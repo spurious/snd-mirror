@@ -573,7 +573,7 @@ vct *vector_to_vct(XEN vect)
   return(v);
 }
 
-void vct_to_vector(vct *v, XEN vect)
+void vct_into_vector(vct *v, XEN vect)
 {
   int len, i;
   XEN *vdata;
@@ -668,7 +668,11 @@ static XEN vct_compare(XEN vr1, XEN vr2)
 
 #endif
 
+#if WITH_MODULES
+static void vct_init(void *ignore)
+#else
 void init_vct(void)
+#endif
 {
   vct_tag = XEN_MAKE_OBJECT_TYPE("Vct", sizeof(vct));
 #if HAVE_GUILE
@@ -724,5 +728,40 @@ void init_vct(void)
   XEN_DEFINE_PROCEDURE(S_vct_ref,       vct_ref_w, 2, 0, 0,       H_vct_ref);
 #endif
   XEN_DEFINE_PROCEDURE(S_vct_setB,      vct_set_w, 3, 0, 0,       H_vct_setB);
+
+#if WITH_MODULES
+  scm_c_export(S_make_vct,
+	       S_vct_copy,
+	       S_vct_p,
+	       S_list2vct,
+	       S_vct2list,
+	       S_vector2vct,
+	       S_vct2vector,
+	       S_vct_length,
+	       S_vct_multiplyB,
+	       S_vct_scaleB,
+	       S_vct_fillB,
+	       S_vct_addB,
+	       S_vct_subtractB,
+	       S_vct_offsetB,
+	       S_vct_peak,
+	       S_vct_moveB,
+	       S_vct_subseq,
+	       S_vct,
+	       S_vct_mapB,
+	       S_vct_ref,
+	       S_vct_setB,
+#if WITH_RUN
+	       "vct-map-1",
+#endif
+	       NULL);
+#endif
 }
+
+#if WITH_MODULES
+void init_vct(void)
+{
+  scm_c_define_module("snd sndlib", vct_init, NULL);
+}
+#endif
 

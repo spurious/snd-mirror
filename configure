@@ -855,6 +855,7 @@ Optional Packages:
   --with-html		  include the XmHTML or mozilla browser library
   --with-motif		  use libXm to build Snd
   --with-static-motif	  use libXm.a to build Snd
+  --with-modules	  use if sndlib uses modules
   --with-motif-prefix=PFX where Motif is installed
   --with-temp-dir	  directory to use for temp files
   --with-save-dir	  directory to use for saved-state files
@@ -2525,6 +2526,7 @@ MAKE_TARGET="snd"
 #   --with-run            Guile optimizer (default=yes)
 #   --with-gl             include OpenGL support (default=no)
 #   --with-just-gl        include OpenGL support but omit the Guile bindings (gl.o) (default=no)
+#   --with-modules        accommodate sndlib that was built with modules
 #--------------------------------------------------------------------------------
 
 
@@ -2618,6 +2620,12 @@ if test "${with_static_motif+set}" = set; then
 
 fi;
 
+# Check whether --with-modules or --without-modules was given.
+if test "${with_modules+set}" = set; then
+  withval="$with_modules"
+
+fi;
+
 if test "$with_doubles" = yes; then
   cat >>confdefs.h <<\_ACEOF
 #define Float double
@@ -2626,6 +2634,13 @@ _ACEOF
 else
   cat >>confdefs.h <<\_ACEOF
 #define Float float
+_ACEOF
+
+fi
+
+if test "$with_modules" = yes; then
+  cat >>confdefs.h <<\_ACEOF
+#define WITH_MODULES 1
 _ACEOF
 
 fi

@@ -314,6 +314,22 @@ static double **saved_Pn = NULL;
 static double *saved_wx = NULL;
 static int saved_Pn_size = 0;
 
+static void free_Pn(void)
+{
+  int k;
+  if (saved_Pn_size > 0)
+    {
+      for (k = 0; k < saved_Pn_size; k++) 
+	if (saved_Pn[k]) 
+	  FREE(saved_Pn[k]);
+      if (saved_Pn) FREE(saved_Pn);
+      if (saved_wx) FREE(saved_wx);
+      saved_Pn = NULL;
+      saved_wx = NULL;
+      saved_Pn_size = 0;
+    }
+}
+
 static void chebyshev_polynomials(double x, double *f, int n)
 {
   int k;
@@ -335,12 +351,7 @@ static void build_Pn(int n)
   double x, rate, ln2;
   if (n != saved_Pn_size)
     {
-      if (saved_Pn_size > 0)
-	{
-	  for (k = 0; k < saved_Pn_size; k++) if (saved_Pn[k]) FREE(saved_Pn[k]);
-	  if (saved_Pn) FREE(saved_Pn);
-	  if (saved_wx) FREE(saved_wx);
-	}
+      free_Pn();
       saved_Pn = (double **)CALLOC(n, sizeof(double *));
       saved_wx = (double *)CALLOC(n, sizeof(double));
       for (k = 0; k < n; k++) saved_Pn[k] = (double *)CALLOC(n, sizeof(double));

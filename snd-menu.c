@@ -574,7 +574,7 @@ static XEN g_set_save_state_file(XEN val)
   snd_state *ss;
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set-" S_save_state_file, "a string"); 
   ss = get_global_state();
-  set_save_state_file(ss, copy_string(XEN_TO_C_STRING(val)));
+  set_save_state_file(ss, XEN_TO_C_STRING(val));
   return(C_TO_XEN_STRING(save_state_file(ss)));
 }
 

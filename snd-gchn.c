@@ -929,7 +929,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
   /* cax->wn has to wait until update_graph */
 }
 
-static void set_graph_font(chan_info *cp, SG_FONT *fnt)
+static void set_graph_font(chan_info *cp, PangoFontDescription *fnt)
 {
   cp->cgx->ax->current_font = fnt;
   gtk_widget_modify_font(cp->cgx->ax->w, fnt);

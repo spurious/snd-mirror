@@ -10,8 +10,8 @@ static GtkWidget *expB, *linB, *lerow, *baseScale, *baseLabel, *baseValue, *sele
 static GtkObject *baseAdj, *orderAdj;
 static GdkGC *gc, *rgc, *ggc;
 
-static SG_PIXMAP *blank = NULL;
-static SG_BITMAP *blank_mask = NULL;
+static GdkPixmap *blank = NULL;
+static GdkBitmap *blank_mask = NULL;
 
 static char *env_names[3] = {STR_amp_env_p, STR_flt_env_p, STR_src_env_p};
 
@@ -381,7 +381,7 @@ void enved_display_point_label(snd_state *ss, Float x, Float y)
   gtk_label_set_text(GTK_LABEL(brktxtL), brkpt_buf);
 }
 
-void display_enved_progress(char *str, SG_PIXMAP *pix, SG_BITMAP *mask)
+void display_enved_progress(char *str, GdkPixmap *pix, GdkBitmap *mask)
 {
   if (pix == NULL)
     gtk_label_set_text(GTK_LABEL(brktxtL), str);

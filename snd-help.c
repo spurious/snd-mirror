@@ -146,6 +146,9 @@ char *version_info(void)
 #else
 	  ", int", snd_itoa(MUS_SAMPLE_BITS), " samples",
 #endif
+#if WITH_MODULES
+	  ", with modules",
+#endif
 	  ")", sndlib_consistency_check(),
 	  "\n    CLM ", snd_itoa(MUS_VERSION), ".", 
 	                snd_itoa(MUS_REVISION), " (", 
@@ -183,17 +186,19 @@ char *version_info(void)
 #endif
 #if HAVE_GL
 	  "\n    OpenGL", glx_version(),
+  #if USE_GTK
 	  ", gtkglext ",
-  #if HAVE_GTK_GL_EXT_0_1
+    #if HAVE_GTK_GL_EXT_0_1
 	  "0.1",
-  #else
-    #if HAVE_GDK_GL_FONT_USE_GDK_FONT
-	  "0.2",
     #else
-      #if HAVE_GDK_GL_CONTEXT_COPY
-	  "0.4 or later",
+      #if HAVE_GDK_GL_FONT_USE_GDK_FONT
+	  "0.2",
       #else
+        #if HAVE_GDK_GL_CONTEXT_COPY
+	  "0.4 or later",
+        #else
 	  "0.3",
+        #endif
       #endif
     #endif
   #endif
@@ -257,8 +262,9 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+4-Sep:   --with-modules for modularized sndlib.\n\
 2-Sep:   removed gtk-1 and gtkextra support.\n\
-1-Sep:   if no extension language, edit position can get confused.\n\
+1-Sep:   if no extension language, edit position can get confused (fixed).\n\
 26-Aug:  added filter-control-coeffs.\n\
          graph-lisp|time|transform? inverted to be lisp|time|transform-graph?\n\
          graph-time-once -> graph-once\n\
@@ -276,11 +282,6 @@ void news_help(snd_state *ss)
 15-Aug:  set-channel-drop in snd-motif.scm.\n\
 13-Aug:  snd 6.0.\n\
 1-Aug:   def-clm-struct (ws.scm).\n\
-19-Jul:  contrib/rmsgain.scm thanks to Fabio Furlanete.\n\
-         with-relative-panes.\n\
-17-Jul:  mix-length -> mix-frames, region-length -> region-frames, selection-length -> selection-frames.\n\
-15-Jul:  snd 5.12.\n\
-         continue-sample->file, read/write-ogg in examp.scm.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

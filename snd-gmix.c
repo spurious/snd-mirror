@@ -341,8 +341,8 @@ static gboolean mix_amp_env_resize_callback(GtkWidget *w, GdkEventConfigure *ev,
 /* ---------------- MIX PANEL ---------------- */
 
 static GtkWidget *w_id = NULL, *w_name = NULL, *w_beg = NULL, *w_track = NULL, *w_play = NULL, *w_id_label = NULL, *w_track_label = NULL, *w_play_pix = NULL;
-static SG_PIXMAP *speaker_pix;
-static SG_BITMAP *speaker_mask;
+static GdkPixmap *speaker_pix;
+static GdkBitmap *speaker_mask;
 
 static void id_activated(GtkWidget *w, gpointer context)
 {

@@ -62,9 +62,6 @@
 
 ;;; SOMEDAY: robust pitch tracker
 ;;; SOMEDAY: adaptive notch filter
-;;; SOMEDAY: data-file rw case for pvoc.scm
-;;; SOMEDAY: notation following location (as in display-current-window-location)
-;;;          but this requires some way to converse with cmn that does not require sleep
 
 
 (use-modules (ice-9 debug))

@@ -183,7 +183,7 @@ void finish_recording(snd_state *ss, recorder_info *rp);
   #define LOAD_FONT(Font) XLoadQueryFont(MAIN_DISPLAY(ss), Font)
 #else
   #if USE_GTK
-    #define FONT_TYPE SG_FONT
+    #define FONT_TYPE PangoFontDescription
     #define LOAD_FONT(Font) pango_font_description_from_string(Font)
   #else
     #define FONT_TYPE int

@@ -77,11 +77,11 @@ static GtkWidget *w_snd_name_pix(snd_info *sp) {if ((sp) && (sp->sgx)) return((s
 #define NUM_GLASSES 15
 #define NUM_BOMBS 15
 
-static SG_PIXMAP *mini_lock, *speed_r, *speed_l, *blank;
+static GdkPixmap *mini_lock, *speed_r, *speed_l, *blank;
 static int mini_lock_allocated = 0;
-static SG_PIXMAP *mini_bombs[NUM_BOMBS];
-static SG_PIXMAP *mini_glasses[NUM_GLASSES];
-static SG_BITMAP *lock_mask, *blank_mask, *speed_l_mask, *speed_r_mask, *bomb_mask, *glass_mask;
+static GdkPixmap *mini_bombs[NUM_BOMBS];
+static GdkPixmap *mini_glasses[NUM_GLASSES];
+static GdkBitmap *lock_mask, *blank_mask, *speed_l_mask, *speed_r_mask, *bomb_mask, *glass_mask;
 
 void snd_file_lock_icon(snd_info *sp, int on)
 {

@@ -1568,6 +1568,7 @@ static XEN g_set_recorder_file(XEN val)
 {
   #define H_recorder_file "(" S_recorder_file ") -> default recorder file name"
   XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, XEN_ONLY_ARG, "set-" S_recorder_file, "a string"); 
+  if (rp->output_file) FREE(rp->output_file);
   if (XEN_FALSE_P(val))
     {
       if (DEFAULT_RECORDER_FILE != (char *)NULL)

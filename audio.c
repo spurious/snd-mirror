@@ -9976,6 +9976,72 @@ void mus_audio_set_oss_buffers(int num, int size)
 #endif
 
 
+/* ------------------------------- JACK ----------------------------------------- */
+
+#if HAVE_JACK
+#define AUDIO_OK
+#include <jack/jack.h>
+
+static jack_client_t *dac = NULL;
+static jack_port_t *dac_port = NULL;
+
+static int write_buffer(jack_nframes_t nframes, void *arg)
+{
+  jack_default_audio_sample_t *dac_out = (jack_default_audio_sample_t *)jack_port_get_buffer(dac_port, nframes);
+  /* write to dac_out -- ack_default_audio_sample_t is assumed to be float */
+  
+  return(0);
+}
+
+static void quit_dac(void *arg)
+{
+  mus_audio_close(0);
+}
+
+int mus_audio_open_output(int dev, int srate, int chans, int format, int size) 
+{
+  /* jack_get_sample_rate(dac)
+     but no chans?
+  */
+  dac = jack_client_new(<name...>);
+  if (dac == NULL) return(MUS_ERROR);
+  jack_set_process_callback(dac, write_buffer, 0);
+  jack_on_shutdown(dac, quit_dac, 0);
+  dac_port = jack_port_register(dac, "output", JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
+  jack_activate(dac);
+  jack_connect(dac, "output", "alsa_pcm:out_1"); /* is this channel 0 or something -- how to handle n chans? */
+  return(MUS_NO_ERROR);
+}
+
+int mus_audio_write(int line, char *buf, int bytes) 
+{
+  return(MUS_ERROR);
+}
+
+int mus_audio_close(int line) 
+{
+  jack_deactivate(dac);
+  jack_port_unregister(dac, dac_port);
+  jack_client_close(dac);
+  return(MUS_NO_ERROR);
+}
+
+/* just implement playing (output) */
+static void describe_audio_state_1(void) {pprint("jack audio");}
+int mus_audio_open_input(int dev, int srate, int chans, int format, int size) {return(MUS_ERROR);}
+int mus_audio_read(int line, char *buf, int bytes) {return(MUS_ERROR);}
+int mus_audio_mixer_read(int dev, int field, int chan, float *val) {return(MUS_ERROR);}
+int mus_audio_mixer_write(int dev, int field, int chan, float *val) {return(MUS_ERROR);}
+void mus_audio_save(void) {}
+void mus_audio_restore(void) {}
+int mus_audio_initialize(void) {return(MUS_ERROR);}
+int mus_audio_systems(void) {return(1);}
+char *mus_audio_system_name(int system) {return("linux jack");}
+void mus_audio_set_oss_buffers(int num, int size) {}
+char *mus_audio_moniker(void) {return("jack");}
+#endif
+
+
 
 /* ------------------------------- STUBS ----------------------------------------- */
 

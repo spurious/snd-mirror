@@ -6,13 +6,13 @@
 #include "snd-rec.h"
 
 typedef struct {
-  SG_PIXMAP *off_label;
-  SG_PIXMAP *on_label;
-  SG_PIXMAP *clip_label;
-  SG_BITMAP *off_label_mask;
-  SG_BITMAP *on_label_mask;
-  SG_BITMAP *clip_label_mask;
-  SG_FONT *label_font;
+  GdkPixmap *off_label;
+  GdkPixmap *on_label;
+  GdkPixmap *clip_label;
+  GdkBitmap *off_label_mask;
+  GdkBitmap *on_label_mask;
+  GdkBitmap *clip_label_mask;
+  PangoFontDescription *label_font;
   Float size;
 } vu_label;
 
@@ -28,12 +28,12 @@ typedef struct {
   Float size;
   int light_x, light_y, center_x, center_y;
   snd_state *ss;
-  SG_PIXMAP *off_label;
-  SG_PIXMAP *on_label;
-  SG_PIXMAP *clip_label;
-  SG_BITMAP *off_label_mask;
-  SG_BITMAP *on_label_mask;
-  SG_BITMAP *clip_label_mask;
+  GdkPixmap *off_label;
+  GdkPixmap *on_label;
+  GdkPixmap *clip_label;
+  GdkBitmap *off_label_mask;
+  GdkBitmap *on_label_mask;
+  GdkBitmap *clip_label_mask;
 } VU;
 
 typedef struct {
@@ -101,7 +101,7 @@ static int device_buttons_size = 0;
 #endif
 static int mixer_gains_posted[MAX_SOUNDCARDS];
 static int tone_controls_posted[MAX_SOUNDCARDS];
-static SG_FONT *small_font;
+static PangoFontDescription *small_font;
 
 static vu_label **vu_labels = NULL;
 static int vu_labels_size = 0;
@@ -150,8 +150,8 @@ void recorder_error(char *msg)
 
 /* -------------------------------- ICONS -------------------------------- */
 
-static SG_PIXMAP *speaker_pix, *line_in_pix, *mic_pix, *aes_pix, *adat_pix, *digital_in_pix, *cd_pix;
-static SG_BITMAP *speaker_mask, *line_in_mask, *mic_mask, *aes_mask, *adat_mask, *digital_in_mask, *cd_mask;
+static GdkPixmap *speaker_pix, *line_in_pix, *mic_pix, *aes_pix, *adat_pix, *digital_in_pix, *cd_pix;
+static GdkBitmap *speaker_mask, *line_in_mask, *mic_mask, *aes_mask, *adat_mask, *digital_in_mask, *cd_mask;
 static int icons_created = 0;
 
 static void make_record_icons(GtkWidget *w, snd_state *ss)
@@ -165,7 +165,7 @@ static void make_record_icons(GtkWidget *w, snd_state *ss)
   cd_pix = gdk_pixmap_create_from_xpm_d(wn, &cd_mask, NULL, cd_bits());
 }
 
-static SG_PIXMAP *device_pix(int device)
+static GdkPixmap *device_pix(int device)
 {
   switch (device)
     {
@@ -459,8 +459,8 @@ static void display_vu_meter(VU *vu)
 {
   Float deg, rdeg, val;
   int nx0, nx1, ny0, ny1, redx, redy, bub0, bub1, i, j;
-  SG_PIXMAP *label = 0;
-  SG_BITMAP *mask;
+  GdkPixmap *label = 0;
+  GdkBitmap *mask;
   snd_state *ss;
   Float size;
   state_context *sx;

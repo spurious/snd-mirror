@@ -2,7 +2,7 @@
 
 int set_help_text_font(snd_state *ss, char *font)
 {
-  SG_FONT *fs = NULL;
+  PangoFontDescription *fs = NULL;
   state_context *sgx;
   if (ss->using_schemes) return(FALSE);
   sgx = ss->sgx;
@@ -19,7 +19,7 @@ int set_help_text_font(snd_state *ss, char *font)
 
 int set_tiny_font(snd_state *ss, char *font)
 {
-  SG_FONT *fs = NULL;
+  PangoFontDescription *fs = NULL;
   state_context *sgx;
   if (ss->using_schemes) return(FALSE);
   sgx = ss->sgx;
@@ -36,7 +36,7 @@ int set_tiny_font(snd_state *ss, char *font)
 
 int set_listener_font(snd_state *ss, char *font)
 {
-  SG_FONT *fs = NULL;
+  PangoFontDescription *fs = NULL;
   if (ss->using_schemes) return(FALSE);
   fs = pango_font_description_from_string(font);
   if (fs)
@@ -51,7 +51,7 @@ int set_listener_font(snd_state *ss, char *font)
 
 int set_button_font(snd_state *ss, char *font)
 {
-  SG_FONT *fs = NULL;
+  PangoFontDescription *fs = NULL;
   if (ss->using_schemes) return(FALSE);
   fs = pango_font_description_from_string(font);
   if (fs)
@@ -66,7 +66,7 @@ int set_button_font(snd_state *ss, char *font)
 
 int set_bold_button_font(snd_state *ss, char *font)
 {
-  SG_FONT *fs = NULL;
+  PangoFontDescription *fs = NULL;
   if (ss->using_schemes) return(FALSE);
   fs = pango_font_description_from_string(font);
   if (fs)
@@ -81,7 +81,7 @@ int set_bold_button_font(snd_state *ss, char *font)
 
 int set_axis_label_font(snd_state *ss, char *font)
 {
-  SG_FONT *fs = NULL;
+  PangoFontDescription *fs = NULL;
   if (ss->using_schemes) return(FALSE);
   fs = pango_font_description_from_string(font);
   if (fs)
@@ -99,7 +99,7 @@ int set_axis_label_font(snd_state *ss, char *font)
 
 int set_axis_numbers_font(snd_state *ss, char *font)
 {
-  SG_FONT *fs = NULL;
+  PangoFontDescription *fs = NULL;
   if (ss->using_schemes) return(FALSE);
   fs = pango_font_description_from_string(font);
   if (fs)
@@ -171,7 +171,7 @@ int number_width(snd_state *ss, char *num)
   return(0);
 }
 
-static int sg_font2width(SG_FONT *font)
+static int sg_font2width(PangoFontDescription *font)
 {
   PangoLayout *layout = NULL;
   int wid = 0;
@@ -186,7 +186,7 @@ static int sg_font2width(SG_FONT *font)
   return(wid);
 }
 
-static int sg_font2height(SG_FONT *font)
+static int sg_font2height(PangoFontDescription *font)
 {
   PangoLayout *layout = NULL;
   int wid = 0;

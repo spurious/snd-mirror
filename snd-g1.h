@@ -485,7 +485,7 @@ void new_active_channel_alert(snd_state *ss);
 void env_redisplay(snd_state *ss);
 void env_redisplay_with_print(snd_state *ss);
 void enved_display_point_label(snd_state *ss, Float x, Float y);
-void display_enved_progress(char *str, SG_PIXMAP *pix, SG_BITMAP *mask);
+void display_enved_progress(char *str, GdkPixmap *pix, GdkBitmap *mask);
 void set_enved_click_to_delete(int n);
 void enved_print(char *name);
 GtkWidget *create_envelope_editor (snd_state *ss);

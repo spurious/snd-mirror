@@ -310,4 +310,3 @@ the y-zoom-slider controls the graph amp"
   
   (add-hook! after-graph-hook display-current-window-location)
   (add-hook! mouse-click-hook click-current-window-location))
-

@@ -3256,6 +3256,7 @@ void g_initialize_gh(void)
 #endif
 
   mus_sndlib2xen_initialize();
+
 #if HAVE_EXTENSION_LANGUAGE
   mus_midi_init();
 #endif
@@ -3734,6 +3735,12 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 #endif
 
   XEN_YES_WE_HAVE("snd");
+
+#if WITH_MODULES
+  scm_c_use_module("snd sndlib");
+  scm_c_use_module("snd clm");
+#endif
+
 }
 
 

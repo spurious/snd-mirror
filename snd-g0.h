@@ -51,14 +51,11 @@
 
 #define Locus gint16
 #define Latus guint16
-#define SG_FONT PangoFontDescription
-#define SG_PIXMAP GdkPixmap
-#define SG_BITMAP GdkBitmap
 
 typedef struct {
   GdkGC *gc;
   GdkDrawable *wn;
-  SG_FONT *current_font;
+  PangoFontDescription *current_font;
   GtkWidget *w;
 } axis_context;
 
@@ -74,8 +71,8 @@ typedef struct {
 } chan_context;
 
 typedef struct {
-  SG_PIXMAP *file_pix;
-  SG_BITMAP *file_mask;
+  GdkPixmap *file_pix;
+  GdkBitmap *file_mask;
   BACKGROUND_FUNCTION_TYPE apply_in_progress;
   GtkWidget **snd_widgets;
   GtkObject **snd_adjs;
@@ -98,13 +95,13 @@ typedef struct {
   GtkWidget *listener_pane;
   GdkWindow *mainwindow;
 
-  SG_FONT *button_fnt;
-  SG_FONT *bold_button_fnt; 
-  SG_FONT *listener_fnt;
-  SG_FONT *axis_label_fnt;
-  SG_FONT *axis_numbers_fnt;
-  SG_FONT *help_text_fnt;
-  SG_FONT *tiny_fnt;
+  PangoFontDescription *button_fnt;
+  PangoFontDescription *bold_button_fnt; 
+  PangoFontDescription *listener_fnt;
+  PangoFontDescription *axis_label_fnt;
+  PangoFontDescription *axis_numbers_fnt;
+  PangoFontDescription *help_text_fnt;
+  PangoFontDescription *tiny_fnt;
 
   GdkColor *white, *black, *red, *yellow, *green, *light_blue, *lighter_blue;
   GdkColor *data_color, *selected_data_color, *mark_color, *graph_color, *selected_graph_color, *listener_color, *listener_text_color, *cursor_color;

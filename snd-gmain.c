@@ -377,8 +377,8 @@ static BACKGROUND_TYPE startup_funcs(gpointer context)
 #ifndef SND_AS_WIDGET
 static void SetupIcon(GtkWidget *shell)
 {
-  SG_PIXMAP *pix;
-  SG_BITMAP *mask;
+  GdkPixmap *pix;
+  GdkBitmap *mask;
   snd_state *ss;
   ss = get_global_state();
   pix = gdk_pixmap_create_from_xpm_d(MAIN_WINDOW(ss), &mask, NULL, snd_icon_bits());

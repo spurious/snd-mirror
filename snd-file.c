@@ -2207,6 +2207,7 @@ void edit_header_callback(snd_state *ss, snd_info *sp, file_data *edit_header_da
 	  ((comment) && (hdr->comment == NULL)) ||
 	  ((comment == NULL) && (hdr->comment)))
 	mus_header_change_comment(sp->filename, comment);
+      if (comment) FREE(comment);
       snd_update(ss, sp);
     }
   else 

@@ -858,7 +858,7 @@ static void unattach_ptree(ptree *inner, ptree *outer)
 }
 
 
-static void int_vct_to_vector(int_vct *v, XEN vect)
+static void int_vct_into_vector(int_vct *v, XEN vect)
 {
   int len, i;
   XEN *vdata;
@@ -920,12 +920,12 @@ static xen_var *free_xen_var(ptree *prog, xen_var *var)
 	      case R_FLOAT_VECTOR:
 		val = symbol_to_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), &local_var);
 		if (XEN_VECTOR_P(val))
-		  vct_to_vector((vct *)(prog->ints[var->v->addr]), val);
+		  vct_into_vector((vct *)(prog->ints[var->v->addr]), val);
 		break;
 	      case R_INT_VECTOR:
 		val = symbol_to_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), &local_var);
 		if (XEN_VECTOR_P(val))
-		  int_vct_to_vector((int_vct *)(prog->ints[var->v->addr]), val);
+		  int_vct_into_vector((int_vct *)(prog->ints[var->v->addr]), val);
 		break;
 	      }
 	  else
@@ -939,12 +939,12 @@ static xen_var *free_xen_var(ptree *prog, xen_var *var)
 	      case R_FLOAT_VECTOR:
 		val = symbol_to_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), &local_var);
 		if (XEN_VECTOR_P(val))
-		  vct_to_vector((vct *)(prog->ints[var->v->addr]), val);
+		  vct_into_vector((vct *)(prog->ints[var->v->addr]), val);
 		break;
 	      case R_INT_VECTOR:
 		val = symbol_to_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), &local_var);
 		if (XEN_VECTOR_P(val))
-		  int_vct_to_vector((int_vct *)(prog->ints[var->v->addr]), val);
+		  int_vct_into_vector((int_vct *)(prog->ints[var->v->addr]), val);
 		break;
 	      }
 	}

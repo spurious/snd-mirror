@@ -26209,6 +26209,7 @@ EDITS: 5
       (system "ls /tmp/file*.snd | wc") ; these are externally created (snd-tempnam in sndxtest etc) 
       (system "rm /tmp/file*.snd")))
 
+(mus-sound-prune)
 (close-output-port optimizer-log)
 (mem-report)
 (system "fgrep -H -n 'snd-run' memlog >> optimizer.log")
