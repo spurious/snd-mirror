@@ -1,13 +1,15 @@
-# examp.rb -- Guile -> Ruby translation
+# examp.rb -- Guile -> Ruby translation -*- snd-ruby -*-
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Last: Fri Feb 13 06:04:45 CET 2004
+# Last: Tue Mar 09 12:36:12 CET 2004
 
 # Commentary:
 #
 # Extensions to Ruby:
 # 
+# provided?(string_or_symbol)
+#
 # backward compatibility methods:
 #  String#to_sym, Symbol#to_sym
 #  make_array(len, init) do |i| ... end
@@ -53,7 +55,7 @@
 # snd_putd(func)
 #
 # Utilities:
-# 
+#
 # close_sound_extend(snd)
 # get_func_name(n)
 # times2samples(start, dur)
@@ -116,6 +118,10 @@
 ##
 ## Extensions to Ruby
 ##
+ 
+def provided?(string_or_symbol)
+  $".member?(string_or_symbol.to_s)
+end
 
 # If $DEBUG = true, on older Ruby versions warnings occur about
 # missing NilClass#to_str and Symbol#to_str
@@ -486,7 +492,6 @@ include Math
 TWO_PI = PI * 2.0
 HALF_PI = PI * 0.5
 
-require "English"
 require "ws"
 require "env"
 include Env
@@ -658,7 +663,7 @@ private :verbose_message_string
 
 def warn(*args)
   str = "Warning: " << verbose_message_string($VERBOSE, "", *args)
-  if $LOADED_FEATURES.member?("snd")
+  if provided? "snd"
     snd_warning(str)
     nil
   else
@@ -667,13 +672,17 @@ def warn(*args)
 end
 
 def die(*args)
+  rbm_message(verbose_message_string(true, "", *args))
+  exit(1) unless provided? "snd"
+end
+
+def error(*args)
   raise verbose_message_string(true, "", *args)
 end
-alias error die
 
 # like printf(*args)
 def rbm_message(*args)
-  if $LOADED_FEATURES.member?("snd") and (!(ENV["EMACS"] or $LOADED_FEATURES.member?("snd-nogui")))
+  if provided?("snd") and (!(ENV["EMACS"] or provided?("snd-nogui")))
     snd_print("\n" + format(*args))
     nil
   else
@@ -865,9 +874,9 @@ def Args(args, *rest)
   result = rest.map do |keys| get_class_or_key(args, *keys) end
   unless args.empty?
     if $strict_args
-      error("rest args: %p", args)
+      error("rest args: %s", args.inspect)
     else
-      warn("rest args ignored: %p", args)
+      warn("rest args ignored: %s", args.inspect)
     end
   end
   result
@@ -892,28 +901,19 @@ end
 
 # all buffers menu functions in my ~/.snd-ruby.rb
 #
-# require "snd-motif"
-# 
 # $open_hook.add_hook!("snd-init-hook") do |file|
 #   open_buffer(file)
 #   check_reopen_menu(file)
-#   set_label_sensitive(menu_widgets[Top_menu_bar], "Buffers", true)
 #   false
 # end
 # 
 # $close_hook.add_hook!("snd-init-hook") do |snd|
 #   close_buffer(snd)
 #   add_to_reopen_menu(snd)
-#   set_label_sensitive(menu_widgets[Top_menu_bar], "Reopen", true)
-#   flag = if each_child(main_menu($buffer_menu)) do end.detect do |w| RXtIsManaged(w) end
-#            true
-#          else
-#            false
-#          end
-#   set_label_sensitive(menu_widgets[Top_menu_bar], "Buffers", flag)
 #   false
 # end
 
+$buffer_names = [] unless defined? $buffer_names
 $buffer_menu = nil unless defined? $buffer_menu
 
 def open_buffer(file)
@@ -925,6 +925,14 @@ $open_hook.add_hook!(\"my-hook\") { |file| open_buffer(file) }
 $close_hook.add_hook!(\"my-hook\") { |snd| close_buffer(snd) }\n") if file == :help
   $buffer_menu ||= add_to_main_menu("Buffers", lambda do | | end)
   add_to_menu($buffer_menu, file, lambda do | | select_sound(find_sound(file)) end)
+  $buffer_names.push(file)
+  if provided? "snd-xm.rb"
+    if provided? "xm"
+      set_label_sensitive(menu_widgets[0], "Buffers", true)
+    else
+      set_sensitive(main_menu($buffer_menu), true)
+    end
+  end
   false
 end
 
@@ -935,7 +943,15 @@ also open_buffer().
 Usage in ~./snd-ruby.rb
 $open_hook.add_hook!(\"my-hook\") { |file| open_buffer(file) }
 $close_hook.add_hook!(\"my-hook\") { |snd| close_buffer(snd) }\n") if snd == :help
-  remove_from_menu($buffer_menu, file_name(snd)) if sound?(snd)
+  remove_from_menu($buffer_menu, file_name(snd))
+  $buffer_names.delete(file_name(snd))
+  if provided? "snd-xm.rb" and $buffer_menu
+    if provided? "xm"
+      set_label_sensitive(menu_widgets[0], "Buffers", !$buffer_names.empty?)
+    else
+      set_sensitive(main_menu($buffer_menu), !$buffer_names.empty?)
+    end
+  end
   false
 end
 
@@ -943,7 +959,7 @@ end
 ## Reopen Menu
 ##
 
-$reopen_names = []
+$reopen_names = [] unless defined? $reopen_names
 $reopen_menu = nil unless defined? $reopen_menu
 
 def add_to_reopen_menu(snd)
@@ -953,28 +969,27 @@ check_reopen_menu().
 Usage in ~./snd-ruby.rb
 $open_hook.add_hook!(\"my-hook\") { |file| check_reopen_menu(file) }
 $close_hook.add_hook!(\"my-hook\") { |snd| add_to_reopen_menu(snd) }\n") if snd == :help
-  if sound?(snd)
-    $reopen_menu ||= add_to_main_menu("Reopen",
-                                      lambda do | |
-                                        if defined? set_label_sensitive
-                                          # defined in snd-motif.rb
-                                          # Top_menu_bar = 0
-                                          set_label_sensitive(menu_widgets[0], "Reopen",
-                                                              !$reopen_names.empty?)
-                                        end
-                                      end)
-    brief_name = short_file_name(snd)
-    long_name = file_name(snd)
-    unless($reopen_names.member?(brief_name))
-      add_to_menu($reopen_menu, brief_name,
-                  lambda do | |
-                    remove_from_menu($reopen_menu, brief_name)
-                    if File.exist?(long_name)
-                      open_sound(long_name)
-                    end
-                  end, 0)
-      $reopen_names.push(brief_name)
-      remove_from_menu($reopen_menu, $reopen_names.shift) if $reopen_names.length > 8
+  $reopen_menu ||= add_to_main_menu("Reopen", lambda do | | end)
+  brief_name = short_file_name(snd)
+  long_name = file_name(snd)
+  unless($reopen_names.member?(brief_name))
+    add_to_menu($reopen_menu, brief_name,
+                lambda do | |
+                  remove_from_menu($reopen_menu, brief_name)
+                  if File.exist?(long_name)
+                    open_sound(long_name)
+                  end
+                end, 0)
+    $reopen_names.push(brief_name)
+    if $reopen_names.length > 8
+      remove_from_menu($reopen_menu, $reopen_names.shift)
+    end
+    if provided? "snd-xm.rb"
+      if provided? "xm"
+        set_label_sensitive(menu_widgets[0], "Reopen", true)
+      else
+        set_sensitive(main_menu($reopen_menu), true)
+      end
     end
   end
   false
@@ -991,10 +1006,12 @@ $close_hook.add_hook!(\"my-hook\") { |snd| add_to_reopen_menu(snd) }\n") if file
   if $reopen_names.member?(brief_name)
     remove_from_menu($reopen_menu, brief_name)
     $reopen_names.delete(brief_name)
-    if defined? set_label_sensitive
-      # defined in snd-motif.rb
-      # Top_menu_bar = 0
+  end
+  if provided? "snd-xm.rb" and $reopen_menu
+    if provided? "xm"
       set_label_sensitive(menu_widgets[0], "Reopen", !$reopen_names.empty?)
+    else
+      set_sensitive(main_menu($reopen_menu), !$reopen_names.empty?)
     end
   end
   false

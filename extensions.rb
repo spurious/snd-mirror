@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Sat Jan 03 17:30:23 CET 2004
-# Last: Tue Feb 10 14:44:07 CET 2004
+# Last: Tue Mar 09 17:23:44 CET 2004
 
 # Commentary:
 #
@@ -11,9 +11,25 @@
 # channel_property(key, snd, chn)  set_channel_property(key, val, snd, chn)
 # sound_property(key, snd)         set_sound_property(key, val, snd)
 # channel_sync(snd, chn)           set_channel_sync(val, snd, chn)
+# show_sound_properties(snd)
+# show_channel_properties(snd, chn)
+#
+# remember_all_sound_properties(database, tmp_snd_p)
+# class Remember_sound_properties
+#   initialize(database)
+#   with_db do |db| ... end
+#   load(snd)
+#   save(snd)
+#   delete_if do |k, v| ... end
+#   contents
+#   reorganize
+#
+# add_comment(comm, samp, snd, chn)
+# remove_comment(comm, snd, chn)
+# show_comment(snd, chn)
 #
 # marks?(more_than_one)
-# all_chans()
+# all_chans
 # normalized_mix(fname, beg, in_chan, snd, chn)
 # enveloped_mix(fname, beg, env, del_tmp)
 #
@@ -21,13 +37,13 @@
 # for_each_sound_file(*args) do |f| ... end
 # match_sound_files(*args) do |f| ... end
 #
-# selection_members()
+# selection_members
 # make_selection(beg, len, snd, chn)
 # delete_selection_and_smooth()
 # eval_over_selection(func)
 #
 # check_for_unsaved_edits(check)
-# remember_sound_state()
+# remember_sound_state
 #
 # mix_channel(fdata, beg, dur, snd, chn, edpos)
 # insert_channel(fdata, beg, dur, snd, chn, edpos)
@@ -105,6 +121,279 @@ module Extensions
     set_channel_property(:sync, val, snd, chn)
   end
 
+  def show_sound_properties(snd = false)
+    if props = sound_properties(snd)
+      message("sound-properties of %s", file_name(snd).inspect)
+      props.each do |k, v|
+        message("%s --> %s", k, v.inspect)
+      end
+    else
+      message("%s has no sound-properties", file_name(snd).inspect)
+    end
+    nil
+  end
+
+  def show_channel_properties(snd = false, chn = false)
+    message("channel-properties of %s", file_name(snd).inspect)
+    if chn.kind_of?(Integer)
+      if props = channel_properties(snd, chn)
+        message("==> channel %d <==", chn)
+        props.each do |k, v|
+          message("%s --> %s", k, v.inspect)
+        end
+      else
+        message("==> channel %d has no channel-properties <==", chn)
+      end
+    else
+      channels(snd).times do |chn|
+        if props = channel_properties(snd, chn)
+          message("==> channel %d <==", chn)
+          props.each do |k, v|
+            message("%s --> %s", k, v.inspect)
+          end
+        else
+          message("==> channel %d has no channel-properties <==", chn)
+        end
+      end
+    end
+    nil
+  end
+
+  # [MS] Based on the idea of remember_sound_state() below, here is
+  # another approach, using a database file.
+  #
+  # remember_all_sound_properties() in ~/.snd-ruby.rb installs the hooks
+  # default database is ~/.snd-properties.db
+  # default tmp_snd_p is false (discarding `.*0000_00.snd' and `.*.rev.*' filenames)
+  def remember_all_sound_properties(database = ENV['HOME'] + "/.snd-properties", tmp_snd_p = false)
+    rsp = Remember_sound_properties.new(database)
+    unless $after_open_hook.member?("save-property-hook")
+      $after_open_hook.add_hook!("save-property-hook") do |snd|
+        rsp.load(snd)
+      end
+      $close_hook.add_hook!("save-property-hook") do |snd|
+        if tmp_snd_p or (not file_name(snd) =~ /(.+\d+_\d+\.snd$)|(.*\.rev.*$)/)
+          rsp.save(snd)
+        end
+        false
+      end
+    end
+    rsp
+  end
+
+  class Remember_sound_properties
+    include Enumerable
+    include Info
+    with_silence do
+      unless defined? GDBM.open
+        require "gdbm"
+      end
+    end
+    
+    def initialize(database)
+      @database = database
+      @sound_funcs = [:sync, :cursor_follows_play]
+      @channel_funcs = [:time_graph?, :transform_graph?, :lisp_graph?, :x_bounds, :y_bounds,
+                        :cursor, :cursor_size, :cursor_style, :show_marks, :show_y_zero,
+                        :wavo_hop, :wavo_trace, :max_transform_peaks, :show_transform_peaks,
+                        :fft_log_frequency, :fft_log_magnitude, :verbose_cursor, :zero_pad,
+                        :wavelet_type, :min_dB, :transform_size, :transform_graph_type,
+                        :time_graph_type, :fft_window, :transform_type, :transform_normalization,
+                        :time_graph_style, :show_mix_waveforms,
+                        :dot_size, :x_axis_style, :show_axes, :graphs_horizontal,
+                        :lisp_graph_style, :transform_graph_style]
+      set_help
+    end
+    attr_reader :database
+    alias help description
+    
+    def inspect
+      format("#<%s: database: %s>", self.class, @database.inspect)
+    end
+
+    def with_db(&body)
+      db = GDBM.open(@database)
+      ret = body.call(db)
+      db.close
+      ret
+    end
+    
+    def load(snd)
+      snd_name = file_name(snd)
+      with_db do |db|
+        eval((db[snd_name] or ""))
+      end
+      if file_write_date(snd_name) == sound_property(:current_file_time, snd)
+        @sound_funcs.each do |prop|
+          send(format("set_%s", prop.to_s).intern, sound_property(prop, snd), snd)
+        end
+        channels(snd).times do |chn|
+          set_squelch_update(true, snd, chn)
+          @channel_funcs.each do |prop|
+            send(format("set_%s", prop.to_s).intern, channel_property(prop, snd, chn), snd, chn)
+          end
+          set_squelch_update(false, snd, chn)
+        end
+      else
+        @sound_funcs.each do |prop|
+          new_prop = (sound_properties(snd) or {})
+          new_prop.delete_if do |k, v| k == prop end
+          set_sound_properties(new_prop.rehash, snd)
+        end
+        channels(snd).times do |chn|
+          @channel_funcs.each do |prop|
+            new_prop = (channel_properties(snd, chn) or {})
+            new_prop.delete_if do |k, v| k == prop end
+            set_channel_properties(new_prop.rehash, snd, chn)
+          end
+        end
+      end
+    end
+    
+    # the resulting string looks like
+    # let(find_sound("snd_name")) do |snd|
+    #   set_sound_properties(Marshal.load("marshaled props"), snd)
+    #   if channels(snd) > 0
+    #     set_channel_properties(Marshal.load("marshaled props"), snd, 0)
+    #   end
+    #   if channels(snd) > 1
+    #     set_channel_properties(Marshal.load("marshaled props"), snd, 1)
+    #   end
+    #   ...
+    # end
+    # self.load evals this string
+    def save(snd)
+      snd_name = file_name(snd)
+      props = (sound_properties(snd) or {})
+      props[:current_file_time] = file_write_date(snd_name)
+      @sound_funcs.each do |prop|
+        props[prop] = send(prop, snd)
+      end
+      res = format("let(find_sound(%s)) do |snd|\n", snd_name.inspect)
+      res += format("  set_sound_properties(Marshal.load(%s), snd)\n", Marshal.dump(props).inspect)
+      channels(snd).times do |chn|
+        props = (channel_properties(snd, chn) or {})
+        @channel_funcs.each do |prop|
+          props[prop] = send(prop, snd, chn)
+        end
+        res += format("  if channels(snd) > %d\n", chn)
+        res += format("    set_channel_properties(Marshal.load(%s), snd, %d)\n",
+                      Marshal.dump(props).inspect, chn)
+        res += "  end\n"
+      end
+      res += "end\n"
+      with_db do |db|
+        db[snd_name] = res
+      end
+    end
+
+    def each
+      with_db do |db|
+        db.each do |key, value|
+          yield(key, value)
+        end
+      end
+    end
+    
+   def delete_if(&body)
+     with_db do |db|
+       db.delete_if(&body)
+     end
+   end
+
+    def contents
+      message("contents of %s", @database.inspect)
+      with_db do |db|
+        db.each do |file, value|
+          message(file)
+        end
+      end
+      nil
+    end
+
+    def reorganize
+      with_db do |db|
+        db.reorganize
+      end
+    end
+  
+    private
+    def set_help
+      self.description = "\
+# class Remember_sound_properties
+#   initialize(database)
+#
+# getter:
+#   database
+#
+# methods:
+#   with_db do ... end
+#   load(snd)
+#   save(snd)
+#   each do |file, value| ... end
+#   delete_if do |file, value| ... end
+#   contents
+#   reorganize
+#   help           (alias info and description)
+#
+# Usage:
+#
+# rsp = Remember_sound_properties.new(database)
+# unless $after_open_hook.member?(\"save-property-hook\")
+#   $after_open_hook.add_hook!(\"save-property-hook\") do |snd|
+#     rsp.load(snd)
+#   end
+#   $close_hook.add_hook!(\"save-property-hook\") do |snd|
+#     # discarding `.*0000_00.snd' and `.*.rev.*' filenames
+#     if tmp_snd_p or (not file_name(snd) =~ /(.+\\d+_\\d+\\.snd$)|(.*\\.rev.*$)/)
+#       rsp.save(snd)
+#     end
+#     false
+#   end
+# end
+#
+# rsp.delete_if do |file, value|
+#   file =~ /rb\\-test/
+# end                        # deletes all files containing the string \"rb-test\"
+# rsp.contents               # prints all filenames in database
+# rsp.reorganize             # reorganizes the GDBM database
+# rsp.each do |file, value|
+#   message(file)
+# end                        # the same as rsp.contents
+# rsp.with_db do |db|
+#   db.reorganize
+# end                        # the same as rsp.reorganize"
+    end
+  end
+
+  # add channel comments (see extsnd.html->Graphics->draw-string)
+  def add_comment(comm, samp = cursor(), snd = selected_sound(), chn = selected_channel())
+    comments = (channel_property(:comments, snd, chn) or {})
+    comments[samp] = comm
+    set_channel_property(:comments, comments, snd, chn)
+  end
+
+  def remove_comment(comm, snd = selected_sound(), chn = selected_channel())
+    comments = (channel_property(:comments, snd, chn) or {})
+    comments.delete_if do |k, v| v == comm end
+    set_channel_property(:comments, comments.rehash, snd, chn)
+  end
+
+  def show_comments(snd, chn)
+    (channel_property(:comments, snd, chn) or {}).each do |samp, text|
+      width = 6 * text.length
+      if samp.between?(left_sample(snd, chn), right_sample(snd, chn))
+        xpos = x2position(samp / srate(snd).to_f, snd, chn)
+        ypos = y2position(sample(samp), snd, chn)
+        draw_line(xpos, 35, xpos, ypos - 4, snd, chn)
+        draw_string(text, xpos - width / 2, 18, snd, chn)
+      end
+    end
+  end
+=begin
+  $after_graph_hook.add_hook!("show-comments") do |snd, chn| show_comments(snd, chn) end
+=end
+  
   # Have we marks?  Similar to selections?().
   def marks?(more_than_one = true)
     if (m = marks(selected_sound(), selected_channel())).nil?

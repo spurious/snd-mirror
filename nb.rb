@@ -2,11 +2,11 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Dec 10 22:08:15 CET 2002
-# Last: Sat Feb 14 14:19:31 CET 2004
+# Last: Tue Mar 09 13:53:33 CET 2004
 
 # Commentary:
 #
-# Tested with Snd 7.2, Motif 2.1, Ruby 1.6.6 and 1.9.0.
+# Tested with Snd 7.3, Motif 2.2.2, Ruby 1.6.6, 1.6.8 and 1.9.0.
 #
 # type nb = make_nb
 #      nb.help
@@ -47,16 +47,20 @@ nb.help                      # this help
 
 # Code:
 
-require "English"
 require "examp"
 require "hooks"
-require "dbm"
+with_silence do
+  unless defined? DBM.open
+    require "dbm"
+  end
+end
 
 $nb_database = "nb" unless defined? $nb_database
 
-if $LOADED_FEATURES.member?("snd-motif")
-  with_silence(LoadError) do require("xm") end unless $LOADED_FEATURES.member?("xm")
-  with_silence(LoadError) do require("libxm") end unless $LOADED_FEATURES.member?("xm")
+if provided?("snd-motif") and (not provided?("xm"))
+  with_silence(LoadError) do
+    require "libxm"
+  end
 end
 
 module Kernel
@@ -83,7 +87,7 @@ def make_nb_motif(path = $nb_database)
   else
     Kernel.xm_nb = XM_NB.new(path)
   end
-end if $LOADED_FEATURES.member?("xm")
+end if provided?("xm")
 
 class NB
   include Info
@@ -193,13 +197,16 @@ class NB
   end
 
   def show_popup_info
-    info_dialog(@name, file_info)
-    unless RWidget?(dialog_widgets[Info_dialog])
-      pos = widget_position(dialog_widgets[View_files_dialog])
-      size = widget_size(dialog_widgets[View_files_dialog])
-      set_widget_position(dialog_widgets[Info_dialog], [pos[0] + size[10], pos[1] + 10])
+    let(dialog_widgets[Info_dialog]) do |info_exists_p|
+      info_dialog(@name, file_info)
+      if info_widget = dialog_widgets[Info_dialog]
+        unless info_exists_p
+          width, height = widget_size(dialog_widgets[View_files_dialog])
+          set_widget_position(info_widget, [width + 10, 10])
+        end
+        recolor_widget(info_widget, @alert_color)
+      end
     end
-    recolor_widget(dialog_widgets[Info_dialog], @alert_color)
     @name
   end
 
@@ -227,7 +234,7 @@ class NB
  length: %1.3f (%d samples)
  format: %s [%s]%s
 written: %s\n", cs, sr, len, frms, d_format, h_type, max_amp, date)
-    if $info_comment_hook.kind_of?(Hook)
+    if defined?($info_comment_hook) and hook?($info_comment_hook)
       if $info_comment_hook.empty?
         if s = mus_sound_comment(@name)
           info_string += format("comment: %s\n", s)
@@ -426,6 +433,6 @@ o Submit:    submits info from edit widget
     RWidget?(@text_widget) and RXtVaSetValues(@text_widget, [RXmNvalue, @notes])
     RXmStringFree(xfname)
   end
-end if $LOADED_FEATURES.member?("xm")
+end if provided?("xm")
 
 # nb.rb ends here

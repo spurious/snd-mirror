@@ -1,10 +1,10 @@
-# dlocsig.rb -- CLM -> Snd/Ruby translation of dlocsig.lisp
+# dlocsig.rb -- CLM -> Snd/Ruby translation of dlocsig.lisp -*- snd-ruby -*-
 
 # Copyright (C) 2003--2004 Michael Scholz
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Mar 25 23:21:37 CET 2003
-# Last: Sat Feb 14 15:10:40 CET 2004
+# Last: Wed Mar 03 01:38:39 CET 2004
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -48,7 +48,7 @@
 
 # Commentary:
 
-# Tested with Snd 7.2, Motif 2.1, Ruby 1.6.6 and 1.9.0.
+# Tested with Snd 7.3, Motif 2.2.2, Gtk+ 2.2.1, Ruby 1.6.6, 1.6.8 and 1.9.0.
 #
 # The code is a translation of the Lisp code of Fernando Lopez Lezcano
 # found in clm-2/dlocsig of the CLM distribution.  An extensive
@@ -236,16 +236,16 @@
 
 # Code:
 
-require "English"
 require "examp"
 require "ws"
 require "complex"
 require "matrix"
 include Math
 
-if $LOADED_FEATURES.member?("snd-motif")
-  with_silence(LoadError) do require("xm") end unless $LOADED_FEATURES.member?("xm")
-  with_silence(LoadError) do require("libxm") end unless $LOADED_FEATURES.member?("xm")
+if (provided? "snd-motif" or provided? "snd-gtk") and (not (provided? "xm" or provided? "xg"))
+  with_silence(LoadError) do
+    require "libxm"
+  end
 end
 
 # module Inject, see Thomas, David, Hunt, Andrew: Programming Ruby --
@@ -365,6 +365,8 @@ class Gnuplot
   
   def open
     @@plot_stream = IO.popen("gnuplot", "w")
+  rescue
+    error("%s#%s: gnuplot not found?", self.class, get_func_name)
   end
 
   def close
@@ -2336,7 +2338,7 @@ end
 
 # Dlocsig menu
 #
-# require 'snd-motif'
+# require 'snd-xm'
 #
 # make_snd_menu("Dlocsig") do
 #   cascade("Dlocsig (Snd)") do
@@ -2349,10 +2351,10 @@ end
 #   end
 # end
 
-if $LOADED_FEATURES.member?("snd-motif") and $LOADED_FEATURES.member?("xm")
+if provided? "snd-motif" or provided? "snd-gtk"
   class Dlocsig_menu
-    require "snd-motif"
-    include Snd_Motif
+    require "snd-xm"
+    include Snd_XM
     require "xm-enved"
     include DL
 
@@ -2373,7 +2375,7 @@ if $LOADED_FEATURES.member?("snd-motif") and $LOADED_FEATURES.member?("xm")
     private
     def with_sound_target(*comment_args)
       if @render_using == B_format_ambisonics
-        RXmScaleSetValue(@sliders[0].scale, @out_chans = 4)
+        set_scale_value(@sliders[0].scale, @out_chans = 4)
       end
       comment_string = if $rbm_comment.kind_of?(String) and !$rbm_comment.empty?
                          format("%s; %s", $rbm_comment, format(*comment_args))
@@ -2405,28 +2407,30 @@ if $LOADED_FEATURES.member?("snd-motif") and $LOADED_FEATURES.member?("xm")
       end
       rbm_message(f.output.inspect)
     rescue
-      message("%s#%s: %s", self.class, get_func_name, comment_string)
+      warn("%s#%s: %s", self.class, get_func_name, comment_string)
     end
 
     def add_with_sound_sliders(parent = @dialog.parent)
       @sliders << @dialog.add_slider("output channels",
                                2, @init_out_chans, 8, 1, :linear, parent) do |w, c, i|
-        @out_chans = Rvalue(i)
+        @out_chans =   get_scale_value(w, i).round
       end
       @sliders <<  @dialog.add_slider("output power",
                                 0, @init_power, 10, 100, :linear, parent) do |w, c, i|
-        @output_power = Rvalue(i) / 100.0
+        @output_power = get_scale_value(w, i, 100.0)
       end
       @sliders << @dialog.add_slider("reverb power",
                                      0, @init_rev_power, 10, 100, :linear, parent) do |w, c, i|
-        @reverb_power = Rvalue(i) / 100.0
+        @reverb_power = get_scale_value(w, i, 100.0)
       end
     end
 
     def reset_with_sound_sliders(reverb_p = true)
-      RXmScaleSetValue(@sliders[0].scale, @out_chans = @init_out_chans)
-      RXmScaleSetValue(@sliders[1].scale, ((@output_power = @init_power) * 100.0).round)
-      RXmScaleSetValue(@sliders[2].scale, ((@reverb_power = @init_rev_power) * 100.0).round)
+      set_scale_value(@sliders[0].scale, @out_chans = @init_out_chans)
+      @output_power = @init_power
+      set_scale_value(@sliders[1].scale, @output_power, 100.0)
+      @reverb_power = @init_rev_power
+      set_scale_value(@sliders[2].scale, @reverb_power, 100.0)
     end
     
     def add_with_sound_targets
@@ -2437,7 +2441,7 @@ if $LOADED_FEATURES.member?("snd-motif") and $LOADED_FEATURES.member?("xm")
                         when :amplitude
                           Amplitude_panning
                         when :b_format
-                          RXmScaleSetValue(@sliders[0].scale, @out_chans = 4)
+                          set_scale_value(@sliders[0].scale, @out_chans = 4)
                           B_format_ambisonics
                         when :decoded
                           Decoded_ambisonics
@@ -2540,15 +2544,10 @@ For detailed information see clm-2/dlocsig.html.",
     end
     
     def post_dialog
-      unless @dialog.kind_of?(Dialog) and RWidget?(@dialog.dialog)
+      unless @dialog.kind_of?(Dialog) and widget?(@dialog.dialog)
         init_traj = [0, 1, 0.5, 0.5, 1, 1]
         init_z_traj = [0, 0, 0.5, 0.1, 1, 0]
         init_vel = [0, 0.5, 1, 0.5]
-        frame_args = [RXmNshadowThickness, 4,
-                      RXmNshadowType, RXmSHADOW_ETCHED_OUT,
-                      RXmNbackground, basic_color,
-                      RXmNheight, 170,
-                      RXmNwidth, 400]
         @dialog = make_dialog(@label,
                               :help_cb, lambda do |w, c, i|
                                 help_cb()
@@ -2565,51 +2564,95 @@ For detailed information see clm-2/dlocsig.html.",
           create_path
           with_sound_target("%s: %s, path: %s", @which_path, dlocsig_strings, @snd_path.inspect)
         end
-        pane = RXtCreateManagedWidget("pane", RxmPanedWindowWidgetClass, @dialog.parent,
-                                      [RXmNsashHeight, 1, RXmNsashWidth, 1,
-                                       RXmNorientation, RXmHORIZONTAL,
-                                       RXmNbackground, basic_color])
-        xepane = RXtCreateManagedWidget("xepane", RxmPanedWindowWidgetClass, pane,
+        if provided? "xm"
+          frame_args = [RXmNshadowThickness, 4,
+                        RXmNshadowType, RXmSHADOW_ETCHED_OUT,
+                        RXmNbackground, basic_color,
+                        RXmNheight, 170,
+                        RXmNwidth, 400]
+          pane = RXtCreateManagedWidget("pane", RxmPanedWindowWidgetClass, @dialog.parent,
                                         [RXmNsashHeight, 1, RXmNsashWidth, 1,
-                                         RXmNorientation, RXmVERTICAL,
+                                         RXmNorientation, RXmHORIZONTAL,
                                          RXmNbackground, basic_color])
-        trfr = RXtCreateManagedWidget("trfr", RxmFrameWidgetClass, xepane, frame_args)
-        zfr = RXtCreateManagedWidget("zfr", RxmFrameWidgetClass, xepane, frame_args)
-        vefr = RXtCreateManagedWidget("vefr", RxmFrameWidgetClass, xepane, frame_args)
-        vepane = RXtCreateManagedWidget("vpane", RxmPanedWindowWidgetClass, pane,
-                                        [RXmNsashHeight, 1, RXmNsashWidth, 1,
-                                         RXmNseparatorOn, true,
-                                         RXmNorientation, RXmVERTICAL,
-                                         RXmNbackground, basic_color])
-        add_with_sound_sliders(vepane)
-        rc = RXtCreateManagedWidget("form", RxmRowColumnWidgetClass, vepane,
-                                    [RXmNorientation, RXmVERTICAL,
-                                     RXmNalignment, RXmALIGNMENT_CENTER,
-                                     RXmNbackground, help_button_color])
-        @label_list = make_array(8) do |i|
-          RXtCreateManagedWidget("W" * 30, RxmLabelWidgetClass, rc,
-                                 [RXmNbackground, help_button_color])
+          xepane = RXtCreateManagedWidget("xepane", RxmPanedWindowWidgetClass, pane,
+                                          [RXmNsashHeight, 1, RXmNsashWidth, 1,
+                                           RXmNorientation, RXmVERTICAL,
+                                           RXmNbackground, basic_color])
+          trfr = RXtCreateManagedWidget("trfr", RxmFrameWidgetClass, xepane, frame_args)
+          zfr = RXtCreateManagedWidget("zfr", RxmFrameWidgetClass, xepane, frame_args)
+          vefr = RXtCreateManagedWidget("vefr", RxmFrameWidgetClass, xepane, frame_args)
+          vepane = RXtCreateManagedWidget("vpane", RxmPanedWindowWidgetClass, pane,
+                                          [RXmNsashHeight, 1, RXmNsashWidth, 1,
+                                           RXmNseparatorOn, true,
+                                           RXmNorientation, RXmVERTICAL,
+                                           RXmNbackground, basic_color])
+          add_with_sound_sliders(vepane)
+          rc = RXtCreateManagedWidget("form", RxmRowColumnWidgetClass, vepane,
+                                      [RXmNorientation, RXmVERTICAL,
+                                       RXmNalignment, RXmALIGNMENT_CENTER,
+                                       RXmNbackground, help_button_color])
+          @label_list = make_array(8) do |i|
+            RXtCreateManagedWidget("W" * 30, RxmLabelWidgetClass, rc,
+                                   [RXmNbackground, help_button_color])
+          end
+          add_with_sound_targets
+          @dialog.add_target([["open bezier", :open_bezier_path, true],
+                              ["closed bezier", :closed_bezier_path, false],
+                              ["literal", :literal_path, false]]) do |val|
+            @which_path = val
+            create_path
+          end
+          activate_dialog(@dialog.dialog)
+          @trajectory = make_xenved("x, y", trfr,
+                                    :envelope, init_traj,
+                                    :axis_bounds, [0.0, 1.0, 0.0, 1.0],
+                                    :axis_label, [-10.0, 10.0, 0.0, 10.0])
+          @z_value = make_xenved("z", zfr,
+                                 :envelope, init_z_traj,
+                                 :axis_bounds, [0.0, 1.0, 0.0, 1.0],
+                                 :axis_label, [-10.0, 10.0, 0.0, 10.0])
+          @velocity = make_xenved("velocity v", vefr,
+                                  :envelope, init_vel,
+                                  :axis_bounds, [0.0, 1.0, 0.05, 1.0],
+                                  :axis_label, [-10.0, 10.0, 0.0, 2.0])
+        else
+          pane = Rgtk_hbox_new(false, 0)
+          Rgtk_box_pack_start(RGTK_BOX(@dialog.parent), pane, false, false, 4)
+          Rgtk_widget_show(pane)
+          xepane = Rgtk_vbox_new(true, 0)
+          Rgtk_box_pack_start(RGTK_BOX(pane), xepane, true, true, 4)
+          Rgtk_widget_show(xepane)
+          activate_dialog(@dialog.dialog)
+          @trajectory = make_xenved("x, y", xepane,
+                                    :envelope, init_traj,
+                                    :axis_bounds, [0.0, 1.0, 0.0, 1.0],
+                                    :axis_label, [-10.0, 10.0, 0.0, 10.0])
+          @z_value = make_xenved("z", xepane,
+                                 :envelope, init_z_traj,
+                                 :axis_bounds, [0.0, 1.0, 0.0, 1.0],
+                                 :axis_label, [-10.0, 10.0, 0.0, 10.0])
+          @velocity = make_xenved("velocity v", xepane,
+                                  :envelope, init_vel,
+                                  :axis_bounds, [0.0, 1.0, 0.05, 1.0],
+                                  :axis_label, [-10.0, 10.0, 0.0, 2.0])
+          vepane = Rgtk_vbox_new(false, 0)
+          Rgtk_box_pack_start(RGTK_BOX(pane), vepane, false, false, 4)
+          Rgtk_widget_show(vepane)
+          add_with_sound_sliders(vepane)
+          @label_list = make_array(8) do |i|
+            lab = Rgtk_label_new("W" * 30)
+            Rgtk_box_pack_start(RGTK_BOX(vepane), lab, false, false, 4)
+            Rgtk_widget_show(lab)
+            lab
+          end
+          add_with_sound_targets
+          @dialog.add_target([["open bezier", :open_bezier_path, true],
+                              ["closed bezier", :closed_bezier_path, false],
+                              ["literal", :literal_path, false]]) do |val|
+            @which_path = val
+            create_path
+          end
         end
-        add_with_sound_targets
-        @dialog.add_target([["open bezier", :open_bezier_path, true],
-                            ["closed bezier", :closed_bezier_path, false],
-                            ["literal", :literal_path, false]]) do |val|
-          @which_path = val
-          create_path
-        end
-        activate_dialog(@dialog.dialog)
-        @trajectory = make_xenved("x, y", trfr,
-                                  :envelope, init_traj,
-                                  :axis_bounds, [0.0, 1.0, 0.0, 1.0],
-                                  :axis_label, [-10.0, 10.0, 0.0, 10.0])
-        @z_value = make_xenved("z", zfr,
-                               :envelope, init_z_traj,
-                               :axis_bounds, [0.0, 1.0, 0.0, 1.0],
-                               :axis_label, [-10.0, 10.0, 0.0, 10.0])
-        @velocity = make_xenved("velocity v", vefr,
-                                :envelope, init_vel,
-                                :axis_bounds, [0.0, 1.0, 0.05, 1.0],
-                                :axis_label, [-10.0, 10.0, 0.0, 2.0])
         set_xm_enveds_hooks(@trajectory, @z_value, @velocity)
         @dialog.clear_string("Gnuplot")
         @dialog.doit_string((@snd_p ? "With_Snd" : "With_Sound"))
@@ -2686,7 +2729,7 @@ For detailed information see clm-2/dlocsig.html.",
     end
     
     def post_dialog
-      unless @dialog.kind_of?(Dialog) and RWidget?(@dialog.dialog)
+      unless @dialog.kind_of?(Dialog) and widget?(@dialog.dialog)
         sliders = []
         init_start = 0
         init_turns = 3.0
@@ -2697,21 +2740,25 @@ For detailed information see clm-2/dlocsig.html.",
                                 make_spiral_path(:start_angle, @start, :turns, @turns).pplot
                               end, :reset_cb, lambda do |w, c, i|
                                 reset_with_sound_sliders
-                                RXmScaleSetValue(sliders[0].scale, @start = init_start)
+                                set_scale_value(sliders[0].scale, @start = init_start)
                                 @turns = init_turns
-                                RXmScaleSetValue(sliders[1].scale, (init_turns * 10.0).round)
+                                set_scale_value(sliders[1].scale, init_turns, 10.0)
                               end) do |w, c, i|
           @path = make_spiral_path(:start_angle, @start, :turns, @turns)
           with_sound_target("spiral_path: %s, start: %d, turns: %1.1f",
                             dlocsig_strings, @start, @turns)
         end
-        add_with_sound_sliders
+        add_with_sound_sliders(if provided? "xg"
+                                 @dialog.dialog
+                               else
+                                 @dialog.parent
+                               end)
         sliders << @dialog.add_slider("start angle", 0, init_start, 360) do |w, c, i|
-          @start = Rvalue(i)
+          @start = get_scale_value(w, i)
         end
         # turns below 2.6 together with reverb create noise
         sliders << @dialog.add_slider("turns", 2.6, init_turns, 10.0, 10) do |w, c, i|
-          @turns = Rvalue(i) / 10.0
+          @turns = get_scale_value(w, i, 10.0)
         end
         add_with_sound_targets
         @dialog.clear_string("Gnuplot")
@@ -2722,7 +2769,7 @@ For detailed information see clm-2/dlocsig.html.",
   end
 
   unless defined? $__private_dlocsig_menu__ and $__private_dlocsig_menu__
-    make_snd_menu("Dlocsig") do
+    snd_main = make_snd_menu("Dlocsig") do
       cascade("Dlocsig (Snd)") do
         entry(Dlocsig_bezier, "Bezier path (Snd)", true)
         entry(Dlocsig_spiral, "Spiral path (Snd)", true)
@@ -2730,6 +2777,32 @@ For detailed information see clm-2/dlocsig.html.",
       cascade("Dlocsig (CLM)") do
         entry(Dlocsig_bezier, "Bezier path (CLM)", false)
         entry(Dlocsig_spiral, "Spiral path (CLM)", false)
+      end
+    end
+
+    if provided? "xm"
+      set_label_sensitive(menu_widgets[Top_menu_bar], "Dlocsig", ((sounds() or []).length > 1))
+    else
+      set_sensitive(snd_main.menu, ((sounds() or []).length > 1))
+    end
+    
+    unless $open_hook.member?("dlocsig-menu-hook")
+      $open_hook.add_hook!("dlocsig-menu-hook") do |snd|
+        if provided? "xm"
+          set_label_sensitive(menu_widgets[Top_menu_bar], "Dlocsig", true)
+        else
+          set_sensitive(snd_main.menu, true)
+        end
+        false
+      end
+      
+      $close_hook.add_hook!("dlocsig-menu-hook") do |snd|
+        if provided? "xm"
+          set_label_sensitive(menu_widgets[Top_menu_bar], "Dlocsig", ((sounds() or []).length > 1))
+        else
+          set_sensitive(snd_main.menu, ((sounds() or []).length > 1))
+        end
+        false
       end
     end
   end

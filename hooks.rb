@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Sun Dec 21 13:48:01 CET 2003
-# Last: Wed Jan 21 09:51:34 CET 2004
+# Last: Tue Mar 09 12:40:18 CET 2004
 
 # Commentary:
 #
@@ -51,11 +51,15 @@ unless defined?(Hook)
     attr_reader :name, :arity, :help
     
     def add_hook!(name, &body)
-      if body.arity == @arity
-        @procs.push([name, body])
-      else
-        raise format("need a procedure of %d args, not %d", @arity, body.arity)
-      end
+      # We can't test any longer body.arity, because Proc#arity
+      # returns -1 in any case (as of CVS-Ruby 1.9.0, Mar 04, 2004).
+
+      # if body.arity == @arity
+      #   @procs.push([name, body])
+      # else
+      #   raise format("need a procedure of %d args, not %d", @arity, body.arity)
+      # end
+      @procs.push([name, body])
     end
     
     def remove_hook!(name)
@@ -101,21 +105,21 @@ unless defined?(Hook)
     private :names
     
     def inspect
-      format("#<%s name: %p, arity: %d, procs[%d]: %p>",
-             self.class, @name, @arity, self.length, names())
+      format("#<%s name: %s, arity: %d, procs[%d]: %s>",
+             self.class, @name.inspect, @arity, self.length, names().inspect)
     end
   end
 
   def make_hook(name, arity = 0, help = "", hook_name = nil, &body)
     error_str = "make_hook(name, arity = 0, help = "", hook_name = nil, &body): \
-need a String or Symbol, not %p"
+need a String or Symbol, not %s"
     var_sym = case name
               when Symbol
                 name
               when String
                 name.intern
               else
-                raise format(error_str, name)
+                raise format(error_str, name.inspect)
               end
     if var_sym.to_s.split(//).first != "$"
       var_sym = format("$%s", var_sym.to_s).intern
@@ -205,9 +209,11 @@ need a String or Symbol, not %p"
   $mix_drag_hook                = Hook.new("$mix_drag_hook", 1)
   $mark_drag_triangle_hook      = Hook.new("$mark_drag_triangle_hook", 4)
   $start_playing_selection_hook = Hook.new("$start_playing_selection_hook", 0)
-  $recorder_file_hook           = Hook.new("$recorder_file_hook", 1)
   $selection_changed_hook       = Hook.new("$selection_changed_hook", 0)
-  # $gtk_popup_hook               = Hook.new("$gtk_popup_hook", 5)
+  # unless --with-no-gui
+  $recorder_file_hook           = Hook.new("$recorder_file_hook", 1)
+  # if --with-gtk
+  $gtk_popup_hook               = Hook.new("$gtk_popup_hook", 5)
 end
 
 require "examp"
@@ -235,88 +241,94 @@ def describe_hook(hook)
   hook.show
 end
 
-Snd_hooks = [$after_graph_hook,
-             $lisp_graph_hook,
-             $before_transform_hook,
-             $mix_release_hook,
-             $stop_playing_channel_hook,
-             $save_hook,
-             $mus_error_hook,
-             $mouse_enter_graph_hook,
-             $mouse_leave_graph_hook,
-             $open_raw_sound_hook,
-             $select_channel_hook,
-             $after_open_hook,
-             $close_hook,
-             $drop_hook,
-             $update_hook,
-             $just_sounds_hook,
-             $mark_click_hook,
-             $mark_drag_hook,
-             $name_click_hook,
-             $open_hook,
-             $help_hook,
-             $output_comment_hook,
-             $play_hook,
-             $snd_error_hook,
-             $snd_warning_hook,
-             $start_hook,
-             $start_playing_hook,
-             $stop_playing_hook,
-             $stop_playing_region_hook,
-             $mouse_enter_listener_hook,
-             $mouse_leave_listener_hook,
-             $window_property_changed_hook,
-             $select_sound_hook,
-             $print_hook,
-             $exit_hook,
-             $output_name_hook,
-             $during_open_hook,
-             $transform_hook,
-             $mouse_enter_label_hook,
-             $mouse_leave_label_hook,
-             $initial_graph_hook,
-             $graph_hook,
-             $key_press_hook,
-             $mouse_drag_hook,
-             $mouse_press_hook,
-             $enved_hook,
-             $read_hook,
-             $mouse_click_hook,
-             $new_widget_hook,
-             $mark_hook,
-             $previous_files_select_hook,
-             $dac_hook,
-             $stop_dac_hook,
-             $stop_playing_selection_hook,
-             $after_apply_hook,
-             $before_apply_hook,
-             $draw_mark_hook,
-             $bad_header_hook,
-             $save_state_hook,
-             $new_sound_hook,
-             $color_hook,
-             $orientation_hook,
-             $listener_click_hook,
-             $mix_click_hook,
-             $after_save_state_hook,
-             $mouse_enter_text_hook,
-             $mouse_leave_text_hook,
-             $optimization_hook,
-             $mix_drag_hook,
-             $mark_drag_triangle_hook,
-             $start_playing_selection_hook,
-             $recorder_file_hook,
-             $selection_changed_hook]
-# $gtk_popup_hook
+if defined? $after_graph_hook
+  Snd_hooks = [$after_graph_hook,
+               $lisp_graph_hook,
+               $before_transform_hook,
+               $mix_release_hook,
+               $stop_playing_channel_hook,
+               $save_hook,
+               $mus_error_hook,
+               $mouse_enter_graph_hook,
+               $mouse_leave_graph_hook,
+               $open_raw_sound_hook,
+               $select_channel_hook,
+               $after_open_hook,
+               $close_hook,
+               $drop_hook,
+               $update_hook,
+               $just_sounds_hook,
+               $mark_click_hook,
+               $mark_drag_hook,
+               $name_click_hook,
+               $open_hook,
+               $help_hook,
+               $output_comment_hook,
+               $play_hook,
+               $snd_error_hook,
+               $snd_warning_hook,
+               $start_hook,
+               $start_playing_hook,
+               $stop_playing_hook,
+               $stop_playing_region_hook,
+               $mouse_enter_listener_hook,
+               $mouse_leave_listener_hook,
+               $window_property_changed_hook,
+               $select_sound_hook,
+               $print_hook,
+               $exit_hook,
+               $output_name_hook,
+               $during_open_hook,
+               $transform_hook,
+               $mouse_enter_label_hook,
+               $mouse_leave_label_hook,
+               $initial_graph_hook,
+               $graph_hook,
+               $key_press_hook,
+               $mouse_drag_hook,
+               $mouse_press_hook,
+               $enved_hook,
+               $read_hook,
+               $mouse_click_hook,
+               $new_widget_hook,
+               $mark_hook,
+               $previous_files_select_hook,
+               $dac_hook,
+               $stop_dac_hook,
+               $stop_playing_selection_hook,
+               $after_apply_hook,
+               $before_apply_hook,
+               $draw_mark_hook,
+               $bad_header_hook,
+               $save_state_hook,
+               $new_sound_hook,
+               $color_hook,
+               $orientation_hook,
+               $listener_click_hook,
+               $mix_click_hook,
+               $after_save_state_hook,
+               $mouse_enter_text_hook,
+               $mouse_leave_text_hook,
+               $optimization_hook,
+               $mix_drag_hook,
+               $mark_drag_triangle_hook,
+               $start_playing_selection_hook,
+               $selection_changed_hook,
+               unless $".member? "snd-nogui"
+                 $recorder_file_hook
+               end,
+               if $".member? "snd-gtk"
+                 $gtk_popup_hook
+               end]
 
-def reset_all_hooks
-  Snd_hooks.each do |h| h.reset_hook! end
-  sounds.each do |snd|
-    channels(snd).times do |chn|
-      edit_hook(snd, chn).reset_hook! if hook?(edit_hook(snd, chn))
-      after_edit_hook(snd, chn).reset_hook! if hook?(after_edit_hook(snd, chn))
-      undo_hook(snd, chn).reset_hook! if hook?(undo_hook(snd, chn))
+  def reset_all_hooks
+    Snd_hooks.each do |h| h.reset_hook! end
+    sounds.each do |snd|
+      channels(snd).times do |chn|
+        edit_hook(snd, chn).reset_hook! if hook?(edit_hook(snd, chn))
+        after_edit_hook(snd, chn).reset_hook! if hook?(after_edit_hook(snd, chn))
+        undo_hook(snd, chn).reset_hook! if hook?(undo_hook(snd, chn))
+      end
     end
   end
 end

@@ -2,13 +2,15 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Mar 18 00:18:35 CET 2003
-# Last: Thu Feb 12 16:19:11 CET 2004
+# Last: Fri Feb 27 14:12:51 CET 2004
 
 # Commentary:
 #
-# Requires Motif module (libxm.so|xm.so) or --with-static-xm!
+# You can use class Enved without Motif or Gtk.  If you want drawing
+# panes, Xenved requires --with-motif or --with-gtk and module
+# libxm.so or --with-static-xm.
 #
-# Tested with Snd 7.2, Motif 2.1, Ruby 1.6.6 and 1.9.0.
+# Tested with Snd 7.3, Motif 2.2.2, Gtk+ 2.2.1, Ruby 1.6.6, 1.6.8 and 1.9.0.
 #
 # type: xe = xenved_test
 #       xe.help
@@ -52,8 +54,8 @@
 #
 # class Xenved < Enved (see xm-enved.scm)
 #   initialize(name, parent, enved, axis_bounds, args, axis_label)
-#   before_enved_hook: lambda do |pos, x, y, reason| ... end
-#   after_enved_hook: lambda do |pos, reason| ... end
+#   before_enved_hook              lambda do |pos, x, y, reason| ... end
+#   after_enved_hook               lambda do |pos, reason| ... end
 #
 # getter and setter:
 #   click_time=(val)
@@ -70,14 +72,7 @@
 =begin
 # more examples in effects.rb
 
-xe = make_xenved("xenved",
-                 add_main_pane("xenved", RxmFormWidgetClass, [RXmNheight, 200]),
-                 :envelope, [0, 0, 1, 1],
-                 :axis_bounds, [0, 1, 0, 1],
-                 :args, [RXmNleftAttachment, RXmATTACH_WIDGET,
-                         RXmNtopAttachment, RXmATTACH_WIDGET,
-                         RXmNbottomAttachment, RXmATTACH_WIDGET,
-                         RXmNrightAttachment, RXmATTACH_WIDGET])
+xe = xenved_test
 xe.envelope                         # --> [0.0, 0.0, 1.0, 1.0]
 xe.click_time                       # --> 0.2
 xe.envelope = [0, 1, 1, 1]
@@ -95,8 +90,11 @@ xe.help                             # this help
 require "examp"
 require "env"
 require "hooks"
-require "snd-motif"
-include Snd_Motif
+
+if provided? "snd-motif" or provided? "snd-gtk"
+  require "snd-xm"
+  include Snd_XM
+end
 
 def make_enved(enved = [0, 0, 1, 1])
   unless enved.kind_of?(Array) and enved.length >= 4 and enved.length.even?
@@ -105,34 +103,42 @@ def make_enved(enved = [0, 0, 1, 1])
   Enved.new(enved)
 end
 
-def xenved_test(name = "xenved")
-  make_xenved(name,
-              add_main_pane(name, RxmFormWidgetClass, [RXmNheight, 200]),
-              :envelope, [0, 0, 1, 1],
-              :axis_bounds, [0, 1, 0, 1],
-              :args, [RXmNleftAttachment, RXmATTACH_WIDGET,
-                      RXmNtopAttachment, RXmATTACH_WIDGET,
-                      RXmNbottomAttachment, RXmATTACH_WIDGET,
-                      RXmNrightAttachment, RXmATTACH_WIDGET])
-end
+if provided? "xm" or provided? "xg"
+  def xenved_test(name = "xenved")
+    widget = if provided? "xm"
+               add_main_pane(name, RxmFormWidgetClass, [RXmNheight, 200])
+             else
+               add_main_pane(name)
+             end
+    args = if provided? "xm"
+             [RXmNleftAttachment, RXmATTACH_WIDGET,
+              RXmNtopAttachment, RXmATTACH_WIDGET,
+              RXmNbottomAttachment, RXmATTACH_WIDGET,
+              RXmNrightAttachment, RXmATTACH_WIDGET]
+           else
+             []
+           end
+    make_xenved(name, widget, :envelope, [0, 0, 1, 1], :axis_bounds, [0, 1, 0, 1], :args, args)
+  end
 
-def make_xenved(name, parent, *rest)
-  envelope = get_args(rest, :envelope, [0, 0, 1, 1])
-  bounds   = get_args(rest, :axis_bounds, [0, 1, 0, 1])
-  args     = get_args(rest, :args, [])
-  label    = get_args(rest, :axis_label, nil)
-  name = "xenved" unless name.kind_of?(String) and !name.empty?
-  unless RWidget?(parent)
-    error("%s: arg 2, %s, need a widget", get_func_name, parent.inspect)
+  def make_xenved(name, parent, *rest)
+    envelope = get_args(rest, :envelope, [0, 0, 1, 1])
+    bounds   = get_args(rest, :axis_bounds, [0, 1, 0, 1])
+    args     = get_args(rest, :args, [])
+    label    = get_args(rest, :axis_label, nil)
+    name = "xenved" unless name.kind_of?(String) and !name.empty?
+    unless widget?(parent)
+      error("%s: arg 2, %s, need a widget", get_func_name, parent.inspect)
+    end
+    unless bounds.kind_of?(Array) and bounds.length == 4
+      error("%s: axis_bounds, %s, need an array of four numbers [x0, x1, y0, y1]",
+            get_func_name, bounds.inspect)
+    end
+    unless label.kind_of?(Array) and label.length == 4
+      label = bounds
+    end
+    Xenved.new(name, parent, envelope, bounds, args, label)
   end
-  unless bounds.kind_of?(Array) and bounds.length == 4
-    error("%s: axis_bounds, %s, need an array of four numbers [x0, x1, y0, y1]",
-          get_func_name, bounds.inspect)
-  end
-  unless label.kind_of?(Array) and label.length == 4
-    label = bounds
-  end
-  Xenved.new(name, parent, envelope, bounds, args, label)
 end
 
 class Enved
@@ -296,8 +302,10 @@ class Xenved < Enved
     @parent = parent
     @x0, @x1, @y0, @y1 = bounds.map do |x| x.to_f end
     @args = args
-    @args += [RXmNforeground, data_color] unless @args.member?(RXmNforeground)
-    @args += [RXmNbackground, graph_color] unless @args.member?(RXmNbackground)
+    if provided? "xm"
+      @args += [RXmNforeground, data_color] unless @args.member?(RXmNforeground)
+      @args += [RXmNbackground, graph_color] unless @args.member?(RXmNbackground)
+    end
     @lx0, @lx1, @ly0, @ly1 = axis_label.map do |x| x.to_f end
     @init = @envelope.dup
     @mouse_up = 0.0
@@ -419,8 +427,8 @@ Enved_add_point, Enved_delete_point, Enved_move_point.")
   end
 
   def create
-    if RWidget?(@drawer)
-      RXtManageChild(@drawer)
+    if widget?(@drawer)
+      show_widget(@drawer)
     else
       create_enved
     end
@@ -428,7 +436,7 @@ Enved_add_point, Enved_delete_point, Enved_move_point.")
   alias open create
   
   def close
-    RXtUnmanageChild(@drawer)
+    hide_widget(@drawer)
   end
 
   def clear
@@ -453,8 +461,8 @@ Enved_add_point, Enved_delete_point, Enved_move_point.")
 #
 # class Xenved < Enved (see xm-enved.scm)
 #   initialize(name, parent, env, axis_bounds, args, axis_label)
-#   before_enved_hook: lambda do |pos, x, y, reason| ... end
-#   after_enved_hook: lambda do |pos, reason| ... end
+#   before_enved_hook              lambda do |pos, x, y, reason| ... end
+#   after_enved_hook               lambda do |pos, reason| ... end
 #
 # getter and setter:
 #   click_time=(val)
@@ -470,14 +478,7 @@ Enved_add_point, Enved_delete_point, Enved_move_point.")
 
 # more examples in effects.rb
 
-xe = make_xenved(\"xenved\",
-                 add_main_pane(\"xenved\", RxmFormWidgetClass, [RXmNheight, 200]),
-                 :envelope, [0, 0, 1, 1],
-                 :axis_bounds, [0, 1, 0, 1],
-                 :args, [RXmNleftAttachment, RXmATTACH_WIDGET,
-                         RXmNtopAttachment, RXmATTACH_WIDGET,
-                         RXmNbottomAttachment, RXmATTACH_WIDGET,
-                         RXmNrightAttachment, RXmATTACH_WIDGET])
+xe = xenved_test
 xe.envelope                         # --> [0.0, 0.0, 1.0, 1.0]
 xe.click_time                       # --> 0.2
 xe.envelope = [0, 1, 1, 1]
@@ -490,24 +491,104 @@ xe.envelope                         # --> [0.0, 1.0,
 xe.help                             # this help
 "
   end
-  
-  def create_enved
-    @drawer = RXtCreateManagedWidget(@name, RxmDrawingAreaWidgetClass, @parent, @args)
-    @dpy = RXtDisplay(@drawer)
-    @window = RXtWindow(@drawer)
-    RXtAddCallback(@drawer, RXmNresizeCallback, lambda do |w, c, i| draw_axes_cb end)
-    RXtAddCallback(@drawer, RXmNexposeCallback, lambda do |w, c, i| draw_axes_cb end)
-    RXtAddEventHandler(@drawer, RButtonPressMask, false,
-                       lambda do |w, c, e, f| mouse_press_cb(e) end)
-    RXtAddEventHandler(@drawer, RButtonMotionMask, false,
-                       lambda do |w, c, e, f| mouse_drag_cb(e) end)
-    RXtAddEventHandler(@drawer, RButtonReleaseMask, false,
-                       lambda do |w, c, e, f| mouse_release_cb end)
-    new_cursor = RXCreateFontCursor(@dpy, RXC_crosshair)
-    RXtAddEventHandler(@drawer, REnterWindowMask, false,
-                       lambda do |w, c, e, f| RXDefineCursor(@dpy, @window, new_cursor) end)
-    RXtAddEventHandler(@drawer, RLeaveWindowMask, false,
-                       lambda do |w, c, e, f| RXUndefineCursor(@dpy, @window) end)
+
+  if provided? "xm"
+    def create_enved
+      @drawer = RXtCreateManagedWidget(@name, RxmDrawingAreaWidgetClass, @parent, @args)
+      @dpy = RXtDisplay(@drawer)
+      @window = RXtWindow(@drawer)
+      RXtAddCallback(@drawer, RXmNresizeCallback, lambda do |w, c, i| draw_axes_cb end)
+      RXtAddCallback(@drawer, RXmNexposeCallback, lambda do |w, c, i| draw_axes_cb end)
+      RXtAddEventHandler(@drawer, RButtonPressMask, false,
+                         lambda do |w, c, e, f| mouse_press_cb(e) end)
+      RXtAddEventHandler(@drawer, RButtonReleaseMask, false,
+                         lambda do |w, c, e, f| mouse_release_cb end)
+      RXtAddEventHandler(@drawer, RButtonMotionMask, false,
+                         lambda do |w, c, e, f| mouse_drag_cb(e) end)
+      new_cursor = RXCreateFontCursor(@dpy, RXC_crosshair)
+      RXtAddEventHandler(@drawer, REnterWindowMask, false,
+                         lambda do |w, c, e, f| RXDefineCursor(@dpy, @window, new_cursor) end)
+      RXtAddEventHandler(@drawer, RLeaveWindowMask, false,
+                         lambda do |w, c, e, f| RXUndefineCursor(@dpy, @window) end)
+    end
+
+    def clear_window
+      RXClearWindow(@dpy, @window)
+    end
+    
+    def fill_arc(x, y, width, height, angle1, angle2)
+      RXFillArc(@dpy, @window, @gc, x, y, width, height, angle1, angle2)
+    end
+
+    def draw_line(x1, y1, x2, y2)
+      RXDrawLine(@dpy, @window, @gc, x1, y1, x2, y2)
+    end
+  elsif provided? "xg"
+    def create_enved
+      @drawer = Rgtk_drawing_area_new()
+      Rgtk_widget_set_events(@drawer, RGDK_ALL_EVENTS_MASK)
+      Rgtk_widget_show(@parent)
+      Rgtk_box_pack_start(RGTK_BOX(@parent), @drawer, true, true, 10)
+      Rgtk_widget_show(@drawer)
+      Rgtk_widget_set_name(@drawer, @name)
+      @window = Rwindow(@drawer)
+      Rgdk_window_set_background(@window, graph_color)
+      Rgtk_widget_set_size_request(@drawer, -1, 200)
+      add_event_handler(@drawer, "expose_event") do |w, e, d|
+        draw_axes_cb
+        false
+      end
+      add_event_handler(@drawer, "configure_event") do |w, e, d|
+        draw_axes_cb
+        false
+      end
+      add_event_handler(@drawer, "button_press_event") do |w, e, d|
+        mouse_press_cb(RGDK_EVENT_BUTTON(e))
+        false
+      end
+      add_event_handler(@drawer, "button_release_event") do |w, e, d|
+        mouse_release_cb
+        false
+      end
+      add_event_handler(@drawer, "motion_notify_event") do |w, e, d|
+        ev = RGDK_EVENT_MOTION(e)
+        if Ris_hint(ev) == 1
+          xy = Rgdk_window_get_pointer(Rwindow(ev))
+          if (xy[3] & RGDK_BUTTON1_MASK).nonzero?
+            mouse_drag_cb(xy[1], xy[2])
+          end
+        else
+          if (Rstate(ev) & RGDK_BUTTON1_MASK).nonzero?
+            mouse_drag_cb(ev)
+          end
+        end
+        false
+      end
+      new_cursor = Rgdk_cursor_new(RGDK_CROSSHAIR)
+      old_cursor = Rgdk_cursor_new(RGDK_LEFT_PTR)
+      add_event_handler(@drawer, "enter_notify_event") do |w, e, d|
+        Rgdk_window_set_cursor(Rwindow(w), new_cursor)
+        false
+      end
+      add_event_handler(@drawer, "leave_notify_event") do |w, e, d|
+        Rgdk_window_set_cursor(Rwindow(w), old_cursor)
+        false
+      end
+    end
+
+    def clear_window
+      Rgdk_window_clear(@window)
+    end
+
+    def fill_arc(x, y, width, height, angle1, angle2)
+      Rgdk_draw_arc(RGDK_DRAWABLE(@window), @gc, true, x, y, width, height, angle1, angle2)
+    end
+
+    def draw_line(x1, y1, x2, y2)
+      Rgdk_draw_line(RGDK_DRAWABLE(@window), @gc, x1, y1, x2, y2)
+    end
+  else
+    error "neither Motif nor Gtk?"
   end
 
   # If the last hook procedure returns false, change the envelope,
@@ -566,9 +647,14 @@ xe.help                             # this help
   # last point.
   Secure_distance = 0.0001
   
-  def mouse_drag_cb(e)
-    x = ungrfx(Rx(e))
-    y = ungrfy(Ry(e))
+  def mouse_drag_cb(e, gtk = false)
+    if gtk
+      x = ungrfx(e)
+      y = ungrfy(gtk)
+    else
+      x = ungrfx(Rx(e))
+      y = ungrfy(Ry(e))
+    end
     lx = if @mouse_pos.zero?
            @envelope[0]
          elsif @mouse_pos >= (@envelope.length - 2)
@@ -606,15 +692,15 @@ xe.help                             # this help
   Mouse_r = 5
   
   def redraw
-    if RXtIsManaged(@drawer) and @px0 and @py0 > @py1
-      RXClearWindow(@dpy, @window)
+    if is_managed(@drawer) and @px0 and @py0 > @py1
+      clear_window
       draw_axes(@drawer, @gc, @name, @lx0, @lx1, @ly0, @ly1)
       lx = ly = nil
       @envelope.each_pair do |x, y|
         cx = grfx(x)
         cy = grfy(y)
-        RXFillArc(@dpy, @window, @gc, cx - Mouse_r, cy - Mouse_r, Mouse_d, Mouse_d, 0, 360 * 64)
-        RXDrawLine(@dpy, @window, @gc, lx, ly, cx, cy) if lx
+        fill_arc(cx - Mouse_r, cy - Mouse_r, Mouse_d, Mouse_d, 0, 360 * 64)
+        draw_line(lx, ly, cx, cy) if lx
         lx, ly = cx, cy
       end
     end
@@ -651,6 +737,6 @@ xe.help                             # this help
       [@py0, [@py1, (@py1 + (@py0 - @py1) * (y - @y1) / (@y0 - @y1)).round].max].min
     end
   end
-end
+end if provided? "xm" or provided? "xg"
 
 # xm-enved.rb ends here

@@ -2,13 +2,13 @@
 
 # Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Thu Sep 05 22:28:49 CEST 2002
-# Last: Wed Feb 11 17:02:59 CET 2004
+# Last: Tue Mar 09 20:24:23 CET 2004
 
 # Commentary:
 #
-# Requires Motif module (libxm.so|xm.so) or --with-static-xm!
+# Requires --with-motif or --with-gtk and module libxm.so or --with-static-xm!
 #
-# Tested with Snd 7.2, Motif 2.1, Ruby 1.6.6 and 1.9.0.
+# Tested with Snd 7.3, Motif 2.2.2, Gtk+ 2.2.1, Ruby 1.6.6, 1.6.8 and 1.9.0.
 #
 # $info_comment_hook: lambda do |file, info_string| ...; new_info_string; end
 #
@@ -95,17 +95,17 @@
 
 require "examp"
 require "hooks"
-require "snd-motif"
-include Snd_Motif
+require "snd-xm"
+include Snd_XM
 
-make_hook("$info_comment_hook", 2, "\
+$info_comment_hook = Hook.new("$info_comment_hook", 2, "\
 lambda do |file, info_string| ...; new_info_string; end: provides a
 way to add more information to INFO_STRING and format the comment of
 FILE.  The hook collects the return value of one hook to INFO_STRING
 on subsequent calls.  This hook is called in popup.rb and nb.rb.  If
 no hook procedure is defined, the normal sound comment is added.
 
-In snd-motif.rb exists format_sound_comment(comment).  It is a very
+In snd-xm.rb exists format_sound_comment(comment).  It is a very
 simple comment formatter.
 
 $info_comment_hook.add_hook!(\"snd-init-hook\") do |file, info|
@@ -119,12 +119,16 @@ end")
 def make_snd_popup(name, *rest, &body)
   doc("make_snd_popup(name, *rest) do ... end
     name                               # menu name
-    :parent, main_widgets[Main_pane]   # e.g. listener popup takes main_widgets[Listener]
+    :parent, main_widgets[Main_pane]   # e.g. listener popup takes main_widgets[Listener_pane]
     :where,  :channels                 # :channels, :widget, :event
     :args,   [RXmNbackground, highlight_color] # Motif arguments\n") if name == :help
-  parent = get_args(rest, :parent, main_widgets[Main_pane])
-  where  = get_args(rest, :where, :channels)      # :channels, :widget, :event
-  args   = get_args(rest, :args, [RXmNbackground, highlight_color])
+  parent = get_args(rest, :parent, main_widgets[Main_pane_shell])
+  where  = get_args(rest, :where, :channels)      # Motif :channels, :widget, :event, Gtk :channels
+  args = if provided? "xm"
+           get_args(rest, :args, [RXmNbackground, highlight_color])
+         else
+           []
+         end
   Snd_popup_menu.new(name, parent, args, where, &body)
 end
 
@@ -134,6 +138,7 @@ class Snd_popup_menu < Menu
     @parent = parent
     @values = []
     @popups = []
+    @widget_names = {}
     @before_popup_hook = Hook.new("@before_popup_hook", 3, "\
 lambda do |snd, chn, xe| ... flag end: called before posting a popup menu.
 
@@ -154,31 +159,61 @@ If it returns non-nil or non-false, the menu will be posted.")
   attr_reader :before_popup_hook
   
   def entry(name, *rest, &body)
-    widget_class = get_args(rest, :widget_class, RxmPushButtonWidgetClass)
-    args         = get_args(rest, :args, @args)
-    proc         = get_args(rest, :proc, nil)
-    widget = RXtCreateManagedWidget(name, widget_class, @menu, args)
-    if block_given?
-      RXtAddCallback(widget, RXmNactivateCallback,
-                     lambda do |w, c, i|
-                       chn = if snd = selected_sound
-                               selected_channel
-                             else
-                               false
-                             end
-                       body.call(snd, chn, w)
-                     end)
+    proc = get_args(rest, :proc, nil)
+    if provided? "xm"
+      widget_class = get_args(rest, :widget_class, RxmPushButtonWidgetClass)
+      args         = get_args(rest, :args, @args)
+      widget = RXtCreateManagedWidget(name, widget_class, @menu, args)
+      if block_given?
+        RXtAddCallback(widget, RXmNactivateCallback,
+                       lambda do |w, c, i|
+                         chn = if snd = selected_sound
+                                 selected_channel
+                               else
+                                 false
+                               end
+                         body.call(snd, chn, w)
+                       end)
+      end
+    else
+      widget = Rgtk_menu_item_new_with_label(name)
+      Rgtk_menu_shell_append(RGTK_MENU_SHELL(@menu), widget)
+      Rgtk_widget_show(widget)
+      if block_given?
+        add_callback(widget, "activate") do |w, d|
+          chn = if snd = selected_sound
+                  selected_channel
+                else
+                  false
+                end
+          body.call(snd, chn, w)
+        end
+      end
     end
+    @widget_names[widget] = name
     proc.call(widget) if proc.kind_of?(Proc)
   end
 
   def label(name, args = @args)
-    RXtCreateManagedWidget(name, RxmLabelWidgetClass, @menu, args)
+    if provided? "xm"
+      label = RXtCreateManagedWidget(name, RxmLabelWidgetClass, @menu, args)
+    else
+      label = Rgtk_menu_item_new_with_label(name)
+      Rgtk_menu_shell_append(RGTK_MENU_SHELL(@menu), label)
+      Rgtk_widget_show(label)
+    end
+    @widget_names[label] = name
   end
 
   def separator(single = :single)
-    line = (single == :double ? RXmDOUBLE_LINE : RXmSINGLE_LINE)
-    RXtCreateManagedWidget("s", RxmSeparatorWidgetClass, @menu, [RXmNseparatorType, line])
+    if provided? "xm"
+      line = (single == :double ? RXmDOUBLE_LINE : RXmSINGLE_LINE)
+      RXtCreateManagedWidget("s", RxmSeparatorWidgetClass, @menu, [RXmNseparatorType, line])
+    else
+      sep = Rgtk_menu_item_new()
+      Rgtk_menu_shell_append(RGTK_MENU_SHELL(@menu), sep)
+      Rgtk_widget_show(sep)
+    end
   end
   
   def cascade(name, args = @args, &body)
@@ -192,98 +227,155 @@ If it returns non-nil or non-false, the menu will be posted.")
     @values.map(&body)
   end
 
-  private
-  def make_menu
-    @menu = RXmCreatePopupMenu(@parent, @label, [RXmNpopupEnabled, true] + @args)
+  def widget_name(widget)
+    @widget_names[widget]
   end
   
+  private
   def create(where, &body)
-    make_menu
+    @menu = if provided? "xm"
+              RXmCreatePopupMenu(@parent, @label, [RXmNpopupEnabled, true] + @args)
+            else
+              Rgtk_menu_new()
+            end
     unless @label.empty?
       label(@label)
       separator
     end
     instance_eval(&body) if block_given?
-    case where
-    when :channels
-      (sounds() or []).each do |snd|
-        set_channel_popup(snd)
+    if provided? "xm"
+      case where
+      when :channels
+        (sounds() or []).each do |snd|
+          set_channel_popup(snd)
+        end
+        let(format("%s-popup", (@label or "channels"))) do |hook_name|
+          $after_open_hook.add_hook!(hook_name) do |snd|
+            set_channel_popup(snd)
+          end
+          $close_hook.add_hook!(hook_name) do |snd|
+            @popups.delete(@popups.assoc(snd))
+          end
+        end
+      when :widget
+        set_widget_popup
+      when :event
+        set_event_popup
       end
-      $after_open_hook.add_hook!(format("%s-popup", @label)) do |snd|
-        set_channel_popup(snd)
-      end
-    when :widget
-      set_widget_popup
-    when :event
-      set_event_popup
+    else
+      set_channel_popup
     end
-  end
-  
-  def set_channel_popup(snd)
-    channels(snd).times do |chn|
-      unless @popups.detect do |c| c[0] == snd and c[1] == chn end
-        chn_grf = channel_widgets(snd, chn)[0]
-        @popups.push([snd, chn])
-        RXtAddCallback(chn_grf, RXmNpopupHandlerCallback,
-                       lambda do |w, c, i|
-                         e = Revent(i)
-                         if RButtonPress == Rtype(e)
-                           if @before_popup_hook.empty?
-                             Rset_menuToPost(i, @menu)
-                           else
-                             xe = Rx_root(e) - RXtTranslateCoords(w, 0, 0)[0]
-                             chn = if channel_style(snd) == Channels_combined
-                                     ye = Ry(e)
-                                     if (cn = (0...channels(snd)).detect do |c|
-                                           ye < axis_info(snd, c)[14]
-                                         end)
-                                       cn - 1
-                                     else
-                                       channels(snd) - 1
-                                     end
-                                   else
-                                     chn
-                                   end
-                             select_channel(chn)
-                             if @before_popup_hook.call(snd, chn, xe)
-                               Rset_menuToPost(i, @menu)
-                             end
-                           end
-                         end
-                       end)
-      end
-    end
-  end
-  
-  # e.g. on listener
-  def set_widget_popup
-    RXtAddCallback(@parent, RXmNpopupHandlerCallback,
-                   lambda do |w, c, i|
-                     if RButtonPress == Rtype(Revent(i))
-                       @before_popup_hook.call(nil, nil, nil)
-                       Rset_menuToPost(i, @menu)
-                     end
-                   end)
   end
 
-  def set_event_popup
-    RXtAddEventHandler(@parent, RButtonPressMask, false,
-                       lambda do |w, c, i, f|
-                         if Rbutton(i) == 3
-                           if @before_popup_hook.empty? or @before_popup_hook.call(nil, nil, nil)
-                             RXmMenuPosition(@menu, i)
-                             RXtManageChild(@menu)
+  if provided? "xm"
+    def set_channel_popup(snd)
+      channels(snd).times do |chn|
+        unless @popups.detect do |c| c[0] == snd and c[1] == chn end
+          chn_grf = channel_widgets(snd, chn)[Graph]
+          @popups.push([snd, chn])
+          RXtAddCallback(chn_grf, RXmNpopupHandlerCallback,
+                         lambda do |w, c, i|
+                           e = Revent(i)
+                           if RButtonPress == Rtype(e)
+                             if @before_popup_hook.empty?
+                               Rset_menuToPost(i, @menu)
+                             else
+                               xe = Rx_root(e) - RXtTranslateCoords(w, 0, 0)[0]
+                               if channel_style(snd) == Channels_combined
+                                 ye = Ry(e)
+                                 chn = if (cn = (0...channels(snd)).detect do |cc|
+                                             ye < axis_info(snd, cc)[14]
+                                           end)
+                                         cn - 1
+                                       else
+                                         channels(snd) - 1
+                                       end
+                               end
+                               unless chn.between?(0, channels(snd) - 1)
+                                 # in case of chans(new-snd) < chans(old-snd)
+                                 # and new-snd has the same index like closed old-snd
+                                 chn = channels(snd) - 1
+                               end
+                               if @before_popup_hook.call(snd, chn, xe)
+                                 Rset_menuToPost(i, @menu)
+                               end
+                             end
                            end
-                         end
-                       end)
+                         end)
+        end
+      end
+    end
+  else
+    def set_channel_popup
+      $gtk_popup_hook.add_hook!("popup-rb-hook") do |widget, event, data, snd, chn|
+        if snd
+          e = RGDK_EVENT_BUTTON(event)
+          if @before_popup_hook.empty?
+            Rgtk_widget_show(@menu)
+            Rgtk_menu_popup(RGTK_MENU(@menu), false, false, false, false, Rbutton(e), Rtime(e))
+          else
+            if channel_style(snd) == Channels_combined
+              chn = if (cn = (0...channels(snd)).detect do |cc|
+                          Ry(e) < axis_info(snd, cc)[14]
+                        end)
+                      cn - 1
+                    else
+                      channels(snd) - 1
+                    end
+            end
+            if @before_popup_hook.call(snd, chn, Rx(e))
+              Rgtk_widget_show(@menu)
+              Rgtk_menu_popup(RGTK_MENU(@menu), false, false, false, false, Rbutton(e), Rtime(e))
+            end
+          end
+          true
+        else
+          false
+        end
+      end
+    end
+  end
+
+  if provided? "xm"
+    # e.g. on listener
+    def set_widget_popup
+      RXtAddCallback(@parent, RXmNpopupHandlerCallback,
+                     lambda do |w, c, i|
+                       if RButtonPress == Rtype(Revent(i))
+                         @before_popup_hook.call(nil, nil, nil)
+                         Rset_menuToPost(i, @menu)
+                       end
+                     end)
+    end
+
+    # see nb.rb for an example
+    def set_event_popup
+      RXtAddEventHandler(@parent, RButtonPressMask, false,
+                         lambda do |w, c, i, f|
+                           if Rbutton(i) == 3
+                             if @before_popup_hook.empty? or @before_popup_hook.call(nil, nil, nil)
+                               RXmMenuPosition(@menu, i)
+                               RXtManageChild(@menu)
+                             end
+                           end
+                         end)
+    end
   end
   
   class Cascade < Snd_popup_menu
     def initialize(name, parent, args)
       super
-      @menu = RXmCreatePulldownMenu(@parent, @label, @args)
-      @cascade = RXtCreateManagedWidget(@label, RxmCascadeButtonWidgetClass, @parent,
-                                        [RXmNsubMenuId, @menu] + @args)
+      if provided? "xm"
+        @menu = RXmCreatePulldownMenu(@parent, @label, @args)
+        @cascade = RXtCreateManagedWidget(@label, RxmCascadeButtonWidgetClass, @parent,
+                                          [RXmNsubMenuId, @menu] + @args)
+      else
+        @cascade = Rgtk_menu_item_new_with_label(@label)
+        Rgtk_menu_shell_append(RGTK_MENU_SHELL(@parent), @cascade)
+        Rgtk_widget_show(@cascade)
+        @menu = Rgtk_menu_new()
+        Rgtk_menu_item_set_submenu(RGTK_MENU_ITEM(@cascade), @menu)
+      end
       @children = []
     end
     attr_reader :values
@@ -292,7 +384,9 @@ If it returns non-nil or non-false, the menu will be posted.")
       if set_cb.kind_of?(Proc) and body.kind_of?(Proc)
         case set_cb.arity
         when -1, 0
-          add_with_arity_1(rest, set_cb, &body)
+          if provided? "xm"
+            add_with_arity_1(rest, set_cb, &body)
+          end
         when 3
           add_with_arity_3(rest, set_cb, &body)
         end
@@ -339,34 +433,52 @@ If it returns non-nil or non-false, the menu will be posted.")
                        end
                      end)
       @values = [widget, @menu, @cascade, set_cb]
-    end
+    end if provided? "xm"
     
     # transform: set_cb.arity and body.arity == 3 (snd, chn, val)
     def add_with_arity_3(list, set_cb, &body)
       list.each do |name, val|
-        wid = RXtCreateManagedWidget(name.to_s, RxmPushButtonWidgetClass, @menu, @args)
-        RXtAddCallback(wid, RXmNactivateCallback,
-                       lambda do |w, c, i|
-                         body.call(selected_sound, selected_channel, val)
-                       end)
+        if provided? "xm"
+          wid = RXtCreateManagedWidget(name.to_s, RxmPushButtonWidgetClass, @menu, @args)
+          RXtAddCallback(wid, RXmNactivateCallback,
+                         lambda do |w, c, i|
+                           body.call(selected_sound, selected_channel, val)
+                         end)
+        else
+          wid = Rgtk_menu_item_new_with_label(name.to_s)
+          Rgtk_menu_shell_append(RGTK_MENU_SHELL(@menu), wid)
+          Rgtk_widget_show(wid)
+          add_callback(wid, "activate") do |w, d|
+            body.call(selected_sound, selected_channel, val)
+          end
+        end
         @values.push(val)
         @children.push(wid)
       end
-      RXtAddCallback(@cascade, RXmNcascadingCallback,
-                     lambda do |w, c, i|
-                       @children.each_with_index do |child, idx|
-                         RXtSetSensitive(child, set_cb.call(selected_sound,
-                                                            selected_channel,
-                                                            @values[idx]))
-                       end
-                     end)
+      if provided? "xm"
+        RXtAddCallback(@cascade, RXmNcascadingCallback,
+                       lambda do |w, c, i|
+                         @children.each_with_index do |child, idx|
+                           RXtSetSensitive(child, set_cb.call(selected_sound,
+                                                              selected_channel,
+                                                              @values[idx]))
+                         end
+                       end)
+      else
+        add_callback(@cascade, "activate") do |w, d|
+          @children.each_with_index do |child, idx|
+            set_sensitive(child, set_cb.call(selected_sound,
+                                             selected_channel,
+                                             @values[idx]))
+          end
+        end
+      end
     end
   end
 end
 
-#
-# example menus
-#
+# Example menus; Selection, Graph and Transform popup work with Motif
+# as well as with Gtk, Listener popup works only with Motif.
 unless defined? $__private_popup_menu__ and $__private_popup_menu__
   #
   # Selection Popup
@@ -378,7 +490,7 @@ unless defined? $__private_popup_menu__ and $__private_popup_menu__
     $stop_playing_selection_hook.add_hook!("popup-stop-selection-hook") do | |
       if stopping
         stopping = false
-        change_label(stop_widget, "Play") if RWidget?(stop_widget)
+        change_label(stop_widget, "Play") if widget?(stop_widget)
       end
     end
     entry("Play") do |snd, chn, w|
@@ -501,10 +613,10 @@ unless defined? $__private_popup_menu__ and $__private_popup_menu__
   make_snd_popup("Snd") do
     stopping = false
     stop_widget = nil
-    $stop_playing_hook.add_hook!("popup-change-label-play2stop") do |snd|
+    $stop_playing_hook.add_hook!("popup-change-label-hook") do |snd|
       if stopping
         stopping = false
-        change_label(stop_widget, "Play") if RWidget?(stop_widget)
+        change_label(stop_widget, "Play") if widget?(stop_widget)
       end
     end
     entry("Play", :proc, lambda do |w| stop_widget = w end) do |snd, chn, w|
@@ -584,7 +696,7 @@ written: %s\n", channels(snd), srate(snd), frames(snd) / srate(snd).to_f,
       else
         $info_comment_hook.run_hook do |prc| info_string = prc.call(file, info_string) end
       end
-      if defined? Kernel.xm_nb and Kernel.xm_nb.kind_of?(XM_NB)
+      if defined? XM_NB and defined? Kernel.xm_nb and Kernel.xm_nb.kind_of?(XM_NB)
         Kernel.xm_nb.popup_nb_hook.run_hook do |prc| info_string = prc.call(snd, info_string) end
       end
       info_dialog(file + " info", info_string)
@@ -646,9 +758,11 @@ written: %s\n", channels(snd), srate(snd), frames(snd) / srate(snd).to_f,
                end
              end
       if flag
+        select_sound(snd)
+        select_channel(chn)
         each_entry do |w|
           eds = edits(snd, chn)
-          case RXtName(w)
+          case widget_name(w)
           when "Snd"
             if channels(snd) > 1
               change_label(w, format("%s[%d]", short_file_name(snd), chn))
@@ -656,23 +770,23 @@ written: %s\n", channels(snd), srate(snd), frames(snd) / srate(snd).to_f,
               change_label(w, short_file_name(snd))
             end
           when "Save", "Undo", "Revert", "Play previous"
-            eds[0] > 0 ? RXtManageChild(w) : RXtUnmanageChild(w)
+            eds[0] > 0 ? show_widget(w) : hide_widget(w)
           when "Play channel"
-            channels(snd) > 1 ? RXtManageChild(w) : RXtUnmanageChild(w)
+            channels(snd) > 1 ? show_widget(w) : hide_widget(w)
           when "Equalize panes"
-            [sounds().length, channels(snd)].max > 1 ? RXtManageChild(w) : RXtUnmanageChild(w)
+            [sounds().length, channels(snd)].max > 1 ? show_widget(w) : hide_widget(w)
           when "Redo"
-            eds[1] > 0 ? RXtManageChild(w) : RXtUnmanageChild(w)
+            eds[1] > 0 ? show_widget(w) : hide_widget(w)
           when "Mix selection", "Insert selection", "Unselect", "Replace with selection"
-            selection? ? RXtManageChild(w) : RXtUnmanageChild(w)
+            selection? ? show_widget(w) : hide_widget(w)
           when "Play from cursor"
-            cursor(snd, chn) > 0 ? RXtManageChild(w) : RXtUnmanageChild(w)
+            cursor(snd, chn) > 0 ? show_widget(w) : hide_widget(w)
           when "Play original"
-            eds[0] > 1 ? RXtManageChild(w) : RXtUnmanageChild(w)
+            eds[0] > 1 ? show_widget(w) : hide_widget(w)
           when "Delete mark", "To next mark", "To last mark"
-            marks(snd, chn) ? RXtManageChild(w) : RXtUnmanageChild(w)
+            marks(snd, chn) ? show_widget(w) : hide_widget(w)
           when "Delete all marks"
-            (marks(snd, chn) or []).length > 1 ? RXtManageChild(w) : RXtUnmanageChild(w)
+            (marks(snd, chn) or []).length > 1 ? show_widget(w) : hide_widget(w)
           end
         end
       end
@@ -785,7 +899,7 @@ written: %s\n", channels(snd), srate(snd), frames(snd) / srate(snd).to_f,
             end
       if fax and xe >= fax[10] and xe <= fax[12]
         each_entry do |w|
-          case RXtName(w)
+          case widget_name(w)
           when "Peaks"
             change_label(w, (show_transform_peaks(snd, chn) ? "No peaks" : "Peaks"))
           when "dB"
@@ -805,94 +919,96 @@ written: %s\n", channels(snd), srate(snd), frames(snd) / srate(snd).to_f,
   end
 
   #
-  # Listener Popup
+  # Listener Popup (only with Motif)
   #
-  make_snd_popup("Listener",
-                 :where, :widget,
-                 :parent, if RWidget?(w = main_widgets[Listener])
-                            w
-                          else
-                            show_listener
-                            set_show_listener(false)
-                            main_widgets[Listener]
-                          end) do
-    identity = lambda do (sounds() or []) end
-    edited = lambda do
-      if snds = sounds()
-        snds.delete_if do |snd|
-          (0...channels(snd)).detect do |chn| edits(snd, chn).first.zero? end
-        end
-      else
-        []
-      end
-    end
-    focused = lambda do (snds = (sounds() or [])).length > 1 ? snds : [] end
-    cascade("Play") do
-      children(identity) do |snd| play(0, snd) end
-    end
-    entry("Open") do |snd, chn, w| open_file_dialog end
-    cascade("Close") do
-      children(identity) do |snd| close_sound_extend(snd) end
-    end
-    cascade("Save") do
-      children(edited) do |snd| save_sound(snd) end
-    end
-    cascade("Revert") do
-      children(edited) do |snd| revert_sound(snd) end
-    end
-    entry("Equalize panes") do |snd, chn, w| equalize_panes end
-    cascade("Focus") do
-      children(focused, true) do |snd|
-        if RWidget?(main_widgets[Notebook])
-          set_selected_sound(snd)
+  if provided?("xm")
+    make_snd_popup("Listener",
+                   :where, :widget,
+                   :parent, if widget?(w = main_widgets[Listener_pane])
+                              w
+                            else
+                              show_listener
+                              set_show_listener(false)
+                              main_widgets[Listener_pane]
+                            end) do
+      identity = lambda do (sounds() or []) end
+      edited = lambda do
+        if snds = sounds()
+          snds.delete_if do |snd|
+            (0...channels(snd)).detect do |chn| edits(snd, chn).first.zero? end
+          end
         else
-          pane = sound_widgets(snd)[0]
-          RXtVaSetValues(main_widgets[Top_level], [RXmNallowShellResize, false])
-          sounds().each do |them| RXtUnmanageChild(sound_widgets(them)[0]) end
-          RXtManageChild(pane)
-          RXtVaSetValues(main_widgets[Top_level], [RXmNallowShellResize, auto_resize])
+          []
         end
       end
-    end
-    entry("Help") do |snd, chn, w|
-      if help = (selected = listener_selection and snd_help(selected))
-        help_dialog(selected, help)
-      else
-        snd_warning(format("%s: no help found", selected.inspect))
+      focused = lambda do (snds = (sounds() or [])).length > 1 ? snds : [] end
+      cascade("Play") do
+        children(identity) do |snd| play(0, snd) end
       end
-    end
-    separator(:double)
-    entry("Exit") do |snd, chn, w| exit(0) end
-    before_popup_hook.add_hook!("listener popup") do |d1, d2, d3|
-      each_value do |val|
-        w = val[0]
-        cas = val[1..2]
-        prc = val[3]
-        len = prc.call.length
-        if RWidget?(w)
-          if len == 1
-            RXtManageChild(w)
+      entry("Open") do |snd, chn, w| open_file_dialog end
+      cascade("Close") do
+        children(identity) do |snd| close_sound_extend(snd) end
+      end
+      cascade("Save") do
+        children(edited) do |snd| save_sound(snd) end
+      end
+      cascade("Revert") do
+        children(edited) do |snd| revert_sound(snd) end
+      end
+      entry("Equalize panes") do |snd, chn, w| equalize_panes end
+      cascade("Focus") do
+        children(focused, true) do |snd|
+          if widget?(main_widgets[Notebook_outer_pane])
+            set_selected_sound(snd)
           else
-            RXtUnmanageChild(w)
+            pane = sound_widgets(snd)[Main_pane]
+            RXtVaSetValues(main_widgets[Top_level_shell], [RXmNallowShellResize, false])
+            sounds().each do |them| hide_widget(sound_widgets(them)[Main_pane]) end
+            show_widget(pane)
+            RXtVaSetValues(main_widgets[Top_level_shell], [RXmNallowShellResize, auto_resize])
           end
         end
-        if len > 1
-          cas.each do |wid| RXtManageChild(wid) end
+      end
+      entry("Help") do |snd, chn, w|
+        if help = (selected = listener_selection and snd_help(selected))
+          help_dialog(selected, help)
         else
-          cas.each do |wid| RXtUnmanageChild(wid) end
+          snd_warning(format("%s: no help found", selected.inspect))
         end
       end
-      each_entry do |w|
-        if RWidget?(w)
-          case name = RXtName(w)
-          when "Equalize panes"
-            (sounds() or []).length > 1 ? RXtManageChild(w) : RXtUnmanageChild(w)
-          when "Help"
-            if subject = listener_selection
-              change_label(w, format("Help on %s", subject.inspect))
-              RXtManageChild(w)
+      separator(:double)
+      entry("Exit") do |snd, chn, w| exit(0) end
+      before_popup_hook.add_hook!("listener popup") do |d1, d2, d3|
+        each_value do |val|
+          w = val[0]
+          cas = val[1..2]
+          prc = val[3]
+          len = prc.call.length
+          if widget?(w)
+            if len == 1
+              show_widget(w)
             else
-              RXtUnmanageChild(w)
+              hide_widget(w)
+            end
+          end
+          if len > 1
+            cas.each do |wid| show_widget(wid) end
+          else
+            cas.each do |wid| hide_widget(wid) end
+          end
+        end
+        each_entry do |w|
+          if widget?(w)
+            case name = widget_name(w)
+            when "Equalize panes"
+              (sounds() or []).length > 1 ? show_widget(w) : hide_widget(w)
+            when "Help"
+              if subject = listener_selection
+                change_label(w, format("Help on %s", subject.inspect))
+                show_widget(w)
+              else
+                hide_widget(w)
+              end
             end
           end
         end

@@ -1,10 +1,10 @@
-# ws.rb -- with_sound and friends for Snd/Ruby
+# ws.rb -- with_sound and friends for Snd/Ruby -*- snd-ruby -*-
 
 # Copyright (C) 2003--2004 Michael Scholz
 
 # Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Apr 08 17:05:03 CEST 2003
-# Last: Sat Feb 14 15:18:53 CET 2004
+# Last: Fri Mar 05 20:51:50 CET 2004
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -367,14 +367,19 @@ end
 
 # Code:
 
-require "English"
-require "sndlib" unless $LOADED_FEATURES.member?("sndlib")
 require "examp"
-require "etc"
-require "socket"
+require "sndlib" unless provided? "sndlib"
+with_silence do
+  unless defined? Etc.getlogin
+    require "etc"
+  end
+  unless defined? Socket.gethostname
+    require "socket"
+  end
+end
 require "hooks"
 
-$rbm_version          = "14-Feb-2004"
+$rbm_version          = "05-Mar-2004"
 $rbm_output           = false
 $rbm_reverb           = false
 $rbm_file_name        = "test.snd" unless defined? $rbm_file_name
@@ -386,23 +391,27 @@ $rbm_reverb_file_name = nil        unless defined? $rbm_reverb_file_name
 $rbm_reverb_channels  = 1          unless defined? $rbm_reverb_channels
 $rbm_reverb_func      = nil        unless defined? $rbm_reverb_func
 $rbm_reverb_data      = []         unless defined? $rbm_reverb_data
-$rbm_locsig_type      = Mus_linear unless defined? $rbm_locsig_type
 $rbm_delete_reverb    = false      unless defined? $rbm_delete_reverb
 $rbm_verbose          = $VERBOSE   unless defined? $rbm_verbose
 $rbm_info             = false      unless defined? $rbm_info
 $rbm_notehook         = nil        unless defined? $rbm_notehook
-$rbm_rt_bufsize       = 128        unless defined? $rbm_rt_bufsize
 
-if $LOADED_FEATURES.member?("snd")
-  $rbm_srate       = default_output_srate  unless defined? $rbm_srate
-  $rbm_channels    = default_output_chans  unless defined? $rbm_channels
-  $rbm_header_type = default_output_type   unless defined? $rbm_header_type
-  $rbm_data_format = default_output_format unless defined? $rbm_data_format
+if provided? "snd"
+  $rbm_srate         = default_output_srate  unless defined? $rbm_srate
+  $rbm_channels      = default_output_chans  unless defined? $rbm_channels
+  $rbm_header_type   = default_output_type   unless defined? $rbm_header_type
+  $rbm_data_format   = default_output_format unless defined? $rbm_data_format
+  $rbm_locsig_type   = locsig_type           unless defined? $rbm_locsig_type
+  $rbm_rt_bufsize    = dac_size              unless defined? $rbm_rt_bufsize
+  $rbm_output_device = audio_output_device   unless defined? $rbm_output_device
 else
-  $rbm_srate       = 22050      unless defined? $rbm_srate
-  $rbm_channels    = 1          unless defined? $rbm_channels
-  $rbm_header_type = Mus_next   unless defined? $rbm_header_type
-  $rbm_data_format = Mus_lshort unless defined? $rbm_data_format
+  $rbm_srate         = 22050             unless defined? $rbm_srate
+  $rbm_channels      = 1                 unless defined? $rbm_channels
+  $rbm_header_type   = Mus_next          unless defined? $rbm_header_type
+  $rbm_data_format   = Mus_lshort        unless defined? $rbm_data_format
+  $rbm_locsig_type   = Mus_linear        unless defined? $rbm_locsig_type
+  $rbm_rt_bufsize    = 512               unless defined? $rbm_rt_bufsize
+  $rbm_output_device = Mus_audio_default unless defined? $rbm_output_device
 end
 
 module WS
@@ -439,7 +448,11 @@ module WS
   # with_reverb(:jc_reverb)
   # require 'clm-ins'
   # with_reverb(:jl_reverb, [], 2, false, 0.2)
-  def with_reverb(reverb, reverb_data = [], snd = false, chn = false, rev_amount = 0.05, *args)
+  def with_reverb(reverb,
+                  reverb_data = [],
+                  snd = selected_sound(),
+                  chn = selected_channel(),
+                  rev_amount = 0.05, *args)
     ws = With_Snd.new(:reverb, reverb,
                       :reverb_data, reverb_data,
                       :output, file_name(snd),
@@ -515,7 +528,7 @@ code.  After finishing the body, the file will be removed.\n") if snd == :help
   end
   
   def remove_file(file)
-    if $LOADED_FEATURES.member?("snd") and (snd = find_sound(file))
+    if provided?("snd") and (snd = find_sound(file))
       revert_sound(snd)
       close_sound_extend(snd)
     end
@@ -915,12 +928,12 @@ installs the @with_sound_note_hook and prints the line
   end
 
   def tempnam
-    if $LOADED_FEATURES.member?("snd")
+    if provided? "snd"
       snd_tempnam()
     else
       @@file_number += 1
       dir = (ENV.map do |k, v| v if /TMP/ =~ k end.compact.first or "/tmp")
-      format("%s/snd_%d_%s.snd", dir, $$, @@file_number)
+      format("%s/snd_%d_%d.snd", dir, $$, @@file_number)
     end
   end
 
@@ -1018,6 +1031,10 @@ installs the @with_sound_note_hook and prints the line
 #   :info,              $rbm_info (#$rbm_info)
 #
 %s
+#
+## special with_dac options:
+#   :bufsize,           $rbm_rt_bufsize (#$rbm_rt_bufsize)
+#   :device,            $rbm_output_device (#$rbm_output_device)
 # 
 # Usage: with_sound(:play, 1, :statistics, true) do fm_violin end",
                               @clm ? "\
@@ -1025,6 +1042,7 @@ installs the @with_sound_note_hook and prints the line
 " : "\
 ## save sound after computing
 #   :save_after,        false")
+
   end
 end
 
@@ -1463,7 +1481,7 @@ Example: rbm_mix(\"tmp\")\n") if filename == :help
     frms         = get_args(args, :frames, mus_sound_frames(filename)).round
     scale        = get_args(args, :scale, 1.0).to_f
     with_closed_output do
-      if $LOADED_FEATURES.member?("snd")
+      if provided? "snd"
         if scale.nonzero?
           unless (snd = find_sound(filename))
             snd = open_sound(filename)
@@ -1504,7 +1522,7 @@ Example: rbm_mix(\"tmp\")\n") if filename == :help
   end
 
   def after_output
-    if $LOADED_FEATURES.member?("snd") and (snd = find_sound(@output))
+    if provided?("snd") and (snd = find_sound(@output))
       save_sound(snd)
       update_sound(snd)
     end
@@ -1515,7 +1533,7 @@ Example: rbm_mix(\"tmp\")\n") if filename == :help
   
   def after_reverb
     mus_close(@ws_reverb) if @reverb
-    if $LOADED_FEATURES.member?("snd")
+    if provided? "snd"
       if snd = find_sound(@output)
         update_sound(snd)
       else
@@ -1525,7 +1543,7 @@ Example: rbm_mix(\"tmp\")\n") if filename == :help
   end
 
   def scaled_to_sound(scl, beg, len)
-    if $LOADED_FEATURES.member?("snd")
+    if provided? "snd"
       unless snd = find_sound(@output)
         snd = open_sound(@output)
       end
@@ -1543,7 +1561,7 @@ Example: rbm_mix(\"tmp\")\n") if filename == :help
   end
 
   def scaled_by_sound(scl, beg, len)
-    if $LOADED_FEATURES.member?("snd")
+    if provided? "snd"
       unless (snd = find_sound(@output))
         snd = open_sound(@output)
       end
@@ -1574,7 +1592,7 @@ Example: rbm_mix(\"tmp\")\n") if filename == :help
   def finish_sound
     super
     mus_close(@ws_output) if @ws_output
-    if $LOADED_FEATURES.member?("snd")
+    if provided? "snd"
       if @ws_output = find_sound(@output)
         select_sound(@ws_output)
       else
@@ -1584,7 +1602,7 @@ Example: rbm_mix(\"tmp\")\n") if filename == :help
   end
 
   def play_it
-    if $LOADED_FEATURES.member?("snd")
+    if provided? "snd"
       play(0, @ws_output)
     else
       system(format("%s %s", @player, @output))
@@ -1606,38 +1624,45 @@ Example: rbm_mix(\"tmp\")\n") if filename == :help
 end
 
 class With_DAC < Snd_Instrument
-  # with_dac handles only 1 output channel and no reverb
+  # handles no reverb
   def initialize(*args, &body)
     @clm = false
     super
-    @bufsize  = get_args(args, :bufsize, $rbm_rt_bufsize)
-    @dac_vct  = make_vct(@bufsize)
-    @dac_data = make_sound_data(@channels, @bufsize)
+    @bufsize = get_args(args, :bufsize, $rbm_rt_bufsize)
+    @device  = get_args(args, :device, $rbm_output_device)
     @ws_reverb = @ws_output = @reverb = false
-    @channels = 1
     @output = "dac"
     @start_dac = nil
   end
-  
+
   def run_instrument(start, dur, *args, &body)
-    super
-    begin
+    loc = super
+    len = seconds2samples(dur)
+    bufsize = [len, @bufsize].min
+    dac_vct  = make_vct(bufsize)
+    dac_data = make_sound_data(@channels, bufsize)
+    while (Time.now - @start_dac) < start
       ws_interrupt?
-      tm = Time.now - @start_dac
-    end while tm < start
-    0.step(seconds2samples(dur), @bufsize) do |samp|
-      ws_interrupt?
-      samp -= 1
-      mus_audio_write(@ws_output,
-                      vct2sound_data(vct_map!(@dac_vct, lambda do | | body.call(samp += 1) end),
-                                     @dac_data, 0), @bufsize)
+    end
+    ws_interrupt?
+    -1.step(len - 2, bufsize) do |samp|
+      th = Thread.new do
+        vct_map!(dac_vct, lambda do | | body.call(samp += 1) end)
+        @channels.times do |chn|
+          vct2sound_data(vct_scale!(vct_copy(dac_vct), locsig_ref(loc, chn)), dac_data, chn)
+        end
+      end
+      th.alive? and th.join
+      Thread.new(dac_data, bufsize) do |d, s|
+        mus_audio_write(@ws_output, d, s)
+      end
     end
   end
 
   protected
   def before_output
-    @ws_output = mus_audio_open_output(Mus_audio_default,
-                                       @srate.round, @channels, @data_format, @bufsize * 2)
+    @ws_output = mus_audio_open_output(@device, @srate.round, @channels, @data_format,
+                                       @bufsize * @channels * 2)
     if @ws_output < 0
       ws_error("%s#%s: can't open DAC (%s)", self.class, get_func_name, @ws_output.inspect)
     end

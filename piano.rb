@@ -2,25 +2,15 @@
 # ;;; CLM piano.ins (Scott Van Duyne) translated to Snd/Scheme
 
 # Ruby Translator: Michael Scholz <scholz-micha@gmx.de>
-# Last: Wed Mar 12 03:07:00 CET 2003
-# Version: $Revision: 1.9 $
-
-# module Piano (see piano.scm)
-# with some additional test functions
-#   with_piano(outfile) { |snd| ... }
-# the four tests
-#   piano_1(outfile)
-#   piano_2(outfile)
-#   piano_3(outfile)
-#   piano_4(outfile)
+# Last: Wed Feb 18 03:07:06 CET 2004
 
 module Piano
   require "examp"
+  require "ws"
+  require "env"
   include Env
   include Math
-  $rbm_srate = 22050
 
-  Noise_Seed_And = "ffffffff".hex
   Number_of_stiffness_allpasses = 8
   Longitudinal_mode_cutoff_keynum = 29
   Longitudinal_mode_stiffness_coefficient = -0.5
@@ -28,7 +18,6 @@ module Piano
   Loop_gain_env_t60 = 0.05
   Loop_gain_default = 0.9999
   Nstrings = 3
-  Two_pi = 2 * PI
 
   # ;;keyNum indexed parameter tables
   # ;;these should all be &key variable defaults for p instrument
@@ -71,118 +60,6 @@ module Piano
   Default_soundboardCutofft60_table = [21.0, 0.25, 108.0, 0.25]
   Default_dryPedalResonanceFactor_table = [21.0, 0.5, 108.0, 0.5]
   Default_unaCordaGain_table = [21, 1.0, 24, 0.4, 29, 0.1, 29.1, 0.95, 108, 0.95]
-
-  # ;;; converts t60 values to suitable :rate values for expseg
-  def in_t60(t60)
-    1.0 - (0.001 ** (1.0 / t60 / $rbm_srate))
-  end
-
-  # ;;; expseg (like musickit asymp)
-  def make_expseg(*args)
-    cv = get_args(args, :currentValue, 0.0)
-    tv = get_args(args, :targetValue, 0.0)
-    lambda do |r|
-      old_cv = cv
-      cv += (tv - cv) * r
-      old_cv     # ; (bil) this is slightly different (getting clicks)
-    end            
-  end
-
-  # ;;; signal controlled one-pole lowpass filter
-  def make_one_pole_swept
-    y1 = 0.0
-    lambda do |input, coef|
-      y1 = (coef + 1) * input - coef * y1
-    end
-  end
-
-  # ;;; one-pole allpass filter
-  def make_one_pole_allpass(coeff)
-    coef = coeff
-    x1 = 0.0
-    y1 = 0.0
-    lambda do |input|
-      y1 = (coef * (input - y1)) + x1
-      x1 = input
-      y1
-    end
-  end
-
-  def one_pole_one_zero(f0, f1, input)
-    one_zero(f0, one_pole(f1, input))
-  end
-
-  def make_one_pole_one_zero(a0, a1, b1)
-    [make_one_zero(a0, a1), make_one_pole(1.0, b1)]
-  end
-
-  # ;;; very special noise generator
-  def make_noise
-    noise_seed = 16383
-    lambda do |amp|
-      noise_seed = (noise_seed * 1103515245 + 12345) & Noise_Seed_And
-      # ;; (bil) added the logand -- otherwise we get an overflow somewhere
-      amp * (((noise_seed / 65536).round % 65536) * 0.0000305185 - 1.0)
-    end
-  end
-
-  # ;;; delay line unit generator with length 0 capabilities...
-  def make_delay0(len)
-    len > 0 ? make_delay(len) : false
-  end
-
-  def delay0(f, input)
-    f ? delay(f, input) : input
-  end
-
-  def ap_phase(a1, wT)
-    atan2((a1 * a1 - 1.0) * sin(wT), 2.0 * a1 + (a1 * a1 + 1.0) * cos(wT))
-  end
-
-  def opoz_phase(b0, b1, a1, wT)
-    s = sin(wT)
-    c = cos(wT)
-    atan2(a1 * s * (b0 + b1 * c) - b1 * s * (1 + a1 * c),
-          (b0 + b1 * c) * (1 + a1 * c) + b1 * s * a1 * s)
-  end
-
-  def get_allpass_coef(samp_frac, wT)
-    ta = tan(-(samp_frac * wT))
-    c = cos(wT)
-    s = sin(wT)
-    (-ta + signum(ta) * sqrt((ta * ta + 1) * s * s)) / (c * ta - s)
-  end
-
-  def signum(x)
-    if x == 0.0
-      0
-    elsif x < 0.0
-      -1
-    else
-      1
-    end
-  end
-
-  def apfloor(len, wT)
-    len_int = len.floor.round
-    len_frac = len - len_int
-    if len_frac < Golden_mean
-      len_int -= 1
-      len_frac += 1.0
-    end
-    if len_frac < Golden_mean and len_int > 0
-      len_int -= 1
-      len_frac += 1.0
-    end
-    [len_int, get_allpass_coef(len_frac, wT)]
-  end
-
-  def tune_piano(frequency, stiffnessCoefficient, numAllpasses, b0, b1, a1)
-    wT = (frequency * Two_pi) / $rbm_srate
-    len = (Two_pi + (numAllpasses * ap_phase(stiffnessCoefficient, wT)) +
-           opoz_phase(1 + 3 * b0, a1 + 3 * b1, a1, wT)) / wT
-    apfloor(len, wT)
-  end
 
   def p(start, *args)
     duration = get_args(args, :duration, 1.0)
@@ -256,11 +133,9 @@ module Piano
     unaCordaGain = get_args(args, :unaCordaGain, nil)
     unaCordaGain_table = get_args(args, :unaCordaGain_table, Default_unaCordaGain_table)
     
-    beg = (start * $rbm_srate).floor
-    fin = beg + ((duration + release_time_margin) * $rbm_srate).floor
-    dur = (duration * $rbm_srate).floor
+    dur = seconds2samples(duration)
     freq = 440.0 * (2.0 ** ((keyNum - 69.0) / 12.0))
-    wT = (Two_pi * freq) / $rbm_srate
+    wT = (TWO_PI * freq) / mus_srate
     
     # ;;look_up parameters in tables (or else use the override value)
     loudPole = (loudPole or envelope_interp(keyNum, loudPole_table))
@@ -309,11 +184,10 @@ module Piano
     dryTap0 = dryTap_one_pole_one_zero_pair[0]
     dryTap1 = dryTap_one_pole_one_zero_pair[1]
 	 
-    dryTap_coef_expseg = make_expseg(:currentValue, dryTapFiltCoefCurrent,
-                                     :targetValue, dryTapFiltCoefTarget)
+    dryTap_coef_expseg = make_expseg(dryTapFiltCoefCurrent, dryTapFiltCoefTarget)
     drycoefrate = in_t60(dryTapFiltCoeft60)
     dryTap_one_pole_swept = make_one_pole_swept()
-    dryTap_amp_expseg = make_expseg(:currentValue, 1.0, :targetValue, 0.0)
+    dryTap_amp_expseg = make_expseg(1.0, 0.0)
     dryamprate = in_t60(dryTapAmpt60)
 	 
     # ;;initialize open_string resonance elements		
@@ -323,12 +197,12 @@ module Piano
     wetTap0 = wetTap_one_pole_one_zero_pair[0]
     wetTap1 = wetTap_one_pole_one_zero_pair[1]
 	 
-    wetTap_coef_expseg = make_expseg(:currentValue, 0.0, :targetValue, -0.5)
+    wetTap_coef_expseg = make_expseg(0.0, -0.5)
     wetcoefrate = in_t60(pedalEnvelopet60)
     wetTap_one_pole_swept = make_one_pole_swept()
-    wetTap_amp_expseg = make_expseg(:currentValue, sustainPedalLevel * pedalPresenceFactor *
-                                    (pedal_down ? 1.0 : dryPedalResonanceFactor),
-                                    :targetValue, 0.0)
+    wetTap_amp_expseg = make_expseg(sustainPedalLevel * pedalPresenceFactor *
+                                                       (pedal_down ? 1.0 : dryPedalResonanceFactor),
+                                    0.0)
     wetamprate = in_t60(pedalEnvelopet60)
     sb_cutoff_rate = in_t60(soundboardCutofft60)
 	 
@@ -338,7 +212,7 @@ module Piano
     hammer_one_pole = Array.new(4)
 	 
     # ;;strike position comb filter delay length
-    agraffe_len = ($rbm_srate.to_f * strikePosition) / freq
+    agraffe_len = (mus_srate * strikePosition) / freq
 
     0.upto(3) do |i|
       hammer_one_pole[i] = make_one_pole(1.0 * (1.0 - hammerPole), -hammerPole)
@@ -410,25 +284,17 @@ module Piano
     string3_tuning_ap = make_one_pole_allpass(tuningCoefficient3)
     string3_stiffness_ap = Array.new(8)
     # ;;initialize loop_gain envelope
-    loop_gain_expseg = make_expseg(:currentValue, Loop_gain_default,
-                                   :targetValue, releaseLoopGain)
+    loop_gain_expseg = make_expseg(Loop_gain_default, releaseLoopGain)
     looprate = in_t60(Loop_gain_env_t60)
-    dryTap = 0.0
-    openStrings = 0.0
-    combedExcitationSignal = 0.0
     adelOut = 0.0
-    adelIn = 0.0
-    totalTap = 0.0
     loop_gain = Loop_gain_default
     is_release_time = false
     string1_junction_input = 0.0
     string2_junction_input = 0.0
     string3_junction_input = 0.0
-    couplingFilter_input = 0.0
     couplingFilter_output = 0.0
     sampCount = 0
     noi = make_noise()
-    out_data = make_vct(fin - beg)
 
     0.upto(7) do |i|
       string1_stiffness_ap[i] = make_one_pole_allpass(stiffnessCoefficientL)
@@ -440,162 +306,221 @@ module Piano
       string3_stiffness_ap[i] = make_one_pole_allpass(stiffnessCoefficient)
     end
 
-    vct_map!(out_data, lambda do | |
-               if is_release_time
-                 loop_gain = loop_gain_expseg.call(looprate)
-               elsif sampCount == dur
-                 is_release_time = true
-                 dryamprate = sb_cutoff_rate
-                 wetamprate = sb_cutoff_rate
-               end
-               dryTap =
-               dryTap_amp_expseg.call(dryamprate) *
-                                     dryTap_one_pole_swept.call(one_pole_one_zero(dryTap0,
-                                                                                  dryTap1,
-                                                                                  noi.call(amp)),
-                                                                dryTap_coef_expseg.call(drycoefrate))
-                                                               
-               openStrings =
-               wetTap_amp_expseg.call(wetamprate) *
-                                     wetTap_one_pole_swept.call(one_pole_one_zero(wetTap0,
-                                                                                  wetTap1,
-                                                                                  noi.call(amp)),
-                                                                wetTap_coef_expseg.call(wetcoefrate))
-               totalTap = dryTap + openStrings
-               adelIn = totalTap
-               0.upto(3) do |i| adelIn = one_pole(hammer_one_pole[i], adelIn) end
-               combedExcitationSignal = hammerGain * (adelOut + adelIn * strikePositionInvFac)
-               adelOut = agraffe_tuning_ap1.call(delay0(agraffe_delay1, adelIn))
-               string1_junction_input += couplingFilter_output
-               0.upto(7) do |i|
-                 string1_junction_input = string1_stiffness_ap[i].call(string1_junction_input)
-               end
-               string1_junction_input =
-               unaCordaGain * combedExcitationSignal +
-                              loop_gain *
-                              delay0(string1_delay,
-                                     string1_tuning_ap.call(string1_junction_input))
-               string2_junction_input += couplingFilter_output
-               0.upto(7) do |i|
-                 string2_junction_input = string2_stiffness_ap[i].call(string2_junction_input)
-               end
-               string2_junction_input =
-               combedExcitationSignal +
-               loop_gain * delay0(string2_delay,
-                                  string2_tuning_ap.call(string2_junction_input))
-               string3_junction_input += couplingFilter_output
-               0.upto(7) do |i|
-                 string3_junction_input = string3_stiffness_ap[i].call(string3_junction_input)
-               end
-               string3_junction_input =
-               combedExcitationSignal +
-               loop_gain * delay0(string3_delay,
-                                  string3_tuning_ap.call(string3_junction_input))
-               couplingFilter_input = string1_junction_input + string2_junction_input +
-                                                               string3_junction_input
-               couplingFilter_output = one_pole_one_zero(cou0, cou1, couplingFilter_input)
-               sampCount += 1
-               couplingFilter_input
-             end)
-  end
-
-  #
-  # with_piano(*args)
-  # for examples see below
-  #
-  def with_piano(*args)
-    outfile = get_args(args, :outfile, "test.snd")
-    if (snd = find_sound(outfile))
-      close_sound(snd)
-    end
-    snd = new_sound(outfile, Mus_next, Mus_bshort, $rbm_srate, 1, "created by #{get_func_name()}")
-    st = Time.now
-    yield(snd)
-    message("time used: %1.2f", Time.now - st)
-    play(0, snd)
-  end
-
-  #
-  # examples from piano.scm
-  #
-  def piano_1(outfile = "piano1.snd")
-    with_piano(:outfile, outfile) do |snd|
-      start_progress_report(snd)
-      0.upto(7) do |i|
-        progress_report((i + 1) * 0.12, get_func_name(), 0, 1, snd)
-        vct2channel(p(i * 0.5,
-                      :duration, 0.5,
-                      :keyNum, 24 + 12.0 * i,
-                      :strike_velocity, 0.5,
-                      :amp, 0.4,
-                      :dryPedalResonanceFactor, 0.25),
-                    ($rbm_srate * (i * 0.5)).round)
+    run_instrument(start, duration + release_time_margin) do
+      if is_release_time
+        loop_gain = loop_gain_expseg.call(looprate)
+      elsif sampCount == dur
+        is_release_time = true
+        dryamprate = sb_cutoff_rate
+        wetamprate = sb_cutoff_rate
       end
-      finish_progress_report(snd)
-    end
-  end
-  
-  def piano_2(outfile = "piano2.snd")
-    with_piano(:outfile, outfile) do |snd|
-      start_progress_report(snd)
+      dryTap = (dryTap_amp_expseg.call(dryamprate) * \
+                dryTap_one_pole_swept.call(one_pole_one_zero(dryTap0, dryTap1, noi.call(amp)),
+                                           dryTap_coef_expseg.call(drycoefrate)))
+      
+      openStrings = (wetTap_amp_expseg.call(wetamprate) * \
+                     wetTap_one_pole_swept.call(one_pole_one_zero(wetTap0, wetTap1, noi.call(amp)),
+                                                wetTap_coef_expseg.call(wetcoefrate)))
+      adelIn = totalTap = dryTap + openStrings
+      0.upto(3) do |i| adelIn = one_pole(hammer_one_pole[i], adelIn) end
+      combedExcitationSignal = hammerGain * (adelOut + adelIn * strikePositionInvFac)
+      adelOut = agraffe_tuning_ap1.call(delay0(agraffe_delay1, adelIn))
+      string1_junction_input += couplingFilter_output
       0.upto(7) do |i|
-        progress_report(i * (7.0 / 50))
-        vct2channel(p(i * 0.5,
-                      :duration, 0.5,
-                      :keyNum, 24 + 12.0 * i,
-                      :strike_velocity, 0.5,
-                      :amp, 0.4,
-                      :dryPedalResonanceFactor, 0.25,
-                      :detuningFactor_table,
-                      [24, 5, 36, 7.0, 48, 7.5, 60, 12.0, 72, 20, 84, 30, 96, 100, 108, 300],
-                      :stiffnessFactor_table,
-                      [21, 1.5, 24, 1.5, 36, 1.5, 48, 1.5, 60, 1.4,
-                       72, 1.3, 84, 1.2, 96, 1.0, 108, 1.0]),
-                    ($rbm_srate * (i * 0.5)).round)
+        string1_junction_input = string1_stiffness_ap[i].call(string1_junction_input)
       end
-      finish_progress_report(snd)
+      string1_junction_input = (unaCordaGain * combedExcitationSignal + \
+                                loop_gain * delay0(string1_delay,
+                                                   string1_tuning_ap.call(string1_junction_input)))
+      string2_junction_input += couplingFilter_output
+      0.upto(7) do |i|
+        string2_junction_input = string2_stiffness_ap[i].call(string2_junction_input)
+      end
+      string2_junction_input = (combedExcitationSignal + \
+                                loop_gain * delay0(string2_delay,
+                                                   string2_tuning_ap.call(string2_junction_input)))
+      string3_junction_input += couplingFilter_output
+      0.upto(7) do |i|
+        string3_junction_input = string3_stiffness_ap[i].call(string3_junction_input)
+      end
+      string3_junction_input = (combedExcitationSignal + \
+                                loop_gain * delay0(string3_delay,
+                                                   string3_tuning_ap.call(string3_junction_input)))
+      couplingFilter_input = string1_junction_input + string2_junction_input +
+                    string3_junction_input
+      couplingFilter_output = one_pole_one_zero(cou0, cou1, couplingFilter_input)
+      sampCount += 1
+      couplingFilter_input
     end
   end
 
-  def piano_3(outfile = "piano3.snd")
-    with_piano(:outfile, outfile) do |snd|
-      start_progress_report(snd)
-      0.upto(7) do |i|
-        progress_report(i * (7.0 / 50))
-        vct2channel(p(i * 0.5,
-                      :duration, 0.5,
-                      :keyNum, 24 + 12.0 * i,
-                      :strike_velocity, 0.5,
-                      :amp, 0.4,
-                      :dryPedalResonanceFactor, 0.25,
-                      :singleStringDecayRate_table,
-                      [21, -5, 24.0, -5.0, 36.0, -5.4, 41.953, -5.867, 48.173, -7.113,
-                       53.818, -8.016, 59.693, -8.875, 66.605, -9.434, 73.056, -10.035,
-                       78.931, -10.293, 84.000, -12.185],
-                      :singleStringPole_table, [21, 0.8, 24, 0.7, 36.0, 0.6, 48, 0.5, 60,
-                                                0.3, 84, 0.1, 96, 0.03, 108, 0.03],
-                      :stiffnessCoefficient_table,
-                      [21.0, -0.92, 24.0, -0.9, 36.0, -0.7, 48.0, -0.250, 60.0, -0.1,
-                       75.179, -0.040, 82.986, -0.040, 92.240, 0.3, 96.0, 0.5, 99.0, 0.7,
-                       108.0, 0.7]),
-                    ($rbm_srate * (i * 0.5)).round)
-      end
-      finish_progress_report(snd)
+  # ;;; converts t60 values to suitable :rate values for expseg
+  def in_t60(t60)
+    1.0 - (0.001 ** (1.0 / t60 / mus_srate))
+  end
+
+  # ;;; expseg (like musickit asymp)
+  def make_expseg(cv = 0.0, tv = 0.0)
+    lambda do |r|
+      old_cv = cv
+      cv += (tv - cv) * r
+      old_cv     # ; (bil) this is slightly different (getting clicks)
+    end            
+  end
+
+  # ;;; signal controlled one-pole lowpass filter
+  def make_one_pole_swept
+    y1 = 0.0
+    lambda do |input, coef|
+      y1 = (coef + 1) * input - coef * y1
     end
   end
 
-  def piano_4(outfile = "piano4.snd")
-    with_piano(:outfile, outfile) do |snd|
-      i = 5
-      vct2channel(p(0,
-                    :duration, i,
-                    :keyNum, 24 + 12.0 * i,
-                    :strike_velocity, 0.5,
-                    :amp, 0.4,
-                    :dryPedalResonanceFactor, 0.25,
-                    :singleStringDecayRateFactor, 1 / 10.0))
+  # ;;; one-pole allpass filter
+  def make_one_pole_allpass(coeff)
+    coef = coeff
+    x1 = 0.0
+    y1 = 0.0
+    lambda do |input|
+      y1 = (coef * (input - y1)) + x1
+      x1 = input
+      y1
     end
+  end
+
+  def one_pole_one_zero(f0, f1, input)
+    one_zero(f0, one_pole(f1, input))
+  end
+
+  def make_one_pole_one_zero(a0, a1, b1)
+    [make_one_zero(a0, a1), make_one_pole(1.0, b1)]
+  end
+
+  # ;;; very special noise generator
+  def make_noise
+    noise_seed = 16383
+    lambda do |amp|
+      noise_seed = (noise_seed * 1103515245 + 12345) & 0xffffffff
+      # ;; (bil) added the logand -- otherwise we get an overflow somewhere
+      amp * (((noise_seed / 65536).round % 65536) * 0.0000305185 - 1.0)
+    end
+  end
+
+  # ;;; delay line unit generator with length 0 capabilities...
+  def make_delay0(len)
+    len > 0 ? make_delay(len) : false
+  end
+
+  def delay0(f, input)
+    f ? delay(f, input) : input
+  end
+
+  def ap_phase(a1, wT)
+    atan2((a1 * a1 - 1.0) * sin(wT), 2.0 * a1 + (a1 * a1 + 1.0) * cos(wT))
+  end
+
+  def opoz_phase(b0, b1, a1, wT)
+    s = sin(wT)
+    c = cos(wT)
+    atan2(a1 * s * (b0 + b1 * c) - b1 * s * (1 + a1 * c),
+          (b0 + b1 * c) * (1 + a1 * c) + b1 * s * a1 * s)
+  end
+
+  def get_allpass_coef(samp_frac, wT)
+    ta = tan(-(samp_frac * wT))
+    c = cos(wT)
+    s = sin(wT)
+    (-ta + signum(ta) * sqrt((ta * ta + 1) * s * s)) / (c * ta - s)
+  end
+
+  def signum(x)
+    if x == 0.0
+      0
+    elsif x < 0.0
+      -1
+    else
+      1
+    end
+  end
+
+  def apfloor(len, wT)
+    len_int = len.floor.round
+    len_frac = len - len_int
+    if len_frac < Golden_mean
+      len_int -= 1
+      len_frac += 1.0
+    end
+    if len_frac < Golden_mean and len_int > 0
+      len_int -= 1
+      len_frac += 1.0
+    end
+    [len_int, get_allpass_coef(len_frac, wT)]
+  end
+
+  def tune_piano(frequency, stiffnessCoefficient, numAllpasses, b0, b1, a1)
+    wT = (frequency * TWO_PI) / mus_srate
+    len = (TWO_PI + (numAllpasses * ap_phase(stiffnessCoefficient, wT)) +
+           opoz_phase(1 + 3 * b0, a1 + 3 * b1, a1, wT)) / wT
+    apfloor(len, wT)
   end
 end
+
+=begin
+include Piano
+with_sound(:clm, false, :channels, 1) do
+  7.times do |i|
+    p(i * 0.5,
+      :duration, 0.5,
+      :keyNum, 24 + 12.0 * i,
+      :strike_velocity, 0.5,
+      :amp, 0.4,
+      :dryPedalResonanceFactor, 0.25)
+  end
+end
+
+with_sound(:clm, false, :channels, 1) do
+  7.times do |i|
+    p(i * 0.5,
+      :duration, 0.5,
+      :keyNum, 24 + 12.0 * i,
+      :strike_velocity, 0.5,
+      :amp, 0.4,
+      :dryPedalResonanceFactor, 0.25,
+      :detuningFactor_table, [24, 5, 36, 7.0, 48, 7.5, 60, 12.0, 72, 20,
+                              84, 30, 96, 100, 108, 300],
+      :stiffnessFactor_table, [21, 1.5, 24, 1.5, 36, 1.5, 48, 1.5, 60, 1.4,
+                               72, 1.3, 84, 1.2, 96, 1.0, 108, 1.0])
+  end
+end
+
+with_sound(:clm, false, :channels, 1) do
+  7.times do |i|
+    p(i * 0.5,
+      :duration, 0.5,
+      :keyNum, 24 + 12.0 * i,
+      :strike_velocity, 0.5,
+      :amp, 0.4,
+      :dryPedalResonanceFactor, 0.25,
+      :singleStringDecayRate_table, [21, -5, 24.0, -5.0, 36.0, -5.4, 41.953, -5.867, 48.173,
+                                     -7.113, 53.818, -8.016, 59.693, -8.875, 66.605, -9.434,
+                                     73.056, -10.035, 78.931, -10.293, 84.000, -12.185],
+      :singleStringPole_table, [21, 0.8, 24, 0.7, 36.0, 0.6, 48, 0.5, 60,
+                                0.3, 84, 0.1, 96, 0.03, 108, 0.03],
+      :stiffnessCoefficient_table, [21.0, -0.92, 24.0, -0.9, 36.0, -0.7, 48.0, -0.250, 60.0,
+                                    -0.1, 75.179, -0.040, 82.986, -0.040, 92.240, 0.3, 96.0,
+                                    0.5, 99.0, 0.7, 108.0, 0.7])
+  end
+end
+
+with_sound(:clm, false, :channels, 1) do
+  p(0,
+    :duration, 5,
+    :keyNum, 24 + 12.0 * 5,
+    :strike_velocity, 0.5,
+    :amp, 0.4,
+    :dryPedalResonanceFactor, 0.25,
+    :singleStringDecayRateFactor, 1 / 10.0)
+end
+=end
 
 # piano.rb ends here
