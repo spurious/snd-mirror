@@ -58,24 +58,24 @@
   (define (auto-save-func)
     (if auto-saving
 	(begin
-	  (map (lambda (snd)
-		 (if (> (unsaved-edits snd) 0)
-		     (begin
-		       (report-in-minibuffer "auto-saving..." snd)
-		       (in (* 1000 3) (lambda () (report-in-minibuffer "" snd)))
-		       (save-sound-as (auto-save-temp-name snd) snd)
-		       (clear-unsaved-edits snd))))
-	       (sounds))
+	  (for-each (lambda (snd)
+		      (if (> (unsaved-edits snd) 0)
+			  (begin
+			    (report-in-minibuffer "auto-saving..." snd)
+			    (in (* 1000 3) (lambda () (report-in-minibuffer "" snd)))
+			    (save-sound-as (auto-save-temp-name snd) snd)
+			    (clear-unsaved-edits snd))))
+		    (sounds))
 	  (in (* 1000 auto-save-interval) auto-save-func))))
   
   (if (not (member auto-save-done (hook->list close-hook)))
       (begin
 	(if (not (null? (sounds)))
-	    (map auto-save-open-func (sounds)))
+	    (for-each auto-save-open-func (sounds)))
 	(add-hook! after-open-hook auto-save-open-func)
 	(add-hook! close-hook auto-save-done)
 	(add-hook! save-hook (lambda (snd name) (auto-save-done snd)))
-	(add-hook! exit-hook (lambda () (map auto-save-done (sounds))))))
+	(add-hook! exit-hook (lambda () (for-each auto-save-done (sounds))))))
   (set! auto-saving #t)
   (in (* 1000 auto-save-interval) auto-save-func))
 

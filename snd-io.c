@@ -308,7 +308,7 @@ typedef struct {
 static tempfile_ctr **tempfiles = NULL;
 static int tempfiles_size = 0;
 
-void remember_temp(char *filename, int chans)
+void remember_temp(const char *filename, int chans)
 {
   int i, old_size;
   tempfile_ctr *tmp = NULL;
@@ -339,7 +339,7 @@ void remember_temp(char *filename, int chans)
   tmp->ticks = (int *)CALLOC(chans, sizeof(int));
 }
 
-static void forget_temp(char *filename, int chan)
+static void forget_temp(const char *filename, int chan)
 {
   int i, j, happy = FALSE;
   tempfile_ctr *tmp;
@@ -368,7 +368,7 @@ static void forget_temp(char *filename, int chan)
     }
 }
 
-static void tick_temp(char *filename, int chan)
+static void tick_temp(const char *filename, int chan)
 {
   int i;
   tempfile_ctr *tmp;
@@ -392,7 +392,7 @@ void forget_temps(void)
       snd_remove(tempfiles[i]->name, TRUE);
 }
 
-snd_data *make_snd_data_file(char *name, snd_io *io, file_info *hdr, int temp, int ctr, int temp_chan)
+snd_data *make_snd_data_file(const char *name, snd_io *io, file_info *hdr, int temp, int ctr, int temp_chan)
 {
   snd_data *sd;
   sd = (snd_data *)CALLOC(1, sizeof(snd_data));
@@ -534,7 +534,7 @@ snd_data *free_snd_data(snd_data *sd)
   return(NULL);
 }
 
-int open_temp_file(char *ofile, int chans, file_info *hdr, snd_state *ss)
+int open_temp_file(const char *ofile, int chans, file_info *hdr, snd_state *ss)
 {
   int ofd, len, err;
   len = snd_strlen(hdr->comment);

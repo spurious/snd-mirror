@@ -28,7 +28,7 @@
   "(mark-name->id name) is like find-mark but searches all currently accessible channels"
   (call-with-current-continuation
    (lambda (return)
-     (map 
+     (for-each
       (lambda (snd)
 	(do ((chn 0 (1+ chn)))
 	    ((= chn (channels snd)))
@@ -43,9 +43,9 @@
 
 (define (move-syncd-marks sync diff)
   "(move-syncd-marks sync diff) moves all marks sharing sync by diff samples"
-  (map (lambda (m)
-         (set! (mark-sample m) (+ (mark-sample m) diff)))
-       (syncd-marks sync)))
+  (for-each (lambda (m)
+	      (set! (mark-sample m) (+ (mark-sample m) diff)))
+	    (syncd-marks sync)))
 
 
 ;;; -------- describe-mark shows mark history
@@ -153,11 +153,12 @@
 	 (silence-samps (make-vct silence-length)))
     (as-one-edit
      (lambda ()
-       (map (lambda (n)
-	      (let ((samp (max 0 (- (mark-sample n) 1)))
-		    (home (mark-home n)))
-		(insert-samples samp silence-length silence-samps (car home) (cadr home))))
-	    ids)))))
+       (for-each 
+	(lambda (n)
+	  (let ((samp (max 0 (- (mark-sample n) 1)))
+		(home (mark-home n)))
+	    (insert-samples samp silence-length silence-samps (car home) (cadr home))))
+	ids)))))
 
 
 ;;; -------- play-syncd-marks
@@ -166,14 +167,15 @@
   "(play-syncd-marks sync) starts playing from all marks sharing sync"
   (let ((chans 1)
 	(rate 22050))
-    (map (lambda (m)
-	   (let* ((sound (car (mark-home m)))
-		  (channel (cadr (mark-home m)))
-		  (new-player (make-player sound channel)))
-	     (add-player new-player (mark-sample m))
-	     (set! chans (max chans (1+ channel)))
-	     (set! rate (max rate (srate sound)))))
-	 (syncd-marks sync))
+    (for-each
+     (lambda (m)
+       (let* ((sound (car (mark-home m)))
+	      (channel (cadr (mark-home m)))
+	      (new-player (make-player sound channel)))
+	 (add-player new-player (mark-sample m))
+	 (set! chans (max chans (1+ channel)))
+	 (set! rate (max rate (srate sound)))))
+     (syncd-marks sync))
     (start-playing chans rate)))
 
 (define play-between-marks

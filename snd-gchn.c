@@ -390,10 +390,12 @@ static void history_select_callback(GtkTreeSelection *selection, gpointer *gp)
   GtkTreeModel *model;
   GtkTreePath *path;
   gint *indices;
+  chan_info *cp = (chan_info *)gp;
   if (!(gtk_tree_selection_get_selected(selection, &model, &iter))) return;
   path = gtk_tree_model_get_path(model, &iter);
   indices = gtk_tree_path_get_indices(path);
-  edit_select_callback((chan_info *)gp, indices[0], 0);
+  undo_edit_with_sync(cp, cp->edit_ctr - indices[0]);
+  goto_graph(cp);
   gtk_tree_path_free(path);
 }
 

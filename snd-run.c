@@ -8666,14 +8666,14 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	      (w->arg_types[0] < 0))
 	    {
 	      true_type = -(w->arg_types[0]);
-	      for (i = 0; i < num_args; i++)
-		if ((args[i + 1]->type != true_type) &&
+	      for (i = 1; i <= num_args; i++)
+		if ((args[i]->type != true_type) &&
 		    (((true_type != R_NUMBER) ||
-		      ((args[i + 1]->type != R_INT) && 
-		       (args[i + 1]->type != R_FLOAT))) &&
+		      ((args[i]->type != R_INT) && 
+		       (args[i]->type != R_FLOAT))) &&
 		     ((true_type != R_XEN) ||
-		      (!(xenable(args[i + 1]))))))
-		  return(clean_up(arg_warn(prog, funcname, i + 1, args, type_name(true_type)), args, num_args));
+		      (!(xenable(args[i]))))))
+		  return(clean_up(arg_warn(prog, funcname, i, args, type_name(true_type)), args, num_args));
 	    }
 	  else
 	    {

@@ -1,8 +1,6 @@
 #include "snd.h"
 
 /* TODO: multichan case can get in state where initial expose updates are ignored in chan>0 */
-/* TODO: if superimposed chans, edit, click in edit-history, need to redisplay all chans, not just 1st (and axes are messed up) */
-/*          ambiguity here caused by syncd edits/undo (sync is not on, but all chans get selection, etc) */
 /* TODO: if united chans, select chan should set edit_history to reflect selected chan (label also to show which is affected) */
 /* TODO: if superimposed, how to see edit history pane of >1 chan (more panes? arrows?) */
 /* TODO: if superimposed, selected portion is wrong color (white) */
@@ -3640,27 +3638,6 @@ void w_button_callback(chan_info *cp, int on, int with_control)
 	}
       goto_graph(cp);
     }
-}
-
-void edit_select_callback(chan_info *cp, int ed, int with_control)
-{
-  if (ed != cp->edit_ctr)
-    {
-      if (cp->edit_ctr > ed)
-	{
-	  if (with_control)
-	    undo_edit_with_sync(cp, cp->edit_ctr - ed);
-	  else undo_edit(cp, cp->edit_ctr - ed);
-	}
-      else 
-	{
-	  if (with_control)
-	    redo_edit_with_sync(cp, ed - cp->edit_ctr);	      
-	  else redo_edit(cp, ed - cp->edit_ctr);
-	}
-    }
-  /* don't let this list trap all subsequent clicks and keypresses! */
-  goto_graph(cp);
 }
 
 int key_press_callback(chan_info *ncp, int x, int y, int key_state, int keysym)

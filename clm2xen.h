@@ -18,7 +18,7 @@ void mus_xen_init(void);
 char *mus_fft_window_name(int i);
 XEN mus_xen_to_object(mus_xen *gn);
 XEN mus_xen_to_object_with_vct(mus_xen *gn, XEN v);
-int mus_decode_keywords(char *caller, int nkeys, XEN *keys, int nargs, XEN *args, int *orig);
+int mus_decode_keywords(const char *caller, int nkeys, XEN *keys, int nargs, XEN *args, int *orig);
 
 #if HAVE_RUBY
 void Init_sndlib(void);

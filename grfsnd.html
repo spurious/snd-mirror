@@ -298,7 +298,7 @@ name of this optional global initialization file is "/etc/snd.conf". It
 is read before your local file; both can, of course, be
 absent.  To override reading the global init file when Snd is invoked, include the switch -noglob.
 To override the local init file, use -noinit.  
-Here's a more extended example:
+Here's a more elaborate initialization file:
 </p>
 
 <pre>
@@ -510,7 +510,7 @@ Next add Guile wrappers to your C code:</p>
 </pre>
 <p>
 Next compile
-your code into a shared object (this example is for Linux):
+your code into a shared object (this is aimed at Linux):
 </p>
 <pre>
   cc -c cscm.c 
@@ -629,8 +629,7 @@ as a batch program.
 </p>
 
 <p>
-To give a specific example of this way of using Snd,
-say we have a sound processing CLM instrument we like; it takes
+Say we have a sound processing CLM instrument we like; it takes
 two sound file names as its arguments, reading the first and writing the second.
 In Snd we write the current edited state to a temporary file (<a href="extsnd.html#sndsaveas">save-sound-as</a>),
 start CLM, call the instrument 
@@ -645,8 +644,9 @@ We then delete the Snd output (the input to CLM).
 
 <p>To include the entire Snd editor as a widget in some other program,
 first compile it with -DSND_AS_WIDGET. Then load it into your program,
-using the procedure <b>snd_as_widget</b> to fire it up.  The program
-saw.c included with Snd is a very brief example.</p>
+using the procedure <b>snd_as_widget</b> to fire it up.  See
+saw.c included with Snd.
+</p>
 
 <pre>
   void snd_as_widget(int argc, char **argv, XtAppContext app, Widget parent, Arg *caller_args, int caller_argn)
@@ -659,10 +659,9 @@ be realized at the time of the call, since Snd uses it to set up graphics
 contexts and so on.  <i>argc</i> and <i>argv</i> can be passed to
 simulate a shell invocation of Snd.  Remember that in this case, the
 first string argument is expected to be the application name, and is
-ignored by Snd.</p>
-
-<p>In Gtk, the arguments are different, but the basic idea is the same.
-saw.c has an example.</p>
+ignored by Snd.
+In Gtk, the arguments are different, but the basic idea is the same.
+</p>
 
 <br>
 <span class=bbox><h3><A NAME="sndwithclm">Snd and the CLM module</a></h3></span>
@@ -1199,7 +1198,7 @@ Test 23 in snd-test.scm has a with-sound that includes most of these instruments
 <tr><td>fullmix</td><td>clm-ins.scm</td><td>complicated mixer</td></tr>
 <tr><td>freeverb</td><td>freeverb.scm</td><td>a reverberator</td></tr>
 <tr><td>gong</td><td>clm-ins.scm</td><td>Paul Weineke's FM gong</td></tr>
-<tr><td>gran-synth</td><td>clm-ins.scm</td><td>simple granular synthesis example</td></tr>
+<tr><td>gran-synth</td><td>clm-ins.scm</td><td>simple granular synthesis</td></tr>
 <tr><td>graphEq</td><td>clm-ins.scm</td><td>Marco Trevisani's semi-graphical equalizer</td></tr>
 <tr><td>jc-reverb</td><td>jcrev.scm, examp.rb</td><td>Chowning's old reverb</td></tr>
 <tr><td>jl-reverb</td><td>clm-ins.scm</td><td>cavernous version of jc-reverb</td></tr>
@@ -1216,7 +1215,7 @@ Test 23 in snd-test.scm has a with-sound that includes most of these instruments
 <tr><td>resflt</td><td>clm-ins.scm</td><td>two-poles for resonances (Xavier Serra)</td></tr>
 <tr><td>reson</td><td>clm-ins.scm</td><td>parallel FM creating resonances</td></tr>
 <tr><td>rhodey, wurley, hammondoid</td><td>clm-ins.scm</td><td>FM stuff from Perry Cook</td></tr>
-<tr><td>scm-simp</td><td>clm.html</td><td>simple sine wave example instrument</td></tr>
+<tr><td>scm-simp</td><td>clm.html</td><td>simple sine wave instrument</td></tr>
 <tr><td>scratch</td><td>clm-ins.scm</td><td>move around in sound via list of turn points and src</td></tr>
 <tr><td>singer</td><td>singer.scm</td><td>Perry Cook's vocal tract physical model</td></tr>
 <tr><td>spectra</td><td>clm-ins.scm</td><td>simple additive synthesis</td></tr>
@@ -1245,7 +1244,7 @@ a shared library named xm.so; you can load this at any time into Snd:
 <p>and now we have access to all of X and Motif.  Alternatively, use the
 configure switch --with-static-xm, and the xm module will be included
 in the base Snd image.
-As a very simple example, here's dialog window with a slider:</p>
+Here's dialog window with a slider:</p>
 <pre>
 (define scale-dialog #f)
 (define current-scaler 1.0)
@@ -1346,8 +1345,8 @@ end
 $Snd_widgets = main_widgets()
 create_scale_dialog $Snd_widgets[1]
 </pre>
-<p>All of Snd is at your disposal once this module is loaded.  As a more interesting example,
-the next function installs our own file filtering procedure into the File:Open dialog (it uses
+<p>All of Snd is at your disposal once this module is loaded.
+The next function installs our own file filtering procedure into the File:Open dialog (it uses
 match-sound-files from extensions.scm):
 </p>
 <pre>
@@ -1378,7 +1377,7 @@ match-sound-files from extensions.scm):
 ;(install-searcher (lambda (file) (= (mus-sound-chans file) 4)))
 </pre>
 <p>Now click the 'Filter' button to see only those files that fit the procedure in
-the dialog's files list.  See snd-motif.scm and popup.scm for more examples.
+the dialog's files list.  See snd-motif.scm and popup.scm.
 </p>
 <br>
 
@@ -1392,7 +1391,7 @@ Here's the scale-dialog in xg/gtk:
 (define current-scaler 1.0)
 
 (define* (g_signal_connect obj name func #:optional data)
-  ;; slightly obsolete example...
+  ;; slightly obsolete ...
   (g_signal_connect_closure_by_id 
    (list 'gpointer (cadr obj))
    (g_signal_lookup name (G_OBJECT_TYPE (GTK_OBJECT obj)))
@@ -1513,7 +1512,7 @@ tell Snd to ignore arguments.  script-args returns a list of strings
 giving the arguments.  The first two are always "-l" and the script
 file name. The current argument is (script-arg).  If you set this to
 a higher value, Snd will subsequently ignore the intevening arguments
-as it scans the startup arguments (see snd-test.scm for an example).
+as it scans the startup arguments (see snd-test.scm).
 </p>
 <pre>
 #!/home/bil/test/snd-6/snd -l
@@ -1534,7 +1533,7 @@ script pistol.snd
 </pre>
 <p>And obviously we can run through the entire argument list,
 doubling all the sounds or whatever by using a do loop --
-the following example displays all the comments it finds:
+the following displays all the comments it finds:
 </p>
 <pre>
 #!/home/bil/cl/snd -l
@@ -1567,7 +1566,7 @@ Say we save this as the file "comments".</p>
 This scripting mechanism actually will work in any version of Snd;
 to keep the Snd window from popping up, use the -b (-batch) switch in
 place of -l.
-Here's another script example; it looks for any sounds that are longer
+Here's another script; it looks for any sounds that are longer
 than 40 seconds in duration, and truncates them to 40 seconds:
 </p>
 <pre>
@@ -1807,8 +1806,7 @@ The main function is:
 An example call to apply the low-pass-filter in the CMT plugin library is 
 (apply-ladspa (make-sample-reader 0) (list "cmt" "lpf" 1000) 10000 "origin").
 </pre>
-<p>Dave Phillips in <a href="http://www.oreillynet.com/pub/a/linux/2001/02/02/ladspa.html">Linux Audio Plug-Ins: A Look Into LADSPA</a> adds this
-example:
+<p>Dave Phillips in <a href="http://www.oreillynet.com/pub/a/linux/2001/02/02/ladspa.html">Linux Audio Plug-Ins: A Look Into LADSPA</a> adds this:
 </p>
 <pre>
   (apply-ladspa (make-sample-reader 57264) (list "cmt" "delay_5s" .3 .5) 32556 "ibm.wav")
@@ -1857,7 +1855,7 @@ than one input is required, the first argument to apply-ladspa should be a list 
 <span class=bbox><h3><A NAME="sndandx">Driving Snd remotely</a></h3></span>
 
 <p>It is possible to send Snd arbitrary Scheme or Ruby code from any other program;
-the program sndctrl.c is a simple example.  Snd has two X window properties:
+see the program sndctrl.c.  Snd has two X window properties:
 "SND_VERSION" and "SND_COMMAND"; the former is the Snd version (a date),
 and the latter is the communication path for other programs.  Any time
 such a program changes the SND_COMMAND property, Snd notices and evaluates
@@ -1925,7 +1923,7 @@ program:
   (glFlush))
 </pre></td></tr></table>
 <br>
-<p>For more examples, see snd-gl.scm.
+<p>See snd-gl.scm.
 </p>
 <br>
 <table border>

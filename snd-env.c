@@ -1278,7 +1278,7 @@ void add_or_edit_symbol(char *name, env *val)
   FREE(buf);
 }
 
-env *get_env(XEN e, char *origin) /* list in e */
+env *get_env(XEN e, const char *origin) /* list in e */
 {
   Float *buf = NULL;
   int i, len = 0;

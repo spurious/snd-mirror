@@ -181,7 +181,7 @@ static void init_keywords(void)
     all_keys[i] = XEN_MAKE_KEYWORD((char *)(keywords[i]));
 }
 
-int mus_decode_keywords(char *caller, int nkeys, XEN *keys, int nargs, XEN *args, int *orig)
+int mus_decode_keywords(const char *caller, int nkeys, XEN *keys, int nargs, XEN *args, int *orig)
 {
   /* implement the &optional-key notion in CLM */
   int arg_ctr = 0, key_start = 0, rtn_ctr = 0, i, keying = 0, key_found = 0;
@@ -235,7 +235,7 @@ int mus_decode_keywords(char *caller, int nkeys, XEN *keys, int nargs, XEN *args
   return(rtn_ctr);
 }
 
-static Float fkeyarg (XEN key, char *caller, int n, Float def)
+static Float fkeyarg (XEN key, const char *caller, int n, Float def)
 {
   if (!(XEN_KEYWORD_P(key)))
     {
@@ -245,25 +245,39 @@ static Float fkeyarg (XEN key, char *caller, int n, Float def)
   return(def);
 }
 
-static int ikeyarg (XEN key, char *caller, int n, int def)
+static int ikeyarg (XEN key, const char *caller, int n, int def)
 {
   if (!(XEN_KEYWORD_P(key)))
     {
-      XEN_ASSERT_TYPE(XEN_NUMBER_P(key), key, n, caller, "a number or keyword");
+      XEN_ASSERT_TYPE(XEN_NUMBER_P(key), key, n, caller, "an integer or keyword");
       return(XEN_TO_C_INT_OR_ELSE_WITH_CALLER(key, def, caller));
     }
   return(def);
 }
 
-static off_t okeyarg (XEN key, char *caller, int n, off_t def)
+static off_t okeyarg (XEN key, const char *caller, int n, off_t def)
 {
   if (!(XEN_KEYWORD_P(key)))
     {
-      XEN_ASSERT_TYPE(XEN_NUMBER_P(key), key, n, caller, "a number or keyword");
+      XEN_ASSERT_TYPE(XEN_NUMBER_P(key), key, n, caller, "a sample number or keyword");
       return(XEN_TO_C_OFF_T_OR_ELSE(key, def));
     }
   return(def);
 }
+
+#if 0
+static mus_any *mkeyarg(XEN key, const char *caller, int n, mus_any *def)
+{
+  /* from Michael Scholz's sndins.c */
+  if (!(XEN_KEYWORD_P(key))) 
+    {
+      XEN_ASSERT_TYPE(MUS_XEN_P(key), key, n, caller, "a clm generator or keyword");
+      return(XEN_TO_MUS_ANY(key));
+    }
+  return(def);
+}
+#endif
+
 
 
 /* ---------------- AM and simple stuff ---------------- */

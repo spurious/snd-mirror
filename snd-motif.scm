@@ -1244,7 +1244,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 ;;;   is up to caller-supplied procedure.  However, if you drag (via 
 ;;;   button 2) the icon to the menubar, that sound will be opened,
 ;;;   and if you drag it to a channel graph, it will be mixed at the
-;;;   cursor in that channel.
+;;;   drag point in that channel.
 
 
 (define (thumbnail-graph dpy wn gc pts width height)

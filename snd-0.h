@@ -127,7 +127,9 @@
   #define S_setB "set! "
 #endif
 
+#ifndef STRFTIME_FORMAT
 #define STRFTIME_FORMAT "%a %d-%b-%Y %H:%M %Z"
+#endif
 
 #define STR_decimal '.'
 /* defines the decimal point character used where I'm making float representations by hand */

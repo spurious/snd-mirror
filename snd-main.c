@@ -180,37 +180,37 @@ static char *b2s(int val) {if (val) return("#t"); else return("#f");}
 #define white_space "      "
 
 #if HAVE_RUBY
-static void pss_ss(FILE *fd, char *name, char *val) {fprintf(fd, "set_%s(%s)\n", TO_PROC_NAME(name), val);}
-static void pss_sq(FILE *fd, char *name, char *val) {fprintf(fd, "set_%s(\"%s\")\n", TO_PROC_NAME(name), val);}
-static void pss_sd(FILE *fd, char *name, int val)   {fprintf(fd, "set_%s(%d)\n", TO_PROC_NAME(name), val);}
-static void pss_sf(FILE *fd, char *name, Float val) {fprintf(fd, "set_%s(%.4f)\n", TO_PROC_NAME(name), val);}
+static void pss_ss(FILE *fd, const char *name, const char *val) {fprintf(fd, "set_%s(%s)\n", TO_PROC_NAME(name), val);}
+static void pss_sq(FILE *fd, const char *name, const char *val) {fprintf(fd, "set_%s(\"%s\")\n", TO_PROC_NAME(name), val);}
+static void pss_sd(FILE *fd, const char *name, int val)   {fprintf(fd, "set_%s(%d)\n", TO_PROC_NAME(name), val);}
+static void pss_sf(FILE *fd, const char *name, Float val) {fprintf(fd, "set_%s(%.4f)\n", TO_PROC_NAME(name), val);}
 
-static void psp_ss(FILE *fd, char *name, char *val) {fprintf(fd, "%sset_%s(%s, sfile)\n", white_space, TO_PROC_NAME(name), val);}
-static void psp_sd(FILE *fd, char *name, int val)   {fprintf(fd, "%sset_%s(%d, sfile)\n", white_space, TO_PROC_NAME(name), val);}
-static void psp_sf(FILE *fd, char *name, Float val) {fprintf(fd, "%sset_%s(%.4f, sfile)\n", white_space, TO_PROC_NAME(name), val);}
+static void psp_ss(FILE *fd, const char *name, const char *val) {fprintf(fd, "%sset_%s(%s, sfile)\n", white_space, TO_PROC_NAME(name), val);}
+static void psp_sd(FILE *fd, const char *name, int val)   {fprintf(fd, "%sset_%s(%d, sfile)\n", white_space, TO_PROC_NAME(name), val);}
+static void psp_sf(FILE *fd, const char *name, Float val) {fprintf(fd, "%sset_%s(%.4f, sfile)\n", white_space, TO_PROC_NAME(name), val);}
 
-static void pcp_ss(FILE *fd, char *name, char *val, int chan) {fprintf(fd, "%sset_%s(%s, sfile, %d)\n", white_space, TO_PROC_NAME(name), val, chan);}
-static void pcp_sd(FILE *fd, char *name, int val, int chan)   {fprintf(fd, "%sset_%s(%d, sfile, %d)\n", white_space, TO_PROC_NAME(name), val, chan);}
-static void pcp_sod(FILE *fd, char *name, off_t val, int chan)   {fprintf(fd, "%sset_%s(" OFF_TD ", sfile, %d)\n", white_space, TO_PROC_NAME(name), val, chan);}
-static void pcp_sf(FILE *fd, char *name, Float val, int chan) {fprintf(fd, "%sset_%s(%.4f, sfile, %d)\n", white_space, TO_PROC_NAME(name), val, chan);}
-static void pcp_sl(FILE *fd, char *name, Float val1, Float val2, int chan) 
+static void pcp_ss(FILE *fd, const char *name, const char *val, int chan) {fprintf(fd, "%sset_%s(%s, sfile, %d)\n", white_space, TO_PROC_NAME(name), val, chan);}
+static void pcp_sd(FILE *fd, const char *name, int val, int chan)   {fprintf(fd, "%sset_%s(%d, sfile, %d)\n", white_space, TO_PROC_NAME(name), val, chan);}
+static void pcp_sod(FILE *fd, const char *name, off_t val, int chan)   {fprintf(fd, "%sset_%s(" OFF_TD ", sfile, %d)\n", white_space, TO_PROC_NAME(name), val, chan);}
+static void pcp_sf(FILE *fd, const char *name, Float val, int chan) {fprintf(fd, "%sset_%s(%.4f, sfile, %d)\n", white_space, TO_PROC_NAME(name), val, chan);}
+static void pcp_sl(FILE *fd, const char *name, Float val1, Float val2, int chan) 
   {fprintf(fd, "%sset_%s([%f, %f], sfile, %d)\n", white_space, TO_PROC_NAME(name), val1, val2, chan);}
 #endif
 #if HAVE_GUILE || (!HAVE_EXTENSION_LANGUAGE)
-static void pss_ss(FILE *fd, char *name, char *val) {fprintf(fd, "(set! (%s) %s)\n", name, val);}
-static void pss_sq(FILE *fd, char *name, char *val) {fprintf(fd, "(set! (%s) \"%s\")\n", name, val);}
-static void pss_sd(FILE *fd, char *name, int val)   {fprintf(fd, "(set! (%s) %d)\n", name, val);}
-static void pss_sf(FILE *fd, char *name, Float val) {fprintf(fd, "(set! (%s) %.4f)\n", name, val);}
+static void pss_ss(FILE *fd, const char *name, const char *val) {fprintf(fd, "(set! (%s) %s)\n", name, val);}
+static void pss_sq(FILE *fd, const char *name, const char *val) {fprintf(fd, "(set! (%s) \"%s\")\n", name, val);}
+static void pss_sd(FILE *fd, const char *name, int val)   {fprintf(fd, "(set! (%s) %d)\n", name, val);}
+static void pss_sf(FILE *fd, const char *name, Float val) {fprintf(fd, "(set! (%s) %.4f)\n", name, val);}
 
-static void psp_ss(FILE *fd, char *name, char *val) {fprintf(fd, "%s(set! (%s sfile) %s)\n", white_space, name, val);}
-static void psp_sd(FILE *fd, char *name, int val)   {fprintf(fd, "%s(set! (%s sfile) %d)\n", white_space, name, val);}
-static void psp_sf(FILE *fd, char *name, Float val) {fprintf(fd, "%s(set! (%s sfile) %.4f)\n", white_space, name, val);}
+static void psp_ss(FILE *fd, const char *name, const char *val) {fprintf(fd, "%s(set! (%s sfile) %s)\n", white_space, name, val);}
+static void psp_sd(FILE *fd, const char *name, int val)   {fprintf(fd, "%s(set! (%s sfile) %d)\n", white_space, name, val);}
+static void psp_sf(FILE *fd, const char *name, Float val) {fprintf(fd, "%s(set! (%s sfile) %.4f)\n", white_space, name, val);}
 
-static void pcp_ss(FILE *fd, char *name, char *val, int chan) {fprintf(fd, "%s(set! (%s sfile %d) %s)\n", white_space, name, chan, val);}
-static void pcp_sd(FILE *fd, char *name, int val, int chan)   {fprintf(fd, "%s(set! (%s sfile %d) %d)\n", white_space, name, chan, val);}
-static void pcp_sod(FILE *fd, char *name, off_t val, int chan)   {fprintf(fd, "%s(set! (%s sfile %d) " OFF_TD ")\n", white_space, name, chan, val);}
-static void pcp_sf(FILE *fd, char *name, Float val, int chan) {fprintf(fd, "%s(set! (%s sfile %d) %.4f)\n", white_space, name, chan, val);}
-static void pcp_sl(FILE *fd, char *name, Float val1, Float val2, int chan) 
+static void pcp_ss(FILE *fd, const char *name, const char *val, int chan) {fprintf(fd, "%s(set! (%s sfile %d) %s)\n", white_space, name, chan, val);}
+static void pcp_sd(FILE *fd, const char *name, int val, int chan)   {fprintf(fd, "%s(set! (%s sfile %d) %d)\n", white_space, name, chan, val);}
+static void pcp_sod(FILE *fd, const char *name, off_t val, int chan)   {fprintf(fd, "%s(set! (%s sfile %d) " OFF_TD ")\n", white_space, name, chan, val);}
+static void pcp_sf(FILE *fd, const char *name, Float val, int chan) {fprintf(fd, "%s(set! (%s sfile %d) %.4f)\n", white_space, name, chan, val);}
+static void pcp_sl(FILE *fd, const char *name, Float val1, Float val2, int chan) 
   {fprintf(fd, "%s(set! (%s sfile %d) (list %f %f))\n", white_space, name, chan, val1, val2);}
 #endif
 
@@ -441,6 +441,21 @@ static void save_property_list(FILE *fd, XEN property_list, int chan)
 }
 #endif
 
+static int find_sound_nth(snd_state *ss, snd_info *nsp)
+{
+  snd_info *sp;
+  int i, which = 0;
+  for (i = 0; i < nsp->index; i++)
+    {
+      sp = ss->sounds[i];
+      if ((sp) && (sp->inuse == SOUND_NORMAL))
+	if ((strcmp(nsp->short_filename, sp->short_filename) == 0) || 
+	    (strcmp(nsp->filename, sp->filename) == 0))
+	  which++;
+    }
+  return(which);
+}
+
 static void save_sound_state (snd_info *sp, void *ptr) 
 {
   /* called only after the global settings have been established, so here we can't use the DEFAULT_* macros that are ambiguous */
@@ -452,17 +467,22 @@ static void save_sound_state (snd_info *sp, void *ptr)
   snd_state *ss;
   ss = sp->state;
   fd = (FILE *)ptr;
+  /* here we have to use the 'nth' arg to find_sound -- it should return #f if such an 'nth' case is not found,
+   *   so that we can tell when to open another view on a given file
+   */
 #if HAVE_RUBY
-  fprintf(fd, "begin\n  sfile = %s(\"%s\")\n  if (sfile == false)\n    sfile = %s(\"%s\")\n  end\n",
+  fprintf(fd, "begin\n  sfile = %s(\"%s\", %d)\n  if (sfile == false)\n    sfile = %s(\"%s\")\n  end\n",
 	  TO_PROC_NAME(S_find_sound),
 	  sp->short_filename,
+	  find_sound_nth(ss, sp),
 	  TO_PROC_NAME((sp->read_only) ? S_view_sound : S_open_sound),
 	  sp->filename);
   
 #else
-  fprintf(fd, "(let ((sfile (or (%s \"%s\") (%s \"%s\"))))\n  (if sfile\n    (begin\n",
+  fprintf(fd, "(let ((sfile (or (%s \"%s\" %d) (%s \"%s\"))))\n  (if sfile\n    (begin\n",
 	  S_find_sound,
-	  sp->short_filename,
+	  sp->short_filename, /* short filename ok because find-sound searches for that name as well as the full filename */
+	  find_sound_nth(ss, sp),
 	  (sp->read_only) ? S_view_sound : S_open_sound,
 	  sp->filename);
 #endif

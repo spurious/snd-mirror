@@ -841,7 +841,7 @@
 			      (snd-display ";~A /= ~A (~A)" (car lst) (caddr lst) (cadr lst))))
 		      (test-defaults (cdddr lst)))))))
       (run-hook before-test-hook 1)
-      (map close-sound (sounds)) ; in case others opened elsewhere
+      (for-each close-sound (sounds)) ; in case others opened elsewhere
       (test-defaults
        (list
 	'amp-control (without-errors (amp-control)) 'no-such-sound
@@ -8500,7 +8500,7 @@ EDITS: 5
 			 #f))
 	    (save-state "s61.scm")
 	    (close-sound index)
-	    (map forget-region (regions))
+	    (for-each forget-region (regions))
 	    (load "s61.scm")
 	    (if (not (equal? old-reglen (map region-frames (regions))))
 		(snd-display ";region-frames after save: ~A ~A" old-reglen (map region-frames (regions))))
@@ -15062,7 +15062,8 @@ EDITS: 5
 				   (mix-property 'pan-mix id3))))
 
 		    (XtUnmanageChild mixd))
-		  (close-sound ind)))
+	      (close-sound ind)
+	      ))
 
 	(if (and (provided? 'snd-motif)
 		 (provided? 'xm))
@@ -16132,7 +16133,7 @@ EDITS: 5
 			     (fd (list-ref open-files choice)))
 			(close-sound fd)
 			(set! open-files (remove-if (lambda (a) (= a fd)) open-files)))))))
-	  (if open-files (map close-sound open-files))
+	  (if open-files (for-each close-sound open-files))
 	  (if (not (= (length (sounds)) 0)) (snd-display ";active-sounds: ~A ~A?" (sounds) (map short-file-name (sounds))))
 	  (let* ((name (string-append sf-dir (list-ref sf-dir-files 0)))
 		 (index (view-sound name)))
@@ -17455,7 +17456,7 @@ EDITS: 5
 	  ((= test-ctr tests))
 	(if (> (length open-files) 8)
 	    (begin
-	      (map close-sound open-files)
+	      (for-each close-sound open-files)
 	      (set! open-files '())))
 	(log-mem test-ctr)
 	(let* ((len (length open-files))
@@ -17693,7 +17694,7 @@ EDITS: 5
 		 (reverse-selection)
 		 (undo 2 cfd))
 	       (if (> (length (regions)) 2) (forget-region (list-ref (regions) 2)))))
-	    (map revert-sound open-files)
+	    (for-each revert-sound open-files)
 	    
 	    (without-errors
 	     (let ((cfd (car open-files)))
@@ -17758,7 +17759,7 @@ EDITS: 5
 	    (insert-sound "oboe.snd")
 	    (reset-hook! graph-hook)
 	    (reset-hook! transform-hook)
-	    (map revert-sound open-files)
+	    (for-each revert-sound open-files)
 	    
 	    (let ((ind (choose-fd)))
 	      (select-sound ind)
@@ -18291,7 +18292,7 @@ EDITS: 5
 		  (set! (transform-size) (min (transform-size) 128))))
 	    
 	    )))
-      (if open-files (map close-sound open-files))
+      (if open-files (for-each close-sound open-files))
       (set! open-files '())
       (set! (mus-rand-seed) 1234)
       (if (not (= (mus-rand-seed) 1234)) (snd-display ";mus-rand-seed: ~A (1234)!" (mus-rand-seed)))
@@ -20355,7 +20356,7 @@ EDITS: 5
 	  (let ((vals (channel->vct (- 12345 50) 200 ind 0)))
 	    (save-state "hiho.scm")
 	    (close-sound ind)
-	    (map forget-region (regions))
+	    (for-each forget-region (regions))
 	    (load "hiho.scm")
 	    (set! ind (find-sound "oboe.snd"))
 	    (if (not (sound? ind))
@@ -20372,7 +20373,7 @@ EDITS: 5
 	     (func ind)
 	     (save-state "s61.scm")
 	     (close-sound ind)
-	     (map forget-region (regions))
+	     (for-each forget-region (regions))
 	     (load "s61.scm")
 	     (set! ind (find-sound "oboe.snd"))
 	     (if (fneq (maxamp ind) val)
@@ -23828,7 +23829,7 @@ EDITS: 1
 	(save-state (save-state-file))
 	(save-options "test.temp")
 	(close-sound nind)
-	(map forget-region (regions))
+	(for-each forget-region (regions))
 	(load (save-state-file))
 	(let ((ind (find-sound "oboe.snd")))
 	  (if (or (> (abs (- (car old-bounds) (car (x-bounds ind 0)))) .05)
@@ -23988,7 +23989,7 @@ EDITS: 5
 	(let ((eds (display-edits ind)))
 	  (save-state "t1.scm")
 	  (close-sound ind)
-	  (map forget-region (regions))
+	  (for-each forget-region (regions))
 	  (load "t1.scm")
 	  (set! ind (find-sound "fmv.snd"))
 	  (if (not (sound? ind))
@@ -24002,7 +24003,7 @@ EDITS: 5
 	    (set! eds (display-edits ind))
 	    (save-state "t1.scm")
 	    (close-sound ind)
-	    (map forget-region (regions))
+	    (for-each forget-region (regions))
 	    (load "t1.scm")
 	    (set! ind (find-sound "fmv.snd"))
 	    (if (not (sound? ind))
@@ -24034,7 +24035,7 @@ EDITS: 5
 	  (save-state "t1.scm")
 	  (close-sound ind)
 	  (close-sound ind1)
-	  (map forget-region (regions))
+	  (for-each forget-region (regions))
 	  (load "t1.scm")
 	  (set! ind (find-sound "fmv.snd"))
 	  (set! ind1 (find-sound "fmv1.snd"))
@@ -24070,7 +24071,7 @@ EDITS: 5
 	(set! (eps-file) "hiho.eps")
 	(save-state "s61.scm")
 	(close-sound ind)
-	(map forget-region (regions))
+	(for-each forget-region (regions))
 	(load "s61.scm")
 	(set! (save-dir) old-save-dir)
 	(set! ind (find-sound "oboe.snd"))
@@ -24133,7 +24134,7 @@ EDITS: 2
 	(set! (channel-style ind) channels-separate)
 	(save-state "s61.scm")
 	(close-sound ind)
-	(map forget-region (regions))
+	(for-each forget-region (regions))
 	(load "s61.scm")
 	(set! ind (find-sound "oboe.snd"))
 	(for-each (lambda (func func-name global local)
@@ -24149,7 +24150,29 @@ EDITS: 2
 	(set! (zoom-focus-style) zoom-focus-active)
 	(set! (channel-style) channels-separate)
 	(delete-file "s61.scm"))
-      
+
+      (let ((ind0 (open-sound "oboe.snd"))
+	    (ind1 (open-sound "oboe.snd")))
+	(if (not (= (find-sound "oboe.snd" 0) ind0))
+	    (snd-display ";find-sound 0: ~A ~A" ind0 (find-sound "oboe.snd" 0)))
+	(if (not (= (find-sound "oboe.snd" 1) ind1))
+	    (snd-display ";find-sound 1: ~A ~A" ind1 (find-sound "oboe.snd" 1)))
+	(add-mark 123 ind0)
+	(add-mark 321 ind1)
+	(save-state "s61.scm")
+	(close-sound ind0)
+	(close-sound ind1)
+	(load "s61.scm")
+	(set! ind0 (find-sound "oboe.snd" 0))
+	(set! ind1 (find-sound "oboe.snd" 1))
+	(if (or (not ind0) (not ind1)) (snd-display ";saved 2oboes, found: ~A" (map short-file-name (sounds))))
+	(if (not (find-mark 123 ind0)) (snd-display ";saved 2oboes mark 0?"))
+	(if (find-mark 123 ind1) (snd-display ";saved 2oboes mark 1->0?"))
+	(if (not (find-mark 321 ind1)) (snd-display ";saved 2oboes mark 1?"))
+	(if (find-mark 321 ind0) (snd-display ";saved 2oboes mark 0->1?"))
+	(close-sound ind0)
+	(close-sound ind1))
+        
       (mus-sound-prune)
       (run-hook after-test-hook 19)
       ))
@@ -28691,7 +28714,7 @@ EDITS: 2
 		(if (not (vequal v0 v1)) (snd-display ";jcrev: opt: ~A ~A" v0 v1))
 		(set! ts (cons (list "jcrev  " t0 t1 (inexact->exact (round (/ t0 t1)))) ts))
 		(close-sound ind))
-	      (snd-display ";         ~{~%       ~A~}~%" ts))
+	      (snd-display "~{       ~A~%~}~%" ts))
 	    
 	    (let* ((osc (make-oscil 440))
 		   (vi (make-vector 2 1))
@@ -28836,8 +28859,10 @@ EDITS: 2
       (if (fneq total-dur (/ (frames ind) (srate ind))) 
 	  (snd-display ";with-mix (~A) total dur: ~A ~A" num total-dur (/ (frames ind) (srate ind))))
       (if (and old-date
-	       (not (= date old-date))) 
-	  (snd-display ";with-mix (~A) rewrote output?: ~A ~A" num date old-date))
+	       (> (abs (- date old-date)) 1)) ; these can be off by one in Linux
+	  (snd-display ";with-mix (~A) rewrote output?: ~A ~A" num 
+		       (strftime "%d-%b-%g %H:%M:%S" (localtime old-date))
+		       (strftime "%d-%b-%g %H:%M:%S" (localtime date))))
       (if (and chkmx (or (not mx) (fneq (cadr mx) amp))) (snd-display ";with-mix sndf (~A) maxamp: ~A (~A)" num mx amp))
       (let ((header-str (mus-sound-comment "with-mix.snd")))
 	(if (not (string? header-str)) (snd-display ";with-mix (~A) comment unwritten?: ~A" num (mus-sound-comment "with-mix.snd")))
@@ -28939,7 +28964,7 @@ EDITS: 2
       (if (file-exists? "ii.scm")
 	  (begin
 	    (time (load "ii.scm"))
-	    (map close-sound (sounds))
+	    (for-each close-sound (sounds))
 	    (delete-file "test.snd")
 	    (delete-file "test.rev")))
       

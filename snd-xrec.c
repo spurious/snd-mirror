@@ -2851,7 +2851,7 @@ void finish_recording(snd_state *ss, recorder_info *rp)
   FREE(str);
   if (rp->autoload)
     {
-      if ((sp = find_sound(ss, rp->output_file)))
+      if ((sp = find_sound(ss, rp->output_file, 0)))
 	snd_update(ss, sp);
       else snd_open_file(rp->output_file, ss, FALSE);
     }

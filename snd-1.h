@@ -151,12 +151,6 @@ typedef struct {
 } axis_info;
 
 typedef struct {
-  int chans, fields;
-  double *axis_data;
-  int *fftp, *wavep;
-} axes_data;
-
-typedef struct {
   off_t samp;
   char *name;
   unsigned int id, sync;
@@ -416,14 +410,14 @@ void file_buffers_back(off_t ind0, off_t ind1, off_t indx, snd_fd *sf, snd_data 
 int snd_remove(const char *name, int forget);
 int snd_close(int fd, const char *name);
 int snd_fclose(FILE *fd, const char *name);
-void remember_temp(char *filename, int chans);
+void remember_temp(const char *filename, int chans);
 void forget_temps(void);
-snd_data *make_snd_data_file(char *name, snd_io *io, file_info *hdr, int temp, int ctr, int temp_chan);
+snd_data *make_snd_data_file(const char *name, snd_io *io, file_info *hdr, int temp, int ctr, int temp_chan);
 snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize);
 snd_data *free_snd_data(snd_data *sf);
 snd_data *make_snd_data_buffer(mus_sample_t *data, int len, int ctr);
 snd_data *make_snd_data_buffer_for_simple_channel(int len);
-int open_temp_file(char *ofile, int chans, file_info *hdr, snd_state *ss);
+int open_temp_file(const char *ofile, int chans, file_info *hdr, snd_state *ss);
 int close_temp_file(int ofd, file_info *hdr, off_t bytes, snd_info *sp);
 
 
@@ -597,12 +591,12 @@ void play_syncd_mark(chan_info *cp, mark *mp);
 off_t move_play_mark(chan_info *cp, off_t *mc, Locus cx);
 void finish_moving_play_mark(chan_info *cp);
 void finish_moving_mark(chan_info *cp, mark *m);
-mark *add_mark(off_t samp, char *name, chan_info *cp);
+mark *add_mark(off_t samp, const char *name, chan_info *cp);
 void delete_mark_samp(off_t samp, chan_info *cp);
 void free_mark_list(chan_info *cp, int ignore);
 void collapse_marks (snd_info *sp);
 void goto_mark(chan_info *cp, int count);
-void goto_named_mark(chan_info *cp, char *name);
+void goto_named_mark(chan_info *cp, const char *name);
 mark *active_mark(chan_info *cp);
 off_t mark_beg(chan_info *cp);
 void display_channel_marks(chan_info *cp);
@@ -653,7 +647,7 @@ sync_info *free_sync_info (sync_info *si);
 sync_info *snd_sync(snd_state *ss, int sync);
 sync_info *sync_to_chan(chan_info *cp);
 sync_info *make_simple_sync (chan_info *cp, off_t beg);
-snd_info *find_sound(snd_state *ss, char *name);
+snd_info *find_sound(snd_state *ss, char *name, int nth);
 void display_info(snd_info *sp);
 
 void g_init_data(void);
@@ -911,7 +905,7 @@ void delete_envelope(snd_state *ss, char *name);
 
 XEN env_to_xen (env *e);
 env *xen_to_env(XEN res);
-env *get_env(XEN e, char *origin);
+env *get_env(XEN e, const char *origin);
 void g_init_env(void);
 int check_enved_hook(env *e, int pos, Float x, Float y, int reason);
 
@@ -1010,7 +1004,6 @@ void fftb(chan_info *cp, int on);
 void waveb(chan_info *cp, int on);
 void f_button_callback(chan_info *cp, int on, int with_control);
 void w_button_callback(chan_info *cp, int on, int with_control);
-void edit_select_callback(chan_info *cp, int ed, int with_control);
 axis_context *set_context (chan_info *cp, int gc);
 axis_context *copy_context (chan_info *cp);
 axis_context *erase_context (chan_info *cp);
@@ -1096,9 +1089,9 @@ void restore_listener_string(int back);
 
 /* -------- snd-file -------- */
 
-axes_data *free_axes_data(axes_data *sa);
-axes_data *make_axes_data(snd_info *sp);
-int restore_axes_data(snd_info *sp, axes_data *sa, Float new_duration, int need_edit_history_update);
+void *free_axes_data(void *sa);
+void *make_axes_data(snd_info *sp);
+int restore_axes_data(snd_info *sp, void *sa, Float new_duration, int need_edit_history_update);
 off_t disk_kspace (char *filename);
 time_t file_write_date(char *filename);
 int is_link(char *filename);

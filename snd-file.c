@@ -888,8 +888,15 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
   return(sp);
 }
 
-axes_data *free_axes_data(axes_data *sa)
+typedef struct {
+  int chans, fields;
+  double *axis_data;
+  int *fftp, *wavep;
+} axes_data;
+
+void *free_axes_data(void *usa)
 {
+  axes_data *sa = (axes_data *)usa;
   if (sa)
     {
       if (sa->axis_data) {FREE(sa->axis_data); sa->axis_data = NULL;}
@@ -902,7 +909,7 @@ axes_data *free_axes_data(axes_data *sa)
 
 enum {SA_X0, SA_X1, SA_Y0, SA_Y1, SA_XMIN, SA_XMAX, SA_YMIN, SA_YMAX};
 
-axes_data *make_axes_data(snd_info *sp)
+void *make_axes_data(snd_info *sp)
 {
   axes_data *sa;
   chan_info *cp;
@@ -930,11 +937,12 @@ axes_data *make_axes_data(snd_info *sp)
       sa->wavep[i] = cp->graph_time_p;
       sa->fftp[i] = cp->graph_transform_p;
     }
-  return(sa);
+  return((void *)sa);
 }
 
-int restore_axes_data(snd_info *sp, axes_data *sa, Float new_duration, int need_edit_history_update)
+int restore_axes_data(snd_info *sp, void *usa, Float new_duration, int need_edit_history_update)
 {
+  axes_data *sa = (axes_data *)usa;
   int i, j, loc, need_update = FALSE;
   Float old_duration;
   chan_info *cp;
@@ -1136,7 +1144,7 @@ static snd_info *snd_update_1(snd_state *ss, snd_info *sp, char *ur_filename)
 {
   /* we can't be real smart here because the channel number may have changed and so on */
   int i, read_only, old_srate, old_chans, old_format, old_raw, sp_chans, old_index, old_channel_style;
-  axes_data *sa;
+  void *sa;
   snd_info *nsp = NULL;
   char *filename;
   void *ms;
@@ -1273,7 +1281,7 @@ char *get_curfullname(int pos)
   snd_info *sp;
   snd_state *ss;
   ss = get_global_state();
-  sp = find_sound(ss, curnames[pos]);
+  sp = find_sound(ss, curnames[pos], 0);
   if (sp) return(sp->filename);
   return(NULL);
 }
@@ -1286,7 +1294,7 @@ char *view_curfiles_name(int pos)
 void view_curfiles_play(snd_state *ss, int pos, int play)
 {
   snd_info *sp;
-  sp = find_sound(ss, curnames[pos]);
+  sp = find_sound(ss, curnames[pos], 0);
   if (sp)
     {
       if (sp->playing) stop_playing_sound(sp);
@@ -1300,7 +1308,7 @@ void view_curfiles_select(snd_state *ss, int pos)
 {
   snd_info *sp, *osp;
   curfile_highlight(ss, pos);
-  sp = find_sound(ss, curnames[pos]);
+  sp = find_sound(ss, curnames[pos], 0);
   osp = any_selected_sound(ss);
   if (sp != osp)
     {
@@ -1313,7 +1321,7 @@ void view_curfiles_select(snd_state *ss, int pos)
 void view_curfiles_save(snd_state *ss, int pos)
 {
   snd_info *sp;
-  sp = find_sound(ss, curnames[pos]);
+  sp = find_sound(ss, curnames[pos], 0);
   if (sp) save_edits(sp, NULL);
 }
 

@@ -1884,14 +1884,16 @@ static XEN g_select_channel(XEN chn_n)
   return(snd_no_such_channel_error(S_select_channel, C_TO_XEN_STRING("selected-sound"), chn_n));
 }
 
-static XEN g_find_sound(XEN filename)
+static XEN g_find_sound(XEN filename, XEN which)
 {
-  #define H_find_sound "(" S_find_sound " name): return the id of the sound associated with file 'name'"
+  #define H_find_sound "(" S_find_sound " name (nth 0)): return the id of the sound associated with file 'name'. \
+If more than one such sound exists, 'nth' chooses which one to return."
   snd_state *ss;
   snd_info *sp;
-  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ONLY_ARG, S_find_sound, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ARG_1, S_find_sound, "a string");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(which), which, XEN_ARG_2, S_find_sound, "an integer");
   ss = get_global_state();
-  sp = find_sound(ss, XEN_TO_C_STRING(filename));
+  sp = find_sound(ss, XEN_TO_C_STRING(filename), XEN_TO_C_INT_OR_ELSE(which, 0));
   if (sp) return(C_TO_XEN_INT(sp->index));
   return(xen_return_first(XEN_FALSE, filename));
 }
@@ -3665,7 +3667,7 @@ If 'filename' is a sound index (an integer), 'size' is an edit-position, and the
      then peak
      then read direct (via make_sound_readable)
   */
-  sp = find_sound(ss, fullname);
+  sp = find_sound(ss, fullname, 0);
   if (sp)
     {
       cp = sp->chans[chn];
@@ -3791,7 +3793,7 @@ update an on-going 'progress report' (an animated hour-glass icon) in snd using 
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_1(g_sound_p_w, g_sound_p)
 XEN_ARGIFY_2(g_bomb_w, g_bomb)
-XEN_NARGIFY_1(g_find_sound_w, g_find_sound)
+XEN_ARGIFY_2(g_find_sound_w, g_find_sound)
 XEN_ARGIFY_1(g_channels_w, g_channels)
 XEN_ARGIFY_2(g_set_channels_w, g_set_channels)
 XEN_ARGIFY_1(g_srate_w, g_srate)
@@ -4018,7 +4020,7 @@ If it returns #t, the apply is aborted."
 
   XEN_DEFINE_PROCEDURE(S_sound_p, g_sound_p_w, 0, 1, 0, H_sound_p);
   XEN_DEFINE_PROCEDURE(S_bomb, g_bomb_w, 0, 2, 0, H_bomb);
-  XEN_DEFINE_PROCEDURE(S_find_sound, g_find_sound_w, 1, 0, 0, H_find_sound);
+  XEN_DEFINE_PROCEDURE(S_find_sound, g_find_sound_w, 1, 1, 0, H_find_sound);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_channels,      g_channels_w,      H_channels,      S_setB S_channels,      g_set_channels_w,       0, 1, 1, 1);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_chans,         g_channels_w,      H_channels,      S_setB S_chans,         g_set_channels_w,       0, 1, 1, 1);

@@ -295,6 +295,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+1-July:  added optional 'nth' arg to find-sound.\n\
 30-Jun:  snd 6.10.\n\
 24-Jun:  moved mix-name and mix-name->id to snd6.scm.\n\
 23-Jun:  mix-amp-env-changed-hook.\n\

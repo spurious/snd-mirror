@@ -816,26 +816,24 @@ sync_info *sync_to_chan(chan_info *cp)
   return(make_simple_sync(cp, 0));
 }
 
-snd_info *find_sound(snd_state *ss, char *name)
+snd_info *find_sound(snd_state *ss, char *name, int nth)
 {
   snd_info *sp;
   char *sname;
-  int i;
+  int i, which = 0;
   if (name == NULL) return(NULL);
+  sname = filename_without_home_directory(name);
   for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse == SOUND_NORMAL))
 	if ((strcmp(name, sp->short_filename) == 0) || 
-	    (strcmp(name, sp->filename) == 0)) 
-	  return(sp);
-    }
-  sname = filename_without_home_directory(name);
-  for (i = 0; i < ss->max_sounds; i++)
-    {
-      sp = ss->sounds[i];
-      if ((sp) && (sp->inuse == SOUND_NORMAL) && (strcmp(sname, sp->short_filename) == 0))
-	return(sp);
+	    (strcmp(name, sp->filename) == 0) ||
+	    ((sname != NULL) && (strcmp(sname, sp->short_filename) == 0)))
+	  {
+	    if (which == nth) return(sp);
+	    which++;
+	  }
     }
   return(NULL);
 }

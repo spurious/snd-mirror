@@ -3004,9 +3004,10 @@ the list of ids reflects the mark list at that time in the edit history.  See de
 <tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define (move-syncd-marks sync diff)
-  (map (lambda (m) 
-         (set! (mark-sample m) (+ (mark-sample m) diff))) 
-       (<em class=red>syncd-marks</em> sync)))
+  (for-each 
+    (lambda (m) 
+      (set! (mark-sample m) (+ (mark-sample m) diff))) 
+    (<em class=red>syncd-marks</em> sync)))
 </pre></td></tr></table>
 </td></tr>
 
@@ -3298,7 +3299,7 @@ although in fact there's no necessary connection between them.
 <!-- forget-region -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="forgetregion">forget-region</a></em> (<i>reg</i>)</code></span></td></tr>
 <tr><td><spacer type=horizontal size=40><br></td><td>
-"forget" (delete) region <i>reg</i>, removing it from the region stack. To delete all regions, <code>(map forget-region (regions))</code>.
+"forget" (delete) region <i>reg</i>, removing it from the region stack. To delete all regions, <code>(for-each forget-region (regions))</code>.
 <small>I called this forget-region because delete-region seemed ambiguous, especially given delete-selection.</small>
 </td></tr>
 
@@ -3964,7 +3965,7 @@ This is used by some of the <a href="#regularizedargs">regularized</a> functions
 <span class=defbox><code><em class=def><a name="sndclose">close-sound</a></em> (<em class=targ>snd</em>)</code></span>
 </td></tr>
 <tr><td></td><td>
-close <i>snd</i> (same as File menu Close). To close all: <code>(map close-sound (sounds))</code>.
+close <i>snd</i> (same as File menu Close). To close all: <code>(for-each close-sound (sounds))</code>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -4508,11 +4509,13 @@ see also <a href="#lcountmatches">count-matches</a> and <a href="#scanchannel">s
 
 <!-- find-sound -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="sndfindsound">find-sound</a></em> (filename)</code></span>
+<span class=defbox><code><em class=def><a name="sndfindsound">find-sound</a></em> (filename <i>nth</i>)</code></span>
 </td></tr>
 <tr><td></td><td>
 return the index of <i>filename</i> or
-#f if no sound is found that matches <i>filename</i>.  find-sound could be defined as:
+#f if no sound is found that matches <i>filename</i>.  If there is (or might be) more than one file
+open with the given filename, the 'nth' parameter (which defaults to 0) chooses which to return.
+Leaving aside the 'nth' parameter, find-sound could be defined as:
 </td></tr>
 <tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
@@ -5796,7 +5799,7 @@ save <i>snd</i>; same as File menu's Save option. <a href="#savehook">save-hook<
 <!-- INDEX saveexamples:Saving -->
 <A NAME="saveexamples"></a>
 <pre><small><blockquote>
-To save all sounds: <code>(map save-sound (sounds))</code>.
+To save all sounds: <code>(for-each save-sound (sounds))</code>.
 To save a sound under a different name: <a href="#sndsaveas">save-sound-as</a>
 To extract one channel of a sound: <a href="#sndsaveas">save-sound-as</a>
 To save a sound in a different format or header: <a href="#sndsaveas">save-sound-as</a>

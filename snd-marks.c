@@ -53,7 +53,7 @@ static mark *map_over_marks(chan_info *cp, mark_map_func *func, void *m, int dir
   return(NULL);
 }
 
-static mark *make_mark_1(off_t samp, char *name, int id, unsigned int sc)
+static mark *make_mark_1(off_t samp, const char *name, int id, unsigned int sc)
 {
   mark *mp;
   mp = (mark *)CALLOC(1, sizeof(mark));
@@ -66,7 +66,7 @@ static mark *make_mark_1(off_t samp, char *name, int id, unsigned int sc)
 
 static int mark_id_counter = 0;
 
-static mark *make_mark(off_t samp, char *name) {return(make_mark_1(samp, name, mark_id_counter++, 0));}
+static mark *make_mark(off_t samp, const char *name) {return(make_mark_1(samp, name, mark_id_counter++, 0));}
 
 static mark *copy_mark(mark *m) {return(make_mark_1(m->samp, m->name, mark_id(m), m->sync));}
 
@@ -141,7 +141,7 @@ static mark *find_named_mark_1(chan_info *cp, mark *mp, void *uname)
   else return(NULL);
 }
 
-static mark *find_named_mark(chan_info *cp, char *name)
+static mark *find_named_mark(chan_info *cp, const char *name)
 {
   return(map_over_marks(cp, find_named_mark_1, (void *)name, READ_FORWARD));
 }
@@ -470,7 +470,7 @@ static void allocate_marks(chan_info *cp, int edit_ctr)
 
 #define MARKS_ALLOC_SIZE 16
 
-mark *add_mark(off_t samp, char *name, chan_info *cp)
+mark *add_mark(off_t samp, const char *name, chan_info *cp)
 {
   int i, j, ed, med;
   mark **mps;
@@ -808,7 +808,7 @@ void goto_mark(chan_info *cp, int count)
     }
 }
 
-void goto_named_mark(chan_info *cp, char *name)
+void goto_named_mark(chan_info *cp, const char *name)
 {
   mark *mp;
   mp = find_named_mark(cp, name);

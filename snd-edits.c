@@ -852,6 +852,8 @@ static void display_edits(chan_info *cp, FILE *outp, int with_source)
     display_ed_list(cp, outp, i, cp->edits[i], with_source);
 }
 
+#define BUFFER_NOT_FILE_LIMIT 64
+
 static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 {
   snd_data *sd;
@@ -865,7 +867,7 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
       ss = cp->state;
       if (sd->type == SND_DATA_BUFFER)
 	{
-	  if ((ed->len > 16) && (save_dir(ss)))
+	  if ((ed->len > BUFFER_NOT_FILE_LIMIT) && (save_dir(ss)))
 	    {
 	      newname = run_save_state_hook(shorter_tempnam(save_dir(ss), "snd_"));
 	      mus_array_to_file(newname, sd->buffered_data, ed->len, 22050, 1);
@@ -7670,7 +7672,7 @@ static int save_edits_and_update_display(snd_info *sp)
   off_t *old_cursors = NULL;
   chan_info *cp;
   snd_fd **sf;
-  axes_data *sa;
+  void *sa;
   file_info *sphdr = NULL;
   ss = sp->state;
   if (dont_save(sp, NULL)) return(MUS_NO_ERROR);
@@ -7942,7 +7944,6 @@ void revert_edits(chan_info *cp, void *ptr)
 void undo_edit(chan_info *cp, int count)
 {
   snd_info *sp;
-  if (cp->edit_ctr == 0) return;
   if ((cp) && (cp->edit_ctr > 0) && (count != 0))
     {
       sp = cp->sound;
@@ -7977,6 +7978,7 @@ void undo_edit_with_sync(chan_info *cp, int count)
   snd_info *sp;
   int i;
   sync_info *si;
+  if (count == 0) return;
   if (count < 0)
     redo_edit_with_sync(cp, -count);
   else
@@ -7998,7 +8000,7 @@ void undo_edit_with_sync(chan_info *cp, int count)
 
 void redo_edit(chan_info *cp, int count)
 {
-  if (cp)
+  if ((cp) && (count != 0))
     {
       cp->edit_ctr += count; 
       while ((cp->edit_ctr >= cp->edit_size) || 
@@ -8031,6 +8033,7 @@ void redo_edit_with_sync(chan_info *cp, int count)
   snd_info *sp;
   int i;
   sync_info *si;
+  if (count == 0) return;
   if (count < 0)
     undo_edit_with_sync(cp, -count);
   else

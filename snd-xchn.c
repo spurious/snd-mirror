@@ -1,5 +1,7 @@
 #include "snd.h"
 
+/* TODO: if chan > 0 edit history is open, then unite, then separate, list is not redisplayed (this is ok in gtk) */
+
 enum {
     W_top, W_form,
     W_main_window,
@@ -573,12 +575,10 @@ static void history_select_callback(Widget w, XtPointer context, XtPointer info)
 {
   /* undo/redo to reach selected position */
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
-  XButtonEvent *ev = NULL;
+  chan_info *cp = (chan_info *)context;
   ASSERT_WIDGET_TYPE(XmIsList(w), w);
-  ev = (XButtonEvent *)(cbs->event);
-  edit_select_callback((chan_info *)context, 
-		       cbs->item_position - 1, 
-		       (ev) ? (ev->state & snd_ControlMask) : 0); /* in auto-test sequences, button event is null */
+  undo_edit_with_sync(cp, cp->edit_ctr - cbs->item_position + 1);
+  goto_graph(cp);
 }
 #endif
 

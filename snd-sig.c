@@ -3476,7 +3476,7 @@ static XEN g_env_1(XEN edata, off_t beg, off_t dur, XEN base, chan_info *cp, XEN
   mus_any *egen = NULL;
   if (XEN_LIST_P(edata))
     {
-      e = get_env(edata, (char *)caller);
+      e = get_env(edata, caller);
       if (e)
 	{
 	  fbase = XEN_TO_C_DOUBLE_OR_ELSE(base, 1.0);
@@ -4081,7 +4081,7 @@ static XEN g_src_1(XEN ratio_or_env, XEN base, XEN snd_n, XEN chn_n, XEN edpos, 
     {
       if (XEN_LIST_P(ratio_or_env))
 	{
-	  e = get_env(ratio_or_env, (char *)caller);
+	  e = get_env(ratio_or_env, caller);
 	  e_ratio = check_src_envelope(e->pts, e->data, caller);
 	  src_env_or_num(ss, cp,
 			 e, e_ratio,
@@ -4159,7 +4159,7 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos, const c
 	{
 	  XEN_ASSERT_TYPE((XEN_VECTOR_P(e) || (XEN_LIST_P(e))), e, XEN_ARG_1, caller, "a list, vector, vct, or env generator");
 	  apply_filter(cp, len,
-		       ne = get_env(e, (char *)caller),
+		       ne = get_env(e, caller),
 		       NOT_FROM_ENVED, caller, selection, NULL, NULL, edpos, 5);
 	  if (ne) free_env(ne); 
 	}
