@@ -5832,6 +5832,7 @@ mus_any *mus_make_granulate(Float (*input)(void *arg, int direction),
       spd->ctr = 0;
       outlen = (int)(sampling_rate * (hop + length));
       if (max_size > outlen) outlen = max_size;
+      if (outlen <= 0) mus_error(MUS_NO_LENGTH, "mus_make_granulate size is %d (hop: %f, segment-length: %f)?", outlen, hop, length);
       spd->block_len = outlen;
       spd->data = (Float *)CALLOC(outlen, sizeof(Float));
       spd->in_data_len = outlen + spd->s20 + 1;

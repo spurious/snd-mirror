@@ -3889,15 +3889,12 @@ static XEN cp_iwrite(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
       if (XEN_INTEGER_P(on))
 	cp->transform_normalization = XEN_TO_SMALL_C_INT(on);
       else
-	if (XEN_NUMBER_P(on))
-	  cp->transform_normalization = ((int)XEN_TO_C_DOUBLE_WITH_CALLER(on, caller));
-	else
-	  if (XEN_FALSE_P(on))
-	    cp->transform_normalization = 0;
-	  else 
-	    if (XEN_TRUE_P(on))
-	      cp->transform_normalization = 1;
-	    else cp->transform_normalization = DEFAULT_TRANSFORM_NORMALIZATION;
+	if (XEN_FALSE_P(on))
+	  cp->transform_normalization = DONT_NORMALIZE_TRANSFORM;
+	else 
+	  if (XEN_TRUE_P(on))
+	    cp->transform_normalization = NORMALIZE_TRANSFORM_BY_CHANNEL;
+	  else cp->transform_normalization = DEFAULT_TRANSFORM_NORMALIZATION;
       calculate_fft(cp, NULL); 
       return(C_TO_XEN_INT(cp->transform_normalization));
       break;

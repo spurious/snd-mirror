@@ -2866,7 +2866,7 @@ snd can be a filename, a sound index number, or a list with a mix id number."
       else return(snd_no_such_file_error(S_make_sample_reader, snd));
       chan = XEN_TO_C_INT_OR_ELSE(chn, 0);
       if ((chan < 0) || 
-	  (chan > loc_sp->nchans))
+	  (chan >= loc_sp->nchans))
 	{
 	  completely_free_snd_info(loc_sp);
 	  return(snd_no_such_channel_error(S_make_sample_reader, snd, chn));	

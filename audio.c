@@ -10148,7 +10148,7 @@ char *mus_audio_moniker(void) {return("OS2 audio");}
 #include <CoreServices/CoreServices.h>
 #include <CoreAudio/CoreAudio.h>
 
-static char* osx_error(int err) 
+static char* osx_error(OSStatus err) 
 {
   switch (err) 
     {
@@ -10203,6 +10203,7 @@ static void describe_audio_state_1(void)
   err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultOutputDevice, &size, &default_output);
   if (err != noErr)
     {
+      fprintf(stderr, "err: %d %s", err, osx_error(err));
       FREE(devices);
       return;
     }
@@ -10324,6 +10325,8 @@ void mus_audio_set_oss_buffers(int num, int size) {}
 
 char *mus_audio_moniker(void) {return("Mac OS-X audio");}
 #endif
+
+
 
 /* -------------------------------- ESD -------------------------------- */
 

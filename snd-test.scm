@@ -34,6 +34,7 @@
 (define total-tests 23)
 (define with-exit (< snd-test 0))
 (set! (with-background-processes) #f)
+(define all-args #t) ; huge arg testing
 
 (define home-dir "/home")
 (define sf-dir "/sf1")
@@ -1528,7 +1529,7 @@
 	  (snd-display ";oboe: mus-sound-maxamp-exists after maxamp: ~A" (mus-sound-maxamp-exists? "oboe.snd")))
 
       (let ((str (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "oboe.snd")))))
-	(if (not (string=? str "21-Oct 07:35 PDT"))
+	(if (not (string=? str "07-Nov 13:23 PST"))
 	    (snd-display ";mus-sound-write-date oboe.snd: ~A?" str)))
       (let ((str (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "pistol.snd")))))
 	(if (not (string=? str "30-Dec 12:04 PST"))
@@ -1660,7 +1661,7 @@
       (if (and (not (= (mus-sound-type-specifier "oboe.snd") #x646e732e))  ;little endian reader
 	       (not (= (mus-sound-type-specifier "oboe.snd") #x2e736e64))) ;big endian reader
 	  (snd-display ";oboe: mus-sound-type-specifier: ~X?" (mus-sound-type-specifier "oboe.snd")))
-      (if (not (string=? (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd"))) "21-Oct-2001 07:35"))
+      (if (not (string=? (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd"))) "07-Nov-2001 13:23"))
 	  (snd-display ";oboe: file-write-date: ~A?" (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd")))))
       (play-sound "oboe.snd")
 
@@ -1672,6 +1673,12 @@
 					   (localtime (current-time))))))
 	(set! (comment ob) str)
 	(save-sound-as "test.snd" ob mus-aifc)
+	(set! (transform-normalization ob 0) #t)
+	(if (not (= (transform-normalization ob 0) normalize-transform-by-channel))
+	    (snd-display ";set-transform-normalization #t -> ~A" (transform-normalization ob 0)))
+	(set! (transform-normalization ob 0) #f)
+	(if (not (= (transform-normalization ob 0) dont-normalize-transform))
+	    (snd-display ";set-transform-normalization #f -> ~A" (transform-normalization ob 0)))
 	(set! (filter-env-in-hz) #t)
 	(let ((ab (open-sound "test.snd")))
 	  (if (not (= (header-type ab) mus-aifc)) 
@@ -2582,8 +2589,18 @@
 	(set! (samples 60 3 index) v0) 
 	(if (or (fneq (sample 60) .25) (fneq (sample 61) .25))
 	    (snd-display ";set-samples: ~A ~A ~A?" (sample 60) (sample 61) (sample 62))))
+      (set! (samples 10 3 index) (list 0.1 0.2 0.3))
+      (if (not (vequal (samples->vct 10 3 index) (vct 0.1 0.2 0.3)))
+	  (snd-display ";set-samples via list: ~A" (samples->vct 10 3 index)))
+      (revert-sound index)
+      (save-sound-as "temporary.snd" index)
+      (set! (samples 100000 20000 index) "temporary.snd")
+      (if (not (vequal (samples->vct 110000 10) (samples->vct 10000 10)))
+	  (snd-display ";set samples to self: ~A ~A" (samples->vct 110000 10) (samples->vct 10000 10)))
       (revert-sound index)
       (delete-sample 100 index) 
+      (if (file-exists? "temporary.snd")
+	  (snd-display ";temp not deleted?"))
       (if (not (= (frames index) 50827)) (snd-display ";delete-sample: ~A?" (frames index)))
       (delete-samples 0 100 index) 
       (if (not (= (frames index) 50727)) (snd-display ";delete-samples: ~A?" (frames index)))
@@ -2658,6 +2675,8 @@
 	(if (or (fneq (sample 40) s40) (not (fneq (sample 100) s100)) (fneq (sample 100) 0.001831))
 	    (snd-display ";insert-sound: ~A?" (sample 100)))
 	(if (not (= (frames) (+ len addlen))) (snd-display ";insert-sound len: ~A?" (frames)))
+	(save-sound-as "temporary.snd")
+	(insert-samples 0 100 "temporary.snd")
 	(revert-sound)
 	(let ((id (make-region 0 99)))
 	  (insert-region 60 id index) 
@@ -8064,6 +8083,25 @@
 
       (test-hooks)
       (let ((ind (open-sound "oboe.snd")))
+	(set! (cursor) 2000)
+	(key (char->integer #\u) 4 ind)
+	(key (char->integer #\1) 0 ind)
+	(key (char->integer #\0) 0 ind)
+	(key (char->integer #\0) 0 ind)
+	(key (char->integer #\x) 4 ind)
+	(key (char->integer #\z) 4 ind)
+	(if (not (equal? (edit-fragment) (list "C-x C-z" "set" 2000 100)))
+	    (snd-display ";C-x C-z fragment: ~A" (edit-fragment)))
+	(if (not (vequal (samples->vct 2010 10) (vct 0.064 0.063 0.063 0.062 0.062 0.061 0.060 0.059 0.059 0.058)))
+	    (snd-display ";C-x C-z samps: ~A" (samples->vct 2010 10)))
+	(set! (cursor) 0)
+	(select-all)
+	(key (char->integer #\x) 4 ind)
+	(key (char->integer #\o) 0 ind)
+	(key (char->integer #\x) 4 ind)
+	(key (char->integer #\p) 0 ind)
+	(set! (selection-member? #t) #f)
+	(revert-sound ind)
 	(set! (search-procedure ind) (lambda (n) (> n .1)))
 	(key (char->integer #\a) 4 ind 0)
 	(if (not (= (cursor ind 0) 0))
@@ -8643,8 +8681,8 @@
 	    (key (char->integer #\e) 0)
 
 	    (key (char->integer #\u) 4)
-	    (key (char->integer #\.) 0)
-	    (key (char->integer #\5) 0)
+	    (key (char->integer #\.) 4)
+	    (key (char->integer #\5) 4)
 	    (key (char->integer #\x) 4)
 	    (key (char->integer #\v) 4)
 
@@ -11556,6 +11594,10 @@ EDITS: 3
 		  (key-event cwin (char->integer #\e) 0) (force-event)
 		  (if (not (= (cursor) 1003))
 		      (snd-display ";kbd macro: ~A?" (cursor)))
+		  (key-event cwin (char->integer #\x) 4) (force-event)
+		  (key-event cwin (char->integer #\e) 4) (force-event)
+		  (widget-string minibuffer "macro")
+		  (key-event (widget-window minibuffer) snd-return-key 0) (force-event)
 		  
 		  (key-event cwin (char->integer #\u) 4) (force-event)
 		  (key-event cwin (char->integer #\8) 0) (force-event)
@@ -12744,6 +12786,7 @@ EDITS: 3
 		  (let ((name1 (cadr (|XmStringGetLtoR (cadr (|XtVaGetValues nm1 (list |XmNlabelString 0))) "bold_button_font"))))
 		    (if (string=? name1 name)
 			(snd-display ";delete in region dialog: ~A?" name)))
+		  (click-button (cadr prtb)) (force-event)
 		  (click-button (cadr (|XmMessageBoxGetChild regd |XmDIALOG_OK_BUTTON))) (force-event)		  
 		  (if (|XtIsManaged regd)
 		      (snd-display ";region dialog is still active?")))
@@ -13290,6 +13333,48 @@ EDITS: 3
 		      (sqrt -1.0) (make-delay 32) :feedback -1 0 #f #t '() 12345678901234567890)))
 	     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) #(0 1) 3/4 
 		   (sqrt -1.0) (make-delay 32) :frequency -1 0 #f #t '() 12345678901234567890))
+
+	    (if all-args
+		(begin
+
+		  ;; ---------------- 3 Args
+		  (for-each 
+		   (lambda (arg1)
+		     (for-each 
+		      (lambda (arg2)
+			(for-each 
+			 (lambda (arg3)
+			   (for-each 
+			    (lambda (n)
+			      (catch #t
+				     (lambda () (n arg1 arg2 arg3))
+				     (lambda args (car args))))
+			    xm-procs))
+			 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :start -1 0 #f #t '() 12345678901234567890)))
+		      (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :phase -1 0 #f #t '() 12345678901234567890)))
+		   (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :channels -1 0 #f #t '() 12345678901234567890))
+		
+		  ;; ---------------- 4 Args
+		  (for-each 
+		   (lambda (arg1)
+		     (for-each 
+		      (lambda (arg2)
+			(for-each 
+			 (lambda (arg3)
+			   (for-each 
+			    (lambda (arg4)
+			      (for-each 
+			       (lambda (n)
+				 (catch #t
+					(lambda () (n arg1 arg2 arg3))
+					(lambda args (car args))))
+			       xm-procs))
+			    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :start -1 0 #f #t '() 12345678901234567890)))
+			 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :phase -1 0 #f #t '() 12345678901234567890)))
+		      (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :channels -1 0 #f #t '() 12345678901234567890)))
+		   (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :channels -1 0 #f #t '() 12345678901234567890))
+		  ))
+
 	    (gc)
 	    )
 	    ))))
@@ -13460,7 +13545,7 @@ EDITS: 3
 		   srate time-graph-type x-position-slider x-zoom-slider
 		   y-position-slider y-zoom-slider sound-data-ref mus-a0 mus-a1 mus-a2 mus-array-print-length 
 		   mus-b1 mus-b2 mus-data mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop
-		   mus-increment mus-length mus-location mus-phase mus-ramp mus-scaler mus-srate vct-ref
+		   mus-increment mus-length mus-location mus-phase mus-ramp mus-scaler vct-ref
 		   ))
 
 (reset-all-hooks)
@@ -14136,9 +14221,13 @@ EDITS: 3
 	(check-error-tag 'cannot-save (lambda () (save-envelopes "/bad/baddy")))
 	(check-error-tag 'bad-arity (lambda () (set! (search-procedure) (lambda (a b c) a))))
 	(check-error-tag 'no-such-sound (lambda () (set! (search-procedure 1234) (lambda (a) a))))
+	(check-error-tag 'no-such-channel (lambda () (make-sample-reader 0 "oboe.snd" 1)))
+	(check-error-tag 'no-such-channel (lambda () (make-sample-reader 0 "oboe.snd" -1)))
 	(check-error-tag 'bad-arity (lambda () (bind-key (char->integer #\p) 0 (lambda (a b) (play-often (max 1 a))))))
+	(check-error-tag 'no-such-sound (lambda () (set! (sound-loop-info 123) '(0 0 1 1))))
 	(let ((ind (open-sound "oboe.snd"))) 
 	  (select-all)
+	  (check-error-tag 'no-such-file (lambda () (insert-sound (string-append sf-dir "mus10.snd"))))
 	  (check-error-tag 'mus-error (lambda () (set! (filter-control-env ind) '())))
 	  (check-error-tag 'bad-arity (lambda () (set! (search-procedure ind) (lambda (a b c) #t))))
 	  (check-error-tag 'bad-arity (lambda () (map-chan (lambda (a b c) 1.0))))
@@ -14159,6 +14248,7 @@ EDITS: 3
 	  (check-error-tag 'no-such-sound (lambda () (axis-info 1234)))
 	  (check-error-tag 'impossible-bounds (lambda () (set! (x-bounds) (list 0 0))))
 	  (check-error-tag 'impossible-bounds (lambda () (set! (x-bounds) (list .1 -.1))))
+	  (check-error-tag 'impossible-bounds (lambda () (set! (y-bounds) (list .2 .1))))
 	  (check-error-tag 'impossible-bounds (lambda () (make-region 100 0)))
 	  (check-error-tag 'no-such-file (lambda () (play "/bad/baddy.snd")))
 	  (check-error-tag 'no-such-sound (lambda () (play 0 1234)))
@@ -14186,6 +14276,8 @@ EDITS: 3
 	  (check-error-tag 'no-such-sound (lambda () (make-track-sample-reader 0 0 1234 0)))
 	  (check-error-tag 'no-such-track (lambda () (make-track-sample-reader 0 0 ind 0)))
 	  (check-error-tag 'no-such-mix (lambda () (make-mix-sample-reader 1234)))
+	  (set! (read-only ind) #t)
+	  (check-error-tag 'cannot-save (lambda () (set! (sound-loop-info ind) '(0 0 1 1))))
 	  (close-sound ind))
 	(check-error-tag 'bad-arity (lambda () (set-reverb-control-procedures abs map +)))
 	(check-error-tag 'bad-arity (lambda () (set-contrast-control-procedure (lambda () 1.0))))
@@ -14303,7 +14395,7 @@ EDITS: 3
 	       (sqrt -1.0) (make-delay 32) :frequency -1 0 #f #t '() 12345678901234567890))
 	(gc)
 
-	(if (> tests 10)
+	(if all-args
 	    ;; these can take awhile...
 	    (begin
 	      ;; ---------------- 3 Args
@@ -14325,6 +14417,27 @@ EDITS: 3
 	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :channels -1 0 #f #t '() 12345678901234567890))
 	      (gc)
 
+	      ;; ---------------- set! 3 Args
+	      (for-each 
+	       (lambda (arg1)
+		 (for-each 
+		  (lambda (arg2)
+		    (for-each 
+		     (lambda (arg3)
+		       (for-each 
+			(lambda (arg4)
+			  (for-each 
+			   (lambda (n)
+			     (catch #t
+				    (lambda () (set! (n arg1 arg2 arg3) arg4))
+				    (lambda args (car args))))
+			   set-procs))
+			(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :wave -1 0 #f #t '() 12345678901234567890)))
+		     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :initial-contents -1 0 #f #t '() 12345678901234567890)))
+		  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :srate -1 0 #f #t '() 12345678901234567890)))
+	      (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :input -1 0 #f #t '() 12345678901234567890))
+
+
 	      ;; ---------------- 4 Args
 	      (for-each 
 	       (lambda (arg1)
@@ -14345,6 +14458,29 @@ EDITS: 3
 		       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :initial-contents -1 0 #f #t '() 12345678901234567890)))
 		    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :srate -1 0 #f #t '() 12345678901234567890))))
 	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :input -1 0 #f #t '() 12345678901234567890))
+
+	      ;; ---------------- set! 4 Args
+	      (for-each 
+	       (lambda (arg1)
+		 (for-each 
+		  (lambda (arg2)
+		    (for-each 
+		     (lambda (arg3)
+		       (for-each 
+			(lambda (arg4)
+			  (for-each 
+			   (lambda (arg5)
+			     (for-each 
+			      (lambda (n)
+				(catch #t
+				       (lambda () (set! (n arg1 arg2 arg3 arg4) arg5))
+				       (lambda args (car args))))
+			      set-procs))
+			   (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :wave -1 0 #f #t '() 12345678901234567890)))
+			(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :initial-contents -1 0 #f #t '() 12345678901234567890)))
+		     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :srate -1 0 #f #t '() 12345678901234567890)))
+		  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :input -1 0 #f #t '() 12345678901234567890)))
+		 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :input -1 0 #f #t '() 12345678901234567890))
 
 	      ;; ---------------- 5 Args
 	      (for-each 

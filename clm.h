@@ -2,8 +2,8 @@
 #define MUS_H
 
 #define MUS_VERSION 1
-#define MUS_REVISION 55
-#define MUS_DATE "21-Oct-01"
+#define MUS_REVISION 56
+#define MUS_DATE "8-Nov-01"
 
 /* 
  * 21-Oct:     fill in some set-data methods.
