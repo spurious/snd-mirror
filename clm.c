@@ -3112,7 +3112,7 @@ static char *inspect_seg(void *ptr)
 		    gen->rate, gen->current_value, gen->base, gen->offset, gen->scaler, gen->power, gen->init_y, gen->init_power, gen->b1,
 		    gen->pass, gen->end, gen->style, gen->index, gen->size,
 		    gen->size * 2,
-		    arr = print_array(gen->original_data, gen->size*2, 0),
+		    arr = print_array(gen->original_data, gen->size * 2, 0),
 		    gen->size,
 		    str1 = print_double_array(gen->rates, gen->size, 0),
 		    gen->size,
@@ -3121,6 +3121,11 @@ static char *inspect_seg(void *ptr)
   if (str1) FREE(str1);
   if (str2) FREE(str2);
   return(desc);
+}
+
+int mus_position(mus_any *gen)
+{
+  return(((seg *)gen)->index);
 }
 
 /* what about breakpoint triples for per-segment exp envs? */

@@ -812,7 +812,9 @@ snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize)
 			   hdr->data_location,
 			   hdr->chans,
 			   hdr->type);
+#if HAVE_HOOKS
   during_open(fd, sd->filename, SND_COPY_READER);
+#endif
   datai = make_file_state(fd, hdr, sd->chan, bufsize);
   sf = (snd_data *)CALLOC(1, sizeof(snd_data));
   sf->type = sd->type;
@@ -1331,7 +1333,9 @@ void file_insert_samples(int beg, int num, char *inserted_file, chan_info *cp, i
 			       hdr->data_location,
 			       hdr->chans,
 			       hdr->type);
+#if HAVE_HOOKS
       during_open(fd, inserted_file, SND_INSERT_FILE);
+#endif
       datai = make_file_state(fd, hdr, chan, FILE_BUFFER_SIZE);
       cb[ED_SND] = add_sound_file_to_edit_list(cp, inserted_file, datai,
 					       MUS_SAMPLE_ARRAY(datai[file_state_channel_offset(chan)]),
@@ -1602,7 +1606,9 @@ void file_change_samples(int beg, int num, char *tempfile, chan_info *cp, int ch
 			       hdr->data_location,
 			       hdr->chans,
 			       hdr->type);
+#if HAVE_HOOKS
       during_open(fd, tempfile, SND_CHANGE_FILE);
+#endif
       datai = make_file_state(fd, hdr, chan, FILE_BUFFER_SIZE);
       cb[ED_SND] = add_sound_file_to_edit_list(cp, tempfile, datai,
 					       MUS_SAMPLE_ARRAY(datai[file_state_channel_offset(chan)]),
@@ -1641,7 +1647,9 @@ void file_override_samples(int num, char *tempfile, chan_info *cp, int chan, int
 			       hdr->data_location,
 			       hdr->chans,
 			       hdr->type);
+#if HAVE_HOOKS
       during_open(fd, tempfile, SND_OVERRIDE_FILE);
+#endif
       datai = make_file_state(fd, hdr, chan, FILE_BUFFER_SIZE);
       e = initial_ed_list(0, num - 1);
       if (origin) e->origin = copy_string(origin);
@@ -3098,20 +3106,18 @@ static SCM save_hook;
 static int dont_save(snd_state *ss, snd_info *sp, char *newname)
 {
   SCM res = SCM_BOOL_F;
-  if (!(ss->save_hook_active))
+  if ((!(ss->save_hook_active)) &&
+      (HOOKED(save_hook)))
     {
-      if (HOOKED(save_hook))
-	{
-	  ss->save_hook_active = 1;
-	  if (newname)
-	    res = g_c_run_or_hook(save_hook,
-				  SCM_LIST2(TO_SMALL_SCM_INT(sp->index),
-					    TO_SCM_STRING(newname)));
-	  else res = g_c_run_or_hook(save_hook,
-				     SCM_LIST2(TO_SMALL_SCM_INT(sp->index),
-					       SCM_BOOL_F));
-	  ss->save_hook_active = 0;
-	}
+      ss->save_hook_active = 1;
+      if (newname)
+	res = g_c_run_or_hook(save_hook,
+			      SCM_LIST2(TO_SMALL_SCM_INT(sp->index),
+					TO_SCM_STRING(newname)));
+      else res = g_c_run_or_hook(save_hook,
+				 SCM_LIST2(TO_SMALL_SCM_INT(sp->index),
+					   SCM_BOOL_F));
+      ss->save_hook_active = 0;
     }
   return(SCM_TRUE_P(res));
 }

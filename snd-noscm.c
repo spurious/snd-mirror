@@ -1240,10 +1240,6 @@ void snd_load_file(char *filename)
   close(fd);
 }
 
-int dont_exit(snd_state *ss) {return(0);}
-int dont_start(snd_state *ss, char *filename) {return(0);}
-void during_open(int fd, char *file, int reason) {}
-void after_open(int index) {}
 void clear_listener(void) {}
 
 #endif

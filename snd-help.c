@@ -272,6 +272,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+28-Feb:  added enved-hook with enved-add-point, enved-delete-point, and enved-move-point.\n\
 26-Feb:  Tab-completion is much smarter in Guile 1.4.1.\n\
 23-Feb:  --with-gsl is the default in configure.\n\
 21-Feb:  snd 4.11.\n\
@@ -280,7 +281,6 @@ void news_help(snd_state *ss)
 12-Feb:  added Wakefield's freeverb, changed user-defined reverb handlers.\n\
 6-Feb:   removed expand-funcs: it could not have worked given the \"hidden controls\" exposure.\n\
 30-Jan:  rtio.scm.\n\
-29-Jan:  pvf headers.\n\
 ",
 NULL);
   FREE(info);
@@ -1098,6 +1098,7 @@ user-interface manipulations.\n\
   " S_mouse_release_hook "(snd chn button state x y)\n\
   " S_name_click_hook "(snd-index)\n\
   " S_menu_hook "(name option)\n\
+  " S_enved_hook "(env pt new-x new-y)\n\
 \n\
 ";
 
@@ -2684,9 +2685,12 @@ the functions html and ? can be used in place of help to go to the HTML descript
   /* help strings are always processed through the word-wrapper to fit whichever widget they are posted to */
   /*   this means all the H_doc strings in Snd need to omit line-feeds except where necessary (i.e. code) */
 
-  str = word_wrap(SCM_STRING_CHARS(help_text), widget_wid);
-  help_text = TO_SCM_STRING(str);
-  if (str) FREE(str);
+  if (gh_string_p(help_text))
+    {
+      str = word_wrap(SCM_STRING_CHARS(help_text), widget_wid);
+      help_text = TO_SCM_STRING(str);
+ if (str) FREE(str);
+    }
   return(help_text);
 }
 

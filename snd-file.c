@@ -353,7 +353,7 @@ dir *find_sound_files_in_dir (char *name)
 		    {
 		      if (strcmp(dot, sound_file_extensions[i]) == 0)
 			{
-#if HAVE_GUILE
+#if HAVE_HOOKS
 			  if (just_sounds_happy(dirp->d_name))
 #endif
 			    add_snd_file_to_dir_list(dp, dirp->d_name);
@@ -495,16 +495,14 @@ static int dont_open(snd_state *ss, char *file)
 {
   char *mcf = NULL;
   SCM res = SCM_BOOL_F;
-  if (!(ss->open_hook_active))
+  if ((!(ss->open_hook_active)) &&
+      (HOOKED(open_hook)))
     {
-      if (HOOKED(open_hook))
-	{
-	  ss->open_hook_active = 1;
-	  res = g_c_run_or_hook(open_hook,
-				SCM_LIST1(TO_SCM_STRING(mcf = mus_file_full_name(file))));
-	  if (mcf) FREE(mcf);
-	  ss->open_hook_active = 0;
-	}
+      ss->open_hook_active = 1;
+      res = g_c_run_or_hook(open_hook,
+			    SCM_LIST1(TO_SCM_STRING(mcf = mus_file_full_name(file))));
+      if (mcf) FREE(mcf);
+      ss->open_hook_active = 0;
     }
   return(SCM_TRUE_P(res));
 }
@@ -512,15 +510,13 @@ static int dont_open(snd_state *ss, char *file)
 static int dont_close(snd_state *ss, snd_info *sp)
 {
   SCM res = SCM_BOOL_F;
-  if (!(ss->close_hook_active))
+  if ((!(ss->close_hook_active)) &&
+      (HOOKED(close_hook)))
     {
-      if (HOOKED(close_hook))
-	{
-	  ss->close_hook_active = 1;
-	  res = g_c_run_or_hook(close_hook,
-				SCM_LIST1(TO_SMALL_SCM_INT(sp->index)));
-	  ss->close_hook_active = 0;
-	}
+      ss->close_hook_active = 1;
+      res = g_c_run_or_hook(close_hook,
+			    SCM_LIST1(TO_SMALL_SCM_INT(sp->index)));
+      ss->close_hook_active = 0;
     }
   return(SCM_TRUE_P(res));
 }
@@ -533,16 +529,7 @@ static int just_sounds_happy(char *filename)
 			  SCM_LIST1(TO_SCM_STRING(filename)));
   return(SCM_TRUE_P(res));
 }
-
-#else
-  static int dont_open(snd_state *ss, char *file) {return(0);}
-  static int dont_close(snd_state *ss, snd_info *sp) {return(0);}
-  static int just_sounds_happy(char *filename) {return(1);}
 #endif
-#else
-  /* no guile */
-  static int dont_open(snd_state *ss, char *file) {return(0);}
-  static int dont_close(snd_state *ss, snd_info *sp) {return(0);}
 #endif
 
 
@@ -555,7 +542,9 @@ static snd_info *snd_open_file_1 (char *filename, snd_state *ss, int select)
   snd_info *sp;
   char *mcf = NULL;
   int files, val;
+#if HAVE_HOOKS
   if (dont_open(ss, filename)) return(NULL);
+#endif
   sp = add_sound_window(mcf = mus_file_full_name(filename), ss); /* snd-xsnd.c -> make_file_info */
   if (mcf) FREE(mcf);
   if (sp)
@@ -600,7 +589,9 @@ snd_info *snd_open_file_unselected (char *filename, snd_state *ss) {return(snd_o
 void snd_close_file(snd_info *sp, snd_state *ss)
 {
   int files;
+#if HAVE_HOOKS
   if (dont_close(ss, sp)) return;
+#endif
   sp->inuse = 0;
   remember_me(ss, sp->shortname, sp->fullname);
   if (sp->playing) stop_playing_sound(sp);

@@ -546,6 +546,28 @@ the hook.
 </small>
                                       The prescaling affects only sound data made up of floats or doubles.
 
+  <b><a name="envedhook">enved-hook</a></b> (env pt new-x new-y reason)
+                                      Each time a breakpoint is changed in the envelope editor, this hook 
+                                      is called; if it returns a list, that list defines the new envelope, 
+                                      otherwise the breakpoint is moved (but not beyond the neighboring 
+                                      breakpoint), leaving other points untouched.  The kind of change
+                                      is <i>reason</i> which can be enved-move-point, enved-delete-point,
+                                      or enved-add-point.  This hook makes it possible to define attack 
+                                      and decay portions in the envelope editor, or use functions such as 
+                                      stretch-envelope from env.scm:
+<small>
+                                      (add-hook! <em class=red>enved-hook</em>
+                                        (lambda (env pt x y reason)
+                                          (if (= reason enved-move-point)
+					      (if (and (> x 0.0) (< x (max-x env)))
+                                                  (let* ((old-x (list-ref env (* pt 2)))
+                                                         (new-env (<em class=red>stretch-envelope</em> env old-x x)))
+                                                     (list-set! new-env (+ (* pt 2) 1) y)
+                                                     new-env)
+                                                  env)
+                                              #f)))
+</small>
+
   <b><a name="exithook">exit-hook</a></b> ()                        called upon exit. (<b>or</b>)
                                       If it returns #t, Snd does not exit.  This can be used to check 
                                       for unsaved edits, or to perform cleanup activities.

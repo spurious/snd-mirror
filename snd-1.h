@@ -486,6 +486,9 @@ void set_x_axis_style(snd_state *ss, int val);
 void set_channel_style(snd_state *ss, int val);
 #if HAVE_GUILE
   void g_init_menu(SCM local_doc);
+  #if HAVE_HOOKS
+    int dont_exit(snd_state *ss);
+  #endif
 #endif
 
 
@@ -748,6 +751,7 @@ char *added_transform_name(int type);
   SCM g_call1(SCM proc, SCM arg);
   SCM g_call2(SCM proc, SCM arg1, SCM arg2);
   SCM g_call3(SCM proc, SCM arg1, SCM arg2, SCM arg3);
+  SCM g_call_any(SCM proc, SCM arglist);
   int procedure_ok(SCM proc, int req_args, int opt_args, char *caller, char *arg_name, int argn);
   void snd_protect(SCM obj);
   void snd_unprotect(SCM obj);
@@ -765,13 +769,13 @@ char *added_transform_name(int type);
 					     char *set_name, SCM (*set_func)(), SCM (*reversed_set_func)(), 
 					     SCM local_doc,
 					     int get_req, int get_opt, int set_req, int set_opt);
+  #if HAVE_HOOKS
+    void during_open(int fd, char *file, int reason);
+    void after_open(int index);
+  #endif
 #endif
 int string2int(char *str);
 Float string2Float(char *str);
-int dont_exit(snd_state *ss);
-int dont_start(snd_state *ss, char *file);
-void during_open(int fd, char *file, int reason);
-void after_open(int index);
 char *output_comment(file_info *hdr);
 void snd_load_init_file(snd_state *ss, int nog, int noi);
 void snd_load_file(char *filename);
@@ -893,6 +897,9 @@ void delete_envelope(snd_state *ss, char *name);
   env *scm2env(SCM res);
   env *get_env(SCM e, SCM base, char *origin);
   void g_init_env(SCM local_doc);
+  #if HAVE_HOOKS
+    int check_enved_hook(env *e, int pos, Float x, Float y, int reason);
+  #endif
 #endif
 
 

@@ -2,7 +2,6 @@
 
 /* TODO  enved mix flt and src undo&apply cases need more testing (also clean undo of selection src)
  * TODO  edit of mix sound doesn't follow undo chains?
- * TODO  fold all of this into CLM (using its envs, not these things)
  */
 
 Float un_dB(snd_state *ss, Float py)
@@ -15,7 +14,6 @@ static Float dB(snd_state *ss, Float py)
 {
   return((py <= ss->lin_dB) ? ss->min_dB : (20.0 * (log10(py))));
 }
-
 
 env *free_env(env *e)
 {
@@ -89,69 +87,6 @@ env *make_envelope(Float *env_buffer, int len)
     } 
   e->base = 1.0;
   return(e);
-}
-
-static Float *magify_env(env *e, int dur, Float scaler)
-{ /* from magify-seg, mus.lisp, with less worry about special cases */
-  int i, j, curx;
-  Float x0, y0, x1, y1, xmag;
-  Float *result;
-  if (!e) return(NULL);
-  x1 = e->data[0];
-  xmag = (Float)dur / (Float)(e->data[e->pts * 2 - 2] - x1);
-  y1 = e->data[1];
-  result = (Float *)CALLOC(e->pts * 2, sizeof(Float));
-  for (j = 0, i = 2; i < e->pts * 2; i+=2, j+=2)
-    {
-      x0 = x1;
-      x1 = e->data[i];
-      y0 = y1;
-      y1 = e->data[i + 1];
-      curx = (int)(xmag * (x1 - x0) + 0.5);
-      if (curx < 1) curx = 1;
-      result[j] = curx;
-      if (y0 == y1) result[j + 1] = 0.0;
-      else result[j + 1] = scaler * (y1 - y0) / (Float)curx;
-    }
-  result[e->pts * 2 - 2] = 100000000;
-  return(result);
-}
-
-static Float *fixup_exp_env(env *e, Float *offset, Float *scaler, Float base)
-{
-  Float min_y, max_y, val = 0.0, tmp = 0.0, b, b1;
-  int flat, len, i;
-  Float *result = NULL;
-  if (!e) return(NULL);
-  if ((base <= 0.0) || (base == 1.0)) return(NULL);
-  min_y = (*offset) + (*scaler) * e->data[1];
-  max_y = min_y;
-  b = 1.0 / log(base);
-  b1 = base - 1.0;
-  len = e->pts * 2;
-  result = (Float *)CALLOC(len, sizeof(Float));
-  result[0] = e->data[0];
-  result[1] = min_y;
-  for (i = 2; i < len; i+=2)
-    {
-      tmp = (*offset) + (*scaler) * e->data[i + 1];
-      result[i] = e->data[i];
-      result[i + 1] = tmp;
-      if (tmp < min_y) min_y = tmp;
-      if (tmp > max_y) max_y = tmp;
-    }
-  flat = (min_y == max_y);
-  if (!flat) val = 1.0 / (max_y - min_y);
-  for (i = 1; i < len; i+=2)
-    {
-      if (flat) 
-	tmp = 1.0;
-      else tmp = val * (result[i] - min_y);
-      result[i] = log(1.0 + (tmp * b1)) * b;
-    }
-  (*scaler) = (max_y - min_y) / b1;
-  (*offset) = min_y;
-  return(result);
 }
 
 static void add_point (env *e, int pos, Float x, Float y)
@@ -640,12 +575,11 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_
 		       char *name, int x0, int y0, int width, int height, int dots)
 {
   int i, j, k;
-  Float ex0, ey0, ex1, ey1, val, offset;
-  int ix0, ix1, iy0, iy1, size = 0, lx0, lx1, ly0, ly1;
-  Float *efm, *ef;
-  Float scl, env_val, env_power, env_incr, logbase, curx, xincr;
-  env *newe;
-  int dur, env_ctr, pass;
+  Float ex0, ey0, ex1, ey1, val;
+  int ix0, ix1, iy0, iy1, size = 0, lx0, lx1, ly0, ly1, index = 0;
+  Float env_val, curx, xincr;
+  mus_any *ce;
+  int dur;
 
   if (e)
     {
@@ -774,52 +708,29 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_
 	    }
 	  else
 	    {
+	      ce = mus_make_env(e->data, e->pts, 1.0, 0.0, e->base, 0.0, 0, width/EXP_SEGLEN - 1, NULL);
 	      /* exponential case */
 	      dur = width / EXP_SEGLEN;
 	      if (dur < e->pts) dur = e->pts;
-	      scl = 1.0;
-	      offset = 0.0;
-	      logbase = log(e->base);
-	      ef = fixup_exp_env(e, &offset, &scl, e->base);
-	      if (ef == NULL) 
-		{
-		  snd_error("%s[%d] %s: fixup exp env failed",
-			    __FILE__, __LINE__, __FUNCTION__);
-		  return;
-		}
-	      newe = make_envelope(ef, e->pts * 2);
-	      newe->base = 1.0; /* ? */
-	      efm = magify_env(newe, dur, 1.0);
-	      env_power = newe->data[1];
-	      env_val = offset + scl * (exp(logbase * env_power) - 1.0);
-	      env_ctr = 0;
-	      env_incr = efm[1];
-	      pass = (int)(efm[0]);
+	      env_val = mus_env(ce);
 	      ix1 = grf_x(0.0, axis_cp->axis);
 	      iy1 = grf_y_dB(ss, env_val, axis_cp->axis);
 	      xincr = (ex1 - ex0) / (Float)dur;
 	      j = 1;
-	      for (i = 1, curx = ex0; i < dur; i++, curx+=xincr)
+	      for (i = 1, curx = ex0; i < dur; i++, curx += xincr)
 		{
 		  iy0 = iy1;
 		  ix0 = ix1;
-		  env_power += env_incr;
-		  env_val = offset + scl * (exp(logbase * env_power) - 1.0);
+		  env_val = mus_env(ce);
 		  ix1 = grf_x(curx, axis_cp->axis);
 		  iy1 = grf_y_dB(ss, env_val, axis_cp->axis);
 		  draw_line(ax, ix0, iy0, ix1, iy1);
 		  if (axis_cp->printing) ps_draw_line(axis_cp, ix0, iy0, ix1, iy1);
-		  pass--;
-		  if (pass <= 0)
+		  if ((dots) && (index != mus_position(ce)))
 		    {
-		      if (dots)
-			{
-			  set_current_point(j++, ix1, iy1);
-			  draw_arc(ax, ix1, iy1, size);
-			}
-		      env_ctr += 2;
-		      pass = (int)(efm[env_ctr]);
-		      env_incr = efm[env_ctr+1];
+		      set_current_point(j++, ix1, iy1);
+		      draw_arc(ax, ix1, iy1, size);
+		      index = mus_position(ce);
 		    }
 		}
 	      if (curx < ex1)
@@ -836,9 +747,7 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_
 		  set_current_point(j++, ix1, iy1);
 		  draw_arc(ax, ix1, iy1, size);
 		}
-	      if (ef) FREE(ef);
-	      if (efm) FREE(efm);
-	      if (newe) free_env(newe);
+	      mus_free(ce);
 	    }
 	}
     }
@@ -1186,7 +1095,10 @@ int enved_button_press_display(snd_state *ss, axis_info *ap, env *active_env, in
       pos = place_point(current_xs, active_env->pts, evx);
       /* place returns left point index of current segment or pts if off left end */
       /* in this case, user clicked in middle of segment, so add point there */
-      add_point(active_env, pos + 1, x, y);
+#if HAVE_HOOKS
+      if (check_enved_hook(active_env, pos, x, y, ENVED_ADD_POINT) == 0)
+#endif
+	add_point(active_env, pos + 1, x, y);
       env_pos = pos + 1;
       set_enved_click_to_delete(0);
       env_redisplay(ss);
@@ -1391,8 +1303,12 @@ void add_or_edit_symbol(char *name, env *val)
   buf = (char *)CALLOC(256, sizeof(char));
   e = SND_LOOKUP(name);
   if ((e) && (gh_list_p(e)))
-    sprintf(buf, "(set! %s %s)", name, tmpstr = env_to_string(val));
-  else sprintf(buf, "(define %s %s)", name, tmpstr = env_to_string(val));
+    sprintf(buf, "(set! %s %s)", 
+	    name, 
+	    tmpstr = env_to_string(val));
+  else sprintf(buf, "(define %s %s)", 
+	       name, 
+	       tmpstr = env_to_string(val));
   scm_internal_stack_catch(SCM_BOOL_T, eval_str_wrapper, buf, snd_catch_scm_error, buf);
   FREE(buf);
   if (tmpstr) FREE(tmpstr);
@@ -1451,12 +1367,90 @@ static SCM g_save_envelopes(SCM filename)
   return(filename);
 }
 
+static SCM enved_hook;
+
+#if HAVE_HOOKS
+
+int check_enved_hook(env *e, int pos, Float x, Float y, int reason)
+{
+  SCM result = SCM_BOOL_F;
+  SCM procs, env_list;
+  int env_changed = 0;
+  if (HOOKED(enved_hook))
+    {
+      /* if hook procedure returns a list, that is the new contents of the
+       * envelope -- if its length doesn't match current, we need to remake
+       * current. Otherwise return 0, and assume the caller will handle default
+       */
+      procs = SCM_HOOK_PROCEDURES (enved_hook);
+      env_list = env2scm(e);
+      while (SCM_NIMP (procs))
+	{
+	  result = g_call_any(SCM_CAR(procs), 
+			      SCM_LIST5(env_list,
+					TO_SMALL_SCM_INT(pos),
+					TO_SCM_DOUBLE(x),
+					TO_SCM_DOUBLE(y),
+					TO_SMALL_SCM_INT(reason)));
+	  procs = SCM_CDR (procs);
+	  if ((SCM_NFALSEP(result)) && 
+	      (gh_list_p(result)))
+	    {
+	      /* remake env and (if SCM_NIMP(procs)) env_list */
+	      /* each successive hook procedure gets the on-going (changing) envelope */
+	      int len, i;
+	      SCM lst;
+	      len = gh_length(result);
+	      if (len > e->data_size)
+		{
+		  FREE(e->data);
+		  e->data = (Float *)CALLOC(len, sizeof(Float));
+		  e->data_size = len;
+		}
+	      e->pts = len / 2;
+	      for (i = 0, lst = result; i < len; i++, lst = SCM_CDR(lst))
+		e->data[i] = TO_C_DOUBLE(SCM_CAR(lst));
+	      if (SCM_NIMP(procs))
+		env_list = env2scm(e);
+	      env_changed = 1;
+	    }
+	}
+    }
+  return(env_changed); /* 0 = default action */
+}
+
+#endif
+
 void g_init_env(SCM local_doc)
 {
   DEFINE_PROC(gh_new_procedure0_1(S_save_envelopes,  g_save_envelopes),   H_save_envelopes);
   DEFINE_PROC(gh_new_procedure2_0(S_define_envelope, g_define_envelope),  H_define_envelope);
   define_procedure_with_setter(S_env_base, SCM_FNC g_env_base, H_env_base,
 			       "set-" S_env_base, SCM_FNC g_set_env_base, local_doc, 1, 0, 2, 0);
+
+  DEFINE_VAR(S_enved_add_point,    TO_SMALL_SCM_INT(ENVED_ADD_POINT),    S_enved_hook " 'reason' arg when point is added");
+  DEFINE_VAR(S_enved_delete_point, TO_SMALL_SCM_INT(ENVED_DELETE_POINT), S_enved_hook " 'reason' arg when point is deleted");
+  DEFINE_VAR(S_enved_move_point,   TO_SMALL_SCM_INT(ENVED_MOVE_POINT),   S_enved_hook " 'reason' arg when point is moved");
+
+  #define H_enved_hook S_enved_hook " (env pt new-x new-y reason)\n\
+Each time a breakpoint is changed in the envelope editor, this hook \
+is called; if it returns a list, that list defines the new envelope, \
+otherwise the breakpoint is moved (but not beyond the neighboring \
+breakpoint), leaving other points untouched.  The kind of change \
+is 'reason' which can be enved-point-moved, enved-point-deleted, \
+or enved-point-added.  This hook makes it possible to define attack \
+and decay portions in the envelope editor, or use functions such as \
+stretch-envelope from env.scm: \n\
+ (add-hook! enved-hook\n\
+   (lambda (env pt x y reason)\n\
+     (if (= reason enved-move-point)\n\
+         (let* ((old-x (list-ref env (* pt 2)))\n\
+                (new-env (stretch-envelope env old-x x)))\n\
+           (list-set! new-env (+ (* pt 2) 1) y)\n\
+           new-env)\n\
+         #f)))"
+
+  enved_hook = MAKE_HOOK(S_enved_hook, 5, H_enved_hook);
 }
 
 #endif

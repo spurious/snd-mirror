@@ -400,7 +400,10 @@ static void drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data
 	  if (y > ap->y1) y = ap->y1;
 	}
       if (enved_dBing(ss)) y = un_dB(ss, y);
-      move_point(active_env, env_pos, x, y);
+#if HAVE_HOOKS
+      if (check_enved_hook(active_env, env_pos, x, y, ENVED_MOVE_POINT) == 0)
+#endif
+	move_point(active_env, env_pos, x, y);
       enved_display_point_label(ss, x, y);
       env_redisplay(ss);
     }
@@ -442,7 +445,10 @@ static void drawer_button_release(GtkWidget *w, GdkEventButton *ev, gpointer dat
 	  (!env_dragged) && 
 	  (env_pos != 0)) /* might want to protect last point also */
 	{
-	  delete_point(active_env, env_pos);
+#if HAVE_HOOKS
+	  if (check_enved_hook(active_env, env_pos, 0, 0, ENVED_DELETE_POINT) == 0)
+#endif
+	    delete_point(active_env, env_pos);
 	}
       do_env_edit(active_env, FALSE);
       env_pos = 0;

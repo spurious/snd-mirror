@@ -974,7 +974,9 @@ static mix_info *file_mix_samples(int beg, int num, char *tempfile, chan_info *c
 			   ihdr->data_location,
 			   ihdr->chans,
 			   ihdr->type);
+#if HAVE_HOOKS
   during_open(ifd, tempfile, SND_MIX_FILE);
+#endif
   if (num < MAX_BUFFER_SIZE) size = num; else size = MAX_BUFFER_SIZE;
   data = (MUS_SAMPLE_TYPE **)CALLOC(in_chans, sizeof(MUS_SAMPLE_TYPE *));
   data[base] = (MUS_SAMPLE_TYPE *)CALLOC(size, sizeof(MUS_SAMPLE_TYPE));

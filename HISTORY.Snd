@@ -1,5 +1,6 @@
 snd change log
 
+  28-Feb:    added enved-hook with enved-add-point, enved-delete-point, and enved-move-point.
   27-Feb:    removed cursor-claim-selection (was identical to cursor-update-display).
   26-Feb:    Tab-completion is much smarter in Guile 1.4.1.
   23-Feb:    --with-gsl is the default in configure.

@@ -656,6 +656,26 @@ static char *file_extension(char *arg)
   return(dot);
 }
 
+#if HAVE_HOOKS
+
+static SCM start_hook;
+
+static int dont_start(snd_state *ss, char *filename)
+{
+  SCM res = SCM_BOOL_F;
+  if ((!(ss->start_hook_active)) &&
+      (HOOKED(start_hook)))
+    {
+      ss->start_hook_active = 1;
+      res = g_c_run_or_hook(start_hook,
+			    SCM_LIST1(TO_SCM_STRING(filename)));
+      ss->start_hook_active = 0;
+    }
+  return(SCM_TRUE_P(res));
+}
+
+#endif
+
 static char *startup_filename = NULL;
 
 int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_file_names, int with_title)
@@ -716,7 +736,9 @@ int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_f
 			  if (startup_filename == NULL)
 			    {
 			      startup_filename = copy_string(argname);
+#if HAVE_HOOKS
 			      if (dont_start(ss, startup_filename)) snd_exit(1);
+#endif
 			    }
 			  snd_open_file_unselected(argname, ss);
 			}
@@ -739,8 +761,10 @@ static SCM g_save_options(SCM filename)
   name = full_filename(filename);
   fd = fopen(name, "w");
   if (name) FREE(name);
-  if (fd) save_snd_state_options(get_global_state(), fd);
-  if ((!fd) || (fclose(fd) != 0))
+  if (fd) 
+    save_snd_state_options(get_global_state(), fd);
+  if ((!fd) || 
+      (fclose(fd) != 0))
     return(scm_throw(CANNOT_SAVE, 
 		     SCM_LIST3(TO_SCM_STRING(S_save_options),
 			       filename,
@@ -760,6 +784,12 @@ void g_init_main(SCM local_doc)
 {
   DEFINE_PROC(gh_new_procedure(S_save_options, SCM_FNC g_save_options, 1, 0, 0), H_save_options);
   gh_new_procedure("mem-report", SCM_FNC g_mem_report, 0, 0, 0);
+
+#if HAVE_HOOKS
+  #define H_start_hook S_start_hook " (filename) is called upon start-up. If it returns #t, snd exits immediately."
+  start_hook =          MAKE_HOOK(S_start_hook, 1, H_start_hook);                   /* arg = argv filename if any */
+#endif
+
 }
 
 #endif

@@ -463,6 +463,27 @@ functions invoked by the hook.
 
                                       The prescaling affects only sound data made up of floats or doubles.
 
+  enved-hook (env pt new-x new-y reason)
+                                      Each time a breakpoint is changed in the envelope editor, this hook
+                                      is called; if it returns a list, that list defines the new envelope,
+                                      otherwise the breakpoint is moved (but not beyond the neighboring
+                                      breakpoint), leaving other points untouched.  The kind of change
+                                      is reason which can be enved-move-point, enved-delete-point,
+                                      or enved-add-point.  This hook makes it possible to define attack
+                                      and decay portions in the envelope editor, or use functions such as
+                                      stretch-envelope from env.scm:
+
+                                      (add-hook! enved-hook
+                                        (lambda (env pt x y reason)
+                                          (if (= reason enved-move-point)
+                                              (if (and (> x 0.0) (< x (max-x env)))
+                                                  (let* ((old-x (list-ref env (* pt 2)))
+                                                         (new-env (stretch-envelope env old-x x)))
+                                                     (list-set! new-env (+ (* pt 2) 1) y)
+                                                     new-env)
+                                                  env)
+                                              #f)))
+
   exit-hook ()                        called upon exit. (or)
                                       If it returns #t, Snd does not exit.  This can be used to check
                                       for unsaved edits, or to perform cleanup activities.

@@ -350,7 +350,7 @@ static SCM g_call_any_1(void *arg)
   return(scm_apply(((SCM *)arg)[0], ((SCM *)arg)[1], SCM_EOL));
 }
 
-static SCM g_call_any(SCM proc, SCM arglist)
+SCM g_call_any(SCM proc, SCM arglist)
 {
   SCM args[2];
   args[0] = proc;
@@ -1622,7 +1622,9 @@ static SCM g_set_search_procedure(SCM snd, SCM proc)
 static SCM g_exit(SCM val) 
 {
   #define H_exit "(" S_exit ") exits Snd"
+#if HAVE_HOOKS
   if (dont_exit(state)) return(SCM_BOOL_T);
+#endif
   snd_exit_cleanly(state); 
   snd_exit(TO_C_INT_OR_ELSE(val,1)); 
   return(SCM_BOOL_F);
@@ -3552,9 +3554,7 @@ updates an on-going 'progress report' (e. g. an animated hour-glass icon) in snd
 }
 
 
-static SCM during_open_hook, exit_hook, start_hook, after_open_hook;
-static SCM output_comment_hook;
-
+static SCM during_open_hook, after_open_hook, output_comment_hook;
 
 void define_procedure_with_setter(char *get_name, SCM (*get_func)(), char *get_help,
 				  char *set_name, SCM (*set_func)(), 
@@ -4044,11 +4044,6 @@ void g_initialize_gh(snd_state *ss)
   #define H_after_open_hook S_after_open_hook " (snd) is called just before the new file's window is displayed. \
 This provides a way to set various sound-specific defaults."
 
-  #define H_exit_hook S_exit_hook " () is called upon exit. \
-If it returns #t, Snd does not exit.  This can be used to check for unsaved edits, or to perform cleanup activities."
-
-  #define H_start_hook S_start_hook " (filename) is called upon start-up. If it returns #t, snd exits immediately."
-
   #define H_output_comment_hook S_output_comment_hook " (str) is called in Save-As dialog, passed current sound's comment, if any. \
 If more than one hook function, results are concatenated. If none, the current comment is used.\n\
   (add-hook! output-comment-hook\n\
@@ -4059,8 +4054,6 @@ If more than one hook function, results are concatenated. If none, the current c
 
   during_open_hook =    MAKE_HOOK(S_during_open_hook, 3, H_during_open_hook);       /* args = fd filename reason */
   after_open_hook =     MAKE_HOOK(S_after_open_hook, 1, H_after_open_hook);         /* args = sound */
-  exit_hook =           MAKE_HOOK(S_exit_hook, 0, H_exit_hook);
-  start_hook =          MAKE_HOOK(S_start_hook, 1, H_start_hook);                   /* arg = argv filename if any */
   output_comment_hook = MAKE_HOOK(S_output_comment_hook, 1, H_output_comment_hook); /* arg = current mus_sound_comment(hdr) if any */
 
   g_init_marks(local_doc);
@@ -4198,43 +4191,6 @@ void after_open(int index)
     g_c_run_progn_hook(after_open_hook,
 		       SCM_LIST1(TO_SMALL_SCM_INT(index)));
 }
-
-int dont_exit(snd_state *ss)
-{
-  SCM res = SCM_BOOL_F;
-  if (!(ss->exit_hook_active))
-    {
-      if (HOOKED(exit_hook))
-	{
-	  ss->exit_hook_active = 1;
-	  res = g_c_run_or_hook(exit_hook, SCM_LIST0);
-	  ss->exit_hook_active = 0;
-	}
-    }
-  return(SCM_TRUE_P(res));
-}
-  
-int dont_start(snd_state *ss, char *filename)
-{
-  SCM res = SCM_BOOL_F;
-  if (!(ss->start_hook_active))
-    {
-      if (HOOKED(start_hook))
-	{
-	  ss->start_hook_active = 1;
-	  res = g_c_run_or_hook(start_hook,
-				SCM_LIST1(TO_SCM_STRING(filename)));
-	  ss->start_hook_active = 0;
-	}
-    }
-  return(SCM_TRUE_P(res));
-}
-
-#else
-int dont_exit(snd_state *ss) {return(0);}
-int dont_start(snd_state *ss, char *filename) {return(0);}
-void during_open(int fd, char *file, int reason) {}
-void after_open(int index) {}
 #endif
 
 #endif

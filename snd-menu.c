@@ -304,9 +304,29 @@ void revert_file_from_menu(snd_state *ss)
     }
 }
 
+#if HAVE_HOOKS
+static SCM exit_hook;
+
+int dont_exit(snd_state *ss)
+{
+  SCM res = SCM_BOOL_F;
+  if ((!(ss->exit_hook_active)) &&
+      (HOOKED(exit_hook)))
+    {
+      ss->exit_hook_active = 1;
+      res = g_c_run_or_hook(exit_hook, 
+			    SCM_LIST0);
+      ss->exit_hook_active = 0;
+    }
+  return(SCM_TRUE_P(res));
+}
+#endif
+  
 void exit_from_menu(snd_state *ss)
 {
+#if HAVE_HOOKS
   if (dont_exit(ss)) return;
+#endif
   snd_exit_cleanly(ss);
   snd_exit(1);
 }
@@ -720,5 +740,14 @@ void g_init_menu(SCM local_doc)
   DEFINE_PROC(gh_new_procedure3_0(S_add_to_menu,       g_add_to_menu),       H_add_to_menu);
   DEFINE_PROC(gh_new_procedure2_0(S_remove_from_menu,  g_remove_from_menu),  H_remove_from_menu);
   DEFINE_PROC(gh_new_procedure3_0(S_change_menu_label, g_change_menu_label), H_change_menu_label);
+
+#if HAVE_HOOKS
+
+  #define H_exit_hook S_exit_hook " () is called upon exit. \
+If it returns #t, Snd does not exit.  This can be used to check for unsaved edits, or to perform cleanup activities."
+
+  exit_hook =           MAKE_HOOK(S_exit_hook, 0, H_exit_hook);
+
+#endif
 }
 #endif

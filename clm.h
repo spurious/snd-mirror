@@ -2,10 +2,11 @@
 #define MUS_H
 
 #define MUS_VERSION 1
-#define MUS_REVISION 41
-#define MUS_DATE "8-Feb-01"
+#define MUS_REVISION 42
+#define MUS_DATE "28-Feb-01"
 
 /* 
+ * 28-Feb:     added mus_position (currently only for envs).
  * 8-Feb:      clm2scm.h.
  * 24-Jan:     mus-bank in clm2scm.
  * 5-Jan:      clm2scm gens are applicable.
@@ -177,8 +178,8 @@ enum {MUS_RECTANGULAR_WINDOW, MUS_HANNING_WINDOW, MUS_WELCH_WINDOW, MUS_PARZEN_W
       MUS_EXPONENTIAL_WINDOW, MUS_RIEMANN_WINDOW, MUS_KAISER_WINDOW, MUS_CAUCHY_WINDOW, MUS_POISSON_WINDOW,
       MUS_GAUSSIAN_WINDOW, MUS_TUKEY_WINDOW, MUS_DOLPH_CHEBYSHEV_WINDOW};
 
-#define MUS_RUN(GEN, ARG1, ARG2) 	((*((GEN->core)->run))(GEN, ARG1, ARG2))
-#define MUS_RUN_P(GEN) 	        ((GEN->core)->run)
+#define MUS_RUN(GEN, ARG1, ARG2) ((*((GEN->core)->run))(GEN, ARG1, ARG2))
+#define MUS_RUN_P(GEN) 	         ((GEN->core)->run)
 
 
 BEGIN_DECLS
@@ -378,6 +379,7 @@ mus_any *mus_make_env           PROTO((Float *brkpts, int pts, Float scaler, Flo
 int mus_env_p                   PROTO((mus_any *ptr));
 void mus_restart_env            PROTO((mus_any *ptr));
 Float mus_env_interp            PROTO((Float x, mus_any *env));
+int mus_position                PROTO((mus_any *ptr));
 
 int mus_frame_p                 PROTO((mus_any *ptr));
 mus_frame *mus_make_empty_frame PROTO((int chans));

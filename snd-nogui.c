@@ -352,7 +352,9 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
   sp = ss->sounds[snd_slot];
   for (i = 0; i < nchans; i++) sp->chans[i] = make_chan_info(sp->chans[i], i, sp, ss);
   add_sound_data(filename, sp, ss);
+#if HAVE_HOOKS
   after_open(sp->index);
+#endif
   return(sp);
 }
 

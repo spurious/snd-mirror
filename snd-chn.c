@@ -628,7 +628,9 @@ void add_channel_data(char *filename, chan_info *cp, file_info *hdr, snd_state *
 				   chdr->data_location,
 				   chdr->chans,
 				   chdr->type);
+#if HAVE_HOOKS
 	  during_open(fd, filename, SND_OPEN_CHANNEL);
+#endif
 	  datai = make_file_state(fd, chdr, chn, FILE_BUFFER_SIZE);
 	  cp->sounds[0] = make_snd_data_file(filename, datai,
 					     MUS_SAMPLE_ARRAY(datai[file_state_channel_offset(chn)]),
@@ -6647,9 +6649,6 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      if ((ss->checking_explicitly) || (play_in_progress())) ss->stopped_explicitly = 1; 
 	      clear_listener();
 	      break;
-	    case snd_K_H: case snd_K_h: 
-	      /* TODO: what is this??? */
-	      break;
 	    case snd_K_I: case snd_K_i: 
 	      redisplay = prompt(sp, "insert file:", NULL); 
 	      sp->filing = INSERT_FILING; 
@@ -6714,8 +6713,6 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      get_eval_expression(sp, ext_count, 0); 
 	      searching = 1; 
 	      redisplay = CURSOR_IN_VIEW; 
-	      break;
-	    case snd_K_Y: case snd_K_y: 
 	      break;
 	    case snd_K_Z: case snd_K_z: 
 	      cp->cursor_on = 1; 
@@ -10278,36 +10275,32 @@ static SCM graph_hook, after_graph_hook;
 #if HAVE_HOOKS
 static void after_fft(snd_state *ss, chan_info *cp, Float scaler)
 {
-  if (!(ss->fft_hook_active))
+  if ((!(ss->fft_hook_active)) &&
+      (HOOKED(fft_hook)))
     {
-      if (HOOKED(fft_hook))
-	{
-	  ss->fft_hook_active = 1;
-	  g_c_run_progn_hook(fft_hook,
-			     SCM_LIST3(TO_SMALL_SCM_INT((cp->sound)->index),
-				       TO_SMALL_SCM_INT(cp->chan),
-				       TO_SCM_DOUBLE(scaler)));
-	  ss->fft_hook_active = 0;
-	}
+      ss->fft_hook_active = 1;
+      g_c_run_progn_hook(fft_hook,
+			 SCM_LIST3(TO_SMALL_SCM_INT((cp->sound)->index),
+				   TO_SMALL_SCM_INT(cp->chan),
+				   TO_SCM_DOUBLE(scaler)));
+      ss->fft_hook_active = 0;
     }
 }
 
 static int dont_graph(snd_state *ss, chan_info *cp)
 {
   SCM res = SCM_BOOL_F;
-  if (!(ss->graph_hook_active))
+  if ((!(ss->graph_hook_active)) &&
+      (HOOKED(graph_hook)))
     {
-      if (HOOKED(graph_hook))
-	{
-	  ss->graph_hook_active = 1;
-	  res = g_c_run_progn_hook(graph_hook,
-				   SCM_LIST4(TO_SMALL_SCM_INT((cp->sound)->index),
-					     TO_SMALL_SCM_INT(cp->chan),
-					     TO_SCM_DOUBLE((cp->axis)->y0),
-					     TO_SCM_DOUBLE((cp->axis)->y1)));
-	  /* (add-hook! graph-hook (lambda (a b c d) (snd-print (format #f "~A ~A ~A ~A" a b c d)))) */
-	  ss->graph_hook_active = 0;
-	}
+      ss->graph_hook_active = 1;
+      res = g_c_run_progn_hook(graph_hook,
+			       SCM_LIST4(TO_SMALL_SCM_INT((cp->sound)->index),
+					 TO_SMALL_SCM_INT(cp->chan),
+					 TO_SCM_DOUBLE((cp->axis)->y0),
+					 TO_SCM_DOUBLE((cp->axis)->y1)));
+      /* (add-hook! graph-hook (lambda (a b c d) (snd-print (format #f "~A ~A ~A ~A" a b c d)))) */
+      ss->graph_hook_active = 0;
     }
   return(SCM_TRUE_P(res));
 }
