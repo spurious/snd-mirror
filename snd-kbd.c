@@ -1464,7 +1464,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      zx_incremented(cp, 1.0 / (1.0 + state_amount(state))); 
 	      break;
 	    case snd_K_Home: 
-	      snd_update(ss, sp); 
+	      sp = snd_update(ss, sp); 
 	      break;
 	    case snd_K_space: 
 	      if (play_in_progress())

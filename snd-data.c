@@ -515,32 +515,40 @@ int active_channels (snd_state *ss, int count_virtual_channels)
   return(chans);
 }
 
-int find_free_sound_slot (snd_state *state, int desired_chans)
+int find_free_sound_slot (snd_state *ss, int desired_chans)
 {
   int i, j;
   snd_info *sp;
   /* first try to find an unused slot that can accommodate desired_chans (to reduce Widget creation) */
-  for (i = 0; i < state->max_sounds; i++)
+  if (ss->reloading_updated_file > 0)
     {
-      sp = state->sounds[i];
+      /* snd_update should change the underlying slot only when it has to (user increased chans) */
+      sp = ss->sounds[ss->reloading_updated_file - 1];
+      if ((sp == NULL) ||
+	  ((sp->inuse == 0) && (sp->allocated_chans >= desired_chans)))
+	return(ss->reloading_updated_file - 1);
+    }
+  for (i = 0; i < ss->max_sounds; i++)
+    {
+      sp = ss->sounds[i];
       if ((sp) && (sp->inuse == 0) && (sp->allocated_chans == desired_chans)) return(i);
     }
-  for (i = 0; i < state->max_sounds; i++)
+  for (i = 0; i < ss->max_sounds; i++)
     {
-      sp = state->sounds[i];
+      sp = ss->sounds[i];
       if ((sp) && (sp->inuse == 0) && (sp->allocated_chans > desired_chans)) return(i);
     }
-  for (i = 0; i < state->max_sounds; i++)
+  for (i = 0; i < ss->max_sounds; i++)
     {
-      sp = state->sounds[i];
+      sp = ss->sounds[i];
       if (sp == NULL) return(i);
       if (sp->inuse == 0) return(i);
     }
   /* need to REALLOC sounds to make space */
-  j = state->max_sounds;
-  state->max_sounds += 4;
-  state->sounds = (snd_info **)REALLOC(state->sounds, state->max_sounds*sizeof(snd_info *));
-  for (i = j; i < state->max_sounds; i++) state->sounds[i] = NULL;
+  j = ss->max_sounds;
+  ss->max_sounds += 4;
+  ss->sounds = (snd_info **)REALLOC(ss->sounds, ss->max_sounds * sizeof(snd_info *));
+  for (i = j; i < ss->max_sounds; i++) ss->sounds[i] = NULL;
   return(j);
 }
 

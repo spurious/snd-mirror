@@ -5074,7 +5074,7 @@ the direction argument between the channel and edit-position.
 (define ctr 0)
 (call-with-current-continuation 
   (lambda (return)
-    (map-chan (lambda (val)
+    (<em class=red>map-chan</em> (lambda (val)
                 (set! ctr (1+ ctr)) 
                 (if (&gt; ctr 100) 
                   (return "quitting!") 
@@ -5094,12 +5094,12 @@ the direction argument between the channel and edit-position.
 (define* (map-sound-chans proc #:optional (beg 0) end edname snd edpos)
   (do ((i 0 (1+ i)))
       ((= i (chans snd)))
-    (map-chan proc beg end edname snd i edpos)))
+    (<em class=red>map-chan</em> proc beg end edname snd i edpos)))
 
 (define* (map-all-chans proc #:optional (beg 0) end edname edpos)
   (apply for-each 
 	 (lambda (snd chn)
-	   (map-chan proc beg end edname snd chn edpos))
+	   (<em class=red>map-chan</em> proc beg end edname snd chn edpos))
 	 (all-chans)))
 <!-- --></pre></td></tr></table>
 <!-- --></td></tr>
@@ -5126,7 +5126,7 @@ the direction argument between the channel and edit-position.
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
 (define (maxamp-all)
   "(maxamp-all) returns the current maxamp of all currently open sounds"
-  (apply max (map (lambda (snd) (apply max (maxamp snd #t))) (sounds))))
+  (apply max (map (lambda (snd) (apply max (<em class=red>maxamp</em> snd #t))) (sounds))))
 <!-- --></pre></td></tr></table>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
@@ -5276,7 +5276,7 @@ the direction argument between the channel and edit-position.
     (add-hook! stop-playing-hook 
 	       (lambda (snd)
 		 (set! (cursor-follows-play) old-tracking)))
-    (play (cursor))))
+    (<em class=red>play</em> (cursor))))
 <!-- --></pre></td></tr></table></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->

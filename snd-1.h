@@ -160,6 +160,12 @@ typedef struct {
 } mark;
 
 typedef struct {
+  mark **marks;
+  int ctr;
+  int size;
+} mark_info;
+
+typedef struct {
   Float *data;
   int pts, data_size;
   int exponential;
@@ -620,6 +626,8 @@ void reset_marks(chan_info *cp, int cur_marks, off_t *samps, off_t end, off_t ex
 void ripple_trailing_marks(chan_info *cp, off_t beg, off_t old_len, off_t new_len);
 void swap_marks(chan_info *cp0, chan_info *cp1);
 void g_init_marks(void);
+mark_info **sound_store_marks(snd_info *sp);
+void sound_restore_marks(snd_info *sp, mark_info **marks);
 
 
 
@@ -1098,7 +1106,7 @@ void snd_close_file(snd_info *sp, snd_state *ss);
 int copy_file(char *oldname, char *newname);
 int move_file(char *oldfile, char *newfile);
 snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close);
-void snd_update(snd_state *ss, snd_info *sp);
+snd_info *snd_update(snd_state *ss, snd_info *sp);
 char *view_curfiles_name(int pos);
 void view_curfiles_play(snd_state *ss, int pos, int play);
 void view_curfiles_select(snd_state *ss, int pos);
@@ -1330,14 +1338,13 @@ off_t end_to_sample(XEN end, chan_info *cp, int edpos, const char *caller);
 void *form_to_ptree_1f2b(XEN code);
 void *form_to_ptree_1f2b_without_env(XEN code);
 void *form_to_ptree_1f2f(XEN code);
-char *initialize_ptree(void *upt);
 Float evaluate_ptree_0f2f(void *upt);
 void *form_to_ptree_0f2f(XEN code);
 Float evaluate_ptree_1f2f(void *upt, Float arg);
 int evaluate_ptree_1f2b(void *upt, Float arg);
 void *free_ptree(void *upt);
-void g_init_run(void);
 #endif
+void g_init_run(void);
 
 
 /* -------- snd-draw.c -------- */

@@ -144,12 +144,6 @@ char *global_search(snd_state *ss, int direction)
     }
 #if WITH_RUN
     }
-  else
-    {
-      char *err;
-      err = initialize_ptree(ss->search_tree);
-      if (err) return(err);
-    }
 #endif
   search_in_progress = 1;
   chans = active_channels(ss, WITH_VIRTUAL_CHANNELS);
@@ -233,14 +227,6 @@ static off_t cursor_find_forward(snd_info *sp, chan_info *cp, int count)
 #if WITH_RUN
   if (sp->search_tree)
     {
-      char *err;
-      err = initialize_ptree(sp->search_tree);
-      if (err) 
-	{
-	  snd_error("find: %s", err);
-	  FREE(err);
-	  return(-1);
-	}
       for (i = start; i < end; i++)
 	if (evaluate_ptree_1f2b(sp->search_tree, read_sample_to_float(sf)))
 	  {
@@ -308,14 +294,6 @@ static off_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
 #if WITH_RUN
   if (sp->search_tree)
     {
-      char *err;
-      err = initialize_ptree(sp->search_tree);
-      if (err) 
-	{
-	  snd_error("find: %s", err);
-	  FREE(err);
-	  return(-1);
-	}
       for (i = start; i >= 0; i--)
 	if (evaluate_ptree_1f2b(sp->search_tree, read_sample_to_float(sf)))
 	  {

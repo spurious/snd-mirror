@@ -346,14 +346,6 @@ int mus_header_data_format_to_bytes_per_sample (void) {return(mus_data_format_to
 off_t mus_samples_to_bytes (int format, off_t size) {return(size * (mus_data_format_to_bytes_per_sample(format)));}
 off_t mus_bytes_to_samples (int format, off_t size) {return((off_t)(size / (mus_data_format_to_bytes_per_sample(format))));}
 
-void mus_header_snd_set_header (int in_srate, int in_chans, int in_format) 
-{
-  srate = in_srate; 
-  chans = in_chans; 
-  data_format = in_format;
-  data_size = mus_bytes_to_samples(in_format, true_file_length);
-}
-
 
 static int equal_big_or_little_endian(const unsigned char *n1, const unsigned int n2)
 {
@@ -6064,3 +6056,4 @@ void mus_header_set_aiff_loop_info (int *data)
     }
   else mus_header_set_full_aiff_loop_info(NULL);
 }
+

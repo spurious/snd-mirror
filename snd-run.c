@@ -110,13 +110,11 @@ static XEN optimization_hook = XEN_FALSE;
 /* find and set (Guile) variable values */
 static XEN symbol_to_value(XEN code, XEN sym, int *local)
 {
-  /* sigh... this is a can of worms */
   XEN new_val = XEN_UNDEFINED;
-  XEN pair = XEN_FALSE, pairs = XEN_FALSE;
+  XEN pair = XEN_FALSE;
   XEN code_env = XEN_FALSE;
   XEN names, values;
   int i, len;
-  int believe_it = FALSE;
   if (XEN_PROCEDURE_P(code))
     {
       /* scrounge around in the "eval" environment looking for local version of sym */
@@ -124,124 +122,55 @@ static XEN symbol_to_value(XEN code, XEN sym, int *local)
       /* fprintf(stderr,"look for %s in %s\n", XEN_AS_STRING(sym), XEN_AS_STRING(code_env)); */
       if (XEN_LIST_P(code_env))
 	{
-	  /* now we might have an "eval environment" (an association list) or an "eval closure" (something different...) */
-	  if (XEN_LIST_P(XEN_CAR(XEN_CAR(code_env))))
+	  (*local) = 1;
+	  while (XEN_NOT_NULL_P(code_env))
 	    {
-	      /*  fprintf(stderr,"look 1: %s\n", XEN_AS_STRING(code_env));  */
-	      names = XEN_CAAR(code_env);
-	      values = XEN_CDAR(code_env);
-	      len = XEN_LIST_LENGTH(names);
-	      for (i = 0; i < len; i++)
-		if (XEN_EQ_P(XEN_LIST_REF(names, i), sym))
-		  {
-		    new_val = XEN_LIST_REF(values, i);
-		    believe_it = TRUE;
-		    (*local) = 1;
-		    break;
-		  }
-	      if ((!believe_it) && (XEN_NOT_NULL_P(XEN_CDR(code_env))))
-		pairs = XEN_CDR(code_env);
-	    }
-	  else pairs = code_env;
-	  if ((!believe_it) && (XEN_LIST_P(pairs)))
-	    {
-	      /* next portion of context appears to be in trailing association list */
-	      pair = scm_sloppy_assoc(sym, pairs);
-	      if (XEN_TRUE_P(scm_pair_p(pair)))
+	      pair = XEN_CAR(code_env);
+	      if ((XEN_LIST_P(pair)) && 
+		  (XEN_LIST_P(XEN_CAR(pair))))
 		{
-		  new_val = XEN_CDR(pair);
-		  /* whatever it is, it is the current reigning sym */
-		  /* fprintf(stderr,"%s found 12: %s\n", XEN_AS_STRING(sym), XEN_AS_STRING(new_val));  */
-		  believe_it = TRUE;
-		  (*local) = 2;
-		}
-	    }
-	  if ((!believe_it) && (XEN_LIST_LENGTH(code_env) > 2))
-	    {
-	      /* getting desperate -- final list of code_env appears to be arg list? */
-	      names = XEN_LIST_REF(code_env, XEN_LIST_LENGTH(code_env) - 2);
-	      /* fprintf(stderr,"check %s\n",XEN_AS_STRING(names));  */
-	      if ((XEN_LIST_P(names)) && (XEN_LIST_P(XEN_CAR(names))))
-		{
-		  /* fprintf(stderr,"look now in: %s\n", XEN_AS_STRING(names)); */
-		  values = XEN_CDR(names);
-		  names = XEN_CAR(names);
+		  names = XEN_CAR(pair);
+		  values = XEN_CDR(pair);
 		  len = XEN_LIST_LENGTH(names);
 		  for (i = 0; i < len; i++)
 		    if (XEN_EQ_P(XEN_LIST_REF(names, i), sym))
-		      {
-			new_val = XEN_LIST_REF(values, i);
-			/* fprintf(stderr,"%s found 1: %s\n", XEN_AS_STRING(sym), XEN_AS_STRING(new_val));  */
-			believe_it = TRUE;
-			(*local) = 3;
-			break;
-		      }
+		      return(XEN_LIST_REF(values, i));
 		}
+	      else
+		{
+		  if ((XEN_TRUE_P(scm_pair_p(pair))) && 
+		      (XEN_EQ_P(XEN_CAR(pair), sym)))
+		    return(XEN_CDR(pair));
+		}
+	      code_env = XEN_CDR(code_env);
 	    }
 	}
     }
-  if ((!believe_it) && (XEN_NOT_BOUND_P(new_val)))
-    {
-      new_val = XEN_SYMBOL_TO_VALUE(sym); /* try the outer environment */
-      (*local) = 0;
-      /* fprintf(stderr,"%s found 3: %s\n", XEN_AS_STRING(sym), XEN_AS_STRING(new_val));  */
-    } 
-  /* fprintf(stderr,"%s found: %s\n", XEN_AS_STRING(sym), XEN_AS_STRING(new_val)); */
+  new_val = XEN_SYMBOL_TO_VALUE(sym); /* try the outer environment */
+  if (XEN_BOUND_P(new_val))
+    (*local) = 0;
   return(new_val);
 }
 
 static XEN symbol_set_value(XEN code, XEN sym, XEN new_val)
 {
-  XEN pair = XEN_FALSE, pairs = XEN_FALSE;
+  XEN pair = XEN_FALSE;
   XEN code_env = XEN_FALSE;
   XEN names, values;
   int i, len;
   /* fprintf(stderr,"set %s to %s\n", XEN_AS_STRING(sym), XEN_AS_STRING(new_val)); */
   if (XEN_PROCEDURE_P(code))
     {
-      /* scrounge around in the "eval" environment looking for local version of sym */
       code_env = SCM_ENV(code);
-      /* fprintf(stderr,"look for %s in %s\n", XEN_AS_STRING(sym), XEN_AS_STRING(code_env)); */
       if (XEN_LIST_P(code_env))
 	{
-	  /* now we might have an "eval environment" (an association list) or an "eval closure" (something different...) */
-	  if (XEN_LIST_P(XEN_CAR(XEN_CAR(code_env))))
+	  while (XEN_NOT_NULL_P(code_env))
 	    {
-	      /*  fprintf(stderr,"look 1: %s\n", XEN_AS_STRING(code_env));  */
-	      names = XEN_CAAR(code_env);
-	      values = XEN_CDAR(code_env);
-	      len = XEN_LIST_LENGTH(names);
-	      for (i = 0; i < len; i++)
-		if (XEN_EQ_P(XEN_LIST_REF(names, i), sym))
-		  {
-		    XEN_LIST_SET(values, i, new_val);
-		    return(new_val);
-		  }
-	      if (XEN_NOT_NULL_P(XEN_CDR(code_env)))
-		pairs = XEN_CDR(code_env);
-	    }
-	  else pairs = code_env;
-	  if (XEN_LIST_P(pairs))
-	    {
-	      /* next portion of context appears to be in trailing association list */
-	      pair = scm_sloppy_assoc(sym, pairs);
-	      if (XEN_TRUE_P(scm_pair_p(pair)))
+	      pair = XEN_CAR(code_env);
+	      if ((XEN_LIST_P(pair)) && (XEN_LIST_P(XEN_CAR(pair))))
 		{
-		  scm_set_cdr_x(pair, new_val);
-		  new_val = XEN_CDR(pair);
-		  return(new_val);
-		}
-	    }
-	  if (XEN_LIST_LENGTH(code_env) > 2)
-	    {
-	      /* getting desperate -- final list of code_env appears to be arg list? */
-	      names = XEN_LIST_REF(code_env, XEN_LIST_LENGTH(code_env) - 2);
-	      /* fprintf(stderr,"check %s\n",XEN_AS_STRING(names));  */
-	      if ((XEN_LIST_P(names)) && (XEN_LIST_P(XEN_CAR(names))))
-		{
-		  /* fprintf(stderr,"look now in: %s\n", XEN_AS_STRING(names)); */
-		  values = XEN_CDR(names);
-		  names = XEN_CAR(names);
+		  names = XEN_CAR(pair);
+		  values = XEN_CDR(pair);
 		  len = XEN_LIST_LENGTH(names);
 		  for (i = 0; i < len; i++)
 		    if (XEN_EQ_P(XEN_LIST_REF(names, i), sym))
@@ -250,19 +179,24 @@ static XEN symbol_set_value(XEN code, XEN sym, XEN new_val)
 			return(new_val);
 		      }
 		}
+	      if ((XEN_TRUE_P(scm_pair_p(pair))) && (XEN_EQ_P(XEN_CAR(pair), sym)))
+		{
+		  scm_set_cdr_x(pair, new_val);
+		  return(new_val);
+		}
+	      code_env = XEN_CDR(code_env);
 	    }
 	}
     }
-  /* fprintf(stderr, "set global\n"); */
   XEN_VARIABLE_SET(scm_sym2var(sym, scm_current_module_lookup_closure(), XEN_TRUE), new_val);
   return(new_val);
 }
 
 
-enum {R_INT, R_FLOAT, R_BOOL, R_CHAR, R_STRING, R_PENDING, R_FUNCTION, R_GOTO, R_VCT, R_READER, R_CLM, 
-      R_FLOAT_VECTOR, R_INT_VECTOR, R_VCT_VECTOR, R_CLM_VECTOR};
-static char *type_names[15] = {"int", "float", "bool", "char", "string", "pending", "function", "continuation", "vct", "reader", "clm", 
-			       "float-vector", "int-vector", "vct-vector", "clm-vector"};
+enum {R_INT, R_FLOAT, R_BOOL, R_CHAR, R_STRING, R_FUNCTION, R_GOTO, R_VCT, R_READER, R_CLM, 
+      R_FLOAT_VECTOR, R_INT_VECTOR, R_VCT_VECTOR, R_CLM_VECTOR, R_UNSPECIFIED};
+static char *type_names[15] = {"int", "float", "bool", "char", "string", "function", "continuation", "vct", "reader", "clm", 
+			       "float-vector", "int-vector", "vct-vector", "clm-vector", "unspecified"};
 static char* type_name(int id) {if ((id >= R_INT) && (id <= R_CLM_VECTOR)) return(type_names[id]); return("unknown");}
 
 #define POINTER_P(Type) ((Type) > R_GOTO)
@@ -272,16 +206,6 @@ static char* type_name(int id) {if ((id >= R_INT) && (id <= R_CLM_VECTOR)) retur
 enum {R_VARIABLE, R_CONSTANT};
 #define NEED_ANY_RESULT 1
 #define NEED_INT_RESULT 2
-
-/* local variables (let vars) global to the closure we are passed are sometimes unbound at read-time,
- *   so we can't get their type from their current value.  It's possible to make plausible
- *   assumptions about the type however (vct-ref ...), so R_PENDING is used to flag some
- *   symbol whose type decision is awaiting clarification.  If a type is chosen, the actual
- *   value is retrieved at eval-time (initialize-globals), and if the type is not the
- *   one we chose, we give up -- this means in some cases, the user will have to reduce
- *   his optimization choice or change his code. (In some cases, once the type is determined
- *   triples in the existing program are edited to reflect that choice).
- */
 
 static int current_optimization = 0;
 static int run_warned = FALSE;
@@ -373,7 +297,7 @@ static char *describe_xen_value(xen_value *v, int *ints, Float *dbls);
 typedef struct {
   char *name;
   xen_value *v;
-  int global, unclean, undefined, unsettable;
+  int global, unclean, unsettable;
 } xen_var;
 
 static char *describe_xen_var(xen_var *var, int *ints, Float *dbls)
@@ -472,20 +396,6 @@ static xen_var *find_var_in_ptree_via_addr(ptree *pt, int dbl, int addr)
   return(NULL);
 }
 
-static xen_var *find_pending_var_in_ptree_via_xen_value(ptree *pt, xen_value *v)
-{
-  int i;
-  xen_var *var;
-  for (i = 0; i < pt->global_var_ctr; i++)
-    {
-      var = pt->global_vars[i];
-      if ((var) &&
-	  (var->v->addr == v->addr)) /* these are unique and unconfusable due to pending_tag below */
-	return(var);
-    }
-  return(NULL);
-}
-
 #if DEBUGGING
 static char **saved_names = NULL;
 static int *saved_int_addrs = NULL;
@@ -534,7 +444,7 @@ static char *find_local_var_via_addr(int is_float, int addr)
 static void free_saved_locals(void)
 {
   int i;
-  for (i = 0; i < saved_var_ctr; i++)
+  for (i = 0; i < saved_vars; i++)
     if (saved_names[i]) FREE(saved_names[i]);
   if (saved_names) FREE(saved_names);
   if (saved_int_addrs) FREE(saved_int_addrs);
@@ -730,12 +640,12 @@ static char *describe_xen_value(xen_value *v, int *ints, Float *dbls)
     case R_VCT:     buf = vct_to_string((vct *)(ints[v->addr]));                                                                           break;
     case R_READER:  if (ints[v->addr]) buf = sf_to_string((snd_fd *)(ints[v->addr])); else buf = copy_string("null");                      break;
     case R_CLM:     if (ints[v->addr]) buf = copy_string(mus_describe((mus_any *)(ints[v->addr])));  else buf = copy_string("null");       break;
-    case R_PENDING: return(copy_string("[value pending]"));                                                                                break;
     case R_GOTO:    return(mus_format("continuation: " INT_PT , v->addr, ints[v->addr]));                                                  break;
     case R_FUNCTION: return(describe_ptree((ptree *)(ints[v->addr])));                                                                     break;
     case R_INT_VECTOR: return(mus_format("int vector " PTR_PT , v->addr, (int_vct *)(ints[v->addr])));                                     break;
     case R_VCT_VECTOR: return(mus_format("vct vector " PTR_PT , v->addr, (vct_vct *)(ints[v->addr])));                                     break;
     case R_CLM_VECTOR: return(mus_format("clm vector " PTR_PT , v->addr, (clm_vct *)(ints[v->addr])));                                     break;
+    case R_UNSPECIFIED: return(copy_string("#<unspecified>"));                                                                             break;
     default:        buf = (char *)CALLOC(32, sizeof(char)); mus_snprintf(buf, 32, "unknown type: %d", v->type);                            break;
     }
   return(buf);
@@ -1028,7 +938,7 @@ void *free_ptree(void *upt)
 		    case R_INT_VECTOR:   free_int_vct((int_vct *)(pt->ints[v->addr]));      break;
 		    case R_CLM_VECTOR:   free_clm_vct((clm_vct *)(pt->ints[v->addr]));      break;
 		    case R_VCT_VECTOR:   free_vct_vct((vct_vct *)(pt->ints[v->addr]));      break;
-		    default:             FREE((void *)(pt->ints[v->addr]));                 break;
+		    default: fprintf(stderr," free %s?\n", type_name(v->type));             break;
 		    }
 		  pt->ints[v->addr] = 0;
 		  v->gc = 0;
@@ -1318,23 +1228,30 @@ static clm_vct *read_clm_vector(XEN vect)
 }
 
 
-static int pending_tag = -1;
-
 static xen_value *add_global_var_to_ptree(ptree *prog, XEN form)
 {
-  XEN val;
+  XEN val = XEN_UNDEFINED;
   xen_var *var;
   int var_loc = 0, local_var = FALSE;
   xen_value *v = NULL;
+  ptree *upper = NULL;
   char varname[256];
   mus_snprintf(varname, 256, "%s", XEN_SYMBOL_TO_C_STRING(form));
   var = find_var_in_ptree(prog, varname);
   if (var) return(copy_xen_value(var->v));
   val = symbol_to_value(prog->code, form, &local_var);
+  if (XEN_NOT_BOUND_P(val))
+    {
+      upper = prog;
+      while ((XEN_NOT_BOUND_P(val)) && (upper->outer_tree))
+	{
+	  upper = (ptree *)(upper->outer_tree);
+	  val = symbol_to_value(upper->code, form, &local_var);
+	}
+      if (XEN_NOT_BOUND_P(val))	
+	return(run_warn("can't find %s", varname));
+    }
   /* fprintf(stderr,"add global %s %d %s\n",varname, sf_p(val), XEN_AS_STRING(val)); */
-  /* if val not (yet) available, set up a request for it at eval_ptree time
-   *    if we know for sure what it's type will be (i.e. clm gen, reader, etc)
-   */
   if (XEN_NUMBER_P(val))
     {
       if ((XEN_EXACT_P(val)) && (XEN_INTEGER_P(val)))
@@ -1413,15 +1330,6 @@ static xen_value *add_global_var_to_ptree(ptree *prog, XEN form)
       var_loc = add_outer_var_to_ptree(prog, varname, v);
       if (current_optimization < 5)
 	prog->global_vars[var_loc]->unsettable = local_var;
-      /* actually we might be able to set this, but it's too much trouble to figure out */
-    }
-  else
-    {
-      prog->need_init = TRUE;
-      /* fprintf(stderr, "%s is pending\n", varname); */
-      v = make_xen_value(R_PENDING, pending_tag--, R_VARIABLE);
-      var_loc = add_outer_var_to_ptree(prog, varname, v);
-      prog->global_vars[var_loc]->unsettable = TRUE;
     }
   return(v);
 }
@@ -1469,87 +1377,6 @@ static void erase_goto(ptree *prog, char *name)
     }
 }
 
-static xen_var *initialize_globals(ptree *pt)
-{
-  /* it's possible the global value won't be defined until run-time (let var outside our form) */
-  int i, local = 0;
-  xen_var *var;
-  xen_value *v;
-  XEN val;
-  for (i = 0; i < pt->global_var_ctr; i++)
-    {
-      var = pt->global_vars[i];
-      if ((var) &&
-	  (var->undefined))
-	{
-	  v = var->v;
-	  val = symbol_to_value(pt->code, C_STRING_TO_XEN_SYMBOL(var->name), &local);
-	  /* fprintf(stderr,"init %s to %s (type: %s)\n", var->name, XEN_AS_STRING(val), type_name(v->type)); */
-	  if (XEN_NOT_BOUND_P(val)) return(var);
-	  switch (v->type)
-	    {
-	    case R_INT:
-	      if (!(XEN_INTEGER_P(val))) return(var);
-	      pt->ints[v->addr] = XEN_TO_C_INT(val);     
-	      break;
-	    case R_FLOAT:  
-	      if (!(XEN_DOUBLE_P(val))) return(var);
-	      pt->dbls[v->addr] = XEN_TO_C_DOUBLE(val);  
-	      break;
-	    case R_BOOL:   
-	      if (!(XEN_BOOLEAN_P(val))) return(var);
-	      pt->ints[v->addr] = XEN_TO_C_BOOLEAN(val); 
-	      break;
-	    case R_FLOAT_VECTOR:
-	    case R_VCT:    
-	      if (!(VCT_P(val))) return(var);
-	      pt->ints[v->addr] = (int)get_vct(val);     
-	      break;
-	    case R_READER: 
-	      if (!(sf_p(val))) return(var);
-	      pt->ints[v->addr] = (int)get_sf(val);  
-	      break;
-	    case R_CLM: 
-	      if (mus_xen_p(val)) 
-		pt->ints[v->addr] = (int)MUS_XEN_TO_CLM(val);
-	      else
-		{
-		  if (XEN_FALSE_P(val))
-		    pt->ints[v->addr] = 0; /* null gen is acceptable */
-		}
-	      break;
-	    case R_CHAR:
-	      if (!(XEN_CHAR_P(val))) return(var);
-	      pt->ints[v->addr] = (int)(XEN_TO_C_CHAR(val));     
-	      break;
-	    case R_STRING:
-	      if (!(XEN_STRING_P(val))) return(var);
-	      if (pt->ints[v->addr]) FREE((char *)(pt->ints[v->addr]));
-	      pt->ints[v->addr] = (int)(copy_string(XEN_TO_C_STRING(val)));     
-	      break;
-	    }
-	}
-    }
-  pt->need_init = FALSE;
-  return(NULL);
-}
-
-char *initialize_ptree(void *upt)
-{
-  xen_var *trouble;
-  ptree *pt = (ptree *)upt;
-  if (pt->need_init)
-    {
-      trouble = initialize_globals(pt);
-      if (trouble)
-	{
-	  run_warn("can't initialize %s", trouble->name);
-	  return(mus_format("can't initialize %s", trouble->name));
-	}
-    }
-  return(NULL);
-}
-
 #define PC ints[0]
 #define ALL_DONE ints[1]
 #define PTREE ((ptree *)(ints[2]))
@@ -1558,7 +1385,6 @@ static void eval_ptree(ptree *prog)
 {
   /* evaluates program, result in prog->result, 
    *   assumes args already passed in addrs given by prog->addrs
-   *   also that globals have been initialized via initialize_ptree
    */
   triple *curfunc;
   int *ints;
@@ -1825,11 +1651,6 @@ static char *define_form(ptree *prog, XEN form)
   val = XEN_CADDR(form);
   v = walk(prog, val, TRUE);
   if (v == NULL) return(mus_format("can't handle this define value: %s", XEN_AS_STRING(val)));
-  if (v->type == R_PENDING) 
-    {
-      FREE(v);
-      return(mus_format("won't handle this define value: %s", XEN_AS_STRING(val)));
-    }
   vs = transfer_value(prog, v);
   add_var_to_ptree(prog, XEN_SYMBOL_TO_C_STRING(var), vs);
   set_var(prog, vs, v);
@@ -1880,21 +1701,17 @@ static char *parallel_binds(ptree *prog, XEN old_lets, const char *name)
 	{
 	  var = XEN_CAR(lets);
 	  v = walk(prog, XEN_CADR(var), TRUE);
-	  if ((v == NULL) || (v->type == R_PENDING))
+	  if (v == NULL)
 	    {
-	      int j, was_null;
-	      was_null = (v == NULL);
+	      int j;
 	      for (j = 0; j < i; j++)
 		{
 		  if (old_vs[j]) FREE(old_vs[j]);
 		  if (vs[j]) FREE(vs[j]);
 		}
-	      if (v) FREE(v);
 	      FREE(vs);
 	      FREE(old_vs);
-	      if (was_null)
-		return(mus_format("can't handle %s var: %s", name, XEN_AS_STRING(lets)));
-	      else return(mus_format("pending var used in %s: %s", XEN_AS_STRING(lets), name));
+	      return(mus_format("can't handle %s var: %s", name, XEN_AS_STRING(lets)));
 	    }
 	  old_vs[i] = v;
 	  vs[i] = transfer_value(prog, v);
@@ -1928,13 +1745,8 @@ static char *sequential_binds(ptree *prog, XEN old_lets, const char *name)
 	{
 	  var = XEN_CAR(lets);
 	  v = walk(prog, XEN_CADR(var), TRUE);
-	  if ((v == NULL) || (v->type == R_PENDING)) 
-	    {
-	      if (v) FREE(v);
-	      if (v == NULL)
-		return(mus_format("can't handle %s var: %s", name, XEN_AS_STRING(lets)));
-	      else return(mus_format("pending var used in %s: %s", name, XEN_AS_STRING(lets)));
-	    }
+	  if (v == NULL)
+	    return(mus_format("can't handle %s var: %s", name, XEN_AS_STRING(lets)));
 	  vs = transfer_value(prog, v);
 	  add_var_to_ptree(prog, XEN_SYMBOL_TO_C_STRING(XEN_CAR(var)), vs);
 	  set_var(prog, vs, v);
@@ -2047,6 +1859,7 @@ static xen_value *lambda_form(ptree *prog, XEN form, int separate)
 	  return(v);
 	}
       /* we get here if walk failed, so clean up */
+      unattach_ptree(new_tree, prog); /* needed in case we realloc'd during failed tree walk */
       free_embedded_ptree(new_tree);
       return(run_warn("can't handle this embedded lambda: %s", XEN_AS_STRING(form)));
     }
@@ -2087,8 +1900,6 @@ static xen_value *let_form(ptree *prog, XEN form, int need_result)
   return(walk_then_undefine(prog, XEN_CDDR(form), need_result, "let", locals_loc));
 }
 
-static xen_value *fixup_if_pending(ptree *pt, xen_value *sf, int new_type);
-
 static xen_value *if_form(ptree *prog, XEN form, int need_result)
 {
   /* form: (if selector true [false]) */
@@ -2098,7 +1909,6 @@ static xen_value *if_form(ptree *prog, XEN form, int need_result)
   has_false = (XEN_LIST_LENGTH(form) == 4);
   if_value = walk(prog, XEN_CADR(form), TRUE);                                      /* walk selector */
   if (if_value == NULL) return(run_warn("if: bad selector? %s", XEN_AS_STRING(XEN_CADR(form))));
-  fixup_if_pending(prog, if_value, R_BOOL);
   if (if_value->type != R_BOOL) 
     return(run_warn("if: selector type not boolean: %s %s", 
 		    XEN_AS_STRING(XEN_CADR(form)), 
@@ -2148,10 +1958,11 @@ static xen_value *if_form(ptree *prog, XEN form, int need_result)
 	{
 	  if ((false_result) && (false_result->type != true_result->type))
 	    {
-	      if ((false_result->type == R_PENDING) || (false_result->type == R_BOOL))
+	      /* #f is ok as null pointer so fixup if needed */
+	      if (false_result->type == R_BOOL)
 		false_result->type = true_result->type;
 	      else
-		if ((true_result->type == R_PENDING) || (true_result->type == R_BOOL))
+		if (true_result->type == R_BOOL)
 		  true_result->type = false_result->type;
 	    }
 	  if ((false_result == NULL) ||
@@ -2181,7 +1992,7 @@ static xen_value *if_form(ptree *prog, XEN form, int need_result)
   if (false_result) FREE(false_result);
   if (result)
     return(result);
-  return(make_xen_value(R_BOOL, -1, R_CONSTANT));
+  return(make_xen_value(R_UNSPECIFIED, -1, R_CONSTANT));
 }
 
 static xen_value *cond_form(ptree *prog, XEN form, int need_result)
@@ -2267,7 +2078,7 @@ static xen_value *cond_form(ptree *prog, XEN form, int need_result)
   if (fixups) FREE(fixups);
   if (need_result)
     return(result);
-  return(make_xen_value(R_BOOL, -1, R_CONSTANT));
+  return(make_xen_value(R_UNSPECIFIED, -1, R_CONSTANT));
 }
 
 static xen_value *case_form(ptree *prog, XEN form, int need_result)
@@ -2379,7 +2190,7 @@ static xen_value *case_form(ptree *prog, XEN form, int need_result)
   if (fixups) FREE(fixups);
   if (need_result)
     return(result);
-  return(make_xen_value(R_BOOL, -1, R_CONSTANT));
+  return(make_xen_value(R_UNSPECIFIED, -1, R_CONSTANT));
 }
 
 
@@ -2444,7 +2255,7 @@ static xen_value *do_form_1(ptree *prog, XEN form, int need_result, int sequenti
 	    {
 	      if (expr) FREE(expr);
 	      expr = walk(prog, XEN_CADDR(var), TRUE);
-	      if ((expr == NULL) || (expr->type == R_PENDING)) 
+	      if (expr == NULL)
 		{
 		  if (expr) FREE(expr);
 		  FREE(jump_to_result);
@@ -2507,7 +2318,7 @@ static xen_value *callcc_form(ptree *prog, XEN form, int need_result)
   prog->ints[c->jump->addr] = prog->triple_ctr;
   if (c->result)
     v = copy_xen_value(c->result);
-  else v = add_empty_var_to_ptree(prog, R_PENDING);
+  else v = make_xen_value(R_BOOL, add_int_to_ptree(prog, FALSE), R_CONSTANT);
   erase_goto(prog, c->name); /* now access to this depends on a set! somewhere */
   return(v);
 }
@@ -2680,9 +2491,9 @@ static xen_value *set_form(ptree *prog, XEN form, int need_result)
 	}
       if (val_type != var_type)
 	{
-	  /* here #f is ok for pointer val == NULL, goto val is ok if var pending */
+	  /* here #f is ok for pointer val */
  	  if ((val_type == R_GOTO) && 
- 	      ((var_type == R_BOOL) || (var_type == R_PENDING)))
+ 	      (var_type == R_BOOL))
 	    {
 	      var->v->type = R_GOTO;
  	      add_triple_to_ptree(prog, va_make_triple(store_i, descr_store_i, 2, var->v, v));
@@ -2799,43 +2610,10 @@ static char *describe_int_args(char *func, int num_args, int *args, int *ints, i
   return(buf);
 }
 
-static xen_value *fixup_if_pending(ptree *pt, xen_value *sf, int new_type)
-{
-  xen_var *var;
-  xen_value *newv;
-  if (sf->type == R_PENDING)
-    {
-      var = find_pending_var_in_ptree_via_xen_value(pt, sf);
-      /* sf->addr is a negative number as part of the pending_tag system */
-      if (var == NULL) return(NULL);
-      switch (new_type)
-	{
-	case R_FLOAT: newv = make_xen_value(R_FLOAT, add_dbl_to_ptree(pt, 0.0), R_VARIABLE); break;
-	case R_STRING: newv = make_xen_value(R_STRING, add_string_to_ptree(pt, NULL), R_VARIABLE); break;
-	default: newv = make_xen_value(new_type, add_int_to_ptree(pt, 0), R_VARIABLE); break;
-	}
-      FREE(sf);
-      var->v->type = new_type;
-      var->v->addr = newv->addr;
-      return(newv);
-    }
-  return(sf);
-}
-
-static void fixup_all_pending_args(ptree *pt, xen_value **args, int num_args, int new_type)
-{
-  int i;
-  if (current_optimization > 3)
-    for (i = 1; i <= num_args; i++)
-      if (args[i])
-	args[i] = fixup_if_pending(pt, args[i], new_type);
-}
-
 static int float_all_args(ptree *prog, int num_args, xen_value **args, int float_result)
 {
   int i, j;
   xen_value *old_loc;
-  fixup_all_pending_args(prog, args, num_args, (float_result) ? R_FLOAT : R_INT);
   for (i = 1, j = 1; i <= num_args; i++)
     if (args[i])
       {
@@ -3304,7 +3082,6 @@ static void float_rel_args(ptree *prog, int num_args, xen_value **args)
 {
   int i;
   xen_value *old_loc;
-  fixup_all_pending_args(prog, args, num_args, R_FLOAT);
   for (i = 1; i <= num_args; i++)
     if (args[i]->type == R_INT)
       {
@@ -4481,7 +4258,7 @@ static xen_value *string_fill_1(ptree *pt, xen_value **args)
   if ((args[1]->constant == R_CONSTANT) || (args[1]->type != R_STRING) || (args[2]->type != R_CHAR))
     return(run_warn("bad args to string-fill!"));
   add_triple_to_ptree(pt, va_make_triple(strfill_1, descr_strfill_1, 2, args[1], args[2])); /* shifts back one */
-  return(make_xen_value(R_BOOL, -1, R_CONSTANT));
+  return(make_xen_value(R_UNSPECIFIED, -1, R_CONSTANT));
 }
 
 static void strset_1(int *args, int *ints, Float *dbls) {STRING_RESULT[INT_ARG_1] = (char)(CHAR_ARG_2);}
@@ -4495,7 +4272,7 @@ static xen_value *string_set_1(ptree *pt, xen_value **args)
   if ((args[1]->constant == R_CONSTANT) || (args[1]->type != R_STRING) || (args[2]->type != R_INT) || (args[3]->type != R_CHAR))
     return(run_warn("bad args to string-set!"));
   add_triple_to_ptree(pt, va_make_triple(strset_1, descr_strset_1, 3, args[1], args[2], args[3])); /* shifts back one */
-  return(make_xen_value(R_BOOL, -1, R_CONSTANT));
+  return(make_xen_value(R_UNSPECIFIED, -1, R_CONSTANT));
 }
 
 static void strref_1(int *args, int *ints, Float *dbls) {CHAR_RESULT = (char)(STRING_ARG_1[INT_ARG_2]);}
@@ -4957,7 +4734,7 @@ static xen_value *funcall_n(ptree *prog, xen_value **args, int num_args, xen_val
 static xen_value *goto_0(ptree *prog, xen_value **args, xen_value *sf)
 {
   if (args[0]) FREE(args[0]);
-  args[0] = make_xen_value(R_PENDING, add_int_to_ptree(prog, sf->addr), R_VARIABLE);
+  args[0] = make_xen_value(R_BOOL, add_int_to_ptree(prog, sf->addr), R_VARIABLE);
   add_triple_to_ptree(prog, va_make_triple(jump_indirect, descr_jump_indirect, 1, args[0]));
   return(args[0]);
 }
@@ -4974,7 +4751,6 @@ static char *descr_reader(int *args, int *ints, Float *dbls, char *which)
 static char *descr_reader_f(int *args, int *ints, Float *dbls) {return(descr_reader(args, ints, dbls, "read-sample"));}
 static xen_value *reader_0(ptree *prog, xen_value **args, xen_value *sf)
 {
-  if ((sf = fixup_if_pending(prog, sf, R_READER)) == NULL) return(run_warn("sample-reader bad arg"));
   if (args[0]) FREE(args[0]);
   args[0] = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, 0.0), R_VARIABLE);
   add_triple_to_ptree(prog, va_make_triple(reader_f, descr_reader_f, 2, args[0], sf));
@@ -4982,7 +4758,6 @@ static xen_value *reader_0(ptree *prog, xen_value **args, xen_value *sf)
 }
 static xen_value *reader_1(ptree *prog, xen_value **args) 
 {
-  if ((args[1] = fixup_if_pending(prog, args[1], R_READER)) == NULL) return(run_warn("sample-reader bad arg"));
   return(package(prog, R_FLOAT, reader_f, descr_reader_f, args, 1));
 }
 
@@ -4990,7 +4765,6 @@ static char *descr_next_reader_f(int *args, int *ints, Float *dbls) {return(desc
 static void next_reader_f(int *args, int *ints, Float *dbls) {FLOAT_RESULT = protected_next_sample_to_float(((snd_fd *)(INT_ARG_1)));}
 static xen_value *next_sample_1(ptree *prog, xen_value **args) 
 {
-  if ((args[1] = fixup_if_pending(prog, args[1], R_READER)) == NULL) return(run_warn("next-sample bad arg"));
   return(package(prog, R_FLOAT, next_reader_f, descr_next_reader_f, args, 1));
 }
 
@@ -4998,7 +4772,6 @@ static char *descr_previous_reader_f(int *args, int *ints, Float *dbls) {return(
 static void previous_reader_f(int *args, int *ints, Float *dbls) {FLOAT_RESULT = protected_previous_sample_to_float(((snd_fd *)(INT_ARG_1)));}
 static xen_value *previous_sample_1(ptree *prog, xen_value **args) 
 {
-  if ((args[1] = fixup_if_pending(prog, args[1], R_READER)) == NULL) return(run_warn("previous-sample bad arg"));
   return(package(prog, R_FLOAT, previous_reader_f, descr_previous_reader_f, args, 1));
 }
 
@@ -5159,7 +4932,6 @@ static xen_value *vector_set_1(ptree *prog, xen_value **args, int num_args)
 {
   xen_var *var;
   if (num_args != 3) return(NULL);
-  if ((args[1] = fixup_if_pending(prog, args[1], R_FLOAT_VECTOR)) == NULL) return(run_warn("vector-set bad arg"));
   var = find_var_in_ptree_via_addr(prog, FALSE, args[1]->addr);
   if (var) var->unclean = TRUE;
   if (args[2]->type != R_INT) return(run_warn("vector-set bad index type"));
@@ -5222,7 +4994,6 @@ static char *descr_vector_fill_c(int *args, int *ints, Float *dbls)
 static xen_value *vector_fill_1(ptree *prog, xen_value **args, int num_args)
 {
   if (num_args != 2) return(NULL);
-  if ((args[1] = fixup_if_pending(prog, args[1], R_FLOAT_VECTOR)) == NULL) return(run_warn("vector-fill! bad arg"));
   switch (args[1]->type)
     {
     case R_FLOAT_VECTOR: 
@@ -5257,7 +5028,6 @@ static char *descr_vct_length_i(int *args, int *ints, Float *dbls)
 static xen_value *vct_length_1(ptree *prog, xen_value **args, int num_args)
 {
   if (num_args != 1) return(NULL);
-  if ((args[1] = fixup_if_pending(prog, args[1], R_VCT)) == NULL) return(run_warn("vct-length bad arg"));
   return(package(prog, R_INT, vct_length_i, descr_vct_length_i, args, 1));
 }
 
@@ -5269,7 +5039,6 @@ static char *descr_vct_ref_f(int *args, int *ints, Float *dbls)
 static xen_value *vct_ref_1(ptree *prog, xen_value **args, int num_args)
 {
   if (num_args != 2) return(NULL);
-  if ((args[1] = fixup_if_pending(prog, args[1], R_VCT)) == NULL) return(run_warn("vct-ref bad arg"));
   if (args[2]->type == R_INT)
     return(package(prog, R_FLOAT, vct_ref_f, descr_vct_ref_f, args, 2));
   return(run_warn("vct-ref bad index type"));
@@ -5290,7 +5059,6 @@ static char *descr_vct_set_i(int *args, int *ints, Float *dbls)
 static xen_value *vct_set_1(ptree *prog, xen_value **args)
 {
   xen_var *var;
-  if ((args[1] = fixup_if_pending(prog, args[1], R_VCT)) == NULL) return(run_warn("vct-set! bad arg"));
   var = find_var_in_ptree_via_addr(prog, FALSE, args[1]->addr);
   if (var) var->unclean = TRUE;
   if (args[2]->type == R_INT)
@@ -5396,7 +5164,6 @@ static xen_value *vct_ ## CName ## _1(ptree *prog, xen_value **args, int num_arg
 { \
   xen_value *temp; \
   if (num_args != 2) return(NULL); \
-  if ((args[1] = fixup_if_pending(prog, args[1], R_VCT)) == NULL) return(run_warn("vct-" #SName " bad arg")); \
   if (args[2]->type == R_INT) \
     { \
       temp = args[2]; \
@@ -5431,8 +5198,6 @@ static char *descr_vct_ ## CName ## _f(int *args, int *ints, Float *dbls)  \
 static xen_value *vct_ ## CName ## _1(ptree *prog, xen_value **args, int num_args) \
 { \
   if (num_args != 2) return(NULL); \
-  if ((args[1] = fixup_if_pending(prog, args[1], R_VCT)) == NULL) return(run_warn("vct-" #SName " bad arg")); \
-  if ((args[2] = fixup_if_pending(prog, args[2], R_VCT)) == NULL) return(run_warn("vct-" #SName " bad arg")); \
   return(package(prog, R_VCT, vct_ ## CName ## _f, descr_vct_ ## CName ## _f, args, 2)); \
 }
 
@@ -5466,10 +5231,8 @@ static char *descr_gen(int *args, int *ints, Float *dbls, char *which, int num_a
   static void Name ## _0p(int *args, int *ints, Float *dbls) {BOOL_RESULT = mus_ ##Name ## _p((mus_any *)(INT_ARG_1));} \
   static xen_value * Name ## _p(ptree *prog, xen_value **args) \
   { \
-    if ((args[1] = fixup_if_pending(prog, args[1], R_CLM)) == NULL) return(run_warn(#Name ": bad gen")); \
     return(package(prog, R_BOOL, Name ## _0p, descr_ ## Name ## _0p, args, 1)); \
   }
-
 #define GEN3_0(Name) \
   static char *descr_ ## Name ## _0f(int *args, int *ints, Float *dbls) {return(descr_gen(args, ints, dbls, #Name, 0));} \
   static void Name ## _0f(int *args, int *ints, Float *dbls) {FLOAT_RESULT = mus_ ## Name (((mus_any *)(INT_ARG_1)), 0.0, 0.0);}  
@@ -5498,7 +5261,6 @@ static char *descr_gen(int *args, int *ints, Float *dbls, char *which, int num_a
   GEN_P(Name) \
   static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args) \
   { \
-    if ((args[1] = fixup_if_pending(prog, args[1], R_CLM)) == NULL) return(run_warn(#Name ": bad gen")); \
     if ((num_args > 1) && (args[2]->type == R_INT)) single_to_float(prog, args, 2); \
     if ((num_args > 2) && (args[3]->type == R_INT)) single_to_float(prog, args, 3); \
     if (num_args == 1) return(package(prog, R_FLOAT, Name ## _0f, descr_ ## Name ## _0f, args, 1)); \
@@ -5513,7 +5275,6 @@ static char *descr_gen(int *args, int *ints, Float *dbls, char *which, int num_a
   GEN_P(Name) \
   static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args) \
   { \
-    if ((args[1] = fixup_if_pending(prog, args[1], R_CLM)) == NULL) return(run_warn(#Name ": bad gen")); \
     if ((num_args > 1) && (args[2]->type == R_INT)) single_to_float(prog, args, 2); \
     if ((num_args > 2) && (args[3]->type == R_INT)) single_to_float(prog, args, 3); \
     if (num_args == 1) return(package(prog, R_FLOAT, Name ## _0f, descr_ ## Name ## _0f, args, 1)); \
@@ -5527,7 +5288,6 @@ static char *descr_gen(int *args, int *ints, Float *dbls, char *which, int num_a
   GEN_P(Name) \
   static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args) \
   { \
-    if ((args[1] = fixup_if_pending(prog, args[1], R_CLM)) == NULL) return(run_warn(#Name ": bad gen")); \
     if ((num_args > 1) && (args[2]->type == R_INT)) single_to_float(prog, args, 2); \
     if (num_args == 1) return(package(prog, R_FLOAT, Name ## _0f, descr_ ## Name ## _0f, args, 1)); \
     if (num_args == 2) return(package(prog, R_FLOAT, Name ## _1f, descr_ ## Name ## _1f, args, 2)); \
@@ -5537,7 +5297,6 @@ static char *descr_gen(int *args, int *ints, Float *dbls, char *which, int num_a
   GEN2_1(Name) \
   static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args) \
   { \
-    if ((args[1] = fixup_if_pending(prog, args[1], R_CLM)) == NULL) return(run_warn(#Name ": bad gen")); \
     if (num_args == 2) \
       { \
         if (args[2]->type == R_INT) single_to_float(prog, args, 2); \
@@ -5550,7 +5309,6 @@ static char *descr_gen(int *args, int *ints, Float *dbls, char *which, int num_a
   GEN_P(Name) \
   static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args) \
   { \
-    if ((args[1] = fixup_if_pending(prog, args[1], R_CLM)) == NULL) return(run_warn(#Name ": bad gen")); \
     if (num_args == 1) return(package(prog, R_FLOAT, Name ## _0f, descr_ ## Name ## _0f, args, 1)); \
     return(run_warn(#Name ": wrong number of args")); \
   }
@@ -5558,7 +5316,6 @@ static char *descr_gen(int *args, int *ints, Float *dbls, char *which, int num_a
   GEN1_0(Name) \
   static xen_value * mus_ ## Name ## _0(ptree *prog, xen_value **args) \
   { \
-    if ((args[1] = fixup_if_pending(prog, args[1], R_CLM)) == NULL) return(run_warn("mus-" #Name ": bad gen")); \
     return(package(prog, R_FLOAT, Name ## _0f, descr_ ## Name ## _0f, args, 1)); \
   }
 
@@ -5571,7 +5328,6 @@ static char *descr_int_gen0(int *args, int *ints, Float *dbls, char *which)
   static void Name ## _0i(int *args, int *ints, Float *dbls) {INT_RESULT = mus_ ## Name ((Type *)(INT_ARG_1));} \
   static xen_value * mus_ ## Name ## _0(ptree *prog, xen_value **args) \
   { \
-    if ((args[1] = fixup_if_pending(prog, args[1], R_CLM)) == NULL) return(run_warn("mus-" #Name ": bad gen")); \
     return(package(prog, R_INT, Name ## _0i, descr_ ## Name ## _0i, args, 1)); \
   }
 
@@ -5654,7 +5410,6 @@ static void set_formant_radius_and_frequency_2f(int *args, int *ints, Float *dbl
 }  
 static xen_value *set_formant_radius_and_frequency_1(ptree *prog, xen_value **args, int num_args)
 {
-  if ((args[1] = fixup_if_pending(prog, args[1], R_CLM)) == NULL) return(run_warn("mus-set-formant-radius-and-frequency: bad gen"));
   if (num_args != 3) return(run_warn("mus-set-formant-radius-and-frequency: wrong number of args"));
   if (args[2]->type == R_INT) single_to_float(prog, args, 2);
   if (args[3]->type == R_INT) single_to_float(prog, args, 3);
@@ -5667,7 +5422,6 @@ static void move_locsig_2f(int *args, int *ints, Float *dbls) {mus_move_locsig((
 static xen_value *move_locsig_1(ptree *prog, xen_value **args, int num_args)
 { 
   if (num_args != 3) return(run_warn("move-locsig: wrong number of args"));
-  if ((args[1] = fixup_if_pending(prog, args[1], R_CLM)) == NULL) return(run_warn("move-locsig: bad gen"));
   return(package(prog, R_BOOL, move_locsig_2f, descr_move_locsig_2f, args, 3));
 }
 
@@ -5681,7 +5435,6 @@ static char *descr_str_gen0(int *args, int *ints, Float *dbls, char *which)
   static void Name ## _0s(int *args, int *ints, Float *dbls) {STRING_RESULT = copy_string(mus_ ## Name ((mus_any *)(INT_ARG_1)));} \
   static xen_value * mus_ ## Name ## _0(ptree *prog, xen_value **args) \
   { \
-    if ((args[1] = fixup_if_pending(prog, args[1], R_CLM)) == NULL) return(run_warn("mus-" #Name ": bad gen")); \
     return(package(prog, R_STRING, Name ## _0s, descr_ ## Name ## _0s, args, 1)); \
   }
 
@@ -5701,7 +5454,6 @@ static char *descr_ref_gen0(int *args, int *ints, Float *dbls, char *which)
   { \
     if (num_args != 2) return(run_warn(#Name ": wrong number of args")); \
     if (args[2]->type != R_INT) return(run_warn(#Name ": bad arg 2")); \
-    if ((args[1] = fixup_if_pending(prog, args[1], R_CLM)) == NULL) return(run_warn("mus-" #Name ": bad gen")); \
     return(package(prog, R_FLOAT, Name ## _0r, descr_ ## Name ## _0r, args, 2)); \
   }
 
@@ -5726,7 +5478,6 @@ static char *descr_set_gen0(int *args, int *ints, Float *dbls, char *which)
     if (num_args != 3) return(run_warn(#Name ": wrong number of args")); \
     if (args[2]->type != R_INT) return(run_warn(#Name ": bad arg 2")); \
     if (args[3]->type != R_FLOAT) return(run_warn(#Name ": bad arg 3")); \
-    if ((args[1] = fixup_if_pending(prog, args[1], R_CLM)) == NULL) return(run_warn("mus-" #Name ": bad gen")); \
     return(package(prog, R_FLOAT, Name ## _0r, descr_ ## Name ## _0r, args, 3)); \
   }
 
@@ -5745,7 +5496,6 @@ static xen_value *mixer_ref_1(ptree *prog, xen_value **args, int num_args)
 {
   if (num_args != 3) return(run_warn("mixer-ref: wrong number of args"));
   if ((args[2]->type != R_INT) || (args[3]->type != R_INT)) return(run_warn("mixer-ref: bad arg index"));
-  if ((args[1] = fixup_if_pending(prog, args[1], R_CLM)) == NULL) return(run_warn("mixer-ref: bad gen"));
   return(package(prog, R_FLOAT, mixer_ref_0, descr_mixer_ref_0, args, 3));
 }
 
@@ -5764,7 +5514,6 @@ static xen_value *mixer_set_1(ptree *prog, xen_value **args, int num_args)
   if (num_args != 4) return(run_warn("mixer-set!: wrong number of args"));
   if ((args[2]->type != R_INT) || (args[3]->type != R_INT)) return(run_warn("mixer-set!: bad arg index"));
   if (args[4]->type != R_FLOAT) return(run_warn("mixer-set!: bad arg 4"));
-  if ((args[1] = fixup_if_pending(prog, args[1], R_CLM)) == NULL) return(run_warn("mixer-set!: bad gen"));
   return(package(prog, R_FLOAT, mixer_set_0, descr_mixer_set_0, args, 4));
 }
 
@@ -5779,7 +5528,6 @@ static char *descr_set_int_gen0(int *args, int *ints, Float *dbls, char *which)
   static void set_ ## Name ## _i(int *args, int *ints, Float *dbls) {mus_set_ ## Name ((mus_any *)(INT_RESULT), INT_ARG_1);} \
   static xen_value * mus_set_ ## Name ## _1(ptree *prog, xen_value *in_v, xen_value *v) \
   { \
-    if ((in_v = fixup_if_pending(prog, in_v, R_CLM)) == NULL) return(run_warn("set! mus-" #Name ": bad gen")); \
     add_triple_to_ptree(prog, va_make_triple(set_ ## Name ## _i, descr_set_ ## Name ## _i, 2, in_v, v)); \
     return(v); \
   }
@@ -5798,7 +5546,6 @@ static char *descr_set_dbl_gen0(int *args, int *ints, Float *dbls, char *which)
   static void set_ ## Name ## _f(int *args, int *ints, Float *dbls) {mus_set_ ## Name ((mus_any *)(INT_RESULT), FLOAT_ARG_1);} \
   static xen_value * mus_set_ ## Name ## _1(ptree *prog, xen_value *in_v, xen_value *v) \
   { \
-    if ((in_v = fixup_if_pending(prog, in_v, R_CLM)) == NULL) return(run_warn("set! mus-" #Name ": bad gen")); \
     add_triple_to_ptree(prog, va_make_triple(set_ ## Name ## _f, descr_set_ ## Name ## _f, 2, in_v, v)); \
     return(v); \
   }
@@ -5828,7 +5575,6 @@ static void polynomial_1f(int *args, int *ints, Float *dbls)
 }
 static xen_value *polynomial_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if ((args[1] = fixup_if_pending(prog, args[1], R_VCT)) == NULL) return(run_warn("polynomial: bad arg"));
   if (num_args == 2) return(package(prog, R_FLOAT, polynomial_1f, descr_polynomial_1f, args, 2));
   return(run_warn("polynomial: wrong number of args"));
 }
@@ -5864,8 +5610,6 @@ static void mus_fft_2v_2(int *args, int *ints, Float *dbls)
 }
 static xen_value *mus_fft_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if ((args[1] = fixup_if_pending(prog, args[1], R_VCT)) == NULL) return(run_warn("mus-fft: bad first arg"));
-  if ((args[2] = fixup_if_pending(prog, args[2], R_VCT)) == NULL) return(run_warn("mus-fft: bad second arg"));
   if (num_args == 2) return(package(prog, R_CLM, mus_fft_2v, descr_mus_fft_2v, args, 2));
   if (num_args == 3) return(package(prog, R_CLM, mus_fft_2v_1, descr_mus_fft_2v_1, args, 3));
   if (num_args == 4) return(package(prog, R_CLM, mus_fft_2v_2, descr_mus_fft_2v_2, args, 4));
@@ -5886,7 +5630,6 @@ static void file2sample_1f(int *args, int *ints, Float *dbls) {FLOAT_RESULT = mu
 static void file2sample_2f(int *args, int *ints, Float *dbls) {FLOAT_RESULT = mus_file2sample((mus_any *)(INT_ARG_1), INT_ARG_2, INT_ARG_3);}
 static xen_value *file2sample_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if ((args[1] = fixup_if_pending(prog, args[1], R_CLM)) == NULL) return(run_warn("file->sample: bad gen arg"));
   if (num_args == 2) return(package(prog, R_FLOAT, file2sample_1f, descr_file2sample_1f, args, 2));
   if (num_args == 3) return(package(prog, R_FLOAT, file2sample_2f, descr_file2sample_2f, args, 3));
   return(run_warn("file->sample: wrong number of args"));
@@ -5900,7 +5643,6 @@ static char *descr_sample2file_4(int *args, int *ints, Float *dbls)
 static void sample2file_4(int *args, int *ints, Float *dbls) {FLOAT_RESULT = mus_sample2file((mus_any *)(INT_ARG_1), INT_ARG_2, INT_ARG_3, FLOAT_ARG_4);}
 static xen_value *sample2file_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if ((args[1] = fixup_if_pending(prog, args[1], R_CLM)) == NULL) return(run_warn("sample->file: bad gen arg"));
   if ((args[2]->type != R_INT) || (args[3]->type != R_INT) || (args[4]->type != R_FLOAT))
     return(run_warn("sample->file: bad arg type"));
   if (num_args == 4) return(package(prog, R_FLOAT, sample2file_4, descr_sample2file_4, args, 4));
@@ -5921,7 +5663,6 @@ static void locsig_3(int *args, int *ints, Float *dbls)
 }
 static xen_value *locsig_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if ((args[1] = fixup_if_pending(prog, args[1], R_CLM)) == NULL) return(run_warn("locsig: bad gen arg"));
   if (args[2]->type != R_INT) return(run_warn("locsig 2nd arg not int"));
   if (args[3]->type != R_FLOAT) return(run_warn("locsig 3rd arg not real"));
   if (num_args == 3) return(package(prog, R_CLM, locsig_3, descr_locsig_3, args, 3));
@@ -5937,7 +5678,6 @@ static char *descr_env_interp_2(int *args, int *ints, Float *dbls)
 static void env_interp_2(int *args, int *ints, Float *dbls) {FLOAT_RESULT = mus_env_interp(FLOAT_ARG_1, (mus_any *)(INT_ARG_2));}
 static xen_value *env_interp_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if ((args[2] = fixup_if_pending(prog, args[2], R_CLM)) == NULL) return(run_warn("env-interp: bad env"));
   if (args[1]->type != R_FLOAT) return(run_warn("env-interp 1st arg not real"));
   if (num_args == 2) return(package(prog, R_FLOAT, env_interp_2, descr_env_interp_2, args, 2));
   return(run_warn("env-interp: wrong number of args"));
@@ -5968,8 +5708,6 @@ static void CName ## _3(int *args, int *ints, Float *dbls) \
 } \
 static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) \
 { \
-  if ((args[1] = fixup_if_pending(prog, args[1], R_CLM)) == NULL) return(run_warn(#SName ": bad arg1")); \
-  if ((args[2] = fixup_if_pending(prog, args[2], R_CLM)) == NULL) return(run_warn(#SName ": bad arg2")); \
   if (num_args == 2) return(package(prog, R_CLM, CName ## _2, descr_ ## CName ## _2, args, 2)); \
   if (num_args == 3) return(package(prog, R_CLM, CName ## _3, descr_ ## CName ## _3, args, 3)); \
   return(run_warn(#SName ": wrong number of args")); \
@@ -5992,8 +5730,6 @@ static void frame2sample_2(int *args, int *ints, Float *dbls)
 }
 static xen_value *frame2sample_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if ((args[1] = fixup_if_pending(prog, args[1], R_CLM)) == NULL) return(run_warn("frame->sample: bad frame"));
-  if ((args[2] = fixup_if_pending(prog, args[2], R_CLM)) == NULL) return(run_warn("frame->sample: bad mixer"));
   if (num_args == 2) return(package(prog, R_FLOAT, frame2sample_2, descr_frame2sample_2, args, 2));
   return(run_warn("frame->sample: wrong number of args"));
 }
@@ -6016,7 +5752,6 @@ static void sample2frame_3(int *args, int *ints, Float *dbls)
 }
 static xen_value *sample2frame_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if ((args[1] = fixup_if_pending(prog, args[1], R_CLM)) == NULL) return(run_warn("sample->frame: bad frame"));
   if (num_args == 2) return(package(prog, R_CLM, sample2frame_2, descr_sample2frame_2, args, 2));
   if (num_args == 3) return(package(prog, R_CLM, sample2frame_3, descr_sample2frame_3, args, 3));
   return(run_warn("sample->frame: wrong number of args"));
@@ -6034,8 +5769,6 @@ static void frame2buffer_2(int *args, int *ints, Float *dbls)
 }
 static xen_value *frame2buffer_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if ((args[1] = fixup_if_pending(prog, args[1], R_CLM)) == NULL) return(run_warn("frame->buffer: bad frame"));
-  if ((args[2] = fixup_if_pending(prog, args[2], R_CLM)) == NULL) return(run_warn("frame->buffer: bad mixer"));
   if (num_args == 2) return(package(prog, R_CLM, frame2buffer_2, descr_frame2buffer_2, args, 2));
   return(run_warn("frame->buffer: wrong number of args"));
 }
@@ -6055,8 +5788,6 @@ static char *descr_buffer2frame_2b(int *args, int *ints, Float *dbls)
 static void buffer2frame_2b(int *args, int *ints, Float *dbls) {INT_RESULT = (int)mus_buffer2frame((mus_any *)(INT_ARG_1), (mus_any *)(INT_ARG_2));}
 static xen_value *buffer2frame_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if ((args[1] = fixup_if_pending(prog, args[1], R_CLM)) == NULL) return(run_warn("buffer->frame: bad buffer"));
-  if ((num_args ==2) && ((args[2] = fixup_if_pending(prog, args[2], R_CLM)) == NULL)) return(run_warn("buffer->frame: bad frame"));
   if (num_args == 1) return(package(prog, R_CLM, buffer2frame_1b, descr_buffer2frame_1b, args, 1));
   if (num_args == 2) return(package(prog, R_CLM, buffer2frame_2b, descr_buffer2frame_2b, args, 2));
   return(run_warn("buffer->frame: wrong number of args"));
@@ -6075,8 +5806,6 @@ static void frame2file_3(int *args, int *ints, Float *dbls)
 }
 static xen_value *frame2file_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if ((args[1] = fixup_if_pending(prog, args[1], R_CLM)) == NULL) return(run_warn("frame->file: bad gen arg"));
-  if ((args[3] = fixup_if_pending(prog, args[3], R_CLM)) == NULL) return(run_warn("frame->file: bad frame arg"));
   if (args[2]->type != R_INT) return(run_warn("frame->file 2nd arg not int"));
   if (num_args == 3) return(package(prog, R_CLM, frame2file_3, descr_frame2file_3, args, 3));
   return(run_warn("frame->file: wrong number of args"));
@@ -6093,8 +5822,6 @@ static void file2frame_3(int *args, int *ints, Float *dbls)
 }
 static xen_value *file2frame_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if ((args[1] = fixup_if_pending(prog, args[1], R_CLM)) == NULL) return(run_warn("file->frame: bad gen arg"));
-  if ((args[3] = fixup_if_pending(prog, args[3], R_CLM)) == NULL) return(run_warn("file->frame: bad frame arg"));
   if (args[2]->type != R_INT) return(run_warn("file->frame 2nd arg not int"));
   if (num_args == 3) return(package(prog, R_CLM, file2frame_3, descr_file2frame_3, args, 3));
   return(run_warn("file->frame: wrong number of args"));
@@ -6113,7 +5840,6 @@ static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) \
 { \
   if (num_args != 3) return(run_warn( #SName ": wrong number of args")); \
   if ((args[1]->type != R_INT) || (args[2]->type != R_FLOAT)) return(run_warn( #SName ": bad arg type")); \
-  if ((args[3] = fixup_if_pending(prog, args[3], R_CLM)) == NULL) return(run_warn( #SName ": bad writer")); \
   return(package(prog, R_FLOAT, CName ## _3, descr_ ## CName ## _3, args, 3)); \
 }
 
@@ -6132,7 +5858,6 @@ static xen_value *out_any_1(ptree *prog, xen_value **args, int num_args)
 {
   if (num_args != 4) return(run_warn("out-any: wrong number of args"));
   if ((args[1]->type != R_INT) || (args[2]->type != R_FLOAT) || (args[3]->type != R_INT)) return(run_warn("out-any: bad arg type"));
-  if ((args[4] = fixup_if_pending(prog, args[4], R_CLM)) == NULL) return(run_warn("out-any: bad writer"));
   return(package(prog, R_FLOAT, out_any_4, descr_out_any_4, args, 4));
 }
 
@@ -6149,7 +5874,6 @@ static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) \
 { \
   if (num_args != 2) return(run_warn( #SName ": wrong number of args")); \
   if (args[1]->type != R_INT) return(run_warn( #SName ": bad arg type")); \
-  if ((args[2] = fixup_if_pending(prog, args[2], R_CLM)) == NULL) return(run_warn( #SName ": bad reader")); \
   return(package(prog, R_FLOAT, CName ## _2, descr_ ## CName ## _2, args, 2)); \
 }
 
@@ -6166,7 +5890,6 @@ static xen_value *in_any_1(ptree *prog, xen_value **args, int num_args)
 {
   if (num_args != 3) return(run_warn("in-any: wrong number of args"));
   if ((args[1]->type != R_INT) || (args[2]->type != R_INT)) return(run_warn("in-any: bad arg type"));
-  if ((args[3] = fixup_if_pending(prog, args[3], R_CLM)) == NULL) return(run_warn("in-any: bad reader"));
   return(package(prog, R_FLOAT, in_any_3, descr_in_any_3, args, 3));
 }
 
@@ -6190,7 +5913,6 @@ static char *descr_array_interp_2f(int *args, int *ints, Float *dbls)
 static void array_interp_2f(int *args, int *ints, Float *dbls) {FLOAT_RESULT = mus_array_interp(((vct *)(INT_ARG_1))->data, FLOAT_ARG_2, INT_ARG_3);}
 static xen_value *array_interp_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if ((args[1] = fixup_if_pending(prog, args[1], R_VCT)) == NULL) return(run_warn("array-interp: bad arg"));
   if (num_args == 2) return(package(prog, R_FLOAT, array_interp_1f, descr_array_interp_1f, args, 2));
   if ((num_args == 3) && (args[3]->type == R_INT))
     return(package(prog, R_FLOAT, array_interp_2f, descr_array_interp_2f, args, 3));
@@ -6219,7 +5941,6 @@ static void vct_peak_v(int *args, int *ints, Float *dbls)
 static xen_value *vct_peak_1(ptree *prog, xen_value **args, int num_args) 
 {
   if (num_args != 1) return(run_warn("vct-peak: wrong number of args"));
-  if ((args[1] = fixup_if_pending(prog, args[1], R_VCT)) == NULL) return(run_warn("vct-peak: bad arg"));
   return(package(prog, R_FLOAT, vct_peak_v, descr_vct_peak_v, args, 1));
 }
 
@@ -6233,7 +5954,6 @@ static void clear_array_1f(int *args, int *ints, Float *dbls)
 }
 static xen_value *clear_array_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if ((args[1] = fixup_if_pending(prog, args[1], R_VCT)) == NULL) return(run_warn("clear-array: bad arg"));
   return(package(prog, R_VCT, clear_array_1f, descr_clear_array_1f, args, 1));
 }
 
@@ -6243,7 +5963,6 @@ static char *descr_restart_env_1f(int *args, int *ints, Float *dbls) {return(mus
 static void restart_env_1f(int *args, int *ints, Float *dbls) {mus_restart_env((mus_any *)(INT_ARG_1)); INT_RESULT = INT_ARG_1;}
 static xen_value *restart_env_1(ptree *prog, xen_value **args) 
 {
-  if ((args[1] = fixup_if_pending(prog, args[1], R_CLM)) == NULL) return(run_warn("restart-env: bad arg"));
   return(package(prog, R_CLM, restart_env_1f, descr_restart_env_1f, args, 1));
 }
 
@@ -6273,8 +5992,6 @@ static void CName ## _3f(int *args, int *ints, Float *dbls)  \
 static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args)  \
 { \
   if ((num_args < 2) || (num_args > 3)) return(run_warn("wrong number of args for " #SName)); \
-  if ((args[1] = fixup_if_pending(prog, args[1], R_VCT)) == NULL) return(run_warn(#SName ": bad arg 1")); \
-  if ((args[2] = fixup_if_pending(prog, args[2], R_VCT)) == NULL) return(run_warn(#SName ": bad arg 2")); \
   if (num_args == 2) \
     return(package(prog, R_VCT, CName ## _2f, descr_ ## CName ## _2f, args, 2)); \
   else \
@@ -6311,8 +6028,6 @@ static void CName ## _3f(int *args, int *ints, Float *dbls)  \
 static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args)  \
 { \
   if ((num_args < 2) || (num_args > 3)) return(run_warn("wrong number of args for " #SName)); \
-  if ((args[1] = fixup_if_pending(prog, args[1], R_VCT)) == NULL) return(run_warn(#SName ": bad arg 1")); \
-  if ((args[2] = fixup_if_pending(prog, args[2], R_VCT)) == NULL) return(run_warn(#SName ": bad arg 2")); \
   if (num_args == 2) \
     return(package(prog, R_FLOAT, CName ## _2f, descr_ ## CName ## _2f, args, 2)); \
   else \
@@ -6333,7 +6048,6 @@ static void clm_2f(int *args, int *ints, Float *dbls) {FLOAT_RESULT = MUS_RUN(((
 static char *descr_clm_2f(int *args, int *ints, Float *dbls) {return(descr_gen(args, ints, dbls, mus_name(((mus_any *)(INT_ARG_1))), 2));} 
 static xen_value *clm_n(ptree *prog, xen_value **args, int num_args, xen_value *sf)
 {
-  if ((sf = fixup_if_pending(prog, sf, R_CLM)) == NULL) return(run_warn("clm gen bad arg"));
   if (args[0]) FREE(args[0]);
   args[0] = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, 0.0), R_VARIABLE);
   switch (num_args)
@@ -6377,9 +6091,6 @@ static void mus_spectrum_5v(int *args, int *ints, Float *dbls)
 static xen_value *mus_spectrum_1(ptree *prog, xen_value **args, int num_args) 
 {
   if ((num_args < 3) || (num_args > 5)) return(run_warn("spectrum: wrong number of args"));
-  if ((args[1] = fixup_if_pending(prog, args[1], R_VCT)) == NULL) return(run_warn("spectrum: bad arg 1"));
-  if ((args[2] = fixup_if_pending(prog, args[2], R_VCT)) == NULL) return(run_warn("spectrum: bad arg 2"));
-  if ((args[3] = fixup_if_pending(prog, args[3], R_VCT)) == NULL) return(run_warn("spectrum: bad arg 3"));
   if (num_args == 3) return(package(prog, R_BOOL, mus_spectrum_3v, descr_mus_spectrum_3v, args, 3));
   if ((num_args == 4) && (args[4]->type == R_INT))
     return(package(prog, R_BOOL, mus_spectrum_4v, descr_mus_spectrum_4v, args, 4));
@@ -6423,7 +6134,6 @@ static char *descr_src_0f(int *args, int *ints, Float *dbls)
 static void src_0f(int *args, int *ints, Float *dbls) {FLOAT_RESULT = mus_src(((mus_any *)(INT_ARG_1)), 0.0, NULL);}
 static xen_value *src_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if ((args[1] = fixup_if_pending(prog, args[1], R_CLM)) == NULL) return(run_warn("src: bad gen"));
   if ((num_args > 1) && (args[2]->type == R_INT)) single_to_float(prog, args, 2);
   if (num_args == 3)
     {
@@ -6458,7 +6168,6 @@ static char *descr_ ## Name ## _0f(int *args, int *ints, Float *dbls)  \
 static void Name ## _0f(int *args, int *ints, Float *dbls) {FLOAT_RESULT = mus_ ## Name(((mus_any *)(INT_ARG_1)), NULL);} \
 static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args)  \
 { \
-  if ((args[1] = fixup_if_pending(prog, args[1], R_CLM)) == NULL) return(run_warn(#Name ": bad gen")); \
   if (num_args == 2) \
     { \
       ptree *pt; \
@@ -6627,8 +6336,6 @@ static void formant_bank_f(int *args, int *ints, Float *dbls)
 static xen_value *formant_bank_1(ptree *prog, xen_value **args, int num_args) 
 {
   if (num_args != 3) return(run_warn("formant-bank: wrong number of args"));
-  if ((args[1] = fixup_if_pending(prog, args[1], R_VCT)) == NULL) return(run_warn("formant-bank: bad amps arg"));
-  if ((args[2] = fixup_if_pending(prog, args[2], R_CLM_VECTOR)) == NULL) return(run_warn("formant-bank: bad gens arg"));
   if (args[3]->type == R_INT) single_to_float(prog, args, 3);
   return(package(prog, R_FLOAT, formant_bank_f, descr_formant_bank_f, args, 3));
 }
@@ -6697,14 +6404,14 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
       char funcname[256];
       xen_value **args = NULL;
       int i, num_args, float_result = FALSE, constants = 0, booleans = 0, vcts = 0;
-      int readers = 0, pendings = 0, clms = 0, chars = 0, strings = 0, arg_result = NEED_ANY_RESULT;
+      int readers = 0, clms = 0, chars = 0, strings = 0, arg_result = NEED_ANY_RESULT;
       xen_var *var;
       xen_value *v = NULL;
       function = XEN_CAR(form);
       mus_snprintf(funcname, 256, "%s", XEN_AS_STRING(function)); /* protect from gc... */
 
       if (strcmp(funcname, "lambda") == 0) return(lambda_form(prog, form, TRUE));
-      if (strcmp(funcname, "declare") == 0) return(make_xen_value(R_BOOL, -1, TRUE));
+      if (strcmp(funcname, "declare") == 0) return(make_xen_value(R_UNSPECIFIED, -1, TRUE));
       if (strcmp(funcname, "begin") == 0) return(begin_form(prog, form, need_result));
       if (strcmp(funcname, "if") == 0) return(if_form(prog, form, need_result));
       if (strcmp(funcname, "do") == 0) return(do_form(prog, form, need_result));
@@ -6756,7 +6463,6 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 		case R_VCT:     vcts++;              break;
 		case R_READER:  readers++;           break;
 		case R_CLM:     clms++;              break;
-		case R_PENDING: pendings++;          break;
 		case R_CHAR:    chars++;             break;
 		case R_STRING:  strings++;           break;
 		}
@@ -6806,7 +6512,6 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 		      else c->result = add_empty_var_to_ptree(prog, args[1]->type);
 		      set_var(prog, c->result, args[1]);
 		    }
-		  else c->result = add_empty_var_to_ptree(prog, R_PENDING);
 		  add_triple_to_ptree(prog, va_make_triple(jump_abs, descr_jump_abs, 1, c->jump));
 		  return(clean_up(copy_xen_value((c->result) ? c->result : c->jump), args, num_args));
 		}
@@ -6824,7 +6529,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	  if (strcmp(funcname, "eqv?") == 0) return(clean_up(eqv_p(prog, args, constants), args, num_args));
 	  if (strcmp(funcname, "equal?") == 0) return(clean_up(equal_p(prog, args, constants), args, num_args));
 	}
-      if ((num_args == 1) && (pendings == 0))
+      if (num_args == 1)
 	{
 	  /* these are known in advance in this context */
 	  if (strcmp(funcname, "boolean?") == 0) 
@@ -6989,7 +6694,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
       if (strcmp(funcname, "locsig") == 0) return(clean_up(locsig_1(prog, args, num_args), args, num_args));
       if (strcmp(funcname, "spectrum") == 0) return(clean_up(mus_spectrum_1(prog, args, num_args), args, num_args));
 
-      if ((clms == 1) || (pendings == 1) || (booleans == 1))
+      if ((clms == 1) || (booleans == 1))
 	/* boolean for gen that is null in the current context */
 	{
 	  if (strcmp(funcname, "oscil") == 0) return(clean_up(oscil_1(prog, args, num_args), args, num_args));
@@ -7135,7 +6840,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	  if (strcmp(funcname, "vct-set!") == 0) return(clean_up(vct_set_1(prog, args), args, num_args));
 	}
       if (strcmp(funcname, "make-sample-reader") == 0) return(clean_up(make_sample_reader_1(prog, args, num_args), args, num_args));
-      if ((num_args == 1) && ((readers == 1) || (pendings == 1)))
+      if ((num_args == 1) && ((readers == 1)))
 	{
 	  if (strcmp(funcname, "next-sample") == 0) return(clean_up(next_sample_1(prog, args), args, num_args));
 	  if (strcmp(funcname, "previous-sample") == 0) return(clean_up(previous_sample_1(prog, args), args, num_args));
@@ -7146,7 +6851,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
       /* both of these can be applicable objects, but those are not counted in the arg scan */
       /* no readers or CLM gens from here on */
 
-      if ((vcts > 0) || (pendings > 0))
+      if (vcts > 0)
 	{
 	  if (strcmp(funcname, "vct-ref") == 0) return(clean_up(vct_ref_1(prog, args, num_args), args, num_args));
 	  if (strcmp(funcname, "vct-length") == 0) return(clean_up(vct_length_1(prog, args, num_args), args, num_args));
@@ -7216,7 +6921,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	  if (num_args == 1)
 	    {
 	      if (strcmp(funcname, "not") == 0) return(clean_up(not_p(prog, args, constants), args, num_args));
-	      if ((booleans == 0) && (pendings == 0))
+	      if (booleans == 0)
 		{
 		  if (strcmp(funcname, "lognot") == 0) return(clean_up(lognot_1(prog, args, constants), args, num_args));
 		  if (strcmp(funcname, "abs") == 0) return(clean_up(abs_1(prog, args, constants), args, num_args));
@@ -7261,7 +6966,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	} /* end need_result */
       if (need_result)
 	return(clean_up(NULL, args, num_args));
-      return(make_xen_value(R_BOOL, -1, R_CONSTANT));
+      return(make_xen_value(R_UNSPECIFIED, -1, R_CONSTANT));
     }
   if (XEN_NUMBER_P(form))
     {
@@ -7276,27 +6981,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
   if (XEN_CHAR_P(form)) 
     return(make_xen_value(R_CHAR, add_int_to_ptree(prog, (int)(XEN_TO_C_CHAR(form))), R_CONSTANT));
   if (XEN_SYMBOL_P(form))
-    {
-      xen_var *var;
-      xen_value *v;
-      v = add_global_var_to_ptree(prog, form);
-      if ((v) && (v->type == R_PENDING))
-	{
-	  if (current_optimization > 2)
-	    {
-	      var = find_var_in_ptree(prog, XEN_SYMBOL_TO_C_STRING(form));
-	      var->undefined = TRUE;
-	    }
-	  else
-	    {
-	      FREE(v);
-	      if (!run_warned)
-		return(run_warn("can't handle %s", XEN_AS_STRING(form)));
-	      return(NULL);
-	    }
-	}
-      return(v);
-    }
+    return(add_global_var_to_ptree(prog, form));
   if (!run_warned)
     return(run_warn("can't handle: %s", XEN_AS_STRING(form)));
   return(NULL);
@@ -7335,9 +7020,7 @@ static xen_value *lookup_generalized_set(ptree *prog, char *accessor, xen_value 
 
 static void *form_to_ptree(XEN code)
 {
-  int i;
   ptree *prog;
-  xen_var *var;
   XEN form;
 #if DEBUGGING
   free_saved_locals();
@@ -7358,17 +7041,6 @@ static void *form_to_ptree(XEN code)
     {
       add_triple_to_ptree(prog, make_triple(quit, descr_quit, NULL, 0));
       /* now check that we were able to nail down all global variable types */
-      for (i = 0; i < prog->global_var_ctr; i++)
-	{
-	  var = prog->global_vars[i];
-	  if ((var) &&
-	      (var->v->type == R_PENDING))
-	    {
-	      run_warn("can't decide type for %s", var->name);
-	      free_ptree((void *)prog);
-	      return(NULL);
-	    }
-	}
 #ifdef DESCRIBE_PTREE
       {
 	char *msg;
@@ -7500,7 +7172,6 @@ static XEN g_run(XEN code)
 static XEN g_run_eval(XEN code, XEN arg)
 {
   ptree *pt;
-  char *err;
   XEN result;
   current_optimization = 4;
   pt = make_ptree(8);
@@ -7524,15 +7195,6 @@ static XEN g_run_eval(XEN code, XEN arg)
 	    case R_INT:    pt->ints[pt->args[0]] = (int)XEN_TO_C_INT(arg); break;
 	    case R_STRING: pt->ints[pt->args[0]] = (int)copy_string(XEN_TO_C_STRING(arg)); break;
 	    }
-	}
-      err = initialize_ptree(pt);
-      if (err)
-	{
-	  free_ptree((void *)pt);
-	  FREE(err);
-	  XEN_ERROR(XEN_ERROR_TYPE("cannot-parse"),
-		    code);
-	  return(XEN_FALSE);
 	}
       eval_ptree(pt);
       if (pt->result->type == R_FLOAT) result = C_TO_XEN_DOUBLE(pt->dbls[pt->result->addr]); else
@@ -7593,7 +7255,7 @@ static XEN g_vct_map(XEN proc_and_code, XEN arglist)
 is then parcelled out to the vcts passed as the trailing arguments.  This is intended for use with locsig \
 in multi-channel situations where you want the optimization that vct-map! provides."
   int i, j, len, min_len = 0;
-  vct **vs;
+  vct **vs = NULL;
   XEN proc, obj, code;
 #if WITH_RUN
   ptree *pt = NULL;
@@ -7631,17 +7293,12 @@ in multi-channel situations where you want the optimization that vct-map! provid
       pt = (ptree *)form_to_ptree(proc_and_code);
       if ((pt) && (pt->arity == 0) && (pt->result->type == R_CLM))
 	{
-	  char *err;
-	  err = initialize_ptree(pt);
-	  if (err == NULL)
+	  for (i = 0; i < min_len; i++) 
 	    {
-	      for (i = 0; i < min_len; i++) 
-		{
-		  eval_ptree(pt);
-		  vals = mus_data((mus_any *)(pt->ints[pt->result->addr]));
-		  for (j = 0; j < len; j++)
-		    vs[j]->data[i] = vals[j];
-		}
+	      eval_ptree(pt);
+	      vals = mus_data((mus_any *)(pt->ints[pt->result->addr]));
+	      for (j = 0; j < len; j++)
+		vs[j]->data[i] = vals[j];
 	    }
 	  if (pt) free_ptree(pt);
 	  return(proc);
@@ -7665,6 +7322,7 @@ in multi-channel situations where you want the optimization that vct-map! provid
 	    }
 	}
     }
+  if (vs) FREE(vs);
   return(proc);
 }
 

@@ -2204,7 +2204,6 @@ static int run_all_ffts(sonogram_state *sg)
 static int cleanup_sonogram(sonogram_state *sg)
 {
   chan_info *cp;
-  /* data has already been placed on cp->sonogram_state, so we need only clear the fft_state struct */
   if (sg)
     {
       cp = sg->cp;
@@ -2213,15 +2212,19 @@ static int cleanup_sonogram(sonogram_state *sg)
 	  if (sg->fs) sg->fs = free_fft_state(sg->fs);
 	  return(1);
 	}
-      if ((sg->scp == NULL) || (sg->outlim <= 1)) return(1);
-      make_sonogram_axes(cp);
+      if ((sg->scp != NULL) && (sg->outlim > 1))
+	make_sonogram_axes(cp);
       if (sg->fs) sg->fs = free_fft_state(sg->fs);
       cp->fft_data = NULL;
-      set_chan_fft_in_progress(cp, 0);
-      display_channel_fft_data(cp, cp->sound, cp->state);
+      set_chan_fft_in_progress(cp, 0); /* i.e. clear it */
+      if ((sg->scp != NULL) && (sg->outlim > 1))
+	{
+	  display_channel_fft_data(cp, cp->sound, cp->state);
+	  if (sg->outer == sg->outlim) sg->done = 1;
+	  sg->old_scale = (sg->scp)->scale;
+	}
+      else sg->done = 1;
       if (cp->last_sonogram) FREE(cp->last_sonogram);
-      if (sg->outer == sg->outlim) sg->done = 1;
-      sg->old_scale = (sg->scp)->scale;
       cp->last_sonogram = sg;
       if (sg->minibuffer_needs_to_be_cleared)
 	{

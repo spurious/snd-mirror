@@ -1506,7 +1506,7 @@ selected sound: (map-chan (cross-synthesis 1 .5 128 6.0))"
 
 ;;; -------- FOF example
 
-(define* (fofins beg dur frq amp vib f0 a0 f1 a1 f2 a2 #:optional (ae '(0 0 25 1 75 1 100 0)))
+(define* (fofins beg dur frq amp uvib f0 a0 f1 a1 f2 a2 #:optional (ae '(0 0 25 1 75 1 100 0)))
 
   "(fofins beg dur frq amp vib f0 a0 f1 a1 f2 a2 #:optional (ae '(0 0 25 1 75 1 100 0))) produces FOF \
 synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
@@ -1514,6 +1514,7 @@ synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
     (let* ((two-pi (* 2 3.141592653589793))
 	   (start (floor (* beg (srate))))
 	   (len (floor (* dur (srate))))
+	   (vib uvib) ; for the optimizer (it can't find define* args sometimes)
 	   (ampf (make-env :envelope ae :scaler amp :duration dur))
 	   (frq0 (hz->radians f0))
 	   (frq1 (hz->radians f1))

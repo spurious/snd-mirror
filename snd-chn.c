@@ -994,7 +994,6 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
   if ((x_start == x_end) || (samps <= 1))
     samples_per_pixel = 0.01; /* any non-zero value < 1.0 should be ok here */
   else samples_per_pixel = (Float)((double)(samps - 1) / (double)pixels);
-  allocate_grf_points();
   if (cp->printing) ps_allocate_grf_points();
   if (sp)
     {
@@ -1296,7 +1295,6 @@ void draw_graph_data(chan_info *cp, off_t losamp, off_t hisamp, int data_size,
   double start_time = 0.0, cur_srate = 1.0;
   ap = cp->axis;
   sp = cp->sound;
-  allocate_grf_points();
   if (data1 == NULL)
     {
       cur_srate = (double)SND_SRATE(sp);
@@ -1491,7 +1489,6 @@ void make_fft_graph(chan_info *cp, snd_info *sp, axis_info *fap, axis_context *a
     }
   /* no scaling etc here!! see snd_display_fft in snd-fft.c */
   scale = fp->scale;
-  allocate_grf_points();
   if (cp->printing) ps_allocate_grf_points();
   samples_per_pixel = (Float)(hisamp - losamp) / (Float)(fap->x_axis_x1 - fap->x_axis_x0);
   if (cp->printing) ps_fg(fap, ax);
@@ -1792,7 +1789,6 @@ static void make_sonogram(chan_info *cp, snd_info *sp, snd_state *ss)
   if ((si) && (si->scale > 0.0))
     {
       bins = (int)(si->target_bins * cp->spectro_cutoff);
-      allocate_grf_points();
       if (cp->printing) ps_allocate_grf_points();
       if (cp->fft_log_frequency) scaler = 1.0 / log(LOG_FACTOR + 1.0);
       scl = si->scale; 
@@ -1953,7 +1949,6 @@ static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
   si = (sono_info *)(cp->sonogram_data);
   if ((si) && (si->scale > 0.0))
     {
-      allocate_grf_points();
       if (cp->printing) ps_allocate_grf_points();
       scl = si->scale; /* unnormalized fft doesn't make much sense here (just washes out the graph) */
       fp = cp->fft;
@@ -2094,7 +2089,6 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
   if (sp) ap->losamp = (off_t)(ap->x0 * SND_SRATE(sp));
   sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
   if (sf == NULL) return;
-  allocate_grf_points();
   if (cp->printing) ps_allocate_grf_points();
   width = (ap->x_axis_x1 - ap->x_axis_x0);
   height = (ap->y_axis_y1 - ap->y_axis_y0); /* negative! */
@@ -2198,7 +2192,6 @@ static void make_lisp_graph(chan_info *cp, snd_info *sp, snd_state *ss, XEN pixe
   up = (lisp_grf *)(cp->lisp_info);
   if (up) uap = up->axis; else return;
   if ((!uap) || (!uap->graph_active) || (up->len == NULL) || (up->len[0] <= 0)) return;
-  allocate_grf_points();
   if (cp->printing) ps_allocate_grf_points();
   if (sp->channel_style == CHANNELS_SUPERIMPOSED) 
     ax = combined_context(cp); 

@@ -38,10 +38,6 @@ snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_f
 
 /* ---------------- amp envs ---------------- */
 
-#if DEBUGGING
-static void check_env(chan_info *cp, env_info *new_ep);
-#endif
-
 typedef struct {
   int slice; 
   off_t samples, m;  
@@ -733,7 +729,7 @@ void amp_env_env_selection_by(chan_info *cp, mus_any *e, off_t beg, off_t num, i
     }
 }
 
-#if DEBUGGING
+#if 0
 static void check_env(chan_info *cp, env_info *new_ep)
 {
   snd_fd *sf;
@@ -1680,7 +1676,7 @@ static XEN sound_get(XEN snd_n, int fld, char *caller)
     case SP_SHORT_FILE_NAME:     return(C_TO_XEN_STRING(sp->short_filename));          break;
     case SP_CLOSE:               snd_close_file(sp, sp->state);                        break;
     case SP_SAVE:                save_edits(sp, NULL);                                 break;
-    case SP_UPDATE:              snd_update(sp->state, sp);                            break;
+    case SP_UPDATE:              sp = snd_update(sp->state, sp); if (sp) return(C_TO_XEN_INT(sp->index)); break;
     case SP_CURSOR_FOLLOWS_PLAY: return(C_TO_XEN_BOOLEAN(sp->cursor_follows_play));    break;
     case SP_SHOW_CONTROLS:       return(C_TO_XEN_BOOLEAN(control_panel_open(sp)));     break;
     case SP_SPEED_TONES:         return(C_TO_XEN_INT(sp->speed_control_tones));        break;
@@ -2395,10 +2391,10 @@ opens filename assuming the data matches the attributes indicated unless the fil
   mus_header_set_raw_defaults(XEN_TO_C_INT_OR_ELSE(srate, os),
 			      XEN_TO_C_INT_OR_ELSE(chans, oc),
 			      XEN_TO_C_INT_OR_ELSE(format, ofr));
-  ss->reloading_updated_file = TRUE;
+  ss->reloading_updated_file = -1;
   ss->catch_message = NULL;
   sp = snd_open_file(fname, ss, FALSE);
-  ss->reloading_updated_file = FALSE;
+  ss->reloading_updated_file = 0;
   /* snd_open_file -> snd_open_file_1 -> add_sound_window -> make_file_info -> raw_data_dialog_to_file_info */
   /*   so here if hooked, we'd need to save the current hook, make it return the current args, open, then restore */
   if (fname) FREE(fname);

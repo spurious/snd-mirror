@@ -677,6 +677,52 @@ void collapse_marks (snd_info *sp)
     }
 }
 
+mark_info **sound_store_marks(snd_info *sp)
+{
+  /* in all channels, move current edit_ctr mark list to 0, freeing all the rest */
+  int i, j, ed;
+  chan_info *cp;
+  mark **mps;
+  mark_info **res = NULL;
+  res = (mark_info **)CALLOC(sp->nchans, sizeof(mark_info *));
+  for (i = 0; i < sp->nchans; i++)
+    {
+      cp = sp->chans[i];
+      if ((cp) && (cp->marks))
+	{
+	  ed = cp->edit_ctr;
+	  mps = cp->marks[ed];
+	  if ((mps) && (cp->mark_ctr[ed] >= 0))
+	    {
+	      res[i] = (mark_info *)CALLOC(1, sizeof(mark_info));
+	      res[i]->marks = (mark **)CALLOC(cp->mark_size[ed], sizeof(mark *)); 
+	      for (j = 0; j <= cp->mark_ctr[ed]; j++)
+		res[i]->marks[j] = copy_mark(mps[j]);
+	      res[i]->ctr = cp->mark_ctr[ed];
+	      res[i]->size = cp->mark_size[ed];
+	    }
+	}
+    }
+  return(res);
+}
+
+void sound_restore_marks(snd_info *sp, mark_info **marks)
+{
+  int i;
+  chan_info *cp;
+  for (i = 0; i < sp->nchans; i++)
+    {
+      if (marks[i])
+	{
+	  cp = sp->chans[i];
+	  allocate_marks(cp, 0);
+	  cp->marks[0] = marks[i]->marks;
+	  cp->mark_ctr[0] = marks[i]->ctr;
+	  cp->mark_size[0] = marks[i]->size;
+	}
+    }
+}
+
 static mark *find_nth_mark(chan_info *cp, int count)
 {
   int i, c, samp;

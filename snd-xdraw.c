@@ -148,14 +148,8 @@ static void fill_two_sided_polygons(axis_context *ax, XPoint *points, XPoint *po
     }
 }
 
-static XPoint *points = NULL;
-static XPoint *points1 = NULL;
-
-void allocate_grf_points(void)
-{
-  if (!points) points = (XPoint *)CALLOC(POINT_BUFFER_SIZE, sizeof(XPoint));
-  if (!points1) points1 = (XPoint *)CALLOC(POINT_BUFFER_SIZE, sizeof(XPoint));
-}
+static XPoint points[POINT_BUFFER_SIZE];
+static XPoint points1[POINT_BUFFER_SIZE];
 
 void set_grf_points(Locus xi, int j, Locus ymin, Locus ymax)
 {

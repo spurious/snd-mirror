@@ -237,42 +237,6 @@ static char *print_double_array(double *arr, int len, int loc)
   return(base);
 }
 
-static char *print_int_array(int *arr, int len, int loc)
-{
-  char *base, *str;
-  int i, lim, k, size = 128;
-  if (arr == NULL) 
-    {
-      str = (char *)CALLOC(4, sizeof(char));
-      sprintf(str, "nil");
-      return(str);
-    }
-  if ((array_print_length * 8) > size) size = array_print_length * 8;
-  base = (char *)CALLOC(size, sizeof(char));
-  str = (char *)CALLOC(32, sizeof(char));
-  sprintf(base, "[");
-  lim = len;
-  if (lim > array_print_length) lim = array_print_length;
-  k = loc;
-  for (i = 0; i < lim - 1; i++)
-    {
-      sprintf(str, "%d ", arr[k]);
-      strcat(base, str);
-      if ((int)(strlen(base) + 32) > size)
-	{
-	  base = (char *)REALLOC(base, size * 2 * sizeof(char));
-	  base[size] = 0;
-	  size *= 2;
-	}
-      k++;
-      if (k >= len) k = 0;
-    }
-  sprintf(str, "%d%s]", arr[k], (len > lim) ? "..." : "");
-  strcat(base, str);
-  FREE(str);
-  return(base);
-}
-
 static char *print_off_t_array(off_t *arr, int len, int loc)
 {
   char *base, *str;

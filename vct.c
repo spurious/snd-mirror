@@ -414,16 +414,10 @@ static XEN vct_mapB(XEN obj, XEN proc)
 	pt = form_to_ptree_0f2f(proc);
 	if (pt)
 	  {
-	    char *err;
-	    err = initialize_ptree(pt);
-	    if (err == NULL)
-	      {
-		for (i = 0; i < v->length; i++) 
-		  v->data[i] = evaluate_ptree_0f2f(pt);
-		free_ptree(pt);
-		return(xen_return_first(obj, proc));
-	      }
-	    else free_ptree(pt); /* and fallback on Guile */
+	    for (i = 0; i < v->length; i++) 
+	      v->data[i] = evaluate_ptree_0f2f(pt);
+	    free_ptree(pt);
+	    return(xen_return_first(obj, proc));
 	  }
       }
     proc = XEN_CADR(proc);

@@ -243,7 +243,7 @@ file_info *make_file_info(char *fullname, snd_state *ss)
 	  int len, srate, chans, data_format;
 	  off_t data_location, bytes;
 
-	  if (ss->reloading_updated_file)
+	  if (ss->reloading_updated_file != 0)
 	    {
 	      /* choices already made, so just send back a header that reflects those choices */
 	      if (mus_file_probe(fullname))
@@ -979,56 +979,225 @@ int restore_axes_data(snd_info *sp, axes_data *sa, Float new_duration, int need_
   return(need_update);
 }
 
+static void copy_chan_info(chan_info *ncp, chan_info *ocp)
+{
+  ncp->cursor_on = ocp->cursor_on;
+  ncp->cursor = ocp->cursor;
+  ncp->cursor_style = ocp->cursor_style;
+  ncp->cursor_size = ocp->cursor_size;
+  ncp->spectro_x_scale = ocp->spectro_x_scale;
+  ncp->spectro_y_scale = ocp->spectro_y_scale;
+  ncp->spectro_z_scale = ocp->spectro_z_scale;
+  ncp->spectro_z_angle = ocp->spectro_z_angle;
+  ncp->spectro_x_angle = ocp->spectro_x_angle;
+  ncp->spectro_y_angle = ocp->spectro_y_angle;
+  ncp->spectro_cutoff = ocp->spectro_cutoff;
+  ncp->spectro_start = ocp->spectro_start;
+  ncp->lin_dB = ocp->lin_dB;
+  ncp->min_dB = ocp->min_dB;
+  ncp->fft_window_beta = ocp->fft_window_beta;
+  ncp->beats_per_minute = ocp->beats_per_minute;
+  ncp->show_y_zero = ocp->show_y_zero;
+  ncp->show_marks = ocp->show_marks;
+  ncp->wavo_hop = ocp->wavo_hop;
+  ncp->wavo_trace = ocp->wavo_trace;
+  ncp->zero_pad = ocp->zero_pad;
+  ncp->x_axis_style = ocp->x_axis_style;
+  ncp->wavelet_type = ocp->wavelet_type;
+  ncp->verbose_cursor = ocp->verbose_cursor;
+  ncp->max_transform_peaks = ocp->max_transform_peaks;
+  ncp->show_transform_peaks = ocp->show_transform_peaks;
+  ncp->show_axes = ocp->show_axes;
+  ncp->graph_style = ocp->graph_style;
+  ncp->fft_log_frequency = ocp->fft_log_frequency;
+  ncp->fft_log_magnitude = ocp->fft_log_magnitude;
+  ncp->transform_size = ocp->transform_size;
+  ncp->transform_graph_type = ocp->transform_graph_type;
+  ncp->fft_window = ocp->fft_window;
+  ncp->time_graph_type = ocp->time_graph_type;
+  ncp->dot_size = ocp->dot_size;
+  ncp->transform_normalization = ocp->transform_normalization;
+  ncp->transform_type = ocp->transform_type;
+  ncp->show_mix_waveforms = ocp->show_mix_waveforms;
+  ncp->spectro_hop = ocp->spectro_hop;
+  ncp->graphs_horizontal = ocp->graphs_horizontal;
+      
+  ncp->cursor_proc = ocp->cursor_proc;
+  if (XEN_BOUND_P(ncp->cursor_proc)) snd_protect(ncp->cursor_proc);
+  if (XEN_VECTOR_P(ocp->properties))
+    {
+      ncp->properties = XEN_VECTOR_REF(ocp->properties, 0);
+      snd_protect(ncp->properties);
+    }
+  else
+    {
+      if (XEN_LIST_P(ocp->properties))
+	{
+	  if (!(XEN_VECTOR_P(ncp->properties)))
+	    {
+	      ncp->properties = XEN_MAKE_VECTOR(1, XEN_EMPTY_LIST);
+	      snd_protect(ncp->properties);
+	    }
+	  XEN_VECTOR_SET(ncp->properties, 0, ocp->properties);
+	  snd_unprotect(ocp->properties);
+	}
+      else ncp->properties = XEN_FALSE;
+    }
+}
+
+static void copy_snd_info(snd_info *nsp, snd_info *osp)
+{
+  nsp->speed_control_style = osp->speed_control_style;
+  nsp->speed_control_tones = osp->speed_control_tones;
+  nsp->expand_control_length = osp->expand_control_length;
+  nsp->expand_control_ramp = osp->expand_control_ramp;
+  nsp->expand_control_hop = osp->expand_control_hop;
+  nsp->contrast_control_amp = osp->contrast_control_amp;
+  nsp->reverb_control_feedback = osp->reverb_control_feedback;
+  nsp->reverb_control_lowpass = osp->reverb_control_lowpass;
+  nsp->reverb_control_decay = osp->reverb_control_decay;
+  nsp->selected_channel = osp->selected_channel;
+  nsp->channel_style = osp->channel_style;
+  nsp->sync = osp->sync;
+  nsp->cursor_follows_play = osp->cursor_follows_play;
+  nsp->search_tree = osp->search_tree;
+  osp->search_tree = NULL;
+  nsp->search_expr = osp->search_expr;
+  osp->search_expr = NULL;
+  nsp->search_proc = osp->search_proc;
+  if (XEN_BOUND_P(nsp->search_proc)) snd_protect(nsp->search_proc);
+  if (XEN_VECTOR_P(osp->properties))
+    {
+      nsp->properties = XEN_VECTOR_REF(osp->properties, 0);
+      snd_protect(nsp->properties);
+    }
+  else
+    {
+      if (XEN_LIST_P(osp->properties))
+	{
+	  if (!(XEN_VECTOR_P(nsp->properties)))
+	    {
+	      nsp->properties = XEN_MAKE_VECTOR(1, XEN_EMPTY_LIST);
+	      snd_protect(nsp->properties);
+	    }
+	  XEN_VECTOR_SET(nsp->properties, 0, osp->properties);
+	  snd_unprotect(osp->properties);
+	}
+      else nsp->properties = XEN_FALSE;
+    }
+}
+
+static snd_info *sound_store_chan_info(snd_info *sp)
+{
+  chan_info **cps;
+  snd_info *nsp;
+  int i;
+  nsp = (snd_info *)CALLOC(1, sizeof(snd_info));
+  cps = (chan_info **)CALLOC(sp->nchans, sizeof(chan_info *));
+  nsp->chans = cps;
+  nsp->nchans = sp->nchans;
+  copy_snd_info(nsp, sp);
+  for (i = 0; i < sp->nchans; i++)
+    {
+      cps[i] = (chan_info *)CALLOC(1, sizeof(chan_info));
+      copy_chan_info(cps[i], sp->chans[i]);
+    }
+  return(nsp);
+}
+
+static void sound_restore_chan_info(snd_info *nsp, snd_info *osp)
+{
+  int i;
+  chan_info **cps;
+  cps = osp->chans;
+  copy_snd_info(nsp, osp);
+  for (i = 0; i < nsp->nchans; i++)
+    {
+      copy_chan_info(nsp->chans[i], cps[i]);
+      if (XEN_BOUND_P(cps[i]->cursor_proc))
+	{
+	  snd_unprotect(cps[i]->cursor_proc);
+	  cps[i]->cursor_proc = XEN_UNDEFINED;
+	}
+    }
+  if (XEN_BOUND_P(osp->search_proc))
+    {
+      snd_unprotect(osp->search_proc);
+      osp->search_proc = XEN_UNDEFINED;
+    }
+}
+
 static snd_info *snd_update_1(snd_state *ss, snd_info *sp, char *ur_filename)
 {
   /* we can't be real smart here because the channel number may have changed and so on */
-  int i, old_sync, old_combine, need_update = 0, read_only, old_srate, old_chans, old_format, old_raw;
+  int i, read_only, old_srate, old_chans, old_format, old_raw, sp_chans, old_index;
   axes_data *sa;
   snd_info *nsp = NULL;
   char *filename;
+  mark_info **ms;
+  snd_info *saved_sp;
+  void *saved_controls;
   filename = copy_string(ur_filename);
-  old_sync = sp->sync;
-  old_combine = sp->channel_style;
   read_only = sp->read_only;
   sa = make_axes_data(sp);
-  /* TODO: save/restore marks across snd_update, xen procs? ... [update-sound should restore as much as possible] */
   old_raw = (sp->hdr->type == MUS_RAW);
   if (old_raw)
     {
       mus_header_raw_defaults(&old_srate, &old_chans, &old_format);
       mus_header_set_raw_defaults(sp->hdr->srate, sp->hdr->chans, sp->hdr->format);
     }
+  sp_chans = sp->nchans;
+  old_index = sp->index;
+  ms = sound_store_marks(sp);
+  save_controls(sp);
+  saved_controls = sp->saved_controls;
+  sp->saved_controls = NULL;
+  saved_sp = sound_store_chan_info(sp);
   snd_close_file(sp, ss);
   /* this normalizes the fft/lisp/wave state so we need to reset it after reopen */
   alert_new_file();
-  ss->reloading_updated_file = TRUE;
+  ss->reloading_updated_file = (old_index + 1);
   nsp = snd_open_file(filename, ss, read_only);
-  ss->reloading_updated_file = FALSE;
+  ss->reloading_updated_file = 0;
   if (old_raw)
     mus_header_set_raw_defaults(old_srate, old_chans, old_format);
   if (nsp)
     {
-      need_update = restore_axes_data(nsp, sa, mus_sound_duration(filename), FALSE);
-      if (nsp->channel_style != old_combine) set_sound_channel_style(nsp, old_combine);
-      if (nsp->sync != old_sync) syncb(nsp, old_sync);
-      if (need_update) 
-	for (i = 0; i < nsp->nchans; i++) 
-	  update_graph(nsp->chans[i], NULL);
+      nsp->saved_controls = saved_controls;
+      if (saved_controls) restore_controls(nsp);
+      if (nsp->nchans == sp_chans) sound_restore_chan_info(nsp, saved_sp);
+      restore_axes_data(nsp, sa, mus_sound_duration(filename), FALSE);
+      if (nsp->nchans == sp_chans) sound_restore_marks(nsp, ms);
+      for (i = 0; i < nsp->nchans; i++) 
+	update_graph(nsp->chans[i], NULL);
+    }
+  if (ms)
+    {
+      for (i = 0; i < sp_chans; i++)
+	if (ms[i]) FREE(ms[i]);
+      FREE(ms);
+    }
+  if (saved_sp)
+    {
+      for (i = 0; i < saved_sp->nchans; i++)
+	if (saved_sp->chans[i]) FREE(saved_sp->chans[i]);
+      FREE(saved_sp->chans);
+      FREE(saved_sp);
     }
   sa = free_axes_data(sa);
   FREE(filename);
   return(nsp);
 }
 
-void snd_update(snd_state *ss, snd_info *sp)
+snd_info *snd_update(snd_state *ss, snd_info *sp)
 {
   int app_x, app_y;
-  if (sp->edited_region) return;
+  if (sp->edited_region) return(sp);
   if (mus_file_probe(sp->filename) == 0)
     {
       /* user deleted file while editing it? */
       report_in_minibuffer_and_save(sp, "%s no longer exists!", sp->short_filename);
-      return;
+      return(sp);
     }
   app_x = widget_width(MAIN_SHELL(ss));
   app_y = widget_height(MAIN_SHELL(ss));
@@ -1037,6 +1206,7 @@ void snd_update(snd_state *ss, snd_info *sp)
     report_in_minibuffer(sp, "updated %s", sp->short_filename);
   else snd_error("update %s failed!", sp->filename);
   set_widget_size(MAIN_SHELL(ss), app_x, app_y);
+  return(sp);
 }
 
 /* View:Files lists */
@@ -2222,6 +2392,10 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
 		  mus_header_type_name(type));
       type = MUS_AIFC;
     }
+  /* ideally set sound_loop_info would just change the header (keeping all other state intact)
+   *   but this aspect of AIFC headers is impossibly complicated (if we could assume our own headers,
+   *   it would not be so hard).
+   */
   tmp_file = snd_tempnam(sp->state);
   save_edits_without_display(sp, tmp_file, type, 
 			     hdr->format, 

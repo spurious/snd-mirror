@@ -2800,11 +2800,14 @@ char *sf_to_string(snd_fd *fd)
 	  else name = "unknown source";
 	}
       if (fd->cb)
-	mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<sample-reader %p: %s from " OFF_TD ", at " OFF_TD ">",
-		     fd, name, fd->initial_samp, current_location(fd));
+	{
+	  if (fd->current_sound == NULL)
+	    sprintf(desc, "#<sample-reader: %s>", (fd->cb) ? "uninitialized" : "at eof");
+	  else mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<sample-reader %p: %s from " OFF_TD ", at " OFF_TD ">",
+			    fd, name, fd->initial_samp, current_location(fd));
+	}
       else mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<sample-reader %p: %s at eof>",
 			fd, name);
-
     }
   return(desc);
 }

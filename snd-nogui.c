@@ -15,7 +15,6 @@ void draw_string (axis_context *ax, int x0, int y0, char *str, int len) {}
 void draw_arc(axis_context *ax, int x, int y, int size) {}
 void set_grf_points(Locus xi, int j, Locus ymin, Locus ymax) {}
 void set_grf_point(Locus xi, int j, Locus yi) {}
-void allocate_grf_points(void) {}
 void draw_grf_points(chan_info *cp, axis_context *ax, int j, axis_info *ap, Float y0, int graph_style) {}
 void draw_both_grf_points(chan_info *cp, axis_context *ax, int j, int graph_style) {}
 void draw_both_grfs(axis_context *ax, int j) {}
