@@ -4246,81 +4246,8 @@ user-supplied Scheme function (via <code>scm_call_1</code>).
 <br>
 
 <table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="extsndcgens">A Note on User-defined Generators in C-CLM</a></h2></td></tr></table>
-
-<p>In the Common Lisp version of CLM, it's relatively easy to define a new generator. Take for
-example, Fernando Lopez-Lezcano's fcomb (a comb filter with a low-pass filter on the feedback), defined as a part of his 
-translation of Jezar Wakefield's freeverb reverberator:
-</p>
-<pre>
-(def-clm-struct fcomb
-  delay
-  filter
-  (feedback 0.0))
-  
-(defmacro fcomb (<a class=quiet href="clm.html#comb">comb</a> input)
-  `(<a class=quiet href="clm.html#delay">delay</a> (fcomb-delay ,comb)
-	  (+ ,input (* (<a class=quiet href="clm.html#one-zero">one-zero</a> (fcomb-filter ,comb)
-				 (<a class=quiet href="clm.html#tap">tap</a> (fcomb-delay ,comb)))
-		       (fcomb-feedback ,comb)))))
-</pre>
-<p>An fcomb generator is then created (in freeverb) via:
-</p>
-<pre>
-(make-fcomb :delay (<a class=quiet href="clm.html#make-delay">make-delay</a> len)
-            :feedback room-decay-val
-            :filter (<a class=quiet href="clm.html#make-one-zero">make-one-zero</a> :a0 (- 1.0 dmp) :a1 dmp))
-</pre>
-<p>and called at run-time with:</p>
-<pre>
-(fcomb (aref combs c j) (<a class=quiet href="clm.html#frame-ref">frame-ref</a> in c))
-</pre>
-<p>(In this case we have a two dimensional array of these generators).  This, of course,
-does not make fcomb a full-fledged generator like oscil -- it doesn't
-respond to mus-scaler or the other methods.  To do that
-requires a bit of defclass/defmethod overhead in Lisp, something
-along the lines of:
-</p>
-<pre> 
-(in-package :clm)
-
-(defclass fcomb (<a class=quiet href="clm.html#comb">comb</a> one-zero) ())
-
-(defmethod fcomb? ((g fcomb)) t)
-(defmethod fcomb? ((g t)) nil)
-
-(defun fcomb (gen input)
-  (<a class=quiet href="clm.html#delay">delay</a> gen
-	 (+ input (* (<a class=quiet href="clm.html#one-zero">one-zero</a> gen (<a class=quiet href="clm.html#tap">tap</a> gen))
-		     (<a class=quiet href="clm.html#mus-feedback">mus-feedback</a> gen)))))
-
-(def-optkey-fun make-fcomb (length feedback a0 a1)
-  (make-instance 'fcomb :loc 0 :xscl feedback :size length :zsize length :zdly nil
-		 :line (make-double-float-array length)
-		 :a0 a0 :a1 a1 :x1 0.0))
-
-(defmethod print-object ((d fcomb) stream)
-  (format stream "#&lt;(fcomb: size: ~A, loc: ~A, feedback: ~A, a0: ~A, a1: ~A, line: ~A&gt;"
-	  (dly-size d) (dly-loc d) (dly-xscl d)
-	  (<a class=quiet href="clm.html#mus-xcoeff">mus-xcoeff</a> d 0) (<a class=quiet href="clm.html#mus-xcoeff">mus-xcoeff</a> d 1)
-	  (prettified-array (dly-line d)))))
-</pre>
-<p>And to get the
-new (lisp-side, non-macro) generator to be callable within the run macro is yet another set
-of headaches (see <a href="clm.html#user-defined-ugs">user-defined generators</a>).
-In CLM-in-Scheme, the first (simpler) fcomb above might be:
-</p>
-<pre>
-(define (fcomb gen input)
-  (<a class=quiet href="clm.html#delay">delay</a> (car gen)
-	 (+ input (* (<a class=quiet href="clm.html#one-zero">one-zero</a> (cadr gen) (<a class=quiet href="clm.html#tap">tap</a> (car gen)))
-		     (caddr gen)))))
-
-(define (make-fcomb length feedback a0 a1)
-  (list (<a class=quiet href="clm.html#make-delay">make-delay</a> length)
-	(<a class=quiet href="clm.html#make-one-zero">make-one-zero</a> a0 a1)
-	feedback))
-</pre>
-<p>Or perhaps a more Schemey (Schemish?) method would be:
+<p>To define a new generator type in Scheme is not difficult.  For example, here is a comb filter with
+a low-pass filter on the feedback:
 </p>
 <pre>
 (define (fcomb gen input)
@@ -4332,8 +4259,8 @@ In CLM-in-Scheme, the first (simpler) fcomb above might be:
     (lambda (input)
       (dly (+ input (* (flt (<a class=quiet href="clm.html#tap">tap</a> dly)) feedback))))))
 </pre>
-<p>(Here we're returning a closure that packages up the generator's state). 
-We could use Guile's object system to conjure up fcomb
+<p>If we weren't concerned with the "run" optimizer,
+we could use Guile's object system to conjure up fcomb
 classes and methods in Scheme:
 </p>
 <pre>
@@ -4369,8 +4296,7 @@ classes and methods in Scheme:
 	   port))
 </pre>
 <p>
-But our real interest here is how to do the same thing in CLM-in-C (clm.c).
-The following code implements a comb filter with a one-zero filter on the feedback.
+To do the same thing in CLM-in-C (clm.c) takes a bit more effort:
 </p>
 <pre>
 #include &lt;stddef.h&gt;

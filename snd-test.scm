@@ -14390,6 +14390,9 @@ EDITS: 5
 	      (snd-display ";fr+*: ~A ~A" fr3 fr4))
 	  (if (fneq (frame-ref fr5 0) .5) 
 	      (snd-display ";sample->frame: ~A?" (frame-ref fr5 0))))
+	(sample->frame fr1 .5 fr5)
+	(if (fneq (frame-ref fr5 0) .5) 
+	    (snd-display ";repeat sample->frame: ~A?" (frame-ref fr5 0)))
 	(let ((fr3 (make-frame 2))
 	      (fr4 (make-frame 4)))
 	  (frame-set! fr3 0 1.0)
@@ -15214,7 +15217,7 @@ EDITS: 5
 	(print-and-check gen 
 			 "readin"
 			 "readin: 2.snd[chan 1], loc: 10, dir: 1"
-			 "rdin chan: 1, dir: 1, loc: 10, chans: 2, data_start: 0, data_end: 8191, file_end: 22051, file_name: 2.snd"))
+			 "rdin chan: 1, dir: 1, loc: 10, chans: 2, data_start: 0, data_end: 22051, file_end: 22051, file_name: 2.snd"))
       
       (let ((gen (make-file->sample "oboe.snd"))
 	    (v0 (make-vct 10)))
@@ -15326,10 +15329,10 @@ EDITS: 5
 	(print-and-check gen 
 			 "sample->file"
 			 "sample->file: fmv.snd"
-			 "rdout chan: 0, loc: 0, file_name: fmv.snd, chans: 2, data_start: 0, data_end: 8191, out_end: 0")
+			 "rdout chan: 0, loc: 0, file_name: fmv.snd, chans: 2, data_start: 0, data_end: 65535, out_end: 0")
 	(if (not (mus-output? gen)) (snd-display ";~A not output?" gen))
 	(if (not (sample->file? gen)) (snd-display ";~A not sample->file?" gen))
-	(if (not (= (mus-length gen) 8192)) (snd-display ";sample->file length: ~A?" (mus-length gen)))
+	(if (not (= (mus-length gen) (mus-file-buffer-size))) (snd-display ";sample->file length: ~A?" (mus-length gen)))
 	(let ((genx gen))
 	  (if (not (equal? genx gen)) (snd-display ";sample->file equal? ~A ~A" genx gen)))
 	(if (not (string=? (mus-file-name gen) "fmv.snd")) (snd-display ";sample->file mus-file-name: ~A" (mus-file-name gen)))
@@ -15369,7 +15372,7 @@ EDITS: 5
 	(print-and-check gen 
 			 "sample->file"
 			 "sample->file: fmv.snd"
-			 "rdout chan: 0, loc: 0, file_name: fmv.snd, chans: 4, data_start: 0, data_end: 8191, out_end: 0")
+			 "rdout chan: 0, loc: 0, file_name: fmv.snd, chans: 4, data_start: 0, data_end: 65535, out_end: 0")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (outa i .1 gen)
@@ -15438,10 +15441,10 @@ EDITS: 5
 	(print-and-check gen 
 			 "frame->file"
 			 "frame->file: fmv1.snd"
-			 "rdout chan: 0, loc: 0, file_name: fmv1.snd, chans: 2, data_start: 0, data_end: 8191, out_end: 0")
+			 "rdout chan: 0, loc: 0, file_name: fmv1.snd, chans: 2, data_start: 0, data_end: 65535, out_end: 0")
 	(if (not (mus-output? gen)) (snd-display ";~A not output?" gen))
 	(if (not (frame->file? gen)) (snd-display ";~A not frame->file?" gen))
-	(if (not (= (mus-length gen) 8192)) (snd-display ";frame->file length: ~A?" (mus-length gen)))
+	(if (not (= (mus-length gen) (mus-file-buffer-size))) (snd-display ";frame->file length: ~A?" (mus-length gen)))
 	(if (not (string=? (mus-file-name gen) "fmv1.snd")) (snd-display ";frame->file mus-file-name: ~A" (mus-file-name gen)))
 	(set! (mus-length gen) 4096)
 	(if (not (= (mus-length gen) 4096)) (snd-display ";frame->file length (1): ~A?" (mus-length gen)))
@@ -15466,7 +15469,7 @@ EDITS: 5
 	(print-and-check gen 
 			 "sample->file"
 			 "sample->file: fmv2.snd"
-			 "rdout chan: 0, loc: 0, file_name: fmv2.snd, chans: 4, data_start: 0, data_end: 8191, out_end: 0")
+			 "rdout chan: 0, loc: 0, file_name: fmv2.snd, chans: 4, data_start: 0, data_end: 65535, out_end: 0")
 	(if (not (mus-output? gen)) (snd-display ";~A not output?" gen))
 	(if (not (sample->file? gen)) (snd-display ";~A not sample->file?" gen))
 	(do ((i 0 (1+ i)))

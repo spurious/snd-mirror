@@ -4657,7 +4657,8 @@ mus_any *mus_sample_to_frame(mus_any *f, Float in, mus_any *uout)
 	}
       else out = (mus_frame *)mus_make_empty_frame(chans);
       for (i = 0; i < chans; i++)
-	out->vals[i] += (in * fr->vals[i]);
+	out->vals[i] = (in * fr->vals[i]);
+      /* was += here and below? */
     }
   else
     {
@@ -4671,7 +4672,7 @@ mus_any *mus_sample_to_frame(mus_any *f, Float in, mus_any *uout)
 	    }
 	  else out = (mus_frame *)mus_make_empty_frame(chans);
 	  for (i = 0; i < chans; i++)
-	    out->vals[i] += (in * mx->vals[0][i]);
+	    out->vals[i] = (in * mx->vals[0][i]);
 	}
       else mus_error(MUS_ARG_OUT_OF_RANGE, S_sample_to_frame ": gen not frame or mixer");
     }

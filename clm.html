@@ -2669,18 +2669,7 @@ and <a href="anoi.ins">anoi.ins</a>.
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4><a class=def name="def-clm-struct">def-clm-struct</a></h4></td></tr></table>
 
 <p><b>def-clm-struct</b> is syntactically like def-struct, but sets up
-the struct field names for the run macro.</p>
-<pre><small>
-  (def-clm-struct hi ho silver away)
-  (<a class=quiet href="#definstrument">definstrument</a> simp ()
-    (let ((ha (make-hi :ho (make-array 1 :element-type 'envelope 
-                             :initial-element (<a class=quiet href="#make-env">make-env</a> :envelope '(0 0 100 1) 
-                                                        :scaler .1 :end 10)))))
-      (run
-        (loop for i from 0 to 10 do
-          (<a class=quiet href="#outa">outa</a> i (<a class=quiet href="#env">env</a> (aref (hi-ho ha) 0)))))))
-</small></pre>
-<p>See prc-toolkit95.lisp.</p>
+the struct field names for the run macro.  There are several examples in prc-toolkit95.lisp, and other instruments.</p>
 <br>
 
 
