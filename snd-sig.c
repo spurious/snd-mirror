@@ -4,6 +4,7 @@
  *        map|scan-across-any-chans the same
  *        so all the map|scan funcs are specialized calls of these two
  * TODO: doc and test and complete edpos 
+ * TODO: shouldn't temp(s)-to-sound etc use "->"?
  */
 
 /* collect syncd chans */
@@ -2814,14 +2815,14 @@ int cursor_insert(chan_info *cp, int beg, int count, const char *origin)
       for (i = 0; i < si->chans; i++)
 	{
 	  extend_with_zeros(cps[i], 
-			    iclamp(0, beg, current_ed_samples(si->cps[i]) - 1), 
+			    mus_iclamp(0, beg, current_ed_samples(si->cps[i]) - 1), 
 			    count, origin);
 	  update_graph(cps[i], NULL);
 	}
       si = free_sync_info(si);
     }
   else extend_with_zeros(cp, 
-			 iclamp(0, beg, current_ed_samples(cp)), 
+			 mus_iclamp(0, beg, current_ed_samples(cp)), 
 			 count, origin);
   return(CURSOR_UPDATE_DISPLAY);
 }

@@ -62,6 +62,7 @@
   <li><a href="#extsndvarexpl">A Note on Scheme variables in Snd</a>
   <li><a href="#extsndasneededexpl">A Note on "As-Needed" input functions</a>
   <li><a href="#extsndcgens">A Note on User-defined Generators in C-CLM</a>
+  <li><a href="#continuations">About Continuations</a>
 </ul>
 </center>
 <br>
@@ -2914,6 +2915,213 @@ static void init_fcomb(void)
   gh_new_procedure("fcomb", SCM_FNC g_fcomb, 2, 0, 0);
 }
 </pre>
+
+<span class=box><h2><A NAME="continuations">About Continuations</a></h2></span>
+
+<p>Here are a few simple examples of Scheme continuations:</p>
+<pre>
+
+(define (con-return)
+  "use call/cc to break out of a loop"
+  (call-with-current-continuation
+   (lambda (return)              ; declare our "escape" procedure
+     (let ((i 0))
+       (while (&lt; i 123)
+	 (if (= i 3) 
+	     (return 'quitting)) ; goto end of continuation form
+	 (display i)
+	 (set! i (+ i 1)))
+       'oops)))
+   )                             ; i.e. here (with value 'quitting)
+
+;;; (con-return)
+;;;  =&gt; 'quitting
+
+;;; don't use a continuation named "break" in while -- while
+;;; itself defines a break continuation that will shadow your break:
+
+(define (con-broken)
+  "use call/cc to break out of a loop"
+  (call-with-current-continuation
+   (lambda (break)
+     (let ((i 0))
+       (while (&lt; i 123)
+	 (if (= i 3) 
+	     (break 'quitting)) ; this is while's break, not ours
+	 (display i)
+	 (set! i (+ i 1)))
+       'oops))))                ; so we end up here
+
+;;; (con-broken)
+;;;  =&gt; 'oops
+
+
+(define (con-go-on)
+  "use call/cc to continue where we left off if a non-serious error is reported"
+  (catch #t
+	 (lambda ()
+	   (do ((i 0 (1+ i)))
+	       ((= i 123) 'oops)
+	     (if (= i 3)
+		 (call-with-current-continuation
+		  (lambda (keep-going)
+		    (throw 'not-really-an-error keep-going)))
+		 (if (= i 6)
+		     (throw 'an-error)))
+	     (display i)))
+	 (lambda args
+	     (if (eq? (car args) 'not-really-an-error)
+		 ((cadr args) #f)  ;; here we are invoking the continuation passed as an arg to throw
+		                   ;;   it will effectively "goto" the "display i" statement with i = 3
+		 (display "got a real error")))))
+
+;;; (con-go-on)
+;;;   prints "012345got a real error"
+</pre>
+<p>The same thing in C might be:
+</p>
+<center style="background: black; color: red">
+ Warning! <br>
+ This can't work in general! <br>  Only Homer Simpson would write code like this! <br>
+If anything goes wrong, it's your own damn fault!
+</center>
+<pre>
+#include &lt;stdio.h&gt;
+#include &lt;guile/gh.h&gt;
+
+static SCM report_error(void *data, SCM tag, SCM throw_args)
+{
+  if (SCM_EQ_P(tag, scm_str2symbol("quit"))) exit(0);
+  fprintf(stdout, "%s: %s\n", 
+	  SCM_STRING_CHARS(scm_object_to_string(tag, SCM_UNDEFINED)), 
+	  SCM_STRING_CHARS(scm_object_to_string(throw_args, SCM_UNDEFINED)));
+  return(tag);
+}
+
+static SCM con_break(void)
+{
+  SCM con;
+  int first, i;
+  con = scm_make_continuation(&first);
+  if (first)
+    {
+      /* we're here on the first time around */
+      for (i = 0; i &lt; 123; i++)
+	{
+	  if (i == 3)
+	    SCM_SMOB_APPLY_1(con, gh_int2scm(i));
+	    /* that calls the continuation procedure, passing "i" as its arg;
+	     *   that should mean (I think) that we jump back to the point
+	     *   of the scm_make_continuation call, but now "first" is false,
+	     *   so the continuation returns its argument, not the continuation procedure
+	     *   so we return 3 (SCM style) below as "con".
+	     */
+	}
+      fprintf(stdout, "oops!");
+    }
+  return(con);
+}
+
+static SCM loop_thunk(void)
+{
+  SCM keep_going;
+  int first, i;
+  for (i = 0; i &lt; 123; i++)
+    {
+      if (i == 3)
+	{
+	  keep_going = scm_make_continuation(&first);
+	  if (first)
+	    scm_throw(scm_str2symbol("not-really-an-error"), SCM_LIST1(keep_going));
+	}
+      else
+	{
+	  if (i == 6)
+	    scm_throw(scm_str2symbol("a-real-error"), SCM_EOL);
+	}
+      fprintf(stdout, "%d", i);
+    }
+  return(gh_int2scm(i));
+}
+
+static SCM frivolous_error(void *data, SCM tag, SCM throw_args)
+{
+  if (SCM_EQ_P(tag, scm_str2symbol("not-really-an-error")))
+    SCM_SMOB_APPLY_1(SCM_CAR(throw_args), SCM_BOOL_F);
+  return(tag);
+}
+
+static SCM con_go_on(void)
+{
+  return(scm_internal_stack_catch(SCM_BOOL_T,
+				  loop_thunk,
+				  NULL,
+				  frivolous_error,
+				  NULL));
+}
+
+static void inner_main(int argc, char **argv)
+{
+  SCM result;
+  int size = 512;
+  char **buffer = NULL;
+  gh_new_procedure("con-break", con_break, 0, 0, 0);
+  gh_new_procedure("con-go-on", con_go_on, 0, 0, 0);
+  buffer = (char **)calloc(1, sizeof(char *));
+  buffer[0] = (char *)calloc(512, sizeof(char));
+  while (1)
+    {
+      /* (exit) to exit */
+      fprintf(stdout, ">");
+      getline(buffer, &size, stdin);
+      result = scm_internal_stack_catch(SCM_BOOL_T,
+					gh_eval_str, 
+					(void *)(buffer[0]), 
+					report_error,
+					buffer[0]);
+      fprintf(stdout, "%s\n",
+	      SCM_STRING_CHARS(scm_object_to_string(result, SCM_UNDEFINED)));
+    }
+}
+
+int main(int argc, char **argv)
+{
+  gh_enter(argc, argv, inner_main);
+  return(0);
+}
+
+/* gcc tst.c -o tst -L/usr/local/lib -lguile -lm -lcrypt
+ *
+ * &gt;(con-break)
+ * 3
+ * &gt;(con-go-on)
+ * 012345a-real-error
+ */
+</pre>
+<p>In Snd, some of the error reporting functions do this:
+</p>
+<pre>
+SCM mus_misc_error_with_continuation(const char *caller, SCM val)
+{
+  int first;
+  SCM con;
+  con = scm_make_continuation(&first);
+  if (first)
+    ERROR(MUS_MISC_ERROR,
+	  SCM_LIST3(TO_SCM_STRING(caller),
+	            val,
+		    SCM_LIST2(scm_str2symbol("snd-error-continuation"),
+			      con)));
+  return(con);
+}
+</pre>
+<p>This throws 'mus-error (from the Snd user's point of view) with
+the name of the calling function, some data for general enlightenment,
+and the list ('snd-error-continuation #&lt;continuation&gt;). 
+If the continuation is invoked, its value is returned (upon
+invocation, "first" will be false, so we drop through to the
+"return(con)" statement).
+</p>
 
 
 <center>

@@ -1138,8 +1138,6 @@ void g_init_file(SCM local_doc);
 /* -------- snd-utils -------- */
 
 int snd_round(Float x);
-int iclamp(int lo, int val, int hi);
-Float fclamp(Float lo, Float val, Float hi);
 char *copy_string(const char *str);
 char *snd_strdup(const char *str);
 int snd_strlen(char *str);

@@ -1576,9 +1576,9 @@ static SCM iwrite_mark(SCM mark_n, SCM val, int fld, char *caller)
   switch (fld)
     {
     case MARK_SAMPLE: 
-      m->samp = iclamp(0, 
-		       TO_C_INT_OR_ELSE_WITH_ORIGIN(val, 0, caller),
-		       current_ed_samples(cp[0]));
+      m->samp = mus_iclamp(0, 
+			   TO_C_INT_OR_ELSE_WITH_ORIGIN(val, 0, caller),
+			   current_ed_samples(cp[0]));
       sort_marks(cp[0]); /* update and re-sort current mark list */
       update_graph(cp[0], NULL);
       break;

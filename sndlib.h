@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 12
-#define SNDLIB_REVISION 26
-#define SNDLIB_DATE "11-May-01"
+#define SNDLIB_REVISION 27
+#define SNDLIB_DATE "12-May-01"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 /* gcc has various compile-time macros like #cpu, but we're hoping to run in Metroworks C, Watcom C, MSC, MPW, etc */
@@ -331,6 +331,10 @@ enum {MUS_NO_ERROR, MUS_NO_FREQUENCY, MUS_NO_PHASE, MUS_NO_GEN, MUS_NO_LENGTH,
 
 #define MUS_MAX_FILE_NAME 256
 
+#ifndef Float
+  #define Float float
+#endif
+
 BEGIN_DECLS
 
 /* -------- sound.c -------- */
@@ -515,6 +519,9 @@ void mus_bdouble_to_char            PROTO((unsigned char *j, double x));
 void mus_ldouble_to_char            PROTO((unsigned char *j, double x));
 unsigned int mus_char_to_ubint      PROTO((const unsigned char *inp));
 unsigned int mus_char_to_ulint      PROTO((const unsigned char *inp));
+
+int mus_iclamp                      PROTO((int lo, int val, int hi));
+Float mus_fclamp                    PROTO((Float lo, Float val, Float hi));
 
 #if LONG_INT_P
   MUS_SAMPLE_TYPE *mus_table2ptr    PROTO((int arr));

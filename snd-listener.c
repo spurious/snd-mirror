@@ -279,14 +279,14 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
 	}
       if (str)
 	{
-	  if (current_position < (last_position-2))
+	  if (current_position < (last_position - 2))
 	    GUI_LISTENER_TEXT_INSERT(w, GUI_TEXT_END(w), str);
 	  GUI_SET_CURSOR(w, (ss->sgx)->wait_cursor);
 	  GUI_UPDATE(w); /* not sure about this... */
 	  snd_eval_listener_str(ss, str);
-	  GUI_UNSET_CURSOR(w, (ss->sgx)->arrow_cursor);
 	  FREE(str);
 	  str = NULL;
+	  GUI_UNSET_CURSOR(w, (ss->sgx)->arrow_cursor);
 	}
       else
 	{

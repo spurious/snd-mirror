@@ -1538,7 +1538,7 @@ static SCM sp_iwrite(SCM snd_n, SCM val, int fld, char *caller)
 	sp->speed_tones = DEFAULT_SPEED_TONES;
       break;
     case SP_SPEED_STYLE:
-      sp->speed_style = iclamp(0, TO_C_INT(val), MAX_SPEED_STYLE);
+      sp->speed_style = mus_iclamp(0, TO_C_INT(val), MAX_SPEED_STYLE);
       break;
     case SP_SRATE:
       mus_sound_set_srate(sp->fullname, TO_C_INT(val));
@@ -2245,9 +2245,9 @@ static SCM g_set_speed_style(SCM speed, SCM snd)
   else
     {
       ss = get_global_state();
-      activate_speed_in_menu(ss, iclamp(SPEED_AS_FLOAT,
-				       TO_C_INT(speed),
-				       SPEED_AS_SEMITONE));
+      activate_speed_in_menu(ss, mus_iclamp(SPEED_AS_FLOAT,
+					    TO_C_INT(speed),
+					    SPEED_AS_SEMITONE));
       return(TO_SCM_INT(speed_style(ss)));
     }
 }
@@ -2642,7 +2642,7 @@ static SCM g_call_apply(SCM snd, SCM choice)
   if (sp) 
     {
       ss = sp->state;
-      ss->apply_choice = iclamp(0, TO_C_INT_OR_ELSE(choice, 0), 2);
+      ss->apply_choice = mus_iclamp(0, TO_C_INT_OR_ELSE(choice, 0), 2);
       run_apply_to_completion(sp); 
       return(SCM_BOOL_F);
     }

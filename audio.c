@@ -3963,7 +3963,7 @@ static int alsa_mus_audio_initialize(void)
     /* initialize function pointers for normal or plugin calls */
     alsa_initialize_functions();
     /* allocate various things */
-    dev_name = (char *)CALLOC(LABLE_BUFFER_SIZE, sizeof(char));
+    dev_name = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
     /* scan for soundcards */
     mask = snd_cards_mask();
     if (!mask) {

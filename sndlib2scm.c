@@ -67,6 +67,31 @@ void mus_misc_error(const char *caller, char *msg, SCM val)
 		    val));
 }
 
+SCM mus_misc_error_with_continuation(const char *caller, char *msg, SCM val)
+{
+  int first;
+  SCM con;
+  /* TODO: extend and test these error continuations, also need to check for those that actually aren't continuable */
+  con = scm_make_continuation(&first);
+  if (first)
+    {
+      if (msg)
+	ERROR(MUS_MISC_ERROR,
+	      SCM_LIST4(TO_SCM_STRING(caller),
+			TO_SCM_STRING(msg),
+			val,
+			SCM_LIST2(ERROR_CONTINUATION,
+				  con)));
+      else
+	ERROR(MUS_MISC_ERROR,
+	      SCM_LIST3(TO_SCM_STRING(caller),
+			val,
+			SCM_LIST2(ERROR_CONTINUATION,
+				  con)));
+    }
+  return(con);
+}
+
 static SCM g_sound_loop_info(SCM filename)
 {
   #define H_mus_sound_loop_info "(" S_mus_sound_loop_info " filename) -> loop info for sound as a list (start1 end1 start2 end2 base-note base-detune)"
@@ -319,7 +344,7 @@ static SCM g_sound_max_amp(SCM file)
 static SCM g_sound_set_max_amp(SCM file, SCM vals)
 {
   #define H_mus_sound_set_max_amp "(" S_mus_sound_set_max_amp " filename vals) -> set max amps for sound (vals is a vector of amps and locations)"
-  int i, chans;
+  int i, chans, len;
   MUS_SAMPLE_TYPE *mvals;
   char *filename;
   SCM *vdata;
@@ -330,10 +355,11 @@ static SCM g_sound_set_max_amp(SCM file, SCM vals)
   if (chans > 0)
     {
       if ((int)VECTOR_LENGTH(vals) < (chans * 2))
-	mus_misc_error(S_mus_sound_set_max_amp, "max amp vector wrong length", vals);
+	mus_misc_error_with_continuation(S_mus_sound_set_max_amp, "max amp vector wrong length", vals);
+      len = VECTOR_LENGTH(vals);
       mvals = (MUS_SAMPLE_TYPE *)CALLOC(chans * 2, sizeof(MUS_SAMPLE_TYPE));
       vdata = SCM_VELTS(vals);
-      for (i = 0; i < chans * 2; i += 2)
+      for (i = 0; i < len; i += 2)
 	{
 	  mvals[i] = MUS_INT_TO_SAMPLE(TO_C_INT_OR_ELSE(vdata[i], 0));
 	  mvals[i + 1] = MUS_DOUBLE_TO_SAMPLE(TO_C_DOUBLE(vdata[i + 1]));
@@ -470,9 +496,15 @@ static SCM g_make_sound_data(SCM chans, SCM frames)
   chns = TO_C_INT(chans);
   frms = TO_C_INT(frames);
   if (chns <= 0)
-    mus_misc_error(S_make_sound_data, "chans <= 0?", chans);
+    {
+      chns = TO_C_INT_OR_ELSE(mus_misc_error_with_continuation(S_make_sound_data, "chans <= 0?", chans), 1);
+      if (chns <= 0) chns = 1;
+    }
   if (frms <= 0)
-    mus_misc_error(S_make_sound_data, "frames <= 0?", frames);
+    {
+      frms = TO_C_INT_OR_ELSE(mus_misc_error_with_continuation(S_make_sound_data, "frames <= 0?", frames), 1);
+      if (frms <= 0) frms = 1;
+    }
   return(make_sound_data(chns, frms));
 			 
 }

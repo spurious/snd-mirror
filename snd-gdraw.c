@@ -893,7 +893,7 @@ static void Hop_Orientation_Callback(GtkAdjustment *adj, gpointer context)
   int val;
   orientation_info *od = (orientation_info *)context;
   ss = od->state;
-  val = iclamp(1, (int)(adj->value), 20);
+  val = mus_iclamp(1, (int)(adj->value), 20);
   in_set_spectro_hop(ss, val);
   map_over_chans(ss, map_chans_spectro_hop, (void *)(&val));
   map_over_chans(ss, update_graph, NULL);

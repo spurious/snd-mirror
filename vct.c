@@ -298,11 +298,15 @@ static SCM vct_ref(SCM obj, SCM pos)
       else
 	{
 	  if (loc >= v->length)
-	    mus_misc_error(S_vct_ref,
-			   "index too high?",
-			   SCM_LIST2(pos,
-				     TO_SCM_INT(v->length)));
-	  else return(TO_SCM_DOUBLE(v->data[loc]));
+	    {
+	      loc = TO_C_INT_OR_ELSE(mus_misc_error_with_continuation(S_vct_ref,
+								      "index too high?",
+								      SCM_LIST2(pos,
+										TO_SCM_INT(v->length))),
+				     0);
+	      if (loc >= v->length) loc = 0;
+	    }
+	  return(TO_SCM_DOUBLE(v->data[loc]));
 	}
     }
   else mus_misc_error(S_vct_ref, "vct obj is null?", obj);
@@ -322,16 +326,19 @@ static SCM vct_set(SCM obj, SCM pos, SCM val)
     {
       loc = TO_C_INT(pos);
       if (loc < 0)
-	mus_misc_error(S_vct_setB, "index < 0?", pos);
+	loc = mus_iclamp(0, 
+			 TO_C_INT_OR_ELSE(mus_misc_error_with_continuation(S_vct_setB, "index < 0?", pos), 0), 
+			 v->length - 1);
       else
-	{
-	  if (loc >= v->length)
-	    mus_misc_error(S_vct_setB,
-			   "index too high?",
-			   SCM_LIST2(pos,
-				     TO_SCM_INT(v->length)));
-	  else v->data[loc] = TO_C_DOUBLE(val);
-	}
+	if (loc >= v->length)
+	  loc = mus_iclamp(0, 
+			   TO_C_INT_OR_ELSE(mus_misc_error_with_continuation(S_vct_setB,
+									     "index >= vct-length?",
+									     SCM_LIST2(pos,
+										       TO_SCM_INT(v->length))),
+					    0), 
+			   v->length);
+      v->data[loc] = TO_C_DOUBLE(val);
     }
   else mus_misc_error(S_vct_ref, "vct obj is null?", obj);
   return(scm_return_first(val, obj, pos));

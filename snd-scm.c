@@ -225,7 +225,21 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
 		{
 		  scm_display(tag, port);
 		  WRITE_STRING(" ", port);
-		  scm_display(SCM_CDR(throw_args), port);
+
+		  {
+		    /* an experiment... */
+		    SCM lst, carlst;
+		    for (lst = SCM_CDR(throw_args); NOT_NULL_P(lst); lst = SCM_CDR(lst))
+		      {
+			carlst = SCM_CAR(lst);
+			if ((!(LIST_P(carlst))) || 
+			    (!(SCM_EQ_P(SCM_CAR(carlst), ERROR_CONTINUATION))))
+			  {
+			    scm_display(carlst, port);
+			    WRITE_STRING(" ", port);
+			  }
+		      }
+		  }
 		}
 	      else
 		{
@@ -908,7 +922,7 @@ default is channels-separate, other values are channels-combined and channels-su
 this is the default setting for each sound's 'unite' button."
 
   ASSERT_TYPE(INTEGER_P(style), style, SCM_ARGn, "set-" S_channel_style, "an integer"); 
-  set_channel_style(state, iclamp(CHANNELS_SEPARATE,
+  set_channel_style(state, mus_iclamp(CHANNELS_SEPARATE,
 				 TO_C_INT(style),
 				 CHANNELS_SUPERIMPOSED)); 
   return(TO_SCM_INT(channel_style(state)));
@@ -919,7 +933,7 @@ static SCM g_set_color_cutoff(SCM val)
 {
   #define H_color_cutoff "(" S_color_cutoff ") -> col" STR_OR " map cutoff point (default .003)"
   ASSERT_TYPE(NUMBER_P(val), val, SCM_ARGn, "set-" S_color_cutoff, "a number");
-  set_color_cutoff(state, fclamp(0.0,
+  set_color_cutoff(state, mus_fclamp(0.0,
 				TO_C_DOUBLE(val),
 				0.25)); 
   return(TO_SCM_DOUBLE(color_cutoff(state)));
@@ -939,7 +953,7 @@ static SCM g_set_color_scale(SCM val)
 {
   #define H_color_scale "(" S_color_scale ") -> essentially a darkness setting for col" STR_OR "maps (0.5)"
   ASSERT_TYPE(NUMBER_P(val), val, SCM_ARGn, "set-" S_color_scale, "a number"); 
-  set_color_scale(state, fclamp(0.0,
+  set_color_scale(state, mus_fclamp(0.0,
 			       TO_C_DOUBLE(val),
 			       1.0)); 
   return(TO_SCM_DOUBLE(color_scale(state)));
@@ -1057,7 +1071,7 @@ static SCM g_set_enved_target(SCM val)
 choices are " S_amplitude_env ", " S_srate_env ", and " S_spectrum_env
 
   ASSERT_TYPE(INTEGER_P(val), val, SCM_ARGn, "set-" S_enved_target, "an integer"); 
-  n = iclamp(AMPLITUDE_ENV,
+  n = mus_iclamp(AMPLITUDE_ENV,
 	     TO_C_INT(val),
 	     SRATE_ENV); 
   set_enved_target(state, n); 
@@ -1211,7 +1225,7 @@ static SCM g_set_previous_files_sort(SCM val)
   #define H_previous_files_sort "(" S_previous_files_sort ") -> sort choice in view files (0 = unsorted, 1 = by name, etc)"
   ASSERT_TYPE(INTEGER_P(val), val, SCM_ARGn, "set-" S_previous_files_sort, "an integer"); 
   update_prevlist(state);
-  set_previous_files_sort(state, iclamp(0,
+  set_previous_files_sort(state, mus_iclamp(0,
 				       TO_C_INT(val),
 				       4));
   update_prevfiles(state);
@@ -1313,7 +1327,7 @@ gray, hsv, hot, cool, bone, copper, pink, jet, prism, autumn, winter, \
 spring, summer, colorcube, flag, and lines.  -1 means black and white."
 
   ASSERT_TYPE(INTEGER_P(val), val, SCM_ARGn, "set-" S_colormap, "an integer"); 
-  set_color_map(state, iclamp(0,
+  set_color_map(state, mus_iclamp(0,
 			     TO_C_INT(val),
 			     NUM_COLORMAPS-1));
   return(TO_SCM_INT(color_map(state)));
@@ -1443,7 +1457,7 @@ static SCM g_set_x_axis_style(SCM val)
 {
   #define H_x_axis_style "(" S_x_axis_style ") -> labelling of time domain x axis (x-in-seconds)"
   ASSERT_TYPE(INTEGER_P(val), val, SCM_ARGn, "set-" S_x_axis_style, "an integer"); 
-  set_x_axis_style(state, iclamp(X_IN_SECONDS,
+  set_x_axis_style(state, mus_iclamp(X_IN_SECONDS,
 				TO_C_INT(val),
 				X_IN_LENGTH));
   return(TO_SCM_INT(x_axis_style(state)));
@@ -1455,7 +1469,7 @@ static SCM g_set_zoom_focus_style(SCM focus)
   #define H_zoom_focus_style "(" S_zoom_focus_style ") -> one of '(" S_focus_left " " S_focus_right " " S_focus_middle " " S_focus_active ")\n\
   decides what zooming centers on (default: " S_focus_active ")"
   ASSERT_TYPE(INTEGER_P(focus), focus, SCM_ARGn, "set-" S_zoom_focus_style, "an integer"); 
-  activate_focus_menu(state, iclamp(FOCUS_LEFT,
+  activate_focus_menu(state, mus_iclamp(FOCUS_LEFT,
 				    TO_C_INT(focus),
 				    FOCUS_MIDDLE));
   return(TO_SCM_INT(zoom_focus_style(state)));

@@ -118,6 +118,7 @@ SCM scm_return_first(SCM a, ...);
 #define NO_SUCH_PLAYER       TO_SCM_SYMBOL("no-such-player")
 #define NO_SUCH_AXIS_CONTEXT TO_SCM_SYMBOL("no-such-graphics-context")
 #define BAD_ARITY            TO_SCM_SYMBOL("bad-arity")
+#define ERROR_CONTINUATION   TO_SCM_SYMBOL("snd-error-continuation")
 
 #define BOOLEAN_P(Arg)                 SCHEME_BOOLP(Arg)
 #define NUMBER_P(Arg)                  (SCHEME_REALP(Arg) && (!SCHEME_COMPLEXP(Arg)))

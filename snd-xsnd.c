@@ -269,7 +269,7 @@ void set_snd_amp(snd_info *sp, Float val)
     sp->amp = val;
   else XtVaSetValues(w_snd_amp(sp),
 		     XmNvalue,
-		     snd_amp_changed(sp, snd_amp_to_int(fclamp(0.0, val, 7.25))),
+		     snd_amp_changed(sp, snd_amp_to_int(mus_fclamp(0.0, val, 7.25))),
 		     NULL);
 }
 
@@ -347,7 +347,7 @@ void set_snd_srate(snd_info *sp, Float val)
     sp->srate = val;
   else XtVaSetValues(w_snd_srate(sp),
 		     XmNvalue,
-		     snd_srate_changed(sp, snd_srate_to_int(fclamp(-20.0, val, 20.0))),
+		     snd_srate_changed(sp, snd_srate_to_int(mus_fclamp(-20.0, val, 20.0))),
 		     NULL);
 }
 
@@ -423,7 +423,7 @@ void set_snd_expand(snd_info *sp, Float val)
     sp->expand = val;
   else XtVaSetValues(w_snd_expand(sp),
 		     XmNvalue,
-		     snd_expand_changed(sp, snd_expand_to_int(fclamp(0.0, val, 20.0))),
+		     snd_expand_changed(sp, snd_expand_to_int(mus_fclamp(0.0, val, 20.0))),
 		     NULL);
 }
 
@@ -503,7 +503,7 @@ void set_snd_contrast(snd_info *sp, Float val)
     sp->contrast = val;
   else XtVaSetValues(w_snd_contrast(sp),
 		     XmNvalue,
-		     snd_contrast_changed(sp, snd_contrast_to_int(fclamp(0.0, val, 9.0))),
+		     snd_contrast_changed(sp, snd_contrast_to_int(mus_fclamp(0.0, val, 9.0))),
 		     NULL);
 }
 
@@ -614,7 +614,7 @@ void set_snd_revscl(snd_info *sp, Float val)
     sp->revscl = val;
   else XtVaSetValues(w_snd_revscl(sp),
 		     XmNvalue,
-		     snd_revscl_changed(sp, snd_revscl_to_int(fclamp(0.0, val, 3.25))),
+		     snd_revscl_changed(sp, snd_revscl_to_int(mus_fclamp(0.0, val, 3.25))),
 		     NULL);
 }
 
@@ -675,7 +675,7 @@ void set_snd_revlen(snd_info *sp, Float val)
     sp->revlen = val;
   else XtVaSetValues(w_snd_revlen(sp),
 		     XmNvalue,
-		     snd_revlen_changed(sp, snd_revlen_to_int(fclamp(0.0, val, 4.5))),
+		     snd_revlen_changed(sp, snd_revlen_to_int(mus_fclamp(0.0, val, 4.5))),
 		     NULL);
 }
 

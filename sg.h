@@ -184,6 +184,7 @@ static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
 #define NO_SUCH_PLAYER       TO_SCM_SYMBOL("no-such-player")
 #define NO_SUCH_AXIS_CONTEXT TO_SCM_SYMBOL("no-such-graphics-context")
 #define BAD_ARITY            TO_SCM_SYMBOL("bad-arity")
+#define ERROR_CONTINUATION   TO_SCM_SYMBOL("snd-error-continuation")
 
 #define ERROR(Type, Info) scm_throw(Type, Info)
 

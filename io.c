@@ -1678,3 +1678,23 @@ char *mus_format(const char *format, ...)
   return(buf);
 }
 
+Float mus_fclamp(Float lo, Float val, Float hi) 
+{
+  if (val > hi) 
+    return(hi); 
+  else 
+    if (val < lo) 
+      return(lo); 
+    else return(val);
+}
+
+int mus_iclamp(int lo, int val, int hi) 
+{
+  if (val > hi) 
+    return(hi); 
+  else 
+    if (val < lo) 
+      return(lo); 
+    else return(val);
+}
+

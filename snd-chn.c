@@ -76,7 +76,7 @@ static int map_chans_fft_style(chan_info *cp, void *ptr) {cp->fft_style = (*((in
 void in_set_fft_style(snd_state *ss, int uval) 
 {
   int val;
-  val = iclamp(0, uval, MAX_FFT_STYLE);
+  val = mus_iclamp(0, uval, MAX_FFT_STYLE);
   in_set_fft_style_1(ss, val); 
   map_over_chans(ss, map_chans_fft_style, (void *)(&val));
 }
@@ -115,9 +115,9 @@ void map_chans_field(snd_state *ss, int field, Float val)
 	    case FCP_Y_SCALE: sp->chans[j]->spectro_y_scale = val;                   break;
 	    case FCP_Z_ANGLE: sp->chans[j]->spectro_z_angle = val;                   break;
 	    case FCP_Z_SCALE: sp->chans[j]->spectro_z_scale = val;                   break;
-	    case FCP_START:   sp->chans[j]->spectro_start = fclamp(0.0, val, 1.0);   break;
-	    case FCP_CUTOFF:  sp->chans[j]->spectro_cutoff = fclamp(0.0, val, 1.0);  break;
-	    case FCP_BETA:    sp->chans[j]->fft_beta = fclamp(0.0, val, 1.0);        break;
+	    case FCP_START:   sp->chans[j]->spectro_start = mus_fclamp(0.0, val, 1.0);   break;
+	    case FCP_CUTOFF:  sp->chans[j]->spectro_cutoff = mus_fclamp(0.0, val, 1.0);  break;
+	    case FCP_BETA:    sp->chans[j]->fft_beta = mus_fclamp(0.0, val, 1.0);        break;
 	    }
     }
 }
@@ -3593,9 +3593,9 @@ static SCM cp_iread(SCM snd_n, SCM chn_n, int fld, char *caller)
   return(SCM_BOOL_F);
 }
 
-static int g_iclamp(int mn, SCM val, int def, int mx)
+static int g_mus_iclamp(int mn, SCM val, int def, int mx)
 {
-  return(iclamp(mn, TO_C_INT_OR_ELSE(val, def), mx));
+  return(mus_iclamp(mn, TO_C_INT_OR_ELSE(val, def), mx));
 }
 
 static int g_imin(int mn, SCM val, int def)
@@ -3707,7 +3707,7 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
 	      snd_unprotect(cp->cursor_proc);
 	      cp->cursor_proc = SCM_UNDEFINED;
 	    }
-	  cp->cursor_style = g_iclamp(CURSOR_CROSS, on, CURSOR_CROSS, CURSOR_LINE);
+	  cp->cursor_style = g_mus_iclamp(CURSOR_CROSS, on, CURSOR_CROSS, CURSOR_LINE);
 	}
       update_graph(cp, NULL); 
       return(TO_SCM_INT(cp->cursor_style));
@@ -3751,7 +3751,7 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
       return(TO_SCM_INT(cp->zero_pad));
       break;
     case CP_WAVELET_TYPE:
-      cp->wavelet_type = g_iclamp(0, on, DEFAULT_WAVELET_TYPE, NUM_WAVELETS - 1); 
+      cp->wavelet_type = g_mus_iclamp(0, on, DEFAULT_WAVELET_TYPE, NUM_WAVELETS - 1); 
       update_graph(cp, NULL);
       return(TO_SCM_INT(cp->wavelet_type));
       break;
@@ -3785,12 +3785,12 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
       return(TO_SCM_INT(cp->fft_size));
       break;
     case CP_FFT_STYLE: 
-      cp->fft_style = g_iclamp(0, on, DEFAULT_FFT_STYLE, MAX_FFT_STYLE); 
+      cp->fft_style = g_mus_iclamp(0, on, DEFAULT_FFT_STYLE, MAX_FFT_STYLE); 
       calculate_fft(cp, NULL); 
       return(TO_SCM_INT(cp->fft_style)); 
       break;
     case CP_FFT_WINDOW:
-      cp->fft_window = g_iclamp(0, on, DEFAULT_FFT_WINDOW, NUM_FFT_WINDOWS - 1); 
+      cp->fft_window = g_mus_iclamp(0, on, DEFAULT_FFT_WINDOW, NUM_FFT_WINDOWS - 1); 
       calculate_fft(cp, NULL); 
       return(TO_SCM_INT(cp->fft_window));
       break;
@@ -3963,16 +3963,16 @@ static SCM cp_fwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
   switch (fld)
     {
     case CP_AP_SX:
-      reset_x_display(cp, fclamp(0.0, TO_C_DOUBLE(on), 1.0), cp->axis->zx);
+      reset_x_display(cp, mus_fclamp(0.0, TO_C_DOUBLE(on), 1.0), cp->axis->zx);
       break;
     case CP_AP_ZX:
-      reset_x_display(cp, cp->axis->sx, fclamp(0.0, TO_C_DOUBLE(on), 1.0));
+      reset_x_display(cp, cp->axis->sx, mus_fclamp(0.0, TO_C_DOUBLE(on), 1.0));
       break;
     case CP_AP_SY:
-      reset_y_display(cp, fclamp(0.0, TO_C_DOUBLE(on), 1.0), cp->axis->zy);
+      reset_y_display(cp, mus_fclamp(0.0, TO_C_DOUBLE(on), 1.0), cp->axis->zy);
       break;
     case CP_AP_ZY:
-      reset_y_display(cp, cp->axis->sy, fclamp(0.0, TO_C_DOUBLE(on), 1.0)); 
+      reset_y_display(cp, cp->axis->sy, mus_fclamp(0.0, TO_C_DOUBLE(on), 1.0)); 
       break;
     case CP_MIN_DB:
       cp->min_dB = TO_C_DOUBLE(on); 
@@ -3986,17 +3986,17 @@ static SCM cp_fwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
     case CP_SPECTRO_Y_SCALE: cp->spectro_y_scale = TO_C_DOUBLE(on); calculate_fft(cp, NULL); break;
     case CP_SPECTRO_Z_SCALE: cp->spectro_z_scale = TO_C_DOUBLE(on); calculate_fft(cp, NULL); break;
     case CP_SPECTRO_CUTOFF:  
-      cp->spectro_cutoff = fclamp(0.0, TO_C_DOUBLE(on), 1.0); 
+      cp->spectro_cutoff = mus_fclamp(0.0, TO_C_DOUBLE(on), 1.0); 
       calculate_fft(cp, NULL); 
       return(TO_SCM_DOUBLE(cp->spectro_cutoff)); 
       break;
     case CP_SPECTRO_START:   
-      cp->spectro_start = fclamp(0.0, TO_C_DOUBLE(on), 1.0); 
+      cp->spectro_start = mus_fclamp(0.0, TO_C_DOUBLE(on), 1.0); 
       calculate_fft(cp, NULL); 
       return(TO_SCM_DOUBLE(cp->spectro_start));   
       break;
     case CP_FFT_BETA:        
-      cp->fft_beta = fclamp(0.0, TO_C_DOUBLE(on), 1.0); 
+      cp->fft_beta = mus_fclamp(0.0, TO_C_DOUBLE(on), 1.0); 
       calculate_fft(cp, NULL); 
       return(TO_SCM_DOUBLE(cp->fft_beta));             
       break;
@@ -4332,7 +4332,7 @@ static SCM g_set_fft_beta(SCM val, SCM snd, SCM chn)
   else
     {
       ss = get_global_state();
-      set_fft_beta(ss, fclamp(0.0, TO_C_DOUBLE(val), 1.0));
+      set_fft_beta(ss, mus_fclamp(0.0, TO_C_DOUBLE(val), 1.0));
       return(TO_SCM_DOUBLE(fft_beta(ss)));
     }
 }
@@ -4356,7 +4356,7 @@ static SCM g_set_spectro_cutoff(SCM val, SCM snd, SCM chn)
   else
     {
       ss = get_global_state();
-      set_spectro_cutoff(ss, fclamp(0.0, TO_C_DOUBLE(val), 1.0));
+      set_spectro_cutoff(ss, mus_fclamp(0.0, TO_C_DOUBLE(val), 1.0));
       return(TO_SCM_DOUBLE(spectro_cutoff(ss)));
     }
 }
@@ -4380,7 +4380,7 @@ static SCM g_set_spectro_start(SCM val, SCM snd, SCM chn)
   else
     {
       ss = get_global_state();
-      set_spectro_start(ss, fclamp(0.0, TO_C_DOUBLE(val), 1.0));
+      set_spectro_start(ss, mus_fclamp(0.0, TO_C_DOUBLE(val), 1.0));
       return(TO_SCM_DOUBLE(spectro_start(ss)));
     }
 }
@@ -4645,7 +4645,7 @@ static SCM g_set_wavelet_type(SCM val, SCM snd, SCM chn)
   else
     {
       ss = get_global_state();
-      set_wavelet_type(ss, iclamp(0, TO_C_INT(val), NUM_WAVELETS-1));
+      set_wavelet_type(ss, mus_iclamp(0, TO_C_INT(val), NUM_WAVELETS-1));
       return(TO_SCM_INT(wavelet_type(ss)));
     }
 }
@@ -4887,7 +4887,7 @@ static SCM g_set_fft_style(SCM val, SCM snd, SCM chn)
   snd_state *ss;
   int style;
   ASSERT_TYPE(INTEGER_P(val), val, SCM_ARG1, "set-" S_fft_style, "an integer"); 
-  style = iclamp(NORMAL_FFT, TO_C_INT(val), SPECTROGRAM);
+  style = mus_iclamp(NORMAL_FFT, TO_C_INT(val), SPECTROGRAM);
   if (BOUND_P(snd))
     return(cp_iwrite(snd, chn, TO_SMALL_SCM_INT(style), CP_FFT_STYLE, "set-" S_fft_style));
   else
@@ -4913,7 +4913,7 @@ static SCM g_set_fft_window(SCM val, SCM snd, SCM chn)
   snd_state *ss;
   int win;
   ASSERT_TYPE(INTEGER_P(val), val, SCM_ARG1, "set-" S_fft_window, "an integer"); 
-  win = iclamp(0, TO_C_INT(val), NUM_FFT_WINDOWS - 1);
+  win = mus_iclamp(0, TO_C_INT(val), NUM_FFT_WINDOWS - 1);
   if (BOUND_P(snd))
     return(cp_iwrite(snd, chn, TO_SMALL_SCM_INT(win), CP_FFT_WINDOW, "set-" S_fft_window));
   else
@@ -4939,7 +4939,7 @@ static SCM g_set_transform_type(SCM val, SCM snd, SCM chn)
   int type;
   snd_state *ss;
   ASSERT_TYPE(INTEGER_P(val), val, SCM_ARG1, "set-" S_transform_type, "an integer"); 
-  type = iclamp(0, TO_C_INT(val), max_transform_type());
+  type = mus_iclamp(0, TO_C_INT(val), max_transform_type());
   if (BOUND_P(snd))
     return(cp_iwrite(snd, chn, TO_SMALL_SCM_INT(type), CP_TRANSFORM_TYPE, "set-" S_transform_type));
   else
@@ -5084,7 +5084,7 @@ static SCM g_set_show_axes(SCM on, SCM snd, SCM chn)
   else
     {
       ss = get_global_state();
-      set_show_axes(ss, iclamp(SHOW_NO_AXES, TO_C_INT_OR_ELSE(on, SHOW_ALL_AXES), SHOW_X_AXIS));
+      set_show_axes(ss, mus_iclamp(SHOW_NO_AXES, TO_C_INT_OR_ELSE(on, SHOW_ALL_AXES), SHOW_X_AXIS));
       return(TO_SCM_INT(show_axes(ss)));
     }
 }

@@ -102,7 +102,7 @@ void snd_completion_help(snd_state *ss, int matches, char **buffer)
   XtVaSetValues(completion_help_list, 
 		XmNitems, match, 
 		XmNitemCount, matches, 
-		XmNvisibleItemCount, iclamp(1, matches, 12), 
+		XmNvisibleItemCount, mus_iclamp(1, matches, 12), 
 		NULL);
   XtVaGetValues(completion_help_list, 
 		XmNwidth, &w, 

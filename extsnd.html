@@ -7026,6 +7026,8 @@ get behavior like this:
 <pre>
 &gt;<em class=typing>(selection-position)</em>
 <em class=listener>selection-position: no-active-selection</em>
+&gt;<em class=typing>asdf</em>
+<em class=listener>#f: Unbound variable: asdf</em>
 </pre>
 <p>But there are cases where you'd rather handle an error (or all errors) specially.
 In the case of 'no-active-selection, we set up our own handler for that as follows:</p>
@@ -7075,6 +7077,46 @@ to #t; it defaults to #f because it has been plagued in the past
 with segfaults.
 To see what files are being loaded, set the
 variable %load-verbosely to #t.
+</p>
+<p>As an experiment, some of the Snd-generated errors include a continuation
+procedure as the second element of the last element of the list of 
+arguments passed to the error handler (the first element of that list is the symbol 'snd-error-continuation).  
+You can ask Snd to continue from the point
+of the error as if nothing had gone wrong by invoking that procedure from the
+error handler:
+</p>
+<table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(define (continuable-error? err)
+  (let* ((len (length err))
+	 (last-arg (and (not (null? err)) 
+			(list-ref err (- len 1)))))
+    (and last-arg
+	 (list? last-arg)
+	 (= (length last-arg) 2)
+	 (eq? (car last-arg) 'snd-error-continuation)
+	 (procedure? (cadr last-arg))
+	 (cadr last-arg))))
+
+(define (with-continuations thunk newval)
+  (catch #t
+	 (lambda ()
+	   (lazy-catch #t 
+		       thunk
+		       lazy-handler-dispatch))
+	 (lambda args
+	   (let ((go-on (continuable-error? args)))
+	     (if go-on
+		 (go-on newval)
+		 (throw args))))))
+
+(define (with-default-continuations thunk)
+  (with-continuations thunk #f))
+</pre></td></tr></table>
+<p>Don't try to save these error continuations over multiple interactions
+with the listener; I haven't set it up so that the listener can re-establish
+the correct state across forms.  Within an outer catch (as in the examples
+above), it should be safe to use, unless I have misunderstood something.
+For a brief discussion of continuations, see <a href="sndscm.html#continuations">About Continuations</a>.
 </p>
 
 

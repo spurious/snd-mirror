@@ -2,8 +2,8 @@
 #define MUS_H
 
 #define MUS_VERSION 1
-#define MUS_REVISION 46
-#define MUS_DATE "7-May-01"
+#define MUS_REVISION 47
+#define MUS_DATE "12-May-01"
 
 /* 
  * 7-May:      filled in some leftover equal_p methods.
@@ -100,10 +100,6 @@
 #if (!defined(M_PI))
   #define M_PI 3.14159265358979323846264338327
   #define M_PI_2 (M_PI / 2.0)
-#endif
-
-#ifndef Float
-  #define Float float
 #endif
 
 typedef struct {

@@ -8,26 +8,6 @@ int snd_round(Float x)
   return(i);
 }
 
-Float fclamp(Float lo, Float val, Float hi) 
-{
-  if (val > hi) 
-    return(hi); 
-  else 
-    if (val < lo) 
-      return(lo); 
-    else return(val);
-}
-
-int iclamp(int lo, int val, int hi) 
-{
-  if (val > hi) 
-    return(hi); 
-  else 
-    if (val < lo) 
-      return(lo); 
-    else return(val);
-}
-
 char *copy_string(const char *str)
 {
 #if DEBUG_MEMORY || (!HAVE_STRDUP)
