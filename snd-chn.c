@@ -85,6 +85,7 @@ static void set_beats_per_minute(Float val)
 {
   if (val > 0.0) 
     {
+      if (val > 10000.0) val = 10000.0;
       in_set_beats_per_minute(val); 
       chans_field(FCP_BEATS, val);
       if (!(ss->graph_hook_active)) 
@@ -4519,6 +4520,7 @@ static void reset_y_display(chan_info *cp, double sy, double zy)
 }
 
 static bool call_update_graph = true;
+#define MAX_SPECTRO_SCALE 1000.0
 
 static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, char *caller)
 {
@@ -4848,9 +4850,9 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, char *calle
     case CP_SPECTRO_X_ANGLE: cp->spectro_x_angle = XEN_TO_C_DOUBLE(on); calculate_fft(cp); break;
     case CP_SPECTRO_Y_ANGLE: cp->spectro_y_angle = XEN_TO_C_DOUBLE(on); calculate_fft(cp); break;
     case CP_SPECTRO_Z_ANGLE: cp->spectro_z_angle = XEN_TO_C_DOUBLE(on); calculate_fft(cp); break;
-    case CP_SPECTRO_X_SCALE: cp->spectro_x_scale = XEN_TO_C_DOUBLE(on); calculate_fft(cp); break;
-    case CP_SPECTRO_Y_SCALE: cp->spectro_y_scale = XEN_TO_C_DOUBLE(on); calculate_fft(cp); break;
-    case CP_SPECTRO_Z_SCALE: cp->spectro_z_scale = XEN_TO_C_DOUBLE(on); calculate_fft(cp); break;
+    case CP_SPECTRO_X_SCALE: cp->spectro_x_scale = mus_fclamp(0.0, XEN_TO_C_DOUBLE(on), MAX_SPECTRO_SCALE); calculate_fft(cp); break;
+    case CP_SPECTRO_Y_SCALE: cp->spectro_y_scale = mus_fclamp(0.0, XEN_TO_C_DOUBLE(on), MAX_SPECTRO_SCALE); calculate_fft(cp); break;
+    case CP_SPECTRO_Z_SCALE: cp->spectro_z_scale = mus_fclamp(0.0, XEN_TO_C_DOUBLE(on), MAX_SPECTRO_SCALE); calculate_fft(cp); break;
     case CP_SPECTRO_CUTOFF:  
       cp->spectro_cutoff = XEN_TO_C_DOUBLE(on); /* range checked already */
       calculate_fft(cp); 

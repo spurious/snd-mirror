@@ -4177,7 +4177,7 @@ static XEN g_set_mix_waveform_height(XEN val)
   #define H_mix_waveform_height "(" S_mix_waveform_height "): max height (pixels) of mix waveforms (20)"
   int new_val[1];
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_mix_waveform_height, "a number"); 
-  new_val[0] = XEN_TO_C_INT_OR_ELSE(val, 0);
+  new_val[0] = mus_iclamp(0, XEN_TO_C_INT_OR_ELSE(val, 0), LOTSA_PIXELS);
   in_set_mix_waveform_height(new_val[0]);
   map_over_mixes(update_mix_waveform_height, (void *)new_val);
   for_each_chan(update_mix_waveforms);
@@ -4204,7 +4204,7 @@ static XEN g_set_mix_tag_width(XEN val)
   #define H_mix_tag_width "(" S_mix_tag_width "): width (pixels) of mix tags (6)"
   int width;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_mix_tag_width, "an integer"); 
-  width = XEN_TO_C_INT(val);
+  width = mus_iclamp(0, XEN_TO_C_INT(val), LOTSA_PIXELS);
   set_mix_tag_width(width);
   for_each_chan(update_graph);
   return(C_TO_XEN_INT(mix_tag_width(ss)));
@@ -4216,7 +4216,7 @@ static XEN g_set_mix_tag_height(XEN val)
   #define H_mix_tag_height "(" S_mix_tag_height "): height (pixels) of mix tags (14)"
   int height;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_mix_tag_height, "an integer"); 
-  height = XEN_TO_C_INT(val);
+  height = mus_iclamp(0, XEN_TO_C_INT(val), LOTSA_PIXELS);
   set_mix_tag_height(height);
   for_each_chan(update_graph);
   return(C_TO_XEN_INT(mix_tag_height(ss)));

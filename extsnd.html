@@ -1260,7 +1260,7 @@ called when a mix is dragged.
 <tr><td></td><td colspan=2>
 called after a mix has been dragged by the mouse to a new position (id = mix id, 
 samps = total samples moved during the drag).  If it returns #t, the actual remix is the 
-hook's responsibility.
+hook's responsibility.  See snap-mix-to-beat in mix.scm.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -6093,8 +6093,10 @@ between beg and beg + dur by a ramp going from rmp0 to rmp1. (<b>ramp-channel</b
 <code><a class=def name="readonly">read-only</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-#t if <i>snd</i> is read-only, #f otherwise.  <a href="#viewsound">view-sound</a> sets this field to #t.
-This can be set at any time.  If it is #t, a lock icon is displayed beside the file name.
+#t if <i>snd</i> is read-only, #f otherwise.  If you open a write-protected file, or open
+a file with <a href="#viewsound">view-sound</a>, read-only is set to #t.
+It can be set at any time (but setting it to #t won't try to unwrite-protect a write-protected file).
+If it is #t, a lock icon is displayed beside the file name.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -8416,6 +8418,10 @@ or <a href="sndscm.html#rubberdoc">rubber.scm</a>.
 <tr><td></td><td>
 perform an FFT on vcts <i>rl</i> and <i>im</i> (the real and imaginary parts of the
 input data). <i>sgn</i> is 1 for an FFT, -1 for an inverse FFT; (default 1).
+The CLM <a href="clm.html#fft">fft</a> function is called <a name="musfft">mus-fft</a> in Snd.
+The only difference between the two is that Snd's fft determines the fft size from 
+the size of the vcts passed to it, whereas CLM's takes the size as an argument,
+and Snd's fft data arrays can be vectors, though I may remove that "feature" someday.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -9985,8 +9991,15 @@ to put the date and time in the Snd title bar.
 <p><b>Graph</b> id (for <a href="#y_to_position">y-&gt;position</a> etc):</p>
 <pre>
   time-graph     transform-graph     lisp-graph
-</pre>
+</pre><br>
 
+<p><b>Colormap</b> choice (<a href="#colormap">colormap</a>, defined in rgb.scm):</p>
+<pre>
+  black-and-white-colormap gray-colormap     hot-colormap     cool-colormap
+  bone-colormap            copper-colormap   pink-colormap    jet-colormap
+  prism-colormap           autumn-colormap   winter-colormap  spring-colormap
+  summer-colormap          rainbow-colormap  flag-colormap
+</pre>
 
 <br>
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="snderrors">Errors and Debugging</a></h3></td></tr></table>
@@ -10302,7 +10315,8 @@ Snd graphics contexts: <a href="#sndgcs">snd-gcs</a><br>
 
 <p>Fonts in Snd are strings containing a description of the
 desired font.  These can be the abbreviated forms such as
-"8x14" or a full X font name such as "-misc-fixed-bold-r-normal--*-140-*-*-c-*-*-*".
+"8x14" or a full X font name such as "-misc-fixed-bold-r-normal--*-140-*-*-*-*-*-*".
+(In Gtk, the font names resemble "Monospace 10" etc).
 The font variables are:
 </p>
 <table cellpadding=0 cellspacing=0>

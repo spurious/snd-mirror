@@ -580,12 +580,13 @@ static XEN g_set_eps_file(XEN val)
   return(C_TO_XEN_STRING(eps_file(ss)));
 }
 
+#define MAX_EPS_MARGIN 1000.0
 static XEN g_eps_left_margin(void) {return(C_TO_XEN_DOUBLE(eps_left_margin(ss)));}
 static XEN g_set_eps_left_margin(XEN val) 
 {
   #define H_eps_left_margin "(" S_eps_left_margin "): File:Print and " S_graph_to_ps " left margin"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_eps_left_margin, "a number"); 
-  set_eps_left_margin(XEN_TO_C_DOUBLE(val));
+  set_eps_left_margin(mus_fclamp(0.0, XEN_TO_C_DOUBLE(val), MAX_EPS_MARGIN));
   return(C_TO_XEN_DOUBLE(eps_left_margin(ss)));
 }
 
@@ -594,16 +595,17 @@ static XEN g_set_eps_bottom_margin(XEN val)
 {
   #define H_eps_bottom_margin "(" S_eps_bottom_margin "): File:Print and " S_graph_to_ps " bottom margin"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_eps_bottom_margin, "a number"); 
-  set_eps_bottom_margin(XEN_TO_C_DOUBLE(val));
+  set_eps_bottom_margin(mus_fclamp(0.0, XEN_TO_C_DOUBLE(val), MAX_EPS_MARGIN));
   return(C_TO_XEN_DOUBLE(eps_bottom_margin(ss)));
 }
 
 static XEN g_eps_size(void) {return(C_TO_XEN_DOUBLE(eps_size(ss)));}
 static XEN g_set_eps_size(XEN val) 
 {
+  #define MAX_EPS_SIZE 1000.0
   #define H_eps_size "(" S_eps_size "): File:Print and " S_graph_to_ps " output size scaler (1.0)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_eps_size, "a number"); 
-  set_eps_size(XEN_TO_C_DOUBLE(val));
+  set_eps_size(mus_fclamp(0.0, XEN_TO_C_DOUBLE(val), MAX_EPS_SIZE));
   return(C_TO_XEN_DOUBLE(eps_size(ss)));
 }
 

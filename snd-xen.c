@@ -1256,18 +1256,20 @@ This value only matters if " S_auto_update " is #t"
 static XEN g_default_output_chans(void) {return(C_TO_XEN_INT(default_output_chans(ss)));}
 static XEN g_set_default_output_chans(XEN val) 
 {
+  #define MAX_OUTPUT_CHANS 1024
   #define H_default_output_chans "(" S_default_output_chans "): default number of channels when a new or temporary file is created (1)"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_default_output_chans, "an integer"); 
-  set_default_output_chans(XEN_TO_C_INT(val));
+  set_default_output_chans(mus_iclamp(1, XEN_TO_C_INT(val), MAX_OUTPUT_CHANS));
   return(C_TO_XEN_INT(default_output_chans(ss)));
 }
 
 static XEN g_default_output_srate(void) {return(C_TO_XEN_INT(default_output_srate(ss)));}
 static XEN g_set_default_output_srate(XEN val) 
 {
+  #define MAX_OUTPUT_SRATE 1000000000
   #define H_default_output_srate "(" S_default_output_srate "): default srate when a new or temporary file is created (22050)" 
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_default_output_srate, "a number"); 
-  set_default_output_srate(XEN_TO_C_INT_OR_ELSE(val, 0));
+  set_default_output_srate(mus_iclamp(1, XEN_TO_C_INT_OR_ELSE(val, 0), MAX_OUTPUT_SRATE));
   return(C_TO_XEN_INT(default_output_srate(ss)));
 }
 

@@ -1826,18 +1826,20 @@ static XEN g_set_vu_font(XEN val)
 static XEN g_vu_font_size(void) {return(C_TO_XEN_DOUBLE(vu_font_size(ss)));}
 static XEN g_set_vu_font_size(XEN val) 
 {
+  #define MAX_VU_FONT_SIZE 1000.0
   #define H_vu_font_size "(" S_vu_font_size "): size of VU font meter labels (1.0)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_vu_font_size, "a number"); 
-  set_vu_font_size(XEN_TO_C_DOUBLE(val));
+  set_vu_font_size(mus_fclamp(0.0, XEN_TO_C_DOUBLE(val), MAX_VU_FONT_SIZE));
   return(C_TO_XEN_DOUBLE(vu_font_size(ss)));
 }
 
 static XEN g_vu_size(void) {return(C_TO_XEN_DOUBLE(vu_size(ss)));}
 static XEN g_set_vu_size(XEN val) 
 {
+  #define MAX_VU_SIZE 1000.0
   #define H_vu_size "(" S_vu_size "): size of VU meters (1.0)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_vu_size, "a number"); 
-  set_vu_size(XEN_TO_C_DOUBLE(val));
+  set_vu_size(mus_fclamp(0.0, XEN_TO_C_DOUBLE(val), MAX_VU_SIZE));
   return(C_TO_XEN_DOUBLE(vu_size(ss)));
 }
 

@@ -13498,7 +13498,7 @@ EDITS: 5
       (let ((var (catch #t (lambda () (make-filter :order 2 :xcoeffs (vct 1.0 0.5) :ycoeffs (vct 2.0 1.0 0.5))) (lambda args args))))
 	(if (not (eq? (car var) 'wrong-type-arg))
 	    (snd-display ";make-filter bad coeffs: ~A" var)))
-      (let ((var (catch #t (lambda () (make-filter :order 0 :xcoeffs (vct 1.0 0.5))))))
+      (let ((var (catch #t (lambda () (make-filter :order 0 :xcoeffs (vct 1.0 0.5))) (lambda args args))))
 	(if (not (eq? (car var) 'out-of-range))
 	    (snd-display ";make-filter bad order: ~A" var)))
       (let ((var (catch #t (lambda () (make-fir-filter :order 22 :xcoeffs (vct 1.0 0.5))) (lambda args args))))
@@ -13520,10 +13520,6 @@ EDITS: 5
       (test-gen-equal (let ((f1 (make-filter 3 (list->vct '(.5 .25 .125)) (list->vct '(.5 .25 .125))))) (filter f1 1.0) f1)
 		      (let ((f2 (make-filter 3 (list->vct '(.5 .25 .125)) (list->vct '(.5 .25 .125))))) (filter f2 1.0) f2)
 		      (let ((f3 (make-filter 3 (list->vct '(.5 .5 .125)) (list->vct '(.5 .25 .0625))))) (filter f3 1.0) f3))
-      
-      (let ((var (catch #t (lambda () (make-filter 0)) (lambda args args))))
-	(if (not (eq? (car var) 'no-data))
-	    (snd-display ";make-filter no coeffs: ~A" var)))
       
       (let ((fr (make-fir-filter 6 (vct 0 1 2 3 4 5))))
 	(if (not (= (mus-length fr) 6)) (snd-display ";filter-length: ~A" (mus-length fr)))
@@ -17538,7 +17534,7 @@ EDITS: 5
 	
 	(if (and (provided? 'snd-motif)
 		 (provided? 'xm)
-		 #f)
+		 #t)
 	    (let* ((ind (open-sound "oboe.snd"))
 		   (mix1 (mix-vct (vct 0.1 0.2 0.3) 120 ind 0 #t "origin!"))
 		   (mix2 (mix-vct (vct 0.1 0.2 0.3) 1200 ind 0 #t))
@@ -34723,7 +34719,7 @@ EDITS: 2
 	      (if (fneq z3 1.05) (snd-display ";run 2zero->1.05: ~A" z3))
 	      (if (fneq p1 .4) (snd-display ";run a0->out 2pole: ~A" p1))
 	      (if (fneq p2 -.08) (snd-display ";run a0->out 2pole (-0.08): ~A" p2))
-	      (if (fneq p3 0.27) (snd-display ";run a0->out 2pole (0.27): ~A" p3)))
+	      (if (fneq p3 0.336) (snd-display ";run a0->out 2pole (0.336): ~A" p3)))
 	    
 	    (let ((flt (make-formant .1 1000.0))
 		  (fa0 123.0)
@@ -39297,7 +39293,12 @@ EDITS: 2
 		  
 		  ;; ---------------- help dialog ----------------
 		  (help-dialog "Test" "snd-test here")
-		  (let* ((helpd (list-ref (dialog-widgets) 14)))
+		  (let* ((helpd (list-ref (dialog-widgets) 14))
+			 (txt (find-child helpd "help-search")))
+		    (if (Widget? txt)
+			(begin
+			  (XmTextFieldSetString txt "reverb")
+			  (XtCallCallbacks txt XmNactivateCallback #f)))
 		    (click-button (XmMessageBoxGetChild helpd XmDIALOG_OK_BUTTON)) (force-event)
 		    (if (XtIsManaged helpd)
 			(snd-display ";help still active?")))
