@@ -833,8 +833,6 @@ static void start_dac(snd_state *ss, int srate, int channels, int background)
     }
 }
 
-/* TODO: shouldn't start_dac set the 'play' button if playing a sound (as opposed to region etc)? */
-
 static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, off_t start, off_t end, XEN edpos, const char *caller, int arg_pos)
 {
   /* if not sp, control panel is ignored */
@@ -916,7 +914,11 @@ void play_channel(chan_info *cp, off_t start, off_t end, int background, XEN edp
   sp = cp->sound;
   if (!(sp->inuse)) return;
   dp = add_channel_to_play_list(cp, sp, start, end, edpos, caller, arg_pos);
-  if (dp) start_dac(dp->ss, SND_SRATE(sp), 1, background);
+  if (dp) 
+    {
+      start_dac(dp->ss, SND_SRATE(sp), 1, background);
+      set_play_button(sp, TRUE);
+    }
 }
 
 void play_sound(snd_info *sp, off_t start, off_t end, int background, XEN edpos, const char *caller, int arg_pos)
@@ -940,7 +942,11 @@ void play_sound(snd_info *sp, off_t start, off_t end, int background, XEN edpos,
     }
   for (i = 0; i < sp->nchans; i++) 
     dp = add_channel_to_play_list(sp->chans[i], sp, start, end, edpos, caller, arg_pos);
-  if (dp) start_dac(sp->state, SND_SRATE(sp), sp->nchans, background);
+  if (dp)
+    {
+      start_dac(sp->state, SND_SRATE(sp), sp->nchans, background);
+      set_play_button(sp, TRUE);
+    }
 }
 
 void play_channels(chan_info **cps, int chans, off_t *starts, off_t *ur_ends, int background, XEN edpos, const char *caller, int arg_pos, int selection)
@@ -969,7 +975,11 @@ void play_channels(chan_info **cps, int chans, off_t *starts, off_t *ur_ends, in
 				  edpos, caller, arg_pos);
   if ((dp) && (selection)) dp->selection = TRUE;
   if (ur_ends == NULL) FREE(ends);
-  if ((sp) && (dp)) start_dac(sp->state, SND_SRATE(sp), chans, background);
+  if ((sp) && (dp)) 
+    {
+      start_dac(sp->state, SND_SRATE(sp), chans, background);
+      set_play_button(sp, TRUE);
+    }
 }
 
 void play_selection(int background, XEN edpos, const char *caller, int arg_pos)

@@ -309,7 +309,7 @@ static gboolean minibuffer_mouse_leave(GtkWidget *w, GdkEventCrossing *ev, gpoin
 
 void set_play_button(snd_info *sp, int val)
 {
-  if (!(IS_PLAYER(sp)))
+  if ((sp->sgx) && (!(IS_PLAYER(sp))))
     {
       set_toggle_button(PLAY_BUTTON(sp), val, FALSE, (void *)sp);
       set_file_browser_play_button(sp->short_filename, val);

@@ -346,7 +346,7 @@ or a save dialog is opened.
 <!-- default-output-type -->
 <tr><td valign=top><code><em class=def><a name="defaultoutputtype">default-output-type</a></em></code></td>
 <td valign=top><code>mus-next</code></td>
-<td>The default header type when a new or temporary file is created, 
+<td>The default header type when a new file is created, 
 or a save dialog is opened. (mus-next is from sndlib, standing for the NeXT/Sun sound file header).
 </td></tr>
 <tr><td colspan=3></td></tr>
@@ -714,7 +714,11 @@ and filled graphs:
           (set! (sync snd) (1+ snd)) ; 0 = #f
           (set! (channel-style snd) channels-combined)
           (set! (graph-style snd) graph-filled)))
-</pre></td></tr></table></td></tr>
+</pre></td></tr></table>
+<br>
+See also <i>C-x b support</i> in examp.scm, <i>remember-sound-state</i> in extensions.scm, enved.scm, and various
+examples in snd-motif.scm.
+</td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- bad-header-hook -->
@@ -3868,6 +3872,8 @@ The following code sets the 'unite' button if the current sound has more than 4 
      	               (format #f "snd ~D channel ~D is not a member of the current selection" snd chn)))
 	  (throw 'no-active-selection (list "selection-&gt;vct")))))
 </pre></td></tr></table>
+<br>
+See also <i>mark-explode</i> in marks.scm.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -4528,15 +4534,19 @@ are arranged vertically or horizontally.
 <span class=defbox><code><em class=def><a name="sndheadertype">header-type</a></em> (<em class=targ>snd</em>)</code></span>
 </td></tr>
 <tr><td></td><td>
-The header type (e.g. mus-aiff) of the file represented by <i>snd</i>.  Snd can read about 60 header types, and write 7 or so.
+The header type (e.g. mus-aiff) of the file that underlies <i>snd</i>.  Snd can read about 60 header types, and write 7 or so.
 Each header type has its own peculiarities; if in doubt, use mus-next because it is simple,
 and can handle any data format that Snd can write (whereas each of the others is restricted in this regard).
-The writable header types are mus-next (also named mus-sun), mus-nist (NIST Sphere), mus-aiff (rarely needed), mus-aifc, mus-riff (MS wave),
+The writable header types are mus-next (also named mus-sun), mus-nist (NIST Sphere), mus-aiff (obsolete, rarely needed), mus-aifc, mus-riff (MS wave),
 mus-ircam, and mus-raw (no header -- it's up to you to remember what's in the file).  For descriptions of the headers,
 see headers.c; for examples, see sf.tar.gz at ccrma-ftp.
+To turn a type number into a string, use <a href="#soundtypename">mus-header-type-name</a>. To get
+the header type of some sound file, use <a href="#soundheadertype">mus-sound-header-type</a>.
+If you set the header-type, the sound file is rewritten with the new header.  The default output
+(new-sound, sound-save-as) header type is <a href="#defaultoutputtype">default-output-type</a>.
 <br><br>
 To read or write your own headers (or some header that isn't built-in),
-I'd recommend using either <a href="#openhook">open-hook</a> or <a href="#openrawsoundhook">open-raw-sound-hook</a>:
+I recommend using either <a href="#openhook">open-hook</a> or <a href="#openrawsoundhook">open-raw-sound-hook</a>:
 in the latter case, when you open the file with the unsupported header,
 Snd will throw up its hands and say "maybe it's a raw (headerless)
 sound"; it will then look at open-raw-sound-hook before trying
@@ -7083,7 +7093,10 @@ one edit (in all channels) in the edit history mechanism.  Graphics redisplays a
   (lambda () 
     (set! (sample 100) .1) 
     (set! (sample 200) .2)))
-</pre></td></tr></table></td></tr>
+</pre></td></tr></table>
+<br>
+See mix.scm for many examples.
+</td></tr>
 <tr><td></td><td></td></tr>
 
 <!-- display-edits -->
@@ -8447,7 +8460,7 @@ handled directly, not sounds displayed in Snd (the latter handled by <a href="#s
 <span class=defbox><code><em class=def><a name="sndabort">c-g?</a></em> ()</code></span></td></tr>
 <tr><td></td><td>
 check for C-g to interrupt on-going computation (and let other UI 
-events through).  <i>c-g?</i> is especially useful in loops; we could define our own safe while loop as follows
+events through).  <i>c-g?</i> is especially useful in loops; we could define our own safe 'while' loop as follows
 (this is a slight revision of Guile's while macro from ice-9/boot-9.scm):
 </td></tr>
 <tr><td></td><td>
@@ -8462,7 +8475,10 @@ events through).  <i>c-g?</i> is especially useful in loops; we could define our
      (catch 'break
 	    (lambda () (continue))
 	    (lambda v (cadr v)))))
-</pre></td></tr></table></td></tr>
+</pre></td></tr></table>
+<br>
+See examp.scm and play.scm for other examples.
+</td></tr>
 <tr><td colspan=2></td></tr>
 
 <!-- c-g! -->
@@ -9075,7 +9091,7 @@ for looks):
 <pre>
   (hide-widget (list-ref (channel-widgets) 4))
 </pre>
-<p>See also examp.scm.</p>
+<p>See also snd-motif.scm, new-effects.scm, and examp.scm.</p>
 
 <br>
 <span class=cbox><h4><A NAME="sndgraphics">Graphics</a></h4></span>
@@ -9115,6 +9131,8 @@ could be defined as:
 	   (/ (- axis-right axis-left)
 	      (- x1 x0)))))))
 </pre></td></tr></table>
+<br>
+See <i>draw-smpte-label</i> in snd-motif.scm, or <i>make-current-window-display</i> in draw.scm.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -9310,7 +9328,7 @@ We can goof around with colors and fonts:
 </td></tr>
 <tr><td colspan=2></td></tr>
 
-glSpectrogram -->
+<!-- glSpectrogram -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="glspectrogram">glSpectrogram</a></em> (data gl-list cutoff use-dB min-dB scale br bg bb)</code></span></td></tr>
 

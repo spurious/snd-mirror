@@ -1168,7 +1168,6 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      break;
 	    case snd_K_Q: case snd_K_q: 
 	      play_channel(cp, CURSOR(cp), NO_END_SPECIFIED, TRUE, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "C-q", 0);
-	      set_play_button(sp, 1); 
 	      break;
 #if HAVE_EXTENSION_LANGUAGE
 	    case snd_K_R: case snd_K_r: 
@@ -1186,7 +1185,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 #endif
 	    case snd_K_T: case snd_K_t: 
 	      stop_playing_sound(sp); 
-	      set_play_button(sp, 0);
+	      set_play_button(sp, FALSE);
 	      break;
 	    case snd_K_U: case snd_K_u: 
 	      counting = TRUE; 

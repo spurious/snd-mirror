@@ -1687,14 +1687,13 @@ static void popup_play_callback(GtkWidget *w, gpointer cD)
 	  stop_playing_all_sounds();
 	  stopping = FALSE;
 	  set_button_label(w, "Play");
-	  if (sp) set_play_button(sp, 0);
+	  if (sp) set_play_button(sp, FALSE);
 	}
       else
 	{
 	  if (sp)
 	    {
 	      play_sound(sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "popup play", 0);
-	      set_play_button(sp, 1);
 	      stopping = TRUE;
 	      set_button_label(w, "Stop playing");
 	    }

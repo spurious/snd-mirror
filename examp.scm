@@ -1124,8 +1124,7 @@ formants: (map-chan (osc-formants .99 '(400 800 1200) '(400 800 1200) '(4 2 3)))
       (let ((index (+ 8.0 (* 8.0 inval))))
 	(array-interp tbl index 17)))))
 
-;;; since there's no state in this function, it can be used without change
-;;; in any of the mapping functions (unlike echo, for example)
+;;; here's the virtual op version:
 
 (define compand-table (vct -1.000 -0.960 -0.900 -0.820 -0.720 -0.600 -0.450 -0.250 
 			   0.000 0.250 0.450 0.600 0.720 0.820 0.900 0.960 1.000))
@@ -2555,7 +2554,6 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 
   (if enable
       (begin
-	(set! lst (cons local-dac-func lst))
 	(add-hook! dac-hook local-dac-func)
 	(add-hook! start-playing-hook local-start-playing-func)
 	(add-hook! stop-playing-channel-hook local-stop-playing-func))

@@ -1257,11 +1257,8 @@ void view_curfiles_play(snd_state *ss, int pos, int play)
     {
       if (sp->playing) stop_playing_sound(sp);
       if (play)
-	{
-	  play_sound(sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "current files play", 0);
-	  set_play_button(sp, 1);
-	}
-      else set_play_button(sp, 0);
+	play_sound(sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "current files play", 0);
+      else set_play_button(sp, FALSE);
     }
 }
 

@@ -36,17 +36,28 @@
 ;;;
 ;;; Guile's remove-hook! does not work with locally defined functions, and
 ;;;   the functions themselves are not eq/eqv/equal to themselves!  So,
-;;;   we kludge around it using the procedure name as a string.
+;;;   we kludge around it using the procedure name as a string (but anonymous
+;;;   lambdas have #f for a name).
 
 (define (remove-local-hook! hook func)
   "(remove-local-hook! hook func) removes func from hook even if func is defined locally"
-  (let ((lst (hook->list hook))
-	(name (symbol->string (procedure-name func))))
-    (reset-hook! hook)
-    (for-each (lambda (orig-func)
-		(if (not (string=? (symbol->string (procedure-name orig-func)) name))
-		    (add-hook! hook orig-func)))
-	      lst)))
+  (define (procedure-name-or-false f)
+    ;; anonymous lambda procedure name is #f
+    (let ((name (procedure-name f)))
+      (if name
+	  (symbol->string name)
+	  #f)))
+  (let ((name (procedure-name-or-false func)))
+    (if name
+	(let ((lst (hook->list hook)))
+	  (reset-hook! hook)
+	  (for-each (lambda (orig-func)
+		      (let ((orig-name (procedure-name-or-false orig-func)))
+			(if (not (and (string? orig-name)
+				      (string=? orig-name name)))
+			    (add-hook! hook orig-func))))
+		    lst))))
+  hook)
 
 
 ;;; -------- describe-hook

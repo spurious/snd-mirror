@@ -1101,7 +1101,7 @@ void filter_env_changed(snd_info *sp, env *e)
 
 void set_play_button(snd_info *sp, int val)
 {
-  if (!(IS_PLAYER(sp)))
+  if ((sp->sgx) && (!(IS_PLAYER(sp))))
     {
       XmToggleButtonSetState(PLAY_BUTTON(sp), (Boolean)val, FALSE);
       set_file_browser_play_button(sp->short_filename, val);

@@ -3730,7 +3730,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 	  if (sp->playing)
 	    {
 	      stop_playing_sound(sp);
-	      set_play_button(sp, 0);
+	      set_play_button(sp, FALSE);
 	    }
 	  if (play_mark != old_mark)
 	    {
@@ -3743,7 +3743,6 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 		  else play_channel(cp, play_mark->samp, NO_END_SPECIFIED, TRUE, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "play button", 0);
 		}
 	      sp->playing_mark = play_mark;
-	      set_play_button(sp, 1);
 	    }
 	  else sp->playing_mark = NULL;
 	  play_mark = NULL;
@@ -3936,7 +3935,6 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time, Temp
 	      sp->speed_control = 0.0;
 	      mouse_cursor = CURSOR(cp);
 	      play_channel(cp, play_mark->samp, NO_END_SPECIFIED, TRUE, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "drag playing mark", 0);
-	      set_play_button(sp, 1);
 	    }
 	  else
 	    {

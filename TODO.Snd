@@ -28,12 +28,6 @@ user-interface extension projects from snd-motif.scm:
     spatial envelope dialog
     spectral edit dialog
 
-More Ruby examples, translations, etc. (snd.rb is snd-test.scm 
-  translation in-progress; Michael Scholz has provided lots of
-  stuff in bess.rb and examp.rb).
-
-The configure script should be able to use libsndlib if it exists.
-
 I'd like Snd to work in Windoze -- I think the current CVS guile
   is buildable even in MS C, and there are rumors that gtk works
   in cygwin, so it's not impossible Snd would build and work
@@ -48,7 +42,6 @@ Gtk versions of bess.scm and Dave Phillips' extensions
     contrib/dlp/fft-menu.scm
     contrib/dlp/misc.scm
     contrib/dlp/plugins-menu.scm
-    contrib/dlp/dp-new-effects.scm
     contrib/dlp/new-buttons.scm
     contrib/dlp/marks-menu.scm
 Both versions could be rewritten to take advantage of the optimizer.
