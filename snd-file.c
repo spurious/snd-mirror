@@ -715,7 +715,7 @@ void snd_close_file(snd_info *sp, snd_state *ss)
   sp->inuse = 0;
   remember_me(ss, sp->short_filename, sp->filename);
   if (sp->playing) stop_playing_sound(sp);
-  clear_minibuffer(sp);
+  if (sp->sgx) clear_minibuffer(sp);
   if (sp == selected_sound(ss)) 
     ss->selected_sound = NO_SELECTION;
   free_snd_info(sp);

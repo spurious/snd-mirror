@@ -1252,10 +1252,13 @@ static void show_bomb_icon(snd_info *sp, int on)
   if (mini_bombs[sp->bomb_ctr]) 
     {
       sx = sp->sgx;
-      if (on)
-	sx->file_pix = mini_bombs[sp->bomb_ctr];
-      else sx->file_pix = blank_pixmap;
-      XtVaSetValues(w_snd_name_icon(sp), XmNlabelPixmap, sx->file_pix, NULL);
+      if (sx)
+	{
+	  if (on)
+	    sx->file_pix = mini_bombs[sp->bomb_ctr];
+	  else sx->file_pix = blank_pixmap;
+	  XtVaSetValues(w_snd_name_icon(sp), XmNlabelPixmap, sx->file_pix, NULL);
+	}
     }
 }
 

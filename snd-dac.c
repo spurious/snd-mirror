@@ -1949,34 +1949,6 @@ static void stop_audio_output (dac_state *dacp);
 
 #if (HAVE_ALSA || HAVE_OSS)
 
-int mus_audio_compatible_format(int dev) 
-{
-#ifndef PPC
-  int err, i;
-  float val[32];
-  int ival[32];
-  err = mus_audio_mixer_read(dev, MUS_AUDIO_FORMAT, 32, val);
-  if (err != MUS_ERROR)
-    {
-      for (i = 0; i <=(int)(val[0]); i++) ival[i] = (int)(val[i]);
-      /*          ^ this cast is vital!  Memory clobbered otherwise in LinuxPPC */
-      for (i = 1; i <= ival[0]; i++)
-	if (ival[i] == MUS_COMPATIBLE_FORMAT) 
-	  return(MUS_COMPATIBLE_FORMAT);
-      for (i = 1; i <= ival[0]; i++) 
-	if ((ival[i] == MUS_BINT) || (ival[i] == MUS_LINT) ||
-	    (ival[i] == MUS_BFLOAT) || (ival[i] == MUS_LFLOAT) ||
-	    (ival[i] == MUS_BSHORT) || (ival[i] == MUS_LSHORT))
-	  return(ival[i]);
-      for (i = 1; i <= ival[0]; i++) 
-	if ((ival[i] == MUS_MULAW) || (ival[i] == MUS_ALAW) ||
-	    (ival[i] == MUS_UBYTE) || (ival[i] == MUS_BYTE))
-	  return(ival[i]);
-      return(ival[1]);
-    }
-#endif
-  return(MUS_COMPATIBLE_FORMAT);
-}
 
 /* Controls behavior of device selection logic below. No amount of logic
  * can make everybody happy all the time. The [i]logic below cannot always

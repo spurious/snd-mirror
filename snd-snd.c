@@ -1172,6 +1172,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 	cp = sp->chans[0];
       else cp = sp->chans[sp->selected_channel];
       si = sync_to_chan(cp);
+      if (si == NULL) return(BACKGROUND_QUIT);
       scalers = (Float *)CALLOC(si->chans, sizeof(Float));
       for (i = 0; i < si->chans; i++)
 	{
@@ -1552,7 +1553,7 @@ static XEN sp_iread(XEN snd_n, int fld, char *caller)
     }
   ASSERT_SOUND(caller, snd_n, 1);
   sp = get_sp(snd_n);
-  if (sp == NULL) 
+  if (sp == NULL)
     return(snd_no_such_sound_error(caller, snd_n));
   switch (fld)
     {

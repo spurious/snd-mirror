@@ -2623,7 +2623,7 @@ static int compare_consoles(const void *umx1, const void *umx2)
 
 int goto_mix(chan_info *cp, int count)
 {
-  int i, j, k, samp;
+  int i, j, k;
   mix_info *md;
   int *css;
   console_state *cs;
@@ -2641,37 +2641,59 @@ int goto_mix(chan_info *cp, int count)
       for (i = 0; i < mix_infos_ctr; i++)
 	{
 	  md = mix_infos[i];
-	  if ((md) && (md->cp == cp))
+	  if ((md) &&
+	      (md->cp == cp) && 
+	      (md->states) && 
+	      (md->states[0]) && 
+	      (((md->states[0])->edit_ctr) <= cp->edit_ctr))
 	    {
 	      cs = md->current_cs;
-	      css[j] = cs->orig;
-	      j++;
+	      if (!(cs->locked))
+		{
+		  css[j] = cs->orig;
+		  j++;
+		}
 	    }
 	}
       qsort((void *)css, j, sizeof(int), compare_consoles);
       /* now find where we are via cp->cursor and go forward or back as per count */
-      samp = cp->cursor;
-      k = j - 1;
-      for (i = 0; i < j; i++)
-	if (css[i] > samp) 
-	  {
-	    k = i; 
-	    break;
-	  }
-      if (css[k] != samp) 
+      if (count > 0)
 	{
-	  if (count < 0) 
-	    k++; 
-	  else k--;
+	  for (i = 0; i < j; i++)
+	    {
+	      if (css[i] > cp->cursor)
+		{
+		  count--;
+		  if (count == 0)
+		    {
+		      cursor_moveto(cp, css[i]);
+		      break;
+		    }
+		}
+	    }
+	  if ((count > 0) && (cp->cursor < css[j - 1]))
+	    cursor_moveto(cp, css[j - 1]);
 	}
-      k += count;
-      if (k < 0) k = 0;
-      if (k >= j) k = j - 1;
-      samp = css[k];
-      cursor_moveto(cp, samp);
+      else
+	{
+	  for (i = j - 1; i >= 0; i--)
+	    {
+	      if (css[i] < cp->cursor)
+		{
+		  count++;
+		  if (count == 0)
+		    {
+		      cursor_moveto(cp, css[i]);
+		      break;
+		    }
+		}
+	    }
+	  if ((count < 0) && (cp->cursor > css[0]))
+	    cursor_moveto(cp, css[0]);
+	}
       FREE(css);
-      if ((count > 0) && (samp > (cp->axis)->hisamp)) return(CURSOR_IN_MIDDLE);
-      if ((count < 0) && (samp < (cp->axis)->losamp)) return(CURSOR_IN_MIDDLE);
+      if ((count > 0) && (cp->cursor > (cp->axis)->hisamp)) return(CURSOR_IN_MIDDLE);
+      if ((count < 0) && (cp->cursor < (cp->axis)->losamp)) return(CURSOR_IN_MIDDLE);
       return(CURSOR_IN_VIEW);
     }
   return(CURSOR_IN_VIEW);
@@ -2800,7 +2822,7 @@ static void free_track_fd(track_fd *fd)
     }
 }
 
-static MUS_SAMPLE_TYPE next_track_sample(track_fd *fd)
+static Float next_track_sample(track_fd *fd)
 {
   int i;
   Float sum = 0.0;
@@ -2818,7 +2840,7 @@ static MUS_SAMPLE_TYPE next_track_sample(track_fd *fd)
 	    }
 	  else fd->state[i]--;
 	}
-  return(MUS_FLOAT_TO_SAMPLE(sum));
+  return(sum);
 }
 
 static void play_track(snd_state *ss, chan_info **ucps, int chans, int track_num)
@@ -2826,8 +2848,17 @@ static void play_track(snd_state *ss, chan_info **ucps, int chans, int track_num
   track_fd **fds;
   chan_info **cps;
   chan_info *locp;
-  int playfd, i, j, k, n, samps, chan = 0, happy = 0, need_free = 0;
-  short *buf;
+  int playfd, i, j, k, n, samps, chan = 0, happy = 0, need_free = 0, format, datum_bytes;
+#if MAC_OSX
+  float *buf;
+#else
+  #if HAVE_ALSA
+    MUS_SAMPLE_TYPE **buf;
+    char *outbuf;
+  #else
+    short *buf;
+  #endif
+#endif
   if (ucps == NULL)
     {
       chans = active_channels(ss, WITH_VIRTUAL_CHANNELS);
@@ -2858,8 +2889,22 @@ static void play_track(snd_state *ss, chan_info **ucps, int chans, int track_num
   else cps = ucps;
   samps = 0;
   if (chans == 0) return;
+  format = mus_audio_compatible_format(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss));
+  datum_bytes = mus_data_format_to_bytes_per_sample(format);
+#if MAC_OSX
+  fds = (track_fd **)CALLOC(2, sizeof(track_fd *));
+  buf = (float *)CALLOC(2 * 256, sizeof(float));
+#else
   fds = (track_fd **)CALLOC(chans, sizeof(track_fd *));
-  buf = (short *)CALLOC(chans * 256, sizeof(short));
+  #if HAVE_ALSA
+    /* in ALSA we have no way to tell what the possible output format is, so... */
+    buf = (MUS_SAMPLE_TYPE **)CALLOC(chans, sizeof(MUS_SAMPLE_TYPE *));
+    for (i = 0; i < chans; i++) buf[i] = (MUS_SAMPLE_TYPE *)CALLOC(256, sizeof(MUS_SAMPLE_TYPE));
+    outbuf = (char *)CALLOC(256 * datum_bytes * chans, sizeof(char));
+  #else
+    buf = (short *)CALLOC(chans * 256, sizeof(short));
+  #endif
+#endif
   for (i = 0; i < chans; i++)
     {
       fds[i] = init_track_reader(cps[i], track_num, need_free);
@@ -2875,27 +2920,51 @@ static void play_track(snd_state *ss, chan_info **ucps, int chans, int track_num
       playfd = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss), 
 				     SND_SRATE(cps[0]->sound), 
 				     chans, 
-				     MUS_COMPATIBLE_FORMAT, 
+				     format, 
 				     dac_size(ss));
-      for (i = 0; i < samps; i += 256)
+      if (playfd != -1)
 	{
-	  for (k = 0; k < chans; k++)
-	    if (fds[k])
-	      for (j = k; j < 256 * chans; j += chans)
-		buf[j] = MUS_SAMPLE_TO_SHORT(next_track_sample(fds[k]));
-	  mus_audio_write(playfd, (char *)buf, 256 * 2 * chans);
-	  check_for_event(ss);
-	  if (ss->stopped_explicitly)
+	  for (i = 0; i < samps; i += 256)
 	    {
-	      ss->stopped_explicitly = 0;
-	      report_in_minibuffer(cps[0]->sound, "stopped");
-	      break;
+#if MAC_OSX
+	      for (k = 0; k < chans; k++)
+		if (fds[k])
+		  for (j = k; j < 256 * 2; j += 2)
+		    buf[j] = next_track_sample(fds[k]);
+	      mus_audio_write(playfd, (char *)buf, 256 * datum_bytes * 2);
+#else
+  #if HAVE_ALSA
+	      for (k = 0; k < chans; k++)
+		if (fds[k])
+		  for (j = 0; j < 256; j++)
+		    buf[k][j] = MUS_FLOAT_TO_SAMPLE(next_track_sample(fds[k]));
+	      mus_file_write_buffer(format, 0, 255, chans, buf, outbuf, TRUE);
+	      mus_audio_write(playfd, outbuf, 256 * datum_bytes * chans);
+  #else
+	      for (k = 0; k < chans; k++)
+		if (fds[k])
+		  for (j = k; j < 256 * chans; j += chans)
+		    buf[j] = MUS_SAMPLE_TO_SHORT(MUS_FLOAT_TO_SAMPLE(next_track_sample(fds[k])));
+	      mus_audio_write(playfd, (char *)buf, 256 * datum_bytes * chans);
+  #endif
+#endif
+	      check_for_event(ss);
+	      if (ss->stopped_explicitly)
+		{
+		  ss->stopped_explicitly = 0;
+		  report_in_minibuffer(cps[0]->sound, "stopped");
+		  break;
+		}
 	    }
+	  mus_audio_close(playfd);
 	}
-      mus_audio_close(playfd);
     }
   for (i = 0; i < chans; i++) free_track_fd(fds[i]);
   FREE(fds);
+#if HAVE_ALSA
+  for (i = 0; i < chans; i++) if (buf[i]) FREE(buf[i]);
+  FREE(outbuf);
+#endif
   FREE(buf);
   if (need_free) FREE(cps);
 }
@@ -2917,47 +2986,84 @@ static void play_mix(snd_state *ss, mix_info *md)
   chan_info *cp;
   mix_fd *mf;
   console_state *cs;
-  short *buf;
-  int play_fd, i, j, samps;
+#if MAC_OSX
+  float *buf;
+#else
+  #if HAVE_ALSA
+    MUS_SAMPLE_TYPE **buf;
+    char *outbuf;
+  #else
+    short *buf;
+  #endif
+#endif
+  int play_fd, i, j, samps, format, datum_bytes;
   if (md == NULL) return;
   cp = md->cp;
   cs = md->current_cs;
   samps = cs->len;
+  format = mus_audio_compatible_format(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss));
+  datum_bytes = mus_data_format_to_bytes_per_sample(format);
+
+#if MAC_OSX
+  buf = (float *)CALLOC(2 * 256, sizeof(float));
+#else
+  #if HAVE_ALSA
+    /* in ALSA we have no way to tell what the possible output format is, so... */
+    buf = (MUS_SAMPLE_TYPE **)CALLOC(1, sizeof(MUS_SAMPLE_TYPE *));
+    buf[0] = (MUS_SAMPLE_TYPE *)CALLOC(256, sizeof(MUS_SAMPLE_TYPE));
+    outbuf = (char *)CALLOC(256 * datum_bytes, sizeof(char));
+  #else
+    buf = (short *)CALLOC(256, sizeof(short));
+  #endif
+#endif
+
   play_fd = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss),
 				  SND_SRATE(cp->sound),
 				  1, 
-				  MUS_COMPATIBLE_FORMAT, 
+				  format, 
 				  dac_size(ss));
   if (play_fd != -1)
     {
       mf = init_mix_read(md, FALSE);
       if (mf)
 	{
-	  buf = (short *)CALLOC(256, sizeof(short));
-	  if (buf)
+	  for (i = 0; i < samps; i += 256)
 	    {
-	      for (i = 0; i < samps; i += 256)
+#if MAC_OSX
+	      for (j = 0; j < 512; j += 2) 
+		buf[j] = next_mix_sample(mf);
+	      mus_audio_write(play_fd, (char *)buf, 2048);
+#else
+  #if HAVE_ALSA
+	      for (j = 0; j < 256; j++)
+		buf[0][j] = MUS_FLOAT_TO_SAMPLE(next_mix_sample(mf));
+	      mus_file_write_buffer(format, 0, 255, 1, buf, outbuf, TRUE);
+	      mus_audio_write(playfd, outbuf, 256 * datum_bytes);
+  #else
+	      for (j = 0; j < 256; j++) 
+		buf[j] = MUS_SAMPLE_TO_SHORT(MUS_FLOAT_TO_SAMPLE(next_mix_sample(mf)));
+	      mus_audio_write(play_fd, (char *)buf, 512);
+  #endif
+#endif
+	      check_for_event(ss);
+	      if ((ss->stopped_explicitly) || (mix_play_stopped()))
 		{
-		  for (j = 0; j < 256; j++) 
-		    buf[j] = MUS_SAMPLE_TO_SHORT(MUS_FLOAT_TO_SAMPLE(next_mix_sample(mf)));
-		  mus_audio_write(play_fd, (char *)buf, 512);
-		  check_for_event(ss);
-		  if ((ss->stopped_explicitly) || (mix_play_stopped()))
-		    {
-		      ss->stopped_explicitly = 0;
-		      report_in_minibuffer(cp->sound, "stopped");
-		      break;
-		    }
+		  ss->stopped_explicitly = 0;
+		  report_in_minibuffer(cp->sound, "stopped");
+		  break;
 		}
-	      mus_audio_close(play_fd);
-	      play_fd = -1;
-	      FREE(buf);
 	    }
-	  free_mix_fd(mf);
+	  mus_audio_close(play_fd);
+	  play_fd = -1;
 	}
-      if (play_fd != -1) mus_audio_close(play_fd);
+      free_mix_fd(mf);
     }
   reflect_mix_play_stop();
+#if HAVE_ALSA
+  FREE(buf[0]);
+  FREE(outbuf);
+#endif
+  FREE(buf);
 }
 
 void mix_play_from_id(int mix_id)
@@ -4042,7 +4148,7 @@ static XEN g_next_track_sample(XEN obj)
 {
   #define H_next_track_sample "(" S_next_track_sample " reader) -> next sample from track reader"
   XEN_ASSERT_TYPE(TRACK_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_next_track_sample, "a track-sample-reader");
-  return(C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_FLOAT(next_track_sample(TO_TRACK_SAMPLE_READER(obj)))));
+  return(C_TO_XEN_DOUBLE(next_track_sample(TO_TRACK_SAMPLE_READER(obj))));
 }
 
 static XEN g_free_track_sample_reader(XEN obj)

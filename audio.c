@@ -10301,9 +10301,6 @@ static OSStatus writer(AudioDeviceID inDevice, const AudioTimeStamp *inNow,
   abuf = OutputData->mBuffers[0];
   aplbuf = (char *)(abuf.mData);
   sndbuf = bufs[out_buf];
-#if DEBUGGING
-  fprintf(stderr,"dac %d ",out_buf);
-#endif
   memmove((void *)aplbuf, (void *)sndbuf, abuf.mDataByteSize);
   out_buf++;
   if (out_buf >= MAX_BUFS) out_buf = 0;
@@ -10384,9 +10381,6 @@ int mus_audio_write(int line, char *buf, int bytes)
 	  fill_point = 0;
 	  if (in_buf == MAX_BUFS)
 	    {
-#if DEBUGGING
-	      fprintf(stderr,"start at %d\n",in_buf);
-#endif
 	      in_buf = 0;
 	      err = AudioDeviceAddIOProc(device, (AudioDeviceIOProc)writer, NULL);
 	      if (err == noErr)
@@ -10405,9 +10399,6 @@ int mus_audio_write(int line, char *buf, int bytes)
     {
       bp = out_buf;
       sizeof_running = sizeof(UInt32);
-#if DEBUGGING
-      fprintf(stderr,"wait at %d ",in_buf);
-#endif
       while (bp == out_buf)
 	{
 	  /* i.e. just kill time without hanging */
@@ -10415,9 +10406,6 @@ int mus_audio_write(int line, char *buf, int bytes)
 	  /* usleep(10); */
 	}
     }
-#if DEBUGGING
-  fprintf(stderr,"fill %d (%d %d) ",in_buf, fill_point, bytes);
-#endif
   to_buf = bufs[in_buf];
   if (fill_point == 0) memset((void *)to_buf, 0, 4096);
   lim = bytes;
@@ -10443,9 +10431,6 @@ int mus_audio_close(int line)
   int bp;
   if ((in_buf > 0) && (writing == 0))
     {
-#if DEBUGGING
-      fprintf(stderr,"starting at close %d \n",in_buf);
-#endif
       err = AudioDeviceAddIOProc(device, (AudioDeviceIOProc)writer, NULL);
       if (err == noErr)
 	err = AudioDeviceStart(device, (AudioDeviceIOProc)writer); /* writer will be called right away */
@@ -10459,9 +10444,6 @@ int mus_audio_close(int line)
 	{
 	  err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyDeviceIsRunning, &sizeof_running, &running);
 	}
-#if DEBUGGING
-      fprintf(stderr,"close %d %d\n", in_buf, out_buf);
-#endif
       while (in_buf != out_buf)
 	{
 	  err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyDeviceIsRunning, &sizeof_running, &running);
@@ -10966,3 +10948,34 @@ void reset_audio_c (void)
 #endif
 }
 #endif
+
+
+int mus_audio_compatible_format(int dev) 
+{
+#if HAVE_ALSA
+  int err, i;
+  float val[32];
+  int ival[32];
+  err = mus_audio_mixer_read(dev, MUS_AUDIO_FORMAT, 32, val);
+  if (err != MUS_ERROR)
+    {
+      for (i = 0; i <= (int)(val[0]); i++) ival[i] = (int)(val[i]);
+      /*               ^ this cast is vital!  Memory clobbered otherwise in LinuxPPC */
+      for (i = 1; i <= ival[0]; i++)
+	if (ival[i] == MUS_COMPATIBLE_FORMAT) 
+	  return(MUS_COMPATIBLE_FORMAT);
+      for (i = 1; i <= ival[0]; i++) 
+	if ((ival[i] == MUS_BINT) || (ival[i] == MUS_LINT) ||
+	    (ival[i] == MUS_BFLOAT) || (ival[i] == MUS_LFLOAT) ||
+	    (ival[i] == MUS_BSHORT) || (ival[i] == MUS_LSHORT))
+	  return(ival[i]);
+      for (i = 1; i <= ival[0]; i++) 
+	if ((ival[i] == MUS_MULAW) || (ival[i] == MUS_ALAW) ||
+	    (ival[i] == MUS_UBYTE) || (ival[i] == MUS_BYTE))
+	  return(ival[i]);
+      return(ival[1]);
+    }
+#else
+  return(MUS_COMPATIBLE_FORMAT);
+#endif
+}

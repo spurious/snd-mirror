@@ -393,8 +393,11 @@ at osxgnu is just the libraries -- I think I got my version from
 gnu-darwin or some such address).  These should be installed by hand
 in /usr/local/include.  Next, the Snd configure process is confused by
 the lack of gtk-config, so you need to rename config.osx to config.h,
-and make -f makefile.osx.  I haven't written "native" OSX audio support
-yet, but perhaps the ESD package will work.
+and make -f makefile.osx.  The "native" Mac audio hardware supports
+only stereo 44100Hz; sndplay tries to fix up 22050 and mono, but
+Snd only fixes up mono cases.  Anything else will be played incorrectly,
+though you can use the speed control to correct it by hand.
+
 
 
 If you installed OpenMotif, then "upgraded" to RedHat 7.2, Redhat

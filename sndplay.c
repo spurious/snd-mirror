@@ -346,35 +346,6 @@ static int use_one_device = 1;
 
 #define MAX_SLOTS 64
 
-static int mus_audio_compatible_format(int dev) 
-{
-#ifndef PPC
-  int err, i;
-  float val[32];
-  int ival[32];
-  err = mus_audio_mixer_read(dev, MUS_AUDIO_FORMAT, 32, val);
-  if (err != MUS_ERROR)
-    {
-      for (i = 0; i <=(int)(val[0]); i++) ival[i] = (int)(val[i]);
-      /*          ^ this cast is vital!  Memory clobbered otherwise in LinuxPPC */
-      for (i = 1; i <= ival[0]; i++)
-	if (ival[i] == MUS_COMPATIBLE_FORMAT) 
-	  return(MUS_COMPATIBLE_FORMAT);
-      for (i = 1; i <= ival[0]; i++) 
-	if ((ival[i] == MUS_BINT) || (ival[i] == MUS_LINT) ||
-	    (ival[i] == MUS_BFLOAT) || (ival[i] == MUS_LFLOAT) ||
-	    (ival[i] == MUS_BSHORT) || (ival[i] == MUS_LSHORT))
-	  return(ival[i]);
-      for (i = 1; i <= ival[0]; i++) 
-	if ((ival[i] == MUS_MULAW) || (ival[i] == MUS_ALAW) ||
-	    (ival[i] == MUS_UBYTE) || (ival[i] == MUS_BYTE))
-	  return(ival[i]);
-      return(ival[1]);
-    }
-#endif
-  return(MUS_COMPATIBLE_FORMAT);
-}
-
 int main(int argc, char *argv[])
 {
   int fd, i, chans, srate, frames;

@@ -1624,7 +1624,7 @@ snd_info *get_sp(XEN x_snd_n)
 	{
 	  /* a mix input sound */
 	  /* make sure it's not the null list */
-	  if (len > 0)
+	  if (len == 1)
 	    return(make_mix_readable_from_id(XEN_TO_C_INT_OR_ELSE(XEN_CAR(x_snd_n), 0)));
 	  return(NULL);
 	}

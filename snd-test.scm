@@ -41,6 +41,7 @@
 (define sample-reader-tests 300)
 (define original-save-dir (or (save-dir) "/zap/snd"))
 (define original-temp-dir (or (temp-dir) "/zap/tmp"))
+(debug-set! stack 0)
 
 (if (not (file-exists? (string-append home-dir "/bil/cl/oboe.snd")))
     (begin
@@ -184,6 +185,13 @@
 ;(defmacro without-errors (func) `(begin ,func))
 (load "hooks.scm")
 ;(reset-all-hooks)
+
+(define (arity-ok func args)
+  (let ((arity (procedure-property func 'arity)))
+    (and (list? arity)
+	 (>= args (car arity))
+	 (or (caddr arity)
+	     (<= args (+ (car arity) (cadr arity)))))))
 
 (if (and (> (length (script-args)) 0)
 	 (> (script-arg) 0))
@@ -13098,7 +13106,7 @@ EDITS: 3
 	  (if (not (|XGCValues? (|XGCValues)))
 	      (snd-display ";xgcvalues type trouble! ~A -> ~A" (|XGCValues) (|XGCValues? (|XGCValues))))
 
-	  (let ((xm-procs 
+	  (let* ((xm-procs 
 		 ;; these can't be called in this context:
 		 ;;   |XtProcessEvent |XtAppProcessEvent |XtMainLoop |XtAppMainLoop |XtAppAddActions |XtAddActions 
 		 ;;   |XtNextEvent |XtAppNextEvent |XtPeekEvent |XtAppPeekEvent |XtMalloc |XtCalloc |XtRealloc |XtFree |XFree 
@@ -13350,7 +13358,14 @@ EDITS: 3
 		  |XmMenuShell?  |XmLabelGadget?  |XmPushButtonGadget?  |XmSeparatorGadget?  |XmArrowButtonGadget?
 		  |XmCascadeButtonGadget?  |XmToggleButtonGadget?  |XmDrawnButton?  |XmPrimitive? |XmFontList?
 		  |XmFontContext?  |XmFontListEntry? |XmTextSource?  |XpmAttributes?  |XpmImage?  |XpmColorSymbol?
-		   )))
+		   ))
+		 (xm-procs0 (remove-if (lambda (n) (not (arity-ok n 0))) xm-procs))
+		 (xm-procs1 (remove-if (lambda (n) (not (arity-ok n 1))) xm-procs))
+		 (xm-procs2 (remove-if (lambda (n) (not (arity-ok n 2))) xm-procs))
+		 (xm-procs3 (remove-if (lambda (n) (not (arity-ok n 3))) xm-procs))
+		 (xm-procs4 (remove-if (lambda (n) (not (arity-ok n 4))) xm-procs))
+		   )
+
 	    ;; ---------------- 0 Args
 	    (for-each 
 	     (lambda (n)
@@ -13358,7 +13373,7 @@ EDITS: 3
 		      (lambda () 
 			(n))
 		      (lambda args (car args))))
-	     xm-procs)
+	     xm-procs0)
 
 	    ;; ---------------- 1 Arg
 	    (for-each 
@@ -13368,7 +13383,7 @@ EDITS: 3
 		  (catch #t
 			 (lambda () (n arg))
 			 (lambda args (car args))))
-		xm-procs))
+		xm-procs1))
 	     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  #(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
 		   (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t '() 12345678901234567890))
 
@@ -13382,7 +13397,7 @@ EDITS: 3
 		     (catch #t
 			    (lambda () (n arg1 arg2))
 			    (lambda args (car args))))
-		   xm-procs))
+		   xm-procs2))
 		(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) #(0 1) 3/4 
 		      (sqrt -1.0) (make-delay 32) :feedback -1 0 #f #t '() 12345678901234567890)))
 	     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) #(0 1) 3/4 
@@ -13403,7 +13418,7 @@ EDITS: 3
 			      (catch #t
 				     (lambda () (n arg1 arg2 arg3))
 				     (lambda args (car args))))
-			    xm-procs))
+			    xm-procs3))
 			 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :start -1 0 #f #t '() 12345678901234567890)))
 		      (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :phase -1 0 #f #t '() 12345678901234567890)))
 		   (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :channels -1 0 #f #t '() 12345678901234567890))
@@ -13422,7 +13437,7 @@ EDITS: 3
 				 (catch #t
 					(lambda () (n arg1 arg2 arg3 arg4))
 					(lambda args (car args))))
-			       xm-procs))
+			       xm-procs4))
 			    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :start -1 0 #f #t '() 12345678901234567890)))
 			 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :phase -1 0 #f #t '() 12345678901234567890)))
 		      (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :channels -1 0 #f #t '() 12345678901234567890)))
@@ -13601,6 +13616,18 @@ EDITS: 3
 		   mus-b1 mus-b2 mus-data mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop
 		   mus-increment mus-length mus-location mus-phase mus-ramp mus-scaler vct-ref
 		   ))
+
+(define procs0 (remove-if (lambda (n) (not (arity-ok n 0))) procs))
+(define set-procs0 (remove-if (lambda (n) (not (arity-ok n 0))) set-procs))
+(define procs1 (remove-if (lambda (n) (not (arity-ok n 1))) procs))
+(define set-procs1 (remove-if (lambda (n) (not (arity-ok n 1))) set-procs))
+(define procs2 (remove-if (lambda (n) (not (arity-ok n 2))) procs))
+(define set-procs2 (remove-if (lambda (n) (not (arity-ok n 2))) set-procs))
+(define procs3 (remove-if (lambda (n) (not (arity-ok n 3))) procs))
+(define set-procs3 (remove-if (lambda (n) (not (arity-ok n 3))) set-procs))
+(define procs4 (remove-if (lambda (n) (not (arity-ok n 4))) procs))
+(define set-procs4 (remove-if (lambda (n) (not (arity-ok n 4))) set-procs))
+(define procs5 (remove-if (lambda (n) (not (arity-ok n 5))) procs))
 
 (define make-procs (list
                make-all-pass make-asymmetric-fm
@@ -14433,7 +14460,7 @@ EDITS: 3
 		  (lambda () 
 		    (n))
 		  (lambda args (car args))))
-	 procs)
+	 procs0)
 	(dismiss-all-dialogs)
 	(gc)
 
@@ -14445,7 +14472,7 @@ EDITS: 3
 	      (catch #t
 		     (lambda () (n arg))
 		     (lambda args (car args))))
-	    procs))
+	    procs1))
 	 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  #(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
 	       (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t '() 12345678901234567890))
 	(gc)
@@ -14462,7 +14489,7 @@ EDITS: 3
 			(lambda args (car args)))
 		 ;(gc)
 		 )
-	       procs))
+	       procs2))
 	    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) #(0 1) 3/4 
 		  (sqrt -1.0) (make-delay 32) :feedback -1 0 #f #t '() 12345678901234567890)))
 	 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) #(0 1) 3/4 
@@ -14477,7 +14504,7 @@ EDITS: 3
 	      (catch #t
 		     (lambda () (set! (n) arg))
 		     (lambda args (car args))))
-	    set-procs))
+	    set-procs0))
 	 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  #(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
 	       (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t '() 12345678901234567890))
 	(gc)
@@ -14492,7 +14519,7 @@ EDITS: 3
 		 (catch #t
 			(lambda () (set! (n arg1) arg2))
 			(lambda args (car args))))
-	       set-procs))
+	       set-procs1))
 	    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) #(0 1) 3/4 
 		  (sqrt -1.0) (make-delay 32) :feedback -1 0 #f #t '() 12345678901234567890)))
 	 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) #(0 1) 3/4 
@@ -14511,7 +14538,7 @@ EDITS: 3
 		    (catch #t
 			   (lambda () (set! (n arg1 arg2) arg3))
 			   (lambda args (car args))))
-		  set-procs))
+		  set-procs2))
 	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) #(0 1) 3/4 
 		     (sqrt -1.0) (make-delay 32) :feedback -1 0 #f #t '() 12345678901234567890)))
 	    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) #(0 1) 3/4 
@@ -14536,7 +14563,7 @@ EDITS: 3
 			    (catch #t
 				   (lambda () (n arg1 arg2 arg3))
 				   (lambda args (car args))))
-			  procs))
+			  procs3))
 		       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :start -1 0 #f #t '() 12345678901234567890)))
 		    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :phase -1 0 #f #t '() 12345678901234567890))))
 	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :channels -1 0 #f #t '() 12345678901234567890))
@@ -14556,7 +14583,7 @@ EDITS: 3
 			     (catch #t
 				    (lambda () (set! (n arg1 arg2 arg3) arg4))
 				    (lambda args (car args))))
-			   set-procs))
+			   set-procs3))
 			(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :wave -1 0 #f #t '() 12345678901234567890)))
 		     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :initial-contents -1 0 #f #t '() 12345678901234567890)))
 		  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :srate -1 0 #f #t '() 12345678901234567890)))
@@ -14578,7 +14605,7 @@ EDITS: 3
 			       (catch #t
 				      (lambda () (n arg1 arg2 arg3 arg4))
 				      (lambda args (car args))))
-			     procs))
+			     procs4))
 			  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :wave -1 0 #f #t '() 12345678901234567890)))
 		       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :initial-contents -1 0 #f #t '() 12345678901234567890)))
 		    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :srate -1 0 #f #t '() 12345678901234567890))))
@@ -14600,7 +14627,7 @@ EDITS: 3
 				(catch #t
 				       (lambda () (set! (n arg1 arg2 arg3 arg4) arg5))
 				       (lambda args (car args))))
-			      set-procs))
+			      set-procs4))
 			   (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :wave -1 0 #f #t '() 12345678901234567890)))
 			(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :initial-contents -1 0 #f #t '() 12345678901234567890)))
 		     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :srate -1 0 #f #t '() 12345678901234567890)))
@@ -14623,7 +14650,7 @@ EDITS: 3
 				(catch #t
 				       (lambda () (n arg1 arg2 arg3 arg4 arg5))
 				       (lambda args (car args))))
-			      procs))
+			      procs5))
 			   (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :wave -1 0 1 #f #t '() 12345678901234567890)))
 			(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :initial-contents -1 0 1 #f #t '() 12345678901234567890)))
 		     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :srate -1 0 1 #f #t '() 12345678901234567890)))

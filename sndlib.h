@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 14
-#define SNDLIB_REVISION 9
-#define SNDLIB_DATE "14-Nov-01"
+#define SNDLIB_REVISION 10
+#define SNDLIB_DATE "15-Nov-01"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 
@@ -469,6 +469,7 @@ char *mus_audio_moniker       PROTO((void));
 
 void mus_audio_mixer_save           PROTO((const char *file));
 void mus_audio_mixer_restore        PROTO((const char *file));
+int mus_audio_compatible_format     PROTO((int dev));
 
 #ifdef SUN
   void mus_audio_sun_outputs        PROTO((int speakers, int headphones, int line_out));

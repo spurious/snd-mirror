@@ -480,7 +480,7 @@ int map_over_separate_chans(snd_state *ss, int (*func)(chan_info *, void *), voi
   return(val);
 }
 
-int snd_ok (snd_info *sp) {return((sp) && (sp->inuse));}
+int snd_ok (snd_info *sp) {return((sp) && (sp->inuse) && (sp->active == 1));}
 
 int active_channels (snd_state *ss, int count_virtual_channels)
 {
