@@ -14,11 +14,6 @@
 #else
   #define PRINT_BUFFER_SIZE 512
   #define LABEL_BUFFER_SIZE 64
-  #if HAVE_RUBY
-    #define S_setB "set_"
-  #else
-    #define S_setB "set! "
-  #endif
 #endif
 
 #define MAX_TABLE_SIZE (1024 * 1024 * 20) /* delay line allocation etc */
@@ -5347,7 +5342,7 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_mus_describe,  g_mus_describe_w, 1, 0, 0,  H_mus_describe);
   XEN_DEFINE_PROCEDURE(S_mus_name,      g_mus_name_w, 1, 0, 0,      H_mus_name);
   XEN_DEFINE_PROCEDURE(S_mus_run,       g_mus_run_w, 1, 2, 0,       H_mus_run);
-  XEN_DEFINE_PROCEDURE(S_mus_bank,      g_mus_bank_w, 2, 2, 0,  H_mus_bank);
+  XEN_DEFINE_PROCEDURE(S_mus_bank,      g_mus_bank_w, 2, 2, 0,      H_mus_bank);
   XEN_DEFINE_PROCEDURE(S_mus_offset,    g_mus_offset_w, 1, 0, 0,    H_mus_offset);
   XEN_DEFINE_PROCEDURE(S_mus_file_name, g_mus_file_name_w, 1, 0, 0, H_mus_file_name);
 

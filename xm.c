@@ -304,7 +304,9 @@ static XEN_OBJECT_TYPE xm_obj_tag;
 #if HAVE_GUILE
 static size_t xm_obj_free(XEN obj)
 {
-  FREE((void *)XEN_OBJECT_REF(obj));
+  void *val;
+  val = (void *)XEN_OBJECT_REF(obj);
+  FREE(val);
   return(0);
 }
 #endif
@@ -10992,9 +10994,11 @@ static XEN gxm_Vector2XPoints(XEN arg1)
 
 static XEN gxm_FreeXPoints(XEN arg1)
 {
+  void *pts;
   #define H_freeXPoints "(freeXPoints vect) frees an (opaque) XPoint array created by vector->Xpoints"
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, XEN_ONLY_ARG, "freeXPoints", "opaque XPoint array");
-  FREE((void *)(XEN_TO_C_ULONG(arg1)));
+  pts = (void *)(XEN_TO_C_ULONG(arg1));
+  FREE(pts);
   return(XEN_FALSE);
 }
 

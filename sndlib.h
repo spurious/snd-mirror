@@ -327,7 +327,7 @@ enum {MUS_NO_ERROR, MUS_NO_FREQUENCY, MUS_NO_PHASE, MUS_NO_GEN, MUS_NO_LENGTH,
   #ifdef DEBUG_MEMORY
     #define CALLOC(a, b)  mem_calloc((size_t)(a), (size_t)(b), c__FUNCTION__, __FILE__, __LINE__)
     #define MALLOC(a)     mem_malloc((size_t)(a), c__FUNCTION__, __FILE__, __LINE__)
-    #define FREE(a)       mem_free(a, c__FUNCTION__, __FILE__, __LINE__)
+    #define FREE(a)       {if ((void *)a == (void *)0x99999999) abort(); mem_free(a, c__FUNCTION__, __FILE__, __LINE__); a = (void *)0x99999999;}
     #define REALLOC(a, b) mem_realloc(a, (size_t)(b), c__FUNCTION__, __FILE__, __LINE__)
 
     #define OPEN(File, Flags, Mode) io_open((File), (Flags), (Mode), c__FUNCTION__, __FILE__, __LINE__)
@@ -355,6 +355,18 @@ enum {MUS_NO_ERROR, MUS_NO_FREQUENCY, MUS_NO_PHASE, MUS_NO_GEN, MUS_NO_LENGTH,
     #define CREAT(File, Flags) creat((File), (Flags))
   #endif
 #endif 
+
+#ifndef S_setB
+#if HAVE_RUBY
+  #define S_setB "set_"
+#else
+  #if HAVE_GUILE
+    #define S_setB "set! "
+  #else
+    #define S_setB "set-"
+  #endif
+#endif
+#endif
 
 #define MUS_LOOP_INFO_SIZE 8
 

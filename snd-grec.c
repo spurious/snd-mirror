@@ -2119,15 +2119,21 @@ void reflect_amp_control_bounds_change_in_recorder(void)
 	  if (AMP_rec_ins[ic][oc])
 	    {
 	      a = AMP_rec_ins[ic][oc];
-	      GTK_ADJUSTMENT(a->adj)->value = amp_to_slider(rp->in_amps[ic][oc]);
-	      gtk_adjustment_value_changed(GTK_ADJUSTMENT(a->adj));
+	      if ((a->adj) && (rp->in_amps[ic][oc]))
+		{
+		  GTK_ADJUSTMENT(a->adj)->value = amp_to_slider(rp->in_amps[ic][oc]);
+		  gtk_adjustment_value_changed(GTK_ADJUSTMENT(a->adj));
+		}
 	    }
       for (oc = 0; oc < MAX_OUT_CHANS; oc++)
 	if (AMP_rec_outs[oc])
 	  {
 	    a = AMP_rec_outs[oc];
-	    GTK_ADJUSTMENT(a->adj)->value = amp_to_slider(rp->out_amps[oc]);
-	    gtk_adjustment_value_changed(GTK_ADJUSTMENT(a->adj));
+	    if (a->adj)
+	      {
+		GTK_ADJUSTMENT(a->adj)->value = amp_to_slider(rp->out_amps[oc]);
+		gtk_adjustment_value_changed(GTK_ADJUSTMENT(a->adj));
+	      }
 	  }
       ignore_callback = false;
     }

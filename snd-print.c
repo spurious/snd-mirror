@@ -1,7 +1,5 @@
 #include "snd.h"
 
-/* SOMEDAY: get Xp to work */
-
 /* create Postscript version of graph */
 
 #define CANNOT_PRINT XEN_ERROR_TYPE("cannot-print")

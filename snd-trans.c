@@ -1412,7 +1412,7 @@ int snd_translate(const char *oldname, const char *newname, int type)
   /* called from snd-file.c */
   int err;
   char *hdr = NULL;
-  if (MUS_CANT_TRANSLATE == 0) MUS_CANT_TRANSLATE = mus_make_error("mus_cant_translate");
+  if (MUS_CANT_TRANSLATE == 0) MUS_CANT_TRANSLATE = mus_make_error("can't translate");
   err = MUS_CANT_TRANSLATE;
   hdr = (char *)CALLOC(TRANS_BUF_SIZE, sizeof(char));
   /* set up default output header */

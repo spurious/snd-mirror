@@ -51,6 +51,13 @@ static char *local_mus_expand_filename(char *name)
   return(tmpstr);
 }
 
+static XEN g_mus_make_error(XEN error)
+{
+  #define H_mus_make_error "(" S_mus_make_error " error-string) -> int identifier for a new 'mus-error choice"
+  XEN_ASSERT_TYPE(XEN_STRING_P(error), error, XEN_ONLY_ARG, S_mus_make_error, "a string"); 
+  return(C_TO_XEN_INT(mus_make_error(XEN_TO_C_STRING(error))));
+}
+
 static XEN g_mus_sound_loop_info(XEN gfilename)
 {
   #define H_mus_sound_loop_info "(" S_mus_sound_loop_info " filename): synth loop info for sound as a list: (start1 \
@@ -1186,6 +1193,7 @@ XEN_NARGIFY_0(g_mus_audio_report_w, g_mus_audio_report)
 XEN_NARGIFY_3(g_mus_audio_sun_outputs_w, g_mus_audio_sun_outputs)
 XEN_NARGIFY_1(g_mus_sound_open_input_w, g_mus_sound_open_input)
 XEN_NARGIFY_1(g_mus_sound_close_input_w, g_mus_sound_close_input)
+XEN_NARGIFY_1(g_mus_make_error_w, g_mus_make_error)
 XEN_NARGIFY_1(g_mus_audio_close_w, g_mus_audio_close)
 XEN_NARGIFY_0(g_mus_audio_save_w, g_mus_audio_save)
 XEN_NARGIFY_0(g_mus_audio_restore_w, g_mus_audio_restore)
@@ -1255,6 +1263,7 @@ XEN_NARGIFY_2(g_mus_audio_set_oss_buffers_w, g_mus_audio_set_oss_buffers)
 #define g_mus_audio_sun_outputs_w g_mus_audio_sun_outputs
 #define g_mus_sound_open_input_w g_mus_sound_open_input
 #define g_mus_sound_close_input_w g_mus_sound_close_input
+#define g_mus_make_error_w g_mus_make_error
 #define g_mus_audio_close_w g_mus_audio_close
 #define g_mus_audio_save_w g_mus_audio_save
 #define g_mus_audio_restore_w g_mus_audio_restore
@@ -1570,6 +1579,7 @@ void mus_sndlib2xen_initialize(void)
   XEN_DEFINE_PROCEDURE(S_mus_sound_forget,         g_mus_sound_forget_w,           1, 0, 0, H_mus_sound_forget);
   XEN_DEFINE_PROCEDURE(S_mus_sound_prune,          g_mus_sound_prune_w,            0, 0, 0, H_mus_sound_prune);
 
+  XEN_DEFINE_PROCEDURE(S_mus_make_error,           g_mus_make_error_w,             1, 0, 0, H_mus_make_error);
   XEN_DEFINE_PROCEDURE(S_mus_audio_report,         g_mus_audio_report_w,           0, 0, 0, H_mus_audio_report);
   XEN_DEFINE_PROCEDURE(S_mus_audio_sun_outputs,    g_mus_audio_sun_outputs_w,      3, 0, 0, H_mus_audio_sun_outputs);
   XEN_DEFINE_PROCEDURE(S_mus_sound_open_input,     g_mus_sound_open_input_w,       1, 0, 0, H_mus_sound_open_input);
@@ -1623,6 +1633,7 @@ void mus_sndlib2xen_initialize(void)
 
 #if WITH_MODULES
   scm_c_export(S_make_sound_data,
+	       S_mus_make_error,
 	       S_mus_aifc,
 	       S_mus_aiff,
 	       S_mus_alaw,

@@ -116,7 +116,9 @@ static XEN_OBJECT_TYPE xm_obj_tag;
 #if HAVE_GUILE
 static size_t xm_obj_free(XEN obj)
 {
-  FREE((void *)XEN_OBJECT_REF(obj));
+  void *val;
+  val = (void *)XEN_OBJECT_REF(obj);
+  FREE(val);
   return(0);
 }
 #endif
@@ -6839,7 +6841,7 @@ GtkDialogFlags flags, etc buttons)"
   XEN_ASSERT_TYPE(XEN_etc_P(buttons), buttons, 4, "gtk_dialog_new_with_buttons", "etc");
   {
     int etc_len;
-    GtkWidget* result;
+    GtkWidget* result = NULL;
     gchar* p_arg0;
     GtkWindow* p_arg1;
     GtkDialogFlags p_arg2;
@@ -6901,6 +6903,7 @@ static XEN gxg_gtk_dialog_add_buttons(XEN dialog, XEN buttons)
         case 8: gtk_dialog_add_buttons(p_arg0, XLS(buttons, 0), XLI(buttons, 1), XLS(buttons, 2), XLI(buttons, 3), XLS(buttons, 4), XLI(buttons, 5), XLS(buttons, 6), XLI(buttons, 7), NULL); break;
         case 10: gtk_dialog_add_buttons(p_arg0, XLS(buttons, 0), XLI(buttons, 1), XLS(buttons, 2), XLI(buttons, 3), XLS(buttons, 4), XLI(buttons, 5), XLS(buttons, 6), XLI(buttons, 7), XLS(buttons, 8), XLI(buttons, 9), NULL); break;
       }
+    return(XEN_FALSE);
   }
 }
 static XEN gxg_gtk_dialog_set_response_sensitive(XEN dialog, XEN response_id, XEN setting)
@@ -12276,6 +12279,7 @@ GtkTextIter* iter, gchar* text, gint len, etc tags)"
         case 5: gtk_text_buffer_insert_with_tags(p_arg0, p_arg1, p_arg2, p_arg3, XLT(tags, 0), XLT(tags, 1), XLT(tags, 2), XLT(tags, 3), XLT(tags, 4), NULL); break;
         case 6: gtk_text_buffer_insert_with_tags(p_arg0, p_arg1, p_arg2, p_arg3, XLT(tags, 0), XLT(tags, 1), XLT(tags, 2), XLT(tags, 3), XLT(tags, 4), XLT(tags, 5), NULL); break;
       }
+    return(XEN_FALSE);
   }
 }
 static XEN gxg_gtk_text_buffer_insert_with_tags_by_name(XEN buffer, XEN iter, XEN text, XEN len, XEN tags)
@@ -12309,6 +12313,7 @@ GtkTextIter* iter, gchar* text, gint len, etc tags)"
         case 5: gtk_text_buffer_insert_with_tags_by_name(p_arg0, p_arg1, p_arg2, p_arg3, XLS(tags, 0), XLS(tags, 1), XLS(tags, 2), XLS(tags, 3), XLS(tags, 4), NULL); break;
         case 6: gtk_text_buffer_insert_with_tags_by_name(p_arg0, p_arg1, p_arg2, p_arg3, XLS(tags, 0), XLS(tags, 1), XLS(tags, 2), XLS(tags, 3), XLS(tags, 4), XLS(tags, 5), NULL); break;
       }
+    return(XEN_FALSE);
   }
 }
 static XEN gxg_gtk_text_buffer_delete(XEN buffer, XEN start, XEN end)
@@ -12522,7 +12527,7 @@ gchar* tag_name, etc tags)"
   XEN_ASSERT_TYPE(XEN_etc_P(tags), tags, 3, "gtk_text_buffer_create_tag", "etc");
   {
     int etc_len;
-    GtkTextTag* result;
+    GtkTextTag* result = NULL;
     GtkTextBuffer* p_arg0;
     gchar* p_arg1;
     etc_len = XEN_LIST_LENGTH(tags);
@@ -20159,7 +20164,7 @@ GtkFileChooserAction action, etc buttons)"
   XEN_ASSERT_TYPE(XEN_etc_P(buttons), buttons, 4, "gtk_file_chooser_dialog_new", "etc");
   {
     int etc_len;
-    GtkWidget* result;
+    GtkWidget* result = NULL;
     gchar* p_arg0;
     GtkWindow* p_arg1;
     GtkFileChooserAction p_arg2;
@@ -23218,9 +23223,11 @@ static XEN gxg_vector2GdkPoints(XEN arg1)
 
 static XEN gxg_freeGdkPoints(XEN arg1)
 {
+  void *pts;
   #define H_freeGdkPoints "(freeGdkPoints vect) frees an (opaque) GdkPoint array created by vector->Gdkpoints"
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, XEN_ONLY_ARG, "freeGdkPoints", "opaque GdkPoint array");
-  FREE((void *)(XEN_TO_C_ULONG(arg1)));
+  pts = (void *)(XEN_TO_C_ULONG(arg1));
+  FREE(pts);
   return(XEN_FALSE);
 }
 static XEN c_array_to_xen_list(XEN val, XEN clen);
@@ -33057,10 +33064,10 @@ static bool xg_already_inited = false;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"27-Mar-04\")");
+      XEN_EVAL_C_STRING("(define xm-version \"30-Mar-04\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("27-Mar-04"));
+      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("30-Mar-04"));
 #endif
       xg_already_inited = true;
 #if WITH_GTK_AND_X11

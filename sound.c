@@ -187,15 +187,18 @@ int mus_make_error(char *error_name)
 
 const char *mus_error_to_string(int err)
 {
-  if (err < MUS_INITIAL_ERROR_TAG)
-    return(mus_initial_error_names[err]);
-  else
+  if (err >= 0)
     {
-      err -= MUS_INITIAL_ERROR_TAG;
-      if ((mus_error_names) && (err < mus_error_names_size))
-	return(mus_error_names[err]);
-      else return("unknown mus error");
+      if (err < MUS_INITIAL_ERROR_TAG)
+	return(mus_initial_error_names[err]);
+      else
+	{
+	  err -= MUS_INITIAL_ERROR_TAG;
+	  if ((mus_error_names) && (err < mus_error_names_size))
+	    return(mus_error_names[err]);
+	}
     }
+  return("unknown mus error");
 }
 
 static void default_mus_error(int type, char *msg)

@@ -3955,7 +3955,9 @@ static XEN g_env_info_to_vcts(env_info *ep, int len)
   Float incr, x;
   mus_sample_t cmax, cmin;
   int loc;
-  if (ep->amp_env_size < len) lim = ep->amp_env_size; else lim = len;
+  if ((len == 0) || (len > ep->amp_env_size))
+    lim = ep->amp_env_size;
+  else lim = len;
   res = XEN_LIST_2(make_vct(lim, (Float *)CALLOC(lim, sizeof(Float))),
 		   make_vct(lim, (Float *)CALLOC(lim, sizeof(Float))));
   loc = snd_protect(res);
@@ -3971,7 +3973,7 @@ static XEN g_env_info_to_vcts(env_info *ep, int len)
     }
   else
     {
-      incr = (Float)(ep->amp_env_size - 1) / (Float)len; /* make extra room on left */
+      incr = (Float)(ep->amp_env_size - 1) / (Float)lim; /* make extra room on left */
       cmax = ep->fmin;
       cmin = ep->fmax;
       vmin->data[0] = MUS_SAMPLE_TO_DOUBLE(ep->data_min[0]);
@@ -4100,6 +4102,7 @@ If 'filename' is a sound index (an integer), 'size' is an edit-position, and the
      then peak
      then read direct (via make_sound_readable)
   */
+
   sp = find_sound(fullname, 0);
   if (sp)
     {

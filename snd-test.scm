@@ -48,7 +48,7 @@
 (define tests 1)
 (if (not (defined? 'snd-test)) (define snd-test -1))
 (if (defined? 'disable-play) (disable-play))
-(define keep-going #f)
+(define keep-going #t)
 (define full-test (< snd-test 0))
 (define total-tests 28)
 (if (not (defined? 'with-exit)) (define with-exit (< snd-test 0)))
@@ -318,7 +318,6 @@
 	    (begin
 	      (load "snd-gtk.scm")
 	      (load "gtk-popup.scm")))))
-
 
 ;(define widvardpy (make-variable-display "do-loop" "i*2" 'graph))
 
@@ -2863,15 +2862,19 @@
 			    "midi open error" "midi read error" "midi write error" "midi close error" "midi init error" "midi misc error"
 			    "no channels method" "no hop method" "no width method" "no file-name method" "no ramp method" "no run method"
 			    "no increment method" "no b2 method" "no inspect method" "no offset method"
+			    "no x1 method" "no x2 method" "no y1 method" "no y2 method" "can't translate"
 			    )))
 	    (call-with-current-continuation
 	     (lambda (quit)
 	       (do ((i 0 (1+ i)))
-		   ((= i 67))
+		   ((= i 72))
 		 (if (not (string-=? (list-ref errs i) (mus-error-to-string i)))
 		     (begin
 		       (snd-display ";mus-error-to-string ~D: ~A ~A" i (list-ref errs i) (mus-error-to-string i))
 		       (quit #f)))))))
+	  (let ((new-id (mus-make-error "hiho all messed up")))
+	    (if (not (string=? (mus-error-to-string new-id) "hiho all messed up"))
+		(snd-display ";mus-make-error :~A ~A" new-id (mus-error-to-string new-id))))
 	  
 	  (let ((cur-srate (mus-sound-srate "oboe.snd"))
 		(cur-chans (mus-sound-chans "oboe.snd"))
@@ -14469,10 +14472,10 @@ EDITS: 5
        (list 1 2 4 8))
       
       (let ((var (catch #t (lambda () (make-locsig :channels 0)) (lambda args args))))
-	(if (not (eq? (car var) 'wrong-type-arg))
+	(if (not (eq? (car var) 'mus-error))
 	    (snd-display ";make-locsig bad (0) chans: ~A" var)))
       (let ((var (catch #t (lambda () (make-locsig :channels -2)) (lambda args args))))
-	(if (not (eq? (car var) 'wrong-type-arg))
+	(if (not (eq? (car var) 'out-of-range))
 	    (snd-display ";make-locsig bad (-2) chans: ~A" var)))
       (let ((var (catch #t (lambda () (make-locsig :output 1)) (lambda args args))))
 	(if (not (eq? (car var) 'wrong-type-arg))
@@ -20514,7 +20517,8 @@ EDITS: 5
 		     (lambda (n)
 		       (if (not (sound-data? n))
 			   (snd-display ";dac-hook data: ~A?" n))
-		       (if (< (sound-data-length n) 128)
+		       (if (and (< (sound-data-length n) 128)
+				(not (= sound-data-length n) 64)) ; mac case
 			   (snd-display ";dac-hook data length: ~A?" (sound-data-length n)))
 		       (set! ph1 #t)))
 	  
@@ -37902,10 +37906,17 @@ EDITS: 2
 		    (snd-display ";depths: ~A" (.depths scr)))
 		(if (not (= (.depth (car dps)) 24)) (snd-display ";.depths val: ~A" (map .depth dps)))
 		(if (not (= (.nvisuals (car dps)) 8)) (snd-display ";nvisuals: ~A" (map .nvisuals dps)))
-		(if (not (Visual? (car (.visuals (car dps))))) 
-		    (snd-display ";visuals: ~A" (map .visuals dps))
-		    (if (not (= (.bits_per_rgb (car (.visuals (car dps)))) 8))
-			(snd-display ";bits/visuals: ~A" (map .bits_per_rgb (.visuals (car dps)))))))
+		(if (not (null? (.visuals (car dps))))
+		    (if (not (Visual? (car (.visuals (car dps))))) 
+			(snd-display ";visuals: ~A" (map .visuals dps))
+			(if (not (= (.bits_per_rgb (car (.visuals (car dps)))) 8))
+			    (snd-display ";bits/visuals: ~A" (map .bits_per_rgb (.visuals (car dps))))))
+		    (if (and (cadr dps)
+			     (not (null? (.visuals (cadr dps)))))
+			(if (not (Visual? (car (.visuals (cadr dps))))) 
+			    (snd-display ";visuals: ~A" (map .visuals dps))
+			    (if (not (= (.bits_per_rgb (car (.visuals (cadr dps)))) 8))
+				(snd-display ";bits/visuals: ~A" (map .bits_per_rgb (.visuals (cadr dps)))))))))
 	      (if (not (= (cadr (.white_pixel scr)) 16777215))
 		  (snd-display ";screen white_pixel: ~A" (.white_pixel scr)))
 	      (if (not (= (cadr (.black_pixel scr)) 0))
