@@ -113,8 +113,6 @@ int popup_save_menu(void) {return(0);}
 int popup_info_menu(void) {return(0);}
 bool popup_menu_exists(void) {return(false);}
 void set_menu_label(int w, const char *label) {}
-int g_set_menu_sensitive(int which_menu, char *old_label, bool on) {return(0);}
-int g_menu_is_sensitive(int which_menu, char *old_label) {return(-1);}
 int g_add_to_main_menu(char *label, int slot) {return(0);}
 int g_add_to_menu(int which_menu, char *label, int callb, int position) {return(0);}
 int g_remove_from_menu(int which_menu, char *label) {return(0);}

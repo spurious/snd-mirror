@@ -3125,33 +3125,60 @@ void g_initialize_gh(void)
   /* XEN_DEFINE_PROCEDURE(S_clm_print,        g_clm_print,             0, 0, 1, H_clm_print); */
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_just_sounds, g_just_sounds_w, H_just_sounds, S_setB S_just_sounds, g_set_just_sounds_w,  0, 0, 1, 0);
 
+#if HAVE_GUILE
   #define H_during_open_hook S_during_open_hook " (fd name reason): called after file is opened, \
 but before data has been read. \n\
-  (add-hook! during-open-hook \n\
+  (add-hook! " S_during_open_hook "\n\
     (lambda (fd name reason) \n\
-      (if (= (mus-sound-header-type name) mus-raw) \n\
-          (mus-file-set-prescaler fd 500.0))))"
+      (if (= (" S_mus_sound_header_type " name) " S_mus_raw ") \n\
+          (set! (" S_mus_file_prescaler " fd) 500.0))))"
 
   #define H_after_open_hook S_after_open_hook " (snd): called just before the new file's window is displayed. \
 This provides a way to set various sound-specific defaults. \n\
-  (add-hook! after-open-hook \n\
+  (add-hook! " S_after_open_hook "\n\
     (lambda (snd) \n\
-      (if (> (channels snd) 1) \n\
-          (set! (channel-style snd) channels-combined))))"
+      (if (> (" S_channels " snd) 1) \n\
+          (set! (" S_channel_style " snd) " S_channels_combined "))))"
+#else
+  #define H_during_open_hook "$" S_during_open_hook " lambda do |fd, name, reason| ...; called after file is opened, \
+but before data has been read. \n\
+  $during_open_hook.add_hook!(\"during-open-hook\") do |fd, name, reason|\n\
+    if (mus_sound_header_type(name) == Mus_raw)\n\
+      set_mus_file_prescaler(fd, 500.0)\n\
+    end\n\
+  end"
+
+  #define H_after_open_hook S_after_open_hook " (snd): called just before the new file's window is displayed. \
+This provides a way to set various sound-specific defaults. \n\
+  $after_open_hook.add-hook!(\"set-channels-combined\") do |snd| \n\
+    if (channels(snd) > 1) \n\
+      set_channel_style(snd, Channels_combined)\n\
+    end\n\
+  end"
+#endif
 
   XEN_DEFINE_HOOK(during_open_hook,    S_during_open_hook, 3,    H_during_open_hook);    /* args = fd filename reason */
   XEN_DEFINE_HOOK(after_open_hook,     S_after_open_hook, 1,     H_after_open_hook);     /* args = sound */
 
+#if HAVE_GUILE
   #define H_print_hook S_print_hook " (text): called each time some Snd-generated response (text) is about to be appended to the listener. \
 If it returns some non-#f result, Snd assumes you've sent the text out yourself, as well as any needed prompt. \n\
-  (add-hook! print-hook \n\
+  (add-hook! "S_print_hook "\n\
     (lambda (msg) \n\
-      (snd-print \n\
+      (" S_snd_print "\n\
         (format #f \"~A~%[~A]~%~A\" \n\
                 msg \n\
                 (strftime \"%d-%b %H:%M %Z\" \n\
                            (localtime (current-time))) \n\
-                (listener-prompt)))))"
+                (" S_listener_prompt ")))))"
+#else
+  #define H_print_hook S_print_hook " (text): called each time some Snd-generated response (text) is about to be appended to the listener. \
+If it returns some non-false result, Snd assumes you've sent the text out yourself, as well as any needed prompt. \n\
+  $print_hook.add-hook!(\"localtime\") do |msg|\n\
+    $stdout.print msg\n\
+  false\n\
+  end"
+#endif
 
   XEN_DEFINE_HOOK(print_hook, S_print_hook, 1, H_print_hook);          /* arg = text */
 

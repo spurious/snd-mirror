@@ -374,7 +374,7 @@ void about_snd_help(void)
 	    "\nRecent changes include:\n\
 \n\
 19-Mar:  change-window-property is now a procedure-with-setter named window-property.\n\
-         removed change-menu-label.\n\
+         removed change-menu-label, menu-sensitive.\n\
 16-Mar:  def-optkey-fun in ws.scm.\n\
          edit function in granulate generator.\n\
 15-Mar:  exported mus_optkey_* from sndlib and began incorporating optkey args into Snd.\n\
@@ -1688,6 +1688,7 @@ char* word_wrap(const char *text, int widget_len)
   int new_len, old_len, i, j, desired_len, line_start = 0;
 #if HAVE_RUBY
   bool move_paren = false;
+  int in_paren = 0;
 #endif
   old_len = snd_strlen(text);
   new_len = old_len + 64;
@@ -1713,7 +1714,6 @@ char* word_wrap(const char *text, int widget_len)
 	    new_text[j++] = text[i];
 #else
 	    /* try to change the reported names to Ruby names */
-	    /* TODO: capitalize the constants' names, prepend $ to hook names, add commas in arg lists, show key/opt args in Ruby syntax */
 	    if (text[i] == '-')
 	      {
 		if ((i > 0) && (isalnum((int)(text[i - 1]))) && (i < old_len))
@@ -1770,8 +1770,29 @@ char* word_wrap(const char *text, int widget_len)
 			  {
 			    new_text[j++] = '(';
 			    move_paren = false;
+			    in_paren = 1;
 			  }
-			else new_text[j++] = text[i];
+			else
+			  {
+			    if (in_paren > 0)
+			      {
+				if ((in_paren == 1) && (text[i] == ' '))
+				  {
+				    new_text[j++] = ',';
+				    new_text[j++] = ' ';
+				  }
+				else
+				  {
+				    if (text[i] == ')')
+				      in_paren--;
+				    else 
+				      if (text[i] == '(')
+					in_paren++;
+				    new_text[j++] = text[i];					
+				  }
+			      }
+			    else new_text[j++] = text[i];
+			  }
 		      }
 		  }
 	      }
@@ -2113,13 +2134,18 @@ if returns a string, it replaces 'help-string' (the default help)"
 
   XEN_DEFINE_HOOK(help_hook, S_help_hook, 2, H_help_hook);    /* args = subject help-string */
 
+#if HAVE_GUILE
   #define H_output_comment_hook S_output_comment_hook " (str): called in Save-As dialog, passed current sound's comment, if any. \
 If more than one hook function, each function gets the previous function's output as its input.\n\
-  (add-hook! output-comment-hook\n\
+  (add-hook! " S_output_comment_hook "\n\
     (lambda (str)\n\
       (string-append str \": written \"\n\
         (strftime \"%a %d-%b-%Y %H:%M %Z\"\n\
           (localtime (current-time))))))"
+#else
+  #define H_output_comment_hook S_output_comment_hook " (str): called in Save-As dialog, passed current sound's comment, if any. \
+If more than one hook function, each function gets the previous function's output as its input."
+#endif
 
   XEN_DEFINE_HOOK(output_comment_hook, S_output_comment_hook, 1, H_output_comment_hook); /* arg = current mus_sound_comment(hdr) if any */
 

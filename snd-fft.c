@@ -2015,17 +2015,22 @@ XEN_ARGIFY_3(g_snd_transform_w, g_snd_transform)
 
 void g_init_fft(void)
 {
+#if HAVE_GUILE
   #define H_before_transform_hook S_before_transform_hook " (snd chn): called just before a transform is calculated.  If it returns \
 an integer, it is used as the starting point of the transform.  The following \
 somewhat brute-force code shows a way to have the transform reflect the position \
 of a moving mark:\n\
   (define transform-position #f)\n\
-  (add-hook! before-transform-hook \n\
+  (add-hook! " S_before_transform_hook "\n\
     (lambda (snd chn) transform-position))\n\
-  (add-hook! mark-drag-hook \n\
+  (add-hook! " S_mark_drag_hook "\n\
     (lambda (id)\n\
-      (set! transform-position (mark-sample id))\n\
-      (update-transform)))"
+      (set! transform-position (" S_mark_sample " id))\n\
+      (" S_update_transform_graph ")))"
+#else
+  #define H_before_transform_hook S_before_transform_hook " (snd chn): called just before a transform is calculated.  If it returns \
+an integer, it is used as the starting point of the transform."
+#endif
 
   XEN_DEFINE_HOOK(before_transform_hook, S_before_transform_hook, 2, H_before_transform_hook);  /* args = snd chn */
 

@@ -686,39 +686,6 @@ static XEN gl_remove_from_menu(XEN menu, XEN label)
   return(C_TO_XEN_INT(g_remove_from_menu(m, XEN_TO_C_STRING(label))));
 }
 
-static XEN gl_menu_sensitive(XEN menu, XEN label)
-{
-  #define H_menu_sensitive "(" S_menu_sensitive " menu label): #t if item label in menu is sensitive"
-  int val, m;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(menu), menu, XEN_ARG_1, S_setB S_menu_sensitive, "an integer");
-  XEN_ASSERT_TYPE(XEN_STRING_P(label), label, XEN_ARG_2, S_setB S_menu_sensitive, "a string");
-  m = XEN_TO_C_INT(menu);
-  if (m < 0) 
-    return(snd_no_such_menu_error(S_menu_sensitive, menu));
-  val = g_menu_is_sensitive(m,
-			    XEN_TO_C_STRING(label));
-  if (val < 0)
-    return(snd_no_such_menu_error(S_menu_sensitive, menu));
-  return(C_TO_XEN_BOOLEAN(val));
-}
-
-static XEN gl_set_menu_sensitive(XEN menu, XEN label, XEN on)
-{
-  int val, m;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(menu), menu, XEN_ARG_1, S_setB S_menu_sensitive, "an integer");
-  XEN_ASSERT_TYPE(XEN_STRING_P(label), label, XEN_ARG_2, S_setB S_menu_sensitive, "a string");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_3, S_setB S_menu_sensitive, "a boolean");
-  m = XEN_TO_C_INT(menu);
-  if (m < 0) 
-    return(snd_no_such_menu_error(S_setB S_menu_sensitive, menu));
-  val = g_set_menu_sensitive(m,
-			     XEN_TO_C_STRING(label), 
-			     XEN_TO_C_BOOLEAN(on));
-  if (val < 0)
-    return(snd_no_such_menu_error(S_setB S_menu_sensitive, menu));
-  return(C_TO_XEN_BOOLEAN(val));
-}
-
 static XEN g_main_menu(XEN which)
 {
   #define H_main_menu "(" S_main_menu " menu): the top-level menu widget referred to by menu"
@@ -736,8 +703,6 @@ static XEN g_main_menu(XEN which)
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_0(g_save_state_file_w, g_save_state_file)
 XEN_NARGIFY_1(g_set_save_state_file_w, g_set_save_state_file)
-XEN_NARGIFY_2(gl_menu_sensitive_w, gl_menu_sensitive)
-XEN_NARGIFY_3(gl_set_menu_sensitive_w, gl_set_menu_sensitive)
 XEN_ARGIFY_2(gl_add_to_main_menu_w, gl_add_to_main_menu)
 XEN_ARGIFY_4(gl_add_to_menu_w, gl_add_to_menu)
 XEN_NARGIFY_2(gl_remove_from_menu_w, gl_remove_from_menu)
@@ -745,8 +710,6 @@ XEN_NARGIFY_1(g_main_menu_w, g_main_menu)
 #else
 #define g_save_state_file_w g_save_state_file
 #define g_set_save_state_file_w g_set_save_state_file
-#define gl_menu_sensitive_w gl_menu_sensitive
-#define gl_set_menu_sensitive_w gl_set_menu_sensitive
 #define gl_add_to_main_menu_w gl_add_to_main_menu
 #define gl_add_to_menu_w gl_add_to_menu
 #define gl_remove_from_menu_w gl_remove_from_menu
@@ -761,9 +724,6 @@ void g_init_menu(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_save_state_file, g_save_state_file_w, H_save_state_file,
 				   S_setB S_save_state_file, g_set_save_state_file_w, 0, 0, 1, 0);
   
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_menu_sensitive, gl_menu_sensitive_w, H_menu_sensitive,
-				   S_setB S_menu_sensitive, gl_set_menu_sensitive_w, 2, 0, 3, 0);
-
   XEN_DEFINE_PROCEDURE(S_add_to_main_menu,  gl_add_to_main_menu_w,  1, 1, 0, H_add_to_main_menu);
   XEN_DEFINE_PROCEDURE(S_add_to_menu,       gl_add_to_menu_w,       3, 1, 0, H_add_to_menu);
   XEN_DEFINE_PROCEDURE(S_remove_from_menu,  gl_remove_from_menu_w,  2, 0, 0, H_remove_from_menu);

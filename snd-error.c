@@ -153,19 +153,31 @@ void g_init_errors(void)
   XEN_DEFINE_PROCEDURE(S_snd_error,   g_snd_error_w,   1, 0, 0, H_snd_error);
   XEN_DEFINE_PROCEDURE(S_snd_warning, g_snd_warning_w, 1, 0, 0, H_snd_warning);
 
+#if HAVE_GUILE
   #define H_snd_error_hook S_snd_error_hook " (error-message): called upon snd_error. \
 If it returns #t, Snd flushes the error (it assumes you've reported it via the hook:\n\
-  (add-hook! snd-error-hook\n\
-    (lambda (msg) (play \"bong.snd\") #f))"
+  (add-hook! " S_snd_error_hook "\n\
+    (lambda (msg) (" S_play " \"bong.snd\") #f))"
 
   #define H_snd_warning_hook S_snd_warning_hook " (warning-message): called upon snd_warning. \
 If it returns #t, Snd flushes the warning (it assumes you've reported it via the hook):\n\
   (define without-warnings\n\
     (lambda (thunk)\n\
       (define no-warning (lambda (msg) #t))\n\
-      (add-hook! snd-warning-hook no-warning)\n\
+      (add-hook! " S_snd_warning_hook " no-warning)\n\
       (thunk)\n\
-      (remove-hook! snd-warning-hook no-warning)))"
+      (remove-hook! " S_snd_warning_hook " no-warning)))"
+#else
+  #define H_snd_error_hook S_snd_error_hook " (error-message): called upon snd_error. \
+If it returns true, Snd flushes the error (it assumes you've reported it via the hook:\n\
+  $snd_error_hook.add-hook!(\"error\") do |msg|\n\
+    play(\"bong.snd\")\n\
+    false\n\
+  end"
+
+  #define H_snd_warning_hook S_snd_warning_hook " (warning-message): called upon snd_warning. \
+If it returns true, Snd flushes the warning (it assumes you've reported it via the hook)"
+#endif
 
   XEN_DEFINE_HOOK(snd_error_hook, S_snd_error_hook, 1, H_snd_error_hook);       /* arg = error-message */
   XEN_DEFINE_HOOK(snd_warning_hook, S_snd_warning_hook, 1, H_snd_warning_hook); /* arg = error-message */

@@ -13839,7 +13839,7 @@ rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
 
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-	  if test "$with_xp" != no; then
+	  if test "$with_xp" == yes; then
 	    echo "$as_me:$LINENO: checking for XmPrint support" >&5
 echo $ECHO_N "checking for XmPrint support... $ECHO_C" >&6
 	    cat >conftest.$ac_ext <<_ACEOF

@@ -1963,6 +1963,7 @@ void reflect_just_sounds_state(void)
 
 void g_init_gxfile(void)
 {
+#if HAVE_GUILE
   #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label): called when the mouse enters a file viewer or region label. \
 The 'type' is 0 for the current files list, 1 for previous files, and 2 for regions. The 'position' \
 is the scrolled list position of the label. The label itself is 'label'. We could use the 'finfo' procedure in examp.scm \
@@ -1972,6 +1973,11 @@ to popup file info as follows: \n\
     (if (not (= type 2))\n\
         (info-dialog name (finfo name)))))\n\
 See also nb.scm."
+#else
+  #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label): called when the mouse enters a file viewer or region label. \
+The 'type' is 0 for the current files list, 1 for previous files, and 2 for regions. The 'position' \
+is the scrolled list position of the label. The label itself is 'label'."
+#endif
 
   #define H_mouse_leave_label_hook S_mouse_leave_label_hook " (type position label): called when the mouse leaves a file viewer or region label"
 

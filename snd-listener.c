@@ -645,15 +645,20 @@ void g_init_listener(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_listener_prompt, g_listener_prompt_w, H_listener_prompt,
 				   S_setB S_listener_prompt, g_set_listener_prompt_w,  0, 0, 1, 0);
 
+#if HAVE_GUILE
   #define H_read_hook S_read_hook " (text): called each time a line is typed into the listener (triggered by the carriage return). \
 If it returns #t, Snd assumes you've dealt the text yourself, and does not try to evaluate it. \n\
 (define (read-listener-line prompt) \n\
   (let ((res #f)) \n\
-    (add-hook! read-hook (lambda (str) (set! res str) #t)) \n\
-    (snd-print prompt) \n\
-    (do () ((or (c-g?) res))) \n\
-    (reset-hook! read-hook) \n\
+    (add-hook! " S_read_hook " (lambda (str) (set! res str) #t)) \n\
+    (" S_snd_print " prompt) \n\
+    (do () ((or (" S_c_g ") res))) \n\
+    (reset-hook! " S_read_hook ") \n\
     res))"
+#else
+  #define H_read_hook S_read_hook " (text): called each time a line is typed into the listener (triggered by the carriage return). \
+If it returns true, Snd assumes you've dealt the text yourself, and does not try to evaluate it."
+#endif
   
   XEN_DEFINE_HOOK(read_hook, S_read_hook, 1, H_read_hook);
 }

@@ -782,69 +782,6 @@ int g_remove_from_menu(int which_menu, char *label)
   return(INVALID_MENU);
 }
 
-typedef struct {
-  char *label;
-  bool on;
-} smenu;
-
-static bool sensitize_menu(Widget w, void *usm)
-{
-  smenu *ism = (smenu *)usm;
-  char *name, *wname;
-  name = ism->label;
-  wname = XtName(w);
-  if ((wname) && (name) && (strcmp(name, wname) == 0) && (XtIsManaged(w)))
-    {
-      set_sensitive(w, ism->on);
-      return(true);
-    }
-  return(false);
-}
-
-int g_set_menu_sensitive(int which_menu, char *old_label, bool on)
-{
-  Widget top_menu;
-  smenu sm;
-  top_menu = menu_widget(which_menu);
-  if (top_menu)
-    {
-      sm.label = old_label;
-      sm.on = on;
-      or_over_children(top_menu, sensitize_menu, (void *)(&sm));
-      return(0);
-    }
-  return(INVALID_MENU);
-}
-
-static bool sensitive_menu_p(Widget w, void *usm)
-{
-  smenu *ism = (smenu *)usm;
-  char *name, *wname;
-  name = ism->label;
-  wname = XtName(w);
-  if ((wname) && (name) && (strcmp(name, wname) == 0) && (XtIsManaged(w)))
-    {
-      ism->on = is_sensitive(w);
-      return(true);
-    }
-  return(false);
-}
-
-int g_menu_is_sensitive(int which_menu, char *old_label)
-{
-  Widget top_menu;
-  smenu sm;
-  top_menu = menu_widget(which_menu);
-  if (top_menu)
-    {
-      sm.label = old_label;
-      sm.on = false;
-      or_over_children(top_menu, sensitive_menu_p, (void *)(&sm));
-      return(sm.on);
-    }
-  return(INVALID_MENU);
-}
-
 static void set_widget_name(Widget w, char *new_name)
 {
   /* based on XtName in Xt/Intrinsic.c, Xt/Create.c, and Xt/ResourceI.h */

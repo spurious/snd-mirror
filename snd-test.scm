@@ -10409,6 +10409,11 @@ EDITS: 5
 	      (if (not (eq? tag 'out-of-range)) (snd-display ";make-vct 0 -> ~A" tag)))
 	    (let ((ho (make-vct 3)))
 	      (vct-add! hi ho 4)))
+	  (let ((v0 (make-vct 5 .1))
+		(v1 (make-vct 6 .2)))
+	    (vct-add! v0 v1 2)
+	    (if (not (vequal v0 (vct .1 .1 .3 .3 .3)))
+		(snd-display ";vct-add + offset: ~A" v0)))
 	  ))
       (run-hook after-test-hook 6)
       ))
@@ -19410,8 +19415,6 @@ EDITS: 5
       (if with-gui
 	  (begin
 	    (add-to-menu mb "not here" (lambda () (snd-display ";oops")))
-	    (set! (menu-sensitive mb "not here") #f)
-	    (if (menu-sensitive mb "not here") (snd-display ";menu-sensitive?"))
 	    (remove-from-menu mb "not here")
 	    (add-to-menu 3 "Denoise" (lambda () (report-in-minibuffer "denoise")))))
       (reset-hook! help-hook)
@@ -39905,10 +39908,12 @@ EDITS: 2
 		    (if (not (eq? tag 'wrong-type-arg)) (snd-display ";XmClipboardBeginCopy type check: ~A" tag)))
 		  (let ((tag (catch #t (lambda () (XmRemoveProtocolCallback txtf XA_STRING XA_STRING #f 1)) (lambda args (car args)))))
 		    (if (not (eq? tag 'wrong-type-arg)) (snd-display ";XmRemoveProtocolCallback type check: ~A" tag)))
-		  (let ((tag (catch #t (lambda () (XmPrintToFile dpy "hi" #f #f)) (lambda args (car args)))))
-		    (if (not (eq? tag 'wrong-type-arg)) (snd-display ";XmPrintToFile type check: ~A" tag)))
-		  (let ((tag (catch #t (lambda () (XmPrintSetup txtf (list 'Screen 0) "hi" (list 1 2) #f)) (lambda args (car args)))))
-		    (if (not (eq? tag 'wrong-type-arg)) (snd-display ";XmPrintSetup type check: ~A" tag)))
+		  (if (provided? 'Xp)
+		      (begin
+			(let ((tag (catch #t (lambda () (XmPrintToFile dpy "hi" #f #f)) (lambda args (car args)))))
+			  (if (not (eq? tag 'wrong-type-arg)) (snd-display ";XmPrintToFile type check: ~A" tag)))
+			(let ((tag (catch #t (lambda () (XmPrintSetup txtf (list 'Screen 0) "hi" (list 1 2) #f)) (lambda args (car args)))))
+			  (if (not (eq? tag 'wrong-type-arg)) (snd-display ";XmPrintSetup type check: ~A" tag)))))
 		  (let ((tag (catch #t (lambda () (XSetStandardColormap dpy win 1 1)) (lambda args (car args)))))
 		    (if (not (eq? tag 'wrong-type-arg)) (snd-display ";XSetStandardColormap type check: ~A" tag)))
 		  (let ((tag (catch #t (lambda () (XSetRGBColormaps dpy win (list 'XStandardColormap 0) 1 #f)) (lambda args (car args)))))
@@ -39946,28 +39951,32 @@ EDITS: 2
 		  (let ((tag (catch #t (lambda () (XtSendSelectionRequest txtf '(Atom 0) #f)) (lambda args (car args)))))
 		    (if (not (eq? tag 'wrong-type-arg)) (snd-display ";XtSendSelectionRequest type check: ~A" tag)))
 		  
-		  (let ((tag (catch #t (lambda () (XpPutDocumentData dpy win "hi" 1 "hi" #f)) (lambda args (car args)))))
-		    (if (not (eq? tag 'wrong-type-arg)) (snd-display ";XpPutDocumentData type check: ~A" tag)))
-		  (let ((tag (catch #t (lambda () (XpGetDocumentData dpy (list 'XPContext 0) #f #f #f)) (lambda args (car args)))))
-		    (if (not (eq? tag 'wrong-type-arg)) (snd-display ";XpGetDocumentData type check: ~A" tag)))
-		  (let ((tag (catch #t (lambda () (XpSelectInput dpy (list 'XPContext 0) #f)) (lambda args (car args)))))
-		    (if (not (eq? tag 'wrong-type-arg)) (snd-display ";XpSelectInput type check: ~A" tag)))
-		  (let ((tag (catch #t (lambda () (XpInputSelected dpy (list 'XPContext 0) #f)) (lambda args (car args)))))
-		    (if (not (eq? tag 'wrong-type-arg)) (snd-display ";XpInputSelected type check: ~A" tag)))
-		  (let ((tag (catch #t (lambda () (XpGetPdmStartParams dpy win (list 'XPContext 0) dpy #f)) (lambda args (car args)))))
-		    (if (not (eq? tag 'wrong-type-arg)) (snd-display ";XpGetPdmStartParams type check: ~A" tag)))
-		  (let ((tag (catch #t (lambda () (XpSetImageResolution dpy (list 'XPContext 0) 1 #f)) (lambda args (car args)))))
-		    (if (not (eq? tag 'wrong-type-arg)) (snd-display ";XpSetImageResolution type check: ~A" tag)))
-		  (let ((tag (catch #t (lambda () (XpSendOneTicket dpy win (list 'XPContext 0) 1)) (lambda args (car args)))))
-		    (if (not (eq? tag 'wrong-type-arg)) (snd-display ";XpSendOneTicket type check: ~A" tag)))
-		  (let ((tag (catch #t (lambda () (XpGetAttributes dpy (list 'XPContext 0) #f)) (lambda args (car args)))))
-		    (if (not (eq? tag 'wrong-type-arg)) (snd-display ";XpGetAttribuyes type check: ~A" tag)))
-		  (let ((tag (catch #t (lambda () (XpNotifyPdm dpy win (list 'XPContext 0) dpy win 1)) (lambda args (car args)))))
-		    (if (not (eq? tag 'wrong-type-arg)) (snd-display ";XpNotifyPdm type check: ~A" tag)))
-		  (let ((tag (catch #t (lambda () (XpGetOneAttribute dpy (list 'XPContext 0) 1 #f)) (lambda args (car args)))))
-		    (if (not (eq? tag 'wrong-type-arg)) (snd-display ";XpGetOneAttribute type check: ~A" tag)))
-		  (let ((tag (catch #t (lambda () (XpSetAttributes dpy (list 'XPContext 0) 1 "hi" #f)) (lambda args (car args)))))
-		    (if (not (eq? tag 'wrong-type-arg)) (snd-display ";XpSetAttributes type check: ~A" tag)))
+		  (if (provided? 'Xp)
+		      (begin
+			(let ((val (XpQueryExtension (XtDisplay (cadr (main-widgets))))))
+			  (if (car val) (snd-display ";got Xp?? ~A" val)))
+			(let ((tag (catch #t (lambda () (XpPutDocumentData dpy win "hi" 1 "hi" #f)) (lambda args (car args)))))
+			  (if (not (eq? tag 'wrong-type-arg)) (snd-display ";XpPutDocumentData type check: ~A" tag)))
+			(let ((tag (catch #t (lambda () (XpGetDocumentData dpy (list 'XPContext 0) #f #f #f)) (lambda args (car args)))))
+			  (if (not (eq? tag 'wrong-type-arg)) (snd-display ";XpGetDocumentData type check: ~A" tag)))
+			(let ((tag (catch #t (lambda () (XpSelectInput dpy (list 'XPContext 0) #f)) (lambda args (car args)))))
+			  (if (not (eq? tag 'wrong-type-arg)) (snd-display ";XpSelectInput type check: ~A" tag)))
+			(let ((tag (catch #t (lambda () (XpInputSelected dpy (list 'XPContext 0) #f)) (lambda args (car args)))))
+			  (if (not (eq? tag 'wrong-type-arg)) (snd-display ";XpInputSelected type check: ~A" tag)))
+			(let ((tag (catch #t (lambda () (XpGetPdmStartParams dpy win (list 'XPContext 0) dpy #f)) (lambda args (car args)))))
+			  (if (not (eq? tag 'wrong-type-arg)) (snd-display ";XpGetPdmStartParams type check: ~A" tag)))
+			(let ((tag (catch #t (lambda () (XpSetImageResolution dpy (list 'XPContext 0) 1 #f)) (lambda args (car args)))))
+			  (if (not (eq? tag 'wrong-type-arg)) (snd-display ";XpSetImageResolution type check: ~A" tag)))
+			(let ((tag (catch #t (lambda () (XpSendOneTicket dpy win (list 'XPContext 0) 1)) (lambda args (car args)))))
+			  (if (not (eq? tag 'wrong-type-arg)) (snd-display ";XpSendOneTicket type check: ~A" tag)))
+			(let ((tag (catch #t (lambda () (XpGetAttributes dpy (list 'XPContext 0) #f)) (lambda args (car args)))))
+			  (if (not (eq? tag 'wrong-type-arg)) (snd-display ";XpGetAttribuyes type check: ~A" tag)))
+			(let ((tag (catch #t (lambda () (XpNotifyPdm dpy win (list 'XPContext 0) dpy win 1)) (lambda args (car args)))))
+			  (if (not (eq? tag 'wrong-type-arg)) (snd-display ";XpNotifyPdm type check: ~A" tag)))
+			(let ((tag (catch #t (lambda () (XpGetOneAttribute dpy (list 'XPContext 0) 1 #f)) (lambda args (car args)))))
+			  (if (not (eq? tag 'wrong-type-arg)) (snd-display ";XpGetOneAttribute type check: ~A" tag)))
+			(let ((tag (catch #t (lambda () (XpSetAttributes dpy (list 'XPContext 0) 1 "hi" #f)) (lambda args (car args)))))
+			  (if (not (eq? tag 'wrong-type-arg)) (snd-display ";XpSetAttributes type check: ~A" tag)))))
 		  
 		  (let ((tag (catch #t (lambda () (XReconfigureWMWindow dpy win 1 1 #f)) (lambda args (car args)))))
 		    (if (not (eq? tag 'wrong-type-arg)) (snd-display ";XReconfigureWMWindow type check: ~A" tag)))
@@ -40054,7 +40063,7 @@ EDITS: 2
 		(XmTextPaste txt)
 		(let ((dest (XmGetDestination (XtDisplay (cadr (main-widgets))))))
 		  (if (not (equal? txt dest)) (snd-display ";XmGetDestination: ~A (~A)" dest txt)))
-		(XmRedisplayWidget txt)
+		(if (provided? 'Xp) (XmRedisplayWidget txt))
 		(let ((val (XmTextGetString txt)))
 		  (if (not (string=? val "01234567189")) (snd-display ";XmTextCopy and Paste: ~A" val)))
 		(XmTextFieldSetSelection txtf 1 2 current-time)
@@ -40345,6 +40354,7 @@ EDITS: 2
 			(fneq (cadddr vals) 0.0))
 		    (snd-display ";xm-float resource vals: ~A" vals)))
 	      
+	      (XtAddCallback scl XmNvalueChangedCallback (lambda (w c i) #f))
 	      (XmScaleSetValue scl 25)
 	      (if (not (= (XmScaleGetValue scl) 25)) (snd-display ";XmScaleSetValue: ~A" (XmScaleGetValue scl)))
 	      (if (XmGetTearOffControl (car (menu-widgets))) (snd-display ";XmGetTearOffControl: ~A" (XmGetTearOffControl (car (menu-widgets)))))
@@ -40625,7 +40635,8 @@ EDITS: 2
 			  (list .value 'XmString '.value) (list .length 'int '.length #f))
 		    (list XmTextVerifyCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
 			  (list .doit 'Boolean '.doit) (list .currInsert 'int '.currInsert #f) (list .newInsert 'int '.newInsert #f) 
-			  (list .startPos 'int '.startPos #f) (list .endPos 'int '.endPos #f))
+			  (list .startPos 'int '.startPos #f) (list .endPos 'int '.endPos #f)
+			  (list .text 'XmTextBlock '.text #f))
 		    (list XmToggleButtonCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) (list .set 'int '.set))
 		    (list XmDestinationCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
 			  (list .selection 'Atom '.selection #f) (list .operation 'uchar '.operation) (list .flags 'int '.flags #f) 
@@ -40667,6 +40678,12 @@ EDITS: 2
 		    (list XmTransferDoneCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event)  
 			  (list .selection 'Atom '.selection #f) (list .transfer_id 'XtPointer '.transfer_id #f) (list .status 'int '.status #f) 
 			  (list .client_data 'XtPointer '.client_data #f))
+		    (list XmDisplayCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
+			  (list .font_name 'char* '.font_name #f) (list .tag 'int '.tag #f)
+			  (list .render_table 'XmRenderTable '.render_table #f)
+			  (list .rendition 'XmRendition '.rendition #f))
+		    (list XmDragStartCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
+			  (list .widget 'Widget '.widget #f) (list .doit 'Boolean '.doit))
 		    )))
 	      
 	      (for-each
@@ -40971,6 +40988,7 @@ EDITS: 2
 			  (if (not ((cadr n) (cadr val)))
 	                      (snd-display ";resource: ~A -> ~A" (car n) (cadr val)))))
 		      resource-list)
+		     (XtAddCallback wid XmNhelpCallback (lambda (w c i) #f))
 		     ))
 		 create-procs ques is)))
 	    
@@ -40999,9 +41017,62 @@ EDITS: 2
 	    (if (not (= (.request_code (XEvent -1)) 0)) (snd-display ";error request_code: ~A" (.request_code (XEvent -1))))
 	    (set! (.pad (XColor)) 1)
 	    
-	    (let ((val (XpQueryExtension (XtDisplay (cadr (main-widgets))))))
-	      (if (car val) (snd-display ";got Xp?? ~A" val)))
+	    (if (defined? 'XShapeQueryExtents)
+		(let* ((dpy (XtDisplay (cadr (main-widgets))))
+		       (win (XtWindow (cadr (main-widgets))))
+		       (vals (XShapeQueryExtents dpy win)))
+		  (if (not (= (car vals) 1))
+		      (snd-display ";XShapeQueryExtents: ~A" vals))
+		  (set! vals (XShapeGetRectangles dpy win 0))
+		  (if (not (list? vals)) (snd-display ";XShapeGetRectangles: ~A" vals))
+		  (set! vals (XShapeQueryExtension dpy))
+		  (if (not (equal? vals (list #t 64 0))) (snd-display ";XShapeQueryExtension: ~A" vals))
+		  (set! vals (XShapeQueryVersion dpy))
+		  (if (not (equal? vals (list #t 1 0))) (snd-display ";XShapeQueryVersion: ~A" vals))
+		  (if (XShapeOffsetShape dpy win 0 0 0) (snd-display ";XShapeOffsetShape?"))
+		  
+		  (let* ((attr (XSetWindowAttributes #f (basic-color) #f (highlight-color)))
+			 (newwin (XCreateWindow dpy win 10 10 100 100 3 
+						CopyFromParent InputOutput (list 'Visual CopyFromParent)
+						(logior CWBackPixel CWBorderPixel)
+						attr))
+			 (bitmap (XCreateBitmapFromData dpy win right-arrow 16 12))) ; right-arrow is in snd-motif.scm
+		    (XShapeCombineMask dpy newwin ShapeClip 0 0 bitmap ShapeSet)
+		    (XShapeCombineRectangles dpy newwin  ShapeUnion 0 0 
+					     (list (XRectangle 0 0 10 10) (XRectangle 0 0 10 30)) 2
+					     ShapeSet ShapeBounding)
+		    (let ((newerwin (XCreateWindow dpy win 10 10 100 100 3 
+						   CopyFromParent InputOutput (list 'Visual CopyFromParent)
+						   (logior CWBackPixel CWBorderPixel)
+						   attr)))
+		      (XShapeCombineShape dpy newerwin ShapeIntersect 0 0 newwin ShapeSet ShapeClip))
+		    (let* ((reg1 (XPolygonRegion (list (XPoint 2 2) (XPoint 10 2) (XPoint 10 10) (XPoint 2 10)) 4 WindingRule)))
+		      (XShapeCombineRegion dpy newwin ShapeUnion 0 0 reg1 ShapeSet)))))
 	    
+	    (let ((classes (list xmArrowButtonWidgetClass xmBulletinBoardWidgetClass xmCascadeButtonWidgetClass xmCommandWidgetClass
+				 xmDrawingAreaWidgetClass xmDrawnButtonWidgetClass xmFileSelectionBoxWidgetClass xmFormWidgetClass
+				 xmFrameWidgetClass xmLabelWidgetClass xmListWidgetClass xmMainWindowWidgetClass xmManagerWidgetClass
+				 xmMessageBoxWidgetClass xmPanedWindowWidgetClass xmPrimitiveWidgetClass xmPushButtonWidgetClass
+				 xmRowColumnWidgetClass xmScaleWidgetClass xmScrollBarWidgetClass xmScrolledWindowWidgetClass
+				 xmSelectionBoxWidgetClass xmSeparatorWidgetClass xmTextFieldWidgetClass xmTextWidgetClass 
+				 xmToggleButtonWidgetClass xmContainerWidgetClass xmComboBoxWidgetClass xmNotebookWidgetClass))
+		  (wids '()))
+	      (for-each
+	       (lambda (class)
+		 (let* ((shell (cadr (main-widgets)))
+			(wid (XtCreateWidget "hiho" class shell '())))
+		   (set! wids (cons wid wids))
+		   (XtAddCallback wid XmNhelpCallback (lambda (w c i) "help!"))))
+	       classes)
+	      (for-each
+	       (lambda (w)
+		 (XtCallCallbacks w XmNhelpCallback #f))
+	       wids))
+
+	    (let ((key (XStringToKeysym "Cancel")))
+	      (if (not (= (cadr key) XK_Cancel))
+		  (snd-display ";XStringToKeysym ~A ~A" key XK_Cancel)))
+
 	    (let* ((win (XtWindow (cadr (main-widgets))))
 		   (xm-procs-1
 		    ;; these can't be called in this context:
@@ -41012,13 +41083,14 @@ EDITS: 2
 		     XPutBackEvent XNextEvent
 		     XtAppProcessEvent XtAppMainLoop XtAppAddActions XtAppNextEvent XtAppPeekEvent
 		     
-		     XpStartPage XpEndPage XpCancelPage XpStartJob XpEndJob XpCancelJob XpStartDoc XpEndDoc
-		     XpCancelDoc XpRehashPrinterList XpCreateContext XpSetContext XpGetContext XpDestroyContext
-		     XpGetLocaleNetString XpNotifyPdm XpSendAuth XpGetImageResolution XpGetAttributes XpSetAttributes
-		     XpGetOneAttribute XpGetScreenOfContext XpFreePrinterList XpQueryVersion XpQueryExtension
-		     XpQueryScreens XpGetPdmStartParams XpGetAuthParams XpSendOneTicket XpGetPageDimensions
-		     XpSetImageResolution XpGetPrinterList XpSelectInput XpInputSelected XpPutDocumentData
-		     XpGetDocumentData XtSetArg XtManageChildren XtManageChild XtUnmanageChildren XtUnmanageChild
+;		     XpStartPage XpEndPage XpCancelPage XpStartJob XpEndJob XpCancelJob XpStartDoc XpEndDoc
+;		     XpCancelDoc XpRehashPrinterList XpCreateContext XpSetContext XpGetContext XpDestroyContext
+;		     XpGetLocaleNetString XpNotifyPdm XpSendAuth XpGetImageResolution XpGetAttributes XpSetAttributes
+;		     XpGetOneAttribute XpGetScreenOfContext XpFreePrinterList XpQueryVersion XpQueryExtension
+;		     XpQueryScreens XpGetPdmStartParams XpGetAuthParams XpSendOneTicket XpGetPageDimensions
+;		     XpSetImageResolution XpGetPrinterList XpSelectInput XpInputSelected XpPutDocumentData
+;		     XpGetDocumentData 
+		     XtSetArg XtManageChildren XtManageChild XtUnmanageChildren XtUnmanageChild
 		     XtDispatchEvent XtCallAcceptFocus XtIsSubclass XtIsObject XtIsManaged XtIsRealized
 		     XtIsSensitive XtOwnSelection XtOwnSelectionIncremental XtMakeResizeRequest XtTranslateCoords
 		     XtKeysymToKeycodeList XtParseTranslationTable XtParseAcceleratorTable XtOverrideTranslations XtAugmentTranslations
@@ -41134,8 +41206,9 @@ EDITS: 2
 		     IsModifierKey XmCreateMessageBox XmCreateMessageDialog XmCreateErrorDialog
 		     XmCreateInformationDialog XmCreateQuestionDialog XmCreateWarningDialog XmCreateWorkingDialog
 		     XmCreateTemplateDialog XmMessageBoxGetChild XmCreateArrowButtonGadget XmCreateArrowButton
-		     XmCreateNotebook XmNotebookGetPageInfo XmPrintSetup XmPrintToFile XmPrintPopupPDM
-		     XmRedisplayWidget XmTransferSetParameters XmTransferValue XmCreateComboBox
+		     XmCreateNotebook XmNotebookGetPageInfo 
+;		     XmRedisplayWidget XmPrintSetup XmPrintToFile XmPrintPopupPDM
+		     XmTransferSetParameters XmTransferValue XmCreateComboBox
 		     XmCreateDropDownComboBox XmCreateDropDownList XmComboBoxAddItem XmComboBoxDeletePos
 		     XmComboBoxSelectItem XmComboBoxSetItem XmComboBoxUpdate XmCreateContainer
 		     XmContainerGetItemChildren XmContainerRelayout XmContainerReorder XmContainerCut XmContainerCopy
@@ -41227,7 +41300,7 @@ EDITS: 2
 		     XmStringExtent XmStringLineCount XmStringDraw XmStringDrawImage XmStringDrawUnderline
 		     XmGetDestination XmIsTraversable XmGetVisibility XmGetTabGroup XmGetFocusWidget
 		     XmProcessTraversal XmCreateMenuShell XmIsMessageBox
-		     XmIsArrowButtonGadget XmIsArrowButton XmIsNotebook XmIsPrintShell XmIsComboBox XmIsContainer
+		     XmIsArrowButtonGadget XmIsArrowButton XmIsNotebook XmIsComboBox XmIsContainer
 		     XmIsGrabShell XmIsIconGadget XmIsIconHeader XmIsPanedWindow XmIsBulletinBoard XmIsPrimitive
 		     XmIsCascadeButtonGadget XmIsCascadeButton XmIsPushButtonGadget XmIsPushButton XmIsCommand
 		     XmIsRowColumn XmIsScale XmIsScreen XmIsScrollBar XmIsDialogShell XmIsScrolledWindow XmIsDisplay
@@ -41241,10 +41314,12 @@ EDITS: 2
 		     XModifierKeymap? Depth? Display? Drawable? Font? GC? KeySym? Pixel? Pixmap? Region?
 		     Time? Visual? Window? XFontProp? XFontSet? XFontStruct? XGCValues? XImage? XVisualInfo?
 		     XWMHints? XWindowAttributes? XWindowChanges? KeyCode? XContext? XCharStruct? XTextItem?
-		     XStandardColormap? XPContext? Widget? XmStringContext? WidgetClass? XmString?
+		     XStandardColormap? 
+;		     XPContext? 
+		     Widget? XmStringContext? WidgetClass? XmString?
 		     XmToggleButton? XmDrawingArea? XmPushButton? XmTextField? XmFileSelectionBox? XmText?
 		     XmFrame? XmLabel? XmList? XmArrowButton? XmScrollBar? XmCommand? XmScale? XmRowColumn?
-		     XmTab? XmNotebook? XmPrintShell? XmComboBox? XmContainer? XmIconHeader?
+		     XmTab? XmNotebook? XmComboBox? XmContainer? XmIconHeader?
 		     XmGrabShell? XmRendition? XmRenderTable? XmIconGadget? XmTabList? XmParseMapping?
 		     XmPanedWindow? XmScrolledWindow? XmCascadeButton? XmForm? XmBulletinBoard? XmScreen?
 		     XmDialogShell? XmDisplay? XmSelectionBox? XmDragContext? XmDragIconObjectClass? XmSeparator?
@@ -41369,7 +41444,9 @@ EDITS: 2
 			    .killid .data .min_height .max_height .min_width .max_width .height_inc .width_inc .page_number
 			    .page_widget .status_area_widget .major_tab_widget .minor_tab_widget .source_data .location_data .parm
 			    .parm_format .parm_length .parm_type .transfer_id .destination_data .remaining .item_or_text .auto_selection_type
-			    .new_outline_state .prev_page_number .prev_page_widget .rendition .render_table .last_page .crossed_boundary
+			    .new_outline_state .prev_page_number .prev_page_widget .rendition .render_table 
+;			    .last_page 
+			    .crossed_boundary
 			    .client_data .status .font_name .tag .traversal_destination .dragProtocolStyle .direction .reason
 			    .timeStamp .operation .operations .dropSiteStatus .dropAction .iccHandle .completionStatus .dragContext
 			    .animate .length .click_count .widget .item_position .callbackstruct
@@ -41403,7 +41480,9 @@ EDITS: 2
 			    '.killid '.data '.min_height '.max_height '.min_width '.max_width '.height_inc '.width_inc '.page_number
 			    '.page_widget '.status_area_widget '.major_tab_widget '.minor_tab_widget '.source_data '.location_data '.parm
 			    '.parm_format '.parm_length '.parm_type '.transfer_id '.destination_data '.remaining '.item_or_text '.auto_selection_type
-			    '.new_outline_state '.prev_page_number '.prev_page_widget '.rendition '.render_table '.last_page '.crossed_boundary
+			    '.new_outline_state '.prev_page_number '.prev_page_widget '.rendition '.render_table 
+;			    '.last_page 
+			    '.crossed_boundary
 			    '.client_data '.status '.font_name '.tag '.traversal_destination '.dragProtocolStyle '.direction '.reason
 			    '.timeStamp '.operation '.operations '.dropSiteStatus '.dropAction '.iccHandle '.completionStatus '.dragContext
 			    '.animate '.length '.click_count '.widget '.item_position '.callbackstruct
@@ -41470,26 +41549,11 @@ EDITS: 2
 				  (snd-display ";(set ~A ~A) -> ~A" name arg tag))))))
 		    struct-accessors
 		    struct-accessor-names))
-		 (list dpy win '(Atom 0) '(Colormap 0) 1.5 "/hiho" 1234 #f #\c '(Time 0) '(Font 0) (make-vector 0))))
+		 (list dpy win '(Atom 0) '(Colormap 0) 1.5 "/hiho" 1234 #f #\c '(Time 0) '(Font 0) (make-vector 0) '(Cursor 1))))
 	      (gc))
 	    ))
 
-      (if (defined? 'XShapeQueryExtents)
-	  (let* ((dpy (XtDisplay (cadr (main-widgets))))
-		 (win (XtWindow (cadr (main-widgets))))
-		 (vals (XShapeQueryExtents dpy win)))
-	    (if (not (= (car vals) 1))
-		(snd-display ";XShapeQueryExtents: ~A" vals))
-	    (set! vals (XShapeGetRectangles dpy win 0))
-	    (if (not (list? vals)) (snd-display ";XShapeGetRectangles: ~A" vals))
-	    (set! vals (XShapeQueryExtension dpy))
-	    (if (not (equal? vals (list #t 64 0))) (snd-display ";XShapeQueryExtension: ~A" vals))
-	    (set! vals (XShapeQueryVersion dpy))
-	    (if (not (equal? vals (list #t 1 0))) (snd-display ";XShapeQueryVersion: ~A" vals))
-	    (if (XShapeOffsetShape dpy win 0 0 0) (snd-display ";XShapeOffsetShape?"))
-	    ;; TODO: XShapeCombine Region|Shape|Mask|Rectangles
-	    ))
-)
+	  )
       (run-hook after-test-hook 25)
       ))
 
@@ -41753,7 +41817,7 @@ EDITS: 2
 		     main-widgets make-color make-graph-data make-mix-sample-reader make-player make-region
 		     make-region-sample-reader make-sample-reader make-track-sample-reader map-chan mark-color mark-name
 		     mark-sample mark-sync mark-sync-max mark-home marks mark?  max-transform-peaks max-regions
-		     maxamp menu-sensitive menu-widgets minibuffer-history-length min-dB mix mixes mix-amp mix-amp-env
+		     maxamp menu-widgets minibuffer-history-length min-dB mix mixes mix-amp mix-amp-env
 		     mix-tag-position mix-chans mix-color mix-track mix-frames mix-locked? mix? mix-dialog mix-position track-dialog
 		     track-dialog-track mix-dialog-mix mix-inverted?
 		     mix-region mix-sample-reader?  mix-selection mix-sound mix-home mix-speed mix-tag-height mix-tag-width
@@ -41866,7 +41930,7 @@ EDITS: 2
 			 filter-control-in-hz filter-control-order filter-control-waveform-color filter-control?  foreground-color
 			 graph-color graph-cursor graph-style lisp-graph? graphs-horizontal highlight-color
 			 just-sounds left-sample listener-color listener-font listener-prompt listener-text-color mark-color
-			 mark-name mark-sample mark-sync max-transform-peaks max-regions menu-sensitive min-dB mix-amp
+			 mark-name mark-sample mark-sync max-transform-peaks max-regions min-dB mix-amp
 			 mix-amp-env mix-tag-position mix-chans mix-color mix-locked? mix-inverted? mix-position
 			 mix-speed mix-tag-height mix-tag-width mix-tag-y mix-waveform-height transform-normalization
 			 equalize-panes position-color recorder-in-device previous-files-sort print-length pushed-button-color

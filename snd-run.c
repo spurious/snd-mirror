@@ -11043,10 +11043,14 @@ void g_init_run(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_optimization, g_optimization_w, H_optimization,
 				   S_setB S_optimization, g_set_optimization_w,  0, 0, 1, 0);
 
+#if HAVE_GUILE
   #define H_optimization_hook S_optimization_hook " (msg): called if the run macro encounters \
 something it can't optimize.  'msg' is a string description of the offending form:\n\
   (add-hook! optimization-hook (lambda (msg) (snd-print msg)))\n\
 You can often slightly rewrite the form to make run happy."
+#else
+#define H_optimization_hook S_optimization_hook " (msg): has no effect since 'run' is Guile-specific."
+#endif
 
   XEN_DEFINE_HOOK(optimization_hook, S_optimization_hook, 1, H_optimization_hook);      /* arg = message */
 

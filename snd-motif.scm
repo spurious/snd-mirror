@@ -2701,9 +2701,7 @@ Reverb-feedback sets the scaler on the feedback.
   (variable-display (* k .02) wid2))
 !#
 
-;;; TODO: if many vars, scrolled window?
 ;;; TODO: bess examples via vardpy
-
 
 (define with-minmax-button
   (let ((maxed-snds '()))

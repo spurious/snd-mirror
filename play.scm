@@ -9,8 +9,6 @@
 ;;; play-with-amps -- play channels with individually settable amps
 ;;; play-sine and play-sines -- produce tones direct to DAC
 
-;;; TODO: functional approach to "mixer"
-
 ;;; see also play-syncd-marks and play-between-marks in marks.scm
 
 

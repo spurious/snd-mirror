@@ -1300,33 +1300,6 @@ static int remove_option(int which_menu, char *label)
   return(INVALID_MENU);
 }
 
-int g_menu_is_sensitive(int which_menu, char *old_label)
-{
-  int i;
-  for (i = 0; i < added_options_pos; i++)
-    if ((added_options_menus[i] == which_menu) && 
-	(added_options_names[i]) &&
-	(strcmp(old_label, added_options_names[i]) == 0) && 
-	(added_options[i]))
-      return(is_sensitive(added_options[i]));
-  return(INVALID_MENU);
-}
-
-int g_set_menu_sensitive(int which_menu, char *old_label, bool on)
-{
-  int i;
-  for (i = 0; i < added_options_pos; i++)
-    if ((added_options_menus[i] == which_menu) && 
-	(added_options_names[i]) &&
-	(strcmp(old_label, added_options_names[i]) == 0) && 
-	(added_options[i]))
-      {
-	set_sensitive(added_options[i], on);
-	return(0);
-      }
-  return(INVALID_MENU);
-}
-
 int g_add_to_main_menu(char *label, int slot)
 {
   GtkWidget *m, *mc;

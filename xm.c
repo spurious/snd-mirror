@@ -7,10 +7,11 @@
 #include <config.h>
 #endif
 
-#define XM_DATE "8-Mar-04"
+#define XM_DATE "22-Mar-04"
 
 /* HISTORY: 
  *
+ *   22-Mar:    added feature 'Xp to indicate that the Xp stuff is included.
  *   8-Mar:     XtAppAddActionHook arity bugfix.
  *   12-Jan:    resources for XmFontSelector.
  *   8-Jan:     various changes for the SGI C compiler, thanks to Avi Bercovich.
@@ -703,6 +704,8 @@ XM_Make(XmTopLevelEnterCallbackStruct)
 XM_Make(XmPopupHandlerCallbackStruct)
 XM_Make(XmSelectionCallbackStruct)
 XM_Make(XmTransferDoneCallbackStruct)
+XM_Make(XmDisplayCallbackStruct)
+XM_Make(XmDragStartCallbackStruct)
 #endif
 
 static XEN gxm_XmTextBlock(void) 
@@ -758,6 +761,8 @@ static void define_makes(void)
   XM_Declare(XmPopupHandlerCallbackStruct);
   XM_Declare(XmSelectionCallbackStruct);
   XM_Declare(XmTransferDoneCallbackStruct);
+  XM_Declare(XmDisplayCallbackStruct);
+  XM_Declare(XmDragStartCallbackStruct);
 #endif
 }
 
@@ -10168,15 +10173,16 @@ actually returned."
 			   XEN_TO_C_Atom(arg7), 
 			   &a, &ret, &len, &bytes, &data);
   if ((a != (Atom)None) && (len > 0))
-#if HAVE_GUILE && HAVE_SCM_MEM2STRING
     {
+#if HAVE_GUILE && HAVE_SCM_MEM2STRING
       if (a == XA_STRING)
 	result = C_TO_XEN_STRING((char *)data);
       else result = scm_mem2string((char *)data, len * ret / 8); /* apparently ret is in bits? */
-    }
 #else
-    result = C_TO_XEN_STRING((char *)data);
+      result = C_TO_XEN_STRING((char *)data);
 #endif
+      if (data) XFree(data);
+    }
   return(XEN_LIST_6(C_TO_XEN_INT(val),
 		    C_TO_XEN_Atom(a),
 		    C_TO_XEN_INT(ret),
@@ -19888,7 +19894,7 @@ static XEN gxm_cursor(XEN ptr)
 static XEN gxm_set_cursor(XEN ptr, XEN val)
 {
   XM_SET_FIELD_ASSERT_TYPE(XEN_XSetWindowAttributes_P(ptr), ptr, XEN_ARG_1, "cursor", "XSetWindowAttributes");
-  XM_SET_FIELD_ASSERT_TYPE(XEN_Cursor_P(val), val, XEN_ARG_2, "cursor", "a Pixel");
+  XM_SET_FIELD_ASSERT_TYPE(XEN_Cursor_P(val), val, XEN_ARG_2, "cursor", "a Cursor");
   (XEN_TO_C_XSetWindowAttributes(ptr))->cursor = XEN_TO_C_Cursor(val);
   return(val);
 }
@@ -22331,10 +22337,11 @@ static XEN gxm_text(XEN ptr)
   if (XEN_XmTextVerifyCallbackStruct_P(ptr)) 
     {
       tb = (XmTextBlock)(XEN_TO_C_XmTextVerifyCallbackStruct(ptr))->text;
-      return(XEN_LIST_2(C_TO_XEN_STRING(tb->ptr),
-			C_TO_XEN_ULONG(tb->format)));
+      if (tb)
+	return(XEN_LIST_2(C_TO_XEN_STRING(tb->ptr),
+			  C_TO_XEN_ULONG(tb->format)));
     }
-  XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "text", "a struct with a text field");
+  else XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "text", "an XmTextVerifyCallbackStruct");
   return(XEN_FALSE);
 }
 
@@ -26031,6 +26038,9 @@ static bool xm_already_inited = false;
                             RXmSetProtocolHooks(s, RXInternAtom(RXtDisplay(s), \"WM_PROTOCOLS\", false), p, preh, prec, posth, postc); end");
 #endif
       XEN_DEFINE_PROCEDURE(S_add_resource, g_add_resource_w, 2, 0, 0, H_add_resource);
+#endif
+#if HAVE_XM_XP
+      XEN_YES_WE_HAVE("Xp");
 #endif
       XEN_YES_WE_HAVE("xm");
 #if (!WITH_GTK_AND_X11)

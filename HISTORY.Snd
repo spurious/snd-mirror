@@ -1,7 +1,7 @@
 Snd change log
 
   19-Mar:    change-window-property is now a procedure-with-setter named window-property.
-             removed change-menu-label.
+             removed change-menu-label, menu-sensitive.
   16-Mar:    def-optkey-fun in ws.scm.
   15-Mar:    exported mus_optkey_* from sndlib and began incorporating optkey args into Snd.
              region-position and optional channel arg to region-frames suggested by Matt Wright

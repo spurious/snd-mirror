@@ -544,7 +544,7 @@ else
 	       with_motif=no
               ])
 	    ])
-	  if test "$with_xp" != no; then
+	  if test "$with_xp" == yes; then
 	    AC_MSG_CHECKING([for XmPrint support])
 	    AC_COMPILE_IFELSE(
 	      [AC_LANG_PROGRAM([#include <Xm/Print.h>],

@@ -87,6 +87,45 @@
 	      :general t
 	      :sortby (string-downcase (subseq str (1+ mid))))))
 
+(defvar scm-variable-names
+  (list "after-graph-hook" "lisp-graph-hook" "before-transform-hook" "mix-release-hook" "stop-playing-channel-hook" "save-hook" "mus-error-hook"
+	"mouse-enter-graph-hook" "mouse-leave-graph-hook" "open-raw-sound-hook" "select-channel-hook" "after-open-hook" "close-hook" "drop-hook" "update-hook"
+	"just-sounds-hook" "mark-click-hook" "mark-drag-hook" "name-click-hook" "open-hook" "help-hook"
+	"output-comment-hook" "play-hook" "snd-error-hook" "snd-warning-hook" "start-hook" "start-playing-hook" "stop-playing-hook"
+	"stop-playing-region-hook" "mouse-enter-listener-hook" "mouse-leave-listener-hook" "window-property-changed-hook" "select-sound-hook"
+	"print-hook" "exit-hook" "output-name-hook" "during-open-hook" "transform-hook" "mouse-enter-label-hook" "mouse-leave-label-hook" "initial-graph-hook"
+	"graph-hook" "key-press-hook" "mouse-drag-hook" "mouse-press-hook" "enved-hook" "read-hook" "mouse-click-hook" "new-widget-hook"
+	"mark-hook" "previous-files-select-hook" "dac-hook" "stop-dac-hook" "stop-playing-selection-hook" "after-apply-hook" "before-apply-hook"
+	"draw-mark-hook" "bad-header-hook" "save-state-hook" "new-sound-hook" "color-hook" "orientation-hook" "listener-click-hook"
+	"mix-click-hook" "after-save-state-hook" "mouse-enter-text-hook" "mouse-leave-text-hook" "optimization-hook" "mix-drag-hook"
+	"mark-drag-triangle-hook" "start-playing-selection-hook" "recorder-file-hook" "selection-changed-hook" "memo-sound"))
+
+(defvar scm-constant-names
+  (list "mus-out-format" "mus-unsupported" "mus-next" "mus-aifc" "mus-riff" "mus-nist" "mus-raw" "mus-ircam" "mus-aiff" "mus-bicsf"
+	"mus-voc" "mus-svx" "mus-soundfont" "mus-unknown" "mus-bshort" "mus-lshort" "mus-mulaw" "mus-alaw" "mus-byte" "mus-ubyte"
+	"mus-bfloat" "mus-lfloat" "mus-bint" "mus-lint" "mus-bintn" "mus-lintn" "mus-b24int" "mus-l24int" "mus-bdouble" "mus-ldouble"
+	"mus-ubshort" "mus-ulshort" "mus-bdouble-unscaled" "mus-ldouble-unscaled" "mus-bfloat-unscaled" "mus-lfloat-unscaled"
+	"mus-audio-default" "mus-audio-duplex-default" "mus-audio-line-out" "mus-audio-line-in" "mus-audio-microphone"
+	"mus-audio-speakers" "mus-audio-dac-out" "mus-audio-adat-in" "mus-audio-aes-in" "mus-audio-digital-in" "mus-audio-digital-out"
+	"mus-audio-adat-out" "mus-audio-aes-out" "mus-audio-dac-filter" "mus-audio-mixer" "mus-audio-line1" "mus-audio-line2"
+	"mus-audio-line3" "mus-audio-aux-input" "mus-audio-cd" "mus-audio-aux-output" "mus-audio-spdif-in" "mus-audio-spdif-out"
+	"mus-audio-direction" "mus-audio-samples-per-channel" "mus-audio-amp" "mus-audio-srate" "mus-audio-channel" "mus-audio-format"
+	"mus-audio-port" "mus-audio-imix" "mus-audio-igain" "mus-audio-reclev" "mus-audio-pcm" "mus-audio-pcm2" "mus-audio-ogain"
+	"mus-audio-line" "mus-audio-synth" "mus-audio-bass" "mus-audio-treble" "rectangular-window" "hann-window" "welch-window"
+	"parzen-window" "bartlett-window" "hamming-window" "blackman2-window" "blackman3-window" "blackman4-window" "exponential-window"
+	"riemann-window" "kaiser-window" "cauchy-window" "poisson-window" "gaussian-window" "tukey-window" "dolph-chebyshev-window"
+	"mus-linear" "mus-sinusoidal" "zoom-focus-left" "zoom-focus-right" "zoom-focus-active" "zoom-focus-middle" "graph-once"
+	"graph-as-wavogram" "graph-as-sonogram" "graph-as-spectrogram" "cursor-cross" "cursor-line" "graph-lines" "graph-dots"
+	"graph-filled" "graph-dots-and-lines" "graph-lollipops" "x-axis-in-seconds" "x-axis-in-samples" "x-axis-in-beats"
+	"x-axis-as-percentage" "show-all-axes" "show-all-axes-unlabelled" "show-no-axes" "show-x-axis" "show-x-axis-unlabelled"
+	"cursor-in-view" "cursor-on-left" "cursor-on-right" "cursor-in-middle" "keyboard-no-action" "fourier-transform"
+	"wavelet-transform" "haar-transform" "cepstrum" "hadamard-transform" "walsh-transform" "autocorrelation" "dont-normalize"
+	"normalize-by-channel" "normalize-by-sound" "normalize-globally" "current-edit-position" "channels-separate"
+	"channels-combined" "channels-superimposed" "speed-control-as-float" "speed-control-as-ratio" "speed-control-as-semitone"
+	"enved-amplitude" "enved-spectrum" "enved-srate" "envelope-linear" "envelope-exponential" "enved-add-point"
+	"enved-delete-point" "enved-move-point" "time-graph" "transform-graph" "lisp-graph" "copy-context" "cursor-context"
+	"selection-context" "mark-context"))
+
 (defun scm->rb (scm-name)
   (if (string= scm-name "frame*")
       "frame_multiply"
@@ -99,9 +138,20 @@
 	  (if (string= scm-name "in")
 	      "call_in"
 	    (let* ((len (length scm-name))
-		   (rb-name (make-string len :initial-element #\space))
+		   (var-case (member scm-name scm-variable-names :test #'string=))
+		   (strlen (if var-case (1+ len) len))
+		   (rb-name (make-string strlen :initial-element #\space))
 		   (i 0)
 		   (j 0))
+	      (if var-case
+		  (progn
+		    (setf (char rb-name 0) #\$)
+		    (setf j 1))
+		(if (member scm-name scm-constant-names :test #'string=)
+		    (progn
+		      (setf (char rb-name 0) (char-upcase (char scm-name 0)))
+		      (setf i 1)
+		      (setf j 1))))
 	      (do ()
 		  ((>= i len))
 		(let ((c (char scm-name i)))
@@ -122,7 +172,9 @@
 			(setf (char rb-name j) #\_)
 			(incf i)
 			(incf j))))))
-	      rb-name)))))))
+	      (if (/= j strlen)
+		  (subseq rb-name 0 j)
+		rb-name))))))))
 
 (defun clean-up-xref (xref file)
   (let* ((len (length xref))

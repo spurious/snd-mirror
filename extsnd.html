@@ -4568,7 +4568,12 @@ size in pixels of dots when graphing with dots (default: 1); this affects <a hre
 </td></tr>
 <tr><td></td><td>
 <b>env-channel</b> is the <a class=quiet href="#regularizedargs">regularized</a> version of <a href="#envsound">env-sound</a>.  <i>clm-env-gen</i>
-can be either a CLM envelope generator or an envelope (a list of breakpoints). <code>(env-channel '(0 0 1 1 2 0))</code>
+can be either a CLM envelope generator or an envelope (a list of breakpoints). <code>(env-channel '(0 0 1 1 2 0))</code>.
+To get .1 seconds of attack and decay:
+<pre>
+  (let ((dur (/ (frames) (srate)))) 
+    (env-channel (list 0 0  .1 1  (- dur .1) 1  dur 0)))
+</pre>
 <br><br>
 <A NAME="envexamples"></a>
 An 'envelope' in Snd is a list of breakpoints. It can be packaged as a CLM generator (an 'env') via <a href="clm.html#make-env">make-env</a>.
@@ -8959,12 +8964,6 @@ As a slightly more elaborate example, the following adds a Delete option to the 
 <tr><td colspan=2><code><a class=def name="removefrommenu">remove-from-menu</a> (top-menu menu-label)</code></td></tr>
 <tr><td></td><td>
 remove menu <i>menu-label</i> from the top top-level menu whose index is <i>top-menu</i>.  See examp.scm or snd-motif.scm.
-</td></tr>
-
-<!-- menu-sensitive -->
-<tr><td colspan=2><code><a class=def name="menusensitive">menu-sensitive</a> (top-menu label)</code></td></tr>
-<tr><td></td><td>
-#t if the given menu is currently sensitive (clickable).  This can be set.
 </td></tr>
 </table>
 

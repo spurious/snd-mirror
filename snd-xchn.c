@@ -1362,14 +1362,26 @@ void g_init_gxchn(void)
 {
   XEN_DEFINE_PROCEDURE(S_channel_widgets, g_channel_widgets_w, 0, 2, 0, H_channel_widgets);
 
+#if HAVE_GUILE
   #define H_mouse_enter_graph_hook S_mouse_enter_graph_hook " (snd chn): called when the mouse \
 enters the drawing area (graph pane) of the given channel.\n\
-  (add-hook! mouse-enter-graph-hook\n\
+  (add-hook! " S_mouse_enter_graph_hook "\n\
     (lambda (snd chn)\n\
-      (focus-widget (car (channel-widgets snd chn)))))"
+      (" S_focus_widget " (car (" S_channel_widgets " snd chn)))))"
 
   #define H_mouse_leave_graph_hook S_mouse_leave_graph_hook " (snd chn): is called when the mouse \
 leaves the drawing area (graph pane) of the given channel."
+#else
+
+  #define H_mouse_enter_graph_hook S_mouse_enter_graph_hook " (snd chn): called when the mouse \
+enters the drawing area (graph pane) of the given channel.\n\
+  $mouse_enter_graph_hook.add-hook!(\"focus\") do |snd chn|\n\
+    focus_widget(channel_widgets(snd, chn)[0])\n\
+    end"
+
+  #define H_mouse_leave_graph_hook S_mouse_leave_graph_hook " (snd chn): called when the mouse \
+leaves the drawing area (graph pane) of the given channel."
+#endif
 
   XEN_DEFINE_HOOK(mouse_enter_graph_hook, S_mouse_enter_graph_hook, 2, H_mouse_enter_graph_hook);    /* args = snd chn */
   XEN_DEFINE_HOOK(mouse_leave_graph_hook, S_mouse_leave_graph_hook, 2, H_mouse_leave_graph_hook);    /* args = snd chn */

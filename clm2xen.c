@@ -2889,9 +2889,9 @@ static XEN g_partials2polynomial(XEN amps, XEN ukind)
   #define H_partials2polynomial "(" S_partials2polynomial " partials (kind 1)): \
 produce a Chebyshev polynomial suitable for use with the " S_polynomial " generator \
 to create (via waveshaping) the harmonic spectrum described by the partials argument:\n\
-   (let ((v0 (partials->polynomial '(1 1 2 1)))\n\
-         (os (make-oscil)))\n\
-     (polynomial v0 (oscil os)))"
+   (let ((v0 (" S_partials2polynomial " '(1 1 2 1)))\n\
+         (os (" S_make_oscil ")))\n\
+     (" S_polynomial " v0 (" S_oscil " os)))"
 
   int npartials, kind, len = 0;
   Float *partials, *wave;

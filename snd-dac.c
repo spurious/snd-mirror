@@ -6,8 +6,6 @@
  *   channels can come and go as a play is in progress
  */
 
-/* SOMEDAY: script to produce CD */
-
 #define NO_SUCH_PLAYER XEN_ERROR_TYPE("no-such-player")
 
 /* -------------------------------- per-channel control-panel state -------------------------------- */

@@ -980,11 +980,19 @@ XEN_NARGIFY_0(g_goto_listener_end_w, g_goto_listener_end)
 
 void g_init_gxlistener(void)
 {
+#if HAVE_GUILE
   #define H_mouse_enter_listener_hook S_mouse_enter_listener_hook " (listener): called when the mouse \
 enters the lisp listener pane:\n\
-  (add-hook! mouse-enter-listener-hook\n\
+  (add-hook! " S_mouse_enter_listener_hook "\n\
     (lambda (widget)\n\
-      (focus-widget widget)))"
+      (" S_focus_widget " widget)))"
+#else
+  #define H_mouse_enter_listener_hook S_mouse_enter_listener_hook " (listener): called when the mouse \
+enters the lisp listener pane:\n\
+  $mouse_enter_listener_hook.add-hook!(\"enter\") do |widget|\n\
+    focus_widget(widget)\n\
+  end"
+#endif
 
   #define H_mouse_leave_listener_hook S_mouse_leave_listener_hook " (listener): called when the mouse \
 leaves the lisp listener pane"
@@ -992,10 +1000,17 @@ leaves the lisp listener pane"
   XEN_DEFINE_HOOK(mouse_enter_listener_hook, S_mouse_enter_listener_hook, 1, H_mouse_enter_listener_hook);    /* arg = listener_text widget */
   XEN_DEFINE_HOOK(mouse_leave_listener_hook, S_mouse_leave_listener_hook, 1, H_mouse_leave_listener_hook);    /* arg = listener_text widget */
 
+#if HAVE_GUILE
   #define H_mouse_enter_text_hook S_mouse_enter_text_hook " (widget): called when the mouse enters a text widget:\n\
-(add-hook! mouse-enter-text-hook\n\
+(add-hook! " S_mouse_enter_text_hook "\n\
   (lambda (w)\n\
-    (focus-widget w)))"
+    (" S_focus_widget " w)))"
+#else
+  #define H_mouse_enter_text_hook S_mouse_enter_text_hook " (widget): called when the mouse enters a text widget:\n\
+$mouse_enter_text_hook.add_hook!(\"enter\") do |w|\n\
+    focus_widget(w)\n\
+  end"
+#endif
 
   #define H_mouse_leave_text_hook S_mouse_leave_text_hook " (widget): called when the mouse leaves a text widget"
 
