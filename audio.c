@@ -3714,7 +3714,7 @@ static int probe_api(void)
 
 #endif
 
-#ifndef SOUND_CARDS
+#ifndef SND_CARDS
   #define SND_CARDS (8)
 #endif
 

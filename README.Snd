@@ -223,6 +223,8 @@ openmotif library rpm package, it may not have included the headers
 (look under /usr/X11R6/include/Xm); to build Snd from the sources you
 need the headers (in the openmotif-devel packages).
 
+In Debian, apt-get install libmotif-dev.
+
 If you have installed Motif in some weird place, use the -I compiler
 flag to provide that information to the compiler.  I've added the
 -with-motif-prefix argument to the configure script, but don't know if

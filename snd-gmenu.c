@@ -352,7 +352,7 @@ static void view_ctrls_callback(GtkWidget *w, gpointer cD)
 static void view_listener_callback(GtkWidget *w, gpointer cD) 
 {
   snd_state *ss = (snd_state *)cD;
-  IF_MENU_HOOK(STR_View, STR_Show_listener) handle_listener((snd_state *)cD, (!(ss->listening)));
+  IF_MENU_HOOK(STR_View, STR_Show_listener) handle_listener((snd_state *)cD, listener_height() < 5);
 }
 #endif
 
