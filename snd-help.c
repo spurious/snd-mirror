@@ -221,14 +221,14 @@ static char *glx_version(void)
 
 char *version_info(void)
 {
-  char *result;
+  char *result, *xversion = NULL;
   snd_itoa_ctr = 0;
   result = vstrcat(
 	  _("This is Snd version "),
 	  SND_RPM_VERSION,
 	  " of ",
 	  SND_VERSION,
-	  ":\n    ", xen_version(),
+	  ":\n    ", xversion = xen_version(),
 	  "\n    ", mus_audio_moniker(),
 	  "\n    Sndlib ", snd_itoa(SNDLIB_VERSION), ".", 
                            snd_itoa(SNDLIB_REVISION), 
@@ -356,6 +356,7 @@ char *version_info(void)
 #endif
 	  NULL);
   free_snd_itoa();
+  if (xversion) free(xversion); /* calloc in xen.c */
   return(result);
 }
 

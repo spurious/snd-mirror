@@ -9,10 +9,11 @@
 
 /* TODO: tests for Motif 2.2.4 additions */
 
-#define XM_DATE "26-Apr-04"
+#define XM_DATE "19-May-04"
 
 /* HISTORY: 
  *
+ *   19-May:    plug several memory leaks.
  *   21-Apr:    XmMultiList, XmTabStack.
  *   19-Apr:    XmDataField.
  *   12-Apr:    XmDropDown, XmColumn.
@@ -1054,7 +1055,11 @@ static XEN c_to_xen_strings(XEN array, XEN len)
 
 static XEN c_to_xen_string(XEN str)
 {
-  return(C_TO_XEN_STRING((char *)XEN_TO_C_ULONG(str)));
+  char *tmp;
+  tmp = (char *)XEN_TO_C_ULONG(str);
+  if (tmp)
+    return(C_TO_XEN_STRING(tmp));
+  return(XEN_FALSE);
 }
 #endif
 
@@ -2212,7 +2217,7 @@ static XEN C_TO_XEN_ANY(Widget w, Arg arg)
    *   (which works on the Pentium/Linux), the Sun gets confused by Dimensions (unsigned short)
    */
   Arg a[1];
-  int j, ilen;
+  int j, ilen = 0;
   switch (resource_type(arg.name))
     {
     case XM_INT:	      return(C_TO_XEN_INT((*((int *)(arg.value)))));
@@ -3142,13 +3147,9 @@ static XmParseTable XEN_TO_C_XmParseTable(XEN lst, int size)
 static XEN gxm_XmParseTableFree(XEN arg1, XEN arg2)
 {
   #define H_XmParseTableFree "void XmParseTableFree(XmParseTable parse_table, Cardinal count) recovers memory"
-  int len;
-  XmParseTable pt;
   XEN_ASSERT_TYPE(XEN_XmParseTable_P(arg1), arg1, 1, "XmParseTableFree", "XmParseTable");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg2), arg2, 2, "XmParseTableFree", "int");
-  if (XEN_INTEGER_P(arg2)) len = XEN_TO_C_INT(arg2); else len = XEN_LIST_LENGTH(arg1);
-  pt = XEN_TO_C_XmParseTable(arg1, len);
-  if (pt) XmParseTableFree(pt, len);
+  /* can't happen -- a no-op */
   return(XEN_FALSE);
 }
 
@@ -3231,18 +3232,24 @@ static XEN gxm_XmCvtXmStringToByteStream(XEN str)
 {
   #define H_XmCvtXmStringToByteStream "int XmCvtXmStringToByteStream(XmString str) converts an XmString into a byte stream."
   unsigned char *prop = NULL;
-  int res;
+  int res = 0; /* #bytes in returned val */
+  XmString xstr;
   XEN_ASSERT_TYPE(XEN_XmString_P(str), str, XEN_ONLY_ARG, "XmCvtXmStringToByteStream", "XmString");
-  res = XmCvtXmStringToByteStream(XEN_TO_C_XmString(str), &prop);
+  xstr = XEN_TO_C_XmString(str);
+  if (!(XmStringEmpty(xstr)))
+    res = XmCvtXmStringToByteStream(xstr, &prop);
   return(XEN_LIST_2(C_TO_XEN_INT(res), C_TO_XEN_STRING(prop)));
 }
 
 static XEN gxm_XmCvtByteStreamToXmString(XEN str)
 {
   #define H_XmCvtByteStreamToXmString "XmString XmCvtByteStreamToXmString(char *str) converts a byte stream into an XmString."
-  XmString res;
+  XmString res = NULL;
+  char *bstr;
   XEN_ASSERT_TYPE(XEN_STRING_P(str), str, XEN_ONLY_ARG, "XmCvtByteStreamToXmString", "char *");
-  res = XmCvtByteStreamToXmString((unsigned char *)(XEN_TO_C_STRING(str)));
+  bstr = XEN_TO_C_STRING(str);
+  if (bstr)
+    res = XmCvtByteStreamToXmString((unsigned char *)(XEN_TO_C_STRING(str)));
   return(C_TO_XEN_XmString(res));
 }
 
@@ -3308,6 +3315,7 @@ to a compound string table"
   char **strs;
   int len;
   XmStringTable val;
+  XmParseTable pt = NULL;
   XEN lst;
   XmTextType type;
   XEN_ASSERT_TYPE(XEN_LIST_P(arg1), arg1, 1, "XmStringTableParseStringArray", "list of strings");
@@ -3321,16 +3329,18 @@ to a compound string table"
   len = XEN_TO_C_INT(arg2);
   if (len <= 0) return(XEN_FALSE);
   strs = XEN_TO_C_Strings(arg1, len);
+  if (XEN_XmParseTable_P(arg5)) pt = XEN_TO_C_XmParseTable(arg5, len);
   val = XmStringTableParseStringArray((XtPointer *)strs, 
 				      (Cardinal)len, 
 				      (XEN_FALSE_P(arg3)) ? NULL : XEN_TO_C_STRING(arg3),
 				      type,
-				      (XEN_FALSE_P(arg5)) ? NULL : XEN_TO_C_XmParseTable(arg5, len), 
+				      pt,
 				      XEN_TO_C_INT(arg6),
 				      (XtPointer)arg7);
   FREE(strs);
   lst = C_TO_XEN_XmStringTable(val, len);
   free(val);
+  if (pt) free(pt); 
   return(xen_return_first(lst, arg1));
 }
 
@@ -3379,7 +3389,7 @@ compound strings to an array of text"
       free(tab[i]);
     }
   free(tab);
-  free(pt);
+  if (pt) free(pt);
   xm_unprotect_at(loc);
   return(lst);
 }
@@ -3452,7 +3462,7 @@ XmParseTable parse_table, Cardinal parse_count, XtPointer call_data) converts a 
   len = XEN_TO_C_INT(arg6);
   if (XEN_XmParseTable_P(arg5)) pt = XEN_TO_C_XmParseTable(arg5, len);
   rtn = C_TO_XEN_XmString(XmStringParseText(str, intext, tag, type, pt, len, (XtPointer)arg7));
-  free(pt);
+  if (pt) free(pt);
   return(xen_return_first(rtn, arg1, arg2));
 }
 
@@ -3462,6 +3472,7 @@ static XEN gxm_XmStringUnparse(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5,
 XmParseTable parse_table, Cardinal parse_count, XmParseModel parse_model) unparses text"
   XmTextType type1, type2;
   XEN rtn;
+  char *str;
   XmParseTable pt = NULL;
   int len;
   XEN_ASSERT_TYPE(XEN_XmString_P(arg1), arg1, 1, "XmStringUnparse", "XmString");
@@ -3477,11 +3488,13 @@ XmParseTable parse_table, Cardinal parse_count, XmParseModel parse_model) unpars
   if (type2 > 1) XEN_ASSERT_TYPE(0, arg4, 4, "XmStringUnparse", "XmTextType");
   len = XEN_TO_C_INT(arg6);
   if (XEN_XmParseTable_P(arg5)) pt = XEN_TO_C_XmParseTable(arg5, len);
-  rtn = C_TO_XEN_STRING((const char *)XmStringUnparse(XEN_TO_C_XmString(arg1), 
-						      (XEN_STRING_P(arg2)) ? XEN_TO_C_STRING(arg2) : NULL,
-						      type1, type2, pt, len,
-						      (XmParseModel)XEN_TO_C_INT(arg7)));
-  free(pt);
+  str = (char *)XmStringUnparse(XEN_TO_C_XmString(arg1), 
+				(XEN_STRING_P(arg2)) ? XEN_TO_C_STRING(arg2) : NULL,
+				type1, type2, pt, len,
+				(XmParseModel)XEN_TO_C_INT(arg7));
+  rtn = C_TO_XEN_STRING(str);
+  if (str) XtFree(str);
+  if (pt) free(pt);
   return(rtn);
 }
 
@@ -3924,9 +3937,14 @@ entry to a font list"
 
 static XEN gxm_XmFontListEntryGetTag(XEN arg1)
 {
+  char *str;
+  XEN res;
   #define H_XmFontListEntryGetTag "char* XmFontListEntryGetTag(XmFontListEntry entry) retrieves the tag of a font list entry"
   XEN_ASSERT_TYPE(XEN_XmFontListEntry_P(arg1), arg1, 1, "XmFontListEntryGetTag", "XmFontListEntry");
-  return(C_TO_XEN_STRING(XmFontListEntryGetTag(XEN_TO_C_XmFontListEntry(arg1))));
+  str = XmFontListEntryGetTag(XEN_TO_C_XmFontListEntry(arg1));
+  res = C_TO_XEN_STRING(str);
+  if (str) XtFree(str);
+  return(res);
 }
 
 static XEN gxm_XmFontListEntryGetFont(XEN arg1)
@@ -4556,19 +4574,29 @@ static XEN gxm_XmCvtCTToXmString(XEN arg1)
 
 static XEN gxm_XmMapSegmentEncoding(XEN arg1)
 {
+  char *str;
+  XEN res;
   #define H_XmMapSegmentEncoding "char *XmMapSegmentEncoding(char *fontlist_tag) returns the compound text \
 encoding format associated with the specified font list tag"
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XmMapSegmentEncoding", "char*");
-  return(C_TO_XEN_STRING(XmMapSegmentEncoding(XEN_TO_C_STRING(arg1))));
+  str = XmMapSegmentEncoding(XEN_TO_C_STRING(arg1));
+  res = C_TO_XEN_STRING(str);
+  if (str) XtFree(str);
+  return(res);
 }
 
 static XEN gxm_XmRegisterSegmentEncoding(XEN arg1, XEN arg2)
 {
+  char *str;
+  XEN res;
   #define H_XmRegisterSegmentEncoding "char *XmRegisterSegmentEncoding(char *fontlist_tag, char *ct_encoding) \
 registers a compound text encoding format for a specified font list element tag"
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XmRegisterSegmentEncoding", "char*");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmRegisterSegmentEncoding", "char*");
-  return(C_TO_XEN_STRING(XmRegisterSegmentEncoding(XEN_TO_C_STRING(arg1), XEN_TO_C_STRING(arg2))));
+  str = XmRegisterSegmentEncoding(XEN_TO_C_STRING(arg1), XEN_TO_C_STRING(arg2));
+  res = C_TO_XEN_STRING(str);
+  if (str) XtFree(str);
+  return(res);
 }
 
 static XEN gxm_XmWidgetGetBaselines(XEN arg1)
@@ -5973,9 +6001,14 @@ sets the primary selection of the text"
 
 static XEN gxm_XmTextGetSelection(XEN arg1)
 {
+  char *str;
+  XEN res;
   #define H_XmTextGetSelection "char *XmTextGetSelection(Widget widget) retrieves the value of the primary selection"
   XEN_ASSERT_TYPE(XEN_TextWidget_P(arg1), arg1, 1, "XmTextGetSelection", "Text or TextField Widget");
-  return(C_TO_XEN_STRING(XmTextGetSelection(XEN_TO_C_Widget(arg1))));
+  str = XmTextGetSelection(XEN_TO_C_Widget(arg1));
+  res = C_TO_XEN_STRING(str);
+  if (str) XtFree(str);
+  return(res);
 }
 
 #if MOTIF_2
@@ -6176,9 +6209,14 @@ static XEN gxm_XmTextGetLastPosition(XEN arg1)
 
 static XEN gxm_XmTextGetString(XEN arg1)
 {
+  char *str;
+  XEN res;
   #define H_XmTextGetString "char *XmTextGetString(Widget widget) accesses the string value"
   XEN_ASSERT_TYPE(XEN_TextWidget_P(arg1), arg1, 1, "XmTextGetString", "Text or TextField Widget");
-  return(C_TO_XEN_STRING(XmTextGetString(XEN_TO_C_Widget(arg1))));
+  str = XmTextGetString(XEN_TO_C_Widget(arg1));
+  res = C_TO_XEN_STRING(str);
+  if (str) XtFree(str);
+  return(res);
 }
 
 static XEN gxm_XmTextGetSubstring(XEN arg1, XEN arg2, XEN arg3)
@@ -6405,9 +6443,14 @@ static XEN gxm_XmTextFieldRemove(XEN arg1)
 
 static XEN gxm_XmTextFieldGetSelection(XEN arg1)
 {
+  char *str;
+  XEN res;
   #define H_XmTextFieldGetSelection "char *XmTextFieldGetSelection(Widget widget) retrieves the value of the primary selection"
   XEN_ASSERT_TYPE(XEN_TextFieldWidget_P(arg1), arg1, 1, "XmTextFieldGetSelection", "TextField Widget");
-  return(C_TO_XEN_STRING(XmTextFieldGetSelection(XEN_TO_C_Widget(arg1))));
+  str = XmTextFieldGetSelection(XEN_TO_C_Widget(arg1));
+  res = C_TO_XEN_STRING(str);
+  if (str) XtFree(str);
+  return(res);
 }
 
 static XEN gxm_XmTextFieldGetSelectionPosition(XEN arg1)
@@ -6578,9 +6621,14 @@ retrieves a copy of a portion of the internal text buffer"
 
 static XEN gxm_XmTextFieldGetString(XEN arg1)
 {
+  char *str;
+  XEN res;
   #define H_XmTextFieldGetString "char *XmTextFieldGetString(Widget widget) accesses the string value"
   XEN_ASSERT_TYPE(XEN_TextFieldWidget_P(arg1), arg1, 1, "XmTextFieldGetString", "TextField Widget");
-  return(C_TO_XEN_STRING(XmTextFieldGetString(XEN_TO_C_Widget(arg1))));
+  str = XmTextFieldGetString(XEN_TO_C_Widget(arg1));
+  res = C_TO_XEN_STRING(str);
+  if (str) XtFree(str);
+  return(res);
 }
 
 static XEN gxm_XmDropTransferAdd(XEN arg1, XEN arg2)
@@ -8028,10 +8076,15 @@ The PanedWindow widget creation function"
 
 static XEN gxm_XmGetAtomName(XEN arg1, XEN arg2)
 {
+  char *str;
+  XEN res;
   #define H_XmGetAtomName "String XmGetAtomName(Display *display, Atom atom)  returns the string representation for an atom"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XmGetAtomName", "Display*");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg2), arg2, 2, "XmGetAtomName", "Atom");
-  return(C_TO_XEN_STRING(XmGetAtomName(XEN_TO_C_Display(arg1), XEN_TO_C_Atom(arg2))));
+  str = XmGetAtomName(XEN_TO_C_Display(arg1), XEN_TO_C_Atom(arg2));
+  res = C_TO_XEN_STRING(str);
+  if (str) XtFree(str);
+  return(res);
 }
 
 static XEN gxm_XmInternAtom(XEN arg1, XEN arg2, XEN arg3)
@@ -8796,11 +8849,13 @@ structures that have attributes equal to the attributes specified by vinfo_templ
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XGetVisualInfo", "long");
   XEN_ASSERT_TYPE(XEN_XVisualInfo_P(arg3), arg3, 3, "XGetVisualInfo", "XVisualInfo*");
   v = XGetVisualInfo(XEN_TO_C_Display(arg1), XEN_TO_C_INT(arg2), XEN_TO_C_XVisualInfo(arg3), &len);
-  loc = xm_protect(lst);
   if (v)
-    for (i = len - 1; i >= 0; i--)
-      lst = XEN_CONS(C_TO_XEN_XVisualInfo(v + i), lst);
-  xm_unprotect_at(loc);
+    {
+      loc = xm_protect(lst);
+      for (i = len - 1; i >= 0; i--)
+	lst = XEN_CONS(C_TO_XEN_XVisualInfo(v + i), lst);
+      xm_unprotect_at(loc);
+    }
   return(lst);
 }
 
@@ -10838,12 +10893,16 @@ static XEN gxm_XGetIconName(XEN arg1, XEN arg2)
    */
   char *str;
   int val;
+  XEN res = XEN_FALSE;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XGetIconName", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XGetIconName", "Window");
   val = XGetIconName(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), &str);
-  if (val == 0)
-    return(XEN_FALSE);
-  return(C_TO_XEN_STRING(str));
+  if (val != 0)
+    {
+      res = C_TO_XEN_STRING(str);
+      XFree(str);
+    }
+  return(res);
 }
 
 static XEN gxm_XGetGeometry(XEN arg1, XEN arg2)
@@ -12924,6 +12983,7 @@ static XEN gxm_XGetFontPath(XEN arg1)
   loc = xm_protect(lst);
   for (i = len - 1; i >= 0; i--)
     lst = XEN_CONS(C_TO_XEN_STRING(str[i]), lst);
+  XFreeFontPath(str);
   xm_unprotect_at(loc);
   return(lst);
 }
@@ -12968,6 +13028,7 @@ the string you passed to the pattern argument."
   loc = xm_protect(lst);
   for (i = len - 1; i >= 0; i--)
     lst = XEN_CONS(C_TO_XEN_STRING(str[i]), lst);
+  XFreeFontNames(str);
   xm_unprotect_at(loc);
   return(lst);
 }
@@ -13291,9 +13352,14 @@ static XEN gxm_XDisplayName(XEN arg1)
 static XEN gxm_XGetAtomName(XEN arg1, XEN arg2)
 {
   #define H_XGetAtomName "char *XGetAtomName(display, atom) returns the name associated with the specified atom."
+  char *str;
+  XEN res;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XGetAtomName", "Display*");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg2), arg2, 2, "XGetAtomName", "Atom");
-  return(C_TO_XEN_STRING(XGetAtomName(XEN_TO_C_Display(arg1), XEN_TO_C_Atom(arg2))));
+  str = XGetAtomName(XEN_TO_C_Display(arg1), XEN_TO_C_Atom(arg2));
+  res = C_TO_XEN_STRING(str);
+  XFree(str);
+  return(res);
 }
 
 static XEN gxm_XFetchBuffer(XEN arg1, XEN arg2)
@@ -14626,6 +14692,7 @@ static XEN gxm_XtResolvePathname(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg
    *       (XtResolvePathname (XtDisplay (cadr (main-widgets))) "app-defaults" #f #f #f #f 0 #f)
    */
   int i, len;
+  XEN res;
   char *str;
   SubstitutionRec *subs = NULL;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XtResolvePathname", "Display*");
@@ -14664,7 +14731,9 @@ static XEN gxm_XtResolvePathname(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg
 	if (subs[i].substitution) free(subs[i].substitution);
       FREE(subs);
     }
-  return(C_TO_XEN_STRING(str));
+  res = C_TO_XEN_STRING(str);
+  if (str) XtFree(str);
+  return(res);
 }
 
 static XEN gxm_XtFindFile(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
@@ -14673,6 +14742,7 @@ static XEN gxm_XtFindFile(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 searches for a file using substitutions in the path list"
   int i;
   char *str;
+  XEN res;
   SubstitutionRec *subs = NULL;
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XtFindFile", "char*");
   XEN_ASSERT_TYPE(XEN_FALSE_P(arg2) || XEN_LIST_P(arg2), arg2, 2, "XtFindFile", "Substitution list");
@@ -14703,7 +14773,9 @@ searches for a file using substitutions in the path list"
 	if (subs[i].substitution) free(subs[i].substitution);
       FREE(subs);
     }
-  return(C_TO_XEN_STRING(str));
+  res = C_TO_XEN_STRING(str);
+  if (str) XtFree(str);
+  return(res);
 }
 
 static XEN gxm_XtReleaseGC(XEN arg1, XEN arg2)
@@ -21626,15 +21698,20 @@ static XEN gxm_key_vector(XEN ptr)
 static XEN gxm_set_key_vector(XEN ptr, XEN val)
 {
   char *keys;
-  int i;
+  int i, lim = 0;
   XM_SET_FIELD_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ARG_2, "key_vector", "a string");
   keys = XEN_TO_C_STRING(val);
-  if (XEN_XKeymapEvent_P(ptr))
+  if (keys) lim = strlen(keys);
+  if (lim > 32) lim = 32;
+  if (lim > 0)
     {
-      for (i = 0; i < 32; i++)
-	(XEN_TO_C_XKeymapEvent(ptr))->key_vector[i] = keys[i];
+      if (XEN_XKeymapEvent_P(ptr))
+	{
+	  for (i = 0; i < lim; i++)
+	    (XEN_TO_C_XKeymapEvent(ptr))->key_vector[i] = keys[i];
+	}
+      else XM_SET_FIELD_ASSERT_TYPE(0, ptr, XEN_ARG_1, "key_vector", "XKeymapEvent");
     }
-  else XM_SET_FIELD_ASSERT_TYPE(0, ptr, XEN_ARG_1, "key_vector", "XKeymapEvent");
   return(val);
 }
 

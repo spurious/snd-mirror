@@ -3087,6 +3087,8 @@ static void init_sound_keywords(void)
   kw_comment = XEN_MAKE_KEYWORD("comment");
 }
 
+/* TODO: if next file with bad data format (0), open-raw-sound should still give us access to it.  Also open sound->bad header dialog or something */
+
 static XEN g_open_raw_sound(XEN arglist)
 {
   #define H_open_raw_sound "(" S_open_raw_sound " :file :channels :srate :data-format): \

@@ -2164,7 +2164,7 @@ static int read_nist_header(const char *filename, int chan)
 	  /* got a complete record (assuming no embedded newlines, of course) */
 	  /* now look for a record we care about and decode it */
 	  nm = 0;
-	  while ((str[nm] != ' ') && (str[nm] != '\0') && (str[nm] != '\n') && (nm < MAX_FIELD_LENGTH))
+	  while ((nm < MAX_FIELD_LENGTH) && (str[nm] != ' ') && (str[nm] != '\0') && (str[nm] != '\n'))
 	    {
 	      name[nm] = str[nm];
 	      nm++;
