@@ -255,7 +255,8 @@
 	#f)))
 
 
-  (define-method (apply!)
+  ;;(define-method* (apply! ...)
+  (define-method* (apply! #:optional parset-func)
     (define (get-startchan snd chan)
       (if (selection-member? snd chan)
 	  chan
@@ -272,10 +273,11 @@
 	   (startchan (if (= 0 (sync snd))
 			  (selected-channel snd)
 			  (get-startchan snd 0)))
-	   (tempfilenames '())
-	   (new-files '())
-	   (vct-out (make-vct ladspa-maxbuf))
-	   (sdobj (make-sound-data chans ladspa-maxbuf))
+	   (tempfilename #f)
+	   (new-file #f)
+	   (buflen (if parset-func 32 ladspa-maxbuf))
+	   (vct-out (make-vct buflen))
+	   (sdobj (make-sound-data chans buflen))
 	   (isbreaked #f)
 	   (readers '()))
       
@@ -284,37 +286,37 @@
 	    (open (minimum-num-handles chans min_num_audios))
 	    #t))
 
-
       (if (not (apply-open))
 	  (begin
 	    (display "Could not start plugin.")
 	    (newline))
 	  (begin
 	    
-	    ;; Set up sample readers and tempfilenames for each channel.
+	    ;; Set up sample readers for each channel.
 	    (c-for 0 < chans 1
 		   (lambda (ch)
 		     (set! readers (cons (make-sample-reader start
 							     snd
 							     (+ startchan ch))
-					 readers))
-		     (set! tempfilenames (cons (snd-tempnam)
-					       tempfilenames))))
+					 readers))))
+	    (set! readers (reverse readers))
 
-	    ;; Create temporary files. One for each channel.
-	    (set! new-files (map (lambda (filename) (open-sound-file filename 1 (srate)))
-				 tempfilenames))
+
+	    ;; Create a temporary file.
+	    (set! tempfilename (snd-tempnam))
+	    (set! new-file (open-sound-file tempfilename chans :srate (srate snd)))
 
 
 	    ;; Start the hour-glass
 	    (start-progress-report)
 
+
 	    ;; Do the ladspa.
-	    (c-for 0 < (+ ladspa-maxbuf length) ladspa-maxbuf
+	    (c-for 0 < (+ buflen length) buflen
 		   (lambda (n)
 		     (if (< n length)
 			 (let ((len (min (- length n)
-					 ladspa-maxbuf)))
+					 buflen)))
 			   
 			   ;;(display "N: ")(display n)
 			   ;;(display " len: ")(display len)
@@ -327,10 +329,11 @@
 				 ;; Update hour-glass
 				 (progress-report (/ n length) "doing the ladspa" chans chans snd)
 				 
-				 ;; Only happens at last iteration.
-				 (if (< len ladspa-maxbuf)
-				     (set! sdobj (make-sound-data chans len))
-				     (set! vct-out (make-vct len)))
+				 ;; The length of sdobj must be the length of the data. Can only happen at last iteration.
+				 (if (< len buflen)
+				     (begin
+				       (set! sdobj (make-sound-data chans len))
+				       (set! vct-out (make-vct len))))
 
 				 ;; Reading data into soundobject from soundfile.
 				 (if (not no_audio_inputs)
@@ -340,36 +343,35 @@
 						   (vct->sound-data vct-out sdobj ch))
 						 readers))
 
+				 ;; Automation
+				 (if parset-func
+				     (parset-func snd (+ start n)))
+
 				 ;; Process soundobject
 				 (apply-soundobject sdobj)
 				 
-				 ;; Writing data from soundobject into temporary files.
-				 (c-for 0 < chans 1
-					(lambda (ch)
-					  (mus-sound-write (list-ref new-files ch)
-							   0
-							   len
-							   1
-							   sdobj)))))))))
-	    
-	    ;; Close temporary files.
-	    (for-each (lambda (file) (close-sound-file file (* 4 length)))
-		      new-files)
+				 ;; Writing data from soundobject into temporary file.
+				 (mus-sound-write new-file
+						  0
+						  (1- len)
+						  chans
+						  sdobj)))))))
+	   
 
-	    ;; Let snd know about the new files.
+	    ;; Close temporary file.
+	    (close-sound-file new-file (* chans (* 4 length)))
+
+
+	    ;; Let snd know about the new file.
 	    (if (not isbreaked)
-		(let ((ch startchan))
-		  (for-each (lambda (filename)
-			      (set! (samples start
-					     length
-					     snd
-					     ch)
-				    filename)
-			      (set! ch (+ ch 1)))
-			    (reverse tempfilenames))))
+		(c-for 0 < chans 1
+		       (lambda (ch)
+			 (set-samples start length tempfilename snd (+ ch startchan) #f (string-append "ladspa: " libname "/" plugname) ch))))
 	    
+
 	    ;; Close hour-glass
 	    (finish-progress-report)
+
 
 	    ;; Close plugin.
 	    (if (not (string=? "vst" libname))
@@ -466,13 +468,23 @@
 	    (isplaying #f)
 	    (onoffbutton #f)
 	    (islooping #f)
-	    (isplayingselection #f))
-
+	    (isplayingselection #f)
+	    (nodelines (make-hash-table 4))
+	    (play-hooks (make-hash-table 4))
+	    (node-graphs (make-hash-table 4))
+	    (open-portnums '()))
+	
 	(define (ShowDialog)
 	  (MakeDialogIfNotMade)
 	  (-> dialog show)
 	  (-> onoffbutton set #t)
 	  (enableplugin)
+	  (for-each (lambda (portnum)
+		      (automation-onoff #t portnum
+					(cadr (list-ref (.PortRangeHints (-> ladspa descriptor)) portnum))
+					(caddr (list-ref (.PortRangeHints (-> ladspa descriptor)) portnum))
+					(list-ref (.PortNames (-> ladspa descriptor)) portnum)))
+		    open-portnums)
 	  )
 
 	(define (Help)
@@ -488,9 +500,21 @@
 	  (MyStop)
 	  (disableplugin)
 	  (-> onoffbutton set #f)
-	  (-> ladspa apply!))
+	  (-> ladspa apply!
+	      (lambda (snd pos)
+		(hash-fold (lambda (portnum nodeline s)
+			     (let ((lo (cadr (list-ref (.PortRangeHints (-> ladspa descriptor)) portnum)))
+				   (hi (caddr (list-ref (.PortRangeHints (-> ladspa descriptor)) portnum))))
+			       (-> ladspa input-control-set!
+				   portnum
+				   (c-scale (-> nodeline get-val (c-scale pos 0 (frames snd 0) 0 1))
+					    0 1
+					    hi lo))))
+			   '() nodelines))))
 
 	(define (Cancel)
+	  (set! open-portnums (hash-fold (lambda (portnum nodeline s) (nodeline-off portnum) (cons portnum s))
+					 '() nodelines))
 	  (-> onoffbutton set #f)
 	  (-> dialog hide)
 	  (disableplugin)
@@ -525,6 +549,48 @@
 	      (enableplugin)
 	      (disableplugin)))
 
+	(define (nodeline-off portnum)
+	  (remove-hook! play-hook (hash-ref play-hooks portnum))
+	  (hash-set! node-graphs portnum (-> (hash-ref nodelines portnum) get-graph))
+	  (hash-remove! play-hooks portnum)
+	  (-> (hash-ref nodelines portnum) paint)
+	  (-> (hash-ref nodelines portnum) delete!)
+	  (hash-remove! nodelines portnum))
+	
+	(define (automation-onoff onoroff portnum lo hi name)
+	  (if onoroff
+	      (let* ((nodeline (<editor-nodeline> (selected-sound) 0
+						  (c-scale (-> ladspa get-input-control portnum) hi lo 0 1)
+						  (lambda (val)
+						    (format #f "~1,3f(~A)" (c-scale val 0 1 hi lo) name))
+						  #f
+						  (list-ref (list cursor-context selection-context) (random 2))))
+		     (das-play-hook (let ((lastcursor (- (dac-size))))
+				      (lambda (samples)
+					(let* ((snd (selected-sound))
+					       (ch 0)
+					       (newcursor (cursor snd ch)))
+					  (if (or (= newcursor (- lastcursor (dac-size)) )
+						  (= newcursor lastcursor))
+					      (set! newcursor (min (frames snd ch) (+ (dac-size) lastcursor))))
+					  (set! lastcursor newcursor)
+					  (-> ladspa input-control-set!
+					      portnum
+					      (c-scale (-> nodeline get-val (c-scale newcursor 0 (frames snd ch) 0 1))
+						       0 1
+						       hi lo)))))))
+		(if (hash-ref node-graphs portnum)
+		    (-> nodeline set-graph!
+			(hash-ref node-graphs portnum)))
+		(hash-set! nodelines portnum nodeline)
+		(add-hook! play-hook das-play-hook)
+		(hash-set! play-hooks portnum das-play-hook))
+	      (nodeline-off portnum)))
+
+	(define (slider-moved val portnum lo hi name)
+	  (if (not (hash-ref nodelines portnum))
+	      (-> ladspa input-control-set! portnum val)))
+	
 	(define (ishint dashint dashint2)
 	  (not (= (logand dashint dashint2 ) 0)))
 
@@ -564,6 +630,7 @@
 					  (scale (if (ishint hint LADSPA_HINT_INTEGER)
 						     1
 						     (if use-gtk 1000.0 100.0)))
+					  (name (list-ref (.PortNames descriptor) portnum))
 					  (islog (ishint hint LADSPA_HINT_LOGARITHMIC)))
 				     
 				     (if #f
@@ -586,12 +653,13 @@
 					   (set! lo (* lo (srate)))
 					   (set! hi (* hi (srate)))))
 				     
-				     (list (list-ref (.PortNames descriptor) portnum)
+				     (list name
 					   lo
 					   init
 					   hi
-					   (lambda (val) (-> ladspa input-control-set! portnum val))
-					   scale)))
+					   (lambda (val) (slider-moved val portnum lo hi name))
+					   scale
+					   (lambda (onoff) (automation-onoff onoff portnum lo hi name)))))
 				 (remove (lambda (portnum) (ishint (car (list-ref (.PortRangeHints descriptor) portnum))  LADSPA_HINT_TOGGLED))
 					 (-> ladspa input-controls)))
 			    ))

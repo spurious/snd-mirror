@@ -178,6 +178,9 @@
 							 "Paste:"
 							 "      <Ctrl>+y"
 							 ""
+							 "Mix-Paste:"
+							 "      <Ctrl>+x+y"
+							 ""
 							 "Zoom in:"
 							 "      +"
 							 ""
@@ -225,6 +228,9 @@
 							 ""
 							 "Move selected area:"
 							 "      <Shift> + <Mouse>"
+							 ""
+							 "Apply Envelope:"
+							 "      v"
 							 ))))
 	       )
 	     0)
@@ -237,9 +243,6 @@
 ;; Various more or less general functions
 ;;##############################################################
 
-
-(define (c-sync? snd)
-  (> (sync snd) 0))
 
 (define (c-get-nameform snd)
   (if use-gtk
@@ -300,9 +303,16 @@
   (member filename (map (lambda (snd) (file-name snd))
 			(sounds))))
 
-;; Like (set! (cursor) pos), but legalize pos and
-;; calls c-show-times as well. Also works when playing.
+
 (define (c-set-cursor-pos pos)
+  (c-for-each-channel2 (selected-sound)
+		       (lambda (ch)
+			 (set! (cursor (selected-sound) ch) pos))))
+
+
+;; Like (set-cursor-pos pos), but legalize pos and
+;; calls c-show-times as well. Also works when playing.
+(define (c-set-cursor-pos2 pos)
   (let ((isplaying (dac-is-running))
 	(legalpos (min (frames) (max 0 pos))))
     (if isplaying
@@ -311,7 +321,7 @@
 	  (c-play legalpos))
 	(begin
 	  (c-show-times legalpos)
-	  (set! (cursor) legalpos)))))
+	  (c-set-cursor-pos legalpos)))))
 
 
 (define c-snd-putgetdata (make-hash-table 32))
@@ -376,14 +386,13 @@
 ;; Let the cursor move when playing. (copied from the manual)
 (add-hook! after-open-hook 
 	   (lambda (snd)
-	     (c-for 0 < (channels snd) 1
-		    (lambda (i)
-		      (set! (cursor snd i) 0)))
-	     (set! (cursor-follows-play snd) #t)
+	     (c-for-each-channel2 snd
+				  (lambda (i)
+				    (set! (cursor snd i) 0)))
 	     (c-set-sound-cursor snd cursor-line)
 	     #f))
 
-;(set! (cursor-follows-play) #t)
+(set! (cursor-follows-play) #t)
 
 
 
@@ -522,12 +531,11 @@
   (stop-playing)
   (if cursorpos
       (begin
-	(set! (cursor) cursorpos)
+	(c-set-cursor-pos cursorpos)
 	(c-show-times cursorpos #t)))
   (set! (cursor-follows-play) #t))
 
 (define (c-play-selection2)
-  ;;(c-display "gakk")
   (if c-islooping
       (play-selection)
       (remove-hook! stop-playing-selection-hook c-play-selection2))
@@ -535,7 +543,7 @@
 
 
 (define (c-play-selection)
-  (set! (cursor) (c-selection-position))
+  (c-set-cursor-pos (c-selection-position))
   (set! c-playstartpos (cursor))
   (if c-is-stop-hooks-here
       (begin
@@ -663,41 +671,41 @@
 
 (bind-key #xFF56 0
 	  (lambda ()
-	    (c-set-cursor-pos (- (cursor) (* (srate) c-cursormovetime-pageupdown)))))
+	    (c-set-cursor-pos2 (- (cursor) (* (srate) c-cursormovetime-pageupdown)))))
 
 (bind-key #xFF55 0
 	  (lambda ()
-	    (c-set-cursor-pos (+ (cursor) (* (srate) c-cursormovetime-pageupdown)))))
+	    (c-set-cursor-pos2 (+ (cursor) (* (srate) c-cursormovetime-pageupdown)))))
 
 (bind-key #xFF52 0
 	  (lambda ()
-	    (c-set-cursor-pos (+ (cursor) (* (srate) c-cursormovetime-updown)))))
+	    (c-set-cursor-pos2 (+ (cursor) (* (srate) c-cursormovetime-updown)))))
 
 (bind-key #xFF54 0
 	  (lambda ()
-	    (c-set-cursor-pos (- (cursor) (* (srate) c-cursormovetime-updown)))))
+	    (c-set-cursor-pos2 (- (cursor) (* (srate) c-cursormovetime-updown)))))
 
 (bind-key #xFF51 0
 	  (lambda ()
-	    (c-set-cursor-pos (- (cursor) (* (srate) c-cursormovetime-rightleft)))))
+	    (c-set-cursor-pos2 (- (cursor) (* (srate) c-cursormovetime-rightleft)))))
 
 (bind-key #xFF53 0
 	  (lambda ()
-	    (c-set-cursor-pos (+ (cursor) (* (srate) c-cursormovetime-rightleft)))))
+	    (c-set-cursor-pos2 (+ (cursor) (* (srate) c-cursormovetime-rightleft)))))
 
 (bind-key #xFF57 0
 	  (lambda ()
-	    (c-set-cursor-pos 0)))
+	    (c-set-cursor-pos2 0)))
 
 (bind-key (char->integer #\<) 0
 	  (lambda ()
-	    (c-set-cursor-pos 0)))
+	    (c-set-cursor-pos2 0)))
 
 #!
 Does not work.
 (bind-key (char->integer #\>) 0
 	  (lambda ()
-	    (c-set-cursor-pos (frames))))
+	    (c-set-cursor-pos2 (frames))))
 !#
 
 
@@ -920,7 +928,7 @@ Does not work.
 	    (add-hook! graph-hook nofunc)
 	    (c-set-selection! snd ch (about-to-move 0) (+ (about-to-move 0) (about-to-move 1)))
 	    (c-cut)
-	    (set! (cursor) samp)
+	    (c-set-cursor-pos samp)
 	    (remove-hook! graph-hook nofunc)
 	    (c-paste)
 	    (c-set-selection! snd ch samp (+ samp (about-to-move 1)))
@@ -939,16 +947,7 @@ Does not work.
     (c-gc-on))
 
 
-  (mouse-cycle mouse-press-callback mouse-motion-callback mouse-release-callback)
-
-  ;(-> mouse-button-press-hook add!
-  ;    mouse-press-callback)
-
-  ;(-> mouse-drag2-hook add!
-  ;    mouse-motion-callback)
-
-  ;(-> mouse-button-release-hook add!
-  ;    mouse-release-callback)
+  (<mouse-cycle> mouse-press-callback mouse-motion-callback mouse-release-callback)
 
   )
 
@@ -1045,7 +1044,7 @@ Does not work.
   (if (c-selection?)
       (let ((curspos (c-selection-position)))
 	(color-samples-allchans (channels) 'black 0 0)
-	(set! (cursor #t #t) curspos)
+	(c-set-cursor-pos curspos)
 	(c-make-region)
 	(c-report-and-clear "Please wait, deleting selection...")
 	(delete-selection)
@@ -1067,23 +1066,21 @@ Does not work.
 (define c-last-report-value 0.0)
 
 (define (progress-report pct . various) ;name current-channel channels snd)
-  (let* ((sound-widget (editor-widget (selected-sound)))
-	 (widget-width (car (widget-size sound-widget))))
-    (if (> (abs (- pct c-last-report-value)) (/ 1 widget-width))
-	(let* ((old-color (foreground-color))
-	       (x0 56)
-	       (y0 0)
-	       (width (* pct (- widget-width x0)))
-	       (height 10)
-	       (new-report-value (/ (floor (* 100 pct)) 100)))
-	  (set! (foreground-color) blue)
-	  (fill-rectangle x0 y0 width height)
-	  (set! (foreground-color) old-color)
-	  (report-in-minibuffer (string-append (number->string new-report-value)
-					       (if (member new-report-value '(0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9))
-						   "0"
-						   "")))
-	  (set! c-last-report-value pct)))))
+  (c-get-bounds (selected-sound) 0
+		(lambda (minx miny maxx maxy)
+		  (let ((width (- maxx minx)))
+		    (if (> (abs (- pct c-last-report-value)) (/ 1 width))
+			(let ((old-color (foreground-color))
+			      (height 10)
+			      (new-report-value (/ (floor (* 100 pct)) 100)))
+			  (set! (foreground-color) blue)
+			  (fill-rectangle minx miny (* pct width) height)
+			  (set! (foreground-color) old-color)
+			  (report-in-minibuffer (string-append (number->string new-report-value)
+							       (if (member new-report-value '(0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9))
+								   "0"
+								   "")))
+			  (set! c-last-report-value pct)))))))
 
 (define  (start-progress-report . snd)
   (set! c-last-report-value 0.0)
@@ -1369,119 +1366,63 @@ Does not work.
 
 (let* ((for-all-channels
 	(lambda (snd ch func)
-	  (c-for 0 < (chans snd) 1
-		 (lambda (newch)
-		   (if (not (= ch newch))
-		       (func ((c-get snd 'nodelines) newch)))))))
+	  (c-for-each-channel2 snd
+			       (lambda (newch)
+				 (if (not (= ch newch))
+				     (func ((c-get snd 'nodelines) newch)))))))
        (do-mouse-op
-	(lambda (snd ch func)
-	  (let* ((nodeline ((c-get snd 'nodelines) ch)))
-	    (if (eq? (func nodeline) 'stop!)
-		(begin
-		  (if (c-sync? snd)
-		      (for-all-channels snd ch
-					(lambda (newnodeline)
-					  (-> newnodeline set-graph!
-					      (-> nodeline get-graph)))))
-		  'stop!))))))
+	(lambda (snd ch nodeline)
+	  (if (c-sync? snd)
+	      (for-all-channels snd ch
+				(lambda (newnodeline)
+				  (-> newnodeline set-graph!
+				      (-> nodeline get-graph)))))))
+
+       (isenving #f)
+
+       (envfunc 
+	(lambda (snd)
+	  (if (not isenving)
+	      (let* ((snd (selected-sound))
+		     (nodelines (c-get snd 'nodelines))
+		     (doit (lambda (ch)
+			     (let* ((nodeline (nodelines ch))
+				    (sel (selection-member? snd ch))
+				    (start (if sel (selection-position snd ch) 0))
+				    (start2 (c-scale start 0 (frames snd ch) 0 1))
+				    (length (if sel (selection-frames snd ch) (frames snd ch))))
+			       (env-channel (apply append (map (lambda (xy) (list (- (car xy) start2) (c-scale (cadr xy) 0 1 2 0)))
+							       (-> nodeline get-graph
+								   start2
+								   (c-scale (+ start length) 0 (frames snd ch) 0 1))))
+					    start length snd ch)))))
+		(set! isenving #t)
+		(c-for-each-channel snd doit)
+		(set! isenving #f))))))
 
 
   (add-hook! after-open-hook
 	     (lambda (snd)
-	       (let ((button (<button> (c-get-nameform snd) "Env" 
+	       (let ((button (<button> (c-get-nameform snd)
+				       "Env"
 				       (lambda ()
-					 (let* ((snd (selected-sound))
-						(nodelines (c-get snd 'nodelines))
-						(doit (lambda (ch)
-							(let ((nodeline (nodelines ch)))
-							  (env-channel (apply append (map (lambda (xy) (list (car xy) (c-scale (cadr xy) 1 0 0 2))) (-> nodeline get-graph)))
-								       0 (frames snd ch) snd ch)))))
-					   (if (c-sync? snd)
-					       (c-for 0 < (chans snd) 1 doit)
-					       (doit (selected-channel snd))))))))
+					 (envfunc snd)))))
 		 (gtk_widget_set_name (-> button button) "doit_button"))
-	       (c-put snd 'nodelines
-		      (<array/map> (channels snd)
-				   (lambda (ch)
-				     (define (linepaint x1 y1 x2 y2)
-				       (let* ((rx1 (car (x-bounds)))
-					      (rx2 (cadr (x-bounds)))
-					      (minx (x->position rx1 snd ch))
-					      (maxx (x->position rx2 snd ch))
-					      (miny (y->position 1 snd ch))
-					      (maxy (y->position -1 snd ch)))
-					 (draw-line (c-scale x1 0 1 minx maxx)
-						    (c-scale y1 0 1 miny maxy)
-						    (c-scale x2 0 1 minx maxx)
-						    (c-scale y2 0 1 miny maxy)
-						    snd
-						    ch
-						    mark-context)))
-				     (define (textpaint val x y)
-				       (let* ((rx1 (car (x-bounds)))
-					      (rx2 (cadr (x-bounds)))
-					      (minx (x->position rx1 snd ch))
-					      (maxx (x->position rx2 snd ch))
-					      (miny (y->position 1 snd ch))
-					      (maxy (y->position -1 snd ch))
-					      (widget (c-editor-widget snd))
-					      (gc (list-ref (snd-gcs) 3)))
-					 (c-draw-text (c-editor-widget snd)
-						      gc
-						      (min (- maxx 20) (c-scale x 0 1 minx maxx))
-						      (max 20 (c-scale y 0 1 miny maxy))
-						      (format #f "~1,3f" (c-scale val 1 0 0 2)))
-					 ))
-				     (<nodeline> '((0 0.5) (1 0.5))
-						 linepaint
-						 textpaint
-						 (lambda (this)
-						   (-> this paint))))))
-	       #f))
-  
-  
-  (add-hook! after-graph-hook
-	     (lambda (snd ch)
-	       ;;(c-display "snd: " snd)
-	       (let ((nodeline ((c-get snd 'nodelines) ch))
-		     (length (/ (frames) (srate))))
-		 (let ((minx (car (x-bounds snd ch)))
-		       (maxx (cadr (x-bounds snd ch)))
-		       (miny (car (y-bounds snd ch)))
-		       (maxy (cadr (y-bounds snd ch))))
-		   (-> nodeline set-bounds!
-		       (c-scale minx 0 length 0 1)
-		       (c-scale maxx 0 length 0 1)
-		       (c-scale miny -1 1 0 1)
-		       (c-scale maxy -1 1 0 1)
-		       (/ (/ (window-height) (chans snd)) (window-width))))
-		 (-> nodeline paint)
-		 #f)))
-  
-  
+	       (c-put snd 'nodelines (<array/map> (channels snd)
+						  (lambda (ch)
+						    (<editor-nodeline> snd ch 0.5
+								       (lambda (val)
+									 (format #f "~1,3f" (c-scale val 0 1 2 0)))
+								       (lambda (this)
+									 (do-mouse-op snd ch this))))))
+	       #f)) 
 
-  (-> mouse-button-rightpress-hook add!
-      (lambda (snd x y stat)
-	(c-get-mouse-info2 snd x y #t
-			   (lambda (ch x y)
-			     (do-mouse-op snd ch
-					  (lambda (nodeline)
-					    (-> nodeline mouse-remove x y)))))))
-  (mouse-cycle (lambda (snd ch x y stat)
-		 (do-mouse-op snd ch
-			      (lambda (nodeline)
-				(-> nodeline mouse-press x y))))
-	       (lambda (snd ch x y stat)
-		 (do-mouse-op snd ch
-			      (lambda (nodeline)
-				(-> nodeline mouse-move x y))))
-	       (lambda (snd ch x y stat)
-		 (do-mouse-op snd ch
-			      (lambda (nodeline)
-				(-> nodeline mouse-release x y))))
-	       #:scaled #t)
- )
 
+  (bind-key (char->integer #\v) 0
+	    (lambda ()
+	      (envfunc (selected-sound))))
+
+  )
 
 
 
