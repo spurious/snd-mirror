@@ -2765,6 +2765,7 @@ you could bind the arrow keys:
   <a class=def name="foreachchild">for-each-child</a> w func
   <a class=def NAME="makehiddencontrolsdialog">make-hidden-controls-dialog</a> 
   <A class=def NAME="createfmvdialog">create-fmv-dialog</A> 
+  <A class=def NAME="createssbdialog">create-ssb-dialog</A> 
   <em class=emdef>make-pixmap</em> strs
   <em class=emdef>display-scanned-synthesis</em> 
   <A class=def NAME="disablecontrolpanel">disable-control-panel</a> 
@@ -2961,6 +2962,16 @@ an instrument, you're presumably not primarily concerned with optimization.
 <b>notebook-with-top-tabs</b> originally changed an existing notebook window (assuming Snd
 was started with the -notebook switch) so that its orientation mimics
 Xemacs, but that's now the default. 
+</p>
+
+<p><b>create-fmv-dialog</b> sets up a controller that runs the FM violin (v.scm),
+letting you change various aspects of the algorithm as it plays.  Similarly,
+<b>create-ssb-dialog</b> sets up an ssb-am + bandpass filter bank (like ssb-bank in dsp.scm) that can
+change the pitch of a (well-behaved) sound without changing its duration.
+It is important to get the "old freq" setting as close as possible to the
+actual original frequency.  If this were slightly faster and smarter, I'd
+replace the "expand" control (which currently uses granular synthesis) with
+this idea.
 </p>
 <br>
 

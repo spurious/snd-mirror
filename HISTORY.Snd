@@ -1,5 +1,6 @@
 Snd change log
 
+  8-Sep:     create-ssb-dialog in snd-motif.scm.
   6-Sep:     removed vct-convolve! (see snd7.scm).
              removed float vector as possible arg to formant-bank (use vct) (see snd7.scm).
 	     removed oscil-bank, mus-bank (snd7.scm)

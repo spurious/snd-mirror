@@ -1601,7 +1601,6 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 ;;; TODO: auto-detect main freq so ssb-bank can work semi-automatically (bw/pairs choices also automated)
 ;;; TODO: if pitch follower, auto-remove gliss/vib (ssb-bank-env could be written to use oscil or triangle wave = add vib)
-;;; TODO: a realtime interface to this -- a slider for pitch/bw etc
 
 #!
 (define* (repitch-sound old-freq new-freq)

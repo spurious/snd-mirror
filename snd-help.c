@@ -368,6 +368,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+8-Sep:   create-ssb-dialog in snd-motif.scm.\n\
 6-Sep:   removed vct-convolve! (see snd7.scm).\n\
          removed float vector as possible arg to formant-bank (use vct) (see snd7.scm).\n\
          removed oscil-bank, mus-bank (snd7.scm)\n\
@@ -376,11 +377,6 @@ void about_snd_help(void)
 16-Aug:  removed built-in Hadamard transform\n\
          out-chan argument to add-player so that channel data can be sent to any audio channel\n\
 	    (also play, play-and-wait, play-channel)\n\
-12-Aug:  major gtk-version bugfix thanks to Kjetil\n\
-2-Aug:   players: returns list of active players\n\
-         run-safety: add error checking to run macro code\n\
-         clm-table-size: default table size in clm\n\
-         --with-midi configuration switch\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

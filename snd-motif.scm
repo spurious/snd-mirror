@@ -2842,3 +2842,172 @@ Reverb-feedback sets the scaler on the feedback.
     (XtVaSetValues nb (list XmNorientation XmVERTICAL
                             XmNbindingType XmNONE
                             XmNbackPagePlacement XmTOP_RIGHT))))
+
+
+;;; -------- create-ssb-dialog --------
+;;;
+;;; this needs auto-pitch detection
+
+(define ssb-dialog #f)
+
+(define (create-ssb-dialog)
+  (if (not (Widget? ssb-dialog))
+      (let ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
+	    (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
+	    (titlestr (XmStringCreate "SSB-Expand" XmFONTLIST_DEFAULT_TAG))
+	    (running #f))
+	(set! ssb-dialog 
+	      (XmCreateTemplateDialog (cadr (main-widgets)) "ssb-expand"
+                (list XmNcancelLabelString   xdismiss
+		      XmNhelpLabelString     xhelp
+		      XmNautoUnmanage        #f
+		      XmNdialogTitle         titlestr
+		      XmNresizePolicy        XmRESIZE_GROW
+	              XmNnoResize            #f
+		      XmNbackground          (basic-color)
+		      XmNwidth               400
+		      XmNtransient           #f) ))
+	(XtAddCallback ssb-dialog 
+		       XmNcancelCallback (lambda (w context info)
+					   (if running (set! running #f))
+					   (XtUnmanageChild ssb-dialog)))
+	(XtAddCallback ssb-dialog XmNhelpCallback (lambda (w context info) (snd-print "set 'play' and move the sliders!")))
+	(XmStringFree xhelp)
+	(XmStringFree xdismiss)
+	(XmStringFree titlestr)
+
+	(let* ((ratio 1.0)
+	       (old-freq 550.0)
+	       (new-freq 550.0)
+	       (hilbert-order 40)
+	       (ssb-pairs 10)
+	       (bw 50.0)
+	       (ssbs (make-vector 512))
+	       (bands (make-vector 512))
+	       (reader #f))
+
+    (letrec ((ssb-expand 
+	      (lambda ()
+		(mus-ssb-bank ssbs bands (reader) ssb-pairs))) ; clm2xen.c -- an experiment
+	     (set-freq 
+	      (lambda (nfreq)
+		(set! old-freq nfreq)
+		(set! ratio (/ (- new-freq old-freq) old-freq))
+		(if running
+		    (do ((i 0 (1+ i)))
+			((= i ssb-pairs))
+		      (set! (mus-frequency (vector-ref ssbs i)) (* (1+ i) ratio old-freq))))))
+	     (set-ratio
+	      (lambda (nfreq)
+		(set! new-freq nfreq)
+		(set! ratio (/ (- new-freq old-freq) old-freq))
+		(if running
+		    (do ((i 0 (1+ i)))
+			((= i ssb-pairs))
+		      (set! (mus-frequency (vector-ref ssbs i)) (* (1+ i) ratio old-freq))))))
+	     (set-pairs 
+	      (lambda (pairs)
+		(set! ssb-pairs pairs)))
+	     (set-order 
+	      (lambda (order)
+		(set! hilbert-order order))))
+      (let* ((mainform 
+	      (XtCreateManagedWidget "formd" xmRowColumnWidgetClass ssb-dialog
+				     (list XmNleftAttachment      XmATTACH_FORM
+					   XmNrightAttachment     XmATTACH_FORM
+					   XmNtopAttachment       XmATTACH_FORM
+					   XmNbottomAttachment    XmATTACH_WIDGET
+					   XmNbottomWidget        (XmMessageBoxGetChild ssb-dialog XmDIALOG_SEPARATOR)
+					   XmNbackground          (basic-color)
+					   XmNorientation         XmVERTICAL)))
+	     (button 
+	      (XtCreateManagedWidget "play" xmToggleButtonWidgetClass mainform
+				     (list XmNbackground  (basic-color))))
+	     (freqstr (XmStringCreate "original freq" XmFONTLIST_DEFAULT_TAG))
+	     (freq-scale
+	      (XtCreateManagedWidget "frq" xmScaleWidgetClass mainform
+				     (list XmNorientation XmHORIZONTAL
+					   XmNshowValue   #t
+					   XmNbackground  (basic-color)
+					   XmNvalue       (inexact->exact old-freq)
+					   XmNmaximum     1000
+					   XmNtitleString freqstr
+					   XmNdecimalPoints 0)))
+	     (ratiostr (XmStringCreate "new freq" XmFONTLIST_DEFAULT_TAG))
+	     (ratio-scale
+	      (XtCreateManagedWidget "nfrq" xmScaleWidgetClass mainform
+				     (list XmNorientation XmHORIZONTAL
+					   XmNshowValue   #t
+					   XmNbackground  (basic-color)
+					   XmNvalue       (inexact->exact new-freq)
+					   XmNmaximum     1000
+					   XmNtitleString ratiostr
+					   XmNdecimalPoints 0)))
+	     (orderstr (XmStringCreate "order" XmFONTLIST_DEFAULT_TAG))
+	     (order-scale
+	      (XtCreateManagedWidget "order" xmScaleWidgetClass mainform
+				     (list XmNorientation XmHORIZONTAL
+					   XmNshowValue   #t
+					   XmNbackground  (basic-color)
+					   XmNvalue       hilbert-order
+					   XmNmaximum     100
+					   XmNtitleString orderstr
+					   XmNdecimalPoints 0)))
+	     (pairsstr (XmStringCreate "ssbs" XmFONTLIST_DEFAULT_TAG))
+	     (pairs-scale
+	      (XtCreateManagedWidget "pairs" xmScaleWidgetClass mainform
+				     (list XmNorientation XmHORIZONTAL
+					   XmNshowValue   #t
+					   XmNbackground  (basic-color)
+					   XmNvalue       ssb-pairs
+					   XmNmaximum     100
+					   XmNtitleString pairsstr
+					   XmNdecimalPoints 0))))
+	(XmStringFree freqstr)
+	(XmStringFree ratiostr)
+	(XmStringFree orderstr)
+	(XmStringFree pairsstr)
+	(XtAddCallback freq-scale XmNvalueChangedCallback (lambda (w context info) (set-freq (.value info))))
+	(XtAddCallback freq-scale XmNdragCallback (lambda (w context info) (set-freq (.value info))))
+	(XtAddCallback ratio-scale XmNvalueChangedCallback (lambda (w context info) (set-ratio (.value info))))
+	(XtAddCallback ratio-scale XmNdragCallback (lambda (w context info) (set-ratio (.value info))))
+	(XtAddCallback order-scale XmNvalueChangedCallback (lambda (w context info) (set-order (.value info))))
+	(XtAddCallback order-scale XmNdragCallback (lambda (w context info) (set-order (.value info))))
+	(XtAddCallback pairs-scale XmNvalueChangedCallback (lambda (w context info) (set-pairs (.value info))))
+	(XtAddCallback pairs-scale XmNdragCallback (lambda (w context info) (set-pairs (.value info))))
+	(XtAddCallback button XmNvalueChangedCallback 
+		       (lambda (w context info)
+			 (if running
+			     (set! running #f)
+			     (let* ((audio-info (open-play-output 1 22050 #f 128))
+				    (audio-fd (car audio-info))
+				    (outchans (cadr audio-info))
+				    (frames (caddr audio-info))
+				    (data (make-sound-data outchans frames)))
+			       (if (not (= audio-fd -1))
+				   (begin
+				     (do ((i 1 (1+ i)))
+					 ((> i ssb-pairs))
+				       (let* ((aff (* i old-freq))
+					      (bwf (* bw (+ 1.0 (/ i (* 2 ssb-pairs))))))
+					 (vector-set! ssbs (1- i) (make-ssb-am (* i ratio old-freq)))
+					 (vector-set! bands (1- i) (make-bandpass (hz->2pi (- aff bwf)) 
+										  (hz->2pi (+ aff bwf)) 
+										  hilbert-order))))
+    				     (set! reader (make-sample-reader 0))
+				     (set! running #t)
+				     (do ()
+					 ((or (c-g?) 
+					      (not running)
+					      (sample-reader-at-end? reader))
+					  (begin
+					    (XmToggleButtonSetValue button 0 #f)
+					    (set! running #f)
+					    (free-sample-reader reader)
+					    (mus-audio-close audio-fd)))
+				       (do ((k 0 (1+ k)))
+					   ((= k frames))
+					 (sound-data-set! data 0 k (ssb-expand)))
+				       (mus-audio-write audio-fd data frames)))))))))))))
+  (XtManageChild ssb-dialog))
+

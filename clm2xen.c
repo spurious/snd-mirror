@@ -5052,6 +5052,26 @@ static XEN g_ssb_am(XEN obj, XEN insig, XEN fm)
   return(C_TO_XEN_DOUBLE(mus_ssb_am_1(XEN_TO_MUS_ANY(obj), insig1)));
 }
 
+static XEN g_ssb_bank(XEN ssbs, XEN filters, XEN inval, XEN size)
+{
+  /* an experiment */
+  int i, len;
+  Float sum = 0.0, val = 0.0;
+  XEN *sb, *flt;
+  XEN_ASSERT_TYPE(XEN_VECTOR_P(ssbs), ssbs, XEN_ARG_1, "ssb-bank", "vector of ssb-am gens");
+  XEN_ASSERT_TYPE(XEN_VECTOR_P(filters), filters, XEN_ARG_2, "ssb-bank", "vector of fir-filter gens");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(inval), inval, XEN_ARG_3, "ssb-bank", "number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(size), size, XEN_ARG_4, "ssb-bank", "int");
+  sb = XEN_VECTOR_ELEMENTS(ssbs);
+  flt = XEN_VECTOR_ELEMENTS(filters);
+  len = XEN_TO_C_INT(size);
+  val = XEN_TO_C_DOUBLE(inval);
+  for (i = 0; i < len; i++)
+    sum += mus_ssb_am_1(XEN_TO_MUS_ANY(sb[i]),
+			mus_fir_filter(XEN_TO_MUS_ANY(flt[i]), val));
+  return(C_TO_XEN_DOUBLE(sum));
+}
+
 
 /* ---------------- wrap (for snd-run.c) ---------------- */
 
@@ -5329,6 +5349,7 @@ XEN_ARGIFY_7(g_mus_mix_w, g_mus_mix)
 XEN_ARGIFY_4(g_make_ssb_am_w, g_make_ssb_am)
 XEN_ARGIFY_3(g_ssb_am_w, g_ssb_am)
 XEN_NARGIFY_1(g_ssb_am_p_w, g_ssb_am_p)
+XEN_NARGIFY_4(g_ssb_bank_w, g_ssb_bank)
 XEN_NARGIFY_0(g_clm_table_size_w, g_clm_table_size)
 XEN_NARGIFY_1(g_set_clm_table_size_w, g_set_clm_table_size)
 #else
@@ -5591,6 +5612,7 @@ XEN_NARGIFY_1(g_set_clm_table_size_w, g_set_clm_table_size)
 #define g_make_ssb_am_w g_make_ssb_am
 #define g_ssb_am_w g_ssb_am
 #define g_ssb_am_p_w g_ssb_am_p
+#define g_ssb_bank_w g_ssb_bank
 #define g_clm_table_size_w g_clm_table_size
 #define g_set_clm_table_size_w g_set_clm_table_size
 #endif
@@ -6033,6 +6055,7 @@ the closer the radius is to 1.0, the narrower the resonance."
   XEN_DEFINE_PROCEDURE(S_make_ssb_am,   g_make_ssb_am_w,   0, 4, 0, H_make_ssb_am); 
   XEN_DEFINE_PROCEDURE(S_ssb_am,        g_ssb_am_w,        1, 2, 0, H_ssb_am);
   XEN_DEFINE_PROCEDURE(S_ssb_am_p,      g_ssb_am_p_w,      1, 0, 0, H_ssb_am_p);
+  XEN_DEFINE_PROCEDURE("mus-ssb-bank",      g_ssb_bank_w,      4, 0, 0, "an experiment");
 
   XEN_YES_WE_HAVE("clm");
 
