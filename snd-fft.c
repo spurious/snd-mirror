@@ -269,6 +269,7 @@ static void hankel_transform(int size, Float *input, Float *output, Float Jn)
   /* args size, bessel limit, xmax */
   double *in1, *out1;
   int i;
+  if (size < 2) size = 2; /* GSL dht dies if size = 1 */
   if (size != last_dht_size)
     {
       if (dht_t) 
@@ -1459,7 +1460,7 @@ static int apply_fft_window(fft_state *fs)
 	  /* to my surprise, it's smoother even on an old SGI to just do the fft in place */
 	  /*   hooray for micro-optimization! */
 	  p = (int)(log(fs->size + 1) / log(4.0));
-	  use_fht = (fs->size == (int)pow(4, p));
+	  use_fht = ((p > 0) && (fs->size == (int)pow(4, p)));
 	}
       if (use_fht)
 	for (i = 0; i < data_len; i++)
@@ -1530,14 +1531,17 @@ static int apply_fft_window(fft_state *fs)
       cepstrum(fft_data, fs->size);
       break;
     case HADAMARD:
-      window = (Float *)CALLOC(fs->size, sizeof(Float));
-      for (i = 0; i < data_len; i++) fft_data[i] = next_sample_to_float(sf);
-      if (data_len < fs->size) 
-	for (i = data_len; i < fs->size; i++) 
-	  fft_data[i] = 0.0;
-      fast_hwt(window, fft_data, (int)(log((Float)(fs->size + 1)) / log(2.0)));
-      for (i = 0; i < fs->size; i++) fft_data[i] = window[i];
-      FREE(window);
+      if (data_len >= 4)
+	{
+	  window = (Float *)CALLOC(fs->size, sizeof(Float));
+	  for (i = 0; i < data_len; i++) fft_data[i] = next_sample_to_float(sf);
+	  if (data_len < fs->size) 
+	    for (i = data_len; i < fs->size; i++) 
+	      fft_data[i] = 0.0;
+	  fast_hwt(window, fft_data, (int)(log((Float)(fs->size + 1)) / log(2.0)));
+	  for (i = 0; i < fs->size; i++) fft_data[i] = window[i];
+	  FREE(window);
+	}
       break;
     case WALSH:
       for (i = 0; i < data_len; i++) fft_data[i] = next_sample_to_float(sf);
@@ -1775,7 +1779,7 @@ void *make_fft_state(chan_info *cp, int simple)
       /* if we're sweeping the mouse defining the selection, by the time we get to apply_fft_window, selection_len() can change */
       fftsize = snd_2pow2(dlen * (1 + cp->zero_pad));
 #if DEBUGGING
-      if (fftsize ! = snd_ipow2((int)(ceil(log((Float)(dlen * (1 + cp->zero_pad))) / log(2.0)))))
+      if (fftsize != snd_ipow2((int)(ceil(log((Float)(dlen * (1 + cp->zero_pad))) / log(2.0)))))
 	fprintf(stderr,"make_fft_state: new: %d, old: %d\n", fftsize, snd_ipow2((int)(ceil(log((Float)(dlen * (1 + cp->zero_pad))) / log(2.0)))));
 #endif
       if (fftsize < 2) fftsize = 2;
@@ -1892,6 +1896,7 @@ BACKGROUND_TYPE safe_fft_in_slices(void *fftData)
   fs = (fft_state *)fftData;
   cp = (chan_info *)(fs->chan);
   if (!(cp->graph_transform_p)) return(BACKGROUND_QUIT);
+  if (cp->transform_size < 2) return(BACKGROUND_QUIT);
   res = fft_in_slices(fftData);
   if (res == BACKGROUND_QUIT)
     {

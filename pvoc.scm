@@ -201,7 +201,7 @@
 		(lambda ()
 		  (phase-vocoder pv (lambda (dir) (next-sample reader)))))
       (free-sample-reader reader)
-      (set-samples 0 len data))))
+      (vct->channel data 0 len))))
 
 (define test-pv-4
   (lambda (gate)

@@ -312,7 +312,7 @@
 			   (let ((new-data (make-vct len))
 				 (old-data (samples->vct beg len snd chn)))
 			     (do ((k 0 (1+ k))) ;here we're applying our function to each sample in the currently selected portion
-				 ((= k len) (set-samples beg len new-data snd chn))
+				 ((= k len) (vct->channel new-data beg len snd chn))
 			       (vct-set! new-data k (func (vct-ref old-data k)))))))
 		 (all-chans))))))
 

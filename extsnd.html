@@ -7670,9 +7670,11 @@ etc.  The Snd-specific errors are:</p>
 'no-such-widget  'mus-error      'no-such-track      'no-such-envelope
 'cannot-print    'no-such-axis   'no-such-player     'bad-arity
 'no-such-color   'no-such-widget 'no-such-plugin     'no-such-graphics-context
+'gsl-error
 </pre>
 <p><i>bad-arity</i> is jargon indicating that a procedure takes the
-wrong number of arguments.
+wrong number of arguments.  <i>gsl-error</i> indicates that the GSL
+library is the source of the error.
 The symbol #t stands for all errors in this case, so we can 
 run rough-shod over any error with:</p>
 <pre>

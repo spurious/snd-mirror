@@ -1075,6 +1075,7 @@ void fht(int powerOfFour, Float *array)
   int a1 = 0, a2 = 0, a3 = 0;
   Float t = 0.0, t1 = 0.0, t2 =0.0, t3 = 0.0, t4 = 0.0, t5 = 0.0, t6 = 0.0, t7 = 0.0, t8 = 0.0;
   Float t9 = 0.0, t0 = 0.0;
+  if (powerOfFour < 1) return; /* sigh: 0 is a power of 4... */
   n = (int)(pow(4.0 , (double)powerOfFour));
   make_sines(n);
   n4 = n / 4;

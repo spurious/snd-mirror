@@ -1022,7 +1022,7 @@ static int checked_write(int tfd, char *buf, int chars)
 #if SNDLIB_USE_FLOATS
   #define MUS_SAMPLE_UNSCALED(n) ((n) / 32768.0)
 #else
-  #define MUS_SAMPLE_UNSCALED(n) ((n) * (1 << (32 - MUS_SAMPLE_BITS)))
+  #define MUS_SAMPLE_UNSCALED(n) ((n) * (1 << (MUS_SAMPLE_BITS - 16)))
 #endif
 
 static int mus_read_any_1(int tfd, int beg, int chans, int nints, MUS_SAMPLE_TYPE **bufs, MUS_SAMPLE_TYPE *cm, char *inbuf)

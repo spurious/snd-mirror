@@ -253,7 +253,7 @@
 			     (new-data (make-vct len))
 			     (old-data (samples->vct beg len snd chan)))
 			(do ((k 0 (1+ k)))
-			    ((= k len) (set-samples beg len new-data snd chan))
+			    ((= k len) (vct->channel new-data beg len snd chan))
 			  (vct-set! new-data k (func (vct-ref old-data k)))))))))))))
 
 ;(bind-key (char->integer #\m) 0 (lambda () (prompt-in-minibuffer "mark eval:" eval-between-marks)))

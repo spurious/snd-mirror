@@ -2687,8 +2687,8 @@ static XEN g_display_edits(XEN snd, XEN chn)
 
 static XEN g_edit_fragment(XEN uctr, XEN snd, XEN chn)
 {
-  #define H_edit_fragment "(" S_edit_fragment " ctr &optional snd chn) returns the edit history entry at 'ctr' \
-associated with snd's channel chn; this is a list (origin type start-sample samps)"
+  #define H_edit_fragment "(" S_edit_fragment " &optional (ctr current-edit-position) snd chn) returns the edit history entry at 'ctr' \
+associated with snd's channel chn; the returned value is a list (origin type start-sample samps)"
 
   chan_info *cp;
   ed_list *ed;
@@ -3476,6 +3476,7 @@ the new data's end."
   XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(edname) || XEN_STRING_P(edname) || XEN_BOOLEAN_P(edname), edname, XEN_ARG_7, "set-" S_samples, "a string");
   beg = XEN_TO_C_INT_OR_ELSE(samp_0, 0);
   len = XEN_TO_C_INT_OR_ELSE(samps, 0);
+  if (len <= 0) return(XEN_FALSE);
   override = XEN_TRUE_P(truncate);
   pos = to_c_edit_position(cp, edpos, "set-" S_samples, 9);
   if (XEN_STRING_P(edname))

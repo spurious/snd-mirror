@@ -8,8 +8,6 @@
  * "current" can change at any time.
  */
 
-/* added sync field and related operations 16-June-00 */
-
 /* if mark is handled as an smob, rather than a bare integer, we get better
  *   type-checking, but (for example) searching for a given mark becomes messy
  *
@@ -109,37 +107,36 @@ static mark *find_mark_id_1(chan_info *cp, mark *mp, void *uid)
   if (mark_id(mp) == (*((int *)uid))) return(mp); else return(NULL);
 }
 
-static mark *find_mark_from_id(snd_state *ss, int id, chan_info **cps, int pos)
+static mark *find_mark_from_id(int id, chan_info **cps, int pos)
 {
   int i, j, old_pos;
+  snd_state *ss;
   snd_info *sp;
   chan_info *cp;
   mark *mp;
+  ss = get_global_state();
   for (i = 0; i < ss->max_sounds; i++)
     if ((sp = ((snd_info *)(ss->sounds[i]))) &&
 	(sp->inuse))
       for (j = 0; j<(sp->nchans); j++)
 	if ((cp = ((chan_info *)(sp->chans[j]))))
 	  {
-	    old_pos = cp->edit_ctr;
-	    if (pos >= 0) cp->edit_ctr = pos;
-	    /* memoization would have to be done here where we know cp->edit_ctr */
-	    mp = map_over_marks(cp, find_mark_id_1, (void *)(&id), READ_FORWARD);
-	    cp->edit_ctr = old_pos;
-	    if (mp) 
+	    if (pos < cp->marks_size) /* pos can be -1 */
 	      {
-		cps[0] = cp; 
-		return(mp);
+		old_pos = cp->edit_ctr;
+		if (pos >= 0) cp->edit_ctr = pos;
+		/* memoization would have to be done here where we know cp->edit_ctr */
+		mp = map_over_marks(cp, find_mark_id_1, (void *)(&id), READ_FORWARD);
+		cp->edit_ctr = old_pos;
+		if (mp) 
+		  {
+		    cps[0] = cp; 
+		    return(mp);
+		  }
 	      }
 	  }
   return(NULL);
 }
-
-static mark *find_mark_id(chan_info **cps, int id, int pos) 
-{
-  return(find_mark_from_id(get_global_state(), id, cps, pos));
-}
-
 
 static mark *find_named_mark_1(chan_info *cp, mark *mp, void *uname)
 {
@@ -1711,7 +1708,8 @@ static XEN iread_mark(XEN n, int fld, XEN pos_n, char *caller)
   chan_info *ncp[1];
   mark *m = NULL;
   pos = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(pos_n, -1, caller);
-  m = find_mark_id(ncp, XEN_TO_C_INT_OR_ELSE_WITH_CALLER(n, 0, caller), pos);
+  m = find_mark_from_id(XEN_TO_C_INT_OR_ELSE_WITH_CALLER(n, 0, caller), 
+			ncp, pos);
   if (m == NULL) 
     return(snd_no_such_mark_error(caller, n));
   switch (fld)
@@ -1739,7 +1737,8 @@ static XEN iwrite_mark(XEN mark_n, XEN val, int fld, char *caller)
 {
   chan_info *cp[1];
   mark *m;
-  m = find_mark_id(cp, XEN_TO_C_INT_OR_ELSE_WITH_CALLER(mark_n, 0, caller), -1);
+  m = find_mark_from_id(XEN_TO_C_INT_OR_ELSE_WITH_CALLER(mark_n, 0, caller), 
+			cp, -1);
   if (m == NULL) 
     return(snd_no_such_mark_error(caller, mark_n));
   switch (fld)
@@ -1769,7 +1768,7 @@ static XEN g_mark_p(XEN id_n)
   #define H_mark_p "(" S_mark_p " id) -> #t if mark is active"
   chan_info *ncp[1];
   if (XEN_INTEGER_P(id_n))
-    return(C_TO_XEN_BOOLEAN(find_mark_id(ncp, XEN_TO_C_INT(id_n), -1)));
+    return(C_TO_XEN_BOOLEAN(find_mark_from_id(XEN_TO_C_INT(id_n), ncp, -1)));
   return(XEN_FALSE);
 }
 
@@ -1894,7 +1893,8 @@ static XEN g_delete_mark(XEN id_n)
   mark *m;
   int id;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(id_n), id_n, XEN_ONLY_ARG, S_delete_mark, "an integer");
-  m = find_mark_id(cp, id = XEN_TO_C_INT_OR_ELSE(id_n, 0), -1);
+  id = XEN_TO_C_INT_OR_ELSE(id_n, 0);
+  m = find_mark_from_id(id, cp, -1);
   if (m == NULL) 
     return(snd_no_such_mark_error(S_delete_mark, id_n));
   delete_mark_id(id, cp[0]);

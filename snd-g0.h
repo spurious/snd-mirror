@@ -46,6 +46,7 @@
 
 #define GUI_POINTER gpointer
 #define GUI_WIDGET GtkWidget*
+#define GUI_PIXEL GdkColor*
 
 #if DEBUGGING
   #define ASSERT_WIDGET_TYPE(Cond, Wid) if (!(Cond)) fprintf(stderr,"%s:[%s %d] widget arg is wrong type", __FUNCTION__, __FILE__, __LINE__)

@@ -1,5 +1,6 @@
 snd change log
 
+  14-Jan:    gsl-error.
   11-Jan:    snd 5.6. flute.scm.
   7-Jan:     mix-channel, insert-channel in extensions.scm.
              event.scm.

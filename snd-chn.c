@@ -2182,7 +2182,7 @@ static void make_lisp_graph(chan_info *cp, snd_info *sp, snd_state *ss, XEN pixe
 	{
 	  if ((pixel_len > graph) &&
 	      (XEN_PIXEL_P(XEN_LIST_REF(pixel_list, graph))))
-	    set_foreground_color(cp, ax, (Pixel)XEN_UNWRAP_PIXEL(XEN_LIST_REF(pixel_list, graph)));
+	    set_foreground_color(cp, ax, (GUI_PIXEL)XEN_UNWRAP_PIXEL(XEN_LIST_REF(pixel_list, graph)));
 	  else
 	    {
 	      switch (graph)
@@ -4953,15 +4953,15 @@ static XEN g_set_transform_size(XEN val, XEN snd, XEN chn)
   int len;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_1, "set-" S_transform_size, "an integer"); 
   len = XEN_TO_C_INT(val);
+  if (!(POWER_OF_2_P(len)))
+    len = snd_ipow2((int)(log(len + 1) / log(2.0)));
   if (len <= 0) return(XEN_FALSE);
   if (XEN_BOUND_P(snd))
     return(cp_iwrite(snd, chn, val, CP_TRANSFORM_SIZE, "set-" S_transform_size));
   else
     {
       ss = get_global_state();
-      if (POWER_OF_2_P(len))
-	set_transform_size(ss, len);
-      else set_transform_size(ss, snd_ipow2((int)(log(len + 1) / log(2.0))));
+      set_transform_size(ss, len);
       return(C_TO_XEN_INT(transform_size(ss)));
     }
 }

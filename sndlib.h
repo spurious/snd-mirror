@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 14
-#define SNDLIB_REVISION 16
-#define SNDLIB_DATE "3-Jan-02"
+#define SNDLIB_REVISION 17
+#define SNDLIB_DATE "14-Jan-02"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 
@@ -189,6 +189,7 @@
   #endif
   #define MUS_INT_TO_SAMPLE(n) (n)
   #define MUS_SAMPLE_TO_INT(n) (n)
+  /* these are for direct read/write (no cross-image assumption is made about 32 bit int scaling) */
   #define MUS_FLOAT_TO_FIX ((MUS_SAMPLE_BITS < 32) ? (1 << (MUS_SAMPLE_BITS - 1)) : 0x7fffffff)
   #define MUS_FIX_TO_FLOAT (1.0 / (float)(MUS_FLOAT_TO_FIX))
   #define MUS_FLOAT_TO_SAMPLE(n) ((int)((n) * MUS_FLOAT_TO_FIX))

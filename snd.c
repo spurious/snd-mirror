@@ -59,7 +59,22 @@ static void mus_print2snd(char *msg)
 #endif
 
 #if HAVE_GSL
-  #include <gsl/gsl_ieee_utils.h>
+#include <gsl/gsl_ieee_utils.h>
+#include <gsl/gsl_errno.h>
+/* default gsl error handler apparently aborts main program! */
+static void snd_gsl_error(const char *reason, const char *file, int line, int gsl_errno)
+{
+  if (ss->catch_exists)
+    XEN_ERROR(SND_GSL_ERROR,
+	      XEN_LIST_5(C_TO_XEN_STRING(reason),
+			 C_TO_XEN_STRING(file),
+			 C_TO_XEN_INT(line),
+			 C_TO_XEN_INT(gsl_errno),
+			 C_TO_XEN_STRING(gsl_strerror(gsl_errno))));
+  else 
+    snd_error("GSL: %s[%d]: %s (%s)\n",
+	      file, line, reason, gsl_strerror(gsl_errno));
+}
 #endif
 
 #if SND_AS_WIDGET
@@ -92,6 +107,7 @@ static void mus_print2snd(char *msg)
       need_ieee_setup = 0;
       gsl_ieee_env_setup();
     }
+  gsl_set_error_handler(snd_gsl_error);
 #endif
 
 #if HAVE_FPU_CONTROL_H

@@ -175,6 +175,9 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
 #if HAVE_LADSPA
 		  (XEN_EQ_P(tag, NO_SUCH_PLUGIN)) || (XEN_EQ_P(tag, PLUGIN_ERROR)) ||
 #endif
+#if HAVE_GSL
+		  (XEN_EQ_P(tag, SND_GSL_ERROR)) ||
+#endif
 		  (XEN_EQ_P(tag, IMPOSSIBLE_BOUNDS)) || (XEN_EQ_P(tag, NO_SUCH_SAMPLE)))
 		{
 		  scm_display(tag, port);

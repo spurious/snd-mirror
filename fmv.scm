@@ -109,7 +109,7 @@
 	  ((= i dur))
 	(vct-set! data i (+ (vct-ref data i)
 			    (v))))
-      (set-samples beg dur data))))
+      (vct->channel data beg dur))))
 
 ;;; (with-sound () (test-v 0 10000 440 .1 '(0 0 1 1 2 0)))
 
@@ -129,7 +129,7 @@
 	  ((= i dur))
 	(vct-set! data i (+ (vct-ref data i)
 			    (v))))
-      (set-samples beg dur data))))
+      (vct->channel data beg dur))))
 
 ;;; here's the original instrument using this new generator
 (define fm-violin-ins

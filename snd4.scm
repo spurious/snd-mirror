@@ -3,7 +3,6 @@
 (use-modules (ice-9 format))
 (use-modules (ice-9 optargs))
 
-;;; the following are currently defined in snd-scm.c, but may be removed later
 (if #f
     (begin
       (define smooth            smooth-sound)

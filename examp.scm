@@ -773,7 +773,7 @@
 	(vct-set! idata j 0.0))
       (fft rdata idata -1)
       (vct-scale! rdata (/ 1.0 fsize))
-      (set-samples 0 (1- len) rdata))))
+      (vct->channel rdata 0 (1- len)))))
 
 (define (fft-squelch squelch)
   ;; fft entire sound, remove all energy below squelch, unfft
@@ -802,7 +802,7 @@
 	      (vct-set! idata j 0.0)))))
     (fft rdata idata -1)
     (vct-scale! rdata (/ 1.0 fsize))
-    (set-samples 0 (1- len) rdata)
+    (vct->channel rdata 0 (1- len))
     scaler))
     
 (define (fft-env-data fft-env)
@@ -828,7 +828,7 @@
 
 (define (fft-env-edit fft-env)
   ;; edit current chan using fft-env
-  (set-samples 0 (1- (frames)) (fft-env-data fft-env)))
+  (vct->channel (fft-env-data fft-env) 0 (1- (frames))))
 
 (define (fft-env-interp env1 env2 interp)
   ;; interpolate between two fft-filtered versions (env1 and env2 are the spectral envelopes) following interp (an env between 0 and 1)
@@ -843,7 +843,7 @@
 	(vct-set! new-data i 
 		  (+ (* (- 1.0 pan) (vct-ref data1 i))
 		     (* pan (vct-ref data2 i))))))
-    (set-samples 0 (1- len) new-data)))
+    (vct->channel new-data 0 (1- len))))
 
 (define (fft-smoother cutoff start samps snd chn)
   "use fft-filtering to smooth a section"
@@ -1863,7 +1863,7 @@
       (if (> data-ctr 0)
 	  (mus-sound-write fil 0 (1- data-ctr) 1 data))
       (mus-sound-close-output fil (* 4 newlen))
-      ;; #t trunc arg to set-samples shortens the sound as needed
+      ;; #t trunc arg to set samples shortens the sound as needed
       (set-samples 0 newlen tempfilename snd chn #t))))
 
 
