@@ -414,7 +414,7 @@ The four "-widgets" procedure return lists of possibly useful widgets:
                      7:file_save_as_dialog 8:view_files_dialog 9:raw_data_dialog 
                      10:new_file_dialog 11:file_mix_dialog 12:edit_header_dialog 
                      13:find_dialog 14:help_dialog 15:completion_dialog 16:mix_panel_dialog
-                     17:print_dialog 18:recorder_dialog 19:region_dialog 20:stats_dialog)
+                     17:print_dialog 18:recorder_dialog 19:region_dialog)
 </pre>
 <p>I've only included the ones I needed immediately (for autotesting), but all Snd widgets are potentially (and easily)
 accessible; if you need access to one that
@@ -1099,13 +1099,6 @@ when you save a sound via the "save" dialog.</p>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
-<!-- show-usage-stats -->
-<!-- --><tr><td><code><em class=def><a name="showusagestats">show-usage-stats</a></em></code></td>
-<!-- --><td><code>#f</code></td>
-<!-- --><td>If #t, show approximate memory and disk space usage of current edit trees.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=3></td></tr>
-<!-- -->
 <!-- sinc-width -->
 <!-- --><tr><td valign=top><code><em class=def><a name="sincwidth">sinc-width</a></em></code></td>
 <!-- --><td valign=top><code>10</code></td>
@@ -1193,7 +1186,9 @@ when you save a sound via the "save" dialog.</p>
 <!-- zoom-focus-style -->
 <!-- --><tr><td><code><em class=def><a name="zoomfocusstyle">zoom-focus-style</a></em></code></td>
 <!-- --><td colspan=2><code>zoom-focus-active</code></td></tr>
-<!-- --><tr><td colspan=2></td><td>This determines what a zoom action focuses (centers) on.  See <a href="snd.html#zoomoption">Zoom options</a>.</td></tr>
+<!-- --><tr><td colspan=2></td><td>This determines what a zoom action focuses (centers) on. The choices are 
+<!-- --><i>zoom-focus-left</i>, <i>zoom-focus-right</i>, <i>zoom-focus-active</i>, and <i>zoom-focus-middle</i>.
+<!-- -->See <a href="snd.html#zoomoption">Zoom options</a>.</td></tr>
 <!-- -->
 <!-- --></table>
 <br>
@@ -7928,7 +7923,8 @@ run
 
 <p><b>Transform normalization</b>:</p>
 <pre>
-  dont-normalize-transform   normalize-transform-by-channel normalize-transform-by-sound  normalize-transform-globally
+  dont-normalize-transform      normalize-transform-by-channel 
+  normalize-transform-by-sound  normalize-transform-globally
 </pre><br>
 
 <p><b><a name="fftwindowchoices"></a>FFT Window</b> type:</p>
@@ -8175,7 +8171,8 @@ run
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="sndclosesoundfile">close-sound-file</a></em> (fd bytes)</code></span></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->close file updating header to report <i>bytes</i> bytes of data.
+<!-- -->close file (opened by open-sound-file) updating header to report <i>bytes</i> bytes of data.  This refers to data files
+<!-- -->handled directly, not sounds displayed in Snd (handled by <a href="#sndopen">open-sound</a> and <a href="#sndclose">close-sound</a>).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->

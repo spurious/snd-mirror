@@ -603,9 +603,6 @@
       (set! (show-selection-transform) (show-selection-transform))
       (if (not (equal? (show-selection-transform)  #f )) 
 	  (snd-display ";show-selection-transform set def: ~A" (show-selection-transform)))
-      (set! (show-usage-stats) (show-usage-stats))
-      (if (not (equal? (show-usage-stats)  #f)) 
-	  (snd-display ";show-usage-stats set def: ~A" (show-usage-stats)))
       (set! (show-y-zero) (show-y-zero))
       (if (not (equal? (show-y-zero)  #f )) 
 	  (snd-display ";show-y-zero set def: ~A" (show-y-zero)))
@@ -830,7 +827,6 @@
 	'show-marks (show-marks) #t 
 	'show-mix-waveforms (show-mix-waveforms) #t
 	'show-selection-transform (show-selection-transform) #f 
-	'show-usage-stats (show-usage-stats) #f
 	'show-y-zero (show-y-zero) #f 
 	'show-controls (without-errors (show-controls)) 'no-such-sound
 	'sinc-width (sinc-width) 10 
@@ -1328,7 +1324,6 @@
 	  (list 'show-marks show-marks #t set-show-marks #f)
 	  (list 'show-mix-waveforms show-mix-waveforms #t set-show-mix-waveforms #f)
 	  (list 'show-selection-transform show-selection-transform #f set-show-selection-transform #t)
-	  (list 'show-usage-stats show-usage-stats #f set-show-usage-stats #t)
 	  (list 'show-y-zero show-y-zero #f set-show-y-zero #t)
 	  (list 'sinc-width sinc-width 10 set-sinc-width 40)
 	  (list 'spectro-cutoff spectro-cutoff 1.0 set-spectro-cutoff 0.7)
@@ -8510,15 +8505,6 @@
 	(add-hook! menu-hook
 		   (lambda (name option)
 		     (if (and (string=? name "Options")
-			      (or (string=? option "Show stats")
-				  (string=? option "Ignore stats")))
-			 (begin
-			   (set! ctr (+ ctr 1))
-			   #f)
-			 #t)))
-	(add-hook! menu-hook
-		   (lambda (name option)
-		     (if (and (string=? name "Options")
 			      (string=? option "Save options"))
 			 (begin
 			   (set! ctr (+ ctr 1))
@@ -8560,7 +8546,7 @@
 
 	(revert-sound fd)
 	(close-sound fd)
-	(if (not (= ctr 2)) (snd-display ";ctr after test-menus: ~A? " ctr))
+	(if (not (= ctr 1)) (snd-display ";ctr after test-menus: ~A? " ctr))
 	(reset-hook! menu-hook))
 
       (test-hooks)
@@ -9935,7 +9921,6 @@
 	    (start-playing chans (srate sound) #f))))
 
       (if (procedure? test-hook) (test-hook 15))
-      (set! (show-usage-stats) #t)
       (if (not (equal? (all-chans) (list (list obi) (list 0)))) (snd-display ";all-chans: ~A?" (all-chans)))
       (let ((s2i (open-sound (car (match-sound-files (lambda (file) (= (mus-sound-chans file) 2)))))))
 	(if (and (not (equal? (all-chans) (list (list obi s2i s2i) (list 0 0 1))))
@@ -9993,7 +9978,6 @@
 	  (let ((nmaxa (maxamp obi)))
 	    (if (fneq maxa nmaxa) (snd-display ";normalized-mix: ~A ~A?" maxa nmaxa)))
 	  (revert-sound obi))
-	(update-usage-stats)
 	(set! s2i (open-sound (car (match-sound-files (lambda (file) 
 							  (and (= (mus-sound-chans file) 2)
 							       (> (mus-sound-frames file) 1000)))))))
@@ -10073,7 +10057,6 @@
 	    (snd-display ";compand: ~A?" (list ((compand) 0.0) ((compand) 1.0) ((compand) .1) ((compand) .99) ((compand) .95))))
 	
 	(close-sound obi)
-	(update-usage-stats)
 	(revert-sound s2i)
 	(let ((s1 (sample 1000 s2i 0))
 	      (s2 (sample 1000 s2i 1)))
@@ -10332,7 +10315,6 @@
 	(if (sound? snd2)
 	    (play-with-amps snd2 0.2 0.1))
 	(close-sound snd2))
-      (update-usage-stats)
       (let ((ind (open-sound "pistol.snd")))
 	(if (selection-member? ind 0) 
 	    (snd-display ";initial selection-member? ~A ~A?" 
@@ -10434,7 +10416,6 @@
 	    (snd-display ";smooth-sound back: ~A ~A?" (samples->vct 0 11 ind) (smoother 1.0 0.0 10)))
 	(close-sound ind))
 
-      (set! (show-usage-stats) #f)
       (let* ((ind (open-sound "oboe.snd"))
 	     (len (frames ind)))
 	(set! (cursor ind) 1200)
@@ -13672,15 +13653,6 @@ EDITS: 3
 		  (if (|XtIsManaged regd)
 		      (snd-display ";region dialog is still active?")))
 
-		;; ---------------- stats dialog ----------------
-		(let ((statsd (list-ref (dialog-widgets) 20)))
-		  (|XtManageChild statsd)
-		  (click-button (|XmMessageBoxGetChild statsd |XmDIALOG_CANCEL_BUTTON)) (force-event) ;update
-		  (click-button (|XmMessageBoxGetChild statsd |XmDIALOG_OK_BUTTON)) (force-event)     ;dismiss
-		  (if (|XtIsManaged statsd)
-		      (snd-display ";why is stats dialog alive?")))
-
-		
 		;; ---------------- Xt tests ----------------
 		(let ((name (|XtGetApplicationNameAndClass (|XtDisplay (cadr (main-widgets))))))
 		  (if (not (equal? name (list "snd" "Snd")))
@@ -14368,7 +14340,7 @@ EDITS: 3
 	       selected-channel selected-data-color selected-graph-color selected-mix selected-mix-color selected-sound
 	       selection-position selection-color selection-creates-region selection-length selection-member? selection?
 	       short-file-name show-axes show-backtrace show-controls show-transform-peaks show-indices show-listener
-	       show-marks show-mix-waveforms show-selection-transform show-usage-stats show-y-zero sinc-width
+	       show-marks show-mix-waveforms show-selection-transform show-y-zero sinc-width
 	       smooth-sound smooth-selection snd-print snd-spectrum snd-tempnam snd-version sound-files-in-directory
 	       sound-loop-info sound-widgets soundfont-info sound? sounds spectro-cutoff spectro-hop spectro-start
 	       spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale
@@ -14376,7 +14348,7 @@ EDITS: 3
 	       start-playing start-progress-report stop-player stop-playing swap-channels syncd-marks sync sound-properties temp-dir
 	       text-focus-color tiny-font track-sample-reader?  transform-dialog transform-sample transform-samples
 	       transform-samples->vct transform-samples-size transform-type trap-segfault unbind-key undo
-	       update-transform update-time-graph update-lisp-graph update-sound update-usage-stats use-sinc-interp
+	       update-transform update-time-graph update-lisp-graph update-sound use-sinc-interp
 	       vct->samples vct->sound-file verbose-cursor view-sound vu-font vu-font-size vu-size wavelet-type
 	       graph-time?  time-graph-type wavo-hop wavo-trace window-height window-width window-x window-y
 	       with-mix-tags write-peak-env-info-file x-axis-style beats-per-minute x-bounds x-position-slider x->position x-zoom-slider
@@ -14447,7 +14419,7 @@ EDITS: 3
 		   reverb-control? sash-color ladspa-dir save-dir save-state-file selected-data-color selected-graph-color
 		   selected-mix-color selection-color selection-creates-region show-axes show-backtrace show-controls
 		   show-transform-peaks show-indices show-marks show-mix-waveforms show-selection-transform show-listener
-		   show-usage-stats show-y-zero sinc-width spectro-cutoff spectro-hop spectro-start spectro-x-angle
+		   show-y-zero sinc-width spectro-cutoff spectro-hop spectro-start spectro-x-angle
 		   spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale speed-control
 		   speed-control-style speed-control-tones squelch-update sync sound-properties temp-dir text-focus-color tiny-font y-bounds
 		   transform-type trap-segfault use-sinc-interp verbose-cursor vu-font vu-font-size vu-size wavelet-type x-bounds
@@ -15095,7 +15067,7 @@ EDITS: 3
 			  recorder-out-format recorder-srate recorder-trigger sash-color ladspa-dir save-dir save-state-file
 			  selected-channel selected-data-color selected-graph-color selected-mix selected-mix-color
 			  selected-sound selection-creates-region show-backtrace show-controls show-indices show-listener
-			  show-selection-transform show-usage-stats sinc-width temp-dir text-focus-color tiny-font
+			  show-selection-transform sinc-width temp-dir text-focus-color tiny-font
 			  trap-segfault unbind-key use-sinc-interp verbose-cursor vu-font vu-font-size vu-size window-height
 			  window-width window-x window-y with-mix-tags x-axis-style beats-per-minute zoom-color zoom-focus-style mix-tag-height
 			  mix-tag-width ))
@@ -15533,7 +15505,6 @@ EDITS: 3
 
 (save-listener "test.output")
 (set! (listener-prompt) original-prompt)
-(update-usage-stats)
 
 (snd-display ";all done!~%~A" original-prompt)
 

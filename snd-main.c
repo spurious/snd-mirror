@@ -300,7 +300,6 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   if (fft_log_magnitude(ss) != DEFAULT_FFT_LOG_MAGNITUDE) pss_ss(fd, S_fft_log_magnitude, b2s(fft_log_magnitude(ss)));
   if (fft_log_frequency(ss) != DEFAULT_FFT_LOG_FREQUENCY) pss_ss(fd, S_fft_log_frequency, b2s(fft_log_frequency(ss)));
   if (print_length(ss) != DEFAULT_PRINT_LENGTH) pss_sd(fd, S_print_length, print_length(ss));
-  if (show_usage_stats(ss) != DEFAULT_SHOW_USAGE_STATS) pss_ss(fd, S_show_usage_stats, b2s(show_usage_stats(ss)));
   if (show_mix_waveforms(ss) != DEFAULT_SHOW_MIX_WAVEFORMS) pss_ss(fd, S_show_mix_waveforms, b2s(show_mix_waveforms(ss)));
   if (mix_waveform_height(ss) != DEFAULT_MIX_WAVEFORM_HEIGHT) pss_sd(fd, S_mix_waveform_height, mix_waveform_height(ss));
   if (mix_tag_height(ss) != DEFAULT_MIX_TAG_HEIGHT) pss_sd(fd, S_mix_tag_height, mix_tag_height(ss));
@@ -553,7 +552,6 @@ static char *save_state_or_error (snd_state *ss, char *save_state_name)
       if (file_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", S_file_dialog); /* View: Files dialog, not Open: File */
       if (region_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", S_region_dialog);
       if (record_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", S_recorder_dialog);
-
       /* the problem here (with saving hooks) is that it is not straightforward to save the function source
        *   (with the current print-set! source option, or with an earlier procedure->string function using
        *   procedure_environment etc); many types print in this case in ways that are not readable.

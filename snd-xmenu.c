@@ -20,7 +20,6 @@ enum {menu_menu,
           o_save_menu, o_save_state_menu,
           o_speed_menu, o_speed_cascade_menu,
             o_speed_float_menu, o_speed_ratio_menu, o_speed_semitone_menu,
-          o_stats_menu,
         view_menu, v_cascade_menu,
           v_equalize_panes_menu, 
           v_graph_style_menu, v_graph_style_cascade_menu,
@@ -37,7 +36,7 @@ enum {menu_menu,
           v_sep2_menu
 };
 
-#define NUM_MENU_WIDGETS 100
+#define NUM_MENU_WIDGETS 99
 static Widget mw[NUM_MENU_WIDGETS];
 
 enum {W_pop_menu, W_pop_sep, W_pop_play, W_pop_undo, W_pop_redo, W_pop_save, W_pop_equalize_panes, W_pop_info};
@@ -90,7 +89,6 @@ Widget view_x_axis_samples_menu(void) {return(mw[v_x_axis_samples_menu]);}
 Widget view_x_axis_percentage_menu(void) {return(mw[v_x_axis_percentage_menu]);}
 
 Widget options_save_state_menu(void) {return(mw[o_save_state_menu]);}
-Widget options_stats_menu(void) {return(mw[o_stats_menu]);}
 Widget options_focus_left_menu(void) {return(mw[o_focus_left_menu]);}
 Widget options_focus_right_menu(void) {return(mw[o_focus_right_menu]);}
 Widget options_focus_middle_menu(void) {return(mw[o_focus_middle_menu]);}
@@ -483,12 +481,6 @@ static void options_save_state_callback(Widget w, XtPointer cD, XtPointer mD)
   IF_MENU_HOOK(STR_Options, STR_Save_state) save_state_from_menu((snd_state *)cD);
 }
 #endif
-
-static void options_stats_callback(Widget w, XtPointer cD, XtPointer mD)
-{
-  snd_state *ss = (snd_state *)cD;
-  IF_MENU_HOOK(STR_Options, STR_Show_stats) set_show_usage_stats(ss, (!(show_usage_stats(ss))));
-}
 
 
 
@@ -883,9 +875,6 @@ Widget add_menu(snd_state *ss)
   mw[o_save_state_menu] = XtCreateManagedWidget(STR_Save_state, xmPushButtonWidgetClass, mw[option_menu], main_args, main_n);
   XtAddCallback(mw[o_save_state_menu], XmNactivateCallback, options_save_state_callback, ss);
 #endif
-
-  mw[o_stats_menu] = XtCreateManagedWidget(STR_Show_stats, xmPushButtonWidgetClass, mw[option_menu], main_args, main_n);
-  XtAddCallback(mw[o_stats_menu], XmNactivateCallback, options_stats_callback, ss);
 
 
 

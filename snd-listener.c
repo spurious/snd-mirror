@@ -153,7 +153,6 @@ char *listener_prompt_with_cr(snd_state *ss)
 #define GUI_TEXT_INSERTION_POSITION(w) SG_TEXT_GET_POINT(w)
 #define GUI_TEXT_SET_INSERTION_POSITION(w, pos) SG_TEXT_SET_POINT(w, pos - 1)
 #define GUI_LISTENER_TEXT_INSERT(w, pos, text) append_listener_text(0, text)
-#define GUI_STATS_TEXT_INSERT(w, pos, text) SG_TEXT_INSERT(w, (ss->sgx)->help_text_fnt, (ss->sgx)->black, (ss->sgx)->white, text, -1)
 #define GUI_FREE(w) g_free(w)
 #define GUI_SET_CURSOR(w, cursor) gdk_window_set_cursor(w->window, cursor)
 #define GUI_UNSET_CURSOR(w, cursor) gdk_window_set_cursor(w->window, cursor)
@@ -167,7 +166,6 @@ char *listener_prompt_with_cr(snd_state *ss)
 #define GUI_TEXT_INSERTION_POSITION(w) XmTextGetInsertionPosition(w)
 #define GUI_TEXT_SET_INSERTION_POSITION(w, pos) XmTextSetInsertionPosition(w, pos)
 #define GUI_LISTENER_TEXT_INSERT(w, pos, text) XmTextInsert(w, pos, text)
-#define GUI_STATS_TEXT_INSERT(w, pos, text) XmTextInsert(w, pos, text)
 #define GUI_FREE(w) XtFree(w)
 #define GUI_SET_CURSOR(w, cursor) XUndefineCursor(XtDisplay(w), XtWindow(w)); XDefineCursor(XtDisplay(w), XtWindow(w), cursor)
 #define GUI_UNSET_CURSOR(w, cursor) XUndefineCursor(XtDisplay(w), XtWindow(w)); XDefineCursor(XtDisplay(w), XtWindow(w), None)
@@ -404,161 +402,6 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
   cmd_eot = GUI_TEXT_END(w);
   GUI_TEXT_GOTO(w, cmd_eot - 1);
   GUI_TEXT_SET_INSERTION_POSITION(w, cmd_eot + 1);
-#endif
-}
-
-#if HAVE_MALLINFO
-  #include <malloc.h>
-#endif
-
-#ifdef DEBUG_MEMORY
-  char *mem_stats(snd_state *ss, int ub);
-#endif
-
-#if DEBUGGING
-  void report_header_stats(int *vals);
-  void report_sound_stats(int *vals);
-  void report_io_stats(int *vals);
-#endif
-
-#if (HAVE_SYS_RESOURCE_H) && (HAVE_GETRUSAGE)
-  #include <sys/time.h>
-  #include <sys/resource.h>
-  #include <unistd.h>
-#endif
-
-#define STATS_BUFFER_SIZE 2048
-
-void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form)
-{
-#if (!USE_NO_GUI)
-  int i, j, regs;
-#if HAVE_MALLINFO
-  int used_bytes = 0;
-#endif
-  GUI_TEXT_POSITION_TYPE pos;
-  int vals[2];
-  snd_info *sp;
-  chan_info *cp;
-  char *str, *r0 = NULL, *r1 = NULL;
-  if (stats_form == NULL) return;
-  GUI_SET_TEXT(stats_form, "file chn: mem(#bufs), main, temp(#files), amp envs\n\n");
-  for (i = 0; i < ss->max_sounds; i++)
-    if ((sp = ((snd_info *)(ss->sounds[i]))) &&	
-	(sp->inuse))
-      for (j = 0; j < (sp->nchans); j++)
-	if ((cp = ((chan_info *)(sp->chans[j]))) && 
-	    (cp->stats))
-	  {
-	    pos = GUI_TEXT_END(stats_form);
-	    str = update_chan_stats(cp);
-	    GUI_STATS_TEXT_INSERT(stats_form, pos, str);
-	    FREE(str);
-	  }
-  regs = snd_regions();
-  if (regs > 0)
-    {
-      vals[0] = region_stats();
-      str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-      mus_snprintf(str, PRINT_BUFFER_SIZE, "\nregions (%d, deferred: %d): %s\n",
-		   regs,
-		   ss->deferred_regions,
-		   r1 = kmg(vals[0]));
-      pos = GUI_TEXT_END(stats_form);
-      GUI_STATS_TEXT_INSERT(stats_form, pos, str);
-      if (r0) free(r0);
-      if (r1) free(r1);
-      FREE(str);
-    }
-#if HAVE_MALLINFO
-  {
-    struct mallinfo mall;
-    char *m0 = NULL, *m1 = NULL, *m2 = NULL, *m3 = NULL;
-    mall = mallinfo();
-    str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-    mus_snprintf(str, PRINT_BUFFER_SIZE, "\nmalloc: %s + %s (in use: %s, freed: %s)\n",
-		 m0 = kmg(mall.arena),
-		 m1 = kmg(mall.hblkhd),
-		 m2 = kmg(used_bytes = mall.uordblks),
-		 m3 = kmg(mall.fordblks));
-    pos = GUI_TEXT_END(stats_form);
-    GUI_STATS_TEXT_INSERT(stats_form, pos, str);
-    if (m0) free(m0);
-    if (m1) free(m1);
-    if (m2) free(m2);
-    if (m3) free(m3);
-    FREE(str);
-  }
-#endif
-#if (HAVE_SYS_RESOURCE_H) && (HAVE_GETRUSAGE)
-  {
-    struct rusage usage;
-    int err;
-    err = getrusage(RUSAGE_SELF, &usage);
-    if (err == 0)
-      {
-	str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-	mus_snprintf(str, PRINT_BUFFER_SIZE, "user time: %.4f, system time: %.4f, page faults: %ld, swaps: %ld\n",
-		     (float)(usage.ru_utime.tv_sec + ((float)(usage.ru_utime.tv_usec) / 1000000.0)),
-		     (float)(usage.ru_stime.tv_sec + ((float)(usage.ru_stime.tv_usec) / 1000000.0)),
-		     usage.ru_majflt,
-		     usage.ru_nswap);
-	pos = GUI_TEXT_END(stats_form);
-	GUI_STATS_TEXT_INSERT(stats_form, pos, str);
-	FREE(str);
-      }
-  }
-#endif
-#if DEBUG_MEMORY && HAVE_MALLINFO
-  str = mem_stats(ss, used_bytes);
-  pos = GUI_TEXT_END(stats_form);
-  GUI_STATS_TEXT_INSERT(stats_form, pos, str);
-  free(str);
-#endif
-#if HAVE_GUILE && HAVE_CLOCK && HAVE_LLONGS && HAVE_SCM_NUM2LONG_LONG
-  {
-    int len;
-    XEN stats;
-    long long gc_swept = 0, gc_heap = 0, gc_cells = 0;
-    Float gc_time;
-    stats = scm_gc_stats();
-    if (XEN_LIST_P_WITH_LENGTH(stats, len))
-      {
-#ifdef SCM_NUM2LONG_LONG
-#define FUNC_NAME __FUNCTION__
-	if (len > 7)
-	  gc_swept = SCM_NUM2LONG_LONG(XEN_ARG_1, XEN_CDR(XEN_LIST_REF(stats, 9)));
-	gc_heap = SCM_NUM2LONG_LONG(XEN_ARG_1, XEN_CDR(XEN_LIST_REF(stats, 2)));
-	gc_cells = SCM_NUM2LONG_LONG(XEN_ARG_1, XEN_CDR(XEN_LIST_REF(stats, 1)));
-#undef FUNC_NAME
-#else
-	if (len > 7)
-	  gc_swept = scm_num2long_long(XEN_CDR(XEN_LIST_REF(stats, 9)), (char *)XEN_ARG_1, __FUNCTION__);
-	gc_heap = scm_num2long_long(XEN_CDR(XEN_LIST_REF(stats, 2)), (char *)XEN_ARG_1, __FUNCTION__);
-	gc_cells = scm_num2long_long(XEN_CDR(XEN_LIST_REF(stats, 1)), (char *)XEN_ARG_1, __FUNCTION__);
-#endif
-	gc_time = (float)(XEN_TO_C_INT(XEN_CDR(XEN_LIST_REF(stats, 0)))) / 1000.0;
-	str = (char *)CALLOC(STATS_BUFFER_SIZE,sizeof(char));
-	if (len > 7)
-	  mus_snprintf(str, STATS_BUFFER_SIZE,
-		       "\nGuile:\n  gc time: %.2f secs (%d sweeps)\n  cells: %Ld (%Ld gc'd)\n  heap size: %Ld",
-		       gc_time,
-		       XEN_TO_C_INT(XEN_CDR(XEN_LIST_REF(stats, 5))),     /* times */
-		       gc_cells,
-		       gc_swept,
-		       gc_heap);
-	else
-	  mus_snprintf(str, STATS_BUFFER_SIZE,
-		       "\nGuile:\n  gc time: %.2f secs\n  cells: %Ld\n  heap size: %Ld",
-		       gc_time,
-		       gc_cells,
-		       gc_heap);
-	pos = GUI_TEXT_END(stats_form);
-	GUI_STATS_TEXT_INSERT(stats_form, pos, str);
-	FREE(str);
-      }
-  }
-#endif
 #endif
 }
 

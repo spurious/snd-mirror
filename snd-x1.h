@@ -144,7 +144,6 @@ Widget view_x_axis_beats_menu(void);
 Widget view_x_axis_samples_menu(void);
 Widget view_x_axis_percentage_menu(void);
 Widget options_save_state_menu(void);
-Widget options_stats_menu(void);
 Widget options_focus_left_menu(void);
 Widget options_focus_right_menu(void);
 Widget options_focus_middle_menu(void);
@@ -378,19 +377,19 @@ void g_init_gxchn(void);
 
 /* -------- snd-xsnd.c -------- */
 
-Widget w_snd_ctrls(snd_info *sp);
+int control_panel_height(snd_info *sp);
 Widget w_snd_pane(snd_info *sp);
 Widget w_snd_name(snd_info *sp);
-Widget w_snd_combine(snd_info *sp);
-Widget w_snd_play(snd_info *sp);
-Widget w_snd_filter_env(snd_info *sp);
+Widget unite_button(snd_info *sp);
+void set_control_panel_play_button(snd_info *sp, int val);
+Widget filter_graph(snd_info *sp);
 void make_minibuffer_label(snd_info *sp, char *str);
 void goto_minibuffer(snd_info *sp);
 void set_minibuffer_string(snd_info *sp, char *str);
 void set_minibuffer_cursor_position(snd_info *sp, int pos);
 char *get_minibuffer_string(snd_info *sp);
-int sound_unlock_ctrls(snd_info *sp, void *ptr);
-int sound_lock_ctrls(snd_info *sp, void *ptr);
+int sound_unlock_control_panel(snd_info *sp, void *ptr);
+int sound_lock_control_panel(snd_info *sp, void *ptr);
 void snd_info_cleanup(snd_info *sp);
 void set_snd_amp(snd_info *sp, Float val);
 void set_snd_expand(snd_info *sp, Float val);
@@ -419,7 +418,7 @@ void snd_file_bomb_icon(snd_info *sp, int on);
 void x_bomb(snd_info *sp, int on);
 snd_info *add_sound_window (char *filename, snd_state *state, int read_only);
 void set_sound_pane_file_label(snd_info *sp, char *str);
-void unlock_ctrls(snd_info *sp);
+void unlock_control_panel(snd_info *sp);
 void equalize_sound_panes(snd_state *ss, snd_info *sp, chan_info *ncp, int all_panes);
 void color_filter_waveform(snd_state *ss, Pixel color);
 void reflect_amp_env_completion(snd_info *sp);
@@ -544,14 +543,6 @@ void color_chan_components(COLOR_TYPE color, int which_component);
 void color_unselected_graphs(COLOR_TYPE color);
 void recolor_everything(GUI_WIDGET w, GUI_POINTER ptr);
 void g_initialize_xgh(void);
-
-
-
-/* -------- snd-xstats.c -------- */
-
-void update_stats(snd_state *ss);
-void update_stats_display(snd_state *ss, int all);
-void check_stats_window(snd_state *ss, int val);
 
 #endif
 

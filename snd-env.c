@@ -243,14 +243,14 @@ static void sp_make_axis_cp(snd_info *sp, char *name, int ex0, int ey0, int widt
     {
       spf->axis_cp = new_env_axis(ss);
       fixup_axis_context((spf->axis_cp)->axis->ax, 
-			 w_snd_filter_env(sp), 
+			 filter_graph(sp), 
 			 (ss->sgx)->fltenv_basic_gc);
     }
   if (!(spf->gray_ap)) 
     {
       spf->gray_ap = new_wave_axis(ss);
       fixup_axis_context(spf->gray_ap->ax, 
-			 w_snd_filter_env(sp), 
+			 filter_graph(sp), 
 			 (ss->sgx)->fltenv_data_gc);
     }
   init_env_axes(spf->axis_cp, name, ex0, ey0, width, height, xmin, xmax, ymin, ymax);

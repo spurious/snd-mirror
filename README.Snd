@@ -88,9 +88,9 @@ Only guile 1.3.4 or later is supported.
 
 Just as a quick example:
 
-  (set! (fft-size) 4096)
+  (set! (transform-size) 4096)
 
-sets the fft size to 4096, and
+sets the transform size to 4096, and
 
   (scale-by 2.0)
 

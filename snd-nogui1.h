@@ -126,7 +126,6 @@ int view_x_axis_beats_menu(void);
 int view_x_axis_samples_menu(void);
 int view_x_axis_percentage_menu(void);
 int options_save_state_menu(void);
-int options_stats_menu(void);
 int options_focus_left_menu(void);
 int options_focus_right_menu(void);
 int options_focus_middle_menu(void);
@@ -277,8 +276,7 @@ void add_channel_window(snd_info *sound, int channel, snd_state *ss, int chan_y,
 /* -------- snd-xsnd.c -------- */
 
 int w_snd_name(snd_info *sp);
-int w_snd_play(snd_info *sp);
-int w_snd_filter_env(snd_info *sp);
+int filter_graph(snd_info *sp);
 void make_minibuffer_label(snd_info *sp, char *str);
 void goto_minibuffer(snd_info *sp);
 void set_minibuffer_string(snd_info *sp, char *str);
@@ -313,7 +311,6 @@ void snd_file_bomb_icon(snd_info *sp, int on);
 void x_bomb(snd_info *sp, int on);
 snd_info *add_sound_window (char *filename, snd_state *state, int read_only);
 void set_sound_pane_file_label(snd_info *sp, char *str);
-void unlock_ctrls(snd_info *sp);
 void equalize_sound_panes(snd_state *ss, snd_info *sp, chan_info *ncp, int all_panes);
 void reflect_amp_env_completion(snd_info *sp);
 void equalize_all_panes(snd_state *ss);
@@ -402,12 +399,6 @@ int record_dialog_is_active(void);
 
 char *ps_rgb(snd_state *ss, int pchan);
 
-
-/* -------- snd-xstats.c -------- */
-
-void update_stats(snd_state *ss);
-void update_stats_display(snd_state *ss, int all);
-void check_stats_window(snd_state *ss, int val);
 
 #endif
 

@@ -207,7 +207,6 @@ typedef struct chan__info {
   int original_cursor;     /* for cursor reset after cursor-moving play */
   int hookable;
   int selection_transform_size;
-  int *stats;
   int squelch_update, waiting_to_make_graph;
   /* moved from global to channel-local 4-Aug-00 */
   Float spectro_x_scale, spectro_y_scale, spectro_z_scale, spectro_z_angle, spectro_x_angle, spectro_y_angle, spectro_cutoff, spectro_start;
@@ -324,7 +323,7 @@ typedef struct snd__state {
   int Show_Transform_Peaks, Show_Y_Zero, Show_Marks, Fft_Log_Frequency, Fft_Log_Magnitude, Channel_Style, Sound_Style, Show_Axes;
   char *Eps_File, *Temp_Dir, *Audio_State_File, *Save_Dir, *Ladspa_Dir;
   char *Listener_Font, *Help_Text_Font, *Axis_Label_Font, *Axis_Numbers_Font, *Bold_Button_Font, *Button_Font, *Tiny_Font;
-  int Verbose_Cursor, Show_Usage_Stats, Trap_Segfault;
+  int Verbose_Cursor, Trap_Segfault;
   int Enved_Filter_Order, Filter_Env_In_Hz;  /* for spectral envelopes from the envelope editor */
   Float Vu_Size, Vu_Font_Size, Eps_Left_Margin, Eps_Bottom_Margin, Eps_Size;
   char *Vu_Font;
@@ -454,7 +453,6 @@ void new_file_dialog_help(snd_state *ss);
 void edit_header_dialog_help(snd_state *ss);
 void print_dialog_help(snd_state *ss);
 void view_files_dialog_help(snd_state *ss);
-void stats_dialog_help(snd_state *ss);
 void ssnd_help(snd_state *ss, char *subject, ...);
 char* word_wrap(char *text, int widget_len);
 void g_init_help(void);
@@ -485,7 +483,6 @@ void reflect_no_regions_in_menu(void);
 void reflect_raw_open_in_menu(void);
 void reflect_raw_pending_in_menu(void);
 
-void set_show_usage_stats(snd_state *ss, int val);
 void close_file_from_menu(snd_state *ss);
 void save_file_from_menu(snd_state *ss);
 void update_file_from_menu(snd_state *ss);
@@ -667,8 +664,6 @@ void remember_temp(char *filename, int chans);
 void forget_temps(void);
 snd_data *make_snd_data_file(char *name, int *io, file_info *hdr, int temp, int ctr, int temp_chan);
 void free_sound_list (chan_info *cp);
-void gather_usage_stats(chan_info *cp);
-void update_all_usage_stats(snd_state *ss);
 int current_ed_samples(chan_info *cp);
 void extend_with_zeros(chan_info *cp, int beg, int num, const char *origin, int edpos);
 void file_insert_samples(int beg, int num, char *tempfile, chan_info *cp, int chan, int auto_delete, const char *origin, int edpos);
@@ -841,7 +836,6 @@ void protect_region(int n, int protect);
 int save_region(snd_state *ss, int n, char *ofile, int data_format);
 void paste_region(int n, chan_info *cp, const char *origin);
 void add_region(int n, chan_info *cp, const char *origin);
-int region_stats(void);
 int define_region(sync_info *si, int *ends);
 snd_fd *init_region_read (int beg, int n, int chan, int direction);
 snd_info *make_initial_region_sp(snd_state *ss, GUI_WIDGET region_grf);
@@ -1097,7 +1091,6 @@ int copy_file(char *oldname, char *newname);
 int move_file(char *oldfile, char *newfile);
 snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close);
 void snd_update(snd_state *ss, snd_info *sp);
-char *update_chan_stats(chan_info *cp);
 char *view_curfiles_name(int pos);
 void view_curfiles_play(snd_state *ss, int pos, int play);
 void view_curfiles_select(snd_state *ss, int pos);
@@ -1174,7 +1167,6 @@ XEN show_stack(void);
 void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt);
 char *listener_prompt_with_cr(snd_state *ss);
 int check_balance(char *expr, int start, int end);
-void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form);
 
 void g_init_listener(void);
 

@@ -555,7 +555,9 @@ void cleanup_dac(void)
 
 static void reflect_play_stop (snd_info *sp) 
 {
-  if (w_snd_play(sp)) set_toggle_button(w_snd_play(sp), FALSE, FALSE, sp);
+#if (!USE_NO_GUI)
+  set_control_panel_play_button(sp, FALSE);
+#endif
   set_file_browser_play_button(sp->short_filename, 0);
   set_open_file_play_button(0);
   reflect_play_stop_in_popup_menu();

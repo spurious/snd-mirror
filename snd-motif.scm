@@ -19,7 +19,6 @@
 ;;; (keep-file-dialog-open-upon-ok) changes File:Open so that clicking "ok" does not "unmanage" the dialog
 ;;;   also keep-mix-file-dialog-open-upon-ok
 ;;; (add-amp-controls) adds amp sliders to the control panel for multi-channel sounds
-;;; commented out -- (add-very-useful-icons) adds some very useful icons -- replaced by contrib/dlp/new-buttons.scm
 ;;; (remove-main-menu menu) removes a top-level menu
 ;;; add delete and rename options to the file menu (add-delete-option) (add-rename-option)
 ;;; (mark-sync-color new-color) sets the color of syncd marks
@@ -100,6 +99,8 @@
 ;;;    (install-searcher (lambda (file) (= (mus-sound-chans file) 4)))
 
 (define (install-searcher proc)
+  "(install-searcher proc) replaces the current file search procedure in the File Selection \
+Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
   (define match-sound-files
     (lambda args
       "(match-sound-files func &optional dir) applies func to each sound file in dir and returns a list of files for which func does not return #f"
@@ -1140,7 +1141,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 ;;; -------- select-file --------
 ;;;
 ;;; (select-file func &optional title dir filter help)
-;;;   starts a Snd-like File Selection Dialog running func if a file is selected
+;;;   starts a Snd-like File Selection Dialog, runs func if a file is selected
 ;;;
 ;;; (add-to-menu 0 "Insert File" 
 ;;;   (lambda () 
@@ -1955,6 +1956,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 ;;; (remove-main-menu 5) removes the Help menu
 
 (define (remove-main-menu menu)
+  "(remove-main-menu menu) removes the specified top-level menu: (remove-main-menu 5) removes the Help menu"
   (let* ((cascade (list-ref (menu-widgets) menu))
 	 (top (cadr (|XtGetValues cascade (list |XmNsubMenuId 0)))))
     (|XtUnmanageChild cascade)
@@ -1964,6 +1966,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 ;;; -------- add delete and rename options to the file menu
 
 (define (add-delete-option)
+  "(add-delete-option) adds a delete (file) option to the File menu"
   (add-to-menu 0 "Delete" ; add Delete option to File menu
 	       (lambda ()
 		 ;; close current sound and delete it (after requesting confirmation)
@@ -1975,6 +1978,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	       8)) ; place after File:New
 
 (define (add-rename-option)
+  "(add-rename-option) adds a rename (file) option to the File menu"
   (let ((rename-dialog #f)
 	(rename-text #f))
     (add-to-menu 0 "Rename" 
@@ -2067,6 +2071,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 
 
 (define (change-label widget new-label)
+  "(change-label widget new-label) changes widget's label to new-label"
   (let ((str (|XmStringCreateLocalized new-label)))
     (|XtSetValues widget (list |XmNlabelString str))
     (|XmStringFree str)))
@@ -2188,4 +2193,4 @@ Reverb-feedback sets the scaler on the feedback.\n\
 ;;; TODO: mix-panning via enved (or as part of mix file dialog?)
 ;;; TODO: spatial envelope dialog
 ;;; TODO: spectral edit dialog
-
+;;; TODO: finish the loop-point dialog in marks-menu.scm (create-loop-dialog)

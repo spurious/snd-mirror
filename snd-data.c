@@ -118,7 +118,6 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
   cp->sonogram_data = NULL;
   cp->lisp_info = NULL;
   cp->mix_md = NULL;
-  cp->stats = NULL;
   cp->amp_control = NULL;
   cp->hookable = 1;
   cp->gzy = 1.0;
@@ -202,12 +201,6 @@ static chan_info *free_chan_info(chan_info *cp)
       cp->last_sonogram = NULL;
     }
   if (cp->lisp_info) cp->lisp_info = free_lisp_info(cp);
-  if (cp->stats) 
-    { 
-      FREE(cp->stats); 
-      cp->stats = NULL;
-      if (show_usage_stats(ss)) update_stats_display(ss, FALSE);
-    }
   cp->graph_lisp_p = 0;
   cp->selection_transform_size = 0;
   XEN_CLEAR_HOOK(cp->edit_hook);
@@ -343,8 +336,6 @@ void free_snd_info(snd_info *sp)
 	toggle_expand_button(sp, DEFAULT_EXPAND_CONTROL_P);
       if (sp->contrast_control_p != DEFAULT_CONTRAST_CONTROL_P)
 	toggle_contrast_button(sp, DEFAULT_CONTRAST_CONTROL_P);
-      if (sp->filter_control_p != DEFAULT_FILTER_CONTROL_P)
-	toggle_filter_button(sp, DEFAULT_FILTER_CONTROL_P);
     }
   /* leave most for reuse as in free_chan_info */
   if ((sp->state) && (sp->state->deferred_regions > 0))

@@ -20,19 +20,20 @@ enum {W_pane,
       W_filter_order_down, W_filter_order_up,
       W_name, W_name_icon, W_info_label, W_info,
       W_info_sep,
-      W_play, W_sync, W_combine,
-      W_ctrls
+      W_play, W_sync, W_unite,
+      W_control_panel
 };
 
 #define NUM_SND_WIDGETS 48
 
-Widget w_snd_ctrls(snd_info *sp)            {return((sp->sgx)->snd_widgets[W_ctrls]);}
-Widget w_snd_pane(snd_info *sp)             {return((sp->sgx)->snd_widgets[W_pane]);}
-Widget w_snd_name(snd_info *sp)             {return((sp->sgx)->snd_widgets[W_name]);}
-Widget w_snd_combine(snd_info *sp)          {return((sp->sgx)->snd_widgets[W_combine]);}
-Widget w_snd_play(snd_info *sp)             {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_play]); else return(NULL);}
-Widget w_snd_filter_env(snd_info *sp)       {return((sp->sgx)->snd_widgets[W_filter_env]);}
+Widget unite_button(snd_info *sp) {return((sp->sgx)->snd_widgets[W_unite]);}
+Widget filter_graph(snd_info *sp) {return((sp->sgx)->snd_widgets[W_filter_env]);}
 
+Widget w_snd_pane(snd_info *sp)   {return((sp->sgx)->snd_widgets[W_pane]);}
+Widget w_snd_name(snd_info *sp)   {return((sp->sgx)->snd_widgets[W_name]);}
+
+#define CONTROL_PANEL(Sp)        (Sp->sgx)->snd_widgets[W_control_panel]
+#define PLAY_BUTTON(Sp)          (Sp->sgx)->snd_widgets[W_play]
 #define NAME_ICON(Sp)            (Sp->sgx)->snd_widgets[W_name_icon]
 #define AMP_SCROLLBAR(Sp)        (Sp->sgx)->snd_widgets[W_amp]
 #define SRATE_SCROLLBAR(Sp)      (Sp->sgx)->snd_widgets[W_srate]
@@ -111,14 +112,15 @@ static void sync_help_callback(Widget w, XtPointer context, XtPointer info)
 "This button causes edit operations on one channel to be applied to all channels at the same time.");
 }
 
-static void combine_help_callback(Widget w, XtPointer context, XtPointer info) 
+static void unite_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     "Combine Button",
+		     "Unite Button",
 "This button causes all channels to be displayed in one window, sharing the various channel controls.  Two extra scrollbars on \
 the right provide scroll and zoom for the overall set of channel graphs. The default multichannel display style can be set in \
-the Snd initialization file by setting the variable combine-channels.");
+the Snd initialization file by setting the variable " S_channel_style ".");
 }
+
 
 static void apply_help_callback(Widget w, XtPointer context, XtPointer info)
 {
@@ -179,19 +181,19 @@ void make_minibuffer_label(snd_info *sp , char *str)
 }
 
 
-int sound_unlock_ctrls(snd_info *sp, void *ptr)
+int sound_unlock_control_panel(snd_info *sp, void *ptr)
 {
-  XtManageChild(w_snd_ctrls(sp));
-  XtVaSetValues(w_snd_ctrls(sp), XmNpaneMinimum, 1, NULL);
+  XtManageChild(CONTROL_PANEL(sp));
+  XtVaSetValues(CONTROL_PANEL(sp), XmNpaneMinimum, 1, NULL);
   return(0);
 }
 
-int sound_lock_ctrls(snd_info *sp, void *ptr)
+int sound_lock_control_panel(snd_info *sp, void *ptr)
 {
   snd_state *ss;
   ss = (snd_state *)(sp->state);
-  XtUnmanageChild(w_snd_ctrls(sp));
-  XtVaSetValues(w_snd_ctrls(sp), XmNpaneMinimum, ss->ctrls_height, NULL);
+  XtUnmanageChild(CONTROL_PANEL(sp));
+  XtVaSetValues(CONTROL_PANEL(sp), XmNpaneMinimum, ss->ctrls_height, NULL);
   return(0);
 }
 
@@ -259,15 +261,13 @@ static void amp_click_callback(Widget w, XtPointer context, XtPointer info)
   snd_info *sp = (snd_info *)context;
   XButtonEvent *ev;
   int val;
-  snd_context *sx;
   ASSERT_WIDGET_TYPE(XmIsPushButton(w), w);
-  sx = sp->sgx;
   ev = (XButtonEvent *)(cb->event);
   if (ev->state & (snd_ControlMask | snd_MetaMask)) 
     val = snd_amp_to_int(sp->last_amp_control); 
   else val = 50;
   snd_amp_changed(sp, val);
-  XtVaSetValues(sx->snd_widgets[W_amp], XmNvalue, val, NULL);
+  XtVaSetValues(AMP_SCROLLBAR(sp), XmNvalue, val, NULL);
 }
 
 static void amp_drag_callback(Widget w, XtPointer context, XtPointer info) 
@@ -340,15 +340,13 @@ static void srate_click_callback(Widget w, XtPointer context, XtPointer info)
   snd_info *sp = (snd_info *)context;
   XButtonEvent *ev;
   int val;
-  snd_context *sx;
   ASSERT_WIDGET_TYPE(XmIsPushButton(w), w);
-  sx = sp->sgx;
   ev = (XButtonEvent *)(cb->event);
   if (ev->state & (snd_ControlMask | snd_MetaMask)) 
     val = snd_srate_to_int(sp->last_speed_control); 
   else val = 450;
   snd_srate_changed(sp, val);
-  XtVaSetValues(sx->snd_widgets[W_srate], XmNvalue, val, NULL);
+  XtVaSetValues(SRATE_SCROLLBAR(sp), XmNvalue, val, NULL);
 }
 
 static void srate_drag_callback(Widget w, XtPointer context, XtPointer info) 
@@ -419,15 +417,13 @@ static void expand_click_callback(Widget w, XtPointer context, XtPointer info)
   snd_info *sp = (snd_info *)context;
   XButtonEvent *ev;
   int val;
-  snd_context *sx;
   ASSERT_WIDGET_TYPE(XmIsPushButton(w), w);
-  sx = sp->sgx;
   ev = (XButtonEvent *)(cb->event);
   if (ev->state & (snd_ControlMask | snd_MetaMask)) 
     val = snd_expand_to_int(sp->last_expand_control); 
   else val = 450;
   snd_expand_changed(sp, val);
-  XtVaSetValues(sx->snd_widgets[W_expand], XmNvalue, val, NULL);
+  XtVaSetValues(EXPAND_SCROLLBAR(sp), XmNvalue, val, NULL);
 }
 
 static void expand_drag_callback(Widget w, XtPointer context, XtPointer info) 
@@ -503,15 +499,13 @@ static void contrast_click_callback(Widget w, XtPointer context, XtPointer info)
   snd_info *sp = (snd_info *)context;
   XButtonEvent *ev;
   int val;
-  snd_context *sx;
   ASSERT_WIDGET_TYPE(XmIsPushButton(w), w);
-  sx = sp->sgx;
   ev = (XButtonEvent *)(cb->event);
   if (ev->state & (snd_ControlMask | snd_MetaMask)) 
     val = snd_contrast_to_int(sp->last_contrast_control); 
   else val = 0;
   snd_contrast_changed(sp, val);
-  XtVaSetValues(sx->snd_widgets[W_contrast], XmNvalue, val, NULL);
+  XtVaSetValues(CONTRAST_SCROLLBAR(sp), XmNvalue, val, NULL);
 }
 
 static void contrast_drag_callback(Widget w, XtPointer context, XtPointer info) 
@@ -600,15 +594,13 @@ static void revscl_click_callback(Widget w, XtPointer context, XtPointer info)
   snd_info *sp = (snd_info *)context;
   XButtonEvent *ev;
   int val;
-  snd_context *sx;
   ASSERT_WIDGET_TYPE(XmIsPushButton(w), w);
-  sx = sp->sgx;
   ev = (XButtonEvent *)(cb->event);
   if (ev->state & (snd_ControlMask | snd_MetaMask)) 
     val = snd_revscl_to_int(sp->last_reverb_control_scale); 
   else val = 0;
   snd_revscl_changed(sp, val);
-  XtVaSetValues(sx->snd_widgets[W_revscl], XmNvalue, val, NULL);
+  XtVaSetValues(REVSCL_SCROLLBAR(sp), XmNvalue, val, NULL);
 }
 
 
@@ -663,15 +655,13 @@ static void revlen_click_callback(Widget w, XtPointer context, XtPointer info)
   snd_info *sp = (snd_info *)context;
   XButtonEvent *ev;
   int val;
-  snd_context *sx;
   ASSERT_WIDGET_TYPE(XmIsPushButton(w), w);
-  sx = sp->sgx;
   ev = (XButtonEvent *)(cb->event);
   if (ev->state & (snd_ControlMask | snd_MetaMask)) 
     val = snd_revlen_to_int(sp->last_reverb_control_length); 
   else val = 20;
   snd_revlen_changed(sp, val);
-  XtVaSetValues(sx->snd_widgets[W_revlen], XmNvalue, val, NULL);
+  XtVaSetValues(REVLEN_SCROLLBAR(sp), XmNvalue, val, NULL);
 }
 
 static void revlen_drag_callback(Widget w, XtPointer context, XtPointer info) 
@@ -752,7 +742,7 @@ void sp_display_env(snd_info *sp)
   int height, width;
   Widget drawer;
   ss = sp->state;
-  drawer = w_snd_filter_env(sp);
+  drawer = filter_graph(sp);
   height = widget_height(drawer);
   if (height < MIN_FILTER_GRAPH_HEIGHT) return;
   width = widget_width(drawer);
@@ -952,7 +942,7 @@ void set_play_button(snd_info *sp, int val)
 {
   if (!(IS_PLAYER(sp)))
     {
-      XmToggleButtonSetState(w_snd_play(sp), val, FALSE);
+      XmToggleButtonSetState(PLAY_BUTTON(sp), val, FALSE);
       set_file_browser_play_button(sp->short_filename, val);
       set_open_file_play_button(val);
     }
@@ -998,7 +988,7 @@ static int set_play_button_pause(snd_info *sp, void *ptr)
   if ((sp->playing) && (!(IS_PLAYER(sp))))
     {
       ss = pd->ss;
-      w = w_snd_play(sp);
+      w = PLAY_BUTTON(sp);
       if (pd->pausing)
 	XtVaSetValues(w, XmNselectColor, (ss->sgx)->red, NULL);
       else XtVaSetValues(w, XmNselectColor, ((sp->cursor_follows_play != DONT_FOLLOW) ? ((ss->sgx)->green) : ((ss->sgx)->pushed_button_color)), NULL);
@@ -1014,6 +1004,12 @@ void play_button_pause(snd_state *ss, int pausing)
   pd->ss = ss;
   map_over_sounds(ss, set_play_button_pause, (void *)pd);
   FREE(pd);
+}
+
+void set_control_panel_play_button(snd_info *sp, int val)
+{
+  if ((sp) && (sp->sgx) && (PLAY_BUTTON(sp)))
+    set_toggle_button(PLAY_BUTTON(sp), FALSE, FALSE, sp);
 }
 
 
@@ -1081,7 +1077,7 @@ static void sync_button_callback(Widget w, XtPointer context, XtPointer info)
     }
 }
 
-static void combine_button_callback(Widget w, XtPointer context, XtPointer info)
+static void unite_button_callback(Widget w, XtPointer context, XtPointer info)
 {
   /* click if set unsets, click if unset->combine, ctrl-click->superimpose */
   snd_info *sp = (snd_info *)context;
@@ -1485,8 +1481,8 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNpaneMinimum, ss->ctrls_height); n++;
       XtSetArg(args[n], XmNpaneMaximum, ss->ctrls_height); n++;
-      sw[W_ctrls] = XtCreateManagedWidget ("snd-ctrls", xmFormWidgetClass, sw[W_pane], args, n);
-      XtAddEventHandler(sw[W_ctrls], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
+      sw[W_control_panel] = XtCreateManagedWidget ("snd-ctrls", xmFormWidgetClass, sw[W_pane], args, n);
+      XtAddEventHandler(sw[W_control_panel], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 
       n = 0;
       if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -1494,7 +1490,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      sw[W_name_form] = XtCreateManagedWidget("snd-name-form", xmFormWidgetClass, sw[W_ctrls], args, n);
+      sw[W_name_form] = XtCreateManagedWidget("snd-name-form", xmFormWidgetClass, sw[W_control_panel], args, n);
       XtAddCallback(sw[W_name_form], XmNhelpCallback, name_help_callback, ss);
       XtAddEventHandler(sw[W_name_form], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 
@@ -1674,13 +1670,13 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNrightWidget, sw[W_sync]); n++;
       XtSetArg(args[n], XM_FONT_RESOURCE, BUTTON_FONT(ss)); n++;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNselectColor, (ss->sgx)->pushed_button_color); n++;}
-      sw[W_combine] = make_togglebutton_widget(STR_unite, sw[W_name_form], args, n);
-      XtAddCallback(sw[W_combine], XmNhelpCallback, combine_help_callback, ss);
-      XtAddEventHandler(sw[W_combine], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
-      XtAddCallback(sw[W_combine], XmNvalueChangedCallback, combine_button_callback, (XtPointer)sp);
+      sw[W_unite] = make_togglebutton_widget(STR_unite, sw[W_name_form], args, n);
+      XtAddCallback(sw[W_unite], XmNhelpCallback, unite_help_callback, ss);
+      XtAddEventHandler(sw[W_unite], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
+      XtAddCallback(sw[W_unite], XmNvalueChangedCallback, unite_button_callback, (XtPointer)sp);
 
       n = 0;
-      XtVaSetValues(sw[W_ctrls], XmNskipAdjust, TRUE, NULL);
+      XtVaSetValues(sw[W_control_panel], XmNskipAdjust, TRUE, NULL);
 
       /* tried a dial widget here, but it didn't seem to fit and was harder to manipulate and read than a scale */
       if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -1692,7 +1688,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNmargin, LINE_MARGIN); n++;
       XtSetArg(args[n], XmNheight, LINE_MARGIN); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
-      sw[W_amp_separator] = XtCreateManagedWidget ("snd-amp-sep", xmSeparatorWidgetClass, sw[W_ctrls], args, n);
+      sw[W_amp_separator] = XtCreateManagedWidget ("snd-amp-sep", xmSeparatorWidgetClass, sw[W_control_panel], args, n);
       XtAddCallback(sw[W_amp_separator], XmNhelpCallback, amp_help_callback, ss);
       
       /* if control-panel */
@@ -1703,7 +1699,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      sw[W_amp_form] = XtCreateManagedWidget ("snd-amp", xmFormWidgetClass, sw[W_ctrls], args, n);
+      sw[W_amp_form] = XtCreateManagedWidget ("snd-amp", xmFormWidgetClass, sw[W_control_panel], args, n);
       XtAddEventHandler(sw[W_amp_form], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 
       n = 0;      
@@ -2433,7 +2429,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
   else
     { /* re-manage currently inactive chan */
       if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
-	XtVaSetValues(sw[W_ctrls],
+	XtVaSetValues(sw[W_control_panel],
 		      XmNpaneMinimum, ss->ctrls_height,
 		      XmNpaneMaximum, ss->ctrls_height,
 		      NULL);
@@ -2452,7 +2448,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
 	add_channel_window(sp, k, ss, chan_min_y, 0, NULL, WITH_FW_BUTTONS);
       set_button_label(sw[W_name], shortname_indexed(sp));
       if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
-	XtVaSetValues(sw[W_ctrls],
+	XtVaSetValues(sw[W_control_panel],
 		      XmNpaneMinimum, 1,
 		      XmNpaneMaximum, LOTSA_PIXELS,
 		      NULL);
@@ -2465,8 +2461,8 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
     }
   if (sp->nchans == 1) 
     {
-      XmToggleButtonSetState(w_snd_combine(sp), FALSE, FALSE);
-      XtUnmanageChild(w_snd_combine(sp));
+      XmToggleButtonSetState(unite_button(sp), FALSE, FALSE);
+      XtUnmanageChild(unite_button(sp));
     }
   add_sound_data(filename, sp, ss, WITH_GRAPH);
   snd_file_lock_icon(sp, (sp->read_only || (cant_write(sp->filename))));
@@ -2492,7 +2488,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
     {
       /* if control-panel */
       if (make_widgets) 
-	XtVaSetValues(sw[W_ctrls],
+	XtVaSetValues(sw[W_control_panel],
 		      XmNpaneMaximum, LOTSA_PIXELS,
 		      NULL); /* locked above to force correct initial setup */
       reset_controls(sp);
@@ -2537,7 +2533,7 @@ void snd_info_cleanup(snd_info *sp)
 	  XtVaSetValues(SRATE_ARROW(sp), XmNset, FALSE, NULL);
 	  XtVaSetValues(FILTER_BUTTON(sp), XmNset, FALSE, NULL);
 	  XtVaSetValues(REVERB_BUTTON(sp), XmNset, FALSE, NULL);
-	  XmToggleButtonSetState(w_snd_combine(sp), FALSE, FALSE);
+	  XmToggleButtonSetState(unite_button(sp), FALSE, FALSE);
 	  sp->channel_style = CHANNELS_SEPARATE;
 #if (XmVERSION > 1)
 	  if (sound_style(ss) == SOUNDS_IN_NOTEBOOK)
@@ -2617,9 +2613,9 @@ static int sound_unlock_pane(snd_info *sp, void *ptr)
   return(0);
 }
 
-void unlock_ctrls(snd_info *sp) 
+void unlock_control_panel(snd_info *sp) 
 {
-  XtVaSetValues(w_snd_ctrls(sp), XmNpaneMinimum, 1, NULL);
+  XtVaSetValues(CONTROL_PANEL(sp), XmNpaneMinimum, 1, NULL);
 }
 
 void equalize_sound_panes(snd_state *ss, snd_info *sp, chan_info *ncp, int all_panes)
@@ -2781,11 +2777,11 @@ void equalize_all_panes(snd_state *ss)
 	  chan_y = (height-(sounds*ss->ctrls_height))/chans - 16;
 	  /* probably can be 14 or 12 -- seems to be margin related or something */
 	  wid[0] = chan_y;
-	  map_over_sounds(ss, sound_lock_ctrls, NULL);
+	  map_over_sounds(ss, sound_lock_control_panel, NULL);
 	  map_over_separate_chans(ss, channel_lock_pane, (void *)wid);
 	  map_over_separate_chans(ss, channel_open_pane, NULL);
 	  map_over_separate_chans(ss, channel_unlock_pane, NULL);
-	  map_over_sounds(ss, sound_unlock_ctrls, NULL);
+	  map_over_sounds(ss, sound_unlock_control_panel, NULL);
 	}
       if (!(auto_resize(ss))) XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, FALSE, NULL);
     }
@@ -2802,11 +2798,11 @@ void equalize_all_panes(snd_state *ss)
 	      map_over_sounds(ss, sound_open_pane, NULL);
 	      map_over_sounds(ss, sound_unlock_pane, NULL);
 	    }
-	  map_over_sounds(ss, sound_lock_ctrls, NULL);
+	  map_over_sounds(ss, sound_lock_control_panel, NULL);
 	  map_over_sounds(ss, even_channels, (void *)(&height));
 	  map_over_separate_chans(ss, channel_open_pane, NULL);   /* manage the channel widgets */
 	  map_over_separate_chans(ss, channel_unlock_pane, NULL); /* allow pane to be resized */
-	  map_over_sounds(ss, sound_unlock_ctrls, NULL);
+	  map_over_sounds(ss, sound_unlock_control_panel, NULL);
 	}
     }
 }
@@ -2815,13 +2811,13 @@ void sound_show_ctrls(snd_info *sp)
 {
   snd_state *ss;
   ss = sp->state;
-  XtUnmanageChild(w_snd_ctrls(sp));
-  XtVaSetValues(w_snd_ctrls(sp),
+  XtUnmanageChild(CONTROL_PANEL(sp));
+  XtVaSetValues(CONTROL_PANEL(sp),
 		XmNpaneMinimum, ss->open_ctrls_height,
 		XmNpaneMaximum, ss->open_ctrls_height,
 		NULL);
-  XtManageChild(w_snd_ctrls(sp));
-  XtVaSetValues(w_snd_ctrls(sp),
+  XtManageChild(CONTROL_PANEL(sp));
+  XtVaSetValues(CONTROL_PANEL(sp),
 		XmNpaneMinimum, 1,
 		XmNpaneMaximum, LOTSA_PIXELS,
 		NULL);
@@ -2829,13 +2825,13 @@ void sound_show_ctrls(snd_info *sp)
 
 void sound_hide_ctrls(snd_info *sp)
 {
-  XtUnmanageChild(w_snd_ctrls(sp));
-  XtVaSetValues(w_snd_ctrls(sp),
+  XtUnmanageChild(CONTROL_PANEL(sp));
+  XtVaSetValues(CONTROL_PANEL(sp),
 		XmNpaneMaximum, CLOSED_CTRLS_HEIGHT,
 		XmNpaneMinimum, CLOSED_CTRLS_HEIGHT,
 		NULL);
-  XtManageChild(w_snd_ctrls(sp));
-  XtVaSetValues(w_snd_ctrls(sp),
+  XtManageChild(CONTROL_PANEL(sp));
+  XtVaSetValues(CONTROL_PANEL(sp),
 		XmNpaneMinimum, 1,
 		XmNpaneMaximum, LOTSA_PIXELS,
 		NULL);
@@ -2844,7 +2840,7 @@ void sound_hide_ctrls(snd_info *sp)
 int control_panel_open(snd_info *sp)
 {
   Dimension hgt;
-  XtVaGetValues(w_snd_ctrls(sp), XmNheight, &hgt, NULL);
+  XtVaGetValues(CONTROL_PANEL(sp), XmNheight, &hgt, NULL);
   return(hgt > CLOSED_CTRLS_HEIGHT);
 }
 
@@ -2874,6 +2870,11 @@ void hide_controls(snd_state *ss)
       if ((sp) && (sp->inuse)) 
 	sound_hide_ctrls(sp);
     }
+}
+
+int control_panel_height(snd_info *sp)
+{
+  return(widget_height(CONTROL_PANEL(sp)));
 }
 
 
@@ -2967,7 +2968,7 @@ static XEN g_add_sound_window (XEN parent, XEN filename, XEN read_only)
 static XEN g_sound_widgets(XEN snd)
 {
   #define H_sound_widgets "(" S_sound_widgets " snd) -> list of widgets \
-((0)pane (1)name (2)ctrls (3)minibuffer (4)play (5)filter-env (6)combine (7)name-label (8)name-icon)"
+((0)pane (1)name (2)control-panel (3)minibuffer (4)play-button (5)filter-env (6)unite-button (7)name-label (8)name-icon)"
   snd_info *sp;
   ASSERT_SOUND(S_sound_widgets, snd, 1);
   sp = get_sp(snd);
@@ -2975,11 +2976,11 @@ static XEN g_sound_widgets(XEN snd)
     return(snd_no_such_sound_error(S_sound_widgets, snd));
   return(XEN_CONS(XEN_WRAP_WIDGET(w_snd_pane(sp)),
 	  XEN_CONS(XEN_WRAP_WIDGET(w_snd_name(sp)),
-           XEN_CONS(XEN_WRAP_WIDGET(w_snd_ctrls(sp)),
+           XEN_CONS(XEN_WRAP_WIDGET(CONTROL_PANEL(sp)),
 	    XEN_CONS(XEN_WRAP_WIDGET(MINIBUFFER_TEXT(sp)),
-	     XEN_CONS(XEN_WRAP_WIDGET(w_snd_play(sp)),
-	      XEN_CONS(XEN_WRAP_WIDGET(w_snd_filter_env(sp)), /* this is the drawingarea widget */
-	       XEN_CONS(XEN_WRAP_WIDGET(w_snd_combine(sp)),
+	     XEN_CONS(XEN_WRAP_WIDGET(PLAY_BUTTON(sp)),
+	      XEN_CONS(XEN_WRAP_WIDGET(filter_graph(sp)), /* this is the drawingarea widget */
+	       XEN_CONS(XEN_WRAP_WIDGET(unite_button(sp)),
 	        XEN_CONS(XEN_WRAP_WIDGET(MINIBUFFER_LABEL(sp)),
 	         XEN_CONS(XEN_WRAP_WIDGET(NAME_ICON(sp)),
 	          XEN_EMPTY_LIST))))))))));

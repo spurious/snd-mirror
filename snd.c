@@ -248,7 +248,6 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->Mix_Waveform_Height = DEFAULT_MIX_WAVEFORM_HEIGHT;
   ss->Mix_Tag_Width = DEFAULT_MIX_TAG_WIDTH;
   ss->Mix_Tag_Height = DEFAULT_MIX_TAG_HEIGHT;
-  ss->Show_Usage_Stats = DEFAULT_SHOW_USAGE_STATS;
   if (DEFAULT_SAVE_STATE_FILE != (char *)NULL) ss->Save_State_File = copy_string(DEFAULT_SAVE_STATE_FILE); else ss->Save_State_File = NULL;
   ss->Enved_Base = DEFAULT_ENVED_BASE;
   ss->Enved_Power = DEFAULT_ENVED_POWER;

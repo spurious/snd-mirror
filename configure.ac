@@ -322,7 +322,7 @@ LIBS=""
 AC_HEADER_DIRENT
 AC_HEADER_STDC
 AC_CHECK_HEADERS(fcntl.h limits.h unistd.h string.h sys/soundcard.h soundcard.h machine/soundcard.h gsl/gsl_version.h)
-AC_CHECK_HEADERS(libc.h sys/vfs.h sys/statfs.h sys/mount.h fpu_control.h setjmp.h sched.h pwd.h ladspa.h locale.h sys/fpu.h dlfcn.h sys/param.h sys/resource.h)
+AC_CHECK_HEADERS(libc.h sys/vfs.h sys/statfs.h sys/mount.h fpu_control.h setjmp.h sched.h pwd.h ladspa.h locale.h sys/fpu.h dlfcn.h sys/param.h)
 AC_CHECK_HEADER(/usr/local/lib/oss/include/sys/soundcard.h,[AC_DEFINE(USR_LOCAL_LIB_OSS)])
 AC_CHECK_HEADER(/usr/lib/oss/include/sys/soundcard.h,[AC_DEFINE(USR_LIB_OSS)])
 AC_CHECK_HEADER(/opt/oss/include/sys/soundcard.h,[AC_DEFINE(OPT_OSS)])
@@ -370,7 +370,7 @@ AC_CHECK_FUNCS(isnan, ,[
 
 AC_TYPE_SIGNAL
 AC_FUNC_STRFTIME
-AC_CHECK_FUNCS(getcwd strerror mallinfo readlink setlocale access opendir sleep signal strdup statfs clock vsnprintf snprintf getrusage)
+AC_CHECK_FUNCS(getcwd strerror readlink setlocale access opendir sleep signal strdup statfs clock vsnprintf snprintf)
 AC_FUNC_CLOSEDIR_VOID
 AC_FUNC_VPRINTF
 
@@ -679,6 +679,8 @@ SO_LD="ld"
 SO_INSTALL="install"
 A_LD="ld"
 A_LD_FLAGS=""
+dnl Python configure.in has a lot of code to get these switches right
+
 
 dnl we need the sndlib.h equivalents to try to find the native sound support (see config.guess)
 dnl this only matters for those cases where we've implemented the audio code in audio.c
@@ -796,6 +798,23 @@ dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
 	SO_LD=":"
 	A_LD_FLAGS="-non_shared"
 dnl should we include -lSgm if motif?
+	# OPT:Olimit check borrowed from Python's configure.in
+	AC_MSG_CHECKING(whether $CC accepts -OPT:Olimit=4000)
+	AC_CACHE_VAL(ac_cv_opt_olimit_ok,
+	[ac_save_cc="$CC"
+	CC="$CC -OPT:Olimit=4000"
+	AC_TRY_RUN([int main() { return 0; }],
+ 	  ac_cv_opt_olimit_ok=yes,
+  	  ac_cv_opt_olimit_ok=no,
+  	  ac_cv_opt_olimit_ok=no)
+	CC="$ac_save_cc"])
+	AC_MSG_RESULT($ac_cv_opt_olimit_ok)
+	if test $ac_cv_opt_olimit_ok = yes; then
+	  CFLAGS="$CFLAGS -OPT:Olimit=4000"
+	fi
+dnl how to incorporate the TARG:platform arguments?
+dnl what is -IPA?
+dnl do we need explicit -n32?	
         ;;
     alpha*) 
         AC_DEFINE(ALPHA)

@@ -268,6 +268,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+30-Jan:  removed stats dialog, snd-xstats.c, snd-gstats.c, show-usage-stats, update-usage-stats.\n\
 28-Jan:  Alpha bugfix thanks to Stefan Schwandter.\n\
 23-Jan:  color-samples (draw.scm).\n\
 21-Jan:  bird.rb.\n\
@@ -281,10 +282,6 @@ void news_help(snd_state *ss)
          event.scm.\n\
          the Snd widget lists now return objects compatible with the xm module,\n\
            so the various \"cast\" functions such as |Widget are now no-ops.\n\
-4-Jan:   removed loop.scm.\n\
-26-Dec:  explode-sf2 in examp.scm.\n\
-14-Dec:  removed icons.scm and backgrounds.scm (replaced by contrib/dlp code).\n\
-         removed reverb-control-procedures and contrast-control-procedure.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'",
@@ -354,7 +351,6 @@ static char options_menu_help_string[] =
    Zoom focus: where to focus during zooms.\n\
    Save Options: save the current Options and View menu settings.\n\
    Save state: save current state of Snd.\n\
-   Show stats: show some memory and disk usage statistics.\n\
 \n\
 ";
 
@@ -972,7 +968,6 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_show_mix_waveforms "    #f (snd #t) (chn #t)\n\
   " S_show_selection_transform " #f\n\
   " S_show_transform_peaks "  #f (snd #t) (chn #t)\n\
-  " S_show_usage_stats "      #f\n\
   " S_show_y_zero "           #f (snd #t) (chn #t)\n\
   " S_sinc_width "            10\n\
   " S_spectro_cutoff "        1.0 (snd #t) (chn #t)\n\
@@ -2010,20 +2005,6 @@ previous files list alphabetically, 'date' sorts by date written, 'size' sorts b
 number of samples in the sound, and 'entry' sorts by the order the sound appears in the \
 absence of explicit sorting.  The variable " S_previous_files_sort " (default 0: \
 unsorted) refers to this menu.");	   
-}
-
-void stats_dialog_help(snd_state *ss)
-{
-  snd_help_with_wrap(ss,
-		     STR_Disk_and_Memory_Usage,
-"This window gives an approximate notion of how much memory (RAM) and disk space each channel is \
-taking up.  As a channel is edited, the relevant data is saved either in arrays or temporary files. \
-The number of bytes in these arrays, and the number of such arrays are the first two numbers; then \
-comes the space in bytes the channel takes up in the main (presumably permanent) file; the next \
-three numbers give the number of bytes in the temporary files, the number of such files, and \
-the number of these files that are currently being held open.  The related variable is \
-" S_show_usage_stats ".  The 'Update' button forces the stats to be regathered, in case the display \
-somehow gets out of sync with the actual data.");
 }
 
 #ifndef _MSC_VER

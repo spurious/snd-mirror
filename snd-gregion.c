@@ -5,7 +5,7 @@
 static GtkWidget *region_dialog = NULL, *region_list, *region_grf;
 static regrow **region_rows = NULL;
 static int region_rows_size = 0;
-static snd_info *reg_sp = NULL;
+static snd_info *rsp = NULL;
 static int current_region = -1;
 static GtkWidget *srate_text, *length_text, *chans_text, *maxamp_text;
 static regrow *region_row(int n);
@@ -13,47 +13,47 @@ static regrow *region_row(int n);
 void reflect_regions_in_region_browser(void)
 {
   int i;
-  if (reg_sp)
+  if (rsp)
     {
-      reg_sp->active = 1;
-      if (reg_sp->chans)
-	for (i = 0; i < reg_sp->nchans; i++)
-	  reg_sp->chans[i]->active = 1;
+      rsp->active = 1;
+      if (rsp->chans)
+	for (i = 0; i < rsp->nchans; i++)
+	  rsp->chans[i]->active = 1;
     }
 }
 
 void reflect_no_regions_in_region_browser(void)
 {
   int i;
-  if (reg_sp)
+  if (rsp)
     {
-      reg_sp->active = 0;
-      if (reg_sp->chans)
-	for (i = 0; i < reg_sp->nchans; i++)
-	  reg_sp->chans[i]->active = 0;
+      rsp->active = 0;
+      if (rsp->chans)
+	for (i = 0; i < rsp->nchans; i++)
+	  rsp->chans[i]->active = 0;
     }
 }
 
 static void region_update_graph(chan_info *cp)
 {
   if (current_region == -1) return;
-  reg_sp->nchans = region_chans(stack_position_to_id(current_region));
-  if (reg_sp->nchans == 0) return;
+  rsp->nchans = region_chans(stack_position_to_id(current_region));
+  if (rsp->nchans == 0) return;
   update_graph(cp, NULL);
-  reg_sp->nchans = 1;
+  rsp->nchans = 1;
 }
 
 void reflect_region_graph_style(snd_state *ss)
 {
   if (current_region == -1) return;
-  if ((reg_sp) &&
-      (reg_sp->chans) &&
-      (reg_sp->chans[0]) &&
+  if ((rsp) &&
+      (rsp->chans) &&
+      (rsp->chans[0]) &&
       (region_dialog_is_active()))
     {
-      reg_sp->chans[0]->graph_style = region_graph_style(ss);
-      reg_sp->chans[0]->dot_size = dot_size(ss);
-      update_graph(reg_sp->chans[0], NULL);
+      rsp->chans[0]->graph_style = region_graph_style(ss);
+      rsp->chans[0]->dot_size = dot_size(ss);
+      update_graph(rsp->chans[0], NULL);
     }
 }
 
@@ -133,8 +133,8 @@ void update_region_browser(snd_state *ss, int grf_too)
       current_region = 0;
       highlight_region(ss);
       goto_window(region_rows[0]->nm);
-      cp = reg_sp->chans[0];
-      cp->sound = reg_sp;
+      cp = rsp->chans[0];
+      cp->sound = rsp;
       if (cp) 
 	{
 	  cp->chan = 0;
@@ -142,8 +142,8 @@ void update_region_browser(snd_state *ss, int grf_too)
 	  set_sensitive(channel_w(cp), (region_chans(stack_position_to_id(0)) > 1));
 	  if (region_ok(stack_position_to_id(0))) 
 	    {
-	      reg_sp->hdr = fixup_region_data(cp, 0, 0);
-	      make_region_labels(reg_sp->hdr);
+	      rsp->hdr = fixup_region_data(cp, 0, 0);
+	      make_region_labels(rsp->hdr);
 	      region_update_graph(cp);
 	    }
 	  else unmake_region_labels();
@@ -212,8 +212,8 @@ static void region_help_callback(GtkWidget *w, gpointer context)
 static void region_up_arrow_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   chan_info *cp;
-  cp = reg_sp->chans[0];
-  cp->sound = reg_sp;
+  cp = rsp->chans[0];
+  cp->sound = rsp;
   if (cp->chan > 0)
     {
       cp->chan--;
@@ -227,8 +227,8 @@ static void region_up_arrow_callback(GtkWidget *w, GdkEventButton *ev, gpointer 
 static void region_down_arrow_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   chan_info *cp;
-  cp = reg_sp->chans[0];
-  cp->sound = reg_sp;
+  cp = rsp->chans[0];
+  cp->sound = rsp;
   if ((cp->chan + 1) < region_chans(stack_position_to_id(current_region)))
     {
       cp->chan++;
@@ -248,14 +248,14 @@ static void region_focus_callback(GtkWidget *w, gpointer context) /* button clic
   unhighlight_region(ss);
   if (stack_position_to_id(r->pos) == INVALID_REGION) return; /* needed by auto-tester */
   current_region = r->pos;
-  cp = reg_sp->chans[0];
-  cp->sound = reg_sp;
+  cp = rsp->chans[0];
+  cp->sound = rsp;
   cp->chan  = 0;
   highlight_region(ss);
   set_sensitive(channel_f(cp), FALSE);
   set_sensitive(channel_w(cp), (region_chans(stack_position_to_id(current_region)) > 1));
-  reg_sp->hdr = fixup_region_data(cp, 0, current_region);
-  make_region_labels(reg_sp->hdr);
+  rsp->hdr = fixup_region_data(cp, 0, current_region);
+  make_region_labels(rsp->hdr);
   region_update_graph(cp);
 }
 
@@ -298,7 +298,7 @@ static void region_print_callback(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
   if (current_region != -1)
-    region_print(eps_file(ss), "region", reg_sp->chans[0]);
+    region_print(eps_file(ss), "region", rsp->chans[0]);
 }
 
 static void region_edit_callback(GtkWidget *w, gpointer context)
@@ -429,13 +429,13 @@ static void make_region_dialog(snd_state *ss)
 
   gtk_widget_show(region_dialog);
 
-  if (!reg_sp) 
+  if (!rsp) 
     { 
-      reg_sp = make_initial_region_sp(ss, region_grf);
+      rsp = make_initial_region_sp(ss, region_grf);
       current_region = 0;
     }
-  else add_channel_window(reg_sp, 0, ss, 0, 0, region_grf, WITH_ARROWS);
-  cp = reg_sp->chans[0];
+  else add_channel_window(rsp, 0, ss, 0, 0, region_grf, WITH_ARROWS);
+  cp = rsp->chans[0];
 
   gtk_paned_set_position(GTK_PANED(region_grf), 150);
 
@@ -449,8 +449,8 @@ static void make_region_dialog(snd_state *ss)
   set_sensitive(channel_f(cp), FALSE);
   if (region_chans(stack_position_to_id(0)) > 1) set_sensitive(channel_w(cp), TRUE);
   cp->chan = 0;
-  reg_sp->hdr = fixup_region_data(cp, 0, 0);
-  make_region_labels(reg_sp->hdr);
+  rsp->hdr = fixup_region_data(cp, 0, 0);
+  make_region_labels(rsp->hdr);
   highlight_region(ss);
   region_update_graph(cp);
   FREE(wwl); 
@@ -533,7 +533,7 @@ static XEN g_region_dialog_widgets(void)
 		 XEN_CONS(XEN_WRAP_WIDGET(dismiss_button),
 		   XEN_CONS(XEN_WRAP_WIDGET(delete_button),
 		     XEN_CONS(XEN_WRAP_WIDGET(help_button),
-		       (reg_sp) ? g_channel_widgets_1(reg_sp->chans[0]) : XEN_EMPTY_LIST)))))));
+		       (rsp) ? g_channel_widgets_1(rsp->chans[0]) : XEN_EMPTY_LIST)))))));
   return(XEN_EMPTY_LIST);
 }
 static XEN g_region_row_widgets(void)

@@ -1096,22 +1096,6 @@ static XEN g_set_show_backtrace(XEN val)
   return(C_TO_XEN_BOOLEAN(show_backtrace(state)));
 }
 
-static XEN g_show_usage_stats(void) {return(C_TO_XEN_BOOLEAN(show_usage_stats(state)));}
-static XEN g_set_show_usage_stats(XEN on) 
-{
-  #define H_show_usage_stats "(" S_show_usage_stats ") -> #t if Snd should display memory usage stats"
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(on), on, XEN_ONLY_ARG, "set-" S_show_usage_stats, "a boolean");
-  set_show_usage_stats(state, XEN_TO_C_BOOLEAN_OR_TRUE(on));
-  return(C_TO_XEN_BOOLEAN(show_usage_stats(state)));
-}
-
-static XEN g_update_usage_stats(void) 
-{
-  #define H_update_usage_stats "(" S_update_usage_stats ") causes the stats display to be made current"
-  update_stats(state); 
-  return(XEN_TRUE);
-}
-
 static XEN g_sinc_width(void) {return(C_TO_XEN_INT(sinc_width(state)));}
 static XEN g_set_sinc_width(XEN val) 
 {
@@ -2927,8 +2911,6 @@ XEN_NARGIFY_0(g_show_indices_w, g_show_indices)
 XEN_ARGIFY_1(g_set_show_indices_w, g_set_show_indices)
 XEN_NARGIFY_0(g_show_backtrace_w, g_show_backtrace)
 XEN_ARGIFY_1(g_set_show_backtrace_w, g_set_show_backtrace)
-XEN_NARGIFY_0(g_show_usage_stats_w, g_show_usage_stats)
-XEN_ARGIFY_1(g_set_show_usage_stats_w, g_set_show_usage_stats)
 XEN_NARGIFY_0(g_sinc_width_w, g_sinc_width)
 XEN_ARGIFY_1(g_set_sinc_width_w, g_set_sinc_width)
 XEN_NARGIFY_0(g_hankel_jn_w, g_hankel_jn)
@@ -3031,7 +3013,6 @@ XEN_NARGIFY_1(g_set_pushed_button_color_w, g_set_pushed_button_color)
 #endif
 XEN_NARGIFY_0(g_snd_tempnam_w, g_snd_tempnam)
 XEN_NARGIFY_2(g_set_oss_buffers_w, g_set_oss_buffers)
-XEN_NARGIFY_0(g_update_usage_stats_w, g_update_usage_stats)
 XEN_NARGIFY_0(g_clear_audio_inputs_w, g_clear_audio_inputs)
 XEN_NARGIFY_0(g_color_dialog_w, g_color_dialog)
 XEN_NARGIFY_0(g_orientation_dialog_w, g_orientation_dialog)
@@ -3135,8 +3116,6 @@ XEN_NARGIFY_1(g_snd_completion_w, g_snd_completion)
 #define g_set_show_indices_w g_set_show_indices
 #define g_show_backtrace_w g_show_backtrace
 #define g_set_show_backtrace_w g_set_show_backtrace
-#define g_show_usage_stats_w g_show_usage_stats
-#define g_set_show_usage_stats_w g_set_show_usage_stats
 #define g_sinc_width_w g_sinc_width
 #define g_set_sinc_width_w g_set_sinc_width
 #define g_hankel_jn_w g_hankel_jn
@@ -3239,7 +3218,6 @@ XEN_NARGIFY_1(g_snd_completion_w, g_snd_completion)
 #endif
 #define g_snd_tempnam_w g_snd_tempnam
 #define g_set_oss_buffers_w g_set_oss_buffers
-#define g_update_usage_stats_w g_update_usage_stats
 #define g_clear_audio_inputs_w g_clear_audio_inputs
 #define g_color_dialog_w g_color_dialog
 #define g_orientation_dialog_w g_orientation_dialog
@@ -3429,9 +3407,6 @@ void g_initialize_gh(snd_state *ss)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_show_backtrace, g_show_backtrace_w, H_show_backtrace,
 				   "set-" S_show_backtrace, g_set_show_backtrace_w,  0, 0, 0, 1);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_show_usage_stats, g_show_usage_stats_w, H_show_usage_stats,
-				   "set-" S_show_usage_stats, g_set_show_usage_stats_w,  0, 0, 0, 1);
-
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sinc_width, g_sinc_width_w, H_sinc_width,
 				   "set-" S_sinc_width, g_set_sinc_width_w,  0, 0, 0, 1);
 
@@ -3587,7 +3562,6 @@ void g_initialize_gh(snd_state *ss)
 
   XEN_DEFINE_PROCEDURE(S_snd_tempnam,         g_snd_tempnam_w, 0, 0, 0,         H_snd_tempnam);
   XEN_DEFINE_PROCEDURE("set-" S_oss_buffers,  g_set_oss_buffers_w, 2, 0, 0,     H_set_oss_buffers);
-  XEN_DEFINE_PROCEDURE(S_update_usage_stats,  g_update_usage_stats_w, 0, 0, 0,  H_update_usage_stats);
   XEN_DEFINE_PROCEDURE(S_clear_audio_inputs,  g_clear_audio_inputs_w, 0, 0, 0,  H_clear_audio_inputs);
   XEN_DEFINE_PROCEDURE(S_color_dialog,        g_color_dialog_w, 0, 0, 0,        H_color_dialog);
   XEN_DEFINE_PROCEDURE(S_orientation_dialog,  g_orientation_dialog_w, 0, 0, 0,  H_orientation_dialog);

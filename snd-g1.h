@@ -151,7 +151,6 @@ GtkWidget *view_x_axis_beats_menu(void);
 GtkWidget *view_x_axis_samples_menu(void);
 GtkWidget *view_x_axis_percentage_menu(void);
 GtkWidget *options_save_state_menu(void);
-GtkWidget *options_stats_menu(void);
 GtkWidget *options_focus_left_menu(void);
 GtkWidget *options_focus_right_menu(void);
 GtkWidget *options_focus_middle_menu(void);
@@ -389,13 +388,13 @@ GtkWidget *sg_make_list(gpointer gp, int num_items, char **items, GtkSignalFunc 
 
 /* -------- snd-gsnd.c -------- */
 
-GtkWidget *w_snd_ctrls(snd_info *sp);
+int control_panel_height(snd_info *sp);
 GtkWidget *w_snd_pane(snd_info *sp);
 GtkWidget *w_snd_pane_box(snd_info *sp);
 GtkWidget *w_snd_name(snd_info *sp);
-GtkWidget *w_snd_combine(snd_info *sp);
-GtkWidget *w_snd_play(snd_info *sp);
-GtkWidget *w_snd_filter_env(snd_info *sp);
+GtkWidget *unite_button(snd_info *sp);
+void set_control_panel_play_button(snd_info *sp, int val);
+GtkWidget *filter_graph(snd_info *sp);
 void snd_file_lock_icon(snd_info *sp, int on);
 void snd_file_bomb_icon(snd_info *sp, int on);
 void x_bomb(snd_info *sp, int on);
@@ -430,10 +429,10 @@ void reflect_amp_env_completion(snd_info *sp);
 void reflect_amp_env_in_progress(snd_info *sp);
 snd_info *add_sound_window (char *filename, snd_state *state, int read_only);
 void set_sound_pane_file_label(snd_info *sp, char *str);
-int sound_unlock_ctrls(snd_info *sp, void *ptr);
-int sound_lock_ctrls(snd_info *sp, void *ptr);
+int sound_unlock_control_panel(snd_info *sp, void *ptr);
+int sound_lock_control_panel(snd_info *sp, void *ptr);
 void snd_info_cleanup(snd_info *sp);
-void unlock_ctrls(snd_info *sp);
+void unlock_control_panel(snd_info *sp);
 void equalize_sound_panes(snd_state *ss, snd_info *sp, chan_info *ncp, int all_panes);
 void equalize_all_panes(snd_state *ss);
 void sound_show_ctrls(snd_info *sp);
@@ -517,14 +516,6 @@ void unlock_recording_audio(void);
 void cleanup_recording (void);
 void snd_record_file(snd_state *ss);
 int record_dialog_is_active(void);
-
-
-
-/*-------- snd-gstats.c -------- */
-
-void update_stats_display(snd_state *ss, int all);
-void check_stats_window(snd_state *ss, int val);
-void update_stats(snd_state *ss);
 
 
 

@@ -20,26 +20,26 @@ enum {W_zy_adj, W_zx_adj, W_sy_adj, W_sx_adj, W_gzy_adj, W_gsy_adj};
 #define NUM_CHAN_ADJS 6
 #define DEFAULT_EDIT_HISTORY_WIDTH 1
 
-GtkWidget *channel_graph(chan_info *cp)      {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_graph]);   else return(NULL);}
-GtkWidget *channel_sx(chan_info *cp)         {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_sx]);      else return(NULL);}
-GtkWidget *channel_sy(chan_info *cp)         {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_sy]);      else return(NULL);}
-GtkWidget *channel_zx(chan_info *cp)         {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_zx]);      else return(NULL);}
-GtkWidget *channel_zy(chan_info *cp)         {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_zy]);      else return(NULL);}
-static GtkWidget *channel_gsy(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_gsy]);     else return(NULL);}
-static GtkWidget *channel_gzy(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_gzy]);     else return(NULL);}
-GtkWidget *channel_w(chan_info *cp)          {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_w]);       else return(NULL);}
-GtkWidget *channel_f(chan_info *cp)          {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_f]);       else return(NULL);}
-GtkWidget *channel_up_arrow(chan_info *cp)   {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_up_ev]);   else return(NULL);}
-GtkWidget *channel_down_arrow(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_down_ev]); else return(NULL);}
-GtkWidget *channel_edhist(chan_info *cp)     {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_edhist]);  else return(NULL);}
+GtkWidget *channel_graph(chan_info *cp)      {return((cp->cgx)->chan_widgets[W_graph]);}
+GtkWidget *channel_sx(chan_info *cp)         {return((cp->cgx)->chan_widgets[W_sx]);}
+GtkWidget *channel_sy(chan_info *cp)         {return((cp->cgx)->chan_widgets[W_sy]);}
+GtkWidget *channel_zx(chan_info *cp)         {return((cp->cgx)->chan_widgets[W_zx]);}
+GtkWidget *channel_zy(chan_info *cp)         {return((cp->cgx)->chan_widgets[W_zy]);}
+static GtkWidget *channel_gsy(chan_info *cp) {return((cp->cgx)->chan_widgets[W_gsy]);}
+static GtkWidget *channel_gzy(chan_info *cp) {return((cp->cgx)->chan_widgets[W_gzy]);}
+GtkWidget *channel_w(chan_info *cp)          {return((cp->cgx)->chan_widgets[W_w]);}
+GtkWidget *channel_f(chan_info *cp)          {return((cp->cgx)->chan_widgets[W_f]);}
+GtkWidget *channel_up_arrow(chan_info *cp)   {return((cp->cgx)->chan_widgets[W_up_ev]);}
+GtkWidget *channel_down_arrow(chan_info *cp) {return((cp->cgx)->chan_widgets[W_down_ev]);}
+GtkWidget *channel_edhist(chan_info *cp)     {return((cp->cgx)->chan_widgets[W_edhist]);}
 
-static GtkWidget *channel_main_pane(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_main_window]); else return(NULL);}
-static GtkObject *gsy_adj(chan_info *cp)           {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_adjs[W_gsy_adj]);        else return(NULL);}
-static GtkObject *gzy_adj(chan_info *cp)           {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_adjs[W_gzy_adj]);        else return(NULL);}
-static GtkObject *sy_adj(chan_info *cp)            {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_adjs[W_sy_adj]);         else return(NULL);}
-static GtkObject *sx_adj(chan_info *cp)            {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_adjs[W_sx_adj]);         else return(NULL);}
-static GtkObject *zy_adj(chan_info *cp)            {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_adjs[W_zy_adj]);         else return(NULL);}
-static GtkObject *zx_adj(chan_info *cp)            {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_adjs[W_zx_adj]);         else return(NULL);}
+static GtkWidget *channel_main_pane(chan_info *cp) {return((cp->cgx)->chan_widgets[W_main_window]);}
+static GtkObject *gsy_adj(chan_info *cp)           {return((cp->cgx)->chan_adjs[W_gsy_adj]);}
+static GtkObject *gzy_adj(chan_info *cp)           {return((cp->cgx)->chan_adjs[W_gzy_adj]);}
+static GtkObject *sy_adj(chan_info *cp)            {return((cp->cgx)->chan_adjs[W_sy_adj]);}
+static GtkObject *sx_adj(chan_info *cp)            {return((cp->cgx)->chan_adjs[W_sx_adj]);}
+static GtkObject *zy_adj(chan_info *cp)            {return((cp->cgx)->chan_adjs[W_zy_adj]);}
+static GtkObject *zx_adj(chan_info *cp)            {return((cp->cgx)->chan_adjs[W_zx_adj]);}
 
 static Float sqr(Float a) {return(a * a);}
 static Float cube (Float a) {return(a * a * a);}
@@ -914,11 +914,11 @@ void change_channel_style(snd_info *sp, int new_style)
 		  apply_x_axis_change((sp->chans[0])->axis, sp->chans[0], sp);
 		}
 	    }
-	  height[0] = widget_height(w_snd_pane(sp)) - widget_height(w_snd_ctrls(sp)) - 16;
+	  height[0] = widget_height(w_snd_pane(sp)) - control_panel_height(sp) - 16;
 	  if (old_style == CHANNELS_SEPARATE)
 	    {
 	      ncp = sp->chans[0];
-	      sound_lock_ctrls(sp, NULL);
+	      sound_lock_control_panel(sp, NULL);
 	      /* channel_lock_pane(ncp, height); */
 	      mcgx = ncp->cgx;
 	      for (i = 1; i < sp->nchans; i++) 
@@ -930,8 +930,8 @@ void change_channel_style(snd_info *sp, int new_style)
 		}
 	      channel_open_pane(sp->chans[0], NULL);
 	      /* channel_unlock_pane(sp->chans[0], NULL); */
-	      sound_unlock_ctrls(sp, NULL);
-	      set_toggle_button(w_snd_combine(sp), TRUE, FALSE, (void *)sp);
+	      sound_unlock_control_panel(sp, NULL);
+	      set_toggle_button(unite_button(sp), TRUE, FALSE, (void *)sp);
 	    }
 	  else
 	    {
@@ -939,11 +939,11 @@ void change_channel_style(snd_info *sp, int new_style)
 		{
 		  /* height[0] = total space available */
 		  height[0] /= sp->nchans;
-		  sound_lock_ctrls(sp, NULL);
+		  sound_lock_control_panel(sp, NULL);
 		  /* map_over_sound_chans(sp, channel_lock_pane, (void *)height); */
 		  map_over_sound_chans(sp, channel_open_pane, NULL);
 		  /* map_over_sound_chans(sp, channel_unlock_pane, NULL); */
-		  sound_unlock_ctrls(sp, NULL);
+		  sound_unlock_control_panel(sp, NULL);
 		  for (i = 0; i < sp->nchans; i++) reset_mix_graph_parent(sp->chans[i]);
 		  pcp = sp->chans[0];
 		  ap = pcp->axis;
@@ -959,7 +959,7 @@ void change_channel_style(snd_info *sp, int new_style)
 		      /* these can get out of sync if changes are made in the unseparated case */
 		      set_axes(cp, ap->x0, ap->x1, ap->y0, ap->y1);
 		    }
-		  set_toggle_button(w_snd_combine(sp), FALSE, FALSE, (void *)sp);
+		  set_toggle_button(unite_button(sp), FALSE, FALSE, (void *)sp);
 		}
 	    }
 	}

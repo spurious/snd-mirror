@@ -1,5 +1,6 @@
 snd change log
 
+  30-Jan:    removed stats dialog, snd-xstats.c, snd-gstats.c, show-usage-stats, update-usage-stats.
   28-Jan:    Alpha bugfix thanks to Stefan Schwandter.
   23-Jan:    color-samples (draw.scm).
   21-Jan:    bird.rb.

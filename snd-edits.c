@@ -940,71 +940,6 @@ void free_sound_list (chan_info *cp)
     }
 }
 
-static int gather_usage_stats_1(chan_info *cp, void *ptr)
-{
-  int i;
-  snd_data *sf;
-  env_info *ep;
-  if (cp)
-    {
-      if (cp->stats) 
-	for (i = 0; i < 8; i++) 
-	  cp->stats[i] = 0;
-      else cp->stats = (int *)CALLOC(8, sizeof(int));
-      if (cp->amp_envs)
-	for (i = 0; i < cp->edit_size; i++)
-	  {
-	    ep = cp->amp_envs[i];
-	    if (ep)
-	      {
-		cp->stats[AMP_ENVS_ACTIVE]++;
-		cp->stats[AMP_ENV_USAGE] += (2 * ((cp->amp_envs[i])->amp_env_size) * sizeof(int));
-	      }
-	  }
-      if (cp->sounds)
-	for (i = 0; i < cp->sound_size; i++)
-	  if ((sf = (cp->sounds[i])))
-	    {
-	      if (sf->type == SND_DATA_BUFFER)
-		{
-		  if (sf->buffered_data) 
-		    {
-		      cp->stats[ARRAY_USAGE] += sf->len;
-		      cp->stats[ARRAYS_ACTIVE]++;
-		    }
-		}
-	      else 
-		{
-		  if (sf->io)
-		    {
-		      cp->stats[ARRAY_USAGE] += (file_state_buffer_size(sf->io));
-		      cp->stats[ARRAYS_ACTIVE]++;
-		    }
-		  if (sf->temporary == DELETE_ME)
-		    {
-		      cp->stats[TEMP_USAGE] += sf->len;
-		      cp->stats[TEMPS_ACTIVE]++;
-		      if (sf->open == FD_OPEN) cp->stats[TEMPS_OPEN]++;
-		    }
-		  else
-		    cp->stats[FILE_USAGE] += (sf->len) / ((cp->sound)->nchans);
-		}
-	    }
-    }
-  return(0);
-}
-
-void gather_usage_stats(chan_info *cp)
-{
-  gather_usage_stats_1(cp, NULL);
-  update_stats_display(cp->state, FALSE);
-}
-
-void update_all_usage_stats(snd_state *ss)
-{
-  map_over_chans(ss, gather_usage_stats_1, NULL);
-}
-  
 static void release_pending_sounds(chan_info *cp, int edit_ctr)
 {
   /* look for buffers or open temp files that are no longer reachable after pruning the edit tree */
@@ -1027,8 +962,6 @@ static void release_pending_sounds(chan_info *cp, int edit_ctr)
 		}
 	    }
 	}
-      if (show_usage_stats(cp->state)) 
-	gather_usage_stats(cp);
     }
 }
 
@@ -1054,7 +987,6 @@ static int add_sound_buffer_to_edit_list(chan_info *cp, MUS_SAMPLE_TYPE *data, i
 {
   prepare_sound_list(cp);
   cp->sounds[cp->sound_ctr] = make_snd_data_buffer(data, len, cp->edit_ctr);
-  if (show_usage_stats(cp->state)) gather_usage_stats(cp);
   return(cp->sound_ctr);
 }
 
@@ -1062,7 +994,6 @@ static int add_sound_file_to_edit_list(chan_info *cp, char *name, int *io, file_
 {
   prepare_sound_list(cp);
   cp->sounds[cp->sound_ctr] = make_snd_data_file(name, io, hdr, temp, cp->edit_ctr, chan);
-  if (show_usage_stats(cp->state)) gather_usage_stats(cp);
   return(cp->sound_ctr);
 }
 

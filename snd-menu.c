@@ -218,14 +218,6 @@ void reflect_raw_pending_in_menu(void)
   set_sensitive(file_new_menu(), FALSE);
 }
 
-void set_show_usage_stats(snd_state *ss, int val)
-{
-  in_set_show_usage_stats(ss, val);
-  if (options_stats_menu())
-    set_menu_label(options_stats_menu(), (val) ? STR_Ignore_stats : STR_Show_stats);
-  check_stats_window(ss, val);
-}
-
 void close_file_from_menu(snd_state *ss)
 {
   snd_info *sp;

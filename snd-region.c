@@ -708,19 +708,6 @@ void paste_region(int n, chan_info *cp, const char *origin) {paste_region_1(n, c
 void add_region(int n, chan_info *cp, const char *origin) {paste_region_1(n, cp, TRUE, cp->cursor, origin);}
 static int mix_region(int n, chan_info *cp, int beg) {return(paste_region_1(n, cp, TRUE, beg, S_mix_region));}
 
-int region_stats(void)
-{
-  int i, fil = 0;
-  region *r;
-  for (i = 0; i < regions_size; i++) 
-    {
-      r = regions[i];
-      if ((r) && (r->use_temp_file == REGION_FILE))
-	fil += (int)file_bytes(r->filename);
-    }
-  return(fil);
-}
-
 int define_region(sync_info *si, int *ends)
 {
   /* now look at all sync'd channels, collect them into the current region */

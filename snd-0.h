@@ -40,7 +40,6 @@
     #define HAVE_SYS_FPU_H 1
   #endif
   #ifdef LINUX
-    #define HAVE_MALLINFO 1
     #define HAVE_VSNPRINTF 1
     #define HAVE_SNPRINTF 1
   #endif
@@ -157,8 +156,8 @@ enum {CURRENT_FILE_VIEWER, PREVIOUS_FILE_VIEWER, REGION_VIEWER};
 enum {COLOR_DIALOG, ORIENTATION_DIALOG, ENVED_DIALOG, ERROR_DIALOG, YES_OR_NO_DIALOG, TRANSFORM_DIALOG,
       FILE_OPEN_DIALOG, FILE_SAVE_AS_DIALOG, VIEW_FILES_DIALOG, RAW_DATA_DIALOG, NEW_FILE_DIALOG,
       FILE_MIX_DIALOG, EDIT_HEADER_DIALOG, FIND_DIALOG, HELP_DIALOG, COMPLETION_DIALOG, MIX_PANEL_DIALOG,
-      PRINT_DIALOG, RECORDER_DIALOG, REGION_DIALOG, STATS_DIALOG};
-#define NUM_DIALOGS 21
+      PRINT_DIALOG, RECORDER_DIALOG, REGION_DIALOG};
+#define NUM_DIALOGS 20
 
 #define NO_REGIONS -2
 #define INVALID_REGION -1
@@ -588,10 +587,6 @@ enum {COLOR_POSITION, COLOR_ZOOM};
 #define show_axes(ss) ss->Show_Axes
 #define in_set_show_axes(ss, a) ss->Show_Axes = a
 #define DEFAULT_SHOW_AXES SHOW_ALL_AXES
-
-#define show_usage_stats(ss) ss->Show_Usage_Stats
-#define in_set_show_usage_stats(ss, a) ss->Show_Usage_Stats = a
-#define DEFAULT_SHOW_USAGE_STATS 0
 
 #define show_mix_waveforms(ss) ss->Show_Mix_Waveforms
 #define in_set_show_mix_waveforms(ss, a) ss->Show_Mix_Waveforms = a

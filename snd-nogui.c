@@ -94,7 +94,6 @@ int view_x_axis_beats_menu(void) {return(0);}
 int view_x_axis_samples_menu(void) {return(0);}
 int view_x_axis_percentage_menu(void) {return(0);}
 int options_save_state_menu(void) {return(0);}
-int options_stats_menu(void) {return(0);}
 int options_focus_left_menu(void) {return(0);}
 int options_focus_right_menu(void) {return(0);}
 int options_focus_middle_menu(void) {return(0);}
@@ -201,8 +200,7 @@ void reflect_amp_env_in_progress(snd_info *sp) {}
 void cleanup_cw(chan_info *cp) {}
 int fixup_cp_cgx_ax_wn(chan_info *cp) {return(0);}
 int w_snd_name(snd_info *sp) {return(0);}
-int w_snd_play(snd_info *sp) {return(0);}
-int w_snd_filter_env(snd_info *sp) {return(0);}
+int filter_graph(snd_info *sp) {return(0);}
 void make_minibuffer_label(snd_info *sp, char *str) {}
 void goto_minibuffer(snd_info *sp) {}
 void set_minibuffer_string(snd_info *sp, char *str) {if ((str) && (*str)) fprintf(stderr, "%s", str);}
@@ -226,7 +224,6 @@ void snd_file_lock_icon(snd_info *sp, int on) {}
 void snd_file_bomb_icon(snd_info *sp, int on) {}
 void x_bomb(snd_info *sp, int on) {}
 void set_sound_pane_file_label(snd_info *sp, char *str) {}
-void unlock_ctrls(snd_info *sp) {}
 void equalize_sound_panes(snd_state *ss, snd_info *sp, chan_info *ncp, int all_panes) {}
 void reflect_amp_env_completion(snd_info *sp) {}
 void equalize_all_panes(snd_state *ss) {}
@@ -291,10 +288,6 @@ void make_open_file_dialog(snd_state *ss, int read_only, int managed) {}
 void make_mix_file_dialog(snd_state *ss, int managed) {}
 
 int menu_widget(int which_menu) {return(0);}
-
-void update_stats(snd_state *ss) {}
-void update_stats_display(snd_state *ss, int all) {}
-void check_stats_window(snd_state *ss, int val) {}
 void get_current_color(int colormap, int j, unsigned short *r, unsigned short *g, unsigned short *b) {}
 
 #define NUM_TRANSFORM_TYPES 9

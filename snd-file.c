@@ -688,7 +688,9 @@ static snd_info *snd_open_file_1 (char *filename, snd_state *ss, int select, int
       if (files == 1) reflect_file_open_in_menu();
       reflect_equalize_panes_in_menu(active_channels(ss, WITHOUT_VIRTUAL_CHANNELS) > 1);
       reflect_file_change_in_title(ss);
-      unlock_ctrls(sp);
+#if (!USE_NO_GUI)
+      unlock_control_panel(sp);
+#endif
       greet_me(ss, sp->short_filename);
     }
   map_over_separate_chans(ss, channel_open_pane, NULL);
@@ -1055,34 +1057,6 @@ void snd_update(snd_state *ss, snd_info *sp)
     report_in_minibuffer(sp, "updated %s", sp->short_filename);
   else snd_error("update %s failed!", sp->filename);
   set_widget_size(MAIN_SHELL(ss), app_x, app_y);
-}
-
-char *update_chan_stats(chan_info *cp)
-{
-  char *desc;
-  char *vals[8];
-  int i;
-  desc = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-  vals[0] = kmg(cp->stats[ARRAY_USAGE]);
-  vals[1] = kmg(cp->stats[ARRAYS_ACTIVE]);
-  vals[2] = kmg(cp->stats[FILE_USAGE]);
-  vals[3] = kmg(cp->stats[TEMP_USAGE]);
-  vals[4] = kmg(cp->stats[TEMPS_ACTIVE]);
-  vals[5] = kmg(cp->stats[TEMPS_OPEN]);
-  vals[6] = kmg(cp->stats[AMP_ENVS_ACTIVE]);
-  vals[7] = kmg(cp->stats[AMP_ENV_USAGE]);
-  if (cp->stats[TEMPS_ACTIVE] != cp->stats[TEMPS_OPEN])
-    mus_snprintf(desc, PRINT_BUFFER_SIZE, "%s %d: %s (%s), %s, %s (%s, %s), %s %s\n",
-		 (cp->sound)->short_filename,
-		 cp->chan + 1,
-		 vals[0], vals[1], vals[2], vals[3], vals[4], vals[5], vals[6], vals[7]);
-  else
-    mus_snprintf(desc, PRINT_BUFFER_SIZE, "%s %d: %s (%s), %s, %s (%s), %s %s\n",
-		 (cp->sound)->short_filename,
-		 cp->chan + 1,
-		 vals[0], vals[1], vals[2], vals[3], vals[4], vals[6], vals[7]);
-  for (i = 0; i < 8; i++) free(vals[i]);
-  return(desc);
 }
 
 /* View:Files lists */

@@ -259,7 +259,6 @@ if show_backtrace != false then snd_display sprintf("\n# show_backtrace: %s", sh
 if show_marks != true then snd_display sprintf("\n# show_marks: %s", show_marks) end
 if show_mix_waveforms != true then snd_display sprintf("\n# show_mix_waveforms: %s", show_mix_waveforms) end
 if show_selection_transform != false then snd_display sprintf("\n# show_selection_transform: %s", show_selection_transform) end
-if show_usage_stats != false then snd_display sprintf("\n# show_usage_stats: %s", show_usage_stats) end
 if show_y_zero != false then snd_display sprintf("\n# show_y_zero: %s", show_y_zero) end
 if sinc_width != 10 then snd_display sprintf("\n# sinc_width: %s", sinc_width) end
 if spectro_cutoff != 1.0 then snd_display sprintf("\n# spectro_cutoff: %s", spectro_cutoff) end
@@ -901,10 +900,6 @@ set_show_selection_transform true
 if show_selection_transform !=  true then snd_display sprintf("\n# show_selection_transform: %s", show_selection_transform) end
 set_show_selection_transform false 
 if show_selection_transform != false then snd_display sprintf("\n# show_selection_transform: %s", show_selection_transform) end
-set_show_usage_stats true
-if show_usage_stats !=  true then snd_display sprintf("\n# show_usage_stats: %s", show_usage_stats) end
-set_show_usage_stats false 
-if show_usage_stats != false then snd_display sprintf("\n# show_usage_stats: %s", show_usage_stats) end
 set_show_y_zero true
 if show_y_zero !=  true then snd_display sprintf("\n# show_y_zero: %s", show_y_zero) end
 set_show_y_zero false 
@@ -1219,7 +1214,7 @@ def display_energy(snd, chn)
   rs = right_sample
   data1 = make_graph_data(snd, chn)
   data = data1
-  if not vct? data
+  if not(vct?(data)) then
     data = data1[1]
   end
   len = vct_length data
@@ -1229,3 +1224,11 @@ def display_energy(snd, chn)
   graph(data, "energy", ls / sr, rs / sr, 0.0, y_max * y_max, snd, chn, false)
   end
 
+oboe = open_sound "oboe.snd"
+save_state "s61.rb"
+close_sound oboe
+load "s61.rb"
+oboe = find_sound "oboe.snd"
+if (oboe == false) then snd_print "oops"
+else close_sound oboe
+end

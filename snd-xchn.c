@@ -29,16 +29,16 @@ Widget channel_main_pane(chan_info *cp)
   return(NULL);
 }
 
-Widget channel_graph(chan_info *cp)      {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_graph]); else return(NULL);}
-Widget channel_sx(chan_info *cp)         {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_sx]);    else return(NULL);}
-Widget channel_sy(chan_info *cp)         {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_sy]);    else return(NULL);}
-Widget channel_zx(chan_info *cp)         {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_zx]);    else return(NULL);}
-Widget channel_zy(chan_info *cp)         {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_zy]);    else return(NULL);}
-static Widget channel_gsy(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_gsy]);   else return(NULL);}
-static Widget channel_gzy(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_gzy]);   else return(NULL);}
-Widget channel_w(chan_info *cp)          {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_w]);     else return(NULL);}
-Widget channel_f(chan_info *cp)          {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_f]);     else return(NULL);}
-Widget channel_edhist(chan_info *cp)     {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_edhist]);else return(NULL);}
+Widget channel_graph(chan_info *cp)      {return((cp->cgx)->chan_widgets[W_graph]);}
+Widget channel_sx(chan_info *cp)         {return((cp->cgx)->chan_widgets[W_sx]);}
+Widget channel_sy(chan_info *cp)         {return((cp->cgx)->chan_widgets[W_sy]);}
+Widget channel_zx(chan_info *cp)         {return((cp->cgx)->chan_widgets[W_zx]);}
+Widget channel_zy(chan_info *cp)         {return((cp->cgx)->chan_widgets[W_zy]);}
+static Widget channel_gsy(chan_info *cp) {return((cp->cgx)->chan_widgets[W_gsy]);}
+static Widget channel_gzy(chan_info *cp) {return((cp->cgx)->chan_widgets[W_gzy]);}
+Widget channel_w(chan_info *cp)          {return((cp->cgx)->chan_widgets[W_w]);}
+Widget channel_f(chan_info *cp)          {return((cp->cgx)->chan_widgets[W_f]);}
+Widget channel_edhist(chan_info *cp)     {return((cp->cgx)->chan_widgets[W_edhist]);}
 
 static Float sqr(Float a) {return(a * a);}
 static Float cube (Float a) {return(a * a * a);}
@@ -1328,7 +1328,7 @@ void change_channel_style(snd_info *sp, int new_style)
 	  if (old_style == CHANNELS_SUPERIMPOSED)
 	    {
 	      syncb(sp, sp->previous_sync);
-	      XtVaSetValues(w_snd_combine(sp), XmNselectColor, (ss->sgx)->pushed_button_color, NULL);
+	      XtVaSetValues(unite_button(sp), XmNselectColor, (ss->sgx)->pushed_button_color, NULL);
 	    }
 	  else
 	    {
@@ -1336,16 +1336,16 @@ void change_channel_style(snd_info *sp, int new_style)
 		{
 		  sp->previous_sync = sp->sync;
 		  if (sp->sync == 0) syncb(sp, 1);
-		  XtVaSetValues(w_snd_combine(sp), XmNselectColor, (ss->sgx)->green, NULL);
+		  XtVaSetValues(unite_button(sp), XmNselectColor, (ss->sgx)->green, NULL);
 		  apply_y_axis_change((sp->chans[0])->axis, sp->chans[0]);
 		  apply_x_axis_change((sp->chans[0])->axis, sp->chans[0], sp);
 		}
 	    }
-	  height[0] = widget_height(w_snd_pane(sp)) - widget_height(w_snd_ctrls(sp)) - 16;
+	  height[0] = widget_height(w_snd_pane(sp)) - control_panel_height(sp) - 16;
 	  if (old_style == CHANNELS_SEPARATE)
 	    {
 	      ncp = sp->chans[0];
-	      sound_lock_ctrls(sp, NULL);
+	      sound_lock_control_panel(sp, NULL);
 	      channel_lock_pane(ncp, height);
 	      mcgx = ncp->cgx;
 	      for (i = 1; i < sp->nchans; i++) 
@@ -1357,8 +1357,8 @@ void change_channel_style(snd_info *sp, int new_style)
 		}
 	      channel_open_pane(sp->chans[0], NULL);
 	      channel_unlock_pane(sp->chans[0], NULL);
-	      sound_unlock_ctrls(sp, NULL);
-	      XmToggleButtonSetState(w_snd_combine(sp), TRUE, FALSE);
+	      sound_unlock_control_panel(sp, NULL);
+	      XmToggleButtonSetState(unite_button(sp), TRUE, FALSE);
 	    }
 	  else
 	    {
@@ -1366,11 +1366,11 @@ void change_channel_style(snd_info *sp, int new_style)
 		{
 		  /* height[0] = total space available */
 		  height[0] /= sp->nchans;
-		  sound_lock_ctrls(sp, NULL);
+		  sound_lock_control_panel(sp, NULL);
 		  map_over_sound_chans(sp, channel_lock_pane, (void *)height);
 		  map_over_sound_chans(sp, channel_open_pane, NULL);
 		  map_over_sound_chans(sp, channel_unlock_pane, NULL);
-		  sound_unlock_ctrls(sp, NULL);
+		  sound_unlock_control_panel(sp, NULL);
 		  for (i = 0; i < sp->nchans; i++) 
 		    reset_mix_graph_parent(sp->chans[i]);
 		  pcp = sp->chans[0];
@@ -1399,7 +1399,7 @@ void change_channel_style(snd_info *sp, int new_style)
 		      /* these can get out of sync if changes are made in the unseparated case */
 		      set_axes(cp, ap->x0, ap->x1, ap->y0, ap->y1);
 		    }
-		  XmToggleButtonSetState(w_snd_combine(sp), FALSE, FALSE);
+		  XmToggleButtonSetState(unite_button(sp), FALSE, FALSE);
 		}
 	    }
 	}

@@ -466,7 +466,6 @@ void add_channel_data(char *filename, chan_info *cp, file_info *hdr, snd_state *
 	  during_open(fd, filename, SND_OPEN_CHANNEL);
 	  io = make_file_state(fd, chdr, chn, FILE_BUFFER_SIZE);
 	  cp->sounds[0] = make_snd_data_file(filename, io, chdr, DONT_DELETE_ME, cp->edit_ctr, chn);
-	  if (show_usage_stats(ss)) gather_usage_stats(cp);
 	}
     }
   if ((current_ed_samples(cp) > AMP_ENV_CUTOFF) &&

@@ -22,7 +22,6 @@ enum {menu_menu,
           o_save_menu, o_save_state_menu,
           o_speed_menu, o_speed_cascade_menu,
             o_speed_float_menu, o_speed_ratio_menu, o_speed_semitone_menu,
-          o_stats_menu,
         view_menu, v_cascade_menu,
 #if 0
           v_equalize_panes_menu, 
@@ -41,7 +40,7 @@ enum {menu_menu,
           v_sep2_menu
 };
 
-#define NUM_MENU_WIDGETS 98
+#define NUM_MENU_WIDGETS 97
 static GtkWidget *mw[NUM_MENU_WIDGETS];
 
 enum {W_pop_play, W_pop_undo, W_pop_redo, W_pop_save, W_pop_info};
@@ -96,7 +95,6 @@ GtkWidget *view_x_axis_samples_menu(void) {return(mw[v_x_axis_samples_menu]);}
 GtkWidget *view_x_axis_percentage_menu(void) {return(mw[v_x_axis_percentage_menu]);}
 
 GtkWidget *options_save_state_menu(void) {return(mw[o_save_state_menu]);}
-GtkWidget *options_stats_menu(void) {return(mw[o_stats_menu]);}
 GtkWidget *options_focus_left_menu(void) {return(mw[o_focus_left_menu]);}
 GtkWidget *options_focus_right_menu(void) {return(mw[o_focus_right_menu]);}
 GtkWidget *options_focus_middle_menu(void) {return(mw[o_focus_middle_menu]);}
@@ -463,11 +461,6 @@ static void options_save_state_callback(GtkWidget *w, gpointer cD)
 }
 #endif
 
-static void options_stats_callback(GtkWidget *w, gpointer cD)
-{
-  snd_state *ss = (snd_state *)cD;
-  IF_MENU_HOOK(STR_Options, STR_Show_stats) set_show_usage_stats(ss, (!(show_usage_stats(ss))));
-}
 
 
 /* -------------------------------- HELP MENU -------------------------------- */
@@ -1000,12 +993,6 @@ GtkWidget *add_menu(snd_state *ss)
   gtk_signal_connect(GTK_OBJECT(mw[o_save_state_menu]), "activate", GTK_SIGNAL_FUNC(options_save_state_callback), (gpointer)ss);
 #endif
 
-  mw[o_stats_menu] = gtk_menu_item_new_with_label(STR_Show_stats);
-  gtk_menu_append(GTK_MENU(mw[o_cascade_menu]), mw[o_stats_menu]);
-  set_background(mw[o_stats_menu], (ss->sgx)->basic_color);
-  gtk_widget_show(mw[o_stats_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[o_stats_menu]), "activate", GTK_SIGNAL_FUNC(options_stats_callback), (gpointer)ss);
-
 
 
   /* HELP MENU */
@@ -1315,8 +1302,7 @@ static int remove_option(int which_menu, char *label)
 	  if (strcmp(label, STR_Focus_style) == 0) gtk_widget_hide(mw[o_focus_style_menu]); else
             if (strcmp(label, STR_Save_options) == 0) gtk_widget_hide(mw[o_save_menu]); else
 	      if (strcmp(label, STR_Save_state) == 0) gtk_widget_hide(mw[o_save_state_menu]); else
-		if (strcmp(label, STR_Show_stats) == 0) gtk_widget_hide(mw[o_stats_menu]); else 
-		  return(INVALID_MENU);
+		return(INVALID_MENU);
       return(OPTIONS_MENU);
       break;
     case HELP_MENU: 
