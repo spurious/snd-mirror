@@ -17386,6 +17386,18 @@ EDITS: 3
 	  
 	  (close-sound ind))
 	
+	(let ((ind (new-sound "test.snd")))
+	  (map-chan (lambda (y) 1.0) 0 100)
+	  (ramp-channel 0.0 1.0)
+	  (smooth-channel 0 99)
+	  (let ((orig-data (channel->vct)))
+	    (undo)
+	    (smooth-channel-via-ptree 0 99)
+	    (let ((diff (vct-peak (vct-subtract! orig-data (channel->vct)))))
+	      (if (> diff .00001)
+		  (snd-display ";smooth-channel-via-ptree diff: ~A" diff))))
+	  (close-sound ind))
+
 	(set! (x-axis-style) x-axis-in-beats)
 	(let ((ind (open-sound "storm.snd")))
 	  (reverse-channel 500000 1000000)

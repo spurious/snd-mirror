@@ -397,7 +397,7 @@ scanned synthesis of Bill Verplank and Max Mathews.
 To watch the wave, open some sound (so Snd has some place to put the graph), turn off
 the time domain display (to give our graph all the window)
 then <code>(testunif 1.0 0.1 0.0)</code> or whatever.
-The <i>spot-freq</i> function is a simple first-pass at using autocorrelation for
+The <A NAME="spotfreq">spot-freq</a> function is a simple first-pass at using autocorrelation for
 pitch tracking; it's easily fooled, but could probably be made relatively robust.
 The code:
 </p>
@@ -824,6 +824,7 @@ I'm slowly dividing out related groups of procedures to separate files.
     <li>sound-interp, env-sound-interp
     <li>searching procedures (search-for-click, find-pitch, zero+, next-peak)
     <li>sound-data-&gt;list
+    <li>smooth-channel-via-ptree -- smooth-channel as virtual op
   </ul>
 </small>
 </ul>
@@ -1305,6 +1306,11 @@ place where the given pitch is predominate.
 </pre>
 <p>This converts a sound-data object into a list of lists, each inner list
 holding the samples of one channel.
+</p>
+<pre>
+  <em class=def><A NAME="exsmoothchannelviaptree">smooth-channel-via-ptree</a></em> &amp;optional beg dur snd chn edpos
+</pre>
+<p>This is <a href="extsnd.html#smoothchannel">smooth-channel</a> as a virtual op.
 </p>
 <br>
 
@@ -2145,40 +2151,40 @@ that were removed from or renamed in Snd-5.
 <p>The Snd-5 compatibilty file contains a number of the procedures
 that were moved from C to Scheme during Snd-5 development.
 </p>
-<!-- --><table border=0 cellspacing=10>
+<table border=0 cellspacing=10>
 <!-- backward-sample -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndbackwardsample">backward-sample</a></em> (<i>count snd chn</i>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->move back <i>count</i> samples (C-b), return new cursor position.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
+<tr><td colspan=2>
+<span class=defbox><code><em class=def><a name="sndbackwardsample">backward-sample</a></em> (<i>count snd chn</i>)</code></span>
+</td></tr>
+<tr><td></td><td>
+move back <i>count</i> samples (C-b), return new cursor position.
+</td></tr>
+<tr><td colspan=2></td></tr>
+
 <!-- forward-sample -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndforwardsample">forward-sample</a></em> (<i>count snd chn</i>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->move forward <i>count</i> samples (C-f), return new cursor position.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
+<tr><td colspan=2>
+<span class=defbox><code><em class=def><a name="sndforwardsample">forward-sample</a></em> (<i>count snd chn</i>)</code></span>
+</td></tr>
+<tr><td></td><td>
+move forward <i>count</i> samples (C-f), return new cursor position.
+</td></tr>
+<tr><td colspan=2></td></tr>
 </table>
 
-<!-- --><table border=0 cellspacing=5>
+<table border=0 cellspacing=5>
 <!-- vct-do! -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="vctdo">vct-do!</a></em> (vobj proc)</code></span></td>
-<!-- --><td><code>vobj[i] = (funcall proc i)</code>.</td></tr>
-<!-- -->
+<tr><td><span class=defbox><code><em class=def><a name="vctdo">vct-do!</a></em> (vobj proc)</code></span></td>
+<td><code>vobj[i] = (funcall proc i)</code>.</td></tr>
+
 <!-- vcts-do! -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="vctsdo">vcts-do!</a></em> (vobj... proc)</code></span></td>
-<!-- --><td><code>vobj[vi][i] = (nth vi (funcall proc num i))</code>.</td></tr>
-<!-- -->
+<tr><td><span class=defbox><code><em class=def><a name="vctsdo">vcts-do!</a></em> (vobj... proc)</code></span></td>
+<td><code>vobj[vi][i] = (nth vi (funcall proc num i))</code>.</td></tr>
+
 <!-- vcts-map! -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="vctsmap">vcts-map!</a></em> (vobj... proc)</code></span></td>
-<!-- --><td><code>vobj[vi][i] = (nth vi (funcall proc num))</code>.</td></tr>
-<!-- -->
-<!-- --></table>
+<tr><td><span class=defbox><code><em class=def><a name="vctsmap">vcts-map!</a></em> (vobj... proc)</code></span></td>
+<td><code>vobj[vi][i] = (nth vi (funcall proc num))</code>.</td></tr>
+
+</table>
 
 <p><i>vct-do!</i>
 is the same as <i>vct-map!</i> except that the called function should take one

@@ -5331,7 +5331,6 @@ static XEN g_sample(XEN samp_n, XEN snd_n, XEN chn_n, XEN pos_n)
   #define H_sample "(" S_sample " samp &optional snd chn pos) -> sample samp in snd's channel chn (slow access -- use sample-readers for speed)"
   chan_info *cp;
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_sample, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(pos_n), pos_n, XEN_ARG_4, S_sample, "a number");
   ASSERT_CHANNEL(S_sample, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_sample);
   return(C_TO_XEN_DOUBLE(chn_sample(XEN_TO_C_OFF_T_OR_ELSE(samp_n, CURSOR(cp)), 

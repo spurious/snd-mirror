@@ -2342,8 +2342,6 @@ void cursor_zeros(chan_info *cp, off_t count, int regexpr)
   si = free_sync_info(si);
 }
 
-/* TODO: smooth-channel|sound as virtual op? (ptree+closure) */
-
 static void smooth_channel(chan_info *cp, off_t beg, off_t dur, int edpos, const char *origin)
 {
   mus_sample_t *data = NULL;

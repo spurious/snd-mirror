@@ -62,6 +62,8 @@
 ;;; open-next-file-in-directory -- middle button click closes current file and opens next
 ;;; chain-dsps
 ;;; cursor-follows-play and stays where it was when the play ended
+;;; smooth-channel as virtual op
+
 
 ;;; SOMEDAY: robust pitch tracker
 ;;; SOMEDAY: adaptive notch filter
@@ -2561,4 +2563,34 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 	(remove-local-hook! dac-hook local-dac-func)
 	(remove-local-hook! start-playing-hook local-start-playing-func)
 	(remove-local-hook! stop-playing-channel-hook local-stop-playing-func))))
+
+
+;;; -------- smooth-channel as virtual op
+
+(define* (smooth-channel-via-ptree #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+  (let* ((y0 (sample beg snd chn edpos))
+	 (y1 (sample (+ beg dur) snd chn edpos))
+	 (init-angle (if (> y1 y0) pi 0.0)) 
+	 (off (* .5 (+ y0 y1))) 
+	 (scale (* 0.5 (abs (- y1 y0))))
+	 (data (vct 0.0 0.0 init-angle off scale)))
+    (ptree-channel
+     (lambda (y data forward)
+       (declare (y real) (data vct) (forward boolean))
+       (let* ((angle (vct-ref data 0))
+	      (incr (vct-ref data 1))
+	      (val (+ (vct-ref data 3) 
+		      (* (vct-ref data 4) 
+			 (cos (+ (vct-ref data 2) angle))))))
+       (if forward
+	   (vct-set! data 0 (+ angle incr))
+	   (vct-set! data 0 (- angle incr)))
+       val))
+     beg dur snd chn edpos #t
+     (lambda (frag-beg frag-dur)
+       (let ((incr (/ pi frag-dur)))
+	 (vct-set! data 1 incr)
+	 (vct-set! data 0 (* frag-beg incr))
+	 data)))))
+
 

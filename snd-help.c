@@ -268,6 +268,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+12-Jan:  snd-6.5\n\
 8-Jan:   removed loop-samples.\n\
 7-Jan:   added various simple FIR filters to dsp.scm.\n\
 6-Jan:   xramp-channel for virtual exp envs.\n\
@@ -276,9 +277,6 @@ void news_help(snd_state *ss)
          added orientation-hook and color-hook.\n\
          waterfall spectrum in snd-gl.scm.\n\
          channel-amp-envs now returns vcts, not vectors.\n\
-16-Dec:  snd 6.4\n\
-11-Dec:  --with-shared-sndlib configure switch.\n\
-10-Dec:  contrib/inf-snd.el from Michael Scholz.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

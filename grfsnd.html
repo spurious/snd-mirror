@@ -2034,7 +2034,7 @@ than one input is required, the first argument to apply-ladspa should be a list 
 </pre>
 <p><a name="ladspachannel"></a>The "regularized" version of apply-ladspa could be defined:
 </p>
-<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define* (ladspa-channel ladspa-data #:optional nbeg ndur nsnd nchn nedpos)
   (let* ((beg (or nbeg 0)) 
 	 (snd (or nsnd (selected-sound) (car (sounds))))
@@ -2044,7 +2044,7 @@ than one input is required, the first argument to apply-ladspa should be a list 
 	 (reader (make-sample-reader beg snd chn 1 edpos)))
     (<em class=red>apply-ladspa</em> reader ladspa-data dur "apply-ladspa")
     (free-sample-reader reader)))
-<!-- --></pre></td></tr></table>
+</pre></td></tr></table>
 <br>
 
 <span class=bbox><h3><A NAME="sndandx">Driving Snd remotely</a></h3></span>
@@ -2081,7 +2081,7 @@ Any of the Snd drawing area widgets (or your own) can receive GL graphics
 commands.  For example, here is a translation of the SGI/xjournal glxmotif
 program:
 </p>
-<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define (draw-it)
   (glXMakeCurrent (XtDisplay (cadr (main-widgets))) 
 		  (XtWindow (car (channel-widgets)))
@@ -2116,7 +2116,7 @@ program:
   (glXSwapBuffers (XtDisplay (cadr (main-widgets))) 
 		  (XtWindow (car (channel-widgets))))
   (glFlush))
-<!-- --></pre></td></tr></table>
+</pre></td></tr></table>
 <br>
 <p>For more examples, see snd-gl.scm.
 </p>

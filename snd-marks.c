@@ -8,6 +8,8 @@
  * "current" can change at any time.
  */
 
+/* TODO: 2 marks on same sample should not erase each other */
+
 typedef mark *mark_map_func(chan_info *cp, mark *mp, void *m);
 
 static XEN mark_drag_hook;
