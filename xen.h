@@ -20,11 +20,12 @@
  */
 
 #define XEN_MAJOR_VERSION 1
-#define XEN_MINOR_VERSION 26
-#define XEN_VERSION "1.26"
+#define XEN_MINOR_VERSION 27
+#define XEN_VERSION "1.27"
 
 /* HISTORY:
  *
+ *  2-Mar-05:  Ruby support for off_t (Mike Scholz).
  *  4-Jan-05:  more guile changes, deprecated XEN_VECTOR_ELEMENTS.
  *  --------
  *  31-Dec-04: removed "caller" arg from *_NO_CATCH.
@@ -803,14 +804,16 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
 #else
   #define C_TO_XEN_ULONG(a)               UINT2NUM((unsigned long)a)
 #endif
-#if HAVE_RB_NUM2LL
-  #define C_TO_XEN_LONG_LONG(a)           C_TO_XEN_ULONG(a)
-  #define XEN_TO_C_LONG_LONG(a)           rb_num2ll(a)
-#else
-  /* not ULONG here -- screws up negative ints */
-  #define C_TO_XEN_LONG_LONG(a)           C_TO_XEN_INT(a)
-  #define XEN_TO_C_LONG_LONG(a)           XEN_TO_C_INT(a)
+
+/* off_t support added in 1.8.0, I think */
+#ifndef OFFT2NUM
+  #define OFFT2NUM(a)                     INT2NUM(a)
 #endif
+#ifndef NUM2OFFT
+  #define NUM2OFFT(a)                     NUM2LONG(a)
+#endif
+#define C_TO_XEN_LONG_LONG(a)             OFFT2NUM(a)
+#define XEN_TO_C_LONG_LONG(a)             NUM2OFFT(a)
 
 #define C_TO_XEN_STRING(a)                xen_rb_str_new2((char *)a)
 #define XEN_TO_C_STRING(Str)              RSTRING(Str)->ptr

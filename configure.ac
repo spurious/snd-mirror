@@ -759,7 +759,7 @@ else
 	AC_CHECK_LIB(m, gdk_pango_renderer_new, [AC_DEFINE(HAVE_GDK_PANGO_RENDERER_NEW)],  ,$GTK_LIBS)
 	# gtk 2.5.6
 	AC_CHECK_LIB(m, gtk_text_layout_get_iter_at_position, [AC_DEFINE(HAVE_GTK_TEXT_LAYOUT_GET_ITER_AT_POSITION)],  ,$GTK_LIBS)
-	# gtk 2.6.0|1|2
+	# gtk 2.6.0|1|2|3
 
         if test "$with_x11" = yes ; then
 	  AC_DEFINE(WITH_GTK_AND_X11)

@@ -744,7 +744,7 @@ one argument (<i>inval</i>) and returns the result of passing
 that value to the delay with scaling.  The upshot of all this is that
 we can use:</p>
 <pre>
-(<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (echo .5 .75) 0 44100)
+  (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (echo .5 .75) 0 44100)
 </pre>
 <p>to take the current active channel and 
 return 44100 samples of echos, each echo half the amplitude
@@ -752,8 +752,16 @@ of the previous, and spaced by .75 seconds.  <i>map-channel</i>'s
 first argument is a function of one argument, the current sample;
 when we pass it <i>(echo ...)</i>, it evaluates the echo call,
 which returns the function that actually runs the delay line,
-producing the echo.  
-The CLM (common lisp) version might be something like:</p>
+producing the echo. 
+</p> 
+<p>If we want "pre-echoes" instead (echoes of the future):
+</p>
+<pre>
+  (<a class=quiet href="extsnd.html#reversesound">reverse-sound</a>)
+  (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (echo .5 .75) 0 44100)
+  (<a class=quiet href="extsnd.html#reversesound">reverse-sound</a>)
+</pre>
+<p>The CLM (common lisp) version might be something like:</p>
 
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (<a class=quiet href="clm.html#definstrument">definstrument</a> echo (beg dur scaler secs file)
@@ -769,7 +777,6 @@ The CLM (common lisp) version might be something like:</p>
 
 ;;; (<a class=quiet href="clm.html#with-sound">with-sound</a> () (echo 0 60000 .5 1.0 "pistol.snd"))
 </pre></td></tr></table>
-
 <br>
 
 <!-- INDEX clmfuncs:CLM generators -->

@@ -3269,15 +3269,19 @@ To provide a quick overview, the CL bird instrument is</p>
 <table border=2 bordercolor="tan" hspace=40 cellpadding=8 cellspacing=3><tr><td>
 <pre>
 (define (bird start dur frequency freqskew amplitude freq-envelope amp-envelope)
-  "(bird start dur frequency freqskew amplitude freq-envelope amp-envelope)"
   (let* ((gls-env (<a class=quiet href="#make-env">make-env</a> freq-envelope (<a class=quiet href="#hz-&gt;radians">hz-&gt;radians</a> freqskew) dur))
-	 (os (<a class=quiet href="#make-oscil">make-oscil</a> :frequency frequency))
-	 (amp-env (<a class=quiet href="#make-env">make-env</a> amp-envelope amplitude dur))
-	 (len (inexact-&gt;exact (round (* (srate) dur))))
-	 (beg (inexact-&gt;exact (round (* (srate) start))))
-	 (local-data (make-vct len)))
-    (vct-map! local-data (lambda () (* (<a class=quiet href="#env">env</a> amp-env) (<a class=quiet href="#oscil">oscil</a> os (<a class=quiet href="#env">env</a> gls-env)))))
-    (vct-add! out-data local-data beg)))
+         (os (<a class=quiet href="#make-oscil">make-oscil</a> :frequency frequency))
+         (amp-env (<a class=quiet href="#make-env">make-env</a> amp-envelope amplitude dur))
+	 (len (inexact-&gt;exact (round (* (<a class=quiet href="grfsnd.html#mussrate">mus-srate</a>) dur))))
+	 (beg (inexact-&gt;exact (round (* (<a class=quiet href="grfsnd.html#mussrate">mus-srate</a>) start))))
+	 (end (+ beg len)))
+    (run
+     (lambda ()
+       (do ((i beg (1+ i)))
+	   ((= i end))
+	 (<a class=quiet href="clm.html#outa">outa</a> i (* (<a class=quiet href="#env">env</a> amp-env) 
+                    (<a class=quiet href="#oscil">oscil</a> os (<a class=quiet href="#env">env</a> gls-env)))
+	       *output*))))))
 </pre>
 </td></tr></table>
 
@@ -3315,6 +3319,33 @@ instrument: bird { f: start f: dur f: freq f: freq-skew f: amp freqenv ampenv --
 ;instrument
 </pre>
 </td></tr></table>
+
+
+<p>And in C (I haven't actually tested this code, but it looks plausible):
+</p>
+<table border=2 bordercolor="tan" hspace=40 cellpadding=8 cellspacing=3><tr><td>
+<pre>
+void c_bird(double start, double dur, double frequency, double freqskew, double amplitude, 
+	    double *freqdata, int freqpts, double *ampdata, int amppts, mus_any *output)
+{
+  off_t beg, end, i;
+  mus_any *amp_env, *freq_env, *osc;
+  beg = start * mus_srate();
+  end = start + dur * mus_srate();
+  osc = mus_make_oscil(frequency, 0.0);
+  amp_env = mus_make_env(ampdata, amppts, amplitude, 0.0, 1.0, dur, beg, end, NULL);
+  freq_env = mus_make_env(freqdata, freqpts, mus_hz_to_radians(freqskew), 0.0, 1.0, dur, beg, end, NULL);
+  for (i = beg; i &lt; end; i++)
+    mus_sample_to_file(output, i, 0, 
+		       mus_env(amp_env) * 
+		         mus_oscil(osc, mus_env(freq_env), 0.0));
+  mus_free(osc);
+  mus_free(amp_env);
+  mus_free(freq_env);
+}
+</pre>
+</td></tr></table>
+
 
 <p>In Scheme, a generator is itself a function: (<a class=quiet href="#oscil">oscil</a> gen 0.0) is the same
 as (gen 0.0), if "gen" is an oscil.  This can simplify instruments that

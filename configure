@@ -12779,7 +12779,7 @@ _ACEOF
 
 fi
 
-	# gtk 2.6.0|1|2
+	# gtk 2.6.0|1|2|3
 
         if test "$with_x11" = yes ; then
 	  cat >>confdefs.h <<\_ACEOF
