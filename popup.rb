@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Thu Sep 05 22:28:49 CEST 2002
-# Last: Tue Mar 09 20:24:23 CET 2004
+# Last: Tue Apr 13 19:49:43 CEST 2004
 
 # Commentary:
 #
@@ -159,13 +159,12 @@ If it returns non-nil or non-false, the menu will be posted.")
   attr_reader :before_popup_hook
   
   def entry(name, *rest, &body)
-    proc = get_args(rest, :proc, nil)
+    prc = get_args(rest, :proc, nil)
     if provided? "xm"
-      widget_class = get_args(rest, :widget_class, RxmPushButtonWidgetClass)
-      args         = get_args(rest, :args, @args)
-      widget = RXtCreateManagedWidget(name, widget_class, @menu, args)
+      args = get_args(rest, :args, @args)
+      child = RXtCreateManagedWidget(name, RxmPushButtonWidgetClass, @menu, args)
       if block_given?
-        RXtAddCallback(widget, RXmNactivateCallback,
+        RXtAddCallback(child, RXmNactivateCallback,
                        lambda do |w, c, i|
                          chn = if snd = selected_sound
                                  selected_channel
@@ -176,11 +175,11 @@ If it returns non-nil or non-false, the menu will be posted.")
                        end)
       end
     else
-      widget = Rgtk_menu_item_new_with_label(name)
-      Rgtk_menu_shell_append(RGTK_MENU_SHELL(@menu), widget)
-      Rgtk_widget_show(widget)
+      child = Rgtk_menu_item_new_with_label(name)
+      Rgtk_menu_shell_append(RGTK_MENU_SHELL(@menu), child)
+      Rgtk_widget_show(child)
       if block_given?
-        add_callback(widget, "activate") do |w, d|
+        add_callback(child, "activate") do |w, d|
           chn = if snd = selected_sound
                   selected_channel
                 else
@@ -190,30 +189,15 @@ If it returns non-nil or non-false, the menu will be posted.")
         end
       end
     end
-    @widget_names[widget] = name
-    proc.call(widget) if proc.kind_of?(Proc)
+    @widget_names[child] = name
+    prc.call(child) if prc.kind_of?(Proc)
+    child
   end
 
   def label(name, args = @args)
-    if provided? "xm"
-      label = RXtCreateManagedWidget(name, RxmLabelWidgetClass, @menu, args)
-    else
-      label = Rgtk_menu_item_new_with_label(name)
-      Rgtk_menu_shell_append(RGTK_MENU_SHELL(@menu), label)
-      Rgtk_widget_show(label)
-    end
+    label = super(name, args)
     @widget_names[label] = name
-  end
-
-  def separator(single = :single)
-    if provided? "xm"
-      line = (single == :double ? RXmDOUBLE_LINE : RXmSINGLE_LINE)
-      RXtCreateManagedWidget("s", RxmSeparatorWidgetClass, @menu, [RXmNseparatorType, line])
-    else
-      sep = Rgtk_menu_item_new()
-      Rgtk_menu_shell_append(RGTK_MENU_SHELL(@menu), sep)
-      Rgtk_widget_show(sep)
-    end
+    label
   end
   
   def cascade(name, args = @args, &body)
@@ -459,17 +443,16 @@ If it returns non-nil or non-false, the menu will be posted.")
         RXtAddCallback(@cascade, RXmNcascadingCallback,
                        lambda do |w, c, i|
                          @children.each_with_index do |child, idx|
-                           RXtSetSensitive(child, set_cb.call(selected_sound,
-                                                              selected_channel,
-                                                              @values[idx]))
+                           RXtSetSensitive(child,
+                                           set_cb.call(selected_sound,
+                                                       selected_channel,
+                                                       @values[idx]))
                          end
                        end)
       else
         add_callback(@cascade, "activate") do |w, d|
           @children.each_with_index do |child, idx|
-            set_sensitive(child, set_cb.call(selected_sound,
-                                             selected_channel,
-                                             @values[idx]))
+            set_sensitive(child, set_cb.call(selected_sound, selected_channel, @values[idx]))
           end
         end
       end
@@ -721,10 +704,11 @@ written: %s\n", channels(snd), srate(snd), frames(snd) / srate(snd).to_f,
       end
     end
     entry("Delete all marks") do |snd, chn, w| delete_marks(snd, chn) end
-#    entry("To next mark") do |snd, chn, w| forward_mark(1, snd, chn) end
-#    entry("To last mark") do |snd, chn, w| backward_mark(1, snd, chn) end
     entry("To next mark") do |snd, chn, w| key(?j, 4, snd, chn) end
-    entry("To last mark") do |snd, chn, w| key(?\-, 4, snd, chn); key(?j, 4, snd, chn) end
+    entry("To last mark") do |snd, chn, w|
+      key(?\-, 4, snd, chn)
+      key(?j, 4, snd, chn)
+    end
     separator(:double)
     entry("Exit") do |snd, chn, w| exit(0) end
     before_popup_hook.add_hook!("graph popup") do |snd, chn, xe|

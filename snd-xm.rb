@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <scholz-micha@@gmx.de>
 # Created: Wed Feb 25 05:31:02 CET 2004
-# Last: Sat Mar 06 17:17:56 CET 2004
+# Last: Tue Apr 13 23:35:57 CEST 2004
 
 # Commentary:
 #
@@ -12,6 +12,8 @@
 #
 # module Snd_XM
 #  make_snd_menu(name, args) do ... end
+#  make_menu(name, parent) do ... end
+#  make_popup_menu(name, parent) do ... end
 #  make_dialog(label, *rest) do |w, c, i| ... end
 #  format_sound_comment(comment)
 #  scale_log2linear(lo, val, hi)
@@ -64,7 +66,6 @@
 # > module Snd_Gtk
 # >  add_event_handler(parent, event, cb_data) do |w, e, d| ... end
 # >  add_callback(parent, event, cb_data) do |w, d| ... end
-# >  g_list2array(glist)
 # >  g_list_each(glist) do |val| ... end
 #
 # Snd_Motif only:
@@ -180,6 +181,37 @@ module Snd_XM
   Region_dialog       = 19
   Info_dialog         = 20
   Track_dialog        = 21
+
+  # MAKE_MENU as well as MAKE_POPUP_MENU may be used in non-Snd
+  # scripts.  MAKE_SND_MENU and MAKE_SND_POPUP (see popup.rb) are
+  # specialized using them in Snd.
+  #
+  #  [...]
+  #  main_widget = RXmCreateMainWindow(top_level, "main", [])
+  #  menu_bar = RXmCreateMenuBar(main_widget, "menu-bar", [])
+  #  RXtManageChild(menu_bar)
+  #  make_menu("file-button", menu_bar) do
+  #    entry("quit") do |w, c, i| exit(0) end
+  #  end
+  #  make_menu("help-button", menu_bar) do
+  #    entry("general-help") do |w, c, i| ... end
+  #  end
+  def make_menu(name, parent, &body)
+    Main_menu.new(name, parent, [], &body)
+  end
+
+  #  play = lambda do |w, c, i|
+  #    @play = Rset(i)
+  #    send_values(!@play)
+  #  end
+  #  make_popup_menu("popup", main_widget) do
+  #    entry("play", :widget_class, RxmToggleButtonWidgetClass, &play)
+  #    separator
+  #    entry("quit") do |w, c, i| exit(0) end
+  #  end
+  def make_popup_menu(name, parent, &body)
+    Main_popup_menu.new(name, parent, [], &body)
+  end
 
   def make_dialog(label, *rest, &ok_cb)
     reset_cb = get_args(rest, :reset_cb, nil)
@@ -336,7 +368,7 @@ module Snd_Gtk
       if RGTK_IS_LABEL(widget)
         Rgtk_label_set_text(RGTK_LABEL(widget), string)
       else
-        Rgtk_label_set_text(RGTK_LABEL(Rchild(RGTK_BIN(widget))), string)
+        Rgtk_label_set_text(RGTK_LABEL(Rgtk_bin_get_child(RGTK_BIN(widget))), string)
       end
     end
   end
@@ -344,11 +376,7 @@ module Snd_Gtk
   def each_child(widget, &body)
     if RGTK_IS_WIDGET(widget)
       body.call(widget)
-      if res = Rgtk_container_get_children(RGTK_CONTAINER(widget))
-        g_list_each(res) do |w|
-          body.call(RGTK_WIDGET(w))
-        end
-      end
+      Rgtk_container_foreach(RGTK_CONTAINER(widget), lambda do |w, d| body.call(RGTK_WIDGET(w)) end)
     end
   end
   alias for_each_child each_child
@@ -432,15 +460,8 @@ module Snd_Gtk
                                     0,
                                     Rg_cclosure_new(lambda do |w, d|
                                                       body.call(w, d)
-                                                    end, cb_data, false), false)
-  end
-
-  def g_list2array(glist)
-    ary = []
-    Rg_list_length(glist).times do |i|
-      ary << Rg_list_nth_data(glist, i)
-    end
-    ary
+                                                    end, cb_data, false),
+                                    false)
   end
   
   def g_list_each(glist)
@@ -1273,6 +1294,50 @@ class Menu
            self.class, @label.inspect, @menu.inspect, @args.inspect)
   end
 
+  def entry(name, *rest, &body)
+    child = false
+    if provided? "xm"
+      args         = get_args(rest, :args, @args)
+      widget_class = get_args(rest, :widget_class, RxmPushButtonWidgetClass)
+      child = RXtCreateManagedWidget(name, widget_class, @menu, args)
+      case widget_class
+      when RxmPushButtonWidgetClass
+        RXtAddCallback(child, RXmNactivateCallback, lambda do |w, c, i| body.call(w, c, i) end)
+      when RxmToggleButtonWidgetClass
+        RXtAddCallback(child, RXmNvalueChangedCallback, lambda do |w, c, i| body.call(w, c, i) end)
+      end
+    else
+      child = Rgtk_menu_item_new_with_label(name)
+      Rgtk_menu_shell_append(RGTK_MENU_SHELL(@menu), child)
+      Rgtk_widget_show(child)
+      add_callback(child, "activate") do |w, d| body.call(w, d, nil) end
+    end
+    child
+  end
+
+  def label(name, args = @args)
+    label = false
+    if provided? "xm"
+      label = RXtCreateManagedWidget(name, RxmLabelWidgetClass, @menu, args)
+    else
+      label = Rgtk_menu_item_new_with_label(name)
+      Rgtk_menu_shell_append(RGTK_MENU_SHELL(@menu), label)
+      Rgtk_widget_show(label)
+    end
+    label
+  end
+
+  def separator(single = :single)
+    if provided? "xm"
+      line = (single == :double ? RXmDOUBLE_LINE : RXmSINGLE_LINE)
+      RXtCreateManagedWidget("s", RxmSeparatorWidgetClass, @menu, [RXmNseparatorType, line])
+    else
+      sep = Rgtk_menu_item_new()
+      Rgtk_menu_shell_append(RGTK_MENU_SHELL(@menu), sep)
+      Rgtk_widget_show(sep)
+    end
+  end
+
   def each_entry(&body)
     each_child(@menu, &body)
   end
@@ -1315,7 +1380,9 @@ class Snd_main_menu < Menu
           child = Rgtk_menu_item_new_with_label(rest[0].to_s)
           Rgtk_menu_shell_append(RGTK_MENU_SHELL(@menu), child)
           Rgtk_widget_show(child)
-          add_callback(child, "activate") do |w, d| menu.post_dialog end
+          add_callback(child, "activate") do |w, d|
+            menu.post_dialog
+          end
         end
         child
       else
@@ -1357,11 +1424,14 @@ class Snd_main_menu < Menu
         Rgtk_widget_show(cascade)
         @menu = Rgtk_menu_new()
         Rgtk_menu_item_set_submenu(RGTK_MENU_ITEM(cascade), @menu)
-        add_callback(cascade, "activate") do |w, d| update_label(@children) end
+        add_callback(cascade, "activate") do |w, d|
+          update_label(@children)
+        end
       end
     end
     
     def entry(arg, *rest, &body)
+      child = false
       if arg.class == Class
         menu = arg.new(*rest)
         if menu.respond_to?(:post_dialog)
@@ -1372,10 +1442,11 @@ class Snd_main_menu < Menu
             child = Rgtk_menu_item_new_with_label(rest[0].to_s)
             Rgtk_menu_shell_append(RGTK_MENU_SHELL(@menu), child)
             Rgtk_widget_show(child)
-            add_callback(child, "activate") do |w, d| menu.post_dialog end
+            add_callback(child, "activate") do |w, d|
+              menu.post_dialog
+            end
           end
           @children.push(lambda do change_label(child, menu.inspect) end)
-          child
         else
           error("%s#%s: class %s does not respond to `post_dialog'",
                 self.class, get_func_name, arg.class)
@@ -1389,26 +1460,82 @@ class Snd_main_menu < Menu
             child = Rgtk_menu_item_new_with_label(arg.to_s)
             Rgtk_menu_shell_append(RGTK_MENU_SHELL(@menu), child)
             Rgtk_widget_show(child)
-            add_callback(child, "activate") do |w, d| body.call end
+            add_callback(child, "activate") do |w, d|
+              body.call
+            end
           end
           change_label(child, arg)
-          child
         else
           error("%s#%s: no block given", self.class, get_func_name)
         end
       end
+      child
     end
     
-    def separator
+    def separator(single = :single)
       if provided? "xm"
-        RXtCreateManagedWidget("sep", RxmSeparatorWidgetClass, @menu,
-                               [RXmNseparatorType, RXmSINGLE_LINE])
+        line = (single == :double ? RXmDOUBLE_LINE : RXmSINGLE_LINE)
+        RXtCreateManagedWidget("s", RxmSeparatorWidgetClass, @menu, [RXmNseparatorType, line])
       else
         sep = Rgtk_menu_item_new()
         Rgtk_menu_shell_append(RGTK_MENU_SHELL(@menu), sep)
         Rgtk_widget_show(sep)
       end
     end
+  end
+end
+
+# non-Snd menu functions, may be used outside Snd scripts
+class Main_menu < Menu
+  def initialize(name, parent, args, &body)
+    super(name, parent, args)
+    if provided? "xm"
+      @menu = RXmCreatePulldownMenu(parent, "pulldown-menu", @args)
+      wid = RXtCreateManagedWidget(@label, RxmCascadeButtonWidgetClass, parent,
+                                   [RXmNsubMenuId, @menu] + @args)
+      RXtVaSetValues(parent, [RXmNmenuHelpWidget, wid]) if name =~ /help/
+    else
+      wid = Rgtk_menu_item_new_with_label(@label)
+      Rgtk_menu_shell_append(RGTK_MENU_SHELL(parent), wid)
+      Rgtk_widget_show(wid) 
+      @menu = Rgtk_menu_new()
+      Rgtk_menu_item_set_submenu(RGTK_MENU_ITEM(wid), @menu)
+    end
+    instance_eval(&body) if block_given?
+  end
+end
+
+class Main_popup_menu < Menu
+  def initialize(name, parent, args, &body)
+    super(name, parent, args)
+    @parent = parent
+    if provided? "xm"
+      @menu = RXmCreatePopupMenu(@parent, "popup-menu", [RXmNpopupEnabled, true] + @args)
+      RXtAddEventHandler(@parent, RButtonPressMask, false,
+                         lambda do |w, c, i, f|
+                           if Rbutton(i) == 3
+                             RXmMenuPosition(@menu, i)
+                             RXtManageChild(@menu)
+                           end
+                         end)
+    else
+=begin
+# FIXME: needs some work
+      @menu = Rgtk_menu_new()
+      add_event_handler(@parent, "button_press_event") do |w, e, d|
+        ev = RGDK_EVENT_BUTTON(e)
+        if Rbutton(ev) == 3
+          Rgtk_widget_show(@menu)
+          Rgtk_menu_popup(RGTK_MENU(@menu), false, false, false, false, Rbutton(ev), Rtime(ev))
+        end
+      end
+=end
+    end
+    unless @label.empty?
+      label(@label)
+      separator
+    end
+    instance_eval(&body) if block_given?
   end
 end
 
