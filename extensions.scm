@@ -13,7 +13,7 @@
 ;;; snd-trace
 ;;; check-for-unsaved-edits
 ;;; remember-sound-state
-;;; mix-channel, insert-channel, c-channel
+;;; mix-channel, insert-channel
 ;;; redo-channel, undo-channel
 
 
@@ -587,14 +587,6 @@ If 'check' is #f, the hooks are removed."
 	      (data (make-vct len)))
 	  (vct-map! data (lambda () (next-sample reader)))
 	  (insert-samples start len data snd chn edpos)))))
-
-(define* (c-channel func #:optional beg dur snd chn edpos call-data)
-  "(c-channel func &optional beg dur snd chn edpos call-data) calls the c function func"
-  (let ((len (or dur (frames snd chn edpos)))
-	(start (or beg 0)))
-    (if (< start 0) (throw 'no-such-sample (list "c-channel" beg)))
-    (if (> len 0)
-	(loop-samples (make-sample-reader start snd chn 1 edpos) func start len "c-channel" call-data))))
 
 
 ;;; -------- redo-channel, undo-channel

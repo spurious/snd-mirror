@@ -1867,6 +1867,49 @@
       (IF (not (= (transform-normalization) normalize-by-channel))
 	  (snd-display ";set-transform-normalization channel -> ~A" (transform-normalization)))
 
+      (let ((len 100))
+	(for-each
+	 (lambda (type allowed-diff)
+	   (let ((ind (new-sound "test.snd" mus-next mus-bfloat))
+		 (v (make-vct len))
+		 (maxdiff 0.0)
+		 (maxpos #f))
+	     (vct-set! v 0 0.999)
+	     (vct-set! v 1 -1.0)
+	     (vct-set! v 2 .1)
+	     (vct-set! v 3 -.1)
+	     (vct-set! v 4 .01)
+	     (vct-set! v 5 -.01)
+	     (vct-set! v 4 .001)
+	     (vct-set! v 5 -.001)
+	     (vct-set! v 6 0.0)
+	     (do ((i 7 (1+ i)))
+		 ((= i len))
+	       (vct-set! v i (- 1.0 (random 2.0))))
+	     (vct->channel v 0 len ind 0)
+	     (save-sound-as "test1.snd" ind mus-next type)
+	     (close-sound ind)
+	     (set! ind (open-sound "test1.snd"))
+	     (let ((v1 (channel->vct 0 len ind 0)))
+	       (do ((i 0 (1+ i)))
+		   ((= i len))
+		 (let ((diff (abs (- (vct-ref v i) (vct-ref v1 i)))))
+		   (if (> diff maxdiff)
+		       (begin
+			 (set! maxdiff diff)
+			 (set! maxpos i)))))
+	       (if (> maxdiff allowed-diff)
+		   (snd-display ";~A: ~A at ~A (~A ~A)" (mus-data-format-name type) maxdiff maxpos (vct-ref v maxpos) (vct-ref v1 maxpos)))
+	       (close-sound ind))))
+	 (list mus-bshort   mus-lshort   mus-mulaw   mus-alaw   mus-byte  
+	       mus-lfloat   mus-bint     mus-lint    mus-b24int mus-l24int
+	       mus-ubshort  mus-ulshort  mus-ubyte   mus-bfloat mus-bdouble 
+	       mus-ldouble)
+	 (list (expt 2 -15) (expt 2 -15) 0.02 0.02 (expt 2 -7)
+	       (expt 2 -23) (expt 2 -23) (expt 2 -23) (expt 2 -23) (expt 2 -23) ; assuming sndlib bits=24 here (if int)
+	       (expt 2 -15) (expt 2 -15) (expt 2 -7) (expt 2 -23) (expt 2 -23)
+	       (expt 2 -23))))
+
       (let* ((ob (view-sound "oboe.snd"))
 	     (samp (sample 1000 ob))
 	     (old-comment (mus-sound-comment "oboe.snd"))
@@ -4219,6 +4262,117 @@ EDITS: 5
 	    (snd-display ";multi-ramp2 2: ~A" (display-edits ind 0 4)))
 	(close-sound ind))
 
+      ;; xramp2
+      (let ((ind (new-sound "test.snd")))
+	(map-chan (lambda (y) 1.0) 0 10)
+
+	(xramp-channel 0.0 1.0 2.0)
+	(xramp-channel 0.0 1.0 2.0)
+	(if (not (string=? (display-edits ind 0 3) "
+ (ramp 0 11) ; xramp-channel 0.0000 0.6931 1.0000 -1.0000 0 11 [3:2]:
+   (at 0, cp->sounds[1][0:10, 1.000000, 0.000000 -> 0.693147, 0.000000 -> 0.693147, off: -1.000000, scl: 1.000000, off2: -1.000000, scl2: 1.000000]) [buf: 11] 
+   (at 11, end_mark)
+"))
+	    (snd-display ";xramp2 0: ~A" (display-edits ind 0 3)))
+	(if (not (vequal (channel->vct) (vct 0.000 0.005 0.022 0.053 0.102 0.172 0.266 0.390 0.549 0.750 1.000)))
+	    (snd-display ";xramp2 (1): ~A" (channel->vct)))
+	(scale-channel 0.5)
+	(if (not (string=? (display-edits ind 0 4) "
+ (scale 0 11) ; scale-channel 0.5000 0 11 [4:2]:
+   (at 0, cp->sounds[1][0:10, 0.500000, 0.000000 -> 0.693147, 0.000000 -> 0.693147, off: -1.000000, scl: 1.000000, off2: -1.000000, scl2: 1.000000]) [buf: 11] 
+   (at 11, end_mark)
+"))
+	    (snd-display ";xramp2 1: ~A" (display-edits ind 0 4)))
+	(undo)
+	(scale-channel 0.5 0 5)
+	(if (not (string=? (display-edits ind 0 4) "
+ (scale 0 5) ; scale-channel 0.5000 0 5 [4:3]:
+   (at 0, cp->sounds[1][0:4, 0.500000, 0.000000 -> 0.277259, 0.000000 -> 0.277259, off: -1.000000, scl: 1.000000, off2: -1.000000, scl2: 1.000000]) [buf: 11] 
+   (at 5, cp->sounds[1][5:10, 1.000000, 0.346574 -> 0.693147, 0.346574 -> 0.693147, off: -1.000000, scl: 1.000000, off2: -1.000000, scl2: 1.000000]) [buf: 11] 
+   (at 11, end_mark)
+"))
+	    (snd-display ";xramp2 2: ~A" (display-edits ind 0 4)))
+	(if (not (vequal (channel->vct) (vct 0.000 0.003 0.011 0.027 0.051 0.172 0.266 0.390 0.549 0.750 1.000)))
+	    (snd-display ";xramp2 (2): ~A" (channel->vct)))
+	(undo)
+	(scale-channel 0.5 2 4)
+	(if (not (string=? (display-edits ind 0 4) "
+ (scale 2 4) ; scale-channel 0.5000 2 4 [4:4]:
+   (at 0, cp->sounds[1][0:1, 1.000000, 0.000000 -> 0.069315, 0.000000 -> 0.069315, off: -1.000000, scl: 1.000000, off2: -1.000000, scl2: 1.000000]) [buf: 11] 
+   (at 2, cp->sounds[1][2:5, 0.500000, 0.138629 -> 0.346574, 0.138629 -> 0.346574, off: -1.000000, scl: 1.000000, off2: -1.000000, scl2: 1.000000]) [buf: 11] 
+   (at 6, cp->sounds[1][6:10, 1.000000, 0.415888 -> 0.693147, 0.415888 -> 0.693147, off: -1.000000, scl: 1.000000, off2: -1.000000, scl2: 1.000000]) [buf: 11] 
+   (at 11, end_mark)
+"))
+	    (snd-display ";xramp2 3: ~A" (display-edits ind 0 4)))
+	(undo 2)
+	(xramp-channel 0.75 0.25 0.3)
+	(if (not (string=? (display-edits ind 0 3) "
+ (ramp 0 11) ; xramp-channel -1.2040 -0.0000 -0.7143 0.9643 0 11 [3:2]:
+   (at 0, cp->sounds[1][0:10, 1.000000, 0.000000 -> 0.693147, -1.203973 -> -0.000000, off: -1.000000, scl: 1.000000, off2: 0.964286, scl2: -0.714286]) [buf: 11] 
+   (at 11, end_mark)
+"))
+	    (snd-display ";xramp2 4: ~A" (display-edits ind 0 3)))
+	(undo)
+	(xramp-channel .2 .6 32.0 2 6)
+	(if (not (string=? (display-edits ind 0 3) "
+ (ramp 2 6) ; xramp-channel 0.0000 3.4657 0.0129 0.1871 2 6 [3:4]:
+   (at 0, cp->sounds[1][0:1, 1.000000, 0.000000 -> 0.069315, off: -1.000000, scl: 1.000000]) [buf: 11] 
+   (at 2, cp->sounds[1][2:7, 1.000000, 0.138629 -> 0.485203, 0.000000 -> 3.465736, off: -1.000000, scl: 1.000000, off2: 0.187097, scl2: 0.012903]) [buf: 11] 
+   (at 8, cp->sounds[1][8:10, 1.000000, 0.554518 -> 0.693147, off: -1.000000, scl: 1.000000]) [buf: 11] 
+   (at 11, end_mark)
+"))
+	    (snd-display ";xramp2 5: ~A" (display-edits ind 0 3)))
+	(scale-channel 0.5 0 5)
+	(if (not (string=? (display-edits ind 0 4) "
+ (scale 0 5) ; scale-channel 0.5000 0 5 [4:5]:
+   (at 0, cp->sounds[1][0:1, 0.500000, 0.000000 -> 0.069315, off: -1.000000, scl: 1.000000]) [buf: 11] 
+   (at 2, cp->sounds[1][2:4, 0.500000, 0.138629 -> 0.277259, 0.000000 -> 1.386294, off: -1.000000, scl: 1.000000, off2: 0.187097, scl2: 0.012903]) [buf: 11] 
+   (at 5, cp->sounds[1][5:7, 1.000000, 0.346574 -> 0.485203, 2.079442 -> 3.465736, off: -1.000000, scl: 1.000000, off2: 0.187097, scl2: 0.012903]) [buf: 11] 
+   (at 8, cp->sounds[1][8:10, 1.000000, 0.554518 -> 0.693147, off: -1.000000, scl: 1.000000]) [buf: 11] 
+   (at 11, end_mark)
+"))
+	    (snd-display ";xramp2 6: ~A" (display-edits ind 0 4)))
+	(undo)
+	(set! (sample 4) .5)
+	(if (not (string=? (display-edits ind 0 4) "
+ (set 4 1) ; set! sample [4:6]:
+   (at 0, cp->sounds[1][0:1, 1.000000, 0.000000 -> 0.069315, off: -1.000000, scl: 1.000000]) [buf: 11] 
+   (at 2, cp->sounds[1][2:3, 1.000000, 0.138629 -> 0.207944, 0.000000 -> 0.693147, off: -1.000000, scl: 1.000000, off2: 0.187097, scl2: 0.012903]) [buf: 11] 
+   (at 4, cp->sounds[2][0:0, 1.000000]) [buf: 1] 
+   (at 5, cp->sounds[1][5:7, 1.000000, 0.346574 -> 0.485203, 2.079442 -> 3.465736, off: -1.000000, scl: 1.000000, off2: 0.187097, scl2: 0.012903]) [buf: 11] 
+   (at 8, cp->sounds[1][8:10, 1.000000, 0.554518 -> 0.693147, off: -1.000000, scl: 1.000000]) [buf: 11] 
+   (at 11, end_mark)
+"))
+	    (snd-display ";xramp2 7: ~A" (display-edits ind 0 4)))
+	(undo 3)
+	(close-sound ind))
+
+      (let ((ind (new-sound "test.snd")))
+	(map-channel (lambda (y) 1.0) 0 100)
+
+	;; multi-xramp2
+	(do ((i 0 (1+ i)))
+	    ((= i 10))
+	  (scale-channel 0.5 (* i 10) 10))
+	(xramp-channel 0.0 1.0 3.0)
+	(xramp-channel 1.0 0.0 0.3)
+	(if (not (string=? (display-edits ind 0 13) "
+ (ramp 0 100) ; xramp-channel -1.2040 0.0000 -1.4286 1.4286 0 100 [13:11]:
+   (at 0, cp->sounds[1][0:9, 0.500000, -0.000000 -> 0.099874, -1.203973 -> -1.094521, off: -0.500000, scl: 0.500000, off2: 1.428571, scl2: -1.428571]) [buf: 100] 
+   (at 10, cp->sounds[1][10:19, 0.500000, 0.110971 -> 0.210845, -1.082359 -> -0.972907, off: -0.500000, scl: 0.500000, off2: 1.428571, scl2: -1.428571]) [buf: 100] 
+   (at 20, cp->sounds[1][20:29, 0.500000, 0.221942 -> 0.321816, -0.960746 -> -0.851294, off: -0.500000, scl: 0.500000, off2: 1.428571, scl2: -1.428571]) [buf: 100] 
+   (at 30, cp->sounds[1][30:39, 0.500000, 0.332913 -> 0.432787, -0.839133 -> -0.729680, off: -0.500000, scl: 0.500000, off2: 1.428571, scl2: -1.428571]) [buf: 100] 
+   (at 40, cp->sounds[1][40:49, 0.500000, 0.443884 -> 0.543758, -0.717519 -> -0.608067, off: -0.500000, scl: 0.500000, off2: 1.428571, scl2: -1.428571]) [buf: 100] 
+   (at 50, cp->sounds[1][50:59, 0.500000, 0.554855 -> 0.654729, -0.595906 -> -0.486454, off: -0.500000, scl: 0.500000, off2: 1.428571, scl2: -1.428571]) [buf: 100] 
+   (at 60, cp->sounds[1][60:69, 0.500000, 0.665826 -> 0.765699, -0.474292 -> -0.364840, off: -0.500000, scl: 0.500000, off2: 1.428571, scl2: -1.428571]) [buf: 100] 
+   (at 70, cp->sounds[1][70:79, 0.500000, 0.776797 -> 0.876670, -0.352679 -> -0.243227, off: -0.500000, scl: 0.500000, off2: 1.428571, scl2: -1.428571]) [buf: 100] 
+   (at 80, cp->sounds[1][80:89, 0.500000, 0.887767 -> 0.987641, -0.231066 -> -0.121613, off: -0.500000, scl: 0.500000, off2: 1.428571, scl2: -1.428571]) [buf: 100] 
+   (at 90, cp->sounds[1][90:99, 0.500000, 0.998738 -> 1.098612, -0.109452 -> -0.000000, off: -0.500000, scl: 0.500000, off2: 1.428571, scl2: -1.428571]) [buf: 100] 
+   (at 100, end_mark)
+"))
+	    (snd-display ";multi-xramp2 1: ~A" (display-edits ind 0 13)))
+	(close-sound ind))
+
       ;; ptree+ramp2
       (let ((ind (new-sound "test.snd")))
 	(map-chan (lambda (y) 1.0) 0 10)
@@ -4599,16 +4753,28 @@ EDITS: 5
 	    (snd-display ";ramp+xramp: ~A" (display-edits ind 0 3)))
 	(undo 2)
 
-	;; xramp+xramp
+	;; xramp+xramp -- this one now optimized
 	(xramp-channel 0.0 1.0 0.32)
 	(xramp-channel 0.0 1.0 32.0)
 	(if (not (string=? (display-edits ind 0 3) "
- (set 0 11) ; ramp-channel [3:2]:
-   (at 0, cp->sounds[2][0:10, 1.000000]) [buf: 11] 
+ (ramp 0 11) ; xramp-channel 0.0000 3.4657 0.0323 -0.0323 0 11 [3:2]:
+   (at 0, cp->sounds[1][0:10, 1.000000, 0.000000 -> -1.139434, 0.000000 -> 3.465736, off: 1.470588, scl: -1.470588, off2: -0.032258, scl2: 0.032258]) [buf: 11] 
    (at 11, end_mark)
 "))
 	    (snd-display ";xramp+xramp: ~A" (display-edits ind 0 3)))
 	(undo 2)
+
+	;; xramp+xramp+xramp
+	(xramp-channel 0.0 1.0 0.32)
+	(xramp-channel 0.0 1.0 32.0)
+	(xramp-channel 0.0 1.0 32.0)
+	(if (not (string=? (display-edits ind 0 4) "
+ (set 0 11) ; ramp-channel [4:2]:
+   (at 0, cp->sounds[2][0:10, 1.000000]) [buf: 11] 
+   (at 11, end_mark)
+"))
+	    (snd-display ";xramp+xramp+xramp: ~A" (display-edits ind 0 4)))
+	(undo 3)
 
 	;; xramp+ramp
 	(xramp-channel 0.0 1.0 32.0)
@@ -6177,26 +6343,6 @@ EDITS: 5
 	(undo 1 ind1 0)
 	(play-and-wait 0 ind1 0 #f #f 1)
 
-	(if (defined? 'get-test-a2)
-	    (let* ((ind4 (open-sound "oboe.snd"))
-		   (s1000 (sample 1000 ind4 0))
-		   (max1 (maxamp)))
-	      (loop-samples (make-sample-reader 0 ind4 0) (get-test-a2) 0 50828 "a2")
-	      (IF (fneq (sample 1000 ind4) (* 2 s1000))
-		  (snd-display ";loop-samples ~A -> ~A" s1000 (sample 1000 ind4 0)))
-	      (IF (fneq (maxamp) (* 2 max1)) 
-		  (snd-display ";loop-samples test-a2 max: ~A ~A" max1 (maxamp)))
-	      (let ((fl (make-flange 2.0 5.0 0.001)))
-		(loop-samples (make-sample-reader 0 ind4 0) (get-flange) 0 (frames) "flange" fl)
-		(free-flange fl))
-	      (close-sound ind4)
-	      (set! ind4 (open-sound "storm.snd"))
-	      (set! max1 (maxamp))
-	      (loop-samples (make-sample-reader 0 ind4 0) (get-test-a2) 0 (frames ind4) "a2")
-	      (IF (fneq (maxamp) (* 2 max1)) 
-		  (snd-display ";loop-samples test-a2 max storm: ~A ~A" max1 (maxamp)))
-	      (close-sound ind4)))
-
 	(delete-samples 0 10000 ind1 0)
 	(save-sound-as "fmv.snd" ind1 #f #f #f #f 0)
 	(save-sound-as "fmv1.snd" ind1 #f #f #f #f (lambda (snd chn) 1))
@@ -6339,17 +6485,9 @@ EDITS: 5
 	     (mx (maxamp ind 0))
 	     (e0 (channel-amp-envs ind 0)))
 	
-	(define (vector-peak v)
-	  (let ((mx (abs (vector-ref v 0)))
-		(len (vector-length v)))
-	    (do ((i 1 (1+ i)))
-		((= i len) mx)
-	      (if (> (abs (vector-ref v i)) mx)
-		  (set! mx (abs (vector-ref v i)))))))
-	
 	(define (peak-env-equal? name index e diff)
 	  (let* ((reader (make-sample-reader 0 index 0))
-		 (e-size (vector-length (car e)))
+		 (e-size (vct-length (car e)))
 		 (samps-per-bin (inexact->exact (ceiling (/ (frames index) e-size))))
 		 (mins (car e))
 		 (maxs (cadr e))
@@ -6362,8 +6500,8 @@ EDITS: 5
 		    (mn 10.0))
 		   ((= e-bin e-size) #t)
 		 (if (>= samp (inexact->exact samps-per-bin))
-		     (let ((mxdiff (abs (- mx (vector-ref maxs e-bin))))
-			   (mndiff (abs (- mn (vector-ref mins e-bin)))))
+		     (let ((mxdiff (abs (- mx (vct-ref maxs e-bin))))
+			   (mndiff (abs (- mn (vct-ref mins e-bin)))))
 		       (if (> mxdiff max-diff)
 			   (set! max-diff mxdiff))
 		       (if (> mndiff max-diff)
@@ -6391,15 +6529,15 @@ EDITS: 5
 	
 	(if (null? e0)
 	    (snd-display ";no amp env data")
-	    (let ((mx1 (vector-peak (car e0)))
-		  (mx2 (vector-peak (cadr e0))))
+	    (let ((mx1 (vct-peak (car e0)))
+		  (mx2 (vct-peak (cadr e0))))
 	      (IF (fneq mx (max mx1 mx2))
 		  (snd-display "amp env max: ~A ~A ~A" mx mx1 mx2))
 	      (peak-env-equal? "straight peak" ind e0 .0001)
 	      (scale-by 3.0)
 	      (let* ((e1 (channel-amp-envs ind 0 1))
-		     (mx3 (vector-peak (car e1)))
-		     (mx4 (vector-peak (cadr e1))))
+		     (mx3 (vct-peak (car e1)))
+		     (mx4 (vct-peak (cadr e1))))
 		(IF (or (fneq (* 3.0 mx1) mx3)
 			(fneq (* 3.0 mx2) mx4))
 		    (snd-display "3.0 amp env max: ~A ~A ~A ~A" mx1 mx2 mx3 mx4))
@@ -6413,8 +6551,8 @@ EDITS: 5
 	      (set! (selection-frames ind 0) 12000)
 	      (scale-selection-by 3.0)
 	      (let* ((e1 (channel-amp-envs ind 0 1))
-		     (mx3 (vector-peak (car e1)))
-		     (mx4 (vector-peak (cadr e1))))
+		     (mx3 (vct-peak (car e1)))
+		     (mx4 (vct-peak (cadr e1))))
 		(IF (or (fneq (* 3.0 mx1) mx3)
 			(fneq (* 3.0 mx2) mx4))
 		    (snd-display "selection 3.0 amp env max: ~A ~A ~A ~A" mx1 mx2 mx3 mx4))
@@ -6423,8 +6561,8 @@ EDITS: 5
 		(peak-env-equal? "selection peak" ind e1 .0001))
 	      (map-chan abs ind 0)
 	      (let* ((e1 (channel-amp-envs ind 0 2))
-		     (mx3 (vector-peak (car e1)))
-		     (mx4 (vector-peak (cadr e1))))
+		     (mx3 (vct-peak (car e1)))
+		     (mx4 (vct-peak (cadr e1))))
 		(IF (fneq (* 3.0 mx2) mx4)
 		    (snd-display "abs selection 3.0 amp env max: ~A ~A ~A ~A" mx1 mx2 mx3 mx4))
 		(IF (fneq (maxamp ind 0) (* 3 mx)) 
@@ -6434,8 +6572,8 @@ EDITS: 5
 		(peak-env-equal? "map-chan peak" ind e1 .0001))
 	      (delete-samples 10000 5000)
 	      (let* ((e1 (channel-amp-envs ind 0 3))
-		     (mx3 (vector-peak (car e1)))
-		     (mx4 (vector-peak (cadr e1))))
+		     (mx3 (vct-peak (car e1)))
+		     (mx4 (vct-peak (cadr e1))))
 		(IF (fneq (* 3.0 mx2) mx4)
 		    (snd-display "abs selection 3.0 amp env max: ~A ~A ~A ~A" mx1 mx2 mx3 mx4))
 		(IF (fneq (maxamp ind 0) (* 3 mx)) 
@@ -6445,8 +6583,8 @@ EDITS: 5
 		(peak-env-equal? "delete peak" ind e1 .0001))
 	      (scale-selection-by -.333)
 	      (let* ((e1 (channel-amp-envs ind 0 4))
-		     (mx3 (vector-peak (car e1)))
-		     (mx4 (vector-peak (cadr e1))))
+		     (mx3 (vct-peak (car e1)))
+		     (mx4 (vct-peak (cadr e1))))
 		(IF (fneq (maxamp ind 0) mx)
 		    (snd-display "maxamp after minus abs selection scale: ~A ~A" mx (maxamp ind 0)))
 		(IF (fneq (maxamp ind 0) mx3)
@@ -6473,10 +6611,10 @@ EDITS: 5
 	      (peak-env-equal? "env-channel base 0.0 peak" ind (channel-amp-envs ind 0 1) .001)
 	      (undo)
 	      (xramp-channel 0.0 1.0 32.0)
-	      (peak-env-equal? "xramp 32.0 peak" ind (channel-amp-envs ind 0 1) .0001)
+	      (peak-env-equal? "xramp 32.0 peak" ind (channel-amp-envs ind 0 1) .008)
 	      (undo)
 	      (xramp-channel 0.0 1.0 .032)
-	      (peak-env-equal? "xramp .032 peak" ind (channel-amp-envs ind 0 1) .0001)
+	      (peak-env-equal? "xramp .032 peak" ind (channel-amp-envs ind 0 1) .004)
 	      (undo)
 	      (env-channel (make-env '(0 0 1 1 2 .5 3 0) :base 10.0 :end (1- (frames))))
 	      (peak-env-equal? "env-channel base 10.0 peak" ind (channel-amp-envs ind 0 1) .003)
@@ -6493,7 +6631,7 @@ EDITS: 5
 	      (undo 2)
 	      (xramp-channel 0.0 1.0 3.0)
 	      (ptree-channel (lambda (y) (* y 2)) 0 (frames) ind 0 #f #t)
-	      (peak-env-equal? "ptree+xramp peak" ind (channel-amp-envs ind 0 2) .0001)
+	      (peak-env-equal? "ptree+xramp peak" ind (channel-amp-envs ind 0 2) .004)
 	      (undo 2)
 	      (ptree-channel (lambda (y data forward)
 			       (declare (y real) (data vct) (forward boolean))
@@ -6501,7 +6639,7 @@ EDITS: 5
 			     0 (frames) ind 0 #f #t
 			     (lambda (pos dur)
 			       (vct 0.5)))
-	      (peak-env-equal? "ptree+closure peak" ind (channel-amp-envs ind 0 1) .0001)
+	      (peak-env-equal? "ptree+closure peak" ind (channel-amp-envs ind 0 1) .009)
 	      (undo)
 	      (ramp-channel 0.0 1.0)
 	      (ptree-channel (lambda (y data forward)
@@ -6519,7 +6657,7 @@ EDITS: 5
 			     0 (frames) ind 0 #f #t
 			     (lambda (pos dur)
 			       (vct 0.5)))
-	      (peak-env-equal? "ptree+xramp+closure peak" ind (channel-amp-envs ind 0 2) .0001)
+	      (peak-env-equal? "ptree+xramp+closure peak" ind (channel-amp-envs ind 0 2) .001)
 	      (undo 2)
 	      (insert-samples 1000 5000 (make-vct 5000 .5))
 	      (peak-env-equal? "insert-samples peak" ind (channel-amp-envs ind 0 1) .0001)
@@ -6561,10 +6699,10 @@ EDITS: 5
 	      (peak-env-equal? "scaled and offset env-channel peak" ind (channel-amp-envs ind 0 1) .002)
 	      (undo)
 	      (xramp-channel 0.0 1.0 32.0 2000 1000)
-	      (peak-env-equal? "xramp 32.0 peak" ind (channel-amp-envs ind 0 1) .0001)
+	      (peak-env-equal? "xramp 32.0 peak (1)" ind (channel-amp-envs ind 0 1) .009)
 	      (undo)
 	      (xramp-channel 0.0 1.0 .032 2000 1000)
-	      (peak-env-equal? "xramp .032 peak" ind (channel-amp-envs ind 0 1) .0001)
+	      (peak-env-equal? "xramp .032 peak (1)" ind (channel-amp-envs ind 0 1) .009)
 	      (undo)
 	      (env-channel (make-env '(0 0 1 1 2 .5 3 0) :base 10.0 :end 4999) 12000 5000)
 	      (peak-env-equal? "env-channel base 10.0 peak" ind (channel-amp-envs ind 0 1) .1)
@@ -6579,7 +6717,7 @@ EDITS: 5
 	      (undo 2)
 	      (xramp-channel 0.0 1.0 3.0)
 	      (ptree-channel (lambda (y) (* y 2)) 2000 1000 ind 0 #f #t)
-	      (peak-env-equal? "ptree+xramp peak" ind (channel-amp-envs ind 0 2) .0001)
+	      (peak-env-equal? "ptree+xramp peak" ind (channel-amp-envs ind 0 2) .001)
 	      (undo 2)
 	      (ptree-channel (lambda (y data forward)
 			       (declare (y real) (data vct) (forward boolean))
@@ -6629,6 +6767,32 @@ EDITS: 5
 	      (peak-env-equal? "xen peak" ind (channel-amp-envs ind 0 1) .0001)
 
 	      ))
+	(close-sound ind))
+
+      (let ((ind (new-sound "test.snd")))
+	(map-chan (lambda (y) 1.0) 0 50000)
+	(ramp-channel 0.5 1.0 1000 4000)
+	(let* ((peaks (channel-amp-envs ind 0))
+	       (mx (cadr peaks))
+	       (mn (car peaks)))
+	  (call-with-current-continuation
+	   (lambda (break)
+	     (do ((i 0 (1+ i)))
+		 ((= i (- (vct-length mn) 4)))
+	       (if (< (vct-ref mn i) 0.5) (begin (snd-display ";peak min: ~A ~A" (vct-ref mn i) i) (break #f)))
+	       (if (< (vct-ref mx i) 0.5) (begin (snd-display ";peak max: ~A ~A" (vct-ref mx i) i) (break #f)))))))
+	(undo 2)
+	(map-chan (lambda (y) -1.0) 0 50000)
+	(ramp-channel 0.5 1.0 1000 4000)
+	(let* ((peaks (channel-amp-envs ind 0))
+	       (mx (cadr peaks))
+	       (mn (car peaks)))
+	  (call-with-current-continuation
+	   (lambda (break)
+	     (do ((i 0 (1+ i)))
+		 ((= i (- (vct-length mn) 4)))
+	       (if (> (vct-ref mn i) -0.5) (begin (snd-display ";1 peak min: ~A ~A" (vct-ref mn i) i) (break #f)))
+	       (if (> (vct-ref mx i) -0.5) (begin (snd-display ";1 peak max: ~A ~A" (vct-ref mx i) i) (break #f)))))))
 	(close-sound ind))
 
       (let ((index (new-sound "fmv.snd" mus-next mus-bshort 22050 2 "channel tests")))
@@ -10156,6 +10320,10 @@ EDITS: 5
 	  (src s1 125.0)
 	  (src s1 -25.0)
 	  (src s1 -125.0))
+	(do ((i 0 (1+ i)))
+	    ((= i 10))
+	  (make-src (lambda (y) 1.0) 1.5 :width (+ 5 (* i 10))))
+	(clear-sincs)
 
       (let ((gen (make-granulate :expansion 2.0))
 	    (v0 (make-vct 1000))
@@ -12309,20 +12477,14 @@ EDITS: 5
 	   (snd-display ";snd-help open-sound: ~A ~A ~A" str1 str2 str3)))
      (IF (not (string-equal-ignoring-white-space (snd-help enved-base) "(enved-base) -> envelope editor exponential base value (1.0)"))
 	 (snd-display ";snd-help enved-base: ~A?" (snd-help enved-base)))
-     (IF (not (string-equal-ignoring-white-space (snd-help x-axis-style) "(x-axis-style (snd #t) (chn #t)) -> labelling of time domain x axis (x-axis-in-seconds)"))
-	 (snd-display ";snd-help x-axis-style: ~A?" (snd-help x-axis-style)))
      (IF (not (string-equal-ignoring-white-space (snd-help vu-font) "(vu-font) -> name of font used to make VU meter labels (courier)"))
 	 (snd-display ";snd-help vu-font: ~A?" (snd-help vu-font)))
      (IF (not (string-equal-ignoring-white-space (snd-help 'enved-base) "(enved-base) -> envelope editor exponential base value (1.0)"))
 	 (snd-display ";snd-help 'enved-base: ~A?" (snd-help 'enved-base)))
-     (IF (not (string-equal-ignoring-white-space (snd-help 'x-axis-style) "(x-axis-style (snd #t) (chn #t)) -> labelling of time domain x axis (x-axis-in-seconds)"))
-	 (snd-display ";snd-help 'x-axis-style: ~A?" (snd-help 'x-axis-style)))
      (IF (not (string-equal-ignoring-white-space (snd-help 'vu-font) "(vu-font) -> name of font used to make VU meter labels (courier)"))
 	 (snd-display ";snd-help 'vu-font: ~A?" (snd-help 'vu-font)))
      (IF (not (string-equal-ignoring-white-space (snd-help "enved-base") "(enved-base) -> envelope editor exponential base value (1.0)"))
 	 (snd-display ";snd-help \"enved-base\": ~A?" (snd-help "enved-base")))
-     (IF (not (string-equal-ignoring-white-space (snd-help "x-axis-style") "(x-axis-style (snd #t) (chn #t)) -> labelling of time domain x axis (x-axis-in-seconds)"))
-	 (snd-display ";snd-help \"x-axis-style\": ~A?" (snd-help "x-axis-style")))
      (IF (not (string-equal-ignoring-white-space (snd-help "vu-font") "(vu-font) -> name of font used to make VU meter labels (courier)"))
 	 (snd-display ";snd-help \"vu-font\": ~A?" (snd-help "vu-font")))
      (let ((str1 (snd-help 'hamming-window))
@@ -13568,7 +13730,6 @@ EDITS: 5
 		  (close-sound fd)
 		  (set! open-files (remove-if (lambda (a) (= a fd)) open-files)))))
 	  
-	  (clear-sincs)
 	  (set! open-ctr (length open-files))
 	  (if (= open-ctr 0)
 	      (let ((fd (view-sound "oboe.snd")))
@@ -14778,9 +14939,9 @@ EDITS: 5
 	(IF (fneq (y-zoom-slider id 0) .5) (snd-display ";set y-zoom-slider: ~A?" (y-zoom-slider id 0)))
 	(let ((vals (channel-amp-envs "oboe.snd" 0 10)))
 	  (IF (not (equal? vals
-			   (list '#(-4.8828125e-4 -0.104156494140625 -0.125213623046875 -0.1356201171875 -0.138916015625 
-				   -0.14093017578125 -0.14093017578125 -0.131439208984375 -0.11248779296875 -0.080047607421875) 
-				 '#(0.0 0.10955810546875 0.130706787109375 0.14068603515625 0.141204833984375 0.147247314453125 
+			   (list (vct -4.8828125e-4 -0.104156494140625 -0.125213623046875 -0.1356201171875 -0.138916015625 
+				   -0.14093017578125 -0.14093017578125 -0.131439208984375 -0.11248779296875 -0.080047607421875)
+				 (vct 0.0 0.10955810546875 0.130706787109375 0.14068603515625 0.141204833984375 0.147247314453125 
                                    0.145904541015625 0.140289306640625 0.126861572265625 0.08172607421875))))
 	      (snd-display ";channel-amp-envs: ~A?" vals)))
 
@@ -15774,9 +15935,9 @@ EDITS: 5
 
 (define (amp-envs-equal? snd chn pos0 pos1 df)
   (let* ((env0 (channel-amp-envs snd chn pos0))
-	 (len0 (and env0 (list-p env0) (= (length env0) 2) (vector-length (cadr env0))))
+	 (len0 (and env0 (list-p env0) (= (length env0) 2) (vct-length (cadr env0))))
 	 (env1 (channel-amp-envs snd chn pos1))
-	 (len1 (and env1 (list-p env1) (= (length env1) 2) (vector-length (cadr env1)))))
+	 (len1 (and env1 (list-p env1) (= (length env1) 2) (vct-length (cadr env1)))))
     (call-with-current-continuation
      (lambda (break)
        (if (and len0 len1)
@@ -15792,17 +15953,17 @@ EDITS: 5
 		   (let ((max0 -1.0)
 			 (max1 -1.0))
 		     (if (= inc0 1)
-			 (set! max0 (vector-ref e0 i))
+			 (set! max0 (vct-ref e0 i))
 			 (do ((j 0 (1+ j)))
 			     ((= j inc0))
-			   (if (> (vector-ref e0 (+ j (* inc0 i))) max0)
-			       (set! max0 (vector-ref e0 (+ j (* inc0 i)))))))
+			   (if (> (vct-ref e0 (+ j (* inc0 i))) max0)
+			       (set! max0 (vct-ref e0 (+ j (* inc0 i)))))))
 		     (if (= inc1 1)
-			 (set! max1 (vector-ref e1 i))
+			 (set! max1 (vct-ref e1 i))
 			 (do ((j 0 (1+ j)))
 			     ((= j inc1))
-			   (if (> (vector-ref e1 (+ j (* inc1 i))) max1)
-			       (set! max1 (vector-ref e1 (+ j (* inc1 i)))))))
+			   (if (> (vct-ref e1 (+ j (* inc1 i))) max1)
+			       (set! max1 (vct-ref e1 (+ j (* inc1 i)))))))
 		     (if (> (abs (- max0 max1)) df)
 			 (begin
 			   (snd-display ";amp-env ~A: ~A ~A" i max0 max1)
@@ -15962,12 +16123,6 @@ EDITS: 5
 	  "mix-channel" "insert-channel" "reverse-channel" "play-channel" 
 	  "scale-sound-by" "env-sound" "set-samples" "smooth-sound" "insert-silence"))
 
-	(if (defined? 'get-test-a2)
-	    (begin
-	      (c-channel (get-test-a2) 0 0 oboe)
-	      (IF (not (= (edit-position oboe) 0))
-		  (snd-display ";dur:0 c-channel? ~A ~A" (edit-position oboe) (edit-fragment)))))
-
 	(for-each
 	 (lambda (func name)
 	   (let ((tag (catch #t
@@ -15999,16 +16154,6 @@ EDITS: 5
 	  "scale-channel" "env-channel" "clm-channel" "vct->channel" "smooth-channel" "pad-channel" "src-channel"
 	  "mix-channel" "insert-channel" "reverse-channel" "play-channel" 
 	  "scale-sound-by" "env-sound" "set-samples" "smooth-sound" "insert-silence" "ptree-channel"))
-
-	(if (defined? 'get-test-a2)
-	    (let ((tag
-		   (catch #t
-			  (lambda () (c-channel (get-test-a2) -1 123 oboe))
-			  (lambda args (car args)))))
-	     (IF (not (eq? tag 'no-such-sample))
-		 (snd-display "c-channel beg -1->~A"  tag))
-	     (IF (not (= (edit-position oboe) 0))
-		 (snd-display ";beg:-1 c-channel? ~A ~A" (edit-position oboe) (edit-fragment)))))
 
 	(scale-channel 2.0 12345678 123 oboe)
 	(IF (not (= (edit-position oboe) 0))
@@ -16057,20 +16202,6 @@ EDITS: 5
 	(reverse-channel 0 123 oboe 0)
 	(IF (not (= (edit-position oboe) 10))
 	    (snd-display ";oboe reverse-channel? ~A ~A" (edit-position oboe) (edit-fragment)))
-	(if (defined? 'get-test-a2)
-	    (begin
-	      (c-channel (get-test-a2) 0 123 oboe 0)
-	      (IF (not (= (edit-position oboe) 11))
-		  (snd-display ";oboe c-channel? ~A ~A" (edit-position oboe) (edit-fragment)))
-	      (let ((fl (make-flange 2.0 5.0 0.001)))
-		(loop-samples (make-sample-reader 0) (get-flange) 0 (frames) "flange" fl)
-		(free-flange fl))
-	      (let ((cmb (dmake-fcomb .1 10 .2 .3)))
-		(if (not (dfcomb? cmb)) (snd-display ";dfcomb? ~A" cmb))
-		(let ((str (format #f "~A" cmb)))
-		  (if (not (string=? str "#<fcomb: scaler: 0.100,  a0: 0.200,  a1: 0.300,  line[10]>"))
-		      (snd-display ";dfcomb descr: ~A" str)))
-		(clm-channel cmb))))
 	(revert-sound)
 	
 	(let ((tag (catch #t (lambda () (scale-channel 2.0 0 123 oboe 0 (lambda (hi) #f))) (lambda args (car args)))))
@@ -16101,10 +16232,6 @@ EDITS: 5
 	(let ((tag (catch #t (lambda () (insert-channel "pistol.snd" 0 123 oboe 0 (lambda (hi) #f))) (lambda args (car args)))))
 	  (IF (not (= (edit-position oboe) 0))
 	      (snd-display ";edpos:func insert-channel? ~A ~A" (edit-position oboe) (edit-fragment))))
-	(if (defined? 'get-test-a2)
-	    (let ((tag (catch #t (lambda () (c-channel (get-test-a2) 0 123 oboe 0 (lambda (hi) #f))) (lambda args (car args)))))
-	      (IF (not (= (edit-position oboe) 0))
-		  (snd-display ";edpos:func c-channel? ~A ~A" (edit-position oboe) (edit-fragment)))))
 	(let ((tag (catch #t (lambda () (reverse-channel 0 123 oboe 0 (lambda (hi) #f))) (lambda args (car args)))))
 	  (IF (not (= (edit-position oboe) 0))
 	      (snd-display ";edpos:func reverse-channel? ~A ~A" (edit-position oboe) (edit-fragment))))
@@ -16137,10 +16264,6 @@ EDITS: 5
 	(let ((tag (catch #t (lambda () (insert-channel "pistol.snd" 0 123 oboe 0 123)) (lambda args (car args)))))
 	  (IF (not (= (edit-position oboe) 0))
 	      (snd-display ";edpos 123 insert-channel? ~A ~A" (edit-position oboe) (edit-fragment))))
-	(if (defined? 'get-test-a2)
-	    (let ((tag (catch #t (lambda () (c-channel (get-test-a2) 0 123 oboe 0 123)) (lambda args (car args)))))
-	      (IF (not (= (edit-position oboe) 0))
-		  (snd-display ";edpos 123 c-channel? ~A ~A" (edit-position oboe) (edit-fragment)))))
 	(let ((tag (catch #t (lambda () (reverse-channel 0 123 oboe 0 123)) (lambda args (car args)))))
 	  (IF (not (= (edit-position oboe) 0))
 	      (snd-display ";edpos 123 reverse-channel? ~A ~A" (edit-position oboe) (edit-fragment))))
@@ -16160,13 +16283,7 @@ EDITS: 5
 	      (snd-display ";insert-channel at 0: ~A ~A" oldv (channel->vct 1000 10 oboe)))
 	  (IF (not (= (frames oboe 0) (* 2 (frames oboe 0 0))))
 	      (snd-display ";insert-channel frames: ~A ~A" (frames oboe 0) (frames oboe 0 0)))
-	  (revert-sound oboe)
-	  (if (defined? 'get-test-a2) 
-	      (begin
-		(c-channel (get-test-a2) 0)
-		(vct-scale! oldv 2.0)
-		(IF (not (vequal oldv (channel->vct 1000 10 oboe)))
-		    (snd-display ";c-channel at 0: ~A ~A" oldv (channel->vct 1000 10 oboe))))))
+	  (revert-sound oboe))
   
 	(close-sound oboe)
 
@@ -16820,6 +16937,10 @@ EDITS: 5
 	(ramp-channel 0.0 1.0)
 	(ramp-channel 1.0 0.0)
 	(zigzag-check "ramp2" ind 0)
+	(undo 2)
+	(xramp-channel 0.0 1.0 3.0)
+	(xramp-channel 1.0 0.0 0.3)
+	(zigzag-check "xramp2" ind 0)
 	(undo 2)
 	(ramp-channel 0.0 1.0)
 	(ramp-channel 1.0 0.0)
@@ -30752,7 +30873,7 @@ EDITS: 2
 	       help-dialog help-text-font highlight-color in insert-region insert-sample insert-samples
 	       insert-samples-with-origin insert-selection insert-silence insert-sound just-sounds key key-binding
 	       left-sample listener-color listener-font listener-prompt listener-selection listener-text-color load-font
-	       loop-samples main-widgets make-color make-graph-data make-mix-sample-reader make-player make-region
+	       main-widgets make-color make-graph-data make-mix-sample-reader make-player make-region
 	       make-region-sample-reader make-sample-reader make-track-sample-reader map-chan mark-color mark-name
 	       mark-sample mark-sync mark-sync-max mark-home marks mark?  max-transform-peaks max-regions
 	       maxamp menu-sensitive menu-widgets minibuffer-history-length min-dB mix mixes mix-amp mix-amp-env

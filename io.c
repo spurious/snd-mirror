@@ -336,25 +336,39 @@ void mus_ldouble_to_char(unsigned char *j, double x)
 #endif
 }
 
+#if HAVE_BYTESWAP_H
+  #include <byteswap.h>
+#endif
+
 #if MUS_LITTLE_ENDIAN
 
-  #define m_big_endian_short(n)                   (mus_char_to_bshort(n))
-  #define m_big_endian_int(n)                     (mus_char_to_bint(n))
-  #define m_big_endian_float(n)                   (mus_char_to_bfloat(n))
-  #define m_big_endian_double(n)                  (mus_char_to_bdouble(n))
-  #define m_big_endian_unsigned_short(n)          (mus_char_to_ubshort(n))
+  #if HAVE_BYTESWAP_H
+    #define m_big_endian_short(n)                  ((short)(bswap_16((*((unsigned short *)n)))))
+    #define m_big_endian_int(n)                    ((int)(bswap_32((*((unsigned int *)n)))))
+  #else
+    #define m_big_endian_short(n)                  (mus_char_to_bshort(n))
+    #define m_big_endian_int(n)                    (mus_char_to_bint(n))
+  #endif
+  #define m_big_endian_unsigned_short(n)           (mus_char_to_ubshort(n))
+  #define m_big_endian_float(n)                    (mus_char_to_bfloat(n))
+  #define m_big_endian_double(n)                   (mus_char_to_bdouble(n))
 
-  #define m_little_endian_short(n)                (*((short *)n))
-  #define m_little_endian_int(n)                  (*((int *)n))
-  #define m_little_endian_float(n)                (*((float *)n))
-  #define m_little_endian_double(n)               (*((double *)n))
-  #define m_little_endian_unsigned_short(n)       (*((unsigned short *)n))
+  #define m_little_endian_short(n)                 (*((short *)n))
+  #define m_little_endian_int(n)                   (*((int *)n))
+  #define m_little_endian_float(n)                 (*((float *)n))
+  #define m_little_endian_double(n)                (*((double *)n))
+  #define m_little_endian_unsigned_short(n)        (*((unsigned short *)n))
 
-  #define m_set_big_endian_short(n, x)             mus_bshort_to_char(n, x)
-  #define m_set_big_endian_int(n, x)               mus_bint_to_char(n, x)
+  #if HAVE_BYTESWAP_H
+    #define m_set_big_endian_short(n, x)           (*((short *)n)) = ((short)(bswap_16(x)))
+    #define m_set_big_endian_int(n, x)             (*((int *)n)) = ((int)(bswap_32(x)))
+  #else
+    #define m_set_big_endian_short(n, x)           mus_bshort_to_char(n, x)
+    #define m_set_big_endian_int(n, x)             mus_bint_to_char(n, x)
+  #endif
+  #define m_set_big_endian_unsigned_short(n, x)    mus_ubshort_to_char(n, x)
   #define m_set_big_endian_float(n, x)             mus_bfloat_to_char(n, x)
   #define m_set_big_endian_double(n, x)            mus_bdouble_to_char(n, x)
-  #define m_set_big_endian_unsigned_short(n, x)    mus_ubshort_to_char(n, x)
 
   #define m_set_little_endian_short(n, x)          (*((short *)n)) = x
   #define m_set_little_endian_int(n, x)            (*((int *)n)) = x
@@ -365,42 +379,52 @@ void mus_ldouble_to_char(unsigned char *j, double x)
 #else
 
   #ifndef SUN
-    #define m_big_endian_short(n)                   (*((short *)n))
-    #define m_big_endian_int(n)                     (*((int *)n))
-    #define m_big_endian_float(n)                   (*((float *)n))
-    #define m_big_endian_double(n)                  (*((double *)n))
-    #define m_big_endian_unsigned_short(n)          (*((unsigned short *)n))
+    #define m_big_endian_short(n)                  (*((short *)n))
+    #define m_big_endian_int(n)                    (*((int *)n))
+    #define m_big_endian_float(n)                  (*((float *)n))
+    #define m_big_endian_double(n)                 (*((double *)n))
+    #define m_big_endian_unsigned_short(n)         (*((unsigned short *)n))
 
-    #define m_set_big_endian_short(n, x)             (*((short *)n)) = x
-    #define m_set_big_endian_int(n, x)               (*((int *)n)) = x
-    #define m_set_big_endian_float(n, x)             (*((float *)n)) = x
-    #define m_set_big_endian_double(n, x)            (*((double *)n)) = x
-    #define m_set_big_endian_unsigned_short(n, x)    (*((unsigned short *)n)) = x
+    #define m_set_big_endian_short(n, x)           (*((short *)n)) = x
+    #define m_set_big_endian_int(n, x)             (*((int *)n)) = x
+    #define m_set_big_endian_float(n, x)           (*((float *)n)) = x
+    #define m_set_big_endian_double(n, x)          (*((double *)n)) = x
+    #define m_set_big_endian_unsigned_short(n, x)  (*((unsigned short *)n)) = x
   #else
-    #define m_big_endian_short(n)                   (mus_char_to_bshort(n))
-    #define m_big_endian_int(n)                     (mus_char_to_bint(n))
-    #define m_big_endian_float(n)                   (mus_char_to_bfloat(n))
-    #define m_big_endian_double(n)                  (mus_char_to_bdouble(n))
-    #define m_big_endian_unsigned_short(n)          (mus_char_to_ubshort(n))
+    #define m_big_endian_short(n)                  (mus_char_to_bshort(n))
+    #define m_big_endian_int(n)                    (mus_char_to_bint(n))
+    #define m_big_endian_float(n)                  (mus_char_to_bfloat(n))
+    #define m_big_endian_double(n)                 (mus_char_to_bdouble(n))
+    #define m_big_endian_unsigned_short(n)         (mus_char_to_ubshort(n))
 
-    #define m_set_big_endian_short(n, x)             mus_bshort_to_char(n, x)
-    #define m_set_big_endian_int(n, x)               mus_bint_to_char(n, x)
-    #define m_set_big_endian_float(n, x)             mus_bfloat_to_char(n, x)
-    #define m_set_big_endian_double(n, x)            mus_bdouble_to_char(n, x)
-    #define m_set_big_endian_unsigned_short(n, x)    mus_ubshort_to_char(n, x)
+    #define m_set_big_endian_short(n, x)           mus_bshort_to_char(n, x)
+    #define m_set_big_endian_int(n, x)             mus_bint_to_char(n, x)
+    #define m_set_big_endian_float(n, x)           mus_bfloat_to_char(n, x)
+    #define m_set_big_endian_double(n, x)          mus_bdouble_to_char(n, x)
+    #define m_set_big_endian_unsigned_short(n, x)  mus_ubshort_to_char(n, x)
   #endif
 
-  #define m_little_endian_short(n)                  (mus_char_to_lshort(n))
-  #define m_little_endian_int(n)                    (mus_char_to_lint(n))
-  #define m_little_endian_float(n)                  (mus_char_to_lfloat(n))
-  #define m_little_endian_double(n)                 (mus_char_to_ldouble(n))
-  #define m_little_endian_unsigned_short(n)         (mus_char_to_ulshort(n))
+  #if HAVE_BYTESWAP_H
+    #define m_little_endian_short(n)               ((short)(bswap_16((*((unsigned short *)n)))))
+    #define m_little_endian_int(n)                 ((int)(bswap_32((*((unsigned int *)n)))))
+  #else
+    #define m_little_endian_short(n)               (mus_char_to_lshort(n))
+    #define m_little_endian_int(n)                 (mus_char_to_lint(n))
+  #endif
+  #define m_little_endian_float(n)                 (mus_char_to_lfloat(n))
+  #define m_little_endian_double(n)                (mus_char_to_ldouble(n))
+  #define m_little_endian_unsigned_short(n)        (mus_char_to_ulshort(n))
 
-  #define m_set_little_endian_short(n, x)            mus_lshort_to_char(n, x)
-  #define m_set_little_endian_int(n, x)              mus_lint_to_char(n, x)
-  #define m_set_little_endian_float(n, x)            mus_lfloat_to_char(n, x)
-  #define m_set_little_endian_double(n, x)           mus_ldouble_to_char(n, x)
-  #define m_set_little_endian_unsigned_short(n, x)   mus_ulshort_to_char(n, x)
+  #if HAVE_BYTESWAP_H
+    #define m_set_little_endian_short(n, x)        (*((short *)n)) = ((short)(bswap_16(x)))
+    #define m_set_little_endian_int(n, x)          (*((int *)n)) = ((int)(bswap_32(x)))
+  #else
+    #define m_set_little_endian_short(n, x)        mus_lshort_to_char(n, x)
+    #define m_set_little_endian_int(n, x)          mus_lint_to_char(n, x)
+  #endif
+  #define m_set_little_endian_float(n, x)          mus_lfloat_to_char(n, x)
+  #define m_set_little_endian_double(n, x)         mus_ldouble_to_char(n, x)
+  #define m_set_little_endian_unsigned_short(n, x) mus_ulshort_to_char(n, x)
 
 #endif
 

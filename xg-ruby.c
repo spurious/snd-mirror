@@ -2305,7 +2305,6 @@ XEN_NARGIFY_2(gxg_gtk_menu_shell_select_first_w, gxg_gtk_menu_shell_select_first
 XEN_NARGIFY_1(gxg_gtk_notebook_get_n_pages_w, gxg_gtk_notebook_get_n_pages)
 XEN_NARGIFY_2(gxg_gtk_list_store_reorder_w, gxg_gtk_list_store_reorder)
 XEN_NARGIFY_3(gxg_gtk_list_store_swap_w, gxg_gtk_list_store_swap)
-XEN_NARGIFY_3(gxg_gtk_list_store_move_w, gxg_gtk_list_store_move)
 XEN_NARGIFY_3(gxg_gtk_tree_store_reorder_w, gxg_gtk_tree_store_reorder)
 XEN_NARGIFY_3(gxg_gtk_tree_store_swap_w, gxg_gtk_tree_store_swap)
 XEN_NARGIFY_3(gxg_gtk_tree_store_move_w, gxg_gtk_tree_store_move)
@@ -2363,6 +2362,16 @@ XEN_NARGIFY_1(gxg_gtk_widget_has_screen_w, gxg_gtk_widget_has_screen)
 XEN_NARGIFY_1(gxg_gtk_widget_get_display_w, gxg_gtk_widget_get_display)
 XEN_NARGIFY_1(gxg_gtk_widget_get_root_window_w, gxg_gtk_widget_get_root_window)
 XEN_NARGIFY_2(gxg_gtk_widget_get_clipboard_w, gxg_gtk_widget_get_clipboard)
+#endif
+
+#if HAVE_GTK_TREE_ROW_REFERENCE_GET_TYPE
+XEN_NARGIFY_0(gxg_gdk_get_display_arg_name_w, gxg_gdk_get_display_arg_name)
+XEN_NARGIFY_0(gxg_gdk_notify_startup_complete_w, gxg_gdk_notify_startup_complete)
+XEN_NARGIFY_0(gxg_gtk_tree_row_reference_get_type_w, gxg_gtk_tree_row_reference_get_type)
+XEN_ARGIFY_4(gxg_gtk_tree_view_column_cell_get_position_w, gxg_gtk_tree_view_column_cell_get_position)
+XEN_NARGIFY_1(gxg_gtk_window_set_auto_startup_notification_w, gxg_gtk_window_set_auto_startup_notification)
+XEN_NARGIFY_3(gxg_gtk_list_store_move_after_w, gxg_gtk_list_store_move_after)
+XEN_NARGIFY_3(gxg_gtk_list_store_move_before_w, gxg_gtk_list_store_move_before)
 #endif
 
 XEN_NARGIFY_1(gxg_GDK_COLORMAP_w, gxg_GDK_COLORMAP)
@@ -5635,7 +5644,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_notebook_get_n_pages, gxg_gtk_notebook_get_n_pages_w, 1, 0, 0, H_gtk_notebook_get_n_pages);
   XG_DEFINE_PROCEDURE(gtk_list_store_reorder, gxg_gtk_list_store_reorder_w, 2, 0, 0, H_gtk_list_store_reorder);
   XG_DEFINE_PROCEDURE(gtk_list_store_swap, gxg_gtk_list_store_swap_w, 3, 0, 0, H_gtk_list_store_swap);
-  XG_DEFINE_PROCEDURE(gtk_list_store_move, gxg_gtk_list_store_move_w, 3, 0, 0, H_gtk_list_store_move);
   XG_DEFINE_PROCEDURE(gtk_tree_store_reorder, gxg_gtk_tree_store_reorder_w, 3, 0, 0, H_gtk_tree_store_reorder);
   XG_DEFINE_PROCEDURE(gtk_tree_store_swap, gxg_gtk_tree_store_swap_w, 3, 0, 0, H_gtk_tree_store_swap);
   XG_DEFINE_PROCEDURE(gtk_tree_store_move, gxg_gtk_tree_store_move_w, 3, 0, 0, H_gtk_tree_store_move);
@@ -5693,6 +5701,16 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_widget_get_display, gxg_gtk_widget_get_display_w, 1, 0, 0, H_gtk_widget_get_display);
   XG_DEFINE_PROCEDURE(gtk_widget_get_root_window, gxg_gtk_widget_get_root_window_w, 1, 0, 0, H_gtk_widget_get_root_window);
   XG_DEFINE_PROCEDURE(gtk_widget_get_clipboard, gxg_gtk_widget_get_clipboard_w, 2, 0, 0, H_gtk_widget_get_clipboard);
+#endif
+
+#if HAVE_GTK_TREE_ROW_REFERENCE_GET_TYPE
+  XG_DEFINE_PROCEDURE(gdk_get_display_arg_name, gxg_gdk_get_display_arg_name_w, 0, 0, 0, H_gdk_get_display_arg_name);
+  XG_DEFINE_PROCEDURE(gdk_notify_startup_complete, gxg_gdk_notify_startup_complete_w, 0, 0, 0, H_gdk_notify_startup_complete);
+  XG_DEFINE_PROCEDURE(gtk_tree_row_reference_get_type, gxg_gtk_tree_row_reference_get_type_w, 0, 0, 0, H_gtk_tree_row_reference_get_type);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_cell_get_position, gxg_gtk_tree_view_column_cell_get_position_w, 2, 2, 0, H_gtk_tree_view_column_cell_get_position);
+  XG_DEFINE_PROCEDURE(gtk_window_set_auto_startup_notification, gxg_gtk_window_set_auto_startup_notification_w, 1, 0, 0, H_gtk_window_set_auto_startup_notification);
+  XG_DEFINE_PROCEDURE(gtk_list_store_move_after, gxg_gtk_list_store_move_after_w, 3, 0, 0, H_gtk_list_store_move_after);
+  XG_DEFINE_PROCEDURE(gtk_list_store_move_before, gxg_gtk_list_store_move_before_w, 3, 0, 0, H_gtk_list_store_move_before);
 #endif
 
   XG_DEFINE_PROCEDURE(GDK_COLORMAP, gxg_GDK_COLORMAP_w, 1, 0, 0, NULL);

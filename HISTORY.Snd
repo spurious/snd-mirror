@@ -1,10 +1,11 @@
 Snd change log
 
-  8-Jan:     xramp-channel for virtual exp envs.
+  6-Jan:     xramp-channel for virtual exp envs.
              edpos args for swap-channels.
              map-channel arg for ptree-channel (xen-channel) for generalized virtual ops.
              orientation-hook and color-hook.
              waterfall spectrum in snd-gl.scm.
+             channel-amp-envs now returns vcts, not vectors.
 
 2003 ----------------------------------------------------------------
 

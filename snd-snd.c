@@ -464,14 +464,15 @@ void pick_one_bin(env_info *ep, int bin, off_t cursamp, chan_info *cp, int edpos
 {
   snd_fd *sf;
   int n;
-  mus_sample_t val, ymin = MUS_SAMPLE_0, ymax = MUS_SAMPLE_0;
+  mus_sample_t val, ymin = MUS_SAMPLE_MAX, ymax = MUS_SAMPLE_MIN;
   /* here we have to read the current bin using the current fragments */
   sf = init_sample_read_any(cursamp, cp, READ_FORWARD, edpos);
   if (sf == NULL) return;
   for (n = 0; n < ep->samps_per_bin; n++)
     {
       val = read_sample(sf); 
-      if (ymin > val) ymin = val; else if (ymax < val) ymax = val;
+      if (ymin > val) ymin = val; 
+      if (ymax < val) ymax = val;
     }
   ep->data_max[bin] = ymax;
   ep->data_min[bin] = ymin;
@@ -481,7 +482,7 @@ void pick_one_bin(env_info *ep, int bin, off_t cursamp, chan_info *cp, int edpos
 void amp_env_scale_selection_by(chan_info *cp, Float scl, off_t beg, off_t num, int pos)
 {
   env_info *old_ep, *new_ep;
-  mus_sample_t fmax = MUS_SAMPLE_0, fmin = MUS_SAMPLE_0;
+  mus_sample_t fmax = MUS_SAMPLE_MIN, fmin = MUS_SAMPLE_MAX;
   off_t cursamp, start, end;
   int i;
   old_ep = cp->amp_envs[pos];
@@ -542,7 +543,7 @@ env_info *amp_env_section(chan_info *cp, off_t beg, off_t num, int edpos)
 {
   /* used in snd-region.c to create the region amp env */
   env_info *old_ep, *new_ep = NULL;
-  mus_sample_t fmax = MUS_SAMPLE_0, fmin = MUS_SAMPLE_0;
+  mus_sample_t fmax = MUS_SAMPLE_MIN, fmin = MUS_SAMPLE_MAX;
   int i, j;
   off_t cursamp, start, end;
   old_ep = cp->amp_envs[edpos];
@@ -674,7 +675,7 @@ void amp_env_env_selection_by(chan_info *cp, mus_any *e, off_t beg, off_t num, i
   env_info *old_ep, *new_ep = NULL;
   Float val, xmax = 1.0;
   Float *data;
-  mus_sample_t fmax = MUS_SAMPLE_0, fmin = MUS_SAMPLE_0;
+  mus_sample_t fmax = MUS_SAMPLE_MIN, fmin = MUS_SAMPLE_MAX;
   int i;
   off_t cursamp, start, end;
   old_ep = cp->amp_envs[pos];
@@ -846,7 +847,7 @@ void amp_env_ptree(chan_info *cp, void *pt, int pos, XEN init_func, int is_xen)
 void amp_env_ptree_selection(chan_info *cp, void *pt, off_t beg, off_t num, int pos, XEN init_func, int is_xen)
 {
   env_info *old_ep, *new_ep = NULL;
-  mus_sample_t fmax = MUS_SAMPLE_0, fmin = MUS_SAMPLE_0, dmin, dmax;
+  mus_sample_t fmax = MUS_SAMPLE_MIN, fmin = MUS_SAMPLE_MAX, dmin, dmax;
   int i, closure = FALSE, inited = FALSE, need_unprotect = FALSE;
   vct *vlo = NULL, *vhi = NULL;
   off_t cursamp, start, end;
@@ -3336,26 +3337,26 @@ static XEN g_read_peak_env_info_file(XEN snd, XEN chn, XEN name)
   return(name);
 }
 
-static XEN g_env_info_to_vectors(env_info *ep, int len)
+static XEN g_env_info_to_vcts(env_info *ep, int len)
 {
+  /* changed 5-Jan-03 to return vcts (Guile vector printer is stupid) */
   XEN res;
-  XEN *velts_max, *velts_min;
   int i, j, lim;
+  vct *vmax, *vmin;
   Float incr, x;
   mus_sample_t cmax, cmin;
   if (ep->amp_env_size < len) lim = ep->amp_env_size; else lim = len;
-  res = XEN_LIST_2(XEN_MAKE_VECTOR(lim, XEN_ZERO),
-		   XEN_MAKE_VECTOR(lim, XEN_ZERO));
+  res = XEN_LIST_2(make_vct(lim, (Float *)CALLOC(lim, sizeof(Float))),
+		   make_vct(lim, (Float *)CALLOC(lim, sizeof(Float))));
   snd_protect(res);
-  velts_min = XEN_VECTOR_ELEMENTS(XEN_CAR(res));
-  velts_max = XEN_VECTOR_ELEMENTS(XEN_CADR(res));
-  /* VECTOR_SET here */
+  vmin = get_vct(XEN_CAR(res));
+  vmax = get_vct(XEN_CADR(res));
   if (ep->amp_env_size == lim)
     {
       for (i = 0; i < lim; i++)
 	{
-	  velts_min[i] = C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_DOUBLE(ep->data_min[i]));
-	  velts_max[i] = C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_DOUBLE(ep->data_max[i]));
+	  vmin->data[i] = MUS_SAMPLE_TO_DOUBLE(ep->data_min[i]);
+	  vmax->data[i] = MUS_SAMPLE_TO_DOUBLE(ep->data_max[i]);
 	}
     }
   else
@@ -3363,8 +3364,8 @@ static XEN g_env_info_to_vectors(env_info *ep, int len)
       incr = (Float)(ep->amp_env_size - 1) / (Float)len; /* make extra room on left */
       cmax = ep->fmin;
       cmin = ep->fmax;
-      velts_min[0] = C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_DOUBLE(ep->data_min[0]));
-      velts_max[0] = C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_DOUBLE(ep->data_max[0]));
+      vmin->data[0] = MUS_SAMPLE_TO_DOUBLE(ep->data_min[0]);
+      vmax->data[0] = MUS_SAMPLE_TO_DOUBLE(ep->data_max[0]);
       for (i = 1, j = 1, x = 0.0; i < ep->amp_env_size; i++)
 	{
 	  if (ep->data_max[i] > cmax) cmax = ep->data_max[i];
@@ -3372,8 +3373,8 @@ static XEN g_env_info_to_vectors(env_info *ep, int len)
 	  x += 1.0;
 	  if (x >= incr)
 	    {
-	      velts_min[j] = C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_DOUBLE(cmin));
-	      velts_max[j++] = C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_DOUBLE(cmax));
+	      vmin->data[j] = MUS_SAMPLE_TO_DOUBLE(cmin);
+	      vmax->data[j++] = MUS_SAMPLE_TO_DOUBLE(cmax);
 	      x -= incr;
 	      cmax = ep->fmin;
 	      cmin = ep->fmax;
@@ -3406,7 +3407,7 @@ static Cessate tick_it(Indicium pet)
     {
       if (es->sf) free_snd_fd(es->sf);
       FREE(es);
-      peak = g_env_info_to_vectors(cp->amp_envs[0], et->len);
+      peak = g_env_info_to_vcts(cp->amp_envs[0], et->len);
       snd_protect(peak);
       XEN_CALL_3(et->func,
 		 et->filename,
@@ -3429,7 +3430,7 @@ static XEN g_channel_amp_envs(XEN filename, XEN chan, XEN pts, XEN peak_func, XE
    *   if done_func set workproc that calls it when done
    */
   #define H_channel_amp_envs "(" S_channel_amp_envs " file chan size peak-file-func work-proc-func)\n\
-return two vectors of length 'size' containing y vals (min and max) of file's channel chan's amp envs. \
+return two vcts of length 'size' containing y vals (min and max) of file's channel chan's amp envs. \
 'peak-file-func' if any is used to get the name of the associated peak_env_info file if the file is very large. \
 'work-proc-func' is called when the amp envs are ready if the amp envs are gathered in the background. \
 If 'filename' is a sound index (an integer), 'size' is an edit-position, and the current amp envs are returned."
@@ -3458,7 +3459,7 @@ If 'filename' is a sound index (an integer), 'size' is an edit-position, and the
 	  cp = sp->chans[XEN_TO_C_INT_OR_ELSE(chan, 0)];
 	  pos = to_c_edit_position(cp, pts, S_channel_amp_envs, 3);
 	  if ((cp->amp_envs) && (ep = cp->amp_envs[pos]))
-	    return(g_env_info_to_vectors(ep, ep->amp_env_size));
+	    return(g_env_info_to_vcts(ep, ep->amp_env_size));
 	  /* force amp env to completion */
 	  stop_amp_env(cp);
 	  es = make_env_state(cp, cp->samples[pos]);
@@ -3468,7 +3469,7 @@ If 'filename' is a sound index (an integer), 'size' is an edit-position, and the
 	      free_env_state(cp);
 	      ep = cp->amp_envs[pos];
 	      if (ep)
-		return(g_env_info_to_vectors(ep, ep->amp_env_size));
+		return(g_env_info_to_vcts(ep, ep->amp_env_size));
 	    }
 	  return(XEN_EMPTY_LIST);
 	}
@@ -3489,7 +3490,7 @@ If 'filename' is a sound index (an integer), 'size' is an edit-position, and the
       if ((cp->amp_envs) && (cp->amp_envs[0]))
 	{
 	  /* read amp_env data into pts (presumably smaller) */
-	  peak = g_env_info_to_vectors(cp->amp_envs[0], len);
+	  peak = g_env_info_to_vcts(cp->amp_envs[0], len);
 	  if (fullname) FREE(fullname);
 	  return(peak);
 	}
@@ -3509,7 +3510,7 @@ If 'filename' is a sound index (an integer), 'size' is an edit-position, and the
 	      if (ep)
 		{
 		  /* read amp_env data into pts (presumably smaller) */
-		  peak = g_env_info_to_vectors(ep, len);
+		  peak = g_env_info_to_vcts(ep, len);
 		  ep = free_env_info(ep);
 		  if (peakname) FREE(peakname);
 		  if (fullname) FREE(fullname);
@@ -3546,7 +3547,7 @@ If 'filename' is a sound index (an integer), 'size' is an edit-position, and the
 	  while (tick_amp_env(cp, es) == FALSE);
 	  if (es->sf) free_snd_fd(es->sf);
 	  FREE(es);
-	  peak = g_env_info_to_vectors(cp->amp_envs[0], len);
+	  peak = g_env_info_to_vcts(cp->amp_envs[0], len);
 	}
       completely_free_snd_info(sp);
     }

@@ -3670,6 +3670,19 @@ between beg and beg + num by an exponential ramp going from rmp0 to rmp1 with cu
 		  passes = mus_env_passes(e);
 		  r1 = r0 + passes[0] * rates[0];
 		  xramp_channel(cp, r0, r1, mus_scaler(e), mus_env_offset(e), samp, samps, pos, FALSE);
+		  if (cp->amp_envs[pos])
+		    {
+		      if ((samp == 0) && 
+			  (samps >= cp->samples[pos]))
+			amp_env_env(cp, data, 2, pos, ebase, mus_scaler(e), mus_env_offset(e));
+		      else 
+			{
+			  mus_any *egen;
+			  egen = mus_make_env(data, 2, 1.0, 0.0, ebase, 0.0, 0, samps - 1, NULL);
+			  amp_env_env_selection_by(cp, egen, samp, samps, pos);
+			  mus_free(egen);
+			}
+		    }
 		  FREE(data);
 		  mus_free(e);
 		  update_graph(cp);

@@ -59,6 +59,9 @@
 (define checks-21 '())
 (define check-types-21 '())
 (define ulongs-21 '())
+(define ints-22 '())
+(define funcs-22 '())
+(define types-22 '())
 
 (define idlers (list "gtk_idle_remove" "gtk_idle_remove_by_data" 
 		     "gtk_quit_remove" "gtk_quit_remove_by_data" 
@@ -253,8 +256,12 @@
 				(if (and (not (member type types))
 					 (not (member type types-21)))
 				    (set! types-21 (cons type types-21)))
-				(if (not (member type types))
-				    (set! types (cons type types)))))
+				(if (eq? extra '22)
+				    (if (and (not (member type types))
+					     (not (member type types-22)))
+					(set! types-22 (cons type types-22)))
+				    (if (not (member type types))
+					(set! types (cons type types))))))
 			(set! type #f))
 		      (if (> i (1+ sp))
 			  (set! type (substring args (1+ sp) i))))
@@ -541,6 +548,8 @@
 	(cons "GdkSettingAction" "INT")
 	(cons "GdkByteOrder" "INT")
 	;(cons "GdkWChar" "ULONG")
+
+	(cons "Drawable_was_Window*" "DRAWABLE_WAS_WINDOW")
 	))
 
 (define (type-it type)
@@ -644,6 +653,19 @@
 	    (set! funcs-21 (cons (list name type strs args) funcs-21))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
+(define* (CFNC-22 data)
+  (let ((name (cadr-str data))
+	(args (caddr-str data)))
+    (if (assoc name names)
+	(no-way "~A CFNC-22~%" name)
+	(let ((type (car-str data)))
+	  (if (and (not (member type types))
+		   (not (member type types-22)))
+	      (set! types-22 (cons type types-22)))
+	  (let ((strs (parse-args args '22)))
+	    (set! funcs-22 (cons (list name type strs args) funcs-22))
+	    (set! names (cons (cons name (func-type strs)) names)))))))
+
 (define (helpify name type args)
   (let* ((initial (format #f "  #define H_~A \"~A ~A(" name type name))
 	 (line-len (string-length initial))
@@ -722,6 +744,13 @@
       (no-way "~A CINT~%" name)
       (begin
 	(set! ints (cons name ints))
+	(set! names (cons (cons name 'int) names)))))
+
+(define* (CINT-22 name #:optional type)
+  (if (assoc name names)
+      (no-way "~A CINT-22~%" name)
+      (begin
+	(set! ints-22 (cons name ints-22))
 	(set! names (cons (cons name 'int) names)))))
 
 (define* (CINT-extra name #:optional type)
@@ -855,6 +884,11 @@
   (thunk)
   (dpy "#endif~%~%"))
 
+(define (with-22 dpy thunk)
+  (dpy "#if HAVE_GTK_TREE_ROW_REFERENCE_GET_TYPE~%")
+  (thunk)
+  (dpy "#endif~%~%"))
+
 
 ;;; ---------------------------------------- write output files ----------------------------------------
 (hey "/* xg.c: Guile and Ruby bindings for gdk/gtk/pango, some of glib~%")
@@ -911,6 +945,7 @@
 (hey " * ~A: test suite (snd-test 24)~%" (string-append "T" "ODO"))
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     6-Jan:     gtk 2.2 changes.~%")
 (hey " *     18-Nov:    Ruby/Gtk bugfixes.~%")
 (hey " *     28-Oct:    gtk 2.1 additions.~%")
 (hey " *     25-Oct:    removed (deprecated) gdk_set_pointer_hooks~%")
@@ -1050,6 +1085,18 @@
 (hey "#define C_TO_XEN_String(Arg) ((Arg == NULL) ? C_TO_XEN_STRING(Arg) : XEN_FALSE)~%")
 (hey "#define XEN_String_P(Arg) ((XEN_FALSE_P(Arg)) || (XEN_STRING_P(Arg)))~%")
 
+(hey "~%#if HAVE_GTK_TREE_ROW_REFERENCE_GET_TYPE~%")
+(hey "  static XEN C_TO_XEN_DRAWABLE_WAS_WINDOW (GdkDrawable* val) {if (val) return(WRAP_FOR_XEN(\"GdkDrawable_\", val)); return(XEN_FALSE);}~%")
+(hey "  static GdkDrawable* XEN_TO_C_DRAWABLE_WAS_WINDOW (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((GdkDrawable *)XEN_TO_C_ULONG(XEN_CADR(val)));}~%")
+(hey "  static int XEN_DRAWABLE_WAS_WINDOW_P(XEN val) {return(XEN_FALSE_P(val) || (WRAP_P(\"GdkDrawable_\", val)));}~%")
+(hey "  #define Drawable_was_Window GdkDrawable~%")
+(hey "#else~%")
+(hey "  static XEN C_TO_XEN_DRAWABLE_WAS_WINDOW (GdkWindow* val) {if (val) return(WRAP_FOR_XEN(\"GdkWindow_\", val)); return(XEN_FALSE);}~%")
+(hey "  static GdkWindow* XEN_TO_C_DRAWABLE_WAS_WINDOW (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((GdkWindow *)XEN_TO_C_ULONG(XEN_CADR(val)));}~%")
+(hey "  static int XEN_DRAWABLE_WAS_WINDOW_P(XEN val) {return(XEN_FALSE_P(val) || (WRAP_P(\"GdkWindow_\", val)));}~%")
+(hey "  #define Drawable_was_Window GdkWindow~%")
+(hey "#endif~%")
+
 
 (hey "~%~%/* ---------------------------------------- types ---------------------------------------- */~%~%")
 
@@ -1075,7 +1122,11 @@
     (with-21 hey
 	     (lambda ()
 	       (for-each type-it (reverse types-21))
-;;;	       (for-each check-type-it (reverse check-types-21))
+	       )))
+(if (not (null? types-22))
+    (with-22 hey
+	     (lambda ()
+	       (for-each type-it (reverse types-22))
 	       )))
 
 (hey "/* -------------------------------- gc protection -------------------------------- */~%")
@@ -1554,6 +1605,7 @@
 (for-each handle-func (reverse funcs))
 (if (not (null? extra-funcs)) (with-extra hey (lambda () (for-each handle-func (reverse extra-funcs)))))
 (if (not (null? funcs-21)) (with-21 hey (lambda () (for-each handle-func (reverse funcs-21)))))
+(if (not (null? funcs-22)) (with-22 hey (lambda () (for-each handle-func (reverse funcs-22)))))
 
 (define cast-it
  (lambda (cast)
@@ -1630,6 +1682,7 @@
 (for-each argify-func (reverse funcs))
 (if (not (null? extra-funcs)) (with-extra say (lambda () (for-each argify-func (reverse extra-funcs)))))
 (if (not (null? funcs-21)) (with-21 say (lambda () (for-each argify-func (reverse funcs-21)))))
+(if (not (null? funcs-22)) (with-22 say (lambda () (for-each argify-func (reverse funcs-22)))))
 
 (define (ruby-cast func) (say "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" (no-arg (car func)) (no-arg (car func)))) 
 (for-each ruby-cast (reverse casts))
@@ -1705,6 +1758,7 @@
 (for-each defun (reverse funcs))
 (if (not (null? extra-funcs)) (with-extra say-hey (lambda () (for-each defun (reverse extra-funcs)))))
 (if (not (null? funcs-21)) (with-21 say-hey (lambda () (for-each defun (reverse funcs-21)))))
+(if (not (null? funcs-22)) (with-22 say-hey (lambda () (for-each defun (reverse funcs-22)))))
 
 (define (cast-out func)
   (hey "  XG_DEFINE_PROCEDURE(~A, gxg_~A, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-arg (car func)))
@@ -1980,6 +2034,10 @@
  (lambda (val) 
    (hey "  DEFINE_INTEGER(~A);~%" val)) 
  (reverse ints))
+
+(if (not (null? ints-22))
+    (with-22 hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(~A);~%" val)) (reverse ints-22)))))
+
 
 (for-each 
  (lambda (vals)

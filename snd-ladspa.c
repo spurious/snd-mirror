@@ -14,11 +14,12 @@
 
 /* CHANGES:
  *
+ * bil: 6-Jan-03  use FREE, not free.
  * bil: 21-Nov-02 better checks for C-g interrupt.
  * bil: 2-May-02  use off_t for sample number.
  * bil: 14-Dec-01 various C++ cleanups.
  * bil: 28-Nov-01 input chans need not equal output chans now.
- * bil: 15-Oct-01 added some error returns (rather than snd_error).   multichannel plugin support.
+ * bil: 15-Oct-01 added some error returns (rather than snd_error).  multichannel plugin support.
  * bil: 20-Sep-01 changed location of pfInputBuffer to avoid glomming up the stack with a huge array.
  */
 
@@ -125,17 +126,17 @@ static void unloadLADSPA() {
   pvPluginHandle++;
   for (lIndex = 0; lIndex < g_lLADSPARepositoryCount; lIndex++) {
     psInfo = g_psLADSPARepository[lIndex];
-    free(psInfo->m_pcPackedFilename);
+    FREE(psInfo->m_pcPackedFilename);
     /* Don't free Label or Descriptor - this memory is owned by the
        relevant plugin library. */
     if (pvPluginHandle != psInfo->m_pvPluginHandle) {
       pvPluginHandle = (LADSPAPluginInfo *)(psInfo->m_pvPluginHandle);
       dlclose(pvPluginHandle);
     }
-    free(psInfo);
+    FREE(psInfo);
   }
 
-  free(g_psLADSPARepository);
+  FREE(g_psLADSPARepository);
   g_bLADSPAInitialised = 0;
 }
 
@@ -163,7 +164,7 @@ static void loadLADSPALibrary(void * pvPluginHandle,
 	       psOldRepository,
 	       sizeof(LADSPAPluginInfo *) * g_lLADSPARepositoryCount);
 	g_lLADSPARepositoryCapacity = lNewCapacity;
-	free(psOldRepository);
+	FREE(psOldRepository);
       }
       psInfo
 	= g_psLADSPARepository[g_lLADSPARepositoryCount++]

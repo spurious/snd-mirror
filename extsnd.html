@@ -3668,7 +3668,6 @@ The following substitutions can be made:
 <a href="#sndinsertsilence">insert-silence</a> beg dur s c                      <a href="#padchannel">pad-channel</a> beg dur s c e
 <a href="#sndsrc">src-sound</a> num base s c e                        <a href="#srcchannel">src-channel</a> ratio-or-env-gen beg dur s c e
 <a href="#sndconvolvewith">convolve-with</a> file amp s c e                    <a href="#clmchannel">clm-channel</a> convolve-gen beg dur s c e
-<a href="#loopsamples">loop-samples</a> reader c-func beg dur origin ptr   <a href="sndscm.html#cchannel">c-channel</a> c-func beg dur s c e ptr
 <a href="grfsnd.html#applyladspa">apply-ladspa</a> reader dat dur origin              <a href="grfsnd.html#ladspachannel">ladspa-channel</a> dat beg dur s c e
 <a href="#sndmix">mix</a> file beg filechn s c with-tags              <a href="sndscm.html#mixchannel">mix-channel</a> filedat beg dur s c e
 <a href="#sndmixsound">mix-sound</a> file beg                              <a href="sndscm.html#mixchannel">mix-channel</a> filedat beg dur s c e
@@ -3777,7 +3776,7 @@ the direction argument between the channel and edit-position:
 <!-- --><span class=defbox><code><em class=def><a name="channelampenvs">channel-amp-envs</a></em> (file chan size <i>peak-file-func work-proc-func</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->This procedure returns two vectors of length 'size' containing y vals (min and max) of file's channel chan's amp envs.
+<!-- -->This procedure returns two vcts of length 'size' containing y vals (min and max) of file's channel chan's amp envs.
 <!-- -->'peak-file-func' if any is used to get the name of the associated peak_env_info file if the file is very large.
 <!-- -->'work-proc-func' is called when the amp envs are ready if the amp envs are gathered in the background.
 <!-- -->If 'file' is a sound index (an integer), pts is an edit-position, and the current amp envs (if any) are returned.
@@ -4558,25 +4557,16 @@ the direction argument between the channel and edit-position:
 <!-- -->
 <!-- loop-samples -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="loopsamples">loop-samples</a></em> (reader function beg dur origin <i>environ</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><A NAME="loopsamples">loop-samples</a></em> (reader function beg dur origin <i>environ</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->This calls external C functions while moving through the data accessed
+<!-- -->[loop-samples may be removed in the near future] This calls external C functions while moving through the data accessed
 <!-- -->by the sample reader. loop-samples takes a sample reader, a pointer to a 
 <!-- -->(C) float function that takes one float argument (the current sample), 
 <!-- -->the number of times to call that function, and a name for the editing 
 <!-- -->operation for the edit history list.  If <i>environ</i> is included, it
-<!-- -->is passed as the second (void *) argument to the function.  See grfsnd.html
-<!-- -->for examples of both forms.  The "regularized" version of this is:
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(define* (<A NAME="excchannel">c-channel</A> func #:optional (beg 0) dur snd chn edpos call-data)
-  (let ((reader (make-sample-reader beg snd chn 1 edpos))
-        (samps (or dur (frames snd chn edpos))))
-    (<em class=red>loop-samples</em> reader func beg samps "c-channel" call-data)))
-<!-- --></pre></td></tr></table>
-<!-- --><tr><td colspan=2></td></tr>
+<!-- -->is passed as the second (void *) argument to the function.
+<!-- --></td></tr><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
 <!-- make-player -->

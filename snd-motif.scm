@@ -1214,15 +1214,15 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		(inexact->exact
 		 (+ ay1
 		    (* height (- 1.0 y)))))))
-    (let* ((ly (y->grfy (vector-ref pts 0) range))
+    (let* ((ly (y->grfy (vct-ref pts 0) range))
 	   (lx left-margin)
-	   (len (vector-length pts))
+	   (len (vct-length pts))
 	   (xinc (/ (- width left-margin right-margin) len))
 	   (y 0))
       (do ((i 1 (1+ i))
 	   (x lx (+ x xinc)))
 	  ((= i len))
-	(set! y (y->grfy (vector-ref pts i) range))
+	(set! y (y->grfy (vct-ref pts i) range))
 	(XDrawLine dpy wn gc lx ly (inexact->exact x) y)
 	(set! lx (inexact->exact x))
 	(set! ly y)))))

@@ -268,11 +268,12 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
-8-Jan:   xramp-channel for virtual exp envs.\n\
+6-Jan:   xramp-channel for virtual exp envs.\n\
          edpos args for swap-channels.\n\
          map-channel arg for ptree-channel for generalized virtual ops.\n\
          added orientation-hook and color-hook.\n\
          waterfall spectrum in snd-gl.scm.\n\
+         channel-amp-envs now returns vcts, not vectors.\n\
 16-Dec:  snd 6.4\n\
 11-Dec:  --with-shared-sndlib configure switch.\n\
 10-Dec:  contrib/inf-snd.el from Michael Scholz.\n\
