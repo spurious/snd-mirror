@@ -246,6 +246,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+18-Jun:  snd colors now mimic xm/xg, snd-pixel is a no-op.\n\
 12-Jun:  snd 5.11.\n\
          moved forward|backward-sample to snd5.scm.\n\
 10-Jun:  mix panel amp envs are now editable.\n\

@@ -4774,9 +4774,8 @@
 	(IF (not (eq? c1 c2)) (snd-display ";color eq? ~A ~A?" c1 c2))
 	(IF (not (equal? c1 c3)) (snd-display ";diff color equal? ~A ~A?" c1 c3))
 	(IF (eq? c1 c3) (snd-display ";diff color eq? ~A ~A?" c1 c3))
-	(let ((str (format #f "~A" c1)))
-	  (IF (not (string=? str "#<color: (0.00 0.00 1.00)>"))
-	      (snd-display ";print color: ~A ~A?" str c1))))
+	(IF (not (equal? (color->list c1) (list 0.0 0.0 1.0)))
+	    (snd-display ";color->list: ~A ~A?" c1 (color->list c1))))
       (do ((i 0 (1+ i))) ((= i 15)) 
 	(let ((val (colormap-ref i 0))
 	      (true-val (list-ref (list '(0.0 0.0 0.0) '(1.0 0.0 0.0) '(0.00520332646677348 0.0 0.0) '(0.0 1.0 1.0)
@@ -20485,7 +20484,7 @@ EDITS: 5
 	      (|XRotateBuffers dpy 1)
 	      (|XSetWindowBorderWidth dpy win 10)
 	      (|XSetWindowBorder dpy win (cadr (black-pixel)))
-	      (|XSetWindowBackground dpy win (cadr (snd-pixel (basic-color))))
+	      (|XSetWindowBackground dpy win (cadr (basic-color)))
 	      (let ((depth (|depth (car (|XGetVisualInfo dpy 0 (list 'XVisualInfo 0))))))
 		(|XSetWindowBorderPixmap dpy win (|XCreatePixmap dpy win 10 10 depth))
 		(|XSetWindowBackgroundPixmap dpy win (|XCreatePixmap dpy win 10 10 depth))
@@ -20684,7 +20683,7 @@ EDITS: 5
 
 		  (let* ((dpy (|XtDisplay (cadr (main-widgets))))
 			 (win (|XtWindow (cadr (main-widgets))))
-			 (attr (|XSetWindowAttributes #f (snd-pixel (basic-color)) #f (snd-pixel (highlight-color))))
+			 (attr (|XSetWindowAttributes #f (basic-color) #f (highlight-color)))
 			 (newwin (|XCreateWindow dpy win 10 10 100 100 3 
 						 |CopyFromParent |InputOutput (list 'Visual |CopyFromParent)
 						 (logior |CWBackPixel |CWBorderPixel)
@@ -20700,9 +20699,9 @@ EDITS: 5
 		    (IF (|save_under attr) (snd-display ";save_under: ~A" (|save_under attr)))
 		    (IF (not (= (cadr (|cursor attr)) 0)) (snd-display ";cursor: ~A" (|cursor attr)))
 		    (IF (not (|Window? newwin)) (snd-display ";XCreateWindow: ~A" newwin))
-		    (|XChangeWindowAttributes dpy newwin (logior |CWBackPixel) (|XSetWindowAttributes #f (snd-pixel (basic-color))))
+		    (|XChangeWindowAttributes dpy newwin (logior |CWBackPixel) (|XSetWindowAttributes #f (basic-color)))
 		    (|XDestroyWindow dpy newwin)
-		    (set! newwin (|XCreateSimpleWindow dpy win 10 10 100 100 3 (snd-pixel (basic-color)) (snd-pixel (highlight-color))))
+		    (set! newwin (|XCreateSimpleWindow dpy win 10 10 100 100 3 (basic-color) (highlight-color)))
 		    (|XDestroyWindow dpy newwin))
 
 		  (|XSetRegion dpy gc (|XPolygonRegion (list (|XPoint 0 0) (|XPoint 10 0) (|XPoint 10 10) (|XPoint 0 10)) 4 |WindingRule))
@@ -20712,7 +20711,7 @@ EDITS: 5
 			(begin
 			  (|XSetTile dpy gc pix)
 			  ;(|XSetStipple dpy gc pix) -- needs depth 1 I think
-			  (|XSetState dpy gc (snd-pixel (basic-color)) (snd-pixel (mark-color)) |GXcopy 0)
+			  (|XSetState dpy gc (basic-color) (mark-color) |GXcopy 0)
 			  (|XSetPlaneMask dpy gc 0)
 			  (|XSetDashes dpy gc 0 '(3 4 3 1))
 			  (|XSetClipRectangles dpy gc 0 0 (list (|XRectangle 0 0 10 10) (|XRectangle 10 10 100 100)) 2 |Unsorted)
@@ -20884,8 +20883,8 @@ EDITS: 5
 	      (set! (|flags c) |DoRed)
 	      (IF (not (= (|flags c) |DoRed)) (snd-display ";Xcolor flags: ~A" (|flags c)))
 	      (IF (not (= (|pad c) 0)) (snd-display ";pad: ~A" (|pad c)))
-	      (set! (|pixel c) (snd-pixel (basic-color)))
-	      (IF (not (equal? (|pixel c) (snd-pixel (basic-color)))) (snd-display ";Xcolor pixel: ~A" (|pixel c))))
+	      (set! (|pixel c) (basic-color))
+	      (IF (not (equal? (|pixel c) (basic-color))) (snd-display ";Xcolor pixel: ~A" (|pixel c))))
 
 	    (let ((obj (|XTextItem "hiho" 4 3 (list 'Font 1))))
 	      (IF (not (|XTextItem? obj)) (snd-display ";XTextItem -> ~A" obj))
@@ -21322,8 +21321,8 @@ EDITS: 5
 			   (scr (|DefaultScreenOfDisplay dpy))
 			   (scrn (|XScreenNumberOfScreen scr))
 			   (gv (|XGCValues)))
-		      (set! (|foreground gv) (snd-pixel (data-color)))
-		      (set! (|background gv) (snd-pixel (basic-color)))
+		      (set! (|foreground gv) (data-color))
+		      (set! (|background gv) (basic-color))
 		      (set! (|function gv) |GXcopy)
 		      (let* ((gc (|XtAllocateGC grf 
 						(|XDefaultDepth dpy scrn) 
@@ -21536,7 +21535,7 @@ EDITS: 5
 		(IF (not (= (|bitmap_unit newimage) 32)) (snd-display "bitmap_unit: ~A" (|bitmap_unit newimage)))
 		(IF (not (= (|obdata newimage) 0)) (snd-display "obdata: ~A" (|obdata newimage)))
 		(IF (not (= (|xoffset newimage) 0)) (snd-display "xoffset: ~A" (|xoffset newimage)))
-		(|XPutPixel before 1 1 (snd-pixel (basic-color)))
+		(|XPutPixel before 1 1 (basic-color))
 		(|XGetPixel before 1 1)
 		(|XPutImage dpy (list 'Window (cadr rotpix)) gc before 0 0 0 0 10 10)
 		(|XAddPixel before 1)
@@ -21544,7 +21543,7 @@ EDITS: 5
 		(let ((i1 (|XGetImage dpy (list 'Window (cadr pix)) 0 0 10 10 |AllPlanes |XYPixmap))
 		      (attr (|XpmAttributes))
 		      (vals (|XtGetValues (cadr (main-widgets)) (list |XmNcolormap 0 |XmNdepth 0)))
-		      (sym (|XpmColorSymbol "basiccolor" #f (snd-pixel (basic-color)))))
+		      (sym (|XpmColorSymbol "basiccolor" #f (basic-color))))
 		  (set! (|visual attr) vis)
 		  (IF (not (equal? vis (|visual attr))) (snd-display ";visual xpm attr: ~A" (|visual attr)))
 		  (set! (|colorsymbols attr) sym)
@@ -21603,7 +21602,7 @@ EDITS: 5
 		    (|XpmWriteFileFromPixmap dpy "test.xpm" pixmap pixmap1 #f)
 		    (|XpmCreateDataFromPixmap dpy pixmap pixmap1 #f)
 		    (let* ((status (|XpmReadFileToXpmImage "bullet.xpm"))
-			   (symb (|XpmColorSymbol "Foreground" "green" (snd-pixel (basic-color))))
+			   (symb (|XpmColorSymbol "Foreground" "green" (basic-color)))
 			   (attr (|XpmAttributes)))
 		      (if (not (|XpmImage? status))
 			  (snd-display "; XpmError ReadFileToXpmImage: ~A" (|XpmGetErrorString status)))
@@ -21728,7 +21727,7 @@ EDITS: 5
 						      |XmNmatchBehavior        |XmQUICK_NAVIGATE
 						      |XmNprimaryOwnership     |XmOWN_NEVER
 						      |XmNscrollBarDisplayPolicy |XmAS_NEEDED
-						      |XmNselectColor          (snd-pixel (basic-color))
+						      |XmNselectColor          (basic-color)
 						      |XmNselectionMode        |XmNORMAL_MODE
 						      |XmNselectionPolicy      |XmBROWSE_SELECT))))
 	      (|XtAddCallback lst |XmNbrowseSelectionCallback (lambda (w c i) (set! browsed 123)))
@@ -22366,7 +22365,7 @@ EDITS: 5
 		   (old-h (cadr (|XtVaGetValues scr (list |XmNhorizontalFontUnit 0))))
 		   (old-v (cadr (|XtVaGetValues scr (list |XmNverticalFontUnit 0)))))
 	      (IF (not (|XmIsScreen scr)) (snd-display ";XmIsScreen: ~A" scr))
-	      (let ((colors (|XmGetColors screen cmap (snd-pixel (basic-color)))))
+	      (let ((colors (|XmGetColors screen cmap (basic-color))))
 		(IF (not (|Pixel? (car colors)))
 		    (snd-display "colors: ~A " colors))
 		(let ((color-proc (lambda (bg)

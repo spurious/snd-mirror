@@ -34,10 +34,6 @@ typedef struct {
 } env_info;
 
 typedef struct {
-  COLOR_TYPE color;
-} snd_color;
-
-typedef struct {
   int fd, chans, bufsize;
   off_t frames, beg, end;
   mus_sample_t **arrays;
@@ -106,6 +102,9 @@ typedef struct snd__fd {
   int iscaler;
   off_t frag_pos;
   double incr, curval;
+#if WITH_RUN
+  void *ptree;
+#endif
 } snd_fd;
 
 typedef struct {Float freq; Float amp;} fft_peak;
@@ -761,7 +760,7 @@ XEN snd_no_such_file_error(const char *caller, XEN filename);
 XEN snd_no_such_channel_error(const char *caller, XEN snd, XEN chn);
 XEN snd_bad_arity_error(const char *caller, XEN errstr, XEN proc);
 XEN snd_no_active_selection_error(const char *caller);
-void g_initialize_gh(snd_state *ss);
+void g_initialize_gh(void);
 XEN eval_str_wrapper(void *data);
 XEN eval_form_wrapper(void *data);
 XEN string_to_form(void *data);

@@ -23,77 +23,23 @@ static XEN g_in(XEN ms, XEN code)
 }
 
 
-/* color support */
-
-static XEN_OBJECT_TYPE snd_color_tag;
-
-int snd_color_p(XEN obj)
-{
-  return(XEN_OBJECT_TYPE_P(obj, snd_color_tag));
-}
-
-static XEN g_color_p(XEN obj) 
-{
-  #define H_color_p "(" S_color_p " obj) -> #t if obj is a color object"
-  return(C_TO_XEN_BOOLEAN(COLOR_P(obj)));
-}
-
-snd_color *get_snd_color(XEN arg)
-{
-  if (COLOR_P(arg))
-    return((snd_color *)XEN_OBJECT_REF(arg));
-  return(NULL);
-}
-
-static void snd_color_free(snd_color *v)
-{
-  gdk_color_free(v->color);
-  FREE(v);
-}
-
-XEN_MAKE_OBJECT_FREE_PROCEDURE(snd_color, free_snd_color, snd_color_free)
-
-static char *snd_color_to_string(snd_color *v)
-{
-  char *buf = NULL;
-  buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-  mus_snprintf(buf, PRINT_BUFFER_SIZE, "#<color: (%.2f %.2f %.2f)>",
-	       (float)(v->color->red) / 65535.0,
-	       (float)(v->color->green) / 65535.0,
-	       (float)(v->color->blue) / 65535.0);
-  return(buf);
-}
-
-XEN_MAKE_OBJECT_PRINT_PROCEDURE(snd_color, print_snd_color, snd_color_to_string)
-
 static XEN g_color2list(XEN obj)
 {
   #define H_color2list "(" S_color2list " obj) -> color rgb values as a list of floats"
-  snd_color *v;
-  XEN_ASSERT_TYPE(COLOR_P(obj), obj, XEN_ONLY_ARG, S_color2list, "a color object"); 
-  v = (snd_color *)XEN_OBJECT_REF(obj);
-  return(xen_return_first(XEN_LIST_3(C_TO_XEN_DOUBLE((float)(v->color->red) / 65535.0),
-				     C_TO_XEN_DOUBLE((float)(v->color->green) / 65535.0),
-				     C_TO_XEN_DOUBLE((float)(v->color->blue) / 65535.0)),
+  GdkColor *v;
+  XEN_ASSERT_TYPE(XEN_PIXEL_P(obj), obj, XEN_ONLY_ARG, S_color2list, "a color"); 
+  v = XEN_UNWRAP_PIXEL(obj);
+  return(xen_return_first(XEN_LIST_3(C_TO_XEN_DOUBLE((float)(v->red) / 65535.0),
+				     C_TO_XEN_DOUBLE((float)(v->green) / 65535.0),
+				     C_TO_XEN_DOUBLE((float)(v->blue) / 65535.0)),
 			  obj));
-}
-
-static XEN equalp_snd_color(XEN obj1, XEN obj2)
-{
-  snd_color *v1, *v2;
-#if HAVE_RUBY
-  if ((!(COLOR_P(obj1))) || (!(COLOR_P(obj2)))) return(XEN_FALSE);
-#endif
-  v1 = (snd_color *)XEN_OBJECT_REF(obj1);
-  v2 = (snd_color *)XEN_OBJECT_REF(obj2);
-  return(C_TO_XEN_BOOLEAN(v1->color->pixel == v2->color->pixel));
 }
 
 static XEN g_make_snd_color(XEN r, XEN g, XEN b)
 {
-  #define H_make_color "(" S_make_color " r g b) -> a color object with the indicated rgb values"
-  snd_color *new_color;
+  #define H_make_color "(" S_make_color " r g b) -> a color with the indicated rgb values"
   GdkColor gcolor;
+  GdkColor *ccolor;
   Float rf, gf, bf;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(r), r, XEN_ARG_1, S_make_color, "a number");
   /* someday accept a list as r */
@@ -102,31 +48,12 @@ static XEN g_make_snd_color(XEN r, XEN g, XEN b)
   rf = check_color_range(S_make_color, r);
   gf = check_color_range(S_make_color, g);
   bf = check_color_range(S_make_color, b);
-  new_color = (snd_color *)MALLOC(sizeof(snd_color));
   gcolor.red = (unsigned short)(65535 * rf);
   gcolor.green = (unsigned short)(65535 * gf);
   gcolor.blue = (unsigned short)(65535 * bf);
-  new_color->color = gdk_color_copy(&gcolor);
-  SG_COLOR_ALLOC(gdk_colormap_get_system(), new_color->color);
-  XEN_MAKE_AND_RETURN_OBJECT(snd_color_tag, new_color, 0, free_snd_color);
-}
-
-XEN pixel2color(COLOR_TYPE pix)
-{
-  return(g_make_snd_color(C_TO_XEN_DOUBLE((Float)(pix->red) / 65535.0),
-			  C_TO_XEN_DOUBLE((Float)(pix->green) / 65535.0),
-			  C_TO_XEN_DOUBLE((Float)(pix->blue) / 65535.0)));
-}
-
-COLOR_TYPE color2pixel(XEN color)
-{
-  snd_color *v;
-  snd_state *ss;
-  v = TO_SND_COLOR(color);
-  if (v)
-    return(v->color);
-  ss = get_global_state();
-  return(ss->sgx->basic_color);
+  ccolor = gdk_color_copy(&gcolor);
+  SG_COLOR_ALLOC(gdk_colormap_get_system(), ccolor);
+  return(XEN_WRAP_PIXEL(ccolor));
 }
 
 void recolor_everything(GUI_WIDGET w, GUI_POINTER ptr)
@@ -220,14 +147,12 @@ static XEN g_set_graph_cursor(XEN curs)
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_2(g_in_w, g_in)
 XEN_NARGIFY_3(g_make_snd_color_w, g_make_snd_color)
-XEN_NARGIFY_1(g_color_p_w, g_color_p)
 XEN_NARGIFY_1(g_color2list_w, g_color2list)
 XEN_NARGIFY_0(g_graph_cursor_w, g_graph_cursor)
 XEN_NARGIFY_1(g_set_graph_cursor_w, g_set_graph_cursor)
 #else
 #define g_in_w g_in
 #define g_make_snd_color_w g_make_snd_color
-#define g_color_p_w g_color_p
 #define g_color2list_w g_color2list
 #define g_graph_cursor_w g_graph_cursor
 #define g_set_graph_cursor_w g_set_graph_cursor
@@ -235,24 +160,8 @@ XEN_NARGIFY_1(g_set_graph_cursor_w, g_set_graph_cursor)
 
 void g_initialize_xgh(void)
 {
-  snd_color_tag = XEN_MAKE_OBJECT_TYPE("SndColor", sizeof(snd_color));
-
-#if HAVE_GUILE
-  scm_set_smob_print(snd_color_tag, print_snd_color);
-  scm_set_smob_free(snd_color_tag, free_snd_color);
-  scm_set_smob_equalp(snd_color_tag, equalp_snd_color);
-#if HAVE_APPLICABLE_SMOB
-  scm_set_smob_apply(snd_color_tag, XEN_PROCEDURE_CAST g_color2list, 0, 0, 0);
-#endif
-#endif
-#if HAVE_RUBY
-  rb_define_method(snd_color_tag, "to_s", XEN_PROCEDURE_CAST print_snd_color, 0);
-  rb_define_method(snd_color_tag, "eql?", XEN_PROCEDURE_CAST equalp_snd_color, 1);
-#endif
-
   XEN_DEFINE_PROCEDURE(S_in,            g_in_w, 2, 0, 0,             H_in);
   XEN_DEFINE_PROCEDURE(S_make_color,    g_make_snd_color_w, 3, 0, 0, H_make_color);
-  XEN_DEFINE_PROCEDURE(S_color_p,       g_color_p_w, 1, 0, 0,        H_color_p);
   XEN_DEFINE_PROCEDURE(S_color2list,    g_color2list_w, 1, 0, 0,     H_color2list);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_graph_cursor, g_graph_cursor_w, H_graph_cursor,

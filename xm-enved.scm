@@ -161,9 +161,9 @@
 
 
   (if (not (member |XmNbackground args))
-      (set! args (append args (list |XmNbackground (snd-pixel (graph-color))))))
+      (set! args (append args (list |XmNbackground (graph-color)))))
   (if (not (member |XmNforeground args))
-      (set! args (append args (list |XmNforeground (snd-pixel (data-color))))))
+      (set! args (append args (list |XmNforeground (data-color)))))
   (let* ((drawer (|XtCreateManagedWidget name |xmDrawingAreaWidgetClass parent args))
 	 (gc (car (snd-gcs)))
 	 (egc (list-ref (snd-gcs) 7))

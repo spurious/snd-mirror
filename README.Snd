@@ -111,15 +111,11 @@ Not very recently I added the possibility of using Ruby rather than
 Guile (on the HAVE_RUBY or --with-ruby switches).
 
 
-There are precompiled binaries available at the ccrma-ftp site
-mentioned above: linux-snd (or linux-snd.gz) for Linux
-on a PC; sun-snd for the Sun; also RPM (Redhat package management)
-files that contain the Linux/PC version, (snd-5-11.i386.rpm), the
-sources (snd-5-11.src.rpm), and the LinuxPPC version (snd-5-11.ppc.rpm).
-These RPM files have been superseded by Fernando Lopez-Lezcano's
-set available at http://www-ccrma.stanford.edu/software/snd/.
-The pre-built images require Guile 1.4; if you are running 1.3.4,
-you'll need to build from sources. 
+There are RPM packages of Snd available at the ccrma-ftp site
+mentioned above: snd-5-11.i386.rpm (for Linux), snd-5-11.src.rpm
+(sources), and snd-5-11.ppc.rpm (linuxPPC).  These RPM files have been
+superseded by Fernando Lopez-Lezcano's set available at
+http://www-ccrma.stanford.edu/software/snd/.
 
 
 ----------------------------------------------------------------
@@ -218,11 +214,10 @@ If you get the error:
 This probably means you don't have the Motif headers installed -- to
 build Snd with a GUI from the sources, you need either Motif or Gtk+.
 Motif has recently been released as open source software: see the url
-mentioned below.  The linux binary rpm file and the linux-snd image at
-ccrma-ftp have Motif statically loaded.  If you installed the
-openmotif library rpm package, it may not have included the headers
-(look under /usr/X11R6/include/Xm); to build Snd from the sources you
-need the headers (in the openmotif-devel packages).
+mentioned below.  If you installed the openmotif library rpm package,
+it may not have included the headers (look under
+/usr/X11R6/include/Xm); to build Snd from the sources you need the
+headers (in the openmotif-devel packages).
 
 In Debian, apt-get install libmotif-dev.
 
@@ -337,7 +332,7 @@ error: failed dependencies:
 	libXm.so.1 is needed by snd-3-1
 
 it means you don't have Motif installed; either get Motif, or use
-the pre-loaded images such as linux-snd, or build using Gtk+.
+build Snd using Gtk+.
 
 If Snd then refuses to run with the error:
 
@@ -414,10 +409,6 @@ particular one for Snd, use the configure variable GUILE_CONFIG_path:
 
 In this case, the configure script looks for /home/bil/test/bin/guile-config
 and uses the paths it returns to build Snd.  See also the PATH business below.
-
-
-If you're running linux-snd, you'll need guile 1.4 (it will appear
-as libguile.so.8 in ldd).
 
 
 > Other thing is that configure doesn't find guile-1.4.

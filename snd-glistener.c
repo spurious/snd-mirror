@@ -137,9 +137,6 @@ void listener_append_and_prompt(snd_state *ss, char *msg)
       if (msg)
 	append_listener_text(0, msg);
       append_listener_text(0, listener_prompt_with_cr(ss));
-#if HAVE_GTK2
-      listener_append(ss, " ");
-#endif
       cmd_eot = SG_TEXT_LENGTH(listener_text);
       printout_end = cmd_eot - 1;
     }
@@ -228,7 +225,7 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
       SG_TEXT_UNSELECT(listener_text);
       last_highlight_position = -1;
     }
-
+  /* fprintf(stderr,"got %d %c\n", event->state & snd_ControlMask, event->keyval); */
   if ((ss->sgx)->graph_is_active) 
     {
       cp = current_channel(ss);

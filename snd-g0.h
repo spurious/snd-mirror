@@ -47,13 +47,15 @@
 #define GUI_WIDGET GtkWidget*
 #define XEN_WRAP_WIDGET(Value)   ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkWidget_"), C_TO_XEN_ULONG((unsigned long)Value)) : XEN_FALSE)
 #define XEN_WRAP_WINDOW(Value)   ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkWindow_"), C_TO_XEN_ULONG((unsigned long)Value)) : XEN_FALSE)
-#define XEN_WRAP_GC(Value)       ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkGC_"), C_TO_XEN_ULONG((unsigned long)Value)) : XEN_FALSE)
-#define XEN_WRAP_PIXEL(Value)    ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkColor_"), C_TO_XEN_ULONG((unsigned long)Value)) : XEN_FALSE)
-#define XEN_UNWRAP_WIDGET(Value) (XEN_LIST_P(Value) ? XEN_TO_C_ULONG(XEN_CADR(Value)) : 0)
-#define XEN_UNWRAP_GC(Value)     (XEN_LIST_P(Value) ? XEN_TO_C_ULONG(XEN_CADR(Value)) : 0)
-#define XEN_UNWRAP_PIXEL(Value)  (XEN_LIST_P(Value) ? XEN_TO_C_ULONG(XEN_CADR(Value)) : 0)
-#define XEN_WIDGET_P(Value) (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
-                            (strcmp("GtkWidget_", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
+#define XEN_WRAP_GC(Value)       XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkGC_"), C_TO_XEN_ULONG((unsigned long)Value))
+#define XEN_WRAP_PIXEL(Value)    XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkColor_"), C_TO_XEN_ULONG((unsigned long)Value))
+#define XEN_UNWRAP_WIDGET(Value) (XEN_LIST_P(Value) ? (GtkWidget*)(XEN_TO_C_ULONG(XEN_CADR(Value))) : NULL)
+#define XEN_UNWRAP_GC(Value)     (GdkGC*)(XEN_TO_C_ULONG(XEN_CADR(Value)))
+#define XEN_UNWRAP_PIXEL(Value)  (GdkColor*)(XEN_TO_C_ULONG(XEN_CADR(Value)))
+#define XEN_WIDGET_P(Value)      (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
+                                  (strcmp("GtkWidget_", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
+#define XEN_PIXEL_P(Value)       (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
+                                  (strcmp("GdkColor_", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
 
 #define Locus gint16
 #define Latus guint16
@@ -341,7 +343,7 @@ typedef struct {
   #define SG_TEXT_FREEZE(Widget)
   #define SG_TEXT_THAW(Widget)
   #define SG_TEXT_DELETE(Widget, Start, End) sg_text_delete(Widget, Start, End)
-  #define SG_TEXT_SET_POINT(Widget, Point)   sg_set_cursor(Widget, Point)
+  #define SG_TEXT_SET_POINT(Widget, Point)   sg_set_cursor(Widget, Point + 1)
   #define SG_TEXT_GET_POINT(Widget)          sg_cursor_position(Widget)
   #define SG_TEXT_UNSELECT(Widget)           sg_unselect_text(Widget)
   #define SG_TEXT_SELECT(Widget, Start, End) sg_select_text(Widget, Start, End)

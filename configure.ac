@@ -81,6 +81,9 @@ AC_ARG_WITH(guile,      [  --with-guile		  use Guile])
 AC_ARG_WITH(run,        [  --with-run		  Guile optimizer])
 AC_ARG_WITH(gl,         [  --with-gl		  include OpenGL support])
 AC_ARG_WITH(just-gl,    [  --with-just-gl	  include OpenGL support, but omit the GL/Guile bindings])
+AC_ARG_WITH(html,	[  --with-html		  include the XmHTML or mozilla browser library])
+AC_ARG_WITH(motif,	[  --with-motif		  use libXm to build Snd])
+AC_ARG_WITH(static-motif,[  --with-static-motif	  use libXm.a to build Snd])
 
 if test "$with_doubles" = yes; then
   AC_DEFINE(Float,double)
@@ -91,31 +94,31 @@ fi
 XMHTML_LIB=""
 GTKHTML_LIB=""
 GTKHTML_FLAGS=""
-AC_ARG_WITH(html,
-	[  --with-html		  include the XmHTML or mozilla browser library],
-  	if test "$with_html" = yes ; then
-	    AC_DEFINE(HAVE_HTML)
-            XMHTML_LIB="-lXmHTML -ljpeg -lpng"
-            GTKHTML_LIB="-Xlinker -rpath -Xlinker /usr/lib/mozilla -L/usr/lib/mozilla -lgtkembedmoz"
-            GTKHTML_FLAGS="-I/usr/include/mozilla"
+if test "$with_html" = yes ; then
+  AC_DEFINE(HAVE_HTML)
+  XMHTML_LIB="-lXmHTML -ljpeg -lpng"
+  AC_PATH_PROG(MOZILLA_CONFIG, mozilla-config, no)
+  if test "$MOZILLA_CONFIG" = no ; then
+    GTKHTML_LIB="-Xlinker -rpath -Xlinker /usr/lib/mozilla -L/usr/lib/mozilla -lgtkembedmoz"
+    GTKHTML_FLAGS="-I/usr/include/mozilla"
+  else
+    GTKHTML_LIB=`$MOZILLA_CONFIG --libs`
+    GTKHTML_FLAGS=`$MOZILLA_CONFIG --cflags`
+    fi
 dnl which we actually use is decided later
-	fi)
+fi
 
-AC_ARG_WITH(motif,
-	[  --with-motif		  use libXm to build Snd],
-  	if test "$with_motif" = yes ; then
-	    AC_DEFINE(USE_MOTIF)
-	fi)
+if test "$with_motif" = yes ; then
+  AC_DEFINE(USE_MOTIF)
+fi
 
 AC_ARG_WITH(motif-prefix,[  --with-motif-prefix=PFX where Motif is installed],
             motif_prefix="$withval", motif_prefix="")
 
-AC_ARG_WITH(static-motif,
-	[  --with-static-motif	  use libXm.a to build Snd],
-  	if test "$with_static_motif" = yes ; then
-	    AC_DEFINE(USE_MOTIF)
-            with_motif=yes
-	fi)
+if test "$with_static_motif" = yes ; then
+  AC_DEFINE(USE_MOTIF)
+  with_motif=yes
+fi
 
 AC_ARG_WITH(temp-dir,
 	[  --with-temp-dir	  directory to use for temp files],
@@ -695,8 +698,6 @@ if test $GUILE_CONFIG_works = yes; then
     AC_CHECK_LIB(guile, scm_c_eval_string,      [AC_DEFINE(HAVE_SCM_C_EVAL_STRING)])
     AC_CHECK_LIB(guile, scm_list_n,             [AC_DEFINE(HAVE_SCM_LIST_N)])
     AC_CHECK_LIB(guile, scm_str2symbol,         [AC_DEFINE(HAVE_SCM_STR2SYMBOL)])
-    AC_CHECK_LIB(guile, scm_gc_malloc,          [AC_DEFINE(HAVE_SCM_GC_MALLOC)])
-# scm_gc_malloc currently unused
     AC_CHECK_TYPE(scm_t_catch_body,             [AC_DEFINE(HAVE_SCM_T_CATCH_BODY)], , [#include <guile/gh.h>])
     LIBS="$OLD_LIBS"
     CFLAGS="$OLD_CFLAGS"

@@ -225,7 +225,7 @@ static void check_for_first_edit(chan_info *cp)
  */
 
 /* ed_list fields accessed only in this file */
-enum {ED_SIMPLE, ED_RAMP};
+enum {ED_SIMPLE, ED_RAMP, ED_PTREE}; /* typ field choices */
 #define UNWRAP_SAMPLE(X, ED) ((X) * (ED))
 #define UNWRAP_SAMPLE_TO_FLOAT(X, SF) ((X) * (SF->fscaler))
 
@@ -261,6 +261,7 @@ enum {ED_SIMPLE, ED_RAMP};
 #define SCALED_EDIT 4
 #define ZERO_EDIT 5
 #define RAMP_EDIT 6
+#define PTREE_EDIT 7
 
 #define PACK_EDIT(a, b) ((a) << 16 | (b))
 #define EDIT_TYPE(a) (((a) >> 16) & 0xffff)
@@ -268,7 +269,7 @@ enum {ED_SIMPLE, ED_RAMP};
 /* edit history decoding info */
 /* EDIT_LOCATION is the index in cp->sounds holding the associated data */
 
-static char *edit_names[8] = {"insert", "delete", "set", "init", "scale", "zero", "env", ""};
+static char *edit_names[9] = {"insert", "delete", "set", "init", "scale", "zero", "env", "ptree", ""};
 
 static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed)
 {
@@ -284,6 +285,8 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed)
     case SCALED_EDIT:     fprintf(outp, "\n (scale " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);          break;
     case ZERO_EDIT:       fprintf(outp, "\n (silence " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);        break;
     case RAMP_EDIT:       fprintf(outp, "\n (ramp " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);           break;
+    case PTREE_EDIT:      fprintf(outp, "\n (<ptree> " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);        break; 
+      /* TODO: how to save ptree edit in reconstructible form (save-state)? */
     case INITIALIZE_EDIT: fprintf(outp, "\n (begin) ");                                                  break;
     }
   if (ed->origin) fprintf(outp, "; %s ", ed->origin);
@@ -368,6 +371,7 @@ char *edit_to_string(chan_info *cp, int edit)
   ed_list *ed;
   ed = cp->edits[edit];
   /* only for edit list in snd-xchn.c */
+  /* TODO: need better name than "ptree" for user's edit history list */
   mus_snprintf(edbuf, PRINT_BUFFER_SIZE, "%s : (%s " OFF_TD " " OFF_TD ")", 
 	       ed->origin, 
 	       edit_names[EDIT_TYPE(ed->sfnum)], 
@@ -564,6 +568,12 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 		      cp->chan);
 	      break;
 	    case RAMP_EDIT:
+	      fprintf(fd, "      (%s sfile %d)\n",
+		      ed->origin,
+		      cp->chan);
+	      break;
+	    case PTREE_EDIT:
+	      /* TODO: ptree edit dependent on origin??? */
 	      fprintf(fd, "      (%s sfile %d)\n",
 		      ed->origin,
 		      cp->chan);
@@ -1381,13 +1391,11 @@ int ramped_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos)
       if ((loc > end) || (FRAGMENT_SOUND(ed, i) == EDIT_LIST_END_MARK))
 	return(FALSE);
       typ = FRAGMENT_TYPE(ed, i);
-      if ((typ == ED_RAMP) && (loc >= beg)) /* loc not beyond end, but is beyond beg, so this ramp falls into our segment */
+      if ((typ == ED_RAMP) && (loc >= beg))                 /* loc not beyond end, but is beyond beg, so this ramp falls into our segment */
 	return(TRUE);
-      loc = FRAGMENT_GLOBAL_POSITION(ed, i + 1);
-      /* i.e. next loc = current fragment end point */
+      loc = FRAGMENT_GLOBAL_POSITION(ed, i + 1);            /* i.e. next loc = current fragment end point */
       if ((typ == ED_RAMP) && (loc >= beg) && (loc <= end)) /* current ramp fragment ends in segment */
 	return(TRUE);
-      /* perhaps these should check typ != ED_SIMPLE (so anything else causes recalc) */
     }
   return(FALSE);
 }
@@ -4349,8 +4357,7 @@ void g_init_edits(void)
 					    "set-" S_samples, g_set_samples_w, g_set_samples_reversed, 0, 5, 3, 6);
 
   #define H_save_hook S_save_hook " (snd name) is called each time a file is about to be saved. \
-If it returns #t, the file is not saved.  'name' is #f unless \
-the file is being saved under a new name (as in sound-save-as)."
+If it returns #t, the file is not saved.  'name' is #f unless the file is being saved under a new name (as in sound-save-as)."
 
   XEN_DEFINE_HOOK(save_hook, S_save_hook, 2, H_save_hook);      /* arg = sound index, possible new name */
 

@@ -855,8 +855,8 @@ Optional Packages:
   --with-just-gl	  include OpenGL support, but omit the GL/Guile bindings
   --with-html		  include the XmHTML or mozilla browser library
   --with-motif		  use libXm to build Snd
-  --with-motif-prefix=PFX where Motif is installed
   --with-static-motif	  use libXm.a to build Snd
+  --with-motif-prefix=PFX where Motif is installed
   --with-temp-dir	  directory to use for temp files
   --with-save-dir	  directory to use for saved-state files
   --with-ruby-prefix=PFX  where Ruby is installed
@@ -2606,6 +2606,24 @@ if test "${with_just_gl+set}" = set; then
 
 fi;
 
+# Check whether --with-html or --without-html was given.
+if test "${with_html+set}" = set; then
+  withval="$with_html"
+
+fi;
+
+# Check whether --with-motif or --without-motif was given.
+if test "${with_motif+set}" = set; then
+  withval="$with_motif"
+
+fi;
+
+# Check whether --with-static-motif or --without-static-motif was given.
+if test "${with_static_motif+set}" = set; then
+  withval="$with_static_motif"
+
+fi;
+
 if test "$with_doubles" = yes; then
   cat >>confdefs.h <<\_ACEOF
 #define Float double
@@ -2621,32 +2639,67 @@ fi
 XMHTML_LIB=""
 GTKHTML_LIB=""
 GTKHTML_FLAGS=""
-
-# Check whether --with-html or --without-html was given.
-if test "${with_html+set}" = set; then
-  withval="$with_html"
-  if test "$with_html" = yes ; then
-	    cat >>confdefs.h <<\_ACEOF
+if test "$with_html" = yes ; then
+  cat >>confdefs.h <<\_ACEOF
 #define HAVE_HTML 1
 _ACEOF
 
-            XMHTML_LIB="-lXmHTML -ljpeg -lpng"
-            GTKHTML_LIB="-Xlinker -rpath -Xlinker /usr/lib/mozilla -L/usr/lib/mozilla -lgtkembedmoz"
-            GTKHTML_FLAGS="-I/usr/include/mozilla"
-	fi
-fi;
+  XMHTML_LIB="-lXmHTML -ljpeg -lpng"
+  # Extract the first word of "mozilla-config", so it can be a program name with args.
+set dummy mozilla-config; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_MOZILLA_CONFIG+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $MOZILLA_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_MOZILLA_CONFIG="$MOZILLA_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_MOZILLA_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
 
+  test -z "$ac_cv_path_MOZILLA_CONFIG" && ac_cv_path_MOZILLA_CONFIG="no"
+  ;;
+esac
+fi
+MOZILLA_CONFIG=$ac_cv_path_MOZILLA_CONFIG
 
-# Check whether --with-motif or --without-motif was given.
-if test "${with_motif+set}" = set; then
-  withval="$with_motif"
-  if test "$with_motif" = yes ; then
-	    cat >>confdefs.h <<\_ACEOF
+if test -n "$MOZILLA_CONFIG"; then
+  echo "$as_me:$LINENO: result: $MOZILLA_CONFIG" >&5
+echo "${ECHO_T}$MOZILLA_CONFIG" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+  if test "$MOZILLA_CONFIG" = no ; then
+    GTKHTML_LIB="-Xlinker -rpath -Xlinker /usr/lib/mozilla -L/usr/lib/mozilla -lgtkembedmoz"
+    GTKHTML_FLAGS="-I/usr/include/mozilla"
+  else
+    GTKHTML_LIB=`$MOZILLA_CONFIG --libs`
+    GTKHTML_FLAGS=`$MOZILLA_CONFIG --cflags`
+    fi
+fi
+
+if test "$with_motif" = yes ; then
+  cat >>confdefs.h <<\_ACEOF
 #define USE_MOTIF 1
 _ACEOF
 
-	fi
-fi;
+fi
 
 
 # Check whether --with-motif-prefix or --without-motif-prefix was given.
@@ -2657,18 +2710,13 @@ else
   motif_prefix=""
 fi;
 
-
-# Check whether --with-static-motif or --without-static-motif was given.
-if test "${with_static_motif+set}" = set; then
-  withval="$with_static_motif"
-  if test "$with_static_motif" = yes ; then
-	    cat >>confdefs.h <<\_ACEOF
+if test "$with_static_motif" = yes ; then
+  cat >>confdefs.h <<\_ACEOF
 #define USE_MOTIF 1
 _ACEOF
 
-            with_motif=yes
-	fi
-fi;
+  with_motif=yes
+fi
 
 
 # Check whether --with-temp-dir or --without-temp-dir was given.
@@ -13034,69 +13082,6 @@ _ACEOF
 
 fi
 
-    echo "$as_me:$LINENO: checking for scm_gc_malloc in -lguile" >&5
-echo $ECHO_N "checking for scm_gc_malloc in -lguile... $ECHO_C" >&6
-if test "${ac_cv_lib_guile_scm_gc_malloc+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lguile  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-#include "confdefs.h"
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char scm_gc_malloc ();
-#ifdef F77_DUMMY_MAIN
-#  ifdef __cplusplus
-     extern "C"
-#  endif
-   int F77_DUMMY_MAIN() { return 1; }
-#endif
-int
-main ()
-{
-scm_gc_malloc ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_guile_scm_gc_malloc=yes
-else
-  echo "$as_me: failed program was:" >&5
-cat conftest.$ac_ext >&5
-ac_cv_lib_guile_scm_gc_malloc=no
-fi
-rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_guile_scm_gc_malloc" >&5
-echo "${ECHO_T}$ac_cv_lib_guile_scm_gc_malloc" >&6
-if test $ac_cv_lib_guile_scm_gc_malloc = yes; then
-  cat >>confdefs.h <<\_ACEOF
-#define HAVE_SCM_GC_MALLOC 1
-_ACEOF
-
-fi
-
-# scm_gc_malloc currently unused
     echo "$as_me:$LINENO: checking for scm_t_catch_body" >&5
 echo $ECHO_N "checking for scm_t_catch_body... $ECHO_C" >&6
 if test "${ac_cv_type_scm_t_catch_body+set}" = set; then
@@ -14899,6 +14884,7 @@ s,@CPP@,$CPP,;t t
 s,@INSTALL_PROGRAM@,$INSTALL_PROGRAM,;t t
 s,@INSTALL_SCRIPT@,$INSTALL_SCRIPT,;t t
 s,@INSTALL_DATA@,$INSTALL_DATA,;t t
+s,@MOZILLA_CONFIG@,$MOZILLA_CONFIG,;t t
 s,@GUILE_LIBS@,$GUILE_LIBS,;t t
 s,@GUILE_CFLAGS@,$GUILE_CFLAGS,;t t
 s,@GSL_CONFIG@,$GSL_CONFIG,;t t

@@ -91,8 +91,8 @@
    (lambda (n)
      (if (|XtIsWidget n)
 	 (if (|XmIsScrollBar n)
-	     (|XmChangeColor n (snd-pixel (position-color)))
-	     (|XmChangeColor n (snd-pixel (basic-color))))))))
+	     (|XmChangeColor n (position-color))
+	     (|XmChangeColor n (basic-color)))))))
 
 (define (x->snd-color color-name)
   "(x->snd-color color-name) returns a Snd color object corresponding to the X11 color name 'color-name'"
@@ -370,8 +370,8 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
 
 ;(add-channel-pane "new-pane" 
 ;		  |xmDrawingAreaWidgetClass 
-;		  (list |XmNbackground (snd-pixel (graph-color))
-;			|XmNforeground (snd-pixel (data-color))))
+;		  (list |XmNbackground (graph-color)
+;			|XmNforeground (data-color)))
 
 (define (remove-menu-bar-menu which)
   (|XtUnmanageChild (list-ref (menu-widgets) which)))
@@ -443,13 +443,13 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		      |XmNresizePolicy        |XmRESIZE_GROW
 	              |XmNnoResize            #f
 		      |XmNtransient           #f
-		      |XmNbackground          (snd-pixel (basic-color)))))
+		      |XmNbackground          (basic-color))))
 
 	(for-each
 	 (lambda (button)
 	   (|XtVaSetValues (|XmMessageBoxGetChild hidden-controls-dialog button)
-			   (list |XmNarmColor   (snd-pixel (pushed-button-color))
-				 |XmNbackground (snd-pixel (basic-color)))))
+			   (list |XmNarmColor   (pushed-button-color)
+				 |XmNbackground (basic-color))))
 	 (list |XmDIALOG_HELP_BUTTON |XmDIALOG_CANCEL_BUTTON |XmDIALOG_OK_BUTTON))
 
 	(|XtAddCallback hidden-controls-dialog 
@@ -491,7 +491,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 				     |XmNdecimalPoints 2
 				     |XmNtitleString   title
 				     |XmNborderWidth   1
-				     |XmNbackground    (snd-pixel (basic-color))))))
+				     |XmNbackground    (basic-color)))))
 	       (|XmStringFree title)
 	       (set! hidden-controls (cons (list slider initial func) hidden-controls))
 	       (|XtAddCallback slider
@@ -537,7 +537,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		      |XmNdialogTitle         titlestr
 		      |XmNresizePolicy        |XmRESIZE_GROW
 	              |XmNnoResize            #f
-		      |XmNbackground          (snd-pixel (basic-color))
+		      |XmNbackground          (basic-color)
 		      |XmNtransient           #f) ))
 	(|XtAddCallback fmv-dialog 
 			|XmNcancelCallback (lambda (w context info)
@@ -557,17 +557,17 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		        |XmNtopAttachment       |XmATTACH_FORM
 		        |XmNbottomAttachment    |XmATTACH_WIDGET
 		        |XmNbottomWidget        (|XmMessageBoxGetChild fmv-dialog |XmDIALOG_SEPARATOR)
-			|XmNbackground          (snd-pixel (basic-color))
+			|XmNbackground          (basic-color)
 			|XmNorientation         |XmHORIZONTAL)))
 	       (button 
 		(|XtCreateManagedWidget "play" |xmToggleButtonWidgetClass mainform
-		  (list |XmNbackground  (snd-pixel (basic-color)))))
+		  (list |XmNbackground  (basic-color))))
 					
 	       (scale
 		(|XtCreateManagedWidget "" |xmScaleWidgetClass mainform
 		  (list |XmNorientation |XmHORIZONTAL
 			|XmNshowValue   #t
-			|XmNbackground  (snd-pixel (basic-color))
+			|XmNbackground  (basic-color)
 			|XmNvalue       (inexact->exact (* amplitude 100))
 			|XmNmaximum     100
 			|XmNdecimalPoints 2))))
@@ -628,7 +628,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 
 (define (make-pixmap widget strs) ; strs is list of strings as in arrow-strs above
   (let* ((attr (|XpmAttributes))
-	 (symb (|XpmColorSymbol "basiccolor" #f (snd-pixel (basic-color))))
+	 (symb (|XpmColorSymbol "basiccolor" #f (basic-color)))
 	 (dpy (|XtDisplay widget))
 	 (win (|XtWindow widget))
 	 (scr (|DefaultScreen dpy))
@@ -730,10 +730,10 @@ Reverb-feedback sets the scaler on the feedback.\n\
 
 	 ;; now set up a paned window in the main Snd window with controllers on the left and the graph on the right
 	 (scan-outer (add-main-pane "Scanned Synthesis" |xmFormWidgetClass
-				    (list |XmNbackground (snd-pixel (basic-color))
+				    (list |XmNbackground (basic-color)
 					  |XmNpaneMinimum 320)))
 	 (scan-row (|XtCreateManagedWidget "row" |xmRowColumnWidgetClass scan-outer
-					   (list |XmNbackground       (snd-pixel (basic-color))
+					   (list |XmNbackground       (basic-color)
 						 |XmNorientation      |XmVERTICAL
 						 |XmNleftAttachment   |XmATTACH_FORM
 						 |XmNtopAttachment    |XmATTACH_FORM
@@ -743,8 +743,8 @@ Reverb-feedback sets the scaler on the feedback.\n\
 
 	 ;; the graph
 	 (scan-pane (|XtCreateManagedWidget "draw" |xmDrawingAreaWidgetClass scan-outer
-					    (list |XmNbackground       (snd-pixel (graph-color))
-						  |XmNforeground       (snd-pixel (data-color))
+					    (list |XmNbackground       (graph-color)
+						  |XmNforeground       (data-color)
 						  |XmNleftAttachment   |XmATTACH_WIDGET
 						  |XmNleftWidget       scan-row
 						  |XmNtopAttachment    |XmATTACH_FORM
@@ -753,14 +753,14 @@ Reverb-feedback sets the scaler on the feedback.\n\
 
 	 ;; the controllers
 	 (scan-start (|XtCreateManagedWidget "Start" |xmPushButtonWidgetClass scan-row
-					     (list |XmNbackground (snd-pixel (basic-color))
-						   |XmNarmColor   (snd-pixel (pushed-button-color)))))
+					     (list |XmNbackground (basic-color)
+						   |XmNarmColor   (pushed-button-color))))
 	 (scan-continue (|XtCreateManagedWidget "Continue" |xmPushButtonWidgetClass scan-row
-						(list |XmNbackground (snd-pixel (basic-color))
-						      |XmNarmColor   (snd-pixel (pushed-button-color)))))
+						(list |XmNbackground (basic-color)
+						      |XmNarmColor   (pushed-button-color))))
 	 (scan-stop (|XtCreateManagedWidget "Stop" |xmPushButtonWidgetClass scan-row
-					    (list |XmNbackground (snd-pixel (basic-color))
-						  |XmNarmColor   (snd-pixel (pushed-button-color)))))
+					    (list |XmNbackground (basic-color)
+						  |XmNarmColor   (pushed-button-color))))
 	 
 	 (size 128)
 	 (gx0 (make-vct size))	   
@@ -840,7 +840,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
      (lambda (data)
        (let* ((title (|XmStringCreate (car data) |XmFONTLIST_DEFAULT_TAG))
 	      (button (|XtCreateManagedWidget (car data) |xmScaleWidgetClass scan-row
-					      (list |XmNbackground    (snd-pixel (basic-color))
+					      (list |XmNbackground    (basic-color)
 						    |XmNorientation   |XmHORIZONTAL
 						    |XmNshowValue     #t
 						    |XmNminimum       (list-ref data 1)
@@ -856,15 +856,15 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	   (list "damping" 0 100 0 4 (lambda (val) (set! damp (/ val 10000.0))))))
 
     (let* ((scan-size (|XtCreateManagedWidget "srow" |xmFormWidgetClass scan-row
-					      (list  |XmNbackground (snd-pixel (basic-color)))))
+					      (list  |XmNbackground (basic-color))))
 	   (scan-label (|XtCreateManagedWidget "Size:" |xmLabelWidgetClass scan-size
-					       (list |XmNbackground       (snd-pixel (basic-color))
+					       (list |XmNbackground       (basic-color)
 						     |XmNleftAttachment   |XmATTACH_FORM
 						     |XmNtopAttachment    |XmATTACH_FORM
 						     |XmNbottomAttachment |XmATTACH_FORM
 						     |XmNrightAttachment  |XmATTACH_NONE)))
 	   (scan-text (|XtCreateManagedWidget "stext" |xmTextFieldWidgetClass scan-size
-					      (list |XmNbackground       (snd-pixel (basic-color))
+					      (list |XmNbackground       (basic-color)
 						    |XmNvalue            (number->string size)
 						    |XmNleftAttachment   |XmATTACH_WIDGET
 						    |XmNleftWidget       scan-label
@@ -878,7 +878,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 			    (|XtSetValues w (list |XmNbackground (white-pixel)))))
       (|XtAddEventHandler scan-text |LeaveWindowMask #f
 			  (lambda (w context ev flag)
-			    (|XtSetValues w (list |XmNbackground (snd-pixel (basic-color))))))
+			    (|XtSetValues w (list |XmNbackground (basic-color)))))
       (|XtAddCallback scan-text |XmNactivateCallback 
 		      (lambda (w c i)
 			(stop-synthesis)
@@ -973,18 +973,18 @@ Reverb-feedback sets the scaler on the feedback.\n\
       (deactivate-channel snd chn)
       (if (not (|Widget? (mark-list snd chn)))
 	  (let* ((mark-box (add-channel-pane snd chn "mark-box" |xmFormWidgetClass
-			          (list |XmNbackground       (snd-pixel (basic-color))
+			          (list |XmNbackground       (basic-color)
 				        |XmNorientation      |XmVERTICAL
 				        |XmNpaneMinimum      100
 				        |XmNbottomAttachment |XmATTACH_FORM)))
 		 (mark-label (|XtCreateManagedWidget "Marks" |xmLabelWidgetClass mark-box
-			          (list |XmNbackground       (snd-pixel (highlight-color))
+			          (list |XmNbackground       (highlight-color)
 				        |XmNleftAttachment   |XmATTACH_FORM
 				        |XmNrightAttachment  |XmATTACH_FORM
 				        |XmNalignment        |XmALIGNMENT_CENTER
 				        |XmNtopAttachment    |XmATTACH_FORM)))
 		 (mark-scroller (|XtCreateManagedWidget "mark-scroller" |xmScrolledWindowWidgetClass mark-box
-			          (list |XmNbackground       (snd-pixel (basic-color))
+			          (list |XmNbackground       (basic-color)
 				        |XmNscrollingPolicy  |XmAUTOMATIC
 				        |XmNscrollBarDisplayPolicy |XmSTATIC
 				        |XmNleftAttachment   |XmATTACH_FORM
@@ -1006,13 +1006,13 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	      (do ((i current-mark-list-length (1+ i)))
 		  ((= i (length new-marks)))
 		(let ((tf (|XtCreateWidget "field" |xmTextFieldWidgetClass lst
-					   (list |XmNbackground (snd-pixel (basic-color))))))
+					   (list |XmNbackground (basic-color)))))
 		  (|XtAddCallback tf |XmNfocusCallback
 				  (lambda (w c i)
 				    (|XtSetValues w (list |XmNbackground (white-pixel)))))
 		  (|XtAddCallback tf |XmNlosingFocusCallback
 				  (lambda (w c i)
-				    (|XtSetValues w (list |XmNbackground (snd-pixel (basic-color))))))
+				    (|XtSetValues w (list |XmNbackground (basic-color)))))
 		  (|XtAddCallback tf |XmNactivateCallback
 				  (lambda (w c i)
 				    (let* ((id (cadr (|XtGetValues w (list |XmNuserData 0))))
@@ -1024,7 +1024,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 				      (if samp
 					  (set! (mark-sample id) samp)
 					  (delete-mark id))
-				      (|XtSetValues w (list |XmNbackground (snd-pixel (basic-color)))))))))))
+				      (|XtSetValues w (list |XmNbackground (basic-color))))))))))
 	(set! (mark-list-length snd chn) (length new-marks))
 	(let* ((lst (mark-list snd chn)))
 	  (call-with-current-continuation
@@ -1113,7 +1113,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		 	 (let ((new-dialog (|XmCreateFileSelectionDialog 
 					     (cadr (main-widgets)) 
 					     title
-					     (list |XmNbackground (snd-pixel (basic-color))))))
+					     (list |XmNbackground (basic-color)))))
 			   (|XtAddCallback new-dialog |XmNhelpCallback
 					    (lambda (w c i)
 					      (let ((lst (find-dialog w file-selector-dialogs)))
@@ -1137,11 +1137,11 @@ Reverb-feedback sets the scaler on the feedback.\n\
 			  (|XtSetValues (|XmFileSelectionBoxGetChild new-dialog |XmDIALOG_LIST) 
 					(list |XmNbackground (white-pixel)))
 			  (|XtSetValues (|XtNameToWidget new-dialog "Cancel")
-					(list |XmNarmColor (snd-pixel (pushed-button-color))))
+					(list |XmNarmColor (pushed-button-color)))
 			  (|XtSetValues (|XtNameToWidget new-dialog "Help")
-					(list |XmNarmColor (snd-pixel (pushed-button-color))))
+					(list |XmNarmColor (pushed-button-color)))
 			  (|XtSetValues (|XtNameToWidget new-dialog "OK")
-					(list |XmNarmColor (snd-pixel (pushed-button-color))))
+					(list |XmNarmColor (pushed-button-color)))
 			  new-dialog))))
 	(if (not help)
 	    (|XtUnmanageChild (|XmFileSelectionBoxGetChild dialog |XmDIALOG_HELP_BUTTON))
@@ -1179,7 +1179,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
       (let* ((pix (|XCreatePixmap dpy win 16 16 (screen-depth)))
 	     (pixwin (list 'Window (cadr pix)))) ; C-style cast to Window for X graphics procedures
 	(vector-set! clock-pixmaps i pix)
-	(|XSetForeground dpy dgc (snd-pixel (basic-color)))
+	(|XSetForeground dpy dgc (basic-color))
 	(|XFillRectangle dpy pixwin dgc 0 0 16 16)
 	(|XSetForeground dpy dgc (white-pixel))
 	(|XFillArc dpy pixwin dgc 1 1 14 14 0 (* 64 360))
@@ -1188,8 +1188,8 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	(|XDrawLine dpy pixwin dgc 8 8
 			(+ 8 (inexact->exact (* 7 (sin (* i (/ 3.1416 6.0))))))
 			(- 8 (inexact->exact (* 7 (cos (* i (/ 3.1416 6.0)))))))))
-    (|XSetBackground dpy dgc (snd-pixel (graph-color)))
-    (|XSetForeground dpy dgc (snd-pixel (data-color)))
+    (|XSetBackground dpy dgc (graph-color))
+    (|XSetForeground dpy dgc (data-color))
     (lambda (snd hour)
       (if hour
 	  (|XtSetValues (list-ref (sound-widgets snd) 8)
@@ -1245,8 +1245,8 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		  (f1 (|XmFontListAppendEntry #f e1)))
 	     (|XmFontListEntryFree e1)
 	     f1)))
-    (set! (|foreground gv) (snd-pixel (data-color)))
-    (set! (|background gv) (snd-pixel (basic-color)))
+    (set! (|foreground gv) (data-color))
+    (set! (|background gv) (basic-color))
     (set! (|font gv) (|fid button-fontstruct))
     (let ((gc (|XCreateGC (|XtDisplay shell) 
 			  (|XtWindow shell) 
@@ -1303,13 +1303,13 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	       (pix (|XCreatePixmap dpy win width height (screen-depth)))
 	       (str (|XmStringCreateLocalized filename))
 	       (data (list gc filename #f (channel-amp-envs filename 0 width peak-func))))
-	  (|XSetForeground dpy gc (snd-pixel (basic-color)))
+	  (|XSetForeground dpy gc (basic-color))
 	  (|XFillRectangle dpy (cast-to-window pix) gc 0 0 width height)
-	  (|XSetForeground dpy gc (snd-pixel (data-color)))
+	  (|XSetForeground dpy gc (data-color))
 	  (make-sound-button-pixmap dpy (cast-to-window pix) data width height)
 	  (let ((icon (|XtCreateManagedWidget filename |xmIconGadgetClass parent
-			(append (list |XmNbackground      (snd-pixel (basic-color))
-				      |XmNforeground      (snd-pixel (data-color))
+			(append (list |XmNbackground      (basic-color)
+				      |XmNforeground      (data-color)
 				      |XmNlabelString     str
 				      |XmNfontList        button-fontlist
 				      |XmNlargeIconPixmap pix
@@ -1550,7 +1550,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	 (width (inexact->exact (/ (cadr (|XtGetValues parent (list |XmNwidth 0))) n)))
 	 (meters (|XtCreateManagedWidget "meters" |xmFormWidgetClass parent
 	 	   (list |XmNpositionIndex 0  ; top pane
-			 |XmNbackground    (snd-pixel (basic-color))
+			 |XmNbackground    (basic-color)
 			 |XmNfractionBase  (* n 10)
 			 |XmNpaneMinimum   height)))
 	 (meter-list '()))
@@ -1666,7 +1666,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		   (space (kmg (disk-kspace (file-name snd))))
 		   (str (|XmStringCreateLocalized space))
 		   (new-label (|XtCreateManagedWidget "space:" |xmLabelWidgetClass name-form 
-				(list |XmNbackground      (snd-pixel (basic-color))
+				(list |XmNbackground      (basic-color)
 				      |XmNleftAttachment  |XmATTACH_WIDGET
 				      |XmNleftWidget      minibuffer
 				      |XmNlabelString     str
@@ -1791,7 +1791,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
     (let* ((s1 (|XmStringCreateLocalized "amp:"))
 	   (smax (scrollbar-max))
 	   (label (|XtCreateManagedWidget (label-name chan) |xmPushButtonWidgetClass parent
-					  (list |XmNbackground       (snd-pixel (basic-color))
+					  (list |XmNbackground       (basic-color)
 						|XmNalignment        |XmALIGNMENT_BEGINNING
 						|XmNtopAttachment    |XmATTACH_FORM
 						|XmNbottomAttachment |XmATTACH_NONE
@@ -1805,7 +1805,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 						|XmNfillOnArm        #f)))
 	   (s2 (|XmStringCreateLocalized "1.00"))
 	   (number (|XtCreateManagedWidget (number-name chan) |xmLabelWidgetClass parent
-					   (list |XmNbackground       (snd-pixel (basic-color))
+					   (list |XmNbackground       (basic-color)
 						 |XmNalignment        |XmALIGNMENT_BEGINNING
 						 |XmNtopAttachment    |XmATTACH_OPPOSITE_WIDGET
 						 |XmNtopWidget        label
@@ -1817,7 +1817,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 						 |XmNmarginHeight     1
 						 |XmNrecomputeSize    #f)))
 	   (scroll (|XtCreateManagedWidget (scroller-name chan) |xmScrollBarWidgetClass parent
-					   (list |XmNbackground       (snd-pixel (position-color))
+					   (list |XmNbackground       (position-color)
 						 |XmNtopAttachment    |XmATTACH_OPPOSITE_WIDGET
 						 |XmNtopWidget        label
 						 |XmNbottomAttachment |XmATTACH_NONE
@@ -1954,14 +1954,14 @@ Reverb-feedback sets the scaler on the feedback.\n\
 				       |XmNdialogTitle         titlestr
 				       |XmNresizePolicy        |XmRESIZE_GROW
 				       |XmNnoResize            #f
-				       |XmNbackground          (snd-pixel (basic-color))
+				       |XmNbackground          (basic-color)
 				       |XmNtransient           #f))))
 	      (for-each
 	       (lambda (button)
 		 (|XtVaSetValues
 		   (|XmMessageBoxGetChild new-dialog button)
-		   (list |XmNarmColor   (snd-pixel (pushed-button-color))
-			 |XmNbackground (snd-pixel (basic-color)))))
+		   (list |XmNarmColor   (pushed-button-color)
+			 |XmNbackground (basic-color))))
 	       (list |XmDIALOG_HELP_BUTTON |XmDIALOG_CANCEL_BUTTON |XmDIALOG_OK_BUTTON))
     
 	      (|XtAddCallback new-dialog |XmNcancelCallback 
@@ -1997,13 +1997,13 @@ Reverb-feedback sets the scaler on the feedback.\n\
 					   |XmNbottomAttachment |XmATTACH_WIDGET
 					   |XmNbottomWidget     (|XmMessageBoxGetChild rename-dialog |XmDIALOG_SEPARATOR)
 					   |XmNorientation      |XmVERTICAL
-					   |XmNbackground       (snd-pixel (basic-color)))))
+					   |XmNbackground       (basic-color))))
 		     (label (|XtCreateManagedWidget "new name:" |xmLabelWidgetClass mainform
 				     (list |XmNleftAttachment   |XmATTACH_FORM
 					   |XmNrightAttachment  |XmATTACH_NONE
 					   |XmNtopAttachment    |XmATTACH_FORM
 					   |XmNbottomAttachment |XmATTACH_FORM
-					   |XmNbackground       (snd-pixel (basic-color))))))
+					   |XmNbackground       (basic-color)))))
 		(set! rename-text 
 		      (|XtCreateManagedWidget "newname" |xmTextFieldWidgetClass mainform
 				     (list |XmNleftAttachment   |XmATTACH_WIDGET
@@ -2011,14 +2011,14 @@ Reverb-feedback sets the scaler on the feedback.\n\
 					   |XmNrightAttachment  |XmATTACH_FORM
 					   |XmNtopAttachment    |XmATTACH_FORM
 					   |XmNbottomAttachment |XmATTACH_FORM
-					   |XmNbackground       (snd-pixel (basic-color)))))
+					   |XmNbackground       (basic-color))))
 		(|XtAddEventHandler rename-text |EnterWindowMask #f
 				    (lambda (w context ev flag)
 				      (|XmProcessTraversal w |XmTRAVERSE_CURRENT)
 				      (|XtSetValues w (list |XmNbackground (white-pixel)))))
 		(|XtAddEventHandler rename-text |LeaveWindowMask #f
 				    (lambda (w context ev flag)
-				      (|XtSetValues w (list |XmNbackground (snd-pixel (basic-color)))))))))
+				      (|XtSetValues w (list |XmNbackground (basic-color))))))))
 	(if (not (|XtIsManaged rename-dialog))
 	    (|XtManageChild rename-dialog)
 	    (raise-dialog rename-dialog)))
@@ -2059,13 +2059,13 @@ Reverb-feedback sets the scaler on the feedback.\n\
   (let* ((mark-gc (list-ref (snd-gcs) 9))
 	 (selected-mark-gc (list-ref (snd-gcs) 10))
 	 (dpy (|XtDisplay (cadr (main-widgets))))
-	 (original-mark-color (|Pixel (logxor (cadr (snd-pixel (mark-color))) 
-					      (cadr (snd-pixel (graph-color))))))
-	 (original-selected-mark-color (|Pixel (logxor (cadr (snd-pixel (mark-color))) 
-						       (cadr (snd-pixel (selected-graph-color))))))
-	 (new-mark-color (|Pixel (logxor (cadr (snd-pixel (graph-color))) 
+	 (original-mark-color (|Pixel (logxor (cadr (mark-color)) 
+					      (cadr (graph-color)))))
+	 (original-selected-mark-color (|Pixel (logxor (cadr (mark-color)) 
+						       (cadr (selected-graph-color)))))
+	 (new-mark-color (|Pixel (logxor (cadr (graph-color)) 
 					 (cadr (get-color new-color)))))
-	 (new-selected-mark-color (|Pixel (logxor (cadr (snd-pixel (selected-graph-color)))
+	 (new-selected-mark-color (|Pixel (logxor (cadr (selected-graph-color))
 						  (cadr (get-color new-color))))))
     (if (not (hook-empty? draw-mark-hook)) 
 	(reset-hook! draw-mark-hook))
@@ -2127,7 +2127,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 					    tip
 					    |xmLabelWidgetClass 
 					    tooltip-shell
-					    (list |XmNbackground (snd-pixel (highlight-color))))))
+					    (list |XmNbackground (highlight-color)))))
 				  (change-label tooltip-label tip))
 			      (let ((loc (|XtTranslateCoords widget (|x ev) (|y ev))))
 				(|XtVaSetValues tooltip-shell (list |XmNx (car loc) |XmNy (cadr loc))))

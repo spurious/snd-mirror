@@ -118,13 +118,6 @@ char *xen_version(void)
 
 void *xen_malloc(int size)
 {
-#if 0
-#if HAVE_SCM_GC_MALLOC
-  return((void *)(scm_gc_malloc(size, __FUNCTION__)));
-#else
-  return((void *)(scm_must_malloc(size, __FUNCTION__)));
-#endif
-#endif
   return((void *)malloc(size));
 }
 

@@ -236,10 +236,10 @@ static XEN g_foreground_color(XEN snd, XEN chn, XEN ax)
   ASSERT_CHANNEL(S_foreground_color, snd, chn, 1);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_3, S_foreground_color, "an integer");
   cp = get_cp(snd, chn, S_foreground_color);
-  return(pixel2color(get_foreground_color(cp,
-					  get_ax(cp, 
-						 XEN_TO_C_INT_OR_ELSE(ax, CHAN_GC),
-						 S_foreground_color))));
+  return(XEN_WRAP_PIXEL(get_foreground_color(cp,
+					     get_ax(cp, 
+						    XEN_TO_C_INT_OR_ELSE(ax, CHAN_GC),
+						    S_foreground_color))));
 }
 
 static XEN g_set_foreground_color(XEN color, XEN snd, XEN chn, XEN ax)
@@ -248,14 +248,14 @@ static XEN g_set_foreground_color(XEN color, XEN snd, XEN chn, XEN ax)
 
   chan_info *cp;
   ASSERT_CHANNEL("set-" S_foreground_color, snd, chn, 2);
-  XEN_ASSERT_TYPE(COLOR_P(color), color, XEN_ARG_1, "set-" S_foreground_color, "a color object");
+  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ARG_1, "set-" S_foreground_color, "a color");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_4, "set-" S_foreground_color, "an integer");
   cp = get_cp(snd, chn, "set-" S_foreground_color);
   set_foreground_color(cp,                                  /* snd-xchn.c */
 		       get_ax(cp, 
 			      XEN_TO_C_INT_OR_ELSE(ax, CHAN_GC),
 			      "set-" S_foreground_color),
-		       color2pixel(color));
+		       XEN_UNWRAP_PIXEL(color));
   return(color);
 }
 
@@ -642,14 +642,14 @@ static XEN g_recolor_widget(XEN wid, XEN color)
   #define H_recolor_widget "(" S_recolor_widget " wid color) resets widget color"
   GUI_WIDGET w;
   XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ARG_1, S_recolor_widget, "a Widget");  
-  XEN_ASSERT_TYPE(COLOR_P(color), color, XEN_ARG_2, S_recolor_widget, "a color object"); 
+  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ARG_2, S_recolor_widget, "a color"); 
   w = (GUI_WIDGET)(XEN_UNWRAP_WIDGET(wid));
   if (w)
     {
 #if USE_MOTIF
-      XmChangeColor(w, color2pixel(color));
+      XmChangeColor(w, XEN_UNWRAP_PIXEL(color));
 #else
-      set_background(w, color2pixel(color));
+      set_background(w, XEN_UNWRAP_PIXEL(color));
 #endif
     }
   else XEN_ERROR(NO_SUCH_WIDGET,

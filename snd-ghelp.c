@@ -81,7 +81,7 @@ static GtkWidget *snd_help_1(snd_state *ss, char *subject, char *helpstr, int wi
 
 /* HAVE_HTML -- try the mozilla embedded widget -- this taken largely from TestGtkEmbed.cpp from the Mozilla sources */
 
-#include <mozilla/gtkembedmoz/gtkmozembed.h>
+#include <gtkembedmoz/gtkmozembed.h>
 #include <gtk/gtk.h>
 
 static GtkWidget *help_mozilla = NULL;

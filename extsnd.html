@@ -330,7 +330,7 @@ spring, summer, colorcube, flag, and lines.  -1 means black and white.
 <table border=0 cellspacing=4>
 <tr>
 <td width="20%"><code><em class=def><a name="colorp">color?</a></em> (obj)</code></td>
-<td>#t if <i>obj</i> is a color object (see <a href="#makecolor">make-color</a>).</td></tr>
+<td>#t if <i>obj</i> is a color (this is the same as |Pixel? in xm), (see <a href="#makecolor">make-color</a>).</td></tr>
 
 <tr>
 <td><code><em class=def><a name="color3list">color-&gt;list</a></em> (obj)</code></td>
@@ -8701,8 +8701,7 @@ suitable for use with make-color.
 between 0.0 and 1.0 with 'pos' omitted; in this case the colormap choice and so on comes from the color dialog.
 <i>snd-gcs</i> returns a list of Snd's graphics contexts
 (intended for use with the xm module in snd-motif.scm).
-<b>snd-pixel</b> returns the pixel associated with a given color such as <a href="#basiccolor">basic-color</a>. This
-is handy in snd-motif.scm where many of the procedures want an X-style Pixel value.
+<b>snd-pixel</b> is a no-op (kept around for backwards compatibility).
 </p>
 
 

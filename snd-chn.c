@@ -5902,8 +5902,9 @@ If 'data' is a list of numbers, it is treated as an envelope."
   axis_info *uap = NULL;
   /* ldata can be a vct object, a vector, or a list of either */
   XEN_ASSERT_TYPE(((VCT_P(ldata)) || 
-		   (XEN_VECTOR_P(ldata)) || 
-		   ((XEN_LIST_P(ldata)) && (XEN_LIST_LENGTH(ldata) > 0))),
+		   (XEN_VECTOR_P(ldata) && (XEN_VECTOR_LENGTH(ldata) > 0)) ||
+		   ((XEN_LIST_P(ldata)) && (XEN_LIST_LENGTH(ldata) > 0) && 
+		    ((XEN_NUMBER_P(XEN_CAR(ldata))) || (XEN_VECTOR_P(XEN_CAR(ldata))) || (VCT_P(XEN_CAR(ldata)))))),
 		  ldata, XEN_ARG_1, S_graph, "a vct, vector, or list");
   ASSERT_CHANNEL(S_graph, snd_n, chn_n, 7);
   cp = get_cp(snd_n, chn_n, S_graph);
@@ -5929,11 +5930,14 @@ If 'data' is a list of numbers, it is treated as an envelope."
     {
       old_lp = (lisp_grf *)(cp->lisp_info);
       uap = old_lp->axis;
-      h = uap->height;
-      w = uap->width;
-      ww = uap->window_width;
-      o = uap->y_offset;
-      gx0 = uap->graph_x0;
+      if (uap)
+	{
+	  h = uap->height;
+	  w = uap->width;
+	  ww = uap->window_width;
+	  o = uap->y_offset;
+	  gx0 = uap->graph_x0;
+	}
       cp->lisp_info = free_lisp_info(cp);
     }
   if (!(cp->lisp_info))
@@ -5945,7 +5949,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
       lg->data = (Float **)CALLOC(graphs, sizeof(Float *));
       need_update = 1;
     }
-  if ((XEN_LIST_P_WITH_LENGTH(ldata, len)) && 
+  if ((XEN_LIST_P_WITH_LENGTH(ldata, len)) &&
       (XEN_NUMBER_P(XEN_CAR(ldata))))
     {
       lg = cp->lisp_info;

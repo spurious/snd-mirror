@@ -63,7 +63,7 @@
 
 (define selection-popup-menu 
   ;; used in graph if pointer is inside selected portion
-  (let ((every-menu (list |XmNbackground (snd-pixel (highlight-color))))
+  (let ((every-menu (list |XmNbackground (highlight-color)))
 	(stopping #f)
 	(stopping1 #f)
 	(stop-widget #f)
@@ -81,7 +81,7 @@
      "selection-popup"
      (caddr (main-widgets))
      (list |XmNpopupEnabled #t
-	   |XmNbackground (snd-pixel (highlight-color)))
+	   |XmNbackground (highlight-color))
      (list
       (list "Selection" |xmLabelWidgetClass      every-menu)
       (list "sep"       |xmSeparatorWidgetClass  every-menu)
@@ -183,7 +183,7 @@
 
 (define graph-popup-menu 
   ;; used within graph if pointer is not inside selected portion
-  (let ((every-menu (list |XmNbackground (snd-pixel (highlight-color))))
+  (let ((every-menu (list |XmNbackground (highlight-color)))
 	(stopping #f)
 	(stop-widget #f))
 
@@ -199,7 +199,7 @@
      "graph-popup"
      (caddr (main-widgets))
      (list |XmNpopupEnabled #t
-	   |XmNbackground (snd-pixel (highlight-color)))
+	   |XmNbackground (highlight-color))
      (list
 
       (list "Snd"                |xmLabelWidgetClass      every-menu) 
@@ -420,7 +420,7 @@
 
 (define fft-popup-menu 
   ;; used within graph if pointer is in the fft graph
-  (let* ((every-menu (list |XmNbackground (snd-pixel (highlight-color))))
+  (let* ((every-menu (list |XmNbackground (highlight-color)))
 	 (fft-popup (|XmCreatePopupMenu (caddr (main-widgets)) "fft-popup"
 		       (append (list |XmNpopupEnabled #t) every-menu))))
 
@@ -643,11 +643,9 @@ color name, an xm Pixel, a snd color, or a list of rgb values (as in Snd's make-
 		   (snd-error "can't allocate ~S" new-color)
 		   (|pixel col)))
 	     (if (color? new-color)
-		 (snd-pixel new-color)
-		 (if  new-color
-		     new-color
-		     ;; assume a list of rgb vals?
-		     (snd-pixel (apply make-color new-color)))))))
+		 new-color
+		 ;; assume a list of rgb vals?
+		 (apply make-color new-color)))))
     (for-each-child
      menu
      (lambda (n)
@@ -728,7 +726,7 @@ color name, an xm Pixel, a snd color, or a list of rgb values (as in Snd's make-
 			 (show-listener)
 			 (set! (show-listener) #f)
 			 (list-ref (main-widgets) 4))))
-	 (every-menu (list |XmNbackground (snd-pixel (highlight-color))))
+	 (every-menu (list |XmNbackground (highlight-color)))
 	 (listener-popup (|XmCreatePopupMenu listener "listener-popup"
 			   (append (list |XmNpopupEnabled #t) every-menu))))
 

@@ -300,7 +300,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   init_recorder();
 
   ss->catch_exists = 0;
-  g_initialize_gh(ss);
+  g_initialize_gh();
   ss->search_proc = XEN_UNDEFINED;
   ss->file_sort_proc = XEN_UNDEFINED;
 #if WITH_RUN
