@@ -1510,53 +1510,150 @@ static XEN g_sum_of_sines(XEN obj, XEN fm)
 
 /* ---------------- rand, rand_interp ---------------- */
 
-static XEN g_make_noi(bool rand_case, XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+#define RANDOM_DISTRIBUTION_TABLE_SIZE 512
+#define RANDOM_DISTRIBUTION_ENVELOPE_SIZE 50
+
+static Float *inverse_integrate(XEN dist, int data_size)
+{
+  /* e = env possibly starting < 0 */
+  int e_size = RANDOM_DISTRIBUTION_ENVELOPE_SIZE;
+  Float *e, *data;
+  int i, e_len, lim, e_loc = 2;
+  XEN ex0, ex1, ey0, ey1;
+  Float x, x0, x1, xincr, y0, y1, sum = 0.0, first_sum = 0.0, last_sum = 0.0;
+  lim = (e_size + 1) * 2;
+  e = (Float *)CALLOC(lim, sizeof(Float));
+  e_len = XEN_LIST_LENGTH(dist);
+  ex0 = XEN_LIST_REF(dist, 0);
+  ex1 = XEN_LIST_REF(dist, e_len - 2);
+  x0 = XEN_TO_C_DOUBLE(ex0);
+  /* get x range first */
+  x1 = XEN_TO_C_DOUBLE(ex1);
+  xincr = (x1 - x0) / (Float)e_size;
+  /* now true x1 */
+  ex1 = XEN_LIST_REF(dist, 2);
+  x1 = XEN_TO_C_DOUBLE(ex1);
+  ey0 = XEN_LIST_REF(dist, 1);
+  ey1 = XEN_LIST_REF(dist, 3);
+  y0 = XEN_TO_C_DOUBLE(ey0);
+  y1 = XEN_TO_C_DOUBLE(ey1);
+  sum = y0;
+  first_sum = sum;
+  for (i = 0,  x = x0; i < lim; i += 2, x += xincr)
+    {
+      e[i] = sum;
+      last_sum = sum;
+      e[i + 1] = x;
+      while ((x >= x1) && ((e_loc + 2) < e_len))
+	{
+	  x0 = x1;
+	  y0 = y1;
+	  e_loc += 2;
+	  ex1 = XEN_LIST_REF(dist, e_loc);
+	  ey1 = XEN_LIST_REF(dist, e_loc + 1);
+	  x1 = XEN_TO_C_DOUBLE(ex1);
+	  y1 = XEN_TO_C_DOUBLE(ey1);
+	}
+      if ((x == x0) || (x0 == x1))
+	sum += y0;
+      else sum += (y0 + (y1 - y0) * (x - x0) / (x1 - x0));
+    }
+  xincr = (last_sum - first_sum) / (Float)(data_size - 1);
+  data = (Float *)CALLOC(data_size, sizeof(Float));
+  x0 = e[0];
+  x1 = e[2];
+  y0 = e[1];
+  y1 = e[3];
+  e_len = lim;
+  e_loc = 2;
+  for (i = 0, x = first_sum; i < data_size; i++, x += xincr)
+    {
+      while ((x >= x1) && ((e_loc + 2) < e_len))
+	{
+	  x0 = x1;
+	  y0 = y1;
+	  e_loc += 2;
+	  x1 = e[e_loc];
+	  y1 = e[e_loc + 1];
+	}
+      if ((x == x0) || (x0 == x1))
+	data[i] = y0;
+      else data[i] = (y0 + (y1 - y0) * (x - x0) / (x1 - x0));
+    }
+  FREE(e);
+  return(data);
+}
+
+static XEN g_make_noi(bool rand_case, XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
 {
   mus_xen *gn;
   mus_any *ge = NULL;
-  XEN args[4]; 
-  XEN keys[2];
-  int orig_arg[2] = {0, 0};
+  XEN args[6]; 
+  XEN keys[3];
+  int orig_arg[3] = {0, 0, 0};
   int vals;
   Float freq = 440.0;
   Float base = 1.0;
+  Float *distribution = NULL;
+  int distribution_size = RANDOM_DISTRIBUTION_TABLE_SIZE;
   keys[0] = kw_frequency;
   keys[1] = kw_amplitude;
-  args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4;
-  vals = mus_optkey_unscramble((rand_case) ? S_make_rand : S_make_rand_interp, 2, keys, args, orig_arg);
+  keys[2] = kw_envelope;
+  args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6;
+  vals = mus_optkey_unscramble((rand_case) ? S_make_rand : S_make_rand_interp, 3, keys, args, orig_arg);
   if (vals > 0)
     {
       freq = mus_optkey_to_float(keys[0], (rand_case) ? S_make_rand : S_make_rand_interp, orig_arg[0], freq);
       base = mus_optkey_to_float(keys[1], (rand_case) ? S_make_rand : S_make_rand_interp, orig_arg[1], base);
+      if (!(XEN_KEYWORD_P(keys[2]))) /* i.e. envelope arg was specified */
+        {
+	  XEN_ASSERT_TYPE(XEN_LIST_P(keys[2]), keys[2], orig_arg[2], (rand_case) ? S_make_rand : S_make_rand_interp, "an envelope");
+	  distribution = inverse_integrate(keys[2], distribution_size);
+	}
     }
-  if (rand_case)
-    ge = mus_make_rand(freq, base);
-  else ge = mus_make_rand_interp(freq, base);
+  if (!distribution)
+    {
+      if (rand_case)
+	ge = mus_make_rand(freq, base);
+      else ge = mus_make_rand_interp(freq, base);
+    }
+  else
+    {
+      if (rand_case)
+	ge = mus_make_rand_with_distribution(freq, base, distribution, distribution_size);
+      else ge = mus_make_rand_interp_with_distribution(freq, base, distribution, distribution_size);
+    }
   if (ge)
     {
       gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
       gn->gen = ge;
+      if (distribution)
+	{
+	  gn->nvcts = 1;
+	  gn->vcts = make_vcts(gn->nvcts);
+	  return(mus_xen_to_object_with_vct(gn, make_vct(distribution_size, distribution)));
+	}
       return(mus_xen_to_object(gn));
     }
   return(XEN_FALSE);
 }
 
-static XEN g_make_rand_interp(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static XEN g_make_rand_interp(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
 {
-  #define H_make_rand_interp "(" S_make_rand_interp " (:frequency 440.0) (:amplitude 1.0)): \
+  #define H_make_rand_interp "(" S_make_rand_interp " (:frequency 440.0) (:amplitude 1.0) envelope): \
 return a new " S_rand_interp " generator, producing linearly interpolated random numbers. \
 frequency is the rate at which new end-points are chosen."
 
-  return(g_make_noi(false, arg1, arg2, arg3, arg4));
+  return(g_make_noi(false, arg1, arg2, arg3, arg4, arg5, arg6));
 }
 
-static XEN g_make_rand(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static XEN g_make_rand(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
 {
-  #define H_make_rand "(" S_make_rand " (:frequency 440.0) (:amplitude 1.0)): \
+  #define H_make_rand "(" S_make_rand " (:frequency 440.0) (:amplitude 1.0) envelope): \
 return a new " S_rand " generator, producing a sequence of random numbers (a step  function). \
 frequency is the rate at which new numbers are chosen."
 
-  return(g_make_noi(true, arg1, arg2, arg3, arg4));
+  return(g_make_noi(true, arg1, arg2, arg3, arg4, arg5, arg6));
 }
 
 static XEN g_rand(XEN obj, XEN fm)
@@ -4898,8 +4995,8 @@ XEN_NARGIFY_1(g_sum_of_cosines_p_w, g_sum_of_cosines_p)
 XEN_ARGIFY_6(g_make_sum_of_sines_w, g_make_sum_of_sines)
 XEN_ARGIFY_2(g_sum_of_sines_w, g_sum_of_sines)
 XEN_NARGIFY_1(g_sum_of_sines_p_w, g_sum_of_sines_p)
-XEN_ARGIFY_4(g_make_rand_w, g_make_rand)
-XEN_ARGIFY_4(g_make_rand_interp_w, g_make_rand_interp)
+XEN_ARGIFY_6(g_make_rand_w, g_make_rand)
+XEN_ARGIFY_6(g_make_rand_interp_w, g_make_rand_interp)
 XEN_ARGIFY_2(g_rand_w, g_rand)
 XEN_ARGIFY_2(g_rand_interp_w, g_rand_interp)
 XEN_NARGIFY_1(g_rand_p_w, g_rand_p)
@@ -5513,8 +5610,8 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_feedback, g_mus_increment_w, H_mus_feedback, S_setB S_mus_feedback, g_mus_set_increment_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_feedforward, g_mus_scaler_w, H_mus_feedforward, S_setB S_mus_feedforward, g_mus_set_scaler_w,  1, 0, 2, 0);
 
-  XEN_DEFINE_PROCEDURE(S_make_rand,        g_make_rand_w,        0, 4, 0, H_make_rand);
-  XEN_DEFINE_PROCEDURE(S_make_rand_interp, g_make_rand_interp_w, 0, 4, 0, H_make_rand_interp);
+  XEN_DEFINE_PROCEDURE(S_make_rand,        g_make_rand_w,        0, 6, 0, H_make_rand);
+  XEN_DEFINE_PROCEDURE(S_make_rand_interp, g_make_rand_interp_w, 0, 6, 0, H_make_rand_interp);
 #if HAVE_RUBY
   rb_define_alias(rb_mKernel, "kernel_rand", "rand");
 #endif

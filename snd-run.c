@@ -10908,8 +10908,8 @@ static void init_walkers(void)
   INIT_WALKER(S_make_phase_vocoder, make_walker(make_phase_vocoder_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_ppolar, make_walker(make_ppolar_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_pulse_train, make_walker(make_pulse_train_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_rand, make_walker(make_rand_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_rand_interp, make_walker(make_rand_interp_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_rand, make_walker(make_rand_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_rand_interp, make_walker(make_rand_interp_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_readin, make_walker(make_readin_1, NULL, NULL, 0, 8, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_sample_to_file, make_walker(make_sample_to_file_1, NULL, NULL, 4, 5, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_sawtooth_wave, make_walker(make_sawtooth_wave_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));

@@ -1228,3 +1228,88 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 (define (make-spencer-filter)
   (make-fir-filter 15 (apply vct (map (lambda (n) (/ n 320.0)) (list -3 -6 -5 3 21 46 67 74 67 46 21 3 -5 -6 -3)))))
+
+
+;;; -------- any-random
+;;;
+;;; arbitrary random number distributions via the "rejection method"
+
+(define* (any-random amount #:optional e)
+  (if (= amount 0.0)
+      0.0
+      (if (not e)
+	  (random amount)
+	  (letrec ((next-random 
+		    (lambda ()
+		      (let* ((len (length e))
+			     (x (random (exact->inexact (list-ref e (- len 2)))))
+			     (y (random 1.0)))
+			(if (or (<= y (envelope-interp x e))
+				(c-g?))
+			    x
+			    (next-random))))))
+	    (next-random)))))
+
+(define (gaussian-distribution s)
+  (let ((e '())
+	(den (* 2.0 s s)))
+    (do ((i 0 (1+ i))
+	 (x 0.0 (+ x .05))
+	 (y -4.0 (+ y .4)))
+	((= i 21))
+      (set! e (cons x e))
+      (set! e (cons (exp (- (/ (* y y) den))) e)))
+    (reverse e)))
+
+(define (pareto-distribution a)
+  (let ((e '())
+	(scl (/ (expt 1.0 (+ a 1.0)) a)))
+    (do ((i 0 (1+ i))
+	 (x 0.0 (+ x .05))
+	 (y 1.0 (+ y .2)))
+	((= i 21))
+      (set! e (cons x e))
+      (set! e (cons (* scl (/ a (expt y (+ a 1.0)))) e)))
+    (reverse e)))
+
+;(map-chan (lambda (y) (any-random 1.0 '(0 1 1 1)))) ; uniform distribution
+;(map-chan (lambda (y) (any-random 1.0 '(0 0 0.95 0.1 1 1)))) ; mostly toward 1.0
+;(let ((g (gaussian-distribution 1.0))) (map-chan (lambda (y) (any-random 1.0 g))))
+;(let ((g (pareto-distribution 1.0))) (map-chan (lambda (y) (any-random 1.0 g))))
+
+;;; this is the inverse integration function used by CLM to turn a distribution function into a weighting function
+
+(define* (inverse-integrate dist #:optional (data-size 512) (e-size 50))
+  (let* ((e '())
+	 (sum (exact->inexact (cadr dist)))
+	 (first-sum sum)
+	 (data (make-vct data-size))
+	 (x0 (car dist))
+	 (x1 (list-ref dist (- (length dist) 2)))
+	 (xincr (exact->inexact (/ (- x1 x0) e-size))))
+    (do ((i 0 (1+ i))
+	 (x x0 (+ x xincr)))
+	((> i e-size))
+      (set! e (cons sum e))
+      (set! e (cons x e))
+      (set! sum (+ sum (envelope-interp x dist))))
+    (let* ((incr (/ (- (cadr e) first-sum) (- data-size 1))))
+      (set! e (reverse e))
+      (do ((i 0 (1+ i))
+	   (x first-sum (+ x incr)))
+	  ((= i data-size))
+	(vct-set! data i (envelope-interp x e)))
+      data)))
+
+(define (gaussian-envelope s)
+  (let ((e '())
+	(den (* 2.0 s s)))
+    (do ((i 0 (1+ i))
+	 (x -1.0 (+ x .1))
+	 (y -4.0 (+ y .4)))
+	((= i 21))
+      (set! e (cons x e))
+      (set! e (cons (exp (- (/ (* y y) den))) e)))
+    (reverse e)))
+
+;;; (make-rand :envelope (gaussian-envelope 1.0))

@@ -291,8 +291,7 @@ The phase-quadrature part of the business creates single side-band spectra.
 For details on waveshaping, see Le Brun, "Digital Waveshaping Synthesis", JAES 1979 April, vol 27, no 4, p250.
 It might be simpler to set up three formant generators and drive them with the waveshapers,
 but the leap-frog idea was a neat hack -- such things are worth keeping even when
-they aren't all that sensible anymore.  (Also, I noticed while writing this paragraph that
-the single-sideband cancellation is not working as I expected -- another bug to track down...)
+they aren't all that sensible anymore.
 </p>
 <p>The FM bell was developed by Michael McNabb in Mus10 in the late '70s.  It is intended
 for low bell sounds (say middle C or so). The lines
@@ -532,10 +531,11 @@ the listener?
   <tr><td><a class=def name="notchselection">notch-selection</a> freqs order width</td><td>arbitrary notch filter applied to selection</td></tr>
   <tr><td><a class=def name="fractionalfouriertransform">fractional-fourier-transform</a> rl im size angle</td></tr>
   <tr><td><a class=def name="ztransform">z-transform</a> rl size z</td></tr>
-  <tr><td><A class=def NAME="exdht">dht</a> data</td><td>slow Hartley transform </td></tr>
+  <tr><td><A class=def NAME="exdht">dht</A> data</td><td>slow Hartley transform </td></tr>
   <tr><td><em class=emdef>find-sine</em> freq beg dur</td><td>DFT at a particular frequency</td></tr>
   <tr><td><em class=emdef>goertzel</em> freq beg dur</td><td>same as find-sine but faster</td></tr>
   <tr><td><em class=emdef>make-spencer-filter</em></td><td>return FIR filter with Spencer coefficients</td></tr>
+  <tr><td><A class=def NAME="anyrandom">any-random</A></td><td>random numbers of arbitrary distribution using rejection method</td></tr>
 </table>
 
 <p><b>dolph</b> is the Dolph-Chebyshev fft data window, taken
@@ -652,8 +652,36 @@ also lose more of the original signal.
 </p>
 <p><b>fractional-fourier-transform</b> is the slow (dft) version of the fractional Fourier Transform.
 <b>z-transform</b> performs a z transform.
+<b>any-random</b> provides the same output as <a href="clm.html#rand">rand</a> if the latter's
+envelope (distribution function) argument is used, but using a slightly different method
+to generate the numbers.  Also included is <b>inverse-integrate</b>, a Scheme version of
+CLM's distribution-to-weighting function, and <b>gaussion-envelope</b> which makes
+a gaussian distribution envelope suitable for <b>rand</b>.
 </p>
 
+<!-- INDEX allrandomnumbers:Random Numbers --><a name="allrandomnumbers"></a>
+<TABLE border=3 bordercolor="tan" hspace=40><tr><td>
+<blockquote><small>
+<br>
+Random Numbers in Snd/CLM:<br>
+generators, arbitrary distributions, fractals, 1/f: <a href="clm.html#randomnumbers">rand and rand-interp</a><br>
+dithering: <a href="sndscm.html#ditherchannel">dither-channel</a><br>
+noise-making instrument: <a href="#noisedoc">noise.scm, noise.rb</a><br>
+physical modeling of noisy instruments: <a href="#maracadoc">maraca.scm</a><br>
+arbitrary distribution via rejection method: <a href="#anyrandom">any-random</a><br>
+CL: random, *random-state*, make-random-state*: random number between 0 and arg, arg can't be 0!<br>
+Guile: random, *random-state*, see-&gt;random-state: random number between 0 and arg, arg can't be 0!<br>
+Ruby: kernel_rand (alias for Ruby's rand), srand: random integer between 0 and arg, or float between 0 and 1<br>
+CLM (all versions): <a href="clm.html#mus-random">mus-random, mus_random</a>: random float between -arg and arg<br>
+CLM (CL): <a href="clm.html#clm-random">clm-random</a>: random float between 0.0 and arg<br>
+CLM (C): mus_irandom: random int between 0 and arg<br>
+CLM (C): mus_frandom: random float between 0.0 and arg<br>
+CLM (CL): <a href="clm.html#mus-set-rand-seed">mus-set-rand-seed</a><br>
+CLM (Scheme): mus-rand-seed (settable)<br>
+<br>
+</small></blockquote>
+</td></tr></TABLE>
+<br>
 
 <A NAME="editmenudoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>edit-menu.scm</h2></td></tr></table>
 

@@ -2,10 +2,12 @@
 #define CLM_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 45
-#define MUS_DATE "26-Apr-04"
+#define MUS_REVISION 46
+#define MUS_DATE "3-May-04"
 
 /*
+ * 3-May:      envelope arg to make-rand and make-rand-interp to give any arbitrary random number distribution.
+ *             added mus_make_rand_with_distribution and mus_make_rand_interp_with_distribution.
  * 26-Apr:     mus_sum_of_sines changed to mus_sine_bank.
  *             new mus_sum_of_sines parallels mus_sum_of_cosines.
  *             deprecated mus_sin.
@@ -342,10 +344,12 @@ int mus_irandom(int amp);
 Float mus_rand(mus_any *gen, Float fm);
 mus_any *mus_make_rand(Float freq, Float base);
 bool mus_rand_p(mus_any *ptr);
+mus_any *mus_make_rand_with_distribution(Float freq, Float base, Float *distribution, int distribution_size);
 
 Float mus_rand_interp(mus_any *gen, Float fm);
 mus_any *mus_make_rand_interp(Float freq, Float base);
 bool mus_rand_interp_p(mus_any *ptr);
+mus_any *mus_make_rand_interp_with_distribution(Float freq, Float base, Float *distribution, int distribution_size);
 
 Float mus_asymmetric_fm(mus_any *gen, Float index, Float fm);
 Float mus_asymmetric_fm_1(mus_any *gen, Float index);

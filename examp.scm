@@ -155,23 +155,25 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 
 ;(add-hook! lisp-graph-hook display-energy)
 
-(define (display-db snd chn)
-  "(display-db snd chn) is a lisp-graph-hook function to display the time domain data in dB"
-  (let* ((datal (make-graph-data snd chn))
-	 (data (if (vct? datal) datal (cadr datal)))
-	 (len (vct-length data))
-	 (sr (srate snd)))
-    (define (dB val)
-      (if (< val .001)
-	  -60.0
-	  (* 20.0 (log10 val))))
-    (do ((i 0 (1+ i)))
-	((= i len))
-      (vct-set! data i (+ 60.0 (dB (abs (vct-ref data i))))))
-    (graph data "dB" 
-	   (/ (left-sample snd chn) sr) (/ (right-sample snd chn) sr)  
-	   0.0 60.0
-	   snd chn #f)))
+(define display-db
+  (lambda (snd chn)
+    "(display-db snd chn) is a lisp-graph-hook function to display the time domain data in dB"
+    (let ((datal (make-graph-data snd chn)))
+      (if datal
+	  (let* ((data (if (vct? datal) datal (cadr datal)))
+		 (len (vct-length data))
+		 (sr (srate snd)))
+	    (define (dB val)
+	      (if (< val .001)
+		  -60.0
+		  (* 20.0 (log10 val))))
+	    (do ((i 0 (1+ i)))
+		((= i len))
+	      (vct-set! data i (+ 60.0 (dB (abs (vct-ref data i))))))
+	    (graph data "dB" 
+		   (/ (left-sample snd chn) sr) (/ (right-sample snd chn) sr)  
+		   0.0 60.0
+		   snd chn))))))
 
 ;(add-hook! lisp-graph-hook display-db)
 

@@ -10620,21 +10620,22 @@ The result can be used in the lisp graph:
 (define <A NAME="displaydb">display-db</A>
   (lambda (snd chn)
     "(display-db snd chn) is a lisp-graph-hook function to display the time domain data in dB"
-    (let* ((datal (<em class=red>make-graph-data</em> snd chn))
-	   (data (if (<a class=quiet href="#vctp">vct?</a> datal) datal (cadr datal)))
-           (len (<a class=quiet href="#vctlength">vct-length</a> data))
-           (sr (<a class=quiet href="#srate">srate</a> snd)))
-      (define (dB val)
-	(if (&lt; val .001)
-	    -60.0
-	    (* 20.0 (log10 val))))
-      (do ((i 0 (1+ i)))
-	  ((= i len))
-	(<a class=quiet href="#vctset">vct-set!</a> data i (+ 60.0 (dB (abs (<a class=quiet href="#vctref">vct-ref</a> data i))))))
-      (<a class=quiet href="#graph">graph</a> data "dB" 
-	     (/ (<a class=quiet href="#leftsample">left-sample</a> snd chn) sr) (/ (<a class=quiet href="#rightsample">right-sample</a> snd chn) sr)  
-	     0.0 60.0
-	     snd chn))))
+    (let ((datal (<em class=red>make-graph-data</em> snd chn)))
+      (if datal
+          (let* ((data (if (<a class=quiet href="#vctp">vct?</a> datal) datal (cadr datal)))
+                 (len (<a class=quiet href="#vctlength">vct-length</a> data))
+                 (sr (<a class=quiet href="#srate">srate</a> snd)))
+            (define (dB val)
+	      (if (&lt; val .001)
+	          -60.0
+	          (* 20.0 (log10 val))))
+            (do ((i 0 (1+ i)))
+	        ((= i len))
+	      (<a class=quiet href="#vctset">vct-set!</a> data i (+ 60.0 (dB (abs (<a class=quiet href="#vctref">vct-ref</a> data i))))))
+              (<a class=quiet href="#graph">graph</a> data "dB" 
+	            (/ (<a class=quiet href="#leftsample">left-sample</a> snd chn) sr) (/ (<a class=quiet href="#rightsample">right-sample</a> snd chn) sr)  
+	            0.0 60.0
+	            snd chn))))))
 
 (add-hook! <a class=quiet href="#lispgraphhook">lisp-graph-hook</a> display-db)
 </pre></td></tr></table>

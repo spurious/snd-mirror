@@ -1936,14 +1936,25 @@ typedef struct {
   Float phase;
   Float output;
   Float incr;
+  Float *distribution;
+  int distribution_size;
 } noi;
 
 static char *inspect_noi(mus_any *ptr)
 {
   noi *gen = (noi *)ptr;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-	       "noi freq: %f, phase: %f, base: %f, output: %f, incr: %f",
-	       gen->freq, gen->phase, gen->base, gen->output, gen->incr);
+  if (gen->distribution)
+    {
+      char *arr = NULL;
+      mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
+		   "noi freq: %f, phase: %f, base: %f, output: %f, incr: %f, envelope: %s",
+		   gen->freq, gen->phase, gen->base, gen->output, gen->incr,
+		   arr = print_array(gen->distribution, gen->distribution_size, 0));
+      if (arr) FREE(arr);
+    }
+  else mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
+		    "noi freq: %f, phase: %f, base: %f, output: %f, incr: %f",
+		    gen->freq, gen->phase, gen->base, gen->output, gen->incr);
   return(describe_buffer);
 }
 
@@ -1981,13 +1992,20 @@ static int irandom(int amp) /* original form -- surely this off by a factor of 2
   return((int)(amp * next_random() * INVERSE_MAX_RAND));
 }
 
+static Float random_any(noi *gen) /* -amp to amp possibly through distribution */
+{
+  if (gen->distribution)
+    return(gen->base * mus_array_interp(gen->distribution, next_random() * INVERSE_MAX_RAND2 * gen->distribution_size, gen->distribution_size));
+  return(gen->base * (next_random() * INVERSE_MAX_RAND - 1.0));
+}
+
 Float mus_rand(mus_any *ptr, Float fm)
 {
   noi *gen = (noi *)ptr;
   if (gen->phase >= TWO_PI)
     {
       while (gen->phase >= TWO_PI) gen->phase -= TWO_PI;
-      gen->output = mus_random(gen->base);
+      gen->output = random_any(gen);
     }
   gen->phase += (gen->freq + fm);
   while (gen->phase < 0.0) gen->phase += TWO_PI;
@@ -2009,7 +2027,7 @@ Float mus_rand_interp(mus_any *ptr, Float fm)
   if (gen->phase >= TWO_PI)
     {
       while (gen->phase >= TWO_PI) gen->phase -= TWO_PI;
-      gen->incr = (mus_random(gen->base) - gen->output) / (ceil(TWO_PI / (gen->freq + fm)));
+      gen->incr = (random_any(gen) - gen->output) / (ceil(TWO_PI / (gen->freq + fm)));
     }
   gen->phase += (gen->freq + fm);
   while (gen->phase < 0.0) gen->phase += TWO_PI;
@@ -2028,6 +2046,8 @@ static Float noi_phase(mus_any *ptr) {return(fmod(((noi *)ptr)->phase, TWO_PI));
 static Float set_noi_phase(mus_any *ptr, Float val) {((noi *)ptr)->phase = val; return(val);}
 static Float noi_scaler(mus_any *ptr) {return(((noi *)ptr)->base);}
 static Float set_noi_scaler(mus_any *ptr, Float val) {((noi *)ptr)->base = val; return(val);}
+static Float *noi_data(mus_any *ptr) {return(((noi *)ptr)->distribution);}
+static off_t noi_length(mus_any *ptr) {return(((noi *)ptr)->distribution_size);}
 
 static bool noi_equalp(mus_any *p1, mus_any *p2)
 {
@@ -2040,7 +2060,9 @@ static bool noi_equalp(mus_any *p1, mus_any *p2)
 	  (g1->phase == g2->phase) &&
 	  (g1->output == g2->output) &&
 	  (g1->incr == g2->incr) &&
-	  (g1->base == g2->base)));
+	  (g1->base == g2->base) &&
+	  (g1->distribution_size == g2->distribution_size) &&
+	  (g1->distribution == g2->distribution)));
 }
 
 static char *describe_noi(mus_any *ptr)
@@ -2048,20 +2070,20 @@ static char *describe_noi(mus_any *ptr)
   noi *gen = (noi *)ptr;
   if (mus_rand_p(ptr))
     mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-		 S_rand " freq: %.3fHz, phase: %.3f, amp: %.3f",
+		 S_rand " freq: %.3fHz, phase: %.3f, amp: %.3f%s",
 		 mus_radians_to_hz(gen->freq), 
 		 gen->phase, 
-		 gen->base);
+		 gen->base,
+		 (gen->distribution) ? ", with distribution envelope" : "");
   else
-    {
-      mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-		   S_rand_interp " freq: %.3fHz, phase: %.3f, amp: %.3f, incr: %.3f, curval: %.3f",
-		   mus_radians_to_hz(gen->freq),
-		   gen->phase, 
-		   gen->base, 
-		   gen->incr,
-		   gen->output);
-    }
+    mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
+		 S_rand_interp " freq: %.3fHz, phase: %.3f, amp: %.3f, incr: %.3f, curval: %.3f%s",
+		 mus_radians_to_hz(gen->freq),
+		 gen->phase, 
+		 gen->base, 
+		 gen->incr,
+		 gen->output,
+		 (gen->distribution) ? ", with distribution envelope" : "");
   return(describe_buffer);
 }
 
@@ -2072,7 +2094,8 @@ static mus_any_class RAND_INTERP_CLASS = {
   &describe_noi,
   &inspect_noi,
   &noi_equalp,
-  0, 0, 0, 0,
+  &noi_data, 0, 
+  &noi_length, 0,
   &noi_freq,
   &set_noi_freq,
   &noi_phase,
@@ -2087,18 +2110,6 @@ static mus_any_class RAND_INTERP_CLASS = {
   0, 0, 0, 0, 0, 0, 0
 };
 
-mus_any *mus_make_rand_interp(Float freq, Float base)
-{
-  noi *gen;
-  gen = (noi *)clm_calloc(1, sizeof(noi), S_make_rand_interp);
-  gen->core = &RAND_INTERP_CLASS;
-  gen->freq = mus_hz_to_radians(freq);
-  gen->base = base;
-  gen->output = 0.0;
-  gen->incr =  mus_random(base) * freq / sampling_rate;
-  return((mus_any *)gen);
-}
-
 static mus_any_class RAND_CLASS = {
   MUS_RAND,
   S_rand,
@@ -2106,7 +2117,8 @@ static mus_any_class RAND_CLASS = {
   &describe_noi,
   &inspect_noi,
   &noi_equalp,
-  0, 0, 0, 0,
+  &noi_data, 0, 
+  &noi_length, 0,
   &noi_freq,
   &set_noi_freq,
   &noi_phase,
@@ -2130,6 +2142,36 @@ mus_any *mus_make_rand(Float freq, Float base)
   gen->base = base;
   gen->incr = 0.0;
   gen->output = 0.0;
+  return((mus_any *)gen);
+}
+
+mus_any *mus_make_rand_interp(Float freq, Float base)
+{
+  noi *gen;
+  gen = (noi *)clm_calloc(1, sizeof(noi), S_make_rand_interp);
+  gen->core = &RAND_INTERP_CLASS;
+  gen->freq = mus_hz_to_radians(freq);
+  gen->base = base;
+  gen->output = 0.0;
+  gen->incr =  mus_random(base) * freq / sampling_rate;
+  return((mus_any *)gen);
+}
+
+mus_any *mus_make_rand_with_distribution(Float freq, Float base, Float *distribution, int distribution_size)
+{
+  noi *gen;
+  gen = (noi *)mus_make_rand(freq, base);
+  gen->distribution = distribution;
+  gen->distribution_size = distribution_size;
+  return((mus_any *)gen);
+}
+
+mus_any *mus_make_rand_interp_with_distribution(Float freq, Float base, Float *distribution, int distribution_size)
+{
+  noi *gen;
+  gen = (noi *)mus_make_rand_interp(freq, base);
+  gen->distribution = distribution;
+  gen->distribution_size = distribution_size;
   return((mus_any *)gen);
 }
 

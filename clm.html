@@ -485,7 +485,7 @@ remember what they are and what order they come in).
   <a class=def name="oscilbank">oscil-bank</a> <i>amps oscils fms len</i> 
 </pre>
 
-<p><b>Oscil</b> produces a sine wave with optional frequency change (i.e. fm).
+<p><b>oscil</b> produces a sine wave with optional frequency change (i.e. fm).
 Its first argument is an oscil created by <b>make-oscil</b>.
 Oscil's second (optional) argument is the current (sample-wise)
 frequency change (defaults to 0).  Its third argument is the (sample-wise)
@@ -604,7 +604,7 @@ J.C.Risset's bell curve could be:</p>
   ;; an envelope (a ramp from 0 to 1 if you want just a bell curve)
   `(+ .64e-4 (* .1565 (- (exp (- 1.0 (cos (* two-pi ,x)))) 1.0))))
 </small></pre>
-<p><b>Restart-env</b> causes an
+<p><b>restart-env</b> causes an
 envelope to start all over again from the beginning. To jump to any position in
 an envelope, use <a href="#mus-location">mus-location</a> (there's an example
 of this in ug.ins).</p>
@@ -681,7 +681,7 @@ duration), it's simplest to use make-env:
   <a class=def name="table-lookup?">table-lookup?</a> <i>tl</i>
 </pre>
 
-<p><b>Table-lookup</b> performs interpolating table lookup.  Indices are first
+<p><b>table-lookup</b> performs interpolating table lookup.  Indices are first
 made to fit in the current table (fm input can produce negative indices), then
 linear interpolation returns the table value.  Table-lookup scales its
 frequency change argument (<i>fm-input</i>) to fit whatever its table size is
@@ -741,7 +741,7 @@ several standard orchestral instruments, courtesy of James A. Moorer.
   <a class=def name="partials-&gt;polynomial">partials-&gt;polynomial</a> <i>partials</i> &amp;optional (<i>kind</i> 1)
 </pre>
 
-<p><b>Waveshape</b> performs waveshaping; see
+<p><b>waveshape</b> performs waveshaping; see
 "Digital Waveshaping Synthesis" by Marc Le Brun in JAES 1979 April, vol 27, no
 4, p250. </p>
 
@@ -795,10 +795,10 @@ determines which kind of Chebyshev polynomial we are interested in.</p>
 </pre>
 
 <p>These generators produce some occasionally useful wave forms.
-<b>Sawtooth-wave</b> ramps from -1 to 1, then goes immediately back to -1.
-<b>Triangle-wave</b> ramps from -1 to 1, then ramps from 1 to -1.
-<b>Pulse-train</b> produces a single sample of 1.0, then zeros.
-<b>Square-wave</b> produces 1 for half a period, then 0.  All have a period
+<b>sawtooth-wave</b> ramps from -1 to 1, then goes immediately back to -1.
+<b>triangle-wave</b> ramps from -1 to 1, then ramps from 1 to -1.
+<b>pulse-train</b> produces a single sample of 1.0, then zeros.
+<b>square-wave</b> produces 1 for half a period, then 0.  All have a period
 of two-pi, so the <i>fm</i> argument should have an effect comparable to the
 same fm applied to the same waveform in <a href="#table-lookup">table-lookup</a>.
 These are not band-limited; if the frequency is too high, you can get foldover.
@@ -828,7 +828,7 @@ One popular kind of vibrato is:
   <a class=def name="sum-of-cosines">sum-of-cosines</a> <i>cs</i> &amp;optional (<i>fm</i> 0.0)
   <a class=def name="sum-of-cosines?">sum-of-cosines?</a> <i>cs</i>
 </pre>
-<p><b>Sum-of-cosines</b> produces a band-limited pulse train containing
+<p><b>sum-of-cosines</b> produces a band-limited pulse train containing
 <i>cosines</i> cosines.
 See also legendre-summation in dsp.scm. "Trigonometric Delights" by Eli Maor has
 a derivation of a very similar formula (producing a sum of sines) and a neat
@@ -862,7 +862,7 @@ based on:
   <a class=def name="sum-of-sines">sum-of-sines</a> <i>cs</i> &amp;optional (<i>fm</i> 0.0)
   <a class=def name="sum-of-sines?">sum-of-sines?</a> <i>cs</i>
 </pre>
-<p><b>Sum-of-sines</b> produces a sum of <i>sines</i> sines.
+<p><b>sum-of-sines</b> produces a sum of <i>sines</i> sines.
 </p>
 <table border align=left hspace=40 cellpadding=4>
 <tr><td colspan=2><center>sum-of-sines methods</center></td></tr>
@@ -889,7 +889,7 @@ based on:
   <a class=def name="wave-train?">wave-train?</a> <i>w</i>
 </pre>
 
-<p><b>Wave-train</b> produces a wave train (an extension of pulse-train).
+<p><b>wave-train</b> produces a wave train (an extension of pulse-train).
 <i>Frequency</i> is the repetition rate of the wave found in <i>wave</i>.
 Successive waves can overlap.  With some simple envelopes, or filters, you can
 use this for VOSIM and other related techniques.</p>
@@ -945,16 +945,18 @@ use this for VOSIM and other related techniques.</p>
 <br>
 
 <!-- TOPIC rand -->
-<!-- INDEX random-numbers:Random numbers --><A class=def NAME="random-numbers"></a>
+<!-- INDEX randomnumbers:Random Numbers --><a name="randomnumbers"></a>
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>RAND, RAND-INTERP</h4></td></tr></table>
 
 <pre>
   <a class=def name="make-rand">make-rand</a> <a href="#optional-key">&amp;optional-key</a> 
-        (<i>frequency</i> 440.0) ;freq at which new random numbers occur
-        (<i>amplitude</i> 1.0)   ;numbers are between -amplitude and amplitude
+        (<i>frequency</i> 440.0)          ;freq at which new random numbers occur
+        (<i>amplitude</i> 1.0)            ;numbers are between -amplitude and amplitude
+        (<i>envelope</i> '(-1 1 1 1)) ;distribution function (uniform distribution between -1 and 1 is default)
   <a class=def name="rand">rand</a> <i>r</i> &amp;optional (<i>sweep</i> 0.0)
   <a class=def name="rand?">rand?</a> <i>r</i>
-  <a class=def name="make-rand-interp">make-rand-interp</a> <a href="#optional-key">&amp;optional-key</a> (<i>frequency</i> 440.0) (<i>amplitude</i> 1.0)
+  <a class=def name="make-rand-interp">make-rand-interp</a> <a href="#optional-key">&amp;optional-key</a> 
+        (<i>frequency</i> 440.0) (<i>amplitude</i> 1.0) (<i>envelope</i> '(0 1 1 1))
   <a class=def name="rand-interp">rand-interp</a> <i>r</i> &amp;optional (<i>sweep</i> 0.0)
   <a class=def name="rand-interp?">rand-interp?</a> <i>r</i>
   <em class=emdef>centered-random</em> <i>amp</i> 
@@ -962,12 +964,13 @@ use this for VOSIM and other related techniques.</p>
   <a class=def name="mus-random">mus-random</a> <i>amp</i> ;same as centered-random (for C-side compatibility)
   <a class=def Name="mus-set-rand-seed">mus-set-rand-seed</a> <i>seed</i>
 </pre>
-<p><b>Rand</b> returns a sequence of random numbers between -amplitude and
+<p><b>rand</b> returns a sequence of random numbers between -amplitude and
 amplitude (it produces a sort of step function).
-<b>Rand-Interp</b> interpolates between successive
+<b>rand-interp</b> interpolates between successive
 random numbers. Lisp's function <i>random</i> returns a number between 0.0 and its argument.
-<b>Centered-random</b> returns a number between -<i>amp</i> and <i>amp</i>.
-<b>Clm-random</b> returns a random number between 0 and <i>amp</i>. In the latter two cases,
+In both cases, the <i>envelope</i> argument determines the random number distribution.
+<b>centered-random</b> returns a number between -<i>amp</i> and <i>amp</i>.
+<b>clm-random</b> returns a random number between 0 and <i>amp</i>. In the latter two cases,
 <i>mus-set-rand-seed</i> sets the seed for the random number generator.  This provides a
 way around Lisp's clumsy mechanism for repeating a random number sequence.
 </p>
@@ -977,6 +980,8 @@ way around Lisp's clumsy mechanism for repeating a random number sequence.
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
 <tr><td><em class=gen>mus-scaler</em></td><td>amplitude arg used in make-&lt;gen&gt;</td></tr>
+<tr><td><em class=gen>mus-length</em></td><td>distribution table length</td></tr>
+<tr><td><em class=gen>mus-data</em></td><td>distribution table, if any</td></tr>
 </table>
 <pre><small>
 rand:
@@ -986,7 +991,15 @@ rand:
 </small></pre>
 <br clear=left>
 
-<p>The central-limit theorem says that you can get closer and closer to gaussian
+<p>There are a variety of ways to change <b>rand</b>'s uniform distribution to
+some other.  Exponential distribution could be:
+</p>
+<pre>
+(/ (log (max .01 (random 1.0))) (log .01))
+</pre>
+<p>where the ".01"'s affect how tightly the resultant values cluster toward 0.0 --
+set it to .0001 for example to get most of the random values close to 0.0.
+The central-limit theorem says that you can get closer and closer to gaussian
 noise simply by adding rand's together.  Orfanidis in 
 "Introduction to Signal Processing" says 12 calls on rand will
 do perfectly well.  We could define our own generator:
@@ -1000,6 +1013,27 @@ do perfectly well.  We could define our own generator:
 <p>For a discussion of the central limit theorem, see
 Korner "Fourier Analysis" and Miller Puckette's dissertation:
 http://www-crca.ucsd.edu/~msp/Publications/thesis.ps.
+Another method is the "rejection method" in which we generate random number
+pairs until we get a pair that falls within the
+desired distribution; see random-any in dsp.scm (Snd) for code to do this.
+It is faster at run time, however, to use the "transformation method".
+The make-rand and make-rand-interp <i>envelope</i> arguments specify
+the desired distribution function; the generator takes the
+inverse of the integral of the envelope, loads that into an array, and uses
+<code>(array-interp (rand array-size))</code> at run time.  This gives
+random numbers of any aribtrary distribution at a computational cost
+equivalent to the waveshape generator (which is obviously very similar).
+The x axis sets the output range (before scaling by <i>amplitude</i>), and
+the y axis sets the relative weight of the corresponding x axis value.
+So, the default is <code>'(-1 1 1 1)</code> which says "output numbers between -1 and 1,
+each number having the same chance of being chosen".
+An envelope of <code>'(0 1 1 0)</code> outputs values between 0 and 1, denser toward 0.
+</p>
+
+<p>
+You can, of course, filter the output of rand to get a different
+frequency distribution (as opposed to the "value distribution"
+above, all of which are forms of white noise).
 Orfanidis also mentions a clever way to get reasonably good 1/f noise:
 sum together n rand's, where each rand is running an octave slower
 than the preceding:
@@ -1155,7 +1189,7 @@ y(n) = x(n) -
 </small></pre>
 <br clear=left>
 
-<p><b>Formant</b> is recommended for resonators (simple bandpass filters), vocal
+<p><b>formant</b> is recommended for resonators (simple bandpass filters), vocal
 tract or instrument cavity simulations, etc.  It provides bandpass
 filtering (a simple resonance) using a two-pole and a two-zero filter, as
 described above. 
@@ -1337,11 +1371,11 @@ get to the envelope.</p>
   <a class=def name="delay?">delay?</a> <i>d</i>
   <a class=def name="tap">tap</a> <i>d</i> &amp;optional (<i>offset</i> 0)
 </pre>
-<p><b>Delay</b> is a delay line.  <i>Size</i> is in samples.
+<p><b>delay</b> is a delay line.  <i>Size</i> is in samples.
 Input fed into a delay line reappears at the output <i>size</i> samples
 later.  <i>Initial-element</i> defaults to 0.0.  If specified,
 <i>initial-contents</i> need not be the same length as the delay line.
-<b>Tap</b> returns the
+<b>tap</b> returns the
 current value of the delay generator.  <i>Offset</i> is the distance of the tap
 from the current delay line sample.  If <i>max-size</i> is specified,
 and larger than <i>size</i>, the delay line can provide fractional delays
@@ -1400,7 +1434,7 @@ delay line. </p>
   <a class=def name="notch">notch</a> <i>cflt input</i> &amp;optional (<i>pm</i> 0.0)
   <a class=def name="notch?">notch?</a> <i>cflt</i>
 </pre>
-<p><b>Comb</b> is a delay line with a scaler on the feedback term.  <b>Notch</b>
+<p><b>comb</b> is a delay line with a scaler on the feedback term.  <b>notch</b>
 is a delay line with a scaler on the feedforward term.
 <i>Size</i> is the length
 in samples of the delay line. 
@@ -1441,7 +1475,7 @@ Digital Waveguides".</p>
   <a class=def name="all-pass">all-pass</a> <i>f input</i> &amp;optional (<i>pm</i> 0.0)
   <a class=def name="all-pass?">all-pass?</a> <i>f</i>
 </pre>
-<p><b>All-pass</b> or moving average comb is just like <a href="#comb">comb</a> but with
+<p><b>all-pass</b> or moving average comb is just like <a href="#comb">comb</a> but with
 an added feedforward term.  If <i>feedback</i> = 0, we get a moving
 average comb filter.  If both scale terms = 0, we get a pure delay line. </p>
 
@@ -1495,7 +1529,7 @@ effect in new-effects.scm (Snd).
 <tr><td><em class=gen>mus-channel</em></td><td>if file input, channel of file (no setf)</td></tr>
 </table>
 
-<p><b>Src</b> performs sampling rate conversion
+<p><b>src</b> performs sampling rate conversion
 by convolving its input with a sinc
 function.
 <i>srate</i> is the
@@ -1580,7 +1614,7 @@ situation, hopefully; see expsrc.ins).</p>
 </table>
 
 <p>
-<b>Convolve</b> convolves its input with the impulse response <i>filter</i>.
+<b>convolve</b> convolves its input with the impulse response <i>filter</i>.
 The <i>filter</i> argument 
 can be
 an array, the result of open-input, or a filename as a string.
@@ -1635,7 +1669,7 @@ handier.</p>
 <tr><td><em class=gen>mus-data</em></td><td>grain samples if edit function in use</td></tr>
 </table>
 
-<p><b>Granulate</b> "granulates" the sound file <i>file</i>.  It is the poor man's way
+<p><b>granulate</b> "granulates" the sound file <i>file</i>.  It is the poor man's way
 to change the speed at which things happen in a recorded sound without
 changing the pitches.  It works by slicing the input file into short
 pieces, then overlapping these slices to lengthen (or shorten) the
@@ -1767,7 +1801,7 @@ ffts (for time stretching etc).
 
 <p>This generator is an extension of a delay line, providing a way to overlap-add
 stuff into the line, and a way to get notification when the next block of input is needed.
-<b>Buffer-&gt;sample</b> provides sample-at-a-time access to block-oriented data.  On
+<b>buffer-&gt;sample</b> provides sample-at-a-time access to block-oriented data.  On
 each call, buffer-&gt;sample returns the next sample in the buffer. 
 Similarly, sample-&gt;buffer appends a sample to the buffer.  <b>buffer-empty?</b> returns
 t when a new block of data is needed; mus-increment sets the next block-trigger time.
@@ -2093,7 +2127,7 @@ run-time memory management).
   <a class=def name="outd">outd</a> <i>loc</i> <i>data</i> &amp;optional (<i>o-stream</i> *output*)
   <a class=def name="out-any">out-any</a> <i>loc</i> <i>data</i> &amp;optional (<i>channel</i> 0) (<i>o-stream</i> *output*)
 </pre>
-<p><b>Outa</b> and friends add <i>data</i> into <i>o-stream</i> at sample
+<p><b>outa</b> and friends add <i>data</i> into <i>o-stream</i> at sample
 position <i>loc</i>.  <i>O-stream</i> defaults to the current output
 file (it is an IO instance, not a file name).  The reverb stream, if any,
 is named *reverb*; the direct output is *output*.
@@ -2109,7 +2143,7 @@ instrument will run much faster if it does sequential output.
   <a class=def name="inb">inb</a> <i>loc</i> &amp;optional (<i>i-stream</i> *input*)
   <a class=def name="in-any">in-any</a> <i>loc</i> &amp;optional (<i>channel</i> 0) (<i>i-stream</i> *input*)
 </pre>
-<p><b>Ina</b> and friends get the sample at position <i>loc</i> in
+<p><b>ina</b> and friends get the sample at position <i>loc</i> in
 <i>i-stream</i> as a float.  The data is normally between -1.0 and 1.0.
 <i>I-stream</i> defaults to the current input file (it is an IO struct, not a file name).
 See the digital zipper instrument <a href="zipper.ins">zipper.ins</a>.
@@ -2144,7 +2178,7 @@ or with-dac (0=microphone, 1=analog line in, 2=digital line in).
 <tr><td><em class=gen>mus-file-name</em></td><td>name of file associated with gen</td></tr>
 </table>
 
-<p><b>Readin</b> returns successive samples (as floats) from <i>file</i>.
+<p><b>readin</b> returns successive samples (as floats) from <i>file</i>.
 <i>File</i> should be an IO instance, as returned by <a href="#open-input">open-input</a>.
 <i>Start</i> is the frame at which to start reading <i>file</i>. 
 Here is an instrument that applies an envelope to a sound file using
@@ -2182,7 +2216,7 @@ readin and <a href="#env">env</a> (see also the fullmix instrument in fullmix.in
  <a class=def name="locsig-reverb-set!">locsig-reverb-set!</a> <i>loc chan val</i>
  <a class=def name="move-locsig">move-locsig</a> loc degree distance
 </pre>
-<p><b>Locsig</b> normally takes the place of <a href="#outa">outa</a> and <a href="#outb">outb</a> in an
+<p><b>locsig</b> normally takes the place of <a href="#outa">outa</a> and <a href="#outb">outb</a> in an
 instrument.  It tries to place a signal between outa and outb in
 an extremely dumb manner, it just scales the respective amplitudes
 ("that old trick <i>never</i> works").  <i>Reverb</i> determines how much of
@@ -2407,7 +2441,7 @@ of the companding function, then:
 <pre>
    <a class=def name="contrast-enhancement">contrast-enhancement</a> <i>in-samp</i> &amp;optional (<i>fm-index</i> 1.0)
 </pre>
-<p><b>Contrast-enhancement</b> phase-modulates a sound file.  It's like audio MSG.
+<p><b>contrast-enhancement</b> phase-modulates a sound file.  It's like audio MSG.
 The actual algorithm is sin(<i>in-samp</i>*pi/2 +
 (<i>fm-index</i>*sin(<i>in-samp</i>*2*pi))).  The result is to brighten the
 sound, helping it cut through a huge mix.</p>
@@ -2464,8 +2498,8 @@ a simple instrument such as:</p>
   <a class=def name="ring-modulate">ring-modulate</a> <i>in1 in2</i>
   <a class=def name="amplitude-modulate">amplitude-modulate</a> <i>am-carrier input1 input2</i>
 </pre>
-<b>Ring-modulate</b> returns (* <i>in1</i> <i>in2</i>).
-<b>Amplitude-modulate</b> returns (* <i>input1</i> (+ <i>am-carrier</i> <i>input2</i>))
+<b>ring-modulate</b> returns (* <i>in1</i> <i>in2</i>).
+<b>amplitude-modulate</b> returns (* <i>input1</i> (+ <i>am-carrier</i> <i>input2</i>))
 
 <p>Since neither needs any state information, there are no associated make
 functions.</p>
@@ -2509,7 +2543,7 @@ translated up and down by w/two-pi Hz.  The simplest case is: </p>
 </pre>
 <p>The
 magnitude of the spectrum is returned by <b>rectangular-&gt;polar</b>.  The data can be windowed
-with <b>multiply-arrays</b>.  <b>Spectrum</b> calls the fft, translates to polar coordinates,
+with <b>multiply-arrays</b>.  <b>spectrum</b> calls the fft, translates to polar coordinates,
 then returns results in dB (<i>norm-type</i> = 0), or linear normalized to 1.0 (<i>norm-type</i> = 1),
 or linear unnormalized (<i>norm-type</i> not 0 or 1). 
 </p>
@@ -2619,7 +2653,7 @@ and <a href="anoi.ins">anoi.ins</a>.
 <!-- TOPIC def-clm-struct -->
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4><a class=def name="def-clm-struct">def-clm-struct</a></h4></td></tr></table>
 
-<p><b>Def-clm-struct</b> is syntactically like def-struct, but sets up
+<p><b>def-clm-struct</b> is syntactically like def-struct, but sets up
 the struct field names for the run macro.</p>
 <pre><small>
   (def-clm-struct hi ho silver away)
@@ -2638,7 +2672,7 @@ the struct field names for the run macro.</p>
 <!-- TOPIC definstrument -->
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><a class=def name="definstrument">Definstrument</a></h3></td></tr></table>
 
-<p><b>Definstrument</b> is the most common way to define an instrument in CLM.
+<p><b>definstrument</b> is the most common way to define an instrument in CLM.
 Its syntax is almost the same as defun, but in addition it has a
 few options.  These fulfill two roles:  specifying instrument output language
 details, and requesting minor optimizations.  The options are in a state of
@@ -2918,7 +2952,7 @@ do this is with with-sound or clm-load.
    (<i>force-recomputation</i> nil) ; if t, force with-mix calls to recompute
    (<i>explode</i> *clm-explode*)   ; if t, produce "exploded" output -- each instrument call becomes a separately mixed file in Snd
 </pre>
-<p><b>With-sound</b> is a macro that performs all the various services needed to
+<p><b>with-sound</b> is a macro that performs all the various services needed to
 produce and play a sound file; it also wraps an unwind-protect around its body to
 make sure that everything is cleaned up properly if you happen to interrupt
 computation, then returns the output file name.</p>
@@ -3118,7 +3152,7 @@ the dac call to wait until the complete sound has been played before returning t
     (<i>bufsize</i> *clm-rt-bufsize*)
     (<i>data-format</i> mus-bshort)) &amp;body <i>body</i>
 </pre>
-<p><b>With-psound</b> runs its body in
+<p><b>with-psound</b> runs its body in
 real-time in the sense that the sound is sent directly to the DAC
 as it is being computed.  The dac buffer size is <i>bufsize</i>,
 which defaults to 1024.  This default avoids clicks and interruptions,
@@ -3158,7 +3192,7 @@ situations.  The alternative is:</p>
     <i>run-func</i>
     (<i>data-format</i> mus-bshort)
 </pre>
-<p><b>With-dac</b> opens the dac and starts sending it buffers
+<p><b>with-dac</b> opens the dac and starts sending it buffers
 of data.  It runs until told explicitly to stop, processing
 whatever instruments are currently active.  <i>Init-func</i>
 is a function of two arguments, the srate and number of
@@ -3339,7 +3373,7 @@ it does not recompute its body, leaving the resultant amplitude at .1.
   <a class=def Name="reopen-output">reopen-output</a> &amp;optional (<i>o-stream</i> *clm-file-name*)
   <a class=def Name="open-input*">open-input*</a> <i>name</i> &amp;key <i>start channel restartable</i>
 </pre>
-<p>These functions open and close input and output sound files.  <b>Open-input</b>
+<p>These functions open and close input and output sound files.  <b>open-input</b>
 and <b>open-output</b> take either strings or pathnames and return an IO object
 (see <a href="io.lisp">io.lisp</a> for a description of the innards of this structure).  Various clm
 functions use that object as a handle on the file.  The variable
@@ -3387,7 +3421,7 @@ messages).</p>
 <!-- TOPIC instrument-let -->
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><a Name="instrument-let">Instrument-let</a></h3></td></tr></table>
 
-<p><b>Instrument-let</b> is like Lisp's <i>flet</i> -- it can be used to
+<p><b>instrument-let</b> is like Lisp's <i>flet</i> -- it can be used to
 define local instruments:</p>
 <pre><small>
 (defun ins ()
@@ -3418,7 +3452,7 @@ Don't use instrument-let within
 <!-- TOPIC sound-let -->
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><a name="sound-let">Sound-let</a></h3></td></tr></table>
 
-<p><b>Sound-let</b> is a form of <i>let*</i> that creates temporary sound streams
+<p><b>sound-let</b> is a form of <i>let*</i> that creates temporary sound streams
 within with-sound.  Its syntax is like that of <i>let</i> and
 with-sound:</p>
 <pre>
@@ -3519,7 +3553,7 @@ provides the standard pitch names as lisp variables (a4 = 440.0 and so on).
 <!-- TOPIC run-star -->
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><a Name="run*">Run*</a></h3></td></tr></table>
 
-<p><b>Run*</b> takes two arguments, a list of variables, and the usual
+<p><b>run*</b> takes two arguments, a list of variables, and the usual
 run macro body.  The run body is executed (in C normally) and then
 the variables are set to the values they had when the run loop
 exited. 
@@ -4324,7 +4358,7 @@ replace the current intermediate C file.
   <tr><td><em class=tab><a href="clm.html#*clm-version*">*clm-version*</a></em></td><td><em class=tab><a href="clm.html#ina-outa"><b>Input and output</b></a></em></td><td><em class=tab><a href="clm.html#mus-channels">mus-channels</a></em></td><td><em class=tab><a href="clm.html#rand-interp">rand-interp</a></em></td><td><em class=tab><a href="clm.html#sum-of-cosines?">sum-of-cosines?</a></em></td></tr>
   <tr><td><em class=tab><a href="clm.html#close-input">close-input</a></em></td><td><em class=tab><a href="clm.html#ins-var">ins-var</a></em></td><td><em class=tab><a href="clm.html#mus-close">mus-close</a></em></td><td><em class=tab><a href="clm.html#rand-interp?">rand-interp?</a></em></td><td><em class=tab><a href="clm.html#sine-bank">sine-bank</a></em></td></tr>
   <tr><td><em class=tab><a href="clm.html#close-output">close-output</a></em></td><td><em class=tab><a href="clm.html#instrument-let">instrument-let</a></em></td><td><em class=tab><a href="clm.html#mus-cosines">mus-cosines</a></em></td><td><em class=tab><a href="clm.html#rand?">rand?</a></em></td><td><em class=tab><a href="clm.html#table-lookup">table-lookup</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#comb">comb</a></em></td><td><em class=tab><a href="clm.html#ins-files"><b>Instruments</b></a></em></td><td><em class=tab><a href="clm.html#mus-create">mus-create</a></em></td><td><em class=tab><a href="clm.html#random-numbers"><b>Random numbers</b></a></em></td><td><em class=tab><a href="clm.html#table-lookup?">table-lookup?</a></em></td></tr>
+  <tr><td><em class=tab><a href="clm.html#comb">comb</a></em></td><td><em class=tab><a href="clm.html#ins-files"><b>Instruments</b></a></em></td><td><em class=tab><a href="clm.html#mus-create">mus-create</a></em></td><td><em class=tab><a href="clm.html#randomnumbers"><b>Random numbers</b></a></em></td><td><em class=tab><a href="clm.html#table-lookup?">table-lookup?</a></em></td></tr>
   <tr><td><em class=tab><a href="clm.html#comb?">comb?</a></em></td><td><em class=tab><a href="clm.html#linear-&gt;db">linear-&gt;db</a></em></td><td><em class=tab><a href="clm.html#mus-data">mus-data</a></em></td><td><em class=tab><a href="clm.html#raw-data"><b>raw data </b></a></em></td><td><em class=tab><a href="clm.html#tap">tap</a></em></td></tr>
   <tr><td><em class=tab><a href="clm.html#continue-sample-&gt;file">continue-sample-&gt;file</a></em></td><td><em class=tab><a href="clm.html#locsig">locsig</a></em></td><td><em class=tab><a href="clm.html#mus-feedback">mus-feedback</a></em></td><td><em class=tab><a href="clm.html#rc">rc</a></em></td><td><em class=tab><a href="clm.html#times-&gt;samples">times-&gt;samples</a></em></td></tr>
   <tr><td><em class=tab><a href="clm.html#contrast-enhancement">contrast-enhancement</a></em></td><td><em class=tab><a href="clm.html#locsig-ref">locsig-ref</a></em></td><td><em class=tab><a href="clm.html#mus-feedforward">mus-feedforward</a></em></td><td><em class=tab><a href="clm.html#*rc-directory*">*rc-directory*</a></em></td><td><em class=tab><a href="clm.html#to-snd">to-snd</a></em></td></tr>
