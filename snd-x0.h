@@ -97,7 +97,6 @@
 
 #define GUI_POINTER XtPointer
 #define GUI_WIDGET Widget
-#define GUI_PIXEL Pixel
 
 #define TIME_TYPE Time
 #define BUTTON_1 Button1

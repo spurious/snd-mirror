@@ -277,7 +277,7 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
     }
 
   curx = left_border_width;
-  cury = height-bottom_border_width;
+  cury = height - bottom_border_width;
   
   x_number_height = number_height(ax);
   x_label_height = 0;
@@ -444,6 +444,9 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
   ap->x_label_y += ap->y_offset;
   ap->x_base = (double)(ap->x_axis_x0 - ap->x0 * ap->x_scale);
   ap->y_base = (Float)(ap->y_axis_y0 - ap->y0 * ap->y_scale);
+  if ((printing) &&
+      ((ap->cp->chan == 0) || (ap->cp->sound->channel_style != CHANNELS_SUPERIMPOSED)))
+    ps_bg(ap, ax);
   if (include_x_label)
     {
       activate_label_font(ax);

@@ -1004,15 +1004,16 @@
   XEN_ARGIFY_3(gxm_XmParseMappingSetValues_w, gxm_XmParseMappingSetValues)
   XEN_ARGIFY_3(gxm_XmParseMappingGetValues_w, gxm_XmParseMappingGetValues)
   XEN_NARGIFY_1(gxm_XmParseMappingFree_w, gxm_XmParseMappingFree)
-  XEN_NARGIFY_2(gxm_XmParseTableFree_w, gxm_XmParseTableFree)
+  XEN_ARGIFY_2(gxm_XmParseTableFree_w, gxm_XmParseTableFree)
   XEN_NARGIFY_5(gxm_XmStringTableProposeTablist_w, gxm_XmStringTableProposeTablist)
   XEN_NARGIFY_2(gxm_XmTabSetValue_w, gxm_XmTabSetValue)
   XEN_NARGIFY_1(gxm_XmTabGetValues_w, gxm_XmTabGetValues)
   XEN_NARGIFY_1(gxm_XmTabFree_w, gxm_XmTabFree)
+  XEN_NARGIFY_1(gxm_XmTabListFree_w, gxm_XmTabListFree)
   XEN_NARGIFY_5(gxm_XmTabCreate_w, gxm_XmTabCreate)
   XEN_NARGIFY_1(gxm_XmTabListTabCount_w, gxm_XmTabListTabCount)
-  XEN_NARGIFY_3(gxm_XmTabListRemoveTabs_w, gxm_XmTabListRemoveTabs)
-  XEN_NARGIFY_4(gxm_XmTabListReplacePositions_w, gxm_XmTabListReplacePositions)
+  XEN_ARGIFY_3(gxm_XmTabListRemoveTabs_w, gxm_XmTabListRemoveTabs)
+  XEN_ARGIFY_4(gxm_XmTabListReplacePositions_w, gxm_XmTabListReplacePositions)
   XEN_NARGIFY_2(gxm_XmTabListGetTab_w, gxm_XmTabListGetTab)
   XEN_NARGIFY_3(gxm_XmTabListCopy_w, gxm_XmTabListCopy)
   XEN_NARGIFY_4(gxm_XmTabListInsertTabs_w, gxm_XmTabListInsertTabs)
@@ -1146,8 +1147,6 @@
   XEN_NARGIFY_2(gxm_XmSetMenuCursor_w, gxm_XmSetMenuCursor)
   XEN_NARGIFY_1(gxm_XmGetMenuCursor_w, gxm_XmGetMenuCursor)
   XEN_NARGIFY_3(gxm_XmTrackingLocate_w, gxm_XmTrackingLocate)
-  XEN_NARGIFY_1(gxm_XmAddTabGroup_w, gxm_XmAddTabGroup)
-  XEN_NARGIFY_1(gxm_XmRemoveTabGroup_w, gxm_XmRemoveTabGroup)
 
   XEN_NARGIFY_1(XEN_XmFontList_p_w, XEN_XmFontList_p)
   XEN_NARGIFY_1(XEN_XmFontContext_p_w, XEN_XmFontContext_p)
@@ -2231,15 +2230,16 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmParseMappingSetValues" XM_POSTFIX, gxm_XmParseMappingSetValues_w, 2, 1, 0, H_XmParseMappingSetValues);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmParseMappingGetValues" XM_POSTFIX, gxm_XmParseMappingGetValues_w, 2, 1, 0, H_XmParseMappingGetValues);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmParseMappingFree" XM_POSTFIX, gxm_XmParseMappingFree_w, 1, 0, 0, H_XmParseMappingFree);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmParseTableFree" XM_POSTFIX, gxm_XmParseTableFree_w, 2, 0, 0, H_XmParseTableFree);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmParseTableFree" XM_POSTFIX, gxm_XmParseTableFree_w, 1, 1, 0, H_XmParseTableFree);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringTableProposeTablist" XM_POSTFIX, gxm_XmStringTableProposeTablist_w, 5, 0, 0, H_XmStringTableProposeTablist);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTabSetValue" XM_POSTFIX, gxm_XmTabSetValue_w, 2, 0, 0, H_XmTabSetValue);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTabGetValues" XM_POSTFIX, gxm_XmTabGetValues_w, 1, 0, 0, H_XmTabGetValues);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTabFree" XM_POSTFIX, gxm_XmTabFree_w, 1, 0, 0, H_XmTabFree);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTabListFree" XM_POSTFIX, gxm_XmTabListFree_w, 1, 0, 0, H_XmTabListFree);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTabCreate" XM_POSTFIX, gxm_XmTabCreate_w, 5, 0, 0, H_XmTabCreate);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTabListTabCount" XM_POSTFIX, gxm_XmTabListTabCount_w, 1, 0, 0, H_XmTabListTabCount);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTabListRemoveTabs" XM_POSTFIX, gxm_XmTabListRemoveTabs_w, 3, 0, 0, H_XmTabListRemoveTabs);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTabListReplacePositions" XM_POSTFIX, gxm_XmTabListReplacePositions_w, 4, 0, 0, H_XmTabListReplacePositions);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTabListRemoveTabs" XM_POSTFIX, gxm_XmTabListRemoveTabs_w, 2, 1, 0, H_XmTabListRemoveTabs);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTabListReplacePositions" XM_POSTFIX, gxm_XmTabListReplacePositions_w, 3, 1, 0, H_XmTabListReplacePositions);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTabListGetTab" XM_POSTFIX, gxm_XmTabListGetTab_w, 2, 0, 0, H_XmTabListGetTab);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTabListCopy" XM_POSTFIX, gxm_XmTabListCopy_w, 3, 0, 0, H_XmTabListCopy);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTabListInsertTabs" XM_POSTFIX, gxm_XmTabListInsertTabs_w, 4, 0, 0, H_XmTabListInsertTabs);
@@ -2387,7 +2387,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringSegmentCreate" XM_POSTFIX, gxm_XmStringSegmentCreate_w, 4, 0, 0, H_XmStringSegmentCreate);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringPeekNextComponent" XM_POSTFIX, gxm_XmStringPeekNextComponent_w, 1, 0, 0, H_XmStringPeekNextComponent);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringGetNextComponent" XM_POSTFIX, gxm_XmStringGetNextComponent_w, 1, 0, 0, H_XmStringGetNextComponent);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRemoveTabGroup" XM_POSTFIX, gxm_XmRemoveTabGroup_w, 1, 0, 0, H_XmRemoveTabGroup);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListAdd" XM_POSTFIX, gxm_XmFontListAdd_w, 3, 0, 0, H_XmFontListAdd);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringLength" XM_POSTFIX, gxm_XmStringLength_w, 1, 0, 0, H_XmStringLength);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringNConcat" XM_POSTFIX, gxm_XmStringNConcat_w, 3, 0, 0, H_XmStringNConcat);
@@ -2402,7 +2401,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmMainWindowSep1" XM_POSTFIX, gxm_XmMainWindowSep1_w, 1, 0, 0, H_XmMainWindowSep1);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmMainWindowSep2" XM_POSTFIX, gxm_XmMainWindowSep2_w, 1, 0, 0, H_XmMainWindowSep2);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmMainWindowSep3" XM_POSTFIX, gxm_XmMainWindowSep3_w, 1, 0, 0, H_XmMainWindowSep3);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmAddTabGroup" XM_POSTFIX, gxm_XmAddTabGroup_w, 1, 0, 0, H_XmAddTabGroup);
 #endif
 
 #if HAVE_XPM

@@ -321,12 +321,12 @@ static gboolean channel_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpoint
   snd_state *ss;
 
   cp = (chan_info *)data;
-  if ((cp == NULL) || (cp->active != 1) || (cp->sound == NULL)) return;
+  if ((cp == NULL) || (cp->active != 1) || (cp->sound == NULL)) return(FALSE);
   ss = cp->state;
 
   if ((ev->area.height < MIN_REGRAPH_Y) || 
       (ev->area.width < MIN_REGRAPH_X)) 
-    return;
+    return(FALSE);
     
   sp = cp->sound;
   if (sp->channel_style != CHANNELS_SEPARATE)
@@ -342,9 +342,9 @@ static gboolean channel_resize_callback(GtkWidget *w, GdkEventConfigure *ev, gpo
   snd_info *sp;
   chan_info *cp;
   cp = (chan_info *)data;
-  if ((cp == NULL) || (cp->active != 1) || (cp->sound == NULL)) return;
+  if ((cp == NULL) || (cp->active != 1) || (cp->sound == NULL)) return(FALSE);
   sp = cp->sound;
-  if (sp == NULL) return;
+  if (sp == NULL) return(FALSE);
   if (sp->channel_style != CHANNELS_SEPARATE)
     map_over_sound_chans(sp, update_graph, NULL);
   else update_graph(cp, NULL);
@@ -835,10 +835,15 @@ void set_bold_peak_numbers_font(chan_info *cp) {set_graph_font(cp, (cp->state->s
 COLOR_TYPE get_foreground_color(chan_info *cp, axis_context *ax)
 {
   GdkGCValues gv;
-  snd_state *ss;
-  ss = cp->state;
   gdk_gc_get_values(ax->gc, &gv);
   return(gdk_color_copy(&(gv.foreground)));
+}
+
+COLOR_TYPE get_background_color(chan_info *cp, axis_context *ax)
+{
+  GdkGCValues gv;
+  gdk_gc_get_values(ax->gc, &gv);
+  return(gdk_color_copy(&(gv.background)));
 }
 
 void set_foreground_color(chan_info *cp, axis_context *ax, GdkColor *color)

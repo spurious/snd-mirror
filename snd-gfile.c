@@ -674,6 +674,7 @@ static void make_save_as_dialog(snd_state *ss, char *sound_name, int save_type, 
 void make_file_save_as_dialog(snd_state *ss)
 {
   snd_info *sp = NULL;
+  char *com = NULL;
   file_info *hdr = NULL;
   save_as_dialog_type = FILE_SAVE_AS;
   sp = any_selected_sound(ss);
@@ -686,7 +687,9 @@ void make_file_save_as_dialog(snd_state *ss)
   load_header_and_data_lists(save_as_file_data,
 			     save_as_file_data->current_type,
 			     save_as_file_data->current_format,
-			     (hdr) ? hdr->srate : selection_srate(), 0, -1, output_comment(hdr));
+			     (hdr) ? hdr->srate : selection_srate(), 0, -1, 
+			     com = output_comment(hdr));
+  if (com) FREE(com);
   gtk_widget_show(save_as_dialog);
 }
 

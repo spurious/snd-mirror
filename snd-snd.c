@@ -2387,7 +2387,13 @@ Any argument can be #f which causes its value to be taken from the sound being s
 	  err = save_channel_edits(cp, fname, edpos, S_save_sound_as, 7);
 	}
     }
-  else err = save_edits_without_display(sp, fname, ht, df, sr, output_comment(hdr), edpos, S_save_sound_as, 7);
+  else 
+    {
+      char *outcom;
+      outcom = output_comment(hdr);
+      err = save_edits_without_display(sp, fname, ht, df, sr, outcom, edpos, S_save_sound_as, 7);
+      if (outcom) FREE(outcom);
+    }
   if (err != MUS_NO_ERROR)
     {
       ss = sp->state;

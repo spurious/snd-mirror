@@ -194,6 +194,7 @@ void set_peak_numbers_font(chan_info *cp) {}
 void set_bold_peak_numbers_font(chan_info *cp) {}
 void set_tiny_numbers_font(chan_info *cp) {}
 COLOR_TYPE get_foreground_color(chan_info *cp, axis_context *ax) {return(0);}
+COLOR_TYPE get_background_color(chan_info *cp, axis_context *ax) {return(0);}
 void set_foreground_color(chan_info *cp, axis_context *ax, int color) {}
 void change_channel_style(snd_info *sp, int new_style) {}
 void reflect_amp_env_in_progress(snd_info *sp) {}
@@ -283,7 +284,6 @@ void recorder_error(char *msg) {}
 void reflect_record_size(int val) {}
 void unsensitize_control_buttons(void) {}
 void reflect_recorder_duration(Float new_dur) {}
-char *ps_rgb(snd_state *ss, int pchan) {return(NULL);}
 void make_open_file_dialog(snd_state *ss, int read_only, int managed) {}
 void make_mix_file_dialog(snd_state *ss, int managed) {}
 

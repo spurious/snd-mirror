@@ -290,6 +290,7 @@ void set_peak_numbers_font(chan_info *cp);
 void set_bold_peak_numbers_font(chan_info *cp);
 void set_tiny_numbers_font(chan_info *cp);
 COLOR_TYPE get_foreground_color(chan_info *cp, axis_context *ax);
+COLOR_TYPE get_background_color(chan_info *cp, axis_context *ax);
 void set_foreground_color(chan_info *cp, axis_context *ax, GdkColor *color);
 GdkGC *copy_GC(chan_info *cp);
 GdkGC *erase_GC(chan_info *cp);
@@ -327,7 +328,6 @@ int number_width(axis_context *ax, char *num);
 int number_height(axis_context *ax);
 int label_height(axis_context *ax);
 int mark_name_width(snd_state *ss, char *txt);
-void map_over_children (GtkWidget *w, void (*func)(GtkWidget *wid, gpointer data), void *userptr);
 void clear_window(axis_context *ax);
 void set_background(GtkWidget *w, GdkColor *col);
 void set_backgrounds(GtkWidget *w, GdkColor *col);
@@ -561,7 +561,6 @@ void g_initialize_xgfile(void);
 /* -------- snd-gprint.c -------- */
 
 void file_print_callback(GtkWidget *w, gpointer clientData);
-char *ps_rgb(snd_state *ss, int pchan);
 
 
 #endif

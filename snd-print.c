@@ -23,7 +23,7 @@ static void ps_flush(int fd)
     }
 }
 
-static void ps_write(int fd, char *buf)
+static void ps_write(char *buf)
 {
   /* sending tiny buffers over the net is a total loss -- grab a bunch at a time */
   if (!nbuf)
@@ -36,7 +36,7 @@ static void ps_write(int fd, char *buf)
       nbuf[nbuf_ctr] = (*buf);
       buf++;
       nbuf_ctr++;
-      if (nbuf_ctr == NBUF_SIZE) ps_flush(fd);
+      if (nbuf_ctr == NBUF_SIZE) ps_flush(ps_fd);
     }
 }
 
@@ -57,20 +57,20 @@ static int start_ps_graph(char *output, char *title)
 #endif
 
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, "%%!PS-Adobe-2.0 EPSF-2.0\n%%%%Title: %s\n%%%%Creator: Snd: %s\n%%%%CreationDate: ", title, SND_VERSION);
-  ps_write(ps_fd, pbuf);
+  ps_write(pbuf);
 #if HAVE_STRFTIME
   time(&ts);
   strftime(pbuf, PRINT_BUFFER_SIZE, STRFTIME_FORMAT, localtime(&ts));
-  ps_write(ps_fd, pbuf);
+  ps_write(pbuf);
 #endif
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, "\n%%%%BoundingBox:(atend)\n%%%%EndComments\n%%%%EndProlog\n%%%%Page: 1 1\n");
-  ps_write(ps_fd, pbuf);
+  ps_write(pbuf);
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, "/LT {lineto} bind def\n/RF {rectfill} bind def\n/RG {setrgbcolor} bind def\n/NAF {newpath arc fill} bind def\n\n");
-  ps_write(ps_fd, pbuf);
+  ps_write(pbuf);
   ss = get_global_state();
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, "gsave [%.3f 0.0 0.0 %.3f %.3f %.3f] concat\n\n",
 	       eps_size(ss), eps_size(ss), eps_left_margin(ss), eps_bottom_margin(ss));
-  ps_write(ps_fd, pbuf);
+  ps_write(pbuf);
   return(0);
 }
 
@@ -92,7 +92,7 @@ static void end_ps_graph(void)
 	       0, 0,
 	       (int)(bbx + 10 + eps_left_margin(ss)),
 	       (int)(bby + 10 + eps_bottom_margin(ss)));
-  ps_write(ps_fd, pbuf);
+  ps_write(pbuf);
   ps_flush(ps_fd);
   close(ps_fd);
   if (previous_locale)
@@ -156,14 +156,14 @@ static void ps_draw_lines(axis_info *ap, int j, Float *xpts, Float *ypts)
 {
   int i;
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " %.2f %.2f moveto\n", ps_grf_x(ap, xpts[0]), ps_grf_y(ap, ypts[0]));
-  ps_write(ps_fd, pbuf);
+  ps_write(pbuf);
   for (i = 1; i < j; i++)
     {
       mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " %.2f %.2f lineto\n", ps_grf_x(ap, xpts[i]), ps_grf_y(ap, ypts[i]));
-      ps_write(ps_fd, pbuf);
+      ps_write(pbuf);
     }
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " stroke\n");
-  ps_write(ps_fd, pbuf);
+  ps_write(pbuf);
 }
 
 static void ps_draw_dots(axis_info *ap, int j, Float *xpts, Float *ypts, int dot_size)
@@ -174,7 +174,7 @@ static void ps_draw_dots(axis_info *ap, int j, Float *xpts, Float *ypts, int dot
   for (i = 0; i < j; i++)
     {
       mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " %.2f %.2f %.2f 0 360 NAF\n", ps_grf_x(ap, xpts[i]), ps_grf_y(ap, ypts[i]), arc_size);
-      ps_write(ps_fd, pbuf);
+      ps_write(pbuf);
     }
 }
 
@@ -184,15 +184,15 @@ static void ps_fill_polygons(axis_info *ap, int j, Float *xpts, Float *ypts, Flo
   for (i = 1; i < j; i++)
     {
       mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " %.2f %.2f moveto\n", ps_grf_x(ap, xpts[i - 1]), ps_grf_y(ap, ypts[i - 1]));
-      ps_write(ps_fd, pbuf);
+      ps_write(pbuf);
       mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " %.2f %.2f lineto\n", ps_grf_x(ap, xpts[i]), ps_grf_y(ap, ypts[i]));
-      ps_write(ps_fd, pbuf);
+      ps_write(pbuf);
       mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " %.2f %.2f lineto\n", ps_grf_x(ap, xpts[i]), ps_grf_y(ap, y0));
-      ps_write(ps_fd, pbuf);
+      ps_write(pbuf);
       mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " %.2f %.2f lineto\n", ps_grf_x(ap, xpts[i - 1]), ps_grf_y(ap, y0));
-      ps_write(ps_fd, pbuf);
+      ps_write(pbuf);
       mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " closepath fill\n");
-      ps_write(ps_fd, pbuf);
+      ps_write(pbuf);
     }
 }
 
@@ -227,7 +227,7 @@ void ps_draw_grf_points(axis_info *ap, int j, Float y0, int graph_style, int dot
 		       (float)gy0,
 		       (float)size4,
 		       ps_grf_y(ap, ypts[i]) - gy0);
-	  ps_write(ps_fd, pbuf);
+	  ps_write(pbuf);
 	}
       break;
     }
@@ -250,15 +250,15 @@ void ps_draw_both_grf_points(axis_info *ap, int j, int graph_style, int dot_size
       for (i = 1; i < j; i++)
 	{
 	  mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " %.2f %.2f moveto\n", ps_grf_x(ap, xpts[i - 1]), ps_grf_y(ap, ypts[i - 1]));
-	  ps_write(ps_fd, pbuf);
+	  ps_write(pbuf);
 	  mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " %.2f %.2f lineto\n", ps_grf_x(ap, xpts[i]), ps_grf_y(ap, ypts[i]));
-	  ps_write(ps_fd, pbuf);
+	  ps_write(pbuf);
 	  mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " %.2f %.2f lineto\n", ps_grf_x(ap, xpts[i]), ps_grf_y(ap, ypts1[i]));
-	  ps_write(ps_fd, pbuf);
+	  ps_write(pbuf);
 	  mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " %.2f %.2f lineto\n", ps_grf_x(ap, xpts[i - 1]), ps_grf_y(ap, ypts1[i - 1]));
-	  ps_write(ps_fd, pbuf);
+	  ps_write(pbuf);
 	  mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " closepath fill\n");
-	  ps_write(ps_fd, pbuf);
+	  ps_write(pbuf);
 	}
       break;
     case GRAPH_DOTS_AND_LINES:
@@ -286,7 +286,7 @@ void ps_draw_both_grf_points(axis_info *ap, int j, int graph_style, int dot_size
 		       ps_grf_y(ap, ypts[i]),
 		       (float)size4,
 		       ps_grf_y(ap, ypts1[i]) - ps_grf_y(ap, ypts[i]));
-	  ps_write(ps_fd, pbuf);
+	  ps_write(pbuf);
 	}
 
       break;
@@ -305,25 +305,63 @@ void ps_draw_sono_rectangle(axis_info *ap, int color, Float x, Float y, Float wi
       get_current_color(color_map(ss), color, &r, &g, &b);
       last_color = color;
       mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " %.2f %.2f %.2f RG\n", (float)r / 65535.0, (float)g / 65535.0, (float)b / 65535.0);
-      ps_write(ps_fd, pbuf);
+      ps_write(pbuf);
     }
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " %.1f %.1f %.2f %.2f RF\n", ps_grf_x(ap, x) + 2, ps_grf_y(ap, y), width, height);
-  ps_write(ps_fd, pbuf);
+  ps_write(pbuf);
 }
 
 void ps_reset_color(void)
 {
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " 0 setgray\n");
-  ps_write(ps_fd, pbuf);
+  ps_write(pbuf);
   last_color = -1;
 }
 
-void ps_recolor(chan_info *cp)
+static void ps_set_color(COLOR_TYPE color)
 {
-  char *rgb;
-  rgb = ps_rgb(cp->state, cp->chan % 4);
-  ps_write(ps_fd, rgb);
-  FREE(rgb);
+#if USE_MOTIF
+  Colormap cmap;
+  XColor tmp_color;
+  Display *dpy;
+  snd_state *ss;
+  ss = get_global_state();
+  dpy = XtDisplay(MAIN_SHELL(ss));
+  cmap = DefaultColormap(dpy, DefaultScreen(dpy));
+  tmp_color.flags = DoRed | DoGreen | DoBlue;
+  tmp_color.pixel = color;
+  XQueryColor(dpy, cmap, &tmp_color);
+  mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " %.2f %.2f %.2f RG\n",
+	       (float)tmp_color.red / 65535.0,
+	       (float)tmp_color.green / 65535.0,
+	       (float)tmp_color.blue / 65535.0);
+  ps_write(pbuf);
+#else
+  #if USE_GTK
+  mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " %.2f %.2f %.2f RG\n", 
+	       (float)color->red / 65535.0, 
+	       (float)color->green / 65535.0, 
+	       (float)color->blue / 65535.0);
+  ps_write(pbuf);
+  #endif
+#endif
+  last_color = -1;
+}
+
+void ps_bg(axis_info *ap, axis_context *ax)
+{
+  /* get background color, fill graph, then set foreground for axis */
+  ps_set_color(get_background_color(ap->cp, ax));
+  mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " %d %d %d %d RF\n",
+	       ap->graph_x0 + bx0, ap->y_offset + by0, ap->width, ap->height);
+  ps_write(pbuf);
+  ps_fg(ap, ax);
+}
+
+void ps_fg(axis_info *ap, axis_context *ax)
+{
+  /* set foreground color for subsequent line drawing */
+  ps_set_color(get_foreground_color(ap->cp, ax));
 }
 
 /* the rest are in real coordinates except upsidedown from PS point of view */
@@ -339,7 +377,7 @@ void ps_draw_line (axis_info *ap, int x0, int y0, int x1, int y1)
   if (py0 > bby) bby = py0;
   if (py1 > bby) bby = py1;
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " 0 setlinewidth %d %d moveto %d %d lineto stroke\n", px0, py0, px1, py1);
-  ps_write(ps_fd, pbuf);
+  ps_write(pbuf);
 }
 
 void ps_draw_spectro_line(axis_info *ap, int color, Float x0, Float y0, Float x1, Float y1)
@@ -353,7 +391,7 @@ void ps_draw_spectro_line(axis_info *ap, int color, Float x0, Float y0, Float x1
       get_current_color(color_map(ss), color, &r, &g, &b);
       last_color = color;
       mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " %.2f %.2f %.2f RG\n", (float)r / 65535.0, (float)g / 65535.0, (float)b / 65535.0);
-      ps_write(ps_fd, pbuf);
+      ps_write(pbuf);
     }
   ps_draw_line(ap, (int)x0, (int)y0, (int)x1, (int)y1);
 }
@@ -370,7 +408,7 @@ void ps_fill_rectangle (axis_info *ap, int x0, int y0, int width, int height)
   if (py0 > bby) bby = py0;
   if (py1 > bby) bby = py1;
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " %d %d %d %d RF\n", px0, py0, width, -height);
-  ps_write(ps_fd, pbuf);
+  ps_write(pbuf);
 }
 
 void ps_draw_string (axis_info *ap, int x0, int y0, char *str) 
@@ -381,37 +419,37 @@ void ps_draw_string (axis_info *ap, int x0, int y0, char *str)
   if (px0 > bbx) bbx = px0;
   if (py0 > bby) bby = py0;
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " %d %d moveto (%s) show\n", px0, py0, str);
-  ps_write(ps_fd, pbuf);
+  ps_write(pbuf);
 }
 
 void ps_set_number_font(void) 
 {
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " /Courier findfont 15 scalefont setfont\n");
-  ps_write(ps_fd, pbuf);
+  ps_write(pbuf);
 }
 
 void ps_set_label_font(void) 
 {
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " /Times-Roman findfont 20 scalefont setfont\n");
-  ps_write(ps_fd, pbuf);
+  ps_write(pbuf);
 }
 
 void ps_set_bold_peak_numbers_font(void) 
 {
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " /Times-Bold findfont 14 scalefont setfont\n");
-  ps_write(ps_fd, pbuf);
+  ps_write(pbuf);
 }
 
 void ps_set_peak_numbers_font(void) 
 {
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " /Times-Roman findfont 14 scalefont setfont\n");
-  ps_write(ps_fd, pbuf);
+  ps_write(pbuf);
 }
 
 void ps_set_tiny_numbers_font(void) 
 {
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " /Times-Roman findfont 12 scalefont setfont\n");
-  ps_write(ps_fd, pbuf);
+  ps_write(pbuf);
 }
 
 

@@ -262,6 +262,7 @@ void set_peak_numbers_font(chan_info *cp);
 void set_bold_peak_numbers_font(chan_info *cp);
 void set_tiny_numbers_font(chan_info *cp);
 COLOR_TYPE get_foreground_color(chan_info *cp, axis_context *ax);
+COLOR_TYPE get_background_color(chan_info *cp, axis_context *ax);
 void set_foreground_color(chan_info *cp, axis_context *ax, int color);
 void cleanup_cw(chan_info *cp);
 void combine_sound(snd_info *sp);
@@ -393,11 +394,6 @@ void unlock_recording_audio(void);
 void cleanup_recording (void);
 void snd_record_file(snd_state *ss);
 int record_dialog_is_active(void);
-
-
-/* -------- snd-xprint.c -------- */
-
-char *ps_rgb(snd_state *ss, int pchan);
 
 
 #endif

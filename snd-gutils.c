@@ -177,20 +177,6 @@ void clear_window(axis_context *ax)
   if (ax) gdk_window_clear(ax->wn);
 }
 
-void map_over_children (GtkWidget *w, void (*func)(GtkWidget *w, gpointer ptr), void *userptr)
-{
-  /* apply func to each child in entire tree beneath top widget */
-  /* used mostly to get colors right in "convenience" widgets */
-  /*   this doesn't actually work in gtk */
-
-  if (w)
-    {
-      (*func)(w, userptr);
-      if (GTK_IS_CONTAINER(w))
-	gtk_container_foreach(GTK_CONTAINER(w), func, (gpointer)userptr);
-    }
-}
-
 void set_background(GtkWidget *w, GdkColor *col)
 { 
   GtkStyle *style;

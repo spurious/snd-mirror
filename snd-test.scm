@@ -13910,6 +13910,12 @@ EDITS: 4
 		  (close-sound ind))
 
 		;; ---------------- view files dialog ----------------
+		(if (not (defined? 'files-popup-info))
+		    (load "nb.scm"))
+		(if (hook-empty? mouse-enter-label-hook)
+		    (begin
+		      (add-hook! mouse-enter-label-hook files-popup-info)
+		      (add-hook! mouse-leave-label-hook files-popup-quit)))
                 (file-dialog)
 		(let ((ind (open-sound "2.snd")))
 		  (close-sound ind))
@@ -13951,9 +13957,13 @@ EDITS: 4
 					(begin
 					  (click-button w #t)
 					  (force-event)))))
+		  (let ((update (find-child filed "Update")))
+		    (click-button update) (force-event))
 		  (click-button (|XmMessageBoxGetChild filed |XmDIALOG_CANCEL_BUTTON)) (force-event)     ;clear
 		  (set! name (cadr (|XmStringGetLtoR (cadr (|XtVaGetValues nm2 (list |XmNlabelString 0))) "bold_button_font")))
 		  (click-button (|XmMessageBoxGetChild filed |XmDIALOG_OK_BUTTON)) (force-event)
+		  (reset-hook! mouse-enter-label-hook)
+		  (reset-hook! mouse-leave-label-hook)
 		  (IF (|XtIsManaged filed)
 		      (snd-display ";why is view files active?")))
 
@@ -15212,7 +15222,36 @@ EDITS: 4
 	      (IF (not (equal? (|XmTabGetValues (|XmTabListGetTab tablist 0)) (list 1.5 5 0 0 ".")))
 		  (snd-display ";XmTabs 0: ~A" (|XmTabGetValues (|XmTabListGetTab tablist 0))))
 	      (IF (not (equal? (|XmTabGetValues (|XmTabListGetTab tablist 2)) (list 1.5 5 1 0 ".")))
-		  (snd-display ";XmTabs 2: ~A" (|XmTabGetValues (|XmTabListGetTab tablist 0))))
+		  (snd-display ";XmTabs 2: ~A" (|XmTabGetValues (|XmTabListGetTab tablist 2))))
+	      (let ((copytab (|XmTabListCopy tablist 0 0)))
+		(IF (not (equal? (|XmTabGetValues (|XmTabListGetTab copytab 0)) (list 1.5 5 0 0 ".")))
+		    (snd-display ";XmTabListCopy 0: ~A" (|XmTabGetValues (|XmTabListGetTab copytab 0))))
+		(let ((another (|XmTabListRemoveTabs copytab (list 0 1)))
+		      (atab (|XmTabCreate 3.0 |XmINCHES |XmABSOLUTE |XmALIGNMENT_BEGINNING ".")))
+		  (IF (not (equal? (|XmTabGetValues (|XmTabListGetTab another 0)) (list 1.5 5 1 0 ".")))
+		      (snd-display ";XmTabListRemoveTabs: ~A" (|XmTabGetValues (|XmTabListGetTab another 0))))
+		  (|XmTabListReplacePositions (|XmTabListCopy tablist 0 0) (list 1) (list atab))
+		  ;; this (replacepositions) is very prone to segfaults -- *very* poorly implemented! 
+		  (|XmTabSetValue atab 6.0)
+		  (|XmTabFree atab)
+		  (|XmTabListFree another)))
+
+	      (let* ((tmp (|XmStringCreateLocalized "h"))
+		     (pm (|XmParseMappingCreate (list |XmNincludeStatus |XmINSERT
+						      |XmNsubstitute    tmp
+						      |XmNpattern       "i"
+						      |XmNpatternType   |XmCHARSET_TEXT))))
+		(|XmStringFree tmp)
+		(let ((newstr (|XmStringParseText "hi" #f #f |XmCHARSET_TEXT (list pm) 1 #f)))
+		  (IF (not (string=? (cadr (|XmStringGetLtoR newstr |XmFONTLIST_DEFAULT_TAG)) "hh"))
+		      (snd-display ";XmStringParseText -> ~A" (|XmStringGetLtoR newstr |XmFONTLIST_DEFAULT_TAG))))
+		(let ((vals (|XmParseMappingGetValues pm (list |XmNincludeStatus 0 |XmNsubstitute 0))))
+		  (IF (or (not (= (cadr vals) |XmINSERT))
+			  (not (string=? (cadr (|XmStringGetLtoR (list-ref vals 3) |XmFONTLIST_DEFAULT_TAG)) "h")))
+		      (snd-display ";XmParseMappingGetValues: ~A" vals))
+		  (|XmParseMappingSetValues pm (list |XmNpattern "b")))
+		(|XmParseMappingFree pm))
+
 	      (let* ((fonts (list "fixed"
 				  "-adobe-times-bold-r-*-*-14-*-*-*-*-*-*-*"
 				  "-adobe-*-medium-i-*-*-18-*-*-*-*-*-*-*"
@@ -15277,14 +15316,28 @@ EDITS: 4
 
 		(IF (not (equal? (|XmRenderTableGetTags rendertable) (list "one" "two" "three" "four")))
 		    (snd-display ";tags: ~A~%" (|XmRenderTableGetTags rendertable)))
-		(let ((r (|XmRenditionRetrieve (|XmRenderTableGetRendition rendertable "one")
-					       (list |XmNrenditionForeground 0
-						     |XmNfontName 0
-						     |XmNfontType 0
-						     |XmNtag 0))))
+		(let* ((rend (|XmRenderTableGetRendition rendertable "one"))
+		       (r (|XmRenditionRetrieve rend
+						(list |XmNrenditionForeground 0
+						      |XmNfontName 0
+						      |XmNfontType 0
+						      |XmNtag 0))))
 		  (IF (or (not (string=? (list-ref r 7) "one"))
 			  (not (string=? (list-ref r 3) "fixed")))
-		      (snd-display ";rendertable: ~A" r)))
+		      (snd-display ";rendertable: ~A" r))
+		  (let* ((str (|XmStringPutRendition (|XmStringCreateLocalized "hiho") "one"))
+			 (ctx (cadr (|XmStringInitContext str)))
+			 (comp (|XmStringPeekNextComponent ctx))
+			 (comp1 (|XmStringPeekNextTriple ctx))
+			 (comp2 (|XmStringGetNextComponent ctx)))
+		    (IF (not (= comp |XmSTRING_COMPONENT_RENDITION_BEGIN)) (snd-display ";XmStringPeekNextComponent: ~A" comp))
+		    (IF (not (= comp1 comp)) (snd-display ";XmStringPeekNextTriple: ~A" comp1))
+		    (IF (not (= (list-ref comp2 4) comp)) (snd-display ";XmStringGetNextComponent: ~A" comp2)))
+		  (|XmRenditionUpdate rend (list |XmNstrikethruType |XmSINGLE_LINE))
+		  (IF (not (= (cadr (|XmRenditionRetrieve rend (list |XmNstrikethruType 0))) |XmSINGLE_LINE))
+		      (snd-display ";XmRenditionUpdate: ~A ~A" (cadr (|XtGetValues rend (list |XmNstrikethruType 0))) |XmSINGLE_LINE)))
+		(let ((r1 (|XmRenditionCreate (cadr (main-widgets)) "r1" (list |XmNfontName "fixed"))))
+		  (|XmRenditionFree r1))
 		
 		(let ((tab (|XmStringComponentCreate |XmSTRING_COMPONENT_TAB 0 #f))
 		      (row #f)
@@ -16177,9 +16230,21 @@ EDITS: 4
 
 	    (|XmSetColorCalculation #f)
 	    (let* ((dpy (|XtDisplay (cadr (main-widgets))))
+		   (scr1 (|DefaultScreen dpy))
+		   (cmap (|DefaultColormap dpy scr1))
+		   (screen (|XDefaultScreenOfDisplay dpy))
 		   (scr (|XmGetXmScreen (|XDefaultScreenOfDisplay dpy)))
 		   (old-h (cadr (|XtVaGetValues scr (list |XmNhorizontalFontUnit 0))))
 		   (old-v (cadr (|XtVaGetValues scr (list |XmNverticalFontUnit 0)))))
+	      (IF (not (|XmIsScreen scr)) (snd-display ";XmIsScreen: ~A" scr))
+	      (let ((colors (|XmGetColors screen cmap (snd-pixel (basic-color)))))
+		(IF (not (|Pixel? (car colors)))
+		    (snd-display "colors: ~A " colors))
+		(let ((color-proc (lambda (bg)
+				    (list (white-pixel) (black-pixel) (white-pixel) (black-pixel)))))
+		  (|XmSetColorCalculation color-proc)
+		  (IF (not (equal? (|XmGetColorCalculation) color-proc))
+		      (snd-display ";XmSetColorcalulcation ~A" (|XmGetColorCalculation)))))
 	      (|XmSetFontUnits dpy 8 10)
 	      (IF (or (not (= (cadr (|XtVaGetValues scr (list |XmNhorizontalFontUnit 0))) 8))
 		      (not (= (cadr (|XtVaGetValues scr (list |XmNverticalFontUnit 0))) 10)))
@@ -16195,6 +16260,7 @@ EDITS: 4
 	      (let* ((dp (|XmGetXmDisplay dpy))
 		     (vals (|XtVaGetValues dp
 					   (list |XmNdragInitiatorProtocolStyle 0 |XmNenableThinThickness 0))))
+		(IF (not (|XmIsDisplay dp)) (snd-display ";XmIsDisplay: ~A" dp))
 		(IF (not (= (list-ref vals 1) |XmDRAG_PREFER_RECEIVER)) (snd-display ";XmNdragInitiatorProtocolStyle: ~A" (list-ref vals 1)))
 		(IF (not (list-ref vals 3)) (snd-display ";XmNenableThinThickness?"))
 		(|XtAddCallback dp |XmNdragStartCallback (lambda (w c i) #f)))
@@ -16579,7 +16645,7 @@ EDITS: 4
 		         |XmStringEmpty |XmStringHasSubstring |XmStringFree |XmStringBaseline |XmStringWidth |XmStringHeight
 		         |XmStringExtent |XmStringLineCount |XmStringDraw |XmStringDrawImage |XmStringDrawUnderline
 		         |XmGetDestination |XmIsTraversable |XmGetVisibility |XmGetTabGroup |XmGetFocusWidget
-		         |XmProcessTraversal |XmAddTabGroup |XmRemoveTabGroup |XmCreateMenuShell |XmIsMessageBox
+		         |XmProcessTraversal |XmCreateMenuShell |XmIsMessageBox
 		         |XmIsArrowButtonGadget |XmIsArrowButton |XmIsNotebook |XmIsPrintShell |XmIsComboBox |XmIsContainer
 		         |XmIsGrabShell |XmIsIconGadget |XmIsIconHeader |XmIsPanedWindow |XmIsBulletinBoard |XmIsPrimitive
 		         |XmIsCascadeButtonGadget |XmIsCascadeButton |XmIsPushButtonGadget |XmIsPushButton |XmIsCommand
@@ -16600,7 +16666,7 @@ EDITS: 4
 		         |XStandardColormap?  |Substitution?  |XPContext?  |Widget?  |XmStringContext? |WidgetClass? |XmString?
 		         |XmToggleButton?  |XmDrawingArea? |XmPushButton?  |XmTextField?  |XmFileSelectionBox?  |XmText?
 		         |XmFrame? |XmLabel? |XmList?  |XmArrowButton?  |XmScrollBar? |XmCommand? |XmScale?  |XmRowColumn?
-		         |XmParseTable? |XmTab? |XmNotebook?  |XmPrintShell?  |XmComboBox? |XmContainer? |XmIconHeader?
+		         |XmTab? |XmNotebook?  |XmPrintShell?  |XmComboBox? |XmContainer? |XmIconHeader?
 		         |XmGrabShell? |XmRendition? |XmRenderTable?  |XmIconGadget?  |XmTabList? |XmParseMapping?
 		         |XmPanedWindow?  |XmScrolledWindow? |XmCascadeButton?  |XmForm?  |XmBulletinBoard? |XmScreen?
 		         |XmDialogShell? |XmDisplay?  |XmSelectionBox?  |XmDragContext?  |XmDragIconObjectClass?  |XmSeparator?

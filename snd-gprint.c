@@ -161,25 +161,3 @@ void file_print_callback(GtkWidget *w, gpointer context)
   gtk_widget_show(file_print_dialog);
 }
 
-char *ps_rgb(snd_state *ss, int pchan)
-{
-  char *buf;
-  state_context *sx;
-  GdkColor *color;
-  sx = ss->sgx;
-  switch (pchan)
-    {
-    case 0: color = sx->black;      break;
-    case 1: color = sx->red;        break;
-    case 2: color = sx->green;      break;
-    case 3: color = sx->light_blue; break;
-    default: color = sx->black;     break;
-    }
-  buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-  mus_snprintf(buf, PRINT_BUFFER_SIZE, " %.2f %.2f %.2f RG\n", 
-	       (float)color->red / 65535.0, 
-	       (float)color->green / 65535.0, 
-	       (float)color->blue / 65535.0);
-  return(buf);
-}
-

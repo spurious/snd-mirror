@@ -1194,6 +1194,15 @@ COLOR_TYPE get_foreground_color(chan_info *cp, axis_context *ax)
   return(gv.foreground);
 }
 
+COLOR_TYPE get_background_color(chan_info *cp, axis_context *ax)
+{
+  XGCValues gv;
+  snd_state *ss;
+  ss = cp->state;
+  XGetGCValues(MAIN_DISPLAY(ss), ax->gc, GCBackground, &gv);
+  return(gv.background);
+}
+
 void set_foreground_color(chan_info *cp, axis_context *ax, Pixel color)
 {
   snd_state *ss;

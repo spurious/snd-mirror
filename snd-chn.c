@@ -994,11 +994,9 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
   if (sp)
     {
       if (sp->channel_style == CHANNELS_SUPERIMPOSED) 
-	{
-	  ax = combined_context(cp); 
-	  if (cp->printing) ps_recolor(cp);
-	}
+	ax = combined_context(cp); 
       else ax = copy_context(cp);
+      if (cp->printing) ps_fg(ap, ax);
     }
   if ((samples_per_pixel < 1.0) ||
       ((samples_per_pixel < 5.0) && (samps < POINT_BUFFER_SIZE)))
@@ -1441,8 +1439,7 @@ void make_fft_graph(chan_info *cp, snd_info *sp, axis_info *fap, axis_context *a
   allocate_grf_points();
   if (cp->printing) ps_allocate_grf_points();
   samples_per_pixel = (Float)(hisamp - losamp) / (Float)(fap->x_axis_x1 - fap->x_axis_x0);
-  if ((sp->channel_style == CHANNELS_SUPERIMPOSED) && (cp->printing))
-    ps_recolor(cp);
+  if (cp->printing) ps_fg(fap, ax);
   if (samples_per_pixel < 4.0)
     {
       if ((!(cp->fft_log_magnitude)) && 
@@ -2149,11 +2146,9 @@ static void make_lisp_graph(chan_info *cp, snd_info *sp, snd_state *ss, XEN pixe
   allocate_grf_points();
   if (cp->printing) ps_allocate_grf_points();
   if (sp->channel_style == CHANNELS_SUPERIMPOSED) 
-    {
-      ax = combined_context(cp); 
-      if (cp->printing) ps_recolor(cp);
-    }
+    ax = combined_context(cp); 
   else ax = copy_context(cp);
+  if (cp->printing) ps_fg(uap, ax);
   if (up->env_data)
     {
       grf_len = up->len[0];
@@ -2182,7 +2177,7 @@ static void make_lisp_graph(chan_info *cp, snd_info *sp, snd_state *ss, XEN pixe
 	{
 	  if ((pixel_len > graph) &&
 	      (XEN_PIXEL_P(XEN_LIST_REF(pixel_list, graph))))
-	    set_foreground_color(cp, ax, (GUI_PIXEL)XEN_UNWRAP_PIXEL(XEN_LIST_REF(pixel_list, graph)));
+	    set_foreground_color(cp, ax, (COLOR_TYPE)XEN_UNWRAP_PIXEL(XEN_LIST_REF(pixel_list, graph)));
 	  else
 	    {
 	      switch (graph)
@@ -3532,7 +3527,6 @@ axis_context *set_context (chan_info *cp, int gc)
 	case CHAN_SELMXGC: ax->gc = sx->selected_mix_gc; break;
 	case CHAN_TMPGC: 
 	  ax->gc = sx->combined_basic_gc;
-	  /* if this changes, see snd-xprint.c ps_rgb */
 	  switch (cp->chan % 4)
 	    {
 	    case 0: set_foreground_color(cp, ax, sx->black);      break;

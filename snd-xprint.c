@@ -191,33 +191,3 @@ void file_print_callback(Widget w, XtPointer context, XtPointer info)
   if (!XtIsManaged(file_print_dialog)) 
     XtManageChild(file_print_dialog);
 }
-
-char *ps_rgb(snd_state *ss, int pchan)
-{
-  char *buf;
-  state_context *sx;
-  Colormap cmap;
-  XColor tmp_color;
-  Display *dpy;
-  Pixel color;
-  sx = ss->sgx;
-  switch (pchan)
-    {
-    case 0: color = sx->black;      break;
-    case 1: color = sx->red;        break;
-    case 2: color = sx->green;      break;
-    case 3: color = sx->light_blue; break;
-    default: color = sx->black;     break;
-    }
-  dpy = XtDisplay(MAIN_SHELL(ss));
-  cmap = DefaultColormap(dpy, DefaultScreen(dpy));
-  tmp_color.flags = DoRed | DoGreen | DoBlue;
-  tmp_color.pixel = color;
-  XQueryColor(dpy, cmap, &tmp_color);
-  buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-  mus_snprintf(buf, PRINT_BUFFER_SIZE, " %.2f %.2f %.2f RG\n",
-	       (float)tmp_color.red / 65535.0,
-	       (float)tmp_color.green / 65535.0,
-	       (float)tmp_color.blue / 65535.0);
-  return(buf);
-}

@@ -41,7 +41,6 @@
 
 #define GUI_POINTER gpointer
 #define GUI_WIDGET GtkWidget*
-#define GUI_PIXEL GdkColor*
 #define XEN_WRAP_WIDGET(Value)   ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkWidget_"), C_TO_XEN_ULONG((unsigned long)Value)) : XEN_FALSE)
 #define XEN_WRAP_WINDOW(Value)   ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkWindow_"), C_TO_XEN_ULONG((unsigned long)Value)) : XEN_FALSE)
 #define XEN_WRAP_GC(Value)       ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkGC_"), C_TO_XEN_ULONG((unsigned long)Value)) : XEN_FALSE)

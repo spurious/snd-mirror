@@ -286,6 +286,7 @@ XEN snd_throw(XEN key, XEN args)
 		XEN_TO_C_STRING(XEN_TO_STRING(key)),
 		XEN_TO_C_STRING(XEN_TO_STRING(args)));
     }
+  return(XEN_FALSE);
 }
 
 XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
@@ -295,7 +296,7 @@ XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
 #else
 XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
 {
-  /* TODO: this needs to catch errors */
+  /* TODO: this (Ruby Snd evaluator) needs to catch errors */
   return((*body)(body_data));
 }
 #endif
@@ -2639,7 +2640,9 @@ static XEN g_set_pushed_button_color (XEN color)
   if (v) 
     {
       (state->sgx)->pushed_button_color = v->color;
+#if HAVE_MOTIF
       map_over_children(MAIN_SHELL(state), recolor_button, NULL);
+#endif
     }
   return(color);
 }
@@ -2666,7 +2669,9 @@ static XEN g_set_basic_color(XEN color)
     {
       old_color = (state->sgx)->basic_color;
       (state->sgx)->basic_color = v->color; 
+#if HAVE_MOTIF
       map_over_children(MAIN_SHELL(state), recolor_everything, (void *)old_color);
+#endif
     }
   return(color);
 }
@@ -2765,7 +2770,7 @@ void after_open(int index)
 char *output_comment(file_info *hdr)
 {
   char *com = NULL;
-  if (hdr) com = hdr->comment;
+  if ((hdr) && (hdr->comment)) com = copy_string(hdr->comment);
   if (XEN_HOOKED(output_comment_hook))
     {
       XEN result;
@@ -2803,7 +2808,7 @@ char *output_comment(file_info *hdr)
 #endif
       return(new_comment);
     }
-  else return(com);
+  return(com);
 }
 
 #if HAVE_LADSPA

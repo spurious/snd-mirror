@@ -363,6 +363,7 @@ void set_peak_numbers_font(chan_info *cp);
 void set_bold_peak_numbers_font(chan_info *cp);
 void set_tiny_numbers_font(chan_info *cp);
 COLOR_TYPE get_foreground_color(chan_info *cp, axis_context *ax);
+COLOR_TYPE get_background_color(chan_info *cp, axis_context *ax);
 void set_foreground_color(chan_info *cp, axis_context *ax, Pixel color);
 GC copy_GC(chan_info *cp);
 GC erase_GC(chan_info *cp);
@@ -525,7 +526,6 @@ int record_dialog_is_active(void);
 /* -------- snd-xprint.c -------- */
 
 void file_print_callback(Widget w, XtPointer clientData, XtPointer callData);
-char *ps_rgb(snd_state *ss, int pchan);
 
 
 /* -------- snd-xxen.c -------- */

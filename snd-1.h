@@ -541,7 +541,8 @@ void ps_draw_grf_points(axis_info *ap, int j, Float y0, int graph_style, int dot
 void ps_draw_both_grf_points(axis_info *ap, int j, int graph_style, int dot_size);
 void ps_draw_sono_rectangle(axis_info *ap, int color, Float x, Float y, Float width, Float height);
 void ps_reset_color(void);
-void ps_recolor(chan_info *cp);
+void ps_bg(axis_info *ap, axis_context *ax);
+void ps_fg(axis_info *ap, axis_context *ax);
 void ps_draw_line (axis_info *ap, int x0, int y0, int x1, int y1);
 void ps_draw_spectro_line(axis_info *ap, int color, Float x0, Float y0, Float x1, Float y1);
 void ps_fill_rectangle (axis_info *ap, int x0, int y0, int width, int height);
@@ -554,7 +555,6 @@ void ps_set_tiny_numbers_font(void);
 void snd_print(snd_state *ss, char *output);
 void region_print(char *output, char* title, chan_info *cp);
 void print_enved(char *output, chan_info *cp, int y0);
-
 void g_init_print(void);
 
 

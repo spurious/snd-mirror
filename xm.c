@@ -9,9 +9,11 @@
  * TODO: callback struct print (and tie makers into Ruby)
  * TODO: XWindowChanges and XSetWindowAttributes accessible
  * TODO: finish the -> converters
+ * TODO: XmParseProc callback (p860)
  */
 
 /* HISTORY: 
+ *   1-Mar:     XmTabListFree, various ->* conversions.
  *   25-Feb:    XmTextBlock fields
  *   22-Feb:    #f = NULL and vice-versa throughout
  *   21-Feb:    added various callback struct makers, changed XtCallCallbacks to be compatible with them.
@@ -22,9 +24,9 @@
  *                XtError, XtSetErrorHandler, XtSetWarningHandler, XtSetErrorMsgHandler, XtSetWarningMsgHandler, XtWarningMsg, XtAppWarning, XtErrorMsg
  *                XtSetSelectionTimeout, XtInitialize , XtAddActions, XtAddInput, XtAddTimeout, XtAddWorkProc, XtCreateApplicationShell
  *                XtNextEvent, XtPeekEvent, XtPending, XtProcessEvent, XtMainLoop, XtGetSelectionTimeout, XtWarning,
- *                XmNdefaultFontList, XmNshellUnitType, XmAddTabGroup, XmNfontList, XmFontList*, XmNchildType, XmGetMenuCursor, 
+ *                XmNdefaultFontList, XmNshellUnitType, XmNfontList, XmFontList*, XmNchildType, XmGetMenuCursor, 
  *                XmNstringDirection, XmListGetSelectedPos, XmMainWindowSep1, XmMainWindowSep2, XmMainWindowSep3, XmMainWindowSetAreas, 
- *                XmRemoveTabGroup, XmNwhichButton, XmScrolledWindowSetAreas, XmSetFontUnit, XmSetFontUnits, XmNdefaultFontList, 
+ *                XmNwhichButton, XmScrolledWindowSetAreas, XmSetFontUnit, XmSetFontUnits, XmNdefaultFontList, 
  *                XmSetMenuCursor, XmStringByteCompare, XmStringCreateLtoR, XmSTRING_COMPONENT_CHARSET, XmSTRING_COMPONENT_FONTLIST_ELEMENT_TAG,
  *                XmStringCreateSimple, XmStringGetLtoR, XmStringGetNextComponent, XmStringGetNextSegment, XmStringLength, XmStringNConcat
  *                XmStringNCopy, XmStringPeekNextComponent, XmStringSegmentCreate, XmTrackingLocate
@@ -412,7 +414,6 @@ XM_TYPE_PTR(XmPrintShellCallbackStruct, XmPrintShellCallbackStruct *)
 XM_TYPE_PTR(XmPopupHandlerCallbackStruct, XmPopupHandlerCallbackStruct *)
 XM_TYPE_PTR(XmSelectionCallbackStruct, XmSelectionCallbackStruct *)
 XM_TYPE_PTR(XmTransferDoneCallbackStruct, XmTransferDoneCallbackStruct *)
-XM_TYPE_PTR(XmParseTable, XmParseTable) /* opaque */
 XM_TYPE_PTR(XmTabList, XmTabList) /* opaque */
 XM_TYPE(XmParseMapping, XmParseMapping)
 #endif
@@ -668,7 +669,7 @@ enum {XM_INT, XM_ULONG, XM_UCHAR, XM_FLOAT, XM_STRING, XM_XMSTRING, XM_STRING_TA
       XM_VISUAL, XM_RECTANGLE_LIST, XM_WIDGET_CLASS, XM_STRING_OR_INT,
       XM_TRANSFER_CALLBACK, XM_CONVERT_CALLBACK, XM_SEARCH_CALLBACK, XM_ORDER_CALLBACK,
       XM_QUALIFY_CALLBACK, XM_ALLOC_COLOR_CALLBACK, XM_POPUP_CALLBACK, XM_SCREEN_COLOR_CALLBACK,
-      XM_DROP_CALLBACK, XM_TRANSFER_ENTRY_LIST, XM_DRAG_CALLBACK
+      XM_DROP_CALLBACK, XM_TRANSFER_ENTRY_LIST, XM_DRAG_CALLBACK, XM_STRING_OR_XMSTRING
 };
 
 static int resource_type(char *resource);
@@ -1209,7 +1210,6 @@ static Cardinal gxm_XtOrderProc(Widget w)
 }
 
 
-/* ScreenColorCalculation and allocation are globals (just one screen widget, I think) */
 static XEN xm_XmColorAllocationProc = XEN_FALSE;
 
 static void gxm_XmAllocColorProc(Display *dpy, Colormap color, XColor *bs)
@@ -1229,12 +1229,32 @@ static XEN xm_XmColorCalculationProc = XEN_FALSE;
 
 static void gxm_XmColorCalculationProc(Screen *scr, XColor *bg, XColor *fg, XColor *sel, XColor *ts, XColor *bs)
 {
-  /* DIFF: XmColorProc takes 2 args, returns list of 4 colors
+  /* DIFF: XmColorCalculationProc takes 2 args, returns list of 4 colors
    */
   XEN lst;
   int loc;
   lst = XEN_CALL_2(xm_XmColorCalculationProc,
 		   C_TO_XEN_Screen(scr),
+		   C_TO_XEN_XColor(bg),
+		   __FUNCTION__);
+  loc = xm_protect(lst);
+  if (XEN_LIST_P(lst))
+    {
+      fg = XEN_TO_C_XColor(XEN_LIST_REF(lst, 0)); 
+      sel = XEN_TO_C_XColor(XEN_LIST_REF(lst, 1));
+      ts = XEN_TO_C_XColor(XEN_LIST_REF(lst, 2));
+      bs = XEN_TO_C_XColor(XEN_LIST_REF(lst, 3));
+   }
+  xm_unprotect_at(loc);
+}
+
+static XEN xm_XmColorProc = XEN_FALSE; /* XmColorProc is not the same as XmScreen color calculation proc */
+
+static void gxm_XmColorProc(XColor *bg, XColor *fg, XColor *sel, XColor *ts, XColor *bs)
+{
+  XEN lst;
+  int loc;
+  lst = XEN_CALL_1(xm_XmColorProc,
 		   C_TO_XEN_XColor(bg),
 		   __FUNCTION__);
   loc = xm_protect(lst);
@@ -1509,6 +1529,12 @@ static Arg *XEN_TO_C_Args(XEN inargl)
 	case XM_XMSTRING:
 	  XEN_ASSERT_TYPE(XEN_XmString_P(value), value, XEN_ONLY_ARG, name, "an XmString");      	      
 	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_XmString(value)));
+	  break;
+	case XM_STRING_OR_XMSTRING:
+	  XEN_ASSERT_TYPE(XEN_XmString_P(value) || XEN_STRING_P(value), value, XEN_ONLY_ARG, name, "a string or an XmString");  
+	  if (XEN_STRING_P(value))
+	    XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_STRING(value)));
+	  else XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_XmString(value)));
 	  break;
 	case XM_STRING_TABLE:
 	  XEN_ASSERT_TYPE(XEN_LIST_P(value), value, XEN_ONLY_ARG, name, "an XmStringTable");      	           
@@ -2088,7 +2114,17 @@ static int XtIsSubClass(Widget w, WidgetClass wc) {return(0);}
  *   so everything is slightly backwards
  */
 
-static int XEN_TO_C_INT_DEF(XEN Len, XEN Lst) {return((XEN_INTEGER_P(Len)) ? (XEN_TO_C_INT(Len)) : (XEN_LIST_LENGTH(Lst) / 2));}
+static int XEN_TO_C_INT_DEF(XEN len, XEN lst) 
+{
+  if (XEN_INTEGER_P(len))
+    return(XEN_TO_C_INT(len));
+  else
+    {
+      int list_len;
+      list_len = XEN_LIST_LENGTH(lst);
+      return((int)(list_len / 2));
+    }
+}
 
 #if MOTIF_2
 static XEN gxm_XmTransferDone(XEN arg1, XEN arg2)
@@ -2191,24 +2227,6 @@ static XEN gxm_XmCreateMenuShell(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 The MenuShell widget creation function"
   return(gxm_new_widget("XmCreateMenuShell", XmCreateMenuShell, arg1, arg2, arg3, arg4));
 }
-
-#if (!XM_DISABLE_DEPRECATED)
-static XEN gxm_XmRemoveTabGroup(XEN arg1)
-{
-  #define H_XmRemoveTabGroup "void XmRemoveTabGroup(Widget tab_group) removes a tab group"
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmRemoveTabGroup", "Widget");
-  XmRemoveTabGroup(XEN_TO_C_Widget(arg1));
-  return(XEN_FALSE);
-}
-
-static XEN gxm_XmAddTabGroup(XEN arg1)
-{
-  #define H_XmAddTabGroup "void XmAddTabGroup(Widget tab_group) adds a manager or a primitive widget to the list of tab groups"
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmAddTabGroup", "Widget");
-  XmAddTabGroup(XEN_TO_C_Widget(arg1));
-  return(XEN_FALSE);
-}
-#endif
 
 static XEN gxm_XmProcessTraversal(XEN arg1, XEN arg2)
 {
@@ -2545,6 +2563,7 @@ static XEN gxm_XmTabListCopy(XEN arg1, XEN arg2, XEN arg3)
 {
   #define H_XmTabListCopy "XmTabList XmTabListCopy(XmTabList tablist, int offset, Cardinal count) creates \
 a new tab list from an existing list"
+  /* Motif documentation incorrectly calls this "XmTabListTabCopy" */
   XEN_ASSERT_TYPE(XEN_XmTabList_P(arg1), arg1, 1, "XmTabListCopy", "XmTabList");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmTabListCopy", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmTabListCopy", "int");
@@ -2574,15 +2593,14 @@ creates a new tab list with replacement tabs"
   /* DIFF: XmTabListReplacePositions arg2 is list of ints, arg3 is list of XmTabs
    */
   Cardinal *ts;
-  int len, listlen;
+  int len;
   XEN res;
   XmTab *tabs;
   XEN_ASSERT_TYPE(XEN_XmTabList_P(arg1), arg1, 1, "XmTabListReplacePositions", "XmTabList");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XmTabListReplacePositions", "list of ints");
-  XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(arg3, listlen), arg3, 3, "XmTabListReplacePositions", "list of XmTab");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XmTabListReplacePositions", "int");
-  len = XEN_TO_C_INT(arg4);
-  if (len < listlen) len = listlen;
+  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmTabListReplacePositions", "list of XmTab");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmTabListReplacePositions", "int");
+  if (XEN_INTEGER_P(arg4)) len = XEN_TO_C_INT(arg4); else len = XEN_LIST_LENGTH(arg3);
   if (len <= 0) return(XEN_FALSE);
   ts = XEN_TO_C_Cardinals(arg2, len);
   tabs = XEN_TO_C_XmTabs(arg3, len);
@@ -2603,11 +2621,11 @@ removes noncontiguous tabs"
   XEN res;
   XEN_ASSERT_TYPE(XEN_XmTabList_P(arg1), arg1, 1, "XmTabListRemoveTabs", "XmTabList");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XmTabListRemoveTabs", "list of int");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmTabListRemoveTabs", "int");
-  len = XEN_TO_C_INT(arg3);
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg3), arg3, 3, "XmTabListRemoveTabs", "int");
+  if (XEN_INTEGER_P(arg3)) len = XEN_TO_C_INT(arg3); else len = XEN_LIST_LENGTH(arg2);
   if (len <= 0) return(XEN_FALSE);
   ts = XEN_TO_C_Cardinals(arg2, len);
-  res = C_TO_XEN_XmTabList(XmTabListRemoveTabs(XEN_TO_C_XmTabList(arg1), ts, XEN_TO_C_INT(arg3)));
+  res = C_TO_XEN_XmTabList(XmTabListRemoveTabs(XEN_TO_C_XmTabList(arg1), ts, len));
   FREE(ts);
   return(res);
 }
@@ -2626,6 +2644,14 @@ creates a tab stop"
 				    (XmOffsetModel)XEN_TO_C_INT(arg3), 
 				    (unsigned char)(XEN_TO_C_INT(arg4)),
 				    XEN_TO_C_STRING(arg5))));
+}
+
+static XEN gxm_XmTabListFree(XEN arg1)
+{
+  #define H_XmTabListFree "void XmTabListFree(XmTabList tab) frees a tab list"
+  XEN_ASSERT_TYPE(XEN_XmTabList_P(arg1), arg1, 1, "XmTabListFree", "XmTabList");
+  XmTabListFree(XEN_TO_C_XmTabList(arg1));
+  return(XEN_FALSE);
 }
 
 static XEN gxm_XmTabFree(XEN arg1)
@@ -2691,12 +2717,35 @@ float pad_value, XmOffsetModel offset_model) returns a tab list"
   return(C_TO_XEN_XmTabList(tabl));
 }
 
+#define XEN_XmParseTable_P(Arg) XEN_LIST_P(Arg)
+
+static XmParseTable XEN_TO_C_XmParseTable(XEN lst, int size)
+{
+  int i;
+  XmParseTable pt;
+  XEN val;
+  if (size <= 0) return(NULL);
+  pt = (XmParseTable)XtCalloc(size, sizeof(XmParseMapping));
+  for (i = 0; i < size; i++)
+    {
+      val = XEN_LIST_REF(lst, i);
+      if (XEN_XmParseMapping_P(val))
+	pt[i] = XEN_TO_C_XmParseMapping(val);
+      else XEN_ASSERT_TYPE(0, val, i, __FUNCTION__, "an XmParseMapping");
+    }
+  return(pt);
+}
+
 static XEN gxm_XmParseTableFree(XEN arg1, XEN arg2)
 {
   #define H_XmParseTableFree "void XmParseTableFree(XmParseTable parse_table, Cardinal count) recovers memory"
+  int len;
+  XmParseTable pt;
   XEN_ASSERT_TYPE(XEN_XmParseTable_P(arg1), arg1, 1, "XmParseTableFree", "XmParseTable");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmParseTableFree", "int");
-  XmParseTableFree(XEN_TO_C_XmParseTable(arg1), XEN_TO_C_INT(arg2));
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg2), arg2, 2, "XmParseTableFree", "int");
+  if (XEN_INTEGER_P(arg2)) len = XEN_TO_C_INT(arg2); else len = XEN_LIST_LENGTH(arg1);
+  pt = XEN_TO_C_XmParseTable(arg1, len);
+  if (pt) XmParseTableFree(pt, len);
   return(XEN_FALSE);
 }
 
@@ -2708,22 +2757,35 @@ static XEN gxm_XmParseMappingFree(XEN arg1)
   return(XEN_FALSE);
 }
 
-static XEN gxm_XmParseMappingGetValues(XEN arg1, XEN arg2, XEN arg3)
+static XEN gxm_XmParseMappingGetValues(XEN arg1, XEN larg2, XEN arg3)
 {
   #define H_XmParseMappingGetValues "void XmParseMappingGetValues(XmParseMapping parse_mapping, ArgList arglist, Cardinal argcount) \
 retrieves attributes of a parse mapping"
   XEN_ASSERT_TYPE(XEN_XmParseMapping_P(arg1), arg1, 1, "XmParseMappingGetValues", "XmParseMapping");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XmParseMappingGetValues", "ArgList");
+  XEN_ASSERT_TYPE(XEN_LIST_P(larg2), larg2, 2, "XmParseMappingGetValues", "ArgList");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg3), arg3, 3, "XmParseMappingGetValues", "int");
   {
     Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg2);
-    XmParseMappingGetValues(XEN_TO_C_XmParseMapping(arg1), 
-			    args, arglen = XEN_TO_C_INT_DEF(arg3, arg2));
-    if (args) FREE(args);
+    unsigned long *locs;
+    int len;
+    XEN val, arg2;
+    int i;
+    char *name;
+    len = XEN_TO_C_INT_DEF(arg3, larg2);
+    arg2 = XEN_COPY_ARG(larg2);
+    args = (Arg *)CALLOC(len, sizeof(Arg));
+    locs = (unsigned long *)CALLOC(len, sizeof(unsigned long));
+    for (i = 0; i < len; i++, arg2 = XEN_CDDR(arg2))
+      {
+	name = XEN_TO_C_STRING(XEN_CAR(arg2));
+	XtSetArg(args[i], name, &(locs[i]));
+      }
+    XmParseMappingGetValues(XEN_TO_C_XmParseMapping(arg1), args, len);
+    val = C_TO_XEN_Args(NULL, args, len);
+    FREE(args);
+    FREE(locs);
+    return(val);
   }
-  return(XEN_FALSE);
 }
 
 static XEN gxm_XmParseMappingSetValues(XEN arg1, XEN arg2, XEN arg3)
@@ -2737,8 +2799,8 @@ sets attributes of a parse mapping"
     Arg *args;
     int arglen;
     args = XEN_TO_C_Args(arg2);
-    XmParseMappingSetValues(XEN_TO_C_XmParseMapping(arg1), 
-			    args, arglen = XEN_TO_C_INT_DEF(arg3, arg2));
+    arglen = XEN_TO_C_INT_DEF(arg3, arg2);
+    XmParseMappingSetValues(XEN_TO_C_XmParseMapping(arg1), args, arglen);
     if (args) FREE(args);
     return(XEN_FALSE);
   }
@@ -2830,7 +2892,7 @@ to a compound string table"
 				      (Cardinal)len, 
 				      (XEN_FALSE_P(arg3)) ? NULL : XEN_TO_C_STRING(arg3),
 				      type,
-				      (XEN_FALSE_P(arg5)) ? NULL : XEN_TO_C_XmParseTable(arg5), 
+				      (XEN_FALSE_P(arg5)) ? NULL : XEN_TO_C_XmParseTable(arg5, len), 
 				      XEN_TO_C_INT(arg6),
 				      (XtPointer)arg7);
   FREE(strs);
@@ -2851,6 +2913,7 @@ compound strings to an array of text"
   XmStringTable tb;
   int i, len, loc;
   XmTextType type1, type2;
+  XmParseTable pt = NULL;
   XEN_ASSERT_TYPE(XEN_LIST_P(arg1), arg1, 1, "XmStringTableUnparse", "XmStringTable");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmStringTableUnparse", "int");
   XEN_ASSERT_TYPE(XEN_FALSE_P(arg3) || XEN_STRING_P(arg3), arg3, 3, "XmStringTableUnparse", "XmStringTag");
@@ -2867,12 +2930,13 @@ compound strings to an array of text"
   if (len <= 0) return(XEN_FALSE);
   loc = xm_protect(lst);
   tb = XEN_TO_C_XmStringTable(arg1, len);
+  if (XEN_XmParseTable_P(arg6)) pt = XEN_TO_C_XmParseTable(arg6, len);
   tab = (char **)XmStringTableUnparse(tb,
 				      len, 
 				      (XEN_FALSE_P(arg3)) ? NULL : XEN_TO_C_STRING(arg3), 
 				      type1,
 				      type2,
-				      (XEN_FALSE_P(arg6)) ? NULL : XEN_TO_C_XmParseTable(arg6), 
+				      pt,
 				      XEN_TO_C_INT(arg7), 
 				      (XmParseModel)XEN_TO_C_INT(arg8));
   FREE(tb);
@@ -2882,6 +2946,7 @@ compound strings to an array of text"
       free(tab[i]);
     }
   free(tab);
+  free(pt);
   xm_unprotect_at(loc);
   return(lst);
 }
@@ -2925,26 +2990,32 @@ static XEN gxm_XmStringParseText(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg
 XmParseTable parse_table, Cardinal parse_count, XtPointer call_data) converts a character string to a compound string"
   /* DIFF: XmStringParseText arg1 is string, arg2 is int
    */
-  int loc;
-  char *str;
+  int loc, len;
+  char *str, *tag = NULL;
   XmTextType type;
+  XtPointer *intext = NULL;
+  XmParseTable pt = NULL;
+  XEN rtn;
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XmStringParseText", "string");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmStringParseText", "int");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg3), arg3, 3, "XmStringParseText", "XmStringTag");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2) || XEN_FALSE_P(arg2), arg2, 2, "XmStringParseText", "int");
+  XEN_ASSERT_TYPE(XEN_STRING_P(arg3) || XEN_FALSE_P(arg3), arg3, 3, "XmStringParseText", "XmStringTag");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XmStringParseText", "XmTextType");
   XEN_ASSERT_TYPE(XEN_XmParseTable_P(arg5), arg5, 5, "XmStringParseText", "XmParseTable");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg6), arg6, 6, "XmStringParseText", "int");
   type = (XmTextType)XEN_TO_C_INT(arg4);
   if ((type < 0) || (type > 1)) XEN_ASSERT_TYPE(0, arg4, 4, "XmStringParseText", "XmTextType");
-  loc = XEN_TO_C_INT(arg2);
   str = XEN_TO_C_STRING(arg1);
-  return(C_TO_XEN_XmString(XmStringParseText(str, 
-					     (XtPointer *)(str + loc), 
-					     XEN_TO_C_STRING(arg3), 
-					     type,
-					     XEN_TO_C_XmParseTable(arg5), 
-					     XEN_TO_C_INT(arg6), 
-					     (XtPointer)arg7)));
+  if (XEN_INTEGER_P(arg2)) 
+    {
+      loc = XEN_TO_C_INT(arg2);
+      intext = (XtPointer *)(str + loc);
+    }
+  if (XEN_STRING_P(arg3)) tag = XEN_TO_C_STRING(arg3);
+  len = XEN_TO_C_INT(arg6);
+  if (XEN_XmParseTable_P(arg5)) pt = XEN_TO_C_XmParseTable(arg5, len);
+  rtn = C_TO_XEN_XmString(XmStringParseText(str, intext, tag, type, pt, len, (XtPointer)arg7));
+  free(pt);
+  return(rtn);
 }
 
 static XEN gxm_XmStringUnparse(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
@@ -2952,6 +3023,9 @@ static XEN gxm_XmStringUnparse(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5,
   #define H_XmStringUnparse "XtPointer XmStringUnparse(XmString string, XmStringTag tag, XmTextType tag_type, XmTextType output_type, \
 XmParseTable parse_table, Cardinal parse_count, XmParseModel parse_model) unparses text"
   XmTextType type1, type2;
+  XEN rtn;
+  XmParseTable pt = NULL;
+  int len;
   XEN_ASSERT_TYPE(XEN_XmString_P(arg1), arg1, 1, "XmStringUnparse", "XmString");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmStringUnparse", "XmStringTag");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmStringUnparse", "XmTextType");
@@ -2963,13 +3037,14 @@ XmParseTable parse_table, Cardinal parse_count, XmParseModel parse_model) unpars
   if ((type1 < 0) || (type1 > 1)) XEN_ASSERT_TYPE(0, arg3, 3, "XmStringUnparse", "XmTextType");
   type2 = (XmTextType)XEN_TO_C_INT(arg4);
   if ((type2 < 0) || (type2 > 1)) XEN_ASSERT_TYPE(0, arg4, 4, "XmStringUnparse", "XmTextType");
-  return(C_TO_XEN_STRING((const char *)XmStringUnparse(XEN_TO_C_XmString(arg1), 
-						       XEN_TO_C_STRING(arg2), 
-						       type1,
-						       type2,
-						       XEN_TO_C_XmParseTable(arg5), 
-						       XEN_TO_C_INT(arg6), 
-						       (XmParseModel)XEN_TO_C_INT(arg7))));
+  len = XEN_TO_C_INT(arg6);
+  pt = XEN_TO_C_XmParseTable(arg5, len);
+  rtn = C_TO_XEN_STRING((const char *)XmStringUnparse(XEN_TO_C_XmString(arg1), 
+						      XEN_TO_C_STRING(arg2), 
+						      type1, type2, pt, len,
+						      (XmParseModel)XEN_TO_C_INT(arg7)));
+  free(pt);
+  return(rtn);
 }
 
 static XEN gxm_XmStringComponentCreate(XEN arg1, XEN arg2, XEN arg3)
@@ -3573,19 +3648,36 @@ static XEN gxm_XmStringGetNextComponent(XEN arg1)
 returns the type and value of the next component in a compound string (list val text tag direction component len value)"
   /* DIFF: XmStringGetNextComponent omits all but 1st arg, returns list
    */
-  unsigned char direction;
+  unsigned char direction = 0;
   unsigned short len;
   unsigned char *value;
   unsigned char component;
   XmStringCharSet tag;
-  char *text;
+  char *text = NULL;
   int val;
+  XEN xtext = XEN_FALSE, xdir = XEN_FALSE, xtag = XEN_FALSE;
   XEN_ASSERT_TYPE(XEN_XmStringContext_P(arg1), arg1, 1, "XmStringGetNextComponent", "XmStringContext");
   val = XmStringGetNextComponent(XEN_TO_C_XmStringContext(arg1), &text, &tag, &direction, &component, &len, &value);
+  if ((val == XmSTRING_COMPONENT_TEXT) || (val == XmSTRING_COMPONENT_LOCALE_TEXT))
+    xtext = C_TO_XEN_STRING(text);
+  else
+    {
+      if (val == XmSTRING_COMPONENT_DIRECTION)
+	xdir = C_TO_XEN_INT((int)direction);
+      else 
+	{
+#if MOTIF_2
+	  if ((val == XmSTRING_COMPONENT_FONTLIST_ELEMENT_TAG) || (val == XmSTRING_COMPONENT_CHARSET))
+#else
+	  if (val == XmSTRING_COMPONENT_CHARSET)
+#endif
+	    xtag = C_TO_XEN_STRING(tag);
+	}
+    }
   return(XEN_LIST_7(C_TO_XEN_INT(val),
-		    C_TO_XEN_STRING(text),
-		    C_TO_XEN_STRING(tag),
-		    C_TO_XEN_INT((int)direction),
+		    xtext,
+		    xtag,
+		    xdir,
 		    C_TO_XEN_INT((int)component),
 		    C_TO_XEN_INT((int)len),
 		    C_TO_XEN_INT((int)value)));
@@ -3707,7 +3799,7 @@ static XEN gxm_XmGetColors(XEN arg1, XEN arg2, XEN arg3)
 static XEN gxm_XmGetColorCalculation(void)
 {
   #define H_XmGetColorCalculation "XmColorProc XmGetColorCalculation(void) get the procedure used for default color calculation"
-  return(xm_XmColorCalculationProc);
+  return(xm_XmColorProc);
 }
 
 static XEN gxm_XmSetColorCalculation(XEN arg1)
@@ -3715,18 +3807,18 @@ static XEN gxm_XmSetColorCalculation(XEN arg1)
   #define H_XmSetColorCalculation "XmColorProc XmSetColorCalculation(XmColorProc color_proc) set the procedure used for default color calculation"
   /* DIFF: XmSetColorCalculation NULL -> #f
    */
-  if (XEN_PROCEDURE_P(xm_XmColorCalculationProc)) xm_unprotect(xm_XmColorCalculationProc);
+  if (XEN_PROCEDURE_P(xm_XmColorProc)) xm_unprotect(xm_XmColorProc);
   if (XEN_FALSE_P(arg1))
     {
-      xm_XmColorCalculationProc = XEN_FALSE;
+      xm_XmColorProc = XEN_FALSE;
       XmSetColorCalculation(NULL);
     }
   else
     {
-      XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg1) && (XEN_REQUIRED_ARGS(arg1) == 5), arg1, 1, "XmSetColorCalculation", "(XmColorProc + 5 args)");
+      XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg1) && (XEN_REQUIRED_ARGS(arg1) == 1), arg1, 1, "XmSetColorCalculation", "(XmColorProc but 1 arg)");
       xm_protect(arg1);
-      xm_XmColorCalculationProc = arg1;
-      XmSetColorCalculation((XmColorProc)gxm_XmColorCalculationProc);
+      xm_XmColorProc = arg1;
+      XmSetColorCalculation((XmColorProc)gxm_XmColorProc);
     }
   return(arg1);
 }
@@ -17895,15 +17987,16 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmParseMappingSetValues" XM_POSTFIX, gxm_XmParseMappingSetValues, 2, 1, 0, H_XmParseMappingSetValues);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmParseMappingGetValues" XM_POSTFIX, gxm_XmParseMappingGetValues, 2, 1, 0, H_XmParseMappingGetValues);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmParseMappingFree" XM_POSTFIX, gxm_XmParseMappingFree, 1, 0, 0, H_XmParseMappingFree);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmParseTableFree" XM_POSTFIX, gxm_XmParseTableFree, 2, 0, 0, H_XmParseTableFree);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmParseTableFree" XM_POSTFIX, gxm_XmParseTableFree, 1, 1, 0, H_XmParseTableFree);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringTableProposeTablist" XM_POSTFIX, gxm_XmStringTableProposeTablist, 5, 0, 0, H_XmStringTableProposeTablist);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTabSetValue" XM_POSTFIX, gxm_XmTabSetValue, 2, 0, 0, H_XmTabSetValue);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTabGetValues" XM_POSTFIX, gxm_XmTabGetValues, 1, 0, 0, H_XmTabGetValues);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTabFree" XM_POSTFIX, gxm_XmTabFree, 1, 0, 0, H_XmTabFree);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTabListFree" XM_POSTFIX, gxm_XmTabListFree, 1, 0, 0, H_XmTabListFree);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTabCreate" XM_POSTFIX, gxm_XmTabCreate, 5, 0, 0, H_XmTabCreate);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTabListTabCount" XM_POSTFIX, gxm_XmTabListTabCount, 1, 0, 0, H_XmTabListTabCount);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTabListRemoveTabs" XM_POSTFIX, gxm_XmTabListRemoveTabs, 3, 0, 0, H_XmTabListRemoveTabs);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTabListReplacePositions" XM_POSTFIX, gxm_XmTabListReplacePositions, 4, 0, 0, H_XmTabListReplacePositions);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTabListRemoveTabs" XM_POSTFIX, gxm_XmTabListRemoveTabs, 2, 1, 0, H_XmTabListRemoveTabs);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTabListReplacePositions" XM_POSTFIX, gxm_XmTabListReplacePositions, 3, 1, 0, H_XmTabListReplacePositions);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTabListGetTab" XM_POSTFIX, gxm_XmTabListGetTab, 2, 0, 0, H_XmTabListGetTab);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTabListCopy" XM_POSTFIX, gxm_XmTabListCopy, 3, 0, 0, H_XmTabListCopy);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTabListInsertTabs" XM_POSTFIX, gxm_XmTabListInsertTabs, 4, 0, 0, H_XmTabListInsertTabs);
@@ -18050,7 +18143,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringSegmentCreate" XM_POSTFIX, gxm_XmStringSegmentCreate, 4, 0, 0, H_XmStringSegmentCreate);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringPeekNextComponent" XM_POSTFIX, gxm_XmStringPeekNextComponent, 1, 0, 0, H_XmStringPeekNextComponent);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringGetNextComponent" XM_POSTFIX, gxm_XmStringGetNextComponent, 1, 0, 0, H_XmStringGetNextComponent);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRemoveTabGroup" XM_POSTFIX, gxm_XmRemoveTabGroup, 1, 0, 0, H_XmRemoveTabGroup);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListAdd" XM_POSTFIX, gxm_XmFontListAdd, 3, 0, 0, H_XmFontListAdd);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringLength" XM_POSTFIX, gxm_XmStringLength, 1, 0, 0, H_XmStringLength);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringNConcat" XM_POSTFIX, gxm_XmStringNConcat, 3, 0, 0, H_XmStringNConcat);
@@ -18065,7 +18157,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmMainWindowSep1" XM_POSTFIX, gxm_XmMainWindowSep1, 1, 0, 0, H_XmMainWindowSep1);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmMainWindowSep2" XM_POSTFIX, gxm_XmMainWindowSep2, 1, 0, 0, H_XmMainWindowSep2);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmMainWindowSep3" XM_POSTFIX, gxm_XmMainWindowSep3, 1, 0, 0, H_XmMainWindowSep3);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmAddTabGroup" XM_POSTFIX, gxm_XmAddTabGroup, 1, 0, 0, H_XmAddTabGroup);
 #endif
 
 #endif
@@ -18176,7 +18267,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmScale?" XM_POSTFIX, gxm_XmIsScale, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRowColumn?" XM_POSTFIX, gxm_XmIsRowColumn, 1, 0, 0, NULL);
 #if MOTIF_2
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmParseTable?" XM_POSTFIX, XEN_XmParseTable_p, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTab?" XM_POSTFIX, XEN_XmTab_p, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmNotebook?" XM_POSTFIX, gxm_XmIsNotebook, 1, 0, 0, NULL);
 #if HAVE_XP
@@ -22169,7 +22259,7 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNpageIncrementCallback" XM_POSTFIX, XmNpageIncrementCallback,      XM_CALLBACK);
   DEFINE_RESOURCE(XM_PREFIX "XmNpaneMaximum" XM_POSTFIX, XmNpaneMaximum,		          XM_DIMENSION);
   DEFINE_RESOURCE(XM_PREFIX "XmNpaneMinimum" XM_POSTFIX, XmNpaneMinimum,		          XM_DIMENSION);
-  DEFINE_RESOURCE(XM_PREFIX "XmNpattern" XM_POSTFIX, XmNpattern,			          XM_XMSTRING);
+  DEFINE_RESOURCE(XM_PREFIX "XmNpattern" XM_POSTFIX, XmNpattern,			          XM_STRING_OR_XMSTRING);
   DEFINE_RESOURCE(XM_PREFIX "XmNpendingDelete" XM_POSTFIX, XmNpendingDelete,		          XM_BOOLEAN);
   DEFINE_RESOURCE(XM_PREFIX "XmNpixmap" XM_POSTFIX, XmNpixmap,				          XM_PIXMAP);
   DEFINE_RESOURCE(XM_PREFIX "XmNpopdownCallback" XM_POSTFIX, XmNpopdownCallback,	          XM_CALLBACK);
@@ -22379,6 +22469,7 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNframeChildType" XM_POSTFIX, XmNframeChildType,		          XM_UCHAR);
   DEFINE_RESOURCE(XM_PREFIX "XmNframeShadowThickness" XM_POSTFIX, XmNframeShadowThickness,        XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNgrabStyle" XM_POSTFIX, XmNgrabStyle,			          XM_UCHAR);
+  DEFINE_RESOURCE(XM_PREFIX "XmNincludeStatus" XM_POSTFIX, XmNincludeStatus,                      XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNincrementValue" XM_POSTFIX, XmNincrementValue,		          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNindeterminateInsensitivePixmap" XM_POSTFIX, XmNindeterminateInsensitivePixmap,  XM_PIXMAP);
   DEFINE_RESOURCE(XM_PREFIX "XmNindeterminatePixmap" XM_POSTFIX, XmNindeterminatePixmap,          XM_PIXMAP);
@@ -22460,6 +22551,7 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNspinBoxChildType" XM_POSTFIX, XmNspinBoxChildType,	          XM_UCHAR);
   DEFINE_RESOURCE(XM_PREFIX "XmNstartJobCallback" XM_POSTFIX, XmNstartJobCallback,	          XM_CALLBACK);
   DEFINE_RESOURCE(XM_PREFIX "XmNstrikethruType" XM_POSTFIX, XmNstrikethruType,		          XM_UCHAR);
+  DEFINE_RESOURCE(XM_PREFIX "XmNsubstitute" XM_POSTFIX, XmNsubstitute,                            XM_XMSTRING);
   DEFINE_RESOURCE(XM_PREFIX "XmNtabList" XM_POSTFIX, XmNtabList,			          XM_TAB_LIST);
   DEFINE_RESOURCE(XM_PREFIX "XmNtag" XM_POSTFIX, XmNtag,				          XM_STRING);
   DEFINE_RESOURCE(XM_PREFIX "XmNtearOffTitle" XM_POSTFIX, XmNtearOffTitle,		          XM_XMSTRING);
@@ -24390,7 +24482,7 @@ static int xm_already_inited = 0;
       define_structs();
       XEN_YES_WE_HAVE("xm");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"28-Feb-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"1-Mar-02\")");
 #endif
       xm_already_inited = 1;
     }
