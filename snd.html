@@ -212,7 +212,7 @@ and a CVS <a href="http://snd.sourceforge.net">repository</a>.
 <tr>
 <td><a href="#savefile">Save</a></td>
 <td><a href="#find">Find</a></td>
-<td><a href="#mixpanel">Mix Panel</a></td>
+<td><a href="#mixdialog">Mix Dialog</a></td>
 <td><a href="#zoomoption">Focus style</a></td>
 <td><a href="#controls">Control panel</a></td>
 </tr>
@@ -685,7 +685,8 @@ flushed (but see the function check-for-unsaved-edits in <a href="sndscm.html#ex
 <tr><th></th><th>View Menu</th><th></th></tr>
 <tr><td width=140><a href="#controls">Show controls</a></td><td>show the control panel</td><td>(C-x C-o, C-x C-c)</td></tr>
 <tr><td><a href="extsnd.html#lisplistener">Open listener</a></td><td>show lisp listener</td><td></td></tr>
-<tr><td><a href="#mixpanel">Mix Panel</a></td><td>mix controller</td><td></td></tr>
+<tr><td><a href="#mixdialog">Mixes</a></td><td>mix browser</td><td></td></tr>
+<tr><td><a href="#trackdialog">Tracks</a></td><td>track browser</td><td></td></tr>
 <tr><td><a href="#regionbrowser">Regions</a></td><td>a browser to examine the region stack</td><td></td></tr>
 <tr><td><a href="#prevfiles">Files</a></td><td>a browser of currently and previously loaded files</td><td></td></tr>
 <tr><td><a href="#colorbrowser">Color</a></td><td>a browser that chooses color maps</td><td></td></tr>
@@ -717,7 +718,7 @@ to view the sound as dots rather than connected lines
 (see also <a href="extsnd.html#dotsize">dot-size</a>).  <A NAME="viewy0"></a>Similarly, to show (or hide) the line
 Y = 0, use the y=0 option.  The Region browser is described under
 <a href="#regions">Regions</a>.  To open the control panel, use Show Controls.
-To open or close the lisp listener panel, use Open listener.
+To open or close the lisp listener, use Open listener.
 When
 many files are displayed, and the pane buttons have
 been in use, the overall display can become a bit of
@@ -765,7 +766,7 @@ See nb.scm for an extension of this dialog that posts various kinds of informati
 about each file as the mouse passes over it.
 </p>
 <br clear=left>
-<br>
+
 <p>The <A NAME="errorhistory">Error History</a> displays whatever errors have been
 posted during the current run of Snd.  If some error gets erased too quickly from the
 'minibuffer', you can find it in this dialog.</p>
@@ -773,7 +774,7 @@ posted during the current run of Snd.  If some error gets erased too quickly fro
         <!-- I(play file):O(File or main window: 'play') --><!-- I(select sound):O(File dialog: click file) -->
         <!-- I(select sound):A(prevfiles) --><!-- I(open file):O(Files dialog: click file) -->
 
-<p>The <a href="#regionbrowser">Regions</a> and <a href="#mixpanel">Mix Panel</a> options are described below.</p>
+<p>The <a href="#regionbrowser">Regions</a> and <a href="#mixdialog">Mix Dialog</a> options are described below.</p>
 
 <br>
 
@@ -1571,17 +1572,17 @@ mix.  The underlying sound being mixed can be edited by the same
 functions used throughout Snd; the mix number is used as the first
 (only) member of a list where the functions take the sound index
 argument.  It is usually handier, however, to adjust the mix
-via the Mix Panel.</p>
+via the Mix Dialog.</p>
 	<!-- I(move mixed file):O(drag mix tag)(mixingfiles) -->
 	<!-- I(move mixed file):A(mixingfiles) -->
 
 <img src="mixer.png" alt="mix tags">
 <br>
 <br>
-<A NAME="mixpanel">The Mix Panel Dialog</a>
+<A NAME="mixdialog">The Mix Dialog</a>
 
-<p>The Mix Panel is a dialog (under the View Menu) that provides various
-commonly-used controls on the currently selected mix.  At the top are
+<p>The Mix Dialog (under the View Menu) provides various
+commonly-used controls on the currently chosen mix.  At the top are
 the mix id, name, begin and end times, track number, and a play button.
 Beneath that are various sliders
 controlling the speed (sampling rate) of the mix, and the amplitude of each
@@ -1598,6 +1599,12 @@ and there are a variety of functions and hooks that apply to them.  See
 <a href="extsnd.html#sndmixes">Mixes and Tracks</a> for details, and
 mix.scm for examples.
 </p>
+
+<A NAME="trackdialog">The Track Dialog</a>
+
+<p>Nothing here yet...
+</p>
+<!-- TODO: doc track dialog -->
 
 <A NAME="gotomix"></a>
 <p>To move the cursor from one mix to the next, in the same

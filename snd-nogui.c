@@ -1,6 +1,6 @@
 #include "snd.h"
 
-void reflect_undo_in_mix_panel(void) {}
+void reflect_undo_in_mix_dialog(void) {}
 bool send_netscape(const char *html_viewer, const char *url) {return(false);}
 void check_menu_labels(int key, int state, bool extended) {}
 int add_channel_window(snd_info *sound, int channel, int chan_y, int insertion, widget_t main, fw_button_t arrows, bool with_events) {return(0);}
@@ -80,8 +80,8 @@ int edit_redo_menu(void) {return(0);}
 int edit_find_menu(void) {return(0);}
 int edit_select_all_menu(void) {return(0);}
 int edit_header_menu(void) {return(0);}
-int view_mix_panel_menu(void) {return(0);}
-int view_track_panel_menu(void) {return(0);}
+int view_mix_dialog_menu(void) {return(0);}
+int view_track_dialog_menu(void) {return(0);}
 int view_region_menu(void) {return(0);}
 int view_combine_separate_menu(void) {return(0);}
 int view_combine_combined_menu(void) {return(0);}
@@ -291,10 +291,10 @@ int add_transform_to_list(char *name) {return(0);}
 void set_filter_text(snd_info *sp, char *str) {}
 int max_transform_type(void) {return(19);}
 
-void reflect_mix_in_mix_panel(int mix_id) {}
-void reflect_no_mix_in_mix_panel(void) {}
-int make_mix_panel(void) {return(0);}
-int make_track_panel(void) {return(0);}
+void reflect_mix_in_mix_dialog(int mix_id) {}
+void reflect_no_mix_in_mix_dialog(void) {}
+int make_mix_dialog(void) {return(0);}
+int make_track_dialog(void) {return(0);}
 bool mix_play_stopped(void) {return(false);}
 void reflect_mix_play_stop(void) {}
 void set_mix_color(int color) {}

@@ -489,6 +489,7 @@ void edit_header_dialog_help(void);
 void print_dialog_help(void);
 void view_files_dialog_help(void);
 void mix_dialog_help(void);
+void track_dialog_help(void);
 void find_dialog_help(void);
 void completion_dialog_help(void);
 void open_file_dialog_help(void);
@@ -1298,43 +1299,54 @@ int any_mix_id(void);
 bool mix_ok_and_unlocked(int n);
 int set_mix_amp_env(int n, int chan, env *val);
 int set_mix_amp_env_without_edit(int n, int chan, env *val);
-env *mix_amp_env_from_id(int n, int chan);
 void g_init_mix(void);
 void clear_mix_tags(chan_info *cp);
 void clear_mix_y(chan_info *cp);
 void move_mix_tag(int mix_tag, int x);
 void finish_moving_mix_tag(int mix_tag, int x);
 int hit_mix(chan_info *cp, int x, int y);
-chan_info *mix_channel_from_id(int mix_id);
-void mix_play_from_id(int mix_id);
-void play_track_from_id(int mix_id);
-void start_mix_panel_slider_drag(int mix_id);
-int set_mix_speed_from_id(int mix_id, Float val, bool dragging);
-int set_mix_amp_from_id(int mix_id, int chan, Float val, bool dragging);
-void set_mix_track_from_id(int mix_id, int track);
-int mix_track_from_id(int mix_id);
-Float mix_speed_from_id(int mix_id);
-Float mix_amp_from_id(int mix_id, int chan);
-off_t mix_position_from_id(int mix_id);
-int mix_input_chans_from_id(int mix_id);
+chan_info *mix_dialog_mix_channel(int mix_id);
+void mix_dialog_mix_play(int mix_id);
+void mix_dialog_track_play(int mix_id);
+void mix_dialog_start_drag(int mix_id);
+int mix_dialog_set_mix_speed(int mix_id, Float val, bool dragging);
+int mix_dialog_set_mix_amp(int mix_id, int chan, Float val, bool dragging);
+void mix_dialog_set_mix_track(int mix_id, int track);
+int mix_dialog_mix_track(int mix_id);
+Float mix_dialog_mix_speed(int mix_id);
+Float mix_dialog_mix_amp(int mix_id, int chan);
+off_t mix_dialog_mix_position(int mix_id);
+env *mix_dialog_mix_amp_env(int n, int chan);
+int mix_dialog_mix_input_chans(int mix_id);
 int set_mix_position(int mix_id, off_t beg);
 bool mix_ok(int n);
-env **mix_panel_envs(int n);
-env *mix_panel_env(int n, int chan);
+env **mix_dialog_envs(int n);
+env *mix_dialog_env(int n, int chan);
 void mix_at_x_y(int data, char *filename, int x, int y);
 int next_mix_id(int id);
 int previous_mix_id(int id);
-void reflect_edit_in_mix_panel_envs(int n);
+void reflect_edit_in_mix_dialog_envs(int n);
 void g_init_track(void);
-#if 0
-#define track_p(Arg) track_p_1(Arg, __FUNCTION__)
-bool track_p_1(int trk, char *caller);
-#else
 bool track_p(int trk);
-#endif
 void free_track_info_list(chan_info *cp);
 track_info *free_track_info(chan_info *cp, int loc);
 void record_initial_track_info(chan_info *cp);
+off_t track_position(int id, int chan);
+off_t track_frames(int id, int chan);
+chan_info *track_channel(int id, int chn);
+env *track_amp_env(int id);
+Float track_amp(int id);
+Float track_speed(int id);
+int track_track(int id);
+bool set_track_track(int id, int trk);
+void set_track_position(int id, off_t pos);
+int make_track(int *mixes, int len);
+void reflect_no_track_in_track_dialog(void);
+void reflect_undo_in_track_dialog(void);
+void reflect_track_in_track_dialog(int track_id);
+void reflect_track_play_stop(void);
+bool track_play_stopped(void);
+
 
 
 /* -------- snd-find.c -------- */

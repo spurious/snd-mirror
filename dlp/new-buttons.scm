@@ -79,7 +79,7 @@
            (list (lambda (w c i) (recorder-dialog)) "Recorder")
 	   (list (lambda (w c i) (enved-dialog)) "Envelope editor")
            (list (lambda (w c i) (region-dialog)) "Region editor")
-           (list (lambda (w c i) (mix-panel)) "Mix editor")
+           (list (lambda (w c i) (mix-dialog)) "Mix editor")
            (list (lambda (w c i) (undo)) #f)
            (list (lambda (w c i) (redo)) #f)
 	   (list (let ((playing #f)

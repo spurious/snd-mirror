@@ -72,9 +72,9 @@ void reflect_mix_in_menu(void)
 {
   int id;
   id = any_mix_id();
-  set_sensitive(view_mix_panel_menu(), (id != INVALID_MIX_ID));
+  set_sensitive(view_mix_dialog_menu(), (id != INVALID_MIX_ID));
   if (id != INVALID_MIX_ID)
-    reflect_mix_in_mix_panel(id);
+    reflect_mix_in_mix_dialog(id);
 }
 
 void reflect_equalize_panes_in_menu(bool on)

@@ -31,6 +31,7 @@
 ;;; test 28: errors
 
 ;;; TODO: recorder-file-hook tests
+;;; TODO: track-dialog tests
 
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 
@@ -14049,7 +14050,7 @@ EDITS: 5
 	  (if (find-mix 0 new-index 0) (snd-display ";found non-existent mix? ~A" (find-mix 0 new-index 0)))
 	  (let ((mix-id (mix "pistol.snd" 100)))
 	    (if (not (mix? mix-id)) (snd-display ";~A not mix?" mix-id))
-	    (mix-panel)
+	    (mix-dialog)
 	    (let ((pos (mix-position mix-id))
 		  (len (mix-frames mix-id))
 		  (loc (mix-locked? mix-id))
@@ -14534,7 +14535,7 @@ EDITS: 5
 	  (if (and (provided? 'snd-motif)
 		   (provided? 'xm))
 	      (begin
-		(mix-panel)
+		(mix-dialog)
 		(let* ((mixd (list-ref (dialog-widgets) 16))
 		       (spdscr (find-child mixd "speed"))
 		       (dragged #f))
@@ -14925,8 +14926,8 @@ EDITS: 5
 			(not (= (mix-position id1) 10000))
 			(mix-property 'pan-mix id1))
 		    (snd-display ";pan-mix 1->1 at 10000: ~A ~A ~A ~A" (mix-amp id1 0) (mix-amp-env id1 0) (mix-position id1) (mix-property 'pan-mix id1)))
-		(mix-panel)
-		(set-mix-panel-mix id1)
+		(mix-dialog)
+		(set-mix-dialog-mix id1)
 		(let* ((mixd (list-ref (dialog-widgets) 16))
 		       (spdscr (find-child mixd "speed"))
 		       (ampscr (find-child mixd "amp"))
@@ -14939,7 +14940,7 @@ EDITS: 5
 		  (if (or (fneq (mix-amp id0 0) 1.0)
 			  (> (abs (- (mix-amp id1 0) .174)) .1))
 		      (snd-display ";amp scr mix: ~A ~A" (mix-amp id0 0) (mix-amp id1 0)))
-		  (set-mix-panel-mix id0)
+		  (set-mix-dialog-mix id0)
 		  (let ((old-frames (mix-frames id0)))
 		    (XtCallCallbacks spdscr XmNvalueChangedCallback
 				     (let ((cb (XmScrollBarCallbackStruct)))
@@ -14984,7 +14985,7 @@ EDITS: 5
 		  
 		  ;; -------- 2 -> 1 --------	    
 		  (let ((id2 (pan-mix "2a.snd" 100)))
-		    (set-mix-panel-mix id2)
+		    (set-mix-dialog-mix id2)
 		    (let ((amp2 (find-next-child mixd "amp" ampscr)))
 		      (if (not amp2) (snd-display ";can't find chan2 amp scrollbar"))
 		      (if (or (fneq (mix-amp id2 0) 1.0)
@@ -15021,7 +15022,7 @@ EDITS: 5
 		    (test-mix-disconnect "2->1" id2 0 id2 1))
 		  
 		  (let ((id2 (pan-mix "2a.snd" 100 .4)))
-		    (set-mix-panel-mix id2)
+		    (set-mix-dialog-mix id2)
 		    (if (or (fneq (mix-amp id2 0) 0.4)
 			    (fneq (mix-amp id2 1) 0.6)
 			    (not (null? (mix-amp-env id2 0)))
@@ -15035,7 +15036,7 @@ EDITS: 5
 				     (mix-property 'pan-mix id2))))
 		  
 		  (let ((id2 (pan-mix "2a.snd" 100 '(0 0 1 1))))
-		    (set-mix-panel-mix id2)
+		    (set-mix-dialog-mix id2)
 		    (if (or (fneq (mix-amp id2 0) 1.0)
 			    (fneq (mix-amp id2 1) 0.0)
 			    (not (equal? (mix-amp-env id2 0) (list 0.0 0.0 1.0 1.0)))
@@ -15050,7 +15051,7 @@ EDITS: 5
 		  
 		  ;; -------- 4 -> 1 --------
 		  (let ((id2 (pan-mix "4.aiff" 100)))
-		    (set-mix-panel-mix id2)
+		    (set-mix-dialog-mix id2)
 		    (let ((amp2 (find-next-child mixd "amp" ampscr)))
 		      (if (not amp2) (snd-display ";can't find chan2 amp scrollbar (4)"))
 		      (if (or (fneq (mix-amp id2 0) 1.0)
@@ -15109,7 +15110,7 @@ EDITS: 5
 		   (id1 (1+ id0)))
 	      
 	      ;; -------- 1 -> 2 --------
-	      (set-mix-panel-mix id0)
+	      (set-mix-dialog-mix id0)
 	      (if (or (not (mix? id1))
 		      (not (= (mix-track id0) (mix-track id1))))
 		  (snd-display ";unsync'd 1->2? ~A ~A" (mix-track id0) (mix-track id1)))
@@ -15122,7 +15123,7 @@ EDITS: 5
 		  (snd-display ";unsync'd 1->2 vals: ~A ~A ~A ~A ~A ~A"
 			       (mix-amp id0 0) (mix-amp id1 0) (mix-position id0) (mix-position id1)
 			       (mix-property 'pan-mix id0) (mix-property 'pan-mix id1)))
-	      (mix-panel)
+	      (mix-dialog)
 	      (let* ((mixd (list-ref (dialog-widgets) 16))
 		     (spdscr (find-child mixd "speed"))
 		     (ampscr (find-child mixd "amp"))
@@ -15173,7 +15174,7 @@ EDITS: 5
 		      (amp0 (mix-amp id0 0))
 		      (amp1 (mix-amp id1 0)))
 		  (set! (sync ind) 0)
-		  (set-mix-panel-mix id4)
+		  (set-mix-dialog-mix id4)
 		  (XtCallCallbacks ampscr XmNvalueChangedCallback
 				   (let ((cb (XmScrollBarCallbackStruct)))
 				     (set! (.value cb) 750)
@@ -15194,7 +15195,7 @@ EDITS: 5
 		  (if (or (not (mix? id3))
 			  (not (= (mix-track id2) (mix-track id3))))
 		      (snd-display ";unsync'd 2->2? ~A ~A" (mix-track id2) (mix-track id3)))
-		  (set-mix-panel-mix id2)
+		  (set-mix-dialog-mix id2)
 		  (let ((amp2 (find-next-child mixd "amp" ampscr)))
 		    (if (not amp2) (snd-display ";(2->2) can't find chan2 amp scrollbar"))
 		    (if (or (fneq (mix-amp id2 0) 1.0)
@@ -15227,7 +15228,7 @@ EDITS: 5
 					 (set! (.value cb) 250)
 					 (set! (.event cb) (XEvent))
 					 cb))
-		      (set-mix-panel-mix id3)
+		      (set-mix-dialog-mix id3)
 		      
 		      (XtCallCallbacks amp2 XmNvalueChangedCallback
 				       (let ((cb (XmScrollBarCallbackStruct)))
@@ -15247,7 +15248,7 @@ EDITS: 5
 		  (if (or (not (mix? id3))
 			  (not (= (mix-track id2) (mix-track id3))))
 		      (snd-display ";unsync'd 2->2 .4? ~A ~A" (mix-track id2) (mix-track id3)))
-		  (set-mix-panel-mix id2)
+		  (set-mix-dialog-mix id2)
 		  (if (or (fneq (mix-amp id2 0) 0.4)
 			  (fneq (mix-amp id3 1) 0.6)
 			  (not (null? (mix-amp-env id2 0)))
@@ -15267,7 +15268,7 @@ EDITS: 5
 		  (if (or (not (mix? id3))
 			  (not (= (mix-track id2) (mix-track id3))))
 		      (snd-display ";unsync'd 2->2 env? ~A ~A" (mix-track id2) (mix-track id3)))
-		  (set-mix-panel-mix id2)
+		  (set-mix-dialog-mix id2)
 		  (if (or (fneq (mix-amp id2 0) 1.0)
 			  (fneq (mix-amp id3 1) 1.0) ;env handles inversion here
 			  (not (equal? (mix-amp-env id2 0) (list 0.0 0.0 1.0 1.0)))
@@ -15288,7 +15289,7 @@ EDITS: 5
 		  (if (or (not (mix? id3))
 			  (not (= (mix-track id2) (mix-track id3))))
 		      (snd-display ";unsync'd 4->2 env? ~A ~A" (mix-track id2) (mix-track id3)))
-		  (set-mix-panel-mix id2)
+		  (set-mix-dialog-mix id2)
 		  
 		  (if (or (fneq (mix-amp id2 0) 1.0)
 			  (fneq (mix-amp id2 1) 0.0)
@@ -15328,7 +15329,7 @@ EDITS: 5
 		  (if (or (not (mix? id3))
 			  (not (= (mix-track id2) (mix-track id3))))
 		      (snd-display ";unsync'd 4->2 env? ~A ~A" (mix-track id2) (mix-track id3)))
-		  (set-mix-panel-mix id2)
+		  (set-mix-dialog-mix id2)
 		  
 		  (if (or (fneq (mix-amp id2 0) 1.0)
 			  (fneq (mix-amp id2 1) 0.0)
@@ -15373,7 +15374,7 @@ EDITS: 5
 		   (id0 (pan-mix "1a.snd"))
 		   (id1 (1+ id0)))
 	      ;; -------- 1 -> 4 --------
-	      (set-mix-panel-mix id0)
+	      (set-mix-dialog-mix id0)
 	      (if (or (not (mix? id1))
 		      (not (= (mix-track id0) (mix-track id1)))
 		      (not (equal? (mix-home id0) (list ind 0)))
@@ -15389,7 +15390,7 @@ EDITS: 5
 		  (snd-display ";unsync'd 1->4 vals: ~A ~A ~A ~A ~A ~A"
 			       (mix-amp id0 0) (mix-amp id1 0) (mix-position id0) (mix-position id1)
 			       (mix-property 'pan-mix id0) (mix-property 'pan-mix id1)))
-	      (mix-panel)
+	      (mix-dialog)
 	      (let* ((mixd (list-ref (dialog-widgets) 16))
 		     (spdscr (find-child mixd "speed"))
 		     (ampscr (find-child mixd "amp"))
@@ -15419,7 +15420,7 @@ EDITS: 5
 		(let* ((id2 (pan-mix "1a.snd" 1000 '(0 1 1 0) ind 2))
 		       (id3 (1+ id2)))
 		  ;; pan-mix-old name #:optional (beg 0) (envelope 1.0) snd (chn 0)
-		  (set-mix-panel-mix id2)
+		  (set-mix-dialog-mix id2)
 		  (if (or (not (mix? id3))
 			  (not (= (mix-track id2) (mix-track id3)))
 			  (not (equal? (mix-home id2) (list ind 2)))
@@ -15457,8 +15458,8 @@ EDITS: 5
 	      (if (not (equal? (mixes) (list (list (list mix1 mix2 mix3)))))
 		  (snd-display ":mixes all: ~A ~A" (mixes) (list (list (list mix1 mix2 mix3)))))
 		
-		(mix-panel)
-		(set-mix-panel-mix mix1)
+		(mix-dialog)
+		(set-mix-dialog-mix mix1)
 		(let* ((mixd (list-ref (dialog-widgets) 16))
 		       (nxt (find-child mixd "Next"))
 		       (prev (find-child mixd "Previous"))
@@ -15466,12 +15467,12 @@ EDITS: 5
 		  (click-button tplay) (force-event)
 		  (if (or (not (XtIsSensitive nxt))
 			  (XtIsSensitive prev))
-		      (snd-display ";mix-panel next/previous: ~A ~A ~A ~A" nxt (XtIsSensitive nxt) prev (XtIsSensitive prev)))
+		      (snd-display ";mix-dialog next/previous: ~A ~A ~A ~A" nxt (XtIsSensitive nxt) prev (XtIsSensitive prev)))
 		  (click-button nxt) (force-event)
 		  (click-button nxt) (force-event)
 		  (if (or (XtIsSensitive nxt)
 			  (not (XtIsSensitive prev)))
-		      (snd-display ";mix-panel (1) next/previous: ~A ~A ~A ~A" nxt (XtIsSensitive nxt) prev (XtIsSensitive prev)))
+		      (snd-display ";mix-dialog (1) next/previous: ~A ~A ~A ~A" nxt (XtIsSensitive nxt) prev (XtIsSensitive prev)))
 		  (click-button prev) (force-event)
 		  (click-button prev) (force-event))
 		(dismiss-all-dialogs)
@@ -34548,7 +34549,7 @@ EDITS: 2
 		    (if (XtIsManaged helpd)
 			(snd-display ";info still active?")))
 		  
-		  ;; ---------------- mix-panel dialog ----------------
+		  ;; ---------------- mix-dialog dialog ----------------
 		  (let* ((ind (open-sound "oboe.snd"))
 			 (v (make-vct 3))
 			 (s1001 (sample 1001))
@@ -34556,7 +34557,7 @@ EDITS: 2
 		    (vct-fill! v .1)
 		    (let* ((id1 (mix-vct v 1000 ind 0 #t))
 			   (id2 (mix-vct v 2000 ind 0 #t)))
-		      (mix-panel)
+		      (mix-dialog)
 		      (let* ((mixd (list-ref (dialog-widgets) 16))
 			     (idtxt (find-child mixd "mix-id"))
 			     (begtxt (find-child mixd "mix-times"))
@@ -34566,19 +34567,19 @@ EDITS: 2
 			     (ampscr (find-child mixd "amp"))
 			     (ampenv (find-child mixd "amp-env-window")))
 			(if (fneq (sample 1001) (+ s1001 .1)) 
-			    (snd-display ";mix-panel at 1001: ~A (~A)?" (sample 1001) s1001))
+			    (snd-display ";mix-dialog at 1001: ~A (~A)?" (sample 1001) s1001))
 			(if (fneq (sample 2001) (+ s2001 .1)) 
-			    (snd-display ";mix-panel at 2001: ~A (~A)?" (sample 2001) s2001))
-			(set-mix-panel-mix id1)
+			    (snd-display ";mix-dialog at 2001: ~A (~A)?" (sample 2001) s2001))
+			(set-mix-dialog-mix id1)
 			(if (not (string=? (XmTextGetString trktxt) "0"))
 			    (snd-display ";mix initial track: ~A" (XmTextGetString trktxt)))
 			(if (not (string=? (XmTextGetString idtxt) (number->string id1)))
 			    (snd-display ";mix initial id: ~A" (XmTextGetString idtxt)))
 			(move-scroll ampscr 20)
 			(if (not (> (sample 1001) (+ s1001 .1)))
-			    (snd-display ";amp mix-panel at 1001: ~A (~A)?" (sample 1001) s1001))
+			    (snd-display ";amp mix-dialog at 1001: ~A (~A)?" (sample 1001) s1001))
 			(if (fneq (sample 2001) (+ s2001 .1)) 
-			    (snd-display ";amp mix-panel at 2001: ~A (~A)?" (sample 2001) s2001))
+			    (snd-display ";amp mix-dialog at 2001: ~A (~A)?" (sample 2001) s2001))
 			(click-button playb)
 			(move-scroll spdscr 20)
 			(for-each
@@ -34618,11 +34619,11 @@ EDITS: 2
 			(key-event idtxt snd-return-key 0) (force-event)
 			(click-button (XmMessageBoxGetChild mixd XmDIALOG_OK_BUTTON)) (force-event)     ;dismiss
 			(if (XtIsManaged mixd)
-			    (snd-display ";why is mix-panel dialog alive?"))))
+			    (snd-display ";why is mix-dialog dialog alive?"))))
 		    (XtCallCallbacks (menu-option "Mixes") XmNactivateCallback (snd-global-state))
 		    (let ((mixd (list-ref (dialog-widgets) 16)))
 		      (if (not (XtIsManaged mixd))
-			  (snd-display ";why isn't mix-panel dialog alive?"))
+			  (snd-display ";why isn't mix-dialog dialog alive?"))
 		      (XtUnmanageChild mixd))
 		    (close-sound ind))
 		  
@@ -39210,7 +39211,7 @@ EDITS: 2
 		     make-region-sample-reader make-sample-reader make-track-sample-reader map-chan mark-color mark-name
 		     mark-sample mark-sync mark-sync-max mark-home marks mark?  max-transform-peaks max-regions
 		     maxamp menu-sensitive menu-widgets minibuffer-history-length min-dB mix mixes mix-amp mix-amp-env
-		     mix-tag-position mix-chans mix-color mix-track mix-frames mix-locked? mix? mix-panel mix-position
+		     mix-tag-position mix-chans mix-color mix-track mix-frames mix-locked? mix? mix-dialog mix-position track-dialog
 		     mix-region mix-sample-reader?  mix-selection mix-sound mix-home mix-speed mix-tag-height mix-tag-width
 		     mix-tag-y mix-vct mix-waveform-height time-graph-style lisp-graph-style transform-graph-style
 					;new-sound 

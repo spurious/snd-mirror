@@ -379,6 +379,7 @@ void about_snd_help(void)
 	    "\nRecent changes include:\n\
 \n\
 10-Nov:  removed next-mix-sample, next-track-sample.\n\
+         renamed mix-panel to mix-dialog, added track-dialog.\n\
 5-Nov:   Jack audio support thanks to Kjetil S. Matheussen.\n\
          mix-anchor -> mix-tag-position.\n\
 4-Nov:   copy-mix, copy-track.\n\
@@ -670,10 +671,10 @@ the main waveform with a red tag at the beginning.  You can drag the tag to \
 reposition the mix. The underlying sound being mixed can be edited by the same \
 functions used throughout Snd; the mix number is used as the first (only) \
 member of a list where the functions take the sound index argument. It is \
-usually handier, however, to adjust the mix via the Mix Panel. \
+usually handier, however, to adjust the mix via the Mix dialog. \
 \n\n\
-The Mix Panel is a dialog (under the View Menu) that provides various \
-commonly-used controls on the currently selected mix. At the top are the mix id, \
+The Mix dialog (under the View Menu) provides various \
+commonly-used controls on the currently chosen mix. At the top are the mix id, \
 name, begin and end times, track number, and a play button. Beneath that are \
 various sliders controlling the speed (sampling rate) of the mix, amplitude of \
 each input channel, and the amplitude envelopes. \
@@ -1227,9 +1228,9 @@ search is satisified.  For example, (lambda (n) (> n .1)) looks for the next sam
 
 void mix_dialog_help(void)
 {
-  snd_help_with_xrefs("Mix Panel",
+  snd_help_with_xrefs("Mixes",
 "This dialog provides various commonly-used controls on the currently \
-selected mix.  At the top are the mix id, begin and end times, \
+chosen mix.  At the top are the mix id, begin and end times, \
 track number, and a play button.  Beneath that are various sliders \
 controlling the speed (sampling rate) of the mix, and the amplitude of each \
 input channel; and finally, an envelope editor for the mix's (input) channels. \
@@ -1239,6 +1240,22 @@ mix amp env (if any) is drawn in blue.",
 		      true,
 		      snd_xrefs("Mix"),
 		      snd_xref_urls("Mix"));
+}
+
+void track_dialog_help(void)
+{
+  snd_help_with_xrefs("Tracks",
+"This dialog provides various commonly-used controls on the currently \
+chosen mix.  At the top are the track id, begin and end times, \
+track number, and a play button.  Beneath that are various sliders \
+controlling the speed (sampling rate) and the amplitude of the track, \
+and an envelope editor for the track's overall amplitude envelope. \
+The current track's amp env is not actually changed until you click 'Apply Env'.\
+The editor envelope is drawn in black with dots whereas the current \
+mix amp env (if any) is drawn in blue.",
+		      true,
+		      snd_xrefs("Track"),
+		      snd_xref_urls("Track"));
 }
 
 static char *new_file_xrefs[5] = {

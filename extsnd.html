@@ -3037,7 +3037,7 @@ edit-menu.scm (trim from mark, etc), examp.scm (move window to correspond to mar
 <p>Mixing operations have a lot of extra support built into Snd.  In nearly every mixing function, you
 can request a "mix tag" (or set that request globally via <a href="#withmixtags">with-mix-tags</a>).
 If the mix operation is tagged, you can then operate on that data through a number of functions,
-the Mix Panel, various hooks, and various mouse-related actions.  These mixes can be grouped
+the Mix Dialog, various hooks, and various mouse-related actions.  These mixes can be grouped
 into "tracks", which have a very similar set of functions.  
 </p>
 
@@ -3242,7 +3242,7 @@ save mix data in file: <a href="sndscm.html#savemix">save-mix</a><br>
 mix property list: <a href="sndscm.html#mixproperty">mix-property</a> in mix.scm<br>
 pan mono into stereo: see <a href="sndscm.html#placesound">place-sound</a> in examp.scm<br>
 pan mix data with envelope: <a href="sndscm.html#panmix">pan-mix</a><br>
-the mix dialog: <a href="snd.html#mixpanel">Mix Panel</a><br>
+the mix dialog: <a href="snd.html#mixdialog">Mix Dialog</a><br>
 mix menu: see dlp/mix-menu.scm<br>
 cross-fade in frequency: <i>cross-fade</i> and <i>dissolve-fade</i> in <a href="sndscm.html#fadedoc">fade.scm</a><br>
 zipper cross-fade: <a href="sndscm.html#zipdoc">zipper.scm</a><br>
@@ -4453,7 +4453,7 @@ The CLM env generator: <a href="clm.html#make-env">env</a>, many examples in exa
 Various operations on envelopes: <a href="sndscm.html#envdoc">env.scm</a><br>
 Peak env files: <a href="sndscm.html#peakenvdoc">peak-env.scm</a><br>
 The envelope editor: <a href="snd.html#editenvelope">Edit or View and Envelope</a><br>
-Panning: place-sound in examp.scm, <a href="snd.html#mixpanel">Mix Dialog</a>, play-panned in enved.scm, <a href="sndscm.html#panmix">pan-mix</a><br>
+Panning: place-sound in examp.scm, <a href="snd.html#mixdialog">Mix Dialog</a>, play-panned in enved.scm, <a href="sndscm.html#panmix">pan-mix</a><br>
 Envelope over mix: <a href="sndscm.html#exenvelopedmix">enveloped-mix</a><br>
 Envelope over track (a set of mixes): <a href="extsnd.html#trackampenv">track-amp-env</a><br>
 Local envelope editor: <a href="sndscm.html#enveddoc">enved.scm</a>, xm-enved.scm<br>
@@ -6361,7 +6361,7 @@ If #t, marks are displayed.  This is the '<a href="snd.html#marks">Show marks</a
 </td></tr>
 <tr><td></td><td>
 If #t (default is #t), a mixed sound is displayed as a separate waveform above the main data.  The rectangular tag
-at the start of the waveform can be dragged to move the mix, or clicked to select it for the mix panel.
+at the start of the waveform can be dragged to move the mix, or clicked to select it for the mix dialog.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -6664,7 +6664,7 @@ This is the <a href="#regularizedargs">regularized</a> version of <a href="#snds
 <small><blockquote>
 resample all chans: <a href="#sndsrc">src-sound</a><br>
 resample selection: <a href="#sndsrcselection">src-selection</a><br>
-resample mix: speed control in <a href="snd.html#mixpanel">Mix dialog</a> (also <a href="#applycontrols">apply-controls</a>)<br>
+resample mix: speed control in <a href="snd.html#mixdialog">Mix dialog</a> (also <a href="#applycontrols">apply-controls</a>)<br>
 resample via drawn envelope: srate in <a href="snd.html#editenvelope">Envelope editor</a><br>
 resample via CLM gen: <a href="clm.html#src">src</a><br>
 resample with independent time control: expand in <a href="#customcontrols">control panel</a>, <a href="sndscm.html#exexpsrc">expsrc</a> and <a href="sndscm.html#exexpsnd">expsnd</a><br>
@@ -8143,9 +8143,9 @@ See <i>html</i> in index.scm.
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="listenertextcolor">listener-text-color</a></em> ()</code></span></td></tr>
 <tr><td></td><td>text color in lisp listener.</td></tr>
 
-<!-- mix-panel -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixpanel">mix-panel</a></em> ()</code></span></td></tr>
-<tr><td></td><td>create the Mix Panel Dialog, if necessary, activate it, and return the dialog widget.</td></tr>
+<!-- mix-dialog -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixdialog">mix-dialog</a></em> ()</code></span></td></tr>
+<tr><td></td><td>create the Mix Dialog, if necessary, activate it, and return the dialog widget.</td></tr>
 
 <!-- orientation-dialog -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndorientationdialog">orientation-dialog</a></em> ()</code></span></td></tr>
@@ -8282,6 +8282,10 @@ If it returns a string, that becomes the output filename.
 
 <tr><td colspan=2><span class=defbox><code><em class=def><a href="sndsavelistener">save-listener</a></em> (filename) </code></span></td></tr>
 <tr><td></td><td>save listener text in filename.</td></tr>
+
+<!-- track-dialog -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndtrackdialog">track-dialog</a></em> ()</code></span></td></tr>
+<tr><td></td><td>create the Track Dialog, if necessary, activate it, and return the dialog widget.</td></tr>
 
 <!-- vu-font -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="vufont">vu-font</a></em> ()</code></span></td></tr>

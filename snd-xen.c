@@ -2051,11 +2051,19 @@ off_t string2off_t(char *str)
 #endif
 }
 
-static XEN g_mix_panel(void)
+static XEN g_mix_dialog(void)
 {
   widget_t w;
-  #define H_mix_panel "(" S_mix_panel "): start the Mix panel"
-  w = make_mix_panel();
+  #define H_mix_dialog "(" S_mix_dialog "): start the Mix browser"
+  w = make_mix_dialog();
+  return(XEN_WRAP_WIDGET(w));
+}
+
+static XEN g_track_dialog(void)
+{
+  widget_t w;
+  #define H_track_dialog "(" S_track_dialog "): start the Track browser"
+  w = make_track_dialog();
   return(XEN_WRAP_WIDGET(w));
 }
 
@@ -2873,7 +2881,8 @@ XEN_ARGIFY_1(g_edit_header_dialog_w, g_edit_header_dialog)
 XEN_NARGIFY_0(g_edit_save_as_dialog_w, g_edit_save_as_dialog)
 XEN_NARGIFY_0(g_file_save_as_dialog_w, g_file_save_as_dialog)
 XEN_NARGIFY_2(g_info_dialog_w, g_info_dialog)
-XEN_NARGIFY_0(g_mix_panel_w, g_mix_panel)
+XEN_NARGIFY_0(g_mix_dialog_w, g_mix_dialog)
+XEN_NARGIFY_0(g_track_dialog_w, g_track_dialog)
 XEN_NARGIFY_0(g_sounds_w, g_sounds)
 XEN_NARGIFY_1(g_yes_or_no_p_w, g_yes_or_no_p)
 XEN_NARGIFY_0(g_abort_w, g_abort)
@@ -3044,7 +3053,8 @@ XEN_NARGIFY_0(g_mus_audio_describe_w, g_mus_audio_describe)
 #define g_edit_save_as_dialog_w g_edit_save_as_dialog
 #define g_file_save_as_dialog_w g_file_save_as_dialog
 #define g_info_dialog_w g_info_dialog
-#define g_mix_panel_w g_mix_panel
+#define g_mix_dialog_w g_mix_dialog
+#define g_track_dialog_w g_track_dialog
 #define g_sounds_w g_sounds
 #define g_yes_or_no_p_w g_yes_or_no_p
 #define g_abort_w g_abort
@@ -3341,30 +3351,31 @@ void g_initialize_gh(void)
 #endif
 
 
-  XEN_DEFINE_PROCEDURE(S_snd_tempnam,         g_snd_tempnam_w, 0, 0, 0,         H_snd_tempnam);
-  XEN_DEFINE_PROCEDURE(S_color_dialog,        g_color_dialog_w, 0, 0, 0,        H_color_dialog);
-  XEN_DEFINE_PROCEDURE(S_orientation_dialog,  g_orientation_dialog_w, 0, 0, 0,  H_orientation_dialog);
-  XEN_DEFINE_PROCEDURE(S_transform_dialog,    g_transform_dialog_w, 0, 1, 0,    H_transform_dialog);
-  XEN_DEFINE_PROCEDURE(S_file_dialog,         g_file_dialog_w, 0, 0, 0,         H_file_dialog);
-  XEN_DEFINE_PROCEDURE(S_edit_header_dialog,  g_edit_header_dialog_w, 0, 1, 0,  H_edit_header_dialog);
+  XEN_DEFINE_PROCEDURE(S_snd_tempnam,         g_snd_tempnam_w,         0, 0, 0, H_snd_tempnam);
+  XEN_DEFINE_PROCEDURE(S_color_dialog,        g_color_dialog_w,        0, 0, 0, H_color_dialog);
+  XEN_DEFINE_PROCEDURE(S_orientation_dialog,  g_orientation_dialog_w,  0, 0, 0, H_orientation_dialog);
+  XEN_DEFINE_PROCEDURE(S_transform_dialog,    g_transform_dialog_w,    0, 1, 0, H_transform_dialog);
+  XEN_DEFINE_PROCEDURE(S_file_dialog,         g_file_dialog_w,         0, 0, 0, H_file_dialog);
+  XEN_DEFINE_PROCEDURE(S_edit_header_dialog,  g_edit_header_dialog_w,  0, 1, 0, H_edit_header_dialog);
   XEN_DEFINE_PROCEDURE(S_edit_save_as_dialog, g_edit_save_as_dialog_w, 0, 0, 0, H_edit_save_as_dialog);
   XEN_DEFINE_PROCEDURE(S_file_save_as_dialog, g_file_save_as_dialog_w, 0, 0, 0, H_file_save_as_dialog);
-  XEN_DEFINE_PROCEDURE(S_info_dialog,         g_info_dialog_w, 2, 0, 0,         H_info_dialog);
-  XEN_DEFINE_PROCEDURE(S_mix_panel,           g_mix_panel_w, 0, 0, 0,           H_mix_panel);
-  XEN_DEFINE_PROCEDURE(S_sounds,              g_sounds_w, 0, 0, 0,              H_sounds);
-  XEN_DEFINE_PROCEDURE(S_yes_or_no_p,         g_yes_or_no_p_w, 1, 0, 0,         H_yes_or_no_p);
-  XEN_DEFINE_PROCEDURE(S_abort,               g_abort_w, 0, 0, 0,               H_abort);
-  XEN_DEFINE_PROCEDURE(S_c_g,                 g_abortq_w, 0, 0, 0,              H_abortQ);
-  XEN_DEFINE_PROCEDURE(S_snd_version,         g_snd_version_w, 0, 0, 0,         H_snd_version);
-  XEN_DEFINE_PROCEDURE(S_equalize_panes,      g_equalize_panes_w, 0, 1, 0,      H_equalize_panes);
-  XEN_DEFINE_PROCEDURE(S_open_sound_file,     g_open_sound_file_w, 0, 4, 0,     H_open_sound_file);
-  XEN_DEFINE_PROCEDURE(S_close_sound_file,    g_close_sound_file_w, 2, 0, 0,    H_close_sound_file);
-  XEN_DEFINE_PROCEDURE(S_vct2sound_file,      vct2soundfile_w, 3, 0, 0,         H_vct2sound_file);
-  XEN_DEFINE_PROCEDURE(S_samples2sound_data,  samples2sound_data_w, 0, 7, 0,    H_samples2sound_data);
-  XEN_DEFINE_PROCEDURE(S_snd_print,           g_snd_print_w, 1, 0, 0,           H_snd_print);
-  XEN_DEFINE_PROCEDURE("little-endian?",      g_little_endian_w, 0, 0, 0,       "return #t if host is little endian");
-  XEN_DEFINE_PROCEDURE("snd-completion",      g_snd_completion_w, 1, 0, 0,      "return completion of arg");
-  /* XEN_DEFINE_PROCEDURE(S_clm_print,        g_clm_print, 0, 0, 1,             H_clm_print); */
+  XEN_DEFINE_PROCEDURE(S_info_dialog,         g_info_dialog_w,         2, 0, 0, H_info_dialog);
+  XEN_DEFINE_PROCEDURE(S_mix_dialog,          g_mix_dialog_w,          0, 0, 0, H_mix_dialog);
+  XEN_DEFINE_PROCEDURE(S_track_dialog,        g_track_dialog_w,        0, 0, 0, H_track_dialog);
+  XEN_DEFINE_PROCEDURE(S_sounds,              g_sounds_w,              0, 0, 0, H_sounds);
+  XEN_DEFINE_PROCEDURE(S_yes_or_no_p,         g_yes_or_no_p_w,         1, 0, 0, H_yes_or_no_p);
+  XEN_DEFINE_PROCEDURE(S_abort,               g_abort_w,               0, 0, 0, H_abort);
+  XEN_DEFINE_PROCEDURE(S_c_g,                 g_abortq_w,              0, 0, 0, H_abortQ);
+  XEN_DEFINE_PROCEDURE(S_snd_version,         g_snd_version_w,         0, 0, 0, H_snd_version);
+  XEN_DEFINE_PROCEDURE(S_equalize_panes,      g_equalize_panes_w,      0, 1, 0, H_equalize_panes);
+  XEN_DEFINE_PROCEDURE(S_open_sound_file,     g_open_sound_file_w,     0, 4, 0, H_open_sound_file);
+  XEN_DEFINE_PROCEDURE(S_close_sound_file,    g_close_sound_file_w,    2, 0, 0, H_close_sound_file);
+  XEN_DEFINE_PROCEDURE(S_vct2sound_file,      vct2soundfile_w,         3, 0, 0, H_vct2sound_file);
+  XEN_DEFINE_PROCEDURE(S_samples2sound_data,  samples2sound_data_w,    0, 7, 0, H_samples2sound_data);
+  XEN_DEFINE_PROCEDURE(S_snd_print,           g_snd_print_w,           1, 0, 0, H_snd_print);
+  XEN_DEFINE_PROCEDURE("little-endian?",      g_little_endian_w,       0, 0, 0, "return #t if host is little endian");
+  XEN_DEFINE_PROCEDURE("snd-completion",      g_snd_completion_w,      1, 0, 0, "return completion of arg");
+  /* XEN_DEFINE_PROCEDURE(S_clm_print,        g_clm_print,             0, 0, 1, H_clm_print); */
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_just_sounds, g_just_sounds_w, H_just_sounds, S_setB S_just_sounds, g_set_just_sounds_w,  0, 0, 1, 0);
 
   #define H_during_open_hook S_during_open_hook " (fd name reason): called after file is opened, \

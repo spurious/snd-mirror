@@ -104,8 +104,8 @@ int edit_redo_menu(void);
 int edit_find_menu(void);
 int edit_select_all_menu(void);
 int edit_header_menu(void);
-int view_mix_panel_menu(void);
-int view_track_panel_menu(void);
+int view_mix_dialog_menu(void);
+int view_track_dialog_menu(void);
 int view_region_menu(void);
 int view_combine_separate_menu(void);
 int view_combine_combined_menu(void);
@@ -360,14 +360,14 @@ void enved_fft_update(void);
 
 /* -------- snd-xmix.c -------- */
 
-void reflect_mix_in_mix_panel(int mix_id);
-int make_mix_panel(void);
-int make_track_panel(void);
+void reflect_mix_in_mix_dialog(int mix_id);
+int make_mix_dialog(void);
+int make_track_dialog(void);
 bool mix_play_stopped(void);
 void reflect_mix_play_stop(void);
-void reflect_no_mix_in_mix_panel(void);
+void reflect_no_mix_in_mix_dialog(void);
 void set_mix_color(int color);
-void reflect_undo_in_mix_panel(void);
+void reflect_undo_in_mix_dialog(void);
 
 
 /* -------- snd-xrec.c -------- */

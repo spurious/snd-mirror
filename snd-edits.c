@@ -7997,7 +7997,7 @@ void undo_edit(chan_info *cp, int count)
       update_track_lists(cp, 0);
       update_graph(cp);
       reflect_mix_in_menu();
-      reflect_undo_in_mix_panel();
+      reflect_undo_in_mix_dialog();
       if (XEN_HOOKED(cp->undo_hook))
 	run_hook(cp->undo_hook, XEN_EMPTY_LIST, S_undo_hook);
     }
@@ -8056,7 +8056,7 @@ void redo_edit(chan_info *cp, int count)
 	  update_track_lists(cp, 0);
 	  update_graph(cp);
 	  reflect_mix_in_menu();
-	  reflect_undo_in_mix_panel();
+	  reflect_undo_in_mix_dialog();
 	}
       if (XEN_HOOKED(cp->undo_hook))
 	run_hook(cp->undo_hook, XEN_EMPTY_LIST, S_undo_hook);
