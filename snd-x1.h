@@ -10,7 +10,7 @@ typedef struct {
 
 /* -------- snd-xhelp.c -------- */
 
-Widget snd_help(snd_state *ss, char *subject, char *help, int with_wrap);
+Widget snd_help(snd_state *ss, const char *subject, const char *help, int with_wrap);
 
 
 /* -------- snd-xerror.c -------- */

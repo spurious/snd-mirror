@@ -3,7 +3,7 @@
 
 /* -------- snd-xhelp.c -------- */
 
-int snd_help(snd_state *ss, char *subject, char *help, int with_wrap);
+int snd_help(snd_state *ss, const char *subject, const char *help, int with_wrap);
 void snd_completion_help(snd_state *ss, int matches, char **buffer);
 
 

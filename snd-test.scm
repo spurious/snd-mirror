@@ -45,7 +45,7 @@
 	  (snd-print "\n")
 	  (snd-print str)))))
 
-(define tests 20)
+(define tests 1)
 (if (not (defined? 'snd-test)) (define snd-test -1))
 (if (defined? 'disable-play) (disable-play))
 (define keep-going #f)
@@ -32463,6 +32463,12 @@ EDITS: 2
       (run-hook before-test-hook 25)
       (if (and (provided? 'snd-motif) (provided? 'xm) (not (provided? 'gl)))
 	  (begin
+	    ;; check some resource stuff first
+	    (let ((hgt (cadr (XtVaGetValues (cadr (main-widgets)) (list XmNheight 0))))
+		  (wid (cadr (XtVaGetValues (cadr (main-widgets)) (list XmNwidth 0)))))
+	      (if (or (<= wid 0) (<= hgt 0) (> wid 65535) (> hgt 65535))
+		  (snd-display ";Dimension miscast: ~A ~A" wid hgt)))
+	    
 	    ;; ---------------- X tests ----------------
 	    (let ((scr (current-screen))
 		  (dpy (XtDisplay (cadr (main-widgets)))))
@@ -33960,7 +33966,7 @@ EDITS: 2
 	      (let ((blu (x->snd-color "blue")))
 		(if (not (Pixel? blu)) (snd-display ";x->snd-color can't find blue! ~A" blu))
 		(if (not (equal? (color->list blu) (list 0.0 0.0 1.0)))
-		    (snd-display ";x->snd-color blue: ~A" (list->color blu))))
+		    (snd-display ";x->snd-color blue: ~A" (color->list blu))))
 	      
 	      (let* ((tmp (XmStringCreateLocalized "h"))
 		     (pm (XmParseMappingCreate (list XmNincludeStatus XmINSERT
@@ -35371,6 +35377,14 @@ EDITS: 2
 	      (XmContainerPaste box)
 	      (XmContainerCopyLink box (list 'Time CurrentTime))
 	      (XmContainerPasteLink box)
+	      (let ((vals (XtVaGetValues box (list XmNlargeIconX 0 XmNlargeIconY 0))))
+		(if (or (null? (cdr vals))
+		        (not (real? (cadr vals)))
+			(fneq (cadr vals) 0.0)
+			(null? (cdddr vals))
+			(not (real? (cadddr vals)))
+			(fneq (cadddr vals) 0.0))
+		    (snd-display ";xm-float resource vals: ~A" vals)))
 	      
 	      (XmScaleSetValue scl 25)
 	      (if (not (= (XmScaleGetValue scl) 25)) (snd-display ";XmScaleSetValue: ~A" (XmScaleGetValue scl)))

@@ -9,7 +9,7 @@ typedef struct {
 
 /* -------- snd-ghelp.c -------- */
 
-GtkWidget *snd_help(snd_state *ss, char *subject, char *help, int with_wrap);
+GtkWidget *snd_help(snd_state *ss, const char *subject, const char *help, int with_wrap);
 
 
 /* -------- snd-gerror.c -------- */

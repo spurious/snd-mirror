@@ -7,10 +7,11 @@
   #include <config.h>
 #endif
 
-#define XM_DATE "23-June-03"
+#define XM_DATE "9-July-03"
 
 
 /* HISTORY: 
+ *   9-July:    Several int->Dimension|Position resource type changes.
  *   23-June:   Motif 1 fixups.
  *   10-June:   added XmCvtByteStreamToXmString, XmCvtXmStringToByteStream, XmStringByteStreamLength.
                 removed XFreeStringList (a no-op).
@@ -330,11 +331,11 @@ static void define_xm_obj(void)
 
 
 #define XEN_TO_C_Dimension(Arg)  (Dimension)(XEN_TO_C_INT(Arg))
-#define C_TO_XEN_Dimension(Arg)  (C_TO_XEN_INT((int)Arg))
+#define C_TO_XEN_Dimension(Arg)  (C_TO_XEN_INT((Dimension)Arg))
 #define XEN_Dimension_P(Arg)     (XEN_INTEGER_P(Arg))
 
 #define XEN_TO_C_Position(Arg)   (Position)(XEN_TO_C_INT(Arg))
-#define C_TO_XEN_Position(Arg)   (C_TO_XEN_INT((int)Arg))
+#define C_TO_XEN_Position(Arg)   (C_TO_XEN_INT((Position)Arg))
 #define XEN_Position_P(Arg)      (XEN_INTEGER_P(Arg))
 
 #define XEN_TO_C_char(Arg)       (char)(XEN_TO_C_INT(Arg))
@@ -732,7 +733,7 @@ enum {XM_INT, XM_ULONG, XM_UCHAR, XM_FLOAT, XM_STRING, XM_XMSTRING, XM_STRING_TA
       XM_TRANSFER_CALLBACK, XM_CONVERT_CALLBACK, XM_SEARCH_CALLBACK, XM_ORDER_CALLBACK,
       XM_QUALIFY_CALLBACK, XM_ALLOC_COLOR_CALLBACK, XM_POPUP_CALLBACK, XM_SCREEN_COLOR_CALLBACK,
       XM_DROP_CALLBACK, XM_TRANSFER_ENTRY_LIST, XM_DRAG_CALLBACK, XM_STRING_OR_XMSTRING, XM_PARSE_CALLBACK,
-      XM_BOOLEAN_OR_INT
+      XM_BOOLEAN_OR_INT, XM_POSITION
 };
 
 static int resource_type(char *resource);
@@ -1771,6 +1772,10 @@ static Arg *XEN_TO_C_Args(XEN inargl)
 	  XEN_ASSERT_TYPE(XEN_INTEGER_P(value), value, XEN_ONLY_ARG, name, "a Dimension (integer)");      
 	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_Dimension(value)));
 	  break;
+	case XM_POSITION:
+	  XEN_ASSERT_TYPE(XEN_INTEGER_P(value), value, XEN_ONLY_ARG, name, "a Position (integer)");      
+	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_Position(value)));
+	  break;
 	case XM_ATOM:
 	  XEN_ASSERT_TYPE(XEN_Atom_P(value), value, XEN_ONLY_ARG, name, "an Atom");      
 	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_Atom(value)));
@@ -1997,41 +2002,42 @@ static int xmstringtable_length(Widget w, char *name)
   return(len);
 }
 
-static XEN C_TO_XEN_ANY(Widget w, char *name, unsigned long *v)
+static XEN C_TO_XEN_ANY(Widget w, Arg arg)
 {
   /* XtGetValues -- a list of pairs: resource-name place-holder where we fill in the 2nd element */
-  unsigned long value;
+  /* this has to wait until the last moment to decide what arg.value is -- if we assume unsigned long*
+   *   (which works on the Pentium/Linux), the Sun gets confused by Dimensions (unsigned short)
+   */
   Arg a[1];
   int j, ilen;
-  value = v[0];
-  switch (resource_type(name))
+  switch (resource_type(arg.name))
     {
-    case XM_INT:	      return(C_TO_XEN_INT(value));
-    case XM_ULONG:	      return(C_TO_XEN_ULONG(value));
-    case XM_UCHAR:	      return(C_TO_XEN_char(value));
-    case XM_FLOAT:	      return(C_TO_XEN_DOUBLE(value));
-    case XM_STRING:	      return(C_TO_XEN_STRING((char *)value));
+    case XM_INT:	      return(C_TO_XEN_INT((*((int *)(arg.value)))));
+    case XM_ULONG:	      return(C_TO_XEN_ULONG((*((unsigned long *)(arg.value)))));
+    case XM_UCHAR:	      return(C_TO_XEN_char((*((char *)(arg.value)))));
+    case XM_FLOAT:	      return(C_TO_XEN_DOUBLE((*((double *)(arg.value)))));
+    case XM_STRING:	      return(C_TO_XEN_STRING((char *)(*((char **)(arg.value)))));
     case XM_STRING_OR_XMSTRING: /* fileselectionbox here , not parsemapping */
-    case XM_XMSTRING:	      return(C_TO_XEN_XmString((XmString)value));
-    case XM_STRING_TABLE:     return(C_TO_XEN_XmStringTable((XmStringTable)value, xmstringtable_length(w, name)));
+    case XM_XMSTRING:	      return(C_TO_XEN_XmString((XmString)(*((XmString *)(arg.value)))));
+    case XM_STRING_TABLE:     return(C_TO_XEN_XmStringTable((XmStringTable)(*((XmStringTable *)(arg.value))), xmstringtable_length(w, arg.name)));
 #if MOTIF_2
-    case XM_RENDER_TABLE:     return(C_TO_XEN_XmRenderTable((XmRenderTable)value));
-    case XM_TAB_LIST:	      return(C_TO_XEN_XmTabList((XmTabList)value));
+    case XM_RENDER_TABLE:     return(C_TO_XEN_XmRenderTable((XmRenderTable)(*((XmRenderTable *)(arg.value)))));
+    case XM_TAB_LIST:	      return(C_TO_XEN_XmTabList((XmTabList)(*((XmTabList *)(arg.value)))));
 #endif
-    case XM_WIDGET:	      return(C_TO_XEN_Widget((Widget)value));
+    case XM_WIDGET:	      return(C_TO_XEN_Widget((Widget)(*((Widget *)(arg.value)))));
     case XM_WIDGET_LIST:      /* (XtGetValues c1 (list XmNchildren 0) 1) */
 #if MOTIF_2
-      if (strcmp(name, XmNchildren) == 0)
+      if (strcmp(arg.name, XmNchildren) == 0)
 	XtSetArg(a[0], XmNnumChildren, &ilen);             /* Composite */
       else XtSetArg(a[0], XmNselectedObjectCount, &ilen);  /* Container */
 #else
       XtSetArg(a[0], XmNnumChildren, &ilen);
 #endif
       XtGetValues(w, a, 1);
-      return(C_TO_XEN_Widgets((Widget *)value, ilen));
+      return(C_TO_XEN_Widgets((Widget *)(*((Widget **)(arg.value))), ilen));
       break;
-    case XM_BOOLEAN:	      return(C_TO_XEN_BOOLEAN(value));
-    case XM_BOOLEAN_OR_INT:   return(C_TO_XEN_INT(value));
+    case XM_BOOLEAN:	      return(C_TO_XEN_BOOLEAN((*((Boolean *)(arg.value)))));
+    case XM_BOOLEAN_OR_INT:   return(C_TO_XEN_INT((*((int *)(arg.value)))));
     case XM_SEARCH_CALLBACK:
       j = map_over_protected_elements(find_searchproc, (unsigned long)w);
       if (j >= 0) return(XEN_LIST_REF(xm_protected_element(j), CALLBACK_FUNC));
@@ -2070,74 +2076,75 @@ static XEN C_TO_XEN_ANY(Widget w, char *name, unsigned long *v)
       /* this can't work because we don't know what the desired callback was, so we can't search the gc table */
       /*   and if the callback was a C procedure, what good would its address be in this context? */
       /*   (XtGetValues_1 would need to pass the entire Arg or something) */
-      return(C_TO_XEN_ULONG(value));
+      return(C_TO_XEN_ULONG((*((unsigned long *)(arg.value)))));
       break;
 
-    case XM_PIXEL:	      return(C_TO_XEN_Pixel(value));
-    case XM_PIXMAP:	      return(C_TO_XEN_Pixmap(value));
-    case XM_XFONTSTRUCT:      return(C_TO_XEN_XFontStruct((XFontStruct *)value));
-    case XM_DIMENSION:	      return(C_TO_XEN_Dimension(value));
-    case XM_ATOM:	      return(C_TO_XEN_Atom(value));
-    case XM_TEXT_SOURCE:      return(C_TO_XEN_XmTextSource((XmTextSource)value));
+    case XM_PIXEL:	      return(C_TO_XEN_Pixel((*((Pixel *)(arg.value)))));
+    case XM_PIXMAP:	      return(C_TO_XEN_Pixmap((*((Pixmap *)(arg.value)))));
+    case XM_XFONTSTRUCT:      return(C_TO_XEN_XFontStruct((XFontStruct *)(*((XFontStruct **)(arg.value)))));
+    case XM_DIMENSION:	      return(C_TO_XEN_Dimension((*((Dimension *)(arg.value)))));
+    case XM_POSITION:	      return(C_TO_XEN_Position((*((Position *)(arg.value)))));
+    case XM_ATOM:	      return(C_TO_XEN_Atom((*((Atom *)(arg.value)))));
+    case XM_TEXT_SOURCE:      return(C_TO_XEN_XmTextSource((XmTextSource)(*((XmTextSource *)(arg.value)))));
     case XM_ATOM_LIST:	      
-      if (strcmp(name, XmNexportTargets) == 0)            /* DragContext */
+      if (strcmp(arg.name, XmNexportTargets) == 0)            /* DragContext */
 	XtSetArg(a[0], XmNnumExportTargets, &ilen);        /* DropSite */
       else XtSetArg(a[0], XmNnumImportTargets, &ilen);
       XtGetValues(w, a, 1);
       if ((ilen > 0) && (ilen < 100))
-	return(C_TO_XEN_Atoms((Atom *)value, ilen));
+	return(C_TO_XEN_Atoms((Atom *)(*((Atom **)(arg.value))), ilen));
       else return(XEN_FALSE);
       break;
     case XM_STRING_LIST:                                  /* ApplicationShell */
       XtSetArg(a[0], XmNargc, &ilen);
       XtGetValues(w, a, 1);
-      return(C_TO_XEN_Strings((char **)value, ilen));
+      return(C_TO_XEN_Strings((char **)(*((char ***)(arg.value))), ilen));
       break;
     case XM_CHARSET_TABLE:    
       XtSetArg(a[0], XmNbuttonCount, &ilen); /* may not be long enough... */
       XtGetValues(w, a, 1);
-      return(C_TO_XEN_Strings((char **)value, ilen));
+      return(C_TO_XEN_Strings((char **)(*((char ***)(arg.value))), ilen));
       break;
 #if (!XM_DISABLE_DEPRECATED)
-    case XM_FONTLIST:	      return(C_TO_XEN_XmFontList((XmFontList)value));
+    case XM_FONTLIST:	      return(C_TO_XEN_XmFontList((XmFontList)(*((XmFontList *)(arg.value)))));
 #endif
-    case XM_COLORMAP:	      return(C_TO_XEN_Colormap(value));
-    case XM_KEYSYM:	      return(C_TO_XEN_KeySym(value));
+    case XM_COLORMAP:	      return(C_TO_XEN_Colormap((*((Colormap *)(arg.value)))));
+    case XM_KEYSYM:	      return(C_TO_XEN_KeySym((*((KeySym *)(arg.value)))));
     case XM_KEYSYM_TABLE:     
       XtSetArg(a[0], XmNbuttonCount, &ilen);
       XtGetValues(w, a, 1);
-      return(C_TO_XEN_KeySyms((KeySym *)value, ilen));
+      return(C_TO_XEN_KeySyms((KeySym *)(*((KeySym **)(arg.value))), ilen));
       break;
-    case XM_SCREEN:	      return(C_TO_XEN_Screen((Screen *)value));
-    case XM_WINDOW:	      return(C_TO_XEN_Window((Window)value));
-    case XM_VISUAL:	      return(C_TO_XEN_Visual((Visual *)value));
+    case XM_SCREEN:	      return(C_TO_XEN_Screen((Screen *)(*((Screen **)(arg.value)))));
+    case XM_WINDOW:	      return(C_TO_XEN_Window((Window)(*((Window *)(arg.value)))));
+    case XM_VISUAL:	      return(C_TO_XEN_Visual((Visual *)(*((Visual **)(arg.value)))));
     case XM_INT_TABLE:	      
 #if MOTIF_2
-      if (strcmp(name, XmNdetailOrder) == 0) 
+      if (strcmp(arg.name, XmNdetailOrder) == 0) 
 	XtSetArg(a[0], XmNdetailOrderCount, &ilen); 
       else
 	{
-	  if (strcmp(name, XmNselectionArray) == 0) 
+	  if (strcmp(arg.name, XmNselectionArray) == 0) 
 	    XtSetArg(a[0], XmNselectionArrayCount, &ilen); 
 	  else XtSetArg(a[0], XmNselectedPositionCount, &ilen);
 	}
       XtGetValues(w, a, 1);
-      return(C_TO_XEN_Ints((int *)value, ilen));
+      return(C_TO_XEN_Ints((int *)(*((int **)(arg.value))), ilen));
 #endif
       break;
     case XM_RECTANGLE_LIST:                              /* XmNrectangles exists but is not documented */
       XtSetArg(a[0], XmNnumDropRectangles, &ilen);
       XtGetValues(w, a, 1);
-      return(C_TO_XEN_XRectangles((XRectangle *)value, ilen));
+      return(C_TO_XEN_XRectangles((XRectangle *)(*((XRectangle **)(arg.value))), ilen));
       break;
-    case XM_WIDGET_CLASS:     return(C_TO_XEN_WidgetClass((WidgetClass)value));
+    case XM_WIDGET_CLASS:     return(C_TO_XEN_WidgetClass((WidgetClass)(*((WidgetClass *)(arg.value)))));
     case XM_STRING_OR_INT:
       if ((w) &&
 	  ((XmIsText(w)) || (XmIsTextField(w))))
-	return(C_TO_XEN_STRING((char *)value));
-      else return(C_TO_XEN_INT((int)value));
+	return(C_TO_XEN_STRING((char *)(*((char **)(arg.value)))));
+      else return(C_TO_XEN_INT((int)(*((int *)(arg.value)))));
     }
-  return(C_TO_XEN_ULONG(value)); /* fallback */
+  return(C_TO_XEN_ULONG((*((unsigned long *)(arg.value))))); /* fallback */
 }
 
 static XEN C_TO_XEN_Args(Widget w, Arg *args, int len)
@@ -2150,8 +2157,7 @@ static XEN C_TO_XEN_Args(Widget w, Arg *args, int len)
   loc = xm_protect(lst);
   for (i = len - 1; i >= 0; i--) 
     lst = XEN_CONS_2(C_TO_XEN_STRING(args[i].name),
-		     C_TO_XEN_ANY(w, args[i].name, 
-				  (unsigned long *)(args[i].value)),
+		     C_TO_XEN_ANY(w, args[i]),
 		     lst);
   xm_unprotect_at(loc);
   return(lst);
@@ -22730,7 +22736,7 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNborder, XM_ULONG);
   DEFINE_RESOURCE(XmNborderColor, XM_PIXEL);
   DEFINE_RESOURCE(XmNborderPixmap, XM_PIXMAP);
-  DEFINE_RESOURCE(XmNborderWidth, XM_INT);
+  DEFINE_RESOURCE(XmNborderWidth, XM_DIMENSION);
   DEFINE_RESOURCE(XmNbottomAttachment, XM_UCHAR);
   DEFINE_RESOURCE(XmNbottomOffset, XM_INT);
   DEFINE_RESOURCE(XmNbottomPosition, XM_INT);
@@ -22772,11 +22778,11 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNcursorPosition, XM_INT);
   DEFINE_RESOURCE(XmNcursorPositionVisible, XM_BOOLEAN);
   DEFINE_RESOURCE(XmNdarkThreshold, XM_INT);
-  DEFINE_RESOURCE(XmNdecimalPoints, XM_INT);
+  DEFINE_RESOURCE(XmNdecimalPoints, XM_INT); /* short in doc (1112) */
   DEFINE_RESOURCE(XmNdecrementCallback, XM_CALLBACK);
   DEFINE_RESOURCE(XmNdefaultActionCallback, XM_CALLBACK);
   DEFINE_RESOURCE(XmNdefaultButton, XM_WIDGET);
-  DEFINE_RESOURCE(XmNdefaultButtonShadowThickness, XM_INT);
+  DEFINE_RESOURCE(XmNdefaultButtonShadowThickness, XM_DIMENSION);
   DEFINE_RESOURCE(XmNdefaultButtonType, XM_UCHAR);
   DEFINE_RESOURCE(XmNdefaultCopyCursorIcon, XM_WIDGET);
   DEFINE_RESOURCE(XmNdefaultInvalidCursorIcon, XM_WIDGET);
@@ -22845,7 +22851,7 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNfractionBase, XM_INT);
   DEFINE_RESOURCE(XmNgainPrimaryCallback, XM_CALLBACK);
   DEFINE_RESOURCE(XmNgeometry, XM_STRING);
-  DEFINE_RESOURCE(XmNheight, XM_INT);
+  DEFINE_RESOURCE(XmNheight, XM_DIMENSION);
   DEFINE_RESOURCE(XmNheightInc, XM_INT);
   DEFINE_RESOURCE(XmNhelpCallback, XM_CALLBACK);
   DEFINE_RESOURCE(XmNhelpLabelString, XM_XMSTRING);
@@ -22853,7 +22859,7 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNhighlightColor, XM_PIXEL);
   DEFINE_RESOURCE(XmNhighlightOnEnter, XM_BOOLEAN);
   DEFINE_RESOURCE(XmNhighlightPixmap, XM_PIXMAP);
-  DEFINE_RESOURCE(XmNhighlightThickness, XM_INT);
+  DEFINE_RESOURCE(XmNhighlightThickness, XM_DIMENSION);
   DEFINE_RESOURCE(XmNhistoryItemCount, XM_INT);
   DEFINE_RESOURCE(XmNhistoryItems, XM_STRING_TABLE);
   DEFINE_RESOURCE(XmNhistoryMaxItems, XM_INT);
@@ -22924,7 +22930,7 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNmappingDelay, XM_INT);
   DEFINE_RESOURCE(XmNmargin, XM_DIMENSION);
   DEFINE_RESOURCE(XmNmarginBottom, XM_DIMENSION);
-  DEFINE_RESOURCE(XmNmarginHeight, XM_INT);
+  DEFINE_RESOURCE(XmNmarginHeight, XM_DIMENSION);
   DEFINE_RESOURCE(XmNmarginLeft, XM_DIMENSION);
   DEFINE_RESOURCE(XmNmarginRight, XM_DIMENSION);
   DEFINE_RESOURCE(XmNmarginTop, XM_DIMENSION);
@@ -22974,8 +22980,8 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNnumDropTransfers, XM_INT);
   DEFINE_RESOURCE(XmNnumExportTargets, XM_INT);
   DEFINE_RESOURCE(XmNnumImportTargets, XM_INT);
-  DEFINE_RESOURCE(XmNoffsetX, XM_INT);
-  DEFINE_RESOURCE(XmNoffsetY, XM_INT);
+  DEFINE_RESOURCE(XmNoffsetX, XM_POSITION);
+  DEFINE_RESOURCE(XmNoffsetY, XM_POSITION);
   DEFINE_RESOURCE(XmNokCallback, XM_CALLBACK);
   DEFINE_RESOURCE(XmNokLabelString, XM_XMSTRING);
   DEFINE_RESOURCE(XmNoperationChangedCallback, XM_CALLBACK);
@@ -23021,14 +23027,14 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNrowColumnType, XM_UCHAR);
   DEFINE_RESOURCE(XmNrows, XM_INT);
   DEFINE_RESOURCE(XmNrubberPositioning, XM_BOOLEAN);
-  DEFINE_RESOURCE(XmNsashHeight, XM_INT);
-  DEFINE_RESOURCE(XmNsashIndent, XM_INT);
-  DEFINE_RESOURCE(XmNsashShadowThickness, XM_INT);
-  DEFINE_RESOURCE(XmNsashWidth, XM_INT);
+  DEFINE_RESOURCE(XmNsashHeight, XM_DIMENSION);
+  DEFINE_RESOURCE(XmNsashIndent, XM_POSITION);
+  DEFINE_RESOURCE(XmNsashShadowThickness, XM_DIMENSION);
+  DEFINE_RESOURCE(XmNsashWidth, XM_DIMENSION);
   DEFINE_RESOURCE(XmNsaveUnder, XM_BOOLEAN);
-  DEFINE_RESOURCE(XmNscaleHeight, XM_INT);
+  DEFINE_RESOURCE(XmNscaleHeight, XM_DIMENSION);
   DEFINE_RESOURCE(XmNscaleMultiple, XM_INT);
-  DEFINE_RESOURCE(XmNscaleWidth, XM_INT);
+  DEFINE_RESOURCE(XmNscaleWidth, XM_DIMENSION);
   DEFINE_RESOURCE(XmNscreen, XM_SCREEN);
   DEFINE_RESOURCE(XmNscrollBarDisplayPolicy, XM_UCHAR);
   DEFINE_RESOURCE(XmNscrollBarPlacement, XM_UCHAR);
@@ -23036,8 +23042,8 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNscrollLeftSide, XM_BOOLEAN);
   DEFINE_RESOURCE(XmNscrollTopSide, XM_BOOLEAN);
   DEFINE_RESOURCE(XmNscrollVertical, XM_BOOLEAN);
-  DEFINE_RESOURCE(XmNscrolledWindowMarginHeight, XM_INT);
-  DEFINE_RESOURCE(XmNscrolledWindowMarginWidth, XM_INT);
+  DEFINE_RESOURCE(XmNscrolledWindowMarginHeight, XM_DIMENSION);
+  DEFINE_RESOURCE(XmNscrolledWindowMarginWidth, XM_DIMENSION);
   DEFINE_RESOURCE(XmNscrollingPolicy, XM_UCHAR);
   DEFINE_RESOURCE(XmNselectColor, XM_PIXEL);
   DEFINE_RESOURCE(XmNselectInsensitivePixmap, XM_PIXMAP);
@@ -23055,7 +23061,7 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNseparatorType, XM_UCHAR);
   DEFINE_RESOURCE(XmNset, XM_UCHAR);
   DEFINE_RESOURCE(XmNshadow, XM_ULONG);
-  DEFINE_RESOURCE(XmNshadowThickness, XM_INT);
+  DEFINE_RESOURCE(XmNshadowThickness, XM_DIMENSION);
   DEFINE_RESOURCE(XmNshadowType, XM_UCHAR);
   DEFINE_RESOURCE(XmNshowArrows, XM_BOOLEAN);
   DEFINE_RESOURCE(XmNshowAsDefault, XM_DIMENSION);
@@ -23137,7 +23143,7 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNvisibleWhenOff, XM_BOOLEAN);
   DEFINE_RESOURCE(XmNvisual, XM_VISUAL);
   DEFINE_RESOURCE(XmNvisualPolicy, XM_UCHAR);
-  DEFINE_RESOURCE(XmNwidth, XM_INT);
+  DEFINE_RESOURCE(XmNwidth, XM_DIMENSION);
   DEFINE_RESOURCE(XmNwidthInc, XM_INT);
   DEFINE_RESOURCE(XmNwinGravity, XM_INT);
   DEFINE_RESOURCE(XmNwindow, XM_WIDGET);
@@ -23145,8 +23151,8 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNwmTimeout, XM_INT);
   DEFINE_RESOURCE(XmNwordWrap, XM_BOOLEAN);
   DEFINE_RESOURCE(XmNworkWindow, XM_WIDGET);
-  DEFINE_RESOURCE(XmNx, XM_INT);
-  DEFINE_RESOURCE(XmNy, XM_INT);
+  DEFINE_RESOURCE(XmNx, XM_POSITION);
+  DEFINE_RESOURCE(XmNy, XM_POSITION);
 #if MOTIF_2
   DEFINE_RESOURCE(XmNarrowLayout, XM_UCHAR);
   DEFINE_RESOURCE(XmNarrowOrientation, XM_UCHAR);
@@ -23213,14 +23219,14 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNincrementValue, XM_INT);
   DEFINE_RESOURCE(XmNindeterminateInsensitivePixmap, XM_PIXMAP);
   DEFINE_RESOURCE(XmNindeterminatePixmap, XM_PIXMAP);
-  DEFINE_RESOURCE(XmNinnerMarginHeight, XM_INT);
-  DEFINE_RESOURCE(XmNinnerMarginWidth, XM_INT);
+  DEFINE_RESOURCE(XmNinnerMarginHeight, XM_DIMENSION);
+  DEFINE_RESOURCE(XmNinnerMarginWidth, XM_DIMENSION);
   DEFINE_RESOURCE(XmNinputPolicy, XM_ULONG);
   DEFINE_RESOURCE(XmNinsensitiveStippleBitmap, XM_PIXMAP);
   DEFINE_RESOURCE(XmNinvokeParseProc, XM_PARSE_CALLBACK);
   DEFINE_RESOURCE(XmNlabelRenderTable, XM_RENDER_TABLE);
-  DEFINE_RESOURCE(XmNlargeCellHeight, XM_INT);
-  DEFINE_RESOURCE(XmNlargeCellWidth, XM_INT);
+  DEFINE_RESOURCE(XmNlargeCellHeight, XM_DIMENSION);
+  DEFINE_RESOURCE(XmNlargeCellWidth, XM_DIMENSION);
   DEFINE_RESOURCE(XmNlargeIcon, XM_WIDGET);
   DEFINE_RESOURCE(XmNlargeIconMask, XM_PIXMAP);
   DEFINE_RESOURCE(XmNlargeIconPixmap, XM_PIXMAP);
@@ -23247,7 +23253,7 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNnumValues, XM_INT);
   DEFINE_RESOURCE(XmNoutlineButtonPolicy, XM_UCHAR);
   DEFINE_RESOURCE(XmNoutlineChangedCallback, XM_CALLBACK);
-  DEFINE_RESOURCE(XmNoutlineColumnWidth, XM_INT);
+  DEFINE_RESOURCE(XmNoutlineColumnWidth, XM_DIMENSION);
   DEFINE_RESOURCE(XmNoutlineIndentation, XM_DIMENSION);
   DEFINE_RESOURCE(XmNoutlineLineStyle, XM_UCHAR);
   DEFINE_RESOURCE(XmNoutlineState, XM_UCHAR);
@@ -23284,8 +23290,8 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNselectionMode, XM_UCHAR);
   DEFINE_RESOURCE(XmNselectionTechnique, XM_UCHAR);
   DEFINE_RESOURCE(XmNsliderMark, XM_INT);
-  DEFINE_RESOURCE(XmNsmallCellHeight, XM_INT);
-  DEFINE_RESOURCE(XmNsmallCellWidth, XM_INT);
+  DEFINE_RESOURCE(XmNsmallCellHeight, XM_DIMENSION);
+  DEFINE_RESOURCE(XmNsmallCellWidth, XM_DIMENSION);
   DEFINE_RESOURCE(XmNsmallIcon, XM_WIDGET);
   DEFINE_RESOURCE(XmNsmallIconMask, XM_PIXMAP);
   DEFINE_RESOURCE(XmNsmallIconPixmap, XM_PIXMAP);

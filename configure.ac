@@ -840,6 +840,7 @@ dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
 # odd... this causes an error in the sndlib configure (can't find libdl) but is needed here?
 	audio_system=Sun
 	LDSO_FLAGS="-G"
+# if __SUNPRO_C we could add -xO3
         ;;
     *-*-hpux*) 
         AC_DEFINE(HPUX)

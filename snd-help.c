@@ -331,7 +331,7 @@ NULL);
 
 /* -------- basic helpers -------- */
 
-void ssnd_help(snd_state *ss, char *subject, ...)
+void ssnd_help(snd_state *ss, const char *subject, ...)
 {
   va_list ap;
   char *helpstr, *newstr;
@@ -813,30 +813,17 @@ as the original by the editor.\n\
 ";
 
 static char mark_help_string[] = 
-"A mark in Snd is attached to a particular\n\
-sample in the sound data.  It moves with that\n\
-sample as you edit the data, and if the sample\n\
-is deleted, so is its mark.  Marks also follow\n\
-the undo/redo edit history -- I'm not sure this\n\
-is a good idea, but it seemed more intuitive\n\
-than other alternatives.  This means that marks\n\
-are 'undone' and 'redone' alongside the edits\n\
-that they accompany.\n\
-\n\
-The mark symbol itself has three or four\n\
-parts.  The name, if any, is at the top.\n\
-Then a 'tab'.  You can click the name or\n\
-tab portion and drag the mark to redefine it.\n\
-Then a line to the bottom of the graph, showing\n\
-where the mark is. And, below the x axis, an\n\
-arrow.  You can click and drag the arrow to\n\
-play the data following the mouse -- sort of\n\
-like listening to a tape as you rock it back\n\
-and forth by hand on the spindles. Or just\n\
-click the arrow to play the data starting\n\
-at the mark.\n\
-\n\
-";
+"A mark in Snd is attached to a particular sample in the sound data.  It moves with that \
+sample as you edit the data, and if the sample is deleted, so is its mark.  Marks also follow \
+the undo/redo edit history -- I'm not sure this is a good idea, but it seemed more intuitive \
+than other alternatives.  This means that marks are 'undone' and 'redone' alongside the edits \
+that they accompany.  The mark symbol itself has three or four \
+parts.  The name, if any, is at the top. Then a 'tab'.  You can click the name or \
+tab portion and drag the mark to redefine it. Then a line to the bottom of the graph, showing \
+where the mark is. And, below the x axis, an arrow.  You can click and drag the arrow to \
+play the data following the mouse -- sort of like listening to a tape as you rock it back \
+and forth by hand on the spindles. Or just click the arrow to play the data starting \
+at the mark.";
 
 static char init_file_help_string[] =
 "Nearly everything in Snd can be set in an initialization file, loaded at any\n\
@@ -998,12 +985,6 @@ The graph editing commands are:\n\
 graph_help_string,
 "\n\
 ",
-fft_keypad_help_string,
-"\n\
-",
-mark_help_string,
-"\n\
-",
 init_file_help_string,
 NULL);
 }
@@ -1022,7 +1003,7 @@ NULL);
 void speed_help(snd_state *ss) {snd_help(ss, "Speed", speed_help_string, TRUE);}
 void expand_help(snd_state *ss) {snd_help(ss, "Expand", expand_help_string, TRUE);}
 void reverb_help(snd_state *ss) {snd_help(ss, "Reverb", reverb_help_string, TRUE);}
-void marks_help(snd_state *ss) {snd_help(ss, "Marks", mark_help_string, FALSE);}
+void marks_help(snd_state *ss) {snd_help(ss, "Marks", mark_help_string, TRUE);}
 void mix_help(snd_state *ss) {snd_help(ss, "Mixing", mix_help_string, TRUE);}
 void sound_files_help(snd_state *ss) {snd_help(ss, "Format", sound_files_help_string, FALSE);}
 void recording_help(snd_state *ss) {snd_help(ss, "Recording", recording_help_string, TRUE);}
@@ -1172,7 +1153,7 @@ unsorted) refers to this menu.",
 
 #define GLYPH_WIDTH 11
 
-char* word_wrap(char *text, int widget_len)
+char* word_wrap(const char *text, int widget_len)
 {
   char *new_text;
   int new_len, old_len, i, j, line_len = 0, desired_len;

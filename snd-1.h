@@ -450,8 +450,8 @@ void new_file_dialog_help(snd_state *ss);
 void edit_header_dialog_help(snd_state *ss);
 void print_dialog_help(snd_state *ss);
 void view_files_dialog_help(snd_state *ss);
-void ssnd_help(snd_state *ss, char *subject, ...);
-char* word_wrap(char *text, int widget_len);
+void ssnd_help(snd_state *ss, const char *subject, ...);
+char* word_wrap(const char *text, int widget_len);
 void g_init_help(void);
 XEN g_snd_help(XEN text, int widget_wid);
 

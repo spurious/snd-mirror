@@ -2,7 +2,7 @@
 
 void check_menu_labels(int key, int state, int extended) {}
 int add_channel_window(snd_info *sound, int channel, snd_state *ss, int chan_y, int insertion, widget_t main, int arrows, int with_events) {return(0);}
-int snd_help(snd_state *ss, char *subject, char *help, int with_wrap) {fprintf(stdout, help); return(0);}
+int snd_help(snd_state *ss, const char *subject, const char *help, int with_wrap) {fprintf(stdout, help); return(0);}
 void add_to_error_history(snd_state *ss, char *msg, int popup) {}
 void post_error_dialog(snd_state *ss, char *msg) {}
 int snd_yes_or_no_p(snd_state *ss, char *format, ...) {return(0);}

@@ -15,9 +15,9 @@ static void delete_help(GtkWidget *w, GdkEvent *event, gpointer context) {gtk_wi
 
 static GtkWidget *help_text = NULL;
 
-static void add_help_text (snd_state *ss, GtkWidget *text, char *message)
+static void add_help_text (snd_state *ss, GtkWidget *text, const char *message)
 {
-  sg_text_insert(text, message);
+  sg_text_insert(text, (char *)message);
 }
 
 static char *cr_to_space(char *val)
@@ -32,7 +32,7 @@ static char *cr_to_space(char *val)
     }
   return(val);
 }
-static int no_cr(char *val)
+static int no_cr(const char *val)
 {
   int i, len;
   if (val)
@@ -115,7 +115,7 @@ static void create_help_monolog(snd_state *ss)
   set_dialog_widget(ss, HELP_DIALOG, help_dialog);
 }
 
-GtkWidget *snd_help(snd_state *ss, char *subject, char *helpstr, int with_wrap)
+GtkWidget *snd_help(snd_state *ss, const char *subject, const char *helpstr, int with_wrap)
 {
   /* place help string in scrollable help window */
   /* if window is already active, add this help at the top and reposition */
