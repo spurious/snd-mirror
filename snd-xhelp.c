@@ -39,7 +39,7 @@ static char *file_to_string(char *filename)
 }
 
 enum {NO_HTML, SND_HTML, EXTSND_HTML, GRFSND_HTML, SNDLIB_HTML, CLM_HTML, SNDSCM_HTML};
-static char *htmls[7] = {"","snd.html","extsnd.html","grfsnd.html","sndlib.html","clm.html","sndscm.html"};
+static char *htmls[7] = {"", "snd.html", "extsnd.html", "grfsnd.html", "sndlib.html", "clm.html", "sndscm.html"};
 static char *html_text = NULL;
 static int html_loaded = NO_HTML;
 
@@ -191,30 +191,6 @@ static void help_help_callback(Widget w, XtPointer context, XtPointer info)
   help_dialog_help((snd_state *)context);
 }
 
-#if (!HAVE_HTML)
-static void hit_help(Widget w, XtPointer context, XtPointer info) 
-{
-  char *selection;
-  selection = XmTextGetSelection(w);
-  if (selection)
-    {
-      /* find help relating to selection and post it */
-#ifdef SCM_MODULE_OBARRAY
-      {
-	XEN help_text;
-	help_text = g_help(C_TO_XEN_STRING(selection),
-			   widget_width(w));
-	if (XEN_STRING_P(help_text))
-	  snd_help(get_global_state(),
-		   selection,
-		   XEN_TO_C_STRING(help_text));
-      }
-#endif
-      XtFree(selection);
-    }
-}
-#endif
-
 static void create_help_monolog(snd_state *ss)
 {
   /* create scrollable but not editable text window */
@@ -289,7 +265,6 @@ static void create_help_monolog(snd_state *ss)
       XtSetArg(args[n], XmNbackground, (ss->sgx)->white); n++;
     }
   help_text = XmCreateScrolledText(help_dialog, "help-text", args, n);
-  XtAddCallback(help_text,XmNgainPrimaryCallback,(XtCallbackProc)hit_help,NULL);
   XtManageChild(help_text);
 #endif
 

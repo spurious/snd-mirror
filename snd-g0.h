@@ -53,7 +53,7 @@
                             (strcmp("GtkWidget_", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
 
 #if DEBUGGING
-  #define ASSERT_WIDGET_TYPE(Cond, Wid) if (!(Cond)) fprintf(stderr,"%s:[%s %d] widget arg is wrong type", __FUNCTION__, __FILE__, __LINE__)
+  #define ASSERT_WIDGET_TYPE(Cond, Wid) if (!(Cond)) fprintf(stderr, "%s:[%s %d] widget arg is wrong type", __FUNCTION__, __FILE__, __LINE__)
   /* GTK_IS_TOGGLE_BUTTON(obj) etc -- not currently used */
 #else
   #define ASSERT_WIDGET_TYPE(Cond, Wid)

@@ -512,8 +512,8 @@ static void muffle_warning(char *name, char *type, char *klass, char *defaultp, 
   int i;
   fprintf(stderr, "warning: %s: %s", name, defaultp);
   for (i = 0; i < (*num_params); i++)
-    fprintf(stderr," %s", params[i]);
-  fprintf(stderr,"\n");
+    fprintf(stderr, " %s", params[i]);
+  fprintf(stderr, "\n");
 #endif
 }
 

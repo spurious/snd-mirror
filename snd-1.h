@@ -91,6 +91,7 @@ typedef struct snd__fd {
   struct chan__info *cp;
   struct snd__info *local_sp;          /* for local reads via make-sample-reader from Scheme */
   Float fscaler;
+  int iscaler;
 } snd_fd;
 
 typedef struct {Float freq; Float amp;} fft_peak;
@@ -685,8 +686,6 @@ int current_location(snd_fd *sf);
 void g_init_edits(void);
 snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize);
 snd_data *free_snd_data(snd_data *sf);
-
-int no_ed_scalers(chan_info *cp, int edpos);
 void set_ed_maxamp(chan_info *cp, int edpos, Float val);
 Float ed_maxamp(chan_info *cp, int edpos);
 void set_ed_selection_maxamp(chan_info *cp, Float val);
@@ -1029,6 +1028,7 @@ void stop_applying(snd_info *sp);
 void remove_apply(snd_info *sp);
 BACKGROUND_TYPE apply_controls(GUI_POINTER xp);
 void *make_apply_state_with_implied_beg_and_dur(void *xp);
+void amp_env_env(chan_info *cp, Float *brkpts, int npts, int pos);
 
 void g_init_snd(void);
 XEN snd_no_such_sound_error(const char *caller, XEN n);

@@ -16,11 +16,14 @@ If you select one, it will be used to complete the current name.\n\
 static void completion_help_browse_callback(Widget w, XtPointer context, XtPointer info) 
 {
   int i, j, old_len, new_len;
+  snd_state *ss = (snd_state *)context;
   char *text = NULL, *old_text = NULL;
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
   /* choice = cbs->item_position - 1; */
   XmStringGetLtoR(cbs->item, XmFONTLIST_DEFAULT_TAG, &text);
-  old_text = XmTextGetString(listener_text);
+  if ((ss->sgx->completion_requestor == NULL) || (ss->sgx->completion_requestor == listener_text))
+    old_text = XmTextGetString(listener_text);
+  else old_text = XmTextGetString(ss->sgx->completion_requestor);
   old_len = snd_strlen(old_text);
   new_len = snd_strlen(text);
   for (i = old_len - 1, j = new_len - 1; j >= 0; j--)
@@ -29,11 +32,26 @@ static void completion_help_browse_callback(Widget w, XtPointer context, XtPoint
 	i = old_len - 1;
       else i--;
     }
-  append_listener_text(XmTextGetLastPosition(listener_text), 
-		       (char *)(text - 1 + old_len - i));
+  if ((ss->sgx->completion_requestor == NULL) || (ss->sgx->completion_requestor == listener_text))
+    append_listener_text(XmTextGetLastPosition(listener_text), 
+			 (char *)(text - 1 + old_len - i));
+  else
+    {
+      /* try to append to who(m?)ever asked for completion help */
+      XmTextInsert(ss->sgx->completion_requestor, 
+		   XmTextGetLastPosition(ss->sgx->completion_requestor), 
+		   (char *)(text - 1 + old_len - i));
+    }
   if (text) XtFree(text);
   if (old_text) XtFree(old_text);
   XtUnmanageChild(completion_help_dialog);
+  ss->sgx->completion_requestor = NULL;
+}
+
+static void help_completion_ok_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  snd_state *ss = (snd_state *)context;
+  ss->sgx->completion_requestor = NULL;
 }
 
 static void create_completion_help_dialog(snd_state *ss, char *title)
@@ -63,6 +81,7 @@ static void create_completion_help_dialog(snd_state *ss, char *title)
 
   XtAddCallback(completion_help_list, XmNbrowseSelectionCallback, completion_help_browse_callback, ss);
   XtAddCallback(completion_help_dialog, XmNhelpCallback, completion_help_help_callback, ss);
+  XtAddCallback(completion_help_dialog, XmNokCallback, help_completion_ok_callback, ss);
 
   XtManageChild(completion_help_dialog);
 
@@ -354,6 +373,7 @@ static void add_completer_widget(Widget w, int row)
 
 static void Name_completion(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
+  /* non-listener tab completion */
   int data, i, matches, need_position;
   Position wx, wy;
   int xoff, yoff; 
@@ -393,6 +413,7 @@ static void Name_completion(Widget w, XEvent *event, char **str, Cardinal *num)
 	  XmUpdateDisplay(w);
 	  if (matches > 1) 
 	    {
+	      ss->sgx->completion_requestor = w;
 	      set_save_completions(TRUE);
 	      search_text = complete_text(old_text, data);
 	      if (search_text) FREE(search_text);
@@ -527,6 +548,7 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
   Window wn;
   snd_state *ss;
   ss = get_global_state();
+  ss->sgx->completion_requestor = listener_text;
   beg = printout_end + 1;
   end = XmTextGetLastPosition(w);
   if (end <= beg) return;
@@ -645,7 +667,7 @@ static char TextTrans2[] =
 	<Key>Return:	    activate()\n";
 static XtTranslations transTable2 = NULL;
 
-/* same but try to avoid causing the currently active pushbutton widget to appear to be activated by <cr> in the text widget */
+/* same (but not activatable), try to avoid causing the currently active pushbutton widget to appear to be activated by <cr> in the text widget */
 static char TextTrans6[] =
        "Ctrl <Key>a:	    beginning-of-line()\n\
 	Ctrl <Key>b:	    backward-character()\n\

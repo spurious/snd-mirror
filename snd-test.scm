@@ -27,8 +27,8 @@
 ;;; test 24: Glib/gdk/gdk-pixbuf/pango/gtk (none yet)
 ;;; test 25: errors
 
-;;; TODO: read-sample read-mix-sample read-track-sample
 ;;; TODO: clipped temps? deliberate data-clipped #t
+;;; TODO: minibuffer completion via browse-click in help-completion dialog to minibuffer not listener
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs) (ice-9 syncase))
 
@@ -2666,7 +2666,7 @@
 		 (lambda ()
 		   (do ((i 0 (1+ i)))
 		       ((= i 50827))
-		     (if (not (= (next-sample vr) (vct-ref samps1 i) (vct-ref samps2 i)))
+		     (if (not (= (if (odd? i) (next-sample vr) (read-sample vr)) (vct-ref samps1 i) (vct-ref samps2 i)))
 			 (begin
 			   (snd-display ";readers disagree at ~D" i)
 			   (throw 'break)))))
@@ -3194,17 +3194,17 @@
 	(scale-sound-by 2.0)
 	(let ((nmx (maxamp ind1 0)))
 	  (IF (fneq (* 2 mx1) nmx) (snd-display ";scale-sound-by 2.0: ~A ~A?" mx1 nmx))
-	  (IF (not (equal? (edit-fragment 1 ind1 0) (list "scale-channel 2.0000 0 50828" "lambda" 0 50828)))
+	  (IF (not (equal? (edit-fragment 1 ind1 0) (list "scale-channel 2.0000 0 50828" "scale" 0 50828)))
 	      (snd-display ";scale-sound-by: ~A?" (edit-fragment 1 ind1 0))))
 	(scale-sound-to 0.5)
 	(let ((nmx (maxamp ind1 0)))
 	  (IF (fneq nmx 0.5) (snd-display ";scale-sound-to 0.5: ~A?" nmx))
-	  (IF (not (equal? (edit-fragment 2 ind1 0) (list "scale-channel 1.6978 0 50828" "lambda" 0 50828)))
+	  (IF (not (equal? (edit-fragment 2 ind1 0) (list "scale-channel 1.6978 0 50828" "scale" 0 50828)))
 	      (snd-display ";scale-sound-to: ~A?" (edit-fragment 2 ind1 0))))
 	(scale-sound-by 0.0 0 1000 ind1 0)
 	(let ((nmx (maxamp ind1 0)))
 	  (IF (fneq 0.5 nmx) (snd-display ";scale-sound-by 0.0: ~A ~A?" mx1 nmx))
-	  (IF (not (equal? (edit-fragment 3 ind1 0) (list "scale-channel 0.0000 0 1000" "lambda" 0 1000)))
+	  (IF (not (equal? (edit-fragment 3 ind1 0) (list "scale-channel 0.0000 0 1000" "scale" 0 1000)))
 	      (snd-display ";scale-sound-by 0.0: ~A?" (edit-fragment 3 ind1 0))))
 	(let* ((v (samples->vct 0 1000 ind1 0))
 	       (pk (vct-peak v)))
@@ -3217,7 +3217,7 @@
 		((= i 10))
 	      (IF (fneq (* 2.0 (vct-ref oldv i)) (vct-ref newv i))
 		  (snd-display ";scale ~D: ~A ~A?" i (vct-ref oldv i) (vct-ref newv i)))))
-	  (IF (not (equal? (edit-fragment 1 ind1 0) (list "scale-channel 2.0000 12000 10" "lambda" 12000 10)))
+	  (IF (not (equal? (edit-fragment 1 ind1 0) (list "scale-channel 2.0000 12000 10" "scale" 12000 10)))
 	      (snd-display ";scale-sound-by 2.0 [12000:10]: ~A?" (edit-fragment 1 ind1 0))))
 	(revert-sound ind1)
 	(select-sound ind2)
@@ -3230,7 +3230,7 @@
 	(let ((nmx (max (maxamp ind2 0) (maxamp ind2 1))))
 	  (IF (fneq nmx 0.5) (snd-display ";2 scale-sound-to 0.5: ~A (~A)?" nmx (maxamp ind2))))
 	(scale-sound-by 0.0 0 1000 ind2 1)
-	(IF (not (equal? (edit-fragment 3 ind2 1) (list "scale-channel 0.0000 0 1000" "lambda" 0 1000)))
+	(IF (not (equal? (edit-fragment 3 ind2 1) (list "scale-channel 0.0000 0 1000" "scale" 0 1000)))
 	    (snd-display ";2:1 scale-sound-by 0.0: ~A?" (edit-fragment 3 ind2 1)))
 	(let* ((v (samples->vct 0 1000 ind2 1))
 	       (pk (vct-peak v)))
@@ -7457,7 +7457,7 @@
 		  (snd-display ";set mix-amp-env bad chan: ~A" var)))
 	    (do ((i 0 (1+ i)))
 		((= i 99))
-	      (let ((mx (next-mix-sample mr))
+	      (let ((mx (if (odd? i) (next-mix-sample mr) (read-mix-sample mr)))
 		    (sx (sample (+ 100 i))))
 		(IF (fneq mx sx) (snd-display ";next-mix-sample: ~A ~A?" mx sx))))
 	    (let ((mx (mr))
@@ -7708,7 +7708,7 @@
 	 (let ((tr (make-track-sample-reader 33)))
 	   (do ((i 0 (1+ i)))
 	       ((= i 10))
-	     (let ((val (next-track-sample tr)))
+	     (let ((val (if (odd? i) (next-track-sample tr) (read-track-sample tr))))
 	       (IF (fneq val (* i .05))
 		   (begin
 		     (close-sound ind)
@@ -12393,6 +12393,46 @@
 	  (if (not (equal? (edits) (list 27 0))) (snd-display ";edits after reload: ~A" (edits)))
 	  (delete-file "hiho.scm")
 	  (close-sound ind))
+
+	;;; TODO: scaling overwriting env and vice-versa
+
+	(if all-args
+	(let ((data (map
+		     (lambda (sound)
+		       (let* ((ind (view-sound sound))
+			      (times (map
+				      (lambda (function)
+					(let ((start (get-internal-real-time)))
+					  (function)
+					  (/ (- (get-internal-real-time) start) 100)))
+				      (list (lambda () (scale-channel 2.0))
+					    (lambda () (reverse-channel))
+					    (lambda () (env-channel (make-env '(0 0 1 1) :end (1- (frames)))))
+					    (lambda () (map-channel (lambda (y) (* y 2))))
+					    (lambda () (scan-channel (lambda (y) #f)))
+					    (lambda () (pad-channel 0 2000))
+					    (lambda () (vct->channel (vct-fill! (make-vct 1000) .1)) 0 1000)
+					    (lambda () (clm-channel (make-two-zero .5 .5)))
+					    (lambda () (mix "pistol.snd" 12345))
+					    (lambda () (src-channel 2.0))
+					    (lambda () (delete-samples 10 200))
+					    ))))
+			 (close-sound ind)
+			 times))
+		     (list "1a.snd" "oboe.snd" "storm.snd" "~/test/sound/away.snd"))))
+	  (snd-display "timings:  scl   rev   env   map   scn   pad   wrt   clm   mix   src   del")
+	  (snd-display "1a:     ~{~6,F~}" (car data))  
+	  (snd-display "oboe:   ~{~6,F~}" (cadr data))  
+	  (snd-display "storm:  ~{~6,F~}" (caddr data))
+	  (snd-display "away:   ~{~6,F~}" (cadddr data))))
+
+;;; timings:  scl   rev   env   map   scn   pad   wrt   clm   mix   src   del
+;;; 1a:       0.01  0.01  0.01  0.01   0.0   0.0  0.01  0.05  0.03  0.03  0.01
+;;; oboe:     0.01  0.02  0.02  0.13  0.06   0.0  0.01  0.02  0.01  0.04  0.04
+;;; storm:    0.01  0.32  0.32  4.87  2.07   0.0  0.07  0.31  0.08  0.79  0.04
+;;; away:     0.02 10.58  3.09 51.85 22.25   0.0  0.68  2.85  0.66  8.28  0.33
+;;;                            ^ nearly all excess over scn case is in the (* y 2) calculation (not file IO)
+
 	)))
 
 
@@ -12510,7 +12550,7 @@
 	  (IF (not (equal? (edit-fragment 1 ind 0) (list "delete-sample" "delete" 12 1)))
 	      (snd-display ";save edits: ~A" (edit-fragment 1 ind 0)))
 	  (IF (not (equal? (edit-tree ind 0) 
-			   (list (list 0 0 0 11 1.0) (list 12 0 13 50827 1.0) (list 50827 -2 0 0 0.0))))
+			   (list (list 0 0 0 11 1.0 0.0) (list 12 0 13 50827 1.0 0.0) (list 50827 -2 0 0 0.0 0.0))))
 	      (snd-display ";save edit tree: ~A" (edit-tree ind 0)))
 	  (close-sound ind)
 
@@ -12539,7 +12579,7 @@
       (IF (not (equal? (edit-fragment 1) '("set-sample" "set" 1 1))) (snd-display ";save-edit-history 1: ~A?" (edit-fragment 1)))
       (IF (not (equal? (edit-fragment 2) '("delete-sample" "delete" 100 1))) (snd-display ";save-edit-history 2: ~A?" (edit-fragment 2)))
       (IF (not (equal? (edit-fragment 3) '("insert-sample" "insert" 10 1))) (snd-display ";save-edit-history 3: ~A?" (edit-fragment 3)))
-      (IF (not (equal? (edit-fragment 4) '("scale-channel 2.0000 0 50828" "lambda" 0 50828))) (snd-display ";save-edit-history 4: ~A?" (edit-fragment 4)))
+      (IF (not (equal? (edit-fragment 4) '("scale-channel 2.0000 0 50828" "scale" 0 50828))) (snd-display ";save-edit-history 4: ~A?" (edit-fragment 4)))
       (IF (not (equal? (edit-fragment 5) '("pad-channel" "zero" 100 20))) (snd-display ";save-edit-history 5: ~A?" (edit-fragment 5)))
       (let ((str (display-edits)))
 	(IF (not (string=? str "
@@ -12571,7 +12611,7 @@ EDITS: 5
    (at 101, cp->sounds[0][101:50827, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
    (at 50828, cp->sounds[-2][0:0, 0.000000])
 
- (scale-channel 2.0000 0 50828 0 50828) ; scale-channel 2.0000 0 50828 [4:7]:
+ (scale 0 50828) ; scale-channel 2.0000 0 50828 [4:7]:
    (at 0, cp->sounds[0][0:0, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]
    (at 1, cp->sounds[1][0:0, 2.000000]) [buf: 1] 
    (at 2, cp->sounds[0][2:9, 2.000000]) [file: /home/bil/cl/oboe.snd[0]]

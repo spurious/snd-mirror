@@ -227,7 +227,6 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
 	  str = (char *)CALLOC(len, sizeof(char));
 	  for (k = 0; k < len - 1; k++)
 	    str[k] = full_str[k + start];
-	  /* fprintf(stderr,"str: [%s]\n", str); */
           break; 
 	}
   }

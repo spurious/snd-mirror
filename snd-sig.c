@@ -1619,11 +1619,6 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, int beg, int dur, XEN ed
 	  if (ebin > ep->amp_env_size) ebin = ep->amp_env_size;
 	  for (i = sbin, j = ebin - 1; i < j; i++, j--)
 	    {
-#if DEBUGGING
-	      if (i >= ep->amp_env_size) abort();
-	      if (j >= ep->amp_env_size) abort();
-	      if (j < 0) abort();
-#endif
 	      min1 = ep->data_min[i];
 	      max1 = ep->data_max[i];
 	      ep->data_min[i] = ep->data_min[j];
@@ -1835,7 +1830,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 	  segbeg = beg;
 	  segend = beg + dur;
 	  segnum = passes[0];
-	  local_edpos = si->cps[i]->edit_ctr;
+	  local_edpos = si->cps[i]->edit_ctr; /* for as_one_edit backup */
 	  old_squelch = si->cps[i]->squelch_update;
 	  si->cps[i]->squelch_update = 1;
 	  pos = to_c_edit_position(si->cps[i], edpos, origin, arg_pos);
@@ -1914,7 +1909,6 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 	  egen_val = mus_env(egen);
 	  for (k = 0; k < si->chans; k++)
 	    data[k][j] = (MUS_SAMPLE_TYPE)(read_sample(sfs[k]) * egen_val);
-	    /* data[k][j] = MUS_FLOAT_TO_SAMPLE(read_sample_to_float(sfs[k]) * egen_val); */
 	  j++;
 	  if ((temp_file) && (j == FILE_BUFFER_SIZE))
 	    {
@@ -1934,7 +1928,6 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
       for (i = 0; i < dur; i++)
 	{
 	  idata[j] = (MUS_SAMPLE_TYPE)(read_sample(sf) * mus_env(egen));
-	  /* idata[j] = MUS_FLOAT_TO_SAMPLE(read_sample_to_float(sf) * mus_env(egen)); */
 	  j++;
 	  if ((temp_file) && (j == FILE_BUFFER_SIZE))
 	    {
@@ -1969,9 +1962,22 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
       for (i = 0; i < si->chans; i++)
 	{
 	  if (temp_file)
-	    file_change_samples(si->begs[i], dur, ofile, si->cps[i], i, 
-				(si->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME, 
-				LOCK_MIXES, origin, si->cps[i]->edit_ctr);
+	    {
+	      int pos, len;
+	      int *passes;
+	      passes = mus_env_passes(egen);
+	      len = mus_length(egen);
+	      /* fprintf(stderr,"dur %d, env dur: %d\n",dur,passes[len - 2]); */
+	      pos = to_c_edit_position(si->cps[i], edpos, origin, arg_pos);
+
+	      file_change_samples(si->begs[i], dur, ofile, si->cps[i], i, 
+				  (si->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME, 
+				  LOCK_MIXES, origin, si->cps[i]->edit_ctr);
+
+	      /* TODO: extend env'd env-channel to dur != env dur */
+	      if (dur == passes[len - 2])
+		amp_env_env(si->cps[i], mus_data(egen), len, pos);
+	    }
 	  else change_samples(si->begs[i], dur, data[i], si->cps[i], LOCK_MIXES, origin, si->cps[i]->edit_ctr);
 	  update_graph(si->cps[i], NULL);
 	}
@@ -2659,7 +2665,6 @@ static XEN g_swap_channels(XEN snd0, XEN chn0, XEN snd1, XEN chn1, XEN beg, XEN 
 	  if (dur0 > dur1) num = dur1; else num = dur0;
 	}
       if ((beg0 == 0) && ((num == dur0) || (num == dur1)) &&
-	  (no_ed_scalers(cp0, cp0->edit_ctr)) && (no_ed_scalers(cp1, cp1->edit_ctr)) &&
 	  (cp0->edit_ctr == 0) && (cp1->edit_ctr == 0))
 	{
 	  /* common special case -- just setup a new ed-list entry with the channels/sounds swapped */

@@ -509,7 +509,7 @@ static int save_sound_state (snd_info *sp, void *ptr)
       edit_history_to_file(fd, cp);
     }
 #if HAVE_RUBY
-  fprintf(fd,"end\n");
+  fprintf(fd, "end\n");
 #else
   fprintf(fd, "      )))\n");
 #endif

@@ -928,7 +928,7 @@ void sequester_deferred_regions(chan_info *cp, int edit_top)
 	    if ((drp->cps[j] == cp) &&
 		(drp->edpos[j] > edit_top))
 	      {
-		report_in_minibuffer(cp->sound,"sequestering region %d...", r->id);
+		report_in_minibuffer(cp->sound, "sequestering region %d...", r->id);
 		deferred_region_to_temp_file(r);
 		clear_minibuffer(cp->sound);
 		break;

@@ -674,6 +674,85 @@ env_info *amp_env_copy(chan_info *cp, int reversed, int edpos)
   return(new_ep);
 }
 
+void amp_env_env(chan_info *cp, Float *brkpts, int npts, int pos)
+{
+  env_info *old_ep, *new_ep;
+  int i;
+  mus_any *e;
+  Float val;
+  MUS_SAMPLE_TYPE fmin, fmax;
+  old_ep = cp->amp_envs[pos];
+  if ((old_ep) && (old_ep->completed))
+    {
+      new_ep = cp->amp_envs[cp->edit_ctr];
+      if ((new_ep) && 
+	  (new_ep->amp_env_size != old_ep->amp_env_size)) 
+	new_ep = free_amp_env(cp, cp->edit_ctr);
+      if (new_ep == NULL)
+	{
+	  new_ep = (env_info *)CALLOC(1, sizeof(env_info));
+	  new_ep->data_max = (MUS_SAMPLE_TYPE *)MALLOC(old_ep->amp_env_size * sizeof(MUS_SAMPLE_TYPE));
+	  new_ep->data_min = (MUS_SAMPLE_TYPE *)MALLOC(old_ep->amp_env_size * sizeof(MUS_SAMPLE_TYPE));
+	}
+      new_ep->amp_env_size = old_ep->amp_env_size;
+      new_ep->samps_per_bin = old_ep->samps_per_bin;
+      e = mus_make_env(brkpts, npts, 1.0, 0.0, 1.0, 0.0, 0, new_ep->amp_env_size, brkpts);
+      fmin = MUS_SAMPLE_MAX;
+      fmax = MUS_SAMPLE_MIN;
+      for (i = 0; i < new_ep->amp_env_size; i++) 
+	{
+	  val = mus_env(e);
+	  new_ep->data_min[i] = (MUS_SAMPLE_TYPE)(old_ep->data_min[i] * val);
+	  if (new_ep->data_min[i] < fmin) fmin = new_ep->data_min[i];
+	  new_ep->data_max[i] = (MUS_SAMPLE_TYPE)(old_ep->data_max[i] * val);
+	  if (new_ep->data_max[i] > fmax) fmax = new_ep->data_max[i];
+	}
+      new_ep->fmin = fmin;
+      new_ep->fmax = fmax;
+      new_ep->completed = 1;
+      new_ep->bin = old_ep->bin;
+      new_ep->top_bin = old_ep->top_bin;
+      cp->amp_envs[cp->edit_ctr] = new_ep;
+      mus_free(e);
+    }
+}
+
+#if DEBUGGING
+static void check_env(chan_info *cp, env_info *new_ep)
+{
+  snd_fd *sf;
+  int bin, j, samps, loc = -1, i;
+  MUS_SAMPLE_TYPE samp, maxdiff = 0, diff, fmin, fmax;
+  samps = cp->samples[cp->edit_ctr];
+  sf = init_sample_read(0, cp, READ_FORWARD);
+  bin = 0;
+  fmin = MUS_SAMPLE_MAX;
+  fmax = MUS_SAMPLE_MIN;
+  for (i = 0, j = 0; i < samps; i++)
+    {
+      samp = read_sample(sf);
+      if (samp > fmax) fmax = samp;
+      if (samp < fmin) fmin = samp;
+      j++;
+      if (j >= new_ep->samps_per_bin)
+	{
+	  diff = abs(new_ep->data_max[bin] - fmax);
+	  if (diff > maxdiff) {maxdiff = diff; loc = bin;}
+	  diff = abs(new_ep->data_min[bin] - fmin);
+	  if (diff > maxdiff) {maxdiff = diff; loc = bin;}
+	  fmin = MUS_SAMPLE_MAX;
+	  fmax = MUS_SAMPLE_MIN;
+	  bin++;
+	  j = 0;
+	}
+    }
+  free_snd_fd(sf);
+  fprintf(stderr,"max diff %d (%f) at %d (%d) (%f)\n", 
+	  maxdiff, MUS_SAMPLE_TO_FLOAT(maxdiff), loc, loc * new_ep->samps_per_bin,
+	  fabs((MUS_SAMPLE_TO_FLOAT(maxdiff)) * cp->axis->y_scale));
+}
+#endif
+
 env_info *make_mix_input_amp_env(chan_info *cp)
 {
   env_state *es;

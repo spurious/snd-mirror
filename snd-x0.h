@@ -109,7 +109,7 @@
 #define NUM_COLORMAPS 16
 
 #if DEBUGGING
-  #define ASSERT_WIDGET_TYPE(Cond, Wid) if (!(Cond)) fprintf(stderr,"%s:[%s %d] %s is wrong type", __FUNCTION__, __FILE__, __LINE__, XtName(Wid))
+  #define ASSERT_WIDGET_TYPE(Cond, Wid) if (!(Cond)) fprintf(stderr, "%s:[%s %d] %s is wrong type", __FUNCTION__, __FILE__, __LINE__, XtName(Wid))
 #else
   #define ASSERT_WIDGET_TYPE(Cond, Wid)
 #endif
@@ -188,6 +188,7 @@ typedef struct {
   Widget *dialogs;
 
   Cursor mix_cursor, graph_cursor, wait_cursor;
+  Widget completion_requestor;
 } state_context;
 
 typedef struct {

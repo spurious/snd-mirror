@@ -2173,7 +2173,6 @@ static int hit_mix_1(mix_info *md, void *uvals)
   height = mix_tag_height(md->ss);
   mx = md->x - width;
   my = md->y - height / 2;
-  /* fprintf(stderr,"check hit at %d %d %d %d ",md->x, md->y, mx, my);  */
   if ((vals[0] + SLOPPY_MOUSE >= mx) && (vals[0] - SLOPPY_MOUSE <= (mx + width)) &&
       (vals[1] + SLOPPY_MOUSE >= my) && (vals[1] - SLOPPY_MOUSE <= (my + height)))
     return(md->id + 1);

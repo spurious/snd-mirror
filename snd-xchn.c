@@ -1256,7 +1256,7 @@ static void cp_graph_key_press(Widget w, XtPointer context, XEvent *event, Boole
   if ((cp == NULL) || (cp->sound == NULL))
     {
 #if DEBUGGING
-      fprintf(stderr,"unconnected chan in key press?");
+      fprintf(stderr, "unconnected chan in key press?");
       abort();
 #endif
       return;

@@ -62,7 +62,7 @@ static void massage_selection(Widget w, XtPointer context, Atom *selection, Atom
 		  FREE(origin);
 		}
 #if DEBUGGING
-	      else fprintf(stderr,"dropped %s?\n", str);
+	      else fprintf(stderr, "dropped %s?\n", str);
 #endif
 	    }
 	  /* value is the file name if dropped icon from filer */
