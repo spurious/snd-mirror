@@ -29,43 +29,10 @@ static void add_help_text (snd_state *ss, GtkWidget *text, char *message)
   gtk_text_thaw (GTK_TEXT (text));
 }
 
-static GtkWidget *create_scrolled_text(snd_state *ss, int editable)
-{
-  GtkWidget *table;
-  GtkWidget *hscrollbar;
-  GtkWidget *vscrollbar;
-  /* basically copied from the tutorial */
-  table = gtk_table_new (2, 2, FALSE);
-  help_text = gtk_text_new (NULL, NULL);
-  gtk_table_attach (GTK_TABLE (table), help_text, 0, 1, 0, 1, 
-		    (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
-		    (GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
-		    0, 0);
-  gtk_text_set_editable(GTK_TEXT(help_text), editable);
-  gtk_text_set_word_wrap(GTK_TEXT(help_text), FALSE);
-  gtk_text_set_line_wrap(GTK_TEXT(help_text), FALSE); /* apparently horizontal scrolling is not yet implemented (gtktext.c version 1.2.8) */
-  gtk_widget_show (help_text);
-  hscrollbar = gtk_hscrollbar_new (GTK_TEXT (help_text)->hadj);
-  set_background(hscrollbar, (ss->sgx)->position_color);
-  gtk_table_attach (GTK_TABLE (table), hscrollbar, 0, 1, 1, 2, 
-		    (GtkAttachOptions)(GTK_EXPAND | GTK_FILL),
-		    (GtkAttachOptions)(GTK_FILL), 
-		    0, 0);
-  gtk_widget_show (hscrollbar);
-  vscrollbar = gtk_vscrollbar_new (GTK_TEXT (help_text)->vadj);
-  set_background(vscrollbar, (ss->sgx)->position_color);
-  gtk_table_attach (GTK_TABLE (table), vscrollbar, 1, 2, 0, 1, 
-		    (GtkAttachOptions)(GTK_FILL), 
-		    (GtkAttachOptions)(GTK_EXPAND | GTK_FILL | GTK_SHRINK), 
-		    0, 0);
-  gtk_widget_show (vscrollbar);
-  return(table);
-}
-
 static void create_help_monolog(snd_state *ss)
 {
   /* create scrollable but not editable text window */
-  GtkWidget *help_button, *ok_button, *table;
+  GtkWidget *help_button, *ok_button;
   help_dialog = gtk_dialog_new();
   gtk_signal_connect(GTK_OBJECT(help_dialog), "delete_event", GTK_SIGNAL_FUNC(delete_help), (gpointer)ss);
   gtk_window_set_title(GTK_WINDOW(help_dialog), STR_Help);
@@ -86,9 +53,7 @@ static void create_help_monolog(snd_state *ss)
   gtk_widget_show(ok_button);
   gtk_widget_show(help_button);
 
-  table = create_scrolled_text(ss, FALSE);
-  gtk_container_add(GTK_CONTAINER(GTK_DIALOG(help_dialog)->vbox), table);
-  gtk_widget_show(table);
+  help_text = make_scrolled_text(ss, GTK_DIALOG(help_dialog)->vbox, FALSE, NULL, NULL);
   gtk_widget_show(help_dialog);
   set_dialog_widget(ss, HELP_DIALOG, help_dialog);
 }

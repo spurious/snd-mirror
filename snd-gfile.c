@@ -147,7 +147,7 @@ static char *snd_gtk_get_filename(GtkWidget *dialog)
   if (last_filename == NULL) last_filename = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   mus_snprintf(last_filename, PRINT_BUFFER_SIZE, "%s%s", path, file);
 #else
-  last_filename = gtk_file_selection_get_filename(GTK_FILE_SELECTION(dialog));
+  last_filename = (char *)gtk_file_selection_get_filename(GTK_FILE_SELECTION(dialog));
 #endif
   return(last_filename);
 }
@@ -209,7 +209,7 @@ static void dialog_select_callback(GtkWidget *w, gint row, gint column, GdkEvent
   char timestr[64];
   time_t date;
   file_dialog_info *fd = (file_dialog_info *)context;
-  filename = gtk_file_selection_get_filename(GTK_FILE_SELECTION(fd->dialog));
+  filename = (char *)gtk_file_selection_get_filename(GTK_FILE_SELECTION(fd->dialog));
   if ((filename) && (is_sound_file(filename)))
     {
       buf = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
@@ -391,8 +391,7 @@ static void save_as_data_format_callback(GtkWidget *w, gint row, gint column, Gd
 file_data *make_file_data_panel(snd_state *ss, GtkWidget *parent, char *name, 
 				 int with_chan, int header_type, int data_format, int with_loc, int comment_as_entry)
 {
-  GtkWidget *form, *hlab, *dlab, *slab, *clab, *comment_label, *loclab,
-    *hscroll, *dscroll, *scbox, *combox, *table, *hscrollbar, *vscrollbar;
+  GtkWidget *form, *hlab, *dlab, *slab, *clab, *comment_label, *loclab, *hscroll, *dscroll, *scbox, *combox;
   file_data *fdat;
   int i;
   int dformats = 0;
@@ -507,31 +506,7 @@ file_data *make_file_data_panel(snd_state *ss, GtkWidget *parent, char *name,
     }
   else
     {
-      table = gtk_table_new (2, 2, FALSE);
-      gtk_box_pack_start(GTK_BOX(combox), table, TRUE, TRUE, 4);
-      fdat->comment_text = gtk_text_new(NULL, NULL);
-      gtk_table_attach(GTK_TABLE(table), fdat->comment_text, 0, 1, 0, 1, 
-		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
-		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
-		       0, 0);
-      gtk_text_set_editable(GTK_TEXT(fdat->comment_text), TRUE);
-      gtk_text_set_word_wrap(GTK_TEXT(fdat->comment_text), FALSE);
-      gtk_widget_show (fdat->comment_text);
-      hscrollbar = gtk_hscrollbar_new (GTK_TEXT (fdat->comment_text)->hadj);
-      set_background(hscrollbar, (ss->sgx)->position_color);
-      gtk_table_attach (GTK_TABLE (table), hscrollbar, 0, 1, 1, 2, 
-			(GtkAttachOptions)(GTK_EXPAND | GTK_FILL), 
-			(GtkAttachOptions)(GTK_FILL), 
-			0, 0);
-      gtk_widget_show (hscrollbar);
-      vscrollbar = gtk_vscrollbar_new (GTK_TEXT (fdat->comment_text)->vadj);
-      set_background(vscrollbar, (ss->sgx)->position_color);
-      gtk_table_attach (GTK_TABLE (table), vscrollbar, 1, 2, 0, 1, 
-			(GtkAttachOptions)(GTK_FILL), 
-			(GtkAttachOptions)(GTK_EXPAND | GTK_FILL | GTK_SHRINK), 
-			0, 0);
-      gtk_widget_show (vscrollbar);
-      gtk_widget_show(table);
+      fdat->comment_text = make_scrolled_text(ss, NULL, TRUE, combox, NULL);
     }
 
   return(fdat);
@@ -556,7 +531,7 @@ static void save_as_ok_callback(GtkWidget *w, gpointer data)
   comment = gtk_editable_get_chars(GTK_EDITABLE(save_as_file_data->comment_text), 0, -1);
   type = save_as_file_data->current_type;
   format = save_as_file_data->current_format;
-  last_save_as_filename = gtk_file_selection_get_filename(GTK_FILE_SELECTION(save_as_dialog));
+  last_save_as_filename = (char *)gtk_file_selection_get_filename(GTK_FILE_SELECTION(save_as_dialog));
   sp = any_selected_sound(ss);
   if (last_save_as_filename)
     opened = check_for_filename_collisions_and_save(ss, sp, last_save_as_filename, save_as_dialog_type, srate, type, format, comment);

@@ -379,6 +379,7 @@ gpointer get_user_data(GtkObject *obj);
 #if (!HAVE_GTK2)
   char *sg_label_text(GtkLabel *w);
 #endif
+GtkWidget *make_scrolled_text(snd_state *ss, GtkWidget *parent, int editable, GtkWidget *boxer, GtkWidget *paner);
 
 
 /* -------- snd-gsnd.c -------- */

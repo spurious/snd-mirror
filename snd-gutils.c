@@ -547,3 +547,76 @@ gpointer get_user_data(GtkObject *obj)
 #if (!HAVE_GTK2)
 char *sg_label_text(GtkLabel *w) {char *text; gtk_label_get(w, &text); return(text);}
 #endif
+
+
+GtkWidget *make_scrolled_text(snd_state *ss, GtkWidget *parent, int editable, GtkWidget *boxer, GtkWidget *paner)
+{
+  /* returns new text widget */
+  GtkWidget *table, *hscrollbar, *vscrollbar, *new_text;
+#if HAVE_GTK2
+  table = gtk_table_new (2, 2, FALSE);
+  if (boxer)
+    gtk_box_pack_start(GTK_BOX(boxer), table, TRUE, TRUE, 4);
+  new_text = gtk_text_view_new();
+  gtk_table_attach(GTK_TABLE(table), new_text, 0, 1, 0, 1, 
+		   (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
+		   (GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
+		   0, 0);
+  gtk_text_view_set_editable(GTK_TEXT_VIEW(new_text), editable);
+  gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(new_text), GTK_WRAP_NONE);
+  gtk_widget_show(new_text);
+  hscrollbar = gtk_hscrollbar_new(GTK_TEXT_VIEW(new_text)->hadjustment);
+  set_background(hscrollbar, (ss->sgx)->position_color);
+  gtk_table_attach(GTK_TABLE(table), hscrollbar, 0, 1, 1, 2, 
+		   (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), 
+		   (GtkAttachOptions)(GTK_FILL), 
+		   0, 0);
+  gtk_widget_show (hscrollbar);
+  vscrollbar = gtk_vscrollbar_new(GTK_TEXT_VIEW(new_text)->vadjustment);
+  set_background(vscrollbar, (ss->sgx)->position_color);
+  gtk_table_attach(GTK_TABLE(table), vscrollbar, 1, 2, 0, 1,
+		   (GtkAttachOptions)(GTK_FILL), 
+		   (GtkAttachOptions)(GTK_EXPAND | GTK_FILL | GTK_SHRINK), 
+		   0, 0);
+  gtk_widget_show (vscrollbar);
+  if (parent)
+    gtk_container_add(GTK_CONTAINER(parent), table);
+  if (paner)
+    gtk_paned_add2(GTK_PANED(paner), table);
+  gtk_widget_show(table);
+#else
+  table = gtk_table_new(2, 2, FALSE);
+  if (boxer)
+    gtk_box_pack_start(GTK_BOX(boxer), table, TRUE, TRUE, 4);
+  new_text = gtk_text_new(NULL, NULL);
+  gtk_table_attach(GTK_TABLE (table), new_text, 0, 1, 0, 1, 
+		   (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
+		   (GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
+		   0, 0);
+  gtk_text_set_editable(GTK_TEXT(new_text), editable);
+  gtk_text_set_word_wrap(GTK_TEXT(new_text), FALSE);
+  gtk_text_set_line_wrap(GTK_TEXT(new_text), FALSE); /* apparently horizontal scrolling is not yet implemented (gtktext.c version 1.2.8) */
+  gtk_widget_show(new_text);
+  hscrollbar = gtk_hscrollbar_new(GTK_TEXT(new_text)->hadj);
+  set_background(hscrollbar, (ss->sgx)->position_color);
+  gtk_table_attach(GTK_TABLE (table), hscrollbar, 0, 1, 1, 2, 
+		   (GtkAttachOptions)(GTK_EXPAND | GTK_FILL),
+		   (GtkAttachOptions)(GTK_FILL), 
+		   0, 0);
+  gtk_widget_show(hscrollbar);
+  vscrollbar = gtk_vscrollbar_new(GTK_TEXT(new_text)->vadj);
+  set_background(vscrollbar, (ss->sgx)->position_color);
+  gtk_table_attach(GTK_TABLE (table), vscrollbar, 1, 2, 0, 1, 
+		   (GtkAttachOptions)(GTK_FILL), 
+		   (GtkAttachOptions)(GTK_EXPAND | GTK_FILL | GTK_SHRINK), 
+		   0, 0);
+  gtk_widget_show(vscrollbar);
+  if (parent)
+    gtk_container_add(GTK_CONTAINER(parent), table);
+  if (paner)
+    gtk_paned_add2(GTK_PANED(paner), table);
+  gtk_widget_show(table);
+#endif
+  return(new_text);
+}
+

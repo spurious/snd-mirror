@@ -695,48 +695,7 @@ static void record_amp_drag_callback(GtkAdjustment *adj, gpointer data)
 }
 
 
-
-
-/* ---------------- MESSAGE PANE ---------------- */
-
-static GtkWidget *make_message_pane(snd_state *ss)
-{
-  GtkWidget *table, *text;
-  GtkWidget *hscrollbar;
-  GtkWidget *vscrollbar;
-  /* basically copied from the tutorial */
-  table = gtk_table_new (2, 2, FALSE);
-  text = gtk_text_new (NULL, NULL);
-  set_text_background(text, (ss->sgx)->light_blue);
-  messages = text;
-  gtk_table_attach (GTK_TABLE (table), text, 0, 1, 0, 1, 
-		    (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
-		    (GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
-		    0, 0);
-  gtk_text_set_editable(GTK_TEXT(text), FALSE);
-  gtk_text_set_word_wrap(GTK_TEXT(text), FALSE);
-  gtk_widget_show (text);
-  hscrollbar = gtk_hscrollbar_new (GTK_TEXT (text)->hadj);
-  set_background(hscrollbar, (ss->sgx)->position_color);
-  gtk_table_attach (GTK_TABLE (table), hscrollbar, 0, 1, 1, 2, 
-		    (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), 
-		    (GtkAttachOptions)(GTK_FILL), 
-		    0, 0);
-  gtk_widget_show (hscrollbar);
-  vscrollbar = gtk_vscrollbar_new (GTK_TEXT (text)->vadj);
-  set_background(vscrollbar, (ss->sgx)->position_color);
-  gtk_table_attach (GTK_TABLE (table), vscrollbar, 1, 2, 0, 1, 
-		    (GtkAttachOptions)(GTK_FILL), 
-		    (GtkAttachOptions)(GTK_EXPAND | GTK_FILL | GTK_SHRINK), 
-		    0, 0);
-  gtk_widget_show (vscrollbar);
-  return(table);
-}
-
-
 /* ---------------- FILE INFO PANE ---------------- */
-
-
 
 static void help_record_callback(GtkWidget *w, gpointer context) 
 {
@@ -1991,7 +1950,7 @@ void snd_record_file(snd_state *ss)
   int n, i, device, input_devices, output_devices, system;
   GdkDrawable *wn;
   state_context *sx;
-  GtkWidget *rec_panes_box, *help_button, *dismiss_button, *messagetab;
+  GtkWidget *rec_panes_box, *help_button, *dismiss_button;
 
   recorder_info *rp;
   rp = get_recorder_info();
@@ -2095,11 +2054,7 @@ void snd_record_file(snd_state *ss)
       gtk_widget_show(file_info_pane);
 
       make_file_info_pane(ss, rp, file_info_pane, rp->ordered_devices_size);
-
-      messagetab = make_message_pane(ss);
-      gtk_paned_add2(GTK_PANED(rec_panes), messagetab);
-      gtk_widget_show(messagetab);
-
+      messages = make_scrolled_text(ss, NULL, FALSE, NULL, rec_panes);
       set_dialog_widget(ss, RECORDER_DIALOG, recorder);
       initialize_recorder(rp);
     }

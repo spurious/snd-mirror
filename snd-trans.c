@@ -127,6 +127,8 @@ static int be_snd_checked_write(int fd, unsigned char *buf, int bytes, char *fil
   while (0)
 
 
+
+
 /* -------------------------------- MIDI sample dump -------------------------------- */
 
 /* F0 7E <ID> 01 ss ss ee ff ff ff gg gg gg hh hh hh ii ii ii jj f7
@@ -1025,6 +1027,7 @@ static int read_oki_adpcm(char *oldname, char *newname, char *hdr)
 
 static int read_12bit(char *oldname, char *newname, char *hdr)
 {
+  /* TODO: if original has loop info, save as temp aifc file to preserve it */
   int loc, chans, samps, totalin, i, j, fs = -1, fd = -1;
   unsigned char *buf = NULL;
   short *buf1;

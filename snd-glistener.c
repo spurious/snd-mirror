@@ -5,7 +5,6 @@
  */
 
 static GtkWidget *listener_text = NULL;
-static GtkWidget *listener_pane = NULL; 
 static int printout_end;
 
 void save_listener_text(FILE *fp)
@@ -429,7 +428,7 @@ GtkWidget *snd_entry_new(snd_state *ss, GtkWidget *container, int with_white_bac
 
 static void make_command_widget(snd_state *ss, int height)
 {
-  GtkWidget *hscrollbar, *vscrollbar, *frame;
+  GtkWidget *frame;
   if (!listener_text)
     {
       frame = gtk_frame_new(NULL);
@@ -438,17 +437,7 @@ static void make_command_widget(snd_state *ss, int height)
       if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
 	gtk_paned_add2(GTK_PANED(SOUND_PANE(ss)), frame);
       else gtk_container_add(GTK_CONTAINER(MAIN_PANE(ss)), frame);
-      listener_pane = gtk_table_new (2, 2, FALSE);
-      gtk_container_add(GTK_CONTAINER(frame), listener_pane);
-
-      listener_text = gtk_text_new(NULL, NULL);
-      gtk_table_attach (GTK_TABLE(listener_pane), listener_text, 0, 1, 0, 1, 
-			(GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
-			(GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK),
-			0, 0);
-      gtk_text_set_editable(GTK_TEXT(listener_text), TRUE);
-      gtk_text_set_word_wrap(GTK_TEXT(listener_text), FALSE);
-      gtk_text_set_line_wrap(GTK_TEXT(listener_text), FALSE);
+      listener_text = make_scrolled_text(ss, frame, TRUE, NULL, NULL);
       gtk_signal_connect(GTK_OBJECT(listener_text), "key_press_event", GTK_SIGNAL_FUNC(listener_key_press), (gpointer)ss);
       gtk_signal_connect_after(GTK_OBJECT(listener_text), "key_press_event", GTK_SIGNAL_FUNC(check_parens), (gpointer)ss);
       gtk_signal_connect(GTK_OBJECT(listener_text), "button_press_event", GTK_SIGNAL_FUNC(listener_button_press), (gpointer)ss);
@@ -456,33 +445,14 @@ static void make_command_widget(snd_state *ss, int height)
       gtk_signal_connect(GTK_OBJECT(listener_text), "enter_notify_event", GTK_SIGNAL_FUNC(listener_focus_callback), NULL);
       gtk_signal_connect(GTK_OBJECT(listener_text), "leave_notify_event", GTK_SIGNAL_FUNC(listener_unfocus_callback), NULL);
       ss->sgx->listener_pane = listener_text;
-
-      gtk_widget_show(listener_text);
       gtk_text_insert(GTK_TEXT(listener_text),
 		      (ss->sgx)->listener_fnt,
 		      (ss->sgx)->listener_text_color,
 		      (ss->sgx)->listener_color,
 		      listener_prompt(ss),
 		      -1);
-
-      hscrollbar = gtk_hscrollbar_new(GTK_TEXT(listener_text)->hadj);
-      set_background(hscrollbar, (ss->sgx)->position_color);
-      gtk_table_attach(GTK_TABLE(listener_pane), hscrollbar, 0, 1, 1, 2, 
-		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), 
-		       (GtkAttachOptions)(GTK_FILL), 
-		       0, 0);
-      gtk_widget_show(hscrollbar);
-      vscrollbar = gtk_vscrollbar_new(GTK_TEXT(listener_text)->vadj);
-      set_background(vscrollbar, (ss->sgx)->position_color);
-      gtk_table_attach(GTK_TABLE(listener_pane), vscrollbar, 1, 2, 0, 1, 
-		       (GtkAttachOptions)(GTK_FILL), 
-		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL | GTK_SHRINK), 
-		       0, 0);
-      gtk_widget_show (vscrollbar);
-
       set_text_background(listener_text, (ss->sgx)->listener_color);
     }
-  gtk_widget_show(listener_pane);
 }
 
 void goto_listener(void) 
@@ -512,13 +482,13 @@ void handle_listener(snd_state *ss, int open)
     {
       if (!listener_text)
 	make_command_widget(ss, 100);
-      else gtk_widget_show(listener_pane);
+      else gtk_widget_show(listener_text);
       set_view_listener_label(STR_Hide_listener);
     }
   else
     {
       set_view_listener_label(STR_Show_listener);
-      gtk_widget_hide(listener_pane);
+      gtk_widget_hide(listener_text);
     }
   ss->listening = open;
 }

@@ -41,7 +41,7 @@ void update_stats(snd_state *ss)
 void update_stats_display(snd_state *ss, int all)
 {
   /* dismiss update help -- update forces recalc of all stats */
-  GtkWidget *help_button, *dismiss_button, *update_button, *table, *hscrollbar, *vscrollbar;
+  GtkWidget *help_button, *dismiss_button, *update_button;
   if (!stats_window)
     {
       stats_window = gtk_dialog_new();
@@ -69,34 +69,7 @@ void update_stats_display(snd_state *ss, int all)
       gtk_widget_show(update_button);
       gtk_widget_show(help_button);
 
-      table = gtk_table_new(2, 2, FALSE);
-      stats_form = gtk_text_new(NULL, NULL);
-      gtk_table_attach (GTK_TABLE(table), stats_form, 0, 1, 0, 1, 
-			(GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
-			(GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
-			0, 0);
-      gtk_text_set_editable(GTK_TEXT(stats_form), FALSE);
-      gtk_text_set_word_wrap(GTK_TEXT(stats_form), FALSE);
-      gtk_widget_show(stats_form);
-
-      hscrollbar = gtk_hscrollbar_new (GTK_TEXT(stats_form)->hadj);
-      set_background(hscrollbar, (ss->sgx)->position_color);
-      gtk_table_attach (GTK_TABLE (table), hscrollbar, 0, 1, 1, 2, 
-			(GtkAttachOptions)(GTK_EXPAND | GTK_FILL), 
-			(GtkAttachOptions)(GTK_FILL), 
-			0, 0);
-      gtk_widget_show (hscrollbar);
-
-      vscrollbar = gtk_vscrollbar_new (GTK_TEXT (stats_form)->vadj);
-      set_background(vscrollbar, (ss->sgx)->position_color);
-      gtk_table_attach (GTK_TABLE (table), vscrollbar, 1, 2, 0, 1, 
-			(GtkAttachOptions)(GTK_FILL), 
-			(GtkAttachOptions)(GTK_EXPAND | GTK_FILL | GTK_SHRINK), 
-			0, 0);
-      gtk_widget_show (vscrollbar);
-
-      gtk_container_add(GTK_CONTAINER(GTK_DIALOG(stats_window)->vbox), table);
-      gtk_widget_show(table);
+      stats_form = make_scrolled_text(ss, GTK_DIALOG(stats_window)->vbox, FALSE, NULL, NULL);
       gtk_widget_show(stats_window);
       set_dialog_widget(ss, STATS_DIALOG, stats_window);
     }

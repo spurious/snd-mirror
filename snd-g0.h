@@ -325,12 +325,18 @@ typedef struct {
   #ifndef gdk_window_get_size
     #define gdk_window_get_size gdk_drawable_get_size
   #endif
-  #define SG_LABEL_TEXT(Widget) gtk_label_get_text(Widget)
+  #define SG_LABEL_TEXT(Widget) (char *)gtk_label_get_text(Widget)
   #define SG_SET_GUTTER_SIZE(Widget, Size)
   #define SG_SET_HANDLE_SIZE(Widget, Size)
   #define SG_SET_DRAWING_AREA_SIZE(Widget, Width, Height)
   #ifndef gdk_draw_pixmap
     #define gdk_draw_pixmap gdk_draw_drawable
+  #endif
+  #ifndef gtk_menu_append
+    #define gtk_menu_append(Menu, Child) gtk_menu_shell_append((GtkMenuShell *)(Menu), (Child))
+  #endif
+  #ifndef gtk_menu_insert
+    #define gtk_menu_insert(Menu, Child, Pos) gtk_menu_shell_insert((GtkMenuShell *)(Menu), (Child), (Pos))
   #endif
 
 #else
