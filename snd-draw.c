@@ -651,26 +651,6 @@ static XEN g_recolor_widget(XEN wid, XEN color)
   return(color);
 }
 
-static XEN g_set_widget_foreground(XEN wid, XEN color)
-{
-  #define H_set_widget_foreground "(set-widget-foreground widget color)"
-  GUI_WIDGET w;
-  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(wid), wid, XEN_ARG_1, "set-widget-foreground", "a wrapped object");  
-  XEN_ASSERT_TYPE(COLOR_P(color), color, XEN_ARG_2, "set-widget-foreground", "a color object"); 
-  w = (GUI_WIDGET)(XEN_UNWRAP_C_POINTER(wid));
-  if (w)
-    {
-#if USE_MOTIF
-      XtVaSetValues(w, XmNforeground, color2pixel(color), NULL);
-#endif
-    }
-  else XEN_ERROR(NO_SUCH_WIDGET,
-		 XEN_LIST_3(C_TO_XEN_STRING("set-widget-foreground"),
-			    wid,
-			    color));
-  return(color);
-}
-
 
 static XEN g_hide_widget(XEN wid)
 {
@@ -797,7 +777,6 @@ XEN_NARGIFY_1(g_show_widget_w, g_show_widget)
 XEN_NARGIFY_1(g_focus_widget_w, g_focus_widget)
 XEN_ARGIFY_5(g_make_graph_data_w, g_make_graph_data)
 XEN_ARGIFY_7(g_graph_data_w, g_graph_data)
-XEN_NARGIFY_2(g_set_widget_foreground_w, g_set_widget_foreground)
 XEN_VARGIFY(g_make_bezier_w, g_make_bezier)
 XEN_NARGIFY_2(g_colormap_ref_w, g_colormap_ref)
 #else
@@ -827,7 +806,6 @@ XEN_NARGIFY_2(g_colormap_ref_w, g_colormap_ref)
 #define g_focus_widget_w g_focus_widget
 #define g_make_graph_data_w g_make_graph_data
 #define g_graph_data_w g_graph_data
-#define g_set_widget_foreground_w g_set_widget_foreground
 #define g_make_bezier_w g_make_bezier
 #define g_colormap_ref_w g_colormap_ref
 #endif
@@ -880,7 +858,6 @@ void g_init_draw(void)
 
   /* ---------------- unstable ---------------- */
 
-  XEN_DEFINE_PROCEDURE("set-widget-foreground", g_set_widget_foreground_w, 2, 0, 0, H_set_widget_foreground);
   XEN_DEFINE_PROCEDURE(S_make_bezier,     g_make_bezier_w, 0, 0, 1,     H_make_bezier);
 
   XEN_DEFINE_PROCEDURE("colormap-ref", g_colormap_ref_w, 2, 0, 0, H_colormap_ref);

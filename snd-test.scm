@@ -4438,7 +4438,6 @@
 	(list 'zoom-color zoom-color set-zoom-color ivory4)))
       (let ((ind (open-sound "oboe.snd")))
 	(recolor-widget (cadr (sound-widgets ind)) (make-color 1 0 0))
-        (set-widget-foreground (cadr (sound-widgets ind)) (make-color 0 1 0))
 	(close-sound ind))
       ))
 
@@ -7523,7 +7522,6 @@
 		     (snd-display ";html-dir: ~A" (html-dir)))
 		 ))
 	   (if (not (= (length (menu-widgets)) 6)) (snd-display ";menu-widgets: ~A?" (menu-widgets)))
-	   (set-widget-foreground (cadr (menu-widgets)) (make-color 1 0 0))
 	   (if (not (equal? (widget-position (car (menu-widgets))) (list 0 0)))
 	       (snd-display ";position main menubar: ~A?" (widget-position (car (menu-widgets)))))
 	   (save-envelopes "hiho.env")

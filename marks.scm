@@ -5,7 +5,7 @@
 ;;;     move-syncd-marks moves all syncd marks together
 ;;;     describe-mark shows mark history
 ;;;     click marks between start-sync and stop-sync to sync them together
-;;;     syncronize sounds at a given mark
+;;;     synchronize sounds at a given mark
 ;;;     fit selection between marks, expanding via granulate (this needs some tweaking...)
 ;;;     pad-marks inserts silence before each in a list of marks
 ;;;     play-syncd-marks and play-between-marks

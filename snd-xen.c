@@ -2865,21 +2865,6 @@ static XEN g_snd_completion(XEN text)
   return(C_TO_XEN_STRING(command_completer(XEN_TO_C_STRING(text))));
 }
 
-#if HAVE_GUILE
-static XEN g_gc_off(void) {++scm_block_gc; return(C_TO_XEN_INT(scm_block_gc));}
-static XEN g_gc_on(void) {--scm_block_gc; return(C_TO_XEN_INT(scm_block_gc));}
-#endif
-
-#if WITH_MCHECK
-#include <mcheck.h>
-static XEN g_mcheck_check_all(void)
-{
-  mcheck_check_all();
-  return(XEN_FALSE);
-}
-#endif
-
-
 #ifdef XEN_ARGIFY_1
 #if HAVE_GUILE && HAVE_DLFCN_H
 XEN_NARGIFY_1(g_dlopen_w, g_dlopen)
@@ -3088,10 +3073,6 @@ XEN_NARGIFY_1(g_snd_print_w, g_snd_print)
 XEN_NARGIFY_0(g_mus_audio_describe_w, g_mus_audio_describe)
 XEN_NARGIFY_0(g_little_endian_w, g_little_endian)
 XEN_NARGIFY_1(g_snd_completion_w, g_snd_completion)
-#if HAVE_GUILE
-XEN_NARGIFY_0(g_gc_off_w, g_gc_off)
-XEN_NARGIFY_0(g_gc_on_w, g_gc_on)
-#endif
 #else
 #if HAVE_GUILE && HAVE_DLFCN_H
 #define g_dlopen_w g_dlopen
@@ -3300,10 +3281,6 @@ XEN_NARGIFY_0(g_gc_on_w, g_gc_on)
 #define g_mus_audio_describe_w g_mus_audio_describe
 #define g_little_endian_w g_little_endian
 #define g_snd_completion_w g_snd_completion
-#if HAVE_GUILE
-#define g_gc_off_w g_gc_off
-#define g_gc_on_w g_gc_on
-#endif
 #endif
 
 #if HAVE_STATIC_XM
@@ -3324,12 +3301,7 @@ void g_initialize_gh(snd_state *ss)
 {
   state = ss;
 
-  XEN_DEFINE_PROCEDURE("show-stack", show_stack, 0 ,0, 0, "show stack trace");
   XEN_DEFINE_PROCEDURE("snd-global-state", g_global_state, 0, 0, 0, "internal testing function");
-
-#if WITH_MCHECK
-  XEN_NEW_PROCEDURE("mcheck-all", g_mcheck_check_all, 0, 0, 0);
-#endif
 
 #if TIMING
   g_init_timing();
@@ -3367,9 +3339,9 @@ void g_initialize_gh(snd_state *ss)
   XEN_DEFINE_CONSTANT(S_cursor_no_action,      CURSOR_NO_ACTION,      H_cursor_no_action);
   XEN_DEFINE_CONSTANT(S_keyboard_no_action,    KEYBOARD_NO_ACTION,    H_keyboard_no_action);
 
-  XEN_DEFINE_CONSTANT(S_time_graph,           TIME_AXIS_INFO,      "time domain graph");
-  XEN_DEFINE_CONSTANT(S_transform_graph,      TRANSFORM_AXIS_INFO, "frequency domain graph");
-  XEN_DEFINE_CONSTANT(S_lisp_graph,           LISP_AXIS_INFO,      "lisp graph");
+  XEN_DEFINE_CONSTANT(S_time_graph,            TIME_AXIS_INFO,        "time domain graph");
+  XEN_DEFINE_CONSTANT(S_transform_graph,       TRANSFORM_AXIS_INFO,   "frequency domain graph");
+  XEN_DEFINE_CONSTANT(S_lisp_graph,            LISP_AXIS_INFO,        "lisp graph");
 
 
   /* ---------------- VARIABLES ---------------- */
@@ -3660,10 +3632,6 @@ void g_initialize_gh(snd_state *ss)
   XEN_DEFINE_PROCEDURE(S_mus_audio_describe,  g_mus_audio_describe_w, 0, 0, 0,  H_mus_audio_describe);
   XEN_DEFINE_PROCEDURE("little-endian?",      g_little_endian_w, 0, 0, 0,       "return #t if host is little endian");
   XEN_DEFINE_PROCEDURE("snd-completion",      g_snd_completion_w, 1, 0, 0,      "return completion of arg");
-#if HAVE_GUILE
-  XEN_DEFINE_PROCEDURE("gc-off",              g_gc_off_w, 0, 0, 0,              "turn off GC");
-  XEN_DEFINE_PROCEDURE("gc-on",               g_gc_on_w, 0, 0, 0,               "turn on GC");
-#endif
 
   #define H_during_open_hook S_during_open_hook " (fd name reason) is called after file is opened, but before data has been read. \n\
 (add-hook! during-open-hook \n\

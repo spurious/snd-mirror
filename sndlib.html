@@ -65,6 +65,7 @@ types, and most of the features of the audio hardware. </p>
 <li>clm.c and clm.h (Music V implementation)
 <li>clm2xen.c, vct.c and vct.h (tie clm.c into Guile or Ruby)
 <li>xen.h, xen.c, xen.html (the embedded language support)
+<li>midi.c (primitive MIDI support)
 <li>old-sndlib.h (old names)
 </ul>
 <p>In version 6 and then to a greater extent in version 10, I changed the exported names to
@@ -989,7 +990,7 @@ ld -shared io.o headers.o audio.o sound.o clm.o -o sndlib.so
   <tr><td>Sun</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>interruptions</td><td align=middle>ok</td><td>not written</td></tr>
   <tr><td>HPUX</td><td align=middle>untested</td><td align=middle>untested</td><td align=middle>untested</td><td align=middle>untested</td><td align=middle>untested</td><td align=middle>untried</td><td>not written</td></tr>
   <tr><td>LinuxPPC</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>untested (**)</td><td align=middle>ok</td><td>untested</td></tr>
-  <tr><td>ALSA</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td>untested</td></tr>
+  <tr><td>ALSA</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td>partly tested</td></tr>
   <tr><td>Mac OS-X</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>not written</td><td align=middle>ok</td><td>not written</td></tr>
 </table>
 
