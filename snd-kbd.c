@@ -51,7 +51,7 @@ static void stop_defining_macro (void)
 static void execute_last_macro (chan_info *cp, int count)
 {
   int i, j;
-  if (macro_cmds)
+  if ((macro_cmds) && (macro_size > 0))
     for (j = 0; j < count; j++)
       for (i = 0; i < macro_size; i++) 
 	keyboard_command(cp, 
@@ -155,7 +155,11 @@ static int execute_named_macro_1(chan_info *cp, char *name, off_t count)
 	      {
 		mc = nm->cmds[i];
 		if (mc->keysym != 0)
-		  keyboard_command(cp, mc->keysym, mc->state);
+		  {
+		    if ((!(cp->active)) || (!(cp->sound))) return(1);
+		    /* it's possible for a command in the macro sequence to close cp */
+		    keyboard_command(cp, mc->keysym, mc->state);
+		  }
 	      }
 	  return(1);
 	}
@@ -480,8 +484,7 @@ void report_in_minibuffer(snd_info *sp, const char *format, ...)
 {
   char *buf;
   va_list ap;
-  if (!(sp->active)) return;
-  if (!(sp->sgx)) return;
+  if ((!sp) || (!(sp->active)) || (!(sp->sgx))) return;
   va_start(ap, format);
   buf = vstr(format, ap);
   va_end(ap);
@@ -889,8 +892,12 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	      FREE(str1);
 	      break;
 	    case MACRO_FILING: 
-	      name_last_macro(str); 
-	      clear_minibuffer(sp); 
+	      if ((macro_cmds) && (macro_size > 0))
+		{
+		  name_last_macro(str); 
+		  clear_minibuffer(sp); 
+		}
+	      else report_in_minibuffer(sp, _("no previous macro"));
 	      break;
 	    default:
 	      break;
@@ -1055,6 +1062,7 @@ static off_t get_count_1(char *number_buffer, int number_ctr, bool dot_seen, cha
     { /* handle special cases of just - or + */
       if (number_buffer[0] == '-') return(-1);
       if (number_buffer[0] == '+') return(1);
+      if (number_buffer[0] == '.') return(0);  /* -. and +. -> 0 from sscanf */
     }
   if (dot_seen)
     {
@@ -1154,8 +1162,8 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
   axis_info *ap;
   sync_info *si;
   mark *mk = NULL;
-  /* fprintf(stderr, "kbd: %x %d, %d %d ", keysym, keysym, state, extended_mode);  */
-  if (!cp) return;
+  /* fprintf(stderr, "(%s %d) ", KEY_TO_NAME(keysym), unmasked_state); */
+  if ((!cp) || (!(cp->sound)) || (!(cp->active))) return;
   sp = cp->sound;
   ap = cp->axis;
   if (keysym >= snd_K_Shift_L) return;
@@ -1617,7 +1625,6 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		toggle_dac_pausing(); 
 	      else deactivate_selection();
 	      break;
-
 	    case snd_keypad_Up:
 	      set_spectro_z_scale(spectro_z_scale(ss) + .01);
 	      reflect_spectro();
@@ -1725,143 +1732,159 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	{
 	  /* -------------------------------- C-x key -------------------------------- */
 	  extended_mode = false;
-	  switch (keysym)
+	  if (!(state & snd_MetaMask))
 	    {
-	    case snd_K_A: case snd_K_a: 
-	      if (selection_is_active_in_channel(cp)) 
+	      switch (keysym)
 		{
-		  get_amp_expression(sp, (!got_ext_count) ? 1 : ext_count, true); 
+		case snd_K_A: case snd_K_a: 
+		  if (selection_is_active_in_channel(cp)) 
+		    {
+		      get_amp_expression(sp, (!got_ext_count) ? 1 : ext_count, true); 
+		      searching = true; 
+		    } 
+		  else no_selection_error(sp); 
+		  break;
+		case snd_K_B: case snd_K_b: 
+		  cp->cursor_on = true; 
+		  handle_cursor(cp, CURSOR_ON_LEFT);
+		  break;
+		case snd_K_C: case snd_K_c: 
+		  mark_define_region(cp, (!got_ext_count) ? 1 : ext_count); 
+		  break;
+		case snd_K_D: case snd_K_d: 
+		  prompt(sp, _("temp dir:"), NULL); 
+		  sp->filing = TEMP_FILING; 
 		  searching = true; 
-		} 
-	      else no_selection_error(sp); 
-	      break;
-	    case snd_K_B: case snd_K_b: 
-	      cp->cursor_on = true; 
-	      handle_cursor(cp, CURSOR_ON_LEFT);
-	      break;
-	    case snd_K_C: case snd_K_c: 
-	      mark_define_region(cp, (!got_ext_count) ? 1 : ext_count); 
-	      break;
-	    case snd_K_D: case snd_K_d: 
-	      prompt(sp, _("temp dir:"), NULL); 
-	      sp->filing = TEMP_FILING; 
-	      searching = true; 
-	      break;
-	    case snd_K_E: case snd_K_e: 
-	      execute_last_macro(cp, (!got_ext_count) ? 1 : ext_count);
-	      handle_cursor(cp, cursor_decision(cp));
-	      break;
-	    case snd_K_F: case snd_K_f: 
-	      cp->cursor_on = true; 
-	      handle_cursor(cp, CURSOR_ON_RIGHT); 
-	      break;
-	    case snd_K_I: case snd_K_i: 
-	      insert_selection_or_region((!got_ext_count) ? 0 : ext_count, cp, "C-x i");
-	      break;
-	    case snd_K_J: case snd_K_j: 
-	      prompt(sp, _("mark:"), NULL); 
-	      sp->finding_mark = true; 
-	      searching = true; 
-	      break;
-	    case snd_K_K: case snd_K_k: 
-	      snd_close_file(sp); 
-	      break;
-	    case snd_K_L: case snd_K_l: 
-	      cp->cursor_on = true;
-	      if (selection_is_active_in_channel(cp))
-		cursor_moveto(cp, (off_t)(selection_beg(cp) + 0.5 * selection_len()));
-	      else no_selection_error(sp); 
-	      handle_cursor(cp, CURSOR_IN_MIDDLE);
-	      break;
-	    case snd_K_O: case snd_K_o: 
-	      if (ext_count > 0) 
-		goto_next_graph(cp, ext_count); 
-	      else goto_previous_graph(cp, ext_count); 
-	      break;
-	    case snd_K_P: case snd_K_p: 
-	      if (!got_ext_count)
-		play_selection(IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "C-x p", 0);
-	      else play_region(ext_count, IN_BACKGROUND);
-	      break;
-	    case snd_K_Q: case snd_K_q: 
-	      add_selection_or_region((!got_ext_count) ? 0 : ext_count, cp, "C-x q"); 
-	      break;
-	    case snd_K_R: case snd_K_r: 
-	      redo_edit_with_sync(cp, (!got_ext_count) ? 1 : ext_count); 
-	      break;
-	    case snd_K_U: case snd_K_u: 
-	      undo_edit_with_sync(cp, (!got_ext_count) ? 1 : ext_count); 
-	      break;
-	    case snd_K_V: case snd_K_v: 
-	      if (selection_is_active_in_channel(cp))
-		window_frames_selection(cp); 
-	      else no_selection_error(sp); 
-	      break;
-	    case snd_K_W: case snd_K_w:
-	      region_count = ((!got_ext_count) ? 0 : ext_count);
-	      prompt(sp, _("file:"), NULL); 
-	      sp->filing = REGION_FILING; 
-	      searching = true;
-	      break;
-	    case snd_K_Z: case snd_K_z: 
-	      if (selection_is_active_in_channel(cp))
-		cos_smooth(cp, CURSOR(cp), (!got_ext_count) ? 1 : ext_count, true, "C-x z"); 
-	      else no_selection_error(sp); 
-	      break;
-	    case snd_K_Right:   
-	      sx_incremented(cp, state_amount(state));
-	      break;
-	    case snd_K_Left:
-	      sx_incremented(cp, -state_amount(state));
-	      break;
-	    case snd_K_Up:
-	      zx_incremented(cp, 1.0 + state_amount(state));
-              break;
-	    case snd_K_Down:
-	      zx_incremented(cp, 1.0 / (1.0 + state_amount(state)));
-	      break;
-	    case snd_K_less:
-	      cp->cursor_on = true; 
-	      cursor_moveto(cp, 0); 
-	      break;
-	    case snd_K_greater: 
-	      cp->cursor_on = true; 
-	      cursor_moveto_end(cp);
-	      break;
-	    case snd_K_openparen:
-	      if (defining_macro) 
-		report_in_minibuffer(sp, _("macro definition already in progress"));
-	      else
-		{
-		  start_defining_macro(); 
-		  report_in_minibuffer(sp, _("defining macro...")); 
+		  break;
+		case snd_K_E: case snd_K_e: 
+		  if (defining_macro) 
+		    {
+		      report_in_minibuffer(sp, _("can't call macro while it's being defined"));
+		      defining_macro = false;
+		      macro_size = 0; /* so subsequent M-x e doesn't get something silly */
+		    }
+		  else
+		    {
+		      execute_last_macro(cp, (!got_ext_count) ? 1 : ext_count);
+		      if ((cp) && (cp->sound) && (cp->active)) handle_cursor(cp, cursor_decision(cp)); else return;
+		    }
+		  break;
+		case snd_K_F: case snd_K_f: 
+		  cp->cursor_on = true; 
+		  handle_cursor(cp, CURSOR_ON_RIGHT); 
+		  break;
+		case snd_K_I: case snd_K_i: 
+		  insert_selection_or_region((!got_ext_count) ? 0 : ext_count, cp, "C-x i");
+		  break;
+		case snd_K_J: case snd_K_j: 
+		  prompt(sp, _("mark:"), NULL); 
+		  sp->finding_mark = true; 
+		  searching = true; 
+		  break;
+		case snd_K_K: case snd_K_k: 
+		  snd_close_file(sp); 
+		  break;
+		case snd_K_L: case snd_K_l: 
+		  cp->cursor_on = true;
+		  if (selection_is_active_in_channel(cp))
+		    cursor_moveto(cp, (off_t)(selection_beg(cp) + 0.5 * selection_len()));
+		  else no_selection_error(sp); 
+		  handle_cursor(cp, CURSOR_IN_MIDDLE);
+		  break;
+		case snd_K_O: case snd_K_o: 
+		  if (ext_count > 0) 
+		    goto_next_graph(cp, ext_count); 
+		  else goto_previous_graph(cp, ext_count); 
+		  break;
+		case snd_K_P: case snd_K_p: 
+		  if (!got_ext_count)
+		    play_selection(IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "C-x p", 0);
+		  else play_region(ext_count, IN_BACKGROUND);
+		  break;
+		case snd_K_Q: case snd_K_q: 
+		  add_selection_or_region((!got_ext_count) ? 0 : ext_count, cp, "C-x q"); 
+		  break;
+		case snd_K_R: case snd_K_r: 
+		  redo_edit_with_sync(cp, (!got_ext_count) ? 1 : ext_count); 
+		  break;
+		case snd_K_U: case snd_K_u: 
+		  undo_edit_with_sync(cp, (!got_ext_count) ? 1 : ext_count); 
+		  break;
+		case snd_K_V: case snd_K_v: 
+		  if (selection_is_active_in_channel(cp))
+		    window_frames_selection(cp); 
+		  else no_selection_error(sp); 
+		  break;
+		case snd_K_W: case snd_K_w:
+		  region_count = ((!got_ext_count) ? 0 : ext_count);
+		  prompt(sp, _("file:"), NULL); 
+		  sp->filing = REGION_FILING; 
+		  searching = true;
+		  break;
+		case snd_K_Z: case snd_K_z: 
+		  if (selection_is_active_in_channel(cp))
+		    cos_smooth(cp, CURSOR(cp), (!got_ext_count) ? 1 : ext_count, true, "C-x z"); 
+		  else no_selection_error(sp); 
+		  break;
+		case snd_K_Right:   
+		  sx_incremented(cp, state_amount(state));
+		  break;
+		case snd_K_Left:
+		  sx_incremented(cp, -state_amount(state));
+		  break;
+		case snd_K_Up:
+		  zx_incremented(cp, 1.0 + state_amount(state));
+		  break;
+		case snd_K_Down:
+		  zx_incremented(cp, 1.0 / (1.0 + state_amount(state)));
+		  break;
+		case snd_K_less:
+		  cp->cursor_on = true; 
+		  cursor_moveto(cp, 0); 
+		  break;
+		case snd_K_greater: 
+		  cp->cursor_on = true; 
+		  cursor_moveto_end(cp);
+		  break;
+		case snd_K_openparen:
+		  if (defining_macro) 
+		    report_in_minibuffer(sp, _("macro definition already in progress"));
+		  else
+		    {
+		      start_defining_macro(); 
+		      report_in_minibuffer(sp, _("defining macro...")); 
+		    }
+		  clear_search = false; 
+		  break;
+		case snd_K_closeparen: 
+		  if (defining_macro)
+		    {
+		      stop_defining_macro(); 
+		      clear_minibuffer(sp); 
+		    }
+		  clear_search = false;
+		  break;
+		case snd_K_slash: 
+		  cp->cursor_on = true;
+		  prompt_named_mark(cp); 
+		  set_show_marks(true); 
+		  searching = true; 
+		  break;
+		default:
+		  report_in_minibuffer(sp, _("C-x %s undefined"), key_to_name(keysym));
+		  break;
 		}
-	      clear_search = false; 
-	      break;
-	    case snd_K_closeparen: 
-	      if (defining_macro)
-		{
-		  stop_defining_macro(); 
-		  clear_minibuffer(sp); 
-		}
-	      clear_search = false;
-	      break;
-	    case snd_K_slash: 
-	      cp->cursor_on = true;
-	      prompt_named_mark(cp); 
-	      set_show_marks(true); 
-	      searching = true; 
-	      break;
-	    default:
-	      report_in_minibuffer(sp, _("C-x %s undefined"), key_to_name(keysym));
-	      break;
+	    }
+	  else
+	    {
+	      report_in_minibuffer(sp, _("C-x M-%s undefined"), key_to_name(keysym));
 	    }
 	}
     }
   if (!extended_mode) {got_ext_count = false; ext_count = 1;}
-  if (clear_search)
+  if ((sp) && (clear_search))
     {
-      if ((sp->minibuffer_on == MINI_FIND) && (!searching)) 
+      if ((sp->minibuffer_on == MINI_FIND) && (!searching))
 	clear_minibuffer(sp);
       else 
 	if (!cursor_searching) 

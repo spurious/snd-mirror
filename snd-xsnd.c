@@ -3055,7 +3055,7 @@ void progress_report(snd_info *sp, const char *funcname, int curchan, int chans,
 #if HAVE_XPM
   char glass_num[8];
   char expr_str[8];
-  if (sp->inuse != SOUND_NORMAL) return;
+  if ((!sp) || (sp->inuse != SOUND_NORMAL)) return;
   which = (int)(pct * NUM_GLASSES);
   mus_snprintf(expr_str, 8, "%.2f", pct);
   if (which >= NUM_GLASSES) which = NUM_GLASSES - 1;

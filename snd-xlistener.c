@@ -1254,7 +1254,8 @@ static XEN g_reset_listener_cursor(void)
 
 void clear_listener(void)
 {
-  if (listener_text) /* this can be called even when there is no listener */
+  if ((listener_text) && /* this can be called even when there is no listener */
+      (XmTextGetCursorPosition(listener_text) > 1))
     {
       dont_check_motion = true;
       XmTextSetSelection(listener_text, 1, XmTextGetCursorPosition(listener_text), CurrentTime);

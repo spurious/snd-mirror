@@ -31,7 +31,8 @@ snd_info *snd_new_file(char *newname, int header_type, int data_format, int srat
 	    }
 	}
       else 
-	snd_error(_("can't write %s file with %s data format"),
+	snd_error(_("%s: can't write %s header with %s data format"),
+		  newname,
 		  mus_header_type_name(header_type),
 		  mus_data_format_name(data_format));
     }
@@ -252,7 +253,7 @@ static bool tick_amp_env(chan_info *cp, env_state *es)
 	}
       sfd = es->sf;
       if (sfd == NULL) return(false);
-      for (n = 0; n < lm; n++, sb++)
+      for (n = 0; (n < lm) && (sb < ep->amp_env_size); n++, sb++)
 	{
 	  val = read_sample(sfd);
 	  ymin = val;

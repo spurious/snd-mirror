@@ -2095,7 +2095,7 @@ int control_panel_height(snd_info *sp)
 void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, enved_progress_t from_enved)
 {
   int which;
-  if (sp->inuse != SOUND_NORMAL) return;
+  if ((!sp) || (sp->inuse != SOUND_NORMAL)) return;
   which = (int)(pct * NUM_GLASSES);
   if (which >= NUM_GLASSES) which = NUM_GLASSES - 1;
   if (which < 0) which = 0;
