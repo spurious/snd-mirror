@@ -31,7 +31,6 @@
 ;;; test 28: errors
 
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
-;;; TODO: test for continuation?
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen) (ice-9 syncase) (ice-9 session))
 
@@ -297,11 +296,6 @@
 		(begin
 		  (set! tests (string->number (list-ref args (+ arg 2))))
 		  (set! (script-arg) (+ arg 2))))))))
-
-(define skip-24 (let ((host (getenv "HOSTNAME")))
-		  (and (not (= snd-test 24))
-		       (string? host)
-		       (string=? host "cat"))))
 
 (if (and (provided? 'snd-motif)
 	 (provided? 'xm))
@@ -2256,7 +2250,10 @@
 			  (list 1 0 0)
 			  (list 1 22050 -10)))
 	  
-	  (let ((ind (open-sound "oboe.snd")))
+	  (let ((ind (open-sound "/usr/include/sys//home/bil/cl/oboe.snd")))
+	    (if (or (not (sound? ind))
+		    (not (string=? (short-file-name ind) "oboe.snd")))
+		(snd-display ";open-sound with slashes: ~A ~A" ind (and (sound? ind) (short-file-name ind))))
 	    (add-hook! bad-header-hook (lambda (n) #t))
 	    (for-each (lambda (n)
 			(begin
@@ -2289,7 +2286,7 @@
 			    "/home/bil/sf1/bad_length.nist"))
 	    (close-sound ind))
 	  
-	  (let* ((ob (open-sound "oboe.snd"))
+	  (let* ((ob (open-sound "~/baddy//home/bil/cl/oboe.snd"))
 		 (sd (samples->sound-data))
 		 (mx (sound-data-maxamp sd)))
 	    (if (not (= (sound-data-length sd) 50828)) (snd-display ";oboe->sd: len ~A?" (sound-data-length sd)))
@@ -2603,7 +2600,7 @@
 		    (list mus-ubshort mus-next))))
 	   (list 1 2 4 8))
 	  
-	  (let ((ind (open-sound "oboe.snd")))
+	  (let ((ind (open-sound "/usr//usr/include//home/bil/cl/oboe.snd")))
 	    (show-input-1)
 	    (close-sound ind))
 	  
@@ -8323,6 +8320,11 @@ EDITS: 5
 		 (mn (car peaks)))
 	    (call-with-current-continuation
 	     (lambda (break)
+	       (if (not (continuation? break)) (snd-display ";not a continuation: ~A" break))
+	       (if (continuation? abs) (snd-display ";abs is a continuation?"))
+	       (if (continuation? open-sound) (snd-display ";open-sound is a continuation?"))
+	       (if (continuation? 32) (snd-display ";32 is a continuation?"))
+	       (if (continuation? (let ((hi 1)) (lambda () hi))) (snd-display ";closure is a continuation?"))
 	       (do ((i 0 (1+ i)))
 		   ((= i (- (vct-length mn) 4)))
 		 (if (< (vct-ref mn i) 0.5) (begin (snd-display ";peak min: ~A ~A" (vct-ref mn i) i) (break #f)))
@@ -16569,7 +16571,8 @@ EDITS: 5
 		       (not (member (XtName menu)
 				    (list "Exit" "New" 
 					  "Save   C-x C-s" 
-					  "Close  C-x k" 
+					  "Close  C-x k"
+					  "Save options"
 					  "Mix Panel" "clm" "fm-violin"))))
 		  (XtCallCallbacks menu XmNactivateCallback (snd-global-state)))))))))
   (dismiss-all-dialogs))
@@ -18372,7 +18375,6 @@ EDITS: 5
 		(begin
 		  (set! (transform-graph? #t #t) #f)
 		  (set! (transform-size) (min (transform-size) 128))))
-	    
 	    )))
       (if open-files (for-each close-sound open-files))
       (set! open-files '())
@@ -29546,7 +29548,7 @@ EDITS: 2
 (if (not (defined? 'move-scale))
     (define (move-scale a b) #f))
 
-(if (and (not skip-24) (or full-test (= snd-test 24) (and keep-going (<= snd-test 24))))
+(if (or full-test (= snd-test 24) (and keep-going (<= snd-test 24)))
     (begin
       (run-hook before-test-hook 24)
       (add-hook! snd-error-hook (lambda (msg) (snd-display ";err: ~A" msg) #t))
@@ -30790,6 +30792,7 @@ EDITS: 2
 				(eds1 (edit-position ind1 0))
 				(len0 (frames ind0 0))
 				(len1 (frames ind1 0)))
+			    (dismiss-all-dialogs)
 			    (set! x (x->position (/ (mark-sample mm0) (srate))))
 			    (drag-event cwid 1 4 x y (- x 200) y) (force-event)
 			    (if (not (= (edit-position ind0 0) (1+ eds0)))
@@ -30905,7 +30908,7 @@ EDITS: 2
 		    (find-child ctrls name))
 		  (list "speed-scroll" "expand-scroll" "contrast-scroll" "revscl-scroll" "revlen-scroll")))
 		(click-button (find-child ctrls "fltdB") #t)
-		(let ((flttxt (find-child ctrls "filter-window")))
+		(let ((flttxt (find-child ctrls "filter-text")))
 		  (take-keyboard-focus flttxt)
 		  (widget-string flttxt "'(0 0 1 1 2 0)")
 		  (key-event flttxt snd-return-key 0) (force-event))
@@ -30967,74 +30970,79 @@ EDITS: 2
 		  (snd-display ";C-x C-q wrote wrong number of samples: ~A" (frames ind 1)))
 	      (key-event cwid (char->integer #\x) 4) (force-event)
 	      (key-event cwid (char->integer #\w) 4) (force-event)
+	      (take-keyboard-focus minibuffer)
 	      (widget-string minibuffer "fmv.snd")
 	      (key-event minibuffer snd-return-key 0) (force-event)
-	      (if (not (= (mus-sound-frames "fmv.snd") 50828))
-		  (snd-display ";C-x C-w wrote wrong number of samples: ~A" (mus-sound-frames "fmv.snd")))
-	      (delete-file "fmv.snd")
+	      (if (file-exists? "fmv.snd")
+		  (begin
+		    (if (not (= (mus-sound-frames "fmv.snd") 50828))
+			(snd-display ";C-x C-w wrote wrong number of samples: ~A" (mus-sound-frames "fmv.snd")))
+		    (delete-file "fmv.snd")))
 	      (select-all)
 	      (key-event cwid (char->integer #\x) 4) (force-event)
 	      (key-event cwid (char->integer #\w) 0) (force-event)
 	      (widget-string minibuffer "fmv1.snd")
 	      (key-event minibuffer snd-return-key 0) (force-event)
-	      (if (not (= (mus-sound-frames "fmv1.snd") 50828))
-		  (snd-display ";C-x w wrote wrong number of samples: ~A" (mus-sound-frames "fmv1.snd")))
-	      (let* ((ind2 (open-sound "fmv1.snd"))
-		     (cwid2 (car (channel-widgets ind2 0))))
-		(select-sound ind2)
-		(delete-samples 0 1000)
-		(key-event cwid2 (char->integer #\x) 4) (force-event)
-		(key-event cwid2 (char->integer #\s) 4) (force-event)
-		(if (not (equal? (edits ind2) (list 0 0))) (snd-display ";C-s edits: ~A" (edits ind2)))
-		(if (not (= (mus-sound-frames "fmv1.snd") (- 50828 1000)))
-		    (snd-display ";C-x C-s wrote wrong number of samples: ~A" (mus-sound-frames "fmv1.snd")))
-		(key-event cwid2 (char->integer #\x) 4) (force-event)
-		(key-event cwid2 (char->integer #\z) 0) (force-event)
-		(let ((str (widget-text (list-ref (sound-widgets ind2) 3))))
-		  (if (not (string=? str "no active selection"))
-		      (snd-display ";C-x z report-in-minibuffer: ~A?" str)))
-		(XtCallCallbacks (menu-option "Save options") XmNactivateCallback (snd-global-state))
-		(if (file-exists? (string-append home-dir "/dot-snd"))
-		    (system (string-append "cp " home-dir "/dot-snd " home-dir "/.snd")))
-		(XtCallCallbacks (menu-option "Select all") XmNactivateCallback (snd-global-state))
-		(if (not (selection?))
-		    (snd-display ";Select all menu option failed?"))
-		(XtCallCallbacks (menu-option "Delete Selection") XmNactivateCallback (snd-global-state))
-		(if (not (= (frames) 0))
-		    (snd-display ";Delete Selection menu option failed? ~A" (frames)))
-		(XtCallCallbacks (menu-option "Revert") XmNactivateCallback (snd-global-state))
-		(if (= (frames) 0)
-		    (snd-display ";Revert menu option failed? ~A" (frames)))
-		(for-each 
-		 (lambda (name style)
-		   (XtCallCallbacks (menu-option name) XmNactivateCallback (snd-global-state))
-		   (if (not (= (graph-style) style)) (snd-display ";graph-style ~A: ~A" name (graph-style))))
-		 (list "dots" "filled" "dots and lines" "lollipops" "lines")
-		 (list graph-dots graph-filled graph-dots-and-lines graph-lollipops graph-lines))
-		(for-each 
-		 (lambda (name style)
-		   (XtCallCallbacks (menu-option name) XmNactivateCallback (snd-global-state))
-		   (if (not (= (x-axis-style) style)) (snd-display ";x-axis style ~A: ~A" name (x-axis-style))))
-		 (list "samples" "percentage" "beats" "seconds")
-		 (list x-axis-in-samples x-axis-as-percentage x-axis-in-beats x-axis-in-seconds))
-		(for-each
-		 (lambda (name style)
-		   (XtCallCallbacks (menu-option name) XmNactivateCallback (snd-global-state))
-		   (if (not (= (speed-control-style) style)) (snd-display ";speed-control style ~A: ~A" name (speed-control-style))))
-		 (list "semitones" "ratio" "float")
-		 (list speed-control-as-semitone speed-control-as-ratio speed-control-as-float))
-		(set! (cursor) 50)
-		(for-each
-		 (lambda (name style)
-		   (XtCallCallbacks (menu-option name) XmNactivateCallback (snd-global-state))
-		   (if (not (= (zoom-focus-style) style)) (snd-display ";zoom-focus style ~A: ~A" name (zoom-focus-style))))
-		 (list "window left edge" "window right edge" "window midpoint" "cursor or selection")
-		 (list zoom-focus-left zoom-focus-right zoom-focus-middle zoom-focus-active))
-		(XtCallCallbacks (menu-option "Close  C-x k") XmNactivateCallback (snd-global-state))
-		(if (find-sound "fmv1.snd") 
-		    (begin
-		      (snd-display ";activate menu ~A -> ~A" (menu-option "Close  C-x k") (find-sound "fmv1.snd"))
-		      (close-sound ind2))))
+	      (if (file-exists? "fmv1.snd")
+		  (begin
+		    (if (not (= (mus-sound-frames "fmv1.snd") 50828))
+			(snd-display ";C-x w wrote wrong number of samples: ~A" (mus-sound-frames "fmv1.snd")))
+		    (let* ((ind2 (open-sound "fmv1.snd"))
+			   (cwid2 (car (channel-widgets ind2 0))))
+		      (select-sound ind2)
+		      (delete-samples 0 1000)
+		      (key-event cwid2 (char->integer #\x) 4) (force-event)
+		      (key-event cwid2 (char->integer #\s) 4) (force-event)
+		      (if (not (equal? (edits ind2) (list 0 0))) (snd-display ";C-s edits: ~A" (edits ind2)))
+		      (if (not (= (mus-sound-frames "fmv1.snd") (- 50828 1000)))
+			  (snd-display ";C-x C-s wrote wrong number of samples: ~A" (mus-sound-frames "fmv1.snd")))
+		      (key-event cwid2 (char->integer #\x) 4) (force-event)
+		      (key-event cwid2 (char->integer #\z) 0) (force-event)
+		      (let ((str (widget-text (list-ref (sound-widgets ind2) 3))))
+			(if (not (string=? str "no active selection"))
+			    (snd-display ";C-x z report-in-minibuffer: ~A?" str)))
+		      (XtCallCallbacks (menu-option "Save options") XmNactivateCallback (snd-global-state))
+		      (if (file-exists? (string-append home-dir "/dot-snd"))
+			  (system (string-append "cp " home-dir "/dot-snd " home-dir "/.snd")))
+		      (XtCallCallbacks (menu-option "Select all") XmNactivateCallback (snd-global-state))
+		      (if (not (selection?))
+			  (snd-display ";Select all menu option failed?"))
+		      (XtCallCallbacks (menu-option "Delete Selection") XmNactivateCallback (snd-global-state))
+		      (if (not (= (frames) 0))
+			  (snd-display ";Delete Selection menu option failed? ~A" (frames)))
+		      (XtCallCallbacks (menu-option "Revert") XmNactivateCallback (snd-global-state))
+		      (if (= (frames) 0)
+			  (snd-display ";Revert menu option failed? ~A" (frames)))
+		      (for-each 
+		       (lambda (name style)
+			 (XtCallCallbacks (menu-option name) XmNactivateCallback (snd-global-state))
+			 (if (not (= (graph-style) style)) (snd-display ";graph-style ~A: ~A" name (graph-style))))
+		       (list "dots" "filled" "dots and lines" "lollipops" "lines")
+		       (list graph-dots graph-filled graph-dots-and-lines graph-lollipops graph-lines))
+		      (for-each 
+		       (lambda (name style)
+			 (XtCallCallbacks (menu-option name) XmNactivateCallback (snd-global-state))
+			 (if (not (= (x-axis-style) style)) (snd-display ";x-axis style ~A: ~A" name (x-axis-style))))
+		       (list "samples" "percentage" "beats" "seconds")
+		       (list x-axis-in-samples x-axis-as-percentage x-axis-in-beats x-axis-in-seconds))
+		      (for-each
+		       (lambda (name style)
+			 (XtCallCallbacks (menu-option name) XmNactivateCallback (snd-global-state))
+			 (if (not (= (speed-control-style) style)) (snd-display ";speed-control style ~A: ~A" name (speed-control-style))))
+		       (list "semitones" "ratio" "float")
+		       (list speed-control-as-semitone speed-control-as-ratio speed-control-as-float))
+		      (set! (cursor) 50)
+		      (for-each
+		       (lambda (name style)
+			 (XtCallCallbacks (menu-option name) XmNactivateCallback (snd-global-state))
+			 (if (not (= (zoom-focus-style) style)) (snd-display ";zoom-focus style ~A: ~A" name (zoom-focus-style))))
+		       (list "window left edge" "window right edge" "window midpoint" "cursor or selection")
+		       (list zoom-focus-left zoom-focus-right zoom-focus-middle zoom-focus-active))
+		      (XtCallCallbacks (menu-option "Close  C-x k") XmNactivateCallback (snd-global-state))
+		      (if (find-sound "fmv1.snd") 
+			  (begin
+			    (snd-display ";activate menu ~A -> ~A" (menu-option "Close  C-x k") (find-sound "fmv1.snd"))
+			    (close-sound ind2))))))
 	      (let ((ind2 (open-sound "4.aiff")))
 		(XtCallCallbacks (menu-option "Equalize Panes") XmNactivateCallback (snd-global-state))
 		(equalize-panes ind2)
@@ -31045,8 +31053,10 @@ EDITS: 2
 		 (list "combined" "superimposed" "separate")
 		 (list channels-combined channels-superimposed channels-separate))
 		(close-sound ind2))
-	      (delete-file "fmv1.snd")
-	      (mus-sound-forget "fmv1.snd")
+	      (if (file-exists? "fmv1.snd")
+		  (begin
+		    (delete-file "fmv1.snd")
+		    (mus-sound-forget "fmv1.snd")))
 	      (select-sound ind)
 	      (select-channel 1)
 	      (set! (selection-member? #t) #f)
@@ -31061,10 +31071,12 @@ EDITS: 2
 		(take-keyboard-focus minibuffer)
 		(widget-string minibuffer "fmv2.snd")
 		(key-event minibuffer snd-return-key 0) (force-event)
-		(if (not (= (mus-sound-frames "fmv2.snd") 50828))
-		    (snd-display ";C-u region C-x w wrote wrong number of samples: ~A" (mus-sound-frames "fmv2.snd")))
-		(delete-file "fmv2.snd"))
-	      (mus-sound-forget "fmv2.snd")
+		(if (file-exists? "fmv2.snd")
+		    (begin
+		      (if (not (= (mus-sound-frames "fmv2.snd") 50828))
+			  (snd-display ";C-u region C-x w wrote wrong number of samples: ~A" (mus-sound-frames "fmv2.snd")))
+		      (delete-file "fmv2.snd")
+		      (mus-sound-forget "fmv2.snd"))))
 	      (widget-string minibuffer "")
 	      (set! (lisp-graph? ind 1) #t)
 	      (set! (time-graph? ind 1) #f)
@@ -31125,15 +31137,8 @@ EDITS: 2
 			(resize-pane (list-ref swids 2) 400)))
 		  (set! (widget-size filter-grf) (list (car psize) (+ (cadr psize) 10))))
 		(force-event)
-		(click-event filter-grf 1 0 100 100) (force-event)
-		(if (not (= (length (filter-control-env ind)) 6))
-		    (snd-display ";click filter-env: ~A?" (filter-control-env ind)))
-		(click-event filter-grf 1 0 100 100) (force-event)
-		(set! fe (filter-control-env ind))
-		(if (not (equal? fe '(0.0 1.0 1.0 1.0)))
-		    (snd-display ";filter-env (point deleted): ~A?" fe))
+		;; can't click filter graph at random because callbacks assume sp passed as context
 		(set! (filter-control-in-dB) #t)
-		(click-event filter-grf 1 0 100 100) (force-event)
 		(close-sound ind)
 		))
 	    
@@ -32421,17 +32426,18 @@ EDITS: 2
 		    (set! (with-background-processes) 1234) ; turns off recorder background process altogether
 		    (if (not (list-ref (dialog-widgets) 18))
 			(recorder-dialog))
-		    (let* ((recd (list-ref (dialog-widgets) 18))
-			   (file-pane (find-child recd "file-pane"))
-			   (record (find-child recd "record-button"))
-			   ;; cancel -> reset, ok -> dismiss
-			   )
-		      (if (not (XtIsManaged recd)) (XtManageChild recd))
-		      (click-button record) (force-event)
-		      (click-button record) (force-event)
-		      (click-button (XmMessageBoxGetChild recd XmDIALOG_CANCEL_BUTTON)) (force-event)
-		      (click-button (XmMessageBoxGetChild recd XmDIALOG_OK_BUTTON)) (force-event)
-		      )
+		    (if (Widget? (list-ref (dialog-widgets) 18))
+			(let* ((recd (list-ref (dialog-widgets) 18))
+			       (file-pane (find-child recd "file-pane"))
+			       (record (find-child recd "record-button"))
+			       ;; cancel -> reset, ok -> dismiss
+			       )
+			  (if (not (XtIsManaged recd)) (XtManageChild recd))
+			  (click-button record) (force-event)
+			  (click-button record) (force-event)
+			  (click-button (XmMessageBoxGetChild recd XmDIALOG_CANCEL_BUTTON)) (force-event)
+			  (click-button (XmMessageBoxGetChild recd XmDIALOG_OK_BUTTON)) (force-event)
+			  ))
 		    (set! (with-background-processes) old-val))
 		  
 		  ;; ---------------- region dialog ----------------
@@ -34137,6 +34143,7 @@ EDITS: 2
 	      
 	      (let ((hname (host-name))) ; from snd-motif.scm
 		(if (and (not (string=? hname "fatty"))
+			 (not (string=? hname "cat"))
 			 (not (string=? hname "goggle")))
 		    (snd-display ";host name appears to be ~A" hname)))
 	      (let ((blu (x->snd-color "blue")))
@@ -36964,7 +36971,7 @@ EDITS: 2
 		     reverb-control-length reverb-control-lowpass reverb-control-scale reverb-control?  reverse-sound
 		     reverse-selection revert-sound right-sample sample sample-reader-at-end?  sample-reader? samples sample-reader-position
 		     samples->vct samples->sound-data sash-color save-controls ladspa-dir save-dir save-edit-history save-envelopes
-		     save-listener save-macros save-marks save-options save-region save-selection save-sound save-sound-as
+		     save-listener save-marks save-region save-selection save-sound save-sound-as
 		     save-state save-state-file scale-by scale-selection-by scale-selection-to scale-to scale-sound-by
 		     scale-sound-to scan-chan search-procedure select-all select-channel select-sound
 		     selected-channel selected-data-color selected-graph-color selected-mix selected-mix-color selected-sound

@@ -127,7 +127,7 @@ void snd_unprotect_at(int loc)
 static int send_error_output_to_stdout = FALSE;
 static char *last_file_loaded = NULL;
 
-static void string_to_stdout(snd_state *ss, char *msg)
+static void string_to_stdout(snd_state *ss, const char *msg)
 {
   char *str;
   write(fileno(stdout), msg, snd_strlen(msg));

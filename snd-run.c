@@ -7208,8 +7208,6 @@ static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args)  \
 VCT_2_F(sum_of_sines, sum-of-sines)
 VCT_2_F(dot_product, dot-product)
 
-  /* TODO: the various make-<gen> calls can throw an error -- this needs to abort the optimization and pass it up the chain */
-
 static void clm_0f(int *args, Int *ints, Float *dbls) {if (INT_ARG_1) FLOAT_RESULT = MUS_RUN(((mus_any *)(INT_ARG_1)), 0.0, 0.0);}
 static char *descr_clm_0f(int *args, Int *ints, Float *dbls) {return(descr_gen(args, ints, dbls, mus_name(((mus_any *)(INT_ARG_1))), 0));} 
 static void clm_1f(int *args, Int *ints, Float *dbls) {if (INT_ARG_1) FLOAT_RESULT = MUS_RUN(((mus_any *)(INT_ARG_1)), FLOAT_ARG_2, 0.0);}

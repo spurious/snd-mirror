@@ -236,7 +236,7 @@ char *mus_midi_describe(void)
       if (err < 0) continue;
       err = snd_rawmidi_info(line, info);
       if (err < 0) break;
-      sprintf(one, "%s: card: %d, device: %d, stream: %d, flags: %x, id: %d, name: %s[%s; %d]\n",
+      sprintf(one, "%s: card: %d, device: %d, stream: %d, flags: %x, id: %s, name: %s[%s; %d]\n",
 	      mus_midi_device_name(i << 16),
 	      snd_rawmidi_info_get_card(info),    /* card number */
 	      snd_rawmidi_info_get_device(info),  /* device number */

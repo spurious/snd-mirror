@@ -24,6 +24,7 @@
 
 /* HISTORY:
  *  
+ *   30-Jul-03: use new SCM_VECTOR_REF/SET macros if they're defined.
  *   7-Apr-03:  changes to error handlers for more perspicuous error messages
  *              changed XEN_PROTECT_FROM_GC in Ruby to use rb_gc_register_address, added XEN_UNPROTECT_FROM_GC (rb_gc_unregister_address)
  *   10-Mar-03: XEN_OUT_OF_RANGE_ERROR, XEN_BAD_ARITY_ERROR
@@ -241,7 +242,13 @@
   #define XEN_NEW_PROCEDURE(Name, Func, Req, Opt, Rst) gh_new_procedure(Name, XEN_PROCEDURE_CAST Func, Req, Opt, Rst)
 #endif
 
-/*  if ((DEBUGGING) && (XEN_TRUE_P(scm_definedp(C_STRING_TO_XEN_SYMBOL(Name), XEN_UNDEFINED)))) fprintf(stderr, "%s is defined\n", Name); */
+/*  
+    #if HAVE_SCM_DEFINED_P
+    if ((DEBUGGING) && (XEN_TRUE_P(scm_defined_p(C_STRING_TO_XEN_SYMBOL(Name), XEN_UNDEFINED)))) fprintf(stderr, "%s is defined\n", Name); 
+    #else
+    if ((DEBUGGING) && (XEN_TRUE_P(scm_definedp(C_STRING_TO_XEN_SYMBOL(Name), XEN_UNDEFINED)))) fprintf(stderr, "%s is defined\n", Name); 
+    #endif
+*/
 #define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
   if (Doc != (char *)NULL) \
     scm_set_procedure_property_x(XEN_NEW_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(Doc)); \
@@ -357,8 +364,15 @@
 #else
   #define XEN_VECTOR_ELEMENTS(a)      SCM_VELTS(a)
 #endif
-#define XEN_VECTOR_REF(Vect, Num)     scm_vector_ref(Vect, C_TO_XEN_INT(Num))
-#define XEN_VECTOR_SET(Vect, Num, Val) scm_vector_set_x(Vect, C_TO_XEN_INT(Num), Val)
+
+#ifdef SCM_VECTOR_REF
+  #define XEN_VECTOR_REF(Vect, Num)      SCM_VECTOR_REF(Vect, Num)
+  #define XEN_VECTOR_SET(Vect, Num, Val) SCM_VECTOR_SET(Vect, Num, Val)
+#else
+  #define XEN_VECTOR_REF(Vect, Num)     scm_vector_ref(Vect, C_TO_XEN_INT(Num))
+  #define XEN_VECTOR_SET(Vect, Num, Val) scm_vector_set_x(Vect, C_TO_XEN_INT(Num), Val)
+#endif
+
 #define XEN_VECTOR_TO_LIST(Vect)      scm_vector_to_list(Vect)
 #if HAVE_SCM_C_MAKE_VECTOR
   #define XEN_MAKE_VECTOR(Num, Fill)  scm_c_make_vector((unsigned long)(Num), Fill)

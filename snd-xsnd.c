@@ -2380,7 +2380,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNrightWidget, sw[W_filter_dB]); n++;
       XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++;
-      sw[W_filter] = make_textfield_widget(ss, "filter-window", sw[W_amp_form], args, n, ACTIVATABLE, add_completer_func(filename_completer));
+      sw[W_filter] = make_textfield_widget(ss, "filter-text", sw[W_amp_form], args, n, ACTIVATABLE, add_completer_func(filename_completer));
       XtAddCallback(sw[W_filter], XmNactivateCallback, filter_activate_callback, (XtPointer)sp);
 
       /* APPLY */
