@@ -1,64 +1,75 @@
-## examp.rb -- Guile -> Ruby translation
+# examp.rb -- Guile -> Ruby translation
 
-## Translator/Author: Michael Scholz <scholz-micha@gmx.de>
-## Last: Sa  Feb 08 21:29:02 CET 2003
-## Version: $Revision: 1.10 $
+# Translator/Author: Michael Scholz <scholz-micha@gmx.de>
+# Last: Fr  Feb 28 04:40:38 CET 2003
+# Version: $Revision: 1.29 $
 
-##
-## Utilities
-##
-## get_func_name(n)
-## doc(str), putd(func), snd_putd(func)
-## help
-## car(v), cadr(v), caddr(v), cdr(v)
-## warn(str), die(str), message(*args)
-## shell(cmd)
-## get_args(args, key, val)
-## load_init_file(file)
-##
-## Buffers
-## 
-## open_buffer(file)
-## close_buffer(snd)
-## add_to_reopen_menu(snd)
-## check_reopen_menu(file)
-##
-## FM
-## 
-## fm_bell(start, dur, freq, amp, *args)
-## fm_violin_rb(start, dur, freq, amp, *args)
-## jc_reverb_rb(*args)
-## with_sound(*args) { ... }
-##
-## fm_play(func, outfile, play_f)
-## fm_bell_snd(start, dur, freq, amp, amp_env, index_env, index)
-## n_rev(*args)
-## hello_dentist(frq, amp)
-## ring_mod(freq, gliss_env)
-## am(freq)
-## vibro(speed, depth)
-## fp(sr, osamp, osfreq)
-## compand(h)
-##
-## Module NB (see nb.scm)
-##  nb(note, file), unb(file), prune_db
-##  files_popup_info(type, position, name)
-##  files_popup_quit(type, position, name)
-## 
+#
+# Utilities
+#
+# get_func_name(n)
+# doc(str), putd(func), snd_putd(func)
+# help
+# car(v), cadr(v), caddr(v), cdr(v)
+# warn(str), die(str), message(*args)
+# shell(cmd)
+# get_args(args, key, val)
+# load_init_file(file)
+#
+# Buffers
+# 
+# open_buffer(file)
+# close_buffer(snd)
+# add_to_reopen_menu(snd)
+# check_reopen_menu(file)
+#
+# FM
+# 
+# fm_bell(start, dur, freq, amp, *args)
+# fm_violin_rb(start, dur, freq, amp, *args)
+# jc_reverb_rb(*args)
+# with_sound(*args) { ... }
+#
+# fm_play(func, outfile, play_f)
+# fm_bell_snd(start, dur, freq, amp, amp_env, index_env, index)
+# n_rev(*args)
+# hello_dentist(frq, amp)
+# ring_mod(freq, gliss_env)
+# am(freq)
+# vibro(speed, depth)
+# fp(sr, osamp, osfreq)
+# compand(h)
+#
+# Module NB (see nb.scm)
+#  nb(note, file), unb(file), prune_db
+#  files_popup_info(type, position, name)
+#  files_popup_quit(type, position, name)
+# 
+# Module Dsp (see dsp.scm)
+#  butter(b, sig)
+#  make_butter_high_pass(freq)
+#  make_butter_low_pass(freq)
+#  make_butter_band_pass(freq, band)
+#  make_butter_band_reject(freq, band)
+#  down_oct(h)
+#  spike(h)
+#  zero_phase(h)
+#  rotate_phase(func)
+#
+# Module Env (see env.scm)
+#  envelope_interp(*args)
+#
+# Module Moog (see moog.scm)
+#  make_moog_filter(freq, q)
+#  moog_filter(m, sig)
 
 include Math
 
 $IN_SND = true unless defined? $IN_SND
 
-#
-# get_func_name([n=1])
-#
-
 def get_func_name(n = 1)
   doc("get_func_name([n=1])
-
 returns function name string\n") if n == :help
-  
   caller(n)[0].scan(/^.*:in `(.*)'/)[0][0]
 end
 
@@ -147,70 +158,84 @@ ensure
   message Kernel.doc(func)
 end
 
-#
-# help
-# 
-
 def help
   message("## Functions available
-##
-## get_func_name(n)
-## doc(str), putd(func), snd_putd(func)
-## help
-## car(v), cadr(v), caddr(v), cdr(v)
-## warn(str), die(str), message(*args)
-## shell(cmd)
-## get_args(args, key, val)
-## load_init_file(file)
-##
-## Buffers
-## 
-## open_buffer(file)
-## close_buffer(snd)
-## add_to_reopen_menu(snd)
-## check_reopen_menu(file)
-##
-## FM
-## 
-## fm_bell(start, dur, freq, amp, *args)
-## fm_violin_rb(start, dur, freq, amp, *args)
-## jc_reverb_rb(*args)
-## with_sound(*args) { ... }
-##
-## fm_play(func, outfile, play_f)
-## fm_bell_snd(start, dur, freq, amp, amp_env, index_env, index)
-## n_rev(*args)
-## hello_dentist(frq, amp)
-## ring_mod(freq, gliss_env)
-## am(freq)
-## vibro(speed, depth)
-## fp(sr, osamp, osfreq)
-## compand(h)
-##
-## Module NB (see nb.scm)
-##  nb(note, file), unb(file), prune_db
-##  files_popup_info(type, position, name)
-##  files_popup_quit(type, position, name)
-## 
-## Global variables
-##
-## $IN_SND               = #{$IN_SND}
-##
-## $rbm_file_name        = \"#{$rbm_file_name}\"
-## $rbm_srate            = #{$rbm_srate}
-## $rbm_channels         = #{$rbm_channels}
-## $rbm_header_type      = Mus_next (#{$rbm_header_type})
-## $rbm_data_format      = Mus_bshort (#{$rbm_data_format})
-## $rbm_comment          = \"#{$rbm_comment}\"
-## $rbm_statistics       = #{$rbm_statistics}
-## $rbm_play             = #{$rbm_play}
-## $rbm_player           = #{$rbm_player}
-## $rbm_reverb_file_name = \"#{$rbm_reverb_file_name}\"
-## $rbm_reverb_channels  = #{$rbm_reverb_channels}
-## $rbm_reverb_func      = #{$rbm_reverb_func}
-##
-## Example: snd_putd :with_sound
-##          prints documentation string of with_sound()\n")
+#
+# get_func_name(n)
+# doc(str), putd(func), snd_putd(func)
+# help
+# car(v), cadr(v), caddr(v), cdr(v)
+# warn(str), die(str), message(*args)
+# shell(cmd)
+# get_args(args, key, val)
+# load_init_file(file)
+#
+# Buffers
+# 
+# open_buffer(file)
+# close_buffer(snd)
+# add_to_reopen_menu(snd)
+# check_reopen_menu(file)
+#
+# FM
+# 
+# fm_bell(start, dur, freq, amp, *args)
+# fm_violin_rb(start, dur, freq, amp, *args)
+# jc_reverb_rb(*args)
+# with_sound(*args) { ... }
+#
+# fm_play(func, outfile, play_f)
+# fm_bell_snd(start, dur, freq, amp, amp_env, index_env, index)
+# n_rev(*args)
+# hello_dentist(frq, amp)
+# ring_mod(freq, gliss_env)
+# am(freq)
+# vibro(speed, depth)
+# fp(sr, osamp, osfreq)
+# compand(h)
+#
+# Module NB (see nb.scm)
+#  nb(note, file), unb(file), prune_db
+#  files_popup_info(type, position, name)
+#  files_popup_quit(type, position, name)
+# 
+# Module Dsp (see dsp.scm)
+#  butter(b, sig)
+#  make_butter_high_pass(freq)
+#  make_butter_low_pass(freq)
+#  make_butter_band_pass(freq, band)
+#  make_butter_band_reject(freq, band)
+#  down_oct(h)
+#  spike(h)
+#  zero_phase(h)
+#  rotate_phase(func)
+#
+# Module Env (see env.scm)
+#  envelope_interp(*args)
+#
+# Module Moog (see moog.scm)
+#  make_moog_filter(freq, q)
+#  moog_filter(m, sig)
+#
+# Global variables
+#
+# $IN_SND               = #{$IN_SND}
+#
+# $rbm_file_name        = \"#{$rbm_file_name}\"
+# $rbm_srate            = #{$rbm_srate}
+# $rbm_channels         = #{$rbm_channels}
+# $rbm_header_type      = Mus_next (#{$rbm_header_type})
+# $rbm_data_format      = Mus_bshort (#{$rbm_data_format})
+# $rbm_comment          = \"#{$rbm_comment}\"
+# $rbm_statistics       = #{$rbm_statistics}
+# $rbm_play             = #{$rbm_play}
+# $rbm_player           = #{$rbm_player}
+# $rbm_reverb_file_name = \"#{$rbm_reverb_file_name}\"
+# $rbm_reverb_channels  = #{$rbm_reverb_channels}
+# $rbm_reverb_func      = #{$rbm_reverb_func}
+#
+# Example: snd_putd :with_sound
+#          prints documentation string of with_sound()\n")
 end
 
 ##
@@ -252,10 +277,6 @@ def die(str = "Error", n = 1)
   exit(n) unless $IN_SND
 end
 
-#
-# message(*args)
-#
-
 def message(*args)
   if $IN_SND
     snd_print "\n" << format(*args)
@@ -264,16 +285,10 @@ def message(*args)
   end
 end
 
-#
-# shell(cmd)
-#
-
 def shell(*cmd)
   doc("shell(*cmd)
-
 Sends cmd to a shell (executes it as a shell command) and returns the
 result.\n") if cmd == :help
-  
   str = String.new
   f = IO.popen(format(*cmd))
   str << f.getc until f.eof?
@@ -297,16 +312,10 @@ def get_args(args, key, val)
   val
 end
 
-#
-# load_init_file(file)
-# 
-
 def load_init_file(file)
   doc("load_init_file(file)
-
 Returns false if file doesn't exist, otherwise loads it. File may
 reside in current working dir or in $HOME dir.\n") if file == :help
-  
   if File.exist? file
     load file
   elsif File.exist? "#{ENV["HOME"]}/#{file}"
@@ -320,44 +329,26 @@ end
 ## Buffers Menu
 ##
 
-#
-# open_buffer(file)
-#
-
 def open_buffer(file)
   doc("open_buffer(file)
-
 Adds a menu item that will select filename (use with $open_hook). See
 also close_buffer().
-
 Usage in ~./snd-ruby.rb
-
 $buffer_menu = add_to_main_menu(\"Buffers\")
-
 $open_hook = lambda { |file| open_buffer(file) }
 $close_hook = lambda { |snd| close_buffer(snd) }\n") if file == :help
-  
   add_to_menu($buffer_menu, file, lambda { || select_sound(find_sound(file)) })
   false
 end
 
-#
-# close_buffer(snd)
-#
-
 def close_buffer(snd)
   doc("close_buffer(snd)
-
 Removes the menu item associated with snd (use with $close_hook). See
 also open_buffer().
-
 Usage in ~./snd-ruby.rb
-
 $buffer_menu = add_to_main_menu(\"Buffers\")
-
 $open_hook = lambda { |file| open_buffer(file) }
 $close_hook = lambda { |snd| close_buffer(snd) }\n") if snd == :help
-  
   remove_from_menu($buffer_menu, file_name(snd))
   false
 end
@@ -368,27 +359,17 @@ end
 
 $reopen_names = []
 
-#
-# add_to_reopen_menu(snd)
-#
-
 def add_to_reopen_menu(snd)
   doc("add_to_reopen_menu(snd)
-
 Adds snd to the Reopen menu (use with $close_hook). See also
 check_reopen_menu().
-
 Usage in ~./snd-ruby.rb
-
 $reopen_menu = add_to_main_menu(\"Reopen\")
-
 $open_hook = lambda { |file| check_reopen_menu(file) }
 $close_hook = lambda { |snd| add_to_reopen_menu(snd) }\n") if snd == :help
-  
   brief_name = short_file_name(snd)
   long_name = file_name(snd)
   reopen_max_length = 8
-
   unless($reopen_names.member?(brief_name))
     add_to_menu($reopen_menu, brief_name,
 		lambda { | |
@@ -404,34 +385,21 @@ $close_hook = lambda { |snd| add_to_reopen_menu(snd) }\n") if snd == :help
   false
 end
 
-#
-# check_reopen_menu(file)
-#
-
 def check_reopen_menu(file)
   doc("check_reopen_menu(file)
-
 Removes filename from the Reopen menu list (use with $open_hook). See
 also add_to_reopen_menu().
-
-
 Usage in ~./snd-ruby.rb
-
 $reopen_menu = add_to_main_menu(\"Reopen\")
-
 $open_hook = lambda { |file| check_reopen_menu(file) }
 $close_hook = lambda { |snd| add_to_reopen_menu(snd) }\n") if file == :help
-  
   just_file = lambda { |name|
     last_slash = -1
     len = name.length
-
     (0...len).each { |i| last_slash = i if name[i] == ?/ }
     name[last_slash + 1]
   }
-
   brief_name = just_file.call(file)
-  
   if($reopen_names.member?(brief_name))
     $reopen_names = remove_if(lambda { |n|
 				val = (n == brief_name)
@@ -470,19 +438,13 @@ $rbm_reverb_func = false
 ## Michael McNabb's FM bell (see bell.scm and fm_bell_snd() below)
 ##
 
-#
-# fm_bell([start=0.0[, dur=1.0[, freq=220.0[, amp=0.3[, *args]]]]])
-#
-
 def fm_bell(start = 0.0, dur = 1.0, freq = 220.0, amp = 0.3, *args)
   doc("fm_bell([start=0.0[, dur=1.0[, freq=220.0[, amp=0.3[, *args]]]]])
-
 	:amp_env,   [0, 0, 0.1, 1, 10, 0.6, 25, 0.3, 50, 0.15, 90, 0.1, 100, 0]
 	:index_env, [0, 1, 2, 1.1, 25, 0.75, 75, 0.5, 100, 0.2]
 	:index,     1.0
 	:distance,  1.0
 	:reverb,    0.01
-
 Usage: with_sound { fm_bell }
        with_sound {
          C = 130.8
@@ -492,12 +454,10 @@ Usage: with_sound { fm_bell }
          notes = [C, A, G, E]
          fbell = [0, 1, 2, 1.1, 25, 0.75, 75, 0.5, 100, 0.2]
          abell = [0, 0, 0.1, 1, 10, 0.6, 25, 0.3, 50, 0.15, 90, 0.1, 100, 0]
-       
          fm_bell(0, 12, E, 0.4,
        	  :amp_env, abell,
        	  :index_env, fbell,
        	  :index, 0.1)
-       
          (0...notes.length).each { |i|
            fm_bell(i * 2, 4, notes[i], 0.5,
        	    :amp_env, abell,
@@ -505,13 +465,11 @@ Usage: with_sound { fm_bell }
        	    :index, 0.2 * (i + 0.1))
          }
        }\n") if start == :help
-  
   amp_env   = get_args(args, :amp_env, [0, 0, 0.1, 1, 10, 0.6, 25, 0.3, 50, 0.15, 90, 0.1, 100, 0])
   index_env = get_args(args, :index_env, [0, 1, 2, 1.1, 25, 0.75, 75, 0.5, 100, 0.2])
   index     = get_args(args, :index, 1.0)
   distance  = get_args(args, :distance, 1.0)
   reverb    = get_args(args, :reverb, 0.01)
-
   srate = (mus_srate() rescue $rbm_srate)
   chans = (mus_channels($rbm_output) rescue $rbm_channels)
   beg = (srate * start).round
@@ -530,7 +488,6 @@ Usage: with_sound { fm_bell }
   indf = make_env(index_env, index, dur)
   ampf = make_env(amp_env, amp, dur)
   loc = make_locsig(kernel_rand(90.0), distance, reverb, $rbm_output, $rbm_reverb, chans)
-
   beg.upto(len) { |i|
     fmenv = env(indf)
     locsig(loc, i, env(ampf) * (oscil(car1, fmenv * fmind1 * oscil(mod1)) +
@@ -542,14 +499,10 @@ rescue
   die get_func_name
 end
 
-#
-# fm_violin_rb([start=0.0[, dur=1.0[, freq=440.0[, amp=0.3[, *args]]]]])
-#
 # for a faster version see v.rb
 
 def fm_violin_rb(start = 0.0, dur = 1.0, freq = 440.0, amp = 0.3, *args)
   doc("fm_violin_rb([start=0.0[, dur=1.0[, freq=440.0[, amp=0.3[, *args]]]]])
-
 	:fm_index,              1.0
 	:amp_env,               [0, 0, 25, 1, 75, 1, 100, 0]
 	:periodic_vibrato_rate, 5.0
@@ -579,12 +532,9 @@ def fm_violin_rb(start = 0.0, dur = 1.0, freq = 440.0, amp = 0.3, *args)
 	:degree,                false
 	:distance,              1.0
 	:degrees,               false
-
    Ruby: fm_violin_rb(0, 1, 440, 0.1, :fm_index, 2.0)
   Guile: (fm-violin 0 1 440 0.1 :fm-index 2.0)
-
 Example: with_sound { fm_violin_rb(0, 1, 440, 0.1, :fm_index, 2.0) }\n") if start == :help
-  
   fm_index              = get_args(args, :fm_index, 1.0)
   amp_env               = get_args(args, :amp_env, [0, 0, 25, 1, 75, 1, 100, 0])
   periodic_vibrato_rate = get_args(args, :periodic_vibrato_rate, 5.0)
@@ -614,7 +564,6 @@ Example: with_sound { fm_violin_rb(0, 1, 440, 0.1, :fm_index, 2.0) }\n") if star
   degree                = get_args(args, :degree, false)
   distance              = get_args(args, :distance, 1.0)
   degrees               = get_args(args, :degrees, false)
-
   srate = (mus_srate() rescue $rbm_srate)
   chans = (mus_channels($rbm_output) rescue $rbm_channels)
   beg = (srate * start).round
@@ -663,13 +612,11 @@ Example: with_sound { fm_violin_rb(0, 1, 440, 0.1, :fm_index, 2.0) }\n") if star
   fuzz = 0.0
   ind_fuzz = 1.0
   amp_fuzz = 1.0
-
   beg.upto(len) { |i|
     fuzz = rand(fm_noi) if noise_amount.nonzero?
     vib = env(frqf) + triangle_wave(pervib) + rand_interp(ranvib)
     ind_fuzz = 1.0 + rand_interp(ind_noi) if ind_noi
     amp_fuzz = 1.0 + rand_interp(amp_noi) if amp_noi
-    
     if(modulate)
       if(easy_case)
 	modulation = env(indf1) * polynomial(coeffs, oscil(fmosc1, vib))
@@ -679,21 +626,16 @@ Example: with_sound { fm_violin_rb(0, 1, 440, 0.1, :fm_index, 2.0) }\n") if star
 	  env(indf3) * oscil(fmosc3, fm3_rat * vib + fuzz)
       end
     end
-
     locsig(loc, i, env(ampf) * amp_fuzz * oscil(carrier, vib + ind_fuzz * modulation))
   }
 rescue
   die get_func_name
 end
 
-#
-# jc_reverb_rb([args=[]])
-#
 # for a faster version see v.rb
 
 def jc_reverb_rb(args = [])
   doc("jc_reverb_rb([args=[]])
-
 	:decay,    1.0
 	:low_pass, false
 	:volume,   1.0
@@ -701,12 +643,9 @@ def jc_reverb_rb(args = [])
 	:amp_env2, false
 	:delay1,   0.013
 	:delay2,   0.011
-
 The old Chowning reverberator (see examp.scm).
-
 Usage: jc_reverb_rb(:decay, 2.0, :volume, 0.1)
        with_sound(:reverb, :jc_reverb) { fm_violin }\n") if get_args(args, :help, false)
-
   decay    = get_args(args, :decay, 1.0)
   low_pass = get_args(args, :low_pass, false)
   volume   = get_args(args, :volume, 1.0)
@@ -714,7 +653,6 @@ Usage: jc_reverb_rb(:decay, 2.0, :volume, 0.1)
   amp_env2 = get_args(args, :amp_env2, false)
   delay1   = get_args(args, :delay1, 0.013)
   delay2   = get_args(args, :delay2, 0.011)
-
   allpass1 = make_all_pass(-0.700, 0.700, 1051)
   allpass2 = make_all_pass(-0.700, 0.700, 337)
   allpass3 = make_all_pass(-0.700, 0.700, 113)
@@ -735,7 +673,6 @@ Usage: jc_reverb_rb(:decay, 2.0, :volume, 0.1)
   allpass_sum, all_sums = 0.0, 0.0
   comb_sumA, comb_sum_1A, comb_sum_2A = 0.0, 0.0, 0.0
   comb_sumB, comb_sum_1B, comb_sum_2B = 0.0, 0.0, 0.0
-
   0.upto(len) { |i|
     ho = ina(i, $rbm_reverb)
     allpass_sum = all_pass(allpass3, all_pass(allpass2, all_pass(allpass1, ho)))
@@ -743,15 +680,12 @@ Usage: jc_reverb_rb(:decay, 2.0, :volume, 0.1)
     comb_sum_1A = comb_sumA
     comb_sumA = comb(comb1, allpass_sum) + comb(comb2, allpass_sum) +
       comb(comb3, allpass_sum) + comb(comb4, allpass_sum)
-    
     if(low_pass)
       all_sums = 0.25 * (comb_sumA + comb_sum_2A) + 0.5 * comb_sum_1A
     else
       all_sums = comb_sumA
     end
-
     outa(i, delA * delay(outdel1, all_sums), $rbm_output)
-
     if($rbm_reverb_channels == 2)
       ho = inb(i, $rbm_reverb)
       allpass_sum = all_pass(allpass3, all_pass(allpass2, all_pass(allpass1, ho)))
@@ -759,28 +693,20 @@ Usage: jc_reverb_rb(:decay, 2.0, :volume, 0.1)
       comb_sum_1B = comb_sumB
       comb_sumB = comb(comb1, allpass_sum) + comb(comb2, allpass_sum) +
 	comb(comb3, allpass_sum) + comb(comb4, allpass_sum)
-      
       if(low_pass)
 	all_sums = 0.25 * (comb_sumB + comb_sum_2B) + 0.5 * comb_sum_1B
       else
 	all_sums = comb_sumB
       end
     end
-    
     outb(i, delB * delay(outdel2, all_sums), $rbm_output) if chans == 2
   }
-
 rescue
   die get_func_name
 end
 
-#
-# with_sound(*args) { ... }
-#
-
 def with_sound(*args)
   doc("with_sound(*args) { ... }
-
 	:output,            $rbm_file_name
 	:continue_old_file, false
 	:channels,          $rbm_channels
@@ -797,9 +723,7 @@ def with_sound(*args)
 	:reverb_data,       []
 	:scaled_to,         false
 	:scaled_by,         false
-
 Usage: with_sound(:play, 1, :statistics, true) { fm_violin }\n") if get_args(args, :help, false)
-
   output            = get_args(args, :output, $rbm_file_name)
   continue_old_file = get_args(args, :continue_old_file, false)
   channels          = get_args(args, :channels, $rbm_channels)
@@ -816,13 +740,11 @@ Usage: with_sound(:play, 1, :statistics, true) { fm_violin }\n") if get_args(arg
   reverb_data       = get_args(args, :reverb_data, [])
   scaled_to         = get_args(args, :scaled_to, false)
   scaled_by         = get_args(args, :scaled_by, false)
-
   $rbm_file_name = output
   $rbm_channels = channels
   $rbm_srate = srate
   $rbm_reverb_file_name = revfile
   $rbm_reverb_channels = reverb_channels
-
   case play
   when true
     play = 1
@@ -831,20 +753,16 @@ Usage: with_sound(:play, 1, :statistics, true) { fm_violin }\n") if get_args(arg
   else
     play = play.abs
   end
-  
   $rbm_play = play
-
   if $IN_SND and (snd = find_sound(output))
     close_sound(snd)
   end
-  
   unless continue_old_file
     old_srate = mus_srate
     mus_set_srate(srate)
     $rbm_output = $rbm_reverb = false
     File.unlink(output) if File.exist?(output)
     $rbm_output = make_sample2file(output, channels, data_format, header_type, comment)
-    
     if reverb
       File.unlink(revfile) if File.exist?(revfile)
       $rbm_reverb = make_sample2file(revfile, reverb_channels, data_format, header_type, "rev")
@@ -853,16 +771,13 @@ Usage: with_sound(:play, 1, :statistics, true) { fm_violin }\n") if get_args(arg
     $rbm_output = continue_sample2file(output)
     $rbm_reverb = continue_sample2file(revfile) if reverb
   end
-
   atime = Time.new if statistics
   yield
-
   if reverb
     mus_close($rbm_reverb)
     $rbm_reverb = make_file2sample(revfile)
     (reverb.class == Proc) ? reverb.call(reverb_data) : send(reverb, reverb_data)
   end
-  
   unless continue_old_file
     if reverb
       mus_close($rbm_reverb)
@@ -872,7 +787,6 @@ Usage: with_sound(:play, 1, :statistics, true) { fm_violin }\n") if get_args(arg
     $rbm_output = false
     mus_set_srate(old_srate)
   end
-
   if $IN_SND
     snd = open_sound(output)
     olds = sync(snd)
@@ -882,13 +796,11 @@ Usage: with_sound(:play, 1, :statistics, true) { fm_violin }\n") if get_args(arg
     save_sound(snd) if scaled_to or scaled_by
     set_sync(olds, snd)
   end
-
   if statistics
     rtime = Time.new - atime
     samps = mus_sound_samples(output)
     max_amp = mus_sound_maxamp(output)
     srate = srate.to_f
-
     message("    Sound File: %s", output)
     message("      Duration: %.4f", (samps / srate / channels))
     message("  Compute time: %.3f, Compute ratio: %.2f", rtime,
@@ -898,13 +810,11 @@ Usage: with_sound(:play, 1, :statistics, true) { fm_violin }\n") if get_args(arg
 	    max_amp[3], max_amp[2] / srate) if channels == 2
     if(reverb)
       max_amp = mus_sound_maxamp(revfile)
-      
       message("  RevA max amp: %.3f (near %.3f secs)", max_amp[1], max_amp[0] / srate)
       message("  RevB max amp: %.3f (near %.3f secs)",
 	      max_amp[3], max_amp[2] / srate) if reverb_channels == 2
     end
   end
-
   1.upto(play) { |i| ($IN_SND ? play_and_wait(snd) : system("#{player} #{output}")) }
   output
 rescue
@@ -958,15 +868,9 @@ with_sound(:play, 1) {
 
 =end
 
-#
-# fm_play(func[, outfile="test.snd"[, play_f=true]])
-#
-
 def fm_play(func, outfile = "test.snd", play_f = true)
   doc("fm_play(func[, outfile=\"test.snd\"[, play_f=true]])
-
 Usage: fm_play(lambda { fm_bell_snd(0, 1, 440, 0.1) })\n") if func == :help
-  
   snd = new_sound(outfile, Mus_next, Mus_bshort, 22050, 1, "created by fm_play()")
   atime = Time.new
   func.call()
@@ -988,18 +892,14 @@ def fm_bell_snd(start = 0.0, dur = 1.1, freq = 220.0, amp = 0.3,
          [, amp_env=[0, 0, 0.1, 1, 10, 0.6, 25, 0.3, 50, 0.15, 90, 0.1, 100, 0]
          [, index_env=[0, 1, 2, 1.1, 25, 0.75, 75, 0.5, 100, 0.2]
          [, index=1.0]]]]]])
-
 Mixes in one fm bell note (see bell.scm).
-
 fm_bell_snd works with fm_play in difference to fm_bell, which works
 with with_sound.
-
 fm_play(lambda {
   fbell = [0, 1, 2, 1.1000, 25, 0.7500, 75, 0.5000, 100, 0.2000]
   abell = [0, 0, 0.1000, 1, 10, 0.6000, 25, 0.3000, 50, 0.1500, 90, 0.1000, 100, 0]
   fm_bell_snd(0.0, 1.0, 220.0, 0.5, abell, fbell, 1.0)
 }, \"bell.snd\")\n") if start == :help
-  
   srate = (srate() rescue 22050);
   beg = (srate * start).round;
   len = beg + (srate * dur).round;
@@ -1017,7 +917,6 @@ fm_play(lambda {
   indf = make_env(index_env, index, dur);
   ampf = make_env(amp_env, amp, dur);
   out_data = make_vct(len);
-
   vct_map!(out_data, 
 	   lambda { | |
 	     fmenv = env(indf);
@@ -1026,29 +925,19 @@ fm_play(lambda {
 				      (fmind2 * oscil(mod2) + fmind3 * oscil(mod3))) +
 			  0.15 * oscil(car3, fmenv * fmind4 * oscil(mod4)));
 	   });
-
   mix_vct(out_data, beg, false, 0, false);
 end
 
-#
-# n_rev([args=[]])
-#
-
 def n_rev(args = [])
   doc("n_rev([args=[]])
-
 	:amount,   0.1
 	:filter,   0.5
 	:feedback, 1.09
-
 Reverb from Michael McNabb's Nrev (see new-effects.scm).
-
 Usage: n_rev([:amount, 0.2, :filter, 0.8])\n") if get_args(args, :help, false)
-
   amount   = get_args(args, :amount, 0.1)
   filter   = get_args(args, :filter, 0.5)
   feedback = get_args(args, :feedback, 1.09)
-
   set_reverb_control?(true)
   set_reverb_control_scale(amount)
   set_reverb_control_lowpass(filter)
@@ -1059,18 +948,11 @@ rescue
   die get_func_name
 end
 
-#
-# hello_dentist([freq=40.0[, amp=0.1]])
-# 
-
 def hello_dentist(freq = 40.0, amp = 0.1)
   doc("hello_dentist([freq=40.0[, amp=0.1]])
-
 Varies the sampling rate randomly, making a voice sound quavery (see
 examp.scm).
-
 Usage: hello_dentist(40.0, 0.1)\n") if freq == :help
-
   rn = make_rand_interp(freq, amp)
   i, j = 0, 0
   len = frames()
@@ -1083,42 +965,28 @@ Usage: hello_dentist(40.0, 0.1)\n") if freq == :help
 		  i = i + dir
 		  val
 		})
-
   vct2channel(vct_map!(out_data, lambda { || src(rd, rand_interp(rn)) }))
 rescue
   die get_func_name
 end
 
-#
-# ring_mod([freq=10.0[, gliss_env=[0, 0, 1, hz2radians(100)]]])
-#
-
 def ring_mod(freq = 10, gliss_env = [0, 0, 1, hz2radians(100)])
   doc("ring_mod([freq=10.0[, gliss_env=[0, 0, 1, hz2radians(100)]]])
-
 Returns a time-varying ring-modulation filter (see examp.scm).
-
 Usage: map_chan(ring_mod(10, [0, 0, 1, hz2radians(100)]))\n") if freq == :help
   os = make_oscil(freq)
   len = frames()
   srate = (srate() rescue $rbm_srate)
   dur = (len / srate).round
   genv = make_env(gliss_env, :end, len)
-  
   lambda { |i| oscil(os, env(genv)) * i }
 rescue
   die get_func_name
 end
 
-#
-# am([freq=440.0])
-#
-
 def am(freq = 440.0)
   doc("am([freq=440.0])
-
 Returns an amplitude-modulator (see examp.scm).
-
 Usage: map_chan(am(440.0))\n") if freq == :help
   os = make_oscil(freq)
   lambda { |i| amplitude_modulate(1.0, i, oscil(os)) }
@@ -1126,43 +994,27 @@ rescue
   die get_func_name
 end
 
-#
-# vibro([speed=20[, depth=0.5]])
-#
-
 def vibro(speed = 20, depth = 0.5)
   doc("vibro([speed=20[, depth=0.5]])
-
 This is taken from sox (vibro.c) (see examp.scm).
-
 Usage: map_chan(vibro(20, 0.5))\n") if speed == :help
-
   sine = make_oscil(speed)
   scl = 0.5 * depth
   offset = 1.0 - scl
-
   lambda { |i| i * (offset + scl * oscil(sine)) }
 rescue
   die get_func_name
 end
 
-#
-# fp([sr=1.0[, osamp=0.3[, osfreq=20]]])
-#
-
 def fp(sr = 1.0, osamp = 0.3, osfreq = 20)
   doc("fp([sr=1.0[, osamp=0.3[, osfreq=20]]])
-
 Varies the sampling rate via an oscil (see examp.scm).
-
 Usage: fp(1.0, 0.3, 20)\n") if sr == :help
-
   os = make_oscil(osfreq)
   s = make_src(:srate, sr)
   len = frames()
   sf = make_sample_reader()
   out_data = make_vct(len)
-
   vct_map!(out_data, lambda { | |
 	     src(s, osamp * oscil(os), lambda { |dir|
 		   dir > 0 ? next_sample(sf) : previous_sample(sf)
@@ -1174,19 +1026,12 @@ rescue
   die get_func_name
 end
 
-#
-# compand([h=false])
-#
-
 def compand(doc = false)
   doc("compand()
-
 Since there's no state in this function, it can be used without change
 in any of the mapping functions (unlike echo, for example) (see
 examp.scm).
-
 Usage: map_chan(compand())\n") if doc == :help
-
   tbl = vct(-1.000, -0.960, -0.900, -0.820, -0.720, -0.600, -0.450, -0.250, 
 	    0.000, 0.250, 0.450, 0.600, 0.720, 0.820, 0.900, 0.960, 1.000)
   lambda { |i| 
@@ -1204,31 +1049,24 @@ end
 module NB
   $nb_database = "nb"
   doc "#{self.class} #{self.name} is a translation of nb.scm.
-
 Provide pop-up help in the Files viewer.
-
 If you have `dbm', any data associated with the file in the dbm
 database will also be posted.  The database name is defined by
 $nb_database (#{$nb_database}).  You may replace the require statement
-with an other database library which you have.
-
-The function nb(note[, file=$nb_database]) adds NOTE to the info
+with an other database library which you have, e.g. `gdbm'.
+The function nb(note[, file=@current_file]) adds NOTE to the info
 currently associated with FILE.
-
-To remove a file's info, unb([file=$nb_database]).
-
+To remove a file's info, unb([file=@current_file]).
 To clean non-existent file references out of the database,
-prune-db()."
+prune_db()."
 
   require "dbm"
 
-  $current_file = nil
+  @current_file = nil
 
-  def nb(note, file = $current_file)
-    doc("nb(note[, file=$current_file])
-
+  def nb(note, file = @current_file)
+    doc("nb(note[, file=@current_file])
 Adds NOTE to the info associated with FILE.\n") if note == :help
-    
     ptr = DBM.open($nb_database) rescue warn("DBM.open(#{$nb_database}")
     if ptr
       current_note = (ptr.key?(file) ? ptr.fetch(file) : "")
@@ -1237,11 +1075,9 @@ Adds NOTE to the info associated with FILE.\n") if note == :help
     end
   end
 
-  def unb(file = $current_file)
-    doc("unb([file=$current_file])
-
+  def unb(file = @current_file)
+    doc("unb([file=@current_file])
 Removes FILE's info from the nb (dbm) data base.\n") if file == :help
-    
     ptr = DBM.open($nb_database) rescue warn("DBM.open(#{$nb_database}")
     if ptr
       ptr.delete(file)
@@ -1251,10 +1087,8 @@ Removes FILE's info from the nb (dbm) data base.\n") if file == :help
 
   def prune_db(doc = nil)
     doc("prune_db([doc=nil]
-
 Cleans up the nb (dbm) data base by removing references to
 non-existent files.\n") if doc == :help
-    
     ptr = DBM.open($nb_database) rescue warn("DBM.open(#{$nb_database}")
     ptr.delete_if { |k, v| k.empty? } if ptr
     ptr.close
@@ -1262,12 +1096,9 @@ non-existent files.\n") if doc == :help
 
   def files_popup_info(type, position = nil, name = nil)
     doc("files_popup_info(type, position, name)
-
 It's intended as a mouse-enter-label hook function.
-
 It causes a description of the file to popup when the mouse crosses
 the filename.\n") if type == :help
-    
     ptr = DBM.open($nb_database) rescue warn("DBM.open(#{$nb_database}")
     file_info = lambda { |file|
       chans = mus_sound_chans(file)
@@ -1289,14 +1120,13 @@ the filename.\n") if type == :help
 
 #{notes}" unless notes.empty?}"
     }
-    
     alert_color = make_color(1.0, 1.0, 0.94)
     current_file_viewer = 0
     previous_file_viewer = 1
     region_viewer = 2
     unless type == region_viewer
       help_exists = dialog_widgets()[14]
-      $current_file = name
+      @current_file = name
       help_dialog(name, file_info.call(name))
       help_widget = dialog_widgets()[14]
       if help_widget
@@ -1304,8 +1134,8 @@ the filename.\n") if type == :help
 	  files_dialog = dialog_widgets()[8]
 	  files_position = widget_position(files_dialog)
 	  files_size = widget_size(files_dialog)
-	  set_widget_position([files_position[0] + files_size[0] + 10, files_position[1] + 10],
-			      help_widget)
+	  set_widget_position(help_widget,
+                              [files_position[0] + files_size[0] + 10, files_position[1] + 10])
 	end
 	recolor_widget(help_widget, alert_color)
       end
@@ -1315,17 +1145,304 @@ the filename.\n") if type == :help
 
   def files_popup_quit(type, position = nil, name = nil)
     doc("files_popup_quit(type, position, name)
-
 It's intended as a mouse-leave-label hook function.
-
 It unhighlights the popped-up info about a file as the mouse leaves
 the associated label.\n") if type == :help
-    
-    recolor_widget(widget, basic_color()) if widget = dialog_widgets()[14]
+    widget = dialog_widgets()[14]
+    recolor_widget(widget, basic_color()) if widget
   end
 
   $mouse_enter_label_hook = lambda { |t, p, n| files_popup_info(t, p, n) }
   $mouse_leave_label_hook = lambda { |t, p, n| files_popup_quit(t, p, n) }
 end
 
-## examp.rb ends here
+module Dsp
+  
+  doc "#{self.class} #{self.name} contains some definitions of dsp.scm\n"
+
+  def butter(b, sig = nil)
+    doc("butter(b, sig)
+is the generator side for the various make-butter procedure\n") if b == :help
+    filter(b, sig)
+  end
+
+  def make_butter_high_pass(freq)
+    doc("make_butter_high_pass(freq)
+makes a Butterworth filter with high pass cutoff at FREQ\n") if freq == :help
+    r = tan(PI * freq / srate())
+    r2 = r * r
+    c1 = 1.0 / (1.0 + r * sqrt(2.0) + r2)
+    c2 = -2.0 * c1
+    c3 = c1
+    c4 = 2.0 * (r2 - 1.0) * c1
+    c5 = ((1.0 - r * sqrt(2.0)) + r2) * c1
+    make_filter(3, list2vct([c1, c2, c3]), list2vct([0.0, c4, c5]))
+  end
+  
+  def make_butter_low_pass(freq)
+    doc("make_butter_low_pass(freq)
+makes a Butterworth filter with low pass cutoff at FREQ.
+The result can be used directly:
+filter_sound(make_butter_low_pass(500.0)), or via the `butter'
+generator\n") if freq == :help
+    r = 1.0 / tan(PI * freq / srate())
+    r2 = r * r
+    c1 = 1.0 / (1.0 + r * sqrt(2.0) + r2)
+    c2 = 2.0 * c1
+    c3 = c1
+    c4 = 2.0 * (1.0 - r2) * c1
+    c5 = ((1.0 - r * sqrt(2.0)) + r2) * c1
+    make_filter(3, list2vct([c1, c2, c3]), list2vct([0.0, c4, c5]))
+  end
+  
+  def make_butter_band_pass(freq, band = nil)
+    doc("make_butter_band_pass(freq, band)
+makes a bandpass Butterworth filter with low edge at FREQ width BAND\n") if freq == :help
+    d = 2.0 * cos(2.0 * PI * freq / srate())
+    c = 1.0 / tan(PI * band / srate())
+    c1 = 1.0 / (1.0 + c)
+    c2 = 0.0
+    c3 = -c1
+    c4 = -c * d * c1
+    c5 = (c - 1.0) * c1
+    make_filter(3, list2vct([c1, c2, c3]), list2vct([0.0, c4, c5]))
+  end
+  
+  def make_butter_band_reject(freq, band = nil)
+    doc("make_butter_band_reject(freq, band)
+makes a band-reject Butterworth filter with low edge at FREQ width BAND\n") if freq == :help
+    d = 2.0 * cos(2.0 * PI * freq / srate())
+    c = tan(PI * band / srate())
+    c1 = 1.0 / (1.0 + c)
+    c2 = -d * c1
+    c3 = c1
+    c4 = c2
+    c5 = (1.0 - c) * c1
+    make_filter(3, list2vct([c1, c2, c3]), list2vct([0.0, c4, c5]))
+  end
+  
+  def down_oct(h = nil)
+    doc("down_oct()
+tries to move a sound down an octave\n") if h == :help
+    len = frames()
+    pow2 = (log(len) / log(2)).ceil
+    fftlen = (2 ** pow2).round
+    fftscale = 1.0 / fftlen
+    rl1 = samples2vct(0, fftlen)
+    im1 = make_vct(fftlen)
+    fft(rl1, im1, 1)
+    vct_scale!(rl1, fftscale)
+    vct_scale!(im1, fftscale)
+    rl2 = make_vct(2 * fftlen)
+    im2 = make_vct(2 * fftlen)
+    k = fftlen / 2
+    j = fftlen + fftlen / 2
+    (0...(fftlen / 2)).each do |i|
+      vct_set!(rl2, i, rl1[i])
+      vct_set!(rl2, j, rl1[k])
+      vct_set!(im2, i, im1[i])
+      vct_set!(im2, j, im1[k])
+      k += 1
+      j += 1
+    end
+    fft(rl2, im2, -1)
+    vct2samples(0, 2 * fftlen, rl2)
+  end
+
+  def spike(h = nil)
+    doc("spike()
+multiplies successive samples together to make a sound more spikey\n") if h == :help
+    x1 = x2 = 0.0
+    amp = maxamp()
+    map_chan(lambda do |x0|
+	       res = (x0 / (amp * amp)) * x2.abs * x1.abs
+	       x2 = x1
+	       x1 = x0
+	       res
+             end)
+  end
+
+  def zero_phase(h = nil)
+    doc("zero_phase()
+calls fft, sets all phases to 0, and un-ffts\n") if h == :help
+    len = frames()
+    pow2 = (log(len) / log(2)).ceil
+    fftlen = (2 ** pow2).round
+    fftscale = 1.0 / fftlen
+    rl = samples2vct(0, fftlen)
+    old_pk = vct_peak(rl)
+    im = make_vct(fftlen)
+    fft(rl, im, 1)
+    rectangular2polar(rl, im)
+    vct_scale!(rl, fftscale)
+    vct_scale!(im, 0.0)
+    fft(rl, im, -1)
+    pk = vct_peak(rl)
+    vct2samples(0, len, vct_scale!(rl, old_pk / pk))
+  end
+
+  def rotate_phase(func)
+    doc("rotate_phase(func)
+calls fft, applies FUNC to each phase, then un-ffts\n") if func == :help
+    len = frames()
+    pow2 = (log(len) / log(2)).ceil
+    fftlen = (2 ** pow2).round
+    fftlen2 = (fftlen / 2).round
+    fftscale = 1.0 / fftlen
+    rl = samples2vct(0, fftlen)
+    old_pk = vct_peak(rl)
+    im = make_vct(fftlen)
+    fft(rl, im, 1)
+    rectangular2polar(rl, im)
+    vct_scale!(rl, fftscale)
+    vct_set!(im, 0, 0.0)
+    j = fftlen - 1
+    (1...fftlen2).each do |i|
+      vct_set!(im, i, func.call(vct_ref(im, i)))
+      vct_set!(im, j, -vct_ref(im, i))
+      j -= 1
+    end
+    polar2rectangular(rl, im)
+    fft(rl, im, -1)
+    pk = vct_peak(rl)
+    vct2samples(0, len, vct_scale!(rl, old_pk / pk))
+  end
+end
+
+module Env
+  doc "#{self.class} #{self.name}
+contains the envelope_interp() only. It is needed by module Moog (see
+env.scm)\n"
+
+  def envelope_interp(*args)
+    doc("envelope_interp(*args)
+envelope_interp(x, env, base = 1.0) -> value of env at x;
+base controls connecting segment type:
+envelope_interp(.3 [0, 0, 0.5, 1, 1, 0]) -> 0.6\n") if args.first == :help
+    x = args[0]
+    env = args[1]
+    base = args[2]
+    if not env
+      0.0
+    elsif x <= env[0] or env[2..-1].empty?
+      env[1]
+    elsif env[2] > x
+      if env[1] == env[3] or (base and base == 0.0)
+        env[1]
+      elsif (not base) or base == 1.0
+        env[1] + (x - env[0]) * (env[3] - env[1]) / (env[2] - env[0])
+      else
+        env[1] + (env[3] - env[1]) / (base - 1.0) *
+                                     ((base ** ((x - env[0]) / (env[2] - env[0]))) - 1.0)
+      end
+    else
+      envelope_interp(x, env[2..-1])
+    end
+  end
+end
+
+module Moog
+  doc "#{self.class} #{self.name}
+Moog style four pole lowpass filter clm unit generator
+  low pass, 24db/Oct, variable resonance, warm, analog sound ;-)
+  [all this digital wizardry and we're back where we started!]
+
+original C instrument by Tim Stilson
+translation into clm and tuning by 
+  Fernando Lopez-Lezcano, nando@ccrma.stanford.edu
+  http://www-ccrma.stanford.edu/~nando/clm/moog
+
+translated to Snd scheme function by Bill
+(and translated to Snd ruby function by M. Scholz)\n"
+  
+  MOOG_GAINTABLE = vct(0.999969, 0.990082, 0.980347, 0.970764, 0.961304, 0.951996,
+                       0.94281, 0.933777, 0.924866, 0.916077, 0.90741, 0.898865,
+                       0.890442, 0.882141, 0.873962, 0.865906, 0.857941, 0.850067,
+                       0.842346, 0.834686, 0.827148, 0.819733, 0.812378, 0.805145,
+                       0.798004, 0.790955, 0.783997, 0.77713, 0.770355, 0.763672,
+                       0.75708, 0.75058, 0.744141, 0.737793, 0.731537, 0.725342,
+                       0.719238, 0.713196, 0.707245, 0.701355, 0.695557, 0.689819,
+                       0.684174, 0.678558, 0.673035, 0.667572, 0.66217, 0.65686,
+                       0.651581, 0.646393, 0.641235, 0.636169, 0.631134, 0.62619,
+                       0.621277, 0.616425, 0.611633, 0.606903, 0.602234, 0.597626,
+                       0.593048, 0.588531, 0.584045, 0.579651, 0.575287, 0.570953,
+                       0.566681, 0.562469, 0.558289, 0.554169, 0.550079, 0.546051,
+                       0.542053, 0.538116, 0.53421, 0.530334, 0.52652, 0.522736,
+                       0.518982, 0.515289, 0.511627, 0.507996, 0.504425, 0.500885,
+                       0.497375, 0.493896, 0.490448, 0.487061, 0.483704, 0.480377,
+                       0.477081, 0.473816, 0.470581, 0.467377, 0.464203, 0.46109,
+                       0.457977, 0.454926, 0.451874, 0.448883, 0.445892, 0.442932,
+                       0.440033, 0.437134, 0.434265, 0.431427, 0.428619, 0.425842,
+                       0.423096, 0.42038, 0.417664, 0.415009, 0.412354, 0.409729,
+                       0.407135, 0.404572, 0.402008, 0.399506, 0.397003, 0.394501,
+                       0.392059, 0.389618, 0.387207, 0.384827, 0.382477, 0.380127,
+                       0.377808, 0.375488, 0.37323, 0.370972, 0.368713, 0.366516,
+                       0.364319, 0.362122, 0.359985, 0.357849, 0.355713, 0.353607,
+                       0.351532, 0.349457, 0.347412, 0.345398, 0.343384, 0.34137,
+                       0.339417, 0.337463, 0.33551, 0.333588, 0.331665, 0.329773,
+                       0.327911, 0.32605, 0.324188, 0.322357, 0.320557, 0.318756,
+                       0.316986, 0.315216, 0.313446, 0.311707, 0.309998, 0.308289,
+                       0.30658, 0.304901, 0.303223, 0.301575, 0.299927, 0.298309,
+                       0.296692, 0.295074, 0.293488, 0.291931, 0.290375, 0.288818,
+                       0.287262, 0.285736, 0.284241, 0.282715, 0.28125, 0.279755,
+                       0.27829, 0.276825, 0.275391, 0.273956, 0.272552, 0.271118,
+                       0.269745, 0.268341, 0.266968, 0.265594, 0.264252, 0.262909,
+                       0.261566, 0.260223, 0.258911, 0.257599, 0.256317, 0.255035, 0.25375)
+  MOOG_FREQTABLE = [0, -1,
+                    0.03311111, -0.9,
+                    0.06457143, -0.8,
+                    0.0960272, -0.7,
+                    0.127483, -0.6,
+                    0.1605941, -0.5,
+                    0.1920544, -0.4,
+                    0.22682086, -0.3,
+                    0.2615873, -0.2,
+                    0.29801363, -0.1,
+                    0.33278003, -0.0,
+                    0.37086168, 0.1,
+                    0.40893877, 0.2,
+                    0.4536417, 0.3,
+                    0.5, 0.4,
+                    0.5463583, 0.5,
+                    0.5943719, 0.6,
+                    0.6556281, 0.7,
+                    0.72185487, 0.8,
+                    0.8096009, 0.9,
+                    0.87913835, 0.95,
+                    0.9933787, 1,
+                    1, 1]
+
+  include Env
+  
+  def make_moog_filter(freq, q = nil)
+    doc("make_moog_filter(freq, q)
+makes a new moog-filter generator. FREQ is the cutoff in Hz, Q sets
+the resonance: 0 = no resonance, 1: oscillates at FREQ\n") if freq == :help
+    [freq, q, make_vct(4), 0.0, envelope_interp(freq / (srate() * 0.5), MOOG_FREQTABLE)]
+  end
+
+  def moog_filter(m, sig = nil)
+    doc("moog_filter(m, sig)
+is the generator associated with make_moog_filter\n") if m == :help
+    saturate = lambda do |x| [[x, -0.95].max, 0.95].min end
+    fc = m[4]
+    s = m[2]
+    a = 0.25 * (sig - m[3])
+    0.upto(3) do |cell|
+      st = vct_ref(s, cell)
+      a = saturate.call(a + fc * (a - st))
+      vct_set!(s, cell, a)
+      a = saturate.call(a + st)
+    end
+    out = a
+    ix = fc * 99.0
+    ixint = ix.round
+    ixfrac = ix - ixint
+    m[3] = a * m[1] *
+                ((1 - ixfrac) * vct_ref(MOOG_GAINTABLE, ixint + 99) +
+                 ixfrac * vct_ref(MOOG_GAINTABLE, ixint + 100))
+    out
+  end
+end
+
+# examp.rb ends here
