@@ -5,36 +5,35 @@ marked with "SOMEDAY".  Things I'm dithering about are marked "PERHAPS".
 
 
 More translations! (See po/snd.pot for the list of translatable
-  strings, and po/de.po for an example).
+    strings, and po/de.po for an example).
 
 A graphic-EQ effect (effects.scm) -- this could use the CLM formant generator. 
-  A CLM version (non-graphical) is in clm-ins.scm.
+    A CLM version (non-graphical) is in clm-ins.scm.
 
 A better pitch tracker than spot-freq in examp.scm.
 
 dB display in VU meters (in the record dialog -- the dB value is ready
-  to go, but the VU labels need different numbers).  A nicer VU meter 
-  background (perhaps from OpenGL?).
+    to go, but the VU labels need different numbers).  A nicer VU meter 
+    background (perhaps from OpenGL?).
 
 dlocsig from CLM to Scheme + a path envelope editor dialog
-  grani.ins from CL to Scheme
 
 A CD building script.
 
 sdif file support (all I need is a routine to translate from
-  sdif to aifc or some such format).
+    sdif to aifc or some such format).
 
 portaudio support (rather than audio.c, at least for OSX)
-  (Is this project dead?)
+    (Is this project dead?)
 
 "waterfall" spectrum display in oscope.scm.
 
 A robust noise reduction technique.
 
 A Qt version of Snd?  An OSX-native version?  (These
-  are large projects -- say 6 months of tedious typing;
-  Qt requires C++, I think, and Cocoa may require Objective-C -- 
-  major drawbacks).
+    are large projects -- say 6 months of tedious typing;
+    Qt requires C++, I think, and Cocoa may require Objective-C -- 
+    major drawbacks).
 
 A closer tie-in to CM.
 
@@ -53,3 +52,15 @@ Physical model of a thunder machine.
 adaptive notch filter
 
 singer.ins -> Donald Duck Transform
+
+Should the Scheme/Ruby files be gettext-ized?  Here's a Guile example:
+
+    (use-modules (ice-9 format))
+    (catch #t (lambda () (setlocale LC_ALL "")) (lambda args #f))
+    (textdomain "hello-guile")
+    (bindtextdomain "hello-guile" "@localedir@") ; presumably set by automake?
+    (define _ gettext)
+    (display (_ "Hello, world!"))
+    (newline)
+    (format #t (_ "This program is running as process number ~D.") (getpid))
+    (newline)

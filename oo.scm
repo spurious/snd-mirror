@@ -1,4 +1,3 @@
-
 #!
 
 ;;OO is a message based system to cause less typing doing object oriented programming with guile.
@@ -52,7 +51,7 @@
 
 (font-lock-add-keywords
  'scheme-mode
- '(("(\\(var\\)\\>\\s-*(?\\(\\sw+\\)?"
+ '(("(\\(def-var\\)\\>\\s-*(?\\(\\sw+\\)?"
     (1 font-lock-keyword-face)
     (2 font-lock-variable-name-face
        nil t))))
@@ -101,6 +100,10 @@
      (let* ((methods (make-hash-table 256))
 	    (supers '())
 	    (super (lambda args (c-display "\n\nError! \"super\" is not a method. Perhaps you ment \"Super\"?\n\n")))
+	    (add-super! (lambda (asuper)
+			  (if (null? supers)
+			      (set! super asuper))
+			  (set! supers (cons asuper supers))))
 	    (dispatch-preds #f)
 	    (dispatch-funcs #f)
 	    (add-dispatcher (lambda (pred func)
@@ -115,7 +118,11 @@
 				     (set! dispatch-funcs (append dispatch-funcs (list func)))))))
 	    (add-method-do (lambda (name func)
 			     (hashq-set! methods name func))))
-       (var class-name ',(car def))
+       (def-var class-name ',(car def))
+
+       (def-method (add-method name func)
+	 (add-method-do name func))
+       
        (def-method (dir)
 	 (append (cons this->class-name
 		       (hash-fold (lambda (key value s) (cons key s)) '() 
@@ -171,11 +178,23 @@
        this)))
 
 
-(define-macro (add-method nameandvars . body)
+(define-macro (add-method2 nameandvars . body)
   `(add-method-do ',(car nameandvars) (lambda ,(cdr nameandvars) ,@body)))
 
-(define-macro (add-method* nameandvars . body)
+(define-macro (add-method2* nameandvars . body)
   `(add-method-do ',(car nameandvars) (lambda* ,(cdr nameandvars) ,@body)))
+
+#!
+(def-class (gakk)
+  (def-var a 5))
+(define g (gakk))
+(-> g a)
+(-> g add-method 'tja (lambda (c)
+			 90))
+(-> g dir)
+(-> g tja 2)
+
+!#
 
 (define-macro (def-method nameandvars . body)
   (if (and (list? nameandvars)
@@ -183,22 +202,22 @@
 	       (member #:rest nameandvars)
 	       (member #:key nameandvars)))
       `(define ,(symbol-append 'this-> (car nameandvars))
-	 (add-method* ,nameandvars ,@body))
+	 (add-method2* ,nameandvars ,@body))
       `(define ,(symbol-append 'this-> (car nameandvars))
-	 (add-method ,nameandvars ,@body))))
+	 (add-method2 ,nameandvars ,@body))))
 
-(define-macro (var name initial)
+(define-macro (def-var name initial)
   (let ((thisname (symbol-append 'this-> name)))
     `(define ,thisname
        (begin
-	 (add-method (,name . rest) (if (null? rest) ,thisname (set! ,thisname (car rest))))
+	 (add-method2 (,name . rest) (if (null? rest) ,thisname (set! ,thisname (car rest))))
 	 ,initial))))
 
 (define-macro (def-constructor nameandvars . body)
   (let* ((name (car nameandvars))
 	(args (cdr nameandvars))
 	(name2 (symbol-append 'constructor- name)))
-    `(add-method* ,(cons name2 args) ,@body)))
+    `(add-method2* ,(cons name2 args) ,@body)))
 
 (define (object? o)
   (and (procedure? o)
@@ -213,9 +232,7 @@
 
 (define-macro (Super . rest)
   `(define dassupers
-     (begin
-       (set! supers (list ,@rest))
-       (set! super (car supers)))))
+     (for-each add-super! (list ,@rest))))
 
 
 (define (void . rest)
@@ -253,6 +270,21 @@
 
 
 #!
+(def-class (<gakk>)
+  (define a #f)
+  (define b #f)
+  (set! a 5)
+  (set! b a))
+  (define a 5)
+  (define b a)
+  )
+(define (<gakk>)
+  (define a 5)
+  (define b a)
+  b)
+
+(define gakk (<gakk>))
+
 (class (<wefwe> wrg)
   (def-method (ai val)
     5))
@@ -264,7 +296,7 @@
 (-> a ai 5)
 
 (def-class (<super1> sum)
-  (var avar 2)
+  (def-var avar 2)
   (def-method (super1)
     (display "super1 sum: ")(display sum)
     (newline)))

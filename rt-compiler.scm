@@ -1,10 +1,10 @@
 
 #!
 
-rt-compile.scm
+rt-compiler.scm
 -Kjetil S. Matheussen/Notam, 2005
 
-rt-compile.scm is developed with support from Notam/Oslo:
+rt-compiler.scm is developed with support from Notam/Oslo:
 http://www.notam02.no
 
 
@@ -17,7 +17,7 @@ change. This file is currently under heavy development.
 ***************************************************************
 Introduction
 ************
-rt-compile provides various functions and macros to compile]1]
+rt-compiler provides various functions and macros to compile]1]
 and run simple lisp functions[2[.
 
 The original purpose of the langauge was to generate code that
@@ -59,7 +59,6 @@ Features
 -Guile can both read and write variables which is used inside
  the compiled functions.
 -Lisp macros
--Recursion
 -Most of Common Lisp Music is supported as well as various other snd and sndlib functions.
 -It _should_ not be possible to cause a segfault by running
  a compiled functions. But for now, I know that at least when dividing or moduling by
@@ -451,7 +450,7 @@ Notes
 !#
 
 
-
+(provide 'snd-rt-compiler.scm)
 
 (use-modules (srfi srfi-1))
 
@@ -493,7 +492,11 @@ Notes
 	 "#include <clm.h>"
 	 "#include <xen.h>"
 	 "#include <clm2xen.h>"
-	 
+
+	 (public
+	  (<void> rt-set-float (lambda ((<SCM> das_float) (<float> newval))
+				 (set! (SCM_REAL_VALUE das_float) newval))))
+					
 	 (<SCM> gakk (lambda ((<SCM> scm))
 		       (return (MAKE_POINTER (XEN_TO_MUS_ANY scm)))))
 	 (<SCM> gakk2 (lambda ((<SCM> sym) (<SCM> toplevel))
@@ -943,7 +946,7 @@ Notes
        (while (rt-must-funcify? #t ret)
 	      (if (> tries 40)
 		  (begin
-		    (c-display "rt-compile.scm: rt-funcify. Had to give up trying to funcify expression" term ".")
+		    (c-display "rt-compiler.scm: rt-funcify. Had to give up trying to funcify expression" term ".")
 		    (c-display "Yes, this is a bug in the compiler. Please send the code you tried to compile to k.s.matheussen@notam02.no. Thanks!")
 		    (return #f)))
 	      (set! tries (1+ tries))
@@ -1073,6 +1076,127 @@ Notes
 !#
 
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; rt-uniqify-varnames makes all internal variable names unique
+;; and transforms all lisp let/let*/letrecs into the eval-c version
+;; of let*.
+
+(define rt-get-unique-name
+  (let ((n 0))
+    (lambda (orgname)
+      (set! n (1+ n))
+      (symbol-append orgname '_u (string->symbol (number->string n))))))
+				 
+(define (rt-uniqify-varnames term)
+
+  (define (uniqify varlist term)
+    (cond ((null? term) term)
+	  ((number? term) term)
+	  
+	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	  ;; A variable
+          ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	  ((symbol? term)
+
+	   (let ((var (assq term varlist)))
+	     (if var
+		 (cadr var)
+		 term)))
+	   
+	  ((eq? 'lambda (car term))
+	   (let* ((varnames (map (lambda (t)
+				   (list (cadr t)
+					 (rt-get-unique-name (cadr t))))
+				 (cadr term)))
+		  (lambdaargs (map (lambda (t name)
+				     (list (car t)
+					   (cadr name)))
+				   (cadr term)
+				   varnames)))
+	     `(lambda ,lambdaargs
+		,@(map (lambda (t)
+			 (uniqify (append varnames varlist) t))
+		       (cddr term)))))
+	  
+	  ((eq? 'let (car term))
+	   (let* ((newvarlist varlist)
+		  (vardecls (map-in-order (lambda (vardecl)
+					    (let* ((uname (rt-get-unique-name (car vardecl)))
+						   (ret `(,uname ,(cadr vardecl) ,(uniqify varlist (caddr vardecl)))))
+					       (set! newvarlist (cons (list (car vardecl) uname) newvarlist))
+					       (c-display "2" newvarlist)
+					       ret))
+					  (cadr term))))
+	     `(let* ,vardecls
+		,@(map (lambda (t)
+			 (c-display "1" newvarlist)
+			 (uniqify newvarlist t))
+		       (cddr term)))))
+	  
+	  ((eq? 'let* (car term))
+	   (let* ((body (cddr term))
+		  (vardecls (map-in-order (lambda (vardecl)
+					    (let* ((uname (rt-get-unique-name (car vardecl)))
+						   (ret `(,uname ,(cadr vardecl) ,(uniqify varlist (caddr vardecl)))))
+					      (set! varlist (cons (list (car vardecl) uname) varlist))
+					      ret))
+					  (cadr term))))
+	     `(let* ,vardecls
+		,@(map (lambda (t)
+			 (uniqify varlist t))
+		       body))))
+	  
+	  ((eq? 'letrec (car term))
+	   (let* ((body (cddr term))
+		  (newvarlist (append (map (lambda (vardecl)
+					     (list (car vardecl)
+						   (rt-get-unique-name (car vardecl))))
+					   (cadr term))
+				      varlist))
+		  (vardecls (map-in-order (lambda (vardecl var)
+					    (list (cadr var) (cadr vardecl) (uniqify newvarlist (caddr vardecl))))
+					  (cadr term)
+					  newvarlist)))
+	     `(let* ,vardecls
+		,@(map (lambda (t)
+			 (uniqify newvarlist t))
+		       body))))
+	  (else
+	   (map (lambda (t)
+		  (uniqify varlist t))
+		term))))
+
+  (uniqify '() term))
+
+
+#!
+(letrec ((a b)
+	 (b 9))
+  (+ a))
+
+(rt-uniqify-varnames '(lambda ((<int> a) (<float> b))
+			(+ a b c)))
+
+(rt-uniqify-varnames '(lambda ((<int> a) (<float> b))
+			(letrec ((c <float> 2)
+			      (d <float> 4)
+			      (e <float> e)
+			      (f <float> d)
+			      (g <float> h))
+			  (+ e g h))))
+(lambda ((<int> a_u6) (<float> b_u7))
+  (let* ((c_u8 <float> 2)
+	 (d_u9 <float> 4)
+	 (e_u10 <float> e)
+	 (f_u11 <float> d)
+	 (g_u12 <float> h))
+    (+ e g h)))
+
+!#
+					   
+  
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; rt-fix-various does various things.
@@ -1108,29 +1232,29 @@ Notes
 	     ((and (eq? 'define (car term))
 		   (pair? (cadr term)))
 	      (if (< (length term) 3)
-		  (check-failed "rt-compile.scm/rt-fix-various: Bad define block: " term ".")
+		  (check-failed "rt-compiler.scm/rt-fix-various: Bad define block: " term ".")
 		  `(define ,(caadr term) ,(fix `(lambda ,(cdadr term)
 						  ,@(cddr term))))))
 	     
 	     ((eq? 'let* (car term))
 	      (if (< (length term) 3)
-		  (check-failed "rt-compile.scm/rt-fix-various: Bad let*-form: " term ".")
+		  (check-failed "rt-compiler.scm/rt-fix-various: Bad let*-form: " term ".")
 		  (if (not (list? (cadr term)))
-		      (check-failed "rt-compile.scm/rt-fix-various: First argument to let* must be a list of variables: " term ".")
+		      (check-failed "rt-compiler.scm/rt-fix-various: First argument to let* must be a list of variables: " term ".")
 		      (begin
 			(for-each (lambda (var)
 				    (cond ((not (list? var))
-					   (check-failed "rt-compile.scm/rt-fix-various: \"" var "\" is not a list in expression " term "."))
+					   (check-failed "rt-compiler.scm/rt-fix-various: \"" var "\" is not a list in expression " term "."))
 					  ((not (symbol? (car var)))
-					   (check-failed "rt-compile.scm/rt-fix-various: Illegal variable name: " (car var) " in expression " term "."))
+					   (check-failed "rt-compiler.scm/rt-fix-various: Illegal variable name: " (car var) " in expression " term "."))
 					  ((and (= 3 (length var))
 						(not (or (eq? '<int> (car var))
 							 (eq? '<float> (car var))
 							 (eq? '<int> (cadr var))
 							 (eq? '<float> (cadr var)))))
-					   (check-failed "rt-compile.scm/rt-fix-various: Unsupported type: " (car var) " in expression " term "."))
+					   (check-failed "rt-compiler.scm/rt-fix-various: Unsupported type: " (car var) " in expression " term "."))
 					  ((= 1 (length var))
-					   (check-failed "rt-compile.scm/rt-fix-various: Variable \"" (car var) "\" in expression " term " does not have a value assigned."))))
+					   (check-failed "rt-compiler.scm/rt-fix-various: Variable \"" (car var) "\" in expression " term " does not have a value assigned."))))
 				  (cadr term))
 			
 			`(let* ,(map (lambda (t)
@@ -1151,15 +1275,17 @@ Notes
 	     
 	     (else
 	      (if (not (symbol? (car term)))
-		  (check-failed "rt-compile.scm/rt-fix-various: Illegal function call:" term ".")
-		  (let* ((args (map fix (cdr term)))
+		  (check-failed "rt-compiler.scm/rt-fix-various: Illegal function call:" term ".")
+		  (let* ((args (cdr term))
+			 ;;((args (map fix (cdr term)))
 			 (a (cons (symbol-append rt-macro-prefix (car term)) args))
 			 (b (macroexpand-1 a )))
 		    (if (not b)
 			(return #f)
 			(if (not (equal? a b))
 			    (fix b)
-			    (cons (car term) args))))))))
+			    ;;(cons (car term) args))))))))
+			    (map fix term))))))))
      (fix term))))
      
 
@@ -1182,8 +1308,8 @@ Notes
 		     (+ 2 3))))
 
 
-(rt-3 '(lambda (a b c)
-	 (or a (and a))))
+(rt-3.5 '(lambda (a b c)
+	   (or a (and a))))
 
 (rt-3 '(lambda (a b c)
 	 (and a b c
@@ -1229,8 +1355,9 @@ Notes
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; rt-check-calls does the following:
 ;; *checks that that the term is a legal expression.
-;; *find guile variables that is read
-;; *find guile variables that is written to
+;; *find guile number variables that is read
+;; *find guile pointer variables that is read
+;; *find guile number variables that is written to
 ;;
 ;; rt-replace-define-with-let*s must have been called on the term before calling.
 ;;
@@ -1240,6 +1367,7 @@ Notes
    (lambda (return)
 
      (define (check-failed . args)
+       (newline)
        (apply c-display args)
        (return #f))
 
@@ -1262,11 +1390,11 @@ Notes
 		   (if (and (is-number? (-> rt-type rt-type))
 			    (is-number? type))
 		       (set-car! (cdr old) (hashq-ref rt-types '<float>))
-		       (check-failed "rt-compile.scm/rt-check-calls: Different types for guile variable \"" varname "\": " type "/" (cadr old) ".")))
+		       (check-failed "rt-compiler.scm/rt-check-calls: Different types for guile variable \"" varname "\": " type "/" (-> rt-type rt-type) ".")))
 	       (set-car! (cddr old) (or iswriting (caddr old))))
 	     (let ((rt-type (hashq-ref rt-types type)))
 	       (if (not rt-type)
-		   (check-failed "rt-compile.scm/rt-check-calls: Unknown type " type ".")
+		   (check-failed "rt-compiler.scm/rt-check-calls: Unknown type " type ".")
 		   (set! external-vars (cons (list varname rt-type iswriting)
 					     external-vars)))))))
    
@@ -1285,24 +1413,24 @@ Notes
 				     (let ((func (hashq-ref rt-funcs (car term))))
 				       (if func
 					   (-> func return-type)
-					   (check-failed "rt-compile.scm/rt-check-calls(2): Unknown function \"" (car term) "\": " term)))))))
+					   (check-failed "rt-compiler.scm/rt-check-calls(2): Unknown function \"" (car term) "\": " term)))))))
 	     (else 'unknown-type)))
      
        
      (define (check-call varlist term)
        (c-display "check-call" term)
        (if (not (symbol? (car term)))
-	   (check-failed "rt-compile.scm/rt-check-calls: Illegal term: " term)
+	   (check-failed "rt-compiler.scm/rt-check-calls: Illegal term: " term)
 	   (let ((func (assq (car term) varlist)))
 	     (if func
 		 (begin
 		   (if (or (= 2 (length func))
 			   (not (list? (caddr func)))
 			   (not (eq? 'lambda (car (caddr func)))))
-		       (check-failed "rt-compile.scm/rt-check-calls: Local variable \"" (car term) "\" is not a function:" term))
+		       (check-failed "rt-compiler.scm/rt-check-calls: Local variable \"" (car term) "\" is not a function:" term))
 		   (if (not (= (length (cadr (caddr func)))
 			       (- (length term) 1)))
-		       (check-failed "rt-compile.scm/rt-check-calls: Illegal number of argumentes to local function \"" (car term) "\":" term))
+		       (check-failed "rt-compiler.scm/rt-check-calls: Illegal number of argumentes to local function \"" (car term) "\":" term))
 		   (for-each (lambda (aterm) (check-calls varlist aterm))
 			     term)
 		   (for-each (lambda (termarg)
@@ -1311,13 +1439,13 @@ Notes
 				     (add-external-var termarg '<float> #f)
 				     (if (and (not (eq? 'number ret-type))
 					      (not (is-number? ret-type)))
-					 (check-failed "rt-compile.scm/rt-check-calls: Illegal argument \"" termarg "\" to local function \"" (car term) "\"."
+					 (check-failed "rt-compiler.scm/rt-check-calls: Illegal argument \"" termarg "\" to local function \"" (car term) "\"."
 						       "expected a number, found" ret-type ", in expression:" term)))))
 			     (cdr term)))
 		 (begin
 		   (set! func (hashq-ref rt-funcs (car term)))
 		   (if (not func)
-		       (check-failed "rt-compile.scm/rt-check-calls: Unknown function \"" (car term) "\": " term)
+		       (check-failed "rt-compiler.scm/rt-check-calls: Unknown function \"" (car term) "\": " term)
 		       (if (not (-> func legal-number-of-arguments? term))
 			   (return #f)
 			   (begin
@@ -1331,11 +1459,11 @@ Notes
 						  (add-external-var termarg argtype #f))
 						 ((or (is-number? ret-type)
 						      (eq? 'number ret-type) (if (not (is-number? argtype))
-										 (check-failed "rt-compile.scm/rt-check-calls: Wrong type in: " term ". "
+										 (check-failed "rt-compiler.scm/rt-check-calls: Wrong type in: " term ". "
 											       termarg " is not a " argtype "."))))
 						 (else
 						  (if (not (eq? ret-type argtype))
-						      (check-failed "rt-compile.scm/rt-check-calls: Wrong type in: " term ". "
+						      (check-failed "rt-compiler.scm/rt-check-calls: Wrong type in: " term ". "
 								    (car termarg) " Does not return " argtype "."))))))
 				       (cdr term)
 				       (list-tabulate (length (cdr term))
@@ -1352,16 +1480,16 @@ Notes
 	     ;; LAMBDA
 	     ((eq? 'lambda (car term))
 	      (if (< (length term) 3)
-		  (check-failed "rt-compile.scm/rt-check-calls: Bad lambda-form: " term ".")
+		  (check-failed "rt-compiler.scm/rt-check-calls: Bad lambda-form: " term ".")
 		  (if (not (list? (cadr term)))
-		      (check-failed "rt-compile.scm/rt-check-calls: Second argument for lambda is not a list: " term ".")	       
+		      (check-failed "rt-compiler.scm/rt-check-calls: Second argument for lambda is not a list: " term ".")	       
 		      (if (not (= (length (cadr term))
 				  (length (delete-duplicates (cadr term)))))
-			  (check-failed "rt-compile.scm/rt-check-calls: Same argument name for lambda function used more than once: " term ".")
+			  (check-failed "rt-compiler.scm/rt-check-calls: Same argument name for lambda function used more than once: " term ".")
 			  (begin
 			    (for-each (lambda (varname)
 					(if (not (symbol? (cadr varname)))
-					    (check-failed "rt-compile.scm/rt-check-calls: Illegal variable \"" (cadr varname) "\" in lambda-form: " term ".")))
+					    (check-failed "rt-compiler.scm/rt-check-calls: Illegal variable \"" (cadr varname) "\" in lambda-form: " term ".")))
 				      (cadr term))
 			    (for-each (lambda (aterm)
 					(c-display "cadrterm" (cadr term))
@@ -1375,9 +1503,9 @@ Notes
 	     ;; SET!
 	     ((eq? 'set! (car term))
 	      (if (not (symbol? (cadr term)))
-		  (check-failed "rt-compile.scm/rt-check-calls(2): Illegal set! term: " term)
+		  (check-failed "rt-compiler.scm/rt-check-calls(2): Illegal set! term: " term)
 		  (if (not (= 3 (length term)))
-		      (check-failed "rt-compile.scm/rt-check-calls(3): Illegal set! term: " term)
+		      (check-failed "rt-compiler.scm/rt-check-calls(3): Illegal set! term: " term)
 		      (let ((avar (assq (cadr term) varlist)))
 			(if (not avar)
 			    (add-external-var (cadr term) '<float> #t))
@@ -1386,7 +1514,7 @@ Notes
 	     ;; BEGIN
 	     ((eq? 'begin (car term))
 	      (if (null? (cdr term))
-		  (check-failed "rt-compile.scm/rt-check-calls: begin needs a body: " term ".")
+		  (check-failed "rt-compiler.scm/rt-check-calls: begin needs a body: " term ".")
 		  (for-each (lambda (aterm) (check-calls varlist aterm))
 			    (cdr term))))
 
@@ -1396,7 +1524,11 @@ Notes
 		(for-each (lambda (var)
 			    (set! newvarlist (cons var
 						   newvarlist))
-			    (check-calls newvarlist (caddr var)))
+			    (if (symbol? (caddr var))
+				(let ((avar (assq term varlist)))
+				  (if (not avar)
+				      (add-external-var (caddr var) (cadr var) #f)))
+				(check-calls newvarlist (caddr var))))
 			  (cadr term))
 		(for-each (lambda (aterm) (check-calls newvarlist aterm))
 			  (cddr term))))
@@ -1404,9 +1536,9 @@ Notes
 	     ;; IF (not used anymore)
 	     ((eq? 'if (car term))
 	      (if (< (length term) 3)
-		  (check-failed "rt-compile.scm/rt-check-calls: To few arguments for if:" term ".")
+		  (check-failed "rt-compiler.scm/rt-check-calls: To few arguments for if:" term ".")
 		  (if (> (length term) 4)
-		      (check-failed "rt-compile.scm/rt-check-calls: To many arguments for if:" term ".")))
+		      (check-failed "rt-compiler.scm/rt-check-calls: To many arguments for if:" term ".")))
 	      (check-calls varlist (cadr term))
 	      (check-calls varlist (caddr term))
 	      (if (= (length term) 4)
@@ -1416,20 +1548,23 @@ Notes
 	      (check-call varlist term))))
      
      (if (not (eq? 'lambda (car term)))
-	 (check-failed "rt-compile.scm/rt-check-calls: This is no a lambda function: " term))
+	 (check-failed "rt-compiler.scm/rt-check-calls: This is no a lambda function: " term))
      
      (check-calls '() term)
 
-     (c-display "external-vars:" external-vars)
+     ;;(c-display "external-vars:" external-vars)
 
-     (let ((extvars '())
-	   (extvars-writing '()))
+     (let ((extnumbers '())
+	   (extpointers '())
+	   (extnumbers-writing '()))
        (for-each (lambda (extvar)
 		   (if (caddr extvar)
-		       (set! extvars-writing (cons extvar extvars-writing))
-		       (set! extvars (cons extvar extvars))))
+		       (set! extnumbers-writing (cons extvar extnumbers-writing))
+		       (if (is-number? (-> (cadr extvar) rt-type))
+			   (set! extnumbers (cons extvar extnumbers))
+			   (set! extpointers (cons extvar extpointers)))))
 		 external-vars)
-       (list extvars extvars-writing)))))
+       (list extnumbers extpointers extnumbers-writing)))))
 
 
 #!
@@ -1442,12 +1577,24 @@ Notes
 				 a
 				 b)))
 
-(rt-check-calls '(lambda ((<float> a))
-		   (let* ((b <float> 5)
-			  (c <float> (lambda ((<float> d))
-				       (+ 2 a b))))
-		     (c (c d)))))
-		     
+(+ 2 3)
+
+(rt-check-calls '(lambda ()
+		   (set! osc 9)
+		   (rt-oscil/mus_oscil_0 osc)))
+
+(map car (caddr 
+	  (rt-check-calls '(lambda ((<float> a))
+			     (let* ((b <float> 5)
+				    (c <float> (lambda ((<float> d))
+						 (+ 2 a b))))
+
+			       (c (c d))
+			       (rt-oscil/mus_oscil_0 anosc)
+			       (set! anosc 5)
+			       (set! extw 9)
+			       (+ ext1 ext2))))
+	  ))
 
 !#
 
@@ -1476,7 +1623,7 @@ Notes
   (def-method (transform var)
     (if (not (this->check var))
 	(begin
-	  (c-display "rt-compile/<rt-type>. Wrong type. \"" var "\" is not a" rt-type ".")
+	  (c-display "rt-compiler/<rt-type>. Wrong type. \"" var "\" is not a" rt-type ".")
 	  (throw 'wrong-type))
 	(if transformfunc
 	    (transformfunc var)
@@ -1513,14 +1660,14 @@ Notes
 		      (<= (- (length term) 1)
 			  max-arguments))))
 	(begin
-	  (c-display "rt-compile.scm/rt-check-calls: Wrong number of arguments in \"" term "\". Expected maximum"
+	  (c-display "rt-compiler.scm/rt-check-calls: Wrong number of arguments in \"" term "\". Expected maximum"
 		     max-arguments "arguments for" (car term) ". Found" (- (length term) 1) ".")
 	  #f)
 	(if (not (or (not min-arguments)
 		     (>= (- (length term) 1)
 			 min-arguments)))
 	    (begin
-	      (c-display "rt-compile.scm/rt-check-calls: Wrong number of arguments in \"" term "\". Expected minimum"
+	      (c-display "rt-compiler.scm/rt-check-calls: Wrong number of arguments in \"" term "\". Expected minimum"
 			 min-arguments "arguments for" (car term) ". Found" (- (length term) 1) ".")
 	      #f)
 	    #t)))
@@ -1826,8 +1973,7 @@ Notes
 	ret
 	(let ((var (car rest)))
 	  (if (number? var)
-	      (if (and (number? var)
-		       (= 0 var))
+	      (if (= 0 var)
 		  0
 		  (expand var (cdr rest)))
 	      (if (symbol? var)
@@ -1848,7 +1994,9 @@ Notes
 	0
 	(let ((var (car rest)))
 	  (if (number? var)
-	      var
+	      (if (= 0 var)
+		  (expand (cdr rest))
+		  var)
 	      (if (symbol? var)
 		  `(if ,var
 		       ,var
@@ -1874,12 +2022,18 @@ Notes
   `(begin_p ,@rest))
 
 (define-rt-macro (out val)
-  (let ((varname (string->symbol (eval-c-get-unique-name))))
-    `(let* ((,varname ,val))
-       (if (> (rt-num_outs/num_outs) 0)
-	   (rt-set-outs! 0 (+ (rt-outs/outs 0) ,varname)))
-       (if (> (rt-num_outs/num_outs) 1)
-	   (rt-set-outs! 1 (+ (rt-outs/outs 1) ,varname))))))
+  (if (number-or-symbol? val)
+      `(begin
+	 (if (> (rt-num_outs/num_outs) 0)
+	     (rt-set-outs! 0 (+ (rt-outs/outs 0) ,val)))
+	 (if (> (rt-num_outs/num_outs) 1)
+	     (rt-set-outs! 1 (+ (rt-outs/outs 1) ,val))))
+      (let ((varname (string->symbol (eval-c-get-unique-name))))
+	`(let* ((,varname ,val))
+	   (if (> (rt-num_outs/num_outs) 0)
+	       (rt-set-outs! 0 (+ (rt-outs/outs 0) ,varname)))
+	   (if (> (rt-num_outs/num_outs) 1)
+	       (rt-set-outs! 1 (+ (rt-outs/outs 1) ,varname)))))))
 
 (define-c-macro (rt-outs/outs n)
   (<-> "_rt_funcarg->outs[" (eval-c-parse n) "]"))
@@ -1927,7 +2081,7 @@ thinking loud
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(define (rt-3 term)
+(define (rt-4 term)
   (for-each (lambda (func)
 	      (if term
 		  (set! term (func term))))
@@ -1940,13 +2094,14 @@ thinking loud
 	    (orgargs (cadr term)))
 	(if (not external-vars)
 	    #f
-	    (let ((extvars (car external-vars))
-		  (extvars-writing (cadr external-vars)))
+	    (let ((extnumbers (car external-vars))
+		  (extpointers (cadr external-vars))
+		  (extnumbers-writing (caddr external-vars)))
 	      (set-car! (cdr term)
 			(append (map (lambda (var)
 				       (list (-> (cadr var) c-type)
 					     (car var)))
-				     (append extvars-writing extvars))
+				     (append extnumbers-writing extpointers extnumbers))
 				orgargs))
 	      (for-each (lambda (func)
 			  (if term
@@ -1955,85 +2110,130 @@ thinking loud
 			 rt-remove-unused++	     
 			 rt-funcify
 			 rt-insert-returns))
-	      
-	      ;;(c-display "extvars-writing" extvars-writing)
-	      ;;(c-display "extvars        " extvars)
-	      (if (not term)
-		  #f		  
-		  (let ((funcname (string->symbol (eval-c-get-unique-name)))
-			(rt-funcname (string->symbol (eval-c-get-unique-name)))
-			(rt-innerfuncname (string->symbol (eval-c-get-unique-name)))
-			(funcarg (string->symbol (eval-c-get-unique-name)))
-			(publicargs (append (map (lambda (extvar)
-						   `(<SCM> ,(symbol-append '_rt_scm_ (car extvar))))
-						 extvars-writing)
-					    (map (lambda (extvar)
-						   (list (-> (cadr extvar) c-type) (car extvar)))
-						 extvars)
-					    orgargs)))
-		    (list funcname
-			  rt-funcname
-			  extvars-writing
-			  extvars
+	      (list extnumbers
+		    extpointers
+		    extnumbers-writing
+		    orgargs
+		    term))))))
 
-			  `( (define-struct <func_args>
-			       <int> num_outs
-			       <float-*> outs
-			       <int> num_ins
-			       <float-*> ins
-			       <float> res
-			       <char-*> error
-			       <SCM> errorvariable
-			       <int> errorvarnum)
+(define (rt-3.5 term)
+  (let ((t (rt-4 term)))
+    (if t
+	(cadr (cdddr t)))))
 
-
-			     (functions->public
-			      (<void> ,rt-funcname (lambda ,(cons `(<struct-func_args-*> _rt_funcarg) publicargs)
-						     
-						     ,@(map (lambda (extvar)
-							      `(<float> ,(car extvar)))
-							    extvars-writing)
-						     
-						     (<float> ,rt-innerfuncname (lambda ()
-										  ,@(cddr term)))
-						     
-						     ,@(let ((n -1))
-							 (map-in-order (lambda (extvar)
-									 (let ((name (symbol-append '_rt_scm_ (car extvar))))
-									   (set! n (1+ n))
-									  `(if (|| (SCM_INUMP ,name)
-										   (SCM_BIGP ,name)
-										   (! (SCM_REALP ,name)))
-									       (begin
-										 (set! _rt_funcarg->errorvariable ,name)
-										 (set! _rt_funcarg->errorvarnum ,n)
-										 (set! _rt_funcarg->error (string ,(string-append "\\\""
-																  (symbol->string (car extvar))
-																  "\\\" is not a real float")))
-										 return))))
-								       extvars-writing))
-
-						    ,@(map (lambda (extvar)
-							     (let ((name (symbol-append '_rt_scm_ (car extvar))))
-							       `(set! ,(car extvar) (SCM_REAL_VALUE ,name))))
-							   extvars-writing)
-						    
-						    (set! _rt_funcarg->res (,rt-innerfuncname))
-						    
-						    ,@(map (lambda (extvar)
-							     (let ((name (symbol-append '_rt_scm_ (car extvar))))
-							       `(set! (SCM_REAL_VALUE ,name) ,(car extvar))))
-							   extvars-writing))))
-			     
-			     (public			      
-			      (<float> ,funcname (lambda ,publicargs
-						   (<struct-func_args> ,funcarg "{0}")
-						   (,rt-funcname ,(string-append "&" (symbol->string funcarg)) ,@(map cadr publicargs))
-						   (SCM_ASSERT (== NULL ,(symbol-append funcarg '.error))
-							       ,(symbol-append funcarg '.errorvariable)
-							       ,(symbol-append funcarg '.errorvarnum)
-							       ,(symbol-append funcarg '.error))
-						   (return ,(symbol-append funcarg '.res))))))))))))))
+(define (rt-3 term)
+  (let ((rt-4-result (rt-4 term)))
+    (if (not term)
+	#f
+	(let* ((extnumbers (car rt-4-result))
+	       (extpointers (cadr rt-4-result))
+	       (extnumbers-writing (caddr rt-4-result))
+	       (orgargs (cadddr rt-4-result))
+	       (term (cadr (cdddr rt-4-result)))
+	       
+	       (funcname (string->symbol (eval-c-get-unique-name)))
+	       (das-funcname (string->symbol (eval-c-get-unique-name)))
+	       (rt-innerfuncname (string->symbol (eval-c-get-unique-name)))
+	       (rt-funcname (string->symbol (eval-c-get-unique-name)))
+	       
+	       (funcarg (string->symbol (eval-c-get-unique-name)))
+	       (publicargs (append (map (lambda (extvar)
+					  `(<SCM> ,(symbol-append '_rt_scm_ (car extvar))))
+					extnumbers-writing)
+				   (map (lambda (extvar)
+					  (list (-> (cadr extvar) c-type) (car extvar)))
+					(append extpointers extnumbers))
+				   orgargs)))
+	  (c-display "term" term)
+	  (newline)
+	  
+	  (list funcname
+		rt-funcname
+		extnumbers-writing
+		extpointers
+		extnumbers
+		
+		`( (define-struct <func_args>
+		     <int> num_outs
+		     <float-*> outs
+		     <int> num_ins
+		     <float-*> ins
+		     <float> time
+		     <float> res
+		     <char-*> error
+		     <SCM> errorvariable
+		     <int> errorvarnum)
+		   
+		   
+		   (<void> ,das-funcname (lambda ,(cons `(<struct-func_args-*> _rt_funcarg) publicargs)
+					   
+					   ,@(map (lambda (extvar)
+						    `(<float> ,(car extvar)))
+						  extnumbers-writing)
+					   
+					   (<float> ,rt-innerfuncname (lambda ()
+									,@(cddr term)))
+					   
+					   ,@(let ((n -1))
+					       (map-in-order (lambda (extvar)
+							       (let ((name (symbol-append '_rt_scm_ (car extvar))))
+								 (set! n (1+ n))
+								 `(if (|| (SCM_INUMP ,name)
+									  (SCM_BIGP ,name)
+									  (! (SCM_REALP ,name)))
+								      (begin
+									(set! _rt_funcarg->errorvariable ,name)
+									(set! _rt_funcarg->errorvarnum ,n)
+									(set! _rt_funcarg->error (string ,(string-append "\\\""
+															 (symbol->string (car extvar))
+															 "\\\" is not a real float")))
+									return))))
+							     extnumbers-writing))
+					   
+					   ,@(map (lambda (extvar)
+						    (let ((name (symbol-append '_rt_scm_ (car extvar))))
+						      `(set! ,(car extvar) (SCM_REAL_VALUE ,name))))
+						  extnumbers-writing)
+					   
+					   (set! _rt_funcarg->res (,rt-innerfuncname))
+					   
+					   ,@(map (lambda (extvar)
+						    (let ((name (symbol-append '_rt_scm_ (car extvar))))
+						      `(set! (SCM_REAL_VALUE ,name) ,(car extvar))))
+						  extnumbers-writing)))
+		   
+		   (functions->public
+		    (<void> ,rt-funcname (lambda ((<SCM> vector)
+						   (<int> num_outs) (<float> *outs)
+						   (<int> num_ins) (<float> *ins)
+						   (<float> time))
+					    ,(if (null? orgargs)
+						 `(begin
+						    (<struct-func_args> funcarg (struct-set num_outs outs num_ins ins time 0 NULL 0 0))
+						    ,(if (not (null? extnumbers-writing))
+							 '(<SCM> setfloats (SCM_VECTOR_REF vector 0))
+							 "/* */")
+						    ,(if (not (null? extpointers))
+							 '(<SCM> pointers (SCM_VECTOR_REF vector 1))
+							 "/* */")
+						    ,(if (not (null? extnumbers))
+							 '(<SCM> readfloats (SCM_VECTOR_REF vector 2))
+							 "/* */")
+						    (,das-funcname &funcarg
+								   ,@(map (lambda (n) `(SCM_VECTOR_REF setfloats ,n)) (iota (length extnumbers-writing)))
+								   ,@(map (lambda (n) `(GET_POINTER(SCM_VECTOR_REF pointers ,n))) (iota (length extpointers)))
+								   ,@(map (lambda (n) `(SCM_REAL_VALUE(SCM_VECTOR_REF readfloats ,n))) (iota (length extnumbers)))))
+						 'return))))
+		   
+		   (public			      
+		    (<float> ,funcname (lambda ,publicargs
+					 (<struct-func_args> ,funcarg "{0}")
+					 (,das-funcname ,(string-append "&" (symbol->string funcarg)) ,@(map cadr publicargs))
+					 (SCM_ASSERT (== NULL ,(symbol-append funcarg '.error))
+						     ,(symbol-append funcarg '.errorvariable)
+						     ,(symbol-append funcarg '.errorvarnum)
+						     ,(symbol-append funcarg '.error))
+					 (return ,(symbol-append funcarg '.res)))))))))))
 
 
 
@@ -2053,8 +2253,9 @@ thinking loud
 
 (rt (lambda ()
       (sin 50)))
-(rt-2 '(lambda (x)
+(rt-3 '(lambda (x)
 	 (if 1
+	     c
 	     (let* ((y (* x x)))
 	       y)
 	     0)))
@@ -2088,8 +2289,10 @@ thinking loud
 			 (tak (- z 1) x y))))))
     (tak x y z)))
 
-(tak 24 12 6)
-(tak-rt 24 12 6)
+
+(tak-rt 30 13 6)
+(tak 30 13 6)
+
 
 (define (hanoi n)
   (letrec ((move-them 
@@ -2120,47 +2323,64 @@ thinking loud
 	(throw 'compilation-failed)
 	(let* ((funcname (car rt-3-result))
 	       (rt-funcname (cadr rt-3-result))
-	       (extvars-writing (caddr rt-3-result))
-	       (extvars (cadddr rt-3-result))
-	       (term (cadr (cdddr rt-3-result)))
+	       (extnumbers-writing (caddr rt-3-result))
+	       (extpointers (cadddr rt-3-result))
+	       (extnumbers (cadr  (cdddr rt-3-result)))
+	       (term       (caddr (cdddr rt-3-result)))
 	       (callmacro (procedure->macro (lambda (x env)
-					      (if (null? extvars-writing)
+					      (if (null? extnumbers-writing)
 						  `(,funcname ,@(map (lambda (extvar)
 								       (let ((name (car extvar))
 									     (type (cadr extvar)))
 									 `(-> ,type transform ,name)))
-								     (append extvars-writing extvars))
+								     (append extnumbers-writing extpointers extnumbers))
 							      ,@(cdr x))
 						  `(begin
 						     ,@(map (lambda (extvar)
 							      `(if (number? ,(car extvar))
 								   (set! ,(car extvar) (exact->inexact ,(car extvar)))))
-							    extvars-writing)
+							    extnumbers-writing)
 						     (,funcname ,@(map (lambda (extvar)
 									 (let ((name (car extvar))
 									       (type (cadr extvar)))
 									   `(-> ,type transform ,name)))
-								       (append extvars-writing extvars))
+								       (append extnumbers-writing extpointers extnumbers))
 								,@(cdr x)))))))
 	       (rt-callmacro (procedure->macro (lambda (x env)
-					      (if (null? extvars-writing)
-						  `(,funcname ,@(map (lambda (extvar)
-								       (let ((name (car extvar))
-									     (type (cadr extvar)))
-									 `(-> ,type transform ,name)))
-								     (append extvars-writing extvars))
-							      ,@(cdr x))
-						  `(begin
-						     ,@(map (lambda (extvar)
-							      `(if (number? ,(car extvar))
-								   (set! ,(car extvar) (exact->inexact ,(car extvar)))))
-							    extvars-writing)
-						     (,funcname ,@(map (lambda (extvar)
-									 (let ((name (car extvar))
-									       (type (cadr extvar)))
-									   `(-> ,type transform ,name)))
-								       (append extvars-writing extvars))
-								,@(cdr x))))))))
+						 `(begin
+						    ,@(map (lambda (extvar)
+							     `(if (number? ,(car extvar))
+								  (set! ,(car extvar) (exact->inexact ,(car extvar)))))
+							   (append extnumbers extnumbers-writing))
+						    (let ((ret (<realtime> (,rt-funcname)
+									   ;; Note, next vector is gc-marked manually in the funcall smob.
+									   (vector (vector ,@(map (lambda (extvar)
+												    (let ((name (car extvar))
+													  (type (cadr extvar)))
+													`(-> ,type transform ,name)))
+												  extnumbers-writing))
+										   (vector ,@(map (lambda (extvar)
+												      (let ((name (car extvar))
+													    (type (cadr extvar)))
+													`(-> ,type transform ,name)))
+												  extpointers))
+										   (vector ,@(map (lambda (extvar)
+												    (let ((name (car extvar))
+													  (type (cadr extvar)))
+												      `(-> ,type transform ,name)))
+												  extnumbers))
+										   ;; Keep untransformed values here so they can be gc-marked. (dont remove!)
+										   (list ,@(map car (append extnumbers-writing extpointers extnumbers)))))))
+						      ,@(map (lambda (numvar)
+							       `(-> ret add-method ',numvar (make-procedure-with-setter
+											     (lambda ()
+											       ,numvar)
+											     (lambda (newval)
+											       (rt-set-float ,numvar newval)))))
+							     (map car (append extnumbers-writing extnumbers)))
+						      ret))))))
+						    
+	  
 	  (apply eval-c-non-macro (append (list (string-append "-I" snd-header-files-path)
 						"#include <math.h>"
 						"#include <clm.h>")
@@ -2171,6 +2391,17 @@ thinking loud
 		rt-callmacro
 		(primitive-eval funcname)
 		(primitive-eval rt-funcname))))))
+
+
+
+;; Yepp, has to redefine set!
+(define rt-old-set! set!)
+(define-macro (set! var val)
+  (if (and (list? var)
+	   (eq? '-> (car var)))
+      `((setter (<- ,@(cdr var))) ,val)
+      `(,rt-old-set! ,var ,val)))
+
 
 (define-macro (rt term)
   `(rt-2 ',term))
@@ -2189,6 +2420,8 @@ thinking loud
 (define-macro (rt-funcall rt-func . args)
   `((cadr ,rt-func) ,@args))
 
+(define-macro (rt-rt rt-func)
+  `((caddr ,rt-func)))
 
   
 #!
@@ -2198,5 +2431,45 @@ thinking loud
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
- 
+(define readfloat 2)
+(define setfloat 3)
+(define osc (make-oscil :frequency 400))
+(define osc2 (make-oscil :frequency 10))
+
+(define a (rt-2 '(lambda ()
+		   ;;(oscil osc2)
+		   (set! setfloat (oscil osc))
+		   (out (* 0.2 (oscil osc) (oscil osc2))))))
+
+(define b (rt-rt a))
+
+(begin b)
+
+(begin (cadr b))
+
+(caddr a)
+
+(-> b dir)
+(-> b setfloat)
+(set! (-> b setfloat) 9)
+(set! setfloat 10)
+
+(define instrument b)
+(-> rt-engine start)
+(-> instrument play)
+(-> instrument stop)
+(c-display setfloat)
+
+(-> instrument setfloat)
+    
+(set! (mus-frequency osc2) 30)
+
+(begin
+  (def-class (gakk b)
+    (def-var c b)
+    (c-display 5 b)))
+  
+
+(gakk 6))
+
 !#

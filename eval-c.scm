@@ -328,6 +328,7 @@ Usually just "", but can be "-lsnd" or something if needed.
 		  "INTEGER" <int>
 		  "FLOAT" <float>
 		  "DOUBLE" <double>
+		  "SCM" <SCM>
 		  "POINTER" <void-*>))))
 
 #!
@@ -734,6 +735,14 @@ Usually just "", but can be "-lsnd" or something if needed.
        (eval-c-parse c)
        ")"))
 
+(define-c-macro (struct-set . rest)
+  (<-> "{"
+       (eval-c-parse (car rest))
+       (apply <-> (map (lambda (t)
+			 (<-> "," (eval-c-parse t)))
+		       (cdr rest)))
+       "}"))
+  
 (define-c-macro (begin_p . rest)
   (<-> "("
        (eval-c-parse (car rest))
@@ -742,6 +751,9 @@ Usually just "", but can be "-lsnd" or something if needed.
 		       (cdr rest)))
        ")"))
 			 
+
+(define-c-macro (arraydef name length)
+  (<-> (eval-c-parse name) "[" (eval-c-parse length) "]"))
 		 
 (define-c-macro (MIN a b)
   `(EC_MIN ,a ,b))
@@ -1684,6 +1696,7 @@ int fgetc (FILE
     "#define GET_FLOAT(a) ((float)scm_num2dbl(a,\"GET_DOUBLE\"))"
     "#define MAKE_FLOAT(a) scm_make_real((double)a)"
     "#define GET_SCM(a) (a)"
+    "#define MAKE_SCM(a) (a)"
     "#define POINTER_P(a) (scm_is_false(a) || ((SCM_BOOL_T == scm_list_p(a)) && (XEN_STRING_P(SCM_CAR(a))||scm_symbol_p(SCM_CAR(a))) && SCM_NULLP(SCM_CDR(SCM_CDR(a))) && (SCM_BOOL_T ==scm_number_p(SCM_CAR(SCM_CDR(a))))))"
     "#if HAVE_SCM_C_MAKE_RECTANGULAR"
     "#define XEN_STRING_P(Arg)           scm_is_string(Arg)"
@@ -1725,6 +1738,7 @@ int fgetc (FILE
   `(eval-c ""
 	   (public (,ret-type ,(car body) (lambda ,(cadr body)
 					    ,@(cddr body))))))
+
 
 
 (eval-c ""
@@ -1982,8 +1996,10 @@ int fgetc (FILE
 	      das-map)
        ,@(map (lambda (def)
 		(let ((name (cadr def)))
-		  `(if ,name
-		       (-> this ,name ,name))))
+		  (if (eq? '<SCM> (car def))
+		      `(-> this ,name ,name)
+		      `(if ,name
+			   (-> this ,name ,name)))))
 	      das-map))
     
     ))
