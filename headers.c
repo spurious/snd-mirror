@@ -2903,10 +2903,10 @@ static int read_smp_header(int chan)
   data_location = 116;
   lseek(chan, 112, SEEK_SET);
   read(chan, hdrbuf, 4);
-  data_size = 2 * (mus_char_to_lint((unsigned char *)hdrbuf));
+  data_size = (mus_char_to_lint((unsigned char *)hdrbuf));
+  data_format = MUS_LSHORT; /* just a guess */
   srate = 8000; /* docs mention an srate floating around at the end of the file, but I can't find it in any example */
   true_file_length = SEEK_FILE_LENGTH(chan);
-  data_size = mus_bytes_to_samples(data_format, data_size);
   return(MUS_NO_ERROR);
 }
 
@@ -4442,6 +4442,23 @@ static int mus_header_read_with_fd_and_name(int chan, const char *filename)
   int i, happy, loc = 0, bytes;
 #if DEBUGGING
   header_reads++;
+  data_size = -1234;
+  data_location = -1234;
+  srate = -1234;
+  chans = -1234;
+  header_type = -1234;
+  data_format = -1234;
+  original_data_format = -1234;
+  true_file_length = -1234;
+  comment_start = -1234;
+  comment_end = -1234;
+  header_distributed = -1234;
+  type_specifier = -1234;
+  bits_per_sample = -1234;
+  fact_samples = -1234;
+  block_align = -1234;
+  base_detune = -1234;
+  base_note = -1234;
 #endif
   header_type = MUS_UNSUPPORTED;
   data_format = MUS_UNSUPPORTED;
@@ -4604,10 +4621,6 @@ static int mus_header_read_with_fd_and_name(int chan, const char *filename)
 	  header_type = MUS_SNDT;
 	  return(read_sndt_header(chan));
 	}
-      mus_print("%s%sunrecognized \"SOUND\" header\n  [%s[%d] %s]",
-		(filename) ? filename : "", (filename) ? ": " : "",
-		__FILE__, __LINE__, __FUNCTION__);
-      return(MUS_ERROR);
     }
   if ((match_four_chars((unsigned char *)hdrbuf, I_VOC0)) && 
       (match_four_chars((unsigned char *)(hdrbuf + 4), I_VOC1)))

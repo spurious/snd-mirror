@@ -2064,6 +2064,8 @@ static SCM g_update_fft(SCM snd, SCM chn)
     {
       if (chan_fft_in_progress(cp)) 
 	force_fft_clear(cp, NULL);
+
+      (cp->state)->checking_explicitly = 1;  /* do not allow UI events to intervene here! */
       if (cp->fft_style == NORMAL_FFT)
 	{
 	  val = (void *)make_fft_state(cp, 1);
@@ -2074,6 +2076,7 @@ static SCM g_update_fft(SCM snd, SCM chn)
 	  val = (void *)make_sonogram_state(cp);
 	  while (sonogram_in_slices(val) == BACKGROUND_CONTINUE);
 	}
+      (cp->state)->checking_explicitly = 0;
     }
   return(SCM_BOOL_F);
 }
@@ -2333,9 +2336,10 @@ static SCM g_set_oss_buffers(SCM num, SCM size)
   return(SCM_BOOL_F);
 }
 
-static SCM g_describe_audio(void) 
+#define S_mus_audio_describe            "mus-audio-describe"
+static SCM g_mus_audio_describe(void) 
 {
-  #define H_describe_audio "("  S_describe_audio ") posts a description of the audio hardware state in the Help dialog"
+  #define H_mus_audio_describe "("  S_mus_audio_describe ") posts a description of the audio hardware state in the Help dialog"
   snd_help(state, "Audio State", mus_audio_report()); 
   return(SCM_BOOL_T);
 }
@@ -3435,8 +3439,8 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(S_finish_progress_report, g_finish_progress_report, 0, 1, 0, H_finish_progress_report);
   DEFINE_PROC(S_progress_report,     g_progress_report, 1, 4, 0,     H_progress_report);
   DEFINE_PROC(S_snd_print,           g_snd_print, 1, 0, 0,           H_snd_print);
-  DEFINE_PROC(S_describe_audio,      g_describe_audio, 0, 0, 0,      H_describe_audio);
-  DEFINE_PROC("mus-audio-describe",  g_describe_audio, 0, 0, 0,      H_describe_audio);
+  DEFINE_PROC(S_describe_audio,      g_mus_audio_describe, 0, 0, 0,  H_mus_audio_describe);
+  DEFINE_PROC(S_mus_audio_describe,  g_mus_audio_describe, 0, 0, 0,  H_mus_audio_describe);
   DEFINE_PROC("little-endian?",      g_little_endian, 0, 0, 0,       "return #t if host is little endian");
 #if HAVE_GUILE
   DEFINE_PROC("gc-off",              g_gc_off, 0, 0, 0,              "turn off GC");

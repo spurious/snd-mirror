@@ -1185,7 +1185,7 @@ static char *spectro_xlabel(chan_info *cp)
     case WALSH:           return("Sequency");                      break;
     case HADAMARD:        return("Sequency");                      break;
     case AUTOCORRELATION: return("Lag time");                      break;
-    default:             return(added_transform_xlabel(cp->transform_type)); break;
+    default:              return(added_transform_xlabel(cp->transform_type)); break;
     }
   return(NULL);
 }
@@ -1984,7 +1984,7 @@ static int run_all_ffts(sonogram_state *sg)
 			  NOT_FROM_ENVED);
 	  sg->minibuffer_needs_to_be_cleared = 1;
 	  sg->msg_ctr = 8;
-	  if (cp->ffting == 0) return(1);
+	  if ((cp->ffting == 0) || (cp->temp_sonogram == NULL)) return(1);
 	}
       if (cp->transform_type == FOURIER)
 	{

@@ -17,10 +17,10 @@ static char help_window_label[64];
 #if HAVE_HTML
 
 #include <XmHTML/XmHTML.h>
-/* CFLAGS = -g -Wall -DLINUX -DUSR_LIB_OSS = 1 -DHAVE_GUILE -DHAVE_HTML = 1 -I/home/bil/test/XmHTML-1.1.4/include */
+/* CFLAGS = -g -Wall -DLINUX -DUSR_LIB_OSS=1 -DHAVE_GUILE -DHAVE_HTML=1 -I/home/bil/test/XmHTML-1.1.4/include */
 /* LIBS = /home/bil/test/XmHTML-1.1.4/src/libXmHTML.a -L/usr/X11R6/lib -lMrm -lXp -lXm -lXpm -lXmu -lXt -lXext -lX11 /usr/local/lib/libguile.a -lm -ldl */
 
-static char *Load_HTML_File(char *filename)
+static char *file_to_string(char *filename)
 { /* from XmHTML/examples/example_1.c */
   FILE *file;
   int size;
@@ -90,10 +90,10 @@ static void load_html(snd_state *ss, int which_html, char *anchor, int added)
 	{
 	  buf = (char *)CALLOC(256, sizeof(char));
 	  mus_snprintf(buf, 256, "%s/%s", html_dir(ss), htmls[which_html]);
-	  html_text = Load_HTML_File(buf);
+	  html_text = file_to_string(buf);
 	  FREE(buf);
 	}
-      else  html_text = Load_HTML_File(htmls[which_html]);
+      else  html_text = file_to_string(htmls[which_html]);
       if (added) add_anchor(which_html, anchor);
     }
   XmHTMLTextSetString(help_text, html_text);

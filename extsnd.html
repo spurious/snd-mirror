@@ -743,7 +743,6 @@ sound over another at an arbitrary point, and so on:
 collect more examples into draw.scm.
 </p>
 <!-- TODO: info procedures -->
-<!-- TODO: examples of input procedures -->
 <!-- TODO: rest of contexts etc -->
 
 <br>
@@ -6398,13 +6397,33 @@ with the trunc argument set to #t.  This way you don't assume the new sound
 will fit in memory (as in using vct-&gt;samples for example), nor that the
 lengths will be more or less the same (as in the mapping operations).
 Use snd-tempnam to get a temporary filename that reflects the current
-temp-dir setting (if any).  The env-sound-interp function in <a href="sndscm.html#exampdoc">examp.scm</a>
+temp-dir setting (if any).  The env-sound-interp function in <a href="sndscm.html#exenvsoundinterp">examp.scm</a>
 is an example of this.</p>
 
 <p>The sample-reader functions have made these scanning functions largely redundant.
-I may remove them, or move them into Scheme.  The mapping functions are still useful
-however.
+I may remove them, or move them into Scheme.
+<i>scan-chan</i> could be:
 </p>
+<table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(define (scan-chan . args)
+  (let* ((func (car args))
+	 (len (length args))
+	 (start (if (&gt; len 1) (cadr args) 0))
+	 (snd (if (&gt; len 3) (cadddr args) (selected-sound)))
+	 (chn (if (&gt; len 4) (caddddr args) (selected-channel snd)))
+	 (end (if (&gt; len 2) (caddr args) (frames snd chn)))
+	 (reader (make-sample-reader start snd chn))
+	 (result #f))
+    (do ((i start (1+ i)))
+	((or result (= i end))
+	 (let ((val (if result 
+			(list result (- i 1) snd chn)
+			#f)))
+	   (free-sample-reader reader)
+	   val))
+      (set! result (func (next-sample reader))))))
+</pre></td></tr></table>
+
 
 <!-- Transforms -->
 <br>

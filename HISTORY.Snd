@@ -1,5 +1,6 @@
 snd change log
 
+  28-Apr:    noguile play segfault caused by backwards NOT_BOUND_P macro (thanks to Bob Sturm).
   26-Apr:    in user-written makefiles, -DHAVE_GUILE=0 should be changed to -DHAVE_EXTENSION_LANGUAGE=0
   25-Apr:    snd.1 (and mandir business in makefile.in)
   24-Apr:    added mouse-enter|leave-text-hook.

@@ -434,6 +434,11 @@ void snd_doit(snd_state *ss, int argc, char **argv)
                (define " S_enved_selected_env " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_just_sounds " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_html_dir " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_time_graph " 0)\
+               (define " S_fft_graph " 1)\
+               (define " S_lisp_graph " 2)\
+               (define " S_copy_context " 0)\
+               (define " S_cursor_context " 3)\
                (define " S_basic_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_zoom_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_position_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\

@@ -1,6 +1,5 @@
 #include "snd.h"
 
-
 snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *new_comment)
 {
   snd_info *sp;
@@ -1944,7 +1943,7 @@ static SCM g_selected_sound(void)
   ss = get_global_state();
   if ((ss->selected_sound != NO_SELECTION) && 
       (snd_ok(ss->sounds[ss->selected_sound])))
-    return(TO_SCM_INT(ss->selected_sound));
+    return(TO_SMALL_SCM_INT(ss->selected_sound));
   return(TO_SMALL_SCM_INT(NO_SELECTION));
 }
 

@@ -931,9 +931,9 @@ static SCM g_set_length(SCM gen, SCM val)
   return(TO_SMALL_SCM_INT(mus_set_length(TO_CLM(gen), TO_C_INT_OR_ELSE(val, 0))));
 }
 
-/* TODO: should this change "_" into "-"? */
 static SCM g_name(SCM gen) 
 {
+  /* mus_name points to a constant string, so don't change it directly */
   #define H_mus_name "(" S_mus_name " gen) -> gen's name, if any"
   ASSERT_TYPE(MUS_SCM_P(gen), gen, SCM_ARGn, S_mus_name, "a generator");
   return(TO_SCM_STRING(mus_name(TO_CLM(gen))));

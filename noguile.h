@@ -69,7 +69,7 @@ SCM scm_return_first(SCM a, ...);
 #define NULL_P(a) 0
 #define NOT_NULL_P(a) 0
 #define BOUND_P(Arg) 0
-#define NOT_BOUND_P(Arg) 0
+#define NOT_BOUND_P(Arg) 1
 #define INTEGER_ZERO 0
 
 #ifndef __GNUC__

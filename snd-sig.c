@@ -370,11 +370,11 @@ static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, 
 		      free_sync_state(sc); 
 		      if (reporting) 
 			finish_progress_report(sp, NOT_FROM_ENVED);
-		      return(SCM_LIST5(res,
+		      return(SCM_LIST4(res,
 				       TO_SCM_INT(kp + beg),
 				       TO_SMALL_SCM_INT(cp->chan),
-				       TO_SMALL_SCM_INT(sp->index),
-				       SCM_UNDEFINED));
+				       TO_SMALL_SCM_INT(sp->index)));
+		      /* why was this including SCM_UNDEFINED as the 5th element? */
 		    }
 		}
 	      if (reporting) 

@@ -2,8 +2,7 @@ Snd
 
 Snd is a sound editor.  It currently runs on the SGI, Sun, UnixWare,
 OpenServer, HPUX, DEC Alpha, Linux, LinuxPPC, FreeBSD, Mac OS-X (in
-progress), BSD (BSDI 4.2), and in Windoze using MS C and a commercial
-Motif.  To build Snd, get the sources from
+progress), and BSD (BSDI 4.2). To build Snd, get the sources from
 
   ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-4.tar.gz
 
@@ -28,8 +27,6 @@ The configure program has several Snd-related arguments:
    --with-snd-as-widget  make Snd a loadable widget, not a standalone program
    --with-doubles        use doubles throughout (default is floats)
    --with-float-samples  represent samples internally as floats (default: ints)
-                         my (not-very-extensive) timing tests indicate floats are
-                         slightly faster than ints in most cases on the Pentium
    --with-ladspa         include LADSPA plugin support (Linux)
    --with-sample-width=N use N bits of samples (default = 24)
                          N=32 or so is not recommended because it does not leave
@@ -171,7 +168,7 @@ The HPUX port is thanks to Seppo Ingalsuo.
 The DEC Alpha port is due to the persistence of Juan Reyes.
 The Linux Alpha port is thanks to Guenter Geiger.
 The original ALSA support was thanks to Paul Barton-Davis.
-The current ALSA support is thanks to Fernando Lopez-Lezcano and Paul Barton-Davis.
+The current ALSA support is thanks to Fernando Lopez-Lezcano.
 The Sam 9407 support is thanks to Gerd Rausch.
 The LADSPA support is thanks to Richard W.E. Furse.
 The ESD support is thanks to Nick Bailey.
@@ -201,17 +198,6 @@ If you're running esd, you need to build Snd with the configuration
 switch --with-esd.  Otherwise, it's likely you'll get an error
 from the 'play' button complaining about data formats, probably
 that it can't play big-endian shorts.
-
-
-Windoze audio:
-In Windoze using Cygwin, I think the audio support is limited to
-PlaySound, which I haven't tied into Snd yet.  In MS C using the
-Hummingbird XDK package, Snd compiles and loads, but dies upon being
-executed with an access violation -- I know nothing about Microsoft C,
-so this has been put aside for a rainy day.
-
-The configure script seems to be unreliable in Cygwin -- use
-makefile.cygwin if possible.
 
 
 Recording:

@@ -128,7 +128,9 @@
 
 #ifndef HAVE_EXTENSION_LANGUAGE
   #define HAVE_EXTENSION_LANGUAGE 1
-  #define HAVE_GUILE 1
+  #if (!(HAVE_LIBREP || HAVE_MZSCHEME))
+    #define HAVE_GUILE 1
+  #endif
 #endif
 
 #if HAVE_GUILE
@@ -189,7 +191,7 @@
 #endif
 #include "snd-strings.h"
 
-#define SND_VERSION "27-Apr-01"
+#define SND_VERSION "28-Apr-01"
 #define SND_RPM_VERSION "4.13"
 #define SND_MAJOR_VERSION 4
 #define SND_MINOR_VERSION 13

@@ -3,6 +3,26 @@
  * TODO  if from glistener, and text selected, complete in listener
  */
 
+#if 0
+/* from gtk-html/src/testgtkhtml.c
+#include "gtkhtml.h"
+#include "htmlurl.h"
+#include "htmlengine.h"
+#include "gtkhtml-embedded.h"
+#include "gtkhtml-properties.h"
+	GtkWidget *html_widget;
+        static GtkHTML *html;
+	html_widget = gtk_html_new ();
+	html = GTK_HTML (html_widget);
+	gtk_html_load_empty (html);
+	gtk_html_set_default_background_color (GTK_HTML (html_widget), &bgColor);
+	gtk_container_add (GTK_CONTAINER (scrolled_window), html_widget);
+void           gtk_html_load_from_string  (GtkHTML             *html,
+					   const gchar         *str,
+					   gint                 len);
+*/
+#endif
+
 #include "snd.h"
 
 /* ---------------- HELP MONOLOG ---------------- */

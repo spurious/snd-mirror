@@ -375,6 +375,7 @@ static void listener_button_press(GtkWidget *w, GdkEventButton *ev, gpointer dat
 }
 
 static SCM mouse_enter_listener_hook, mouse_leave_listener_hook;
+static SCM mouse_enter_text_hook, mouse_leave_text_hook;
 
 static gint listener_focus_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
 {
@@ -543,6 +544,16 @@ leaves the lisp listener pane"
 
   mouse_enter_listener_hook = MAKE_HOOK(S_mouse_enter_listener_hook, 1, H_mouse_enter_listener_hook);    /* arg = listener_text widget */
   mouse_leave_listener_hook = MAKE_HOOK(S_mouse_leave_listener_hook, 1, H_mouse_leave_listener_hook);    /* arg = listener_text widget */
+
+  #define H_mouse_enter_text_hook S_mouse_enter_text_hook " (widget) is called when the mouse enters a text widget:\n\
+(add-hook! mouse-enter-text-hook\n\
+  (lambda (w)\n\
+    (focus-widget w)))"
+
+  #define H_mouse_leave_text_hook S_mouse_leave_text_hook " (widget) is called when the mouse leaves a text widget"
+
+  mouse_enter_text_hook = MAKE_HOOK(S_mouse_enter_text_hook, 1, H_mouse_enter_text_hook);    /* arg = text widget */
+  mouse_leave_text_hook = MAKE_HOOK(S_mouse_leave_text_hook, 1, H_mouse_leave_text_hook);    /* arg = text widget */
 
   DEFINE_PROC(S_listener_selection, g_listener_selected_text, 0, 0, 0, "returns current selection in listener or #f");
 }

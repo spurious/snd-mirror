@@ -113,6 +113,7 @@
 
 (define (log-mem tst) (if (and (> tests 50) (= (modulo tst 10) 0))  (mem-report)))
 
+
 ;;; ---------------- test 0: constants ----------------
 (if (or full-test (= snd-test 0))
     (letrec ((test-constants 
@@ -437,9 +438,9 @@
 				    (if (> (length testf) 6)
 					(begin
 					  (if (not (equal? (car lst) (list-ref testf 6))) 
-					      (snd-display (format #f ";~A: loop start: ~A ~A" (car lst) (list-ref testf 6))))
+					      (snd-display (format #f ";~A: loop start: ~A" (car lst) (list-ref testf 6))))
 					  (if (not (equal? (cadr lst) (list-ref testf 7))) 
-					      (snd-display (format #f ";~A: loop end: ~A ~A" (cadr lst) (list-ref testf 7)))))
+					      (snd-display (format #f ";~A: loop end: ~A" (cadr lst) (list-ref testf 7)))))
 					(if (not (null? lst))
 					    (snd-display (format #f ";~A thinks it has loop info: ~A" file lst))))))
 				(snd-display (format #f ";~A missing?" file)))
@@ -1334,16 +1335,19 @@
 	(if (not p)
 	    (snd-display (format #f ";peaks->tmp.peaks failed?"))
 	    (let ((line (read-line p)))
-	      (if (not (string=? "Snd: fft peaks" (substring line 0 14)))
-		  (snd-display line))
+	      (if (or (not (string? line))
+		      (not (string=? "Snd: fft peaks" (substring line 0 14))))
+		  (snd-display (format #f ";peaks 1: ~A?" line)))
 	      (set! line (read-line p))
 	      (set! line (read-line p))
-	      (if (not (string=? "oboe.snd, fft 256 points beginning at sample 0 (0.000 secs)" line))
-		  (snd-display line))
+	      (if (or (not (string? line))
+		      (not (string=? "oboe.snd, fft 256 points beginning at sample 0 (0.000 secs)" line)))
+		  (snd-display (format #f ";peaks 2: ~A?" line)))
 	      (set! line (read-line p))
 	      (set! line (read-line p))
-	      (if (not (string=? "  86.132812  1.00000" line))
-		  (snd-display line))
+	      (if (or (not (string? line))
+		      (not (string=? "  86.132812  1.00000" line)))
+		  (snd-display (format #f ";peaks 3: ~A?" line)))
 	      (close-port p)
 	      (delete-file "tmp.peaks"))))
       (let* ((num-transforms 9)
@@ -4300,7 +4304,8 @@
      (let ((str1 (snd-help open-sound))
 	   (str2 (snd-help 'open-sound))
 	   (str3 (snd-help "open-sound")))
-       (if (or (not (string=? str1 str2))
+       (if (or (not (string? str1)) ; can happen if we're running -DTIMING
+	       (not (string=? str1 str2))
 	       (not (string=? str1 str3)))
 	   (snd-display (format #f ";snd-help open-sound: ~A ~A ~A" str1 str2 str3))))
      (let ((str1 (snd-help 'hamming-window))
@@ -6524,6 +6529,24 @@
 
 ;;; ---------------- test 17: guile-gtk dialogs and graphics ----------------
 
+(define (-> x0 y0 size snd chn)
+                          "draw an arrow pointing (from the left) at the point (x0 y0)"
+                          (let ((points (make-vector 8)))
+                            (define (point i x y)
+                              (vector-set! points (* i 2) x)
+                              (vector-set! points (+ (* i 2) 1) y))
+                            (define (arrow-head x y)
+                              (point 0 x y)
+                              (point 1 (- x (* 2 size)) (- y size))
+                              (point 2 (- x (* 2 size)) (+ y size))
+                              (point 3 x y)
+                              (fill-polygon points snd chn))
+                            (arrow-head x0 y0)
+                            (fill-rectangle (- x0 (* 4 size)) 
+                                            (inexact->exact (- y0 (* .4 size)))
+                                            (* 2 size)
+                                            (inexact->exact (* .8 size))
+                                            snd chn)))  
 (if (or full-test (= snd-test 17))
     (begin
       (if (procedure? trace-hook) (trace-hook 17))
@@ -6552,6 +6575,8 @@
 	(draw-line 100 100 200 200 ind 0)
 	(draw-dot 300 300 10 ind 0)
 	(draw-string "hiho" 20 20 ind 0)
+	(draw-dots #(25 25 50 50 100 100) 10 ind 0)
+	(-> 100 50 10 ind 0)
 	(fill-rectangle 20 20 100 100 ind 0)
 	(erase-rectangle 30 30 20 20 ind 0)
 	(make-bezier 0 0 20 20 40 30 60 10 10)
@@ -8294,14 +8319,14 @@ EDITS: 3
 ;;; TODO: these aren't tested at all yet (except as bare error checks in a few cases):
 ;;;   mus-audio-read mus-audio-open-input mus-sound-print-cache stop-player
 ;;;   sound-to-temp selection-to-temp temp-to-sound temp-to-selection scan-all-chans map-all-chans map-across-sound-chans
-;;;   loop-samples save-listener draw-dots fill-polygon hide-widget show-widget focus-widget graph-data
+;;;   loop-samples save-listener hide-widget show-widget focus-widget graph-data
 ;;;   add-input remove-input dlopen dlclose dlerror dlinit
 ;;;
 ;;; only touched upon:
 ;;;   convolve-files map-across-all-chans map-chans scan-across-chans map-sound-chans scan-sound-chans scan-chans
 ;;;   selection-to-temps samples->sound-data forward-mix smooth-selection convolve-selection-with save-state open-alternate-sound
 ;;;   mus-sound-reopen-output mus-sound-seek mus-sound-seek-frame close-sound-file vct->sound-file
-;;;   save-marks save-region delete-selection insert-selection mix-selection save-selection vct-do! vcts-map!
+;;;   save-marks save-region delete-selection insert-selection mix-selection save-selection vcts-map!
 ;;;   buffer->frame frame->buffer mixer* mixer-set! frame->frame restart-env locsig-set! locsig-reverb-set!
 ;;;   ina inb outc outd mus-channel make-track-sample-reader free-track-sample-reader mix-sound-channel mix-sound-index
 ;;;   backward-mix peaks forward-sample backward-sample cursor-position prompt-in-minibuffer

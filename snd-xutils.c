@@ -370,6 +370,7 @@ void check_for_event(snd_state *ss)
   XEvent event;
   XtInputMask msk = 0;
   XtAppContext app;
+  if (ss->checking_explicitly) return;
   ss->checking_explicitly = 1;
   app = MAIN_APP(ss);
   while (1)

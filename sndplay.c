@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
   int afd0, afd1, buffer_size, curframes;
   MUS_SAMPLE_TYPE **qbufs;
   short *obuf0, *obuf1;
-  char *name;
+  char *name = NULL;
 #if MACOS
   argc = ccommand(&argv);
 #endif
@@ -101,6 +101,11 @@ int main(int argc, char *argv[])
 #else
   name = argv[1];
 #endif
+  if (name == NULL) 
+    {
+      printf("usage: sndplay file\n"); 
+      exit(0);
+    }
 
   afd = -1;
   afd0 = -1;
