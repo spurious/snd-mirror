@@ -15,7 +15,7 @@
          (provided? 'xm))
 
     (add-to-menu
-     plugins-menu "Pitch Scaler (High quality)"
+     plugins-menu "Pitch Scaler (high quality)"
      (lambda ()
        (if (not (|Widget? pitch-scale-dialog))
            ;; if pitch-scale-dialog doesn't exist, create it

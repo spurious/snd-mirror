@@ -839,7 +839,7 @@ way around Lisp's clumsy mechanism for repeating a random number sequence.
 </table>
 <pre><small>
 rand:
-  (if (>= phase (* 2 pi))
+  (if (&gt;= phase (* 2 pi))
       (setf output (centered-random amplitude))
   (incf phase (+ (hz-&gt;radians frequency) sweep))
 </small></pre>
@@ -2345,7 +2345,7 @@ for more examples.</p>
        (let ((inval (ina i in-file)))
 	 (setf (aref fdr k) inval)
 	 (incf k)
-	 (when (>= k fftsize)
+	 (when (&gt;= k fftsize)
 	   (setf k 0)
 	   (<em class=red>spectrum</em> fdr fdi win 1)
 	   (clm-print out-file "~%sample: ~D~%" i)
@@ -3509,10 +3509,10 @@ seconds as they go by in Snd's minibuffer:</p>
     (run
      (loop for i from bg below nd do
        (incf ctr)
-       (when (>= ctr *srate*)
+       (when (&gt;= ctr *srate*)
 	 (incf secs)
 	 (setf ctr 0)
-	 (send-snd "(report-in-minibuffer (number->string ~D))" secs))
+	 (send-snd "(report-in-minibuffer (number-&gt;string ~D))" secs))
        (outa i (oscil o))))))
 </pre>
 <p>In this case, if send-snd has extra arguments, they are treated like

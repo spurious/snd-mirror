@@ -2097,3 +2097,12 @@ Reverb-feedback sets the scaler on the feedback.\n\
   (let ((str (|XmStringCreateLocalized new-label)))
     (|XtSetValues widget (list |XmNlabelString str))
     (|XmStringFree str)))
+
+;;; this deletes the play button
+;(add-hook! after-open-hook
+;	   (lambda (snd)
+;	     (let* ((ctrls (|Widget (list-ref (sound-widgets snd) 2)))
+;		    (play-button (find-child ctrls "play"))
+;		    (sync-button (find-child ctrls "sync")))
+;	     (|XtUnmanageChild play-button)
+;	     (|XtVaSetValues sync-button (list |XmNrightAttachment |XmATTACH_FORM)))))

@@ -589,21 +589,21 @@ and 1.5. Since we are dividing by B in the equation, we might worry that as B he
 hell breaks loose, but luckily:</p>
 <pre>
     lim 2/B (J<sub>1</sub>(B)) = 1
-    B=>0 
+    B=&gt;0 
 </pre>
 <p>and for all the other components</p>
 <pre>
     lim 2/nB J<sub>n</sub>(nB) = 0
-    B=>0 
+    B=&gt;0 
 </pre>
 <p>so, just as in normal FM, if the index is 0, we get a pure sine wave. This also seems natural from </p>
 <pre>
-    sin(y <= w<sub>c</sub>t + B sin y) 
+    sin(y &gt;= w<sub>c</sub>t + B sin y) 
 </pre>
-<p>with B=0 (but computer arithmetic doesn't care what "seems natural"). Apparently, if B>1.0, this formula becomes 
+<p>with B=0 (but computer arithmetic doesn't care what "seems natural"). Apparently, if B&gt;1.0, this formula becomes 
 numerically unstable; the result is a burst of noise.
 Tomisawa says the problem "is considered to be caused by an error in the digital computation".  We 
-may be rubbing against the behavior of J<sub>n</sub>(nB) for  large n and B>1.0 -- see Watson, "Theory of 
+may be rubbing against the behavior of J<sub>n</sub>(nB) for  large n and B&gt;1.0 -- see Watson, "Theory of 
 Bessel Functions", chapter 8.  J<sub>n</sub>(nB) might not be a decreasing function of n, so there may be 
 hundreds of noticeable side bands, most of them aliasing.  One of the standard ways to make noise 
 (deliberately) with FM is to increase the index until massive aliasing is taking place.  However, this 

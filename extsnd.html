@@ -368,7 +368,7 @@ spring, summer, colorcube, flag, and lines.  -1 means black and white.
 <td>#t if <i>obj</i> is a color object (see <a href="#makecolor">make-color</a>).</td>
 <td align right><input type="button" value="->" onClick="example(
   'color?', 
-  '(define blue (make-color 0 0 1))\n(color? blue)\n  => #t',
+  '(define blue (make-color 0 0 1))\n(color? blue)\n  =&gt; #t',
   '<code>snd-x|gscm.c g_color_p</code>',
   'rgb.scm'
 );">
@@ -379,8 +379,8 @@ spring, summer, colorcube, flag, and lines.  -1 means black and white.
 <td><code><em class=def><a name="color3list">color-&gt;list</a></em> (obj)</code></td>
 <td>return list (r g b) of color components.</td>
 <td><input type="button" value="->" onClick="example(
-  'color->list', 
-  '(define red (make-color 1 0 0))\n(color->list red)\n => \'(1.0 0.0 0.0)',
+  'color-&gt;list', 
+  '(define red (make-color 1 0 0))\n(color-&gt;list red)\n =&gt; \'(1.0 0.0 0.0)',
   '<code>snd-x|gscm.c g_color2list</code>'
 );">
 </input></td>
@@ -390,7 +390,7 @@ spring, summer, colorcube, flag, and lines.  -1 means black and white.
 <td valign=top><code><em class=def><a name="makecolor">make-color</a></em> (r g b)</code></td>
 <td>return a color object using the red/green/blue values.  If the object is called
 as a function, it returns the list of rgb values.
-If, for example, blue is a defined color, <code>(blue)</code> is the same as <code>(color->list blue)</code>.
+If, for example, blue is a defined color, <code>(blue)</code> is the same as <code>(color-&gt;list blue)</code>.
 Two colors are equal (i.e. equal? returns #t) if their rgb values are the same.
 </td>
 <td valign=top><input type="button" value="->" onClick="example(
@@ -398,11 +398,11 @@ Two colors are equal (i.e. equal? returns #t) if their rgb values are the same.
   '(define red (make-color 1 0 0))\
 (define beige (make-color 0.96 0.96 0.86))\
 (red)\
-  => (1.0 0.0 0.0)\
+  =&gt; (1.0 0.0 0.0)\
 (eq? red (make-color 1 0 0))\
-  => #f\
+  =&gt; #f\
 (equal? red (make-color 1 0 0))\
-  => #t',
+  =&gt; #t',
   '<code>snd-x|gscm.c g_make_snd_color</code>',
   'rbg.scm',
   'The arguments are floats between 0.0 and 1.0 (as in Postscript).'
@@ -533,7 +533,7 @@ The lowest level procedures are:
 	 (x1 (list-ref axinfo 4))
 	 (axis-left (list-ref axinfo 10))
 	 (axis-right (list-ref axinfo 12)))
-    (inexact->exact 
+    (inexact-&gt;exact 
      (+ axis-left
 	(* (- x x0) 
 	   (/ (- axis-right axis-left)
@@ -663,7 +663,7 @@ The lowest level procedures are:
 <!-- -->draws a filled polygon whose vertices are in <i>points</i>.</td></tr>
 <!-- --><tr><td></td><td>
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
-(define (-> x0 y0 size snd chn)
+(define (-&gt; x0 y0 size snd chn)
   "draw an arrow pointing (from the left) at the point (x0 y0)"
   (let ((points (make-vector 8)))
     (define (point i x y)
@@ -677,9 +677,9 @@ The lowest level procedures are:
       (<em class=red>fill-polygon</em> points snd chn))
     (arrow-head x0 y0)
     (fill-rectangle (- x0 (* 4 size)) 
-		    (inexact->exact (- y0 (* .4 size)))
+		    (inexact-&gt;exact (- y0 (* .4 size)))
 		    (* 2 size)
-		    (inexact->exact (* .8 size))
+		    (inexact-&gt;exact (* .8 size))
                     snd chn)))	
 <!-- --></pre></td></tr></table></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
@@ -1688,8 +1688,8 @@ the hook.
 			    (bps (/ (beats-per-minute snd chn) 60.0))
 			    (sr (srate snd))
 			    (beat (floor (/ (* samp bps) sr)))
-			    (lower (inexact->exact (/ (* beat sr) bps)))
-			    (higher (inexact->exact (/ (* (1+ beat) sr) bps))))
+			    (lower (inexact-&gt;exact (/ (* beat sr) bps)))
+			    (higher (inexact-&gt;exact (/ (* (1+ beat) sr) bps))))
 		       (set! (mark-sample mrk)
 			     (if (&lt; (- samp lower) (- higher samp))
 				 lower
@@ -1781,10 +1781,10 @@ the hook.
 (define (click-to-center snd chn button state x y axis)
   ;; if mouse click in time domain graph, set cursor as normally, but also center the window
   (if (= axis time-graph)
-      (let ((samp (inexact->exact (* (srate snd) (position-&gt;x x snd chn)))))
+      (let ((samp (inexact-&gt;exact (* (srate snd) (position-&gt;x x snd chn)))))
 	(set! (cursor snd chn) samp)
 	(set! (right-sample snd chn) 
-          (- samp (inexact->exact (* .5 (- (left-sample snd chn) (right-sample snd chn))))))
+          (- samp (inexact-&gt;exact (* .5 (- (left-sample snd chn) (right-sample snd chn))))))
 	(update-time-graph)
 	#t)
       #f))
@@ -4133,7 +4133,7 @@ The following substitutions can be made:
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
 (define show-bomb 
   (lambda (n speed) 
-    (if (> n 0) 
+    (if (&gt; n 0) 
 	(begin 
 	  (bomb) 
 	  (in speed (lambda () (show-bomb (- n 1) speed))))
@@ -4386,7 +4386,7 @@ The following substitutions can be made:
   (let* ((point (<em class=red>cursor-position</em>))
          (x (car point))
          (y (cadr point))
-         (size (inexact->exact (/ (<em class=red>cursor-size</em>) 2))))
+         (size (inexact-&gt;exact (/ (<em class=red>cursor-size</em>) 2))))
     (<em class=red>draw-line</em> (- x size) (- y size) (+ x size) (+ y size) snd chn <em class=red>cursor-context</em>)    
     (<em class=red>draw-line</em> (- x size) (+ y size) (+ x size) (- y size) snd chn <em class=red>cursor-context</em>)))
 <!-- --></pre></td></tr></table>
@@ -5095,7 +5095,7 @@ The following substitutions can be made:
 (define mpg
   (lambda (mpgfile rawfile chans)
     "(mpg file tmpname chans) converts file from MPEG-3 to raw 16-bit samples using mpg123"
-    (system (format #f "mpg123 -s ~A > ~A" mpgfile rawfile))
+    (system (format #f "mpg123 -s ~A &gt; ~A" mpgfile rawfile))
     (open-raw-sound rawfile 1 44100 (if (little-endian?) mus-lshort mus-bshort))))
 <!-- --></pre></td></tr></table>
 <!-- --></td></tr>
@@ -5296,12 +5296,12 @@ The following substitutions can be made:
 <!-- -->
 <!-- --><tr><td></td><td>
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
-(bind-key (char->integer #\k) 0 
+(bind-key (char-&gt;integer #\k) 0 
   (lambda ()
     (<em class=red>prompt-in-minibuffer</em>
      (format #f "close ~S (cr=yes)?" (short-file-name))
      (lambda (response)
-       (if (and (not (c-g?)) ; C-g => no
+       (if (and (not (c-g?)) ; C-g =&gt; no
 		(or (not (string? response))
 		    (= (string-length response) 0)
 		    (char=? (string-ref response 0) #\y)))
@@ -5757,7 +5757,7 @@ The following substitutions can be made:
 (define (smoother y0 y1 num)
    "go sinusoidally from y0 to y1 over num samps"
    (let ((v (make-vct (1+ num))) 
-	 (angle (if (> y1 y0) pi 0.0)) 
+	 (angle (if (&gt; y1 y0) pi 0.0)) 
 	 (off (* .5 (+ y0 y1))) 
 	 (scale (* 0.5 (abs (- y1 y0)))))
      (do ((i 0 (1+ i)))
@@ -6899,8 +6899,8 @@ one, and are exposed in many functions described above as the <i>pos</i> argumen
           (let ((nxtpos (car (cadr tree))))
             (if (and (&lt;= pos rs)
                      (&gt;= nxtpos ls))   ; fragment is at least partially visible
-                (let ((x0pos (x->position (/ (max ls pos) (srate))))
-                      (x1pos (x->position (/ (min rs nxtpos) (srate)))))
+                (let ((x0pos (x-&gt;position (/ (max ls pos) (srate))))
+                      (x1pos (x-&gt;position (/ (min rs nxtpos) (srate)))))
                   (fill-rectangle x0pos 2 (- x1pos x0pos) 5)))))
       (if (and (cdr tree)              ; go to next fragment
                (not (= (cadr (car tree)) -2)))
@@ -7563,7 +7563,7 @@ And an example that lets us see the result of filtering the waveform:
 	 (let ((local-max (max .1 (vct-peak samps))))
 	   (snd-print (format #f "~A " local-max))
 	   (if (<em class=red>yes-or-no?</em> "continue?")
-	       (if (and (> (abs (- samp0 samp1)) local-max)
+	       (if (and (&gt; (abs (- samp0 samp1)) local-max)
                         ...
 		   (return (1- ctr)))
 	       (return #f)
@@ -7584,7 +7584,7 @@ And an example that lets us see the result of filtering the waveform:
 	    (lambda (go-on)
 	      (snd-print (format #f "~A: ~A (~A) " ctr local-max samp2))
 	      (return go-on)
-	      (if (and (> (abs (- samp0 samp1)) local-max)
+	      (if (and (&gt; (abs (- samp0 samp1)) local-max)
                   ...
 		  (return (1- ctr))
 <!-- --></pre></td></tr></table></td></tr>
@@ -7639,7 +7639,7 @@ And an example that lets us see the result of filtering the waveform:
 (<em class=red>add-to-menu</em> 0 "Delete" ; add Delete option to File menu
 	     (lambda ()
 	       ;; close current sound and delete it (after requesting confirmation)
-	       (if (>= (selected-sound) 0)
+	       (if (&gt;= (selected-sound) 0)
 		   (let ((filename (file-name)))
 		     (close-sound)
 		     (if (yes-or-no? (format #f "delete ~S?" filename))
@@ -7883,7 +7883,7 @@ variable %load-verbosely to #t.
 <!-- -->Cause <i>key</i> (an integer) with modifiers <i>state</i> (and preceding C-x if <i>extended</i>) to evaluate <i>code</i>.<br><br>
 <!-- -->
 <!-- --><code>(bind-key (char-&gt;integer #\a) 4 (lambda () (snd-print \"hi\") cursor-in-view))</code><br>
-<!-- --><code>(bind-key (char->integer #\p) 0 (lambda () cursor-on-left)) ;now (cursor) == (left-sample)</code><br><br>
+<!-- --><code>(bind-key (char-&gt;integer #\p) 0 (lambda () cursor-on-left)) ;now (cursor) == (left-sample)</code><br><br>
 <!-- -->
 <!-- -->The modifier state is a combination of shift: 1, control: 4, meta: 8, 
 <!-- -->so this call causes C-a to print "hi" in the lisp listener.  The 
@@ -7905,8 +7905,8 @@ variable %load-verbosely to #t.
 <!-- --><tr><td></td><td>
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
 (define line-size 128)
-(<em class=red>bind-key</em> (char->integer #\n) 4 (lambda (arg) (forward-sample (* line-size arg))))
-(<em class=red>bind-key</em> (char->integer #\p) 4 (lambda (arg) (backward-sample (* line-size arg))))
+(<em class=red>bind-key</em> (char-&gt;integer #\n) 4 (lambda (arg) (forward-sample (* line-size arg))))
+(<em class=red>bind-key</em> (char-&gt;integer #\p) 4 (lambda (arg) (backward-sample (* line-size arg))))
 <!-- --></pre></td></tr></table></td></tr>
 <!-- -->
 <!-- --><tr><td></td><td>
@@ -8407,7 +8407,7 @@ is handy in snd-motif.scm where many of the procedures want an X-style Pixel val
 	<!-- I(revert file):L(revert-sound)(sndrevert) -->
         <!-- I(open file read-only):L(view-sound)(sndview) -->
         <!-- I(create new file):L(new-sound)(sndnew) -->
-	<!-- I(print file):L(graph->ps)(sndgraph2ps) -->
+	<!-- I(print file):L(graph-&gt;ps)(sndgraph2ps) -->
 	<!-- I(exit Snd):L(exit)(sndexit) -->
         <!-- I(undo edit):L(undo)(sndundo) -->
 	<!-- I(redo edit):L(redo)(sndredo) -->

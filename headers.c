@@ -889,6 +889,8 @@ static int read_aiff_marker(int m, unsigned char *buf)
   return(psize+6);
 }
 
+static int *aiff_loop_info = NULL;
+
 static int read_aiff_header (int chan, int overall_offset)
 {
   /* we know we have checked for FORM xxxx AIFF|AIFC when we arrive here */
@@ -1121,8 +1123,6 @@ static int read_aiff_header (int chan, int overall_offset)
 
 int mus_header_aiff_p(void) {return(type_specifier == mus_char_to_uninterpreted_int((unsigned const char *)I_AIFF));}
 
-static int *aiff_loop_info = NULL;
-
 void mus_header_set_aiff_loop_info(int *data)
 {
   aiff_loop_info = data;
@@ -1300,6 +1300,7 @@ static int write_aif_header (int chan, int wsrate, int wchans, int siz, int form
       mus_bint_to_char((unsigned char *)(hdrbuf + 14), 20);
       mus_bint_to_char((unsigned char *)(hdrbuf + 18), 0x3c00007f); /* base-note = middle C, detune = 0, lownote = 0, highnote = 0x7f */
       mus_bint_to_char((unsigned char *)(hdrbuf + 22), 0x017f0000); /* lowvelocity = 1, highvelocity = 0x7f, gain = 0 */
+                                                                    /* TODO: should all these synth-style fields be settable? */
       mus_bint_to_char((unsigned char *)(hdrbuf + 26), 0);          /* no loops */
       mus_bint_to_char((unsigned char *)(hdrbuf + 30), 0); 
       mus_bint_to_char((unsigned char *)(hdrbuf + 34), 0);
@@ -1326,8 +1327,8 @@ static int write_aif_header (int chan, int wsrate, int wchans, int siz, int form
       mus_bint_to_char((unsigned char *)(hdrbuf + 12), 0x017f0000);
       if (aiff_loop_info[4] != 0) hdrbuf[8] = (unsigned char)(aiff_loop_info[4]);
       hdrbuf[9] = (unsigned char)(aiff_loop_info[5]);
-      if ((aiff_loop_info[0] != 0) || (aiff_loop_info[1] != 0))
-	mus_bshort_to_char((unsigned char *)(hdrbuf + 16), 1);
+      if ((aiff_loop_info[0] != 0) || (aiff_loop_info[1] != 0))  /* TODO: can't the sustain start by sample 0? */
+	mus_bshort_to_char((unsigned char *)(hdrbuf + 16), 1);   /* TODO: loop mode settable (and below as well) */
       else mus_bshort_to_char((unsigned char *)(hdrbuf + 16), 0);
       mus_bshort_to_char((unsigned char *)(hdrbuf + 18), 1);
       mus_bshort_to_char((unsigned char *)(hdrbuf + 20), 2);
@@ -4615,30 +4616,12 @@ static int mus_header_read_with_fd_and_name(int chan, const char *filename)
 {
   /* returns 0 on success (at least to the extent that we can report the header type), -1 for error */
   int i, happy, loc = 0, bytes;
-#if DEBUGGING
-  data_size = -1234;
-  data_location = -1234;
-  srate = -1234;
-  chans = -1234;
-  header_type = -1234;
-  data_format = -1234;
-  original_data_format = -1234;
-  true_file_length = -1234;
-  comment_start = -1234;
-  comment_end = -1234;
-  header_distributed = -1234;
-  type_specifier = -1234;
-  bits_per_sample = -1234;
-  fact_samples = -1234;
-  block_align = -1234;
-  base_detune = -1234;
-  base_note = -1234;
-#endif
   header_type = MUS_UNSUPPORTED;
   data_format = MUS_UNSUPPORTED;
   comment_start = 0;
   comment_end = 0;
   data_size = 0;
+  aiff_loop_info = NULL;
   if (loop_modes)
     {
       loop_modes[0] = 0;

@@ -1,0 +1,28 @@
+
+The following files require explicit load path settings:
+
+	misc.scm
+	plugins.scm
+	mix-menu.scm
+	new-buttons.scm
+
+Alternately you can specify Snd's module load path, but I haven't quite figured it out...
+
+To enable these modules you can either start Snd with this command sequence (adding the path to your Scheme modules of course) :
+
+	snd -l misc.scm
+
+or you can load the file while Snd is running with this sequence in the Listener:
+
+	(load "misc.scm")
+
+I usually start up Snd with this line:
+
+	snd -l ~/my_scm/misc.scm -geometry 1280x700
+
+for a big view on a 19" monitor. Adjust to taste... 
+
+== dlp
+
+20 November 2001
+

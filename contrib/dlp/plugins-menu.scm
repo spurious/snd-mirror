@@ -2,7 +2,7 @@
 
 (define plugins-list '()) ; menu labels are updated to show current default settings
 
-(define plugins-menu (add-to-main-menu "LADSPA Effects" (lambda ()
+(define plugins-menu (add-to-main-menu "LADSPA Plugins" (lambda ()
 						   (define (update-label plugins)
 						     (if (not (null? plugins))
 							 (begin
@@ -30,5 +30,4 @@
 		       (map-chan (func) #f #f origin snd chn)))
 		 (all-chans))
 	  (map-chan (func) #f #f origin)))))
-
 

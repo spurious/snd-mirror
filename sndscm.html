@@ -211,7 +211,7 @@ In fact, in Snd this could be automated...
 <pre>
 (definstrument bird (startime dur frequency freq-skew amplitude freq-envelope amp-envelope 
 	             &amp;optional (lpfilt 1.0) (degree 0) (reverb-amount 0))
-  (multiple-value-bind (beg end) (times->samples startime dur)
+  (multiple-value-bind (beg end) (times-&gt;samples startime dur)
     (let* ((amp-env (make-env amp-envelope amplitude dur))
 	   (gls-env (make-env freq-envelope (hz-&gt;radians freq-skew) dur))
 	   (loc (make-locsig :degree degree :distance 1.0 :reverb reverb-amount))
@@ -248,7 +248,7 @@ the cursor is moved to the clicked point.
     <li>Dolph-Chebyshev fft data window
     <li>dht -- slow Hartley transform 
     <li>Butterworth filters
-    <li>frequency-response -> FIR coeffs
+    <li>frequency-response -&gt; FIR coeffs
     <li>move sound down 8ve using fft
     <li>compute-uniform-circular-string (and scanned-synthesis)
     <li>"frequency division"
@@ -290,11 +290,11 @@ The Butterworth filters are taken from Sam Heisz's CLM version
 of Paris Smaragdis's Csound version of Charles Dodge's code from "Computer Music: synthesis, composition, and performance".
 See also the notch filter in effects.scm.
 <i>spectrum-&gt;coeffs</i> is a Scheme
-version of Snd's very simple spectrum->coefficients procedure ("frequency sampling").
+version of Snd's very simple spectrum-&gt;coefficients procedure ("frequency sampling").
 It returns the FIR filter coefficients given the filter order and desired spectral envelope.
 </p>
 <pre>
-(map-chan (fltit-1 10 (list->vct '(0 1.0 0 0 0 0 0 0 1.0 0))))
+(map-chan (fltit-1 10 (list-&gt;vct '(0 1.0 0 0 0 0 0 0 1.0 0))))
 </pre>
 <p>
 <i>down-oct</i> tries to move a sound down an octave by goofing with the fft data,
@@ -344,8 +344,8 @@ the phazor package of Scott McNab.
 <pre>
   trim front and trim back (to/from marks)
   crop (first and last marks)
-  selection->new
-  cut selection->new
+  selection-&gt;new
+  cut selection-&gt;new
   append selection (and append sound)
 </pre>
 <!-- I(trim sound):M(Edit: Trim)(editmenudoc) -->
@@ -661,7 +661,7 @@ I'm slowly dividing out related groups of procedures to separate files.
     <li>shift pitch keeping duration constant (src+granulate)
     <li>tempo change via envelope (granulate)
     <li>cross-synthesis (using a formant bank)
-    <li>voiced->unvoiced (formants)
+    <li>voiced-&gt;unvoiced (formants)
     <li>convolution (convolve)
     <li>reverb (all-pass etc)
     <li>fancier locsig
@@ -689,7 +689,7 @@ I'm slowly dividing out related groups of procedures to separate files.
     <li>mapping extensions (map arbitrary single-channel function over various channel collections)
     <li>sound-interp, env-sound-interp
     <li>searching procedures (search-for-click, find-pitch, zero+, next-peak)
-    <li>sound-data->list
+    <li>sound-data-&gt;list
   </ul>
 </small>
 </ul>
@@ -1073,7 +1073,7 @@ Here are some sample calls:
 (expsnd '(0 1 2 .4))
 (expsnd '(0 .5 2 2.0))
 (map-chan (cross-synthesis 1 .5 128 6.0))
-(voiced->unvoiced 1.0 256 2.0 2.0)
+(voiced-&gt;unvoiced 1.0 256 2.0 2.0)
 (cnvtest 0 1 .1)
 (jc-reverb 2.0 #f .1 #f)
 </pre>
@@ -1146,7 +1146,7 @@ corresponding code in extsnd.html.  These include:
   <em class=def><a name="exwindowsamples">window-samples</a></em> snd chn
   <em class=def><a name="exdisplayenergy">display-energy</a></em> snd chn y0 y1
   <em class=def><a name="exwindowrms">window-rms</a></em>
-  <em class=def><A NAME="exnostartupfile">no-startup-file></a></em> ind file
+  <em class=def><A NAME="exnostartupfile">no-startup-file</a></em> ind file
   <em class=def><A NAME="exfftpeak">fft-peak</a></em> snd chn scale
 </pre>
 <p>
@@ -1161,7 +1161,7 @@ corresponding code in extsnd.html.  These include:
 displayed in the current window for <i>snd</i>'s channel <i>chn</i>.
 <i>display-energy</i> is a graph-hook function to display the time domain data squared.
 <i>window-rms</i> returns the rms of the data in currently selected graph window.
-<i>no-startup-file></i> is a start-hook function that causes Snd to exit immediately
+<i>no-startup-file</i> is a start-hook function that causes Snd to exit immediately
 if a file is specified on Snd's invocation line, but that file doesn't exist.
 <i>fft-peak</i> is a transform-hook function that returns the peak spectral magnitude.
 </p>
@@ -1342,7 +1342,7 @@ sound-files in directory.  We're using some procedures written by Dirk Herrman h
   (let ((r (make-regexp rx)))
     (filter-list (lambda (x) (regexp-exec r x)) strings)))
 
-(define (directory->list dir)
+(define (directory-&gt;list dir)
   (let ((dport (opendir dir)))
     (let loop ((entry (readdir dport))
 	       (files '()))
@@ -1361,8 +1361,8 @@ sound-files in directory.  We're using some procedures written by Dirk Herrman h
 (define* (sound-files-in-directory-1 #:optional (dir "."))
   (sort (grep
 	 (format #f "\\.(~{~A~^|~})$" sound-file-extensions)
-	 (directory->list dir))
-	string<?))
+	 (directory-&gt;list dir))
+	string&lt;?))
 </pre>
 
 <p><i>normalized-mix</i> is like <a href="extsnd.html#sndmix">mix</a> but the mixed result has same peak amplitude as the 
@@ -1416,7 +1416,7 @@ in fmv.scm, the simpler one being:
 					  :scaler amp 
 					  :end dur)))
 			 (lambda () (env e)))))
-	  (data (samples->vct beg dur)))
+	  (data (samples-&gt;vct beg dur)))
       (do ((i 0 (1+ i)))
 	  ((= i dur))
 	(vct-set! data i (+ (vct-ref data i)
@@ -1712,7 +1712,7 @@ the last sample:
 :<em class=typing>(max (+ (mix-position 0) (mix-length 0)) (+ (mix-position 1) (mix-length 1)))</em>
 <em class=listener>17846</em>
 </pre>
-<p><i>set-track-tempo</i> affects the time between the successive mix begin points (tempo > 1.0 makes the
+<p><i>set-track-tempo</i> affects the time between the successive mix begin points (tempo &gt; 1.0 makes the
 mixes happen more quickly):
 </p>
 <pre>
@@ -2745,7 +2745,7 @@ resource argument list is <i>args</i>.  The editor's current envelope is accessi
 				   |XmNrightAttachment  |XmATTACH_FORM)
 			     '(0.0 1.0 0.0 1.0)))))
 (set! (xe-envelope editor) (list 0.0 1.0 1.0 0.5))
-<pre>
+</pre>
 
 
 <A NAME="zipdoc"></a><span class=box><h2>zip.scm</h2></span>
@@ -2771,11 +2771,11 @@ an upward ramp and a downward ramp, then zips them together using
     (new-sound "new-0.snd")
     (do ((i 0 (1+ i))) ((= i 10000)) 
       (vct-set! data i (* i .0001)))
-    (vct->samples 0 10000 data 0)
+    (vct-&gt;samples 0 10000 data 0)
     (new-sound "new-1.snd")
     (do ((i 0 (1+ i))) ((= i 10000)) 
       (vct-set! data i (- 1.0 (* i .0001))))
-    (vct->samples 0 10000 data 1)
+    (vct-&gt;samples 0 10000 data 1)
     (test-zip)))
 </pre>
 <center><img src="zramp.png" alt="zipper ramp output"></center>
@@ -3050,7 +3050,7 @@ typedef struct {
 float src_input_as_needed(void *arg, int dir) 
 {
   src_state *sr = (src_state *)arg;
-  sr->val += (dir * .01); /* just return a ramp */
+  sr-&gt;val += (dir * .01); /* just return a ramp */
   return(sr-&gt;val);
 }
 

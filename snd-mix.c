@@ -338,6 +338,7 @@ static void select_mix(mix_info *md)
       ((md == NULL) || (ss->selected_mix != md->id)))
     {
       old_md = md_from_id(ss->selected_mix);
+      ss->selected_mix = INVALID_MIX_ID; /* force color update in wave display */
       if ((old_md) && (old_md->cp->show_mix_waveforms)) 
 	draw_mix_waveform(old_md);
     }

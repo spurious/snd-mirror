@@ -1,34 +1,58 @@
-;(define (add-listener-pane name type args)
-;  (let* ((listener (find-child (|Widget (cadr (main-widgets))) "lisp-listener"))
+(define (add-listener-pane name type args)
+  (let* ((listener (find-child (|Widget (cadr (main-widgets))) "lisp-listener"))
          ;; this is the listener text widget, hopefully
          ;;   its parent is the scrolled window
-;         (listener-scroll (|XtParent listener))
+         (listener-scroll (|XtParent listener))
          ;; its parent is the form widget filling the listener pane
-;         (listener-form (|XtParent listener-scroll)))
+         (listener-form (|XtParent listener-scroll)))
     ;; to insert the new widget at the top of the listener pane we need to detach the
     ;;   listener scrolled window etc -- assume here that the "args" list does not
     ;;   include any ATTACH_* arguments
-;    (|XtUnmanageChild listener-scroll)
-;    (let ((top-widget (|XtCreateManagedWidget name type listener-form
-;                                              (append
-;                                               (list |XmNleftAttachment   |XmATTACH_FORM
-;                                                     |XmNrightAttachment  |XmATTACH_FORM
-;                                                     |XmNtopAttachment    |XmATTACH_FORM)
-;                                               args))))
-;      (|XtVaSetValues listener-scroll (list |XmNtopAttachment |XmATTACH_WIDGET
-;                                            |XmNtopWidget     top-widget))
-;      (|XtManageChild listener-scroll)
-;      top-widget)))
+    (|XtUnmanageChild listener-scroll)
+    (let ((top-widget (|XtCreateManagedWidget name type listener-form
+                                              (append
+                                               (list |XmNleftAttachment   |XmATTACH_FORM
+                                                     |XmNrightAttachment  |XmATTACH_FORM
+                                                     |XmNtopAttachment    |XmATTACH_FORM)
+                                               args))))
+      (|XtVaSetValues listener-scroll (list |XmNtopAttachment |XmATTACH_WIDGET
+                                            |XmNtopWidget     top-widget))
+      (|XtManageChild listener-scroll)
+      top-widget)))
 
+;;;
+;;; code for the zoom buttons
+;;;
+
+(define (zoom-in)
+  (let ((midpoint (* 0.5 (apply + (x-bounds))))
+        (range (* -0.25 (apply - (x-bounds))))
+        (dur (/ (frames) (srate))))
+    (set! (x-bounds) (list (max 0.0 (- midpoint range))
+                           (min dur (+ midpoint range))))))
+
+(define (zoom-out)
+  (let ((midpoint (* 0.5 (apply + (x-bounds))))
+        (range (abs (apply - (x-bounds))))
+        (dur (/ (frames) (srate))))
+    (set! (x-bounds) (list (max 0.0 (- midpoint range))
+                           (min dur (+ midpoint range))))))
+
+;;;
+;;; the button bar
+;;;
 
 (define (add-useful-icons)
-  (let ((tools (add-main-pane "tools" |xmRowColumnWidgetClass
-;  (let ((tools (add-listener-pane "tools" |xmRowColumnWidgetClass
+(let* ((toolscroll (add-main-pane "toolscroll" |xmScrolledWindowWidgetClass
+                       (list |XmNscrollingPolicy |XmAUTOMATIC
+                             |XmNscrollBarDisplayPolicy |XmSTATIC
+                             |XmNpaneMinimum (+ 48 26) ; leave room for scrollers
+                             |XmNpaneMaximum (+ 48 26)
+                             |XmNbackground (|Pixel (snd-pixel (basic-color))))))
+         (tools (|XtCreateManagedWidget "tools" |xmRowColumnWidgetClass toolscroll
                   (list |XmNbackground (black-pixel)
-                        |XmNpaneMinimum 48
-                        |XmNpaneMaximum 48
                         |XmNorientation |XmHORIZONTAL))))
-    (load "/home/dlphilp/my_scm/new-icons.scm")
+    (load "new-icons.scm")
     (let ((play-pixmap (make-pixmap tools full-go))
           (stop-pixmap (make-pixmap tools full-stop))
           (play-forward-pixmap (make-pixmap tools play-direction-forward))
@@ -44,7 +68,7 @@
                       |XmNwidth       32
                       |XmNheight      32))))
          (|XtAddCallback button |XmNactivateCallback callback)))
-     (list open-file close-file save-as rec-pane env-edit regions-browser mix-pane undo-it redo-it full-go play-direction-forward loop-play start-of-file start-of-window back-one-window back-one-sample mid-window forward-one-sample forward-one-window end-of-window end-of-file last-mix-point next-mix-point exit-it)
+     (list open-file close-file save-as rec-pane env-edit regions-browser mix-pane undo-it redo-it full-go play-direction-forward loop-play start-of-file start-of-window back-one-window back-one-sample mid-window forward-one-sample forward-one-window end-of-window end-of-file last-mix-point next-mix-point zooming-in zooming-out exit-it)
      (list 
            (lambda (w c i) (open-file-dialog))
            (lambda (w c i) (close-sound))
@@ -92,6 +116,8 @@
 	   (lambda (w c i) (set! (cursor) (1- (frames)))) ; to end of file
            (lambda (w c i) (backward-mix))
            (lambda (w c i) (forward-mix))
+           (lambda (w c i) (zoom-in))
+           (lambda (w c i) (zoom-out))
            (lambda (w c i) (exit))
            )))))
 (add-useful-icons)

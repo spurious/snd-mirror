@@ -355,7 +355,7 @@ Once you have ILISP, put this code in your .emacs file:</p>
   (setq ilisp-block-command "(begin \n%s)")
   (setq ilisp-load-command "(load \"%s\")")
   (setq ilisp-init-hook '((lambda () (ilisp-init nil nil nil))))
-  (setq comint-prompt-regexp "^>+")
+  (setq comint-prompt-regexp "^&gt;+")
   (setq ilisp-directory-command "(getcwd)")
   (setq	ilisp-set-directory-command "(chdir \"%s\")")
   (setq	ilisp-complete-command
@@ -1585,20 +1585,20 @@ match-sound-files from extensions.scm):
 </p>
 <pre>
 (define (install-searcher proc)
-  (define (XmString->string str)
+  (define (XmString-&gt;string str)
     (cadr (|XmStringGetLtoR str |XmFONTLIST_DEFAULT_TAG)))
-  (define (XmStringTable->list st len)
+  (define (XmStringTable-&gt;list st len)
     (|XmStringTableUnparse st len #f |XmCHARSET_TEXT |XmCHARSET_TEXT #f 0 |XmOUTPUT_ALL))
-  (define (list->XmStringTable strs)
+  (define (list-&gt;XmStringTable strs)
     (|XmStringTableParseStringArray strs (length strs) #f |XmCHARSET_TEXT #f 0 #f))
   (|XtSetValues (let ((m (open-file-dialog #f)))
                          ; make sure the dialog exists
 		  (|Widget (list-ref (dialog-widgets) 6)))
 		(list |XmNfileSearchProc                             ; set dialog file search procedure
 		       (lambda (widget info)
-			 (let* ((dir (XmString->string (|dir info))) ; directory string
+			 (let* ((dir (XmString-&gt;string (|dir info))) ; directory string
 				(files (match-sound-files proc dir)) ; list of matching files
-				(fileTable (list->XmStringTable      ; XmStringTable for XmNfileListItems
+				(fileTable (list-&gt;XmStringTable      ; XmStringTable for XmNfileListItems
                                              (map (lambda (n)        ; every file needs prepended dir
                                                     (string-append dir n)) 
                                                   files))))

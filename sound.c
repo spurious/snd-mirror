@@ -655,7 +655,7 @@ void mus_sound_set_loop_info(const char *arg, int *loop)
 	}
       if ((loop[0] != 0) || (loop[1] != 0))
 	{
-	  sf->loop_modes[0] = 1;
+	  sf->loop_modes[0] = 1;             /* TODO: this should be settable (0:none, 1:forward, 2:to and fro) */
 	  sf->loop_starts[0] = loop[0];
 	  sf->loop_ends[0] = loop[1];
 	}

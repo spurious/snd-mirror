@@ -1,5 +1,5 @@
 
-;(load "plugins/plugin-.scm") 
+(load "plugins/plugin-canyon-delay.scm") 
 (load "plugins/plugin-chorus.scm") 
 (load "plugins/plugin-decimator.scm") 
 (load "plugins/plugin-delay5s.scm") 
