@@ -774,7 +774,7 @@ static void mix_title_button_motion(Widget w, XtPointer clientData, XEvent *even
   mixmark *m = (mixmark *)clientData;
   XMotionEvent *ev = (XMotionEvent *)event;
   /* this needs to be a little slow about deciding that we are dragging, as opposed to a slow click */
-  mix_title_move(m,ev->x_root,ev->time,(0.5 * XtGetMultiClickTime(XtDisplay(w))),TRUE);
+  mix_title_move(m,ev->x_root,ev->time,(int)(0.5 * XtGetMultiClickTime(XtDisplay(w))),TRUE);
 }
 
 void move_mixmark(mixmark *m, int x, int y)

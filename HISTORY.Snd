@@ -1,5 +1,6 @@
 snd change log
 
+  24-Aug:    drag-and-drop bugfixes.
   23-Aug:    removed -s startup switch.
   22-Aug:    removed snd-gdac.c, snd-xdac.c.
   19-Aug:    removed Lesstif support.

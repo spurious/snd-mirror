@@ -500,9 +500,16 @@ int save_state (snd_state *ss, char *save_state_name)
   return(0);
 }
 
+static char *file_extension(char *arg)
+{
+  char *dot = NULL,*sp;
+  if (arg) for (sp=arg;(*sp) != '\0';sp++) if ((*sp) == '.') dot=(++sp);
+  return(dot);
+}
+
 static char *startup_filename = NULL;
 
-int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, int auto_open_files, char **auto_open_file_names, int with_title)
+int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_file_names, int with_title)
 {
   char *argname;
   argname = auto_open_file_names[auto_open_ctr];

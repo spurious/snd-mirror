@@ -41,7 +41,7 @@ void draw_both_grfs(axis_context *ax, int j);
 void mix_save_graph(snd_state *ss, mix_context *ms,int j);
 void erase_and_draw_grf_points(mix_context *ms,chan_info *cp, int j);
 void erase_and_draw_both_grf_points(mix_context *ms,chan_info *cp, int j);
-void make_axes(chan_info *cp, axis_info *ap, int x_style);
+void setup_axis_context(chan_info *cp, axis_context *ax);
 void draw_spectro_line(axis_context *ax, int color, int x0, int y0, int x1, int y1);
 void allocate_color_map(snd_state *ss, int colormap);
 void initialize_colormap(snd_state *ss);
@@ -201,10 +201,13 @@ void set_show_selection_transform(snd_state *ss, int show);
 void set_fft_style(snd_state *ss, int val);
 
 
+/* -------- snd-xdrop.c -------- */
+
+void InitializeDrop(snd_state *ss);
+
 
 /* -------- snd-xregion.c -------- */
 
-void InitializeDrop(snd_state *ss);
 void update_region_browser(snd_state *ss, int grf_too);
 int region_browser_is_active(void);
 void delete_region_and_update_browser(snd_state *ss, int n);
@@ -286,8 +289,6 @@ XtCallbackList make_callback_list(XtCallbackProc callback, XtPointer closure);
 void color_sashes(Widget w, void *ptr);
 void check_for_event(snd_state *ss);
 void work_wait(snd_state *ss);
-void save_window_size(snd_state *ss);
-void restore_window_size(snd_state *ss);
 char *key_to_name(int keysym);
 void color_cursor(snd_state *ss, Pixel color);
 void color_marks(snd_state *ss, Pixel color);
@@ -514,7 +515,6 @@ void mix_raise_console(mixmark *m);
 
 /* -------- snd-xrec.c -------- */
 
-int record_in_progress(void);
 void lock_recording_audio(void);
 void unlock_recording_audio(void);
 void cleanup_recording (void);

@@ -187,6 +187,7 @@ static void who_called(GtkWidget *w,GdkEvent *event, gpointer clientData)
   GdkAtom type;
   gint format,nitems;
   guchar *version[1];
+fprintf(stderr,"prop: %s ",gdk_atom_name(ev->atom));
   if (ev->atom == snd_c)
     {
       if (gdk_property_get(MAIN_WINDOW(ss),snd_c,GDK_TARGET_STRING,0L,(long)BUFSIZ,FALSE,
@@ -338,29 +339,31 @@ static BACKGROUND_TYPE startup_funcs(gpointer clientData)
     case 0:
 #ifndef SND_AS_WIDGET
 #ifndef __alpha__
-      intern_atoms(ss);
       InitializeDrop(ss);
 #endif
 #endif
+
 #ifndef SND_AS_WIDGET
 #ifndef NEXT
-
       /* add X property level communication path (see sndctrl.c for the other side) */
       snd_v = gdk_atom_intern("SND_VERSION",FALSE);
       snd_c = gdk_atom_intern("SND_COMMAND",FALSE);
       gdk_property_change(MAIN_WINDOW(ss),snd_v,GDK_TARGET_STRING,8,GDK_PROP_MODE_REPLACE,SND_VERSION,strlen(SND_VERSION)+1);
       gtk_signal_connect(GTK_OBJECT(tm->shell),"property_notify_event",GTK_SIGNAL_FUNC(who_called),(gpointer)ss);
-      /* does gtk actually handle this event correctly?? */
+      /* this doesn't work for some reason */
+      /*  -- I think this is because gtk assumes the only property of interest is the gtk_selection!! */
 
       /* trap outer-level Close for cleanup check */
       gtk_signal_connect(GTK_OBJECT(tm->shell),"delete_event",GTK_SIGNAL_FUNC(Window_Close),(gpointer)ss);
 #endif
       gtk_signal_connect(GTK_OBJECT(tm->shell),"unmap_event",GTK_SIGNAL_FUNC(iconify_window),(gpointer)ss);
 #endif
+
       (ss->sgx)->graph_cursor = gdk_cursor_new(in_graph_cursor(ss));
       (ss->sgx)->mix_cursor = gdk_cursor_new(GDK_LEFT_PTR);
       (ss->sgx)->wait_cursor = gdk_cursor_new(GDK_WATCH);
       (ss->sgx)->arrow_cursor = gdk_cursor_new(GDK_LEFT_PTR);
+
 #if HAVE_SIGNAL
       signal(SIGTTIN,SIG_IGN);
       signal(SIGTTOU,SIG_IGN);
@@ -378,7 +381,7 @@ static BACKGROUND_TYPE startup_funcs(gpointer clientData)
     case 2: 
       if (auto_open_files > 0)
 	{
-	  auto_open_ctr = handle_next_startup_arg(ss,auto_open_ctr,auto_open_files,auto_open_file_names,TRUE);
+	  auto_open_ctr = handle_next_startup_arg(ss,auto_open_ctr,auto_open_file_names,TRUE);
 	  if (auto_open_ctr < auto_open_files) return(BACKGROUND_CONTINUE); /* i.e. come back to this branch */
 	}
       break;

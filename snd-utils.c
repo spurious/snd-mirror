@@ -39,13 +39,6 @@ char *filename_without_home_directory(char *name)
   return((char *)(name+last_slash));
 }
 
-char *file_extension(char *arg)
-{
-  char *dot = NULL,*sp;
-  if (arg) for (sp=arg;(*sp) != '\0';sp++) if ((*sp) == '.') dot=(++sp);
-  return(dot);
-}
-
 char *just_filename(char *name)
 {
   char *nodir;

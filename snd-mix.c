@@ -17,12 +17,6 @@ static void display_md(mixdata *md)
 }
 #endif
 
-void reflect_mix_name(mixdata *md)
-{
-  mixmark *m;
-  m = md->mixer;
-  if (m) mix_set_title_name(md,m);
-}
 
 /* ---------------- MIX POOL ---------------- */
 
@@ -2044,7 +2038,7 @@ static BACKGROUND_TYPE watch_mix(GUI_POINTER m)
   else return(BACKGROUND_QUIT);
 }
 
-void move_mix(mixmark *m, int evx)
+void move_mix(mixmark *m, int evx) /* used in snd-gmix.c -- needs to be global */
 {
   snd_state *ss;
   axis_info *ap;
@@ -3241,6 +3235,7 @@ static SCM g_set_mix_name(SCM n, SCM val)
   #define H_set_mix_name "(" S_set_mix_name " id name) sets the mix's name"
   char *name;
   mixdata *md;
+  mixmark *m;
   ERRN1(n,S_set_mix_name);
   ERRS2(val,S_set_mix_name);
   md = md_from_int(g_scm2int(n));
@@ -3250,7 +3245,8 @@ static SCM g_set_mix_name(SCM n, SCM val)
       name = gh_scm2newstr(val,NULL);
       md->name = copy_string(name);
       free(name);
-      reflect_mix_name(md);
+      m = md->mixer;
+      if (m) mix_set_title_name(md,m);
       return(val);
     }
   return(scm_throw(NO_SUCH_MIX,SCM_LIST2(gh_str02scm(S_set_mix_name),n)));

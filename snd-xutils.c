@@ -374,19 +374,6 @@ void check_for_event(snd_state *ss)
   ss->checking_explicitly = 0;
 }
 
-static Dimension app_x,app_y;
-
-void save_window_size(snd_state *ss)
-{
-  XtVaGetValues(MAIN_SHELL(ss),XmNwidth,&app_x,XmNheight,&app_y,NULL);
-}
-
-void restore_window_size(snd_state *ss)
-{
-  XtVaSetValues(MAIN_SHELL(ss),XmNwidth,app_x,XmNheight,app_y,NULL);
-}
-
-
 char *key_to_name(int keysym) {if (keysym > 0) return(XKeysymToString(keysym)); else return("NUL");}
 /* on the Sun, if keysym is 0, XKeysymToString segfaults! */
 
@@ -532,6 +519,11 @@ void set_widget_width(Widget w, int width)
   XtVaSetValues(w,XmNwidth,wid,NULL);
 }
 
+void set_widget_size(Widget w, int width, int height)
+{
+  XtVaSetValues(w,XmNwidth,(Dimension)width,XmNheight,(Dimension)height,NULL);
+}
+
 int widget_x(Widget w)
 {
   Dimension x;
@@ -558,11 +550,6 @@ void set_widget_y(Widget w, int y)
   Dimension yy;
   yy = (Dimension)y;
   XtVaSetValues(w,XmNy,yy,NULL);
-}
-
-void set_widget_size(Widget w, int width, int height)
-{
-  XtVaSetValues(w,XmNwidth,(Dimension)width,XmNheight,(Dimension)height,NULL);
 }
 
 void set_widget_position(Widget w, int x, int y)

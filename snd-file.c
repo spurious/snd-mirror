@@ -878,6 +878,7 @@ static snd_info *snd_update_1(snd_state *ss, snd_info *sp, char *ur_filename)
 void snd_update(snd_state *ss, snd_info *sp)
 {
   char *buf;
+  int app_x,app_y;
   if (sp->edited_region) return;
   if ((snd_probe_file(sp->fullname)) == FILE_DOES_NOT_EXIST)
     {
@@ -888,13 +889,14 @@ void snd_update(snd_state *ss, snd_info *sp)
       FREE(buf);
       return;
     }
-  save_window_size(ss);
+  app_x = widget_width(MAIN_SHELL(ss));
+  app_y = widget_height(MAIN_SHELL(ss));
   sp = snd_update_1(ss,sp,sp->fullname);
   buf = (char *)CALLOC(64,sizeof(char));
   sprintf(buf,"updated %s",sp->shortname);
   report_in_minibuffer(sp,buf);
   FREE(buf);
-  restore_window_size(ss);
+  set_widget_size(MAIN_SHELL(ss),app_x,app_y);
 }
 
 char *update_chan_stats(chan_info *cp)

@@ -194,6 +194,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+24-Aug:  drag-and-drop bugfixes.\n\
 23-Aug:  removed -s startup switch.\n\
 22-Aug:  removed snd-gdac.c, snd-xdac.c.\n\
 19-Aug:  removed Lesstif support.\n\

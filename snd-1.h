@@ -550,7 +550,7 @@ int snd_not_current(snd_info *sp, void *dat);
 int save_options (snd_state *ss);
 FILE *open_snd_init_file (snd_state *ss);
 int save_state (snd_state *ss, char *save_state_name);
-int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, int auto_open_files, char **auto_open_file_names, int with_title);
+int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_file_names, int with_title);
 #if HAVE_GUILE
   void g_init_main(SCM local_doc);
 #endif
@@ -968,7 +968,6 @@ int update_graph(chan_info *cp, void *ptr);
 void add_channel_data(char *filename, chan_info *cp, file_info *hdr, snd_state *ss);
 void add_channel_data_1(chan_info *cp, snd_info *sp, snd_state *ss, int graphed);
 void handle_cursor(chan_info *cp, int redisplay);
-void set_xy_bounds(chan_info *cp,axis_info *ap);
 void set_x_bounds(axis_info *ap);
 void display_channel_data (chan_info *cp, snd_info *sp, snd_state *ss);
 void show_cursor_info(chan_info *cp);
@@ -1031,6 +1030,8 @@ Float ungrf_y(axis_info *ap, int y);
 axis_info *make_axis_info (chan_info *cp, Float xmin, Float xmax, Float ymin, Float ymax, 
 			   char *xlabel, Float x0, Float x1, Float y0, Float y1,
 			   axis_info *old_ap);
+void make_axes(chan_info *cp, axis_info *ap, int x_style);
+
 
 
 /* -------- snd-snd.c -------- */
@@ -1161,7 +1162,6 @@ char *copy_string(char *str);
 int snd_strlen(char *str);
 char *filename_without_home_directory(char *name);
 char *just_filename(char *name);
-char *file_extension(char *arg);
 #ifndef sqr
   Float sqr(Float a);
 #endif
@@ -1186,7 +1186,6 @@ char *kmg (int num);
 
 /* -------- snd-mix.c -------- */
 
-void reflect_mix_name(mixdata *md);
 chan_info *m_to_cp(mixmark *m);
 snd_info *make_mix_readable(mixdata *md);
 mix_context *make_mix_context(chan_info *cp);
@@ -1249,6 +1248,7 @@ int snd_translate(snd_state *ss, char *oldname, char *newname);
 
 /* -------- snd-rec.c -------- */
 
+int record_in_progress(void);
 void init_recorder(void);
 void save_recorder_state(FILE *fd);
 void close_recorder_audio(void);

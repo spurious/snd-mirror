@@ -1586,6 +1586,5 @@ void g_init_recorder(SCM local_doc)
   void recorder_set_vu_out_val(int chan, MUS_SAMPLE_TYPE val) {}
   void finish_recording(snd_state *ss, recorder_info *rp) {}
   void sensitize_control_buttons(void) {}
-  int record_in_progress(void) {return(0);}
   void recorder_fill_wd(void *uwd, int chan, int field, int device) {}
 #endif

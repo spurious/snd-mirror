@@ -32,7 +32,20 @@ static void handle_mouse_drag(snd_info *sp, chan_info *cp, Float x, Float y) {}
 static int handle_key_press(chan_info *cp, int key, int state) {return(0);}
 #endif
 
-static int map_chans_wavo(chan_info *cp, void *ptr) {cp->wavo = (int)ptr; if (cp->wavo == 0) set_xy_bounds(cp,cp->axis); update_graph(cp,NULL); return(0);}
+static void set_y_bounds(axis_info *ap);
+static int map_chans_wavo(chan_info *cp, void *ptr) 
+{
+  cp->wavo = (int)ptr; 
+  if (cp->wavo == 0) 
+    {
+      set_y_bounds(cp->axis);
+      resize_sy(cp);
+      set_x_bounds(cp->axis);
+      resize_sx(cp);
+    }
+  update_graph(cp,NULL); 
+  return(0);
+}
 static void set_wavo(snd_state *ss, int val) {in_set_wavo(ss,val); map_over_chans(ss,map_chans_wavo,(void *)val);}
 
 static int map_chans_wavo_hop(chan_info *cp, void *ptr) {cp->wavo_hop = (int)ptr; update_graph(cp,NULL); return(0);}
@@ -939,13 +952,6 @@ void set_axes(chan_info *cp,Float x0,Float x1,Float y0,Float y1)
   resize_zy(cp);
 }
 
-void set_xy_bounds(chan_info *cp,axis_info *ap)
-{
-  set_y_bounds(ap);
-  resize_sy(cp);
-  set_x_bounds(ap);
-  resize_sx(cp);
-}
 
 
 /* ---------------- CHANNEL GRAPHICS ---------------- */

@@ -20,7 +20,7 @@ void mix_save_graph(snd_state *ss, mix_context *ms,int j) {}
 void erase_rectangle (chan_info *cp, axis_context *ax,int x0, int y0, int width, int height) {}
 void erase_and_draw_grf_points(mix_context *ms,chan_info *cp, int j) {}
 void erase_and_draw_both_grf_points(mix_context *ms,chan_info *cp, int j) {}
-void make_axes(chan_info *cp, axis_info *ap, int x_style) {}
+void setup_axis_context(chan_info *cp, axis_context *ax) {}
 void draw_spectro_line(axis_context *ax, int color, int x0, int y0, int x1, int y1) {}
 void allocate_color_map(snd_state *ss, int colormap) {}
 void allocate_sono_rects(snd_state *ss, int size) {}
@@ -150,8 +150,6 @@ void set_title(snd_state *ss, char *title) {}
 void goto_window(int text) {}
 void check_for_event(snd_state *ss) {}
 void work_wait(snd_state *ss) {}
-void save_window_size(snd_state *ss) {}
-void restore_window_size(snd_state *ss) {}
 char *key_to_name(int keysym) {return(NULL);}
 void recolor_graph(chan_info *cp, int selected) {}
 int main_time(snd_state *ss) {return(0);}
@@ -162,6 +160,7 @@ int widget_height(int w) {return(0);}
 int widget_width(int w) {return(0);}
 void set_widget_height(int w, int height) {}
 void set_widget_width(int w, int width) {}
+void set_widget_size(int w, int width, int height) {}
 int widget_x(int w) {return(0);}
 int widget_y(int w) {return(0);}
 void set_widget_x(int w, int x) {}

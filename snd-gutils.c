@@ -364,18 +364,6 @@ void check_for_event(snd_state *ss)
   ss->checking_explicitly = 0;
 }
 
-static gint app_x,app_y;
-
-void save_window_size(snd_state *ss)
-{
-  gdk_window_get_size(MAIN_WINDOW(ss),&app_x,&app_y);
-}
-
-void restore_window_size(snd_state *ss)
-{
-  gdk_window_resize(MAIN_WINDOW(ss),app_x,app_y);
-}
-
 void set_title(snd_state *ss, char *title)
 {
 #ifndef SND_AS_WIDGET

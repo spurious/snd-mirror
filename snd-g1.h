@@ -47,7 +47,7 @@ void draw_both_grfs(axis_context *ax, int j);
 void mix_save_graph(snd_state *ss, mix_context *ms,int j);
 void erase_and_draw_grf_points(mix_context *ms,chan_info *cp, int j);
 void erase_and_draw_both_grf_points(mix_context *ms,chan_info *cp, int j);
-void make_axes(chan_info *cp, axis_info *ap, int x_style);
+void setup_axis_context(chan_info *cp, axis_context *ax);
 void start_color_dialog(snd_state *ss, int width, int height);
 void start_orientation_dialog(snd_state *ss, int width, int height);
 void set_color_scale(snd_state *ss, Float val);
@@ -200,11 +200,14 @@ void set_fft_style(snd_state *ss, int val);
 #endif
 
 
+/* -------- snd-gdrop.c -------- */
+
+void InitializeDrop(snd_state *ss);
+
+
 
 /* -------- snd-gregion.c -------- */
 
-void intern_atoms (snd_state *ss);
-void InitializeDrop(snd_state *ss);
 void update_region_browser(snd_state *ss, int grf_too);
 void reflect_play_region_stop(region_info *r);
 int region_browser_is_active(void);
@@ -341,8 +344,6 @@ void set_button_label(GtkWidget *label,char *str);
 void set_label(GtkWidget *label,char *str);
 void check_for_event(snd_state *ss);
 void work_wait(snd_state *ss);
-void save_window_size(snd_state *ss);
-void restore_window_size(snd_state *ss);
 void set_title(snd_state *ss, char *title);
 void goto_window(GtkWidget *text);
 char *key_to_name(int keysym);
@@ -519,7 +520,6 @@ void reflect_mix_in_enved(void);
 
 /* -------- snd-grec.c -------- */
 
-int record_in_progress(void);
 void lock_recording_audio(void);
 void unlock_recording_audio(void);
 void cleanup_recording (void);
