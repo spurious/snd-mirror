@@ -4046,6 +4046,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time, Temp
 	      if (time_interval != 0)
 		sp->speed_control = (Float)((double)(samps * 1000) / (double)(time_interval * SND_SRATE(sp)));
 	      else sp->speed_control = 0.0;
+	      /* TODO: smooth the speed-drag amount! */
 	    }
 	}
       else

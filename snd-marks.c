@@ -265,16 +265,17 @@ typedef struct {
 
 static mark *hit_mark_1(chan_info *cp, mark *mp, void *m)
 {
-  /* we're going left to right, so after passing x, give up */
+  /* SOMEDAY? -- we're going left to right, so after passing x, give up */
   int mx;
   mdata *md = (mdata *)m;
   axis_info *ap;
+  ap = cp->axis;
+  if ((mp->samp < ap->losamp) || (mp->samp > ap->hisamp)) return(NULL); /* grf_x clips so we can be confused by off-screen marks */
   mx = grf_x((double)(mp->samp) / (double)SND_SRATE(cp->sound), cp->axis);
   if (mx > (md->x + MARK_TAB_WIDTH)) return(NULL); /* past it */
   if (mx < (md->x - MARK_TAB_WIDTH)) return(NULL); /* before it */
   if (mp->name == NULL)                          /* check y if unnamed */
     {
-      ap = cp->axis;
       if ((md->y >= ap->y_axis_y1) && 
 	  (md->y <= (ap->y_axis_y1 + MARK_TAB_HEIGHT))) 
 	return(mp); 
@@ -290,10 +291,11 @@ static mark *hit_triangle_1(chan_info *cp, mark *mp, void *m)
   int mx, y;
   mdata *md = (mdata *)m;
   axis_info *ap;
+  ap = cp->axis;
+  if ((mp->samp < ap->losamp) || (mp->samp > ap->hisamp)) return(NULL); /* grf_x clips so we can be confused by off-screen marks */
   mx = grf_x((double)(mp->samp) / (double)SND_SRATE(cp->sound), cp->axis);
   if (mx > md->x) return(NULL);
   if ((mx + PLAY_ARROW_SIZE) < md->x) return(NULL);
-  ap = cp->axis;
   y = md->y - ap->y_axis_y0 - PLAY_ARROW_SIZE;
   if (y < 0) y = -y;
   if ((mx + PLAY_ARROW_SIZE - y) >= md->x) return(mp);
