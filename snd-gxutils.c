@@ -23,7 +23,8 @@ static Window compare_window(Display *display, Window window, char *id)
   Window found = (Window)None;
   if (((XGetWindowProperty(display, window, XInternAtom (display, id, False), 0L, (long)BUFSIZ, False,
 			   XA_STRING, &type, &format, &nitems, &bytesafter, 
-			   (unsigned char **)version)) == Success) && (type != None))
+			   (unsigned char **)version)) == Success) && 
+      (type != None))
     {
       found = window;
       if (version[0]) 

@@ -101,7 +101,7 @@ void clear_listener(void);
 void lock_listener_pane(void);
 void unlock_listener_pane(void);
 void g_init_gxlistener(void);
-
+void highlight_unbalanced_paren(void);
 
 
 /* -------- snd-xmenu.c -------- */

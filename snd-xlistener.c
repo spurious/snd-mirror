@@ -980,7 +980,6 @@ static void flash_unbalanced_paren(XtPointer context, XtIntervalId *id)
     }
 }
 
-void highlight_unbalanced_paren(void);
 void highlight_unbalanced_paren(void)
 {
   /* if cursor is positioned at close paren, try to find reason for unbalanced expr and highlight it */

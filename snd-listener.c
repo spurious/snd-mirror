@@ -70,8 +70,6 @@ int find_matching_paren(char *str, int parens, int pos, char *prompt, int *highl
   return(parens);
 }
 
-void highlight_unbalanced_paren(void);
-
 int check_balance(char *expr, int start, int end, int in_listener) 
 {
   int i;
@@ -188,10 +186,8 @@ int check_balance(char *expr, int start, int end, int in_listener)
 	  break;
 	}
     }
-#if USE_MOTIF
   if (in_listener)
     highlight_unbalanced_paren();
-#endif
   return(0);
 }
 

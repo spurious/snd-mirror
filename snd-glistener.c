@@ -1,7 +1,5 @@
 #include "snd.h"
 
-/* TODO: highlight_unbalanced_paren */
-
 static GtkWidget *completion_dialog = NULL;
 static int first_time = TRUE;
 static GtkWidget *listener_text = NULL, *completion_list = NULL;
@@ -368,6 +366,79 @@ static void listener_help(snd_state *ss)
       g_free(source);
     }
 }
+
+/* /home/bil/test/gtk+-2.1.1/demos/gtk-demo/textview.c */
+
+static GtkTextTag *flash_tag = NULL;
+static int flashes = 0;
+static int paren_pos = -1;
+#define FLASH_TIME 150
+
+static void add_inverse(int pos)
+{
+  GtkTextIter start, end;
+  GtkTextBuffer *buf;
+  buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(listener_text));
+  gtk_text_buffer_get_iter_at_offset(buf, &start, pos);
+  gtk_text_buffer_get_iter_at_offset(buf, &end, pos + 1);
+  if (!flash_tag) flash_tag = gtk_text_buffer_create_tag (buf, "red_background", "background", "red", NULL);
+  gtk_text_buffer_apply_tag(buf, flash_tag, &start, &end);
+}
+
+static void remove_inverse(int pos)
+{
+  GtkTextIter start, end;
+  GtkTextBuffer *buf;
+  buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(listener_text));
+  gtk_text_buffer_get_iter_at_offset(buf, &start, pos);
+  gtk_text_buffer_get_iter_at_offset(buf, &end, pos + 1);
+  if (!flash_tag) flash_tag = gtk_text_buffer_create_tag(buf, "red_background", "background", "red", NULL);
+  gtk_text_buffer_remove_tag(buf, flash_tag, &start, &end);
+}
+
+static gint flash_unbalanced_paren(gpointer data)
+{
+  snd_state *ss;
+  ss = get_global_state();
+  flashes--;
+  if (flashes & 1) remove_inverse(paren_pos); else add_inverse(paren_pos);
+  if (flashes > 0)
+    gtk_timeout_add((guint32)FLASH_TIME, flash_unbalanced_paren, NULL);
+  else 
+    {
+      remove_inverse(paren_pos);
+      paren_pos = -1;
+    }
+  return(0);
+}
+
+void highlight_unbalanced_paren(void)
+{
+  /* if cursor is positioned at close paren, try to find reason for unbalanced expr and highlight it */
+  int pos;
+  char *str = NULL;
+  snd_state *ss;
+  ss = get_global_state();
+  pos = sg_cursor_position(listener_text);
+  if (pos > 2)
+    {
+      str = sg_get_text(listener_text, 0, pos);
+      if ((str[pos - 1] == ')') &&
+	  ((str[pos - 2] != '\\') || (str[pos - 3] != '#')))
+	{
+	  int parens;
+	  parens = find_matching_paren(str, 2, pos - 1, listener_prompt(ss), &paren_pos);
+	  if (parens == 0)
+	    {
+	      add_inverse(paren_pos);
+	      flashes = 4;
+	      gtk_timeout_add((guint32)FLASH_TIME, flash_unbalanced_paren, NULL);
+	    }
+	}
+      if (str) g_free(str);
+    }
+}
+
 
 static GtkTextTag *tag = NULL;
 static int old_pos = -1;

@@ -79,6 +79,7 @@ void handle_listener(snd_state *ss, int new_state);
 int listener_height(void);
 int listener_width(void);
 void clear_listener(void);
+void highlight_unbalanced_paren(void);
 
 
 /* -------- snd-xmenu.c -------- */

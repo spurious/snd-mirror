@@ -1756,7 +1756,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 
 ;;; -------- add amp sliders in control panel for multi-channel sounds
 ;;;
-;;; SOMEDAY: some way to synchronize sliders (needs to be installable into existing set)
+;;; It would be nice to have some way to synchronize sliders, but apparently mouse+control(etc) is ignored by the scrollbars?
 
 (define (add-amp-controls)
 

@@ -54,6 +54,7 @@ void listener_append(char *msg) {fprintf(stderr, "%s", msg);}
 void handle_listener(snd_state *ss, int new_state) {}
 int listener_height(void) {return(0);}
 int listener_width(void) {return(0);}
+void highlight_unbalanced_paren(void) {}
 int file_open_menu(void) {return(0);}
 int file_close_menu(void) {return(0);}
 int file_save_menu(void) {return(0);}

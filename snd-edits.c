@@ -1634,9 +1634,9 @@ void ramp_channel(chan_info *cp, Float rmp0, Float rmp1, off_t beg, off_t num, i
  *   Also currently assumes sample->sample mapping (as opposed to src etc)
  *   and randomness is out -- need to be able to start anywhere with same result etc.
  *
- * Next steps in virtual ops
- *   FILTER:
- *     TODO: add "context" arg to ptree-channel: how many preceding samples to include with current
+ * Next steps in virtual ops:
+ *
+ *  add "context" arg to ptree-channel: how many preceding samples to include with current
  *     if given, user proc takes vct arg, not sample (intended for FIR filters)
  *     snd_fd would need vct arg with size
  *     new ED_VTREE? ptree+vct op
@@ -1646,11 +1646,12 @@ void ramp_channel(chan_info *cp, Float rmp0, Float rmp1, off_t beg, off_t num, i
  *     previous_sample: shift forward current, put prev at vct[0] (we're reading ahead here)
  *       init: start at end of vct[end]=requested start, move back filling (unless < 0)
  *       from next: move back filling
- *   ENV:
- *     TODO: embed exp env calc (new op)
- *   CHAIN:
- *     TODO: ramp + ptree, ramp + ramp, ptree + ramp could be chained
- *           as could ptree+ptree with some cleverness
+ *
+ *  to embed exp env calc, we need room for the base/scaler (power is the ramp)
+ *  ramp + ptree, ptree + ramp could be chained if we had room for a subsequent scaling (i.e. need one more seg value)
+ *  ptree + ptree if had list of ptrees (function composition-style)
+ *  ramp + ramp is out unless we add more segment info since end points do not uniquely set the intervening values:
+ *    '(0 1 1 .5) * '(0 0 1 1) has the same endpoints as '(0 0 1 .707) * '(0 0 1 .707)
  */
 void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, void *env_pt)
 {

@@ -93,6 +93,8 @@ void listener_append_and_prompt(char *msg);
 void clear_listener(void);
 void g_init_gxlistener(void);
 GtkWidget *snd_entry_new(snd_state *ss, GtkWidget *container, int with_white_background);
+void highlight_unbalanced_paren(void);
+
 
 
 /* -------- snd-gmain.c -------- */

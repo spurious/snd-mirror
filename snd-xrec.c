@@ -1,7 +1,5 @@
 /* 
- * SOMEDAY:  output panel should support max chans found in all output devices, and have some way to send output anywhere
- * SOMEDAY:  recorder-defaults device {function} -> layout, chans, whether included and active, etc (using sndlib device numbers)
- * TODO:  dB in VUs (code below -- needs labels and a switch somewhere)
+ * SOMEDAY:  dB in VUs (code below -- needs labels and a switch somewhere)
  * SOMEDAY:  syncd sliders ("master" volume control basically)
  */
 

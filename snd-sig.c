@@ -1371,7 +1371,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
 #if HAVE_FFTW
   if ((!ur_a) && 
       (!gen) && 
-      (!over_selection) &&   /* TODO: make fft-filter work with selection */
+      (!over_selection) &&
       ((order == 0) || (order >= 128)) && 
       ((ss->memory_available == 0) ||
        ((int)((to_c_edit_samples(ncp, edpos, origin, arg_pos) + order) / 128) < ss->memory_available))) /* this is in Kbytes */
