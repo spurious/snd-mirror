@@ -1576,6 +1576,54 @@ As a very simple example, here's dialog window with a slider:</p>
 
 (create-scale-dialog (|Widget (cadr (main-widgets))))
 </pre>
+<p>All of Snd is at your disposal once this module is loaded.  As a more interesting example,
+the next function installs our own file filtering procedure into the File:Open dialog (it uses
+match-sound-files from extensions.scm):
+</p>
+<pre>
+(define (install-searcher proc)
+  (define (XmString->string str)
+    (cadr (|XmStringGetLtoR str |XmFONTLIST_DEFAULT_TAG)))
+  (define (XmStringTable->list st len)
+    (|XmStringTableUnparse st len #f |XmCHARSET_TEXT |XmCHARSET_TEXT #f 0 |XmOUTPUT_ALL))
+  (define (list->XmStringTable strs)
+    (|XmStringTableParseStringArray strs (length strs) #f |XmCHARSET_TEXT #f 0 #f))
+  (|XtSetValues (let ((m (open-file-dialog #f)))
+                         ; make sure the dialog exists
+		  (|Widget (list-ref (dialog-widgets) 6)))
+		(list |XmNfileSearchProc                             ; set dialog file search procedure
+		       (lambda (widget info)
+			 (let* ((dir (XmString->string (|dir info))) ; directory string
+				(files (match-sound-files proc dir)) ; list of matching files
+				(fileTable (list->XmStringTable      ; XmStringTable for XmNfileListItems
+                                             (map (lambda (n)        ; every file needs prepended dir
+                                                    (string-append dir n)) 
+                                                  files))))
+			   (|XtSetValues widget                      ; change the list of files
+					 (list |XmNfileListItems fileTable
+					       |XmNfileListItemCount (length files)
+					       |XmNlistUpdated #t)))))))
+
+;(install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))
+;(install-searcher (lambda (file) (= (mus-sound-chans file) 4)))
+</pre>
+<p>Now click the 'Filter' button to see only those files that fit the procedure in
+the dialog's files list.
+</p>
+<!--
+This disables the y-position slider:
+(define sy (|Widget (list-ref (channel-widgets) 4)))
+(|XtRemoveAllCallbacks sy |XmNdragCallback)
+(|XtRemoveAllCallbacks sy |XmNvalueChangedCallback)
+
+This gets its current (raw) value
+(|XtGetValues sy (list |XmNvalue 0))
+
+(|XtSetValues sy |XmNdragCallback)
+  (list (lambda (w c i)
+          (set! (left-sample) (+ (left-sample) (- (|value i) 50))))
+	#f))
+-->
 <br>
 
 <span class=bbox><h3><A NAME="sndwithgtk">Snd and Gtk+</a></h3></span>
@@ -1733,10 +1781,10 @@ set_listener_font "9x15"
 set_help_text_font "9x15"
 set_axis_numbers_font "9x15"
 
-set_show_mix_waveforms #t
-set_trap_segfault #f
-set_show_backtrace #t
-set_show_indices #t
+set_show_mix_waveforms true
+set_trap_segfault false
+set_show_backtrace true
+set_show_indices true
 
 set_listener_prompt ":"
 show_listener

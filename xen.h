@@ -219,7 +219,9 @@
 #if (!TIMING) && (!WITH_MCHECK)
 
 #define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
-  scm_set_procedure_property_x(XEN_NEW_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(Doc))
+  if (Doc) \
+    scm_set_procedure_property_x(XEN_NEW_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(Doc)); \
+  else XEN_NEW_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg)
 #else
 #if (TIMING)
 /* add timing calls */
@@ -393,6 +395,9 @@
   #define XEN_CALL_2(Func, Arg1, Arg2, Caller)       g_call2(Func, Arg1, Arg2, Caller)
   #define XEN_CALL_3(Func, Arg1, Arg2, Arg3, Caller) g_call3(Func, Arg1, Arg2, Arg3, Caller)
   #define XEN_APPLY(Func, Args, Caller)              g_call_any(Func, Args, Caller)
+  #define XEN_CALL_4(Func, Arg1, Arg2, Arg3, Arg4, Caller) g_call_any(Func, XEN_LIST_4(Arg1, Arg2, Arg3, Arg4), Caller) 
+  #define XEN_CALL_5(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Caller) g_call_any(Func, XEN_LIST_5(Arg1, Arg2, Arg3, Arg4, Arg5), Caller) 
+  #define XEN_CALL_6(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Caller) g_call_any(Func, XEN_LIST_6(Arg1, Arg2, Arg3, Arg4, Arg5, Arg6), Caller) 
 #else
   #define XEN_CALL_0(Func, Caller)                   scm_apply(Func, XEN_EMPTY_LIST, XEN_EMPTY_LIST)
   #define XEN_CALL_1(Func, Arg1, Caller)             scm_apply(Func, Arg1, scm_listofnull)
@@ -500,9 +505,9 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #define C_TO_SMALL_XEN_INT(a)             INT2FIX(a)
 #define XEN_TO_SMALL_C_INT(a)             FIX2INT(a)
 #define XEN_TO_C_UNSIGNED_LONG(a)         NUM2ULONG(a)
-#define C_TO_XEN_UNSIGNED_LONG(a)         rb_int2inum(a)
+#define C_TO_XEN_UNSIGNED_LONG(a)         rb_int2inum((unsigned long)(a))
 #define XEN_TO_C_ULONG(a)                 NUM2ULONG(a)
-#define C_TO_XEN_ULONG(a)                 rb_int2inum(a)
+#define C_TO_XEN_ULONG(a)                 rb_int2inum((unsigned long)(a))
 
 #define C_TO_XEN_STRING(a)                rb_str_new2(a)
 #define XEN_TO_C_STRING(Str)              RSTRING(Str)->ptr
@@ -528,27 +533,27 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
   do { \
       rb_define_global_function(xen_scheme_procedure_to_ruby(Name), XEN_PROCEDURE_CAST Func, ((RstArg > 0) ? -2 : (OptArg > 0) ? -1 : ReqArg)); \
-      xen_add_help(xen_scheme_procedure_to_ruby(Name), Doc); \
+      if (Doc) xen_add_help(xen_scheme_procedure_to_ruby(Name), Doc); \
     } while (0)
 
 #define XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
   do { \
     XEN_DEFINE_PROCEDURE(Get_Name, XEN_PROCEDURE_CAST Get_Func, Get_Req, Get_Opt, 0, Get_Help); \
     XEN_DEFINE_PROCEDURE(Set_Name, XEN_PROCEDURE_CAST Set_Func, Set_Req, Set_Opt, 0, Get_Help); \
-    xen_add_help(xen_scheme_procedure_to_ruby(Get_Name), Get_Help); \
+    if (Get_Help) xen_add_help(xen_scheme_procedure_to_ruby(Get_Name), Get_Help); \
     } while (0)
 
 #define XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
   do { \
     XEN_DEFINE_PROCEDURE(Get_Name, XEN_PROCEDURE_CAST Get_Func, Get_Req, Get_Opt, 0, Get_Help); \
     XEN_DEFINE_PROCEDURE(Set_Name, XEN_PROCEDURE_CAST Set_Func, Set_Req, Set_Opt, 0, Get_Help); \
-    xen_add_help(xen_scheme_procedure_to_ruby(Get_Name), Get_Help); \
+    if (Get_Help) xen_add_help(xen_scheme_procedure_to_ruby(Get_Name), Get_Help); \
     } while (0)
 
 #define XEN_DEFINE_CONSTANT(Name, Value, Help) \
   do { \
       rb_define_global_const(xen_scheme_constant_to_ruby(Name), C_TO_XEN_INT(Value)); \
-      xen_add_help(xen_scheme_constant_to_ruby(Name), Help); \
+      if (Help) xen_add_help(xen_scheme_constant_to_ruby(Name), Help); \
     } while (0)
 
 #define XEN_DEFINE_VARIABLE(Name, Var, Value) \
@@ -561,11 +566,12 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
   { \
     Var = Qnil; \
     rb_define_variable(xen_scheme_global_variable_to_ruby(Name), (VALUE *)(&Var)); \
-    xen_add_help(xen_scheme_global_variable_to_ruby(Name), Help); \
+    if (Help) xen_add_help(xen_scheme_global_variable_to_ruby(Name), Help); \
   }
 
 #define XEN_BOOLEAN_P(Arg)               (XEN_TRUE_P(Arg) || XEN_FALSE_P(Arg))
 #define XEN_NUMBER_P(Arg)                ((TYPE(Arg) == T_FLOAT) || (TYPE(Arg) == T_FIXNUM) || (TYPE(Arg) == T_BIGNUM))
+#define XEN_DOUBLE_P(Arg)                XEN_NUMBER_P(Arg)
 #define XEN_INTEGER_P(Arg)               ((TYPE(Arg) == T_FIXNUM) || (TYPE(Arg) == T_BIGNUM))
 #define XEN_SYMBOL_P(Arg)                SYMBOL_P(Arg)
 #define XEN_STRING_P(Arg)                (TYPE(Arg) == T_STRING)

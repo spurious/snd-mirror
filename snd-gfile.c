@@ -211,7 +211,7 @@ static void file_open_dialog_delete(GtkWidget *w, GdkEvent *event, gpointer cont
   gtk_widget_hide(open_dialog);
 }
 
-void make_open_file_dialog(snd_state *ss, int read_only)
+void make_open_file_dialog(snd_state *ss, int read_only, int managed)
 {
   file_dialog_read_only = read_only;
   if (!open_dialog)
@@ -222,8 +222,7 @@ void make_open_file_dialog(snd_state *ss, int read_only)
 					       (GtkSignalFunc)file_open_dialog_dismiss);
       set_dialog_widget(FILE_OPEN_DIALOG, open_dialog);
     }
-
-  gtk_widget_show(open_dialog);
+  if (managed) gtk_widget_show(open_dialog);
 }
 
 

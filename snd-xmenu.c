@@ -130,12 +130,12 @@ static int call_menu_hook(char *name, char *option)
 
 static void File_Open_Callback(Widget w, XtPointer cD, XtPointer mD) 
 {
-  IF_MENU_HOOK(STR_File, STR_Open) make_open_file_dialog((snd_state *)cD, FALSE);
+  IF_MENU_HOOK(STR_File, STR_Open) make_open_file_dialog((snd_state *)cD, FALSE, TRUE);
 }
 
 static void File_View_Callback(Widget w, XtPointer cD, XtPointer mD) 
 {
-  IF_MENU_HOOK(STR_File, STR_View) make_open_file_dialog((snd_state *)cD, TRUE);
+  IF_MENU_HOOK(STR_File, STR_View) make_open_file_dialog((snd_state *)cD, TRUE, TRUE);
 }
 
 static void File_New_Callback(Widget w, XtPointer cD, XtPointer mD) 

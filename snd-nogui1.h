@@ -348,7 +348,7 @@ int start_file_dialog(snd_state *ss, int width, int height);
 int file_dialog_is_active(void);
 int edit_header(snd_info *sp);
 void make_a_big_star_outa_me(char *shortname, int big_star);
-
+void make_open_file_dialog(snd_state *ss, int read_only, int managed);
 void g_initialize_xgfile(void);
 
 

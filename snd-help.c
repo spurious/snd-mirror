@@ -253,6 +253,9 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+26-Jul:  added 'play selected sound' button to open file dialog.\n\
+         previous-files-select-hook, open-file-dialog, install-searcher (grfsnd.html).\n\
+         snd-motif.scm.\n\
 25-Jul:  snd 5.1.\n\
          removed snd-gtk.scm (guile-gtk is no longer supported).\n\
          removed add/remove-idler/input.\n\

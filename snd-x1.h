@@ -452,7 +452,7 @@ XmString initial_speed_label(snd_state *ss);
 char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type, int *format, int *location);
 file_data *sndCreateFileDataForm(snd_state *ss, Widget parent, char *name, Arg *args, int n, int with_chan, int header_type, int data_format, int with_loc);
 void alert_new_file(void);
-void make_open_file_dialog(snd_state *ss, int read_only);
+void make_open_file_dialog(snd_state *ss, int read_only, int managed);
 void make_file_save_as_dialog(snd_state *ss);
 void make_edit_save_as_dialog(snd_state *ss);
 snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *comment);

@@ -830,7 +830,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  if (insertion) {XtSetArg(args[n], XmNpositionIndex, (short)channel); n++;}
 	  XtSetArg(args[n], XmNpaneMinimum, chan_y); n++;
 #if (XmVERSION > 1)
-	  cw[W_form] = sndCreateFormWidget("hiho", w_snd_pane(sp), args, n);
+	  cw[W_form] = sndCreateFormWidget("chn-form", w_snd_pane(sp), args, n);
 	  if ((sp->channel_style == CHANNELS_COMBINED) && (channel > 0)) XtUnmanageChild(cw[W_form]);
 
 	  n = 0;
@@ -854,7 +854,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->white); n++;}
 	  XtSetArg(args[n], XmNpaneMaximum, DEFAULT_EDIT_HISTORY_WIDTH); n++;
 	  XtSetArg(args[n], XmNlistSizePolicy, XmCONSTANT); n++;
-	  cw[W_edhist] = XmCreateScrolledList(cw[W_top], "edhist", args, n);
+	  cw[W_edhist] = XmCreateScrolledList(cw[W_top], "chn-edhist", args, n);
 
 	  n = 0;
 	  if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}

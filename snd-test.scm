@@ -6241,6 +6241,7 @@
   (add-hook! select-mix-hook arg1) (carg1 select-mix-hook)
   (add-hook! print-hook arg1) (carg1 print-hook)
   (add-hook! read-hook arg1) (carg1 read-hook)
+  (add-hook! previous-files-select-hook arg1) (carg1 previous-files-select-hook)
 
   (add-hook! exit-hook arg0) (carg0 exit-hook)
   (add-hook! output-name-hook arg0) (carg0 output-name-hook)
@@ -10919,6 +10920,7 @@ EDITS: 3
 			(list property-changed-hook 'property-changed-hook)
 			(list select-sound-hook 'select-sound-hook)
 			(list select-mix-hook 'select-mix-hook)
+			(list previous-files-select-hook 'previous-files-select-hook)
 			(list during-open-hook 'during-open-hook)
 			(list transform-hook 'transform-hook)
 			(list mouse-enter-label-hook 'mouse-enter-label-hook)

@@ -60,6 +60,7 @@
   <li><a href="#rtiodoc">rtio.scm: real-time stuff</a>
   <li><a href="#rubberdoc">rubber.scm: rubber-sound</a>
   <li><a href="#snd4doc">snd4.scm: Backwards compatibility stuff</a>
+  <li><a href="#sndmotifdoc">snd-motif.scm: Motif module (xm.c)</a>
   <li><a href="#sndtestdoc">snd-test.scm: Snd regression tests</a>
   <li><a href="#vdoc">v.scm: fm-violin</a>
   <li><a href="#wsdoc">ws.scm: with-sound</a>
@@ -1911,6 +1912,15 @@ shortened.
 <p>The Snd-4 compatibilty file contains a number of the procedures
 that were removed from or renamed in Snd-5.  
 </p>
+
+<A NAME="sndmotifdoc"></a><span class=box><h2>snd-motif.scm</h2></span>
+
+<p>snd-motif.scm has procedures that rely on the Motif module (xm.c).
+Currently, that comprises just <b>install-searcher</b> which places
+our own search procedure into the "filter" mechanism in the File:Open
+dialog.
+</p>
+
 
 <A NAME="sndtestdoc"></a><span class=box><h2>snd-test.scm</h2></span>
 <p>

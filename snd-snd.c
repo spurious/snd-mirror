@@ -1465,21 +1465,21 @@ static XEN sp_iread(XEN snd_n, int fld, char *caller)
     case SP_CONTRASTING:         return(C_TO_XEN_BOOLEAN(sp->contrast_control_p));  break;
     case SP_REVERBING:           return(C_TO_XEN_BOOLEAN(sp->reverb_control_p));    break;
     case SP_FILTERING:           return(C_TO_XEN_BOOLEAN(sp->filter_control_p));    break;
-    case SP_FILTER_DBING:        return(C_TO_XEN_BOOLEAN(sp->filter_control_in_dB)); break;
+    case SP_FILTER_DBING:        return(C_TO_XEN_BOOLEAN(sp->filter_control_in_dB));break;
     case SP_FILTER_ORDER:        return(C_TO_XEN_INT(sp->filter_control_order));    break;
     case SP_SRATE:               return(C_TO_XEN_INT((sp->hdr)->srate));            break;
     case SP_DATA_FORMAT:         return(C_TO_XEN_INT((sp->hdr)->format));           break;
     case SP_HEADER_TYPE:         return(C_TO_XEN_INT((sp->hdr)->type));             break;
     case SP_DATA_LOCATION:       return(C_TO_XEN_INT((sp->hdr)->data_location));    break;
-    case SP_SAVE_CONTROLS:       save_controls(sp);                               break;
-    case SP_RESTORE_CONTROLS:    restore_controls(sp);                            break;
-    case SP_RESET_CONTROLS:      reset_controls(sp);                              break;
+    case SP_SAVE_CONTROLS:       save_controls(sp);                                 break;
+    case SP_RESTORE_CONTROLS:    restore_controls(sp);                              break;
+    case SP_RESET_CONTROLS:      reset_controls(sp);                                break;
     case SP_SELECTED_CHANNEL:    return(C_TO_XEN_INT(sp->selected_channel));        break;
     case SP_FILE_NAME:           return(C_TO_XEN_STRING(sp->filename));             break;
-    case SP_SHORT_FILE_NAME:     return(C_TO_XEN_STRING(sp->short_filename));            break;
-    case SP_CLOSE:               snd_close_file(sp, sp->state);                   break;
-    case SP_SAVE:                save_edits(sp, NULL);                            break;
-    case SP_UPDATE:              snd_update(sp->state, sp);                       break;
+    case SP_SHORT_FILE_NAME:     return(C_TO_XEN_STRING(sp->short_filename));       break;
+    case SP_CLOSE:               snd_close_file(sp, sp->state);                     break;
+    case SP_SAVE:                save_edits(sp, NULL);                              break;
+    case SP_UPDATE:              snd_update(sp->state, sp);                         break;
     case SP_CURSOR_FOLLOWS_PLAY: return(C_TO_XEN_BOOLEAN(sp->cursor_follows_play)); break;
     case SP_SHOW_CONTROLS:       return(C_TO_XEN_BOOLEAN(control_panel_open(sp)));  break;
     case SP_SPEED_TONES:         return(C_TO_XEN_INT(sp->speed_control_tones));     break;
@@ -2695,9 +2695,9 @@ static XEN g_sound_widgets(XEN snd)
 	     XEN_CONS(XEN_WRAP_C_POINTER(w_snd_play(sp)),
 	      XEN_CONS(XEN_WRAP_C_POINTER(w_snd_filter_env(sp)), /* this is the drawingarea widget */
 	       XEN_CONS(XEN_WRAP_C_POINTER(w_snd_combine(sp)),
-		 XEN_CONS(XEN_WRAP_C_POINTER(w_snd_minibuffer_label(sp)),
-		   XEN_CONS(XEN_WRAP_C_POINTER(w_snd_name_icon(sp)),
-	             XEN_EMPTY_LIST))))))))));
+	        XEN_CONS(XEN_WRAP_C_POINTER(w_snd_minibuffer_label(sp)),
+	         XEN_CONS(XEN_WRAP_C_POINTER(w_snd_name_icon(sp)),
+	          XEN_EMPTY_LIST))))))))));
 }
 #endif
 

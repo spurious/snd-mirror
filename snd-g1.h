@@ -529,7 +529,7 @@ void update_stats(snd_state *ss);
 
 char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type, int *format, int *location);
 void alert_new_file(void);
-void make_open_file_dialog(snd_state *ss, int read_only);
+void make_open_file_dialog(snd_state *ss, int read_only, int managed);
 file_data *sndCreateFileDataForm(snd_state *ss, GtkWidget *parent, char *name, int with_chan, int header_type, int data_format, int with_loc, int comment_as_entry);
 void make_file_save_as_dialog(snd_state *ss);
 void make_edit_save_as_dialog(snd_state *ss);

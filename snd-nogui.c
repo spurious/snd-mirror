@@ -285,6 +285,7 @@ void reflect_record_size(int val) {}
 void unsensitize_control_buttons(void) {}
 void reflect_recorder_duration(Float new_dur) {}
 char *ps_rgb(snd_state *ss, int pchan) {return(NULL);}
+void make_open_file_dialog(snd_state *ss, int read_only, int managed) {}
 
 void g_init_gxenv(void) {}
 void g_initialize_xgh(snd_state *ss) {}
@@ -388,7 +389,6 @@ void snd_doit(snd_state *ss, int argc, char **argv)
     ss->init_file = INIT_FILE_NAME;
 
   /* TODO: add Ruby no-gui inits */
-  /* TODO: mxscheme where possible in no-gui inits? */
 #if HAVE_GUILE
   XEN_EVAL_C_STRING("(set! scm-repl-prompt \"snd> \")");
 

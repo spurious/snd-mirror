@@ -589,6 +589,7 @@
 #define S_normalize_transform_by_channel "normalize-transform-by-channel"
 #define S_normalize_transform_by_sound  "normalize-transform-by-sound"
 #define S_normalize_transform_globally  "normalize-transform-globally"
+#define S_open_file_dialog              "open-file-dialog"
 #define S_open_hook                     "open-hook"
 #define S_open_raw_sound                "open-raw-sound"
 #define S_open_raw_sound_hook           "open-raw-sound-hook"
@@ -614,6 +615,7 @@
 #define S_position_color                "position-col" STR_OR
 #define S_preload_directory             "preload-directory"
 #define S_preload_file                  "preload-file"
+#define S_previous_files_select_hook    "previous-files-select-hook"
 #define S_previous_files_sort           "previous-files-sort"
 #define S_previous_files_sort_procedure "previous-files-sort-procedure"
 #define S_previous_sample               "previous-sample"

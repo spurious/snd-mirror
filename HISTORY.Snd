@@ -1,5 +1,8 @@
 snd change log
 
+  26-Jul:    added 'play selected sound' button to open file dialog.
+             previous-files-select-hook, open-file-dialog, install-searcher (grfsnd.html).
+             snd-motif.scm.
   25-Jul:    snd 5.1.
              removed snd-gtk.scm (guile-gtk is no longer supported).
              removed add/remove-idler/input.

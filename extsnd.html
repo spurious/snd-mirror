@@ -191,6 +191,7 @@ various examples of and extensions to Snd can be found in:
 <tr><td><a href="sndscm.html#rgbdoc">rgb.scm</a></td>        <td>color definitions</td></tr>
 <tr><td><a href="sndscm.html#rtiodoc">rtio.scm</a></td>      <td>real-time stuff</td></tr>
 <tr><td><a href="sndscm.html#rubberdoc">rubber.scm</a></td>  <td>rubber-sound</td></tr>
+<tr><td><a href="sndscm.html#sndmotifdoc">snd-motif.scm</a></td><td>Motif module (xm.c)</td></tr>
 <tr><td><a href="sndscm.html#snd4doc">snd4.scm</a></td>      <td>backwards compatibility stuff</td></tr>
 <tr><td><a href="sndscm.html#vdoc">v.scm</a></td>            <td>fm-violin (from CLM)</td></tr>
 <tr><td><a href="sndscm.html#wsdoc">ws.scm</a></td>          <td>with-sound implementation</td></tr>
@@ -1946,6 +1947,26 @@ the hook.
 <!-- -->called each time a buffer (size: <i>samps</i>) is about to be 
 <!-- -->filled for the DAC (see <a href="sndscm.html#enveddoc">enved.scm</a> and <a href="sndscm.html#marksdoc">marks.scm</a>).
 <!-- --></td></tr>
+<!-- --><tr><td colspan=3></td></tr>
+<!-- -->
+<!-- previous-files-select-hook -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="previousfilesselecthook">previous-files-select-hook</a></em> (filename)</code></span><td align=right><b>or</b></td>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td colspan=2>
+<!-- -->called each time a file is selected in the View Files dialog's previous files list.
+<!-- -->If it returns #t, the file is not opened in Snd (the default action).  We can use this
+<!-- -->hook to use the previous files list for whatever purpose seems handy.  For example,
+<!-- -->say we want to click a file to have it mixed into the currently selected sound at
+<!-- -->the cursor:
+<!-- --></td></tr>
+<!-- --><tr><td></td><td colspan=2>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(add-hook! <em class=red>previous-files-select-hook</em>
+  (lambda (file)
+    (mix-sound file (cursor))
+    #t))
+<!-- --></pre></td></tr></table></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
 <!-- print-hook -->
@@ -6733,6 +6754,11 @@ And an example that lets us see the result of filtering the waveform:
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="sndfiledialog">file-dialog</a></em> ()</code></span></td>
 <!-- --><td>create the <a href="snd.html#prevfiles">list</a> of current and previous files (not the file browser), if necessary, activate it, and return the dialog widget.</td></tr>
+<!-- -->
+<!-- open-file-dialog -->
+<!-- -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="sndopenfiledialog">open-file-dialog</a></em> (managed)</code></span></td>
+<!-- --><td>create the File:Open file selection dialog, if necessary, and make it visible if <i>managed</i>.</td></tr>
 <!-- -->
 <!-- previous-files-sort -->
 <!-- -->

@@ -417,7 +417,6 @@ dir *find_sound_files_in_dir (char *name)
 #if (!HAVE_OPENDIR)
   return(NULL);
 #else
-  /* TODO: here we could insert the file-dialog (just-sounds) filter procedure, but it's also called in prevlist and sound-files-in-directory */
   struct dirent *dirp;
   DIR *dpos;
   char *dot, *sp;
@@ -1047,11 +1046,21 @@ void view_curfiles_save(snd_state *ss, int pos)
   if (sp) save_edits(sp, NULL);
 }
 
+static XEN previous_files_select_hook;
+
 void view_prevfiles_select(snd_state *ss, int pos)
 {
   snd_info *sp;
-  sp = snd_open_file(prevfullnames[pos], ss, FALSE);
-  if (sp) select_channel(sp, 0); 
+  XEN res = XEN_FALSE;
+  if (XEN_HOOKED(previous_files_select_hook))
+    res = g_c_run_or_hook(previous_files_select_hook,
+			  XEN_LIST_1(C_TO_XEN_STRING(prevfullnames[pos])),
+			  S_previous_files_select_hook);
+  if (XEN_NOT_TRUE_P(res))
+    {
+      sp = snd_open_file(prevfullnames[pos], ss, FALSE);
+      if (sp) select_channel(sp, 0); 
+    }
 }
 
 int view_prevfiles_play(snd_state *ss, int pos, int play)
@@ -2288,6 +2297,14 @@ XEN_NARGIFY_1(g_set_previous_files_sort_procedure_w, g_set_previous_files_sort_p
 #define g_set_previous_files_sort_procedure_w g_set_previous_files_sort_procedure
 #endif
 
+static XEN g_open_file_dialog(XEN managed)
+{
+  #define H_open_file_dialog "(" S_open_file_dialog " managed) creates the file dialog if needed and displays it if managed"
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_open_file_dialog, "a boolean");
+  make_open_file_dialog(get_global_state(), FALSE, (XEN_BOUND_P(managed)) ? XEN_TO_C_BOOLEAN(managed) : 1);
+  return(managed);
+}
+
 void g_init_file(void)
 {
   XEN_DEFINE_PROCEDURE(S_add_sound_file_extension,    g_add_sound_file_extension_w, 1, 0, 0,     H_add_sound_file_extension);
@@ -2296,6 +2313,7 @@ void g_init_file(void)
   XEN_DEFINE_PROCEDURE(S_preload_directory,           g_preload_directory_w, 1, 0, 0,            H_preload_directory);
   XEN_DEFINE_PROCEDURE(S_preload_file,                g_preload_file_w, 1, 0, 0,                 H_preload_file);
   XEN_DEFINE_PROCEDURE(S_sound_files_in_directory,    g_sound_files_in_directory_w, 1, 0, 0,     H_sound_files_in_directory);
+  XEN_DEFINE_PROCEDURE(S_open_file_dialog,            g_open_file_dialog, 0, 1, 0,               H_open_file_dialog);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sound_loop_info, g_sound_loop_info_w, H_sound_loop_info,
 			       "set-" S_sound_loop_info, g_set_sound_loop_info_w,  0, 1, 1, 1);
@@ -2315,7 +2333,7 @@ just-sounds button is set. Return #f to filter out filename. "
   XEN_DEFINE_HOOK(close_hook, S_close_hook, 1, H_close_hook);                     /* arg = sound index */
   XEN_DEFINE_HOOK(just_sounds_hook, S_just_sounds_hook, 1, H_just_sounds_hook);   /* arg = filename */
 
-#define H_open_raw_sound_hook S_open_raw_sound_hook " (filename current-choices) is called when a headerless sound file is opened. \
+  #define H_open_raw_sound_hook S_open_raw_sound_hook " (filename current-choices) is called when a headerless sound file is opened. \
 Its result can be a list describing the raw file's attributes (thereby bypassing the Raw File Dialog and so on). \
 The list (passed to subsequent hook functions as 'current-choice') is interpreted as \
 (list chans srate data-format data-location data-length) where trailing elements can \
@@ -2325,4 +2343,9 @@ be omitted (location defaults to 0, and length defaults to the file length in by
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_previous_files_sort_procedure, g_previous_files_sort_procedure_w, H_previous_files_sort_procedure,
 			       "set-" S_previous_files_sort_procedure, g_set_previous_files_sort_procedure_w,  0, 0, 1, 0);
+
+  #define H_previous_files_select_hook S_previous_files_select_hook "(filename) called when a file is selected in the \
+previous files list of the View Files dialog.  If it returns #t, the default action, opening the file, is omitted."
+
+  XEN_DEFINE_HOOK(previous_files_select_hook, S_previous_files_select_hook, 1, H_previous_files_select_hook); /* arg = filename */
 }

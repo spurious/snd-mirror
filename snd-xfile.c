@@ -1,8 +1,5 @@
 #include "snd.h"
 
-/* TODO: user-defined sort proc for file dialog(s)? and (not the same thing) user-defined filter proc?  */
-/*       if defaults to proc that checks list, add-to-sound-file-extension becomes easier */
-
 /* most the dialogs present a view of the various file header possibilities */
 
 #define NUM_VISIBLE_HEADERS 4
@@ -203,15 +200,48 @@ static int string_compare(const void *ss1, const void *ss2)
   return(strcmp((*((char **)ss1)), (*((char **)ss2))));
 }
 
-static void just_sounds_help_Callback(Widget w, XtPointer context, XtPointer info) 
+static snd_info *file_play_sp = NULL;
+
+static void play_selected_Callback(Widget w, XtPointer context, XtPointer info) 
+{
+  Widget wtmp;
+  char *filename;
+  snd_state *ss;
+  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
+  ss = get_global_state();
+  ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
+  if (cb->set)
+    {
+      if ((file_play_sp) && (file_play_sp->playing)) 
+	stop_playing_sound(file_play_sp);
+      wtmp = XtNameToWidget(open_dialog, "Text");
+      if (!wtmp) wtmp = XmFileSelectionBoxGetChild(open_dialog, XmDIALOG_TEXT);
+      filename = XmTextGetString(wtmp);
+      if (filename)
+	{
+	  file_play_sp = make_sound_readable(ss, filename, FALSE);
+	  if (file_play_sp)
+	    play_sound(file_play_sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "selected file play", 0);
+	}
+    }
+  else
+    {
+      if ((file_play_sp) && (file_play_sp->playing)) 
+	{
+	  stop_playing_sound(file_play_sp);
+	  file_play_sp = NULL;
+	}
+    }
+}
+
+static void play_selected_help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help((snd_state *)context,
-	   "Sound Files Only",
-"If you click the 'Sound Files Only'\n\
-button, only those files in the current\n\
-directory that look vaguely like sound\n\
-files will be displayed.  The decision\n\
-is based on the file's extension.\n\
+	   "play selected sound",
+"If you click the 'play selected sound'\n\
+button, the currently selected sound (if\n\
+and) in the file selection box file list\n\
+is played.\n\
 ");
 }
 
@@ -318,6 +348,7 @@ static void sound_file_search(Widget FSB_w, XmFileSelectionBoxCallbackStruct *in
 	    {
 	      for (sp = save_dir, sn = cdp->files[i]; ((*sp) = (*sn)) != '\0'; sp++, sn++);
 	      /* save_dir is a pointer into fullpathname after the directory portion */
+	      /*   this is unreadable code! -- it's basically sprintf(fullpathname,"%s%s",our_dir,cdp->files[i]) I think */
 	      names[i] = XmStringCreate(fullpathname, XmFONTLIST_DEFAULT_TAG);
 	    }
 	}
@@ -357,16 +388,29 @@ static void just_sounds_Callback(Widget w, XtPointer context, XtPointer info)
   force_directory_reread();
 }
 
+static void just_sounds_help_Callback(Widget w, XtPointer context, XtPointer info) 
+{
+  snd_help((snd_state *)context,
+	   "sound files only",
+"If you click the 'sound files only'\n\
+button, only those files in the current\n\
+directory that look vaguely like sound\n\
+files will be displayed.  The decision\n\
+is based on the file's extension.\n\
+");
+}
+
 static Widget just_sounds_button = NULL;
 static int just_sounds_state = FALSE;
+static Widget play_selected_button = NULL;
 
-void make_open_file_dialog(snd_state *ss, int read_only)
+void make_open_file_dialog(snd_state *ss, int read_only, int managed)
 {
   Widget w;
   Arg args[20];
   int n;
   XmString s1;
-  Widget wtmp = NULL;
+  Widget wtmp = NULL, rc;
   file_dialog_read_only = read_only;
   if (!open_dialog) 
     {
@@ -384,9 +428,16 @@ void make_open_file_dialog(snd_state *ss, int read_only)
       set_dialog_widget(FILE_OPEN_DIALOG, open_dialog);
       XmStringFree(s1);
 
-      just_sounds_button = XtVaCreateManagedWidget(STR_Sound_Files_Only, xmToggleButtonWidgetClass, open_dialog,
+      rc = XtVaCreateManagedWidget("filebuttons", 
+				   xmRowColumnWidgetClass, open_dialog,
+				   XmNorientation, XmHORIZONTAL,
+				   NULL);
+      just_sounds_button = XtVaCreateManagedWidget(STR_Sound_Files_Only, xmToggleButtonWidgetClass, rc,
 						   XmNset, just_sounds_state,
 						   XmNalignment, XmALIGNMENT_BEGINNING,
+						   NULL);
+      play_selected_button = XtVaCreateManagedWidget("play selected sound", xmToggleButtonWidgetClass, rc,
+						   XmNalignment, XmALIGNMENT_END,
 						   NULL);
       color_file_selection_box(open_dialog, ss);
 
@@ -399,12 +450,15 @@ void make_open_file_dialog(snd_state *ss, int read_only)
       if (wtmp) add_completer_to_textfield(ss, wtmp, add_completer_func(filename_completer));
 
       if (!(ss->using_schemes)) XtVaSetValues(just_sounds_button, XmNselectColor, (ss->sgx)->pushed_button_color, NULL);
+      if (!(ss->using_schemes)) XtVaSetValues(play_selected_button, XmNselectColor, (ss->sgx)->pushed_button_color, NULL);
       XtVaGetValues(open_dialog, XmNfileSearchProc, &default_search_proc, NULL);
       XtAddCallback(open_dialog, XmNokCallback, File_Open_OK_Callback, (XtPointer)ss);
       XtAddCallback(open_dialog, XmNcancelCallback, File_Open_Cancel_Callback, (XtPointer)ss);
       XtAddCallback(open_dialog, XmNhelpCallback, File_Open_Help_Callback, (XtPointer)ss);
       XtAddCallback(just_sounds_button, XmNvalueChangedCallback, just_sounds_Callback, NULL);
       XtAddCallback(just_sounds_button, XmNhelpCallback, just_sounds_help_Callback, (XtPointer)ss);
+      XtAddCallback(play_selected_button, XmNvalueChangedCallback, play_selected_Callback, NULL);
+      XtAddCallback(play_selected_button, XmNhelpCallback, play_selected_help_Callback, (XtPointer)ss);
       add_dialog(ss, open_dialog);
     }
   if (new_file_written) 
@@ -412,7 +466,7 @@ void make_open_file_dialog(snd_state *ss, int read_only)
       force_directory_reread();
       new_file_written = 0;
     }
-  if (!(XtIsManaged(open_dialog))) 
+  if ((managed) && (!(XtIsManaged(open_dialog))))
     XtManageChild(open_dialog);
 }
 
