@@ -160,6 +160,7 @@
 #undef HAVE_GDK_GL_CONTEXT_COPY
 #undef HAVE_GDK_DRAW_PIXBUF
 #undef WITH_MODULES
+#undef WITH_SHARED_SNDLIB
 
 #define USE_SND 1
 #endif

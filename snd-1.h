@@ -718,6 +718,7 @@ snd_fd *init_sample_read(off_t samp, chan_info *cp, int direction);
 snd_fd *init_sample_read_any(off_t samp, chan_info *cp, int direction, int edit_position);
 void read_sample_change_direction(snd_fd *sf, int dir);
 int ramp_or_ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos);
+int ptree_or_sound_fragments_in_use(chan_info *cp, int pos);
 #define read_sample(Sf) (*Sf->run)(Sf)
 #define read_sample_to_float(Sf) (*Sf->runf)(Sf)
 Float protected_next_sample_to_float(snd_fd *sf);

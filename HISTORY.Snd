@@ -1,19 +1,20 @@
 Snd change log
 
-  10-Dec:    added contrib/inf-snd.el from Michael Scholz.
-  9-Dec:     added init-func arg to ptree-channel.
+  11-Dec:    --with-shared-sndlib configure switch.
+  10-Dec:    contrib/inf-snd.el from Michael Scholz.
+  9-Dec:     init-func arg to ptree-channel.
   1-Dec:     removed Chebyshev and Hankel transforms.
              def-clm-struct support in run completed.
 	     new-sound-hook, sound-let (ws.scm).
              -nostdin switch for CLM/Snd communication.
-  22-Nov:    added contrib/v.rb thanks to Michael Scholz.
+  22-Nov:    contrib/v.rb thanks to Michael Scholz.
   13-Nov:    snd 6.3.
   8-Nov:     gtk-effects.scm.
   1-Nov:     snd-gtk.scm.
   31-Oct:    gtk-popup.scm.
-  28-Oct:    added peaks-font and bold-peaks-font.
-  25-Oct:    added -I switch to add dir to load path.
-  23-Oct:    added origin arg to bind-key, edpos arg to find-mark.
+  28-Oct:    peaks-font and bold-peaks-font.
+  25-Oct:    -I switch to add dir to load path.
+  23-Oct:    origin arg to bind-key, edpos arg to find-mark.
   16-Oct:    snd-6.2.
   14-Oct:    removed max-sounds.
   11-Oct:    add-find-to-listener in snd-motif.scm.
@@ -27,7 +28,7 @@ Snd change log
   4-Sep:     --with-modules for modularized sndlib.
   2-Sep:     removed gtk-1 and gtkextra support.
   1-Sep:     bugfix: if no extension language, edit position could get confused.
-  26-Aug:    added filter-control-coeffs.
+  26-Aug:    filter-control-coeffs.
              graph-lisp|time|transform? inverted to be lisp|time|transform-graph?
              graph-time-once -> graph-once, graph-transform-once -> graph-once
              graph-time-as-wavogram -> graph-as-wavogram, graph-transform-as-sonogram -> graph-as-sonogram
@@ -38,7 +39,7 @@ Snd change log
              normalize-transform-by-channel -> normalize-by-channel
              normalize-transform-by-sound -> normalize-by-sound
              normalize-transform-globally -> normalize-globally
-  16-Aug:    added IBM adpcm from Perry Cook's adpcmdec.c.
+  16-Aug:    IBM adpcm from Perry Cook's adpcmdec.c.
   15-Aug:    set-channel-drop in snd-motif.scm.
   13-Aug:    snd 6.0.
   1-Aug:     def-clm-struct (ws.scm).
@@ -51,8 +52,8 @@ Snd change log
              continue-sample->file, read/write-ogg in examp.scm.
   11-Jul:    run macro for Snd.
   8-Jul:     update-transform changed to update-transform-graph.
-             added sample-reader-position.
-  3-Jul:     added contrib/DotEmacs thanks to Fernando.
+             sample-reader-position.
+  3-Jul:     contrib/DotEmacs thanks to Fernando.
   27-Jun:    bad-header-hook.
   20-Jun:    ptree-channel -- func as virtual edit.
              env-channel can take envelope (list) arg.
@@ -60,7 +61,7 @@ Snd change log
   12-Jun:    snd 5.11.
              moved forward|backward-sample to snd5.scm.
   10-Jun:    mix panel amp envs are now editable.
-  7-Jun:     added fftw support, removed fht.
+  7-Jun:     fftw support, removed fht.
   6-Jun:     removed --with-big-colormap switch (use -DCOLORMAP_SIZE=64 to get old form).
   4-Jun:     Gtk OpenGL support via the gtkglext library.
   3-Jun:     removed "colour" spelling option (snd5.scm has backwards compatible definitions).
@@ -68,7 +69,7 @@ Snd change log
   24-May:    with-gl to choose between GL/X graphics, snd-gl.scm
   23-May:    gl1.png (spectrogram uses GL now if mono and HAVE_GL).
   20-May:    removed glfft.c and glfft.scm
-             added snd-gxl-context on -DHAVE_GL switch (configure --with-gl)
+             snd-gxl-context on -DHAVE_GL switch (configure --with-gl)
              added gl.c, makegl.scm, gldata.scm. (GL example in grfsnd.html).
   15-May:    update-hook.
   13-May:    snd 5.10.

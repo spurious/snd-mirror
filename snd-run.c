@@ -1894,7 +1894,16 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, int separ
 		  if (strcmp(type, "reader") == 0) arg_type = R_READER; else
 		  if (strcmp(type, "boolean") == 0) arg_type = R_BOOL; else
 		  if (strcmp(type, "char") == 0) arg_type = R_CHAR; else
-		  if (strcmp(type, "list") == 0) arg_type = R_LIST;
+		  if (strcmp(type, "list") == 0) arg_type = R_LIST; 
+
+		  /* TODO: list arg type actually doesn't work -- segfault:
+(let ((tst 0.0))
+  (run-eval '(lambda (lst)
+	       (declare (lst list))
+	       (set! tst (st3-one lst)))
+	    (make-st3 :one 1 :two 2)))
+		  */
+
 		}
 	    }
 	  add_var_to_ptree(prog, 

@@ -103,22 +103,6 @@ snd_io *make_file_state(int fd, file_info *hdr, int chan, int suggested_bufsize)
   return(io);
 }
 
-static snd_io *free_file_state(snd_io *io)
-{
-  /* gotta free the IO buffers as well as the descriptor buffer */
-  int i, chans;
-  if (io)
-    {
-      chans = io->chans;
-      for (i = 0; i < chans; i++)
-	if (io->arrays[i]) 
-	  FREE(io->arrays[i]);
-      FREE(io->arrays);
-      FREE(io);
-    }
-  return(NULL);
-}
-
 void file_buffers_forward(off_t ind0, off_t ind1, off_t indx, snd_fd *sf, snd_data *cur_snd)
 {
   /* need to track in-core buffer and file-relative index */
@@ -503,7 +487,18 @@ snd_data *free_snd_data(snd_data *sd)
 	  if (sd->io)
 	    {
 	      if (sd->open == FD_OPEN) mus_file_close(sd->io->fd);
-	      sd->io = free_file_state(sd->io);
+	      if (sd->io)
+		{
+		  /* free the IO buffers as well as the descriptor buffer */
+		  int i, chans;
+		  chans = sd->io->chans;
+		  for (i = 0; i < chans; i++)
+		    if (sd->io->arrays[i]) 
+		      FREE(sd->io->arrays[i]);
+		  FREE(sd->io->arrays);
+		  FREE(sd->io);
+		  sd->io = NULL;
+		}
 	      if (sd->temporary == DELETE_ME) 
 		snd_remove(sd->filename, TRUE);
 	    }

@@ -9,6 +9,36 @@
  * greatly simplified 8-June-02: no more cached windows, single fft background functions etc, zero pad made sensible
  */
 
+#if HAVE_FFTW && WITH_SHARED_SNDLIB
+#include <rfftw.h>
+/* save old plans both ways */
+static fftw_real *rdata = NULL, *idata = NULL;
+static rfftw_plan rplan, iplan;
+static int last_fft_size = 0;
+
+void mus_fftw(Float *rl, int n, int dir)
+{
+  int i;
+  if (n != last_fft_size)
+    {
+      if (rdata) {FREE(rdata); FREE(idata); rfftw_destroy_plan(rplan); rfftw_destroy_plan(iplan);}
+      rplan = rfftw_create_plan(n, FFTW_REAL_TO_COMPLEX, FFTW_ESTIMATE); /* I didn't see any improvement here from using FFTW_MEASURE */
+      iplan = rfftw_create_plan(n, FFTW_COMPLEX_TO_REAL, FFTW_ESTIMATE);
+      last_fft_size = n;
+      rdata = (fftw_real *)CALLOC(n, sizeof(fftw_real));
+      idata = (fftw_real *)CALLOC(n, sizeof(fftw_real));
+    }
+  memset((void *)idata, 0, n * sizeof(fftw_real));
+  /* if Float (default float) == fftw_real (default double) we could forego the data copy */
+  for (i = 0; i < n; i++) {rdata[i] = rl[i];}
+  if (dir != -1)
+    rfftw_one(rplan, rdata, idata);
+  else rfftw_one(iplan, rdata, idata);
+  for (i = 0; i < n; i++) rl[i] = idata[i];
+}
+#endif
+
+
 /* -------------------------------- WAVELET TRANSFORM -------------------------------- */
 /* 
  * taken from wavelets.cl in clm which is taken from

@@ -20,3 +20,4 @@ GM_FILES = xm.o
 GM_SO_FILE = xm.so
 GG_FILES = xg.o
 GG_SO_FILE = xg.so
+NO_FILES =

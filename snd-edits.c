@@ -1,8 +1,52 @@
 #include "snd.h"
 
-/* TODO: sndlib.so in configure */
-/* TODO: ramp on ptree should be workable */
-/* TODO: exp env as virtual op */
+/* TODO: ramp on ptree and vice versa? should be workable
+ *         ptree-on-ramp: pscl1 (arg ramp end), sf->pcinr and pcurval ED_PTREE_RAMP
+ *           this would need to subsume any existing scaler, I think
+ *         ramp-on-ptree: use existing code ED_RAMP_PTREE
+ * TODO: exp env as virtual op
+ *         needs base ED_XRAMP
+ * TODO: ramp + ramp is out unless we add more segment info since end points do not uniquely set the intervening values:
+ *    '(0 1 1 .5) * '(0 0 1 1) has the same endpoints as '(0 0 1 .707) * '(0 0 1 .707)
+ *    but this will exist with pscl and pscl1 -- ED_RAMP_RAMP
+ *    if no closure, text is procedure_source:
+
+      (lambda (y) [...]) and current (lambda (x) <...>)
+      -> new ptree (lambda (y) (let ((x (begin [...]))) <...>))
+      using let, there shouldn't be collisions even if the same arg name is used
+ *
+ * ptree chain if we could encapsulate ptrees (closures also) or recursive descent of trees
+ *
+ * swap chans if no sounds (i.e. other edits implicit)
+ *   all FRAGMENT_SOUND indices are either 0 or EDIT_LIST_END|ZERO_MARK (see ptree_or_sound_fragments_in_use below)
+ *   if its a data buffer, we could fix up the index and make a new (copy) buffer, but that's getting complicated
+ *   does this require copying the base sound accessors as well?
+ *     change all 0's to add_sound_file_to_edit_list results:
+ *
+       hdr = copy_current_header
+       fd = snd_open_read(ss, inserted_file);
+       mus_file_open_descriptors(fd,
+				file name
+				hdr->format,
+				mus_data_format_to_bytes_per_sample(hdr->format),
+				hdr->data_location,
+				hdr->chans,
+				hdr->type);
+       io = make_file_state(fd, hdr, chan, FILE_BUFFER_SIZE);
+       new0 = add_sound_file_to_edit_list(cp, inserted_file, io, hdr, auto_delete, chan);
+       then copy current other chan edlist
+       prepare_edit_list(cp, len, pos, S_swap_channel);
+       new_ed = make_ed_list(cp->edits[pos]->size);
+       cp->edits[cp->edit_ctr] = new_ed;
+       for (i = 0; i < new_ed->size; i++) 
+         {
+           copy_ed_fragment(new_ed->fragments[i], old_ed->fragments[i]);
+           change 0 refs to new0
+         }
+       amp_env_scale_by(cp, 1.0, pos); 
+
+ */
+
 
 static int dont_edit(chan_info *cp) 
 {
@@ -1566,6 +1610,24 @@ static int ramp_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos)
   return(FALSE);
 }
 
+int ptree_or_sound_fragments_in_use(chan_info *cp, int pos)
+{
+  /* are there any non-simple edits? */
+  int i, index;
+  ed_list *ed;
+  ed = cp->edits[pos];
+  for (i = 0; i < ed->size - 1; i++) 
+    {
+      index = FRAGMENT_SOUND(ed, i);
+      if (index == EDIT_LIST_END_MARK) return(FALSE);
+      if ((index != 0) &&
+	  (index != EDIT_LIST_ZERO_MARK))
+	return(TRUE);
+      if (FRAGMENT_TYPE(ed, i) == ED_PTREE) return(TRUE);
+    }
+  return(FALSE);
+}
+
 void scale_channel(chan_info *cp, Float scl, off_t beg, off_t num, int pos, int in_as_one_edit)
 {
   /* copy current ed-list and reset scalers */
@@ -1731,14 +1793,6 @@ void ramp_channel(chan_info *cp, Float rmp0, Float rmp1, off_t beg, off_t num, i
   reflect_edit_history_change(cp);
   if (!in_as_one_edit) update_graph(cp);
 }
-
-/* Next steps in virtual ops:
- *
- *  to embed exp env calc, we need room for the base/scaler (power is the ramp)
- *  ramp + ptree
- *  ramp + ramp is out unless we add more segment info since end points do not uniquely set the intervening values:
- *    '(0 1 1 .5) * '(0 0 1 1) has the same endpoints as '(0 0 1 .707) * '(0 0 1 .707)
- */
 
 void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, void *env_pt, XEN init_func)
 {

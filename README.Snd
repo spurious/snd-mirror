@@ -68,6 +68,7 @@ The configure program has several Snd-related arguments:
    --with-temp-dir       directory to use for temp files
    --with-save-dir       directory to use for saved-state files
    --with-run            Guile optimizer (default = yes)
+   --with-shared-sndlib  try to use libsndlib.so (default = no)
 
 If the configure/make process fails, please send me
 (bil@ccrma.stanford.edu) the files config.h, config.log, and makefile,

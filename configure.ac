@@ -42,6 +42,7 @@ MAKE_TARGET="snd"
 #   --with-just-gl        include OpenGL support but omit the Guile bindings (gl.o) (default=no)
 #   --with-modules        accommodate sndlib that was built with modules
 #   --with-editres 	  include EditRes in xm
+#   --with-shared-sndlib  load sndlib.so if possible
 #--------------------------------------------------------------------------------
 
 AC_ARG_WITH(esd,        [  --with-esd		  use ESD])
@@ -67,6 +68,21 @@ if test "$with_doubles" = yes; then
 else
   AC_DEFINE(Float,float)
 fi
+
+LOCAL_SNDLIB_BITS="24"
+AC_ARG_WITH(float-samples,
+	[  --with-float-samples	  use floats as the internal sample respresentation],
+  	if test "$with_float_samples" = yes ; then
+	    AC_DEFINE(SNDLIB_USE_FLOATS)
+            LOCAL_SNDLIB_BITS="0"
+	fi)
+
+AC_ARG_WITH(sample-width,
+	[  --with-sample-width=N   use N bits of samples],
+	AC_MSG_RESULT(Using $with_sample_width bit samples)
+	AC_DEFINE_UNQUOTED(MUS_SAMPLE_BITS,$with_sample_width)
+        LOCAL_SNDLIB_BITS=$with_sample_width
+	)
 
 if test "$with_modules" = yes; then
   AC_DEFINE(WITH_MODULES)
@@ -104,6 +120,7 @@ AC_ARG_WITH(ruby-prefix,[  --with-ruby-prefix=PFX  where Ruby is installed],
 		RUBY="$ruby_prefix/bin/ruby",
 		ruby_prefix="")
 
+LOCAL_LANGUAGE="None"
 AC_ARG_WITH(ruby,
 	[  --with-ruby	  	  try to use Ruby as the extension language],
   	if test "$with_ruby" = yes ; then
@@ -137,6 +154,7 @@ AC_ARG_WITH(ruby,
               AC_CHECK_LIB(ruby, rb_num2ll, [AC_DEFINE(HAVE_RB_NUM2LL)])
               LIBS="$OLD_LIBS"
               CFLAGS="$OLD_CFLAGS"
+              LOCAL_LANGUAGE="Ruby"
 
             else 
               AC_MSG_WARN([can't find Ruby!])
@@ -187,18 +205,6 @@ AC_ARG_WITH(snd-as-widget,
 	    AC_DEFINE(SND_AS_WIDGET)
 	    MAKE_TARGET=widget
 	fi)
-
-AC_ARG_WITH(float-samples,
-	[  --with-float-samples	  use floats as the internal sample respresentation],
-  	if test "$with_float_samples" = yes ; then
-	    AC_DEFINE(SNDLIB_USE_FLOATS)
-	fi)
-
-AC_ARG_WITH(sample-width,
-	[  --with-sample-width=N   use N bits of samples],
-	AC_MSG_RESULT(Using $with_sample_width bit samples)
-	AC_DEFINE_UNQUOTED(MUS_SAMPLE_BITS,$with_sample_width)
-	)
 
 AC_ARG_ENABLE(snd-debug,
   [  --enable-snd-debug      include internal Snd debugging functions],
@@ -679,6 +685,7 @@ if test $GUILE_CONFIG_works = yes; then
     AC_SUBST(GUILE_LIBS)
     AC_DEFINE(HAVE_GUILE)
     AC_DEFINE(HAVE_EXTENSION_LANGUAGE)
+    LOCAL_LANGUAGE="Guile"
 
     OLD_LIBS="$LIBS"
     LIBS="$GUILE_LIBS"
@@ -1006,6 +1013,45 @@ if test "$enable_snd_debug" != yes ; then
   fi
   AC_MSG_RESULT($trap_segfault)
 fi
+
+
+# -------- sndlib --------
+#
+# look for sndlib-config, check mus_sample_bits against current choice [with-float-sample, with-sample-width]
+# check against needed version (17.2 for now -- need c_vct_copy in vct.c)
+# set SNDLIB_FILES and SNDLIB_LIB
+
+SNDLIB_FILES="SNDLIB_O_FILES"
+SNDLIB_LIB=""
+SNDLIB_PREFIX=""
+AC_ARG_WITH(shared-sndlib,[  --with-shared-sndlib  	  try to load libsndlib.so])
+if test "$with_shared_sndlib" = yes; then
+  AC_PATH_PROG(SNDLIB_CONFIG, sndlib-config, no)
+  if test "$SNDLIB_CONFIG" = "no" ; then
+    AC_MSG_RESULT(no)
+  else
+    AC_CHECK_LIB(sndlib, c_vct_copy,
+      [
+	SNDLIB_BITS=`$SNDLIB_CONFIG --bits`
+	if test "$SNDLIB_BITS" = "$LOCAL_SNDLIB_BITS" ; then
+          SNDLIB_LANGUAGE=`$SNDLIB_CONFIG --language`
+          if test "$SNDLIB_LANGUAGE" = $LOCAL_LANGUAGE ; then
+            SNDLIB_PREFIX=`$SNDLIB_CONFIG --prefix`
+	    SNDLIB_FILES="NO_FILES"
+            SNDLIB_LIB="-L$SNDLIB_PREFIX/lib -lsndlib"
+            AC_DEFINE(WITH_SHARED_SNDLIB)
+          else
+	    AC_MSG_WARN([libsndlib.so was built with $SNDLIB_LANGUAGE, but current choice is $LOCAL_LANGUAGE])
+          fi
+        else
+	  AC_MSG_WARN([libsndlib.so is not compatible with current Snd mus_sample_t choice])
+   	fi
+       ])
+    fi
+fi
+AC_SUBST(SNDLIB_FILES)
+AC_SUBST(SNDLIB_LIB)
+
 
 CFLAGS="-I. $CFLAGS"
 # needed since we're looking for <config.h>, I think (where is config.h written?)

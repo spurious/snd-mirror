@@ -310,7 +310,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA GUILE_LIBS GUILE_CFLAGS GSL_CONFIG GSL_LIBS GSL_CFLAGS FFTW_LIBS X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS XLIBS XFLAGS GTKHTML_LIB GTKHTML_FLAGS XMHTML_LIB PKG_CONFIG GTK_CFLAGS GTK_LIBS MOZILLA_CONFIG GX_FILES GX_HEADERS GL_LIBS GL_FILES GL_FLAGS XM_LIBS AUDIO_LIB LDSO_FLAGS SO_INSTALL SO_LD A_LD A_LD_FLAGS MAKE_TARGET LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA GUILE_LIBS GUILE_CFLAGS GSL_CONFIG GSL_LIBS GSL_CFLAGS FFTW_LIBS X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS XLIBS XFLAGS GTKHTML_LIB GTKHTML_FLAGS XMHTML_LIB PKG_CONFIG GTK_CFLAGS GTK_LIBS MOZILLA_CONFIG GX_FILES GX_HEADERS GL_LIBS GL_FILES GL_FLAGS XM_LIBS AUDIO_LIB LDSO_FLAGS SO_INSTALL SO_LD A_LD A_LD_FLAGS SNDLIB_CONFIG SNDLIB_FILES SNDLIB_LIB MAKE_TARGET LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -874,16 +874,17 @@ Optional Packages:
   --with-static-motif	  use libXm.a to build Snd
   --with-modules	  use if sndlib uses modules
   --with-editres         include editres in xm
+  --with-float-samples	  use floats as the internal sample respresentation
+  --with-sample-width=N   use N bits of samples
   --with-motif-prefix=PFX where Motif is installed
   --with-temp-dir	  directory to use for temp files
   --with-save-dir	  directory to use for saved-state files
   --with-ruby-prefix=PFX  where Ruby is installed
   --with-ruby	  	  try to use Ruby as the extension language
   --with-snd-as-widget	  make Snd a loadable widget, not a standalone program
-  --with-float-samples	  use floats as the internal sample respresentation
-  --with-sample-width=N   use N bits of samples
   --with-ladspa	  	  include support for LADSPA plugins
   --with-x                use the X Window System
+  --with-shared-sndlib  	  try to load libsndlib.so
 
 Some influential environment variables:
   CC          C compiler command
@@ -2772,6 +2773,7 @@ MAKE_TARGET="snd"
 #   --with-just-gl        include OpenGL support but omit the Guile bindings (gl.o) (default=no)
 #   --with-modules        accommodate sndlib that was built with modules
 #   --with-editres 	  include EditRes in xm
+#   --with-shared-sndlib  load sndlib.so if possible
 #--------------------------------------------------------------------------------
 
 
@@ -2889,6 +2891,34 @@ _ACEOF
 
 fi
 
+LOCAL_SNDLIB_BITS="24"
+
+# Check whether --with-float-samples or --without-float-samples was given.
+if test "${with_float_samples+set}" = set; then
+  withval="$with_float_samples"
+  if test "$with_float_samples" = yes ; then
+	    cat >>confdefs.h <<\_ACEOF
+#define SNDLIB_USE_FLOATS 1
+_ACEOF
+
+            LOCAL_SNDLIB_BITS="0"
+	fi
+fi;
+
+
+# Check whether --with-sample-width or --without-sample-width was given.
+if test "${with_sample_width+set}" = set; then
+  withval="$with_sample_width"
+  echo "$as_me:$LINENO: result: Using $with_sample_width bit samples" >&5
+echo "${ECHO_T}Using $with_sample_width bit samples" >&6
+	cat >>confdefs.h <<_ACEOF
+#define MUS_SAMPLE_BITS $with_sample_width
+_ACEOF
+
+        LOCAL_SNDLIB_BITS=$with_sample_width
+
+fi;
+
 if test "$with_modules" = yes; then
   cat >>confdefs.h <<\_ACEOF
 #define WITH_MODULES 1
@@ -2957,6 +2987,7 @@ else
   ruby_prefix=""
 fi;
 
+LOCAL_LANGUAGE="None"
 
 # Check whether --with-ruby or --without-ruby was given.
 if test "${with_ruby+set}" = set; then
@@ -3128,6 +3159,7 @@ fi
 
               LIBS="$OLD_LIBS"
               CFLAGS="$OLD_CFLAGS"
+              LOCAL_LANGUAGE="Ruby"
 
             else
               { echo "$as_me:$LINENO: WARNING: can't find Ruby!" >&5
@@ -3262,31 +3294,6 @@ _ACEOF
 
 	    MAKE_TARGET=widget
 	fi
-fi;
-
-
-# Check whether --with-float-samples or --without-float-samples was given.
-if test "${with_float_samples+set}" = set; then
-  withval="$with_float_samples"
-  if test "$with_float_samples" = yes ; then
-	    cat >>confdefs.h <<\_ACEOF
-#define SNDLIB_USE_FLOATS 1
-_ACEOF
-
-	fi
-fi;
-
-
-# Check whether --with-sample-width or --without-sample-width was given.
-if test "${with_sample_width+set}" = set; then
-  withval="$with_sample_width"
-  echo "$as_me:$LINENO: result: Using $with_sample_width bit samples" >&5
-echo "${ECHO_T}Using $with_sample_width bit samples" >&6
-	cat >>confdefs.h <<_ACEOF
-#define MUS_SAMPLE_BITS $with_sample_width
-_ACEOF
-
-
 fi;
 
 # Check whether --enable-snd-debug or --disable-snd-debug was given.
@@ -12697,6 +12704,7 @@ _ACEOF
 #define HAVE_EXTENSION_LANGUAGE 1
 _ACEOF
 
+    LOCAL_LANGUAGE="Guile"
 
     OLD_LIBS="$LIBS"
     LIBS="$GUILE_LIBS"
@@ -14856,6 +14864,151 @@ _ACEOF
 echo "${ECHO_T}$trap_segfault" >&6
 fi
 
+
+# -------- sndlib --------
+#
+# look for sndlib-config, check mus_sample_bits against current choice [with-float-sample, with-sample-width]
+# check against needed version (17.2 for now -- need c_vct_copy in vct.c)
+# set SNDLIB_FILES and SNDLIB_LIB
+
+SNDLIB_FILES="SNDLIB_O_FILES"
+SNDLIB_LIB=""
+SNDLIB_PREFIX=""
+
+# Check whether --with-shared-sndlib or --without-shared-sndlib was given.
+if test "${with_shared_sndlib+set}" = set; then
+  withval="$with_shared_sndlib"
+
+fi;
+if test "$with_shared_sndlib" = yes; then
+  # Extract the first word of "sndlib-config", so it can be a program name with args.
+set dummy sndlib-config; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_SNDLIB_CONFIG+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $SNDLIB_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_SNDLIB_CONFIG="$SNDLIB_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_SNDLIB_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_path_SNDLIB_CONFIG" && ac_cv_path_SNDLIB_CONFIG="no"
+  ;;
+esac
+fi
+SNDLIB_CONFIG=$ac_cv_path_SNDLIB_CONFIG
+
+if test -n "$SNDLIB_CONFIG"; then
+  echo "$as_me:$LINENO: result: $SNDLIB_CONFIG" >&5
+echo "${ECHO_T}$SNDLIB_CONFIG" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+  if test "$SNDLIB_CONFIG" = "no" ; then
+    echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+  else
+    echo "$as_me:$LINENO: checking for c_vct_copy in -lsndlib" >&5
+echo $ECHO_N "checking for c_vct_copy in -lsndlib... $ECHO_C" >&6
+if test "${ac_cv_lib_sndlib_c_vct_copy+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lsndlib  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char c_vct_copy ();
+int
+main ()
+{
+c_vct_copy ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_sndlib_c_vct_copy=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_sndlib_c_vct_copy=no
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_sndlib_c_vct_copy" >&5
+echo "${ECHO_T}$ac_cv_lib_sndlib_c_vct_copy" >&6
+if test $ac_cv_lib_sndlib_c_vct_copy = yes; then
+
+	SNDLIB_BITS=`$SNDLIB_CONFIG --bits`
+	if test "$SNDLIB_BITS" = "$LOCAL_SNDLIB_BITS" ; then
+          SNDLIB_LANGUAGE=`$SNDLIB_CONFIG --language`
+          if test "$SNDLIB_LANGUAGE" = $LOCAL_LANGUAGE ; then
+            SNDLIB_PREFIX=`$SNDLIB_CONFIG --prefix`
+	    SNDLIB_FILES="NO_FILES"
+            SNDLIB_LIB="-L$SNDLIB_PREFIX/lib -lsndlib"
+            cat >>confdefs.h <<\_ACEOF
+#define WITH_SHARED_SNDLIB 1
+_ACEOF
+
+          else
+	    { echo "$as_me:$LINENO: WARNING: libsndlib.so was built with $SNDLIB_LANGUAGE, but current choice is $LOCAL_LANGUAGE" >&5
+echo "$as_me: WARNING: libsndlib.so was built with $SNDLIB_LANGUAGE, but current choice is $LOCAL_LANGUAGE" >&2;}
+          fi
+        else
+	  { echo "$as_me:$LINENO: WARNING: libsndlib.so is not compatible with current Snd mus_sample_t choice" >&5
+echo "$as_me: WARNING: libsndlib.so is not compatible with current Snd mus_sample_t choice" >&2;}
+   	fi
+
+fi
+
+    fi
+fi
+
+
+
+
 CFLAGS="-I. $CFLAGS"
 # needed since we're looking for <config.h>, I think (where is config.h written?)
 
@@ -15521,6 +15674,9 @@ s,@SO_INSTALL@,$SO_INSTALL,;t t
 s,@SO_LD@,$SO_LD,;t t
 s,@A_LD@,$A_LD,;t t
 s,@A_LD_FLAGS@,$A_LD_FLAGS,;t t
+s,@SNDLIB_CONFIG@,$SNDLIB_CONFIG,;t t
+s,@SNDLIB_FILES@,$SNDLIB_FILES,;t t
+s,@SNDLIB_LIB@,$SNDLIB_LIB,;t t
 s,@MAKE_TARGET@,$MAKE_TARGET,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
