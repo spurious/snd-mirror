@@ -447,11 +447,12 @@ void activate_speed_in_menu(snd_state *ss, int newval)
     }
 }
 
-static int map_chans_x_axis_style(chan_info *cp, void *ptr)
+int map_chans_x_axis_style(chan_info *cp, void *ptr)
 {
   axis_info *ap;
   int new_style = (*((int *)ptr));
   ap = cp->axis;
+  cp->x_axis_style = new_style;
   if (ap)
     {
       if (ap->xlabel) FREE(ap->xlabel);

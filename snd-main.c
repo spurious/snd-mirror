@@ -211,7 +211,7 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   if (fft_window(ss) != DEFAULT_FFT_WINDOW) pss_ss(fd, S_fft_window, mus_fft_window_name(fft_window(ss)));
   if (transform_graph_type(ss) != DEFAULT_TRANSFORM_GRAPH_TYPE) pss_ss(fd, S_transform_graph_type, transform_graph_type_name(transform_graph_type(ss)));
   if (time_graph_type(ss) != DEFAULT_TIME_GRAPH_TYPE) pss_ss(fd, S_time_graph_type, time_graph_type_name(time_graph_type(ss)));
-  if (x_axis_style(ss) != DEFAULT_AXIS_STYLE) pss_ss(fd, S_x_axis_style, x_axis_style_name(x_axis_style(ss)));
+  if (x_axis_style(ss) != DEFAULT_X_AXIS_STYLE) pss_ss(fd, S_x_axis_style, x_axis_style_name(x_axis_style(ss)));
   if (graph_style(ss) != DEFAULT_GRAPH_STYLE) pss_ss(fd, S_graph_style, graph_style_name(graph_style(ss)));
   if (speed_control_style(ss) != DEFAULT_SPEED_CONTROL_STYLE) pss_ss(fd, S_speed_control_style, speed_control_style_name(speed_control_style(ss)));
   if (channel_style(ss) != DEFAULT_CHANNEL_STYLE) pss_ss(fd, S_channel_style, channel_style_name(channel_style(ss)));
@@ -457,6 +457,7 @@ static int save_sound_state (snd_info *sp, void *ptr)
       if (cp->graph_style != DEFAULT_GRAPH_STYLE) pcp_ss(fd, S_graph_style, graph_style_name(cp->graph_style), chan);
       if (cp->show_mix_waveforms != DEFAULT_SHOW_MIX_WAVEFORMS) pcp_ss(fd, S_show_mix_waveforms, b2s(cp->show_mix_waveforms), chan);
       if (cp->dot_size != DEFAULT_DOT_SIZE) pcp_sd(fd, S_dot_size, cp->dot_size, chan);
+      if (cp->x_axis_style != DEFAULT_X_AXIS_STYLE) pcp_sd(fd, S_x_axis_style, cp->x_axis_style, chan);
       if (cp->show_axes != DEFAULT_SHOW_AXES) pcp_sd(fd, S_show_axes, cp->show_axes, chan);
       if (cp->graphs_horizontal != DEFAULT_GRAPHS_HORIZONTAL) pcp_ss(fd, S_graphs_horizontal, b2s(cp->graphs_horizontal), chan);
       edit_history_to_file(fd, cp);

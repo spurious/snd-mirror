@@ -62,6 +62,10 @@ static repv snd_rep_main(repv arg)
   #include <gsl/gsl_ieee_utils.h>
 #endif
 
+#if WITH_MCHECK
+  #include <mcheck.h>
+#endif
+
 #if SND_AS_WIDGET
   snd_state *snd_main(int argc, char **argv)
 #else
@@ -79,6 +83,10 @@ static repv snd_rep_main(repv arg)
 
 #if HAVE_SYS_FPU_H
   union fpc_csr f; f.fc_word = get_fpc_csr(); f.fc_struct.flush = 1; set_fpc_csr(f.fc_word);
+#endif
+
+#if WITH_MCHECK
+  mcheck_pedantic(NULL);
 #endif
 
   /* if HAVE_GSL and the environment variable GSL_IEEE_MODE exists, use it */
@@ -156,7 +164,7 @@ static repv snd_rep_main(repv arg)
   ss->Color_Inverted = DEFAULT_COLOR_INVERTED;
   ss->Zero_Pad = DEFAULT_ZERO_PAD;
   ss->Ask_Before_Overwrite = DEFAULT_ASK_BEFORE_OVERWRITE;
-  ss->X_Axis_Style = DEFAULT_AXIS_STYLE;
+  ss->X_Axis_Style = DEFAULT_X_AXIS_STYLE;
   ss->Time_Graph_Type = DEFAULT_TIME_GRAPH_TYPE;
   ss->Wavo_Hop = DEFAULT_WAVO_HOP;
   ss->Wavo_Trace = DEFAULT_WAVO_TRACE;

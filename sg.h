@@ -31,7 +31,6 @@
 #define SND_RETURN_NEWSMOB(Tag, Val) SCM_RETURN_NEWSMOB(Tag, (SCM)Val)
 #define SND_VALUE_OF(a) SCM_SMOB_DATA(a)
 /* remember to check the smob type agreement before calling SND_VALUE_OF! */
-#define SND_SET_VALUE_OF(a, b) SCM_SET_SMOB_DATA(a, b)
 
 #if HAVE_SCM_C_DEFINE
   #define SET_SCM_VALUE(Var, Val) SCM_VARIABLE_SET(Var, Val)
@@ -153,14 +152,14 @@
 			       "set-" Name, SCM_FNC SetFunc, SCM_FNC RevFunc, local_doc, Req, Opt, Req + 1, Opt)
 #endif
 
-#define DEFINE_VAR(a, b, c) \
+#define DEFINE_VAR(Name, Value, Help) \
   { \
-    gh_define(a, TO_SMALL_SCM_INT(b)); \
-    scm_set_object_property_x(TO_SCM_SYMBOL(a), local_doc, TO_SCM_STRING(c)); \
+    gh_define(Name, TO_SMALL_SCM_INT(Value)); \
+    scm_set_object_property_x(TO_SCM_SYMBOL(Name), local_doc, TO_SCM_STRING(Help)); \
   }
 
 /* DEFINE_PROC sets the documentation property of procedure Func to Doc
- * DEFINE_VAR sets the symbol's documentation property (gh_define returns the value) 
+ * DEFINE_VAR sets the symbol's documentation property (gh_define returned the value in older version of Guile) 
  */
 
 #define WITH_REVERSED_CHANNEL_ARGS(name_reversed, name) \

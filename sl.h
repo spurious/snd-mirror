@@ -52,7 +52,6 @@ SCM scm_return_first(SCM a, ...);
 #define MAKE_HELPLESS_HOOK(a)        Qnil
 #define SND_RETURN_NEWSMOB(Tag, Val) Qnil
 #define SND_VALUE_OF(a)              Qnil
-#define SND_SET_VALUE_OF(a, b) 
 #define SND_LOOKUP(a)                Qnil
 #define SND_TAG_TYPE                 int
 #define SND_SMOB_TYPE(TAG, OBJ)      Qnil

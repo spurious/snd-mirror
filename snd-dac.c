@@ -1573,7 +1573,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
   Float amp, incr, sr, sincr, ind, indincr, ex, exincr, rev, revincr, fval;
   dac_info *dp;
   snd_info *sp;
-  Float *data;
+  Float *data = NULL;
   snd_state *ss;
   MUS_SAMPLE_TYPE *buf;
 #if (HAVE_OSS || HAVE_ALSA)

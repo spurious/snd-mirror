@@ -533,7 +533,7 @@ enum {COLOR_POSITION, COLOR_ZOOM};
 
 #define x_axis_style(ss) ss->X_Axis_Style
 #define in_set_x_axis_style(ss, a) ss->X_Axis_Style = a
-#define DEFAULT_AXIS_STYLE X_AXIS_IN_SECONDS
+#define DEFAULT_X_AXIS_STYLE X_AXIS_IN_SECONDS
 
 #define zero_pad(ss) ss->Zero_Pad
 #define in_set_zero_pad(ss, a) ss->Zero_Pad = a

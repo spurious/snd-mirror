@@ -132,7 +132,7 @@ static scm_sizet free_vct(SCM obj)
 	FREE(v->data);
       v->data = NULL;
       free(v);
-      SND_SET_VALUE_OF(obj, (SCM)NULL);
+      /* SND_SET_VALUE_OF(obj, (SCM)NULL); */
     }
   return(sizeof(vct));
 }

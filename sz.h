@@ -50,7 +50,6 @@ SCM scm_return_first(SCM a, ...);
 
 #define SND_RETURN_NEWSMOB(Tag, Val) 0
 #define SND_VALUE_OF(a) 0
-#define SND_SET_VALUE_OF(a, b) 
 #define SND_LOOKUP(a) 0
 #define SND_TAG_TYPE int
 #define SND_SMOB_TYPE(TAG, OBJ) 0

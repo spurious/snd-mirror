@@ -917,6 +917,34 @@ snd_data *make_snd_data_buffer(MUS_SAMPLE_TYPE *data, int len, int ctr)
   return(sf);
 }
 
+#if DEBUGGING
+void print_snd_data(snd_data *sf);
+void print_snd_data(snd_data *sf)
+{
+  fprintf(stderr,"snd_data: caller: %s, filename: %s, active: %d\n\
+   copy:%d, io: %p, hdr: %p, edit_ctr: %d,\n\
+   open: %d, inuse: %d, chan: %d, len: %d\n\
+   just_zeros: %d, backpointer: %p, type: %d\n",
+	  sf->caller, sf->filename, sf->active,
+	  sf->copy, sf->io, sf->hdr, sf->edit_ctr,
+	  sf->open, sf->inuse, sf->chan, sf->len, 
+	  sf->just_zeros, sf->backpointer, sf->type);
+}
+
+void print_snd_fd(snd_fd *sf);
+void print_snd_fd(snd_fd *sf)
+{
+  fprintf(stderr,"snd_fd: caller: %s, filename: %s\n\
+    current_sound: %p, first: %p, last: %p, view_buffered_data: %p,\n\
+    eof: %d, beg: %d, end: %d, direction: %d, initial_samp: %d, scaler: %f,\n\
+    cbi: %d, cp: %p, edit_pos: %d, local_sp: %p, sounds: %p, cb: %p, current_state: %p\n",
+	  sf->caller, sf->filename, 
+	  sf->current_sound, sf->first, sf->last, sf->view_buffered_data,
+	  sf->eof, sf->beg, sf->end, sf->direction, sf->initial_samp, sf->scaler,
+	  sf->cbi, sf->cp, sf->edit_pos, sf->local_sp, sf->sounds, sf->cb, sf->current_state);
+}
+#endif
+
 snd_data *free_snd_data(snd_data *sf)
 {
   /* in the snd file case, these pointers are dealt with elsewhere (where??) */
@@ -971,6 +999,7 @@ void free_sound_list (chan_info *cp)
     {
       if (cp->sounds)
 	{
+	  if ((cp->sound) && (cp->sound->playing)) stop_playing_sound(cp->sound);
 	  for (i = 0; i < cp->sound_size; i++)
 	    if (cp->sounds[i]) 
 	      cp->sounds[i] = free_snd_data(cp->sounds[i]);
@@ -1056,32 +1085,27 @@ static void release_pending_sounds(chan_info *cp, int edit_ctr)
     {
       if (cp->sounds)
 	{
+	  if ((cp->sound) && (cp->sound->playing)) stop_playing_sound(cp->sound);
 	  del = -1;
 	  for (i = 0; i < cp->sound_size; i++)
-	    {
-	      if ((sf = (cp->sounds[i])))
-		{
-		  if (sf->edit_ctr >= edit_ctr)
-		    {
-		      cp->sounds[i] = free_snd_data(sf);
-		      if (del == -1) del = i;
-		    }
-		}
+	    if ((sf = (cp->sounds[i])))
+	      {
+		if (sf->edit_ctr >= edit_ctr)
+		  {
+		    cp->sounds[i] = free_snd_data(sf);
+		    if (del == -1) del = i;
+		  }
 	    }
 	  if (del != -1)
 	    {
 	      for (j = del, i = del; i < cp->sound_size; i++)
-		{
-		  if (cp->sounds[i]) 
-		    {
-		      if (j != i) 
-			{
-			  cp->sounds[j] = cp->sounds[i];
-			  cp->sounds[i] = NULL;
-			  j++;
-			}
-		    }
-		}
+		if ((cp->sounds[i]) && (j != i))
+		  {
+fprintf(stderr,"moving %d to %d\n",i,j);
+		    cp->sounds[j] = cp->sounds[i];
+		    cp->sounds[i] = NULL;
+		    j++;
+		  }
 	      cp->sound_ctr = j - 1;
 	    }
 	}
@@ -1101,7 +1125,10 @@ static void prepare_sound_list (chan_info *cp)
       for (i = cp->sound_ctr; i < cp->sound_size; i++) cp->sounds[i] = NULL;
     }
   if (cp->sounds[cp->sound_ctr]) 
-    cp->sounds[cp->sound_ctr] = free_snd_data(cp->sounds[cp->sound_ctr]);
+    {
+      if ((cp->sound) && (cp->sound->playing)) stop_playing_sound(cp->sound);
+      cp->sounds[cp->sound_ctr] = free_snd_data(cp->sounds[cp->sound_ctr]);
+    }
 }
 
 static int add_sound_buffer_to_edit_list(chan_info *cp, MUS_SAMPLE_TYPE *data, int len)
@@ -1861,24 +1888,13 @@ Float sample(int samp, chan_info *cp)
 
 /* now for optimized sample access -- since everything goes through these lists, we want the access to be fast */
 
-snd_fd *free_snd_fd(snd_fd *sf)
+
+snd_fd *free_snd_fd_almost(snd_fd *sf)
 {
   snd_data *sd;
   if (sf) 
     {
 #if DEBUGGING
-      /* once in a blue moon guile's gc is trying to free a sample-reader (allocated from Scheme code)
-       *  in the gc sweep after we have already freed it via free-sample-reader, and (this is the
-       *  strange part), the snd_data field is still there despite the appearance of being freed.
-       */
-      if (sf->active != 1) 
-	{
-	  fprintf(stderr,"double snd_fd free (%s): %s %s %d %d\n", 
-		 (sd->backpointer != (void *)sf) ? "recognizable" : "not recognizable",
-		 sf->caller, sf->filename, sf->beg, sf->end);
-	  return(NULL);
-	}
-      sf->active = 0;
       if (sf->filename) {FREE(sf->filename); sf->filename = NULL;}
 #endif
       sd = sf->current_sound;
@@ -1886,10 +1902,7 @@ snd_fd *free_snd_fd(snd_fd *sf)
 	{
 #if DEBUGGING
 	  if (sd->backpointer != (void *)sf)
-	    {
-	      fprintf(stderr,"trouble in free_snd_fd!");
-	      abort();
-	    }
+	    fprintf(stderr,"trouble in free_snd_fd!");
 	  sd->backpointer = NULL;
 #endif
 	  sd->inuse = FALSE;
@@ -1897,8 +1910,15 @@ snd_fd *free_snd_fd(snd_fd *sf)
 	}
       sf->current_state = NULL;
       sf->current_sound = NULL;
-      FREE(sf);
+      /* FREE(sf); */
     }
+  return(NULL);
+}
+
+snd_fd *free_snd_fd(snd_fd *sf)
+{
+  free_snd_fd_almost(sf);
+  FREE(sf);
   return(NULL);
 }
 
@@ -1945,7 +1965,7 @@ snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_po
 #if DEBUGGING
   sf->caller = caller;
   sf->filename = copy_string(sp->filename);
-  sf->active = 1;
+  sf->edit_pos = edit_position;
 #endif
   sf->initial_samp = samp;
   sf->direction = 0;
@@ -2604,7 +2624,7 @@ void revert_edits(chan_info *cp, void *ptr)
   int old_ctr;
   old_ctr = cp->edit_ctr;
   sp = cp->sound;
-  if (sp->playing) stop_playing_sound(sp);
+  /* if (sp->playing) stop_playing_sound(sp); */
   cp->edit_ctr = 0;
   reflect_edit_counter_change(cp);
   reflect_sample_change_in_axis(cp);
@@ -2623,7 +2643,7 @@ void undo_edit(chan_info *cp, int count)
   if ((cp) && (cp->edit_ctr > 0) && (count != 0))
     {
       sp = cp->sound;
-      if (sp->playing) stop_playing_sound(sp);
+      /* if (sp->playing) stop_playing_sound(sp); */
       cp->edit_ctr -= count; 
       if (cp->edit_ctr < 0) cp->edit_ctr = 0;
       reflect_edit_counter_change(cp);
@@ -2674,7 +2694,7 @@ void redo_edit(chan_info *cp, int count)
   if (cp)
     {
       sp = cp->sound;
-      if (sp->playing) stop_playing_sound(sp);
+      /* if (sp->playing) stop_playing_sound(sp); */
       cp->edit_ctr += count; 
       while ((cp->edit_ctr >= cp->edit_size) || 
 	     (!(cp->edits[cp->edit_ctr]))) 
@@ -3018,8 +3038,7 @@ static SCM g_free_sample_reader(SCM obj)
   fd = TO_SAMPLE_READER(obj);
   sp = fd->local_sp; 
   fd->local_sp = NULL;
-  SND_SET_VALUE_OF(obj, (SCM)NULL);
-  free_snd_fd(fd);
+  free_snd_fd_almost(fd);
   /* free_snd_fd looks at its snd_data field to see if the latter's copy flag is set,
    *   free_snd_info may free this snd_data structure (via free_sound_list), so we have to
    *   call free_snd_fd before free_snd_info

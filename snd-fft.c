@@ -1451,9 +1451,10 @@ static int apply_fft_window(fft_state *fs)
 	    len = v->length;
 	    for (i = 0; i < len; i++) fft_data[i] = v->data[i];
 	  }
-	SND_SET_VALUE_OF(sfd, (SCM)NULL); /* don't let guile's gc mess with it */
 	snd_unprotect(res);
+	free_snd_fd_almost(sf);
 	snd_unprotect(sfd);
+	return(result);
       }
       break;
     }

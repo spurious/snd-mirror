@@ -5567,6 +5567,15 @@ desired edit history position.
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
+<!-- write-peak-env-info-file -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="writepeakenvinfofile">write-peak-env-info-file</a></em> (snd chn filename)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->writes the current peak-env amp info of the given channel to <i>filename</i>.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
 <!-- x-axis-style -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="xaxisstyle">x-axis-style</a></em> (<em class=narg>snd chn</em>)</code></span>
@@ -5580,15 +5589,6 @@ desired edit history position.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
-<!-- -->
-<!-- write-peak-env-info-file -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="writepeakenvinfofile">write-peak-env-info-file</a></em> (snd chn filename)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->writes the current peak-env amp info of the given channel to <i>filename</i>.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- x-bounds -->
 <!-- --><tr><td colspan=2>
@@ -5761,6 +5761,7 @@ the reverb.  The control panel procedures are:
 <!-- --><tr><td></td><td>
 <!-- -->equivalent to pushing <i>snd</i>'s 'apply' button (this is intended 
 <!-- -->for internal testing); <i>target</i> can be 0=sound, 1=channel, 2=selection.
+<!-- --><i>beg</i> sets where (in samples) the apply starts; <code>(apply-controls 0 0 (mark-sample m))</code> starts from the given mark.
 <!-- -->apply-controls can be used in conjunction with the various control panel variables:
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2 align=center>

@@ -722,6 +722,7 @@
     (list "remove-input" "extsnd.html#removeinput")
     (list "reopen-output" "clm.html#reopen-output")
     (list "report-in-minibuffer" "extsnd.html#sndreportinminibuffer")
+    (list "reset-all-hooks" "sndscm.html#resetallhooks")
     (list "reset-controls" "extsnd.html#sndcontrolreset")
     (list "restart-clm" "clm.html#restart-clm")
     (list "restart-env" "clm.html#restart-env")
@@ -842,6 +843,7 @@
     (list "snd-error" "extsnd.html#snderror")
     (list "snd-error-hook" "extsnd.html#snderrorhook")
     (list "snd-help" "extsnd.html#sndhelp")
+    (list "snd-hooks" "sndscm.html#sndhooks")
     (list "snd-memo" "clm.html#snd-memo")
     (list "snd-print" "extsnd.html#sndprint")
     (list "snd-region" "clm.html#snd-region")
@@ -1015,6 +1017,7 @@
     (list "window-y" "extsnd.html#windowy")
     (list "with-current-sound" "clm.html#with-current-sound")
     (list "with-dac" "clm.html#with-dac")
+    (list "with-local-hook" "sndscm.html#withlocalhook")
     (list "with-mix" "clm.html#with-mix")
     (list "with-mix-tags" "extsnd.html#withmixtags")
     (list "with-offset" "clm.html#with-offset")
@@ -1037,6 +1040,7 @@
     (list "zoom-color" "extsnd.html#zoomcolor")
     (list "zoom-focus-style" "extsnd.html#zoomfocusstyle")
   ))
+
 
 
 (define *html-reader* "netscape")

@@ -1,5 +1,8 @@
 #include "snd.h"
 
+/* TODO: need a way to force a channel to be open
+ */
+
 enum {
     W_top, W_form,
     W_main_window,

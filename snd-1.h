@@ -72,7 +72,7 @@ typedef struct snd_fd {
 #if DEBUGGING
   const char *caller;
   char *filename;
-  int active;
+  int edit_pos;
 #endif
   snd_data *current_sound;
   int beg, end, initial_samp;
@@ -494,6 +494,7 @@ void activate_focus_menu(snd_state *ss, int new_focus);
 void activate_speed_in_menu(snd_state *ss, int newval);
 void set_x_axis_style(snd_state *ss, int val);
 void set_channel_style(snd_state *ss, int val);
+int map_chans_x_axis_style(chan_info *cp, void *ptr);
 
 void g_init_menu(SCM local_doc);
 
@@ -665,6 +666,7 @@ void file_change_samples(int beg, int num, char *tempfile, chan_info *cp, int ch
 void file_override_samples(int num, char *tempfile, chan_info *cp, int chan, int auto_delete, int lock, const char *origin);
 Float sample (int samp, chan_info *cp);
 snd_fd *free_snd_fd(snd_fd *sf);
+snd_fd *free_snd_fd_almost(snd_fd *sf);
 MUS_SAMPLE_TYPE previous_sound (snd_fd *sf);
 MUS_SAMPLE_TYPE next_sound (snd_fd *sf);
 

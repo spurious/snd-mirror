@@ -2973,6 +2973,14 @@ If it returns #t, the usual informative minibuffer babbling is squelched."
 					"set-" S_reverb_control_decay, SCM_FNC g_set_reverb_control_decay, SCM_FNC g_set_reverb_control_decay_reversed,
 					local_doc, 0, 1, 0, 2);
 
+  #define H_speed_control_as_float "The value for " S_speed_control_style " that interprets the speed slider as a float"
+  #define H_speed_control_as_ratio "The value for " S_speed_control_style " that interprets the speed slider as a just-intonation ratio"
+  #define H_speed_control_as_semitone "The value for " S_speed_control_style " that interprets the speed slider as a microtone (via " S_speed_control_tones ")"
+
+  DEFINE_VAR(S_speed_control_as_float,        SPEED_CONTROL_AS_FLOAT,    H_speed_control_as_float);
+  DEFINE_VAR(S_speed_control_as_ratio,        SPEED_CONTROL_AS_RATIO,    H_speed_control_as_ratio);
+  DEFINE_VAR(S_speed_control_as_semitone,     SPEED_CONTROL_AS_SEMITONE, H_speed_control_as_semitone);
+
   define_procedure_with_reversed_setter(S_speed_control_style, SCM_FNC g_speed_control_style, H_speed_control_style,
 					"set-" S_speed_control_style, SCM_FNC g_set_speed_control_style, SCM_FNC g_set_speed_control_style_reversed,
 					local_doc, 0, 1, 0, 2);

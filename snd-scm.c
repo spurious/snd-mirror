@@ -221,8 +221,17 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
 		  else scm_display(tag, port);
 		  if (show_backtrace(state))
 		    {
-		      /* scm_backtrace sends its output to scm_cur_outp, but we want it posted in the listener window. */
-		      /*   TODO: how to trap scm_cur_outp here?? */
+#if 0
+		      {
+			SCM oldport; /* This code from the guile mailing list, but doesn't seem to be needed here after all */
+			SCM str;
+			oldport = scm_current_output_port();
+			scm_set_current_output_port(
+			  scm_mkstrport(SCM_INUM0,
+					scm_make_string(SCM_INUM0, SCM_UNDEFINED),
+					SCM_OPN | SCM_WRTNG,
+					__FUNCTION__));
+#endif			
 #if HAVE_SCM_C_DEFINE
 		      stack = scm_fluid_ref(SCM_VARIABLE_REF(scm_the_last_stack_fluid_var));
 #else
@@ -230,6 +239,12 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
 #endif
 		      if (NOT_FALSE_P(stack)) 
 			scm_display_backtrace(stack, port, SCM_UNDEFINED, SCM_UNDEFINED);
+#if 0
+		      str = scm_strport_to_string(scm_current_output_port());
+		      scm_set_current_output_port(oldport);
+		      scm_display(str, port);
+		      }
+#endif
 		    }
 		}
 	    }
@@ -1217,18 +1232,6 @@ static SCM g_set_vu_size(SCM val)
   ASSERT_TYPE(NUMBER_P(val), val, SCM_ARGn, "set-" S_vu_size, "a number"); 
   set_vu_size(state, TO_C_DOUBLE(val));
   return(TO_SCM_DOUBLE(vu_size(state)));
-}
-
-static SCM g_x_axis_style(void) {return(TO_SCM_INT(x_axis_style(state)));}
-static SCM g_set_x_axis_style(SCM val) 
-{
-  /* TODO: why isn't x-axis-style channel-local? */
-  #define H_x_axis_style "(" S_x_axis_style ") -> labelling of time domain x axis (x-in-seconds)"
-  ASSERT_TYPE(INTEGER_P(val), val, SCM_ARGn, "set-" S_x_axis_style, "an integer"); 
-  set_x_axis_style(state, mus_iclamp(X_AXIS_IN_SECONDS,
-				     TO_C_INT(val),
-				     X_AXIS_IN_LENGTH));
-  return(TO_SCM_INT(x_axis_style(state)));
 }
 
 static SCM g_zoom_focus_style(void) {return(TO_SCM_INT(zoom_focus_style(state)));}
@@ -2669,15 +2672,15 @@ void define_procedure_with_setter(char *get_name, SCM (*get_func)(), char *get_h
 {
 #if HAVE_GUILE
 #if HAVE_SCM_C_DEFINE
-  scm_set_object_property_x(
-    scm_permanent_object(
-      scm_c_define(get_name,
-	scm_make_procedure_with_setter(
-          gh_new_procedure("", SCM_FNC get_func, get_req, get_opt, 0),
-	  gh_new_procedure(set_name, SCM_FNC set_func, set_req, set_opt, 0)
-	  ))),
-    local_doc,
-    TO_SCM_STRING(get_help));
+  SCM str;
+  str = TO_SCM_STRING(get_help);
+  scm_permanent_object(
+    scm_c_define(get_name,
+      scm_make_procedure_with_setter(
+        gh_new_procedure("", SCM_FNC get_func, get_req, get_opt, 0),
+	gh_new_procedure(set_name, SCM_FNC set_func, set_req, set_opt, 0))));
+  scm_set_object_property_x(TO_SCM_SYMBOL(get_name), local_doc, str);
+  scm_set_procedure_property_x(SND_LOOKUP(get_name), local_doc, str);
 #else
   scm_set_object_property_x(
     SCM_CDR(
@@ -2704,17 +2707,16 @@ void define_procedure_with_reversed_setter(char *get_name, SCM (*get_func)(), ch
 {
 #if HAVE_GUILE
 #if HAVE_SCM_C_DEFINE
-  scm_set_object_property_x(
-    scm_permanent_object(
-      scm_c_define(get_name,
-	scm_make_procedure_with_setter(
-          gh_new_procedure("", SCM_FNC get_func, get_req, get_opt, 0),
-	  gh_new_procedure("", SCM_FNC reversed_set_func, set_req, set_opt, 0)
-	  ))),
-    local_doc,
-    TO_SCM_STRING(get_help));
-  /* still need to trap help output and send it to the listener */
+  SCM str;
+  str = TO_SCM_STRING(get_help);
+  scm_permanent_object(
+    scm_c_define(get_name,
+      scm_make_procedure_with_setter(
+        gh_new_procedure("", SCM_FNC get_func, get_req, get_opt, 0),
+	gh_new_procedure("", SCM_FNC reversed_set_func, set_req, set_opt, 0))));
   gh_new_procedure(set_name, SCM_FNC set_func, set_req, set_opt, 0);
+  scm_set_object_property_x(TO_SCM_SYMBOL(get_name), local_doc, str);
+  scm_set_procedure_property_x(SND_LOOKUP(get_name), local_doc, str);
 #else
   scm_set_object_property_x(
     SCM_CDR(
@@ -2844,19 +2846,6 @@ void g_initialize_gh(snd_state *ss)
 
   /* ---------------- CONSTANTS ---------------- */
 
-  /* should these be named "graph-with-lines" etc? */
-  #define H_graph_lines "The value for " S_graph_style " that causes graphs to use line-segments"
-  #define H_graph_dots "The value for " S_graph_style " that causes graphs to use dots"
-  #define H_graph_filled "The value for " S_graph_style " that causes graphs to use filled polygons"
-  #define H_graph_dots_and_lines "The value for " S_graph_style " that causes graphs to use dots connected by lines"
-  #define H_graph_lollipops "The value for " S_graph_style " that makes DSP engineers happy"
-
-  DEFINE_VAR(S_graph_lines,           GRAPH_LINES,          H_graph_lines);
-  DEFINE_VAR(S_graph_dots,            GRAPH_DOTS,           H_graph_dots);
-  DEFINE_VAR(S_graph_filled,          GRAPH_FILLED,         H_graph_filled);
-  DEFINE_VAR(S_graph_dots_and_lines,  GRAPH_DOTS_AND_LINES, H_graph_dots_and_lines);
-  DEFINE_VAR(S_graph_lollipops,       GRAPH_LOLLIPOPS,      H_graph_lollipops);
-
   #define H_zoom_focus_left "The value for " S_zoom_focus_style " that causes zooming to maintain the left edge steady"
   #define H_zoom_focus_right "The value for " S_zoom_focus_style " that causes zooming to maintain the right edge steady"
   #define H_zoom_focus_middle "The value for " S_zoom_focus_style " that causes zooming to focus on the middle sample"
@@ -2866,22 +2855,6 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_VAR(S_zoom_focus_right,      ZOOM_FOCUS_RIGHT,  H_zoom_focus_right);
   DEFINE_VAR(S_zoom_focus_active,     ZOOM_FOCUS_ACTIVE, H_zoom_focus_active);
   DEFINE_VAR(S_zoom_focus_middle,     ZOOM_FOCUS_MIDDLE, H_zoom_focus_middle);
-
-  #define H_x_axis_in_seconds    "The value for " S_x_axis_style " that displays the x axis using seconds"
-  #define H_x_axis_in_samples    "The value for " S_x_axis_style " that displays the x axis using sample numbers"
-  #define H_x_axis_as_percentage "The value for " S_x_axis_style " that displays the x axis using percentages"
-
-  DEFINE_VAR(S_x_axis_in_seconds,     X_AXIS_IN_SECONDS,    H_x_axis_in_seconds);
-  DEFINE_VAR(S_x_axis_in_samples,     X_AXIS_IN_SAMPLES,    H_x_axis_in_samples);
-  DEFINE_VAR(S_x_axis_as_percentage,  X_AXIS_AS_PERCENTAGE, H_x_axis_as_percentage);
-
-  #define H_speed_control_as_float "The value for " S_speed_control_style " that interprets the speed slider as a float"
-  #define H_speed_control_as_ratio "The value for " S_speed_control_style " that interprets the speed slider as a just-intonation ratio"
-  #define H_speed_control_as_semitone "The value for " S_speed_control_style " that interprets the speed slider as a microtone (via " S_speed_control_tones ")"
-
-  DEFINE_VAR(S_speed_control_as_float,        SPEED_CONTROL_AS_FLOAT,    H_speed_control_as_float);
-  DEFINE_VAR(S_speed_control_as_ratio,        SPEED_CONTROL_AS_RATIO,    H_speed_control_as_ratio);
-  DEFINE_VAR(S_speed_control_as_semitone,     SPEED_CONTROL_AS_SEMITONE, H_speed_control_as_semitone);
 
   #define H_cursor_in_view "The value for an " S_bind_key " function that causes it to shift the window so that the cursor is in the view"
   #define H_cursor_on_left "The value for an " S_bind_key " function that causes it to shift the window so that the cursor is at the left edge"
@@ -2898,26 +2871,6 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_VAR(S_cursor_update_display, CURSOR_UPDATE_DISPLAY, H_cursor_update_display);
   DEFINE_VAR(S_cursor_no_action,      CURSOR_NO_ACTION,      H_cursor_no_action);
   DEFINE_VAR(S_keyboard_no_action,    KEYBOARD_NO_ACTION,    H_keyboard_no_action);
-
-  #define H_cursor_cross "The value for " S_cursor_style " that causes is to be a cross (the default)"
-  #define H_cursor_line "The value for " S_cursor_style " that causes is to be a full vertical line"
-
-  DEFINE_VAR(S_cursor_cross,          CURSOR_CROSS, H_cursor_cross);
-  DEFINE_VAR(S_cursor_line,           CURSOR_LINE,  H_cursor_line);
-
-  #define H_show_all_axes "The value for " S_show_axes " that causes both the x and y axes to be displayed"
-  #define H_show_no_axes "The value for " S_show_axes " that causes neither the x or y axes to be displayed"
-  #define H_show_x_axis "The value for " S_show_axes " that causes only the x axis to be displayed"
-
-  DEFINE_VAR(S_show_all_axes,         SHOW_ALL_AXES, H_show_all_axes);
-  DEFINE_VAR(S_show_no_axes,          SHOW_NO_AXES,  H_show_no_axes);
-  DEFINE_VAR(S_show_x_axis,           SHOW_X_AXIS,   H_show_x_axis);
-
-  #define H_graph_time_once "The value for " S_time_graph_type " to display the standard time domain waveform"
-  #define H_graph_time_as_wavogram "The value for " S_time_graph_type " to make a spectrogram-like form of the time-domain data"
-
-  DEFINE_VAR(S_graph_time_once,        GRAPH_TIME_ONCE,        H_graph_time_once);
-  DEFINE_VAR(S_graph_time_as_wavogram, GRAPH_TIME_AS_WAVOGRAM, H_graph_time_as_wavogram);
 
 
   /* ---------------- VARIABLES ---------------- */
@@ -3055,9 +3008,6 @@ void g_initialize_gh(snd_state *ss)
 
   define_procedure_with_setter(S_window_y, SCM_FNC g_window_y, H_window_y,
 			       "set-" S_window_y, SCM_FNC g_set_window_y, local_doc, 0, 0, 0, 1);
-
-  define_procedure_with_setter(S_x_axis_style, SCM_FNC g_x_axis_style, H_x_axis_style,
-			       "set-" S_x_axis_style, SCM_FNC g_set_x_axis_style, local_doc, 0, 0, 0, 1);
 
   define_procedure_with_setter(S_zoom_focus_style, SCM_FNC g_zoom_focus_style, H_zoom_focus_style,
 			       "set-" S_zoom_focus_style, SCM_FNC g_set_zoom_focus_style, local_doc, 0, 0, 0, 1);

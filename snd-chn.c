@@ -12,6 +12,7 @@ static SCM graph_hook, after_graph_hook;
 static void set_y_bounds(axis_info *ap);
 static int map_chans_time_graph_type(chan_info *cp, void *ptr) 
 {
+  /* TODO: should time-graph? be folded into time-graph-type? -- dont-graph-time as #f case (transform-graph similar) */
   cp->time_graph_type = (*((int *)ptr)); 
   if (cp->time_graph_type == GRAPH_TIME_ONCE) 
     {
@@ -304,7 +305,7 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, int graphed)
   x1 = DEFAULT_INITIAL_X1;
   y0 = DEFAULT_INITIAL_Y0;
   y1 = DEFAULT_INITIAL_Y1;
-  switch (x_axis_style(cp->state))
+  switch (cp->x_axis_style)
     {
     case X_AXIS_IN_SAMPLES:    label = STR_time_samples; break;
     case X_AXIS_AS_PERCENTAGE: label = STR_time_percent; break;
@@ -2376,13 +2377,13 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	  if (cp->time_graph_type == GRAPH_TIME_AS_WAVOGRAM)
 	    {
 	      if (ap->y_axis_y0 == ap->y_axis_y1) 
-		make_axes(cp, ap, x_axis_style(ss), FALSE); /* first time needs setup */
+		make_axes(cp, ap, cp->x_axis_style, FALSE); /* first time needs setup */
 	      ap->y0 = ap->x0;
 	      ap->y1 = ap->y0 + (Float)(cp->wavo_trace * (ap->y_axis_y0 - ap->y_axis_y1)) / ((Float)(cp->wavo_hop) * SND_SRATE(sp));
 	      ap->x1 = ap->x0 + (Float)(cp->wavo_trace) / (Float)SND_SRATE(sp);
 	    }
 	  make_axes(cp, ap,
-		    x_axis_style(ss),
+		    cp->x_axis_style,
 		    ((cp->chan == 0) || (sp->channel_style != CHANNELS_SUPERIMPOSED)));
   
 	  cp->cursor_visible = 0;
@@ -2401,7 +2402,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
       if (with_fft)
 	{
 	  make_axes(cp, fap,
-		    (x_axis_style(ss) == X_AXIS_IN_SAMPLES) ? X_AXIS_IN_SECONDS : (x_axis_style(ss)),
+		    (cp->x_axis_style == X_AXIS_IN_SAMPLES) ? X_AXIS_IN_SECONDS : (cp->x_axis_style),
 #if USE_MOTIF
 		    ((cp->chan == sp->nchans-1) || (sp->channel_style != CHANNELS_SUPERIMPOSED)));
 	            /* Xt documentation says the most recently added work proc runs first, but we're
@@ -3501,7 +3502,7 @@ enum {CP_GRAPH_TRANSFORM_P, CP_GRAPH_TIME_P, CP_FRAMES, CP_CURSOR, CP_GRAPH_LISP
       CP_WAVELET_TYPE, CP_SPECTRO_HOP, CP_TRANSFORM_SIZE, CP_TRANSFORM_GRAPH_TYPE, CP_FFT_WINDOW, CP_TRANSFORM_TYPE,
       CP_TRANSFORM_NORMALIZATION, CP_SHOW_MIX_WAVEFORMS, CP_GRAPH_STYLE, CP_DOT_SIZE,
       CP_SHOW_AXES, CP_GRAPHS_HORIZONTAL, CP_SYNC, CP_CURSOR_SIZE, CP_CURSOR_POSITION,
-      CP_EDPOS_FRAMES
+      CP_EDPOS_FRAMES, CP_X_AXIS_STYLE
 };
 
 static SCM cp_edpos;
@@ -3574,6 +3575,7 @@ static SCM cp_iread(SCM snd_n, SCM chn_n, int fld, char *caller)
 	    case CP_TRANSFORM_NORMALIZATION: return(TO_SCM_INT(cp->transform_normalization));      break;
 	    case CP_SHOW_MIX_WAVEFORMS: return(TO_SCM_BOOLEAN(cp->show_mix_waveforms));            break;
 	    case CP_GRAPH_STYLE:        return(TO_SCM_INT(cp->graph_style));                       break;
+	    case CP_X_AXIS_STYLE:       return(TO_SCM_INT(cp->x_axis_style));                      break;
 	    case CP_DOT_SIZE:           return(TO_SCM_INT(cp->dot_size));                          break;
 	    case CP_SHOW_AXES:          return(TO_SCM_INT(cp->show_axes));                         break;
 	    case CP_GRAPHS_HORIZONTAL:  return(TO_SCM_BOOLEAN(cp->graphs_horizontal));             break;
@@ -3813,6 +3815,11 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
       cp->graph_style = TO_C_INT_OR_ELSE_WITH_ORIGIN(on, DEFAULT_GRAPH_STYLE, caller);
       update_graph(cp, NULL); 
       return(TO_SCM_INT(cp->graph_style));
+      break;
+    case CP_X_AXIS_STYLE:
+      val = TO_C_INT_OR_ELSE_WITH_ORIGIN(on, DEFAULT_X_AXIS_STYLE, caller);
+      map_chans_x_axis_style(cp, (void *)(&val));
+      return(TO_SCM_INT(cp->x_axis_style));
       break;
     case CP_DOT_SIZE:
       cp->dot_size = g_imin(0, on, DEFAULT_DOT_SIZE); 
@@ -5033,6 +5040,31 @@ static SCM g_set_dot_size(SCM size, SCM snd, SCM chn)
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_dot_size_reversed, g_set_dot_size)
 
+static SCM g_x_axis_style(SCM snd, SCM chn)
+{
+  #define H_x_axis_style "(" S_x_axis_style " (snd #t) (chn #t)) -> labelling of time domain x axis (x-in-seconds)"
+  if (BOUND_P(snd))
+    return(cp_iread(snd, chn, CP_X_AXIS_STYLE, S_x_axis_style));
+  return(TO_SCM_INT(x_axis_style(get_global_state())));
+}
+
+static SCM g_set_x_axis_style(SCM style, SCM snd, SCM chn)
+{
+  snd_state *ss;
+  ASSERT_TYPE(INTEGER_P(style), style, SCM_ARG1, "set-" S_x_axis_style, "an integer"); 
+  if (BOUND_P(snd))
+    return(cp_iwrite(snd, chn, style, CP_X_AXIS_STYLE, "set-" S_x_axis_style));
+  else
+    {
+      ss = get_global_state();
+      set_x_axis_style(ss, mus_iclamp(X_AXIS_IN_SECONDS, TO_C_INT(style), X_AXIS_IN_LENGTH));
+      /* snd-menu.c -- maps over chans */
+      return(TO_SCM_INT(x_axis_style(ss)));
+    }
+}
+
+WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_x_axis_style_reversed, g_set_x_axis_style)
+
 static SCM g_show_axes(SCM snd, SCM chn)
 {
   #define H_show_axes "(" S_show_axes "(snd #t) (chn #t)) -> show-all-axes if Snd should display axes"
@@ -5365,6 +5397,12 @@ void g_init_chn(SCM local_doc)
 					"set-" S_graph_transform_p, SCM_FNC g_set_graph_transform_p, SCM_FNC g_set_graph_transform_p_reversed,
 					local_doc, 0, 2, 0, 3);
 
+  #define H_graph_time_once "The value for " S_time_graph_type " to display the standard time domain waveform"
+  #define H_graph_time_as_wavogram "The value for " S_time_graph_type " to make a spectrogram-like form of the time-domain data"
+
+  DEFINE_VAR(S_graph_time_once,        GRAPH_TIME_ONCE,        H_graph_time_once);
+  DEFINE_VAR(S_graph_time_as_wavogram, GRAPH_TIME_AS_WAVOGRAM, H_graph_time_as_wavogram);
+
   define_procedure_with_reversed_setter(S_graph_time_p, SCM_FNC g_graph_time_p, H_graph_time_p,
 					"set-" S_graph_time_p, SCM_FNC g_set_graph_time_p, SCM_FNC g_set_graph_time_p_reversed,
 					local_doc, 0, 2, 0, 3);
@@ -5380,6 +5418,12 @@ void g_init_chn(SCM local_doc)
   define_procedure_with_reversed_setter(S_cursor, SCM_FNC g_cursor, H_cursor,
 					"set-" S_cursor, SCM_FNC g_set_cursor, SCM_FNC g_set_cursor_reversed,
 					local_doc, 0, 2, 0, 3);
+
+  #define H_cursor_cross "The value for " S_cursor_style " that causes is to be a cross (the default)"
+  #define H_cursor_line "The value for " S_cursor_style " that causes is to be a full vertical line"
+
+  DEFINE_VAR(S_cursor_cross,          CURSOR_CROSS, H_cursor_cross);
+  DEFINE_VAR(S_cursor_line,           CURSOR_LINE,  H_cursor_line);
 
   define_procedure_with_reversed_setter(S_cursor_style, SCM_FNC g_cursor_style, H_cursor_style,
 					"set-" S_cursor_style, SCM_FNC g_set_cursor_style, SCM_FNC g_set_cursor_style_reversed,
@@ -5517,6 +5561,19 @@ void g_init_chn(SCM local_doc)
 					"set-" S_show_mix_waveforms, SCM_FNC g_set_show_mix_waveforms, SCM_FNC g_set_show_mix_waveforms_reversed,
 					local_doc, 0, 2, 0, 3);
 
+  /* should these be named "graph-with-lines" etc? */
+  #define H_graph_lines "The value for " S_graph_style " that causes graphs to use line-segments"
+  #define H_graph_dots "The value for " S_graph_style " that causes graphs to use dots"
+  #define H_graph_filled "The value for " S_graph_style " that causes graphs to use filled polygons"
+  #define H_graph_dots_and_lines "The value for " S_graph_style " that causes graphs to use dots connected by lines"
+  #define H_graph_lollipops "The value for " S_graph_style " that makes DSP engineers happy"
+
+  DEFINE_VAR(S_graph_lines,           GRAPH_LINES,          H_graph_lines);
+  DEFINE_VAR(S_graph_dots,            GRAPH_DOTS,           H_graph_dots);
+  DEFINE_VAR(S_graph_filled,          GRAPH_FILLED,         H_graph_filled);
+  DEFINE_VAR(S_graph_dots_and_lines,  GRAPH_DOTS_AND_LINES, H_graph_dots_and_lines);
+  DEFINE_VAR(S_graph_lollipops,       GRAPH_LOLLIPOPS,      H_graph_lollipops);
+
   define_procedure_with_reversed_setter(S_graph_style, SCM_FNC g_graph_style, H_graph_style,
 					"set-" S_graph_style, SCM_FNC g_set_graph_style, SCM_FNC g_set_graph_style_reversed,
 					local_doc, 0, 2, 0, 3);
@@ -5524,6 +5581,26 @@ void g_init_chn(SCM local_doc)
   define_procedure_with_reversed_setter(S_dot_size, SCM_FNC g_dot_size, H_dot_size,
 					"set-" S_dot_size, SCM_FNC g_set_dot_size, SCM_FNC g_set_dot_size_reversed,
 					local_doc, 0, 2, 0, 3);
+
+  #define H_x_axis_in_seconds    "The value for " S_x_axis_style " that displays the x axis using seconds"
+  #define H_x_axis_in_samples    "The value for " S_x_axis_style " that displays the x axis using sample numbers"
+  #define H_x_axis_as_percentage "The value for " S_x_axis_style " that displays the x axis using percentages"
+
+  DEFINE_VAR(S_x_axis_in_seconds,     X_AXIS_IN_SECONDS,    H_x_axis_in_seconds);
+  DEFINE_VAR(S_x_axis_in_samples,     X_AXIS_IN_SAMPLES,    H_x_axis_in_samples);
+  DEFINE_VAR(S_x_axis_as_percentage,  X_AXIS_AS_PERCENTAGE, H_x_axis_as_percentage);
+
+  define_procedure_with_reversed_setter(S_x_axis_style, SCM_FNC g_x_axis_style, H_x_axis_style,
+					"set-" S_x_axis_style, SCM_FNC g_set_x_axis_style, SCM_FNC g_set_x_axis_style_reversed,
+					local_doc, 0, 2, 0, 3);
+
+  #define H_show_all_axes "The value for " S_show_axes " that causes both the x and y axes to be displayed"
+  #define H_show_no_axes "The value for " S_show_axes " that causes neither the x or y axes to be displayed"
+  #define H_show_x_axis "The value for " S_show_axes " that causes only the x axis to be displayed"
+
+  DEFINE_VAR(S_show_all_axes,         SHOW_ALL_AXES, H_show_all_axes);
+  DEFINE_VAR(S_show_no_axes,          SHOW_NO_AXES,  H_show_no_axes);
+  DEFINE_VAR(S_show_x_axis,           SHOW_X_AXIS,   H_show_x_axis);
 
   define_procedure_with_reversed_setter(S_show_axes, SCM_FNC g_show_axes, H_show_axes,
 					"set-" S_show_axes, SCM_FNC g_set_show_axes, SCM_FNC g_set_show_axes_reversed,

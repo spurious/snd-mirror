@@ -742,13 +742,13 @@ static mix_fd *init_mix_input_amp_env_read(mix_info *md, int old, int hi)
   return(mf);
 }
 
-static mix_fd *free_mix_fd(mix_fd *mf)
+static mix_fd *free_mix_fd_almost(mix_fd *mf)
 {
   int i;
   if (mf)
     {
-      if (mf->lst) FREE(mf->lst);
-      if (mf->nxt) FREE(mf->nxt);
+      if (mf->lst) {FREE(mf->lst); mf->lst = NULL;}
+      if (mf->nxt) {FREE(mf->nxt); mf->nxt = NULL;}
       if (mf->sfs)
 	{
 	  for (i = 0; i < mf->chans; i++)
@@ -757,9 +757,9 @@ static mix_fd *free_mix_fd(mix_fd *mf)
 	  FREE(mf->sfs);
 	  mf->sfs = NULL;
 	}
-      if (mf->ctr) FREE(mf->ctr); mf->ctr = NULL; 
-      if (mf->samples) FREE(mf->samples); mf->samples = NULL; 
-      if (mf->idata) FREE(mf->idata); mf->idata = NULL; 
+      if (mf->ctr) {FREE(mf->ctr); mf->ctr = NULL;}
+      if (mf->samples) {FREE(mf->samples); mf->samples = NULL;}
+      if (mf->idata) {FREE(mf->idata); mf->idata = NULL;}
       if (mf->segs)
 	{
 	  for (i = 0; i < mf->chans; i++)
@@ -777,12 +777,19 @@ static mix_fd *free_mix_fd(mix_fd *mf)
 	}
       mf->type = MIX_INPUT_INVALID;
       mf->md = NULL;
-      FREE(mf);
     }
   return(NULL);
 }
 
-
+static mix_fd *free_mix_fd(mix_fd *mf)
+{
+  if (mf)
+    {
+      free_mix_fd_almost(mf);
+      FREE(mf);
+    }
+  return(NULL);
+}
 
 /* ---------------- MIXING ---------------- */
 
@@ -2735,7 +2742,7 @@ static track_fd *init_track_reader(chan_info *cp, int track_num, int global) /* 
   return(fd);
 }
 
-static void free_track_fd(track_fd *fd)
+static void free_track_fd_almost(track_fd *fd)
 {
   int i;
   if (fd)
@@ -2746,10 +2753,19 @@ static void free_track_fd(track_fd *fd)
 	    if (fd->fds[i]) 
 	      fd->fds[i] = free_mix_fd(fd->fds[i]);
 	  FREE(fd->fds);
+	  fd->fds = NULL;
 	}
       fd->mixes = 0;
-      if (fd->state) FREE(fd->state);
-      if (fd->len) FREE(fd->len);
+      if (fd->state) {FREE(fd->state); fd->state = NULL;}
+      if (fd->len) {FREE(fd->len); fd->len = NULL;}
+    }
+}
+
+static void free_track_fd(track_fd *fd)
+{
+  if (fd)
+    {
+      free_track_fd_almost(fd);
       FREE(fd);
     }
 }
@@ -3861,8 +3877,7 @@ static SCM g_free_mix_sample_reader(SCM obj)
   mix_fd *mf;
   ASSERT_TYPE(MIX_SAMPLE_READER_P(obj), obj, SCM_ARGn, S_free_mix_sample_reader, "a mix-sample-reader");
   mf = TO_MIX_SAMPLE_READER(obj);
-  SND_SET_VALUE_OF(obj, (SCM)NULL);
-  free_mix_fd(mf);
+  free_mix_fd_almost(mf);
   return(scm_return_first(SCM_BOOL_F, obj));
 }
 
@@ -3983,8 +3998,7 @@ static SCM g_free_track_sample_reader(SCM obj)
   track_fd *tf = NULL;
   ASSERT_TYPE(TRACK_SAMPLE_READER_P(obj), obj, SCM_ARGn, S_free_track_sample_reader, "a track-sample-reader");
   tf = TO_TRACK_SAMPLE_READER(obj);
-  SND_SET_VALUE_OF(obj, (SCM)NULL);
-  free_track_fd(tf);
+  free_track_fd_almost(tf);
   return(scm_return_first(SCM_BOOL_F, obj));
 }
 

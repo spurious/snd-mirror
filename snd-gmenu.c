@@ -1542,14 +1542,6 @@ static SCM g_test_menus(void)
   return(SCM_BOOL_F);
 }
 
-#if HAVE_GUILE_GTK
-/* backwards compatibility */
-
-#include <guile-gtk.h>
-static SCM sg_options_menu_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[o_cascade_menu])));}
-static SCM sg_menu_bar_widget(void) {return(sgtk_wrap_gtkobj((GtkObject *)(mw[menu_menu])));}
-#endif
-
 void g_init_gxmenu(SCM local_doc)
 {
   #define H_menu_hook S_menu_hook " (name option) is called each time a menu item is \
@@ -1567,13 +1559,7 @@ wants to override the default menu action:\n\
 
   menu_hook = MAKE_HOOK(S_menu_hook, 2, H_menu_hook);
   DEFINE_PROC("test-menus", SCM_FNC g_test_menus, 0, 0, 0, "");
-  
   DEFINE_PROC(S_menu_widgets, g_menu_widgets, 0, 0, 0, "returns top level menu widgets");
-
-#if HAVE_GUILE_GTK
-  DEFINE_PROC("sg-options-menu-widget", sg_options_menu_widget, 0, 0, 0, "");
-  DEFINE_PROC("sg-menu-bar-widget", sg_menu_bar_widget, 0, 0, 0, "");
-#endif
 }
 
 
