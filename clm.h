@@ -3,10 +3,10 @@
 
 #define MUS_VERSION 3
 #define MUS_REVISION 7
-#define MUS_DATE "13-Dec-04"
+#define MUS_DATE "14-Dec-04"
 
 /*
- * 13-Dec:     mus_env_linear.
+ * 14-Dec:     mus_env_linear.
  * 11-Sep:     removed buffer generator.
  * 6-Sep:      removed mus_oscil_bank, mus_bank.
  * 24-Aug:     removed mus_inspect method -- overlaps mus_describe and is useless given gdb capabilities.
@@ -234,6 +234,8 @@ typedef enum {MUS_RECTANGULAR_WINDOW, MUS_HANN_WINDOW, MUS_WELCH_WINDOW, MUS_PAR
   #define MUS_RUN(GEN, ARG_1, ARG_2) ((*(((GEN)->core)->run))(GEN, ARG_1, ARG_2))
 #endif
 #define MUS_RUN_P(GEN) (((GEN)->core)->run)
+#define MUS_MAX_CLM_SINC_WIDTH 65536
+#define MUS_MAX_CLM_SRC 65536.0
 
 #ifdef __cplusplus
 extern "C" {

@@ -265,7 +265,7 @@
 				  (vector-set! timings (- n 1) (hundred (- (real-time) (vector-ref timings (- n 1))))))
 			      (vector-set! timings n (real-time))
 			      (snd-display ";test ~D" n)
-			      (gc)
+			      (gc)(gc)
 			      (set! (show-backtrace) #f)
 					;(snd-display (gc-stats))
 					;(if (file-exists? "memlog")
@@ -276,7 +276,7 @@
 ;(add-hook! after-test-hook (lambda (n) (snd-display ";...~D" n)))
 (add-hook! after-test-hook
 	   (lambda (n)
-	     (gc)
+	     (gc)(gc)
 	     (if (not (null? (sounds))) 
 		 (snd-display ";test ~D: open sounds: ~A" n (map short-file-name (sounds))))))
 
@@ -285,7 +285,7 @@
 (snd-display ";~%~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time))))
 
 (define (log-mem tst) 
-  (if (> tests 1) (begin (snd-display ";test ~D " (1+ tst)) (gc)))
+  (if (> tests 1) (begin (snd-display ";test ~D " (1+ tst)) (gc)(gc)))
   (if (= (modulo tst 10) 0) (if (defined? 'mem-report) (mem-report))))
 
 (defmacro without-errors (func)
@@ -12413,6 +12413,66 @@ EDITS: 5
 	(if (not (vequal v7 (vct 0.0 0.0 0.0 0.0 0.0 0.0 0.200 0.400 0.600 0.800 1.0 0.800 0.600 0.400 0.200 0.0 0.0 0.0 0.0 0.0)))
 	    (snd-display ";delay interp linear (7): ~A" v7)))
 
+      (let ((dly1 (make-delay :size 2 :max-size 3))
+	    (data (make-vct 5))
+	    (impulse 1.0))
+	(do ((i 0 (1+ i)))
+	    ((= i 5))
+	  (vct-set! data i (delay dly1 impulse 0.4)) ; longer line
+	  (set! impulse 0.0))
+	(if (not (vequal data (vct 0.0 0.0 0.6 0.4 0.0)))
+	    (snd-display "delay size 2, max 3, off 0.4: ~A" data))
+	
+	(set! dly1 (make-delay :size 2 :max-size 3))
+	(set! impulse 1.0)
+	(do ((i 0 (1+ i)))
+	    ((= i 5))
+	  (vct-set! data i (delay dly1 impulse -0.4)) ; shorter line
+	  (set! impulse 0.0))
+	(if (not (vequal data (vct 0.0 0.4 0.6 0.0 0.0)))
+	    (snd-display "delay size 2, max 3, off -0.4: ~A" data))
+	
+	(set! dly1 (make-delay :size 1 :max-size 2))
+	(set! impulse 1.0)
+	(do ((i 0 (1+ i)))
+	    ((= i 5))
+	  (vct-set! data i (delay dly1 impulse 0.4))
+	  (set! impulse 0.0))
+	(if (not (vequal data (vct 0.0 0.6 0.4 0.0 0.0)))
+	    (snd-display "delay size 1, max 2, off 0.4: ~A" data))
+	
+	(set! dly1 (make-delay :size 1 :max-size 2))
+	(set! impulse 1.0)
+	(do ((i 0 (1+ i)))
+	    ((= i 5))
+	  (vct-set! data i (delay dly1 impulse -0.4))
+	  (set! impulse 0.0))
+	(if (not (vequal data (vct 0.4 0.6 0.0 0.0 0.0)))
+	    (snd-display "delay size 1, max 2, off -0.4: ~A" data))
+	
+	(set! dly1 (make-delay :size 0 :max-size 1))
+	(set! impulse 1.0)
+	(do ((i 0 (1+ i)))
+	    ((= i 5))
+	  (vct-set! data i (delay dly1 impulse 0.4))
+	  (set! impulse 0.0))
+	(if (not (vequal data (vct 0.6 0.0 0.0 0.0 0.0)))
+	    (snd-display "delay size 0, max 1, off 0.4: ~A" data))
+	
+	(set! dly1 (make-delay :size 0 :max-size 1))
+	(let ((val (delay dly1 0.0)))
+	  (if (fneq val 0.0) (snd-display ";initial delay 0 size val: ~A" val)))
+	
+	(set! dly1 (make-delay :size 0 :max-size 1))
+	(set! impulse 1.0)
+	(do ((i 0 (1+ i)))
+	    ((= i 5))
+	  (vct-set! data i (delay dly1 impulse -0.4)) ; shorter than 0? should this be an error?
+	  (set! impulse 0.0))
+	(if (not (vequal data (vct 1.4 0.0 0.0 0.0 0.0))) ; hmmm -- they're asking for undefined values here 
+	    (snd-display "delay size 0, max 1, off -0.4: ~A" data))
+	)
+      
       (let ((gen (make-all-pass .4 .6 3))
 	    (v0 (make-vct 10))
 	    (gen1 (make-all-pass .4 .6 3))
@@ -18163,7 +18223,7 @@ EDITS: 5
 	    ((= i 100))
 	  (vector-set! open-readers i #f))
 	(close-sound ind)
-	(gc))
+	(gc)(gc))
       
       (let ((id (open-sound "oboe.snd")))
 	(make-selection 1000 2000 id 0)
@@ -29026,7 +29086,7 @@ EDITS: 3
 				 (old-opt (optimization)))
 			     (set! (squelch-update ind) #t)
 			     (set! (optimization) max-optimization)
-			     (gc)
+			     (gc)(gc)
 			     (let ((times (map
 					   (lambda (function)
 					     (let ((start (real-time)))
@@ -38587,7 +38647,7 @@ EDITS: 2
 	   (let* ((gen (n))
 		  (val1 (format #f "~A" gen))
 		  (val2 (run (lambda () (format #f "~A" gen)))))
-	     (gc)
+	     (gc)(gc)
 	     (if (not (string=? val1 val2))
 		 (snd-display ";run format gen: ~A ~A" val1 val2))))
 	 make-procs))
@@ -38595,7 +38655,7 @@ EDITS: 2
       (let ((val1 (run-eval '(format #f "~A" (make-all-pass))))
 	    (val2 (run (lambda () (let ((gen (make-all-pass))) (format #f "~A" gen)))))
 	    (val3 (format #f "~A" (make-all-pass))))
-	(gc)
+	(gc)(gc)
 	(if (or (not (string=? val1 val2))
 		(not (string=? val2 val3)))
 	    (snd-display ";run-eval format: ~A ~A ~A" val1 val2 val3)))
@@ -38604,7 +38664,7 @@ EDITS: 2
       (let ((val1 (run-eval '(format #f "~A" (make-asymmetric-fm ))))
 	    (val2 (run (lambda () (let ((gen (make-asymmetric-fm ))) (format #f "~A" gen)))))
 	    (val3 (format #f "~A" (make-asymmetric-fm ))))
-	(gc)
+	(gc)(gc)
 	(if (or (not (string=? val1 val2))
 		(not (string=? val2 val3)))
 	    (snd-display ";run-eval format: ~A ~A ~A" val1 val2 val3)))
@@ -40000,7 +40060,7 @@ EDITS: 2
       ))
 (set! (optimization) old-opt-23)
 
-(gc)
+(gc)(gc)
 (if (defined? 'mem-report) (mem-report))
 (if (file-exists? "memlog")
     (system "mv memlog memlog.23")) ; save pre-error version
@@ -47676,7 +47736,7 @@ EDITS: 2
 		    struct-accessors
 		    struct-accessor-names))
 		 (list dpy win '(Atom 0) '(Colormap 0) 1.5 "/hiho" 1234 #f #\c '(Time 0) '(Font 0) (make-vector 0) '(Cursor 1))))
-	      (gc))
+	      (gc)(gc))
 	    (show-sounds-in-directory)
 	    ;(show-all-atoms)
 
@@ -51869,7 +51929,7 @@ EDITS: 2
     nlst))
 !#
 
-(gc)
+(gc)(gc)
 (if (defined? 'mem-report) (mem-report))
 (if (file-exists? "memlog")
     (system "mv memlog memlog.27")) ; save pre-error version
@@ -52144,8 +52204,18 @@ EDITS: 2
       (define set-procs4 (remove-if (lambda (n) (or (not (procedure? n)) (not (set-arity-ok n 5)))) set-procs))
       (define procs5 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 5)))) procs))
       (define procs6 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 6)))) procs))
+      (define procs7 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 7)))) procs))
       (define procs8 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 8)))) procs))
       (define procs10 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 10)))) procs))
+
+      (if all-args
+	  (snd-display "procs 0: ~A ~A, 1: ~A ~A, 2: ~A ~A, 3: ~A ~A, 4: ~A ~A, 5: ~A, 6: ~A, 7: ~A, 8: ~A, 10: ~A"
+		       (length procs0) (length set-procs0) 
+		       (length procs1) (length set-procs1) 
+		       (length procs2) (length set-procs2) 
+		       (length procs3) (length set-procs3) 
+		       (length procs4) (length set-procs4) 
+		       (length procs5) (length procs6) (length procs7) (length procs8) (length procs10)))
 
       (define already-warned '("mus-length" "mus-data" "hz->radians" "in-hz" "mus-order" "mus-xcoeffs" "mus-ycoeffs"
 			       "list->vct" "vct" "formant-bank"
@@ -52364,7 +52434,7 @@ EDITS: 2
 					triangle-wave? two-pole? two-zero? wave-train? waveshape? color? mix-sample-reader? average? ssb-am?
 					sample-reader? track-sample-reader? region-sample-reader? vct? )))
 		      (list (current-module) "hiho" (sqrt -1.0) 1.5 (list 1 0) '#(0 1)))
-	    (gc)
+	    (gc)(gc)
 	    
 	    (for-each (lambda (n)
 			(let ((tag
@@ -52451,7 +52521,7 @@ EDITS: 2
 					  sawtooth-wave sine-summation square-wave src sum-of-cosines sum-of-sines table-lookup tap triangle-wave
 					  two-pole two-zero wave-train waveshape ssb-am))))
 		      (list (current-module) (sqrt -1.0)))
-	    (gc)
+	    (gc)(gc)
 	    
 	    (for-each (lambda (n)
 			(let ((tag
@@ -52489,7 +52559,7 @@ EDITS: 2
 			    mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop mus-increment mus-length
 			    mus-location mus-mix mus-order mus-phase mus-ramp mus-random mus-run mus-scaler mus-xcoeffs
 			    mus-ycoeffs))
-	    (gc)
+	    (gc)(gc)
 	    
 	    (for-each (lambda (n)
 			(let ((tag
@@ -52558,7 +52628,7 @@ EDITS: 2
 			      transform->vct transform-frames transform-type update-transform-graph update-time-graph
 			      update-lisp-graph update-sound wavelet-type time-graph? time-graph-type wavo-hop wavo-trace x-bounds
 			      x-position-slider x-zoom-slider x-axis-label y-bounds y-position-slider y-zoom-slider zero-pad))
-	      (gc))
+	      (gc)(gc))
 	    
 	    (let ((ctr 0))
 	      (for-each (lambda (n)
@@ -52689,7 +52759,7 @@ EDITS: 2
 			      wavo-hop wavo-trace x-bounds x-position-slider x-zoom-slider y-bounds y-position-slider
 			      y-zoom-slider zero-pad x-axis-label
 			      ))
-	      (gc)
+	      (gc)(gc)
 	      (close-sound index))
 	    
 	    (let ((ctr 0))
@@ -52785,7 +52855,7 @@ EDITS: 2
 			    (set! ctr (+ ctr 1))))
 			(list mark-name mark-sample mark-sync))
 	      (close-sound index)
-	      (gc))
+	      (gc)(gc))
 	    
 	    (for-each (lambda (arg)
 			(let ((ctr 0))
@@ -52846,7 +52916,7 @@ EDITS: 2
 			      mix-tag-width with-relative-panes run-safety clm-table-size mark-tag-width mark-tag-height
 			      quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
 			      ))
-	      (gc))
+	      (gc)(gc))
 	    
 	    (for-each (lambda (n)
 			(let* ((hook (car n))
@@ -53258,6 +53328,9 @@ EDITS: 2
 
 	    ;; now try everything! (all we care about here is that Snd keeps running)
 	    
+;	    (reset-hook! snd-error-hook)
+;	    (add-hook! snd-error-hook (lambda (msg) (snd-display msg) #t))
+
 	    ;; ---------------- key args
 	    (for-each
 	     (lambda (arg1)
@@ -53309,7 +53382,7 @@ EDITS: 2
 		      keyargs))
 		   (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 (log 0) (nan)))))
 
-	    (gc)
+	    (gc)(gc)
 	    
 	    ;; ---------------- 0 Args
 	    (for-each 
@@ -53322,7 +53395,7 @@ EDITS: 2
 		     (snd-display ";procs0: ~A ~A" err (procedure-property n 'documentation)))))
 	     procs0)
 	    (dismiss-all-dialogs)
-	    (gc)
+	    (gc)(gc)
 	    
 	    ;; ---------------- 1 Arg
 	    (for-each 
@@ -53339,7 +53412,7 @@ EDITS: 2
 		   (lambda () #t) (current-module) sound-data-23 :order 0 1 -1 a-hook #f #t #\c 0.0 1.0 -1.0 
 		   '() '3 4 2 8 16 32 64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
 		   12345678901234567890 (log 0) (nan)))
-	    (gc)
+	    (gc)(gc)
 	    
 	    ;; ---------------- 2 Args
 	    (for-each 
@@ -53368,7 +53441,7 @@ EDITS: 2
 		       12345678901234567890 (log 0) (nan))
 		 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95 '#(0 1) 3/4 
 		       (sqrt -1.0) delay-32 :frequency -1 0 #f #t '() vector-0 12345678901234567890 (log 0) (nan))))
-	    (gc)
+	    (gc)(gc)
 	    
 	    ;; ---------------- set! no Args
 	    (for-each 
@@ -53388,7 +53461,7 @@ EDITS: 2
 		       12345678901234567890 (log 0) (nan))
 		 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95  '#(0 1) 3/4 'mus-error (sqrt -1.0) delay-32
 		       (lambda () #t) (current-module) sound-data-23 :order 0 1 -1 a-hook #f #t '() vector-0 12345678901234567890 (log 0) (nan))))
-	    (gc)
+	    (gc)(gc)
 	    
 	    ;; ---------------- set! 1 Arg
 	    (for-each 
@@ -53417,7 +53490,7 @@ EDITS: 2
 		       12345678901234567890 (log 0) (nan))
 		 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95 '#(0 1) 3/4 
 		       (sqrt -1.0) delay-32 :frequency -1 0 #f #t '() vector-0 12345678901234567890 (log 0) (nan))))
-	    (gc)
+	    (gc)(gc)
 	    
 	    ;; ---------------- set! 2 Args
 	    (for-each 
@@ -53455,12 +53528,12 @@ EDITS: 2
 		       12345678901234567890 (log 0) (nan))
 		 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95 '#(0 1) 3/4 
 		       (sqrt -1.0) delay-32 :frequency -1 0 #f #t '() vector-0 12345678901234567890 (log 0) (nan))))
-	    (gc)
+	    (gc)(gc)
 
 	    (if all-args
 		;; these can take awhile...
 		(begin
-
+		  (snd-display "3 args")
 		  ;; ---------------- 3 Args
 		  (for-each 
 		   (lambda (arg1)
@@ -53483,8 +53556,11 @@ EDITS: 2
 			      :phase -1 0 3 #f #t '() vector-0 12345678901234567890 (log 0) (nan)))))
 		   (list 1.5 "/hiho" (list 0 1) 1234 vct-3 '#(0 1) (sqrt -1.0) delay-32 3/4 -1.0
 			 :channels -1 0 3 #f #t '() vector-0 12345678901234567890 (log 0) (nan)))
-		  (gc)
+		  (gc)(gc)
+		  (mem-report)
+		  (if (file-exists? "memlog") (system "mv memlog memlog.2"))
 
+		  (snd-display "set 3 args")
 		  ;; ---------------- set! 3 Args
 		  (for-each 
 		   (lambda (arg1)
@@ -53510,34 +53586,39 @@ EDITS: 2
 			    :srate -1 0 3 16 #f #t '() vector-0 12345678901234567890 (log 0) (nan))))
 		   (list 1.5 "/hiho" (list 0 1) 1234 vct-3 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
 			 :input -1 0 3 16 #f #t '() vector-0 12345678901234567890 (log 0) (nan)))
-
+		  (gc)(gc)
+		  (mem-report)
+		  (if (file-exists? "memlog") (system "mv memlog memlog.3"))
+		  (snd-display "4 args")
 		  ;; ---------------- 4 Args
 		  (for-each 
 		   (lambda (arg1)
-		     (begin
-		       (for-each 
-			(lambda (arg2)
-			  (for-each 
-			   (lambda (arg3)
-			     (for-each 
-			      (lambda (arg4)
-				(for-each
-				 (lambda (n)
-				   (let ((err (catch #t
-						     (lambda () (n arg1 arg2 arg3 arg4))
-						     (lambda args (car args)))))
-				     (if (eq? err 'wrong-number-of-args)
-					 (snd-display ";procs4: ~A ~A ~A" err n (procedure-property n 'documentation)))))
-				 procs4))
-			      (list 1.5 "/hiho" (list 0 1) 1234 vct-3 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
-				    :wave -1 0 #f #t '() vector-0 12345678901234567890 (log 0) (nan))))
-			   (list 1.5 "/hiho" (list 0 1) 1234 vct-3 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
-				 :initial-contents -1 0 #f #t '() vector-0 12345678901234567890 (log 0) (nan))))
-			(list 1.5 "/hiho" (list 0 1) 1234 vct-3 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
-			      :srate -1 0 #f #t '() vector-0 12345678901234567890 (log 0) (nan)))))
+		     (for-each 
+		      (lambda (arg2)
+			(for-each 
+			 (lambda (arg3)
+			   (for-each 
+			    (lambda (arg4)
+			      (for-each
+			       (lambda (n)
+				 (let ((err (catch #t
+						   (lambda () (n arg1 arg2 arg3 arg4))
+						   (lambda args (car args)))))
+				   (if (eq? err 'wrong-number-of-args)
+				       (snd-display ";procs4: ~A ~A ~A" err n (procedure-property n 'documentation)))))
+			       procs4))
+			    (list 1.5 "/hiho" (list 0 1) 1234 vct-3 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
+				  :wave -1 0 #f #t '() 12345678901234567890 (log 0) (nan))))
+			 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
+			       :initial-contents -1 0 #f #t '() vector-0 12345678901234567890 (log 0) (nan))))
+		      (list 1.5 "/hiho" (list 0 1) 1234 vct-3 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
+			    :srate -1 0 #f #t '() vector-0 12345678901234567890 (log 0) (nan))))
 		   (list 1.5 "/hiho" (list 0 1) 1234 vct-3 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
 			 :input -1 0 #f #t '() vector-0 12345678901234567890 (log 0) (nan)))
-
+		  (gc)(gc)
+		  (mem-report)
+		  (if (file-exists? "memlog") (system "mv memlog memlog.4"))
+		  (snd-display "set 4 args")
 		  ;; ---------------- set! 4 Args
 		  (for-each 
 		   (lambda (arg1)
@@ -53558,7 +53639,7 @@ EDITS: 2
 					  (snd-display ";set-procs4: ~A ~A" err (procedure-property n 'documentation)))))
 				  set-procs4))
 			       (list 1.5 "/hiho" (list 0 1) 1234 vct-3 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
-				     :wave -1 0 3 16 #f #t '() vector-0 12345678901234567890 (log 0) (nan))))
+				     :wave -1 0 3 16 #f #t '() 12345678901234567890 (log 0) (nan))))
 			    (list 1.5 "/hiho" (list 0 1) 1234 vct-3 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
 				  :initial-contents -1 0 3 16 #f #t '() vector-0 12345678901234567890 (log 0) (nan))))
 			 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
@@ -53567,7 +53648,10 @@ EDITS: 2
 			    :input -1 0 3 16 #f #t '() vector-0 12345678901234567890 (log 0) (nan))))
 		   (list 1.5 "/hiho" (list 0 1) 1234 vct-3 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
 			 :input -1 0 3 16 #f #t '() vector-0 12345678901234567890 (log 0) (nan)))
-		  
+		  (gc)(gc)
+		  (mem-report)
+		  (if (file-exists? "memlog") (system "mv memlog memlog.4set"))
+		  (snd-display "5 args")
 		  ;; ---------------- 5 Args
 		  (for-each 
 		   (lambda (arg1)
@@ -53592,7 +53676,10 @@ EDITS: 2
 			 (list 1.5 "/hiho" 1234 vct-3 (sqrt -1.0) -1 0 #f #t '() 3/4 12345678901234567890 (log 0) (nan))))
 		      (list 1.5 "/hiho" 1234 vct-3 (sqrt -1.0) -1 0 #f #t '() 3/4 12345678901234567890 (log 0) (nan))))
 		   (list 1.5 "/hiho" 1234 vct-3 (sqrt -1.0) -1 0 #f #t '() 3/4 12345678901234567890 (log 0) (nan)))
-		  
+		  (gc)(gc)
+		  (mem-report)
+		  (if (file-exists? "memlog") (system "mv memlog memlog.5"))
+		  (snd-display "6 args")
 		  ;; ---------------- 6 Args
 		  (for-each 
 		   (lambda (arg1)
@@ -53614,13 +53701,50 @@ EDITS: 2
 					 (if (eq? err 'wrong-number-of-args)
 					     (snd-display ";procs6: ~A ~A" err (procedure-property n 'documentation)))))
 				     procs6))
-				  (list 1.5 "/hiho" -1234 -1 0 #f #t (log 0))))
-			       (list 1.5 "/hiho" -1234 0 #t)))
+				  (list 1.5 "/hiho" -1234 -1 0 #f #t '() (log 0))))
+			       (list 1.5 "/hiho" -1234 0 #f #t)))
 			    (list 1.5 "/hiho" -1234 vct-3 #f #t)))
-			 (list 1.5 "/hiho" -1234 vct-3 -1 #t)))
+			 (list 1.5 "/hiho" 1234 vct-3 -1 #f #t)))
 		      (list 1.5 vct-3 -1 0 #f #t)))
-		   (list 1.5 "/hiho" -1234 #f))
-		  
+		   (list 1.5 "/hiho" 1234 #f #t))
+		  (gc)(gc)
+		  (mem-report)
+		  (if (file-exists? "memlog") (system "mv memlog memlog.6"))
+		  (snd-display "7 args")		  
+		  ;; ---------------- 7 Args
+		  (for-each 
+		   (lambda (arg1)
+		     (for-each 
+		      (lambda (arg2)
+			(for-each 
+			 (lambda (arg3)
+			   (for-each 
+			    (lambda (arg4)
+			      (for-each
+			       (lambda (arg5)
+				 (for-each 
+				  (lambda (arg6)
+				    (for-each 
+				     (lambda (arg7)
+				       (for-each
+					(lambda (n)
+					  (let ((err (catch #t
+							    (lambda () (n arg1 arg2 arg3 arg4 arg5 arg6 arg7))
+							    (lambda args (car args)))))
+					    (if (eq? err 'wrong-number-of-args)
+						(snd-display ";procs7: ~A ~A" err (procedure-property n 'documentation)))))
+					procs7))
+				     (list 1.5 "/hiho" -1234 -1 0 #f #t '() (log 0))))
+				  (list 1.5 "/hiho" -1234 0 #f #t)))
+			       (list 1.5 "/hiho" -1234 0 #f #t)))
+			    (list 1.5 "/hiho" -1234 vct-3 #f #t)))
+			 (list 1.5 "/hiho" 1234 vct-3 -1 #f #t)))
+		      (list 1.5 vct-3 -1 0 #f #t)))
+		   (list 1.5 "/hiho" 1234 #f #t))
+		  (gc)(gc)
+		  (mem-report)
+		  (if (file-exists? "memlog") (system "mv memlog memlog.7"))
+		  (snd-display "8 args")
 		  ;; ---------------- 8 Args
 		  (for-each 
 		   (lambda (arg1)
@@ -53647,15 +53771,17 @@ EDITS: 2
 						   (snd-display ";procs8: ~A ~A" err (procedure-property n 'documentation)))))
 					   procs8))
 					(list 1.5 -1 #f (log 0))))
-				     (list "/hiho" 1234)))
-				  (list #t vct-3)))
-			       (list (sqrt -1.0) 1)))
-			    (list 1.5 '())))
-			 (list 2 1234)))
-		      (list #f #t)))
-		   (list 1.5 "/hiho"))
-		  
-		  
+				     (list "/hiho" -1 1234)))
+				  (list #t #f -1 vct-3)))
+			       (list (sqrt -1.0) 0 1)))
+			    (list 1.5 -1 #f '())))
+			 (list 2 #f #t 1234)))
+		      (list #f #t -1)))
+		   (list 1.5 -1 '() "/hiho"))
+		  (gc)(gc)
+		  (mem-report)
+		  (if (file-exists? "memlog") (system "mv memlog memlog.8"))		  
+		  (snd-display "10 args")
 		  ;; ---------------- 10 Args
 		  (for-each 
 		   (lambda (arg1)
@@ -53686,16 +53812,18 @@ EDITS: 2
 							 (snd-display ";procs10: ~A ~A" err (procedure-property n 'documentation)))))
 						 procs10))
 					      (list 1.5 -1 #f)))
-					   (list "/hiho" 1234)))
-					(list #t vct-3)))
-				     (list (sqrt -1.0) 1)))
-				  (list 1.5 '())))
-			       (list 2 1234)))
-			    (list #f #t)))
-			 (list 1.5 "/hiho")))
+					   (list "/hiho" -1 1234)))
+					(list #t #f vct-3)))
+				     (list (sqrt -1.0) #f 1)))
+				  (list 1.5 #f -1 '())))
+			       (list -2 #f 1234)))
+			    (list #f #t '())))
+			 (list 1.5 -1 "/hiho")))
 		      (list 1.5 -1)))
-		   (list #f 1234))
-		  (gc)
+		   (list #f -1 1234))
+		  (gc)(gc)
+		  (mem-report)
+		  (if (file-exists? "memlog") (system "mv memlog memlog.10"))
 		  )))
 
 	    (if (defined? 'mus-audio-reinitialize) (mus-audio-reinitialize))
@@ -53800,7 +53928,7 @@ EDITS: 2
 (set! (previous-files-sort) 0)
 
 (if (file-exists? "saved-snd.scm") (delete-file "saved-snd.scm"))
-(gc)
+(gc)(gc)
 (clear-sincs)
 (reset-almost-all-hooks)
 (for-each free-track (tracks))
@@ -53848,7 +53976,7 @@ EDITS: 2
 (mus-sound-prune)
 (close-output-port optimizer-log)
 ;;;(mus-sound-report-cache "hiho.tmp")
-(gc)
+(gc)(gc)
 (if (defined? 'mem-report) (mem-report))
 (if (and full-test
 	 (file-exists? "oldopt.log"))

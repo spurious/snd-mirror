@@ -479,12 +479,7 @@ typedef struct {
 
 /* -------- snd-io.c -------- */
 
-#if DEBUGGING
-int snd_open_read_1(const char *arg, const char *caller);
-#define snd_open_read(File) snd_open_read_1(File, __FUNCTION__)
-#else
 int snd_open_read(const char *arg);
-#endif
 int snd_reopen_write(const char *arg);
 int snd_write_header(const char *name, int type, int srate, int chans, off_t loc, off_t samples, int format, const char *comment, int len, int *loops);
 bool snd_overwrite_ok(const char *ofile);
@@ -1321,7 +1316,12 @@ char *string_to_colon(char *val);
 char *filename_without_home_directory(const char *name);
 char *just_filename(char *name);
 char *prettyf(Float num, int tens);
+#if DEBUGGING
+char *shorter_tempnam_1(const char *dir, const char *prefix, const char* caller);
+#define shorter_tempnam(Directory, Prefix) shorter_tempnam_1(Directory, Prefix, __FUNCTION__)
+#else
 char *shorter_tempnam(const char *dir, const char *prefix);
+#endif
 char *snd_tempnam(void);
 void snd_exit(int val);
 void g_init_utils(void);

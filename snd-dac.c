@@ -357,7 +357,14 @@ static dac_info *make_dac_info(chan_info *cp, snd_info *sp, snd_fd *fd, int out_
       dp->reverbing = sp->reverb_control_p;
       dp->contrast_amp = sp->contrast_control_amp;
       if ((sp->speed_control * sp->speed_control_direction) != 1.0)
-	dp->src = make_src(0.0, fd, sp->speed_control * sp->speed_control_direction);
+	{
+	  dp->src = make_src(0.0, fd, sp->speed_control * sp->speed_control_direction);
+	  if (dp->src == NULL)
+	    {
+	      FREE(dp);
+	      return(NULL);
+	    }
+	}
       /* that is, if user wants fancy src, he needs to say so before we start */
       if (dp->expanding) 
 	{
@@ -743,8 +750,9 @@ static int find_slot_to_play(void)
 static dac_info *init_dp(int slot, chan_info *cp, snd_info *sp, snd_fd *fd, off_t beg, off_t end, int out_chan)
 {
   dac_info *dp;
-  play_list_members++;
   dp = make_dac_info(cp, sp, fd, out_chan); /* sp == NULL if region */
+  if (dp == NULL) return(NULL);
+  play_list_members++;
   dp->end = end;
   play_list[slot] = dp;
   dp->slot = slot;

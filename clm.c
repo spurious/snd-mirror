@@ -1152,6 +1152,10 @@ Float mus_delay_tick(mus_any *ptr, Float input)
 Float mus_delay(mus_any *ptr, Float input, Float pm)
 {
   Float result;
+  dly *gen = (dly *)ptr;
+  if (gen->size == 0)
+    return(pm * gen->line[0] + (1.0 - pm) * input);
+  /* TODO: if ((size == 1) && (pm < 0.0)) return(something reasonable) */
   result = mus_tap(ptr, pm);
   mus_delay_tick(ptr, input);
   return(result);
@@ -1162,7 +1166,10 @@ Float mus_delay_1(mus_any *ptr, Float input)
   dly *gen = (dly *)ptr;
   Float result;
   if (gen->zdly) 
-    result = gen->line[gen->zloc];
+    {
+      if (gen->size == 0) return(input); /* no point in tick in this case */
+      result = gen->line[gen->zloc];
+    }
   else result = gen->line[gen->loc];
   mus_delay_tick(ptr, input);
   return(result);
@@ -4432,11 +4439,12 @@ Float mus_mixer_ref(mus_any *uf, int in, int out)
   if ((in >= 0) && (in < f->chans) &&
       (out >= 0) && (out < f->chans))
     return(f->vals[in][out]);
-  return((Float)mus_error(MUS_ARG_OUT_OF_RANGE, 
-			  S_mixer_ref ": invalid chan: %d (mixer has %d chan%s)",
-			  ((in < 0) || (in >= f->chans)) ? in : out,
-			  f->chans,
-			  (f->chans == 1) ? "" : "s"));
+  mus_error(MUS_ARG_OUT_OF_RANGE, 
+	    S_mixer_ref ": invalid chan: %d (mixer has %d chan%s)",
+	    ((in < 0) || (in >= f->chans)) ? in : out,
+	    f->chans,
+	    (f->chans == 1) ? "" : "s");
+  return(0.0);
 }
 
 Float mus_mixer_set(mus_any *uf, int in, int out, Float val) 
@@ -6018,11 +6026,11 @@ static mus_any_class SRC_CLASS = {
 
 mus_any *mus_make_src(Float (*input)(void *arg, int direction), Float srate, int width, void *closure)
 {
-  if (fabs(srate) > (Float)(1 << 16))
+  if (fabs(srate) > MUS_MAX_CLM_SRC)
     mus_error(MUS_ARG_OUT_OF_RANGE, S_make_src " srate arg invalid: %f", srate);
   else
     {
-      if ((width < 0) || (width > (1 << 16)))
+      if ((width < 0) || (width > MUS_MAX_CLM_SINC_WIDTH))
 	mus_error(MUS_ARG_OUT_OF_RANGE, S_make_src " width arg invalid: %d", width);
       else
 	{

@@ -7161,7 +7161,7 @@ static XEN g_display_edits(XEN snd, XEN chn, XEN edpos, XEN with_source)
   FILE *tmp = NULL;
   char *buf, *name;
   chan_info *cp;
-  int fd;
+  int fd, pos = -1;
   bool include_source = true;
   off_t len;
   XEN res;
@@ -7169,15 +7169,14 @@ static XEN g_display_edits(XEN snd, XEN chn, XEN edpos, XEN with_source)
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(with_source), with_source, XEN_ARG_4, S_display_edits, "boolean");
   cp = get_cp(snd, chn, S_display_edits);
   if (XEN_BOOLEAN_P(with_source)) include_source = XEN_TO_C_BOOLEAN(with_source);
+  if (XEN_INTEGER_P(edpos)) pos = XEN_TO_C_INT(edpos);
   name = snd_tempnam();
   tmp = FOPEN(name, "w");
   if (tmp) 
     {
-      if (XEN_INTEGER_P(edpos))
+      if (pos >= 0)
 	{
-	  int pos;
-	  pos = XEN_TO_C_INT(edpos);
-	  if ((pos >= 0) && (pos < cp->edit_size) && (cp->edits[pos]))
+	  if ((pos < cp->edit_size) && (cp->edits[pos]))
 	    display_ed_list(cp, tmp, pos, cp->edits[pos], include_source);
 	  else 
 	    {
@@ -7188,14 +7187,12 @@ static XEN g_display_edits(XEN snd, XEN chn, XEN edpos, XEN with_source)
 	    }
 	}
       else display_edits(cp, tmp, include_source);
+      FCLOSE(tmp);
     }
-  if ((!tmp) || (FCLOSE(tmp) != 0))
-    {
-      XEN_ERROR(CANNOT_SAVE,
-		XEN_LIST_3(C_TO_XEN_STRING(S_display_edits),
-			   C_TO_XEN_STRING(name),
-			   C_TO_XEN_STRING(strerror(errno))));
-    }
+  else XEN_ERROR(CANNOT_SAVE,
+		 XEN_LIST_3(C_TO_XEN_STRING(S_display_edits),
+			    C_TO_XEN_STRING(name),
+			    C_TO_XEN_STRING(strerror(errno))));
   fd = mus_file_open_read(name);
   len = lseek(fd, 0L, SEEK_END);
   buf = (char *)CALLOC(len + 1, sizeof(char));

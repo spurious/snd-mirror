@@ -189,19 +189,10 @@ static int too_many_files_cleanup(void)
   return(rtn);
 }
 
-#if DEBUGGING
-int snd_open_read_1(const char *arg, const char* caller)
-#else
 int snd_open_read(const char *arg) 
-#endif
 {
   int fd;
-#if DEBUGGING
-  /* try to track down a weird lost file problem in full arg snd-test 28 */
-  fd = io_open(arg, O_RDONLY, 0, caller, "snd_open_read in snd-io.c", 195);
-#else
   fd = OPEN(arg, O_RDONLY, 0);
-#endif
   if ((fd == -1) && (errno == EMFILE)) /* there's also ENFILE = file table overflow (/usr/include/asm/errno.h) */
     {
       fd = too_many_files_cleanup();

@@ -733,6 +733,10 @@ Float src_input_as_needed(void *arg, int direction)
 src_state *make_src(Float srate, snd_fd *sf, Float initial_srate)
 {
   src_state *sr;
+  if ((sinc_width(ss) > MUS_MAX_CLM_SINC_WIDTH) ||
+      (sinc_width(ss) < 0) ||
+      (fabs(initial_srate) > MUS_MAX_CLM_SRC))
+    return(NULL);
   sr = (src_state *)CALLOC(1, sizeof(src_state));
   sr->sf = sf;
   if (initial_srate >= 0.0) sr->dir = 1; else sr->dir = -1;
@@ -775,8 +779,10 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
   mus_sample_t *idata;
   src_state *sr;
   if ((ratio == 1.0) && (egen == NULL)) return(NULL);
-  if (!(editable_p(cp))) return(NULL);
   sp = cp->sound;
+  if (!(editable_p(cp))) return(NULL); /* edit hook result perhaps */
+  sr = make_src(ratio, sf, ratio);
+  if (sr == NULL) return(mus_format("invalid src ratio: %f\n", ratio));
   full_chan = ((beg == 0) && (dur == CURRENT_SAMPLES(cp)));
   reporting = ((sp) && (dur > REPORTING_SIZE) && (!(cp->squelch_update)));
   if (reporting) start_progress_report(sp, from_enved);
@@ -792,7 +798,6 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
   data[0] = (mus_sample_t *)CALLOC(MAX_BUFFER_SIZE, sizeof(mus_sample_t)); 
   datumb = mus_bytes_per_sample(hdr->format);
   idata = data[0];
-  sr = make_src(ratio, sf, ratio);
   j = 0;
   ss->stopped_explicitly = false;
   if (egen == NULL)
@@ -4468,7 +4473,7 @@ frequency whistles leaking through."
   int len;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_sinc_width, "an integer"); 
   len = XEN_TO_C_INT(val);
-  if (len >= 0)
+  if ((len >= 0) && (len <= MUS_MAX_CLM_SINC_WIDTH))
     set_sinc_width(len);
   return(C_TO_XEN_INT(sinc_width(ss)));
 }

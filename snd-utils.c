@@ -271,11 +271,21 @@ static char *get_tmpdir(void)
 }
 
 static int sect_ctr = 0;
+#if DEBUGGING
+char *shorter_tempnam_1(const char *udir, const char *prefix, const char *caller)
+#else
 char *shorter_tempnam(const char *udir, const char *prefix)
+#endif
 {
   /* tempnam turns out names that are inconveniently long (in this case the filename is user-visible) */
   char *str, *tmpdir = NULL;
+#if DEBUGGING
+  set_encloser((char *)caller);
+#endif
   str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+#if DEBUGGING
+  set_encloser(NULL);
+#endif
   if ((udir == NULL) || (snd_strlen(udir) == 0)) 
     tmpdir = get_tmpdir(); /* incoming dir could be "" */
   else tmpdir = copy_string(udir);
