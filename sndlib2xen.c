@@ -28,9 +28,6 @@
 #endif
 #endif
 
-/* TODO: user (scheme-level) defined mus-print/mus-error handlers 
-*/
-
 void mus_misc_error(const char *caller, char *msg, XEN val)
 {
   if (msg)
@@ -1062,19 +1059,17 @@ static XEN g_mus_audio_mixer_write(XEN dev, XEN field, XEN chan, XEN vals)
   return(xen_return_first(C_TO_XEN_INT(res), vals));
 }
 
-static XEN g_mus_file_data_clipped(XEN fd)
+static XEN g_mus_file_data_clipped(void)
 {
-  #define H_mus_file_data_clipped "(" S_mus_file_data_clipped " fd): whether data associated with file fd is clipped or allowed to wrap around"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(fd), fd, XEN_ONLY_ARG, S_mus_file_data_clipped, "an integer");
-  return(C_TO_XEN_BOOLEAN(mus_file_data_clipped(XEN_TO_C_INT(fd))));
+  /* this sets the default value, not the local file value */
+  #define H_mus_file_data_clipped "(" S_mus_file_data_clipped "): whether sound data accessed from a file should be clipped"
+  return(C_TO_XEN_BOOLEAN(mus_file_data_clipped_default()));
 }
 
-static XEN g_mus_file_set_data_clipped(XEN fd, XEN clipped)
+static XEN g_mus_file_set_data_clipped(XEN clipped)
 {
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(fd), fd, XEN_ARG_1, S_setB S_mus_file_data_clipped, "an integer");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(clipped), fd, XEN_ARG_2, S_setB S_mus_file_data_clipped, "a boolean");
-  return(C_TO_XEN_INT(mus_file_set_data_clipped(XEN_TO_C_INT(fd),
-						(!(XEN_FALSE_P(clipped))))));
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(clipped), clipped, XEN_ONLY_ARG, S_setB S_mus_file_data_clipped, "a boolean");
+  return(C_TO_XEN_BOOLEAN(mus_file_set_data_clipped_default(XEN_TO_C_BOOLEAN(clipped))));
 }
 
 static XEN g_mus_file_prescaler(XEN fd)
@@ -1209,8 +1204,8 @@ XEN_NARGIFY_0(g_mus_audio_restore_w, g_mus_audio_restore)
 XEN_NARGIFY_0(g_mus_audio_systems_w, g_mus_audio_systems)
 XEN_NARGIFY_4(g_mus_audio_mixer_read_w, g_mus_audio_mixer_read)
 XEN_NARGIFY_4(g_mus_audio_mixer_write_w, g_mus_audio_mixer_write)
-XEN_NARGIFY_1(g_mus_file_data_clipped_w, g_mus_file_data_clipped)
-XEN_NARGIFY_2(g_mus_file_set_data_clipped_w, g_mus_file_set_data_clipped)
+XEN_NARGIFY_0(g_mus_file_data_clipped_w, g_mus_file_data_clipped)
+XEN_NARGIFY_1(g_mus_file_set_data_clipped_w, g_mus_file_set_data_clipped)
 XEN_NARGIFY_1(g_mus_file_prescaler_w, g_mus_file_prescaler)
 XEN_NARGIFY_2(g_mus_file_set_prescaler_w, g_mus_file_set_prescaler)
 XEN_NARGIFY_1(g_mus_expand_filename_w, g_mus_expand_filename)
@@ -1620,7 +1615,7 @@ void mus_sndlib_xen_initialize(void)
 				   S_setB S_mus_file_prescaler, g_mus_file_set_prescaler_w, 1, 0, 2, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_file_data_clipped, g_mus_file_data_clipped_w, H_mus_file_data_clipped,
-				   S_setB S_mus_file_data_clipped, g_mus_file_set_data_clipped_w, 1, 0, 2, 0);
+				   S_setB S_mus_file_data_clipped, g_mus_file_set_data_clipped_w, 0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sound_data_ref, g_sound_data_ref_w, H_sound_data_ref,
 				   S_setB S_sound_data_ref, g_sound_data_set_w,  3, 0, 4, 0);

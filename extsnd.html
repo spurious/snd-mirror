@@ -1454,7 +1454,16 @@ relative to the lisp graph axis (as if the raw mouse pixel position was passed t
 called upon mus_error.
 If it returns #t, Snd ignores the error (it assumes you've handled it via the hook).
 This hook is used in <i>play-sound</i> in play.scm to flush an error message that the Snd ALSA support code generates (or used to generate).
+Both mus_error and mus_print run this hook; in the mus_print case, the <i>type</i> is mus-no-error (0).
+You can redirect mus_print output from stderr (the default) to stdout via:
 </td></tr>
+<tr><td></td><td colspan=2>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+(add-hook! mus-error-hook 
+  (lambda (typ msg)
+    (and (= typ 0)         ; it's mus_print, not mus_error
+         (display msg))))  ; display returns some non-#f result, I assume
+</pre></td></tr></table></td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- name-click-hook -->
@@ -2451,8 +2460,8 @@ return a brief string description of <i>error</i> (a mus-error return type).
 and whatever else seems appropriate.</td></tr>
 
 <!-- mus-file-data-clipped -->
-<tr><td colspan=2><code><a class=def name="musfiledataclipped">mus-file-data-clipped</a> (fd)</code></td></tr>
-<tr><td></td><td>The low-level clipping choice while reading the file associated with <i>fd</i>.
+<tr><td colspan=2><code><a class=def name="musfiledataclipped">mus-file-data-clipped</a> ()</code></td></tr>
+<tr><td></td><td>The default low-level clipping choice while accessing sound data.
 The default is #f which makes clipping very obvious (it will cause wrap-around).
 </td></tr>
 

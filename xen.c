@@ -10,6 +10,9 @@
 #else
   #include <sys/types.h>
 #endif
+#if HAVE_STDINT_H
+  #include <stdint.h>
+#endif
 #include <math.h>
 #include "xen.h"
 

@@ -223,6 +223,7 @@ returning you to the true top-level."
        (set! (mus-file-buffer-size) *clm-file-buffer-size*)
        (set! (locsig-type) *clm-locsig-type*)
        (set! (mus-array-print-length) *clm-array-print-length*)
+       (set! (mus-file-data-clipped) clipped)
        (set! (mus-srate) srate))
 
      (lambda ()
@@ -240,66 +241,85 @@ returning you to the true top-level."
 	     (if reverb (set! *reverb* (make-sample->file revfile reverb-channels data-format header-type)))))
        (let ((start (if statistics (get-internal-real-time)))
 	     (flush-reverb #f)
-	     (cycles 0))
-	 (catch 'with-sound-interrupt
-		thunk
-		(lambda args 
-		  ;; if from ws-interrupt? we have (continue stack message) as args
-		  (begin
-		    (if (and (not (null? (cdr args)))
-			     (continuation? (cadr args)))
-			;; instrument passed us a way to continue, so drop into the with-sound debugger
-			(let ((val (call-with-current-continuation
-				    (lambda (finish)
-				      (push-ws (cadr args)              ; continue in notelist from ws-interrupt
-					       finish                   ; stop notelist, go to output close section below
-					       (if (> (length args) 2)
-						   (list-ref args 2) 
-						   (make-stack #t)))    ; stack at point of ws-interrupt or stack right here
-				      (set! in-debugger #t)             ; gad -- turn off dynamic-wind output fixup below
-				      (throw 'snd-top-level             ; return to "top level" (can be nested)
-					     (format #f ";~A~A" 
-						     (if (> (length args) 3)    ; optional message to ws-interrupt
-							 (list-ref args 3)
-							 "")
-						     (let ((loc (ws-location)))
-						       (if (string? loc)
-							   (format #f ", interrupted at: ~A" loc)
-							   ""))))))))
-			  (set! in-debugger #f)
-			  (set! flush-reverb (eq? val #f)))
-			(begin
-			  (snd-print (format #f "with-sound interrupted: ~{~A~^ ~}" (cdr args)))
-			  (set! flush-reverb #t)))
-		    args)))
+	     (cycles 0)
+	     (revmax #f))
+	 (catch 'mus-error
+		(lambda ()
+		  (catch 'with-sound-interrupt
+			 thunk
+			 (lambda args 
+			   ;; if from ws-interrupt? we have (continue stack message) as args
+			   (begin
+			     (if (and (not (null? (cdr args)))
+				      (continuation? (cadr args)))
+				 ;; instrument passed us a way to continue, so drop into the with-sound debugger
+				 (let ((val (call-with-current-continuation
+					     (lambda (finish)
+					       (push-ws (cadr args)              ; continue in notelist from ws-interrupt
+							finish                   ; stop notelist, go to output close section below
+							(if (> (length args) 2)
+							    (list-ref args 2) 
+							    (make-stack #t)))    ; stack at point of ws-interrupt or stack right here
+					       (set! in-debugger #t)             ; gad -- turn off dynamic-wind output fixup below
+					       (throw 'snd-top-level             ; return to "top level" (can be nested)
+						      (format #f ";~A~A" 
+							      (if (> (length args) 3)    ; optional message to ws-interrupt
+								  (list-ref args 3)
+								  "")
+							      (let ((loc (ws-location)))
+								(if (string? loc)
+								    (format #f ", interrupted at: ~A" loc)
+								    ""))))))))
+				   (set! in-debugger #f)
+				   (set! flush-reverb (eq? val #f)))
+				 (begin
+				   (snd-print (format #f "with-sound interrupted: ~{~A~^ ~}" (cdr args)))
+				   (set! flush-reverb #t)))
+			     args))))
+		(lambda args
+		  ;; hit mus-error -- not usually continuable -- can we send a stack to the debugger here?
+		  (display "hit mus-error")
+		  (snd-print (format #f "with-sound mus-error: ~{~A~^ ~}~%" (cdr args)))
+		  (set! flush-reverb #t)))
+		  
 	 (if (and reverb (not flush-reverb))
 	     (begin
 	       (mus-close *reverb*)
+	       (if statistics (set! revmax (mus-sound-maxamp revfile)))
 	       (set! *reverb* (make-file->sample revfile))
 	       (apply reverb reverb-data)
 	       (mus-close *reverb*)
 	       (if *clm-delete-reverb* (delete-file revfile))))
 	 (mus-close *output*)
 	 (if to-snd
-	     (begin
+	     (let ((snd-output #f))
 	       (if statistics
 		   (set! cycles (exact->inexact (/ (- (get-internal-real-time) start) internal-time-units-per-second))))
-	       (let ((cur (find-sound output-1)))
-		 (if cur (close-sound cur)))
-	       (let ((snd-output (open-sound output-1)))
+	       (let* ((cur (find-sound output-1))
+		      (cur-sync (and cur (sync cur))))
+		 (if cur 
+		     (set! snd-output (update-sound cur))
+		     (set! snd-output (open-sound output-1)))
 		 (set! (sync snd-output) #t)
 		 (if statistics
 		     (snd-print 
-		      (format #f "~A:~%  maxamp:~{ ~,4F~},~%  compute time: ~,3F~%"
+		      (format #f "~A:~%  maxamp~A:~{ ~,4F~}~%~A  compute time: ~,3F~%"
 			      output-1
+			      (if (or scaled-to scaled-by) " (before scaling)" "")
 			      (maxamp snd-output #t)
+			      (if revmax 
+				  (format #f "  rev max: ~,4F~%" (if (list? revmax) 
+								     (cadr revmax) 
+								     revmax)) 
+				  "")
 			      cycles)))
 		 (if scaled-to
 		     (scale-to scaled-to snd-output)
 		     (if scaled-by
 			 (scale-by scaled-by snd-output)))
 		 (if play (play-and-wait snd-output))
-		 (update-time-graph snd-output))))
+		 (update-time-graph snd-output)
+		 (if (number? cur-sync) (set! (sync snd-output) cur-sync)))))
 	 output-1))
 
      (lambda () 

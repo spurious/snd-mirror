@@ -2293,6 +2293,8 @@ and waiting for the play to complete before returning.  'start' can also be a fi
   return(g_play_1(samp_n, snd_n, chn_n, false, TO_C_BOOLEAN_OR_FALSE(syncd), end_n, edpos, S_play_and_wait, 6, stop_proc));
 }
 
+/* TODO: make sure stop-playing actually stops the dac at all levels */
+
 static XEN g_stop_playing(XEN snd_n)
 {
   #define H_stop_playing "(" S_stop_playing " (snd #f)): stop play (DAC output) in progress"

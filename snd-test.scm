@@ -34,7 +34,6 @@
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
 
-
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
 (define (snd-display . args)
@@ -1881,10 +1880,10 @@
 	  (mus-audio-set-oss-buffers 4 12)
 	  
 	  (let ((str (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "oboe.snd")))))
-	    (if (not (string=? str "19-Oct 09:46 PDT"))
+	    (if (not (string=? str "01-Jul 13:06 PDT"))
 		(snd-display ";mus-sound-write-date oboe.snd: ~A?" str)))
 	  (let ((str (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "pistol.snd")))))
-	    (if (not (string-=? str "19-Oct 09:46 PDT"))
+	    (if (not (string-=? str "01-Jul 13:06 PDT"))
 		(snd-display ";mus-sound-write-date pistol.snd: ~A?" str)))
 	  
 	  (let ((index (open-sound "oboe.snd"))
@@ -2079,7 +2078,7 @@
 	  (if (and (not (= (mus-sound-type-specifier "oboe.snd") #x646e732e))  ;little endian reader
 		   (not (= (mus-sound-type-specifier "oboe.snd") #x2e736e64))) ;big endian reader
 	      (snd-display ";oboe: mus-sound-type-specifier: ~X?" (mus-sound-type-specifier "oboe.snd")))
-	  (if (not (string-=? (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd"))) "19-Oct-1998 09:46"))
+	  (if (not (string-=? (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd"))) "01-Jul-2004 13:06"))
 	      (snd-display ";oboe: file-write-date: ~A?" (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd")))))
 	  (play-sound-1 "oboe.snd")
 	  
@@ -2993,13 +2992,6 @@
 	    (set! (mus-sound-data-location "oboe.snd") cur-loc)
 	    (set! (mus-sound-header-type "oboe.snd") cur-type)
 	    (set! (mus-sound-data-format "oboe.snd") cur-format))
-	  
-	  (let ((ind (mus-sound-open-input "oboe.snd")))
-	    (set! (mus-file-data-clipped ind) #t)
-	    (if (not (mus-file-data-clipped ind)) (snd-display ";file data-clipped?"))
-	    (set! (mus-file-prescaler ind) 2.0)
-	    (if (fneq (mus-file-prescaler ind) 2.0) (snd-display ";prescaler: ~A" (mus-file-prescaler ind)))
-	    (mus-sound-close-input ind))
 	  
 ;	  (with-sound (:output "/home/bil/zap/sounds/bigger.snd" :srate 44100 :play #f)
 ;	    (do ((i 0 (1+ i))) ((= i 72000))
@@ -22003,10 +21995,10 @@ EDITS: 5
 		  (snd-display ";window-property: ~A" (window-property "SND_VERSION" "SND_COMMAND")))
 	      (reset-hook! window-property-changed-hook)
 	      (set! (window-property "SND_VERSION" "SND_COMMAND") "(make-vector 10 3.14)")
+	      (if (provided? 'xm) (XSynchronize (XtDisplay (cadr (main-widgets))) #f))
 	      (if (or (not gotit)
 		      (fneq (vu-size) 0.5))
 		  (snd-display ";property vu-size: ~A" (vu-size)))
-	      (if (provided? 'xm) (XSynchronize (XtDisplay (cadr (main-widgets))) #f))
 	      (set! (vu-size) oldsize))))
       
       (if (and (provided? 'snd-motif) (provided? 'xm)) (if (not (provided? 'snd-new-effects.scm)) (load "new-effects.scm")))
@@ -22305,6 +22297,20 @@ EDITS: 5
 	(close-sound ind)
 	(reset-hook! open-raw-sound-hook))
       
+      (reset-hook! during-open-hook)
+      (let* ((ind (open-sound "oboe.snd"))
+	     (mx0 (maxamp ind)))
+	(save-sound-as "test.snd" ind mus-next mus-bfloat)
+	(close-sound ind)
+	(add-hook! during-open-hook
+		   (lambda (fd name reason)
+		     (set! (mus-file-prescaler fd) 4.0)))
+	(let* ((ind1 (open-sound "test.snd"))
+	       (mx1 (maxamp ind1)))
+	  (if (fneq mx1 (* 4.0 mx0)) (snd-display ";set prescaler: ~A -> ~A" mx0 mx1))
+	  (close-sound ind1)))
+      (reset-hook! during-open-hook)
+
       (let ((ind #f)
 	    (op #f)
 	    (sl #f)
@@ -32372,6 +32378,8 @@ EDITS: 2
 (define unique-boolean #t)
 (define unique-vct-vector (make-vector 3 #f))
 
+;(set! (run-safety) 1)
+
 (if (or full-test (= snd-test 22) (and keep-going (<= snd-test 22)))
     (begin
       
@@ -38178,6 +38186,75 @@ EDITS: 2
 	(if (fneq (cadr mx) 0.0)
 	    (snd-display ";pvoc a-e: ~A" mx)))
 
+      (let* ((file (with-sound (:clipped #f :data-format mus-bfloat :header-type mus-next)
+			       (fm-violin 0 .1 440 3.14159)))
+	     (ind (find-sound file))
+	     (mx (maxamp ind)))
+	(if (fneq mx 3.14159) (snd-display ";clipped #f: ~A" mx))
+	(close-sound ind)
+	(set! file (with-sound (:clipped #t :data-format mus-bfloat :header-type mus-next)
+			       (fm-violin 0 .1 440 3.14159)))
+	(set! ind (find-sound file))
+	(set! mx (maxamp ind))
+	(if (fneq mx 1.0) (snd-display ";clipped #t: ~A" mx))
+	
+	(close-sound ind)
+	(set! file (with-sound (:data-format mus-bfloat :header-type mus-next :scaled-by .1 :clipped #f)
+			       (fm-violin 0 .1 440 3.14159)))
+	(set! ind (find-sound file))
+	(set! mx (maxamp ind))
+	(if (fneq mx .314159) (snd-display ";scaled-by ~A" mx))
+	
+	(close-sound ind)
+	(set! file (with-sound (:data-format mus-bfloat :header-type mus-next :scaled-to .1 :clipped #f)
+			       (fm-violin 0 .1 440 3.14159)))
+	(set! ind (find-sound file))
+	(set! mx (maxamp ind))
+	(if (fneq mx .1) (snd-display ";scaled-to ~A" mx))
+	
+	(close-sound ind)
+	(let ((old-bufsize *clm-file-buffer-size*)
+	      (old-tsize *clm-table-size*)
+	      (old-arrp *clm-array-print-length*))
+	  (set! *clm-file-buffer-size* (* 1024 1024))
+	  (set! *clm-table-size* 256)
+	  (set! *clm-array-print-length* 123)
+	  (let ((tsize 0)
+		(arrp 0))
+	    (set! file (with-sound (:data-format mus-bfloat :header-type mus-next)
+				   (set! mx (mus-file-buffer-size))
+				   (set! tsize (clm-table-size))
+				   (set! arrp (mus-array-print-length))
+				   (fm-violin 0 .1 440 .1)))
+	    (set! ind (find-sound file))
+	    (if (not (= mx (* 1024 1024))) (snd-display ";*clm-file-buffer-size*: ~A" mx))
+	    (if (not (= tsize 256)) (snd-display ";*clm-table-size*: ~A" tsize))
+	    (if (not (= arrp 123)) (snd-display ";*clm-array-print-length*: ~A" arrp))
+	    (set! *clm-file-buffer-size* old-bufsize)
+	    (set! *clm-table-size* old-tsize)
+	    (set! *clm-array-print-length* old-arrp)
+	    (close-sound ind)))
+
+	(set! file (with-sound () (fm-violin 0 3.0 440 .1)))
+	(set! ind (find-sound file))
+	(set! (amp-control ind) .5)
+	(set! (x-bounds ind 0) (list 1.0 2.0))
+	(set! file (with-sound () (fm-violin 0 4.0 440 .1)))
+	(set! ind (find-sound file))
+	(if (fneq (amp-control ind) .5) (snd-display ";update ws amp: ~A" (amp-control ind)))
+	(if (or (fneq (car (x-bounds ind 0)) 1.0)
+		(fneq (cadr (x-bounds ind 0)) 2.0))
+	    (snd-display ";update ws bounds: ~A" (x-bounds ind)))
+	(close-sound ind)
+
+	(set! file (with-sound (:reverb jc-reverb) (fm-violin 0 .1 440 .1 :reverb-amount .1)))
+	(set! ind (find-sound file))
+	(set! mx (maxamp ind))
+	(set! file (with-sound (:reverb jc-reverb :reverb-data '(#f 12.0 (0 0 1 1 20 1 21 0))) (fm-violin 0 .1 440 .1 :reverb-amount .1)))
+	(set! ind (find-sound file))
+	(if (not (> (maxamp ind) mx)) (snd-display ";reverb-data: ~A ~A" mx (maxamp ind)))
+	(close-sound ind))
+      
       (if (not (null? (sounds))) (for-each close-sound (sounds)))
       
       (run-hook after-test-hook 23)

@@ -26,6 +26,7 @@
 
 /* HISTORY:
  *
+ *  3-Aug-04:  xen_to_c_int bugfix thanks to Kjetil S. Matheussen.
  *  29-Jul-04: deprecated XEN_TO_C_BOOLEAN_OR_TRUE.
  *  21-Jul-04: deprecated XEN_TO_SMALL_C_INT and C_TO_SMALL_XEN_INT.
  *             use new Guile 1.7 numerical function names (under flag HAVE_SCM_TO_SIGNED_INTEGER).
@@ -224,6 +225,11 @@
 #define XEN_ARG_9    9
 
 
+#define XEN_TO_C_INT(a)                 xen_to_c_int(a)
+#define XEN_TO_C_INT_OR_ELSE(a, b)      xen_to_c_int_or_else(a, b, c__FUNCTION__)
+#define XEN_TO_C_INT_OR_ELSE_WITH_CALLER(a, b, c) xen_to_c_int_or_else(a, b, c)
+#define XEN_INTEGER_P(Arg)              xen_integer_p(Arg)
+
 /* all the number handlers changed (names...) in 1.7 */
 #if HAVE_SCM_TO_SIGNED_INTEGER
   #define XEN_TO_C_DOUBLE(a)            scm_to_double(a)
@@ -234,16 +240,12 @@
   #endif
   #define XEN_TO_C_DOUBLE_WITH_CALLER(a, b) scm_to_double(a)
   #define C_TO_XEN_DOUBLE(a)            scm_from_double(a)
-  #define XEN_TO_C_INT(a)               (int)scm_to_int(a)
-  #define XEN_TO_C_INT_OR_ELSE(a, b)    xen_to_c_int_or_else(a, b, c__FUNCTION__)
-  #define XEN_TO_C_INT_OR_ELSE_WITH_CALLER(a, b, c) xen_to_c_int_or_else(a, b, c)
   #define C_TO_XEN_INT(a)               scm_from_int(a)
   #define XEN_TO_C_ULONG(a)             scm_to_ulong(a)
   #define C_TO_XEN_ULONG(a)             scm_from_ulong((unsigned long)a)
   #define C_TO_XEN_LONG_LONG(a)         scm_from_long_long(a)
   #define XEN_TO_C_LONG_LONG(a)         scm_to_long_long(a)
   #define XEN_EXACT_P(Arg)              XEN_TRUE_P(scm_exact_p(Arg))
-  #define XEN_INTEGER_P(Arg)            xen_integer_p(Arg)
   #define XEN_BOOLEAN_P(Arg)            ((bool)scm_is_bool(Arg))
   #define XEN_NUMBER_P(Arg)             ((bool)scm_is_real(Arg))
   #define XEN_DOUBLE_P(Arg)             ((bool)scm_is_real(Arg))
@@ -262,9 +264,6 @@
   #else
     #define C_TO_XEN_DOUBLE(a)          scm_makdbl(a, 0.0)
   #endif
-  #define XEN_TO_C_INT(a)               xen_to_c_int(a)
-  #define XEN_TO_C_INT_OR_ELSE(a, b)    xen_to_c_int_or_else(a, b, c__FUNCTION__)
-  #define XEN_TO_C_INT_OR_ELSE_WITH_CALLER(a, b, c) xen_to_c_int_or_else(a, b, c)
   #define C_TO_XEN_INT(a)               scm_long2num((long)a)
   #define XEN_TO_C_ULONG(a)             scm_num2ulong(a, 0, c__FUNCTION__)
   #define C_TO_XEN_ULONG(a)             scm_ulong2num((unsigned long)a)
@@ -277,7 +276,6 @@
     #define C_TO_XEN_LONG_LONG(a)       scm_long2num(a)
     #define XEN_TO_C_LONG_LONG(a)       scm_num2long(a, 0, c__FUNCTION__)
   #endif
-  #define XEN_INTEGER_P(Arg)            xen_integer_p(Arg)
   #define XEN_BOOLEAN_P(Arg)            (SCM_BOOLP(Arg))
   #define XEN_NUMBER_P(Arg)             (XEN_NOT_FALSE_P(scm_real_p(Arg)))
   #define XEN_DOUBLE_P(Arg)             (XEN_NOT_FALSE_P(scm_real_p(Arg)))

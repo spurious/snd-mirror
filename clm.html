@@ -2992,7 +2992,7 @@ it would be:
 <p>The
 magnitude of the spectrum is returned by <b>rectangular-&gt;polar</b>.  The data can be windowed
 with <b>multiply-arrays</b>.  <b>spectrum</b> calls the fft, translates to polar coordinates,
-then returns results in dB (<i>norm-type</i> = 0), or linear normalized to 1.0 (<i>norm-type</i> = 1),
+then returns the results (in the lower half of "rdat") in dB (<i>norm-type</i> = 0), or linear normalized to 1.0 (<i>norm-type</i> = 1),
 or linear unnormalized (<i>norm-type</i> not 0 or 1). 
 </p>
 <p>The following instrument implements fft overlap-add, but instead
