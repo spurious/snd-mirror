@@ -26,7 +26,9 @@
 <span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html#overview">snd.html</a><spacer type=horizontal size=25><a href="extsnd.html">extsnd.html</a><spacer type=horizontal size=25><a href="grfsnd.html#grfsndcontents">grfsnd.html</a><spacer type=horizontal size=25><a href="clm.html#introduction">clm.html</a><spacer type=horizontal size=25><a href="sndlib.html#introduction">sndlib.html</a></span>
 </center>
 
-<center><a name="introduction"></a>
+<!-- I'm using A NAME (i.e caps) where the entity should be ignored by the indexer (index.cl) -->
+
+<center><A NAME="introduction"></a>
 <ul>
   <li><a href="#belldoc">bell.scm: the fm-bell from CLM</a>
   <li><a href="#birddoc">bird.scm: North-American birds</a>
@@ -36,6 +38,7 @@
   <li><a href="#exampdoc">examp.scm: many examples</a>
   <li><a href="#fmvdoc">fmv.scm: the fm-violin in Guile-gtk</a>
   <li><a href="#glfftdoc">glfft.scm: OpenGL for spectra</a>
+  <li><a href="#gmdoc">gm.scm: gmeteor support</a>
   <li><a href="#goopsnddoc">goopsnd.scm: look at Goops</a>
   <li><a href="#indexdoc">index.scm: snd-help extension</a>
   <li><a href="#loopdoc">loop.scm: Common Lisp syntax</a>
@@ -56,14 +59,14 @@
 </center>
 <br>
 
-<p>This file documents and comments upon the various *.scm files included with Snd.
+<p>This file contains a leisurely discourse upon the various *.scm files included with Snd.
 To use any of these files, (load &lt;file&gt;); for example (load "bell.scm").  To start Snd with
 the file already loaded, snd bell.scm.
 </p>
 
-<a name="belldoc"></a><span class=box><h2>bell.scm</h2></span>
+<A NAME="belldoc"></a><span class=box><h2>bell.scm</h2></span>
 <pre>
-  <b><a name="fmbell">fm-bell</a></b> startime dur frequency amplitude amp-env index-env index
+  <b><A NAME="fmbell">fm-bell</a></b> startime dur frequency amplitude amp-env index-env index
 </pre>
 <p>The FM bell was developed by Michael McNabb in Mus10 in the late '70s.  It is intended
 for low bell sounds (say middle C or so). The lines
@@ -87,12 +90,12 @@ at random), and car3+mod3 putting a sort of formant at the minor third
   (fm-bell 0.0 1.0 220.0 .5 abell fbell 1.0)
 </pre>
 
-<a name="birddoc"></a><span class=box><h2>bird.scm</h2></span>
+<A NAME="birddoc"></a><span class=box><h2>bird.scm</h2></span>
 <pre>
-  <b><a name="bird">bird</a></b> start dur frequency freqskew amplitude freq-envelope amp-envelope
-  <b><a name="bigbird">bigbird</a></b> start dur frequency freqskew amplitude freq-envelope amp-envelope partials
-  <b><a name="one-bird">one-bird</a></b> beg maxdur func birdname
-  <b><a name="make-birds">make-birds</a></b> &amp;optional (output-file "test.snd")
+  <b><A NAME="bird">bird</a></b> start dur frequency freqskew amplitude freq-envelope amp-envelope
+  <b><A NAME="bigbird">bigbird</a></b> start dur frequency freqskew amplitude freq-envelope amp-envelope partials
+  <b><A NAME="one-bird">one-bird</a></b> beg maxdur func birdname
+  <b><A NAME="make-birds">make-birds</a></b> &amp;optional (output-file "test.snd")
 </pre>
 <p>
 bird.scm is a translation of Sambox/CLM bird songs.  The two instruments set
@@ -101,7 +104,8 @@ low-pass filter for distance effects (a bird song sounds really silly
 reverberated).  All the real information is in the amplitude and frequency
 envelopes.  These were transcribed from sonograms found in some bird guides and articles from
 the Cornell Ornithology Lab.  The variable <i>with-editable-mixes</i> controls
-whether each bird is tagged so that you can move it around later.  The function
+whether each bird is tagged so that you can move it around later (for a pretty picture of the
+result, check <a href="snd.html#mixingfiles">this</a> out).  The function
 <i>one-bird</i> mixes in one complete birdsong, using the bird's name for the
 edit history list.  Many of these birds were used in "Colony".  To hear all the
 birds, call <code>(make-birds)</code>.  This writes the sequence out as "test.snd"; give the
@@ -169,10 +173,10 @@ In fact, in Snd this could be automated...
 <p>In CLM, the bird is:</p>
 <pre>
 (definstrument bird (startime dur frequency freq-skew amplitude freq-envelope amp-envelope 
-	             &optional (lpfilt 1.0) (degree 0) (reverb-amount 0))
+	             &amp;optional (lpfilt 1.0) (degree 0) (reverb-amount 0))
   (multiple-value-bind (beg end) (times->samples startime dur)
     (let* ((amp-env (make-env amp-envelope amplitude dur))
-	   (gls-env (make-env freq-envelope (hz->radians freq-skew) dur))
+	   (gls-env (make-env freq-envelope (hz-&gt;radians freq-skew) dur))
 	   (loc (make-locsig :degree degree :distance 1.0 :reverb reverb-amount))
 	   (fil (make-one-pole lpfilt (- 1.0 lpfilt)))
 	   (s (make-oscil :frequency frequency)))
@@ -182,7 +186,7 @@ In fact, in Snd this could be automated...
 </pre>
 <p>The bird.scm version could easily include the one-pole filter and so on.</p>
 
-<a name="effectsdoc"></a><span class=box><h2>effects.scm</h2></span>
+<A NAME="effectsdoc"></a><span class=box><h2>effects.scm</h2></span>
 
 <p>effects.scm implements a simple "Effects" menu, mimicking other sound editors.
 I think this is a mistake, but new Snd users expect a "real" editor to provide a
@@ -261,7 +265,7 @@ effects in more detail.  The code is mostly straight-forward, and
 it's not hard to try them out.
 </p>		   
 
-<a name="envdoc"></a><span class=box><h2>env.scm</h2></span>
+<A NAME="envdoc"></a><span class=box><h2>env.scm</h2></span>
 
 <p>An envelope in Snd/CLM is simply a list of breakpoint pairs.  The x axis extent
 is arbitrary, though it's simplest to use 0.0 to 1.0.  env.scm provides several
@@ -274,7 +278,7 @@ envelope functions that are often useful:
   <b><a name="multiplyenvelopes">multiply-envelopes</a></b> env1 env2
   <b><a name="maxenvelope">max-envelope</a></b> env
   <b><a name="integrateenvelope">integrate-envelope</a></b> env
-  <b><a name="maxx">max-x</a></b> env
+  <b><A NAME="maxx">max-x</a></b> env
 </pre>
 <p>These are translated from CLM's env.lisp which has many more useful
 functions; someday they also should be translated.
@@ -292,7 +296,7 @@ curve:
 :<em class=typing>(envelope-interp .1 '(0 0 1 1) .012)</em>
 <em class=listener>0.361774730775292</em>
 </pre>
-The corresponding function for a CLM env generator is <a href="clm.html#env-interp">env-interp</a>.
+<p>The corresponding function for a CLM env generator is <a href="clm.html#env-interp">env-interp</a>.
 If you'd rather think in terms of e^-kt, set the base to (exp k).  
 </p>
 <p><i>window-envelope</i> returns (as an envelope) the portion of its envelope argument that lies
@@ -344,14 +348,14 @@ controlling the sampling rate, for example.
 <p>More of env.lisp will be translated eventually.
 </p>
 
-<a name="enveddoc"></a><span class=box><h2>enved.scm</h2></span>
+<A NAME="enveddoc"></a><span class=box><h2>enved.scm</h2></span>
 <img src="envs.png" alt="channel enveds" align=right hspace=10 vspace=20>
 <pre>
-  <b><a name="startenveloping">start-enveloping</a></b>
-  <b><a name="stopenveloping">stop-enveloping</a></b>
+  <b><A NAME="startenveloping">start-enveloping</a></b>
+  <b><A NAME="stopenveloping">stop-enveloping</a></b>
   <b><a name="channelenvelope">channel-envelope</a></b> <i>snd chn</i>
-  <b><a name="playwithenvs">play-with-envs</a></b> snd
-  <b><a name="playpanned">play-panned</a></b> snd
+  <b><A NAME="playwithenvs">play-with-envs</a></b> snd
+  <b><A NAME="playpanned">play-panned</a></b> snd
 </pre>
 
 <p>enved.scm implements an independent envelope editor in each channel.  <code>(start-enveloping)</code>
@@ -387,80 +391,720 @@ the second if you're setting it to something new:
 </pre>
 <br clear=right>
 
-<a name="exampdoc"></a><span class=box><h2>examp.scm</h2></span>
+<A NAME="exampdoc"></a><span class=box><h2>examp.scm</h2></span>
+
+<p>examp.scm has become a bit of a grab-bag; rather than get organized, I just
+appended new stuff as it came to mind.  The following documentation is mostly 
+a quick overview of the code; most of the examples are very simple, so (as
+the saying goes) "the code is the documentation".  Also, there's some overlap
+between these examples, other .scm files, and discussions in other documents.
+<p>
+
+<ul>
+<li><a href="#ssplay">play</a>
+<small>
+  <ul>
+    <li>play sound n times
+    <li>play region over and over until C-g typed
+    <li>play samples created on-the-fly
+    <li>play while looping continuously between two movable marks
+    <li>hold DAC open and play sounds via keyboard
+  </ul>
+</small>
+<li><a href="#ssfilters">filters</a>
+<small>
+  <ul>
+    <li>comb-filter, notch-filter, formant-filter
+    <li>time varying FIR filter, notch filter, frequency-response -> FIR coeffs
+    <li>filtered-env (low-pass and amplitude follow envelope)
+    <li>Butterworth filters
+  </ul>
+</small>
+<li><a href="#ssffts">ffts</a>
+<small>
+  <ul>
+    <li>correlation
+    <li>set fft-size based on current time domain window size
+    <li>superimpose spectra of sycn'd sounds
+    <li>fft-edit -- FFT based editing
+    <li>move sound down 8ve using fft
+    <li>Dolph-Chebyshev fft data window
+    <li>dht -- slow Hartley transform 
+    <li>phase vocoder
+  </ul>
+</small>
+<li><a href="#ssuserinterface">user-interface</a>
+<small>
+  <ul>
+    <li>XEmacs-like "Buffers" menu
+    <li>make dot size dependent on number of samples being displayed
+    <li>flash selected data red and green
+    <li>show bomb icon
+    <li>add date and time to title bar
+    <li>how to get 'display' to write to Snd's listener
+    <li>multi-colored rxvt printout
+    <li>accessors for graph-style fields
+    <li>auto-save
+  </ul>
+</small>
+<li><a href="#ssmarks">marks</a>
+<small>
+  <ul>
+    <li>use loop info (if any) to set marks at loop points
+    <li>move window left edge to mark upon 'm' key
+  </ul>
+</small>
+<li><a href="#ssselections">selections</a>
+<small>
+  <ul>
+    <li>delete selected portion and smooth the splice
+    <li>eval over selection or between marks replacing current samples, mapped to "x" or "m" key using prompt-in-minibuffer
+    <li>swap selection chans
+    <li>selection-members
+  </ul>
+</small>
+<li><a href="#ssmixes">mixes</a>
+<small>
+  <ul>
+    <li>mix with result at original peak amp
+    <li>mix mono sound into stereo sound panning according to env, also simple sound placement
+    <li>mix with envelope
+  </ul>
+</small>
+<li><a href="#sssoundeffects">sound effects</a>
+<small>
+  <ul>
+    <li>echo (delays)
+    <li>ring-modulation, am
+    <li>src-related sound effects (src, rand-interp, etc)
+    <li>compand (array-interp)
+    <li>shift pitch keeping duration constant (src+granulate)
+    <li>tempo change via envelope (granulate)
+    <li>cross-synthesis (using a formant bank)
+    <li>voiced->unvoiced (formants)
+    <li>convolution (convolve)
+    <li>reverb (all-pass etc)
+    <li>"frequency division"
+    <li>"adaptive saturation"
+    <li>spike effect
+  </ul>
+</small>
+<li><a href="#sssynthesis">synthesis</a>
+<small>
+  <ul>
+    <li>scissor-tailed flycatcher (waveshaping)
+    <li>fm-violin (FM and various other generators, #&amp;key args)
+    <li>FOF voice synthesis (wave-train, #&amp;optional args)
+    <li>pluck instrument (physical modelling)
+    <li>voice instrument (formants via FM)
+    <li>compute-uniform-circular-string (and scanned-synthesis)
+  </ul>
+</small>
+<li><a href="#ssmiscellaneousextensions">miscellaneous extensions</a>
+<small>
+  <ul>
+    <li>'info' from extsnd.html using format
+    <li>make a system call
+    <li>documentation examples made harder to break
+    <li>example of c-g?
+    <li>translate mpeg input to 16-bit linear and read into Snd
+    <li>mapping extensions (map arbitrary single-channel function over various channel collections)
+    <li>vct func like list
+    <li>map-sound-files, match-sound-files
+    <li>sound-interp, env-sound-interp
+  </ul>
+</small>
+</ul>
+
+<span class=bbox><h3><A NAME="ssplay">play</a></h3></span>
+
+<p>These examples relate to playing sounds. To set up the keyboard
+as a kind of extended piano, we could map keys to sounds:
+</p>
 <pre>
-;;; documentation examples made harder to break
-;;; 'info' from extsnd.html using format
-;;; correlation
-;;; XEmacs-like "Buffers" menu
-;;; set fft-size based on current time domain window size
-;;; superimpose spectra of sycn'd sounds
-;;; example of c-g?
-;;; play sound n times
-;;; play region over and over until C-g typed
-;;; play samples created on-the-fly
-;;; play while looping continuously between two movable marks
-;;; make a system call
-;;; translate mpeg input to 16-bit linear and read into Snd
-;;; make dot size dependent on number of samples being displayed
-;;; auto-save
-;;; move window left edge to mark upon 'm' key
-;;; flash selected data red and green
-;;; show bomb icon
-;;; use loop info (if any) to set marks at loop points
-;;; delete selected portion and smooth the splice
-;;; eval over selection or between marks replacing current samples, mapped to "x" or "m" key using prompt-in-minibuffer
-;;; mix with result at original peak amp
-;;; mapping extensions (map arbitrary single-channel function over various channel collections)
-;;;     do-chans, do-all-chans, do-sound-chans
-;;;     every-sample?
-;;;     sort-samples
-;;; envelope-interp, window-envelope, map-envelopes, multiply-envelopes
-;;; mix mono sound into stereo sound panning according to env, also simple sound placement
-;;; fft-edit -- FFT based editing
-;;; comb-filter, notch-filter, formant-filter
-;;; echo (delays)
-;;; ring-modulation, am
-;;; src-related sound effects (src, rand-interp, etc)
-;;; vct func like list
-;;; compand (array-interp)
-;;; shift pitch keeping duration constant (src+granulate)
-;;; tempo change via envelope (granulate)
-;;; cross-synthesis (using a formant bank)
-;;; voiced->unvoiced (formants)
-;;; convolution (convolve)
-;;; reverb (all-pass etc)
-;;; scissor-tailed flycatcher (waveshaping)
-;;; fm-violin (FM and various other generators, #&key args)
-;;; digital zipper "crossfade" (file->sample)
-;;; FOF voice synthesis (wave-train, #&optional args)
-;;; phase vocoder
-;;; mix with envelope
-;;; time varying FIR filter, notch filter, frequency-response -> FIR coeffs
-;;; map-sound-files, match-sound-files
-;;; move sound down 8ve using fft
-;;; swap selection chans
-;;; sound-interp, env-sound-interp
-;;; compute-uniform-circular-string (and scanned-synthesis)
-;;; add date and time to title bar
-;;; selection-members
-;;; with-sound for Snd
-;;; how to get 'display' to write to Snd's listener
-;;; hold DAC open and play sounds via keyboard
-;;; "frequency division"
-;;; "adaptive saturation"
-;;; Dolph-Chebyshev fft data window
-;;; spike effect
-;;; pluck instrument (physical modelling)
-;;; voice instrument (formants via FM)
-;;; filtered-env (low-pass and amplitude follow envelope)
-;;; multi-colored rxvt printout
-;;; dht -- slow Hartley transform 
-;;; accessors for graph-style fields
-;;; Butterworth filters
+(bind-key (char-&gt;integer #\o) 0 (lambda () (play "oboe.snd")))
+(bind-key (char-&gt;integer #\p) 0 (lambda () (play "pistol.snd")))
+</pre>
+<p>The various play hooks can be used to play sounds over and over. 
+</p>
+<pre>
+  <b><A NAME="expl">pl</a></b> times
+  <b><a name="explayregionforever">play-region-forever</a></b> region
+
+(bind-key (char-&gt;integer #\p) 0 (lambda () (pl (max 1 (prefix-arg)))) #t)
+(bind-key (char-&gt;integer #\r) 0 (lambda () (play-region-forever (max 0 (prefix-arg)))) #t)
+</pre>
+<p>Now C-u 31 p plays the current sound 31 time; C-u 3 r plays region 3 until we type C-g.
+<i>pl</i> uses stop-playing-hook, and <i>play-region-forever</i> uses stop-playing-region-hook.
+With a sufficiently fast computer, it's possible to create the samples to be played 
+in "real-time".  <i>play-fun</i> starts and stops the DAC, <i>ampit</i> and <i>amprt</i>
+fill up the audio buffer with data.
+</p>
+<pre>
+(play-fun (ampit (frames) 2.0) 256)
+</pre>
+<p>scales sound 0's samples by 2 and sends them to the DAC. 
+More useful is:</p>
+<pre>
+  <b><A NAME="exloopit">loop-it</a></b> mark1 mark2 buffer-size
+</pre>
+<p>which loops continuously between the two specified marks.
+The marks can be moved as the sound is played; C-g stops loopit.
+If you want the DAC to be held open in the background,
+</p>
+<pre>
+  <b><A NAME="exstartdac">start-dac</a></b>
+  <b><A NAME="exstopdac">stop-dac</a></b>
 </pre>
 
-<a name="fmvdoc"></a><span class=box><h2>fmv.scm</h2></span>
+
+<span class=bbox><h3><A NAME="ssfilters">filters</a></h3></span>
+
+<pre>
+  <b><A NAME="excombfilter">comb-filter</a></b> scaler size
+  <b><A NAME="excombchord">comb-chord</a></b> scaler size amp
+  <b><A NAME="exzcomb">zcomb</a></b> scaler size pm
+  <b><A NAME="exnotchfilter">notch-filter</a></b> scaler size
+  <b><A NAME="exformantfilter">formant-filter</a></b> radius frequency
+  <b><A NAME="exformants">formants</a></b> r1 f1 r2 f2 r3 f3
+  <b><A NAME="exmovingformant">moving-formant radius</a></b> move-envelope
+  <b><A NAME="exoscformants">osc-formants</a></b> radius bases amounts freqs
+</pre>
+<p>The two versions of <i>comb-filter</i> implement a comb filter both
+"by hand" and using CLM. <i>comb-chord</i> uses comb filters at harmonically
+related sizes to create a chord (see also chordalize in effects.scm).  <i>amp</i>
+here is an overall amplitude scaler.  <i>zcomb</i> is a time-varying comb
+filter using the envelope <i>pm</i>.  <i>notch-filter</i> parallels comb-filter.
+<i>formant-filter</i> applies a formant to its input.
+Some examples:
+</p>
+<pre>
+(map-chan (comb-filter .8 32))
+(map-chan (comb-chord .95 100 .3))
+(map-chan (comb-chord .95 60 .3))
+(map-chan (zcomb .8 32 '(0 0 1 10)))
+(map-chan (notch-filter .8 32))
+(map-chan (formant-filter .99 2400))
+</pre>
+<p>In all these cases, however, it's actually much faster to pass the
+filter to filter-sound:</p>
+<pre>
+(filter-sound (make-formant .99 2400))
+</pre>
+<p><i>formants</i> applies three formants in parallel.
+<i>moving-formant</i> moves a formant according to an envelope.
+<i>osc-formants</i> sets up any number of independently oscillating formants.
+</p>
+<pre>
+(map-chan (formants .99 900 .98 1800 .99 2700))
+(map-chan (moving-formant .99 '(0 1200 1 2400)))
+(map-chan (osc-formants .99 '(400 800 1200) '(400 800 1200) '(4 2 3)))
+</pre>
+<pre>
+  <b><A NAME="exfilteredenv">filtered-env</a></b> envelope
+</pre>
+<p><i>filtered-env</i> creates an amplitude envelope and a one-pole
+filter, and moves them in parallel over a sound; 
+as the sound gets softer, the low-pass filter's cutoff frequency
+gets lower, a sort of poor-man's distance effect.  When <i>envelope</i>
+is at 1.0, no filtering takes place.
+</p>
+<pre>
+  <b><A NAME="exbutter">butter</a></b> gen
+  <b><A NAME="exmakebutterhighpass">make-butter-high-pass</a></b> freq
+  <b><A NAME="exmakebutterlowpass">make-butter-low-pass</a></b> freq
+  <b><A NAME="exmakebutterbandpass">make-butter-band-pass</a></b> freq bandwidth
+  <b><A NAME="exmakebutterbandreject">make-butter-band-reject</a></b> freq bandwidth
+</pre>
+<p>These are simple Butterworth filters taken from Sam Heisz's CLM version
+of Paris Smaragdis's Csound version of Charles Dodge's code from "Computer Music: synthesis, composition, and performance".
+See also the notch filter in effects.scm.
+</p>
+<pre>
+  <b><A NAME="exfltit">fltit</a></b>
+  <b><A NAME="exfltit1">fltit-1</a></b>
+  <b><A NAME="exspectrum2coeffs">spectrum-&gt;coeffs</a></b> order spectrum-envelope
+</pre>
+<p><i>fltit</i> is a simple FIR filter call; <i>spectrum-&gt;coeffs</i> is a Scheme
+version of Snd's very simple spectrum->coefficients procedure ("frequency sampling").
+It returns the FIR filter coefficients given the filter order and desired spectral envelope.
+</p>
+<pre>
+(map-chan (fltit-1 10 (list->vct '(0 1.0 0 0 0 0 0 0 1.0 0))))
+</pre>
+
+
+<span class=bbox><h3><A NAME="ssffts">ffts</a></h3></span>
+<pre>
+  <b><A NAME="excorrelate">correlate</a></b> snd chn y0 y1
+  <b><a name="exsuperimposeffts">superimpose-ffts</a></b> snd chn y0 y1
+  <b><A NAME="exdht">dht</a></b> data
+  <b><A NAME="exdolph">dolph</a></b> n gamma
+  <b><A NAME="exdownoct">down-oct</a></b>
+  <b><a name="exfftedit">fft-edit</a></b> low-freq high-freq
+  <b><A NAME="expvoc">pvoc</a></b> #:key (fftsize 512) (overlap 4) (time 1.0) (pitch 1.0) (gate 0.0) (hoffset 0.0) (snd 0) (chn 0)
+</pre>
+<p><i>correlate</i> graphs the correlation of <i>snd</i>'s 2 channels.
+To make this happen automatically as you move the time domain position
+slider, <code>(add-hook! graph-hook correlate)</code>.
+<i>superimpose-ffts</i> is a similar graph-hook function that
+superimposes the ffts of multiple (syncd) sounds.
+<i>dht</i> is the slow form of the Hartley transform, 
+taken from Perry Cook's SignalProcessor.m.
+The built-in function <a href="extsnd.html#sndfht">fht</a> is the fast form of this transform.
+The Hartley transform is a kind of Fourier transform.
+<i>dolph</i> is the Dolph-Chebychev fft data window, taken
+from Richard Lyons, "Understanding DSP".
+<i>down-oct</i> tries to move a sound down an octave by goofing with the fft data,
+then inverse ffting.  <i>fft-edit</i> is a simple example of fft-based editing.
+It takes an fft of the entire sound, removes all energy below <i>low-freq</i> and above <i>high-freq</i>,
+then inverse fft's. <i>pvoc</i> is a phase-vocoder.  
+pvoc applies the phase-vocoder (i.e. fft analysis, oscil bank resynthesis).
+to the current sound; <i>pitch</i> specifies the pitch transposition ratio, 
+<i>time</i> specifies the time dilation ratio,
+<i>gate</i> specifies a resynthesis gate in dB (partials with amplitudes lower than
+the gate value will not be synthesized), <i>hoffset</i> is a pitch offset in Hz.
+Finally there are two examples
+of using graph-hook to set the fft size based on the current time domain window
+size.  The simpler one is:
+</p>
+<pre>
+(add-hook! graph-hook 
+	   (lambda (snd chn y0 y1)
+	     (if (and (ffting snd chn) 
+                      (= (fft-style snd chn) normal-fft))
+		 (begin
+		   (set! (fft-size snd chn)
+			 (expt 2 (ceiling 
+				  (/ (log (- (right-sample snd chn) (left-sample snd chn))) 
+				     (log 2.0)))))
+		   (set! (spectro-cutoff snd chn) (y-zoom-slider snd chn))))))
+
+</pre>
+<p>The <i>expt...</i> code is rounding the current window size (right-sample - left-sample)
+up to the nearest power of 2. 
+</p>
+
+<span class=bbox><h3><A NAME="ssuserinterface">user-interface</a></h3></span>
+
+<pre>
+  <b><a name="exmaingraphstyle">main-graph-style</a></b> snd chn
+  <b><a name="exfftgraphstyle">fft-graph-style</a></b> snd chn
+  <b><a name="exlispgraphstyle">lisp-graph-style</a></b> snd chn
+</pre>
+<p>These three functions provide accessors for the channel-specific
+graph styles. Each is of the form:
+</p>
+<pre>
+(define main-graph-style
+  (make-procedure-with-setter
+   (lambda (snd chn)
+     (logand (graph-style snd chn) #xff))
+   (lambda (snd chn val)
+     (set! (graph-style snd chn)
+	   (logior (logand (graph-style snd chn) #xffff00)
+		   val)))))
+</pre>
+<p>This uses the generalized set! support in Guile; <i>make-procedure-with-setter</i>
+takes two arguments, the reader and the writer of the field.  The reader picks off the
+bits that are of interest (in this case <code>(logand (graph-style snd chn) #xff)</code>);
+the writer sets those bits without affecting the other two fields.  Normally all three
+fields are accessed at the same time (by <a href="extsnd.html#graphstyle">graph-style</a>).
+To return to this mode after setting a specific field, set that field to -1.
+</p>
+<pre>
+:<em class=typing>graph-dots</em>
+<em class=listener>1</em>
+:<em class=typing>(set! (fft-graph-style 0 0) graph-dots) ;now the time-domain uses lines, the fft dots</em>
+<em class=listener>512</em>
+:<em class=typing>(fft-graph-style 0 0)</em>
+<em class=listener>1</em>
+:<em class=typing>(main-graph-style 0 0)</em>
+<em class=listener>0</em>
+:<em class=typing>(set! (fft-graph-style 0 0) -1)</em>
+<em class=listener>0</em>
+:<em class=typing>(fft-graph-style 0 0)</em>
+<em class=listener>0</em>
+</pre>
+<p>Two of the examples are imitations of Xemacs: a "Buffers" menu and an auto-save hook.</p>
+<pre>
+  <b><A NAME="exopenbuffer">open-buffer</a></b> filename
+  <b><A NAME="exclosebuffer">close-buffer</a></b> snd
+  <b><a name="exautosave">auto-save</a></b>
+  <b><a name="excancelautosave">cancel-auto-save</a></b>
+</pre>
+<p>The Buffers menu provides a list of currently open sounds; selecting one
+in the menu causes it to become the selected sound; <i>open-buffer</i>
+adds a menu item that will select a file, <i>close-buffer</i> removes it.
+To activate this, we need
+to:
+</p>
+<pre>
+(add-hook! open-hook open-buffer)
+(add-hook! close-hook close-buffer)
+</pre>
+<p>The auto-save code sets up a background process that checks periodically for
+unsaved edits, and if any are found it saves them in a temporary file.
+The time between checks
+is set by the variable <i>auto-save-interval</i> which defaults to 60.0 seconds.
+To start auto-saving, <code>(auto-save)</code>, and to stop, <code>(cancel-auto-save)</code>.
+</p>
+<pre>
+  <b><A NAME="exsndout">snd-out</a></b>
+</pre>
+<p>A minor irritation in the current Guile system is that Scheme's "display" function
+writes to <i>current-output-port</i>, but there's no simple way to redirect that
+elsewhere (and with-output-to-string is not completely integrated with
+Guile's help system).  So, if your code calls display, the result may be invisible.
+One way around this is to reset the current-output-port to be a "soft port"
+that actually calls <a href="extsnd.html#sndprint">snd-print</a> instead:
+</p>
+<pre>
+(define stdout (current-output-port)) ;save it in case we want to go back to it
+(define snd-out
+  (make-soft-port
+   (vector                      ;soft port is a vector of procedures:
+    (lambda (c) (snd-print c))  ;  procedure accepting one character for output 
+    (lambda (s) (snd-print s))  ;  procedure accepting a string for output 
+    (lambda () #f)              ;  thunk for flushing output (not needed here)
+    #f                          ;  thunk for getting one character (also not needed)
+    (lambda () #f))             ;  thunk for closing port -- hmm should this go back to the previous?
+   "w"))
+(set-current-output-port snd-out)
+</pre>
+<p>There are also a few brief examples showing simple display customizations.
+For example, the following makes the graph dot size dependent on the
+number of samples in the graph:
+</p>
+<pre>
+  <b><a name="exautodot">auto-dot</a></b> snd chn y0 y1
+
+(add-hook! graph-hook auto-dot)
+</pre>
+<p>There are also examples tying the channel graph sliders to the fft display.
+Finally there are several somewhat frivolous examples:
+</p>
+<pre>
+  <b><a name="extitlewithdate">title-with-date</a></b>
+  <b><a name="exshowbomb">show-bomb</a></b> n speed
+  <b><A NAME="exflashselecteddata">flash-selected-data</a></b> time-interval
+</pre>
+<p><code>(title-with-date)</code> adds a clock to the Snd window's title bar.
+Set the variable <i>retitle-time</i> to 0 to turn this off.
+<i>show-bomb</i> displays the animated bomb icon; <code>(show-bomb 20 200)</code>
+for example. <i>flash-selected-data</i> cause the selected channel's graph to
+flash red and green.  And the there are functions to display colored text
+in rxvt:
+</p>
+<pre>
+(display (format #f "~Athis is red!~Abut this is not" red-text normal-text))
+(display (format #f "~A~Ahiho~Ahiho" yellow-bg red-fg normal-text))
+</pre>
+<p>It's possible to use the same escape sequences in a normal shell script, of course:
+</p>
+<pre>
+echo '\e[41m This is red! \e[0m'
+</pre>
+
+<span class=bbox><h3><A NAME="ssmarks">marks</a></h3></span>
+
+<p><a href="#marksdoc">marks.scm</a> has most of the mark-related extensions.
+The three in examp.scm are:
+</p>
+<pre>
+  <b><a name="exfirstmarkinwindowatleft">first-mark-in-window-at-left</a></b>
+  <b><a name="exmarkloops">mark-loops</a></b>
+  <b><a name="exevalbetweenmarks">eval-between-marks</a></b> func snd
+
+(bind-key (char-&gt;integer #\l) 0 
+          (lambda () 
+            (first-mark-in-window-at-left)))
+
+(bind-key (char-&gt;integer #\m) 0 
+	  (lambda ()
+	    (prompt-in-minibuffer "mark eval:" eval-between-marks)))
+</pre>
+<p><i>first-mark-in-window-at-left</i> moves the (time domain) 
+graph so that the leftmost visible mark is at the left edge;
+<i>mark-loops</i> places marks at any loop points found in the selected sound's header.
+Only a few headers support loop points (these are apparently used in synthesizers
+to mark portions of a waveform that can be looped without causing clicks, thereby lengthening
+a sound as a key is held down). <i>eval-between-marks</i> evaluates <i>func</i>
+between the leftmost marks in <i>snd</i>.
+</p>
+
+<span class=bbox><h3><A NAME="ssselections">selections</a></h3></span>
+
+<pre>
+  <b><a name="exselectionmembers">selection-members</a></b>
+  <b><a name="exallchans">all-chans</a></b>
+  <b><a name="exdeleteselectionandsmooth">delete-selection-and-smooth</a></b>
+  <b><a name="exevaloverselection">eval-over-selection</a></b> func snd
+  <b><a name="exswapselectionchannels">swap-selection-channels</a></b>
+  <b><A NAME="exselectionrms1">selection-rms-1</a></b>
+  <b><a name="exselectionrms">selection-rms</a></b>
+  <b><A NAME="exregionrms1">region-rms-1</a></b> region
+  <b><a name="exregionrms">region-rms</a></b> region
+</pre>
+<p><i>selection-members</i> returns a list of lists of (snd chn) indicating the channels participating in the current selection.
+It is very similar to <i>all-chans</i> which returns a list of lists of all (snd chn)'s.
+<i>delete-selection-and-smooth</i> deletes the current selection and smooths the splice.
+<i>swap-selection-channels</i> swaps the currently selected data's channels.
+The various rms functions return the rms value of the desired data in a variety
+of ways. The fastest and simplest uses CLM's dot-product function:
+<p>
+<pre>
+(define (region-rms n)
+  "(region-rms n) -&gt; rms of region n's data (chan 0)"
+  (if (region? n)
+      (let* ((data (region-samples-&gt;vct 0 0 n)))
+	(sqrt (/ (dot-product data data) (vct-length data))))
+      (throw 'no-such-region (list "region-rms" n))))
+</pre>
+<p><i>eval-over-selection</i> evaluates <i>func</i> on each sample in the current selection. The code:
+</p>
+<pre>
+(bind-key (char-&gt;integer #\x) 0 
+	  (lambda ()
+	    (if (selection?)
+		(prompt-in-minibuffer "selection eval:" eval-over-selection)
+		(report-in-minibuffer "no selection"))))
+</pre>
+<p>binds the character 'x' to a function that checks for an active selection,
+then prompts (in the minibuffer) for the function to apply, and when
+the user eventually replies with a function, applies that function
+to each sample in the selection.
+</p>
+
+<span class=bbox><h3><A NAME="ssmixes">mixes</a></h3></span>
+
+<p><a href="#mixdoc">mix.scm</a> has mix and track related functions.
+</p>
+<pre>
+  <b><a name="exnormalizedmix">normalized-mix</a></b> filename beg in-chan snd chn
+  <b><a name="expanmonomixtostereo">pan-mono-mix-to-stereo</a></b> panning-envelope)
+  <b><A NAME="explace">place</a></b> mono-snd stereo-snd degree
+  <b><A NAME="explace1">place1</a></b> mono-snd stereo-snd degree
+  <b><a name="exenvelopedmix">enveloped-mix</a></b> filename beg env
+  <b><A NAME="exenvelopedmix1">enveloped-mix-1</a></b> filename beg env
+</pre>
+<p><i>normalized-mix</i> is like <a href="extsnd.html#sndmix">mix</a> but the mixed result has same peak amplitude as the 
+original data. <i>enveloped-mix</i> is like <a href="extsnd.html#sndmixsound">mix-sound</a>, but includes an
+amplitude envelope over the mixed-in data.
+</p>
+<pre>
+(enveloped-mix "pistol.snd" 0 '(0 0 1 1 2 0))
+</pre>
+<p>The <i>place</i> and <i>place1</i> functions have the same effect as using
+CLM's locate generator; they mix a mono sound into a stereo sound, splitting 
+it into two copies whose amplitudes depend on the desired <i>degree</i>.
+0 degrees: all in channel 0, 90: all in channel 1. A slightly more complex
+function along the same lines is <i>pan-mono-mix-to-stereo</i> which
+replaces the <i>degree</i> argument with an envelope.
+</p>
+
+<span class=bbox><h3><A NAME="sssoundeffects">sound effects</a></h3></span>
+
+<p>Most of these sound effects are based on CLM generators.
+</p>
+<pre>
+  <b><A NAME="execho">echo</a></b> scaler secs
+  <b><A NAME="exechoes">echoes</a></b> scaler secs decay-time
+  <b><A NAME="exzecho">zecho</a></b> scaler secs frq amp      ; modulated echo
+  <b><A NAME="exflecho">flecho</a></b> scaler secs             ; filtered echo
+  <b><A NAME="exringmod">ring-mod</a></b> freq gliss-env        ; ring-modulation
+  <b><A NAME="exam">am</a></b> freq                        ; amplitude modulation
+  <b><A NAME="exhellodentist">hello-dentist</a></b> frq amp          ; randomized sampling rate changes
+  <b><A NAME="exfp">fp</a></b> sr osamp osfrq              ; osc-driven src ("Forbidden Planet")
+  <b><a name="excompand">compand</a></b>
+  <b><A NAME="exexpsrc">expsrc</a></b> rate snd chn
+  <b><A NAME="exexpsnd">expsnd</a></b> rate-envelope
+  <b><a name="excrosssynthesis">cross-synthesis</a></b> cross-snd amp fftsize radius
+  <b><a name="exvoiced2unvoiced">voiced-&gt;unvoiced</a></b> amp fftsize r tempo
+  <b><A NAME="excnvtest">cnvtest</a></b> snd0 snd1 amp
+  <b><A NAME="exjcreverb">jc-reverb</a></b> decay-dur low-pass volume amp-env
+  <b><A NAME="exfreqdiv">freqdiv</a></b> n
+  <b><A NAME="exadsat">adsat</a></b> size
+  <b><A NAME="exspike">spike</a></b>
+</pre>
+<p><i>expsrc</i> uses sampling rate conversion (the src gen) and granular synthesis (granulate)
+to lengthen or shorten a sound without changing its pitch.  The same idea is used in the effects menu.
+<i>expsnd</i> is the same but the
+change follows an envelope.  In <i>cross-synthesis</i>, <i>cross-snd</i> is the index
+of the sound that controls the spectra, not the affected sound.  <i>voiced-&gt;unvoiced</i>
+is essentially the same idea, but drives the synthesis with white noise.
+<i>cnvtest</i> demonstrates convolution.  <i>jc-reverb</i> is an old Mus10 reverberator
+written originally by John Chowning; see jcrev.ins in CLM.  <i>freqdiv</i> implements
+"frequency division", taken from an effects package of sed_sed@my-dejanews.com.
+Also from that package is <i>adsat</i>, "adaptive saturation".  <i>spike</i> performs 
+a product of samples (as opposed to the more common sum); that is, it multiplies
+together several successive samples, causing a more spikey output.
+Here are some sample calls:
+</p>
+<pre>
+(map-chan (echo .5 .5) 0 44100)
+(echoes .5 .75 2.0)
+(map-chan (zecho .5 .75 6 10.0) 0 65000)
+(map-chan (flecho .5 .9) 0 75000)
+(map-chan (ring-mod 100 '(0 0 1 0)))
+(map-chan (ring-mod 10 (list 0 0 1 (hz-&gt;radians 100))))
+(map-chan (am 440))
+(hello-dentist 40.0 .1)
+(fp 1.0 .3 20)
+(map-chan (compand))
+(expsnd '(0 1 2 .4))
+(expsnd '(0 .5 2 2.0))
+(map-chan (cross-synthesis 1 .5 128 6.0))
+(voiced->unvoiced 1.0 256 2.0 2.0)
+(cnvtest 0 1 .1)
+(jc-reverb 2.0 #f .1 #f)
+(freqdiv 8)
+</pre>
+<p>There are lots more sound effects scattered around the Snd distribution.
+</p>
+
+<span class=bbox><h3><A NAME="sssynthesis">synthesis</a></h3></span>
+
+<p>The synthesis examples are taken primarily from CLM:</p>
+<pre>
+  <b><A NAME="exscissor">scissor</a></b> begin-time
+  <b><A NAME="exfmviolin">fm-violin</a></b> ...many args...
+  <b><A NAME="exfofins">fofins</a></b> ...many args...
+  <b><A NAME="expluck">pluck</a></b> start dur freq amp weighting lossfact
+  <b><A NAME="exvox">vox</a></b>beg dur freq amp ampfun freqfun freqscl voxfun index vibscl
+  <b><a name="excomputeuniformcircularstring">compute-uniform-circular-string</a></b> size x0 x1 x2 mass xspring damp
+  <b><A NAME="excomputestring">compute-string</a></b>size x0 x1 x2 masses xsprings esprings damps haptics
+</pre>
+<p><i>scissor</i> synthesizes the squawk of the scissor-tailed flycatcher (state bird of Oklahoma);
+see <a href="#birddoc">bird.scm</a> for more birds.  The fm-violin is discussed in <a href="#vdoc">v.scm</a>.
+<i>fofins</i> is an implementation of FOF synthesis, taken originally from
+fof.c of Perry Cook and the article
+"Synthesis of the Singing Voice" by Bennett and Rodet in
+"Current Directions in Computer Music Research" (MIT Press).
+<i>pluck</i> is based on
+the Karplus-Strong algorithm as extended by David Jaffe and Julius Smith -- see 
+Jaffe and Smith, "Extensions of the Karplus-Strong Plucked-String Algorithm"
+CMJ vol 7 no 2 Summer 1983, reprinted in "The Music Machine".
+<i>vox</i> is a translations of Marc LeBrun's MUS10 waveshaping voice instrument
+using FM in this case.  The waveshaping version can be found in <a href="#pqwvoxdoc">pqwvox.scm</a>.
+<i>compute-uniform-circular-string</i> and <i>compute-string</i> implement
+scanned synthesis of Bill Verplank and Max Mathews.
+To watch the wave, open some sound (so Snd has some place to put the graph), turn off
+the time domain display (to give our graph all the window)
+then <code>(testunif 1.0 0.1 0.0)</code> or whatever.
+</p>
+
+
+<span class=bbox><h3><A NAME="ssmiscellaneousextensions">miscellaneous extensions</a></h3></span>
+
+<pre>
+  <b><A NAME="exfinfo">finfo</a></b> filename
+  <b><A NAME="exshell">shell</a></b> cmd
+  <b><a name="exmpg">mpg</a></b> rawfile chans
+</pre>
+<p><i>finfo</i> returns a description of the file <i>filename</i>. <i>shell</i> is similar
+to Guile's <i>system</i> function, but output is sent to Snd's listener, rather than stdout.
+<i>mpg</i> uses the system function to call the program mpg123 to translate an MPEG
+format sound file to a headerless ("raw") file containing 16-bit samples.
+<pre>
+(shell "df")
+(add-hook! close-hook (lambda (snd) (shell \"sndplay wood16.wav\")))
+(mpg "mpeg.mpg" "mpeg.raw" 1)
+</pre>
+<p>Several of the functions in this section are slight robustifications of the
+corresponding code in extsnd.html.  These include:
+</p>
+<pre>
+  <b><a name="exdochans">do-chans</a></b> func origin
+  <b><a name="exdoallchans">do-all-chans</a></b> func origin
+  <b><a name="exdosoundchans">do-sound-chans</a></b> func origin
+  <b><a name="exupdategraphs">update-graphs</a></b>
+  <b><a name="exeverysample">every-sample?</a></b> func
+  <b><a name="exsortsamples">sort-samples</a></b> bins
+  <b><a name="exwindowsamples">window-samples</a></b> snd chn
+  <b><a name="exdisplayenergy">display-energy</a></b> snd chn y0 y1
+  <b><a name="exwindowrms">window-rms</a></b>
+  <b><a name="exunsavededits">unsaved-edits?</a></b> ind
+  <b><A NAME="exnostartupfile">no-startup-file></a></b> ind file
+  <b><A NAME="exfftpeak">fft-peak</a></b> snd chn scale
+</pre>
+<p>
+<i>do-chans</i> applies <i>func</i> to all syncd channels using <i>origin</i> as the edit history indication.
+<i>do-all-chans</i> is the same but applies <i>func</i> to all active channels.
+<i>do-sound-chans</i> applies <i>func</i> to all selected channels.
+<i>update-graphs</i> updates (redraws) all graphs.
+<i>every-sample?</i> applies <i>func</i> to each sample in the current channel and returns
+#t if <i>func</i> is not #f for all samples; otherwise it moves the cursor to the first offending sample.
+<i>sort-samples</i> provides a histogram of the samples (by amplitude) in <i>bins</i> bins.
+<i>window-samples</i> returns (via the function <a href="extsnd.html#sndsamples">samples</a>) the samples
+displayed in the current window for <i>snd</i>'s channel <i>chn</i>.
+<i>display-energy</i> is a graph-hook function to display the time domain data squared.
+<i>window-rms</i> returns the rms of the data in currently selected graph window.
+<i>unsaved-edits?</i> is an exit-hook function that returns #t if there are
+any open sounds with unsaved edits.
+<i>no-startup-file></i> is a start-hook function that causes Snd to exit immediately
+if a file is specified on Snd's invocation line, but that file doesn't exist.
+<i>fft-peak</i> is an fft-hook function that returns the peak spectral magnitude.
+</p>
+<pre>
+  <b><a name="exvct">vct</a></b> args
+</pre>
+<p><i>vct</i> returns a vct object preloaded with args; it is equivalent to list->vct.
+</p>
+<pre>
+:<em class=typing>(vct 1 2 3)</em>
+<em class=listener>#&lt;vct 1.000 2.000 3.000&gt;</em>
+</pre>
+<pre>
+  <b><A NAME="exlocatezero">locate-zero</a></b> limit
+  <b><a name="exmapsoundfiles">map-sound-files</a></b> func &amp;optional dir
+  <b><a name="exmatchsoundfiles">match-sound-files</a></b> func &amp;optional dir
+</pre>
+<p>
+<i>locate-zero</i> looks for the next sample where adjacent samples together are less than <i>limit</i>
+and moves the cursor to that sample. It can be interrupted by C-g.
+<i>map-sound-files</i> applies <i>func</i> to each sound file in <i>dir</i>.
+<i>match-sound-files</i> applies <i>func</i> to each sound file in <i>dir</i> and returns a list of files for which func does not return #f.
+</p>
+<pre>
+(map-sound-files 
+  (lambda (n) 
+    (if (&gt; (mus-sound-duration n) 10.0) 
+      (snd-print n))))
+
+(let ((reg (make-regexp ".wav|.snd$")))
+  (match-sound-files 
+    (lambda (file) 
+       (regexp-exec reg file))))
+</pre>
+<p>The argument to make-regexp is looking for *.wav and *.snd.
+</p>
+<pre>
+  <b><a name="exmakesoundinterp">make-sound-interp</a></b> start &amp;optional snd chn
+  <b><a name="exsoundinterp">sound-interp</a></b> reader loc
+  <b><a name="exenvsoundinterp">env-sound-interp</a></b> envelope &amp;optional (time-scale 1.0) snd chn) 
+</pre>
+<p><i>make-sound-interp</i> returns an interpolating reader for <i>snd</i>'s channel <i>chn</i>.
+The "interpolating reader" reads a channel at an arbitary location,
+interpolating between samples if necessary.  The corresponding "generator" is <i>sound-interp</i>.
+The function <i>test-interp</i> shows one way to use this, using a sine wave to lookup the
+current sound.
+<i>env-sound-interp</i> reads <i>snd</i>'s channel <i>chn</i> (via a sound-interp generator)
+according to <i>envelope</i> and <i>time-scale</i>.
+It takes an envelope that goes between 0 and 1 (y-axis), and a time-scaler
+(1.0 = original length) and returns a new version of the data in the specified channel
+that follows that envelope (that is, when the envelope is 0 we get sample 0, when the
+envelope is 1 we get the last sample, envelope = .5 we get the middle sample of the 
+sound and so on). <code>(env-sound-interp '(0 0 1 1))</code> returns a copy of the
+current sound; <code>(env-sound-interp '(0 0 1 1 2 0) 2.0)</code> returns a new sound 
+with the sound copied first in normal order, then reversed.  src-sound with an
+envelope could be used for this effect, but it is much more direct to apply the
+envelope to sound sample positions.
+</p>
+
+<br>
+
+<A NAME="fmvdoc"></a><span class=box><h2>fmv.scm</h2></span>
 
 <p>fmv.scm implements the fm-violin (v.scm) as a CLM-style generator, making it possible
 to call the violin anywhere a generator could be called; since each call on the fm-violin
@@ -468,17 +1112,17 @@ function produces the next sample of the given violin, this form of the fm-violi
 to call in "real-time" situations (see snd-gtk.scm).  Any other CLM-style instrument could
 be rewritten in the same form.
 <pre>
-  <b><a name="fmakefmviolin">make-fm-violin</a></b>
+  <b><A NAME="fmakefmviolin">make-fm-violin</a></b>
     frequency amplitude #:key (fm-index 1.0) (amp-env #f) (periodic-vibrato-rate 5.0) (random-vibrato-rate 16.0)
     (periodic-vibrato-amplitude 0.0025) (random-vibrato-amplitude 0.005) (noise-amount 0.0) (noise-freq 1000.0)
     (ind-noise-freq 10.0) (ind-noise-amount 0.0) (amp-noise-freq 20.0) (amp-noise-amount 0.0) (gliss-env #f)
     (fm1-env #f) (fm2-env #f) (fm3-env #f) (fm1-rat 1.0) (fm2-rat 3.0) (fm3-rat 4.0) (fm1-index #f) (fm2-index #f) 
     (fm3-index #f) (base 1.0) #:allow-other-keys)
 
-  <b><a name="ffmviolin">fm-violin</a></b> gen
-  <b><a name="ffmviolinins">fm-violin-ins</a></b> [same args as original violin in v.scm]
+  <b><A NAME="ffmviolin">fm-violin</a></b> gen
+  <b><A NAME="ffmviolinins">fm-violin-ins</a></b> [same args as original violin in v.scm]
 </pre>
-<i>fm-violin-ins</i> shows how this generator can be fitted into the original fm-violin code.
+<p><i>fm-violin-ins</i> shows how this generator can be fitted into the original fm-violin code.
 The <i>make-fm-violin</i> function uses the optional arguments support from Guile (optargs.scm, loaded
 via <code>(use-modules (ice-9 optargs))</code>). The plethora of arguments is an historical artifact;
 normally only a few of them are used at a time.  There are two examples of calling this generator
@@ -514,11 +1158,11 @@ the note itself should be called until it has had time to ramp off; an exercise
 for the interested reader.
 </p>
 
-<a name="glfftdoc"></a><span class=box><h2>glfft.scm</h2></span>
+<A NAME="glfftdoc"></a><span class=box><h2>glfft.scm</h2></span>
 <pre>
-  <b><a name="startgl">start-gl</a></b>
-  <b><a name="stopgl">stop-gl</a></b>
-  <b><a name="cleanupgl">cleanup-gl</a></b>
+  <b><A NAME="startgl">start-gl</a></b>
+  <b><A NAME="stopgl">stop-gl</a></b>
+  <b><A NAME="cleanupgl">cleanup-gl</a></b>
 </pre>
 <p>glfft.scm and glfft.c implement a way for Snd to display spectra using OpenGL.  Due to
 the way Mesa (the open source OpenGL) connects with the X server, I decided not to try
@@ -534,7 +1178,13 @@ and <code>(start-gl)</code>.  <code>(stop-gl)</code> turns it off.  <code>(clean
 calls stop-gl and then removes the glfft communication files.
 </p>
 
-<a name="goopsnddoc"></a><span class=box><h2>goopsnd.scm</h2></span>
+<A NAME="gmdoc"></a><span class=box><h2>gm.scm</h2></span>
+
+<p>gm.scm provides a simple way to get gmeteor to run in Snd.  See <a href="grfsnd.html#sndwithgmeteor">Snd with gmeteor</a>
+for details.
+</p>
+
+<A NAME="goopsnddoc"></a><span class=box><h2>goopsnd.scm</h2></span>
 
 <p>goopsnd.scm goofs around with goops, the Guile Object System.  As it stands, it
 might provide simple examples of goops syntax, but I'm not sure it's of any value
@@ -542,11 +1192,11 @@ yet.  There are days when it seems to me that there must be something neat we co
 (Currently this file is broken -- something changed in goops, and my old code no longer works).
 </p>
 
-<a name="indexdoc"></a><span class=box><h2>index.scm</h2></span>
+<A NAME="indexdoc"></a><span class=box><h2>index.scm</h2></span>
 <pre>
-  <b><a name="htmlreader">*html-reader*</a></b> "netscape"
-  <b><a name="html">html</a></b> obj
-  <b><a name="Q">?</a></b> obj
+  <b><A NAME="htmlreader">*html-reader*</a></b> "netscape"
+  <b><A NAME="html">html</a></b> obj
+  <b><A NAME="Q">?</a></b> obj
 </pre>
 <p>index.scm provides a connection between an HTML reader (default: netscape, determined
 by the value of <i>*html-reader*</i>) and the Snd documentation.  The index itself is
@@ -565,7 +1215,7 @@ reader can work.  All the following forms are acceptable:
   (html open-sound)
 </pre>
 
-<a name="loopdoc"></a><span class=box><h2>loop.scm</h2></span>
+<A NAME="loopdoc"></a><span class=box><h2>loop.scm</h2></span>
 
 <p>loop.scm implements (at least partially) some Common Lisp syntax in Scheme using
 Scheme's define-syntax.  For example, prog1 in Scheme is:
@@ -599,13 +1249,13 @@ Any additions are welcome!
 </em>
 </pre>
 
-<a name="marksdoc"></a><span class=box><h2>marks.scm</h2></span>
+<A NAME="marksdoc"></a><span class=box><h2>marks.scm</h2></span>
 
 <p>marks.scm is a collection of mark-related functions.</p>
 <pre>
   <b><a name="markname2id">mark-name-&gt;id</a></b> name
   <b><a name="describemark">describe-mark</a></b> id
-  <b><a name="syncup">syncup</a></b> ids
+  <b><A NAME="syncup">syncup</a></b> ids
   <b><a name="fitselectionbetweenmarks">fit-selection-between-marks</a></b> m1 m2
   <b><a name="padmarks">pad-marks</a></b> ids secs
   <b><a name="movesyncdmarks">move-syncd-marks</a></b> sync samples-to-move
@@ -636,11 +1286,11 @@ functions in examp.scm and scattered around the documentation.
 </p>
 
 
-<a name="mixdoc"></a><span class=box><h2>mix.scm</h2></span>
+<A NAME="mixdoc"></a><span class=box><h2>mix.scm</h2></span>
 
 <p>mix.scm provides various mix-related utilities, including support for "tracks".  The latter were originally
 called groups in Snd, with their own elaborate dialog and what-not. That was jettisoned soon after it
-was written.  The next thing to go were the "mix consoles" -- originally each mix incapsulated the
+was written.  The next thing to go were the "mix consoles" -- originally each mix encapsulated the
 current Mix Panel in a little (but incredibly complicated) widget set that followed the mix around
 in the time domain graph.  This was too hard to implement in Gtk+, and too hard to use in any case.
 The current version has only the "tag" to drag a mix around, the Mix Panel to set mix amplitudes
@@ -669,10 +1319,10 @@ to pan the mixed samples (0: all chan 0, 1: all chan 1).
   <b><a name="trackcolor">track-color</a></b> track
   <b><a name="settrackcolor">set-track-color</a></b> track color
   <b><a name="settrackamp">set-track-amp</a></b> track amp
-  <b><a name="incftrackamp">incf-track-amp</a></b> track amp-increment
+  <b><A NAME="incftrackamp">incf-track-amp</a></b> track amp-increment
   <b><a name="settrackspeed">set-track-speed</a></b> track speed
   <b><a name="transposetrack">transpose-track</a></b> track semitones
-  <b><a name="trackpoition">track-position</a></b> track
+  <b><a name="trackposition">track-position</a></b> track
   <b><a name="settrackposition">set-track-position</a></b> track position
   <b><a name="trackend">track-end</a></b> track
   <b><a name="tracklength">track-length</a></b> track
@@ -762,10 +1412,10 @@ entire track moves when you drag one mix in it, or all the amplitudes change at 
 (this is normally what people expect).
 <p>
 
-<a name="moogdoc"></a><span class=box><h2>moog.scm</h2></span>
+<A NAME="moogdoc"></a><span class=box><h2>moog.scm</h2></span>
 <pre>
-  <b><a name="makemoogfilter">make-moog-filter</a></b> frequency Q
-  <b><a name="moogfilter">moog-filter</a></b> gen input
+  <b><A NAME="makemoogfilter">make-moog-filter</a></b> frequency Q
+  <b><A NAME="moogfilter">moog-filter</a></b> gen input
 </pre>
 <p>moog.scm is a translation of CLM's moog.lisp (written by Fernando Lopez-Lezcano --
 http://www-ccrma.stanford.edu/~nando/clm/moog),
@@ -788,9 +1438,9 @@ faster.
   (map-chan (moog 1200.0 .7))
 </pre>
 
-<a name="pqwvoxdoc"></a><span class=box><h2>pqwvox.scm</h2></span>
+<A NAME="pqwvoxdoc"></a><span class=box><h2>pqwvox.scm</h2></span>
 <pre>
-  <b><a name="pqwvox">pqw-vox</a></b> beg dur freq spacing-freq amp ampfun freqfun freqscl phonemes formant-amps formant-shapes
+  <b><A NAME="pqwvox">pqw-vox</a></b> beg dur freq spacing-freq amp ampfun freqfun freqscl phonemes formant-amps formant-shapes
 </pre>
 <p>pqwvox ("phase-quadrature waveshaping voice") was originally written by Marc LeBrun in the late 70's using waveshaping.  It was 
 changed to use FM for the Samson Box since the box had trouble performing waveshaping, then
@@ -811,11 +1461,11 @@ they aren't all that sensible anymore.  (Also, I noticed while writing this para
 the single-sideband cancellation is not working as I expected -- another bug to track down...)
 </p>
 
-<a name="prc95doc"></a><span class=box><h2>prc95.scm</h2></span>
+<A NAME="prc95doc"></a><span class=box><h2>prc95.scm</h2></span>
 
 <p>prc95.scm is a translation to Snd of Perry Cook's (1995) physical modelling toolkit; prc-toolkit95.lisp 
-in CLM.  One starting point for physical modelling is Smith, "Music Applications of Digital Waveguides", CCRMA, Stan-M-39, 1987.
-or Julius's home page (which is completely amazing): http://www-ccrma.stanford.edu/~jos (?), or
+in CLM.  One starting point for physical modelling is Smith, "Music Applications of Digital Waveguides", CCRMA, Stan-M-39, 1987,
+or Julius's <a href="http://www-ccrma.stanford.edu/~jos">home</a> page, or
 any of several classic papers also by Julius Smith.  Perry's own version of this code can be
 found in <a href="www-ccrma.stanford.edu/CCRMA/Software/STK/">STK</a>; there's also apparently
 a csound version somewhere.
@@ -825,33 +1475,33 @@ reedtable, bowtable, jettable, onezero, onepole, biquad (biquad filter), lip, dc
 delaya and delayl (which I think differ in the interpolation technique -- linear and all-pass?).
 </p>
 <pre>
-  <b><a name="makereed">make-reed</a></b> #;key (offset 0.6) (slope -0.8)
-  <b><a name="reedtable">reedtable</a></b> r sample
-  <b><a name="makebowt">make-bowt</a></b> #:key (offset 0.0) (slope 1.0)
-  <b><a name="bowtable">bowtable</a></b> b sample
-  <b><a name="jettable">jettable</a></b> sample
-  <b><a name="makeonez">make-onez</a></b> #:key (gain 0.5) (zerocoeff 1.0) (input 0.0)
-  <b><a name="onezero">onezero</a></b> b sample
-  <b><a name="makeonep">make-onep</a></b> #:key (polecoeff 0.9) (gain 1.0) (sgain 0.1) (output 0.0)
-  <b><a name="onepole">onepole</a></b> p sample
-  <b><a name="makebiq">make-biq</a></b> 
-  <b><a name="biquad">biquad</a></b> b sample
-  <b><a name="makedcb">make-dcb</a></b> #:key (input 0.0) (output 0.0)
-  <b><a name="dcblock">dcblock</a></b> b sample
-  <b><a name="makedelaya">make-delaya</a></b> len
-  <b><a name="delaya">delaya</a></b> d sample
-  <b><a name="makedelayl">make-delayl</a></b> len
-  <b><a name="delayl">delayl</a></b> d sample
-  <b><a name="lip">lip</a></b> b mouthsample boresample
+  <b><A NAME="makereed">make-reed</a></b> #;key (offset 0.6) (slope -0.8)
+  <b><A NAME="reedtable">reedtable</a></b> r sample
+  <b><A NAME="makebowt">make-bowt</a></b> #:key (offset 0.0) (slope 1.0)
+  <b><A NAME="bowtable">bowtable</a></b> b sample
+  <b><A NAME="jettable">jettable</a></b> sample
+  <b><A NAME="makeonez">make-onez</a></b> #:key (gain 0.5) (zerocoeff 1.0) (input 0.0)
+  <b><A NAME="onezero">onezero</a></b> b sample
+  <b><A NAME="makeonep">make-onep</a></b> #:key (polecoeff 0.9) (gain 1.0) (sgain 0.1) (output 0.0)
+  <b><A NAME="onepole">onepole</a></b> p sample
+  <b><A NAME="makebiq">make-biq</a></b> 
+  <b><A NAME="biquad">biquad</a></b> b sample
+  <b><A NAME="makedcb">make-dcb</a></b> #:key (input 0.0) (output 0.0)
+  <b><A NAME="dcblock">dcblock</a></b> b sample
+  <b><A NAME="makedelaya">make-delaya</a></b> len
+  <b><A NAME="delaya">delaya</a></b> d sample
+  <b><A NAME="makedelayl">make-delayl</a></b> len
+  <b><A NAME="delayl">delayl</a></b> d sample
+  <b><A NAME="lip">lip</a></b> b mouthsample boresample
 </pre>
 <p>The example instruments are:
 </p>
 <pre>
-  <b><a name="plucky">plucky</a></b> beg dur freq amplitude maxa
-  <b><a name="bow">bow</a></b> beg dur frq amplitude maxa
-  <b><a name="brass">brass</a></b> beg dur freq amplitude maxa
-  <b><a name="clarinet">clarinet</a></b> beg dur freq amplitude maxa
-  <b><a name="flute">flute</a></b> beg dur freq amplitude maxa
+  <b><A NAME="plucky">plucky</a></b> beg dur freq amplitude maxa
+  <b><A NAME="bow">bow</a></b> beg dur frq amplitude maxa
+  <b><A NAME="brass">brass</a></b> beg dur freq amplitude maxa
+  <b><A NAME="clarinet">clarinet</a></b> beg dur freq amplitude maxa
+  <b><A NAME="flute">flute</a></b> beg dur freq amplitude maxa
 
 (define (test-prc95)
   (plucky 0 .3 440 .2 1.0)
@@ -861,15 +1511,15 @@ delaya and delayl (which I think differ in the interpolation technique -- linear
   (flute 2 .3 440 .2 1.0))
 </pre>
 
-<a name="pvocdoc"></a><span class=box><h2>pvoc.scm</h2></span>
+<A NAME="pvocdoc"></a><span class=box><h2>pvoc.scm</h2></span>
 <p>
 This is the same as the CLM phase-vocoder generator, but implemented in Scheme.  If you're interested
 in how the thing works, I think the Scheme version is easiest to understand; the Common Lisp version 
 is in mus.lisp, and the C version is in clm.c.
 </p>
 <pre>
-  <b><a name="makepvocoder">make-pvocoder</a></b> fftsize overlap interp analyze edit synthesize
-  <b><a name="pvocoder">pvocoder</a></b> gen input
+  <b><A NAME="makepvocoder">make-pvocoder</a></b> fftsize overlap interp analyze edit synthesize
+  <b><A NAME="pvocoder">pvocoder</a></b> gen input
 </pre>
 <p>The <i>analyze</i>, <i>edit</i>, and <i>synthesize</i> arguments to make-pvocoder are
 functions that are applied as needed during pvocoder processing; similarly, the <i>input</i>
@@ -887,7 +1537,7 @@ For example:
 				    (let ((N (mus-length v)))
 				      (do ((i 0 (1+ i)))
 					  ((= i N))
-					(if (< (pv-ampinc v i) gate)
+					(if (&lt; (pv-ampinc v i) gate)
 					    (set-pv-ampinc v i 0.0)))
 				      #t))
 				  #f ;no change to synthesis))
@@ -903,7 +1553,7 @@ way to try out this generator is to use it as the argument to filter-sound.  I c
 of good names for the internal arrays (such as <i>pv-ampinc</i> above).
 </p>
 
-<a name="rgbdoc"></a><span class=box><h2>rgb.scm</h2></span>
+<A NAME="rgbdoc"></a><span class=box><h2>rgb.scm</h2></span>
 <p>rgb.scm is a simple translation of the standard X11 color names into Snd
 color objects.
 </p>
@@ -921,7 +1571,7 @@ less and less need for these elaborate color names, and less
 reason to limit these numbers to bytes.
 </p>
 
-<a name="rubberdoc"></a><span class=box><h2>rubber.scm</h2></span>
+<A NAME="rubberdoc"></a><span class=box><h2>rubber.scm</h2></span>
 
 <pre>
   <b><a name="rubbersound">rubber-sound</a></b> stretch-factor
@@ -940,12 +1590,12 @@ the smallest, throw away this crossing, 6) sort the remaining crossings by least
 shortened.
 </p>
 
-<a name="snd-gtkdoc"></a><span class=box><h2>snd-gtk.scm</h2></span>
+<A NAME="snd-gtkdoc"></a><span class=box><h2>snd-gtk.scm</h2></span>
 <pre>
-  <b><a name="makeampdialog">make-amp-dialog</a></b>
-  <b><a name="makecontroldialog">make-control-dialog</a></b>
-  <b><a name="makefmvdialog">make-fmv-dialog</a></b>
-  <b><a name="makeampcontrols">make-amp-controls</a></b>
+  <b><A NAME="makeampdialog">make-amp-dialog</a></b>
+  <b><A NAME="makecontroldialog">make-control-dialog</a></b>
+  <b><A NAME="makefmvdialog">make-fmv-dialog</a></b>
+  <b><A NAME="makeampcontrols">make-amp-controls</a></b>
 </pre>
 <p>These functions are examples of using Guile-Gtk in Snd.  First you need to build Snd
 with Gtk and Guile-gtk loaded. 
@@ -970,7 +1620,7 @@ each control affects all channels at once.
 <br clear=left>
 <br>
 
-<a name="snd-testdoc"></a><span class=box><h2>snd-test.scm</h2></span>
+<A NAME="snd-testdoc"></a><span class=box><h2>snd-test.scm</h2></span>
 <p>
 snd-test.scm is a large test suite for Snd. The simplest use is:
 </p>
@@ -979,11 +1629,11 @@ snd -l snd-test
 </pre>
 <p>
 which will run all the tests, assuming you have the various sound files it is expecting to find.
-I assume that for most users snd-test.scm will provide more of a set of example calls than anything directly useful.
+I assume that for most users snd-test.scm will provide more of a set of examples than anything directly useful.
 
 </p>
 
-<a name="vdoc"></a><span class=box><h2>v.scm</h2></span>
+<A NAME="vdoc"></a><span class=box><h2>v.scm</h2></span>
 
 <p>The fm violin was my favorite instrument while working in the 70's and 80's,
 primarily on the Samson box.  It was developed in Mus10 (ca 1977) based on ideas of John Chowning;
@@ -1154,7 +1804,7 @@ GenOutLoc:=CASE (Pn[1] MOD 4) OF (Outma,Outmb,Outmc,Outmd);
 					! OUTMA is channel 1, OUTMB channel 2, etc;
 if freq&gt;srate/3 then return;		! note too high, so leave it out;
 x1:=3;					! modulating frequency checks;
-x2:=4;					! (we ant them less than srate/2);
+x2:=4;					! (we want them less than srate/2);
 If x1*freq&gt;srate/2 Then x1:=1;
 If x2*freq&gt;srate/2 then x2:=1;
 amp:=Amp/2;				! two carriers, so halve the amplitude;
@@ -1165,8 +1815,7 @@ indRats[1]:=(x1*Freq*IndMult*((8.5-log(freq))/(3+(freq/1000)))*4/srate) MIN .999
 indRats[2]:=(x2*Freq*IndMult*(1/(freq^.5))*4/srate) MIN .999;
 indRats[3]:=(freq*IndMult*(5/log(freq))*4/srate) MIN .999;
 indrats[4]:=indrats[1]; indrats[5]:=indrats[2]; indrats[6]:=indrats[3];
-					! these index ratios are those described
-					! in the paper mentioned above;
+
 ratsA[1]:=x1; ratsA[2]:=x2;     ratsA[3]:=1;     ratsA[4]:=1;	
 ratsB[1]:=x1+.002; ratsB[2]:=x2+.003;     ratsB[3]:=1.002;     ratsB[4]:=1;	
 					! this is the skewing for the chorus effect;
@@ -1340,8 +1989,11 @@ In CLM, the fm-violin became (fm.html, 1989):</p>
 	 (fmosc1  (and modulate (make-oscil (* fm1-rat frequency))))
 	 (fmosc2  (and modulate (or easy-case (make-oscil (* fm2-rat frequency)))))
 	 (fmosc3  (and modulate (or easy-case (make-oscil (* fm3-rat frequency)))))
-	 (ampf  (make-env (if denoise (reduce-amplitude-quantization-noise amp-env dur amplitude denoise-dur denoise-amp) amp-env)
-			  amplitude :base base :duration dur))
+	 (ampf  (make-env 
+                  (if denoise
+                       (reduce-amplitude-quantization-noise amp-env dur amplitude denoise-dur denoise-amp) 
+                     amp-env)
+	          amplitude :base base :duration dur))
 	 (indf1 (and modulate (make-env fm1-env norm :duration dur)))
 	 (indf2 (and modulate (or easy-case (make-env fm2-env index2 :duration dur))))
 	 (indf3 (and modulate (or easy-case (make-env fm3-env index3 :duration dur))))
@@ -1398,34 +2050,92 @@ it.  In CLM, there's fmviolin.clm which shows some of the effects (although it's
 hard to read due to the way the Sambox system worked).
 </p>
 
-<a name="wsdoc"></a><span class=box><h2>ws.scm</h2></span>
+<A NAME="wsdoc"></a><span class=box><h2>ws.scm</h2></span>
 <p>
-with-sound is the primary sound producing macro in CLM (in a sense, it is CLM's user-interface).
+<i>with-sound</i> is the primary sound producing macro in CLM (in a sense, it is CLM's user-interface).
+In Common Lisp it's defined as:</p>
+<pre>
+ (defmacro with-sound ((&amp;key (srate 22050) ...) &amp;body body) 
+   (unwind-protect
+     (let (...) ,.body)
+     (progn (cleanup...))))
+</pre>
+<p>and makes extensive use of Lisp's dynamic binding to handle nested with-sound calls and so on.
+Optional argument syntax has changed slightly in Guile; my first attempt to implement this macro
+(in Guile 1.4) was:</p>
+<pre>
+(defmacro with-sound (args . body) 
+  `((lambda* (#&amp;key (srate 22050)
+		    (output "test.snd")
+		    (channels 1)
+		    (explode #f))
+      (let ((old-srate (mus-srate)))
+	(dynamic-wind
+	 (lambda ()
+	   (set! (mus-srate) srate))
+	 (lambda () 
+	   (if (find-sound output) 
+               (close-sound (find-sound output)))
+	   (new-sound output (default-output-type) (default-output-format) srate channels)
+	   ,@body)
+	 (lambda ()
+	   (set! (mus-srate) old-srate)))))
+    ,@args))
+</pre>
+<p>but in the newer Guile (1.4.1) it's possible to make this prettier (this
+version is thanks to Kalle Olavi Niemitalo):</p>
+<pre>
+(define* (with-sound-helper thunk #&amp;key (srate 22050) (explode #f))
+  (let ((old-srate (mus-srate)))
+    (dynamic-wind 
+      (lambda () 
+        (set! (mus-srate) srate))
+      thunk
+      (lambda () 
+        (set! (mus-srate) old-srate)))))
+
+(defmacro with-sound (args . body)
+  `(with-sound-helper (lambda () ,@body)
+                      ,@args))
+</pre>
+<p><i>lambda*</i> and <i>define*</i> are extensions of Scheme
+from Guile's ice-9/optargs.scm.
+The version in ws.scm is simply an amplification of this code.
+The global variables that parallel CLM's *clm-...* are:
 </p>
 <pre>
-(define *snd-srate* (default-output-srate))
-(define *snd-file-name* "test.snd")
-(define *snd-channels* (default-output-chans))
-(define *snd-explode* #f)                           ;with-mix-tags
-(define *snd-data-format* (default-output-format))
-(define *snd-header-type* (default-output-type))
-
-(define* (with-sound-helper thunk 
-			    #:key (srate *snd-srate*) 
-			          (output *snd-file-name*) 
-				  (channels *snd-channels*)
-				  (explode *snd-explode*)
-				  (header-type *snd-header-type*)
-				  (data-format *snd-data-format*)
-				  (comment #f)
-				  (continue-old-file #f)
-				  (statistics #f)
-				  (scaled-to #f)
-				  (scaled-by #f))
-;;;    (with-sound (:srate 44100) (fm-violin 0 1 440 .1))
+  <b><A NAME="wssndsrate">*snd-srate*</a></b> (default-output-srate)
+  <b><A NAME="wssndfilename">*snd-file-name*</a></b> "test.snd"
+  <b><A NAME="wssndchannels">*snd-channels*</a></b> (default-output-chans)
+  <b><A NAME="wssndexplode">*snd-explode*</a></b> #f                          
+  <b><A NAME="wssnddataformat">*snd-data-format*</a></b> (default-output-format)
+  <b><A NAME="wssndheadertype">*snd-header-type*</a></b> (default-output-type)
 </pre>
+<p>*snd-explode* here refers to the with-mix-tags setting
+</p>
+<pre>
+ <b><A NAME="wswithsound">with-sound</a></b>
+    #:key (srate *snd-srate*) 
+          (output *snd-file-name*) 
+	  (channels *snd-channels*)
+	  (explode *snd-explode*)
+	  (header-type *snd-header-type*)
+	  (data-format *snd-data-format*)
+	  (comment #f)
+	  (continue-old-file #f)
+	  (statistics #f)
+	  (scaled-to #f)
+	  (scaled-by #f))
+</pre>
+<p>As far as possible, this parallels CLM's with-sound.</p>
+<pre>
+  (with-sound (:srate 44100) (fm-violin 0 1 440 .1))
+</pre>
+<p>If the output file isn't specified, or isn't currently open in Snd, with-sound opens
+a new output file.
+</p>
 
-<a name="zipdoc"></a><span class=box><h2>zip.scm</h2></span>
+<A NAME="zipdoc"></a><span class=box><h2>zip.scm</h2></span>
 <pre>
   <b><a name="makezipper">make-zipper</a></b> ramp-env frame-size frame-env
   <b><a name="zipper">zipper</a></b> gen in1 in2
@@ -1434,8 +2144,8 @@ with-sound is the primary sound producing macro in CLM (in a sense, it is CLM's 
 tries to be smooth!  It marches through the two sounds taking equal short
 portions of each, then abutting them while resampling so that as one
 takes less overall "frame" space, the other takes more.  The <i>frame-size</i>
-argument is the initial length of each twosome in seconds, the <i>frame-env</i>
-argument determines this length as new "frames" are needed, and the
+argument is the maximum length of each twosome in seconds (for initial array allocation), the <i>frame-env</i>
+argument determines the current such length as new "frames" are needed, and the
 <i>ramp-env</i> argument determines which of the files gets more space
 in the frame (0: all first, 1: all second).
 For example, the following function sets up two sounds,
@@ -1456,7 +2166,7 @@ an upward ramp and a downward ramp, then zips them together using
     (test-zip)))
 </pre>
 <center><img src="zramp.png" alt="zipper ramp output"></center>
-<p>Needless to say, this is not intended to be a hazy romantic gesture!
+<p>Needless to say, this is not intended to be a suave, romantic gesture!
 </p>
 <br>
 <center>

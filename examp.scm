@@ -30,7 +30,6 @@
 ;;;     do-chans, do-all-chans, do-sound-chans
 ;;;     every-sample?
 ;;;     sort-samples
-;;; envelope-interp, window-envelope, map-envelopes, multiply-envelopes
 ;;; mix mono sound into stereo sound panning according to env, also simple sound placement
 ;;; fft-edit -- FFT based editing
 ;;; comb-filter, notch-filter, formant-filter
@@ -47,7 +46,6 @@
 ;;; reverb (all-pass etc)
 ;;; scissor-tailed flycatcher (waveshaping)
 ;;; fm-violin (FM and various other generators, #&key args)
-;;; digital zipper "crossfade" (file->sample)
 ;;; FOF voice synthesis (wave-train, #&optional args)
 ;;; phase vocoder
 ;;; mix with envelope
@@ -171,9 +169,8 @@
 (define display-energy
   ;; in this version, the y-zoom-slider controls the graph amp
   (lambda (snd chn y0 y1)
-    "(vct-display-energy snd chn y0 y1) is a graph-hook function to display the time domain data\n\
-    as energy (squared); y0 and y1 set the resultant graph y axis bounds; vct-display-energy is faster.\n\
-    use (add-hook! graph-hook vct-display-energy)"
+    "(display-energy snd chn y0 y1) is a graph-hook function to display the time domain data\n\
+    as energy (squared); y0 and y1 set the resultant graph y axis bounds"
     (let* ((ls (left-sample))
            (rs (right-sample))
            (data (samples->vct ls (+ 1 (- rs ls)) snd chn))
@@ -556,7 +553,7 @@
 ;;;
 ;;;   (shell "df") for example -- there's probably a more elegant way to do this is in Scheme
 ;;; or to play a sound whenever a file is closed:
-;;;   (set! close-hook "(shell \"sndplay wood16.wav\")")
+;;;   (add-hook! close-hook (lambda (snd) (shell \"sndplay wood16.wav\")))
 
 (use-modules (ice-9 popen))  
 
@@ -945,113 +942,6 @@
 	   #f)))
       bins)))
 
-
-
-;;; -------- envelope-interp (named envelope-interp in clm's env.lisp)
-;;;
-;;; (envelope-interp .3 '(0 0 .5 1 1 0) -> .6
-
-(define envelope-interp                      ;env is list of x y breakpoint pairs, interpolate at x returning y
-  (lambda args                          ;  (x env &optional (base 1.0)
-    "(envelope-interp x env &optional (base 1.0)) -> value of env at x (base controls connecting segment type)"
-    (let ((x (car args))
-	  (env (cadr args))
-	  (base (if (null? (cddr args)) #f (caddr args))))
-      (cond ((null? env) 0.0)		;no data -- return 0.0
-	    ((or (<= x (car env))	;we're sitting on x val (or if < we blew it)
-		 (null? (cddr env)))	;or we're at the end of the list
-	     (cadr env))		;so return current y value
-	    ((> (caddr env) x)		;x <= next env x axis value
-	     (if (or (= (cadr env) (cadddr env))
-		     (and base (= base 0.0)))
-		 (cadr env)		;y1=y0, so just return y0 (avoid endless calculations below)
-		 (if (or (not base) (= base 1.0))
-		     (+ (cadr env)	;y0+(x-x0)*(y1-y0)/(x1-x0)
-			(* (- x (car env))
-			   (/ (- (cadddr env) (cadr env))
-			      (- (caddr env) (car env)))))
-		     (+ (cadr env)
-			(* (/ (- (cadddr env) (cadr env))
-			      (- base 1.0))
-			   (- (expt base (/ (- x (car env))
-					    (- (caddr env) (car env))))
-			      1.0))))))
-	    (else (envelope-interp x (cddr env))))))) ;go on looking for x segment
-
-;;; -------- window-envelope (a kinda brute-force translation from the CL version in env.lisp)
-;;;
-;;; (window-envelope 1.0 3.0 '(0.0 0.0 5.0 1.0)) -> '(1.0 0.2 3.0 0.6)
-
-(define window-envelope 
-  (lambda (beg end env)
-    "(window-envelope beg end env) -> portion of env lying between x axis values beg and end"
-    (let ((nenv '())
-	  (lasty (if env (cadr env) 0.0))
-	  (len (length env)))
-      (call-with-current-continuation
-       (lambda (return-early)               
-	 (do ((i 0 (+ i 2)))
-	     ((>= i len))
-	   (let ((x (list-ref env i))
-		 (y (list-ref env (+ i 1))))
-	     (set! lasty y)
-	     (if (null? nenv)
-		 (if (>= x beg)
-		     (begin
-		       (set! nenv (append nenv (list beg (envelope-interp beg env))))
-		       (if (not (= x beg))
-			   (if (>= x end)
-			       (return-early (append nenv (list end (envelope-interp end env))))
-			       (set! nenv (append nenv (list x y)))))))
-		 (if (<= x end)
-		     (begin
-		       (set! nenv (append nenv (list x y)))
-		       (if (= x end)
-			   (return-early nenv)))
-		     (if (> x end)
-			 (return-early (append nenv (list end (envelope-interp end env)))))))))
-	 (append nenv (list end lasty)))))))
-
-;;; map-envelopes like map-across-envelopes in env.lisp
-
-(define map-envelopes 
-  (lambda (op e1 e2)
-    "(map-envelopes func env1 env2) maps func over the breakpoints in env1 and env2 returning a new envelope"
-    (let ((xs '()))
-      (letrec ((at0 
-		(lambda (e)
-		  (let ((diff (car e))
-			(len (length e)))
-		    (do ((i 0 (+ i 2)))
-			((>= i len) e)
-		      (let ((x (- (list-ref e i) diff)))
-			(set! xs (cons x xs))
-			(list-set! e i x))))))
-	       (remove-duplicates
-		(lambda (lst)
-		  (letrec ((rem-dup
-			    (lambda (lst nlst)
-			      (cond ((null? lst) nlst)
-				    ((member (car lst) nlst) (rem-dup (cdr lst) nlst))
-				    (else (rem-dup (cdr lst) (cons (car lst) nlst)))))))
-		    (rem-dup lst '())))))
-	(let ((ee1 (at0 e1))
-	      (ee2 (at0 e2))
-	      (newe '()))
-	  (set! xs (sort! (remove-duplicates xs) <))
-	  (let ((len (length xs)))
-	    (do ((i 0 (1+ i)))
-		((= i len))
-	      (let ((x (list-ref xs i)))
-		(set! newe (append newe (list x (op (envelope-interp x ee1) (envelope-interp x ee2)))))))
-	    newe))))))
-
-(define multiply-envelopes
-  (lambda (e1 e2)
-    "(multiply-envelopes env1 env2) multiplies break-points of env1 and env2 returning a new envelope"
-    (map-envelopes * e1 e2)))
-
-; (multiply-envelopes '(0 0 2 .5) '(0 0 1 2 2 1)) -> '(0 0 1 0.5 2 0.5)
 
 
 ;;; -------- mix mono sound into stereo sound panning according to env
@@ -1857,116 +1747,6 @@
 	  (mix-vct out-data beg #f 0 #f)))))
 
 ; (fm-violin 0 1 440 .1 :fm-index 2.0)
-
-
-;;; -------- zipper "crossfade"
-;;;
-;;; create the 'digital zipper' effect
-;;; a not-very-debonair way to fade out file1 and fade in file2
-;;; CLM version in zipper.ins
-;;; zipper as generator: zip.scm
-
-;(define max-envelope
-;  (lambda (e mx)
-;    (if (null? e)
-;	mx
-;      (max-envelope (cddr e) (max mx (abs (cadr e)))))))
-
-(define zipper 
-  (lambda* (beg dur file1 file2 ramp-envelope frame-size #&optional (ramp-envelope-base 1.0) (frame-envelope #f))
-  ;; pan between file1 and file2 using a "zipper-like" effect
-  ;; ramp-env at 0 => all file1, at 1 => all file2, in between a mixture
-  ;; frame-size is the basic speed at which the mixture takes place (dependent also on frame-env)
-  ;; ramp-env-base is the base of the panning envelope (for exponential pans)
-  ;; frame-env affects the frame size -- don't let it get to 0!!
-  (let* ((f1 (make-file->sample file1))
-	 (f2 (make-file->sample file2))
-	 (start (floor (* (srate) beg)))
-	 (len (floor (* (srate) dur)))
-	 (end (+ start len))
-	 (tframe-envelope (or frame-envelope '(0 1 1 1)))
-	 (fe (make-env tframe-envelope :scaler (* (srate) frame-size) :duration dur))
-	 (maxframe (max-envelope tframe-envelope 0.0))
-	 (ctr1 0)
-	 (ctr2 0)
-	 (frame-loc 0)
-	 (ramp-loc 0.0)
-	 (rampe (make-env ramp-envelope :duration dur :base ramp-envelope-base))
-	 (trigger 0)
-	 (frame-samples (1+ (ceiling (* (srate) maxframe frame-size))))
-	 (frame (make-vct frame-samples))
-	 (frame1 (make-vct frame-samples))
-	 (frame2 (make-vct frame-samples))
-	 (cursamples 0)
-	 (sf (make-sample-reader start))
-	 (low-start (/ 20.0 (srate)))
-	 (high-start (- 1.0 low-start))
-	 (out-data (make-vct len)))
-    (do ((i 0 (1+ i)))
-	((= i len))
-      (let ((insamp (next-sample sf)))
-	(set! ramp-loc (env rampe))
-	(set! frame-samples (floor (env fe)))
-	;; fe's duration assumes it's being called on every sample, but we only need this value every once in a while
-	(if (<= ramp-loc low-start)
-	    (begin
-	      (vct-set! out-data i (+ insamp (file->sample f1 ctr1)))
-	      (set! ctr1 (+ ctr1 1)))
-	    (if (>= ramp-loc high-start)
-		(begin
-		  (vct-set! out-data i (+ insamp (file->sample f2 ctr2)))
-		  (set! ctr2 (+ ctr2 1)))
-		;; else we're in the ramp phase
-		;;  read frame if we're within its bounds
-		(if (= trigger 0)
-		    (vct-set! out-data i (+ insamp (vct-ref frame frame-loc)))
-		    ;; now get next portion of the ramp
-		    (begin
-		      (set! cursamples frame-samples)
-		      (let* ((changept (floor (* cursamples ramp-loc)))
-			     (samp1 (/ 1.0 (- 1.0 ramp-loc)))
-			     (samp2 (/ 1.0 ramp-loc)))
-			(do ((k 0 (1+ k)))
-			    ((= k cursamples))
-			 (vct-set! frame1 k (file->sample f1 ctr1))
-			 (set! ctr1 (+ ctr1 1))
-			 (vct-set! frame2 k (file->sample f2 ctr2))
-			 (set! ctr2 (+ ctr2 1)))
-			;; now resample each dependent on location in ramp (samp1 and samp2 are increments)
-			(clear-array frame)
-			(let ((start-ctr 0.0))
-			  (do ((k 0 (1+ k)))
-			      ((= k changept))
-			    (let* ((ictr (floor start-ctr))
-				   (y0 (vct-ref frame2 ictr))
-				   (y1 (vct-ref frame2 (+ ictr 1))))
-			      (vct-set! frame k (+ y0 (* (- y1 y0) (- start-ctr ictr))))
-			      (set! start-ctr (+ start-ctr samp2)))))
-			(let ((start-ctr 0.0)
-			      (m changept))
-			  (do ((k 0 (1+ k)))
-			      ((= k (- cursamples changept)))
-			    (let* ((ictr (floor start-ctr))
-				   (y0 (vct-ref frame1 ictr))
-				   (y1 (vct-ref frame1 (+ ictr 1))))
-			      (vct-set! frame m (+ y0 (* (- y1 y0) (- start-ctr ictr))))
-			      (set! start-ctr (+ start-ctr samp1))
-			      (set! m (+ m 1)))))
-			(vct-set! out-data i (+ insamp (vct-ref frame 0))))))))
-	(set! frame-loc (+ frame-loc 1))
-	(set! trigger 0)
-	(if (>= frame-loc cursamples)
-	    (begin
-	      (set! frame-loc 0)
-	      (set! trigger 1)))))
-    (free-sample-reader sf)
-    (vct->samples start len out-data)
-    )))
-
-;;; this is also good if the same file is used twice -- sort of like a CD player gone berserk
-
-; (zipper 0 1 "fyow.snd" "now.snd" '(0 0 1 1) .05)
-; (zipper 0 3 "mb.snd" "fyow.snd" '(0 0 1.0 0 1.5 1.0 3.0 1.0) .025)
 
 
 ;;; -------- FOF example

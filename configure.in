@@ -227,7 +227,7 @@ AC_CHECK_SIZEOF(int *)
 AC_CHECK_SIZEOF(float)
 
 if test "$SIZEOF_INT" = "0" ; then
-  echo "******** big trouble! configure thinks ints have 0 bytes ********"
+  AC_MSG_ERROR(big trouble: configure thinks ints have 0 bytes)
 fi
 
 dnl this taken from Guile's configure.in
@@ -282,7 +282,7 @@ else
       XLIBS="$x_libraries/libXm.a $X_LIBS $X_PRE_LIBS -lXt -lX11 $X_EXTRA_LIBS"
 	],
 	[
-      echo "can't find $x_libraries/libXm.a!";
+      AC_MSG_WARN(can't find $x_libraries/libXm.a!)
       XLIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt -lX11 $X_EXTRA_LIBS"
 	])
   else
@@ -351,7 +351,7 @@ else
       AC_SUBST(XFLAGS)
       ],
       [
-      echo "trouble with gtk -- trying to use motif...";
+      AC_MSG_WARN(trouble with gtk -- trying to use motif)
       AC_DEFINE(USE_MOTIF)
       XLIBS="$XLIBS -lXpm"
       AC_SUBST(XLIBS)
@@ -397,7 +397,7 @@ if test $GUILE_CONFIG_works = yes; then
     GUILE_LIBS="`${GUILE_CONFIG_path}guile-config link`"
   fi
   if test "`guile -c '(display (string>=? (version) "1.3"))'`" != "#t"; then
-    echo Snd needs Guile 1.3 or later
+    AC_MSG_WARN(Snd needs Guile 1.3 or later)
     AC_DEFINE(HAVE_GUILE,0)
   else
     AC_SUBST(GUILE_CFLAGS)
@@ -450,7 +450,7 @@ if test $GUILE_CONFIG_works = yes; then
 
         if test "`guile -c '(display (string>? (version) "1.3.4"))'`" = "#t"; then
           if test "`$GUILE_GTK_PROG -c '(use-modules (gtk config)) (display (string<? gtkconf-guile-gtk-version "0.19"))'`" = "#t"; then
-            echo "Guile 1.4 or later needs Guile-gtk 0.19 or later"
+            AC_MSG_WARN(Guile 1.4 or later needs Guile-gtk 0.19 or later)
 	  fi
 	fi
       fi
@@ -492,16 +492,16 @@ dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
           AC_CHECK_LIB(asound,main,[ 
 	    AC_CHECK_HEADER(sys/asoundlib.h,
                 [audio_system=ALSA],
-   	        [echo "I can't find the ALSA header files"])], 
-          [echo "I can't find the ALSA library"])
+   	        [AC_MSG_WARN(can't find the ALSA header files)])], 
+          [AC_MSG_WARN(can't find the ALSA library)])
         fi
 
         if test "$with_esd" = yes ; then
 	  AC_CHECK_LIB(esd,main,[
 	    AC_CHECK_HEADER(esd.h,
 		 [audio_system=ESD],
-		 [echo "I can't find the ESD header files"])],
-            [echo "I can't find the ESD library"])
+		 [AC_MSG_WARN(can't find the ESD header files)])],
+            [AC_MSG_WARN(can't find the ESD library)])
         fi
 
 	case $audio_system in
@@ -676,3 +676,4 @@ AC_OUTPUT(makefile)
 dnl if no motif, search for gtk (could use locate)
 dnl need to be able to set both HAVE_ALSA and HAVE_OSS?
 dnl support for sndlib.so needs to decide whether clm2scm/clm are available
+dnl make with-gsl the default

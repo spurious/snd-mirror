@@ -161,6 +161,7 @@ and a CVS <a href="http://snd.sourceforge.net">repository</a>.
     <li><a href="grfsnd.html#sndandgl">Snd and OpenGL</a>
     </ul>
   <li><a href="grfsnd.html#extsndindex">Customization Index</a>
+  <li><a href="sndscm.html#introduction">Scheme Functions included with Snd</a>
   </ul>
 <li><a href="#index">Topical Index</a>
 </ul>
@@ -428,7 +429,7 @@ use a ".scm" extension, or precede the file name with <a name="minusl">"-l"</a> 
 <pre>
   snd oboe.snd -l examp.scm
 </pre>
-<p>opens the sound file oboe.snd and loads the Scheme code in examp.scm.</p>
+<p>opens the sound file oboe.snd and loads the Scheme code in <a href="sndscm.html#exampdoc">examp.scm</a>.</p>
 
         <!-- I(preload directory):O(-p switch to Snd)(minusp) --><!-- I(preload directory):A(minusp) -->
         <!-- I(continue session):O(-l switch to Snd)(minusl) -->
@@ -524,7 +525,7 @@ is opened. The file types listed above as "automatically translated" are
 decoded upon being opened, rewritten in Sun 16-bit format
 to a new file with an added (possibly redundant) extension .snd,
 and that form is the one the editor sees from then on. To read
-mepg files, see the mpg function in examp.scm.
+mepg files, see the mpg function in <a href="sndscm.html#exampdoc">examp.scm</a>.
 </p>
 
 <p><a name="panelayout"></a>Each file has its own
@@ -619,7 +620,7 @@ To record a file, see <a href="#recordfile">"Record Files"</a>.</p>
 <a name="exitfile"></a><p>Finally, to exit Snd cleanly (that is, removing any
 temporary files, and cleaning up some system stuff),
 use the Exit option.  Unsaved edits are silently
-flushed (but see the function unsaved-edits? in examp.scm).</p>
+flushed (but see the function unsaved-edits? in <a href="sndscm.html#exampdoc">examp.scm</a>).</p>
         <!-- I(close file):K(C-x k)(cxk) --><!-- I(close file):A(closefile) --><!-- I(save file):A(savefile) --><!-- I(exit Snd):A(exitfile) -->
         <!-- I(save file):K(C-x C-s)(cxcs) --><!-- I(save selection):K(C-x w)(cxw) --><!-- I(save channel):K(C-x C-w)(cxcw) -->
 	<!-- I(extract channel):K(C-x C-w)(cxcw) --><!-- I(extract channel):A(cxcw) -->
@@ -1566,7 +1567,7 @@ manner as C-j moves through marks, use <a name="cxcj">C-x C-j</a>.
         <!-- I(move to mix):A(gotomix) -->
 
 <p>It is often handy to collect several mixes into a "track"; 
-mix.scm implements a variety of track-related operations.
+<a href="sndscm.html#mixdoc">mix.scm</a> implements a variety of track-related operations.
 </p>
 
 

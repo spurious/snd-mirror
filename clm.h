@@ -63,14 +63,14 @@
 #  endif
 #endif
 
-#undef __BEGIN_DECLS
-#undef __END_DECLS
+#undef BEGIN_DECLS
+#undef END_DECLS
 #ifdef __cplusplus
-# define __BEGIN_DECLS extern "C" {
-# define __END_DECLS }
+# define BEGIN_DECLS extern "C" {
+# define END_DECLS }
 #else
-# define __BEGIN_DECLS /* empty */
-# define __END_DECLS /* empty */
+# define BEGIN_DECLS /* empty */
+# define END_DECLS /* empty */
 #endif
 
 #undef PROTO
@@ -183,7 +183,7 @@ enum {MUS_RECTANGULAR_WINDOW,MUS_HANNING_WINDOW,MUS_WELCH_WINDOW,MUS_PARZEN_WIND
 #define MUS_RUN_EXISTS(GEN) 	((GEN->core)->run)
 
 
-__BEGIN_DECLS
+BEGIN_DECLS
 
 void init_mus_module PROTO((void));
 
@@ -502,6 +502,6 @@ Float *mus_phase_vocoder_lastphase PROTO((void *ptr));
 
 void mus_clear_sinc_tables      PROTO((void));
 
-__END_DECLS
+END_DECLS
 
 #endif

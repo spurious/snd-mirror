@@ -371,7 +371,7 @@ music V implementation, and clm2scm.c ties these into Guile (Scheme).  The
 primary clm documentation (which describes both the Scheme and Common Lisp implementations)
 is clm.html found in clm-2.tar.gz alongside sndlib at ccrma-ftp.
 The simplest way to try these out is to load them into Snd; see extsnd.html,
-examp.scm, and snd-test.scm in snd-3.tar.gz for more details.
+<a href="sndscm.html#exampdoc">examp.scm</a>, and <a href="sndscm.html#sndtestdoc">snd-test.scm</a> in snd-4.tar.gz for more details.
 The C implementation is essentially the same as the two Lisp versions, but (as might be expected), works
 at a lower level, expecting the caller to handle garbage collection and so forth.
 The following briefly describes the C calls (see clm.h).
@@ -820,7 +820,7 @@ int main(int argc, char *argv[])
   return(0);
 }
 </pre>
-<p>The CLM version is v.ins, the Scheme version can be found in examp.scm.
+<p>The CLM version is v.ins, the Scheme version can be found in <a href="sndscm.html#exampdoc">examp.scm</a>.
 This code can be run:</p>
 <pre>
 cc v.c -o vc -O3 -lm io.o headers.o audio.o sound.o clm.o -DLINUX
@@ -1103,7 +1103,7 @@ to and from arrays:</p>
 the modules sndlib2scm and clm2scm tie most of the library into Scheme
 making it possible to call the library functions from Guile.  The documentation
 is scattered around, unfortunately: the clm side is in clm.html and extsnd.html with many
-examples in Snd's examp.scm.  Most of these are obvious translations of the
+examples in Snd's <a href="sndscm.html#exampdoc">examp.scm</a>.  Most of these are obvious translations of the
 constants and functions described above into Scheme. 
 </p>
 <pre>

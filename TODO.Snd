@@ -13,8 +13,6 @@ Alpha port: I'm told there are lingering long int problems in this
   port, but I don't have access to an Alpha -- all I need is the
   gcc printout during compilation.
 
-Libool-ize sndlib.  Parallel support in Snd's configuration process.
-
 add modules to tie sndlib into CL, Python, Octave, etc (via SWIG?).
 
 Snd name completion tied into the Emacs-Snd subjob connection (this
@@ -104,6 +102,9 @@ dnl and we don't want to be global namespace polluters.
 ])
 and then make needs a target for glfft.
 --------
+
+Also, HAVE_GSL should be the default in configure.in
+
 
 Sawfish connection: it should be possible to send commands to sawfish,
   (via sawfish-client?); also there's a switch in Snd, HAVE_THEMES,

@@ -36,7 +36,7 @@ versions, but in general, the differences are obvious and consistent (Lisp "-" b
 C "_", "?" becomes "_p", "-&gt;" becomes "2", etc).  
 The Common Lisp and Scheme versions try to be completely compatible, and this document
 concentrates on former.  (To compare the three versions, see v.ins, the fm-violin in
-examp.scm, and the same code in sndlib.html).
+<a href="sndscm.html#exampdoc">examp.scm</a>, and the same code in sndlib.html).
 </p>
 
 <p>CLM has several sections: the <a href="#generators">"generators"</a>, instruments
@@ -3819,9 +3819,9 @@ See <a href="rc.lisp">rc.lisp</a> for more details.</p>
 
 <p>Instruments as generators are not implemented yet in common lisp (not difficult)
 or in the run macro (difficult).
-They are working in the Scheme/Snd versions however -- see fmv.scm for an example
-of treating the fm-violin (v.ins) as a generator; pvoc.scm for a phase-vocoder
-generator; and zip.scm for the zipper.  There are two main
+They are working in the Scheme/Snd versions however -- see <a href="sndscm.html#fmvdoc">fmv.scm</a> for an example
+of treating the fm-violin (v.ins) as a generator; <a href="sndscm.html#pvocdoc">pvoc.scm</a> for a phase-vocoder
+generator; and <a href="sndscm.html#zipdoc">zip.scm</a> for the zipper.  There are two main
 differences between an instrument and a generator: first, the generator
 does not know its duration, so envelopes have to be packaged as functions
 (closures), and second, sound input (as from a sound file) should be handled as

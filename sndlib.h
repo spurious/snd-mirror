@@ -8,14 +8,14 @@
 #  endif
 #endif
 
-#undef __BEGIN_DECLS
-#undef __END_DECLS
+#undef BEGIN_DECLS
+#undef END_DECLS
 #ifdef __cplusplus
-# define __BEGIN_DECLS extern "C" {
-# define __END_DECLS }
+# define BEGIN_DECLS extern "C" {
+# define END_DECLS }
 #else
-# define __BEGIN_DECLS /* empty */
-# define __END_DECLS /* empty */
+# define BEGIN_DECLS /* empty */
+# define END_DECLS /* empty */
 #endif
 
 #undef PROTO
@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 11
-#define SNDLIB_REVISION 28
-#define SNDLIB_DATE "8-Jan-01"
+#define SNDLIB_REVISION 29
+#define SNDLIB_DATE "22-Jan-01"
 
 #ifndef HAVE_SNDLIB
   #define HAVE_SNDLIB 1
@@ -336,7 +336,7 @@ enum {MUS_NO_ERROR,MUS_NO_FREQUENCY,MUS_NO_PHASE,MUS_NO_GEN,MUS_NO_LENGTH,
 
 #define MUS_MAX_FILE_NAME 256
 
-__BEGIN_DECLS
+BEGIN_DECLS
 
 /* -------- sound.c -------- */
 
@@ -590,6 +590,6 @@ void mus_sndlib2scm_initialize      PROTO((void));
   void *mem_realloc                 PROTO((void *ptr, size_t size, const char *func, const char *file, int line));
 #endif
 
-__END_DECLS
+END_DECLS
 
 #endif

@@ -40,8 +40,8 @@ static char *Load_HTML_File(char *filename)
   return(content);
 }
 
-enum {NO_HTML,SND_HTML,EXTSND_HTML,GRFSND_HTML,SNDLIB_HTML,CLM_HTML};
-static char *htmls[6] = {"","snd.html","extsnd.html","grfsnd.html","sndlib.html","clm.html"};
+enum {NO_HTML,SND_HTML,EXTSND_HTML,GRFSND_HTML,SNDLIB_HTML,CLM_HTML,SNDSCM_HTML};
+static char *htmls[7] = {"","snd.html","extsnd.html","grfsnd.html","sndlib.html","clm.html","sndscm.html"};
 static char *html_text = NULL;
 static int html_loaded = NO_HTML;
 
@@ -150,11 +150,14 @@ static void anchorCB(Widget widget, XtPointer client_data, XmHTMLAnchorCallbackS
 	  if (strncmp(cbs->href,"sndlib",6) == 0)
 	    load_html(ss,SNDLIB_HTML,(char *)(cbs->href+11),TRUE);
 	  else 
-	    if (strncmp(cbs->href,"snd",3) == 0)
-	      load_html(ss,SND_HTML,(char *)(cbs->href+8),TRUE);
+	    if (strncmp(cbs->href,"sndscm",6) == 0)
+	      load_html(ss,SNDSCM_HTML,(char *)(cbs->href+11),TRUE);
 	    else 
-	      if (strncmp(cbs->href,"clm",3) == 0)
-		load_html(ss,CLM_HTML,(char *)(cbs->href+8),TRUE);
+	      if (strncmp(cbs->href,"snd",3) == 0)
+		load_html(ss,SND_HTML,(char *)(cbs->href+8),TRUE);
+	      else 
+		if (strncmp(cbs->href,"clm",3) == 0)
+		  load_html(ss,CLM_HTML,(char *)(cbs->href+8),TRUE);
     }
   else
     {

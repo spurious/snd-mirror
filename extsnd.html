@@ -114,7 +114,7 @@ sections, each of the basic entities is treated in a separate
 section with cross-references where needed.  The <a href="grfsnd.html#extsndindex">index</a>
 provides alphabetical entry.</p>
 
-<p>There are many examples in examp.scm and snd-test.scm.  In addition,
+<p>There are many examples in <a href="sndscm.html#exampdoc">examp.scm</a> and <a href="sndscm.html#sndtestdoc">snd-test.scm</a>.  In addition,
 various examples of and extensions to Snd can be found in:
 </p>
 
@@ -135,7 +135,7 @@ various examples of and extensions to Snd can be found in:
 <tr><td><a href="sndscm.html#pqwvoxdoc">pqwvox.scm</a></td><td>phase-quadrature waveshaping (from CLM)</td></tr>
 <tr><td><a href="sndscm.html#prc95doc">prc95.scm</a></td><td>Perry Cook's physical model examples (from CLM)</td></tr>
 <tr><td><a href="sndscm.html#pvocdoc">pvoc.scm</a></td><td>phase-vocoder examples</td></tr>
-<tr><td><a href="sndscm.html#rgbdoc"rgb.scm</a></td><td>color definitions</td></tr>
+<tr><td><a href="sndscm.html#rgbdoc">rgb.scm</a></td><td>color definitions</td></tr>
 <tr><td><a href="sndscm.html#rubberdoc">rubber.scm</a></td><td>rubber-sound</td></tr>
 <tr><td><a href="sndscm.html#snd-gtkdoc">snd-gtk.scm</a></td><td>various Guile-Gtk examples</td></tr>
 <tr><td><a href="sndscm.html#vdoc">v.scm</a></td><td>fm-violin (from CLM)</td></tr>
@@ -184,7 +184,7 @@ description of what it does.  So,
   <b>basic-color</b>           ivory2          main Snd color.
 </pre>
 <p>means there's a thing called basic-color (and a way to set it via  "(set! (basic-color) ...)"),
-that its default value is ivory2 (see rgb.scm for a definition of this color), and that
+that its default value is ivory2 (see <a href="sndscm.html#rgbdoc">rgb.scm</a> for a definition of this color), and that
 it is the main Snd color.</p>
 <br>
 <span class=cbox><h4><a name="colors">Colors</a></h4></span>
@@ -197,7 +197,7 @@ object is created via make-color:</p>
 </pre>
 <p>This declares the Scheme variable "blue" and gives it the value
 of the color whose rgb components include only blue in full force.
-The X11 color names are defined in rgb.scm. Now, in Snd, the basic
+The X11 color names are defined in <a href="sndscm.html#rgbdoc">rgb.scm</a>. Now, in Snd, the basic
 color is known as "basic-color" (another Scheme variable); we can
 set it:</p>
 <pre>
@@ -614,7 +614,7 @@ the hook.
                                       called upon mouse button release within lisp graph.
 
   <b><a name="multichannelmixhook">multichannel-mix-hook</a></b> (ids)         called when a multichannel mix happens in a sync'd sound.
-                                      <i>ids</i> is a list of mix id numbers.  See mix.scm for an example.
+                                      <i>ids</i> is a list of mix id numbers.  See <a href="sndscm.html#mixdoc">mix.scm</a> for an example.
 
   <b><a name="muserrorhook">mus-error-hook</a></b> (error-type error-message) called upon mus_error. (<b>or</b>)
                                       If it returns #t, Snd ignores the error (it assumes you've handled it via the hook).
@@ -644,7 +644,7 @@ the hook.
                                       If it returns #t, snd exits immediately.
 
   <b><a name="playhook">play-hook</a></b> (samps)                   called each time a buffer (size: <i>samps</i>) is about to be 
-                                      filled for the DAC (see enved.scm and marks.scm). (<b>progn</b>)
+                                      filled for the DAC (see <a href="sndscm.html#enveddoc">enved.scm</a> and <a href="sndscm.html#marksdoc">marks.scm</a>). (<b>progn</b>)
 
   <b><a name="startplayinghook">start-playing-hook</a></b> (snd)            called when a play request is triggered. (<b>or</b>)
                                       If it returns #t, snd does not play.
@@ -708,7 +708,7 @@ the hook.
            (lambda args (reset-hook! (apply <em class=red>edit-hook</em> args))))
 </small>
 </pre>
-<p>enved.scm uses several of these hooks to implement an envelope editor in lisp.
+<p><a href="sndscm.html#enveddoc">enved.scm</a> uses several of these hooks to implement an envelope editor in lisp.
 See also <a href="#menuhook">menu-hook</a> below.</p>
 
 <br>
@@ -836,7 +836,7 @@ Scheme function to get the values to assign into the vct(s).  For example</p>
                        (convolve cnv (lambda (dir) 
                                        (next-sample sf)))))
 </pre>
-<p>in the cnvtest function in examp.scm is calling the convolve generator and
+<p>in the cnvtest function in <a href="sndscm.html#exampdoc">examp.scm</a> is calling the convolve generator and
 assigning the result to each successive member of the out-data vct.  <i>vct-do!</i>
 is the same as <i>vct-map!</i> except that the called function should take one
 argument, the current loop index.  Similarly, <i>vcts-map!</i> and <i>vcts-do!</i>
@@ -979,7 +979,7 @@ The most important Sndlib functions for Snd are:</p>
   <b>mus-sound-seek-frame</b> (fd frame)     move to <i>frame</i> in sound file <i>fd</i>
   <b><a name="soundsrate">mus-sound-srate</a></b>      (filename)     sampling rate
   <b><a name="setossbuffers">set-oss-buffers</a></b>      (num size)     in Linux (OSS) sets the number and size of the OSS "fragments"
-  <b><a name="soundloopinfo">mus-sound-loop-info</a></b>  (filename)     loop info (for an example, see examp.scm mark-loops)
+  <b><a name="soundloopinfo">mus-sound-loop-info</a></b>  (filename)     loop info (for an example, see <a href="sndscm.html#exampdoc">examp.scm</a> mark-loops)
   <b><a name="setsoundloopinfo">set-sound-loop-info</a></b>  (start0 end0 <i>start1 end1 snd</i>)   
                                       set loop points in header -- start0 refers to the "sustain" loop, 
                                       start1 to the "release".
@@ -1006,7 +1006,7 @@ use of a special object known as a <i>sample-reader</i>.  The former is
 better if you're jumping around in the data, the latter if you're treating
 it generally as a stream of samples, read in order.  The <a href="grfsnd.html#expsrc">expsrc</a>
 function below shows how to use <i>samples-&gt;vct</i>; there are numerous
-examples of <i>sample-readers</i> in examp.scm.  The basic idea is that
+examples of <i>sample-readers</i> in <a href="sndscm.html#exampdoc">examp.scm</a>.  The basic idea is that
 you create a reader (via <i>make-sample-reader</i> or <i>make-region-sample-reader</i>) giving it the start position, the sound and channel
 to read, and the initial read direction, then get data via <i>next-sample</i> and
 <i>previous-sample</i>, finally closing the reader with <i>free-sample-reader</i>.
@@ -1218,7 +1218,7 @@ instead; you type (start-sync), then click the set of marks to sync, then (stop-
 </pre>
 <p>Now control-click and drag one of them, and all move together deleting data, or
 inserting zeros; or click the "play" triangle, and all play together starting from
-the respective marks (which need not be in separate channels). See marks.scm for
+the respective marks (which need not be in separate channels). See <a href="sndscm.html#marksdoc">marks.scm</a> for
 more examples.</p>
 
 <br>
@@ -1508,7 +1508,7 @@ sets its value to val.
   <b><a name="sndamp">amp</a></b>               (<em class=targ>snd</em>)         current amp (control panel slider) value.
 <small>
                                   It is possible to use these controls (in "real-time") in your own functions.
-                                  See amprt in examp.scm for a simple example, and snd-gtk.scm for a complicated one. 
+                                  See amprt in <a href="sndscm.html#exampdoc">examp.scm</a> for a simple example, and <a href="sndscm.html#sndgtkdoc">snd-gtk.scm</a> for a complicated one. 
 </small>
   <b><a name="sndappendtominibuffer">append-to-minibuffer</a></b> (msg <i>snd</i>)  append <i>msg</i> to whatever is in <i>snd</i>'s minibuffer [<em class=error>no-such-sound</em>].
 
@@ -1622,7 +1622,7 @@ sets its value to val.
   <b><a name="sndexpandramp">expand-ramp</a></b>       (<em class=targ>snd</em>)         <i>snd</i>'s <a href="snd.html#expand">expansion</a> ramp amount (between 0 and .5).
 <small>
                                   This affects the smoothness of the grain overlaps -- .001 gives a 
-                                  rattling effect (see make-control-dialog in snd-gtk.scm).
+                                  rattling effect (see make-control-dialog in <a href="sndscm.html#sndgtkdoc">snd-gtk.scm</a>).
 </small>
   <b><a name="sndexpanding">expanding</a></b>         (<em class=targ>snd</em>)         #t if <i>snd</i>'s expand button is on.
 
@@ -1697,7 +1697,7 @@ sets its value to val.
                                   The current slider values can be read from <a href="#xpositionslider">x-position-slider</a>, 
                                   <a href="#xzoomslider">x-zoom-slider</a>, etc.  The <i>data</i> argument can be a list of vectors or
                                   vcts; each is graphed at the same time, following the sequence of
-                                  colors used when channels are superimposed.  See examp.scm.  If <i>data</i>
+                                  colors used when channels are superimposed.  See <a href="sndscm.html#exampdoc">examp.scm</a>.  If <i>data</i>
                                   is a list of numbers, it is assumed to be an envelope (a list of breakpoints).
 
   <b><a name="graphstyle">graph-style</a></b>       (<em class=narg>snd chn</em>)     how sound data is displayed (default: <i>graph-lines</i>)
@@ -1716,7 +1716,7 @@ sets its value to val.
 </small>
                                   causes the main (time domain) graph to be displayed using dots, 
                                   the fft graph to use lines, and the lisp graph lollipops.  There 
-                                  are some functions in examp.scm (main-graph-style et al) that 
+                                  are some functions in <a href="sndscm.html#exampdoc">examp.scm</a> (main-graph-style et al) that 
                                   might make these fields easier to access and change.
 
   <b><a name="sndgraphing">graphing</a></b>          (<i>snd chn</i>)     #t if (lisp) graph data is being displayed.
@@ -1780,7 +1780,7 @@ sets its value to val.
 
                                     (play-with-amps 0 1.0 0.5) ;plays channel 2 of stereo sound at half amplitude
 </small>
-                                  See also make-amp-controls in snd-gtk.scm, and play-syncd-marks in marks.scm.
+                                  See also make-amp-controls in <a href="sndscm.html#snd-gtkdoc">sndgtk.scm</a>, and play-syncd-marks in <a href="sndscm.html#marksdoc">marks.scm</a>.
 
   <b><a name="mapacrossallchans">map-across-all-chans</a></b> (func <i>start end edname</i>) 
                                   apply func to all open channels in parallel (see <a href="#scanning">Scanning Data</a>).
@@ -1896,7 +1896,7 @@ sets its value to val.
                                     ;; now if the user responds: (lambda (y) (+ y .5))
                                     ;; sample 0 will be set to itself + .5
 
-                                  See eval-over-selection in examp.scm for a more useful example.
+                                  See eval-over-selection in <a href="sndscm.html#exampdoc">examp.scm</a> for a more useful example.
 </small>
   <b><a name="sndreadonly">read-only</a></b>         (<em class=targ>snd</em>)         #t if <i>snd</i> is read-only, #f otherwise.
 
@@ -2593,7 +2593,7 @@ we define a function that finds silences and replaces them with
 something:<p>
 <pre>
 (define map-silence
-  ;; see squelch in effects.scm for a better version
+  ;; see squelch in <a href="sndscm.html#effectsdoc">effects.scm</a> for a better version
   (lambda (silence replacement)
     (let ((sum-of-squares 0.0)
 	  (buffer (make-vector 128 0.0))
@@ -2647,7 +2647,7 @@ with the trunc argument set to #t.  This way you don't assume the new sound
 will fit in memory (as in using vct-&gt;samples for example), nor that the
 lengths will be more or less the same (as in the mapping operations).
 Use snd-tempnam to get a temporary filename that reflects the current
-temp-dir setting (if any).  The env-sound-interp function in examp.scm
+temp-dir setting (if any).  The env-sound-interp function in <a href="sndscm.html#exampdoc">examp.scm</a>
 is an example of this.</p>
 
 
@@ -2817,7 +2817,7 @@ Error:
   <b><a name="sndaddtomainmenu">add-to-main-menu</a></b>      (menu-label <i>update-callback</i>)  
                                 add new top-level menu named <i>menu-label</i>, return menu index.
                                 <i>update-callback</i> can be a procedure of no arguments that will be 
-                                called each time the menu is displayed. (See effects.scm for an example).
+                                called each time the menu is displayed. (See <a href="sndscm.html#effectsdoc">effects.scm</a> for an example).
 <small>
                                       &gt;<em class=typing>(add-to-main-menu "Tools")</em>
                                       <em class=listener>5</em>
@@ -3065,7 +3065,7 @@ Axis choice:
                                          (graph hv1)))
                                      (add-hook! graph-hook hgrf)
 </small>
-                                    The explicit (slow) form of this transform is dht in examp.scm.
+                                    The explicit (slow) form of this transform is dht in <a href="sndscm.html#exampdoc">examp.scm</a>.
 
   <b><a name="lfind">find</a></b>              (expr <i>sample snd chn</i>) 
                                   find the sample that satisfies the Scheme function <i>expr</i>. <i>sample</i>
@@ -3105,7 +3105,7 @@ Axis choice:
                                   for example: (snd-help vct-ref).
 <small>
                                   For scheme functions, this returns the procedure-documentation, if any.  To go to the
-                                  HTML documentation for a given procedure, load index.scm and use the html function.
+                                  HTML documentation for a given procedure, load <a href="sndscm.html#indexdoc">index.scm</a> and use the html function.
                                   To get a more global help function, (use-modules (ice-9 session)).  This loads Guile's
                                   help (and apropos) support which uses 'regexps' and so forth.
 </small>
@@ -3136,7 +3136,7 @@ Axis choice:
                                                        (= (mus-sound-chans filename) 2))
                                                (snd-print filename)))))
 
-                                  See also map-sound-files in examp.scm.
+                                  See also map-sound-files in <a href="sndscm.html#exampdoc">examp.scm</a>.
 </small>
   <b><a name="sndunbindkey">unbind-key</a></b>  (key state) cause <i>key</i> with modifiers <i>state</i> to be a no-op.
 
@@ -3153,8 +3153,8 @@ Axis choice:
 <br>
 <span class=bbox><h3><a name="sndexamples">Examples</a></h3></span>
 
-<p>These examples are simplified to make the exposition cleaner; see examp.scm for more robust versions.
-examp.scm also has examples that add and remove menu items, set variables via the special "F" keys,
+<p>These examples are simplified to make the exposition cleaner; see <a href="sndscm.html#exampdoc">examp.scm</a> for more robust versions.
+<a href="sndscm.html#exampdoc">examp.scm</a> also has examples that add and remove menu items, set variables via the special "F" keys,
 perform correlation on the current data, 
 make a system call from the listener, and so on.  The following function computes the rms amplitude of a region:</p>
 <pre>
@@ -3205,7 +3205,7 @@ so we can rewrite display-energy:</p>
       (graph data "energy" (/ ls sr) (/ rs sr) 0.0 (* y1 y1) snd chn))))
 </pre>
 
-<p>See examp.scm for more examples of using the vct structure.
+<p>See <a href="sndscm.html#exampdoc">examp.scm</a> for more examples of using the vct structure.
 Say we want Snd to refuse to exit if there are unsaved edits.</p>
 <pre>
 (define <a name="unsavededits">unsaved-edits?</a>
@@ -3274,7 +3274,7 @@ found (this code obviously has to be in the init file):</p>
 	
 (add-hook! fft-hook fft-peak)
 </pre>
-<p>The following function uses the sndlib functions to mimic the 'info' popup menu option (see examp.scm for a version that uses format):</p>
+<p>The following function uses the sndlib functions to mimic the 'info' popup menu option (see <a href="sndscm.html#exampdoc">examp.scm</a> for a version that uses format):</p>
 <pre>
 <a name="sndinfo"></a>
 (define info 

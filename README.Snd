@@ -36,6 +36,7 @@ The configure program has several Snd-related arguments:
                          you any "head room" during mixes.
    --with-sndlib         use libsndlib.so if possible (under development)
    --with-esd            use the enlightened sound daemon, if possible
+   --with-no-gui         make Snd without any graphics support
 
 If the configure/make process fails, please send me
 (bil@ccrma.stanford.edu) the files config.h, config.log, and makefile,
@@ -149,7 +150,7 @@ or
 
 
 ----------------------------------------------------------------
-The documentation is in snd.html, extsnd.html, grfsnd.html,
+The documentation is in snd.html, extsnd.html, grfsnd.html, sndscm.html,
 sndlib.html, and clm.html.  There's also a fancier wrapper for the
 documentation: snd1.html.  A brief change log is in HISTORY.Snd.
 
@@ -453,6 +454,7 @@ Guile/Scheme:
 
 CCRMA:
   http://www-ccrma.stanford.edu/
+  http://www-ccrma.stanford.edu/~jos/
 
 Snd:
   ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-4.tar.gz
