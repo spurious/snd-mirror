@@ -34,7 +34,7 @@ int xen_to_c_int_or_else(XEN obj, int fallback, const char *origin)
 off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback, const char *origin)
 {
 #if HAVE_GUILE
-  if ((XEN_EXACT_P(obj)) || (SCM_BIGP(obj)))
+  if ((XEN_NOT_FALSE_P(scm_integer_p(obj))) && XEN_EXACT_P(obj))
 #else
   if (XEN_ULONG_P(obj))
 #endif

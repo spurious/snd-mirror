@@ -1781,7 +1781,7 @@ static XEN g_mark_sample(XEN mark_n, XEN pos_n)
 static XEN g_set_mark_sample(XEN mark_n, XEN samp_n) 
 {
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(mark_n), mark_n, XEN_ARG_1, "set-" S_mark_sample, "an integer");
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_2, "set-" S_mark_sample, "an integer");
+  XEN_ASSERT_TYPE(XEN_OFF_T_P(samp_n) || XEN_NOT_BOUND_P(samp_n), samp_n, XEN_ARG_2, "set-" S_mark_sample, "an integer");
   return(mark_set(mark_n, samp_n, MARK_SAMPLE, "set-" S_mark_sample));
 }
 
@@ -1873,7 +1873,7 @@ static XEN g_add_mark(XEN samp_n, XEN snd_n, XEN chn_n)
   mark *m = NULL;
   chan_info *cp;
   off_t loc;
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_add_mark, "an integer");
+  XEN_ASSERT_TYPE(XEN_OFF_T_P(samp_n) || XEN_NOT_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_add_mark, "an integer");
   ASSERT_CHANNEL(S_add_mark, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_add_mark);
   loc = XEN_TO_C_OFF_T_OR_ELSE(samp_n, 0);

@@ -54,7 +54,8 @@ static char *display_maxamps(const char *filename, int chans)
 
 int main(int argc, char *argv[])
 {
-  int chans, srate, samples, format, type;
+  int chans, srate, format, type;
+  off_t samples;
   float length = 0.0;
   time_t date;
   int *loops = NULL;

@@ -1169,10 +1169,9 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
   ss = get_global_state();
   cur_srate = (double)SND_SRATE(sp);
   if (losamp == -1)
-    losamp = snd_round_off_t(ap->x0 * cur_srate);
+    losamp = snd_round_off_t(ap->xmin * cur_srate);
   if (hisamp < 0)
-    hisamp = (off_t)(ap->x1 * cur_srate);
-
+    hisamp = (off_t)(ap->xmax * cur_srate);
   x_start = ap->x_axis_x0;
   x_end = ap->x_axis_x1;
   samps = hisamp - losamp + 1;
@@ -1197,7 +1196,7 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
     {
       if (amp_env_usable(cp, samples_per_pixel, hisamp, FALSE, edit_pos)) 
 	{
-	  Float step, xk;
+	  double step, xk;
 	  mus_sample_t ymin, ymax;
 	  int k, kk;
 	  env_info *ep;
@@ -1208,7 +1207,7 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
 
 	  ep = cp->amp_envs[edit_pos];
 	  step = samples_per_pixel / (Float)(ep->samps_per_bin);
-	  xf = (Float)(losamp) / (Float)(ep->samps_per_bin);
+	  xf = (double)(losamp) / (double)(ep->samps_per_bin);
 	  j = 0;
 	  ioff = losamp;
 	  xk = ioff;
@@ -3688,7 +3687,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, int fld, char *caller)
 	    case CP_SHOW_AXES:          return(C_TO_XEN_INT(cp->show_axes));                         break;
 	    case CP_GRAPHS_HORIZONTAL:  return(C_TO_XEN_BOOLEAN(cp->graphs_horizontal));             break;
 	    case CP_CURSOR_POSITION:    return(XEN_LIST_2(C_TO_XEN_INT(cp->cx), C_TO_XEN_INT(cp->cy))); break;
-	    case CP_EDPOS_FRAMES:       return(C_TO_XEN_INT(to_c_edit_samples(cp, cp_edpos, caller, 3))); break;
+	    case CP_EDPOS_FRAMES:       return(C_TO_XEN_OFF_T(to_c_edit_samples(cp, cp_edpos, caller, 3))); break;
 	    case CP_UPDATE_TIME:        update_graph(cp, NULL);                                      break;
 	    case CP_UPDATE_LISP:        display_channel_lisp_data(cp, cp->sound, cp->state);         break;
 	    case CP_UPDATE_TRANSFORM: 
@@ -5422,8 +5421,8 @@ static XEN g_forward_sample(XEN count, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(count), count, XEN_ARG_1, S_forward_sample, "an integer");
   ASSERT_CHANNEL(S_forward_sample, snd, chn, 2);
   cp = get_cp(snd, chn, S_forward_sample);
-  cursor_move(cp, XEN_TO_C_INT_OR_ELSE(count, 1)); 
-  return(C_TO_XEN_INT(cp->cursor));
+  cursor_move(cp, XEN_TO_C_OFF_T_OR_ELSE(count, 1)); 
+  return(C_TO_XEN_OFF_T(cp->cursor));
 }
 
 static XEN g_backward_sample(XEN count, XEN snd, XEN chn) 
@@ -5433,8 +5432,8 @@ static XEN g_backward_sample(XEN count, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(count), count, XEN_ARG_1, S_backward_sample, "an integer");
   ASSERT_CHANNEL(S_backward_sample, snd, chn, 2);
   cp = get_cp(snd, chn, S_backward_sample);
-  cursor_move(cp, -(XEN_TO_C_INT_OR_ELSE(count, 1))); 
-  return(C_TO_XEN_INT(cp->cursor));
+  cursor_move(cp, -(XEN_TO_C_OFF_T_OR_ELSE(count, 1))); 
+  return(C_TO_XEN_OFF_T(cp->cursor));
 }
 
 static XEN g_graph(XEN ldata, XEN xlabel, XEN x0, XEN x1, XEN y0, XEN y1, XEN snd_n, XEN chn_n, XEN force_display)

@@ -213,12 +213,11 @@ the y-zoom-slider controls the graph amp"
 			(set! data0 (list-ref old-env 3))
 			(set! data1 (list-ref old-env 4)))
 		      (let* ((data (make-graph-data snd chn current-edit-position 0 (frames snd chn)))
-			     (data-max (if (vct? data) (vct-peak data) (vct-peak (car data))))
+			     (data-max (if (vct? data) (vct-peak data) (vct-peak (cadr data))))
 			     (data-scaler (if (> data-max 0.0) (/ height (* 2 data-max)) 0.0))
 			     (new-len (* width 2))
 			     (data-len (if (vct? data) (vct-length data) (vct-length (car data))))
 			     (step (/ data-len width)))
-			
 			(if (> data-len width)
 			    (begin ; the normal case -- more samples to display than pixels available
 			      (set! data0 (make-vector new-len))
@@ -233,8 +232,8 @@ the y-zoom-slider controls the graph amp"
 				    ((or (= j new-len) (= i data-len)))
 				  (if data1
 				      (begin
-					(set! max-y (max max-y (vct-ref (car data) i)))
-					(set! min-y (min min-y (vct-ref (cadr data) i))))
+					(set! max-y (max max-y (vct-ref (cadr data) i)))
+					(set! min-y (min min-y (vct-ref (car data) i))))
 				      (set! max-y (max max-y (vct-ref data i))))
 				  (set! stepper (+ stepper 1.0))
 				  (if (>= stepper step)
@@ -271,9 +270,9 @@ the y-zoom-slider controls the graph amp"
 				(if (not data1)
 				    (vector-set! data0 (+ j 1) (inexact->exact (- y-offset (* (vct-ref data i) data-scaler))))
 				    (begin
-				      (vector-set! data0 (+ j 1) (inexact->exact (- y-offset (* (vct-ref (car data) i) data-scaler))))
+				      (vector-set! data0 (+ j 1) (inexact->exact (- y-offset (* (vct-ref (cadr data) i) data-scaler))))
 				      (vector-set! data1 j (inexact->exact xj))
-				      (vector-set! data1 (+ j 1) (inexact->exact (- y-offset (* (vct-ref (cadr data) i) data-scaler)))))))))
+				      (vector-set! data1 (+ j 1) (inexact->exact (- y-offset (* (vct-ref (car data) i) data-scaler)))))))))
 			(set! (channel-property 'inset-envelope snd chn) 
 			      (list width height (edit-position snd chn) data0 data1 y-offset)))))
 		

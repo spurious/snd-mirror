@@ -3608,8 +3608,8 @@ static XEN samples2vct_1(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN v, XEN
   if (len <= 0) 
     XEN_ERROR(IMPOSSIBLE_BOUNDS,
 	      XEN_LIST_3(C_TO_XEN_STRING(caller),
-			 C_TO_XEN_INT(beg),
-			 C_TO_XEN_INT(len)));
+			 C_TO_XEN_OFF_T(beg),
+			 C_TO_XEN_OFF_T(len)));
 #if HAVE_LLONGS
   ss = get_global_state();
   if (ss->memory_available < (len / 1024))
@@ -3774,7 +3774,7 @@ inserts channel 'file-chan' of 'file' (or all chans if file-chan not given) into
   if (len == 0) 
     {
       if (filename) FREE(filename);
-      return(C_TO_XEN_INT(len));
+      return(C_TO_XEN_OFF_T(len));
     }
   if (XEN_NUMBER_P(ubeg))
     beg = XEN_TO_C_OFF_T_OR_ELSE(ubeg, 0);
@@ -3788,7 +3788,7 @@ inserts channel 'file-chan' of 'file' (or all chans if file-chan not given) into
 			      to_c_edit_position(cp, edpos, S_insert_sound, 6));
 	  update_graph(cp, NULL);
 	  if (filename) FREE(filename);
-	  return(C_TO_XEN_INT(len));
+	  return(C_TO_XEN_OFF_T(len));
 	}
       else 
 	{
@@ -3810,7 +3810,7 @@ inserts channel 'file-chan' of 'file' (or all chans if file-chan not given) into
 	  update_graph(sp->chans[i], NULL);
 	}
       if (filename) FREE(filename);
-      return(C_TO_XEN_INT(len));
+      return(C_TO_XEN_OFF_T(len));
     }
   return(XEN_FALSE); /* not reached */
 }
@@ -3926,7 +3926,7 @@ inserts data (either a vector, vct, or list of samples, or a filename) into snd'
 	}
     }
   update_graph(cp, NULL);
-  return(C_TO_XEN_INT(len));
+  return(C_TO_XEN_OFF_T(len));
 }
 
 static XEN g_insert_samples_with_origin(XEN samp, XEN samps, XEN origin, XEN vect, XEN snd_n, XEN chn_n, XEN edpos)
@@ -3972,7 +3972,7 @@ static XEN g_insert_samples_with_origin(XEN samp, XEN samps, XEN origin, XEN vec
       else extend_with_zeros(cp, beg, len, XEN_TO_C_STRING(origin), pos);
     }
   update_graph(cp, NULL);
-  return(C_TO_XEN_INT(len));
+  return(C_TO_XEN_OFF_T(len));
 }
 
 

@@ -83,7 +83,7 @@ off_t dur_to_samples(XEN dur, off_t beg, chan_info *cp, int edpos, int argn, con
 
 off_t end_to_sample(XEN end, chan_info *cp, int edpos, const char *caller)
 {
-  int last;
+  off_t last;
   last = XEN_TO_C_OFF_T_OR_ELSE(end, cp->samples[edpos] - 1);
   if (last < 0) 
     XEN_ERROR(NO_SUCH_SAMPLE,
@@ -2624,7 +2624,7 @@ static XEN g_sp_scan(XEN proc, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 		      if (reporting) 
 			finish_progress_report(sp, NOT_FROM_ENVED);
 		      return(XEN_LIST_2(XEN_TRUE,
-					C_TO_XEN_INT(kp + beg)));
+					C_TO_XEN_OFF_T(kp + beg)));
 		    }
 		}
 	    }
@@ -2645,7 +2645,7 @@ static XEN g_sp_scan(XEN proc, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 		      if (reporting) 
 			finish_progress_report(sp, NOT_FROM_ENVED);
 		      return(XEN_LIST_2(res,
-					C_TO_XEN_INT(kp + beg)));
+					C_TO_XEN_OFF_T(kp + beg)));
 		    }
 		}
 #if WITH_RUN

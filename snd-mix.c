@@ -3635,7 +3635,7 @@ static XEN g_mix_amp_env(XEN n, XEN chan)
 static XEN g_set_mix_position(XEN n, XEN uval) 
 {
   XEN_ASSERT_TYPE(XEN_NUMBER_P(n), n, XEN_ARG_1, "set-" S_mix_position, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(uval), uval, XEN_ARG_2, "set-" S_mix_position, "a number");
+  XEN_ASSERT_TYPE(XEN_OFF_T_P(uval), uval, XEN_ARG_2, "set-" S_mix_position, "a number");
   if (set_mix_position(XEN_TO_C_INT_OR_ELSE(n, 0), 
 		       XEN_TO_C_OFF_T_OR_ELSE(uval, 0),
 		       FALSE) == INVALID_MIX_ID)
@@ -3649,7 +3649,7 @@ static XEN g_set_mix_length(XEN n, XEN uval)
   off_t val;
   console_state *cs = NULL;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, "set-" S_mix_length, "an integer");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(uval), uval, XEN_ARG_2, "set-" S_mix_length, "a number");
+  XEN_ASSERT_TYPE(XEN_OFF_T_P(uval), uval, XEN_ARG_2, "set-" S_mix_length, "a number");
   md = md_from_id(XEN_TO_C_INT(n));
   if ((md == NULL) || 
       (!(mix_ok_and_unlocked(md->id))))
@@ -3698,7 +3698,7 @@ static XEN g_set_mix_anchor(XEN n, XEN uval)
   console_state *cs = NULL;
   off_t val;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, "set-" S_mix_anchor, "an integer");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(uval), uval, XEN_ARG_2, "set-" S_mix_anchor, "a number");
+  XEN_ASSERT_TYPE(XEN_OFF_T_P(uval), uval, XEN_ARG_2, "set-" S_mix_anchor, "a number");
   md = md_from_id(XEN_TO_C_INT(n));
   if (md == NULL)
     return(snd_no_such_mix_error("set-" S_mix_anchor, n));
@@ -4376,10 +4376,10 @@ finds the mix in snd's channel chn at samp, returning the mix id; returns #f if 
 
   int id;
   chan_info *cp = NULL;
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_find_mix, "a number");
+  XEN_ASSERT_TYPE(XEN_OFF_T_P(samp_n) || XEN_NOT_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_find_mix, "a number");
   ASSERT_CHANNEL(S_find_mix, snd_n, chn_n, 2); 
   cp = get_cp(snd_n, chn_n, S_find_mix);
-  id = mix_id_from_channel_position(cp, XEN_TO_C_INT_OR_ELSE_WITH_CALLER(samp_n, -1, S_find_mix));
+  id = mix_id_from_channel_position(cp, XEN_TO_C_OFF_T_OR_ELSE(samp_n, -1));
   if (id == INVALID_MIX_ID)
     return(XEN_FALSE);
   return(C_TO_XEN_INT(id));

@@ -212,12 +212,6 @@ void start_env_state(chan_info *cp)
   cp->cgx->amp_env_state = make_env_state(cp, current_ed_samples(cp));
 }
 
-#ifndef AMP_ENV_SUBSAMPLE
-  #define AMP_ENV_SUBSAMPLE 100
-  /* sets how may samples we actually check per bin in huge sound files -- 10 looked ok too */
-  /* the lower this number, the faster the amp-envs are calculated, but the higher chance of missing something */
-#endif
-
 static int tick_amp_env(chan_info *cp, env_state *es)
 {
   env_info *ep;
@@ -244,86 +238,28 @@ static int tick_amp_env(chan_info *cp, env_state *es)
 	  ep->completed = 1;
 	  return(TRUE);
 	}
-      if ((cp->edit_ctr != 0) || 
-	  (ep->samps_per_bin < (2 * AMP_ENV_SUBSAMPLE)))
+      if (es->sf == NULL) 
+	es->sf = init_sample_read(ep->bin * ep->samps_per_bin, cp, READ_FORWARD);
+      sfd = es->sf;
+      if (sfd == NULL) return(FALSE);
+      for (n = 0; n < lm; n++, sb++)
 	{
-	  if (es->sf == NULL) 
-	    es->sf = init_sample_read(ep->bin * ep->samps_per_bin, cp, READ_FORWARD);
-	  sfd = es->sf;
-	  if (sfd == NULL) return(FALSE);
-	  for (n = 0; n < lm; n++, sb++)
+	  val = read_sample(sfd);
+	  ymin = val;
+	  ymax = val;
+	  for (i = 1; i < ep->samps_per_bin; i++)
 	    {
 	      val = read_sample(sfd);
-	      ymin = val;
-	      ymax = val;
-	      for (i = 1; i < ep->samps_per_bin; i++)
-		{
-		  val = read_sample(sfd);
-		  if (ymin > val) 
-		    ymin = val; 
-		  else 
-		    if (ymax < val) 
-		      ymax = val;
-		}
-	      ep->data_max[sb] = ymax;
-	      ep->data_min[sb] = ymin;
-	      if (ymin < ep->fmin) ep->fmin = ymin;
-	      if (ymax > ep->fmax) ep->fmax = ymax;
+	      if (ymin > val) 
+		ymin = val; 
+	      else 
+		if (ymax < val) 
+		  ymax = val;
 	    }
-	}
-      else
-	{
-	  /* an experiment... */
-	  /* sub sample reads even at the lowest level (io.c -- using dummy chans to subsample) */
-	  /* this actually only helps after the initial read -- the first pass has to read the file into the RAM cache */
-
-	  int fd, subsamp, bin_size, nc, m;
-	  snd_info *sp;
-	  mus_sample_t **bufs;
-	  sp = cp->sound;
-	  subsamp = ep->samps_per_bin / AMP_ENV_SUBSAMPLE;
-	  bin_size = ep->samps_per_bin / subsamp;
-	  nc = cp->chan;
-	  bufs = (mus_sample_t **)CALLOC(sp->nchans * subsamp, sizeof(mus_sample_t *));
-	  /* we're claiming the file has sp->nchans * subsamp channels to get mus_file_read to subsample by subsamp */
-	  bufs[nc] = (mus_sample_t *)CALLOC(lm * (bin_size + 2), sizeof(mus_sample_t));
-	  /* and we only read the current channel (bufs[nc]).
-	   * (bin_size+1) should be ok (it can't be bin_size due to annoying round-off problems that
-	   *   accumulate over 100 bins, and I'm paranoid)
-	   */
-	  fd = mus_file_open_read(sp->filename);
-	  mus_file_open_descriptors(fd,
-				    sp->filename,
-				    mus_sound_data_format(sp->filename),
-				    mus_sound_datum_size(sp->filename),
-				    mus_sound_data_location(sp->filename),
-				    sp->nchans,
-				    mus_sound_header_type(sp->filename));
-	  mus_file_seek_frame(fd, ep->bin * ep->samps_per_bin);
-	  mus_file_read_any(fd, 0,
-			    sp->nchans * subsamp,
-			    lm * (bin_size + 2),
-			    bufs,
-			    (mus_sample_t *)bufs);
-
-	  for (m = 0, n = 0; n < lm; n++, sb++)
-	    {
-	      val = bufs[nc][m++];
-	      ymin = val;
-	      ymax = val;
-	      for (i = 1; i < ep->samps_per_bin; i += subsamp, m++)
-		{
-		  val = bufs[nc][m];
-		  if (ymin > val) ymin = val; else if (ymax < val) ymax = val;
-		}
-	      ep->data_max[sb] = ymax;
-	      ep->data_min[sb] = ymin;
-	      if (ymin < ep->fmin) ep->fmin = ymin;
-	      if (ymax > ep->fmax) ep->fmax = ymax;
-	    }
-	  FREE(bufs[nc]);
-	  FREE(bufs);   
-	  mus_file_close(fd);
+	  ep->data_max[sb] = ymax;
+	  ep->data_min[sb] = ymin;
+	  if (ymin < ep->fmin) ep->fmin = ymin;
+	  if (ymax > ep->fmax) ep->fmax = ymax;
 	}
 
       es->m += es->amp_buffer_size;
@@ -2962,8 +2898,8 @@ The 'choices' are 0 (apply to sound), 1 (apply to channel), and 2 (apply to sele
   if (sp) 
     {
       ss = sp->state;
-      if (XEN_INTEGER_P(beg)) apply_beg = XEN_TO_C_INT(beg); else apply_beg = 0;
-      if (XEN_INTEGER_P(dur)) apply_dur = XEN_TO_C_INT(dur); else apply_dur = 0;
+      if (XEN_OFF_T_P(beg)) apply_beg = XEN_TO_C_OFF_T(beg); else apply_beg = 0;
+      if (XEN_OFF_T_P(dur)) apply_dur = XEN_TO_C_OFF_T(dur); else apply_dur = 0;
       ss->apply_choice = mus_iclamp(0, XEN_TO_C_INT_OR_ELSE(choice, 0), 2);
       sp->applying = 1;
       ap = (apply_state *)make_apply_state((void *)sp);

@@ -293,7 +293,7 @@
 #define XEN_BOOLEAN_P(Arg)            (SCM_BOOLP(Arg))
 #define XEN_NUMBER_P(Arg)             (XEN_NOT_FALSE_P(scm_real_p(Arg)))
 #define XEN_DOUBLE_P(Arg)             (XEN_NOT_FALSE_P(scm_real_p(Arg)))
-#define XEN_OFF_T_P(Arg)              (scm_integer_p(Arg))
+#define XEN_OFF_T_P(Arg)              (XEN_NOT_FALSE_P(scm_integer_p(Arg)))
 
 #define XEN_SYMBOL_P(Arg)             (SCM_SYMBOLP(Arg))
 #define XEN_PROCEDURE_P(Arg)          (XEN_NOT_FALSE_P(scm_procedure_p(Arg)))

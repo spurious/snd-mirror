@@ -3142,7 +3142,8 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
   int orig_arg[7] = {0, 0, 0, 0, 0, 0, 0};
   int vals, i, len = 0, arglist_len;
   Float base = 1.0, scaler = 1.0, offset = 0.0, duration = 0.0;
-  int start = 0, end = 0, npts = 0;
+  off_t start = 0, end = 0;
+  int npts = 0;
   Float *brkpts = NULL, *odata = NULL;
   XEN lst;
   keys[0] = all_keys[C_envelope];
@@ -3162,8 +3163,8 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
       duration = fkeyarg(keys[2], S_make_env, orig_arg[2] + 1, 0.0);
       offset = fkeyarg(keys[3], S_make_env, orig_arg[3] + 1, 0.0);
       base = fkeyarg(keys[4], S_make_env, orig_arg[4] + 1, 1.0);
-      end = ikeyarg(keys[5], S_make_env, orig_arg[5] + 1, 0);
-      start = ikeyarg(keys[6], S_make_env, orig_arg[6] + 1, 0);
+      end = okeyarg(keys[5], S_make_env, orig_arg[5] + 1, 0);
+      start = okeyarg(keys[6], S_make_env, orig_arg[6] + 1, 0);
       /* env data is a list, checked last to let the preceding throw wrong-type error before calloc  */
       if (!(XEN_KEYWORD_P(keys[0])))
         {

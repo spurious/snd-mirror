@@ -2002,7 +2002,7 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, int background, int syncd,
   off_t samp = 0;
   off_t end = NO_END_SPECIFIED;
   off_t *ends = NULL;
-  if (XEN_INTEGER_P(end_n)) end = XEN_TO_C_INT(end_n);
+  if (XEN_OFF_T_P(end_n)) end = XEN_TO_C_OFF_T(end_n);
 #if USE_NO_GUI
   background = 0;
 #endif
@@ -2099,7 +2099,7 @@ static XEN g_play_channel(XEN beg, XEN dur, XEN snd_n, XEN chn_n, XEN edpos)
     {
       len = XEN_TO_C_OFF_T(dur);
       if (len <= 0) return(XEN_FALSE);
-      end = C_TO_XEN_OFF_T(XEN_TO_C_INT_OR_ELSE(beg, 0) + len);
+      end = C_TO_XEN_OFF_T(XEN_TO_C_OFF_T_OR_ELSE(beg, 0) + len);
     }
   return(g_play_1(beg, snd_n, chn_n, TRUE, FALSE, end, edpos, S_play_channel, 5));
 }

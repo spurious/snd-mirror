@@ -386,8 +386,8 @@ returns either a vct (if the graph has one trace), or a list of two vcts (the tw
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(hi), hi, XEN_ARG_5, S_make_graph_data, "a number");
   return(make_graph_data(cp,
 			 to_c_edit_position(cp, edpos, S_make_graph_data, 3),
-			 XEN_TO_C_INT_OR_ELSE(lo, -1),
-			 XEN_TO_C_INT_OR_ELSE(hi, -1)));
+			 XEN_TO_C_OFF_T_OR_ELSE(lo, -1),
+			 XEN_TO_C_OFF_T_OR_ELSE(hi, -1)));
 }
 
 static XEN g_graph_data(XEN data, XEN snd, XEN chn, XEN ax, XEN lo, XEN hi, XEN style)

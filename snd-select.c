@@ -37,7 +37,7 @@ int selection_is_visible_in_channel (chan_info *cp)
   return((cp_has_selection(cp, NULL)) && (selection_is_visible(cp)));
 }
 
-static int off_t_map_over_chans(snd_state *ss, off_t (*func)(chan_info *, off_t *), off_t *userptr)
+static off_t off_t_map_over_chans(snd_state *ss, off_t (*func)(chan_info *, off_t *), off_t *userptr)
 {
   int i, j;
   off_t val;
