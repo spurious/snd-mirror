@@ -194,6 +194,7 @@ void set_foreground_color(chan_info *cp, axis_context *ax, int color) {}
 void change_channel_style(snd_info *sp, int new_style) {}
 void reflect_amp_env_in_progress(snd_info *sp) {}
 void cleanup_cw(chan_info *cp) {}
+void clear_deleted_snd_info(void *fd) {}
 int fixup_cp_cgx_ax_wn(chan_info *cp) {return(0);}
 int w_snd_name(snd_info *sp) {return(0);}
 int filter_graph(snd_info *sp) {return(0);}
@@ -409,8 +410,8 @@ void snd_doit(snd_state *ss, int argc, char **argv)
                (define " S_new_widget_hook " (make-hook 1))\
                (define " S_drop_hook " (make-hook 1))\
                (define " S_menu_hook " (make-hook 2))\
-               (define " S_color_hook " (make-hook 2))\
-               (define " S_orientation_hook " (make-hook 2))\
+               (define " S_color_hook " (make-hook 0))\
+               (define " S_orientation_hook " (make-hook 0))\
                (define " S_property_changed_hook " (make-hook 1))");
 
   XEN_EVAL_C_STRING("(define " S_enved_active_env " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\

@@ -1498,7 +1498,7 @@ char *mus_format(const char *format, ...)
 {
   /* this is primarily intended for error messages */
   /* caller should free result */
-  char *buf;
+  char *buf = NULL;
 #if HAVE_VPRINTF
   va_list ap;
   buf = (char *)CALLOC(MUS_FORMAT_STRING_MAX, sizeof(char));

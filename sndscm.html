@@ -1396,7 +1396,7 @@ a region).
 (let ((reg (make-regexp "\\.(wav|.snd)$")))
   (match-sound-files (lambda (file) (regexp-exec reg file))))
 </pre>
-<p>In fact, we could replace the built-in procedures add-sound-file-extension and
+<p>In fact, we could replace the built-in procedures <A NAME="addsoundextension1">add-sound-file-extension</a> and
 sound-files in directory.  We're using some procedures written by Dirk Herrman here.
 </p>
 <pre>
@@ -1551,12 +1551,15 @@ Fabio Furlanete's rmsgain.scm in the contrib directory uses goops.
 <A NAME="hooksdoc"></a><span class=box><h2>hooks.scm</h2></span>
 <pre>
   <em class=def><a name="exdescribehook">describe-hook</a></em> hook
+  <em class=def><A NAME="removelocalhook">remove-local-hook!</a></em> hook func
   <em class=def><a name="withlocalhook">with-local-hook</a></em> hook local-hook-procs thunk
   <em class=def><a name="resetallhooks">reset-all-hooks</a></em>
   <em class=def><a name="sndhooks1">snd-hooks</a></em>
 </pre>
 <p>hooks.scm has various hook-related functions.
 <i>describe-hook</i> tries to decipher the functions on the hook list.
+<i>remove-local-hook!</i> is a kludge to get around a bug in Guile's remove-hook! function;
+it makes it possible to remove a locally-defined function from a hook.
 <i>with-local-hook</i> is a kind of "let" for hooks.  <i>snd-hooks</i> returns
 a list of all Snd-specific hooks; this is used by <i>reset-all-hooks</i> which
 returns all hooks to the empty state. 

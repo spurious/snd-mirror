@@ -1410,7 +1410,7 @@ static void update(int	code_size, int y, int wi, int fi, int dq, int sr, int dqs
 	  state_ptr->sr[0] =  (exp << 6) + ((mag << 6) >> exp) - 0x400;
 	} 
       else
-	state_ptr->sr[0] = 0xFC20;
+	state_ptr->sr[0] = 0xFC20; /* it's declared short?? */
   state_ptr->pk[1] = state_ptr->pk[0];
   state_ptr->pk[0] = pk0;
   if (tr == 1) state_ptr->td = 0; else if (a2p < -11776) state_ptr->td = 1; else state_ptr->td = 0;

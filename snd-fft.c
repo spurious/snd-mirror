@@ -1513,7 +1513,7 @@ static int cleanup_sonogram(sonogram_state *sg)
 	  sg->old_scale = (sg->scp)->scale;
 	}
       else sg->done = TRUE;
-      if (cp->last_sonogram) FREE(cp->last_sonogram);
+      if ((cp->last_sonogram) && (cp->last_sonogram != sg)) FREE(cp->last_sonogram);
       cp->last_sonogram = sg;
       if (sg->minibuffer_needs_to_be_cleared)
 	{

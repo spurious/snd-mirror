@@ -306,7 +306,7 @@ typedef struct snd__info {
   int allocated_chans;        /* snd_info widget tree is never pruned -- can only grow */
   int cursor_follows_play;
   void *edited_region;
-  int delete_me;
+  void *delete_me;
   chan_info *lacp;
   void *saved_controls;
   int apply_ok, applying;
@@ -733,7 +733,7 @@ void set_ed_maxamp(chan_info *cp, int edpos, Float val);
 Float ed_maxamp(chan_info *cp, int edpos);
 void set_ed_selection_maxamp(chan_info *cp, Float val);
 Float ed_selection_maxamp(chan_info *cp);
-void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, off_t beg0, off_t num, int pos0, int pos1);
+void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, off_t num, int pos0, int pos1);
 
 
 /* -------- snd-fft.c -------- */

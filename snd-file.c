@@ -687,7 +687,7 @@ snd_info *snd_open_file_unselected(char *filename, snd_state *ss, int read_only)
 
 void snd_close_file(snd_info *sp, snd_state *ss)
 {
-  int files;
+  int files, i;
   XEN res = XEN_FALSE;
   if (XEN_HOOKED(close_hook))
     res = run_or_hook(close_hook,
@@ -695,9 +695,10 @@ void snd_close_file(snd_info *sp, snd_state *ss)
 		      S_close_hook);
   if (XEN_TRUE_P(res)) return;
   sp->inuse = FALSE;
+  for (i = 0; i < sp->nchans; i++) sp->chans[i]->squelch_update = TRUE;
   add_to_previous_files(ss, sp->short_filename, sp->filename);
   if (sp->playing) stop_playing_sound(sp);
-  if (sp->sgx) clear_minibuffer(sp);
+  if (sp->sgx) clear_minibuffer(sp); /* this can trigger a redisplay-expose sequence, so make sure channels ignore it above */
   if (sp == selected_sound(ss)) 
     ss->selected_sound = NO_SELECTION;
   if (selection_creation_in_progress()) finish_selection_creation();
@@ -2291,7 +2292,7 @@ static XEN g_file_write_date(XEN file)
   #define H_file_write_date "(" S_file_write_date " file) -> write date of file"
 #else
   #define H_file_write_date "(" S_file_write_date " file) -> write date in the same format as \
-current-time:\n\(strftime \"%a %d-%b-%Y %H:%M %Z\" (localtime (file-write-date \"oboe.snd\")))\n\
+current-time:\n(strftime \"%a %d-%b-%Y %H:%M %Z\" (localtime (file-write-date \"oboe.snd\")))\n\
 Equivalent to Guile (stat:mtime (stat file))"
 #endif
 

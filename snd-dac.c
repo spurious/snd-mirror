@@ -640,7 +640,10 @@ static void stop_playing_with_toggle(dac_info *dp, int toggle)
     }
   free_dac_info(dp);
   if ((sp) && (sp_stopping) && (sp->delete_me)) 
-    completely_free_snd_info(sp); /* dummy snd_info struct for (play "filename") in snd-xen.c */
+    {
+      if (sp->delete_me != (void *)1) clear_deleted_snd_info(sp->delete_me);
+      completely_free_snd_info(sp); /* dummy snd_info struct for (play "filename") in snd-xen.c */
+    }
 }
 
 static void stop_playing(dac_info *dp) {stop_playing_with_toggle(dp, TRUE);}
@@ -761,11 +764,9 @@ static void free_dac_state(void)
 
 static Cessate dac_in_background(Indicium ptr);
 
-#if DEBUGGING
 static int disable_play = FALSE;
 static XEN g_disable_play(void) {disable_play = TRUE; return(XEN_FALSE);}
 static XEN g_enable_play(void) {disable_play = FALSE; return(XEN_TRUE);}
-#endif
 
 static void start_dac(snd_state *ss, int srate, int channels, int background)
 {
@@ -811,7 +812,6 @@ static void start_dac(snd_state *ss, int srate, int channels, int background)
       snd_dacp->frames = 256; /* just a first guess */
       snd_dacp->devices = 1;  /* just a first guess */
       snd_dacp->reverb_ring_frames = (off_t)(srate * reverb_control_decay(ss));
-#if DEBUGGING
       if (disable_play) 
 	{
 	  stop_playing_all_sounds();
@@ -819,25 +819,21 @@ static void start_dac(snd_state *ss, int srate, int channels, int background)
 	  max_active_slot = -1;
 	  free_dac_state();
 	}
-      else {
-#endif
-      if (background == IN_BACKGROUND) 
-	BACKGROUND_ADD(ss, dac_in_background, NULL);
-      else
+      else 
 	{
-	  /* here we want to play as an atomic (not background) action */
-	  while (dac_in_background(NULL) == BACKGROUND_CONTINUE)
+	  if (background == IN_BACKGROUND) 
+	    BACKGROUND_ADD(ss, dac_in_background, NULL);
+	  else
 	    {
-	      check_for_event(ss); /* need to be able to C-g out of this */
-	      /* if ((sp) && (!(sp->inuse))) break; */
+	      /* here we want to play as an atomic (not background) action */
+	      while (dac_in_background(NULL) == BACKGROUND_CONTINUE)
+		check_for_event(ss); /* need to be able to C-g out of this */
 	    }
 	}
-#if DEBUGGING
-      }
-#endif
     }
 }
 
+/* TODO: shouldn't start_dac set the 'play' button if playing a sound (as opposed to region etc)? */
 
 static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, off_t start, off_t end, XEN edpos, const char *caller, int arg_pos)
 {
@@ -2087,7 +2083,7 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, int background, int syncd,
       sp = make_sound_readable(get_global_state(), name, FALSE);
       sp->short_filename = filename_without_home_directory(name);
       sp->filename = NULL;
-      sp->delete_me = TRUE;
+      sp->delete_me = (void *)1;
       if (XEN_OFF_T_P(chn_n)) end = XEN_TO_C_OFF_T(chn_n);
       play_sound(sp, samp, end, background, C_TO_SMALL_XEN_INT(0), caller, arg_pos);
       if (name) FREE(name);
@@ -2437,10 +2433,8 @@ XEN_NARGIFY_0(g_dac_size_w, g_dac_size)
 XEN_ARGIFY_1(g_set_dac_size_w, g_set_dac_size)
 XEN_NARGIFY_0(g_dac_combines_channels_w, g_dac_combines_channels)
 XEN_ARGIFY_1(g_set_dac_combines_channels_w, g_set_dac_combines_channels)
-#if DEBUGGING
-  XEN_NARGIFY_0(g_disable_play_w, g_disable_play)
-  XEN_NARGIFY_0(g_enable_play_w, g_enable_play)
-#endif
+XEN_NARGIFY_0(g_disable_play_w, g_disable_play)
+XEN_NARGIFY_0(g_enable_play_w, g_enable_play)
 #else
 #define g_play_w g_play
 #define g_play_channel_w g_play_channel
@@ -2457,10 +2451,8 @@ XEN_ARGIFY_1(g_set_dac_combines_channels_w, g_set_dac_combines_channels)
 #define g_set_dac_size_w g_set_dac_size
 #define g_dac_combines_channels_w g_dac_combines_channels
 #define g_set_dac_combines_channels_w g_set_dac_combines_channels
-#if DEBUGGING
-  #define g_disable_play_w g_disable_play
-  #define g_enable_play_w g_enable_play
-#endif
+#define g_disable_play_w g_disable_play
+#define g_enable_play_w g_enable_play
 #endif
 
 void g_init_dac(void)
@@ -2503,8 +2495,6 @@ If it returns #t, the sound is not played."
   XEN_DEFINE_HOOK(stop_dac_hook, S_stop_dac_hook, 0, H_stop_dac_hook);                                     /* no args */
   XEN_DEFINE_HOOK(stop_playing_selection_hook, S_stop_playing_selection_hook, 0, H_stop_playing_selection_hook); /* no args */
 
-#if DEBUGGING
   XEN_DEFINE_PROCEDURE("disable-play", g_disable_play_w, 0, 0, 0, "internal testing function");
   XEN_DEFINE_PROCEDURE("enable-play", g_enable_play_w, 0, 0, 0, "internal testing function");
-#endif
 }

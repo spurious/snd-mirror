@@ -676,7 +676,8 @@ the hook.
 <!-- --><span class=defbox><code><em class=def><a name="afterapplyhook">after-apply-hook</a></em> (snd)</code></span><td></td>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
-<!-- -->called when 'Apply' finishes.
+<!-- -->called when 'Apply' finishes.  <i>add-amp-controls</i> in snd-motif.scm uses this hook to
+<!-- -->reset any added amplitude sliders to 1.0 when Apply finishes.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
@@ -1424,7 +1425,8 @@ the hook.
 <!-- --><span class=defbox><code><em class=def><a name="newwidgethook">new-widget-hook</a></em> (widget)</code></span><td></td>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
-<!-- -->called each time a dialog or a new set of channel or sound widgets is created.
+<!-- -->called each time a dialog or a new set of channel or sound widgets is created.  This is used in snd-motif.scm (<i>paint-all</i>) to
+<!-- -->make sure all newly created widgets have the same background pixmaps.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
@@ -1913,7 +1915,8 @@ the edit is aborted. So,
 aborts any attempt to edit the data; this is even more restrictive than setting the read-only
 flag because the latter only refuses to overwrite the current data.  undo-hook is called
 just after any undo, redo, or revert that affects the channel.  after-edit-hook is called
-after an edit.
+after an edit (there's an example in snd-motif.scm that updates a mark list after each edit
+so that the displayed mark positions are correct).
 You can use edit-hook to set
 up protected portions of the edit history:
 </td></tr></table>
@@ -2066,10 +2069,6 @@ functions:</p>
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="sndlist2vct">list-&gt;vct</a></em> (lst)</code></span></td>
 <!-- --><td>return vct object with elements of list <i>lst</i></td></tr>
 <!-- -->
-<!-- vct -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="sndvct">vct</a></em> args</code></span></td>
-<!-- --><td>list-&gt;vct with args not list: <code>(vct 1 2 3)</code> = <code>(list-&gt;vct '(1 2 3))</code></td></tr>
-<!-- -->
 <!-- make-vct -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="makevct">make-vct</a></em> (len &amp;optional (initial-element 0.0))</code></span></td>
 <!-- --><td>create vct struct of size <i>len</i>.</td></tr>
@@ -2077,6 +2076,10 @@ functions:</p>
 <!-- sound-date->vct -->
 <!-- --><tr><td colspan=2><span class=defbox><code><em class=def>sound-data-&gt;vct</em> (sdobj chan vobj)</code></span></td>
 <!-- --></tr><tr><td></td><td>place sound-data channel data in vct, returning vobj</td></tr>
+<!-- -->
+<!-- vct -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="sndvct">vct</a></em> args</code></span></td>
+<!-- --><td>list-&gt;vct with args not list: <code>(vct 1 2 3)</code> = <code>(list-&gt;vct '(1 2 3))</code></td></tr>
 <!-- -->
 <!-- vct? -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="vctp">vct?</a></em> (vobj)</code></span></td>
@@ -2138,6 +2141,10 @@ functions:</p>
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="vctsubtract">vct-subtract!</a></em> (vobj1 vobj2)</code></span></td>
 <!-- --><td><code>vobj1[i] -= vobj2[i]</code>, returns vobj1.</td></tr>
 <!-- -->
+<!-- vct-subseq -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="vctsubseq">vct-subseq</a></em> (vobj start <i>end nv</i>)</code></span></td>
+<!-- --><td>return vct (nv) with vobj[start..end].</td></tr>
+<!-- -->
 <!-- vct->channel -->
 <!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="vct2channel">vct-&gt;channel</a></em> (v <i>beg dur snd chn edpos</i>)</code></span></td>
 <!-- --></tr><tr><td></td><td>The <a href="#regularizedargs">regularized</a> version of <a href="#vct2samples">vct-&gt;samples</a>.</td></tr>
@@ -2169,10 +2176,6 @@ functions:</p>
 <!-- vector-&gt;vct -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="sndvector2vct">vector-&gt;vct</a></em> (vect)</code></span></td>
 <!-- --><td>return vct object with elements of vector <i>vect</i></td></tr>
-<!-- -->
-<!-- vct-subseq -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="vctsubseq">vct-subseq</a></em> (vobj start <i>end nv</i>)</code></span></td>
-<!-- --><td>return vct (nv) with vobj[start..end].</td></tr>
 <!-- -->
 <!-- --></table>
 
@@ -2642,10 +2645,6 @@ edited) sound can be accessed by a normal sample-reader.
 <!-- --></tr><tr><td></td>
 <!-- --><td>create a mix-sample-reader object reading <i>mix</i></td></tr>
 <!-- -->
-<!-- mix-sample-reader? -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="mixsamplereaderQ">mix-sample-reader?</a></em> (obj)</code></span></td>
-<!-- --><td>#t if <i>obj</i> is a mix-sample-reader.</td></tr>
-<!-- -->
 <!-- make-region-sample-reader -->
 <!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="makeregionsamplereader">make-region-sample-reader</a></em> (<i>start reg chn dir</i>)</code></span></td>
 <!-- --></tr><tr><td></td>
@@ -2689,6 +2688,10 @@ edited) sound can be accessed by a normal sample-reader.
 <!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="maketracksamplereader">make-track-sample-reader</a></em> (track snd chn)</code></span></td>
 <!-- --></tr><tr><td></td>
 <!-- --><td>create a track-sample-reader object reading <i>track</i></td></tr>
+<!-- -->
+<!-- mix-sample-reader? -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="mixsamplereaderQ">mix-sample-reader?</a></em> (obj)</code></span></td>
+<!-- --><td>#t if <i>obj</i> is a mix-sample-reader.</td></tr>
 <!-- -->
 <!-- next-mix-sample -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="nextmixsample">next-mix-sample</a></em>   (obj)</code></span></td>
@@ -2786,7 +2789,7 @@ a globally unique id number (returned by <b>find-mark</b> or <b>add-mark</b>, fo
 <!-- -->This identifier is used in calls such as <a href="#sndmarksample">mark-sample</a>.  Since marks
 <!-- -->can move around during editing, a unique 'tag' is needed to refer to a 
 <!-- -->particular mark. <i>samp</i> can also be a string; in this case <i>find-mark</i> 
-<!-- -->looks for a mark of that name.
+<!-- -->looks for a mark of that name.  <i>mark-name->id</i> in marks.scm finds a named mark in any channel (a global version of find-mark).
 <!-- --></td></tr>
 <!-- -->
 <!-- forward-mark -->
@@ -2797,6 +2800,12 @@ a globally unique id number (returned by <b>find-mark</b> or <b>add-mark</b>, fo
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a href="#markclickhook">mark-click-hook</a></em> (id)</code></span></td>
 <!-- --><td>called when a mark is clicked, return #t to squelch message.
+<!-- --></td></tr>
+<!-- -->
+<!-- mark-home -->
+<!-- -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="markhome">mark-home</a></em> (<i>id</i>)</code></span></td>
+<!-- --><td>a list with the sound index and channel that hold mark <i>id</i>.
 <!-- --></td></tr>
 <!-- -->
 <!-- mark-name -->
@@ -2830,12 +2839,6 @@ a globally unique id number (returned by <b>find-mark</b> or <b>add-mark</b>, fo
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="sndmarksyncmax">mark-sync-max</a></em> ()</code></span></td>
 <!-- --><td>max mark sync value seen so far (intended as a way to get a unique sync value).
-<!-- --></td></tr>
-<!-- -->
-<!-- mark-home -->
-<!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="markhome">mark-home</a></em> (<i>id</i>)</code></span></td>
-<!-- --><td>a list with the sound index and channel that hold mark <i>id</i>.
 <!-- --></td></tr>
 <!-- -->
 <!-- marks -->
@@ -3064,6 +3067,12 @@ a particular mix object:</p>
 <!-- --><td>mix's length in samples.  (This was named mix-length originally).
 <!-- --></td></tr>
 <!-- -->
+<!-- mix-home-->
+<!-- -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="sndmixhome">mix-home</a></em> (<i>mix</i>)</code></span></td>
+<!-- --><td>returns a list of the sound index and channel number affected by <i>mix</i>.
+<!-- --></td></tr>
+<!-- -->
 <!-- mix-locked -->
 <!-- -->
 <!-- --><tr><td valign=top><span class=defbox><code><em class=def><a name="sndmixlocked">mix-locked</a></em> (<i>mix</i>)</code></span></td>
@@ -3095,12 +3104,6 @@ a particular mix object:</p>
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="sndmixposition">mix-position</a></em> (<i>mix</i>)</code></span></td>
 <!-- --><td>position (sample number) of <i>mix</i>.
-<!-- --></td></tr>
-<!-- -->
-<!-- mix-home-->
-<!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="sndmixhome">mix-home</a></em> (<i>mix</i>)</code></span></td>
-<!-- --><td>returns a list of the sound index and channel number affected by <i>mix</i>.
 <!-- --></td></tr>
 <!-- -->
 <!-- mix-speed -->
@@ -3294,18 +3297,18 @@ Most of the region number arguments default to the current region (the first in 
 <!-- -->number of channels in region <i>reg</i>.
 <!-- --></td></tr>
 <!-- -->
-<!-- region-graph-style -->
-<!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="sndregiongraphstyle">region-graph-style</a></em> (style)</code></span></td>
-<!-- --><td>
-<!-- -->graph drawing choice for the region dialog's graph.
-<!-- --></td></tr>
-<!-- -->
 <!-- region-frames -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="sndregionframes">region-frames</a></em> (<i>reg</i>)</code></span></td>
 <!-- --><td>
 <!-- -->number of samples (per channel) in region <i>reg</i>. (This used to be region-length).
+<!-- --></td></tr>
+<!-- -->
+<!-- region-graph-style -->
+<!-- -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="sndregiongraphstyle">region-graph-style</a></em> (style)</code></span></td>
+<!-- --><td>
+<!-- -->graph drawing choice for the region dialog's graph.
 <!-- --></td></tr>
 <!-- -->
 <!-- region-maxamp -->
@@ -3708,7 +3711,9 @@ the direction argument between the channel and edit-position:
 <!-- --></td></tr>
 <!-- --><tr><td><spacer type=horizontal size=40><br></td><td>
 <!-- -->add <i>player</i> to the play-list (see <a href="#makeplayer">make-player</a>). 
-<!-- -->If <i>pos</i> is given, play at that edit position. [<em class=error>no-such-player</em>]
+<!-- -->If <i>pos</i> is given, play at that edit position. See <i>play-with-envs</i> in enved.scm, <i>play-syncd-marks</i>
+<!-- -->in marks.scm, or <i>start-dac</i> in play.scm for examples.
+<!-- -->[<em class=error>no-such-player</em>]
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -3988,6 +3993,12 @@ the direction argument between the channel and edit-position:
 <!-- -->#t if cursor is following along in the sound as it plays.  To make this the default:<br><br>
 <!-- --><code>(add-hook! after-open-hook (lambda (sp) (set! (cursor-follows-play sp) #t)))</code>.<br><br>
 <!-- -->A better name for this might be <i>with-tracking-cursor</i>, but the word "track" already has too many meanings in this context.
+<blockquote><small>
+To play from the current cursor position with a tracking cursor:  <a href="#pfc">pfc</a>.<br>
+To display tracking cursor as a full height vertical line: <a href="#cursorstyle">cursor-style</a>.<br>
+To track play once: control-click 'play'. (You can add a mark at the current tracking cursor location during the play with C-m).<br>
+To leave the cursor at the final position after tracking play: if-cursor-follows-play-it-stays-where-play-stopped in examp.scm.
+</small></blockquote>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4157,7 +4168,7 @@ the direction argument between the channel and edit-position:
 <!-- --><span class=defbox><code><em class=def><a name="dotsize">dot-size</a></em> (<em class=narg>snd chn</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->size in pixels of dots when graphing with dots (default: 1); this affects <a href="#graphstyle">graph-styles</a> such as <code>graph-lollipops</code>.
+<!-- -->size in pixels of dots when graphing with dots (default: 1); this affects <a href="#graphstyle">graph-styles</a> such as <code>graph-lollipops</code>.  See <a href="#graphhook">graph-hook</a> or auto-dot in examp.scm.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4169,6 +4180,21 @@ the direction argument between the channel and edit-position:
 <!-- --><tr><td></td><td>
 <!-- --><b>env-channel</b> is the <a href="#regularizedargs">regularized</a> version of <a href="#sndenv">env-sound</a>.  <i>clm-env-gen</i>
 <!-- -->can be either a CLM envelope generator or an envelope (a list of breakpoints). <code>(env-channel '(0 0 1 1 2 0))</code><br>
+<blockquote><small>
+<spacer type=horizontal size=40>envelopes in Snd:<br>
+Other enveloping functions: <a href="#rampchannel">ramp-channel</a>, <a href="#xrampchannel">xramp-channel</a>, <a href="#smoothchannel">smooth-channel</a><br>
+The CLM env generator: <a href="clm.html#make-env">env</a>, many examples in examp.scm, new-effects.scm, etc<br>
+Various operations on envelopes: <a href="sndscm.html#envdoc">env.scm</a><br>
+Peak env files: <a href="sndscm.html#peakenvdoc">peak-env.scm</a><br>
+The envelope editor: <a href="snd.html#editenvelope">Edit or View and Envelope</a><br>
+Panning: place-sound in examp.scm, <a href="snd.html#mixpanel">Mix Dialog</a>, play-panned in enved.scm, <a href="sndscm.html#panmix">pan-mix</a><br>
+Envelope over mix: <a href="sndscm.html#exenvelopedmix">enveloped-mix</a><br>
+Envelope over track (a set of mixes): <a href="sndscm.html#settrackampenv">set-track-amp-env</a><br>
+Local envelope editor: <a href="sndscm.html#enveddoc">enved.scm</a>, xm-enved.scm<br>
+Read sound indexed through envelope: <a href="sndscm.html#exenvsoundinterp">env-sound-interp</a><br>
+Cosine as envelope: <a href="#cosinechannel">cosine-channel</a>, <a href="#cosinechannelviaptree">cosine-channel-via-ptree</a>, <a href="clm.html#bellcurve">bell-curve</a><br>
+Customizing the envelope editor: <a href="#envedhook">enved-hook</a>
+</small></blockquote>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4296,6 +4322,27 @@ the direction argument between the channel and edit-position:
 (filter-sound (make-delay 120))                      ;CLM delay (same as insert-silence)
 (filter-sound (make-formant .99 1200))               ;CLM formant
 <!-- --></pre></td></tr></table>
+<br><blockquote><small>
+<spacer type=horizontal size=40>Filters in Snd:<br>
+CLM filter generators: <a href="clm.html#filters">filter, one-pole, formant, comb, notch, all-pass, etc</a>, many examples in examp.scm, new-effects.scm<br>
+lowpass filter: make-lowpass in dsp.scm<br>
+highpass filter: make-highpass in dsp.scm<br>
+bandpass filter: make-bandpass in dsp.scm<br>
+bandstop filter: make-bandstop in dsp.scm<br>
+Butterworth filters: make-butter-high-pass et al in dsp.scm, used in new-effects.scm<br>
+Hilbert transform: make-hilbert-transform in dsp.scm<br>
+differentiator: make-differentiator in dsp.scm<br>
+block DC: see dc-block in prc95.scm, also flute.scm.<br>
+arbitrary spectrum via FIR filter: spectrum-&gt;coeffs in dsp.scm<br>
+filtered echo sound effect: flecho in examp.scm<br>
+time varying filter: fltit in examp.scm<br>
+draw frequency response: use <a href="snd.html#editenvelope">envelope editor</a> or <a href="snd.html#filtercontrol">filter control</a> in control panel<br>
+Moog filter: <a href="sndscm.html#moogdoc">moog.scm</a><br>
+Click reduction: <a href="sndscm.html#exremoveclick">remove-click</a><br>
+Filter a track: <a href="sndscm.html#filtertrack">filter-track</a><br>
+LADSPA-based filter effects: see contrib/dlp/plugins-menu.scm<br>
+see also convolution, physical modeling, reverb, and <a href="sndscm.html#ssffts">fft-based filtering</a>
+</small></blockquote>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4306,9 +4353,19 @@ the direction argument between the channel and edit-position:
 <!-- --><tr><td></td><td>
 <!-- -->find the sample that satisfies the function <i>proc</i>. <i>sample</i>
 <!-- -->determines where to start the search. 
-<!-- -->If the fund function returns some non-#f value, find itself returns a list of that value and the sample number.
+<!-- -->If 'proc' returns some non-#f value, find itself returns a list with that value and the sample number.
 <!-- -->In the find dialog and in C-s or C-r searches, if the value returned is an integer, the cursor is offset by that number of samples.
 <!-- --><br><br><code>(find (lambda (y) (&gt; y .1)))</code><br><code>(find (lambda (y) (and (&gt; y .1) -2)))</code><br>
+<blockquote><small>
+Example find procedures: <a href="sndscm.html#exsearchforclick">search-for-click, zero+, next-peak, find-pitch</a><br>
+Search via continuation: <a href="#scanagain">scan-again</a><br>
+Explicit access to search procedures: <a href="#searchprocedure">search-procedure</a></br>
+The Find dialog: <a href="snd.html#editoperations">Find</a><br>
+find silence: <a href="#mapsilence">map-silence</a><br>
+find zero crossing: <a href="#newcp">find-zero</a><br>
+find a mark etc: <a href="#sndfindmark">find-mark</a>, <a href="#sndfindmix">find-mix</a>, <a href="#sndfindsound">find-sound</a><br>
+see also <a href="#lcountmatches">count-matches</a> and <a href="#scanchannel">scan-channel</a>.
+</small></blockquote>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4333,7 +4390,8 @@ the direction argument between the channel and edit-position:
 	    (return snd)))
       (sounds))
      #f)))
-<!-- --></pre></td></tr></table>
+<!-- --></pre></td></tr></table><br>
+<!-- -->See popup.scm, and <i>files-popup-buffer</i>, <i>open-next-file-in-directory</i> and the "Buffer Menu" code in examp.scm for examples.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4463,6 +4521,30 @@ the direction argument between the channel and edit-position:
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
+<!-- insert-sample -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndinsertsample">insert-sample</a></em> (samp value <i>snd chn edpos</i>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->insert sample <i>value</i> at sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i> 
+<!-- -->[<em class=error>no-such-sample</em>].
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- insert-samples -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndinsertsamples">insert-samples</a></em> (samp samps data <i>snd chn edpos</i>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->insert <i>samps</i> samples of <i>data</i> starting at sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
+<!-- --><i>data</i> can be a filename.
+<!-- -->The regularized version of this might be:
+<!-- --><code>(define* (insert-channel data #:optional beg dur snd chn edpos) (insert-samples beg dur data snd chn edpos))</code>.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
 <!-- insert-silence -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="sndinsertsilence">insert-silence</a></em> (beg num <i>snd chn</i>)</code></span>
@@ -4484,30 +4566,6 @@ the direction argument between the channel and edit-position:
 <!-- -->beg defaults to the cursor position; if <i>in_chan</i> is not given, all 
 <!-- -->channels are inserted. 
 <!-- -->[<em class=error>no-such-file</em>].
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- insert-sample -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndinsertsample">insert-sample</a></em> (samp value <i>snd chn edpos</i>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->insert sample <i>value</i> at sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i> 
-<!-- -->[<em class=error>no-such-sample</em>].
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- insert-samples -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndinsertsamples">insert-samples</a></em> (samp samps data <i>snd chn edpos</i>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->insert <i>samps</i> samples of <i>data</i> starting at sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
-<!-- --><i>data</i> can be a filename.
-<!-- -->The regularized version of this might be:
-<!-- --><code>(define* (insert-channel data #:optional beg dur snd chn edpos) (insert-samples beg dur data snd chn edpos))</code>.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4635,7 +4693,7 @@ the direction argument between the channel and edit-position:
 <!-- -->something:<br><br>
 <!-- -->
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(define map-silence
+(define <A NAME="mapsilence">map-silence</a>
   ;; see squelch in <a href="sndscm.html#effectsdoc">new-effects.scm</a> for a better version
   (lambda (silence replacement)
     (let ((sum-of-squares 0.0)
@@ -4748,7 +4806,7 @@ the direction argument between the channel and edit-position:
 <!-- --><b>map-channel</b> is the <a href="#regularizedargs">regularized</a> version of <a href="#mapchan">map-chan</a>.
 <!-- --><br><br>
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(define* (cosine-channel #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+(define* (<A NAME="cosinechannel">cosine-channel</a> #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
   (<em class=red>map-channel</em>
    (let* ((samps (or dur (frames snd chn)))
 	  (incr (/ pi samps))
@@ -4927,7 +4985,7 @@ the direction argument between the channel and edit-position:
 <!-- --></pre></td></tr></table><br>
 <!-- -->The following code plays from the cursor with a moving ("tracking") cursor:<br><br>
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(define (pfc)
+(define (<A NAME="pfc">pfc</a>)
   (let ((old-tracking (cursor-follows-play)))
     (set! (cursor-follows-play) #t)
     (add-hook! stop-playing-hook 
@@ -5154,7 +5212,7 @@ the direction argument between the channel and edit-position:
 <!-- -->
 <!-- --><tr><td></td><td>
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(define* (cosine-channel-via-ptree #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+(define* (<A NAME="cosinechannelviaptree">cosine-channel-via-ptree</a> #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
   ;; vct: angle increment
   (<em class=red>ptree-channel</em>
    (lambda (y data forward)
@@ -5248,7 +5306,7 @@ the direction argument between the channel and edit-position:
     (<em class=red>ptree-channel</em> proc beg dur snd chn edpos env-too init-func #f))
 <!-- --></pre>Then reverse-channel as a virtual op could be:
 <!-- --><br><br><pre>
-(xen-channel (lambda (y data forward)
+(<A NAME="virtualreverse">xen-channel</a> (lambda (y data forward)
 	       (if forward
 		   (previous-sample data)
 		   (next-sample data)))
@@ -5365,6 +5423,15 @@ the direction argument between the channel and edit-position:
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- --><b>reverse-channel</b> is the <a href="#regularizedargs">regularized</a> version of <a href="#sndreverse">reverse-sound</a>.
+<blockquote><small>
+To reverse selected portion: <a href="#sndreverseselection">reverse-selection</a><br>
+To read samples in reverse: use <a href="#makesamplereader">make-sample-reader</a> with direction -1.<br>
+To reverse at new sampling rate: use <a href="#srcchannel">src-channel</a> with a negative ratio.<br>
+Reverse in control panel: <a href="snd.html#speed">control panel</a> and <a href="#sndspeed">speed-control</a> variable.<br>
+To reverse a track: <a href="sndscm.html#reversetrack">reverse-track</a><br>
+To reverse an envelope: <a href="sndscm.html#reverseenvelope">reverse-envelope</a><br>
+Virtual reverse-channel: <a href="#virtualreverse">xen-channel</a>
+</small></blockquote>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5528,6 +5595,7 @@ the direction argument between the channel and edit-position:
 (scale-by 2.0)
 (scale-channel 2.0)
 (map-chan (lambda (val) (* val 2.0)))
+(set! (maxamp) (* 2 (maxamp)))
 (env-sound '(0 2 1 2))
 (env-channel (make-env '(0 1 1 1) :scaler 2.0) :end (1- (frames)))
 (clm-channel (make-one-zero :a0 2.0 :a1 0.0))
@@ -5699,7 +5767,7 @@ the direction argument between the channel and edit-position:
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define reader #f)
 (define last-proc #f)
-(define (scan-again)
+(define (<A NAME="scanagain">scan-again</a>)
   (if (sample-reader-at-end? reader)
       #f
       (let ((val (last-proc (reader))))
@@ -6569,7 +6637,8 @@ This can be
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->returns the graph position that corresponds to the Y axis value <i>y</i>. <i>axis</i> is one of time-graph, lisp-graph, or transform-graph.
-<!-- -->[<em class=error>no-such-axis</em>].
+<!-- -->This is used in <i>samples-via-colormap</i> in draw.scm to draw the time domain samples in many colors.
+<!-- -->[<em class=error>no-such-axis</em>].  
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -6769,7 +6838,7 @@ The control panel procedures are:
 <!-- --><span class=defbox><code><em class=def><a name="sndfiltercoeffs">filter-control-coeffs</a></em> (<em class=targ>snd</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- --><i>snd</i>'s control panel <a href="snd.html#filter">filter</a> coefficients (read-only currently).
+<!-- --><i>snd</i>'s control panel <a href="snd.html#filtercontrol">filter</a> coefficients (read-only currently).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -6779,7 +6848,7 @@ The control panel procedures are:
 <!-- --><span class=defbox><code><em class=def><a name="sndfilterdbing">filter-control-in-dB</a></em> (<em class=targ>snd</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- --><i>snd</i>'s control panel <a href="snd.html#filter">filter</a> dB button state.  If #t, the filter (frequency) envelope
+<!-- --><i>snd</i>'s control panel <a href="snd.html#filtercontrol">filter</a> dB button state.  If #t, the filter (frequency) envelope
 <!-- -->graph is displayed in dB.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
@@ -6790,7 +6859,7 @@ The control panel procedures are:
 <!-- --><span class=defbox><code><em class=def><a name="sndfilterenv">filter-control-env</a></em> (<em class=targ>snd</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- --><i>snd</i>'s control panel <a href="snd.html#filter">filter</a> envelope (a list of breakpoints).
+<!-- --><i>snd</i>'s control panel <a href="snd.html#filtercontrol">filter</a> envelope (a list of breakpoints).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -6800,7 +6869,7 @@ The control panel procedures are:
 <!-- --><span class=defbox><code><em class=def><a name="sndfilterorder">filter-control-order</a></em> (<em class=targ>snd</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- --><i>snd</i>'s control panel <a href="snd.html#filter">filter</a> order.  This affects how much computing
+<!-- --><i>snd</i>'s control panel <a href="snd.html#filtercontrol">filter</a> order.  This affects how much computing
 <!-- -->is needed to run the filter, and how close the filter can get to the desired frequency envelope.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
@@ -8123,7 +8192,8 @@ run
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="abort">abort</a></em> ()</code></span></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->exit Snd via "abort", presumably to fall into the C debugger (gdb).
+<!-- -->exit Snd via "abort", presumably to fall into the C debugger (gdb).  To stop some on-going Snd operation,
+<!-- -->use <a href="#sndabort">C-g</a>.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -8131,9 +8201,10 @@ run
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="addsoundfileextension">add-sound-file-extension</a></em> (ext)</code></span></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->add <i>ext</i> to the list of (case sensitive) sound file extensions.
+<!-- -->add <i>ext</i> to the list of (case sensitive) sound file extensions (used by <a href="#soundfilesindirectory">sound-files-in-directory</a>).
 <!-- -->The initial list is ("snd" "aiff" "aif" "wav" "au" "aifc" "voc" "wve" "WAV" "sf2").
-<!-- --><code>(add-sound-file-extension "ogg")</code>
+<!-- -->To add "ogg" as a recognized extension: <code>(add-sound-file-extension "ogg")</code><br>
+<!-- -->A scheme implementation: <a href="sndscm.html#addsoundextension1">add-sound-file-extension-1</a>.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -9064,7 +9135,8 @@ The lowest level procedures are:
 <!-- -->draws axes in the widget <i>wid</i>, using the graphics context <i>gc</i>, with the x-axis label <i>label</i>
 <!-- -->going from <i>x0</i> to <i>x1</i> (floats) along the x axis, <i>y0</i> to <i>y1</i> along the y axis, with x-axis-style
 <!-- --><i>style</i> (x-axis-in-seconds etc); whether the axes are actually displayed or just implied
-<!-- -->depends on <i>axes</i>. Returns a list of the actual (pixel) axis bounds.  See, for example,  the scanned-synthesis display code in snd-motif.scm.
+<!-- -->depends on <i>axes</i>. Returns a list of the actual (pixel) axis bounds.  See, for example,  the scanned-synthesis display code in snd-motif.scm,
+<!-- -->or the local envelope editor code in xm-enved.scm.
 <!-- --></td></tr><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- draw-dot -->
@@ -9072,7 +9144,7 @@ The lowest level procedures are:
 <!-- --><span class=defbox><code><em class=def><a name="drawdot">draw-dot</a></em> (x0 y0 dot-size snd chn context)</code></span></td></tr>
 <!-- -->
 <!-- --><tr><td width=50></td><td>
-<!-- -->draws a dot at (x0 y0) of <i>dot-size</i> pixels diameter in the given graph</td></tr>
+<!-- -->draws a dot at (x0 y0) of <i>dot-size</i> pixels diameter in the given graph.  See musglyphs.scm.</td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- draw-dots -->

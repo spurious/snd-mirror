@@ -619,6 +619,8 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
   return(FALSE);
 }
 
+/* TODO: click in listener can place cursor (and autoscroll window) at any random place! */
+
 static gboolean listener_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   snd_state *ss = (snd_state *)data;

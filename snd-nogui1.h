@@ -337,6 +337,7 @@ void set_open_file_play_button(int val);
 void make_edit_save_as_dialog(snd_state *ss);
 void make_file_save_as_dialog(snd_state *ss);
 void make_mix_file_dialog(snd_state *ss, int managed);
+void clear_deleted_snd_info(void *fd);
 
 
 /* -------- snd-xenv.c -------- */

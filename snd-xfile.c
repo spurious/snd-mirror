@@ -200,6 +200,12 @@ static int string_compare(const void *ss1, const void *ss2)
   return(strcmp((*((char **)ss1)), (*((char **)ss2))));
 }
 
+void clear_deleted_snd_info(void *data)
+{
+  file_dialog_info *fd = (file_dialog_info *)data;
+  fd->file_play_sp = NULL;
+}
+
 static void play_selected_callback(Widget w, XtPointer context, XtPointer info) 
 {
   Widget wtmp;
@@ -220,7 +226,7 @@ static void play_selected_callback(Widget w, XtPointer context, XtPointer info)
       if (filename)
 	{
 	  fd->file_play_sp = make_sound_readable(ss, filename, FALSE);
-	  fd->file_play_sp->delete_me = TRUE;
+	  fd->file_play_sp->delete_me = (void *)fd;
 	  if (fd->file_play_sp)
 	    play_sound(fd->file_play_sp, 0, 
 		       NO_END_SPECIFIED, IN_BACKGROUND, 

@@ -840,7 +840,12 @@ static ed_list *make_ed_list(int size)
   ed = (ed_list *)CALLOC(1, sizeof(ed_list));
   ed->size = size;
   ed->allocated_size = size;
+#if defined(SGI) && (!(defined(__GNUC__)))
+  /* this form required by the SGI C compiler: */
+  ed->fragments = (void *)CALLOC(size, sizeof(ed_fragment *));
+#else
   FRAGMENTS(ed) = (ed_fragment **)CALLOC(size, sizeof(ed_fragment *));
+#endif
   for (i = 0; i < size; i++)
     FRAGMENT(ed, i) = (ed_fragment *)CALLOC(1, sizeof(ed_fragment));
   ed->origin = NULL;
@@ -3961,7 +3966,7 @@ mus_sample_t next_sound (snd_fd *sf)
   return(read_sample(sf));
 }
 
-void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, off_t beg0, off_t num, int pos0, int pos1)
+void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, off_t num, int pos0, int pos1)
 {
   int i, fd, new0, new1;
   char *name;

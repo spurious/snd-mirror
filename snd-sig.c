@@ -1632,6 +1632,8 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved,
     }
 }
 
+/* TODO: should reverse-channel move the cursor?  src-channel? */
+
 static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XEN edp, char *caller, int arg_pos)
 {
   snd_state *ss;
@@ -1791,8 +1793,6 @@ static void reverse_sound(chan_info *ncp, int over_selection, XEN edpos, int arg
     }
   free_sync_state(sc);
 }
-
-void amp_env_env_selection_by(chan_info *cp, mus_any *e, off_t beg, off_t num, int pos);
 
 void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, int regexpr, 
 	       int from_enved, const char *origin, mus_any *gen, XEN edpos, int arg_pos, Float e_base)
@@ -2341,6 +2341,8 @@ void cursor_zeros(chan_info *cp, off_t count, int regexpr)
     }
   si = free_sync_info(si);
 }
+
+/* TODO: smooth-channel|sound as virtual op? (ptree+closure) */
 
 static void smooth_channel(chan_info *cp, off_t beg, off_t dur, int edpos, const char *origin)
 {
@@ -3324,7 +3326,7 @@ static XEN g_swap_channels(XEN snd0, XEN chn0, XEN snd1, XEN chn1, XEN beg, XEN 
 		  (ptree_or_sound_fragments_in_use(cp1, pos1)) ||
 		  (num < FILE_BUFFER_SIZE))
 		swap_channels(cp0, cp1, beg0, num, pos0, pos1);
-	      else copy_then_swap_channels(cp0, cp1, beg0, num, pos0, pos1); /* snd-edits.c */
+	      else copy_then_swap_channels(cp0, cp1, num, pos0, pos1); /* snd-edits.c */
 	    }
 	}
     }

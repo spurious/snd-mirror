@@ -61,6 +61,7 @@
 ;;; explode-sf2 -- turn soundfont file into a bunch of files of the form sample-name.aif
 ;;; open-next-file-in-directory -- middle button click closes current file and opens next
 ;;; chain-dsps
+;;; cursor-follows-play and stays where it was when the play ended
 
 ;;; SOMEDAY: robust pitch tracker
 ;;; SOMEDAY: adaptive notch filter
@@ -2514,3 +2515,50 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 				   (lambda (val) (+ (osc1 val) 
 						    (osc2 (* 2 val))))))
 !#
+
+
+;;; -------- cursor-follows-play and stays where it was when the play ended
+
+(define* (if-cursor-follows-play-it-stays-where-play-stopped #:optional (enable #t))
+  ;; call with #t or no args to enable this, with #f to disable
+  ;; this requires extensions.scm and hooks.scm
+
+  (define current-cursor
+    (make-procedure-with-setter
+     (lambda (snd chn) (channel-property 'cursor snd chn))
+     (lambda (snd chn val) (set! (channel-property 'cursor snd chn) val))))
+
+  (define original-cursor
+    (make-procedure-with-setter
+     (lambda (snd chn) (channel-property 'original-cursor snd chn))
+     (lambda (snd chn val) (set! (channel-property 'original-cursor snd chn) val))))
+
+  (define (local-dac-func data)
+    (for-each
+     (lambda (snd)
+       (do ((i 0 (1+ i)))
+	   ((= i (channels snd)))
+	 (if (not (= (cursor snd i) (original-cursor snd i)))
+	     (set! (current-cursor snd i) (cursor snd i)))))
+     (sounds)))
+
+  (define (local-start-playing-func snd)
+    (do ((i 0 (1+ i)))
+	((= i (channels snd)))
+      (set! (original-cursor snd i) (cursor snd i))
+      (set! (current-cursor snd i) (cursor snd i))))
+
+  (define (local-stop-playing-func snd chn)
+    (set! (cursor snd chn) (current-cursor snd chn)))
+
+  (if enable
+      (begin
+	(set! lst (cons local-dac-func lst))
+	(add-hook! dac-hook local-dac-func)
+	(add-hook! start-playing-hook local-start-playing-func)
+	(add-hook! stop-playing-channel-hook local-stop-playing-func))
+      (begin
+	(remove-local-hook! dac-hook local-dac-func)
+	(remove-local-hook! start-playing-hook local-start-playing-func)
+	(remove-local-hook! stop-playing-channel-hook local-stop-playing-func))))
+

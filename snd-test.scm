@@ -53,12 +53,7 @@
 ;    ((IF <form1> <form2>) (begin (display (quote <form1>)) (if <form1> <form2>) (gc)))
 ;    ((IF <form1> <form2> <form3>) (begin (display (quote <form1>)) (if <form1> <form2> <form3>) (gc)))))
 
-(if (string>=? (version) "1.7")
-    (define IF if)
-    (define-syntax IF
-      (syntax-rules ()
-		    ((IF <form1> <form2>) (if <form1> <form2>))
-		    ((IF <form1> <form2> <form3>) (if <form1> <form2> <form3>)))))
+(define IF if)
 
 (define tests 1)
 (define snd-test -1)
@@ -2863,9 +2858,13 @@
 (define (region2vct r c len)
   (region-samples->vct 0 len r c))
 
+(define old-opt-val (optimization))
+
 (if (or full-test (= snd-test 5) (and keep-going (<= snd-test 5)))
     (begin
       
+      (set! (optimization) 5) ; these trees assume optimization is on
+
       ;; basic edit tree cases
       (let ((ind (new-sound "test.snd")))
 	(if (not (string=? (display-edits) (string-append "
@@ -4840,6 +4839,8 @@ EDITS: 5
 	    (snd-display ";ptree+ptree: ~A" (display-edits ind 0 3)))
 	(undo 2)
 	(close-sound ind))
+
+      (set! (optimization) old-opt-val)
 
       (let ((ind (open-sound "oboe.snd")))
 	(set! (cursor) 1000)
@@ -7710,7 +7711,7 @@ EDITS: 5
 			(lambda args #f))))
 	(IF (not (equal? c1 c2)) (snd-display ";color equal? ~A ~A?" c1 c2))
 	(IF (not (eq? c1 c2)) (snd-display ";color eq? ~A ~A?" c1 c2))
-	(IF (not (equal? c1 c3)) (snd-display ";diff color equal? ~A ~A?" c1 c3))
+	(if (provided? 'snd-motif) (IF (not (equal? c1 c3)) (snd-display ";diff color equal? ~A ~A?" c1 c3)))
 	(IF (eq? c1 c3) (snd-display ";diff color eq? ~A ~A?" c1 c3))
 	(IF (not (equal? (color->list c1) (list 0.0 0.0 1.0)))
 	    (snd-display ";color->list: ~A ~A?" c1 (color->list c1))))

@@ -208,6 +208,12 @@ static void dialog_select_callback(GtkTreeSelection *selection, gpointer context
     }
 }
 
+void clear_deleted_snd_info(void *data)
+{
+  file_dialog_info *fd = (file_dialog_info *)data;
+  fd->file_play_sp = NULL;
+}
+
 static void play_selected_callback(GtkWidget *w, gpointer data)
 {
   file_dialog_info *fd = (file_dialog_info *)data;
@@ -218,7 +224,7 @@ static void play_selected_callback(GtkWidget *w, gpointer data)
 	stop_playing_sound(fd->file_play_sp);
       filename = (char *)gtk_file_selection_get_filename(GTK_FILE_SELECTION(fd->dialog));
       fd->file_play_sp = make_sound_readable(get_global_state(), filename, FALSE);
-      fd->file_play_sp->delete_me = TRUE;
+      fd->file_play_sp->delete_me = (void *)fd;
       if (fd->file_play_sp)
 	play_sound(fd->file_play_sp, 0, 
 		   NO_END_SPECIFIED, IN_BACKGROUND, 

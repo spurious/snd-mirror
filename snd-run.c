@@ -2062,10 +2062,12 @@ static xen_value *if_form(ptree *prog, XEN form, int need_result)
 	  if ((false_result) && (false_result->type != true_result->type))
 	    {
 	      /* #f is ok as null pointer so fixup if needed */
-	      if (false_result->type == R_BOOL)
+	      if ((false_result->type == R_BOOL) &&
+		  ((true_result->type == R_CLM) || (true_result->type == R_READER)))
 		false_result->type = true_result->type;
 	      else
-		if (true_result->type == R_BOOL)
+		if ((true_result->type == R_BOOL) &&
+		    ((false_result->type == R_CLM) || (false_result->type == R_READER)))
 		  true_result->type = false_result->type;
 	    }
 	  if ((false_result == NULL) ||
@@ -4376,7 +4378,7 @@ static xen_value *expt_1(ptree *prog, xen_value **args, int constants)
 static void fneq_f(int *args, int *ints, Float *dbls) {BOOL_RESULT = (fabs(FLOAT_ARG_1 - FLOAT_ARG_2) > .001);}
 static char *descr_fneq_f(int *args, int *ints, Float *dbls) 
 {
-  return(mus_format( FLT_PT " = fneq(" FLT_PT ", " FLT_PT ")", args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1, args[2], FLOAT_ARG_2));
+  return(mus_format( INT_PT " = fneq(" FLT_PT ", " FLT_PT ")", args[0], BOOL_RESULT, args[1], FLOAT_ARG_1, args[2], FLOAT_ARG_2));
 }
 static xen_value *fneq_1(ptree *prog, xen_value **args, int constants)
 {

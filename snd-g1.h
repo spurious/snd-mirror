@@ -544,7 +544,7 @@ void make_mix_file_dialog(snd_state *ss, int managed);
 GtkWidget *edit_header(snd_info *sp);
 void set_open_file_play_button(int val);
 void g_init_gxfile(void);
-
+void clear_deleted_snd_info(void *fd);
 
 
 /* -------- snd-gprint.c -------- */

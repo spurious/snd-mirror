@@ -2148,6 +2148,7 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
        *   tried: glScissor + glClear, 
        *          glRectf in bg color
        *          no action (something is still clearing the darn thing!)
+       * TODO: get gl spectro to work in united channel cases
        */
       /* SOMEDAY: editable spectrogram (select, apply any selection-proc)
 	 TODO: printing support (via pixmaps I guess) glReadBuffer(GL_BACK) then glReadPixels
@@ -3403,11 +3404,8 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
   int ind, time;
   fp = cp->fft;
   ap = fp->axis;
-  if (x < ap->x_axis_x0) 
-    x = ap->x_axis_x0; 
-  else 
-    if (x > ap->x_axis_x1) 
-      x = ap->x_axis_x1;
+  if (x < ap->x_axis_x0) x = ap->x_axis_x0; else if (x > ap->x_axis_x1) x = ap->x_axis_x1;
+  if (ap->x_axis_x1 == ap->x_axis_x0) return(copy_string("?"));
   xf = ap->x0 + (ap->x1 - ap->x0) * (Float)(x - ap->x_axis_x0) / (Float)(ap->x_axis_x1 - ap->x_axis_x0);
   if (cp->fft_log_frequency)                                /* map axis x1 = 1.0 to srate/2 */
     xf = ((exp(xf * log(LOG_FACTOR + 1.0)) - 1.0) / LOG_FACTOR) * SND_SRATE(cp->sound) * 0.5 * cp->spectro_cutoff; 
@@ -3416,6 +3414,7 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
       if (cp->transform_type == FOURIER)
 	ind = (int)((fp->current_size * xf) / (Float)SND_SRATE(cp->sound));
       else ind = (int)xf;
+      if (ind >= fp->current_size) ind = fp->current_size - 1;
       return(mus_format("(%.1f%s, transform val: %.3f%s (raw: %.3f)",
 			xf,
 			((cp->transform_type == AUTOCORRELATION) ? " samps" : " Hz"),
@@ -3427,12 +3426,16 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
     {
       if (cp->transform_graph_type == GRAPH_AS_SONOGRAM) 	  /* si->data[slices][bins] */
 	{
+	  if (y < ap->y_axis_y1) y = ap->y_axis_y1; else if (y > ap->y_axis_y0) y = ap->y_axis_y0;
+	  if (ap->y_axis_y1 == ap->y_axis_y0) return(copy_string("?"));
 	  yf = ap->y0 + (ap->y1 - ap->y0) * (Float)(y - ap->y_axis_y0) / (Float)(ap->y_axis_y1 - ap->y_axis_y0);
 	  si = (sono_info *)(cp->sonogram_data);
 	  if (cp->transform_type == FOURIER)
 	    ind = (int)((fp->current_size * yf) / (Float)SND_SRATE(cp->sound));
 	  else ind = (int)yf;
+	  if (ind >= si->total_bins) ind = si->total_bins - 1;
 	  time = (int)(si->target_slices * (Float)(x - ap->x_axis_x0) / (Float)(ap->x_axis_x1 - ap->x_axis_x0));
+	  if (time >= si->total_slices) time = si->total_slices - 1;
 	  return(mus_format("(time: %.2f, freq: %.1f, val: %.3f%s (raw: %.3f))",
 			    xf, yf,
 			    (cp->fft_log_magnitude) ? in_dB(cp->min_dB, cp->lin_dB, si->data[time][ind] / si->scale) : (si->data[time][ind] / si->scale),
@@ -3709,7 +3712,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
   mark *old_mark;
   int actax;
   off_t samps;
-  char *str;
+  char *str = NULL;
   sp = cp->sound;
   ss = cp->state;
   if (sp->channel_style == CHANNELS_COMBINED)

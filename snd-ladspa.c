@@ -427,9 +427,6 @@ a user interface edit the parameter in a useful way."
 
 /*****************************************************************************/
 
-snd_fd *get_sf(XEN obj);
-int sf_p(XEN obj);
-
 /* FIXME: We could improve this function to receive a list of plugin configurations for chain processing. */
 
 #define S_apply_ladspa "apply-ladspa"

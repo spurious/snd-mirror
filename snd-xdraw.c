@@ -247,11 +247,37 @@ void draw_grf_points(chan_info *cp, axis_context *ax, int j, axis_info *ap, Floa
 	  size8 = cp->dot_size / 8;
 	  size4 = cp->dot_size / 4;
 	  if (size4 < 1) size4 = 1;
-	  draw_points(ax, points, j, cp->dot_size);
-	  for (i = 0; i < j; i++)
-	    if (points[i].y > gy0) /* unsigned int height */
-	      XFillRectangle(ax->dp, ax->wn, ax->gc, points[i].x - size8, gy0, size4, points[i].y - gy0);
-	    else XFillRectangle(ax->dp, ax->wn, ax->gc, points[i].x - size8, points[i].y, size4, gy0 - points[i].y);
+	  if (cp->dot_size < 20)
+	    {
+	      draw_points(ax, points, j, cp->dot_size);
+	      for (i = 0; i < j; i++)
+		if (points[i].y > gy0) /* unsigned int height */
+		  XFillRectangle(ax->dp, ax->wn, ax->gc, points[i].x - size8, gy0, size4, points[i].y - gy0);
+		else XFillRectangle(ax->dp, ax->wn, ax->gc, points[i].x - size8, points[i].y, size4, gy0 - points[i].y);
+	    }
+	  else
+	    {
+	      int radius, size6, size12, size3;
+	      radius = cp->dot_size / 2;
+	      size6 = snd_round(cp->dot_size / 6.0);
+	      size12 = snd_round(cp->dot_size / 12.0);
+	      size3 = snd_round(cp->dot_size / 3.0);
+	      for (i = 0; i < j; i++) 
+		{
+		  XDrawArc(ax->dp, ax->wn, ax->gc, 
+			   points[i].x - radius, points[i].y - radius,
+			   cp->dot_size, cp->dot_size, 0, 360 * 64);
+		  XDrawArc(ax->dp, ax->wn, ax->gc, 
+			   points[i].x - size3, points[i].y - size3,
+			   2 * size3, 2 * size3, 200 * 64, 140 * 64);
+		  XDrawArc(ax->dp, ax->wn, ax->gc, 
+			   points[i].x - size6 - size12, points[i].y - size6,
+			   size6, size6, 0, 360 * 64);
+		  XDrawArc(ax->dp, ax->wn, ax->gc, 
+			   points[i].x + size12, points[i].y - size6,
+			   size6, size6, 0, 360 * 64);
+		}
+	    }
 	}
       break;
     }
