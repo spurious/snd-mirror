@@ -128,7 +128,7 @@ for example"
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_2, S_change_window_property, "a string");
   if (XEN_STRING_P(command))
     c = copy_string(XEN_TO_C_STRING(command));
-  else c = copy_string(g_print_1(command));
+  else c = g_print_1(command);
   change_window_property(XEN_TO_C_STRING(winat), XEN_TO_C_STRING(name), c);
   if (c) FREE(c);
   return(XEN_FALSE);

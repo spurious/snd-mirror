@@ -606,7 +606,9 @@
   XEN_NARGIFY_3(gxm_XSetRegion_w, gxm_XSetRegion)
 #if (!XM_DISABLE_DEPRECATED)
   XEN_NARGIFY_4(gxm_XSetStandardColormap_w, gxm_XSetStandardColormap)
+  XEN_NARGIFY_8(gxm_XSetStandardProperties_w, gxm_XSetStandardProperties)
 #endif
+  XEN_NARGIFY_8(gxm_XSetWMProperties_w, gxm_XSetWMProperties)
   XEN_NARGIFY_3(gxm_XShrinkRegion_w, gxm_XShrinkRegion)
   XEN_NARGIFY_3(gxm_XSubtractRegion_w, gxm_XSubtractRegion)
   XEN_NARGIFY_3(gxm_XUnionRectWithRegion_w, gxm_XUnionRectWithRegion)
@@ -1300,6 +1302,17 @@
   XEN_NARGIFY_4(gxm_XEditResCheckMessages_w, gxm_XEditResCheckMessages)
 #endif
 
+#if HAVE_XSHAPEQUERYEXTENSION
+  XEN_NARGIFY_1(gxm_XShapeQueryExtension_w, gxm_XShapeQueryExtension)
+  XEN_NARGIFY_1(gxm_XShapeQueryVersion_w, gxm_XShapeQueryVersion)
+  XEN_NARGIFY_2(gxm_XShapeQueryExtents_w, gxm_XShapeQueryExtents)
+  XEN_NARGIFY_3(gxm_XShapeGetRectangles_w, gxm_XShapeGetRectangles)
+  XEN_NARGIFY_5(gxm_XShapeOffsetShape_w, gxm_XShapeOffsetShape)
+  XEN_NARGIFY_7(gxm_XShapeCombineRegion_w, gxm_XShapeCombineRegion)
+  XEN_NARGIFY_7(gxm_XShapeCombineMask_w, gxm_XShapeCombineMask)
+  XEN_NARGIFY_8(gxm_XShapeCombineShape_w, gxm_XShapeCombineShape)
+  XEN_NARGIFY_9(gxm_XShapeCombineRectangles_w, gxm_XShapeCombineRectangles)
+#endif
 
 static void define_procedures(void)
 {
@@ -1892,7 +1905,9 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XSetRegion, gxm_XSetRegion_w, 3, 0, 0, H_XSetRegion);
 #if (!XM_DISABLE_DEPRECATED)
   XM_DEFINE_PROCEDURE(XSetStandardColormap, gxm_XSetStandardColormap_w, 4, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XSetStandardProperties, gxm_XSetStandardProperties_w, 8, 0, 0, H_XSetStandardProperties);
 #endif
+  XM_DEFINE_PROCEDURE(XSetWMProperties, gxm_XSetWMProperties_w, 8, 0, 0, H_XSetWMProperties);
   XM_DEFINE_PROCEDURE(XShrinkRegion, gxm_XShrinkRegion_w, 3, 0, 0, H_XShrinkRegion);
   XM_DEFINE_PROCEDURE(XSubtractRegion, gxm_XSubtractRegion_w, 3, 0, 0, H_XSubtractRegion);
   XM_DEFINE_PROCEDURE(XUnionRectWithRegion, gxm_XUnionRectWithRegion_w, 3, 0, 0, H_XUnionRectWithRegion);
@@ -2655,14 +2670,29 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmPrimitive?, gxm_XmIsPrimitive_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmTextSource?, XEN_XmTextSource_p_w, 1, 0, 0, NULL);
 #endif
+
 #if HAVE_XPM
   XM_DEFINE_PROCEDURE(XpmAttributes?, XEN_XpmAttributes_p_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XpmImage?, XEN_XpmImage_p_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XpmColorSymbol?, XEN_XpmColorSymbol_p_w, 1, 0, 0, NULL);
 #endif
+
 #if WITH_EDITRES
   XM_DEFINE_PROCEDURE(_XEditResCheckMessages, gxm_XEditResCheckMessages_w, 4, 0, 0, NULL);
 #endif
+
+#if HAVE_XSHAPEQUERYEXTENSION
+  XM_DEFINE_PROCEDURE(XShapeQueryExtension, gxm_XShapeQueryExtension_w, 1, 0, 0, H_XShapeQueryExtension);
+  XM_DEFINE_PROCEDURE(XShapeQueryVersion, gxm_XShapeQueryVersion_w, 1, 0, 0, H_XShapeQueryVersion);
+  XM_DEFINE_PROCEDURE(XShapeQueryExtents, gxm_XShapeQueryExtents_w, 2, 0, 0, H_XShapeQueryExtents);
+  XM_DEFINE_PROCEDURE(XShapeGetRectangles, gxm_XShapeGetRectangles_w, 3, 0, 0, H_XShapeGetRectangles);
+  XM_DEFINE_PROCEDURE(XShapeOffsetShape, gxm_XShapeOffsetShape_w, 5, 0, 0, H_XShapeOffsetShape);
+  XM_DEFINE_PROCEDURE(XShapeCombineRegion, gxm_XShapeCombineRegion_w, 7, 0, 0, H_XShapeCombineRegion);
+  XM_DEFINE_PROCEDURE(XShapeCombineMask, gxm_XShapeCombineMask_w, 7, 0, 0, H_XShapeCombineMask);
+  XM_DEFINE_PROCEDURE(XShapeCombineShape, gxm_XShapeCombineShape_w, 8, 0, 0, H_XShapeCombineShape);
+  XM_DEFINE_PROCEDURE(XShapeCombineRectangles, gxm_XShapeCombineRectangles_w, 9, 0, 0, H_XShapeCombineRectangles);
+#endif
+
 }
 
 
@@ -2940,6 +2970,9 @@ static void define_procedures(void)
   XEN_NARGIFY_1(gxm_colormap_w, gxm_colormap)
   XEN_NARGIFY_2(gxm_set_colormap_w, gxm_set_colormap)
 
+  XEN_NARGIFY_2(gxm_set_input_w, gxm_set_input)
+  XEN_NARGIFY_2(gxm_set_initial_state_w, gxm_set_initial_state)
+
   XEN_NARGIFY_1(gxm_min_height_w, gxm_min_height)
   XEN_NARGIFY_1(gxm_max_height_w, gxm_max_height)
   XEN_NARGIFY_1(gxm_min_width_w, gxm_min_width)
@@ -3151,8 +3184,10 @@ static void define_structs(void)
   XM_DEFINE_READER(min_bounds, gxm_min_bounds_w, 1, 0, 0);
   XM_DEFINE_READER(max_bounds, gxm_max_bounds_w, 1, 0, 0);
   XM_DEFINE_READER(per_char, gxm_per_char_w, 1, 0, 0);
-  XM_DEFINE_READER(input, gxm_input_w, 1, 0, 0);
-  XM_DEFINE_READER(initial_state, gxm_initial_state_w, 1, 0, 0);
+
+  XM_DEFINE_ACCESSOR(input, gxm_input_w, set_input, gxm_set_input_w, 1, 0, 2, 0);
+  XM_DEFINE_ACCESSOR(initial_state, gxm_initial_state_w, set_initial_state, gxm_set_initial_state_w, 1, 0, 2, 0);
+
   XM_DEFINE_READER(icon_pixmap, gxm_icon_pixmap_w, 1, 0, 0);
   XM_DEFINE_READER(icon_window, gxm_icon_window_w, 1, 0, 0);
   XM_DEFINE_READER(icon_x, gxm_icon_x_w, 1, 0, 0);

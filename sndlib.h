@@ -42,6 +42,11 @@
   #include <Gestalt.h>
 #endif
 
+#if HAVE_UNISTD_H && (!(defined(_MSC_VER)))
+  /* SEEK_END */
+  #include <unistd.h>
+#endif
+
 #if defined(macosx)
   #define MAC_OSX 1
 #endif

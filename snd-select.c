@@ -599,7 +599,6 @@ int save_selection(char *ofile, int type, int format, int srate, const char *com
   if (sp)
     {
       bool copy_ok = false;
-
       bps = mus_bytes_per_sample(format);
       num = dur * bps * chans;
       no_space = disk_space_p(sp, num, 0, ofile);

@@ -387,10 +387,11 @@ else
 
   TEST_LIBS="$X_LIBS $X_PRE_LIBS -lXt -lX11 $X_EXTRA_LIBS"
 
-  AC_CHECK_LIB(Xext, XShapeCombineMask, 
+  AC_CHECK_LIB(Xext, XShapeQueryExtension, 
     [
      XLIBS="$XLIBS -lXext"
      TEST_LIBS="$TEST_LIBS -lXext"
+     AC_DEFINE(HAVE_XSHAPEQUERYEXTENSION)
     ], , $TEST_LIBS)
 
   GX_FILES="X_O_FILES"

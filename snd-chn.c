@@ -428,7 +428,7 @@ void add_channel_data_1(chan_info *cp, int srate, off_t frames, channel_graph_t 
   axis_info *ap;
   Float ymin = 0.0, ymax = 0.0, y0, y1;
   double xmax, x0, x1, dur, gdur;
-  char *label;
+  char *label = NULL, *hook_label = NULL;
   bool ymin_set = false, ymax_set = false;
   x0 = 0.0;
   x1 = 0.1;
@@ -475,7 +475,7 @@ void add_channel_data_1(chan_info *cp, int srate, off_t frames, channel_graph_t 
 	  if (len > 1) x1 = XEN_TO_C_DOUBLE(XEN_CADR(res));
 	  if (len > 2) y0 = XEN_TO_C_DOUBLE(XEN_CADDR(res));
 	  if (len > 3) y1 = XEN_TO_C_DOUBLE(XEN_CADDDR(res));
-	  if (len > 4) label = XEN_TO_C_STRING(XEN_LIST_REF(res, 4));
+	  if (len > 4) hook_label = copy_string(XEN_TO_C_STRING(XEN_LIST_REF(res, 4)));
 	  if (len > 5)
 	    {
 	      ymin = XEN_TO_C_DOUBLE(XEN_LIST_REF(res, 5));
@@ -509,7 +509,8 @@ void add_channel_data_1(chan_info *cp, int srate, off_t frames, channel_graph_t 
   if (xmax <= 0.0) xmax = .001;
   if (ymin >= ymax) ymin = ymax - .01;
   if (y0 >= y1) y0 = y1 - .01;
-  ap = make_axis_info(cp, 0.0, xmax, ymin, ymax, label, x0, x1, y0, y1, NULL);
+  ap = make_axis_info(cp, 0.0, xmax, ymin, ymax, (hook_label) ? hook_label : label, x0, x1, y0, y1, NULL);
+  if (hook_label) FREE(hook_label);
   if (dur == 0)
     {
       ap->zx = 1.0;

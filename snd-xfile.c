@@ -716,13 +716,9 @@ static void save_as_ok_callback(Widget w, XtPointer context, XtPointer info)
 { 
   char *str = NULL, *comment, *fullname;
   snd_info *sp;
-  int i, type, format, srate, opened = -1;
-  str = XmTextGetString(save_as_file_data->srate_text);
-  srate = string2int(str);
-  if (str) XtFree(str);
-  comment = XmTextGetString(save_as_file_data->comment_text);
-  type = save_as_file_data->current_type;
-  format = save_as_file_data->current_format;
+  int i, type, format, srate, chans, opened = -1;
+  off_t location, samples;
+  comment = read_file_data_choices(save_as_file_data, &srate, &chans, &type, &format, &location, &samples);
   str = XmTextGetString(file_save_as_file_name);
   sp = any_selected_sound();
   if ((str) && (*str))
@@ -730,6 +726,7 @@ static void save_as_ok_callback(Widget w, XtPointer context, XtPointer info)
   else 
     if (sp) 
       report_in_minibuffer(sp, _("not saved (no file name given)"));
+  if (comment) FREE(comment);
   XtUnmanageChild(save_as_dialog);
   if ((sp) && (str) && (emacs_style_save_as(ss)) &&
       (save_as_dialog_type == FILE_SAVE_AS) && 
@@ -1116,7 +1113,6 @@ void make_file_save_as_dialog(void)
   make_save_as_dialog((char *)((sp) ? sp->short_filename : ""),
 		      default_output_type(ss),
 		      default_output_format(ss));
-
   load_header_and_data_lists(save_as_file_data,
 			     save_as_file_data->current_type,
 			     save_as_file_data->current_format,

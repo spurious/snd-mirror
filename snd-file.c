@@ -260,6 +260,7 @@ file_info *make_file_info(const char *fullname)
       if (type == MUS_RAW)
 	{
 	  XEN res = XEN_FALSE;
+	  int res_loc = -1;
 #if HAVE_GUILE
 	  XEN procs, arg1;
 #endif
@@ -289,6 +290,8 @@ file_info *make_file_info(const char *fullname)
 				   arg1, 
 				   res, 
 				   S_open_raw_sound_hook);
+		  if (res_loc != -1) snd_unprotect_at(res_loc);
+		  res_loc = snd_protect(res);
 		  procs = XEN_CDR(procs);
 		}
 #else
@@ -296,6 +299,7 @@ file_info *make_file_info(const char *fullname)
 			       C_TO_XEN_STRING(fullname), 
 			       XEN_FALSE, 
 			       S_open_raw_sound_hook);
+	      res_loc = snd_protect(res);
 #endif
 	    }
 	  if (XEN_LIST_P(res)) /* empty list ok here -> accept all current defaults */
@@ -316,6 +320,7 @@ file_info *make_file_info(const char *fullname)
 	      mus_sound_override_header(fullname, srate, chans, data_format, 
 					MUS_RAW, data_location,
 					mus_bytes_to_samples(data_format, bytes));
+	      if (res_loc != -1) snd_unprotect_at(res_loc);	      
 	      hdr = (file_info *)CALLOC(1, sizeof(file_info));
 	      hdr->name = copy_string(fullname);
 	      hdr->type = MUS_RAW;
@@ -331,6 +336,7 @@ file_info *make_file_info(const char *fullname)
 	  else 
 	    {
 	      char *str;
+	      if (res_loc != -1) snd_unprotect_at(res_loc);
 	      str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
 	      mus_snprintf(str, PRINT_BUFFER_SIZE, _("No header found for %s"), filename_without_home_directory(fullname));
 	      hdr = raw_data_dialog_to_file_info(fullname, str);
@@ -1760,7 +1766,8 @@ void make_prevfiles_list_1(void)
 		file_list = XEN_CONS(C_TO_XEN_STRING(prevfullnames[i]), file_list);
 	      gc_loc = snd_protect(file_list);
 	      file_list = XEN_CALL_1(ss->file_sort_proc, file_list, "previous files sort");
-	      snd_unprotect_at(gc_loc);
+	      snd_unprotect_at(gc_loc); /* unprotect old version */
+	      gc_loc = snd_protect(file_list); /* protect new */
 	      if (XEN_LIST_P(file_list))
 		{
 		  for (i = 0; (i < len) && (XEN_NOT_NULL_P(file_list)); i++, file_list = XEN_CDR(file_list))
@@ -1775,6 +1782,7 @@ void make_prevfiles_list_1(void)
 			  }
 		    }
 		}
+	      snd_unprotect_at(gc_loc);
 	    }
 	  for (i = 0; i < len; i++) FREE(data[i]);
 	  FREE(data);
@@ -2140,7 +2148,7 @@ int check_for_filename_collisions_and_save(snd_info *sp, char *str, save_dialog_
       else result = save_selection(str, type, format, srate, comment, SAVE_ALL_CHANS);
       if (result != MUS_NO_ERROR)
 	{
-	  report_in_minibuffer_and_save(sp, "%s: %s", str, strerror(errno));
+	  report_in_minibuffer_and_save(sp, "%s: %s", str, (errno != 0) ? strerror(errno) : mus_error_to_string(result));
 	  opened = -1;
 	}
       else report_in_minibuffer(sp, _("%s saved as %s"),

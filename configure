@@ -11477,9 +11477,9 @@ fi
 
   TEST_LIBS="$X_LIBS $X_PRE_LIBS -lXt -lX11 $X_EXTRA_LIBS"
 
-  echo "$as_me:$LINENO: checking for XShapeCombineMask in -lXext" >&5
-echo $ECHO_N "checking for XShapeCombineMask in -lXext... $ECHO_C" >&6
-if test "${ac_cv_lib_Xext_XShapeCombineMask+set}" = set; then
+  echo "$as_me:$LINENO: checking for XShapeQueryExtension in -lXext" >&5
+echo $ECHO_N "checking for XShapeQueryExtension in -lXext... $ECHO_C" >&6
+if test "${ac_cv_lib_Xext_XShapeQueryExtension+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
@@ -11498,11 +11498,11 @@ extern "C"
 #endif
 /* We use char because int might match the return type of a gcc2
    builtin and then its argument prototype would still apply.  */
-char XShapeCombineMask ();
+char XShapeQueryExtension ();
 int
 main ()
 {
-XShapeCombineMask ();
+XShapeQueryExtension ();
   ;
   return 0;
 }
@@ -11519,22 +11519,26 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_Xext_XShapeCombineMask=yes
+  ac_cv_lib_Xext_XShapeQueryExtension=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_Xext_XShapeCombineMask=no
+ac_cv_lib_Xext_XShapeQueryExtension=no
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_Xext_XShapeCombineMask" >&5
-echo "${ECHO_T}$ac_cv_lib_Xext_XShapeCombineMask" >&6
-if test $ac_cv_lib_Xext_XShapeCombineMask = yes; then
+echo "$as_me:$LINENO: result: $ac_cv_lib_Xext_XShapeQueryExtension" >&5
+echo "${ECHO_T}$ac_cv_lib_Xext_XShapeQueryExtension" >&6
+if test $ac_cv_lib_Xext_XShapeQueryExtension = yes; then
 
      XLIBS="$XLIBS -lXext"
      TEST_LIBS="$TEST_LIBS -lXext"
+     cat >>confdefs.h <<\_ACEOF
+#define HAVE_XSHAPEQUERYEXTENSION 1
+_ACEOF
+
 
 fi
 

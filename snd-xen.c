@@ -294,6 +294,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
   snd_info *sp;
   char *possible_code;
   XEN port;
+  int port_gc_loc;
   XEN stack;
   char *name_buf = NULL;
   bool need_comma = false;
@@ -312,6 +313,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
 		       SCM_OPN | SCM_WRTNG,
 		       "snd error handler");
 #endif
+  port_gc_loc = snd_protect(port);
 
   if ((DEBUGGING) || (ss->batch_mode))
     {
@@ -384,12 +386,16 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
     {
       /* this actually isn't very useful since it points to the end of the enclosing form */
       char *info;
-      XEN portline;
+      int gc_loc;
+      XEN portline, portname;
       portline = scm_port_line(scm_current_load_port());
+      portname = scm_port_filename(scm_current_load_port());
+      gc_loc = snd_protect(portname);
       info = (char *)CALLOC(1024, sizeof(char));
       sprintf(info, " (%s: line %d)", 
-	      filename_without_home_directory(XEN_TO_C_STRING(scm_port_filename(scm_current_load_port()))),
+	      filename_without_home_directory(XEN_TO_C_STRING(portname)),
 	      XEN_TO_C_INT(portline));
+      snd_unprotect_at(gc_loc);
       XEN_PUTS(info, port);
       FREE(info);
     }
@@ -424,6 +430,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
 	  else snd_error(name_buf);
 	}
     }
+  snd_unprotect_at(port_gc_loc);
   check_for_event();
   return(tag);
 }
@@ -472,7 +479,7 @@ void snd_rb_raise(XEN tag, XEN throw_args)
 /* if error occurs in sndlib, mus-error wants to throw to user-defined catch
  *   (or our own global catch), but if the sndlib function was not called by the user, 
  *   the attempt to throw to a non-existent catch tag exits the main program!!
- *   so, we only throw if the catch_exists flag is true.
+ *   so, we only throw if catch_exists.
  */
 
 #if HAVE_GUILE
@@ -771,12 +778,11 @@ XEN g_call3(XEN proc, XEN arg1, XEN arg2, XEN arg3, const char *caller)
 #endif
 }
 
-char *g_print_1(XEN obj) /* don't free return val */
+char *g_print_1(XEN obj) /* free return val */
 {
-  char *str1 = NULL;
 #if HAVE_GUILE
 #if HAVE_SCM_OBJECT_TO_STRING
-  return(XEN_AS_STRING(obj)); 
+  return(copy_string(XEN_AS_STRING(obj))); 
 #else
   XEN str, val;
   XEN port;
@@ -785,15 +791,14 @@ char *g_print_1(XEN obj) /* don't free return val */
   scm_prin1(obj, port, 1);
   val = XEN_PORT_TO_STRING(port);
   XEN_CLOSE_PORT(port);
-  str1 = XEN_TO_C_STRING(val);
+  return(copy_string(XEN_TO_C_STRING(val)));
 #endif
 #endif
 #if HAVE_RUBY
   if (XEN_NULL_P(obj))
-    return("nil"); /* Ruby returns the null string in this case??? */
-  return(XEN_AS_STRING(obj));
+    return(copy_string("nil")); /* Ruby returns the null string in this case??? */
+  return(copy_string(XEN_AS_STRING(obj)));
 #endif
-  return(str1);
 }
 
 static char *gl_print(XEN result)
@@ -803,7 +808,7 @@ static char *gl_print(XEN result)
   /* specialize vectors which can be enormous in this context */
   if ((!(XEN_VECTOR_P(result))) || 
       ((int)(XEN_VECTOR_LENGTH(result)) <= print_length(ss)))
-    return(copy_string(g_print_1(result)));
+    return(g_print_1(result));
   ilen = print_length(ss); 
   newbuf = (char *)CALLOC(128, sizeof(char));
   savelen = 128;
@@ -825,6 +830,7 @@ static char *gl_print(XEN result)
 	      newbuf = snd_strcat(newbuf, " ", &savelen); 
 	    }
 	  newbuf = snd_strcat(newbuf, str, &savelen);
+	  FREE(str);
 	}
     }
 #if HAVE_GUILE

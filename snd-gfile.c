@@ -432,7 +432,7 @@ static void file_open_dialog_delete(GtkWidget *w, GdkEvent *event, gpointer cont
 void make_open_file_dialog(bool read_only, bool managed)
 {
   if (!open_dialog)
-    open_dialog = make_file_dialog(read_only, (read_only) ? _("View") : _("Open"), FILE_OPEN_DIALOG,
+    open_dialog = make_file_dialog(read_only, (char *)((read_only) ? _("View") : _("Open")), FILE_OPEN_DIALOG,
 				   (GtkSignalFunc)file_open_dialog_ok,				     
 				   (GtkSignalFunc)file_open_dialog_delete,
 				   (GtkSignalFunc)file_open_dialog_dismiss);
@@ -440,7 +440,7 @@ void make_open_file_dialog(bool read_only, bool managed)
     {
       if (read_only != open_dialog->file_dialog_read_only)
 	{
-	  gtk_window_set_title(GTK_WINDOW(open_dialog->dialog), (read_only) ? (const char *)(_("View")) : (const char *)(_("Open")));
+	  gtk_window_set_title(GTK_WINDOW(open_dialog->dialog), (char *)((read_only) ? _("View") : _("Open")));
 	  open_dialog->file_dialog_read_only = read_only;
 	}
     }
@@ -604,6 +604,14 @@ file_data *make_file_data_panel(GtkWidget *parent, char *name,
 
       fdat->samples_text = snd_entry_new(scbox, true);
     }
+  else
+    {
+      /* need a spacer to force the lists to have room */
+      GtkWidget *spacer;
+      spacer = gtk_vseparator_new();
+      gtk_box_pack_start(GTK_BOX(scbox), spacer, false, false, 40);
+      gtk_widget_show(spacer);
+    }
 
   combox = gtk_hbox_new(false, 0);
   gtk_box_pack_start(GTK_BOX(parent), combox, true, true, 4);
@@ -644,16 +652,10 @@ static char *last_save_as_filename = NULL;
 static void save_as_ok_callback(GtkWidget *w, gpointer data)
 {
   char *str = NULL, *comment = NULL, *fullname = NULL;
-  int i, type, format, srate, opened = -1;
+  int i, type, format, srate, chans, opened = -1;
+  off_t location, samples;
   snd_info *sp;
-  str = (char *)gtk_entry_get_text(GTK_ENTRY(save_as_file_data->srate_text));
-  srate = string2int(str);
-  str = NULL;
-  if (GTK_IS_TEXT_VIEW(save_as_file_data->comment_text))
-    comment = sg_get_text(save_as_file_data->comment_text, 0, -1);
-  else comment = (char *)gtk_entry_get_text(GTK_ENTRY(save_as_file_data->comment_text)); 
-  type = save_as_file_data->current_type;
-  format = save_as_file_data->current_format;
+  comment = read_file_data_choices(save_as_file_data, &srate, &chans, &type, &format, &location, &samples);
   last_save_as_filename = (char *)gtk_file_selection_get_filename(GTK_FILE_SELECTION(save_as_dialog));
   sp = any_selected_sound();
   if (last_save_as_filename)
@@ -661,6 +663,7 @@ static void save_as_ok_callback(GtkWidget *w, gpointer data)
   else 
     if (sp) 
       report_in_minibuffer(sp, _("not saved (no name given)"));
+  if (comment) FREE(comment);
   gtk_widget_hide(save_as_dialog);
   if ((sp) && (last_save_as_filename) && (emacs_style_save_as(ss)) &&
       (save_as_dialog_type == FILE_SAVE_AS) && 
@@ -698,8 +701,7 @@ static void make_save_as_dialog(char *sound_name, int header_type, int format_ty
       fbox = gtk_vbox_new(false, 0);
       gtk_box_pack_start(GTK_BOX(GTK_FILE_SELECTION(save_as_dialog)->main_vbox), fbox, true, true, 0);
       gtk_widget_show(fbox);
-
-      save_as_file_data = make_file_data_panel(fbox, "data-form", false, header_type, format_type, false, false, true);
+      save_as_file_data = make_file_data_panel(fbox, "data-form", false, header_type, format_type, false, false, false);
       set_dialog_widget(FILE_SAVE_AS_DIALOG, save_as_dialog);
     }
 }
@@ -718,8 +720,8 @@ void make_file_save_as_dialog(void)
   load_header_and_data_lists(save_as_file_data,
 			     save_as_file_data->current_type,
 			     save_as_file_data->current_format,
-			     (hdr) ? hdr->srate : selection_srate(), 0, -1,
-			     (hdr) ? hdr->samples : selection_len(),
+			     (hdr) ? hdr->srate : selection_srate(), 
+			     0, -1, -1,
 			     com = output_comment(hdr));
   if (com) FREE(com);
   gtk_widget_show(save_as_dialog);
@@ -728,13 +730,14 @@ void make_file_save_as_dialog(void)
 void make_edit_save_as_dialog(void)
 {
   save_as_dialog_type = EDIT_SAVE_AS;
-  make_save_as_dialog(_("current selection"), -1, -1);
+  make_save_as_dialog(_("current selection"),
+		      default_output_type(ss),
+		      default_output_format(ss));
   load_header_and_data_lists(save_as_file_data,
 			     save_as_file_data->current_type,
 			     save_as_file_data->current_format,
-			     selection_srate(), 0, -1,
-			     selection_len(),
-			     NULL);
+			     selection_srate(), 
+			     0, -1, -1, NULL);
   gtk_widget_show(save_as_dialog);
 }
 

@@ -880,22 +880,22 @@ static void apply_fft(fft_state *fs)
       {
 	XEN res = XEN_FALSE, sfd;
 	vct *v;
-	int len;
+	int len, gc_loc, sf_loc;
 	sfd = g_c_make_sample_reader(sf);
-	snd_protect(sfd);
+	sf_loc = snd_protect(sfd);
 	res = XEN_CALL_2(added_transform_proc(cp->transform_type), 
 			 C_TO_XEN_INT(data_len), 
 			 sfd,
 			 "added transform func");
-	snd_protect(res);
+	gc_loc = snd_protect(res);
 	if (VCT_P(res))
 	  {
 	    v = TO_VCT(res);
 	    len = v->length;
 	    for (i = 0; i < len; i++) fft_data[i] = v->data[i];
 	  }
-	snd_unprotect(res);
-	snd_unprotect(sfd);
+	snd_unprotect_at(gc_loc);
+	snd_unprotect_at(sf_loc);
 	free_snd_fd_almost(sf);
 	return;
       }

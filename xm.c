@@ -7,10 +7,12 @@
   #include <config.h>
 #endif
 
-#define XM_DATE "3-Oct-03"
+#define XM_DATE "14-Oct-03"
 
 
 /* HISTORY: 
+ *   14-Oct:    XShapeQueryExtension from Michael Scholz, plus other extensions/shape.h functions and constants.
+ *              Also XSizeHints, XSet[Standard|WM]Properties and accessors for input and initial_state.
  *   3-Oct:     removed some macros that were intended only for testing, added XmTOP_LEFT etc.
  *   29-Sep:    changed: XSetWindowBorder, XSetWindowBackground, XCreatePixmapFromBitmapData, XSetWindowAttributes,
  *                 .backing_pixel, .border_pixel, .background_pixel, .base_pixel; these now use the "wrapped"
@@ -111,6 +113,10 @@
 #include <X11/keysym.h>
 #include <X11/cursorfont.h>
 #include <stdio.h>
+
+#if HAVE_XSHAPEQUERYEXTENSION
+#include <X11/extensions/shape.h>
+#endif
 
 /* compile-time flags are HAVE_XPM HAVE_MOTIF HAVE_XM_XP HAVE_GUILE|HAVE_RUBY XM_DISABLE_DEPRECATED LESSTIF_VERSION WITH_EDITRES WITH_GTK_AND_X11 */
 
@@ -439,6 +445,7 @@ XM_TYPE_PTR_NO_C2X(XVisibilityEvent, XVisibilityEvent *)
 XM_TYPE_PTR_OBJ(XSetWindowAttributes, XSetWindowAttributes *)
 XM_TYPE_PTR(XVisualInfo, XVisualInfo *)
 XM_TYPE_PTR(XWMHints, XWMHints *)
+XM_TYPE_PTR(XSizeHints, XSizeHints *)
 XM_TYPE_PTR(XWindowAttributes, XWindowAttributes *)
 XM_TYPE_PTR_OBJ(XWindowChanges, XWindowChanges *)
 XM_TYPE_PTR(XStandardColormap, XStandardColormap *)
@@ -7919,7 +7926,77 @@ static XEN gxm_XSetStandardColormap(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   XSetStandardColormap(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), XEN_TO_C_XStandardColormap(arg3), XEN_TO_C_Atom(arg4));
   return(XEN_FALSE);
 }
+static XEN gxm_XSetStandardProperties(XEN dpy, XEN win, XEN win_name, XEN icon_name, XEN icon_pixmap, XEN argv, XEN argc, XEN hints)
+{
+  #define H_XSetStandardProperties "XSetStandardProperties(dpy, win, win_name, icon_name, icon_pixmap, argv, argc, hints) sets the standard properties"
+  int c_argc = 0;
+  char **c_argv = NULL;
+  XEN_ASSERT_TYPE(XEN_Display_P(dpy), dpy, XEN_ARG_1, "XSetStandardProperties", "Display*");
+  XEN_ASSERT_TYPE(XEN_Window_P(win), win, XEN_ARG_2, "XSetStandardProperties", "Window");
+  XEN_ASSERT_TYPE(XEN_STRING_P(win_name) || XEN_NULL_P(win_name) || XEN_FALSE_P(win_name), win_name, XEN_ARG_3, "XSetStandardProperties", "char*");
+  XEN_ASSERT_TYPE(XEN_STRING_P(icon_name) || XEN_NULL_P(icon_name) || XEN_FALSE_P(icon_name), icon_name, XEN_ARG_4, "XSetStandardProperties", "char*");
+  XEN_ASSERT_TYPE(XEN_Pixmap_P(icon_pixmap) || XEN_INTEGER_P(icon_pixmap), icon_pixmap, XEN_ARG_5, "XSetStandardProperties", "Pixmap or None");
+  XEN_ASSERT_TYPE(XEN_LIST_P(argv), argv, XEN_ARG_6, "XSetStandardProperties", "list of char*");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(argc), argc, XEN_ARG_7, "XSetStandardProperties", "int");
+  XEN_ASSERT_TYPE(XEN_FALSE_P(hints) || XEN_NULL_P(hints) || XEN_XSizeHints_P(hints), hints, XEN_ARG_8, "XSetStandardProperties", "XSizeHints* or false");
+  c_argc = XEN_TO_C_INT(argc);
+  if (c_argc > 0) c_argv = XEN_TO_C_Strings(argv, c_argc);
+  XSetStandardProperties(XEN_TO_C_Display(dpy),
+			 XEN_TO_C_Window(win),
+			 (XEN_STRING_P(win_name)) ? XEN_TO_C_STRING(win_name): NULL,
+			 (XEN_STRING_P(icon_name)) ? XEN_TO_C_STRING(icon_name) : NULL,
+			 (XEN_Pixmap_P(icon_pixmap)) ? XEN_TO_C_Pixmap(icon_pixmap) : None,
+			 c_argv,
+			 c_argc,
+			 (XEN_XSizeHints_P(hints)) ? XEN_TO_C_XSizeHints(hints) : NULL);
+  if (c_argv) FREE(c_argv);
+  return(XEN_FALSE);
+}
 #endif
+static XEN gxm_XSetWMProperties(XEN dpy, XEN win, XEN win_name, XEN icon_name, XEN argv, XEN argc, XEN normal_hints, XEN wm_hints)
+{
+  /* last arg omitted -- XClassHint not supported */
+  #define H_XSetWMProperties "XSetWMProperties(dpy, win, win_name, icon_name, argv, argc, normal_hints wm_hints) sets the window properties"
+  int c_argc = 0;
+  char **c_argv = NULL;
+  XTextProperty w_name, i_name;
+  bool use_w_name = false, use_i_name = false;
+  XEN_ASSERT_TYPE(XEN_Display_P(dpy), dpy, XEN_ARG_1, "XSetWMProperties", "Display*");
+  XEN_ASSERT_TYPE(XEN_Window_P(win), win, XEN_ARG_2, "XSetWMProperties", "Window");
+  XEN_ASSERT_TYPE(XEN_STRING_P(win_name) || XEN_NULL_P(win_name) || XEN_FALSE_P(win_name), win_name, XEN_ARG_3, "XSetWMProperties", "char*");
+  XEN_ASSERT_TYPE(XEN_STRING_P(icon_name) || XEN_NULL_P(icon_name) || XEN_FALSE_P(icon_name), icon_name, XEN_ARG_4, "XSetWMProperties", "char*");
+  XEN_ASSERT_TYPE(XEN_LIST_P(argv), argv, XEN_ARG_5, "XSetWMProperties", "list of char*");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(argc), argc, XEN_ARG_6, "XSetWMProperties", "int");
+  XEN_ASSERT_TYPE(XEN_FALSE_P(normal_hints) || XEN_XSizeHints_P(normal_hints), normal_hints, XEN_ARG_7, "XSetWMProperties", "XSizeHints* or false");
+  XEN_ASSERT_TYPE(XEN_FALSE_P(wm_hints) || XEN_XWMHints_P(wm_hints), wm_hints, XEN_ARG_8, "XSetWMProperties", "XWMHints* or false");
+  c_argc = XEN_TO_C_INT(argc);
+  if (c_argc > 0) c_argv = XEN_TO_C_Strings(argv, c_argc);
+  if (XEN_STRING_P(win_name))
+    {
+      char *name;
+      use_w_name = true;
+      name = XEN_TO_C_STRING(win_name);
+      XStringListToTextProperty(&name, 1, &w_name);
+    }
+  if (XEN_STRING_P(icon_name))
+    {
+      char *name;
+      use_i_name = true; 
+      name = XEN_TO_C_STRING(icon_name);
+      XStringListToTextProperty(&name, 1, &i_name);
+   }
+  XSetWMProperties(XEN_TO_C_Display(dpy),
+		   XEN_TO_C_Window(win),
+		   (use_w_name) ? &w_name : NULL,
+		   (use_i_name) ? &i_name : NULL,
+		   c_argv,
+		   c_argc,
+		   XEN_TO_C_XSizeHints(normal_hints),
+		   XEN_TO_C_XWMHints(wm_hints),
+		   NULL);
+  if (c_argv) FREE(c_argv);
+  return(XEN_FALSE);
+}
 
 static XEN gxm_XSetRegion(XEN arg1, XEN arg2, XEN arg3)
 {
@@ -13248,6 +13325,187 @@ static XEN gxm_XDestroyImage(XEN arg1)
 
 
 
+/* ----------------------------------------------------------------------------------------------------
+ *
+ *                            *         *  ***********  *         *  ***********
+ *                             *       *   *             *       *        *
+ *                              *     *    *              *     *         *
+ *                               *   *     *               *   *          *
+ *                                * *      *                * *           *
+ *                                 *       *******           *            *
+ *                                * *      *                * *           *
+ *                               *   *     *               *   *          *
+ *                              *     *    *              *     *         *
+ *                             *       *   *             *       *        *
+ *                            *         *  ***********  *         *       *
+ * ----------------------------------------------------------------------------------------------------
+ */
+
+#if HAVE_XSHAPEQUERYEXTENSION
+
+/* thanks to Michael Scholz! */
+
+static XEN gxm_XShapeQueryExtension(XEN dpy)
+{
+  #define H_XShapeQueryExtension "(XShapeQueryExtension dpy) returns list of (Bool event_base error_base)"
+  /* DIFF: (proposal)
+     [C] Bool XShapeQueryExtension(Display *dpy, int *event_base, int *error_base)
+     [XEN] (XShapeQueryExtension dpy) -> (list Bool event_base error_base)
+  */
+  int event_base = 0, error_base = 0;
+  Bool ret = False;
+  XEN_ASSERT_TYPE(XEN_Display_P(dpy), dpy, XEN_ARG_1, "XShapeQueryExtension", "Display*");
+  ret = XShapeQueryExtension(XEN_TO_C_Display(dpy), &event_base, &error_base);
+  return(XEN_LIST_3(C_TO_XEN_BOOLEAN(ret), C_TO_XEN_INT(event_base), C_TO_XEN_INT(error_base)));
+}
+
+static XEN gxm_XShapeQueryVersion(XEN dpy)
+{
+  #define H_XShapeQueryVersion "(XShapeQueryVersion dpy) returns list of (Bool major_version minor_version)"
+  int major = 0, minor = 0;
+  Bool ret = False;
+  XEN_ASSERT_TYPE(XEN_Display_P(dpy), dpy, XEN_ARG_1, "XShapeQueryVersion", "Display*");
+  ret = XShapeQueryVersion(XEN_TO_C_Display(dpy), &major, &minor);
+  return(XEN_LIST_3(C_TO_XEN_BOOLEAN(ret), C_TO_XEN_INT(major), C_TO_XEN_INT(minor)));
+}
+
+static XEN gxm_XShapeQueryExtents(XEN dpy, XEN win)
+{
+  #define H_XShapeQueryExtents "(XShapeQueryExtents dpy win) returns list of (status bounding_shaped x_bound y_bound w_bound \
+h_bound clip_shaped x_clip y_clip w_clip h_clip"
+  Bool bounding_shaped;
+  int x_bounding;
+  int y_bounding;
+  unsigned int w_bounding;
+  unsigned int h_bounding;
+  Bool clip_shaped;
+  int x_clip;
+  int y_clip;
+  unsigned int w_clip;
+  unsigned int h_clip;
+  Status ret;
+  XEN_ASSERT_TYPE(XEN_Display_P(dpy), dpy, XEN_ARG_1, "XShapeQueryExtents", "Display*");
+  XEN_ASSERT_TYPE(XEN_Window_P(win), win, XEN_ARG_2, "XShapeQueryExtents", "Window");
+  ret = XShapeQueryExtents(XEN_TO_C_Display(dpy), XEN_TO_C_Window(win),
+			   &bounding_shaped, &x_bounding, &y_bounding, &w_bounding, &h_bounding,
+			   &clip_shaped, &x_clip, &y_clip, &w_clip, &h_clip);
+  return(XEN_CONS(C_TO_XEN_INT(ret),
+		  XEN_CONS(C_TO_XEN_INT(bounding_shaped),
+			   XEN_LIST_9(C_TO_XEN_INT(x_bounding),
+				      C_TO_XEN_INT(y_bounding),
+				      C_TO_XEN_INT(w_bounding),
+				      C_TO_XEN_INT(h_bounding),
+				      C_TO_XEN_INT(clip_shaped),
+				      C_TO_XEN_INT(x_clip),
+				      C_TO_XEN_INT(y_clip),
+				      C_TO_XEN_INT(w_clip),
+				      C_TO_XEN_INT(h_clip)))));
+}
+
+static XEN gxm_XShapeGetRectangles(XEN dpy, XEN win, XEN kind)
+{
+  #define H_XShapeGetRectangles "(XShapeGetRectangles dpy win kind) returns list of (xrectangles ordering)"
+  int count = 0, ordering = 0;
+  XRectangle *res;
+  XEN_ASSERT_TYPE(XEN_Display_P(dpy), dpy, XEN_ARG_1, "XShapeGetRectangles", "Display*");
+  XEN_ASSERT_TYPE(XEN_Window_P(win), win, XEN_ARG_2, "XShapeGetRectangles", "Window");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(kind), kind, XEN_ARG_3, "XShapeGetRectangles", "int");
+  res = XShapeGetRectangles(XEN_TO_C_Display(dpy), XEN_TO_C_Window(win), XEN_TO_C_INT(kind), &count, &ordering);
+  return(XEN_LIST_2(C_TO_XEN_XRectangles(res, count), C_TO_XEN_INT(ordering)));
+}
+
+static XEN gxm_XShapeOffsetShape(XEN dpy, XEN win, XEN kind, XEN x, XEN y)
+{
+  #define H_XShapeOffsetShape "(XShapeOffsetShape dpy win kind x-off y-off)"
+  XEN_ASSERT_TYPE(XEN_Display_P(dpy), dpy, XEN_ARG_1, "XShapeOffsetShape", "Display*");
+  XEN_ASSERT_TYPE(XEN_Window_P(win), win, XEN_ARG_2, "XShapeOffsetShape", "Window");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(kind), kind, XEN_ARG_3, "XShapeOffsetShape", "int");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(x), x, XEN_ARG_4, "XShapeOffsetShape", "int");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(y), y, XEN_ARG_5, "XShapeOffsetShape", "int");
+  XShapeOffsetShape(XEN_TO_C_Display(dpy), XEN_TO_C_Window(win), 
+		    XEN_TO_C_INT(kind), XEN_TO_C_INT(x), XEN_TO_C_INT(y));
+  return(XEN_FALSE);
+}
+
+static XEN gxm_XShapeCombineRegion(XEN dpy, XEN win, XEN kind, XEN x, XEN y, XEN reg, XEN op)
+{
+  #define H_XShapeCombineRegion "(XShapeCombineRegion dpy win kind x-off y-off region op)"
+  XEN_ASSERT_TYPE(XEN_Display_P(dpy), dpy, XEN_ARG_1, "XShapeCombineRegion", "Display*");
+  XEN_ASSERT_TYPE(XEN_Window_P(win), win, XEN_ARG_2, "XShapeCombineRegion", "Window");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(kind), kind, XEN_ARG_3, "XShapeCombineRegion", "int");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(x), x, XEN_ARG_4, "XShapeCombineRegion", "int");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(y), y, XEN_ARG_5, "XShapeCombineRegion", "int");
+  XEN_ASSERT_TYPE(XEN_Region_P(reg), reg, XEN_ARG_6, "XShapeCombineRegion", "Region");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(op), op, XEN_ARG_6, "XShapeCombineRegion", "int");
+  XShapeCombineRegion(XEN_TO_C_Display(dpy), XEN_TO_C_Window(win), 
+		      XEN_TO_C_INT(kind), XEN_TO_C_INT(x), XEN_TO_C_INT(y),
+		      XEN_TO_C_Region(reg),
+		      XEN_TO_C_INT(op));
+  return(XEN_FALSE);
+}
+
+static XEN gxm_XShapeCombineMask(XEN dpy, XEN win, XEN kind, XEN x, XEN y, XEN pix, XEN op)
+{
+  #define H_XShapeCombineMask "(XShapeCombineMask dpy win kind x-off y-off pixmap op)"
+  XEN_ASSERT_TYPE(XEN_Display_P(dpy), dpy, XEN_ARG_1, "XShapeCombineMask", "Display*");
+  XEN_ASSERT_TYPE(XEN_Window_P(win), win, XEN_ARG_2, "XShapeCombineMask", "Window");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(kind), kind, XEN_ARG_3, "XShapeCombineMask", "int");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(x), x, XEN_ARG_4, "XShapeCombineMask", "int");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(y), y, XEN_ARG_5, "XShapeCombineMask", "int");
+  XEN_ASSERT_TYPE(XEN_Pixmap_P(pix), pix, XEN_ARG_6, "XShapeCombineMask", "Pixmap");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(op), op, XEN_ARG_6, "XShapeCombineMask", "int");
+  XShapeCombineMask(XEN_TO_C_Display(dpy), XEN_TO_C_Window(win), 
+		    XEN_TO_C_INT(kind), XEN_TO_C_INT(x), XEN_TO_C_INT(y),
+		    XEN_TO_C_Pixmap(pix),
+		    XEN_TO_C_INT(op));
+  return(XEN_FALSE);
+}
+
+static XEN gxm_XShapeCombineShape(XEN dpy, XEN win, XEN kind, XEN x, XEN y, XEN src, XEN src_kind, XEN op)
+{
+  #define H_XShapeCombineShape "(XShapeCombineShape dpy win kind x-off y-off src src_kind op)"
+  XEN_ASSERT_TYPE(XEN_Display_P(dpy), dpy, XEN_ARG_1, "XShapeCombineShape", "Display*");
+  XEN_ASSERT_TYPE(XEN_Window_P(win), win, XEN_ARG_2, "XShapeCombineShape", "Window");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(kind), kind, XEN_ARG_3, "XShapeCombineShape", "int");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(x), x, XEN_ARG_4, "XShapeCombineShape", "int");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(y), y, XEN_ARG_5, "XShapeCombineShape", "int");
+  XEN_ASSERT_TYPE(XEN_Window_P(src), src, XEN_ARG_6, "XShapeCombineShape", "Window");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(src_kind), src_kind, XEN_ARG_7, "XShapeCombineShape", "int");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(op), op, XEN_ARG_8, "XShapeCombineShape", "int");
+  XShapeCombineShape(XEN_TO_C_Display(dpy), XEN_TO_C_Window(win), 
+		     XEN_TO_C_INT(kind), XEN_TO_C_INT(x), XEN_TO_C_INT(y),
+		     XEN_TO_C_Window(src), XEN_TO_C_INT(src_kind),
+		     XEN_TO_C_INT(op));
+  return(XEN_FALSE);
+}
+
+static XEN gxm_XShapeCombineRectangles(XEN dpy, XEN win, XEN kind, XEN x, XEN y, XEN rects, XEN n_rects, XEN op, XEN ordering)
+{
+  #define H_XShapeCombineRectangles "(XShapeCombineRectangles dpy win kind x-off y-off rectangles n-rects op ordering)"
+  XRectangle *cr = NULL;
+  XEN_ASSERT_TYPE(XEN_Display_P(dpy), dpy, XEN_ARG_1, "XShapeCombineRectangles", "Display*");
+  XEN_ASSERT_TYPE(XEN_Window_P(win), win, XEN_ARG_2, "XShapeCombineRectangles", "Window");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(kind), kind, XEN_ARG_3, "XShapeCombineRectangles", "int");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(x), x, XEN_ARG_4, "XShapeCombineRectangles", "int");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(y), y, XEN_ARG_5, "XShapeCombineRectangles", "int");
+  XEN_ASSERT_TYPE(XEN_LIST_P(rects), rects, XEN_ARG_6, "XShapeCombineRectangles", "list of XRectangles");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(n_rects), n_rects, XEN_ARG_7, "XShapeCombineRectangles", "int");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(op), op, XEN_ARG_8, "XShapeCombineRectangles", "int");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(ordering), ordering, XEN_ARG_9, "XShapeCombineRectangles", "int");
+  cr = XEN_TO_C_XRectangles(rects, XEN_TO_C_INT(n_rects));
+  XShapeCombineRectangles(XEN_TO_C_Display(dpy), XEN_TO_C_Window(win), 
+			  XEN_TO_C_INT(kind), XEN_TO_C_INT(x), XEN_TO_C_INT(y),
+			  cr, XEN_TO_C_INT(n_rects),
+			  XEN_TO_C_INT(op), XEN_TO_C_INT(ordering));
+  if (cr) FREE(cr);
+  return(XEN_FALSE);
+}
+
+/* TODO: shape tests */
+
+#endif
+
+
 
 /* ----------------------------------------------------------------------------------------------------
  *
@@ -18239,7 +18497,10 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XSetRegion, gxm_XSetRegion, 3, 0, 0, H_XSetRegion);
 #if (!XM_DISABLE_DEPRECATED)
   XM_DEFINE_PROCEDURE(XSetStandardColormap, gxm_XSetStandardColormap, 4, 0, 0, H_XSetStandardColormap);
+  XM_DEFINE_PROCEDURE(XSetStandardProperties, gxm_XSetStandardProperties, 8, 0, 0, H_XSetStandardProperties);
 #endif
+  XM_DEFINE_PROCEDURE(XSetWMProperties, gxm_XSetWMProperties, 8, 0, 0, H_XSetWMProperties);
+
   XM_DEFINE_PROCEDURE(XShrinkRegion, gxm_XShrinkRegion, 3, 0, 0, H_XShrinkRegion);
   XM_DEFINE_PROCEDURE(XSubtractRegion, gxm_XSubtractRegion, 3, 0, 0, H_XSubtractRegion);
   XM_DEFINE_PROCEDURE(XUnionRectWithRegion, gxm_XUnionRectWithRegion, 3, 0, 0, H_XUnionRectWithRegion);
@@ -19047,6 +19308,19 @@ static void define_procedures(void)
 #if WITH_EDITRES
   XEN_DEFINE_PROCEDURE("_XEditResCheckMessages", gxm_XEditResCheckMessages, 4, 0, 0, NULL);
 #endif
+
+#if HAVE_XSHAPEQUERYEXTENSION
+  XM_DEFINE_PROCEDURE(XShapeQueryExtension, gxm_XShapeQueryExtension, 1, 0, 0, H_XShapeQueryExtension);
+  XM_DEFINE_PROCEDURE(XShapeQueryVersion, gxm_XShapeQueryVersion, 1, 0, 0, H_XShapeQueryVersion);
+  XM_DEFINE_PROCEDURE(XShapeQueryExtents, gxm_XShapeQueryExtents, 2, 0, 0, H_XShapeQueryExtents);
+  XM_DEFINE_PROCEDURE(XShapeGetRectangles, gxm_XShapeGetRectangles, 3, 0, 0, H_XShapeGetRectangles);
+  XM_DEFINE_PROCEDURE(XShapeOffsetShape, gxm_XShapeOffsetShape, 5, 0, 0, H_XShapeOffsetShape);
+  XM_DEFINE_PROCEDURE(XShapeCombineRegion, gxm_XShapeCombineRegion, 7, 0, 0, H_XShapeCombineRegion);
+  XM_DEFINE_PROCEDURE(XShapeCombineMask, gxm_XShapeCombineMask, 7, 0, 0, H_XShapeCombineMask);
+  XM_DEFINE_PROCEDURE(XShapeCombineShape, gxm_XShapeCombineShape, 8, 0, 0, H_XShapeCombineShape);
+  XM_DEFINE_PROCEDURE(XShapeCombineRectangles, gxm_XShapeCombineRectangles, 9, 0, 0, H_XShapeCombineRectangles);
+#endif
+
 }
 #endif
 
@@ -19787,10 +20061,26 @@ static XEN gxm_initial_state(XEN ptr)
   return(C_TO_XEN_INT((int)((XEN_TO_C_XWMHints(ptr))->initial_state)));
 }
 
+static XEN gxm_set_initial_state(XEN ptr, XEN val)
+{
+  XM_SET_FIELD_ASSERT_TYPE(XEN_XWMHints_P(ptr), ptr, XEN_ARG_1, "initial_state", "XWMHints");
+  XM_SET_FIELD_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_2, "initial_state", "an integer");
+  (XEN_TO_C_XWMHints(ptr))->initial_state = XEN_TO_C_INT(val);
+  return(val);
+}
+
 static XEN gxm_input(XEN ptr)
 {
   XM_FIELD_ASSERT_TYPE(XEN_XWMHints_P(ptr), ptr, XEN_ONLY_ARG, "input", "XWMHints");
   return(C_TO_XEN_BOOLEAN((Bool)((XEN_TO_C_XWMHints(ptr))->input)));
+}
+
+static XEN gxm_set_input(XEN ptr, XEN val)
+{
+  XM_SET_FIELD_ASSERT_TYPE(XEN_XWMHints_P(ptr), ptr, XEN_ARG_1, "input", "XWMHints");
+  XM_SET_FIELD_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ARG_2, "input", "a boolean");
+  (XEN_TO_C_XWMHints(ptr))->input = XEN_TO_C_BOOLEAN(val);
+  return(val);
 }
 
 static XEN gxm_flags(XEN ptr)
@@ -19811,8 +20101,10 @@ static XEN gxm_flags(XEN ptr)
 
 static XEN gxm_set_flags(XEN ptr, XEN val)
 {
-  XM_SET_FIELD_ASSERT_TYPE(XEN_XColor_P(ptr), ptr, XEN_ARG_1, "flags", "XColor");
-  (XEN_TO_C_XColor(ptr))->flags = XEN_TO_C_char(val);
+  XM_SET_FIELD_ASSERT_TYPE(XEN_XColor_P(ptr) || XEN_XWMHints_P(ptr), ptr, XEN_ARG_1, "flags", "XColor or XWMHints");
+  XM_SET_FIELD_ASSERT_TYPE(XEN_char_P(val), val, XEN_ARG_2, "input", "a char (int)");
+  if (XEN_XColor_P(ptr)) (XEN_TO_C_XColor(ptr))->flags = XEN_TO_C_char(val);
+  else if (XEN_XWMHints_P(ptr)) (XEN_TO_C_XWMHints(ptr))->flags = XEN_TO_C_char(val);
   return(val);
 }
 
@@ -22498,6 +22790,9 @@ static void define_structs(void)
   XM_DEFINE_ACCESSOR(depth, gxm_depth, gxm_set_depth, 1, 0, 2, 0);
   XM_DEFINE_ACCESSOR(visual, gxm_visual, gxm_set_visual, 1, 0, 2, 0);
 
+  XM_DEFINE_ACCESSOR(input, gxm_input, gxm_set_input, 1, 0, 2, 0);
+  XM_DEFINE_ACCESSOR(initial_state, gxm_initial_state, gxm_set_initial_state, 1, 0, 2, 0);
+
   XM_DEFINE_READER(mwidth, gxm_mwidth, 1, 0, 0, NULL);
   XM_DEFINE_READER(mheight, gxm_mheight, 1, 0, 0, NULL);
   XM_DEFINE_READER(ndepths, gxm_ndepths, 1, 0, 0, NULL);
@@ -22524,8 +22819,6 @@ static void define_structs(void)
   XM_DEFINE_READER(min_bounds, gxm_min_bounds, 1, 0, 0, NULL);
   XM_DEFINE_READER(max_bounds, gxm_max_bounds, 1, 0, 0, NULL);
   XM_DEFINE_READER(per_char, gxm_per_char, 1, 0, 0, NULL);
-  XM_DEFINE_READER(input, gxm_input, 1, 0, 0, NULL);
-  XM_DEFINE_READER(initial_state, gxm_initial_state, 1, 0, 0, NULL);
   XM_DEFINE_READER(icon_pixmap, gxm_icon_pixmap, 1, 0, 0, NULL);
   XM_DEFINE_READER(icon_window, gxm_icon_window, 1, 0, 0, NULL);
   XM_DEFINE_READER(icon_x, gxm_icon_x, 1, 0, 0, NULL);
@@ -25146,6 +25439,17 @@ static void define_integers(void)
   DEFINE_INTEGER(XPDocNormal);
   DEFINE_INTEGER(XPDocRaw);
 #endif
+
+#if HAVE_XSHAPEQUERYEXTENSION
+  DEFINE_INTEGER(ShapeSet);
+  DEFINE_INTEGER(ShapeUnion);
+  DEFINE_INTEGER(ShapeIntersect);
+  DEFINE_INTEGER(ShapeSubtract);
+  DEFINE_INTEGER(ShapeInvert);
+  DEFINE_INTEGER(ShapeBounding);
+  DEFINE_INTEGER(ShapeClip);
+#endif
+
 }
 
 

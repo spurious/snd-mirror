@@ -279,7 +279,7 @@ char *version_info(void)
                          snd_itoa(GLIB_MINOR_VERSION), ".", 
                          snd_itoa(GLIB_MICRO_VERSION),
 #endif
-	  xm_version(),
+	  xm_version(), /* omitted if --version/--help because the init procs haven't run at that point */
 #if WITH_GTK_AND_X11
 	  " (with x11)",
 #endif

@@ -1226,7 +1226,7 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
       if (new_style != old_style)
 	{
 	  sp->channel_style = new_style;
-#if WITH_RELATIVE_PANES
+#if WITH_RELATIVE_PANES && (XmVERSION > 1)
 	  if ((new_style == CHANNELS_SEPARATE) || (old_style == CHANNELS_SEPARATE))
 	    {
 	      Widget lst;

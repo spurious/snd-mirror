@@ -95,8 +95,11 @@ static bool new_help(const char *pattern)
       xstr = g_snd_help(C_TO_XEN_STRING(pattern), 0);
       if (XEN_STRING_P(xstr))
 	{
+	  int gc_loc;
+	  gc_loc = snd_protect(xstr);
 	  xrefs = help_name_to_xrefs(pattern);
 	  snd_help_with_xrefs(pattern, XEN_TO_C_STRING(xstr), true, xrefs, NULL);
+	  snd_unprotect_at(gc_loc);
 	  if (xrefs) FREE(xrefs);
 	  return(true);
 	}

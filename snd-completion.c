@@ -4,13 +4,18 @@
 static char *current_match = NULL;
 
 #if HAVE_GUILE
+
+static int xen_return_first_int(int a, ...)
+{
+  return(a);
+}
+
 #if defined(SCM_MODULE_OBARRAY)
 static int scan_tab(XEN tab, char *text, int len, int matches)
 {
   int i, j, n, curlen;
   char *sym;
-  XEN handle;
-  XEN ls;
+  XEN handle = XEN_FALSE, ls = XEN_FALSE;
 #ifdef SCM_HASHTABLE_BUCKETS
   /* new form searches through Guile's module's hash tables */
   n = SCM_HASHTABLE_N_BUCKETS(tab);
@@ -47,13 +52,13 @@ static int scan_tab(XEN tab, char *text, int len, int matches)
 	  ls = XEN_CDR(ls);
 	}
     }
-  return(matches);
+  return(xen_return_first_int(matches, handle, ls, tab));
 }
 
 static int completions(char *text)
 {
   int len, matches = 0;
-  XEN curmod, uses;
+  XEN curmod = XEN_FALSE, uses = XEN_FALSE;
   len = strlen(text);
   curmod = scm_current_module();
   matches = scan_tab(SCM_MODULE_OBARRAY(curmod), 
@@ -65,7 +70,7 @@ static int completions(char *text)
 			 text, len, matches);
       uses = XEN_CDR(uses);
     }
-  return(matches);
+  return(xen_return_first_int(matches, curmod, uses));
 }
 #else
 static int completions(char *text) {return(0);}
