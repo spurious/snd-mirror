@@ -17,24 +17,6 @@ char *mus_fft_window_name(int i);
 XEN mus_xen_to_object(mus_xen *gn);
 XEN mus_xen_to_object_with_vct(mus_xen *gn, XEN v);
 
-#define S_bartlett_window        "bartlett-window"
-#define S_blackman2_window       "blackman2-window"
-#define S_blackman3_window       "blackman3-window"
-#define S_blackman4_window       "blackman4-window"
-#define S_cauchy_window          "cauchy-window"
-#define S_exponential_window     "exponential-window"
-#define S_gaussian_window        "gaussian-window"
-#define S_hamming_window         "hamming-window"
-#define S_hann_window            "hann-window"
-#define S_kaiser_window          "kaiser-window"
-#define S_parzen_window          "parzen-window"
-#define S_poisson_window         "poisson-window"
-#define S_rectangular_window     "rectangular-window"
-#define S_riemann_window         "riemann-window"
-#define S_tukey_window           "tukey-window"
-#define S_welch_window           "welch-window"
-#define S_dolph_chebyshev_window "dolph-chebyshev-window"
-
 #if HAVE_RUBY
 void Init_sndlib(void);
 #else

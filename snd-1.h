@@ -232,7 +232,7 @@ typedef struct chan__info {
   off_t original_cursor;   /* for cursor reset after cursor-moving play */
   int hookable;
   int selection_transform_size;
-  int squelch_update, waiting_to_make_graph;
+  int squelch_update, previous_squelch_update, waiting_to_make_graph, in_as_one_edit;
   /* moved from global to channel-local 4-Aug-00 */
   Float spectro_x_scale, spectro_y_scale, spectro_z_scale, spectro_z_angle, spectro_x_angle, spectro_y_angle, spectro_cutoff, spectro_start;
   Float lin_dB, min_dB, fft_window_beta, beats_per_minute;
@@ -457,11 +457,7 @@ void recording_help(snd_state *ss);
 void clm_help(snd_state *ss);
 char *version_info(void);
 void news_help(snd_state *ss);
-
-void snd_help_with_url(snd_state *ss, char *subject, char *url, char *helpstr);
 void snd_help_with_url_and_wrap(snd_state *ss, char *subject, char *url, char *helpstr);
-void ssnd_help_with_url(snd_state *ss, char *subject, char *url, ...);
-
 void help_dialog_help(snd_state *ss);
 void transform_dialog_help(snd_state *ss);
 void color_dialog_help(snd_state *ss);

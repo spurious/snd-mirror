@@ -1535,7 +1535,7 @@ static void make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE *p
       wd->p = p;
       wd->gain = gain_ctr + chan;
       if (wd->gain > rp->num_mixer_gains) 
-	snd_error(_("gain (slider) number too high: %d > %d"), 
+	snd_error("gain (slider) number too high: %d > %d", 
 		  wd->gain, rp->num_mixer_gains);
       gain_sliders[wd->gain] = wd;
       vol = mixer_gain(wd->system, wd->device, wd->chan, wd->gain, wd->field);

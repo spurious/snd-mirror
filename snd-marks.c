@@ -1721,7 +1721,7 @@ static XEN g_restore_marks(XEN size, XEN snd, XEN chn, XEN marklist)
   cp = get_cp(snd, chn, S_restore_marks);
   if (cp->marks)
     {
-      snd_error(_("restore-marks: there are marks here already!"));
+      snd_error("restore-marks: there are marks here already!");
       free_mark_list(cp, 0);
     }
   cp->marks_size = XEN_TO_C_INT(size);
@@ -1744,7 +1744,7 @@ static XEN g_restore_marks(XEN size, XEN snd, XEN chn, XEN marklist)
 	    {
 	      el = XEN_CAR(molst);
 	      if (!(XEN_LIST_P(el))) 
-		snd_error(_("restore-marks: saved mark data is not a list?? "));
+		snd_error("restore-marks: saved mark data is not a list?? ");
 	      else
 		{
 		  sm = XEN_CADR(el);

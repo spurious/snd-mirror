@@ -435,7 +435,7 @@ void reflect_edit_history_change(chan_info *cp)
   snd_info *sp;
   int i, eds;
   char *str;
-  if (cp->squelch_update) return;
+  if (cp->in_as_one_edit) return;
   ss = cp->state;
   cx = cp->cgx;
   if (cx)
@@ -462,29 +462,6 @@ void reflect_edit_history_change(chan_info *cp)
 	      g_signal_handlers_unblock_matched(GTK_OBJECT(lst), G_SIGNAL_MATCH_DATA, 0, 0, NULL, 0, (gpointer)cp);
 	      goto_graph(cp);
 	    }
-	}
-    }
-}
-
-void reflect_save_as_in_edit_history(chan_info *cp, char *filename)
-{
-  chan_context *cx;
-  GtkWidget *lst;
-  char *new_line;
-  if (cp->edit_ctr < 1) return; /* Sun segfaults if 0 here! (apparently the usual C library strlen null bug) */
-  cx = cp->cgx;
-  if (cx)
-    {
-      lst = EDIT_HISTORY_LIST(cp);
-      if (lst)
-	{
-	  new_line = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-	  mus_snprintf(new_line, PRINT_BUFFER_SIZE,
-		       "%s: (save-sound-as \"%s\")", 
-		       edit_to_string(cp, cp->edit_ctr), 
-		       filename);
-	  sg_list_set_text(lst, cp->edit_ctr, new_line);
-	  FREE(new_line);
 	}
     }
 }

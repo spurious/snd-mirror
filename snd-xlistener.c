@@ -1075,9 +1075,9 @@ static void command_modify_callback(Widget w, XtPointer context, XtPointer info)
 static void command_help_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_help_with_url_and_wrap((snd_state *)context,
-			     _("Lisp Listener"),
+			     "Lisp Listener",
 			     "#customization",
-_("This is the lisp listener pane; it is one way to access the interpreter."));
+"This is the lisp listener pane; it is one way to access the interpreter.");
 }
 
 static XEN mouse_enter_listener_hook;

@@ -1613,7 +1613,7 @@ void c_convolve(char *fname, Float amp, int filec, off_t filehdr, int filterc, o
 	  (pbuffer == NULL) || (pbuffer[0] == NULL) || (cm == NULL) ||
 	  (fbuffer == NULL) || (fbuffer[filter_chan] == NULL) || (fcm == NULL))
 	{
-	  snd_error(_("not enough memory for convolve of %s (filter size: %d, fft size: %d"), 
+	  snd_error(_("not enough memory for convolve of %s (filter size: %d, fft size: %d)"), 
 		    fname, filtersize, fftsize);
 	}
       else
@@ -1782,7 +1782,7 @@ returns the current transform sample at bin and slice in snd channel chn (assumi
 				 XEN_LIST_8(C_TO_XEN_STRING(S_transform_sample),
 					    bin, slice,
 					    snd_n, chn_n,
-					    C_TO_XEN_STRING(_("max bin, max slice:")),
+					    C_TO_XEN_STRING("max bin, max slice:"),
 					    C_TO_XEN_INT((si) ? si->target_bins : 0),
 					    C_TO_XEN_INT((si) ? si->active_slices : 0)));
 		}
@@ -1791,7 +1791,7 @@ returns the current transform sample at bin and slice in snd channel chn (assumi
 			 XEN_LIST_6(C_TO_XEN_STRING(S_transform_sample),
 				    bin,
 				    snd_n, chn_n,
-				    C_TO_XEN_STRING(_("max bin:")),
+				    C_TO_XEN_STRING("max bin:"),
 				    C_TO_XEN_INT(fp->current_size)));
 	}
     }

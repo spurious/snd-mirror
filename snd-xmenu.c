@@ -10,7 +10,7 @@ enum {menu_menu,
           e_redo_menu, e_find_menu, e_edenv_menu, e_header_menu, e_select_all_menu,
           e_select_sep_menu, e_edit_sep_menu,
         help_menu, h_cascade_menu,
-          h_click_for_help_menu, h_about_snd_menu, h_fft_menu, h_find_menu, h_undo_menu, h_sync_menu, h_speed_menu,
+          h_about_snd_menu, h_fft_menu, h_find_menu, h_undo_menu, h_sync_menu, h_speed_menu,
           h_expand_menu, h_contrast_menu, h_reverb_menu, h_env_menu, h_marks_menu, h_sound_files_menu, h_init_file_menu,
           h_mix_menu, h_recording_menu, h_clm_menu, h_news_menu,
         option_menu, o_cascade_menu,
@@ -36,7 +36,7 @@ enum {menu_menu,
           v_sep2_menu
 };
 
-#define NUM_MENU_WIDGETS 99
+#define NUM_MENU_WIDGETS 98
 static Widget mw[NUM_MENU_WIDGETS];
 
 enum {W_pop_menu, W_pop_sep, W_pop_play, W_pop_undo, W_pop_redo, W_pop_save, W_pop_equalize_panes, W_pop_info};
@@ -470,42 +470,6 @@ static void options_save_state_callback(Widget w, XtPointer cD, XtPointer mD)
 
 /* -------------------------------- HELP MENU -------------------------------- */
 
-static void help_context_help_callback(Widget w, XtPointer cD, XtPointer mD) 
-{
-  XmAnyCallbackStruct *cbs = (XmAnyCallbackStruct *)mD;
-  Widget selectedWidget = NULL;
-  static Cursor cursor = 0;
-  Widget parent = XtParent(w);
-  snd_state *ss = (snd_state *)cD;
-  Widget mainWindow;
-#if XM_DISABLE_DEPRECATED
-  XEvent event;
-#endif
-  mainWindow = MAIN_PANE(ss);
-  if (!cursor) cursor = XCreateFontCursor(XtDisplay(parent), XC_question_arrow); 
-#if XM_DISABLE_DEPRECATED
-  selectedWidget = XmTrackingEvent(mainWindow, cursor, FALSE, &event);
-#else
-  selectedWidget = XmTrackingLocate(mainWindow, cursor, FALSE);
-#endif
-  if (selectedWidget)
-    {
-      XmAnyCallbackStruct cb;
-      cb.reason = XmCR_HELP;
-      cb.event = cbs->event;
-      do
-        {
-	  if ((XtHasCallbacks(selectedWidget, XmNhelpCallback) == XtCallbackHasSome))
-            {
-	      XtCallCallbacks(selectedWidget, XmNhelpCallback, &cb);
-	      return;
-            }
-	  else
-	    selectedWidget = XtParent(selectedWidget);
-        } while (selectedWidget != NULL);
-    }
-}
-
 static void help_about_snd_callback(Widget w, XtPointer cD, XtPointer mD) {IF_MENU_HOOK("Help", "Overview") about_snd_help((snd_state *)cD);}
 static void help_fft_callback (Widget w, XtPointer cD, XtPointer mD) {IF_MENU_HOOK("Help", "FFT") fft_help((snd_state *)cD);}
 static void help_find_callback (Widget w, XtPointer cD, XtPointer mD) {IF_MENU_HOOK("Help", "Find") find_help((snd_state *)cD);}
@@ -894,10 +858,6 @@ Widget add_menu(snd_state *ss)
   XtSetArg(high_args[high_n], XmNsubMenuId, mw[help_menu]); high_n++;
   XtSetArg(high_args[high_n], XmNmnemonic, 'H'); high_n++;
   mw[h_cascade_menu] = XtCreateManagedWidget(_("Help"), xmCascadeButtonWidgetClass, mw[menu_menu], high_args, high_n);
-
-  mw[h_click_for_help_menu] = XtCreateManagedWidget(_("Click for help"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
-  XtAddCallback(mw[h_click_for_help_menu], XmNactivateCallback, help_context_help_callback, ss);
-  XtVaSetValues(mw[h_click_for_help_menu], XmNmnemonic, 'C', NULL);
 
   mw[h_about_snd_menu] = XtCreateManagedWidget(_("Overview"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
   XtAddCallback(mw[h_about_snd_menu], XmNactivateCallback, help_about_snd_callback, ss);

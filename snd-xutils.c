@@ -349,10 +349,10 @@ void goto_window(Widget text)
 	    {
 	      XtVaGetValues(text, XmNkeyboardFocusPolicy, &err, NULL);
 	      if (err == XmEXPLICIT)
-		snd_error(_("goto_window: traverse to %s failed!"), XtName(text));
+		snd_error("goto_window: traverse to %s failed!", XtName(text));
 	      else 
 		{
-		  snd_error(_("goto_window: keyboard focus policy is not explicit!"));
+		  snd_error("goto_window: keyboard focus policy is not explicit!");
 		  complain_about_focus_policy = FALSE;
 		}
 	    }

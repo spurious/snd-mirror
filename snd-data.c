@@ -89,6 +89,7 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
   cp->fft_log_magnitude = fft_log_magnitude(ss);
   cp->min_dB = ss->min_dB;
   cp->lin_dB = ss->lin_dB;
+  cp->in_as_one_edit = FALSE;
   cp->wavelet_type = wavelet_type(ss);
   cp->spectro_x_angle = spectro_x_angle(ss);
   cp->spectro_y_angle = spectro_y_angle(ss);

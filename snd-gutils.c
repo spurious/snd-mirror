@@ -715,6 +715,7 @@ void sg_list_insert(GtkWidget *lst, int row, char *val)
   gtk_list_store_set(w, &iter, 0, val, -1);
 }
 
+#if 0
 void sg_list_set_text(GtkWidget *lst, int row, char *val)
 {
   GtkTreeIter iter;
@@ -723,6 +724,7 @@ void sg_list_set_text(GtkWidget *lst, int row, char *val)
   gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(w), &iter, NULL, row);
   gtk_list_store_set(w, &iter, 0, val, -1);
 }
+#endif
 
 void sg_list_select(GtkWidget *lst, int row)
 {

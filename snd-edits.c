@@ -7781,9 +7781,6 @@ int save_edits_without_display(snd_info *sp, char *new_name, int type, int forma
 	  for (i = 0; i < sp->nchans; i++) 
 	    free_snd_fd(sf[i]);
 	  FREE(sf);
-	  if (err == MUS_NO_ERROR)
-	    for (i = 0; i < sp->nchans; i++) 
-	      reflect_save_as_in_edit_history(sp->chans[i], new_name);
 	  free_file_info(hdr);
 	  return(err);
 	}
@@ -7838,11 +7835,7 @@ int save_channel_edits(chan_info *cp, char *ofile, XEN edpos, const char *caller
       else 
 	{
 	  err = move_file(nfile, ofile);
-	  if (err == 0)
-	    {
-	      reflect_save_as_in_edit_history(cp, ofile);
-	      snd_update(ss, sp);
-	    }
+	  if (err == 0) snd_update(ss, sp);
 	}
       FREE(nfile);
     }
@@ -8481,12 +8474,10 @@ void as_one_edit(chan_info *cp, int one_edit, char *one_edit_origin) /* origin c
 	  if (ed)
 	    {
 	      if (ed->origin) FREE(ed->origin);
-	      ed->origin = copy_string(one_edit_origin); /* TODO: as-one-edit save ruby case? */
-	      reflect_edit_history_change(cp);
+	      ed->origin = copy_string(one_edit_origin);
 	    }
 	}
       if (need_backup) prune_edits(cp, cp->edit_ctr + 1);
-      update_graph(cp); 
     }
 }
 
@@ -8496,14 +8487,18 @@ static char *as_one_edit_origin;
 static void init_as_one_edit(chan_info *cp, void *ptr) 
 {
   ((int *)ptr)[chan_ctr] = cp->edit_ctr; 
+  cp->previous_squelch_update = cp->squelch_update; /* preserve possible user setting across as-one-edit call */
   cp->squelch_update = TRUE;
+  cp->in_as_one_edit = TRUE;
   chan_ctr++; 
 }
 
 static void finish_as_one_edit(chan_info *cp, void *ptr) 
 {
   as_one_edit(cp, (((int *)ptr)[chan_ctr] + 1), as_one_edit_origin);
-  cp->squelch_update = FALSE;
+  cp->squelch_update = cp->previous_squelch_update;
+  cp->in_as_one_edit = FALSE;
+  reflect_edit_history_change(cp);
   update_graph(cp);
   chan_ctr++; 
 }

@@ -3,12 +3,14 @@
 ;;;   rubber-sound looks for stable portions and either inserts or deletes periods 
 ;;;     period length is determined via autocorrelation
 
-;;; TODO: no-vib (local resample), more-vib
-;;; TODO: re-pitch (local resample, same end length)
-;;; TODO: re-orch (cross-fade within steady state) -- could end up with one voice's consonants and another's vowels etc
-
 (define zeros-checked 8)
 (define extension 10.0)
+(define show-details #f)
+
+(define* (add-named-mark samp name #:optional snd chn)
+  (let ((m (add-mark samp snd chn)))
+    (set! (mark-name m) name)
+    m))
 
 ;;; remove anything below 16Hz
 ;;; extend (src by 1/extension)
@@ -87,7 +89,7 @@
 	(set! x (+ x xinc)))))
       data)))
 
-(define rubber-sound-1
+(define rubber-sound
   (lambda args
     (let* ((stretch (car args))
 	   (snd (if (> (length args) 1) (list-ref args 1) #f))
@@ -102,11 +104,8 @@
 	 
 	 (let* ((crosses (crossings))
 		(cross-samples (make-vct crosses))
-					;(cross-maxes (make-vct crosses))
-					;(cross-to-max-times (make-vct crosses))
 		(cross-weights (make-vct crosses))
 		(cross-marks (make-vct crosses))
-					;(cross-ids (make-vct crosses))
 		(cross-periods (make-vct crosses)))
 	   (run
 	    (lambda ()
@@ -143,21 +142,22 @@
 		  (let* ((s0 start)
 			 (pow2 (ceiling (/ (log (* extension (/ (srate) 40.0))) (log 2))))
 			 (fftlen (inexact->exact (expt 2 pow2)))
+			 (len4 (/ fftlen 4))
 			 (data (make-vct fftlen))
 			 (reader (make-sample-reader (inexact->exact s0))))
-		    (do ((i 0 (1+ i)))
-			((= i fftlen))
+		    (do ((j 0 (1+ j)))
+			((= j fftlen))
 		      (let ((val (next-sample reader)))
-			(vct-set! data i val)))
+			(vct-set! data j val)))
 		    (autocorrelate data)
 		    (set! autolen 0)
 		    (let ((happy #f))
-		      (do ((i 1 (1+ i)))
-			  ((or happy (= i 2046)))
-			(if (and (< (vct-ref data i) (vct-ref data (+ i 1)))
-				 (> (vct-ref data (+ i 1)) (vct-ref data (+ i 2))))
+		      (do ((j 1 (1+ j)))
+			  ((or happy (= j len4)))
+			(if (and (< (vct-ref data j) (vct-ref data (+ j 1)))
+				 (> (vct-ref data (+ j 1)) (vct-ref data (+ j 2))))
 			    (begin
-			      (set! autolen (* i 2))
+			      (set! autolen (* j 2))
 			      (set! happy #t))))))
 		  (let* ((next-start (+ start autolen))
 			 (min-i (+ i 1))
@@ -228,13 +228,16 @@
 	   (let* ((len (frames snd chn))
 		  (adding (> stretch 1.0))
 		  (samps (inexact->exact (* (abs (- stretch 1.0)) len)))
+		  (needed-samps (if adding samps (min len (* samps 2))))
 		  (handled 0)
+		  (mult 1)
 		  (curs 0)
-		  (edits (make-vct (vct-length cross-weights))))
+		  (weights (vct-length cross-weights))
+		  (edits (make-vct weights)))
 	     (run (lambda ()
 		    (do ()
-			((>= handled samps))
-		      ;; need to find enough splice points to add/delete samps
+			((or (= curs weights) (>= handled needed-samps)))
+		      ;; need to find (more than) enough splice points to delete samps
 		      (let ((best-mark -1)
 			    (old-handled handled))
 			(let ((cur 0)
@@ -248,75 +251,62 @@
 				  (set! curmin (vct-ref cross-weights i)))))
 			  (set! best-mark cur))
 			(set! handled (+ handled (inexact->exact (vct-ref cross-periods best-mark))))
-			(if (or (< handled samps)
-				(< (- handled samps) (- samps old-handled)))
+			(if (or (< handled needed-samps)
+				(< (- handled needed-samps) (- needed-samps old-handled)))
 			    (begin
 			      (vct-set! edits curs best-mark)
 			      (set! curs (1+ curs))))
 			(vct-set! cross-weights best-mark 1000.0)))
 		    ))
-	     (do ((i 0 (1+ i)))
-		 ((= i curs))
-	       (let ((best-mark (vct-ref edits i)))
-		 (if (> (vct-ref cross-periods best-mark) 0)
-		     (if adding
-			 (let ((beg (vct-ref cross-samples (vct-ref cross-marks best-mark)))
-			       (len (vct-ref cross-periods best-mark)))
+	     (if (>= curs weights)
+		 (set! mult (ceiling (/ needed-samps handled))))
+
+	     (let ((changed-len 0)
+		   (weights (vct-length cross-weights)))
+	       (do ((i 0 (1+ i)))
+		   ((or (= i curs) (> changed-len samps)))
+		 (let* ((best-mark (vct-ref edits i))
+			(beg (vct-ref cross-samples best-mark))
+			(next-beg (vct-ref cross-samples (vct-ref cross-marks best-mark)))
+			(len (vct-ref cross-periods best-mark)))
+		   (if (> len 0)
+		       (if adding
 			   (let ((new-samps
-				  (env-add (vct-ref cross-samples best-mark)
-					   (vct-ref cross-samples (vct-ref cross-marks best-mark))
-					   (vct-ref cross-periods best-mark))))
+				  (env-add beg next-beg len)))
+			     (if show-details
+				 (add-named-mark beg (format #f "~D:~D" i (inexact->exact (/ len extension)))))
 			     (insert-samples beg len new-samps)
-			     (do ((j i (1+ j)))
-				 ((= j curs))
-			       (if (> (vct-ref cross-samples j) beg)
-				   (vct-set! cross-samples j (+ (vct-ref cross-samples j) len))))))
-			 (let* ((beg (vct-ref cross-samples best-mark))
-				(delete-len (vct-ref cross-periods best-mark)))
-			   (delete-samples beg delete-len)
-			   (if (not (= delete-len 0))
-			       (do ((j i (1+ j)))
-				   ((= j curs))
-				 (if (> (vct-ref cross-samples j) beg)
-				     (vct-set! cross-samples j (- (vct-ref cross-samples j) delete-len len))))))))))
-	     ;; delete from mark for period samps
+			     (if (> mult 1)
+				 (do ((k 1 (1+ k)))
+				     ((= k mult))
+				   (insert-samples (+ beg (* k len)) len new-samps)))
+			     (set! changed-len (+ changed-len (* mult len)))
+			     (do ((j 0 (1+ j)))
+				 ((= j weights))
+			       (let ((curbeg (vct-ref cross-samples j)))
+				 (if (> curbeg beg)
+				     (vct-set! cross-samples j (+ curbeg len))))))
+			   (begin
+			     (if (>= beg (frames))
+				 (snd-print (format #f "trouble at ~D: ~D of ~D~%" i beg (frames))))
+			     (if show-details
+				 (add-named-mark (1- beg) (format #f "~D:~D" i (inexact->exact (/ len extension)))))
+			     (delete-samples beg len)
+			     (set! changed-len (+ changed-len len))
+			     (let ((end (+ beg len)))
+			       (do ((j 0 (1+ j)))
+				   ((= j weights))
+				 (let ((curbeg (vct-ref cross-samples j)))
+				   (if (> curbeg beg)
+				       (if (< curbeg end)
+					   (vct-set! cross-periods j 0)
+					   (vct-set! cross-samples j (- curbeg len))))))))))))
+	       (if show-details
+		   (snd-print (format #f "wanted: ~D, got ~D~%" (inexact->exact samps) (inexact->exact changed-len)))))
 	     ))
 	 ;; and return to original srate
 	 (unsample-sound snd chn)
+	 (snd-print (format #f "~A -> ~A (~A)~%" (frames snd chn 0) (frames snd chn) (inexact->exact (* stretch (frames snd chn 0)))))
 	 ) ; end of as-one-edit thunk
        (format #f "(rubber-sound ~{~A~^ ~})" args)
        ))))
-
-
-(define rubber-sound
-  (lambda args
-    (apply rubber-sound-1 args)
-    (display (format #f "~%"))))
-
-#!
-;;; oboe.snd: (begin (rubber-sound 1.5) (revert-sound) (rubber-sound 0.5) (revert-sound) (delete-sample 10) (revert-sound))
-
-;;;   not as one, no squelch:
-derumble: 0.18 sample: 0.23 crossings: 3.81 cross: 3.79 weights: 27.49 sort: 6.92 change: 28.72 unsample: 0.13 overall: 71.31 amp_envs (641): time: 180 
-derumble: 0.37 sample: 0.22 crossings: 2.81 cross: 2.85 weights: 26.87 sort: 6.76 change: 39.35 unsample: 0.04 overall: 79.28 amp_envs (1281): time: 50 
-
---------------------------------------------------------------------------------
-;;; as one:
-derumble: 0.12 sample: 0.23 crossings: 3.85 cross: 3.85 weights: 27.83 sort: 6.95 change: 3.12 unsample: 0.13 overall: 46.29 amp_envs (0): time: 0 
-derumble: 0.16 sample: 0.22 crossings: 2.77 cross: 2.83 weights: 27.17 sort: 6.81 change: 2.81 unsample: 0.05 overall: 42.89 amp_envs (0): time: 0 
---------------------------------------------------------------------------------
-;;; run crossings:
-derumble: 0.12 sample: 0.22 crossings: 0.23 cross: 3.86 weights: 28.02 sort: 7.04 change: 2.39 unsample: 0.13 overall: 42.23 amp_envs (0): time: 0 
-derumble: 0.16 sample: 0.23 crossings: 0.22 cross: 2.81 weights: 20.72 sort: 6.34 change: 1.71 unsample: 0.04 overall: 32.31 amp_envs (0): time: 0 
-derumble: 0.12 sample: 0.23 crossings: 0.22 cross: 3.82 weights: 27.79 sort: 6.91 change: 2.84 unsample: 0.05 overall: 42.07
---------------------------------------------------------------------------------
-;;; run cross:
-derumble: 0.16 sample: 0.22 crossings: 0.23 cross: 0.23 weights: 27.49 sort: 9.93 change: 3.11 unsample: 0.12 overall: 41.71 amp_envs (0): time: 0 
-derumble: 0.11 sample: 0.22 crossings: 0.23 cross: 0.22 weights: 27.38 sort: 9.91 change: 2.96 unsample: 0.04 overall: 41.16 amp_envs (0): time: 0 
---------------------------------------------------------------------------------
-;;; run weigths/sort:
-derumble: 0.17 sample: 0.23 crossings: 0.29 cross: 0.22 weights: 9.1 sort: 0.34 change: 3.16 unsample: 0.14 overall: 13.86 
-derumble: 0.13 sample: 0.23 crossings: 0.25 cross: 0.23 weights: 9.18 sort: 0.34 change: 3.27 unsample: 0.09 overall: 14 
---------------------------------------------------------------------------------
-
-!#

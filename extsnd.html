@@ -691,8 +691,8 @@ reset any added amplitude sliders to 1.0 when Apply finishes.
 <span class=defbox><code><em class=def><a name="aftergraphhook">after-graph-hook</a></em> (snd chn)</code></span><td></td>
 </td></tr>
 <tr><td width=150></td><td colspan=2>
-called after a graph is updated or redisplayed; see <a href="#displaysampsinred">display-samps-in-red</a>
-or <i>draw-smpte-label</i> in snd-motif.scm.
+called after a graph is updated or redisplayed; see <a href="#displaysampsinred">display-samps-in-red</a>,
+<i>draw-smpte-label</i> in snd-motif.scm, or <a href="#addcomment">add-comment</a>.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -1923,6 +1923,7 @@ the returned procedure to make sure the mark pane is reactivated right away when
 
 <table border=0><tr><td width=150><br></td><td>
 These are functions that return the hooks in question associated with the specified channel.
+The functions on these hooks are "thunks" -- they should take no arguments.
 edit-hook is called just before any attempt to edit the channel's data; if it returns #t,
 the edit is aborted. So,
 </td></tr></table>
@@ -1933,7 +1934,7 @@ the edit is aborted. So,
 aborts any attempt to edit the data; this is even more restrictive than setting the read-only
 flag because the latter only refuses to overwrite the current data.  undo-hook is called
 just after any undo, redo, or revert that affects the channel.  after-edit-hook is called
-after an edit (there's an example in snd-motif.scm that updates a mark list after each edit
+after an edit, but before after-graph-hook (there's an example in snd-motif.scm that updates a mark list after each edit
 so that the displayed mark positions are correct).
 You can use edit-hook to set
 up protected portions of the edit history:
@@ -9415,28 +9416,38 @@ See <i>make-current-window-display</i> in draw.scm.
 
 <tr><td></td><td>
 draws a string (<i>text</i>) in the current font and foreground color starting at (x0 y0) in the given context.
-The next procedure draws a box over sample 1000 (if it is visible)
-with the text "hiho":
+The next procedures use the channel-property list (extensions.scm) to maintain a list
+of sample-oriented comments, displaying a given comment if its associated sample is
+currently in the time-domain graph:
 </td></tr>
 <tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(define show-hiho
-  ;; show "hiho" in a box over sample 1000
-  (lambda (snd chn)
-    (define (draw-rectangle x0 y0 width height)
-      (<em class=red>draw-line</em> x0 y0 (+ x0 width) y0)
-      (<em class=red>draw-line</em> (+ x0 width) y0 (+ x0 width) (+ y0 height))
-      (<em class=red>draw-line</em> (+ x0 width) (+ y0 height) x0 (+ y0 height))
-      (<em class=red>draw-line</em> x0 (+ y0 height) x0 y0))
-    (let ((ls (left-sample snd chn))
-          (rs (right-sample snd chn)))
-      (if (and (&lt; ls 1000)
-               (&gt; rs 1000))
-	  (let ((pos (<em class=red>x-&gt;position</em> (/ 1000.0 (srate)))))
-            (draw-rectangle pos 10 50 20)
-            (<em class=red>draw-string</em> "hiho" (+ pos 5) 24))))))
+(define* (<a name="addcomment">add-comment</a> sample comment #:optional snd1 chn1)
+  (let* ((snd (or snd1 (selected-sound)))
+	 (chn (or chn1 (selected-channel)))
+	 (old-comments (or (channel-property 'comments snd chn) '())))
+    (set! (channel-property 'comments snd chn)
+	  (cons (list sample comment)
+		old-comments))))
+	  
+(define (show-comments snd chn)
+  (let ((comments (or (channel-property 'comments snd chn) '())))
+    (for-each
+     (lambda (comment)
+       (let* ((samp (car comment))
+	      (text (cadr comment))
+	      (text-width (* 6 (string-length text)))
+	      (ls (left-sample snd chn))
+	      (rs (right-sample snd chn)))
+	 (if (and (< ls samp)
+		  (> rs samp))
+	     (let ((xpos (x->position (/ samp (srate))))
+		   (ypos (y->position (sample samp))))
+	       (draw-line xpos 20 xpos (- ypos 4))
+	       (draw-string text (- xpos (/ text-width 2)) 18)))))
+     comments)))
 
-(add-hook! after-graph-hook show-hiho)
+(add-hook! after-graph-hook show-comments)
 </pre></td></tr></table>
 </td></tr>
 <tr><td colspan=2></td></tr>

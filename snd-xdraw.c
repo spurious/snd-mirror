@@ -952,13 +952,6 @@ void set_spectro_x_angle(snd_state *ss, Float val)
     for_each_chan(ss, update_graph);
 }
 
-static void ax_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_help_with_wrap((snd_state *)context, 
-		     "x angle slider", 
-"This slider causes the graph to rotate around the x axis.");
-}
-
 static void ay_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss;
@@ -981,13 +974,6 @@ void set_spectro_y_angle(snd_state *ss, Float val)
   check_orientation_hook();
   if (!(ss->graph_hook_active)) 
     for_each_chan(ss, update_graph);
-}
-
-static void ay_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_help_with_wrap((snd_state *)context, 
-		     "y angle slider", 
-"This slider causes the graph to rotate around the y axis.");
 }
 
 static void az_orientation_callback(Widget w, XtPointer context, XtPointer info) 
@@ -1014,13 +1000,6 @@ void set_spectro_z_angle(snd_state *ss, Float val)
     for_each_chan(ss, update_graph);
 }
 
-static void az_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_help_with_wrap((snd_state *)context, 
-		     "z angle slider", 
-"This slider causes the graph to rotate around the z axis.");
-}
-
 static void sx_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss;
@@ -1042,13 +1021,6 @@ void set_spectro_x_scale(snd_state *ss, Float val)
   check_orientation_hook();
   if (!(ss->graph_hook_active)) 
     for_each_chan(ss, update_graph);
-}
-
-static void sx_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_help_with_wrap((snd_state *)context, 
-		     "x scale slider", 
-"This slider causes the graph to expand or contract along the x axis.");
 }
 
 static void sy_orientation_callback(Widget w, XtPointer context, XtPointer info) 
@@ -1074,13 +1046,6 @@ void set_spectro_y_scale(snd_state *ss, Float val)
     for_each_chan(ss, update_graph);
 }
 
-static void sy_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_help_with_wrap((snd_state *)context, 
-		     "y scale slider", 
-"This slider causes the graph to expand or contract along the y axis.");
-}
-
 static void sz_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss;
@@ -1102,13 +1067,6 @@ void set_spectro_z_scale(snd_state *ss, Float val)
   check_orientation_hook();
   if (!(ss->graph_hook_active)) 
     for_each_chan(ss, update_graph);
-}
-
-static void sz_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_help_with_wrap((snd_state *)context, 
-		     "z scale slider", 
-"This slider causes the graph to expand or contract along the z axis.");
 }
 
 static void chans_spectro_hop(chan_info *cp, void *ptr) {cp->spectro_hop = (*((int *)ptr));}
@@ -1141,13 +1099,6 @@ void set_spectro_hop(snd_state *ss, int val)
     }
 }
 
-static void hop_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_help_with_wrap((snd_state *)context, 
-		     "hop slider", 
-"This slider changes the hop size.");
-}
-
 static void chans_spectro_cut(chan_info *cp) {cp->fft_changed = FFT_CHANGE_LOCKED;}
 
 static void cut_orientation_callback(Widget w, XtPointer context, XtPointer info) 
@@ -1172,13 +1123,6 @@ void set_spectro_cutoff(snd_state *ss, Float val)
   check_orientation_hook();
   if (!(ss->graph_hook_active)) 
     for_each_chan(ss, update_graph_setting_fft_changed);
-}
-
-static void cut_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_help_with_wrap((snd_state *)context, 
-		     "percent of spectrum slider", 
-"This slider determines how much of the spectrum is displayed");
 }
 
 static int fixup_angle(Float ang)
@@ -1240,12 +1184,6 @@ static void with_gl_callback(Widget w, XtPointer context, XtPointer info)
   for_each_chan(ss, update_graph);
 }
 
-static void with_gl_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_help_with_wrap((snd_state *)context, 
-		     "with-gl button", 
-"This buttons determines whether OpenGL is used for various displays");
-}
 #endif
 
 static void help_orientation_callback(Widget w, XtPointer context, XtPointer info) 
@@ -1359,7 +1297,6 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       oid->ax = XtCreateManagedWidget("ax", xmScaleWidgetClass, leftbox, args, n);
       XtAddCallback(oid->ax, XmNvalueChangedCallback, ax_orientation_callback, oid);
       XtAddCallback(oid->ax, XmNdragCallback, ax_orientation_callback, oid);
-      XtAddCallback(oid->ax, XmNhelpCallback, ax_help_callback, ss);
       XmStringFree(xstr);
 
       n = 0;
@@ -1373,7 +1310,6 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       oid->ay = XtCreateManagedWidget("ay", xmScaleWidgetClass, leftbox, args, n);
       XtAddCallback(oid->ay, XmNvalueChangedCallback, ay_orientation_callback, oid);
       XtAddCallback(oid->ay, XmNdragCallback, ay_orientation_callback, oid);
-      XtAddCallback(oid->ay, XmNhelpCallback, ay_help_callback, ss);
       XmStringFree(xstr);
 
       n = 0;
@@ -1387,7 +1323,6 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       oid->az = XtCreateManagedWidget("az", xmScaleWidgetClass, leftbox, args, n);
       XtAddCallback(oid->az, XmNvalueChangedCallback, az_orientation_callback, oid);
       XtAddCallback(oid->az, XmNdragCallback, az_orientation_callback, oid);
-      XtAddCallback(oid->az, XmNhelpCallback, az_help_callback, ss);
       XmStringFree(xstr);
 
       n = 0;
@@ -1401,7 +1336,6 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       oid->hop = XtCreateManagedWidget("hop", xmScaleWidgetClass, leftbox, args, n);
       XtAddCallback(oid->hop, XmNvalueChangedCallback, hop_orientation_callback, oid);
       XtAddCallback(oid->hop, XmNdragCallback, hop_orientation_callback, oid);
-      XtAddCallback(oid->hop, XmNhelpCallback, hop_help_callback, ss);
       XmStringFree(xstr);
 
       /* right box */
@@ -1417,7 +1351,6 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       oid->sx = XtCreateManagedWidget("xs", xmScaleWidgetClass, rightbox, args, n);
       XtAddCallback(oid->sx, XmNvalueChangedCallback, sx_orientation_callback, oid);
       XtAddCallback(oid->sx, XmNdragCallback, sx_orientation_callback, oid);
-      XtAddCallback(oid->sx, XmNhelpCallback, sx_help_callback, ss);
       XmStringFree(xstr);
 
       n = 0;
@@ -1432,7 +1365,6 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       oid->sy = XtCreateManagedWidget("ys", xmScaleWidgetClass, rightbox, args, n);
       XtAddCallback(oid->sy, XmNvalueChangedCallback, sy_orientation_callback, oid);
       XtAddCallback(oid->sy, XmNdragCallback, sy_orientation_callback, oid);
-      XtAddCallback(oid->sy, XmNhelpCallback, sy_help_callback, ss);
       XmStringFree(xstr);
 
       n = 0;
@@ -1447,7 +1379,6 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       oid->sz = XtCreateManagedWidget("zs", xmScaleWidgetClass, rightbox, args, n);
       XtAddCallback(oid->sz, XmNvalueChangedCallback, sz_orientation_callback, oid);
       XtAddCallback(oid->sz, XmNdragCallback, sz_orientation_callback, oid);
-      XtAddCallback(oid->sz, XmNhelpCallback, sz_help_callback, ss);
       XmStringFree(xstr);
 
       n = 0;
@@ -1460,7 +1391,6 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       oid->cut = XtCreateManagedWidget("cut", xmScaleWidgetClass, rightbox, args, n);
       XtAddCallback(oid->cut, XmNvalueChangedCallback, cut_orientation_callback, oid);
       XtAddCallback(oid->cut, XmNdragCallback, cut_orientation_callback, oid);
-      XtAddCallback(oid->cut, XmNhelpCallback, cut_help_callback, ss);
       XmStringFree(xstr);
 
 #if HAVE_GL
@@ -1472,7 +1402,6 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNlabelString, glstr); n++;
       oid->glbutton = make_togglebutton_widget("use OpenGL", leftbox, args, n);
       XtAddCallback(oid->glbutton, XmNvalueChangedCallback, with_gl_callback, oid);
-      XtAddCallback(oid->glbutton, XmNhelpCallback, with_gl_help_callback, oid);
       XmStringFree(glstr);
 #endif
 

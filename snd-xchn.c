@@ -423,89 +423,6 @@ static void gsy_valuechanged_callback(Widget w, XtPointer context, XtPointer inf
 /* anything special for increment?  XmNincrementCallback sx_increment_callback */
 
 
-static void graph_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_help_with_url_and_wrap((snd_state *)context,
-			     "Graph", "#panelayout",
-"This portion of the Snd display shows the sound data in the time and/or frequency domains. \
-If you click on the time domain wave, you can edit it using emacs-like keyboard commands, as \
-well as using mouse-click-and-drag to define the selection.  Once defined, the selected portion \
-can be cut, deleted, or pasted elsewhere, the latter with the middle mouse button.");
-}
-
-#if (XmVERSION > 1)
-static void history_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_help_with_url_and_wrap((snd_state *)context,
-			     "Edit History",
-			     "#edithistory",
-"The current state of the undo/redo list can be viewed as a scrolled list of strings in the pane \
-on the left of the graph (in Motif 1, there's a 'Show Edit History' menu option).  If there are no \
-current edits, it just lists the associated file name (i.e. the zero-edits state).  As you edit the \
-sound, the operations appear in the edit list window.  Click on a member of the list to move to \
-that point in the edit list (equivalent to some number of undo's or redo's).  To move to a given \
-edit point and follow the sync chain (if any), use control-click.");
-}
-#endif
-
-static void sx_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_help_with_wrap((snd_state *)context,
-		     "X axis scroll",
-"This scrollbar controls the position of the x axis within the overall sound file. The arrows increment the view by one window.");
-}
-
-static void sy_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_help_with_wrap((snd_state *)context,
-		     "Y axis scroll",
-"This (nearly useless) scrollbar controls the position of the y-axis within the current y axis limits.");
-}
-
-static void zx_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_help_with_wrap((snd_state *)context,
-		     "X axis zoom",
-"This scrollbar zooms in (as you move it to the left) or out along the x axis.");
-}
-
-static void zy_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_help_with_wrap((snd_state *)context,
-		     "Y axis zoom",
-"This scrollbar zooms in (as you move it down) or out along the y axis.");
-}
-
-static void gsy_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_help_with_wrap((snd_state *)context,
-		     "Graph position",
-"This scrollbar controls the position in the overall combined graph of the portion visible in the sound pane.");
-}
-
-static void gzy_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_help_with_wrap((snd_state *)context,
-		     "Graph zoom",
-"This scrollbar controls how much of the overall combined graph is visible in the sound pane.");
-}
-
-static void f_button_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_help_with_wrap((snd_state *)context,
-		     "fft button",
-"This button controls whether an FFT is displayed alongside the waveform.  To affect all channels at once, use control-click.");
-}
-
-static void w_button_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_help_with_wrap((snd_state *)context,
-		     "time domain waveform button",
-"This button determines whether the time domain waveform is displayed.  If both the 'w' and 'f' buttons are off, only the lisp \
-graph (if any) is displayed.  To affect all channels at once, use control-click.");
-}
-
-
 static void f_toggle_callback(Widget w, XtPointer context, XtPointer info)
 {
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
@@ -671,16 +588,63 @@ static void history_select_callback(Widget w, XtPointer context, XtPointer info)
 }
 #endif
 
+#if WITH_RELATIVE_PANES
+#include <Xm/SashP.h>
+
+/* using undocumented callback here, as in snd-xsnd.c */
+static void remake_edit_history(Widget lst, chan_info *cp, int from_graph)
+{
+  snd_info *sp;
+  int i, eds, items = 0;
+  XmString *edits;
+  eds = cp->edit_ctr;
+  while ((eds < (cp->edit_size - 1)) && (cp->edits[eds + 1])) eds++;
+  XmListDeleteAllItems(lst);
+  sp = cp->sound;
+  edits = (XmString *)CALLOC(eds + 1, sizeof(XmString));
+  edits[0] = XmStringCreate(sp->filename, XmFONTLIST_DEFAULT_TAG);
+  for (i = 1; i <= eds; i++) 
+    edits[i] = XmStringCreate(edit_to_string(cp, i), XmFONTLIST_DEFAULT_TAG);
+  XtVaSetValues(lst, 
+		XmNitems, edits, 
+		XmNitemCount, eds + 1, 
+		NULL);
+  for (i = 0; i <= eds; i++) 
+    XmStringFree(edits[i]);
+  FREE(edits);
+  XmListSelectPos(lst, cp->edit_ctr + 1, FALSE);
+  XtVaGetValues(lst, XmNvisibleItemCount, &items, NULL);
+  if (items <= eds)
+    XtVaSetValues(lst, XmNtopItemPosition, eds - items + 2, NULL);
+  if (from_graph) goto_graph(cp);
+}
+
+static void watch_edit_history_sash(Widget w, XtPointer closure, XtPointer info)
+{
+  SashCallData call_data = (SashCallData)info;
+  /* call_data->params[0]: Commit, Move, Key, Start (as strings) */
+  if ((call_data->params) && 
+      (call_data->params[0]) && 
+      (strcmp(call_data->params[0], "Start") == 0))
+    {
+      chan_info *cp = (chan_info *)closure;
+      Widget edhist;
+      if ((cp) && (cp->cgx) && (cp->cgx->chan_widgets))
+	{
+	  edhist = EDIT_HISTORY_LIST(cp);
+	  if (edhist)
+	    remake_edit_history(edhist, cp, FALSE);
+	}
+    }
+}
+#endif
+
 void reflect_edit_history_change(chan_info *cp)
 {
   /* new edit so it is added, and any trailing lines removed */
   chan_context *cx;
   Widget lst;
-  snd_info *sp;
-  int i, eds, items = 0;
-  XmString *edits;
-  XmString edit;
-  if (cp->squelch_update) return;
+  if (cp->in_as_one_edit) return;
 #if (XmVERSION == 1)
   if (0)
 #endif
@@ -688,20 +652,28 @@ void reflect_edit_history_change(chan_info *cp)
       cx = cp->cgx;
       if (cx)
 	{
-
 	  lst = EDIT_HISTORY_LIST(cp);
+#if WITH_RELATIVE_PANES
+	  if ((lst) && (widget_width(lst) > 1)) remake_edit_history(lst, cp, TRUE);
+#else
+	  /* old form */
 	  if (lst)
 	    {
+	      snd_info *sp;
+	      int i, eds, items = 0;
+	      XmString *edits;
 	      eds = cp->edit_ctr;
 	      while ((eds < (cp->edit_size - 1)) && (cp->edits[eds + 1])) eds++;
 	      if (eds >= 0)
 		{
 		  if ((eds == cp->edit_ctr) && (eds > 1)) /* need to force 0 (1) case to start list with sound file name */
 		    {
+		      XmString edit;
 		      /* special common case -- we're appending a new edit description */
 		      XtVaGetValues(lst, XmNitemCount, &items, NULL);
 		      if (items > eds )
-			XmListDeleteItemsPos(lst, cp->edit_size, eds + 1);
+			XmListDeleteItemsPos(lst, cp->edit_size, eds + 1); 
+		      /* cp->edit_size is too large, but the manual says this is the way to delete to the end */
 		      edit = XmStringCreate(edit_to_string(cp, eds), XmFONTLIST_DEFAULT_TAG);
 		      XmListAddItemUnselected(lst, edit, eds + 1);
 		      XmStringFree(edit);
@@ -728,38 +700,7 @@ void reflect_edit_history_change(chan_info *cp)
 		  goto_graph(cp);
 		}
 	    }
-	}
-    }
-}
-
-void reflect_save_as_in_edit_history(chan_info *cp, char *filename)
-{
-  chan_context *cx;
-  Widget lst;
-  char *new_line;
-  XmString str;
-  int pos;
-  if (cp->edit_ctr < 1) return; /* Sun segfaults if 0 here! (apparently the usual C library strlen null bug) */
-  cx = cp->cgx;
-#if (XmVERSION == 1)
-  if (0)
-#else
-  if (cx)
 #endif
-    {
-      lst = EDIT_HISTORY_LIST(cp);
-      if (lst)
-	{
-	  new_line = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-	  mus_snprintf(new_line, PRINT_BUFFER_SIZE,
-		       "%s: (save-sound-as \"%s\")", 
-		       edit_to_string(cp, cp->edit_ctr), 
-		       filename);
-	  str = XmStringCreate(new_line, XmFONTLIST_DEFAULT_TAG);
-	  pos = cp->edit_ctr + 1;
-	  XmListReplacePositions(lst, &pos, &str, 1);
-	  XmStringFree(str);
-	  FREE(new_line);
 	}
     }
 }
@@ -778,7 +719,7 @@ void reflect_edit_counter_change(chan_info *cp)
       if (cx)
 	{
 	  lst = EDIT_HISTORY_LIST(cp);
-	  if (lst)
+	  if ((lst) && (widget_width(lst) > 1))
 	    {
 	      XmListSelectPos(lst, cp->edit_ctr + 1, FALSE);
 	      XtVaGetValues(lst, 
@@ -829,6 +770,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
 	  if (insertion) {XtSetArg(args[n], XmNpositionIndex, (short)channel); n++;}
 	  XtSetArg(args[n], XmNpaneMinimum, chan_y); n++;
+
 #if (XmVERSION > 1)
 	  cw[W_form] = XtCreateManagedWidget("chn-form", xmFormWidgetClass, w_snd_pane(sp), args, n);
 	  if ((sp->channel_style == CHANNELS_COMBINED) && (channel > 0)) XtUnmanageChild(cw[W_form]);
@@ -841,12 +783,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
 	  cw[W_top] = XtCreateManagedWidget("chn-main-window", xmPanedWindowWidgetClass, cw[W_form], args, n);
 	  XtAddEventHandler(cw[W_top], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
-#else
-	  cw[W_main_window] = XtCreateManagedWidget("chn-main-window", xmFormWidgetClass, w_snd_pane(sp), args, n);
-	  XtAddEventHandler(cw[W_main_window], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
-#endif
 
-#if (XmVERSION > 1)
 	  n = 0;
 	  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->white); n++;}
 	  XtSetArg(args[n], XmNpaneMaximum, DEFAULT_EDIT_HISTORY_WIDTH); n++;
@@ -861,9 +798,30 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  XtManageChild(cw[W_edhist]);
 
 	  XtAddCallback(cw[W_edhist], XmNbrowseSelectionCallback, history_select_callback, cp);
-	  XtAddCallback(cw[W_edhist], XmNhelpCallback, history_help_callback, ss);
 	  XtAddEventHandler(cw[W_edhist], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 	  XtAddEventHandler(XtParent(cw[W_edhist]), KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
+#if WITH_RELATIVE_PANES
+	{
+	  unsigned int i;
+	  Widget child;
+	  CompositeWidget w = (CompositeWidget)(cw[W_top]);
+	  for (i = w->composite.num_children - 1; i>= 0; i--)
+	    {
+	      child = w->composite.children[i];
+	      if ((XtIsWidget(child)) && 
+		  (XtIsSubclass(child, xmSashWidgetClass)))
+		{
+		  XtAddCallback(child, XmNcallback, watch_edit_history_sash, (XtPointer)cp);
+		  break; /* there seems to be more than 1?? */
+		}
+	    }
+	}
+#endif
+
+#else
+	/* Motif 1 */
+	  cw[W_main_window] = XtCreateManagedWidget("chn-main-window", xmFormWidgetClass, w_snd_pane(sp), args, n);
+	  XtAddEventHandler(cw[W_main_window], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 #endif
 	}
       else cw[W_main_window] = main;
@@ -889,13 +847,11 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNselectColor, sx->pushed_button_color); n++;}
 	  cw[W_f] = make_togglebutton_widget(_("f"), cw[W_wf_buttons], args, n);
 	  XtAddCallback(cw[W_f], XmNvalueChangedCallback, f_toggle_callback, cp);
-	  XtAddCallback(cw[W_f], XmNhelpCallback, f_button_help_callback, ss);
 	  XtAddEventHandler(cw[W_f], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 	  
 	  XtSetArg(args[n], XmNset, TRUE); n++;
 	  cw[W_w] = make_togglebutton_widget(_("w"), cw[W_wf_buttons], args, n);
 	  XtAddCallback(cw[W_w], XmNvalueChangedCallback, w_toggle_callback, cp);
-	  XtAddCallback(cw[W_w], XmNhelpCallback, w_button_help_callback, ss);
 	  XtAddEventHandler(cw[W_w], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 	}
       else
@@ -939,7 +895,6 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       XtSetArg(args[n], XmNdragCallback, n1 = make_callback_list(zy_drag_callback, (XtPointer)cp)); n++;
       XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(zy_valuechanged_callback, (XtPointer)cp)); n++;
       cw[W_zy] = XtCreateManagedWidget("chn-zy", xmScrollBarWidgetClass, cw[W_left_scrollers], args, n);
-      XtAddCallback(cw[W_zy], XmNhelpCallback, zy_help_callback, ss);
       XtAddEventHandler(cw[W_zy], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 
       n = 0;
@@ -957,7 +912,6 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       XtSetArg(args[n], XmNdragCallback, n3 = make_callback_list(sy_drag_callback, (XtPointer)cp)); n++;
       XtSetArg(args[n], XmNvalueChangedCallback, n4 = make_callback_list(sy_valuechanged_callback, (XtPointer)cp)); n++;
       cw[W_sy] = XtCreateManagedWidget("chn-sy", xmScrollBarWidgetClass, cw[W_left_scrollers], args, n);
-      XtAddCallback(cw[W_sy], XmNhelpCallback, sy_help_callback, ss);
       XtAddEventHandler(cw[W_sy], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 
       n = 0;
@@ -987,7 +941,6 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       XtSetArg(args[n], XmNdecrementCallback, n7 = make_callback_list(sx_decrement_callback, (XtPointer)cp)); n++;
       XtSetArg(args[n], XmNvalueChangedCallback, n8 = make_callback_list(sx_valuechanged_callback, (XtPointer)cp)); n++;
       cw[W_sx] = XtCreateManagedWidget("chn-sx", xmScrollBarWidgetClass, cw[W_bottom_scrollers], args, n);
-      XtAddCallback(cw[W_sx], XmNhelpCallback, sx_help_callback, ss);
       XtAddEventHandler(cw[W_sx], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 
       n = 0;
@@ -1004,7 +957,6 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       XtSetArg(args[n], XmNdragCallback, n9 = make_callback_list(zx_drag_callback, (XtPointer)cp)); n++;
       XtSetArg(args[n], XmNvalueChangedCallback, n10 = make_callback_list(zx_valuechanged_callback, (XtPointer)cp)); n++;
       cw[W_zx] = XtCreateManagedWidget("chn-zx", xmScrollBarWidgetClass, cw[W_bottom_scrollers], args, n);
-      XtAddCallback(cw[W_zx], XmNhelpCallback, zx_help_callback, ss);
       XtAddEventHandler(cw[W_zx], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 
       n = 0;
@@ -1029,7 +981,6 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 
       if (!main)
 	{
-	  XtAddCallback(cw[W_graph], XmNhelpCallback, graph_help_callback, ss);
 	  XtAddCallback(cw[W_graph], XmNresizeCallback, channel_resize_callback, (XtPointer)cp);
 	  XtAddCallback(cw[W_graph], XmNexposeCallback, channel_expose_callback, (XtPointer)cp);
 	  XtAddEventHandler(cw[W_graph], EnterWindowMask, FALSE, graph_mouse_enter, (XtPointer)ss);
@@ -1070,7 +1021,6 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  XtSetArg(args[n], XmNdragCallback, n11 = make_callback_list(gzy_drag_callback, (XtPointer)cp)); n++;
 	  XtSetArg(args[n], XmNvalueChangedCallback, n12 = make_callback_list(gzy_valuechanged_callback, (XtPointer)cp)); n++;
 	  cw[W_gzy] = XtCreateManagedWidget("chn-gzy", xmScrollBarWidgetClass, cw[W_main_window], args, n);
-	  XtAddCallback(cw[W_gzy], XmNhelpCallback, gzy_help_callback, ss);
 	  XtAddEventHandler(cw[W_gzy], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 
 	  n = 0;
@@ -1089,7 +1039,6 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  XtSetArg(args[n], XmNdragCallback, n13 = make_callback_list(gsy_drag_callback, (XtPointer)cp)); n++;
 	  XtSetArg(args[n], XmNvalueChangedCallback, n14 = make_callback_list(gsy_valuechanged_callback, (XtPointer)cp)); n++;
 	  cw[W_gsy] = XtCreateManagedWidget("chn-gsy", xmScrollBarWidgetClass, cw[W_main_window], args, n);
-	  XtAddCallback(cw[W_gsy], XmNhelpCallback, gsy_help_callback, ss);
 	  XtAddEventHandler(cw[W_gsy], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 	  
 	  FREE(n11);
@@ -1105,7 +1054,6 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  cw[W_gzy] = NULL;
 	}
       run_new_widget_hook(cw[W_main_window]);
-
       /* also position of current graph in overall sound as window */
 
     } /* alloc new chan */

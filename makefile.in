@@ -94,5 +94,3 @@ configure: configure.in
 #   will therefore get accidentally loaded.  I fear the only fix is to delete the
 #   libraries on /usr/local/lib.
 
-
-# TODO: po (mo) files should be installed in /usr/local/share/locale/<loc>/LC_MESSAGES/ where <loc> is de for example

@@ -284,7 +284,6 @@ Float gsy_size(chan_info *cp);
 int fixup_cp_cgx_ax_wn(chan_info *cp);
 void reflect_edit_history_change(chan_info *cp);
 void reflect_edit_counter_change(chan_info *cp);
-void reflect_save_as_in_edit_history(chan_info *cp, char *filename);
 gboolean graph_key_press(GtkWidget *w, GdkEventKey *event, gpointer data);
 void add_channel_window(snd_info *sound, int channel, snd_state *ss, int chan_y, int insertion, GtkWidget *main, int arrows);
 void set_peak_numbers_font(chan_info *cp);
@@ -379,7 +378,6 @@ void sg_text_insert(GtkWidget *w, char *text);
 int sg_cursor_position(GtkWidget *w);
 void sg_list_append(GtkWidget *w, char *val);
 void sg_list_insert(GtkWidget *w, int row, char *val);
-void sg_list_set_text(GtkWidget *w, int row, char *val);
 void sg_list_select(GtkWidget *lst, int row);
 void sg_list_moveto(GtkWidget *lst, int row);
 

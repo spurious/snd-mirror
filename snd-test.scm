@@ -66,7 +66,7 @@
 (define all-args #f) ; huge arg testing
 (define reversed-tests #f)
 (define with-big-file #f)
-(define have-libguile-so #t) ; set to #f if loading libguile.a
+(define have-libguile-so #f)
 (define debugging-device-channels 8)
 
 (define pi 3.141592653589793)
@@ -2592,11 +2592,14 @@
 			"can't close audio" "can't open audio" "audio read error" "audio amp not available"
 			"can't write audio" "can't read audio" "no audio read permission" 
 			"can't close file" "arg out of range"
-			"midi open error" "midi read error" "midi write error" "midi close error" "midi init error" "midi misc error")))
+			"midi open error" "midi read error" "midi write error" "midi close error" "midi init error" "midi misc error"
+			"no channels method" "no hop method" "no width method" "no file-name method" "no ramp method" "no run method"
+			"no increment method" "no b2 method" "no inspect method" "no offset method"
+			)))
 	(call-with-current-continuation
 	 (lambda (quit)
 	   (do ((i 0 (1+ i)))
-	       ((= i 57))
+	       ((= i 67))
 	     (if (not (string=? (list-ref errs i) (mus-error-to-string i)))
 		 (begin
 		   (snd-display ";mus-error-to-string ~D: ~A ~A" i (list-ref errs i) (mus-error-to-string i))
@@ -10943,7 +10946,7 @@ EDITS: 5
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (wave-train gen 0.0)))
-	(vct-map! v1 (lambda () (if (wave-train? gen1) (wave-train gen1 0.0) -1.0)))
+	(vct-map! v1 (lambda () (if (wave-train? gen1) (wave-train gen1) -1.0)))
 	(IF (not (vequal v0 v1)) (snd-display ";map wave-train: ~A ~A" v0 v1))
 	(IF (not (wave-train? gen)) (snd-display ";~A not wave-train?" gen))
 	(IF (fneq (mus-phase gen) 0.0) (snd-display ";wave-train phase: ~F?" (mus-phase gen)))
@@ -26910,10 +26913,11 @@ EDITS: 2
 		  (IF (fneq (/ (cursor) (srate)) 1.0)
 		      (snd-display ";C-u 1.0 C-f: ~A?" (/ (cursor) (srate))))
 
-		  (let ((edhist (list-ref (channel-widgets) 7)))
-		    (select-item edhist 1) (force-event)
-		    (IF (not (= (edit-position) 1))
-			(snd-display ";click edit history: ~A ~A" (edit-position) (edits))))
+;		  (let ((edhist (list-ref (channel-widgets) 7)))
+;		    (select-item edhist 1) (force-event)
+;		    (IF (not (= (edit-position) 1))
+;			(snd-display ";click edit history: ~A ~A" (edit-position) (edits))))
+		  (set! (edit-position) 1)
 		    
 		  (drag-event cwid 1 0 100 50 400 50) (force-event)
 		  (IF (not (selection?))
@@ -27469,11 +27473,12 @@ EDITS: 2
 				 snd chn key state
 				 ind 1 (char->integer #\f) 4
 				 (axis-info ind 1 lisp-graph))))
-	      (for-each
-	       (lambda (sash)
-		 (if (Widget? sash)
-		     (drag-event sash 1 0 1 1 1 100)))
-	       (top-sash))
+	      (if (provided? 'snd-debug)
+		  (for-each
+		   (lambda (sash)
+		     (if (Widget? sash)
+			 (drag-event sash 1 0 1 1 1 100)))
+		   (top-sash)))
 	      (close-sound ind))
 
 	    ;; -------- filter envelope editor

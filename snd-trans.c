@@ -71,26 +71,18 @@ static int be_snd_checked_write(int fd, unsigned char *buf, int bytes, char *fil
   return(snd_checked_write(fd, buf, bytes, filename));
 }
 
-#define RETURN_MUS_IO_ERROR(IO_Func, IO_Name) \
-  return(mus_error(MUS_CANT_OPEN_FILE, _("translator: %s(%s): %s\n  [%s[%d] %s]"), \
-                   IO_Func, IO_Name, strerror(errno), \
-                   __FILE__, __LINE__, __FUNCTION__))
+#define RETURN_MUS_IO_ERROR(IO_Func, IO_Name) return(mus_error(MUS_CANT_OPEN_FILE, "translator: %s(%s) %s", IO_Func, IO_Name, strerror(errno)))
 
 #define RETURN_MUS_WRITE_ERROR(OldName, NewName) \
   do { \
-      mus_error(MUS_WRITE_ERROR, _("can't translate %s to %s:\n  %s\n [snd-trans.c[%d] %s]"), \
-		OldName, NewName, write_error_buffer, \
-		__LINE__, __FUNCTION__); \
+      mus_error(MUS_WRITE_ERROR, "can't translate %s to %s:\n  %s", OldName, NewName, write_error_buffer); \
       write_error_buffer[0] = '\0'; \
       return(MUS_ERROR); \
     } \
   while (0)
 
 #define RETURN_MUS_ALLOC_ERROR(OldName, Bytes, VariableName) \
-  return(mus_error(MUS_MEMORY_ALLOCATION_FAILED, _("translate %s: can't allocate %d bytes for %s:\n  [snd-trans.c[%d] %s]"), \
-		   OldName, Bytes, VariableName, \
-		   __LINE__, __FUNCTION__))
-
+  return(mus_error(MUS_MEMORY_ALLOCATION_FAILED, "translate %s: can't allocate %d bytes for %s", OldName, Bytes, VariableName))
 
 /* I'm using the same variable names in most cases below, so these two macros save lots of repetition */
 #define CLEANUP() \

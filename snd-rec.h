@@ -58,12 +58,9 @@ char *recorder_device_name(int dev);
 char *recorder_system_and_device_name(int sys, int dev);
 int recorder_input_device(int dev);
 int recorder_output_device(int dev);
-char *pane_device_name(int dev);
 
 #if (HAVE_OSS || HAVE_ALSA)
   char *recorder_field_abbreviation(int fld);
-  char *recorder_field_name(int fld);
-  char *recorder_field_function(int fld);
 #endif
 
 typedef struct {
@@ -130,7 +127,6 @@ void reflect_recorder_mixer_gain(int ind, Float val);
 void reflect_recorder_out_amp(int ind, Float val);
 void reflect_recorder_in_amp(int in, int out, Float val);
 char *channel_name(int in_chans, int out_chans, int chan);
-char *out_channel_name(int chan);
 char *gain_channel_name(int in_chans, int out_chans, int input, int dev_in, int out);
 Float mixer_gain(int system, int device, int chan, int gain, int field);
 void set_mixer_gain(int system, int device, int chan, int gain, int field, Float amp) ;

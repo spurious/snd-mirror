@@ -358,7 +358,6 @@ int channel_unlock_pane(chan_info *cp, void *ptr);
 int channel_lock_pane(chan_info *cp, void *ptr);
 void reflect_edit_history_change(chan_info *cp);
 void reflect_edit_counter_change(chan_info *cp);
-void reflect_save_as_in_edit_history(chan_info *cp, char *filename);
 void add_channel_window(snd_info *sound, int channel, snd_state *ss, int chan_y, int insertion, Widget main, int arrows);
 void set_peak_numbers_font(chan_info *cp);
 void set_bold_peak_numbers_font(chan_info *cp);

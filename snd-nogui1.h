@@ -249,7 +249,6 @@ void resize_zy(chan_info *cp);
 int channel_open_pane(chan_info *cp, void *ptr);
 void reflect_edit_history_change(chan_info *cp);
 void reflect_edit_counter_change(chan_info *cp);
-void reflect_save_as_in_edit_history(chan_info *cp, char *filename);
 void set_peak_numbers_font(chan_info *cp);
 void set_bold_peak_numbers_font(chan_info *cp);
 void set_tiny_numbers_font(chan_info *cp);

@@ -388,7 +388,7 @@ static int allocate_meter_2(Widget w, vu_label *vu)
   if (off_err != XpmSuccess) 
     {
       buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-      mus_snprintf(buf, PRINT_BUFFER_SIZE, _("can't create VU meter's label: %s\n"), XpmGetErrorString(off_err));
+      mus_snprintf(buf, PRINT_BUFFER_SIZE, "can't create VU meter's label: %s\n", XpmGetErrorString(off_err));
       attach_error(buf);
       FREE(buf);
       return(off_err);
@@ -397,7 +397,7 @@ static int allocate_meter_2(Widget w, vu_label *vu)
   if (err != XpmSuccess) 
     {
       buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-      mus_snprintf(buf, PRINT_BUFFER_SIZE, _("trouble with VU meter's 'on label' (%s)\nwill use the colorless 'off label'\n"), XpmGetErrorString(err));
+      mus_snprintf(buf, PRINT_BUFFER_SIZE, "trouble with VU meter's 'on label' (%s)\nwill use the colorless 'off label'\n", XpmGetErrorString(err));
       attach_error(buf);
       FREE(buf);
       vu->on_label = vu->off_label;
@@ -406,7 +406,7 @@ static int allocate_meter_2(Widget w, vu_label *vu)
   if (err != XpmSuccess) 
     {
       buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-      mus_snprintf(buf, PRINT_BUFFER_SIZE, _("trouble with VU meter's 'clip label' (%s)\nwill use the colorless 'off label'\n"), XpmGetErrorString(err));
+      mus_snprintf(buf, PRINT_BUFFER_SIZE, "trouble with VU meter's 'clip label' (%s)\nwill use the colorless 'off label'\n", XpmGetErrorString(err));
       attach_error(buf);
       FREE(buf);
       vu->clip_label = vu->off_label;
@@ -994,14 +994,6 @@ static void record_amp_valuechanged_callback(Widget w, XtPointer context, XtPoin
 
 /* ---------------- MESSAGE PANE ---------------- */
 
-static void messages_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_state *ss = (snd_state *)context;
-  snd_help_with_wrap(ss,
-		     "Message Pane",
-"This pane contains any messages the recorder generates.  Each is time stamped.  Many are merely informational or mild gripes.");
-}
-
 static Widget make_message_pane(snd_state *ss, Widget message_pane)
 {
   int n;
@@ -1023,67 +1015,12 @@ static Widget make_message_pane(snd_state *ss, Widget message_pane)
       map_over_children(XtParent(msg), set_main_color_of_widget, (void *)ss);
       XtVaSetValues(msg, XmNbackground, (ss->sgx)->light_blue, XmNforeground, (ss->sgx)->black, NULL);
     }
-  XtAddCallback(msg, XmNhelpCallback, messages_help_callback, ss);
   return(msg);
 }
 
 
 
 /* ---------------- FILE INFO PANE ---------------- */
-
-static void file_label_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_state *ss = (snd_state *)context;
-  snd_help_with_wrap(ss,
-		     "Output File Name",
-"This field sets the name of the output file.");	   
-}
-
-static void duration_label_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_state *ss = (snd_state *)context;
-  snd_help_with_wrap(ss,
-		     "Output File Duration",
-"This field shows the duration of the current or previous recording.");	   
-}
-
-static void button_holder_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_state *ss = (snd_state *)context;
-  snd_help_with_wrap(ss,
-		     "Record Options",
-"These buttons configure the appearance of the recorder; 'Autoload Recording', if set, causes the recorded output to be loaded automatically into Snd.");
-}
-
-static void autoload_file_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_state *ss = (snd_state *)context;
-  snd_help_with_wrap(ss,
-		     "Autoload File",
-"If this button is set, the recorded file is automatically loaded into Snd.");	   
-}
-
-static void help_record_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  recording_help((snd_state *)context);
-}
-
-static void vu_reset_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_state *ss = (snd_state *)context;
-  snd_help_with_wrap(ss,
-		     "Reset Button",
-"This button resets the fields above it that indicate the on-going max amp encountered since the last reset");
-}
-
-static void trigger_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_state *ss = (snd_state *)context;
-  snd_help_with_wrap(ss,
-		     "Record Trigger",
-"This scale sets the auto-record trigger value.  If it is non-zero, when you push the \
-'Rp->Triggered Record' button, Snd waits until it receives data above that value before starting the actual recording.");
-}
 
 static void make_trigger_label(Float val)
 {
@@ -1272,17 +1209,6 @@ static void save_audio_settings_callback(Widget w, XtPointer context, XtPointer 
   rp->mixer_settings_saved = TRUE;
   mus_audio_mixer_save(DEFAULT_AUDIO_STATE_FILE);
 }
-
-static void save_audio_settings_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_state *ss = (snd_state *)context;
-  snd_help_with_wrap(ss,
-		     "Save Audio Settings",
-"Normally, Snd saves the state of the audio hardware (the 'mixer' in Linux jargon) before opening the \
-recorder window, then restores it upon closing that window.  This means that any changes you make via \
-the sliders will be erased upon exit.  To save the current state, press this button.  The mixer state \
-will be written to the file .snd-mixer which can be deleted to cancel the save.");	   
-}
 #endif
 
 static void srate_changed_callback(Widget w, XtPointer context, XtPointer info) 
@@ -1317,15 +1243,6 @@ static void rec_size_changed_callback(Widget w, XtPointer context, XtPointer inf
       if ((n > 0) && (n != rp->buffer_size)) set_record_size(n);
       XtFree(str);
     }
-}
-
-static void rec_size_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_state *ss = (snd_state *)context;
-  snd_help_with_wrap(ss,
-		     "Record Input Buffer Size",
-"This field sets the size of the recorder's input buffers.  If you are getting clicks, and have already \
-tried everything else (you're writing to a local disk, in the host's native data format), try goofing around with this number.");
 }
 
 static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pane, int ndevs)
@@ -1381,7 +1298,6 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   XtSetArg(args[n], XmNmarginTop, 8); n++;
   XtSetArg(args[n], XmNmarginBottom, 8); n++;
   file_label = XtCreateManagedWidget(_("file:"), xmLabelWidgetClass, ff_form, args, n);
-  XtAddCallback(file_label, XmNhelpCallback, file_label_help_callback, ss);
 
   n = 0;
   /* if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;} */
@@ -1393,7 +1309,6 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   if (snd_strlen(rp->output_file) > 0) {XtSetArg(args[n], XmNvalue, rp->output_file); n++;}
   file_text = make_textfield_widget(ss, "text", ff_form, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
-  XtAddCallback(file_text, XmNhelpCallback, file_label_help_callback, ss);
 
   n = 0;
   /* if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;} */
@@ -1455,7 +1370,6 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   XtSetArg(args[n], XmNmarginTop, 8); n++;
   XtSetArg(args[n], XmNmarginBottom, 8); n++;
   duration_label = XtCreateManagedWidget(_("duration:"), xmLabelWidgetClass, file_form, args, n);
-  XtAddCallback(duration_label, XmNhelpCallback, duration_label_help_callback, ss);
 
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -1467,7 +1381,6 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   XtSetArg(args[n], XmNrecomputeSize, FALSE); n++;
   XtSetArg(args[n], XmNcolumns, 6); n++;
   rec_size_text = make_textfield_widget(ss, "rectext", file_form, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
-  XtAddCallback(rec_size_text, XmNhelpCallback, rec_size_help_callback, ss);
   XtAddCallback(rec_size_text, XmNactivateCallback, rec_size_changed_callback, (void *)ss);
   mus_snprintf(timbuf, TIME_STR_SIZE, "%d", rp->buffer_size);
   XmTextSetString(rec_size_text, timbuf);
@@ -1483,7 +1396,6 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   XtSetArg(args[n], XmNmarginTop, 8); n++;
   XtSetArg(args[n], XmNmarginBottom, 8); n++;
   rec_size_label = XtCreateManagedWidget(_("buf:"), xmLabelWidgetClass, file_form, args, n);
-  XtAddCallback(rec_size_label, XmNhelpCallback, rec_size_help_callback, ss);
 
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->light_blue); n++;}
@@ -1498,7 +1410,6 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   XtSetArg(args[n], XmNmarginTop, 8); n++;
   XtSetArg(args[n], XmNmarginBottom, 8); n++;
   file_duration = XtCreateManagedWidget("  0.0 ", xmLabelWidgetClass, file_form, args, n);
-  XtAddCallback(file_duration, XmNhelpCallback, duration_label_help_callback, ss);
 
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -1522,7 +1433,6 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
   trigger_label = XtCreateManagedWidget(_("trigger:"), xmLabelWidgetClass, file_form, args, n);
-  XtAddCallback(trigger_label, XmNhelpCallback, trigger_help_callback, ss);
   make_trigger_label(rp->trigger);
 
   n = 0;
@@ -1538,7 +1448,6 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   XtSetArg(args[n], XmNdragCallback, n1 = make_callback_list(drag_trigger_callback, (XtPointer)ss)); n++;
   XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(change_trigger_callback, (XtPointer)ss)); n++;
   trigger_scale = XtCreateManagedWidget("trigger-scale", xmScaleWidgetClass, file_form, args, n);
-  XtAddCallback(trigger_scale, XmNhelpCallback, trigger_help_callback, ss);
 
   /* buttons */
   n = 0;
@@ -1559,7 +1468,6 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
   XtSetArg(args[n], XmNspacing, 0); n++;
   button_holder = XtCreateManagedWidget("button-holder", xmRowColumnWidgetClass, button_frame, args, n);
-  XtAddCallback(button_holder, XmNhelpCallback, button_holder_help_callback, ss);
 
   /* load up the box of panel on-buttons and various other settings (autoload for now) */
   n = 0;
@@ -1587,7 +1495,6 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
 	name = recorder_device_name(rp->ordered_devices[i]);
       else name = recorder_system_and_device_name(rp->ordered_systems[i], rp->ordered_devices[i]);
       device_buttons[i] = make_togglebutton_widget(name, button_holder, args, n);
-      XtAddCallback(device_buttons[i], XmNhelpCallback, button_holder_help_callback, ss);
       XtAddCallback(device_buttons[i], XmNvalueChangedCallback, device_button_callback, (XtPointer)all_panes[i]);
       XmToggleButtonSetState(device_buttons[i], TRUE, FALSE); 
     }
@@ -1595,13 +1502,11 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   device_buttons[ndevs] = autoload_file;
   /* we assume this is last in the device_buttons list in sensitize_control_buttons */
   rp->autoload_button = ndevs;
-  XtAddCallback(autoload_file, XmNhelpCallback, autoload_file_help_callback, ss);
   XtAddCallback(autoload_file, XmNvalueChangedCallback, autoload_file_callback, ss);
   XmToggleButtonSetState(autoload_file, (Boolean)(rp->autoload), FALSE); 
 #if (HAVE_OSS || HAVE_ALSA)
   save_audio_settings = make_togglebutton_widget(_("Save Audio Settings"), button_holder, args, n);
   XtAddCallback(save_audio_settings, XmNvalueChangedCallback, save_audio_settings_callback, NULL);
-  XtAddCallback(save_audio_settings, XmNhelpCallback, save_audio_settings_help_callback, ss);
 #endif
 
   FREE(n1);
@@ -1642,143 +1547,6 @@ void unlock_recording_audio(void)
 /* -------------------------------- DEVICE PANE -------------------------------- */
 
 
-
-static void vu_max_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  Wdesc *wd = (Wdesc *)context;
-  ssnd_help(wd->ss,
-	   "Max Amp Indicator",
-	    "This number indicates the max amp encountered \
-since the last reset in ",
-	    pane_device_name(wd->p->device), "'s",
-	    " channel ",
-	    channel_name(wd->p->in_chans, wd->p->out_chans, wd->chan),
-	    ". \
-The reset button sets it back to 0.0.\n",
-	    NULL);
-}
-
-static void vu_on_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  Wdesc *wd = (Wdesc *)context;
-  ssnd_help(wd->ss,
-	    "On/Off Button",
-	    "This button causes ",
-	    pane_device_name(wd->p->device), "'s",
-	    " channel ",
-	    channel_name(wd->p->in_chans, wd->p->out_chans, wd->chan),
-	    " to be included \
-in or removed from the recording. The button \
-is red when the signal is active.\n",
-	    NULL);
-}
-
-static void volume_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  Wdesc *wd = (Wdesc *)context;
-#if (HAVE_OSS || HAVE_ALSA)
-  int device, channel, field;
-  device = wd->device;
-  field = wd->field;
-  channel = wd->chan;
-  if (device == MUS_AUDIO_DAC_OUT)
-    ssnd_help(wd->ss,
-	      "Analog Out",
-	      "This slider scales channel ",
-	      out_channel_name(channel),
-	      "'s volume \
-at the speaker.  It has no effect on the output \
-file's amplitude.\n",
-	      NULL);
-  else
-    {
-      if (device == MUS_AUDIO_DAC_FILTER)
-	ssnd_help(wd->ss,
-		  "Tone Controls",
-		  "This slider sets the mixer's ",
-		  (field == MUS_AUDIO_TREBLE) ? "treble" : "bass",
-		  " tone control.\n",
-		  NULL);
-      else
-	{
-	  if (device == MUS_AUDIO_MICROPHONE)
-	    ssnd_help(wd->ss,
-		      "Microphone Gain",
-"This slider controls the input gain of the microphone.\n",
-		      NULL);
-	  else
-	    {
-	      if (device == MUS_AUDIO_LINE_IN)
-		ssnd_help(wd->ss,
-			  "Line In Gain",
-"This slider controls the volume of the analog \
-line-in channel ",
-			  channel_name(wd->p->in_chans, wd->p->out_chans, channel),
-			  ".\n",
-			  NULL);
-	      else
-		ssnd_help(wd->ss,
-			  "Linux Mixer Settings",
-"This bank of sliders affects the OSS 'mixer'; this \
-particular slider claims to control channel ",
-			  channel_name(wd->p->in_chans, wd->p->out_chans, channel),
-			  "'s\n",
-			  recorder_field_name(field),
-" field, which I believe has something to do with\n",
-			  recorder_field_function(field),
-			  ".\n",
-			  NULL);
-	    }
-	}
-    }
-#else
-  ssnd_help(wd->ss,
-	    recorder_device_name(wd->p->device),
-	    "This slider sets the ",
-	    (recorder_input_device(wd->p->device)) ? "gain" : "volume",
-	    " of channel ",
-	    channel_name(wd->p->in_chans, wd->p->out_chans, wd->chan),
-	    " of ",
-	    pane_device_name(wd->p->device),
-	    "\n",
-	    (recorder_input_device(((PANE *)(wd->p))->device)) ? "This scales the in-coming signal before it \
-is reflected in the meters or the audio data.\n" : "",
-	    NULL);
-#endif
-}
-
-static void amp_slider_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  Wdesc *wd = (Wdesc *)context;
-  PANE *p;
-  AMP *a;
-  p = wd->p;
-  a = p->amps[wd->chan];
-  ssnd_help(wd->ss,
-	    "Volume Slider",
-	    "This slider scales ",
-	    (recorder_input_device(((PANE *)(wd->p))->device)) ? "the contribution of " : "",
-	    pane_device_name(wd->p->device), "'s\n",
-	    "channel ",
-	    channel_name(wd->p->in_chans, wd->p->out_chans, a->in),
-	    (recorder_input_device(((PANE *)(wd->p))->device)) ? " to the output file's channel " : ".",
-	    (recorder_input_device(((PANE *)(wd->p))->device)) ? (out_channel_name(a->out)) : "",
-	    NULL);
-}
-
-static void meter_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  Wdesc *wd = (Wdesc *)context;
-  ssnd_help(wd->ss,
-	    "VU Meter",
-	    "This meter shows the current volume of ",
-	    pane_device_name(wd->p->device), "'s",
-	    " channel ",
-	    channel_name(wd->p->in_chans, wd->p->out_chans, wd->chan),
-	    ". \
-It is yellow if active, red if clipping.\n",
-	    NULL);
-}
 
 static void vu_reset_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -1861,19 +1629,6 @@ static void volume_callback(Widget w, XtPointer context, XtPointer info)
 
 /* ---- slider button matrix ---- */
 
-static void button_matrix_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_state *ss = (snd_state *)context;
-  snd_help_with_wrap(ss, 
-		     "Channel Matrix",
-"This set of buttons controls which amplitude sliders are visible in the pane.  To conserve screen space, only \
-the most commonly used sliders are visible by default, but you can press the button corresponding to the slider you want \
-at any time.  It is also possible to drag the mouse through a row or column, setting (button 1) or unsetting (button 2) \
-buttons as you go.  Click in the corner (the '/' label) to set all (button 1) or unset all (button 2). Similarly, click \
-above a column or to the left of a row to set (button 1) or unset (button 2) the entire column or row.  Control-click in \
-the corner to return to the default settings.");
-}
-
 static Widget make_recorder_slider(snd_state *ss, PANE *p, AMP *a, Widget last_slider, int input)
 {
   int n;
@@ -1906,7 +1661,6 @@ static Widget make_recorder_slider(snd_state *ss, PANE *p, AMP *a, Widget last_s
   a->label = make_pushbutton_widget(gain_channel_name(p->in_chans, p->out_chans, input, a->device_in_chan, a->out), 
 				       p->pane, args, n);
   XtAddCallback(a->label, XmNactivateCallback, record_amp_click_callback, a);
-  XtAddCallback(a->label, XmNhelpCallback, amp_slider_help_callback, a->wd);
   
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -1934,7 +1688,6 @@ static Widget make_recorder_slider(snd_state *ss, PANE *p, AMP *a, Widget last_s
   a->number = make_pushbutton_widget ("amp-number", p->pane, args, n);
   /* this could be the snd-xsnd control panel case as well */
   XtAddCallback(a->number, XmNactivateCallback, record_amp_click_callback, a);
-  XtAddCallback(a->number, XmNhelpCallback, amp_slider_help_callback, a->wd);
   XmStringFree(s1);
 	  
   n = 0;      
@@ -1956,7 +1709,6 @@ static Widget make_recorder_slider(snd_state *ss, PANE *p, AMP *a, Widget last_s
   XtSetArg(args[n], XmNdragCallback, n1 = make_callback_list(record_amp_drag_callback, (XtPointer)a)); n++;
   XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(record_amp_valuechanged_callback, (XtPointer)a)); n++;
   a->slider = XtCreateManagedWidget("amp", xmScrollBarWidgetClass, p->pane, args, n);
-  XtAddCallback(a->slider, XmNhelpCallback, amp_slider_help_callback, a->wd);
 
   FREE(n1);
   FREE(n2);
@@ -2148,7 +1900,6 @@ static Widget make_button_matrix(snd_state *ss, PANE *p, char *name, Widget pare
   XtSetArg(args[n], XmNwidth, (Dimension)width); n++;
   XtSetArg(args[n], XmNresizePolicy, XmRESIZE_NONE); n++;
   outer_form = XtCreateManagedWidget("outer-form", xmFormWidgetClass, outer_frame, args, n);
-  XtAddCallback(outer_form, XmNhelpCallback, button_matrix_help_callback, ss);
   XtAddEventHandler(outer_form, ButtonPressMask, FALSE, button_matrix_button_press, (XtPointer)p);
   XtAddEventHandler(outer_form, ButtonMotionMask, FALSE, button_matrix_button_motion, (XtPointer)p);
   XtAddEventHandler(outer_form, ButtonReleaseMask, FALSE, button_matrix_button_release, (XtPointer)p);
@@ -2508,7 +2259,6 @@ static Widget make_vu_meters(snd_state *ss, PANE *p, int vu_meters, Widget *fram
       wd->field = MUS_AUDIO_AMP;
       wd->device = p->device;
       wd->system = p->system;
-      XtAddCallback(meter, XmNhelpCallback, meter_help_callback, wd);
       last_frame = frame;
       if ((i == (columns*(row + 1) - 1)) && 
 	  (vu_meters > (i + 1))) 
@@ -2620,7 +2370,7 @@ static Widget make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE 
       wd->p = p;
       wd->gain = gain_ctr + chan;
       if (wd->gain > rp->num_mixer_gains) 
-	snd_error(_("make_vertical_gain_sliders: overflow %d > %d"), 
+	snd_error("make_vertical_gain_sliders: overflow %d > %d", 
 		  wd->gain, rp->num_mixer_gains);
       else gain_sliders[wd->gain] = wd;
       vol = mixer_gain(wd->system, wd->device, wd->chan, wd->gain, wd->field);
@@ -2685,7 +2435,6 @@ static Widget make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE 
       last_slider = wd->wg;
       XtAddCallback(last_slider, XmNvalueChangedCallback, volume_callback, wd);
       XtAddCallback(last_slider, XmNdragCallback, volume_callback, wd);
-      XtAddCallback(last_slider, XmNhelpCallback, volume_help_callback, wd);
 #if (HAVE_OSS || HAVE_ALSA)
       last_device = this_device;
 #endif
@@ -2826,7 +2575,6 @@ static Widget make_button_box(snd_state *ss, recorder_info *rp, PANE *p, Float m
       wd->system = p->system;
       wd->field = MUS_AUDIO_AMP;
       XtAddCallback(last_button, XmNactivateCallback, meter_button_callback, wd);
-      XtAddCallback(last_button, XmNhelpCallback, vu_on_help_callback, wd);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -2872,7 +2620,6 @@ static Widget make_button_box(snd_state *ss, recorder_info *rp, PANE *p, Float m
       vu = p->meters[i];
       vu->max_button = max_label;
       vu->max_val = 0.0;
-      XtAddCallback(max_label, XmNhelpCallback, vu_max_help_callback, wd);
 
       if ((i == (columns * (row + 1) - 1)) && 
 	  (vu_meters > (i + 1))) 
@@ -2912,7 +2659,6 @@ static void make_reset_button(snd_state *ss, PANE *p, Float meter_size, Widget b
   XtSetArg(args[n], XmNlabelString, labelstr); n++;
   p->reset_button = XtCreateManagedWidget("reset", xmPushButtonWidgetClass, p->pane, args, n);
   XtAddCallback(p->reset_button, XmNactivateCallback, vu_reset_callback, p);
-  XtAddCallback(p->reset_button, XmNhelpCallback, vu_reset_help_callback, ss);
   XmStringFree(labelstr);
 }
 
@@ -3249,6 +2995,11 @@ static void record_button_callback(Widget w, XtPointer context, XtPointer info)
 
 static void initialize_recorder(recorder_info *rp);
 static Widget rec_panes, message_pane, file_info_pane;
+
+static void help_record_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  recording_help((snd_state *)context);
+}
 
 void snd_record_file(snd_state *ss)
 {

@@ -2113,7 +2113,8 @@ with chans samples, each sample set from the trailing arguments (defaulting to 0
   /* make_empty_frame from first of arglist, then if more args, load vals */
   mus_xen *gn;
   mus_any *ge;
-  mus_frame *fr;
+  mus_any *fr;
+  Float *vals;
   XEN cararg; XEN lst;
   int size = 0, i, len;
   XEN_ASSERT_TYPE((XEN_LIST_P_WITH_LENGTH(arglist, len)) && (len > 0), arglist, XEN_ARG_1, S_make_frame, "a list");
@@ -2131,10 +2132,11 @@ with chans samples, each sample set from the trailing arguments (defaulting to 0
       gn->gen = ge;
       if (len > 1)
 	{
-	  fr = (mus_frame *)(gn->gen);
+	  fr = gn->gen;
+	  vals = mus_data(fr);
 	  for (i = 1, lst = XEN_CDR(XEN_COPY_ARG(arglist)); i < len; i++, lst = XEN_CDR(lst))
 	    if (XEN_NUMBER_P(XEN_CAR(lst)))
-	      fr->vals[i - 1] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
+	      vals[i - 1] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
 	    else
 	      {
 		mus_free(gn->gen);
@@ -2153,7 +2155,7 @@ static XEN g_frame_p(XEN obj)
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_frame_p(MUS_XEN_TO_CLM(obj)))));
 }
 
-static XEN g_wrap_frame(mus_frame *val, int dealloc)
+static XEN g_wrap_frame(mus_any *val, int dealloc)
 {
   mus_xen *gn;
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
@@ -2167,14 +2169,14 @@ static XEN g_frame_add(XEN uf1, XEN uf2, XEN ures) /* optional res */
   #define H_frame_add "(" S_frame_add " f1 f2 &optional outf) adds f1 and f2 returning outf; \
 if outf is not given, a new frame is created. outf[i] = f1[i] + f2[i]"
 
-  mus_frame *res = NULL;
+  mus_any *res = NULL;
   XEN_ASSERT_TYPE((MUS_XEN_P(uf1)) && (mus_frame_p(MUS_XEN_TO_CLM(uf1))), uf1, XEN_ARG_1, S_frame_add, "a frame");
   XEN_ASSERT_TYPE((MUS_XEN_P(uf2)) && (mus_frame_p(MUS_XEN_TO_CLM(uf2))), uf2, XEN_ARG_2, S_frame_add, "a frame");
   if ((MUS_XEN_P(ures)) && 
       (mus_frame_p(MUS_XEN_TO_CLM(ures)))) 
-    res = (mus_frame *)MUS_XEN_TO_CLM(ures);
-  return(g_wrap_frame(mus_frame_add((mus_frame *)MUS_XEN_TO_CLM(uf1),
-				    (mus_frame *)MUS_XEN_TO_CLM(uf2),
+    res = (mus_any *)MUS_XEN_TO_CLM(ures);
+  return(g_wrap_frame(mus_frame_add((mus_any *)MUS_XEN_TO_CLM(uf1),
+				    (mus_any *)MUS_XEN_TO_CLM(uf2),
 				    res),
 		      (res) ? DONT_FREE_FRAME : FREE_FRAME));
 }
@@ -2184,14 +2186,14 @@ static XEN g_frame_multiply(XEN uf1, XEN uf2, XEN ures) /* optional res */
   #define H_frame_multiply "(" S_frame_multiply " f1 f2 &optional outf) multiplies f1 and f2 returning outf; \
 if outf is not given, a new frame is created. outf[i] = f1[i] * f2[i]."
 
-  mus_frame *res = NULL;
+  mus_any *res = NULL;
   XEN_ASSERT_TYPE((MUS_XEN_P(uf1)) && (mus_frame_p(MUS_XEN_TO_CLM(uf1))), uf1, XEN_ARG_1, S_frame_multiply, "a frame");
   XEN_ASSERT_TYPE((MUS_XEN_P(uf2)) && (mus_frame_p(MUS_XEN_TO_CLM(uf2))), uf2, XEN_ARG_2, S_frame_multiply, "a frame");
   if ((MUS_XEN_P(ures)) && 
       (mus_frame_p(MUS_XEN_TO_CLM(ures)))) 
-    res = (mus_frame *)MUS_XEN_TO_CLM(ures);
-  return(g_wrap_frame(mus_frame_multiply((mus_frame *)MUS_XEN_TO_CLM(uf1),
-					 (mus_frame *)MUS_XEN_TO_CLM(uf2),
+    res = (mus_any *)MUS_XEN_TO_CLM(ures);
+  return(g_wrap_frame(mus_frame_multiply((mus_any *)MUS_XEN_TO_CLM(uf1),
+					 (mus_any *)MUS_XEN_TO_CLM(uf2),
 					 res),
 		      (res) ? DONT_FREE_FRAME : FREE_FRAME));
 }
@@ -2201,7 +2203,7 @@ static XEN g_frame_ref(XEN uf1, XEN uchan)
   #define H_frame_ref "(" S_frame_ref " f chan) -> f[chan] (the chan-th sample in frame f"
   XEN_ASSERT_TYPE((MUS_XEN_P(uf1)) && (mus_frame_p(MUS_XEN_TO_CLM(uf1))), uf1, XEN_ARG_1, S_frame_ref, "a frame");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(uchan), uchan, XEN_ARG_2, S_frame_ref, "an integer");
-  return(C_TO_XEN_DOUBLE(mus_frame_ref((mus_frame *)MUS_XEN_TO_CLM(uf1), XEN_TO_C_INT(uchan))));
+  return(C_TO_XEN_DOUBLE(mus_frame_ref((mus_any *)MUS_XEN_TO_CLM(uf1), XEN_TO_C_INT(uchan))));
 }
 
 static XEN g_set_frame_ref(XEN uf1, XEN uchan, XEN val)
@@ -2210,7 +2212,7 @@ static XEN g_set_frame_ref(XEN uf1, XEN uchan, XEN val)
   XEN_ASSERT_TYPE((MUS_XEN_P(uf1)) && (mus_frame_p(MUS_XEN_TO_CLM(uf1))), uf1, XEN_ARG_1, S_frame_set, "a frame");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(uchan), uchan, XEN_ARG_2, S_frame_set, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, S_frame_set, "a number");
-  return(C_TO_XEN_DOUBLE(mus_frame_set((mus_frame *)MUS_XEN_TO_CLM(uf1), XEN_TO_C_INT(uchan), XEN_TO_C_DOUBLE(val))));
+  return(C_TO_XEN_DOUBLE(mus_frame_set((mus_any *)MUS_XEN_TO_CLM(uf1), XEN_TO_C_INT(uchan), XEN_TO_C_DOUBLE(val))));
 }
 
 
@@ -2229,7 +2231,7 @@ static XEN g_mixer_ref(XEN uf1, XEN in, XEN out)
   XEN_ASSERT_TYPE((MUS_XEN_P(uf1)) && (mus_mixer_p(MUS_XEN_TO_CLM(uf1))), uf1, XEN_ARG_1, S_mixer_ref, "a mixer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(in), in, XEN_ARG_2, S_mixer_ref, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(out), out, XEN_ARG_3, S_mixer_ref, "an integer");
-  return(C_TO_XEN_DOUBLE(mus_mixer_ref((mus_mixer *)MUS_XEN_TO_CLM(uf1),
+  return(C_TO_XEN_DOUBLE(mus_mixer_ref((mus_any *)MUS_XEN_TO_CLM(uf1),
 				       XEN_TO_C_INT(in),
 				       XEN_TO_C_INT(out))));
 }
@@ -2241,7 +2243,7 @@ static XEN g_set_mixer_ref(XEN uf1, XEN in, XEN out, XEN val)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(in), in, XEN_ARG_2, S_mixer_set, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(out), out, XEN_ARG_2, S_mixer_set, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_4, S_mixer_set, "a number");
-  return(C_TO_XEN_DOUBLE(mus_mixer_set((mus_mixer *)MUS_XEN_TO_CLM(uf1),
+  return(C_TO_XEN_DOUBLE(mus_mixer_set((mus_any *)MUS_XEN_TO_CLM(uf1),
 				       XEN_TO_C_INT(in),
 				       XEN_TO_C_INT(out),
 				       XEN_TO_C_DOUBLE(val))));
@@ -2250,7 +2252,7 @@ static XEN g_set_mixer_ref(XEN uf1, XEN in, XEN out, XEN val)
 #define DONT_FREE_MIXER -1
 #define FREE_MIXER 1
 
-static XEN g_wrap_mixer(mus_mixer *val, int dealloc)
+static XEN g_wrap_mixer(mus_any *val, int dealloc)
 {
   mus_xen *gn;
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
@@ -2264,14 +2266,14 @@ static XEN g_mixer_multiply(XEN uf1, XEN uf2, XEN ures) /* optional res */
   #define H_mixer_multiply "(" S_mixer_multiply " m1 m2 &optional outm) multiplies mixers m1 and m2 \
 (a matrix multiply), returning the mixer outm, or creating a new mixer if outm is not given."
 
-  mus_mixer *res = NULL;
+  mus_any *res = NULL;
   XEN_ASSERT_TYPE((MUS_XEN_P(uf1)) && (mus_mixer_p(MUS_XEN_TO_CLM(uf1))), uf1, XEN_ARG_1, S_mixer_multiply, "a mixer");
   XEN_ASSERT_TYPE((MUS_XEN_P(uf2)) && (mus_mixer_p(MUS_XEN_TO_CLM(uf2))), uf2, XEN_ARG_2, S_mixer_multiply, "a mixer");
   if ((MUS_XEN_P(ures)) && 
       (mus_mixer_p(MUS_XEN_TO_CLM(ures))))
-    res = (mus_mixer *)MUS_XEN_TO_CLM(ures);
-  return(g_wrap_mixer(mus_mixer_multiply((mus_mixer *)MUS_XEN_TO_CLM(uf1),
-					 (mus_mixer *)MUS_XEN_TO_CLM(uf2),
+    res = (mus_any *)MUS_XEN_TO_CLM(ures);
+  return(g_wrap_mixer(mus_mixer_multiply((mus_any *)MUS_XEN_TO_CLM(uf1),
+					 (mus_any *)MUS_XEN_TO_CLM(uf2),
 					 res),
 		      (res) ? DONT_FREE_MIXER : FREE_MIXER));
 }
@@ -2281,14 +2283,14 @@ static XEN g_frame2frame(XEN mx, XEN infr, XEN outfr) /* optional outfr */
   #define H_frame2frame "(" S_frame2frame " m f &optional outf) passes frame f through mixer m \
 returning frame outf (or creating a new frame if necessary); this is a matrix multiply of m and f"
 
-  mus_frame *res = NULL;
+  mus_any *res = NULL;
   XEN_ASSERT_TYPE((MUS_XEN_P(mx)) && (mus_mixer_p(MUS_XEN_TO_CLM(mx))), mx, XEN_ARG_1, S_frame2frame, "a mixer");
   XEN_ASSERT_TYPE((MUS_XEN_P(infr)) && (mus_frame_p(MUS_XEN_TO_CLM(infr))), infr, XEN_ARG_2, S_frame2frame, "a frame");
   if ((MUS_XEN_P(outfr)) && 
       (mus_frame_p(MUS_XEN_TO_CLM(outfr)))) 
-    res = (mus_frame *)MUS_XEN_TO_CLM(outfr);
-  return(g_wrap_frame(mus_frame2frame((mus_mixer *)MUS_XEN_TO_CLM(mx),
-				      (mus_frame *)MUS_XEN_TO_CLM(infr),
+    res = (mus_any *)MUS_XEN_TO_CLM(outfr);
+  return(g_wrap_frame(mus_frame2frame((mus_any *)MUS_XEN_TO_CLM(mx),
+				      (mus_any *)MUS_XEN_TO_CLM(infr),
 				      res),
 		      (res) ? DONT_FREE_FRAME : FREE_FRAME));
 }
@@ -2296,13 +2298,15 @@ returning frame outf (or creating a new frame if necessary); this is a matrix mu
 static XEN g_frame2list(XEN fr)
 {
   #define H_frame2list "(" S_frame2list " f) -> contents of frame f as a list"
-  mus_frame *val;
+  mus_any *val;
   int i;
+  Float *vals;
   XEN res = XEN_EMPTY_LIST;
   XEN_ASSERT_TYPE((MUS_XEN_P(fr)) && (mus_frame_p(MUS_XEN_TO_CLM(fr))), fr, XEN_ONLY_ARG, S_frame2list, "a frame");
-  val = (mus_frame *)MUS_XEN_TO_CLM(fr);
-  for (i = (val->chans) - 1; i >= 0; i--) 
-    res = XEN_CONS(C_TO_XEN_DOUBLE(val->vals[i]), res);
+  val = (mus_any *)MUS_XEN_TO_CLM(fr);
+  vals = mus_data(val);
+  for (i = mus_length(val) - 1; i >= 0; i--) 
+    res = XEN_CONS(C_TO_XEN_DOUBLE(vals[i]), res);
   return(xen_return_first(res, fr));
 }
 
@@ -2312,7 +2316,7 @@ static XEN g_frame2sample(XEN mx, XEN fr)
   XEN_ASSERT_TYPE((MUS_XEN_P(mx)), mx, XEN_ARG_1, S_frame2sample, "a frame or mixer");
   XEN_ASSERT_TYPE((MUS_XEN_P(fr)) && (mus_frame_p(MUS_XEN_TO_CLM(fr))), fr, XEN_ARG_2, S_frame2sample, "a frame");
   return(C_TO_XEN_DOUBLE(mus_frame2sample(MUS_XEN_TO_CLM(mx),
-					  (mus_frame *)MUS_XEN_TO_CLM(fr))));
+					  (mus_any *)MUS_XEN_TO_CLM(fr))));
 }
 
 static XEN g_sample2frame(XEN mx, XEN insp, XEN outfr) /* optional outfr */
@@ -2320,12 +2324,12 @@ static XEN g_sample2frame(XEN mx, XEN insp, XEN outfr) /* optional outfr */
   #define H_sample2frame "(" S_sample2frame " m val &optional outf) passes the sample val through mixer m \
 returning frame outf (creating it if necessary)"
 
-  mus_frame *res = NULL;
+  mus_any *res = NULL;
   XEN_ASSERT_TYPE((MUS_XEN_P(mx)), mx, XEN_ARG_1, S_sample2frame, "a frame or mixer");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(insp), insp, XEN_ARG_2, S_sample2frame, "a number");
   if ((MUS_XEN_P(outfr)) && 
       (mus_frame_p(MUS_XEN_TO_CLM(outfr)))) 
-    res = (mus_frame *)MUS_XEN_TO_CLM(outfr);
+    res = (mus_any *)MUS_XEN_TO_CLM(outfr);
   return(g_wrap_frame(mus_sample2frame(MUS_XEN_TO_CLM(mx),
 				       XEN_TO_C_DOUBLE(insp),
 				       res),
@@ -2347,7 +2351,8 @@ giving | (a*.5 + b*.125) (a*.25 + b*1.0) |"
   /* make_empty_mixer from first of arglist, then if more args, load vals */
   mus_xen *gn;
   mus_any *ge;
-  mus_mixer *fr;
+  mus_any *fr;
+  Float **vals;
   XEN cararg; XEN lst;
   int size = 0, i, j, k, len;
   XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(arglist, len), arglist, XEN_ARG_1, S_make_mixer, "a list");
@@ -2366,13 +2371,14 @@ giving | (a*.5 + b*.125) (a*.25 + b*1.0) |"
       gn->gen = ge;
       if (len > 1)
 	{
-	  fr = (mus_mixer *)(gn->gen);
+	  fr = gn->gen;
+	  vals = (Float **)mus_data(fr);
 	  j = 0;
 	  k = 0;
 	  for (i = 1, lst = XEN_CDR(XEN_COPY_ARG(arglist)); (i < len) && (XEN_NOT_NULL_P(lst)); i++, lst = XEN_CDR(lst))
 	    {
 	      if (XEN_NUMBER_P(XEN_CAR(lst)))
-		fr->vals[j][k] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
+		vals[j][k] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
 	      else
 		{
 		  mus_free(gn->gen);
@@ -3139,7 +3145,7 @@ static XEN g_in_any_1(char *caller, XEN frame, XEN chan, XEN inp)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(frame), frame, XEN_ARG_1, caller, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_2, caller, "an integer");
   XEN_ASSERT_TYPE((MUS_XEN_P(inp)) && (mus_input_p(MUS_XEN_TO_CLM(inp))), inp, XEN_ARG_3, caller, "an input gen");
-  return(C_TO_XEN_DOUBLE(mus_in_any(XEN_TO_C_OFF_T_OR_ELSE(frame, 0), XEN_TO_C_INT(chan), (mus_input *)MUS_XEN_TO_CLM(inp))));
+  return(C_TO_XEN_DOUBLE(mus_in_any(XEN_TO_C_OFF_T_OR_ELSE(frame, 0), XEN_TO_C_INT(chan), (mus_any *)MUS_XEN_TO_CLM(inp))));
 }
 
 static XEN g_in_any(XEN frame, XEN chan, XEN inp) 
@@ -3169,7 +3175,7 @@ static XEN g_out_any_1(char *caller, XEN frame, XEN chan, XEN val, XEN outp)
   return(C_TO_XEN_DOUBLE(mus_out_any(XEN_TO_C_OFF_T_OR_ELSE(frame, 0),
 				     XEN_TO_C_DOUBLE(val),
 				     XEN_TO_C_INT(chan),
-				     (mus_output *)MUS_XEN_TO_CLM(outp))));
+				     (mus_any *)MUS_XEN_TO_CLM(outp))));
 }
 
 static XEN g_out_any(XEN frame, XEN val, XEN chan, XEN outp)
@@ -3351,12 +3357,12 @@ static XEN g_make_file2frame(XEN name)
 static XEN g_file2frame(XEN obj, XEN samp, XEN outfr)
 {
   #define H_file2frame "(" S_file2frame " obj samp outf) -> frame of samples at frame 'samp' in sound file read by 'obj'"
-  mus_frame *res = NULL;
+  mus_any *res = NULL;
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_input_p(MUS_XEN_TO_CLM(obj))), obj, XEN_ARG_1, S_file2frame, "an input gen");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(samp), samp, XEN_ARG_2, S_file2frame, "a number");
   if ((MUS_XEN_P(outfr)) && 
       (mus_frame_p(MUS_XEN_TO_CLM(outfr)))) 
-    res = (mus_frame *)MUS_XEN_TO_CLM(outfr);
+    res = (mus_any *)MUS_XEN_TO_CLM(outfr);
   return(g_wrap_frame(mus_file2frame(MUS_XEN_TO_CLM(obj),
 				     XEN_TO_C_OFF_T_OR_ELSE(samp, 0),
 				     res),
@@ -3401,7 +3407,7 @@ handled by the output generator 'obj' at frame 'samp'"
   XEN_ASSERT_TYPE((MUS_XEN_P(val)) && (mus_frame_p(MUS_XEN_TO_CLM(val))), val, XEN_ARG_3, S_frame2file, "a frame");
   return(g_wrap_frame(mus_frame2file(MUS_XEN_TO_CLM(obj),
 				     XEN_TO_C_OFF_T_OR_ELSE(samp, 0),
-				     (mus_frame *)MUS_XEN_TO_CLM(val)),
+				     (mus_any *)MUS_XEN_TO_CLM(val)),
 		      DONT_FREE_FRAME));
 }
 
@@ -3585,7 +3591,7 @@ static XEN g_channel(XEN obj)
 {
   #define H_mus_channel "(" S_mus_channel " gen) -> gen's " S_mus_channel " field, if any"
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_input_p(MUS_XEN_TO_CLM(obj))), obj, XEN_ONLY_ARG, S_mus_channel, "an input gen");
-  return(C_TO_SMALL_XEN_INT(mus_channel((mus_input *)MUS_XEN_TO_CLM(obj))));
+  return(C_TO_SMALL_XEN_INT(mus_channel((mus_any *)MUS_XEN_TO_CLM(obj))));
 }
 
 
@@ -3674,7 +3680,7 @@ returns a new generator for signal placement in n channels.  Channel 0 correspon
   XEN out_obj = XEN_UNDEFINED; XEN rev_obj = XEN_UNDEFINED;
   mus_xen *gn;
   mus_any *ge;
-  mus_output *outp = NULL, *revp = NULL;
+  mus_any *outp = NULL, *revp = NULL;
   XEN args[14]; XEN keys[7];
   int orig_arg[7] = {0, 0, 0, 0, 0, 0, 0};
   int vals, i, arglist_len, vlen = 0, out_chans = 1, type;
@@ -3702,7 +3708,7 @@ returns a new generator for signal placement in n channels.  Channel 0 correspon
 	    {
 	      out_obj = keys[3];
 	      vlen++;
-	      outp = (mus_output *)MUS_XEN_TO_CLM(keys[3]);
+	      outp = (mus_any *)MUS_XEN_TO_CLM(keys[3]);
 	      out_chans = mus_channels((mus_any *)outp);
 	    }
 	  else 
@@ -3717,7 +3723,7 @@ returns a new generator for signal placement in n channels.  Channel 0 correspon
 	    {
 	      rev_obj = keys[4];
 	      vlen++;
-	      revp = (mus_output *)MUS_XEN_TO_CLM(keys[4]);
+	      revp = (mus_any *)MUS_XEN_TO_CLM(keys[4]);
 	    }
 	  else 
 	    {
@@ -4266,8 +4272,8 @@ static XEN g_pv_amps(XEN pv)
   mus_xen *gn;
   XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ONLY_ARG, S_pv_amps, "a phase-vocoder gen");
   gn = CLM_TO_MUS_XEN(pv);
-  amps = mus_phase_vocoder_amps((void *)(gn->gen)); 
-  len = mus_length((mus_any *)(gn->gen));
+  amps = mus_phase_vocoder_amps(gn->gen); 
+  len = mus_length(gn->gen);
   return(make_vct_wrapper(len / 2, amps));
 }
   
@@ -4279,8 +4285,8 @@ static XEN g_pv_freqs(XEN pv)
   mus_xen *gn;
   XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ONLY_ARG, S_pv_freqs, "a phase-vocoder gen");
   gn = CLM_TO_MUS_XEN(pv);
-  amps = mus_phase_vocoder_freqs((void *)(gn->gen)); 
-  len = mus_length((mus_any *)(gn->gen));
+  amps = mus_phase_vocoder_freqs(gn->gen); 
+  len = mus_length(gn->gen);
   return(make_vct_wrapper(len, amps));
 }
   
@@ -4292,8 +4298,8 @@ static XEN g_pv_phases(XEN pv)
   mus_xen *gn;
   XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ONLY_ARG, S_pv_phases, "a phase-vocoder gen");
   gn = CLM_TO_MUS_XEN(pv);
-  amps = mus_phase_vocoder_phases((void *)(gn->gen)); 
-  len = mus_length((mus_any *)(gn->gen));
+  amps = mus_phase_vocoder_phases(gn->gen); 
+  len = mus_length(gn->gen);
   return(make_vct_wrapper(len / 2, amps));
 }
   
@@ -4305,8 +4311,8 @@ static XEN g_pv_amp_increments(XEN pv)
   mus_xen *gn;
   XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ONLY_ARG, S_pv_amp_increments, "a phase-vocoder gen");
   gn = CLM_TO_MUS_XEN(pv);
-  amps = mus_phase_vocoder_amp_increments((void *)(gn->gen)); 
-  len = mus_length((mus_any *)(gn->gen));
+  amps = mus_phase_vocoder_amp_increments(gn->gen); 
+  len = mus_length(gn->gen);
   return(make_vct_wrapper(len, amps));
 }
   
@@ -4318,8 +4324,8 @@ static XEN g_pv_phase_increments(XEN pv)
   mus_xen *gn;
   XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ONLY_ARG, S_pv_phase_increments, "a phase-vocoder gen");
   gn = CLM_TO_MUS_XEN(pv);
-  amps = mus_phase_vocoder_phase_increments((void *)(gn->gen)); 
-  len = mus_length((mus_any *)(gn->gen));
+  amps = mus_phase_vocoder_phase_increments(gn->gen); 
+  len = mus_length(gn->gen);
   return(make_vct_wrapper(len / 2, amps));
 }
   
@@ -4365,7 +4371,7 @@ mixing frames frames of infile.  frames defaults to the length of infile. If mix
 use it to scale the various channels; if envs (an array of envelope generators), use \
 it in conjunction with mixer to scale/envelope all the various ins and outs."
 
-  mus_mixer *mx1 = NULL;
+  mus_any *mx1 = NULL;
   mus_any ***envs1 = NULL;
   char *outfile = NULL, *infile = NULL;
   int in_len = 0, out_len, i, j;
@@ -4381,7 +4387,7 @@ it in conjunction with mixer to scale/envelope all the various ins and outs."
   XEN_ASSERT_TYPE((XEN_NOT_BOUND_P(envs)) || (XEN_VECTOR_P(envs)), envs, XEN_ARG_7, S_mus_mix, "an env gen or vector of envs");
   if (XEN_BOUND_P(ost)) ostart = XEN_TO_C_OFF_T_OR_ELSE(ost, 0);
   if (XEN_BOUND_P(ist)) istart = XEN_TO_C_OFF_T_OR_ELSE(ist, 0);
-  if ((XEN_BOUND_P(mx)) && (MUS_XEN_P(mx))) mx1 = (mus_mixer *)MUS_XEN_TO_CLM(mx);
+  if ((XEN_BOUND_P(mx)) && (MUS_XEN_P(mx))) mx1 = (mus_any *)MUS_XEN_TO_CLM(mx);
   outfile = XEN_TO_C_STRING(out);
   infile = XEN_TO_C_STRING(in);
   if (XEN_BOUND_P(olen)) osamps = XEN_TO_C_OFF_T_OR_ELSE(olen, 0); else osamps = mus_sound_frames(infile);

@@ -159,33 +159,6 @@ int recorder_output_device(int dev)
 	 (!(recorder_input_device(dev))));
 }
 
-char *pane_device_name(int dev)
-{
-  /* informal aw shucks reference in help window */
-  switch (dev)
-    {
-    case MUS_AUDIO_DIGITAL_OUT:
-    case MUS_AUDIO_LINE_OUT:
-    case MUS_AUDIO_DEFAULT:
-    case MUS_AUDIO_DAC_OUT:
-    case MUS_AUDIO_DUPLEX_DEFAULT: return(_("the output"));                break;
-    case MUS_AUDIO_SPEAKERS:   return(_("the speakers"));                  break;
-    case MUS_AUDIO_ADAT_OUT: 
-    case MUS_AUDIO_ADAT_IN:    return(_("the Adat"));                      break;
-    case MUS_AUDIO_AES_OUT: 
-    case MUS_AUDIO_AES_IN:     return(_("the Aes"));                       break;
-    case MUS_AUDIO_SPDIF_IN:
-    case MUS_AUDIO_SPDIF_OUT:  return(_("the S/PDIF"));                    break;
-    case MUS_AUDIO_LINE_IN:    return(_("line in"));                       break;
-    case MUS_AUDIO_MICROPHONE: return(_("the microphone"));                break;
-    case MUS_AUDIO_DIGITAL_IN: return(_("digital in"));                    break;
-    case MUS_AUDIO_DAC_FILTER: return(_("the analog tone control"));       break;
-    case MUS_AUDIO_MIXER:      return(_("various analog volume controls")); break;
-    case MUS_AUDIO_CD:         return(_("the internal CD"));               break;
-    default:                   return(_("the input"));                     break;
-    }
-}
-
 #if (HAVE_OSS || HAVE_ALSA)
 char *recorder_field_abbreviation(int fld)
 {
@@ -208,48 +181,6 @@ char *recorder_field_abbreviation(int fld)
     case MUS_AUDIO_CD:     return("cd");  break;
     }
   return("oops");
-}
-
-char *recorder_field_name(int fld)
-{
-  switch (fld)
-    {
-    case MUS_AUDIO_IMIX:   return("imix");    break;
-    case MUS_AUDIO_IGAIN:  return("igain");   break;
-    case MUS_AUDIO_RECLEV: return("reclev");  break;
-    case MUS_AUDIO_PCM:    return("pcm");     break;
-    case MUS_AUDIO_PCM2:   return("pcm2");    break;
-    case MUS_AUDIO_OGAIN:  return("ogain");   break;
-    case MUS_AUDIO_LINE:   return("line-in"); break;
-    case MUS_AUDIO_MICROPHONE: return("mic"); break;
-    case MUS_AUDIO_LINE1:  return("line1");   break;
-    case MUS_AUDIO_LINE2:  return("line2");   break; 
-    case MUS_AUDIO_LINE3:  return("line3");   break;
-    case MUS_AUDIO_SYNTH:  return("synth");   break;
-    case MUS_AUDIO_CD:     return("cd");      break;
-    default:               return("?");       break;
-    }
-}
-
-char *recorder_field_function(int fld)
-{
-  switch (fld)
-    {
-    case MUS_AUDIO_IMIX:   return(_("the pre-adc mix of mic and line-in")); break;
-    case MUS_AUDIO_IGAIN:  return(_("input gain"));                         break;
-    case MUS_AUDIO_RECLEV: return(_("recording level"));                    break;
-    case MUS_AUDIO_PCM:    return(_("the speaker level, perhaps"));         break;
-    case MUS_AUDIO_PCM2:   return(_("nothing in particular"));              break;
-    case MUS_AUDIO_OGAIN:  return(_("output gain"));                        break;
-    case MUS_AUDIO_LINE:   return(_("analog line-in"));                     break;
-    case MUS_AUDIO_MICROPHONE: return(_("the microphone"));                 break;
-    case MUS_AUDIO_LINE1:  
-    case MUS_AUDIO_LINE2:  
-    case MUS_AUDIO_LINE3:  return(_("extra line inputs"));                  break;
-    case MUS_AUDIO_SYNTH:  return(_("the on-card synthesizer, if any"));    break;
-    case MUS_AUDIO_CD:     return(_("the cd gain"));                        break;
-    default:               return("?");                                  break;
-    }
 }
 #endif
 
@@ -466,16 +397,6 @@ char *channel_name(int in_chans, int out_chans, int chan)
 {
   int use_numbers;
   use_numbers = ((out_chans > 4) || (in_chans > 4));
-  if (use_numbers)
-    mus_snprintf(numbuf, LABEL_BUFFER_SIZE, "%d", chan + 1);
-  else mus_snprintf(numbuf, LABEL_BUFFER_SIZE, "%c", (char)('A' + chan));
-  return(numbuf);
-}
-
-char *out_channel_name(int chan)
-{
-  int use_numbers;
-  use_numbers = (rp->out_chans > 4);
   if (use_numbers)
     mus_snprintf(numbuf, LABEL_BUFFER_SIZE, "%d", chan + 1);
   else mus_snprintf(numbuf, LABEL_BUFFER_SIZE, "%c", (char)('A' + chan));

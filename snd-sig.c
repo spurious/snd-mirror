@@ -2447,7 +2447,7 @@ static char *run_channel(chan_info *cp, void *upt, off_t beg, off_t dur, int edp
   return(NULL);
 }
 
-#define MUS_OUTA_1(Frame, Val, Fd) ((*((Fd)->base)->sample))((void *)(Fd), Frame, 0, Val)
+#define MUS_OUTA_1(Frame, Val, Fd) ((*(Fd->core)->write_sample))(Fd, Frame, 0, Val)
 /* avoids all the CLM error checking */
 
 static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN chn, XEN edpos, XEN s_dur, char *fallback_caller) 
@@ -2538,7 +2538,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 				    C_TO_XEN_DOUBLE((double)read_sample_to_float(sf)),
 				    caller);
 	  if (XEN_NUMBER_P(res))                         /* one number -> replace current sample */
-	    MUS_OUTA_1(j++, XEN_TO_C_DOUBLE(res), (mus_output *)outgen);
+	    MUS_OUTA_1(j++, XEN_TO_C_DOUBLE(res), outgen);
 	  else
 	    {
 	      if (XEN_NOT_FALSE_P(res))                  /* if #f, no output on this pass */
@@ -2552,7 +2552,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 			  len = XEN_VECTOR_LENGTH(res);
 			  data = XEN_VECTOR_ELEMENTS(res);
 			  for (i = 0; i < len; i++) 
-			    MUS_OUTA_1(j++, XEN_TO_C_DOUBLE(data[i]), (mus_output *)outgen);
+			    MUS_OUTA_1(j++, XEN_TO_C_DOUBLE(data[i]), outgen);
 			}
 		      else
 			{
@@ -2560,7 +2560,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 			    {
 			      v = TO_VCT(res);
 			      for (i = 0; i < v->length; i++) 
-				MUS_OUTA_1(j++, v->data[i], (mus_output *)outgen);
+				MUS_OUTA_1(j++, v->data[i], outgen);
 			    }
 			  else
 			    {
@@ -2568,7 +2568,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 				{
 				  len = XEN_LIST_LENGTH(res);
 				  for (i = 0; i < len; i++, res = XEN_CDR(res)) 
-				    MUS_OUTA_1(j++, XEN_TO_C_DOUBLE(XEN_CAR(res)), (mus_output *)outgen);
+				    MUS_OUTA_1(j++, XEN_TO_C_DOUBLE(XEN_CAR(res)), outgen);
 				}
 			      else 
 				{
@@ -2663,7 +2663,7 @@ static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, off
 			       v,
 			       XEN_TRUE,
 			       "ptree-channel fallback proc");
-	      MUS_OUTA_1(kp, XEN_TO_C_DOUBLE(res), (mus_output *)outgen);
+	      MUS_OUTA_1(kp, XEN_TO_C_DOUBLE(res), outgen);
 	    }
 	  snd_unprotect(v);
 	}
@@ -2674,7 +2674,7 @@ static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, off
 	      res = XEN_CALL_1(proc, 
 			       C_TO_XEN_DOUBLE((double)read_sample_to_float(sf)),
 			       "ptree-channel fallback proc");
-	      MUS_OUTA_1(kp, XEN_TO_C_DOUBLE(res), (mus_output *)outgen);
+	      MUS_OUTA_1(kp, XEN_TO_C_DOUBLE(res), outgen);
 	    }
 	}
       if (outgen) mus_free(outgen);

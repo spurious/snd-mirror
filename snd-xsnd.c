@@ -64,204 +64,6 @@ Widget w_snd_name(snd_info *sp)   {return((sp->sgx)->snd_widgets[W_name]);}
 
 #define MAX_NOTEBOOK_TAB_LENGTH 5
 
-static void info_help_callback(Widget w, XtPointer context, XtPointer info)
-{
-  snd_help_with_url_and_wrap((snd_state *)context, 
-			     "Minibuffer", "#panelayout",
-"This is the 'minibuffer', to use Emacs jargon.  Although it looks inert and wasted,  \
-there is in fact a text window lurking beneath that has access to the Lisp evaluator, not \
-to mention much of the innards of the Snd program.");
-}
-
-static void play_help_callback(Widget w, XtPointer context, XtPointer info)
-{  
-  snd_help_with_url_and_wrap((snd_state *)context, 
-			     "Play", "#play",
-"Snd can play any number of sounds at once or should be able to anyway.  A sort of \
-clumsy realtime mixer, although it was not intended to fill that role.");
-}
-
-static void info_sep_help_callback(Widget w, XtPointer context, XtPointer info)        
-{  
-  snd_help_with_wrap((snd_state *)context, 
-		     "Name Separator", 
-"When reading a very large file, Snd tries to keep an overview at hand of the channels so \
-that you can move around quickly in very large data sets; when first read in, these overviews \
-are set underway, and when they are finally ready for use, the line after the file name \
-appears.  If you try to zoom out to a large view before the separator line appears, the graphics update process may be slow. ");
-}
-
-static void amp_help_callback(Widget w, XtPointer context, XtPointer info)             
-{
-  snd_help_with_wrap((snd_state *)context, 
-		     "Amp", 
-"This scrollbar controls the amplitude at which the sound is played.  Click the \
-amp label to return to 1.0. Control-Click returns to the previous value.");
-}
-
-static void srate_help_callback(Widget w, XtPointer context, XtPointer info)           
-{
-  snd_help_with_url_and_wrap((snd_state *)context, 
-			     "Srate", "#speed", 
-"This scrollbar controls the sampling rate at which the sound is played.  The arrow \
-controls the direction (forwards or backwards) of playback.  Label clicks behave as with amp.");
-}
-
-static void srate_arrow_help_callback(Widget w, XtPointer context, XtPointer info)     
-{
-  snd_help_with_wrap((snd_state *)context, 
-		     "Srate Arrow",
-"This button determines which direction the sound file is played.  When pointing \
-to the right, the sound is played forwards;  to the left, backwards.");
-}
-
-static void expand_help_callback(Widget w, XtPointer context, XtPointer info)          
-{  
-  snd_help_with_url_and_wrap((snd_state *)context, 
-			     "Expand", "#expand",
-"This scrollbar controls the tempo at which the sound is played back, using granular \
-synthesis. The expand button must be down to get any expansion. Label clicks as in amp.");
-}
-
-static void contrast_help_callback(Widget w, XtPointer context, XtPointer info)        
-{  
-  snd_help_with_url((snd_state *)context, 
-		    "Contrast", "#contrast",
-"This scrollbar controls the amount of 'contrast enhancement' applied during \
-playback.  The contrast button must be down to get any effect.  Label clicks as in amp.");
-}
-
-static void revscl_help_callback(Widget w, XtPointer context, XtPointer info)          
-{  
-  snd_help_with_url_and_wrap((snd_state *)context, 
-			     "Reverb amount", "#reverb",
-"This scrollbar controls the amount of the sound that is fed into the reverberator. \
-The reverb button must be down to get any reverb during playback.  Label clicks as in amp.");
-}
-
-static void revlen_help_callback(Widget w, XtPointer context, XtPointer info)          
-{
-  snd_help_with_url_and_wrap((snd_state *)context, 
-			     "Reverb length", "#reverb", 
-"This scrollbar controls the lengths of the various delay lines in the reverb. \
-It only takes effect when the reverb is created, that is, only when the play \
-operation starts from silence.  Label clicks as in amp.");
-}
-
-static void filter_help_callback(Widget w, XtPointer context, XtPointer info)          
-{
-  snd_help_with_wrap((snd_state *)context, 
-		     "Filter", 
-"The Snd filter is an FIR filter of arbitrary order.  You specify the filter you want by \
-defining the frequency response as an envelope in the 'env' window; set the desired order in \
-the 'order' window; then turn it on by pushing the filter button at the right.  The filter \
-design algorithm uses frequency sampling. The higher the order, the closer the filter \
-can approximate the envelope you draw. You can also specify the filter coefficients \
-in a file of floats, then load them into the Snd filter by typing the file name in the \
-filter envelope text window.");
-}
-
-static void filter_order_help_callback(Widget w, XtPointer context, XtPointer info)    
-{
-  snd_help_with_wrap((snd_state *)context, 
-		     "Filter Order", 
-"The filter order determines how closely the filter approximates the frequency response curve you drew in the 'env' window. ");
-}
-
-static void filter_envelope_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_help_with_wrap((snd_state *)context, 
-		     "Filter Envelope", 
-"The filter envelope is a line-segment description of the frequency response \
-you want.  It consists of a sequence of x, y pairs; normally the x axis goes \
-from 0 to .5 or 0 to 1.0.  For example, a low-pass filter envelope could be: \
-0.0 1.0 .25 1.0 .5 0.0 1.0 0.0");
-}
-
-static void name_help_callback(Widget w, XtPointer context, XtPointer info)            
-{
-  snd_help_with_wrap((snd_state *)context,
-		     "Minibuffer",
-"This portion of the snd display has several parts: the sound file name, with an asterisk if \
-the file has unsaved edits; a minibuffer for various expression evaluations; a sync button \
-that causes operations on one channel to be applied to all channels; and a play button \
-that causes the sound to be played.  The lower portion of the pane, normally hidden, \
-contains a variety of sound manipulation controls that can be applied while it is playing.");
-}
-
-static void expand_button_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_help((snd_state *)context, "Expand Button", "This button turns on expansion (granular synthesis time scaling)\n");
-}
-
-static void contrast_button_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_help((snd_state *)context, "Contrast Button", "This button turns on contrast enhancement (a form of companding)\n");
-}
-
-static void reverb_button_help_callback(Widget w, XtPointer context, XtPointer info)
-{
-  snd_help((snd_state *)context, "Reverb Button", "This button turns on reverberation (Nrev)\n");
-}
-
-static void filter_button_help_callback(Widget w, XtPointer context, XtPointer info)
-{
-  snd_help((snd_state *)context, "Filter Button", "This button turns on the filter\n");
-}
-
-static void filter_dB_help_callback(Widget w, XtPointer context, XtPointer info)
-{
-  snd_help_with_wrap((snd_state *)context, 
-		     "Filter dB",
-"This button chooses between dB and linear y axis in the frequency response graph");
-}
-
-static void sync_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_help_with_wrap((snd_state *)context,
-		     "Sync Button",
-"This button causes edit operations on one channel to be applied to all channels at the same time.");
-}
-
-static void unite_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_help_with_wrap((snd_state *)context,
-		     "Unite Button",
-"This button causes all channels to be displayed in one window, sharing the various channel controls.  Two extra scrollbars on \
-the right provide scroll and zoom for the overall set of channel graphs. The default multichannel display style can be set in \
-the Snd initialization file by setting the variable " S_channel_style ".");
-}
-
-
-static void apply_help_callback(Widget w, XtPointer context, XtPointer info)
-{
-  snd_help_with_wrap((snd_state *)context,
-		     "Apply",
-"The Apply button saves the last recorded run over the current file (see Record) as an edit of the current file.");
-}
-
-static void reset_help_callback(Widget w, XtPointer context, XtPointer info)
-{
-  snd_help_with_wrap((snd_state *)context,
-		     "Reset",
-"The 'Reset' button clears the control panel settings to the no-change state.");
-}
-
-static void remember_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_help_with_wrap((snd_state *)context,
-		     "Remember",
-"The 'Remember' button saves the current control panel state for a subsequent 'Restore'.");
-}
-
-static void restore_help_callback(Widget w, XtPointer context, XtPointer info)
-{
-  snd_help_with_wrap((snd_state *)context,
-		     "Restore",
-"The 'Restore' button returns the control panel to the state at the time of the last 'Remember', or the initial state if there \
-has been no 'Remember'.");
-}
-
 void goto_minibuffer(snd_info *sp)
 {
   if (sp) goto_window(MINIBUFFER_TEXT(sp));
@@ -895,14 +697,6 @@ void set_filter_text(snd_info *sp, char *str)
     XmTextSetString(FILTER_COEFFS_TEXT(sp), str);
 }
 
-static void filter_drawer_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_help_with_wrap((snd_state *)context, 
-		     "Filter Frequency Response",
-"This graph shows the current filter frequency response envelope, and the actual response (dependent on the filter order). \
-See the envelope editor documentation for editing directions.");
-}
-
 #ifdef MAC_OSX
 static int press_x, press_y;
 #endif
@@ -1005,20 +799,6 @@ static void filter_order_down_callback(Widget w, XtPointer context, XtPointer in
   snd_info *sp = (snd_info *)context;
   if (sp->filter_control_order > 2)
     set_snd_filter_order(sp, sp->filter_control_order - 2);
-}
-
-static void filter_order_up_help_callback(Widget w, XtPointer context, XtPointer info)
-{
-  snd_help_with_wrap((snd_state *)context,
-		     "Filter Order Increment Button",
-"This button causes the filter order to be incremented");
-}
-
-static void filter_order_down_help_callback(Widget w, XtPointer context, XtPointer info)
-{
-  snd_help_with_wrap((snd_state *)context,
-		     "Filter Order Decrement Button",
-"This button causes the filter order to be decremented");
 }
 
 static void filter_activate_callback(Widget w, XtPointer context, XtPointer info)
@@ -1813,7 +1593,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
 	  else sw[W_pane] = XtCreateManagedWidget("snd-pane", xmPanedWindowWidgetClass, SOUND_PANE(ss), args, n);
 	}
 
-      XtAddCallback(sw[W_pane], XmNhelpCallback, name_help_callback, ss);
       XtAddEventHandler(sw[W_pane], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
       /* if user clicks in controls, then starts typing, try to send key events to current active channel */
       /* all widgets in the control-pane that would otherwise intercept the key events get this event handler */
@@ -1835,7 +1614,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       sw[W_name_form] = XtCreateManagedWidget("snd-name-form", xmFormWidgetClass, sw[W_control_panel], args, n);
-      XtAddCallback(sw[W_name_form], XmNhelpCallback, name_help_callback, ss);
       XtAddEventHandler(sw[W_name_form], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 
       n = 0;      
@@ -1851,7 +1629,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, FALSE); n++;
       sw[W_name] = XtCreateManagedWidget ("snd-name", xmPushButtonWidgetClass, sw[W_name_form], args, n);
-      XtAddCallback(sw[W_name], XmNhelpCallback, name_help_callback, ss);
       XtAddEventHandler(sw[W_name], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
       XtAddCallback(sw[W_name], XmNactivateCallback, name_click_callback, (XtPointer)sp);
       XmStringFree(s1);
@@ -1931,7 +1708,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNwidth, 20); n++; /* was 40 */
       XtSetArg(args[n], XmNseparatorType, XmSHADOW_ETCHED_IN); n++;
       sw[W_info_sep] = XtCreateManagedWidget ("snd-info-sep", xmSeparatorWidgetClass, sw[W_name_form], args, n);
-      XtAddCallback(sw[W_info_sep], XmNhelpCallback, info_sep_help_callback, ss);
 
       n = 0;
       s1 = XmStringCreate("     ", "button_font");
@@ -1945,7 +1721,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNlabelString, s1); n++;
       XtSetArg(args[n], XM_FONT_RESOURCE, BUTTON_FONT(ss)); n++;
       sw[W_info_label] = XtCreateManagedWidget ("snd-info-label", xmLabelWidgetClass, sw[W_name_form], args, n);
-      XtAddCallback(sw[W_info_label], XmNhelpCallback, info_help_callback, ss);
       XmStringFree(s1);
 
       n = 0;
@@ -1962,7 +1737,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNcolumns, 30); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       sw[W_info] = make_textfield_widget(ss, "snd-info", sw[W_name_form], args, n, ACTIVATABLE, add_completer_func(info_completer));
-      XtAddCallback(sw[W_info], XmNhelpCallback, info_help_callback, ss);
       XtAddCallback(sw[W_info], XmNactivateCallback, minibuffer_click_callback, (XtPointer)sp);
 
       n = 0;
@@ -1982,7 +1756,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       */
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNselectColor, (ss->sgx)->pushed_button_color); n++;}
       sw[W_play] = make_togglebutton_widget(_("play"), sw[W_name_form], args, n);
-      XtAddCallback(sw[W_play], XmNhelpCallback, play_help_callback, ss);
       XtAddCallback(sw[W_play], XmNvalueChangedCallback, play_button_callback, (XtPointer)sp);
 
       n = 0;
@@ -1999,7 +1772,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XM_FONT_RESOURCE, BUTTON_FONT(ss)); n++;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNselectColor, (ss->sgx)->pushed_button_color); n++;}
       sw[W_sync] = make_togglebutton_widget(_("sync"), sw[W_name_form], args, n);
-      XtAddCallback(sw[W_sync], XmNhelpCallback, sync_help_callback, ss);
       XtAddEventHandler(sw[W_sync], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
       XtAddCallback(sw[W_sync], XmNvalueChangedCallback, sync_button_callback, (XtPointer)sp);
 
@@ -2018,7 +1790,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XM_FONT_RESOURCE, BUTTON_FONT(ss)); n++;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNselectColor, (ss->sgx)->pushed_button_color); n++;}
       sw[W_unite] = make_togglebutton_widget(_("unite"), sw[W_name_form], args, n);
-      XtAddCallback(sw[W_unite], XmNhelpCallback, unite_help_callback, ss);
       XtAddEventHandler(sw[W_unite], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
       XtAddCallback(sw[W_unite], XmNvalueChangedCallback, unite_button_callback, (XtPointer)sp);
 
@@ -2036,7 +1807,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNheight, LINE_MARGIN); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       sw[W_amp_separator] = XtCreateManagedWidget ("snd-amp-sep", xmSeparatorWidgetClass, sw[W_control_panel], args, n);
-      XtAddCallback(sw[W_amp_separator], XmNhelpCallback, amp_help_callback, ss);
       
       /* if control-panel */
       n = 0;      
@@ -2065,7 +1835,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, FALSE); n++;
       sw[W_amp_label] = make_pushbutton_widget ("amp-label", sw[W_amp_form], args, n);
-      XtAddCallback(sw[W_amp_label], XmNhelpCallback, amp_help_callback, ss);
       XtAddEventHandler(sw[W_amp_label], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
       XtAddCallback(sw[W_amp_label], XmNactivateCallback, amp_click_callback, (XtPointer)sp);
       XmStringFree(s1);
@@ -2084,7 +1853,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++;
       XtSetArg(args[n], XmNrecomputeSize, FALSE); n++;
       sw[W_amp_number] = XtCreateManagedWidget ("amp-number", xmLabelWidgetClass, sw[W_amp_form], args, n);
-      XtAddCallback(sw[W_amp_number], XmNhelpCallback, amp_help_callback, ss);
       XmStringFree(s1);
 
       n = 0;      
@@ -2102,7 +1870,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNdragCallback, n1 = make_callback_list(amp_drag_callback, (XtPointer)sp)); n++;
       XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(amp_valuechanged_callback, (XtPointer)sp)); n++;
       sw[W_amp] = XtCreateManagedWidget("amp", xmScrollBarWidgetClass, sw[W_amp_form], args, n);
-      XtAddCallback(sw[W_amp], XmNhelpCallback, amp_help_callback, ss);
       XtAddEventHandler(sw[W_amp], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 
       n = 0;
@@ -2122,7 +1889,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, FALSE); n++;
       sw[W_srate_label] = make_pushbutton_widget ("srate-label", sw[W_amp_form], args, n);
-      XtAddCallback(sw[W_srate_label], XmNhelpCallback, srate_help_callback, ss);
       XtAddEventHandler(sw[W_srate_label], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
       XtAddCallback(sw[W_srate_label], XmNactivateCallback, srate_click_callback, (XtPointer)sp);
       XmStringFree(s1);
@@ -2141,7 +1907,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++; 
       XtSetArg(args[n], XmNrecomputeSize, FALSE); n++;
       sw[W_srate_number] = XtCreateManagedWidget ("srate-number", xmLabelWidgetClass, sw[W_amp_form], args, n);
-      XtAddCallback(sw[W_srate_number], XmNhelpCallback, srate_help_callback, ss);
       XmStringFree(s1);
 
       n = 0;
@@ -2173,7 +1938,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
 	  spd_ok = TRUE;
 	}
       XtVaSetValues(form, XmNselectPixmap, spd_l, XmNlabelPixmap, spd_r, NULL);
-      XtAddCallback(sw[W_srate_arrow], XmNhelpCallback, srate_arrow_help_callback, ss);
       XtAddEventHandler(sw[W_srate_arrow], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
       XtAddCallback(sw[W_srate_arrow], XmNvalueChangedCallback, play_arrow_callback, (XtPointer)sp);
 
@@ -2193,7 +1957,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNdragCallback, n3 = make_callback_list(srate_drag_callback, (XtPointer)sp)); n++;
       XtSetArg(args[n], XmNvalueChangedCallback, n4 = make_callback_list(srate_valuechanged_callback, (XtPointer)sp)); n++;
       sw[W_srate] = XtCreateManagedWidget("speed-scroll", xmScrollBarWidgetClass, sw[W_amp_form], args, n);
-      XtAddCallback(sw[W_srate], XmNhelpCallback, srate_help_callback, ss);
       XtAddEventHandler(sw[W_srate], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 
       n = 0;
@@ -2213,7 +1976,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, FALSE); n++;
       sw[W_expand_label] = make_pushbutton_widget ("expand-label", sw[W_amp_form], args, n);
-      XtAddCallback(sw[W_expand_label], XmNhelpCallback, expand_help_callback, ss);
       XtAddEventHandler(sw[W_expand_label], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
       XtAddCallback(sw[W_expand_label], XmNactivateCallback, expand_click_callback, (XtPointer)sp);
       XmStringFree(s1);
@@ -2232,7 +1994,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++;
       XtSetArg(args[n], XmNrecomputeSize, FALSE); n++;
       sw[W_expand_number] = XtCreateManagedWidget ("expand-number", xmLabelWidgetClass, sw[W_amp_form], args, n);
-      XtAddCallback(sw[W_expand_number], XmNhelpCallback, expand_help_callback, ss);
       XmStringFree(s1);
       
       n = 0;
@@ -2252,7 +2013,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNselectColor, (ss->sgx)->pushed_button_color); n++;}
       sw[W_expand_button] = make_togglebutton_widget("expoff", sw[W_amp_form], args, n);
-      XtAddCallback(sw[W_expand_button], XmNhelpCallback, expand_button_help_callback, ss);
       XtAddEventHandler(sw[W_expand_button], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
       XtAddCallback(sw[W_expand_button], XmNvalueChangedCallback, expand_button_callback, (XtPointer)sp);
       XmStringFree(s1);
@@ -2274,7 +2034,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNdragCallback, n5 = make_callback_list(expand_drag_callback, (XtPointer)sp)); n++;
       XtSetArg(args[n], XmNvalueChangedCallback, n6 = make_callback_list(expand_valuechanged_callback, (XtPointer)sp)); n++;
       sw[W_expand] = XtCreateManagedWidget("expand-scroll", xmScrollBarWidgetClass, sw[W_amp_form], args, n);
-      XtAddCallback(sw[W_expand], XmNhelpCallback, expand_help_callback, ss);
       XtAddEventHandler(sw[W_expand], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 
 
@@ -2295,7 +2054,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, FALSE); n++;
       sw[W_contrast_label] = make_pushbutton_widget ("contrast-label", sw[W_amp_form], args, n);
-      XtAddCallback(sw[W_contrast_label], XmNhelpCallback, contrast_help_callback, ss);
       XtAddEventHandler(sw[W_contrast_label], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
       XtAddCallback(sw[W_contrast_label], XmNactivateCallback, contrast_click_callback, (XtPointer)sp);
       XmStringFree(s1);
@@ -2314,7 +2072,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++;
       XtSetArg(args[n], XmNrecomputeSize, FALSE); n++;
       sw[W_contrast_number] = XtCreateManagedWidget ("contrast-number", xmLabelWidgetClass, sw[W_amp_form], args, n);
-      XtAddCallback(sw[W_contrast_number], XmNhelpCallback, contrast_help_callback, ss);
       XmStringFree(s1);
       
       n = 0;
@@ -2334,7 +2091,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNselectColor, (ss->sgx)->pushed_button_color); n++;}
       sw[W_contrast_button] = make_togglebutton_widget("conoff", sw[W_amp_form], args, n);
-      XtAddCallback(sw[W_contrast_button], XmNhelpCallback, contrast_button_help_callback, ss);
       XtAddEventHandler(sw[W_contrast_button], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
       XtAddCallback(sw[W_contrast_button], XmNvalueChangedCallback, contrast_button_callback, (XtPointer)sp);
       XmStringFree(s1);
@@ -2356,7 +2112,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNdragCallback, n7 = make_callback_list(contrast_drag_callback, (XtPointer)sp)); n++;
       XtSetArg(args[n], XmNvalueChangedCallback, n8 = make_callback_list(contrast_valuechanged_callback, (XtPointer)sp)); n++;
       sw[W_contrast] = XtCreateManagedWidget("contrast-scroll", xmScrollBarWidgetClass, sw[W_amp_form], args, n);
-      XtAddCallback(sw[W_contrast], XmNhelpCallback, contrast_help_callback, ss);
       XtAddEventHandler(sw[W_contrast], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 
       /* REVERB */
@@ -2377,7 +2132,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, FALSE); n++;
       sw[W_revscl_label] = make_pushbutton_widget ("revscl-label", sw[W_amp_form], args, n);
-      XtAddCallback(sw[W_revscl_label], XmNhelpCallback, revscl_help_callback, ss);
       XtAddEventHandler(sw[W_revscl_label], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
       XtAddCallback(sw[W_revscl_label], XmNactivateCallback, revscl_click_callback, (XtPointer)sp);
       XmStringFree(s1);
@@ -2396,7 +2150,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++;
       XtSetArg(args[n], XmNrecomputeSize, FALSE); n++;
       sw[W_revscl_number] = XtCreateManagedWidget ("revscl-number", xmLabelWidgetClass, sw[W_amp_form], args, n);
-      XtAddCallback(sw[W_revscl_number], XmNhelpCallback, revscl_help_callback, ss);
       XmStringFree(s1);
       
       n = 0;
@@ -2416,7 +2169,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNdragCallback, n9 = make_callback_list(revscl_drag_callback, (XtPointer)sp)); n++;
       XtSetArg(args[n], XmNvalueChangedCallback, n10 = make_callback_list(revscl_valuechanged_callback, (XtPointer)sp)); n++;
       sw[W_revscl] = XtCreateManagedWidget("revscl-scroll", xmScrollBarWidgetClass, sw[W_amp_form], args, n);
-      XtAddCallback(sw[W_revscl], XmNhelpCallback, revscl_help_callback, ss);
       XtAddEventHandler(sw[W_revscl], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 
       /* REVOFF */
@@ -2438,7 +2190,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNselectColor, (ss->sgx)->pushed_button_color); n++;}
       sw[W_reverb_button] = make_togglebutton_widget("revoff", sw[W_amp_form], args, n);
-      XtAddCallback(sw[W_reverb_button], XmNhelpCallback, reverb_button_help_callback, ss);
       XtAddEventHandler(sw[W_reverb_button], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
       XtAddCallback(sw[W_reverb_button], XmNvalueChangedCallback, reverb_button_callback, (XtPointer)sp);
       XmStringFree(s1);
@@ -2462,7 +2213,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, FALSE); n++;
       sw[W_revlen_label] = make_pushbutton_widget("revlen-label", sw[W_amp_form], args, n);
-      XtAddCallback(sw[W_revlen_label], XmNhelpCallback, revlen_help_callback, ss);
       XtAddEventHandler(sw[W_revlen_label], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
       XtAddCallback(sw[W_revlen_label], XmNactivateCallback, revlen_click_callback, (XtPointer)sp);
       XmStringFree(s1);
@@ -2481,7 +2231,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++;
       XtSetArg(args[n], XmNrecomputeSize, FALSE); n++;
       sw[W_revlen_number] = XtCreateManagedWidget("revlen-number", xmLabelWidgetClass, sw[W_amp_form], args, n);
-      XtAddCallback(sw[W_revlen_number], XmNhelpCallback, revlen_help_callback, ss);
       XmStringFree(s1);
 
       n = 0;
@@ -2501,7 +2250,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNdragCallback, n11 = make_callback_list(revlen_drag_callback, (XtPointer)sp)); n++;
       XtSetArg(args[n], XmNvalueChangedCallback, n12 = make_callback_list(revlen_valuechanged_callback, (XtPointer)sp)); n++;
       sw[W_revlen] = XtCreateManagedWidget("revlen-scroll", xmScrollBarWidgetClass, sw[W_amp_form], args, n);
-      XtAddCallback(sw[W_revlen], XmNhelpCallback, revlen_help_callback, ss);
       XtAddEventHandler(sw[W_revlen], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 
 
@@ -2526,7 +2274,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
 #else
       sw[W_filter_label] = XtCreateManagedWidget ("filter-label", xmLabelWidgetClass, sw[W_amp_form], args, n);
 #endif
-      XtAddCallback(sw[W_filter_label], XmNhelpCallback, filter_help_callback, ss);
       XmStringFree(s1);
 
       /* filter order */
@@ -2545,7 +2292,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNrecomputeSize, FALSE); n++;
       sw[W_filter_order] = make_textfield_widget(ss, "filter-order", sw[W_amp_form], args, n, ACTIVATABLE, NO_COMPLETER);
       XmTextSetString(sw[W_filter_order], " 20");
-      XtAddCallback(sw[W_filter_order], XmNhelpCallback, filter_order_help_callback, ss);
       XtAddCallback(sw[W_filter_order], XmNactivateCallback, filter_order_activate_callback, (XtPointer)sp);
 
       #define ARROW_SIZE 12
@@ -2565,7 +2311,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;}
       sw[W_filter_order_down] = make_pushbutton_widget("", sw[W_amp_form], args, n);
       XtAddEventHandler(sw[W_filter_order_down], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
-      XtAddCallback(sw[W_filter_order_down], XmNhelpCallback, filter_order_down_help_callback, ss);
       XtAddCallback(sw[W_filter_order_down], XmNactivateCallback, filter_order_down_callback, (XtPointer)sp);
 
       n = 0;
@@ -2583,7 +2328,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;}
       sw[W_filter_order_up] = make_pushbutton_widget("", sw[W_amp_form], args, n);
       XtAddEventHandler(sw[W_filter_order_up], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
-      XtAddCallback(sw[W_filter_order_up], XmNhelpCallback, filter_order_up_help_callback, ss);
       XtAddCallback(sw[W_filter_order_up], XmNactivateCallback, filter_order_up_callback, (XtPointer)sp);
 
       n = 0;
@@ -2602,7 +2346,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNselectColor, (ss->sgx)->pushed_button_color); n++;}
       sw[W_filter_button] = make_togglebutton_widget("fltoff", sw[W_amp_form], args, n);
-      XtAddCallback(sw[W_filter_button], XmNhelpCallback, filter_button_help_callback, ss);
       XtAddEventHandler(sw[W_filter_button], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
       XtAddCallback(sw[W_filter_button], XmNvalueChangedCallback, filter_button_callback, (XtPointer)sp);
       XmStringFree(s1);
@@ -2621,7 +2364,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNselectColor, (ss->sgx)->pushed_button_color); n++;}
       sw[W_filter_dB] = make_togglebutton_widget("fltdB", sw[W_amp_form], args, n);
-      XtAddCallback(sw[W_filter_dB], XmNhelpCallback, filter_dB_help_callback, ss);
       XtAddEventHandler(sw[W_filter_dB], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
       XtAddCallback(sw[W_filter_dB], XmNvalueChangedCallback, filter_dB_callback, (XtPointer)sp);
       XmStringFree(s1);
@@ -2639,7 +2381,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNrightWidget, sw[W_filter_dB]); n++;
       XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++;
       sw[W_filter] = make_textfield_widget(ss, "filter-window", sw[W_amp_form], args, n, ACTIVATABLE, add_completer_func(filename_completer));
-      XtAddCallback(sw[W_filter], XmNhelpCallback, filter_envelope_help_callback, ss);
       XtAddCallback(sw[W_filter], XmNactivateCallback, filter_activate_callback, (XtPointer)sp);
 
       /* APPLY */
@@ -2656,7 +2397,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
       XtSetArg(args[n], XmNrightPosition, 25); n++;
       sw[W_apply] = make_pushbutton_widget(_("Apply"), sw[W_amp_form], args, n);
-      XtAddCallback(sw[W_apply], XmNhelpCallback, apply_help_callback, ss);
       XtAddEventHandler(sw[W_apply], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
       XtAddCallback(sw[W_apply], XmNactivateCallback, apply_callback, (XtPointer)sp);
 
@@ -2675,7 +2415,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
       XtSetArg(args[n], XmNrightPosition, 50); n++;
       sw[W_remember] = make_pushbutton_widget(_("Remember"), sw[W_amp_form], args, n);
-      XtAddCallback(sw[W_remember], XmNhelpCallback, remember_help_callback, ss);
       XtAddEventHandler(sw[W_remember], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
       XtAddCallback(sw[W_remember], XmNactivateCallback, save_control_panel_callback, (XtPointer)sp);
 
@@ -2694,7 +2433,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
       XtSetArg(args[n], XmNrightPosition, 75); n++;
       sw[W_restore] = make_pushbutton_widget(_("Restore"), sw[W_amp_form], args, n);
-      XtAddCallback(sw[W_restore], XmNhelpCallback, restore_help_callback, ss);
       XtAddEventHandler(sw[W_restore], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
       XtAddCallback(sw[W_restore], XmNactivateCallback, restore_control_panel_callback, (XtPointer)sp);
 
@@ -2712,7 +2450,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNleftPosition, 75); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       sw[W_reset] = XtCreateManagedWidget(_("Reset"), xmPushButtonWidgetClass, sw[W_amp_form], args, n);
-      XtAddCallback(sw[W_reset], XmNhelpCallback, reset_help_callback, ss);
       XtAddEventHandler(sw[W_reset], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
       XtAddCallback(sw[W_reset], XmNactivateCallback, reset_control_panel_callback, (XtPointer)sp);
 
@@ -2739,7 +2476,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       n = attach_all_sides(args, n);
       XtSetArg(args[n], XmNallowResize, TRUE); n++;
       sw[W_filter_env] = XtCreateManagedWidget("filter-window", xmDrawingAreaWidgetClass, sw[W_filter_frame], args, n);
-      XtAddCallback(sw[W_filter_env], XmNhelpCallback, filter_drawer_help_callback, ss);
       XtAddCallback(sw[W_filter_env], XmNresizeCallback, filter_drawer_resize, (XtPointer)sp);
       XtAddCallback(sw[W_filter_env], XmNexposeCallback, filter_drawer_resize, (XtPointer)sp);
 

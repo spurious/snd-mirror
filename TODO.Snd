@@ -4,6 +4,9 @@ can be listed by searching the sources for "TODO".  Long-term stuff is
 marked with "SOMEDAY".
 
 
+More translations! (See po/snd.pot for the list of translatable
+strings, and po/de.po for an example).
+
 A more direct connection to gmeteor (perhaps using the control-panel filter
   text widget).  use (filter-sound(make-filter ...)).
 

@@ -46,7 +46,7 @@ The configure program has several Snd-related arguments:
                            (mozilla is used with Gtk, XmHTML with Motif).
                            This affects only the Help dialog.
 
-   --with-ladspa         include LADSPA plugin support (Linux)
+   --with-ladspa         include LADSPA plugin support (default=yes in Linux)
    --with-static-xm      include the xm module (rather than loading it dynamically)
 			   this option affects xm.c for Motif, xg.c for Gtk.
                            You'll need this (or need to make xm and load xm.so
@@ -68,7 +68,6 @@ The configure program has several Snd-related arguments:
 
    --with-temp-dir       directory to use for temp files
    --with-save-dir       directory to use for saved-state files
-   --with-run            Guile optimizer (default = yes)
    --with-shared-sndlib  try to use libsndlib.so (default = no)
    --disable-nls         the gettext (internationalization) support is on
                            by default; this turns it off.
@@ -87,15 +86,13 @@ OpenServer 5:          makefile.sco5
 Windoze/MSVC:          makefile.msv (this file assumes you have clisp's cccp, etc)
 Mac-OSX:               makefile.motif.osx and config.motif.osx (or gtk for motif)
 
-If you have Guile 1.3.4 add -DHAVE_GUILE_1_3.  (The default is now
-Guile 1.6.2).  If you don't have Guile or Ruby, Snd can still be built, but it's
-severely limited in what it can do (there is a configure switch
---with-guile=no, and there's the compiler switch HAVE_EXTENSION_LANGUAGE).
+If you don't have Guile or Ruby, Snd can still be built, but it's
+severely limited in what it can do.  Snd can also be built without
+any graphics toolkit.
 
+Here at CCRMA, we use this configure invocation:
 
-Here at CCRMA, the system Snd is built:
-
-  ./configure --with-alsa --with-gsl --with-temp-dir=/zap --with-static-xm --with-ladspa --with-gl
+  ./configure --with-alsa --with-gsl --with-temp-dir=/zap --with-static-xm --with-gl
 
 but I'd recommend --with-just-gl elsewhere (the various GL implementations
 are different enough that gl.c can be a pain to build).
@@ -126,8 +123,8 @@ a variant of Lisp; see the urls below for some Scheme tutorials.
 The details of Snd customization are discussed in extsnd.html
 and grfsnd.html.
 
-Not very recently I added the possibility of using Ruby rather than
-Guile (on the HAVE_RUBY or --with-ruby switches).
+You can use Ruby rather than Guile (use the --with-ruby configure
+switch).
 
 
 There are RPM packages of Snd available at the ccrma-ftp site
@@ -159,30 +156,35 @@ http://ccrma-mail.stanford.edu/mailman/listinfo/cmdist
 
 The mailing list has been auto-archived since Apr 2002;
 the previous posts (going back to late 1993) are in
-old-cmdist.html at ccrma-ftp.
+ftp://ccrma-ftp.stanford.edu/pub/Lisp/old-cmdist.html.
+
 
 This software is available to anyone who is interested, free gratis
 for nothing, without warranties of any kind (see the file COPYING for
 legalese).  Send bug reports or suggestions to bil@ccrma.stanford.edu.
 
 
-The OpenServer and UnixWare ports are courtesy of Larry Plona.
-The Solaris port is thanks to Volker Kuhlmann and Seppo Ingalsuo.
-The HPUX port is thanks to Seppo Ingalsuo.
-The DEC Alpha port is due to the persistence of Juan Reyes.
-The Linux Alpha port is thanks to Guenter Geiger and Stefan Schwandter.
-The original ALSA support was thanks to Paul Barton-Davis.
-The current ALSA support is thanks to Fernando Lopez-Lezcano.
-The Sam 9407 support is thanks to Gerd Rausch.
-The LADSPA support is thanks to Richard W.E. Furse.
-The ESD support is thanks to Nick Bailey.
-The BSD port is thanks to Steven Schultz.
-The Mac-OSX port is thanks to Ludger Brummer and Charles Nichols.
-effects.scm is largely thanks to Dave Phillips.
+Larry Plona provided the OpenServer and UnixWare ports.
+Volker Kuhlmann and Seppo Ingalsuo provided the Solaris port.
+Seppo Ingalsuo provide the HPUX port.
+Juan Reyes provided the DEC Alpha port.
+Guenter Geiger and Stefan Schwandter provided the Linux Alpha port.
+Paul Davis provided the original ALSA support.
+Fernando Lopez-Lezcano provided the current ALSA support.
+Gerd Rausch provided the Sam 9407 support.
+Richard W.E. Furse provided the LADSPA support.
+Nick Bailey provided the ESD support.
+Steven Schultz provided the BSD port.
+Ludger Brummer and Charles Nichols provided the Mac-OSX port.
+Dave Phillips provided the tutorial, effects.scm, and many other files.
+Michael Scholz provided the German translation and much of the Ruby code.
 The contrib directory has contributions from 
-  Dave Phillips, Fernando Lopez-Lezcano, Tom Roth,
-  Michael Scholz, and Fabio Furlanete.
-The tutorial was written by Dave Phillips.
+  Dave Phillips, 
+  Fernando Lopez-Lezcano, 
+  Tom Roth,
+  Michael Scholz, 
+  Fabio Furlanete.
+
 
 
 ----------------------------------------------------------------
@@ -231,7 +233,7 @@ If you get the error:
 
 This probably means you don't have the Motif headers installed -- to
 build Snd with a GUI from the sources, you need either Motif or Gtk+.
-Motif has recently been released as open source software: see the url
+Motif has been released as open source software: see the url
 mentioned below.  If you installed the openmotif library rpm package,
 it may not have included the headers (look under
 /usr/X11R6/include/Xm); to build Snd from the sources you need the
@@ -302,7 +304,7 @@ panes. 2) Gtk+ colors are a bottomless pit; colors may or may not work
 right.  3) Gtk+ file selection dialog's filter is restricted to a simple
 string using "*" -- the just-sounds button of Motif, and the associated
 sound file extension list are omitted.  4) Emacs bindings are only partially
-competed in the listener, and help/completion is broken.
+competed in the listener, and help/completion is probably broken.
 
 (I've tried snd+gtk in Linux, Sun, and SGI).
 
@@ -377,6 +379,7 @@ whereas I'm building the images and RPM versions with a completely
 vanilla Guile (i.e. without threads).  You'll need to make a
 version of the guile library that doesn't require libqt, or
 build Snd from the sources and include -lqt in the LIBS statement.
+(This advice may be out-of-date now).
 
 If you get some complaint along these lines:
 

@@ -136,14 +136,6 @@ static void graph_redisplay(snd_state *ss)
     }
 }
 
-static void size_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_help_with_wrap((snd_state *)context,
-		     "FFT Size",
-"Any size FFT can be accommodated here, as long as it will fit in memory somehow.  The larger \
-the FFT, the longer it takes to compute. The size must be a power of 2.");
-}
-
 static void get_fft_window_data(snd_state *ss)
 {
   int i;
@@ -200,13 +192,6 @@ static void wavelet_browse_callback(Widget w, XtPointer context, XtPointer info)
     for_each_chan(ss, calculate_fft);
 }
 
-static void wavelet_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_help_with_wrap((snd_state *)context,
-		     "Wavelet Choice",
-"These names refer to various standard wavelets. The actual coefficients are in snd-fft.c.");
-}
-
 
 static void window_browse_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -228,15 +213,6 @@ static void window_browse_callback(Widget w, XtPointer context, XtPointer info)
     }
 }
 
-static void window_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_help_with_wrap((snd_state *)context,
-		     "FFT Window",
-"The FFT window names are taken from the article of Harris that discusses most FFT windows \
-at great length.  The default window is a second order Blackman window.");
-}
-
-
 static void chans_transform_type(chan_info *cp, void *ptr) {cp->transform_type = (*((int *)ptr));}
 
 static void transform_type_browse_callback(Widget w, XtPointer context, XtPointer info) 
@@ -250,14 +226,6 @@ static void transform_type_browse_callback(Widget w, XtPointer context, XtPointe
   in_set_transform_type(ss, type);
   for_each_chan_1(ss, chans_transform_type, (void *)(&type));
   for_each_chan(ss, calculate_fft);
-}
-
-static void transform_type_help_callback(Widget w, XtPointer context, XtPointer info)
-{
-  snd_state *ss = (snd_state *)context;
-  snd_help_with_wrap(ss,
-		     "Transform Type",
-"This list presents the various transforms that are available.");	   
 }
 
 
@@ -393,14 +361,6 @@ static void selection_callback(Widget w, XtPointer context, XtPointer info)
 }
 
 
-static void beta_help_callback(Widget w, XtPointer context, XtPointer info)
-{
-  snd_help_with_wrap((snd_state *)context,
-		     "FFT Window Parameter",
-"This scale sets the FFT window parameter ometimes known as alpha or beta.  The \
-scale tries to provide access to 'normal' values, given the current FFT window.");
-} 
-
 static void beta_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_state *ss = (snd_state *)context;
@@ -416,13 +376,6 @@ static void beta_callback(Widget w, XtPointer context, XtPointer info)
 	for_each_chan(ss, calculate_fft);
     }
 } 
-
-static void graph_help_callback(Widget w, XtPointer context, XtPointer info)
-{
-  snd_help_with_wrap((snd_state *)context,
-		     "Window Graph",
-"This shows a graph of the current fft window and the spectrum thereof -- the spectrum is in dB with the min at -80dB.");
-}
 
 static void graph_resize_callback(Widget w, XtPointer context, XtPointer info)
 {
@@ -548,14 +501,12 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       XtSetArg(args[n], XmNborderWidth, 4); n++;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNborderColor, (ss->sgx)->basic_color); n++;}
       type_frame = XtCreateManagedWidget("type-frame", xmFrameWidgetClass, mainform, args, n);
-      XtAddCallback(type_frame, XmNhelpCallback, transform_type_help_callback, ss);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       n = attach_all_sides(args, n);
       type_form = XtCreateManagedWidget("type-form", xmFormWidgetClass, type_frame, args, n);
       /* needed because XmFrame only accepts one child */
-      XtAddCallback(type_form, XmNhelpCallback, transform_type_help_callback, ss);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
@@ -565,7 +516,6 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;
       type_label = XtCreateManagedWidget(_("type"), xmLabelWidgetClass, type_form, args, n);
-      XtAddCallback(type_label, XmNhelpCallback, transform_type_help_callback, ss);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -591,7 +541,6 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
 	XmStringFree(types[i]);
       XtManageChild(type_list); 
       XtAddCallback(type_list, XmNbrowseSelectionCallback, transform_type_browse_callback, ss);
-      XtAddCallback(type_list, XmNhelpCallback, transform_type_help_callback, ss);
       FREE(types);
 
       /* SIZE */
@@ -606,13 +555,11 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       XtSetArg(args[n], XmNborderWidth, 4); n++;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNborderColor, (ss->sgx)->basic_color); n++;}
       size_frame = XtCreateManagedWidget("size-frame", xmFrameWidgetClass, mainform, args, n);
-      XtAddCallback(size_frame, XmNhelpCallback, size_help_callback, ss);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       n = attach_all_sides(args, n);
       size_form = XtCreateManagedWidget("size-form", xmFormWidgetClass, size_frame, args, n);
-      XtAddCallback(size_form, XmNhelpCallback, size_help_callback, ss);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
@@ -622,7 +569,6 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;
       size_label = XtCreateManagedWidget(_("size"), xmLabelWidgetClass, size_form, args, n);
-      XtAddCallback(size_label, XmNhelpCallback, size_help_callback, ss);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -645,7 +591,6 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
 	XmStringFree(sizes[i]);
       XtManageChild(size_list); 
       XtAddCallback(size_list, XmNbrowseSelectionCallback, size_browse_callback, ss);
-      XtAddCallback(size_list, XmNhelpCallback, size_help_callback, ss);
 
 
       /* DISPLAY */
@@ -835,13 +780,11 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       XtSetArg(args[n], XmNborderWidth, 4); n++;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNborderColor, (ss->sgx)->basic_color); n++;}
       wavelet_frame = XtCreateManagedWidget("wavelet-frame", xmFrameWidgetClass, mainform, args, n);
-      XtAddCallback(wavelet_frame, XmNhelpCallback, wavelet_help_callback, ss);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       n = attach_all_sides(args, n);
       wavelet_form = XtCreateManagedWidget("wavelet-form", xmFormWidgetClass, wavelet_frame, args, n);
-      XtAddCallback(wavelet_form, XmNhelpCallback, wavelet_help_callback, ss);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
@@ -851,7 +794,6 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;
       wavelet_label = XtCreateManagedWidget(_("wavelet"), xmLabelWidgetClass, wavelet_form, args, n);
-      XtAddCallback(wavelet_label, XmNhelpCallback, wavelet_help_callback, ss);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -873,7 +815,6 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
 	XmStringFree(wavelets[i]);
       XtManageChild(wavelet_list); 
       XtAddCallback(wavelet_list, XmNbrowseSelectionCallback, wavelet_browse_callback, ss);
-      XtAddCallback(wavelet_list, XmNhelpCallback, wavelet_help_callback, ss);
 
 
       /* WINDOW */
@@ -889,13 +830,11 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       XtSetArg(args[n], XmNborderWidth, 4); n++;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNborderColor, (ss->sgx)->basic_color); n++;}
       window_frame = XtCreateManagedWidget("window-frame", xmFrameWidgetClass, mainform, args, n);
-      XtAddCallback(window_frame, XmNhelpCallback, window_help_callback, ss);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       n = attach_all_sides(args, n);
       window_form = XtCreateManagedWidget("window-form", xmFormWidgetClass, window_frame, args, n);
-      XtAddCallback(window_form, XmNhelpCallback, window_help_callback, ss);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -910,7 +849,6 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       XtSetArg(args[n], XmNdragCallback, n1 = make_callback_list(beta_callback, (XtPointer)ss)); n++;
       XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(beta_callback, (XtPointer)ss)); n++;
       window_beta_scale = XtCreateManagedWidget("beta-scale", xmScaleWidgetClass, window_form, args, n);
-      XtAddCallback(window_beta_scale, XmNhelpCallback, beta_help_callback, ss);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
@@ -920,7 +858,6 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;
       window_label = XtCreateManagedWidget(_("window"), xmLabelWidgetClass, window_form, args, n);
-      XtAddCallback(window_label, XmNhelpCallback, window_help_callback, ss);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -944,7 +881,6 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
 	XmStringFree(windows[i]);
       XtManageChild(window_list); 
       XtAddCallback(window_list, XmNbrowseSelectionCallback, window_browse_callback, ss);
-      XtAddCallback(window_list, XmNhelpCallback, window_help_callback, ss);
 
 
 
@@ -985,7 +921,6 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNallowResize, TRUE); n++;
       graph_drawer = XtCreateManagedWidget("graph-drawer", xmDrawingAreaWidgetClass, graph_form, args, n);
-      XtAddCallback(graph_drawer, XmNhelpCallback, graph_help_callback, ss);
 
       gv.function = GXcopy;
       XtVaGetValues(graph_drawer, XmNbackground, &gv.background, XmNforeground, &gv.foreground, NULL);

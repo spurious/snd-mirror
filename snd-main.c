@@ -227,9 +227,9 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
 #if HAVE_STRFTIME
   time(&ts);
   strftime(time_buf, TIME_STR_SIZE, STRFTIME_FORMAT, localtime(&ts));
-  fprintf(fd, _("\n%s Snd %s (%s) options saved %s\n"), XEN_COMMENT_STRING, SND_RPM_VERSION, SND_VERSION, time_buf);
+  fprintf(fd, "\n%s Snd %s (%s) options saved %s\n", XEN_COMMENT_STRING, SND_RPM_VERSION, SND_VERSION, time_buf);
 #else
-  fprintf(fd, _("\n%s Snd %s (%s)\n"), XEN_COMMENT_STRING, SND_RPM_VERSION, SND_VERSION);
+  fprintf(fd, "\n%s Snd %s (%s)\n", XEN_COMMENT_STRING, SND_RPM_VERSION, SND_VERSION);
 #endif
 
   if (transform_size(ss) != DEFAULT_TRANSFORM_SIZE) pss_sd(fd, S_transform_size, transform_size(ss));

@@ -44,7 +44,6 @@ AC_SUBST(VERSION)
 #   --with-static-xm      include xm module
 #   --with-temp-dir       directory to use for temp files
 #   --with-save-dir       directory to use for saved-state files
-#   --with-run            Guile optimizer (default=yes)
 #   --with-gl             include OpenGL support (default=no)
 #   --with-just-gl        include OpenGL support but omit the Guile bindings (gl.o) (default=no)
 #   --with-modules        accommodate sndlib that was built with modules
@@ -61,7 +60,6 @@ AC_ARG_WITH(doubles,    [  --with-doubles	  use doubles throughout])
 AC_ARG_WITH(static-gsl, [  --with-static-gsl	  use libgsl.a to build Snd])
 AC_ARG_WITH(static-xm,  [  --with-static-xm	  include the xm module])
 AC_ARG_WITH(guile,      [  --with-guile		  use Guile])
-AC_ARG_WITH(run,        [  --with-run		  Guile optimizer])
 AC_ARG_WITH(gl,         [  --with-gl		  include OpenGL support])
 AC_ARG_WITH(just-gl,    [  --with-just-gl	  include OpenGL support, but omit the GL/Guile bindings])
 AC_ARG_WITH(html,	[  --with-html		  include the XmHTML or mozilla browser library])
@@ -69,6 +67,7 @@ AC_ARG_WITH(motif,	[  --with-motif		  use libXm to build Snd])
 AC_ARG_WITH(static-motif,[  --with-static-motif	  use libXm.a to build Snd])
 AC_ARG_WITH(modules,    [  --with-modules	  use if sndlib uses modules])
 AC_ARG_WITH(editres,    [  --with-editres	  include editres in xm])
+AC_ARG_WITH(ladspa,	[  --with-ladspa  	  include support for LADSPA plugins])
 
 if test "$with_doubles" = yes; then
   AC_DEFINE(Float,double)
@@ -219,12 +218,6 @@ AC_ARG_ENABLE(snd-debug,
   fi)
 
 
-AC_ARG_WITH(ladspa,
-	[  --with-ladspa	  	  include support for LADSPA plugins],
-  	if test "$with_ladspa" = yes ; then
-	    AC_DEFINE(HAVE_LADSPA)
-	fi)
-
 
 #--------------------------------------------------------------------------------
 # standard libraries, header files, functions, OSS special cases
@@ -237,7 +230,7 @@ LIBS=""
 
 AC_HEADER_DIRENT
 AC_CHECK_HEADERS(fcntl.h limits.h unistd.h string.h sys/soundcard.h soundcard.h machine/soundcard.h gsl/gsl_version.h sys/mixer.h)
-AC_CHECK_HEADERS(libc.h sys/vfs.h sys/statfs.h sys/mount.h setjmp.h sched.h pwd.h ladspa.h locale.h sys/fpu.h dlfcn.h sys/param.h byteswap.h)
+AC_CHECK_HEADERS(libc.h sys/vfs.h sys/statfs.h sys/mount.h setjmp.h sched.h pwd.h locale.h sys/fpu.h dlfcn.h sys/param.h byteswap.h)
 AC_CHECK_HEADER(/usr/local/lib/oss/include/sys/soundcard.h,[AC_DEFINE(USR_LOCAL_LIB_OSS)])
 AC_CHECK_HEADER(/usr/lib/oss/include/sys/soundcard.h,[AC_DEFINE(USR_LIB_OSS)])
 AC_CHECK_HEADER(/opt/oss/include/sys/soundcard.h,[AC_DEFINE(OPT_OSS)])
@@ -305,6 +298,10 @@ AC_FUNC_CLOSEDIR_VOID
 AC_FUNC_VPRINTF
 
 # AC_CHECK_STRUCT_FOR([#include <sys/statfs.h>],statfs,f_bsize)
+
+if test "$with_ladspa" != no ; then
+  AC_CHECK_HEADER(ladspa.h, [AC_DEFINE(HAVE_LADSPA)])
+fi
 
 
 #--------------------------------------------------------------------------------
@@ -744,14 +741,8 @@ if test $GUILE_CONFIG_works = yes; then
     if test "`${GUILE_CONFIG_path}guile -c '(display (string<=? (version) "1.3.4"))'`" = "#t"; then
       echo found old out-of-date Guile library
     fi
-    if test "$with_run" != no; then
-      if test "`${GUILE_CONFIG_path}guile -c '(display (string>=? (version) "1.5"))'`" = "#t"; then
-        AC_DEFINE(WITH_RUN)
-      else
-	if test "$with_run" = yes; then
-          echo --with-run switch is not compatible with Guile versions before 1.5
-	fi
-      fi
+    if test "`${GUILE_CONFIG_path}guile -c '(display (string>=? (version) "1.5"))'`" = "#t"; then
+      AC_DEFINE(WITH_RUN)
     fi
   fi
 else
@@ -1084,4 +1075,3 @@ CFLAGS="-I. $CFLAGS"
 AC_SUBST(MAKE_TARGET)
 AC_OUTPUT
 
-dnl perhaps make with-ladspa the default in Linux

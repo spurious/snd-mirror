@@ -5084,7 +5084,6 @@ static void funcall_nf(int *args, int *ints, Float *dbls)
       INT_RESULT = ints[fres->addr];   
       break;
     }
-  /* TODO: extend funcall args and result to all types */
 }
 static char *descr_funcall_nf(int *args, int *ints, Float *dbls) 
 {
@@ -6011,9 +6010,9 @@ static char *descr_int_gen0(int *args, int *ints, Float *dbls, char *which)
 {
   return(mus_format( INT_PT " = %s(" PTR_PT , args[0], INT_RESULT, which, args[1], (void *)(INT_ARG_1)));
 }
-#define INT_GEN0(Name, Type) \
+#define INT_GEN0(Name) \
   static char *descr_ ## Name ## _0i(int *args, int *ints, Float *dbls) {return(descr_int_gen0(args, ints, dbls, #Name));} \
-  static void Name ## _0i(int *args, int *ints, Float *dbls) {INT_RESULT = mus_ ## Name ((Type *)(INT_ARG_1));} \
+  static void Name ## _0i(int *args, int *ints, Float *dbls) {INT_RESULT = mus_ ## Name ((mus_any *)(INT_ARG_1));} \
   static xen_value * mus_ ## Name ## _0(ptree *prog, xen_value **args, int num_args) \
   { \
     return(package(prog, R_INT, Name ## _0i, descr_ ## Name ## _0i, args, 1)); \
@@ -6064,15 +6063,15 @@ GEN0(b2)
 GEN0(feedforward)
 GEN0(feedback)
 
-INT_GEN0(hop, mus_any)
-INT_GEN0(channels, mus_any)
-INT_GEN0(location, mus_any)
-INT_GEN0(ramp, mus_any)
-INT_GEN0(position, mus_any)
-INT_GEN0(order, mus_any)
-INT_GEN0(length, mus_any)
-INT_GEN0(cosines, mus_any)
-INT_GEN0(channel, mus_input)
+INT_GEN0(hop)
+INT_GEN0(channels)
+INT_GEN0(location)
+INT_GEN0(ramp)
+INT_GEN0(position)
+INT_GEN0(order)
+INT_GEN0(length)
+INT_GEN0(cosines)
+INT_GEN0(channel)
 
 GEN_P(buffer)
 GEN_P(buffer_empty)
@@ -6134,28 +6133,28 @@ static char *descr_ref_gen0(int *args, int *ints, Float *dbls, char *which)
 {
   return(mus_format( FLT_PT " = %s(" PTR_PT ", " INT_PT ")", args[0], FLOAT_RESULT, which, args[1], (mus_any *)(INT_ARG_1), args[2], INT_ARG_2));
 }
-#define REF_GEN0(Name, Type) \
+#define REF_GEN0(Name) \
   static char *descr_ ## Name ## _0r(int *args, int *ints, Float *dbls) {return(descr_ref_gen0(args, ints, dbls, #Name));} \
-  static void Name ## _0r(int *args, int *ints, Float *dbls) {FLOAT_RESULT = mus_ ## Name ((Type *)(INT_ARG_1), INT_ARG_2);} \
+  static void Name ## _0r(int *args, int *ints, Float *dbls) {FLOAT_RESULT = mus_ ## Name ((mus_any *)(INT_ARG_1), INT_ARG_2);} \
   static xen_value * Name ## _0(ptree *prog, xen_value **args, int num_args) \
   { \
     return(package(prog, R_FLOAT, Name ## _0r, descr_ ## Name ## _0r, args, 2)); \
   }
 
-REF_GEN0(frame_ref, mus_frame)
-REF_GEN0(locsig_ref, mus_any)
-REF_GEN0(locsig_reverb_ref, mus_any)
+REF_GEN0(frame_ref)
+REF_GEN0(locsig_ref)
+REF_GEN0(locsig_reverb_ref)
 
 
 static char *descr_set_gen0(int *args, int *ints, Float *dbls, char *which)
 {
   return(mus_format("%s(" PTR_PT ", " INT_PT ", " FLT_PT ")", which, args[1], (mus_any *)(INT_ARG_1), args[2], INT_ARG_2, args[3], FLOAT_ARG_3));
 }
-#define SET_GEN0(Name, Type) \
+#define SET_GEN0(Name) \
   static char *descr_ ## Name ## _0r(int *args, int *ints, Float *dbls) {return(descr_set_gen0(args, ints, dbls, #Name));} \
   static void Name ## _0r(int *args, int *ints, Float *dbls) \
     { \
-      mus_ ## Name ((Type *)(INT_ARG_1), INT_ARG_2, FLOAT_ARG_3); \
+      mus_ ## Name ((mus_any *)(INT_ARG_1), INT_ARG_2, FLOAT_ARG_3); \
     } \
   static xen_value * Name ## _2(ptree *prog, xen_value **args, int num_args) \
   { \
@@ -6166,9 +6165,9 @@ static char *descr_set_gen0(int *args, int *ints, Float *dbls, char *which)
     add_triple_to_ptree(prog, va_make_triple( Name ## _0r, descr_ ## Name ## _0r, 4, NULL, in_v, in_v1, v)); \
   }
 
-SET_GEN0(frame_set, mus_frame)
-SET_GEN0(locsig_set, mus_any)
-SET_GEN0(locsig_reverb_set, mus_any)
+SET_GEN0(frame_set)
+SET_GEN0(locsig_set)
+SET_GEN0(locsig_reverb_set)
 
 
 static char *descr_mixer_ref_0(int *args, int *ints, Float *dbls)
@@ -6176,7 +6175,7 @@ static char *descr_mixer_ref_0(int *args, int *ints, Float *dbls)
   return(mus_format( FLT_PT " = mixer-ref(" PTR_PT ", " INT_PT ", " INT_PT ")", 
 		    args[0], FLOAT_RESULT, args[1], (mus_any *)(INT_ARG_1), args[2], INT_ARG_2, args[3], INT_ARG_3));
 }
-static void mixer_ref_0(int *args, int *ints, Float *dbls) {FLOAT_RESULT = mus_mixer_ref((mus_mixer *)(INT_ARG_1), INT_ARG_2, INT_ARG_3);}
+static void mixer_ref_0(int *args, int *ints, Float *dbls) {FLOAT_RESULT = mus_mixer_ref((mus_any *)(INT_ARG_1), INT_ARG_2, INT_ARG_3);}
 static xen_value *mixer_ref_1(ptree *prog, xen_value **args, int num_args)
 {
   return(package(prog, R_FLOAT, mixer_ref_0, descr_mixer_ref_0, args, 3));
@@ -6189,7 +6188,7 @@ static char *descr_mixer_set_0(int *args, int *ints, Float *dbls)
 }
 static void mixer_set_0(int *args, int *ints, Float *dbls) 
 {
-  mus_mixer_set((mus_mixer *)(INT_ARG_1), INT_ARG_2, INT_ARG_3, FLOAT_ARG_4);
+  mus_mixer_set((mus_any *)(INT_ARG_1), INT_ARG_2, INT_ARG_3, FLOAT_ARG_4);
 }
 static xen_value *mixer_set_2(ptree *prog, xen_value **args, int num_args)
 {
@@ -6350,25 +6349,25 @@ static xen_value *env_interp_1(ptree *prog, xen_value **args, int num_args)
 
 /* ---------------- frame+ etc ---------------- */
 
-#define FRAME_OP(CName, SName, OutType, Type1, Type2, Type3) \
+#define FRAME_OP(CName, SName) \
 static char *descr_ ## CName ## _2(int *args, int *ints, Float *dbls) \
 { \
   return(mus_format( PTR_PT " = " #SName "(" PTR_PT ", " PTR_PT ")", \
-		    args[0], (OutType *)(INT_RESULT), args[1], (Type1 *)(INT_ARG_1), args[2], (Type2 *)(INT_ARG_2))); \
+		    args[0], (mus_any *)(INT_RESULT), args[1], (mus_any *)(INT_ARG_1), args[2], (mus_any *)(INT_ARG_2))); \
 } \
 static char *descr_ ## CName ## _3(int *args, int *ints, Float *dbls) \
 { \
   return(mus_format( PTR_PT " = " #SName "(" PTR_PT ", " PTR_PT ", " PTR_PT ")", \
-		    args[0], (OutType *)(INT_RESULT), args[1], (Type1 *)(INT_ARG_1), args[2], (Type2 *)(INT_ARG_2), args[3], (Type3 *)(INT_ARG_3))); \
+		    args[0], (mus_any *)(INT_RESULT), args[1], (mus_any *)(INT_ARG_1), args[2], (mus_any *)(INT_ARG_2), args[3], (mus_any *)(INT_ARG_3))); \
 } \
 static void CName ## _2(int *args, int *ints, Float *dbls) \
 { \
   if (INT_RESULT) mus_free((mus_any *)(INT_RESULT)); \
-  INT_RESULT = (int)CName((Type1 *)(INT_ARG_1), (Type2 *)(INT_ARG_2), NULL); \
+  INT_RESULT = (int)CName((mus_any *)(INT_ARG_1), (mus_any *)(INT_ARG_2), NULL); \
 } \
 static void CName ## _3(int *args, int *ints, Float *dbls) \
 { \
-  INT_RESULT = (int)CName((Type1 *)(INT_ARG_1), (Type2 *)(INT_ARG_2), (Type3 *)(INT_ARG_3)); \
+  INT_RESULT = (int)CName((mus_any *)(INT_ARG_1), (mus_any *)(INT_ARG_2), (mus_any *)(INT_ARG_3)); \
 } \
 static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) \
 { \
@@ -6376,20 +6375,20 @@ static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) \
   return(package(prog, R_CLM, CName ## _3, descr_ ## CName ## _3, args, 3)); \
 }
 
-FRAME_OP(mus_frame_add, frame+, mus_frame, mus_frame, mus_frame, mus_frame)
-FRAME_OP(mus_frame_multiply, frame*, mus_frame, mus_frame, mus_frame, mus_frame)
-FRAME_OP(mus_frame2frame, frame->frame, mus_frame, mus_mixer, mus_frame, mus_frame)
-FRAME_OP(mus_mixer_multiply, mixer*, mus_mixer, mus_mixer, mus_mixer, mus_mixer)
+FRAME_OP(mus_frame_add, frame+)
+FRAME_OP(mus_frame_multiply, frame*)
+FRAME_OP(mus_frame2frame, frame->frame)
+FRAME_OP(mus_mixer_multiply, mixer*)
 
 
 /* ---------------- frame->sample ---------------- */
 static char *descr_frame2sample_2(int *args, int *ints, Float *dbls) 
 {
-  return(mus_format( FLT_PT " = frame->sample(" PTR_PT ", " PTR_PT ")", args[0], FLOAT_RESULT, args[1], (mus_any *)(INT_ARG_1), args[2], (mus_frame *)(INT_ARG_2)));
+  return(mus_format( FLT_PT " = frame->sample(" PTR_PT ", " PTR_PT ")", args[0], FLOAT_RESULT, args[1], (mus_any *)(INT_ARG_1), args[2], (mus_any *)(INT_ARG_2)));
 }
 static void frame2sample_2(int *args, int *ints, Float *dbls) 
 {
-  FLOAT_RESULT = mus_frame2sample((mus_any *)(INT_ARG_1), (mus_frame *)(INT_ARG_2));
+  FLOAT_RESULT = mus_frame2sample((mus_any *)(INT_ARG_1), (mus_any *)(INT_ARG_2));
 }
 static xen_value *frame2sample_1(ptree *prog, xen_value **args, int num_args) 
 {
@@ -6400,17 +6399,17 @@ static xen_value *frame2sample_1(ptree *prog, xen_value **args, int num_args)
 static char *descr_sample2frame_2(int *args, int *ints, Float *dbls) 
 {
   return(mus_format( PTR_PT " = sample->frame(" PTR_PT ", " FLT_PT ")", 
-		     args[0], (mus_frame *)(INT_RESULT), args[1], (mus_any *)(INT_ARG_1), args[2], FLOAT_ARG_2));
+		     args[0], (mus_any *)(INT_RESULT), args[1], (mus_any *)(INT_ARG_1), args[2], FLOAT_ARG_2));
 }
 static void sample2frame_2(int *args, int *ints, Float *dbls) {INT_RESULT = (int)mus_sample2frame((mus_any *)(INT_ARG_1), FLOAT_ARG_2, NULL);}
 static char *descr_sample2frame_3(int *args, int *ints, Float *dbls) 
 {
   return(mus_format( PTR_PT " = sample->frame(" PTR_PT ", " FLT_PT ", " PTR_PT ")", 
-		     args[0], (mus_frame *)(INT_RESULT), args[1], (mus_any *)(INT_ARG_1), args[2], FLOAT_ARG_2, args[3], (mus_frame *)(INT_ARG_3)));
+		     args[0], (mus_any *)(INT_RESULT), args[1], (mus_any *)(INT_ARG_1), args[2], FLOAT_ARG_2, args[3], (mus_any *)(INT_ARG_3)));
 }
 static void sample2frame_3(int *args, int *ints, Float *dbls) 
 {
-  INT_RESULT = (int)mus_sample2frame((mus_any *)(INT_ARG_1), FLOAT_ARG_2, (mus_frame *)(INT_ARG_3));
+  INT_RESULT = (int)mus_sample2frame((mus_any *)(INT_ARG_1), FLOAT_ARG_2, (mus_any *)(INT_ARG_3));
 }
 static xen_value *sample2frame_1(ptree *prog, xen_value **args, int num_args) 
 {
@@ -6422,7 +6421,7 @@ static xen_value *sample2frame_1(ptree *prog, xen_value **args, int num_args)
 static char *descr_frame2buffer_2(int *args, int *ints, Float *dbls) 
 {
   return(mus_format( PTR_PT " = frame->buffer(" PTR_PT ", " PTR_PT ")", 
-		    args[0], (mus_frame *)INT_RESULT, args[1], (mus_any *)(INT_ARG_1), args[2], (mus_any *)(INT_ARG_2)));
+		    args[0], (mus_any *)INT_RESULT, args[1], (mus_any *)(INT_ARG_1), args[2], (mus_any *)(INT_ARG_2)));
 }
 static void frame2buffer_2(int *args, int *ints, Float *dbls) 
 {
@@ -6437,13 +6436,13 @@ static xen_value *frame2buffer_1(ptree *prog, xen_value **args, int num_args)
 /* ---------------- buffer->frame ---------------- */
 static char *descr_buffer2frame_1b(int *args, int *ints, Float *dbls) 
 {
-  return(mus_format( PTR_PT " = buffer->frame(" PTR_PT ")", args[0], (mus_frame *)INT_RESULT, args[1], (mus_any *)(INT_ARG_1)));
+  return(mus_format( PTR_PT " = buffer->frame(" PTR_PT ")", args[0], (mus_any *)INT_RESULT, args[1], (mus_any *)(INT_ARG_1)));
 }
 static void buffer2frame_1b(int *args, int *ints, Float *dbls) {INT_RESULT = (int)mus_buffer2frame((mus_any *)(INT_ARG_1), NULL);}
 static char *descr_buffer2frame_2b(int *args, int *ints, Float *dbls) 
 {
   return(mus_format( PTR_PT " = buffer->frame(" PTR_PT ", " PTR_PT ")", 
-		    args[0], (mus_frame *)INT_RESULT, args[1], (mus_any *)(INT_ARG_1), args[2], (mus_any *)(INT_ARG_2)));
+		    args[0], (mus_any *)INT_RESULT, args[1], (mus_any *)(INT_ARG_1), args[2], (mus_any *)(INT_ARG_2)));
 }
 static void buffer2frame_2b(int *args, int *ints, Float *dbls) {INT_RESULT = (int)mus_buffer2frame((mus_any *)(INT_ARG_1), (mus_any *)(INT_ARG_2));}
 static xen_value *buffer2frame_1(ptree *prog, xen_value **args, int num_args) 
@@ -6457,11 +6456,11 @@ static xen_value *buffer2frame_1(ptree *prog, xen_value **args, int num_args)
 static char *descr_frame2file_3(int *args, int *ints, Float *dbls) 
 {
   return(mus_format( PTR_PT " = frame->file((" PTR_PT ", " INT_PT ", " PTR_PT ")", 
-		    args[0], (void *)(INT_RESULT), args[1], (mus_any *)(INT_ARG_1), args[2], INT_ARG_2, args[3], (mus_frame *)(INT_ARG_3)));
+		    args[0], (void *)(INT_RESULT), args[1], (mus_any *)(INT_ARG_1), args[2], INT_ARG_2, args[3], (mus_any *)(INT_ARG_3)));
 }
 static void frame2file_3(int *args, int *ints, Float *dbls) 
 {
-  INT_RESULT = (int)mus_frame2file((mus_any *)(INT_ARG_1), INT_ARG_2, (mus_frame *)(INT_ARG_3));
+  INT_RESULT = (int)mus_frame2file((mus_any *)(INT_ARG_1), INT_ARG_2, (mus_any *)(INT_ARG_3));
 }
 static xen_value *frame2file_1(ptree *prog, xen_value **args, int num_args) 
 {
@@ -6471,11 +6470,11 @@ static xen_value *frame2file_1(ptree *prog, xen_value **args, int num_args)
 static char *descr_file2frame_3(int *args, int *ints, Float *dbls) 
 {
   return(mus_format( PTR_PT " = file->frame((" PTR_PT ", " INT_PT ", " PTR_PT ")", 
-		    args[0], (void *)(INT_RESULT), args[1], (mus_any *)(INT_ARG_1), args[2], INT_ARG_2, args[3], (mus_frame *)(INT_ARG_3)));
+		    args[0], (void *)(INT_RESULT), args[1], (mus_any *)(INT_ARG_1), args[2], INT_ARG_2, args[3], (mus_any *)(INT_ARG_3)));
 }
 static void file2frame_3(int *args, int *ints, Float *dbls) 
 {
-  INT_RESULT = (int)mus_file2frame((mus_any *)(INT_ARG_1), INT_ARG_2, (mus_frame *)(INT_ARG_3));
+  INT_RESULT = (int)mus_file2frame((mus_any *)(INT_ARG_1), INT_ARG_2, (mus_any *)(INT_ARG_3));
 }
 static xen_value *file2frame_1(ptree *prog, xen_value **args, int num_args) 
 {
@@ -6489,9 +6488,9 @@ static xen_value *file2frame_1(ptree *prog, xen_value **args, int num_args)
 static char *descr_ ## CName ## _3(int *args, int *ints, Float *dbls) \
 { \
   return(mus_format( FLT_PT " = " #SName "(" INT_PT ", " FLT_PT ", " PTR_PT ")", \
-		    args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], FLOAT_ARG_2, args[3], (mus_output *)(INT_ARG_3))); \
+		    args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], FLOAT_ARG_2, args[3], (mus_any *)(INT_ARG_3))); \
 } \
-static void CName ## _3(int *args, int *ints, Float *dbls) {FLOAT_RESULT = mus_ ## CName (INT_ARG_1, FLOAT_ARG_2, (mus_output *)(INT_ARG_3));} \
+static void CName ## _3(int *args, int *ints, Float *dbls) {FLOAT_RESULT = mus_ ## CName (INT_ARG_1, FLOAT_ARG_2, (mus_any *)(INT_ARG_3));} \
 static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) \
 { \
   return(package(prog, R_FLOAT, CName ## _3, descr_ ## CName ## _3, args, 3)); \
@@ -6505,9 +6504,9 @@ OUT_GEN(outd, outd)
 static char *descr_out_any_4(int *args, int *ints, Float *dbls)
 {
   return(mus_format( FLT_PT " = out-any(" INT_PT ", " FLT_PT ", " INT_PT ", " PTR_PT ")",
-		    args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], FLOAT_ARG_2, args[3], INT_ARG_3, args[4], (mus_output *)(INT_ARG_4)));
+		    args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], FLOAT_ARG_2, args[3], INT_ARG_3, args[4], (mus_any *)(INT_ARG_4)));
 }
-static void out_any_4(int *args, int *ints, Float *dbls) {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, INT_ARG_3, (mus_output *)(INT_ARG_4));} 
+static void out_any_4(int *args, int *ints, Float *dbls) {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, INT_ARG_3, (mus_any *)(INT_ARG_4));} 
 static xen_value *out_any_1(ptree *prog, xen_value **args, int num_args)
 {
   return(package(prog, R_FLOAT, out_any_4, descr_out_any_4, args, 4));
@@ -6519,9 +6518,9 @@ static xen_value *out_any_1(ptree *prog, xen_value **args, int num_args)
 #define IN_GEN(CName, SName) \
 static char *descr_ ## CName ## _2(int *args, int *ints, Float *dbls) \
 { \
-  return(mus_format( FLT_PT " = " #SName "(" INT_PT ", " PTR_PT ")", args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], (mus_output *)(INT_ARG_2))); \
+  return(mus_format( FLT_PT " = " #SName "(" INT_PT ", " PTR_PT ")", args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], (mus_any *)(INT_ARG_2))); \
 } \
-static void CName ## _2(int *args, int *ints, Float *dbls) {FLOAT_RESULT = mus_ ## CName (INT_ARG_1, (mus_input *)(INT_ARG_2));} \
+static void CName ## _2(int *args, int *ints, Float *dbls) {FLOAT_RESULT = mus_ ## CName (INT_ARG_1, (mus_any *)(INT_ARG_2));} \
 static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) \
 { \
   return(package(prog, R_FLOAT, CName ## _2, descr_ ## CName ## _2, args, 2)); \
@@ -6533,9 +6532,9 @@ IN_GEN(inb, inb)
 static char *descr_in_any_3(int *args, int *ints, Float *dbls)
 {
   return(mus_format( FLT_PT " = in-any(" INT_PT ", " INT_PT ", " PTR_PT ")",
-		    args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2, args[3], (mus_output *)(INT_ARG_3)));
+		    args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2, args[3], (mus_any *)(INT_ARG_3)));
 }
-static void in_any_3(int *args, int *ints, Float *dbls) {FLOAT_RESULT = mus_in_any(INT_ARG_1, INT_ARG_2, (mus_input *)(INT_ARG_3));}
+static void in_any_3(int *args, int *ints, Float *dbls) {FLOAT_RESULT = mus_in_any(INT_ARG_1, INT_ARG_2, (mus_any *)(INT_ARG_3));}
 static xen_value *in_any_1(ptree *prog, xen_value **args, int num_args)
 {
   return(package(prog, R_FLOAT, in_any_3, descr_in_any_3, args, 3));
@@ -7380,13 +7379,12 @@ static xen_value *arg_warn(ptree *prog, char *funcname, int arg_num, xen_value *
 {
   char *xb;
   xb = describe_xen_value(args[arg_num], prog->ints, prog->dbls);
-  run_warn("%s argument %d (%s) is a %s, not a %s?", 
-	   funcname, 
-	   arg_num, 
-	   xb,
-	   type_name(args[arg_num]->type),
-	   correct_type);
-  if (xb) FREE(xb);
+  if (xb)
+    {
+      run_warn("%s argument %d (%s) is a %s, not a %s?", funcname, arg_num, xb, type_name(args[arg_num]->type), correct_type);
+      FREE(xb);
+    }
+  else run_warn("%s argument %d is a %s, not a %s?", funcname, arg_num, type_name(args[arg_num]->type), correct_type);
   return(NULL);
 }
 

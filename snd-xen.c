@@ -349,7 +349,7 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
   if (!(XEN_PROCEDURE_P(proc)))
     {
       if (XEN_NOT_FALSE_P(proc)) /* #f as explicit arg to clear */
-	return(mus_format(_("%s: %s (%s arg %d) is not a procedure!"), 
+	return(mus_format("%s: %s (%s arg %d) is not a procedure!", 
 			  XEN_AS_STRING(proc),
 			  arg_name, caller, argn));
     }

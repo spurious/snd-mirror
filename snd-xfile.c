@@ -237,13 +237,6 @@ static void play_selected_callback(Widget w, XtPointer context, XtPointer info)
   else file_dialog_stop_playing(fd);
 }
 
-static void play_selected_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_help_with_wrap(get_global_state(),
-		     "play selected sound",
-"If you click the 'play selected sound' button, the currently selected sound (if any) in the file selection box file list is played.");
-}
-
 static file_dialog_info *open_dialog = NULL;
 static file_dialog_info *mix_dialog = NULL;
 
@@ -407,14 +400,6 @@ static void just_sounds_callback(Widget w, XtPointer context, XtPointer info)
   force_directory_reread(fd->dialog);
 }
 
-static void just_sounds_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_help_with_wrap((snd_state *)context,
-		     "sound files only",
-"If you click the 'sound files only' button, only those files in the current directory that look vaguely like sound \
-files will be displayed.  The decision is based on the file's extension.");
-}
-
 #if (XmVERSION > 1)
 static void file_dialog_select_callback(Widget w, XtPointer context, XtPointer info)
 {
@@ -541,9 +526,7 @@ static file_dialog_info *make_file_dialog(snd_state *ss, int read_only, char *ti
   XtAddCallback(fd->dialog, XmNcancelCallback, file_cancel_callback, (XtPointer)fd);
   XtAddCallback(fd->dialog, XmNhelpCallback, file_help_callback, (XtPointer)ss);
   XtAddCallback(fd->just_sounds_button, XmNvalueChangedCallback, just_sounds_callback, (XtPointer)fd);
-  XtAddCallback(fd->just_sounds_button, XmNhelpCallback, just_sounds_help_callback, (XtPointer)ss);
   XtAddCallback(fd->play_selected_button, XmNvalueChangedCallback, play_selected_callback, (XtPointer)fd);
-  XtAddCallback(fd->play_selected_button, XmNhelpCallback, play_selected_help_callback, (XtPointer)ss);
 #if (XmVERSION > 1)
   XtAddCallback(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_LIST),
 		XmNbrowseSelectionCallback, file_dialog_select_callback, (XtPointer)fd);
@@ -692,20 +675,6 @@ static void save_as_ok_callback(Widget w, XtPointer context, XtPointer info)
   if (str) XtFree(str);
 } 
 
-static void save_as_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_help_with_wrap((snd_state *)context,
-		     "Save As",
-"You can save the current state of a file or region under a different file name using the Save \
-As option.  The output header type, data format,  and sampling rate can also be set.  The data formats \
-are big-endian where relevant except for 'wave' output.  If a file by the chosen name already exists \
-it is silently overwritten, unless that file is already open in Snd and has edits.  In that case,  \
-you'll be asked what to do.  If you want to be warned whenever a file is about to be overwritten by this \
-option, set the resource overwriteCheck to 1. If you give the current file name to Save As,  \
-any current edits will be saved and the current version in Snd will be updated (that is, in this \
-case, the current edit tree is not preserved).");
-}
-
 static void save_as_cancel_callback(Widget w, XtPointer context, XtPointer info)
 { 
   XtUnmanageChild(save_as_dialog);
@@ -737,51 +706,6 @@ static void file_data_format_callback(Widget w, XtPointer context, XtPointer inf
   ASSERT_WIDGET_TYPE(XmIsList(w), w);
   XtVaGetValues(w, XmNuserData, &fd, NULL);
   fd->current_format = data_format_from_position(fd->current_type, cbs->item_position - 1);
-}
-
-static void file_header_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_help_with_wrap((snd_state *)context,
-		     "File Header Type",
-"This list shows the output header types that Snd is willing to write.");
-}
-
-static void file_data_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_help_with_wrap((snd_state *)context,
-		     "File Data Format",
-"This list shows the data format choices available with the currently selected header choice.  'Short' means 16-bit two's complement \
-integer.  'Mulaw' and 'Alaw' are common 8-bit compression schemes. 'Long' is 32-bit integer. 'Float' is 32-bit float.  In each case, the \
-decision as to byte order ('endianess') depends on the header type.");
-}
-
-static void file_data_location_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_help_with_wrap((snd_state *)context,
-		     "File Data Location",
-"If you know the data location (in bytes) you can set it in this field.");
-}
-
-static void file_srate_help_callback(Widget w, XtPointer context, XtPointer info)
-{
-  snd_help_with_wrap((snd_state *)context,
-		     "File Srate",
-"This field sets the nominal file sampling rate.");
-} 
-
-static void file_chans_help_callback(Widget w, XtPointer context, XtPointer info)
-{
-  snd_help_with_wrap((snd_state *)context,
-		     "File Srate",
-"This field sets the number of channels in the output file.");
-} 
-
-static void file_comment_label_help_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  snd_state *ss = (snd_state *)context;
-  snd_help_with_wrap(ss,
-		     "Output File Comment",
-"This optional field provides any comments that you want saved in the output file's header.");	   
 }
 
 #define NUM_HEADER_TYPES 7
@@ -832,7 +756,6 @@ file_data *make_file_data_panel(snd_state *ss, Widget parent, char *name, Arg *i
   XtSetArg(args[n], XmNleftWidget, sep1); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
   hlab = XtCreateManagedWidget(_("header"), xmLabelWidgetClass, form, args, n);
-  XtAddCallback(hlab, XmNhelpCallback, file_header_help_callback, ss);
 
   n = 0;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -851,7 +774,6 @@ file_data *make_file_data_panel(snd_state *ss, Widget parent, char *name, Arg *i
   XtSetArg(args[n], XmNitemCount, NUM_HEADER_TYPES); n++;
   XtSetArg(args[n], XmNvisibleItemCount, NUM_VISIBLE_HEADERS); n++;
   hlist = XmCreateScrolledList(form, "header type", args, n);
-  XtAddCallback(hlist, XmNhelpCallback, file_header_help_callback, ss);
   XtManageChild(hlist);
   for (i = 0; i < NUM_HEADER_TYPES; i++) XmStringFree(strs[i]);
   FREE(strs);
@@ -877,7 +799,6 @@ file_data *make_file_data_panel(snd_state *ss, Widget parent, char *name, Arg *i
   XtSetArg(args[n], XmNleftWidget, sep2); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
   dlab = XtCreateManagedWidget(_("data"), xmLabelWidgetClass, form, args, n);
-  XtAddCallback(dlab, XmNhelpCallback, file_data_help_callback, ss);
 
   n = 0;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -889,7 +810,6 @@ file_data *make_file_data_panel(snd_state *ss, Widget parent, char *name, Arg *i
   XtSetArg(args[n], XmNuserData, (XtPointer)fdat); n++;
   dlist = XmCreateScrolledList(form, "data format", args, n);
   /* what is displayed and selected depends on current type */
-  XtAddCallback(dlist, XmNhelpCallback, file_data_help_callback, ss);
   strs = (XmString *)CALLOC(dformats, sizeof(XmString)); 
   for (i = 0; i < dformats; i++) 
     strs[i] = XmStringCreate(formats[i], XmFONTLIST_DEFAULT_TAG);
@@ -919,7 +839,6 @@ file_data *make_file_data_panel(snd_state *ss, Widget parent, char *name, Arg *i
   XtSetArg(args[n], XmNleftWidget, sep3); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
   slab = XtCreateManagedWidget(_("srate:"), xmLabelWidgetClass, form, args, n);
-  XtAddCallback(slab, XmNhelpCallback, file_srate_help_callback, ss);
 
   n = 0;
   XtSetArg(args[n], XmNcolumns, 6); n++;
@@ -931,7 +850,6 @@ file_data *make_file_data_panel(snd_state *ss, Widget parent, char *name, Arg *i
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
   stext = make_textfield_widget(ss, "srate-text", form, args, n, NOT_ACTIVATABLE, add_completer_func(srate_completer));
-  XtAddCallback(stext, XmNhelpCallback, file_srate_help_callback, ss);
   fdat->srate_text = stext;
 
   if (with_chan)
@@ -944,7 +862,6 @@ file_data *make_file_data_panel(snd_state *ss, Widget parent, char *name, Arg *i
       XtSetArg(args[n], XmNleftWidget, sep3); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
       clab = XtCreateManagedWidget(_("chans:"), xmLabelWidgetClass, form, args, n);
-      XtAddCallback(clab, XmNhelpCallback, file_chans_help_callback, ss);
 
       n = 0;
       XtSetArg(args[n], XmNcolumns, 6); n++;
@@ -956,7 +873,6 @@ file_data *make_file_data_panel(snd_state *ss, Widget parent, char *name, Arg *i
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       ctext = make_textfield_widget(ss, "chans-text", form, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
-      XtAddCallback(ctext, XmNhelpCallback, file_chans_help_callback, ss);
       fdat->chans_text = ctext;
 
       if (with_loc)
@@ -969,7 +885,6 @@ file_data *make_file_data_panel(snd_state *ss, Widget parent, char *name, Arg *i
 	  XtSetArg(args[n], XmNleftWidget, sep3); n++;
 	  XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
 	  loclab = XtCreateManagedWidget(_("location:"), xmLabelWidgetClass, form, args, n);
-	  XtAddCallback(loclab, XmNhelpCallback, file_data_location_help_callback, ss);
 
 	  n = 0;
 	  XtSetArg(args[n], XmNcolumns, 6); n++;
@@ -981,7 +896,6 @@ file_data *make_file_data_panel(snd_state *ss, Widget parent, char *name, Arg *i
 	  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
 	  XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
 	  loctext = make_textfield_widget(ss, "location-text", form, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
-	  XtAddCallback(loctext, XmNhelpCallback, file_data_location_help_callback, ss);
 	  fdat->location_text = loctext;
 	}
     }
@@ -1006,7 +920,6 @@ file_data *make_file_data_panel(snd_state *ss, Widget parent, char *name, Arg *i
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
       comment_label = XtCreateManagedWidget(_("comment:"), xmLabelWidgetClass, mainform, args, n);
-      XtAddCallback(comment_label, XmNhelpCallback, file_comment_label_help_callback, ss);
       
       n = 0;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
@@ -1021,10 +934,23 @@ file_data *make_file_data_panel(snd_state *ss, Widget parent, char *name, Arg *i
       /* this pushes the right boundary over a ways -- otherwise the button holder box takes up all available space */
 #endif
       comment_text = make_text_widget(ss, "comment-text", mainform, args, n);
-      XtAddCallback(comment_text, XmNhelpCallback, file_comment_label_help_callback, ss);
       fdat->comment_text = comment_text;
     }
   return(fdat);
+}
+
+static void save_as_help_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  snd_help_with_wrap((snd_state *)context,
+		     "Save As",
+"You can save the current state of a file or region under a different file name using the Save \
+As option.  The output header type, data format,  and sampling rate can also be set.  The data formats \
+are big-endian where relevant except for 'wave' output.  If a file by the chosen name already exists \
+it is silently overwritten, unless that file is already open in Snd and has edits.  In that case,  \
+you'll be asked what to do.  If you want to be warned whenever a file is about to be overwritten by this \
+option, set the resource overwriteCheck to 1. If you give the current file name to Save As,  \
+any current edits will be saved and the current version in Snd will be updated (that is, in this \
+case, the current edit tree is not preserved).");
 }
 
 static void make_save_as_dialog(snd_state *ss, char *sound_name, int header_type, int format_type)

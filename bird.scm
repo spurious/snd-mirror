@@ -1202,7 +1202,6 @@
   (if (find-sound filename) (close-sound (find-sound filename)))
   (if (file-exists? filename) (delete-file filename))
   (let ((out-file (new-sound filename)))
-    (set! (squelch-update out-file 0) #t)
     (orchard-oriole 0)
     (cassins-kingbird 3)
     (chipping-sparrow 6)
@@ -1242,7 +1241,6 @@
     (blue-gray-gnatcatcher 109)
     (black-throated-sparrow 112)
     (black-chinned-sparrow 115)
-    (set! (squelch-update out-file 0) #f)
     (various-gull-cries-from-end-of-colony-5 118))
   (set! out-data #f))
 
