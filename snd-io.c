@@ -19,10 +19,6 @@ static void reposition_file_buffers_1(off_t loc, snd_io *io)
 {
   /* called when loc is outside the current in-core frame for the file pointed to by io */
   off_t frames;
-#if LONG_INT_P
-  int i;
-  mus_sample_t **bufs;
-#endif
   frames = io->frames - loc;
   if (frames > io->bufsize) frames = io->bufsize;
   if (frames <= 0)                   /* tried to access beyond current end of file */
@@ -34,23 +30,11 @@ static void reposition_file_buffers_1(off_t loc, snd_io *io)
     {
       mus_file_seek_frame(io->fd, loc);
       io->beg = loc;
-#if LONG_INT_P
-      bufs = (mus_sample_t **)MALLOC(io->chans * sizeof(mus_sample_t *));
-      for (i = 0; i < io->chans; i++) 
-	bufs[i] = MUS_SAMPLE_ARRAY(io->arrays[i]);
-      mus_file_read_chans(io->fd,
-			  0, frames - 1,
-			  io->chans,
-			  bufs,
-			  (mus_sample_t *)bufs);
-      FREE(bufs);
-#else
       mus_file_read_chans(io->fd,
 			  0, frames - 1,
 			  io->chans,
 			  io->arrays,
 			  (mus_sample_t *)(io->arrays));
-#endif
       if (frames < io->bufsize) c_io_bufclr(io, frames);
     }
   io->end = io->beg + io->bufsize - 1;
@@ -116,22 +100,6 @@ snd_io *make_file_state(int fd, file_info *hdr, int chan, int suggested_bufsize)
   io->bufsize = bufsize;
   io->arrays[chan] = MUS_MAKE_SAMPLE_ARRAY(bufsize);
   reposition_file_buffers_1(0, io); /* get ready to read -- we're assuming mus_file_read_chans here */
-  return(io);
-}
-
-#define ZERO_BUFFER_SIZE 1024
-snd_io *make_zero_file_state(off_t size)
-{
-  snd_io *io;
-  io = (snd_io *)CALLOC(1, sizeof(snd_io));
-  io->arrays = (mus_sample_t **)CALLOC(1, sizeof(mus_sample_t *));
-  io->fd = -1;
-  io->chans = 1;
-  io->frames = size;
-  io->beg = 0;
-  io->end = ZERO_BUFFER_SIZE - 1;
-  io->bufsize = ZERO_BUFFER_SIZE;
-  io->arrays[0] = MUS_MAKE_SAMPLE_ARRAY(ZERO_BUFFER_SIZE);
   return(io);
 }
 

@@ -408,7 +408,6 @@ snd_io *make_file_state(int fd, file_info *hdr, int chan, int suggested_bufsize)
 snd_io *free_file_state(snd_io *io);
 void file_buffers_forward(off_t ind0, off_t ind1, off_t indx, snd_fd *sf, snd_data *cur_snd);
 void file_buffers_back(off_t ind0, off_t ind1, off_t indx, snd_fd *sf, snd_data *cur_snd);
-snd_io *make_zero_file_state(off_t size);
 int snd_remove(const char *name);
 int snd_close(int fd, const char *name);
 int snd_fclose(FILE *fd, const char *name);

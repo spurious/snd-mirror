@@ -931,7 +931,7 @@ static int from_mulaw(unsigned char u_val)
 
 /* ---------------- read/write buffer allocation ---------------- */
 
-#if LONG_INT_P
+#if CLM && LONG_INT_P
 static mus_sample_t **long_int_p_table = NULL;
 static int long_int_p_table_size = 0;
 

@@ -1532,9 +1532,6 @@ Float chn_sample(off_t samp, chan_info *cp, int pos)
   return(val);
 }
 
-/* now for optimized sample access -- since everything goes through these lists, we want the access to be fast */
-
-
 snd_fd *free_snd_fd_almost(snd_fd *sf)
 {
   snd_data *sd;
@@ -1967,6 +1964,9 @@ snd_fd *init_sample_read_any(off_t samp, chan_info *cp, int direction, int edit_
   /*
    * TODO: fragment change func (with possibility of callback fragment-hook)
    * TODO: other readers: run-ified ptree ops? (basic cases need (ideally) to be peak-amp-envable (i.e. linear monotonically increasing etc)
+   *       mix reader? (i.e. two readers running in parallel)
+   *       some way for user to decide when to use ptree
+   *       easy but maybe useless: add constant, set to constant
    */
 
   sf->current_state = ed;
@@ -2323,7 +2323,6 @@ static int save_edits_and_update_display(snd_info *sp)
   collapse_marks(sp);
   for (i = 0; i < sp->nchans; i++)
     {
-      /* why not free_chan_info here? */
       cp = sp->chans[i];
       if (ss->deferred_regions > 0)
 	sequester_deferred_regions(cp, -1);

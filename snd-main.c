@@ -574,12 +574,7 @@ static char *save_state_or_error (snd_state *ss, char *save_state_name)
 #endif
 	  FREE(locale);
 	}
-
-      if (fclose(save_fd) != 0)
-	return(mus_format("can't close %s: %s [%s[%d] %s]", 
-			  save_state_name, strerror(errno), 
-			  __FILE__, __LINE__, __FUNCTION__));
-
+      snd_fclose(save_fd, save_state_name);
     }
   return(NULL);
 }

@@ -106,9 +106,6 @@ char *version_info(void)
 #else
 	  ", int", snd_itoa(MUS_SAMPLE_BITS), " samples",
 #endif
-#if LONG_INT_P
-	  " and long int* tables",
-#endif
 	  ")", sndlib_consistency_check(),
 	  "\n    CLM ", snd_itoa(MUS_VERSION), ".", 
 	                snd_itoa(MUS_REVISION), " (", 

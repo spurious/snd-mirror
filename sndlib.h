@@ -38,6 +38,7 @@
      #define MUS_LITTLE_ENDIAN 1
   #endif
   #if (SIZEOF_INT_P != SIZEOF_INT)
+     /* this is for the Lisp version of CLM (kludge around FFI limitations) */
      #define LONG_INT_P 1
   #else 
      #define LONG_INT_P 0

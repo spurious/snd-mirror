@@ -135,11 +135,7 @@ static void describe_bad_gen(void *ptr, char *gen_name, char *an)
     {
       if ((((mus_any *)ptr)->core)->type < mus_class_tag)
 	mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "arg to describe_%s appears to be %s %s", gen_name, an, mus_name((mus_any *)ptr));
-#if LONG_INT_P
       else mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "arg to describe_%s is not %s %s", gen_name, an, gen_name);
-#else
-      else mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "arg to describe_%s (%d) is not %s %s", gen_name, (int)ptr, an, gen_name);
-#endif
     }
 }
 
@@ -1316,15 +1312,9 @@ static char *describe_table_lookup(void *ptr)
 static char *inspect_table_lookup(void *ptr)
 {
   tbl *gen = (tbl *)ptr;
-#if LONG_INT_P
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "tbl freq: %f, phase: %f, length: %d, mag: %f, table: %s",
-	       gen->freq, gen->phase, gen->table_size, gen->internal_mag,
+	       gen->freq, gen->phase, gen->table_size, gen->internal_mag, 
 	       (gen->table_allocated) ? "local" : "external");
-#else
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "tbl freq: %f, phase: %f, length: %d, mag: %f, table: %d (%s)",
-	       gen->freq, gen->phase, gen->table_size, gen->internal_mag, (int)(gen->table),
-	       (gen->table_allocated) ? "local" : "external");
-#endif
   return(describe_buffer);
 }
 
@@ -5348,7 +5338,7 @@ Float mus_locsig_reverb_ref (mus_any *ptr, int chan)
 	  (chan < gen->rev_chans))
 	return(gen->revn[chan]);
       else mus_error(MUS_NO_SUCH_CHANNEL, 
-		     "locsig_reverb_ref chan %d >= %d", 
+		     "locsig_reverb_ref chan %d, but this locsig has %d reverb chans", 
 		     chan, gen->rev_chans);
     }
   return(0.0);
