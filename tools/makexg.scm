@@ -110,8 +110,16 @@
 (define check-types-254 '())
 (define ulongs-254 '())
 (define ints-254 '())
+
 (define funcs-255 '())
 (define types-255 '())
+
+(define funcs-256 '())
+(define types-256 '())
+(define casts-256 '())
+(define checks-256 '())
+(define check-types-256 '())
+(define ulongs-256 '())
 
 (define all-types '())
 (define all-check-types '())
@@ -369,8 +377,10 @@
 							      (set! types-254 (cons type types-254))
 							      (if (eq? extra '255)
 								  (set! types-255 (cons type types-255))
-								  (if (not (member type types))
-								      (set! types (cons type types))))))))))))))
+								  (if (eq? extra '256)
+								      (set! types-256 (cons type types-256))
+								      (if (not (member type types))
+									  (set! types (cons type types)))))))))))))))
 			(set! type #f))
 		      (if (> i (1+ sp))
 			  (set! type (substring args (1+ sp) i))))
@@ -1009,6 +1019,22 @@
 		(set! funcs-255 (cons (list name type strs args) funcs-255)))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
+(define* (CFNC-256 data #:optional spec)
+  (let ((name (cadr-str data))
+	(args (caddr-str data)))
+    (if (assoc name names)
+	(no-way "CFNC-256: ~A~%" (list name data))
+	(let ((type (car-str data)))
+	  (if (not (member type all-types)) 
+	      (begin
+		(set! all-types (cons type all-types))
+		(set! types-256 (cons type types-256))))
+	  (let ((strs (parse-args args '256)))
+	    (if spec
+		(set! funcs-256 (cons (list name type strs args spec) funcs-256))
+		(set! funcs-256 (cons (list name type strs args) funcs-256)))
+	    (set! names (cons (cons name (func-type strs)) names)))))))
+
 (define* (CFNC-22 data)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
@@ -1148,6 +1174,14 @@
 	(set! ulongs-254 (cons (list name type spec-name) ulongs-254))
 	(set! names (cons (cons name 'ulong) names)))))
 
+(define* (CLNG-256 name #:optional type spec-name)
+  (save-declared-type type)
+  (if (assoc name names)
+      (no-way "~A CLNG-256~%" name)
+      (begin
+	(set! ulongs-256 (cons (list name type spec-name) ulongs-256))
+	(set! names (cons (cons name 'ulong) names)))))
+
 (define* (CINT name #:optional type)
   (save-declared-type type)
   (if (assoc name names)
@@ -1263,6 +1297,13 @@
 	(set! casts-254 (cons (list name type) casts-254))
 	(set! names (cons (cons name 'def) names)))))
 
+(define (CCAST-256 name type)
+  (if (assoc name names)
+      (no-way "~A CCAST-256~%" name)
+      (begin
+	(set! casts-256 (cons (list name type) casts-256))
+	(set! names (cons (cons name 'def) names)))))
+
 (define (CCHK name type)
   (if (assoc name names)
       (no-way "~A CCHK~%" name)
@@ -1338,6 +1379,17 @@
 	      (set! all-check-types (cons type all-check-types))
 	      (set! check-types-254 (cons type check-types-254))))
 	(set! checks-254 (cons (list name type) checks-254))
+	(set! names (cons (cons name 'def) names)))))
+
+(define (CCHK-256 name type)
+  (if (assoc name names)
+      (no-way "~A CCHK-256~%" name)
+      (begin
+	(if (not (member type all-check-types))
+	    (begin
+	      (set! all-check-types (cons type all-check-types))
+	      (set! check-types-256 (cons type check-types-256))))
+	(set! checks-256 (cons (list name type) checks-256))
 	(set! names (cons (cons name 'def) names)))))
 
 (define (STRUCT data)
@@ -1467,6 +1519,11 @@
   (thunk)
   (dpy "#endif~%~%"))
 
+(define (with-256 dpy thunk)
+  (dpy "#if HAVE_GDK_PANGO_RENDERER_NEW~%")
+  (thunk)
+  (dpy "#endif~%~%"))
+
 
 
 ;;; ---------------------------------------- write output files ----------------------------------------
@@ -1475,19 +1532,20 @@
 (hey " *   needs xen.h~%")
 (hey " *~%")
 (hey " *   compile-time flags:~%")
-(hey " *     HAVE_GDK_DRAW_PIXBUF for gtk+-2.1 additions~%")
-(hey " *     GTK_CELL_RENDERER_FOCUSED for gtk+-2.2~%")
-(hey " *     HAVE_GTK_FILE_CHOOSER_DIALOG_NEW for gtk+-2.3~%")
-(hey " *     HAVE_GTK_EXPANDER_GET_USE_MARKUP for gtk+-2.3.1~%")
-(hey " *     HAVE_GTK_MENU_SHELL_CANCEL for gtk+-2.3.2~%")
-(hey " *     HAVE_GTK_COMBO_BOX_POPUP for gtk+-2.3.4~%")
-(hey " *     HAVE_GTK_COMBO_BOX_ENTRY_NEW_TEXT for gtk+-2.3.5~%")
-(hey " *     HAVE_GBOOLEAN_GTK_FILE_CHOOSER_SET_FILENAME for gtk+-2.3.6~%")
-(hey " *     HAVE_GTK_ABOUT_DIALOG_NEW for gtk+-2.5.0~%")
-(hey " *     HAVE_GTK_LABEL_SET_ELLIPSIZE for gtk+-2.5.1~%")
-(hey " *     HAVE_GTK_FILE_CHOOSER_BUTTON_NEW for gtk+-2.5.2~%")
-(hey " *     HAVE_GTK_MENU_TOOL_BUTTON_NEW for gtk+-2.5.3 and 2.5.4~%")
-(hey " *     HAVE_GTK_LABEL_GET_SINGLE_LINE_MODE for gtk+-2.5.5~%")
+(hey " *     HAVE_GDK_DRAW_PIXBUF for gtk 2.1 additions~%")
+(hey " *     GTK_CELL_RENDERER_FOCUSED for gtk 2.2~%")
+(hey " *     HAVE_GTK_FILE_CHOOSER_DIALOG_NEW for gtk 2.3~%")
+(hey " *     HAVE_GTK_EXPANDER_GET_USE_MARKUP for gtk 2.3.1~%")
+(hey " *     HAVE_GTK_MENU_SHELL_CANCEL for gtk 2.3.2~%")
+(hey " *     HAVE_GTK_COMBO_BOX_POPUP for gtk 2.3.4~%")
+(hey " *     HAVE_GTK_COMBO_BOX_ENTRY_NEW_TEXT for gtk 2.3.5~%")
+(hey " *     HAVE_GBOOLEAN_GTK_FILE_CHOOSER_SET_FILENAME for gtk 2.3.6~%")
+(hey " *     HAVE_GTK_ABOUT_DIALOG_NEW for gtk 2.5.0~%")
+(hey " *     HAVE_GTK_LABEL_SET_ELLIPSIZE for gtk 2.5.1~%")
+(hey " *     HAVE_GTK_FILE_CHOOSER_BUTTON_NEW for gtk 2.5.2~%")
+(hey " *     HAVE_GTK_MENU_TOOL_BUTTON_NEW for gtk 2.5.3 and 2.5.4~%")
+(hey " *     HAVE_GTK_LABEL_GET_SINGLE_LINE_MODE for gtk 2.5.5~%")
+(hey " *     HAVE_GDK_PANGO_RENDERER_NEW for gtk 2.5.6~%")
 (hey " *~%")
 (hey " * reference args initial values are usually ignored, resultant values are returned in a list.~%")
 (hey " * null ptrs are passed and returned as #f, trailing \"user_data\" callback function arguments are optional (default: #f).~%")
@@ -1522,6 +1580,8 @@
 (hey " *     win32-specific functions~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     6-Dec:     added check for lost callback context.~%")
+(hey " *                gtk 2.5.6 changes,~%")
 (hey " *     3-Dec:     changed GPOINTER cast func to accept non-lists.~%")
 (hey " *     15-Nov:    gtk 2.5.5 changes.~%")
 (hey " *     29-Oct:    gtk 2.5.4 changes.~%")
@@ -1792,6 +1852,12 @@
 	       (for-each type-it (reverse types-255))
 	       )))
 
+(if (not (null? types-256))
+    (with-256 hey
+	     (lambda ()
+	       (for-each type-it (reverse types-256))
+	       )))
+
 (hey "#define XLS(a, b) XEN_TO_C_gchar_(XEN_LIST_REF(a, b))~%")
 (hey "#define XLI(a, b) XEN_TO_C_INT(XEN_LIST_REF(a, b))~%")
 (hey "#define XLG(a, b) XEN_TO_C_GType(XEN_LIST_REF(a, b))~%")
@@ -1933,20 +1999,17 @@
 		args)
 	       (hey ")~%"))
 	     (hey "{~%  ")
-	     (if (eq? gctype 'timeout)
-		 (begin
-		   (hey "int call_again = 0;~%")
-		   (hey "  XEN result = XEN_FALSE;~%")))
+	     ;; I tried to use XEN_ERROR here but it was a no-op for some reason?? 
+	     (hey "if (!XEN_LIST_P((XEN)func_data)) return~A;~%  "
+		  (if void? 
+		      ""
+		      (format #f "((~A)0)" (no-stars type))))
 	     (let ((castlen (+ 12 (if (not void?) 
-				      (if (eq? gctype 'timeout)
-					  10
-					  (+ 2 (string-length (format #f "return(XEN_TO_C_~A" (no-stars type)))))
+				      (+ 2 (string-length (format #f "return(XEN_TO_C_~A" (no-stars type))))
 				      1))))
 	       (if (not void?)
-		   (if (eq? gctype 'timeout)
-		       (hey "  result = ")
-		       (hey "return(XEN_TO_C_~A("
-			    (no-stars type))))
+		   (hey "return(XEN_TO_C_~A("
+			(no-stars type)))
 	       (hey "XEN_CALL_~D(~A((XEN)func_data),~%"
 		    (length args)
 		    (if (eq? fname 'GtkClipboardClearFunc)
@@ -1970,13 +2033,7 @@
 	       (hey "c__FUNCTION__)")
 	       (if void?
 		   (hey ";~%")
-		   (if (eq? gctype 'timeout)
-		       (begin
-			 (hey ";~%")
-			 (hey "  if (XEN_BOOLEAN_P(result)) call_again = XEN_TO_C_BOOLEAN(result); else call_again = XEN_TO_C_INT_OR_ELSE(result, 0);~%")
-			 (hey "  if (!call_again) xm_unprotect_at(XEN_TO_C_INT(XEN_CADDR((XEN)func_data)));~%")
-			 (hey "  return(call_again);~%"))
-		       (hey "));~%"))))
+		   (hey "));~%")))
 	     (hey "}~%")))))))
     (for-each xc callbacks)
     (with-23 hey (lambda () (for-each xc callbacks-23)))
@@ -2134,8 +2191,7 @@
 	     (set! using-loc (or (eq? lambda-type 'GCallback)
 				 (and callback-data
 				      (or (eq? (callback-gc callback-data) 'temporary)
-					  (eq? (callback-gc callback-data) 'semi-permanent)
-					  (eq? (callback-gc callback-data) 'timeout)))))
+					  (eq? (callback-gc callback-data) 'semi-permanent)))))
 	     (set! using-result (and (not (string=? return-type "void"))
 				     (not (eq? lambda-type 'lambda))))
 	     (hey "  {~%")
@@ -2417,6 +2473,7 @@
 (if (not (null? funcs-252)) (with-252 hey (lambda () (for-each handle-func (reverse funcs-252)))))
 (if (not (null? funcs-254)) (with-254 hey (lambda () (for-each handle-func (reverse funcs-254)))))
 (if (not (null? funcs-255)) (with-255 hey (lambda () (for-each handle-func (reverse funcs-255)))))
+(if (not (null? funcs-256)) (with-256 hey (lambda () (for-each handle-func (reverse funcs-256)))))
 
 (define cast-it
  (lambda (cast)
@@ -2435,6 +2492,7 @@
 (if (not (null? casts-250)) (with-250 hey (lambda () (for-each cast-it (reverse casts-250)))))
 (if (not (null? casts-252)) (with-252 hey (lambda () (for-each cast-it (reverse casts-252)))))
 (if (not (null? casts-254)) (with-254 hey (lambda () (for-each cast-it (reverse casts-254)))))
+(if (not (null? casts-256)) (with-256 hey (lambda () (for-each cast-it (reverse casts-256)))))
 
 ;;; checks have to use the built-in macros, not local symbol-based type checks
 (define (make-check func)
@@ -2448,6 +2506,7 @@
 (if (not (null? checks-250)) (with-250 hey (lambda () (for-each make-check (reverse checks-250)))))
 (if (not (null? checks-252)) (with-252 hey (lambda () (for-each make-check (reverse checks-252)))))
 (if (not (null? checks-254)) (with-254 hey (lambda () (for-each make-check (reverse checks-254)))))
+(if (not (null? checks-256)) (with-256 hey (lambda () (for-each make-check (reverse checks-256)))))
 
 
 (hey "~%~%/* ---------------------------------------- special functions ---------------------------------------- */~%~%")
@@ -2531,9 +2590,10 @@
 (if (not (null? funcs-252)) (with-252 say (lambda () (for-each argify-func (reverse funcs-252)))))
 (if (not (null? funcs-254)) (with-254 say (lambda () (for-each argify-func (reverse funcs-254)))))
 (if (not (null? funcs-255)) (with-255 say (lambda () (for-each argify-func (reverse funcs-255)))))
+(if (not (null? funcs-256)) (with-256 say (lambda () (for-each argify-func (reverse funcs-256)))))
 
 (define (ruby-cast func) (say "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" (no-arg (car func)) (no-arg (car func)))) 
-(say "XEN_NARGIFY_1(gxg_GPONTER_w, gxg_GPOINTER)~%")
+(say "XEN_NARGIFY_1(gxg_GPOINTER_w, gxg_GPOINTER)~%")
 
 (for-each ruby-cast (reverse casts))
 (if (not (null? casts-21)) (with-21 say (lambda () (for-each ruby-cast (reverse casts-21)))))
@@ -2542,6 +2602,7 @@
 (if (not (null? casts-250)) (with-250 say (lambda () (for-each ruby-cast (reverse casts-250)))))
 (if (not (null? casts-252)) (with-252 say (lambda () (for-each ruby-cast (reverse casts-252)))))
 (if (not (null? casts-254)) (with-254 say (lambda () (for-each ruby-cast (reverse casts-254)))))
+(if (not (null? casts-256)) (with-256 say (lambda () (for-each ruby-cast (reverse casts-256)))))
 
 (define (ruby-check func) (say "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" (no-arg (car func)) (no-arg (car func))))
 (for-each ruby-check (reverse checks))
@@ -2551,6 +2612,7 @@
 (if (not (null? checks-250)) (with-250 say (lambda () (for-each ruby-check (reverse checks-250)))))
 (if (not (null? checks-252)) (with-252 say (lambda () (for-each ruby-check (reverse checks-252)))))
 (if (not (null? checks-254)) (with-254 say (lambda () (for-each ruby-check (reverse checks-254)))))
+(if (not (null? checks-256)) (with-256 say (lambda () (for-each ruby-check (reverse checks-256)))))
 
 (say "XEN_NARGIFY_2(c_array_to_xen_list_w, c_array_to_xen_list)~%")
 (say "XEN_NARGIFY_2(xen_list_to_c_array_w, xen_list_to_c_array)~%")
@@ -2676,6 +2738,7 @@
 (if (not (null? funcs-252)) (with-252 say-hey (lambda () (for-each defun (reverse funcs-252)))))
 (if (not (null? funcs-254)) (with-254 say-hey (lambda () (for-each defun (reverse funcs-254)))))
 (if (not (null? funcs-255)) (with-255 say-hey (lambda () (for-each defun (reverse funcs-255)))))
+(if (not (null? funcs-256)) (with-256 say-hey (lambda () (for-each defun (reverse funcs-256)))))
 
 (define (cast-out func)
   (hey "  XG_DEFINE_PROCEDURE(~A, gxg_~A, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-arg (car func)))
@@ -2691,6 +2754,7 @@
 (if (not (null? casts-250)) (with-250 say-hey (lambda () (for-each cast-out (reverse casts-250)))))
 (if (not (null? casts-252)) (with-252 say-hey (lambda () (for-each cast-out (reverse casts-252)))))
 (if (not (null? casts-254)) (with-254 say-hey (lambda () (for-each cast-out (reverse casts-254)))))
+(if (not (null? casts-256)) (with-256 say-hey (lambda () (for-each cast-out (reverse casts-256)))))
 
 (say "  XG_DEFINE_PROCEDURE(c-array->list, c_array_to_xen_list_w, 2, 0, 0, NULL);~%")
 (say "  XG_DEFINE_PROCEDURE(list->c-array, xen_list_to_c_array_w, 2, 0, 0, NULL);~%")
@@ -2710,6 +2774,7 @@
 (if (not (null? checks-250)) (with-250 say-hey (lambda () (for-each check-out (reverse checks-250)))))
 (if (not (null? checks-252)) (with-252 say-hey (lambda () (for-each check-out (reverse checks-252)))))
 (if (not (null? checks-254)) (with-254 say-hey (lambda () (for-each check-out (reverse checks-254)))))
+(if (not (null? checks-256)) (with-256 say-hey (lambda () (for-each check-out (reverse checks-256)))))
 
 (say-hey "}~%~%")
 (hey "#endif~%")
@@ -3045,6 +3110,8 @@
     (with-252 hey (lambda () (for-each (lambda (vals) (let ((val (car vals))) (hey "  DEFINE_ULONG(~A);~%" val))) (reverse ulongs-252)))))
 (if (not (null? ulongs-254))
     (with-254 hey (lambda () (for-each (lambda (vals) (let ((val (car vals))) (hey "  DEFINE_ULONG(~A);~%" val))) (reverse ulongs-254)))))
+(if (not (null? ulongs-256))
+    (with-256 hey (lambda () (for-each (lambda (vals) (let ((val (car vals))) (hey "  DEFINE_ULONG(~A);~%" val))) (reverse ulongs-256)))))
      
 
 (hey "}~%~%")

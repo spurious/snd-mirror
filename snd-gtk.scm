@@ -715,19 +715,25 @@ Reverb-feedback sets the scaler on the feedback.
 
 (define (keep-file-dialog-open-upon-ok)
   (let ((dialog (open-file-dialog #f)))
-    (if (GTK_IS_FILE_SELECTION dialog)
-	(let ((ok-button (.ok_button (GTK_FILE_SELECTION dialog))))
-	  (g_signal_connect ok-button "clicked" (lambda (w d) (gtk_widget_show dialog)) #f)
-	  'ok)
-	'oops)))
+    (g_object_set_data (G_OBJECT dialog) "hide-me" (GPOINTER 1)))) ; anything not 0 means don't hide (this is a stupid kludge forced on me by goddamn gtk)
+	
 #!
-;;; this code segfaults, but I can't see why
+;;; The new Gtk FileChooserDialog "response" callback has no "context"
+;;;   argument (which I use on all other callbacks to pass in the Scheme/Ruby function
+;;;   to be called), so there's no way to connect a local function to that event.
+;;;   So this code can't work:
 	(if (GTK_IS_FILE_CHOOSER dialog)
 	    (g_signal_connect dialog "response" (lambda (w id)
 						  (if (= id GTK_RESPONSE_OK)
 						      (gtk_widget_show dialog)))
 			      #f)
-	    'unknown-dialog-widget))))
+	    ...)
+;;; I'll try to trap the problem in xg.c and throw an error (rather than segfault)
+;;;   [added later: that failed, so now a bad context simply returns silently!]
+;;;
+;;; so use g_object_set_data with "hide-me"
+;;;
+;;; Another problem: how many more of these broken callbacks are there in Gtk?
 !#
 
 

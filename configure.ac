@@ -775,6 +775,8 @@ else
 	# gtk 2.5.4 
 	AC_CHECK_LIB(m, gtk_label_get_single_line_mode, [AC_DEFINE(HAVE_GTK_LABEL_GET_SINGLE_LINE_MODE)],  ,$GTK_LIBS)
 	# gtk 2.5.5
+	AC_CHECK_LIB(m, gdk_pango_renderer_new, [AC_DEFINE(HAVE_GDK_PANGO_RENDERER_NEW)],  ,$GTK_LIBS)
+	# gtk 2.5.6
 
         if test "$with_x11" = yes ; then
 	  AC_DEFINE(WITH_GTK_AND_X11)

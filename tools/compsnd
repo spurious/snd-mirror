@@ -33,12 +33,16 @@ make
 make xm
 snd --version
 make allclean
-echo ' CC=g++ CFLAGS="-Wall" GUILE_CONFIG_path=/home/bil/test/bin '
-./configure --quiet CC=g++ CFLAGS="-Wall" GUILE_CONFIG_path=/home/bil/test/bin
-make
-make xm
-snd --version
-make allclean
+# echo ' CC=g++ CFLAGS="-Wall" GUILE_CONFIG_path=/home/bil/test/bin '
+# ./configure --quiet CC=g++ CFLAGS="-Wall" GUILE_CONFIG_path=/home/bil/test/bin
+# /usr/include/gmp.h:2073: declaration of C function `std::ostream& 
+#   operator<<(std::ostream&, const __mpq_struct*)' conflicts with
+# /usr/include/gmp.h:2072: previous declaration `std::ostream& 
+#   operator<<(std::ostream&, const __mpz_struct*)' here
+# make
+# make xm
+# snd --version
+# make allclean
 ./configure --quiet --enable-snd-debug CC=g++ CFLAGS="-Wall"
 make
 make xm
@@ -373,7 +377,7 @@ echo ' '
 ./snd --version
 make allclean
 echo ' CFLAGS="-Wall -DGTK_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED" --with-ruby --with-static-xm --with-gtk --with-x11 --with-gl '
-./configure --quiet disable-deprecated CFLAGS="-Wall" --with-ruby --with-static-xm --with-gtk --with-x11 --with-gl
+./configure --quiet --disable-deprecated CFLAGS="-Wall" --with-ruby --with-static-xm --with-gtk --with-x11 --with-gl
 make
 echo ' '
 echo ' '
