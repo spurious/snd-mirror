@@ -2,13 +2,14 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Mon Mar 07 13:50:44 CET 2005
-# Last: Sun Mar 13 02:07:56 CET 2005
+# Last: Mon Mar 28 17:53:56 CEST 2005
 
 # Commentary:
 #
 # comments are taken mostly from dsp.scm
 #
 # module Dsp
+#  src_duration(e)
 #  dolph(n, gamma)
 #  dolph_1(n, gamma)
 #  down_oct(n, snd = false, chn = false)
@@ -148,6 +149,8 @@
 #  channel_polynomial(coeffs, snd = false, chn = false)
 #  spectral_polynomial(coeffs, snd = false, chn = false)
 #  scentroid(file, *args)
+#  invert_filter(fcoeffs)
+#  
 
 # Code:
 
@@ -156,6 +159,27 @@ require "env"
 require "complex"
 
 module Dsp
+  # src_duration (see src-channel in extsnd.html)
+  def src_duration(e)
+    e.map! do |x| x.to_f end
+    ex0 = e.first
+    ex1 = e[-2]
+    all_x = ex1 - ex0
+    dur = 0.0
+    0.step(e.length - 3, 2) do |i|
+      x0, xy0, x1, xy1 = e[i, 4]
+      y0 = xy0.zero? ? 1.0 : (1.0 / xy0)
+      y1 = xy1.zero? ? 1.0 : (1.0 / xy1)
+      area = if (xy0 - xy1).abs < 0.0001
+               y0 * ((x1 - x0) / all_x)
+             else
+               ((log(y1) - log(y0)) / (xy0 - xy1)) * ((x1 - x0) / all_x)
+             end
+      dur += area.abs
+    end
+    dur
+  end
+
   # Dolph-Chebyshev window
   # 
   # formula taken from Richard Lyons, "Understanding DSP"
@@ -490,7 +514,7 @@ tries to determine the current pitch: spot_freq(left_sample)")
   class Flanger
     def initialize(time = 0.05, amount = 20.0, speed = 10.0)
       @randind = make_rand_interp(:frequency, speed, :amplitude, amount)
-      len = rbm_random(3.0 * time * srate()).floor
+      len = random(3.0 * time * srate()).floor
       @flanger = make_delay(:size, len, :max_size, (len + amount + 1).to_i)
     end
 
@@ -584,7 +608,7 @@ calls fft, applies body to each phase, then un-ffts")
     vct2channel(vct_scale!(rl, old_pk / pk), 0, len, snd, chn, false, get_func_name)
   end
   # rotate_phase do |x| 0.0 end    # is the same as (zero-phase)
-  # rotate_phase do |x| rbm_random(PI) end # randomizes phases
+  # rotate_phase do |x| random(PI) end # randomizes phases
   # rotate_phase do |x| x end      # returns original
   # rotate_phase do |x| -x end     # reverses original (might want to write fftlen samps here)
 
@@ -1373,12 +1397,12 @@ returns the amplitude and initial-phase (for sin) at freq between beg and dur")
       0.0
     else
       unless e
-        rbm_random(amount)
+        random(amount)
       else
         next_random = lambda do | |
           len = e.length
-          x = rbm_random(e[len - 2].to_f)
-          y = rbm_random(1.0)
+          x = random(e[len - 2].to_f)
+          y = random(1.0)
           if y <= envelope_interp(x, e) or c_g?
             x
           else
@@ -1548,6 +1572,7 @@ returns the amplitude and initial-phase (for sin) at freq between beg and dur")
   end
 
   def periodogram(n)
+    # the "Bartlett" version, apparently
     len = frames()
     average_data = make_vct(n)
     rd = make_sample_reader(0)
@@ -1707,7 +1732,7 @@ returns the amplitude and initial-phase (for sin) at freq between beg and dur")
   def channel_polynomial(coeffs, snd = false, chn = false)
     len = frames(snd, chn)
     vct2channel(vct_polynomial(channel2vct(0, len, snd, chn), coeffs), 0, len, snd, chn, false,
-                format("%s %s", get_func_name, coeffs))
+                format("%s %s", get_func_name, coeffs.to_str))
   end
 
   # (channel-polynomial (vct 0.0 .5)) = x*.5
@@ -1819,6 +1844,34 @@ returns the amplitude and initial-phase (for sin) at freq between beg and dur")
       loc += 1
     end
     results
+  end
+
+  # invert_filter inverts an FIR filter
+  #
+  # say we previously filtered a sound via filter_channel([0.5, 0.25, 0.125].to_vct)
+  #   and we want to undo it without using undo_edit:
+  #   filter_channel(invert_filter([0.5, 0.25, 0.125].to_vct))
+  # 
+  # there are a million gotchas here.  The primary one is that the inverse filter
+  # can "explode" -- the coefficients can grow without bound.  For example, any
+  # filter returned by spectrum2coeffs above will be a problem.
+
+  def invert_filter(fcoeffs)
+    order = fcoeffs.length + 32
+    coeffs = Vct.new(order)
+    fcoeffs.each_with_index do |fval, i| coeffs[i] = val end
+    nfilt = Vct.new(order)
+    nfilt[0] = 1.0 / coeffs.first
+    (1...order).each do |i|
+      sum = 0.0
+      k = i
+      i.times do |j|
+        sum += nfilt[j] * coeffs[k]
+        k -= 1
+        nfilt[i] = sum / -coeffs.first
+      end
+    end
+    nfilt
   end
 end
 

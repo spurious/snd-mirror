@@ -1,7 +1,7 @@
 # clm-ins.rb -- CLM instruments translated to Snd/Ruby -*- snd-ruby -*-
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
-# Last: Sun Mar 06 10:05:49 CET 2005
+# Last: Thu Mar 24 02:57:49 CET 2005
 
 # Instruments work with
 #   with_sound (CLM, sample2file gens)
@@ -38,7 +38,7 @@ require "examp"
 require "ws"
 require "spectr"
 require "env"
-include Env, Math
+include Math
 require "matrix"
 
 def normalize_partials(partials)
@@ -48,7 +48,7 @@ def normalize_partials(partials)
   1.step(len - 1, 2) do |i| sum += parts[i].abs end
   1.step(len - 1, 2) do |i| parts[i] /= sum end
   parts
-end
+end unless defined? normalize_partials
 
 # PLUCK
 #
@@ -56,6 +56,14 @@ end
 #  Smith -- see Jaffe and Smith, "Extensions of the Karplus-Strong
 #  Plucked-String Algorithm" CMJ vol 7 no 2 Summer 1983, reprinted in
 #  "The Music Machine".  translated from CLM's pluck.ins
+add_help(:pluck,
+         "pluck(start, dur, freq, amp, weighting, lossfact) \
+implements the Jaffe-Smith plucked string physical model. 
+'weighting' is the ratio of the once-delayed to the twice-delayed samples.  \
+It defaults to 0.5=shortest decay. 
+Anything other than 0.5 = longer decay.  Must be between 0 and less than 1.0. 
+'lossfact' can be used to shorten decays.  \
+Most useful values are between 0.8 and 1.0. pluck(0, 1, 330, 0.3, 0.95, 0.95)")
 def pluck(start, dur, freq, amp, weighting = 0.5, lossfact = 0.9)
   get_optimum_c = lambda do |s, o, p|
     pa = (1.0 / o) * atan2(s * sin(o), (1.0 - s) + s * cos(o))
@@ -89,7 +97,7 @@ def pluck(start, dur, freq, amp, weighting = 0.5, lossfact = 0.9)
   # with white noise (between -1 and 1).
   allp = make_one_zero(lf * (1.0 - wt), lf * wt)
   feedb = make_one_zero(c, 1.0)     # or feedb = make_one_zero(1.0, c)
-  dlen.times do |i| tab[i] = 1.0 - rbm_random(2.0) end
+  dlen.times do |i| tab[i] = 1.0 - random(2.0) end
   run_instrument(start, dur) do
     val = tab.cycle
     tab[tab.cycle_index] = (1.0 - c) * one_zero(feedb, one_zero(allp, val))
@@ -215,6 +223,9 @@ end
 =end
 
 # FOF example
+add_help(:fofins,
+         "fofins(beg, dur, frq, amp, vib, f0, a0, f1, a1, f2, a2, ae=[0, 0, 25, 1, 75, 1, 100, 0]) \
+produces FOF synthesis: fofins(0, 1, 270, 0.2, 0.001, 730, 0.6, 1090, 0.3, 2440, 0.1)")
 def fofins(start, dur, frq, amp, vib, f0, a0, f1, a1, f2, a2, ae = [0, 0, 25, 1, 75, 1, 100,0])
   ampf = make_env(:envelope, ae, :scaler, amp, :duration, dur)
   frq0 = hz2radians(f0)
@@ -267,8 +278,8 @@ def bes_fm(start, dur, freq, amp, ratio, index)
   mod_incr = ratio.to_f * car_incr
   ampenv = make_env(:envelope, [0, 0, 25, 1, 75, 1, 100, 0], :scaler, amp, :duration, dur)
   run_instrument(start, dur) do
-    out_val = env(ampenv) * j0(car_ph)
-    car_ph += car_incr + index.to_f * j0(mod_ph)
+    out_val = env(ampenv) * bes_j1(car_ph)
+    car_ph += car_incr + index.to_f * bes_j1(mod_ph)
     mod_ph += mod_incr
     out_val
   end
@@ -356,6 +367,9 @@ end
 #
 # translation of CLM pqwvox.ins (itself translated from MUS10 of MLB's
 # waveshaping voice instrument (using phase quadrature waveshaping))
+add_help(:pqw_vox,
+         "pqw_vox(beg, dur, freq, spacing_freq, amp, ampfun, freqfun, freqscl, phonemes, formant_amps, formant_shapes)  \
+produces vocal sounds using phase quadrature waveshaping")
 def pqw_vox(start, dur, freq, spacing_freq, amp, ampfun, freqfun, freqscl,
             phonemes, formant_amps, formant_shapes)
   vox_fun = lambda do |phons, which, newenv|
@@ -446,6 +460,23 @@ end
 
 # STEREO-FLUTE
 # slightly simplified [MS]
+add_help(:stereo_flute,
+        "stereo_flute(start, dur, freq, flow, *key_args) 
+  key_args :flow_envelope   = [0, 1, 100, 1]
+           :decay           = 0.01
+	   :noise           = 0.0356
+           :embouchure_size = 0.5
+           :fbk_scl1        = 0.5
+	   :fbk_scl2        = 0.55
+           :out_scl         = 1.0
+	   :a0              = 0.7
+           :b1              = -0.3
+           :vib_rate        = 5
+           :vib_amount      = 0.03
+           :ran_rate        = 5
+           :ran_amount      = 0.03
+is a physical model of a flute: \
+stereo_flute(0, 1, 440, 0.55, :flow_envelope, [0, 0, 1, 1, 2, 1, 3, 0])")
 def stereo_flute(start, dur, freq, flow, *args)
   flow_env   = get_args(args, :flow_envelope, [0, 1, 100, 1])
   decay      = get_args(args, :decay, 0.01)   # additional time for instrument to decay
@@ -490,6 +521,9 @@ end
 # with_sound() do stereo_flute(0, 2, 440, 0.55, :flow_envelope, [0, 0, 1, 1, 2, 1, 3, 0]) end
 
 # FM-BELL
+add_help(:fm_bell,
+         "fm_bell(startime, dur, frequency, amplitude, [amp-env=[], [index_env=[], [index=1.0]]]) \
+mixes in one fm bell note" )
 def fm_bell(start, dur, freq, amp,
             amp_env = [0, 0, 0.1, 1, 10, 0.6, 25, 0.3, 50, 0.15, 90, 0.1, 100, 0],
             index_env = [0, 1, 2, 1.1, 25, 0.75, 75, 0.5, 100, 0.2],
@@ -2590,9 +2624,9 @@ class Snd_Instrument
         in_chans.times do |chn|
           frame_set!(inframe, chn, src(srcs[chn], 0.0, lambda do |dir| ws_readin(file[chn]) end))
         end
-        frame2sound_data!(out_data, i, frame2frame(mx, inframe, outframe))
+        frame2sound_data!(out_data, i, frame2frame(inframe, mx, outframe))
         if rev_mx
-          frame2sound_data!(rev_data, i, frame2frame(rev_mx, inframe, revframe))
+          frame2sound_data!(rev_data, i, frame2frame(inframe, rev_mx, revframe))
         end
       end
       v = make_vct(samps)
@@ -2636,9 +2670,9 @@ class CLM_Instrument
         in_chans.times do |chn|
           frame_set!(inframe, chn, src(srcs[chn], 0.0, lambda do |dir| readin(file[chn]) end))
         end
-        frame2file(@ws_output, i, frame2frame(mx, inframe, outframe))
+        frame2file(@ws_output, i, frame2frame(inframe, mx, outframe))
         if rev_mx
-          frame2file(@ws_reverb, i, frame2frame(rev_mx, inframe, revframe))
+          frame2file(@ws_reverb, i, frame2frame(inframe, rev_mx, revframe))
         end
       end
     end
@@ -2680,7 +2714,7 @@ end
 
 # ;;; calculate a random spread around a center of 0
 def random_spread(spread)
-  spread.nonzero? ? (rbm_random(spread) - spread / 2.0) : 0.0
+  spread.nonzero? ? (random(spread) - spread / 2.0) : 0.0
 end
 
 # ;;; create a constant envelope if argument is a number
@@ -2927,7 +2961,7 @@ def grani(start, dur, amp, file, *args)
               when Grani_to_grain_sample_rate
                 gr_srate
               when Grani_to_grain_random
-                rbm_random(1.0)
+                random(1.0)
               else
                 Grani_to_locsig
               end

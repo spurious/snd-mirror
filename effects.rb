@@ -2,40 +2,30 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Fri Feb 07 23:56:21 CET 2003
-# Last: Sun Mar 06 10:08:52 CET 2005
+# Last: Sat Mar 19 17:52:00 CET 2005
 
 # Commentary:
 #
 # Requires --with-moitf or --with-gtk and module libxm.so or --with-static-xm!
 #
-# Tested with Snd 7.11, Motif 2.2.2, Gtk+ 2.2.1, Ruby 1.6.6, 1.6.8 and 1.9.0.
+# Tested with Snd 7.12, Motif 2.2.2, Gtk+ 2.2.1, Ruby 1.6.6, 1.6.8 and 1.9.0.
 #
 # module Effects (see new-effects.scm)
 #  plausible_mark_samples
 #  map_chan_over_target_with_sync(target, origin, decay) do |in| ... end
 #  effect_frames(target)
-#  scale_envelope(e, scl)
 #  squelch_channel(amount, size, snd, chn)
 #  flecho_1(scaler, secs, in_samps)
 #  zecho_1(scaler, secs, frq, amp, in_samps)
-#  comb_filter(scaler, size)
-#  comb_chord(scaler, size, amp, interval_one, interval_two)
-#  moog(freq, q)
 #  jc_reverb_1(in_samps)
-#  cnvtest(snd0, snd1, amp)
-#  place_sound(mono_snd, stereo_snd, pan_env)
-#  cross_synthesis(cross_snd, amp, fftsize, r)
 #  fp_1(sr, osamp, osfrq, beg, fin)
 #  hello_dentist_1(frq, amp, beg, fin)
 
 # Code:
 
 require "examp"
-include Dsp, Moog
 require "snd-xm"
-include Snd_XM
 require "env"
-include Env
 require "extensions"
 require "xm-enved"
 require "rubber"
@@ -70,71 +60,80 @@ module Effects
     if ms = marks(snd, chn)
       ms = ms.map do |x| mark_sample(x) end.sort
       if ms.length < 2
-        snd_warning("no-such-mark: mark-related action requires two marks")
+        message("mark-related action requires two marks")
         false
-      elsif ms.length == 2
-        ms
       else
-        lw = left_sample(snd, chn)
-        rw = right_sample(snd, chn)
-        cw = cursor(snd, chn)
-        favor = if cw >= lw and cw <= rw
-                  cw
-                else
-                  0.5 * (lw + rw)
-                end
-        centered_points = lambda do |points|
-          if points.length == 2
-            points
-          else
-            p1, p2, p3 = points[0, 3]
-            if (p1 - favor).abs < (p3 - favor).abs
-              [p1, p2]
+        if ms.length == 2
+          ms
+        else
+          lw = left_sample(snd, chn)
+          rw = right_sample(snd, chn)
+          cw = cursor(snd, chn)
+          favor = if cw >= lw and cw <= rw
+                    cw
+                  else
+                    0.5 * (lw + rw)
+                  end
+          centered_points = lambda do |points|
+            if points.length == 2
+              points
             else
-              centered_points.call(points[1..-1])
+              p1, p2, p3 = points[0, 3]
+              if (p1 - favor).abs < (p3 - favor).abs
+                [p1, p2]
+              else
+                centered_points.call(points[1..-1])
+              end
             end
           end
+          centered_points.call(ms)
         end
-        centered_points.call(ms)
       end
     else
+      message("mark-related action requires marks")
       false
     end
   end
 
-  def map_chan_over_target_with_sync(target = nil, origin = nil, decay = nil, &func)
-    doc("map_chan_over_target_with_sync(target, origin, decay) do |in| ... end
-target: 'marks -> beg=closest marked sample, dur=samples to next mark
-y        'sound -> beg=0, dur=all samples in sound
-        'selection -> beg=selection-position, dur=selection-frames
-        'cursor -> beg=cursor, dur=samples to end of sound
-decay is how long to run the effect past the end of the sound\n") if target == :help
-    snc = sync()
-    ssnd = selected_sound
-    schn = selected_channel
-    ms = (target == :marks and plausible_mark_samples)
-    beg = case target
-          when :sound
-            0
-          when :selection
-            selection_position
-          when :cursor
-            cursor(selected_sound, selected_channel)
-          else
-            (ms ? ms[0] : 0)
-          end
-    overlap = (decay ? (srate().to_f * decay).round : 0)
-    sndlst, chnlst = (snc > 0 ? all_chans() : [[ssnd], [schn]])
-    sndlst.zip(chnlst) do |snd, chn|
-      fin = if target == :sound or target == :cursor
-              frames(snd, chn) - 1
-            elsif target == :selection and selection?
-              selection_position + selection_frames
+  def map_chan_over_target_with_sync(target, origin, decay, &func)
+    okay = case target
+           when :sound
+             sounds or message("no sound")
+           when :selection
+             selection? or message("no selection")
+           when :marks
+             sounds or marks(selected_sound, selected_channel).length < 2 or message("no marks")
+           else
+             true
+           end
+    if okay
+      snc = sync()
+      ssnd = selected_sound
+      schn = selected_channel
+      ms = (target == :marks and plausible_mark_samples)
+      beg = case target
+            when :sound
+              0
+            when :selection
+              selection_position
+            when :cursor
+              cursor(selected_sound, selected_channel)
             else
-              (ms ? ms[1] : 0)
+              (ms ? ms[0] : 0)
             end
-      if sync(snd) == snc
-        map_chan(func.call(fin - beg), beg, fin + overlap, origin, snd, chn)
+      overlap = (decay ? (srate().to_f * decay).round : 0)
+      sndlst, chnlst = (snc > 0 ? all_chans() : [[ssnd], [schn]])
+      sndlst.zip(chnlst) do |snd, chn|
+        fin = if target == :sound or target == :cursor
+                frames(snd, chn) - 1
+              elsif target == :selection and selection?
+                selection_position + selection_frames
+              else
+                (ms ? ms[1] : 0)
+              end
+        if sync(snd) == snc
+          map_chan(func.call(fin - beg), beg, fin + overlap, origin, snd, chn)
+        end
       end
     end
   end
@@ -176,38 +175,12 @@ decay is how long to run the effect past the end of the sound\n") if target == :
   def zecho_1(scaler, secs, frq, amp, in_samps)
     os = make_oscil(frq)
     len = (secs.to_f * srate()).round
-    del = make_delay(len, false, 0.0, (len + amp + 1).round)
+    del = make_delay(len, :max_size, (len + amp + 1).to_i)
     samp = 0
     lambda do |inval|
       samp += 1
       inval + delay(del, scaler * (tap(del) + (samp <= in_samps ? inval : 0.0)), amp * oscil(os))
     end
-  end
-  
-  def comb_filter(scaler, size)
-    delay_line = Array.new(size, 0.0)
-    delay_loc = 0
-    lambda do |x|
-      result = delay_line[delay_loc]
-      delay_line[delay_loc] = x + scaler * result
-      delay_loc += 1
-      delay_loc = 0 if delay_loc == size
-      result
-    end
-  end
-  
-  def comb_chord(scaler, size, amp, interval_one, interval_two)
-    c1 = make_comb(scaler, size)
-    c2 = make_comb(scaler, (size * interval_one).round)
-    c3 = make_comb(scaler, (size * interval_two).round)
-    lambda do |x|
-      amp * (comb(c1, x) + comb(c2, x) + comb(c3, x))
-    end
-  end
-  
-  def moog(freq, q)
-    gen = make_moog_filter(freq, q)
-    lambda do |inval| moog_filter(gen, inval) end
   end
 
   def jc_reverb_1(in_samps, volume)
@@ -234,77 +207,6 @@ decay is how long to run the effect past the end of the sound\n") if target == :
       comb_sum = (comb(comb1, allpass_sum) + comb(comb2, allpass_sum) + \
                   comb(comb3, allpass_sum) + comb(comb4, allpass_sum))
       inval + volume * delay(outdel1, comb_sum)
-    end
-  end
-
-  def cnvtest(snd0, snd1, amp)
-    flt_len = frames(snd0)
-    total_len = flt_len + frames(snd1)
-    cnv = make_convolve(:filter, channel2vct(0, flt_len, snd0))
-    sf = make_sample_reader(0, snd1)
-    out_data = make_vct(total_len)
-    vct_map!(out_data, lambda do || convolve(cnv, lambda do |dir| next_sample(sf) end) end)
-    free_sample_reader(sf)
-    vct_scale!(out_data, amp)
-    max_samp = vct_peak(out_data)
-    vct2channel(out_data, 0, total_len, snd1)
-    set_y_bounds([-max_samp, max_samp], snd1) if max_samp > 1.0
-    max_samp
-  end
-
-  def place_sound(mono_snd, stereo_snd, pan_env)
-    if !sound?(mono_snd) or !sound?(stereo_snd) or
-        channels(mono_snd) != 1 or channels(stereo_snd) != 2
-        snd_warning("no mono-snd or stereo-snd")
-    else
-      len = frames(mono_snd)
-      unless array?(pan_env) or vct?(pan_env)
-        pos = pan_env / 90.0
-        reader0 = make_sample_reader(0, mono_snd)
-        reader1 = make_sample_reader(0, mono_snd)
-        map_channel(lambda do |y|
-                      y + pos * read_sample(reader1)
-                    end, 0, len, stereo_snd, 1)
-        map_channel(lambda do |y|
-                      y + (1.0 - pos) * read_sample(reader0)
-                    end, 0, len, stereo_snd, 0)
-      else
-        e0 = make_env(pan_env, :end, len - 1)
-        e1 = make_env(pan_env, :end, len - 1)
-        reader0 = make_sample_reader(0, mono_snd)
-        reader1 = make_sample_reader(0, mono_snd)
-        map_channel(lambda do |y|
-                      y + env(e1) * read_sample(reader1)
-                    end, 0, len, stereo_snd, 1)
-        map_channel(lambda do |y|
-                      y + (1.0 - env(e0)) * read_sample(reader0)
-                    end, 0, len, stereo_snd, 0)
-      end
-    end
-  end
-
-  def cross_synthesis(cross_snd, amp, fftsize, r)
-    freq_inc = fftsize / 2
-    fdr = make_vct(fftsize)
-    fdi = make_vct(fftsize)
-    spectr = make_vct(freq_inc)
-    inctr = 0
-    ctr = freq_inc
-    radius = 1.0 - r / fftsize.to_f
-    bin = mus_srate() / fftsize
-    formants = make_array(freq_inc) do |i| make_formant(radius, i * bin) end
-    lambda do |inval|
-      if ctr == freq_inc
-        fdr = channel2vct(inctr, fftsize, cross_snd, 0)
-        inctr += freq_inc
-        spectrum(fdr, fdi, false, 2)
-        vct_subtract!(fdr, spectr)
-        vct_scale!(fdr, 1.0 / freq_inc)
-        ctr = 0
-      end
-      ctr += 1
-      vct_add!(spectr, fdr)
-      amp * formant_bank(spectr, formants, inval)
     end
   end
 
@@ -1045,17 +947,17 @@ Move the sliders to set the filter cutoff frequency and resonance.",
             vals = make_vct(@size)
             lambda do |val|
               if n == @size
-                (0...@size).each do |i|
-                  if vct_ref(vals, i) >= 0.0
-                    vct_set!(vals, i, mx)
+                @size.times do |i|
+                  if vals[i] >= 0.0
+                    vals[i] = mx
                   else
-                    vct_set!(vals, i, mn)
+                    vals[i] = mn
                   end
                 end
                 n, mx, mn = 0, 0.0, 0.0
                 vals
               else
-                vct_set!(vals, n, val)
+                vals[n] = val
                 mx = [mx, val].max
                 mn = [mn, val].min
                 n += 1
@@ -1812,7 +1714,7 @@ to be cross_synthesized, the synthesis amplitude, the FFT size, and the radius v
           map_chan_over_target_with_sync(@target, "flange", false) do |ignored|
             ri = make_rand_interp(:frequency, @speed, :amplitude, @amount)
             len = (@time.to_f * srate()).round
-            del = make_delay(len, false, 0.0, (len + @amount + 1).round)
+            del = make_delay(len, :max_size, (len + @amount + 1).to_i)
             lambda do |inval|
               0.75 * (inval + delay(del, inval, rand_interp(ri)))
             end

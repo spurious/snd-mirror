@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Sun Dec 21 13:48:01 CET 2003
-# Last: Fri Mar 04 00:12:36 CET 2005
+# Last: Sat Mar 26 03:44:21 CET 2005
 
 # Commentary:
 #
@@ -320,8 +320,8 @@ if defined? $after_graph_hook
   end
   
   def reset_all_hooks
-    Snd_hooks.each do |h| h.reset_hook! end
-    sounds.each do |snd|
+    Snd_hooks.each do |h| h.kind_of?(Hook) and h.reset_hook! end
+    sounds2array.each do |snd|
       channels(snd).times do |chn|
         edit_hook(snd, chn).reset_hook! if hook?(edit_hook(snd, chn))
         after_edit_hook(snd, chn).reset_hook! if hook?(after_edit_hook(snd, chn))

@@ -4,7 +4,7 @@
 
 # Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Apr 08 17:05:03 CEST 2003
-# Last: Sun Feb 06 20:25:04 CET 2005
+# Last: Sat Mar 19 20:51:21 CET 2005
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -24,11 +24,11 @@
 # Commentary:
 #
 # module WS
-#   ws_error(*args)
+#   ws_error(tag, *args)
 #   ws_interrupt?
 #   make_with_snd(*args) do ... end
 #   with_snd(*args) do ... end
-#   with_reverb(reverb, reverb_data, snd, chn, rev_amount, *args)
+#   with_reverb(reverb, reverb_data, reverb_amount, snd, *with_sound_args)
 #   make_with_sound(*args) do ... end
 #   with_sound(*args) do ... end
 #   make_with_dac(*args, &body)
@@ -383,7 +383,7 @@ with_silence do
 end
 require "hooks"
 
-$rbm_version          = "06-02-2004"
+$rbm_version          = "19-03-2005"
 $rbm_output           = false
 $rbm_reverb           = false
 $rbm_file_name        = "test.snd" unless defined? $rbm_file_name
@@ -420,12 +420,59 @@ else
 end
 
 module WS
+
+  ws_doc = "\
+ with_sound(*args) do ... end
+ 
+   :output,            $rbm_file_name        test.snd
+   :channels,          $rbm_channels         1
+   :srate,             $rbm_srate            22050
+   :header_type,       $rbm_header_type      Mus_next
+   :data_format,       $rbm_data_format      Mus_lfloat
+   :audio_format,      $rbm_audio_format     Mus_lshort
+ 
+   :reverb,            $rbm_reverb_func      nil
+   :reverb_data,       $rbm_reverb_data      []
+   :reverb_channels,   $rbm_reverb_channels  1
+   :revfile,           $rbm_reverb_file_name nil
+   :delete_reverb      $rbm_delete_reverb    false
+ 
+   :decay_time,        1.0
+   :scaled_to,         false
+   :scaled_by,         false
+   :continue_old_file, false
+   :notehook,          $rbm_notehook         nil
+  
+   :play,              $rbm_play             0
+   :statistics,        $rbm_statistics       false
+   :comment,           $rbm_comment          nil
+   :locsig_type,       $rbm_locsig_type      Mus_interp_linear
+   :verbose,           $rbm_verbose          false
+
+# next option works only with newer Ruby versions
+# save the with_sound-body in sound file's comment
+   :save_body,         false
+
+# if an instrument uses run_instrument/run_reverb and INFO is true, a
+# message will be printed: `instrument_name: start 0.000, dur 0.000'
+   :info,              $rbm_info             false
+   :player,            $rbm_player           sndplay
+# save sound after computing
+   :save_after,        false
+# special with_dac options:
+   :bufsize,           $rbm_rt_bufsize       512
+   :device,            $rbm_output_device    Mus_audio_default
+ 
+ Usage: with_sound(:play, 1, :statistics, true) do fm_violin end"
+
   class WSError < StandardError
   end
 
   module_function
-  def ws_error(*args)
-    raise(WSError, verbose_message_string(true, "# ", *args))
+  def ws_error(tag, *args)
+    str = format("%s: %s:", get_func_name(2), tag.to_s.capitalize)
+    args.each do |s| str += format(" %s:", s.inspect) end
+    raise(WSError, verbose_message_string(true, "# ", str))
   end
 
   def ws_interrupt?
@@ -436,6 +483,7 @@ module WS
     With_Snd.new(*args, &body)
   end
 
+  add_help(:with_snd, ws_doc)
   def with_snd(*args, &body)
     ws = if get_args(args, :clm, false)
            make_with_sound(*args, &body)
@@ -450,19 +498,19 @@ module WS
     ws
   end
 
-  # with_reverb(:jc_reverb)
-  # require 'clm-ins'
-  # with_reverb(:jl_reverb, [], 2, false, 0.2)
-  def with_reverb(reverb,
-                  reverb_data = [],
-                  snd = selected_sound(),
-                  chn = selected_channel(),
-                  rev_amount = 0.05, *args)
+  add_help(:with_reverb,
+           "with_reverb(reverb, [reverb_data=[], [reverb_amount=0.05, [snd=false]]], *with_sound_args)
+with_reverb(:jc_reverb)
+require 'clm-ins'
+with_reverb(:jl_reverb, [], 0.2)")
+  def with_reverb(reverb, reverb_data = [], reverb_amount = 0.05, snd = false, *args)
     ws = With_Snd.new(:reverb, reverb,
                       :reverb_data, reverb_data,
+                      :reverb_channels, 1,
                       :output, file_name(snd),
-                      :save_after, false, *args)
-    ws.with_reverb(snd, chn, rev_amount)
+                      :save_after, false,
+                      *args)
+    ws.with_reverb(snd_snd(snd), reverb_amount)
     ws
   end
   
@@ -470,6 +518,7 @@ module WS
     With_CLM.new(*args, &body)
   end
   
+  add_help(:with_sound, ws_doc)
   def with_sound(*args, &body)
     ws = if get_args(args, :clm, true)
            make_with_sound(*args, &body)
@@ -488,6 +537,7 @@ module WS
     With_DAC.new(*args, &body)
   end
   
+  add_help(:with_dac, ws_doc)
   def with_dac(*args, &body)
     ws = make_with_dac(*args, &body)
     if get_args(args, :help, false)
@@ -498,22 +548,25 @@ module WS
     ws
   end
   
+  add_help(:snd_load, "snd_load(rbm_file, *with_sound_args)\n" + ws_doc)
   def snd_load(rbm_file, *args)
     ws = make_with_sound(:clm, false, *args)
     ws.rbm_load(rbm_file)
     ws
   end
   
+  add_help(:rbm_load, "rbm_load(rbm_file, *with_sound_args)\n" + ws_doc)
   def rbm_load(rbm_file, *args)
     ws = make_with_sound(:clm, true, *args)
     ws.rbm_load(rbm_file)
     ws
   end
 
+  add_help(:with_temp_sound,
+           "with_temp_sound(snd = false) do |temp_snd_file_name| ... end \
+Saves SND in a temporary file, which name can be accessed in the body code.  \
+After finishing the body, the file will be removed.")
   def with_temp_sound(snd = false, &body)
-    doc("with_temp_sound(snd = false) do |temp_snd_file_name| ... end
-Saves SND in a temporary file, which name can be accessed in the body
-code.  After finishing the body, the file will be removed.\n") if snd == :help
     t = tempnam
     save_sound_as(t, snd)
     ret = body.call(t)
@@ -610,6 +663,7 @@ class With_sound
     @verbose         = get_args(args, :verbose, $rbm_verbose)
     @info            = get_args(args, :info, $rbm_info)
     @comment         = get_args(args, :comment, $rbm_comment)
+    @locsig_type     = get_args(args, :locsig_type, $rbm_locsig_type)
     @offset          = get_args(args, :offset, 0.0)
 
     @rtime = @utime = @stime = 0.0
@@ -647,7 +701,6 @@ class With_sound
     @old_srate = mus_srate
     @start = @dur = 0.0
     @locsig = nil
-    @locsig_type = $rbm_locsig_type
     @rbm_output = @ws_output = false
     $rbm_reverb = @ws_reverb = false
     # recursive call: :reverb, [:old_reverb, @ws_reverb]
@@ -688,7 +741,7 @@ installs the @with_sound_note_hook and prints the line
             when Symbol
               method(@notehook).to_proc
             else
-              ws_error("%s#%s: need a proc, %s", self.class, get_func_name, @notehook.inspect)
+              ws_error(:wrong_type_arg, "proc required", @notehook.inspect)
             end
       # @with_sound_note_hook.add_hook!("with-sound-note-hook", &prc)
       # Doesn't work with older Ruby if @notehook is a Symbol/Method,
@@ -705,7 +758,7 @@ installs the @with_sound_note_hook and prints the line
   def inspect
     rstr = format(", reverb: %s, reverb-channels: %d", @reverb.to_s, @reverb_channels)
     format("#<%s: output: %s, channels: %d, srate: %d%s>",
-           self.class, @output.inspect, @channels, @srate.round, @reverb ? rstr : "")
+           self.class, @output.inspect, @channels, @srate.to_i, @reverb ? rstr : "")
   end
 
   def with_sound(*args, &body)
@@ -777,7 +830,7 @@ installs the @with_sound_note_hook and prints the line
       if (ws_body = ws_args.pop).kind_of?(Proc)
         outfile_list << with_sound(:output, tempnam(), *ws_args, &ws_body).output
       else
-        ws_error("%s#%s: need a procedure, %s", self.class, get_func_name, ws_body.inspect)
+        ws_error(:wrong_type_arg, "proc required", ws_body.inspect)
       end
     end
     body.call(*outfile_list)
@@ -795,13 +848,13 @@ installs the @with_sound_note_hook and prints the line
       end
       ws
     else
-      ws_error("%s: no such file, %s", get_func_name, rbm_file.inspect)
+      ws_error(:no_such_file, "file name required", rbm_file.inspect)
     end
   end
 
   def with_mix(*args)
     unless (body_str = args.pop).kind_of?(String)
-      ws_error("%s#%s: need a body string, %s", self.class, get_func_name, body_str.inspect)
+      ws_error(:wrong_type_arg, "body string required", body_str.inspect)
     end
     beg = if args[-1].kind_of?(Numeric)
             args.pop
@@ -812,7 +865,7 @@ installs the @with_sound_note_hook and prints the line
       out_file = fname + ".snd"
       rbm_file = fname + ".rbm"
     else
-      ws_error("%s#%s: need a file name, %s", self.class, get_func_name, fname.inspect)
+      ws_error(:wrong_type_arg, "file name required", fname.inspect)
     end
     snd_time = if File.exist?(out_file)
                  File.mtime(out_file)
@@ -843,7 +896,7 @@ installs the @with_sound_note_hook and prints the line
   
   def run_instrument(start, dur, *locsig_args, &body)
     with_sound_info(get_func_name(3), start, dur)
-    degree         = get_args(locsig_args, :degree, rbm_random(90.0))
+    degree         = get_args(locsig_args, :degree, random(90.0))
     distance       = get_args(locsig_args, :distance, 1.0)
     @reverb_amount = get_args(locsig_args, :reverb_amount, 0.05)
     @locsig = make_locsig(:degree, degree,
@@ -870,8 +923,7 @@ installs the @with_sound_note_hook and prints the line
               get_func_name(3), @reverb_channels, @channels, (@channels > 1 ? "s" : ""))
     end
     unless chan.between?(0, @reverb_channels - 1)
-      ws_error("%s#%s: only %d reverb channel(s), but channel %d requested",
-               self.class, get_func_name, @reverb_channels, chan)
+      ws_error(:out_of_range, format("channel %d of %d requested", chan, @reverb_channels))
     end
   end
   
@@ -909,15 +961,15 @@ installs the @with_sound_note_hook and prints the line
       begin
         instance_eval(&@body)
       rescue
-        ws_error("%s#%s: body interrupted", self.class, get_func_name)
         set_mus_srate(@old_srate)
         finish_sound
+        ws_error(:mus_error, "body interrupted", @body.inspect)
       end
     end
     if ret == :interrupted
       set_mus_srate(@old_srate)
       finish_sound
-      message("%s#%s: body interrupted by user, %s", self.class, get_func_name, ret.inspect)
+      message("ws body interrupted by C-g")
     end
     frm2 = ws_frame_location
     scaled_to_sound(frm1, frm2 - frm1) if @scaled_to
@@ -925,22 +977,20 @@ installs the @with_sound_note_hook and prints the line
   end
   
   def run_sound_reverb
-    unless @reverb == :intern or @reverb == :n_rev
-      ret = catch(:with_sound_interrupt) do
-        case @reverb
-        when Proc
-          @reverb.call(@start, @dur, *@reverb_data)
-        when Symbol
-          send(@reverb, @start, @dur, *@reverb_data)
-        else
-          ws_error("%s#%s: need a proc, %s", self.class, get_func_name, @reverb.inspect)
-        end
+    ret = catch(:with_sound_interrupt) do
+      case @reverb
+      when Proc
+        @reverb.call(@start, @dur, *@reverb_data)
+      when Symbol
+        send(@reverb, @start, @dur, *@reverb_data)
+      else
+        ws_error(:wrong_type_arg, "proc required", @reverb.inspect)
       end
-      if ret == :interrupted
-        set_mus_srate(@old_srate)
-        finish_sound
-        message("%s#%s: reverb interrupted by user", self.class, get_func_name)
-      end
+    end
+    if ret == :interrupted
+      set_mus_srate(@old_srate)
+      finish_sound
+      message("ws reverb body interrupted by C-g")
     end
   end
 
@@ -981,6 +1031,16 @@ installs the @with_sound_note_hook and prints the line
   def after_output
   end
 
+  def after_reverb
+    if provided? "snd"
+      if snd = find_sound(@output)
+        update_sound(snd)
+      else
+        open_sound(@output)
+      end
+    end
+  end
+  
   def ws_frame_location
   end
 
@@ -1038,6 +1098,7 @@ installs the @with_sound_note_hook and prints the line
 #   :play,              $rbm_play (#$rbm_play)
 #   :statistics,        $rbm_statistics (#$rbm_statistics)
 #   :comment,           $rbm_comment (#{$rbm_comment.inspect})
+#   :locsig_type,       $rbm_locsig_type (#{$rbm_locsig_type})
 #   :verbose,           $rbm_verbose (#$rbm_verbose)
 #
 ## next option works only with newer Ruby versions
@@ -1060,7 +1121,6 @@ installs the @with_sound_note_hook and prints the line
 " : "\
 ## save sound after computing
 #   :save_after,        false")
-
   end
 end
 
@@ -1211,7 +1271,7 @@ class Snd_Instrument < Instrument
     if snd.kind_of?(Integer) and sound?(snd)
       snd
     else
-      ws_error("%s: no such snd, %s", get_func_name, snd.inspect)
+      ws_error(:no_such_sound, snd.inspect)
     end
   end
   private :get_snd
@@ -1382,20 +1442,20 @@ class With_Snd < Snd_Instrument
     end
   end
   
-  def rbm_mix(filename, *args)
-    doc("rbm_mix(filename, *args)
+  add_help(:rbm_mix, "rbm_mix(filename, *args)
         :input_frame,  0
         :output_frame, 0
         :frames,       mus_sound_frames(filename)
         :scale,        1.0
-Example: rbm_mix(\"tmp\")\n") if filename == :help
+Example: rbm_mix(\"tmp\")")
+  def rbm_mix(filename, *args)
     input_frame  = get_args(args, :input_frame, 0).round
     output_frame = get_args(args, :output_frame, 0).round
     frms         = get_args(args, :frames, mus_sound_frames(filename)).round
     scale        = get_args(args, :scale, 1.0).to_f
     unless snd = find_sound(filename)
       unless snd = open_sound(filename)
-        ws_error("%s#%s: no such file, %s", self.class, get_func_name, filename.inspect)
+        ws_error(:no_such_file, "file name required", filename.inspect)
       end
     end
     [channels(snd), @channels].min.times do |chn|
@@ -1406,58 +1466,28 @@ Example: rbm_mix(\"tmp\")\n") if filename == :help
     close_sound_extend(snd)
   end
 
-  def with_reverb(snd, chn, rev_amount)
-    @reverb_amount = rev_amount
-    select_sound(snd)
-    if chn.kind_of?(Integer)
-      swap = chn.nonzero?
-      @channels = 1
-    else
-      @channels = channels(snd)
-    end
-    set_mus_srate(@srate = srate(snd).to_f)
-    len = frames(snd, chn)
+  def with_reverb(snd, reverb_amount)
+    @channels = channels(snd)
+    set_mus_srate(@srate)
+    len = frames(snd)
     @start = 0
     @dur = len / @srate + @decay_time
-    @ws_output = snd
-    @ws_reverb = false
     init_process_time
-    if @reverb == :intern or @reverb == :n_rev
-      # apply_controls(snd = false, choice = 0, beg = 0, dur = len)
-      # coice 0: sound
-      #       1: channel
-      #       2: selection
-      @reverb_channels = (chn ? 1 : 0)
-      after_reverb
+    if rsnd = find_sound(@revfile)
+      if channels(rsnd) == @reverb_channels and srate(rsnd) == @srate.to_i
+        delete_samples(0, len, rsnd, 0)
+      else
+        remove_file(@revfile)
+        rsnd = new_sound(@revfile, @header_type, @data_format, @srate.to_i, @reverb_channels)
+      end
     else
-      @reverb_channels = @channels
-      if rsnd = find_sound(@revfile)
-        if channels(rsnd) == @reverb_channels and srate(rsnd) == @srate.round
-          @reverb_channels.times do |c| set_frames(0, rsnd, c) end
-        else
-          remove_file(@revfile)
-          rsnd = new_sound(@revfile, @header_type, @data_format, @srate.round, @reverb_channels)
-        end
-      else
-        rsnd = new_sound(@revfile, @header_type, @data_format, @srate.round, @reverb_channels)
-      end
-      if chn.kind_of?(Integer)
-        if swap
-          swap_channels(snd, 0, snd, chn)
-        end
-        vct2channel(vct_scale!(channel2vct(0, len, snd, 0), @reverb_amount), 0, len, rsnd, 0)
-      else
-        @channels.times do |c|
-          vct2channel(vct_scale!(channel2vct(0, len, snd, c), @reverb_amount), 0, len, rsnd, c)
-        end
-      end
-      @ws_reverb = rsnd
-      run_sound_reverb
-      if swap
-        swap_channels(snd, chn, snd, 0)
-      end
+      rsnd = new_sound(@revfile, @header_type, @data_format, @srate.to_i, @reverb_channels)
     end
-    @reverb_channels = @channels
+    vct2channel(vct_scale!(vct_copy(channel2vct(0, len, snd, 0)), reverb_amount), 0, len, rsnd, 0)
+    @ws_output = snd
+    @ws_reverb = rsnd
+    save_sound(rsnd)
+    run_sound_reverb
     if @statistics
       set_process_time
       statistics
@@ -1517,24 +1547,6 @@ Example: rbm_mix(\"tmp\")\n") if filename == :help
 
   def ws_frame_location
     frames(@ws_output)
-  end
-
-  def after_reverb
-    if @reverb == :intern or @reverb == :n_rev
-      amount   = get_args(@reverb_data, :amount, 0.1)
-      filter   = get_args(@reverb_data, :filter, 0.5)
-      feedback = get_args(@reverb_data, :feedback, 1.09)
-      set_reverb_control?(true, @ws_output)
-      set_reverb_control_scale(amount, @ws_output)
-      set_reverb_control_lowpass(filter, @ws_output)
-      set_reverb_control_feedback(feedback, @ws_output)
-      # apply_controls(snd = false, choice = 0, beg = 0, dur = len)
-      # coice 0: sound
-      #       1: channel
-      #       2: selection
-      apply_controls(@ws_output, @reverb_channels, seconds2samples(@start), seconds2samples(@dur))
-      restore_controls
-    end
   end
 
   def scaled_to_sound(beg, len)
@@ -1604,13 +1616,13 @@ class With_CLM < CLM_Instrument
     end
   end
 
-  def rbm_mix(filename, *args)
-    doc("rbm_mix(filename, *args)
+  add_help(:rbm_mix, "rbm_mix(filename, *args)
         :input_frame,  0
         :output_frame, 0
         :frames,       mus_sound_frames(filename)
         :scale,        1.0
-Example: rbm_mix(\"tmp\")\n") if filename == :help
+Example: rbm_mix(\"tmp\")")
+  def rbm_mix(filename, *args)
     input_frame  = get_args(args, :input_frame, 0).round
     output_frame = get_args(args, :output_frame, 0).round
     frms         = get_args(args, :frames, mus_sound_frames(filename)).round
@@ -1669,17 +1681,6 @@ Example: rbm_mix(\"tmp\")\n") if filename == :help
   def ws_frame_location
     with_closed_output do
       mus_sound_frames(@output)
-    end
-  end
-    
-  def after_reverb
-    mus_close(@ws_reverb) if mus_output?(@ws_reverb)
-    if provided? "snd"
-      if snd = find_sound(@output)
-        update_sound(snd)
-      else
-        open_sound(@output)
-      end
     end
   end
 
@@ -1810,7 +1811,7 @@ class With_DAC < Snd_Instrument
     @ws_output = mus_audio_open_output(@device, @srate.round, @channels, @audio_format,
                                        @bufsize * @channels * 2)
     if @ws_output < 0
-      ws_error("%s#%s: can't open DAC (%s)", self.class, get_func_name, @ws_output.inspect)
+      ws_error(:mus_error, "can't open DAC", @ws_output.inspect)
     end
   end
 
@@ -1830,5 +1831,6 @@ class With_DAC < Snd_Instrument
 end
 
 include WS
+require "v"
 
 # ws.rb ends here

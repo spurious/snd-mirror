@@ -1,7 +1,7 @@
 # freeverb.rb -- CLM -> Snd/Ruby translation of freeverb.ins
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
-# Last: Thu Feb 12 18:27:16 CET 2004
+# Last: Wed Mar 23 23:08:12 CET 2005
 
 # Original notes of Fernando Lopez-Lezcano
 
@@ -36,7 +36,7 @@ with_silence(LoadError) do require "sndins" end
 
 # Snd-Ruby's freeverb and fcomb (see sndins.so for a faster one).
 
-unless $".member?("sndins")
+unless provided? :sndins
   class Fcomb
     def initialize(scaler, size, a0, a1)
       @feedback = scaler.to_f
@@ -68,8 +68,7 @@ unless $".member?("sndins")
   end
 end
 
-def freeverb_rb(start = 0, dur = 1, *args)
-  doc("freeverb_rb(start, dur, *args)
+add_help(:freeverb_rb, "freeverb_rb(start, dur, *args)
         :room_decay,        0.5,
         :damping,           0.5,
         :global,            0.3,
@@ -82,11 +81,9 @@ def freeverb_rb(start = 0, dur = 1, *args)
         :allpasstuning,     [556, 441, 341, 225],
         :scale_damping,     0.4,
         :stereo_spread,     23,
-
- with_sound(:reverb, :freeverb_rb) do fm_violin_rb(0, 1, 440, 0.3) end
-
-This is the Ruby version of freeverb.  For a faster one see sndins.so.
-") if start == :help
+with_sound(:reverb, :freeverb_rb) do fm_violin_rb(0, 1, 440, 0.3) end
+This is the Ruby version of freeverb.  For a faster one see sndins.so.")
+def freeverb_rb(start = 0, dur = 1, *args)
   room_decay        = get_args(args, :room_decay, 0.5)
   damping           = get_args(args, :damping, 0.5)
   global            = get_args(args, :global, 0.3)
@@ -104,9 +101,9 @@ This is the Ruby version of freeverb.  For a faster one see sndins.so.
   out_gain = output_gain
   f_out = make_frame(@channels)
   predelays = make_array(@reverb_channels)
-  local_gain = (1 - global) / (1 - 1.0 / @channels) + 1.0 / @channels
-  global_gain = (@channels - local_gain * @channels) / (@channels * @channels - @channels)
-  srate_scale = @srate / 44100
+  local_gain = (1.0 - global) * (1.0 - 1.0 / @channels) + 1.0 / @channels
+  global_gain = (@channels - local_gain * @channels) / [(@channels * @channels - @channels), 1].max
+  srate_scale = @srate / 44100.0
   room_decay_val = room_decay * scale_room_decay + offset_room_decay
   numcombs = combtuning.length
   numallpasses = allpasstuning.length
@@ -188,7 +185,7 @@ This is the Ruby version of freeverb.  For a faster one see sndins.so.
         frame_set!(f_out, c, all_pass(allpasses[c][j], frame_ref(f_out, c)))
       end
     end
-    frame2frame(out_mix, f_out, out_buf)
+    frame2frame(f_out, out_mix, out_buf)
   end
 end
 

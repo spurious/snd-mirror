@@ -2,18 +2,29 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Last: Tue Mar 15 04:06:14 CET 2005
+# Last: Mon Mar 28 04:54:27 CEST 2005
 
 # Commentary:
 #
 # Extensions to Ruby:
 # 
-# provided?(string_or_symbol)
+# provided?(feature)
+# features
+# all_features
+# 
+# array?(obj)   alias list?(obj)
+# string?(obj)
+# symbol?(obj)
+# number?(obj)
+# integer?(obj)
+# float?(obj)
+# proc?(obj)
+# thunk?(obj)
+# mus?(obj)
 #
 # backward compatibility methods:
 #  String#to_sym, Symbol#to_sym
 #  make_array(len, init) do |i| ... end
-#  array?
 #  Array#zip, Array#insert
 #
 # extensions to existing classes
@@ -22,14 +33,36 @@
 #   to_pairs
 #   each_pair do |x, y| ... end
 #   to_string(len)
+#   first=(val)
+#   last=(val)
 #
 # make_vct!(len, init) do |i| ... end
 #
-# class Vct
-#   map!
+# sound_data2string(sd)
+#
+# class SoundData
+#   length
+#   each(chn = nil)
+#   each_with_index(chn = nil)
+#   map(chn = nil)
+#   map!(chn = nil)
+#   to_a
+#   to_s
+#
+# mus_a0(gen)
+# set_mus_a0(gen, val)
+# mus_a1(gen)
+# set_mus_a1(gen, val)
+# mus_a2(gen)
+# set_mus_a2(gen, val)
+# mus_b1(gen)
+# set_mus_b1(gen, val)
+# mus_b2(gen)
+# set_mus_b2(gen, val)
 #
 # class Mus
-#   run(arg1, arg2)
+#   run(arg1 = 0.0, arg2 = 0.0)
+#   inspect
 #   xcoeff=(index, val)
 #   ycoeff=(index, val)
 #   a0  a0=(val)
@@ -37,7 +70,7 @@
 #   a2  a2=(val)
 #   b1  b1=(val)
 #   b2  b2=(val)
-#   
+#
 # class Integer
 #  even?
 #  odd?
@@ -67,18 +100,19 @@
 # close_sound_extend(snd)
 # get_func_name(n)
 # times2samples(start, dur)
-# rbm_random(n)
+# random(n)
 # logn(r, b)
 # car(v), cadr(v), caddr(v), cdr(v)
 # warn(*args), die(*args), error(*args)
 # rbm_message(*args), message(*args), debug(*args), debug_trace(*args)
 #
 # sounds2array
+# regions2array
 # snd_snd(snd)
 # snd_chn(chn)
 # snd_var(name, snd, chn)
 # set_snd_var(name, val, snd, chn)
-# snd_catch(tag, &body)
+# snd_catch(tag, retval = nil, &body)
 # snd_throw(tag, *args)
 # snd_raise(tag, *args)
 # c_g?() (if not in Snd)
@@ -90,14 +124,6 @@
 # get_class_or_key(args, klass, key, default)
 # Args(args, *rest)
 # load_init_file(file)
-#
-# FM
-#
-# class Instrument
-#   fm_violin_rb(start, dur, freq, amp, *args)
-#   jc_reverb_rb(start, dur, *args)
-#
-# n_rev(*args)
 #
 # module Examp (examp.scm)
 #  selection_rms
@@ -133,7 +159,7 @@
 #
 #  first_mark_in_window_at_left
 #  flash_selected_data(interval)
-#  mark_loop
+#  mark_loops
 #  do_all_chans(origin, &func)
 #  update_graphs
 #  do_chans(*origin, &func)
@@ -154,7 +180,7 @@
 #  fft_smoother(cutoff, start, samps, snd = false, chn = false)
 #
 #  comb_filter(scaler, size)
-#  comb_chord(scaler, size, amp)
+#  comb_chord(scaler, size, amp, interval_one = 0.75, interval_two = 1.2)
 #  zcomb(scaler, size, pm)
 #  notch_filter(scaler, size)
 #  formant_filter(radius, freq)
@@ -233,13 +259,14 @@
 #  scramble_channel(silence)
 #
 # module Moog (moog.scm)
-#   class Moog_filter
-#     initialize(freq, q)
-#     frequency=(freq)
-#     filter(insig)
+#  class Moog_filter
+#    initialize(freq, q)
+#    frequency=(freq)
+#    filter(insig)
 #
-#   make_moog_filter(freq = 440.0, q = 0)
-#   moog_filter(moog, insig = 0.0)
+#  make_moog_filter(freq = 440.0, q = 0)
+#  moog_filter(moog, insig = 0.0)
+#  moog(freq, q)
 # 
 # Code:
 
@@ -247,8 +274,64 @@
 ## Extensions to Ruby
 ##
  
-def provided?(string_or_symbol)
-  $".member?(string_or_symbol.to_s)
+def provided?(feature)
+  case feature
+  when Symbol
+    $".member?(feature.to_s.tr("_", "-"))
+  when String
+    $".member?(feature)
+  else
+    raise(ArgumentError, "provided?: expect a Symbol or String")
+  end
+end
+
+def features
+  $".map do |f|
+    next if f.include? "."
+    f
+  end.compact
+end
+
+# features and loaded files
+def all_features
+  $"
+end
+
+def array?(obj)
+  obj.kind_of?(Array)
+end
+alias list? array?
+
+def string?(obj)
+  obj.kind_of?(String)
+end
+
+def symbol?(obj)
+  obj.kind_of?(Symbol)
+end
+
+def number?(obj)
+  obj.kind_of?(Numeric)
+end
+
+def integer?(obj)
+  obj.kind_of?(Integer)
+end
+
+def float?(obj)
+  obj.kind_of?(Float)
+end
+
+def proc?(obj)
+  obj.kind_of?(Proc)
+end
+
+def thunk?(obj)
+  obj.kind_of?(Proc) and obj.arity.zero?
+end
+
+def mus?(obj)
+  obj.kind_of?(Mus)
 end
 
 # If $DEBUG = true, on older Ruby versions warnings occur about
@@ -279,6 +362,67 @@ class Symbol
   end unless defined? :a.to_sym
 end
 
+alias object_id __id__ unless defined? object_id
+
+# with_silence(exception) do |old_verbose, old_debug| ... end
+# 
+# supress debug messages (mostly on older Ruby versions)
+# 
+# with_silence do $global_var ||= value end
+# with_silence(LoadError) do require("nonexistent.file") end
+def with_silence(exception = StandardError)
+  old_verbose = $VERBOSE
+  old_debug = $DEBUG
+  $VERBOSE = false
+  $DEBUG = false
+  ret = if block_given?
+          begin
+            yield(old_verbose, old_debug)
+          rescue exception
+            false
+          end
+        else
+          false
+        end
+  $VERBOSE = old_verbose
+  $DEBUG = old_debug
+  ret
+end
+
+# Provides descriptions of instances of classes, see nb.rb,
+# xm-enved.rb, etc.
+#
+# m = lambda do |*args| puts args end
+# m.info = "my description"
+# puts m.info
+module Info
+  def description=(val)
+    @description = val.to_s
+  end
+  alias info= description=
+  
+  def description
+    if defined?(@description) and @description.kind_of?(String) and (not @description.empty?)
+      @description
+    else
+      "no description available"
+    end
+  end
+  alias info description
+end
+
+require "ws"
+
+$array_print_length = 10
+
+def print_length
+  $array_print_length
+end unless defined? print_length
+
+def set_print_length(val)
+  $array_print_length = val
+end unless defined? set_print_length
+
 # Older Ruby versions lack Array.new(10) do |i| ... end
 # make_array
 # make_array(10)
@@ -295,10 +439,6 @@ def make_array(len = 0, init = nil)
   else
     Array.new(len, init)
   end
-end
-
-def array?(obj)
-  obj.kind_of?(Array)
 end
 
 class Array
@@ -362,27 +502,155 @@ class Array
   end
 
   # prints flat float array more prettily
-  def to_string(len = 8)
+  def to_string(len = print_length)
     ary = self.flatten
-    nlen = [ary.length, len].min
     str = "["
-    nlen.times do |i|
-      str += "%1.3f" % ary[i].to_f
-      str += ", " if i < nlen - 1
+    ary.each_with_index do |val, i|
+      if i < len
+        str += "%1.3f, " % val.to_f
+      else
+        break
+      end
     end
-    str += ", ..." if ary.length > len
+    if ary.length > len
+      str += "..."
+    else
+      str.chop!.chop!
+    end
     str += "]"
+  end
+
+  alias old_to_s to_s
+  alias to_s inspect
+
+  def first=(val)
+    self[0] = val
+  end
+
+  def last=(val)
+    self[-1] = val
   end
 end
 
 def make_vct!(len, init = 0.0, &body)
-  vector2vct(make_array(len, init, &body))
+  if block_given?
+    Vct.new(len, &body)
+  else
+    Vct.new(len, init)
+  end
 end
 
-class Vct
-  def map!
-    self.map_with_index do |x, i| self[i] = yield(x) end
+def sound_data2string(sd)
+  sd.to_s
+end
+
+class SoundData
+  alias old_length length
+  def length
+    self.size / self.chans
   end
+
+  alias old_each each
+  def each(chn = nil)
+    if chn
+      self.length.times do |i| yield(self[chn, i]) end
+    else
+      old_each do |val| yield(val) end
+    end
+  end
+
+  def each_with_index(chn = nil)
+    if chn
+      self.length.times do |i| yield(self[chn, i], i) end
+    else
+      self.length.times do |i|
+        self.chans.times do |j| yield(self[j, i], i) end
+      end
+    end
+  end
+  
+  def map(chn = nil)
+    sd = nil
+    if chn
+      sd = self.dup
+      self.each_with_index(chn) do |val, i| sd[chn, i] = yield(val) end
+    else
+      sd = SoundData.new(self.chans, self.length)
+      self.chans.times do |j|
+        self.each_with_index(j) do |val, i| sd[j, i] = yield(val) end
+      end
+    end
+    sd
+  end
+
+  def map!(chn = nil)
+    if chn
+      self.each_with_index(chn) do |val, i| self[chn, i] = yield(val) end
+    else
+      self.chans.times do |j|
+        self.each_with_index(j) do |val, i| self[j, i] = yield(val) end
+      end
+    end
+    self
+  end
+
+  # returns an array of sd.chans vcts
+  def to_a
+    make_array(self.chans) do |chn| sound_data2vct(self, chn, Vct.new(self.length)) end
+  end
+
+  alias old_inspect inspect
+  alias inspect to_s
+  # returns a string containing an array of sd.chans vcts
+  def to_s
+    str = ""
+    self.to_a.each do |vc| str += "%s, " % vc.to_s end
+    if str.chop!.chop!
+      "[" + str + "]"
+    else
+      "nil"
+    end
+  end
+end
+
+def mus_a0(gen)
+  mus_xcoeff(gen, 0)
+end
+
+def set_mus_a0(gen, val)
+  set_mus_xcoeff(gen, 0, val)
+end
+
+def mus_a1(gen)
+  mus_xcoeff(gen, 1)
+end
+
+def set_mus_a1(gen, val)
+  set_mus_xcoeff(gen, 1, val)
+end
+
+def mus_a2(gen)
+  mus_xcoeff(gen, 2)
+end
+
+def set_mus_a2(gen, val)
+  set_mus_xcoeff(gen, 2, val)
+end
+
+def mus_b1(gen)
+  mus_ycoeff(gen, 1)
+end
+
+def set_mus_b1(gen, val)
+  set_mus_ycoeff(gen, 1, val)
+end
+
+def mus_b2(gen)
+  mus_ycoeff(gen, 2)
+end
+
+def set_mus_b2(gen, val)
+  set_mus_ycoeff(gen, 2, val)
 end
 
 class Mus
@@ -394,9 +662,9 @@ class Mus
     mus_run(self, arg1, arg2)
   end
 
-  # the same as gen.to_s
+  alias old_inspect inspect
   def inspect
-    mus_describe(self)
+    "#<" + mus_describe(self) + ">"
   end
   
   # gen.xcoeff = 0, 0.4
@@ -488,64 +756,27 @@ module Enumerable
       (0...n).map do |i| self.cycle end
     end
   end
+
+  # FIXME: @cycle_index needs work
+  def cycle=(val)
+    unless defined? @cycle_index
+      @cycle_index = -1
+    end
+    self[@cycle_index = (@cycle_index + 1) % self.length] = val
+  end
   attr_accessor :cycle_index
 end
 
 def as_one_edit_rb(*origin, &body)
-  as_one_edit(body, format(*origin))
+  # ruby compatibility:
+  # ruby pre 1.9: lambda do end.arity != lambda do | | end.arity
+  # ruby     1.9: they are even (0)
+  as_one_edit(lambda do | | body.call end, origin.empty? ? "" : format(*origin))
 end
 
 def map_channel_rb(beg = 0, dur = false,
                    snd = false, chn = false, edpos = false, edname = false, &body)
   map_channel(body, beg, dur, snd, chn, edpos, edname) 
-end
-
-
-# with_silence(exception) do |old_verbose, old_debug| ... end
-# 
-# supress debug messages (mostly on older Ruby versions)
-# 
-# with_silence do $global_var ||= value end
-# with_silence(LoadError) do require("nonexistent.file") end
-def with_silence(exception = StandardError)
-  old_verbose = $VERBOSE
-  old_debug = $DEBUG
-  $VERBOSE = false
-  $DEBUG = false
-  ret = if block_given?
-          begin
-            yield(old_verbose, old_debug)
-          rescue exception
-            false
-          end
-        else
-          false
-        end
-  $VERBOSE = old_verbose
-  $DEBUG = old_debug
-  ret
-end
-
-# Provides descriptions of instances of classes, see nb.rb,
-# xm-enved.rb, etc.
-#
-# m = lambda do |*args| puts args end
-# m.info = "my description"
-# puts m.info
-module Info
-  def description=(val)
-    @description = val.to_s
-  end
-  alias info= description=
-  
-  def description
-    if defined?(@description) and @description.kind_of?(String) and (not @description.empty?)
-      @description
-    else
-      "no description available"
-    end
-  end
-  alias info description
 end
 
 class Proc
@@ -695,14 +926,13 @@ def make_color(r, g, b)
   [:Pixel, 0]
 end unless defined? make_color
 
-require "ws"
-require "env"
-require "dsp"
-require "rgb"
-
 def doc(*rest)
   # dummy for old Kernel.doc
 end
+
+require "env"
+require "dsp"
+require "rgb"
 
 ##
 ## Utilities
@@ -737,9 +967,14 @@ def times2samples(start, dur = nil)
   [beg, beg + seconds2samples(dur)]
 end
 
-def rbm_random(n)
-  mus_random(n - 0.000001).abs
+def random(n)
+  if n.zero?
+    0.0
+  else
+    n < 0 ? -mus_random(n).abs : mus_random(n).abs
+  end
 end
+alias rbm_random random
 
 def logn(r, b = 10)
   error("r must be > 0 (r = %s)", r.inspect) if r <= 0
@@ -765,7 +1000,7 @@ def cdr(v)
 end
 
 def verbose_message_string(stack_p, remark, *args)
-  str = format(*args)
+  str = args.empty? ? "" : format(*args)
   if $!
     if stack_p
       str += format(": %s\n%s%s\n", $!, remark, $@.join(format("\n%s", remark)))
@@ -803,17 +1038,17 @@ end
 
 def rbm_message(*args)
   if provided?("snd") and (!(ENV["EMACS"] or provided?("snd-nogui")))
-    snd_print("\n" + format(*args))
+    snd_print("\n" + args.empty? ? "" : format(*args))
     nil
   else
-    print(format(*args), "\n")
+    print(args.empty? ? "" : format(*args), "\n")
   end
 end
 
 # like printf(*args), prepends a comment sign
 
 def message(*args)
-  rbm_message("# %s", format(*args))
+  rbm_message("# %s", args.empty? ? "" : format(*args))
 end
 
 # debug("var1: %s, var2: %s", var1, var2) --> #<DEBUG: var1: value1, var2: value2>
@@ -841,6 +1076,10 @@ end
 
 def sounds2array
   (sounds or []).reverse
+end
+
+def regions2array
+  (regions or []).reverse
 end
 
 def snd_snd(snd = false)
@@ -964,15 +1203,30 @@ def rb_error_to_message_array
   err
 end
 
-# returns [:tag_name, message(-array)]
+# if something goes wrong
+# returns [:tag_name, message(-array)] or [retval] if not nil
 
-def snd_catch(tag = :all, &body)
+def snd_catch(tag = :all, retval = nil, &body)
   old_debug = $DEBUG
   $DEBUG = false
   ret = catch(tag) do body.call end
-  (ret.kind_of?(Array) and ret[0] == :snd_throw) ? ret[1, 2] : [ret]
+  # catch/throw
+  if ret.kind_of?(Array) and ret[0] == :snd_throw
+    if retval
+      [retval]
+    else
+      ret[1..-1]
+    end
+  else
+    [ret]
+  end
 rescue StandardError, RangeError, TypeError
-  [rb_error_to_mus_tag, rb_error_to_message_array].flatten
+  # rescue
+  if tag == (mus_tag = rb_error_to_mus_tag) and retval 
+    [retval]
+  else
+    [mus_tag, rb_error_to_message_array].flatten
+  end
 ensure
   $DEBUG = old_debug
 end
@@ -983,7 +1237,7 @@ end
 
 def snd_raise(tag, *args)
   str = format("%s: %s:", get_func_name(2), tag.to_s.capitalize)
-  args.each do |s| str += format(" %s:", s.inspect) end
+  args.each do |s| str += format(" %s", s.inspect) end
   exception = case tag
               when :out_of_range
                 RangeError
@@ -1168,216 +1422,6 @@ def load_init_file(file)
   else
     false
   end
-end
-
-##
-## FM
-##
-
-class Instrument
-  add_help(:fm_violin_rb,
-           "fm_violin([start=0.0[, dur=1.0[, freq=440.0[, amp=0.5[, *args]]]]])
-	:fm_index,              1.0
-	:amp_env,               [0, 0, 25, 1, 75, 1, 100, 0]
-	:periodic_vibrato_rate, 5.0
-	:random_vibrato_rate,   16.0
-	:periodic_vibrato_amp,  0.0025
-	:random_vibrato_amp,    0.005
-	:noise_amount,          0.0
-	:noise_freq,            1000.0
-	:ind_noise_freq,        10.0
-	:ind_noise_amount,      0.0
-	:amp_noise_freq,        20.0
-	:amp_noise_amount,      0.0
-	:gliss_env,             [0, 0, 100, 0]
-	:gliss_amount,          0.0
-	:fm1_env,               [0, 1, 25, 0.4, 75, 0.6, 100, 0]
-	:fm2_env,               [0, 1, 25, 0.4, 75, 0.6, 100, 0]
-	:fm3_env,               [0, 1, 25, 0.4, 75, 0.6, 100, 0]
-	:fm1_rat,               1.0
-	:fm2_rat,               3.0
-	:fm3_rat,               4.0
-	:fm1_index,             false
-	:fm2_index,             false
-	:fm3_index,             false
-	:base,                  1.0
-	:index_type,            :violin
-	:reverb_amount,         0.01
-	:degree,                kernel_rand(90.0)
-	:distance,              1.0
-   Ruby: fm_violin_rb(0, 1, 440, 0.1, :fm_index, 2.0)
-  Guile: (fm-violin 0 1 440 0.1 :fm-index 2.0)
-Example: with_sound do fm_violin_rb(0, 1, 440, 0.1, :fm_index, 2.0) end")
-  def fm_violin_rb(start = 0.0, dur = 1.0, freq = 440.0, amp = 0.5, *args)
-    fm_index              = get_args(args, :fm_index, 1.0)
-    amp_env               = get_args(args, :amp_env, [0, 0, 25, 1, 75, 1, 100, 0])
-    periodic_vibrato_rate = get_args(args, :periodic_vibrato_rate, 5.0)
-    random_vibrato_rate   = get_args(args, :random_vibrato_rate, 16.0)
-    periodic_vibrato_amp  = get_args(args, :periodic_vibrato_amp, 0.0025)
-    random_vibrato_amp    = get_args(args, :random_vibrato_amp, 0.005)
-    noise_amount          = get_args(args, :noise_amount, 0.0)
-    noise_freq            = get_args(args, :noise_freq, 1000.0)
-    ind_noise_freq        = get_args(args, :ind_noise_freq, 10.0)
-    ind_noise_amount      = get_args(args, :ind_noise_amount, 0.0)
-    amp_noise_freq        = get_args(args, :amp_noise_freq, 20.0)
-    amp_noise_amount      = get_args(args, :amp_noise_amount, 0.0)
-    gliss_env             = get_args(args, :gliss_env, [0, 0, 100, 0])
-    gliss_amount          = get_args(args, :gliss_amount, 0.0)
-    fm1_env               = get_args(args, :fm1_env, [0, 1, 25, 0.4, 75, 0.6, 100, 0])
-    fm2_env               = get_args(args, :fm2_env, [0, 1, 25, 0.4, 75, 0.6, 100, 0])
-    fm3_env               = get_args(args, :fm3_env, [0, 1, 25, 0.4, 75, 0.6, 100, 0])
-    fm1_rat               = get_args(args, :fm1_rat, 1.0)
-    fm2_rat               = get_args(args, :fm2_rat, 3.0)
-    fm3_rat               = get_args(args, :fm3_rat, 4.0)
-    fm1_index             = get_args(args, :fm1_index, false)
-    fm2_index             = get_args(args, :fm2_index, false)
-    fm3_index             = get_args(args, :fm3_index, false)
-    base                  = get_args(args, :base, 1.0)
-    index_type            = get_args(args, :index_type, :violin)
-    rev_amount            = get_args(args, :reverb_amount, 0.01)
-    degree                = get_args(args, :degree, kernel_rand(90.0))
-    distance              = get_args(args, :distance, 1.0)
-    frq_scl = hz2radians(freq)
-    modulate = fm_index.nonzero?
-    maxdev = frq_scl * fm_index
-    vln = (index_type != :cello)
-    logfreq = log(freq)
-    sqrtfreq = sqrt(freq)
-    index1 = (fm1_index or [PI, maxdev * (vln ? 5.0 : 7.5) / logfreq].min)
-    index2 = (fm2_index or [PI, maxdev * 3.0 * \
-                (vln ? ((8.5 - logfreq) / (3.0 + freq * 0.001)) : (15.0 / sqrtfreq))].min)
-    index3 = (fm3_index or [PI, maxdev * (vln ? 4.0 : 8.0) / sqrtfreq].min)
-    easy_case = (noise_amount.zero? and
-                   (fm1_env == fm2_env) and 
-                   (fm1_env == fm3_env) and 
-                   (fm1_rat - fm1_rat.floor).zero? and 
-                   (fm2_rat - fm2_rat.floor).zero? and 
-                   (fm3_rat - fm3_rat.floor).zero?)
-    coeffs = (easy_case and modulate and 
-                partials2polynomial([fm1_rat.floor, index1, 
-                                     (fm2_rat / fm1_rat).floor, index2,
-                                     (fm3_rat / fm1_rat).floor, index3]))
-    norm = ((easy_case and modulate and 1.0) or index1)
-    carrier = make_oscil(freq)
-    fmosc1 = (modulate and make_oscil(fm1_rat * freq))
-    fmosc2 = (modulate and (easy_case or make_oscil(fm2_rat * freq)))
-    fmosc3 = (modulate and (easy_case or make_oscil(fm3_rat * freq)))
-    ampf = make_env(amp_env, amp, dur, 0.0, base)
-    indf1 = (modulate and make_env(fm1_env, norm, dur))
-    indf2 = (modulate and (easy_case or make_env(fm2_env, index2, dur)))
-    indf3 = (modulate and (easy_case or make_env(fm3_env, index3, dur)))
-    frqf = make_env(gliss_env, gliss_amount * frq_scl, dur)
-    pervib = make_triangle_wave(periodic_vibrato_rate, periodic_vibrato_amp *  frq_scl)
-    ranvib = make_rand_interp(random_vibrato_rate, random_vibrato_amp * frq_scl)
-    fm_noi = (noise_amount.nonzero? and make_rand(noise_freq, PI * noise_amount))
-    ind_noi = ((ind_noise_amount.nonzero? and ind_noise_freq.nonzero?) and 
-                 make_rand_interp(ind_noise_freq, ind_noise_amount))
-    amp_noi = ((amp_noise_amount.nonzero? and amp_noise_freq.nonzero?) and
-                 make_rand_interp(amp_noise_freq, amp_noise_amount))
-    fuzz = 0.0
-    ind_fuzz = amp_fuzz = 1.0
-    run_instrument(start, dur, :reverb_amount, rev_amount, :degree, degree, :distance, distance) do
-      fuzz = rand(fm_noi) if noise_amount.nonzero?
-      vib = env(frqf) + triangle_wave(pervib) + rand_interp(ranvib)
-      ind_fuzz = 1.0 + rand_interp(ind_noi) if ind_noi
-      amp_fuzz = 1.0 + rand_interp(amp_noi) if amp_noi
-      if modulate
-        if easy_case
-          modulation = env(indf1) * polynomial(coeffs, oscil(fmosc1, vib))
-        else
-          modulation = (env(indf1) * oscil(fmosc1, fm1_rat * vib + fuzz) + \
-                        env(indf2) * oscil(fmosc2, fm2_rat * vib + fuzz) + \
-                        env(indf3) * oscil(fmosc3, fm3_rat * vib + fuzz))
-        end
-      end
-      env(ampf) * amp_fuzz * oscil(carrier, vib + ind_fuzz * modulation)
-    end
-  end
-  
-  def jc_reverb_rb(start, dur, *args)
-    low_pass = get_args(args, :low_pass, false)
-    volume   = get_args(args, :volume, 1.0)
-    amp_env  = get_args(args, :amp_env, false)
-    delay1   = get_args(args, :delay1, 0.013)
-    delay2   = get_args(args, :delay2, 0.011)
-    delay3   = get_args(args, :delay3, 0.015)
-    delay4   = get_args(args, :delay4, 0.017)
-    double   = get_args(args, :double, false)
-    chan2 = (@channels > 1)
-    chan4 = (@channels == 4)
-    if double and chan4
-      error("%s: not set up for doubled reverb in quad", get_func_name)
-    end
-    allpass1 = make_all_pass(-0.7, 0.7, 1051)
-    allpass2 = make_all_pass(-0.7, 0.7,  337)
-    allpass3 = make_all_pass(-0.7, 0.7,  113)
-    comb1 = make_comb(0.742, 4799)
-    comb2 = make_comb(0.733, 4999)
-    comb3 = make_comb(0.715, 5399)
-    comb4 = make_comb(0.697, 5801)
-    outdel1 = make_delay((delay1 * @srate).round)
-    outdel2 = (chan2 ? make_delay((delay2 * @srate).round) : false)
-    outdel3 = ((chan4 or double) ? make_delay((delay3 * @srate).round) : false)
-    outdel4 = ((chan4 or (double and chan2)) ? make_delay((delay4 * @srate).round) : false)
-    envA = (amp_env ? make_env(:envelope, amp_env, :scaler, volume, :duration, dur) : false)
-    comb_sum_1 = comb_sum = 0.0
-    reverb_frame = make_frame(@channels)
-    run_reverb(start, dur) do |ho, i|
-      allpass_sum = all_pass(allpass3, all_pass(allpass2, all_pass(allpass1, ho)))
-      comb_sum_2, comb_sum_1 = comb_sum_1, comb_sum
-      comb_sum = (comb(comb1, allpass_sum) + comb(comb2, allpass_sum) + \
-                  comb(comb3, allpass_sum) + comb(comb4, allpass_sum))
-      all_sums = if low_pass
-                   0.25 * (comb_sum + comb_sum_2) + 0.5 * comb_sum_1
-                 else
-                   comb_sum
-                 end
-      delA = delay(outdel1, all_sums)
-      if double
-        delA += delay(outdel3, all_sums)
-      end
-      if envA
-        volume = env(envA)
-      end
-      frame_set!(reverb_frame, 0, volume * delA)
-      if chan2
-        delB = delay(outdel2, all_sums)
-        if double
-          delB += delay(outdel4, all_sums)
-        end
-        frame_set!(reverb_frame, 1, volume * delB)
-        if chan4
-          frame_set!(reverb_frame, 2, volume * delay(outdel3, all_sums))
-          frame_set!(reverb_frame, 3, volume * delay(outdel4, all_sums))
-        end
-      end
-      reverb_frame
-    end
-  end
-end
-
-class Snd_Instrument
-  alias fm_violin fm_violin_rb
-  alias jc_reverb jc_reverb_rb
-end
-
-add_help(:n_rev,
-         "n_rev(*args)
-	:amount,   0.1
-	:filter,   0.5
-	:feedback, 1.09
-Reverb from Michael McNabb's Nrev (see new-effects.scm).
-Usage: n_rev([:amount, 0.2, :filter, 0.8])")
-def n_rev(*args)
-  amount   = get_args(args, :amount, 0.1)
-  filter   = get_args(args, :filter, 0.5)
-  feedback = get_args(args, :feedback, 1.09)
-  set_reverb_control?(true)
-  set_reverb_control_scale(amount)
-  set_reverb_control_lowpass(filter)
-  set_reverb_control_feedback(feedback)
-  apply_controls(selected_sound(), 0)
-  restore_controls()
 end
 
 module Examp
@@ -1968,9 +2012,9 @@ bind_key(?m, 0, lambda do | | first_mark_in_window_at_left end)")
 
   # use loop info (if any) to set marks at loop points
 
-  add_help(:mark_loop,
+  add_help(:mark_loops,
            "mark_loops() places marks at loop points found in the selected sound's header")
-  def mark_loop
+  def mark_loops
     loops = (sound_loop_info or mus_sound_loop_info(file_name))
     if loops and !loops.empty?
       unless loops[0].zero? and loops[1].zero?
@@ -2323,12 +2367,12 @@ If you're in a hurry use: clm_channel(make_comb(0.8, 32)) instead")
   # by using filters at harmonically related sizes, we can get chords:
 
   add_help(:comb_chord,
-           "comb_chord(scaler, size, amp) \
+           "comb_chord(scaler, size, amp, [interval_one=0.75, [interval_two=1.2]]) \
 returns a set of harmonically-related comb filters: map_channel(comb_chord(0.95, 100, 0.3))")
-  def comb_chord(scaler, size, amp)
+  def comb_chord(scaler, size, amp, interval_one = 0.75, interval_two = 1.2)
     c1 = make_comb(scaler, size.to_i)
-    c2 = make_comb(scaler, (0.75 * size).to_i)
-    c3 = make_comb(scaler, (1.2 * size).to_i)
+    c2 = make_comb(scaler, (interval_one * size).to_i)
+    c3 = make_comb(scaler, (interval_two * size).to_i)
     lambda do |inval| amp * (comb(c1, inval) + comb(c2, inval) + comb(c3, inval)) end
   end
 
@@ -2431,7 +2475,7 @@ returns a modulated echo maker: map_channel(zecho(0.5, 0.75, 6, 10.0), 0, 65000)
   end
 
   add_help(:flecho,
-           "flecho(scaler, secs) \
+           "flecho(scaler, secs]) \
 returns a low-pass filtered echo maker: map_channel(flecho(0.5, 0.9), 0, 75000)" )
   def flecho(scaler, secs)
     flt = make_fir_filter(:order, 4, :xcoeffs, vct(0.125, 0.25, 0.25, 0.125))
@@ -3509,7 +3553,7 @@ turns the currently selected soundfont file into a bunch of files of the form sa
     as_one_edit(lambda do
                   scale_by(0.0)
                   len.times do
-                    this = rbm_random(len)
+                    this = random(len)
                     reg, pieces[this] = pieces[this], false
                     unless reg
                       (this.round + 1).upto(len - 1) do |i|
@@ -3651,6 +3695,11 @@ translated to Snd scheme function by Bill
            "moog_filter(moog, [insig=0.0]) is the generator associated with make_moog_filter")
   def moog_filter(moog, insig = 0.0)
     moog.filter(insig)
+  end
+  
+  def moog(freq, q)
+    mg = Moog_filter.new(freq, q)
+    lambda do |inval| mg.filter(inval) end
   end
 end
 

@@ -1,7 +1,7 @@
 # maxf.rb -- CLM -> Snd/Ruby translation of maxf.ins
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
-# Last: Tue Feb 10 17:06:14 CET 2004
+# Last: Wed Mar 16 01:37:29 CET 2005
 
 # It follows the original header of Juan Reyes.
 
@@ -33,12 +33,10 @@
 
 require "examp"
 require "ws"
-include Math
 
 CLM = Struct.new("CLM", :yy1, :yy2, :zz1, :zz2, :pp1, :pp2, :pp3, :out)
 
-def maxfilter(file, start = 0, *args)
-  doc("maxfilter(file, start, *args)
+add_help(:maxfilter, "maxfilter(file, start, *args)
     :att           = 1.0
     :numf          = 1
     :freqfactor    = 1.0
@@ -65,7 +63,8 @@ the desired phase.
    :numf =  4   4 filters
    :numf =  9   9 filters
    :numf = 12  12 filters
-   :numf = 13  13 filters\n") if file == :help
+   :numf = 13  13 filters")
+def maxfilter(file, start = 0, *args)
   att        = get_args(args, :att, 1.0)
   numf       = get_args(args, :numf, 1).to_i
   freqfactor = get_args(args, :freqfactor, 1.0)

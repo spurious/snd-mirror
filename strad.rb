@@ -7,7 +7,7 @@
 # CLM version by Juan Reyes
 #
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
-# Last: Mon Feb 09 00:33:22 CET 2004
+# Last: Sun Mar 13 14:55:49 CET 2005
 
 require "examp"
 require "ws"
@@ -29,9 +29,7 @@ class DCBlock
   end
 end
 
-# snd_putd(:bow) or putd(:bow) to get this help
-def bow(start = 0, dur = 1, freq = 440, amp = 0.5, *args)
-  doc("bow(start = 0, dur = 1, freq = 440, amp = 0.5, *args)
+add_help(:bow, "bow(start = 0, dur = 1, freq = 440, amp = 0.5, *args)
         :bufsize 2205         @srate 22050
         :fb      0.2          bow force (0.0..1.0)
         :vb      0.05         bow velocity (0.0..0.8)
@@ -40,7 +38,8 @@ def bow(start = 0, dur = 1, freq = 440, amp = 0.5, *args)
         :ampenv  [0, 0, 20, 1, 48, 1, 92, 0, 100, 0]
         :degree  45
         :dist    0.0025
-        :reverb  0.005\n ") if start == :help
+        :reverb  0.005")
+def bow(start = 0, dur = 1, freq = 440, amp = 0.5, *args)
   bufsize  = get_args(args, :bufsize, 2205)
   fb       = get_args(args, :fb, 0.2)
   vb       = get_args(args, :vb, 0.05)
