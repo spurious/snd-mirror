@@ -1044,482 +1044,6 @@ void display_frequency_response(snd_state *ss, env *e, axis_info *ap, axis_conte
   FREE(coeffs);
 }
 
-
-/* Hartley Transfrom */
-
-static Float *fht_sines = NULL, *fht_cosines = NULL;
-static int fht_last_length = 0;
-
-static void make_sines(int length)
-{
-  int i, j;
-  double freq, incr;
-  if (length != fht_last_length)
-    {
-      if (fht_sines) FREE(fht_sines);
-      if (fht_cosines) FREE(fht_cosines);
-      fht_sines = (Float *)MALLOC(length * sizeof(Float));
-      fht_cosines = (Float *)MALLOC(length * sizeof(Float));
-      fht_last_length = length;
-      incr = TWO_PI / (double)length;
-      for (i = 0, freq = 0.0; i < length; i++, freq += incr) 
-	fht_cosines[i] = cos(freq);
-      for (i = 0, j = length / 4; i < length; i++)
-	{
-	  fht_sines[j++] = fht_cosines[i];
-	  if (j == length) j = 0;
-        }
-    }
-}
-
-void fht(int powerOfFour, Float *array)
-{
-  /*  In place Fast Hartley Transform of floating point data in array.
-      Size of data array must be power of four. Lots of sets of four 
-      inline code statements, so it is verbose and repetitive, but fast. 
-      The Fast Hartley Transform algorithm is patented, and is documented
-      in the book "The Hartley Transform", by Ronald N. Bracewell.
-      This routine was converted to C from a BASIC routine in the above book,
-      that routine Copyright 1985, The Board of Trustees of Stanford University 	
-   */
-  /* fht is its own inverse -- run it again to return to original data */
-
-  register int j = 0, i = 0, k = 0, L = 0;
-  int n = 0, n4 = 0, d1 = 0, d2 = 0, d3 = 0, d4 = 0, d5 = 1, d6 = 0, d7 = 0, d8 = 0, d9 = 0;
-  int L1 = 0, L2 = 0, L3 = 0, L4 = 0, L5 = 0, L6 = 0, L7 = 0, L8 = 0;
-  int n_over_d3;
-  Float r = 0.0;
-  int a1 = 0, a2 = 0, a3 = 0;
-  Float t = 0.0, t1 = 0.0, t2 =0.0, t3 = 0.0, t4 = 0.0, t5 = 0.0, t6 = 0.0, t7 = 0.0, t8 = 0.0;
-  Float t9 = 0.0, t0 = 0.0;
-  if (powerOfFour < 1) return;
-  n = (int)(pow(4.0, (double)powerOfFour));
-  make_sines(n);
-  n4 = n / 4;
-  r = 1.414213562;
-  j = 1;
-  i = 0;
-  while (i < n - 1)	
-    {
-      i++;
-      if (i < j)	
-	{
-	  t = array[j - 1];
-	  array[j - 1] = array[i - 1];
-	  array[i - 1] = t;
-    	}
-      k = n4;
-      while ((3 * k) < j)	
-	{
-	  j -= 3 * k;
-	  k /= 4;
-    	}
-      j += k;
-    }
-  for (i = 0; i < n; i += 4) 
-    {
-      t5 = array[i];
-      t6 = array[i + 1];
-      t7 = array[i + 2];
-      t8 = array[i + 3];
-      t1 = t5 + t6;
-      t2 = t5 - t6;
-      t3 = t7 + t8;
-      t4 = t7 - t8;
-      array[i] = t1 + t3;
-      array[i + 1] = t1 - t3;
-      array[i + 2] = t2 + t4;
-      array[i + 3] = t2 - t4;
-    }
-  for (L = 2; L <= powerOfFour; L++)  
-    {
-      d1 = snd_ipow2(L + L - 3);
-      d2 = d1 + d1;
-      d3 = d2 + d2;
-      n_over_d3 = n / 2 / d3;
-      d4 = d2 + d3;
-      d5 = d3 + d3;
-      for (j = 0; j < n; j += d5)	  
-	{
-	  t5 = array[j];
-	  t6 = array[j + d2];
-	  t7 = array[j + d3];
-	  t8 = array[j + d4];
-	  t1 = t5 + t6;
-	  t2 = t5 - t6;
-	  t3 = t7 + t8;
-	  t4 = t7 - t8;
-	  array[j] = t1 + t3;
-	  array[j + d2] = t1 - t3;
-	  array[j + d3] = t2 + t4;
-	  array[j + d4] = t2 - t4;
-	  d6 = j + d1;
-	  d7 = j + d1 + d2;
-	  d8 = j + d1 + d3;
-	  d9 = j + d1 + d4;
-	  t1 = array[d6];
-	  t2 = array[d7] * r;
-	  t3 = array[d8];
-	  t4 = array[d9] * r;
-	  array[d6] = t1 + t2 + t3;
-	  array[d7] = t1 - t3 + t4;
-	  array[d8] = t1 - t2 + t3;
-	  array[d9] = t1 - t3 - t4;
-	  for (k = 1; k < d1; k++)	
-	    {
-	      L1 = j + k;
-	      L2 = L1 + d2;
-	      L3 = L1 + d3;
-	      L4 = L1 + d4;
-	      L5 = j + d2 - k;
-	      L6 = L5 + d2;
-	      L7 = L5 + d3;
-	      L8 = L5 + d4;
-	      a1 = k * n_over_d3;
-	      a2 = 2 * a1;
-	      a3 = 3 * a1;
-	      /* (these never even get close to n so the mod is not needed)
-	      a1 = (int) (k * n_over_d3) % n;
-	      a2 = (a1 + a1) % n;
-	      a3 = (a1 + a2) % n;
-	      */
-#if DEBUGGING
-	      if (a3 >= n)
-		{
-		  fprintf(stderr, "fht n: %d, a3: %d\n", n, a3);
-		  abort();
-		}
-#endif
-	      /* use of table-lookup here speeds up the overall function by a factor of about 8! */
-	      t5 = array[L2] * fht_cosines[a1] + array[L6] * fht_sines[a1];
-	      t6 = array[L3] * fht_cosines[a2] + array[L7] * fht_sines[a2];
-	      t7 = array[L4] * fht_cosines[a3] + array[L8] * fht_sines[a3];
-	      t8 = array[L6] * fht_cosines[a1] - array[L2] * fht_sines[a1];
-	      t9 = array[L7] * fht_cosines[a2] - array[L3] * fht_sines[a2];
-	      t0 = array[L8] * fht_cosines[a3] - array[L4] * fht_sines[a3];
-	      t1 = array[L5] - t9;
-	      t2 = array[L5] + t9;
-	      t3 = - t8 - t0;
-	      t4 = t5 - t7;
-	      array[L5] = t1 + t4;
-	      array[L6] = t2 + t3;
-	      array[L7] = t1 - t4;
-	      array[L8] = t2 - t3;
-	      t1 = array[L1] + t6;
-	      t2 = array[L1] - t6;
-	      t3 = t8 - t0;
-	      t4 = t5 + t7;
-	      array[L1] = t1 + t4;
-	      array[L2] = t2 + t3;
-	      array[L3] = t1 - t4;
-	      array[L4] = t2 - t3;
-	    }
-	}
-    }		  
-}
-
-
-/* this version is by Ron Mayer, only works for small ffts (starts to lose around 64k) */
-/* Copyright 1988, 1993; Ron Mayer who says:
- * NOTE: This routine uses at least 2 patented algorithms, and may be
- *       under the restrictions of a bunch of different organizations.
- *       Although I wrote it completely myself; it is kind of a derivative
- *       of a routine I once authored and released under the GPL, so it
- *       may fall under the free software foundation's restrictions;
- *       it was worked on as a Stanford Univ project, so they claim
- *       some rights to it; it was further optimized at work here, so
- *       I think this company claims parts of it.  The patents are
- *       held by R. Bracewell (the FHT algorithm) and O. Buneman (the
- *       trig generator), both at Stanford Univ.
- *       If it were up to me, I'd say go do whatever you want with it;
- *       but it would be polite to give credit to the following people
- *       if you use this anywhere:
- *           Euler     - probable inventor of the fourier transform.
- *           Gauss     - probable inventor of the FFT.
- *           Hartley   - probable inventor of the hartley transform.
- *           Buneman   - for a really cool trig generator
- *           Mayer(me) - for authoring this particular version and
- *                       including all the optimizations in one package.
- *       Thanks,
- *       Ron Mayer; mayer@acuson.com
- *
- * Bill says:
- *   this is slightly (15-20%) faster than the fht above for small ffts (smaller than 16384 samples)
- *   it slows down radically (factor of 2) on big arrays, and returns bogus results -- perhaps real sin/cos would fix it
- *   it is not restricted to powers of 4 (hence its use in snd-fft.c), but len must be > 4
- *
- * as a kind of goofy experiment, I unrolled all the loops of a 256 point fft,
- *   creating a single-level 2200 line fft with no address calcs, and it ran
- *   twice as fast as fht.
- */
-
-static Float halsec[20]=
-    {
-     0,
-     0,
-     .54119610014619698439972320536638942006107206337801,
-     .50979557910415916894193980398784391368261849190893,
-     .50241928618815570551167011928012092247859337193963,
-     .50060299823519630134550410676638239611758632599591,
-     .50015063602065098821477101271097658495974913010340,
-     .50003765191554772296778139077905492847503165398345,
-     .50000941253588775676512870469186533538523133757983,
-     .50000235310628608051401267171204408939326297376426,
-     .50000058827484117879868526730916804925780637276181,
-     .50000014706860214875463798283871198206179118093251,
-     .50000003676714377807315864400643020315103490883972,
-     .50000000919178552207366560348853455333939112569380,
-     .50000000229794635411562887767906868558991922348920,
-     .50000000057448658687873302235147272458812263401372
-    };
-static Float costab[20]=
-    {
-     .00000000000000000000000000000000000000000000000000,
-     .70710678118654752440084436210484903928483593768847,
-     .92387953251128675612818318939678828682241662586364,
-     .98078528040323044912618223613423903697393373089333,
-     .99518472667219688624483695310947992157547486872985,
-     .99879545620517239271477160475910069444320361470461,
-     .99969881869620422011576564966617219685006108125772,
-     .99992470183914454092164649119638322435060646880221,
-     .99998117528260114265699043772856771617391725094433,
-     .99999529380957617151158012570011989955298763362218,
-     .99999882345170190992902571017152601904826792288976,
-     .99999970586288221916022821773876567711626389934930,
-     .99999992646571785114473148070738785694820115568892,
-     .99999998161642929380834691540290971450507605124278,
-     .99999999540410731289097193313960614895889430318945,
-     .99999999885102682756267330779455410840053741619428
-    };
-static Float sintab[20]=
-    {
-     1.0000000000000000000000000000000000000000000000000,
-     .70710678118654752440084436210484903928483593768846,
-     .38268343236508977172845998403039886676134456248561,
-     .19509032201612826784828486847702224092769161775195,
-     .09801714032956060199419556388864184586113667316749,
-     .04906767432741801425495497694268265831474536302574,
-     .02454122852291228803173452945928292506546611923944,
-     .01227153828571992607940826195100321214037231959176,
-     .00613588464915447535964023459037258091705788631738,
-     .00306795676296597627014536549091984251894461021344,
-     .00153398018628476561230369715026407907995486457522,
-     .00076699031874270452693856835794857664314091945205,
-     .00038349518757139558907246168118138126339502603495,
-     .00019174759731070330743990956198900093346887403385,
-     .00009587379909597734587051721097647635118706561284,
-     .00004793689960306688454900399049465887274686668768
-    };
-static Float coswrk[20]=
-    {
-     .00000000000000000000000000000000000000000000000000,
-     .70710678118654752440084436210484903928483593768847,
-     .92387953251128675612818318939678828682241662586364,
-     .98078528040323044912618223613423903697393373089333,
-     .99518472667219688624483695310947992157547486872985,
-     .99879545620517239271477160475910069444320361470461,
-     .99969881869620422011576564966617219685006108125772,
-     .99992470183914454092164649119638322435060646880221,
-     .99998117528260114265699043772856771617391725094433,
-     .99999529380957617151158012570011989955298763362218,
-     .99999882345170190992902571017152601904826792288976,
-     .99999970586288221916022821773876567711626389934930,
-     .99999992646571785114473148070738785694820115568892,
-     .99999998161642929380834691540290971450507605124278,
-     .99999999540410731289097193313960614895889430318945,
-     .99999999885102682756267330779455410840053741619428
-    };
-static Float sinwrk[20]=
-    {
-     1.0000000000000000000000000000000000000000000000000,
-     .70710678118654752440084436210484903928483593768846,
-     .38268343236508977172845998403039886676134456248561,
-     .19509032201612826784828486847702224092769161775195,
-     .09801714032956060199419556388864184586113667316749,
-     .04906767432741801425495497694268265831474536302574,
-     .02454122852291228803173452945928292506546611923944,
-     .01227153828571992607940826195100321214037231959176,
-     .00613588464915447535964023459037258091705788631738,
-     .00306795676296597627014536549091984251894461021344,
-     .00153398018628476561230369715026407907995486457522,
-     .00076699031874270452693856835794857664314091945205,
-     .00038349518757139558907246168118138126339502603495,
-     .00019174759731070330743990956198900093346887403385,
-     .00009587379909597734587051721097647635118706561284,
-     .00004793689960306688454900399049465887274686668768
-    };
-
-#define SQRT2_2   0.70710678118654752440084436210484
-#define SQRT2   2*0.70710678118654752440084436210484
-
-void fht_1(Float *fz, int n);
-void fht_1(Float *fz, int n)
-{
-  int i,k,k1,k2,k3,k4,kx;
-  Float *fi,*fn,*gi;
-  int t_lam=0;
-  
-  for (k1=1,k2=0;k1<n;k1++)
-    {
-      Float a;
-      for (k=n>>1; (!((k2^=k)&k)); k>>=1);
-      if (k1>k2)
-	{
-	  a=fz[k1];fz[k1]=fz[k2];fz[k2]=a;
-	}
-    }
-  for ( k=0 ; (1<<k)<n ; k++ );
-  k  &= 1;
-  if (k==0)
-    {
-      for (fi=fz,fn=fz+n;fi<fn;fi+=4)
-	{
-	  Float f0,f1,f2,f3;
-	  f1     = fi[0 ]-fi[1 ];
-	  f0     = fi[0 ]+fi[1 ];
-	  f3     = fi[2 ]-fi[3 ];
-	  f2     = fi[2 ]+fi[3 ];
-	  fi[2 ] = (f0-f2);	
-	  fi[0 ] = (f0+f2);
-	  fi[3 ] = (f1-f3);	
-	  fi[1 ] = (f1+f3);
-	}
-    }
-  else
-    {
-      for (fi=fz,fn=fz+n,gi=fi+1;fi<fn;fi+=8,gi+=8)
-	{
-	  Float s1,c1,s2,c2,s3,c3,s4,c4,g0,f0,f1,g1,f2,g2,f3,g3;
-	  c1     = fi[0 ] - gi[0 ];
-	  s1     = fi[0 ] + gi[0 ];
-	  c2     = fi[2 ] - gi[2 ];
-	  s2     = fi[2 ] + gi[2 ];
-	  c3     = fi[4 ] - gi[4 ];
-	  s3     = fi[4 ] + gi[4 ];
-	  c4     = fi[6 ] - gi[6 ];
-	  s4     = fi[6 ] + gi[6 ];
-	  f1     = (s1 - s2);	
-	  f0     = (s1 + s2);
-	  g1     = (c1 - c2);	
-	  g0     = (c1 + c2);
-	  f3     = (s3 - s4);	
-	  f2     = (s3 + s4);
-	  g3     = SQRT2*c4;		
-	  g2     = SQRT2*c3;
-	  fi[4 ] = f0 - f2;
-	  fi[0 ] = f0 + f2;
-	  fi[6 ] = f1 - f3;
-	  fi[2 ] = f1 + f3;
-	  gi[4 ] = g0 - g2;
-	  gi[0 ] = g0 + g2;
-	  gi[6 ] = g1 - g3;
-	  gi[2 ] = g1 + g3;
-	}
-    }
-  if (n<16) return;
-  
-  do
-    {
-      Float s1,c1;
-      k  += 2;
-      k1  = 1  << k;
-      k2  = k1 << 1;
-      k4  = k2 << 1;
-      k3  = k2 + k1;
-      kx  = k1 >> 1;
-      fi  = fz;
-      gi  = fi + kx;
-      fn  = fz + n;
-      do
-	{
-	  Float g0,f0,f1,g1,f2,g2,f3,g3;
-	  f1      = fi[0 ] - fi[k1];
-	  f0      = fi[0 ] + fi[k1];
-	  f3      = fi[k2] - fi[k3];
-	  f2      = fi[k2] + fi[k3];
-	  fi[k2]  = f0	  - f2;
-	  fi[0 ]  = f0	  + f2;
-	  fi[k3]  = f1	  - f3;
-	  fi[k1]  = f1	  + f3;
-	  g1      = gi[0 ] - gi[k1];
-	  g0      = gi[0 ] + gi[k1];
-	  g3      = SQRT2  * gi[k3];
-	  g2      = SQRT2  * gi[k2];
-	  gi[k2]  = g0	  - g2;
-	  gi[0 ]  = g0	  + g2;
-	  gi[k3]  = g1	  - g3;
-	  gi[k1]  = g1	  + g3;
-	  gi     += k4;
-	  fi     += k4;
-	} while (fi<fn);
-      {	
-	int i;
-	for (i=2 ; i<=k ; i++)	
-	  {coswrk[i]=costab[i];sinwrk[i]=sintab[i];}
-	t_lam = 0;
-	c1 = 1;
-	s1 = 0;
-      }
-      
-      for (i=1;i<kx;i++)
-	{
-	  Float c2,s2;
-	  {								
-	    int i,j;	                                        
-	    t_lam++;	  					
-	    for (i=0 ; !((1<<i)&t_lam) ; i++);			
-	    i = k-i;						
-	    s1 = sinwrk[i];					
-	    c1 = coswrk[i];					
-	    if (i>1)   						
-	      {	    						
-		for (j=k-i+2 ; (1<<j)&t_lam ; j++);		
-		j	       = k - j;					
-		sinwrk[i] = halsec[i] * (sinwrk[i-1] + sinwrk[j]); 
-		coswrk[i] = halsec[i] * (coswrk[i-1] + coswrk[j]); 
-	      }                                                   
-	  }
-	  
-	  c2 = c1*c1 - s1*s1;
-	  s2 = 2*(c1*s1);
-	  fn = fz + n;
-	  fi = fz +i;
-	  gi = fz +k1-i;
-	  do
-	    {
-	      Float a,b,g0,f0,f1,g1,f2,g2,f3,g3;
-	      b       = s2*fi[k1] - c2*gi[k1];
-	      a       = c2*fi[k1] + s2*gi[k1];
-	      f1      = fi[0 ]    - a;
-	      f0      = fi[0 ]    + a;
-	      g1      = gi[0 ]    - b;
-	      g0      = gi[0 ]    + b;
-	      b       = s2*fi[k3] - c2*gi[k3];
-	      a       = c2*fi[k3] + s2*gi[k3];
-	      f3      = fi[k2]    - a;
-	      f2      = fi[k2]    + a;
-	      g3      = gi[k2]    - b;
-	      g2      = gi[k2]    + b;
-	      b       = s1*f2     - c1*g3;
-	      a       = c1*f2     + s1*g3;
-	      fi[k2]  = f0        - a;
-	      fi[0 ]  = f0        + a;
-	      gi[k3]  = g1        - b;
-	      gi[k1]  = g1        + b;
-	      b       = c1*g2     - s1*f3;
-	      a       = s1*g2     + c1*f3;
-	      gi[k2]  = g0        - a;
-	      gi[0 ]  = g0        + a;
-	      fi[k3]  = f1        - b;
-	      fi[k1]  = f1        + b;
-	      gi     += k4;
-	      fi     += k4;
-	    } while (fi<fn);
-        }
-    } while (k4<n);
-}
-
-
 static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int edpos, char *caller, int arg_pos, off_t overlap)
 {
   /* calls gen over cp[beg for dur] data, replacing. */
@@ -1605,8 +1129,6 @@ static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int 
   return(NULL);
 }
 
-/* TODO: non-fht(fft) case is centered but straight case is not! */
-
 static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_enved, 
 				   const char *origin, int over_selection, Float *ur_a, mus_any *gen, XEN edpos, int arg_pos)
 {
@@ -1633,7 +1155,6 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
   int fsize;
   Float scale;
   Float *sndrdat = NULL, *fltdat = NULL;
-  int pow4;
 
   if ((!e) && (!ur_a) && (!gen)) 
     return(NULL);
@@ -1653,11 +1174,12 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
   si = sc->si;
   sfs = sc->sfs;
   scdur = sc->dur;
-
+#if HAVE_FFTW
   if ((!ur_a) && 
       (!gen) && 
       (!over_selection) &&   /* TODO: make fft-filter work with selection */
-      ((order == 0) || (order >= 256)) && 
+      ((order == 0) || (order >= 64)) && 
+      /* TODO: and dur < 2^31 */
       ((int)((to_c_edit_samples(ncp, edpos, origin, arg_pos) + order) / 128) < ss->memory_available))
     {
       /* use convolution if order is large and there's memory available (and not over_selection) */
@@ -1676,7 +1198,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
 	      continue;
 	    }
 	  dur += order;
-	  fsize = (int)(pow(4.0, pow4 = (int)ceil(log(dur) / log(4.0))));
+	  fsize = snd_2pow2(dur);
 	  sndrdat = (Float *)CALLOC(fsize, sizeof(Float));
 	  fltdat = env2array(fsize, e);
 
@@ -1685,7 +1207,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
 	    sndrdat[k] = (Float)(read_sample_to_float(sf));
 	  sfs[i] = free_snd_fd(sf);
 
-	  fht(pow4, sndrdat);
+	  mus_fftw(sndrdat, fsize, 1);
 	  check_for_event(ss);
 	  if (ss->stopped_explicitly)
 	    {
@@ -1698,7 +1220,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
 	  scale = 1.0 / (Float)fsize;
 	  for (k = 0; k < fsize; k++)
 	    sndrdat[k] *= (scale * fltdat[k]);         /* fltdat (via env2array) is already reflected around midpoint */
-	  fht(pow4, sndrdat);
+	  mus_fftw(sndrdat, fsize, -1);
 
 	  ofile = snd_tempnam(ss);
 	  hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur, (char *)origin);
@@ -1735,6 +1257,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
 	}
     }
   else
+#endif
     {
       if (order == 0) order = enved_filter_order(ss);
       if (!gen)
@@ -3249,24 +2772,6 @@ static XEN g_swap_channels(XEN snd0, XEN chn0, XEN snd1, XEN chn1, XEN beg, XEN 
   return(XEN_FALSE);
 }
 
-static XEN g_fht(XEN data)
-{
-  #define H_fht "(fht vct-obj) returns the Hartley transform of the data in the vct object whose size must be a power of 4"
-  vct *v;
-  int pow4;
-  XEN_ASSERT_TYPE(VCT_P(data), data, XEN_ONLY_ARG, S_fht, "a vct");
-  v = TO_VCT(data);
-  pow4 = (int)(snd_round(log(v->length) / (log(4))));
-  if (((int)(pow(4.0, pow4))) != v->length) 
-    mus_misc_error(S_fht,
-		   "fht data length must be a power of 4",
-		   XEN_LIST_3(C_TO_XEN_INT(v->length),
-			      C_TO_XEN_DOUBLE((log(v->length) / (log(4)))),
-			      C_TO_XEN_INT((int)(pow(4.0, pow4)))));
-  fht(pow4, v->data);
-  return(data);
-}
-
 static Float *load_Floats(XEN scalers, int *result_len, const char *caller)
 {
   int len, i;
@@ -3607,7 +3112,7 @@ static XEN g_snd_spectrum(XEN data, XEN win, XEN len, XEN linear_or_dB, XEN beta
   #define H_snd_spectrum "(" S_snd_spectrum " data window len linear-or-dB beta)\n\
 return magnitude spectrum of data (vct) in data using fft-window win and fft length len"
 
-  int i, j, n, p = 0, n2, linear, wtype;
+  int i, j, n, n2, linear, wtype;
   Float maxa, todb, lowest, val, b = 0.0;
   Float *idat, *rdat, *window;
   vct *v;
@@ -3633,32 +3138,26 @@ return magnitude spectrum of data (vct) in data using fft-window win and fft len
   make_fft_window_1(window, n, wtype, b); /* this multiplies by beta max, so beta here should be between 0.0 and 1.0 */
   for (i = 0; i < n; i++) rdat[i] *= window[i];
   FREE(window);
-
-  p = (int)(log(n) / log(4.0));
-  if (n == (int)pow(4, p))
+  n2 = n / 2;
+#if HAVE_FFTW
+  mus_fftw(rdat, n, 1);
+  rdat[0] *= rdat[0];
+  rdat[n2] *= rdat[n2];
+  for (i = 1, j = n - 1; i < n2; i++, j--)
     {
-      fht(p, rdat);
-      rdat[0] *= rdat[0];
-      n2 = n / 2;
-      rdat[n2] *= rdat[n2];
-      for (i = 1, j = n - 1; i < n2; i++, j--)
-	{
-	  rdat[i] = 0.5 * ((rdat[i] * rdat[i]) + (rdat[j] * rdat[j]));
-	  rdat[j] = rdat[i];
-	}
+      rdat[i] = rdat[i] * rdat[i] + rdat[j] * rdat[j];
+      rdat[j] = rdat[i];
     }
-  else
+#else
+  mus_fft(rdat, idat, n, 1);
+  rdat[0] *= rdat[0];
+  rdat[n2] *= rdat[n2];
+  for (i = 1, j = n - 1; i < n2; i++, j--)
     {
-      mus_fft(rdat, idat, n, 1);
-      rdat[0] *= rdat[0];
-      n2 = n / 2;
-      rdat[n2] *= rdat[n2];
-      for (i = 1, j = n - 1; i < n2; i++, j--)
-	{
-	  rdat[i] = rdat[i] * rdat[i] + idat[i] * idat[i];
-	  rdat[j] = rdat[i];
-	}
+      rdat[i] = rdat[i] * rdat[i] + idat[i] * idat[i];
+      rdat[j] = rdat[i];
     }
+#endif
   lowest = 0.000001;
   maxa = 0.0;
   n = n / 2;
@@ -3967,7 +3466,6 @@ XEN_ARGIFY_5(g_reverse_channel_w, g_reverse_channel)
 XEN_NARGIFY_0(g_reverse_selection_w, g_reverse_selection)
 XEN_ARGIFY_6(g_swap_channels_w, g_swap_channels)
 XEN_ARGIFY_4(g_insert_silence_w, g_insert_silence)
-XEN_NARGIFY_1(g_fht_w, g_fht)
 XEN_ARGIFY_1(g_scale_selection_to_w, g_scale_selection_to)
 XEN_ARGIFY_1(g_scale_selection_by_w, g_scale_selection_by)
 XEN_ARGIFY_3(g_scale_to_w, g_scale_to)
@@ -4002,7 +3500,6 @@ XEN_ARGIFY_7(g_clm_channel_w, g_clm_channel)
 #define g_reverse_selection_w g_reverse_selection
 #define g_swap_channels_w g_swap_channels
 #define g_insert_silence_w g_insert_silence
-#define g_fht_w g_fht
 #define g_scale_selection_to_w g_scale_selection_to
 #define g_scale_selection_by_w g_scale_selection_by
 #define g_scale_to_w g_scale_to
@@ -4062,7 +3559,6 @@ void g_init_sig(void)
   XEN_DEFINE_PROCEDURE(S_reverse_selection,       g_reverse_selection_w, 0, 0, 0,       H_reverse_selection);
   XEN_DEFINE_PROCEDURE(S_swap_channels,           g_swap_channels_w, 0, 6, 0,           H_swap_channels);
   XEN_DEFINE_PROCEDURE(S_insert_silence,          g_insert_silence_w, 2, 2, 0,          H_insert_silence);
-  XEN_DEFINE_PROCEDURE(S_fht,                     g_fht_w, 1, 0, 0,                     H_fht);
 
   XEN_DEFINE_PROCEDURE(S_scale_selection_to,      g_scale_selection_to_w, 0, 1, 0,      H_scale_selection_to);
   XEN_DEFINE_PROCEDURE(S_scale_selection_by,      g_scale_selection_by_w, 0, 1, 0,      H_scale_selection_by);

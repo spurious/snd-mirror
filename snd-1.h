@@ -1332,7 +1332,6 @@ void display_frequency_response(snd_state *ss, env *e, axis_info *ap, axis_conte
 void cursor_delete(chan_info *cp, off_t count, const char *origin);
 void cursor_zeros(chan_info *cp, off_t count, int regexpr);
 void cursor_insert(chan_info *cp, off_t beg, off_t count, const char *origin);
-void fht(int powerOfFour, Float *array);
 
 void g_init_sig(void);
 int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos);

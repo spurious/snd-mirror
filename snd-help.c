@@ -119,6 +119,10 @@ static char *glx_version(void)
 }
 #endif
 
+#if HAVE_FFTW
+#include <fftw.h>
+#endif
+
 char *version_info(void)
 {
   char *buf;
@@ -147,6 +151,9 @@ char *version_info(void)
   #ifdef GSL_VERSION
           " ", GSL_VERSION,
   #endif
+#endif
+#if HAVE_FFTW
+	  "\n    ", fftw_version,
 #endif
 #if USE_MOTIF
   #ifdef LESSTIF_VERSION
@@ -239,6 +246,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+7-Jun:   added fftw support, removed fht.\n\
 6-Jun:   removed --with-big-colormap switch (use -DCOLORMAP_SIZE=64 to get old form).\n\
 4-Jun:   Gtk OpenGL support via the gtkglext library.\n\
 3-Jun:   removed \"colour\" spelling option (snd5.scm has backwards compatible definitions).\n\
@@ -1179,7 +1187,6 @@ all refer to the same thing.\n\
   " S_expand_control_ramp " (snd)\n\
   " S_expand_control_p "   (snd)\n\
   " S_fft "               (rl im sgn)\n\
-  " S_fht "               (rl)\n\
   " S_file_dialog "       ()\n\
   " S_file_name "         (snd)\n\
   " S_filter_control_env " (snd)\n\

@@ -95,6 +95,7 @@
 #undef ESD
 #undef BSDI
 
+#undef HAVE_FFTW
 #undef HAVE_GUILE
 #undef HAVE_RUBY
 #undef HAVE_EXTENSION_LANGUAGE

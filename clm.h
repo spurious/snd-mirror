@@ -2,10 +2,11 @@
 #define MUS_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 9
-#define MUS_DATE "5-June-02"
+#define MUS_REVISION 10
+#define MUS_DATE "7-June-02"
 
 /* 
+ * 7-Jun:      fftw support added (mus_fftw).
  * 31-May:     changed mus_any_class.
  * 3-May:      many int->off_t changes for large files.
  * 8-Apr:      off-by-1 env bug (Lisp/C are now identical), env_interp of exp env beyond end bugfix.
@@ -500,6 +501,9 @@ Float mus_convolve              PROTO((mus_any *ptr, Float (*input)(void *arg, i
 mus_any *mus_make_convolve      PROTO((Float (*input)(void *arg, int direction), Float *filter, int fftsize, int filtersize, void *environ));
 void mus_spectrum               PROTO((Float *rdat, Float *idat, Float *window, int n, int type));
 void mus_fft                    PROTO((Float *rl, Float *im, int n, int is));
+#if HAVE_FFTW
+void mus_fftw                   PROTO((Float *rl, int n, int dir));
+#endif
 Float *mus_make_fft_window      PROTO((int type, int size, Float beta));
 Float *mus_make_fft_window_with_window PROTO((int type, int size, Float beta, Float *window));
 void mus_convolution            PROTO((Float* rl1, Float* rl2, int n));

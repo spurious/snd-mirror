@@ -1,5 +1,6 @@
 snd change log
 
+  7-Jun:     added fftw support, removed fht.
   6-Jun:     removed --with-big-colormap switch (use -DCOLORMAP_SIZE=64 to get old form).
   4-Jun:     Gtk OpenGL support via the gtkglext library.
   3-Jun:     removed "colour" spelling option (snd5.scm has backwards compatible definitions).

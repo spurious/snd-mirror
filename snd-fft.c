@@ -7,9 +7,14 @@
  * and is scaled by the window max before being applied 
  *
  * returned to old wavelet code 18-Apr-01, and finally wrote the snd-test.scm tests.
+ * added fftw support and removed fht 6-June-02
  */
 
-#define FFT_IN_BACKGROUND_SIZE 16384
+#if HAVE_FFTW
+  #define FFT_IN_BACKGROUND_SIZE 16384
+#else
+  #define FFT_IN_BACKGROUND_SIZE 1024
+#endif
 /* this fft size decides when to use a background process rather than a single fft call */
 
 #define NUM_CACHED_FFT_WINDOWS 8
@@ -664,45 +669,44 @@ static void walsh_transform(Float *data, int n)
 
 static void autocorrelation(Float *data, int n)
 {
+#if HAVE_FFTW
+  Float *rl;
+#else
   Float *rl, *im;
+#endif
   Float fscl;
-  int i, j, p, n2;
-  fscl = 2.0 / (Float)n;
+  int i, j, n2;
+  n2 = n / 2;
   rl = (Float *)MALLOC(n * sizeof(Float));
-  im = (Float *)CALLOC(n, sizeof(Float));
   for (i = 0; i < n; i++) rl[i] = data[i];
-
-  p = (int)(log(n + 1) / log(4.0));
-  if (n == snd_ipow2(p * 2))
+#if HAVE_FFTW
+  fscl = 1.0 / (Float)n;
+  mus_fftw(rl, n, 1);
+  rl[0] *= rl[0];
+  rl[n2] *= rl[n2];
+  for (i = 1, j = n - 1; i < n2; i++, j--) 
     {
-      fht(p, rl);
-      rl[0] *= rl[0];
-      n2 = n / 2;
-      rl[n2] *= rl[n2];
-      for (i = 1, j = n - 1; i < n2; i++, j--)
-	{
-	  rl[i] = 0.5 * ((rl[i] * rl[i]) + (rl[j] * rl[j]));
-	  rl[j] = rl[i];
-	}
+      rl[i] = rl[i] * rl[i] + rl[j] * rl[j];
+      rl[j] = rl[i];
     }
-  else
+  mus_fftw(rl, n, -1);
+#else
+  fscl = 2.0 / (Float)n;
+  im = (Float *)CALLOC(n, sizeof(Float));
+  mus_fft(rl, im, n, 1);
+  rl[0] *= rl[0];
+  rl[n2] *= rl[n2];
+  for (i = 1, j = n - 1; i < n2; i++, j--)
     {
-      mus_fft(rl, im, n, 1);
-      rl[0] *= rl[0];
-      n2 = n / 2;
-      rl[n2] *= rl[n2];
-      for (i = 1, j = n - 1; i < n2; i++, j--)
-	{
-	  rl[i] = rl[i] * rl[i] + im[i] * im[i];
-	  rl[j] = rl[i];
-	}
+      rl[i] = rl[i] * rl[i] + im[i] * im[i];
+      rl[j] = rl[i];
     }
   memset((void *)im, 0, n * sizeof(Float));
   mus_fft(rl, im, n, -1);
-  for (i = 0; i <= n / 2; i++) data[i] = fscl * rl[i];
-
-  FREE(rl);
   FREE(im);
+#endif
+  for (i = 0; i <= n2; i++) data[i] = fscl * rl[i];
+  FREE(rl);
 }
 
 
@@ -1415,12 +1419,10 @@ static void make_sonogram_axes(chan_info *cp)
     }
 }
 
-void fht_1(Float *fz, int n);
-
 static int apply_fft_window(fft_state *fs)
 {
   /* apply the window, reading data if necessary, resetting IO blocks to former state */
-  int i, j, result = 5, p = 0, use_fht = 0, use_fht_1 = 0;
+  int i, j, result = 5;
   off_t ind0;
   Float *window, *fft_data;
   int data_len;
@@ -1466,39 +1468,36 @@ static int apply_fft_window(fft_state *fs)
     {
     case FOURIER:
       window = (Float *)((fft_window_state *)(fs->wp))->window;
-      if ((fs->size <= FFT_IN_BACKGROUND_SIZE) && (fs->size > 2))
+#if HAVE_FFTW
+      if (fs->size <= FFT_IN_BACKGROUND_SIZE)
 	{
-	  /* to my surprise, it's smoother even on an old SGI to just do the fft in place */
-	  /*   hooray for micro-optimization! */
-	  p = (int)(log(fs->size + 1) / log(4.0));
-	  use_fht = ((p > 0) && (fs->size == snd_ipow2(p * 2)));
-	  use_fht_1 = !use_fht;
+	  for (i = 0; i < data_len; i++)
+	    fft_data[i] = window[i] * read_sample_to_float(sf);
 	}
-      if ((use_fht) || (use_fht_1))
-	for (i = 0; i < data_len; i++)
-	  fft_data[i] = window[i] * read_sample_to_float(sf);
-	else
-	  {
-	    fft_data[0] = 0.0;
-	    for (i = 1; i < data_len; i++)  /* 22-Nov-00 was starting at 0, but I think XJS's version of the fft is 1-based */
-	      fft_data[i] = window[i - 1] * read_sample_to_float(sf);
-	  }
-      /* my timing tests indicate this change to float (i.e. scaling) costs nothing in the larger scheme of things */
+      else
+#endif
+	{
+	  fft_data[0] = 0.0;
+	  for (i = 1; i < data_len; i++)  /* 22-Nov-00 was starting at 0, but I think XJS's version of the fft is 1-based */
+	    fft_data[i] = window[i - 1] * read_sample_to_float(sf);
+	}
       if (data_len < fs->size) 
 	for (i = data_len; i < fs->size; i++) 
 	  fft_data[i] = 0.0;
       decrement_fft_window_use(fs);
       result = 1;
-      if ((use_fht) || (use_fht_1))
+#if HAVE_FFTW
+      if (fs->size <= FFT_IN_BACKGROUND_SIZE)
 	{
-	  if (use_fht) fht(p, fft_data); else fht_1(fft_data, fs->size);
-	  scaler = 1.0 / sqrt(2.0);
-	  fft_data[0] = scaler * fabs(fft_data[0]);
-	  fft_data[fs->size / 2] = scaler * fabs(fft_data[fs->size / 2]);
+	  mus_fftw(fft_data, fs->size, 1);
+	  scaler = 2.0 / (Float)(fs->size);
+	  fft_data[0] = fabs(scaler * fft_data[0]);
+	  fft_data[fs->size / 2] = fabs(scaler * fft_data[fs->size / 2]);
 	  for (i = 1, j = fs->size - 1; i < fs->size / 2; i++, j--) 
 	    fft_data[i] = scaler * hypot(fft_data[i], fft_data[j]);
 	  result = 5;
 	}
+#endif
       break;
     case HANKEL:
       for (i = 0; i < data_len; i++) fs->hwin[i] = read_sample_to_float(sf);
@@ -2592,22 +2591,17 @@ static XEN g_snd_transform(XEN type, XEN data, XEN hint)
   switch (trf)
     {
     case FOURIER: 
-      if ((XEN_BOUND_P(hint)) && (XEN_TO_C_INT(hint) == 1))
-	fht((int)(log(v->length) / log(4.0)), v->data);
-      else
+      dat = (Float *)CALLOC(v->length, sizeof(Float));
+      mus_fft(v->data, dat, v->length, 1);
+      v->data[0] *= v->data[0];
+      n2 = v->length / 2;
+      v->data[n2] *= v->data[n2];
+      for (i = 1, j = v->length - 1; i < n2; i++, j--)
 	{
-	  dat = (Float *)CALLOC(v->length, sizeof(Float));
-	  mus_fft(v->data, dat, v->length, 1);
-	  v->data[0] *= v->data[0];
-	  n2 = v->length / 2;
-	  v->data[n2] *= v->data[n2];
-	  for (i = 1, j = v->length - 1; i < n2; i++, j--)
-	    {
-	      v->data[i] = v->data[i] * v->data[i] + dat[i] * dat[i];
-	      v->data[j] = v->data[i];
-	    }
-	  FREE(dat);
+	  v->data[i] = v->data[i] * v->data[i] + dat[i] * dat[i];
+	  v->data[j] = v->data[i];
 	}
+      FREE(dat);
       break;
     case HANKEL:
 #if HAVE_GSL

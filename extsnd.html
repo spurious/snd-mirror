@@ -7264,46 +7264,6 @@ And an example that lets us see the result of filtering the waveform:
 <!-- -->input data. <i>sgn</i> is 1 for an FFT, -1 for an inverse FFT; (default 1).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- fht -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndfht">fht</a></em> (vobj)</code></span></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->perform Hartley transform on vct <i>vobj</i> whose length must be a power of 4.
-<!-- -->This is a fast version of the FFT (it's about 4 to 6 times faster than the fft, 
-<!-- -->but can be applied only to real data; it is its own inverse).  The following 
-<!-- -->function reads data from the left window edge, calls the Hartley transform 
-<!-- -->(using a "rectangular window"), turns that into a magnitude spectrum, and graphs 
-<!-- -->the result (which is the same as the fft-generated magnitude spectrum before 
-<!-- -->any normalization etc).
-<!-- --></td></tr>
-<!-- -->
-<!-- --><tr><td></td><td>
-<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(define (hgrf snd chn y0 y1)
-  (let* ((size (transform-size snd chn))
-         (hv0 (samples-&gt;vct (left-sample snd chn) size))
-         (hv1 (make-vct (/ size 2))))
-    (<em class=red>fht</em> hv0)
-    (do ((i 1 (1+ i)))
-        ((= i (/ size 2)))
-      (vct-set! hv1 i 
-        (* (sqrt (+ (* (vct-ref hv0 i) 
-                       (vct-ref hv0 i))
-                    (* (vct-ref hv0 (- size i)) 
-                       (vct-ref hv0 (- size i)))))
-           (/ (sqrt 2.0) size))))
-    (graph hv1)))
-
-(add-hook! graph-hook hgrf)
-<!-- --></pre></td></tr></table></td></tr>
-<!-- -->
-<!-- --><tr><td></td><td>
-<!-- -->The explicit (slow) form of this transform is dht in <a href="sndscm.html#dspdoc">dsp.scm</a>.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-
 </table>
 
 <p>Other related variables and functions:</p>

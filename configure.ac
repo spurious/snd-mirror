@@ -372,10 +372,24 @@ fi
 dnl from gsl's configure.in
 AC_CHECK_FUNCS(isnan, ,[
     AC_MSG_CHECKING([for isnan with <math.h>])
-    AC_TRY_LINK([#include <math.h>], [float f = 0.0; isnan(f)],[
-        AC_MSG_RESULT(yes)
-        AC_DEFINE(HAVE_ISNAN)],
-        AC_MSG_RESULT(no))])
+    AC_TRY_LINK([#include <math.h>], 
+		[float f = 0.0; isnan(f)],
+        	[AC_MSG_RESULT(yes)
+         	 AC_DEFINE(HAVE_ISNAN)],
+         	[AC_MSG_RESULT(no)])])
+
+SAVELIBS=$LIBS
+FFTW_LIBS=""
+LIBS="$LIBS -lrfftw -lfftw -lm"
+AC_MSG_CHECKING([for rfftw])
+AC_TRY_LINK([#include <rfftw.h>],
+		[rfftw_one(NULL, NULL, NULL)],
+		[AC_MSG_RESULT(yes)
+		 AC_DEFINE(HAVE_FFTW)
+		 FFTW_LIBS="-lrfftw -lfftw"],
+		[AC_MSG_RESULT(no)])
+AC_SUBST(FFTW_LIBS)
+LIBS=$SAVELIBS
 
 AC_TYPE_SIGNAL
 AC_FUNC_STRFTIME

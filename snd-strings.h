@@ -420,7 +420,6 @@
 #define S_fft_log_magnitude             "fft-log-magnitude"
 #define S_fft_window                    "fft-window"
 #define S_fft_window_beta               "fft-window-beta"
-#define S_fht                           "fht"
 #define S_file_dialog                   "file-dialog"
 #define S_file_name                     "file-name"
 #define S_file_save_as_dialog           "file-save-as-dialog"

@@ -36,6 +36,10 @@
 #include <gsl/gsl_complex_math.h>
 #endif
 
+#if HAVE_FFTW
+#include <rfftw.h>
+#endif
+
 static int mus_class_tag = MUS_INITIAL_GEN_TAG;
 int mus_make_class_tag(void) {return(mus_class_tag++);}
 
@@ -540,7 +544,7 @@ void mus_rectangular2polar(Float *rl, Float *im, int size)
     {
       temp = rl[i] * rl[i] + im[i] * im[i];
       im[i] = -atan2(im[i], rl[i]); /* "-" here so that clockwise is positive? */
-      if (temp < .0000001) 
+      if (temp < .00000001) 
 	rl[i] = 0.0;
       else rl[i] = sqrt(temp);
     }
@@ -5794,6 +5798,33 @@ Float mus_granulate(mus_any *ptr, Float (*input)(void *arg, int direction))
 /* fft and convolution of Float data in zero-based arrays
  */
 
+#if HAVE_FFTW
+/* save old plans both ways */
+static fftw_real *rdata = NULL, *idata = NULL;
+static rfftw_plan rplan, iplan;
+static int last_fft_size = 0;
+
+void mus_fftw(Float *rl, int n, int dir)
+{
+  int i;
+  if (n != last_fft_size)
+    {
+      if (rdata) {FREE(rdata); FREE(idata); rfftw_destroy_plan(rplan); rfftw_destroy_plan(iplan);}
+      rplan = rfftw_create_plan(n, FFTW_REAL_TO_COMPLEX, FFTW_ESTIMATE); /* I didn't see any improvement here from using FFTW_MEASURE */
+      iplan = rfftw_create_plan(n, FFTW_COMPLEX_TO_REAL, FFTW_ESTIMATE);
+      last_fft_size = n;
+      rdata = (fftw_real *)CALLOC(n, sizeof(fftw_real));
+      idata = (fftw_real *)CALLOC(n, sizeof(fftw_real));
+    }
+  memset((void *)idata, 0, n * sizeof(fftw_real));
+  for (i = 0; i < n; i++) {rdata[i] = rl[i];}
+  if (dir != -1)
+    rfftw_one(rplan, rdata, idata);
+  else rfftw_one(iplan, rdata, idata);
+  for (i = 0; i < n; i++) rl[i] = idata[i];
+}
+#endif
+
 static void mus_scramble (Float* rl, Float* im, int n)
 {
   /* bit reversal */
@@ -5822,7 +5853,7 @@ static void mus_scramble (Float* rl, Float* im, int n)
     }
 }
 
-void mus_fft (Float *rl, Float *im, int n, int is)
+void mus_fft(Float *rl, Float *im, int n, int is)
 {
   /* standard fft: real part in rl, imaginary in im,
    * rl and im are zero-based.
@@ -5844,11 +5875,6 @@ void mus_fft (Float *rl, Float *im, int n, int is)
       ui = 0.0;
       for (i2 = 0; i2 < ldm; i2++)
 	{
-#if 0
-#if (HAVE_ISNAN) || (LINUX) || defined(__bsdi__)
-	  if (isnan(ui)) ui = 0.0;
-#endif
-#endif
 	  i = i2;
 	  j = i2 + ldm;
 	  for (j2 = 0; j2 < mh; j2++)
@@ -6894,8 +6920,26 @@ Float mus_phase_vocoder(mus_any *ptr, Float (*input)(void *arg, int direction))
 	      if (buf >= pv->N) buf = 0;
 	    }
 	  pv->filptr += pv->D;
+#if HAVE_FFTW
+	  /* actually this is not faster than the mus_fft case -- other processing swamps the fft here */
+	  {
+	    double temp;
+	    mus_fftw(pv->ampinc, pv->N, 1);
+	    pv->ampinc[0] = fabs(pv->ampinc[0]);
+	    pv->ampinc[N2] = fabs(pv->ampinc[N2]);
+	    for (i = 1, j = pv->N - 1; i < N2; i++, j--)
+	      {
+		pv->freqs[i] = atan2(pv->ampinc[j], pv->ampinc[i]);
+		temp = pv->ampinc[i] * pv->ampinc[i] + pv->ampinc[j] * pv->ampinc[j];
+		if (temp < .00000001) 
+		  pv->ampinc[i] = 0.0;
+		else pv->ampinc[i] = sqrt(temp);
+	      }
+	  }
+#else
 	  mus_fft(pv->ampinc, pv->freqs, pv->N, 1);
 	  mus_rectangular2polar(pv->ampinc, pv->freqs, N2);
+#endif
 	}
       
       if ((pv->edit == NULL) || 

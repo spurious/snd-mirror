@@ -6074,7 +6074,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
 static XEN g_colormap_ref(XEN map, XEN pos)
 {
   #define H_colormap_ref "(colormap-ref map &optional position) -> (list r g b). 'map' can be a number \
-between 0.0 and 1.0 with 'pos' omitted -- in this case the color_map and so on comes from the color dialog.
+between 0.0 and 1.0 with 'pos' omitted -- in this case the color_map and so on comes from the color dialog. \
 colormap_ref returns -1 if the current background color should be used."
   unsigned short r, g, b;
   snd_state *ss;

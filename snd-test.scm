@@ -3415,8 +3415,9 @@
 	(close-sound ind1)
 	(close-sound ind2))
 
-      (let* ((ind (open-sound "oboe.snd"))
+      (let* ((ind (open-sound "now.snd"))
 	     (cur-amp (amp-control ind)))
+	(IF (not (= now-snd-index ind)) (snd-display ";memo-sound: ~A ~A ~A" memo-sound ind now-snd-index))
 	(set! (amp-control ind) .5)
 	(IF (ffneq (amp-control ind) .5) (snd-display ";amp-control (.5): ~A?" (amp-control ind)))
 	(set! (amp-control ind 0) .25)
@@ -3994,6 +3995,24 @@
 	(test-edpos-1 (lambda (snd pos) (src-sound 0.5 1.0 snd 0 pos)) 'src-sound ind1)
 	(test-edpos-1 (lambda (snd pos) (filter-sound (make-fir-filter 6 (list->vct '(.1 .2 .3 .3 .2 .1))) 6 snd 0 pos)) 'filter-sound ind1)
 	(test-edpos-1 (lambda (snd pos) (convolve-with "pistol.snd" .5 snd 0 pos)) 'convolve-with ind1)
+
+	(let ((ind (new-sound "fmv.snd"))
+	      (v (make-vct 2000))
+	      (ctr 0))
+	  (vct-map! v (lambda ()
+			(let ((val (sin (* ctr 2.0 (/ 3.14159 10.0)))))
+			  (set! ctr (1+ ctr))
+			  val)))
+	  (vct->channel v 0 2000 ind 0)
+	  (filter-sound '(0 0 .09 0 .1 1 .11 0 1 0) 1024)
+	  (IF (> (maxamp) .025) (snd-display "filter-sound maxamp 1: ~A" (maxamp)))
+	  (undo)
+	  (filter-sound '(0 0 .19 0 .2 1 .21 0 1 0) 1024)  
+	  (IF (< (maxamp) .9) (snd-display "filter-sound maxamp 2: ~A" (maxamp)))
+	  (undo)
+	  (filter-sound '(0 0 .29 0 .3 1 .31 0 1 0) 1024)  
+	  (IF (> (maxamp) .02) (snd-display "filter-sound maxamp 3: ~A" (maxamp)))
+	  (close-sound ind))
 
 	(set! (previous-files-sort-procedure)
 	      (lambda (lst)
@@ -4969,37 +4988,6 @@
 	(IF (or (fneq (vector-ref rdat 3) 16.0)
 		(fneq (vector-ref rdat 4) 0.0))
 	    (snd-display ";vector fft real[3 or 4]: ~A ~A?" (vector-ref rdat 3) (vector-ref rdat 4))))
-
-      (for-each
-       (lambda (size)
-	 (let* ((rdat (make-vct size))
-		(idat (make-vct size))
-		(xdat (make-vct size)))
-	   (vct-set! rdat 3 1.0)
-	   (vct-set! xdat 3 1.0)
-	   (fft rdat idat 1)
-	   (fht xdat)
-	   (do ((i 1 (1+ i)))
-	       ((= i (/ size 2)))
-	     (let ((hdat (* (sqrt (+ (* (vct-ref xdat i) (vct-ref xdat i))
-				     (* (vct-ref xdat (- size i)) (vct-ref xdat (- size i)))))
-			    (/ (sqrt 2.0) size)))
-		   (fdat (* (sqrt (+ (* (vct-ref rdat i) (vct-ref rdat i))
-				     (* (vct-ref idat i) (vct-ref idat i))))
-			    (/ 2 size))))
-	       (if (fneq fdat hdat)
-		   (snd-display ";~D: fft ~A, fht ~A " i fdat hdat))))
-	   (fft rdat idat -1)
-	   (fht xdat)
-	   (IF (fneq (vct-ref rdat 3) size)
-	       (snd-display ";ifft ~A: ~A" size (vct-ref rdat 3)))
-	   (IF (fneq (vct-ref xdat 3) size)
-	       (snd-display ";ifht ~A: ~A" size (vct-ref xdat 3)))
-	   (IF (fneq (vct-ref rdat 4) 0.0)
-	       (snd-display ";ifft ~A: ~A" size (vct-ref rdat 3)))
-	   (IF (fneq (vct-ref xdat 4) 0.0)
-	       (snd-display ";ifht ~A: ~A" size (vct-ref xdat 3)))))
-       (list 256 64 1024 4096))
 
       (let ((v0 (make-vct 10))
 	    (v1 (make-vct 10)))
@@ -11906,8 +11894,7 @@
 	      (insert-selection 3000 ind 0)
 	      (delete-selection)
 	      (revert-sound ind))))
-	(close-sound ind)
-	)
+	(close-sound ind))
 
       (if (file-exists? "storm.snd")
 	  (let ((ind (open-sound "storm.snd")))
@@ -14029,53 +14016,6 @@ EDITS: 5
 	       (snd-display ";snd-spectrum dB (0.0) [~D: ~D]: ~A?" i size (vct-ref d1 i)))))
 
        (list 8 16))
-
-
-      ;; -------- fht
-      
-      (set! d0 (make-vct 16))
-      (set! d1 (make-vct 16))
-      (do ((i 0 (1+ i)))
-	  ((= i 16))
-	(vct-set! d0 i (random 1.0)) 
-	(vct-set! d1 i (vct-ref d0 i)))
-      (fht d0)
-      (fht d0)
-      (vct-scale! d0 (/ 1.0 16.0))
-      (do ((i 0 (1+ i)))
-	  ((= i 16))
-	(IF (fneq (vct-ref d0 i) (vct-ref d1 i))
-	    (snd-display (format ";fht twice [~D]:~A ~A?" i (vct-ref d0 i) (vct-ref d1 i)))))
-
-      (for-each 
-       (lambda (size)
-	 (for-each
-	  (lambda (loc)
-	    (let ((rdat (make-vct size)))
-	      (vct-set! rdat loc 1.0)
-	      (autocorrelate rdat)
-	      (IF (fneq (vct-ref rdat 0) 2.0) (snd-display ";autocorrelate ~D:~D: ~A?" size loc rdat))
-	      (do ((i 1 (1+ i)))
-		  ((= i (/ size 2)))
-		(if (fneq (vct-ref rdat i) 0.0) (snd-display ";autocorrelate ~D:~D[~D]: ~A?" size loc i (vct-ref rdat i))))))
-	  (list 0 1 2 3)))
-       (list 8 16 128 256))
-
-      (for-each 
-       (lambda (size)
-	 (for-each
-	  (lambda (loc)
-	    (let ((rdat (make-vct size)))
-	      (vct-set! rdat loc 1.0)
-	      (vct-set! rdat (+ loc 1) 1.0)
-	      (autocorrelate rdat)
-	      (IF (fneq (vct-ref rdat 0) 4.0) (snd-display ";autocorrelate(4) ~D:~D: ~A?" size loc rdat))
-	      (IF (fneq (vct-ref rdat 1) 2.0) (snd-display ";autocorrelate(4:1) ~D:~D: ~A?" size loc rdat))
-	      (do ((i 2 (1+ i)))
-		  ((= i (/ size 2)))
-		(if (fneq (vct-ref rdat i) 0.0) (snd-display ";autocorrelate(4) ~D:~D[~D]: ~A?" size loc i (vct-ref rdat i))))))
-	  (list 0 1 2 3)))
-       (list 8 16 128 256))
 
 
       ;; -------- hankel
@@ -22391,7 +22331,7 @@ EDITS: 5
 		(snd-display ";xevent type trouble! ~A -> ~A" (|XEvent) (|XEvent? (|XEvent))))
 	    (IF (not (|XGCValues? (|XGCValues)))
 		(snd-display ";xgcvalues type trouble! ~A -> ~A" (|XGCValues) (|XGCValues? (|XGCValues))))
-      
+
 	    (let* ((xm-procs 
 		    ;; these can't be called in this context:
 		    ;;   |XtProcessEvent |XtAppProcessEvent |XtMainLoop |XtAppMainLoop |XtAppAddActions |XtAddActions 
@@ -22450,7 +22390,9 @@ EDITS: 5
 		         |XCreatePixmap |XCreateBitmapFromData |XCreatePixmapFromBitmapData |XCreateSimpleWindow
 		         |XGetSelectionOwner |XCreateWindow |XListInstalledColormaps |XListFonts |XListFontsWithInfo
 		         |XGetFontPath |XListExtensions |XListProperties |XKeycodeToKeysym |XLookupKeysym
-		         |XGetKeyboardMapping |XStringToKeysym |XMaxRequestSize |XExtendedMaxRequestSize
+		         |XGetKeyboardMapping 
+                         |XStringToKeysym 
+			 |XMaxRequestSize |XExtendedMaxRequestSize
 		         |XDisplayMotionBufferSize |XVisualIDFromVisual
 		         |XInitThreads |XLockDisplay |XUnlockDisplay |XRootWindow |XDefaultRootWindow |XRootWindowOfScreen
 		         |XDefaultVisual |XDefaultVisualOfScreen |XDefaultGC |XDefaultGCOfScreen |XBlackPixel |XWhitePixel
@@ -22731,7 +22673,7 @@ EDITS: 5
 		     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) (sqrt -1.0) (make-delay 32) 
 			   :channels -1 0 #f #t '() (make-vector 0) 12345678901234567890))
 		    ))
-	      
+
 	      (let ((struct-accessors (list  |pixel |red |green |blue |flags |pad |x |y |width |height |angle1 |angle2
 				|x1 |y1 |x2 |y2 |dashes |dash_offset |clip_mask |clip_y_origin |clip_x_origin |graphics_exposures
 				|subwindow_mode |font |ts_y_origin |ts_x_origin |stipple |tile |arc_mode |fill_rule |fill_style
@@ -22810,7 +22752,7 @@ EDITS: 5
 			     (snd-display ";(~A) -> ~A" name tag)))))
 		 struct-accessors
 		 struct-accessor-names)
-		
+
 		;; ---------------- 1 Arg
 		(for-each 
 		 (lambda (arg)
@@ -22834,7 +22776,6 @@ EDITS: 5
 		 (list 1.5 "/hiho" (list 0 1) 1234 #f #t '() (make-vector 0))))
 	      (gc))
 	      ))))
-
 
 ;;; -------------------- test 25: Gtk --------------------
 
@@ -22885,7 +22826,7 @@ EDITS: 5
 	       enved-selected-env enved-target enved-waveform-color enved-wave? eps-file eps-left-margin emacs-style-save-as
 	       eps-bottom-margin eps-size expand-control expand-control-hop expand-control-length expand-control-ramp
 	       expand-control? fft fft-window-beta fft-log-frequency fft-log-magnitude transform-size disk-kspace
-	       transform-graph-type fft-window graph-transform?  fht file-dialog mix-file-dialog file-name fill-polygon
+	       transform-graph-type fft-window graph-transform? file-dialog mix-file-dialog file-name fill-polygon
 	       fill-rectangle filter-sound filter-control-in-dB filter-control-env enved-filter-order enved-filter
 	       filter-env-in-hz filter-control-order filter-selection filter-waveform-color filter-control? find
 	       find-mark find-sound finish-progress-report foreground-color forward-graph forward-mark forward-mix
