@@ -1,13 +1,5 @@
 #include "snd.h"
 
-/* these are used internally by the save-state process */
-#define S_delete_samples_with_origin    "delete-samples-with-origin"
-#define S_change_samples_with_origin    "change-samples-with-origin"
-#define S_insert_samples_with_origin    "insert-samples-with-origin"
-#define S_override_samples_with_origin  "override-samples-with-origin"
-
-static ed_list *free_ed_list(ed_list *ed, chan_info *cp);
-
 static XEN save_hook;
 static bool dont_save(snd_info *sp, const char *newname)
 {
@@ -173,6 +165,8 @@ static int add_ptree(chan_info *cp)
     }
   return(cp->ptree_ctr);
 }
+
+static ed_list *free_ed_list(ed_list *ed, chan_info *cp);
 
 static void prune_edits(chan_info *cp, int edpt)
 {
@@ -4417,7 +4411,7 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, bool 
 		      code = cp->xens[FRAGMENT_PTREE_INDEX(ed, j)];
 #if HAVE_GUILE
 		      if (XEN_PROCEDURE_P(code))
-			fprintf(outp, ", code: %s", XEN_AS_STRING(scm_procedure_source(code)));
+			fprintf(outp, ", code: %s", XEN_AS_STRING(XEN_PROCEDURE_SOURCE(code)));
 #endif
 		    }
 		  else 
@@ -4429,7 +4423,7 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, bool 
 #if HAVE_GUILE
 		  code = cp->ptree_inits[FRAGMENT_PTREE_INDEX(ed, j)];
 		  if (XEN_PROCEDURE_P(code))
-		    fprintf(outp, ", init: %s", XEN_AS_STRING(scm_procedure_source(code)));
+		    fprintf(outp, ", init: %s", XEN_AS_STRING(XEN_PROCEDURE_SOURCE(code)));
 #endif
 		}
 	    }
@@ -4521,6 +4515,12 @@ static void display_edits(chan_info *cp, FILE *outp, bool with_source)
   for (i = 0; i <= cp->edit_ctr; i++)
     display_ed_list(cp, outp, i, cp->edits[i], with_source);
 }
+
+/* these are used internally by the save-state process */
+#define S_delete_samples_with_origin    "delete-samples-with-origin"
+#define S_change_samples_with_origin    "change-samples-with-origin"
+#define S_insert_samples_with_origin    "insert-samples-with-origin"
+#define S_override_samples_with_origin  "override-samples-with-origin"
 
 void edit_history_to_file(FILE *fd, chan_info *cp)
 {
@@ -4627,7 +4627,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 		  fprintf(fd, "%s" PROC_OPEN "%s" PROC_SEP OFF_TD PROC_SEP  OFF_TD PROC_SEP "sfile" PROC_SEP "%d",
 			  TO_PROC_NAME("xen-channel"),
 #if HAVE_GUILE
-			  XEN_AS_STRING(scm_procedure_source(cp->xens[ed->ptree_location])),
+			  XEN_AS_STRING(XEN_PROCEDURE_SOURCE(cp->xens[ed->ptree_location])),
 #else
 			  XEN_AS_STRING(cp->xens[ed->ptree_location]),
 #endif
@@ -4665,7 +4665,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 		  fprintf(fd, " %s", (ed->ptree_env_too) ? "#t" : "#f");
 		  code = cp->ptree_inits[ed->ptree_location];
 		  if (XEN_PROCEDURE_P(code))
-		    fprintf(fd, " %s", XEN_AS_STRING(scm_procedure_source(code)));
+		    fprintf(fd, " %s", XEN_AS_STRING(XEN_PROCEDURE_SOURCE(code)));
 		}
 #endif
 	      fprintf(fd, ")\n"); /* works for both Ruby and Scheme */
@@ -8612,7 +8612,9 @@ static char *xen_to_sample_describe(mus_any *ptr)
       FREE(snd_to_sample_buf);
       snd_to_sample_buf = NULL;
     }
-  desc = XEN_AS_STRING(xpl->reader);
+  if (XEN_PROCEDURE_P(xpl->reader))
+    desc = XEN_AS_STRING(XEN_PROCEDURE_SOURCE(xpl->reader));
+  else desc = XEN_AS_STRING(xpl->reader);
   snd_to_sample_buf = (char *)CALLOC(snd_strlen(desc) + PRINT_BUFFER_SIZE, sizeof(char));
   sprintf(snd_to_sample_buf, S_xen_to_sample ": %s", desc);
   return(snd_to_sample_buf);

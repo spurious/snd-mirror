@@ -68,7 +68,7 @@
 #endif
 #endif
 
-/* TODO: property lists, dynamic-wind?, procedure-source? */
+/* TODO: property lists, dynamic-wind?, procedure-source in ruby? */
 /*   currently using scm_internal_dynamic_wind, scm_current_module,
  *   scm_procedure_source, scm_set_smob*, scm_object_property, scm_set_object_property,
  *   scm_c_define, scm_hook_to_list, scm_mkstrport, scm_make_string, scm_current_error_port, scm_fluid_ref, scm_frame_source,
@@ -365,6 +365,7 @@
 #define XEN_OBJECT_HELP(Name)           scm_object_property(Name, XEN_DOCUMENTATION_SYMBOL)
 #define XEN_PROCEDURE_HELP(Name)        scm_procedure_property(Name, XEN_DOCUMENTATION_SYMBOL)
 #define XEN_PROCEDURE_SOURCE_HELP(Name) scm_procedure_documentation(Name)
+#define XEN_PROCEDURE_SOURCE(Func)      scm_procedure_source(Func)
 
 #if HAVE_SCM_C_DEFINE
   #if XEN_DEBUGGING
@@ -747,6 +748,8 @@ XEN xen_guile_dbg_new_procedure(const char *name, XEN (*func)(), int req, int op
 #define XEN_WRAP_C_POINTER(a)             Data_Wrap_Struct(rb_cData, 0, 0, (void *)a)
 #define XEN_UNWRAP_C_POINTER(a)           DATA_PTR(a)
 #define XEN_WRAPPED_C_POINTER_P(a)        (TYPE(a) == T_DATA)
+
+#define XEN_PROCEDURE_SOURCE(Func)        XEN_AS_STRING(Func)
 
 #if XEN_DEBUGGING
 /* the otiose casts to int here are required by g++ */
@@ -1333,6 +1336,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_HOOK_PROCEDURES(a) 0
 #define XEN_VARIABLE_SET(a, b)
 #define XEN_VARIABLE_REF(a) 0
+#define XEN_PROCEDURE_SOURCE(Func) 0
 
 #define XEN_MAKE_AND_RETURN_OBJECT(Tag, Val, ig1, ig2) return(0)
 #define XEN_OBJECT_REF(a) 0

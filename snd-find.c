@@ -500,7 +500,7 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
 		{
 #if HAVE_GUILE
 		  if (optimization(ss) > 0)
-		    sp->search_tree = form_to_ptree_1_b(XEN_LIST_2(scm_procedure_source(proc), proc));
+		    sp->search_tree = form_to_ptree_1_b(XEN_LIST_2(XEN_PROCEDURE_SOURCE(proc), proc));
 #endif
 		  sp->search_proc = proc;
 		  snd_protect(proc);
@@ -532,7 +532,7 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
 	    {
 #if HAVE_GUILE
 	      if (optimization(ss) > 0)
-		ss->search_tree = form_to_ptree_1_b(XEN_LIST_2(scm_procedure_source(snd), snd));
+		ss->search_tree = form_to_ptree_1_b(XEN_LIST_2(XEN_PROCEDURE_SOURCE(snd), snd));
 #endif
 	      ss->search_proc = snd;
 	      snd_protect(snd);

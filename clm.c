@@ -532,7 +532,7 @@ Float *mus_set_data(mus_any *gen, Float *new_data)
 
 Float *mus_xcoeffs(mus_any *gen)
 {
-  if ((check_gen(gen, S_mus_data)) &&
+  if ((check_gen(gen, S_mus_xcoeffs)) &&
       ((gen->core)->xcoeffs))
     return((*((gen->core)->xcoeffs))(gen));
   mus_error(MUS_NO_XCOEFFS, "can't get %s's xcoeffs", mus_name(gen));
@@ -541,7 +541,7 @@ Float *mus_xcoeffs(mus_any *gen)
 
 Float *mus_ycoeffs(mus_any *gen)
 {
-  if ((check_gen(gen, S_mus_data)) &&
+  if ((check_gen(gen, S_mus_ycoeffs)) &&
       ((gen->core)->ycoeffs))
     return((*((gen->core)->ycoeffs))(gen));
   mus_error(MUS_NO_YCOEFFS, "can't get %s's ycoeffs", mus_name(gen));
@@ -550,7 +550,7 @@ Float *mus_ycoeffs(mus_any *gen)
 
 Float mus_xcoeff(mus_any *gen, int index)
 {
-  if ((check_gen(gen, S_mus_data)) &&
+  if ((check_gen(gen, S_mus_xcoeff)) &&
       ((gen->core)->xcoeff))
     return((*((gen->core)->xcoeff))(gen, index));
   return(mus_error(MUS_NO_XCOEFF, "can't get %s's xcoeff[%d] value", mus_name(gen), index));
@@ -558,7 +558,7 @@ Float mus_xcoeff(mus_any *gen, int index)
 
 Float mus_set_xcoeff(mus_any *gen, int index, Float val)
 {
-  if ((check_gen(gen, S_mus_data)) &&
+  if ((check_gen(gen, S_setB S_mus_xcoeff)) &&
       ((gen->core)->set_xcoeff))
     return((*((gen->core)->set_xcoeff))(gen, index, val));
   return(mus_error(MUS_NO_XCOEFF, "can't set %s's xcoeff[%d] value", mus_name(gen), index));
@@ -566,7 +566,7 @@ Float mus_set_xcoeff(mus_any *gen, int index, Float val)
 
 Float mus_ycoeff(mus_any *gen, int index)
 {
-  if ((check_gen(gen, S_mus_data)) &&
+  if ((check_gen(gen, S_mus_ycoeff)) &&
       ((gen->core)->ycoeff))
     return((*((gen->core)->ycoeff))(gen, index));
   return(mus_error(MUS_NO_YCOEFF, "can't get %s's ycoeff[%d] value", mus_name(gen), index));
@@ -574,7 +574,7 @@ Float mus_ycoeff(mus_any *gen, int index)
 
 Float mus_set_ycoeff(mus_any *gen, int index, Float val)
 {
-  if ((check_gen(gen, S_mus_data)) &&
+  if ((check_gen(gen, S_setB S_mus_ycoeff)) &&
       ((gen->core)->set_ycoeff))
     return((*((gen->core)->set_ycoeff))(gen, index, val));
   return(mus_error(MUS_NO_YCOEFF, "can't set %s's ycoeff[%d] value", mus_name(gen), index));
@@ -2796,7 +2796,8 @@ mus_any *mus_make_sine_summation(Float frequency, Float phase, int n, Float a, F
 /* eventually this class/struct could be replaced by flt/filter below */
 typedef struct {
   mus_any_class *core;
-  Float a0, a1, a2, b1, b2;
+  Float xs[3];
+  Float ys[3];
   Float x1, x2, y1, y2;
   Float gain, radius, frequency;
 } smpflt;
@@ -2806,7 +2807,7 @@ static char *inspect_smpflt(mus_any *ptr)
   smpflt *gen = (smpflt *)ptr;
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
 	       "smpflt a0: %f, a1: %f, a2: %f, b1: %f, b2: %f, x1: %f, x2: %f, y1: %f, y2: %f",
-	       gen->a0, gen->a1, gen->a2, gen->b1, gen->b2, gen->x1, gen->x2, gen->y1, gen->y2);
+	       gen->xs[0], gen->xs[1], gen->xs[2], gen->ys[1], gen->ys[2], gen->x1, gen->x2, gen->y1, gen->y2);
   return(describe_buffer);
 }
 
@@ -2818,11 +2819,11 @@ static bool smpflt_equalp(mus_any *p1, mus_any *p2)
   smpflt *g2 = (smpflt *)p2;
   return((p1 == p2) ||
 	 ((g1->core->type == g2->core->type) &&
-	  (g1->a0 == g2->a0) &&
-	  (g1->a1 == g2->a1) &&
-	  (g1->a2 == g2->a2) &&
-	  (g1->b1 == g2->b1) &&
-	  (g1->b2 == g2->b2) &&
+	  (g1->xs[0] == g2->xs[0]) &&
+	  (g1->xs[1] == g2->xs[1]) &&
+	  (g1->xs[2] == g2->xs[2]) &&
+	  (g1->ys[1] == g2->ys[1]) &&
+	  (g1->ys[2] == g2->ys[2]) &&
 	  (g1->x1 == g2->x1) &&
 	  (g1->x2 == g2->x2) &&
 	  (g1->y1 == g2->y1) &&
@@ -2836,19 +2837,19 @@ static char *describe_smpflt(mus_any *ptr)
     {
     case MUS_ONE_ZERO: 
       mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_one_zero ": a0: %.3f, a1: %.3f, x1: %.3f", 
-		   gen->a0, gen->a1, gen->x1); 
+		   gen->xs[0], gen->xs[1], gen->x1); 
       break;
     case MUS_ONE_POLE: 
       mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_one_pole ": a0: %.3f, b1: %.3f, y1: %.3f", 
-		   gen->a0, gen->b1, gen->y1); 
+		   gen->xs[0], gen->ys[1], gen->y1); 
       break;
     case MUS_TWO_ZERO: 
       mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_two_zero ": a0: %.3f, a1: %.3f, a2: %.3f, x1: %.3f, x2: %.3f",
-		   gen->a0, gen->a1, gen->a2, gen->x1, gen->x2); 
+		   gen->xs[0], gen->xs[1], gen->xs[2], gen->x1, gen->x2); 
       break;
     case MUS_TWO_POLE: 
       mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_two_pole ": a0: %.3f, b1: %.3f, b2: %.3f, y1: %.3f, y2: %.3f",
-		   gen->a0, gen->b1, gen->b2, gen->y1, gen->y2); 
+		   gen->xs[0], gen->ys[1], gen->ys[2], gen->y1, gen->y2); 
       break;
     }
   return(describe_buffer);
@@ -2858,7 +2859,7 @@ Float mus_one_zero(mus_any *ptr, Float input)
 {
   smpflt *gen = (smpflt *)ptr;
   Float result;
-  result = (gen->a0 * input) + (gen->a1 * gen->x1);
+  result = (gen->xs[0] * input) + (gen->xs[1] * gen->x1);
   gen->x1 = input;
   return(result);
 }
@@ -2867,40 +2868,12 @@ static Float run_one_zero(mus_any *ptr, Float input, Float unused) {return(mus_o
 static off_t one_length(mus_any *ptr) {return(1);}
 static off_t two_length(mus_any *ptr) {return(2);}
 
-static Float smp_xcoeff(mus_any *ptr, int index)
-{
-  smpflt *gen = (smpflt *)ptr;
-  if (index == 0) return(gen->a0);
-  if (index == 1) return(gen->a1);
-  return(gen->a2);
-}
-
-static Float smp_set_xcoeff(mus_any *ptr, int index, Float val)
-{
-  smpflt *gen = (smpflt *)ptr;
-  if (index == 0) gen->a0 = val;
-  else 
-    {
-      if (index == 1) gen->a1 = val;
-      else gen->a2 = val;
-    }
-  return(val);
-}
-
-static Float smp_ycoeff(mus_any *ptr, int index)
-{
-  smpflt *gen = (smpflt *)ptr;
-  if (index == 1) return(gen->b1);
-  return(gen->b2);
-}
-
-static Float smp_set_ycoeff(mus_any *ptr, int index, Float val)
-{
-  smpflt *gen = (smpflt *)ptr;
-  if (index == 1) gen->b1 = val;
-  else gen->b2 = val;
-  return(val);
-}
+static Float smp_xcoeff(mus_any *ptr, int index) {return(((smpflt *)ptr)->xs[index]);}
+static Float smp_set_xcoeff(mus_any *ptr, int index, Float val) {((smpflt *)ptr)->xs[index] = val; return(val);}
+static Float smp_ycoeff(mus_any *ptr, int index) {return(((smpflt *)ptr)->ys[index]);}
+static Float smp_set_ycoeff(mus_any *ptr, int index, Float val) {((smpflt *)ptr)->ys[index] = val; return(val);}
+static Float *smp_xcoeffs(mus_any *ptr) {return(((smpflt *)ptr)->xs);}
+static Float *smp_ycoeffs(mus_any *ptr) {return(((smpflt *)ptr)->ys);}
 
 static mus_any_class ONE_ZERO_CLASS = {
   MUS_ONE_ZERO,
@@ -2923,7 +2896,7 @@ static mus_any_class ONE_ZERO_CLASS = {
   0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 
-  0, 0,
+  &smp_xcoeffs, &smp_ycoeffs,
   &_mus_wrap_no_vcts
 };
 
@@ -2932,8 +2905,8 @@ mus_any *mus_make_one_zero(Float a0, Float a1)
   smpflt *gen;
   gen = (smpflt *)clm_calloc(1, sizeof(smpflt), S_make_one_zero);
   gen->core = &ONE_ZERO_CLASS;
-  gen->a0 = a0;
-  gen->a1 = a1;
+  gen->xs[0] = a0;
+  gen->xs[1] = a1;
   return((mus_any *)gen);
 }
 
@@ -2942,7 +2915,7 @@ bool mus_one_zero_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_ONE
 Float mus_one_pole(mus_any *ptr, Float input)
 {
   smpflt *gen = (smpflt *)ptr;
-  gen->y1 = (gen->a0 * input) - (gen->b1 * gen->y1);
+  gen->y1 = (gen->xs[0] * input) - (gen->ys[1] * gen->y1);
   return(gen->y1);
 }
 
@@ -2967,7 +2940,7 @@ static mus_any_class ONE_POLE_CLASS = {
   0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
   &smp_ycoeff, &smp_set_ycoeff, 
-  0, 0,
+  &smp_xcoeffs, &smp_ycoeffs,  
   &_mus_wrap_no_vcts
 };
 
@@ -2976,8 +2949,8 @@ mus_any *mus_make_one_pole(Float a0, Float b1)
   smpflt *gen;
   gen = (smpflt *)clm_calloc(1, sizeof(smpflt), S_make_one_pole);
   gen->core = &ONE_POLE_CLASS;
-  gen->a0 = a0;
-  gen->b1 = b1;
+  gen->xs[0] = a0;
+  gen->ys[1] = b1;
   return((mus_any *)gen);
 }
 
@@ -2987,7 +2960,7 @@ Float mus_two_zero(mus_any *ptr, Float input)
 {
   smpflt *gen = (smpflt *)ptr;
   Float result;
-  result = (gen->a0 * input) + (gen->a1 * gen->x1) + (gen->a2 * gen->x2);
+  result = (gen->xs[0] * input) + (gen->xs[1] * gen->x1) + (gen->xs[2] * gen->x2);
   gen->x2 = gen->x1;
   gen->x1 = input;
   return(result);
@@ -3014,7 +2987,8 @@ static mus_any_class TWO_ZERO_CLASS = {
   &smp_xcoeff, &smp_set_xcoeff,
   0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0,
+  0, 0,
+  &smp_xcoeffs, &smp_ycoeffs,
   &_mus_wrap_no_vcts
 };
 
@@ -3023,9 +2997,9 @@ mus_any *mus_make_two_zero(Float a0, Float a1, Float a2)
   smpflt *gen;
   gen = (smpflt *)clm_calloc(1, sizeof(smpflt), S_make_two_zero);
   gen->core = &TWO_ZERO_CLASS;
-  gen->a0 = a0;
-  gen->a1 = a1;
-  gen->a2 = a2;
+  gen->xs[0] = a0;
+  gen->xs[1] = a1;
+  gen->xs[2] = a2;
   return((mus_any *)gen);
 }
 
@@ -3040,7 +3014,7 @@ Float mus_two_pole(mus_any *ptr, Float input)
 {
   smpflt *gen = (smpflt *)ptr;
   Float result;
-  result = (gen->a0 * input) - (gen->b1 * gen->y1) - (gen->b2 * gen->y2);
+  result = (gen->xs[0] * input) - (gen->ys[1] * gen->y1) - (gen->ys[2] * gen->y2);
   gen->y2 = gen->y1;
   gen->y1 = result;
   return(result);
@@ -3067,7 +3041,7 @@ static mus_any_class TWO_POLE_CLASS = {
   0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
   &smp_ycoeff, &smp_set_ycoeff, 
-  0, 0,
+  &smp_xcoeffs, &smp_ycoeffs,
   &_mus_wrap_no_vcts
 };
 
@@ -3090,9 +3064,9 @@ mus_any *mus_make_two_pole(Float a0, Float b1, Float b2)
 	   {
 	     gen = (smpflt *)clm_calloc(1, sizeof(smpflt), S_make_two_pole);
 	     gen->core = &TWO_POLE_CLASS;
-	     gen->a0 = a0;
-	     gen->b1 = b1;
-	     gen->b2 = b2;
+	     gen->xs[0] = a0;
+	     gen->ys[1] = b1;
+	     gen->ys[2] = b2;
 	     return((mus_any *)gen);
 	    }
 	}
@@ -3126,9 +3100,9 @@ Float mus_formant(mus_any *ptr, Float input)
 {
   smpflt *gen = (smpflt *)ptr;
   Float inval, tpinval, output;
-  inval = gen->a0 * input;
-  tpinval = inval + (gen->a2 * gen->x2);
-  output = tpinval - (gen->b1 * gen->y1) - (gen->b2 * gen->y2);
+  inval = gen->xs[0] * input;
+  tpinval = inval + (gen->xs[2] * gen->x2);
+  output = tpinval - (gen->ys[1] * gen->y1) - (gen->ys[2] * gen->y2);
   gen->y2 = gen->y1;
   gen->y1 = output;
   gen->x2 = gen->x1;
@@ -3154,10 +3128,10 @@ void mus_set_formant_radius_and_frequency(mus_any *ptr, Float radius, Float freq
   fw = mus_hz_to_radians(frequency);
   gen->radius = radius;
   gen->frequency = frequency;
-  gen->b2 = radius * radius;
-  gen->a0 = gen->gain * sin(fw) * (1.0 - gen->b2);
-  gen->a2 = -radius;
-  gen->b1 = -2.0 * radius * cos(fw);
+  gen->ys[2] = radius * radius;
+  gen->xs[0] = gen->gain * sin(fw) * (1.0 - gen->ys[2]);
+  gen->xs[2] = -radius;
+  gen->ys[1] = -2.0 * radius * cos(fw);
 }
 
 static Float formant_frequency(mus_any *ptr)
@@ -3198,7 +3172,7 @@ static mus_any_class FORMANT_CLASS = {
   0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
   &smp_ycoeff, &smp_set_ycoeff, 
-  0, 0,
+  &smp_xcoeffs, &smp_ycoeffs,
   &_mus_wrap_no_vcts
 };
 
@@ -3208,7 +3182,7 @@ mus_any *mus_make_formant(Float radius, Float frequency, Float gain)
   gen = (smpflt *)clm_calloc(1, sizeof(smpflt), S_make_formant);
   gen->core = &FORMANT_CLASS;
   gen->gain = gain;
-  gen->a1 = gain; /* for backwards compatibility */
+  gen->xs[1] = gain; /* for backwards compatibility */
   mus_set_formant_radius_and_frequency((mus_any *)gen, radius, frequency);
   return((mus_any *)gen);
 }

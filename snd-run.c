@@ -143,7 +143,6 @@ static XEN optimization_hook;
 #define XEN_SET_OBJECT_PROPERTY(Obj, Prop, Val) scm_set_object_property_x(Obj, Prop, Val)
 #define XEN_PROCEDURE_PROPERTY(Obj, Prop)   scm_procedure_property(Obj, Prop)
 #define XEN_SET_PROCEDURE_PROPERTY(Obj, Prop, Val) scm_set_procedure_property_x(Obj, Prop, Val)
-#define XEN_PROCEDURE_SOURCE(Proc)          scm_procedure_source(Proc)
 #define XEN_PROCEDURE_WITH_SETTER_P(Proc)   scm_procedure_with_setter_p(Proc)
 #define XEN_LONG_INTEGER_P(Arg)             XEN_NOT_FALSE_P(scm_integer_p(Arg))
 

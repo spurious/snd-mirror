@@ -947,6 +947,7 @@ static XEN g_mus_xcoeffs(XEN gen)
   ms = XEN_TO_MUS_XEN(gen);
   if ((ms->vcts) && (ms->nvcts > G_FILTER_XCOEFFS))
     return(ms->vcts[G_FILTER_XCOEFFS]); 
+  /* no wrapper -- locsig/ssb-am, all smpflts have xcoeffs, latter have ycoeffs, but how to get array size? */
   return(XEN_FALSE);
 }
 
