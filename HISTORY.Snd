@@ -1,6 +1,7 @@
 Snd change log
 
-  28-Apr:    freeverb.rb and freeverb.scm from Michael Scholz.
+  28-Apr:    snd 6.8.
+             freeverb.rb and freeverb.scm from Michael Scholz.
   22-Apr:    samples function returns a vct, not a vector.
   15-Apr:    removed fix-bar, makefile.motif.osx, and makefile.gtk.osx.
   11-Apr:    moved dismiss-all-dialogs to snd6.scm.
@@ -33,7 +34,7 @@ Snd change log
   10-Feb:    removed click-for-help option.
   7-Feb:     German translation (po/de.po) thanks to Michael Scholz.
   30-Jan:    gettext changes.
-  12-Jan:    snd-6.5.
+  12-Jan:    snd 6.5.
   8-Jan:     removed loop-samples.
   7-Jan:     added various simple FIR filters to dsp.scm.
   6-Jan:     xramp-channel for virtual exp envs.

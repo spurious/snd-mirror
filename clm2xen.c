@@ -489,10 +489,9 @@ is the window parameter, if any:\n\
   if (n <= 0)
     XEN_OUT_OF_RANGE_ERROR(S_make_fft_window, 2, size, "size ~A <= 0?");
   t = XEN_TO_C_INT(type);
-  if (MUS_FFT_WINDOW_OK(t))
-    return(make_vct(n, mus_make_fft_window(t, n, beta)));
-  XEN_OUT_OF_RANGE_ERROR(S_make_fft_window, 1, type, "~A: unknown fft window");
-  return(XEN_FALSE);
+  if (!(MUS_FFT_WINDOW_OK(t)))
+    XEN_OUT_OF_RANGE_ERROR(S_make_fft_window, 1, type, "~A: unknown fft window");
+  return(make_vct(n, mus_make_fft_window(t, n, beta)));
 }
 
 static XEN g_spectrum(XEN url, XEN uim, XEN uwin, XEN un, XEN utype)

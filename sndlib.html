@@ -116,7 +116,6 @@ name of the sound file.
   int mus_sound_bits_per_sample(const char *arg)   /* bits per sample */
   int mus_data_format_to_bytes_per_sample(int format) /* bytes per sample */
   int mus_sound_maxamp(const char *arg, int *vals) /* return list of maxamp sample pairs */
-  int mus_sound_aiff_p(const char *arg)            /* is it an old-style AIFF file (not AIFC) */
   int *mus_sound_loop_info(const char *arg)        /* 6 loop vals (mode,start,end) then base-detune and base-note  (empty list if no loop info found) */
   int mus_sound_initialize(void)                   /* initialize everything */
 </pre>
@@ -158,7 +157,6 @@ sound file data:</p>
   int mus_sound_close_output (int fd, off_t bytes_of_data) 
   int mus_sound_read (int fd, int beg, int end, int chans, mus_sample_t **bufs) 
   int mus_sound_write (int fd, int beg, int end, int chans, mus_sample_t **bufs) 
-  off_t mus_sound_seek (int fd, off_t offset, int origin) 
   off_t mus_sound_seek_frame (int fd, off_t frame)
 </pre>
 <p>mus_sample_t defaults to int, but can also be float -- it is set when
@@ -202,17 +200,8 @@ See the sndplay example below if this is not obvious.</p>
 starting for each of <i>chans</i> channels in <i>obufs</i> at
 <i>beg</i> and ending at <i>end</i>.</p>
 
-<p><i>mus_sound_seek</i> moves the read or write position for the
-file indicated by <i>fd</i> to <i>offset</i> given the
-<i>origin</i> indication (both treated as in lseek).
-The new actual position attained is returned.  In both
-cases (the returned value and offset), the output datum
-size is considered to be 2, no matter what it really is.
-That is, use byte positions as if you were always reading
-and writing 16-bit data, and mus_sound_seek will compensate
-if its actually 32-bit floats or whatever.  Since this
-is impossible to understand, there's also mus_sound_seek_frame
-which moves to the indicated frame.
+<p><i>mus_sound_seek_frame</i> moves the read or write position for the
+file indicated by <i>fd</i> to the desired frame.
 </p>
 
 <br>
@@ -995,20 +984,20 @@ ld -shared io.o headers.o audio.o sound.o clm.o -o sndlib.so
 <li>8SVX (IFF), EBICSF, INRS, ESPS, 
 <li>SPPACK, ADC (OGI), AVR, VOC, PVF,
 <li>Sound Tools, Turtle Beach SMP, SoundFont 2.0, 
-<li>Sound Designer I and II, PSION, MAUD, Kurzweil 2000,
+<li>Sound Designer I, PSION, MAUD, Kurzweil 2000,
 <li>Gravis Ultrasound, ASF, PAF, CSL,
 <li>Comdisco SPW, Goldwave sample, omf, quicktime
 <li>Sonic Foundry, SBStudio II, Delusion digital, 
 <li>Digiplayer ST3, Farandole Composer WaveSample,
 <li>Ultratracker WaveSample, Sample Dump exchange, 
-<li>Yamaha SY85, SY99, and TX16, Covox v8, SPL, AVI
+<li>Yamaha SY85, SY99, and TX16, Covox v8, SPL, AVI,
+<li>Impulse tracker, Korg, Akai, Turtle Beach
 </ul>
 </ul>
 
 <pre>
 <small>
 Incomplete: OMF, AVI, ASF, QuickTime, SoundFont 2.0, TwinVQ.
-Not handled: Esignal, ILS, HTK, DVSM, SoundEdit.
 Handled by Snd: Mus10, IEEE text, HCOM, various compression schemes.
 </small>
 </pre>
@@ -1065,7 +1054,6 @@ see headers.c or sndlib.h for details.  The next functions handle various IO cal
   int mus_file_create (const char *arg)                 create file
   int mus_file_reopen_write (const char *arg)           open file read-write without changing anything
   int mus_file_close (int fd)                           close file
-  off_t mus_file_seek (int tfd, off_t offset, int origin) 
   off_t mus_file_seek_frame (int tfd, off_t frame)      go to a specific frame in file
   int mus_file_read (int fd, int beg, int end, int chans, mus_sample_t **bufs)
   int mus_file_read_chans (int fd, int beg, int end, int chans, mus_sample_t **bufs, mus_sample_t *cm)
@@ -1188,7 +1176,6 @@ constants and functions described above into Scheme.
   mus-sound-read (fd beg end chans sdata)  read data from sound file <i>fd</i> loading the data array from beg to end
                                            <i>sdata</i> is a sound-data object that should be able to accommodate the read
   mus-sound-write (fd beg end chans sdata) write data to sound file <i>fd</i>
-  mus-sound-seek (fd offset origin)        complicated -- see mus_sound_seek above
   mus-sound-seek-frame (fd frame)          move to <i>frame</i> in sound file <i>fd</i>
   mus-file-data-clipped (fd)               whether output is clipped
 

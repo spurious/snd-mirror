@@ -131,7 +131,7 @@
 	(let ((err (XSendEvent dpy window #f ButtonPressMask e)))
 	  (if (not (= err 0))
 	      (begin
-		(set! (.time e) (list 'Time CurrentTime 100))
+		(set! (.time e) (list 'Time CurrentTime))
 		(set! (.type e) ButtonRelease)
 		(set! err (XSendEvent dpy window #f ButtonReleaseMask e))))
 	  (if (= err 0)

@@ -112,7 +112,6 @@
 #define S_mus_sound_reopen_output       "mus-sound-reopen-output"
 #define S_mus_sound_report_cache        "mus-sound-report-cache"
 #define S_mus_sound_samples             "mus-sound-samples"
-#define S_mus_sound_seek                "mus-sound-seek"
 #define S_mus_sound_seek_frame          "mus-sound-seek-frame"
 #define S_mus_sound_srate               "mus-sound-srate"
 #define S_mus_sound_type_specifier      "mus-sound-type-specifier"

@@ -93,3 +93,13 @@
 (define change-property change-window-property)
 
 ;;; to get a vector from samples, use vct->vector
+
+(define (mus-sound-seek fd loc seek format chans)
+  ;; mus-sound-seek-frame = lseek fd data-location+frames*chans*sample-size-in-bytes seek-set
+  ;; old mus-sound-seek = lseek fd data-location+loc-as-16-in-bytes seek-set
+  ;; but there's no direct way to get the data-format and chans from the file descriptor
+  ;; so in this replacement, there are two added args
+  (let* ((datum-bytes (mus-data-format-bytes-per-sample format))
+	 (fixup-loc (inexact->exact (/ (* loc datum-bytes) (* 2 chans)))))
+    (mus-sound-seek-frame fd loc)))
+

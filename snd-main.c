@@ -28,7 +28,6 @@ int snd_exit_cleanly(snd_state *ss, int force_exit)
 		      XEN_EMPTY_LIST,
 		      S_exit_hook);
   if ((XEN_TRUE_P(res)) && (!force_exit)) return(0);
-  mus_sound_finalize();
   cleanup_dac();
   for_each_chan(ss, remove_temp_files);
   cleanup_region_temp_files();

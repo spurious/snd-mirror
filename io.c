@@ -3,7 +3,6 @@
  * --------------------------------
  * int mus_file_read(int fd, int beg, int end, int chans, mus_sample_t **bufs)
  * int mus_file_write(int tfd, int beg, int end, int chans, mus_sample_t **bufs)
- * off_t mus_file_seek(int tfd, off_t offset, int origin)
  * int mus_file_open_read(const char *arg) 
  * int mus_file_open_write(const char *arg)
  * int mus_file_create(const char *arg)
@@ -11,6 +10,7 @@
  * int mus_file_close(int fd)
  * int mus_file_probe(const char *arg)
  * char *mus_format(const char *format, ...)
+ * off_t mus_file_seek_frame(int tfd, off_t frame)
  * --------------------------------
  */
 
@@ -633,58 +633,6 @@ int mus_file_close(int fd)
 
 
 /* ---------------- seek ---------------- */
-
-off_t mus_file_seek(int tfd, off_t offset, int origin)
-{
-  /* not used in Snd */
-  io_fd *fd;
-  int siz; /* datum size */
-  off_t loc, true_loc, header_end;
-  if ((tfd == MUS_DAC_CHANNEL) || 
-      (tfd == MUS_DAC_REVERB)) 
-    return(0);
-  if ((io_fds == NULL) || 
-      (tfd >= io_fd_size) || 
-      (tfd < 0) || 
-      (io_fds[tfd] == NULL))
-    return(mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED, "mus_file_seek: no file descriptor"));
-  fd = io_fds[tfd];
-  if (fd->data_format == MUS_UNKNOWN) 
-    return(mus_error(MUS_NOT_A_SOUND_FILE, "mus_file_seek: invalid data format for %s", fd->name));
-  siz = fd->bytes_per_sample;
-  if ((siz == 2) || 
-      (origin != SEEK_SET))
-    return(lseek(tfd, offset, origin));
-  else
-    {
-      header_end = fd->data_location;
-      loc = offset - header_end;
-      switch (siz)
-	{
-	case 1: 
-	  true_loc = lseek(tfd, header_end + (loc >> 1), origin);
-
-	  /* now pretend we're still in 16-bit land and return where we "actually" are in that region */
-	  /* that is, loc (in bytes) = how many (2-byte) samples into the file we want to go, return what we got */
-
-	  return(header_end + ((true_loc - header_end) << 1));
-	  break;
-	case 3:
-	  true_loc = lseek(tfd, header_end + loc + (loc >> 1), origin);
-	  return(true_loc + ((true_loc - header_end) >> 1));
-	  break;
-	case 4:
-	  true_loc = lseek(tfd, header_end + (loc << 1), origin);
-	  return(header_end + ((true_loc - header_end) >> 1));
-	  break;
-	case 8:
-	  true_loc = lseek(tfd, header_end + (loc << 2), origin);
-	  return(header_end + ((true_loc - header_end) >> 2));
-	  break;
-	}
-    }
-  return(MUS_ERROR);
-}
 
 off_t mus_file_seek_frame(int tfd, off_t frame)
 {

@@ -309,7 +309,9 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
-28-Apr:  freeverb.rb and freeverb.scm from Michael Scholz.\n\
+28-Apr:  snd 6.8.\n\
+         freeverb.rb and freeverb.scm from Michael Scholz.\n\
+         removed mus-sound-seek.\n\
 25-Apr:  check-for-unsaved-edits arg defaults to #t now.\n\
 22-Apr:  samples function returns a vct, not a vector.\n\
 15-Apr:  removed fix-bar, makefile.motif.osx, and makefile.gtk.osx\n\
@@ -853,16 +855,17 @@ read-only (in selected data formats):\n\
      8SVX (IFF), EBICSF, INRS, ESPS,\n\
      SPPACK, ADC (OGI), AVR, VOC, PVF,\n\
      Sound Tools, Turtle Beach SMP, SoundFont 2.0,\n\
-     Sound Designer I and II, PSION, MAUD, Kurzweil 2000,\n\
+     Sound Designer I, PSION, MAUD, Kurzweil 2000,\n\
      Gravis Ultrasound, ASF, PAF, CSL,\n\
      Comdisco SPW, Goldwave sample, omf, quicktime\n\
      Sonic Foundry, SBStudio II, Delusion digital,\n\
      Digiplayer ST3, Farandole Composer WaveSample,\n\
      Ultratracker WaveSample, Sample Dump exchange,\n\
      Yamaha SY85, SY99, and TX16w, Covox v8, SPL, AVI,\n\
+     Impulse tracker, Korg, Akai, Turtle Beach\n\
      ----\n\
 automatically translated to Sun 16-bit, then read/write:\n\
-     IEEE text, Mus10 SAM 16-bit (modes 1 and 4), AVI\n\
+     IEEE text, Mus10, SAM 16-bit (modes 1 and 4), AVI\n\
      NIST shortpack, HCOM, Intel, IBM, and Oki (Dialogic) ADPCM, \n\
      G721, G723_24, G723_40, MIDI sample dump\n\
 \n\

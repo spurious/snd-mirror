@@ -21,8 +21,6 @@
  *        int mus_header_bits_per_sample (void)                 sample width in bits
  *        off_t mus_header_true_length (void)                   true (lseek) file length
  *        int mus_data_format_to_bytes_per_sample (int format)  sample width in bytes
- *
- *        int mus_header_aiff_p(void)                is header actually old-style AIFF, not AIFC
  *        int mus_header_writable(int type, int format)
  * --------------------------------
  *
@@ -38,11 +36,11 @@
  *
  * Currently supported read-only (in selected data formats):
  *      8SVX (IFF), EBICSF, INRS, ESPS, SPPACK, ADC (OGI), AVR, VOC, CSL, snack "SMP", PVF,
- *      Sound Tools, Turtle Beach SMP, SoundFont 2.0, Sound Designer I and II, PSION alaw, MAUD, 
+ *      Sound Tools, Turtle Beach SMP, SoundFont 2.0, Sound Designer I, PSION alaw, MAUD, 
  *      Gravis Ultrasound, Comdisco SPW, Goldwave sample, OMF,
  *      Sonic Foundry, SBStudio II, Delusion digital, Digiplayer ST3, Farandole Composer WaveSample,
  *      Ultratracker WaveSample, Sample Dump exchange, Yamaha SY85 and SY99 (buggy), Yamaha TX16W, 
- *      Covox v8, SPL, AVI, Kurzweil 2000, Paris Ensoniq
+ *      Covox v8, SPL, AVI, Kurzweil 2000, Paris Ensoniq, Impulse tracker, Korg, Akai type 4, Maui,
  *
  * for a few of these I'm still trying to get documentation -- best sources of info
  * are ftp.cwi.nl:pub/audio (info files), the AFsp sources, and the SOX sources.
@@ -183,6 +181,7 @@ static const unsigned char I_fact[4] = {'f','a','c','t'};  /* used by compressed
 static const unsigned char I_clm_[4] = {'c','l','m',' '};
 static const unsigned char I_NIST[4] = {'N','I','S','T'};  /* first word of NIST SPHERE files */
 static const unsigned char I_8SVX[4] = {'8','S','V','X'};  /* AIFF other choice */
+static const unsigned char I_16SV[4] = {'1','6','S','V'};  /* hmmm... 16-bit 8svx? */
 static const unsigned char I_VOC0[4] = {'C','r','e','a'};  /* Actual text is "Creative Voice File" */
 static const unsigned char I_VOC1[4] = {'t','i','v','e'};
 static const unsigned char I_SOUN[4] = {'S','O','U','N'};  /* Sound Tools first word="SOUND" -- not unique as SMP files start with "SOUND SAMPLE" */
@@ -205,10 +204,7 @@ static const unsigned char I_MHDR[4] = {'M','H','D','R'};
 static const unsigned char I_MDAT[4] = {'M','D','A','T'};
 static const unsigned char I_mdat[4] = {'m','d','a','t'};  /* quicktime */
 static const unsigned char I_MThd[4] = {'M','T','h','d'};  /* sigh -- the M word */
-static const unsigned char I_DVSM[4] = {'D','V','S','M'};  /* first word of DVSM files */
 static const unsigned char I_DECN[4] = {'.','s','d','\0'}; /* first word of DEC files (?) */
-static const unsigned char I_Esig[4] = {'E','s','i','g'};  /* first word of Esignal files */
-static const unsigned char I_nalc[4] = {'n','a','l','\n'}; /* second word of Esignal files */
 static const unsigned char I_sfbk[4] = {'s','f','b','k'};  /* SoundFont 2.0 */
 static const unsigned char I_sdta[4] = {'s','d','t','a'};
 static const unsigned char I_shdr[4] = {'s','h','d','r'};
@@ -223,7 +219,6 @@ static const unsigned char I__WAV[4] = {' ','S','A','M'};  /* second word */
 static const unsigned char I_SRFS[4] = {'S','R','F','S'};  /* first word Sonic Resource Foundry file(?) */
 static const unsigned char I_Diam[4] = {'D','i','a','m'};  /* first word DiamondWare file */
 static const unsigned char I_ondW[4] = {'o','n','d','W'};  /* second word */
-static const unsigned char I_Drat[4] = {'.','r','a',(unsigned char)'\xfd'};  /* first word real audio file */
 static const unsigned char I_CSRE[4] = {'C','S','R','E'};  /* adf first word -- second starts with "40" */
 static const unsigned char I_SND_[4] = {'S','N','D',' '};  /* SBStudio II */
 static const unsigned char I_SNIN[4] = {'S','N','I','N'};
@@ -267,13 +262,8 @@ static const unsigned char I_AUTH[4] = {'A','U','T','H'};
 static const unsigned char I_riff[4] = {'r','i','f','f'};  /* SourceForge */
 static const unsigned char I_TWIN[4] = {'T','W','I','N'};  /* TwinVQ */
 static const unsigned char I_IMPS[4] = {'I','M','P','S'};  /* Impulse Tracker */
-static const unsigned char I_Exte[4] = {'E','x','t','e'};  /* Fast Tracker */
-static const unsigned char I_nded[4] = {'n','d','e','d'};  /* Fast Tracker */
-static const unsigned char I__Ins[4] = {' ','I','n','s'};  /* Fast Tracker */
 static const unsigned char I_SMP1[4] = {'S','M','P','1'};  /* Korg */
-
-
-/* .glt and .shp -> Perry Cook's SPASM data files */
+static const unsigned char I_Maui[4] = {'M','a','u','i'};  /* Turtle Beach */
 
 #define I_IRCAM_VAX  0x0001a364
 #define I_IRCAM_SUN  0x0002a364
@@ -407,7 +397,6 @@ const char *mus_header_type_name(int type)
     case MUS_SNDT:             return("SNDT");                    break;
     case MUS_RAW:              return("raw (no header)");         break;
     case MUS_SMP:              return("SMP");                     break;
-    case MUS_SD2:              return("Sound Designer 2");        break;
     case MUS_AVR:              return("AVR");                     break;
     case MUS_IRCAM:            return("IRCAM");                   break;
     case MUS_SD1:              return("Sound Designer 1");        break;
@@ -419,11 +408,7 @@ const char *mus_header_type_name(int type)
     case MUS_IEEE:             return("IEEE text");               break;
     case MUS_MATLAB:           return("Matlab");                  break;
     case MUS_ADC:              return("ADC/OGI");                 break;
-    case MUS_SOUND_EDIT:       return("SoundEdit");               break;
-    case MUS_SOUND_EDIT_16:    return("SoundEdit 16");            break;
-    case MUS_DVSM:             return("DVSM");                    break;
     case MUS_MIDI:             return("MIDI");                    break;
-    case MUS_ESIGNAL:          return("Esignal");                 break;
     case MUS_SOUNDFONT:        return("SoundFont");               break;
     case MUS_GRAVIS:           return("Gravis Ultrasound patch"); break;
     case MUS_COMDISCO:         return("Comdisco SPW signal");     break;
@@ -431,7 +416,6 @@ const char *mus_header_type_name(int type)
     case MUS_SRFS:             return("SRFS");                    break;
     case MUS_MIDI_SAMPLE_DUMP: return("MIDI sample dump");        break;
     case MUS_DIAMONDWARE:      return("DiamondWare");             break;
-    case MUS_REALAUDIO:        return("RealAudio");               break;
     case MUS_ADF:              return("CSRE adf");                break;
     case MUS_SBSTUDIOII:       return("SBStudioII");              break;
     case MUS_DELUSION:         return("Delusion");                break;
@@ -443,9 +427,9 @@ const char *mus_header_type_name(int type)
     case MUS_YAMAHA_SY99:      return("Sy-99");                   break;
     case MUS_KURZWEIL_2000:    return("Kurzweil 2000");           break;
     case MUS_KORG:             return("Korg");                    break;
+    case MUS_MAUI:             return("Turtle Beach");            break;
     case MUS_IMPULSETRACKER:   return("Impulse Tracker");         break;
     case MUS_AKAI4:            return("AKAI 4");                  break;
-    case MUS_FASTTRACKER:      return("Fast Tracker");            break;
     case MUS_DIGIPLAYER:       return("Digiplayer ST3");          break;
     case MUS_COVOX:            return("Covox V8");                break;
     case MUS_SPL:              return("Digitracker SPL");         break;
@@ -760,9 +744,6 @@ static void update_next_header (int chan, int size)
  *
  * always big-endian
  * There was also (briefly) an AIFS file, now deprecated.
- *
- * originally I thought AIFF (as opposed to AIFC) files were obsolete, but lots of
- *  "legacy" sotfware insists on AIFF still, so mus_header_aiff_p was added to check this case
  */
 
 /* ieee-80 conversions -- design by committee! */
@@ -1105,8 +1086,6 @@ static int read_aiff_header (int chan, int overall_offset)
   return(MUS_NO_ERROR);
 }
 
-int mus_header_aiff_p(void) {return(type_specifier == mus_char_to_uninterpreted_int((unsigned const char *)I_AIFF));}
-
 static int sndlib_format_to_aiff_bits(int format)
 {
   switch (format)
@@ -1374,7 +1353,7 @@ char *mus_header_aiff_aux_comment(const char *name, int *starts, int *ends)
  *
  *   0: "RIFF" (little-endian) or "RIFX" (big-endian)
  *   4: size
- *   8: "WAVE"  ("RMID" = midi data, others are AVI, CPPO, ACON etc)
+ *   8: "WAVE"  ("RMID" = midi data, others are AVI, CPPO, ACON, DLS? etc)
  *       AVI chunk can include audio data
  *  
  *   rest very similar to AIFF (odd-sized chunks are padded)
@@ -2534,13 +2513,13 @@ static void update_ircam_header(void)
  * big_endian throughout
  */
 
-static int read_8svx_header (int chan)
+static int read_8svx_header(int chan, int bytewise)
 {
   int chunksize, offset, chunkloc, happy;
   type_specifier = mus_char_to_uninterpreted_int((unsigned char *)hdrbuf);
   chunkloc = 12;
   offset = 0;
-  data_format = MUS_BYTE;
+  if (bytewise) data_format = MUS_BYTE; else data_format = MUS_BSHORT;
   srate = 0;
   chans = 1;
   happy = TRUE;
@@ -2992,6 +2971,7 @@ static int read_smp_header(int chan)
  *   272   240    char   Text strings (3 * 80)
  *   512   ...    --     Audio data
  *
+ * at least one program is writing these headers using little endian data...
  */
 
 static int read_sppack_header(int chan)
@@ -3831,6 +3811,23 @@ static int read_korg_header(int chan)
 }
 
 
+/* ------------------------------------ Maui -------------------------------------
+ * 
+ * "Maui" -- guessing on the rest
+ */
+static int read_maui_header(int chan)
+{
+  lseek(chan, 420, SEEK_SET);
+  read(chan, hdrbuf, 64);
+  chans = 1; 
+  data_location = 776;
+  true_file_length = SEEK_FILE_LENGTH(chan);
+  data_size = mus_char_to_lint((unsigned char *)(hdrbuf + 8));
+  srate = mus_char_to_lint((unsigned char *)(hdrbuf));
+  data_format = MUS_LSHORT;
+  return(MUS_NO_ERROR);
+}
+
 /* ------------------------------------ Impulse Tracker -------------------------------------
  * 
  * data from its2raw.c by Ben Collver
@@ -4366,58 +4363,7 @@ static int read_asf_header (int chan)
 
 
 
-/* ------------------------------------ no header, Sound Designer II, SoundEdit, SoundEdit 16 ------------------------------------- 
- *
- * Sound Designer II data fork is a raw data file -- interleaved channels, bytes in sequence.
- *   The associated resource fork under "STR " has "sample-size" "sample-rate" and "channels".
- *   Similarly the resources "sdDD" id 1000, "sdML" id 1000, and "sdLL" id 1000 return pascal records of
- *   respectively Document Data, Markers and text, Loop data.  I don't see any useful info in any of these
- *   except perhaps the file comment in the "sdDD" record of type str255 10 bytes in (I think).
- *   See headers.lisp for a reader for some of this stuff.
- *   file type: 'Sd2f'
- *
- * SoundEdit data fork contains 8-bit unsigned linear samples.  The resource fork has:
- *   REPT: 0: mouse pos
- *         4: length of sound in samples
- *         8: sample number of beginning of selection (if any)
- *        12: ditto end of selection
- *        16: ditto loopback beginning (if any)
- *        20: ditto loopback end
- *   INFO: 0: nada
- *         8: "record frequency"
- *        12: ditto for playback
- *        16: compression mode: 0 = none
- *        20: chans (0 = mono, 1 = stereo)
- *        24: window position
- *        28: sample rate: 1 = 22KHz, 2 = 11, 3 = 7, 4 = 5
- *        32: length of left channel in samples
- *        36: if stereo, ditto right channel
- *   file type: 'FSDD', creator: 'SFX!'
- * 
- * SoundEdit 16 data fork has either 8 or 16-bit linear unsigned samples.  The resource fork has:
- *   TRKS: 0: -7 (version number)
- *         4: track length in bytes
- *         8: track offset in samples
- *        12: left/right stereo
- *        16: track selected flag
- *        20: sample rate
- *        22: pstring -- track title (31 chars, fixed size)
- *        54: (?) gain
- *      one TRKS resource for each track in the file
- *   INFO: essentially the same as above, but with added version number at 
- *        40: 0 = SoundEdit, -2 = SoundEdit 16
- *        44: reserved
- *        52: sample rate
- *        and then other stuff that doesn't look interesting
- *   LABS: 16: pstring (31 chars) track label
- *   CUES: 0: sample location
- *         4: pstring (31 chars) cue point text
- *   PReS: spectral stuff
- *   PRnt: printer stuff
- *   CLRS: colors stuff
- *   REPT: same as above
- *   file type: 'jB1 ', creator: 'jBox'.
- */
+/* ------------------------------------ no header ------------------------------------- */
 
 static int header_raw_srate = 44100;
 static int header_raw_chans = 2;
@@ -4510,7 +4456,12 @@ static int mus_header_read_with_fd_and_name(int chan, const char *filename)
       if (match_four_chars((unsigned char *)(hdrbuf + 8), I_8SVX))
 	{
 	  header_type = MUS_SVX;
-	  return(read_8svx_header(chan));
+	  return(read_8svx_header(chan, TRUE));
+	}
+      if (match_four_chars((unsigned char *)(hdrbuf + 8), I_16SV))
+	{
+	  header_type = MUS_SVX;
+	  return(read_8svx_header(chan, FALSE));
 	}
       if (match_four_chars((unsigned char *)(hdrbuf + 8), I_MAUD))
 	{
@@ -4705,11 +4656,6 @@ static int mus_header_read_with_fd_and_name(int chan, const char *filename)
       header_type = MUS_IEEE;
       return(MUS_NO_ERROR);
     }
-  if (match_four_chars((unsigned char *)hdrbuf, I_DVSM))
-    {
-      header_type = MUS_DVSM;
-      return(MUS_ERROR);
-    }
   if (match_four_chars((unsigned char *)hdrbuf, I_riff))
     {
       header_type = MUS_SOUNDFORGE;
@@ -4721,20 +4667,9 @@ static int mus_header_read_with_fd_and_name(int chan, const char *filename)
       header_type = MUS_PVF;
       return(read_pvf_header(chan));
     }
-  if (match_four_chars((unsigned char *)hdrbuf, I_Drat))
-    {
-      header_type = MUS_REALAUDIO;
-      return(MUS_ERROR);
-    }
   if (match_four_chars((unsigned char *)hdrbuf, I_MThd))
     {
       header_type = MUS_MIDI;
-      return(MUS_ERROR);
-    }
-  if ((match_four_chars((unsigned char *)hdrbuf, I_Esig)) && 
-      (match_four_chars((unsigned char *)(hdrbuf + 4), I_nalc)))
-    {
-      header_type = MUS_ESIGNAL;
       return(MUS_ERROR);
     }
   if (match_four_chars((unsigned char *)hdrbuf, I_SND_))
@@ -4782,17 +4717,15 @@ static int mus_header_read_with_fd_and_name(int chan, const char *filename)
       header_type = MUS_KORG;
       return(read_korg_header(chan));
     }
+  if (match_four_chars((unsigned char *)hdrbuf, I_Maui))
+    {
+      header_type = MUS_MAUI;
+      return(read_maui_header(chan));
+    }
   if (match_four_chars((unsigned char *)hdrbuf, I_IMPS))
     {
       header_type = MUS_IMPULSETRACKER;
       return(read_impulsetracker_header(chan));
-    }
-  if ((match_four_chars((unsigned char *)hdrbuf, I_Exte)) &&
-      (match_four_chars((unsigned char *)(hdrbuf + 4), I_nded)) &&
-      (match_four_chars((unsigned char *)(hdrbuf + 8), I__Ins)))
-    {
-      header_type = MUS_FASTTRACKER;
-      return(MUS_NO_ERROR); /* TODO: figure fas out see xi2raw.c of Ben Collver */
     }
   if (match_four_chars((unsigned char *)(hdrbuf + 35), I_UWFD))
     {
@@ -4851,7 +4784,7 @@ static int mus_header_read_with_fd_and_name(int chan, const char *filename)
       header_type = MUS_QUICKTIME;
       return(read_qt_header(chan));
     }
-  if ((hdrbuf[0] == 1) && (hdrbuf[1] == 4))
+  if ((hdrbuf[0] == 1) && (hdrbuf[1] == 4)) /* name follows --check? */
     {
       header_type = MUS_AKAI4;
       return(read_akai4_header(chan));
@@ -5391,148 +5324,6 @@ int mus_header_writable(int type, int format) /* -2 to ignore format for this ca
   return(FALSE);
 }
 
-
-
-/* ------------------------------------------------------------------------
- * old Mus10, SAM formats, just for completeness
- *
- * These were used for sound data on the PDP-10s at SAIL and CCRMA in the 70's and 80's.
- * The word length was 36-bits. (SAM here refers to the Samson box, the Systems Concepts
- * Digital Synthesizer, built by Peter Samson), not the SAM format associated (apparently)
- * with ModEdit.
- *
- * "New" format as used by nearly all CCRMA software pre-1990:
- *
- *  WD 0 - '525252525252 (chosen because "it is unlikely to occur at random"!)
- *  WD 1 - Clock rate in Hz (PDP-10 36-bit floating point)
- *         PDP-10 floating point format was sign in bit 0, excess 128 exponent in 1-8, fraction in 9-35
- *  WD 2 - #samples per word,, pack-code, (has # samples per word in LH, pack-code in RH)
- * 	0 for 12-bit fixed point (this was the main one)
- * 	1 for 18-bit fixed point
- * 	2 for  9-bit floating point incremental (never used)
- * 	3 for 36-bit floating point (never used)
- * 	4 for 16-bit sambox fixed point, right justified
- * 	5 for 20-bit sambox fixed point
- * 	6 for 20-bit right-adjusted fixed point (sambox SAT format = SAM output)
- * 	7 for 16-bit fixed point, left justified (never used)
- * 	N > 9 for N bit bytes in ILDB format (never used)
- *  WD 3 - # channels
- *  WD 4 - Maximum amplitude (if known) (PDP-10 float)
- *  WD 5 - number of Sambox ticks per pass (inverse of Sambox clock rate, sort of)
- *  WD 6 - Total #samples in file. If 0 then #wds_in_file*#samps_per_wd assumed.
- *  WD 7 - Block size (if any). 0 means sound is not blocked.
- *  WDs '10-'77 Reserved for EDSND usage, but I used it anyway.
- *  WDs '100-'177 Text description of file (in ASCIZ format) (ASCIZ = ASCII+null if I remember right = C string(?))
- *
- * "Old" format (pre-1977)
- *
- *  WD 0 - '525252525252
- *  WD 1 - Clock rate => rate as integer,, code
- * 	code = 0 for 6.4Kc (or anything else)
- * 	    =1 for 12.8Kc, =2 for 25.6Kc, =3 for 51.2Kc
- * 	    =5 for 102.4Kc, =6 for 204.8Kc
- *  WD 2 - #sample per word,, pack
- * 	0 for 12 bit
- * 	1 for 16 bit (18 bit)
- * 	2 for 9 bit floating point incremental
- * 	3 for 36-bit floating point
- * 	N > 9 for N bit bytes in ILDB format
- *  WD 3 - # channels
- *  WD 4 - Maximum amplitude (if known, otherwise 0)
- *  WDs 5-77 Reserved for future expansion
- *  WDs 100-177 Text description of file (in ASCIZ format) 
- *
- * ------------------------------------
- * and even more esoteric... from the MIT PDP-6 (1971-76):
- *      JRST 1
- *      0
- *      blkcnt,, 2000
- *	duration,, ---    ; negative halfword number to be counted down for duration
- *	v0 v1 v2 v3 v4 v5 ; 6 six-bit byes, each encoding pitch no. from 2.-63, 63 not used
- *	duration,, --
- *	v0 v1 v2 v3 v4 v5 
- *	...
- *	checksum
- *      ...
- *	blkcnt,, blkaddr   ; neg half word in block, not counting itself or checksum,, addr of block start
- *	...
- *	0,,--
- *	0
- *      checksum          ; =ROT 1 and ADD including blkcnt,, blkaddr
- *	-1,, 41
- *	JRST 101
- *	checksum
- *	-1,, 41
- *	JRST 101
- *	checksum
- *	JUMPA 101
- *	JUMPA 101
- *
- * ah, the good old days...
- */
-
-/* ILS headers (info from P Kabal): Interactive Laboratory System.
- * in 1988 info from ils@hub.ucsb.edu
- * v4 is in longs, v3 in shorts
- * data is 16-bit linear (probably big-endian) (locs below are in version format)
- * 0: #pts in analysis window, 1: #autoregressive coeffs, 2: preemphasis, 3: shift per frame, 4: hamming if 'y'
- * 5: #data blocks, 6: #resonances, 7: start frame, 8: #frames, 9: start sector, 10: #autoregressive coeffs
- * 11: #pts past whole block, 12-15: 'field chars', 16: #frames, 17: autoreg flag, 18: #disk num of file
- * 19: another disk number, 20: analysis mnemonic, 22-26: id chars, 35-36: scaling mult, 37-38: scaling adder
- * 57: starting chan, 58: #chans, 59: mulaw if 50, 60: power of ten mult for sampling freq, 61: int srate,
- * 62: -29000 if not sampled, -32000 if sampled, 63: 32149 if initialized.
- * 128: data starts (or 256 in v3, I think) -- byte 512 in any case.
- */
-
-/* from /usr/share/magic:
-# Real Audio (Magic .ra\0375)
-0	belong		0x2e7261fd	realaudio sound file
-0	string		.RMF\0\0\0	realmedia file        
-# first entry is also the string "NTRK"
-0	belong		0x4e54524b	MultiTrack sound data
->4	belong		x		- version %ld
-
-# MTM/669/FAR/S3M/ULT/XM format checking [Aaron Eppert, aeppert@dialin.ind.net]
-# Oct 31, 1995
-0	string		MTM		MultiTracker Module sound file
-#0	string		if		Composer 669 Module sound data
-0	string		FAR		Module sound data
-0	string		MAS_U		ULT(imate) Module sound data
-0x2c	string		SCRM		ScreamTracker III Module sound data
-0	string		Extended Module	Extended Module sound data
-
-# Taken from loader code from mikmod version 2.14
-# by Steve McIntyre (stevem@chiark.greenend.org.uk)
-0	string	JN		extended 669 module data
-0	string	MAS_UTrack_V00
->14	string	>/0		ultratracker V1.%.1s module sound data
-0	string	UN05		MikMod UNI format module sound data
-0	string	Extended\ Module: Fasttracker II module sound data
-21	string	!SCREAM!	Screamtracker 2 module sound data
-1080	string	M.K.		4-channel Protracker module sound data
-1080	string	M!K!		4-channel Protracker module sound data
-1080	string	FLT4		4-channel Startracker module sound data
-1080	string	4CHN		4-channel Fasttracker module sound data
-1080	string	6CHN		6-channel Fasttracker module sound data
-1080	string	8CHN		8-channel Fasttracker module sound data
-1080	string	CD81		8-channel Oktalyzer module sound data
-1080	string	OKTA		8-channel Oktalyzer module sound data
-# Not good enough.
-#1082	string	CH
-#>1080	string	>/0		%.2s-channel Fasttracker "oktalyzer" module sound data
-1080	string	16CN		16-channel Taketracker module sound data
-1080	string	32CN		32-channel Taketracker module sound data
-
-# TOC sound files -Trevor Johnson <trevor@jpj.net>
-#
-0       string          TOC             TOC sound file
-
-# From Felix von Leitner <leitner@fefe.de>
-0	string		OggS	Ogg-Vorbis compressed sound file
-*/
-/* I've also seen sounds that start with @!sound then (probably) signed byte data */
-/* sfs files apparently start with SFS\0 */
-
 static char aifc_format[5];
 
 /* try to give some info on data formats that aren't supported by sndlib */
@@ -5643,13 +5434,10 @@ int mus_header_no_header(const char *filename)
 	  (equal_big_or_little_endian((unsigned char *)(hdrbuf + 16), 0x00006a1a)) ||
 	  (match_four_chars((unsigned char *)hdrbuf, I_SPIB)) ||
 	  (match_four_chars((unsigned char *)hdrbuf, I_S___)) ||
-	  (match_four_chars((unsigned char *)hdrbuf, I_DVSM)) ||
 	  (match_four_chars((unsigned char *)hdrbuf, I_riff)) ||
 	  (match_four_chars((unsigned char *)hdrbuf, I_PVF1)) ||
 	  (match_four_chars((unsigned char *)hdrbuf, I_PVF2)) ||
-	  (match_four_chars((unsigned char *)hdrbuf, I_Drat)) ||
 	  (match_four_chars((unsigned char *)hdrbuf, I_MThd)) ||
-	  (match_four_chars((unsigned char *)hdrbuf, I_Esig)) ||
 	  (match_four_chars((unsigned char *)hdrbuf, I_SND_)) ||
 	  (match_four_chars((unsigned char *)hdrbuf, I_FSMt)) ||
 	  (match_four_chars((unsigned char *)hdrbuf, I_DDSF)) ||
@@ -5663,6 +5451,9 @@ int mus_header_no_header(const char *filename)
 	  (match_four_chars((unsigned char *)hdrbuf, I__PAF)) ||
 	  (match_four_chars((unsigned char *)hdrbuf, I_FAP_)) ||
 	  (match_four_chars((unsigned char *)hdrbuf, I_TWIN)) ||
+	  (match_four_chars((unsigned char *)hdrbuf, I_IMPS)) ||
+	  (match_four_chars((unsigned char *)hdrbuf, I_SMP1)) ||
+	  (match_four_chars((unsigned char *)hdrbuf, I_Maui)) ||
 	  (match_four_chars((unsigned char *)hdrbuf, I_DSPL)));
   return(!ok);
 }
@@ -5686,21 +5477,4 @@ void mus_header_set_full_aiff_loop_info (int *data)
       loop_modes[0] = 0;
       loop_modes[1] = 0;
     }
-}
-
-void mus_header_set_aiff_loop_info (int *data)
-{
-  /* backwards compatibility */
-  int bloop[8];
-  int i;
-#if DEBUGGING && USE_SND
-  fprintf(stderr, "you've used the wrong damned loop writer again!");
-#endif
-  if (data)
-    {
-      for (i = 0; i < 6; i++) bloop[i] = data[i];
-      bloop[6] = 1; bloop[7] = 1;
-      mus_header_set_full_aiff_loop_info(bloop);
-    }
-  else mus_header_set_full_aiff_loop_info(NULL);
 }

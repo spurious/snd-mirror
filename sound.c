@@ -238,10 +238,6 @@ int mus_sound_initialize(void)
   return(MUS_NO_ERROR);
 }
 
-void mus_sound_finalize(void)
-{
-}
-
 int mus_sample_bits(void)
 {
   /* this to check for inconsistent loads */
@@ -714,11 +710,6 @@ void mus_sound_set_full_loop_info(const char *arg, int *loop)
     }
 }
 
-int mus_sound_aiff_p(const char *arg) 
-{
-  return(mus_sound_header_type(arg) == MUS_AIFF);
-}
-
 char *mus_sound_comment(const char *name)
 {
   int start, end, fd, len, full_len;
@@ -864,11 +855,6 @@ int mus_sound_read (int fd, int beg, int end, int chans, mus_sample_t **bufs)
 int mus_sound_write (int tfd, int beg, int end, int chans, mus_sample_t **bufs) 
 {
   return(mus_file_write(tfd, beg, end, chans, bufs));
-}
-
-off_t mus_sound_seek (int tfd, off_t offset, int origin) 
-{
-  return(mus_file_seek(tfd, offset, origin));
 }
 
 off_t mus_sound_seek_frame(int tfd, off_t frame)

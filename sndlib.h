@@ -2,8 +2,8 @@
 #define SNDLIB_H
 
 #define SNDLIB_VERSION 18
-#define SNDLIB_REVISION 1
-#define SNDLIB_DATE "9-Apr-03"
+#define SNDLIB_REVISION 3
+#define SNDLIB_DATE "28-Apr-03"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 
@@ -52,9 +52,6 @@
 #if defined(macosx)
   #define MAC_OSX 1
 #endif
-
-/* due to project builder stupidity, we can't always depend on -D flags here (maybe we need a SNDLIB_OS macro?) */
-/* these wouldn't work with autoconf anyway, so we'll do it by hand */
 
 #if (!defined(SGI)) && (!defined(LINUX)) && (!defined(MACOS)) && (!defined(SUN)) && (!defined(UW2)) && (!defined(SCO5)) && (!defined(ALPHA)) && (!defined(WINDOZE)) && (!defined(MAC_OSX))
   #if defined(__dest_os)
@@ -194,16 +191,15 @@
 
 #define MUS_UNSUPPORTED -1
 enum {MUS_NEXT, MUS_AIFC, MUS_RIFF, MUS_BICSF, MUS_NIST, MUS_INRS, MUS_ESPS, MUS_SVX, MUS_VOC, MUS_SNDT, MUS_RAW,
-      MUS_SMP, MUS_SD2, MUS_AVR, MUS_IRCAM, MUS_SD1, MUS_SPPACK, MUS_MUS10, MUS_HCOM, MUS_PSION, MUS_MAUD,
-      MUS_IEEE, MUS_MATLAB, MUS_ADC, MUS_SOUND_EDIT, MUS_SOUND_EDIT_16,
-      MUS_DVSM, MUS_MIDI, MUS_ESIGNAL, MUS_SOUNDFONT, MUS_GRAVIS, MUS_COMDISCO, MUS_GOLDWAVE, MUS_SRFS,
-      MUS_MIDI_SAMPLE_DUMP, MUS_DIAMONDWARE, MUS_REALAUDIO, MUS_ADF, MUS_SBSTUDIOII, MUS_DELUSION,
+      MUS_SMP, MUS_AVR, MUS_IRCAM, MUS_SD1, MUS_SPPACK, MUS_MUS10, MUS_HCOM, MUS_PSION, MUS_MAUD,
+      MUS_IEEE, MUS_MATLAB, MUS_ADC, MUS_MIDI, MUS_SOUNDFONT, MUS_GRAVIS, MUS_COMDISCO, MUS_GOLDWAVE, MUS_SRFS,
+      MUS_MIDI_SAMPLE_DUMP, MUS_DIAMONDWARE, MUS_ADF, MUS_SBSTUDIOII, MUS_DELUSION,
       MUS_FARANDOLE, MUS_SAMPLE_DUMP, MUS_ULTRATRACKER, MUS_YAMAHA_SY85, MUS_YAMAHA_TX16W, MUS_DIGIPLAYER,
       MUS_COVOX, MUS_SPL, MUS_AVI, MUS_OMF, MUS_QUICKTIME, MUS_ASF, MUS_YAMAHA_SY99, MUS_KURZWEIL_2000,
       MUS_AIFF, MUS_PAF, MUS_CSL, MUS_FILE_SAMP, MUS_PVF, MUS_SOUNDFORGE, MUS_TWINVQ, MUS_AKAI4,
-      MUS_IMPULSETRACKER, MUS_KORG, MUS_FASTTRACKER};
+      MUS_IMPULSETRACKER, MUS_KORG, MUS_MAUI};
 
-#define MUS_HEADER_TYPE_OK(n) (((n) > MUS_UNSUPPORTED) && ((n) <= MUS_FASTTRACKER))
+#define MUS_HEADER_TYPE_OK(n) (((n) > MUS_UNSUPPORTED) && ((n) <= MUS_MAUI))
 
 enum {MUS_UNKNOWN, MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BFLOAT, MUS_BINT, MUS_ALAW, MUS_UBYTE, MUS_B24INT,
       MUS_BDOUBLE, MUS_LSHORT, MUS_LINT, MUS_LFLOAT, MUS_LDOUBLE, MUS_UBSHORT, MUS_ULSHORT, MUS_L24INT,
@@ -405,14 +401,12 @@ int mus_data_format_to_bytes_per_sample(int format);
 #define mus_bytes_per_sample(Format) mus_data_format_to_bytes_per_sample(Format)
 float mus_sound_duration(const char *arg);
 int mus_sound_initialize(void);
-void mus_sound_finalize(void);
 int mus_sample_bits(void);
 int mus_sound_override_header(const char *arg, int srate, int chans, int format, int type, off_t location, off_t size);
 int mus_sound_forget(const char *name);
 int mus_sound_prune(void);
 #define mus_sound_print_cache() mus_sound_report_cache(stdout)
 void mus_sound_report_cache(FILE *fp);
-int mus_sound_aiff_p(const char *arg);
 int *mus_sound_loop_info(const char *arg);
 void mus_sound_set_full_loop_info(const char *arg, int *loop);
 
@@ -423,7 +417,6 @@ int mus_sound_close_input(int fd);
 int mus_sound_close_output(int fd, off_t bytes_of_data);
 int mus_sound_read(int fd, int beg, int end, int chans, mus_sample_t **bufs);
 int mus_sound_write(int tfd, int beg, int end, int chans, mus_sample_t **bufs);
-off_t mus_sound_seek(int tfd, off_t offset, int origin);
 off_t mus_sound_seek_frame(int tfd, off_t frame);
 off_t mus_sound_maxamp(const char *ifile, mus_sample_t *vals);
 off_t mus_sound_maxamps(const char *ifile, int chans, mus_sample_t *vals, off_t *times);
@@ -490,7 +483,6 @@ int mus_file_open_write(const char *arg);
 int mus_file_create(const char *arg);
 int mus_file_reopen_write(const char *arg);
 int mus_file_close(int fd);
-off_t mus_file_seek(int tfd, off_t offset, int origin);
 off_t mus_file_seek_frame(int tfd, off_t frame);
 int mus_file_read(int fd, int beg, int end, int chans, mus_sample_t **bufs);
 int mus_file_read_chans(int fd, int beg, int end, int chans, mus_sample_t **bufs, mus_sample_t *cm);
@@ -583,9 +575,7 @@ int mus_header_update_with_fd(int chan, int type, off_t siz);
 int mus_header_aux_comment_start(int n);
 int mus_header_aux_comment_end(int n);
 int mus_header_initialize(void);
-int mus_header_aiff_p(void);
 int mus_header_writable(int type, int format);
-void mus_header_set_aiff_loop_info(int *data);
 void mus_header_set_full_aiff_loop_info(int *data);
 int mus_header_sf2_entries(void);
 char *mus_header_sf2_name(int n);

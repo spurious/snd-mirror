@@ -2112,6 +2112,7 @@ static XEN sound_set(XEN snd_n, XEN val, int fld, char *caller)
 	}
       break;
     case SP_DATA_FORMAT:
+      /* TODO: if data_format or location is changed, the existing amp envs are not recalculated */
       if (!(IS_PLAYER(sp))) 
 	{
 	  ival = XEN_TO_C_INT(val);
@@ -3341,40 +3342,37 @@ static XEN g_write_peak_env_info_file(XEN snd, XEN chn, XEN name)
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_2, S_write_peak_env_info_file, "a string");
   ASSERT_CHANNEL(S_write_peak_env_info_file, snd, chn, 1);
   cp = get_cp(snd, chn, S_write_peak_env_info_file);
-  if ((cp->amp_envs) && (cp->amp_envs[0]))
+  if ((cp->amp_envs == NULL) || (cp->amp_envs[0] == NULL))
+    XEN_ERROR(NO_SUCH_ENVELOPE,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_write_peak_env_info_file),
+			 snd,
+			 chn));
+  fullname = mus_expand_filename(XEN_TO_C_STRING(name));
+  fd = mus_file_create(fullname);
+  if (fd == -1)
     {
-      fullname = mus_expand_filename(XEN_TO_C_STRING(name));
-      fd = mus_file_create(fullname);
-      if (fd == -1)
-	{
-	  errstr = C_TO_XEN_STRING(fullname);
-	  if (fullname) FREE(fullname);
-	  XEN_ERROR(CANNOT_SAVE,
-		    XEN_LIST_3(C_TO_XEN_STRING(S_write_peak_env_info_file),
-			       errstr,
-			       C_TO_XEN_STRING(strerror(errno))));
-	}
+      errstr = C_TO_XEN_STRING(fullname);
       if (fullname) FREE(fullname);
-      ep = cp->amp_envs[0];
-      ibuf[0] = ((ep->completed) ? 1 : 0) | (pack_mus_sample_type() << 16);
-      ibuf[1] = ep->amp_env_size;
-      ibuf[2] = ep->samps_per_bin;
-      ibuf[3] = ep->bin;
-      ibuf[4] = ep->top_bin;
-      mbuf[0] = ep->fmin;
-      mbuf[1] = ep->fmax;
-      write(fd, (char *)ibuf, (5 * sizeof(int)));
-      write(fd, (char *)mbuf, (2 * sizeof(mus_sample_t)));
-      write(fd, (char *)(ep->data_min), (ep->amp_env_size * sizeof(mus_sample_t)));
-      write(fd, (char *)(ep->data_max), (ep->amp_env_size * sizeof(mus_sample_t)));
-      snd_close(fd, fullname);
-      return(name);
+      XEN_ERROR(CANNOT_SAVE,
+		XEN_LIST_3(C_TO_XEN_STRING(S_write_peak_env_info_file),
+			   errstr,
+			   C_TO_XEN_STRING(strerror(errno))));
     }
-  XEN_ERROR(NO_SUCH_ENVELOPE,
-	    XEN_LIST_3(C_TO_XEN_STRING(S_write_peak_env_info_file),
-		       snd,
-		       chn));
-  return(snd);
+  if (fullname) FREE(fullname);
+  ep = cp->amp_envs[0];
+  ibuf[0] = ((ep->completed) ? 1 : 0) | (pack_mus_sample_type() << 16);
+  ibuf[1] = ep->amp_env_size;
+  ibuf[2] = ep->samps_per_bin;
+  ibuf[3] = ep->bin;
+  ibuf[4] = ep->top_bin;
+  mbuf[0] = ep->fmin;
+  mbuf[1] = ep->fmax;
+  write(fd, (char *)ibuf, (5 * sizeof(int)));
+  write(fd, (char *)mbuf, (2 * sizeof(mus_sample_t)));
+  write(fd, (char *)(ep->data_min), (ep->amp_env_size * sizeof(mus_sample_t)));
+  write(fd, (char *)(ep->data_max), (ep->amp_env_size * sizeof(mus_sample_t)));
+  snd_close(fd, fullname);
+  return(name);
 }
 
 enum {PEAK_ENV_NO_ERROR, PEAK_ENV_BAD_HEADER, PEAK_ENV_BAD_FORMAT, PEAK_ENV_BAD_SIZE, PEAK_ENV_NO_FILE, PEAK_ENV_NO_DATA};

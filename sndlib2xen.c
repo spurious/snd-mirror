@@ -791,19 +791,6 @@ starting at beg (buffer location), going to end"
 				      get_sound_data(sv))));
 }
 
-static XEN g_seek_sound(XEN fd, XEN offset, XEN origin)
-{
-  #define H_mus_sound_seek "(" S_mus_sound_seek " fd offset origin): move the current read/write location in file fd \
-to the short-wise sample offset given origin (both treated as in lseek).  Use " S_mus_sound_seek_frame " instead."
-
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(fd), fd, XEN_ARG_1, S_mus_sound_seek, "an integer");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(offset), offset, XEN_ARG_2, S_mus_sound_seek, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(origin), origin, XEN_ARG_3, S_mus_sound_seek, "an integer");
-  return(C_TO_XEN_OFF_T(mus_sound_seek(XEN_TO_C_INT(fd),
-				       XEN_TO_C_OFF_T(offset),
-				       XEN_TO_C_INT(origin))));
-}
-
 static XEN g_seek_sound_frame(XEN fd, XEN offset)
 {
   #define H_mus_sound_seek_frame "(" S_mus_sound_seek_frame " fd frame): move the current read/write location in file fd \
@@ -1245,7 +1232,6 @@ XEN_NARGIFY_5(g_reopen_sound_output_w, g_reopen_sound_output)
 XEN_NARGIFY_2(g_close_sound_output_w, g_close_sound_output)
 XEN_NARGIFY_5(g_read_sound_w, g_read_sound)
 XEN_NARGIFY_5(g_write_sound_w, g_write_sound)
-XEN_NARGIFY_3(g_seek_sound_w, g_seek_sound)
 XEN_NARGIFY_2(g_seek_sound_frame_w, g_seek_sound_frame)
 XEN_NARGIFY_5(g_open_audio_output_w, g_open_audio_output)
 XEN_NARGIFY_5(g_open_audio_input_w, g_open_audio_input)
@@ -1315,7 +1301,6 @@ XEN_NARGIFY_2(g_mus_audio_set_oss_buffers_w, g_mus_audio_set_oss_buffers)
 #define g_close_sound_output_w g_close_sound_output
 #define g_read_sound_w g_read_sound
 #define g_write_sound_w g_write_sound
-#define g_seek_sound_w g_seek_sound
 #define g_seek_sound_frame_w g_seek_sound_frame
 #define g_open_audio_output_w g_open_audio_output
 #define g_open_audio_input_w g_open_audio_input
@@ -1571,7 +1556,6 @@ void mus_sndlib2xen_initialize(void)
   XEN_DEFINE_PROCEDURE(S_mus_sound_close_output,   g_close_sound_output_w, 2, 0, 0,    H_mus_sound_close_output);
   XEN_DEFINE_PROCEDURE(S_mus_sound_read,           g_read_sound_w, 5, 0, 0,            H_mus_sound_read);
   XEN_DEFINE_PROCEDURE(S_mus_sound_write,          g_write_sound_w, 5, 0, 0,           H_mus_sound_write);
-  XEN_DEFINE_PROCEDURE(S_mus_sound_seek,           g_seek_sound_w, 3, 0, 0,            H_mus_sound_seek);
   XEN_DEFINE_PROCEDURE(S_mus_sound_seek_frame,     g_seek_sound_frame_w, 2, 0, 0,      H_mus_sound_seek_frame);
   XEN_DEFINE_PROCEDURE(S_mus_audio_open_output,    g_open_audio_output_w, 5, 0, 0,     H_mus_audio_open_output);
   XEN_DEFINE_PROCEDURE(S_mus_audio_open_input,     g_open_audio_input_w, 5, 0, 0,      H_mus_audio_open_input);
@@ -1722,7 +1706,6 @@ void mus_sndlib2xen_initialize(void)
 	       S_mus_sound_reopen_output,
 	       S_mus_sound_report_cache,
 	       S_mus_sound_samples,
-	       S_mus_sound_seek,
 	       S_mus_sound_seek_frame,
 	       S_mus_sound_srate,
 	       S_mus_sound_type_specifier,

@@ -717,7 +717,7 @@ static XEN gl_remove_from_menu(XEN menu, XEN label)
 
 static XEN gl_change_menu_label(XEN menu, XEN old_label, XEN new_label)
 {
-  /* TODO: wouldn't it be better to replace change-menu-label with settable menu-label? */
+  /* wouldn't it be better to replace change-menu-label with settable menu-label? */
   #define H_change_menu_label "(" S_change_menu_label " menu old-label new-label): changes menu's label"
   int val, m;
   XEN_ASSERT_TYPE(XEN_STRING_P(old_label), old_label, XEN_ARG_2, S_change_menu_label, "a string");
