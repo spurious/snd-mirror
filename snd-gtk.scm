@@ -20,6 +20,8 @@
 ;;; make-font-selector-dialog
 ;;; make-color-selector-dialog
 
+;;; TODO: make-sound-box (snd-motif.scm) could be implemented with GtkIconView
+
 (use-modules (ice-9 format))
 (provide 'snd-snd-gtk.scm)
 

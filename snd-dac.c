@@ -783,10 +783,6 @@ static void free_dac_state(void)
 
 static Cessate dac_in_background(Indicium ptr);
 
-static bool disable_play = false;
-static XEN g_disable_play(void) {disable_play = true; return(XEN_FALSE);}
-static XEN g_enable_play(void) {disable_play = false; return(XEN_TRUE);}
-
 static void start_dac(int srate, int channels, play_process_t background, Float decay)
 {
   dac_info *dp;
@@ -828,26 +824,13 @@ static void start_dac(int srate, int channels, play_process_t background, Float 
       else snd_dacp->frames = 256;
       snd_dacp->devices = 1;  /* just a first guess */
       snd_dacp->reverb_ring_frames = (off_t)(srate * decay);
-      if (disable_play) 
+      if (background == IN_BACKGROUND) 
+	BACKGROUND_ADD(dac_in_background, NULL);
+      else
 	{
-	  stop_playing_all_sounds(PLAY_DISABLED);
-#if DEBUGGING
-	  if (play_list_members > 0) fprintf(stderr, "dac still running? %d\n", play_list_members);
-#endif
-	  play_list_members = 0; 
-	  max_active_slot = -1;
-	  free_dac_state();
-	}
-      else 
-	{
-	  if (background == IN_BACKGROUND) 
-	    BACKGROUND_ADD(dac_in_background, NULL);
-	  else
-	    {
-	      /* here we want to play as an atomic (not background) action */
-	      while (dac_in_background(NULL) == BACKGROUND_CONTINUE)
-		check_for_event(); /* need to be able to C-g out of this */
-	    }
+	  /* here we want to play as an atomic (not background) action */
+	  while (dac_in_background(NULL) == BACKGROUND_CONTINUE)
+	    check_for_event(); /* need to be able to C-g out of this */
 	}
     }
 }
@@ -2641,8 +2624,6 @@ XEN_NARGIFY_0(g_dac_size_w, g_dac_size)
 XEN_NARGIFY_1(g_set_dac_size_w, g_set_dac_size)
 XEN_NARGIFY_0(g_dac_combines_channels_w, g_dac_combines_channels)
 XEN_NARGIFY_1(g_set_dac_combines_channels_w, g_set_dac_combines_channels)
-XEN_NARGIFY_0(g_disable_play_w, g_disable_play)
-XEN_NARGIFY_0(g_enable_play_w, g_enable_play)
 XEN_NARGIFY_0(g_dac_is_running_w, g_dac_is_running)
 XEN_NARGIFY_0(g_cursor_update_interval_w, g_cursor_update_interval)
 XEN_NARGIFY_1(g_set_cursor_update_interval_w, g_set_cursor_update_interval)
@@ -2665,8 +2646,6 @@ XEN_NARGIFY_1(g_set_cursor_location_offset_w, g_set_cursor_location_offset)
 #define g_set_dac_size_w g_set_dac_size
 #define g_dac_combines_channels_w g_dac_combines_channels
 #define g_set_dac_combines_channels_w g_set_dac_combines_channels
-#define g_disable_play_w g_disable_play
-#define g_enable_play_w g_enable_play
 #define g_dac_is_running_w g_dac_is_running
 #define g_cursor_update_interval_w g_cursor_update_interval
 #define g_set_cursor_update_interval_w g_set_cursor_update_interval
@@ -2719,9 +2698,6 @@ If it returns #t, the sound is not played."
   XEN_DEFINE_HOOK(stop_dac_hook, S_stop_dac_hook, 0, H_stop_dac_hook);                                     /* no args */
   XEN_DEFINE_HOOK(stop_playing_selection_hook, S_stop_playing_selection_hook, 0, H_stop_playing_selection_hook); /* no args */
   XEN_DEFINE_HOOK(start_playing_selection_hook, S_start_playing_selection_hook, 0, H_start_playing_selection_hook); /* no args */
-
-  XEN_DEFINE_PROCEDURE("disable-play", g_disable_play_w, 0, 0, 0, "internal testing function");
-  XEN_DEFINE_PROCEDURE("enable-play", g_enable_play_w, 0, 0, 0, "internal testing function");
 
   sdobj = XEN_FALSE;
   sdobj_loc = -1;

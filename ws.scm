@@ -177,6 +177,7 @@ returning you to the true top-level."
 (define *clm-locsig-type* mus-interp-linear)
 (define *clm-clipped* #t)
 (define *clm-array-print-length* 8)
+(define *clm-player* #f) ; default is play-and-wait (takes index of newly created sound, not the sound's file name)
 
 (define *to-snd* #t)
 
@@ -317,7 +318,10 @@ returning you to the true top-level."
 		     (scale-to scaled-to snd-output)
 		     (if scaled-by
 			 (scale-by scaled-by snd-output)))
-		 (if play (play-and-wait snd-output))
+		 (if play 
+		     (if *clm-player*
+			 (*clm-player* snd-output)
+			 (play-and-wait 0 snd-output)))
 		 (update-time-graph snd-output)
 		 (if (number? cur-sync) (set! (sync snd-output) cur-sync)))))
 	 output-1))
@@ -510,7 +514,7 @@ returning you to the true top-level."
 		  (scale-to scaled-to snd-output)
 		  (if scaled-by
 		      (scale-by scaled-by snd-output)))
-	      (if play (play-and-wait snd-output))
+	      (if play (play-and-wait 0 snd-output))
 	      (update-time-graph snd-output)))
 	(set! (mus-srate) old-srate)
 	output)

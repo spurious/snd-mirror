@@ -98,8 +98,8 @@ static int run_safety = RUN_UNSAFE;
 
 /* TODO:  [*clm-safety*] -- needs implementation/test
  *         any (non-vct) array ref: check arr ok and index against bounds (vct latter too)
- *         any possibly complex result? -- sqrt of neg, acos > 1 etc -- are these worth tracking down?
- *         any NaNs? -- these do happen -- isnan in each arith op?
+ *         any possibly complex result? -- sqrt of neg, acos > 1 etc -- are these worth tracking down? -- these are arg checks HAVE_DECL_ISNAN
+ *         any NaNs? -- these do happen -- isnan in each arith op or perhaps just gen inputs?
  */
 
 #define Int off_t
@@ -2404,41 +2404,26 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 }
 
 #define BOOL_RESULT pt->ints[args[0]]
-#define FLOAT_RESULT pt->dbls[args[0]]
-#define INT_RESULT pt->ints[args[0]]
-#define STRING_RESULT pt->strs[args[0]]
-#define CHAR_RESULT pt->ints[args[0]]
-#define VCT_RESULT pt->vcts[args[0]]
-#define DESC_VCT_RESULT ((args[0] < pt->vct_ctr) ? pt->vcts[args[0]] : NULL)
-#define SOUND_DATA_RESULT pt->sds[args[0]]
-#define DESC_SOUND_DATA_RESULT ((args[0] < pt->sd_ctr) ? pt->sds[args[0]] : NULL)
-#define CLM_RESULT pt->clms[args[0]]
-#define DESC_CLM_RESULT ((args[0] < pt->clm_ctr) ? pt->clms[args[0]] : NULL)
-#define VECT_RESULT pt->vects[args[0]]
-#define DESC_VECT_RESULT ((args[0] < pt->vect_ctr) ? pt->vects[args[0]] : NULL)
-#define FNC_RESULT ((ptree **)(pt->fncs))[args[0]]
-#define DESC_FNC_RESULT ((args[0] < pt->fnc_ctr) ? pt->fncs[args[0]] : NULL)
-#define XEN_RESULT pt->xens[args[0]]
-#define DESC_XEN_RESULT ((args[0] < pt->xen_ctr) ? pt->xens[args[0]] : NULL)
-#define READER_RESULT pt->readers[args[0]]
-#define DESC_READER_RESULT ((args[0] < pt->reader_ctr) ? pt->readers[args[0]] : NULL)
-#define MIX_READER_RESULT pt->mix_readers[args[0]]
-#define DESC_MIX_READER_RESULT ((args[0] < pt->mix_reader_ctr) ? pt->mix_readers[args[0]] : NULL)
-#define TRACK_READER_RESULT pt->track_readers[args[0]]
-#define DESC_TRACK_READER_RESULT ((args[0] < pt->track_reader_ctr) ? pt->track_readers[args[0]] : NULL)
 #define BOOL_ARG_1 ((bool)(pt->ints[args[1]]))
 #define BOOL_ARG_2 ((bool)(pt->ints[args[2]]))
 #define BOOL_ARG_3 ((bool)(pt->ints[args[3]]))
+
+#define INT_RESULT pt->ints[args[0]]
 #define INT_ARG_1 pt->ints[args[1]]
 #define INT_ARG_2 pt->ints[args[2]]
 #define INT_ARG_3 pt->ints[args[3]]
 #define INT_ARG_4 pt->ints[args[4]]
 #define INT_ARG_5 pt->ints[args[5]]
 #define INT_ARG_6 pt->ints[args[6]]
+
+#define FLOAT_RESULT pt->dbls[args[0]]
 #define FLOAT_ARG_1 pt->dbls[args[1]]
 #define FLOAT_ARG_2 pt->dbls[args[2]]
 #define FLOAT_ARG_3 pt->dbls[args[3]]
 #define FLOAT_ARG_4 pt->dbls[args[4]]
+
+#define VCT_RESULT pt->vcts[args[0]]
+#define DESC_VCT_RESULT ((args[0] < pt->vct_ctr) ? pt->vcts[args[0]] : NULL)
 #define VCT_ARG_1 pt->vcts[args[1]]
 #define VCT_ARG_2 pt->vcts[args[2]]
 #define VCT_ARG_3 pt->vcts[args[3]]
@@ -2449,14 +2434,24 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define DESC_VCT_ARG_3 ((args[3] < pt->vct_ctr) ? pt->vcts[args[3]] : NULL)
 #define DESC_VCT_ARG_4 ((args[4] < pt->vct_ctr) ? pt->vcts[args[4]] : NULL)
 #define DESC_VCT_ARG_5 ((args[5] < pt->vct_ctr) ? pt->vcts[args[5]] : NULL)
+
+#define SOUND_DATA_RESULT pt->sds[args[0]]
+#define DESC_SOUND_DATA_RESULT ((args[0] < pt->sd_ctr) ? pt->sds[args[0]] : NULL)
 #define SOUND_DATA_ARG_1 pt->sds[args[1]]
 #define SOUND_DATA_ARG_2 pt->sds[args[2]]
 #define DESC_SOUND_DATA_ARG_1 ((args[1] < pt->sd_ctr) ? pt->sds[args[1]] : NULL)
 #define DESC_SOUND_DATA_ARG_2 ((args[2] < pt->sd_ctr) ? pt->sds[args[2]] : NULL)
+
+#define STRING_RESULT pt->strs[args[0]]
 #define STRING_ARG_1 pt->strs[args[1]]
 #define STRING_ARG_2 pt->strs[args[2]]
+
+#define CHAR_RESULT pt->ints[args[0]]
 #define CHAR_ARG_1 ((char)(pt->ints[args[1]]))
 #define CHAR_ARG_2 ((char)(pt->ints[args[2]]))
+
+#define CLM_RESULT pt->clms[args[0]]
+#define DESC_CLM_RESULT ((args[0] < pt->clm_ctr) ? pt->clms[args[0]] : NULL)
 #define CLM_ARG_1 pt->clms[args[1]]
 #define CLM_ARG_2 pt->clms[args[2]]
 #define CLM_ARG_3 pt->clms[args[3]]
@@ -2465,18 +2460,30 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define DESC_CLM_ARG_2 ((args[2] < pt->clm_ctr) ? pt->clms[args[2]] : NULL)
 #define DESC_CLM_ARG_3 ((args[3] < pt->clm_ctr) ? pt->clms[args[3]] : NULL)
 #define DESC_CLM_ARG_4 ((args[4] < pt->clm_ctr) ? pt->clms[args[4]] : NULL)
+
+#define READER_RESULT pt->readers[args[0]]
+#define DESC_READER_RESULT ((args[0] < pt->reader_ctr) ? pt->readers[args[0]] : NULL)
 #define READER_ARG_1 pt->readers[args[1]]
 #define READER_ARG_2 pt->readers[args[2]]
 #define DESC_READER_ARG_1 ((args[1] < pt->reader_ctr) ? pt->readers[args[1]] : NULL)
 #define DESC_READER_ARG_2 ((args[2] < pt->reader_ctr) ? pt->readers[args[2]] : NULL)
+
+#define MIX_READER_RESULT pt->mix_readers[args[0]]
+#define DESC_MIX_READER_RESULT ((args[0] < pt->mix_reader_ctr) ? pt->mix_readers[args[0]] : NULL)
 #define MIX_READER_ARG_1 pt->mix_readers[args[1]]
 #define MIX_READER_ARG_2 pt->mix_readers[args[2]]
 #define DESC_MIX_READER_ARG_1 ((args[1] < pt->mix_reader_ctr) ? pt->mix_readers[args[1]] : NULL)
 #define DESC_MIX_READER_ARG_2 ((args[2] < pt->mix_reader_ctr) ? pt->mix_readers[args[2]] : NULL)
+
+#define TRACK_READER_RESULT pt->track_readers[args[0]]
+#define DESC_TRACK_READER_RESULT ((args[0] < pt->track_reader_ctr) ? pt->track_readers[args[0]] : NULL)
 #define TRACK_READER_ARG_1 pt->track_readers[args[1]]
 #define TRACK_READER_ARG_2 pt->track_readers[args[2]]
 #define DESC_TRACK_READER_ARG_1 ((args[1] < pt->track_reader_ctr) ? pt->track_readers[args[1]] : NULL)
 #define DESC_TRACK_READER_ARG_2 ((args[2] < pt->track_reader_ctr) ? pt->track_readers[args[2]] : NULL)
+
+#define FNC_RESULT ((ptree **)(pt->fncs))[args[0]]
+#define DESC_FNC_RESULT ((args[0] < pt->fnc_ctr) ? pt->fncs[args[0]] : NULL)
 #define FNC_ARG_1 ((ptree **)(pt->fncs))[args[1]]
 #define FNC_ARG_2 ((ptree **)(pt->fncs))[args[2]]
 #define FNC_ARG_3 ((ptree **)(pt->fncs))[args[3]]
@@ -2489,14 +2496,21 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define DESC_FNC_ARG_4 ((args[4] < pt->fnc_ctr) ? pt->fncs[args[4]] : NULL)
 #define DESC_FNC_ARG_5 ((args[5] < pt->fnc_ctr) ? pt->fncs[args[5]] : NULL)
 #define DESC_FNC_ARG_6 ((args[6] < pt->fnc_ctr) ? pt->fncs[args[6]] : NULL)
+
+#define XEN_RESULT pt->xens[args[0]]
+#define DESC_XEN_RESULT ((args[0] < pt->xen_ctr) ? pt->xens[args[0]] : NULL)
 #define RXEN_ARG_1 pt->xens[args[1]]
 #define RXEN_ARG_2 pt->xens[args[2]]
 #define DESC_RXEN_ARG_1 ((args[1] < pt->xen_ctr) ? pt->xens[args[1]] : NULL)
 #define DESC_RXEN_ARG_2 ((args[2] < pt->xen_ctr) ? pt->xens[args[2]] : NULL)
+
+#define VECT_RESULT pt->vects[args[0]]
+#define DESC_VECT_RESULT ((args[0] < pt->vect_ctr) ? pt->vects[args[0]] : NULL)
 #define VECT_ARG_1 pt->vects[args[1]]
 #define VECT_ARG_2 pt->vects[args[2]]
 #define DESC_VECT_ARG_1 ((args[1] < pt->vect_ctr) ? pt->vects[args[1]] : NULL)
 #define DESC_VECT_ARG_2 ((args[2] < pt->vect_ctr) ? pt->vects[args[2]] : NULL)
+
 
 static void quit(int *args, ptree *pt) {ALL_DONE = (Int)true;}
 static char *descr_quit(int *args, ptree *pt) {return(copy_string("quit"));}

@@ -36,6 +36,27 @@
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
+;; start-playing-hook is only called when an indexed sound is played, not if play-mix etc -- need a way to hit all possible playback
+(define mus-audio-playback-amp
+  (make-procedure-with-setter
+   (lambda ()
+     (let ((vals (make-vector 32)))
+       (mus-audio-mixer-read mus-audio-default mus-audio-amp 0 vals)
+       (let ((ch0-amp (vector-ref vals 0)))
+	 (mus-audio-mixer-read mus-audio-default mus-audio-amp 1 vals)
+	 (let ((ch1-amp (vector-ref vals 0)))
+	   (list ch0-amp ch1-amp)))))
+   (lambda (val)
+     (let ((vals (make-vector 32)))
+       (vector-set! vals 0 val)
+       (mus-audio-mixer-write mus-audio-default mus-audio-amp 0 vals)       
+       (mus-audio-mixer-write mus-audio-default mus-audio-amp 1 vals)
+       val))))
+
+(define playback-amp 0.0)
+(define old-playback-amp (mus-audio-playback-amp))
+(set! (mus-audio-playback-amp) playback-amp)
+
 (define (snd-display . args)
   (let ((str (if (null? (cdr args))
 		 (car args)
@@ -49,7 +70,6 @@
 
 (define tests 1)
 (if (not (defined? 'snd-test)) (define snd-test -1))
-(if (defined? 'disable-play) (disable-play))
 (define keep-going #f)
 (define full-test (< snd-test 0))
 (define total-tests 28)
@@ -22445,8 +22465,6 @@ EDITS: 5
 	      (ph #f)
 	      (ph1 #f)
 	      (pc #f))
-	  (if (defined? 'enable-play) (enable-play))
-	  
 	  (add-hook! start-playing-hook
 		     (lambda (snd)
 		       (if (not (= snd ind))
@@ -22545,8 +22563,6 @@ EDITS: 5
 	    (start-playing 1 22050 #f)
 	    (if (> ctr 2) (snd-display ";stop-player: ~A" ctr))
 	    (reset-hook! dac-hook))
-	  
-	  (if (defined? 'disable-play) (disable-play))
 	  )
 	
 	(let ((e0 #f)
@@ -22711,9 +22727,7 @@ EDITS: 5
 	    (in2 (open-sound "2.snd")))
 	(set! (sync in1) 1)
 	(set! (sync in2) 1)
-	(if (defined? 'enable-play) (enable-play))
 	(play-and-wait 0 #f #f #t)
-	(if (defined? 'disable-play) (disable-play))
 	(close-sound in1)
 	(close-sound in2))
 
@@ -37397,7 +37411,6 @@ EDITS: 2
       (set! (mus-srate) 22050)
       (set! (default-output-srate) 22050)
       
-      (if (defined? 'enable-play) (enable-play))
       (let ((old-opt (optimization)))
 	(do ((opt 0 (1+ opt)))
 	    ((> opt max-optimization))
@@ -37410,9 +37423,8 @@ EDITS: 2
 	      (if (not (= (srate ind) 22050)) (snd-display ";with-sound srate: ~A (~A, ~A)" 
 							   (srate ind) (mus-srate) (mus-sound-srate "test.snd")))
 	      (if (not (= (frames ind) 2205)) (snd-display ";with-sound frames: ~A" (frames ind))))
-	    (play-and-wait ind)))
+	    (play-and-wait 0 ind)))
 	(set! (optimization) old-opt))
-      (if (defined? 'disable-play) (disable-play))
       
       (with-sound (:continue-old-file #t) (fm-violin .2 .1 440 .25))
       (let ((ind (find-sound "test.snd")))
@@ -37693,9 +37705,8 @@ EDITS: 2
 			     .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2
 			     ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4  )))
       
-      (if (defined? 'enable-play) (enable-play))
       (let ((ind (find-sound "test.snd")))
-	(play-and-wait ind)
+	(play-and-wait 0 ind)
 	(close-sound ind))
 
       (with-sound (:srate 22050) 
@@ -37786,7 +37797,6 @@ EDITS: 2
 	    (snd-display ";fm-violin with-sound: ~A ~A" (channel->vct 45 10) (channel->vct 210 10)))
 	(play-and-wait ind)
 	(close-sound ind))
-      (if (defined? 'disable-play) (disable-play))
 
       (with-sound (:channels 2 :statistics #t)
 		  (fullmix "pistol.snd")
@@ -51086,4 +51096,5 @@ EDITS: 2
       (system (string-append "rm ../peaks/_home_bil_cl_hiho*"))
       (system (string-append "rm ../peaks/_home_bil_cl_new*"))))
 
+(set! (mus-audio-playback-amp) old-playback-amp)
 (if with-exit (exit))
