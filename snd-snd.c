@@ -192,7 +192,7 @@ static env_state *make_env_state(chan_info *cp, off_t samples)
 	  /* preset as much as possible of the envelope */
 	}
       cp->amp_envs[pos] = ep;
-      ep->completed = 0;
+      ep->completed = FALSE;
     }
   es->sf = NULL;
   return(es);
@@ -229,7 +229,7 @@ static int tick_amp_env(chan_info *cp, env_state *es)
 	  /* oops... */
 	  es->slice++;
 	  if (es->sf) es->sf = free_snd_fd(es->sf);
-	  ep->completed = 1;
+	  ep->completed = TRUE;
 	  return(TRUE);
 	}
       if (es->sf == NULL) 
@@ -265,14 +265,14 @@ static int tick_amp_env(chan_info *cp, env_state *es)
 	{
 	  es->slice++;
 	  if (es->sf) es->sf = free_snd_fd(es->sf);
-	  ep->completed = 1;
+	  ep->completed = TRUE;
 	  return(TRUE);
 	}
       return(FALSE);
     }
   else
     {
-      ep->completed = 1;
+      ep->completed = TRUE;
       return(TRUE);
     }
 }
@@ -454,7 +454,7 @@ void amp_env_scale_by(chan_info *cp, Float scl, int pos)
 	      new_ep->data_min[i] = (mus_sample_t)(old_ep->data_max[i] * scl);
 	    }
 	}
-      new_ep->completed = 1;
+      new_ep->completed = TRUE;
       new_ep->bin = old_ep->bin;
       new_ep->top_bin = old_ep->top_bin;
       cp->amp_envs[cp->edit_ctr] = new_ep;
@@ -532,7 +532,7 @@ void amp_env_scale_selection_by(chan_info *cp, Float scl, off_t beg, off_t num, 
 	}
       new_ep->fmin = fmin;
       new_ep->fmax = fmax;
-      new_ep->completed = 1;
+      new_ep->completed = TRUE;
       new_ep->bin = old_ep->bin;
       new_ep->top_bin = old_ep->top_bin;
       cp->amp_envs[cp->edit_ctr] = new_ep;
@@ -572,7 +572,7 @@ env_info *amp_env_section(chan_info *cp, off_t beg, off_t num, int edpos)
 	}
       new_ep->fmin = fmin;
       new_ep->fmax = fmax;
-      new_ep->completed = 1;
+      new_ep->completed = TRUE;
       new_ep->bin = old_ep->bin;
       new_ep->top_bin = old_ep->top_bin;
     }
@@ -609,7 +609,7 @@ env_info *amp_env_copy(chan_info *cp, int reversed, int edpos)
 	      new_ep->data_max[i] = old_ep->data_max[i];
 	    }
 	}
-      new_ep->completed = 1;
+      new_ep->completed = TRUE;
       new_ep->bin = old_ep->bin;
       new_ep->top_bin = old_ep->top_bin;
       
@@ -660,7 +660,7 @@ void amp_env_env(chan_info *cp, Float *brkpts, int npts, int pos)
 	}
       new_ep->fmin = fmin;
       new_ep->fmax = fmax;
-      new_ep->completed = 1;
+      new_ep->completed = TRUE;
       new_ep->bin = old_ep->bin;
       new_ep->top_bin = old_ep->top_bin;
       cp->amp_envs[cp->edit_ctr] = new_ep;
@@ -727,7 +727,7 @@ void amp_env_env_selection_by(chan_info *cp, mus_any *e, off_t beg, off_t num, i
 	}
       new_ep->fmin = fmin;
       new_ep->fmax = fmax;
-      new_ep->completed = 1;
+      new_ep->completed = TRUE;
       new_ep->bin = old_ep->bin;
       new_ep->top_bin = old_ep->top_bin;
       cp->amp_envs[cp->edit_ctr] = new_ep;
@@ -775,7 +775,7 @@ void amp_env_ptree(chan_info *cp, void *pt, int pos)
 	}
       new_ep->fmin = fmin;
       new_ep->fmax = fmax;
-      new_ep->completed = 1;
+      new_ep->completed = TRUE;
       new_ep->bin = old_ep->bin;
       new_ep->top_bin = old_ep->top_bin;
       cp->amp_envs[cp->edit_ctr] = new_ep;
@@ -836,7 +836,7 @@ void amp_env_ptree_selection(chan_info *cp, void *pt, off_t beg, off_t num, int 
 	}
       new_ep->fmin = fmin;
       new_ep->fmax = fmax;
-      new_ep->completed = 1;
+      new_ep->completed = TRUE;
       new_ep->bin = old_ep->bin;
       new_ep->top_bin = old_ep->top_bin;
       cp->amp_envs[cp->edit_ctr] = new_ep;
@@ -1478,7 +1478,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 	  if (apply_reporting) finish_progress_report(sp, NOT_FROM_ENVED);
 	  close_temp_file(ap->ofd,
 			  ap->hdr,
-			  apply_dur * (ap->hdr->chans) * mus_data_format_to_bytes_per_sample((ap->hdr)->format),
+			  apply_dur * (ap->hdr->chans) * mus_bytes_per_sample((ap->hdr)->format),
 			  sp);
 	  if ((sp->apply_ok) && (apply_dur > 0))
 	    {
@@ -1925,9 +1925,9 @@ static XEN sound_set(XEN snd_n, XEN val, int fld, char *caller)
 	  old_format = sp->hdr->format;
 	  mus_sound_set_data_format(sp->filename, ival);
 	  sp->hdr->format = ival;
-	  if (mus_data_format_to_bytes_per_sample(old_format) != mus_data_format_to_bytes_per_sample(ival))
+	  if (mus_bytes_per_sample(old_format) != mus_bytes_per_sample(ival))
 	    {
-	      sp->hdr->samples = (sp->hdr->samples * mus_data_format_to_bytes_per_sample(old_format)) / mus_data_format_to_bytes_per_sample(ival);
+	      sp->hdr->samples = (sp->hdr->samples * mus_bytes_per_sample(old_format)) / mus_bytes_per_sample(ival);
 	      mus_sound_set_samples(sp->filename, sp->hdr->samples);
 	    }
 	  snd_update(ss, sp);
@@ -3102,7 +3102,7 @@ static XEN g_write_peak_env_info_file(XEN snd, XEN chn, XEN name)
 	}
       if (fullname) FREE(fullname);
       ep = cp->amp_envs[0];
-      ibuf[0] = ep->completed | (pack_mus_sample_type() << 16);
+      ibuf[0] = ((ep->completed) ? 1 : 0) | (pack_mus_sample_type() << 16);
       ibuf[1] = ep->amp_env_size;
       ibuf[2] = ep->samps_per_bin;
       ibuf[3] = ep->bin;
@@ -3394,7 +3394,7 @@ If 'filename' is a sound index (an integer), 'size' is an edit-position, and the
     {
       cp = sp->chans[chn];
       cp->edit_ctr = 0;
-      cp->active = 1;
+      cp->active = TRUE;
       es = make_env_state(cp, cp->samples[0]);
       if (es)
 	{

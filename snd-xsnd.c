@@ -1716,7 +1716,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
   make_widgets = (ss->sounds[snd_slot] == NULL);
   ss->sounds[snd_slot] = make_snd_info(ss->sounds[snd_slot], ss, filename, hdr, snd_slot, read_only);
   sp = ss->sounds[snd_slot];
-  sp->inuse = 1;
+  sp->inuse = TRUE;
   sx = sp->sgx;
 #if HAVE_XPM
   sx->file_pix = blank_pixmap;

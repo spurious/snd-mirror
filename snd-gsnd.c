@@ -1372,7 +1372,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
   make_widgets = (ss->sounds[snd_slot] == NULL);
   ss->sounds[snd_slot] = make_snd_info(ss->sounds[snd_slot], ss, filename, hdr, snd_slot, read_only);
   sp = ss->sounds[snd_slot];
-  sp->inuse = 1;
+  sp->inuse = TRUE;
   sx = sp->sgx;
   sx->controls_fixed = 0;
   sx->file_pix = blank;

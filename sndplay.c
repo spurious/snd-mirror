@@ -174,7 +174,7 @@ int main(int argc, char *argv[])
 #endif
       srate = mus_sound_srate(name);
       frames = mus_sound_samples(name) / chans;
-      sample_size = mus_data_format_to_bytes_per_sample(MUS_COMPATIBLE_FORMAT);
+      sample_size = mus_bytes_per_sample(MUS_COMPATIBLE_FORMAT);
       if (!use_multi_card_code)
 	{
 	  outbytes = BUFFER_SIZE * out_chans * sample_size;
@@ -553,7 +553,7 @@ int main(int argc, char *argv[])
 	  for (i = 0; i < out_chans[d]; i++) 
 	    read_bufs[base + i] = (mus_sample_t *)CALLOC(samples_per_chan, sizeof(mus_sample_t));
 	  base += out_chans[d];
-	  out_bytes[dev] = samples_per_chan * out_chans[d] * mus_data_format_to_bytes_per_sample(out_format[dev]);
+	  out_bytes[dev] = samples_per_chan * out_chans[d] * mus_bytes_per_sample(out_format[dev]);
 	  out_buf[dev] = (short *)CALLOC(out_bytes[dev], 1);
 	}
       for (ioff = 0; ioff < frames; ioff += samples_per_chan)
@@ -572,7 +572,7 @@ int main(int argc, char *argv[])
 		  for (f = 0; f < chans; f++) 
 		    memset(read_bufs[f], 0, samples_per_chan * sizeof(mus_sample_t));
 #endif
-		  out_bytes[dev] = curframes * out_chans[d] * mus_data_format_to_bytes_per_sample(out_format[dev]);
+		  out_bytes[dev] = curframes * out_chans[d] * mus_bytes_per_sample(out_format[dev]);
 		}
 	    }
 	  mus_sound_read(fd, 0, curframes - 1, chans, read_bufs); 

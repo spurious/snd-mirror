@@ -639,7 +639,7 @@ Information about about parameters can be acquired using analyse-ladspa."
 			 C_TO_XEN_STRING(strerror(errno))));
 
   /* Tidy up header. */
-  datumb = mus_data_format_to_bytes_per_sample(hdr->format);
+  datumb = mus_bytes_per_sample(hdr->format);
 
   if (psDescriptor->activate)
     psDescriptor->activate(psHandle);

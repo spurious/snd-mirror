@@ -324,7 +324,7 @@ static gboolean channel_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpoint
   snd_state *ss;
 
   cp = (chan_info *)data;
-  if ((cp == NULL) || (cp->active != 1) || (cp->sound == NULL)) return(FALSE);
+  if ((cp == NULL) || (!(cp->active)) || (cp->sound == NULL)) return(FALSE);
   ss = cp->state;
 
   if ((ev->area.height < MIN_REGRAPH_Y) || 
@@ -345,7 +345,7 @@ static gboolean channel_resize_callback(GtkWidget *w, GdkEventConfigure *ev, gpo
   snd_info *sp;
   chan_info *cp;
   cp = (chan_info *)data;
-  if ((cp == NULL) || (cp->active != 1) || (cp->sound == NULL)) return(FALSE);
+  if ((cp == NULL) || (!(cp->active)) || (cp->sound == NULL)) return(FALSE);
   sp = cp->sound;
   if (sp == NULL) return(FALSE);
   if (sp->channel_style != CHANNELS_SEPARATE)

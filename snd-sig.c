@@ -463,7 +463,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 		  mus_file_open_descriptors(scfd,
 					    saved_chan_file,
 					    hdr->format,
-					    mus_data_format_to_bytes_per_sample(hdr->format),
+					    mus_bytes_per_sample(hdr->format),
 					    hdr->data_location,
 					    1, hdr->type); /* ??? */
 		  fltfd = mus_file_open_read(filename);
@@ -475,7 +475,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 		      mus_file_open_descriptors(fltfd,
 						filename,
 						dataformat,
-						mus_data_format_to_bytes_per_sample(dataformat),
+						mus_bytes_per_sample(dataformat),
 						dataloc,
 						filter_chans,
 						mus_sound_header_type(filename));
@@ -623,7 +623,7 @@ void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int
       sp = si->cps[0]->sound;
     }
   else si = sync_to_chan(cp);
-  datum_size = mus_data_format_to_bytes_per_sample((sp->hdr)->format);
+  datum_size = mus_bytes_per_sample((sp->hdr)->format);
   chans = si->chans;
   scalers = (Float *)CALLOC(chans, sizeof(Float));
   if (chans < len)
@@ -731,7 +731,7 @@ static void swap_channels(snd_state *ss, off_t beg, off_t dur, snd_fd *c0, snd_f
 	  snd_error("can't open swap-channels temp file %s: %s\n", ofile0, strerror(errno));
 	  return;
 	}
-      datumb = mus_data_format_to_bytes_per_sample(hdr0->format);
+      datumb = mus_bytes_per_sample(hdr0->format);
       ofile1 = snd_tempnam(ss);
       hdr1 = make_temp_header(ofile1, SND_SRATE(sp0), 1, dur, (char *)S_swap_channels);
       ofd1 = open_temp_file(ofile1, 1, hdr1, ss);
@@ -887,7 +887,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
     return(mus_format("can't open %s temp file %s: %s\n", origin, ofile, strerror(errno)));
   data = (mus_sample_t **)MALLOC(sizeof(mus_sample_t *));
   data[0] = (mus_sample_t *)CALLOC(MAX_BUFFER_SIZE, sizeof(mus_sample_t)); 
-  datumb = mus_data_format_to_bytes_per_sample(hdr->format);
+  datumb = mus_bytes_per_sample(hdr->format);
   idata = data[0];
 
   sr = make_src(ss, ratio, sf, ratio);
@@ -1252,7 +1252,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int 
 	  free_snd_fd(sf); 
 	  return(mus_format("can't open %s temp file %s: %s\n", caller, ofile, strerror(errno)));
 	}
-      datumb = mus_data_format_to_bytes_per_sample(hdr->format);
+      datumb = mus_bytes_per_sample(hdr->format);
     }
   else temp_file = 0;
   data = (mus_sample_t **)MALLOC(sizeof(mus_sample_t *));
@@ -1491,7 +1491,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
 		      snd_error("can't open %s temp file %s: %s\n", origin, ofile, strerror(errno));
 		      break;
 		    }
-		  datumb = mus_data_format_to_bytes_per_sample(hdr->format);
+		  datumb = mus_bytes_per_sample(hdr->format);
 		}
 	      else temp_file = 0;
 	      sf = sfs[i];
@@ -1618,7 +1618,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XE
       ofd = open_temp_file(ofile, 1, hdr, ss);
       if (ofd == -1)
 	return(mus_format("can't open %s temp file %s: %s\n", caller, ofile, strerror(errno)));
-      datumb = mus_data_format_to_bytes_per_sample(hdr->format);
+      datumb = mus_bytes_per_sample(hdr->format);
     }
   else temp_file = 0;
   if ((beg == 0) && (dur == cp->samples[edpos]))
@@ -1951,7 +1951,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
 	      FREE(ofile);
 	      return;
 	    }
-	  datumb = mus_data_format_to_bytes_per_sample(hdr->format);
+	  datumb = mus_bytes_per_sample(hdr->format);
 	}
       else temp_file = FALSE;
       data = (mus_sample_t **)MALLOC(si->chans * sizeof(mus_sample_t *));
@@ -2334,7 +2334,7 @@ static char *run_channel(chan_info *cp, void *upt, off_t beg, off_t dur, int edp
 	  free_snd_fd(sf); 
 	  return(mus_format("can't open run-channel temp file %s: %s\n", ofile, strerror(errno)));
 	}
-      datumb = mus_data_format_to_bytes_per_sample(hdr->format);
+      datumb = mus_bytes_per_sample(hdr->format);
     }
   else temp_file = 0;
   data = (mus_sample_t **)MALLOC(sizeof(mus_sample_t *));

@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
 	    }
 	}
       if (k > 0) mus_sound_write(fd, 0, k - 1, 1, obuf);
-      mus_sound_close_output(fd, 22050 * mus_data_format_to_bytes_per_sample(MUS_BSHORT));
+      mus_sound_close_output(fd, 22050 * mus_bytes_per_sample(MUS_BSHORT));
       FREE(obuf[0]);
     }
   return(0);

@@ -536,7 +536,7 @@ static void channel_expose_callback(Widget w, XtPointer context, XtPointer info)
   XExposeEvent *ev;
   TIME_TYPE curtime;
   ASSERT_WIDGET_TYPE(XmIsDrawingArea(w), w);
-  if ((cp == NULL) || (cp->active != 1) || (cp->sound == NULL)) return;
+  if ((cp == NULL) || (!(cp->active)) || (cp->sound == NULL)) return;
   ev = (XExposeEvent *)(cb->event);
   if (ev->count > 0) return;
   curtime = GUI_CURRENT_TIME(cp->state);
@@ -556,7 +556,7 @@ static void channel_resize_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_info *sp;
   chan_info *cp = (chan_info *)context;
-  if ((cp == NULL) || (cp->active != 1) || (cp->sound == NULL)) return;
+  if ((cp == NULL) || (!(cp->active)) || (cp->sound == NULL)) return;
   sp = cp->sound;
   if (sp->channel_style != CHANNELS_SEPARATE)
     {

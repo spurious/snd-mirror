@@ -981,7 +981,7 @@ to the audio line from the sound-data object sdata."
 			      C_TO_XEN_INT(sd->length)));
   fd = XEN_TO_C_INT(line);
   fmt = audio_io_write_format(fd);
-  outbytes = frms * sd->chans * mus_data_format_to_bytes_per_sample(fmt);
+  outbytes = frms * sd->chans * mus_bytes_per_sample(fmt);
   obuf = (char *)CALLOC(outbytes, sizeof(char));
   mus_file_write_buffer(fmt, 0, frms - 1, sd->chans, sd->data, obuf, TRUE); /* TRUE -> clipped */
   val = mus_audio_write(fd, obuf, outbytes);
@@ -1004,7 +1004,7 @@ from the audio line into the sound-data object sdata."
   frms = XEN_TO_C_INT(frames);
   fd = XEN_TO_C_INT(line);
   fmt = audio_io_read_format(fd);
-  inbytes = frms * sd->chans * mus_data_format_to_bytes_per_sample(fmt);
+  inbytes = frms * sd->chans * mus_bytes_per_sample(fmt);
   inbuf = (char *)CALLOC(inbytes, sizeof(char));
   val = mus_audio_read(fd, inbuf, inbytes);
   mus_file_read_buffer(fmt, 0, sd->chans, frms - 1, sd->data, inbuf);

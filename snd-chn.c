@@ -332,7 +332,7 @@ void update_graph(chan_info *cp)
   snd_info *sp;
   axis_info *ap;
   if ((updating) || 
-      (cp->active != 1) ||
+      (!(cp->active)) ||
       (cp->cgx == NULL) || 
       (cp->squelch_update) || 
       (cp->sounds == NULL) || 
@@ -462,13 +462,13 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, int graphed)
     {
       ap->zx = 1.0;
       ap->sx = 1.0;
-      ap->no_data = 1;
+      ap->no_data = TRUE;
     }
   else
     {
       ap->zx = (ap->x1 - ap->x0) / ap->x_ambit;
       ap->sx = (ap->x0 - ap->xmin) / ap->x_ambit;
-      ap->no_data = 0;
+      ap->no_data = FALSE;
     }
   ap->zy = (ap->y1 - ap->y0) / ap->y_ambit;
   ap->sy = (ap->y0 - ap->ymin) / ap->y_ambit;
@@ -510,7 +510,7 @@ void add_channel_data(char *filename, chan_info *cp, file_info *hdr, snd_state *
 	{
 	  mus_file_open_descriptors(fd,
 				    filename, chdr->format,
-				    mus_data_format_to_bytes_per_sample(chdr->format),
+				    mus_bytes_per_sample(chdr->format),
 				    chdr->data_location,
 				    chdr->chans,
 				    chdr->type);
@@ -558,7 +558,7 @@ void set_x_bounds(axis_info *ap)
       ap->x0 = ap->x1 - range;
     }
   if (ap->x0 < ap->xmin) ap->x0 = ap->xmin;
-  ap->changed = 1;
+  ap->changed = TRUE;
 }
 
 void apply_y_axis_change (axis_info *ap, chan_info *cp)
@@ -607,7 +607,7 @@ void set_x_axis_x0x1 (chan_info *cp, double x0, double x1)
   resize_sx(cp);
   resize_zx(cp);
   apply_x_axis_change(ap, cp, cp->sound); /* this checks sync */
-  ap->changed = 1;
+  ap->changed = TRUE;
 }
 
 static void set_x_axis_x0(chan_info *cp, off_t left)
@@ -1110,7 +1110,7 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	  ymin = MUS_SAMPLE_MAX;
 	  ymax = MUS_SAMPLE_MIN;
 	  if (cp->printing) pinc = samples_per_pixel/cur_srate;
-	  ap->changed = 0;
+	  ap->changed = FALSE;
 	  for (ioff = ap->losamp, xf = 0.0; ioff <= ap->hisamp; ioff++)
 	    {
 	      samp = read_sample(sf);
@@ -1138,7 +1138,7 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 		      if ((ap->changed) || (ss->stopped_explicitly))
 			{
 			  ss->stopped_explicitly = 0;
-			  ap->changed = 0;
+			  ap->changed = FALSE;
 			  break;
 			}
 		    }
@@ -1289,7 +1289,7 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
 		      if ((ap->changed) || (ss->stopped_explicitly))
 			{
 			  ss->stopped_explicitly = 0;
-			  ap->changed = 0;
+			  ap->changed = FALSE;
 			  break;
 			}
 		    }
@@ -3010,9 +3010,9 @@ static void display_channel_data_1 (chan_info *cp, snd_info *sp, snd_state *ss, 
   int width, height, offset, full_height, y0, y1, bottom, top;
   Float val, size, chan_height;
   axis_info *ap;
-  if ((sp->inuse == 0) ||
-      (cp->active == 0) ||
-      (sp->active == 0))
+  if ((!(sp->inuse)) ||
+      (!(cp->active)) ||
+      (!(sp->active)))
     return;
   if ((sp->channel_style == CHANNELS_SEPARATE) || (sp->nchans == 1))
     {

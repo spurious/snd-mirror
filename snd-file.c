@@ -698,7 +698,7 @@ void snd_close_file(snd_info *sp, snd_state *ss)
 		      XEN_LIST_1(C_TO_SMALL_XEN_INT(sp->index)),
 		      S_close_hook);
   if (XEN_TRUE_P(res)) return;
-  sp->inuse = 0;
+  sp->inuse = FALSE;
   add_to_previous_files(ss, sp->short_filename, sp->filename);
   if (sp->playing) stop_playing_sound(sp);
   if (sp->sgx) clear_minibuffer(sp);
@@ -808,7 +808,7 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
   sp = make_basic_snd_info(chans);
   sp->nchans = chans;
   sp->hdr = hdr;
-  sp->inuse = 1;
+  sp->inuse = TRUE;
   sp->state = ss;
   initialize_control_panel(ss, sp);
   sp->search_proc = XEN_UNDEFINED;
@@ -857,7 +857,7 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
 	   */
 	}
     }
-  sp->active = 1;
+  sp->active = TRUE;
   return(sp);
 }
 

@@ -518,7 +518,7 @@ void allocate_color_map(snd_state *ss, int colormap)
       if (grays_allocated != -1) XFreeColors(dpy, cmap, grays, COLORMAP_SIZE, 0);
       for (i = 0; i < COLORMAP_SIZE; i++)
 	{
-	  get_current_color(colormap, i, &(tmp_color.red), &(tmp_color.green), &tmp_color.blue);
+	  get_current_color(colormap, i, &(tmp_color.red), &(tmp_color.green), &(tmp_color.blue));
 	  if ((XAllocColor(dpy, cmap, &tmp_color)) == 0) /* 0 = failure -- try black as a fallback */
 	    {
 	      tmp_color.red = 0;

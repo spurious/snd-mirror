@@ -744,7 +744,7 @@ void fire_up_recorder(snd_state *ss)
 	    {
 	      if ((int)direction == 1)
 		{
-		  size = mus_data_format_to_bytes_per_sample(rp->input_formats[sys]);
+		  size = mus_bytes_per_sample(rp->input_formats[sys]);
 		  rp->input_ports[sys] = mus_audio_open_input(sysdev,
 							      rp->srate,
 							      rp->input_channels[sys],
@@ -789,7 +789,7 @@ void fire_up_recorder(snd_state *ss)
 		      rp->out_chans = rp->monitor_chans;
 		    }
 		  rp->monitor_data_format = mus_audio_compatible_format(sysdev);
-		  size = mus_data_format_to_bytes_per_sample(rp->monitor_data_format);
+		  size = mus_bytes_per_sample(rp->monitor_data_format);
 		  rp->monitor_port = mus_audio_open_output(sysdev,
 							   rp->srate,
 							   rp->monitor_chans,
@@ -1177,7 +1177,7 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
 	  rp->system_input_buffer_size = buffer_size;
 	  rp->all_systems_input_buf = (mus_sample_t *)CALLOC(rp->system_input_buffer_size, sizeof(mus_sample_t));
 	}
-      in_datum_size = mus_data_format_to_bytes_per_sample(rp->input_formats[0]);
+      in_datum_size = mus_bytes_per_sample(rp->input_formats[0]);
       mus_audio_read(rp->input_ports[0], rp->raw_input_bufs[0], buffer_size * in_datum_size);
       input_bufs[0] = rp->all_systems_input_buf;
       mus_file_read_buffer(rp->input_formats[0], 0, 1, buffer_size, input_bufs, rp->raw_input_bufs[0]);
@@ -1205,7 +1205,7 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
       input_bufs[0] = rp->one_system_input_buf;
       for (i = 0; i < rp->systems; i++)
 	{
-	  in_datum_size = mus_data_format_to_bytes_per_sample(rp->input_formats[i]);
+	  in_datum_size = mus_bytes_per_sample(rp->input_formats[i]);
 	  mus_audio_read(rp->input_ports[i], 
 			 rp->raw_input_bufs[i], 
 			 rp->input_buffer_sizes[i] * rp->input_channels[i] * in_datum_size);
@@ -1273,7 +1273,7 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
       mus_file_write_buffer(rp->monitor_data_format, 0, out_frame - 1, rp->monitor_chans, rp->output_bufs, rp->monitor_buf, data_clipped(ss));
       mus_audio_write(rp->monitor_port, 
 		      rp->monitor_buf, 
-		      rp->buffer_size * rp->monitor_chans * mus_data_format_to_bytes_per_sample(rp->monitor_data_format));
+		      rp->buffer_size * rp->monitor_chans * mus_bytes_per_sample(rp->monitor_data_format));
     }
   if ((rp->recording) && (rp->triggered))
     {
@@ -1301,7 +1301,7 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
   ochns = rp->out_chans;
   sr = rp->srate;
   sz = rp->buffer_size;
-  in_datum_size = mus_data_format_to_bytes_per_sample(ifmt);
+  in_datum_size = mus_bytes_per_sample(ifmt);
   if (rp->systems == 1)
     {
       active_in_chans = rp->input_channels[0];
@@ -1396,7 +1396,7 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
       mus_file_write_buffer(rp->out_format, 0, out_frame - 1, rp->monitor_chans, rp->output_bufs, rp->raw_input_bufs[0], data_clipped(ss));
       mus_audio_write(rp->monitor_port, 
 		      rp->raw_input_bufs[0], 
-		      out_frame * rp->monitor_chans * mus_data_format_to_bytes_per_sample(rp->out_format));
+		      out_frame * rp->monitor_chans * mus_bytes_per_sample(rp->out_format));
     }
   if ((rp->recording) && (rp->triggered))
     {
@@ -1438,7 +1438,7 @@ int recorder_start_output_file(snd_state *ss, char *comment)
   mus_file_open_descriptors(rp->output_file_descriptor, 
 			    rp->output_file,
 			    rp->out_format, 
-			    mus_data_format_to_bytes_per_sample(rp->out_format), 
+			    mus_bytes_per_sample(rp->out_format), 
 			    mus_header_data_location(),
 			    rp->out_chans, 
 			    rp->output_header_type);
@@ -1448,10 +1448,8 @@ int recorder_start_output_file(snd_state *ss, char *comment)
   if (!rp->output_bufs)
     rp->output_bufs = (mus_sample_t **)CALLOC(MAX_OUT_CHANS, sizeof(mus_sample_t *));
   for (i = 0; i < rp->out_chans; i++) 
-    {
-      if (!rp->output_bufs[i])
-	rp->output_bufs[i] = (mus_sample_t *)CALLOC(rp->buffer_size, sizeof(mus_sample_t));
-    }
+    if (!rp->output_bufs[i])
+      rp->output_bufs[i] = (mus_sample_t *)CALLOC(rp->buffer_size, sizeof(mus_sample_t));
   return(FALSE);
 }
 

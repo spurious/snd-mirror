@@ -2313,7 +2313,7 @@ static void edit_header_ok_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_state *ss = (snd_state *)context;
   XmAnyCallbackStruct *cb = (XmAnyCallbackStruct *)info;
-  if ((ss) && (edit_header_sp->active == 1))
+  if ((ss) && (edit_header_sp->active))
     {
       if (cb->event == ((ss->sgx)->text_activate_event)) return; /* <cr> in one of text fields */
       if (!(edit_header_sp->read_only))

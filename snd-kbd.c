@@ -292,7 +292,7 @@ void report_in_minibuffer(snd_info *sp, char *format, ...)
   int len;
 #if HAVE_VPRINTF
   va_list ap;
-  if (sp->active == 0) return;
+  if (!(sp->active)) return;
   len = snd_strlen(format) + PRINT_BUFFER_SIZE;
   buf = (char *)CALLOC(len, sizeof(char));
   va_start(ap, format);
@@ -324,7 +324,7 @@ void report_in_minibuffer_and_save(snd_info *sp, char *format, ...)
   int len;
 #if HAVE_VPRINTF
   va_list ap;
-  if (sp->active == 0) return;
+  if (!(sp->active)) return;
   len = snd_strlen(format) + 256;
   buf = (char *)CALLOC(len, sizeof(char));
   va_start(ap, format);

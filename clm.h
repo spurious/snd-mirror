@@ -2,10 +2,11 @@
 #define MUS_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 17
-#define MUS_DATE "19-Aug-02"
+#define MUS_REVISION 18
+#define MUS_DATE "13-Sep-02"
 
 /* 
+ * 13-Sep:     added mus_frandom and mus_irandom (for Snd optimizer).
  * 19-Aug:     changed internal phase-vocoder array accessor names
  * 13-Aug:     added set! (*-ref) for frame, locsig, mixer, locsig-reverb.
  * 29-Jul:     added various *_1 cases for the optimizer.
@@ -338,6 +339,8 @@ int mus_pulse_train_p           PROTO((mus_any *gen));
 void mus_set_rand_seed          PROTO((unsigned long seed));
 unsigned long mus_rand_seed     PROTO((void));
 Float mus_random                PROTO((Float amp));
+Float mus_frandom               PROTO((Float amp));
+int mus_irandom                 PROTO((int amp));
 
 Float mus_rand                  PROTO((mus_any *gen, Float fm));
 mus_any *mus_make_rand          PROTO((Float freq, Float base));

@@ -483,7 +483,7 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int requ
   else size = check_queue_size(requested_size, chans);
   /* if (chans > 2) size = 65536; */                            /* for temp adat code */
 
-  datum_size[line] = mus_data_format_to_bytes_per_sample(format);
+  datum_size[line] = mus_bytes_per_sample(format);
   if (datum_size[line] == 3) 
     width = AL_SAMPLE_24;
   else 
@@ -648,7 +648,7 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int reque
 		      mus_format("no free audio lines?"));
   channels[line] = chans;
   line_out[line] = 0;
-  datum_size[line] = mus_data_format_to_bytes_per_sample(format);
+  datum_size[line] = mus_bytes_per_sample(format);
 #ifdef AL_RESOURCE
   if (dev == MUS_AUDIO_DEFAULT)
     device[line] = AL_DEFAULT_INPUT;
@@ -4508,7 +4508,7 @@ static int alsa_audio_open(int ur_dev, int srate, int chans, int format, int siz
 		  __FUNCTION__, alsa_name, periods, min, max);
 	return(MUS_ERROR);
     }
-    frames = size/chans/mus_data_format_to_bytes_per_sample(format);
+    frames = size/chans/mus_bytes_per_sample(format);
     err = snd_pcm_hw_params_set_buffer_size(handle, hw_params, frames*periods);
     if (err < 0) {
 	snd_pcm_uframes_t min, max;
@@ -5062,7 +5062,7 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
     }
   info.play.sample_rate = srate; 
   info.play.channels = chans;
-  bits = 8 * mus_data_format_to_bytes_per_sample(format);
+  bits = 8 * mus_bytes_per_sample(format);
   info.play.precision = bits;
   info.play.encoding = encode;
   err = ioctl(audio_fd, AUDIO_SETINFO, &info); 
@@ -5170,7 +5170,7 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
 	      __FILE__, __LINE__, 
 	      info.record.channels, chans);
 
-  bits = 8 * mus_data_format_to_bytes_per_sample(format);
+  bits = 8 * mus_bytes_per_sample(format);
   info.play.precision = bits;
   info.play.encoding = encode;
   err = ioctl(audio_fd, AUDIO_SETINFO, &info); 

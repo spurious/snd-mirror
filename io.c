@@ -872,7 +872,7 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, mus_sample_t *
   else
     {
       charbuf = inbuf;
-      siz = mus_data_format_to_bytes_per_sample(tfd);
+      siz = mus_bytes_per_sample(tfd);
       prescaling = (float)(MUS_FLOAT_TO_SAMPLE(1.0));
       format = tfd;
     }
@@ -1236,7 +1236,7 @@ static int mus_write_1(int tfd, int beg, int end, int chans, mus_sample_t **bufs
   else
     {
       charbuf = inbuf;
-      siz = mus_data_format_to_bytes_per_sample(tfd);
+      siz = mus_bytes_per_sample(tfd);
       data_format = tfd;
       clipping = clipped;
     }

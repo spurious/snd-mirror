@@ -44,21 +44,6 @@ typedef short indata;
   #endif
 #endif
 
-#ifdef DEBUG_MEMORY
-void *mem_calloc(size_t len, size_t size, const char *func, const char *file, int line) {return(calloc(len, size));}
-void *mem_malloc(size_t len, const char *func, const char *file, int line) {return(malloc(len));}
-void mem_free(void *ptr, const char *func, const char *file, int line) {free(ptr);}
-void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, int line) {return(realloc(ptr, size));}
-#include <fcntl.h>
-int io_open(const char *pathname, int flags, mode_t mode, const char *func, const char *file, int line) {return(open(pathname, flags, mode));}
-int io_creat(const char *pathname, mode_t mode, const char *func, const char *file, int line) {return(creat(pathname, mode));}
-int io_close(int fd, const char *func, const char *file, int line) {return(close(fd));}
-FILE *io_fopen(const char *path, const char *mode, const char *func, const char *file, int line) {return(fopen(path, mode));}
-int io_fclose(FILE *stream, const char *func, const char *file, int line) {return(fclose(stream));}
-char *copy_string(const char *str);
-char *copy_string(const char *str) {return(strdup(str));}
-#endif
-
 int main(int argc, char *argv[])
 {
   int fd, afd, i, err, bytes_per_sample, bytes_per_read;
@@ -75,7 +60,7 @@ int main(int argc, char *argv[])
   mus_audio_mixer_write(MUS_AUDIO_MICROPHONE, MUS_AUDIO_AMP, 0, mic_gain);
   if (CHANNELS == 2) mus_audio_mixer_write(MUS_AUDIO_MICROPHONE, MUS_AUDIO_AMP, 1, mic_gain);
   /* open the output sound file */
-  bytes_per_sample = mus_data_format_to_bytes_per_sample(DATA_TYPE);
+  bytes_per_sample = mus_bytes_per_sample(DATA_TYPE);
   bytes_per_read = BUFFER_SIZE * bytes_per_sample;
   fd = mus_sound_open_output(argv[1], SAMPLING_RATE, CHANNELS, DATA_TYPE, FILE_TYPE, "created by sndrecord");
   if (fd != -1)

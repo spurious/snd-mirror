@@ -1133,7 +1133,7 @@ static void display_fft(fft_state *fs)
   int i, j, lo, hi;
 
   cp = (chan_info *)(fs->chan);
-  if ((cp == NULL) || (cp->active == 0)) return;
+  if ((cp == NULL) || (!(cp->active))) return;
   fp = cp->fft;
   if (fp == NULL) return; /* can happen if selection transform set, but no selection */
   data = fp->data;

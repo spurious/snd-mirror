@@ -15,10 +15,10 @@ void reflect_regions_in_region_browser(void)
   int i;
   if (rsp)
     {
-      rsp->active = 1;
+      rsp->active = TRUE;
       if (rsp->chans)
 	for (i = 0; i < rsp->nchans; i++)
-	  rsp->chans[i]->active = 1;
+	  rsp->chans[i]->active = TRUE;
     }
 }
 
@@ -27,10 +27,10 @@ void reflect_no_regions_in_region_browser(void)
   int i;
   if (rsp)
     {
-      rsp->active = 0;
+      rsp->active = FALSE;
       if (rsp->chans)
 	for (i = 0; i < rsp->nchans; i++)
-	  rsp->chans[i]->active = 0;
+	  rsp->chans[i]->active = FALSE;
     }
 }
 

@@ -324,8 +324,8 @@ snd_info *make_initial_region_sp(snd_state *ss, GUI_WIDGET region_grf)
   id = stack_position_to_id(0);
   reg_sp = make_basic_snd_info(1);
   reg_sp->nchans = 1;
-  reg_sp->inuse = 1;
-  reg_sp->active = 1;
+  reg_sp->inuse = TRUE;
+  reg_sp->active = TRUE;
   reg_sp->hdr = (file_info *)CALLOC(1, sizeof(file_info));
   reg_sp->search_proc = XEN_UNDEFINED;
   reg_sp->prompt_callback = XEN_UNDEFINED;
@@ -393,7 +393,7 @@ static void make_region_readable(region *r)
 	  mus_file_open_descriptors(fd,
 				    r->filename,
 				    hdr->format,
-				    mus_data_format_to_bytes_per_sample(hdr->format),
+				    mus_bytes_per_sample(hdr->format),
 				    hdr->data_location,
 				    hdr->chans,
 				    hdr->type);
@@ -582,7 +582,7 @@ static int save_region_1(snd_state *ss, char *ofile, int type, int format, int s
       if ((ofd = snd_reopen_write(ss, ofile)) == -1) 
 	return(MUS_CANT_OPEN_TEMP_FILE);
       mus_file_open_descriptors(ofd, ofile, format, 
-				mus_data_format_to_bytes_per_sample(format), 
+				mus_bytes_per_sample(format), 
 				oloc, r->chans, type);
       mus_file_set_data_clipped(ofd, data_clipped(ss));
       lseek(ofd, oloc, SEEK_SET);
@@ -834,7 +834,7 @@ static void deferred_region_to_temp_file(region *r)
       char *buffer;
       mus_sample_t ymax = MUS_SAMPLE_0;
       env_info *ep;
-      datumb = mus_data_format_to_bytes_per_sample(sp0->hdr->format);
+      datumb = mus_bytes_per_sample(sp0->hdr->format);
       data_size = drp->len * r->chans * datumb;
       fdo = mus_file_create(r->filename);
       if (fdo == -1)
@@ -881,7 +881,7 @@ static void deferred_region_to_temp_file(region *r)
 	{
 	  sfs = (snd_fd **)CALLOC(r->chans, sizeof(snd_fd *));
 	  data = (mus_sample_t **)CALLOC(r->chans, sizeof(mus_sample_t *));
-	  datumb = mus_data_format_to_bytes_per_sample(hdr->format);
+	  datumb = mus_bytes_per_sample(hdr->format);
 
 	  /* here if amp_envs, maxamp exists */
 	  for (i = 0; i < r->chans; i++)

@@ -338,8 +338,8 @@ int mus_data_format_to_bytes_per_sample (int format)
     }
 }
 
-off_t mus_samples_to_bytes (int format, off_t size) {return(size * (mus_data_format_to_bytes_per_sample(format)));}
-off_t mus_bytes_to_samples (int format, off_t size) {return((off_t)(size / (mus_data_format_to_bytes_per_sample(format))));}
+off_t mus_samples_to_bytes (int format, off_t size) {return(size * (mus_bytes_per_sample(format)));}
+off_t mus_bytes_to_samples (int format, off_t size) {return((off_t)(size / (mus_bytes_per_sample(format))));}
 
 
 static int equal_big_or_little_endian(const unsigned char *n1, const unsigned int n2)
@@ -954,7 +954,7 @@ static int read_aiff_header (int chan, int overall_offset)
 		    }
 		}
 	    }
-	  data_size = (frames * mus_data_format_to_bytes_per_sample(data_format) * chans);
+	  data_size = (frames * mus_bytes_per_sample(data_format) * chans);
 	}
       else
 	{
@@ -1149,7 +1149,7 @@ static int write_aif_header (int chan, int wsrate, int wchans, int siz, int form
     mus_bint_to_char((unsigned char *)(hdrbuf + 16), 18 + 10); 
   else mus_bint_to_char((unsigned char *)(hdrbuf + 16), 18);
   mus_bshort_to_char((unsigned char *)(hdrbuf + 20), (short)wchans);
-  mus_bint_to_char((unsigned char *)(hdrbuf + 22), siz / (wchans * mus_data_format_to_bytes_per_sample(format)));
+  mus_bint_to_char((unsigned char *)(hdrbuf + 22), siz / (wchans * mus_bytes_per_sample(format)));
   mus_bshort_to_char((unsigned char *)(hdrbuf + 26), sndlib_format_to_aiff_bits(format));
   double_to_ieee_80((double)wsrate, (unsigned char *)(hdrbuf + 28));
   if (aifc_header)
@@ -1287,7 +1287,7 @@ static void update_aiff_header (int chan, int siz)
   write(chan, hdrbuf, 4);
   lseek(chan, update_frames_location, SEEK_SET);
   mus_bint_to_char((unsigned char *)hdrbuf,
-		   siz / (chans * mus_data_format_to_bytes_per_sample(data_format)));
+		   siz / (chans * mus_bytes_per_sample(data_format)));
   write(chan, hdrbuf, 4);
   lseek(chan, update_ssnd_location, SEEK_SET);
   mus_bint_to_char((unsigned char *)hdrbuf, siz + 8);
@@ -1610,9 +1610,9 @@ static int write_riff_header (int chan, int wsrate, int wchans, int siz, int for
   mus_lint_to_char((unsigned char *)(hdrbuf + 24),
 		   wsrate);
   mus_lint_to_char((unsigned char *)(hdrbuf + 28),
-		   wsrate * wchans * mus_data_format_to_bytes_per_sample(format)); /* added chans 10-Mar-99 */
+		   wsrate * wchans * mus_bytes_per_sample(format)); /* added chans 10-Mar-99 */
   mus_lshort_to_char((unsigned char *)(hdrbuf + 32),
-		     (short)(wchans * mus_data_format_to_bytes_per_sample(format)));
+		     (short)(wchans * mus_bytes_per_sample(format)));
 
   offset = 36;
   i = 36;
@@ -2255,7 +2255,7 @@ static int write_nist_header (int chan, int wsrate, int wchans, int siz, int for
 {
   char *header;
   int datum;
-  datum = mus_data_format_to_bytes_per_sample(format);
+  datum = mus_bytes_per_sample(format);
   header = (char *)CALLOC(1024, sizeof(char));
   sprintf(header, "NIST_1A\n   1024\nchannel_count -i %d\nsample_rate -i %d\nsample_n_bytes -i %d\nsample_byte_format -s2 %s\nsample_sig_bits -i %d\nsample_count -i %d\nend_head\n",
 	  wchans, wsrate, datum,
@@ -5020,7 +5020,7 @@ int mus_header_change_chans(const char *filename, int new_chans)
 	      break;
 	    case MUS_NIST:
 	      lseek(fd, 0L, SEEK_SET);
-	      write_nist_header(fd, srate, new_chans, mus_data_format_to_bytes_per_sample(data_format) * data_size, data_format);
+	      write_nist_header(fd, srate, new_chans, mus_bytes_per_sample(data_format) * data_size, data_format);
 	      break;
 	    case MUS_AIFF: case MUS_AIFC:
 	      lseek(fd, update_frames_location - 2, SEEK_SET);
@@ -5073,7 +5073,7 @@ int mus_header_change_srate(const char *filename, int new_srate)
 	      break;
 	    case MUS_NIST:
 	      lseek(fd, 0L, SEEK_SET);
-	      write_nist_header(fd, new_srate, chans, mus_data_format_to_bytes_per_sample(data_format) * data_size, data_format);
+	      write_nist_header(fd, new_srate, chans, mus_bytes_per_sample(data_format) * data_size, data_format);
 	      break;
 	    case MUS_AIFF: case MUS_AIFC:
 	      lseek(fd, update_frames_location + 6, SEEK_SET);
@@ -5121,7 +5121,7 @@ int mus_header_change_type(const char *filename, int new_type, int new_format)
 		  read(ifd, (unsigned char *)comment, len);
 		  CLOSE(ifd);
 		}
-	      data_size = data_size * mus_data_format_to_bytes_per_sample(data_format) / mus_data_format_to_bytes_per_sample(new_format);
+	      data_size = data_size * mus_bytes_per_sample(data_format) / mus_bytes_per_sample(new_format);
 	      mus_header_write(new_file, new_type, srate, chans, loc, data_size, new_format, comment, len);
 	    }
 	  else mus_file_create(new_file);
@@ -5170,13 +5170,13 @@ int mus_header_change_format(const char *filename, int new_format)
 	      break;
 	    case MUS_NIST:
 	      lseek(fd, 0L, SEEK_SET);
-	      write_nist_header(fd, srate, chans, mus_data_format_to_bytes_per_sample(data_format) * data_size, new_format);
+	      write_nist_header(fd, srate, chans, mus_bytes_per_sample(data_format) * data_size, new_format);
 	      break;
 	    case MUS_AIFF: case MUS_AIFC:
-	      old_bytes = data_size * mus_data_format_to_bytes_per_sample(data_format);
+	      old_bytes = data_size * mus_bytes_per_sample(data_format);
 	      lseek(fd, update_frames_location, SEEK_SET);
 	      mus_bint_to_char((unsigned char *)hdrbuf,
-			       old_bytes / (chans * mus_data_format_to_bytes_per_sample(new_format)));
+			       old_bytes / (chans * mus_bytes_per_sample(new_format)));
 	      mus_bshort_to_char((unsigned char *)(hdrbuf + 4), sndlib_format_to_aiff_bits(new_format));
 	      write(fd, hdrbuf, 6);
 	      if (header_type == MUS_AIFC)

@@ -138,7 +138,7 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
       FREE(cp->last_sonogram); 
       cp->last_sonogram = NULL;
     }
-  cp->active = 1;
+  cp->active = TRUE;
   return(cp);
 }
 
@@ -146,7 +146,7 @@ static chan_info *free_chan_info(chan_info *cp)
 {
   /* this does not free the associated widgets -- they are merely unmanaged */
   snd_state *ss;
-  cp->active = 0;
+  cp->active = FALSE;
   /* need an indication right away that this channel is being deleted -- during free_snd_info (close-sound),
    *   an error may occur (an edit list temp file might have vanished for example), and normally Snd
    *   attempts to post an error message in the sound's minibuffer.  To force this out, we have to
@@ -295,7 +295,7 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
   sp->index = snd_slot;
   sp->nchans = chans;
   sp->hdr = hdr;
-  sp->inuse = 1;
+  sp->inuse = TRUE;
   sp->filename = copy_string(filename);
   sp->short_filename = filename_without_home_directory(sp->filename); /* a pointer into filename, not a new string */
   sp->state = ss;
@@ -325,7 +325,7 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
   sp->search_proc = XEN_UNDEFINED;
   sp->prompt_callback = XEN_UNDEFINED;
   sp->delete_me = 0;
-  sp->active = 1;
+  sp->active = TRUE;
   return(sp);
 }
 
@@ -347,7 +347,7 @@ void free_snd_info(snd_info *sp)
     for (i = 0; i < sp->nchans; i++)
       if (sp->chans[i]) 
 	sequester_deferred_regions(sp->chans[i], -1);
-  sp->active = 0;
+  sp->active = FALSE;
   if (sp->sgx)
     {
       if ((sp->sgx)->apply_in_progress) remove_apply(sp);
@@ -361,7 +361,7 @@ void free_snd_info(snd_info *sp)
     if (sp->chans[i]) 
       sp->chans[i] = free_chan_info(sp->chans[i]);
   sp->state = NULL;
-  sp->inuse = 0;
+  sp->inuse = FALSE;
   sp->playing_mark = NULL;
   sp->playing = 0;
   sp->searching = 0;
@@ -549,7 +549,7 @@ int map_over_separate_chans(snd_state *ss, int (*func)(chan_info *, void *), voi
   return(val);
 }
 
-int snd_ok (snd_info *sp) {return((sp) && (sp->inuse) && (sp->active == 1));}
+int snd_ok (snd_info *sp) {return((sp) && (sp->inuse) && (sp->active));}
 
 int active_channels (snd_state *ss, int count_virtual_channels)
 {

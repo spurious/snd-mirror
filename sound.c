@@ -518,7 +518,7 @@ static sound_file *fill_sf_record(const char *name, sound_file *sf)
   if (sf->srate < 0) sf->srate = 0;
   sf->chans = mus_header_chans();
   if (sf->chans < 0) sf->chans = 0;
-  sf->datum_size = mus_data_format_to_bytes_per_sample(sf->data_format);
+  sf->datum_size = mus_bytes_per_sample(sf->data_format);
   sf->header_type = mus_header_type();
   sf->original_sound_format = mus_header_original_format();
   sf->true_file_length = mus_header_true_length();
@@ -784,7 +784,7 @@ int mus_sound_open_output (const char *arg, int srate, int chans, int data_forma
 	mus_file_open_descriptors(fd,
 				  arg,
 				  data_format,
-				  mus_data_format_to_bytes_per_sample(data_format),
+				  mus_bytes_per_sample(data_format),
 				  mus_header_data_location(),
 				  chans,
 				  header_type);
@@ -801,7 +801,7 @@ int mus_sound_reopen_output(const char *arg, int chans, int format, int type, of
     mus_file_open_descriptors(fd,
 			      arg,
 			      format,
-			      mus_data_format_to_bytes_per_sample(format),
+			      mus_bytes_per_sample(format),
 			      data_loc,
 			      chans,
 			      type);
@@ -859,7 +859,7 @@ static int mus_sound_set_field(const char *arg, int field, int val)
 	case SF_CHANS:    sf->chans = val; break;
 	case SF_SRATE:    sf->srate = val; break;
 	case SF_TYPE:     sf->header_type = val; break;
-	case SF_FORMAT:   sf->data_format = val; sf->datum_size = mus_data_format_to_bytes_per_sample(val); break;
+	case SF_FORMAT:   sf->data_format = val; sf->datum_size = mus_bytes_per_sample(val); break;
 	default: return(MUS_ERROR); break;
 	}
       return(MUS_NO_ERROR);
@@ -903,7 +903,7 @@ int mus_sound_override_header(const char *arg, int srate, int chans, int format,
       if (format != -1) 
 	{
 	  sf->data_format = format;
-	  sf->datum_size = mus_data_format_to_bytes_per_sample(format);
+	  sf->datum_size = mus_bytes_per_sample(format);
 	}
       if (srate != -1) sf->srate = srate;
       if (chans != -1) sf->chans = chans;
@@ -1107,7 +1107,7 @@ char *mus_array_to_file_with_error(const char *filename, mus_sample_t *ddata, in
     return("mus_array_to_file can't create output file");
   err = mus_file_open_descriptors(fd, filename,
 				  MUS_OUT_FORMAT,
-				  mus_data_format_to_bytes_per_sample(MUS_OUT_FORMAT),
+				  mus_bytes_per_sample(MUS_OUT_FORMAT),
 				  28, channels, MUS_NEXT);
   if (err != MUS_ERROR)
     {

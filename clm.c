@@ -1748,13 +1748,33 @@ static unsigned long randx = 1;
 void mus_set_rand_seed(unsigned long val) {randx = val;}
 unsigned long mus_rand_seed(void) {return(randx);}
 
+static Float next_random(void)
+{
+  randx = randx * 1103515245 + 12345;
+  return((Float)((unsigned int)(randx >> 16) & 32767));
+}
+
 Float mus_random(Float amp) /* -amp to amp as Float */
 {
-  unsigned int val;
-  randx = randx * 1103515245 + 12345;
-  val = (unsigned int)(randx >> 16) & 32767;
-  return(amp * (((Float)val) * INVERSE_MAX_RAND - 1.0));
+  return(amp * (next_random() * INVERSE_MAX_RAND - 1.0));
 }
+
+Float mus_frandom(Float amp) /* 0.0 to amp as Float */
+{
+  return(amp * next_random() * INVERSE_MAX_RAND2);
+}
+
+int mus_irandom(int amp)
+{
+  return((int)(amp * next_random() * INVERSE_MAX_RAND2));
+}
+
+static int irandom(int amp) /* original form -- surely this off by a factor of 2? */
+{
+  return((int)(amp * next_random() * INVERSE_MAX_RAND));
+}
+
+
 
 Float mus_rand(mus_any *ptr, Float fm)
 {
@@ -4833,7 +4853,7 @@ static void flush_buffers(rdout *gen)
 	  mus_sound_close_output(fd, 
 				 (gen->out_end + 1) * 
 				 gen->chans * 
-				 mus_data_format_to_bytes_per_sample(mus_sound_data_format(gen->file_name)));	  
+				 mus_bytes_per_sample(mus_sound_data_format(gen->file_name)));	  
 	}
     }
   else
@@ -4859,7 +4879,7 @@ static void flush_buffers(rdout *gen)
       mus_sound_seek_frame(fd, gen->data_start);
       mus_sound_write(fd, 0, last, gen->chans, addbufs);
       if (size <= gen->out_end) size = gen->out_end + 1;
-      mus_sound_close_output(fd, size * gen->chans * mus_data_format_to_bytes_per_sample(hdrfrm));
+      mus_sound_close_output(fd, size * gen->chans * mus_bytes_per_sample(hdrfrm));
       for (i = 0; i < gen->chans; i++) FREE(addbufs[i]);
       FREE(addbufs);
     }
@@ -5849,14 +5869,6 @@ mus_any *mus_make_granulate(Float (*input)(void *arg, int direction),
   return((mus_any *)spd);
 }
 
-static int irandom(int amp)
-{
-  unsigned int val;
-  randx = randx * 1103515245 + 12345;
-  val = (unsigned int)((randx >> 16) & 32767);
-  return((int)(amp * (((Float)val) * INVERSE_MAX_RAND)));
-}
-
 Float mus_granulate(mus_any *ptr, Float (*input)(void *arg, int direction))
 { 
   grn_info *spd = (grn_info *)ptr;
@@ -6735,7 +6747,7 @@ void mus_mix(const char *outfile, const char *infile, off_t out_start, off_t out
       if (curoutframes < (out_frames + out_start)) 
 	curoutframes = out_frames + out_start;
       mus_sound_close_output(ofd, 
-			     curoutframes * out_chans * mus_data_format_to_bytes_per_sample(mus_sound_data_format(outfile)));
+			     curoutframes * out_chans * mus_bytes_per_sample(mus_sound_data_format(outfile)));
       mus_sound_close_input(ifd);
       for (i = 0; i < in_chans; i++) FREE(ibufs[i]);
       FREE(ibufs);

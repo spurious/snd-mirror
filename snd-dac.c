@@ -1353,7 +1353,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
       for (i = 0; i < dacp->devices; i++)
 	if (dev_fd[i] != -1)
 	  {
-	    bytes = dacp->chans_per_device[i] * frames * mus_data_format_to_bytes_per_sample(dacp->out_format);
+	    bytes = dacp->chans_per_device[i] * frames * mus_bytes_per_sample(dacp->out_format);
 	    mus_audio_write(dev_fd[i], (char *)(audio_bytes[i]), bytes);
 	  }
     }
@@ -1361,7 +1361,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
   if (write_ok == WRITE_TO_DAC) 
     {
       mus_file_write_buffer(dacp->out_format, 0, frames - 1, dacp->channels, dac_buffers, (char *)(audio_bytes[0]), data_clipped(ss));
-      bytes = dacp->channels * frames * mus_data_format_to_bytes_per_sample(dacp->out_format);
+      bytes = dacp->channels * frames * mus_bytes_per_sample(dacp->out_format);
       mus_audio_write(dev_fd[0], (char *)(audio_bytes[0]), bytes);
     }
 #endif
@@ -1456,7 +1456,7 @@ static void make_dac_buffers(dac_state *dacp)
       r_outs = (Float *)CALLOC(dacp->channels, sizeof(Float));
       r_ins = (Float *)CALLOC(dacp->channels, sizeof(Float));
     }
-  bytes = dacp->channels * dac_buffer_size * mus_data_format_to_bytes_per_sample(dacp->out_format);
+  bytes = dacp->channels * dac_buffer_size * mus_bytes_per_sample(dacp->out_format);
   if ((audio_bytes_size < bytes) || 
       (audio_bytes_devices < dacp->devices))
     {
@@ -1675,7 +1675,7 @@ static int start_audio_output_1 (dac_state *dacp)
 	  samples_per_channel = (int)(val[0]);
 	}
       dacp->frames = samples_per_channel;
-      set_dac_size(ss, dacp->frames * mus_data_format_to_bytes_per_sample(dacp->out_format));
+      set_dac_size(ss, dacp->frames * mus_bytes_per_sample(dacp->out_format));
       /* open all allocated devices */
       for (d = 0; d < alloc_devs; d++) 
 	{
@@ -1698,7 +1698,7 @@ static int start_audio_output_1 (dac_state *dacp)
 					    dacp->srate,
 					    channels, 
 					    dacp->out_format, 
-					    dacp->frames * channels * mus_data_format_to_bytes_per_sample(dacp->out_format));
+					    dacp->frames * channels * mus_bytes_per_sample(dacp->out_format));
 	  unset_dac_print();
       
 	  if (dev_fd[d] == -1) 

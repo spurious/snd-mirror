@@ -988,7 +988,7 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *tempfile, chan_inf
   ifd = snd_open_read(ss, tempfile);
   mus_file_open_descriptors(ifd, tempfile,
 			    ihdr->format,
-			    mus_data_format_to_bytes_per_sample(ihdr->format),
+			    mus_bytes_per_sample(ihdr->format),
 			    ihdr->data_location,
 			    ihdr->chans,
 			    ihdr->type);
@@ -1028,7 +1028,7 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *tempfile, chan_inf
 	}
       if (j > 0) mus_file_write(ofd, 0, j - 1, 1, &chandata);
     }
-  close_temp_file(ofd, ohdr, num * mus_data_format_to_bytes_per_sample(ohdr->format), sp);
+  close_temp_file(ofd, ohdr, num * mus_bytes_per_sample(ohdr->format), sp);
   mus_file_close(ifd);
   free_snd_fd(csf);
   FREE(data[base]);
@@ -1261,11 +1261,11 @@ static void remix_file(mix_info *md, const char *origin)
 	  break;
 	case HUNKER_DOWN:
 	  close_temp_file(ofd, ohdr, 0, cursp);
-	  if (mus_data_format_to_bytes_per_sample(MUS_OUT_FORMAT) == 2)
+	  if (mus_bytes_per_sample(MUS_OUT_FORMAT) == 2)
 	    ohdr->format = MUS_OUT_FORMAT;
 	  else
 	    {
-	      if (mus_data_format_to_bytes_per_sample(MUS_COMPATIBLE_FORMAT) == 2)
+	      if (mus_bytes_per_sample(MUS_COMPATIBLE_FORMAT) == 2)
 		ohdr->format = MUS_COMPATIBLE_FORMAT;
 	      else
 #if MUS_LITTLE_ENDIAN
@@ -1359,7 +1359,7 @@ static void remix_file(mix_info *md, const char *origin)
   if (use_temp_file)
     {
       if (j > 0) mus_file_write(ofd, 0, j - 1, 1, &chandata);
-      close_temp_file(ofd, ohdr, num * mus_data_format_to_bytes_per_sample(ohdr->format), cursp);
+      close_temp_file(ofd, ohdr, num * mus_bytes_per_sample(ohdr->format), cursp);
       free_file_info(ohdr);
     }
   free_snd_fd(cur);
@@ -2904,7 +2904,7 @@ static void play_track(snd_state *ss, chan_info **ucps, int chans, int track_num
   if (chans == 0) return;
   outchans = chans;
   format = mus_audio_compatible_format(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss));
-  datum_bytes = mus_data_format_to_bytes_per_sample(format);
+  datum_bytes = mus_bytes_per_sample(format);
   frames = 256;
 #if MAC_OSX
   fds = (track_fd **)CALLOC(2, sizeof(track_fd *));
@@ -2918,7 +2918,7 @@ static void play_track(snd_state *ss, chan_info **ucps, int chans, int track_num
     if (chans < (int)(val[1])) outchans = (int)(val[1]);
     mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss), MUS_AUDIO_SAMPLES_PER_CHANNEL, 2, val);
     frames = (int)(val[0]);
-    set_dac_size(ss, outchans * frames * mus_data_format_to_bytes_per_sample(format));
+    set_dac_size(ss, outchans * frames * mus_bytes_per_sample(format));
     buf = (mus_sample_t **)CALLOC(outchans, sizeof(mus_sample_t *));
     for (i = 0; i < chans; i++) buf[i] = (mus_sample_t *)CALLOC(frames, sizeof(mus_sample_t));
     outbuf = (char *)CALLOC(frames * datum_bytes * outchans, sizeof(char));
@@ -3026,7 +3026,7 @@ static void play_mix(snd_state *ss, mix_info *md)
   cs = md->current_cs;
   samps = cs->len;
   format = mus_audio_compatible_format(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss));
-  datum_bytes = mus_data_format_to_bytes_per_sample(format);
+  datum_bytes = mus_bytes_per_sample(format);
   outchans = 1;
   frames = 256;
 
@@ -3038,7 +3038,7 @@ static void play_mix(snd_state *ss, mix_info *md)
     if (outchans < (int)(val[1])) outchans = (int)(val[1]);
     mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss), MUS_AUDIO_SAMPLES_PER_CHANNEL, 2, val);
     frames = (int)(val[0]);
-    set_dac_size(ss, outchans * frames * mus_data_format_to_bytes_per_sample(format));
+    set_dac_size(ss, outchans * frames * mus_bytes_per_sample(format));
     buf = (mus_sample_t **)CALLOC(outchans, sizeof(mus_sample_t *));
     buf[0] = (mus_sample_t *)CALLOC(frames, sizeof(mus_sample_t));
     outbuf = (char *)CALLOC(frames * datum_bytes * outchans, sizeof(char));

@@ -2163,7 +2163,7 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, int 
   off_t ind0, ind1, indx, curlen;
   ed_fragment *cb;
   snd_data *first_snd = NULL;
-  if (cp->active == 0) return(NULL);
+  if (!(cp->active)) return(NULL);
   if ((edit_position < 0) || (edit_position > cp->edit_size)) return(NULL);
   if ((samp == 0) && (direction == READ_BACKWARD))
     {
@@ -2272,7 +2272,7 @@ Float chn_sample(off_t samp, chan_info *cp, int pos)
   snd_data *sd;
   snd_fd *sf;
   Float val = 0.0;
-  if ((cp->active == 0) || (samp < 0) || (pos < 0) || (pos > cp->edit_size) || (samp >= cp->samples[pos])) return(0.0);
+  if ((!(cp->active)) || (samp < 0) || (pos < 0) || (pos > cp->edit_size) || (samp >= cp->samples[pos])) return(0.0);
   /* try the quick case */
   if (pos == 0)
     {
