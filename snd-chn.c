@@ -5,7 +5,7 @@ enum {NOGRAPH, WAVE, FFT_AXIS, LISP, FFT_MAIN};    /* for marks, regions, mouse 
 static void after_fft(snd_state *ss, chan_info *cp, Float scaler);
 
 static SCM lisp_graph_hook;
-static SCM mouse_press_hook, mark_click_hook;
+static SCM mouse_press_hook, mark_click_hook, mouse_click_hook;
 static SCM mouse_release_hook, mouse_drag_hook, key_press_hook, transform_hook;
 static SCM graph_hook, after_graph_hook;
 
@@ -2488,6 +2488,10 @@ static void display_channel_data_1 (chan_info *cp, snd_info *sp, snd_state *ss, 
   int width, height, offset, full_height, chan_height, y0, y1, bottom, top;
   Float val, size;
   axis_info *ap;
+  if ((sp->inuse == 0) ||
+      (cp->active == 0) ||
+      (sp->active == 0))
+    return;
   if ((sp->channel_style == CHANNELS_SEPARATE) || (sp->nchans == 1))
     {
       width = widget_width(channel_graph(cp));
@@ -3084,16 +3088,6 @@ static Float fft_axis_extent(chan_info *cp)
   else return((Float)(ap->y_axis_y0 - ap->y_axis_y1));
 }
 
-static int cursor_round(double x)
-{
-  int xint;
-  Float xfrac;
-  xint = (int)x;
-  xfrac = x-xint;
-  if (xfrac > .5) return(xint + 1);
-  return(xint);
-}
-
 static int calculate_syncd_fft(chan_info *cp, void *ptr)
 {
   snd_info *sp;
@@ -3192,14 +3186,29 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
       else
 	{
 	  actax = within_graph(cp, x, y);
+
+	  if ((HOOKED(mouse_click_hook)) &&
+	      (TRUE_P(g_c_run_or_hook(mouse_click_hook,
+				      SCM_LIST7(TO_SMALL_SCM_INT(sp->index),
+						TO_SMALL_SCM_INT(cp->chan),
+						TO_SCM_INT(button),
+						TO_SCM_INT(key_state),
+						TO_SCM_INT(x),
+						TO_SCM_INT(y),
+						TO_SCM_INT((actax == WAVE) ? 
+							   TIME_AXIS_INFO : ((actax == LISP) ? 
+									    LISP_AXIS_INFO : TRANSFORM_AXIS_INFO))),
+				      S_mouse_click_hook))))
+	    return;
+
 	  if (actax == WAVE)
 	    {
 	      if (button == BUTTON_2) /* the middle button */
 		{
 		  cp->cursor_on = 1;
 		  cursor_moveto(cp, 
-				cursor_round(ungrf_x(cp->axis, x) * 
-					     (double)SND_SRATE(sp)));
+				snd_round(ungrf_x(cp->axis, x) * 
+					  (double)SND_SRATE(sp)));
 		  draw_graph_cursor(cp);
 		  paste_region(0, cp, "Btn2");
 		}
@@ -3215,7 +3224,10 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 			  if (key_state & snd_ShiftMask) ap->zx *= .5;
 			  if (key_state & snd_ControlMask) ap->zx *= .5;
 			  if (key_state & snd_MetaMask) ap->zx *= .5;
-			  ap->sx = (((double)(cp->cursor) / (double)SND_SRATE(sp) - ap->zx * 0.5 * (ap->xmax - ap->xmin)) - ap->xmin) / ap->x_ambit;
+			  ap->sx = (((double)(cp->cursor) / (double)SND_SRATE(sp) - 
+				     ap->zx * 0.5 * (ap->xmax - ap->xmin)) - 
+				    ap->xmin) / 
+			           ap->x_ambit;
 			  apply_x_axis_change(ap, cp, sp);
 			  resize_sx(cp);
 			  set_zx_scrollbar_value(cp, sqrt(ap->zx));
@@ -3226,8 +3238,8 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 		      cp->cursor_on = 1;
 		      handle_cursor(cp, 
 				    cursor_moveto(cp, 
-						  cursor_round(ungrf_x(cp->axis, x) * 
-							       (double)SND_SRATE(sp))));
+						  snd_round(ungrf_x(cp->axis, x) * 
+							    (double)SND_SRATE(sp))));
 		      if (mouse_mark)
 			{
 			  SCM res = SCM_BOOL_F;
@@ -5626,8 +5638,9 @@ void g_init_chn(SCM local_doc)
   #define H_after_graph_hook S_after_graph_hook " (snd chn) is called after a graph is updated."
   #define H_lisp_graph_hook S_lisp_graph_hook " (snd chn) is called just before the lisp graph is updated."
   #define H_mouse_press_hook S_mouse_press_hook " (snd chn button state x y) is called upon mouse button press within the lisp graph."
-  #define H_mouse_release_hook S_mouse_press_hook " (snd chn button state x y) is called upon mouse button release within the lisp graph."
-  #define H_mouse_drag_hook S_mouse_press_hook " (snd chn button state x y) is called upon mouse drag within the lisp graph."
+  #define H_mouse_click_hook S_mouse_click_hook " (snd chn button state x y axis) is called upon button click."
+  #define H_mouse_release_hook S_mouse_release_hook " (snd chn button state x y) is called upon mouse button release within the lisp graph."
+  #define H_mouse_drag_hook S_mouse_drag_hook " (snd chn button state x y) is called upon mouse drag within the lisp graph."
   #define H_mark_click_hook S_mark_click_hook " (id) is called when a mark is clicked; return #t to squelch the default message."
   #define H_key_press_hook S_key_press_hook " (snd chn key state) is called upon a key press if the mouse is in the lisp graph. \
 If it returns #t, the key press is not passed to the main handler. 'state' refers to the control, meta, and shift keys."
@@ -5638,6 +5651,7 @@ If it returns #t, the key press is not passed to the main handler. 'state' refer
   after_graph_hook =   MAKE_HOOK(S_after_graph_hook, 2, H_after_graph_hook);     /* args = sound channel */
   lisp_graph_hook =    MAKE_HOOK(S_lisp_graph_hook, 2, H_lisp_graph_hook);       /* args = sound channel */
   mouse_press_hook =   MAKE_HOOK(S_mouse_press_hook, 6, H_mouse_press_hook);     /* args = sound channel button state x y */
+  mouse_click_hook =   MAKE_HOOK(S_mouse_click_hook, 7, H_mouse_click_hook);     /* args = sound channel button state x y axis */
   mouse_release_hook = MAKE_HOOK(S_mouse_release_hook, 6, H_mouse_release_hook); /* args = sound channel button state x y */
   mouse_drag_hook =    MAKE_HOOK(S_mouse_drag_hook, 6, H_mouse_drag_hook);       /* args = sound channel button state x y */
   key_press_hook =     MAKE_HOOK(S_key_press_hook, 4, H_key_press_hook);         /* args = sound channel key state */

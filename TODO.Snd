@@ -51,3 +51,12 @@ Gettext support, if there's interest. How does gettext handle Scheme-style
 Mac-OSX Snd port (since gtk and guile have been ported, Snd shouldn't be difficult).
 
 Translate the rest of env.lisp to env.scm.
+
+A "master volume" control in the recorder.  Also a running spectrogram display.
+
+A guile-gtk controller dialog for the scanned-synthesis procedures.
+
+A data file mechanism for the phase vocoder (i.e. save/reuse analysis pass).
+
+A "sox-script" -- use Snd script as sox replacement.
+A sndinfo script?

@@ -322,12 +322,11 @@ static SCM g_sound_max_amp_exists(SCM file)
 
 static SCM g_sound_max_amp(SCM file)
 {
-  #define H_mus_sound_max_amp "(" S_mus_sound_max_amp " filename) -> max amps in sound (a vector of amps and locations)"
+  #define H_mus_sound_max_amp "(" S_mus_sound_max_amp " filename) -> max amps in sound (a list of amps and locations)"
   int chans, rtn, i;
   MUS_SAMPLE_TYPE *vals;
   char *filename;
-  SCM *vdata;
-  SCM vect = SCM_BOOL_F;
+  SCM res = SCM_EOL;
   ASSERT_TYPE(STRING_P(file), file, SCM_ARGn, S_mus_sound_max_amp, "a string");
   filename = mus_expand_filename(TO_C_STRING(file));
   chans = mus_sound_chans(filename);
@@ -336,44 +335,37 @@ static SCM g_sound_max_amp(SCM file)
       vals = (MUS_SAMPLE_TYPE *)CALLOC(chans * 2, sizeof(MUS_SAMPLE_TYPE));
       rtn = mus_sound_max_amp(filename, vals);
       if (rtn > 0)
-	{
-	  vect = MAKE_VECTOR(chans * 2, TO_SMALL_SCM_INT(0));
-	  vdata = SCM_VELTS(vect);
-	  for (i = 0; i < chans * 2; i += 2)
-	    {
-	      vdata[i] = TO_SCM_INT((int)(vals[i]));
-	      vdata[i + 1] = TO_SCM_DOUBLE(MUS_SAMPLE_TO_FLOAT(vals[i + 1]));
-	    }
-	}
+	for (i = (chans * 2) - 2; i >= 0; i -= 2)
+	  res = CONS(TO_SCM_INT((int)(vals[i])),
+		  CONS(TO_SCM_DOUBLE(MUS_SAMPLE_TO_FLOAT(vals[i + 1])), res));
       FREE(vals);
     }
   if (filename) FREE(filename);
-  return(vect);
+  return(res);
 }
 
 static SCM g_sound_set_max_amp(SCM file, SCM vals)
 {
-  #define H_mus_sound_set_max_amp "(" S_mus_sound_set_max_amp " filename vals) -> set max amps for sound (vals is a vector of amps and locations)"
+  #define H_mus_sound_set_max_amp "(" S_mus_sound_set_max_amp " filename vals) -> set max amps for sound (vals is a list of amps and locations)"
   int i, chans, len;
   MUS_SAMPLE_TYPE *mvals;
   char *filename;
-  SCM *vdata;
+  SCM lst;
   ASSERT_TYPE(STRING_P(file), file, SCM_ARG1, S_mus_sound_set_max_amp, "a string");
-  ASSERT_TYPE(VECTOR_P(vals), vals, SCM_ARG2, S_mus_sound_set_max_amp, "a vector");
+  ASSERT_TYPE(LIST_P(vals), vals, SCM_ARG2, S_mus_sound_set_max_amp, "a list");
   filename = mus_expand_filename(TO_C_STRING(file));
   chans = mus_sound_chans(filename);
   if (chans > 0)
     {
-      if ((int)VECTOR_LENGTH(vals) < (chans * 2))
-	mus_misc_error(S_mus_sound_set_max_amp, "max amp vector wrong length", vals);
-      len = VECTOR_LENGTH(vals);
+      len = LIST_LENGTH(vals);
+      if (len < (chans * 2))
+	mus_misc_error(S_mus_sound_set_max_amp, "max amp list wrong length", vals);
       if (len > chans * 2) len = chans * 2;
       mvals = (MUS_SAMPLE_TYPE *)CALLOC(chans * 2, sizeof(MUS_SAMPLE_TYPE));
-      vdata = SCM_VELTS(vals);
-      for (i = 0; i < len; i += 2)
+      for (i = 0, lst = vals; i < len; i += 2, lst = SCM_CDDR(lst))
 	{
-	  mvals[i] = MUS_INT_TO_SAMPLE(TO_C_INT_OR_ELSE(vdata[i], 0));
-	  mvals[i + 1] = MUS_DOUBLE_TO_SAMPLE(TO_C_DOUBLE(vdata[i + 1]));
+	  mvals[i] = MUS_INT_TO_SAMPLE(TO_C_INT_OR_ELSE(SCM_CAR(lst), 0));
+	  mvals[i + 1] = MUS_DOUBLE_TO_SAMPLE(TO_C_DOUBLE(SCM_CADR(lst)));
 	}
       mus_sound_set_max_amp(filename, mvals);
       FREE(mvals);

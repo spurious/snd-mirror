@@ -93,6 +93,7 @@ char *global_search(snd_state *ss, int direction)
       fd->fds = (snd_fd **)CALLOC(chans, sizeof(snd_fd *));
       fd->cps = (chan_info **)CALLOC(chans, sizeof(chan_info *));
       map_over_chans(ss, prepare_global_search, (void *)fd);
+      fd->n = -1;
       while (!(run_global_search(ss, fd)))
 	{
 	  passes++;

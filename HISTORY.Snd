@@ -1,5 +1,10 @@
 snd change log
 
+  25-Jun:    gcc 3.0.
+	     added type and comment args to save-region, and moved format arg after type (to be consistent with other such calls).
+             mouse-click-hook.
+             reverse-track (mix.scm).
+             mus-sound-max-amp now returns (and takes) a list, not a vector.
   21-Jun:    dsp.scm, autosave.scm, extensions.scm.
              find-mix.
   20-Jun:    read-hook. hooks.scm. snd-debug in examp.scm.

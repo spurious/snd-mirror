@@ -4666,7 +4666,7 @@ static int mus_header_read_with_fd_and_name(int chan, const char *filename)
     {
       header_type = MUS_MIDI_SAMPLE_DUMP;
       chans = 1;
-      srate = srate = (int)(1.0e9 / (float)((hdrbuf[7] + (hdrbuf[8] << 7) + (hdrbuf[9] << 14))));
+      srate = (int)(1.0e9 / (float)((hdrbuf[7] + (hdrbuf[8] << 7) + (hdrbuf[9] << 14))));
       data_size = (hdrbuf[10] + (hdrbuf[11] << 7) + (hdrbuf[12] << 14));
       /* since this file type has embedded blocks, we have to translate it elsewhere */
       return(MUS_NO_ERROR);

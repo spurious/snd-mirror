@@ -227,9 +227,10 @@ after-graph-hook.  <b>display-samps-in-red</b> (see <a href="extsnd.html#display
 displays samples 1000 to 2000 in red whenever they're in the current view.
 <b>display-previous-edits</b> displays all edits of the current sound, with older versions gradually fading away.
 <b>overlay-sounds</b> overlays onto its first argument all subsequent arguments: (overlay-sounds 1 0 3).
-<b>display-current-window-location</b>
+<b>make-current-window-display</b>
 displays in the upper right corner the overall current sound and where the current window fits in it.
-This info is implicit in the x sliders, but a redundant graph doesn't hurt.
+This info is implicit in the x sliders, but a redundant graph doesn't hurt.  If you click in that graph,
+the cursor is moved to the clicked point.
 </p>
 <center><img src="uppergrf.png" alt="display-current-window-location"></center>
 <br>
@@ -1513,7 +1514,7 @@ to pan the mixed samples (0: all chan 0, 1: all chan 1).
   <em class=def><a name="tracklength">track-length</a></em> track
   <em class=def><a name="settracktempo">set-track-tempo</a></em> track tempo
   <em class=def><a name="settrackampenv">set-track-amp-env</a></em> track chan env
-  
+  <em class=def><a name="reversetrack">reverse-track</a></em> track
   <em class=def><a name="filtertrack">filter-track</a></em> track coeffs
 </pre>
 <p>A track is a list of mixes, each member mix having its track set to the track id.  The <i>make-track</i>
@@ -1590,7 +1591,8 @@ each mix's amp env(s) to match the portion of that envelope that happens to fall
 (multiplying envelopes if the mix aready has one).
 <i>filter-track</i> applies a filter to each mix sound at the pre-mix point (that is, the
 mixed in sound is being edited, then the mix takes place); any kind of edit can follow the
-same sequence.</p>
+same sequence.  <i>reverse-track</i> reverses the order in which a track's members occur.
+</p>
 <p>Finally, the various mix hooks can be tied into these functions so that (for example) the
 entire track moves when you drag one mix in it, or all the amplitudes change at once.
 <i>sync-multichannel-mixes</i> causes multichannel mixes to be syncd together automatically

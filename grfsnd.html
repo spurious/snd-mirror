@@ -1716,7 +1716,7 @@ when that is activated, the dialog fires up):</p>
 <p>See <a href="sndscm.html#sndgtkdoc">snd-gtk.scm</a> for more examples.</p>
 <br>
 
-<span class=bbox><h3><A NAME="sndwithnogui">Snd with no GUI</a></h3></span>
+<span class=bbox><h3><A NAME="sndwithnogui">Snd with no GUI and scripting</a></h3></span>
 
 <p>If Snd is built without a graphical user interface (either by specifying
 --with-no-gui to configure, or by setting the USE_NO_GUI compile-time flag),
@@ -1824,6 +1824,16 @@ the following example displays all the comments it finds:
 Say we save this as the file "comments".</p>
 <pre>
 /home/bil/cl/comments *.snd
+</pre>
+<p>If you like, you can use env:
+<pre>
+#!/usr/bin/env snd
+!#
+</pre>
+<p>But if that works, so will:</p>
+<pre>
+#!snd -l
+!#
 </pre>
 <p>
 This scripting mechanism actually will work in any version of Snd,

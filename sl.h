@@ -31,6 +31,7 @@ SCM scm_return_first(SCM a, ...);
 #define SCM_LIST4(Arg1, Arg2, Arg3, Arg4) rep_LIST_4(Arg1, Arg2, Arg3, Arg4)
 #define SCM_LIST5(Arg1, Arg2, Arg3, Arg4, Arg5) rep_LIST_5(Arg1, Arg2, Arg3, Arg4, Arg5)
 #define SCM_LIST6(a, b, c, d, e, f) Fcons(a, SCM_LIST5(b, c, d, e, f))
+#define SCM_LIST7(a, b, c, d, e, f, g) Fcons(a, SCM_LIST6(b, c, d, e, f, g))
 #define SCM_CAR(Arg)    rep_CAR(Arg)
 #define SCM_CDR(Arg)    rep_CDR(Arg)
 #define SCM_CDDR(Arg)   rep_CDDR(Arg)

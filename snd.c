@@ -98,6 +98,7 @@ static repv snd_rep_main(repv arg)
       gsl_ieee_env_setup();
     }
 #endif
+
 #if HAVE_FPU_CONTROL_H
   #if __GLIBC_MINOR__ < 1
     /* in linux there's <fpu_control.h> with __setfpucw which Clisp calls as __setfpucw(_FPU_IEEE); */
@@ -308,7 +309,12 @@ static repv snd_rep_main(repv arg)
     rep_call_with_barrier (snd_rep_main, Qnil, rep_TRUE, 0, 0, 0);
     return(rep_top_level_exit());
   #else
+    #if HAVE_RUBY
+      ruby_init();
+    #endif
+
     snd_doit(ss, argc, argv);
+
     #if (!HAVE_GUILE)
       return(0);
     #endif

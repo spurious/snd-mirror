@@ -1205,23 +1205,40 @@ static SCM g_make_region(SCM beg, SCM end, SCM snd_n, SCM chn_n)
   return(TO_SCM_INT(id));
 }
 
-static SCM g_save_region (SCM n, SCM filename, SCM format) 
+static SCM g_save_region (SCM n, SCM filename, SCM type, SCM format, SCM comment) 
 {
-  /* TODO: why doesn't save-region accept header-type arg? */
-  #define H_save_region "(" S_save_region " region filename &optional format) saves region in filename using data format (mus-bshort)"
-  char *name = NULL;
+  #define H_save_region "(" S_save_region " region filename &optional type format comment) saves region in filename \
+using data format (mus-bshort), header type (default is mus-next), and comment"
+
+  char *name = NULL, *com = NULL;
   snd_state *ss;
-  int res = MUS_NO_ERROR, rg;
+  int res = MUS_NO_ERROR, rg, data_format, header_type;
   ASSERT_TYPE(INTEGER_P(n), n, SCM_ARG1, S_save_region, "an integer");
   ASSERT_TYPE(STRING_P(filename), filename, SCM_ARG2, S_save_region, "a string");
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(format), format, SCM_ARG3, S_save_region, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(type), type, SCM_ARG3, S_save_region, "an integer (mus-next etc)");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(format), format, SCM_ARG4, S_save_region, "an integer (mus-bshort etc)");
+  ASSERT_TYPE(STRING_IF_BOUND_P(comment), comment, SCM_ARG5, S_save_region, "a string");
   rg = TO_C_INT_OR_ELSE(n, stack_position_to_id(0));
   if (!(region_ok(rg)))
     return(snd_no_such_region_error(S_save_region, n));
+  data_format = TO_C_INT_OR_ELSE_WITH_ORIGIN(format, MUS_OUT_FORMAT, S_save_region);
+  header_type = TO_C_INT_OR_ELSE_WITH_ORIGIN(type, MUS_NEXT, S_save_region);
   name = mus_expand_filename(TO_C_STRING(filename));
   ss = get_global_state();
   ss->catch_message = NULL;
-  res = save_region(get_global_state(), rg, name, TO_C_INT_OR_ELSE(format, 0));
+  if (!(mus_header_writable(header_type, data_format))) 
+    {
+      if (mus_header_writable(MUS_NEXT, data_format))
+	header_type = MUS_NEXT;
+      else
+	{
+	  if (mus_header_writable(MUS_RIFF, data_format))
+	    header_type = MUS_RIFF;
+	  else header_type = MUS_RAW;
+	}
+    }
+  if (STRING_P(comment)) com = TO_C_STRING(comment);
+  res = save_region_1(ss, name, header_type, data_format, region_srate(rg), rg, com);
   if (name) FREE(name);
   if (res != MUS_NO_ERROR)
     ERROR(CANNOT_SAVE,
@@ -1360,7 +1377,7 @@ void g_init_regions(SCM local_doc)
   DEFINE_PROC(S_region_srate,       g_region_srate, 0, 1, 0,       H_region_srate);
   DEFINE_PROC(S_region_chans,       g_region_chans, 0, 1, 0,       H_region_chans);
   DEFINE_PROC(S_region_maxamp,      g_region_maxamp, 0, 1, 0,      H_region_maxamp);
-  DEFINE_PROC(S_save_region,        g_save_region, 2, 1, 0,        H_save_region);
+  DEFINE_PROC(S_save_region,        g_save_region, 2, 3, 0,        H_save_region);
   DEFINE_PROC(S_forget_region,      g_forget_region, 0, 1, 0,      H_forget_region);
   DEFINE_PROC(S_protect_region,     g_protect_region, 2, 0, 0,     H_protect_region);
   DEFINE_PROC(S_play_region,        g_play_region, 0, 2, 0,        H_play_region);

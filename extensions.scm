@@ -2,13 +2,14 @@
 
 ;;; accessors for graph-style fields
 ;;; delete selected portion and smooth the splice
-;;; eval over selection or between marks replacing current samples, mapped to "x" or "m" key using prompt-in-minibuffer
+;;; eval over selection
 ;;; mix with result at original peak amp
 ;;; mix with envelope
 ;;; map-sound-files, match-sound-files
 ;;; selection-members
 ;;; make-selection
 ;;; snd-debug
+;;; read-listener-line
 
 
 ;;; -------- accessors for graph-style fields
@@ -242,9 +243,9 @@
 		 (all-chans))))))
 
 
-;;; -------- eval over selection, replacing current samples, mapped to "x" key using prompt-in-minibuffer
+;;; -------- eval over selection, replacing current samples, mapped to "C-x x" key using prompt-in-minibuffer
 ;;;
-;;; when the user types x (without modifiers) and there is a current selection,
+;;; when the user types C-x x (without modifiers) and there is a current selection,
 ;;;   the minibuffer prompts "selection eval:".  Eventually the user responds,
 ;;;   hopefully with a function of one argument, the current selection sample
 ;;;   the value returned by the function becomes the new selection value.
@@ -283,60 +284,63 @@
 
 (use-modules (ice-9 debugger))
 
-(define in-debugger #f)
-(define debugger-input "")
-(define debugger-char 0)
-(define debugger-strlen 0)
-
-(add-hook! read-hook
-  (lambda (str)
-    (if in-debugger
-	(begin
-	  (snd-print "\n")
-	  (set! debugger-input (string-append str "\n"))
-	  (set! debugger-char 0)
-	  (set! debugger-strlen (string-length debugger-input))
-	  #t)
-	#f)))
-
 (define (snd-debug)
-  (let ((stdout (current-output-port))
-	(stdin (current-input-port))
-	(snd-out (make-soft-port
-		  (vector
-		   (lambda (c) (snd-print c))
-		   (lambda (s) (snd-print s))
-		   (lambda () #f)
-		   
-		   (lambda ()
-		     (do () ((or (and (>= debugger-char 0)
-				      (< debugger-char debugger-strlen))
-				 (c-g?))))
-		     (let ((ch (string-ref debugger-input debugger-char)))
-		       (set! debugger-char (+ debugger-char 1))
-		       ch))
+  (let* ((debugger-input "")
+	 (debugger-char 0)
+	 (debugger-strlen 0)
+	 (stdout (current-output-port))
+	 (stdin (current-input-port))
+	 (snd-out (make-soft-port
+		   (vector
+		    (lambda (c) (snd-print c))
+		    (lambda (s) (snd-print s))
+
+		    (lambda () #f)
+		    
+		    (lambda ()
+		      (do () ((or (and (>= debugger-char 0)
+				       (< debugger-char debugger-strlen))
+				  (c-g?))))
+		      (let ((ch (string-ref debugger-input debugger-char)))
+			(set! debugger-char (+ debugger-char 1))
+			ch))
 	      
-		   (lambda () #f))
-		  "rw")))
+		    (lambda () #f))
+		   "rw")))
 
-    (snd-print "\n")
-    ;; might want to use dynamic-wind here to make sure the ports are reset
-    (set-current-output-port snd-out)
-    (set-current-input-port snd-out)
-    (set! in-debugger #t)
-    (debug)
-    (set-current-output-port stdout)
-    (set-current-input-port stdin)
-    (set! in-debugger #f)))
+    (define (snd-debug-read str)
+      (snd-print "\n")
+      (set! debugger-input (string-append str "\n"))
+      (set! debugger-char 0)
+      (set! debugger-strlen (string-length debugger-input))
+      #t)
 
+    (dynamic-wind
+     (lambda ()
+       (snd-print "\n")
+       (set-current-output-port snd-out)
+       (set-current-input-port snd-out)
+       (add-hook! read-hook snd-debug-read)
+       (reset-listener-cursor)) ; going into snd-debug causes the cursor to change to the clock (wait) cursor which we don't want here
+     (lambda ()
+       (debug))
+     (lambda ()
+       (remove-hook! read-hook snd-debug-read)
+       (set-current-output-port stdout)
+       (set-current-input-port stdin)))))
+
+;;; TODO: check step/trace
 		 
 
 ;;; -------- read-listener-line
 
 (define (read-listener-line prompt)
   (let ((res #f))
-    (add-hook! read-hook (lambda (str) (set! res str) #t))
+    (define (reader str) (set! res str) #t)
+    (add-hook! read-hook reader)
+    (reset-listener-cursor)
+    (snd-print "\n")
     (snd-print prompt)
     (do () ((or (c-g?) res)))
-    (reset-hook! read-hook)
+    (remove-hook! read-hook reader)
     res))

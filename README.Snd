@@ -35,6 +35,7 @@ The configure program has several Snd-related arguments:
    --with-esd            use the enlightened sound daemon, if possible
    --with-no-gui         make Snd without any graphics support
    --with-no-guile       make Snd without an extension language (only user-interface stuff will work)
+   --with-static-gsl     try to load GSL statically (for RPM)
 
 If the configure/make process fails, please send me
 (bil@ccrma.stanford.edu) the files config.h, config.log, and makefile,
@@ -107,14 +108,12 @@ available, in the Help sections of Snd.  The XmHTML widget needs
 access to snd.html and extsnd.html.  If these are not in the current
 directory, nor in /usr/doc/snd-5 (the RPM documentation location),
 then you need to set the htmldir resource (see extsnd.html).
-The Gtk+ version of this is apparently in the gnome-devel libs
-named gtk-xmhtml (but I haven't had time to tie it into Snd yet).
+In Gtk+, the --with-html flag tries to use /usr/lib/mozilla.
 
 In Motif, the XPM library, if it is available, is used to create some cute
 icons.  If the relevant makefile does not include -DXPM and you have
 the library, add -DXPM to CFLAGS and -lXpm to LIBS.  (This is built
-into Gtk+).  If you're using gtk, try to get version 1.2.7 or later;
-there was a serious bug in earlier versions of the vpaned widget.
+into Gtk+).  If you're using gtk, try to get version 1.2.7 or later.
 
 If you want bigger colormaps and have the requisite video memory,
 define WITH_BIG_COLORMAP (see snd.h).
@@ -227,16 +226,14 @@ If you get the error:
 
  snd-x0.h:9 Xm/XmAll: No such file or directory
 
-This probably means you don't have Motif installed -- to build Snd
-from the sources, you need either Motif or Gtk+.  Motif has recently
-been released as open source software: see the url mentioned below.
-Another freeware version is called Lesstif, but this is no longer
-supported in Snd with elaborate special bug-work-arounds.  The linux
-binary rpm file and the linux-snd image at ccrma-ftp have Motif
-statically loaded.  If you installed the openmotif library rpm
-package, it may not have included the headers (look under 
-/usr/X11R6/include/Xm); to build Snd from the sources you need
-the headers (in the openmotif-devel packages).
+This probably means you don't have the Motif headers installed -- to
+build Snd from the sources, you need either Motif or Gtk+.  Motif has
+recently been released as open source software: see the url mentioned
+below.  The linux binary rpm file and the linux-snd image at ccrma-ftp
+have Motif statically loaded.  If you installed the openmotif library
+rpm package, it may not have included the headers (look under
+/usr/X11R6/include/Xm); to build Snd from the sources you need the
+headers (in the openmotif-devel packages).
 
 If you have installed Motif in some weird place, use the -I compiler
 flag to provide that information to the compiler.  I've added the

@@ -95,6 +95,7 @@
 #undef ESD
 #undef BSDI
 
+#undef CCRMA
 #undef HAVE_GUILE
 #undef HAVE_LIBREP
 #undef HAVE_MZSCHEME

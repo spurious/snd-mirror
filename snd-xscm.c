@@ -295,7 +295,7 @@ static SCM g_set_graph_cursor(SCM curs)
   int val;
   ASSERT_TYPE(NUMBER_P(curs), curs, SCM_ARGn, "set-" S_graph_cursor, "a number");
   /* X11/cursorfont.h has various even-numbered glyphs, but the odd numbers are ok, and XC_num_glyphs is a lie */
-  /*   if you use too high a number here, Goddamn X dies */
+  /*   if you use too high a number here, X dies */
   val = TO_C_INT(curs);
   if ((val >= 0) && (val <= XC_xterm))
     {

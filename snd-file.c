@@ -413,6 +413,7 @@ dir *find_sound_files_in_dir (char *name)
 #if (!HAVE_OPENDIR)
   return(NULL);
 #else
+  /* TODO: here we could insert the file-dialog (just-sounds) filter procedure, but it's also called in prevlist and sound-files-in-directory */
   struct dirent *dirp;
   DIR *dpos;
   char *dot, *sp;
@@ -2234,6 +2235,7 @@ static SCM g_preload_file(SCM file)
 static SCM g_sound_files_in_directory(SCM dirname)
 {
   #define H_sound_files_in_directory "(" S_sound_files_in_directory " directory) returns a vector of sound files in directory"
+  /* TODO: should sound-files-in-directory return a list? */
   dir *dp = NULL;
   char *name = NULL;
   int i, numfiles;

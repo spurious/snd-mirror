@@ -546,6 +546,18 @@ static SCM g_listener_selected_text(void)
   return(res);
 }
 
+static SCM g_reset_listener_cursor(void)
+{
+  snd_state *ss;
+  if (listener_text)
+    {
+      ss = get_global_state();
+      gdk_window_set_cursor(listener_text->window, (ss->sgx)->arrow_cursor);
+    }
+  return(SCM_BOOL_F);
+}
+
+
 void g_init_gxlistener(SCM local_doc)
 {
   #define H_mouse_enter_listener_hook S_mouse_enter_listener_hook " (listener) is called when the mouse \
@@ -571,5 +583,7 @@ leaves the lisp listener pane"
   mouse_leave_text_hook = MAKE_HOOK(S_mouse_leave_text_hook, 1, H_mouse_leave_text_hook);    /* arg = text widget */
 
   DEFINE_PROC(S_listener_selection, g_listener_selected_text, 0, 0, 0, "returns current selection in listener or #f");
+
+  DEFINE_PROC(S_reset_listener_cursor, g_reset_listener_cursor, 0, 0, 0, "resets listener cursor to default pointer");
 }
 

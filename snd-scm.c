@@ -1052,8 +1052,8 @@ static SCM g_set_previous_files_sort(SCM val)
   ASSERT_TYPE(INTEGER_P(val), val, SCM_ARGn, "set-" S_previous_files_sort, "an integer"); 
   update_prevlist(state);
   set_previous_files_sort(state, mus_iclamp(0,
-				       TO_C_INT(val),
-				       4));
+					    TO_C_INT(val),
+					    5));
   update_prevfiles(state);
   return(TO_SCM_INT(previous_files_sort(state)));
 }

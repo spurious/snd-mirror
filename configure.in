@@ -52,6 +52,8 @@ MAKE_TARGET="snd"
 #   --with-motif-prefix   set location of Motif (untested as yet)
 #   --with-no-guile       build without Guile (for autotesting sequence)
 #   --with-static-gsl     try to statically load GSL
+#   --with-ccrma          /zap as temp dir and snd-conf
+#   --with-ruby           try to use Ruby as the extension language
 #--------------------------------------------------------------------------------
 
 AC_ARG_WITH(esd,[  --with-esd		  use ESD])
@@ -61,12 +63,17 @@ AC_ARG_WITH(gtk,[  --with-gtk		  use Gtk+ to build Snd])
 AC_ARG_WITH(no-gui,[  --with-no-gui  	  make Snd without any graphics support])
 AC_ARG_WITH(no-guile,[  --with-no-guile	  make Snd without any extension language])
 AC_ARG_WITH(doubles,[  --with-doubles	  use doubles throughout])
+AC_ARG_WITH(ccrma,[  --with-ccrma		ccrma-specific setup])
 AC_ARG_WITH(static-gsl,[  --with-static-gsl	  use libgsl.a to build Snd])
 
 if test "$with_doubles" = yes; then
   AC_DEFINE(Float,double)
 else
   AC_DEFINE(Float,float)
+fi
+
+if test "$with_ccrma" = yes; then
+  AC_DEFINE(CCRMA)
 fi
 
 XMHTML_LIB=""
@@ -109,6 +116,15 @@ AC_ARG_WITH(snd-conf,
 	[  --with-snd-conf	  use Snd site config file /etc/snd.conf],
   	if test "$with_snd_conf" = yes ; then
 	    AC_DEFINE(SND_CONF,"/etc/snd.conf")
+	fi)
+
+AC_ARG_WITH(ruby,
+	[  --with-ruby	  	try to use Ruby as the extension language],
+  	if test "$with_ruby" = yes ; then
+	    AC_DEFINE(HAVE_RUBY)
+	    GUILE_LIBS="-lruby -ldl -lcrypt"
+	    AC_DEFINE(HAVE_EXTENSION_LANGUAGE)
+            AC_SUBST(GUILE_LIBS)
 	fi)
 
 
@@ -277,10 +293,6 @@ AC_CHECK_SIZEOF(short)
 AC_CHECK_SIZEOF(long)
 AC_CHECK_SIZEOF(int *)
 AC_CHECK_SIZEOF(float)
-
-if test "$SIZEOF_INT" = "0" ; then
-  AC_MSG_ERROR(big trouble: configure thinks ints have 0 bytes)
-fi
 
 dnl this taken from Guile's configure.in
 AC_CACHE_CHECK([for long longs], snd_cv_long_longs,
@@ -474,6 +486,8 @@ AC_SUBST(GX_HEADERS)
 # Guile, Guile-gtk
 #--------------------------------------------------------------------------------
 
+if test "$with_ruby" != yes ; then
+
 GUILE_LIBS=""
 GUILE_CFLAGS=""
 GUILE_CONFIG_path=""
@@ -575,6 +589,7 @@ if test $GUILE_CONFIG_works = yes; then
 else
   AC_DEFINE(HAVE_GUILE,0)
   AC_DEFINE(HAVE_EXTENSION_LANGUAGE, 0)
+fi
 fi
 fi
 
@@ -717,6 +732,9 @@ fi
 
 #--------------------------------------------------------------------------------
 # fstatfs special case
+#   it is also possible for statfs to take 3 args
+#   the libit configure.in and fsusage.c might be useful here.
+#   fstatfs is not used anymore, but statfs is, and has all the same problems
 #--------------------------------------------------------------------------------
 
 dnl fstatfs is a mess

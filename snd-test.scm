@@ -142,24 +142,27 @@
 	    ;(snd-display (format #f ";warning: ~A" (car args)))
 	    (car args))))
 ;(defmacro without-errors (func) `(begin ,func))
+(load "hooks.scm")
+(reset-all-hooks)
 
 (if (> (length (script-args)) 0)
-    (begin
-      (if (not (= (script-arg) 1)) (snd-display (format #f ";script-arg: ~A (~A)" (script-arg) (script-args))))
-      (if (not (string=? (list-ref (script-args) 0) "-l")) (snd-display (format #f ";script-args[0]: ~A?" (list-ref (script-args) 0))))
-      (if (not (string=? (list-ref (script-args) 1) "snd-test")) (snd-display (format #f ";script-args[1]: ~A?" (list-ref (script-args) 1))))
-      (if (> (length (script-args)) 2)
+    (let ((arg (script-arg))
+	  (args (script-args)))
+      (if (not (string=? (list-ref args (1- arg)) "-l")) 
+	  (snd-display (format #f ";script-args[~A]: ~A?" (1- arg) (list-ref args (1- arg)))))
+      (if (not (string=? (list-ref args arg) "snd-test")) 
+	  (snd-display (format #f ";script-args[~A]: ~A?" arg (list-ref args arg))))
+      (if (> (length args) (1+ arg))
 	  (begin
 	    ;; test-number tests
-	    (set! snd-test (string->number (list-ref (script-args) 2)))
+	    (set! snd-test (string->number (list-ref args (1+ arg))))
 	    (set! full-test (< snd-test 0))
 	    (set! with-exit #t)
-	    (set! (script-arg) 2)
-	    (if (> (length (script-args)) 3)
+	    (set! (script-arg) (1+ arg))
+	    (if (> (length (script-args)) (+ arg 2))
 		(begin
-		  (set! tests (string->number (list-ref (script-args) 3)))
-		  (set! (script-arg) 3)))))))
-
+		  (set! tests (string->number (list-ref args (+ arg 2))))
+		  (set! (script-arg) (+ arg 2))))))))
 
 
 ;;; ---------------- test 0: constants ----------------
@@ -1006,6 +1009,8 @@
 	  (snd-display (format #f ";mouse-drag-hook: ~A?" mouse-drag-hook)))
       (if (or (not (hook? mouse-release-hook)) (not (hook-empty? mouse-release-hook)))
 	  (snd-display (format #f ";mouse-release-hook: ~A?" mouse-release-hook)))
+      (if (or (not (hook? mouse-click-hook)) (not (hook-empty? mouse-click-hook)))
+	  (snd-display (format #f ";mouse-click-hook: ~A?" mouse-click-hook)))
       (if (or (not (hook? mouse-press-hook)) (not (hook-empty? mouse-press-hook)))
 	  (snd-display (format #f ";mouse-press-hook: ~A?" mouse-press-hook)))
       (if (or (not (hook? start-playing-hook)) (not (hook-empty? start-playing-hook)))
@@ -1349,7 +1354,7 @@
 	  (com (mus-sound-comment "oboe.snd"))
 	  (sr (mus-sound-srate "oboe.snd"))
 	  (m1 (mus-sound-max-amp-exists? "oboe.snd"))
-	  (ma (mus-sound-max-amp "oboe.snd"))
+	  (mal (mus-sound-max-amp "oboe.snd"))
 	  (bytes (mus-data-format-bytes-per-sample (mus-sound-data-format "oboe.snd")))
 	  (sys (mus-audio-systems)))
       (mus-sound-report-cache "hiho.tmp")
@@ -1435,19 +1440,19 @@
 	      (not (string=? com "sample_byte_format -s2 01\nchannel_count -i 1\nsample_count -i 36461\nsample_rate -i 16000\nsample_n_bytes -i 2\nsample_sig_bits -i 16\n")))
 	  (snd-display (format #f ";mus-sound-comment \"telephone.wav\") -> ~A?" com)))
       
-      (if (fneq (vector-ref ma 1) .14724) (snd-display (format #f ";oboe: mus-sound-max-amp ~F?" (vector-ref ma 1))))
-      (if (not (= (vector-ref ma 0) 24971)) (snd-display (format #f ";oboe: mus-sound-max-amp at ~D?" (vector-ref ma 0))))
-      (mus-sound-set-max-amp "oboe.snd" #(1234 .5))
-      (set! ma (mus-sound-max-amp "oboe.snd"))
-      (if (fneq (vector-ref ma 1) .5) (snd-display (format #f ";oboe: mus-sound-set-max-amp ~F?" (vector-ref ma 1))))
-      (if (not (= (vector-ref ma 0) 1234)) (snd-display (format #f ";oboe: mus-sound-set-max-amp at ~D?" (vector-ref ma 0))))
-      (set! ma (vector->list (mus-sound-max-amp "4.aiff")))
-      (if (not (feql ma (list 810071 0.245 810071 0.490 810071 0.735 810071 0.980)))
-	  (snd-display (format #f ";mus-sound-max-amp 4.aiff: ~A?" ma)))
-      (mus-sound-set-max-amp "4.aiff" #(12345 .5 54321 .2 0 .1 9999 .01))
-      (set! ma (vector->list (mus-sound-max-amp "4.aiff")))
-      (if (not (feql ma (list 12345 .5 54321 .2 0 .1 9999 .01)))
-	  (snd-display (format #f ";mus-sound-set-max-amp 4.aiff: ~A?" ma)))
+      (if (fneq (cadr mal) .14724) (snd-display (format #f ";oboe: mus-sound-max-amp ~F?" (cadr mal))))
+      (if (not (= (car mal) 24971)) (snd-display (format #f ";oboe: mus-sound-max-amp at ~D?" (car mal))))
+      (mus-sound-set-max-amp "oboe.snd" (list 1234 .5))
+      (set! mal (mus-sound-max-amp "oboe.snd"))
+      (if (fneq (cadr mal) .5) (snd-display (format #f ";oboe: mus-sound-set-max-amp ~F?" (cadr mal))))
+      (if (not (= (car mal) 1234)) (snd-display (format #f ";oboe: mus-sound-set-max-amp at ~D?" (car mal))))
+      (set! mal (mus-sound-max-amp "4.aiff"))
+      (if (not (feql mal (list 810071 0.245 810071 0.490 810071 0.735 810071 0.980)))
+	  (snd-display (format #f ";mus-sound-max-amp 4.aiff: ~A?" mal)))
+      (mus-sound-set-max-amp "4.aiff" (list 12345 .5 54321 .2 0 .1 9999 .01))
+      (set! mal (mus-sound-max-amp "4.aiff"))
+      (if (not (feql mal (list 12345 .5 54321 .2 0 .1 9999 .01)))
+	  (snd-display (format #f ";mus-sound-set-max-amp 4.aiff: ~A?" mal)))
 
       (if (and (not (= (mus-sound-type-specifier "oboe.snd") #x646e732e))  ;little endian reader
 	       (not (= (mus-sound-type-specifier "oboe.snd") #x2e736e64))) ;big endian reader
@@ -1838,7 +1843,6 @@
 (load "extensions.scm")
 (load "examp.scm")
 (load "snd4.scm")
-(load "hooks.scm")
 (load "dsp.scm")
 
 (define (our-x->position ind x) 
@@ -2136,7 +2140,29 @@
 	(let ((id (make-region 0 99)))
 	  (insert-region 60 id index) 
 	  (if (not (= (frames) (+ len 100))) (snd-display (format #f ";insert-region len: ~A?" (frames))))
-	  (if (fneq (sample 100) s40) (snd-display (format #f ";insert-region: ~A ~A?" (sample 100) s40)))))
+	  (if (fneq (sample 100) s40) (snd-display (format #f ";insert-region: ~A ~A?" (sample 100) s40)))
+	  (save-region id "fmv.snd")
+	  (if (not (= (mus-sound-header-type "fmv.snd") mus-next))
+	      (snd-display (format #f ";save-region header: ~A?" (mus-header-type-name (mus-sound-header-type "fmv.snd")))))
+	  (if (not (= (mus-sound-data-format "fmv.snd") mus-out-format))
+	      (snd-display (format #f ";save-region format: ~A?" (mus-data-format-name (mus-sound-data-format "fmv.snd")))))
+	  (if (not (= (mus-sound-srate "fmv.snd") (region-srate id)))
+	      (snd-display (format #f ";save-region srate: ~A (~A)" (mus-sound-srate "fmv.snd") (region-srate id))))
+	  (if (not (= (mus-sound-chans "fmv.snd") (region-chans id)))
+	      (snd-display (format #f ";save-region chans: ~A (~A)" (mus-sound-chans "fmv.snd") (region-chans id))))
+	  (if (not (= (mus-sound-frames "fmv.snd") (region-length id)))
+	      (snd-display (format #f ";save-region length: ~A (~A)" (mus-sound-frames "fmv.snd") (region-length id))))
+	  (delete-file "fmv.snd")
+	  (save-region id "fmv.snd" mus-riff mus-lshort "this is a comment")
+	  (if (not (= (mus-sound-header-type "fmv.snd") mus-riff))
+	      (snd-display (format #f ";save-region riff header: ~A?" (mus-header-type-name (mus-sound-header-type "fmv.snd")))))
+	  (if (not (= (mus-sound-data-format "fmv.snd") mus-lshort))
+	      (snd-display (format #f ";save-region lshort format: ~A?" (mus-data-format-name (mus-sound-data-format "fmv.snd")))))
+	  (if (not (= (mus-sound-frames "fmv.snd") (region-length id)))
+	      (snd-display (format #f ";save-region length: ~A (~A)" (mus-sound-frames "fmv.snd") (region-length id))))
+	  (if (not (string=? (mus-sound-comment "fmv.snd") "this is a comment"))
+	      (snd-display (format #f ";save-region comment: ~A" (mus-sound-comment "fmv.snd"))))
+	  (delete-file "fmv.snd")))
       (close-sound index)
       (set! index (new-sound "fmv.snd" mus-ircam mus-bshort 22050 1 "this is a comment"))
       (let ((v0 (make-vct 128)))
@@ -2881,15 +2907,35 @@
 			      (mxall (max mxcur (cadr mxlst)) (cddr mxlst))))
 			(let ((mxa (mus-sound-max-amp a))
 			      (mxb (mus-sound-max-amp b)))
-			  (or (not mxb)
-			      (and mxa
-				   (> (mxall 0.0 (vector->list mxa))
-				      (mxall 0.0 (vector->list mxb))))))))))
+			  (or (null? mxb)
+			      (and (not (null? mxa))
+				   (> (mxall 0.0 mxa)
+				      (mxall 0.0 mxb)))))))))
 	(set! (previous-files-sort) 5)
 	(close-sound ind1)
 	(set! (previous-files-sort) 1)
 	)
 
+      (with-output-to-file "sndtst" 
+	(lambda ()
+	  (display "#!/home/bil/cl/snd -l
+!#
+(use-modules (ice-9 format))
+(if (= (length (script-args)) 2) ;i.e. (\"-l\" \"script\")
+  (display \"usage: script file-name...\n\")
+  (do ((arg (+ (script-arg) 1) (1+ arg)))
+      ((= arg (length (script-args))))
+    (let ((name (list-ref (script-args) arg)))
+      (display (format #f \"~A: ~A~%\" name (mus-sound-comment name))))))
+(exit)
+")))
+
+      (system "chmod 777 sndtst")
+      (let ((val (shell "sndtst fyow.snd")))
+        (if (not (string=? val "fyow.snd: ;Written on Tue 11-May-93 at 15:55 PDT by me at localhost (NeXT) using Allegro CL and clm of 11-May-93
+"))
+            (snd-display (format #f ";script: ~A?" val))
+            (delete-file "sndtst")))
       ))
 
 
@@ -4784,8 +4830,8 @@
 		  (fneq (vct-ref v2 7) 0.143))
 	      (snd-display (format #f ";convolve output: ~A?" v2))))
 	(convolve-files "oboe.snd" "fyow.snd" .5 "fmv.snd")
-	(if (fneq (vector-ref (mus-sound-max-amp "fmv.snd") 1) .5) 
-	    (snd-display (format #f ";convolve-files: ~A /= .5?" (vector-ref (mus-sound-max-amp "fmv.snd") 1))))
+	(if (fneq (cadr (mus-sound-max-amp "fmv.snd")) .5) 
+	    (snd-display (format #f ";convolve-files: ~A /= .5?" (cadr (mus-sound-max-amp "fmv.snd")))))
 	(play-sound "fmv.snd"))
 
       (let* ((fd (mus-sound-open-input "oboe.snd"))
@@ -5311,6 +5357,29 @@
     (if (provided? 'gcing) (set! g-gc-step 100))
     (close-sound (find-sound "fmv.snd"))
     (dismiss-all-dialogs)
+
+    (let ((ind (new-sound "new.snd"))
+	  (mxs (make-vector 10)))
+      (call-with-current-continuation
+       (lambda (quit)
+	 (do ((i 0 (1+ i)))
+	     ((= i 10))
+	   (let ((v (make-vct 1)))
+	     (vct-set! v 0 (* i .05))
+	     (vector-set! mxs i (mix-vct v i ind 0))
+	     (if (not (mix? (vector-ref mxs i)))
+		 (quit (snd-display (format #f ";mix-vct at ~A failed? " i)))
+		 (set! (mix-track (vector-ref mxs i)) 33))))
+	 (let ((tr (make-track-sample-reader 33)))
+	   (do ((i 0 (1+ i)))
+	       ((= i 10))
+	     (let ((val (next-track-sample tr)))
+	       (if (fneq val (* i .05))
+		   (begin
+		     (close-sound ind)
+		     (quit (snd-display (format #f ";read track at ~A: ~A?" i val)))))))
+	   (free-track-sample-reader tr)
+	   (close-sound ind)))))
     ))
 
 (clear-sincs)
@@ -5548,8 +5617,16 @@
 		  (set! m4 (add-mark 1000 sd 3))
 		  (if (not (equal? (mark-home m3) (list sd 2))) (snd-display (format #f ";marks->sound 4: ~A?" (mark-home m3))))
 		  (close-sound sd))
-		(save-marks fd)
+		(let ((file (save-marks fd)))
+		  (if (or (not file)
+			  (not (string=? file "/home/bil/cl/oboe.marks")))
+		      (snd-display (format #f ";save-marks -> ~A?" file))))
 		(close-sound fd)
+		(let ((fd (open-sound "pistol.snd")))
+		  (let ((file (save-marks)))
+		    (if file
+			(snd-display (format #f ";save-marks no marks -> ~A?" file))))
+		  (close-sound fd))
 		(let ((fd (open-sound "oboe.snd")))
 		  (load "oboe.marks")
 		  (let ((mlst (marks fd 0)))
@@ -5557,7 +5634,26 @@
 		    (if (or (not (= (mark-sample (car mlst)) 123))
 			    (not (= (mark-sample (cadr mlst)) 12345)))
 			(snd-display (format #f ";restored-marks: ~D ~D?" (mark-sample (car mlst)) (mark-sample (cadr mlst))))))
-		  (close-sound fd)))))))))
+		  (close-sound fd))
+		(let ((fd (open-sound "4.aiff")))
+		  (let ((m1 (add-mark 1000 fd 0))
+			(m2 (add-mark 2000 fd 1))
+			(m3 (add-mark 3000 fd 2))
+			(m4 (add-mark 4000 fd 3)))
+		    (save-marks fd)
+		    (close-sound fd)
+		    (set! fd (open-sound "4.aiff"))
+		    (load "4.marks")
+		    (delete-file "4.marks")
+		    (do ((i 0 (1+ i)))
+			((= i 4))
+		      (let ((mlst (marks fd i)))
+			(if (not (= (length mlst) 1))
+			    (snd-display (format #f ";save-marks[~A]: ~A?" i mlst)))
+			(if (not (= (mark-sample (car mlst)) (* (+ i 1) 1000)))
+			    (snd-display (format #f ";save-marks[~A] at ~A?" i (mark-sample (car mlst)))))))
+		    (close-sound fd)))
+		)))))))
 
 
 ;;; ---------------- test 11: dialogs ----------------
@@ -10616,6 +10712,7 @@ EDITS: 3
 			(list output-comment-hook 'output-comment-hook)
 			(list multichannel-mix-hook 'multichannel-mix-hook)
 			(list play-hook 'play-hook)
+			(list read-hook 'read-hook)
 			(list snd-error-hook 'snd-error-hook)
 			(list snd-warning-hook 'snd-warning-hook)
 			(list start-hook 'start-hook)
@@ -10636,6 +10733,7 @@ EDITS: 3
 			(list key-press-hook 'key-press-hook)
 			(list mouse-drag-hook 'mouse-drag-hook)
 			(list mouse-press-hook 'mouse-press-hook)
+			(list mouse-click-hook 'mouse-click-hook)
 			(list mouse-release-hook 'mouse-release-hook)
 			(list enved-hook 'enved-hook)))
 
@@ -10904,12 +11002,7 @@ EDITS: 3
 (if (file-exists? "saved-snd.scm") (delete-file "saved-snd.scm"))
 (gc)
 (clear-sincs)
-(reset-hook! exit-hook)
-(reset-hook! graph-hook)
-(reset-hook! name-click-hook)
-(reset-hook! menu-hook)
-(reset-hook! before-transform-hook)
-(reset-hook! transform-hook)
+(reset-all-hooks)
 
 (save-listener "test.output")
 (set! (listener-prompt) original-prompt)
@@ -10943,11 +11036,8 @@ EDITS: 3
 (if with-exit (exit))
 
 ;;; these need further testing
-;;; TODO:  save-state mus-sound-reopen-output close-sound-file vct->sound-file peaks
-;;; TODO:  save-marks save-region vcts-map! update-sound make-track-sample-reader free-track-sample-reader 
-;;; TODO:  play-track? equalize-panes
-;;; TODO:  edpos in sound->temp graph-data
-;;; TODO:  apply from mark etc
+;;; TODO:  save-state mus-sound-reopen-output update-sound play-track? equalize-panes
+;;; TODO:  edpos in sound->temp graph-data, apply from mark etc
 ;;; TODO:  run overall (14 etc) with various hooks set (current-window-location etc)
 
 ;; we have mus-sound-srate in sndlib, mus-srate in clm.c, sound-srate and *clm-srate* in clm, mus-sound-srate and srate in snd
@@ -10955,7 +11045,7 @@ EDITS: 3
 ;; TODO: control-changed-hook (lambda (snd control-func val) ...) (for auto-set etc)
 ;;        or amp|speed|contrast|expand|reverb[-scale|length]|filter[-text?]-control-hook -> return value given raw slider position (0..1)
 ;;        or hooks on all sliders (chan-sx etc)
-;;   and cursor-position (widget-position, x->position) is a different thing from selection|mix-position -> origin?
+;;   and cursor-position (widget-position, x->position) is a different thing from selection|mix-position -> origin? (mark-sample, left|right-sample)
 
 ;;; need to know before calling this if libguile.so was loaded
 ;;; (system "cc gsl-ex.c -c")

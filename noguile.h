@@ -46,6 +46,7 @@ SCM scm_return_first(SCM a, ...);
 #define SCM_LIST4(a, b, c, d) 0
 #define SCM_LIST5(a, b, c, d, e) 0
 #define SCM_LIST6(a, b, c, d, e, f) 0
+#define SCM_LIST7(a, b, c, d, e, f, g) 0
 #define SCM_CAR(a) 0
 #define SCM_CADR(a) 0
 #define SCM_CADDR(a) 0

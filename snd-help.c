@@ -268,6 +268,11 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+24-Jun:  added type and comment args to save-region,\n\
+           and moved format arg after type (to be consistent with other such calls).\n\
+         mouse-click-hook.\n\
+         reverse-track (mix.scm).\n\
+         mus-sound-max-amp now returns (and takes) a list, not a vector.\n\
 21-Jun:  dsp.scm, autosave.scm, extensions.scm.\n\
          find-mix.\n\
 20-Jun:  read-hook. hooks.scm\n\
@@ -341,20 +346,6 @@ void news_help(snd_state *ss)
 	   The control names (\"amp\" in particular) were too likely to be confused or shadowed.\n\
            filter-env-order was too similar to filter-order (and not obvious it meant the envelope editor filter order)\n\
            These names actually predated the decision to use Guile -- I didn't foresee 4 years ago where Snd was headed.\n\
-26-May:  removed fit-data-on-open; here's a replacement:\n\
-             (define (fit-data snd chn dur)\n\
-               (let ((mx (maxamp snd chn)))\n\
-                 (list 0.0 dur (- mx) mx \"time\" (- mx) mx)))\n\
-             (add-hook! initial-graph-hook fit-data #t) ; #t to make sure env restorers get to function first\n\
-         added 'extended' arg to bind-key et al so C-x keys can be bound.\n\
-         example of zero-crossing based C-p, C-n, and C-k in extsnd.html (bind-key).\n\
-         save-control-panel renamed save-controls, similarly for reset-controls and restore-controls.\n\
-         mark->sound renamed mark-home (the arrow is out of place here).\n\
-         added sample-reader-home.\n\
-25-May:  removed open-alternate-sound -- is exactly the same as close-sound + open-sound.\n\
-         removed normalize-on-open (use open-hook and equalize-panes).\n\
-             (add-hook! after-open-hook (lambda (snd) (equalize-panes)))\n\
-         renamed normalize-view to equalize-panes.\n\
 ",
 NULL);
   FREE(info);

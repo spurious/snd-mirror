@@ -131,7 +131,7 @@
 
 #ifndef HAVE_EXTENSION_LANGUAGE
   #define HAVE_EXTENSION_LANGUAGE 1
-  #if (!(HAVE_LIBREP || HAVE_MZSCHEME))
+  #if (!(HAVE_LIBREP || HAVE_MZSCHEME || HAVE_RUBY))
     #define HAVE_GUILE 1
   #endif
 #endif
@@ -144,6 +144,9 @@
 #endif
 #if HAVE_MZSCHEME
   #include <scheme.h>
+#endif
+#if HAVE_RUBY
+  #include <ruby.h>
 #endif
 
 #if (!(USE_NO_GUI || USE_MOTIF || USE_GTK))
@@ -162,6 +165,9 @@
 #endif
 #if HAVE_MZSCHEME
   #include "sz.h"
+#endif
+#if HAVE_RUBY
+  #include "sr.h"
 #endif
 #if (!HAVE_EXTENSION_LANGUAGE)
   #include "noguile.h"
@@ -193,7 +199,7 @@
 
 #include "snd-strings.h"
 
-#define SND_VERSION "22-June-01"
+#define SND_VERSION "25-June-01"
 #define SND_RPM_VERSION "5.1"
 #define SND_MAJOR_VERSION 5
 #define SND_MINOR_VERSION 1

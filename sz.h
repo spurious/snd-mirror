@@ -37,6 +37,7 @@ SCM scm_return_first(SCM a, ...);
 #define SCM_LIST4(a, b, c, d)           scheme_make_pair(a, SCM_LIST3(b, c, d))
 #define SCM_LIST5(a, b, c, d, e)        scheme_make_pair(a, SCM_LIST4(b, c, d, e))
 #define SCM_LIST6(a, b, c, d, e, f)     scheme_make_pair(a, SCM_LIST5(b, c, d, e, f))
+#define SCM_LIST7(a, b, c, d, e, f, g)  scheme_make_pair(a, SCM_LIST6(b, c, d, e, f, g))
 #define SCM_CAR(a)                       SCHEME_CAR(a)
 #define SCM_CADR(a)                      SCHEME_CADR(a)
 #define SCM_CADDR(a)                     SCHEME_CAR(SCHEME_CDDR(a))

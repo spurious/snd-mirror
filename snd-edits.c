@@ -3349,7 +3349,6 @@ static SCM g_samples(SCM samp_0, SCM samps, SCM snd_n, SCM chn_n, SCM edpos)
 returns a vector containing snd channel chn's samples starting a start-samp for samps samples; edit-position is the edit \
 history position to read (defaults to current position)."
 
-  /* return the filled vector for scm to free? */
   chan_info *cp;
   snd_fd *sf;
   int i, len, beg, pos;

@@ -30,7 +30,7 @@
 ;;; (save-track track filename) save track data in file
 ;;; (set-track-amp-env track chan env) set overall track amp env
 ;;; (filter-track track coeffs) filter track data
-
+;;; (reverse-track track) reverses the mix order
 
 (load "env.scm")
 
@@ -387,3 +387,18 @@
       (map (lambda (n) (set-mix-track n new-track)) mix-ids))))
 
 (add-hook! multichannel-mix-hook sync-multichannel-mixes)
+
+
+(define reverse-track
+  (lambda (track)
+    "(reverse-track) reverses the order of its mixes"
+    (let* ((ids-in-order (sort track
+			       (lambda (a b)
+				 (> (mix-position a)
+				    (mix-position b))))))
+      (as-one-edit
+       (lambda ()
+	 (for-each (lambda (id pos)
+		     (set! (mix-position id) pos))
+		   ids-in-order
+		   (reverse (map mix-position ids-in-order))))))))
