@@ -808,6 +808,34 @@ static Float mus_array_hermite_interp(Float *wave, Float x, int size)
   return(((c3 * p + c2) * p + c1) * p + c0);
 }
 
+static Float mus_array_bezier_interp(Float *wave, Float x, int size)
+{
+  int x0, x1, x2, x3;
+  Float p, y0, y1, y2, y3, ay, by, cy;
+  if ((x < 0.0) || (x > size))
+    {
+      x = fmod((double)x, (double)size);
+      if (x < 0.0) x += size;
+    }
+  x1 = (int)floor(x); 
+  p = ((x - x1) + 1.0) / 3.0;
+  if (x1 == size) x1 = 0;
+  x2 = x1 + 1;
+  if (x2 == size) x2 = 0;
+  x3 = x2 + 1;
+  if (x3 == size) x3 = 0;
+  x0 = x1 - 1;
+  if (x0 < 0) x0 = size - 1;
+  y0 = wave[x0];
+  y1 = wave[x1];
+  y2 = wave[x2];
+  y3 = wave[x3];
+  cy = 3 * (y1 - y0);
+  by = 3 * (y2 - y1) - cy;
+  ay = y3 - y0 - cy - by;
+  return(y0 + p * (cy + (p * (by + (p * ay)))));
+}
+
 Float mus_interpolate(mus_interp_t type, Float x, Float *table, int table_size, Float y)
 {
   switch (type)
@@ -831,6 +859,9 @@ Float mus_interpolate(mus_interp_t type, Float x, Float *table, int table_size, 
       break;
     case MUS_INTERP_ALL_PASS:
       return(mus_array_all_pass_interp(table, x, table_size, y));
+      break;
+    case MUS_INTERP_BEZIER:
+      return(mus_array_bezier_interp(table, x, table_size));
       break;
     default:
       mus_error(MUS_ARG_OUT_OF_RANGE, "unknown interpolation type: %d", type);

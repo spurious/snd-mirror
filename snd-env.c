@@ -1465,7 +1465,7 @@ env *position_to_env(int pos)
   e = xen_to_env(XEN_EVAL_C_STRING(all_names[pos]));
 #endif
   free_env(all_envs[pos]);
-  all_envs[pos] = e; /* TODO: check this for copy_env */
+  all_envs[pos] = copy_env(e);
   return(e);
 }
 

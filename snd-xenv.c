@@ -391,7 +391,7 @@ static void select_or_edit_env(int pos)
   if (active_env) active_env = free_env(active_env);
   selected_env = position_to_env(pos);
   if (!selected_env) return;
-  active_env = copy_env(selected_env);
+  active_env = selected_env;
   XmTextSetString(textL, enved_all_names(pos));
   set_enved_env_list_top(0);
   prepare_env_edit(active_env);

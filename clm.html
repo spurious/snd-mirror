@@ -786,7 +786,7 @@ frequency change argument (<i>fm-input</i>) to fit whatever its table size is
 and fixes it up).  In CL, the wave table should be an array of double-floats (the function
 make-double-array can be used to create it). In Ruby/Scheme it is a vct.
 <i>type</i> sets the type of interpolation used: mus-interp-none,
-mus-interp-linear, mus-interp-lagrange, or mus-interp-hermite.
+mus-interp-linear, mus-interp-lagrange, mus-interp-bezier, or mus-interp-hermite.
 </p>
 
 <table border align=left hspace=40 cellpadding=4>
@@ -1693,7 +1693,7 @@ delay length (<i>size</i>) and the current actual delay length (<i>size</i>
 + <i>pm</i>).  A positive <i>pm</i> corresponds to a longer
 delay line.  The <i>type</i> argument sets the interpolation type:
 mus-interp-none, mus-interp-linear, mus-interp-all-pass, 
-mus-interp-lagrange, or mus-interp-hermite.
+mus-interp-lagrange, mus-interp-bezier, or mus-interp-hermite.
 <b>delay-tick</b> just puts a sample in the delay line. 'ticks' the delay forward, and
 returns its <i>input</i> argument.  This is aimed at physical modeling instruments
 where a <b>tap</b> is doing the actual delay line read.
@@ -2516,6 +2516,8 @@ matrix multiply, and so on.
 The form <code>(frame-&gt;frame frame mixer frame)</code> multiplies a row vector (the first frame)
 by a matrix (the mixer), whereas <code>(frame-&gt;frame mixer frame frame)</code> multiplies
 a matrix by a column vector.
+<a href="sndscm.html#mixerdoc">mixer.scm</a> and snd-test.scm have a number of matrix/vector
+functions that are sometimes useful: mixer-solve, mixer-determinant, frame-reverse, and so on.
 </p>
 <br>
 
@@ -2602,7 +2604,7 @@ See the digital zipper instrument <a href="zipper.ins">zipper.ins</a>.
 </p>
 
 <p>Many of the CLM examples and instruments use <b>ina</b> and <b>inb</b>.
-These are macros equivalent to <code>(in-any loc 0 stream)</code> etc.
+These are macros equivalent to <code>(in-any loc 0 stream)</code>.
 </p>
 
 <table border=2 bordercolor="tan" hspace=40 cellpadding=8 cellspacing=3><tr><td>

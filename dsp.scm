@@ -151,7 +151,6 @@
 ;;; the time domain display (to give our graph all the window -- to do this in a much more
 ;;; elegant manner, see snd-motif.scm under scanned-synthesis).
 
-
 (define compute-uniform-circular-string
   (lambda (size x0 x1 x2 mass xspring damp)
     (define circle-vct-ref 

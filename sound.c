@@ -198,7 +198,7 @@ const char *mus_error_to_string(int err)
   return("unknown mus error");
 }
 
-static void default_mus_error(int type, char *msg)
+static void default_mus_error(int ignore, char *msg)
 {
   /* default error handler simply prints the error message */
   fprintf(stderr, msg);
