@@ -4,6 +4,7 @@
  */
 
 /* HISTORY: 
+ *   8-Oct:     added WITH_EDITRES to include _XEditResCheckMessages.
  *   1-Oct:     some int args are now KeyCodes (Modifiermap stuff).
  *   23-Sep:    X ScreenSaver constants omitted earlier.
  *   18-Sep:    properties XFontStruct field now returns list of all properties.
@@ -101,6 +102,7 @@
 /* for Ruby, XM PREFIX needs to be uppercase */
   #define XM_PREFIX "R"
   #define XM_POSTFIX ""
+  #define XM_FIELD_PREFIX "R"
 #endif
 
 #if HAVE_MOTIF
@@ -17193,6 +17195,26 @@ static XEN gxm_set_npixels(XEN ptr, XEN val)
 #endif
 /* HAVE_XPM */
 
+#if WITH_EDITRES
+#include <X11/Xmu/Editres.h>
+
+static XEN gxm_XEditResCheckMessages(XEN widget, XEN data, XEN event, XEN cont)
+{
+  Boolean flag;
+  XEN_ASSERT_TYPE(XEN_Widget_P(widget), widget, XEN_ARG_1, "widget", "_XEditResCheckMessages");
+  XEN_ASSERT_TYPE(XEN_XEvent_P(event), event, XEN_ARG_3, "XEvent", "_XEditResCheckMessages");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(cont), cont, XEN_ARG_4, "boolean", "_XEditResCheckMessages");
+  flag = XEN_TO_C_BOOLEAN(cont);
+  _XEditResCheckMessages(XEN_TO_C_Widget(widget),
+			 (XtPointer)data,
+			 XEN_TO_C_XEvent(event),
+			 &flag);
+}
+
+#endif
+
+
+
 /* ---------------------------------------------------------------------------------------------------- */
 
 #if HAVE_GUILE
@@ -18584,6 +18606,10 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE("->ints", c_to_xen_ints, 2, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE("->Atoms", c_to_xen_atoms, 2, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE("->XRectangles", c_to_xen_xrectangles, 2, 0, 0, NULL);
+
+#if WITH_EDITRES
+  XEN_DEFINE_PROCEDURE("_XEditResCheckMessages", gxm_XEditResCheckMessages, 4, 0, 0, NULL);
+#endif
 }
 #endif
 
@@ -24693,7 +24719,7 @@ static int xm_already_inited = 0;
       XEN_DEFINE_PROCEDURE(S_add_resource, g_add_resource_w, 2, 0, 0, H_add_resource);
       XEN_YES_WE_HAVE("xm");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"23-Sep-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"8-Oct-02\")");
 #endif
       xm_already_inited = 1;
     }

@@ -41,6 +41,7 @@ MAKE_TARGET="snd"
 #   --with-gl             include OpenGL support (default=no)
 #   --with-just-gl        include OpenGL support but omit the Guile bindings (gl.o) (default=no)
 #   --with-modules        accommodate sndlib that was built with modules
+#   --with-editres 	  include EditRes in xm
 #--------------------------------------------------------------------------------
 
 AC_ARG_WITH(esd,        [  --with-esd		  use ESD])
@@ -59,6 +60,7 @@ AC_ARG_WITH(html,	[  --with-html		  include the XmHTML or mozilla browser librar
 AC_ARG_WITH(motif,	[  --with-motif		  use libXm to build Snd])
 AC_ARG_WITH(static-motif,[  --with-static-motif	  use libXm.a to build Snd])
 AC_ARG_WITH(modules,    [  --with-modules	  use if sndlib uses modules])
+AC_ARG_WITH(editres,    [  --with-editres         include editres in xm])
 
 if test "$with_doubles" = yes; then
   AC_DEFINE(Float,double)
@@ -409,6 +411,12 @@ else
 
     LIBS=$XLIBS
     CFLAGS=$XFLAGS
+
+    if test "$with_editres" = yes ; then
+	AC_CHECK_LIB(Xmu, _XEditResCheckMessages, 
+			[AC_DEFINE(WITH_EDITRES)
+			 XLIBS="$XLIBS -lXmu"])
+    fi
 
     AC_CHECK_LIB(Xm, XmCreateForm, 
 	[

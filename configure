@@ -856,6 +856,7 @@ Optional Packages:
   --with-motif		  use libXm to build Snd
   --with-static-motif	  use libXm.a to build Snd
   --with-modules	  use if sndlib uses modules
+  --with-editres         include editres in xm
   --with-motif-prefix=PFX where Motif is installed
   --with-temp-dir	  directory to use for temp files
   --with-save-dir	  directory to use for saved-state files
@@ -2527,6 +2528,7 @@ MAKE_TARGET="snd"
 #   --with-gl             include OpenGL support (default=no)
 #   --with-just-gl        include OpenGL support but omit the Guile bindings (gl.o) (default=no)
 #   --with-modules        accommodate sndlib that was built with modules
+#   --with-editres 	  include EditRes in xm
 #--------------------------------------------------------------------------------
 
 
@@ -2623,6 +2625,12 @@ fi;
 # Check whether --with-modules or --without-modules was given.
 if test "${with_modules+set}" = set; then
   withval="$with_modules"
+
+fi;
+
+# Check whether --with-editres or --without-editres was given.
+if test "${with_editres+set}" = set; then
+  withval="$with_editres"
 
 fi;
 
@@ -10820,6 +10828,72 @@ fi
 
     LIBS=$XLIBS
     CFLAGS=$XFLAGS
+
+    if test "$with_editres" = yes ; then
+	echo "$as_me:$LINENO: checking for _XEditResCheckMessages in -lXmu" >&5
+echo $ECHO_N "checking for _XEditResCheckMessages in -lXmu... $ECHO_C" >&6
+if test "${ac_cv_lib_Xmu__XEditResCheckMessages+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lXmu  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char _XEditResCheckMessages ();
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+_XEditResCheckMessages ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_Xmu__XEditResCheckMessages=yes
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+ac_cv_lib_Xmu__XEditResCheckMessages=no
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_Xmu__XEditResCheckMessages" >&5
+echo "${ECHO_T}$ac_cv_lib_Xmu__XEditResCheckMessages" >&6
+if test $ac_cv_lib_Xmu__XEditResCheckMessages = yes; then
+  cat >>confdefs.h <<\_ACEOF
+#define WITH_EDITRES 1
+_ACEOF
+
+			 XLIBS="$XLIBS -lXmu"
+fi
+
+    fi
 
     echo "$as_me:$LINENO: checking for XmCreateForm in -lXm" >&5
 echo $ECHO_N "checking for XmCreateForm in -lXm... $ECHO_C" >&6

@@ -1,7 +1,7 @@
 ## examp.rb -- Guile -> Ruby translation
 
 ## Translator/Author: Michael Scholz <scholz-micha@gmx.de>
-## Last: Mon Oct 07 01:23:53 CEST 2002
+## Last: Tue Oct 08 00:33:10 CEST 2002
 ## Version: $Revision: 1.1 $
 
 ##
@@ -102,7 +102,7 @@ end
 ## $open_hook = lambda { |file| check_reopen_menu(file) }
 ## $close_hook = lambda { |snd| add_to_reopen_menu(snd) }
 ##
-
+ 
 $reopen_names = [];
 
 # add_to_reopen_menu(snd)
@@ -181,7 +181,7 @@ end
 ##
 ## Michael McNabb's FM bell (see bell.scm)
 ##
-
+ 
 # fm_bell(start, dur, freq, amp
 #         [, amp_env=[0, 0, .1, 1, 10, .6, 25, .3, 50, .15, 90, .1, 100, 0]
 #         [, index_env=[0, 1, 2, 1.1, 25, .75, 75, .5, 100, .2]
@@ -223,7 +223,7 @@ def fm_bell(start, dur, freq, amp,
 				      (fmind2 * oscil(mod2) + fmind3 * oscil(mod3))) +
 			  .15 * oscil(car3, fmenv * fmind4 * oscil(mod4)));
 	   });
-  mix_vct(out_data, beg);
+  mix_vct(out_data, beg, false, 0, false);
 end
 
 =begin
@@ -366,7 +366,8 @@ def fm_violin(start = 0.0, dur = 1.0, freq = 440.0, amp = 0.1, args = {})
   vib = 0.0;
   modulation = 0.0;
   # make_locsig(degree=0.0, distance=1.0, reverb=0.0, output, revout, chans=1, type=Mus_linear)
-  loc = make_locsig((h[:degree] or h[:degrees] or 17), 
+  # Ruby's rand() is shadowed by CLM's rand(), that's why mus_random().abs.
+  loc = make_locsig((h[:degree] or h[:degrees] or mus_random(90.0).abs), 
 		    h[:distance], h[:reverb_amount], false, false, chans);
   fuzz = 0.0;
   ind_fuzz = 1.0;

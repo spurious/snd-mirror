@@ -27235,7 +27235,6 @@ EDITS: 5
 	  (check-error-tag 'mus-error (lambda () (mix-vct (vct 0.1 0.2 0.3) -1 ind 0 #t)))
 	  (check-error-tag 'mus-error (lambda () (snd-spectrum (make-vct 8) 0 -123)))
 	  (check-error-tag 'mus-error (lambda () (snd-spectrum (make-vct 8) 0 0)))
-	  (check-error-tag 'mus-error (lambda () (insert-sound (string-append sf-dir "nist-shortpack.wav"))))
 	  (check-error-tag 'no-such-file (lambda () (play "/baddy/hiho")))
 	  (check-error-tag 'mus-error (lambda () (play (string-append sf-dir "nist-shortpack.wav"))))
 	  (check-error-tag 'no-such-file (lambda () (mix "/baddy/hiho")))
