@@ -103,7 +103,8 @@ static void change_window_property(char *winat, char *name, char *command)
   Window window;
   Display *dpy;
   dpy = MAIN_DISPLAY(ss);
-  if ((window = find_window(dpy, DefaultRootWindow(dpy), winat, compare_window)))
+  window = find_window(dpy, DefaultRootWindow(dpy), winat, compare_window);
+  if (window)
     {
       XChangeProperty(dpy, 
 		      window, 

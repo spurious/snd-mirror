@@ -1225,6 +1225,13 @@ This pertains to the M-p and M-n commands."
   return(C_TO_XEN_INT(minibuffer_history_length(ss)));
 }
 
+/* TODO: replace emacs-style-save-as with after-save-as-hook:
+   (lambda (snd new-filename) ...) 
+     #f = stay with new, just save under new name
+     #t = emacs-style-save-as = save and go to new
+     #f + anything else (for example keep old and open new... )
+*/
+
 static XEN g_emacs_style_save_as(void) {return(C_TO_XEN_BOOLEAN(emacs_style_save_as(ss)));}
 static XEN g_set_emacs_style_save_as(XEN val) 
 {
