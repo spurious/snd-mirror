@@ -458,6 +458,7 @@ static XEN sound_data_ref(XEN obj, XEN chan, XEN frame_num)
   return(C_TO_XEN_DOUBLE(0.0));
 }
 
+#if HAVE_APPLICABLE_SMOB
 static XEN sound_data_apply(XEN obj, XEN chan, XEN i)
 {
 #if DEBUGGING
@@ -469,6 +470,7 @@ static XEN sound_data_apply(XEN obj, XEN chan, XEN i)
   return(sound_data_ref(obj, chan, i));
 #endif
 }
+#endif
 
 static XEN sound_data_set(XEN obj, XEN chan, XEN frame_num, XEN val)
 {

@@ -131,7 +131,6 @@ Float mixer_gain(int system, int device, int chan, int gain, int field);
 void set_mixer_gain(int system, int device, int chan, int gain, int field, Float amp) ;
 void set_record_size (int new_size);
 void reflect_record_size(int val);
-void recorder_error(char *msg);
 void reflect_recorder_duration(Float new_dur);
 
 int device_channels(int dev); /* audio.c */

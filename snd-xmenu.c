@@ -1283,6 +1283,7 @@ static void Popup_Info_Callback(Widget w, XtPointer cD, XtPointer mD)
     }
 }
 
+#if (XmVERSION == 1)
 static void Post_Popup_Menu(Widget w, XtPointer cD, XEvent *event, Boolean *flag)
 {
   if (event->xbutton.button == BUTTON_3)
@@ -1291,6 +1292,7 @@ static void Post_Popup_Menu(Widget w, XtPointer cD, XEvent *event, Boolean *flag
       XtManageChild(popup_menu);
     }
 }
+#endif
 
 void create_popup_menu(snd_state *ss)
 {

@@ -59,9 +59,9 @@ char *recorder_system_and_device_name(int sys, int dev)
   if (strcmp("OSS", mus_audio_system_name(sys)) == 0) 
     return(recorder_device_name(dev));
   mus_snprintf(sysdevstr, LABEL_BUFFER_SIZE,
-	  "%s: %s", 
-	  mus_audio_system_name(sys), 
-	  recorder_device_name(dev));
+	       "%s: %s", 
+	       mus_audio_system_name(sys), 
+	       recorder_device_name(dev));
   return(sysdevstr);
 }
 
@@ -186,7 +186,7 @@ char *recorder_field_function(int fld)
     case MUS_AUDIO_PCM2:   return("nothing in particular");              break;
     case MUS_AUDIO_OGAIN:  return("output gain");                        break;
     case MUS_AUDIO_LINE:   return("analog line-in");                     break;
-    case MUS_AUDIO_MICROPHONE:    return("the microphone");              break;
+    case MUS_AUDIO_MICROPHONE: return("the microphone");                 break;
     case MUS_AUDIO_LINE1:  
     case MUS_AUDIO_LINE2:  
     case MUS_AUDIO_LINE3:  return("extra line inputs");                  break;
@@ -386,15 +386,15 @@ void save_recorder_state(FILE *fd)
   if (fneq(rp->max_duration, DEFAULT_RECORDER_MAX_DURATION)) fprintf(fd, "(set! (%s) %.4f)\n", S_recorder_max_duration, rp->max_duration);
 #endif
 #if HAVE_RUBY
-  if (rp->autoload != DEFAULT_RECORDER_AUTOLOAD) fprintf(fd, "(set_%s %s)\n", S_recorder_autoload, b2s(rp->autoload));
-  if (rp->buffer_size != DEFAULT_RECORDER_BUFFER_SIZE) fprintf(fd, "(set_%s %d)\n", S_recorder_buffer_size, rp->buffer_size);
-  if (rp->out_chans != DEFAULT_RECORDER_OUT_CHANS) fprintf(fd, "(set_%s %d)\n", S_recorder_out_chans, rp->out_chans);
-  if (rp->out_format != DEFAULT_RECORDER_OUT_FORMAT) fprintf(fd, "(set_%s %d)\n", S_recorder_out_format, rp->out_format);
-  if (rp->in_format != DEFAULT_RECORDER_IN_FORMAT) fprintf(fd, "(set_%s %d)\n", S_recorder_in_format, rp->in_format);
-  if (rp->srate != DEFAULT_RECORDER_SRATE) fprintf(fd, "(set_%s %d)\n", S_recorder_srate, rp->srate);
-  if (rp->output_file != DEFAULT_RECORDER_FILE) fprintf(fd, "(set_%s \"%s\")\n", S_recorder_file, rp->output_file);
-  if (fneq(rp->trigger, DEFAULT_RECORDER_TRIGGER)) fprintf(fd, "(set_%s %.4f)\n", S_recorder_trigger, rp->trigger);
-  if (fneq(rp->max_duration, DEFAULT_RECORDER_MAX_DURATION)) fprintf(fd, "(set_%s %.4f)\n", S_recorder_max_duration, rp->max_duration);
+  if (rp->autoload != DEFAULT_RECORDER_AUTOLOAD) fprintf(fd, "set_%s %s\n", S_recorder_autoload, b2s(rp->autoload));
+  if (rp->buffer_size != DEFAULT_RECORDER_BUFFER_SIZE) fprintf(fd, "set_%s %d\n", S_recorder_buffer_size, rp->buffer_size);
+  if (rp->out_chans != DEFAULT_RECORDER_OUT_CHANS) fprintf(fd, "set_%s %d\n", S_recorder_out_chans, rp->out_chans);
+  if (rp->out_format != DEFAULT_RECORDER_OUT_FORMAT) fprintf(fd, "set_%s %d\n", S_recorder_out_format, rp->out_format);
+  if (rp->in_format != DEFAULT_RECORDER_IN_FORMAT) fprintf(fd, "set_%s %d\n", S_recorder_in_format, rp->in_format);
+  if (rp->srate != DEFAULT_RECORDER_SRATE) fprintf(fd, "set_%s %d\n", S_recorder_srate, rp->srate);
+  if (rp->output_file != DEFAULT_RECORDER_FILE) fprintf(fd, "set_%s \"%s\"\n", S_recorder_file, rp->output_file);
+  if (fneq(rp->trigger, DEFAULT_RECORDER_TRIGGER)) fprintf(fd, "set_%s %.4f\n", S_recorder_trigger, rp->trigger);
+  if (fneq(rp->max_duration, DEFAULT_RECORDER_MAX_DURATION)) fprintf(fd, "set_%s %.4f\n", S_recorder_max_duration, rp->max_duration);
 #endif
 }
 

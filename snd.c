@@ -38,7 +38,8 @@ static void mus_error2snd(int type, char *msg)
 static void mus_print2snd(char *msg)
 {
   add_to_error_history(get_global_state(), msg, FALSE);
-  /* should this go to the listener window? */
+  if (record_dialog_is_active) recorder_error(msg);
+  listener_append_and_prompt(get_global_state(), msg);
 }
 
 #if HAVE_SYS_FPU_H

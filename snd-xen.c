@@ -1937,6 +1937,13 @@ static XEN g_edit_header_dialog(XEN snd_n)
   return(XEN_WRAP_C_POINTER(edit_header(sp))); 
 }
 
+static XEN g_edit_save_as_dialog(void) 
+{
+  #define H_edit_save_as_dialog "(" S_edit_save_as_dialog ") opens the Selection Save-as dialog"
+  make_edit_save_as_dialog(get_global_state()); 
+  return(XEN_FALSE);
+}
+
 static XEN g_yes_or_no_p(XEN msg) 
 {
   #define H_yes_or_no_p "(" S_yes_or_no_p " message) displays message and waits for 'y' or 'n'; returns #t if 'y'"
@@ -2963,6 +2970,7 @@ XEN_NARGIFY_0(g_orientation_dialog_w, g_orientation_dialog)
 XEN_NARGIFY_0(g_transform_dialog_w, g_transform_dialog)
 XEN_NARGIFY_0(g_file_dialog_w, g_file_dialog)
 XEN_ARGIFY_1(g_edit_header_dialog_w, g_edit_header_dialog)
+XEN_NARGIFY_0(g_edit_save_as_dialog_w, g_edit_save_as_dialog)
 XEN_NARGIFY_2(g_help_dialog_w, g_help_dialog)
 XEN_NARGIFY_0(g_mix_panel_w, g_mix_panel)
 XEN_NARGIFY_0(g_max_sounds_w, g_max_sounds)
@@ -3165,6 +3173,7 @@ XEN_NARGIFY_0(g_gc_on_w, g_gc_on)
 #define g_transform_dialog_w g_transform_dialog
 #define g_file_dialog_w g_file_dialog
 #define g_edit_header_dialog_w g_edit_header_dialog
+#define g_edit_save_as_dialog_w g_edit_save_as_dialog
 #define g_help_dialog_w g_help_dialog
 #define g_mix_panel_w g_mix_panel
 #define g_max_sounds_w g_max_sounds
@@ -3492,6 +3501,7 @@ void g_initialize_gh(snd_state *ss)
   XEN_DEFINE_PROCEDURE(S_transform_dialog,    g_transform_dialog_w, 0, 0, 0,    H_transform_dialog);
   XEN_DEFINE_PROCEDURE(S_file_dialog,         g_file_dialog_w, 0, 0, 0,         H_file_dialog);
   XEN_DEFINE_PROCEDURE(S_edit_header_dialog,  g_edit_header_dialog_w, 0, 1, 0,  H_edit_header_dialog);
+  XEN_DEFINE_PROCEDURE(S_edit_save_as_dialog, g_edit_save_as_dialog_w, 0, 0, 0, H_edit_save_as_dialog);
   XEN_DEFINE_PROCEDURE(S_help_dialog,         g_help_dialog_w, 2, 0, 0,         H_help_dialog);
   XEN_DEFINE_PROCEDURE(S_mix_panel,           g_mix_panel_w, 0, 0, 0,           H_mix_panel);
 

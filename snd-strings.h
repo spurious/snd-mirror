@@ -381,6 +381,7 @@
 #define S_edit_header_dialog            "edit-header-dialog"
 #define S_edit_hook                     "edit-hook"
 #define S_edit_position                 "edit-position"
+#define S_edit_save_as_dialog           "edit-save-as-dialog"
 #define S_edit_tree                     "edit-tree"
 #define S_edits                         "edits"
 #define S_env_selection                 "env-selection"

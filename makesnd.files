@@ -15,5 +15,7 @@ NO_GUI_O_FILES = snd-nogui.o
 GM_FILES = xm.o
 
 prefix = /usr/local
-bindir = $(prefix)/bin
+exec_prefix = ${prefix}
+bindir = ${exec_prefix}/bin
 INSTALL = install
+mkinstalldirs = :

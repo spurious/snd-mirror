@@ -982,6 +982,11 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	   (list |XmNbackground (|Pixel (snd-pixel (highlight-color))))
 	   (lambda (w c i) 
 	     (delete-selection)))
+    (list "zero"
+	  |xmPushButtonWidgetClass
+	   (list |XmNbackground (|Pixel (snd-pixel (highlight-color))))
+	   (lambda (w c i) 
+	     (scale-selection-by 0.0)))
     (list "crop"
 	  |xmPushButtonWidgetClass
 	   (list |XmNbackground (|Pixel (snd-pixel (highlight-color))))
@@ -1007,6 +1012,11 @@ Reverb-feedback sets the scaler on the feedback.\n\
 			     (set! sndlist (cons (list snd i) sndlist)))))
 		     (sounds))
 		sndlist))))
+    (list "save as"
+	  |xmPushButtonWidgetClass
+	   (list |XmNbackground (|Pixel (snd-pixel (highlight-color))))
+	   (lambda (w c i) 
+	     (edit-save-as-dialog)))
     (list "reverse"
 	  |xmPushButtonWidgetClass
 	   (list |XmNbackground (|Pixel (snd-pixel (highlight-color))))
@@ -1324,7 +1334,27 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	   sounds)
 	  container)))))
 
+#!
+(make-sound-box "sounds"
+		(|Widget (list-ref (main-widgets) 3))
+		(lambda (file) 
+		  (mix file))
+		(lambda (file chn)
+		  (define (without-directories filename)
+		    (call-with-current-continuation
+		     (lambda (return)
+		       (do ((i (- (string-length filename) 1) (1- i)))
+			   ((= 0 i) filename)
+			 (if (char=? (string-ref filename i) #\/)
+			     (return (substring filename (+ i 1))))))))
+		  (format #f "~~/peaks/~A-peaks-~D" 
+			  (without-directories (mus-expand-filename file)) 
+			  chn))
+		(list "oboe.snd" "pistol.snd" "cardinal.snd" "storm.snd")
+		'())
+!#
 
+    
 ;;; drawnbutton+workproc sound-button example
 ;;; spectral editing in new window
 ;;; panel of effects-buttons[icons] on right? (normalize, reverse, etc)

@@ -2191,6 +2191,25 @@ static int oss_mus_audio_read(int line, char *buf, int bytes)
   return(MUS_NO_ERROR);
 }
 
+static char *oss_unsrc(int srcbit)
+{
+  char *buf;
+  int need_and = 0;
+  if (srcbit == 0)
+    return(strdup("none"));
+  else
+    {
+      buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+      if (srcbit & SOUND_MASK_MIC) {need_and = 1; strcat(buf, "mic");}
+      if (srcbit & SOUND_MASK_LINE) {if (need_and) strcat(buf, " and "); need_and = 1; strcat(buf, "line in");}
+      if (srcbit & SOUND_MASK_LINE1) {if (need_and) strcat(buf, " and "); need_and = 1; strcat(buf, "line1");}
+      if (srcbit & SOUND_MASK_LINE2) {if (need_and) strcat(buf, " and "); need_and = 1; strcat(buf, "line2");}
+      if (srcbit & SOUND_MASK_LINE3) {if (need_and) strcat(buf, " and "); need_and = 1; strcat(buf, "line3");}
+      if (srcbit & SOUND_MASK_CD) {if (need_and) strcat(buf, " and "); need_and = 1; strcat(buf, "cd");}
+      return(buf);
+    }
+}
+
 static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int format, int requested_size)
 {
   /* dev can be MUS_AUDIO_DEFAULT or MUS_AUDIO_DUPLEX_DEFAULT as well as the obvious others */
@@ -2330,6 +2349,16 @@ static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int format
   ioctl(audio_fd, MIXER_READ(SOUND_MIXER_RECSRC), &cursrc);
   srcbit = (srcbit | cursrc);
   ioctl(audio_fd, MIXER_WRITE(SOUND_MIXER_RECSRC), &srcbit);
+  ioctl(audio_fd, MIXER_READ(SOUND_MIXER_RECSRC), &cursrc);
+  if (cursrc != srcbit)
+    {
+      char *str1, *str2;
+      str1 = oss_unsrc(srcbit);
+      str2 = oss_unsrc(cursrc);
+      mus_print("weird: tried to set recorder source to %s, but got %s?", str1, str2);
+      FREE(str1);
+      FREE(str2);
+    }
   if (dsp_reset) ioctl(audio_fd, SNDCTL_DSP_RESET, 0);
   if ((fragments_locked) && (requested_size != 0))
     {

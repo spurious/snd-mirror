@@ -1,5 +1,8 @@
 snd change log
 
+  7-Aug:     snd-print locale bugfix (thanks to Ludger Brummer).
+             makefile.in prefix bugfix (thanks to Marc Herbert).
+             edit-save-as-dialog added (for selection popup menu in snd-motif.scm).
   6-Aug:     drop file into channel graph mixes at cursor.
              make-sound-box, select-file, snd-clock-icon in snd-motif.scm.
   3-Aug:     moved listener widget to main-widgets list.

@@ -1291,9 +1291,8 @@ int record_in_progress(void);
 void init_recorder(void);
 void save_recorder_state(FILE *fd);
 void close_recorder_audio(void);
-
+void recorder_error(char *msg);
 void g_init_recorder(void);
-
 void fire_up_recorder(snd_state *ss);
 
 

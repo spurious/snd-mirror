@@ -1,5 +1,9 @@
 #include "snd.h"
 
+#if HAVE_LOCALE_H
+  #include <locale.h>
+#endif
+
 /* create Postscript version of graph */
 
 static char *pbuf = NULL;
@@ -36,6 +40,8 @@ static void ps_write(int fd, char *buf)
     }
 }
 
+static char *previous_locale = NULL;
+
 static int start_ps_graph(char *output, char *title) 
 { 
   time_t ts;
@@ -45,6 +51,11 @@ static int start_ps_graph(char *output, char *title)
   if (!pbuf) pbuf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   bbx = 0;
   bby = 0;
+
+#if HAVE_SETLOCALE
+  previous_locale = copy_string(setlocale(LC_NUMERIC, "C")); /* must use decimal point in floats since PostScript assumes that format */
+#endif
+
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, "%%!PS-Adobe-2.0 EPSF-2.0\n%%%%Title: %s\n%%%%Creator: Snd: %s\n%%%%CreationDate: ", title, SND_VERSION);
   ps_write(ps_fd, pbuf);
 #if HAVE_STRFTIME
@@ -60,7 +71,7 @@ static int start_ps_graph(char *output, char *title)
   if ((eps_left_margin(ss) != 0) || (eps_bottom_margin(ss) != 0))
     {
       mus_snprintf(pbuf, PRINT_BUFFER_SIZE, "gsave [1.00 0.00 0.00 1.00 %.3f %.3f] concat\n\n",
-	      eps_left_margin(ss), eps_bottom_margin(ss));
+		   eps_left_margin(ss), eps_bottom_margin(ss));
       ps_write(ps_fd, pbuf);
     }
   return(0);
@@ -87,6 +98,14 @@ static void end_ps_graph(void)
   ps_write(ps_fd, pbuf);
   ps_flush(ps_fd);
   close(ps_fd);
+  if (previous_locale)
+    {
+#if HAVE_SETLOCALE
+      setlocale(LC_NUMERIC, previous_locale);
+#endif
+      FREE(previous_locale);
+      previous_locale = NULL;
+    }
 }
 
 /* the x and y values in the "points" are relative to grf_x/y:
@@ -515,9 +534,9 @@ static XEN g_graph2ps(XEN filename)
       result = C_TO_XEN_STRING(error);
       FREE(error);
       XEN_ERROR(CANNOT_PRINT,
-	    XEN_LIST_3(C_TO_XEN_STRING(S_graph2ps),
-		      C_TO_XEN_STRING(file),
-		      result));
+		XEN_LIST_3(C_TO_XEN_STRING(S_graph2ps),
+			   C_TO_XEN_STRING(file),
+			   result));
     }
   return(C_TO_XEN_STRING(file));
 }
