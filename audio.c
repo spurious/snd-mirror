@@ -4954,7 +4954,8 @@ static int alsa_mus_audio_initialize(void)
     char *string;
     int value; 
     int dir;
-    snd_pcm_uframes_t min_periods, max_periods, min_buffer_size, max_buffer_size;
+    snd_pcm_uframes_t min_periods, max_periods, min_rec_periods, max_rec_periods;
+    snd_pcm_uframes_t min_buffer_size, max_buffer_size, min_rec_buffer_size, max_rec_buffer_size;
     if (audio_initialized) {
 	return(0);
     }
@@ -5025,8 +5026,18 @@ static int alsa_mus_audio_initialize(void)
      * separately, and they might interact when being set, but it is better
      * than not checking at all anything 
      */
-    min_periods = snd_pcm_hw_params_get_period_size_min(alsa_hw_params[SND_PCM_STREAM_PLAYBACK], &dir);
-    max_periods = snd_pcm_hw_params_get_period_size_max(alsa_hw_params[SND_PCM_STREAM_PLAYBACK], &dir);
+    min_periods = snd_pcm_hw_params_get_periods_min(alsa_hw_params[SND_PCM_STREAM_PLAYBACK], &dir);
+    max_periods = snd_pcm_hw_params_get_periods_max(alsa_hw_params[SND_PCM_STREAM_PLAYBACK], &dir);
+    if (alsa_hw_params[SND_PCM_STREAM_CAPTURE] != NULL) {
+        min_rec_periods = snd_pcm_hw_params_get_periods_min(alsa_hw_params[SND_PCM_STREAM_CAPTURE], &dir);
+	max_rec_periods = snd_pcm_hw_params_get_periods_max(alsa_hw_params[SND_PCM_STREAM_CAPTURE], &dir);
+	if (max_periods > max_rec_periods) {
+	    max_periods = max_rec_periods;
+	}
+	if (min_periods < min_rec_periods) {
+	    min_periods = min_rec_periods;
+	}
+    }
     if (alsa_periods > max_periods) {
         alsa_periods = max_periods;
     }
@@ -5041,6 +5052,16 @@ static int alsa_mus_audio_initialize(void)
     }
     min_buffer_size = snd_pcm_hw_params_get_buffer_size_min(alsa_hw_params[SND_PCM_STREAM_PLAYBACK]);
     max_buffer_size = snd_pcm_hw_params_get_buffer_size_max(alsa_hw_params[SND_PCM_STREAM_PLAYBACK]);
+    if (alsa_hw_params[SND_PCM_STREAM_CAPTURE] != NULL) {
+        min_rec_buffer_size = snd_pcm_hw_params_get_buffer_size_min(alsa_hw_params[SND_PCM_STREAM_CAPTURE]);
+	max_rec_buffer_size = snd_pcm_hw_params_get_buffer_size_max(alsa_hw_params[SND_PCM_STREAM_CAPTURE]);
+	if (max_buffer_size > max_rec_buffer_size) {
+	    max_buffer_size = max_rec_buffer_size;
+	}
+	if (min_buffer_size < min_rec_buffer_size) {
+	    min_buffer_size = min_rec_buffer_size;
+	}
+    }
     if (alsa_samples_per_channel*alsa_periods > max_buffer_size) {
         alsa_samples_per_channel = max_buffer_size/alsa_periods;
     }
@@ -5164,8 +5185,8 @@ static int alsa_audio_open(int ur_dev, int srate, int chans, int format, int siz
     if (err < 0) {
 	int dir;
 	snd_pcm_uframes_t min, max;
-	min = snd_pcm_hw_params_get_period_size_min(hw_params, &dir);
-	max = snd_pcm_hw_params_get_period_size_max(hw_params, &dir);
+	min = snd_pcm_hw_params_get_periods_min(hw_params, &dir);
+	max = snd_pcm_hw_params_get_periods_max(hw_params, &dir);
 	snd_pcm_close(handle);
 	handles[alsa_stream] = NULL;
 	alsa_dump_configuration(alsa_name, hw_params, sw_params);
