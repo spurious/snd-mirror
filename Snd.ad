@@ -5,7 +5,6 @@
 !
 !
 ! ---- possible font names for a big screen running Linux ----
-! *boldbuttonFont:     -adobe-times-bold-r-*-*-14-*-*-*-*-*-*-*
 ! *axisLabelFont:      -adobe-times-medium-r-normal-*-18-*-*-*-*-*-*-*
 ! *axisNumbersFont:    9x15
 ! *fontList:           9x15
@@ -37,8 +36,12 @@
 *markcolor:            red
 *sashcolor:            lightgreen
 *pushedbuttoncolor:    lightsteelblue1
+*helpbuttoncolor:      lightsteelblue2
+*quitbuttoncolor:      indianred2
+*resetbuttoncolor:     goldenrod1
+*doitbuttoncolor:      palegreen2
+*doitagainbuttoncolor: darkolivegreen1
 *useSchemes:           none
-*boldbuttonFont:       -*-times-bold-r-*-*-14-*-*-*-*-*-iso8859-1
 *axisLabelFont:        -*-times-medium-r-*-*-14-*-*-*-*-*-iso8859-1
 *axisNumbersFont:      -*-courier-medium-r-*-*-14-*-*-*-*-*-iso8859-1
 *initFile:             ~/.snd

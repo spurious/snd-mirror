@@ -13,6 +13,9 @@
    GList = gtk_tree_view_column_get_cell_renderers
    g_list_free when done
    gtk_cell_renderer_text_set_property(cell, PROP_MARKUP, wrapped str, NULL); but this is internal
+
+   or: 
+   make the "list" an uneditable text widget, use gtk_text_tags for the red/normal text, and have a click event handler
  */
 
 static GtkWidget *help_dialog = NULL;

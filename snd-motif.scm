@@ -34,6 +34,7 @@
 ;;; make-variable-display displays an arbitrary set of expressions/variables in a notebook widget
 ;;; with-minmax-button adds an open/close button to each sound pane
 ;;; set-root-window-color
+;;; notebook-with-top-tabs (for Xemacs-like list of open files across the top of the window)
 
 (use-modules (ice-9 common-list) (ice-9 format))
 
@@ -2756,10 +2757,18 @@ Reverb-feedback sets the scaler on the feedback.\n\
 ;;; SOMEDAY: bess-translations (first case is bess.scm)
 ;;; SOMEDAY: radar scope style region cue list
 ;;; SOMEDAY: spatial envelope dialog
-;;; SOMEDAY: xemacs style top list of sounds, current takes whole screen [add-second-row above, files-popup-buffer in examp.scm]
 ;;; SOMEDAY: speedbar style extension of file viewer dialog
 ;;; SOMEDAY: speedbar/emacs -> Snd subjob support
 
 
 ;;; you can get a different scrollbar style with:
 ;;; (XtVaSetValues (XmGetXmDisplay (XtDisplay (cadr (main-widgets)))) (list XmNenableThinThickness #t))
+
+
+;;; get open file list across top of window (like Xemacs): use -notebook, then:
+
+(define (notebook-with-top-tabs)
+  (let ((nb (list-ref (main-widgets) 3)))
+    (XtVaSetValues nb (list XmNorientation XmVERTICAL
+                            XmNbindingType XmNONE
+                            XmNbackPagePlacement XmTOP_RIGHT))))

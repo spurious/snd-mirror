@@ -16,6 +16,7 @@
 ;;; with-level-meters
 ;;; add delete and rename options to the file menu
 ;;; make-pixmap
+;;; notebook-with-top-tabs
 
 (use-modules (ice-9 format))
 
@@ -1109,3 +1110,8 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		    (display-level widget)
 		    (force-update (car widget)))))))
   var)
+
+
+
+(define (notebook-with-top-tabs)
+  (gtk_notebook_set_tab_pos (GTK_NOTEBOOK (list-ref (main-widgets) 5)) GTK_POS_TOP))

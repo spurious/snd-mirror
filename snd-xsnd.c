@@ -894,7 +894,6 @@ static void play_button_callback(Widget w, XtPointer context, XtPointer info)
   goto_graph(cp);
   if (cb->set) 
     {
-
       XtVaSetValues(w, XmNselectColor, ((sp->cursor_follows_play != DONT_FOLLOW) ? ((ss->sgx)->green) : ((ss->sgx)->pushed_button_color)), NULL);
       play_sound(sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, 
 		 C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION),
@@ -2597,9 +2596,9 @@ snd_info *add_sound_window(char *filename, bool read_only)
       /* this calculation assumes the window is built amp_form down, then record buttons up, then filter_frame */
       Position fey, cy, rsy;
       /* if control-panel */
-      XtVaGetValues(sw[W_amp_form], XmNy, &cy, NULL);
-      XtVaGetValues(sw[W_filter_frame], XmNy, &fey, NULL);
-      XtVaGetValues(sw[W_apply], XmNy, &rsy, NULL);
+      cy = widget_y(sw[W_amp_form]);
+      fey = widget_y(sw[W_filter_frame]);
+      rsy = widget_y(sw[W_apply]);
       /* end if control-panel */
       ss->open_ctrls_height = fey + ((rsy < 0) ? (-rsy) : rsy) + cy - 1;
       first_window = false;
@@ -2794,7 +2793,7 @@ void equalize_sound_panes(snd_info *sp, chan_info *ncp, bool all_panes)
     }
   else
     {
-      XtVaGetValues(channel_main_pane(ncp), XmNwidth, &chan_y, NULL);
+      chan_y = widget_width(channel_main_pane(ncp));
       if (chan_y < 200)
 	{
 	  XtUnmanageChild(channel_main_pane(ncp));

@@ -1738,14 +1738,14 @@ returns all hooks to the empty state.
 
 <A NAME="indexdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>index.scm, index.rb</h2></td></tr></table>
 <pre>
-  <em class=def>*html-reader*</em> "netscape"
+  <em class=def>*html-reader*</em> "mozilla"
   <em class=def>html</em> obj
   <em class=def>?</em> obj
 </pre>
-<p>index.scm provides a connection between netscape
+<p>index.scm provides a connection between mozilla or netscape
 and the Snd documentation.  The index itself is
 built by index.cl, then accessed through the <b>html</b> and <b>?</b> functions.
-<code>(html arg)</code> where arg can be a string, symbol, or procedure sends netscape to the corresponding url
+<code>(html arg)</code> where arg can be a string, symbol, or procedure sends mozilla to the corresponding url
 in the Snd documents.
 <code>(? obj)</code> prints out any help it can find for obj, and tries to find obj in the documentation.
 The function that actually passes the url to the reader is <a href="extsnd.html#sendnetscape">send-netscape</a>.
@@ -2476,8 +2476,6 @@ in Linux/OSS, tries to reduce soundcard background racket.
 appends <i>msg</i> to whatever is in <i>snd</i>'s minibuffer.
 </p><p><b><a name="sndselectmix">select-mix</a></b> sets the selected mix (#f = none).
 </p><p><b>dismiss-all-dialogs</b> deactivates all active dialogs.
-</p><p><b>with-html</b> sets up Help menu callbacks to send netscape 
-a url to open, rather than opening Snd's help dialog.
 </p><p><b><a name="mixname">mix-name</a></b> asociates a name with a mix, and
 <b><a name="mixname2id">mix-name-&gt;id</a></b> returns the id given a mix name.
 </p>
@@ -2536,6 +2534,7 @@ waterfall spectrum display of the incoming audio data.  <b>stop-waterfall</b> tu
   <em class=def><a name="variabledisplay">variable-display</a></em> val widget
   <em class=def>with-minmax-button</em>
   <em class=def>set-root-window-color</em> color
+  <em class=def>notebook-with-top-tabs</em>
 </pre>
 <!-- INDEX variabledisplay:Debugging (instruments) -->
 <p>snd-motif.scm has procedures that rely on the Motif module (xm.c).
@@ -2685,6 +2684,9 @@ an instrument, you're presumably not primarily concerned with optimization.
 </p>
 <p><b>with-minmax-button</b> adds an open/close button to each sound's pane.
 <b>set-root-window-color</b> sets the background color of the root window.
+<b>notebook-with-top-tabs</b> changes an existing notebook window (assuming Snd
+was started with the -notebook switch) so that its orientation mimics
+Xemacs.
 </p>
 <br>
 
