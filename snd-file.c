@@ -2292,7 +2292,7 @@ void edit_header_callback(snd_info *sp, file_data *edit_header_data)
       int chans, srate, type, format;
       hdr = sp->hdr;
       original_comment = mus_sound_comment(sp->filename);
-      if ((hdr->type == MUS_AIFF) || (hdr->type == MUS_AIFC)) mus_header_set_full_aiff_loop_info(mus_sound_loop_info(sp->filename));
+      if ((hdr->type == MUS_AIFF) || (hdr->type == MUS_AIFC)) mus_header_set_aiff_loop_info(mus_sound_loop_info(sp->filename));
       mus_sound_forget(sp->filename);
       /* find out which fields changed -- if possible don't touch the sound data */
       comment = read_file_data_choices(edit_header_data, &srate, &chans, &type, &format, &loc, &samples);
@@ -2560,8 +2560,8 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
       if (!(XEN_FALSE_P(end0))) hdr->loops[6] = 1;
       if (!(XEN_FALSE_P(end1))) hdr->loops[7] = 1;
     }
-  mus_sound_set_full_loop_info(sp->filename, hdr->loops);
-  mus_header_set_full_aiff_loop_info(hdr->loops);
+  mus_sound_set_loop_info(sp->filename, hdr->loops);
+  mus_header_set_aiff_loop_info(hdr->loops);
   type = hdr->type;
   if ((type != MUS_AIFF) && 
       (type != MUS_AIFC))

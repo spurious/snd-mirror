@@ -654,7 +654,7 @@ int *mus_sound_loop_info(const char *arg)
   else return(NULL);
 }
 
-void mus_sound_set_full_loop_info(const char *arg, int *loop)
+void mus_sound_set_loop_info(const char *arg, int *loop)
 {
   sound_file *sf; 
   sf = getsf(arg); 

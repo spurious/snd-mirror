@@ -50,18 +50,45 @@ void sound_not_current(snd_info *sp, void *ignore)
 /* ---------------- save sound state (options, or entire state) ---------------- */
 
 #if HAVE_GUILE
-/* TODO: files list can have deleted files, and can include the current save-state file (causing recursive load) */
-static void save_loaded_files_list(FILE *fd)
+
+static void save_loaded_files_list(FILE *fd, const char *current_filename)
 {
   /* make sure all previously loaded code is available */
-  char *files;
-  files = XEN_AS_STRING(XEN_LIST_REVERSE(XEN_EVAL_C_STRING("snd-loaded-files"))); 
-  if (files)
+  XEN old_list;
+  char *full_name;
+  int len;
+  old_list = XEN_NAME_AS_C_STRING_TO_VALUE("snd-loaded-files");
+  len = XEN_LIST_LENGTH(old_list);
+  if (len > 0)
     {
-      fprintf(fd, ";;; reload any missing files\n");
-      fprintf(fd, "(for-each\n  (lambda (file)\n");
-      fprintf(fd, "    (if (and (not (member file snd-loaded-files))\n             (file-exists? file))\n        (load file)))\n");
-      fprintf(fd, "  '%s)\n\n", files);
+      char **files;
+      int i, gc_loc, new_files = 0;
+      full_name = mus_expand_filename(current_filename);
+      gc_loc = snd_protect(old_list);
+      files = (char **)CALLOC(len, sizeof(char *));
+      for (i = len - 1; i >= 0; i--)
+	{
+	  char *curfile;
+	  curfile = XEN_TO_C_STRING(XEN_LIST_REF(old_list, i));
+	  if ((strcmp(curfile, current_filename) != 0) &&
+	      (strcmp(curfile, full_name) != 0) &&
+	      (mus_file_probe(curfile)))
+	    files[new_files++] = copy_string(curfile);
+	}
+      snd_unprotect_at(gc_loc);
+      FREE(full_name);
+      if (new_files > 0)
+	{
+	  fprintf(fd, ";;; reload any missing files\n");
+	  fprintf(fd, "(for-each\n  (lambda (file)\n");
+	  fprintf(fd, "    (if (and (not (member file snd-loaded-files))\n             (file-exists? file))\n        (load file)))\n");
+	  fprintf(fd, "  '(");
+	  for (i = 0; i < new_files; i++)
+	    fprintf(fd, "\"%s\" ", files[i]);
+	  fprintf(fd, "))\n\n");
+	}
+      for (i = 0; i < new_files; i++) FREE(files[i]);
+      FREE(files);
     }
 }
 #endif
@@ -821,7 +848,7 @@ static char *save_state_or_error (char *save_state_name)
     {
 #if HAVE_GUILE
       /* try to make sure all previously loaded files are now loaded */
-      save_loaded_files_list(save_fd);
+      save_loaded_files_list(save_fd, save_state_name);
 #endif
 #if HAVE_SETLOCALE
       locale = copy_string(setlocale(LC_NUMERIC, "C")); /* must use decimal point in floats since Scheme assumes that format */

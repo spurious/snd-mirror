@@ -40,7 +40,7 @@
 
 ;(setlocale LC_ALL "de_DE")
 
-(define tests 100)
+(define tests 1)
 (define keep-going #f)
 (define all-args #f) ; huge arg testing
 (define with-big-file #t)
@@ -3575,7 +3575,7 @@
 
       (reset-hook! bad-header-hook)
       (reset-hook! open-raw-sound-hook)
-      (if (not (null? (sounds))) (map close-sound (sounds)))
+      (if (not (null? (sounds))) (for-each close-sound (sounds)))
       
       (run-hook after-test-hook 4)
       ))
@@ -9387,6 +9387,7 @@ EDITS: 5
 		       (lambda (file)
 			 (set! s61-files (cons file s61-files))
 			 #f))
+	    (if (file-exists? "s61.scm") (delete-file "s61.scm"))
 	    (save-state "s61.scm")
 	    (close-sound index)
 	    (for-each forget-region (regions))
@@ -20530,6 +20531,7 @@ EDITS: 5
 		    (if (not (vequal (channel->vct 20 20 ind 0) (vct 0.000 0.010 0.040 0.090 0.160 0.250 0.360 0.490 0.640 0.810 
 								     1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000)))
 			(snd-display ";make-track again overrides vals: ~A" (channel->vct 20 20 ind 0)))
+		    (if (file-exists? "s61.scm") (delete-file "s61.scm"))
 		    (save-state "s61.scm")
 		    (close-sound ind)
 		    (load "s61.scm")
@@ -21566,6 +21568,7 @@ EDITS: 5
 		    (add-mark 123 s1 0)
 		    (add-mark 321 s2 0)
 		    (set! (verbose-cursor) #t)
+		    (if (file-exists? "s61.scm") (delete-file "s61.scm"))
 		    (save-state "s61.scm")
 		    (set! (verbose-cursor) #f)
 		    (close-sound s1)
@@ -22722,7 +22725,7 @@ EDITS: 5
 					  "Save options"
 					  "Mixes" "clm" "fm-violin"))))
 		  (XtCallCallbacks menu XmNactivateCallback (snd-global-state)))))))))
-  (map close-sound (sounds))
+  (for-each close-sound (sounds))
   (dismiss-all-dialogs))
 
 (define (mdt-test id x time drg) #f)
@@ -22981,6 +22984,7 @@ EDITS: 5
       
       (let ((ctr 0))
 	(let ((added 0))
+	  (reset-hook! close-hook)
 	  (set! (with-background-processes) #t)
 	  (set! (vu-size) 1.25)
 	  (add-hook! new-widget-hook
@@ -22988,13 +22992,13 @@ EDITS: 5
 		       (set! added (+ added 1))))
 	  (if (provided? 'snd-motif)
 	      (without-errors
-	       (test-menus)) ; built-in self-test function -- now closes all sounds due to unpredictable changes elsewhere
-	      (begin
-		(map close-sound (sounds))
-		(dismiss-all-dialogs)))
+	       (test-menus)))
+	  (dismiss-all-dialogs)
+	  (reset-hook! close-hook)
+	  (for-each close-sound (sounds))
 	  (if (sound? fd) 
 	      (begin 
-		(snd-display ";close all didn't? ~A ~A ~A" fd (sound? fd) (short-file-name fd))
+		(snd-display ";close all didn't? ~A ~A ~A ~A ~A" fd (sound? fd) (short-file-name fd) (hook->list close-hook) (sounds))
 		(close-sound fd)))
 	  (set! fd (open-sound "obtest.snd"))	  
 	  (set! (with-background-processes) #f)
@@ -23088,6 +23092,7 @@ EDITS: 5
 	
       (revert-sound fd)
       (close-sound fd)
+      (for-each close-sound (sounds))
       
       (test-hooks)
       (add-hook! bad-header-hook (lambda (n) #t))
@@ -24062,6 +24067,7 @@ EDITS: 5
 
 	(if (> test-ctr 0)
 	    (let ((files (length (sounds))))
+	      (if (file-exists? "s61.scm") (delete-file "s61.scm"))
 	      (save-state "s61.scm")
 	      (for-each close-sound (sounds))
 	      (for-each forget-region (regions))
@@ -26550,6 +26556,7 @@ EDITS: 5
 			 (val1 (reader1)))
 		    (if (> (abs (- val0 val1)) .005)
 			(begin
+			  (if (file-exists? "baddy.scm") (delete-file "baddy.scm"))
 			  (save-state "baddy.scm")
 			  (snd-display ";read env off by ~A: ~%    (~A) at ~A: ~%    ~A ~A (~A ~A) [~A ~A]:~%    ~A" 
 				       (abs (- val0 val1))
@@ -27332,6 +27339,7 @@ EDITS: 5
 	  (close-sound ind1)
 	  (insert-sound "test.snd" 12345)
 	  (let ((vals (channel->vct (- 12345 50) 200 ind 0)))
+	    (if (file-exists? "hiho.scm") (delete-file "hiho.scm"))
 	    (save-state "hiho.scm")
 	    (close-sound ind)
 	    (for-each forget-region (regions))
@@ -27349,6 +27357,7 @@ EDITS: 5
 	  (for-each
 	   (lambda (func val name)
 	     (func ind)
+	     (if (file-exists? "s61.scm") (delete-file "s61.scm"))
 	     (save-state "s61.scm")
 	     (close-sound ind)
 	     (for-each forget-region (regions))
@@ -30830,6 +30839,7 @@ EDITS: 1
 		     (let ((fd (open filename (logior O_RDWR O_APPEND))))
 		       (format fd "~%~%(set! after-save-state-hook-var 1234)~%")
 		       (close fd))))
+	(if (file-exists? (save-state-file)) (delete-file (save-state-file)))
 	(save-state (save-state-file))
 	(save-options "test.temp")
 	(close-sound nind)
@@ -30985,6 +30995,7 @@ EDITS: 5
 	(save-sound ind)
 	(set! (sample 1) .1)
 	(let ((eds (display-edits ind)))
+	  (if (file-exists? "t1.scm") (delete-file "t1.scm"))
 	  (save-state "t1.scm")
 	  (close-sound ind)
 	  (for-each forget-region (regions))
@@ -30999,6 +31010,7 @@ EDITS: 5
 	      ((= i 6))
 	    (set! (sample i) (* i .1))
 	    (set! eds (display-edits ind))
+	    (if (file-exists? "t1.scm") (delete-file "t1.scm"))
 	    (save-state "t1.scm")
 	    (close-sound ind)
 	    (for-each forget-region (regions))
@@ -31030,6 +31042,7 @@ EDITS: 5
 	(set! (sample 1 ind1 1) -.2)
 	(let ((eds (display-edits ind))
 	      (eds1 (display-edits ind1)))
+	  (if (file-exists? "t1.scm") (delete-file "t1.scm"))
 	  (save-state "t1.scm")
 	  (close-sound ind)
 	  (close-sound ind1)
@@ -31067,6 +31080,7 @@ EDITS: 5
 	(set! (speed-control-style ind) speed-control-as-semitone)
 	(set! (cursor ind 0) 1234)
 	(set! (eps-file) "hiho.eps")
+	(if (file-exists? "s61.scm") (delete-file "s61.scm"))
 	(save-state "s61.scm")
 	(close-sound ind)
 	(for-each forget-region (regions))
@@ -31132,6 +31146,7 @@ EDITS: 2
 	(set! (zoom-focus-style) zoom-focus-right)
 	(set! (channel-style) channels-combined)
 	(set! (channel-style ind) channels-separate)
+	(if (file-exists? "s61.scm") (delete-file "s61.scm"))
 	(save-state "s61.scm")
 	(close-sound ind)
 	(for-each forget-region (regions))
@@ -31159,6 +31174,7 @@ EDITS: 2
 	    (snd-display ";find-sound 1: ~A ~A" ind1 (find-sound "oboe.snd" 1)))
 	(add-mark 123 ind0)
 	(add-mark 321 ind1)
+	(if (file-exists? "s61.scm") (delete-file "s61.scm"))
 	(save-state "s61.scm")
 	(close-sound ind0)
 	(close-sound ind1)
@@ -31178,6 +31194,7 @@ EDITS: 2
 	 (lambda (func test)
 	   (let ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 1 "mono save-state tests" 100)))
 	     (func ind)
+	     (if (file-exists? "s61.scm") (delete-file "s61.scm"))
 	     (save-state "s61.scm")
 	     (close-sound ind)
 	     (load "s61.scm")
@@ -33026,6 +33043,7 @@ EDITS: 2
 	      (let* ((samps (transform->vct ind 0)))
 		(if (fneq (vct-ref samps 2) .002)
 		    (snd-display ";add-transform filtering (~A): ~A" ftype samps)))
+	      (if (file-exists? "s61.scm") (delete-file "s61.scm"))
 	      (save-state "s61.scm")
 	      (delete-file "s61.scm") ; added transform needs to be saved somehow?
 	      (close-sound ind))
@@ -40087,7 +40105,7 @@ EDITS: 2
 	(close-sound ind))
 
       (make-birds)
-      (map close-sound (sounds))
+      (for-each close-sound (sounds))
 
       (set! (run-safety) 1)
       (with-sound ()

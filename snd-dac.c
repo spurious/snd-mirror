@@ -561,10 +561,8 @@ static void stop_playing_with_toggle(dac_info *dp, dac_toggle_t toggle, with_hoo
 {
   snd_info *sp = NULL;
   bool sp_stopping = false;
-  chan_info *cp;
   if ((dp == NULL) || (play_list == NULL)) return;
   sp = dp->sp;
-  cp = dp->cp;
   if ((sp) && (sp->inuse != SOUND_IDLE))
     {
       sp->playing_mark = NULL;
@@ -616,18 +614,18 @@ static void stop_playing_with_toggle(dac_info *dp, dac_toggle_t toggle, with_hoo
 		run_hook(stop_playing_hook,
 			 XEN_LIST_1(C_TO_XEN_INT(sp->index)),
 			 S_stop_playing_hook);
-	      if (IS_PLAYER(sp)) {free_player(sp); sp = NULL;}
 	    }
 	}
     }
-  else
+  if ((sp) && (IS_PLAYER(sp))) 
     {
-      if ((sp) && (IS_PLAYER(sp))) {free_player(sp); sp = NULL;}
+      free_player(sp); 
+      sp = NULL;
     }
   free_dac_info(dp, reason); /* this will call the stop-function, if any */
   if ((sp) && (sp_stopping) && (sp->delete_me)) 
     {
-      if (sp->delete_me != (void *)1) clear_deleted_snd_info(sp->delete_me);
+      if (sp->delete_me != (void *)1) clear_deleted_snd_info(sp->delete_me); /* for various file dialog play buttons */
       completely_free_snd_info(sp); /* dummy snd_info struct for (play "filename") in snd-xen.c */
     }
 }

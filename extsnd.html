@@ -4427,8 +4427,7 @@ This function is modelled after Emacs. It could be defined along these lines:
 <tr><td></td><td>
 cursor location (as a sample number, first sample is numbered 0) in channel <i>chn</i> of <i>snd</i>.
 <code>(set! (cursor) 100)</code> moves the cursor to sample 100.  The cursor is somewhat similar to a
-mark in that it moves if you delete or insert samples in front of it.  Many functions apply from the
-cursor in the currently selected channel if you don't specify otherwise.
+mark in that it moves if you delete or insert samples in front of it. 
 
 <!-- INDEX cursorexamples:Cursors -->
 <A NAME="cursorexamples"></a>
@@ -5183,7 +5182,8 @@ The regularized version of this might be:<br>
 <pre>
 (define* (<a class=quiet href="sndscm.html#insertchannel">insert-channel</a> data #:optional beg dur snd chn edpos)
   (insert-samples beg dur data snd chn edpos))
-</pre>To insert a block of samples of a given value: <code>(insert-samples beg dur (<a class=quiet href="#makevct">make-vct</a> dur val))</code>
+</pre>
+To insert a block of samples of a given value: <code>(insert-samples beg dur (<a class=quiet href="#makevct">make-vct</a> dur val))</code>
 </td></tr>
 <tr><td colspan=2></td></tr>
 

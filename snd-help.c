@@ -369,13 +369,12 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+5-Jan:   snd 7.9.\n\
 3-Jan:   removed next-to-last (xen fallback) arg to ptree-channel,\n\
            and associated xen-channel stuff.\n\
 29-Dec:  eval-c.scm (Kjetil Matheussen).\n\
 7-Dec:   after-save-as-hook, replacing emacs-style-save-as (see snd7.scm).\n\
 3-Dec:   mark-tag-width|height.\n\
-17-Nov:  snd 7.9\n\
-16-Nov:  moved the 'Apply' button and friends from the Controls pane to a popup menu.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

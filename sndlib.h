@@ -2,8 +2,8 @@
 #define SNDLIB_H
 
 #define SNDLIB_VERSION 19
-#define SNDLIB_REVISION 7
-#define SNDLIB_DATE "15-Nov-04"
+#define SNDLIB_REVISION 8
+#define SNDLIB_DATE "6-Jan-05"
 
 #include <config.h>
 
@@ -367,7 +367,7 @@ int mus_sound_forget(const char *name);
 int mus_sound_prune(void);
 void mus_sound_report_cache(FILE *fp);
 int *mus_sound_loop_info(const char *arg);
-void mus_sound_set_full_loop_info(const char *arg, int *loop);
+void mus_sound_set_loop_info(const char *arg, int *loop);
 
 int mus_sound_open_input(const char *arg);
 int mus_sound_open_output(const char *arg, int srate, int chans, int data_format, int header_type, const char *comment);
@@ -533,7 +533,7 @@ off_t mus_header_aux_comment_start(int n);
 off_t mus_header_aux_comment_end(int n);
 int mus_header_initialize(void);
 bool mus_header_writable(int type, int format);
-void mus_header_set_full_aiff_loop_info(int *data);
+void mus_header_set_aiff_loop_info(int *data);
 int mus_header_sf2_entries(void);
 char *mus_header_sf2_name(int n);
 int mus_header_sf2_start(int n);
@@ -589,6 +589,11 @@ char *strdup(const char *str);
 #endif
 #if (!HAVE_FILENO)
 int fileno(FILE *fp);
+#endif
+
+#ifndef SNDLIB_DISABLE_DEPRECATED
+#define mus_sound_set_full_loop_info(Arg1, Arg2) mus_sound_set_loop_info(Arg1, Arg2)
+#define mus_header_set_full_aiff_loop_info(Arg1) mus_header_set_aiff_loop_info(Arg1)
 #endif
 
 #ifdef __cplusplus

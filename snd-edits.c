@@ -6411,7 +6411,7 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
   off_t curlen;
   snd_data *first_snd = NULL;
   if (!(cp->active)) return(NULL);
-  if ((edit_position < 0) || (edit_position > cp->edit_size)) return(NULL);
+  if ((edit_position < 0) || (edit_position >= cp->edit_size)) return(NULL); /* was ">" not ">=": 6-Jan-05 */
   ed = (ed_list *)(cp->edits[edit_position]);
   if (!ed) return(NULL);
   sp = cp->sound;
@@ -6527,7 +6527,7 @@ Float chn_sample(off_t samp, chan_info *cp, int pos)
 { 
   snd_fd *sf;
   Float val = 0.0;
-  if ((!(cp->active)) || (samp < 0) || (pos < 0) || (pos > cp->edit_size) || (samp >= cp->samples[pos])) return(0.0);
+  if ((!(cp->active)) || (samp < 0) || (pos < 0) || (pos >= cp->edit_size) || (samp >= cp->samples[pos])) return(0.0);
   /* try the quick case */
   if (pos == 0)
     {

@@ -247,7 +247,7 @@ int snd_write_header(const char *name, int type, int srate, int chans, off_t loc
   /* trap mus_error locally here so that callers of open_temp_file can cleanup sample readers and whatnot */
   old_error_handler = mus_error_set_handler(local_mus_error2snd);
   mus_sound_forget(name);
-  mus_header_set_full_aiff_loop_info(loops);
+  mus_header_set_aiff_loop_info(loops);
   err = mus_header_write(name, type, srate, chans, loc, samples, format, comment, len);
   if (err == -1)
     {
@@ -259,7 +259,7 @@ int snd_write_header(const char *name, int type, int srate, int chans, off_t loc
 	}
     }
   if (err != -1)
-    mus_header_set_full_aiff_loop_info(NULL);
+    mus_header_set_aiff_loop_info(NULL);
   mus_error_set_handler(old_error_handler);
   if ((err == -1) || (local_mus_error != MUS_NO_ERROR))
     {

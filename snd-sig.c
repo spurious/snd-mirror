@@ -1771,6 +1771,9 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XE
   char *ofile = NULL;
   if ((beg < 0) || (dur <= 0)) return(NULL);
   if (!(editable_p(cp))) return(NULL);
+  /* if last was reverse and start/end match, we could just copy preceding edlist entry, or undo/redo etc --
+   *   how to tell that this is happening?
+   */
   sp = cp->sound;
   edpos = to_c_edit_position(cp, edp, caller, arg_pos);
   if (dur > cp->samples[edpos]) dur = cp->samples[edpos];

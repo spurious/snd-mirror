@@ -5675,7 +5675,7 @@ bool mus_header_no_header(const char *filename)
   return(!ok);
 }
 
-void mus_header_set_full_aiff_loop_info (int *data)
+void mus_header_set_aiff_loop_info (int *data)
 {
   /* include modes */
   if (data)
