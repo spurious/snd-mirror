@@ -15,7 +15,7 @@
 #endif
       
 
-#define NUM_COMMANDS 744
+#define NUM_COMMANDS 748
 
 static char *snd_commands[NUM_COMMANDS]={
   S_abort,S_abortQ,S_activate_listener,S_add_mark,S_add_sound_file_extension,S_add_to_main_menu,S_add_to_menu,S_add_transform,
@@ -39,7 +39,7 @@ static char *snd_commands[NUM_COMMANDS]={
   S_default_output_chans,S_default_output_format,S_default_output_srate,S_default_output_type,
   S_define_envelope,
   S_delete_mark,S_delete_marks,S_delete_region,S_delete_sample,S_delete_samples,S_describe_audio,
-  S_dismiss_all_dialogs,S_dot_size,S_during_open_hook,
+  S_dismiss_all_dialogs,S_dont_normalize,S_dot_size,S_during_open_hook,
 
   S_edit_fragment,S_edit_header_dialog,S_edit_hook,S_edit_position,S_edits,
   S_env_selection,S_env_sound,S_enved_base,S_enved_clipping,S_enved_dBing,
@@ -81,7 +81,8 @@ static char *snd_commands[NUM_COMMANDS]={
   S_mix_vct,S_mix_waveform_color,S_mix_waveform_height,S_mixQ,S_mixes,
   S_mouse_drag_hook,S_mouse_press_hook,S_mouse_release_hook,S_movies,S_multichannel_mix_hook,S_mus_error_hook,
 
-  S_name_click_hook,S_new_sound,S_next_mix_sample,S_next_sample,S_next_track_sample,S_normal_fft,S_normalize_fft,S_normalize_on_open,S_normalize_view,
+  S_name_click_hook,S_new_sound,S_next_mix_sample,S_next_sample,S_next_track_sample,S_normal_fft,
+  S_normalize_by_channel,S_normalize_by_sound,S_normalize_fft,S_normalize_globally,S_normalize_on_open,S_normalize_view,
 
   S_open_alternate_sound,S_open_hook,S_open_multifile_sound_hook,S_open_raw_sound,S_open_sound,S_open_sound_file,S_orientation_dialog,
   S_output_comment_hook,S_output_name_hook,

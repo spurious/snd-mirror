@@ -55,7 +55,7 @@
 ;;; swap selection chans
 ;;; sound-interp, env-sound-interp
 ;;; compute-uniform-circular-string (and scanned-synthesis)
-
+;;; add date and time to title bar
 
 (use-modules (ice-9 debug))
 (use-modules (ice-9 format))
@@ -589,11 +589,6 @@
 	    (set-dot-size 5)))))))
     
 ;(add-hook! graph-hook auto-dot)
-
-
-;;; -- current time 
-;(strftime "%H:%M" (localtime (current-time)))
-;(add-hook! output-comment-hook (lambda (str) (string-append "written " (strftime "%a %d-%b-%Y %H:%M %Z" (localtime (current-time))))))
 
 
 ;;; -------- auto-save 
@@ -2406,7 +2401,7 @@
       (set-samples 0 newlen tempfilename snd chn #t))))
 
 
-;;; compute-uniform-circular-string
+;;; -------- compute-uniform-circular-string
 ;;;
 ;;; this is a simplification of the underlying table-filling routine for "scanned synthesis".
 ;;; To watch the wave, open some sound (so Snd has someplace to put the graph), turn off
@@ -2512,3 +2507,28 @@
 	((= i size))
       (vct-set! x2 i (vct-ref x1 i))
       (vct-set! x1 i (vct-ref x0 i)))))
+
+
+
+;;; -------- add date and time to title bar
+;;;
+;;; The window manager's property that holds the Snd window's title is WM_NAME,
+;;;   we can use the change-property function (used normally for CLM/Snd communication)
+;;;   to reset this value.  The Snd window's identifier is SND_VERSION.
+;;;   Here we're also using the #t argument to short-file-name to get a list of all current sounds.
+
+(define retitle-time (* 60 1000)) ;once a minute
+
+(define title-with-date
+  (lambda ()
+    (let ((names (short-file-name #t)))
+      (change-property "SND_VERSION" "WM_NAME"
+		       (format #f "snd (~A)~A"
+			       (strftime "%d-%b %H:%M %Z" (localtime (current-time)))
+			       (if (null? names)
+				   ""
+				   (format #f ":~{~A~^, ~}" names))))
+      (in retitle-time title-with-date))))
+
+;(title-with-date)
+;  -- this line starts the new window title handler which runs until Snd is exited

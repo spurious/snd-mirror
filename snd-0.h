@@ -130,6 +130,7 @@ enum {PLAIN_MESSAGE,MESSAGE_WITH_CARET,MESSAGE_WITHOUT_CARET};
 enum {SND_REOPEN_CLOSED_FILE,SND_OPEN_CHANNEL,SND_COPY_READER,SND_INSERT_FILE,SND_CHANGE_FILE,SND_OVERRIDE_FILE,SND_MIX_FILE};
 enum {CURSOR_CROSS,CURSOR_LINE};
 enum {SHOW_NO_AXES,SHOW_ALL_AXES,SHOW_X_AXIS};
+enum {DONT_NORMALIZE,NORMALIZE_BY_CHANNEL,NORMALIZE_BY_SOUND,NORMALIZE_GLOBALLY};
 
 #define NO_REGIONS -1
 #define INVALID_REGION -2
@@ -327,7 +328,7 @@ enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
 
 #define normalize_fft(ss) ss->Normalize_Fft
 #define in_set_normalize_fft(ss,a) ss->Normalize_Fft = a
-#define DEFAULT_NORMALIZE_FFT 1
+#define DEFAULT_NORMALIZE_FFT NORMALIZE_BY_CHANNEL
 
 #define ask_before_overwrite(ss) ss->Ask_Before_Overwrite
 #define set_ask_before_overwrite(ss,a) ss->Ask_Before_Overwrite = a

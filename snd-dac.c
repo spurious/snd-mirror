@@ -178,7 +178,7 @@ typedef struct dac__info {
   Float cur_rev; /* rev scaler -- len is set at initialization */
   Float contrast_amp;
   int expanding,reverbing,filtering; /* these need lots of preparation, so they're noticed only at the start */
-  int chans;
+  int chans,orig_chan;
   int slot;
   Float *lst; 
   Float *nxt;
@@ -619,6 +619,7 @@ static dac_info *make_dac_info(snd_info *sp, int chans, snd_fd **fds)
   dp->x = (Float *)CALLOC(chans,sizeof(Float));
   dp->ri = NULL;
   dp->a = NULL;
+  dp->orig_chan = -1;
   if (sp)
     {
       dp->expanding = sp->expanding;
@@ -892,7 +893,7 @@ static int find_slot_to_play(void)
 
 static void start_playing_1(void *ptr, int start, int background, int paused, int end)
 {
-  int slot,chans = 0,i,direction,beg = 0,channels = 1;
+  int slot,chans = 0,i,direction,beg = 0,channels = 1,specific_chan = -1;
   dac_info *dp;
   snd_info *sp = NULL;
   snd_state *ss = NULL;
@@ -934,6 +935,7 @@ static void start_playing_1(void *ptr, int start, int background, int paused, in
 	  chans = 1; 
 	  if (sp->nchans > 1) ss->apply_choice = APPLY_TO_CHANNEL;
 	}
+      specific_chan = cp->chan;
       /* start playing hook?? */
       break;
     case REGION_INFO:
@@ -1014,6 +1016,7 @@ static void start_playing_1(void *ptr, int start, int background, int paused, in
   dp = make_dac_info(sp,chans,fds);
   dp->ri = ri;
   dp->end = end;
+  dp->orig_chan = specific_chan;
   if (end != NO_END_SPECIFIED) {dp->end -= beg; if (dp->end < 0) dp->end = -(dp->end);}
 
   if (chans > channels) channels = chans;
@@ -1221,8 +1224,8 @@ static int fill_dac(snd_state *ss, int write_ok)
 	      if ((sp) && ((!(sp->inuse)) || (sp->playing == 0))) return(-len);
 	      if ((sp) && (cursor_change) && (sp->cursor_follows_play != DONT_FOLLOW)) 
 		{
-		  if (sp->syncing != 0) 
-		    handle_cursor(sp->chans[0],cursor_moveto(sp->chans[0],current_location(dp->chn_fds[0])));
+		  if (dp->orig_chan != -1)
+		    handle_cursor(sp->chans[dp->orig_chan],cursor_moveto(sp->chans[dp->orig_chan],current_location(dp->chn_fds[0])));
 		  else
 		    {
 		      for (m=0;m<dp->chans;m++) 

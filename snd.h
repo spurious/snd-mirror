@@ -15,10 +15,12 @@
  *                 see http://www.gnu.org/software/guile (this is now a standard part of the Gnu distribution)
  *                 if you have Guile 1.3.4, include -DHAVE_GUILE_1_3, if 1.3 -DHAVE_GUILE_1_3_0.
  *                 (The default is Guile 1.4, versions before 1.3 are no longer supported).
+ *                 (Version 1.3 support will eventually go away).
  * 
  *   HAVE_GUILE_GTK
  *                 define if you're using Gtk+ and have libguilegtk.  The configure script
  *                 will define this if it can find the guile-gtk library and you're using Gtk+.
+ *                 With guile 1.4, you need guile-gtk-0.19.
  *
  *   HAVE_XPM      define if you have the XPM library (the default in Linux and Gtk+)
  *                 (used to make cute icons in various places)
@@ -171,7 +173,7 @@
 #endif
 #include "snd-strings.h"
 
-#define SND_VERSION "2-Aug-00"
+#define SND_VERSION "3-Aug-00"
 #define SND_RPM_VERSION "4.4"
 #define SND_MAJOR_VERSION 4
 #define SND_MINOR_VERSION 4

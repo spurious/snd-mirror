@@ -78,6 +78,9 @@ Transform type:
   fourier-transform  wavelet-transform   hankel-transform    chebyshev-transform
   autocorrelation    walsh-transform     hadamard-transform  cepstrum
 
+Transform normalization choice:
+  dont-normalize    normalize-by-channel normalize-by-sound  normalize-globally
+
 FFT Window type:
   rectangular-window hanning-window     welch-window      parzen-window
   bartlett-window    hamming-window     blackman2-window  blackman3-window
@@ -126,6 +129,17 @@ reflects the variable; I need the "set-" forms anyway, so making everything
 a function makes for less confusion, I hope. If you'd rather use a Common
 Lisp-like setf, see setf.scm; if it is loaded you can say (setf
 (auto-resize) #f) instead of (set-auto-resize #f).
+
+I am in the process of making it possible to specify some of these variables
+local to a channel, rather than always being applied across all channels. To
+retain backwards compatibility, in these cases the "variable" can be treated
+as a function with two optional trailing arguments, the sound index (default
+#t = all sounds), and the channel (default #t = all channels). I'll mark
+these case below like this. So, (set-show-y-zero #t) turns on the y-zero
+line for all channels (as before), whereas (set-show-y-zero #t 0 1) turns it
+on only in sound 0's channel 1. (This will eventually coalesce with the #t
+arguments in the "functions" such as ffting so that all these things will be
+handled in the same way.)
 
   ask-before-overwrite  #f      (Save-as): ask before overwriting an existing file
   audio-output-device   sndlib-default-device Audio output device (for the play button)
@@ -240,8 +254,9 @@ Lisp-like setf, see setf.scm; if it is loaded you can say (setf
   mix-waveform-height   20      Max height (pixels) of mix waveforms (see show-mix-waveforms).
   movies                #t      If #t, the mix graphs are updated constantly as the
                                 mouse drags the mix console.
-  normalize-fft         #t      If #t, spectral data is normalized to 1.0 before display.
-                                If #f, you get the raw data values, which can reflect amplitude changes.
+  normalize-fft         normalize-by-channel
+                                If normalize-by-channel (#t) or normalize-by-sound, spectral data is normalized to 1.0 before display.
+                                If dont-normalize (#f), you get the raw data values, which can reflect amplitude changes.
                                 Snd tries to choose a y axis limit that makes successive displays move smoothly.
   normalize-on-open     #t      When a new sound is added to the Snd window, the resultant
                                 set of graphs can start to dangle off the bottom or end of the screen.
@@ -1448,8 +1463,8 @@ Customizing Snd's appearance
 
 Snd's overall appearance is controlled first by the startup switches that
 choose the outermost widget; normally this is a paned window with a sound in
-each pane; -separate tries to put each sound in a separate window, and
--notebook puts each sound on a separate page of a notebook widget. Similarly
+each pane; -separate puts each sound in a separate window, and -notebook
+puts each sound on a separate page of a notebook widget. Similarly
 -horizontal and -vertical determine which way the outer panes are layed out.
 The initial window size and location are set (in ~/.snd, the initialization
 file) via set-window-width, set-window-height, set-window-y, and

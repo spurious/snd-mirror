@@ -405,14 +405,28 @@ void set_graph_style(snd_state *ss, int val)
     }
 }
 
+static int map_chans_marks(chan_info *cp, void *ptr)
+{
+  cp->show_marks = (int)ptr;
+  update_graph(cp,NULL);
+  return(0);
+}
+
 void set_show_marks(snd_state *ss, int val)
 {
   in_set_show_marks(ss,val);
   if (view_marks_menu())
     {
       set_menu_label(view_marks_menu(),(val) ? STR_Hide_marks : STR_Show_marks);
-      map_over_chans(ss,update_graph,NULL);
+      map_over_chans(ss,map_chans_marks,(void *)val);
     }
+}
+
+static int map_chans_zero(chan_info *cp, void *ptr)
+{
+  cp->show_y_zero = (int)ptr;
+  update_graph(cp,NULL);
+  return(0);
 }
 
 void set_show_y_zero(snd_state *ss, int val)
@@ -421,7 +435,7 @@ void set_show_y_zero(snd_state *ss, int val)
   if (view_zero_menu())
     {
       set_menu_label(view_zero_menu(),(val) ? STR_Hide_Y0 : STR_Show_Y0);
-      map_over_chans(ss,update_graph,NULL);
+      map_over_chans(ss,map_chans_zero,(void *)val);
     }
 }
 

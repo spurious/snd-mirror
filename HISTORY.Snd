@@ -1,5 +1,7 @@
 snd change log
 
+  3-Aug:     C-q with moving cursor bug, extended normalize-fft choices (Daniel Aronovitch).
+             show-y-zero, show-marks can be local to a given sound or channel.
   2-Aug:     compute-uniform-circular-string in examp.scm.
   1-Aug:     removed xmin,xmax,ymin,ymax (redundant and pointless).
   31-Jul:    amp env subsampling, C-x v, and superimposed fft bugs (thanks to Daniel Aronovitch).

@@ -111,6 +111,10 @@
 	'welch-window welch-window 2 
 	'cursor-cross cursor-cross 0
 	'cursor-line cursor-line 1
+	'dont-normalize dont-normalize 0
+	'normalize-by-channel normalize-by-channel 1
+	'normalize-by-sound normalize-by-sound 2
+	'normalize-globally normalize-globally 3
 	'x-in-samples x-in-samples 1 
 	'x-in-seconds x-in-seconds 0 
 	'x-to-one x-to-one 2)))
@@ -201,7 +205,7 @@
 	'max-regions (max-regions) 16 
 	'min-dB (min-dB) -60.0 
 	'movies (movies) #t 
-	'normalize-fft (normalize-fft) #t 
+	'normalize-fft (normalize-fft) normalize-by-channel
 	'normalize-on-open (normalize-on-open) #t
 	'previous-files-sort (previous-files-sort) 0 
 	'print-length (print-length) 12 
@@ -631,7 +635,7 @@
 	  (list 'mix-console-speed-scaler mix-console-speed-scaler 1.0 set-mix-console-speed-scaler 3.0)
 	  (list 'mix-waveform-height mix-waveform-height 20 set-mix-waveform-height 40)
 	  (list 'movies movies #t set-movies #f)
-	  (list 'normalize-fft normalize-fft #t set-normalize-fft #f)
+	  (list 'normalize-fft normalize-fft normalize-by-channel set-normalize-fft dont-normalize)
 	  (list 'normalize-on-open normalize-on-open #t set-normalize-on-open #f)
 	  (list 'previous-files-sort previous-files-sort 0 set-previous-files-sort 1)
 	  (list 'print-length print-length 12 set-print-length 16)
@@ -3781,7 +3785,7 @@
 		    (list 'max-regions #f 1 set-max-regions 64)
 		    (list 'min-dB #f -120.0 set-min-dB -30.0)
 		    (list 'movies #f #f set-movies #t)
-		    (list 'normalize-fft #f #f set-normalize-fft #t)
+		    (list 'normalize-fft #f dont-normalize set-normalize-fft normalize-globally)
 		    (list 'normalize-on-open #f #f set-normalize-on-open #t)
 		    (list 'previous-files-sort #f 0 set-previous-files-sort 3)
 		    (list 'print-length #f 2 set-print-length 32)

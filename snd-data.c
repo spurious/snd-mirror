@@ -35,7 +35,7 @@ lisp_grf *free_lisp_info(chan_info *cp)
   return(NULL);
 }
 
-chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *state)
+chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *ss)
 {
   chan_info *cp; /* may be re-use */
   if ((!cip) || (((snd_any *)cip)->s_type != CHAN_INFO))
@@ -68,11 +68,13 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
   cp->cursor = 0;
   cp->cursor_style = CURSOR_CROSS;
   cp->squelch_update = 0;
+  cp->show_y_zero = show_y_zero(ss);
+  cp->show_marks = show_marks(ss);
   cp->waving = 1; /* the default state (button is set when we start) */
   cp->ffting = 0;
   cp->printing = 0;
   cp->waiting_to_make_graph = 0;
-  cp->state = state;
+  cp->state = ss;
   cp->amp_envs = NULL;
   cp->sonogram_data = NULL;
   cp->lisp_info = NULL;
@@ -117,6 +119,8 @@ static chan_info *free_chan_info(chan_info *cp)
   cp->mix_md = NULL;
   cp->cursor_on = 0;
   cp->cursor_visible = 0;
+  cp->show_y_zero = show_y_zero(ss);
+  cp->show_marks = show_marks(ss);
   cp->cursor = 0;
   cp->cursor_style = CURSOR_CROSS;
   cp->drawing = 1;

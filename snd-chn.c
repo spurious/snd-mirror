@@ -1056,7 +1056,7 @@ static void display_peaks(chan_info *cp,axis_info *fap,Float *data,int scaler,in
   if (with_amps) 
     {
       col -= AMP_ROOM;
-      if ((fft_data) && (!(normalize_fft(ss))))
+      if ((fft_data) && (normalize_fft(ss) == DONT_NORMALIZE))
 	{
 	  col -= 5;
 	  acol -= 5;
@@ -1153,7 +1153,8 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
     }
 
   data_max = 0.0;
-  if ((!(normalize_fft(ss))) && (sp->nchans > 1) && (sp->combining == CHANNELS_SUPERIMPOSED))
+  if ((normalize_fft(ss) == NORMALIZE_BY_SOUND) ||
+      ((normalize_fft(ss) == DONT_NORMALIZE) && (sp->nchans > 1) && (sp->combining == CHANNELS_SUPERIMPOSED)))
     {
       for (j=0;j<sp->nchans;j++)
 	{
@@ -1182,7 +1183,7 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	}
     }
   if (data_max == 0.0) data_max = 1.0;
-  if (normalize_fft(ss))
+  if (normalize_fft(ss) != DONT_NORMALIZE)
     scale = 1.0/data_max;
   else 
     {
@@ -2036,9 +2037,9 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
   if (cp->waving)
     {
       display_selection(cp);
-      if ((cp->marks) && (show_marks(ss))) display_channel_marks(cp);
+      if ((cp->marks) && (cp->show_marks)) display_channel_marks(cp);
       if (cp == selected_channel(ss)) draw_graph_border(cp);
-      if (show_y_zero(ss)) display_zero(cp);
+      if (cp->show_y_zero) display_zero(cp);
       if ((show_mix_consoles(ss)) && (cp->mixes)) display_channel_mixes(cp);
     }
   else 
@@ -7316,7 +7317,9 @@ static SCM g_backward_graph(SCM count, SCM snd, SCM chn)
   RTNINT(val);
 }
 
-enum {FFTF,WAVEF,LENGTHF,CURSORF,MAXAMPF,GRAPHINGF,LOSAMPF,HISAMPF,SQUELCH_UPDATE,AP_SX,AP_SY,AP_ZX,AP_ZY,EDITF,CURSOR_STYLE,EDIT_HOOK,UNDO_HOOK};
+enum {FFTF,WAVEF,LENGTHF,CURSORF,MAXAMPF,GRAPHINGF,LOSAMPF,HISAMPF,SQUELCH_UPDATE,
+      AP_SX,AP_SY,AP_ZX,AP_ZY,EDITF,CURSOR_STYLE,EDIT_HOOK,UNDO_HOOK,
+      SHOW_Y_ZERO,SHOW_MARKS};
 
 static SCM cp_iread(SCM snd_n, SCM chn_n, int fld, char *caller)
 {
@@ -7368,6 +7371,8 @@ static SCM cp_iread(SCM snd_n, SCM chn_n, int fld, char *caller)
 	    case CURSOR_STYLE: RTNINT(cp->cursor_style); break;
 	    case EDIT_HOOK: return(cp->edit_hook); break;
 	    case UNDO_HOOK: return(cp->undo_hook); break;
+	    case SHOW_Y_ZERO: RTNBOOL(cp->show_y_zero); break;
+	    case SHOW_MARKS: RTNBOOL(cp->show_marks); break;
 	    }
 	}
     }
@@ -7420,6 +7425,8 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
 	    case HISAMPF: set_x_axis_x1(cp,val = g_scm2intdef(on,1)); return(on); break;
 	    case SQUELCH_UPDATE: cp->squelch_update = bool_int_or_one(on); break;
 	    case CURSOR_STYLE: cp->cursor_style = g_scm2intdef(on,0); update_graph(cp,NULL); return(on); break;
+	    case SHOW_Y_ZERO: cp->show_y_zero = bool_int_or_one(on); update_graph(cp,NULL); return(on); break;
+	    case SHOW_MARKS: cp->show_marks = bool_int_or_one(on); update_graph(cp,NULL); return(on); break;
 	    }
 	}
     }
@@ -7579,6 +7586,52 @@ static SCM g_undo_hook(SCM snd_n, SCM chn_n)
   #define H_undo_hook "(" S_undo_hook " &optional snd chn) -> snd's channel chn's undo-hook"
   ERRCPT(S_undo_hook,snd_n,chn_n,1); 
   return(cp_iread(snd_n,chn_n,UNDO_HOOK,S_undo_hook));
+}
+
+static SCM g_show_y_zero(SCM snd, SCM chn)
+{
+  #define H_show_y_zero "(" S_show_y_zero " &optional (snd #t) (chn #t)) -> #t if Snd should include a line at y=0.0"
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_iread(snd,chn,SHOW_Y_ZERO,S_show_y_zero));
+  else RTNBOOL(show_y_zero(get_global_state()));
+}
+
+static SCM g_set_show_y_zero(SCM on, SCM snd, SCM chn) 
+{
+  #define H_set_show_y_zero "(" S_set_show_y_zero " &optional (val #t) (snd #t) (chn #t)) sets " S_show_y_zero
+  snd_state *ss;
+  ERRB1(on,S_set_show_y_zero); 
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_iwrite(snd,chn,on,SHOW_Y_ZERO,S_set_show_y_zero));
+  else
+    {
+      ss = get_global_state();
+      set_show_y_zero(ss,bool_int_or_one(on));
+      RTNBOOL(show_y_zero(ss));
+    }
+}
+
+static SCM g_show_marks(SCM snd, SCM chn)
+{
+  #define H_show_marks "(" S_show_marks " &optional (snd #t) (chn #t)) -> #t if Snd should show marks"
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_iread(snd,chn,SHOW_MARKS,S_show_marks));
+  else RTNBOOL(show_marks(get_global_state()));
+}
+
+static SCM g_set_show_marks(SCM on, SCM snd, SCM chn)
+{
+  #define H_set_show_marks "(" S_set_show_marks " &optional (val #t) (snd #t) (chn #t)) sets " S_show_marks
+  snd_state *ss;
+  ERRB1(on,S_set_show_marks); 
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(cp_iwrite(snd,chn,on,SHOW_MARKS,S_set_show_marks));
+  else
+    {
+      ss = get_global_state();
+      set_show_marks(ss,bool_int_or_one(on));
+      RTNBOOL(show_marks(ss));
+    }
 }
 
 static SCM g_peaks(SCM filename, SCM snd_n, SCM chn_n)
@@ -8057,8 +8110,12 @@ void g_init_chn(SCM local_doc)
   DEFINE_PROC(gh_new_procedure(S_smooth_selection,SCM_FNC g_smooth_selection,0,0,0),H_smooth_selection);
   DEFINE_PROC(gh_new_procedure(S_reverse_sound,SCM_FNC g_reverse_sound,0,2,0),H_reverse_sound);
   DEFINE_PROC(gh_new_procedure(S_reverse_selection,SCM_FNC g_reverse_selection,0,0,0),H_reverse_selection);
-  DEFINE_PROC(gh_new_procedure0_0(S_max_fft_peaks,g_max_fft_peaks),H_max_fft_peaks);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_max_fft_peaks,g_set_max_fft_peaks),H_set_max_fft_peaks);
+  DEFINE_PROC(gh_new_procedure(S_max_fft_peaks,g_max_fft_peaks,0,0,0),H_max_fft_peaks);
+  DEFINE_PROC(gh_new_procedure(S_set_max_fft_peaks,g_set_max_fft_peaks,1,0,0),H_set_max_fft_peaks);
+  DEFINE_PROC(gh_new_procedure(S_show_y_zero,g_show_y_zero,0,2,0),H_show_y_zero);
+  DEFINE_PROC(gh_new_procedure(S_set_show_y_zero,g_set_show_y_zero,0,3,0),H_set_show_y_zero);
+  DEFINE_PROC(gh_new_procedure(S_show_marks,g_show_marks,0,2,0),H_show_marks);
+  DEFINE_PROC(gh_new_procedure(S_set_show_marks,g_set_show_marks,0,3,0),H_set_show_marks);
 
   DEFINE_PROC(gh_new_procedure("swap-channels",SCM_FNC g_swap_channels,0,6,0),H_swap_channels);
 

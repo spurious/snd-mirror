@@ -1398,7 +1398,7 @@ static int display_snd_fft(fft_state *fs)
 	}
       else 
 	{
-	  if ((!(normalize_fft(ss))) && (fap) && ((fap->ymin > ss->min_dB) || (fap->ymax <= 1.0)))
+	  if ((normalize_fft(ss) == DONT_NORMALIZE) && (fap) && ((fap->ymin > ss->min_dB) || (fap->ymax <= 1.0)))
 	    {
 	      max_val = fap->ymax; 
 	      min_val = fap->ymin;

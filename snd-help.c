@@ -192,6 +192,8 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+3-Aug:   C-q with moving cursor bug, extended normalize-fft choices (Daniel Aronovitch).\n\
+         show-y-zero, show-marks can be local to a given sound or channel.\n\
 2-Aug:   compute-uniform-circular-string in examp.scm.\n\
 1-Aug:   removed xmin,xmax,ymin,ymax (redundant and pointless).\n\
 31-Jul:  amp env subsampling, C-x v, and superimposed fft bugs (thanks to Daniel Aronovitch).\n\
@@ -809,6 +811,9 @@ FFT Window type:\n\
   blackman4-window    exponential-window  riemann-window     kaiser-window\n\
   cauchy-window       poisson-window      gaussian-window    tukey-window\n\
 \n\
+Transform normalization choice:\n\
+  dont-normalize    normalize-by-channel normalize-by-sound  normalize-globally\n\
+\n\
 Zoom Focus style:\n\
   " S_focus_left "         " S_focus_right "        " S_focus_active "      " S_focus_middle "\n\
 \n\
@@ -907,7 +912,7 @@ new value via (" S_set_auto_resize " #t). \n\
   " S_mix_waveform_color "    darkgray\n\
   " S_mix_waveform_height "   20\n\
   " S_movies "                #t\n\
-  " S_normalize_fft "         #t\n\
+  " S_normalize_fft "         normalize-by-channel\n\
   " S_normalize_on_open "     #t\n\
   " S_position_color "        ivory3\n\
   " S_prefix_arg "            nil\n\
@@ -935,12 +940,12 @@ new value via (" S_set_auto_resize " #t). \n\
   " S_show_axes "             show-all-axes\n\
   " S_show_fft_peaks "        #f\n\
   " S_show_indices "          #f\n\
-  " S_show_marks "            #t\n\
+  " S_show_marks "            #t &optional (snd #t) (chn #t)\n\
   " S_show_mix_consoles "     #t\n\
   " S_show_mix_waveforms "    #f\n\
   " S_show_selection_transform " #f\n\
   " S_show_usage_stats "      #f\n\
-  " S_show_y_zero "           #f\n\
+  " S_show_y_zero "           #f &optional (snd #t) (chn #t)\n\
   " S_sinc_width "            10\n\
   " S_spectro_cutoff "        1.0\n\
   " S_spectro_hop "           4\n\

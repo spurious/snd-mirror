@@ -191,7 +191,7 @@ typedef struct chan__info {
   int hookable;
   int selection_transform_size;
   int *stats;
-  int squelch_update,waiting_to_make_graph;
+  int squelch_update,waiting_to_make_graph,show_y_zero,show_marks;
   void *mix_md;
 #if FILE_PER_CHAN
   char *filename;

@@ -1025,7 +1025,8 @@ static SCM g_set_fit_data_on_open(SCM val)
 static SCM g_graph_style(void) {RTNINT(graph_style(state));}
 static SCM g_set_graph_style(SCM style) 
 {
-  #define H_graph_style "(" S_graph_style ") -> how graphs are drawn: graph-lines, graph-dots, etc"
+  #define H_graph_style "(" S_graph_style ") -> one of '(" S_graph_lines " " S_graph_dots " " S_graph_dots_and_lines " " S_graph_lollipops " " S_graph_filled ")\n\
+  determines how graphs are drawn (default: " S_graph_lines ")"
   #define H_set_graph_style "(" S_set_graph_style " val) sets " S_graph_style
   ERRN1(style,S_set_graph_style); 
   set_graph_style(state,iclamp(GRAPH_LINES,g_scm2int(style),GRAPH_LOLLIPOPS));
@@ -1112,14 +1113,15 @@ static SCM g_set_movies(SCM val)
   RTNBOOL(movies(state));
 }
 
-static SCM g_normalize_fft(void) {RTNBOOL(normalize_fft(state));}
+static SCM g_normalize_fft(void) {RTNINT(normalize_fft(state));}
 static SCM g_set_normalize_fft(SCM val) 
 {
-  #define H_normalize_fft "(" S_normalize_fft ") -> #t is spectral data is normalized before display (#t)"
-  #define H_set_normalize_fft "(" S_set_normalize_fft " &optional (val #t)) sets " S_normalize_fft
+  #define H_normalize_fft "(" S_normalize_fft ") -> one of '(" S_dont_normalize " " S_normalize_by_channel " " S_normalize_by_sound " " S_normalize_globally ")\n\
+  decides whether spectral data is normalized before display (default: " S_normalize_by_channel ")"
+  #define H_set_normalize_fft "(" S_set_normalize_fft " &optional (val " S_normalize_by_channel ")) sets " S_normalize_fft
   ERRB1(val,S_set_normalize_fft); 
   set_normalize_fft(state,bool_int_or_one(val));
-  RTNBOOL(normalize_fft(state));
+  RTNINT(normalize_fft(state));
 }
 
 static SCM g_normalize_on_open(void) {RTNBOOL(normalize_on_open(state));}
@@ -1324,16 +1326,6 @@ static SCM g_set_show_indices(SCM val)
   RTNBOOL(show_indices(state));
 }
 
-static SCM g_show_marks(void) {RTNBOOL(show_marks(state));}
-static SCM g_set_show_marks(SCM on) 
-{
-  #define H_show_marks "(" S_show_marks ") -> #t if Snd should show marks"
-  #define H_set_show_marks "(" S_set_show_marks " &optional (val #t)) sets " S_show_marks
-  ERRB1(on,S_set_show_marks); 
-  set_show_marks(state,bool_int_or_one(on));
-  RTNBOOL(show_marks(state));
-}
-
 static SCM g_show_usage_stats(void) {RTNBOOL(show_usage_stats(state));}
 static SCM g_set_show_usage_stats(SCM on) 
 {
@@ -1369,16 +1361,6 @@ static SCM g_set_show_mix_waveforms(SCM on)
   ERRB1(on,S_set_show_mix_waveforms); 
   set_show_mix_waveforms(state,bool_int_or_one(on));
   RTNBOOL(show_mix_waveforms(state));
-}
-
-static SCM g_show_y_zero(void) {RTNBOOL(show_y_zero(state));}
-static SCM g_set_show_y_zero(SCM on) 
-{
-  #define H_show_y_zero "(" S_show_y_zero ") -> #t if Snd should include a line at y=0.0"
-  #define H_set_show_y_zero "(" S_set_show_y_zero " &optional (val #t)) sets " S_show_y_zero
-  ERRB1(on,S_set_show_y_zero); 
-  set_show_y_zero(state,bool_int_or_one(on));
-  RTNBOOL(show_y_zero(state));
 }
 
 static SCM g_erase_zeros(void) {RTNBOOL(erase_zeros(state));}
@@ -1760,7 +1742,8 @@ static SCM g_set_zero_pad(SCM val)
 static SCM g_zoom_focus_style(void) {RTNINT(zoom_focus_style(state));}
 static SCM g_set_zoom_focus_style(SCM focus) 
 {
-  #define H_zoom_focus_style "(" S_zoom_focus_style ") -> what zooming centers on (focus-active)"
+  #define H_zoom_focus_style "(" S_zoom_focus_style ") -> one of '(" S_focus_left " " S_focus_right " " S_focus_middle " " S_focus_active ")\n\
+  decides what zooming centers on (default: " S_focus_active ")"
   #define H_set_zoom_focus_style "(" S_set_zoom_focus_style " val) sets " S_zoom_focus_style
   ERRN1(focus,S_set_zoom_focus_style); 
   activate_focus_menu(state,iclamp(FOCUS_LEFT,g_scm2int(focus),FOCUS_MIDDLE));
@@ -3915,6 +3898,12 @@ void g_initialize_gh(snd_state *ss)
   gh_define(S_show_no_axes,gh_int2scm(SHOW_NO_AXES));
   gh_define(S_show_x_axis,gh_int2scm(SHOW_X_AXIS));
 
+  gh_define(S_dont_normalize,gh_int2scm(DONT_NORMALIZE));
+  gh_define(S_normalize_by_channel,gh_int2scm(NORMALIZE_BY_CHANNEL));
+  gh_define(S_normalize_by_sound,gh_int2scm(NORMALIZE_BY_SOUND));
+  gh_define(S_normalize_globally,gh_int2scm(NORMALIZE_GLOBALLY));
+
+
 
   /* ---------------- VARIABLES ---------------- */
 
@@ -4046,16 +4035,12 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure0_1(S_set_show_fft_peaks,g_set_show_fft_peaks),H_set_show_fft_peaks);
   DEFINE_PROC(gh_new_procedure0_0(S_show_indices,g_show_indices),H_show_indices);
   DEFINE_PROC(gh_new_procedure0_1(S_set_show_indices,g_set_show_indices),H_set_show_indices);
-  DEFINE_PROC(gh_new_procedure0_0(S_show_marks,g_show_marks),H_show_marks);
-  DEFINE_PROC(gh_new_procedure0_1(S_set_show_marks,g_set_show_marks),H_set_show_marks);
   DEFINE_PROC(gh_new_procedure0_0(S_show_usage_stats,g_show_usage_stats),H_show_usage_stats);
   DEFINE_PROC(gh_new_procedure0_1(S_set_show_usage_stats,g_set_show_usage_stats),H_set_show_usage_stats);
   DEFINE_PROC(gh_new_procedure0_0(S_show_mix_consoles,g_show_mix_consoles),H_show_mix_consoles);
   DEFINE_PROC(gh_new_procedure0_1(S_set_show_mix_consoles,g_set_show_mix_consoles),H_set_show_mix_consoles);
   DEFINE_PROC(gh_new_procedure0_0(S_show_mix_waveforms,g_show_mix_waveforms),H_show_mix_waveforms);
   DEFINE_PROC(gh_new_procedure0_1(S_set_show_mix_waveforms,g_set_show_mix_waveforms),H_set_show_mix_waveforms);
-  DEFINE_PROC(gh_new_procedure0_0(S_show_y_zero,g_show_y_zero),H_show_y_zero);
-  DEFINE_PROC(gh_new_procedure0_1(S_set_show_y_zero,g_set_show_y_zero),H_set_show_y_zero);
   DEFINE_PROC(gh_new_procedure0_0(S_erase_zeros,g_erase_zeros),H_erase_zeros);
   DEFINE_PROC(gh_new_procedure0_1(S_set_erase_zeros,g_set_erase_zeros),H_set_erase_zeros);
   DEFINE_PROC(gh_new_procedure0_0(S_show_axes,g_show_axes),H_show_axes);

@@ -373,7 +373,7 @@ static void normalize_Callback(Widget w,XtPointer clientData,XtPointer callData)
 {
   snd_state *ss = (snd_state *)clientData;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)callData;
-  in_set_normalize_fft(ss,cb->set);
+  in_set_normalize_fft(ss,(cb->set) ? NORMALIZE_BY_CHANNEL : DONT_NORMALIZE);
   map_over_chans(ss,calculate_fft,NULL);
 }
 

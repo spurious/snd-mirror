@@ -78,6 +78,31 @@ static char *zoom_focus_style_name(snd_state *ss)
     }
 }
 
+static char *normalize_fft_name(snd_state *ss)
+{
+  switch (normalize_fft(ss))
+    {
+    case DONT_NORMALIZE: return(S_dont_normalize); break;
+    case NORMALIZE_BY_CHANNEL:return(S_normalize_by_channel); break;
+    case NORMALIZE_BY_SOUND: return(S_normalize_by_sound); break;
+    case NORMALIZE_GLOBALLY:return(S_normalize_globally); break;
+    default:return(S_normalize_by_channel); break;
+    }
+}
+
+static char *graph_style_name(snd_state *ss)
+{
+  switch (graph_style(ss))
+    {
+    case GRAPH_DOTS: return(S_graph_dots); break;
+    case GRAPH_DOTS_AND_LINES: return(S_graph_dots_and_lines); break;
+    case GRAPH_LOLLIPOPS: return(S_graph_lollipops); break;
+    case GRAPH_FILLED: return(S_graph_filled); break;
+    case GRAPH_LINES: 
+    default: return(S_graph_lines); break;
+    }
+}
+
 static char *b2s(int val) {if (val) return("#t"); else return("#f");}
 
 #else
@@ -113,15 +138,7 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   if (x_axis_style(ss) != DEFAULT_AXIS_STYLE) 
     fprintf(fd,"(%s %s)\n",S_set_x_axis_style,(x_axis_style(ss) == X_IN_SAMPLES) ? S_x_in_samples : S_x_to_one);
   if (graph_style(ss) != DEFAULT_GRAPH_STYLE) 
-    {
-      switch (graph_style(ss))
-	{
-	case GRAPH_DOTS:           fprintf(fd,"(%s %s)\n",S_set_graph_style,S_graph_dots); break;
-	case GRAPH_DOTS_AND_LINES: fprintf(fd,"(%s %s)\n",S_set_graph_style,S_graph_dots_and_lines); break;
-	case GRAPH_LOLLIPOPS:      fprintf(fd,"(%s %s)\n",S_set_graph_style,S_graph_lollipops); break;
-    	case GRAPH_FILLED:         fprintf(fd,"(%s %s)\n",S_set_graph_style,S_graph_filled); break;
-	}
-    }
+    fprintf(fd,"(%s %s)\n",S_set_graph_style,graph_style_name(ss));
   if (speed_style(ss) != DEFAULT_SPEED_STYLE) 
     fprintf(fd,"(%s %s)\n",S_set_speed_style,(speed_style(ss) == SPEED_AS_RATIO) ? S_speed_as_ratio : S_speed_as_semitone);
   if (channel_style(ss) != DEFAULT_CHANNEL_STYLE) 
@@ -132,6 +149,8 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
     fprintf(fd,"(%s %s)\n",S_set_transform_type,transform_type_name(ss));
   if (zoom_focus_style(ss) != FOCUS_ACTIVE) 
     fprintf(fd,"(%s %s)\n",S_set_zoom_focus_style,zoom_focus_style_name(ss));
+  if (normalize_fft(ss) != DEFAULT_NORMALIZE_FFT) 
+    fprintf(fd,"(%s %s)\n",S_set_normalize_fft,normalize_fft_name(ss));
 #else
   if (fft_window(ss) != default_fft_window(NULL)) fprintf(fd,"(%s %d)\n",S_set_fft_window,fft_window(ss));
   if (fft_style(ss) != NORMAL_FFT) fprintf(fd,"(%s %d)\n",S_set_fft_style,fft_style(ss));
@@ -142,6 +161,7 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   if (enved_target(ss) != DEFAULT_ENVED_TARGET) fprintf(fd,"(%s %d)\n",S_set_enved_target,enved_target(ss));
   if (transform_type(ss) != DEFAULT_TRANSFORM_TYPE) fprintf(fd,"(%s %d)\n",S_set_transform_type,transform_type(ss));
   if (zoom_focus_style(ss) != DEFAULT_ZOOM_FOCUS_STYLE) fprintf(fd,"(%s %d)\n",S_set_zoom_focus_style,zoom_focus_style(ss));
+  if (normalize_fft(ss) != DEFAULT_NORMALIZE_FFT) fprintf(fd,"(%s %d)\n",S_set_normalize_fft,normalize_fft(ss));
 #endif
   if (trap_segfault(ss) != DEFAULT_TRAP_SEGFAULT) fprintf(fd,"(%s %s)\n",S_set_trap_segfault,b2s(trap_segfault(ss)));
   if (show_selection_transform(ss) != DEFAULT_SHOW_SELECTION_TRANSFORM) fprintf(fd,"(%s %s)\n",S_set_show_selection_transform,b2s(show_selection_transform(ss)));
@@ -174,7 +194,6 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   if (dot_size(ss) != DEFAULT_DOT_SIZE) fprintf(fd,"(%s %d)\n",S_set_dot_size,dot_size(ss));
   if (dac_size(ss) != DEFAULT_DAC_SIZE) fprintf(fd,"(%s %d)\n",S_set_dac_size,dac_size(ss));
   if (movies(ss) != DEFAULT_MOVIES) fprintf(fd,"(%s %s)\n",S_set_movies,b2s(movies(ss)));
-  if (normalize_fft(ss) != DEFAULT_NORMALIZE_FFT) fprintf(fd,"(%s %s)\n",S_set_normalize_fft,b2s(normalize_fft(ss)));
   if (fit_data_on_open(ss) != DEFAULT_FIT_DATA_ON_OPEN) fprintf(fd,"(%s %s)\n",S_set_fit_data_on_open,b2s(fit_data_on_open(ss)));
   if (save_state_on_exit(ss) != DEFAULT_SAVE_STATE_ON_EXIT) fprintf(fd,"(%s %s)\n",S_set_save_state_on_exit,b2s(save_state_on_exit(ss)));
   if (filter_env_order(ss) != DEFAULT_FILTER_ENV_ORDER) fprintf(fd,"(%s %d)\n",S_set_filter_env_order,filter_env_order(ss));
