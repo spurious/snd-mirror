@@ -1590,9 +1590,12 @@
 	  (close-sound ab))
 	(close-sound ob))
       (let* ((ob (open-sound "oboe.snd"))
-	     (sd (samples->sound-data)))
+	     (sd (samples->sound-data))
+	     (mx (sound-data-maxamp sd)))
 	(if (not (= (sound-data-length sd) 50828)) (snd-display ";oboe->sd: len ~A?" (sound-data-length sd)))
 	(if (fneq (sound-data-ref sd 0 1000) .0328369) (snd-display ";oboe->sd[1000]: ~A?" (sound-data-ref sd 0 1000)))
+	(if (not (= (length mx) 1)) (snd-display ";sound-data-maxamp oboe.snd: ~A?" (sound-data-maxamp sd)))
+	(if (not (= (maxamp ob 0) (car mx))) (snd-display ";sound-data-maxamp oboe.snd: ~A ~A?" (sound-data-maxamp sd) (maxamp ob 0)))
 	(close-sound ob))
       (let* ((vals (make-vector 32))
 	     (err (mus-audio-mixer-read mus-audio-microphone mus-audio-amp 0 vals)))
@@ -6234,6 +6237,7 @@
   (add-hook! output-comment-hook arg1) (carg1 output-comment-hook)
   (add-hook! multichannel-mix-hook arg1) (carg1 multichannel-mix-hook)
   (add-hook! play-hook arg1) (carg1 play-hook)
+  (add-hook! dac-hook arg1) (carg1 dac-hook)
   (add-hook! snd-error-hook arg1) (carg1 snd-error-hook)
   (add-hook! snd-warning-hook arg1) (carg1 snd-warning-hook)
   (add-hook! start-hook arg1) (carg1 start-hook)
@@ -6250,6 +6254,7 @@
   (add-hook! previous-files-select-hook arg1) (carg1 previous-files-select-hook)
 
   (add-hook! exit-hook arg0) (carg0 exit-hook)
+  (add-hook! stop-dac-hook arg0) (carg0 stop-dac-hook)
   (add-hook! output-name-hook arg0) (carg0 output-name-hook)
 
   (add-hook! during-open-hook arg3) (carg3 during-open-hook)
@@ -6670,6 +6675,7 @@
 	(let ((spl #f)
 	      (stl #f)
 	      (ph #f)
+	      (ph1 #f)
 	      (pc #f))
 	  (add-hook! start-playing-hook
 		     (lambda (snd)
@@ -6693,6 +6699,13 @@
 		       (if (< n 128)
 			   (snd-display ";play-hook samps: ~A?" n))
 		       (set! ph #t)))
+	  (add-hook! dac-hook
+		     (lambda (n)
+		       (if (not (sound-data? n))
+			   (snd-display ";dac-hook data: ~A?" n))
+		       (if (< (sound-data-length n) 128)
+			   (snd-display ";dac-hook data length: ~A?" (sound-data-length n)))
+		       (set! ph1 #t)))
 
 	  (play-and-wait 0 ind)
 
@@ -6700,10 +6713,12 @@
 	  (if (not stl) (snd-display ";stop-playing-hook not called?"))
 	  (if (not pc) (snd-display ";stop-playing-channel-hook not called?"))
 	  (if (not ph) (snd-display ";play-hook not called?"))
+	  (if (not ph1) (snd-display ";dac-hook not called?"))
 	  (reset-hook! start-playing-hook)
 	  (reset-hook! stop-playing-hook)
 	  (reset-hook! stop-playing-channel-hook)
 	  (reset-hook! play-hook)
+	  (reset-hook! dac-hook)
 
 	  ;; stop-playing-region-hook
 	  ;;   what about start-playing-region-hook?
@@ -10164,6 +10179,40 @@ EDITS: 3
 	      (click-button ok-button))
 
 	    (x-synchronize #f)
+
+	  (if (provided? 'snd-motif)
+	      (begin
+		(load "snd-motif.scm")
+		(install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))
+		(zync)
+		(make-hidden-controls-dialog)
+		(make-pixmap (|Widget (cadr (main-widgets))) arrow-strs)
+		(display-scanned-synthesis)
+		(add-mark-pane)
+		(open-sound "oboe.snd")
+		(add-mark 123)
+		(add-selection-popup)
+		(make-sound-box "sounds"
+				(|Widget (list-ref (main-widgets) 3))
+				(lambda (file) 
+				  (mix file))
+				(lambda (file chn)
+				  (define (without-directories filename)
+				    (call-with-current-continuation
+				     (lambda (return)
+				       (do ((i (- (string-length filename) 1) (1- i)))
+					   ((= 0 i) filename)
+					 (if (char=? (string-ref filename i) #\/)
+					     (return (substring filename (+ i 1))))))))
+				  (format #f "~~/peaks/~A-peaks-~D" 
+					  (without-directories (mus-expand-filename file)) 
+					  chn))
+				(list "oboe.snd" "pistol.snd" "cardinal.snd" "storm.snd")
+				'())
+		(show-smpte-label)
+		(with-level-meters 4)
+		(play)
+		(close-sound)))
 	    )
 	    ))))
 
@@ -10245,7 +10294,7 @@ EDITS: 3
 	       mus-audio-report mus-audio-sun-outputs mus-sound-max-amp mus-sound-max-amp-exists? mus-sound-open-input mus-sound-open-output
 	       mus-sound-reopen-output mus-sound-close-input mus-sound-close-output mus-sound-read mus-sound-write mus-sound-seek mus-sound-seek-frame
 	       mus-file-set-data-clipped mus-file-prescaler mus-file-set-prescaler mus-expand-filename make-sound-data sound-data-ref sound-data-set!
-	       sound-data? sound-data-length sound-data-chans sound-data->vct vct->sound-data all-pass all-pass? amplitude-modulate array->file
+	       sound-data? sound-data-length sound-data-maxamp sound-data-chans sound-data->vct vct->sound-data all-pass all-pass? amplitude-modulate array->file
 	       array-interp asymmetric-fm asymmetric-fm? buffer->frame buffer->sample buffer-empty? buffer? clear-array comb comb? contrast-enhancement
 	       convolution convolve convolve? db->linear degrees->radians delay delay? dot-product env env-interp env? file->array file->frame file->frame?
 	       file->sample file->sample? filter filter? fir-filter fir-filter? formant formant-bank formant? frame* frame+ frame->buffer frame->file
@@ -10919,6 +10968,7 @@ EDITS: 3
 			(list output-comment-hook 'output-comment-hook)
 			(list multichannel-mix-hook 'multichannel-mix-hook)
 			(list play-hook 'play-hook)
+			(list dac-hook 'dac-hook)
 			(list read-hook 'read-hook)
 			(list snd-error-hook 'snd-error-hook)
 			(list snd-warning-hook 'snd-warning-hook)
@@ -11239,4 +11289,3 @@ EDITS: 3
 ;;; (define handle (dlopen "/home/bil/snd-4/gsl-ex.so"))
 ;;; (dlinit handle "init_gsl_j0")
 ;;; (fneq (j0 1.0) 0.765)
-

@@ -218,10 +218,15 @@
 
 #if (!TIMING) && (!WITH_MCHECK)
 
+#ifdef __cplusplus
+#define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
+  XEN_NEW_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg)
+#else
 #define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
   if (Doc) \
     scm_set_procedure_property_x(XEN_NEW_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(Doc)); \
   else XEN_NEW_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg)
+#endif
 #else
 #if (TIMING)
 /* add timing calls */

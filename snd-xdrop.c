@@ -58,6 +58,9 @@ static void massage_selection(Widget w, XtPointer context, Atom *selection, Atom
 		  mix_complete_file(sp, str, origin, with_mix_tags(ss)); 
 		  FREE(origin);
 		}
+#if DEBUGGING
+	      else fprintf(stderr,"dropped %s?\n", str);
+#endif
 	    }
 	  /* value is the file name if dropped icon from filer */
 	}

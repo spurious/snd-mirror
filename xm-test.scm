@@ -246,3 +246,141 @@
 (define m (bitmap->pixmap iconw mouse_bits mouse_width mouse_height))
 !#
 
+
+
+#!
+
+(define tags (list "one" "two" "three" "four"))
+(define colors (list "red" "green" "blue" "orange"))
+(define fonts (list "fixed"
+		    "-adobe-times-bold-r-*-*-14-*-*-*-*-*-*-*"
+		    "-adobe-*-medium-i-*-*-18-*-*-*-*-*-*-*"
+		    "-*-helvetica-)-*-*-*-18-*-*-*-*-*-*-*"))
+
+(define shell (|Widget (cadr (main-widgets))))
+
+(define pixels
+  (let* ((dpy (|XtDisplay shell))
+	 (scr (|DefaultScreen dpy))
+	 (cmap (|DefaultColormap dpy scr)))
+    (map
+     (lambda (color)
+       (let ((col (|XColor)))
+	 (if (= (|XAllocNamedColor dpy cmap color col col) 0)
+	     (snd-error "can't allocate ~S" color)
+	     (|pixel col))))
+     colors)))
+
+(define tabs
+  (let ((ctr 0))
+    (map
+     (lambda (n)
+       (set! ctr (+ ctr 1))
+       (|XmTabCreate n |XmINCHES (if (= ctr 1) |XmABSOLUTE |XmRELATIVE) |XmALIGNMENT_BEGINNING "."))
+     (list 1.5 1.5 1.5 1.5))))
+
+(define tablist (|XmTabListInsertTabs #f tabs (length tabs) 0))
+(if (not (= (|XmTabListTabCount tablist) (length tabs))) 
+    (snd-print "tablist len: ~A ~A~%" (|XmTabListTabCount tablist) (length tabs)))
+
+(do ((i 0 (1+ i)))
+    ((= i (length tabs)))
+  (let ((vals (|XmTabGetValues (|XmTabListGetTab tablist i))))
+    (snd-print (format #f "~A~%" vals))))
+     
+(define rendertable (|XmRenderTableAddRenditions #f 
+						 (let ((ctr 0))
+						   (map (lambda (r)
+							  (set! ctr (+ ctr 1))
+							  (|XmRenditionCreate (|Widget (cadr (main-widgets)))
+									    r
+									    (append
+									     (if (= ctr 1)
+										 (list |XmNtabList tablist)
+										 '())
+									     (list |XmNrenditionForeground (list-ref pixels (1- ctr))
+										   |XmNfontName (list-ref fonts (1- ctr))
+										   |XmNfontType |XmFONT_IS_FONT))))
+							tags))
+						 (length tags)
+						 |XmMERGE_NEW))
+
+(snd-print (format #f "tags: ~A~%" (|XmRenderTableGetTags rendertable)))
+
+(for-each
+ (lambda (tag)
+   (let ((r (|XmRenderTableGetRendition rendertable tag)))
+     (snd-print (|XmRenditionRetrieve r
+			      (list |XmNrenditionForeground 0
+				    |XmNfontName 0
+				    |XmNfontType 0
+				    |XmNtag 0)))
+     ))
+ tags)
+
+(define (show-string n)
+  (let ((c (|XmStringInitContext n)))
+    (call-with-current-continuation
+     (lambda (done)
+       (do ((i 0 (1+ i)))
+	   (#f)
+	 (let ((type (|XmStringGetNextTriple (cadr c))))
+	   (if (= (car type) |XmSTRING_COMPONENT_TEXT)
+	       (snd-print (format #f " ~A -> ~A~%" i (cdr type)))
+	       (if (= (car type) |XmSTRING_COMPONENT_TAB)
+		   (snd-print (format #f " tab~%"))
+		   (if (= (car type) |XmSTRING_COMPONENT_END)
+		       (done #f))))))))
+    (|XmStringFreeContext (cadr c))))
+					
+(define tab (|XmStringComponentCreate |XmSTRING_COMPONENT_TAB 0 #f))
+(define row #f)
+(define table '())
+
+(let ((our-tags tags))
+  (for-each 
+   (lambda (word)
+     (let ((entry (|XmStringGenerate word
+				     #f
+				     |XmCHARSET_TEXT
+				     (car our-tags))))
+
+
+       (if row
+	   (let ((tmp (|XmStringConcat row tab)))
+	     (|XmStringFree row)
+	     (set! row (|XmStringConcatAndFree tmp entry)))
+	   (set! row entry))
+       (set! our-tags (cdr our-tags))
+       (if (null? our-tags) 
+	   (begin
+	     (set! our-tags tags)
+	     (set! table (cons row table))
+	     (set! row #f)))))
+   (list "this" "is" "a" "test" "of" "the" "renditions" "and" "rendertables" "perhaps" "all" "will" "go" "well" "and" "then" "again" "perhaps" "not")))
+
+(for-each
+ (lambda (n)
+   (show-string n))
+ table)
+
+(define (add-main-pane name type args)
+  (|XtCreateManagedWidget name type (|Widget (list-ref (main-widgets) 3)) args))
+
+(define rowcol (|XmCreateRowColumn (|Widget (list-ref (main-widgets) 3)) "rowcol" '()))
+(define lst (|XmCreateScrolledList rowcol "lst" (list |XmNitems table
+						      |XmNitemCount (length table)
+						      |XmNwidth 400
+						      |XmNvisibleItemCount (length table))))
+(|XtSetValues lst (list |XmNrenderTable rendertable)) ; why can't this be done at creation time?
+(|XtManageChild lst)
+(|XtManageChild rowcol)
+
+(define widget (|XmCreateComboBox rowcol "widget" (list |XmNcomboBoxType |XmDROP_DOWN_COMBO_BOX)))
+(for-each
+ (lambda (n)
+   (|XmComboBoxAddItem widget (|XmStringCreateLocalized n) 0 #f))
+ (list "one" "two" "three"))
+(|XmComboBoxUpdate widget)
+(|XtManageChild widget)
+!#

@@ -2168,9 +2168,18 @@ the hook.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
+<!-- stop-dac-hook -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="stopdachook">stop-dac-hook</a></em>()</code></span><td align=right><b>progn</b></td>
+<!-- --></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td colspan=2>
+<!-- -->called upon mus_audio_close (when DAC is turned off).
+<!-- --><tr><td colspan=3></td></tr>
+<!-- -->
 <!-- stop-playing-channel-hook -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="stopplayingchannelhook">stop-playing-channel-hook</a></em> (snd chn)</code></span><td align=right><b>or</b></td>
+<!-- --><span class=defbox><code><em class=def><a name="stopplayingchannelhook">stop-playing-channel-hook</a></em> (snd chn)</code></span><td align=right><b>progn</b></td>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called when a sound finishes playing.
@@ -2179,7 +2188,7 @@ the hook.
 <!-- -->
 <!-- stop-playing-hook -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="stopplayinghook">stop-playing-hook</a></em> (snd)</code></span><td align=right><b>or</b></td>
+<!-- --><span class=defbox><code><em class=def><a name="stopplayinghook">stop-playing-hook</a></em> (snd)</code></span><td align=right><b>progn</b></td>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called when a sound finishes playing.
@@ -2217,7 +2226,7 @@ the hook.
 <!-- -->
 <!-- stop-playing-region-hook -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="stopplayingregionhook">stop-playing-region-hook</a></em> (n)</code></span><td align=right><b>or</b></td>
+<!-- --><span class=defbox><code><em class=def><a name="stopplayingregionhook">stop-playing-region-hook</a></em> (n)</code></span><td align=right><b>progn</b></td>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called when a region finishes playing.
@@ -4064,7 +4073,8 @@ desired edit history position.
 <!-- --><span class=defbox><code><em class=def><a name="sndcursorfollowsplay">cursor-follows-play</a></em> (<em class=targ>snd</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->#t if cursor is following along in the sound as it plays.
+<!-- -->#t if cursor is following along in the sound as it plays.  To make this the default:<br><br>
+<!-- --><code>(add-hook! after-open-hook (lambda (sp) (set! (cursor-follows-play sp) #t)))
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -6895,6 +6905,11 @@ And an example that lets us see the result of filtering the waveform:
 <!-- --><td><a href="snd.html#editenvelope">Envelope editor</a> 'wave' button
 <!-- -->The wave shown is the time domain display, even when filtering.
 <!-- --></td></tr>
+<!-- -->
+<!-- file-save-as-dialog -->
+<!-- -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="sndfilesaveasdialog">file-save-as-dialog</a></em> () </code></span></td>
+<!-- --><td>fire up File Save-as dialog (to save the currently selected sound).</td></tr>
 <!-- -->
 <!-- help-dialog -->
 <!-- -->

@@ -793,6 +793,7 @@ static void display_vu_meter(VU *vu)
   /* if (deg < -45.0) deg = -45.0; else if (deg > 45.0) deg = 45.0; */
   rdeg = mus_degrees2radians(deg);
   nx0 = vu->center_x - (int)((Float)(vu->center_y - vu->light_y) / tan(mus_degrees2radians(deg + 90)));
+  /* not sure this is needed -- see snd-motif.scm for simpler code */
   ny0 = vu->light_y;
   nx1 = (int)(vu->center_x + 130 * size * sin(rdeg));
   ny1 = (int)(vu->center_y - 130 * size * cos(rdeg));

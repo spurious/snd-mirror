@@ -156,10 +156,10 @@
 (use-modules (ice-9 common-list))
 
 (define inset-width .2)
-(define inset-height .15)
+(define inset-height .25)
 
 (define (make-current-window-display)
-  ;; TODO: make this work right with combined channels etc 
+
   (let ((envelopes '()))
     ;; keep track of already-computed envelopes
 
@@ -195,35 +195,40 @@
 
     (define (display-current-window-location snd chn)
       "display in upper right corner the overall current sound and where the current window fits in it"
-      (let* ((grf-size (widget-size (car (channel-widgets snd chn))))
-	     (grf-width (car grf-size))
+      (let* ((axinf (axis-info snd chn))
+	     (grf-width (list-ref axinf 12))
 	     (width (inexact->exact (* inset-width grf-width)))
 	     (x-offset (inexact->exact (- grf-width width)))
-	     (grf-height (cadr grf-size))
+	     (grf-height (- (list-ref axinf 11) (list-ref axinf 13)))
 	     (height (inexact->exact (* inset-height grf-height)))
-	     (y-offset (/ height 2))
+	     (chan-offset (- (list-ref axinf 13) 10))
+	     (y-offset (+ chan-offset (inexact->exact (/ height 2))))
+	     (grf-chn (if (= (channel-style snd) channels-separate) chn 0))
 	     (data0 #f)
 	     (data1 #f))
 
 	(if (and (> width 10)
 		 (> height 10)
-		 (> (frames snd chn) 0))
+		 (> (frames snd chn) 0)
+		 (or (= chn 0)
+		     (not (= (channel-style snd) channels-superimposed))))
 	    (begin
 	      
 	      ;; draw axes around the inset graph
-	      (fill-rectangle x-offset height width 2 snd chn)
-	      (fill-rectangle x-offset 0 2 height snd chn)
+	      (fill-rectangle x-offset (+ chan-offset height) width 2 snd grf-chn)
+	      (fill-rectangle x-offset chan-offset 2 height snd grf-chn)
 	      
 	      ;; now show where the current window fits in this graph
 	      (let ((rx (inexact->exact (* width (/ (right-sample snd chn) (frames snd chn)))))
 		    (lx (inexact->exact (* width (/ (left-sample snd chn) (frames snd chn))))))
-		(fill-rectangle (+ x-offset lx) 0 (max 1 (- rx lx)) height snd chn selection-context))
+		(fill-rectangle (+ x-offset lx) chan-offset (max 1 (- rx lx)) height snd grf-chn selection-context))
 	      
 	      (let ((old-env (channel-envelope snd chn)))
 		(if (and old-env
 			 (= width (car old-env))
 			 (= height (cadr old-env))
-			 (= (edit-position snd chn) (caddr old-env)))
+			 (= y-offset (list-ref old-env 5))
+			 (= (edit-position snd chn) (list-ref old-env 2)))
 		    (begin
 		      (set! data0 (list-ref old-env 3))
 		      (set! data1 (list-ref old-env 4)))
@@ -289,25 +294,32 @@
 				    (vector-set! data0 (+ j 1) (inexact->exact (- y-offset (* (vct-ref (car data) i) data-scaler))))
 				    (vector-set! data1 j (inexact->exact xj))
 				    (vector-set! data1 (+ j 1) (inexact->exact (- y-offset (* (vct-ref (cadr data) i) data-scaler)))))))))
-		      (set! (channel-envelope snd chn) (list width height (edit-position snd chn) data0 data1)))))
+		      (set! (channel-envelope snd chn) (list width height (edit-position snd chn) data0 data1 y-offset)))))
 	      
-	      (draw-lines data0 snd chn)
-	      (if data1 (draw-lines data1 snd chn))))))
+	      (draw-lines data0 snd grf-chn)
+	      (if data1 (draw-lines data1 snd grf-chn))))))
 
     (define (click-current-window-location snd chn button state x y axis)
       (if (= axis time-graph)
-	  (let* ((grf-size (widget-size (car (channel-widgets snd chn))))
-		 (grf-width (car grf-size))
+	  (let* ((axinf (axis-info snd chn))
+		 (grf-width (list-ref axinf 12))
 		 (width (inexact->exact (* inset-width grf-width)))
 		 (x-offset (inexact->exact (- grf-width width)))
-		 (grf-height (cadr grf-size))
-		 (height (inexact->exact (* inset-height grf-height))))
+		 (grf-height (- (list-ref axinf 11) (list-ref axinf 13)))
+		 (height (inexact->exact (* inset-height grf-height)))
+		 (chan-offset (- (list-ref axinf 13) 10))
+		 (y-offset (+ chan-offset (inexact->exact (/ height 2)))))
 	    (if (and (> width 0)
 		     (>= x x-offset)
-		     (<= y height))
+		     (<= x grf-width)
+		     (>= y chan-offset)
+		     (<= y (+ chan-offset height)))
 		(let ((samp (inexact->exact (* (frames snd chn) (/ (- x x-offset) width)))))
 		  (set! (cursor snd chn) samp)
-		  (set! (right-sample snd chn) (max 0 (- samp (inexact->exact (* .5 (- (left-sample snd chn) (right-sample snd chn)))))))
+		  (set! (right-sample snd chn) 
+			(max 0 
+			     (min (frames snd chn)
+				  (- samp (inexact->exact (* .5 (- (left-sample snd chn) (right-sample snd chn))))))))
 		  (update-time-graph)
 		  #t)
 	    #f))

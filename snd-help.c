@@ -253,6 +253,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+13-Aug:  stop-dac-hook, file-save-as-dialog.\n\
 10-Aug:  make-level-meter, with-level-meters in snd-motif.scm.\n\
          added dac-hook, sound-data-maxamp.\n\
 9-Aug:   show-smpte-label in snd-motif.scm.\n\
@@ -276,14 +277,6 @@ void news_help(snd_state *ss)
          removed snd-gtk.scm (guile-gtk is no longer supported).\n\
          removed add/remove-idler/input.\n\
 23-Jul:  xm.c (Motif module).\n\
-12-Jul:  ALSA 0.9 support from Fernando.\n\
-9-Jul:   xen.c, xen.html.\n\
-6-Jul:   sg.h, sl.h, noguile.h, sr.h, sz.h -> xen.h.\n\
-         snd-scm.c, clm2scm.[ch], sndlib2scm.[ch] -> xen for scm.\n\
-         many internal name changes to change scm to xen.\n\
-5-Jul:   Ruby support.\n\
-3-Jul:   added -b (-batch) switch for scripts.\n\
-         snd-4 compatibility names are no longer built-in (use snd4.scm).\n\
 ",
 NULL);
   FREE(info);

@@ -283,8 +283,8 @@ void set_button_label_normal(Widget button, const char *str)
   s1 = XmStringCreate((char *)str, "button_font");
 #if (USE_RENDITIONS)
   XtVaSetValues(button, 
-		XmNlabelString, s1, 
 		XmNrenderTable, BUTTON_FONT(get_global_state()), 
+		XmNlabelString, s1, 
 		NULL);
 #else
   XtVaSetValues(button, XmNlabelString, s1, NULL);
@@ -298,8 +298,8 @@ void set_button_label_bold(Widget button, const char *str)
   s1 = XmStringCreate((char *)str, "bold_button_font");
 #if (USE_RENDITIONS)
   XtVaSetValues(button, 
-		XmNlabelString, s1,
 		XmNrenderTable, BOLD_BUTTON_FONT(get_global_state()), 
+		XmNlabelString, s1,
 		NULL);
 #else
   XtVaSetValues(button, XmNlabelString, s1, NULL);

@@ -15,6 +15,7 @@
 ;;; (make-sound-box name parent select-func peak-func sounds args) makes a box of sound icons
 ;;; (show-smpte-label on-or-off) shows the current SMPTE frame number
 ;;; (make-level-meter parent width height args), (display-level data), (with-level-meters n) -- VU meters
+;;; (make-channel-drop-site snd chn) -- add a drop site
 
 (use-modules (ice-9 common-list))
 
@@ -79,8 +80,7 @@
 			   (|XtSetValues widget
 					 (list |XmNfileListItems fileTable
 					       |XmNfileListItemCount (length files)
-					       |XmNlistUpdated #t))
-			   (|XmStringTableFree fileTable (length files)))))))
+					       |XmNlistUpdated #t)))))))
 
 
 
@@ -954,7 +954,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 
 ;;; -------- add-selection-popup --------
 ;;;
-;;; if pointer is in selected portion, a different popup menu is posted if button 3
+;;; specialize popup menu 
 
 (define (make-popup-menu name parent top-args entries)
   (let ((menu (|XmCreatePopupMenu parent name top-args)))
@@ -970,16 +970,17 @@ Reverb-feedback sets the scaler on the feedback.\n\
      entries)
     menu))
 
+(define (change-label w new-label)
+  (let ((str (|XmStringCreateLocalized new-label)))
+    (|XtSetValues w (list |XmNlabelString str))
+    (|XmStringFree str)))
+      
 (define selection-popup-menu 
+  ;; used in graph if pointer is inside selected portion
   (let ((every-menu (list |XmNbackground (|Pixel (snd-pixel (highlight-color)))))
 	(stopping #f)
 	(stop-widget #f))
 
-    (define (change-label w new-label)
-      (let ((str (|XmStringCreateLocalized new-label)))
-	(|XtSetValues w (list |XmNlabelString str))
-	(|XmStringFree str)))
-      
     (add-hook! stop-playing-hook
 	       (lambda (snd) 
 		 (if stopping
@@ -993,56 +994,147 @@ Reverb-feedback sets the scaler on the feedback.\n\
      (|Widget (caddr (main-widgets)))
      (list |XmNpopupEnabled #t
 	   |XmNbackground (|Pixel (snd-pixel (highlight-color))))
-   (list
-    (list "Selection" |xmLabelWidgetClass      every-menu)
-    (list "sep"       |xmSeparatorWidgetClass  every-menu)
-    (list "Play"      |xmPushButtonWidgetClass every-menu 
-	  (lambda (w c i) 
-	    (if stopping
-		(begin
-		  (set! stopping #f)
-		  (change-label w "Play")
-		  (stop-playing))
-		(begin
-		  (change-label w "Stop playing")
-		  (set! stop-widget w)
-		  (set! stopping #t)
-		  (play-selection)))))
-    (list "Delete"    |xmPushButtonWidgetClass every-menu (lambda (w c i) (delete-selection)))
-    (list "Zero"      |xmPushButtonWidgetClass every-menu (lambda (w c i) (scale-selection-by 0.0)))
-    (list "Crop"      |xmPushButtonWidgetClass every-menu
-	  (lambda (w c i)
-	    ;; delete everything except selection
-	    (for-each
-	     (lambda (selection)
-	       (as-one-edit
-		(lambda ()
-		  (let* ((snd (car selection))
-			 (chn (cadr selection))
-			 (beg (selection-position snd chn))
-			 (len (selection-length snd chn)))
-		    (if (> beg 0) 
-			(delete-samples 0 beg snd chn))
-		    (if (< len (frames snd chn))
-			(delete-samples (+ len 1) (- (frames snd chn) len) snd chn))))))
-	     (let ((sndlist '()))
-	       (map (lambda (snd)
-		      (do ((i (1- (channels snd)) (1- i)))
-			  ((< i 0))
-			(if (selection-member? snd i)
-			    (set! sndlist (cons (list snd i) sndlist)))))
-		    (sounds))
-	       sndlist))))
-    (list "Save as"   |xmPushButtonWidgetClass every-menu (lambda (w c i) (edit-save-as-dialog)))
-    (list "Copy->New" |xmPushButtonWidgetClass every-menu 
-	  (let ((selctr 0)) 
+     (list
+      (list "Selection" |xmLabelWidgetClass      every-menu)
+      (list "sep"       |xmSeparatorWidgetClass  every-menu)
+      (list "Play"      |xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i) 
-	      (let ((new-file-name (format #f "newf-~D.snd" selctr)))
-		(set! selctr (+ selctr 1))
-		(save-selection new-file-name)
-		(open-sound new-file-name)))))
-    (list "Reverse"   |xmPushButtonWidgetClass every-menu (lambda (w c i) (reverse-selection)))
-    (list "Invert"    |xmPushButtonWidgetClass every-menu (lambda (w c i) (scale-selection-by -1)))))))
+	      (if stopping
+		  (begin
+		    (set! stopping #f)
+		    (change-label w "Play")
+		    (stop-playing))
+		  (begin
+		    (change-label w "Stop playing")
+		    (set! stop-widget w)
+		    (set! stopping #t)
+		    (play-selection)))))
+      (list "Delete"    |xmPushButtonWidgetClass every-menu (lambda (w c i) (delete-selection)))
+      (list "Zero"      |xmPushButtonWidgetClass every-menu (lambda (w c i) (scale-selection-by 0.0)))
+      (list "Crop"      |xmPushButtonWidgetClass every-menu
+	    (lambda (w c i)
+	      ;; delete everything except selection
+	      (for-each
+	       (lambda (selection)
+		 (as-one-edit
+		  (lambda ()
+		    (let* ((snd (car selection))
+			   (chn (cadr selection))
+			   (beg (selection-position snd chn))
+			   (len (selection-length snd chn)))
+		      (if (> beg 0) 
+			  (delete-samples 0 beg snd chn))
+		      (if (< len (frames snd chn))
+			  (delete-samples (+ len 1) (- (frames snd chn) len) snd chn))))))
+	       (let ((sndlist '()))
+		 (map (lambda (snd)
+			(do ((i (1- (channels snd)) (1- i)))
+			    ((< i 0))
+			  (if (selection-member? snd i)
+			      (set! sndlist (cons (list snd i) sndlist)))))
+		      (sounds))
+		 sndlist))))
+      (list "Save as"   |xmPushButtonWidgetClass every-menu (lambda (w c i) (edit-save-as-dialog)))
+      (list "Copy->New" |xmPushButtonWidgetClass every-menu 
+	    (let ((selctr 0)) 
+	      (lambda (w c i) 
+		(let ((new-file-name (format #f "newf-~D.snd" selctr)))
+		  (set! selctr (+ selctr 1))
+		  (save-selection new-file-name)
+		  (open-sound new-file-name)))))
+      (list "Reverse"   |xmPushButtonWidgetClass every-menu (lambda (w c i) (reverse-selection)))
+      (list "Invert"    |xmPushButtonWidgetClass every-menu (lambda (w c i) (scale-selection-by -1)))))))
+
+
+(define graph-popup-snd #f)
+(define graph-popup-chn #f)
+
+(define graph-popup-menu 
+  ;; used within graph if pointer is not inside selected portion
+  (let ((every-menu (list |XmNbackground (|Pixel (snd-pixel (highlight-color))))))
+    (make-popup-menu 
+     "graph-popup"
+     (|Widget (caddr (main-widgets)))
+     (list |XmNpopupEnabled #t
+	   |XmNbackground (|Pixel (snd-pixel (highlight-color))))
+     (list
+
+      (list "Snd"                |xmLabelWidgetClass      every-menu) 
+      (list "sep"                |xmSeparatorWidgetClass  every-menu)
+      ;; TODO: stop-playing in graph-popup-menu
+      (list "Play"               |xmPushButtonWidgetClass every-menu 
+	    (lambda (w c i)
+	      (play 0 graph-popup-snd)))
+      (list "Play channel"       |xmPushButtonWidgetClass every-menu 
+	    (lambda (w c i)
+	      (play 0 graph-popup-snd graph-popup-chn)))
+      (list "Play from cursor"   |xmPushButtonWidgetClass every-menu 
+	    (lambda (w c i)
+	      (play (cursor graph-popup-snd graph-popup-chn) graph-popup-snd)))
+      (list "Undo"               |xmPushButtonWidgetClass every-menu 
+	    (lambda (w c i)
+	      (undo 1 graph-popup-snd graph-popup-chn)))
+      (list "Redo"               |xmPushButtonWidgetClass every-menu 
+	    (lambda (w c i)
+	      (redo 1 graph-popup-snd graph-popup-chn)))
+      (list "Revert"             |xmPushButtonWidgetClass every-menu 
+	    (lambda (w c i)
+	      (revert-sound graph-popup-snd)))
+      (list "Save"               |xmPushButtonWidgetClass every-menu 
+	    (lambda (w c i)
+	      (save-sound graph-popup-snd)))
+      (list "Save as"            |xmPushButtonWidgetClass every-menu 
+	    (lambda (w c i)
+	      (select-sound graph-popup-snd)
+	      (file-save-as-dialog)))
+      (list "Mix selection"      |xmPushButtonWidgetClass every-menu 
+	    (lambda (w c i)
+	      (mix-selection (cursor graph-popup-snd graph-popup-chn) graph-popup-snd graph-popup-chn)))
+      (list "Insert selection"   |xmPushButtonWidgetClass every-menu 
+	    (lambda (w c i)
+	      (insert-selection (cursor graph-popup-snd graph-popup-chn) graph-popup-snd graph-popup-chn)))
+      (list "Equalize panes"     |xmPushButtonWidgetClass every-menu 
+	    (lambda (w c i)
+	      (equalize-panes graph-popup-snd)))
+      (list "Info"               |xmPushButtonWidgetClass every-menu 
+	    (lambda (w c i)
+	      (let ((snd graph-popup-snd))
+		(help-dialog 
+		 (format #f "~A info" (file-name snd))
+		 (format #f "~A:~%  chans: ~D~%  srate: ~D~%  header: ~A~%  data format: ~A~%  length: ~1,3F~%"
+			(short-file-name snd)
+			(chans snd)
+			(srate snd)
+			(mus-header-type-name (header-type snd))
+			(mus-data-format-name (data-format snd))
+			(/ (frames snd graph-popup-chn) (srate snd)))))))
+      ))))
+
+(define (edit-graph-popup-menu snd chn)
+  ;; hide otiose entries, relabel others
+  (let ((eds (edits snd chn)))
+    (set! graph-popup-snd snd)
+    (set! graph-popup-chn chn)
+    (for-each-child
+     graph-popup-menu
+     (lambda (w)
+       (let ((name (|XtName w)))
+	 (if (string=? name "Snd")
+	     (change-label w (format #f "~A[~D]" (short-file-name snd) chn))
+	     (if (or (string=? name "Save")
+		     (string=? name "Undo")
+		     (string=? name "Revert"))
+		 ((if (> (car eds) 0) |XtManageChild |XtUnmanageChild) w)
+		 (if (or (string=? name "Equalize panes")
+			 (string=? name "Play channel"))
+		     ((if (> (chans snd) 1) |XtManageChild |XtUnmanageChild) w)
+		     (if (string=? name "Redo")
+			 ((if (> (cadr eds) 0) |XtManageChild |XtUnmanageChild) w)
+			 (if (or (string=? name "Mix selection")
+				 (string=? name "Insert selection"))
+			     ((if (selection?) |XtManageChild |XtUnmanageChild) w)
+			     (if (string=? name "Play from cursor")
+				 ((if (> (cursor snd chn) 0) |XtManageChild |XtUnmanageChild) w))))))))))))
 
 (define (add-selection-popup)
   (let ((popups '()))
@@ -1059,9 +1151,9 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	(do ((chn 0 (1+ chn)))
 	    ((= chn (chans snd)))
 	  (if (not (find-popup snd chn popups))
-	      (begin
+	      (let ((chn-grf (|Widget (car (channel-widgets snd chn)))))
 		(set! popups (cons (list snd chn) popups))
-		(|XtAddCallback (|Widget (car (channel-widgets snd chn))) |XmNpopupHandlerCallback 
+		(|XtAddCallback chn-grf |XmNpopupHandlerCallback 
 		  (lambda (w data info)
 		    (if (selection?)
 			(let* ((e (|event info))
@@ -1070,9 +1162,15 @@ Reverb-feedback sets the scaler on the feedback.\n\
 			       (xe (- (|x_root e) (car (|XtTranslateCoords w 0 0)))))
 			  (if (and (>= xe (x->position beg snd chn))
 				   (<= xe (x->position end snd chn)))
-			      (set! (|menuToPost info) selection-popup-menu)))))))))))))
+			      (set! (|menuToPost info) selection-popup-menu)
+			      (begin
+				(edit-graph-popup-menu snd chn)
+				(set! (|menuToPost info) graph-popup-menu))))
+			(begin
+			  (edit-graph-popup-menu snd chn)
+			  (set! (|menuToPost info) graph-popup-menu))))))))))))
 
-;(add-selection-popup)
+(add-selection-popup)
 
 (define (change-selection-popup-color new-color)
   ;; new-color can be the color name, an xm Pixel, a snd color, or a list of rgb values (as in Snd's make-color)
@@ -1605,18 +1703,61 @@ Reverb-feedback sets the scaler on the feedback.\n\
 			  (list-set! meter 1 0.0)
 			  (begin
 			    (list-set! meter 1 (car maxes))
-			    (set! maxes (cdr maxes))))
-		      (display-level meter))
+			    (display-level meter)
+			    (set! maxes (cdr maxes)))))
 		    (reverse meter-list)))))
-    ;; TODO: need trailing timed calls to clear bubble
-    ;; TODO: retrofit the xrec junk
-    ;; TODO: test this on a slow machine
-    (|XtSetValues meters (list |XmNpaneMinimum 1))))
+    (add-hook! stop-dac-hook
+	       (lambda () ; drain away the bubble
+		 (|XtAppAddWorkProc (|XtAppContext (car (main-widgets)))
+				    (let ((ctr 0))
+				      (lambda (ignored)
+					(for-each 
+					 (lambda (meter)
+					   (list-set! meter 1 0.0)
+					   (display-level meter))
+					 meter-list)
+					(set! ctr (+ ctr 1))
+					(> ctr 200))))))
+    (|XtSetValues meters (list |XmNpaneMinimum 1))
+    meter-list))
 
 
 
+;;; -------- add a drop site
+;;;
+;;; this adds a pane to the current channel which can respond to drag-and-drop operations
+;;;   (this is a Motif 1.2 style drop -- I've had trouble getting the new style to work at all)
 
-
+(define make-channel-drop-site
+  (lambda args
+  (let* ((snd (if (> (length args) 0) (car args) (selected-sound)))
+	 (chn (selected-channel snd))
+	 (widget (add-channel-pane snd chn "drop here" |xmDrawingAreaWidgetClass
+		  (list |XmNbackground (white-pixel)
+                        |XmNleftAttachment      |XmATTACH_FORM
+		        |XmNrightAttachment     |XmATTACH_FORM
+		        |XmNtopAttachment       |XmATTACH_FORM
+		        |XmNbottomAttachment    |XmATTACH_FORM))))
+    (|XmDropSiteRegister
+     widget 
+     (list |XmNdropSiteOperations |XmDROP_COPY
+	   |XmNimportTargets (list |XA_STRING) ; list of Atoms we can deal with -- in this case, just strings
+	   |XmNnumImportTargets 1
+	   |XmNdropProc (lambda (w c i)
+			  ;; i is the callback data (XmDropProcCallbackStruct), c is always #f
+			  (if (or (not (= (|dropAction i) |XmDROP))
+				  (not (= (|operation i) |XmDROP_COPY)))
+			      (set! (|dropSiteStatus i) |XmINVALID_DROP_SITE)
+			      (begin
+				(set! (|operation i) |XmDROP_COPY) ; tell system drop has succeeded
+				(|XmDropTransferStart 
+				  (|dragContext i)
+				  (list |XmNdropTransfers (list (list |XA_STRING w)) ; list of lists of Atoms/our-data
+					|XmNnumDropTransfers 1
+					|XmNtransferProc (lambda (w context selection type val len fmt)
+							   ;; the actual in-coming string (properly terminated in xm.c) is 'value'
+							   (snd-print (format #f "got: ~A ~A ~A ~A ~A ~A ~A~%"
+									      w context selection type val len fmt)))))))))))))
 
 
 
@@ -1627,8 +1768,6 @@ Reverb-feedback sets the scaler on the feedback.\n\
 ;;; bess-translations
 ;;; separate chan amp controls (from snd-gtk.scm)
 ;;; specialized popup for enved, listener, fft-window (channel), lisp-window
-;;;   toss info from main popup
-;;;   if selection, but not in it, add append/mix etc
 ;;; cue-list as mix set?
 ;;; midi trigger
 ;;; save/restore -separate window details

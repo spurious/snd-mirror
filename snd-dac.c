@@ -1095,24 +1095,24 @@ static void stop_playing_with_toggle(dac_info *dp, int toggle)
   if (dp->region >= 0)
     {
       if (XEN_HOOKED(stop_playing_region_hook))
-	g_c_run_or_hook(stop_playing_region_hook,
-			XEN_LIST_1(C_TO_SMALL_XEN_INT(dp->region)),
-			S_stop_playing_region_hook);
+	g_c_run_progn_hook(stop_playing_region_hook,
+			   XEN_LIST_1(C_TO_SMALL_XEN_INT(dp->region)),
+			   S_stop_playing_region_hook);
     }
   else
     {
       if (sp_stopping)
 	{
 	  if (XEN_HOOKED(stop_playing_hook))
-	    g_c_run_or_hook(stop_playing_hook,
-			    XEN_LIST_1(C_TO_SMALL_XEN_INT(sp->index)),
-			    S_stop_playing_hook);
+	    g_c_run_progn_hook(stop_playing_hook,
+			       XEN_LIST_1(C_TO_SMALL_XEN_INT(sp->index)),
+			       S_stop_playing_hook);
 	}
       if (XEN_HOOKED(stop_playing_channel_hook))
-	g_c_run_or_hook(stop_playing_channel_hook,
-			XEN_LIST_2(C_TO_SMALL_XEN_INT(sp->index),
-				   C_TO_SMALL_XEN_INT(cp->chan)),
-			S_stop_playing_channel_hook);
+	g_c_run_progn_hook(stop_playing_channel_hook,
+			   XEN_LIST_2(C_TO_SMALL_XEN_INT(sp->index),
+				      C_TO_SMALL_XEN_INT(cp->chan)),
+			   S_stop_playing_channel_hook);
       if (sp->index < 0) {free_player(sp); sp = NULL;}
     }
   free_dac_info(dp);
@@ -1531,11 +1531,16 @@ static MUS_SAMPLE_TYPE local_next_sample_unscaled(snd_fd *sf)
 }
 
 static XEN dac_hook;
+static XEN stop_dac_hook;
 static XEN sdobj = XEN_FALSE;
 static void cleanup_dac_hook(void)
 {
   if (!(XEN_FALSE_P(sdobj)))
     {
+      if (XEN_HOOKED(stop_dac_hook))
+	g_c_run_progn_hook(stop_dac_hook, 
+			   XEN_EMPTY_LIST,
+			   S_stop_dac_hook);
       snd_unprotect(sdobj);
       sdobj = XEN_FALSE;
     }
@@ -2908,6 +2913,7 @@ void g_init_dac(void)
   #define H_start_playing_hook S_start_playing_hook " (snd) is called when a play request is triggered. \
 If it returns #t, the sound is not played."
   #define H_dac_hook S_dac_hook " (sdobj) called just before data is sent to DAC passing data as sound-data object"
+  #define H_stop_dac_hook S_stop_dac_hook " () called upon mus_audio_close (when DAC is turned off)"
 
   XEN_DEFINE_HOOK(stop_playing_hook, S_stop_playing_hook, 1, H_stop_playing_hook);                         /* arg = sound */
   XEN_DEFINE_HOOK(stop_playing_channel_hook, S_stop_playing_channel_hook, 2, H_stop_playing_channel_hook); /* args = sound channel */
@@ -2915,6 +2921,7 @@ If it returns #t, the sound is not played."
   XEN_DEFINE_HOOK(start_playing_hook, S_start_playing_hook, 1, H_start_playing_hook);                      /* arg = sound */
   XEN_DEFINE_HOOK(play_hook, S_play_hook, 1, H_play_hook);                                                 /* args = size */
   XEN_DEFINE_HOOK(dac_hook, S_dac_hook, 1, H_dac_hook);                                                    /* args = data as sound_data obj */
+  XEN_DEFINE_HOOK(stop_dac_hook, S_stop_dac_hook, 0, H_stop_dac_hook);                                     /* no args */
 
   g_make_reverb = XEN_FALSE;
   g_reverb = XEN_FALSE;

@@ -354,6 +354,7 @@ void make_open_file_dialog(snd_state *ss, int read_only, int managed);
 void g_initialize_xgfile(void);
 void set_open_file_play_button(int val);
 void make_edit_save_as_dialog(snd_state *ss);
+void make_file_save_as_dialog(snd_state *ss);
 
 
 /* -------- snd-xenv.c -------- */
