@@ -2000,7 +2000,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
       (if (> max-samp 1.0) (set! (y-bounds snd chn) (list (- max-samp) max-samp)))
       max-samp)))
   
-;;; TODO: finish effects origins: jcrev place-sound cross-synthesis
+;;; TODO: finish effects origins: jcrev cross-synthesis
 ;;; TODO: make effects optimizable throughout
 
 
@@ -2288,6 +2288,25 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
     (free-sample-reader sf)
     (vct->channel out-data beg len snd chn #f
 		  (format #f "effects-fp ~A ~A ~A ~A ~A" srf osamp osfrq beg (if (= len (frames snd chn)) #f len)))))
+
+(define* (effects-position-sound mono-snd pos #:optional snd chn)
+  (let ((len (frames mono-snd))
+	(reader1 (make-sample-reader 0 mono-snd)))
+    (if (number? pos)
+	(map-channel (lambda (y)
+		       (+ y (* pos (read-sample reader1))))
+		     0 len snd chn #f
+		     (format #f "effects-position-sound ~A ~A" mono-snd pos))
+	(let ((e1 (make-env pos :end (1- len))))
+	  (if (and (number? chn) (= chn 1))
+	      (map-channel (lambda (y)
+			     (+ y (* (env e1) (read-sample reader1))))
+			   0 len snd chn #f
+			   (format #f "effects-position-sound ~A '~A" mono-snd pos))
+	      (map-channel (lambda (y)
+			     (+ y (* (- 1.0 (env e1)) (read-sample reader1))))
+			   0 len snd chn #f
+			   (format #f "effects-position-sound ~A '~A" mono-snd pos)))))))
     
 (define* (effects-flange amount speed time #:optional beg dur snd chn)
   (let* ((ri (make-rand-interp :frequency speed :amplitude amount))
@@ -2329,25 +2348,12 @@ it into two copies whose amplitudes depend on the envelope 'pan-env'.  If 'pan-e
 a number, the sound is split such that 0 is all in channel 0 and 90 is all in channel 1."
       (let ((len (frames mono-snd)))
 	(if (number? pan-env)
-	    (let* ((pos (/ pan-env 90.0))
-		   (reader0 (make-sample-reader 0 mono-snd))
-		   (reader1 (make-sample-reader 0 mono-snd)))
-	      (map-channel (lambda (y)
-			     (+ y (* pos (read-sample reader1))))
-			   0 len stereo-snd 1)
-	      (map-channel (lambda (y)
-			     (+ y (* (- 1.0 pos) (read-sample reader0))))
-			   0 len stereo-snd 0))
-	    (let ((e0 (make-env pan-env :end (1- len)))
-		  (e1 (make-env pan-env :end (1- len)))
-		  (reader0 (make-sample-reader 0 mono-snd))
-		  (reader1 (make-sample-reader 0 mono-snd)))
-	      (map-channel (lambda (y)
-			     (+ y (* (env e1) (read-sample reader1))))
-			   0 len stereo-snd 1)
-	      (map-channel (lambda (y)
-			     (+ y (* (- 1.0 (env e0)) (read-sample reader0))))
-			   0 len stereo-snd 0)))))
+	    (let* ((pos (/ pan-env 90.0)))
+	      (effects-position-sound mono-snd pos stereo-snd 1)
+	      (effects-position-sound mono-snd (- 1.0 pos) stereo-snd 0))
+	    (begin
+	      (effects-position-sound mono-snd pan-env stereo-snd 1)
+	      (effects-position-sound mono-snd pan-env stereo-snd 0)))))
     
     (define (post-place-sound-dialog)
       (if (not (Widget? place-sound-dialog))
