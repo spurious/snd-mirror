@@ -1195,7 +1195,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		}
 	      break;
 	    case snd_K_Y: case snd_K_y: 
-	      paste_region(stack_position_to_id(0), cp, "C-y");
+	      paste_region(region_list_position_to_id(0), cp, "C-y");
 	      break;
 	    case snd_K_Z: case snd_K_z: 
 	      cp->cursor_on = true; 

@@ -38,7 +38,7 @@ void reflect_no_regions_in_region_browser(void)
 static void region_update_graph(chan_info *cp)
 {
   if (current_region == -1) return;
-  rsp->nchans = region_chans(stack_position_to_id(current_region));
+  rsp->nchans = region_chans(region_list_position_to_id(current_region));
   if (rsp->nchans == 0) return;
   update_graph(cp);
   rsp->nchans = 1;
@@ -98,7 +98,7 @@ static void make_region_labels(file_info *hdr)
   set_label(reg_chntxt, str);
   mus_snprintf(str, PRINT_BUFFER_SIZE, _("length: %.3f"), (float)((double)(hdr->samples) / (float)(hdr->chans * hdr->srate)));
   set_label(reg_lentxt, str);
-  mus_snprintf(str, PRINT_BUFFER_SIZE, _("maxamp: %.3f"), region_maxamp(stack_position_to_id(current_region)));
+  mus_snprintf(str, PRINT_BUFFER_SIZE, _("maxamp: %.3f"), region_maxamp(region_list_position_to_id(current_region)));
   set_label(reg_maxtxt, str);
   FREE(str);
 }
@@ -137,7 +137,7 @@ void update_region_browser(bool grf_too)
 	  cp->sound = rsp;
 	  cp->chan = 0;
 	  set_sensitive(channel_f(cp), false);
-	  set_sensitive(channel_w(cp), (region_chans(stack_position_to_id(0)) > 1));
+	  set_sensitive(channel_w(cp), (region_chans(region_list_position_to_id(0)) > 1));
 	  rsp->hdr = fixup_region_data(cp, 0, 0);
 	  make_region_labels(rsp->hdr);
 	  region_update_graph(cp);
@@ -164,7 +164,7 @@ void delete_region_and_update_browser(int pos)
 {
   int act;
   unhighlight_region();
-  act = remove_region_from_stack(pos);
+  act = remove_region_from_list(pos);
   if (act == INVALID_REGION) return;
   if (region_dialog)
     {
@@ -211,11 +211,11 @@ static void region_down_arrow_callback(Widget w, XtPointer context, XtPointer in
   chan_info *cp;
   cp = rsp->chans[0];
   cp->sound = rsp;
-  if ((cp->chan + 1) < region_chans(stack_position_to_id(current_region)))
+  if ((cp->chan + 1) < region_chans(region_list_position_to_id(current_region)))
     {
       cp->chan++;
       set_sensitive(channel_f(cp), true);
-      set_sensitive(channel_w(cp), (region_chans(stack_position_to_id(current_region)) > (cp->chan + 1)));
+      set_sensitive(channel_w(cp), (region_chans(region_list_position_to_id(current_region)) > (cp->chan + 1)));
       fixup_region_data(cp, cp->chan, current_region);
       region_update_graph(cp);
     }
@@ -226,14 +226,14 @@ static void region_focus_callback(Widget w, XtPointer context, XtPointer info)
   chan_info *cp;
   regrow *r = (regrow *)context;
   unhighlight_region();
-  if (stack_position_to_id(r->pos) == INVALID_REGION) return; /* needed by auto-tester */
+  if (region_list_position_to_id(r->pos) == INVALID_REGION) return; /* needed by auto-tester */
   current_region = r->pos;
   cp = rsp->chans[0];
   cp->sound = rsp;
   cp->chan  = 0;
   highlight_region();
   set_sensitive(channel_f(cp), false);
-  set_sensitive(channel_w(cp), (region_chans(stack_position_to_id(current_region)) > 1));
+  set_sensitive(channel_w(cp), (region_chans(region_list_position_to_id(current_region)) > 1));
   rsp->hdr = fixup_region_data(cp, 0, current_region);
   if (rsp->hdr == NULL) return;
   make_region_labels(rsp->hdr);
@@ -246,7 +246,7 @@ void reflect_play_region_stop(int n)
   regrow *rg;
   if (region_rows)
     {
-      rg = region_row(id_to_stack_position(n));
+      rg = region_row(region_id_to_list_position(n));
       if (rg) XmToggleButtonSetState(rg->pl, false, false);
     }
 }
@@ -255,8 +255,8 @@ static void region_play_callback(Widget w, XtPointer context, XtPointer info)
 {
   regrow *r = (regrow *)context;
   if (XmToggleButtonGetState(r->pl))
-    play_region(stack_position_to_id(r->pos), IN_BACKGROUND);
-  else stop_playing_region(stack_position_to_id(r->pos));
+    play_region(region_list_position_to_id(r->pos), IN_BACKGROUND);
+  else stop_playing_region(region_list_position_to_id(r->pos));
 }
 
 static void region_print_callback(Widget w, XtPointer context, XtPointer info) 
@@ -449,7 +449,7 @@ static void make_region_dialog(void)
   XtManageChild(region_dialog);
   if (widget_width(region_dialog) < 400) set_widget_width(region_dialog, 400);
 
-  id = stack_position_to_id(0);
+  id = region_list_position_to_id(0);
   rsp = make_simple_channel_display(region_srate(id), region_len(id), WITH_ARROWS, region_graph_style(ss), region_grf, false);
   rsp->inuse = SOUND_REGION;
   current_region = 0;
@@ -469,7 +469,7 @@ static void make_region_dialog(void)
   XtAddCallback(channel_f(cp), XmNactivateCallback, region_up_arrow_callback, NULL);
   XtAddCallback(channel_w(cp), XmNactivateCallback, region_down_arrow_callback, NULL);
   set_sensitive(channel_f(cp), false);
-  if (region_chans(stack_position_to_id(0)) > 1) set_sensitive(channel_w(cp), true);
+  if (region_chans(region_list_position_to_id(0)) > 1) set_sensitive(channel_w(cp), true);
   cp->chan = 0;
   rsp->hdr = fixup_region_data(cp, 0, 0);
   make_region_labels(rsp->hdr);

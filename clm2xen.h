@@ -11,7 +11,6 @@ typedef struct {
 
 #define XEN_TO_MUS_XEN(arg) ((mus_xen *)XEN_OBJECT_REF(arg))
 #define XEN_TO_MUS_ANY(obj) ((mus_any *)((XEN_TO_MUS_XEN(obj))->gen))
-#define MUS_XEN_TO_MUS_ANY(obj) ((mus_any *)(((mus_xen *)(obj))->gen))
 #define MUS_DATA_POSITION 0
 
 bool mus_xen_p(XEN obj);

@@ -9585,6 +9585,7 @@ static int snd2sample_free(mus_any *ptr)
 	  FREE(spl->samps);
 	  spl->samps = NULL;
 	}
+      FREE(spl);
     }
   return(0);
 }
@@ -9600,6 +9601,7 @@ static int xen2sample_free(mus_any *ptr)
 	  xpl->gc_loc = -1;
 	  xpl->reader = XEN_FALSE;
 	}
+      FREE(xpl);
     }
   return(0);
 }

@@ -1961,7 +1961,7 @@ pre-zero value.
   <em class=def><a name="transposetrack">transpose-track</a></em> track semitones
   <em class=def><a name="trackposition">track-position</a></em> track [settable]
   <em class=def>track-end</em> track
-  <em class=def><a name="tracklength">track-length</a></em> track
+  <em class=def><a name="trackframes">track-frames</a></em> track
   <em class=def><a name="retempotrack">retempo-track</a></em> track tempo
   <em class=def><a name="envtrack">env-track</a></em> track chan env
   <em class=def><a name="reversetrack">reverse-track</a></em> track
@@ -2020,11 +2020,11 @@ quibble is true of all these settings). <i>set! (track-amp trk)</i> sets each mi
 amplitude to <i>amp</i>.  Similarly, <b>incf-track-amp</b> increments each amplitude by
 <i>amp-increment</i>.  The track-speed refers to its mix's speeds: <i>set! (track-speed trk)</i>
 sets all of them to <i>speed</i>, and <b>transpose-track</b> moves them all by <i>semitones</i>.
-<b>track-length</b> returns the total duration (samples) of the track, <b>track-end</b> returns
+<b>track-frames</b> returns the total duration (samples) of the track, <b>track-end</b> returns
 the last sample:
 </p>
 <pre>
-:<em class=typing>(track-length (track 1))</em>
+:<em class=typing>(track-frames (track 1))</em>
 <em class=listener>16346</em>
 :<em class=typing>(- (+ (mix-position 1) (mix-frames 1)) (mix-position 0))</em>
 <em class=listener>16346</em>

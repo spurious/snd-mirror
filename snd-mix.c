@@ -1,9 +1,25 @@
 #include "snd.h"
 
-/* SOMEDAY: extend the mix-as-list syntax to list-of-ids (tracks) (are these all rationalized now?) */
-/* this seems to include only scale_sound scale_channel ramp_channel xramp_channel revert_sound save_sound_as and some in snd_snd field:
- * :channels, srate, data_location, data_size, data_format, header_type, comment, sync, (short)file_name
- * and others that don't assert sound first?? -- g_filter 
+/* SOMEDAY: extend the mix-as-list syntax to list-of-ids (tracks) (are these all rationalized now?)
+ * this seems to include scale_sound scale_channel ramp_channel xramp_channel revert_sound save_sound_as snd2sample
+ * and some in snd_snd field: {:channels, srate, data_location, data_size, data_format, header_type, comment, (short)file_name}
+ *   surely none of the latter matter
+ * and any that just assert channel (not sound) -- this is most channel ops
+ *
+ * why not remove mix|track sample readers and vector all that through sample-reader?
+ *   extra work in next-sample?
+ * does the distinction matter? mix-frames? mix-position (would need snd side)?
+ *
+ * if region encoded as bit 17 (or whatever), region index is implicit, and make-region-sample-reader is not needed
+ *    mix/track also?
+ * make-sample-reader (mix 0) | (region 9) | (sound 1) | (track 2 -- or list of ids?)... | (channel (...) n)
+ *   with sound the default so make-mix-sample-reader n -> make-sample-reader (list 'mix n)
+ *   xm.c uses type 'Region, so this depends on type-sensitive symbol names
+ *
+ * (region n) could be used as well for region-chans | frames | maxamp | graph_style | sample|->vct | srate
+ *   or return id as smob in each case -- region|mix|track|sound|channel|selection
+ *
+ * these could be packaged at the Scheme level: (make-reader '(region 0) ...) (reader ...)
  */
 /* mix waveform in amp env as in enved (this requires 1-chan mix readers, not currently implemented)
  * SOMEDAY: sync multichan mixes should change together in graph
@@ -4239,6 +4255,7 @@ static void check_dangling_mix_readers(mix_fd *md)
 
 static XEN g_make_mix_sample_reader(XEN mix_id, XEN ubeg)
 {
+  /* TODO: this is different from make-sample-reader (beg snd) not (snd beg) */
   #define H_make_mix_sample_reader "(" S_make_mix_sample_reader " id (beg 0)): return a reader ready to access mix id"
   mix_info *md = NULL;
   mix_fd *mf = NULL;

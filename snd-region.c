@@ -140,7 +140,7 @@ static void set_max_regions(int n)
     }
 }
 
-int id_to_stack_position(int id)
+int region_id_to_list_position(int id)
 {
   int i;
   if ((id >= 0) && (id < region_id_ctr))
@@ -151,7 +151,7 @@ int id_to_stack_position(int id)
   return(INVALID_REGION);
 }
 
-int stack_position_to_id(int n) 
+int region_list_position_to_id(int n) 
 {
   if ((n >= 0) && 
       (n < regions_size) &&
@@ -455,10 +455,10 @@ void free_region_state (region_state *r)
     }
 }
 
-int remove_region_from_stack(int pos) /* region browser */
+int remove_region_from_list(int pos) /* region browser */
 {
   int i, id;
-  id = stack_position_to_id(pos);
+  id = region_list_position_to_id(pos);
   if (id == INVALID_REGION) return(INVALID_REGION);
   stop_playing_region(id);
   free_region(id_to_region(id), COMPLETE_DELETION);
@@ -468,10 +468,9 @@ int remove_region_from_stack(int pos) /* region browser */
   return(check_regions());
 }
 
-static void stack_region(region *r) 
+static void add_to_region_list(region *r) 
 {
   int i, okr = -1;
-  /* leave protected regions alone -- search for highest unprotected region */
   for (i = max_regions(ss) - 1; i >= 0; i--) 
     {
       if (!(regions[i]))
@@ -481,11 +480,7 @@ static void stack_region(region *r)
 	}
     }
   if (okr == -1)
-    {
-      /* all possible slots are taken by protected regions! */
-      okr = regions_size;
-      set_max_regions(regions_size * 2);
-    }
+    okr = max_regions(ss) - 1;
   if (regions[okr]) 
     {
       stop_playing_region(regions[okr]->id);
@@ -664,7 +659,7 @@ int define_region(sync_info *si, off_t *ends)
   cp0 = si->cps[0];
   sp0 = cp0->sound;
   if (regions[0]) 
-    stack_region(r); 
+    add_to_region_list(r); 
   else regions[0] = r;
   r->header_type = (sp0->hdr)->type;
   r->srate = SND_SRATE(sp0);
@@ -1048,7 +1043,7 @@ void save_region_backpointer(snd_info *sp)
 
 #define XEN_REGION_P(Val) XEN_INTEGER_P(Val)
 #define XEN_REGION_IF_BOUND_P(Val) ((XEN_NOT_BOUND_P(Val)) || (XEN_INTEGER_P(Val)))
-#define XEN_REGION_TO_C_INT(Val) ((XEN_INTEGER_P(Val)) ? XEN_TO_C_INT(Val) : stack_position_to_id(0))
+#define XEN_REGION_TO_C_INT(Val) ((XEN_INTEGER_P(Val)) ? XEN_TO_C_INT(Val) : region_list_position_to_id(0))
 #define C_INT_TO_XEN_REGION(Val) C_TO_XEN_INT(Val)
 
 static XEN snd_no_such_region_error(const char *caller, XEN n)
@@ -1147,7 +1142,7 @@ static XEN region_get(region_field_t field, XEN n, char *caller)
     case REGION_SRATE:  return(C_TO_XEN_INT(region_srate(rg))); break;
     case REGION_CHANS:  return(C_TO_XEN_INT(region_chans(rg))); break;
     case REGION_MAXAMP: return(C_TO_XEN_DOUBLE(region_maxamp(rg))); break;
-    case REGION_FORGET: delete_region_and_update_browser(id_to_stack_position(rg)); return(n); break;
+    case REGION_FORGET: delete_region_and_update_browser(region_id_to_list_position(rg)); return(n); break;
     default: break;
     }
   return(XEN_FALSE);

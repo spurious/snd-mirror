@@ -20,7 +20,7 @@
 ;;; (set-all-tracks new-id) places all mixes in track new-id
 ;;;
 ;;; settable:     track-amp, track-speed, track-position, track-color
-;;; not settable: track-length, track-end
+;;; not settable: track-frames, track-end
 ;;; 
 ;;; (set! (track-amp track) new-amp) sets the amp of each mix in track to new-amp
 ;;;   (incf-track-amp track change) increments the amp of each mix in track by change
@@ -32,7 +32,7 @@
 ;;; (track-position track) returns the begin time of track (the minimum mix begin sample associated with track)
 ;;;   (set! (track-position track) new-beg) moves all mixes in track so that the track starts at new-beg
 ;;;   (track-end track) returns endpoint (maximum frame in mixes) of track
-;;;   (track-length track) returns number of samples between track start and end
+;;;   (track-frames track) returns number of samples between track start and end
 ;;; 
 ;;; (retempo-track track tempo) changes the inter-mix begin times of mixes in track by tempo (> 1.0 is faster)
 ;;; (set! (track-color track) color) changes the associated mix colors to color
@@ -476,8 +476,8 @@ the filter to the underlying mixes: (filter-track (track 1) '(.1 .2 .3 .3 .2 .1)
 	  (throw 'no-such-track (list "track-end" track))
 	  (apply max pos)))))
 
-(define (track-length track)
-  "(track-length track) returns number of samples between track start and end"
+(define (track-frames track)
+  "(track-frames track) returns number of samples between track start and end"
   (- (track-end track) (track-position track)))
 
 
@@ -485,7 +485,7 @@ the filter to the underlying mixes: (filter-track (track 1) '(.1 .2 .3 .3 .2 .1)
   "(track->vct track) places track data in vct"
   (vct-map! 
    (make-vct 
-    (track-length track)) 
+    (track-frames track)) 
    (make-track-sample-reader 
     (mix-track (car track)))))
 
@@ -624,7 +624,7 @@ the filter to the underlying mixes: (filter-track (track 1) '(.1 .2 .3 .3 .2 .1)
 (define (env-track track chan env)
   "(env-track track chan env) sets overall track amplitude envelope"
   (let ((beg (track-position track))
-	(len (track-length track)))
+	(len (track-frames track)))
     (as-one-edit
      (lambda ()
        (for-each 

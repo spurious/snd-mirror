@@ -2643,7 +2643,6 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		     (loc (cursor snd 0)))
 		(sound-data-set! data 0 loc var)
 		(if (time-graph? snd) (update-time-graph snd))
-		;; TODO: also the spectrum x sliders are confusing -- should show entire window
 		(if (transform-graph? snd) (update-transform-graph snd))
 		(if (= (+ loc 1) frames)
 		    (set! (cursor snd 0) 0)
@@ -2673,15 +2672,15 @@ Reverb-feedback sets the scaler on the feedback.\n\
 #!
 (define wid (make-variable-display "do-loop" "i*2" 'text))
 (define wid1 (make-variable-display "do-loop" "i" 'text))
-  (do ((i 0 (1+ i)))
-      ((= i 10))
-    (variable-display (* (variable-display i wid1) 2) wid))
+(do ((i 0 (1+ i)))
+    ((= i 10))
+  (variable-display (* (variable-display i wid1) 2) wid))
 
 (define wid2 (make-variable-display "a-loop" "k*2" 'meter))
 ;(define wid3 (make-variable-display "a-loop" "k" 'scale '(0 40)))
-  (do ((k 0 (1+ k)))
-      ((= k 11))
-    (variable-display (* k .02) wid2))
+(do ((k 0 (1+ k)))
+    ((= k 11))
+  (variable-display (* k .02) wid2))
 !#
 
 ;;; TODO: if many vars, scrolled window?

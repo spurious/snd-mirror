@@ -135,10 +135,10 @@
 typedef enum {MUS_NOT_SPECIAL, MUS_SIMPLE_FILTER, MUS_FULL_FILTER, MUS_OUTPUT, MUS_INPUT, MUS_DELAY_LINE} mus_clm_extended_t;
 
 typedef struct {
-  struct mus__any_class *core;
+  struct mus_any_class *core;
 } mus_any;
 
-typedef struct mus__any_class {
+typedef struct mus_any_class {
   int type;
   char *name;
   int (*release)(mus_any *ptr);

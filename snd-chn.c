@@ -3893,7 +3893,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 		  cursor_moveto(cp, 
 				snd_round_off_t(ungrf_x(cp->axis, x) * 
 						(double)SND_SRATE(sp)));
-		  paste_region(stack_position_to_id(0), cp, "Btn2");
+		  paste_region(region_list_position_to_id(0), cp, "Btn2");
 		}
 	      else 
 		{
@@ -6497,7 +6497,7 @@ static XEN g_channel_data(XEN snd, XEN chn)
   #define H_channel_data "(" S_channel_data " snd (chn 0)) returns the in-core samples associated with the \
 given channel.  Currently, this must be a channel (sound) created by " S_make_variable_graph "."
   chan_info *cp;
-  ASSERT_CHANNEL(S_channel_data, snd, chn, 1);
+  ASSERT_JUST_CHANNEL(S_channel_data, snd, chn, 1);
   cp = get_cp(snd, chn, S_channel_data);
   if ((cp) && (cp->sound) && (cp->sound->inuse == SOUND_WRAPPER))
     return(wrap_sound_data(1, cp->samples[0], &(cp->sounds[0]->buffered_data)));

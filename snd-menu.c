@@ -168,7 +168,7 @@ void reflect_edit_without_selection_in_menu (void)
   set_sensitive(edit_paste_menu(), false);
   set_sensitive(edit_mix_menu(), false);
   if ((!(selection_is_active())) && 
-      (!(region_ok(stack_position_to_id(0))))) 
+      (!(region_ok(region_list_position_to_id(0))))) 
     set_sensitive(edit_paste_menu(), false);
   set_sensitive(edit_play_menu(), false);
   set_sensitive(edit_save_as_menu(), false);
