@@ -4188,7 +4188,9 @@ static int alsa_mus_audio_initialize(void)
 	return(0);
     }
     /* set the process schedulling policy to real-time SCHED_FIFO */
-    set_priority();
+
+    /* set_priority(); */
+
     /* allocate various things */
     dev_name = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
     sound_cards = 0;
