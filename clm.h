@@ -153,6 +153,7 @@ typedef struct mus__any_class {
   Float (*run)(mus_any *gen, Float arg1, Float arg2);
   int extended_type;
   void  *(*environ)(mus_any *gen);
+  int   (*channels)(void *ptr);
 } mus_any_class;
 
 typedef struct {
@@ -271,7 +272,7 @@ mus_any *mus_make_oscil         PROTO((Float freq, Float phase));
 Float mus_sum_of_cosines        PROTO((mus_any *gen, Float fm));
 int mus_sum_of_cosines_p        PROTO((mus_any *ptr));
 mus_any *mus_make_sum_of_cosines PROTO((int cosines, Float freq, Float phase));
-int mus_cosines                 PROTO((mus_any *ptr));
+#define mus_cosines(Gen) mus_channels(Gen)
 
 Float mus_delay                 PROTO((mus_any *gen, Float input, Float pm));
 Float mus_tap                   PROTO((mus_any *gen, Float loc));
@@ -418,7 +419,7 @@ void mus_restart_env            PROTO((mus_any *ptr));
 Float mus_env_interp            PROTO((Float x, mus_any *env));
 off_t *mus_env_passes           PROTO((mus_any *gen)); /* for Snd */
 double *mus_env_rates           PROTO((mus_any *gen)); /* ditto */
-int mus_position                PROTO((mus_any *ptr));
+#define mus_position(Gen) mus_channels(Gen)
 
 int mus_frame_p                 PROTO((mus_any *ptr));
 mus_frame *mus_make_empty_frame PROTO((int chans));

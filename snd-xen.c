@@ -950,7 +950,7 @@ static XEN g_set_filter_env_in_hz(XEN val)
 static XEN g_color_cutoff(void) {return(C_TO_XEN_DOUBLE(color_cutoff(state)));}
 static XEN g_set_color_cutoff(XEN val) 
 {
-  #define H_color_cutoff "(" S_color_cutoff ") -> col" STR_OR " map cutoff point (default .003)"
+  #define H_color_cutoff "(" S_color_cutoff ") -> color map cutoff point (default .003)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set-" S_color_cutoff, "a number");
   set_color_cutoff(state, mus_fclamp(0.0,
 				     XEN_TO_C_DOUBLE(val),
@@ -961,7 +961,7 @@ static XEN g_set_color_cutoff(XEN val)
 static XEN g_color_inverted(void) {return(C_TO_XEN_BOOLEAN(color_inverted(state)));}
 static XEN g_set_color_inverted(XEN val) 
 {
-  #define H_color_inverted "(" S_color_inverted ") -> whether the col" STR_OR "map in operation should be inverted"
+  #define H_color_inverted "(" S_color_inverted ") -> whether the colormap in operation should be inverted"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, "set-" S_color_inverted, "a boolean");
   set_color_inverted(state, XEN_TO_C_BOOLEAN_OR_TRUE(val)); 
   return(C_TO_XEN_BOOLEAN(color_inverted(state)));
@@ -970,7 +970,7 @@ static XEN g_set_color_inverted(XEN val)
 static XEN g_color_scale(void) {return(C_TO_XEN_DOUBLE(color_scale(state)));}
 static XEN g_set_color_scale(XEN val) 
 {
-  #define H_color_scale "(" S_color_scale ") -> essentially a darkness setting for col" STR_OR "maps (0.5)"
+  #define H_color_scale "(" S_color_scale ") -> essentially a darkness setting for colormaps (0.5)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set-" S_color_scale, "a number"); 
   set_color_scale(state, mus_fclamp(0.0,
 				    XEN_TO_C_DOUBLE(val),
@@ -1188,7 +1188,7 @@ static XEN g_set_hankel_jn(XEN val)
 static XEN g_color_map(void) {return(C_TO_XEN_INT(color_map(state)));}
 static XEN g_set_color_map(XEN val) 
 {
-  #define H_colormap "(" S_colormap ") -> current col" STR_OR "map choice. \
+  #define H_colormap "(" S_colormap ") -> current colormap choice. \
 This should be an integer between -1 and 15.  The maps (from 0 to 15) are: \
 gray, hsv, hot, cool, bone, copper, pink, jet, prism, autumn, winter, \
 spring, summer, colorcube, flag, and lines.  -1 means black and white."
@@ -2184,7 +2184,7 @@ static XEN g_set_cursor_color (XEN color)
 
 static XEN g_cursor_color(void) 
 {
-  #define H_cursor_color "(" S_cursor_color ") -> cursor col" STR_OR
+  #define H_cursor_color "(" S_cursor_color ") -> cursor color"
   return(pixel2color((state->sgx)->cursor_color));
 }
 
@@ -2199,7 +2199,7 @@ static XEN g_set_highlight_color (XEN color)
 
 static XEN g_highlight_color(void) 
 {
-  #define H_highlight_color "(" S_highlight_color ") -> col" STR_OR " of highlighted text or buttons"
+  #define H_highlight_color "(" S_highlight_color ") -> color of highlighted text or buttons"
   return(pixel2color((state->sgx)->highlight_color));
 }
 
@@ -2218,7 +2218,7 @@ static XEN g_set_mark_color (XEN color)
 
 static XEN g_mark_color(void) 
 {
-  #define H_mark_color "(" S_mark_color ") -> mark col" STR_OR
+  #define H_mark_color "(" S_mark_color ") -> mark color"
   return(pixel2color((state->sgx)->mark_color));
 }
 
@@ -2237,7 +2237,7 @@ static XEN g_set_zoom_color (XEN color)
 
 static XEN g_zoom_color(void) 
 {
-  #define H_zoom_color "(" S_zoom_color ") -> col" STR_OR " of zoom sliders"
+  #define H_zoom_color "(" S_zoom_color ") -> color of zoom sliders"
   return(pixel2color((state->sgx)->zoom_color));
 }
 
@@ -2256,7 +2256,7 @@ static XEN g_set_position_color (XEN color)
 
 static XEN g_position_color(void) 
 {
-  #define H_position_color "(" S_position_color ") -> col" STR_OR " of position sliders"
+  #define H_position_color "(" S_position_color ") -> color of position sliders"
   return(pixel2color((state->sgx)->position_color));
 }
 
@@ -2271,7 +2271,7 @@ static XEN g_set_listener_color (XEN color)
 
 static XEN g_listener_color(void) 
 {
-  #define H_listener_color "(" S_listener_color ") -> background col" STR_OR " of the lisp listener"
+  #define H_listener_color "(" S_listener_color ") -> background color of the lisp listener"
   return(pixel2color((state->sgx)->listener_color));
 }
 
@@ -2286,7 +2286,7 @@ static XEN g_set_listener_text_color (XEN color)
 
 static XEN g_listener_text_color(void) 
 {
-  #define H_listener_text_color "(" S_listener_text_color ") -> text col" STR_OR " in the lisp listener"
+  #define H_listener_text_color "(" S_listener_text_color ") -> text color in the lisp listener"
   return(pixel2color((state->sgx)->listener_text_color));
 }
 
@@ -2301,7 +2301,7 @@ static XEN g_set_enved_waveform_color (XEN color)
 
 static XEN g_enved_waveform_color(void) 
 {
-  #define H_enved_waveform_color "(" S_enved_waveform_color ") -> col" STR_OR " of the envelope editor wave display"
+  #define H_enved_waveform_color "(" S_enved_waveform_color ") -> color of the envelope editor wave display"
   return(pixel2color((state->sgx)->enved_waveform_color));
 }
 
@@ -2316,7 +2316,7 @@ static XEN g_set_filter_waveform_color (XEN color)
 
 static XEN g_filter_waveform_color(void) 
 {
-  #define H_filter_waveform_color "(" S_filter_waveform_color ") -> col" STR_OR " of the filter waveform"
+  #define H_filter_waveform_color "(" S_filter_waveform_color ") -> color of the filter waveform"
   return(pixel2color((state->sgx)->filter_waveform_color));
 }
 
@@ -2335,7 +2335,7 @@ static XEN g_set_selection_color (XEN color)
 
 static XEN g_selection_color(void) 
 {
-  #define H_selection_color "(" S_selection_color ") -> selection col" STR_OR
+  #define H_selection_color "(" S_selection_color ") -> selection color"
   return(pixel2color((state->sgx)->selection_color));
 }
 
@@ -2364,7 +2364,7 @@ static XEN g_set_mix_color (XEN arg1, XEN arg2)
 
 static XEN g_mix_color(XEN mix_id) 
 {
-  #define H_mix_color "(" S_mix_color ") -> col" STR_OR " of mix consoles"
+  #define H_mix_color "(" S_mix_color ") -> color of mix consoles"
   if (XEN_INTEGER_P(mix_id))
     return(pixel2color(mix_to_color_from_id(XEN_TO_SMALL_C_INT(mix_id))));
   return(pixel2color((state->sgx)->mix_color));
@@ -2385,7 +2385,7 @@ static XEN g_set_selected_mix_color (XEN color)
 
 static XEN g_selected_mix_color(void) 
 {
-  #define H_selected_mix_color "(" S_selected_mix_color ") -> col" STR_OR " of the currently selected mix"
+  #define H_selected_mix_color "(" S_selected_mix_color ") -> color of the currently selected mix"
   return(pixel2color((state->sgx)->selected_mix_color));
 }
 
@@ -2400,7 +2400,7 @@ static XEN g_set_text_focus_color (XEN color)
 
 static XEN g_text_focus_color(void) 
 {
-  #define H_text_focus_color "(" S_text_focus_color ") -> col" STR_OR " used to show a text field has focus"
+  #define H_text_focus_color "(" S_text_focus_color ") -> color used to show a text field has focus"
   return(pixel2color((state->sgx)->text_focus_color));
 }
 
@@ -2415,7 +2415,7 @@ static XEN g_set_sash_color (XEN color)
 
 static XEN g_sash_color(void) 
 {
-  #define H_sash_color "(" S_sash_color ") -> col" STR_OR " used to draw paned window sashes"
+  #define H_sash_color "(" S_sash_color ") -> color used to draw paned window sashes"
   return(pixel2color((state->sgx)->sash_color));
 }
 
@@ -2434,7 +2434,7 @@ static XEN g_set_data_color (XEN color)
 
 static XEN g_data_color(void) 
 {
-  #define H_data_color "(" S_data_color ") -> col" STR_OR " used to draw unselected data"
+  #define H_data_color "(" S_data_color ") -> color used to draw unselected data"
   return(pixel2color((state->sgx)->data_color));
 }
 
@@ -2459,7 +2459,7 @@ static XEN g_set_selected_data_color (XEN color)
 
 static XEN g_selected_data_color(void) 
 {
-  #define H_selected_data_color "(" S_selected_data_color ") -> col" STR_OR " used for selected data"
+  #define H_selected_data_color "(" S_selected_data_color ") -> color used for selected data"
   return(pixel2color((state->sgx)->selected_data_color));
 }
 
@@ -2478,7 +2478,7 @@ static XEN g_set_graph_color (XEN color)
 
 static XEN g_graph_color(void) 
 {
-  #define H_graph_color "(" S_graph_color ") -> background col" STR_OR " used for unselected data"
+  #define H_graph_color "(" S_graph_color ") -> background color used for unselected data"
   return(pixel2color((state->sgx)->graph_color));
 }
 
@@ -2506,7 +2506,7 @@ static XEN g_set_selected_graph_color (XEN color)
 
 static XEN g_selected_graph_color(void) 
 {
-  #define H_selected_graph_color "(" S_selected_graph_color ") -> background col" STR_OR " of selected data"
+  #define H_selected_graph_color "(" S_selected_graph_color ") -> background color of selected data"
   return(pixel2color((state->sgx)->selected_graph_color));
 }
 
@@ -2527,13 +2527,13 @@ static XEN g_set_pushed_button_color (XEN color)
 
 static XEN g_pushed_button_color(void) 
 {
-  #define H_pushed_button_color "(" S_pushed_button_color ") -> col" STR_OR " of a pushed button"
+  #define H_pushed_button_color "(" S_pushed_button_color ") -> color of a pushed button"
   return(pixel2color((state->sgx)->pushed_button_color));
 }
 
 static XEN g_basic_color(void) 
 {
-  #define H_basic_color "(" S_basic_color ") -> Snd's basic col" STR_OR
+  #define H_basic_color "(" S_basic_color ") -> Snd's basic color"
   return(pixel2color((state->sgx)->basic_color));
 }
 

@@ -1005,6 +1005,7 @@ void sp_display_env(snd_info *sp)
   ax = (axis_context *)CALLOC(1, sizeof(axis_context));
   ax->gc = (ss->sgx)->fltenv_basic_gc;
   ax->wn = drawer->window;
+  ax->w = drawer;
   gdk_window_clear(ax->wn);
   display_filter_graph(ss, sp, ax, width, height);
   ax = free_axis_context(ax);

@@ -5429,7 +5429,6 @@
 (STRUCT "GtkSettings GData* queued_settings GValue* property_values GtkRcContext* rc_context")
 (STRUCT "GtkSizeGroup GSList* widgets guint8 mode guint have_width guint have_height")
 (STRUCT "GtkSocket guint16 request_width guint16 request_height guint16 current_width guint16 current_height GdkWindow* plug_window GtkWidget* plug_widget gshort xembed_version guint same_app guint focus_in guint have_size guint need_map guint is_mapped GtkWidget* toplevel")
-;; TODO: 3.15 has GtkAccelGroup* accel_group
 (STRUCT "GtkSpinButton GtkAdjustment* adjustment GdkWindow* panel guint32 timer gdouble climb_rate gdouble timer_step GtkSpinButtonUpdatePolicy update_policy guint in_child guint click_child guint button guint need_timer guint timer_calls guint digits guint numeric guint wrap")
 (STRUCT "GtkStockItem gchar* stock_id gchar* label GdkModifierType modifier guint keyval gchar* translation_domain")
 (STRUCT "GtkStyle GdkColor* fg GdkColor* bg GdkColor* light GdkColor* dark GdkColor* mid GdkColor* text GdkColor* base GdkColor* text_aa PangoFontDescription* font_desc gint xthickness gint ythickness GdkGC** fg_gc GdkGC** bg_gc GdkGC** light_gc GdkGC** dark_gc GdkGC** mid_gc GdkGC** text_gc GdkGC** base_gc GdkGC** text_aa_gc GdkGC* black_gc GdkGC* white_gc GdkPixmap** bg_pixmap gint attach_count gint depth GdkColormap* colormap GtkRcStyle* rc_style GSList* styles GArray* property_cache GSList* icon_factories")

@@ -1,6 +1,6 @@
 #include "snd.h"
 
-#define FALLBACK_FONT "fixed"
+#define FALLBACK_FONT "Monospace 14"
 #define HIGHLIGHT_COLOR      "ivory1"
 #define BASIC_COLOR          "ivory2"
 #define POSITION_COLOR       "ivory3"
@@ -36,10 +36,10 @@
 #define NOTEBOOK_BINDING_WIDTH 20
 
 #if HAVE_GTK2
-  #define TINY_FONT "Monospace 12"
+  #define TINY_FONT "Monospace 8"
   #define DEFAULT_BUTTON_FONT "Serif 14"
   #define DEFAULT_BOLD_BUTTON_FONT "Serif Bold 14"
-  #define DEFAULT_AXIS_NUMBERS_FONT "Monospace 14"
+  #define DEFAULT_AXIS_NUMBERS_FONT "Monospace 10"
   #define DEFAULT_AXIS_LABEL_FONT "Serif 14"
   #define DEFAULT_HELP_TEXT_FONT "Monospace 14"
 #else
@@ -144,7 +144,11 @@ static int noglob = 0, noinit = 0, batch = 0;
 #if HAVE_EXTENSION_LANGUAGE
 static gint stdin_id = 0;
 
+#if HAVE_GTK2
+static void get_stdin_string(gpointer context, gint fd, int condition)
+#else
 static void get_stdin_string(gpointer context, gint fd, GdkInputCondition condition)
+#endif
 {
   int bytes, size;
   char *buf;
@@ -259,6 +263,16 @@ static void setup_gcs (snd_state *ss)
   initialize_colormap(ss);
 }
 
+#if HAVE_EXTENSION_LANGUAGE
+#if HAVE_GTK2
+static gboolean io_invoke(GIOChannel *source, GIOCondition condition, gpointer data)
+{
+  get_stdin_string((gpointer)get_global_state(), g_io_channel_unix_get_fd(source), 0);
+  return(TRUE);
+}
+#endif
+#endif
+
 typedef struct {int slice; snd_state *ss; GtkWidget *shell;} startup_state;
 
 static BACKGROUND_TYPE startup_funcs(gpointer context)
@@ -312,7 +326,16 @@ static BACKGROUND_TYPE startup_funcs(gpointer context)
        * but try to read stdin (needed to support the emacs subjob connection).  If
        * we don't do this, the background job is suspended when the shell sends SIGTTIN.
        */
+#if HAVE_GTK2
+      {
+	GIOChannel *channel;
+	channel = g_io_channel_unix_new(fileno(stdin));
+	stdin_id = g_io_add_watch_full(channel, G_PRIORITY_DEFAULT, (GIOCondition)(G_IO_IN | G_IO_HUP | G_IO_ERR), io_invoke, NULL, NULL);
+	g_io_channel_unref (channel);
+      }
+#else
       stdin_id = gdk_input_add(fileno(stdin), GDK_INPUT_READ, get_stdin_string, (gpointer)ss);
+#endif
 #endif
       break;
     case 2: 
@@ -387,12 +410,12 @@ static GdkColor *get_color(char *defined_color, char *fallback_color, char *seco
 	{
 	  /* snd_error here can cause trouble (no error dialog or something) */
 	  fprintf(stderr, "can't get %s -- will use white\n", defined_color);
-	  gdk_color_white(gdk_colormap_get_system(), &tmp_color);
+	  SG_WHITE_COLOR(tmp_color);
 	}
       else
 	{
 	  fprintf(stderr, "can't get %s -- will use black\n", defined_color);
-	  gdk_color_black(gdk_colormap_get_system(), &tmp_color);
+	  SG_BLACK_COLOR(tmp_color);
 	}
     }
   new_color = gdk_color_copy(&tmp_color);

@@ -1350,13 +1350,6 @@ gets the next sample of the band-limited pulse-train produced by gen"
   return(C_TO_XEN_DOUBLE(mus_sum_of_cosines(MUS_XEN_TO_CLM(obj), fm1)));
 }
 
-static XEN g_cosines(XEN obj)
-{
-  #define H_mus_cosines "(" S_mus_cosines " gen) -> number of cosines produced by gen"
-  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ONLY_ARG, S_mus_cosines, "a generator");
-  return(C_TO_XEN_DOUBLE(mus_cosines(MUS_XEN_TO_CLM(obj))));
-}
-
 
 
 /* ---------------- rand, rand_interp ---------------- */
@@ -4673,7 +4666,6 @@ XEN_NARGIFY_1(g_all_pass_p_w, g_all_pass_p)
 XEN_ARGIFY_6(g_make_sum_of_cosines_w, g_make_sum_of_cosines)
 XEN_ARGIFY_2(g_sum_of_cosines_w, g_sum_of_cosines)
 XEN_NARGIFY_1(g_sum_of_cosines_p_w, g_sum_of_cosines_p)
-XEN_NARGIFY_1(g_cosines_w, g_cosines)
 XEN_ARGIFY_4(g_make_rand_w, g_make_rand)
 XEN_ARGIFY_4(g_make_rand_interp_w, g_make_rand_interp)
 XEN_ARGIFY_2(g_rand_w, g_rand)
@@ -4925,7 +4917,6 @@ XEN_ARGIFY_7(g_mus_mix_w, g_mus_mix)
 #define g_make_sum_of_cosines_w g_make_sum_of_cosines
 #define g_sum_of_cosines_w g_sum_of_cosines
 #define g_sum_of_cosines_p_w g_sum_of_cosines_p
-#define g_cosines_w g_cosines
 #define g_make_rand_w g_make_rand
 #define g_make_rand_interp_w g_make_rand_interp
 #define g_rand_w g_rand
@@ -5141,7 +5132,7 @@ void mus_xen_init(void)
   rb_define_method(mus_xen_tag, "data", XEN_PROCEDURE_CAST g_data, 0);
   rb_define_method(mus_xen_tag, "feedforward", XEN_PROCEDURE_CAST g_scaler, 0);
   rb_define_method(mus_xen_tag, "feedback", XEN_PROCEDURE_CAST g_increment, 0);
-  rb_define_method(mus_xen_tag, "cosines", XEN_PROCEDURE_CAST g_cosines, 0);
+  rb_define_method(mus_xen_tag, "cosines", XEN_PROCEDURE_CAST g_channels, 0);
   rb_define_method(mus_xen_tag, "order", XEN_PROCEDURE_CAST g_length, 0);
   rb_define_method(mus_xen_tag, "call", XEN_PROCEDURE_CAST mus_xen_apply, 2);
   rb_define_method(mus_xen_tag, "location", XEN_PROCEDURE_CAST g_location, 0);
@@ -5286,7 +5277,8 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_make_sum_of_cosines, g_make_sum_of_cosines_w, 0, 6, 0, H_make_sum_of_cosines); 
   XEN_DEFINE_PROCEDURE(S_sum_of_cosines,      g_sum_of_cosines_w, 1, 1, 0,      H_sum_of_cosines);
   XEN_DEFINE_PROCEDURE(S_sum_of_cosines_p,    g_sum_of_cosines_p_w, 1, 0, 0,    H_sum_of_cosines_p);
-  XEN_DEFINE_PROCEDURE(S_mus_cosines,         g_cosines_w, 1, 0, 0,             H_mus_cosines);
+  #define H_mus_cosines "(" S_mus_cosines " gen) -> number of cosines produced by gen"
+  XEN_DEFINE_PROCEDURE(S_mus_cosines,         g_channels_w, 1, 0, 0,            H_mus_cosines);
 
 
   XEN_DEFINE_PROCEDURE(S_table_lookup_p,     g_table_lookup_p_w, 1, 0, 0,     H_table_lookup_p);

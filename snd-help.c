@@ -227,6 +227,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+3-Jun:   removed \"colour\" spelling option (snd5.scm has backwards compatible definitions).\n\
 28-May:  Dave Phillips' Snd tutorial added in contrib/tutorial.\n\
 24-May:  with-gl to choose between GL/X graphics, snd-gl.scm.\n\
 23-May:  gl1.png (spectrogram uses GL now if mono and HAVE_GL).\n\
@@ -361,7 +362,7 @@ static char view_menu_help_string[] =
   Mix Panel: open the mix controller.\n\
   Regions: fire up the region browser.\n\
   Files: fire up the file browser.\n\
-  Color: col" STR_OR " browser for sonogram.\n\
+  Color: color browser for sonogram.\n\
   Orientation: sonogram orientation.\n\
   Equalize Panes: During editing with multiple\n\
      files and channels, some data may be\n\

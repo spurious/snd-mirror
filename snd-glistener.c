@@ -137,6 +137,9 @@ void listener_append_and_prompt(snd_state *ss, char *msg)
       if (msg)
 	append_listener_text(0, msg);
       append_listener_text(0, listener_prompt_with_cr(ss));
+#if HAVE_GTK2
+      listener_append(ss, " ");
+#endif
       cmd_eot = SG_TEXT_LENGTH(listener_text);
       printout_end = cmd_eot - 1;
     }
@@ -327,16 +330,20 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
 
 static gint clear_paren_check(gpointer nada)
 {
+#if (!HAVE_GTK2)
+  /* TODO: major gtk bug here -- their own internal iterator gets fatally screwed up */
   if (last_highlight_position != -1)
     {
       SG_TEXT_UNSELECT(listener_text);
       last_highlight_position = -1;
     }
+#endif
   return(0);
 }
 
 static gboolean check_parens(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
+#if (!HAVE_GTK2)
   int current_position;
   char *fstr, *prompt;
   int parens = 0, i;
@@ -372,6 +379,7 @@ static gboolean check_parens(GtkWidget *w, GdkEventKey *event, gpointer data)
 	    }
 	}
     }
+#endif
   return(FALSE);
 }
 
@@ -429,7 +437,11 @@ GtkWidget *snd_entry_new(snd_state *ss, GtkWidget *container, int with_white_bac
 {
   GtkWidget *text;
   text = gtk_entry_new();
+#if HAVE_GTK2
+  gtk_editable_set_editable(GTK_EDITABLE(text), TRUE);
+#else
   gtk_entry_set_editable(GTK_ENTRY(text), TRUE);
+#endif
   gtk_box_pack_start(GTK_BOX(container), text, TRUE, TRUE, 2);
   if (with_white_background) set_background(text, (ss->sgx)->white);
   gtk_widget_show(text);
@@ -442,9 +454,6 @@ GtkWidget *snd_entry_new(snd_state *ss, GtkWidget *container, int with_white_bac
 static void make_command_widget(snd_state *ss, int height)
 {
   GtkWidget *frame;
-#if HAVE_GTK2
-  PangoLayout *layout;
-#endif
   if (!listener_text)
     {
       frame = gtk_frame_new(NULL);
@@ -454,9 +463,128 @@ static void make_command_widget(snd_state *ss, int height)
 	gtk_paned_add2(GTK_PANED(SOUND_PANE(ss)), frame);
       else gtk_container_add(GTK_CONTAINER(MAIN_PANE(ss)), frame);
       listener_text = make_scrolled_text(ss, frame, TRUE, NULL, NULL);
-#if HAVE_GTK2
-      layout = gtk_widget_create_pango_layout (listener_text, "");
+
       if (ss->sgx->listener_fnt) gtk_widget_modify_font(listener_text, ss->sgx->listener_fnt);
+#if HAVE_GTK2
+      {
+	/* sigh... activate Emacs key bindings to some extent */
+	GtkBindingSet *set;
+	set = gtk_binding_set_by_class(GTK_TEXT_VIEW_GET_CLASS(GTK_TEXT_VIEW(listener_text)));
+
+	/* C-b back char */
+	gtk_binding_entry_remove(set, GDK_b, GDK_CONTROL_MASK);
+	gtk_binding_entry_add_signal(set, GDK_b, GDK_CONTROL_MASK, "move_cursor", 3,
+				     G_TYPE_ENUM, GTK_MOVEMENT_VISUAL_POSITIONS,
+				     G_TYPE_INT, -1,
+				     G_TYPE_BOOLEAN, FALSE);
+	/* M-b back word */
+	gtk_binding_entry_remove(set, GDK_b, GDK_MOD1_MASK);
+	gtk_binding_entry_add_signal(set, GDK_b, GDK_MOD1_MASK, "move_cursor", 3,
+				     G_TYPE_ENUM, GTK_MOVEMENT_WORDS,
+				     G_TYPE_INT, -1,
+				     G_TYPE_BOOLEAN, FALSE);
+	/* C-f forward char */
+	gtk_binding_entry_remove(set, GDK_f, GDK_CONTROL_MASK);
+	gtk_binding_entry_add_signal(set, GDK_f, GDK_CONTROL_MASK, "move_cursor", 3,
+				     G_TYPE_ENUM, GTK_MOVEMENT_VISUAL_POSITIONS,
+				     G_TYPE_INT, 1,
+				     G_TYPE_BOOLEAN, FALSE);
+	/* OVERRIDDEN: M-f forward word */
+	gtk_binding_entry_remove(set, GDK_f, GDK_MOD1_MASK);
+	gtk_binding_entry_add_signal(set, GDK_f, GDK_MOD1_MASK, "move_cursor", 3,
+				     G_TYPE_ENUM, GTK_MOVEMENT_WORDS,
+				     G_TYPE_INT, 1,
+				     G_TYPE_BOOLEAN, FALSE);
+	/* C-e end of line */
+	gtk_binding_entry_remove(set, GDK_e, GDK_CONTROL_MASK);
+	gtk_binding_entry_add_signal(set, GDK_e, GDK_CONTROL_MASK, "move_cursor", 3,
+				     G_TYPE_ENUM, GTK_MOVEMENT_DISPLAY_LINE_ENDS,
+				     G_TYPE_INT, 1,
+				     G_TYPE_BOOLEAN, FALSE);
+	/* C-a start of line */
+	gtk_binding_entry_remove(set, GDK_a, GDK_CONTROL_MASK);
+	gtk_binding_entry_add_signal(set, GDK_a, GDK_CONTROL_MASK, "move_cursor", 3,
+				     G_TYPE_ENUM, GTK_MOVEMENT_DISPLAY_LINE_ENDS,
+				     G_TYPE_INT, -1,
+				     G_TYPE_BOOLEAN, FALSE);
+	/* M-< start of file */
+	gtk_binding_entry_remove(set, GDK_less, GDK_MOD1_MASK);
+	gtk_binding_entry_add_signal(set, GDK_less, GDK_MOD1_MASK, "move_cursor", 3,
+				     G_TYPE_ENUM, GTK_MOVEMENT_BUFFER_ENDS,
+				     G_TYPE_INT, -1,
+				     G_TYPE_BOOLEAN, FALSE);
+	/* M-> end of file */
+	gtk_binding_entry_remove(set, GDK_greater, GDK_MOD1_MASK);
+	gtk_binding_entry_add_signal(set, GDK_greater, GDK_MOD1_MASK, "move_cursor", 3,
+				     G_TYPE_ENUM, GTK_MOVEMENT_BUFFER_ENDS,
+				     G_TYPE_INT, 1,
+				     G_TYPE_BOOLEAN, FALSE);
+	/* C-n down line */
+	gtk_binding_entry_remove(set, GDK_n, GDK_CONTROL_MASK);
+	gtk_binding_entry_add_signal(set, GDK_n, GDK_CONTROL_MASK, "move_cursor", 3,
+				     G_TYPE_ENUM, GTK_MOVEMENT_DISPLAY_LINES,
+				     G_TYPE_INT, 1,
+				     G_TYPE_BOOLEAN, FALSE);
+	/* C-p up line */
+	gtk_binding_entry_remove(set, GDK_p, GDK_CONTROL_MASK);
+	gtk_binding_entry_add_signal(set, GDK_p, GDK_CONTROL_MASK, "move_cursor", 3,
+				     G_TYPE_ENUM, GTK_MOVEMENT_DISPLAY_LINES,
+				     G_TYPE_INT, -1,
+				     G_TYPE_BOOLEAN, FALSE);
+	/* C-v down window */
+	gtk_binding_entry_remove(set, GDK_v, GDK_CONTROL_MASK);
+	gtk_binding_entry_add_signal(set, GDK_v, GDK_CONTROL_MASK, "move_cursor", 3,
+				     G_TYPE_ENUM, GTK_MOVEMENT_PAGES,
+				     G_TYPE_INT, 1,
+				     G_TYPE_BOOLEAN, FALSE);
+	/* OVERRIDEN: M-v up window */
+	gtk_binding_entry_remove(set, GDK_v, GDK_MOD1_MASK);
+	gtk_binding_entry_add_signal(set, GDK_v, GDK_MOD1_MASK, "move_cursor", 3,
+				     G_TYPE_ENUM, GTK_MOVEMENT_PAGES,
+				     G_TYPE_INT, -1,
+				     G_TYPE_BOOLEAN, FALSE);
+	/* C-d delete at cursor */
+	gtk_binding_entry_remove(set, GDK_d, GDK_CONTROL_MASK);
+	gtk_binding_entry_add_signal(set, GDK_d, GDK_CONTROL_MASK,
+				     "delete_from_cursor", 2,
+				     G_TYPE_ENUM, GTK_DELETE_CHARS,
+				     G_TYPE_INT, -1);
+	/* M-d delete word at cursor */
+	gtk_binding_entry_remove(set, GDK_d, GDK_MOD1_MASK);
+	gtk_binding_entry_add_signal(set, GDK_d, GDK_MOD1_MASK,
+				     "delete_from_cursor", 2,
+				     G_TYPE_ENUM, GTK_DELETE_WORD_ENDS,
+				     G_TYPE_INT, 1);
+	/* C-k delete to end of line */
+	gtk_binding_entry_remove(set, GDK_k, GDK_CONTROL_MASK);
+	gtk_binding_entry_add_signal(set, GDK_k, GDK_CONTROL_MASK,
+				     "delete_from_cursor", 2,
+				     G_TYPE_ENUM, GTK_DELETE_PARAGRAPH_ENDS,
+				     G_TYPE_INT, 1);
+	/* M-delete delete to start of line */
+	gtk_binding_entry_remove(set, GDK_Delete, GDK_MOD1_MASK);
+	gtk_binding_entry_add_signal(set, GDK_Delete, GDK_MOD1_MASK,
+				     "delete_from_cursor", 2,
+				     G_TYPE_ENUM, GTK_DELETE_PARAGRAPH_ENDS,
+				     G_TYPE_INT, -1);
+	/*
+	  TODO: more emacs keybinds (also Tab completion screws up)
+	Mod1 <Key>c:	    word-upper(c)\n\
+	Ctrl <Key>j:	    newline-and-indent()\n\
+	Ctrl <Key>l:	    redraw-display()\n\
+	Mod1 <Key>l:	    word-upper(l)\n\
+	Ctrl <Key>o:	    newline-and-backup()\n\
+	Ctrl <Key>t:	    text-transpose()\n\
+	Ctrl <Key>u:	    activate-keyboard(u)\n\
+	Mod1 <Key>u:	    word-upper(u)\n\
+	Ctrl <Key>w:	    delete-region()\n\
+	Ctrl <Key>x:	    activate-keyboard(x)\n\
+	Ctrl <Key>z:	    activate()\n\
+	Ctrl <Key>space:    set-anchor()\n\
+	<Key>Tab:	    listener-completion()\n\
+        Ctrl <Key>?:        listener-help()\n\
+	*/
+      }
 #endif
       SG_SIGNAL_CONNECT(GTK_OBJECT(listener_text), "key_press_event", GTK_SIGNAL_FUNC(listener_key_press), (gpointer)ss);
       SG_SIGNAL_CONNECT_AFTER(GTK_OBJECT(listener_text), "key_press_event", GTK_SIGNAL_FUNC(check_parens), (gpointer)ss);

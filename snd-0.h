@@ -93,6 +93,11 @@
   #define INIT_FILE_NAME "snd-init"
 #endif
 
+#define STRFTIME_FORMAT                  "%a %d-%b-%Y %H:%M %Z"
+
+#define STR_decimal                      '.'
+/* defines the decimal point character used where I'm making float representations by hand */
+
 #define XOR(a, b) ((~((a) & (b))) & ((a) | (b)))
 
 #define FILE_BUFFER_SIZE 8192

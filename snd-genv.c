@@ -56,6 +56,7 @@ static void display_env(snd_state *ss, env *e, char *name, GdkGC *cur_gc, int x0
   axis_context *ax = NULL;  
   ax = (axis_context *)CALLOC(1, sizeof(axis_context));
   ax->wn = drawer->window;
+  ax->w = drawer;
   ax->gc = cur_gc;
   display_enved_env(ss, e, ax, axis_cp, name, x0, y0, width, height, dots, base);
   ax = free_axis_context(ax);

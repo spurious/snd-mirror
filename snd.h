@@ -53,9 +53,6 @@
  *   Float         This can be defined to double in CFLAGS if you want Snd to use 
  *                 doubles throughout (i.e. -DFloat=double).
  *
- *   STR_OR        British spelling enthusiasts can -DSTR_OR=\"our\" (this changes
- *                 every "color" to "colour" even in the resource names).
- *
  *   HAVE_GSL      use GSL (Gnu Scientific Library).
  *                 The intention is to use GSL for most of the standard math stuff that
  *                 isn't in the math library.  Currently this means the Bessel I0 function
@@ -150,7 +147,7 @@
 
 #include "snd-strings.h"
 
-#define SND_VERSION "1-Jun-02"
+#define SND_VERSION "3-Jun-02"
 #define SND_RPM_VERSION "5.11"
 #define SND_MAJOR_VERSION 5
 #define SND_MINOR_VERSION 11

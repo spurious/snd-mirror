@@ -480,6 +480,10 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
       tdx->min_tick_len = minor_tick_length;
     }
 
+#if HAVE_GTK2
+  cury -= 12;
+#endif
+
   if ((include_x_label) || (include_x_tick_labels))
     {
       ap->x_label_y = cury;
@@ -609,12 +613,20 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
 #endif
       draw_string(ax,
 		  ap->y_axis_x0 - tdy->maj_tick_len - tdy->min_label_width - inner_border_width,
+#if HAVE_GTK2
+		  (int)(grf_y(tdy->mlo, ap) - .5 * x_number_height),
+#else
 		  (int)(grf_y(tdy->mlo, ap) + .25 * x_number_height),
+#endif
 		  tdy->min_label,
 		  strlen(tdy->min_label));
       draw_string(ax,
 		  ap->y_axis_x0 - tdy->maj_tick_len - tdy->max_label_width - inner_border_width,
+#if HAVE_GTK2
+		  (int)(grf_y(tdy->mhi, ap) - .5 * x_number_height),
+#else
 		  (int)(grf_y(tdy->mhi, ap) + .5 * x_number_height),
+#endif
 		  tdy->max_label,
 		  strlen(tdy->max_label));
 #if HAVE_GL

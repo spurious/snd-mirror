@@ -35,7 +35,7 @@ int snd_color_p(XEN obj)
 
 static XEN g_color_p(XEN obj) 
 {
-  #define H_color_p "(" S_color_p " obj) -> #t if obj is a col" STR_OR " object"
+  #define H_color_p "(" S_color_p " obj) -> #t if obj is a color object"
   return(C_TO_XEN_BOOLEAN(COLOR_P(obj)));
 }
 
@@ -70,7 +70,7 @@ static char *snd_color_to_string(snd_color *v)
   tmp_color.flags = DoRed | DoGreen | DoBlue;
   tmp_color.pixel = v->color;
   XQueryColor(dpy, cmap, &tmp_color);
-  mus_snprintf(buf, PRINT_BUFFER_SIZE, "#<col" STR_OR ": (%.2f %.2f %.2f)>",
+  mus_snprintf(buf, PRINT_BUFFER_SIZE, "#<color: (%.2f %.2f %.2f)>",
 	       (float)tmp_color.red / 65535.0,
 	       (float)tmp_color.green / 65535.0,
 	       (float)tmp_color.blue / 65535.0);
@@ -81,7 +81,7 @@ XEN_MAKE_OBJECT_PRINT_PROCEDURE(snd_color, print_snd_color, snd_color_to_string)
 
 static XEN g_color2list(XEN obj)
 {
-  #define H_color2list "(" S_color2list " obj) -> col" STR_OR " rgb values as a list of floats"
+  #define H_color2list "(" S_color2list " obj) -> color rgb values as a list of floats"
   snd_color *v;
   Colormap cmap;
   XColor tmp_color;
@@ -112,7 +112,7 @@ static XEN equalp_snd_color(XEN obj1, XEN obj2)
 
 static XEN g_make_snd_color(XEN r, XEN g, XEN b)
 {
-  #define H_make_color "(" S_make_color " r g b) -> a col" STR_OR " object with the indicated rgb values"
+  #define H_make_color "(" S_make_color " r g b) -> a color object with the indicated rgb values"
   Colormap cmap;
   XColor tmp_color;
   Display *dpy;
@@ -300,7 +300,7 @@ XEN_NARGIFY_1(g_set_graph_cursor_w, g_set_graph_cursor)
 
 void g_initialize_xgh(void)
 {
-  snd_color_tag = XEN_MAKE_OBJECT_TYPE("SndCol" STR_OR, sizeof(snd_color));
+  snd_color_tag = XEN_MAKE_OBJECT_TYPE("SndColor", sizeof(snd_color));
 
 #if HAVE_GUILE
   scm_set_smob_print(snd_color_tag, print_snd_color);

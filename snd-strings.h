@@ -1,19 +1,6 @@
 #ifndef STRS_H_LOADED
 #define STRS_H_LOADED
 
-/* strings used in Snd */
-#ifndef STR_OR
-  #define STR_OR "or"
-  /* British spelling enthusiasts can -DSTR_OR=\"our\" */
-#endif
-
-#define STRFTIME_FORMAT                  "%a %d-%b-%Y %H:%M %Z"
-
-#define STR_decimal                      '.'
-/* defines the decimal point character used where I'm making float representations by hand */
-
-/* '_p' below means it's a prompt or a boolean */
-
 #define STR_Adat_In                      "Adat In"
 #define STR_Adat_Out                     "Adat Out"
 #define STR_Aes_In                       "Aes In"
@@ -29,8 +16,8 @@
 #define STR_Click_for_help		 "Click for help"
 #define STR_CLM                          "CLM"
 #define STR_Close			 "Close"
-#define STR_Color                        "Col" STR_OR
-#define STR_Color_Editor                 "Col" STR_OR " Editor"
+#define STR_Color                        "Color"
+#define STR_Color_Editor                 "Color Editor"
 #define STR_Contrast			 "Contrast"
 #define STR_Customization		 "Customization"
 #define STR_Default		 	 "Default"
@@ -290,7 +277,7 @@
 #define S_backward_mark                 "backward-mark"
 #define S_backward_mix                  "backward-mix"
 #define S_backward_sample               "backward-sample"
-#define S_basic_color                   "basic-col" STR_OR
+#define S_basic_color                   "basic-color"
 #define S_beats_per_minute              "beats-per-minute"
 #define S_before_apply_hook             "before-apply-hook"
 #define S_before_transform_hook         "before-transform-hook"
@@ -321,13 +308,13 @@
 #define S_close_hook                    "close-hook"
 #define S_close_sound                   "close-sound"
 #define S_close_sound_file              "close-sound-file"
-#define S_color2list                    "col" STR_OR "->list"
-#define S_color_cutoff                  "col" STR_OR "-cutoff"
-#define S_color_dialog                  "col" STR_OR "-dialog"
-#define S_color_inverted                "col" STR_OR "-inverted"
-#define S_color_p                       "col" STR_OR "?"
-#define S_color_scale                   "col" STR_OR "-scale"
-#define S_colormap                      "col" STR_OR "map"
+#define S_color2list                    "color->list"
+#define S_color_cutoff                  "color-cutoff"
+#define S_color_dialog                  "color-dialog"
+#define S_color_inverted                "color-inverted"
+#define S_color_p                       "color?"
+#define S_color_scale                   "color-scale"
+#define S_colormap                      "colormap"
 #define S_comment                       "comment"
 #define S_contrast_control              "contrast-control"
 #define S_contrast_control_amp          "contrast-control-amp"
@@ -341,7 +328,7 @@
 #define S_current_edit_position         "current-edit-position"
 #define S_current_font                  "current-font"
 #define S_cursor                        "cursor"
-#define S_cursor_color                  "cursor-col" STR_OR
+#define S_cursor_color                  "cursor-color"
 #define S_cursor_context                "cursor-context"
 #define S_cursor_cross                  "cursor-cross"
 #define S_cursor_follows_play           "cursor-follows-play"
@@ -357,7 +344,7 @@
 #define S_dac_hook                      "dac-hook"
 #define S_dac_size                      "dac-size"
 #define S_data_clipped                  "data-clipped"
-#define S_data_color                    "data-col" STR_OR
+#define S_data_color                    "data-color"
 #define S_data_format                   "data-format"
 #define S_data_location                 "data-location"
 #define S_default_output_chans          "default-output-chans"
@@ -415,7 +402,7 @@
 #define S_enved_srate                   "enved-srate"
 #define S_enved_target                  "enved-target"
 #define S_enved_wave_p                  "enved-wave?"
-#define S_enved_waveform_color          "enved-waveform-col" STR_OR
+#define S_enved_waveform_color          "enved-waveform-color"
 #define S_eps_bottom_margin             "eps-bottom-margin"
 #define S_eps_file                      "eps-file"
 #define S_eps_left_margin               "eps-left-margin"
@@ -447,14 +434,14 @@
 #define S_filter_env_in_hz              "filter-env-in-hz"
 #define S_filter_selection              "filter-selection"
 #define S_filter_sound                  "filter-sound"
-#define S_filter_waveform_color         "filter-waveform-col" STR_OR
+#define S_filter_waveform_color         "filter-waveform-color"
 #define S_find                          "find"
 #define S_find_mark                     "find-mark"
 #define S_find_mix                      "find-mix"
 #define S_find_sound                    "find-sound"
 #define S_finish_progress_report        "finish-progress-report"
 #define S_focus_widget                  "focus-widget"
-#define S_foreground_color              "foreground-col" STR_OR
+#define S_foreground_color              "foreground-color"
 #define S_forget_region                 "forget-region"
 #define S_forward_graph                 "forward-graph"
 #define S_forward_mark                  "forward-mark"
@@ -467,7 +454,7 @@
 #define S_free_track_sample_reader      "free-track-sample-reader"
 #define S_graph                         "graph"
 #define S_graph2ps                      "graph->ps"
-#define S_graph_color                   "graph-col" STR_OR
+#define S_graph_color                   "graph-color"
 #define S_graph_cursor                  "graph-cursor"
 #define S_graph_data                    "graph-data"
 #define S_graph_dots                    "graph-dots"
@@ -495,7 +482,7 @@
 #define S_help_hook                     "help-hook"
 #define S_help_text_font                "help-text-font"
 #define S_hide_widget                   "hide-widget"
-#define S_highlight_color               "highlight-col" STR_OR
+#define S_highlight_color               "highlight-color"
 #define S_html_dir                      "html-dir"
 #define S_in                            "in"
 #define S_initial_graph_hook            "initial-graph-hook"
@@ -516,16 +503,16 @@
 #define S_left_sample                   "left-sample"
 #define S_lisp_graph                    "lisp-graph"
 #define S_lisp_graph_hook               "lisp-graph-hook"
-#define S_listener_color                "listener-col" STR_OR
+#define S_listener_color                "listener-color"
 #define S_listener_font                 "listener-font"
 #define S_listener_prompt               "listener-prompt"
 #define S_listener_selection            "listener-selection"
-#define S_listener_text_color           "listener-text-col" STR_OR
+#define S_listener_text_color           "listener-text-color"
 #define S_load_font                     "load-font"
 #define S_loop_samples                  "loop-samples"
 #define S_main_menu                     "main-menu"
 #define S_main_widgets                  "main-widgets"
-#define S_make_color                    "make-col" STR_OR
+#define S_make_color                    "make-color"
 #define S_make_graph_data               "make-graph-data"
 #define S_make_mix_sample_reader        "make-mix-sample-reader"
 #define S_make_player                   "make-player"
@@ -536,7 +523,7 @@
 #define S_map_chan                      "map-chan"
 #define S_map_channel                   "map-channel"
 #define S_mark_click_hook               "mark-click-hook"
-#define S_mark_color                    "mark-col" STR_OR
+#define S_mark_color                    "mark-color"
 #define S_mark_context                  "mark-context"
 #define S_mark_drag_hook                "mark-drag-hook"
 #define S_mark_home                     "mark-home"
@@ -563,7 +550,7 @@
 #define S_mix_amp_env                   "mix-amp-env"
 #define S_mix_anchor                    "mix-anchor"
 #define S_mix_chans                     "mix-chans"
-#define S_mix_color                     "mix-col" STR_OR
+#define S_mix_color                     "mix-color"
 #define S_mix_file_dialog               "mix-file-dialog"
 #define S_mix_home                      "mix-home"
 #define S_mix_length                    "mix-length"
@@ -637,7 +624,7 @@
 #define S_player_p                      "player?"
 #define S_position2x                    "position->x"
 #define S_position2y                    "position->y"
-#define S_position_color                "position-col" STR_OR
+#define S_position_color                "position-color"
 #define S_preload_directory             "preload-directory"
 #define S_preload_file                  "preload-file"
 #define S_previous_files_select_hook    "previous-files-select-hook"
@@ -650,7 +637,7 @@
 #define S_prompt_in_minibuffer          "prompt-in-minibuffer"
 #define S_property_changed_hook         "property-changed-hook"
 #define S_protect_region                "protect-region"
-#define S_pushed_button_color           "pushed-button-col" STR_OR
+#define S_pushed_button_color           "pushed-button-color"
 #define S_ramp_channel                  "ramp-channel"
 #define S_read_hook                     "read-hook"
 #define S_read_only                     "read-only"
@@ -658,7 +645,7 @@
 #define S_read_sample                   "read-sample"
 #define S_read_mix_sample               "read-mix-sample"
 #define S_read_track_sample             "read-track-sample"
-#define S_recolor_widget                "recol" STR_OR "-widget"
+#define S_recolor_widget                "recolor-widget"
 #define S_recorder_autoload             "recorder-autoload"
 #define S_recorder_buffer_size          "recorder-buffer-size"
 #define S_recorder_dialog               "recorder-dialog"
@@ -710,7 +697,7 @@
 #define S_samples                       "samples"
 #define S_samples2sound_data            "samples->sound-data"
 #define S_samples2vct                   "samples->vct"
-#define S_sash_color                    "sash-col" STR_OR
+#define S_sash_color                    "sash-color"
 #define S_save_controls                 "save-controls"
 #define S_save_dir                      "save-dir"
 #define S_save_edit_history             "save-edit-history"
@@ -746,13 +733,13 @@
 #define S_select_sound                  "select-sound"
 #define S_select_sound_hook             "select-sound-hook"
 #define S_selected_channel              "selected-channel"
-#define S_selected_data_color           "selected-data-col" STR_OR
-#define S_selected_graph_color          "selected-graph-col" STR_OR
+#define S_selected_data_color           "selected-data-color"
+#define S_selected_graph_color          "selected-graph-color"
 #define S_selected_mix                  "selected-mix"
-#define S_selected_mix_color            "selected-mix-col" STR_OR
+#define S_selected_mix_color            "selected-mix-color"
 #define S_selected_sound                "selected-sound"
 #define S_selection_chans               "selection-chans"
-#define S_selection_color               "selection-col" STR_OR
+#define S_selection_color               "selection-color"
 #define S_selection_context             "selection-context"
 #define S_selection_creates_region      "selection-creates-region"
 #define S_selection_length              "selection-length"
@@ -834,7 +821,7 @@
 #define S_sync                          "sync"
 #define S_syncd_marks                   "syncd-marks"
 #define S_temp_dir                      "temp-dir"
-#define S_text_focus_color              "text-focus-col" STR_OR
+#define S_text_focus_color              "text-focus-color"
 #define S_time_graph                    "time-graph"
 #define S_time_graph_type               "time-graph-type"
 #define S_tiny_font                     "tiny-font"
@@ -900,7 +887,7 @@
 #define S_y_zoom_slider                 "y-zoom-slider"
 #define S_yes_or_no_p                   "yes-or-no?"
 #define S_zero_pad                      "zero-pad"
-#define S_zoom_color                    "zoom-col" STR_OR
+#define S_zoom_color                    "zoom-color"
 #define S_zoom_focus_active             "zoom-focus-active"
 #define S_zoom_focus_left               "zoom-focus-left"
 #define S_zoom_focus_middle             "zoom-focus-middle"

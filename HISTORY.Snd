@@ -1,5 +1,6 @@
 snd change log
 
+  3-Jun:     removed "colour" spelling option (snd5.scm has backwards compatible definitions).
   28-May:    Dave Phillips' Snd tutorial added in contrib/tutorial.
   24-May:    with-gl to choose between GL/X graphics, snd-gl.scm
   23-May:    gl1.png (spectrogram uses GL now if mono and HAVE_GL).

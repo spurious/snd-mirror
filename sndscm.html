@@ -281,6 +281,7 @@ the cursor is moved to the clicked point.
     <li>zero-phase, rotate-phase
     <li>asyfm
     <li>cosine-summation, legendre-summation
+    <li>brighten-slightly
   </ul>
 
 <p>These are DSP-related procedures that aren't closely tied to CLM.
@@ -306,6 +307,7 @@ the cursor is moved to the clicked point.
   <em class=def><A NAME="asyfm">both forms of asymmetric-fm</a></em>
   <em class=def><a name="cosinesummation">cosine-summation</a></em>
   <em class=def><a name="legendresummation">legendre-summation</a></em>
+  <em class=def><A NAME="brightenslightly">brighten-slightly</a></em> amount
 </pre>
 
 <p><i>dolph</i> is the Dolph-Chebyshev fft data window, taken
@@ -378,6 +380,9 @@ sine-summation, applied within the sum-of-cosines output).  <i>legendre-summatio
 uses the sum-of-cosines generator to produce a band-limited pulse-train whose
 cosine components have a decreasing amplitude (as if it were a sum of Lengendre
 Polynomials driven by a cosine).
+</p>
+
+<p><i>brighten-slightly</i> is a slight simplification of contrast-enhancement.
 </p>
 
 <A NAME="editmenudoc"></a><span class=box><h2>edit-menu.scm</h2></span>

@@ -389,11 +389,14 @@ static gboolean graph_mouse_leave(GtkWidget *w, GdkEventCrossing *ev, gpointer d
 static void history_select_callback(GtkTreeSelection *selection, gpointer *gp)
 {
   GtkTreeIter iter;
-  gchar *value;
   GtkTreeModel *model;
+  GtkTreePath *path;
+  gint *indices;
   if (!(gtk_tree_selection_get_selected(selection, &model, &iter))) return;
-  gtk_tree_model_get(model, &iter, 0, &value, -1);
-  /* TODO: find the goddamn row somehow */
+  path = gtk_tree_model_get_path(model, &iter);
+  indices = gtk_tree_path_get_indices(path);
+  edit_select_callback((chan_info *)gp, indices[0], 0);
+  gtk_tree_path_free(path);
 }
 #else
 static gboolean history_select_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
@@ -825,7 +828,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 static void set_graph_font(chan_info *cp, SG_FONT *fnt)
 {
   cp->cgx->ax->current_font = fnt;
-  SG_SET_FONT(copy_GC(cp), fnt);
+  SG_SET_FONT(cp->cgx->ax, fnt);
 }
 
 void set_peak_numbers_font(chan_info *cp) {set_graph_font(cp, (cp->state->sgx)->button_fnt);}
@@ -995,6 +998,7 @@ int fixup_cp_cgx_ax_wn(chan_info *cp)
     w = channel_graph((cp->sound)->chans[0]);
   else w = channel_graph(cp);
   ax->wn = w->window;
+  ax->w = w;
   return((int)(ax->wn));
 }
 

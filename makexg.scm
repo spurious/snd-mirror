@@ -12,6 +12,9 @@
 (debug-enable 'backtrace)
 (read-enable 'positions)
 
+(define include-broken #f)  ; set to #t to get ENABLE_BROKEN entities
+(define include-deprecated #f) ; set to #t to get DISABLE_DEPRECATED entitities
+
 (define xg-file (open-output-file "xg.c"))
 (define xg-ruby-file (open-output-file "xg-ruby.c"))
 
@@ -553,8 +556,11 @@
 	(cons "GdkSettingAction" "INT")
 	(cons "GdkByteOrder" "INT")
 	;(cons "GdkWChar" "ULONG")
-	
-	;; deprecated
+	))
+
+(if include-deprecated
+    (set! direct-types (append direct-types
+      (list		       
 	(cons "GtkCellType" "INT")
 	(cons "GtkCTreeLineStyle" "INT")
 	(cons "GtkCTreeExpanderStyle" "INT")
@@ -562,11 +568,13 @@
 	(cons "GtkPreviewType" "INT")
 	(cons "GtkProgressBarStyle" "INT")
 	(cons "GtkVisibility" "INT")
-	(cons "GtkSignalRunType" "INT")
+	(cons "GtkSignalRunType" "INT")))))
 
-	;; broken
-	(cons "GtkTreeViewMode" "INT")
-	))
+(if include-broken
+    (set! direct-types (append direct-types
+      (list
+	(cons "GtkTreeViewMode" "INT")))))
+
 
 (define (type-it type)
   (let ((typ (assoc type direct-types))
@@ -578,7 +586,7 @@
 	      (if (string? (cdr typ))
 		  (begin
 		    (hey "#define C_TO_XEN_~A(Arg) C_TO_XEN_~A(Arg)~%" (no-stars (car typ)) (cdr typ))
-		    (hey "#define XEN_TO_C_~A(Arg) XEN_TO_C_~A(Arg)~%" (no-stars (car typ)) (cdr typ))
+		    (hey "#define XEN_TO_C_~A(Arg) (~A)(XEN_TO_C_~A(Arg))~%" (no-stars (car typ)) (car typ) (cdr typ))
 		    (hey "#define XEN_~A_P(Arg) XEN_~A_P(Arg)~%" 
 			 (no-stars (car typ))
 			 (if (string=? (cdr typ) "INT") 
@@ -643,31 +651,33 @@
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
 (define (CFNC-broken data)
-  (let ((name (cadr-str data))
-	(args (caddr-str data)))
-    (if (assoc name names)
-	(no-way "~A CFNC-broken~%" name)
-	(let ((type (car-str data)))
-	  (if (and (not (member type types))
-		   (not (member type deprecated-types))
-		   (not (member type broken-types)))
-	      (set! broken-types (cons type broken-types)))
-	  (let ((strs (parse-args args 'broken)))
-	    (set! broken-funcs (cons (list name type strs args) broken-funcs))
-	    (set! names (cons (cons name (func-type strs)) names)))))))
+  (if include-broken
+      (let ((name (cadr-str data))
+	    (args (caddr-str data)))
+	(if (assoc name names)
+	    (no-way "~A CFNC-broken~%" name)
+	    (let ((type (car-str data)))
+	      (if (and (not (member type types))
+		       (not (member type deprecated-types))
+		       (not (member type broken-types)))
+		  (set! broken-types (cons type broken-types)))
+	      (let ((strs (parse-args args 'broken)))
+		(set! broken-funcs (cons (list name type strs args) broken-funcs))
+		(set! names (cons (cons name (func-type strs)) names))))))))
 
 (define (CFNC-dep data)
-  (let ((name (cadr-str data))
-	(args (caddr-str data)))
-    (if (assoc name names)
-	(no-way "~A CFNC-deprecated~%" name)
-	(let ((type (car-str data)))
-	  (if (and (not (member type types))
-		   (not (member type deprecated-types)))
-	      (set! deprecated-types (cons type deprecated-types)))
-	  (let ((strs (parse-args args 'deprecated)))
-	    (set! deprecated-funcs (cons (list name type strs args) deprecated-funcs))
-	    (set! names (cons (cons name (func-type strs)) names)))))))
+  (if include-deprecated
+      (let ((name (cadr-str data))
+	    (args (caddr-str data)))
+	(if (assoc name names)
+	    (no-way "~A CFNC-deprecated~%" name)
+	    (let ((type (car-str data)))
+	      (if (and (not (member type types))
+		       (not (member type deprecated-types)))
+		  (set! deprecated-types (cons type deprecated-types)))
+	      (let ((strs (parse-args args 'deprecated)))
+		(set! deprecated-funcs (cons (list name type strs args) deprecated-funcs))
+		(set! names (cons (cons name (func-type strs)) names))))))))
 
 (define (CFNC-extra data)
   (let ((name (cadr-str data))
@@ -763,18 +773,20 @@
 	(set! names (cons (cons name 'int) names)))))
 
 (define* (CINT-broken name #:optional type)
-  (if (assoc name names)
-      (no-way "~A CINT-broken~%" name)
-      (begin
-	(set! broken-ints (cons name broken-ints))
-	(set! names (cons (cons name 'int) names)))))
+  (if include-broken
+      (if (assoc name names)
+	  (no-way "~A CINT-broken~%" name)
+	  (begin
+	    (set! broken-ints (cons name broken-ints))
+	    (set! names (cons (cons name 'int) names))))))
 
 (define* (CINT-dep name #:optional type)
-  (if (assoc name names)
-      (no-way "~A CINT-deprecated~%" name)
-      (begin
-	(set! deprecated-ints (cons name deprecated-ints))
-	(set! names (cons (cons name 'int) names)))))
+  (if include-deprecated
+      (if (assoc name names)
+	  (no-way "~A CINT-deprecated~%" name)
+	  (begin
+	    (set! deprecated-ints (cons name deprecated-ints))
+	    (set! names (cons (cons name 'int) names))))))
 
 
 (define (CCAST name type) ; this is the cast (type *)obj essentially but here it's (list type* (cadr obj))
@@ -796,44 +808,48 @@
 	(set! names (cons (cons name 'def) names)))))
 
 (define (CCAST-broken name type)
-  (if (assoc name names)
-      (no-way "~A CCAST-broken~%" name)
-      (begin
-	(if (and (not (member type types))
-		 (not (member type broken-types)))
-	    (set! broken-types (cons type broken-types)))
-	(set! broken-casts (cons (list name type) broken-casts))
-	(set! names (cons (cons name 'def) names)))))
+  (if include-broken
+      (if (assoc name names)
+	  (no-way "~A CCAST-broken~%" name)
+	  (begin
+	    (if (and (not (member type types))
+		     (not (member type broken-types)))
+		(set! broken-types (cons type broken-types)))
+	    (set! broken-casts (cons (list name type) broken-casts))
+	    (set! names (cons (cons name 'def) names))))))
 
 (define (CCHK-broken name type)
-  (if (assoc name names)
-      (no-way "~A CCHK~%" name)
-      (begin
-	(if (and (not (member type types))
-		 (not (member type broken-types)))
-	    (set! broken-types (cons type broken-types)))
-	(set! broken-checks (cons (list name type) broken-checks))
-	(set! names (cons (cons name 'def) names)))))
+  (if include-broken
+      (if (assoc name names)
+	  (no-way "~A CCHK~%" name)
+	  (begin
+	    (if (and (not (member type types))
+		     (not (member type broken-types)))
+		(set! broken-types (cons type broken-types)))
+	    (set! broken-checks (cons (list name type) broken-checks))
+	    (set! names (cons (cons name 'def) names))))))
 
 (define (CCAST-dep name type)
-  (if (assoc name names)
-      (no-way "~A CCAST-deprecated~%" name)
-      (begin
-	(if (and (not (member type types))
-		 (not (member type deprecated-types)))
-	    (set! deprecated-types (cons type deprecated-types)))
-	(set! deprecated-casts (cons (list name type) deprecated-casts))
-	(set! names (cons (cons name 'def) names)))))
+  (if include-deprecated
+      (if (assoc name names)
+	  (no-way "~A CCAST-deprecated~%" name)
+	  (begin
+	    (if (and (not (member type types))
+		     (not (member type deprecated-types)))
+		(set! deprecated-types (cons type deprecated-types)))
+	    (set! deprecated-casts (cons (list name type) deprecated-casts))
+	    (set! names (cons (cons name 'def) names))))))
 
 (define (CCHK-dep name type)
-  (if (assoc name names)
-      (no-way "~A CCHK~%" name)
-      (begin
-	(if (and (not (member type types))
-		 (not (member type deprecated-types)))
-	    (set! deprecated-types (cons type deprecated-types)))
-	(set! deprecated-checks (cons (list name type) deprecated-checks))
-	(set! names (cons (cons name 'def) names)))))
+  (if include-deprecated
+      (if (assoc name names)
+	  (no-way "~A CCHK~%" name)
+	  (begin
+	    (if (and (not (member type types))
+		     (not (member type deprecated-types)))
+		(set! deprecated-types (cons type deprecated-types)))
+	    (set! deprecated-checks (cons (list name type) deprecated-checks))
+	    (set! names (cons (cons name 'def) names))))))
 
 (define (CCAST-extra name type)
   (if (assoc name names)
@@ -912,18 +928,22 @@
 
 
 (define (with-deprecated dpy thunk)
-  (check-gtk1 #t)
-  (dpy "#if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED))) && (!(defined(GDK_PIXBUF_DISABLE_DEPRECATED)))~%")
-  (thunk)
-  (check-gtk1 #t)
-  (dpy "#endif~%~%"))
+  (if include-deprecated
+      (begin
+	(check-gtk1 #t)
+	(dpy "#if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED))) && (!(defined(GDK_PIXBUF_DISABLE_DEPRECATED)))~%")
+	(thunk)
+	(check-gtk1 #t)
+	(dpy "#endif~%~%"))))
 
 (define (with-broken dpy thunk)
-  (check-gtk1 #t)
-  (dpy "#if GDK_ENABLE_BROKEN && GTK_ENABLE_BROKEN~%")
-  (thunk)
-  (check-gtk1 #t)
-  (dpy "#endif~%~%"))
+  (if include-broken
+      (begin
+	(check-gtk1 #t)
+	(dpy "#if GDK_ENABLE_BROKEN && GTK_ENABLE_BROKEN~%")
+	(thunk)
+	(check-gtk1 #t)
+	(dpy "#endif~%~%"))))
 
 (define (with-extra dpy thunk)
   (check-gtk1 #t)
@@ -997,6 +1017,7 @@
 (hey " * ~A: test suite (snd-test 24)~%" (string-append "T" "ODO"))
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     2-Jun:     removed deprecated and broken stuff (see include-deprecated switch in makexg.scm)~%")
 (hey " *     4-Apr:     minor changes for Gtk 2.0.2~%")
 (hey " *     13-Mar:    Gtk 2.0.0~%")
 (hey " *     12-Mar:    support for GtkDestroyNotify callbacks~%")
@@ -1119,7 +1140,7 @@
 (hey "#define C_TO_XEN_GtkTreeSelectionFunc(Arg) WRAP_FOR_XEN(\"GtkTreeSelectionFunc\", Arg)~%")
 (hey "#define C_TO_XEN_GtkMenuPositionFunc(Arg) WRAP_FOR_XEN(\"GtkMenuPositionFunc\", Arg)~%")
 (hey "#define C_TO_XEN_GtkDestroyNotify(Arg) WRAP_FOR_XEN(\"GtkDestroyNotify\", Arg)~%")
-(hey "#define XEN_TO_C_GdkFilterReturn(Arg) XEN_TO_C_INT(Arg)~%")
+(hey "#define XEN_TO_C_GdkFilterReturn(Arg) (GdkFilterReturn)XEN_TO_C_INT(Arg)~%")
 
 
 (hey "~%~%/* ---------------------------------------- types ---------------------------------------- */~%~%")
@@ -2114,8 +2135,8 @@
 
 (for-each gtk1? names)
 (for-each gtk1? types)
-(for-each gtk1? broken-types)
-(for-each gtk1? deprecated-types)
+(if include-broken (for-each gtk1? broken-types))
+(if include-deprecated (for-each gtk1? deprecated-types))
 (for-each gtk1? struct-fields)
 (close-output-port gad)
 !#

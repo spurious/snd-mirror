@@ -346,11 +346,6 @@ Two colors are equal (i.e. equal? returns #t) if their rgb values are the same.
 </tr>
 </table>
 
-
-<p><small>(British spelling enthusiasts can use "colour" throughout Snd by building it with the CFLAG
- -DSTR_OR=\"our\").</small>
-</p>
-
 <br>
 <span class=cbox><h4><A NAME="fonts">Fonts</a></h4></span>
 
@@ -731,7 +726,16 @@ The lowest level procedures are:
 <!-- --><pre>
 <!-- -->  (define new-font (<em class=red>load-font</em> "-adobe-helvetica-bold-r-*-*-14-*-*-*-*-*-*-*"))
 <!-- --></pre>
+<!-- --><p>load-font could be (should have been!) defined using the xm module as:</p>
 <!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+(define (load-font name)
+  (let ((fs (|XLoadQueryFont (|XtDisplay (cadr (main-widgets))) name)))
+    (and (|XFontStruct? fs) (|fid fs))))
+<!-- --></pre></td></tr></table>
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- make-graph-data -->

@@ -224,6 +224,7 @@ static void amp_env_display(GtkWidget *w, snd_state *ss)
 
       ax = (axis_context *)CALLOC(1, sizeof(axis_context));
       ax->wn = w_env->window;
+      ax->w = w_env;
       ax->gc = cur_gc;
     }
   else clear_window(ax);

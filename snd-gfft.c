@@ -80,6 +80,7 @@ static void graph_redisplay(snd_state *ss)
       if (axis_ap->xlabel) FREE(axis_ap->xlabel);
     }
   ax->wn = graph_drawer->window;
+  ax->w = graph_drawer;
   ax->gc = gc;
   ax->current_font = AXIS_NUMBERS_FONT(ss);
   axis_ap->xmin = 0.0;
@@ -176,17 +177,14 @@ static void gfft_size(snd_state *ss, int row)
 static void size_browse_callback(GtkTreeSelection *selection, gpointer *gp)
 {
   GtkTreeIter iter;
-  gchar *value;
-  int i;
+  gint *indices;
+  GtkTreePath *path;
   GtkTreeModel *model;
   if (!(gtk_tree_selection_get_selected(selection, &model, &iter))) return;
-  gtk_tree_model_get(model, &iter, 0, &value, -1);
-  for (i = 0; i < NUM_TRANSFORM_SIZES; i++)
-    if (strcmp(value, TRANSFORM_SIZES[i]) == 0)
-      {
-	gfft_size((snd_state *)gp, i);
-	return;
-      }
+  path = gtk_tree_model_get_path(model, &iter);
+  indices = gtk_tree_path_get_indices(path);
+  gfft_size((snd_state *)gp, indices[0]);
+  gtk_tree_path_free(path);
 }
 #else
 static void size_browse_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
@@ -499,7 +497,7 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
       set_background(transform_dialog, (ss->sgx)->basic_color);
       gtk_container_set_border_width(GTK_CONTAINER(transform_dialog), 4);
       gtk_widget_realize(transform_dialog);
-      SG_SET_SIZE(GTK_WIDGET(transform_dialog), 400, 350);
+      SG_SET_SIZE(GTK_WIDGET(transform_dialog), 400, 500);
 
       help_button = gtk_button_new_with_label(STR_Help);
       dismiss_button = gtk_button_new_with_label(STR_Dismiss);

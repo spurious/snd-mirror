@@ -288,16 +288,14 @@ On recording, here's a note from Fernando from cmdist:
 ---- Gtk+: ----
 Gtk+ is not as sophisticated as Motif, and the port is still somewhat new, so
 there are a number of differences and rough-edges in that version of Snd.
-(Actually, at this point the port is not new, but Gtk has changed so much,
-that the port should probably be considered broken -- someday I'll tackle
-this again).
-
 The primary differences are 1) Gtk+ paned-window widget only accepts two
 panes.  This means that simple boxes are used throughout rather than
 panes. 2) Gtk+ colors are a bottomless pit; colors may or may not work
 right.  3) Gtk+ file selection dialog's filter is restricted to a simple
 string using "*" -- the just-sounds button of Motif, and the associated
-sound file extension list are omitted.
+sound file extension list are omitted.  4) Emacs bindings are only partially
+competed in the listener, and help/completion is broken. 5) No OpenGL
+support -- there is apparently a GtkGLArea widget somewhere.
 
 (I've tried snd+gtk in Linux, Sun, and SGI).
 
@@ -455,7 +453,9 @@ Fernando Lopez-Lezcano mentioned this possibility:
 If you're running Guile 1.4 and get:
     Syntax error in fixed argument declaration.
 you've hit a use of the newer (Guile 1.5) optargs syntax.  To get around
-this, load fix-optargs.scm before anything else.
+this, load fix-optargs.scm before anything else.  There are other
+similar problems involving "applicable smobs" and the tab-completion
+system; if possible, get the latest Guile.
 
 
 ---- SGI/OpenGL ----

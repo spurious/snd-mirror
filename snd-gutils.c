@@ -112,33 +112,52 @@ int set_axis_numbers_font(snd_state *ss, char *font)
 
 void activate_numbers_font(axis_context *ax, snd_state *ss)
 {
-  SG_SET_FONT(ax->gc, AXIS_NUMBERS_FONT(ss));
+  SG_SET_FONT(ax, AXIS_NUMBERS_FONT(ss));
   ax->current_font = AXIS_NUMBERS_FONT(ss);
 }
    
 void activate_button_font(axis_context *ax, snd_state *ss)
 {
-  SG_SET_FONT(ax->gc, (ss->sgx)->button_fnt);
+  SG_SET_FONT(ax, (ss->sgx)->button_fnt);
   ax->current_font = (ss->sgx)->button_fnt;
 }
 
 void activate_label_font(axis_context *ax, snd_state *ss)
 {
-  SG_SET_FONT(ax->gc, AXIS_LABEL_FONT(ss));
+  SG_SET_FONT(ax, AXIS_LABEL_FONT(ss));
   ax->current_font = AXIS_LABEL_FONT(ss);
 }
+
+#if HAVE_GTK2
+static int sg_text_width(char *txt, PangoFontDescription *font)
+{
+  PangoLayout *layout = NULL;
+  int wid = 0;
+  layout = pango_layout_new(gdk_pango_context_get());
+  if (layout)
+    {
+      pango_layout_set_font_description(layout, font);
+      pango_layout_set_text(layout, txt, -1);
+      pango_layout_get_pixel_size(layout, &wid, NULL);
+      g_object_unref(G_OBJECT(layout));
+    }
+  return(wid);
+}
+#else
+  #define sg_text_width(Txt, Font) gdk_text_width(Font, (gchar *)Txt, (gint)strlen(Txt))
+#endif
 
 int label_width(snd_state *ss, char *txt)
 {
   if (txt)
-    return(SG_TEXT_WIDTH(txt, AXIS_LABEL_FONT(ss)));
+    return(sg_text_width(txt, AXIS_LABEL_FONT(ss)));
   else return(0);
 }
 
 int mark_name_width(snd_state *ss, char *txt)
 {
   if (txt)
-    return(SG_TEXT_WIDTH(txt, (ss->sgx)->button_fnt));
+    return(sg_text_width(txt, (ss->sgx)->button_fnt));
   return(0);
 }
 
@@ -146,30 +165,94 @@ int mark_name_width(snd_state *ss, char *txt)
 int number_width(snd_state *ss, char *num)
 {
   if (num)
-    return(SG_TEXT_WIDTH(num, AXIS_NUMBERS_FONT(ss)));
+    return(sg_text_width(num, AXIS_NUMBERS_FONT(ss)));
   return(0);
 }
 
+#if HAVE_GTK2
+static int sg_font2width(SG_FONT *font)
+{
+  PangoLayout *layout = NULL;
+  int wid = 0;
+  layout = pango_layout_new(gdk_pango_context_get());
+  if (layout)
+    {
+      pango_layout_set_font_description(layout, font);
+      pango_layout_set_text(layout, "1", -1);
+      pango_layout_get_pixel_size(layout, &wid, NULL);
+      g_object_unref(G_OBJECT(layout));
+    }
+  return(wid);
+}
+
+static int sg_font2height(SG_FONT *font)
+{
+  PangoLayout *layout = NULL;
+  int wid = 0;
+  layout = pango_layout_new(gdk_pango_context_get());
+  if (layout)
+    {
+      pango_layout_set_font_description(layout, font);
+      pango_layout_set_text(layout, "1", -1);
+      pango_layout_get_pixel_size(layout, NULL, &wid);
+      g_object_unref(G_OBJECT(layout));
+    }
+  return(wid);
+}
+
+GtkWidget *sg_pixmap_new(GdkPixmap *map, GdkBitmap *mask)
+{
+  GtkWidget *pixmap, *fixed;
+  pixmap = gtk_image_new_from_pixmap(map, mask);
+  gtk_widget_show(pixmap);
+  fixed = gtk_fixed_new();
+  gtk_widget_set_size_request(fixed, 16, 16);
+  gtk_fixed_put(GTK_FIXED(fixed), pixmap, 0, 0);
+  /* gtk_container_add(GTK_CONTAINER(window), fixed); */
+  /* gtk_widget_show(fixed); */
+  /* gtk_widget_shape_combine_mask(window, mask, 0, 0); */
+  return(fixed);
+}
+
+void sg_pixmap_set(GtkWidget *w, GdkPixmap *map, GdkBitmap *mask)
+{
+  GtkWidget *pixmap;
+  GtkFixed *fixed;
+  GtkFixedChild *child;
+  GList *children;
+  pixmap = gtk_image_new_from_pixmap(map, mask);
+  gtk_widget_show(pixmap);
+  fixed = GTK_FIXED(w);
+  children = fixed->children;
+  child = (GtkFixedChild *)(children->data);
+  gtk_widget_unparent(child->widget);
+  fixed->children = g_list_remove_link(fixed->children, children);
+  g_list_free(children);
+  g_free(child);
+  gtk_fixed_put(fixed, pixmap, 0, 0);
+}
+#endif
+
 int number_height(snd_state *ss)
 {
-  gint lb, rb, asc, des, wid;
 #if HAVE_GTK2
-  gdk_text_extents(gdk_font_from_description(AXIS_NUMBERS_FONT(ss)), "1", 1, &lb, &rb, &wid, &asc, &des);
+  return(sg_font2height(AXIS_NUMBERS_FONT(ss)));
 #else
+  gint lb, rb, asc, des, wid;
   gdk_text_extents(AXIS_NUMBERS_FONT(ss), "1", 1, &lb, &rb, &wid, &asc, &des);
-#endif
   return(asc + des);
+#endif
 }
 
 int label_height(snd_state *ss)
 {
-  gint lb, rb, asc, des, wid;
 #if HAVE_GTK2
-  gdk_text_extents(gdk_font_from_description(AXIS_LABEL_FONT(ss)), "1", 1, &lb, &rb, &wid, &asc, &des);
+  return(sg_font2width(AXIS_LABEL_FONT(ss)));
 #else
+  gint lb, rb, asc, des, wid;
   gdk_text_extents(AXIS_LABEL_FONT(ss), "1", 1, &lb, &rb, &wid, &asc, &des);
-#endif
   return(asc + des);
+#endif
 }
 
 void clear_window(axis_context *ax)
@@ -535,6 +618,7 @@ void fixup_axis_context(axis_context *ax, GtkWidget *w, GdkGC *gc)
   snd_state *ss;
   ss = get_global_state();
   ax->wn = w->window;
+  ax->w = w;
   if (gc) ax->gc = gc;
   ax->current_font = AXIS_NUMBERS_FONT(ss);
 }
@@ -626,7 +710,7 @@ void sg_set_cursor(GtkWidget *w, int position)
   GtkTextIter pos;
   GtkTextBuffer *buf;
   buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
-  gtk_text_buffer_get_iter_at_offset(buf, &pos, position - 1); /* can't put the cursor at the end in gtk2! */
+  gtk_text_buffer_get_iter_at_offset(buf, &pos, position - 1); /* TODO: can't put the cursor at the end in gtk2! */
   gtk_text_buffer_place_cursor(buf, &pos);
   gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(w), gtk_text_buffer_get_insert(buf));
 }
@@ -648,9 +732,6 @@ void sg_select_text(GtkWidget *w, int s0, int s1)
   /* The currently-selected text in @buffer is the region between the
    * "selection_bound" and "insert" marks. If "selection_bound" and
    * "insert" are in the same place, then there is no current selection.
-   * gtk_text_buffer_get_selection_bounds() is another convenient function
-   * for handling the selection, if you just want to know whether there's a
-   * selection and what its bounds are.
    */
   GtkTextIter start, end;
   GtkTextBuffer *buf;
@@ -663,10 +744,12 @@ void sg_select_text(GtkWidget *w, int s0, int s1)
 
 void sg_unselect_text(GtkWidget *w)
 {
+  int s0;
   GtkTextIter start;
   GtkTextBuffer *buf;
   buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
-  gtk_text_iter_set_offset(&start, sg_cursor_position(w));
+  s0 = sg_cursor_position(w);
+  gtk_text_iter_set_offset(&start, s0);
   gtk_text_buffer_move_mark_by_name(buf, "selection_bound", &start);
 }
 
@@ -828,16 +911,28 @@ void sg_list_set_text(GtkWidget *lst, int row, char *val)
   gtk_tree_store_set(GTK_TREE_STORE(w), &iter, 0, val, -1);
 }
 
-void sg_pixmap_set(GtkWidget *holder, GdkPixbuf *pix)
+void sg_list_select(GtkWidget *lst, int row)
 {
-  /* TODO: how to set label pixmap? */
+  GtkTreeIter iter;
+  GtkTreeModel *w;
+  GtkTreeSelection *tree;
+  w = gtk_tree_view_get_model(GTK_TREE_VIEW(lst));
+  gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(w), &iter, NULL, row);
+  tree = gtk_tree_view_get_selection(GTK_TREE_VIEW(lst));
+  gtk_tree_selection_select_iter(tree, &iter);
 }
 
-GtkWidget *sg_pixmap_new(GdkPixbuf *pix)
+void sg_list_moveto(GtkWidget *lst, int row)
 {
-  GtkWidget *label;
-  label = gtk_label_new("TODO: get rid of this damned label");
-  sg_pixmap_set(label, pix);
-  return(label);
+  /* GTK2 bug here -- does not actually scroll */
+  GtkTreeIter iter;
+  GtkTreeModel *w;
+  GtkTreePath *path;
+  w = gtk_tree_view_get_model(GTK_TREE_VIEW(lst));
+  gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(w), &iter, NULL, row);
+  path = gtk_tree_model_get_path(w, &iter);
+  gtk_tree_view_scroll_to_cell(GTK_TREE_VIEW(lst), path, NULL, TRUE, 0.5, 0.5);
+  gtk_tree_path_free(path);
 }
+
 #endif

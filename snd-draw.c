@@ -287,7 +287,8 @@ static XEN g_load_font(XEN font)
   ss = get_global_state();
   fs = XLoadQueryFont(MAIN_DISPLAY(ss), 
 		      XEN_TO_C_STRING(font));
-  if (fs) return(C_TO_XEN_INT(fs->fid));
+  if (fs) return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("Font"),
+			    C_TO_XEN_ULONG(fs->fid)));
   return(XEN_FALSE);
 }
 
@@ -296,8 +297,12 @@ static XEN g_set_current_font(XEN id, XEN snd, XEN chn, XEN ax_id)
   axis_context *ax;
   ASSERT_CHANNEL("set-" S_current_font, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, XEN_ARG_4, "set-" S_current_font, "an integer");
+  XEN_ASSERT_TYPE((XEN_LIST_P(id)) &&
+		  (XEN_LIST_LENGTH(id) >= 2) &&
+		  (XEN_SYMBOL_P(XEN_CAR(id))) &&
+		  (strcmp("Font", XEN_SYMBOL_TO_C_STRING(XEN_CAR(id))) == 0), id, XEN_ARG_1, "set-" S_current_font, "a Font");
   ax = TO_C_AXIS_CONTEXT(snd, chn, ax_id, S_current_font);
-  ax->current_font = (Font)XEN_TO_C_INT(id);
+  ax->current_font = (Font)XEN_TO_C_INT(XEN_CADR(id));
   XSetFont(ax->dp, ax->gc, ax->current_font);
   return(id);
 }
@@ -314,8 +319,10 @@ static XEN g_current_font(XEN snd, XEN chn, XEN ax_id)
 	      XEN_TO_C_INT_OR_ELSE(ax_id, CHAN_GC),
 	      S_current_font);
   if (ax->current_font == 0)
-    return(C_TO_XEN_INT(cp->axis->ax->current_font));
-  return(C_TO_XEN_INT(ax->current_font));
+    return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("Font"),
+		      C_TO_XEN_ULONG(cp->axis->ax->current_font)));
+  return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("Font"),
+		    C_TO_XEN_ULONG(ax->current_font)));
 }
 
 
@@ -338,7 +345,7 @@ static XEN g_set_current_font(XEN id, XEN snd, XEN chn, XEN ax_id)
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, XEN_ARG_4, "set-" S_current_font, "an integer");
   ax = TO_C_AXIS_CONTEXT(snd, chn, ax_id, "set-" S_current_font);
   XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(id), id, XEN_ARG_1, "set-" S_current_font, "a wrapped object");
-  SG_SET_FONT(ax->gc, (SG_FONT *)XEN_UNWRAP_C_POINTER(id));
+  SG_SET_FONT(ax, (SG_FONT *)XEN_UNWRAP_C_POINTER(id));
   ax->current_font = (SG_FONT *)XEN_UNWRAP_C_POINTER(id);
   return(id);
 }

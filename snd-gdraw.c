@@ -21,7 +21,21 @@ void erase_rectangle (chan_info *cp, axis_context *ax, int x0, int y0, int width
 void draw_string (axis_context *ax, int x0, int y0, char *str, int len)
 {
   if ((ax->wn == NULL) || (ax->current_font == NULL)) return;
-  SG_DRAW_STRING(ax->wn, ax->current_font, ax->gc, (gint)x0, (gint)y0, (const gchar *)str);
+#if HAVE_GTK2
+  {
+    PangoLayout *layout = NULL;
+    layout = pango_layout_new(gdk_pango_context_get());
+    if (layout)
+      {
+	pango_layout_set_font_description(layout, ax->current_font);
+	pango_layout_set_text(layout, str, -1);
+	gdk_draw_layout(ax->wn, ax->gc, (gint)x0, (gint)y0, layout);
+	g_object_unref(G_OBJECT(layout));
+      }
+  }
+#else
+  gdk_draw_string(ax->wn, ax->current_font, ax->gc, (gint)x0, (gint)y0, (const gchar *)str);
+#endif
 }
 
 void fill_polygon(axis_context *ax, int points, ...)
@@ -401,6 +415,7 @@ void setup_axis_context(chan_info *cp, axis_context *ax)
   else w = channel_graph(cp);
   ax->gc = copy_GC(cp);
   ax->wn = w->window;
+  ax->w = w;
 }
 
 
