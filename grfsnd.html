@@ -1512,121 +1512,70 @@ any demand -- there is CLM-in-CL after all, and it's about 8000 lines of Lisp...
 
 <span class=bbox><h3><A NAME="sndwithmotif">Snd and Motif</a></h3></span>
 
-<p>It is possible to add your own user-interface elements.
+<p>It is possible to add your own user-interface elements using the xm module
+included with Snd.  The Snd build process for Motif should (someday) create
+a shared library named xm.so; you can load this at any time into Snd, then
+call (init-xm) to define all the X/Motif entities. These can then be
+tied into Snd in many ways,
 As a very simple example, let's make a dialog window with a slider:</p>
 <pre>
+(init-xm)
 
-#include &lt;math.h&gt;
-#include &lt;stdio.h&gt;
-#include &lt;stdlib.h&gt;
-#include &lt;string.h&gt;
-#include &lt;guile/gh.h&gt;
-#include &lt;Xm/XmAll.h&gt;
+(define scale-dialog #f)
+(define current-scaler 1.0)
 
-static Widget scale_dialog = NULL; /* this will hold our slider */
-static float current_scaler = 1.0;
+(define (create-scale-dialog parent)
+  (if (not (|Widget? scale-dialog))
+      (let ((xdismiss (|XmStringCreate "Dismiss" |XmFONTLIST_DEFAULT_TAG))
+	    (xhelp (|XmStringCreate "Help" |XmFONTLIST_DEFAULT_TAG))
+	    (titlestr (|XmStringCreate "Scaling" |XmFONTLIST_DEFAULT_TAG)))
+	(set! scale-dialog 
+	      (|XmCreateTemplateDialog parent "Scaling"
+                (list |XmNcancelLabelString   xdismiss
+		      |XmNhelpLabelString     xhelp
+		      |XmNautoUnmanage        #f
+		      |XmNdialogTitle         titlestr
+		      |XmNresizePolicy        |XmRESIZE_GROW
+	              |XmNnoResize            #f
+		      |XmNtransient           #f) ))
+	(|XtAddCallback scale-dialog 
+			|XmNcancelCallback (lambda (w context info)
+					     (|XtUnmanageChild scale-dialog))
+			 #f)
+	(|XtAddCallback scale-dialog 
+			|XmNhelpCallback (lambda (w context info)
+					   (snd-print "move the slider to affect the volume"))
+			 #f)
+	(|XmStringFree xhelp)
+	(|XmStringFree xdismiss)
+	(|XmStringFree titlestr)
 
-static void Help_Scale_Callback(Widget w, XtPointer context, XtPointer info)
-{
-  fprintf(stderr, "move the slider to affect the volume");
-}
+	(let* ((mainform 
+		(|XtCreateManagedWidget "formd" |xmFormWidgetClass scale-dialog
+                  (list |XmNleftAttachment      |XmATTACH_FORM
+		        |XmNrightAttachment     |XmATTACH_FORM
+		        |XmNtopAttachment       |XmATTACH_FORM
+		        |XmNbottomAttachment    |XmATTACH_WIDGET
+		        |XmNbottomWidget        (|XmMessageBoxGetChild scale-dialog |XmDIALOG_SEPARATOR))))
+	       (scale
+		(|XtCreateManagedWidget "" |xmScaleWidgetClass mainform
+		  (list |XmNorientation |XmHORIZONTAL
+			|XmNshowValue   #t
+			|XmNvalue       100
+			|XmNmaximum     500
+			|XmNdecimalPoints 2))))
 
-static void Dismiss_Scale_Callback(Widget w, XtPointer context, XtPointer info)
-{
-  XtUnmanageChild(scale_dialog);
-}
+      (|XtAddCallback scale 
+		      |XmNvalueChangedCallback (lambda (w context info)
+						 (set! current-scaler (/ (|value info) 100.0)))
+		       #f)
+      (|XtAddCallback scale |XmNdragCallback (lambda (w context info)
+						 (set! current-scaler (/ (|value info) 100.0)))
+		      #f))))
+  (|XtManageChild scale-dialog))
 
-static void Scale_Callback(Widget w, XtPointer context, XtPointer info)
-{
-  XmScaleCallbackStruct *cb = (XmScaleCallbackStruct *)info;
-  current_scaler = (float)(cb-&gt;value / 100.0);
-}
-
-static void create_scale_dialog(Widget parent)
-{
-  Arg args[32];
-  int n, i;
-  XmString xhelp, xdismiss, titlestr;
-  Widget mainform, scale;
-  if (!scale_dialog)
-    {
-      xdismiss = XmStringCreate("Dismiss", XmFONTLIST_DEFAULT_TAG);
-      xhelp = XmStringCreate("Help", XmFONTLIST_DEFAULT_TAG);
-      titlestr = XmStringCreate("Scaling", XmFONTLIST_DEFAULT_TAG);
-
-      n = 0;
-      XtSetArg(args[n], XmNcancelLabelString, xdismiss); n++;
-      XtSetArg(args[n], XmNhelpLabelString, xhelp); n++;
-      XtSetArg(args[n], XmNautoUnmanage, FALSE); n++;
-      XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
-      XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
-      XtSetArg(args[n], XmNnoResize, FALSE); n++;
-      XtSetArg(args[n], XmNtransient, FALSE); n++;
-      scale_dialog = XmCreateTemplateDialog(parent, "Scaling", args, n);
-
-      XtAddCallback(scale_dialog, XmNcancelCallback, Dismiss_Scale_Callback, NULL);
-      XtAddCallback(scale_dialog, XmNhelpCallback, Help_Scale_Callback, NULL);
-      XmStringFree(xhelp);
-      XmStringFree(xdismiss);
-      XmStringFree(titlestr);
-
-      n = 0;
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNbottomWidget, XmMessageBoxGetChild(scale_dialog, XmDIALOG_SEPARATOR)); n++;
-      mainform = XtCreateManagedWidget("formd", xmFormWidgetClass, scale_dialog, args, n);
-
-      n = 0;
-      XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
-      XtSetArg(args[n], XmNshowValue, TRUE); n++;
-      XtSetArg(args[n], XmNvalue, 100); n++;
-      XtSetArg(args[n], XmNmaximum, 500); n++;
-      XtSetArg(args[n], XmNdecimalPoints, 2); n++;
-      scale = XtCreateManagedWidget("", xmScaleWidgetClass, mainform, args, n);
-      XtAddCallback(scale, XmNvalueChangedCallback, Scale_Callback, NULL);
-      XtAddCallback(scale, XmNdragCallback, Scale_Callback, NULL);
-    }
-  XtManageChild(scale_dialog);
-}
-
-static SCM hiho_scaler(void) 
-{
-  return(scm_make_real(current_scaler));
-}
-
-static SCM g_create_scale_dialog(SCM parent)
-{
-  /* assumes we're called in listener as (create-scale-dialog (cadr (main-widgets))) */
-  /* (cadr (main-widgets)) returns Snd's topmost widget */
-  create_scale_dialog((Widget)scm_num2ulong(parent));
-  return(SCM_BOOL_F);
-}
-
-void init_hiho()
-{
-  scm_c_define_gsubr("create-scale-dialog", 1, 0, 0, g_create_scale_dialog);
-  scm_c_define_gsubr("hiho-scaler", 0, 0, 0, hiho_scaler);
-}
-
-/* call this hiho.c:
- *   gcc -c hiho.c -o hiho.o
- *   ld -shared hiho.o -o hiho.so -L/usr/X11R6/lib -lXm -lXt -lXext -lX11 -L/usr/local/lib -lguile -lcrypt -ldl
- * in Snd:
- *   (define hiho (dynamic-link "/home/bil/cl/hiho.so"))
- *   (dynamic-call "init_hiho" hiho)
- *   (create-scale-dialog (cadr (main-widgets)))
- *
- * if the dynamic-link says "file not found", this normally means it can't find one of the needed
- * libraries; this in turn normally means your /etc/ld.so.conf file needs to be updated to include
- * whatever directory is missing, then run (as root) /sbin/ldconfig.
- */
-
+(create-scale-dialog (|Widget (cadr (main-widgets))))
 </pre>
-<p>I've heard rumors of a guile-motif package similar (I presume) 
-to the guile-gtk package (see below).  If it surfaces, I'll add
-some immortal prose here.</p>
 <br>
 
 <span class=bbox><h3><A NAME="sndwithgtk">Snd and Gtk+</a></h3></span>

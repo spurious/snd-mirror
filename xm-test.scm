@@ -12,6 +12,59 @@
 
 (define c1 #f)
 
+(define scale-dialog #f)
+(define current-scaler 1.0)
+
+(define (create-scale-dialog parent)
+  (if (not (|Widget? scale-dialog))
+      (let ((xdismiss (|XmStringCreate "Dismiss" |XmFONTLIST_DEFAULT_TAG))
+	    (xhelp (|XmStringCreate "Help" |XmFONTLIST_DEFAULT_TAG))
+	    (titlestr (|XmStringCreate "Scaling" |XmFONTLIST_DEFAULT_TAG)))
+	(set! scale-dialog 
+	      (|XmCreateTemplateDialog parent "Scaling"
+                (list |XmNcancelLabelString   xdismiss
+		      |XmNhelpLabelString     xhelp
+		      |XmNautoUnmanage        #f
+		      |XmNdialogTitle         titlestr
+		      |XmNresizePolicy        |XmRESIZE_GROW
+	              |XmNnoResize            #f
+		      |XmNtransient           #f) ))
+	(|XtAddCallback scale-dialog 
+			|XmNcancelCallback (lambda (w context info)
+					     (|XtUnmanageChild scale-dialog))
+			 #f)
+	(|XtAddCallback scale-dialog 
+			|XmNhelpCallback (lambda (w context info)
+					   (snd-print "move the slider to affect the volume"))
+			 #f)
+	(|XmStringFree xhelp)
+	(|XmStringFree xdismiss)
+	(|XmStringFree titlestr)
+
+	(let* ((mainform 
+		(|XtCreateManagedWidget "formd" |xmFormWidgetClass scale-dialog
+                  (list |XmNleftAttachment      |XmATTACH_FORM
+		        |XmNrightAttachment     |XmATTACH_FORM
+		        |XmNtopAttachment       |XmATTACH_FORM
+		        |XmNbottomAttachment    |XmATTACH_WIDGET
+		        |XmNbottomWidget        (|XmMessageBoxGetChild scale-dialog |XmDIALOG_SEPARATOR))))
+	       (scale
+		(|XtCreateManagedWidget "" |xmScaleWidgetClass mainform
+		  (list |XmNorientation |XmHORIZONTAL
+			|XmNshowValue   #t
+			|XmNvalue       100
+			|XmNmaximum     500
+			|XmNdecimalPoints 2))))
+
+      (|XtAddCallback scale 
+		      |XmNvalueChangedCallback (lambda (w context info)
+						 (set! current-scaler (/ (|value info) 100.0)))
+		       #f)
+      (|XtAddCallback scale |XmNdragCallback (lambda (w context info)
+						 (set! current-scaler (/ (|value info) 100.0)))
+		      #f))))
+  (|XtManageChild scale-dialog))
+
 (let* ((wids (main-widgets))
        (app (|XtAppContext (car wids)))
        (shell (|Widget (cadr wids)))
@@ -64,14 +117,14 @@
 		     (list |XmNleftAttachment   |XmATTACH_FORM
 			   |XmNbottomAttachment |XmATTACH_NONE
 			   |XmNrightAttachment  |XmATTACH_NONE
-			   |XmNtopAttachment    |XmATTACH_FORM) 4))
+			   |XmNtopAttachment    |XmATTACH_FORM)))
 	   (toggle (|XtCreateManagedWidget
 		     "toggle" |xmToggleButtonWidgetClass main-pane
 		     (list |XmNleftAttachment   |XmATTACH_WIDGET
 			   |XmNleftWidget       button
                            |XmNrightAttachment  |XmATTACH_FORM
 			   |XmNbottomAttachment |XmATTACH_NONE
-			   |XmNtopAttachment    |XmATTACH_FORM) 5))
+			   |XmNtopAttachment    |XmATTACH_FORM)))
 	   (drawer (|XtCreateManagedWidget
 		     "drawer" |xmDrawingAreaWidgetClass main-pane
 		     (list |XmNleftAttachment   |XmATTACH_FORM
@@ -79,8 +132,7 @@
 			   |XmNrightAttachment  |XmATTACH_FORM
 			   |XmNtopAttachment    |XmATTACH_WIDGET
 			   |XmNtopWidget        button
-			   |XmNbackground       white)
-		     6))
+			   |XmNbackground       white)))
 	   (scr (|DefaultScreen dpy))
 	   (cmap (|DefaultColormap dpy scr))
 	   (col (|XColor))
@@ -128,5 +180,6 @@
 			      (display "hi"))
 			    #f)
 
+	(create-scale-dialog shell)
     
       ))))
