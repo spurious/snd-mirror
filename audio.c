@@ -110,7 +110,7 @@ char *strerror(int errnum)
 
 
 static char *version_name = NULL;
-static int audio_initialized = 0;
+static int audio_initialized = FALSE;
 
 static const char *mus_audio_device_names[] = {
   "mus_audio_default", "mus_audio_duplex_default", "mus_audio_adat_in", "mus_audio_aes_in", "mus_audio_line_out",
@@ -375,7 +375,7 @@ int mus_audio_initialize(void)
 {
   if (!audio_initialized)
     {
-      audio_initialized = 1;
+      audio_initialized = TRUE;
       config = (ALconfig *)CALLOC(IO_LINES, sizeof(ALconfig));
       port = (ALport *)CALLOC(IO_LINES, sizeof(ALport));
       line_in_use = (int *)CALLOC(IO_LINES, sizeof(int));
@@ -1682,7 +1682,7 @@ static int oss_mus_audio_initialize(void)
   int num_mixers, num_dsps, nmix, ndsp;
   if (!audio_initialized)
     {
-      audio_initialized = 1;
+      audio_initialized = TRUE;
       audio_fd = (int *)CALLOC(MAX_SOUNDCARDS, sizeof(int));
       audio_open_ctr = (int *)CALLOC(MAX_SOUNDCARDS, sizeof(int));
       audio_dsp = (int *)CALLOC(MAX_SOUNDCARDS, sizeof(int));
@@ -1950,7 +1950,7 @@ static int oss_mus_audio_initialize(void)
 int mus_audio_reinitialize(void)
 {
   /* an experiment */
-  audio_initialized = 0;
+  audio_initialized = FALSE;
   return(mus_audio_initialize());
 }
 
@@ -4389,7 +4389,7 @@ static int alsa_mus_audio_initialize(void)
 			      max_buffer_size/alsa_periods) == MUS_NO_ERROR) {
 	alsa_samples_per_channel = value;
     }
-    audio_initialized = 1;
+    audio_initialized = TRUE;
     return 0;
 }
 
@@ -9032,7 +9032,7 @@ void mus_audio_describe(void)
 #ifdef CLM
 void reset_audio_c (void)
 {
-  audio_initialized = 0;
+  audio_initialized = FALSE;
   save_it = NULL;
   version_name = NULL;
 #ifdef SUN

@@ -1000,7 +1000,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
   static int u_count = FALSE;
   static char number_buffer[NUMBER_BUFFER_SIZE];
   static off_t count = 1;
-  static int got_count = 0;
+  static int got_count = FALSE;
   static int m = 0;
   int searching = FALSE, cursor_searching = FALSE, hashloc, sync_num, i, clear_search = TRUE;
   off_t loc;
@@ -1034,7 +1034,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
       m = ((u_count) && 
 	   ((keysym == snd_K_M) || (keysym == snd_K_m)));
       count = get_count(number_buffer, number_ctr, dot_seen, cp, m);
-      got_count = 1;
+      got_count = TRUE;
       number_ctr = 0;
       counting = FALSE;
       dot_seen = FALSE;
@@ -1043,7 +1043,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
   u_count = FALSE;
   if ((keysym != snd_K_X) && (keysym != snd_K_x))
     {
-      got_count = 0;
+      got_count = FALSE;
       if (count == 0) return;
     }
 #if HAVE_EXTENSION_LANGUAGE
@@ -1207,7 +1207,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      if (got_count) 
 		{
 		  ext_count = count; 
-		  got_count = 0;
+		  got_count = FALSE;
 		}
 	      break;
 	    case snd_K_Y: case snd_K_y: 

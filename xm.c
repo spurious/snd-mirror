@@ -24829,7 +24829,7 @@ static void define_Atoms(void)
 
 /* -------------------------------- initialization -------------------------------- */
 
-static int xm_already_inited = 0;
+static int xm_already_inited = FALSE;
 
 #if HAVE_GUILE
  void init_xm(void);
@@ -24890,7 +24890,7 @@ static int xm_already_inited = 0;
 #if HAVE_GUILE
       XEN_EVAL_C_STRING("(define xm-version \"6-Nov-02\")");
 #endif
-      xm_already_inited = 1;
+      xm_already_inited = TRUE;
     }
 }
 

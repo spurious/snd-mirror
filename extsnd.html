@@ -779,7 +779,7 @@ the hook.
 <!-- --></td></tr>
 <!-- -->
 <!-- --><tr><td></td><td colspan=2>
-<!-- -->called whenever one of the variables associated with the color dialog changes.
+<!-- -->called whenever one of the variables associated with the color dialog changes.  See <i>start-waterfall</i> in snd-gl.scm.
 <!-- --></td></tr><tr><td colspan=3></td></tr>
 <!-- -->
 <!-- dac-hook -->
@@ -788,7 +788,7 @@ the hook.
 <!-- --></td></tr>
 <!-- -->
 <!-- --><tr><td></td><td colspan=2>
-<!-- -->called just before data is sent to DAC passing data as sound-data object. See with-level-meters in snd-motif.scm.
+<!-- -->called just before data is sent to DAC passing data as sound-data object. See <i>with-level-meters</i> in snd-motif.scm.
 <!-- --></td></tr><tr><td colspan=3></td></tr>
 <!-- -->
 <!-- draw-mark-hook -->
@@ -832,7 +832,7 @@ the hook.
 (add-hook! <em class=red>during-open-hook</em>
   (lambda (fd name reason)
     (if (= (mus-sound-header-type name) mus-raw)
-        (mus-file-set-prescaler fd 500.0))))
+        (<a href="#musfileprescaler">mus-file-set-prescaler</a> fd 500.0))))
 <!-- --></pre></td></tr></table></td></tr>
 <!-- -->
 <!-- --><tr><td></td><td colspan=2>
@@ -1195,7 +1195,7 @@ the hook.
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called when mix moves via mouse (id = mix id, 
 <!-- -->samps = samps moved).  If #t, the actual remix is the 
-<!-- -->hook's responsibility (see, for example, reposition-track in mix.scm).
+<!-- -->hook's responsibility (see, for example, <i>reposition-track</i> in mix.scm).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
@@ -1205,7 +1205,7 @@ the hook.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called when mix speed changes via mouse (id = mix id).
-<!-- -->If #t, the actual remix is the hook's responsibility (see, for example, respeed-track in mix.scm).
+<!-- -->If #t, the actual remix is the hook's responsibility (see, for example, <i>respeed-track</i> in mix.scm).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
@@ -1215,7 +1215,7 @@ the hook.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called upon mouse button click (press and release without drag).  If it returns #t, the click is ignored by Snd.
-<!-- -->See the current-window-location procedures in draw.scm.  Here's a simpler example:</td></tr>
+<!-- -->See the <i>current-window-location</i> procedures in draw.scm.  Here's a simpler example:</td></tr>
 <!-- --><tr><td></td><td colspan=2>
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define (click-to-center snd chn button state x y axis)
@@ -1265,7 +1265,7 @@ the hook.
 <!-- -->called when a file viewer or region label 
 <!-- -->is entered by the mouse. The 'type' is 0 for the current files list, 1 for previous files, and 2 for regions. 
 <!-- -->The 'position' is the scrolled list position of the label. 
-<!-- -->The label itself is 'label'. We could use the 'finfo' procedure in examp.scm
+<!-- -->The label itself is 'label'. We could use the <i>finfo</i> procedure in examp.scm
 <!-- -->to popup file info as follows:
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
@@ -1275,7 +1275,7 @@ the hook.
     (if (not (= type 2))
         (help-dialog name (finfo name)))))
 <!-- --></pre></td></tr></table></td></tr>
-<!-- --><tr><td></td><td>See also files-popup-buffer in examp.scm</td></tr>
+<!-- --><tr><td></td><td>See also <i>files-popup-buffer</i> in examp.scm</td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
 <!-- mouse-enter-listener-hook -->
@@ -1489,7 +1489,7 @@ the hook.
 <!-- --></td></tr>
 <!-- -->
 <!-- --><tr><td></td><td colspan=2>
-<!-- -->called whenever one of the variables associated with the orientation dialog changes.
+<!-- -->called whenever one of the variables associated with the orientation dialog changes.  See <i>start-waterfall</i> in snd-gl.scm.
 <!-- --></td></tr><tr><td colspan=3></td></tr>
 <!-- -->
 <!-- output-comment-hook -->
@@ -1745,7 +1745,7 @@ the hook.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called when a play request is triggered.
-<!-- -->If it returns #t, snd does not play (see, for example, report-mark-names in marks.scm).
+<!-- -->If it returns #t, snd does not play (see, for example, <i>report-mark-names</i> in marks.scm).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
@@ -2395,6 +2395,18 @@ See play.scm and rtio.scm for example code. The most important Sndlib functions 
 <!-- --><td>expands <i>name</i> into its 'absolute' pathname; that is, it replaces '~' with the current home directory,
 <!-- -->and whatever else seems appropriate.</td></tr>
 <!-- -->
+<!-- mus-file-prescaler -->
+<!-- --><tr><td valign=top><span class=defbox><code><em class=def><a name="musfileprescaler">mus-file-prescaler</a></em> (fd)</code></span></td>
+<!-- --><td>The prescaling value for reading data from the sndlib file descriptor <i>fd</i>.  The set form is <b>mus-file-set-prescaler</b>.
+<!-- -->If you're reading float data that is extremely soft (i.e. max amp
+<!-- -->below .001), the transfer to integer form in sndlib can cause bits
+<!-- -->to be lost, resulting in hiss.  In this case set the prescaler for
+<!-- -->the file to 1000.0 or so to get the data into a more "normal"
+<!-- -->range.  Since the mus-file-set-prescaler call should come just after opening
+<!-- -->the sound file, but before trying to read any data, you need to use it in the context of <a href="#duringopenhook">during-open-hook</a>.
+<!-- -->A similar low-level sndlib function is <em class=def><a name="musfilesetdataclipped">mus-file-set-data-clipped</a></em>.
+<!-- --></td></tr>
+<!-- -->
 <!-- mus-header-type-name -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="soundtypename">mus-header-type-name</a></em> (type)</code></span></td>
 <!-- --><td>e.g. "AIFF", <i>type</i> is an integer, some of which have names:</td></tr>
@@ -2620,6 +2632,10 @@ edited) sound can be accessed by a normal sample-reader.
 <!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="freetracksamplereader">free-track-sample-reader</a></em> (obj)</code></span></td>
 <!-- --></tr><tr><td></td>
 <!-- --><td>release track-sample-reader <i>obj</i>.</td></tr>
+<!-- -->
+<!-- inspect-sample-reader -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="inspectsamplereader">inspect-sample-reader</a></em> (obj)</code></span></td>
+<!-- --><td>This is mainly a debugging aid; it returns a string with much internal info about the sample-reader <i>obj</i>.</td></tr>
 <!-- -->
 <!-- make-mix-sample-reader -->
 <!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="makemixsamplereader">make-mix-sample-reader</a></em> (mix)</code></span></td>
@@ -4203,7 +4219,7 @@ the direction argument between the channel and edit-position:
 <!-- --><span class=defbox><code><em class=def><a name="fftlogfrequency">fft-log-frequency</a></em> (<em class=narg>snd chn</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->spectrum frequency axis is logarithmic (#t) or linear (#f) (default #f).
+<!-- -->spectrum frequency axis is logarithmic (#t) or linear (#f, the default).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4213,7 +4229,7 @@ the direction argument between the channel and edit-position:
 <!-- --><span class=defbox><code><em class=def><a name="fftlogmagnitude">fft-log-magnitude</a></em> (<em class=narg>snd chn</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->spectrum magnitude axis is in decibels (#t) or linear (#f) (default #f).
+<!-- -->spectrum magnitude axis is in decibels (#t) or linear (#f, the default).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5752,7 +5768,6 @@ the direction argument between the channel and edit-position:
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->selected sound (index) (set it to select a sound). Returns #f is there is no selected sound.
-<!-- -->(It used to return -1 if there was no selected sound, and some of the .scm code in Snd still reflects that).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->

@@ -1637,6 +1637,11 @@ int ramp_or_ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos,
       typ = FRAGMENT_TYPE(ed, i);
       next_loc = FRAGMENT_GLOBAL_POSITION(ed, i + 1);         /* i.e. next loc = current fragment end point */
       /* fragment starts at loc, ends just before next_loc, is of type typ */
+#if 0
+      if (((typ == ED_XRAMP) && (base == 1.0)) ||
+	  ((typ == ED_RAMP) && (base != 1.0)))
+	fprintf(stderr,"xramp2 ");
+#endif
       if (((PTREE_OP(typ)) ||
 	   (typ == ED_RAMP3) || 
 	   (typ == ED_XRAMP)) && 
@@ -1848,6 +1853,38 @@ void scale_channel(chan_info *cp, Float scl, off_t beg, off_t num, int pos, int 
   if (!in_as_one_edit) update_graph(cp);
 }
 
+static void setup_ramp_fragments(ed_list *new_ed, int i, double seg0, double seg1, Float scaler, Float offset)
+{
+  if (FRAGMENT_TYPE(new_ed, i) != ED_ZERO)
+    {
+      if (FRAGMENT_TYPE(new_ed, i) == ED_RAMP2)
+	{
+	  FRAGMENT_RAMP3_BEG(new_ed, i) = seg0;
+	  FRAGMENT_RAMP3_END(new_ed, i) = seg1;
+	  FRAGMENT_TYPE(new_ed, i) = ED_RAMP3;
+	}
+      else
+	{
+	  if (FRAGMENT_TYPE(new_ed, i) == ED_RAMP)
+	    {
+	      FRAGMENT_RAMP2_BEG(new_ed, i) = seg0;
+	      FRAGMENT_RAMP2_END(new_ed, i) = seg1;
+	      FRAGMENT_TYPE(new_ed, i) = ED_RAMP2;
+	    }
+	  else
+	    {
+	      FRAGMENT_RAMP_BEG(new_ed, i) = seg0;
+	      FRAGMENT_RAMP_END(new_ed, i) = seg1;
+	      if (scaler != 0.0)
+		FRAGMENT_TYPE(new_ed, i) = ED_XRAMP;
+	      else FRAGMENT_TYPE(new_ed, i) = ED_RAMP;
+	    }
+	}
+      FRAGMENT_XRAMP_SCALER(new_ed, i) = scaler;
+      FRAGMENT_XRAMP_OFFSET(new_ed, i) = offset;
+    }
+}
+
 static void all_ramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler, Float offset, 
 			     off_t beg, off_t num, int pos, int in_as_one_edit, const char *origin)
 {
@@ -1885,41 +1922,7 @@ static void all_ramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler
 	{
 	  seg0 = seg1 + incr;
 	  seg1 = seg0 + (incr * (FRAGMENT_LENGTH(new_ed, i) - 1));
-	  if (FRAGMENT_TYPE(new_ed, i) != ED_ZERO)
-	    {
-	      if (FRAGMENT_TYPE(new_ed, i) == ED_RAMP2)
-		{
-		  FRAGMENT_RAMP3_BEG(new_ed, i) = seg0;
-		  FRAGMENT_RAMP3_END(new_ed, i) = seg1;
-		  FRAGMENT_TYPE(new_ed, i) = ED_RAMP3;
-		}
-	      else
-		{
-		  if (FRAGMENT_TYPE(new_ed, i) == ED_RAMP)
-		    {
-		      FRAGMENT_RAMP2_BEG(new_ed, i) = seg0;
-		      FRAGMENT_RAMP2_END(new_ed, i) = seg1;
-		      FRAGMENT_TYPE(new_ed, i) = ED_RAMP2;
-		    }
-		  else
-		    {
-		      FRAGMENT_RAMP_BEG(new_ed, i) = seg0;
-		      FRAGMENT_RAMP_END(new_ed, i) = seg1;
-		      if (scaler != 0.0)
-			FRAGMENT_TYPE(new_ed, i) = ED_XRAMP;
-		      else FRAGMENT_TYPE(new_ed, i) = ED_RAMP;
-		    }
-		}
-#if DEBUGGING
-	      if ((seg0 == 0.0) && (seg1 == 0.0)) 
-		{
-		  fprintf(stderr, "unexpected zero");
-		  abort();
-		}
-#endif
-	      FRAGMENT_XRAMP_SCALER(new_ed, i) = scaler;
-	      FRAGMENT_XRAMP_OFFSET(new_ed, i) = offset;
-	    }
+	  setup_ramp_fragments(new_ed, i, seg0, seg1, scaler, offset);
 	}
     }
   else 
@@ -1936,42 +1939,7 @@ static void all_ramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler
 	    {
 	      seg0 = seg1 + incr;
 	      seg1 = seg0 + (incr * (FRAGMENT_LENGTH(new_ed, i) - 1));
-	      
-	      if (FRAGMENT_TYPE(new_ed, i) != ED_ZERO)
-		{
-		  if (FRAGMENT_TYPE(new_ed, i) == ED_RAMP2)
-		    {
-		      FRAGMENT_RAMP3_BEG(new_ed, i) = seg0;
-		      FRAGMENT_RAMP3_END(new_ed, i) = seg1;
-		      FRAGMENT_TYPE(new_ed, i) = ED_RAMP3;
-		    }
-		  else
-		    {
-		      if (FRAGMENT_TYPE(new_ed, i) == ED_RAMP)
-			{
-			  FRAGMENT_RAMP2_BEG(new_ed, i) = seg0;
-			  FRAGMENT_RAMP2_END(new_ed, i) = seg1;
-			  FRAGMENT_TYPE(new_ed, i) = ED_RAMP2;
-			}
-		      else
-			{
-			  FRAGMENT_RAMP_BEG(new_ed, i) = seg0;
-			  FRAGMENT_RAMP_END(new_ed, i) = seg1;
-			  if (scaler != 0.0)
-			    FRAGMENT_TYPE(new_ed, i) = ED_XRAMP;
-			  else FRAGMENT_TYPE(new_ed, i) = ED_RAMP;
-			}
-		    }
-#if DEBUGGING
-		  if ((seg0 == 0.0) && (seg1 == 0.0)) 
-		    {
-		      fprintf(stderr, "unexpected zero");
-		      abort();
-		    }
-#endif
-		  FRAGMENT_XRAMP_SCALER(new_ed, i) = scaler;
-		  FRAGMENT_XRAMP_OFFSET(new_ed, i) = offset;
-		}
+	      setup_ramp_fragments(new_ed, i, seg0, seg1, scaler, offset);
 	    }
 	}
     }
@@ -2157,7 +2125,7 @@ off_t current_location(snd_fd *sf)
  *     (if fragment has scaler, use next_sample else next_sample_unscaled, etc)
  * read_sample calls run, read_sample_to_float runf
  *
- * it is assumed all sample accesses will go through run/runf -- no "direct" access anymore.
+ * all sample accesses go through run/runf
  *
  * each type of accessor needs 8 cases: 
  *   [back | forth] [normal | on_air] -> [mus_sample_t | float]

@@ -291,14 +291,14 @@ char *mus_fft_window_name(int i) {return(FFT_WINDOW_CONSTANTS[i]);}
 
 static XEN g_radians2hz(XEN val) 
 {
-  #define H_radians_hz "(" S_radians_hz " rads) converts radians/sample to frequency in Hz: rads*srate/(2*pi)"
+  #define H_radians_hz "(" S_radians_hz " rads) converts radians/sample to frequency in Hz: rads * srate / (2 * pi)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_radians_hz, "a number");
   return(C_TO_XEN_DOUBLE(mus_radians2hz(XEN_TO_C_DOUBLE(val))));
 }
 
 static XEN g_hz2radians(XEN val) 
 {
-  #define H_hz_radians "(" S_hz_radians " hz) converts frequency in Hz to radians/sample: hz*2*pi/srate"
+  #define H_hz_radians "(" S_hz_radians " hz) converts frequency in Hz to radians/sample: hz * 2 * pi / srate"
   #define H_in_hz "(" S_in_hz " hz) converts frequency in Hz to radians/sample: hz*2*pi/srate"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_hz_radians, "a number"); 
   return(C_TO_XEN_DOUBLE(mus_hz2radians(XEN_TO_C_DOUBLE(val))));
@@ -306,28 +306,28 @@ static XEN g_hz2radians(XEN val)
 
 static XEN g_radians2degrees(XEN val) 
 {
-  #define H_radians_degrees "(" S_radians_degrees " rads) converts radians to degrees: rads*360/(2*pi)"
+  #define H_radians_degrees "(" S_radians_degrees " rads) converts radians to degrees: rads * 360 / (2 * pi)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_radians_degrees, "a number"); 
   return(C_TO_XEN_DOUBLE(mus_radians2degrees(XEN_TO_C_DOUBLE(val))));
 }
 
 static XEN g_degrees2radians(XEN val) 
 {
-  #define H_degrees_radians "(" S_degrees_radians " deg) converts degrees to radians: deg*2*pi/360"
+  #define H_degrees_radians "(" S_degrees_radians " deg) converts degrees to radians: deg * 2 * pi / 360"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_degrees_radians, "a number"); 
   return(C_TO_XEN_DOUBLE(mus_degrees2radians(XEN_TO_C_DOUBLE(val))));
 }
 
 static XEN g_db2linear(XEN val) 
 {
-  #define H_db_linear "(" S_db_linear " db) converts decibel value db to linear value: pow(10, db/20)"
+  #define H_db_linear "(" S_db_linear " db) converts decibel value db to linear value: pow(10, db / 20)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_db_linear, "a number");
   return(C_TO_XEN_DOUBLE(mus_db2linear(XEN_TO_C_DOUBLE(val))));
 }
 
 static XEN g_linear2db(XEN val) 
 {
-  #define H_linear_db "(" S_linear_db " lin) converts linear value to decibels: 20*log10(lin)"
+  #define H_linear_db "(" S_linear_db " lin) converts linear value to decibels: 20 * log10(lin)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_linear_db, "a number");
   return(C_TO_XEN_DOUBLE(mus_linear2db(XEN_TO_C_DOUBLE(val))));
 }
@@ -367,7 +367,7 @@ static XEN g_ring_modulate(XEN val1, XEN val2)
 
 static XEN g_amplitude_modulate(XEN val1, XEN val2, XEN val3) 
 {
-  #define H_amplitude_modulate "(" S_amplitude_modulate " carrier in1 in2) -> in1*(carrier+in2)"
+  #define H_amplitude_modulate "(" S_amplitude_modulate " carrier in1 in2) -> in1 * (carrier + in2)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val1), val1, XEN_ARG_1, S_amplitude_modulate, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val2), val2, XEN_ARG_2, S_amplitude_modulate, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val3), val3, XEN_ARG_3, S_amplitude_modulate, "a number");
@@ -376,7 +376,7 @@ static XEN g_amplitude_modulate(XEN val1, XEN val2, XEN val3)
 
 static XEN g_contrast_enhancement(XEN val1, XEN val2) 
 {
-  #define H_contrast_enhancement "(" S_contrast_enhancement " sig index) -> sin(sig*pi/2 + index*sin(sig*2*pi))"
+  #define H_contrast_enhancement "(" S_contrast_enhancement " sig index) -> sin(sig * pi / 2 + index * sin(sig * 2 * pi))"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val1), val1, XEN_ARG_1, S_contrast_enhancement, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val2), val2, XEN_ARG_2, S_contrast_enhancement, "a number");
   return(C_TO_XEN_DOUBLE(mus_contrast_enhancement(XEN_TO_C_DOUBLE(val1), XEN_TO_C_DOUBLE(val2))));
@@ -384,7 +384,7 @@ static XEN g_contrast_enhancement(XEN val1, XEN val2)
 
 static XEN g_dot_product(XEN val1, XEN val2) 
 {
-  #define H_dot_product "(" S_dot_product " v1 v2) -> sum of (vcts) v1[i]*v2[i] (scalar product)"
+  #define H_dot_product "(" S_dot_product " v1 v2) -> sum of (vcts) v1[i] * v2[i] (scalar product)"
   vct *v1, *v2;
   XEN_ASSERT_TYPE(VCT_P(val1), val1, XEN_ARG_1, S_dot_product, "a vct");
   XEN_ASSERT_TYPE(VCT_P(val2), val2, XEN_ARG_2, S_dot_product, "a vct");
@@ -1023,7 +1023,7 @@ static XEN g_oscil(XEN os, XEN fm, XEN pm)
 static XEN g_oscil_bank(XEN amps, XEN gens, XEN inp, XEN size)
 {
   /* size currently ignored */
-  #define H_oscil_bank "(" S_oscil_bank " scls gens fms) -> sum a bank of " S_oscil "s: scls[i]*" S_oscil "(gens[i], fms[i])"
+  #define H_oscil_bank "(" S_oscil_bank " scls gens fms) -> sum a bank of " S_oscil "s: scls[i] * " S_oscil "(gens[i], fms[i])"
   XEN_ASSERT_TYPE(XEN_VECTOR_P(gens), gens, XEN_ARG_2, S_oscil_bank, "a vector of oscils");
   return(g_mus_bank(gens, amps, inp, XEN_UNDEFINED));
 }

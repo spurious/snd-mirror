@@ -66,10 +66,13 @@
 ;  (syntax-rules ()
 ;    ((IF <form1> <form2>) (begin (display (quote <form1>)) (if <form1> <form2>) (gc)))
 ;    ((IF <form1> <form2> <form3>) (begin (display (quote <form1>)) (if <form1> <form2> <form3>) (gc)))))
-(define-syntax IF
-  (syntax-rules ()
-    ((IF <form1> <form2>) (if <form1> <form2>))
-    ((IF <form1> <form2> <form3>) (if <form1> <form2> <form3>))))
+
+(if (string>=? (version) "1.7")
+    (define IF if)
+    (define-syntax IF
+      (syntax-rules ()
+		    ((IF <form1> <form2>) (if <form1> <form2>))
+		    ((IF <form1> <form2> <form3>) (if <form1> <form2> <form3>)))))
 
 (define tests 1)
 (define snd-test -1)

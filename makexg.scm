@@ -2063,7 +2063,7 @@
 
 
 (hey "/* -------------------------------- initialization -------------------------------- */~%~%")
-(hey "static int xg_already_inited = 0;~%~%")
+(hey "static int xg_already_inited = FALSE;~%~%")
 (hey "#if HAVE_GUILE~%")
 (hey " void init_xm(void);~%")
 (hey " void init_xm(void)~%")
@@ -2086,7 +2086,7 @@
 (hey "#if HAVE_GUILE~%")
 (hey "      XEN_EVAL_C_STRING(\"(define xm-version \\\"~A\\\")\");~%" (strftime "%d-%b-%y" (localtime (current-time))))
 (hey "#endif~%")
-(hey "      xg_already_inited = 1;~%")
+(hey "      xg_already_inited = TRUE;~%")
 (hey "    }~%")
 (hey "}~%")
 

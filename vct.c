@@ -337,7 +337,7 @@ static XEN vct_multiply(XEN obj1, XEN obj2)
 
 static XEN vct_add(XEN obj1, XEN obj2, XEN offs)
 {
-  #define H_vct_addB "(" S_vct_addB " v1 v2 &optional (offset 0)) -> v1 with element-wise add of vcts v1 and v2: v1[i+offset] += v2[i]"
+  #define H_vct_addB "(" S_vct_addB " v1 v2 &optional (offset 0)) -> v1 with element-wise add of vcts v1 and v2: v1[i + offset] += v2[i]"
   int i, lim, j;
   vct *v1, *v2;
   XEN_ASSERT_TYPE(VCT_P(obj1), obj1, XEN_ARG_1, S_vct_addB, "a vct");

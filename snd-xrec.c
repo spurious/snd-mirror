@@ -1975,7 +1975,7 @@ static void handle_matrix_slider(Widget mb, PANE *p, int bin, int bout, int cura
   if (remove)
     {
       XmChangeColor(mb, (Pixel)((ss->sgx)->basic_color));
-      p->active_sliders[bin][bout] = 0;
+      p->active_sliders[bin][bout] = FALSE;
       XtUnmanageChild(a->label);
       XtUnmanageChild(a->number);
       XtUnmanageChild(a->slider);
@@ -1984,7 +1984,7 @@ static void handle_matrix_slider(Widget mb, PANE *p, int bin, int bout, int cura
   else
     {
       XmChangeColor(mb, (Pixel)((ss->sgx)->green));
-      p->active_sliders[bin][bout] = 1;
+      p->active_sliders[bin][bout] = TRUE;
       if (a->label)
 	{
 	  XtVaSetValues(a->label, XmNtopWidget, a->top, NULL);
@@ -2368,7 +2368,7 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
       for (i = 0; i < p->in_chans; i++) 
 	for (k = 0; k < p->out_chans; k++) 
 	  if (i == k) 
-	    p->active_sliders[i][k] = 1;
+	    p->active_sliders[i][k] = TRUE;
 
       /* rather than default to posting 64 (or 256!) sliders, set up a channel matrix where desired sliders can be set */
       n = 0;
@@ -2385,7 +2385,7 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
     {
       for (i = 0; i < p->in_chans; i++) 
 	for (k = 0; k < p->out_chans; k++) 
-	  p->active_sliders[i][k] = 1;
+	  p->active_sliders[i][k] = TRUE;
     }
 
   last_frame = make_vu_meters(ss, p, vu_meters, frames, last_frame, left_frame, overall_input_ctr, meter_size, input, first_frame);

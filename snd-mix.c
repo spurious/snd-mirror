@@ -1963,7 +1963,7 @@ static int display_mix_waveform(chan_info *cp, mix_info *md, console_state *cs, 
       draw_mix_tag(md);
     }
 
-  if ((ss->just_time == 1) && (event_pending(ss))) return(0);
+  if ((ss->just_time) && (event_pending(ss))) return(0);
 
   if (sp) 
     {

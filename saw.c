@@ -6,7 +6,7 @@
 
 /* ---------------- MOTIF VERSION ---------------- */
 
-static int snd_running = 0;
+static int snd_running = FALSE;
 Widget form, shell, label, snd;
 XtAppContext app;     
 int n;
@@ -27,7 +27,7 @@ static void snd_callback(Widget w, XtPointer clientData, XtPointer callData)
       snd_as_widget(0, NULL, app, form, args, n);
       snd_open_file("~/cl/oboe.snd", get_global_state(), FALSE);
 
-      snd_running = 1;
+      snd_running = TRUE;
     }
 }
 
@@ -95,7 +95,7 @@ include makesnd.back
 
 /* Gtk+ version using Guile */
 
-static int snd_running = 0;
+static int snd_running = FALSE;
 GtkWidget *form, *shell, *label, *snd;
 
 static void snd_callback(GtkWidget *w, gpointer data) 
@@ -106,7 +106,7 @@ static void snd_callback(GtkWidget *w, gpointer data)
       gtk_box_pack_start(GTK_BOX(form), snd, TRUE, TRUE, 0);
       gtk_widget_show(snd);
       snd_open_file("~/cl/oboe.snd", get_global_state(), FALSE); 
-      snd_running = 1;
+      snd_running = TRUE;
       gtk_label_set_text(GTK_LABEL(GTK_BIN(label)->child), "Push to quit Snd");
     }
   else

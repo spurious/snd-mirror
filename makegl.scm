@@ -836,7 +836,7 @@
 (hey "}~%~%")
 
 (hey "/* -------------------------------- initialization -------------------------------- */~%~%")
-(hey "static int gl_already_inited = 0;~%~%")
+(hey "static int gl_already_inited = FALSE;~%~%")
 (hey "#if HAVE_GUILE~%")
 (hey " void init_gl(void);~%")
 (hey " void init_gl(void)~%")
@@ -853,7 +853,7 @@
 (hey "#if HAVE_GUILE~%")
 (hey "      XEN_EVAL_C_STRING(\"(define gl-version \\\"~A\\\")\");~%" (strftime "%d-%b-%y" (localtime (current-time))))
 (hey "#endif~%")
-(hey "      gl_already_inited = 1;~%")
+(hey "      gl_already_inited = TRUE;~%")
 (hey "    }~%")
 (hey "}~%")
 

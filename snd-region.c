@@ -1334,7 +1334,8 @@ static XEN g_regions(void)
 static XEN g_make_region(XEN beg, XEN end, XEN snd_n, XEN chn_n)
 {
   #define H_make_region "(" S_make_region " beg end &optional snd chn) makes a new region between beg and end in snd, returning its id. \
-If 'chn' is #t, all chans are included, taking the 'snd' sync field into account if it's not 0."
+If 'chn' is #t, all chans are included, taking the 'snd' sync field into account if it's not 0.  If no args are passed, the current \
+selection is used."
   chan_info *cp;
   sync_info *si = NULL;
   snd_info *sp;

@@ -1436,8 +1436,8 @@ static int read_riff_header (int chan)
   /* we know we have checked for RIFF xxxx WAVE when we arrive here */
   int chunksize, chunkloc, little, i;
   off_t offset;
-  little = 1;
-  if (match_four_chars((unsigned char *)hdrbuf, I_RIFX)) little = 0; /* big-endian data in this case, but I've never seen one */
+  little = TRUE;
+  if (match_four_chars((unsigned char *)hdrbuf, I_RIFX)) little = FALSE; /* big-endian data in this case, but I've never seen one */
   little_endian = little;
   type_specifier = mus_char_to_uninterpreted_int((unsigned char *)(hdrbuf + 8));
   chunkloc = 12;
@@ -2344,8 +2344,8 @@ static int read_ircam_header (int chan)
   type_specifier = mus_char_to_uninterpreted_int((unsigned char *)hdrbuf);
   if ((mus_char_to_lint((unsigned char *)hdrbuf) == I_IRCAM_VAX) || 
       (mus_char_to_lint((unsigned char *)hdrbuf) == I_IRCAM_MIPS))
-    little = 1;
-  else little = 0;
+    little = TRUE;
+  else little = FALSE;
   little_endian = little;
   data_location = 1024;
   true_file_length = SEEK_FILE_LENGTH(chan);
@@ -4090,11 +4090,11 @@ static int read_comdisco_header (int chan)
   int happy = TRUE;
   k = 15;
   line = (char *)CALLOC(256, sizeof(char));
-  little = 0;
+  little = FALSE;
   offset = 0;
   type = 0;
   curend = INITIAL_READ_SIZE;
-  commenting = 0;
+  commenting = FALSE;
   while (happy)
     {
       for (i = 0; i < 256; i++)
@@ -4123,7 +4123,7 @@ static int read_comdisco_header (int chan)
       if (strcmp(line, "$USER_COMMENT") == 0)
 	{
 	  comment_start = offset + k;
-	  commenting = 1;
+	  commenting = TRUE;
 	}
       else
 	{
@@ -4132,7 +4132,7 @@ static int read_comdisco_header (int chan)
 	      if (line[0] == '$')
 		{
 		  comment_end = offset + k - 2 - strlen(line);
-		  commenting = 0;
+		  commenting = FALSE;
 		}
 	    }
 	}

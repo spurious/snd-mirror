@@ -1184,7 +1184,7 @@ static void handle_matrix_slider(GtkWidget *mb, PANE *p, int bin, int bout, int 
   if (remove)
     {
       set_backgrounds(mb, (ss->sgx)->basic_color);
-      p->active_sliders[bin][bout] = 0;
+      p->active_sliders[bin][bout] = FALSE;
       gtk_widget_hide(a->label);
       gtk_widget_hide(a->number);
       gtk_widget_hide(a->slider);
@@ -1192,7 +1192,7 @@ static void handle_matrix_slider(GtkWidget *mb, PANE *p, int bin, int bout, int 
   else
     {
       set_backgrounds(mb, (ss->sgx)->green);
-      p->active_sliders[bin][bout] = 1;
+      p->active_sliders[bin][bout] = TRUE;
       if (a->label)
 	{
 	  gtk_widget_show(a->label);
@@ -1404,7 +1404,7 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, GtkWidget *paned_window
       for (i = 0; i < p->in_chans; i++) 
 	for (k = 0; k < p->out_chans; k++) 
 	  if (i == k) 
-	    p->active_sliders[i][k] = 1;
+	    p->active_sliders[i][k] = TRUE;
 
       /* rather than default to posting 64 (or 256!) sliders, set up a channel matrix where desired sliders can be set */
       matrix_frame = make_button_matrix(ss, p, "channel-matrix", vuh, meter_size);
@@ -1413,7 +1413,7 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, GtkWidget *paned_window
     {
       for (i = 0; i < p->in_chans; i++) 
 	for (k = 0; k < p->out_chans; k++) 
-	  p->active_sliders[i][k] = 1;
+	  p->active_sliders[i][k] = TRUE;
     }
 
   make_vu_meters(ss, p, vu_meters, overall_input_ctr, meter_size, input, vuh);

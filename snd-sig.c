@@ -1638,7 +1638,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XE
   snd_info *sp;
   env_info *ep = NULL;
   file_info *hdr = NULL;
-  int i, j, ofd = 0, datumb = 0, temp_file, err = 0, section = 0, edpos = 0;
+  int i, j, ofd = 0, datumb = 0, temp_file, err = 0, section = FALSE, edpos = 0;
   off_t k;
   mus_sample_t **data;
   mus_sample_t *idata;
@@ -1684,7 +1684,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XE
 	  if (sbin > 0) pick_one_bin(ep, sbin - 1, ep->samps_per_bin * (sbin - 1), cp, edpos);
 	  if (ebin < ep->amp_env_size) pick_one_bin(ep, ebin, ep->samps_per_bin * ebin, cp, edpos);
 	}
-      section = 1; /* only for reverse_marks below */
+      section = TRUE; /* only for reverse_marks below */
     }
   data = (mus_sample_t **)MALLOC(sizeof(mus_sample_t *));
   data[0] = (mus_sample_t *)CALLOC(MAX_BUFFER_SIZE, sizeof(mus_sample_t)); 
