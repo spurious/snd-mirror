@@ -433,7 +433,7 @@ char *mus_midi_describe(void)
 
 
 /* ---------------- OSS ---------------- */
-#if HAVE_OSS
+#if HAVE_OSS && (!HAVE_ALSA)
 #define MIDI_OK
 
 #include <sys/ioctl.h>
