@@ -2167,7 +2167,7 @@ int hit_mix(chan_info *cp, int x, int y)
     {
       mix_info *md;
       md = md_from_id(mx - 1);
-      mix_save_graph(md->ss, md->wg, make_graph(cp, cp->sound, cp->state));
+      mix_save_graph(md->wg, make_graph(cp, cp->sound, cp->state));
       select_mix(md);
       return(mx - 1);
     }
@@ -2178,7 +2178,7 @@ void start_mix_drag(int mix_id)
 {
   mix_info *md;
   md = md_from_id(mix_id);
-  mix_save_graph(md->ss, md->wg, make_graph(md->cp, md->cp->sound, md->cp->state));
+  mix_save_graph(md->wg, make_graph(md->cp, md->cp->sound, md->cp->state));
 }
 
 /* for axis movement (as in mark drag off screen) */

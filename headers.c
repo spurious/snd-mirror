@@ -1713,7 +1713,7 @@ static long little_long_long(unsigned char *buf)
   return(mus_char_to_lint((unsigned char *)(buf)));
 }
 
-static int read_soundforge_header (int chan, int loc)
+static int read_soundforge_header (int chan)
 {
   /* like RIFF but lowercase and 64-bit vals */
   int chunksize, chunkloc, i, off;
@@ -3764,7 +3764,7 @@ static int read_kurzweil_2000_header(int chan)
  * chans | srate | sample size
  */
 
-static int read_pvf_header(int chan, int loc)
+static int read_pvf_header(int chan)
 {
   char *buf;
   int bits, i;
@@ -4580,13 +4580,13 @@ static int mus_header_read_with_fd_and_name(int chan, const char *filename)
   if (match_four_chars((unsigned char *)hdrbuf, I_riff))
     {
       header_type = MUS_SOUNDFORGE;
-      return(read_soundforge_header(chan, loc));
+      return(read_soundforge_header(chan));
     }
   if ((match_four_chars((unsigned char *)hdrbuf, I_PVF1)) || 
       (match_four_chars((unsigned char *)hdrbuf, I_PVF2)))
     {
       header_type = MUS_PVF;
-      return(read_pvf_header(chan, loc));
+      return(read_pvf_header(chan));
     }
   if (match_four_chars((unsigned char *)hdrbuf, I_Drat))
     {

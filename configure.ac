@@ -82,6 +82,7 @@ if test "$with_html" = yes ; then
   if test "$MOZILLA_CONFIG" = no ; then
     GTKHTML_LIB="-Xlinker -rpath -Xlinker /usr/lib/mozilla -L/usr/lib/mozilla -lgtkembedmoz"
     GTKHTML_FLAGS="-I/usr/include/mozilla"
+# TODO: this is mozilla-1.0.1/... in redhat 8.0 -- need also to find the library
   else
     GTKHTML_LIB=`$MOZILLA_CONFIG --libs`
     GTKHTML_FLAGS=`$MOZILLA_CONFIG --cflags`

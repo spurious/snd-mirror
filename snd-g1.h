@@ -44,7 +44,7 @@ void set_grf_point(Locus xi, int j, Locus yi);
 void draw_grf_points(chan_info *cp, axis_context *ax, int j, axis_info *ap, Float y0, int graph_style);
 void draw_both_grf_points(chan_info *cp, axis_context *ax, int j, int graph_style);
 void draw_both_grfs(axis_context *ax, int j);
-void mix_save_graph(snd_state *ss, mix_context *ms, int j);
+void mix_save_graph(mix_context *ms, int j);
 void erase_and_draw_grf_points(mix_context *ms, chan_info *cp, int j);
 void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int j);
 void setup_axis_context(chan_info *cp, axis_context *ax);
@@ -468,8 +468,7 @@ void reflect_no_mix_in_mix_panel(void);
 
 /* -------- snd-genv.c -------- */
 
-axis_info *enved_make_axis(snd_state *ss, char *name, axis_context *ax, 
-			   int ex0, int ey0, int width, int height, Float xmin, Float xmax, Float ymin, Float ymax, int printing);
+axis_info *enved_make_axis(char *name, axis_context *ax, int ex0, int ey0, int width, int height, Float xmin, Float xmax, Float ymin, Float ymax, int printing);
 void display_enved_env_with_selection(snd_state *ss, env *e, char *name, 
 				      int x0, int y0, int width, int height, int dots, Float base, int printing);
 void set_enved_redo_sensitive(int val);

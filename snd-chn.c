@@ -2883,7 +2883,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	  if (points == 0) return;
 	  if ((cp->mixes) &&
 	      (cp->mix_dragging)) 
-	    mix_save_graph(ss, cp_to_mix_context(cp), points);
+	    mix_save_graph(cp_to_mix_context(cp), points);
 	  if (cp->cursor_on) draw_graph_cursor(cp);
 	}
     }

@@ -700,6 +700,15 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 	      mus_snprintf(tmpstr, PRINT_BUFFER_SIZE, "/usr/doc/snd-%d", SND_MAJOR_VERSION);
 	      set_html_dir(ss, copy_string(tmpstr));
 	    }
+	  else
+	    {
+	      mus_snprintf(tmpstr, PRINT_BUFFER_SIZE, "/usr/share/doc/snd-%d/snd.html", SND_MAJOR_VERSION);
+	      if (mus_file_probe(tmpstr))
+		{
+		  mus_snprintf(tmpstr, PRINT_BUFFER_SIZE, "/usr/share/doc/snd-%d", SND_MAJOR_VERSION);
+		  set_html_dir(ss, copy_string(tmpstr));
+		}
+	    }
 	}
       FREE(tmpstr);
     }

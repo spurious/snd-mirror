@@ -21091,7 +21091,7 @@ static XEN gxm_set_data(XEN ptr, XEN val)
   if (str)
     len = strlen(str);
   if (len > 19) len = 19;
-  for (i = 0; i < strlen(str); i++)
+  for (i = 0; i < len; i++)
     (XEN_TO_C_XClientMessageEvent(ptr))->data.b[i] = str[i];
   return(val);
 }

@@ -1259,7 +1259,7 @@ static void initialize_md_context(int size, chan_info **cps)
       mark_movers[i] = make_mix_context(cps[i]);
       ms = mark_movers[i];
       ms->lastpj = make_graph(cps[i], cps[i]->sound, cps[i]->state); 
-      mix_save_graph(cps[i]->state, ms, ms->lastpj);
+      mix_save_graph(ms, ms->lastpj);
     }
 }
 

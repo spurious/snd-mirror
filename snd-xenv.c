@@ -28,7 +28,7 @@ static axis_info *gray_ap = NULL;
 static int FIR_p = 1;
 static int old_clip_p = 0;
 
-axis_info *enved_make_axis(snd_state *ss, char *name, axis_context *ax, 
+axis_info *enved_make_axis(char *name, axis_context *ax, 
 			   int ex0, int ey0, int width, int height, 
 			   Float xmin, Float xmax, Float ymin, Float ymax,
 			   int printing)

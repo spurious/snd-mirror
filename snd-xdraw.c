@@ -284,7 +284,7 @@ static void backup_erase_grf_points(mix_context *ms, int nj)
     }
 }
 
-void mix_save_graph(snd_state *ss, mix_context *ms, int j)
+void mix_save_graph(mix_context *ms, int j)
 {
   allocate_erase_grf_points(ms);
   backup_erase_grf_points(ms, j);

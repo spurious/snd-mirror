@@ -581,7 +581,7 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax,
       ey1 = 0.0;
     }
 
-  ap = enved_make_axis(ss, name, ax, x0, y0, width, height, ex0, ex1, ey0, ey1, printing); /* ax used only for GC here */
+  ap = enved_make_axis(name, ax, x0, y0, width, height, ex0, ex1, ey0, ey1, printing); /* ax used only for GC here */
   if (e)
     {
       ix1 = grf_x(e->data[0], ap);
