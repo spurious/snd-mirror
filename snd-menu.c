@@ -647,7 +647,7 @@ static SCM g_add_to_menu(SCM menu, SCM label, SCM callstr)
   char *name;
   int i,err=0;
   SCM_ASSERT(gh_string_p(label),label,SCM_ARG2,S_add_to_menu);
-  ERRN1(menu,S_add_to_menu);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(menu)),menu,SCM_ARG1,S_add_to_menu);
   if (callbacks_size == callb)
     {
       callbacks_size += CALLBACK_INCR;
@@ -695,7 +695,7 @@ static SCM g_remove_from_menu(SCM menu, SCM label)
   char *name;
   int val;
   SCM_ASSERT(gh_string_p(label),label,SCM_ARG2,S_remove_from_menu);
-  ERRN1(menu,S_remove_from_menu);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(menu)),menu,SCM_ARG1,S_remove_from_menu);
   name = gh_scm2newstr(label,NULL);
   val = gh_remove_from_menu(g_scm2int(menu),name);
   free(name);
@@ -709,7 +709,7 @@ static SCM g_change_menu_label(SCM menu, SCM old_label, SCM new_label)
   int val;
   SCM_ASSERT(gh_string_p(old_label),old_label,SCM_ARG2,S_change_menu_label);
   SCM_ASSERT(gh_string_p(new_label),new_label,SCM_ARG3,S_change_menu_label);
-  ERRN1(menu,S_change_menu_label);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(menu)),menu,SCM_ARG1,S_change_menu_label);
   old_name = gh_scm2newstr(old_label,NULL);
   new_name = gh_scm2newstr(new_label,NULL);
   val = gh_change_menu_label(g_scm2int(menu),old_name,new_name);
@@ -723,7 +723,7 @@ static SCM g_menu_sensitive(SCM menu, SCM label)
   #define H_menu_sensitive "(" S_menu_sensitive " menu label) reflects whether item label in menu is sensitive"
   char *name;
   int val;
-  ERRN1(menu,"set-" S_menu_sensitive);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(menu)),menu,SCM_ARG1,"set-" S_menu_sensitive);
   SCM_ASSERT(gh_string_p(label),label,SCM_ARG2,"set-" S_menu_sensitive);
   name = gh_scm2newstr(label,NULL);
   val = gh_menu_is_sensitive(g_scm2int(menu),name);
@@ -735,7 +735,7 @@ static SCM g_set_menu_sensitive(SCM menu, SCM label, SCM on)
 {
   char *name;
   int val;
-  ERRN1(menu,"set-" S_menu_sensitive);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(menu)),menu,SCM_ARG1,"set-" S_menu_sensitive);
   SCM_ASSERT(gh_string_p(label),label,SCM_ARG2,"set-" S_menu_sensitive);
   ERRB3(on,"set-" S_menu_sensitive);
   name = gh_scm2newstr(label,NULL);

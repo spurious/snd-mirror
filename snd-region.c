@@ -4,7 +4,7 @@
 
 typedef struct { /* one for each 'channel' */
   int visible;
-  int type;
+  /* int type; */
   snd_info *sp;
   chan_info *cp;
   int first,last;
@@ -42,12 +42,12 @@ typedef struct {
   MUS_SAMPLE_TYPE **data;
   int chans;
   int len;
-  int beg;
+  int beg; /* DELETE */
   int srate;               /* for file save (i.e. region->file) */
   int header_type;         /* for file save */
   int save;
   snd_info *rsp;
-  region_context **rgx;
+  region_context **rgx; /* DELETE */
   char *name,*start,*end;
   char *filename;          /* if region data is stored in a temp file */
   int use_temp_file;       /* REGION_ARRAY = data is in 'data' arrays, else in temp file 'filename' */
@@ -406,19 +406,6 @@ void protect_region(int n,int protect)
       r = regions[n];
       if (r) r->save = protect;
     }
-}
-
-snd_info *region_sound(int n) 
-{
-  region *r; 
-  region_context **rgx;
-  if (region_ok(n))
-    {
-      r = regions[n]; 
-      rgx = r->rgx;
-      if ((rgx) && (rgx[0])) return(rgx[0]->sp); else return(NULL);
-    }
-  return(NULL);
 }
 
 static void stack_region(snd_state *ss, region *r) 
@@ -1275,7 +1262,7 @@ snd_fd *init_region_read (snd_state *ss, int beg, int n, int chan, int direction
   return(NULL);
 }
 
-sync_info *region_sync(int n)
+sync_info *region_sync(int n)  /* MISNAMED: selection_sync */
 {
   region *r;
   region_context *rg;
@@ -1587,7 +1574,7 @@ static SCM g_max_regions(void)
 static SCM g_set_max_regions(SCM n) 
 {
   snd_state *ss;
-  ERRN1(n,"set-" S_max_regions); 
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(n)),n,SCM_ARG1,"set-" S_max_regions); 
   ss = get_global_state();
   set_max_regions(ss,g_scm2int(n));
   RTNINT(max_regions(ss));
@@ -1631,7 +1618,7 @@ static SCM region_read(int field, SCM n, char *caller)
 static SCM g_regionQ(SCM n)
 {
   #define H_regionQ "(" S_regionQ " reg) -> #t if region is active"
-  ERRN1(n,S_regionQ);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(n)),n,SCM_ARG1,S_regionQ);
   RTNBOOL(region_ok(g_scm2int(n)));
 }
 
@@ -1714,7 +1701,7 @@ static SCM g_protect_region (SCM n, SCM protect)
    pushed off the end of the region list"
 
   int rg;
-  ERRN1(n,S_protect_region);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(n)),n,SCM_ARG1,S_protect_region);
   ERRB2(protect,S_protect_region);
   rg = g_scm2intdef(n,0);
   if (region_ok(rg))
@@ -1739,8 +1726,8 @@ static SCM g_make_region (SCM beg, SCM end, SCM snd_n, SCM chn_n)
 {
   #define H_make_region "(" S_make_region " beg end &optional snd chn) makes a new region between beg and end in snd"
   chan_info *cp;
-  ERRN1(beg,S_make_region);
-  ERRN2(end,S_make_region);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(beg)),beg,SCM_ARG1,S_make_region);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(end)),end,SCM_ARG2,S_make_region);
   ERRCP(S_make_region,snd_n,chn_n,3);
   cp = get_cp(snd_n,chn_n,S_make_region);
   define_region(cp,g_scm2int(beg),g_scm2int(end),DONT_CLEAR_MINIBUFFER);
@@ -1798,7 +1785,7 @@ static SCM g_save_region (SCM n, SCM filename, SCM format)
   #define H_save_region "(" S_save_region " region filename &optional format) saves region in filename using data format (mus-bshort)"
   char *name = NULL,*urn;
   int res=SND_NO_ERROR,rg;
-  ERRN1(n,S_save_region);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(n)),n,SCM_ARG1,S_save_region);
   SCM_ASSERT(gh_string_p(filename),filename,SCM_ARG2,S_save_region);
   ERRB3(format,S_save_region);
   rg = g_scm2int(n);

@@ -45,6 +45,7 @@ typedef struct {
   int beg,len;
   char *origin;
   int sfnum;
+  int selection_beg, selection_end;    /* added 11-Sep-00: selection needs to follow edit list */
 } ed_list;
 
 typedef struct {
@@ -824,7 +825,6 @@ void free_region_state (region_state *r);
 void select_region(int n);
 int delete_region(int n);
 void protect_region(int n,int protect);
-snd_info *region_sound(int n);
 int selection_is_current_in_channel(chan_info *cp);
 int selection_member(snd_info *sp);
 int active_selection (chan_info *cp);

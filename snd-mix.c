@@ -3140,8 +3140,8 @@ static SCM g_set_mix_position(SCM n, SCM uval)
   mixdata *md;
   int val;
   console_state *cs = NULL;
-  ERRN1(n,"set-" S_mix_position);
-  ERRN2(uval,"set-" S_mix_position);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(n)),n,SCM_ARG1,"set-" S_mix_position);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(uval)),uval,SCM_ARG2,"set-" S_mix_position);
   md = md_from_int(g_scm2int(n));
   if (md)
     {
@@ -3163,8 +3163,8 @@ static SCM g_set_mix_length(SCM n, SCM uval)
   mixdata *md;
   int val;
   console_state *cs = NULL;
-  ERRN1(n,"set-" S_mix_length);
-  ERRN2(uval,"set-" S_mix_length);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(n)),n,SCM_ARG1,"set-" S_mix_length);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(uval)),uval,SCM_ARG2,"set-" S_mix_length);
   md = md_from_int(g_scm2int(n));
   if (md)
     {
@@ -3189,7 +3189,7 @@ static SCM g_set_mix_locked(SCM n, SCM val)
   console_state *cs;
   mixdata *md;
   int on;
-  ERRN1(n,"set-" S_mix_locked);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(n)),n,SCM_ARG1,"set-" S_mix_locked);
   ERRB2(val,"set-" S_mix_locked);
   md = md_from_int(g_scm2int(n));
   if (md)
@@ -3210,8 +3210,8 @@ static SCM g_set_mix_anchor(SCM n, SCM uval)
   mixdata *md;
   console_state *cs = NULL;
   int val;
-  ERRN1(n,"set-" S_mix_anchor);
-  ERRN2(uval,"set-" S_mix_anchor);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(n)),n,SCM_ARG1,"set-" S_mix_anchor);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(uval)),uval,SCM_ARG2,"set-" S_mix_anchor);
   md = md_from_int(g_scm2int(n));
   if (md)
     {
@@ -3235,7 +3235,7 @@ static SCM g_set_mix_name(SCM n, SCM val)
   char *name;
   mixdata *md;
   mixmark *m;
-  ERRN1(n,"set-" S_mix_name);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(n)),n,SCM_ARG1,"set-" S_mix_name);
   SCM_ASSERT(gh_string_p(val),val,SCM_ARG2,"set-" S_mix_name);
   md = md_from_int(g_scm2int(n));
   if (md)
@@ -3254,8 +3254,8 @@ static SCM g_set_mix_name(SCM n, SCM val)
 static SCM g_set_mix_track(SCM n, SCM val) 
 {
   mixdata *md;
-  ERRN1(n,"set-" S_mix_track);
-  ERRN2(val,"set-" S_mix_track);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(n)),n,SCM_ARG1,"set-" S_mix_track);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG2,"set-" S_mix_track);
   md = md_from_int(g_scm2int(n));
   if (md)
     {
@@ -3271,8 +3271,8 @@ static SCM g_set_mix_console_state(SCM n, SCM uval)
   mixdata *md;
   console_state *cs = NULL;
   int val;
-  ERRN1(n,"set-" S_mix_console_state);
-  ERRN2(uval,"set-" S_mix_console_state);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(n)),n,SCM_ARG1,"set-" S_mix_console_state);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(uval)),uval,SCM_ARG2,"set-" S_mix_console_state);
   md = md_from_int(g_scm2int(n));
   if (md) 
     {
@@ -3291,8 +3291,8 @@ static SCM g_set_mix_console_state(SCM n, SCM uval)
 static SCM g_set_mix_console_y(SCM n, SCM val) 
 {
   mixdata *md;
-  ERRN1(n,"set-" S_mix_console_y);
-  ERRN2(val,"set-" S_mix_console_y);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(n)),n,SCM_ARG1,"set-" S_mix_console_y);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG2,"set-" S_mix_console_y);
   md = md_from_int(g_scm2int(n));
   if (md)
     {
@@ -3307,8 +3307,8 @@ static SCM g_set_mix_speed(SCM n, SCM uval)
 {
   mixdata *md;
   Float val;
-  ERRN1(n,"set-" S_mix_speed);
-  ERRN2(uval,"set-" S_mix_speed);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(n)),n,SCM_ARG1,"set-" S_mix_speed);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(uval)),uval,SCM_ARG2,"set-" S_mix_speed);
   md = md_from_int(g_scm2int(n));
   if (md)
     {
@@ -3328,9 +3328,9 @@ static SCM g_set_mix_amp(SCM n, SCM uchan, SCM uval)
   mixdata *md;
   Float val;
   int chan;
-  ERRN1(n,"set-" S_mix_amp);
-  ERRN2(uchan,"set-" S_mix_amp);
-  ERRN3(uval,"set-" S_mix_amp);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(n)),n,SCM_ARG1,"set-" S_mix_amp);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(uchan)),uchan,SCM_ARG2,"set-" S_mix_amp);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(uval)),uval,SCM_ARG3,"set-" S_mix_amp);
   md = md_from_int(g_scm2int(n));
   if (md)
     {
@@ -3352,8 +3352,8 @@ static SCM g_set_mix_amp(SCM n, SCM uchan, SCM uval)
 
 static SCM g_set_mix_amp_env(SCM n, SCM chan, SCM val) 
 {
-  ERRN1(n,"set-" S_mix_amp_env);
-  ERRN2(chan,"set-" S_mix_amp_env);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(n)),n,SCM_ARG1,"set-" S_mix_amp_env);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(chan)),chan,SCM_ARG2,"set-" S_mix_amp_env);
   set_mix_amp_env(g_scm2int(n),g_scm2int(chan),get_env(val,SCM_BOOL_F,"set-" S_mix_amp_env));
   return(val);
 }
@@ -3368,7 +3368,7 @@ static SCM g_mix_sound(SCM file, SCM start_samp)
   snd_info *sp;
   int beg,err=0;
   SCM_ASSERT(gh_string_p(file),file,SCM_ARG1,S_mix_sound);
-  ERRN1(start_samp,S_mix_sound);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(start_samp)),start_samp,SCM_ARG1,S_mix_sound);
   urn = gh_scm2newstr(file,NULL);
   filename = mus_file_full_name(urn);
   free(urn);
@@ -3394,7 +3394,7 @@ static SCM g_set_mix_waveform_height(SCM val)
 {
   #define H_mix_waveform_height "(" S_mix_waveform_height ") -> max height (pixels) of mix waveforms (20)"
   snd_state *ss; 
-  ERRN1(val,"set-" S_mix_waveform_height); 
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_mix_waveform_height); 
   ss = get_global_state(); 
   in_set_mix_waveform_height(ss,g_scm2int(val));
   map_over_chans(ss,update_mix_waveforms,NULL);
@@ -3404,7 +3404,7 @@ static SCM g_set_mix_waveform_height(SCM val)
 static SCM g_select_mix(SCM id)
 {
   #define H_select_mix "(" S_select_mix " id) makes mix is the selected mix"
-  ERRN1(id,S_select_mix);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(id)),id,SCM_ARG1,S_select_mix);
   select_mix(get_global_state(),md_from_int(g_scm2int(id)));
   return(id);
 }
@@ -3561,7 +3561,7 @@ static SCM g_make_mix_sample_reader(SCM mix_id)
 #if HAVE_GUILE_1_3_0
   SCM new_mf;
 #endif
-  ERRN1(mix_id,S_make_mix_sample_reader);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(mix_id)),mix_id,SCM_ARG1,S_make_mix_sample_reader);
   md = md_from_int(g_scm2int(mix_id));
   if (md) mf = init_mix_read(md,FALSE); else return(scm_throw(NO_SUCH_MIX,SCM_LIST2(gh_str02scm(S_make_mix_sample_reader),mix_id)));
   if (mf)
@@ -3681,7 +3681,7 @@ static SCM g_make_track_sample_reader(SCM track_id, SCM samp, SCM snd, SCM chn)
 #if HAVE_GUILE_1_3_0
   SCM new_tf;
 #endif
-  ERRN1(track_id,S_make_track_sample_reader);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(track_id)),track_id,SCM_ARG1,S_make_track_sample_reader);
   ERRCP(S_make_track_sample_reader,snd,chn,3); 
   cp = get_cp(snd,chn,S_make_track_sample_reader);
   tf = init_track_reader(cp,g_scm2int(track_id),g_scm2intdef(samp,0));

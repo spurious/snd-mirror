@@ -1,5 +1,6 @@
 snd change log
 
+  12-Sep:    effects.scm.
   11-Sep:    generalized set! now built-in (the set-* forms still exist for old versions of Guile).
                removed setf.scm.
                x-bounds and y-bounds setters now take a list of (low high) values.

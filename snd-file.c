@@ -1951,7 +1951,7 @@ static SCM g_override_data_location(SCM loc, SCM snd)
 {
   #define H_override_data_location "(" S_override_data_location " loc &optional snd) overrides snd's notion of its data location"
   snd_info *sp;
-  ERRN1(loc,S_override_data_location);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(loc)),loc,SCM_ARG1,S_override_data_location);
   ERRSP(S_override_data_location,snd,2);
   sp = get_sp(snd);
   if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_override_data_location),snd)));
@@ -1964,7 +1964,7 @@ static SCM g_override_data_format(SCM frm, SCM snd)
 {
   #define H_override_data_format "(" S_override_data_format " format &optional snd) overrides snd's notion of its data format"
   snd_info *sp;
-  ERRN1(frm,S_override_data_format);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(frm)),frm,SCM_ARG1,S_override_data_format);
   ERRSP(S_override_data_format,snd,2);
   sp = get_sp(snd);
   if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_override_data_format),snd)));
@@ -1977,7 +1977,7 @@ static SCM g_override_data_size(SCM over, SCM snd)
 {
   #define H_override_data_size "(" S_override_data_size " samples &optional snd) overrides snd's notion of its data size"
   snd_info *sp;
-  ERRN1(over,S_override_data_size);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(over)),over,SCM_ARG1,S_override_data_size);
   ERRSP(S_override_data_size,snd,2);
   sp = get_sp(snd);
   if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_override_data_size),snd)));
@@ -1992,8 +1992,8 @@ static SCM g_set_sound_loop_info(SCM start0, SCM end0, SCM start1, SCM end1, SCM
   snd_info *sp;
   char *tmp_file;
   int type;
-  ERRN1(start0,"set-" S_sound_loop_info);
-  ERRN2(end0,"set-" S_sound_loop_info);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(start0)),start0,SCM_ARG1,"set-" S_sound_loop_info);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(end0)),end0,SCM_ARG2,"set-" S_sound_loop_info);
   ERRB3(start1,"set-" S_sound_loop_info);
   ERRB4(end1,"set-" S_sound_loop_info);
   ERRSP("set-" S_sound_loop_info,snd,5);

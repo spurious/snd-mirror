@@ -4408,7 +4408,6 @@
       ))
 
 
-(if #f (begin
 ;;; ---------------- test 16: define-syntax ----------------
 (if (or full-test (= snd-test 16))
     (let ((hi 32)
@@ -4421,7 +4420,7 @@
       (if (not (= ho 16)) (snd-print (format #f "loop: ~A?" ho)))
       (set! hi (prog1 (+ 2 ho) (set! ho 3)))
       (if (not (= hi 18)) (snd-print (format #f "prog1: ~A?" hi)))))
-))
+
 
 ;;; ---------------- test 17: guile-gtk dialogs ----------------
 (if (or full-test (= snd-test 17))

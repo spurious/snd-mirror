@@ -1503,9 +1503,9 @@ static SCM g_open_raw_sound(SCM filename, SCM chans, SCM srate, SCM format)
   snd_info *sp;
   int os,oc,ofr,ou,ofit;
   SCM_ASSERT(gh_string_p(filename),filename,SCM_ARG1,S_open_raw_sound);
-  ERRN2(srate,S_open_raw_sound);
-  ERRN3(chans,S_open_raw_sound);
-  ERRN4(format,S_open_raw_sound);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(srate)),srate,SCM_ARG2,S_open_raw_sound);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(chans)),chans,SCM_ARG3,S_open_raw_sound);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(format)),format,SCM_ARG4,S_open_raw_sound);
   ss = get_global_state();
   ou=use_raw_defaults(ss);
   os=raw_srate(ss);
@@ -1667,7 +1667,7 @@ static SCM g_filter_order(SCM snd_n)
 
 static SCM g_set_filter_order(SCM on, SCM snd_n) 
 {
-  ERRN1(on,"set-" S_filter_order); 
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(on)),on,SCM_ARG1,"set-" S_filter_order); 
   ERRSPT("set-" S_filter_order,snd_n,2); 
   return(sp_iwrite(snd_n,on,FILTERORDERF,"set-" S_filter_order));
 }
@@ -1686,7 +1686,7 @@ static SCM g_speed_style(SCM snd)
 static SCM g_set_speed_style(SCM speed, SCM snd) 
 {
   snd_state *ss;
-  ERRN1(speed,"set-" S_speed_style); 
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(speed)),speed,SCM_ARG1,"set-" S_speed_style); 
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(sp_iwrite(snd,speed,SPEEDSTYLEF,"set-" S_speed_style));
   else
@@ -1712,7 +1712,7 @@ static SCM g_speed_tones(SCM snd)
 static SCM g_set_speed_tones(SCM val, SCM snd)
 {
   snd_state *ss;
-  ERRN1(val,"set-" S_speed_tones); 
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_speed_tones); 
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(sp_iwrite(snd,val,SPEEDTONESF,"set-" S_speed_tones));
   else
@@ -1861,7 +1861,7 @@ static SCM g_amp(SCM snd_n)
 
 static SCM g_set_amp(SCM on, SCM snd_n) 
 {
-  ERRN1(on,"set-" S_amp); 
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(on)),on,SCM_ARG1,"set-" S_amp); 
   ERRSPT("set-" S_amp,snd_n,2); 
   return(sp_fwrite(snd_n,on,AMPF,"set-" S_amp));
 }
@@ -1877,7 +1877,7 @@ static SCM g_contrast(SCM snd_n)
 
 static SCM g_set_contrast(SCM on, SCM snd_n) 
 {
-  ERRN1(on,"set-" S_contrast); 
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(on)),on,SCM_ARG1,"set-" S_contrast); 
   ERRSPT("set-" S_contrast,snd_n,2); 
   return(sp_fwrite(snd_n,on,CONTRASTF,"set-" S_contrast));
 }
@@ -1895,7 +1895,7 @@ static SCM g_contrast_amp(SCM snd_n)
 
 static SCM g_set_contrast_amp(SCM on, SCM snd_n) 
 {
-  ERRN1(on,"set-" S_contrast_amp);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(on)),on,SCM_ARG1,"set-" S_contrast_amp);
   ERRSPT("set-" S_contrast_amp,snd_n,2); 
   return(sp_fwrite(snd_n,on,CONTRASTAMPF,"set-" S_contrast_amp));
 }
@@ -1911,7 +1911,7 @@ static SCM g_expand(SCM snd_n)
 
 static SCM g_set_expand(SCM on, SCM snd_n) 
 {
-  ERRN1(on,"set-" S_expand); 
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(on)),on,SCM_ARG1,"set-" S_expand); 
   ERRSPT("set-" S_expand,snd_n,2); 
   return(sp_fwrite(snd_n,on,EXPANDF,"set-" S_expand));
 }
@@ -1927,7 +1927,7 @@ static SCM g_expand_length(SCM snd_n)
 
 static SCM g_set_expand_length(SCM on, SCM snd_n) 
 {
-  ERRN1(on,"set-" S_expand_length); 
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(on)),on,SCM_ARG1,"set-" S_expand_length); 
   ERRSPT("set-" S_expand_length,snd_n,2); 
   return(sp_fwrite(snd_n,on,EXPANDLENGTHF,"set-" S_expand_length));
 }
@@ -1943,7 +1943,7 @@ static SCM g_expand_ramp(SCM snd_n)
 
 static SCM g_set_expand_ramp(SCM on, SCM snd_n) 
 {
-  ERRN1(on,"set-" S_expand_ramp);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(on)),on,SCM_ARG1,"set-" S_expand_ramp);
   ERRSPT("set-" S_expand_ramp,snd_n,2); 
   return(sp_fwrite(snd_n,on,EXPANDRAMPF,"set-" S_expand_ramp));
 }
@@ -1959,7 +1959,7 @@ static SCM g_expand_hop(SCM snd_n)
 
 static SCM g_set_expand_hop(SCM on, SCM snd_n) 
 {
-  ERRN1(on,"set-" S_expand_hop); 
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(on)),on,SCM_ARG1,"set-" S_expand_hop); 
   ERRSPT("set-" S_expand_hop,snd_n,2);
   return(sp_fwrite(snd_n,on,EXPANDHOPF,"set-" S_expand_hop));
 }
@@ -1975,7 +1975,7 @@ static SCM g_speed(SCM snd_n)
 
 static SCM g_set_speed(SCM on, SCM snd_n) 
 {
-  ERRN1(on,"set-" S_speed); 
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(on)),on,SCM_ARG1,"set-" S_speed); 
   ERRSPT("set-" S_speed,snd_n,2);
   return(sp_fwrite(snd_n,on,SPEEDF,"set-" S_speed));
 }
@@ -1991,7 +1991,7 @@ static SCM g_reverb_length(SCM snd_n)
 
 static SCM g_set_reverb_length(SCM on, SCM snd_n) 
 {
-  ERRN1(on,"set-" S_reverb_length); 
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(on)),on,SCM_ARG1,"set-" S_reverb_length); 
   ERRSPT("set-" S_reverb_length,snd_n,2); 
   return(sp_fwrite(snd_n,on,REVERBLENGTHF,"set-" S_reverb_length));
 }
@@ -2007,7 +2007,7 @@ static SCM g_reverb_feedback(SCM snd_n)
 
 static SCM g_set_reverb_feedback(SCM on, SCM snd_n) 
 {
-  ERRN1(on,"set-" S_reverb_feedback); 
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(on)),on,SCM_ARG1,"set-" S_reverb_feedback); 
   ERRSPT("set-" S_reverb_feedback,snd_n,2);
   return(sp_fwrite(snd_n,on,REVERBFEEDBACKF,"set-" S_reverb_feedback));
 }
@@ -2023,7 +2023,7 @@ static SCM g_reverb_scale(SCM snd_n)
 
 static SCM g_set_reverb_scale(SCM on, SCM snd_n) 
 {
-  ERRN1(on,"set-" S_reverb_scale); 
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(on)),on,SCM_ARG1,"set-" S_reverb_scale); 
   ERRSPT("set-" S_reverb_scale,snd_n,2); 
   return(sp_fwrite(snd_n,on,REVERBSCALEF,"set-" S_reverb_scale));
 }
@@ -2039,7 +2039,7 @@ static SCM g_reverb_lowpass(SCM snd_n)
 
 static SCM g_set_reverb_lowpass(SCM on, SCM snd_n) 
 {
-  ERRN1(on,"set-" S_reverb_lowpass); 
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(on)),on,SCM_ARG1,"set-" S_reverb_lowpass); 
   ERRSPT("set-" S_reverb_lowpass,snd_n,2); 
   return(sp_fwrite(snd_n,on,REVERBLOWPASSF,"set-" S_reverb_lowpass));
 }
@@ -2058,7 +2058,7 @@ static SCM g_reverb_decay(SCM snd)
 static SCM g_set_reverb_decay(SCM val, SCM snd)
 {
   snd_state *ss;
-  ERRN1(val,"set-" S_reverb_decay); 
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_reverb_decay); 
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(sp_fwrite(snd,val,SP_REVERB_DECAY,"set-" S_reverb_decay));
   else

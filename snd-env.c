@@ -1216,7 +1216,11 @@ void save_envelope_editor_state(FILE *fd)
 	{
 	  fprintf(fd,"(defvar %s %s)",all_names[i],estr);
 	  if (all_envs[i]->base != 1.0)
+#if (HAVE_GUILE) && (!(HAVE_GUILE_1_3_0))
+	    fprintf(fd," (set! (env-base \"%s\") %.4f)",all_names[i],all_envs[i]->base);
+#else
 	    fprintf(fd," (%s \"%s\" %.4f)","set-" S_env_base,all_names[i],all_envs[i]->base);
+#endif
 	  fprintf(fd,"\n");
 	  FREE(estr);
 	}
@@ -1322,7 +1326,7 @@ static SCM g_set_env_base(SCM name, SCM val)
   int i;
   char *urn = NULL;
   SCM_ASSERT(gh_string_p(name),name,SCM_ARG1,"set-" S_env_base);
-  ERRN2(val,"set-" S_env_base);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG2,"set-" S_env_base);
   urn = gh_scm2newstr(name,NULL);
   i = find_env(urn);
   if (i != -1) all_envs[i]->base = gh_scm2double(val);

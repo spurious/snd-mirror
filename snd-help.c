@@ -251,6 +251,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+12-Sep:  effects.scm.\n\
 11-Sep:  generalized set! now built-in.\n\
            removed setf.scm.\n\
            x-bounds and y-bounds setters now take a list of (low high) values.\n\

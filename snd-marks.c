@@ -1586,7 +1586,7 @@ static SCM g_markQ(SCM id_n)
 {
   #define H_markQ "(" S_markQ " id) -> #t if mark is active"
   chan_info *ncp[1];
-  ERRN1(id_n,S_markQ);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(id_n)),id_n,SCM_ARG1,S_markQ);
   RTNBOOL(find_mark_id(ncp,g_scm2int(id_n),-1));
 }
 
@@ -1752,7 +1752,7 @@ static SCM g_syncd_marks(SCM sync)
   #define H_syncd_marks "(" S_syncd_marks " sync) -> list of mark ids that share sync"
   int *ids;
   SCM res;
-  ERRN1(sync,S_syncd_marks);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(sync)),sync,SCM_ARG1,S_syncd_marks);
   ids = syncd_marks(get_global_state(),gh_scm2int(sync));
   if ((ids == NULL) || (ids[0] == 0)) return(SCM_EOL);
   res = int_array_to_list(ids,1,ids[0]);

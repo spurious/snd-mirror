@@ -28,11 +28,6 @@
   #define SCM_FNC
 #endif
 
-#define ERRN1(a,b) SCM_ASSERT(SCM_NFALSEP(scm_real_p(a)),a,SCM_ARG1,b)
-#define ERRN2(a,b) SCM_ASSERT(SCM_NFALSEP(scm_real_p(a)),a,SCM_ARG2,b)
-#define ERRN3(a,b) SCM_ASSERT(SCM_NFALSEP(scm_real_p(a)),a,SCM_ARG3,b)
-#define ERRN4(a,b) SCM_ASSERT(SCM_NFALSEP(scm_real_p(a)),a,SCM_ARG4,b)
-
 #define ERRB1(a,b) SCM_ASSERT((gh_number_p(a)) || (gh_boolean_p(a)) || (SCM_UNBNDP(a)),a,SCM_ARG1,b)
 #define ERRB2(a,b) SCM_ASSERT((gh_number_p(a)) || (gh_boolean_p(a)) || (SCM_UNBNDP(a)),a,SCM_ARG2,b)
 #define ERRB3(a,b) SCM_ASSERT((gh_number_p(a)) || (gh_boolean_p(a)) || (SCM_UNBNDP(a)),a,SCM_ARG3,b)
@@ -49,17 +44,6 @@
 
 /* DEFINE_PROC(proc,doc) sets the documentation property of procedure proc to the text doc
  *   the assumption is that it will be used with gh_new_procedure and scm_string_to_symbol
- */
-
-/*
- * this sets the documentation property of a variable (the symbol, not the variable's value):
- *   #define DEFINE_OBJ(name,obj,text) {gh_define(name,obj); scm_set_object_property_x(scm_string_to_symbol(gh_str02scm(name)),local_doc,gh_str02scm(text));}
- * but it's inconsistent with the procedure property above where the "value" has the property, not the symbol
- * I'm not sure which is "the right thing":  (help vct?) or (help 'vct?)
- * the problem with setting the symbol's property is that there apparently isn't a Scheme version of defconstant
- */
-/* properties are apparently about to be deprecated in guile, so perhaps we should use a hashtable,
- *   in this case, the constants could also be used as keys
  */
 
 /* error indications */

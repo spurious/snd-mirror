@@ -2086,7 +2086,7 @@ static SCM g_add_player(SCM snd_chn, SCM start, SCM end)
   snd_info *sp;
   chan_info *cp;
   int index;
-  ERRN1(snd_chn,S_add_player);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(snd_chn)),snd_chn,SCM_ARG1,S_add_player);
   index = -gh_scm2int(snd_chn);
   sp = players[index];
   if (sp)

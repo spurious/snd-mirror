@@ -909,7 +909,7 @@ int channel_unlock_pane(chan_info *cp, void *ptr) {return(0);}
 static SCM sg_sample2x(SCM samp, SCM snd, SCM chn)
 {
   chan_info *cp;
-  ERRN1(samp,Sg_sample2x);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(samp)),samp,SCM_ARG1,Sg_sample2x);
   ERRCP(Sg_sample2x,snd,chn,2);
   cp = get_cp(snd,chn,Sg_sample2x);
   return(gh_int2scm(grf_x((double)(gh_scm2int(samp))/(double)SND_SRATE(cp->sound),cp->axis)));
@@ -918,7 +918,7 @@ static SCM sg_sample2x(SCM samp, SCM snd, SCM chn)
 static SCM sg_sample2y(SCM samp, SCM snd, SCM chn)
 {
   chan_info *cp;
-  ERRN1(samp,Sg_sample2y);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(samp)),samp,SCM_ARG1,Sg_sample2y);
   ERRCP(Sg_sample2y,snd,chn,2);
   cp = get_cp(snd,chn,Sg_sample2y);
   return(gh_int2scm(grf_y(sample(gh_scm2int(samp),cp),cp->axis)));

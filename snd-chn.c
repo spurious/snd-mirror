@@ -5039,7 +5039,7 @@ static int cursor_zeros(chan_info *cp, int count, int regexpr)
     }
   else
     {
-      if ((regexpr) && (region_ok(0)))
+      if ((regexpr) && (selection_is_current()))
 	{
 	  si = region_sync(0);
 	  num = selection_len();
@@ -7597,8 +7597,8 @@ static SCM g_bind_key(SCM key, SCM state, SCM code, SCM ignore_prefix)
    The function should return one of the cursor choices (e.g. cursor-no-action)."
 
   int ip;
-  ERRN1(key,S_bind_key);
-  ERRN2(state,S_bind_key);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(key)),key,SCM_ARG1,S_bind_key);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(state)),state,SCM_ARG2,S_bind_key);
   SCM_ASSERT((SCM_FALSEP(code) || gh_procedure_p(code)),code,SCM_ARG3,S_bind_key);
   if ((SCM_FALSEP(ignore_prefix)) || (SCM_UNBNDP(ignore_prefix)) ||  
       ((gh_number_p(ignore_prefix)) && (g_scm2int(ignore_prefix) == 0)))
@@ -7616,8 +7616,8 @@ static SCM g_key(SCM kbd, SCM buckybits, SCM snd, SCM chn)
 {
   #define H_key "(" S_key " key modifiers &optional snd chn) simulates typing 'key' with 'modifiers' in snd's channel chn"
   chan_info *cp;
-  ERRN1(kbd,S_key);
-  ERRN2(buckybits,S_key);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(kbd)),kbd,SCM_ARG1,S_key);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(buckybits)),buckybits,SCM_ARG2,S_key);
   cp = get_cp(snd,chn,S_key);
   RTNINT(keyboard_command(cp,g_scm2int(kbd),g_scm2int(buckybits)));
 }
@@ -8175,7 +8175,7 @@ static SCM g_set_min_dB(SCM val, SCM snd, SCM chn)
 {
   Float db;
   snd_state *ss;
-  ERRN1(val,"set-" S_min_dB); 
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_min_dB); 
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_fwrite(snd,chn,val,CP_MIN_DB,"set-" S_min_dB));
   else
@@ -8204,7 +8204,7 @@ static SCM g_fft_beta(SCM snd, SCM chn)
 static SCM g_set_fft_beta(SCM val, SCM snd, SCM chn) 
 {
   snd_state *ss;
-  ERRN1(val,"set-" S_fft_beta); 
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_fft_beta); 
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_fwrite(snd,chn,val,CP_FFT_BETA,"set-" S_fft_beta));
   else
@@ -8230,7 +8230,7 @@ static SCM g_spectro_cutoff(SCM snd, SCM chn)
 static SCM g_set_spectro_cutoff(SCM val, SCM snd, SCM chn) 
 {
   snd_state *ss;
-  ERRN1(val,"set-" S_spectro_cutoff); 
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_spectro_cutoff); 
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_fwrite(snd,chn,val,CP_SPECTRO_CUTOFF,"set-" S_spectro_cutoff));
   else
@@ -8256,7 +8256,7 @@ static SCM g_spectro_start(SCM snd, SCM chn)
 static SCM g_set_spectro_start(SCM val, SCM snd, SCM chn) 
 {
   snd_state *ss;
-  ERRN1(val,"set-" S_spectro_start); 
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_spectro_start); 
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_fwrite(snd,chn,val,CP_SPECTRO_START,"set-" S_spectro_start));
   else
@@ -8282,7 +8282,7 @@ static SCM g_spectro_x_angle(SCM snd, SCM chn)
 static SCM g_set_spectro_x_angle(SCM val, SCM snd, SCM chn) 
 {
   snd_state *ss;
-  ERRN1(val,"set-" S_spectro_x_angle); 
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_spectro_x_angle); 
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_fwrite(snd,chn,val,CP_SPECTRO_X_ANGLE,"set-" S_spectro_x_angle));
   else
@@ -8308,7 +8308,7 @@ static SCM g_spectro_x_scale(SCM snd, SCM chn)
 static SCM g_set_spectro_x_scale(SCM val, SCM snd, SCM chn) 
 {
   snd_state *ss;
-  ERRN1(val,"set-" S_spectro_x_scale); 
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_spectro_x_scale); 
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_fwrite(snd,chn,val,CP_SPECTRO_X_SCALE,"set-" S_spectro_x_scale));
   else
@@ -8334,7 +8334,7 @@ static SCM g_spectro_y_angle(SCM snd, SCM chn)
 static SCM g_set_spectro_y_angle(SCM val, SCM snd, SCM chn) 
 {
   snd_state *ss;
-  ERRN1(val,"set-" S_spectro_y_angle); 
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_spectro_y_angle); 
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_fwrite(snd,chn,val,CP_SPECTRO_Y_ANGLE,"set-" S_spectro_y_angle));
   else
@@ -8360,7 +8360,7 @@ static SCM g_spectro_y_scale(SCM snd, SCM chn)
 static SCM g_set_spectro_y_scale(SCM val, SCM snd, SCM chn) 
 {
   snd_state *ss;
-  ERRN1(val,"set-" S_spectro_y_scale); 
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_spectro_y_scale); 
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_fwrite(snd,chn,val,CP_SPECTRO_Y_SCALE,"set-" S_spectro_y_scale));
   else
@@ -8386,7 +8386,7 @@ static SCM g_spectro_z_angle(SCM snd, SCM chn)
 static SCM g_set_spectro_z_angle(SCM val, SCM snd, SCM chn) 
 {
   snd_state *ss;
-  ERRN1(val,"set-" S_spectro_z_angle); 
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_spectro_z_angle); 
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_fwrite(snd,chn,val,CP_SPECTRO_Z_ANGLE,"set-" S_spectro_z_angle));
   else
@@ -8412,7 +8412,7 @@ static SCM g_spectro_z_scale(SCM snd, SCM chn)
 static SCM g_set_spectro_z_scale(SCM val, SCM snd, SCM chn) 
 {
   snd_state *ss;
-  ERRN1(val,"set-" S_spectro_z_scale); 
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_spectro_z_scale); 
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_fwrite(snd,chn,val,CP_SPECTRO_Z_SCALE,"set-" S_spectro_z_scale));
   else
@@ -8438,7 +8438,7 @@ static SCM g_spectro_hop(SCM snd, SCM chn)
 static SCM g_set_spectro_hop(SCM val, SCM snd, SCM chn)
 {
   snd_state *ss;
-  ERRN1(val,"set-" S_spectro_hop); 
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_spectro_hop); 
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iwrite(snd,chn,val,CP_SPECTRO_HOP,"set-" S_spectro_hop));
   else
@@ -8517,7 +8517,7 @@ static SCM g_zero_pad(SCM snd, SCM chn)
 static SCM g_set_zero_pad(SCM val, SCM snd, SCM chn)
 {
   snd_state *ss;
-  ERRN1(val,"set-" S_zero_pad); 
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_zero_pad); 
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iwrite(snd,chn,val,CP_ZERO_PAD,"set-" S_zero_pad));
   else
@@ -8543,7 +8543,7 @@ static SCM g_wavelet_type(SCM snd, SCM chn)
 static SCM g_set_wavelet_type(SCM val, SCM snd, SCM chn)
 {
   snd_state *ss;
-  ERRN1(val,"set-" S_wavelet_type); 
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_wavelet_type); 
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iwrite(snd,chn,val,CP_WAVELET_TYPE,"set-" S_wavelet_type));
   else
@@ -8728,7 +8728,7 @@ static SCM g_wavo_hop(SCM snd, SCM chn)
 static SCM g_set_wavo_hop(SCM val, SCM snd, SCM chn) 
 {
   snd_state *ss;
-  ERRN1(val,"set-" S_wavo_hop); 
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_wavo_hop); 
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iwrite(snd,chn,val,CP_WAVO_HOP,"set-" S_wavo_hop));
   else
@@ -8754,7 +8754,7 @@ static SCM g_wavo_trace(SCM snd, SCM chn)
 static SCM g_set_wavo_trace(SCM val, SCM snd, SCM chn)
 {
   snd_state *ss;
-  ERRN1(val,"set-" S_wavo_trace); 
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_wavo_trace); 
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iwrite(snd,chn,val,CP_WAVO_TRACE,"set-" S_wavo_trace));
   else
@@ -8780,7 +8780,7 @@ static SCM g_line_size(SCM snd, SCM chn)
 static SCM g_set_line_size(SCM val, SCM snd, SCM chn)
 {
   snd_state *ss;
-  ERRN1(val,"set-" S_line_size); 
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_line_size); 
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iwrite(snd,chn,val,CP_LINE_SIZE,"set-" S_line_size));
   else
@@ -8807,7 +8807,7 @@ static SCM g_set_fft_size(SCM val, SCM snd, SCM chn)
 {
   snd_state *ss;
   int len;
-  ERRN1(val,"set-" S_fft_size); 
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_fft_size); 
   len = g_scm2int(val);
   if (len <= 0) return(SCM_BOOL_F);
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
@@ -8836,7 +8836,7 @@ static SCM g_set_fft_style(SCM val, SCM snd, SCM chn)
 {
   snd_state *ss;
   int style;
-  ERRN1(val,"set-" S_fft_style); 
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_fft_style); 
   style = iclamp(NORMAL_FFT,g_scm2int(val),SPECTROGRAM);
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iwrite(snd,chn,gh_int2scm(style),CP_FFT_STYLE,"set-" S_fft_style));
@@ -8864,7 +8864,7 @@ static SCM g_set_fft_window(SCM val, SCM snd, SCM chn)
 {
   snd_state *ss;
   int win;
-  ERRN1(val,"set-" S_fft_window); 
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_fft_window); 
   win = iclamp(0,g_scm2int(val),NUM_FFT_WINDOWS-1);
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iwrite(snd,chn,gh_int2scm(win),CP_FFT_WINDOW,"set-" S_fft_window));
@@ -8892,7 +8892,7 @@ static SCM g_set_transform_type(SCM val, SCM snd, SCM chn)
 {
   int type;
   snd_state *ss;
-  ERRN1(val,"set-" S_transform_type); 
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_transform_type); 
   type = iclamp(0,g_scm2int(val),max_transform_type());
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iwrite(snd,chn,gh_int2scm(type),CP_TRANSFORM_TYPE,"set-" S_transform_type));
@@ -8948,7 +8948,7 @@ static SCM g_set_max_fft_peaks(SCM n, SCM snd, SCM chn)
 {
   int lim;
   snd_state *ss;
-  ERRN1(n,"set-" S_max_fft_peaks); 
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(n)),n,SCM_ARG1,"set-" S_max_fft_peaks); 
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iwrite(snd,chn,n,CP_MAX_FFT_PEAKS,"set-" S_max_fft_peaks));
   else
@@ -8978,7 +8978,7 @@ static SCM g_graph_style(SCM snd, SCM chn)
 static SCM g_set_graph_style(SCM style, SCM snd, SCM chn)
 {
   snd_state *ss;
-  ERRN1(style,"set-" S_graph_style); 
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(style)),style,SCM_ARG1,"set-" S_graph_style); 
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iwrite(snd,chn,style,CP_GRAPH_STYLE,"set-" S_graph_style));
   else
@@ -9004,7 +9004,7 @@ static SCM g_dot_size(SCM snd, SCM chn)
 static SCM g_set_dot_size(SCM size, SCM snd, SCM chn)
 {
   snd_state *ss;
-  ERRN1(size,"set-" S_dot_size); 
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(size)),size,SCM_ARG1,"set-" S_dot_size); 
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iwrite(snd,chn,size,CP_DOT_SIZE,"set-" S_dot_size));
   else
@@ -9248,8 +9248,8 @@ static SCM g_smooth(SCM beg, SCM num, SCM snd_n, SCM chn_n)
 {
   #define H_smooth "(" S_smooth " start-samp samps &optional snd chn) smooths data from start-samp for samps in snd's channel chn"
   chan_info *cp;
-  ERRN1(beg,S_smooth);
-  ERRN2(num,S_smooth);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(beg)),beg,SCM_ARG1,S_smooth);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(num)),num,SCM_ARG2,S_smooth);
   ERRCP(S_smooth,snd_n,chn_n,3);
   cp = get_cp(snd_n,chn_n,S_smooth);
   cos_smooth(cp,g_scm2int(beg),g_scm2int(num),FALSE,S_smooth); 

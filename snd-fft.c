@@ -1992,8 +1992,8 @@ static SCM g_add_transform(SCM name, SCM xlabel, SCM lo, SCM hi, SCM proc)
   SCM res=SCM_BOOL_F;
   SCM_ASSERT(gh_string_p(name),name,SCM_ARG1,S_add_transform);
   SCM_ASSERT(gh_string_p(xlabel),xlabel,SCM_ARG2,S_add_transform);
-  ERRN3(lo,S_add_transform);
-  ERRN4(hi,S_add_transform);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(lo)),lo,SCM_ARG3,S_add_transform);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(hi)),hi,SCM_ARG4,S_add_transform);
   str1 = gh_scm2newstr(name,NULL);
   str2 = gh_scm2newstr(xlabel,NULL);
   SCM_ASSERT(gh_procedure_p(proc),proc,SCM_ARG5,S_add_transform);

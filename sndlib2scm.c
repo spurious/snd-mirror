@@ -199,21 +199,21 @@ static SCM g_sound_comment(SCM filename)
 static SCM g_sound_type_name(SCM type) 
 {
   #define H_mus_header_type_name "(" S_mus_header_type_name " type) -> header type (e.g. mus-aiff) as a string"
-  ERRN1(type,S_mus_header_type_name); 
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(type)),type,SCM_ARG1,S_mus_header_type_name); 
   RTNSTR(mus_header_type_name(g_scm2int(type)));
 }
 
 static SCM g_sound_format_name(SCM format) 
 {
   #define H_mus_data_format_name "(" S_mus_data_format_name " format) -> data format (e.g. mus-bshort) as a string"
-  ERRN1(format,S_mus_data_format_name); 
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(format)),format,SCM_ARG1,S_mus_data_format_name); 
   RTNSTR(mus_data_format_name(g_scm2int(format)));
 }
 
 static SCM g_sound_bytes_per_sample(SCM format) 
 {
   #define H_mus_data_format_bytes_per_sample "(" S_mus_data_format_bytes_per_sample " format) -> number of bytes per sample in format (e.g. mus-short = 2)"
-  ERRN1(format,S_mus_data_format_bytes_per_sample); 
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(format)),format,SCM_ARG1,S_mus_data_format_bytes_per_sample); 
   RTNINT(mus_data_format_to_bytes_per_sample(g_scm2int(format)));
 }
 
@@ -226,7 +226,7 @@ static SCM g_audio_error(void)
 static SCM g_audio_error_name(SCM err) 
 {
   #define H_mus_audio_error_name "(" S_mus_audio_error_name " err) -> audio error indication as a string"
-  ERRN1(err,S_mus_audio_error_name); 
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(err)),err,SCM_ARG1,S_mus_audio_error_name); 
   RTNSTR(mus_audio_error_name(g_scm2int(err)));
 }
 
@@ -410,7 +410,7 @@ static scm_smobfuns sound_data_smobfuns = {
 
 static SCM g_make_sound_data(SCM chans, SCM frames)
 {
-  ERRN1(chans,S_make_sound_data);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(chans)),chans,SCM_ARG1,S_make_sound_data);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(frames)),frames,SCM_ARG1,S_make_sound_data);
   return(make_sound_data(g_scm2int(chans),g_scm2int(frames)));
 }

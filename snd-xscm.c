@@ -4,8 +4,6 @@
 
 #include "sg.h"
 
-#define ERRCOL1(a,b) SCM_ASSERT((snd_color_p(a)),a,SCM_ARG1,b)
-
 static snd_state *state;
 
 #if HAVE_HTML
@@ -114,7 +112,7 @@ static SCM g_color2list(SCM obj)
   Colormap cmap;
   XColor tmp_color;
   Display *dpy;
-  ERRCOL1(obj,S_color2list); 
+  SCM_ASSERT(snd_color_p(obj),obj,SCM_ARG1,S_color2list); 
   v = (snd_color *)GH_VALUE_OF(obj);
   dpy=XtDisplay(MAIN_SHELL(state));
   cmap=DefaultColormap(dpy,DefaultScreen(dpy));
@@ -145,10 +143,10 @@ static SCM g_make_snd_color(SCM r, SCM g, SCM b)
   XColor tmp_color;
   Display *dpy;
   snd_color *new_color;
-  ERRN1(r,S_make_color);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(r)),r,SCM_ARG1,S_make_color);
   /* someday accept a list as r */
-  ERRN2(g,S_make_color);
-  ERRN3(b,S_make_color);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(g)),g,SCM_ARG2,S_make_color);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(b)),b,SCM_ARG3,S_make_color);
   new_color = (snd_color *)CALLOC(1,sizeof(snd_color));
   dpy=XtDisplay(MAIN_SHELL(state));
   cmap=DefaultColormap(dpy,DefaultScreen(dpy));
@@ -207,7 +205,7 @@ static SCM g_set_basic_color (SCM color)
 {
   snd_color *v; 
   Pixel old_color;
-  ERRCOL1(color,"set-" S_basic_color); 
+  SCM_ASSERT(snd_color_p(color),color,SCM_ARG1,"set-" S_basic_color); 
   v = get_snd_color(color); 
   if (v) 
     {
@@ -283,7 +281,7 @@ static void color_chan_components(Pixel color, int which_component)
 static SCM g_set_data_color (SCM color) 
 {
   snd_color *v; 
-  ERRCOL1(color,"set-" S_data_color); 
+  SCM_ASSERT(snd_color_p(color),color,SCM_ARG1,"set-" S_data_color); 
   /* this hidden scheme variable needed to handle Xalloc/XFree correctly (otherwise XFreeColors can't safely be called at all) */
   v = get_snd_color(color); 
   if (v) 
@@ -304,7 +302,7 @@ static SCM g_set_selected_data_color (SCM color)
 {
   snd_color *v; 
   chan_info *cp;
-  ERRCOL1(color,"set-" S_selected_data_color); 
+  SCM_ASSERT(snd_color_p(color),color,SCM_ARG1,"set-" S_selected_data_color); 
   v = get_snd_color(color); 
   if (v) 
     {
@@ -328,7 +326,7 @@ static SCM g_selected_data_color(void)
 static SCM g_set_graph_color (SCM color) 
 {
   snd_color *v; 
-  ERRCOL1(color,"set-" S_graph_color);
+  SCM_ASSERT(snd_color_p(color),color,SCM_ARG1,"set-" S_graph_color);
   v = get_snd_color(color);
   if (v) 
     {
@@ -348,7 +346,7 @@ static SCM g_set_selected_graph_color (SCM color)
 {
   snd_color *v; 
   chan_info *cp;
-  ERRCOL1(color,"set-" S_selected_graph_color);
+  SCM_ASSERT(snd_color_p(color),color,SCM_ARG1,"set-" S_selected_graph_color);
   v = get_snd_color(color); 
   if (v) 
     {
@@ -371,7 +369,7 @@ static SCM g_selected_graph_color(void)
 static SCM g_set_cursor_color (SCM color) 
 {
   snd_color *v; 
-  ERRCOL1(color,"set-" S_cursor_color); 
+  SCM_ASSERT(snd_color_p(color),color,SCM_ARG1,"set-" S_cursor_color); 
   v = get_snd_color(color); 
   if (v) 
     {
@@ -390,7 +388,7 @@ static SCM g_cursor_color(void)
 static SCM g_set_selection_color (SCM color) 
 {
   snd_color *v; 
-  ERRCOL1(color,"set-" S_selection_color); 
+  SCM_ASSERT(snd_color_p(color),color,SCM_ARG1,"set-" S_selection_color); 
   v = get_snd_color(color); 
   if (v) 
     {
@@ -409,7 +407,7 @@ static SCM g_selection_color(void)
 static SCM g_set_highlight_color (SCM color) 
 {
   snd_color *v; 
-  ERRCOL1(color,"set-" S_highlight_color); 
+  SCM_ASSERT(snd_color_p(color),color,SCM_ARG1,"set-" S_highlight_color); 
   v = get_snd_color(color); 
   if (v) (state->sgx)->highlight_color = v->color; 
   return(color);
@@ -424,7 +422,7 @@ static SCM g_highlight_color(void)
 static SCM g_set_mark_color (SCM color) 
 {
   snd_color *v; 
-  ERRCOL1(color,"set-" S_mark_color); 
+  SCM_ASSERT(snd_color_p(color),color,SCM_ARG1,"set-" S_mark_color); 
   v = get_snd_color(color); 
   if (v) 
     {
@@ -443,7 +441,7 @@ static SCM g_mark_color(void)
 static SCM g_set_zoom_color (SCM color) 
 {
   snd_color *v; 
-  ERRCOL1(color,"set-" S_zoom_color); 
+  SCM_ASSERT(snd_color_p(color),color,SCM_ARG1,"set-" S_zoom_color); 
   v = get_snd_color(color); 
   if (v) 
     {
@@ -462,7 +460,7 @@ static SCM g_zoom_color(void)
 static SCM g_set_position_color (SCM color) 
 {
   snd_color *v; 
-  ERRCOL1(color,"set-" S_position_color); 
+  SCM_ASSERT(snd_color_p(color),color,SCM_ARG1,"set-" S_position_color); 
   v = get_snd_color(color); 
   if (v) 
     {
@@ -481,7 +479,7 @@ static SCM g_position_color(void)
 static SCM g_set_listener_color (SCM color) 
 {
   snd_color *v; 
-  ERRCOL1(color,"set-" S_listener_color); 
+  SCM_ASSERT(snd_color_p(color),color,SCM_ARG1,"set-" S_listener_color); 
   v = get_snd_color(color);
   if (v) color_listener(v->color);
   return(color);
@@ -496,7 +494,7 @@ static SCM g_listener_color(void)
 static SCM g_set_enved_waveform_color (SCM color) 
 {
   snd_color *v;
-  ERRCOL1(color,"set-" S_enved_waveform_color); 
+  SCM_ASSERT(snd_color_p(color),color,SCM_ARG1,"set-" S_enved_waveform_color); 
   v = get_snd_color(color); 
   if (v) color_enved_waveform(v->color);
   return(color);
@@ -511,7 +509,7 @@ static SCM g_enved_waveform_color(void)
 static SCM g_set_mix_waveform_color (SCM color) 
 {
   snd_color *v; 
-  ERRCOL1(color,"set-" S_mix_waveform_color);
+  SCM_ASSERT(snd_color_p(color),color,SCM_ARG1,"set-" S_mix_waveform_color);
   v = get_snd_color(color);
   if (v) 
     {
@@ -530,7 +528,7 @@ static SCM g_mix_waveform_color(void)
 static SCM g_set_filter_waveform_color (SCM color) 
 {
   snd_color *v; 
-  ERRCOL1(color,"set-" S_filter_waveform_color);
+  SCM_ASSERT(snd_color_p(color),color,SCM_ARG1,"set-" S_filter_waveform_color);
   v = get_snd_color(color);
   if (v) color_filter_waveform(state,v->color);
   return(color);
@@ -554,7 +552,7 @@ static SCM g_set_mix_color (SCM arg1, SCM arg2)
       color = arg2;
       mix_id = arg1;
     }
-  ERRCOL1(color,"set-" S_mix_color); 
+  SCM_ASSERT(snd_color_p(color),color,SCM_ARG1,"set-" S_mix_color); 
   v = get_snd_color(color); 
   if (v) 
     {
@@ -587,7 +585,7 @@ static SCM g_mix_color(SCM mix_id)
 static SCM g_set_mix_focus_color (SCM color) 
 {
   snd_color *v; 
-  ERRCOL1(color,"set-" S_mix_focus_color); 
+  SCM_ASSERT(snd_color_p(color),color,SCM_ARG1,"set-" S_mix_focus_color); 
   v = get_snd_color(color); 
   if (v) 
     {
@@ -621,7 +619,7 @@ static void recolor_button(Widget w, void *ptr)
 static SCM g_set_pushed_button_color (SCM color) 
 {
   snd_color *v; 
-  ERRCOL1(color,"set-" S_pushed_button_color); 
+  SCM_ASSERT(snd_color_p(color),color,SCM_ARG1,"set-" S_pushed_button_color); 
   v = get_snd_color(color); 
   if (v) 
     {
@@ -640,7 +638,7 @@ static SCM g_pushed_button_color(void)
 static SCM g_set_text_focus_color (SCM color) 
 {
   snd_color *v; 
-  ERRCOL1(color,"set-" S_text_focus_color); 
+  SCM_ASSERT(snd_color_p(color),color,SCM_ARG1,"set-" S_text_focus_color); 
   v = get_snd_color(color); 
   if (v) (state->sgx)->text_focus_color = v->color;
   return(color);
@@ -661,7 +659,7 @@ static SCM g_sash_color(void)
 static SCM g_set_sash_color (SCM color) 
 {
   snd_color *v; 
-  ERRCOL1(color,"set-" S_sash_color); 
+  SCM_ASSERT(snd_color_p(color),color,SCM_ARG1,"set-" S_sash_color); 
   v = get_snd_color(color); 
   if (v) (state->sgx)->sash_color = v->color;
   return(color);
@@ -693,7 +691,7 @@ static SCM g_graph_cursor(void)
 
 static SCM g_set_graph_cursor(SCM curs)
 {
-  ERRN1(curs,"set-" S_graph_cursor);
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(curs)),curs,SCM_ARG1,"set-" S_graph_cursor);
   state->Graph_Cursor = gh_scm2int(curs);
   (state->sgx)->graph_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(state)),in_graph_cursor(state));
   return(curs);
