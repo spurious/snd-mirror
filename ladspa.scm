@@ -2,7 +2,9 @@
 ;; ladspa.scm
 ;; Use ladspa plugins with the help of a mouse. -Kjetil S. Matheussen.
 
-
+;; Changes 9.8.2003 ->
+;; Many changes.
+;;
 ;; Changes 8.8.2003 -> 9.8.2003
 ;; -Added some workaround code for vst plugins. Previously, applying didnt work.
 ;; -Possible to use plugins without input audio ports.
@@ -107,15 +109,18 @@
 
 
 
-(define (ladspa-class libname plugname)
-  (define descriptor #f)
+
+(define-class (ladspa-class libname plugname)
+
+  (var descriptor #f)
   
   ;; List of ladspa plugin handles.
   (define handles '())
 
   ;; These are lists of numbers.
-  (define input-controls '())
-  (define output-controls '())
+  (var input-controls '())
+  (var output-controls '())
+
   (define input-audios '())
   (define output-audios '())
 
@@ -161,7 +166,7 @@
   
 
   ;; Close all handles.
-  (define (close)
+  (define-method (close)
     ;;(display "close called ")(display (length handles))(newline)
     (if (not (null? handles))
 	(let ((handle (car handles)))
@@ -169,18 +174,6 @@
 	  (ladspa-cleanup descriptor handle)
 	  (set! handles (cdr handles))
 	  (close))))
-	  
-  
-  
-  
-  (define (input-control-ports)
-    input-controls)
-  (define (output-control-ports)
-    output-controls)
-  (define (input-audio-ports)
-    input-audios)
-  (define (output-audio-ports)
-    output-audios)
 
   (define (get-port portnum)
     (list-ref ports portnum))
@@ -208,22 +201,10 @@
     (set-port (list-ref output-audios num) vct))
 
 
-  (define (get-descriptor)
-    descriptor)
-
-
   ;; Warning, len must not be larger than ladspa-maxbuf.
   (define (run len)
     (for-each (lambda (handle) (ladspa-run descriptor handle len))
 	      handles))
-
-
-  (define (input-control-set! num val)
-    (vct-set! (list-ref ports num) 0 val))
-
-  (define (get-input-control num)
-    (vct-ref (list-ref ports num) 0))
-
 
 
   (define (set-default-input-controls)
@@ -235,25 +216,25 @@
 		    (= (logand hint LADSPA_HINT_DEFAULT_MASK) dashint))
 		  (define (ishint_notdefault dashint)
 		    (not (= (logand hint dashint ) 0)))
-		  (input-control-set! (car x) 
-				      (cond ((ishint LADSPA_HINT_DEFAULT_0) 0)
-					    ((ishint LADSPA_HINT_DEFAULT_MINIMUM) lo)
-					    ((ishint LADSPA_HINT_DEFAULT_LOW) (if (ishint_notdefault LADSPA_HINT_LOGARITHMIC)
-										  (exp (+ (* 0.75 (log lo)) (* 0.25 (log hi))))
-										  (+ (* 0.75 lo) (* 0.25 hi))))
-					    ((ishint LADSPA_HINT_DEFAULT_1) 1)
-					    ((ishint LADSPA_HINT_DEFAULT_MAXIMUM) hi)
-					    ((ishint LADSPA_HINT_DEFAULT_HIGH) (if (ishint_notdefault LADSPA_HINT_LOGARITHMIC)
-										  (exp (+ (* 0.75 (log hi)) (* 0.25 (log lo))))
-										  (+ (* 0.75 hi) (* 0.25 lo))))
-					    ((ishint LADSPA_HINT_DEFAULT_MIDDLE) (if (ishint_notdefault LADSPA_HINT_LOGARITHMIC)
-										     (exp (+ (* 0.5 (log hi)) (* 0.5 (log lo))))
-										     (+ (* 0.5 hi) (* 0.5 lo))))
-					    ((ishint LADSPA_HINT_DEFAULT_100) 100)
-					    ((ishint LADSPA_HINT_DEFAULT_440) 440)
-					    (else
-					     (/ (+ lo hi) 2))))))
-		
+		  (this 'input-control-set! (car x) 
+			(cond ((ishint LADSPA_HINT_DEFAULT_0) 0)
+			      ((ishint LADSPA_HINT_DEFAULT_MINIMUM) lo)
+			      ((ishint LADSPA_HINT_DEFAULT_LOW) (if (ishint_notdefault LADSPA_HINT_LOGARITHMIC)
+								    (exp (+ (* 0.75 (log lo)) (* 0.25 (log hi))))
+								    (+ (* 0.75 lo) (* 0.25 hi))))
+			      ((ishint LADSPA_HINT_DEFAULT_1) 1)
+			      ((ishint LADSPA_HINT_DEFAULT_MAXIMUM) hi)
+			      ((ishint LADSPA_HINT_DEFAULT_HIGH) (if (ishint_notdefault LADSPA_HINT_LOGARITHMIC)
+								     (exp (+ (* 0.75 (log hi)) (* 0.25 (log lo))))
+								     (+ (* 0.75 hi) (* 0.25 lo))))
+			      ((ishint LADSPA_HINT_DEFAULT_MIDDLE) (if (ishint_notdefault LADSPA_HINT_LOGARITHMIC)
+								       (exp (+ (* 0.5 (log hi)) (* 0.5 (log lo))))
+								       (+ (* 0.5 hi) (* 0.5 lo))))
+			      ((ishint LADSPA_HINT_DEFAULT_100) 100)
+			      ((ishint LADSPA_HINT_DEFAULT_440) 440)
+			      (else
+			       (/ (+ lo hi) 2))))))
+	      
 	      (map (lambda (x) (list x (list-ref (.PortRangeHints descriptor) x)))
 		   input-controls)))
   
@@ -296,10 +277,7 @@
     #f)
 
 
-
-    
-
-  (define (apply!)
+  (define-method (apply!)
     (define (get-startchan snd chan)
       (if (selection-member? snd chan)
 	  chan
@@ -323,6 +301,7 @@
 	(if (not (string=? "vst" libname))
 	    (open (minimum-num-handles chans min_num_audios))
 	    #t))
+
 
       (if (not (apply-open))
 	  (begin
@@ -423,7 +402,7 @@
       
 
 
-  (define (add-dac-hook!)
+  (define-method (add-dac-hook!)
     (let* ((num_channels (channels (selected-sound)))
 	   (num_ins (length input-audios))
 	   (num_outs (length output-audios)))
@@ -446,54 +425,22 @@
 		    #t))))))
 
 
-  (define (remove-dac-hook!)
+  (define-method (remove-dac-hook!)
     (remove-hook! dac-hook apply-soundobject)
     (if (not (string=? "vst" libname))    
 	(close)))
 
+  (define-method (input-control-set! num val)
+    (vct-set! (list-ref ports num) 0 val))
 
-  (define (dispatcher m)
-    (cond ((eq? m 'open) open)
-	  ((eq? m 'close) close)
-	  ((eq? m 'run) run)
-
-	  ((eq? m 'input-control-ports) input-control-ports)
-	  ((eq? m 'output-control-ports) output-control-ports)
-	  ((eq? m 'input-audio-ports) input-audio-ports)
-	  ((eq? m 'output-audio-ports) output-audio-ports)
-
-	  ((eq? m 'input-control-set!) input-control-set!)
-	  ((eq? m 'get-input-control) get-input-control)
-
-	  ((eq? m 'get-port) get-port)
-	  ((eq? m 'set-port) set-port)
-
-	  ((eq? m 'get-num-input-audio-ports)  get-num-input-audio-ports)
-	  ((eq? m 'get-input-audio-port)   get-input-audio-port)
-	  ((eq? m 'set-input-audio-port)  set-input-audio-port)
-	  ((eq? m 'get-num-output-audio-ports)  get-num-output-audio-ports)
-	  ((eq? m 'get-output-audio-port)  get-output-audio-port)
-	  ((eq? m 'set-output-audio-port)  set-output-audio-port)
-
-	  ((eq? m 'set-default-input-controls) set-default-input-controls)
-
-	  ((eq? m 'descriptor) get-descriptor)
-
-	  ((eq? m 'add-dac-hook!) add-dac-hook!)
-	  ((eq? m 'remove-dac-hook!) remove-dac-hook!)
-
-	  ((eq? m 'apply!) apply!)
-
-	  (else
-	   (display "Unknown message to ladspa-class: ")
-	   (display m)
-	   (newline))))
+  (define-method (get-input-control num)
+    (vct-ref (list-ref ports num) 0))
 
 
   ;; Constructor:
   (set! descriptor (ladspa-descriptor libname plugname))
   (if (not descriptor)
-      #f
+      (set! this #f)
       (begin
 	(let ((n 0))
 	  (for-each (lambda (x)
@@ -515,17 +462,13 @@
 					 (make-vct 1)
 					 #f))
 			 (.PortDescriptors descriptor)))
-	(set-default-input-controls)
-
-	dispatcher)))
-
-
+	(set-default-input-controls))))
 
 
 
 (define (install-ladspa-menues)  
 
-  (let* ((ladspa-effects-menu (add-to-main-menu "Ladspa" (lambda () (update-label '()))))
+  (let* ((ladspa-effects-menu (add-to-main-menu "Ladspa" (lambda x #f)))
 	 (num-effects-per-submenu 12)
 	 (ladspa-effect-num num-effects-per-submenu)
 	 (curr-submenu #f))
@@ -540,8 +483,8 @@
     
     
     (define (make-ladspadialog ladspa-analysed libraryname effectname)
-      (define ladspa-object #f)
-      (define ladspa-dialog #f)
+      (define ladspa #f)
+      (define dialog #f)
       
       (let ((name (car ladspa-analysed))
 	    (author (cadr ladspa-analysed))
@@ -550,17 +493,16 @@
 	    (onoffbutton #f)
 	    (plugin_enable #f)
 	    (islooping #f)
-	    (isplayingselection #f)
-	    (sliders '()))
+	    (isplayingselection #f))
 
 	(define (ShowDialog)
 	  (MakeDialogIfNotMade)
-	  (dialog-show ladspa-dialog)
-	  (checkbutton-set onoffbutton #t)
+	  (dialog 'show)
+	  (onoffbutton 'set #t)
 	  (enableplugin)
 	  )
 
-	(define (Help d)
+	(define (Help)
 	  (let ((dashelp (assoc (string-append libraryname effectname) ladspa-help-assoclist)))
 	    (help-dialog author
 			 (string-append (if dashelp
@@ -568,37 +510,37 @@
 					    lisense)
 					"\n\nProcessing can be stopped by pressing C-g"))))
 	  
-	(define (OK d)
+	(define (OK)
 	  (MyStop)
 	  (disableplugin)
-	  (checkbutton-set onoffbutton #f)
-	  ((ladspa-object 'apply!)))
+	  (onoffbutton 'set #f)
+	  (ladspa 'apply!))
 
-	(define (Cancel d)
-	  (checkbutton-set onoffbutton #f)
-	  (dialog-hide ladspa-dialog)
+	(define (Cancel)
+	  (onoffbutton 'set #f)
+	  (dialog 'hide)
 	  (disableplugin)
 	  (if (string=? "vst" libraryname)
-	      ((ladspa-object 'close))))
+	      (ladspa 'close)))
 
-	(define (MyPlay d)
+	(define (MyPlay)
 	  (if (not (selection-member? (selected-sound)))
 	      (select-all (selected-sound)))
 	  (add-hook! stop-playing-selection-hook play-selection)
 	  (play-selection))
 
-	(define (MyStop d)
+	(define (MyStop)
 	  (remove-hook! stop-playing-selection-hook play-selection)
 	  (stop-playing))
 
 	(define (enableplugin)
-	  (if (not ((ladspa-object 'add-dac-hook!)))
+	  (if (not (ladspa 'add-dac-hook!))
 	      (begin
 		(display "Unable to use ladspa plugin.")
 		(newline))))
 
 	(define (disableplugin)
-	  ((ladspa-object 'remove-dac-hook!)))
+	  (ladspa 'remove-dac-hook!))
 
 	(define (onoff onoroff)
 	  (set! plugin_enable onoroff)
@@ -613,54 +555,68 @@
 
 	(define (MakeDialogIfNotMade)
 	  (if (not ismade)
-	      (let ((descriptor ((ladspa-object 'descriptor))))
+	      (let ((descriptor (ladspa 'descriptor)))
 
 	    
 		;; Make sure the plugin is disabled before quitting.
 		(add-hook! exit-hook (lambda args
 				       (disableplugin)
 				       (if (string=? "vst" libraryname)
-					   ((ladspa-object 'close)))
+					   (ladspa 'close))
 				       #f))
 		
 	    
 		;; Make dialog
-		(set! ladspa-dialog 
-		      (dialog-create name Cancel
-				     "Close" Cancel
-				     "Apply" OK
-				     "Play" MyPlay
-				     "Stop" MyStop
-				     "Help" Help))
+		(set! dialog 
+		      (dialog-class name Cancel
+				    "Close" Cancel
+				    "Apply" OK
+				    "Play" MyPlay
+				    "Stop" MyStop
+				    "Help" Help))
 		
 		;; Add sliders.
-		(if (not (null? ((ladspa-object 'input-control-ports))))
-		    (set! sliders
-			  (dialog-add-sliders ladspa-dialog
-					      (map (lambda (portnum)
-						     (let* ((lo (cadr (list-ref (.PortRangeHints descriptor) portnum)))
-							    (init ((ladspa-object 'get-input-control) portnum))
-							    (hi (caddr (list-ref (.PortRangeHints descriptor) portnum)))
-							    (hint (car (list-ref (.PortRangeHints descriptor) portnum)))
-							    (scale (if (ishint hint LADSPA_HINT_INTEGER)
-								       1
-								       (if use-gtk 1000.0 100.0)))
-							    (islog (ishint hint LADSPA_HINT_LOGARITHMIC)))
-						       
-						       ;;(if (and (string=? "cmt" libraryname) (string=? "grain_scatter" effectname))
-						       ;;  (begin
-						       ;;   (display (list-ref (.PortNames descriptor) portnum))(display " ")(display hint)(display " ")
-						       ;;  (display lo)(display " ")(display init)(display " ")(display hi)(newline)))
-						       
-						       (list (list-ref (.PortNames descriptor) portnum)
-							     lo
-							     init
-							     hi
-							     (lambda (val) ((ladspa-object 'input-control-set!) portnum val))
-							     scale)))
-						   (my-filter (lambda (portnum) (not (ishint (car (list-ref (.PortRangeHints descriptor) portnum))  LADSPA_HINT_TOGGLED)))
-							      ((ladspa-object 'input-control-ports))))
-					      )))
+		(if (not (null? (ladspa 'input-controls)))
+		    (dialog 'add-sliders
+			    (map (lambda (portnum)
+				   (let* ((lo (cadr (list-ref (.PortRangeHints descriptor) portnum)))
+					  (init (ladspa 'get-input-control portnum))
+					  (hi (caddr (list-ref (.PortRangeHints descriptor) portnum)))
+					  (hint (car (list-ref (.PortRangeHints descriptor) portnum)))
+					  (scale (if (ishint hint LADSPA_HINT_INTEGER)
+						     1
+						     (if use-gtk 1000.0 100.0)))
+					  (islog (ishint hint LADSPA_HINT_LOGARITHMIC)))
+				     
+				     (if #f
+					 (begin
+					   (if (ishint hint LADSPA_HINT_SAMPLE_RATE)
+					       (display "HINT_SAMPLE_RATE "))
+					   (if (ishint hint LADSPA_HINT_BOUNDED_ABOVE)
+					       (display "HINT_BOUNDED_ABOVE "))
+					   (if (ishint hint LADSPA_HINT_BOUNDED_BELOW)
+					       (display "HINT_BOUNDED_BELOW "))
+					   (display (list-ref (.PortNames descriptor) portnum))(display " ")(display hint)(display " ")
+					   (display lo)(display " ")(display init)(display " ")(display hi)(newline)))
+				     
+				     (if (not (ishint hint LADSPA_HINT_BOUNDED_BELOW))
+					 (set! lo 0))                                   ;The value Ardour use.
+				     (if (not (ishint hint LADSPA_HINT_BOUNDED_ABOVE))
+					 (set! hi 4))                                   ;The value Ardour use.
+				     (if (ishint hint LADSPA_HINT_SAMPLE_RATE)
+					 (begin
+					   (set! lo (* lo (srate)))
+					   (set! hi (* hi (srate)))))
+				     
+				     (list (list-ref (.PortNames descriptor) portnum)
+					   lo
+					   init
+					   hi
+					   (lambda (val) (ladspa 'input-control-set! portnum val))
+					   scale)))
+				 (my-filter (lambda (portnum) (not (ishint (car (list-ref (.PortRangeHints descriptor) portnum))  LADSPA_HINT_TOGGLED)))
+					    (ladspa 'input-controls)))
+			    ))
 		
 		
 		;; Add toggle buttons.
@@ -669,30 +625,29 @@
 				   (hi (caddr (list-ref (.PortRangeHints descriptor) portnum)))
 				   (lo (cadr (list-ref (.PortRangeHints descriptor) portnum)))
 				   (portname (list-ref (.PortNames descriptor) portnum))
-				   (onofffunc (ladspa-object 'input-control-set!))
-				   (ison (> ((ladspa-object 'get-input-control) portnum) 0)))
-			      (checkbutton-create ladspa-dialog
-						  portname
-						  (lambda (on)
-						    (onofffunc portnum (if on hi lo)))
-						  ison)))
+				   (ison (> (ladspa 'get-input-control portnum 0))))
+			      (checkbutton-class dialog
+						 portname
+						 (lambda (on)
+						   (ladspa 'input-control-set! portnum (if on hi lo)))
+						 ison)))
 			  (my-filter (lambda (portnum) (ishint (car (list-ref (.PortRangeHints descriptor) portnum))  LADSPA_HINT_TOGGLED))
-				     ((ladspa-object 'input-control-ports))))
+				     (ladspa 'input-controls)))
 		
 		
 	    
 		;; Add on/off button.
-		(set! onoffbutton (checkbutton-create ladspa-dialog
-						      "On/off"
-						      (lambda (on)
-							(onoff on))
-						      #t))
+		(set! onoffbutton (checkbutton-class dialog
+						     "On/off"
+						     (lambda (on)
+						       (onoff on))
+						     #t))
 		(set! ismade #t))))
 
 	  
-	(set! ladspa-object (ladspa-class libraryname effectname))
+	(set! ladspa (ladspa-class libraryname effectname))
 	  
-	(if ladspa-object
+	(if ladspa
 	    (ladspa-add-effect-menuitem name (lambda () (ShowDialog)))
 	    #t)))
       

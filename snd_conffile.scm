@@ -8,12 +8,12 @@
 
 
 
-;; Set various variables. See Snd documentation.
 
 
 
-;; This is for my personal computers settings. May not suite your setup.
-(if #f
+
+;; This is the settings used Notam/Oslo. May not suite your setup.
+(if (defined? 'notam-settings)
     (begin
       (set! (ladspa-dir) "/usr/lib/ladspa")
       
@@ -24,6 +24,20 @@
 
 
 
+;; This is for my personal computers settings. May not suite your setup.
+(if (defined? 'kjetil-settings)
+    (begin
+      (set! %load-path (append (if (or #t (provided? 'snd-gtk))
+				   '("/home/kjetil/snd-7" "/home/kjetil/snd-7/dlp")
+				   '("/home/kjetil/snd-7-motif" "/home/kjetil/snd-7-motif/dlp"))
+			       %load-path))
+      (set! (temp-dir) "/lyd/local/tmp")
+      (set! (save-dir) "/lyd/local/tmp")))
+
+
+
+
+;; Set various variables. See Snd documentation.
 
 ;;(set! snd-remember-paths #t)
 
@@ -187,7 +201,15 @@
 (add-hook! stop-playing-hook
 	   (lambda (snd) 
 	     (set! (cursor-color) blue)
+	     ;;(gc)
 	     #f))
+
+(if #f
+    (add-hook! stop-dac-hook
+	       (lambda ()
+		 (gc)
+		 #f)))
+
 
 ;; Set different color on the cursor when playing selection.
 (add-hook! start-playing-selection-hook
@@ -800,11 +822,14 @@
 				      (get-time-string dastime)))))))
 
 
-;; Show the time in the minibuffer when playing
+
+;; Show the time in the minibuffer when playing (in 10 ms to (try to) avoid stopping the dac)
 
 (add-hook! play-hook
 	   (lambda (samples)
-	     (show-times (cursor))
+	     (in 10
+		 (lambda ()
+		   (show-times (cursor))))
 	     #f))
 
 (add-hook! after-graph-hook
@@ -834,8 +859,6 @@
 ;; -Remove the play button. Its useless now with the way p and space is configured.
 ;; -Added a loop button where the play button was.
 
-(define sound-list '())
-
 (define unique-sync-num 0)
 (define (get-unique-sync-num)
   (set! unique-sync-num (+ unique-sync-num 1))
@@ -855,7 +878,7 @@
 (add-hook! after-open-hook
 	   (lambda (snd)
 	     (let ((oldplay (get-nameform-button snd "play")))
-	       (checkbutton-create (get-nameform snd)
+	       (checkbutton-class (get-nameform snd)
 				   "loop"
 				   (lambda (on)
 				     (set! islooping on)
@@ -873,7 +896,7 @@
 	     (set! (sync snd) (get-unique-sync-num))
 	     
 	     (let ((oldsync (get-nameform-button snd "sync")))
-	       (checkbutton-create (get-nameform snd)
+	       (checkbutton-class (get-nameform snd)
 				   "sync"
 				   (lambda (on)
 				     (if on

@@ -5,6 +5,167 @@
 
 
 
+(use-modules (ice-9 optargs))
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; OO  (Goops/cloos syntax is so ugly.)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;; Is multiple inheritance a good idea? It was easy to implement, but I might remove it.
+(define-macro (define-class def . body)
+  `(define* ,def
+     (let ((dasmethods '())
+	   (superobjects #f))
+       (var class-name ',(car def))
+       (define (init-superobjects)
+	 (if (not superobjects)
+	     (catch #t
+		    (lambda ()
+		      (set! superobjects dassuperobjects))
+		    (lambda (key . args)
+		      (set! superobjects '())))))
+       (define-method (dir)
+	 (init-superobjects)
+	 (append (map (lambda (md)
+			(car md))
+		      dasmethods)
+		 (map (lambda (superobject)
+			(superobject 'dir))
+		      superobjects)))
+       (define-method (get-method m)
+	 (let ((ass (assq m dasmethods)))
+	   (if ass
+	       (cdr ass)
+	       (begin
+		 (init-superobjects)
+		 (call-with-current-continuation
+		  (lambda (exit)
+		    (for-each (lambda (superobject)
+				(let ((method (superobject 'get-method m)))
+				  (if method
+				      (exit method))))
+			      superobjects)
+		    #f))))))
+       (define-method (instance? dasclass-name)
+	 (if (eq? dasclass-name class-name)
+	     #t
+	     (begin
+	       (init-superobjects)
+	       (call-with-current-continuation
+		(lambda (exit)
+		  (for-each (lambda (superobject)
+			      (if (superobject 'instance? dasclass-name)
+				  (exit #t)))
+			    superobjects)
+		  #f)))))
+       (define (this m . rest)
+	 (let ((func (get-method m)))
+	   (if func
+	       (apply func rest)
+	       (begin
+		 (display "No such method: \"")(display m)(display "\" in class \"")(display ',(car def))(display "\".\n")))))
+       ,@body
+       this)))
+
+(define-macro (add-method nameandvars . body)
+  `(set! dasmethods (cons (cons ',(car nameandvars)
+				(lambda ,(cdr nameandvars) ,@body))
+			  dasmethods)))
+
+(define-macro (add-method* nameandvars . body)
+  `(set! dasmethods (cons (cons ',(car nameandvars)
+				(lambda* ,(cdr nameandvars) ,@body))
+			  dasmethods)))
+
+(define-macro (define-method* nameandvars . body)
+  `(define ,(car nameandvars)
+     (let ((func (lambda* ,(cdr nameandvars) ,@body)))
+       (set! dasmethods (cons (cons ',(car nameandvars)
+				    func)
+			      dasmethods))
+       func)))
+
+(define-macro (define-method nameandvars . body)
+  `(define ,(car nameandvars)
+     (let ((func (lambda ,(cdr nameandvars) ,@body)))
+       ;;(display "adding ")(display ,(car nameandvars))(newline)
+       (set! dasmethods (cons (cons ',(car nameandvars)
+				    func)
+			      dasmethods))
+       func)))
+
+(define-macro (var name initial)
+  `(define ,name
+     (let ((inited #f))
+       (if (not inited)
+	   (begin
+	     (add-method* (,name #:optional newval) (if newval (set! ,name newval) ,name))
+	     (set! inited #t)))
+       ,initial)))
+
+(define object? procedure?)
+
+(define-macro (instance? object class)
+  `(,object 'instance? ',class))
+
+(define-macro (Super . rest)
+  `(define dassuperobjects (list ,@rest)))
+
+
+
+#!
+(define-class (initial sum)
+  (var avar 2)
+  (define-method (initial)
+    (display "Initial sum: ")(display sum)
+    (newline)))
+
+(define-class (initial2 sum)
+  (define-method (initial2)
+    (display "Initial sum2: ")(display sum)
+    (newline)))
+
+(define-class (bank-class sum) (Super (initial sum) (initial2 sum))
+  (define (print-sum)
+    (display sum)(newline))
+  (define-method (deposit x)
+    (set! sum (+ sum x))
+    (print-sum))
+  (define-method (withdraw x)
+    (set! sum (- sum x))
+    (print-sum)))
+
+(define b (bank-class 5))
+(b 'deposit 3)
+(b 'withdraw 6)
+(b 'class-name)
+(b 'initial)
+(b 'initial2)
+(b 'avar)
+(b 'avar 5)
+(b 'avar)
+(instance? b bank-class)
+(instance? b initial)
+(instance? b initial2)
+(instance? b someother-class)
+(b 'dir)
+(b 'somethingelse)
+!#
+
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Various functions
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
 (define use-gtk (if (provided? 'snd-gtk)
 		    #t
 		    #f))
@@ -23,14 +184,7 @@
     
 
 
-;; This should take care of some of the functions we need.
-;(if (not (defined? 'add-sliders))
-;    (load-from-path (if use-gtk
-;			"gtk-effects.scm"
-;			"new-effects.scm")))
-
-
-
+;; Taken from new-effects.scm
 (define yellow-pixel
   (let ((pix #f))
     (lambda ()
@@ -46,9 +200,62 @@
       pix)))
 
 
+
+
+(define (my-filter proc list)
+  (if (null? list)
+      '()
+      (if (proc (car list))
+	  (cons (car list) (my-filter proc (cdr list)))
+	  (my-filter proc (cdr list)))))
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Paint (just started)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-class (paint-class parent width height)
+
+  (define pixmap #f)
+  (define colors '())
+  (define gc #f)
+  (define font #f)
+
+  (define-method (line color x1 y1 x2 y2)
+    (gdk_draw_line pixmap color x1 y1 (- x2 x1 -1) (- y2 y1 -1)))
+
+  (define-method (update x1 y1 x2 y2)
+    (gdk_draw_pixmap (.window parent)
+		     gc
+		     pixmap
+		     x1 y1
+		     x1 y1
+		     (- x2 x1 -1) (- y2 y1 -1)))
+
+  (define-method (update-all)
+    (update 0 0 width height))
+
+  (set! pixmap (gdk_pixmap_new (.window parent)
+			       width
+			       height
+			       -1))
+  
+  (gtk_signal_connect (GTK_OBJECT parent) "expose_event"
+		      (lambda (w e)
+			(update-all))
+		      #f)
+
+  )
+
+
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Menues
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 (define* (menu-sub-add menu menu-label #:optional callback)
   (let ((dasmenu (if (integer? menu) (main-menu menu) menu)))
@@ -76,6 +283,7 @@
 	  (if callback
 	      (XtAddCallback menuitem XmNcascadingCallback (lambda (w c i) (callback))))
 	  submenu))))
+
 
 (define* (menu-add top-menu menu-label callback #:optional position)
   (if (integer? top-menu)
@@ -130,10 +338,25 @@
 ;;; Checkbuttons
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define* (checkbutton-create parent name callback #:optional onoff (extraopts '()))
+
+(define-class (checkbutton-class parent name callback #:optional onoff (extraopts '()))
+
+  (define button #f)
+
+  (define-method (set to)
+    (if use-gtk
+	(gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON button) to)
+	(XtSetValues button (list XmNset to))))
+
+  (define-method (remove)
+    (if use-gtk
+	(hide-widget (GTK_WIDGET button))
+	;;(gtk_widget_destroy (GTK_WIDGET button))
+	(XtUnmanageChild button)))
+    
   (if use-gtk
-      (let ((button (gtk_check_button_new_with_label name))
-	    (dasparent (if (isdialog? parent) (dialog-getbox2 parent) (GTK_BOX parent))))
+      (let ((dasparent (if (isdialog? parent) (parent 'getbox2) (GTK_BOX parent))))
+	(set! button (gtk_check_button_new_with_label name))
 	(gtk_box_pack_end (GTK_BOX dasparent) button #f #f 0)
 	(gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON button) onoff)
 	(gtk_widget_show button)
@@ -143,28 +366,28 @@
 	 (g_cclosure_new (lambda (w d) 
 			   (callback (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON w))))
 			 #f #f)
-	 #f)
-	button)
-      (let* ((dasparent (if (isdialog? parent) (dialog-getbox2 parent) parent))
-	     (button (XtCreateManagedWidget name xmToggleButtonWidgetClass dasparent
+	 #f))
+      (let* ((dasparent (if (isdialog? parent) (parent 'getbox2) parent)))
+	(set! button (XtCreateManagedWidget name xmToggleButtonWidgetClass dasparent
 					    (append (list XmNbackground       (basic-color)
 							  ;;XmNlabelString      name
 							  XmNset              onoff
 							  XmNselectColor      (yellow-pixel))
-						    extraopts))))
-	(XtAddCallback button XmNvalueChangedCallback (lambda (w c i) (callback (.set i))))
-	button)))
+						    extraopts)))
+	(XtAddCallback button XmNvalueChangedCallback (lambda (w c i) (callback (.set i)))))))
+
+
+
+(define (checkbutton-set button to)
+  (if use-gtk
+      (gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON button) to)
+      (XtSetValues button (list XmNset to))))
 
 (define (checkbutton-remove button)
   (if use-gtk
       (hide-widget (GTK_WIDGET button))
       ;;(gtk_widget_destroy (GTK_WIDGET button))
       (XtUnmanageChild button)))
-
-(define (checkbutton-set button to)
-  (if use-gtk
-      (gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON button) to)
-      (XtSetValues button (list XmNset to))))
 
 
 
@@ -173,25 +396,26 @@
 ;;; Buttons
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (button-create parent name callback)
+(define-class (button-class parent name callback)
+
+  (var button #f)
+
   (if use-gtk
-      (let ((button (gtk_button_new_with_label name)))
+      (begin
+	(set! button (gtk_button_new_with_label name))
 	(gtk_box_pack_start (GTK_BOX parent) button #t #t 20)
 	(g_signal_connect_closure_by_id (GPOINTER button)
 					(g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT button)))
 					0 (g_cclosure_new (lambda (w data) 
 							    (callback))
 							  #f #f) #f)
-	(gtk_widget_show button)
-	button)
-      (let ((button (XtCreateManagedWidget name xmPushButtonWidgetClass parent
-					   (list XmNbackground (basic-color)
-						 XmNarmColor   (pushed-button-color)))))
+	(gtk_widget_show button))
+      (begin
+	(set! button (XtCreateManagedWidget name xmPushButtonWidgetClass parent
+					     (list XmNbackground (basic-color)
+						   XmNarmColor   (pushed-button-color))))
 	(XtAddCallback button XmNactivateCallback (lambda (w c i)
-						    (callback)))
-	button)))
-
-  
+							    (callback))))))
 
 
 
@@ -199,14 +423,17 @@
 ;;; Sliders
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define* (slider-create parent
-			title
-			low initial high
-			func
-			scaler
-			#:optional use-log)
+(define-class (slider-class parent
+			 title
+			 low initial high
+			 func
+			 scaler
+			 #:optional use-log)
+
+  (define slider #f)
+
   (if use-gtk
-      (let* ((vbox (if (isdialog? parent) (dialog-getbox1 parent) parent))
+      (let* ((vbox (if (isdialog? parent) (parent 'getbox1) parent))
 	     (label (gtk_label_new (if use-log
 				       (format #f "~A (~,2F)" title initial)
 				       (format #f "~A" title))))
@@ -215,11 +442,10 @@
 		      (gtk_adjustment_new initial low high 0.0 0.0 0.0)))
 	     (hbox (gtk_hbox_new #f 0))
 	     (scale (gtk_hscale_new (GTK_ADJUSTMENT adj))))
-	
+
 	(gtk_box_pack_start (GTK_BOX vbox) hbox #f #f 2)
 	(gtk_widget_show hbox)
 	(gtk_box_pack_start (GTK_BOX hbox) label #f #f 6)
-	
 	(gtk_widget_show label)
 	(gtk_range_set_update_policy (GTK_RANGE (GTK_SCALE scale)) GTK_UPDATE_CONTINUOUS)
 	(gtk_scale_set_digits (GTK_SCALE scale)
@@ -230,7 +456,6 @@
 	(gtk_widget_show scale)
 	
 	(gtk_box_pack_start (GTK_BOX hbox) scale #t #t 0)
-	
 	(if use-log
 	    (g_signal_connect_closure_by_id (GPOINTER adj)
 					    (g_signal_lookup "value_changed" (G_OBJECT_TYPE (GTK_OBJECT adj))) 0
@@ -246,8 +471,8 @@
 					    (g_signal_lookup "value_changed" (G_OBJECT_TYPE (GTK_OBJECT adj))) 0
 					    (g_cclosure_new (lambda (w d) (func (.value (GTK_ADJUSTMENT adj)))) #f #f)
 					    #f))
-	adj)
-      (let* ((mainform (if (isdialog? parent) (dialog-getbox1 parent) parent))
+	(set! slider adj))
+      (let* ((mainform (if (isdialog? parent) (parent 'getbox1) parent))
 	     (dastitle (XmStringCreate title XmFONTLIST_DEFAULT_TAG))
 	     (new-slider (XtCreateManagedWidget title xmScaleWidgetClass mainform
 						(list XmNorientation   XmHORIZONTAL
@@ -265,7 +490,10 @@
 	(XmStringFree dastitle)
 	(XtAddCallback new-slider XmNvalueChangedCallback (lambda (w c info) (func (/ (.value info) scaler))))
 	(XtAddCallback new-slider XmNdragCallback (lambda (w c info) (func (/ (.value info) scaler))))
-	new-slider)))
+	(set! slider new-slider))))
+
+
+
 
 
 
@@ -273,67 +501,15 @@
 ;;; Dialogs
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+
 (define (isdialog? dialog)
-  (and (list? dialog) (= (length dialog) 5) (eq? (list-ref dialog 4) 'dialog)))
-(define* (dialog-makedialog dialog #:optional sliders box2 box1)
-  (list dialog sliders box2 box1 'dialog))
-(define (dialog-getdialog dialog)
-  (car dialog))
-(define (dialog-getsliders dialog)
-  (cadr dialog))
-(define (dialog-setsliders! dialog sliders)
-  (set-car! (cdr dialog) sliders))
+  (and (object? dialog)
+       (instance? dialog dialog-class)))
 
-(define (dialog-getbox2 dialog)
-  (if (not (caddr dialog))
-      (let ((hbox #f))
-	(if use-gtk
-	    (begin
-	      (set! hbox (gtk_hbox_new #f 0))
-	      (gtk_box_pack_start (GTK_BOX (.vbox (GTK_DIALOG (dialog-getdialog dialog)))) hbox #f #f 4)
-	      (gtk_widget_show hbox))
-	    (let* ((mainform (dialog-getbox1 dialog))
-		   (sep (XtCreateManagedWidget "sep" xmSeparatorWidgetClass mainform
-					       (list XmNorientation      XmHORIZONTAL
-						     XmNseparatorType    XmSHADOW_ETCHED_OUT
-						     XmNbackground       (basic-color))))
-		   (rc (XtCreateManagedWidget "rc"  xmRowColumnWidgetClass mainform
-					      (list XmNorientation      XmHORIZONTAL
-						    XmNbackground       (basic-color)
-						    XmNradioBehavior    #f
-						    XmNradioAlwaysOne   #t
-						    XmNbottomAttachment XmATTACH_FORM
-						    XmNleftAttachment   XmATTACH_FORM
-						    XmNrightAttachment  XmATTACH_FORM
-						    XmNentryClass       xmToggleButtonWidgetClass
-						    XmNisHomogeneous    #t))))
-	      (set! hbox rc)))
-	(dialog-setbox2! dialog hbox)))
-  (caddr dialog))
-(define (dialog-setbox2! dialog hbox)
-  (set-car! (cddr dialog) hbox))
-(define (dialog-getbox1 dialog)
-  (if (not (cadddr dialog))
-      (let ((vbox #f))
-	(if use-gtk
-	    (begin
-	      (set! vbox (gtk_vbox_new #f 2))
-	      (gtk_box_pack_start (GTK_BOX (.vbox (GTK_DIALOG (dialog-getdialog dialog)))) vbox #f #f 4)
-	      (gtk_widget_show vbox))
-	    (set! vbox (XtCreateManagedWidget "formd" xmRowColumnWidgetClass (dialog-getdialog dialog)
-					      (list XmNleftAttachment      XmATTACH_FORM
-						    XmNrightAttachment     XmATTACH_FORM
-						    XmNtopAttachment       XmATTACH_FORM
-						    XmNbottomAttachment    XmATTACH_WIDGET
-						    XmNbottomWidget        (XmMessageBoxGetChild (dialog-getdialog dialog) XmDIALOG_SEPARATOR)
-						    XmNbackground          (highlight-color)
-						    XmNorientation         XmVERTICAL))))
-	(dialog-setbox1! dialog vbox)))
-  (cadddr dialog))
-(define (dialog-setbox1! dialog vbox)
-  (set-car! (cdddr dialog) vbox))
+(define-class (dialog-class label deletefunc . buttons)
 
-(define (dialog-create label deletefunc . buttons)
+  (define box1 #f)
+  (define box2 #f)
 
   (define wassoc (list (list 'Close "quit_button" (quit-button-color))
 		       (list 'Help "help_button" (help-button-color))
@@ -342,120 +518,181 @@
 		       (list 'Ok "doit_button" (doit-button-color))))
 
 
-    (let ((names '())
-	  (funcs '())
-	  (wnames '())
-	  (new-dialog #f))
+  (var dialog #f)
+  (var sliders #f)
 
-      (if use-gtk
-	  (begin
-	    (set! new-dialog (gtk_dialog_new))
-	    (gtk_window_set_title (GTK_WINDOW new-dialog) label)
-	    (gtk_container_set_border_width (GTK_CONTAINER new-dialog) 10)
-	    (gtk_window_set_default_size (GTK_WINDOW new-dialog) -1 -1)
-	    (gtk_window_set_resizable (GTK_WINDOW new-dialog) #t)
-	    (gtk_widget_realize new-dialog)
+  (define-method (getbox2)
+    (if (not box2)
+	(let ((hbox #f))
+	  (if use-gtk
+	      (begin
+		(set! hbox (gtk_hbox_new #f 0))
+		(gtk_box_pack_start (GTK_BOX (.vbox (GTK_DIALOG dialog))) hbox #f #f 4)
+		(gtk_widget_show hbox))
+	      (let* ((mainform box1)
+		     (sep (XtCreateManagedWidget "sep" xmSeparatorWidgetClass mainform
+						 (list XmNorientation      XmHORIZONTAL
+						       XmNseparatorType    XmSHADOW_ETCHED_OUT
+						       XmNbackground       (basic-color))))
+		     (rc (XtCreateManagedWidget "rc"  xmRowColumnWidgetClass mainform
+						(list XmNorientation      XmHORIZONTAL
+						      XmNbackground       (basic-color)
+						      XmNradioBehavior    #f
+						      XmNradioAlwaysOne   #t
+						      XmNbottomAttachment XmATTACH_FORM
+						      XmNleftAttachment   XmATTACH_FORM
+						      XmNrightAttachment  XmATTACH_FORM
+						      XmNentryClass       xmToggleButtonWidgetClass
+						      XmNisHomogeneous    #t))))
+		(set! hbox rc)))
+	  (setbox2! hbox)))
+    box2)
 
-	    (g_signal_connect_closure_by_id (GPOINTER new-dialog)
-					    (g_signal_lookup "delete_event" (G_OBJECT_TYPE (GTK_OBJECT new-dialog)))
-					    0 (g_cclosure_new (lambda (w ev data)
-								(if deletefunc (deletefunc new-dialog))
-								(gtk_widget_hide new-dialog)
-								(focus-widget (list-ref (channel-widgets (selected-sound) 0) 0)))
-							      #f #f) #f))
-	  (let ((titlestr (XmStringCreate label XmFONTLIST_DEFAULT_TAG)))
-	    (set! new-dialog
-		  (XmCreateTemplateDialog (cadr (main-widgets)) label
-					  (list XmNautoUnmanage        #f
-						XmNdialogTitle         titlestr
-						;XmNresizePolicy        XmRESIZE_GROW
-						XmNnoResize            #f
-						XmNbackground          (basic-color)
-						XmNtransient           #f)))
-	    (XtAddCallback new-dialog XmNcancelCallback (lambda (w c i)
-							  (if deletefunc (deletefunc new-dialog))
-							  (XtUnmanageChild new-dialog)
-							  (focus-widget (list-ref (channel-widgets (selected-sound) 0) 0))))
-	    (XmStringFree titlestr)))
+  (define-method (setbox2! dashbox)
+    (set! box2 dashbox))
 
-      
-      (for-each
-       (lambda (e)
-	 (if (procedure? e)
-	     (set! funcs (cons e funcs))
-	     (begin
-	       (set! names (cons e names))
-	       (set! wnames (cons (if (assoc (string->symbol e) wassoc) (assoc (string->symbol e) wassoc) (list #f "noname")) wnames)))))
-       buttons)
-      
-      (for-each
-       (lambda (name func wname)
-	 (let ((button (button-create (if use-gtk
-					  (.action_area (GTK_DIALOG new-dialog))
-					  new-dialog)
-				      name (lambda () (func new-dialog)))))
-	   ;;(display (caddr wname))
-	   (if use-gtk
-	       (gtk_widget_set_name button (cadr wname))
-	       (if (car wname)
-		   (XtVaSetValues
-		    button
-		    (list XmNarmColor   (pushed-button-color)
-			  XmNbackground (caddr wname)))))))
-       
-       (reverse names) (reverse funcs) (reverse wnames))
-      
-      ;; build rest in (.vbox (GTK_DIALOG new-dialog))
-      (dialog-makedialog new-dialog #f #f)))
+  (define-method (getbox1)
+    (if (not box1)
+	(let ((vbox #f))
+	  (if use-gtk
+	      (begin
+		(set! vbox (gtk_vbox_new #f 2))
+		(gtk_box_pack_start (GTK_BOX (.vbox (GTK_DIALOG dialog))) vbox #f #f 4)
+		(gtk_widget_show vbox))
+	      (set! vbox (XtCreateManagedWidget "formd" xmRowColumnWidgetClass dialog
+						(list XmNleftAttachment      XmATTACH_FORM
+						      XmNrightAttachment     XmATTACH_FORM
+						      XmNtopAttachment       XmATTACH_FORM
+						      XmNbottomAttachment    XmATTACH_WIDGET
+						      XmNbottomWidget        (XmMessageBoxGetChild dialog XmDIALOG_SEPARATOR)
+						      XmNbackground          (highlight-color)
+						      XmNorientation         XmVERTICAL))))
+	  (setbox1! vbox)))
+    box1)
+
+  (define-method (setbox1! dasvbox)
+    (set! box1 dasvbox))
+
+  (define-method (hide)
+    (if use-gtk
+	(gtk_widget_hide dialog)
+	(XtUnmanageChild dialog))
+    (focus-widget (list-ref (channel-widgets (selected-sound) 0) 0)))
+
+  (define-method (show)
+    (if use-gtk
+	(begin
+	  (gtk_widget_show dialog)
+	  (gdk_window_raise (.window dialog)))
+	(if (not (XtIsManaged dialog))
+	    (XtManageChild dialog)
+	    (raise-dialog dialog))))
+
+
+  ;; Replacement for add-sliders in new-effects.scm/gtk-effects.scm
+  (define-method (add-sliders dassliders)
+    (set! sliders (map
+		   (lambda (slider-data)
+		     (apply slider-class (cons (getbox1) slider-data)))
+		   dassliders))
+    
+    (if (not use-gtk)
+	(let ((num_inputs (+ 1 (length sliders))))
+	  (set! (widget-size dialog) (list (min 800 (max 400 (* num_inputs 20)))
+						   (min 800 (max 120 (* num_inputs 70)))))))
+    
+    sliders)
+
+
+  (let ((names '())
+	(funcs '())
+	(wnames '())
+	(new-dialog #f))
+
+    (if use-gtk
+	(begin
+	  (set! new-dialog (gtk_dialog_new))
+	  (gtk_window_set_title (GTK_WINDOW new-dialog) label)
+	  (gtk_container_set_border_width (GTK_CONTAINER new-dialog) 10)
+	  (gtk_window_set_default_size (GTK_WINDOW new-dialog) -1 -1)
+	  (gtk_window_set_resizable (GTK_WINDOW new-dialog) #t)
+	  (gtk_widget_realize new-dialog)
+	  
+	  (g_signal_connect_closure_by_id (GPOINTER new-dialog)
+					  (g_signal_lookup "delete_event" (G_OBJECT_TYPE (GTK_OBJECT new-dialog)))
+					  0 (g_cclosure_new (lambda (w ev data)
+							      (if deletefunc (deletefunc new-dialog))
+							      (gtk_widget_hide new-dialog)
+							      (focus-widget (list-ref (channel-widgets (selected-sound) 0) 0)))
+							    #f #f) #f))
+	(let ((titlestr (XmStringCreate label XmFONTLIST_DEFAULT_TAG)))
+	  (set! new-dialog
+		(XmCreateTemplateDialog (cadr (main-widgets)) label
+					(list XmNautoUnmanage        #f
+					      XmNdialogTitle         titlestr
+					;XmNresizePolicy        XmRESIZE_GROW
+					      XmNnoResize            #f
+					      XmNbackground          (basic-color)
+					      XmNtransient           #f)))
+	  (XtAddCallback new-dialog XmNcancelCallback (lambda (w c i)
+							(if deletefunc (deletefunc new-dialog))
+							(XtUnmanageChild new-dialog)
+							(focus-widget (list-ref (channel-widgets (selected-sound) 0) 0))))
+	  (XmStringFree titlestr)))
+    
+    
+    (for-each
+     (lambda (e)
+       (if (procedure? e)
+	   (set! funcs (cons e funcs))
+	   (begin
+	     (set! names (cons e names))
+	     (set! wnames (cons (if (assoc (string->symbol e) wassoc) (assoc (string->symbol e) wassoc) (list #f "noname")) wnames)))))
+     buttons)
+    
+    (for-each
+     (lambda (name func wname)
+       (let ((button (button-class (if use-gtk
+					(.action_area (GTK_DIALOG new-dialog))
+					new-dialog)
+				    name (lambda () (func)))))
+	 (if use-gtk
+	     (gtk_widget_set_name (button 'button) (cadr wname))
+	     (if (car wname)
+		 (XtVaSetValues
+		  (button 'button)
+		  (list XmNarmColor   (pushed-button-color)
+			XmNbackground (caddr wname)))))))
+     
+     (reverse names) (reverse funcs) (reverse wnames))
+    
+    ;; build rest in (.vbox (GTK_DIALOG new-dialog))
+    (set! dialog new-dialog)))
     
 
-(define (dialog-hide dialog)
-  (if use-gtk
-      (gtk_widget_hide (dialog-getdialog dialog))
-      (XtUnmanageChild (dialog-getdialog dialog)))
-  (focus-widget (list-ref (channel-widgets (selected-sound) 0) 0)))
-
-(define (dialog-show dialog)
-  (if use-gtk
-      (begin
-	(gtk_widget_show (dialog-getdialog dialog))
-	(gdk_window_raise (.window (dialog-getdialog dialog))))
-      (if (not (XtIsManaged (dialog-getdialog dialog)))
-	  (XtManageChild (dialog-getdialog dialog))
-	  (raise-dialog (dialog-getdialog dialog)))))
 
 
-;; Replacement for add-sliders in new-effects.scm/gtk-effects.scm
-(define (dialog-add-sliders dialog sliders)
-  (dialog-setsliders! dialog (map
-			      (lambda (slider-data)
-				(apply slider-create (cons dialog slider-data)))
-			      sliders))
 
-  (if (not use-gtk)
-      (let ((num_inputs (+ 1 (length (dialog-getsliders dialog)))))
-	(set! (widget-size (dialog-getdialog dialog)) (list (min 800 (max 400 (* num_inputs 20)))
-							    (min 800 (max 120 (* num_inputs 70)))))))
-    
-  (dialog-getsliders dialog))
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; GUI test
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
 #!
-(let ((d (dialog-create "gakk"  #f
-			"Close" (lambda (d2) (dialog-hide d2))
-			"Apply" (lambda (d2) (dialog-hide d2))
-			"Play" (lambda (d2) (dialog-hide d2))
-			"Stop" (lambda (d2) (dialog-hide d2))
-			"Help" (lambda (d2) (dialog-hide d2)))))
+(let ((d (dialog-class "gakk"  #f
+		       "Close" (lambda () (display "close"))
+		       "Apply" (lambda () (display "apply"))
+		       "Play" (lambda () (display "play"))
+		       "Stop" (lambda () (display "stop"))
+		       "Help" (lambda () (display "help")))))
 
-  (slider-create d "slider1" 0 1 2 (lambda (val) (display val)(newline)) 100)
-  (slider-create d "slider2" 0 0.2 1 (lambda (val) (display val)(newline)) 100)
-  (slider-create d "slider3" 0 1 20 (lambda (val) (display val)(newline)) 1)
-  (checkbutton-create d "checkbutton1" (lambda (a) (display a)(newline)))
-  (checkbutton-create d "checkbutton2" (lambda (a) (display a)(newline)))
-  (checkbutton-create d "checkbutton3" (lambda (a) (display a)(newline)))
-  (dialog-show d))  
+  (slider-class d "slider1" 0 1 2 (lambda (val) (display val)(newline)) 100)
+  (slider-class d "slider2" 0 0.2 1 (lambda (val) (display val)(newline)) 1000)
+  (slider-class d "slider3" 0 1 20 (lambda (val) (display val)(newline)) 1)
+  (checkbutton-class d "checkbutton1" (lambda (a) (display a)(newline)))
+  (checkbutton-class d "checkbutton2" (lambda (a) (display a)(newline)))
+  (checkbutton-class d "checkbutton3" (lambda (a) (display a)(newline)))
+  (d 'show))
 !#
 
 
