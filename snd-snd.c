@@ -2586,6 +2586,84 @@ static SCM g_peak_env_info(SCM snd, SCM chn, SCM pos)
   return(SCM_LIST0);
 }
 
+/* TODO: finish the peak-env-info-file stuff (doc, examples, etc) */
+/* these intended for close-hook? and initial-graph-hook, but we need
+ *   a way to save the name across invocations (file-name & ".peaks-%d" chan?)
+ *   and code to see that the envelope exists before write (peak-env-info length > 0?)
+ */
+
+static SCM g_write_peak_env_info_file(SCM snd, SCM chn, SCM name)
+{
+  chan_info *cp;
+  env_info *ep;
+  int fd;
+  int ibuf[5];
+  MUS_SAMPLE_TYPE mbuf[2];
+  cp = get_cp(snd, chn, "write-peak-info-file");
+  SCM_ASSERT(gh_string_p(name), name, SCM_ARG2, S_write_peak_env_info_file);
+  if ((cp->amp_envs) && (cp->amp_envs[0]))
+    {
+      fd = mus_file_open_write(TO_C_STRING(name));
+      if (fd == -1)
+	return(scm_throw(CANNOT_SAVE,
+			 SCM_LIST3(TO_SCM_STRING(S_write_peak_env_info_file),
+				   name,
+				   TO_SCM_STRING(strerror(errno)))));
+      ep = cp->amp_envs[0];
+      ibuf[0] = ep->completed;
+      ibuf[1] = ep->amp_env_size;
+      ibuf[2] = ep->samps_per_bin;
+      ibuf[3] = ep->bin;
+      ibuf[4] = ep->top_bin;
+      mbuf[0] = ep->fmin;
+      mbuf[1] = ep->fmax;
+      write(fd, (char *)ibuf, (5 * sizeof(int)));
+      write(fd, (char *)mbuf, (2 * sizeof(MUS_SAMPLE_TYPE)));
+      write(fd, (char *)(ep->data_min), (ep->amp_env_size * sizeof(MUS_SAMPLE_TYPE)));
+      write(fd, (char *)(ep->data_max), (ep->amp_env_size * sizeof(MUS_SAMPLE_TYPE)));
+      close(fd);
+      return(name);
+    }
+  else return(scm_throw(NO_SUCH_ENVELOPE,
+			SCM_LIST3(TO_SCM_STRING(S_write_peak_env_info_file),
+				  snd,
+				  chn)));
+}
+
+static SCM g_read_peak_env_info_file(SCM snd, SCM chn, SCM name)
+{
+  /* has to happen in initial_graph_hook to precede add_amp_env */
+  chan_info *cp;
+  env_info *ep;
+  int fd;
+  int ibuf[5];
+  MUS_SAMPLE_TYPE mbuf[2];
+  cp = get_cp(snd, chn, S_read_peak_env_info_file);
+  fd = mus_file_open_read(TO_C_STRING(name));
+  if (fd == -1)
+    return(scm_throw(NO_SUCH_FILE,
+		     SCM_LIST3(TO_SCM_STRING(S_read_peak_env_info_file),
+			       name,
+			       TO_SCM_STRING(strerror(errno)))));
+  /* assume cp->amp_envs already exists (needs change to snd-chn) */
+  cp->amp_envs[0] = (env_info *)CALLOC(1, sizeof(env_info));
+  ep = cp->amp_envs[0];
+  read(fd, (char *)ibuf, (5 * sizeof(int)));
+  ep->completed = ibuf[0];
+  ep->amp_env_size = ibuf[1];
+  ep->samps_per_bin = ibuf[2];
+  ep->bin = ibuf[3];
+  ep->top_bin = ibuf[4];
+  read(fd, (char *)mbuf, (2 * sizeof(MUS_SAMPLE_TYPE)));
+  ep->fmin = mbuf[0];
+  ep->fmax = mbuf[1];
+  ep->data_min = (MUS_SAMPLE_TYPE *)CALLOC(ep->amp_env_size, sizeof(MUS_SAMPLE_TYPE));
+  ep->data_max = (MUS_SAMPLE_TYPE *)CALLOC(ep->amp_env_size, sizeof(MUS_SAMPLE_TYPE));
+  read(fd, (char *)(ep->data_min), (ep->amp_env_size * sizeof(MUS_SAMPLE_TYPE)));
+  read(fd, (char *)(ep->data_max), (ep->amp_env_size * sizeof(MUS_SAMPLE_TYPE)));
+  close(fd);
+  return(name);
+}
 
 void g_init_snd(SCM local_doc)
 {
@@ -2761,6 +2839,10 @@ If it returns #t, the usual informative minibuffer babbling is squelched."
 					local_doc, 0, 1, 0, 2);
 
   DEFINE_PROC(gh_new_procedure(S_peak_env_info, SCM_FNC g_peak_env_info, 0, 3, 0), H_peak_env_info);
+
+
+  DEFINE_PROC(gh_new_procedure(S_write_peak_env_info_file, SCM_FNC g_write_peak_env_info_file, 3, 0, 0), "(" S_write_peak_env_info_file " snd chn filename)");
+  DEFINE_PROC(gh_new_procedure(S_read_peak_env_info_file,  SCM_FNC g_read_peak_env_info_file,  3, 0, 0), "(" S_read_peak_env_info_file " snd chn filename)");
 
 }
 

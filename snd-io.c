@@ -340,7 +340,7 @@ static int too_many_files_cleanup(snd_state *ss)
   return(rtn);
 }
 
-int snd_open_read(snd_state *ss, char *arg) 
+int snd_open_read(snd_state *ss, const char *arg) 
 {
   int fd;
   fd = open(arg, O_RDONLY, 0);
@@ -355,7 +355,7 @@ int snd_open_read(snd_state *ss, char *arg)
   return(fd);
 }
 
-int snd_overwrite_ok(snd_state *ss, char *ofile)
+int snd_overwrite_ok(snd_state *ss, const char *ofile)
 {
   int fil, rtn = 1;
   if (ask_before_overwrite(ss))
@@ -374,7 +374,7 @@ int snd_overwrite_ok(snd_state *ss, char *ofile)
   return(rtn);
 }
 
-int snd_reopen_write(snd_state *ss, char *arg)
+int snd_reopen_write(snd_state *ss, const char *arg)
 {
   int fd;
   fd = open(arg, O_RDWR, 0);
@@ -390,7 +390,7 @@ int snd_reopen_write(snd_state *ss, char *arg)
   return(fd);
 }
 
-int snd_write_header(snd_state *ss, char *name, int type, int srate, int chans, int loc, int size, int format, char *comment, int len, int *loops)
+int snd_write_header(snd_state *ss, const char *name, int type, int srate, int chans, int loc, int size, int format, const char *comment, int len, int *loops)
 {
   int fd;
   mus_sound_forget(name);

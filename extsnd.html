@@ -2381,7 +2381,8 @@ The most important Sndlib functions for Snd are:</p>
 <!-- -->
 <!-- --><table border=0 cellspacing=5>
 <!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def>mus-audio-close</em> (line)</code></span></td>
+<!-- mus-audio-close -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="musaudioclose">mus-audio-close</a></em> (line)</code></span></td>
 <!-- --><td>close audio port <i>line</i></td></tr>
 <!-- -->
 <!-- mus-audio-describe -->
@@ -2393,45 +2394,111 @@ The most important Sndlib functions for Snd are:</p>
 <!-- --><td>returns error code indicated by preceding audio call</td></tr>
 <!-- -->
 <!-- mus-audio-error-name -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="audioerror-name">mus-audio-error-name</a></em> (err)</code></span></td>
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="audioerror-name">mus-audio-error-name</a></em> (er)r</code></span></td>
 <!-- --><td>string decription of error code</td></tr>
 <!-- -->
-<!-- --><tr><td colspan=2><span class=defbox><code><em class=def>mus-audio-open-input</em> (device srate chans format bufsize)</code></span></td>
+<!-- mus-audio-mixer-read -->
+<!-- --><tr><td colspan=2><span class=defbox><code><em class=def>
+<!-- --><a name=musaudiomixerread">mus-audio-mixer-read</a></em> (device field channel vals)</code></span></td>
 <!-- --></tr><tr><td></td>
-<!-- --><td>open audio port <i>device</i> ready for input</td></tr>
+<!-- --><td>read current state of <i>device</i>'s <i>field</i>:
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2>
+<!-- --><pre>
+<!-- -->  mus-audio-amp       mus-audio-srate    mus-audio-channel mus-audio-format
+<!-- -->  mus-audio-imix      mus-audio-igain    mus-audio-reclev  mus-audio-pcm 
+<!-- -->  mus-audio-ogain     mus-audio-line     mus-audio-synth   mus-audio-bass
+<!-- -->  mus-audio-direction mus-audio-port     mus-audio-pcm2    mus-audio-treble
+<!-- -->  mus-audio-samples-per-channel
+<!-- --></pre>
+<!-- --></td></tr>
+<!-- mus-audio-mixer-write -->
+<!-- --><tr><td colspan=2><span class=defbox><code><em class=def>
+<!-- --><a name=musaudiomixerwrite">mus-audio-mixer-write</a></em> (device field channel vals)</code></span></td>
+<!-- --></tr><tr><td></td>
+<!-- --><td>set state of <i>device</i>'s <i>field</i>.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2 align=center>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+<!-- -->;;; here we get the microphone volume, then set it to .5
+<!-- -->(define vals (make-vector 32))
+<!-- -->(mus-audio-mixer-read mus-audio-microphone mus-audio-amp 0 vals)
+<!-- -->(vector-ref vals 0)
+<!-- -->(vector-set! vals 0 .5)
+<!-- -->(mus-audio-mixer-write mus-audio-microphone mus-audio-amp 0 vals)
+<!-- --></pre></td></tr></table></td></tr>
 <!-- -->
-<!-- --><tr><td colspan=2><span class=defbox><code><em class=def>mus-audio-open-output</em> (device srate chans format bufsize)</code></span></td>
+<!-- mus-audio-open-input -->
+<!-- --><tr><td colspan=2><span class=defbox><code><em class=def>
+<!-- --><a name="musaudioopeninput">mus-audio-open-input</a></em> (device srate chans format bufsize)</code></span></td>
+<!-- --></tr><tr><td></td>
+<!-- --><td>open audio port <i>device</i> ready for input.  <i>device</i> is one of:
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2>
+<!-- --><pre>
+<!-- -->  mus-audio-default    mus-audio-duplex-default mus-audio-line-out
+<!-- -->  mus-audio-microphone mus-audio-speakers       mus-audio-dac-out    
+<!-- -->  mus-audio-aes-in     mus-audio-digital-in     mus-audio-digital-out
+<!-- -->  mus-audio-aes-out    mus-audio-dac-filter     mus-audio-mixer
+<!-- -->  mus-audio-line2      mus-audio-line3          mus-audio-aux-input 
+<!-- -->  mus-audio-line-in    mus-audio-aux-output     mus-audio-adat-in
+<!-- -->  mus-audio-adat-out   mus-audio-line1          mus-audio-cd 
+<!-- -->  mus-audio-spdif-in   mus-audio-spdif-out
+<!-- --></pre>
+<!-- --></td></tr>
+<!-- -->
+<!-- mus-audio-open-output -->
+<!-- --><tr><td colspan=2><span class=defbox><code><em class=def>
+<!-- --><a name="musaudioopenoutput">mus-audio-open-output</a></em> (device srate chans format bufsize)</code></span></td>
 <!-- --></tr><tr><td></td>
 <!-- --><td>open audio port <i>device</i> ready for output</td></tr>
 <!-- -->
 <!-- mus-audio-outputs -->
-<!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="sndaudiooutputs">mus-audio-outputs</a></em> (speakers headphones line-out)</code></span></td>
+<!-- --><tr><td colspan=2><span class=defbox><code><em class=def>
+<!-- --><a name="sndaudiooutputs">mus-audio-outputs</a></em> (speakers headphones line-out)</code></span></td>
 <!-- --></tr><tr><td></td>
 <!-- --><td>(Sun only) set active outputs</td></tr>
 <!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def>mus-audio-read</em> (line sdata frames)</code></span></td>
+<!-- mus-audio-read -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="musaudioread">mus-audio-read</a></em> (line sdata frames)</code></span></td>
 <!-- --><td>read <i>frames</i> of data into sound-data object <i>sdata</i> from port <i>line</i></td></tr>
 <!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def>mus-audio-write</em> (line sdata frames)</code></span></td>
-<!-- --><td>write <i>frames</i> of data from sound-data object <i>sdata</i> to port <i>line</i></td></tr>
+<!-- mus-audio-write -->
+<!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="musaudiowrite">mus-audio-write</a></em> (line sdata frames)</code></span></td>
+<!-- --></tr><tr><td></td><td>write <i>frames</i> of data from sound-data object <i>sdata</i> to port <i>line</i></td></tr>
 <!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def>mus-sound-close-input</em> (fd)</code></span></td>
+<!-- mus-data-format-name -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="soundformatname">mus-data-format-name</a></em> (format)</code></span></td>
+<!-- --><td>e.g. "16-bit big endian linear", <i>format</i> an integer, some of which have names:</td></tr>
+<!-- --><tr><td colspan=2><pre>
+<!-- -->  mus-bshort   mus-lshort   mus-mulaw   mus-alaw   mus-byte  
+<!-- -->  mus-lfloat   mus-bint     mus-lint    mus-b24int mus-l24int
+<!-- -->  mus-ubshort  mus-ulshort  mus-ubyte   mus-bfloat mus-bdouble 
+<!-- -->  mus-ldouble
+<!-- --><pre></td></tr>
+<!-- -->
+<!-- mus-header-type-name -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="soundtypename">mus-header-type-name</a></em> (type)</code></span></td>
+<!-- --><td>e.g. "AIFF", <i>type</i> is an integer, some of which have names:</td></tr>
+<!-- --><tr><td colspan=2><pre>
+<!-- -->  mus-next  mus-aifc  mus-riff  mus-nist  mus-raw  mus-ircam  mus-aiff
+<!-- --><pre></td></tr>
+<!-- -->
+<!-- mus-sound-chans -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="soundchans">mus-sound-chans</a></em> (filename)</code></span></td>
+<!-- --><td>number of channels (samples are interleaved)</td></tr>
+<!-- -->
+<!-- mus-sound-close-input -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="mussoundcloseinput">mus-sound-close-input</a></em> (fd)</code></span></td>
 <!-- --><td>close sound file</td></tr>
 <!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def>mus-sound-close-output</em> (fd bytes)</code></span></td>
+<!-- mus-sound-close-output -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="mussoundcloseoutput">mus-sound-close-output</a></em> (fd bytes)</code></span></td>
 <!-- --><td>close sound file and update its length indication, if any</td></tr>
 <!-- -->
 <!-- mus-sound-comment -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="soundcomment">mus-sound-comment</a></em> (filename)</code></span></td>
 <!-- --><td>header comment, if any</td></tr>
-<!-- -->
-<!-- mus-data-format-name -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="soundformatname">mus-data-format-name</a></em> (format)</code></span></td>
-<!-- --><td>e.g. "16-bit big endian linear"</td></tr>
-<!-- -->
-<!-- mus-header-type-name -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="soundtypename">mus-header-type-name</a></em> (type)</code></span></td>
-<!-- --><td>e.g. "AIFF"</td></tr>
 <!-- -->
 <!-- mus-sound-data-format -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="sounddataformat">mus-sound-data-format</a></em> (filename)</code></span></td>
@@ -2449,10 +2516,6 @@ The most important Sndlib functions for Snd are:</p>
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="soundframes">mus-sound-frames</a></em> (filename)</code></span></td>
 <!-- --><td>frames of sound according to header (can be incorrect)</td></tr>
 <!-- -->
-<!-- mus-sound-chans -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="soundchans">mus-sound-chans</a></em> (filename)</code></span></td>
-<!-- --><td>number of channels (samples are interleaved)</td></tr>
-<!-- -->
 <!-- mus-sound-header-type -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="soundheadertype">mus-sound-header-type</a></em> (filename)</code></span></td>
 <!-- --><td>header type (e.g. <i>mus-aifc</i>)</td></tr>
@@ -2461,28 +2524,38 @@ The most important Sndlib functions for Snd are:</p>
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="soundlength">mus-sound-length</a></em> (filename)</code></span></td>
 <!-- --><td>true file length (bytes)</td></tr>
 <!-- -->
+<!-- mus-sound-loop-info -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="soundloopinfo">mus-sound-loop-info</a></em> (filename)</code></span></td>
+<!-- --><td>loop info (for an example, see <a href="sndscm.html#exampdoc">examp.scm</a> mark-loops)</td></tr>
+<!-- -->
 <!-- mus-sound-max-amp -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="mussoundmaxamp">mus-sound-max-amp</a></em> (filename)</code></span></td>
 <!-- --><td>returns a vector of max amps and locations thereof</td></tr>
 <!-- -->
 <!-- mus-sound-max-amp-exists -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="mussoundmaxampexists">mus-sound-max-amp-exists</a></em> (filename)</code></span></td>
-<!-- --><td>returns #t if the sound's max amps are already available.</td></tr>
+<!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="mussoundmaxampexists">mus-sound-max-amp-exists</a></em> (filename)</code></span></td>
+<!-- --></tr><tr><td></td><td>returns #t if the sound's max amps are already available.</td></tr>
 <!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def>mus-sound-open-input</em> (filename)</code></span></td>
+<!-- mus-sound-open-input -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="mussoundopeninput">mus-sound-open-input</a></em> (filename)</code></span></td>
 <!-- --><td>open filename (a sound file) returning an integer ("fd" below)</td></tr>
 <!-- -->
-<!-- --><tr><td colspan=2><span class=defbox><code><em class=def>mus-sound-open-output</em> (filename srate chans data-format header-type comment)</code></span></td>
+<!-- mus-sound-open-output -->
+<!-- --><tr><td colspan=2><span class=defbox><code><em class=def>
+<!-- --><a name="mussoundopenoutput">mus-sound-open-output</a></em> (filename srate chans data-format header-type comment)</code></span></td>
 <!-- --></tr><tr><td></td>
 <!-- --><td>create a new sound file with the indicated attributes, return "fd"</td></tr>
 <!-- -->
-<!-- --><tr><td colspan=2><span class=defbox><code><em class=def>mus-sound-read</em> (fd beg end chans sdata)</code></span></td>
+<!-- mus-sound-read -->
+<!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="mussoundread">mus-sound-read</a></em> (fd beg end chans sdata)</code></span></td>
 <!-- --></tr><tr><td></td>
 <!-- --><td>read data from sound file <i>fd</i> loading the data array from beg
 <!-- -->to end. <i>sdata</i> is a sound-data object that should be able to
 <!-- -->accommodate the read</td></tr>
 <!-- -->
-<!-- --><tr><td colspan=2><span class=defbox><code><em class=def>mus-sound-reopen-output</em> (filename chans data-format header-type data-location)</code></span></td>
+<!-- mus-sound-reopen-output -->
+<!-- --><tr><td colspan=2><span class=defbox><code><em class=def>
+<!-- --><a name="mussoundreopenoutput">mus-sound-reopen-output</a></em> (filename chans data-format header-type data-location)</code></span></td>
 <!-- --></tr><tr><td></td>
 <!-- --><td>reopen (without disturbing) filename, ready to be written</td></tr>
 <!-- -->
@@ -2490,27 +2563,35 @@ The most important Sndlib functions for Snd are:</p>
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="soundsamples">mus-sound-samples</a></em> (filename)</code></span></td>
 <!-- --><td>samples of sound according to header (can be incorrect)</td></tr>
 <!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def>mus-sound-seek</em> (fd offset origin)</code></span></td>
+<!-- mus-sound-seek -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="mussoundseek">mus-sound-seek</a></em> (fd offset origin)</code></span></td>
 <!-- --><td>complicated -- see mus-sound-seek above</td></tr>
 <!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def>mus-sound-seek-frame</em> (fd frame)</code></span></td>
+<!-- mus-sound-seek-frame -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="mussoundseekframe">mus-sound-seek-frame</a></em> (fd frame)</code></span></td>
 <!-- --><td>move to <i>frame</i> in sound file <i>fd</i></td></tr>
 <!-- -->
 <!-- mus-sound-srate -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="soundsrate">mus-sound-srate</a></em> (filename)</code></span></td>
 <!-- --><td>sampling rate</td></tr>
 <!-- -->
+<!-- mus-sound-write -->
+<!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="mussoundwrite">mus-sound-write</a></em> (fd beg end chans sdata)</code></span></td>
+<!-- --></tr><tr><td></td>
+<!-- --><td>write data to sound file <i>fd</i></td></tr>
+<!-- -->
+<!-- mus-sound-write-date -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="soundwritedate">mus-sound-write-date</a></em> (filename)</code></span></td>
+<!-- --><td>sound's write date:
+<!-- --></td></tr><tr><td colspan=2><pre>
+<!-- -->    :<em class=typing>(strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "oboe.snd")))</em>
+<!-- -->    <em class=listener>"18-Oct 06:56 PDT"</em>
+<!-- --></pre></td></tr>
+<!-- -->
 <!-- set-oss-buffers -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="setossbuffers">set-oss-buffers</a></em> (num size)</code></span></td>
 <!-- --><td>in Linux (OSS) sets the number and size of the OSS "fragments"</td></tr>
 <!-- -->
-<!-- mus-sound-loop-info -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="soundloopinfo">mus-sound-loop-info</a></em> (filename)</code></span></td>
-<!-- --><td>loop info (for an example, see <a href="sndscm.html#exampdoc">examp.scm</a> mark-loops)</td></tr>
-<!-- -->
-<!-- --><tr><td colspan=2><span class=defbox><code><em class=def>mus-sound-write</em> (fd beg end chans sdata)</code></span></td>
-<!-- --></tr><tr><td></td>
-<!-- --><td>write data to sound file <i>fd</i></td></tr>
 <!-- --></table>
 
 <p>See <a href="sndlib.html">Sndlib</a> for more information on these functions. 
@@ -5370,10 +5451,7 @@ sets its value to val.
 <!-- -->argument <i>num-or-env</i> can be either a number or an envelope.  In 
 <!-- -->the latter case, <i>base</i> sets the segment base (default is 1.0 = linear).
 <!-- -->A value greater than 1.0 causes the sound to be transposed up.
-<!-- -->A value less than 0.0 causes the sound to be reversed.  The envelope
-<!-- -->(if any) represents the difference of the new srate from 1.0 -- that is,
-<!-- -->(src-sound '(0 0 1 0)) is a no-op, whereas (src-sound '(0 0 1 1) moves
-<!-- -->up an octave over the course of the sound.
+<!-- -->A value less than 0.0 causes the sound to be reversed. 
 <!-- --><br>
 <!-- --><i>num-or-env</i> can also be a CLM env generator (its duration should
 <!-- -->be the same as the original sound).
@@ -6744,8 +6822,11 @@ etc.  The Snd-specific errors are:</p>
 'no-such-edit    'cannot-save    'impossible-bounds  'no-active-selection
 'no-such-widget  'mus-error      'no-such-track      'no-such-envelope
 'cannot-print    'no-such-axis   'no-such-graphics-context
+'bad-arity
 </pre>
-<p>The symbol #t stands for all errors in this case, so we can 
+<p><i>bad-arity</i> is jargon indicating that a procedure takes the
+wrong number of arguments.
+The symbol #t stands for all errors in this case, so we can 
 run rough-shod over any error with:</p>
 <pre>
 (defmacro without-errors (func)

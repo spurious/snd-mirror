@@ -324,6 +324,7 @@ void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form)
   snd_info *sp;
   chan_info *cp;
   char *str, *r0 = NULL, *r1 = NULL;
+  if (stats_form == NULL) return;
   GUI_SET_TEXT(stats_form, "file chn: mem(#bufs), main, temp(#files), amp envs\n\n");
   for (i = 0; i < ss->max_sounds; i++)
     if ((sp = ((snd_info *)(ss->sounds[i]))) &&	(sp->inuse))

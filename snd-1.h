@@ -355,10 +355,10 @@ typedef struct {
 
 /* -------- snd-io.c -------- */
 
-int snd_open_read(snd_state *ss, char *arg);
-int snd_reopen_write(snd_state *ss, char *arg);
-int snd_write_header(snd_state *ss, char *name, int type, int srate, int chans, int loc, int size, int format, char *comment, int len, int *loops);
-int snd_overwrite_ok(snd_state *ss, char *ofile);
+int snd_open_read(snd_state *ss, const char *arg);
+int snd_reopen_write(snd_state *ss, const char *arg);
+int snd_write_header(snd_state *ss, const char *name, int type, int srate, int chans, int loc, int size, int format, const char *comment, int len, int *loops);
+int snd_overwrite_ok(snd_state *ss, const char *ofile);
 int file_state_channel_offset(int chan);
 int *make_file_state(int fd, file_info *hdr, int chan, int suggested_bufsize);
 int *free_file_state(int *datai);
@@ -753,7 +753,8 @@ char *added_transform_name(int type);
   SCM g_call2(SCM proc, SCM arg1, SCM arg2);
   SCM g_call3(SCM proc, SCM arg1, SCM arg2, SCM arg3);
   SCM g_call_any(SCM proc, SCM arglist);
-  int procedure_ok(SCM proc, int req_args, int opt_args, const char *caller, char *arg_name, int argn);
+  char *procedure_ok(SCM proc, int req_args, int opt_args, const char *caller, const char *arg_name, int argn);
+  int procedure_ok_with_error(SCM proc, int req_args, int opt_args, const char *caller, const char *arg_name, int argn);
   void snd_protect(SCM obj);
   void snd_unprotect(SCM obj);
   int to_c_int_or_else(SCM obj, int fallback, const char *origin);

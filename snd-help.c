@@ -272,6 +272,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+16-Mar:  read|write-peak-env-info-file.\n\
 15-Mar:  src-sound with negative envelope bugfix, also the interpretation of the\n\
            envelope arg is changed to be consistent with the envelope editor src function.\n\
            '(0 1 1 1) now returns no change (src ratio of 1 throughout -- the value is used\n\

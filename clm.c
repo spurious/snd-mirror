@@ -3269,6 +3269,7 @@ static int free_env_gen(void *pt)
 static Float *env_data(void *ptr) {return(((seg *)ptr)->original_data);}
 static Float env_scaler(void *ptr) {return(((seg *)ptr)->scaler);}
 static int env_size(void *ptr) {return(((seg *)ptr)->size);}
+static Float env_current_value(void *ptr) {return(((seg *)ptr)->current_value);}
 
 static mus_any_class ENV_CLASS = {
   MUS_ENV,
@@ -3281,7 +3282,8 @@ static mus_any_class ENV_CLASS = {
   0,
   &env_size,
   0,
-  0, 0, 0, 0,
+  0, 0, 
+  &env_current_value, 0,
   &env_scaler,
   0,
   &run_env

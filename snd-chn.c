@@ -313,6 +313,16 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, snd_state *ss, int graphed)
   label = STR_time;
   dur = (Float)samples_per_channel / (Float)hdr->srate;
 
+  cp->edit_size = INITIAL_EDIT_SIZE;
+  cp->edit_ctr = 0;
+  allocate_ed_list(cp);
+  cp->amp_envs = (env_info **)CALLOC(cp->edit_size, sizeof(env_info *));
+  cp->samples = (int *)CALLOC(cp->edit_size, sizeof(int));
+  cp->sound_size = INITIAL_EDIT_SIZE;
+  cp->sound_ctr = 0;
+  cp->sounds = (snd_data **)CALLOC(cp->sound_size, sizeof(snd_data *));
+  cp->samples[0] = samples_per_channel;
+
 #if HAVE_HOOKS
   if ((graphed == WITH_GRAPH) &&    
       /* can also be WITHOUT_GRAPH and WITHOUT_INITIAL_GRAPH_HOOK
@@ -405,15 +415,6 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, snd_state *ss, int graphed)
   cp->axis = ap;
   if (graphed == WITH_GRAPH) initialize_scrollbars(cp);
   /* our initial edit_list size will be relatively small */
-  cp->edit_size = INITIAL_EDIT_SIZE;
-  cp->edit_ctr = 0;
-  allocate_ed_list(cp);
-  cp->amp_envs = (env_info **)CALLOC(cp->edit_size, sizeof(env_info *));
-  cp->samples = (int *)CALLOC(cp->edit_size, sizeof(int));
-  cp->sound_size = INITIAL_EDIT_SIZE;
-  cp->sound_ctr = 0;
-  cp->sounds = (snd_data **)CALLOC(cp->sound_size, sizeof(snd_data *));
-  cp->samples[0] = samples_per_channel;
 }
 
 void start_amp_env(chan_info *cp)
@@ -463,7 +464,9 @@ void add_channel_data(char *filename, chan_info *cp, file_info *hdr, snd_state *
 	  if (show_usage_stats(ss)) gather_usage_stats(cp);
 	}
     }
-  if (current_ed_samples(cp) > AMP_ENV_CUTOFF) start_amp_env(cp);
+  if ((current_ed_samples(cp) > AMP_ENV_CUTOFF) &&
+      (cp->amp_envs[0] == NULL))                      /* perhaps created in initial-graph-hook by read-peak-env-info-file */
+    start_amp_env(cp);
 }
 
 static void set_y_bounds(axis_info *ap)

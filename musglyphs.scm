@@ -129,7 +129,7 @@
 
 (define (circle score x0 y0 rad . rest)
   (draw-dot (->x x0) (->y y0) 
-	    (inexact->exact (* ps-size rad))
+	    (inexact->exact (* ps-size rad 2)) ;; TODO: check this! (may be off center and wrong size)
 	    ps-snd ps-chn ps-ax))
 
 (define old-defvar defvar)

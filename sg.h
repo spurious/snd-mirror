@@ -149,5 +149,6 @@ static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
 #define MUS_MISC_ERROR       TO_SCM_SYMBOL("mus-error")
 #define NO_SUCH_AXIS_INFO    TO_SCM_SYMBOL("no-such-axis")
 #define NO_SUCH_AXIS_CONTEXT TO_SCM_SYMBOL("no-such-graphics-context")
+#define BAD_ARITY            TO_SCM_SYMBOL("bad-arity")
 
 #endif

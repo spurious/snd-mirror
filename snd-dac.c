@@ -226,12 +226,31 @@ static SCM g_set_reverb_funcs(SCM rev, SCM make_rev, SCM free_rev)
 {
   #define H_reverb_funcs "(" S_reverb_funcs ") -> list of the 3 reverb funcs (reverb make-reverb free-reverb)"
   #define H_set_reverb_funcs "(" "set-" S_reverb_funcs " reverb make-reverb free-reverb) sets the current reverb functions"
+
+  char *errmsg;
   if (gh_procedure_p(g_reverb)) snd_unprotect(g_reverb);
   if (gh_procedure_p(g_make_reverb)) snd_unprotect(g_make_reverb);
   if (gh_procedure_p(g_free_reverb)) snd_unprotect(g_free_reverb);
-  if ((procedure_ok(rev, 3, 0, "set-" S_reverb_funcs, "reverb", 1)) &&
-      (procedure_ok(make_rev, 2, 0, "set-" S_reverb_funcs, "make-reverb", 2)) &&
-      (procedure_ok(free_rev, 1, 0, "set-" S_reverb_funcs, "free-reverb", 3)))
+
+  errmsg = procedure_ok(rev, 3, 0, "set-" S_reverb_funcs, "reverb", 1);
+  if (errmsg)
+    return(scm_throw(BAD_ARITY,
+		     SCM_LIST3(TO_SCM_STRING(S_reverb_funcs),
+			       rev,
+			       TO_SCM_STRING(errmsg))));
+  errmsg = procedure_ok(make_rev, 2, 0, "set-" S_reverb_funcs, "make-reverb", 2);
+  if (errmsg)
+    return(scm_throw(BAD_ARITY,
+		     SCM_LIST3(TO_SCM_STRING(S_reverb_funcs),
+			       make_rev,
+			       TO_SCM_STRING(errmsg))));
+  errmsg = procedure_ok(free_rev, 1, 0, "set-" S_reverb_funcs, "free-reverb", 3);
+  if (errmsg)
+    return(scm_throw(BAD_ARITY,
+		     SCM_LIST3(TO_SCM_STRING(S_reverb_funcs),
+			       free_rev,
+			       TO_SCM_STRING(errmsg))));
+  if (SCM_NFALSEP(rev))
     {
       g_reverb = rev;
       g_make_reverb = make_rev;
@@ -272,8 +291,16 @@ static SCM g_set_contrast_func(SCM func)
 {
   #define H_contrast_func "(" S_contrast_func ") -> current contrast function"
   #define H_set_contrast_func "(" "set-" S_contrast_func " func) sets the current contrast function"
+
+  char *errmsg;
   if (gh_procedure_p(g_contrast)) snd_unprotect(g_contrast);
-  if (procedure_ok(func, 2, 0, "set-" S_contrast_func, "contrast", 1))
+  errmsg = procedure_ok(func, 2, 0, "set-" S_contrast_func, "contrast", 1);
+  if (errmsg)
+    return(scm_throw(BAD_ARITY,
+		     SCM_LIST3(TO_SCM_STRING(S_contrast_func),
+			       func,
+			       TO_SCM_STRING(errmsg))));
+  if (SCM_NFALSEP(func))
     {
       g_contrast = func;
       use_g_contrast = 1;

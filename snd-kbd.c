@@ -252,13 +252,9 @@ static void set_keymap_entry(int key, int state, int ignore, SCM func)
 	  (gh_procedure_p(user_keymap[i].func))) 
 	snd_unprotect(user_keymap[i].func);
     }
-  if ((func != SCM_UNDEFINED) &&
-      (procedure_ok(func, 0, 0, S_bind_key, "func", 3)))
-    {
-      user_keymap[i].func = func;
-      snd_protect(func);
-    }
-  else user_keymap[i].func = SCM_UNDEFINED;
+  /* already checked arity etc */
+  user_keymap[i].func = func;
+  if (gh_procedure_p(func)) snd_protect(func);
   user_keymap[i].ignore_prefix = ignore;
 }
 
@@ -630,7 +626,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 		snd_unprotect(sp->search_proc);
 	      sp->search_proc = SCM_UNDEFINED;
 	      proc = parse_proc(str);
-	      if (procedure_ok(proc, 1, 0, "find", "find procedure", 1))
+	      if (procedure_ok_with_error(proc, 1, 0, "find", "find procedure", 1))
 		{
 		  sp->search_proc = proc;
 		  snd_protect(proc);
@@ -835,7 +831,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 		snd_unprotect(sp->eval_proc);
 	      sp->eval_proc = SCM_UNDEFINED;
 	      proc = parse_proc(str);
-	      if (procedure_ok(proc, 1, 0, "eval", "eval procedure", 1))
+	      if (procedure_ok_with_error(proc, 1, 0, "eval", "eval procedure", 1))
 		{
 		  sp->eval_proc = proc;
 		  snd_protect(proc);
@@ -1897,6 +1893,7 @@ no arguments.  If ignore-prefix is #t, preceding C-u arguments are not handled b
 The function should return one of the cursor choices (e.g. cursor-no-action)."
 
   int ip;
+  char *errmsg;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(key)), key, SCM_ARG1, S_bind_key);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(state)), state, SCM_ARG2, S_bind_key);
   SCM_ASSERT((SCM_FALSEP(code) || gh_procedure_p(code)), code, SCM_ARG3, S_bind_key);
@@ -1911,10 +1908,17 @@ The function should return one of the cursor choices (e.g. cursor-no-action)."
 		     TO_C_INT_OR_ELSE(state, 0), 
 		     ip, SCM_UNDEFINED);
   else 
-    if (procedure_ok(code, 0, 0, S_bind_key, "func", 3))
+    {
+      errmsg = procedure_ok(code, 0, 0, S_bind_key, "func", 3);
+      if (errmsg)
+	return(scm_throw(BAD_ARITY,
+			 SCM_LIST3(TO_SCM_STRING(S_bind_key),
+				   code,
+				   TO_SCM_STRING(errmsg))));
       set_keymap_entry(TO_C_INT_OR_ELSE(key, 0), 
 		       TO_C_INT_OR_ELSE(state, 0), 
 		       ip, code);
+    }
   return(SCM_BOOL_T);
 }
 

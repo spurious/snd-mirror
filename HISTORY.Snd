@@ -1,5 +1,6 @@
 snd change log
 
+  16-Mar:    read|write-peak-env-info-file.
   15-Mar:    tested ok with gtk 1.2.9.
              src-sound with negative envelope bugfix, also the interpretation of the
                envelope arg is changed to be consistent with the envelope editor src function.

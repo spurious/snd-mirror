@@ -1329,6 +1329,11 @@ env *get_env(SCM e, SCM base, char *origin) /* list or vector in e */
   if (gh_vector_p(e))
     {
       len = gh_vector_length(e);
+      if (len == 0)
+	scm_throw(MUS_MISC_ERROR,
+		  SCM_LIST3(TO_SCM_STRING(origin),
+			    TO_SCM_STRING("null env"),
+			    e));
       buf = (Float *)CALLOC(len, sizeof(Float));
       vdata = SCM_VELTS(e);
       for (i = 0; i < len; i++) 
@@ -1338,6 +1343,11 @@ env *get_env(SCM e, SCM base, char *origin) /* list or vector in e */
     if (gh_list_p(e))
       {
 	len = gh_length(e);
+      if (len == 0)
+	scm_throw(MUS_MISC_ERROR,
+		  SCM_LIST3(TO_SCM_STRING(origin),
+			    TO_SCM_STRING("null env"),
+			    e));
 	buf = (Float *)CALLOC(len, sizeof(Float));
         for (i = 0, lst = e; i < len; i++, lst = SCM_CDR(lst)) 
 	  buf[i] = TO_C_DOUBLE(SCM_CAR(lst));

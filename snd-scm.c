@@ -203,7 +203,7 @@ SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error handler */
 		      (SCM_EQ_P(tag, NO_SUCH_MENU)) || (SCM_EQ_P(tag, NO_SUCH_REGION)) ||
 		      (SCM_EQ_P(tag, NO_SUCH_CHANNEL)) || (SCM_EQ_P(tag, NO_SUCH_EDIT)) ||
 		      (SCM_EQ_P(tag, NO_SUCH_AXIS_INFO)) || (SCM_EQ_P(tag, NO_SUCH_AXIS_CONTEXT)) ||
-		      (SCM_EQ_P(tag, CANNOT_SAVE)) || (SCM_EQ_P(tag, CANNOT_PRINT)) ||
+		      (SCM_EQ_P(tag, CANNOT_SAVE)) || (SCM_EQ_P(tag, CANNOT_PRINT)) || (SCM_EQ_P(tag, BAD_ARITY)) ||
 		      (SCM_EQ_P(tag, IMPOSSIBLE_BOUNDS)) || (SCM_EQ_P(tag, NO_SUCH_SAMPLE)))
 		    {
 		      scm_display(tag, port);
@@ -280,41 +280,57 @@ SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error handler */
   return(tag);
 }
 
-int procedure_ok(SCM proc, int req_args, int opt_args, const char *caller, char *arg_name, int argn)
+char *procedure_ok(SCM proc, int req_args, int opt_args, const char *caller, const char *arg_name, int argn)
 {
   SCM arity_list;
-  int args, res = 0;
+  int args;
   if (!(gh_procedure_p(proc)))
     {
       if (SCM_NFALSEP(proc)) /* #f as explicit arg to clear */
-	snd_error("%s, arg %d to %s, is not a procedure!", arg_name, argn, caller);
+	return(mus_format("%s, arg %d to %s, is not a procedure!", arg_name, argn, caller));
     }
   else
     {
-#if (!HAVE_SCM_CREATE_HOOK)
-      return(1);
+#if (!HAVE_HOOKS)
+      return(NULL);
 #else
       arity_list = scm_i_procedure_arity(proc);
       snd_protect(arity_list);
       args = TO_SMALL_C_INT(gh_car(arity_list));
       if (args != req_args)
-	snd_error("%s, arg %d to %s, should take %d required argument%s, but instead takes %d",
-		  arg_name, argn, caller,
-		  req_args, (req_args != 1) ? "s" : "", args);
+	return(mus_format("%s, arg %d to %s, should take %d required argument%s, but instead takes %d",
+			  arg_name, argn, caller,
+			  req_args, 
+			  (req_args != 1) ? "s" : "", 
+			  args));
       else
 	{
 	  args = TO_SMALL_C_INT(gh_cadr(arity_list));
 	  if (args != opt_args)
-	    snd_error("%s, arg %d to %s, should take %d optional argument%s, but instead takes %d",
-		      arg_name, argn, caller,
-		      opt_args, (opt_args != 1) ? "s" : "", args);
+	    return(mus_format("%s, arg %d to %s, should take %d optional argument%s, but instead takes %d",
+			      arg_name, argn, caller,
+			      opt_args, 
+			      (opt_args != 1) ? "s" : "", 
+			      args));
 	  /* ignore &rest */
-	  else res = 1;
 	}
       snd_unprotect(arity_list);
 #endif
     }
-  return(res);
+  return(NULL);
+}
+
+int procedure_ok_with_error(SCM proc, int req_args, int opt_args, const char *caller, const char *arg_name, int argn)
+{
+  char *errmsg;
+  errmsg = procedure_ok(proc, req_args, opt_args, caller, arg_name, argn);
+  if (errmsg)
+    {
+      snd_error(errmsg);
+      FREE(errmsg);
+      return(0);
+    }
+  return(1);
 }
 
 SCM eval_str_wrapper(void *data)
@@ -1546,7 +1562,7 @@ static SCM g_set_search_procedure(SCM snd, SCM proc)
 		  (gh_procedure_p(sp->search_proc))) 
 		snd_unprotect(sp->search_proc);
 	      sp->search_proc = SCM_UNDEFINED;
-	      if (procedure_ok(proc, 1, 0, "find", "find procedure", 1))
+	      if (procedure_ok_with_error(proc, 1, 0, "find", "find procedure", 1))
 		{
 		  sp->search_proc = proc;
 		  snd_protect(proc);
@@ -1563,7 +1579,7 @@ static SCM g_set_search_procedure(SCM snd, SCM proc)
 	  (gh_procedure_p(ss->search_proc))) 
 	snd_unprotect(ss->search_proc);
       ss->search_proc = SCM_UNDEFINED;
-      if (procedure_ok(snd, 1, 0, "find", "find procedure", 1))
+      if (procedure_ok_with_error(snd, 1, 0, "find", "find procedure", 1))
 	{
 	  ss->search_proc = snd;
 	  snd_protect(snd);

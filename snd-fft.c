@@ -2201,19 +2201,23 @@ and a sample-reader to get the data, and should return a vct object containing t
 'name' is the transform's name, x-label is its x-axis label, and the relevant returned data \
 to be displayed goes from low to high (normally 0.0 to 1.0)"
 
-  SCM res = SCM_BOOL_F;
+  char *errmsg;
+  errmsg = procedure_ok(proc, 2, 0, S_add_transform, "func", 5);
+  if (errmsg)
+    scm_throw(BAD_ARITY,
+	      SCM_LIST3(TO_SCM_STRING(S_add_transform),
+			proc,
+			TO_SCM_STRING(errmsg)));
   SCM_ASSERT(gh_string_p(name), name, SCM_ARG1, S_add_transform);
   SCM_ASSERT(gh_string_p(xlabel), xlabel, SCM_ARG2, S_add_transform);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(lo)), lo, SCM_ARG3, S_add_transform);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(hi)), hi, SCM_ARG4, S_add_transform);
   SCM_ASSERT(gh_procedure_p(proc), proc, SCM_ARG5, S_add_transform);
-  if (procedure_ok(proc, 2, 0, S_add_transform, "func", 5))
-    res = TO_SMALL_SCM_INT(add_transform(TO_C_STRING(name),
-					 TO_C_STRING(xlabel),
-					 TO_C_DOUBLE(lo),
-					 TO_C_DOUBLE(hi),
-					 proc));
-  return(res);
+  return(TO_SMALL_SCM_INT(add_transform(TO_C_STRING(name),
+					TO_C_STRING(xlabel),
+					TO_C_DOUBLE(lo),
+					TO_C_DOUBLE(hi),
+					proc)));
 }
 
 static SCM g_transform_size(SCM snd, SCM chn)

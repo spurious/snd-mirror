@@ -6,12 +6,9 @@
  * TODO  in -separate mode (and elsewhere?) need to save description (sizes) of window/channels etc 
  *         but to make this work requires the load-side deferred resizing and reshaping
  *         and some way to access the sound-widget parent dialog, since otherwise widget-size is unsettable
- * TODO: similar split for make_fft_graph [needs sonogram etc??]
+ * TODO: similar split for make_fft_graph [needs sonogram etc??] -- complicated by background processes etc
  * TODO: decide about the "info" functions, fft-info? sync_info + accessors?
- * TODO: in gtk widget position to always be 0 0, or initial if using gdk_get_window_geometry?
- * TODO: run scheme code in background
- *         add-idler (lambda () ... returning background-quit or background-continue)
- *         remove-idler
+ * TODO: in gtk widget position to always 0 0, or initial if using gdk_get_window_geometry?
  */
 
 #if HAVE_GUILE && (!USE_NO_GUI)
