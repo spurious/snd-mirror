@@ -798,6 +798,12 @@
       (set! (optimization) (optimization))
       (if (not (equal? (optimization) 0)) 
 	  (snd-display ";optimization set def: ~A" (optimization)))
+      (set! (run-safety) (run-safety))
+      (if (not (equal? (run-safety) 0)) 
+	  (snd-display ";run-safety set def: ~A" (run-safety)))
+      (set! (clm-table-size) (clm-table-size))
+      (if (not (equal? (clm-table-size) 512)) 
+	  (snd-display ";clm-table-size set def: ~A" (clm-table-size)))
       (set! (verbose-cursor) (verbose-cursor))
       (if (not (equal? (verbose-cursor)  #f)) 
 	  (snd-display ";verbose-cursor set def: ~A" (verbose-cursor)))
@@ -1008,6 +1014,8 @@
 	'tiny-font (tiny-font) "6x12"
 	'transform-type (transform-type) 0 
 	'optimization (optimization) 0
+	'run-safety (run-safety) 0
+	'clm-table-size (clm-table-size) 512
 	'verbose-cursor (verbose-cursor) #f
 	'vu-font (vu-font) #f 
 	'vu-font-size (vu-font-size) 1.0 
@@ -37700,7 +37708,8 @@ EDITS: 2
 		  (bes-fm 2.5 .5 440 5.0 1.0 8.0)
 		  (chain-dsps 3 0.5 '(0 0 1 .1 2 0) (make-oscil 440))
 		  (chain-dsps 3.5 1.0 '(0 0 1 1 2 0) (make-one-zero .5) (make-readin "oboe.snd"))
-		  (vox 4 2 170 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 '(0 E 25 AE 35 ER 65 ER 75 I 100 UH) .05 .1)
+		  (vox 4 2 170 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 '(0 E 25 AE 35 ER 65 ER 75 I 100 UH) 
+		       '(.8 .15 .05) '(.005 .0125 .025) .05 .1)
 		  (p 5.0 :duration .5 :keyNum 36 :strike-velocity .5 :amp .4 :DryPedalResonanceFactor .25)
 		  (bobwhite 5.5)
 		  (scissor 2.0) 
@@ -49109,7 +49118,7 @@ EDITS: 2
 		     start-playing start-progress-report stop-player stop-playing swap-channels syncd-marks sync sound-properties temp-dir
 		     text-focus-color tiny-font track-sample-reader?  region-sample-reader? transform-dialog transform-sample
 		     transform-samples->vct transform-samples-size transform-type trap-segfault optimization unbind-key undo
-		     update-transform-graph update-time-graph update-lisp-graph update-sound
+		     update-transform-graph update-time-graph update-lisp-graph update-sound run-safety clm-table-size
 		     vct->samples vct->sound-file verbose-cursor view-sound vu-font vu-font-size vu-size wavelet-type
 		     time-graph?  time-graph-type wavo-hop wavo-trace window-height window-width window-x window-y
 		     with-mix-tags with-relative-panes with-gl write-peak-env-info-file x-axis-style 
@@ -49244,7 +49253,7 @@ EDITS: 2
 			 mus-b1 mus-b2 mus-cosines mus-data mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop
 			 mus-increment mus-length mus-location mus-phase mus-ramp mus-scaler vct-ref x-axis-label
 			 beats-per-minute filter-control-coeffs locsig-type mus-file-buffer-size 
-			 mus-rand-seed mus-width
+			 mus-rand-seed mus-width clm-table-size run-safety
 			 previous-files-sort-procedure phase-vocoder-amp-increments phase-vocoder-amps 
 			 phase-vocoder-freqs phase-vocoder-outctr phase-vocoder-phase-increments phase-vocoder-phases 
 			 quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
@@ -49939,7 +49948,7 @@ EDITS: 2
 			      show-selection-transform sinc-width temp-dir text-focus-color tiny-font
 			      trap-segfault optimization unbind-key verbose-cursor vu-font vu-font-size vu-size window-height
 			      window-width window-x window-y with-gl with-mix-tags x-axis-style beats-per-minute zoom-color zoom-focus-style mix-tag-height
-			      mix-tag-width with-relative-panes
+			      mix-tag-width with-relative-panes run-safety clm-table-size
 			      quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
 			      ))
 	      (gc))

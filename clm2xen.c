@@ -384,25 +384,25 @@ static XEN g_samples_to_seconds(XEN val)
 }
 
 /* can't use a variable *srate* directly here because the set! side would not communicate the change to C */
-static XEN g_srate(void) 
+static XEN g_mus_srate(void) 
 {
   #define H_mus_srate "(" S_mus_srate "): current sampling rate"
   return(C_TO_XEN_DOUBLE(mus_srate()));
 }
 
-static XEN g_set_srate(XEN val) 
+static XEN g_mus_set_srate(XEN val) 
 {
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_mus_srate, "a number");
   return(C_TO_XEN_DOUBLE(mus_set_srate(XEN_TO_C_DOUBLE(val))));
 }
 
-static XEN g_array_print_length(void) 
+static XEN g_mus_array_print_length(void) 
 {
   #define H_mus_array_print_length "(" S_mus_array_print_length "): current clm array print length (default is 8)"
   return(C_TO_XEN_INT(mus_array_print_length()));
 }
 
-static XEN g_set_array_print_length(XEN val) 
+static XEN g_mus_set_array_print_length(XEN val) 
 {
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_mus_array_print_length, "an integer");
   return(C_TO_XEN_INT(mus_set_array_print_length(XEN_TO_C_INT(val))));
@@ -1904,7 +1904,22 @@ static XEN g_mus_set_rand_seed(XEN a)
 
 /* ---------------- table lookup ---------------- */
 
-static int DEFAULT_TABLE_SIZE = 512;
+static int clm_table_size = 512;
+
+static XEN g_clm_table_size(void) {return(C_TO_XEN_INT((int)clm_table_size));}
+static XEN g_set_clm_table_size(XEN val) 
+{
+  int size;
+  #define H_clm_table_size "(" S_clm_table_size "): the default table size for most generators (512)"
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set! " S_clm_table_size, "an integer");
+  size = XEN_TO_C_INT(val);
+  if ((size <= 0) || (size > MAX_TABLE_SIZE))
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_clm_table_size, XEN_ARG_1, val, "invalid size: ~A");
+  clm_table_size = size;
+  return(C_TO_XEN_INT(clm_table_size));
+}
+
+
 
 static XEN g_table_lookup_p(XEN obj) 
 {
@@ -1935,10 +1950,10 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
 			 partials));
   if ((XEN_NOT_BOUND_P(utable)) || (!(VCT_P(utable))))
     {
-      wave = (Float *)CALLOC(DEFAULT_TABLE_SIZE, sizeof(Float));
+      wave = (Float *)CALLOC(clm_table_size, sizeof(Float));
       if (wave == NULL)
 	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate wave table"));
-      table = make_vct(DEFAULT_TABLE_SIZE, wave);
+      table = make_vct(clm_table_size, wave);
     }
   else table = utable;
   f = TO_VCT(table);
@@ -1975,10 +1990,10 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
 			 partials));
   if ((XEN_NOT_BOUND_P(utable)) || (!(VCT_P(utable))))
     {
-      wave = (Float *)CALLOC(DEFAULT_TABLE_SIZE, sizeof(Float));
+      wave = (Float *)CALLOC(clm_table_size, sizeof(Float));
       if (wave == NULL)
 	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate wave table"));
-      table = make_vct(DEFAULT_TABLE_SIZE, wave);
+      table = make_vct(clm_table_size, wave);
     }
   else table = utable;
   f = TO_VCT(table);
@@ -2001,7 +2016,7 @@ The default table size is 512; use :size to set some other size, or pass your ow
 is the same in effect as " S_make_oscil "."
 
   mus_any *ge;
-  int vals, i, arglist_len, table_size = DEFAULT_TABLE_SIZE;
+  int vals, i, arglist_len, table_size = clm_table_size;
   bool need_free = false;
   XEN args[MAX_ARGLIST_LEN]; 
   XEN keys[5];
@@ -2876,7 +2891,7 @@ processing, normally involving overlap-adds."
   int orig_arg[2] = {0, 0};
   int vals;
   Float *buf;
-  int siz = DEFAULT_TABLE_SIZE;
+  int siz = clm_table_size;
   Float filltime = 0.0;
   keys[0] = kw_size;
   keys[1] = kw_fill_time;
@@ -2967,7 +2982,7 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
   XEN args[MAX_ARGLIST_LEN]; 
   XEN keys[5];
   int orig_arg[5] = {0, 0, 0, 0, MUS_INTERP_LINEAR};
-  int vals, i, arglist_len, wsize = DEFAULT_TABLE_SIZE;
+  int vals, i, arglist_len, wsize = clm_table_size;
   bool need_free = false;
   vct *v = NULL;
   Float freq = 440.0;
@@ -3084,7 +3099,7 @@ is the same in effect as make-oscil"
   vct *v = NULL;
   Float freq = 440.0;
   Float *wave = NULL, *partials = NULL;
-  wsize = DEFAULT_TABLE_SIZE;
+  wsize = clm_table_size;
   keys[0] = kw_frequency;
   keys[1] = kw_partials;
   keys[2] = kw_size;
@@ -3165,7 +3180,7 @@ returns partial 2 twice as loud as 3."
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(s_size), s_size, XEN_ARG_2, S_partials_to_waveshape, "an integer");
   if (XEN_INTEGER_P(s_size))
     size = XEN_TO_C_INT(s_size);
-  else size = DEFAULT_TABLE_SIZE;
+  else size = clm_table_size;
   if ((size <= 0) || (size > MAX_TABLE_SIZE))
     XEN_OUT_OF_RANGE_ERROR(S_partials_to_waveshape, 2, s_size, "~A: bad size?");
   if (len == 0)
@@ -5111,10 +5126,10 @@ XEN mus_wrap_generator(mus_any *gen)
 /* ---------------- export ---------------- */
 
 #ifdef XEN_ARGIFY_1
-XEN_NARGIFY_0(g_srate_w, g_srate)
-XEN_NARGIFY_1(g_set_srate_w, g_set_srate)
-XEN_NARGIFY_0(g_array_print_length_w, g_array_print_length)
-XEN_NARGIFY_1(g_set_array_print_length_w, g_set_array_print_length)
+XEN_NARGIFY_0(g_mus_srate_w, g_mus_srate)
+XEN_NARGIFY_1(g_mus_set_srate_w, g_mus_set_srate)
+XEN_NARGIFY_0(g_mus_array_print_length_w, g_mus_array_print_length)
+XEN_NARGIFY_1(g_mus_set_array_print_length_w, g_mus_set_array_print_length)
 XEN_NARGIFY_1(g_radians_to_hz_w, g_radians_to_hz)
 XEN_NARGIFY_1(g_hz_to_radians_w, g_hz_to_radians)
 XEN_NARGIFY_1(g_radians_to_degrees_w, g_radians_to_degrees)
@@ -5373,11 +5388,13 @@ XEN_ARGIFY_7(g_mus_mix_w, g_mus_mix)
 XEN_ARGIFY_4(g_make_ssb_am_w, g_make_ssb_am)
 XEN_ARGIFY_3(g_ssb_am_w, g_ssb_am)
 XEN_NARGIFY_1(g_ssb_am_p_w, g_ssb_am_p)
+XEN_NARGIFY_0(g_clm_table_size_w, g_clm_table_size)
+XEN_NARGIFY_1(g_set_clm_table_size_w, g_set_clm_table_size)
 #else
-#define g_srate_w g_srate
-#define g_set_srate_w g_set_srate
-#define g_array_print_length_w g_array_print_length
-#define g_set_array_print_length_w g_set_array_print_length
+#define g_mus_srate_w g_mus_srate
+#define g_mus_set_srate_w g_mus_set_srate
+#define g_mus_array_print_length_w g_mus_array_print_length
+#define g_mus_set_array_print_length_w g_mus_set_array_print_length
 #define g_radians_to_hz_w g_radians_to_hz
 #define g_hz_to_radians_w g_hz_to_radians
 #define g_radians_to_degrees_w g_radians_to_degrees
@@ -5636,6 +5653,8 @@ XEN_NARGIFY_1(g_ssb_am_p_w, g_ssb_am_p)
 #define g_make_ssb_am_w g_make_ssb_am
 #define g_ssb_am_w g_ssb_am
 #define g_ssb_am_p_w g_ssb_am_p
+#define g_clm_table_size_w g_clm_table_size
+#define g_set_clm_table_size_w g_set_clm_table_size
 #endif
 
 #if WITH_MODULES
@@ -5686,11 +5705,12 @@ void mus_xen_init(void)
 
   init_keywords();
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_srate, g_srate_w, H_mus_srate,
-				   S_setB S_mus_srate, g_set_srate_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_array_print_length, g_array_print_length_w, H_mus_array_print_length,
-				   S_setB S_mus_array_print_length, g_set_array_print_length_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_srate, g_mus_srate_w, H_mus_srate,
+				   S_setB S_mus_srate, g_mus_set_srate_w, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_array_print_length, g_mus_array_print_length_w, H_mus_array_print_length,
+				   S_setB S_mus_array_print_length, g_mus_set_array_print_length_w, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_clm_table_size, g_clm_table_size_w, H_clm_table_size,
+				   S_setB S_clm_table_size, g_set_clm_table_size_w, 0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE(S_radians_to_hz,        g_radians_to_hz_w,        1, 0, 0, H_radians_to_hz);
   XEN_DEFINE_PROCEDURE(S_hz_to_radians,        g_hz_to_radians_w,        1, 0, 0, H_hz_to_radians);
@@ -6104,6 +6124,8 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_cauchy_window,
 	       S_clear_array,
 	       S_clear_sincs,
+	       S_clm_print,
+	       S_clm_table_size,
 	       S_comb,
 	       S_comb_p,
 	       S_connes_window,

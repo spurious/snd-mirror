@@ -1174,6 +1174,7 @@ Does not work.
 	     (set! dim (list-ref lastpainted level))
 	     
 	     (if (or force
+		     (not (car dim))
 		     (not (= x (car dim))))
 		 (begin
 		   (set! old-color (foreground-color))

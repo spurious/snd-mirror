@@ -92,13 +92,27 @@ static XEN optimization_hook;
 
 #if HAVE_GUILE && WITH_RUN && HAVE_STRINGIZE
 
-enum {RUN_WILD, RUN_WITH_HELMET, RUN_WITH_HELMET_AND_KNEE_PADS};
-static int run_safety = RUN_WILD;
+#define S_run_safety "run-safety"
+typedef enum {RUN_UNSAFE, RUN_SAFE} run_safety_t;
+static run_safety_t run_safety = RUN_UNSAFE;
 
-/* TODO: *clm-safety* equivalent -- if 1: add gen/array existence checks -- should these be built-into clm.c?
- * TODO: vox seems very slow (and why is it unrolled?)
+/* TODO:                                   [*clm-safety*] -- needs implementation/test
+ *                                         [*clm-file-buffer-size*] -- needs test
+ *                                         [*clm-locsig-type*] -- test
+ *                                         [*clm-table-size*] -- needs test
+ *                                         [*clm-array-print-length*] -- needs test
+ *
+ *   *clm-clipped* -- is it safe to use mus-file-data-clipped here?
+ *   
+ * max amp reported should  be preclipped/prescaled value
+ *  report rev maxes
+ * test with-midi switch both ways
+ *
+ * safety: any gen ref: check gen_p first -- if err how to exit?
+ *         any array/vct ref: check arr ok and index against bounds
+ *         any possibly complex result? -- sqrt of neg, acos > 1 etc -- are these worth tracking down?
+ *         any NaNs? -- these do happen
  */
-
 
 #define Int off_t
 #define INT_PT  "i%d(%lld)"
@@ -11071,6 +11085,16 @@ static XEN g_set_optimization(XEN val)
   return(C_TO_XEN_INT(optimization(ss)));
 }
 
+static XEN g_run_safety(void) {return(C_TO_XEN_INT((int)run_safety));}
+static XEN g_set_run_safety(XEN val) 
+{
+  #define H_run_safety "(" S_run_safety "): the current 'run' safety level (default 0 = off)"
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set! " S_run_safety, "an integer");
+  run_safety = (run_safety_t)XEN_TO_C_INT(val);
+  if ((run_safety != 0) && (run_safety != 1)) run_safety = 1;
+  return(C_TO_XEN_INT((int)run_safety));
+}
+
 #if WITH_RUN
 static XEN g_run(XEN proc_and_code)
 {
@@ -11097,10 +11121,14 @@ to Guile and is equivalent to (thunk)."
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_0(g_optimization_w, g_optimization)
 XEN_NARGIFY_1(g_set_optimization_w, g_set_optimization)
+XEN_NARGIFY_0(g_run_safety_w, g_run_safety)
+XEN_NARGIFY_1(g_set_run_safety_w, g_set_run_safety)
 XEN_NARGIFY_2(g_vct_map_w, g_vct_map)
 #else
 #define g_optimization_w g_optimization
 #define g_set_optimization_w g_set_optimization
+#define g_run_safety_w g_run_safety
+#define g_set_run_safety_w g_set_run_safety
 #define g_vct_map_w g_vct_map
 #endif
 
@@ -11646,6 +11674,8 @@ void g_init_run(void)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_optimization, g_optimization_w, H_optimization,
 				   S_setB S_optimization, g_set_optimization_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_run_safety, g_run_safety_w, H_run_safety,
+				   S_setB S_run_safety, g_set_run_safety_w,  0, 0, 1, 0);
 
 #if HAVE_GUILE
   #define H_optimization_hook S_optimization_hook " (msg): called if the run macro encounters \

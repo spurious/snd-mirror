@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA PACKAGE VERSION GUILE_LIBS GUILE_CFLAGS FFTW_LIBS GSL_CONFIG GSL_LIBS GSL_CFLAGS X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS XLIBS XFLAGS PKG_CONFIG GTK_CFLAGS GTK_LIBS GTK_LD_LIBS GX_FILES GX_HEADERS GL_LIBS GL_FILES GL_FLAGS XM_LIBS AUDIO_LIB LDSO_FLAGS SO_INSTALL SO_LD A_LD A_LD_FLAGS SNDLIB_CONFIG SNDLIB_FILES SNDLIB_LIB SET_MAKE MKINSTALLDIRS MSGFMT GMSGFMT XGETTEXT MSGMERGE USE_NLS LIBICONV LTLIBICONV INTLLIBS LIBINTL LTLIBINTL POSUB MAKE_TARGET LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA PACKAGE VERSION GUILE_LIBS GUILE_CFLAGS FFTW_LIBS GSL_CONFIG GSL_LIBS GSL_CFLAGS X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS XLIBS XFLAGS PKG_CONFIG GTK_CFLAGS GTK_LIBS GTK_LD_LIBS GX_FILES GX_HEADERS GL_LIBS GL_FILES GL_FLAGS XM_LIBS AUDIO_LIB LDSO_FLAGS SO_INSTALL SO_LD A_LD A_LD_FLAGS MIDI_FILES SNDLIB_CONFIG SNDLIB_FILES SNDLIB_LIB SET_MAKE MKINSTALLDIRS MSGFMT GMSGFMT XGETTEXT MSGMERGE USE_NLS LIBICONV LTLIBICONV INTLLIBS LIBINTL LTLIBINTL POSUB MAKE_TARGET LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -881,6 +881,7 @@ Optional Packages:
   --with-x11		  include X funcs from xm.c with xg.c
   --with-hobbit 	  include hobbit-style function arity checking
   --with-builtin-gtkrc	  include built-in gtkrc fallbacks
+  --with-midi		  include sndlib midi module
   --with-gsl		  use GSL, default=yes
   --with-fftw		  use fftw, default=yes
   --with-xpm		  use xpm, default=yes
@@ -2940,6 +2941,7 @@ _ACEOF
 #   --without-xpm         omit XPM even if it exists (for testing)
 #   --without-xp          omit libXp even if it exists (for testing)
 #   --with-profiling      add profiling flags (for testing)
+#   --with-midi           include sndlib midi module
 #   GUILE_CONFIG_path     where to look for guile-config
 #   GUILE_CONFIG_name     Fink (OSX) includes guile-config under funny names
 #   GUILE_name            same problem
@@ -3067,6 +3069,12 @@ fi;
 # Check whether --with-builtin-gtkrc or --without-builtin-gtkrc was given.
 if test "${with_builtin_gtkrc+set}" = set; then
   withval="$with_builtin_gtkrc"
+
+fi;
+
+# Check whether --with-midi or --without-midi was given.
+if test "${with_midi+set}" = set; then
+  withval="$with_midi"
 
 fi;
 
@@ -19992,6 +20000,16 @@ fi
 # check against needed version (17.2 for now -- need c_vct_copy in vct.c)
 # set SNDLIB_FILES and SNDLIB_LIB
 
+MIDI_FILES=""
+if test "$with_midi" = yes; then
+  MIDI_FILES="MIDI_O_FILES"
+  cat >>confdefs.h <<\_ACEOF
+#define WITH_MIDI 1
+_ACEOF
+
+fi
+
+
 SNDLIB_FILES="SNDLIB_O_FILES"
 if test "$enable_snd_debug" != yes ; then
   SNDLIB_LIB=""
@@ -22686,6 +22704,7 @@ s,@SO_INSTALL@,$SO_INSTALL,;t t
 s,@SO_LD@,$SO_LD,;t t
 s,@A_LD@,$A_LD,;t t
 s,@A_LD_FLAGS@,$A_LD_FLAGS,;t t
+s,@MIDI_FILES@,$MIDI_FILES,;t t
 s,@SNDLIB_CONFIG@,$SNDLIB_CONFIG,;t t
 s,@SNDLIB_FILES@,$SNDLIB_FILES,;t t
 s,@SNDLIB_LIB@,$SNDLIB_LIB,;t t

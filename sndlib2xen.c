@@ -28,6 +28,9 @@
 #endif
 #endif
 
+/* TODO: user (scheme-level) defined mus-print/mus-error handlers 
+*/
+
 void mus_misc_error(const char *caller, char *msg, XEN val)
 {
   if (msg)

@@ -65,6 +65,7 @@ AC_DEFINE_UNQUOTED(CONFIGURE_ARGS, "$INVOKED_ARGS")
 #   --without-xpm         omit XPM even if it exists (for testing)
 #   --without-xp          omit libXp even if it exists (for testing)
 #   --with-profiling      add profiling flags (for testing)
+#   --with-midi           include sndlib midi module
 #   GUILE_CONFIG_path     where to look for guile-config
 #   GUILE_CONFIG_name     Fink (OSX) includes guile-config under funny names
 #   GUILE_name            same problem
@@ -94,6 +95,7 @@ AC_ARG_WITH(ladspa,	 [  --with-ladspa  	  include support for LADSPA plugins])
 AC_ARG_WITH(x11,	 [  --with-x11		  include X funcs from xm.c with xg.c])
 AC_ARG_WITH(hobbit,      [  --with-hobbit 	  include hobbit-style function arity checking])
 AC_ARG_WITH(builtin-gtkrc,[  --with-builtin-gtkrc	  include built-in gtkrc fallbacks])
+AC_ARG_WITH(midi,        [  --with-midi		  include sndlib midi module])
 
 # these are primarily for testing
 AC_ARG_WITH(gsl,         [  --with-gsl		  use GSL, default=yes])
@@ -1373,6 +1375,13 @@ fi
 # look for sndlib-config, check mus_sample_bits against current choice [with-float-sample, with-sample-width]
 # check against needed version (17.2 for now -- need c_vct_copy in vct.c)
 # set SNDLIB_FILES and SNDLIB_LIB
+
+MIDI_FILES=""
+if test "$with_midi" = yes; then
+  MIDI_FILES="MIDI_O_FILES"
+  AC_DEFINE(WITH_MIDI)
+fi
+AC_SUBST(MIDI_FILES)
 
 SNDLIB_FILES="SNDLIB_O_FILES"
 if test "$enable_snd_debug" != yes ; then

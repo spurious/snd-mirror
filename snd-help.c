@@ -380,16 +380,15 @@ void about_snd_help(void)
 	    "\nRecent changes include:\n\
 \n\
 2-Aug:   players: returns list of active players\n\
+         run-safety: add error checking to run macro code\n\
+         clm-table-size: default table size in clm\n\
+         --with-midi configuration switch\n\
 27-Jul:  --with-hobbit and --with-builtin-gtkrc configure switches\n\
          clm23.scm.\n\
 30-Jun:  snd-hobbit.scm thanks to Kjetil\n\
          snd 7.5.\n\
 23-Jun:  new configure variables GUILE_CONFIG_name and GUILE_name (for OSX/fink)\n\
          cursor-location-offset\n\
-18-Jun:  ssb-fm in dsp.scm.\n\
-10-Jun:  gtk support in fft-menu.scm thanks to Kjetil\n\
-         ssb-bank in dsp.scm.\n\
-9-Jun:   ssb-am in CLM.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

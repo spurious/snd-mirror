@@ -172,6 +172,11 @@ returning you to the true top-level."
 (define *clm-reverb* #f)
 (define *clm-reverb-channels* 1)
 (define *clm-reverb-data* '())
+(define *clm-table-size* 512)
+(define *clm-file-buffer-size* 65536)
+(define *clm-locsig-type* mus-interp-linear)
+(define *clm-clipped* #t)
+(define *clm-array-print-length* 8)
 
 (define *to-snd* #t)
 
@@ -192,7 +197,7 @@ returning you to the true top-level."
 				  (header-type *clm-header-type*)
 				  (data-format *clm-data-format*)
 				  (comment #f)
-				  ;(verbose *clm-verbose*)
+				  (verbose *clm-verbose*)
 				  (reverb *clm-reverb*)
 				  (revfile "test.rev")
 				  (reverb-data *clm-reverb-data*)
@@ -202,19 +207,25 @@ returning you to the true top-level."
 				  (scaled-to #f)
 				  (play *clm-play*)
 				  (to-snd *to-snd*)
+				  (clipped *clm-clipped*)
 				  (scaled-by #f))
   (let ((old-srate (mus-srate))
 	(old-*output* *output*)
 	(old-*reverb* *reverb*)
 	(in-debugger #f)
+	(old-verbose *clm-verbose*)
 	(output-1 output)) ; protect during nesting
     (dynamic-wind 
 
      (lambda () 
+       (set! *clm-verbose* verbose)
+       (set! (clm-table-size) *clm-table-size*)
+       (set! (mus-file-buffer-size) *clm-file-buffer-size*)
+       (set! (locsig-type) *clm-locsig-type*)
+       (set! (mus-array-print-length) *clm-array-print-length*)
        (set! (mus-srate) srate))
 
      (lambda ()
-
        (if continue-old-file
 	   (begin
 	     (set! *output* (continue-sample->file output-1))
@@ -292,6 +303,7 @@ returning you to the true top-level."
 	 output-1))
 
      (lambda () 
+       (set! *clm-verbose* old-verbose)
        (if (not in-debugger)
 	   (begin
 	     (if *reverb*

@@ -2910,7 +2910,7 @@ void g_initialize_gh(void)
   init_sndlib();
 #endif
 
-#if HAVE_EXTENSION_LANGUAGE
+#if WITH_MIDI && HAVE_EXTENSION_LANGUAGE
   mus_midi_init();
 #endif
 

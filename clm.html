@@ -3312,29 +3312,29 @@ do this is with with-sound or clm-load.
 <pre>
  <a class=def name="with-sound">with-sound</a> &amp;key 
    ;; "With-sound: check it out!" -- Duane Kuiper, Giants broadcaster after Strawberry homer
-   (<i>output</i> <a href="#*clm-file-name*">*clm-file-name*</a>)  ; name of output sound file ("test.snd" normally)
-   (<i>channels</i> <a href="#*clm-channels*">*clm-channels*</a>) ; can be any number (defaults to 1, see defaults.lisp)
-   (<i>srate</i> <a href="#*clm-srate*">*clm-srate*</a>)       ; also 'sampling-rate' for backwards compatibility
-   <i>continue-old-file</i>         ; open and continue old output file
-   <i>reverb</i>                    ; name of the reverberator, if any.  The reverb
-                             ;   is a normal clm instrument (see <a href="nrev.ins">nrev.ins</a>)
-   <i>reverb-data</i>               ; arguments passed to the reverberator; an unquoted list
-   (<i>reverb-channels</i> 1)       ; chans in temp reverb stream (input to reverb)
-   <i>revfile</i>                   ; reverb file name
-   (<i>play</i> *clm-play*)         ; play new sound automatically?
-   (<i>notehook</i> *clm-notehook*) ; function evaluated on each instrument call
-   <i>statistics</i>                ; print out various fascinating numbers
-   (<i>decay-time</i> 1.0)          ; ring time of reverb after end of piece
-   <i>comment</i>                   ; comment placed in header
-   <i>info</i>                      ; non-comment header string
-   (<i>header-type</i> <a href="#*clm-header-type*">*clm-header-type*</a>)  ; output file type (see also <a href="#header-types">header types</a>)
-   (<i>data-format</i> <a href="#*clm-data-format*">*clm-data-format*</a>)  ; output data format (see <a href="#header-types">header types</a>)
-   <i>save-body</i>                 ; if t, copy the body (as a string) into the header
-   <i>scaled-to</i>                 ; if a number, scale results to have that max amp
-   <i>scaled-by</i>                 ; scale output by some number
-   (<i>clipped</i> *clm-clipped*)   ; if t, clip output rather than allowing data to wrap-around
-   (<i>verbose</i> <em class=emdef>*clm-verbose*</em>)
-   (<i>force-recomputation</i> nil) ; if t, force with-mix calls to recompute
+   (<i>output</i> <a href="#*clm-file-name*">*clm-file-name*</a>)        ; name of output sound file ("test.snd" normally)
+   (<i>channels</i> <a href="#*clm-channels*">*clm-channels*</a>)       ; can be any number (defaults to 1, see defaults.lisp)
+   (<i>srate</i> <a href="#*clm-srate*">*clm-srate*</a>)             ; also 'sampling-rate' for backwards compatibility
+   <i>continue-old-file</i>               ; open and continue old output file
+   <i>reverb</i>                          ; name of the reverberator, if any.  The reverb
+                                   ;   is a normal clm instrument (see <a href="nrev.ins">nrev.ins</a>)
+   <i>reverb-data</i>                     ; arguments passed to the reverberator; an unquoted list
+   (<i>reverb-channels</i> *clm-reverb-channels*) ; chans in temp reverb stream (input to reverb)
+   <i>revfile</i>                         ; reverb file name
+   (<i>play</i> *clm-play*)               ; play new sound automatically?
+   (<i>notehook</i> *clm-notehook*)       ; function evaluated on each instrument call
+   (<i>statistics</i> *clm-statistics*)   ; print out various fascinating numbers
+   (<i>decay-time</i> 1.0)                ; ring time of reverb after end of piece
+   <i>comment</i>                         ; comment placed in header
+   <i>info</i>                            ; non-comment header string
+   (<i>header-type</i> <a href="#*clm-header-type*">*clm-header-type*</a>) ; output file type (see also <a href="#header-types">header types</a>)
+   (<i>data-format</i> <a href="#*clm-data-format*">*clm-data-format*</a>) ; output data format (see <a href="#header-types">header types</a>)
+   <i>save-body</i>                       ; if t, copy the body (as a string) into the header
+   <i>scaled-to</i>                       ; if a number, scale results to have that max amp
+   <i>scaled-by</i>                       ; scale output by some number
+   (<i>clipped</i> *clm-clipped*)         ; if t, clip output rather than allowing data to wrap-around
+   (<i>verbose</i> <em class=emdef>*clm-verbose*</em>)         ; some instruments use this to display info during computation
+   (<i>force-recomputation</i> nil)       ; if t, force with-mix calls to recompute
 </pre>
 <p><b>with-sound</b> is a macro that performs all the various services needed to
 produce and play a sound file; it also wraps an unwind-protect around its body to
@@ -3697,27 +3697,30 @@ current dynamic value of that variable is *&lt;var&gt;*.
 </p>
 
 <pre>
+  <a class=def Name="*clm-array-print-length*">*clm-array-print-length*</a> number of IO data buffer elements printed
+  <a class=def Name="*clm-channels*">*clm-channels*</a>           default output channels (1)
+  <a class=def Name="*clm-clipped*">*clm-clipped*</a>            default for clipped arg in with-sound
+  <a class=def Name="*clm-dac-wait-default*">*clm-dac-wait-default*</a> default choice of whether play function should wait for completion
+  <a class=def Name="*clm-data-format*">*clm-data-format*</a>        default output sound file data format
+  <a class=def Name="*clm-date*">*clm-date*</a>               creation date of the current version
+  <a class=def Name="*clm-delete-reverb*">*clm-delete-reverb*</a>      should with-sound delete the temporary reverb output (default nil)
+  <a class=def Name="*clm-file-buffer-size*">*clm-file-buffer-size*</a>   IO buffer sizes 
   <a class=def Name="*clm-file-name*">*clm-file-name*</a>          default sound file name
   <a class=def Name="*clm-header-type*">*clm-header-type*</a>        default output sound file header type
-  <a class=def Name="*clm-data-format*">*clm-data-format*</a>        default output sound file data format
-  <a class=def Name="*clm-table-size*">*clm-table-size*</a>         default table-lookup table size
-  <a class=def Name="*clm-srate*">*clm-srate*</a>              default sampling rate (22050)
-  <a class=def Name="*clm-channels*">*clm-channels*</a>           default output channels (1)
-  <a class=def Name="*clm-delete-reverb*">*clm-delete-reverb*</a>      should with-sound delete the temporary reverb output (default nil)
-  <a class=def Name="*clm-play*">*clm-play*</a>               default for play arg in with-sound
-  <a class=def Name="*clm-clipped*">*clm-clipped*</a>            default for clipped arg in with-sound
-  <a class=def Name="*clm-notehook*">*clm-notehook*</a>           default for notehook arg in with-sound
   <a class=def Name="*clm-init*">*clm-init*</a>               name of site-specific initializations (see <a href="#clm-init.lisp">clm-init.lisp</a>)
-  <a class=def Name="*clm-array-print-length*">*clm-array-print-length*</a> number of IO data buffer elements printed
-  <a class=def Name="*clm-player*">*clm-player*</a>             user-supplied DAC funtion
-  <a class=def Name="*clm-file-buffer-size*">*clm-file-buffer-size*</a>   IO buffer sizes 
-  <a class=def Name="*clm-search-list*">*clm-search-list*</a>        pathname list for file searches (open-input*)
   <a class=def Name="*clm-instruments*">*clm-instruments*</a>        list of the currently loaded clm instruments
-  <a class=def Name="*clm-news*">*clm-news*</a>               brief list of recent changes (HISTORY.clm)
-  <a class=def Name="*clm-version*">*clm-version*</a>            version identifier (a number -- also *clm-revision*)
-  <a class=def Name="*clm-date*">*clm-date*</a>               creation date of the current version
-  <a class=def Name="*clm-safety*">*clm-safety*</a>             default safety setting (run loop debugging choices)
   <a class=def Name="*clm-locsig-type*">*clm-locsig-type*</a>        locsig interpolation choice (mus-interp-linear or mus-interp-sinusoidal)
+  <a class=def Name="*clm-news*">*clm-news*</a>               brief list of recent changes (HISTORY.clm)
+  <a class=def Name="*clm-notehook*">*clm-notehook*</a>           default for notehook arg in with-sound
+  <a class=def Name="*clm-play*">*clm-play*</a>               default for play arg in with-sound
+  <a class=def Name="*clm-player*">*clm-player*</a>             user-supplied DAC function
+  <a class=def Name="*clm-reverb-channels*">*clm-reverb-channels*</a>    reverb stream chans in with-sound
+  <a class=def Name="*clm-safety*">*clm-safety*</a>             default safety setting (run loop debugging choices)
+  <a class=def Name="*clm-search-list*">*clm-search-list*</a>        pathname list for file searches (open-input*)
+  <a class=def Name="*clm-srate*">*clm-srate*</a>              default sampling rate (22050)
+  <a class=def Name="*clm-statistics*">*clm-statistics*</a>         default statistics arg in with-sound
+  <a class=def Name="*clm-table-size*">*clm-table-size*</a>         default table-lookup table size
+  <a class=def Name="*clm-version*">*clm-version*</a>            version identifier (a number -- also *clm-revision*)
   <a class=def Name="*output*">*output*</a>                 current output stream (for outa and friends)
   <a class=def Name="*reverb*">*reverb*</a>                 current reverb stream
   <a class=def Name="two-pi">two-pi</a>                   2*pi

@@ -1,6 +1,9 @@
 Snd change log
 
   2-Aug:     players: returns list of active players
+             run-safety: add error checking to run macro code
+             clm-table-size: default table size in clm
+	     --with-midi configuration switch
   27-Jul:    --with-hobbit and --with-builtin-gtkrc configure switches
              clm23.scm
   14-Jul:    new file: NEWS

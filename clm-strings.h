@@ -23,6 +23,7 @@
 #define S_clear_array                "clear-array"
 #define S_clear_sincs                "clear-sincs"
 #define S_clm_print                  "clm-print"
+#define S_clm_table_size             "clm-table-size"
 #define S_comb                       "comb"
 #define S_comb_p                     "comb?"
 #define S_connes_window              "connes-window"

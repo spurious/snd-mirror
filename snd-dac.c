@@ -520,6 +520,7 @@ static void cleanup_dac_hook(void);
 
 void cleanup_dac(void)
 {
+  /* called only from snd_exit_cleanly in snd-main.c */
   int i;
   if (dac_running) 
     for (i = 0; i < MAX_DEVICES; i++) 

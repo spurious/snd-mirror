@@ -4505,6 +4505,8 @@ static int alsa_mus_audio_open_input(int ur_dev, int srate, int chans, int forma
 
 /* sndlib support for closing a device */
 
+/* to force it to stop, snd_pcm_drop */
+
 static int alsa_mus_audio_close(int id)
 {
     int err = 0;
