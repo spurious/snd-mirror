@@ -7988,6 +7988,14 @@ run
 (XtOverrideTranslations (list-ref (main-widgets) 4) (XtParseTranslationTable "Ctrl <Key>i: hiho()\n"))
 <!-- --></pre></td></tr></table><br></td></tr>
 <!-- -->
+<!-- change-property -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="changeproperty">change-property</a></em> (known-atom property value)</code></span></td></tr>
+<!-- --><tr><td width=150></td><td>
+<!-- --><i>change-property</i> changes an X-window's property; there's an example in examp.scm. 
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
 <!-- clear-audio-inputs -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="sndclearaudioinputs">clear-audio-inputs</a></em> ()</code></span></td></tr>
@@ -8120,6 +8128,24 @@ run
 <!-- --><span class=defbox><code><em class=def><a name="keybinding">key-binding</a></em> (key state extended)</code></span></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->the (user-defined, not built-in) procedure currently bound to key+state+extended.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- listener-selection -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="listenerselection">listener-selection</a></em> ()</code></span></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->
+<!-- --><i>listener-selection</i> returns the currently selected text in the listener, or #f if there isn't any.  The following code 
+<!-- -->starts the help dialog with help related to the selection if "h" is typed in the graph:
+<!-- --><pre>
+<!-- -->  (bind-key (char-&gt;integer #\h) 0 
+<!-- -->    (lambda ()
+<!-- -->      (let ((subject (<em class=red>listener-selection</em>)))
+<!-- -->	(if subject
+<!-- -->            (help-dialog subject (snd-help subject))))))
+<!-- --></pre>
+<!-- -->
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -8663,6 +8689,16 @@ The lowest level procedures are:
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
+<!-- colormap-ref -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="colormapref">colormap-ref</a></em> (map pos)</code></span></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- --><p><i>colormap-ref</i> returns the rgb values of the colormap <i>map</i> at position <i>pos</i>,
+<!-- -->suitable for use with make-color.  'map' can be a number
+<!-- -->between 0.0 and 1.0 with 'pos' omitted; in this case the colormap choice and so on comes from the color dialog.
+<!-- --></td></tr><tr><td colspan=2></td></tr>
+<!-- -->
 <!-- copy-context -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="copycontext">copy-context</a></em></code></span></td></tr>
@@ -8988,6 +9024,18 @@ The lowest level procedures are:
 <!-- -->the graphics context for XOR drawing in the selection color.</td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
+<!-- snd-gcs -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndgcs">snd-gcs</a></em></code></span></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- --><i>snd-gcs</i> returns a list of Snd's graphics contexts (intended for use with the xm module in snd-motif.scm):
+<!-- -->(0)basic (1)selected_basic (2)combined (3)cursor (4)selected_cursor (5)selection (6)selected_selection 
+<!-- -->(7)erase (8)selected_erase (9)mark (10)selected_mark (11)mix (12)selected_mix (13)fltenv_basic (14)fltenv_data.
+<!-- --><tr><td></td><td>
+<!-- -->
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
 <!-- with-gl -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="withgl">with-gl</a></em></code></span></td></tr>
@@ -8997,41 +9045,6 @@ The lowest level procedures are:
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- --></table>
-
-
-<p>This only scratches the surface of these functions; I'll eventually 
-collect more examples into draw.scm.
-</p>
-
-<br>
-<p>leftovers...</p>
-<pre>
-  <b><a name="changeproperty">change-property</a></b> (known-atom property value)
-  <b><a name="listenerselection">listener-selection</a></b> ()
-  <b><a name="colormapref">colormap-ref</a></b> (map position)
-  <b><a name="sndgcs">snd-gcs</a></b>
-</pre>
-<p><i>change-property</i> changes an X-window's property; there's an example in examp.scm. <i>listener-selection</i>
-returns the currently selected text in the listener, or #f if there isn't any.  The following posts help related
-to the selection if "h" is typed in the graph:
-</p>
-<pre>
-  (bind-key (char-&gt;integer #\h) 0 
-    (lambda ()
-      (let ((subject (<em class=red>listener-selection</em>)))
-	(if subject
-            (help-dialog subject (snd-help subject))))))
-</pre>
-<p><i>colormap-ref</i> returns the rgb values of the colormap <i>map</i> at position <i>pos</i>,
-suitable for use with make-color.  
-'map' can be a number
-between 0.0 and 1.0 with 'pos' omitted; in this case the colormap choice and so on comes from the color dialog.
-<i>snd-gcs</i> returns a list of Snd's graphics contexts
-(intended for use with the xm module in snd-motif.scm).
-</p>
-
-
-<br><br>
 
         <!-- I(open file):L(open-sound)(sndopen) -->
 	<!-- I(close file):L(close-sound)(sndclose) -->
@@ -9163,6 +9176,7 @@ between 0.0 and 1.0 with 'pos' omitted; in this case the colormap choice and so 
 	<!-- I(fft normalization):A(normalizefft) -->
 	<!-- I(file formats):L(data-format)(snddataformat) -->
 
+<br><br>
 <center>
 <span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html">snd.html</a><spacer type=horizontal size=25><a href="grfsnd.html">grfsnd.html</a><spacer type=horizontal size=25><a href="clm.html">clm.html</a><spacer type=horizontal size=25><a href="sndlib.html">sndlib.html</a><spacer type=horizontal size=25><a href="sndscm.html">sndscm.html</a><spacer type=horizontal size=25><a href="index.html">index.html</a></span>
 </center>

@@ -72,6 +72,7 @@
  * TODO: def-clm-struct equivalent:
  *         need a way to add list-ref+offset to table of func names
  *         macro to create the make func and all accessors
+ * TODO: split Scheme from Snd/Clm here and do the latter via an FFI of some sort
  *
  * LIMITATIONS: <insert anxious lucubration here about DSP context and so on>
  *      variables can have only one type, the type has to be ascertainable somehow (similarly for vector elements)
@@ -91,7 +92,7 @@
  *
  * so where does the speed-up come from? We're not getting/freeing any Guile memory so the gc is never
  *   triggered, we're doing math ops direct and normally using float (not double),
- *   no function args are cons'd, no run-time types are checked, no vars are boxed/unboxed,
+ *   no function args are cons'd, no run-time types are checked, no values are boxed/unboxed,
  *   no symbols are looked-up in the current environment.
  */
 
@@ -104,12 +105,37 @@ static XEN optimization_hook = XEN_FALSE;
 /* this code assumes a void* is the same size as int */
 #if HAVE_GUILE && WITH_RUN && HAVE_STRINGIZE
 
-#define C_TO_XEN_CHAR(c) SCM_MAKE_CHAR(c)
-#define XEN_CDDDR(a) SCM_CDDDR(a)
-#define XEN_CAAR(a) XEN_CAR(XEN_CAR(a))
-#define XEN_CDAR(a) XEN_CDR(XEN_CAR(a))
-#define XEN_CDADR(a) XEN_CDR(XEN_CADR(a))
-#define XEN_PAIR_P(a) XEN_TRUE_P(scm_pair_p(a))
+#define C_TO_XEN_CHAR(c)           SCM_MAKE_CHAR(c)
+#define XEN_CDDDR(a)               SCM_CDDDR(a)
+#define XEN_CAAR(a)                XEN_CAR(XEN_CAR(a))
+#define XEN_CDAR(a)                XEN_CDR(XEN_CAR(a))
+#define XEN_CDADR(a)               XEN_CDR(XEN_CADR(a))
+#define XEN_CAAAR(a)               SCM_CAAAR(a)
+#define XEN_CAADR(a)               SCM_CAADR(a)
+#define XEN_CADAR(a)               SCM_CADAR(a)
+#define XEN_CADDR(a)               SCM_CADDR(a)
+#define XEN_CAAAAR(a)              SCM_CAAAAR(a)
+#define XEN_CAAADR(a)              SCM_CAAADR(a)
+#define XEN_CAADAR(a)              SCM_CAADAR(a)
+#define XEN_CAADDR(a)              SCM_CAADDR(a)
+#define XEN_CADAAR(a)              SCM_CADAAR(a)
+#define XEN_CADADR(a)              SCM_CADADR(a)
+#define XEN_CADDAR(a)              SCM_CADDAR(a)
+#define XEN_CADDDR(a)              SCM_CADDDR(a)
+#define XEN_PAIR_P(a)              XEN_TRUE_P(scm_pair_p(a))
+#define XEN_APPLICABLE_SMOB_P(a)   (SCM_TYP7(a) == scm_tc7_smob)
+#define XEN_ENV(a)                 SCM_ENV(a)
+#define XEN_VAR_NAME_TO_VAR(a)     scm_sym2var(scm_str2symbol(a), scm_current_module_lookup_closure(), XEN_FALSE)
+#define XEN_SYMBOL_TO_VAR(a)       scm_sym2var(a, scm_current_module_lookup_closure(), XEN_FALSE)
+#define XEN_SET_CDR(pair, new_val) scm_set_cdr_x(pair, new_val)
+#define XEN_FRANDOM(a)             (a * scm_c_uniform01(scm_c_default_rstate()))
+#define XEN_IRANDOM(a)             scm_c_random(scm_c_default_rstate(), a)
+#define INTEGER_TO_STRING(a)       XEN_TO_C_STRING(scm_number_to_string(C_TO_XEN_INT(a), XEN_UNDEFINED))
+#define INTEGER_TO_STRING_WITH_RADIX(a, b) XEN_TO_C_STRING(scm_number_to_string(C_TO_XEN_INT(a), C_TO_XEN_INT(b)))
+#define DOUBLE_TO_STRING(a)        XEN_TO_C_STRING(scm_number_to_string(C_TO_XEN_DOUBLE(a), XEN_UNDEFINED))
+#define DOUBLE_TO_STRING_WITH_RADIX(a, b) XEN_TO_C_STRING(scm_number_to_string(C_TO_XEN_DOUBLE(a), C_TO_XEN_INT(b)))
+#define XEN_PROCEDURE_SOURCE_TO_C_STRING(a) XEN_AS_STRING(scm_procedure_source(a))
+#define XEN_LIST_REF_WRAPPED(a, b) scm_list_ref(a, b)
 
 #define INT_PT "i%d(%d)"
 #define FLT_PT "d%d(%.4f)"
@@ -122,7 +148,7 @@ static XEN optimization_hook = XEN_FALSE;
 static void xen_symbol_name_set_value(char *a, XEN b)
 {
   XEN var = XEN_FALSE;
-  var = scm_sym2var(scm_str2symbol(a), scm_current_module_lookup_closure(), XEN_FALSE);
+  var = XEN_VAR_NAME_TO_VAR(a);
   if (!(XEN_FALSE_P(var)))
     XEN_VARIABLE_SET(var, b);
 }
@@ -138,7 +164,7 @@ static XEN symbol_to_value(XEN code, XEN sym, int *local)
   if (XEN_PROCEDURE_P(code))
     {
       /* scrounge around in the "eval" environment looking for local version of sym */
-      code_env = SCM_ENV(code);
+      code_env = XEN_ENV(code);
       /* fprintf(stderr,"look for %s in %s\n", XEN_AS_STRING(sym), XEN_AS_STRING(code_env)); */
       if (XEN_LIST_P(code_env))
 	{
@@ -158,7 +184,7 @@ static XEN symbol_to_value(XEN code, XEN sym, int *local)
 		}
 	      else
 		{
-		  if ((XEN_TRUE_P(scm_pair_p(pair))) && 
+		  if ((XEN_PAIR_P(pair)) && 
 		      (XEN_EQ_P(XEN_CAR(pair), sym)))
 		    return(XEN_CDR(pair));
 		}
@@ -166,7 +192,7 @@ static XEN symbol_to_value(XEN code, XEN sym, int *local)
 	    }
 	}
     }
-  val = scm_sym2var(sym, scm_current_module_lookup_closure(), XEN_FALSE);
+  val = XEN_SYMBOL_TO_VAR(sym);
   if (!(XEN_FALSE_P(val))) 
     {
       new_val = XEN_VARIABLE_REF(val);
@@ -186,7 +212,7 @@ static XEN symbol_set_value(XEN code, XEN sym, XEN new_val)
   /* fprintf(stderr,"set %s to %s\n", XEN_AS_STRING(sym), XEN_AS_STRING(new_val)); */
   if (XEN_PROCEDURE_P(code))
     {
-      code_env = SCM_ENV(code);
+      code_env = XEN_ENV(code);
       if (XEN_LIST_P(code_env))
 	{
 	  while (XEN_NOT_NULL_P(code_env))
@@ -204,16 +230,16 @@ static XEN symbol_set_value(XEN code, XEN sym, XEN new_val)
 			return(new_val);
 		      }
 		}
-	      if ((XEN_TRUE_P(scm_pair_p(pair))) && (XEN_EQ_P(XEN_CAR(pair), sym)))
+	      if ((XEN_PAIR_P(pair)) && (XEN_EQ_P(XEN_CAR(pair), sym)))
 		{
-		  scm_set_cdr_x(pair, new_val);
+		  XEN_SET_CDR(pair, new_val);
 		  return(new_val);
 		}
 	      code_env = XEN_CDR(code_env);
 	    }
 	}
     }
-  var = scm_sym2var(sym, scm_current_module_lookup_closure(), XEN_FALSE);
+  var = XEN_SYMBOL_TO_VAR(sym);
   if (!(XEN_FALSE_P(var)))
     XEN_VARIABLE_SET(var, new_val);
   return(new_val);
@@ -2277,6 +2303,7 @@ static int list_member(XEN symb, XEN varlst)
 
 static int tree_member(XEN varlst, XEN expr)
 {
+  /* is any member of varlst found in expr */
   /* search expr (assumed to be a list here) for reference to any member of varlst */
   XEN symb;
   if (XEN_NULL_P(expr)) return(FALSE);
@@ -4333,12 +4360,12 @@ static xen_value *abs_1(ptree *prog, xen_value **args, int constants)
 
 /* ---------------- random ---------------- */
 
-static void random_f(int *args, int *ints, Float *dbls) {FLOAT_RESULT = FLOAT_ARG_1 * scm_c_uniform01(scm_c_default_rstate());}
+static void random_f(int *args, int *ints, Float *dbls) {FLOAT_RESULT = XEN_FRANDOM(FLOAT_ARG_1);}
 static char *descr_random_f(int *args, int *ints, Float *dbls) 
 {
   return(mus_format( FLT_PT " = random(" FLT_PT ")", args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1));
 }
-static void random_i(int *args, int *ints, Float *dbls) {INT_RESULT = scm_c_random(scm_c_default_rstate(), INT_ARG_1);}
+static void random_i(int *args, int *ints, Float *dbls) {INT_RESULT = XEN_IRANDOM(INT_ARG_1);}
 static char *descr_random_i(int *args, int *ints, Float *dbls) 
 {
   return(mus_format( INT_PT " = random(" INT_PT ")", args[0], INT_RESULT, args[1], INT_ARG_1));
@@ -4864,10 +4891,10 @@ STR_CI_REL_OP(lt, string<?, >=)
 /* ---------------- number->string ---------------- */
 
 /* fallback on Guile's number->string */
-static char *f2s_1(Float n) {return(copy_string(XEN_TO_C_STRING(scm_number_to_string(C_TO_XEN_DOUBLE(n), XEN_UNDEFINED))));}
-static char *f2s_2(Float n, int rad) {return(copy_string(XEN_TO_C_STRING(scm_number_to_string(C_TO_XEN_DOUBLE(n), C_TO_XEN_INT(rad)))));}
-static char *i2s_1(int n) {return(copy_string(XEN_TO_C_STRING(scm_number_to_string(C_TO_XEN_INT(n), XEN_UNDEFINED))));}
-static char *i2s_2(int n, int rad) {return(copy_string(XEN_TO_C_STRING(scm_number_to_string(C_TO_XEN_INT(n), C_TO_XEN_INT(rad)))));}
+static char *f2s_1(Float n) {return(copy_string(DOUBLE_TO_STRING(n)));}
+static char *f2s_2(Float n, int rad) {return(copy_string(DOUBLE_TO_STRING_WITH_RADIX(n, rad)));}
+static char *i2s_1(int n) {return(copy_string(INTEGER_TO_STRING(n)));}
+static char *i2s_2(int n, int rad) {return(copy_string(INTEGER_TO_STRING_WITH_RADIX(n, rad)));}
 static void number2string_f1(int *args, int *ints, Float *dbls) {if (STRING_RESULT) FREE(STRING_RESULT); STRING_RESULT = f2s_1(FLOAT_ARG_1);}
 static void number2string_f2(int *args, int *ints, Float *dbls) {if (STRING_RESULT) FREE(STRING_RESULT); STRING_RESULT = f2s_2(FLOAT_ARG_1, INT_ARG_2);}
 static void number2string_i1(int *args, int *ints, Float *dbls) {if (STRING_RESULT) FREE(STRING_RESULT); STRING_RESULT = i2s_1(INT_ARG_1);}
@@ -6890,14 +6917,14 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	{
 	  XEN val = XEN_UNDEFINED;
 	  XEN nval;
-	  nval = scm_sym2var(function, scm_current_module_lookup_closure(), XEN_FALSE);
+	  nval = XEN_SYMBOL_TO_VAR(function);
 	  if (!(XEN_FALSE_P(nval))) val = XEN_VARIABLE_REF(nval);
 	  if ((sf_p(val)) || (mus_xen_p(val)))
 	    v = add_global_var_to_ptree(prog, function);
 
 	  /* if we had a way to handle arbitrary lambda args, this might pick up user func:
 	   *	   if (XEN_PROCEDURE_P(val))
-	   *         fprintf(stderr,"%s: %s\n", funcname, XEN_AS_STRING(scm_procedure_source(val)));
+	   *         fprintf(stderr,"%s: %s\n", funcname, XEN_PROCEDURE_SOURCE_TO_C_STRING(val));
 	   */
 	}
       else v = var->v;
@@ -6999,36 +7026,38 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	  /* (define lst (list 1 2 3)) (define val 0) (run (lambda () (set! val (+ 1 (list-ref lst 1))))) */
 	  XEN lst;
 	  lst = (XEN)(prog->ints[args[1]->addr]);
-	  if ((strcmp(funcname, "list-ref") == 0) && (XEN_EXACT_P(XEN_CADDR(form))))
-	    return(unwrap_xen_object(prog, scm_list_ref(lst, XEN_CADDR(form)), funcname));
+	  if ((num_args == 2) && (strcmp(funcname, "list-ref") == 0) && (XEN_EXACT_P(XEN_CADDR(form))))
+	    return(unwrap_xen_object(prog, XEN_LIST_REF_WRAPPED(lst, XEN_CADDR(form)), funcname));
 	  /* TODO: if loc arg is not constant, we could check the list, get its contents types (all the same...)
 	   *       then set up a list-ref run-time accessor with that type built in.
 	   *       this way run-time (list-ref data i) would work
 	   */
-	  if (strcmp(funcname, "car") == 0) return(unwrap_xen_object(prog, XEN_CAR(lst), funcname));
-	  if (strcmp(funcname, "caar") == 0) return(unwrap_xen_object(prog, XEN_CAAR(lst), funcname));
-	  if (strcmp(funcname, "cadr") == 0) return(unwrap_xen_object(prog, XEN_CADR(lst), funcname));
-	  if (strcmp(funcname, "caaar") == 0) return(unwrap_xen_object(prog, SCM_CAAAR(lst), funcname));
-	  if (strcmp(funcname, "caadr") == 0) return(unwrap_xen_object(prog, SCM_CAADR(lst), funcname));
-	  if (strcmp(funcname, "cadar") == 0) return(unwrap_xen_object(prog, SCM_CADAR(lst), funcname));
-	  if (strcmp(funcname, "caddr") == 0) return(unwrap_xen_object(prog, SCM_CADDR(lst), funcname));
-	  if (strcmp(funcname, "caaaar") == 0) return(unwrap_xen_object(prog, SCM_CAAAAR(lst), funcname));
-	  if (strcmp(funcname, "caaadr") == 0) return(unwrap_xen_object(prog, SCM_CAAADR(lst), funcname));
-	  if (strcmp(funcname, "caadar") == 0) return(unwrap_xen_object(prog, SCM_CAADAR(lst), funcname));
-	  if (strcmp(funcname, "caaddr") == 0) return(unwrap_xen_object(prog, SCM_CAADDR(lst), funcname));
-	  if (strcmp(funcname, "cadaar") == 0) return(unwrap_xen_object(prog, SCM_CADAAR(lst), funcname));
-	  if (strcmp(funcname, "cadadr") == 0) return(unwrap_xen_object(prog, SCM_CADADR(lst), funcname));
-	  if (strcmp(funcname, "caddar") == 0) return(unwrap_xen_object(prog, SCM_CADDAR(lst), funcname));
-	  if (strcmp(funcname, "cadddr") == 0) return(unwrap_xen_object(prog, SCM_CADDDR(lst), funcname));
-	  if (strcmp(funcname, "length") == 0) return(make_xen_value(R_INT, add_int_to_ptree(prog, XEN_LIST_LENGTH(lst)), R_CONSTANT));
-	  if (strcmp(funcname, "null?") == 0) return(make_xen_value(R_BOOL, add_int_to_ptree(prog, XEN_NULL_P(lst)), R_CONSTANT));
-
+	  if (num_args == 1)
+	    {
+	      if (strcmp(funcname, "car") == 0) return(unwrap_xen_object(prog, XEN_CAR(lst), funcname));
+	      if (strcmp(funcname, "caar") == 0) return(unwrap_xen_object(prog, XEN_CAAR(lst), funcname));
+	      if (strcmp(funcname, "cadr") == 0) return(unwrap_xen_object(prog, XEN_CADR(lst), funcname));
+	      if (strcmp(funcname, "caaar") == 0) return(unwrap_xen_object(prog, XEN_CAAAR(lst), funcname));
+	      if (strcmp(funcname, "caadr") == 0) return(unwrap_xen_object(prog, XEN_CAADR(lst), funcname));
+	      if (strcmp(funcname, "cadar") == 0) return(unwrap_xen_object(prog, XEN_CADAR(lst), funcname));
+	      if (strcmp(funcname, "caddr") == 0) return(unwrap_xen_object(prog, XEN_CADDR(lst), funcname));
+	      if (strcmp(funcname, "caaaar") == 0) return(unwrap_xen_object(prog, XEN_CAAAAR(lst), funcname));
+	      if (strcmp(funcname, "caaadr") == 0) return(unwrap_xen_object(prog, XEN_CAAADR(lst), funcname));
+	      if (strcmp(funcname, "caadar") == 0) return(unwrap_xen_object(prog, XEN_CAADAR(lst), funcname));
+	      if (strcmp(funcname, "caaddr") == 0) return(unwrap_xen_object(prog, XEN_CAADDR(lst), funcname));
+	      if (strcmp(funcname, "cadaar") == 0) return(unwrap_xen_object(prog, XEN_CADAAR(lst), funcname));
+	      if (strcmp(funcname, "cadadr") == 0) return(unwrap_xen_object(prog, XEN_CADADR(lst), funcname));
+	      if (strcmp(funcname, "caddar") == 0) return(unwrap_xen_object(prog, XEN_CADDAR(lst), funcname));
+	      if (strcmp(funcname, "cadddr") == 0) return(unwrap_xen_object(prog, XEN_CADDDR(lst), funcname));
+	      if (strcmp(funcname, "length") == 0) return(make_xen_value(R_INT, add_int_to_ptree(prog, XEN_LIST_LENGTH(lst)), R_CONSTANT));
+	      if (strcmp(funcname, "null?") == 0) return(make_xen_value(R_BOOL, add_int_to_ptree(prog, XEN_NULL_P(lst)), R_CONSTANT));
+	    }
 	  /* TODO: add port ops? hyperbolics? struct refs?
 	   * TODO: list could be added if all args are constants (list included)
 	   */
 	}
 
-      if ((pairs == 1) && (args[1]->type == R_PAIR))
+      if ((pairs == 1) && (num_args == 1) && (args[1]->type == R_PAIR))
 	{
 	  XEN lst;
 	  lst = (XEN)(prog->ints[args[1]->addr]);
@@ -7515,7 +7544,7 @@ static void *form_to_ptree(XEN code)
   form = XEN_CAR(code);
   prog = make_ptree(8);
   if ((XEN_PROCEDURE_P(XEN_CADR(code))) && 
-      (SCM_TYP7(XEN_CADR(code)) != scm_tc7_smob)) /* applicable smobs cause confusion here */
+      (!(XEN_APPLICABLE_SMOB_P(XEN_CADR(code))))) /* applicable smobs cause confusion here */
     prog->code = XEN_CADR(code);                  /* need env before starting to walk the code */
   else prog->code = XEN_FALSE;                    /* many confusing cases here -- we'll just give up */
   if (XEN_SYMBOL_P(form))
@@ -7823,11 +7852,11 @@ void g_init_run(void)
 #if WITH_RUN
   XEN_DEFINE_PROCEDURE("run-internal", g_run, 1, 0, 0, "run macro testing...");
   XEN_EVAL_C_STRING("(defmacro " S_run " (thunk) `(run-internal (list ',thunk ,thunk)))");
-  scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL(S_run), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(H_run));
+  XEN_SET_DOCUMENTATION(S_run, H_run);
   XEN_DEFINE_PROCEDURE("run-eval", g_run_eval, 1, 1, 0, "run macro testing...");
   XEN_DEFINE_PROCEDURE("vct-map-2",     g_vct_map, 2, 0, 0,      H_vct_map);
   XEN_EVAL_C_STRING("(defmacro* " S_vct_map " (thunk #:rest args) `(vct-map-2 (list ',thunk ,thunk) (list ,@args)))");
-  scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL(S_vct_map), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(H_vct_map));
+  XEN_SET_DOCUMENTATION(S_vct_map, H_vct_map);
 #else
   XEN_DEFINE_PROCEDURE(S_vct_map, g_vct_map, 1, 0, 1, H_vct_map);
 #endif

@@ -223,6 +223,8 @@
   #define XEN_EVAL_C_STRING(Arg)      scm_eval_0str(Arg)
 #endif
 
+#define XEN_SET_DOCUMENTATION(Func, Help) scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL(Func), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(Help))
+
 #if HAVE_SCM_C_DEFINE_GSUBR
   #define XEN_NEW_PROCEDURE(Name, Func, Req, Opt, Rst) scm_c_define_gsubr(Name, Req, Opt, Rst, XEN_PROCEDURE_CAST Func)
 #else
@@ -249,13 +251,13 @@
 #define XEN_DEFINE_CONSTANT(Name, Value, Help) \
   { \
     scm_c_define(Name, C_TO_SMALL_XEN_INT(Value)); \
-    scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL(Name), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(Help)); \
+    XEN_SET_DOCUMENTATION(Name, Help); \
   }
 #else
 #define XEN_DEFINE_CONSTANT(Name, Value, Help) \
   { \
     gh_define(Name, C_TO_SMALL_XEN_INT(Value)); \
-    scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL(Name), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(Help)); \
+    XEN_SET_DOCUMENTATION(Name, Help); \
   }
 #endif
 

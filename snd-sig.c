@@ -2640,7 +2640,7 @@ static void before_scan(void *ignore)
   /*   put init_sample_read here, update sc->beg in scan body, don't free context explicitly */
 }
 
-static SCM scan_body(void *context)
+static XEN scan_body(void *context)
 {
   off_t kp;
   snd_state *ss;
@@ -3886,20 +3886,19 @@ void g_init_sig(void)
   XEN_DEFINE_PROCEDURE(S_ptree_channel "-1",      g_ptree_channel, 1, 6, 0,             H_ptree_channel);
 
   XEN_EVAL_C_STRING("(defmacro* scan-channel (form #:rest args) `(apply scan-channel-1 (list (list ',form ,form) ,@args)))");
-  scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL("scan-channel"), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(H_scan_channel));
+  XEN_SET_DOCUMENTATION(S_scan_channel, H_scan_channel);
   XEN_EVAL_C_STRING("(defmacro* scan-chan (form #:rest args) `(apply scan-chan-1 (list (list ',form ,form) ,@args)))");
-  scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL("scan-chan"), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(H_scan_chan));
+  XEN_SET_DOCUMENTATION(S_scan_chan, H_scan_chan);
   XEN_EVAL_C_STRING("(defmacro* find (form #:rest args) `(apply find-1 (list (list ',form ,form) ,@args)))");
-  scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL("find"), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(H_find));
+  XEN_SET_DOCUMENTATION(S_find, H_find);
   XEN_EVAL_C_STRING("(defmacro* count-matches (form #:rest args) `(apply count-matches-1 (list (list ',form ,form) ,@args)))");
-  scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL("count-matches"), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(H_count_matches));
+  XEN_SET_DOCUMENTATION(S_count_matches, H_count_matches);
   XEN_EVAL_C_STRING("(defmacro* map-channel (form #:rest args) `(apply map-channel-1 (list (list ',form ,form) ,@args)))");
-  scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL("map-channel"), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(H_map_channel));
+  XEN_SET_DOCUMENTATION(S_map_channel, H_map_channel);
   XEN_EVAL_C_STRING("(defmacro* map-chan (form #:rest args) `(apply map-chan-1 (list (list ',form ,form) ,@args)))");
-  scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL("map-chan"), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(H_map_chan));
-
+  XEN_SET_DOCUMENTATION(S_map_chan, H_map_chan);
   XEN_EVAL_C_STRING("(defmacro* ptree-channel (form #:rest args) `(apply ptree-channel-1 (list (list ',form ,form) ,@args)))");
-  scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL(S_ptree_channel), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(H_ptree_channel));
+  XEN_SET_DOCUMENTATION(S_ptree_channel, H_ptree_channel);
 #else
   XEN_DEFINE_PROCEDURE(S_scan_channel,            g_scan_channel_w, 1, 5, 0,            H_scan_channel);
   XEN_DEFINE_PROCEDURE(S_scan_chan,               g_scan_chan_w, 1, 5, 0,               H_scan_chan);

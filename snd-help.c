@@ -267,7 +267,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
-23-Jul:  snd 6.0 (in progress).\n\
+31-Jul:  snd 6.0 (in progress).\n\
 19-Jul:  contrib/rmsgain.scm thanks to Fabio Furlanete.\n\
          with-relative-panes.\n\
 17-Jul:  mix-length -> mix-frames, region-length -> region-frames, selection-length -> selection-frames.\n\

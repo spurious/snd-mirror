@@ -3233,7 +3233,6 @@ XEN_NARGIFY_1(gxg_blue_w, gxg_blue)
 XEN_NARGIFY_1(gxg_green_w, gxg_green)
 XEN_NARGIFY_1(gxg_red_w, gxg_red)
 XEN_NARGIFY_1(gxg_pixel_w, gxg_pixel)
-#if (!HAVE_GTK_1)
 XEN_VARGIFY(gxg_make_GdkCursor_w, gxg_make_GdkCursor)
 XEN_VARGIFY(gxg_make_GdkPoint_w, gxg_make_GdkPoint)
 XEN_VARGIFY(gxg_make_GdkRectangle_w, gxg_make_GdkRectangle)
@@ -3242,7 +3241,6 @@ XEN_VARGIFY(gxg_make_GdkSpan_w, gxg_make_GdkSpan)
 XEN_NARGIFY_0(gxg_make_GtkTextIter_w, gxg_make_GtkTextIter)
 XEN_NARGIFY_0(gxg_make_GtkTextMark_w, gxg_make_GtkTextMark)
 XEN_NARGIFY_0(gxg_make_GtkTextChildAnchor_w, gxg_make_GtkTextChildAnchor)
-#endif
 
 static void define_functions(void)
 {

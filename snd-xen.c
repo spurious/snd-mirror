@@ -2196,11 +2196,6 @@ static XEN g_color_p(XEN obj)
   return(C_TO_XEN_BOOLEAN(XEN_PIXEL_P(obj)));
 }
 
-static XEN g_snd_pixel(XEN color)
-{
-  return(color);
-}
-
 Float check_color_range(const char *caller, XEN val)
 {
   Float rf;
@@ -3243,6 +3238,12 @@ static XEN g_snd_sound_pointer(XEN snd)
     return(C_TO_XEN_ULONG((unsigned long)(ss->sounds[s])));
   return(XEN_FALSE);
 }
+
+#if HAVE_GUILE
+static SCM g_gc_off(void) {++scm_block_gc; return(XEN_FALSE);}
+static SCM g_gc_on(void) {--scm_block_gc; return(XEN_FALSE);}
+#endif
+
 #endif 
 
 void g_initialize_gh(void)
@@ -3250,6 +3251,10 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE("snd-global-state", g_snd_global_state, 0, 0, 0, "internal testing function");
 #if DEBUGGING
   XEN_DEFINE_PROCEDURE("snd-sound-pointer", g_snd_sound_pointer, 1, 0, 0, "internal testing function");
+#if HAVE_GUILE
+  XEN_DEFINE_PROCEDURE("gc-off", g_gc_off, 0, 0, 0, "turn off GC");
+  XEN_DEFINE_PROCEDURE("gc-on", g_gc_on, 0, 0, 0, "turn on GC");
+#endif
 #endif
 
   mus_sndlib2xen_initialize();
@@ -3521,7 +3526,6 @@ void g_initialize_gh(void)
 				   "set-" S_pushed_button_color, g_set_pushed_button_color_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE(S_color_p,   g_color_p_w, 1, 0, 0, H_color_p);
-  XEN_DEFINE_PROCEDURE("snd-pixel", g_snd_pixel, 1, 0, 0, "a no-op");
 #endif
 
 

@@ -1086,7 +1086,6 @@ void filter_env_changed(snd_info *sp, env *e)
       if (tmpstr) FREE(tmpstr);
       edp_edited(sp->sgx->flt);
       display_filter_env(sp);
-      /* this is called also from snd-scm.c */
     }
   sp->filter_control_changed = 1;
 }

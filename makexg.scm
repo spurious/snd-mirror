@@ -14,6 +14,7 @@
 
 (define include-broken #f)  ; set to #t to get ENABLE_BROKEN entities
 (define include-deprecated #f) ; set to #t to get DISABLE_DEPRECATED entitities
+(define worry-about-gtk-1 #f)
 
 (define xg-file (open-output-file "xg.c"))
 (define xg-ruby-file (open-output-file "xg-ruby.c"))
@@ -66,25 +67,27 @@
 (define extra-ints '())
 (define extra-strings '())
 (define in-gtk1 #t)
+
 (define* (check-gtk1 val #:optional addcr)
-  (if (eq? val #t)
-      (if (not in-gtk1)
-	  (begin
-	    (hey "#endif~%")
-	    (set! in-gtk1 #t)))
-      (if (member val gtk1)
-	  (begin
-	    (if (not in-gtk1)
-		(begin
-		  (hey "#endif~%")
-		  (set! in-gtk1 #t)))
-	    (if addcr (hey "~%")))
-	  (if in-gtk1
+  (if worry-about-gtk-1
+      (if (eq? val #t)
+	  (if (not in-gtk1)
 	      (begin
-		(if addcr (hey "~%"))
-		(hey "#if (!HAVE_GTK_1)~%")
-		(set! in-gtk1 #f))
-	      (if addcr (hey "~%"))))))
+		(hey "#endif~%")
+		(set! in-gtk1 #t)))
+	  (if (member val gtk1)
+	      (begin
+		(if (not in-gtk1)
+		    (begin
+		      (hey "#endif~%")
+		      (set! in-gtk1 #t)))
+		(if addcr (hey "~%")))
+	      (if in-gtk1
+		  (begin
+		    (if addcr (hey "~%"))
+		    (hey "#if (!HAVE_GTK_1)~%")
+		    (set! in-gtk1 #f))
+		  (if addcr (hey "~%")))))))
 
 (define idlers (list "gtk_idle_remove" "gtk_idle_remove_by_data" 
 		     "gtk_quit_remove" "gtk_quit_remove_by_data" 
@@ -436,6 +439,7 @@
 	(cons "gchar" "CHAR")
 	(cons "char*" "STRING")
 	(cons "gchar*" "STRING")
+	(cons "guchar*" "STRING") ; added 30-Jul-02
 	(cons "guint" "ULONG")
 	(cons "guint16" "INT")
 	(cons "gint" "INT")
@@ -1017,6 +1021,7 @@
 (hey " * ~A: test suite (snd-test 24)~%" (string-append "T" "ODO"))
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     31-Jul:    removed GTK 1.n support (it can still be generated from makexg.scm)~%")
 (hey " *     24-Jul:    changed Guile prefix (R5RS reserves vertical-bar).~%")
 (hey " *     19-Jul:    XG_FIELD_PRE for change from using vertical-bar (reserved in R5RS)~%")
 (hey " *     2-Jun:     removed deprecated and broken stuff (see include-deprecated switch in makexg.scm)~%")
@@ -1041,10 +1046,10 @@
 (hey "#include <gdk/gdk.h>~%")
 (hey "#include <gdk/gdkkeysyms.h>~%")
 (hey "#include <gtk/gtk.h>~%")
-(hey "#if (!HAVE_GTK_1)~%")
+(if worry-about-gtk-1 (hey "#if (!HAVE_GTK_1)~%"))
 (hey "#include <glib-object.h>~%")
 (hey "#include <pango/pango.h>~%")
-(hey "#endif~%~%")
+(if worry-about-gtk-1 (hey "#endif~%~%"))
 (hey "#include <string.h>~%~%")
 
 (hey "#if USE_SND~%")
@@ -1685,16 +1690,19 @@
 (if (not (null? broken-checks)) (with-broken say (lambda () (for-each ruby-check (reverse broken-checks)))))
 
 (for-each (lambda (field) (say "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" field field)) struct-fields)
-(say "#if (!HAVE_GTK_1)~%")
+(if worry-about-gtk-1 (say "#if (!HAVE_GTK_1)~%"))
 (for-each (lambda (struct) 
 	    (let* ((s (find-struct struct)))
 	      (if (> (length (cadr s)) 0)
 		  (say "XEN_VARGIFY(gxg_make_~A_w, gxg_make_~A)~%" struct struct)
 		  (say "XEN_NARGIFY_0(gxg_make_~A_w, gxg_make_~A)~%" struct struct))))
  (reverse make-structs))
-(say "#endif~%")
+(if worry-about-gtk-1 (say "#endif~%"))
 (say "~%")
 ;;; ---------------- end Ruby step 1 ----------------
+
+(hey "static XEN c_array_to_xen_list(XEN val, XEN clen);~%")
+(hey "static XEN xen_list_to_c_array(XEN val, XEN type);~%~%")
 
 (check-gtk1 #t)
 (hey "#if HAVE_GUILE~%")
@@ -1707,6 +1715,9 @@
 (say-hey "  xm_protected_size = 512;~%")
 (say-hey "  xm_protected = XEN_MAKE_VECTOR(xm_protected_size, XEN_FALSE);~%")
 (say-hey "  XEN_VECTOR_SET(xm_gc_table, 0, xm_protected);~%~%")
+
+(hey "  XG_DEFINE_PROCEDURE(c-array->list, c_array_to_xen_list, 2, 0, 0, NULL);~%")
+(hey "  XG_DEFINE_PROCEDURE(list->c-array, xen_list_to_c_array, 2, 0, 0, NULL);~%~%")
 
 (define (defun func)
   (let* ((cargs (length (caddr func)))
@@ -1767,13 +1778,13 @@
   (check-gtk1 (no-arg-or-stars (deref-type (list type))))
   (hey "  if (strcmp(ctype, ~S) == 0)~%" type)
   (hey "    {~%")
-  (hey "      ~A arr; arr = (~A)XEN_CADR(val); ~%" type type)
+  (hey "      ~A arr; arr = (~A)XEN_TO_C_ULONG(XEN_CADR(val)); ~%" type type)
   (hey "      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_~A(arr[i]), result);~%" (no-stars (deref-type (list type))))
   (hey "    }~%"))
 
 (define (list->array type)
   (check-gtk1 (no-arg-or-stars (deref-type (list type))))
-  (hey "  if (strcmp(ctype, ~S) == 0)~%" type)
+  (hey "  if (strcmp(ctype, ~S) == 0)~%" (no-stars type)) ; changed 30-Jul-02
   (hey "    {~%")
   (hey "      ~A arr; arr = (~A)CALLOC(len, sizeof(~A));~%" type type (deref-type (list type)))
   (hey "      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_~A(XEN_CAR(val));~%" (no-stars (deref-type (list type))))
@@ -1796,10 +1807,10 @@
        (array->list type)))
  types)
 ;;; gotta handle GList* by hand
-(hey "  if (strcmp(ctype, \"GList*\") == 0)~%")
+(hey "  if (strcmp(ctype, \"GList_\") == 0)~%")
 (hey "    { /* tagging these pointers is currently up to the caller */~%")
 (hey "      GList* lst;~%")
-(hey "      lst = (GList*)XEN_CADR(val);~%")
+(hey "      lst = (GList*)XEN_TO_C_ULONG(XEN_CADR(val));~%")
 (hey "      len = g_list_length(lst);~%")
 (hey "      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_ULONG(g_list_nth_data(lst, i)), result);~%")
 (hey "    }~%")
@@ -1879,7 +1890,7 @@
      ))
  (reverse struct-fields))
 
-(hey "#if (!HAVE_GTK_1)~%")
+(if worry-about-gtk-1 (hey "#if (!HAVE_GTK_1)~%"))
 (for-each
  (lambda (name)
    (let* ((struct (find-struct name))
@@ -1918,15 +1929,12 @@
 		(string-append name "_"))
 	   (hey "}~%~%")))))
  (reverse make-structs))
-(hey "#endif~%~%")
+(if worry-about-gtk-1 (hey "#endif~%~%"))
 
 (hey "#if HAVE_GUILE~%")
 (say-hey "static void define_structs(void)~%")
 (say-hey "{~%~%")
 (say-hey "  #define XGS_DEFINE_PROCEDURE(Name, Value, A1, A2, A3, Help) XEN_DEFINE_PROCEDURE(XG_FIELD_PRE #Name XG_POST, Value, A1, A2, A3, Help)~%")
-
-(hey "  XGS_DEFINE_PROCEDURE(c-array->list, c_array_to_xen_list, 2, 0, 0, NULL);~%")
-(hey "  XGS_DEFINE_PROCEDURE(list->c-array, xen_list_to_c_array, 2, 0, 0, NULL);~%~%")
 
 (for-each 
  (lambda (field)
@@ -1935,7 +1943,7 @@
    (say "  XGS_DEFINE_PROCEDURE(~A, gxg_~A_w, 1, 0, 0, NULL);~%" field field))
  struct-fields)
 
-(hey "#if (!HAVE_GTK_1)~%")
+(if worry-about-gtk-1 (hey "#if (!HAVE_GTK_1)~%"))
 (for-each 
  (lambda (struct)
    (let* ((s (find-struct struct)))
@@ -1943,7 +1951,7 @@
      (hey "  XGS_DEFINE_PROCEDURE(~A, gxg_make_~A, 0, 0, ~D, NULL);~%" struct struct (if (> (length (cadr s)) 0) 1 0))
      (say "  XGS_DEFINE_PROCEDURE(~A, gxg_make_~A_w, 0, 0, ~D, NULL);~%" struct struct (if (> (length (cadr s)) 0) 1 0))))
  (reverse make-structs))
-(hey "#endif~%~%")
+(if worry-about-gtk-1 (hey "#endif~%~%"))
 
 (say-hey "}~%~%")
 (hey "#else~%")
@@ -1954,7 +1962,7 @@
 (hey "/* ---------------------------------------- macros ---------------------------------------- */~%~%")
 (hey "static void define_macros(void)~%")
 (hey "{~%")
-(hey "#if (!HAVE_GTK_1)~%")
+(if worry-about-gtk-1 (hey "#if (!HAVE_GTK_1)~%"))
 (with-deprecated hey
 		 (lambda ()
 		   (for-each
@@ -1962,7 +1970,7 @@
 		      (hey "  XEN_EVAL_C_STRING(\"(define \" XG_PRE \"~A\" XG_POST \" \" XG_PRE \"~A\" XG_POST \")\");~%"
 			   (car mac) (cadr mac)))
 		    (reverse vars))))
-(hey "#endif~%")
+(if worry-about-gtk-1 (hey "#endif~%"))
 (hey "}~%~%")
 
 (hey "/* ---------------------------------------- constants ---------------------------------------- */~%~%")
@@ -1981,9 +1989,9 @@
 (hey "  #define DEFINE_ULONG(Name) rb_define_global_const(XG_PRE #Name XG_POST, C_TO_XEN_ULONG(Name))~%")
 (hey "#endif~%")
 (hey "~%")
-(hey "#if (!HAVE_GTK_1)~%")
+(if worry-about-gtk-1 (hey "#if (!HAVE_GTK_1)~%"))
 (hey "  g_type_init();~%")
-(hey "#endif~%~%")
+(if worry-about-gtk-1 (hey "#endif~%~%"))
 
 (for-each 
  (lambda (val) 

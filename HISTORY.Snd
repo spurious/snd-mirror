@@ -1,5 +1,6 @@
 Snd change log
 
+  30-Jul:    list constant ops in optimizer.
   23-Jul:    first steps toward snd 6.0.
   19-Jul:    contrib/rmsgain.scm thanks to Fabio Furlanete.
 	     with-relative-panes.

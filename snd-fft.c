@@ -974,7 +974,7 @@ static void before_add_fft(void *ignore)
 {
 }
 
-static SCM add_fft_body(void *context)
+static XEN add_fft_body(void *context)
 {
   add_fft *af = (add_fft *)context;
   int i, len;

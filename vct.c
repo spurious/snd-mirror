@@ -713,7 +713,7 @@ void init_vct(void)
 #if WITH_RUN
   XEN_DEFINE_PROCEDURE("vct-map-1",     vct_mapB_w, 2, 0, 0,      H_vct_mapB);
   XEN_EVAL_C_STRING("(defmacro vct-map! (v form) `(vct-map-1 ,v (list ',form ,form)))");
-  scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL("vct-map!"), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(H_vct_mapB));
+  XEN_SET_DOCUMENTATION(S_vct_mapB, H_vct_mapB);
 #else
   XEN_DEFINE_PROCEDURE(S_vct_mapB,      vct_mapB_w, 2, 0, 0,      H_vct_mapB);
 #endif

@@ -27,7 +27,7 @@ typedef struct {
   int temporary;               /* in-filename was written by us and needs to be deleted when mix console is deleted */
   snd_info *add_snd;           /* readable snd_info struct for mix input */
   int id, x, nx, y, track, selected_chan, tagx, tagy, tag_y, height; 
-                               /* number used in snd-scm calls, tag_y only for user set mix_tag_y */
+                               /* tag_y only for user set mix_tag_y */
   env **panel_envs;            /* mix panel version of current amp envs */
 } mix_info;
 
