@@ -2,10 +2,11 @@
 #define MUS_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 1
-#define MUS_DATE "18-Mar-02"
+#define MUS_REVISION 2
+#define MUS_DATE "27-Mar-02"
 
 /* 
+ * 27-Mar:     negative degree locsig bugfix.
  * 18-Mar:     mus_move_locsig.
  * 15-Mar:     n-chan locsig (and reverb scalers), 'type' arg to mus_make_locsig.
  * 6-Mar:      mus_scaler in asymmetric-fm now refers to the "r" parameter, "a" in sine-summation.

@@ -5246,6 +5246,7 @@ static int free_locsig(void *p)
 }
 
 static int locsig_length(void *ptr) {return(((locs *)ptr)->chans);}
+static Float *locsig_data(void *ptr) {return(((locs *)ptr)->outn);}
 
 Float mus_locsig_ref (mus_any *ptr, int chan) 
 {
@@ -5314,7 +5315,7 @@ static mus_any_class LOCSIG_CLASS = {
   &describe_locsig,
   &inspect_locs,
   &locsig_equalp,
-  0, 0,
+  &locsig_data, 0,
   &locsig_length,
   0,
   0, 0, 0, 0,
@@ -5333,6 +5334,13 @@ static void fill_locsig(Float *arr, int chans, Float degree, Float scaler, int t
     arr[0] = scaler;
   else
     {
+      if (degree < 0.0)
+	{
+	  /* sigh -- hope for the best... */
+	  int m;
+	  m = (int)ceil(degree / -360.0);
+	  degree += (360 * m);
+	}
       if (chans == 2)
 	{
 	  if (degree > 90.0)
@@ -5355,6 +5363,10 @@ static void fill_locsig(Float *arr, int chans, Float degree, Float scaler, int t
       right = left + 1;
       if (right == chans) right = 0;
       frac = pos - left;
+#if DEBUGGING
+      if ((left < 0) || (left >= chans)) abort();
+      if ((right < 0) || (right >= chans)) abort();
+#endif
       if (type == MUS_LINEAR)
 	{
 	  arr[left] = scaler * (1.0 - frac);
@@ -5376,6 +5388,8 @@ mus_any *mus_make_locsig(Float degree, Float distance, Float reverb, int chans, 
 {
   locs *gen;
   Float dist;
+  if (chans <= 0)
+    mus_error(MUS_ARG_OUT_OF_RANGE, "chans: %d", chans);
   gen = (locs *)CALLOC(1, sizeof(locs));
   if (gen == NULL) 
     mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate struct for mus_make_locsig!");

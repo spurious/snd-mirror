@@ -46,8 +46,8 @@ whenever they're in the current view."
   (if (not (member display-samples-in-color (hook->list after-graph-hook)))
       (add-hook! after-graph-hook display-samples-in-color))
   (let* ((beg (or ubeg 0))
-	 (snd (or usnd (selected-sound)))
-	 (chn (or uchn (selected-channel snd)))
+	 (snd (or usnd (selected-sound) (car (sounds))))
+	 (chn (or uchn (selected-channel snd) 0))
 	 (dur (or udur (- (frames snd chn) beg)))
 	 (old-colors (or (channel-property 'colored-samples snd chn) '())))
     (set! (channel-property 'colored-samples snd chn) (cons (list color beg dur) old-colors))
@@ -55,8 +55,8 @@ whenever they're in the current view."
 
 (define* (uncolor-samples #:optional usnd uchn)
   "(uncolor-samples &optional snd chn) cancels sample coloring in the given channel"
-  (let*	((snd (or usnd (selected-sound)))
-	 (chn (or uchn (selected-channel snd))))
+  (let*	((snd (or usnd (selected-sound) (car (sounds))))
+	 (chn (or uchn (selected-channel snd) 0)))
     (set! (channel-property 'colored-samples snd chn) '())
     (update-time-graph snd chn)))
 

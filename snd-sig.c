@@ -985,14 +985,15 @@ static Float *env2array(int order, env *e)
 {
   Float *fdata = NULL;
   Float x;
-  int i, j;
+  int i, j, lim;
   Float last_x, step;
   if (!e) return(NULL);
   /* get the frequency envelope and design the FIR filter */
   fdata = (Float *)CALLOC(order, sizeof(Float));
   last_x = e->data[(e->pts - 1) * 2];
   step = 2 * last_x / ((Float)order - 1);
-  for (i = 0, x = 0.0; i < order / 2; i++, x += step) 
+  lim = order / 2;
+  for (i = 0, x = 0.0; i < lim; i++, x += step) 
     fdata[i] = list_interp(x, e->data, e->pts); /* not mus_env here since it's likely the points fall between the order-related samples */
   for (j = order / 2 - 1, i = order / 2; 
        (i < order) && (j >= 0); 

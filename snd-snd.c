@@ -1,5 +1,8 @@
 #include "snd.h"
 
+/* TODO: check for lingering -1=no-selection/mix !-> #f cases
+ */
+
 snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *new_comment)
 {
   int chan, size, err;
@@ -147,18 +150,12 @@ static env_state *make_env_state(chan_info *cp, int samples)
 		      ep->data_max = (MUS_SAMPLE_TYPE *)CALLOC(ep->amp_env_size, sizeof(MUS_SAMPLE_TYPE));
 		      ep->data_min = (MUS_SAMPLE_TYPE *)CALLOC(ep->amp_env_size, sizeof(MUS_SAMPLE_TYPE));
 		      start_bin = (int)(start / ep->samps_per_bin);
-#if DEBUGGING
-		      if (start_bin > ep->amp_env_size) abort();
-#endif
 		      ep->fmin = MUS_SAMPLE_0;
 		      ep->fmax = MUS_SAMPLE_0;
 		      for (i = 0; i < start_bin; i++) 
 			{
 			  ep->data_min[i] = old_ep->data_min[i];
 			  ep->data_max[i] = old_ep->data_max[i];
-#if DEBUGGING
-			  if (i >= ep->amp_env_size) abort();
-#endif
 			  if (ep->data_min[i] < ep->fmin) ep->fmin = ep->data_min[i];
 			  if (ep->data_max[i] > ep->fmax) ep->fmax = ep->data_max[i];
 			}
@@ -264,9 +261,6 @@ static int tick_amp_env(chan_info *cp, env_state *es)
 		    if (ymax < val) 
 		      ymax = val;
 		}
-#if DEBUGGING
-	      if (sb >= ep->amp_env_size) abort();
-#endif
 	      ep->data_max[sb] = ymax;
 	      ep->data_min[sb] = ymin;
 	      if (ymin < ep->fmin) ep->fmin = ymin;
@@ -319,9 +313,6 @@ static int tick_amp_env(chan_info *cp, env_state *es)
 		  val = bufs[nc][m];
 		  if (ymin > val) ymin = val; else if (ymax < val) ymax = val;
 		}
-#if DEBUGGING
-	      if (sb >= ep->amp_env_size) abort();
-#endif
 	      ep->data_max[sb] = ymax;
 	      ep->data_min[sb] = ymin;
 	      if (ymin < ep->fmin) ep->fmin = ymin;
@@ -545,9 +536,6 @@ void pick_one_bin(env_info *ep, int bin, int cursamp, chan_info *cp, int edpos)
       val = next_sample(sf); 
       if (ymin > val) ymin = val; else if (ymax < val) ymax = val;
     }
-#if DEBUGGING
-  if (bin >= ep->amp_env_size) abort();
-#endif
   ep->data_max[bin] = ymax;
   ep->data_min[bin] = ymin;
   free_snd_fd(sf);
@@ -634,9 +622,6 @@ env_info *amp_env_section(chan_info *cp, int beg, int num, int edpos)
 	  /* if segment is entirely in region, just scale it */
 	  if ((cursamp >= beg) && ((cursamp + new_ep->samps_per_bin) <= end))
 	    {
-#if DEBUGGING
-	      if (j > new_ep->amp_env_size) abort();
-#endif
 	      new_ep->data_max[j] = old_ep->data_max[i];
 	      new_ep->data_min[j] = old_ep->data_min[i];
 	    }
@@ -1513,20 +1498,26 @@ static XEN g_select_sound(XEN snd_n)
   snd_info *sp;
   ss = get_global_state();
   ASSERT_SOUND(S_select_sound, snd_n, 1);
-  val = XEN_TO_C_INT_OR_ELSE(snd_n, 0);
-  if ((val >= 0) && 
-      (val < ss->max_sounds))
+  if (XEN_FALSE_P(snd_n))
+    ss->selected_sound = NO_SELECTION;
+  else
     {
-      sp = ss->sounds[val];
-      if (snd_ok(sp))
+      val = XEN_TO_C_INT_OR_ELSE(snd_n, 0);
+      if ((val >= 0) && 
+	  (val < ss->max_sounds))
 	{
-	  select_channel(sp, 0);
-	  equalize_sound_panes(ss, sp, sp->chans[0], FALSE);
-	  map_over_chans(ss, update_graph, NULL);
-	  return(snd_n);
+	  sp = ss->sounds[val];
+	  if (snd_ok(sp))
+	    {
+	      select_channel(sp, 0);
+	      equalize_sound_panes(ss, sp, sp->chans[0], FALSE);
+	      map_over_chans(ss, update_graph, NULL);
+	      return(snd_n);
+	    }
 	}
+      return(snd_no_such_sound_error(S_select_sound, snd_n));
     }
-  return(snd_no_such_sound_error(S_select_sound, snd_n));
+  return(snd_n);
 }
 
 static XEN g_select_channel(XEN chn_n)
@@ -1622,7 +1613,7 @@ static XEN sound_get(XEN snd_n, int fld, char *caller)
     case SP_SAVE_CONTROLS:       save_controls(sp);                                    break;
     case SP_RESTORE_CONTROLS:    restore_controls(sp);                                 break;
     case SP_RESET_CONTROLS:      reset_controls(sp);                                   break;
-    case SP_SELECTED_CHANNEL:    return(C_TO_XEN_INT(sp->selected_channel));           break;
+    case SP_SELECTED_CHANNEL:    if (sp->selected_channel != NO_SELECTION) return(C_TO_XEN_INT(sp->selected_channel)); else return(XEN_FALSE); break;
     case SP_FILE_NAME:           return(C_TO_XEN_STRING(sp->filename));                break;
     case SP_SHORT_FILE_NAME:     return(C_TO_XEN_STRING(sp->short_filename));          break;
     case SP_CLOSE:               snd_close_file(sp, sp->state);                        break;
@@ -2195,7 +2186,7 @@ static XEN g_reset_controls(XEN snd_n)
 
 static XEN g_selected_channel(XEN snd_n) 
 {
-  #define H_selected_channel "(" S_selected_channel " &optional snd) -> currently selected channel in snd"
+  #define H_selected_channel "(" S_selected_channel " &optional snd) -> currently selected channel in snd (or #f if none)"
   return(sound_get(snd_n, SP_SELECTED_CHANNEL, S_selected_channel));
 }
 
@@ -2211,16 +2202,21 @@ static XEN g_set_selected_channel(XEN snd_n, XEN chn_n)
       sp = get_sp(snd_n);
       if (sp == NULL) 
 	return(snd_no_such_sound_error("set-" S_selected_channel, snd_n));
-      chan = XEN_TO_C_INT_OR_ELSE(chn_n, 0);
-      if ((sp) && 
-	  (chan >= 0) && 
-	  (chan < sp->nchans)) 
+      if (XEN_FALSE_P(chn_n))
+	sp->selected_channel = NO_SELECTION;
+      else
 	{
-	  select_channel(sp, chan);
-	  return(chn_n);
+	  chan = XEN_TO_C_INT_OR_ELSE(chn_n, 0);
+	  if ((chan >= 0) && 
+	      (chan < sp->nchans)) 
+	    {
+	      select_channel(sp, chan);
+	      return(chn_n);
+	    }
+	  else return(snd_no_such_channel_error("set-" S_selected_channel, snd_n, chn_n));
 	}
     }
-  return(snd_no_such_channel_error("set-" S_selected_channel, snd_n, chn_n));
+  return(XEN_FALSE);
 }
 
 static XEN g_file_name(XEN snd_n) 
@@ -2279,13 +2275,13 @@ static XEN g_revert_sound(XEN index)
 
 static XEN g_selected_sound(void)
 {
-  #define H_selected_sound "(" S_selected_sound ") -> index of currently selected sound"
+  #define H_selected_sound "(" S_selected_sound ") -> index of currently selected sound (or #f if none)"
   snd_state *ss;
   ss = get_global_state();
   if ((ss->selected_sound != NO_SELECTION) && 
       (snd_ok(ss->sounds[ss->selected_sound])))
     return(C_TO_SMALL_XEN_INT(ss->selected_sound));
-  return(C_TO_SMALL_XEN_INT(NO_SELECTION));
+  return(XEN_FALSE); /* was -1 before 26-Mar-02 */
 }
 
 static XEN g_open_sound(XEN filename)
@@ -3424,13 +3420,13 @@ If it returns #t, the apply is aborted."
   XEN_DEFINE_PROCEDURE(S_bomb, g_bomb_w, 0, 2, 0, H_bomb);
   XEN_DEFINE_PROCEDURE(S_find_sound, g_find_sound_w, 1, 0, 0, H_find_sound);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_channels, g_channels_w, H_channels, "set-" S_channels, g_set_channels_w,  0, 1, 0, 2);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_chans, g_channels_w, H_channels, "set-" S_chans, g_set_channels_w,  0, 1, 0, 2);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_srate, g_srate_w, H_srate, "set-" S_srate, g_set_srate_w,  0, 1, 0, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_channels,      g_channels_w,      H_channels,      "set-" S_channels,      g_set_channels_w,       0, 1, 0, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_chans,         g_channels_w,      H_channels,      "set-" S_chans,         g_set_channels_w,       0, 1, 0, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_srate,         g_srate_w,         H_srate,         "set-" S_srate,         g_set_srate_w,          0, 1, 0, 2);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_data_location, g_data_location_w, H_data_location, "set-" S_data_location, g_set_data_location_w,  0, 1, 0, 2);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_data_format, g_data_format_w, H_data_format, "set-" S_data_format, g_set_data_format_w,  0, 1, 0, 2);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_header_type, g_header_type_w, H_header_type, "set-" S_header_type, g_set_header_type_w,  0, 1, 0, 2);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_comment, g_comment_w, H_comment, "set-" S_comment, g_set_comment_w,  0, 1, 0, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_data_format,   g_data_format_w,   H_data_format,   "set-" S_data_format,   g_set_data_format_w,    0, 1, 0, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_header_type,   g_header_type_w,   H_header_type,   "set-" S_header_type,   g_set_header_type_w,    0, 1, 0, 2);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_comment,       g_comment_w,       H_comment,       "set-" S_comment,       g_set_comment_w,        0, 1, 0, 2);
 
   XEN_DEFINE_PROCEDURE(S_file_name,             g_file_name_w, 0, 1, 0,             H_file_name);
   XEN_DEFINE_PROCEDURE(S_short_file_name,       g_short_file_name_w, 0, 1, 0,       H_short_file_name);

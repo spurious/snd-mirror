@@ -3573,13 +3573,13 @@ a particular mix object:</p>
 <!-- selected-mix -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="sndselectedmix">selected-mix</a></em> ()</code></span></td>
-<!-- --><td>selected mix (-1 = none) -- set to select mix.
+<!-- --><td>selected mix (#f if none) -- set to select mix.
 <!-- --></td></tr>
 <!-- -->
 <!-- select-mix -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="sndselectmix">select-mix</a></em> (mix)</code></span></td>
-<!-- --><td>set selected mix (-1 = none).
+<!-- --><td>set selected mix (#f = none).
 <!-- --></td></tr>
 <!-- -->
 <!-- --></table>
@@ -3877,6 +3877,22 @@ Most of the region number arguments default to the current region (the first in 
 <!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="sndsaveselection">save-selection</a></em> (file <i>header-type data-format srate comment chan</i>)</code></span></td>
 <!-- --></tr><tr><td></td><td>
 <!-- -->save the currently selected data in <i>file</i>.  If <i>chan</i> is given, save only that channel.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2>
+<!-- --><center><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(define (brksnd dur base)
+  "(brksnd dur base) divides the current sound into dur-sized pieces, saving them as base.n"
+  (let ((hop (inexact-&gt;exact (* (srate) dur)))
+	(len (frames))
+        (old-sync (sync)))
+    (set! (sync) 1) ; save all chans
+    (do ((i 0 (+ i hop))
+	 (j 0 (1+ j)))
+	((&gt;= i len))
+      (make-selection i (+ i hop)) ; in extensions.scm
+      (<em class=red>save-selection</em> (string-append base "." (number-&gt;string j))))
+    (set! (sync) old-sync)))
+<!-- --></pre></td></tr></table></center>
 <!-- --></td></tr>
 <!-- -->
 <!-- scale-selection-by -->
@@ -5678,7 +5694,7 @@ the direction argument between the channel and edit-position.
 <!-- --><span class=defbox><code><em class=def><a name="sndselectedchannel">selected-channel</a></em> (<i>snd</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->selected channel in <i>snd</i> (set to select channel).
+<!-- -->selected channel in <i>snd</i> (set it to select a channel).  Returns #f is no channel is selected in snd.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5688,7 +5704,7 @@ the direction argument between the channel and edit-position.
 <!-- --><span class=defbox><code><em class=def><a name="sndselectedsound">selected-sound</a></em> ()</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->selected sound (index) (set to select sound).
+<!-- -->selected sound (index) (set it to select a sound). Returns #f is there is no selected sound.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -7647,7 +7663,7 @@ And an example that lets us see the result of filtering the waveform:
 (<em class=red>add-to-menu</em> 0 "Delete" ; add Delete option to File menu
 	     (lambda ()
 	       ;; close current sound and delete it (after requesting confirmation)
-	       (if (&gt;= (selected-sound) 0)
+	       (if (selected-sound)
 		   (let ((filename (file-name)))
 		     (close-sound)
 		     (if (yes-or-no? (format #f "delete ~S?" filename))
@@ -8049,13 +8065,33 @@ run
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="sndbindkey">bind-key</a></em> (key state func extended) </code></span></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->Cause <i>key</i> (an integer) with modifiers <i>state</i> (and preceding C-x if <i>extended</i>) to evaluate <i>code</i>.<br><br>
+<!-- -->Cause <i>key</i> (an integer) with modifiers <i>state</i> (and preceding C-x if <i>extended</i>) to evaluate <i>func</i>.<br><br>
 <!-- -->
-<!-- --><code>(bind-key (char-&gt;integer #\a) 4 (lambda () (snd-print \"hi\") cursor-in-view))</code><br>
-<!-- --><code>(bind-key (char-&gt;integer #\p) 0 (lambda () cursor-on-left)) ;now (cursor) == (left-sample)</code><br><br>
+<!-- --><tr><td></td><td>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(bind-key (char-&gt;integer #\a) 4 
+          (lambda () 
+            "C-a prints hi in listener"
+            (snd-print \"hi\") 
+            cursor-in-view))
+
+(bind-key (char-&gt;integer #\p) 0 
+          (lambda () 
+            "p moves cursor to left edge of window"
+            cursor-on-left))
+
+(bind-key (char-&gt;integer #\v) 4
+	  (lambda ()
+            "C-v redefined to behave as in Emacs (move ahead window)
+	    (if (&lt; (right-sample) (frames))
+		(set! (left-sample) (right-sample)))
+	    keyboard-no-action))
+<!-- --></pre></td></tr></table></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
 <!-- -->
 <!-- -->The modifier state is a combination of shift: 1, control: 4, meta: 8, 
-<!-- -->so this call causes C-a to print "hi" in the lisp listener.  The 
+<!-- -->so the first bind-key above causes C-a to print "hi" in the lisp listener.  The 
 <!-- -->value returned should be one of the cursor choices telling Snd what 
 <!-- -->action (if any) to take after evaluating <i>code</i>.  
 <!-- -->Possible return values are:

@@ -306,7 +306,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
   "(make-selection &optional beg end snd chn) makes a selection like make-region but without creating a region. \
 make-selection follows snd's sync field, and applies to all snd's channels if chn is not specified. end defaults
 to end of channel, beg defaults to 0, snd defaults to the currently selected sound."
-  (let ((current-sound (or (and (number? snd) snd) (selected-sound))))
+  (let ((current-sound (or snd (selected-sound) (car (sounds)))))
     (define (add-chan-to-selection s0 s1 s c)
       (set! (selection-member? s c) #t)
       (set! (selection-position s c) (or s0 0))

@@ -3899,8 +3899,12 @@ static XEN g_set_mix_tag_height(XEN val)
 static XEN g_select_mix(XEN id)
 {
   #define H_select_mix "(" S_select_mix " id) makes mix is the selected mix"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(id), id, XEN_ONLY_ARG, S_select_mix, "an integer");
-  select_mix(md_from_id(XEN_TO_C_INT(id)));
+  snd_state *ss;
+  ss = get_global_state();
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(id) || XEN_FALSE_P(id), id, XEN_ONLY_ARG, S_select_mix, "an integer or #f");
+  if (XEN_FALSE_P(id))
+    ss->selected_mix = INVALID_MIX_ID;
+  else select_mix(md_from_id(XEN_TO_C_INT(id)));
   return(id);
 }
 
@@ -3909,7 +3913,9 @@ static XEN g_selected_mix(void)
   #define H_selected_mix "(" S_selected_mix ") -> the id of the currently selected mix"
   snd_state *ss;
   ss = get_global_state();
-  return(C_TO_SMALL_XEN_INT(ss->selected_mix));
+  if (ss->selected_mix != INVALID_MIX_ID)
+    return(C_TO_SMALL_XEN_INT(ss->selected_mix));
+  return(XEN_FALSE); /* changed 26-Mar-02 */
 }
 
 static XEN g_forward_mix(XEN count, XEN snd, XEN chn) 

@@ -1,5 +1,6 @@
 snd change log
 
+  27-Mar:    selected-mix, selected-sound, and selected-channel return #f if none selected (not -1).
   24-Mar:    removed ALSA 0.5 support.
              cosine-summation, legendre-summation in dsp.scm.
              mus-sound-forget and mus-sound-prune bindings.

@@ -552,7 +552,7 @@ this can be confusing if fft normalization is on (the default)"
 
 (define (first-mark-in-window-at-left)
   "(first-mark-in-window-at-left) moves the graph so that the leftmost visible mark is at the left edge"
-  (let* ((keysnd (or (selected-sound) 0))
+  (let* ((keysnd (or (selected-sound) (car (sounds))))
 	 (keychn (or (selected-channel keysnd) 0))
 	 (current-left-sample (left-sample keysnd keychn))
 	 (chan-marks (marks keysnd keychn)))
@@ -2036,7 +2036,7 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
   "(files-popup-buffer type position name) hides all sounds but the one the mouse touched in the current files list. Use with mouse-enter-label-hook"
   (let ((snd (find-sound name)))
     (if snd
-	(let* ((curr-buffer (max 0 (selected-sound)))
+	(let* ((curr-buffer (or (selected-sound) (car sounds)))
 	       (width (car (widget-size (car (sound-widgets curr-buffer)))))
 	       (height (cadr (widget-size (car (sound-widgets curr-buffer))))))
 	  (for-each 
@@ -2313,8 +2313,8 @@ In most cases, this will be slightly offset from the true beginning of the note"
 (define (add-notes notes)
   "(add-notes notes) adds (mixes) 'notes' which is a list of lists of the form: file &optional (offset 0.0) (amp 1.0) \
 starting at the cursor in the currently selected channel: (add-notes '(("oboe.snd") ("pistol.snd" 1.0 2.0)))"
-  (let* ((snd (selected-sound))
-	 (chn (selected-channel))
+  (let* ((snd (or (selected-sound) (car (sounds))))
+	 (chn (or (selected-channel) 0))
 	 (start (cursor snd chn)))
     (as-one-edit
      (lambda ()

@@ -30,7 +30,6 @@
 ;;; TODO: gtk tests
 ;;; TODO: Xt selection tests?
 ;;; TODO: rest of Snd callbacks triggered
-;;; TODO: control-mark-drag with large files (amp env case)
 ;;; TODO: mix play with various amp/speed settings
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs) (ice-9 syncase))
@@ -60,7 +59,7 @@
 (define total-tests 25)
 (define with-exit (< snd-test 0))
 (set! (with-background-processes) #f)
-(define all-args #t) ; huge arg testing
+(define all-args #f) ; huge arg testing
 
 (define home-dir "/home")
 (define sf-dir "/sf1")
@@ -731,7 +730,7 @@
       (IF (not (equal? (audio-output-device)  0 )) 
 	  (snd-display ";audio-output-device set def: ~A" (audio-output-device)))
       (set! (selected-mix) (selected-mix))
-      (IF (not (equal? (selected-mix)  -1)) 
+      (IF (not (equal? (selected-mix) #f)) 
 	  (snd-display ";selected-mix set def: ~A" (selected-mix)))
 
       ))
@@ -887,7 +886,7 @@
 	'mix-tag-width (mix-tag-width) 6
 	'mix-tag-height (mix-tag-height) 14
 	'audio-output-device (audio-output-device) 0 
-	'selected-mix (selected-mix) -1
+	'selected-mix (selected-mix) #f
 	))))
 
 
@@ -1958,7 +1957,7 @@
 	  (IF (not (eq? (car var) 'mus-error))
 	      (snd-display ";vct->sound-data-set! bad chan: ~A" var)))
 	(close-sound ob))
-      (IF (not (= (selected-sound) -1))
+      (IF (selected-sound)
 	  (snd-display ";selected-sound ~A ~A" (selected-sound) (sounds)))
       
       (let* ((vals (make-vector 32))
@@ -2712,6 +2711,10 @@
 	  (scale-by 2.0 index) 
 	  (set! newmaxa (maxamp index))
 	  (IF (fneq newmaxa (* 2.0 maxa)) (snd-display ";scale-by: ~A?" newmaxa))
+	  (revert-sound index)
+	  (scale-by -1 index)
+	  (mix "oboe.snd")
+	  (IF (fneq (maxamp index 0) 0.0) (snd-display ";invert+mix->~A" (maxamp)))
 	  (revert-sound index)
 	  (select-all index) 
 	  (IF (not (= (length (regions)) 2)) (snd-display ";regions(2): ~A?" (regions)))
@@ -4275,12 +4278,15 @@
 	(IF (equal? v4 v1) (snd-display ";len diff vct equal? ~A ~A" v4 v1)))
       (vct-set! vlst 1 .1)
       (IF (not (feql (vct->list vlst) (list 0.0 0.1 0.0))) (snd-display ";vct->list: ~A?" (vct->list vlst)))
-      (let* ((vect '#(0 1 2 3))
+      (let* ((vect '#(0.0 1.0 2.0 3.0))
+	     (v123 (vct 0.0 1.0 2.0 3.0))
 	     (v2 (vector->vct vect))
 	     (v3 v2)
 	     (str (format #f "~A" v2)))
 	(IF (not (string=? str "#<vct[len=4]: 0.000 1.000 2.000 3.000>"))
 	    (snd-display ";vct print: ~%  ~A~%  ~A?" str v2))
+	(IF (not (vequal v123 v2)) (snd-display ";vector->vct: ~A" v2))
+	(IF (not (equal? (vct->vector v123) vect)) (snd-display ";vct->vector: ~A ~A" vect (vct->vector v123)))
 	(IF (not (equal? v3 v2)) (snd-display ";vct=? ~A ~A?" v2 v3))
 	(IF (not (= (vct-length v2) 4)) (snd-display ";vector->vct length: ~A?" (vct-length v2)))
 	(IF (fneq (vct-ref v2 2) 2.0) (snd-display ";vector->vct: ~A?" v2))
@@ -6518,6 +6524,12 @@
 		 (snd-display ";locsig[~A] = ~A (~A)?" i (locsig-ref m1 i) (* i .1))))))
        (list 1 2 4 8))
 
+      (let ((var (catch #t (lambda () (make-locsig :channels 0)) (lambda args args))))
+	(IF (not (eq? (car var) 'wrong-type-arg))
+	    (snd-display ";make-locsig bad (0) chans: ~A" var)))
+      (let ((var (catch #t (lambda () (make-locsig :channels -2)) (lambda args args))))
+	(IF (not (eq? (car var) 'wrong-type-arg))
+	    (snd-display ";make-locsig bad (-2) chans: ~A" var)))
       (let ((var (catch #t (lambda () (make-locsig :output 1)) (lambda args args))))
 	(IF (not (eq? (car var) 'wrong-type-arg))
 	    (snd-display ";make-locsig bad output: ~A" var)))
@@ -6588,6 +6600,10 @@
 			 "locsig"
 			 "locsig: chans 4, outn: [0.000 0.222 0.778 0.000]"
 			 "locs outn[4]: [0.000 0.222 0.778 0.000], revn[0]: nil")
+	(print-and-check (make-locsig -200 :channels 4)
+			 "locsig"
+			 "locsig: chans 4, outn: [0.000 0.222 0.778 0.000]"
+			 "locs outn[4]: [0.000 0.222 0.778 0.000], revn[0]: nil")
 	(print-and-check (make-locsig 160 :channels 4 :distance .5)
 			 "locsig"
 			 "locsig: chans 4, outn: [0.000 0.222 0.778 0.000]"
@@ -6596,10 +6612,59 @@
 			 "locsig"
 			 "locsig: chans 4, outn: [0.556 0.000 0.000 0.444]"
 			 "locs outn[4]: [0.556 0.000 0.000 0.444], revn[0]: nil")
+	(print-and-check (make-locsig -40 :channels 4)
+			 "locsig"
+			 "locsig: chans 4, outn: [0.556 0.000 0.000 0.444]"
+			 "locs outn[4]: [0.556 0.000 0.000 0.444], revn[0]: nil")
 	(print-and-check (make-locsig 320 :channels 2)
 			 "locsig"
 			 "locsig: chans 2, outn: [0.000 1.000]"
 			 "locs outn[2]: [0.000 1.000], revn[0]: nil")
+	(print-and-check (make-locsig -40 :channels 2)
+			 "locsig"
+			 "locsig: chans 2, outn: [0.000 1.000]"
+			 "locs outn[2]: [0.000 1.000], revn[0]: nil")
+	(letrec ((locsig-data
+		  (lambda (gen)
+		    (let* ((chans (mus-channels gen))
+			   (dat (make-vct chans)))
+		      (do ((i 0 (1+ i)))
+			  ((= i chans))
+			(vct-set! dat i (locsig-ref gen i)))
+		      dat))))
+	  (let ((gen (make-locsig -.1 :channels 8)))
+	    (IF (not (vequal (locsig-data gen) (vct 0.998 0.000 0.000 0.000 0.000 0.000 0.000 0.002)))
+		(snd-display ";locsig -.1(8): ~A" (locsig-data gen)))
+	    (set! gen (make-locsig -359.9 :channels 8))
+	    (IF (not (vequal (locsig-data gen) (vct 0.998 0.002 0.000 0.000 0.000 0.000 0.000 0.000)))
+		(snd-display ";locsig -359.9(8): ~A" (locsig-data gen)))
+	    (set! gen (make-locsig -359.9 :channels 4))
+	    (IF (not (vequal (locsig-data gen) (vct 0.999 0.001 0.000 0.000)))
+		(snd-display ";locsig -359.9(4): ~A" (locsig-data gen)))
+	    (set! gen (make-locsig -360.1 :channels 8))
+	    (IF (not (vequal (locsig-data gen) (vct 0.998 0.000 0.000 0.000 0.000 0.000 0.000 0.002)))
+		(snd-display ";locsig -360.1(8): ~A" (locsig-data gen)))
+	    (set! gen (make-locsig -700 :channels 8))
+	    (IF (not (vequal (locsig-data gen) (vct 0.556 0.444 0.000 0.000 0.000 0.000 0.000 0.000)))
+		(snd-display ";locsig -700(8): ~A" (locsig-data gen)))
+	    (set! gen (make-locsig -700 :channels 2))
+	    (IF (not (vequal (locsig-data gen) (vct 0.778 0.222)))
+		(snd-display ";locsig -700(2): ~A" (locsig-data gen)))
+	    (set! gen (make-locsig 20 :channels 2))
+	    (IF (not (vequal (locsig-data gen) (vct 0.778 0.222)))
+		(snd-display ";locsig 20(2): ~A" (locsig-data gen)))
+	    (set! gen (make-locsig 123456.0 :channels 8))
+	    (IF (not (vequal (locsig-data gen) (vct 0.467 0.000 0.000 0.000 0.000 0.000 0.000 0.533)))
+		(snd-display ";locsig 123456(8): ~A" (locsig-data gen)))
+	    (set! gen (make-locsig 336.0 :channels 8))
+	    (IF (not (vequal (locsig-data gen) (vct 0.467 0.000 0.000 0.000 0.000 0.000 0.000 0.533)))
+		(snd-display ";locsig 336(8): ~A" (locsig-data gen)))
+	    (set! gen (make-locsig -123456.0 :channels 8))
+	    (IF (not (vequal (locsig-data gen) (vct 0.467 0.533 0.000 0.000 0.000 0.000 0.000 0.000)))
+		(snd-display ";locsig -123456(8): ~A" (locsig-data gen)))
+	    (set! gen (make-locsig 24.0 :channels 8))
+	    (IF (not (vequal (locsig-data gen) (vct 0.467 0.533 0.000 0.000 0.000 0.000 0.000 0.000)))
+		(snd-display ";locsig 24(8): ~A" (locsig-data gen)))))
 
 	(for-each 
 	 (lambda (rev-chans)
@@ -7288,10 +7353,10 @@
 	      (IF (not (= anc 30)) (snd-display ";set-mix-anchor: ~A?" anc))
 	      (IF (not (equal? (mix-amp-env mix-id 0) '(0.0 0.0 1.0 1.0))) (snd-display ";set-mix-amp-env: ~A?" (mix-amp-env mix-id 0)))
 	      (IF (not (string=? nam "asdf")) (snd-display ";set-mix-name: ~A?" nam))
-	      (IF (= mix-id (selected-mix)) (snd-display ";selected-mix: ~A?" mix-id))
+	      (IF (and (selected-mix) (= mix-id (selected-mix))) (snd-display ";selected-mix: ~A?" mix-id))
 	      (set! (selected-mix) mix-id)
 	      (IF (not (= mix-id (selected-mix))) (snd-display ";set! select-mix: ~A ~A?" mix-id (selected-mix)))
-	      (set! (selected-mix) -1)
+	      (set! (selected-mix) #f)
 	      (select-mix mix-id)
 	      (IF (not (= mix-id (selected-mix))) (snd-display ";select-mix: ~A ~A?" mix-id (selected-mix))))
 	    (let ((id (make-region 0 100)))
@@ -9028,6 +9093,14 @@
 	      (snd-display ";sndxtest chan 1 hit chan 0? ~A ~A" old0 new0))
 	  (IF (not (vequal new1 old1))
 	      (snd-display ";sndxtest chan 1 ? ~A ~A" old1 new1))))
+      (do ((i 0 (1+ i))) ((= i 2))
+	(set! (selection-position fd i) 1000)
+	(set! (selection-length fd i) 10)
+	(set! (selection-member? fd i) #t))
+      (scale-selection-to '#(.5 .25))
+      (IF (or (fneq (maxamp fd 0) .5)
+	      (fneq (maxamp fd 1) .25))
+	  (snd-display ";scale-selection-to with vector: ~A" (maxamp fd #t)))
       (close-sound fd)
 
       (set! fd (open-sound "2.snd"))
@@ -12760,7 +12833,8 @@ EDITS: 4
 		(snd-kp-right-key #xFF98)
 		(snd-kp-up-key #xFF97)
 		(snd-tab-key #xFF09)
-		(snd-kp-down-key #xFF99))
+		(snd-kp-down-key #xFF99)
+		(snd-home-key #xFF50))
 
 	    (define (all-help wid)
 	      (if (|Widget? wid)
@@ -13052,6 +13126,7 @@ EDITS: 4
 		  (key-event cwid snd-kp-enter-key 0) (force-event)
 
 		  (set! (graph-transform?) #t)
+		  (set! (transform-size) 256)
 		  (let ((ds (transform-size)))
 		    (key-event cwid snd-kp-multiply-key 0) (force-event)
 		    (IF (not (= (transform-size) (* 2 ds)))
@@ -13065,7 +13140,7 @@ EDITS: 4
 		  (let ((hop (wavo-trace)))
 		    (key-event cwid snd-kp-add-key 0) (force-event)
 		    (IF (not (= (1+ hop) (wavo-trace))) (snd-display ";add wavo-trace ~A -> ~A" hop (wavo-trace)))
-		    (key-event cwid snd-kp-add-subtract 0) (force-event)
+		    (key-event cwid snd-kp-subtract-key 0) (force-event)
 		    (IF (not (= hop (wavo-trace))) (snd-display ";subtract wavo-trace ~A -> ~A" hop (wavo-trace))))
 		  (set! (time-graph-type) graph-time-once)
 
@@ -13315,8 +13390,8 @@ EDITS: 4
 		      (snd-display ";C-space for selection len: ~A?" (selection-length)))
 		  (key-event cwid (char->integer #\x) 4) (force-event)
 		  (key-event cwid (char->integer #\l) 0) (force-event)
-		  (IF (not (= (cursor) (+ (selection-position) (inexact->exact (* 0.5 (selection-len))))))
-		      (snd-display ";C-x L: ~A ~A" (cursor) (+ (selection-position) (inexact->exact (* 0.5 (selection-len))))))
+		  (IF (not (= (cursor) (+ (selection-position) (inexact->exact (* 0.5 (selection-length))))))
+		      (snd-display ";C-x L: ~A ~A" (cursor) (+ (selection-position) (inexact->exact (* 0.5 (selection-length))))))
 
 		  (key-event cwid (char->integer #\x) 8) (force-event)
 		  (widget-string minibuffer "(set! mxa 3)")
@@ -13520,9 +13595,19 @@ EDITS: 4
 		  (key-event cwid (char->integer #\u) 4) (force-event)
 		  (IF (not (equal? (edits) (list 1 1)))
 		      (snd-display ";C-x C-u: ~A?" (edits)))
-		  (key-event cwid (char->integer #\l) 4) (force-event)		  
+		  (set! (x-bounds) (list .3 .4))
+		  (update-time-graph)
+		  (key-event cwid (char->integer #\l) 4) (force-event)	
+		  (update-time-graph)
 		  (IF (fneq (/ (cursor) (srate)) (/ (* .5 (+ (left-sample) (right-sample))) (srate)))
-		      (snd-display ";C-l: ~A ~A?" (/ (cursor) (srate)) (/ (* .5 (+ (left-sample) (right-sample))) (srate))))
+		      (snd-display ";C-l: ~A ~A (~A: ~A ~A of ~A in ~A)?" 
+				   (/ (cursor) (srate))
+				   (/ (* .5 (+ (left-sample) (right-sample))) (srate))
+				   (cursor)
+				   (left-sample)
+				   (right-sample)
+				   (selected-sound)
+				   (sounds)))
 		  )
 
 		;; named macro
@@ -13625,20 +13710,22 @@ EDITS: 4
 	      (set! (sync ind1) 1)
 	      (set! (sync ind0) 1)
 	      (set! (cursor) 100)
-	      (key-event cwid (char->integer #\m) 4) (force-event)
+	      (select-sound ind0)
+	      (select-channel 0)
+	      (key-event cwid (char->integer #\M) 5) (force-event)
 	      (let ((m0 (marks ind0 0))
 		    (m1 (marks ind1 0)))
 		(IF (or (not (= (length m0) (length m1)))
 			(not (= (length m0) 1)))
-		    (snd-display ";sync'd C-m: ~A ~A" m0 m1))
-		(IF (not (= (mark-sample (car m0)) (mark-sample (car m1))))
-		    (snd-display ";sync'd C-m: ~A ~A" (mark-sample (car m0)) (mark-sample (car m1))))
+		    (snd-display ";sync'd C-M: ~A ~A" m0 m1)
+		    (IF (not (= (mark-sample (car m0)) (mark-sample (car m1))))
+			(snd-display ";sync'd C-m: ~A ~A" (mark-sample (car m0)) (mark-sample (car m1)))))
 		(close-sound ind1)
-		(let ((tag (catch #t (lambda () 
-				       (key-event cwid (char->integer #\x) 4) (force-event)
-				       (key-event cwid (char->integer #\a) 0) (force-event)))))
-		  (IF (not (eq? tag 'no-active-selection))
-		      (snd-display ";C-x a w/o selection: ~A" tag)))
+		(catch #t (lambda () 
+			    (key-event cwid (char->integer #\x) 4) (force-event)
+			    (key-event cwid (char->integer #\a) 0) (force-event))
+		       (lambda args (car args)))
+		(key-event cwid snd-home-key 0) (force-event)
 		(close-sound ind0)))
 	    
 	    (let* ((ind (open-sound "2.snd"))
@@ -18394,7 +18481,7 @@ EDITS: 4
 	       sum-of-cosines? table-lookup table-lookup? tap triangle-wave triangle-wave? two-pole two-pole? two-zero
 	       two-zero? wave-train wave-train?  waveshape waveshape?  make-vct vct-add! vct-subtract!  vct-copy
 	       vct-length vct-multiply! vct-offset! vct-ref vct-scale! vct-fill! vct-set! mus-audio-describe vct-peak
-	       vct? list->vct vct->list vector->vct vct-move!  vct-subseq vct little-endian?
+	       vct? list->vct vct->list vector->vct vct->vector vct-move!  vct-subseq vct little-endian?
 	       clm-channel env-channel map-channel scan-channel play-channel reverse-channel 
 	       smooth-channel vct->channel channel->vct src-channel scale-channel pad-channel
 	       cursor-position clear-listener mus-sound-prune mus-sound-forget
@@ -19336,9 +19423,7 @@ EDITS: 4
 	       (lambda (n)
 		 (catch #t
 			(lambda () (n arg1 arg2))
-			(lambda args (car args)))
-		 ;(gc)
-		 )
+			(lambda args (car args))))
 	       procs2))
 	    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) '#(0 1) 3/4 
 		  (sqrt -1.0) (make-delay 32) :feedback -1 0 #f #t '() 12345678901234567890)))

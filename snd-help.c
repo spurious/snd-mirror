@@ -275,6 +275,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+27-Mar:  selected-mix, selected-sound, and selected-channel return #f if none selected (not -1)\n\
 24-Mar:  removed ALSA 0.5 support.\n\
          cosine-summation, legendre-summation in dsp.scm.\n\
          mus-sound-forget and mus-sound-prune bindings.\n\
