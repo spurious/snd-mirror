@@ -9,6 +9,21 @@
  */
 
 /* HISTORY: 
+ *   18-Feb:    removed undocumented functions: XmClipboardBeginCopy, XmCvtFromHorizontalPixels, XmCvtFromVerticalPixels,
+ *                XmCvtToHorizontalPixels, XmCvtToVerticalPixels, XmGetIconFileName, XmStringCreateFontList, XmStringCreateFontList_r,
+ *                XmStringLtoRCreate
+ *              commented out undocumented resources (see HAVE_UNDOCUMENTED_RESOURCES)
+ *              added XM_DISABLE_DEPRECATED which affects:
+ *                XtError, XtSetErrorHandler, XtSetWarningHandler, XtSetErrorMsgHandler, XtSetWarningMsgHandler, XtWarningMsg, XtAppWarning, XtErrorMsg
+ *                XtSetSelectionTimeout, XtInitialize , XtAddActions, XtAddInput, XtAddTimeout, XtAddWorkProc, XtCreateApplicationShell
+ *                XtNextEvent, XtPeekEvent, XtPending, XtProcessEvent, XtMainLoop, XtGetSelectionTimeout, XtWarning,
+ *                XmNdefaultFontList, XmNshellUnitType, XmAddTabGroup, XmNfontList, XmFontList*, XmNchildType, XmGetMenuCursor, 
+ *                XmNstringDirection, XmListGetSelectedPos, XmMainWindowSep1, XmMainWindowSep2, XmMainWindowSep3, XmMainWindowSetAreas, 
+ *                XmRemoveTabGroup, XmNwhichButton, XmScrolledWindowSetAreas, XmSetFontUnit, XmSetFontUnits, XmNdefaultFontList, 
+ *                XmSetMenuCursor, XmStringByteCompare, XmStringCreateLtoR, XmSTRING_COMPONENT_CHARSET, XmSTRING_COMPONENT_FONTLIST_ELEMENT_TAG,
+ *                XmStringCreateSimple, XmStringGetLtoR, XmStringGetNextComponent, XmStringGetNextSegment, XmStringLength, XmStringNConcat
+ *                XmStringNCopy, XmStringPeekNextComponent, XmStringSegmentCreate, XmTrackingLocate
+ *              added XmWidgetGetDisplayRect inadvertently omitted earlier.
  *   14-Feb:    XUniqueContext added, XExtentsOfFontSet and XGetErrorDatabaseText deleted.
  *              X save-set and X host-address stuff deleted.
  *              XVisualInfo fields added. 
@@ -505,6 +520,20 @@ static void define_xm_obj(void)
   static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));} \
   static XEN XEN_ ## Name ## _p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P(#Name, val)));}
 
+#define XM_TYPE_nox(Name, XType) \
+  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)UNWRAP_FOR_C(val));} \
+  static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));} \
+  static XEN XEN_ ## Name ## _p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P(#Name, val)));}
+
+#define XM_TYPE_nop(Name, XType) \
+  static XEN C_TO_XEN_ ## Name (XType val) {return(WRAP_FOR_XEN(#Name, val));} \
+  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)UNWRAP_FOR_C(val));} \
+  static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}
+
+#define XM_TYPE_nopx(Name, XType) \
+  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)UNWRAP_FOR_C(val));} \
+  static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}
+
 #define XM_TYPE_OBJ(Name, XType) \
   static XEN C_TO_XEN_ ## Name (XType val) {return(WRAP_FOR_XEN_OBJ(#Name, val));} \
   static XType XEN_TO_C_ ## Name (XEN val) {return((XType)UNWRAP_FOR_C(val));} \
@@ -548,54 +577,54 @@ XM_TYPE(Region, Region)
 XM_TYPE(Time, Time)
 XM_TYPE(Visual, Visual *)
 XM_TYPE(Window, Window)
-XM_TYPE(XAnyEvent, XAnyEvent *)
-XM_TYPE(XButtonEvent, XButtonEvent *)
 XM_TYPE(XCharStruct, XCharStruct *)
-XM_TYPE(XCirculateEvent, XCirculateEvent *)
-XM_TYPE(XCirculateRequestEvent, XCirculateRequestEvent *)
-XM_TYPE(XClientMessageEvent, XClientMessageEvent *)
-XM_TYPE(XColormapEvent, XColormapEvent *)
-XM_TYPE(XConfigureEvent, XConfigureEvent *)
-XM_TYPE(XConfigureRequestEvent, XConfigureRequestEvent *)
-XM_TYPE(XCreateWindowEvent, XCreateWindowEvent *)
-XM_TYPE(XCrossingEvent, XCrossingEvent *)
-XM_TYPE(XDestroyWindowEvent, XDestroyWindowEvent *)
-XM_TYPE(XErrorEvent, XErrorEvent *)
-XM_TYPE(XExposeEvent, XExposeEvent *)
-XM_TYPE(XFocusChangeEvent, XFocusChangeEvent *)
 XM_TYPE(XFontProp, XFontProp *)
 XM_TYPE(XFontSet, XFontSet)
 XM_TYPE(XFontStruct, XFontStruct *)
 XM_TYPE(XGCValues, XGCValues *)
-XM_TYPE(XTextItem, XTextItem *)
+XM_TYPE_nox(XTextItem, XTextItem *)
 XM_TYPE(XModifierKeymap, XModifierKeymap *) /* opaque in this implementation */
-XM_TYPE(XGraphicsExposeEvent, XGraphicsExposeEvent *)
-XM_TYPE(XGravityEvent, XGravityEvent *)
 XM_TYPE(XImage, XImage *)
-XM_TYPE(XKeyEvent, XKeyEvent *)
-XM_TYPE(XKeymapEvent, XKeymapEvent *)
-XM_TYPE(XMapEvent, XMapEvent *)
-XM_TYPE(XMapRequestEvent, XMapRequestEvent *)
-XM_TYPE(XMappingEvent, XMappingEvent *)
-XM_TYPE(XMotionEvent, XMotionEvent *)
-XM_TYPE(XNoExposeEvent, XNoExposeEvent *)
-XM_TYPE(XPropertyEvent, XPropertyEvent *)
-XM_TYPE(XReparentEvent, XReparentEvent *)
-XM_TYPE(XResizeRequestEvent, XResizeRequestEvent *)
-XM_TYPE(XSelectionClearEvent, XSelectionClearEvent *)
-XM_TYPE(XSelectionEvent, XSelectionEvent *)
+static XAnyEvent *XEN_TO_C_XAnyEvent(XEN val) {return((XAnyEvent *)UNWRAP_FOR_C(val));}
+XM_TYPE_nox(XButtonEvent, XButtonEvent *)
+XM_TYPE_nox(XCirculateEvent, XCirculateEvent *)
+XM_TYPE_nox(XCirculateRequestEvent, XCirculateRequestEvent *)
+XM_TYPE_nox(XClientMessageEvent, XClientMessageEvent *)
+XM_TYPE_nox(XColormapEvent, XColormapEvent *)
+XM_TYPE_nox(XConfigureEvent, XConfigureEvent *)
+XM_TYPE_nox(XConfigureRequestEvent, XConfigureRequestEvent *)
+XM_TYPE_nox(XCreateWindowEvent, XCreateWindowEvent *)
+XM_TYPE_nox(XCrossingEvent, XCrossingEvent *)
+XM_TYPE_nox(XDestroyWindowEvent, XDestroyWindowEvent *)
+XM_TYPE_nox(XErrorEvent, XErrorEvent *)
+XM_TYPE_nox(XExposeEvent, XExposeEvent *)
+XM_TYPE_nox(XFocusChangeEvent, XFocusChangeEvent *)
+XM_TYPE_nox(XGraphicsExposeEvent, XGraphicsExposeEvent *)
+XM_TYPE_nox(XGravityEvent, XGravityEvent *)
+XM_TYPE_nox(XKeyEvent, XKeyEvent *)
+XM_TYPE_nox(XKeymapEvent, XKeymapEvent *)
+XM_TYPE_nox(XMapEvent, XMapEvent *)
+XM_TYPE_nox(XMapRequestEvent, XMapRequestEvent *)
+XM_TYPE_nox(XMappingEvent, XMappingEvent *)
+XM_TYPE_nox(XMotionEvent, XMotionEvent *)
+XM_TYPE_nox(XNoExposeEvent, XNoExposeEvent *)
+XM_TYPE_nox(XPropertyEvent, XPropertyEvent *)
+XM_TYPE_nox(XReparentEvent, XReparentEvent *)
+XM_TYPE_nox(XResizeRequestEvent, XResizeRequestEvent *)
+XM_TYPE_nox(XSelectionClearEvent, XSelectionClearEvent *)
+XM_TYPE_nox(XSelectionEvent, XSelectionEvent *)
 XM_TYPE(XSelectionRequestEvent, XSelectionRequestEvent *)
-XM_TYPE(XSetWindowAttributes, XSetWindowAttributes *)
-XM_TYPE(XUnmapEvent, XUnmapEvent *)
-XM_TYPE(XVisibilityEvent, XVisibilityEvent *)
+XM_TYPE_nox(XUnmapEvent, XUnmapEvent *)
+XM_TYPE_nox(XVisibilityEvent, XVisibilityEvent *)
+XM_TYPE_nox(XSetWindowAttributes, XSetWindowAttributes *)
 XM_TYPE(XVisualInfo, XVisualInfo *)
 XM_TYPE(XWMHints, XWMHints *)
 XM_TYPE(XWindowAttributes, XWindowAttributes *)
-XM_TYPE(XWindowChanges, XWindowChanges *)
+XM_TYPE_nox(XWindowChanges, XWindowChanges *)
 XM_TYPE(XStandardColormap, XStandardColormap *)
 XM_TYPE(KeyCode, KeyCode)
 XM_TYPE(XContext, XContext)
-XM_TYPE(Substitution, Substitution)
+XM_TYPE_nox(Substitution, Substitution)
 XM_TYPE(XIconSize, XIconSize *)
 
 #if HAVE_XP
@@ -606,76 +635,84 @@ XM_TYPE(XPContext, XPContext)
 XM_TYPE(Widget, Widget)
 XM_TYPE(WidgetClass, WidgetClass)
 XM_TYPE(XtAppContext, XtAppContext)
-XM_TYPE(XtRequestId, XtRequestId)
+XM_TYPE_nox(XtRequestId, XtRequestId)
 XM_TYPE(XtWorkProcId, XtWorkProcId)
 XM_TYPE(XtInputId, XtInputId)
 XM_TYPE(XtIntervalId, XtIntervalId)
-XM_TYPE(XtActionHookId, XtActionHookId)
-XM_TYPE(XtTranslations, XtTranslations)
+XM_TYPE_nop(XtActionHookId, XtActionHookId)
+XM_TYPE_nop(XtTranslations, XtTranslations)
 XM_TYPE(XmString, XmString)
-XM_TYPE(XmAnyCallbackStruct, XmAnyCallbackStruct *)
-XM_TYPE(XmArrowButtonCallbackStruct, XmArrowButtonCallbackStruct *)
-XM_TYPE(XmCommandCallbackStruct, XmCommandCallbackStruct *)
-XM_TYPE(XmDragDropFinishCallbackStruct, XmDragDropFinishCallbackStruct *)
-XM_TYPE(XmDragMotionCallbackStruct, XmDragMotionCallbackStruct *)
-XM_TYPE(XmDragProcCallbackStruct, XmDragProcCallbackStruct *)
-XM_TYPE(XmDrawingAreaCallbackStruct, XmDrawingAreaCallbackStruct *)
-XM_TYPE(XmDrawnButtonCallbackStruct, XmDrawnButtonCallbackStruct *)
-XM_TYPE(XmDropFinishCallbackStruct, XmDropFinishCallbackStruct *)
-XM_TYPE(XmDropProcCallbackStruct, XmDropProcCallbackStruct *)
-XM_TYPE(XmDropSiteEnterCallbackStruct, XmDropSiteEnterCallbackStruct *)
-XM_TYPE(XmDropSiteLeaveCallbackStruct, XmDropSiteLeaveCallbackStruct *)
-XM_TYPE(XmDropSiteVisuals, XmDropSiteVisuals)
-XM_TYPE(XmDropStartCallbackStruct, XmDropStartCallbackStruct *)
-XM_TYPE(XmFileSelectionBoxCallbackStruct, XmFileSelectionBoxCallbackStruct *)
-XM_TYPE(XmListCallbackStruct, XmListCallbackStruct *)
+XM_TYPE_nop(XmAnyCallbackStruct, XmAnyCallbackStruct *)
+XM_TYPE_nop(XmArrowButtonCallbackStruct, XmArrowButtonCallbackStruct *)
+XM_TYPE_nop(XmCommandCallbackStruct, XmCommandCallbackStruct *)
+XM_TYPE_nop(XmDragDropFinishCallbackStruct, XmDragDropFinishCallbackStruct *)
+XM_TYPE_nop(XmDragMotionCallbackStruct, XmDragMotionCallbackStruct *)
+XM_TYPE_nop(XmDragProcCallbackStruct, XmDragProcCallbackStruct *)
+XM_TYPE_nop(XmDrawingAreaCallbackStruct, XmDrawingAreaCallbackStruct *)
+XM_TYPE_nop(XmDrawnButtonCallbackStruct, XmDrawnButtonCallbackStruct *)
+XM_TYPE_nop(XmDropFinishCallbackStruct, XmDropFinishCallbackStruct *)
+XM_TYPE_nop(XmDropProcCallbackStruct, XmDropProcCallbackStruct *)
+XM_TYPE_nop(XmDropSiteEnterCallbackStruct, XmDropSiteEnterCallbackStruct *)
+XM_TYPE_nop(XmDropSiteLeaveCallbackStruct, XmDropSiteLeaveCallbackStruct *)
+XM_TYPE_nopx(XmDropSiteVisuals, XmDropSiteVisuals)
+XM_TYPE_nop(XmDropStartCallbackStruct, XmDropStartCallbackStruct *)
+XM_TYPE_nop(XmFileSelectionBoxCallbackStruct, XmFileSelectionBoxCallbackStruct *)
+XM_TYPE_nop(XmListCallbackStruct, XmListCallbackStruct *)
 #if MOTIF_2
 XM_TYPE(XmTab, XmTab) /*opaque */
-XM_TYPE(XmDragStartCallbackStruct, XmDragStartCallbackStruct *)
-XM_TYPE(XmDisplayCallbackStruct, XmDisplayCallbackStruct *)
-XM_TYPE(XmDestinationCallbackStruct, XmDestinationCallbackStruct *)
-XM_TYPE(XmConvertCallbackStruct, XmConvertCallbackStruct *)
-XM_TYPE(XmComboBoxCallbackStruct, XmComboBoxCallbackStruct *)
-XM_TYPE(XmContainerOutlineCallbackStruct, XmContainerOutlineCallbackStruct *)
-XM_TYPE(XmContainerSelectCallbackStruct, XmContainerSelectCallbackStruct *)
-XM_TYPE(XmNotebookCallbackStruct, XmNotebookCallbackStruct *)
-XM_TYPE(XmNotebookPageInfo, XmNotebookPageInfo *)
+XM_TYPE_nop(XmDragStartCallbackStruct, XmDragStartCallbackStruct *)
+XM_TYPE_nop(XmDisplayCallbackStruct, XmDisplayCallbackStruct *)
+XM_TYPE_nop(XmDestinationCallbackStruct, XmDestinationCallbackStruct *)
+XM_TYPE_nop(XmConvertCallbackStruct, XmConvertCallbackStruct *)
+XM_TYPE_nop(XmComboBoxCallbackStruct, XmComboBoxCallbackStruct *)
+XM_TYPE_nop(XmContainerOutlineCallbackStruct, XmContainerOutlineCallbackStruct *)
+XM_TYPE_nop(XmContainerSelectCallbackStruct, XmContainerSelectCallbackStruct *)
+XM_TYPE_nop(XmNotebookCallbackStruct, XmNotebookCallbackStruct *)
+XM_TYPE_nopx(XmNotebookPageInfo, XmNotebookPageInfo *)
 XM_TYPE(XmRenderTable, XmRenderTable)
 XM_TYPE(XmRendition, XmRendition)
-XM_TYPE(XmSpinBoxCallbackStruct, XmSpinBoxCallbackStruct *)
-XM_TYPE(XmTraverseObscuredCallbackStruct, XmTraverseObscuredCallbackStruct *)
-XM_TYPE(XmTopLevelLeaveCallbackStruct, XmTopLevelLeaveCallbackStruct *)
-XM_TYPE(XmTopLevelEnterCallbackStruct, XmTopLevelEnterCallbackStruct *)
+XM_TYPE_nop(XmSpinBoxCallbackStruct, XmSpinBoxCallbackStruct *)
+XM_TYPE_nop(XmTraverseObscuredCallbackStruct, XmTraverseObscuredCallbackStruct *)
+XM_TYPE_nop(XmTopLevelLeaveCallbackStruct, XmTopLevelLeaveCallbackStruct *)
+XM_TYPE_nop(XmTopLevelEnterCallbackStruct, XmTopLevelEnterCallbackStruct *)
 #if HAVE_XP
-XM_TYPE(XmPrintShellCallbackStruct, XmPrintShellCallbackStruct *)
+XM_TYPE_nop(XmPrintShellCallbackStruct, XmPrintShellCallbackStruct *)
 #endif
-XM_TYPE(XmPopupHandlerCallbackStruct, XmPopupHandlerCallbackStruct *)
-XM_TYPE(XmSelectionCallbackStruct, XmSelectionCallbackStruct *)
-XM_TYPE(XmTransferDoneCallbackStruct, XmTransferDoneCallbackStruct *)
-XM_TYPE(XmParseTable, XmParseTable) /* opaque */
+XM_TYPE_nop(XmPopupHandlerCallbackStruct, XmPopupHandlerCallbackStruct *)
+XM_TYPE_nop(XmSelectionCallbackStruct, XmSelectionCallbackStruct *)
+XM_TYPE_nopx(XmTransferDoneCallbackStruct, XmTransferDoneCallbackStruct *)
+XM_TYPE_nox(XmParseTable, XmParseTable) /* opaque */
 XM_TYPE(XmTabList, XmTabList) /* opaque */
 XM_TYPE(XmParseMapping, XmParseMapping)
 #endif
-XM_TYPE(XmOperationChangedCallbackStruct, XmOperationChangedCallbackStruct *)
-XM_TYPE(XmPushButtonCallbackStruct, XmPushButtonCallbackStruct *)
-XM_TYPE(XmRowColumnCallbackStruct, XmRowColumnCallbackStruct *)
-XM_TYPE(XmScaleCallbackStruct, XmScaleCallbackStruct *)
-XM_TYPE(XmScrollBarCallbackStruct, XmScrollBarCallbackStruct *)
-XM_TYPE(XmSelectionBoxCallbackStruct, XmSelectionBoxCallbackStruct *)
-XM_TYPE(XmTextVerifyCallbackStruct, XmTextVerifyCallbackStruct *)
-XM_TYPE(XmToggleButtonCallbackStruct, XmToggleButtonCallbackStruct *)
-XM_TYPE(XmFontContext, XmFontContext) /* opaque */
-XM_TYPE(XmFontList, XmFontList) /* opaque, obsolete == XmRenderTable in motif 2 */
-XM_TYPE(XmFontListEntry, XmFontListEntry) /* opaque */
+XM_TYPE_nop(XmOperationChangedCallbackStruct, XmOperationChangedCallbackStruct *)
+XM_TYPE_nop(XmPushButtonCallbackStruct, XmPushButtonCallbackStruct *)
+XM_TYPE_nop(XmRowColumnCallbackStruct, XmRowColumnCallbackStruct *)
+XM_TYPE_nop(XmScaleCallbackStruct, XmScaleCallbackStruct *)
+XM_TYPE_nop(XmScrollBarCallbackStruct, XmScrollBarCallbackStruct *)
+XM_TYPE_nop(XmSelectionBoxCallbackStruct, XmSelectionBoxCallbackStruct *)
+XM_TYPE_nop(XmTextVerifyCallbackStruct, XmTextVerifyCallbackStruct *)
+XM_TYPE_nop(XmToggleButtonCallbackStruct, XmToggleButtonCallbackStruct *)
+#if (!XM_DISABLE_DEPRECATED)
+  XM_TYPE(XmFontContext, XmFontContext) /* opaque */
+  XM_TYPE(XmFontList, XmFontList) /* opaque, obsolete == XmRenderTable in motif 2 */
+  XM_TYPE(XmFontListEntry, XmFontListEntry) /* opaque */
+#else
+  #define XEN_TO_C_XmFontList(Arg) XEN_TO_C_XmRenderTable(Arg)
+#endif
 XM_TYPE(XmTextSource, XmTextSource)
 XM_TYPE(XmStringContext, XmStringContext)
 
 static int XEN_XmFontList_or_XmRenderTable_P(XEN arg)
 {
+#if (!XM_DISABLE_DEPRECATED)
 #if MOTIF_2
   return(XEN_XmFontList_P(arg) || XEN_XmRenderTable_P(arg));
 #else
   return(XEN_XmFontList_P(arg));
+#endif
+#else
+  return(XEN_XmRenderTable_P(arg));
 #endif
 }
 #endif
@@ -1649,10 +1686,12 @@ static Arg *XEN_TO_C_Args(XEN inargl)
 	  XEN_ASSERT_TYPE(XEN_XmTextSource_P(value), value, XEN_ONLY_ARG, name, "an XmTextSource");      
 	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_XmTextSource(value)));
 	  break;
+#if (!XM_DISABLE_DEPRECATED)
 	case XM_FONTLIST:
 	  XEN_ASSERT_TYPE(XEN_XmFontList_or_XmRenderTable_P(value), value, XEN_ONLY_ARG, name, "an XmFontList");      
 	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_XmFontList(value)));
 	  break;
+#endif
 	case XM_COLORMAP:
 	  XEN_ASSERT_TYPE(XEN_Colormap_P(value), value, XEN_ONLY_ARG, name, "a Colormap");      
 	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_Colormap(value)));
@@ -1847,14 +1886,20 @@ static void fixup_args(Widget w, Arg *args, int len)
     }
 }
 
-static int guess_length(unsigned long value)
+static int xmstringtable_length(Widget w, char *name)
 {
-  XmString *ptrs = (XmString *)value;
-  int i;
-  for (i = 0; ; i++)
-    if (ptrs[i] == NULL)
-      return(i);
-  return(0);
+  /* it's not safe here to search for 0 as end of table, so where possible we'll match resources with counts */
+  int len = 0;
+  if (strcmp(name, XmNitems) == 0) XtVaGetValues(w, XmNitemCount, &len, NULL);
+  else if (strcmp(name, XmNlistItems) == 0) XtVaGetValues(w, XmNlistItemCount, &len, NULL);
+  else if (strcmp(name, XmNselectedItems) == 0) XtVaGetValues(w, XmNselectedItemCount, &len, NULL);
+  else if (strcmp(name, XmNhistoryItems) == 0) XtVaGetValues(w, XmNhistoryItemCount, &len, NULL);
+  else if (strcmp(name, XmNfileListItems) == 0) XtVaGetValues(w, XmNfileListItemCount, &len, NULL);
+  else if (strcmp(name, XmNdirListItems) == 0) XtVaGetValues(w, XmNdirListItemCount, &len, NULL);
+  else if (strcmp(name, XmNdetail) == 0) XtVaGetValues(w, XmNdetailCount, &len, NULL);
+  else if (strcmp(name, XmNvalues) == 0) XtVaGetValues(w, XmNnumValues, &len, NULL);
+  else XtVaGetValues(w, XmNbuttonCount, &len, NULL);
+  return(len);
 }
 
 static XEN C_TO_XEN_ANY(Widget w, char *name, unsigned long *v)
@@ -1872,7 +1917,7 @@ static XEN C_TO_XEN_ANY(Widget w, char *name, unsigned long *v)
     case XM_FLOAT:	      return(C_TO_XEN_DOUBLE(value));
     case XM_STRING:	      return(C_TO_XEN_STRING((char *)value));
     case XM_XMSTRING:	      return(C_TO_XEN_XmString((XmString)value));
-    case XM_STRING_TABLE:     return(C_TO_XEN_XmStringTable((XmStringTable)value, guess_length(value)));
+    case XM_STRING_TABLE:     return(C_TO_XEN_XmStringTable((XmStringTable)value, xmstringtable_length(w, name)));
 #if MOTIF_2
     case XM_RENDER_TABLE:     return(C_TO_XEN_XmRenderTable((XmRenderTable)value));
     case XM_TAB_LIST:	      return(C_TO_XEN_XmTabList((XmTabList)value));
@@ -1954,7 +1999,9 @@ static XEN C_TO_XEN_ANY(Widget w, char *name, unsigned long *v)
       XtGetValues(w, a, 1);
       return(C_TO_XEN_Strings((char **)value, (int)len));
       break;
+#if (!XM_DISABLE_DEPRECATED)
     case XM_FONTLIST:	      return(C_TO_XEN_XmFontList((XmFontList)value));
+#endif
     case XM_COLORMAP:	      return(C_TO_XEN_Colormap(value));
     case XM_KEYSYM:	      return(C_TO_XEN_KeySym(value));
     case XM_KEYSYM_TABLE:     
@@ -2270,6 +2317,7 @@ The MenuShell widget creation function"
   return(gxm_new_widget("XmCreateMenuShell", XmCreateMenuShell, arg1, arg2, arg3, arg4));
 }
 
+#if (!XM_DISABLE_DEPRECATED)
 static XEN gxm_XmRemoveTabGroup(XEN arg1)
 {
   #define H_XmRemoveTabGroup "void XmRemoveTabGroup(Widget tab_group) removes a tab group"
@@ -2285,6 +2333,7 @@ static XEN gxm_XmAddTabGroup(XEN arg1)
   XmAddTabGroup(XEN_TO_C_Widget(arg1));
   return(XEN_FALSE);
 }
+#endif
 
 static XEN gxm_XmProcessTraversal(XEN arg1, XEN arg2)
 {
@@ -3298,12 +3347,14 @@ non-zero-length text components"
   return(C_TO_XEN_BOOLEAN(XmStringEmpty(XEN_TO_C_XmString(arg1))));
 }
 
+#if (!XM_DISABLE_DEPRECATED)
 static XEN gxm_XmStringLength(XEN arg1)
 {
   #define H_XmStringLength "int XmStringLength(XmString s1) obtains the length of a compound string"
   XEN_ASSERT_TYPE(XEN_XmString_P(arg1), arg1, 1, "XmStringLength", "XmString");
   return(C_TO_XEN_INT(XmStringLength(XEN_TO_C_XmString(arg1))));
 }
+#endif
 
 static XEN gxm_XmStringCompare(XEN arg1, XEN arg2)
 {
@@ -3313,6 +3364,7 @@ static XEN gxm_XmStringCompare(XEN arg1, XEN arg2)
   return(C_TO_XEN_BOOLEAN(XmStringCompare(XEN_TO_C_XmString(arg1), XEN_TO_C_XmString(arg2))));
 }
 
+#if (!XM_DISABLE_DEPRECATED)
 static XEN gxm_XmStringByteCompare(XEN arg1, XEN arg2)
 {
   #define H_XmStringByteCompare "Boolean XmStringByteCompare(XmString s1, XmString s2) indicates the results of a \
@@ -3329,6 +3381,7 @@ static XEN gxm_XmStringNCopy(XEN arg1, XEN arg2)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmStringNCopy", "int");
   return(C_TO_XEN_XmString(XmStringNCopy(XEN_TO_C_XmString(arg1), XEN_TO_C_INT(arg2))));
 }
+#endif
 
 static XEN gxm_XmStringCopy(XEN arg1)
 {
@@ -3337,6 +3390,7 @@ static XEN gxm_XmStringCopy(XEN arg1)
   return(C_TO_XEN_XmString(XmStringCopy(XEN_TO_C_XmString(arg1))));
 }
 
+#if (!XM_DISABLE_DEPRECATED)
 static XEN gxm_XmStringNConcat(XEN arg1, XEN arg2, XEN arg3)
 {
   #define H_XmStringNConcat "XmString XmStringNConcat(XmString s1, XmString s2, int num_bytes) appends a specified \
@@ -3346,6 +3400,7 @@ number of bytes to a compound string"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmStringNConcat", "int");
   return(C_TO_XEN_XmString(XmStringNConcat(XEN_TO_C_XmString(arg1), XEN_TO_C_XmString(arg2), XEN_TO_C_INT(arg3))));
 }
+#endif
 
 #if MOTIF_2
 static XEN gxm_XmStringConcatAndFree(XEN arg1, XEN arg2)
@@ -3366,6 +3421,7 @@ static XEN gxm_XmStringConcat(XEN arg1, XEN arg2)
   return(C_TO_XEN_XmString(XmStringConcat(XEN_TO_C_XmString(arg1), XEN_TO_C_XmString(arg2))));
 }
 
+#if (!XM_DISABLE_DEPRECATED)
 static XEN gxm_XmFontListFreeFontContext(XEN arg1)
 {
   #define H_XmFontListFreeFontContext "void XmFontListFreeFontContext(XmFontContext context) instructs the toolkit that \
@@ -3429,25 +3485,6 @@ static XEN gxm_XmFontListFree(XEN arg1)
   XEN_ASSERT_TYPE(XEN_XmFontList_or_XmRenderTable_P(arg1), arg1, 1, "XmFontListFree", "XmFontList");
   XmFontListFree(XEN_TO_C_XmFontList(arg1));
   return(XEN_FALSE);
-}
-
-#if MOTIF_2
-static XEN gxm_XmStringCreateFontList_r(XEN arg1, XEN arg2, XEN arg3)
-{
-  #define H_XmStringCreateFontList_r "XmFontList XmStringCreateFontList_r(XFontStruct *font, XmStringCharSet charset, Widget wid)"
-  XEN_ASSERT_TYPE(XEN_XFontStruct_P(arg1), arg1, 1, "XmStringCreateFontList_r", "XFontStruct*");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmStringCreateFontList_r", "XmStringCharSet");
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg3), arg3, 3, "XmStringCreateFontList_r", "Widget");
-  return(C_TO_XEN_XmFontList(XmStringCreateFontList_r(XEN_TO_C_XFontStruct(arg1), XEN_TO_C_STRING(arg2), XEN_TO_C_Widget(arg3))));
-}
-#endif
-
-static XEN gxm_XmStringCreateFontList(XEN arg1, XEN arg2)
-{
-  #define H_XmStringCreateFontList "XmFontList XmStringCreateFontList(XFontStruct *font, XmStringCharSet charset)"
-  XEN_ASSERT_TYPE(XEN_XFontStruct_P(arg1), arg1, 1, "XmStringCreateFontList", "XFontStruct*");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmStringCreateFontList", "XmStringCharSet");
-  return(C_TO_XEN_XmFontList(XmStringCreateFontList(XEN_TO_C_XFontStruct(arg1), XEN_TO_C_STRING(arg2))));
 }
 
 #if MOTIF_2
@@ -3586,7 +3623,9 @@ creates a font list entry"
 							type,
 							gad)));
 }
+#endif
 
+#if (!XM_DISABLE_DEPRECATED)
 static XEN gxm_XmStringGetLtoR(XEN arg1, XEN arg2)
 {
   #define H_XmStringGetLtoR "Boolean XmStringGetLtoR(XmString string, XmStringCharSet tag) searches \
@@ -3655,6 +3694,7 @@ returns the type and value of the next component in a compound string (list val 
 		    C_TO_XEN_INT((int)len),
 		    C_TO_XEN_INT((int)value)));
 }
+#endif
 
 static XEN gxm_XmStringFreeContext(XEN arg1)
 {
@@ -3678,20 +3718,13 @@ a data structure for scanning an XmString component by component"
   return(XEN_LIST_2(C_TO_XEN_BOOLEAN(val), C_TO_XEN_XmStringContext(gxm_initxmsc)));
 }
 
+#if (!XM_DISABLE_DEPRECATED)
 static XEN gxm_XmStringCreateLtoR(XEN arg1, XEN arg2)
 {
   #define H_XmStringCreateLtoR "XmString XmStringCreateLtoR(char *text, char *tag) creates a compound string"
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XmStringCreateLtoR", "char*");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmStringCreateLtoR", "XmStringCharSet");
   return(C_TO_XEN_XmString(XmStringCreateLtoR(XEN_TO_C_STRING(arg1), XEN_TO_C_STRING(arg2))));
-}
-
-static XEN gxm_XmStringLtoRCreate(XEN arg1, XEN arg2)
-{
-  #define H_XmStringLtoRCreate "XmString XmStringLtoRCreate(char *text, XmStringCharSet charset)"
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XmStringLtoRCreate", "char*");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmStringLtoRCreate", "XmStringCharSet");
-  return(C_TO_XEN_XmString(XmStringLtoRCreate(XEN_TO_C_STRING(arg1), XEN_TO_C_STRING(arg2))));
 }
 
 static XEN gxm_XmStringSegmentCreate(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
@@ -3707,6 +3740,7 @@ creates a compound string"
 						 XEN_TO_C_INT(arg3), 
 						 XEN_TO_C_BOOLEAN(arg4))));
 }
+#endif
 
 static XEN gxm_XmStringSeparatorCreate(void)
 {
@@ -3728,6 +3762,7 @@ static XEN gxm_XmStringCreateLocalized(XEN arg1)
   return(C_TO_XEN_XmString(XmStringCreateLocalized(XEN_TO_C_STRING(arg1))));
 }
 
+#if (!XM_DISABLE_DEPRECATED)
 static XEN gxm_XmStringCreateSimple(XEN arg1)
 {
   #define H_XmStringCreateSimple "XmString XmStringCreateSimple(char * text) creates a compound string in the \
@@ -3735,6 +3770,7 @@ language environment of a widget"
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XmStringCreateSimple", "char*");
   return(C_TO_XEN_XmString(XmStringCreateSimple(XEN_TO_C_STRING(arg1))));
 }
+#endif
 
 static XEN gxm_XmStringCreate(XEN arg1, XEN arg2)
 {
@@ -3799,6 +3835,7 @@ static XEN gxm_XmSetColorCalculation(XEN arg1)
   return(arg1);
 }
 
+#if (!XM_DISABLE_DEPRECATED)
 static XEN gxm_XmTrackingLocate(XEN arg1, XEN arg2, XEN arg3)
 {
   #define H_XmTrackingLocate "Widget XmTrackingLocate(Widget widget, Cursor cursor, Boolean confine_to) allows for modal \
@@ -3808,6 +3845,7 @@ selection of a component (obsolete)"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg3), arg3, 3, "XmTrackingLocate", "boolean");
   return(C_TO_XEN_Widget(XmTrackingLocate(XEN_TO_C_Widget(arg1), XEN_TO_C_ULONG(arg2), XEN_TO_C_BOOLEAN(arg3))));
 }
+#endif
 
 static XEN gxm_XmTrackingEvent(XEN arg1, XEN arg2, XEN arg3)
 {
@@ -3855,14 +3893,14 @@ static XEN gxm_XmTrackingEvent(XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XmVaCreateSimpleCheckBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
-  #define H_XmVaCreateSimpleCheckBox "Widget XmVaCreateSimpleCheckBox(Widget parent, String name, XtCallbackProc callback)"
+  #define H_XmVaCreateSimpleCheckBox "Widget XmVaCreateSimpleCheckBox(Widget parent, String name, XtCallbackProc callback, args)"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmVaCreateSimpleCheckBox", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmVaCreateSimpleCheckBox", "String");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg3) && (XEN_REQUIRED_ARGS(arg3) == 3), arg3, 3, "XmVaCreateSimpleCheckBox", "XtCallbackProc (3 args)");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg4), arg4, 4, "XmVaCreateSimpleCheckBox", "List");
-  arg4 = XEN_CONS_2(C_TO_XEN_STRING("XmNvalueChangedCallback"),
-		    arg3,
+  arg4 = XEN_CONS_2(C_TO_XEN_STRING(XmNvalueChangedCallback),
+		    XEN_LIST_2(arg3, XEN_FALSE), /* XtCallbackList technically */
 		    arg4);
   {
     int arglen;
@@ -3884,18 +3922,17 @@ static XEN gxm_XmVaCreateSimpleCheckBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 
 static XEN gxm_XmVaCreateSimpleRadioBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
-  #define H_XmVaCreateSimpleRadioBox "Widget XmVaCreateSimpleRadioBox(Widget parent, String name, int button_set, XtCallbackProc callback)"
+  #define H_XmVaCreateSimpleRadioBox "Widget XmVaCreateSimpleRadioBox(Widget parent, String name, int button_set, XtCallbackProc callback, args)"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmVaCreateSimpleRadioBox", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmVaCreateSimpleRadioBox", "String");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmVaCreateSimpleRadioBox", "int");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS(arg4) == 3), arg4, 4, "XmVaCreateSimpleRadioBox", "XtCallbackProc (3 args");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg5), arg5, 5, "XmVaCreateSimpleRadioBox", "List");
-  arg5 = XEN_CONS_2(C_TO_XEN_STRING("XmNvalueChangedCallback"),
-		    arg4,
-		    XEN_CONS_2(C_TO_XEN_STRING("XmNmenuHistory"),
-			       arg3,
-			       arg5));
+  arg5 = XEN_CONS_2(C_TO_XEN_STRING(XmNvalueChangedCallback),
+		    XEN_LIST_2(arg4, XEN_FALSE),
+		    arg5);
+  /* can't handle button set here since the menuHistory resource is the widget allocated later */
   {
     int arglen;
     Arg *args;
@@ -3916,7 +3953,7 @@ static XEN gxm_XmVaCreateSimpleRadioBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4, 
 static XEN gxm_XmVaCreateSimpleOptionMenu(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
 {
   #define H_XmVaCreateSimpleOptionMenu "Widget XmVaCreateSimpleOptionMenu(Widget parent, String name, XmString option_label, \
-KeySym option_mnemonic, int button_set, XtCallbackProc callback)"
+KeySym option_mnemonic, int button_set, XtCallbackProc callback, args)"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmVaCreateSimpleOptionMenu", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmVaCreateSimpleOptionMenu", "String");
@@ -3925,15 +3962,13 @@ KeySym option_mnemonic, int button_set, XtCallbackProc callback)"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XmVaCreateSimpleOptionMenu", "int");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg6) && (XEN_REQUIRED_ARGS(arg6) == 3), arg6, 6, "XmVaCreateSimpleOptionMenu", "XtCallbackProc (3 args)");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg7), arg7, 7, "XmVaCreateSimpleOptionMenu", "List");
-  arg7 = XEN_CONS_2(C_TO_XEN_STRING("XmNlabelString"),
+  arg7 = XEN_CONS_2(C_TO_XEN_STRING(XmNlabelString),
 		    arg3,
-		    XEN_CONS_2(C_TO_XEN_STRING("XmNmnemonic"),
+		    XEN_CONS_2(C_TO_XEN_STRING(XmNmnemonic),
 			       arg4,
-			       XEN_CONS_2(C_TO_XEN_STRING("XmNmenuHistory"),
-					  arg5,
-					  XEN_CONS_2(C_TO_XEN_STRING("XmNvalueChangedCallback"),
-						     arg6,
-						     arg7))));
+			       XEN_CONS_2(C_TO_XEN_STRING(XmNvalueChangedCallback),
+					  XEN_LIST_2(arg6, XEN_FALSE),
+					  arg7)));
   {
     int arglen;
     Arg *args;
@@ -3953,18 +3988,16 @@ KeySym option_mnemonic, int button_set, XtCallbackProc callback)"
 
 static XEN gxm_XmVaCreateSimplePulldownMenu(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
-  #define H_XmVaCreateSimplePulldownMenu "Widget XmVaCreateSimplePulldownMenu(Widget parent, String name, int post_from_button, XtCallbackProc callback)"
+  #define H_XmVaCreateSimplePulldownMenu "Widget XmVaCreateSimplePulldownMenu(Widget parent, String name, int post_from_button, XtCallbackProc callback, args)"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmVaCreateSimplePulldownMenu", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmVaCreateSimplePulldownMenu", "String");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmVaCreateSimplePulldownMenu", "int");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS(arg4) == 3), arg4, 4, "XmVaCreateSimplePulldownMenu", "XtCallbackProc (3 args)");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg5), arg5, 5, "XmVaCreateSimplePulldownMenu", "List");
-  arg5 = XEN_CONS_2(C_TO_XEN_STRING("XmNvalueChangedCallback"),
-		    arg4,
-		    XEN_CONS_2(C_TO_XEN_STRING("XmNmenuHistory"),
-			       arg3,
-			       arg5));
+  arg5 = XEN_CONS_2(C_TO_XEN_STRING(XmNvalueChangedCallback),
+		    XEN_LIST_2(arg4, XEN_FALSE),
+		    arg5);
   {
     int arglen;
     Arg *args;
@@ -3984,14 +4017,14 @@ static XEN gxm_XmVaCreateSimplePulldownMenu(XEN arg1, XEN arg2, XEN arg3, XEN ar
 
 static XEN gxm_XmVaCreateSimplePopupMenu(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
-  #define H_XmVaCreateSimplePopupMenu "Widget XmVaCreateSimplePopupMenu(Widget parent, String name, XtCallbackProc callback)"
+  #define H_XmVaCreateSimplePopupMenu "Widget XmVaCreateSimplePopupMenu(Widget parent, String name, XtCallbackProc callback, args)"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmVaCreateSimplePopupMenu", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmVaCreateSimplePopupMenu", "String");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg3) && (XEN_REQUIRED_ARGS(arg3) == 3), arg3, 3, "XmVaCreateSimplePopupMenu", "XtCallbackProc (3 args)");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg4), arg4, 4, "XmVaCreateSimplePopupMenu", "List");
-  arg4 = XEN_CONS_2(C_TO_XEN_STRING("XmNvalueChangedCallback"),
-		    arg3,
+  arg4 = XEN_CONS_2(C_TO_XEN_STRING(XmNvalueChangedCallback),
+		    XEN_LIST_2(arg3, XEN_FALSE),
 		    arg4);
   {
     int arglen;
@@ -4012,7 +4045,7 @@ static XEN gxm_XmVaCreateSimplePopupMenu(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 
 static XEN gxm_XmVaCreateSimpleMenuBar(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XmVaCreateSimpleMenuBar "Widget XmVaCreateSimpleMenuBar(Widget parent, String name)"
+  #define H_XmVaCreateSimpleMenuBar "Widget XmVaCreateSimpleMenuBar(Widget parent, String name, args)"
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmVaCreateSimpleMenuBar", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmVaCreateSimpleMenuBar", "String");
@@ -4070,6 +4103,7 @@ static XEN gxm_XmCreateSimpleMenuBar(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   return(gxm_new_widget("XmCreateSimpleMenuBar", XmCreateSimpleMenuBar, arg1, arg2, arg3, arg4));
 }
 
+#if (!XM_DISABLE_DEPRECATED)
 static XEN gxm_XmGetMenuCursor(XEN arg1)
 {
   #define H_XmGetMenuCursor "Cursor XmGetMenuCursor(Display * display) returns the cursor ID for the current menu cursor"
@@ -4104,42 +4138,7 @@ static XEN gxm_XmSetFontUnits(XEN arg1, XEN arg2, XEN arg3)
   XmSetFontUnits(XEN_TO_C_Display(arg1), XEN_TO_C_INT(arg2), XEN_TO_C_INT(arg3));
   return(XEN_FALSE);
 }
-
-static XEN gxm_XmCvtFromVerticalPixels(XEN arg1, XEN arg2, XEN arg3)
-{
-  #define H_XmCvtFromVerticalPixels "int XmCvtFromVerticalPixels(Screen *screen, int from_val, int to_type)"
-  XEN_ASSERT_TYPE(XEN_Screen_P(arg1), arg1, 1, "XmCvtFromVerticalPixels", "Screen*");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmCvtFromVerticalPixels", "register");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmCvtFromVerticalPixels", "register");
-  return(C_TO_XEN_INT(XmCvtFromVerticalPixels(XEN_TO_C_Screen(arg1), XEN_TO_C_INT(arg2), XEN_TO_C_INT(arg3))));
-}
-
-static XEN gxm_XmCvtFromHorizontalPixels(XEN arg1, XEN arg2, XEN arg3)
-{
-  #define H_XmCvtFromHorizontalPixels "int XmCvtFromHorizontalPixels(Screen *screen, int from_val, int to_type)"
-  XEN_ASSERT_TYPE(XEN_Screen_P(arg1), arg1, 1, "XmCvtFromHorizontalPixels", "Screen*");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmCvtFromHorizontalPixels", "register");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmCvtFromHorizontalPixels", "register");
-  return(C_TO_XEN_INT(XmCvtFromHorizontalPixels(XEN_TO_C_Screen(arg1), XEN_TO_C_INT(arg2), XEN_TO_C_INT(arg3))));
-}
-
-static XEN gxm_XmCvtToVerticalPixels(XEN arg1, XEN arg2, XEN arg3)
-{
-  #define H_XmCvtToVerticalPixels "int XmCvtToVerticalPixels(Screen *screen, int from_val, int from_type)"
-  XEN_ASSERT_TYPE(XEN_Screen_P(arg1), arg1, 1, "XmCvtToVerticalPixels", "Screen*");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmCvtToVerticalPixels", "register");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmCvtToVerticalPixels", "register");
-  return(C_TO_XEN_INT(XmCvtToVerticalPixels(XEN_TO_C_Screen(arg1), XEN_TO_C_INT(arg2), XEN_TO_C_INT(arg3))));
-}
-
-static XEN gxm_XmCvtToHorizontalPixels(XEN arg1, XEN arg2, XEN arg3)
-{
-  #define H_XmCvtToHorizontalPixels "int XmCvtToHorizontalPixels(Screen *screen, int from_val, int from_type)"
-  XEN_ASSERT_TYPE(XEN_Screen_P(arg1), arg1, 1, "XmCvtToHorizontalPixels", "Screen*");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmCvtToHorizontalPixels", "register");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmCvtToHorizontalPixels", "register");
-  return(C_TO_XEN_INT(XmCvtToHorizontalPixels(XEN_TO_C_Screen(arg1), XEN_TO_C_INT(arg2), XEN_TO_C_INT(arg3))));
-}
+#endif
 
 static XEN gxm_XmConvertUnits(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
@@ -4225,6 +4224,20 @@ static XEN gxm_XmWidgetGetBaselines(XEN arg1)
   return(lst);
 }
 
+static XEN gxm_XmWidgetGetDisplayRect(XEN arg1)
+{
+  #define H_XmWidgetGetDisplayRect "Boolean XmWidgetGetDisplayRect(Widget widget) returns widget's bounding box as XRectangle"
+  XRectangle *r;
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmWidgetGetDisplayRect", "Widget");
+  r = (XRectangle *)CALLOC(1, sizeof(XRectangle));
+  if (XmWidgetGetDisplayRect(XEN_TO_C_Widget(arg1), r) == False)
+    {
+      FREE(r);
+      return(XEN_FALSE);
+    }
+  return(C_TO_XEN_XRectangle(r));
+}
+
 #if MOTIF_2
 static XEN gxm_XmObjectAtPoint(XEN arg1, XEN arg2, XEN arg3)
 {
@@ -4307,6 +4320,7 @@ The MainWindow widget creation function"
   return(gxm_new_widget("XmCreateMainWindow", XmCreateMainWindow, arg1, arg2, arg3, arg4));
 }
 
+#if (!XM_DISABLE_DEPRECATED)
 static XEN gxm_XmMainWindowSep3(XEN arg1)
 {
   #define H_XmMainWindowSep3 "Widget XmMainWindowSep3(Widget widget) returns the widget ID of the third Separator widget"
@@ -4343,6 +4357,7 @@ Widget vertical_scrollbar, Widget work_region) identifies manageable children fo
 		       XEN_TO_C_Widget(arg5), XEN_TO_C_Widget(arg6));
   return(XEN_FALSE);
 }
+#endif
 
 static XEN gxm_XmTranslateKey(XEN arg1, XEN arg2, XEN arg3)
 {
@@ -4399,6 +4414,7 @@ static XEN gxm_XmListSetHorizPos(XEN arg1, XEN arg2)
   return(XEN_FALSE);
 }
 
+#if (!XM_DISABLE_DEPRECATED)
 static XEN gxm_XmListGetSelectedPos(XEN arg1)
 {
   #define H_XmListGetSelectedPos "Boolean XmListGetSelectedPos(Widget widget) A List function that returns the position of every selected item in the list"
@@ -4419,6 +4435,7 @@ static XEN gxm_XmListGetSelectedPos(XEN arg1)
   xm_unprotect_at(loc);
   return(lst);
 }
+#endif
 
 static XEN gxm_XmListGetMatchPos(XEN arg1, XEN arg2)
 {
@@ -4606,8 +4623,8 @@ replaces items in a list based on position"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmListReplacePositions", "Widget");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XmListReplacePositions", "list of int");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmListReplacePositions", "list of XmString");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XmListReplacePositions", "int");
-  len = XEN_TO_C_INT(arg4);
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmListReplacePositions", "int");
+  if (XEN_INTEGER_P(arg4)) len = XEN_TO_C_INT(arg4); else len = XEN_LIST_LENGTH(arg3);
   if (len <= 0) return(XEN_FALSE);
   ps = XEN_TO_C_Ints(arg2, len);
   str = XEN_TO_C_XmStrings(arg3, len);
@@ -4739,8 +4756,8 @@ items from a list based on an array of positions"
   int len;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmListDeletePositions", "Widget");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XmListDeletePositions", "list of int");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmListDeletePositions", "int");
-  len = XEN_TO_C_INT(arg3);
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg3), arg3, 3, "XmListDeletePositions", "int");
+  if (XEN_INTEGER_P(arg3)) len = XEN_TO_C_INT(arg3); else len = XEN_LIST_LENGTH(arg2);
   if (len <= 0) return(XEN_FALSE);
   pos = XEN_TO_C_Ints(arg2, len);
   XmListDeletePositions(XEN_TO_C_Widget(arg1), pos, len);
@@ -4757,8 +4774,8 @@ static XEN gxm_XmListDeleteItems(XEN arg1, XEN arg2, XEN arg3)
   int len;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmListDeleteItems", "Widget");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XmListDeleteItems", "list of XmString");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmListDeleteItems", "int");
-  len = XEN_TO_C_INT(arg3);
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg3), arg3, 3, "XmListDeleteItems", "int");
+  if (XEN_INTEGER_P(arg3)) len = XEN_TO_C_INT(arg3); else len = XEN_LIST_LENGTH(arg2);
   if (len <= 0) return(XEN_FALSE);
   str = XEN_TO_C_XmStrings(arg2, len);
   XmListDeleteItems(XEN_TO_C_Widget(arg1), str, len);
@@ -4876,21 +4893,6 @@ static XEN gxm_XmCreateIconGadget(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   #define H_XmCreateIconGadget "Widget XmCreateIconGadget(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The IconGadget widget creation function"
   return(gxm_new_widget("XmCreateIconGadget", XmCreateIconGadget, arg1, arg2, arg3, arg4));
-}
-
-static XEN gxm_XmGetIconFileName(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
-{
-  #define H_XmGetIconFileName "String XmGetIconFileName(Screen *screen, String imageInstanceName, String imageClassName, \
-String hostPrefix, unsigned int size)"
-
-  XEN_ASSERT_TYPE(XEN_Screen_P(arg1), arg1, 1, "XmGetIconFileName", "Screen*");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmGetIconFileName", "String");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg3), arg3, 3, "XmGetIconFileName", "String");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg4), arg4, 4, "XmGetIconFileName", "String");
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg5), arg5, 5, "XmGetIconFileName", "unsigned int");
-  return(C_TO_XEN_STRING(XmGetIconFileName(XEN_TO_C_Screen(arg1), 
-					   XEN_TO_C_STRING(arg2), XEN_TO_C_STRING(arg3), XEN_TO_C_STRING(arg4), 
-					   XEN_TO_C_ULONG(arg5))));
 }
 #endif
 
@@ -6117,6 +6119,7 @@ The ScrolledWindow widget creation function"
   return(gxm_new_widget("XmCreateScrolledWindow", XmCreateScrolledWindow, arg1, arg2, arg3, arg4));
 }
 
+#if (!XM_DISABLE_DEPRECATED)
 static XEN gxm_XmScrolledWindowSetAreas(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmScrolledWindowSetAreas "void XmScrolledWindowSetAreas(Widget widget, Widget horizontal_scrollbar, Widget vertical_scrollbar, \
@@ -6130,6 +6133,7 @@ ScrollBar widget to the ScrolledWindow widget"
 			   XEN_TO_C_Widget(arg3), XEN_TO_C_Widget(arg4));
   return(XEN_FALSE);
 }
+#endif
 
 static XEN gxm_XmCreateDialogShell(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
@@ -6456,39 +6460,6 @@ sets up a storage and data structure, returns id"
   xm_XmCutPasteProc = arg6;
   val = XmClipboardStartCopy(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), XEN_TO_C_XmString(arg3), 
 			     XEN_TO_C_Time(arg4), XEN_TO_C_Widget(arg5), gxm_XmCutPasteProc, &id);
-  return(XEN_LIST_2(C_TO_XEN_INT(val),
-		    C_TO_XEN_INT(id)));
-}
-
-static XEN xm_XmVoidProc = XEN_FALSE;
-static void gxm_XmVoidProc(Widget w, int *data, int *privater, int *reason)
-{
-  XEN_CALL_4(xm_XmVoidProc, 
-	     C_TO_XEN_Widget(w),
-	     C_TO_XEN_ULONG(*data),
-	     C_TO_XEN_ULONG(*privater),
-	     C_TO_XEN_INT(*reason),
-	     __FUNCTION__);
-}
-
-static XEN gxm_XmClipboardBeginCopy(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
-{
-  #define H_XmClipboardBeginCopy "int XmClipboardBeginCopy(display, window, XmString label, widget, callback)"
-  /* DIFF: XmClipboardBeinCopy omits and returns last arg
-   */
-  long id;
-  int val;
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XmClipboardBeginCopy", "Display*");
-  XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XmClipboardBeginCopy", "Window");
-  XEN_ASSERT_TYPE(XEN_XmString_P(arg3), arg3, 3, "XmClipboardBeginCopy", "XmString");
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg4), arg4, 4, "XmClipboardBeginCopy", "Widget");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg5) && (XEN_REQUIRED_ARGS(arg5) == 4), arg5, 5, "XmClipboardBeginCopy", "(XmVoidProc widget data priv reason)");
-  xm_protect(arg5);
-  if (XEN_PROCEDURE_P(xm_XmVoidProc)) xm_unprotect(xm_XmVoidProc);
-  xm_XmVoidProc = arg5;
-  val = XmClipboardBeginCopy(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), 
-			     XEN_TO_C_XmString(arg3), XEN_TO_C_Widget(arg4), 
-			     gxm_XmVoidProc, &id);
   return(XEN_LIST_2(C_TO_XEN_INT(val),
 		    C_TO_XEN_INT(id)));
 }
@@ -13139,30 +13110,32 @@ static XEN gxm_XtGetSelectionRequest(XEN arg1, XEN arg2, XEN arg3)
   return(C_TO_XEN_XSelectionRequestEvent(XtGetSelectionRequest(XEN_TO_C_Widget(arg1), XEN_TO_C_Atom(arg2), XEN_TO_C_XtRequestId(arg3))));
 }
 
+#if (!XM_DISABLE_DEPRECATED)
 static XEN gxm_XtGetSelectionTimeout(void)
 {
-  #define H_XtAppGetSelectionTimeout "unsigned long XtAppGetSelectionTimeout(app_context) returns the current selection timeout value, in milliseconds."
-  return(C_TO_XEN_ULONG(XtGetSelectionTimeout()));
-}
-
-static XEN gxm_XtAppGetSelectionTimeout(XEN arg1)
-{
   #define H_XtGetSelectionTimeout "unsigned long XtGetSelectionTimeout() has been superseded by XtAppGetSelectionTimeout."
-  XEN_ASSERT_TYPE(XEN_XtAppContext_P(arg1), arg1, 1, "XtAppGetSelectionTimeout", "XtAppContext");
-  return(C_TO_XEN_ULONG(XtAppGetSelectionTimeout(XEN_TO_C_XtAppContext(arg1))));
+  return(C_TO_XEN_ULONG(XtGetSelectionTimeout()));
 }
 
 static XEN gxm_XtSetSelectionTimeout(XEN arg1)
 {
-  #define H_XtAppSetSelectionTimeout "void XtAppSetSelectionTimeout(app_context, timeout) sets the 's selection timeout mechanism."
+  #define H_XtSetSelectionTimeout "void XtSetSelectionTimeout(timeout) has been superseded by XtAppSetSelectionTimeout."
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, 1, "XtSetSelectionTimeout", "ulong");
   XtSetSelectionTimeout(XEN_TO_C_ULONG(arg1));
   return(XEN_FALSE);
 }
+#endif
+
+static XEN gxm_XtAppGetSelectionTimeout(XEN arg1)
+{
+  #define H_XtAppGetSelectionTimeout "unsigned long XtAppGetSelectionTimeout(app_context) returns the current selection timeout value, in milliseconds."
+  XEN_ASSERT_TYPE(XEN_XtAppContext_P(arg1), arg1, 1, "XtAppGetSelectionTimeout", "XtAppContext");
+  return(C_TO_XEN_ULONG(XtAppGetSelectionTimeout(XEN_TO_C_XtAppContext(arg1))));
+}
 
 static XEN gxm_XtAppSetSelectionTimeout(XEN arg1, XEN arg2)
 {
-  #define H_XtSetSelectionTimeout "void XtSetSelectionTimeout(timeout) has been superseded by XtAppSetSelectionTimeout."
+  #define H_XtAppSetSelectionTimeout "void XtAppSetSelectionTimeout(app_context, timeout) sets the 's selection timeout mechanism."
   XEN_ASSERT_TYPE(XEN_XtAppContext_P(arg1), arg1, 1, "XtAppSetSelectionTimeout", "XtAppContext");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XtAppSetSelectionTimeout", "ulong");
   XtAppSetSelectionTimeout(XEN_TO_C_XtAppContext(arg1), XEN_TO_C_ULONG(arg2));
@@ -13401,7 +13374,8 @@ static XEN gxm_XtRemoveWorkProc(XEN arg1)
 
 static XEN gxm_XtAppAddWorkProc(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XtAddWorkProc "XtWorkProcId XtAddWorkProc(proc, client_data) has been replaced by XtAppAddWorkProc."
+  #define H_XtAppAddWorkProc "XtWorkProcId XtAppAddWorkProc(app_context, proc, client_data) adds the specified work procedure for the \
+application identified by app_context."
   XtWorkProcId id;
   int gc_loc;
   XEN descr;
@@ -13418,10 +13392,10 @@ static XEN gxm_XtAppAddWorkProc(XEN arg1, XEN arg2, XEN arg3)
   return(C_TO_XEN_XtWorkProcId(id));
 }
 
+#if (!XM_DISABLE_DEPRECATED)
 static XEN gxm_XtAddWorkProc(XEN arg1, XEN arg2)
 {
-  #define H_XtAppAddWorkProc "XtWorkProcId XtAppAddWorkProc(app_context, proc, client_data) adds the specified work procedure for the \
-application identified by app_context."
+  #define H_XtAddWorkProc "XtWorkProcId XtAddWorkProc(proc, client_data) has been replaced by XtAppAddWorkProc."
   XtWorkProcId id;
   int gc_loc;
   XEN descr;
@@ -13434,6 +13408,7 @@ application identified by app_context."
   XEN_LIST_SET(descr, 4, C_TO_XEN_ULONG(id));
   return(C_TO_XEN_XtWorkProcId(id));
 }
+#endif
 
 /* the next 4 are needed where the caller allocates a block of memory, but X frees it (XCreateImage) --
  *   can't use Scheme-allocated memory here etc
@@ -13469,11 +13444,10 @@ static XEN gxm_XtMalloc(XEN arg1)
   return(C_TO_XEN_ULONG(XtMalloc(XEN_TO_C_INT(arg1))));
 }
 
+#if (!XM_DISABLE_DEPRECATED)
 static XEN gxm_XtWarning(XEN arg1)
 {
   #define H_XtWarning "void XtWarning(message)"
-  #define H_XtAppSetWarningHandler "void XtAppSetWarningHandler(app_context, handler) registers the specified procedure, which is called \
-when a nonfatal error condition occurs."
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XtWarning", "char*");
   XtWarning(XEN_TO_C_STRING(arg1));
   return(XEN_FALSE);
@@ -13491,11 +13465,11 @@ static XEN gxm_XtAppWarning(XEN arg1, XEN arg2)
 static XEN gxm_XtError(XEN arg1)
 {
   #define H_XtError "void XtError(message)"
-  #define H_XtAppError "void XtAppError(app_context, message) calls the installed error procedure and passes the specified message."
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XtError", "char*");
   XtError(XEN_TO_C_STRING(arg1));
   return(XEN_FALSE);
 }
+#endif
 
 static XEN xm_XtErrorHandler = XEN_FALSE;
 static XEN xm_XtWarningHandler = XEN_FALSE;
@@ -13508,6 +13482,7 @@ static void gxm_XtErrorHandler(String msg)
 	       __FUNCTION__);
 }
 
+#if (!XM_DISABLE_DEPRECATED)
 static XEN gxm_XtSetErrorHandler(XEN arg1)
 {
   #define H_XtSetErrorHandler "void XtSetErrorHandler(handler) has been superseded by XtAppSetErrorHandler."
@@ -13519,12 +13494,20 @@ static XEN gxm_XtSetErrorHandler(XEN arg1)
   if (XEN_PROCEDURE_P(old_val)) xm_unprotect(old_val);
   return(old_val);
 }
+#endif
 
 static XEN gxm_XtAppSetErrorHandler(XEN arg1, XEN arg2)
 {
   #define H_XtAppSetErrorHandler "void XtAppSetErrorHandler(app_context, handler) registers the specified procedure, which is called when \
 a fatal error condition occurs."
-  return(gxm_XtSetErrorHandler(arg2));
+  XEN old_val;
+  XEN_ASSERT_TYPE(XEN_XtAppContext_P(arg1), arg1, 1, "XtAppSetErrorHandler", "XtAppContext");
+  old_val = xm_XtErrorHandler;
+  xm_protect(arg2);
+  xm_XtErrorHandler = arg2;
+  XtAppSetErrorHandler(XEN_TO_C_XtAppContext(arg1), gxm_XtErrorHandler);
+  if (XEN_PROCEDURE_P(old_val)) xm_unprotect(old_val);
+  return(old_val);
 }
 
 static void gxm_XtWarningHandler(String msg)
@@ -13535,6 +13518,7 @@ static void gxm_XtWarningHandler(String msg)
 	       __FUNCTION__);
 }
 
+#if (!XM_DISABLE_DEPRECATED)
 static XEN gxm_XtSetWarningHandler(XEN arg1)
 {
   #define H_XtSetWarningHandler "void XtSetWarningHandler(handler) has been superseded by XtAppSetWarningHandler."
@@ -13546,16 +13530,25 @@ static XEN gxm_XtSetWarningHandler(XEN arg1)
   if (XEN_PROCEDURE_P(old_val)) xm_unprotect(old_val);
   return(old_val);
 }
+#endif
 
 static XEN gxm_XtAppSetWarningHandler(XEN arg1, XEN arg2)
 {
-  return(gxm_XtSetWarningHandler(arg2));
+  #define H_XtAppSetWarningHandler "void XtAppSetWarningHandler(app_context, handler) registers the specified procedure, which is called \
+when a nonfatal error condition occurs."
+  XEN old_val;
+  XEN_ASSERT_TYPE(XEN_XtAppContext_P(arg1), arg1, 1, "XtAppSetWarningHandler", "XtAppContext");
+  old_val = xm_XtWarningHandler;
+  xm_protect(arg2);
+  xm_XtWarningHandler = arg2;
+  XtAppSetWarningHandler(XEN_TO_C_XtAppContext(arg1), gxm_XtWarningHandler);
+  if (XEN_PROCEDURE_P(old_val)) xm_unprotect(old_val);
+  return(old_val);
 }
 
 static XEN gxm_XtAppError(XEN arg1, XEN arg2)
 {
-  #define H_XtAppErrorMsg "void XtAppErrorMsg(app_context, name, type, class, default, params, num_params) calls the high-level error \
-handler and passes the specified information."
+  #define H_XtAppError "void XtAppError(app_context, message) calls the installed error procedure and passes the specified message."
   XEN_ASSERT_TYPE(XEN_XtAppContext_P(arg1), arg1, 1, "XtAppError", "XtAppContext");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XtAppError", "char*");
   XtAppError(XEN_TO_C_XtAppContext(arg1), XEN_TO_C_STRING(arg2));
@@ -13563,11 +13556,10 @@ handler and passes the specified information."
 }
 
 
+#if (!XM_DISABLE_DEPRECATED)
 static XEN gxm_XtWarningMsg(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
 {
   #define H_XtWarningMsg "void XtWarningMsg(name, type, class, default, params, num_params)"
-  #define H_XtAppSetWarningMsgHandler "void XtAppSetWarningMsgHandler(app_context, msg_handler) registers the specified procedure, which \
-is called when a nonfatal error condition occurs."
   /* DIFF: XtWarningMsg takes final int not int*, arg5 is list of strings
    */
   int size;
@@ -13587,6 +13579,7 @@ is called when a nonfatal error condition occurs."
   FREE(pars);
   return(XEN_FALSE);
 }
+#endif
 
 static XEN gxm_XtAppWarningMsg(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
 {
@@ -13615,10 +13608,10 @@ handler and passes the specified information."
   return(XEN_FALSE);
 }
 
+#if (!XM_DISABLE_DEPRECATED)
 static XEN gxm_XtErrorMsg(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
 {
-  #define H_XtAppSetErrorMsgHandler "void XtAppSetErrorMsgHandler(app_context, msg_handler) registers the specified procedure, which is called \
-when a fatal error occurs."
+  #define H_XtErrorMsg "void XtErrorMsg(name, type, class, default, params, num_params) has been superseded by XtAppErrorMsg."
   /* DIFF: XtErrorMsg takes final int not int*, arg5 is list of strings
    */
   int size;
@@ -13638,10 +13631,12 @@ when a fatal error occurs."
   FREE(pars);
   return(XEN_FALSE);
 }
+#endif
 
 static XEN gxm_XtAppErrorMsg(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
 {
-  #define H_XtErrorMsg "void XtErrorMsg(name, type, class, default, params, num_params) has been superseded by XtAppErrorMsg."
+  #define H_XtAppErrorMsg "void XtAppErrorMsg(app_context, name, type, class, default, params, num_params) calls the high-level error \
+handler and passes the specified information."
   /* DIFF: XtAppErrorMsg takes final int not int*, arg5 is list of strings
    */
   int size;
@@ -13692,6 +13687,7 @@ static void gxm_XtErrorMsgHandler(String name, String type, String clas, String 
     }
 }
 
+#if (!XM_DISABLE_DEPRECATED)
 static XEN gxm_XtSetErrorMsgHandler(XEN arg1)
 {
   #define H_XtSetErrorMsgHandler "void XtSetErrorMsgHandler(msg_handler) has been superseded by XtAppSetErrorMsgHandler."
@@ -13703,10 +13699,20 @@ static XEN gxm_XtSetErrorMsgHandler(XEN arg1)
   if (XEN_PROCEDURE_P(old_val)) xm_unprotect(old_val);
   return(old_val);
 }
+#endif
 
 static XEN gxm_XtAppSetErrorMsgHandler(XEN arg1, XEN arg2)
 {
-  return(gxm_XtSetErrorMsgHandler(arg2));
+  #define H_XtAppSetErrorMsgHandler "void XtAppSetErrorMsgHandler(app_context, msg_handler) registers the specified procedure, which is called \
+when a fatal error occurs."
+  XEN old_val;
+  XEN_ASSERT_TYPE(XEN_XtAppContext_P(arg1), arg1, 1, "XtAppSetErrorMsgHandler", "XtAppContext");
+  old_val = xm_XtErrorMsgHandler;
+  xm_protect(arg2);
+  xm_XtErrorMsgHandler = arg2;
+  XtAppSetErrorMsgHandler(XEN_TO_C_XtAppContext(arg1), gxm_XtErrorMsgHandler);
+  if (XEN_PROCEDURE_P(old_val)) xm_unprotect(old_val);
+  return(old_val);
 }
 
 
@@ -13734,6 +13740,7 @@ static void gxm_XtWarningMsgHandler(String name, String type, String clas, Strin
     }
 }
 
+#if (!XM_DISABLE_DEPRECATED)
 static XEN gxm_XtSetWarningMsgHandler(XEN arg1)
 {
   #define H_XtSetWarningMsgHandler "void XtSetWarningMsgHandler(msg_handler) has been superseded by XtAppSetWarningMsgHandler."
@@ -13745,10 +13752,20 @@ static XEN gxm_XtSetWarningMsgHandler(XEN arg1)
   if (XEN_PROCEDURE_P(old_val)) xm_unprotect(old_val);
   return(old_val);
 }
+#endif
 
 static XEN gxm_XtAppSetWarningMsgHandler(XEN arg1, XEN arg2)
 {
-  return(gxm_XtSetWarningMsgHandler(arg2));
+  #define H_XtAppSetWarningMsgHandler "void XtAppSetWarningMsgHandler(app_context, msg_handler) registers the specified procedure, which \
+is called when a nonfatal error condition occurs."
+  XEN old_val;
+  XEN_ASSERT_TYPE(XEN_XtAppContext_P(arg1), arg1, 1, "XtAppSetWarningMsgHandler", "XtAppContext");
+  old_val = xm_XtWarningMsgHandler;
+  xm_protect(arg2);
+  xm_XtWarningMsgHandler = arg2;
+  XtAppSetWarningMsgHandler(XEN_TO_C_XtAppContext(arg1), gxm_XtWarningMsgHandler);
+  if (XEN_PROCEDURE_P(old_val)) xm_unprotect(old_val);
+  return(old_val);
 }
 
 static XEN gxm_XtGetValues(XEN arg1, XEN arg2, XEN arg3)
@@ -13907,7 +13924,8 @@ calls XOpenDisplay the specified display name."
   else lst = XEN_CONS(XEN_FALSE, lst);
   return(gxm_argv_to_list(lst, argc, argv));
 }
- 
+
+#if (!XM_DISABLE_DEPRECATED) 
 static XEN gxm_XtInitialize(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
 {
   #define H_XtInitialize "Widget XtInitialize(shell_name, application_class, options, num_options, argc, argv) calls XtToolkitInitialize \
@@ -13927,6 +13945,7 @@ widget_class applicationShellWidgetClass , and the specified args and num_args a
   w = XtInitialize(XEN_TO_C_STRING(arg1), XEN_TO_C_STRING(arg2), NULL, 0, &argc, argv);
   return(gxm_argv_to_list(XEN_CONS(C_TO_XEN_Widget(w), XEN_EMPTY_LIST), argc, argv));
 }
+#endif
 
 static XEN gxm_XtVaAppInitialize(XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
 {
@@ -14220,6 +14239,7 @@ the specified application name and application class for qualifying all widget r
   return(C_TO_XEN_Widget(w));
 }
 
+#if (!XM_DISABLE_DEPRECATED)
 static XEN gxm_XtCreateApplicationShell(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XtCreateApplicationShell "Widget XtCreateApplicationShell(name, widget_class, args, num_args) calls XtAppCreateShell with the \
@@ -14243,6 +14263,7 @@ routine has been replaced by XtAppCreateShell."
     }
   return(C_TO_XEN_Widget(w));
 }
+#endif
 
 static XEN gxm_XtVaCreateManagedWidget(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
@@ -14845,11 +14866,13 @@ pending, or other input sources pending. "
   return(C_TO_XEN_ULONG(XtAppPending(XEN_TO_C_XtAppContext(arg1))));
 }
 
+#if (!XM_DISABLE_DEPRECATED)
 static XEN gxm_XtPending(void)
 {
   #define H_XtPending "XtInputMask XtPending() has been replaced by XtAppPending."
   return(C_TO_XEN_BOOLEAN(XtPending()));
 }
+#endif
 
 static XEN gxm_XtAppNextEvent(XEN arg1)
 {
@@ -14865,6 +14888,7 @@ procedures triggered by them -> event."
   return(C_TO_XEN_XEvent_OBJ(e));
 }
 
+#if (!XM_DISABLE_DEPRECATED)
 static XEN gxm_XtNextEvent(void)
 {
   #define H_XtNextEvent "void XtNextEvent() has been replaced by XtAppNextEvent."
@@ -14875,6 +14899,7 @@ static XEN gxm_XtNextEvent(void)
   XtNextEvent(e);
   return(C_TO_XEN_XEvent_OBJ(e));
 }
+#endif
 
 
 /* -------- Input callback -------- */
@@ -14920,7 +14945,8 @@ static XEN gxm_XtRemoveInput(XEN arg1)
 
 static XEN gxm_XtAppAddInput(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
-  #define H_XtAddInput "XtInputId XtAddInput(source, condition, proc, client_data) has been replaced by XtAppAddInput."
+  #define H_XtAppAddInput "XtInputId XtAppAddInput(app_context, source, condition, proc, client_data) registers with the read routine a \
+new source of events, which is usually file input but can also be file output."
   XtInputId id;
   int gc_loc;
   XEN descr;
@@ -14939,10 +14965,10 @@ static XEN gxm_XtAppAddInput(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
   return(C_TO_XEN_XtInputId(id));
 }
 
+#if (!XM_DISABLE_DEPRECATED)
 static XEN gxm_XtAddInput(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
-  #define H_XtAppAddInput "XtInputId XtAppAddInput(app_context, source, condition, proc, client_data) registers with the read routine a \
-new source of events, which is usually file input but can also be file output."
+  #define H_XtAddInput "XtInputId XtAddInput(source, condition, proc, client_data) has been replaced by XtAppAddInput."
   XtInputId id;
   int gc_loc;
   XEN descr;
@@ -14958,7 +14984,7 @@ new source of events, which is usually file input but can also be file output."
   XEN_LIST_SET(descr, 4, C_TO_XEN_ULONG(id));
   return(C_TO_XEN_XtInputId(id));
 }
-
+#endif
 
 /* -------- Timer Callback -------- */
 /* (79) protect the function, then unprotect after invocation */
@@ -15022,6 +15048,7 @@ static XEN gxm_XtAppAddTimeOut(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   return(C_TO_XEN_XtIntervalId(id));
 }
 
+#if (!XM_DISABLE_DEPRECATED)
 static XEN gxm_XtAddTimeOut(XEN arg1, XEN arg2, XEN arg3)
 {
   #define H_XtAddTimeOut "XtIntervalId XtAddTimeOut(interval, proc, client_data) has been replaced by XtAppAddTimeOut."
@@ -15039,7 +15066,7 @@ static XEN gxm_XtAddTimeOut(XEN arg1, XEN arg2, XEN arg3)
   XEN_LIST_SET(descr, 4, C_TO_XEN_XtIntervalId(id));
   return(C_TO_XEN_XtIntervalId(id));
 }
-
+#endif
 
 static XEN gxm_XtLastTimestampProcessed(XEN arg1)
 {
@@ -15094,12 +15121,14 @@ the event to the appropriate registered procedure by calling XtDispatchEvent."
   return(XEN_FALSE);
 }
 
+#if (!XM_DISABLE_DEPRECATED)
 static XEN gxm_XtMainLoop(void)
 {
   #define H_XtMainLoop "void XtMainLoop() has been replaced by XtAppMainLoop."
   XtMainLoop();
   return(XEN_FALSE);
 }
+#endif
 
 static XEN gxm_XtAppProcessEvent(XEN arg1, XEN arg2)
 {
@@ -15111,6 +15140,7 @@ If there is nothing of the appropriate type to process, XtAppProcessEvent blocks
   return(XEN_FALSE);
 }
 
+#if (!XM_DISABLE_DEPRECATED)
 static XEN gxm_XtProcessEvent(XEN arg1)
 {
   #define H_XtProcessEvent "void XtProcessEvent(mask) has been replaced by XtAppProcessEvent."
@@ -15118,6 +15148,7 @@ static XEN gxm_XtProcessEvent(XEN arg1)
   XtProcessEvent(XEN_TO_C_ULONG(arg1));
   return(XEN_FALSE);
 }
+#endif
 
 static XEN gxm_XtRemoveGrab(XEN arg1)
 {
@@ -15670,6 +15701,7 @@ static XtActionsRec *make_action_rec(int len, XEN larg2)
   return(act);
 }
 
+#if (!XM_DISABLE_DEPRECATED)
 static XEN gxm_XtAddActions(XEN arg1)
 {
   #define H_XtAddActions "void XtAddActions(actions, num_actions) has been replaced by XtAppAddActions."
@@ -15686,6 +15718,7 @@ static XEN gxm_XtAddActions(XEN arg1)
   FREE(act);
   return(arg1);
 }
+#endif
 
 static XEN gxm_XtAppAddActions(XEN arg1, XEN arg2)
 {
@@ -15917,6 +15950,7 @@ input is on the queue, XtAppPeekEvent flushes the output buffer and blocks until
   return(XEN_LIST_2(C_TO_XEN_BOOLEAN(val), C_TO_XEN_XEvent_OBJ(e)));
 }
 
+#if (!XM_DISABLE_DEPRECATED)
 static XEN gxm_XtPeekEvent(void)
 {
   #define H_XtPeekEvent "Boolean XtPeekEvent() has been replaced by XtAppPeekEvent."
@@ -15928,6 +15962,7 @@ static XEN gxm_XtPeekEvent(void)
   val = XtPeekEvent(e);
   return(XEN_LIST_2(C_TO_XEN_BOOLEAN(val), C_TO_XEN_XEvent_OBJ(e)));
 }
+#endif
 
 static XEN gxm_XtCallAcceptFocus(XEN arg1, XEN arg2)
 {
@@ -16570,8 +16605,8 @@ static XEN gxm_XpPutDocumentData(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg
 /* ---------------------------------------------------------------------------------------------------- */
 #if HAVE_XPM
 
-XM_TYPE(XpmImage, XpmImage *)
-XM_TYPE(XpmAttributes, XpmAttributes *) /* _OBJ?? */
+XM_TYPE_nox(XpmImage, XpmImage *)
+XM_TYPE_nox(XpmAttributes, XpmAttributes *) /* _OBJ?? */
 XM_TYPE(XpmColorSymbol, XpmColorSymbol *)
 
 #if HAVE_XPM_CREATE_XPM_IMAGE_FROM_PIXMAP
@@ -16964,7 +16999,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtUnmanageChild" XM_POSTFIX, gxm_XtUnmanageChild, 1, 0, 0, H_XtUnmanageChild);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtDispatchEvent" XM_POSTFIX, gxm_XtDispatchEvent, 1, 0, 0, H_XtDispatchEvent);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCallAcceptFocus" XM_POSTFIX, gxm_XtCallAcceptFocus, 2, 0, 0, H_XtCallAcceptFocus);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtPeekEvent" XM_POSTFIX, gxm_XtPeekEvent, 0, 0, 0, H_XtPeekEvent);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppPeekEvent" XM_POSTFIX, gxm_XtAppPeekEvent, 1, 0, 0, H_XtAppPeekEvent);
 #if MOTIF_2
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtIsSubclass" XM_POSTFIX, gxm_XtIsSubclass, 2, 0, 0, H_XtIsSubclass);
@@ -16986,7 +17020,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtInstallAllAccelerators" XM_POSTFIX, gxm_XtInstallAllAccelerators, 2, 0, 0, H_XtInstallAllAccelerators);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtUninstallTranslations" XM_POSTFIX, gxm_XtUninstallTranslations, 1, 0, 0, H_XtUninstallTranslations);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppAddActions" XM_POSTFIX, gxm_XtAppAddActions, 2, 0, 0, H_XtAppAddActions);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAddActions" XM_POSTFIX, gxm_XtAddActions, 1, 0, 0, H_XtAddActions);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppAddActionHook" XM_POSTFIX, gxm_XtAppAddActionHook, 2, 1, 0, H_XtAppAddActionHook);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtRemoveActionHook" XM_POSTFIX, gxm_XtRemoveActionHook, 1, 0, 0, H_XtRemoveActionHook);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetActionList" XM_POSTFIX, gxm_XtGetActionList, 1, 0, 0, H_XtGetActionList);
@@ -17010,24 +17043,18 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtBuildEventMask" XM_POSTFIX, gxm_XtBuildEventMask, 1, 0, 0, H_XtBuildEventMask);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAddGrab" XM_POSTFIX, gxm_XtAddGrab, 3, 0, 0, H_XtAddGrab);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtRemoveGrab" XM_POSTFIX, gxm_XtRemoveGrab, 1, 0, 0, H_XtRemoveGrab);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtProcessEvent" XM_POSTFIX, gxm_XtProcessEvent, 1, 0, 0, H_XtProcessEvent);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppProcessEvent" XM_POSTFIX, gxm_XtAppProcessEvent, 2, 0, 0, H_XtAppProcessEvent);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtMainLoop" XM_POSTFIX, gxm_XtMainLoop, 0, 0, 0, H_XtMainLoop);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppMainLoop" XM_POSTFIX, gxm_XtAppMainLoop, 1, 0, 0, H_XtAppMainLoop);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAddExposureToRegion" XM_POSTFIX, gxm_XtAddExposureToRegion, 2, 0, 0, H_XtAddExposureToRegion);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSetKeyboardFocus" XM_POSTFIX, gxm_XtSetKeyboardFocus, 2, 0, 0, H_XtSetKeyboardFocus);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetKeyboardFocusWidget" XM_POSTFIX, gxm_XtGetKeyboardFocusWidget, 1, 0, 0, H_XtGetKeyboardFocusWidget);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtLastEventProcessed" XM_POSTFIX, gxm_XtLastEventProcessed, 1, 0, 0, H_XtLastEventProcessed);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtLastTimestampProcessed" XM_POSTFIX, gxm_XtLastTimestampProcessed, 1, 0, 0, H_XtLastTimestampProcessed);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAddTimeOut" XM_POSTFIX, gxm_XtAddTimeOut, 2, 1, 0, H_XtAddTimeOut);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppAddTimeOut" XM_POSTFIX, gxm_XtAppAddTimeOut, 3, 1, 0, H_XtAppAddTimeOut);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtRemoveTimeOut" XM_POSTFIX, gxm_XtRemoveTimeOut, 1, 0, 0, H_XtRemoveTimeOut);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAddInput" XM_POSTFIX, gxm_XtAddInput, 3, 1, 0, H_XtAddInput);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppAddInput" XM_POSTFIX, gxm_XtAppAddInput, 4, 1, 0, H_XtAppAddInput);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtRemoveInput" XM_POSTFIX, gxm_XtRemoveInput, 1, 0, 0, H_XtRemoveInput);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtNextEvent" XM_POSTFIX, gxm_XtNextEvent, 0, 0, 0, H_XtNextEvent);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppNextEvent" XM_POSTFIX, gxm_XtAppNextEvent, 1, 0, 0, H_XtAppNextEvent);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtPending" XM_POSTFIX, gxm_XtPending, 0, 0, 0, H_XtPending);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppPending" XM_POSTFIX, gxm_XtAppPending, 1, 0, 0, H_XtAppPending);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtRealizeWidget" XM_POSTFIX, gxm_XtRealizeWidget, 1, 0, 0, H_XtRealizeWidget);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtUnrealizeWidget" XM_POSTFIX, gxm_XtUnrealizeWidget, 1, 0, 0, H_XtUnrealizeWidget);
@@ -17069,7 +17096,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCreateManagedWidget" XM_POSTFIX, gxm_XtCreateManagedWidget, 4, 1, 0, H_XtCreateManagedWidget);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtVaCreateWidget" XM_POSTFIX, gxm_XtVaCreateWidget, 4, 0, 0, H_XtVaCreateWidget);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtVaCreateManagedWidget" XM_POSTFIX, gxm_XtVaCreateManagedWidget, 4, 0, 0, H_XtVaCreateManagedWidget);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCreateApplicationShell" XM_POSTFIX, gxm_XtCreateApplicationShell, 3, 1, 0, H_XtCreateApplicationShell);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppCreateShell" XM_POSTFIX, gxm_XtAppCreateShell, 5, 1, 0, H_XtAppCreateShell);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtVaAppCreateShell" XM_POSTFIX, gxm_XtVaAppCreateShell, 5, 0, 0, H_XtVaAppCreateShell);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtToolkitInitialize" XM_POSTFIX, gxm_XtToolkitInitialize, 0, 0, 0, H_XtToolkitInitialize);
@@ -17079,7 +17105,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtVaOpenApplication" XM_POSTFIX, gxm_XtVaOpenApplication, 8, 0, 0, H_XtVaOpenApplication);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppInitialize" XM_POSTFIX, gxm_XtAppInitialize, 8, 0, 0, H_XtAppInitialize);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtVaAppInitialize" XM_POSTFIX, gxm_XtVaAppInitialize, 7, 0, 0, H_XtVaAppInitialize);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtInitialize" XM_POSTFIX, gxm_XtInitialize, 6, 0, 0, H_XtInitialize);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtOpenDisplay" XM_POSTFIX, gxm_XtOpenDisplay, 8, 0, 0, H_XtOpenDisplay);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCreateApplicationContext" XM_POSTFIX, gxm_XtCreateApplicationContext, 0, 0, 0, H_XtCreateApplicationContext);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtDestroyApplicationContext" XM_POSTFIX, gxm_XtDestroyApplicationContext, 1, 0, 0, H_XtDestroyApplicationContext);
@@ -17092,26 +17117,16 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetValues" XM_POSTFIX, gxm_XtGetValues, 2, 1, 0, H_XtGetValues);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtVaGetValues" XM_POSTFIX, gxm_XtVaGetValues, 2, 0, 0, H_XtVaGetValues);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppSetErrorMsgHandler" XM_POSTFIX, gxm_XtAppSetErrorMsgHandler, 2, 0, 0, H_XtAppSetErrorMsgHandler);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSetErrorMsgHandler" XM_POSTFIX, gxm_XtSetErrorMsgHandler, 1, 0, 0, H_XtSetErrorMsgHandler);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppSetWarningMsgHandler" XM_POSTFIX, gxm_XtAppSetWarningMsgHandler, 2, 0, 0, H_XtAppSetWarningMsgHandler);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSetWarningMsgHandler" XM_POSTFIX, gxm_XtSetWarningMsgHandler, 1, 0, 0, H_XtSetWarningMsgHandler);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppErrorMsg" XM_POSTFIX, gxm_XtAppErrorMsg, 7, 0, 0, H_XtAppErrorMsg);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtErrorMsg" XM_POSTFIX, gxm_XtErrorMsg, 6, 0, 0, H_XtErrorMsg);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppWarningMsg" XM_POSTFIX, gxm_XtAppWarningMsg, 7, 0, 0, H_XtAppWarningMsg);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtWarningMsg" XM_POSTFIX, gxm_XtWarningMsg, 6, 0, 0, H_XtWarningMsg);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppSetErrorHandler" XM_POSTFIX, gxm_XtAppSetErrorHandler, 2, 0, 0, H_XtAppSetErrorHandler);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSetErrorHandler" XM_POSTFIX, gxm_XtSetErrorHandler, 1, 0, 0, H_XtSetErrorHandler);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppSetWarningHandler" XM_POSTFIX, gxm_XtAppSetWarningHandler, 2, 0, 0, H_XtAppSetWarningHandler);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSetWarningHandler" XM_POSTFIX, gxm_XtSetWarningHandler, 1, 0, 0, H_XtSetWarningHandler);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppError" XM_POSTFIX, gxm_XtAppError, 2, 0, 0, H_XtAppError);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtError" XM_POSTFIX, gxm_XtError, 1, 0, 0, H_XtError);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppWarning" XM_POSTFIX, gxm_XtAppWarning, 2, 0, 0, H_XtAppWarning);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtWarning" XM_POSTFIX, gxm_XtWarning, 1, 0, 0, H_XtWarning);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtMalloc" XM_POSTFIX, gxm_XtMalloc, 1, 0, 0, H_XtMalloc);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCalloc" XM_POSTFIX, gxm_XtCalloc, 2, 0, 0, H_XtCalloc);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtRealloc" XM_POSTFIX, gxm_XtRealloc, 2, 0, 0, H_XtRealloc);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtFree" XM_POSTFIX, gxm_XtFree, 1, 0, 0, H_XtFree);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAddWorkProc" XM_POSTFIX, gxm_XtAddWorkProc, 1, 1, 0, H_XtAddWorkProc);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppAddWorkProc" XM_POSTFIX, gxm_XtAppAddWorkProc, 2, 1, 0, H_XtAppAddWorkProc);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtRemoveWorkProc" XM_POSTFIX, gxm_XtRemoveWorkProc, 1, 0, 0, H_XtRemoveWorkProc);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetGC" XM_POSTFIX, gxm_XtGetGC, 3, 0, 0, H_XtGetGC);
@@ -17125,9 +17140,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetSelectionValue" XM_POSTFIX, gxm_XtGetSelectionValue, 6, 0, 0, H_XtGetSelectionValue);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetSelectionValues" XM_POSTFIX, gxm_XtGetSelectionValues, 7, 0, 0, H_XtGetSelectionValues);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppSetSelectionTimeout" XM_POSTFIX, gxm_XtAppSetSelectionTimeout, 2, 0, 0, H_XtAppSetSelectionTimeout);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSetSelectionTimeout" XM_POSTFIX, gxm_XtSetSelectionTimeout, 1, 0, 0, H_XtSetSelectionTimeout);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppGetSelectionTimeout" XM_POSTFIX, gxm_XtAppGetSelectionTimeout, 1, 0, 0, H_XtAppGetSelectionTimeout);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetSelectionTimeout" XM_POSTFIX, gxm_XtGetSelectionTimeout, 0, 0, 0, H_XtGetSelectionTimeout);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetSelectionRequest" XM_POSTFIX, gxm_XtGetSelectionRequest, 3, 0, 0, H_XtGetSelectionRequest);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetSelectionValueIncremental" XM_POSTFIX, gxm_XtGetSelectionValueIncremental, 6, 0, 0, H_XtGetSelectionValueIncremental);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetSelectionValuesIncremental" XM_POSTFIX, gxm_XtGetSelectionValuesIncremental, 7, 0, 0, H_XtGetSelectionValuesIncremental);
@@ -17642,7 +17655,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextFieldPasteLink" XM_POSTFIX, gxm_XmTextFieldPasteLink, 1, 0, 0, H_XmTextFieldPasteLink);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextGetCenterline" XM_POSTFIX, gxm_XmTextGetCenterline, 1, 0, 0, H_XmTextGetCenterline);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmToggleButtonGadgetSetValue" XM_POSTFIX, gxm_XmToggleButtonGadgetSetValue, 3, 0, 0, H_XmToggleButtonGadgetSetValue);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmGetIconFileName" XM_POSTFIX, gxm_XmGetIconFileName, 5, 0, 0, H_XmGetIconFileName);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateIconGadget" XM_POSTFIX, gxm_XmCreateIconGadget, 3, 1, 0, H_XmCreateIconGadget);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateIconHeader" XM_POSTFIX, gxm_XmCreateIconHeader, 3, 1, 0, H_XmCreateIconHeader);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmObjectAtPoint" XM_POSTFIX, gxm_XmObjectAtPoint, 3, 0, 0, H_XmObjectAtPoint);
@@ -17694,7 +17706,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmScaleSetValue" XM_POSTFIX, gxm_XmScaleSetValue, 2, 0, 0, H_XmScaleSetValue);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmScaleGetValue" XM_POSTFIX, gxm_XmScaleGetValue, 1, 0, 0, H_XmScaleGetValue);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateScale" XM_POSTFIX, gxm_XmCreateScale, 3, 1, 0, H_XmCreateScale);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmClipboardBeginCopy" XM_POSTFIX, gxm_XmClipboardBeginCopy, 5, 0, 0, H_XmClipboardBeginCopy);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmClipboardStartCopy" XM_POSTFIX, gxm_XmClipboardStartCopy, 6, 0, 0, H_XmClipboardStartCopy);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmClipboardCopy" XM_POSTFIX, gxm_XmClipboardCopy, 7, 0, 0, H_XmClipboardCopy);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmClipboardEndCopy" XM_POSTFIX, gxm_XmClipboardEndCopy, 3, 0, 0, H_XmClipboardEndCopy);
@@ -17717,7 +17728,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmScrollBarGetValues" XM_POSTFIX, gxm_XmScrollBarGetValues, 1, 0, 0, H_XmScrollBarGetValues);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmScrollBarSetValues" XM_POSTFIX, gxm_XmScrollBarSetValues, 6, 0, 0, H_XmScrollBarSetValues);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateDialogShell" XM_POSTFIX, gxm_XmCreateDialogShell, 3, 1, 0, H_XmCreateDialogShell);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmScrolledWindowSetAreas" XM_POSTFIX, gxm_XmScrolledWindowSetAreas, 4, 0, 0, H_XmScrolledWindowSetAreas);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateScrolledWindow" XM_POSTFIX, gxm_XmCreateScrolledWindow, 3, 1, 0, H_XmCreateScrolledWindow);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmScrollVisible" XM_POSTFIX, gxm_XmScrollVisible, 4, 0, 0, H_XmScrollVisible);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmGetDragContext" XM_POSTFIX, gxm_XmGetDragContext, 2, 0, 0, H_XmGetDragContext);
@@ -17837,8 +17847,8 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmListAddItemsUnselected" XM_POSTFIX, gxm_XmListAddItemsUnselected, 4, 0, 0, H_XmListAddItemsUnselected);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmListAddItemUnselected" XM_POSTFIX, gxm_XmListAddItemUnselected, 3, 0, 0, H_XmListAddItemUnselected);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmListDeleteItem" XM_POSTFIX, gxm_XmListDeleteItem, 2, 0, 0, H_XmListDeleteItem);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmListDeleteItems" XM_POSTFIX, gxm_XmListDeleteItems, 3, 0, 0, H_XmListDeleteItems);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmListDeletePositions" XM_POSTFIX, gxm_XmListDeletePositions, 3, 0, 0, H_XmListDeletePositions);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmListDeleteItems" XM_POSTFIX, gxm_XmListDeleteItems, 2, 1, 0, H_XmListDeleteItems);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmListDeletePositions" XM_POSTFIX, gxm_XmListDeletePositions, 2, 1, 0, H_XmListDeletePositions);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmListDeletePos" XM_POSTFIX, gxm_XmListDeletePos, 2, 0, 0, H_XmListDeletePos);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmListDeleteItemsPos" XM_POSTFIX, gxm_XmListDeleteItemsPos, 3, 0, 0, H_XmListDeleteItemsPos);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmListDeleteAllItems" XM_POSTFIX, gxm_XmListDeleteAllItems, 1, 0, 0, H_XmListDeleteAllItems);
@@ -17846,7 +17856,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmListReplaceItemsPos" XM_POSTFIX, gxm_XmListReplaceItemsPos, 4, 0, 0, H_XmListReplaceItemsPos);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmListReplaceItemsUnselected" XM_POSTFIX, gxm_XmListReplaceItemsUnselected, 4, 0, 0, H_XmListReplaceItemsUnselected);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmListReplaceItemsPosUnselected" XM_POSTFIX, gxm_XmListReplaceItemsPosUnselected, 4, 0, 0, H_XmListReplaceItemsPosUnselected);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmListReplacePositions" XM_POSTFIX, gxm_XmListReplacePositions, 4, 0, 0, H_XmListReplacePositions);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmListReplacePositions" XM_POSTFIX, gxm_XmListReplacePositions, 3, 1, 0, H_XmListReplacePositions);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmListSelectItem" XM_POSTFIX, gxm_XmListSelectItem, 3, 0, 0, H_XmListSelectItem);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmListSelectPos" XM_POSTFIX, gxm_XmListSelectPos, 3, 0, 0, H_XmListSelectPos);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmListDeselectItem" XM_POSTFIX, gxm_XmListDeselectItem, 2, 0, 0, H_XmListDeselectItem);
@@ -17864,17 +17874,12 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmListYToPos" XM_POSTFIX, gxm_XmListYToPos, 2, 0, 0, H_XmListYToPos);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmListPosToBounds" XM_POSTFIX, gxm_XmListPosToBounds, 2, 0, 0, H_XmListPosToBounds);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmListGetMatchPos" XM_POSTFIX, gxm_XmListGetMatchPos, 2, 0, 0, H_XmListGetMatchPos);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmListGetSelectedPos" XM_POSTFIX, gxm_XmListGetSelectedPos, 1, 0, 0, H_XmListGetSelectedPos);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmListSetHorizPos" XM_POSTFIX, gxm_XmListSetHorizPos, 2, 0, 0, H_XmListSetHorizPos);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmListUpdateSelectedList" XM_POSTFIX, gxm_XmListUpdateSelectedList, 1, 0, 0, H_XmListUpdateSelectedList);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmListPosSelected" XM_POSTFIX, gxm_XmListPosSelected, 2, 0, 0, H_XmListPosSelected);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateList" XM_POSTFIX, gxm_XmCreateList, 3, 1, 0, H_XmCreateList);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateScrolledList" XM_POSTFIX, gxm_XmCreateScrolledList, 3, 1, 0, H_XmCreateScrolledList);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTranslateKey" XM_POSTFIX, gxm_XmTranslateKey, 3, 0, 0, H_XmTranslateKey);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmMainWindowSetAreas" XM_POSTFIX, gxm_XmMainWindowSetAreas, 6, 0, 0, H_XmMainWindowSetAreas);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmMainWindowSep1" XM_POSTFIX, gxm_XmMainWindowSep1, 1, 0, 0, H_XmMainWindowSep1);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmMainWindowSep2" XM_POSTFIX, gxm_XmMainWindowSep2, 1, 0, 0, H_XmMainWindowSep2);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmMainWindowSep3" XM_POSTFIX, gxm_XmMainWindowSep3, 1, 0, 0, H_XmMainWindowSep3);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateMainWindow" XM_POSTFIX, gxm_XmCreateMainWindow, 3, 1, 0, H_XmCreateMainWindow);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmInstallImage" XM_POSTFIX, gxm_XmInstallImage, 2, 0, 0, H_XmInstallImage);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmUninstallImage" XM_POSTFIX, gxm_XmUninstallImage, 1, 0, 0, H_XmUninstallImage);
@@ -17883,19 +17888,12 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmDestroyPixmap" XM_POSTFIX, gxm_XmDestroyPixmap, 2, 0, 0, H_XmDestroyPixmap);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmUpdateDisplay" XM_POSTFIX, gxm_XmUpdateDisplay, 1, 0, 0, H_XmUpdateDisplay);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmWidgetGetBaselines" XM_POSTFIX, gxm_XmWidgetGetBaselines, 1, 0, 0, H_XmWidgetGetBaselines);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmWidgetGetDisplayRect" XM_POSTFIX, gxm_XmWidgetGetDisplayRect, 1, 0, 0, H_XmWidgetGetDisplayRect);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRegisterSegmentEncoding" XM_POSTFIX, gxm_XmRegisterSegmentEncoding, 2, 0, 0, H_XmRegisterSegmentEncoding);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmMapSegmentEncoding" XM_POSTFIX, gxm_XmMapSegmentEncoding, 1, 0, 0, H_XmMapSegmentEncoding);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCvtCTToXmString" XM_POSTFIX, gxm_XmCvtCTToXmString, 1, 0, 0, H_XmCvtCTToXmString);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCvtXmStringToCT" XM_POSTFIX, gxm_XmCvtXmStringToCT, 1, 0, 0, H_XmCvtXmStringToCT);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmConvertUnits" XM_POSTFIX, gxm_XmConvertUnits, 5, 0, 0, H_XmConvertUnits);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCvtToHorizontalPixels" XM_POSTFIX, gxm_XmCvtToHorizontalPixels, 3, 0, 0, H_XmCvtToHorizontalPixels);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCvtToVerticalPixels" XM_POSTFIX, gxm_XmCvtToVerticalPixels, 3, 0, 0, H_XmCvtToVerticalPixels);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCvtFromHorizontalPixels" XM_POSTFIX, gxm_XmCvtFromHorizontalPixels, 3, 0, 0, H_XmCvtFromHorizontalPixels);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCvtFromVerticalPixels" XM_POSTFIX, gxm_XmCvtFromVerticalPixels, 3, 0, 0, H_XmCvtFromVerticalPixels);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmSetFontUnits" XM_POSTFIX, gxm_XmSetFontUnits, 3, 0, 0, H_XmSetFontUnits);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmSetFontUnit" XM_POSTFIX, gxm_XmSetFontUnit, 2, 0, 0, H_XmSetFontUnit);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmSetMenuCursor" XM_POSTFIX, gxm_XmSetMenuCursor, 2, 0, 0, H_XmSetMenuCursor);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmGetMenuCursor" XM_POSTFIX, gxm_XmGetMenuCursor, 1, 0, 0, H_XmGetMenuCursor);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateSimpleMenuBar" XM_POSTFIX, gxm_XmCreateSimpleMenuBar, 3, 1, 0, H_XmCreateSimpleMenuBar);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateSimplePopupMenu" XM_POSTFIX, gxm_XmCreateSimplePopupMenu, 3, 1, 0, H_XmCreateSimplePopupMenu);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateSimplePulldownMenu" XM_POSTFIX, gxm_XmCreateSimplePulldownMenu, 3, 1, 0, H_XmCreateSimplePulldownMenu);
@@ -17909,30 +17907,17 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmVaCreateSimpleRadioBox" XM_POSTFIX, gxm_XmVaCreateSimpleRadioBox, 5, 0, 0, H_XmVaCreateSimpleRadioBox);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmVaCreateSimpleCheckBox" XM_POSTFIX, gxm_XmVaCreateSimpleCheckBox, 4, 0, 0, H_XmVaCreateSimpleCheckBox);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTrackingEvent" XM_POSTFIX, gxm_XmTrackingEvent, 3, 0, 0, H_XmTrackingEvent);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTrackingLocate" XM_POSTFIX, gxm_XmTrackingLocate, 3, 0, 0, H_XmTrackingLocate);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmSetColorCalculation" XM_POSTFIX, gxm_XmSetColorCalculation, 1, 0, 0, H_XmSetColorCalculation);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmGetColorCalculation" XM_POSTFIX, gxm_XmGetColorCalculation, 0, 0, 0, H_XmGetColorCalculation);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmGetColors" XM_POSTFIX, gxm_XmGetColors, 3, 0, 0, H_XmGetColors);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmChangeColor" XM_POSTFIX, gxm_XmChangeColor, 2, 0, 0, H_XmChangeColor);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringCreate" XM_POSTFIX, gxm_XmStringCreate, 2, 0, 0, H_XmStringCreate);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringCreateSimple" XM_POSTFIX, gxm_XmStringCreateSimple, 1, 0, 0, H_XmStringCreateSimple);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringCreateLocalized" XM_POSTFIX, gxm_XmStringCreateLocalized, 1, 0, 0, H_XmStringCreateLocalized);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringDirectionCreate" XM_POSTFIX, gxm_XmStringDirectionCreate, 1, 0, 0, H_XmStringDirectionCreate);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringSeparatorCreate" XM_POSTFIX, gxm_XmStringSeparatorCreate, 0, 0, 0, H_XmStringSeparatorCreate);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringSegmentCreate" XM_POSTFIX, gxm_XmStringSegmentCreate, 4, 0, 0, H_XmStringSegmentCreate);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringLtoRCreate" XM_POSTFIX, gxm_XmStringLtoRCreate, 2, 0, 0, H_XmStringLtoRCreate);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringCreateLtoR" XM_POSTFIX, gxm_XmStringCreateLtoR, 2, 0, 0, H_XmStringCreateLtoR);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringInitContext" XM_POSTFIX, gxm_XmStringInitContext, 1, 0, 0, H_XmStringInitContext);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringFreeContext" XM_POSTFIX, gxm_XmStringFreeContext, 1, 0, 0, H_XmStringFreeContext);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringGetNextComponent" XM_POSTFIX, gxm_XmStringGetNextComponent, 1, 0, 0, H_XmStringGetNextComponent);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringPeekNextComponent" XM_POSTFIX, gxm_XmStringPeekNextComponent, 1, 0, 0, H_XmStringPeekNextComponent);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringGetNextSegment" XM_POSTFIX, gxm_XmStringGetNextSegment, 1, 0, 0, H_XmStringGetNextSegment);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringGetLtoR" XM_POSTFIX, gxm_XmStringGetLtoR, 2, 0, 0, H_XmStringGetLtoR);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntryCreate" XM_POSTFIX, gxm_XmFontListEntryCreate, 3, 0, 0, H_XmFontListEntryCreate);
 #if MOTIF_2
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntryCreate_r" XM_POSTFIX, gxm_XmFontListEntryCreate_r, 4, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListCreate_r" XM_POSTFIX, gxm_XmFontListCreate_r, 3, 0, 0, H_XmFontListCreate_r);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringCreateFontList_r" XM_POSTFIX, gxm_XmStringCreateFontList_r, 3, 0, 0, H_XmStringCreateFontList_r);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringConcatAndFree" XM_POSTFIX, gxm_XmStringConcatAndFree, 2, 0, 0, H_XmStringConcatAndFree);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringIsVoid" XM_POSTFIX, gxm_XmStringIsVoid, 1, 0, 0, H_XmStringIsVoid);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCvtXmStringToByteStream" XM_POSTFIX, gxm_XmCvtXmStringToByteStream, 1, 0, 0, H_XmCvtXmStringToByteStream);
@@ -17981,28 +17966,9 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRenderTableRemoveRenditions" XM_POSTFIX, gxm_XmRenderTableRemoveRenditions, 3, 0, 0, H_XmRenderTableRemoveRenditions);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRenderTableAddRenditions" XM_POSTFIX, gxm_XmRenderTableAddRenditions, 4, 0, 0, H_XmRenderTableAddRenditions);
 #endif
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntryFree" XM_POSTFIX, gxm_XmFontListEntryFree, 1, 0, 0, H_XmFontListEntryFree);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntryGetFont" XM_POSTFIX, gxm_XmFontListEntryGetFont, 2, 0, 0, H_XmFontListEntryGetFont);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntryGetTag" XM_POSTFIX, gxm_XmFontListEntryGetTag, 1, 0, 0, H_XmFontListEntryGetTag);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListAppendEntry" XM_POSTFIX, gxm_XmFontListAppendEntry, 2, 0, 0, H_XmFontListAppendEntry);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListNextEntry" XM_POSTFIX, gxm_XmFontListNextEntry, 1, 0, 0, H_XmFontListNextEntry);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListRemoveEntry" XM_POSTFIX, gxm_XmFontListRemoveEntry, 2, 0, 0, H_XmFontListRemoveEntry);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntryLoad" XM_POSTFIX, gxm_XmFontListEntryLoad, 4, 0, 0, H_XmFontListEntryLoad);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListCreate" XM_POSTFIX, gxm_XmFontListCreate, 2, 0, 0, H_XmFontListCreate);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringCreateFontList" XM_POSTFIX, gxm_XmStringCreateFontList, 2, 0, 0, H_XmStringCreateFontList);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListFree" XM_POSTFIX, gxm_XmFontListFree, 1, 0, 0, H_XmFontListFree);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListAdd" XM_POSTFIX, gxm_XmFontListAdd, 3, 0, 0, H_XmFontListAdd);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListCopy" XM_POSTFIX, gxm_XmFontListCopy, 1, 0, 0, H_XmFontListCopy);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListInitFontContext" XM_POSTFIX, gxm_XmFontListInitFontContext, 1, 0, 0, H_XmFontListInitFontContext);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListGetNextFont" XM_POSTFIX, gxm_XmFontListGetNextFont, 1, 0, 0, H_XmFontListGetNextFont);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListFreeFontContext" XM_POSTFIX, gxm_XmFontListFreeFontContext, 1, 0, 0, H_XmFontListFreeFontContext);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringConcat" XM_POSTFIX, gxm_XmStringConcat, 2, 0, 0, H_XmStringConcat);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringNConcat" XM_POSTFIX, gxm_XmStringNConcat, 3, 0, 0, H_XmStringNConcat);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringCopy" XM_POSTFIX, gxm_XmStringCopy, 1, 0, 0, H_XmStringCopy);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringNCopy" XM_POSTFIX, gxm_XmStringNCopy, 2, 0, 0, H_XmStringNCopy);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringByteCompare" XM_POSTFIX, gxm_XmStringByteCompare, 2, 0, 0, H_XmStringByteCompare);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringCompare" XM_POSTFIX, gxm_XmStringCompare, 2, 0, 0, H_XmStringCompare);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringLength" XM_POSTFIX, gxm_XmStringLength, 1, 0, 0, H_XmStringLength);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringEmpty" XM_POSTFIX, gxm_XmStringEmpty, 1, 0, 0, H_XmStringEmpty);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringHasSubstring" XM_POSTFIX, gxm_XmStringHasSubstring, 2, 0, 0, H_XmStringHasSubstring);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringFree" XM_POSTFIX, gxm_XmStringFree, 1, 0, 0, H_XmStringFree);
@@ -18020,8 +17986,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmGetTabGroup" XM_POSTFIX, gxm_XmGetTabGroup, 1, 0, 0, H_XmGetTabGroup);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmGetFocusWidget" XM_POSTFIX, gxm_XmGetFocusWidget, 1, 0, 0, H_XmGetFocusWidget);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmProcessTraversal" XM_POSTFIX, gxm_XmProcessTraversal, 2, 0, 0, H_XmProcessTraversal);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmAddTabGroup" XM_POSTFIX, gxm_XmAddTabGroup, 1, 0, 0, H_XmAddTabGroup);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRemoveTabGroup" XM_POSTFIX, gxm_XmRemoveTabGroup, 1, 0, 0, H_XmRemoveTabGroup);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateMenuShell" XM_POSTFIX, gxm_XmCreateMenuShell, 3, 1, 0, H_XmCreateMenuShell);
 
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsMessageBox" XM_POSTFIX, gxm_XmIsMessageBox, 1, 0, 0, NULL);
@@ -18077,6 +18041,78 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsMainWindow" XM_POSTFIX, gxm_XmIsMainWindow, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsManager" XM_POSTFIX, gxm_XmIsManager, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsMenuShell" XM_POSTFIX, gxm_XmIsMenuShell, 1, 0, 0, NULL);
+
+#if (!XM_DISABLE_DEPRECATED)
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtWarning" XM_POSTFIX, gxm_XtWarning, 1, 0, 0, H_XtWarning);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppWarning" XM_POSTFIX, gxm_XtAppWarning, 2, 0, 0, H_XtAppWarning);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSetWarningMsgHandler" XM_POSTFIX, gxm_XtSetWarningMsgHandler, 1, 0, 0, H_XtSetWarningMsgHandler);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSetWarningHandler" XM_POSTFIX, gxm_XtSetWarningHandler, 1, 0, 0, H_XtSetWarningHandler);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtWarningMsg" XM_POSTFIX, gxm_XtWarningMsg, 6, 0, 0, H_XtWarningMsg);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtErrorMsg" XM_POSTFIX, gxm_XtErrorMsg, 6, 0, 0, H_XtErrorMsg);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtError" XM_POSTFIX, gxm_XtError, 1, 0, 0, H_XtError);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSetErrorMsgHandler" XM_POSTFIX, gxm_XtSetErrorMsgHandler, 1, 0, 0, H_XtSetErrorMsgHandler);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSetErrorHandler" XM_POSTFIX, gxm_XtSetErrorHandler, 1, 0, 0, H_XtSetErrorHandler);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtInitialize" XM_POSTFIX, gxm_XtInitialize, 6, 0, 0, H_XtInitialize);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCreateApplicationShell" XM_POSTFIX, gxm_XtCreateApplicationShell, 3, 1, 0, H_XtCreateApplicationShell);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSetSelectionTimeout" XM_POSTFIX, gxm_XtSetSelectionTimeout, 1, 0, 0, H_XtSetSelectionTimeout);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetSelectionTimeout" XM_POSTFIX, gxm_XtGetSelectionTimeout, 0, 0, 0, H_XtGetSelectionTimeout);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAddActions" XM_POSTFIX, gxm_XtAddActions, 1, 0, 0, H_XtAddActions);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAddInput" XM_POSTFIX, gxm_XtAddInput, 3, 1, 0, H_XtAddInput);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAddWorkProc" XM_POSTFIX, gxm_XtAddWorkProc, 1, 1, 0, H_XtAddWorkProc);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAddTimeOut" XM_POSTFIX, gxm_XtAddTimeOut, 2, 1, 0, H_XtAddTimeOut);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtMainLoop" XM_POSTFIX, gxm_XtMainLoop, 0, 0, 0, H_XtMainLoop);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtProcessEvent" XM_POSTFIX, gxm_XtProcessEvent, 1, 0, 0, H_XtProcessEvent);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtPending" XM_POSTFIX, gxm_XtPending, 0, 0, 0, H_XtPending);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtNextEvent" XM_POSTFIX, gxm_XtNextEvent, 0, 0, 0, H_XtNextEvent);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtPeekEvent" XM_POSTFIX, gxm_XtPeekEvent, 0, 0, 0, H_XtPeekEvent);
+
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntryCreate" XM_POSTFIX, gxm_XmFontListEntryCreate, 3, 0, 0, H_XmFontListEntryCreate);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntryCreate_r" XM_POSTFIX, gxm_XmFontListEntryCreate_r, 4, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntryFree" XM_POSTFIX, gxm_XmFontListEntryFree, 1, 0, 0, H_XmFontListEntryFree);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntryGetFont" XM_POSTFIX, gxm_XmFontListEntryGetFont, 2, 0, 0, H_XmFontListEntryGetFont);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntryGetTag" XM_POSTFIX, gxm_XmFontListEntryGetTag, 1, 0, 0, H_XmFontListEntryGetTag);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListAppendEntry" XM_POSTFIX, gxm_XmFontListAppendEntry, 2, 0, 0, H_XmFontListAppendEntry);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListNextEntry" XM_POSTFIX, gxm_XmFontListNextEntry, 1, 0, 0, H_XmFontListNextEntry);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListRemoveEntry" XM_POSTFIX, gxm_XmFontListRemoveEntry, 2, 0, 0, H_XmFontListRemoveEntry);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntryLoad" XM_POSTFIX, gxm_XmFontListEntryLoad, 4, 0, 0, H_XmFontListEntryLoad);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListFree" XM_POSTFIX, gxm_XmFontListFree, 1, 0, 0, H_XmFontListFree);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListCopy" XM_POSTFIX, gxm_XmFontListCopy, 1, 0, 0, H_XmFontListCopy);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListInitFontContext" XM_POSTFIX, gxm_XmFontListInitFontContext, 1, 0, 0, H_XmFontListInitFontContext);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListFreeFontContext" XM_POSTFIX, gxm_XmFontListFreeFontContext, 1, 0, 0, H_XmFontListFreeFontContext);
+
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontContext?" XM_POSTFIX, XEN_XmFontContext_p, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntry?" XM_POSTFIX, XEN_XmFontListEntry_p, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontList?" XM_POSTFIX, XEN_XmFontList_p, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListCreate_r" XM_POSTFIX, gxm_XmFontListCreate_r, 3, 0, 0, H_XmFontListCreate_r);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListCreate" XM_POSTFIX, gxm_XmFontListCreate, 2, 0, 0, H_XmFontListCreate);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTrackingLocate" XM_POSTFIX, gxm_XmTrackingLocate, 3, 0, 0, H_XmTrackingLocate);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListGetNextFont" XM_POSTFIX, gxm_XmFontListGetNextFont, 1, 0, 0, H_XmFontListGetNextFont);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringByteCompare" XM_POSTFIX, gxm_XmStringByteCompare, 2, 0, 0, H_XmStringByteCompare);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringCreateLtoR" XM_POSTFIX, gxm_XmStringCreateLtoR, 2, 0, 0, H_XmStringCreateLtoR);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringCreateSimple" XM_POSTFIX, gxm_XmStringCreateSimple, 1, 0, 0, H_XmStringCreateSimple);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringGetLtoR" XM_POSTFIX, gxm_XmStringGetLtoR, 2, 0, 0, H_XmStringGetLtoR);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringGetNextSegment" XM_POSTFIX, gxm_XmStringGetNextSegment, 1, 0, 0, H_XmStringGetNextSegment);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringSegmentCreate" XM_POSTFIX, gxm_XmStringSegmentCreate, 4, 0, 0, H_XmStringSegmentCreate);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringPeekNextComponent" XM_POSTFIX, gxm_XmStringPeekNextComponent, 1, 0, 0, H_XmStringPeekNextComponent);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringGetNextComponent" XM_POSTFIX, gxm_XmStringGetNextComponent, 1, 0, 0, H_XmStringGetNextComponent);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRemoveTabGroup" XM_POSTFIX, gxm_XmRemoveTabGroup, 1, 0, 0, H_XmRemoveTabGroup);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListAdd" XM_POSTFIX, gxm_XmFontListAdd, 3, 0, 0, H_XmFontListAdd);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringLength" XM_POSTFIX, gxm_XmStringLength, 1, 0, 0, H_XmStringLength);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringNConcat" XM_POSTFIX, gxm_XmStringNConcat, 3, 0, 0, H_XmStringNConcat);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringNCopy" XM_POSTFIX, gxm_XmStringNCopy, 2, 0, 0, H_XmStringNCopy);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmScrolledWindowSetAreas" XM_POSTFIX, gxm_XmScrolledWindowSetAreas, 4, 0, 0, H_XmScrolledWindowSetAreas);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmSetFontUnits" XM_POSTFIX, gxm_XmSetFontUnits, 3, 0, 0, H_XmSetFontUnits);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmSetFontUnit" XM_POSTFIX, gxm_XmSetFontUnit, 2, 0, 0, H_XmSetFontUnit);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmGetMenuCursor" XM_POSTFIX, gxm_XmGetMenuCursor, 1, 0, 0, H_XmGetMenuCursor);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmSetMenuCursor" XM_POSTFIX, gxm_XmSetMenuCursor, 2, 0, 0, H_XmSetMenuCursor);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmListGetSelectedPos" XM_POSTFIX, gxm_XmListGetSelectedPos, 1, 0, 0, H_XmListGetSelectedPos);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmMainWindowSetAreas" XM_POSTFIX, gxm_XmMainWindowSetAreas, 6, 0, 0, H_XmMainWindowSetAreas);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmMainWindowSep1" XM_POSTFIX, gxm_XmMainWindowSep1, 1, 0, 0, H_XmMainWindowSep1);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmMainWindowSep2" XM_POSTFIX, gxm_XmMainWindowSep2, 1, 0, 0, H_XmMainWindowSep2);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmMainWindowSep3" XM_POSTFIX, gxm_XmMainWindowSep3, 1, 0, 0, H_XmMainWindowSep3);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmAddTabGroup" XM_POSTFIX, gxm_XmAddTabGroup, 1, 0, 0, H_XmAddTabGroup);
+#endif
+
 #endif
 
 #if HAVE_XPM
@@ -18228,9 +18264,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmToggleButtonGadget?" XM_POSTFIX, gxm_XmIsToggleButtonGadget, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmDrawnButton?" XM_POSTFIX, gxm_XmIsDrawnButton, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmPrimitive?" XM_POSTFIX, gxm_XmIsPrimitive, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontList?" XM_POSTFIX, XEN_XmFontList_p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontContext?" XM_POSTFIX, XEN_XmFontContext_p, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntry?" XM_POSTFIX, XEN_XmFontListEntry_p, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextSource?" XM_POSTFIX, XEN_XmTextSource_p, 1, 0, 0, NULL);
 #endif
 #if HAVE_XPM
@@ -18238,6 +18271,39 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmImage?" XM_POSTFIX, XEN_XpmImage_p, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmColorSymbol?" XM_POSTFIX, XEN_XpmColorSymbol_p, 1, 0, 0, NULL);
 #endif
+
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XButtonEvent?" XM_POSTFIX, XEN_XButtonEvent_p, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XCirculateEvent?" XM_POSTFIX, XEN_XCirculateEvent_p, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XCirculateRequestEvent?" XM_POSTFIX, XEN_XCirculateRequestEvent_p, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XClientMessageEvent?" XM_POSTFIX, XEN_XClientMessageEvent_p, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XColormapEvent?" XM_POSTFIX, XEN_XColormapEvent_p, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XConfigureEvent?" XM_POSTFIX, XEN_XConfigureEvent_p, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XConfigureRequestEvent?" XM_POSTFIX, XEN_XConfigureRequestEvent_p, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XCreateWindowEvent?" XM_POSTFIX, XEN_XCreateWindowEvent_p, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XCrossingEvent?" XM_POSTFIX, XEN_XCrossingEvent_p, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XDestroyWindowEvent?" XM_POSTFIX, XEN_XDestroyWindowEvent_p, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XErrorEvent?" XM_POSTFIX, XEN_XErrorEvent_p, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XExposeEvent?" XM_POSTFIX, XEN_XExposeEvent_p, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XFocusChangeEvent?" XM_POSTFIX, XEN_XFocusChangeEvent_p, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XGraphicsExposeEvent?" XM_POSTFIX, XEN_XGraphicsExposeEvent_p, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XGravityEvent?" XM_POSTFIX, XEN_XGravityEvent_p, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XKeyEvent?" XM_POSTFIX, XEN_XKeyEvent_p, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XKeymapEvent?" XM_POSTFIX, XEN_XKeymapEvent_p, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XMapEvent?" XM_POSTFIX, XEN_XMapEvent_p, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XMapRequestEvent?" XM_POSTFIX, XEN_XMapRequestEvent_p, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XMappingEvent?" XM_POSTFIX, XEN_XMappingEvent_p, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XMotionEvent?" XM_POSTFIX, XEN_XMotionEvent_p, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XNoExposeEvent?" XM_POSTFIX, XEN_XNoExposeEvent_p, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XPropertyEvent?" XM_POSTFIX, XEN_XPropertyEvent_p, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XReparentEvent?" XM_POSTFIX, XEN_XReparentEvent_p, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XResizeRequestEvent?" XM_POSTFIX, XEN_XResizeRequestEvent_p, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XSelectionClearEvent?" XM_POSTFIX, XEN_XSelectionClearEvent_p, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XSelectionEvent?" XM_POSTFIX, XEN_XSelectionEvent_p, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XSelectionRequestEvent?" XM_POSTFIX, XEN_XSelectionRequestEvent_p, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetWindowAttributes?" XM_POSTFIX, XEN_XSetWindowAttributes_p, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XUnmapEvent?" XM_POSTFIX, XEN_XUnmapEvent_p, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XVisibilityEvent?" XM_POSTFIX, XEN_XVisibilityEvent_p, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XIconSize?" XM_POSTFIX, XEN_XIconSize_p, 1, 0, 0, NULL);
 
   XEN_DEFINE_PROCEDURE("xm-gc-elements", xm_gc_elements, 0, 0, 0, NULL);
 }
@@ -21838,7 +21904,7 @@ static int alphabet_compare(const void *a, const void *b)
 }
 
 /* #define XM_HASH_SIZE 1024 */
-/* 684 in Motif 2.1, but more added for 2.2 */
+/* 600 in Motif 2.1, but more added for 2.2 */
 #define XM_HASH_SIZE 750
 
 static hdata **xm_hash = NULL;
@@ -21887,7 +21953,6 @@ static void define_strings(void)
     hash_resource(Value, Type)
 
   DEFINE_STRING(XM_PREFIX "XmSTRING_DEFAULT_CHARSET" XM_POSTFIX, XmSTRING_DEFAULT_CHARSET);
-  DEFINE_STRING(XM_PREFIX "XmSTRING_ISO8859_1" XM_POSTFIX,       XmSTRING_ISO8859_1);
   DEFINE_STRING(XM_PREFIX "XmFONTLIST_DEFAULT_TAG" XM_POSTFIX,   XmFONTLIST_DEFAULT_TAG);
   DEFINE_STRING(XM_PREFIX "XmFONTLIST_DEFAULT_TAG_STRING"        XM_POSTFIX, XmFONTLIST_DEFAULT_TAG_STRING);
 
@@ -21936,7 +22001,6 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNautoShowCursorPosition" XM_POSTFIX, XmNautoShowCursorPosition,    XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNautoUnmanage" XM_POSTFIX, XmNautoUnmanage,                        XM_BOOLEAN);
   DEFINE_RESOURCE(XM_PREFIX "XmNautomaticSelection" XM_POSTFIX, XmNautomaticSelection,            XM_UCHAR);
-  DEFINE_RESOURCE(XM_PREFIX "XmNavailability" XM_POSTFIX, XmNavailability,                        XM_ULONG);
   DEFINE_RESOURCE(XM_PREFIX "XmNbackground" XM_POSTFIX, XmNbackground,                            XM_PIXEL);
   DEFINE_RESOURCE(XM_PREFIX "XmNbackgroundPixmap" XM_POSTFIX, XmNbackgroundPixmap,                XM_PIXMAP);
   DEFINE_RESOURCE(XM_PREFIX "XmNbaseHeight" XM_POSTFIX, XmNbaseHeight,                            XM_INT);
@@ -21958,13 +22022,11 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNbuttonAcceleratorText" XM_POSTFIX, XmNbuttonAcceleratorText,      XM_STRING_TABLE);
   DEFINE_RESOURCE(XM_PREFIX "XmNbuttonAccelerators" XM_POSTFIX, XmNbuttonAccelerators,            XM_STRING_TABLE);
   DEFINE_RESOURCE(XM_PREFIX "XmNbuttonCount" XM_POSTFIX, XmNbuttonCount,                          XM_INT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNbuttonFontList" XM_POSTFIX, XmNbuttonFontList,                    XM_FONTLIST);
   DEFINE_RESOURCE(XM_PREFIX "XmNbuttonMnemonicCharSets" XM_POSTFIX, XmNbuttonMnemonicCharSets,    XM_CHARSET_TABLE);
   DEFINE_RESOURCE(XM_PREFIX "XmNbuttonMnemonics" XM_POSTFIX, XmNbuttonMnemonics,                  XM_KEYSYM_TABLE);
   DEFINE_RESOURCE(XM_PREFIX "XmNbuttonSet" XM_POSTFIX, XmNbuttonSet,                              XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNbuttonType" XM_POSTFIX, XmNbuttonType,                            XM_ULONG);
   DEFINE_RESOURCE(XM_PREFIX "XmNbuttons" XM_POSTFIX, XmNbuttons,                                  XM_STRING_TABLE);
-  DEFINE_RESOURCE(XM_PREFIX "XmNcallback" XM_POSTFIX, XmNcallback,                                XM_CALLBACK);
   DEFINE_RESOURCE(XM_PREFIX "XmNcancelButton" XM_POSTFIX, XmNcancelButton,                        XM_WIDGET);
   DEFINE_RESOURCE(XM_PREFIX "XmNcancelCallback" XM_POSTFIX, XmNcancelCallback,                    XM_CALLBACK);
   DEFINE_RESOURCE(XM_PREFIX "XmNcancelLabelString" XM_POSTFIX, XmNcancelLabelString,              XM_XMSTRING);
@@ -21973,8 +22035,6 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNchildHorizontalAlignment" XM_POSTFIX, XmNchildHorizontalAlignment, XM_UCHAR);
   DEFINE_RESOURCE(XM_PREFIX "XmNchildHorizontalSpacing" XM_POSTFIX, XmNchildHorizontalSpacing,    XM_DIMENSION);
   DEFINE_RESOURCE(XM_PREFIX "XmNchildPlacement" XM_POSTFIX, XmNchildPlacement,                    XM_UCHAR);
-  DEFINE_RESOURCE(XM_PREFIX "XmNchildPosition" XM_POSTFIX, XmNchildPosition,                      XM_INT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNchildType" XM_POSTFIX, XmNchildType,                              XM_UCHAR);
   DEFINE_RESOURCE(XM_PREFIX "XmNchildVerticalAlignment" XM_POSTFIX, XmNchildVerticalAlignment,    XM_UCHAR);
   DEFINE_RESOURCE(XM_PREFIX "XmNchildren" XM_POSTFIX, XmNchildren,                                XM_WIDGET_LIST);
   DEFINE_RESOURCE(XM_PREFIX "XmNclientData" XM_POSTFIX, XmNclientData,                            XM_ULONG);
@@ -22000,7 +22060,6 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNdefaultButtonShadowThickness" XM_POSTFIX, XmNdefaultButtonShadowThickness, XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNdefaultButtonType" XM_POSTFIX, XmNdefaultButtonType,              XM_UCHAR);
   DEFINE_RESOURCE(XM_PREFIX "XmNdefaultCopyCursorIcon" XM_POSTFIX, XmNdefaultCopyCursorIcon,      XM_WIDGET);
-  DEFINE_RESOURCE(XM_PREFIX "XmNdefaultFontList" XM_POSTFIX, XmNdefaultFontList,                  XM_FONTLIST);
   DEFINE_RESOURCE(XM_PREFIX "XmNdefaultInvalidCursorIcon" XM_POSTFIX, XmNdefaultInvalidCursorIcon, XM_WIDGET);
   DEFINE_RESOURCE(XM_PREFIX "XmNdefaultLinkCursorIcon" XM_POSTFIX, XmNdefaultLinkCursorIcon,      XM_WIDGET);
   DEFINE_RESOURCE(XM_PREFIX "XmNdefaultMoveCursorIcon" XM_POSTFIX, XmNdefaultMoveCursorIcon,      XM_WIDGET);
@@ -22010,7 +22069,6 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNdefaultValidCursorIcon" XM_POSTFIX, XmNdefaultValidCursorIcon,    XM_WIDGET);
   DEFINE_RESOURCE(XM_PREFIX "XmNdeleteResponse" XM_POSTFIX, XmNdeleteResponse,		          XM_UCHAR);
   DEFINE_RESOURCE(XM_PREFIX "XmNdepth" XM_POSTFIX, XmNdepth,				          XM_INT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNdesktopParent" XM_POSTFIX, XmNdesktopParent,		          XM_WIDGET);
   DEFINE_RESOURCE(XM_PREFIX "XmNdestroyCallback" XM_POSTFIX, XmNdestroyCallback,	          XM_CALLBACK);
   DEFINE_RESOURCE(XM_PREFIX "XmNdialogStyle" XM_POSTFIX, XmNdialogStyle,		          XM_UCHAR);
   DEFINE_RESOURCE(XM_PREFIX "XmNdialogTitle" XM_POSTFIX, XmNdialogTitle,		          XM_XMSTRING);
@@ -22030,7 +22088,6 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNdragInitiatorProtocolStyle" XM_POSTFIX, XmNdragInitiatorProtocolStyle, XM_UCHAR);
   DEFINE_RESOURCE(XM_PREFIX "XmNdragMotionCallback" XM_POSTFIX, XmNdragMotionCallback,	          XM_CALLBACK);
   DEFINE_RESOURCE(XM_PREFIX "XmNdragOperations" XM_POSTFIX, XmNdragOperations,		          XM_UCHAR);
-  DEFINE_RESOURCE(XM_PREFIX "XmNdragOverMode" XM_POSTFIX, XmNdragOverMode,		          XM_ULONG);
   DEFINE_RESOURCE(XM_PREFIX "XmNdragProc" XM_POSTFIX, XmNdragProc,			          XM_DRAG_CALLBACK); /* drag and drop, not scale drag */
   DEFINE_RESOURCE(XM_PREFIX "XmNdragReceiverProtocolStyle" XM_POSTFIX, XmNdragReceiverProtocolStyle, XM_UCHAR);
   DEFINE_RESOURCE(XM_PREFIX "XmNdropFinishCallback" XM_POSTFIX, XmNdropFinishCallback,            XM_CALLBACK);
@@ -22044,7 +22101,6 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNdropStartCallback" XM_POSTFIX, XmNdropStartCallback,	          XM_CALLBACK);
   DEFINE_RESOURCE(XM_PREFIX "XmNdropTransfers" XM_POSTFIX, XmNdropTransfers,		          XM_TRANSFER_ENTRY_LIST);
   DEFINE_RESOURCE(XM_PREFIX "XmNeditMode" XM_POSTFIX, XmNeditMode,			          XM_INT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNeditType" XM_POSTFIX, XmNeditType,			          XM_UCHAR);
   DEFINE_RESOURCE(XM_PREFIX "XmNeditable" XM_POSTFIX, XmNeditable,			          XM_BOOLEAN);
   DEFINE_RESOURCE(XM_PREFIX "XmNentryAlignment" XM_POSTFIX, XmNentryAlignment,		          XM_UCHAR);
   DEFINE_RESOURCE(XM_PREFIX "XmNentryBorder" XM_POSTFIX, XmNentryBorder,		          XM_DIMENSION);
@@ -22054,7 +22110,6 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNexportTargets" XM_POSTFIX, XmNexportTargets,		          XM_ATOM_LIST);
   DEFINE_RESOURCE(XM_PREFIX "XmNexposeCallback" XM_POSTFIX, XmNexposeCallback,		          XM_CALLBACK);
   DEFINE_RESOURCE(XM_PREFIX "XmNextendedSelectionCallback" XM_POSTFIX, XmNextendedSelectionCallback,  XM_CALLBACK);
-  DEFINE_RESOURCE(XM_PREFIX "XmNextensionType" XM_POSTFIX, XmNextensionType,                      XM_UCHAR);
   DEFINE_RESOURCE(XM_PREFIX "XmNfile" XM_POSTFIX, XmNfile,				          XM_ULONG);
   DEFINE_RESOURCE(XM_PREFIX "XmNfileListItemCount" XM_POSTFIX, XmNfileListItemCount,	          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNfileListItems" XM_POSTFIX, XmNfileListItems,		          XM_STRING_TABLE);
@@ -22065,16 +22120,10 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNfillOnSelect" XM_POSTFIX, XmNfillOnSelect,		          XM_BOOLEAN);
   DEFINE_RESOURCE(XM_PREFIX "XmNfilterLabelString" XM_POSTFIX, XmNfilterLabelString,	          XM_XMSTRING);
   DEFINE_RESOURCE(XM_PREFIX "XmNfocusCallback" XM_POSTFIX, XmNfocusCallback,		          XM_CALLBACK);
-  DEFINE_RESOURCE(XM_PREFIX "XmNfocusMovedCallback" XM_POSTFIX, XmNfocusMovedCallback,	          XM_CALLBACK);
-  DEFINE_RESOURCE(XM_PREFIX "XmNfocusPolicyChanged" XM_POSTFIX, XmNfocusPolicyChanged,	          XM_BOOLEAN);
   DEFINE_RESOURCE(XM_PREFIX "XmNfont" XM_POSTFIX, XmNfont,				          XM_XFONTSTRUCT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNfontList" XM_POSTFIX, XmNfontList,			          XM_FONTLIST);
-  DEFINE_RESOURCE(XM_PREFIX "XmNfontSet" XM_POSTFIX, XmNfontSet,			          XM_ULONG);
-  DEFINE_RESOURCE(XM_PREFIX "XmNforceBars" XM_POSTFIX, XmNforceBars,			          XM_BOOLEAN);
   DEFINE_RESOURCE(XM_PREFIX "XmNforeground" XM_POSTFIX, XmNforeground,			          XM_PIXEL);
   DEFINE_RESOURCE(XM_PREFIX "XmNforegroundThreshold" XM_POSTFIX, XmNforegroundThreshold,          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNfractionBase" XM_POSTFIX, XmNfractionBase,		          XM_INT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNfunction" XM_POSTFIX, XmNfunction,			          XM_CALLBACK);
   DEFINE_RESOURCE(XM_PREFIX "XmNgainPrimaryCallback" XM_POSTFIX, XmNgainPrimaryCallback,          XM_CALLBACK);
   DEFINE_RESOURCE(XM_PREFIX "XmNgeometry" XM_POSTFIX, XmNgeometry,			          XM_STRING);
   DEFINE_RESOURCE(XM_PREFIX "XmNheight" XM_POSTFIX, XmNheight,				          XM_INT);
@@ -22107,7 +22156,6 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNincrement" XM_POSTFIX, XmNincrement,			          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNincrementCallback" XM_POSTFIX, XmNincrementCallback,	          XM_CALLBACK);
   DEFINE_RESOURCE(XM_PREFIX "XmNincremental" XM_POSTFIX, XmNincremental,		          XM_BOOLEAN);
-  DEFINE_RESOURCE(XM_PREFIX "XmNindex" XM_POSTFIX, XmNindex,				          XM_INT);
 #if MOTIF_2
   DEFINE_RESOURCE(XM_PREFIX "XmNindicatorOn" XM_POSTFIX, XmNindicatorOn,		          XM_INT);
 #else
@@ -22119,25 +22167,16 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNinitialFocus" XM_POSTFIX, XmNinitialFocus,		          XM_WIDGET);
   DEFINE_RESOURCE(XM_PREFIX "XmNinitialResourcesPersistent" XM_POSTFIX, XmNinitialResourcesPersistent,  XM_BOOLEAN);
   DEFINE_RESOURCE(XM_PREFIX "XmNinitialState" XM_POSTFIX, XmNinitialState,		          XM_INT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNinnerHeight" XM_POSTFIX, XmNinnerHeight,		          XM_INT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNinnerWidth" XM_POSTFIX, XmNinnerWidth,			          XM_INT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNinnerWindow" XM_POSTFIX, XmNinnerWindow,		          XM_WIDGET);
   DEFINE_RESOURCE(XM_PREFIX "XmNinput" XM_POSTFIX, XmNinput,				          XM_BOOLEAN);
   DEFINE_RESOURCE(XM_PREFIX "XmNinputCallback" XM_POSTFIX, XmNinputCallback,		          XM_CALLBACK);
-  DEFINE_RESOURCE(XM_PREFIX "XmNinputCreate" XM_POSTFIX, XmNinputCreate,		          XM_ULONG);
   DEFINE_RESOURCE(XM_PREFIX "XmNinputMethod" XM_POSTFIX, XmNinputMethod,		          XM_STRING);
   DEFINE_RESOURCE(XM_PREFIX "XmNinsertPosition" XM_POSTFIX, XmNinsertPosition,		          XM_ORDER_CALLBACK);
-  DEFINE_RESOURCE(XM_PREFIX "XmNinternalHeight" XM_POSTFIX, XmNinternalHeight,		          XM_INT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNinternalWidth" XM_POSTFIX, XmNinternalWidth,		          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNinvalidCursorForeground" XM_POSTFIX, XmNinvalidCursorForeground,  XM_PIXEL);
   DEFINE_RESOURCE(XM_PREFIX "XmNisAligned" XM_POSTFIX, XmNisAligned,			          XM_BOOLEAN);
   DEFINE_RESOURCE(XM_PREFIX "XmNisHomogeneous" XM_POSTFIX, XmNisHomogeneous,		          XM_BOOLEAN);
   DEFINE_RESOURCE(XM_PREFIX "XmNitemCount" XM_POSTFIX, XmNitemCount,			          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNitems" XM_POSTFIX, XmNitems,				          XM_STRING_TABLE);
-  DEFINE_RESOURCE(XM_PREFIX "XmNjumpProc" XM_POSTFIX, XmNjumpProc,			          XM_CALLBACK);
-  DEFINE_RESOURCE(XM_PREFIX "XmNjustify" XM_POSTFIX, XmNjustify,			          XM_BOOLEAN);
   DEFINE_RESOURCE(XM_PREFIX "XmNkeyboardFocusPolicy" XM_POSTFIX, XmNkeyboardFocusPolicy,          XM_UCHAR);
-  DEFINE_RESOURCE(XM_PREFIX "XmNlabelFontList" XM_POSTFIX, XmNlabelFontList,		          XM_FONTLIST);
   DEFINE_RESOURCE(XM_PREFIX "XmNlabelInsensitivePixmap" XM_POSTFIX, XmNlabelInsensitivePixmap,    XM_PIXMAP);
   DEFINE_RESOURCE(XM_PREFIX "XmNlabelPixmap" XM_POSTFIX, XmNlabelPixmap,		          XM_PIXMAP);
   DEFINE_RESOURCE(XM_PREFIX "XmNlabelString" XM_POSTFIX, XmNlabelString,		          XM_XMSTRING);
@@ -22146,7 +22185,6 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNleftOffset" XM_POSTFIX, XmNleftOffset,			          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNleftPosition" XM_POSTFIX, XmNleftPosition,		          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNleftWidget" XM_POSTFIX, XmNleftWidget,			          XM_WIDGET);
-  DEFINE_RESOURCE(XM_PREFIX "XmNlength" XM_POSTFIX, XmNlength,				          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNlightThreshold" XM_POSTFIX, XmNlightThreshold,		          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNlineSpace" XM_POSTFIX, XmNlineSpace,			          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNlistItemCount" XM_POSTFIX, XmNlistItemCount,		          XM_INT);
@@ -22158,10 +22196,8 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNlistSpacing" XM_POSTFIX, XmNlistSpacing,		          XM_DIMENSION);
   DEFINE_RESOURCE(XM_PREFIX "XmNlistUpdated" XM_POSTFIX, XmNlistUpdated,		          XM_BOOLEAN);
   DEFINE_RESOURCE(XM_PREFIX "XmNlistVisibleItemCount" XM_POSTFIX, XmNlistVisibleItemCount,        XM_INT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNlogicalParent" XM_POSTFIX, XmNlogicalParent,		          XM_WIDGET);
   DEFINE_RESOURCE(XM_PREFIX "XmNlosePrimaryCallback" XM_POSTFIX, XmNlosePrimaryCallback,          XM_CALLBACK);
   DEFINE_RESOURCE(XM_PREFIX "XmNlosingFocusCallback" XM_POSTFIX, XmNlosingFocusCallback,          XM_CALLBACK);
-  DEFINE_RESOURCE(XM_PREFIX "XmNlowerRight" XM_POSTFIX, XmNlowerRight,			          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNmainWindowMarginHeight" XM_POSTFIX, XmNmainWindowMarginHeight,    XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNmainWindowMarginWidth" XM_POSTFIX, XmNmainWindowMarginWidth,      XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNmapCallback" XM_POSTFIX, XmNmapCallback,		          XM_CALLBACK);
@@ -22184,12 +22220,10 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNmenuAccelerator" XM_POSTFIX, XmNmenuAccelerator,	          XM_STRING);
   DEFINE_RESOURCE(XM_PREFIX "XmNmenuBar" XM_POSTFIX, XmNmenuBar,			          XM_WIDGET);
   DEFINE_RESOURCE(XM_PREFIX "XmNmenuCursor" XM_POSTFIX, XmNmenuCursor,			          XM_STRING);
-  DEFINE_RESOURCE(XM_PREFIX "XmNmenuEntry" XM_POSTFIX, XmNmenuEntry,			          XM_ULONG);
   DEFINE_RESOURCE(XM_PREFIX "XmNmenuHelpWidget" XM_POSTFIX, XmNmenuHelpWidget,		          XM_WIDGET);
   DEFINE_RESOURCE(XM_PREFIX "XmNmenuHistory" XM_POSTFIX, XmNmenuHistory,		          XM_WIDGET);
   DEFINE_RESOURCE(XM_PREFIX "XmNmenuPost" XM_POSTFIX, XmNmenuPost,			          XM_STRING);
   DEFINE_RESOURCE(XM_PREFIX "XmNmessageAlignment" XM_POSTFIX, XmNmessageAlignment,	          XM_UCHAR);
-  DEFINE_RESOURCE(XM_PREFIX "XmNmessageProc" XM_POSTFIX, XmNmessageProc,		          XM_CALLBACK);
   DEFINE_RESOURCE(XM_PREFIX "XmNmessageString" XM_POSTFIX, XmNmessageString,		          XM_XMSTRING);
   DEFINE_RESOURCE(XM_PREFIX "XmNmessageWindow" XM_POSTFIX, XmNmessageWindow,		          XM_WIDGET);
   DEFINE_RESOURCE(XM_PREFIX "XmNminAspectX" XM_POSTFIX, XmNminAspectX,			          XM_INT);
@@ -22210,23 +22244,17 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNmwmFunctions" XM_POSTFIX, XmNmwmFunctions,		          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNmwmInputMode" XM_POSTFIX, XmNmwmInputMode,		          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNmwmMenu" XM_POSTFIX, XmNmwmMenu,			          XM_STRING);
-  DEFINE_RESOURCE(XM_PREFIX "XmNmwmMessages" XM_POSTFIX, XmNmwmMessages,		          XM_ULONG);
-  DEFINE_RESOURCE(XM_PREFIX "XmNname" XM_POSTFIX, XmNname,				          XM_ULONG);
   DEFINE_RESOURCE(XM_PREFIX "XmNnavigationType" XM_POSTFIX, XmNnavigationType,		          XM_UCHAR);
-  DEFINE_RESOURCE(XM_PREFIX "XmNneedsMotion" XM_POSTFIX, XmNneedsMotion,		          XM_BOOLEAN);
   DEFINE_RESOURCE(XM_PREFIX "XmNnoMatchCallback" XM_POSTFIX, XmNnoMatchCallback,	          XM_CALLBACK);
   DEFINE_RESOURCE(XM_PREFIX "XmNnoMatchString" XM_POSTFIX, XmNnoMatchString,		          XM_XMSTRING);
   DEFINE_RESOURCE(XM_PREFIX "XmNnoResize" XM_POSTFIX, XmNnoResize,			          XM_BOOLEAN);
   DEFINE_RESOURCE(XM_PREFIX "XmNnoneCursorForeground" XM_POSTFIX, XmNnoneCursorForeground,        XM_PIXEL);
-  DEFINE_RESOURCE(XM_PREFIX "XmNnotify" XM_POSTFIX, XmNnotify,				          XM_ULONG);
-  DEFINE_RESOURCE(XM_PREFIX "XmNnotifyProc" XM_POSTFIX, XmNnotifyProc,			          XM_CALLBACK);
   DEFINE_RESOURCE(XM_PREFIX "XmNnumChildren" XM_POSTFIX, XmNnumChildren,		          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNnumColumns" XM_POSTFIX, XmNnumColumns,			          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNnumDropRectangles" XM_POSTFIX, XmNnumDropRectangles,	          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNnumDropTransfers" XM_POSTFIX, XmNnumDropTransfers,	          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNnumExportTargets" XM_POSTFIX, XmNnumExportTargets,	          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNnumImportTargets" XM_POSTFIX, XmNnumImportTargets,	          XM_INT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNnumRectangles" XM_POSTFIX, XmNnumRectangles,		          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNoffsetX" XM_POSTFIX, XmNoffsetX,			          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNoffsetY" XM_POSTFIX, XmNoffsetY,			          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNokCallback" XM_POSTFIX, XmNokCallback,			          XM_CALLBACK);
@@ -22236,7 +22264,6 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNoptionLabel" XM_POSTFIX, XmNoptionLabel,		          XM_XMSTRING);
   DEFINE_RESOURCE(XM_PREFIX "XmNoptionMnemonic" XM_POSTFIX, XmNoptionMnemonic,		          XM_KEYSYM);
   DEFINE_RESOURCE(XM_PREFIX "XmNorientation" XM_POSTFIX, XmNorientation,		          XM_UCHAR);
-  DEFINE_RESOURCE(XM_PREFIX "XmNoutputCreate" XM_POSTFIX, XmNoutputCreate,		          XM_ULONG);
   DEFINE_RESOURCE(XM_PREFIX "XmNoverrideRedirect" XM_POSTFIX, XmNoverrideRedirect,	          XM_BOOLEAN);
   DEFINE_RESOURCE(XM_PREFIX "XmNpacking" XM_POSTFIX, XmNpacking,			          XM_UCHAR);
   DEFINE_RESOURCE(XM_PREFIX "XmNpageDecrementCallback" XM_POSTFIX, XmNpageDecrementCallback,      XM_CALLBACK);
@@ -22244,7 +22271,6 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNpageIncrementCallback" XM_POSTFIX, XmNpageIncrementCallback,      XM_CALLBACK);
   DEFINE_RESOURCE(XM_PREFIX "XmNpaneMaximum" XM_POSTFIX, XmNpaneMaximum,		          XM_DIMENSION);
   DEFINE_RESOURCE(XM_PREFIX "XmNpaneMinimum" XM_POSTFIX, XmNpaneMinimum,		          XM_DIMENSION);
-  DEFINE_RESOURCE(XM_PREFIX "XmNparameter" XM_POSTFIX, XmNparameter,			          XM_ULONG);
   DEFINE_RESOURCE(XM_PREFIX "XmNpattern" XM_POSTFIX, XmNpattern,			          XM_XMSTRING);
   DEFINE_RESOURCE(XM_PREFIX "XmNpendingDelete" XM_POSTFIX, XmNpendingDelete,		          XM_BOOLEAN);
   DEFINE_RESOURCE(XM_PREFIX "XmNpixmap" XM_POSTFIX, XmNpixmap,				          XM_PIXMAP);
@@ -22253,19 +22279,14 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNpopupEnabled" XM_POSTFIX, XmNpopupEnabled,		          XM_BOOLEAN);
   DEFINE_RESOURCE(XM_PREFIX "XmNpositionIndex" XM_POSTFIX, XmNpositionIndex,		          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNpostFromButton" XM_POSTFIX, XmNpostFromButton,		          XM_WIDGET);
-  DEFINE_RESOURCE(XM_PREFIX "XmNpostFromCount" XM_POSTFIX, XmNpostFromCount,		          XM_INT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNpostFromList" XM_POSTFIX, XmNpostFromList,		          XM_ULONG);
   DEFINE_RESOURCE(XM_PREFIX "XmNpreeditType" XM_POSTFIX, XmNpreeditType,		          XM_UCHAR);
   DEFINE_RESOURCE(XM_PREFIX "XmNprocessingDirection" XM_POSTFIX, XmNprocessingDirection,          XM_UCHAR);
   DEFINE_RESOURCE(XM_PREFIX "XmNpromptString" XM_POSTFIX, XmNpromptString,		          XM_XMSTRING);
-  DEFINE_RESOURCE(XM_PREFIX "XmNprotocolCallback" XM_POSTFIX, XmNprotocolCallback,	          XM_CALLBACK);
   DEFINE_RESOURCE(XM_PREFIX "XmNpushButtonEnabled" XM_POSTFIX, XmNpushButtonEnabled,	          XM_BOOLEAN);
   DEFINE_RESOURCE(XM_PREFIX "XmNqualifySearchDataProc" XM_POSTFIX, XmNqualifySearchDataProc,      XM_QUALIFY_CALLBACK);
   DEFINE_RESOURCE(XM_PREFIX "XmNradioAlwaysOne" XM_POSTFIX, XmNradioAlwaysOne,		          XM_BOOLEAN);
   DEFINE_RESOURCE(XM_PREFIX "XmNradioBehavior" XM_POSTFIX, XmNradioBehavior,		          XM_BOOLEAN);
-  DEFINE_RESOURCE(XM_PREFIX "XmNrealizeCallback" XM_POSTFIX, XmNrealizeCallback,	          XM_CALLBACK);
   DEFINE_RESOURCE(XM_PREFIX "XmNrecomputeSize" XM_POSTFIX, XmNrecomputeSize,		          XM_BOOLEAN);
-  DEFINE_RESOURCE(XM_PREFIX "XmNrectangles" XM_POSTFIX, XmNrectangles,			          XM_RECTANGLE_LIST);
   DEFINE_RESOURCE(XM_PREFIX "XmNrefigureMode" XM_POSTFIX, XmNrefigureMode,		          XM_BOOLEAN);
   DEFINE_RESOURCE(XM_PREFIX "XmNrepeatDelay" XM_POSTFIX, XmNrepeatDelay,		          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNresizable" XM_POSTFIX, XmNresizable,			          XM_BOOLEAN);
@@ -22274,7 +22295,6 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNresizeHeight" XM_POSTFIX, XmNresizeHeight,		          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNresizePolicy" XM_POSTFIX, XmNresizePolicy,		          XM_UCHAR);
   DEFINE_RESOURCE(XM_PREFIX "XmNresizeWidth" XM_POSTFIX, XmNresizeWidth,		          XM_INT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNreverseVideo" XM_POSTFIX, XmNreverseVideo,		          XM_BOOLEAN);
   DEFINE_RESOURCE(XM_PREFIX "XmNrightAttachment" XM_POSTFIX, XmNrightAttachment,	          XM_UCHAR);
   DEFINE_RESOURCE(XM_PREFIX "XmNrightOffset" XM_POSTFIX, XmNrightOffset,		          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNrightPosition" XM_POSTFIX, XmNrightPosition,		          XM_INT);
@@ -22293,16 +22313,9 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNscreen" XM_POSTFIX, XmNscreen,				          XM_SCREEN);
   DEFINE_RESOURCE(XM_PREFIX "XmNscrollBarDisplayPolicy" XM_POSTFIX, XmNscrollBarDisplayPolicy,    XM_UCHAR);
   DEFINE_RESOURCE(XM_PREFIX "XmNscrollBarPlacement" XM_POSTFIX, XmNscrollBarPlacement,	          XM_UCHAR);
-  DEFINE_RESOURCE(XM_PREFIX "XmNscrollDCursor" XM_POSTFIX, XmNscrollDCursor,		          XM_ULONG);
-  DEFINE_RESOURCE(XM_PREFIX "XmNscrollHCursor" XM_POSTFIX, XmNscrollHCursor,		          XM_ULONG);
   DEFINE_RESOURCE(XM_PREFIX "XmNscrollHorizontal" XM_POSTFIX, XmNscrollHorizontal,	          XM_BOOLEAN);
-  DEFINE_RESOURCE(XM_PREFIX "XmNscrollLCursor" XM_POSTFIX, XmNscrollLCursor,		          XM_ULONG);
   DEFINE_RESOURCE(XM_PREFIX "XmNscrollLeftSide" XM_POSTFIX, XmNscrollLeftSide,		          XM_BOOLEAN);
-  DEFINE_RESOURCE(XM_PREFIX "XmNscrollProc" XM_POSTFIX, XmNscrollProc,			          XM_CALLBACK);
-  DEFINE_RESOURCE(XM_PREFIX "XmNscrollRCursor" XM_POSTFIX, XmNscrollRCursor,		          XM_ULONG);
   DEFINE_RESOURCE(XM_PREFIX "XmNscrollTopSide" XM_POSTFIX, XmNscrollTopSide,		          XM_BOOLEAN);
-  DEFINE_RESOURCE(XM_PREFIX "XmNscrollUCursor" XM_POSTFIX, XmNscrollUCursor,		          XM_ULONG);
-  DEFINE_RESOURCE(XM_PREFIX "XmNscrollVCursor" XM_POSTFIX, XmNscrollVCursor,		          XM_ULONG);
   DEFINE_RESOURCE(XM_PREFIX "XmNscrollVertical" XM_POSTFIX, XmNscrollVertical,		          XM_BOOLEAN);
   DEFINE_RESOURCE(XM_PREFIX "XmNscrolledWindowMarginHeight" XM_POSTFIX, XmNscrolledWindowMarginHeight, XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNscrolledWindowMarginWidth" XM_POSTFIX, XmNscrolledWindowMarginWidth, XM_INT);
@@ -22325,33 +22338,24 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNshadow" XM_POSTFIX, XmNshadow,				          XM_ULONG);
   DEFINE_RESOURCE(XM_PREFIX "XmNshadowThickness" XM_POSTFIX, XmNshadowThickness,	          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNshadowType" XM_POSTFIX, XmNshadowType,			          XM_UCHAR);
-  DEFINE_RESOURCE(XM_PREFIX "XmNshellUnitType" XM_POSTFIX, XmNshellUnitType,		          XM_UCHAR);
   DEFINE_RESOURCE(XM_PREFIX "XmNshowArrows" XM_POSTFIX, XmNshowArrows,			          XM_BOOLEAN);
   DEFINE_RESOURCE(XM_PREFIX "XmNshowAsDefault" XM_POSTFIX, XmNshowAsDefault,		          XM_DIMENSION);
   DEFINE_RESOURCE(XM_PREFIX "XmNshowSeparator" XM_POSTFIX, XmNshowSeparator,		          XM_BOOLEAN);
   DEFINE_RESOURCE(XM_PREFIX "XmNshowValue" XM_POSTFIX, XmNshowValue,			          XM_BOOLEAN);
-  DEFINE_RESOURCE(XM_PREFIX "XmNshown" XM_POSTFIX, XmNshown,				          XM_BOOLEAN);
   DEFINE_RESOURCE(XM_PREFIX "XmNsimpleCallback" XM_POSTFIX, XmNsimpleCallback,		          XM_CALLBACK);
   /* doc p905 calls this an XtCallbackProc (not list), but next pages says it's a list, Motif sources appear to treat it as a proc */
   DEFINE_RESOURCE(XM_PREFIX "XmNsingleSelectionCallback" XM_POSTFIX, XmNsingleSelectionCallback,  XM_CALLBACK);
-  DEFINE_RESOURCE(XM_PREFIX "XmNsizePolicy" XM_POSTFIX, XmNsizePolicy,			          XM_UCHAR);
   DEFINE_RESOURCE(XM_PREFIX "XmNskipAdjust" XM_POSTFIX, XmNskipAdjust,			          XM_BOOLEAN);
   DEFINE_RESOURCE(XM_PREFIX "XmNsliderSize" XM_POSTFIX, XmNsliderSize,			          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNsliderVisual" XM_POSTFIX, XmNsliderVisual,		          XM_VISUAL);
   DEFINE_RESOURCE(XM_PREFIX "XmNslidingMode" XM_POSTFIX, XmNslidingMode,		          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNsource" XM_POSTFIX, XmNsource,				          XM_TEXT_SOURCE);
   DEFINE_RESOURCE(XM_PREFIX "XmNsourceCursorIcon" XM_POSTFIX, XmNsourceCursorIcon,	          XM_WIDGET);
-  DEFINE_RESOURCE(XM_PREFIX "XmNsourceIsExternal" XM_POSTFIX, XmNsourceIsExternal,	          XM_BOOLEAN);
   DEFINE_RESOURCE(XM_PREFIX "XmNsourcePixmapIcon" XM_POSTFIX, XmNsourcePixmapIcon,	          XM_WIDGET);
-  DEFINE_RESOURCE(XM_PREFIX "XmNsourceWidget" XM_POSTFIX, XmNsourceWidget,		          XM_WIDGET);
-  DEFINE_RESOURCE(XM_PREFIX "XmNsourceWindow" XM_POSTFIX, XmNsourceWindow,		          XM_WIDGET);
-  DEFINE_RESOURCE(XM_PREFIX "XmNspace" XM_POSTFIX, XmNspace,				          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNspacing" XM_POSTFIX, XmNspacing,			          XM_DIMENSION);
   DEFINE_RESOURCE(XM_PREFIX "XmNspotLocation" XM_POSTFIX, XmNspotLocation,		          XM_INT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNstartTime" XM_POSTFIX, XmNstartTime,			          XM_ULONG);
   DEFINE_RESOURCE(XM_PREFIX "XmNstateCursorIcon" XM_POSTFIX, XmNstateCursorIcon,	          XM_WIDGET);
   DEFINE_RESOURCE(XM_PREFIX "XmNstring" XM_POSTFIX, XmNstring,				          XM_STRING);
-  DEFINE_RESOURCE(XM_PREFIX "XmNstringDirection" XM_POSTFIX, XmNstringDirection,	          XM_UCHAR);
   DEFINE_RESOURCE(XM_PREFIX "XmNsubMenuId" XM_POSTFIX, XmNsubMenuId,			          XM_WIDGET);
   DEFINE_RESOURCE(XM_PREFIX "XmNsymbolPixmap" XM_POSTFIX, XmNsymbolPixmap,		          XM_PIXMAP);
   DEFINE_RESOURCE(XM_PREFIX "XmNtearOffMenuActivateCallback" XM_POSTFIX, XmNtearOffMenuActivateCallback, XM_CALLBACK);
@@ -22359,16 +22363,8 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNtearOffModel" XM_POSTFIX, XmNtearOffModel,		          XM_UCHAR);
   DEFINE_RESOURCE(XM_PREFIX "XmNtextAccelerators" XM_POSTFIX, XmNtextAccelerators,	          XM_ULONG);
   DEFINE_RESOURCE(XM_PREFIX "XmNtextColumns" XM_POSTFIX, XmNtextColumns,		          XM_INT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNtextFontList" XM_POSTFIX, XmNtextFontList,		          XM_FONTLIST);
-  DEFINE_RESOURCE(XM_PREFIX "XmNtextOptions" XM_POSTFIX, XmNtextOptions,		          XM_ULONG);
-  DEFINE_RESOURCE(XM_PREFIX "XmNtextSink" XM_POSTFIX, XmNtextSink,			          XM_ULONG);
-  DEFINE_RESOURCE(XM_PREFIX "XmNtextSource" XM_POSTFIX, XmNtextSource,			          XM_TEXT_SOURCE);
   DEFINE_RESOURCE(XM_PREFIX "XmNtextString" XM_POSTFIX, XmNtextString,			          XM_XMSTRING);
   DEFINE_RESOURCE(XM_PREFIX "XmNtextTranslations" XM_POSTFIX, XmNtextTranslations,	          XM_CALLBACK);
-  DEFINE_RESOURCE(XM_PREFIX "XmNtextValue" XM_POSTFIX, XmNtextValue,			          XM_ULONG);
-  DEFINE_RESOURCE(XM_PREFIX "XmNthickness" XM_POSTFIX, XmNthickness,			          XM_INT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNthumb" XM_POSTFIX, XmNthumb,				          XM_ULONG);
-  DEFINE_RESOURCE(XM_PREFIX "XmNthumbProc" XM_POSTFIX, XmNthumbProc,			          XM_CALLBACK);
   DEFINE_RESOURCE(XM_PREFIX "XmNtitle" XM_POSTFIX, XmNtitle,				          XM_STRING);
   DEFINE_RESOURCE(XM_PREFIX "XmNtitleEncoding" XM_POSTFIX, XmNtitleEncoding,		          XM_ATOM);
   DEFINE_RESOURCE(XM_PREFIX "XmNtitleString" XM_POSTFIX, XmNtitleString,		          XM_XMSTRING);
@@ -22380,7 +22376,6 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNanimate" XM_POSTFIX, XmNanimate,                                  XM_BOOLEAN);
 #endif
   DEFINE_RESOURCE(XM_PREFIX "XmNtoBottomCallback" XM_POSTFIX, XmNtoBottomCallback,	          XM_CALLBACK);
-  DEFINE_RESOURCE(XM_PREFIX "XmNtoPositionCallback" XM_POSTFIX, XmNtoPositionCallback,	          XM_CALLBACK);
   DEFINE_RESOURCE(XM_PREFIX "XmNtoTopCallback" XM_POSTFIX, XmNtoTopCallback,		          XM_CALLBACK);
   DEFINE_RESOURCE(XM_PREFIX "XmNtop" XM_POSTFIX, XmNtop,				          XM_UCHAR);
   DEFINE_RESOURCE(XM_PREFIX "XmNtopAttachment" XM_POSTFIX, XmNtopAttachment,		          XM_UCHAR);
@@ -22398,21 +22393,13 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNtransient" XM_POSTFIX, XmNtransient,			          XM_BOOLEAN);
   DEFINE_RESOURCE(XM_PREFIX "XmNtransientFor" XM_POSTFIX, XmNtransientFor,		          XM_WIDGET);
   DEFINE_RESOURCE(XM_PREFIX "XmNtranslations" XM_POSTFIX, XmNtranslations,		          XM_CALLBACK);
-  DEFINE_RESOURCE(XM_PREFIX "XmNtraversalCallback" XM_POSTFIX, XmNtraversalCallback,	          XM_CALLBACK);
   DEFINE_RESOURCE(XM_PREFIX "XmNtraversalOn" XM_POSTFIX, XmNtraversalOn,		          XM_BOOLEAN);
-  DEFINE_RESOURCE(XM_PREFIX "XmNtraversalType" XM_POSTFIX, XmNtraversalType,		          XM_UCHAR);
   DEFINE_RESOURCE(XM_PREFIX "XmNtraverseObscuredCallback" XM_POSTFIX, XmNtraverseObscuredCallback, XM_CALLBACK);
-  DEFINE_RESOURCE(XM_PREFIX "XmNtreeUpdateProc" XM_POSTFIX, XmNtreeUpdateProc,		          XM_CALLBACK);
   DEFINE_RESOURCE(XM_PREFIX "XmNtroughColor" XM_POSTFIX, XmNtroughColor,		          XM_PIXEL);
   DEFINE_RESOURCE(XM_PREFIX "XmNunitType" XM_POSTFIX, XmNunitType,			          XM_UCHAR);
   DEFINE_RESOURCE(XM_PREFIX "XmNunmapCallback" XM_POSTFIX, XmNunmapCallback,		          XM_CALLBACK);
   DEFINE_RESOURCE(XM_PREFIX "XmNunpostBehavior" XM_POSTFIX, XmNunpostBehavior,		          XM_UCHAR);
-  DEFINE_RESOURCE(XM_PREFIX "XmNunselectPixmap" XM_POSTFIX, XmNunselectPixmap,		          XM_PIXMAP);
-  DEFINE_RESOURCE(XM_PREFIX "XmNupdate" XM_POSTFIX, XmNupdate,				          XM_ULONG);
-  DEFINE_RESOURCE(XM_PREFIX "XmNupdateSliderSize" XM_POSTFIX, XmNupdateSliderSize,	          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNuseAsyncGeometry" XM_POSTFIX, XmNuseAsyncGeometry,	          XM_BOOLEAN);
-  DEFINE_RESOURCE(XM_PREFIX "XmNuseBottom" XM_POSTFIX, XmNuseBottom,			          XM_BOOLEAN);
-  DEFINE_RESOURCE(XM_PREFIX "XmNuseRight" XM_POSTFIX, XmNuseRight,			          XM_BOOLEAN);
   DEFINE_RESOURCE(XM_PREFIX "XmNuserData" XM_POSTFIX, XmNuserData,			          XM_ULONG);
   DEFINE_RESOURCE(XM_PREFIX "XmNvalidCursorForeground" XM_POSTFIX, XmNvalidCursorForeground,      XM_PIXEL);
   DEFINE_RESOURCE(XM_PREFIX "XmNvalue" XM_POSTFIX, XmNvalue,				          XM_STRING_OR_INT);
@@ -22426,7 +22413,6 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNvisual" XM_POSTFIX, XmNvisual,				          XM_VISUAL);
   DEFINE_RESOURCE(XM_PREFIX "XmNvisualPolicy" XM_POSTFIX, XmNvisualPolicy,		          XM_UCHAR);
   DEFINE_RESOURCE(XM_PREFIX "XmNwaitForWm" XM_POSTFIX, XmNwaitForWm,			          XM_BOOLEAN);
-  DEFINE_RESOURCE(XM_PREFIX "XmNwhichButton" XM_POSTFIX, XmNwhichButton,		          XM_WIDGET);
   DEFINE_RESOURCE(XM_PREFIX "XmNwidth" XM_POSTFIX, XmNwidth,				          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNwidthInc" XM_POSTFIX, XmNwidthInc,			          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNwinGravity" XM_POSTFIX, XmNwinGravity,			          XM_INT);
@@ -22462,7 +22448,6 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNdecimal" XM_POSTFIX, XmNdecimal,			          XM_STRING);
   DEFINE_RESOURCE(XM_PREFIX "XmNdefaultArrowSensitivity" XM_POSTFIX, XmNdefaultArrowSensitivity,  XM_UCHAR);
   DEFINE_RESOURCE(XM_PREFIX "XmNdefaultButtonEmphasis" XM_POSTFIX, XmNdefaultButtonEmphasis,      XM_INT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNdefaultGlyphPixmap" XM_POSTFIX, XmNdefaultGlyphPixmap,	          XM_PIXMAP);
   DEFINE_RESOURCE(XM_PREFIX "XmNdefaultVirtualBindings" XM_POSTFIX, XmNdefaultVirtualBindings,    XM_STRING);
   DEFINE_RESOURCE(XM_PREFIX "XmNdestinationCallback" XM_POSTFIX, XmNdestinationCallback,          XM_CALLBACK);
   DEFINE_RESOURCE(XM_PREFIX "XmNdetail" XM_POSTFIX, XmNdetail,				          XM_STRING_TABLE);
@@ -22503,7 +22488,6 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNinnerMarginWidth" XM_POSTFIX, XmNinnerMarginWidth,	          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNinputPolicy" XM_POSTFIX, XmNinputPolicy,		          XM_ULONG);
   DEFINE_RESOURCE(XM_PREFIX "XmNinsensitiveStippleBitmap" XM_POSTFIX, XmNinsensitiveStippleBitmap,  XM_PIXMAP);
-  DEFINE_RESOURCE(XM_PREFIX "XmNinstallColormap" XM_POSTFIX, XmNinstallColormap,	          XM_BOOLEAN);
   DEFINE_RESOURCE(XM_PREFIX "XmNinvokeParseProc" XM_POSTFIX, XmNinvokeParseProc,	          XM_CALLBACK);
   DEFINE_RESOURCE(XM_PREFIX "XmNlabelRenderTable" XM_POSTFIX, XmNlabelRenderTable,	          XM_RENDER_TABLE);
   DEFINE_RESOURCE(XM_PREFIX "XmNlargeCellHeight" XM_POSTFIX, XmNlargeCellHeight,	          XM_INT);
@@ -22511,8 +22495,6 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNlargeIcon" XM_POSTFIX, XmNlargeIcon,			          XM_WIDGET);
   DEFINE_RESOURCE(XM_PREFIX "XmNlargeIconMask" XM_POSTFIX, XmNlargeIconMask,		          XM_PIXMAP);
   DEFINE_RESOURCE(XM_PREFIX "XmNlargeIconPixmap" XM_POSTFIX, XmNlargeIconPixmap,	          XM_PIXMAP);
-  DEFINE_RESOURCE(XM_PREFIX "XmNlargeIconX" XM_POSTFIX, XmNlargeIconX,			          XM_FLOAT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNlargeIconY" XM_POSTFIX, XmNlargeIconY,			          XM_FLOAT);
   DEFINE_RESOURCE(XM_PREFIX "XmNlastPageNumber" XM_POSTFIX, XmNlastPageNumber,		          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNlayoutDirection" XM_POSTFIX, XmNlayoutDirection,	          XM_UCHAR);
   DEFINE_RESOURCE(XM_PREFIX "XmNlayoutType" XM_POSTFIX, XmNlayoutType,			          XM_UCHAR);
@@ -22532,7 +22514,6 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNnoRenditionCallback" XM_POSTFIX, XmNnoRenditionCallback,          XM_CALLBACK);
   DEFINE_RESOURCE(XM_PREFIX "XmNnotebookChildType" XM_POSTFIX, XmNnotebookChildType,	          XM_UCHAR);
   DEFINE_RESOURCE(XM_PREFIX "XmNnumValues" XM_POSTFIX, XmNnumValues,			          XM_INT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNoffsetModel" XM_POSTFIX, XmNoffsetModel,		          XM_ULONG);
   DEFINE_RESOURCE(XM_PREFIX "XmNoutlineButtonPolicy" XM_POSTFIX, XmNoutlineButtonPolicy,          XM_UCHAR);
   DEFINE_RESOURCE(XM_PREFIX "XmNoutlineChangedCallback" XM_POSTFIX, XmNoutlineChangedCallback,    XM_CALLBACK);
   DEFINE_RESOURCE(XM_PREFIX "XmNoutlineColumnWidth" XM_POSTFIX, XmNoutlineColumnWidth,	          XM_INT);
@@ -22554,10 +22535,6 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNpreeditDrawCallback" XM_POSTFIX, XmNpreeditDrawCallback,          XM_CALLBACK);
   DEFINE_RESOURCE(XM_PREFIX "XmNpreeditStartCallback" XM_POSTFIX, XmNpreeditStartCallback,        XM_CALLBACK);
   DEFINE_RESOURCE(XM_PREFIX "XmNprimaryOwnership" XM_POSTFIX, XmNprimaryOwnership,	          XM_UCHAR);
-  DEFINE_RESOURCE(XM_PREFIX "XmNprintOrientation" XM_POSTFIX, XmNprintOrientation,	          XM_UCHAR);
-  DEFINE_RESOURCE(XM_PREFIX "XmNprintOrientations" XM_POSTFIX, XmNprintOrientations,	          XM_INT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNprintResolution" XM_POSTFIX, XmNprintResolution,	          XM_UCHAR);
-  DEFINE_RESOURCE(XM_PREFIX "XmNprintResolutions" XM_POSTFIX, XmNprintResolutions,	          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNrenderTable" XM_POSTFIX, XmNrenderTable,		          XM_RENDER_TABLE);
   DEFINE_RESOURCE(XM_PREFIX "XmNrenditionBackground" XM_POSTFIX, XmNrenditionBackground,          XM_PIXEL);
   DEFINE_RESOURCE(XM_PREFIX "XmNrenditionForeground" XM_POSTFIX, XmNrenditionForeground,          XM_PIXEL);
@@ -22577,8 +22554,6 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNsmallIcon" XM_POSTFIX, XmNsmallIcon,			          XM_WIDGET);
   DEFINE_RESOURCE(XM_PREFIX "XmNsmallIconMask" XM_POSTFIX, XmNsmallIconMask,		          XM_PIXMAP);
   DEFINE_RESOURCE(XM_PREFIX "XmNsmallIconPixmap" XM_POSTFIX, XmNsmallIconPixmap,	          XM_PIXMAP);
-  DEFINE_RESOURCE(XM_PREFIX "XmNsmallIconX" XM_POSTFIX, XmNsmallIconX,			          XM_FLOAT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNsmallIconY" XM_POSTFIX, XmNsmallIconY,			          XM_FLOAT);
   DEFINE_RESOURCE(XM_PREFIX "XmNsnapBackMultiple" XM_POSTFIX, XmNsnapBackMultiple,	          XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNspatialIncludeModel" XM_POSTFIX, XmNspatialIncludeModel,          XM_UCHAR);
   DEFINE_RESOURCE(XM_PREFIX "XmNspatialResizeModel" XM_POSTFIX, XmNspatialResizeModel,	          XM_UCHAR);
@@ -22588,7 +22563,6 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNstartJobCallback" XM_POSTFIX, XmNstartJobCallback,	          XM_CALLBACK);
   DEFINE_RESOURCE(XM_PREFIX "XmNstrikethruType" XM_POSTFIX, XmNstrikethruType,		          XM_UCHAR);
   DEFINE_RESOURCE(XM_PREFIX "XmNtabList" XM_POSTFIX, XmNtabList,			          XM_TAB_LIST);
-  DEFINE_RESOURCE(XM_PREFIX "XmNtabValue" XM_POSTFIX, XmNtabValue,			          XM_FLOAT);
   DEFINE_RESOURCE(XM_PREFIX "XmNtag" XM_POSTFIX, XmNtag,				          XM_STRING);
   DEFINE_RESOURCE(XM_PREFIX "XmNtearOffTitle" XM_POSTFIX, XmNtearOffTitle,		          XM_XMSTRING);
   DEFINE_RESOURCE(XM_PREFIX "XmNtextField" XM_POSTFIX, XmNtextField,			          XM_WIDGET);
@@ -22598,8 +22572,6 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNunderlineType" XM_POSTFIX, XmNunderlineType,		          XM_UCHAR);
   DEFINE_RESOURCE(XM_PREFIX "XmNunselectColor" XM_POSTFIX, XmNunselectColor,		          XM_PIXEL);
   DEFINE_RESOURCE(XM_PREFIX "XmNuseColorObj" XM_POSTFIX, XmNuseColorObj,		          XM_BOOLEAN);
-  DEFINE_RESOURCE(XM_PREFIX "XmNuseMask" XM_POSTFIX, XmNuseMask,			          XM_PIXMAP);
-  DEFINE_RESOURCE(XM_PREFIX "XmNuseTextColor" XM_POSTFIX, XmNuseTextColor,		          XM_PIXEL);
   DEFINE_RESOURCE(XM_PREFIX "XmNvalues" XM_POSTFIX, XmNvalues,				          XM_STRING_TABLE);
   DEFINE_RESOURCE(XM_PREFIX "XmNverifyPreedit" XM_POSTFIX, XmNverifyPreedit,		          XM_BOOLEAN);
   DEFINE_RESOURCE(XM_PREFIX "XmNviewType" XM_POSTFIX, XmNviewType,			          XM_UCHAR);
@@ -22608,6 +22580,104 @@ static void define_strings(void)
 #endif
 #if HAVE_XP
   DEFINE_STRING(XM_PREFIX "XP_PRINTNAME" XM_POSTFIX, XP_PRINTNAME);
+#endif
+#if (!XM_DISABLE_DEPRECATED)
+  DEFINE_RESOURCE(XM_PREFIX "XmNlabelFontList" XM_POSTFIX, XmNlabelFontList,		          XM_FONTLIST);
+  DEFINE_RESOURCE(XM_PREFIX "XmNbuttonFontList" XM_POSTFIX, XmNbuttonFontList,                    XM_FONTLIST);
+  DEFINE_RESOURCE(XM_PREFIX "XmNtextFontList" XM_POSTFIX, XmNtextFontList,		          XM_FONTLIST);
+  DEFINE_RESOURCE(XM_PREFIX "XmNwhichButton" XM_POSTFIX, XmNwhichButton,		          XM_WIDGET);
+  DEFINE_RESOURCE(XM_PREFIX "XmNchildType" XM_POSTFIX, XmNchildType,                              XM_UCHAR);
+  DEFINE_RESOURCE(XM_PREFIX "XmNstringDirection" XM_POSTFIX, XmNstringDirection,	          XM_UCHAR);
+  DEFINE_RESOURCE(XM_PREFIX "XmNfontList" XM_POSTFIX, XmNfontList,			          XM_FONTLIST);
+  DEFINE_RESOURCE(XM_PREFIX "XmNdefaultFontList" XM_POSTFIX, XmNdefaultFontList,                  XM_FONTLIST);
+  DEFINE_RESOURCE(XM_PREFIX "XmNshellUnitType" XM_POSTFIX, XmNshellUnitType,		          XM_UCHAR);
+#endif
+#if HAVE_UNDOCUMENTED_RESOURCES
+  DEFINE_RESOURCE(XM_PREFIX "XmNavailability" XM_POSTFIX, XmNavailability,                        XM_ULONG);
+  DEFINE_RESOURCE(XM_PREFIX "XmNcallback" XM_POSTFIX, XmNcallback,                                XM_CALLBACK);
+  DEFINE_RESOURCE(XM_PREFIX "XmNchildPosition" XM_POSTFIX, XmNchildPosition,                      XM_INT);
+  DEFINE_RESOURCE(XM_PREFIX "XmNdefaultGlyphPixmap" XM_POSTFIX, XmNdefaultGlyphPixmap,	          XM_PIXMAP);
+  DEFINE_RESOURCE(XM_PREFIX "XmNdesktopParent" XM_POSTFIX, XmNdesktopParent,		          XM_WIDGET);
+  DEFINE_RESOURCE(XM_PREFIX "XmNdragOverMode" XM_POSTFIX, XmNdragOverMode,		          XM_ULONG);
+  DEFINE_RESOURCE(XM_PREFIX "XmNeditType" XM_POSTFIX, XmNeditType,			          XM_UCHAR);
+  DEFINE_RESOURCE(XM_PREFIX "XmNextensionType" XM_POSTFIX, XmNextensionType,                      XM_UCHAR);
+  DEFINE_RESOURCE(XM_PREFIX "XmNfocusMovedCallback" XM_POSTFIX, XmNfocusMovedCallback,	          XM_CALLBACK);
+  DEFINE_RESOURCE(XM_PREFIX "XmNfocusPolicyChanged" XM_POSTFIX, XmNfocusPolicyChanged,	          XM_BOOLEAN);
+  DEFINE_RESOURCE(XM_PREFIX "XmNfontSet" XM_POSTFIX, XmNfontSet,			          XM_ULONG);
+  DEFINE_RESOURCE(XM_PREFIX "XmNforceBars" XM_POSTFIX, XmNforceBars,			          XM_BOOLEAN);
+  DEFINE_RESOURCE(XM_PREFIX "XmNfunction" XM_POSTFIX, XmNfunction,			          XM_CALLBACK);
+  DEFINE_RESOURCE(XM_PREFIX "XmNindex" XM_POSTFIX, XmNindex,				          XM_INT);
+  DEFINE_RESOURCE(XM_PREFIX "XmNinnerHeight" XM_POSTFIX, XmNinnerHeight,		          XM_INT);
+  DEFINE_RESOURCE(XM_PREFIX "XmNinnerWidth" XM_POSTFIX, XmNinnerWidth,			          XM_INT);
+  DEFINE_RESOURCE(XM_PREFIX "XmNinnerWindow" XM_POSTFIX, XmNinnerWindow,		          XM_WIDGET);
+  DEFINE_RESOURCE(XM_PREFIX "XmNinputCreate" XM_POSTFIX, XmNinputCreate,		          XM_ULONG);
+  DEFINE_RESOURCE(XM_PREFIX "XmNinstallColormap" XM_POSTFIX, XmNinstallColormap,	          XM_BOOLEAN);
+  DEFINE_RESOURCE(XM_PREFIX "XmNinternalHeight" XM_POSTFIX, XmNinternalHeight,		          XM_INT);
+  DEFINE_RESOURCE(XM_PREFIX "XmNinternalWidth" XM_POSTFIX, XmNinternalWidth,		          XM_INT);
+  DEFINE_RESOURCE(XM_PREFIX "XmNjumpProc" XM_POSTFIX, XmNjumpProc,			          XM_CALLBACK);
+  DEFINE_RESOURCE(XM_PREFIX "XmNjustify" XM_POSTFIX, XmNjustify,			          XM_BOOLEAN);
+  DEFINE_RESOURCE(XM_PREFIX "XmNlargeIconX" XM_POSTFIX, XmNlargeIconX,			          XM_FLOAT);
+  DEFINE_RESOURCE(XM_PREFIX "XmNlargeIconY" XM_POSTFIX, XmNlargeIconY,			          XM_FLOAT);
+  DEFINE_RESOURCE(XM_PREFIX "XmNlength" XM_POSTFIX, XmNlength,				          XM_INT);
+  DEFINE_RESOURCE(XM_PREFIX "XmNlogicalParent" XM_POSTFIX, XmNlogicalParent,		          XM_WIDGET);
+  DEFINE_RESOURCE(XM_PREFIX "XmNlowerRight" XM_POSTFIX, XmNlowerRight,			          XM_INT);
+  DEFINE_RESOURCE(XM_PREFIX "XmNmenuEntry" XM_POSTFIX, XmNmenuEntry,			          XM_ULONG);
+  DEFINE_RESOURCE(XM_PREFIX "XmNmessageProc" XM_POSTFIX, XmNmessageProc,		          XM_CALLBACK);
+  DEFINE_RESOURCE(XM_PREFIX "XmNmwmMessages" XM_POSTFIX, XmNmwmMessages,		          XM_ULONG);
+  DEFINE_RESOURCE(XM_PREFIX "XmNname" XM_POSTFIX, XmNname,				          XM_ULONG);
+  DEFINE_RESOURCE(XM_PREFIX "XmNneedsMotion" XM_POSTFIX, XmNneedsMotion,		          XM_BOOLEAN);
+  DEFINE_RESOURCE(XM_PREFIX "XmNnotify" XM_POSTFIX, XmNnotify,				          XM_ULONG);
+  DEFINE_RESOURCE(XM_PREFIX "XmNnotifyProc" XM_POSTFIX, XmNnotifyProc,			          XM_CALLBACK);
+  DEFINE_RESOURCE(XM_PREFIX "XmNnumRectangles" XM_POSTFIX, XmNnumRectangles,		          XM_INT);
+  DEFINE_RESOURCE(XM_PREFIX "XmNoffsetModel" XM_POSTFIX, XmNoffsetModel,		          XM_ULONG);
+  DEFINE_RESOURCE(XM_PREFIX "XmNoutputCreate" XM_POSTFIX, XmNoutputCreate,		          XM_ULONG);
+  DEFINE_RESOURCE(XM_PREFIX "XmNparameter" XM_POSTFIX, XmNparameter,			          XM_ULONG);
+  DEFINE_RESOURCE(XM_PREFIX "XmNpostFromCount" XM_POSTFIX, XmNpostFromCount,		          XM_INT);
+  DEFINE_RESOURCE(XM_PREFIX "XmNpostFromList" XM_POSTFIX, XmNpostFromList,		          XM_ULONG);
+  DEFINE_RESOURCE(XM_PREFIX "XmNprintOrientation" XM_POSTFIX, XmNprintOrientation,	          XM_UCHAR);
+  DEFINE_RESOURCE(XM_PREFIX "XmNprintOrientations" XM_POSTFIX, XmNprintOrientations,	          XM_INT);
+  DEFINE_RESOURCE(XM_PREFIX "XmNprintResolution" XM_POSTFIX, XmNprintResolution,	          XM_UCHAR);
+  DEFINE_RESOURCE(XM_PREFIX "XmNprintResolutions" XM_POSTFIX, XmNprintResolutions,	          XM_INT);
+  DEFINE_RESOURCE(XM_PREFIX "XmNprotocolCallback" XM_POSTFIX, XmNprotocolCallback,	          XM_CALLBACK);
+  DEFINE_RESOURCE(XM_PREFIX "XmNrealizeCallback" XM_POSTFIX, XmNrealizeCallback,	          XM_CALLBACK);
+  DEFINE_RESOURCE(XM_PREFIX "XmNrectangles" XM_POSTFIX, XmNrectangles,			          XM_RECTANGLE_LIST);
+  DEFINE_RESOURCE(XM_PREFIX "XmNreverseVideo" XM_POSTFIX, XmNreverseVideo,		          XM_BOOLEAN);
+  DEFINE_RESOURCE(XM_PREFIX "XmNscrollDCursor" XM_POSTFIX, XmNscrollDCursor,		          XM_ULONG);
+  DEFINE_RESOURCE(XM_PREFIX "XmNscrollHCursor" XM_POSTFIX, XmNscrollHCursor,		          XM_ULONG);
+  DEFINE_RESOURCE(XM_PREFIX "XmNscrollLCursor" XM_POSTFIX, XmNscrollLCursor,		          XM_ULONG);
+  DEFINE_RESOURCE(XM_PREFIX "XmNscrollProc" XM_POSTFIX, XmNscrollProc,			          XM_CALLBACK);
+  DEFINE_RESOURCE(XM_PREFIX "XmNscrollRCursor" XM_POSTFIX, XmNscrollRCursor,		          XM_ULONG);
+  DEFINE_RESOURCE(XM_PREFIX "XmNscrollUCursor" XM_POSTFIX, XmNscrollUCursor,		          XM_ULONG);
+  DEFINE_RESOURCE(XM_PREFIX "XmNscrollVCursor" XM_POSTFIX, XmNscrollVCursor,		          XM_ULONG);
+  DEFINE_RESOURCE(XM_PREFIX "XmNshown" XM_POSTFIX, XmNshown,				          XM_BOOLEAN);
+  DEFINE_RESOURCE(XM_PREFIX "XmNsizePolicy" XM_POSTFIX, XmNsizePolicy,			          XM_UCHAR);
+  DEFINE_RESOURCE(XM_PREFIX "XmNsmallIconX" XM_POSTFIX, XmNsmallIconX,			          XM_FLOAT);
+  DEFINE_RESOURCE(XM_PREFIX "XmNsmallIconY" XM_POSTFIX, XmNsmallIconY,			          XM_FLOAT);
+  DEFINE_RESOURCE(XM_PREFIX "XmNsourceIsExternal" XM_POSTFIX, XmNsourceIsExternal,	          XM_BOOLEAN);
+  DEFINE_RESOURCE(XM_PREFIX "XmNsourceWidget" XM_POSTFIX, XmNsourceWidget,		          XM_WIDGET);
+  DEFINE_RESOURCE(XM_PREFIX "XmNsourceWindow" XM_POSTFIX, XmNsourceWindow,		          XM_WIDGET);
+  DEFINE_RESOURCE(XM_PREFIX "XmNspace" XM_POSTFIX, XmNspace,				          XM_INT);
+  DEFINE_RESOURCE(XM_PREFIX "XmNstartTime" XM_POSTFIX, XmNstartTime,			          XM_ULONG);
+  DEFINE_RESOURCE(XM_PREFIX "XmNtabValue" XM_POSTFIX, XmNtabValue,			          XM_FLOAT);
+  DEFINE_RESOURCE(XM_PREFIX "XmNtextOptions" XM_POSTFIX, XmNtextOptions,		          XM_ULONG);
+  DEFINE_RESOURCE(XM_PREFIX "XmNtextSink" XM_POSTFIX, XmNtextSink,			          XM_ULONG);
+  DEFINE_RESOURCE(XM_PREFIX "XmNtextSource" XM_POSTFIX, XmNtextSource,			          XM_TEXT_SOURCE);
+  DEFINE_RESOURCE(XM_PREFIX "XmNtextValue" XM_POSTFIX, XmNtextValue,			          XM_ULONG);
+  DEFINE_RESOURCE(XM_PREFIX "XmNthickness" XM_POSTFIX, XmNthickness,			          XM_INT);
+  DEFINE_RESOURCE(XM_PREFIX "XmNthumb" XM_POSTFIX, XmNthumb,				          XM_ULONG);
+  DEFINE_RESOURCE(XM_PREFIX "XmNthumbProc" XM_POSTFIX, XmNthumbProc,			          XM_CALLBACK);
+  DEFINE_RESOURCE(XM_PREFIX "XmNtoPositionCallback" XM_POSTFIX, XmNtoPositionCallback,	          XM_CALLBACK);
+  DEFINE_RESOURCE(XM_PREFIX "XmNtraversalCallback" XM_POSTFIX, XmNtraversalCallback,	          XM_CALLBACK);
+  DEFINE_RESOURCE(XM_PREFIX "XmNtraversalType" XM_POSTFIX, XmNtraversalType,		          XM_UCHAR);
+  DEFINE_RESOURCE(XM_PREFIX "XmNtreeUpdateProc" XM_POSTFIX, XmNtreeUpdateProc,		          XM_CALLBACK);
+  DEFINE_RESOURCE(XM_PREFIX "XmNunselectPixmap" XM_POSTFIX, XmNunselectPixmap,		          XM_PIXMAP);
+  DEFINE_RESOURCE(XM_PREFIX "XmNupdate" XM_POSTFIX, XmNupdate,				          XM_ULONG);
+  DEFINE_RESOURCE(XM_PREFIX "XmNupdateSliderSize" XM_POSTFIX, XmNupdateSliderSize,	          XM_INT);
+  DEFINE_RESOURCE(XM_PREFIX "XmNuseBottom" XM_POSTFIX, XmNuseBottom,			          XM_BOOLEAN);
+  DEFINE_RESOURCE(XM_PREFIX "XmNuseRight" XM_POSTFIX, XmNuseRight,			          XM_BOOLEAN);
+  DEFINE_RESOURCE(XM_PREFIX "XmNuseMask" XM_POSTFIX, XmNuseMask,			          XM_PIXMAP);
+  DEFINE_RESOURCE(XM_PREFIX "XmNuseTextColor" XM_POSTFIX, XmNuseTextColor,		          XM_PIXEL);
+  DEFINE_STRING(XM_PREFIX "XmSTRING_ISO8859_1" XM_POSTFIX,       XmSTRING_ISO8859_1);
 #endif
 
   qsort((void *)xm_hash, hd_ctr, sizeof(hdata *), alphabet_compare);
@@ -23664,12 +23734,15 @@ static void define_integers(void)
   DEFINE_INTEGER(XM_PREFIX "XmSTRING_DIRECTION_R_TO_L" XM_POSTFIX,    XmSTRING_DIRECTION_R_TO_L);
   DEFINE_INTEGER(XM_PREFIX "XmSTRING_DIRECTION_DEFAULT" XM_POSTFIX,   XmSTRING_DIRECTION_DEFAULT);
   DEFINE_INTEGER(XM_PREFIX "XmSTRING_COMPONENT_UNKNOWN" XM_POSTFIX,   XmSTRING_COMPONENT_UNKNOWN);
-  DEFINE_INTEGER(XM_PREFIX "XmSTRING_COMPONENT_CHARSET" XM_POSTFIX,   XmSTRING_COMPONENT_CHARSET);
   DEFINE_INTEGER(XM_PREFIX "XmSTRING_COMPONENT_TEXT" XM_POSTFIX,      XmSTRING_COMPONENT_TEXT);
   DEFINE_INTEGER(XM_PREFIX "XmSTRING_COMPONENT_DIRECTION" XM_POSTFIX, XmSTRING_COMPONENT_DIRECTION);
   DEFINE_INTEGER(XM_PREFIX "XmSTRING_COMPONENT_SEPARATOR" XM_POSTFIX, XmSTRING_COMPONENT_SEPARATOR);
   DEFINE_INTEGER(XM_PREFIX "XmSTRING_COMPONENT_LOCALE_TEXT" XM_POSTFIX, XmSTRING_COMPONENT_LOCALE_TEXT);
   DEFINE_INTEGER(XM_PREFIX "XmSTRING_COMPONENT_END" XM_POSTFIX,	      XmSTRING_COMPONENT_END);
+#if (!XM_DISABLE_DEPRECATED)
+  DEFINE_INTEGER(XM_PREFIX "XmSTRING_COMPONENT_CHARSET" XM_POSTFIX,   XmSTRING_COMPONENT_CHARSET);
+  DEFINE_INTEGER(XM_PREFIX "XmSTRING_COMPONENT_FONTLIST_ELEMENT_TAG" XM_POSTFIX, XmSTRING_COMPONENT_FONTLIST_ELEMENT_TAG);
+#endif
 #if MOTIF_2
   DEFINE_INTEGER(XM_PREFIX "XmPAGE_FOUND" XM_POSTFIX,		      XmPAGE_FOUND);
   DEFINE_INTEGER(XM_PREFIX "XmPAGE_INVALID" XM_POSTFIX,		      XmPAGE_INVALID);
@@ -23706,7 +23779,6 @@ static void define_integers(void)
   DEFINE_INTEGER(XM_PREFIX "XmSTRING_COMPONENT_RENDITION_BEGIN" XM_POSTFIX, XmSTRING_COMPONENT_RENDITION_BEGIN);
   DEFINE_INTEGER(XM_PREFIX "XmSTRING_COMPONENT_RENDITION_END" XM_POSTFIX, XmSTRING_COMPONENT_RENDITION_END);
   DEFINE_INTEGER(XM_PREFIX "XmSTRING_COMPONENT_TAB" XM_POSTFIX,	      XmSTRING_COMPONENT_TAB);
-  DEFINE_INTEGER(XM_PREFIX "XmSTRING_COMPONENT_FONTLIST_ELEMENT_TAG" XM_POSTFIX, XmSTRING_COMPONENT_FONTLIST_ELEMENT_TAG);
   DEFINE_INTEGER(XM_PREFIX "XmSTRING_COMPONENT_TAG" XM_POSTFIX,	      XmSTRING_COMPONENT_TAG);
   DEFINE_INTEGER(XM_PREFIX "XmCHARSET_TEXT" XM_POSTFIX,		      XmCHARSET_TEXT);
   DEFINE_INTEGER(XM_PREFIX "XmMULTIBYTE_TEXT" XM_POSTFIX,	      XmMULTIBYTE_TEXT);
@@ -24380,178 +24452,6 @@ static void define_Atoms(void)
 }
 
 
-/* this is just trying to squelch irritating compiler complaints */
-static void muffle_compiler(void)
-{
-  XEN xval;
-  unsigned long val;
-  if (1) return;
-  C_TO_XEN_Substitution((Substitution)val);
-  C_TO_XEN_XAnyEvent((XAnyEvent *)val);
-  C_TO_XEN_XButtonEvent((XButtonEvent *)val);
-  C_TO_XEN_XCirculateEvent((XCirculateEvent *)val);
-  C_TO_XEN_XCirculateRequestEvent((XCirculateRequestEvent *)val);
-  C_TO_XEN_XClientMessageEvent((XClientMessageEvent *)val);
-  C_TO_XEN_XColormapEvent((XColormapEvent *)val);
-  C_TO_XEN_XConfigureEvent((XConfigureEvent *)val);
-  C_TO_XEN_XConfigureRequestEvent((XConfigureRequestEvent *)val);
-  C_TO_XEN_XContext((XContext)val);
-  C_TO_XEN_XCreateWindowEvent((XCreateWindowEvent *)val);
-  C_TO_XEN_XCrossingEvent((XCrossingEvent *)val);
-  C_TO_XEN_XDestroyWindowEvent((XDestroyWindowEvent *)val);
-  C_TO_XEN_XErrorEvent((XErrorEvent *)val);
-  C_TO_XEN_XExposeEvent((XExposeEvent *)val);
-  C_TO_XEN_XFocusChangeEvent((XFocusChangeEvent *)val);
-  C_TO_XEN_XGCValues((XGCValues *)val);
-  C_TO_XEN_XGraphicsExposeEvent((XGraphicsExposeEvent *)val);
-  C_TO_XEN_XGravityEvent((XGravityEvent *)val);
-  C_TO_XEN_XKeyEvent((XKeyEvent *)val);
-  C_TO_XEN_XKeymapEvent((XKeymapEvent *)val);
-  C_TO_XEN_XMapEvent((XMapEvent *)val);
-  C_TO_XEN_XMapRequestEvent((XMapRequestEvent *)val);
-  C_TO_XEN_XMappingEvent((XMappingEvent *)val);
-  C_TO_XEN_XMotionEvent((XMotionEvent *)val);
-  C_TO_XEN_XNoExposeEvent((XNoExposeEvent *)val);
-  C_TO_XEN_XPropertyEvent((XPropertyEvent *)val);
-  C_TO_XEN_XReparentEvent((XReparentEvent *)val);
-  C_TO_XEN_XResizeRequestEvent((XResizeRequestEvent *)val);
-  C_TO_XEN_XSelectionClearEvent((XSelectionClearEvent *)val);
-  C_TO_XEN_XSelectionEvent((XSelectionEvent *)val);
-  C_TO_XEN_XSetWindowAttributes((XSetWindowAttributes *)val);
-  C_TO_XEN_XTextItem((XTextItem *)val);
-  C_TO_XEN_XUnmapEvent((XUnmapEvent *)val);
-  C_TO_XEN_XVisibilityEvent((XVisibilityEvent *)val);
-  C_TO_XEN_XWindowChanges((XWindowChanges *)val);
-#if HAVE_MOTIF
-#if MOTIF_2
-  C_TO_XEN_XmContainerOutlineCallbackStruct((XmContainerOutlineCallbackStruct *)val);
-  C_TO_XEN_XmContainerSelectCallbackStruct((XmContainerSelectCallbackStruct *)val);
-  C_TO_XEN_XmConvertCallbackStruct((XmConvertCallbackStruct *)val);
-  C_TO_XEN_XmDestinationCallbackStruct((XmDestinationCallbackStruct *)val);
-  C_TO_XEN_XmDisplayCallbackStruct((XmDisplayCallbackStruct *)val);
-  C_TO_XEN_XmDragStartCallbackStruct((XmDragStartCallbackStruct *)val);
-  C_TO_XEN_XmNotebookPageInfo((XmNotebookPageInfo *)val);
-  C_TO_XEN_XmParseTable((XmParseTable)val);
-  C_TO_XEN_XmSpinBoxCallbackStruct((XmSpinBoxCallbackStruct *)val);
-  C_TO_XEN_XmTransferDoneCallbackStruct((XmTransferDoneCallbackStruct *)val);
-  C_TO_XEN_XmPopupHandlerCallbackStruct((XmPopupHandlerCallbackStruct *)val);
-  C_TO_XEN_XmSelectionCallbackStruct((XmSelectionCallbackStruct *)val);
-#endif
-  C_TO_XEN_XmDragDropFinishCallbackStruct((XmDragDropFinishCallbackStruct *)val);
-  C_TO_XEN_XmDragMotionCallbackStruct((XmDragMotionCallbackStruct *)val);
-  C_TO_XEN_XmDragProcCallbackStruct((XmDragProcCallbackStruct *)val);
-  C_TO_XEN_XmDropFinishCallbackStruct((XmDropFinishCallbackStruct *)val);
-  C_TO_XEN_XmDropProcCallbackStruct((XmDropProcCallbackStruct *)val);
-  C_TO_XEN_XmDropSiteEnterCallbackStruct((XmDropSiteEnterCallbackStruct *)val);
-  C_TO_XEN_XmDropSiteLeaveCallbackStruct((XmDropSiteLeaveCallbackStruct *)val);
-  C_TO_XEN_XmDropSiteVisuals((XmDropSiteVisuals)val);
-  C_TO_XEN_XmDropStartCallbackStruct((XmDropStartCallbackStruct *)val);
-  C_TO_XEN_XmOperationChangedCallbackStruct((XmOperationChangedCallbackStruct *)val);
-  C_TO_XEN_XmTextVerifyCallbackStruct((XmTextVerifyCallbackStruct *)val);
-#if HAVE_XPM
-  C_TO_XEN_XpmAttributes((XpmAttributes *)val);
-  C_TO_XEN_XpmImage((XpmImage *)val);
-#endif
-  C_TO_XEN_XtRequestId((XtRequestId)val);
-#endif
-  XEN_XAnyEvent_p(xval);
-  XEN_XAnyEvent_P(xval);
-  XEN_XButtonEvent_p(xval);
-  XEN_XCirculateEvent_p(xval);
-  XEN_XCirculateRequestEvent_p(xval);
-  XEN_XClientMessageEvent_p(xval);
-  XEN_XColormapEvent_p(xval);
-  XEN_XConfigureEvent_p(xval);
-  XEN_XConfigureRequestEvent_p(xval);
-  XEN_XCreateWindowEvent_p(xval);
-  XEN_XCrossingEvent_p(xval);
-  XEN_XDestroyWindowEvent_p(xval);
-  XEN_XErrorEvent_p(xval);
-  XEN_XExposeEvent_p(xval);
-  XEN_XFocusChangeEvent_p(xval);
-  XEN_XGraphicsExposeEvent_p(xval);
-  XEN_XGravityEvent_p(xval);
-  XEN_XKeyEvent_p(xval);
-  XEN_XKeymapEvent_p(xval);
-  XEN_XMapEvent_p(xval);
-  XEN_XMapRequestEvent_p(xval);
-  XEN_XMappingEvent_p(xval);
-  XEN_XMotionEvent_p(xval);
-  XEN_XNoExposeEvent_p(xval);
-  XEN_XPropertyEvent_p(xval);
-  XEN_XReparentEvent_p(xval);
-  XEN_XResizeRequestEvent_p(xval);
-  XEN_XSelectionClearEvent_p(xval);
-  XEN_XSelectionEvent_p(xval);
-  XEN_XSelectionRequestEvent_p(xval);
-  XEN_XSetWindowAttributes_p(xval);
-  XEN_XUnmapEvent_p(xval);
-  XEN_XVisibilityEvent_p(xval);
-  XEN_XIconSize_p(xval);
-#if HAVE_MOTIF
-  XEN_XmAnyCallbackStruct_p(xval);
-  XEN_XmArrowButtonCallbackStruct_p(xval);
-#if MOTIF_2
-  XEN_XmComboBoxCallbackStruct_p(xval);
-  XEN_XmCommandCallbackStruct_p(xval);
-  XEN_XmContainerOutlineCallbackStruct_p(xval);
-  XEN_XmContainerSelectCallbackStruct_p(xval);
-  XEN_XmConvertCallbackStruct_p(xval);
-  XEN_XmDestinationCallbackStruct_p(xval);
-  XEN_XmDragStartCallbackStruct_p(xval);
-  XEN_XmNotebookCallbackStruct_p(xval);
-  XEN_XmNotebookPageInfo_p(xval);
-  XEN_XmPopupHandlerCallbackStruct_p(xval);
-  XEN_XmTraverseObscuredCallbackStruct_p(xval);
-  XEN_XmTopLevelLeaveCallbackStruct_p(xval);
-  XEN_XmTopLevelEnterCallbackStruct_p(xval);
-#if HAVE_XP
-  XEN_XmPrintShellCallbackStruct_p(xval);
-#endif
-  XEN_XmSelectionCallbackStruct_p(xval);
-  XEN_XmSpinBoxCallbackStruct_p(xval);
-  XEN_XmTransferDoneCallbackStruct_p(xval);
-  XEN_XmDisplayCallbackStruct_p(xval);
-#endif
-  XEN_XmDragDropFinishCallbackStruct_p(xval);
-  XEN_XmDragMotionCallbackStruct_p(xval);
-  XEN_XmDragProcCallbackStruct_p(xval);
-  XEN_XmDrawingAreaCallbackStruct_p(xval);
-  XEN_XmDrawnButtonCallbackStruct_p(xval);
-  XEN_XmDropFinishCallbackStruct_p(xval);
-  XEN_XmDropProcCallbackStruct_p(xval);
-  XEN_XmDropSiteEnterCallbackStruct_p(xval);
-  XEN_XmDropSiteLeaveCallbackStruct_p(xval);
-  XEN_XmDropSiteVisuals_p(xval);
-  XEN_XmDropStartCallbackStruct_p(xval);
-  XEN_XmFileSelectionBoxCallbackStruct_p(xval);
-  XEN_XmListCallbackStruct_p(xval);
-  XEN_XmOperationChangedCallbackStruct_p(xval);
-  XEN_XmPushButtonCallbackStruct_p(xval);
-  XEN_XmRowColumnCallbackStruct_p(xval);
-  XEN_XmScaleCallbackStruct_p(xval);
-  XEN_XmScrollBarCallbackStruct_p(xval);
-  XEN_XmSelectionBoxCallbackStruct_p(xval);
-  XEN_XmTextVerifyCallbackStruct_p(xval);
-  XEN_XmToggleButtonCallbackStruct_p(xval);
-  XEN_XtActionHookId_p(xval);
-  XEN_XtTranslations_p(xval);
-#else
-  C_TO_XEN_Pixel((Pixel)val);
-#if HAVE_XPM
-  C_TO_XEN_XpmImage((XpmImage *)val);
-  C_TO_XEN_XpmAttributes((XpmAttributes *)val);
-#endif
-  C_TO_XEN_XSelectionRequestEvent((XSelectionRequestEvent *)val);
-  XEN_TO_C_KeyCode(xval);
-  XEN_Pixel_P(xval);
-  XEN_KeyCode_P(xval);
-  XEN_TO_C_Substitution(xval);
-  XEN_Substitution_P(xval);
-#endif
-}
-
-
 /* -------------------------------- initialization -------------------------------- */
 
 static int xm_already_inited = 0;
@@ -24567,7 +24467,6 @@ static int xm_already_inited = 0;
   /* perhaps nicer here to check the features list for 'xm */
   if (!xm_already_inited)
     {
-      muffle_compiler();
       define_xm_obj();
 #if HAVE_MOTIF  
       define_strings();

@@ -565,12 +565,34 @@ void set_color_scale(snd_state *ss, Float val)
   if (!(ss->graph_hook_active)) map_over_chans(ss, update_graph, NULL);
 }
 
+#if HAVE_GTK2
+static void list_color_callback(GtkTreeSelection *selection, gpointer *gp)
+{
+  GtkTreeIter iter;
+  gchar *value;
+  int size, i;
+  char **names;
+  GtkTreeModel *model;
+  snd_state *ss = (snd_state *)gp;
+  if (!(gtk_tree_selection_get_selected(selection, &model, &iter))) return;
+  gtk_tree_model_get(model, &iter, 0, &value, -1);
+  names = colormap_names();
+  for (i = 0; i < NUM_COLORMAPS; i++)
+    if (strcmp(value, names[i]) == 0)
+      {
+	in_set_color_map(ss, i);
+	map_over_chans(ss, update_graph, NULL);
+	return;
+      }
+}
+#else
 static void list_color_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
   in_set_color_map(ss, row);
   map_over_chans(ss, update_graph, NULL);
 }
+#endif
 
 void set_color_map(snd_state *ss, int val)
 {

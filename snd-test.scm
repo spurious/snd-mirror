@@ -14196,13 +14196,16 @@ EDITS: 4
 	      (|XGetPointerMapping dpy 0 3)
 	      (|XGetScreenSaver dpy)
 	      (|XMoveWindow dpy win 100 10)
+	      (|XSync dpy #f)
 	      (|XResizeWindow dpy win 400 400)
+	      (|XSync dpy #f)
 	      (|XMoveResizeWindow dpy win 120 20 500 500)
+	      (|XSync dpy #f)
 	      (let ((attr (|XGetWindowAttributes dpy win)))
 		(if (> (abs (- (|x attr) 120)) 200) (snd-display ";XMoveWindow x etc: ~A" (|x attr)))
 		(if (> (abs (- (|y attr) 20)) 200) (snd-display ";XMoveWindow y etc: ~A" (|y attr)))
-		(if (> (abs (- (|width attr) 500)) 2000) (snd-display ";XMoveWindow width etc: ~A" (|width attr)))
-		(if (> (abs (- (|height attr) 500)) 2000) (snd-display ";XMoveWindow height etc: ~A" (|height attr)))
+		(if (> (abs (- (|width attr) 500)) 20) (snd-display ";XMoveWindow width etc: ~A" (|width attr)))
+		(if (> (abs (- (|height attr) 500)) 20) (snd-display ";XMoveWindow height etc: ~A" (|height attr)))
 		(if (not (= (|border_width attr) 0)) (snd-display ";XGetWindowAttributes border_width: ~A" (|border_width attr)))
 		(if (not (= (|depth attr) 24)) (snd-display ";XGetWindowAttributes depth: ~A" (|depth attr)))
 		(if (not (= (|bit_gravity attr) 0)) (snd-display ";XGetWindowAttributes bit_gravity: ~A" (|bit_gravity attr)))
@@ -14246,6 +14249,20 @@ EDITS: 4
 		  (snd-display "XGetStandardColormap: ~A!" (|XGetStandardColormap dpy win |XA_RGB_DEFAULT_MAP)))
 	      (if (|XGetRGBColormaps dpy win |XA_RGB_DEFAULT_MAP)
 		  (snd-display "XGetRGBColormaps: ~A!" (|XGetRGBColormaps dpy win |XA_RGB_DEFAULT_MAP)))
+	      (let ((cmap (|XAllocStandardColormap)))
+		(for-each 
+		 (lambda (func name)
+		   (if (not (= (func cmap) 0)) (snd-display ";standardcolormap ~A: ~A" name (func cmap))))
+		 (list |base_pixel |visualid |red_max |red_mult |green_max |green_mult |blue_max |blue_mult)
+		 (list 'base_pixel 'visualid 'red_max 'red_mult 'green_max 'green_mult 'blue_max 'blue_mult))
+		(if (not (equal? (|colormap cmap) (list 'Colormap 0))) (snd-display ";colormap: ~A" (|colormap cmap))))
+	      (let ((icon (|XAllocIconSize)))
+		(for-each
+		 (lambda (func name)
+		   (if (not (= (func icon) 0)) (snd-display ";iconsize ~A: ~A" name (func icon))))
+		 (list |min_width |min_height |max_width |max_height |width_inc |height_inc)
+		 (list 'min_width 'min_height 'max_width 'max_height 'width_inc 'height_inc)))
+			  
 	      (let ((fs (|XCreateFontSet dpy "*-*-*-*-Normal-*-180-100-100-*-*")))
 		(if (or (not (|XFontSet? fs))
 			(= (cadr fs) 0))
@@ -14282,6 +14299,9 @@ EDITS: 4
 		(if (or (not (> (length cmd) 0))
 			(not (string=? (car cmd) "./snd")))
 		  (snd-display ";XGetCommand: ~A" cmd)))
+	      (|XSetCommand dpy win (list "hiho" "away") 2)
+	      (if (not (equal? (|XGetCommand dpy win) (list "hiho" "away"))) 
+		  (snd-display ";XSetCommand: ~A" (|XGetCommand dpy win)))
 	      (let ((wmp (map (lambda (w) (|XGetAtomName dpy w)) (|XGetWMProtocols dpy win))))
 		(if (not (equal? wmp (list "_MOTIF_WM_MESSAGES" "WM_DELETE_WINDOW")))
 		    (snd-display ";XGetWMProtocols: ~A" wmp)))
@@ -14290,6 +14310,13 @@ EDITS: 4
 	      (if (not (equal? (|XListPixmapFormats dpy) '((1 1 32) (4 8 32) (8 8 32) (15 16 32) (16 16 32) (24 32 32) (32 32 32))))
 		  (snd-display ";XListPixmapFormats: ~A" (|XListPixmapFormats dpy)))
 
+	      (let ((cs (|XQueryBestCursor dpy win 10 10)))
+		(if (not (equal? cs (list 1 32 32))) (snd-display ";XQueryBestCursor: ~A" cs)))
+	      (let ((pt (|XQueryPointer dpy win)))
+		(if (not (|Window? (cadr pt))) (snd-display ";XQueryPointer: ~A" pt)))
+	      (|XRaiseWindow dpy win)
+	      (|XRotateBuffers dpy 1)
+	      (|XSetWindowBorderWidth dpy win 10)
 	      (let ((hints (|XGetWMHints dpy win)))
 		(if (or (not hints) (not (|XWMHints? hints))) (snd-display ";XGetWMHints?"))
 		(if (not (= (|flags hints) 7)) (snd-display ";flags wmhints: ~A" (|flags hints)))
@@ -15013,6 +15040,14 @@ EDITS: 4
 		   (depth (cadr (|XtGetValues grf (list |XmNdepth 0))))
 		   (pix (|XCreatePixmap dpy win 10 10 depth))
 		   (rotpix (|XCreatePixmap dpy win 10 10 depth)))
+	      (if (not (string=? (|XmGetAtomName dpy |XA_STRING) "STRING")) (snd-display ";XmGetAtomName: ~A" (|XmGetAtomName dpy |XA_STRING)))
+	      (if (not (|XmTargetsAreCompatible dpy (list |XA_STRING) 1 (list |XA_STRING) 1)) (snd-display ";XmTargetsAreCompatible"))
+	      (|XmUpdateDisplay grf)
+	      (let ((lines (|XmWidgetGetBaselines (list-ref (main-widgets) 4))))
+		(if (not lines) (snd-display ";XmWidgetGetBaselines?"))
+		(if (< (length lines) 4) (snd-display ";no listener text?? ~A" lines)))
+	      (let ((r (|XmWidgetGetDisplayRect (list-ref (sound-widgets) 8))))
+		(if (not (|XRectangle? r)) (snd-display ";XmWidgetGetDisplayRect: ~A" r)))
 	      (|XDrawImageString dpy (list 'Window (cadr pix)) gc 0 10 "hiho" 4)
 	      (let* ((data (|XtCalloc (* 11 11 depth) 1))
 		     (before (|XCreateImage dpy vis depth |XYPixmap 0 data 10 10 8 0)))
@@ -15045,6 +15080,9 @@ EDITS: 4
 	      (let ((coords (|XTranslateCoordinates dpy (|XtWindow shl) win 10 10)))
 		(if (not (car coords))
 		    (snd-display ";XTranslateCoordinates: ~A" coords)))
+	      (let ((coords (|XtTranslateCoords shl 10 10)))
+		(if (not (number? (car coords)))
+		    (snd-display ";XtTranslateCoords: ~A" coords)))
 	      (if (not (|XmIsVendorShell shl)) (snd-display ";XmIsVendorShell?"))
 	      (if (|XmIsPrimitive shl) (snd-display ";XmIsPrimitive?"))
 	      (if (|XmIsManager shl) (snd-display ";XmIsManager?"))
@@ -15081,6 +15119,248 @@ EDITS: 4
 
 	    (close-sound)
 	    
+	    (let* ((frm (add-main-pane "hi" |xmFormWidgetClass (list |XmNpaneMinimum 120)))
+		   (browsed 0)
+		   (lst (|XtCreateManagedWidget "lst" |xmListWidgetClass frm
+						(list |XmNleftAttachment      |XmATTACH_FORM
+						      |XmNrightAttachment     |XmATTACH_FORM
+						      |XmNtopAttachment       |XmATTACH_FORM
+						      |XmNbottomAttachment    |XmATTACH_FORM
+						      |XmNautomaticSelection   |XmNO_AUTO_SELECT
+						      |XmNdoubleClickInterval  100
+						      |XmNitemCount            3
+						      |XmNitems                (list (|XmStringCreate "one" |XmFONTLIST_DEFAULT_TAG)
+										     (|XmStringCreate "two" |XmFONTLIST_DEFAULT_TAG)
+										     (|XmStringCreate "three" |XmFONTLIST_DEFAULT_TAG))
+						      |XmNlistMarginHeight     4
+						      |XmNlistMarginWidth      1
+						      |XmNlistSizePolicy       |XmVARIABLE
+						      |XmNlistSpacing          2
+						      |XmNmatchBehavior        |XmQUICK_NAVIGATE
+						      |XmNprimaryOwnership     |XmOWN_NEVER
+						      |XmNscrollBarDisplayPolicy |XmAS_NEEDED
+						      |XmNselectColor          (snd-pixel (basic-color))
+						      |XmNselectionMode        |XmNORMAL_MODE
+						      |XmNselectionPolicy      |XmBROWSE_SELECT))))
+	      (|XtAddCallback lst |XmNbrowseSelectionCallback (lambda (w c i) (set! browsed 123)))
+	      (let ((vals (|XtVaGetValues lst
+					  (list |XmNautomaticSelection 0 |XmNdoubleClickInterval 0 |XmNitemCount 0 |XmNitems 0 |XmNlistMarginHeight 0
+						 |XmNlistMarginWidth 0 |XmNlistSizePolicy 0 |XmNlistSpacing 0 |XmNmatchBehavior 0
+						  |XmNprimaryOwnership 0  |XmNscrollBarDisplayPolicy 0 |XmNselectColor 0 |XmNselectionMode 0
+						   |XmNselectionPolicy 0 |XmNhorizontalScrollBar 0 |XmNselectedItemCount 0 |XmNtopItemPosition 0))))
+		(if (not (= (list-ref vals 1) |XmNO_AUTO_SELECT)) (snd-display ";XmNautomaticSelection: ~A" (list-ref vals 1)))
+		(if (not (= (list-ref vals 3) 100)) (snd-display ";XmNdoubleClickInterval: ~A" (list-ref vals 3)))
+		(if (not (= (list-ref vals 5) 3)) (snd-display ";XmNitemCount: ~A" (list-ref vals 5)))
+		(if (not (|XmString? (car (list-ref vals 7)))) (snd-display ";XmNitems: ~A" (list-ref vals 7)))
+		(if (not (= (list-ref vals 9) 4)) (snd-display ";XmNlistMarginHeight: ~A" (list-ref vals 9)))
+		(if (not (= (list-ref vals 11) 1)) (snd-display ";XmNlistMarginWidth: ~A" (list-ref vals 11)))
+		(if (not (= (list-ref vals 13) |XmVARIABLE)) (snd-display ";XmNlistSizePolicy: ~A" (list-ref vals 13)))
+		(if (not (= (list-ref vals 15) 2)) (snd-display ";XmNlistSpacing: ~A" (list-ref vals 15)))
+		(if (not (= (list-ref vals 17) |XmQUICK_NAVIGATE)) (snd-display ";XmNmatchBehavior: ~A" (list-ref vals 17)))
+		(if (not (= (list-ref vals 19) |XmOWN_NEVER)) (snd-display ";XmNprimaryOwnership : ~A" (list-ref vals 19)))
+		(if (not (= (list-ref vals 21) |XmAS_NEEDED)) (snd-display ";XmNscrollBarDisplayPolicy: ~A" (list-ref vals 21)))
+		(if (not (|Pixel? (list-ref vals 23))) (snd-display ";XmNselectColor: ~A" (list-ref vals 23)))
+		(if (not (= (list-ref vals 25) |XmNORMAL_MODE)) (snd-display ";XmNselectionMode: ~A" (list-ref vals 25)))
+		(if (not (= (list-ref vals 27) |XmBROWSE_SELECT)) (snd-display ";XmNselectionPolicy: ~A" (list-ref vals 27)))
+		(if (not (|Widget? (list-ref vals 29))) (snd-display ";XmNhorizontalScrollBar: ~A" (list-ref vals 29)))
+		(if (not (= (list-ref vals 31) 0)) (snd-display ";XmNselectedItemCount : ~A" (list-ref vals 31)))
+		(if (not (= (list-ref vals 33) 1)) (snd-display ";XmNtopItemPosition: ~A" (list-ref vals 33)))
+		
+		(|XmListAddItem lst (|XmStringCreate "four" |XmFONTLIST_DEFAULT_TAG) 0) ; 0 -> last position
+		(set! vals (|XtGetValues lst (list |XmNitemCount 0 |XmNitems 0)))
+		(if (not (= (list-ref vals 1) 4)) (snd-display ";XmAddItem len: ~A" (list-ref vals 1)))
+		(if (not (string=? (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 3) |XmFONTLIST_DEFAULT_TAG)) "four"))
+		    (snd-display "added item: ~A" (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 3) |XmFONTLIST_DEFAULT_TAG))))
+		(|XmListAddItems lst (list (|XmStringCreateLocalized "five") (|XmStringCreateLocalized "six")) 2 0)
+		(set! vals (|XtGetValues lst (list |XmNitemCount 0 |XmNitems 0)))
+		(if (not (= (list-ref vals 1) 6)) (snd-display ";XmAddItems len: ~A" (list-ref vals 1)))
+		(if (not (string=? (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 5) |XmFONTLIST_DEFAULT_TAG)) "six"))
+		    (snd-display "added items: ~A" (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 5) |XmFONTLIST_DEFAULT_TAG))))
+		
+		(|XmListDeletePos lst 1)
+		(set! vals (|XtGetValues lst (list |XmNitemCount 0 |XmNitems 0)))
+		(if (not (= (list-ref vals 1) 5)) (snd-display ";XmListDeletePos len: ~A" (list-ref vals 1)))
+		(if (not (string=? (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 0) |XmFONTLIST_DEFAULT_TAG)) "two"))
+		    (snd-display "deleted item 1: ~A" (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 0) |XmFONTLIST_DEFAULT_TAG))))
+		(|XmListDeletePositions lst (list 2 4))
+		(set! vals (|XtGetValues lst (list |XmNitemCount 0 |XmNitems 0)))
+		(if (not (= (list-ref vals 1) 3)) (snd-display ";XmListDeletePositions len: ~A" (list-ref vals 1)))
+		(if (not (string=? (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 1) |XmFONTLIST_DEFAULT_TAG)) "four"))
+		    (snd-display "deleted item 2: ~A" (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 1) |XmFONTLIST_DEFAULT_TAG))))
+		
+		(|XmListAddItemUnselected lst (|XmStringCreate "seven" |XmFONTLIST_DEFAULT_TAG) 0) ; 0 -> last position
+		(set! vals (|XtGetValues lst (list |XmNitemCount 0 |XmNitems 0)))
+		(if (not (= (list-ref vals 1) 4)) (snd-display ";XmListAddItemUnselected len: ~A" (list-ref vals 1)))
+		(if (not (string=? (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 3) |XmFONTLIST_DEFAULT_TAG)) "seven"))
+		    (snd-display "added item unselected: ~A" (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 3) |XmFONTLIST_DEFAULT_TAG))))
+		(|XmListAddItemsUnselected lst (list (|XmStringCreateLocalized "eight") (|XmStringCreateLocalized "nine")) 2 0)
+		(set! vals (|XtGetValues lst (list |XmNitemCount 0 |XmNitems 0)))
+		(if (not (= (list-ref vals 1) 6)) (snd-display ";XmListAddItemsUnselected len: ~A" (list-ref vals 1)))
+		(if (not (string=? (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 5) |XmFONTLIST_DEFAULT_TAG)) "nine"))
+		    (snd-display "added items unselected: ~A" (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 5) |XmFONTLIST_DEFAULT_TAG))))
+		
+		(|XmListDeleteAllItems lst)
+		(set! vals (|XtGetValues lst (list |XmNitemCount 0 |XmNitems 0)))
+		(if (not (= (list-ref vals 1) 0)) (snd-display ";XmListDeleteAllItems len: ~A" (list-ref vals 1)))
+		(if (not (null? (list-ref vals 3)))
+		    (snd-display "deleted all items: ~A" (list-ref vals 3)))
+		
+		(let ((item1 (|XmStringCreate "one" |XmFONTLIST_DEFAULT_TAG))
+		      (item2 (|XmStringCreate "two" |XmFONTLIST_DEFAULT_TAG))
+		      (item3 (|XmStringCreate "three" |XmFONTLIST_DEFAULT_TAG))
+		      (item4 (|XmStringCreate "four" |XmFONTLIST_DEFAULT_TAG))
+		      (item5 (|XmStringCreate "five" |XmFONTLIST_DEFAULT_TAG)))
+		  (|XtVaSetValues lst 
+				  (list |XmNitemCount 5
+					 |XmNitems (list item1 item2 item3 item4 item5))) 
+		  (set! vals (|XtGetValues lst (list |XmNitemCount 0 |XmNitems 0)))
+		  (if (not (= (list-ref vals 1) 5)) (snd-display ";Xt set items len: ~A" (list-ref vals 1)))
+		  (if (not (string=? (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 0) |XmFONTLIST_DEFAULT_TAG)) "one"))
+		      (snd-display "set items: ~A" (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 0) |XmFONTLIST_DEFAULT_TAG))))
+		  
+		  (|XmListSelectItem lst item3 #t)
+		  (if (not (= browsed 123)) (snd-display ";XmListSelectItem callback: ~A" browsed))
+		  (if (|XmListPosSelected lst 1) (snd-display ";XmList selected pos 1?"))
+		  (if (not (|XmListPosSelected lst 3)) (snd-display ";XmList didn't select pos 3?"))
+		  (set! vals (|XtVaGetValues lst (list |XmNselectedItemCount 0 |XmNselectedItems 0)))
+		  (if (not (= (list-ref vals 1) 1)) (snd-display ";selected count: ~A" (list-ref vals 1)))
+		  (set! vals (|XmListGetSelectedPos lst))
+		  (if (not (= (length vals) 1)) (snd-display ";XmListGetSelectedPos: ~A" vals))
+		  (if (not (= (car vals) 3)) (snd-display ";XmListGetSelectedPos: ~A" vals))
+		  (set! browsed 0)
+		  (|XmListSelectPos lst 1 #f)
+		  (if (not (= browsed 0)) (snd-display ";XmListSelectPos callback: ~A" browsed))
+		  (if (not (|XmListPosSelected lst 1)) (snd-display ";XmList select pos?"))
+		  (if (not (= (|XmListItemPos lst item3) 3)) (snd-display ";XmListItemPos: ~A" (|XmListItemPos lst item3)))
+		  (if (not (= (car (|XmListGetMatchPos lst item3)) 3)) (snd-display ";XmListGetMatchPos: ~A" (|XmListGetMatchPos lst item3)))
+		  (if (not (= (|XmListItemExists lst item3))) (snd-display ";XmListItemExists?"))
+		  
+		  (if (not (= (|XmListYToPos lst 40) 2)) (snd-display ";XmListYToPos: ~A" (|XmListYToPos lst 40)))
+		  (let ((box (|XmListPosToBounds lst 2)))
+		    (if (not (= (cadr box) 3))
+			(snd-display "XmListPosToBounds: ~A" box)))
+		  (|XmListDeselectPos lst 1)
+		  (if (|XmListPosSelected lst 1) (snd-display ";XmList deselected pos?"))
+		  (|XmListSelectItem lst item3 #t)
+		  (|XmListDeselectAllItems lst)
+		  (if (|XmListPosSelected lst 3) (snd-display ";XmList deselect all pos?"))
+		  (|XmListSelectItem lst item3 #f)
+		  (|XmListDeselectItem lst item3)
+		  (if (|XmListPosSelected lst 3) (snd-display ";XmList deselect item?"))
+		  
+		  (|XmListDeleteItem lst item2)
+		  (set! vals (|XtGetValues lst (list |XmNitemCount 0 |XmNitems 0)))
+		  (if (not (= (list-ref vals 1) 4)) (snd-display ";XmDeleteItem len: ~A" (list-ref vals 1)))
+		  (if (not (string=? (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 1) |XmFONTLIST_DEFAULT_TAG)) "three"))
+		      (snd-display "delete item: ~A" (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 1) |XmFONTLIST_DEFAULT_TAG))))
+		  (|XmListDeleteItems lst (list item1 item4))
+		  (set! vals (|XtGetValues lst (list |XmNitemCount 0 |XmNitems 0)))
+		  (if (not (= (list-ref vals 1) 2)) (snd-display ";XmDeleteItems len: ~A" (list-ref vals 1)))
+		  (if (not (string=? (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 0) |XmFONTLIST_DEFAULT_TAG)) "three"))
+		      (snd-display "delete items: ~A" (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 1) |XmFONTLIST_DEFAULT_TAG))))
+		  (|XmListDeleteAllItems lst)
+		  (|XtVaSetValues lst 
+				  (list |XmNitemCount 5
+					 |XmNitems (list item1 item2 item3 item4 item5))) 
+		  
+		  (let ((item6 (|XmStringCreate "six" |XmFONTLIST_DEFAULT_TAG)))
+		    (|XmListReplacePositions lst (list 2) (list item6) 1)
+		    (set! vals (|XtGetValues lst (list |XmNitemCount 0 |XmNitems 0)))
+		    (if (not (string=? (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 1) |XmFONTLIST_DEFAULT_TAG)) "six"))
+			(snd-display "replace pos: ~A ~A" 
+				     (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 1) |XmFONTLIST_DEFAULT_TAG))
+				     (map (lambda (n) 
+					    (|XmStringGetLtoR n |XmFONTLIST_DEFAULT_TAG))
+					  (list-ref vals 3))))
+		    (|XmListReplaceItemsUnselected lst (list item6 item3) 2 (list item2 item6))
+		    (set! vals (|XtGetValues lst (list |XmNitemCount 0 |XmNitems 0)))
+		    (if (not (string=? (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 2) |XmFONTLIST_DEFAULT_TAG)) "six"))
+			(snd-display "replace items unselected: ~A ~A" 
+				     (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 1) |XmFONTLIST_DEFAULT_TAG))
+				     (map (lambda (n) 
+					    (|XmStringGetLtoR n |XmFONTLIST_DEFAULT_TAG))
+					  (list-ref vals 3))))
+		    (|XmListReplaceItemsPosUnselected lst (list item6 item3) 2 1)
+		    (set! vals (|XtGetValues lst (list |XmNitemCount 0 |XmNitems 0)))
+		    (if (not (string=? (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 0) |XmFONTLIST_DEFAULT_TAG)) "six"))
+			(snd-display "replace items pos: ~A ~A" 
+				     (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 0) |XmFONTLIST_DEFAULT_TAG))
+				     (map (lambda (n) 
+					    (|XmStringGetLtoR n |XmFONTLIST_DEFAULT_TAG))
+					  (list-ref vals 3))))
+		    (|XmListReplaceItemsPos lst (list item4) 1 1)
+		    (set! vals (|XtGetValues lst (list |XmNitemCount 0 |XmNitems 0)))
+		    (if (not (string=? (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 0) |XmFONTLIST_DEFAULT_TAG)) "four"))
+			(snd-display "replace items pos: ~A ~A" 
+				     (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 0) |XmFONTLIST_DEFAULT_TAG))
+				     (map (lambda (n) 
+					    (|XmStringGetLtoR n |XmFONTLIST_DEFAULT_TAG))
+					  (list-ref vals 3))))
+		    (|XmListReplaceItems lst (list item4 item3) 2 (list item2 item6))
+		    (set! vals (|XtGetValues lst (list |XmNitemCount 0 |XmNitems 0)))
+		    (if (not (string=? (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 0) |XmFONTLIST_DEFAULT_TAG)) "two"))
+			(snd-display "replace items: ~A ~A" 
+				     (cadr (|XmStringGetLtoR (list-ref (list-ref vals 3) 0) |XmFONTLIST_DEFAULT_TAG))
+				     (map (lambda (n) 
+					    (|XmStringGetLtoR n |XmFONTLIST_DEFAULT_TAG))
+					  (list-ref vals 3))))
+		    (|XmListSetPos lst 1)
+		    (if (not (|XmListSetKbdItemPos lst 1)) (snd-display ";XmListSetKbdItemPos?"))
+		    (|XmListGetKbdItemPos lst)
+		    (|XmListUpdateSelectedList lst)
+		    (|XmListSetPos lst 1)
+		    (|XmListSetHorizPos lst 0)
+		    (|XmListSetBottomPos lst 0)
+		    (|XmListSetBottomItem lst item5)
+		    (|XmListSetAddMode lst #f)
+		    (|XmListSetItem lst item6)))
+		(|XtUnmanageChild frm)))
+
+	    (|XmSetColorCalculation #f)
+	    (let* ((scr (|XmGetXmScreen (|XDefaultScreenOfDisplay (|XtDisplay (cadr (main-widgets))))))
+		   (old-h (cadr (|XtVaGetValues scr (list |XmNhorizontalFontUnit 0))))
+		   (old-v (cadr (|XtVaGetValues scr (list |XmNverticalFontUnit 0)))))
+	      (|XmSetFontUnits dpy 8 10)
+	      (if (or (not (= (cadr (|XtVaGetValues scr (list |XmNhorizontalFontUnit 0))) 8))
+		      (not (= (cadr (|XtVaGetValues scr (list |XmNverticalFontUnit 0))) 10)))
+		  (snd-display ";XmSetFontUnits: ~A" (|XtVaGetValues scr (list |XmNhorizontalFontUnit 0 |XmNverticalFontUnit 0))))
+	      (let ((vals (|XtVaGetValues scr 
+					  (list |XmNbitmapConversionModel 0 |XmNdarkThreshold 0 |XmNfont 0 |XmNunpostBehavior 0))))
+		(if (not (= (list-ref vals 1) |XmMATCH_DEPTH)) (snd-display ";XmNbitmapConversionModel: ~A" (list-ref vals 1)))
+		(if (not (= (list-ref vals 3) 0)) (snd-display ";XmNdarkThreshold: ~A" (list-ref vals 3)))
+		(if (not (|XFontStruct? (list-ref vals 5))) (snd-display ";XmNfont: ~A" (list-ref vals 5)))
+		(if (not (= (list-ref vals 7) |XmUNPOST_AND_REPLAY)) (snd-display ";XmNunpostBehavior: ~A" (list-ref vals 7)))
+		))
+
+	    (let* ((dp (|XmGetXmDisplay (|XtDisplay (cadr (main-widgets)))))
+		   (vals (|XtVaGetValues dp
+					 (list |XmNdragInitiatorProtocolStyle 0 |XmNenableThinThickness 0))))
+	      (if (not (= (list-ref vals 1) |XmDRAG_PREFER_RECEIVER)) (snd-display ";XmNdragInitiatorProtocolStyle: ~A" (list-ref vals 1)))
+	      (if (not (list-ref vals 3)) (snd-display ";XmNenableThinThickness?"))
+	      (|XtAddCallback dp |XmNdragStartCallback (lambda (w c i) #f)))
+
+	    (if (not (string=? (|XmCvtXmStringToCT (|XmStringCreateLocalized "hiho")) "hiho"))
+		(snd-display "XmCvtXmStringToCT: ~A" (|XmCvtXmStringToCT (|XmStringCreateLocalized "hiho"))))
+	    (let ((val (|XmConvertStringToUnits (|XDefaultScreenOfDisplay dpy) "3.14 in" |XmHORIZONTAL |XmINCHES)))
+	      (if (not (= val 3)) (snd-display ";XmConvertStringToUnits in->in ~A" val)))
+	    (let ((val (|XmConvertStringToUnits (|XDefaultScreenOfDisplay dpy) "3.14 in" |XmHORIZONTAL |XmPOINTS)))
+	      (if (not (= val 225)) (snd-display ";XmConvertStringToUnits in->pts ~A" val)))
+	    (let ((val (|XmConvertStringToUnits (|XDefaultScreenOfDisplay dpy) "3.14 in" |XmHORIZONTAL |XmCENTIMETERS)))
+	      (if (not (= val 7)) (snd-display ";XmConvertStringToUnits in->cm ~A" val)))
+	    (let ((val (|XmConvertUnits (cadr (main-widgets)) |XmHORIZONTAL |XmCENTIMETERS 7 |XmMILLIMETERS)))
+	      (if (not (= val 70)) (snd-display ";XmConvertUnits cm->mm ~A" val)))
+	    (let ((val (|XmConvertUnits (cadr (main-widgets)) |XmHORIZONTAL |XmCENTIMETERS 7 |XmPIXELS)))
+	      (if (not (= val 278)) (snd-display ";XmConvertUnits cm->pix ~A" val)))
+	    (|XmVaCreateSimpleRadioBox (caddr (main-widgets)) "hiho" 0 (lambda (w c i) #f) '())
+	    (|XmVaCreateSimpleCheckBox (caddr (main-widgets)) "hiho" (lambda (w c i) #f) '())
+	    (|XmVaCreateSimplePulldownMenu (caddr (main-widgets)) "hiho" 0 (lambda (w c i) #f) '())
+	    (|XmVaCreateSimplePopupMenu (caddr (main-widgets)) "hiho" (lambda (w c i) #f) '())
+	    (|XmVaCreateSimpleMenuBar (caddr (main-widgets)) "hiho" '())
+	    (|XmVaCreateSimpleOptionMenu (caddr (main-widgets)) "hiho" 
+					 (|XmStringCreateLocalized "away") 
+					 (|XKeycodeToKeysym dpy |XK_b 0)
+					 0  (lambda (w c i) #f) '())
+
 	    (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))
 	    (zync)
 	    (make-hidden-controls-dialog)
@@ -15317,7 +15597,7 @@ EDITS: 4
 		  |XmContainerPaste |XmContainerCopyLink |XmContainerPasteLink |XmCreateSpinBox
 		  |XmSpinBoxValidatePosition |XmCreateSimpleSpinBox |XmSimpleSpinBoxAddItem |XmSimpleSpinBoxDeletePos
 		  |XmSimpleSpinBoxSetItem |XmDropSiteRegistered |XmTextFieldCopyLink |XmTextFieldPasteLink
-		  |XmTextGetCenterline |XmToggleButtonGadgetSetValue |XmGetIconFileName |XmCreateIconGadget
+		  |XmTextGetCenterline |XmToggleButtonGadgetSetValue |XmCreateIconGadget
 		  |XmCreateIconHeader |XmObjectAtPoint |XmConvertStringToUnits |XmCreateGrabShell
 		  |XmToggleButtonSetValue |XmTextPasteLink |XmTextCopyLink |XmScaleSetTicks |XmInternAtom |XmGetAtomName
 		  |XmCreatePanedWindow |XmCreateBulletinBoard |XmCreateBulletinBoardDialog |XmCreateCascadeButtonGadget
@@ -15328,7 +15608,7 @@ EDITS: 4
 		  |XmCreateCommandDialog |XmMenuPosition |XmCreateRowColumn |XmCreateWorkArea |XmCreateRadioBox
 		  |XmCreateOptionMenu |XmOptionLabelGadget |XmOptionButtonGadget |XmCreateMenuBar |XmCreatePopupMenu
 		  |XmCreatePulldownMenu |XmGetPostedFromWidget |XmGetTearOffControl |XmAddToPostFromList
-		  |XmRemoveFromPostFromList |XmScaleSetValue |XmScaleGetValue |XmCreateScale |XmClipboardBeginCopy
+		  |XmRemoveFromPostFromList |XmScaleSetValue |XmScaleGetValue |XmCreateScale
 		  |XmClipboardStartCopy |XmClipboardCopy |XmClipboardEndCopy |XmClipboardCancelCopy
 		  |XmClipboardWithdrawFormat |XmClipboardCopyByName |XmClipboardUndoCopy |XmClipboardLock
 		  |XmClipboardUnlock |XmClipboardStartRetrieve |XmClipboardEndRetrieve |XmClipboardRetrieve
@@ -15373,18 +15653,17 @@ EDITS: 4
 		  |XmMainWindowSetAreas |XmMainWindowSep1 |XmMainWindowSep2 |XmMainWindowSep3 |XmCreateMainWindow
 		  |XmInstallImage |XmUninstallImage |XmGetPixmap |XmGetPixmapByDepth |XmDestroyPixmap |XmUpdateDisplay
 		  |XmWidgetGetBaselines |XmRegisterSegmentEncoding |XmMapSegmentEncoding
-		  |XmCvtCTToXmString |XmCvtXmStringToCT |XmConvertUnits |XmCvtToHorizontalPixels |XmCvtToVerticalPixels
-		  |XmCvtFromHorizontalPixels |XmCvtFromVerticalPixels |XmSetFontUnits |XmSetFontUnit |XmSetMenuCursor
+		  |XmCvtCTToXmString |XmCvtXmStringToCT |XmConvertUnits |XmSetFontUnits |XmSetFontUnit |XmSetMenuCursor
 		  |XmGetMenuCursor |XmCreateSimpleMenuBar |XmCreateSimplePopupMenu |XmCreateSimplePulldownMenu
 		  |XmCreateSimpleOptionMenu |XmCreateSimpleRadioBox |XmCreateSimpleCheckBox |XmVaCreateSimpleMenuBar
 		  |XmVaCreateSimplePopupMenu |XmVaCreateSimplePulldownMenu |XmVaCreateSimpleOptionMenu
 		  |XmVaCreateSimpleRadioBox |XmVaCreateSimpleCheckBox |XmTrackingEvent |XmTrackingLocate
 		  |XmSetColorCalculation |XmGetColorCalculation |XmGetColors |XmChangeColor |XmStringCreate
 		  |XmStringCreateSimple |XmStringCreateLocalized |XmStringDirectionCreate |XmStringSeparatorCreate
-		  |XmStringSegmentCreate |XmStringLtoRCreate |XmStringCreateLtoR |XmStringInitContext
+		  |XmStringSegmentCreate |XmStringCreateLtoR |XmStringInitContext
 		  |XmStringFreeContext |XmStringGetNextComponent |XmStringPeekNextComponent |XmStringGetNextSegment
 		  |XmStringGetLtoR |XmFontListEntryCreate |XmFontListEntryCreate_r |XmFontListCreate_r
-		  |XmStringCreateFontList_r |XmStringConcatAndFree |XmStringIsVoid |XmCvtXmStringToByteStream
+		  |XmStringConcatAndFree |XmStringIsVoid |XmCvtXmStringToByteStream
 		  |XmCvtByteStreamToXmString |XmStringByteStreamLength |XmStringPeekNextTriple |XmStringGetNextTriple
 		  |XmStringComponentCreate |XmStringUnparse |XmStringParseText |XmStringToXmStringTable
 		  |XmStringTableToXmString |XmStringTableUnparse |XmStringTableParseStringArray
@@ -15397,7 +15676,7 @@ EDITS: 4
 		  |XmRenderTableGetTags |XmRenderTableFree |XmRenderTableCopy |XmRenderTableRemoveRenditions
 		  |XmRenderTableAddRenditions |XmFontListEntryFree |XmFontListEntryGetFont |XmFontListEntryGetTag
 		  |XmFontListAppendEntry |XmFontListNextEntry |XmFontListRemoveEntry |XmFontListEntryLoad
-		  |XmFontListCreate |XmStringCreateFontList |XmFontListFree |XmFontListAdd |XmFontListCopy
+		  |XmFontListCreate |XmFontListFree |XmFontListAdd |XmFontListCopy
 		  |XmFontListInitFontContext |XmFontListGetNextFont |XmFontListFreeFontContext |XmStringConcat
 		  |XmStringNConcat |XmStringCopy |XmStringNCopy |XmStringByteCompare |XmStringCompare |XmStringLength
 		  |XmStringEmpty |XmStringHasSubstring |XmStringFree |XmStringBaseline |XmStringWidth |XmStringHeight
@@ -16938,3 +17217,4 @@ EDITS: 4
 ;;; (define handle (dlopen "/home/bil/snd-4/gsl-ex.so"))
 ;;; (dlinit handle "init_gsl_j0")
 ;;; (fneq (j0 1.0) 0.765)
+

@@ -39,6 +39,30 @@
   XEN_NARGIFY_6(gxm_XpPutDocumentData_w, gxm_XpPutDocumentData)
   XEN_NARGIFY_5(gxm_XpGetDocumentData_w, gxm_XpGetDocumentData)
 #endif
+#if (!XM_DISABLE_DEPRECATED)
+  XEN_NARGIFY_1(gxm_XtWarning_w, gxm_XtWarning)
+  XEN_NARGIFY_2(gxm_XtAppWarning_w, gxm_XtAppWarning)
+  XEN_NARGIFY_1(gxm_XtSetWarningMsgHandler_w, gxm_XtSetWarningMsgHandler)
+  XEN_NARGIFY_6(gxm_XtInitialize_w, gxm_XtInitialize)
+  XEN_NARGIFY_1(gxm_XtSetWarningHandler_w, gxm_XtSetWarningHandler)
+  XEN_NARGIFY_1(gxm_XtError_w, gxm_XtError)
+  XEN_NARGIFY_6(gxm_XtErrorMsg_w, gxm_XtErrorMsg)
+  XEN_NARGIFY_6(gxm_XtWarningMsg_w, gxm_XtWarningMsg)
+  XEN_NARGIFY_1(gxm_XtSetErrorMsgHandler_w, gxm_XtSetErrorMsgHandler)
+  XEN_NARGIFY_1(gxm_XtSetErrorHandler_w, gxm_XtSetErrorHandler)
+  XEN_ARGIFY_4(gxm_XtCreateApplicationShell_w, gxm_XtCreateApplicationShell)
+  XEN_NARGIFY_1(gxm_XtSetSelectionTimeout_w, gxm_XtSetSelectionTimeout)
+  XEN_NARGIFY_0(gxm_XtGetSelectionTimeout_w, gxm_XtGetSelectionTimeout)
+  XEN_NARGIFY_1(gxm_XtAddActions_w, gxm_XtAddActions)
+  XEN_ARGIFY_4(gxm_XtAddInput_w, gxm_XtAddInput)
+  XEN_ARGIFY_2(gxm_XtAddWorkProc_w, gxm_XtAddWorkProc)
+  XEN_ARGIFY_3(gxm_XtAddTimeOut_w, gxm_XtAddTimeOut)
+  XEN_NARGIFY_0(gxm_XtMainLoop_w, gxm_XtMainLoop)
+  XEN_NARGIFY_1(gxm_XtProcessEvent_w, gxm_XtProcessEvent)
+  XEN_NARGIFY_0(gxm_XtPending_w, gxm_XtPending)
+  XEN_NARGIFY_0(gxm_XtNextEvent_w, gxm_XtNextEvent)
+  XEN_NARGIFY_0(gxm_XtPeekEvent_w, gxm_XtPeekEvent)
+#endif
 #if HAVE_MOTIF
   XEN_NARGIFY_3(gxm_XtSetArg_w, gxm_XtSetArg)
   XEN_NARGIFY_2(gxm_XtManageChildren_w, gxm_XtManageChildren)
@@ -47,7 +71,6 @@
   XEN_NARGIFY_1(gxm_XtUnmanageChild_w, gxm_XtUnmanageChild)
   XEN_NARGIFY_1(gxm_XtDispatchEvent_w, gxm_XtDispatchEvent)
   XEN_NARGIFY_2(gxm_XtCallAcceptFocus_w, gxm_XtCallAcceptFocus)
-  XEN_NARGIFY_0(gxm_XtPeekEvent_w, gxm_XtPeekEvent)
   XEN_NARGIFY_1(gxm_XtAppPeekEvent_w, gxm_XtAppPeekEvent)
 #if MOTIF_2
   XEN_NARGIFY_2(gxm_XtIsSubclass_w, gxm_XtIsSubclass)
@@ -69,7 +92,6 @@
   XEN_NARGIFY_2(gxm_XtInstallAllAccelerators_w, gxm_XtInstallAllAccelerators)
   XEN_NARGIFY_1(gxm_XtUninstallTranslations_w, gxm_XtUninstallTranslations)
   XEN_NARGIFY_2(gxm_XtAppAddActions_w, gxm_XtAppAddActions)
-  XEN_NARGIFY_1(gxm_XtAddActions_w, gxm_XtAddActions)
   XEN_ARGIFY_3(gxm_XtAppAddActionHook_w, gxm_XtAppAddActionHook)
   XEN_NARGIFY_1(gxm_XtRemoveActionHook_w, gxm_XtRemoveActionHook)
   XEN_NARGIFY_1(gxm_XtGetActionList_w, gxm_XtGetActionList)
@@ -93,24 +115,18 @@
   XEN_NARGIFY_1(gxm_XtBuildEventMask_w, gxm_XtBuildEventMask)
   XEN_NARGIFY_3(gxm_XtAddGrab_w, gxm_XtAddGrab)
   XEN_NARGIFY_1(gxm_XtRemoveGrab_w, gxm_XtRemoveGrab)
-  XEN_NARGIFY_1(gxm_XtProcessEvent_w, gxm_XtProcessEvent)
   XEN_NARGIFY_2(gxm_XtAppProcessEvent_w, gxm_XtAppProcessEvent)
-  XEN_NARGIFY_0(gxm_XtMainLoop_w, gxm_XtMainLoop)
   XEN_NARGIFY_1(gxm_XtAppMainLoop_w, gxm_XtAppMainLoop)
   XEN_NARGIFY_2(gxm_XtAddExposureToRegion_w, gxm_XtAddExposureToRegion)
   XEN_NARGIFY_2(gxm_XtSetKeyboardFocus_w, gxm_XtSetKeyboardFocus)
   XEN_NARGIFY_1(gxm_XtGetKeyboardFocusWidget_w, gxm_XtGetKeyboardFocusWidget)
   XEN_NARGIFY_1(gxm_XtLastEventProcessed_w, gxm_XtLastEventProcessed)
   XEN_NARGIFY_1(gxm_XtLastTimestampProcessed_w, gxm_XtLastTimestampProcessed)
-  XEN_ARGIFY_3(gxm_XtAddTimeOut_w, gxm_XtAddTimeOut)
   XEN_ARGIFY_4(gxm_XtAppAddTimeOut_w, gxm_XtAppAddTimeOut)
   XEN_NARGIFY_1(gxm_XtRemoveTimeOut_w, gxm_XtRemoveTimeOut)
-  XEN_ARGIFY_4(gxm_XtAddInput_w, gxm_XtAddInput)
   XEN_ARGIFY_5(gxm_XtAppAddInput_w, gxm_XtAppAddInput)
   XEN_NARGIFY_1(gxm_XtRemoveInput_w, gxm_XtRemoveInput)
-  XEN_NARGIFY_0(gxm_XtNextEvent_w, gxm_XtNextEvent)
   XEN_NARGIFY_1(gxm_XtAppNextEvent_w, gxm_XtAppNextEvent)
-  XEN_NARGIFY_0(gxm_XtPending_w, gxm_XtPending)
   XEN_NARGIFY_1(gxm_XtAppPending_w, gxm_XtAppPending)
   XEN_NARGIFY_1(gxm_XtRealizeWidget_w, gxm_XtRealizeWidget)
   XEN_NARGIFY_1(gxm_XtUnrealizeWidget_w, gxm_XtUnrealizeWidget)
@@ -152,7 +168,6 @@
   XEN_ARGIFY_5(gxm_XtCreateManagedWidget_w, gxm_XtCreateManagedWidget)
   XEN_NARGIFY_4(gxm_XtVaCreateWidget_w, gxm_XtVaCreateWidget)
   XEN_NARGIFY_4(gxm_XtVaCreateManagedWidget_w, gxm_XtVaCreateManagedWidget)
-  XEN_ARGIFY_4(gxm_XtCreateApplicationShell_w, gxm_XtCreateApplicationShell)
   XEN_ARGIFY_6(gxm_XtAppCreateShell_w, gxm_XtAppCreateShell)
   XEN_NARGIFY_5(gxm_XtVaAppCreateShell_w, gxm_XtVaAppCreateShell)
   XEN_NARGIFY_0(gxm_XtToolkitInitialize_w, gxm_XtToolkitInitialize)
@@ -162,7 +177,6 @@
   XEN_NARGIFY_8(gxm_XtVaOpenApplication_w, gxm_XtVaOpenApplication)
   XEN_NARGIFY_8(gxm_XtAppInitialize_w, gxm_XtAppInitialize)
   XEN_NARGIFY_7(gxm_XtVaAppInitialize_w, gxm_XtVaAppInitialize)
-  XEN_NARGIFY_6(gxm_XtInitialize_w, gxm_XtInitialize)
   XEN_NARGIFY_8(gxm_XtOpenDisplay_w, gxm_XtOpenDisplay)
   XEN_NARGIFY_0(gxm_XtCreateApplicationContext_w, gxm_XtCreateApplicationContext)
   XEN_NARGIFY_1(gxm_XtDestroyApplicationContext_w, gxm_XtDestroyApplicationContext)
@@ -175,26 +189,16 @@
   XEN_ARGIFY_3(gxm_XtGetValues_w, gxm_XtGetValues)
   XEN_NARGIFY_2(gxm_XtVaGetValues_w, gxm_XtVaGetValues)
   XEN_NARGIFY_2(gxm_XtAppSetErrorMsgHandler_w, gxm_XtAppSetErrorMsgHandler)
-  XEN_NARGIFY_1(gxm_XtSetErrorMsgHandler_w, gxm_XtSetErrorMsgHandler)
   XEN_NARGIFY_2(gxm_XtAppSetWarningMsgHandler_w, gxm_XtAppSetWarningMsgHandler)
-  XEN_NARGIFY_1(gxm_XtSetWarningMsgHandler_w, gxm_XtSetWarningMsgHandler)
   XEN_NARGIFY_7(gxm_XtAppErrorMsg_w, gxm_XtAppErrorMsg)
-  XEN_NARGIFY_6(gxm_XtErrorMsg_w, gxm_XtErrorMsg)
   XEN_NARGIFY_7(gxm_XtAppWarningMsg_w, gxm_XtAppWarningMsg)
-  XEN_NARGIFY_6(gxm_XtWarningMsg_w, gxm_XtWarningMsg)
   XEN_NARGIFY_2(gxm_XtAppSetErrorHandler_w, gxm_XtAppSetErrorHandler)
-  XEN_NARGIFY_1(gxm_XtSetErrorHandler_w, gxm_XtSetErrorHandler)
   XEN_NARGIFY_2(gxm_XtAppSetWarningHandler_w, gxm_XtAppSetWarningHandler)
-  XEN_NARGIFY_1(gxm_XtSetWarningHandler_w, gxm_XtSetWarningHandler)
   XEN_NARGIFY_2(gxm_XtAppError_w, gxm_XtAppError)
-  XEN_NARGIFY_1(gxm_XtError_w, gxm_XtError)
-  XEN_NARGIFY_2(gxm_XtAppWarning_w, gxm_XtAppWarning)
-  XEN_NARGIFY_1(gxm_XtWarning_w, gxm_XtWarning)
   XEN_NARGIFY_1(gxm_XtMalloc_w, gxm_XtMalloc)
   XEN_NARGIFY_2(gxm_XtCalloc_w, gxm_XtCalloc)
   XEN_NARGIFY_2(gxm_XtRealloc_w, gxm_XtRealloc)
   XEN_NARGIFY_1(gxm_XtFree_w, gxm_XtFree)
-  XEN_ARGIFY_2(gxm_XtAddWorkProc_w, gxm_XtAddWorkProc)
   XEN_ARGIFY_3(gxm_XtAppAddWorkProc_w, gxm_XtAppAddWorkProc)
   XEN_NARGIFY_1(gxm_XtRemoveWorkProc_w, gxm_XtRemoveWorkProc)
   XEN_NARGIFY_3(gxm_XtGetGC_w, gxm_XtGetGC)
@@ -208,9 +212,7 @@
   XEN_NARGIFY_6(gxm_XtGetSelectionValue_w, gxm_XtGetSelectionValue)
   XEN_NARGIFY_7(gxm_XtGetSelectionValues_w, gxm_XtGetSelectionValues)
   XEN_NARGIFY_2(gxm_XtAppSetSelectionTimeout_w, gxm_XtAppSetSelectionTimeout)
-  XEN_NARGIFY_1(gxm_XtSetSelectionTimeout_w, gxm_XtSetSelectionTimeout)
   XEN_NARGIFY_1(gxm_XtAppGetSelectionTimeout_w, gxm_XtAppGetSelectionTimeout)
-  XEN_NARGIFY_0(gxm_XtGetSelectionTimeout_w, gxm_XtGetSelectionTimeout)
   XEN_NARGIFY_3(gxm_XtGetSelectionRequest_w, gxm_XtGetSelectionRequest)
   XEN_NARGIFY_6(gxm_XtGetSelectionValueIncremental_w, gxm_XtGetSelectionValueIncremental)
   XEN_NARGIFY_7(gxm_XtGetSelectionValuesIncremental_w, gxm_XtGetSelectionValuesIncremental)
@@ -602,6 +604,7 @@
   XEN_NARGIFY_3(gxm_XPolygonRegion_w, gxm_XPolygonRegion)
   XEN_NARGIFY_5(gxm_XRectInRegion_w, gxm_XRectInRegion)
   XEN_NARGIFY_4(gxm_XSaveContext_w, gxm_XSaveContext)
+  XEN_NARGIFY_0(gxm_XUniqueContext_w, gxm_XUniqueContext)
   XEN_NARGIFY_5(gxm_XSetRGBColormaps_w, gxm_XSetRGBColormaps)
   XEN_NARGIFY_3(gxm_XSetWMHints_w, gxm_XSetWMHints)
   XEN_NARGIFY_3(gxm_XSetRegion_w, gxm_XSetRegion)
@@ -724,7 +727,6 @@
   XEN_NARGIFY_1(gxm_XmTextFieldPasteLink_w, gxm_XmTextFieldPasteLink)
   XEN_NARGIFY_1(gxm_XmTextGetCenterline_w, gxm_XmTextGetCenterline)
   XEN_NARGIFY_3(gxm_XmToggleButtonGadgetSetValue_w, gxm_XmToggleButtonGadgetSetValue)
-  XEN_NARGIFY_5(gxm_XmGetIconFileName_w, gxm_XmGetIconFileName)
   XEN_ARGIFY_4(gxm_XmCreateIconGadget_w, gxm_XmCreateIconGadget)
   XEN_ARGIFY_4(gxm_XmCreateIconHeader_w, gxm_XmCreateIconHeader)
   XEN_NARGIFY_3(gxm_XmObjectAtPoint_w, gxm_XmObjectAtPoint)
@@ -776,7 +778,6 @@
   XEN_NARGIFY_2(gxm_XmScaleSetValue_w, gxm_XmScaleSetValue)
   XEN_NARGIFY_1(gxm_XmScaleGetValue_w, gxm_XmScaleGetValue)
   XEN_ARGIFY_4(gxm_XmCreateScale_w, gxm_XmCreateScale)
-  XEN_NARGIFY_5(gxm_XmClipboardBeginCopy_w, gxm_XmClipboardBeginCopy)
   XEN_NARGIFY_6(gxm_XmClipboardStartCopy_w, gxm_XmClipboardStartCopy)
   XEN_NARGIFY_7(gxm_XmClipboardCopy_w, gxm_XmClipboardCopy)
   XEN_NARGIFY_3(gxm_XmClipboardEndCopy_w, gxm_XmClipboardEndCopy)
@@ -799,7 +800,6 @@
   XEN_NARGIFY_1(gxm_XmScrollBarGetValues_w, gxm_XmScrollBarGetValues)
   XEN_NARGIFY_6(gxm_XmScrollBarSetValues_w, gxm_XmScrollBarSetValues)
   XEN_ARGIFY_4(gxm_XmCreateDialogShell_w, gxm_XmCreateDialogShell)
-  XEN_NARGIFY_4(gxm_XmScrolledWindowSetAreas_w, gxm_XmScrolledWindowSetAreas)
   XEN_ARGIFY_4(gxm_XmCreateScrolledWindow_w, gxm_XmCreateScrolledWindow)
   XEN_NARGIFY_4(gxm_XmScrollVisible_w, gxm_XmScrollVisible)
   XEN_NARGIFY_2(gxm_XmGetDragContext_w, gxm_XmGetDragContext)
@@ -943,17 +943,12 @@
   XEN_NARGIFY_2(gxm_XmListYToPos_w, gxm_XmListYToPos)
   XEN_NARGIFY_2(gxm_XmListPosToBounds_w, gxm_XmListPosToBounds)
   XEN_NARGIFY_2(gxm_XmListGetMatchPos_w, gxm_XmListGetMatchPos)
-  XEN_NARGIFY_1(gxm_XmListGetSelectedPos_w, gxm_XmListGetSelectedPos)
   XEN_NARGIFY_2(gxm_XmListSetHorizPos_w, gxm_XmListSetHorizPos)
   XEN_NARGIFY_1(gxm_XmListUpdateSelectedList_w, gxm_XmListUpdateSelectedList)
   XEN_NARGIFY_2(gxm_XmListPosSelected_w, gxm_XmListPosSelected)
   XEN_ARGIFY_4(gxm_XmCreateList_w, gxm_XmCreateList)
   XEN_ARGIFY_4(gxm_XmCreateScrolledList_w, gxm_XmCreateScrolledList)
   XEN_NARGIFY_3(gxm_XmTranslateKey_w, gxm_XmTranslateKey)
-  XEN_NARGIFY_6(gxm_XmMainWindowSetAreas_w, gxm_XmMainWindowSetAreas)
-  XEN_NARGIFY_1(gxm_XmMainWindowSep1_w, gxm_XmMainWindowSep1)
-  XEN_NARGIFY_1(gxm_XmMainWindowSep2_w, gxm_XmMainWindowSep2)
-  XEN_NARGIFY_1(gxm_XmMainWindowSep3_w, gxm_XmMainWindowSep3)
   XEN_ARGIFY_4(gxm_XmCreateMainWindow_w, gxm_XmCreateMainWindow)
   XEN_NARGIFY_2(gxm_XmInstallImage_w, gxm_XmInstallImage)
   XEN_NARGIFY_1(gxm_XmUninstallImage_w, gxm_XmUninstallImage)
@@ -967,14 +962,6 @@
   XEN_NARGIFY_1(gxm_XmCvtCTToXmString_w, gxm_XmCvtCTToXmString)
   XEN_NARGIFY_1(gxm_XmCvtXmStringToCT_w, gxm_XmCvtXmStringToCT)
   XEN_NARGIFY_5(gxm_XmConvertUnits_w, gxm_XmConvertUnits)
-  XEN_NARGIFY_3(gxm_XmCvtToHorizontalPixels_w, gxm_XmCvtToHorizontalPixels)
-  XEN_NARGIFY_3(gxm_XmCvtToVerticalPixels_w, gxm_XmCvtToVerticalPixels)
-  XEN_NARGIFY_3(gxm_XmCvtFromHorizontalPixels_w, gxm_XmCvtFromHorizontalPixels)
-  XEN_NARGIFY_3(gxm_XmCvtFromVerticalPixels_w, gxm_XmCvtFromVerticalPixels)
-  XEN_NARGIFY_3(gxm_XmSetFontUnits_w, gxm_XmSetFontUnits)
-  XEN_NARGIFY_2(gxm_XmSetFontUnit_w, gxm_XmSetFontUnit)
-  XEN_NARGIFY_2(gxm_XmSetMenuCursor_w, gxm_XmSetMenuCursor)
-  XEN_NARGIFY_1(gxm_XmGetMenuCursor_w, gxm_XmGetMenuCursor)
   XEN_ARGIFY_4(gxm_XmCreateSimpleMenuBar_w, gxm_XmCreateSimpleMenuBar)
   XEN_ARGIFY_4(gxm_XmCreateSimplePopupMenu_w, gxm_XmCreateSimplePopupMenu)
   XEN_ARGIFY_4(gxm_XmCreateSimplePulldownMenu_w, gxm_XmCreateSimplePulldownMenu)
@@ -988,30 +975,17 @@
   XEN_NARGIFY_5(gxm_XmVaCreateSimpleRadioBox_w, gxm_XmVaCreateSimpleRadioBox)
   XEN_NARGIFY_4(gxm_XmVaCreateSimpleCheckBox_w, gxm_XmVaCreateSimpleCheckBox)
   XEN_NARGIFY_3(gxm_XmTrackingEvent_w, gxm_XmTrackingEvent)
-  XEN_NARGIFY_3(gxm_XmTrackingLocate_w, gxm_XmTrackingLocate)
   XEN_NARGIFY_1(gxm_XmSetColorCalculation_w, gxm_XmSetColorCalculation)
   XEN_NARGIFY_0(gxm_XmGetColorCalculation_w, gxm_XmGetColorCalculation)
   XEN_NARGIFY_3(gxm_XmGetColors_w, gxm_XmGetColors)
   XEN_NARGIFY_2(gxm_XmChangeColor_w, gxm_XmChangeColor)
   XEN_NARGIFY_2(gxm_XmStringCreate_w, gxm_XmStringCreate)
-  XEN_NARGIFY_1(gxm_XmStringCreateSimple_w, gxm_XmStringCreateSimple)
   XEN_NARGIFY_1(gxm_XmStringCreateLocalized_w, gxm_XmStringCreateLocalized)
   XEN_NARGIFY_1(gxm_XmStringDirectionCreate_w, gxm_XmStringDirectionCreate)
   XEN_NARGIFY_0(gxm_XmStringSeparatorCreate_w, gxm_XmStringSeparatorCreate)
-  XEN_NARGIFY_4(gxm_XmStringSegmentCreate_w, gxm_XmStringSegmentCreate)
-  XEN_NARGIFY_2(gxm_XmStringLtoRCreate_w, gxm_XmStringLtoRCreate)
-  XEN_NARGIFY_2(gxm_XmStringCreateLtoR_w, gxm_XmStringCreateLtoR)
   XEN_NARGIFY_1(gxm_XmStringInitContext_w, gxm_XmStringInitContext)
   XEN_NARGIFY_1(gxm_XmStringFreeContext_w, gxm_XmStringFreeContext)
-  XEN_NARGIFY_1(gxm_XmStringGetNextComponent_w, gxm_XmStringGetNextComponent)
-  XEN_NARGIFY_1(gxm_XmStringPeekNextComponent_w, gxm_XmStringPeekNextComponent)
-  XEN_NARGIFY_1(gxm_XmStringGetNextSegment_w, gxm_XmStringGetNextSegment)
-  XEN_NARGIFY_2(gxm_XmStringGetLtoR_w, gxm_XmStringGetLtoR)
-  XEN_NARGIFY_3(gxm_XmFontListEntryCreate_w, gxm_XmFontListEntryCreate)
 #if MOTIF_2
-  XEN_NARGIFY_4(gxm_XmFontListEntryCreate_r_w, gxm_XmFontListEntryCreate_r)
-  XEN_NARGIFY_3(gxm_XmFontListCreate_r_w, gxm_XmFontListCreate_r)
-  XEN_NARGIFY_3(gxm_XmStringCreateFontList_r_w, gxm_XmStringCreateFontList_r)
   XEN_NARGIFY_2(gxm_XmStringConcatAndFree_w, gxm_XmStringConcatAndFree)
   XEN_NARGIFY_1(gxm_XmStringIsVoid_w, gxm_XmStringIsVoid)
   XEN_NARGIFY_1(gxm_XmCvtXmStringToByteStream_w, gxm_XmCvtXmStringToByteStream)
@@ -1060,28 +1034,9 @@
   XEN_NARGIFY_3(gxm_XmRenderTableRemoveRenditions_w, gxm_XmRenderTableRemoveRenditions)
   XEN_NARGIFY_4(gxm_XmRenderTableAddRenditions_w, gxm_XmRenderTableAddRenditions)
 #endif
-  XEN_NARGIFY_1(gxm_XmFontListEntryFree_w, gxm_XmFontListEntryFree)
-  XEN_NARGIFY_2(gxm_XmFontListEntryGetFont_w, gxm_XmFontListEntryGetFont)
-  XEN_NARGIFY_1(gxm_XmFontListEntryGetTag_w, gxm_XmFontListEntryGetTag)
-  XEN_NARGIFY_2(gxm_XmFontListAppendEntry_w, gxm_XmFontListAppendEntry)
-  XEN_NARGIFY_1(gxm_XmFontListNextEntry_w, gxm_XmFontListNextEntry)
-  XEN_NARGIFY_2(gxm_XmFontListRemoveEntry_w, gxm_XmFontListRemoveEntry)
-  XEN_NARGIFY_4(gxm_XmFontListEntryLoad_w, gxm_XmFontListEntryLoad)
-  XEN_NARGIFY_2(gxm_XmFontListCreate_w, gxm_XmFontListCreate)
-  XEN_NARGIFY_2(gxm_XmStringCreateFontList_w, gxm_XmStringCreateFontList)
-  XEN_NARGIFY_1(gxm_XmFontListFree_w, gxm_XmFontListFree)
-  XEN_NARGIFY_3(gxm_XmFontListAdd_w, gxm_XmFontListAdd)
-  XEN_NARGIFY_1(gxm_XmFontListCopy_w, gxm_XmFontListCopy)
-  XEN_NARGIFY_1(gxm_XmFontListInitFontContext_w, gxm_XmFontListInitFontContext)
-  XEN_NARGIFY_1(gxm_XmFontListGetNextFont_w, gxm_XmFontListGetNextFont)
-  XEN_NARGIFY_1(gxm_XmFontListFreeFontContext_w, gxm_XmFontListFreeFontContext)
   XEN_NARGIFY_2(gxm_XmStringConcat_w, gxm_XmStringConcat)
-  XEN_NARGIFY_3(gxm_XmStringNConcat_w, gxm_XmStringNConcat)
   XEN_NARGIFY_1(gxm_XmStringCopy_w, gxm_XmStringCopy)
-  XEN_NARGIFY_2(gxm_XmStringNCopy_w, gxm_XmStringNCopy)
-  XEN_NARGIFY_2(gxm_XmStringByteCompare_w, gxm_XmStringByteCompare)
   XEN_NARGIFY_2(gxm_XmStringCompare_w, gxm_XmStringCompare)
-  XEN_NARGIFY_1(gxm_XmStringLength_w, gxm_XmStringLength)
   XEN_NARGIFY_1(gxm_XmStringEmpty_w, gxm_XmStringEmpty)
   XEN_NARGIFY_2(gxm_XmStringHasSubstring_w, gxm_XmStringHasSubstring)
   XEN_NARGIFY_1(gxm_XmStringFree_w, gxm_XmStringFree)
@@ -1099,8 +1054,6 @@
   XEN_NARGIFY_1(gxm_XmGetTabGroup_w, gxm_XmGetTabGroup)
   XEN_NARGIFY_1(gxm_XmGetFocusWidget_w, gxm_XmGetFocusWidget)
   XEN_NARGIFY_2(gxm_XmProcessTraversal_w, gxm_XmProcessTraversal)
-  XEN_NARGIFY_1(gxm_XmAddTabGroup_w, gxm_XmAddTabGroup)
-  XEN_NARGIFY_1(gxm_XmRemoveTabGroup_w, gxm_XmRemoveTabGroup)
   XEN_ARGIFY_4(gxm_XmCreateMenuShell_w, gxm_XmCreateMenuShell)
 
   XEN_NARGIFY_1(gxm_XmIsMessageBox_w, gxm_XmIsMessageBox)
@@ -1156,6 +1109,55 @@
   XEN_NARGIFY_1(gxm_XmIsMainWindow_w, gxm_XmIsMainWindow)
   XEN_NARGIFY_1(gxm_XmIsManager_w, gxm_XmIsManager)
   XEN_NARGIFY_1(gxm_XmIsMenuShell_w, gxm_XmIsMenuShell)
+
+#if (!XM_DISABLE_DEPRECATED)
+  XEN_NARGIFY_1(gxm_XmStringLength_w, gxm_XmStringLength)
+  XEN_NARGIFY_2(gxm_XmStringByteCompare_w, gxm_XmStringByteCompare)
+  XEN_NARGIFY_4(gxm_XmScrolledWindowSetAreas_w, gxm_XmScrolledWindowSetAreas)
+  XEN_NARGIFY_4(gxm_XmFontListEntryCreate_r_w, gxm_XmFontListEntryCreate_r)
+  XEN_NARGIFY_3(gxm_XmFontListCreate_r_w, gxm_XmFontListCreate_r)
+  XEN_NARGIFY_1(gxm_XmFontListEntryFree_w, gxm_XmFontListEntryFree)
+  XEN_NARGIFY_2(gxm_XmFontListEntryGetFont_w, gxm_XmFontListEntryGetFont)
+  XEN_NARGIFY_1(gxm_XmFontListEntryGetTag_w, gxm_XmFontListEntryGetTag)
+  XEN_NARGIFY_2(gxm_XmFontListAppendEntry_w, gxm_XmFontListAppendEntry)
+  XEN_NARGIFY_1(gxm_XmFontListNextEntry_w, gxm_XmFontListNextEntry)
+  XEN_NARGIFY_2(gxm_XmFontListRemoveEntry_w, gxm_XmFontListRemoveEntry)
+  XEN_NARGIFY_4(gxm_XmFontListEntryLoad_w, gxm_XmFontListEntryLoad)
+  XEN_NARGIFY_2(gxm_XmFontListCreate_w, gxm_XmFontListCreate)
+  XEN_NARGIFY_1(gxm_XmFontListFree_w, gxm_XmFontListFree)
+  XEN_NARGIFY_3(gxm_XmFontListAdd_w, gxm_XmFontListAdd)
+  XEN_NARGIFY_1(gxm_XmFontListCopy_w, gxm_XmFontListCopy)
+  XEN_NARGIFY_1(gxm_XmFontListInitFontContext_w, gxm_XmFontListInitFontContext)
+  XEN_NARGIFY_1(gxm_XmFontListGetNextFont_w, gxm_XmFontListGetNextFont)
+  XEN_NARGIFY_1(gxm_XmFontListFreeFontContext_w, gxm_XmFontListFreeFontContext)
+  XEN_NARGIFY_1(gxm_XmStringGetNextComponent_w, gxm_XmStringGetNextComponent)
+  XEN_NARGIFY_1(gxm_XmStringPeekNextComponent_w, gxm_XmStringPeekNextComponent)
+  XEN_NARGIFY_1(gxm_XmStringGetNextSegment_w, gxm_XmStringGetNextSegment)
+  XEN_NARGIFY_2(gxm_XmStringGetLtoR_w, gxm_XmStringGetLtoR)
+  XEN_NARGIFY_3(gxm_XmFontListEntryCreate_w, gxm_XmFontListEntryCreate)
+  XEN_NARGIFY_1(gxm_XmStringCreateSimple_w, gxm_XmStringCreateSimple)
+  XEN_NARGIFY_4(gxm_XmStringSegmentCreate_w, gxm_XmStringSegmentCreate)
+  XEN_NARGIFY_2(gxm_XmStringCreateLtoR_w, gxm_XmStringCreateLtoR)
+  XEN_NARGIFY_1(gxm_XmListGetSelectedPos_w, gxm_XmListGetSelectedPos)
+  XEN_NARGIFY_2(gxm_XmStringNCopy_w, gxm_XmStringNCopy)
+  XEN_NARGIFY_3(gxm_XmStringNConcat_w, gxm_XmStringNConcat)
+  XEN_NARGIFY_6(gxm_XmMainWindowSetAreas_w, gxm_XmMainWindowSetAreas)
+  XEN_NARGIFY_1(gxm_XmMainWindowSep1_w, gxm_XmMainWindowSep1)
+  XEN_NARGIFY_1(gxm_XmMainWindowSep2_w, gxm_XmMainWindowSep2)
+  XEN_NARGIFY_1(gxm_XmMainWindowSep3_w, gxm_XmMainWindowSep3)
+  XEN_NARGIFY_3(gxm_XmSetFontUnits_w, gxm_XmSetFontUnits)
+  XEN_NARGIFY_2(gxm_XmSetFontUnit_w, gxm_XmSetFontUnit)
+  XEN_NARGIFY_2(gxm_XmSetMenuCursor_w, gxm_XmSetMenuCursor)
+  XEN_NARGIFY_1(gxm_XmGetMenuCursor_w, gxm_XmGetMenuCursor)
+  XEN_NARGIFY_3(gxm_XmTrackingLocate_w, gxm_XmTrackingLocate)
+  XEN_NARGIFY_1(gxm_XmAddTabGroup_w, gxm_XmAddTabGroup)
+  XEN_NARGIFY_1(gxm_XmRemoveTabGroup_w, gxm_XmRemoveTabGroup)
+
+  XEN_NARGIFY_1(XEN_XmFontList_p_w, XEN_XmFontList_p)
+  XEN_NARGIFY_1(XEN_XmFontContext_p_w, XEN_XmFontContext_p)
+  XEN_NARGIFY_1(XEN_XmFontListEntry_p_w, XEN_XmFontListEntry_p)
+#endif
+
 #endif
 
 #if HAVE_XPM
@@ -1175,20 +1177,6 @@
   XEN_NARGIFY_5(gxm_XSubImage_w, gxm_XSubImage)
   XEN_NARGIFY_2(gxm_XAddPixel_w, gxm_XAddPixel)
 
-
-  /*  ADD: XtAppContext? XtRequestId? XtWorkProcId? XtInputId? XtIntervalId? Screen? XEvent? XRectangle? XArc?
-      ADD: XPoint? XSegment? XColor? XmTab? Atom? Colormap? Depth? Display? Drawable? Font? GC? KeySym? Pixel? Pixmap? Region?
-      ADD: Time? Visual? Window? XFontProp? XFontStruct? XGCValues? XImage? XVisualInfo? XWMHints? XWindowAttributes? XWindowChanges?
-      ADD: KeyCode? XContext? Substitution? XmString? XmToggleButton? XmDrawingArea?
-      ADD: XmPushButton? XmTextField? XmFileSelectionBox? XmText? XmFrame? XmLabel? XmList? XmArrowButton? XmScrollBar? XmCommand?
-      ADD: XmScale? XmRowColumn? XmNotebook? XmPrintShell? XmComboBox? XmContainer? XmIconHeader? XmGrabShell? XmPanedWindow? XmScrolledWindow?
-      ADD: XmCascadeButton? XmForm? XmBulletinBoard? XmScreen? XmDialogShell? XmDisplay? XmSelectionBox? XmDragContext? XmDragIconObjectClass?
-      ADD: XmSeparator? XmDropSiteManager? XmDropTransfer? XmVendorShell? XmMainWindow? XmMessageBox? XmManager? XmMenuShell? XmIconGadget?
-      ADD: XmLabelGadget? XmPushButtonGadget? XmSeparatorGadget? XmArrowButtonGadget? XmCascadeButtonGadget? XmToggleButtonGadget? XmDrawnButton?
-      ADD: XmPrimitive? XmTabList? XmParseMapping? XmFontList? XmFontListEntry? XmTextSource? XmStringContext?
-      ADD: XStandardColormap? WidgetClass? Widget? XTextItem? XCharStruct? XmParseTable? XmFontContext? XFontSet?
-      ADD: XpmAttributes? XpmImage? XmRendition? XmRenderTable? XModifierKeymap? XPContext?
-  */
 #if HAVE_MOTIF
   XEN_NARGIFY_1(gxm_Pixel_w, gxm_Pixel)
   XEN_NARGIFY_1(gxm_GC_w, gxm_GC)
@@ -1252,9 +1240,6 @@
   XEN_NARGIFY_1(XEN_XmTabList_p_w, XEN_XmTabList_p)
   XEN_NARGIFY_1(XEN_XmParseMapping_p_w, XEN_XmParseMapping_p)
 #endif
-  XEN_NARGIFY_1(XEN_XmFontList_p_w, XEN_XmFontList_p)
-  XEN_NARGIFY_1(XEN_XmFontContext_p_w, XEN_XmFontContext_p)
-  XEN_NARGIFY_1(XEN_XmFontListEntry_p_w, XEN_XmFontListEntry_p)
   XEN_NARGIFY_1(XEN_XmTextSource_p_w, XEN_XmTextSource_p)
 #endif
 #if HAVE_XPM
@@ -1317,7 +1302,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtUnmanageChild" XM_POSTFIX, gxm_XtUnmanageChild_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtDispatchEvent" XM_POSTFIX, gxm_XtDispatchEvent_w, 1, 0, 0, H_XtDispatchEvent);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCallAcceptFocus" XM_POSTFIX, gxm_XtCallAcceptFocus_w, 2, 0, 0, H_XtCallAcceptFocus);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtPeekEvent" XM_POSTFIX, gxm_XtPeekEvent_w, 0, 0, 0, H_XtPeekEvent);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppPeekEvent" XM_POSTFIX, gxm_XtAppPeekEvent_w, 1, 0, 0, H_XtAppPeekEvent);
 #if MOTIF_2
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtIsSubclass" XM_POSTFIX, gxm_XtIsSubclass_w, 2, 0, 0, H_XtIsSubclass);
@@ -1339,7 +1323,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtInstallAllAccelerators" XM_POSTFIX, gxm_XtInstallAllAccelerators_w, 2, 0, 0, H_XtInstallAllAccelerators);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtUninstallTranslations" XM_POSTFIX, gxm_XtUninstallTranslations_w, 1, 0, 0, H_XtUninstallTranslations);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppAddActions" XM_POSTFIX, gxm_XtAppAddActions_w, 2, 0, 0, H_XtAppAddActions);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAddActions" XM_POSTFIX, gxm_XtAddActions_w, 1, 0, 0, H_XtAddActions);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppAddActionHook" XM_POSTFIX, gxm_XtAppAddActionHook_w, 2, 1, 0, H_XtAppAddActionHook);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtRemoveActionHook" XM_POSTFIX, gxm_XtRemoveActionHook_w, 1, 0, 0, H_XtRemoveActionHook);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetActionList" XM_POSTFIX, gxm_XtGetActionList_w, 1, 0, 0, H_XtGetActionList);
@@ -1363,24 +1346,18 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtBuildEventMask" XM_POSTFIX, gxm_XtBuildEventMask_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAddGrab" XM_POSTFIX, gxm_XtAddGrab_w, 3, 0, 0, H_XtAddGrab);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtRemoveGrab" XM_POSTFIX, gxm_XtRemoveGrab_w, 1, 0, 0, H_XtRemoveGrab);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtProcessEvent" XM_POSTFIX, gxm_XtProcessEvent_w, 1, 0, 0, H_XtProcessEvent);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppProcessEvent" XM_POSTFIX, gxm_XtAppProcessEvent_w, 2, 0, 0, H_XtAppProcessEvent);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtMainLoop" XM_POSTFIX, gxm_XtMainLoop_w, 0, 0, 0, H_XtMainLoop);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppMainLoop" XM_POSTFIX, gxm_XtAppMainLoop_w, 1, 0, 0, H_XtAppMainLoop);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAddExposureToRegion" XM_POSTFIX, gxm_XtAddExposureToRegion_w, 2, 0, 0, H_XtAddExposureToRegion);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSetKeyboardFocus" XM_POSTFIX, gxm_XtSetKeyboardFocus_w, 2, 0, 0, H_XtSetKeyboardFocus);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetKeyboardFocusWidget" XM_POSTFIX, gxm_XtGetKeyboardFocusWidget_w, 1, 0, 0, H_XtGetKeyboardFocusWidget);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtLastEventProcessed" XM_POSTFIX, gxm_XtLastEventProcessed_w, 1, 0, 0, H_XtLastEventProcessed);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtLastTimestampProcessed" XM_POSTFIX, gxm_XtLastTimestampProcessed_w, 1, 0, 0, H_XtLastTimestampProcessed);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAddTimeOut" XM_POSTFIX, gxm_XtAddTimeOut_w, 2, 1, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppAddTimeOut" XM_POSTFIX, gxm_XtAppAddTimeOut_w, 3, 1, 0, H_XtAppAddTimeOut);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtRemoveTimeOut" XM_POSTFIX, gxm_XtRemoveTimeOut_w, 1, 0, 0, H_XtRemoveTimeOut);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAddInput" XM_POSTFIX, gxm_XtAddInput_w, 3, 1, 0, H_XtAddInput);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppAddInput" XM_POSTFIX, gxm_XtAppAddInput_w, 4, 1, 0, H_XtAppAddInput);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtRemoveInput" XM_POSTFIX, gxm_XtRemoveInput_w, 1, 0, 0, H_XtRemoveInput);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtNextEvent" XM_POSTFIX, gxm_XtNextEvent_w, 0, 0, 0, H_XtNextEvent);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppNextEvent" XM_POSTFIX, gxm_XtAppNextEvent_w, 1, 0, 0, H_XtAppNextEvent);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtPending" XM_POSTFIX, gxm_XtPending_w, 0, 0, 0, H_XtPending);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppPending" XM_POSTFIX, gxm_XtAppPending_w, 1, 0, 0, H_XtAppPending);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtRealizeWidget" XM_POSTFIX, gxm_XtRealizeWidget_w, 1, 0, 0, H_XtRealizeWidget);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtUnrealizeWidget" XM_POSTFIX, gxm_XtUnrealizeWidget_w, 1, 0, 0, H_XtUnrealizeWidget);
@@ -1422,7 +1399,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCreateManagedWidget" XM_POSTFIX, gxm_XtCreateManagedWidget_w, 4, 1, 0, H_XtCreateManagedWidget);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtVaCreateWidget" XM_POSTFIX, gxm_XtVaCreateWidget_w, 4, 0, 0, H_XtVaCreateWidget);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtVaCreateManagedWidget" XM_POSTFIX, gxm_XtVaCreateManagedWidget_w, 4, 0, 0, H_XtVaCreateManagedWidget);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCreateApplicationShell" XM_POSTFIX, gxm_XtCreateApplicationShell_w, 3, 1, 0, H_XtCreateApplicationShell);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppCreateShell" XM_POSTFIX, gxm_XtAppCreateShell_w, 5, 1, 0, H_XtAppCreateShell);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtVaAppCreateShell" XM_POSTFIX, gxm_XtVaAppCreateShell_w, 5, 0, 0, H_XtVaAppCreateShell);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtToolkitInitialize" XM_POSTFIX, gxm_XtToolkitInitialize_w, 0, 0, 0, H_XtToolkitInitialize);
@@ -1432,7 +1408,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtVaOpenApplication" XM_POSTFIX, gxm_XtVaOpenApplication_w, 8, 0, 0, H_XtVaOpenApplication);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppInitialize" XM_POSTFIX, gxm_XtAppInitialize_w, 8, 0, 0, H_XtAppInitialize);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtVaAppInitialize" XM_POSTFIX, gxm_XtVaAppInitialize_w, 7, 0, 0, H_XtVaAppInitialize);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtInitialize" XM_POSTFIX, gxm_XtInitialize_w, 6, 0, 0, H_XtInitialize);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtOpenDisplay" XM_POSTFIX, gxm_XtOpenDisplay_w, 8, 0, 0, H_XtOpenDisplay);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCreateApplicationContext" XM_POSTFIX, gxm_XtCreateApplicationContext_w, 0, 0, 0, H_XtCreateApplicationContext);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtDestroyApplicationContext" XM_POSTFIX, gxm_XtDestroyApplicationContext_w, 1, 0, 0, H_XtDestroyApplicationContext);
@@ -1445,26 +1420,16 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetValues" XM_POSTFIX, gxm_XtGetValues_w, 2, 1, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtVaGetValues" XM_POSTFIX, gxm_XtVaGetValues_w, 2, 0, 0, H_XtVaGetValues);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppSetErrorMsgHandler" XM_POSTFIX, gxm_XtAppSetErrorMsgHandler_w, 2, 0, 0, H_XtAppSetErrorMsgHandler);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSetErrorMsgHandler" XM_POSTFIX, gxm_XtSetErrorMsgHandler_w, 1, 0, 0, H_XtSetErrorMsgHandler);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppSetWarningMsgHandler" XM_POSTFIX, gxm_XtAppSetWarningMsgHandler_w, 2, 0, 0, H_XtAppSetWarningMsgHandler);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSetWarningMsgHandler" XM_POSTFIX, gxm_XtSetWarningMsgHandler_w, 1, 0, 0, H_XtSetWarningMsgHandler);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppErrorMsg" XM_POSTFIX, gxm_XtAppErrorMsg_w, 7, 0, 0, H_XtAppErrorMsg);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtErrorMsg" XM_POSTFIX, gxm_XtErrorMsg_w, 6, 0, 0, H_XtErrorMsg);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppWarningMsg" XM_POSTFIX, gxm_XtAppWarningMsg_w, 7, 0, 0, H_XtAppWarningMsg);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtWarningMsg" XM_POSTFIX, gxm_XtWarningMsg_w, 6, 0, 0, H_XtWarningMsg);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppSetErrorHandler" XM_POSTFIX, gxm_XtAppSetErrorHandler_w, 2, 0, 0, H_XtAppSetErrorHandler);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSetErrorHandler" XM_POSTFIX, gxm_XtSetErrorHandler_w, 1, 0, 0, H_XtSetErrorHandler);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppSetWarningHandler" XM_POSTFIX, gxm_XtAppSetWarningHandler_w, 2, 0, 0, H_XtAppSetWarningHandler);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSetWarningHandler" XM_POSTFIX, gxm_XtSetWarningHandler_w, 1, 0, 0, H_XtSetWarningHandler);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppError" XM_POSTFIX, gxm_XtAppError_w, 2, 0, 0, H_XtAppError);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtError" XM_POSTFIX, gxm_XtError_w, 1, 0, 0, H_XtError);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppWarning" XM_POSTFIX, gxm_XtAppWarning_w, 2, 0, 0, H_XtAppWarning);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtWarning" XM_POSTFIX, gxm_XtWarning_w, 1, 0, 0, H_XtWarning);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtMalloc" XM_POSTFIX, gxm_XtMalloc_w, 1, 0, 0, H_XtMalloc);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCalloc" XM_POSTFIX, gxm_XtCalloc_w, 2, 0, 0, H_XtCalloc);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtRealloc" XM_POSTFIX, gxm_XtRealloc_w, 2, 0, 0, H_XtRealloc);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtFree" XM_POSTFIX, gxm_XtFree_w, 1, 0, 0, H_XtFree);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAddWorkProc" XM_POSTFIX, gxm_XtAddWorkProc_w, 1, 1, 0, H_XtAddWorkProc);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppAddWorkProc" XM_POSTFIX, gxm_XtAppAddWorkProc_w, 2, 1, 0, H_XtAppAddWorkProc);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtRemoveWorkProc" XM_POSTFIX, gxm_XtRemoveWorkProc_w, 1, 0, 0, H_XtRemoveWorkProc);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetGC" XM_POSTFIX, gxm_XtGetGC_w, 3, 0, 0, H_XtGetGC);
@@ -1478,9 +1443,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetSelectionValue" XM_POSTFIX, gxm_XtGetSelectionValue_w, 6, 0, 0, H_XtGetSelectionValue);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetSelectionValues" XM_POSTFIX, gxm_XtGetSelectionValues_w, 7, 0, 0, H_XtGetSelectionValues);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppSetSelectionTimeout" XM_POSTFIX, gxm_XtAppSetSelectionTimeout_w, 2, 0, 0, H_XtAppSetSelectionTimeout);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSetSelectionTimeout" XM_POSTFIX, gxm_XtSetSelectionTimeout_w, 1, 0, 0, H_XtSetSelectionTimeout);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppGetSelectionTimeout" XM_POSTFIX, gxm_XtAppGetSelectionTimeout_w, 1, 0, 0, H_XtAppGetSelectionTimeout);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetSelectionTimeout" XM_POSTFIX, gxm_XtGetSelectionTimeout_w, 0, 0, 0, H_XtGetSelectionTimeout);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetSelectionRequest" XM_POSTFIX, gxm_XtGetSelectionRequest_w, 3, 0, 0, H_XtGetSelectionRequest);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetSelectionValueIncremental" XM_POSTFIX, gxm_XtGetSelectionValueIncremental_w, 6, 0, 0, H_XtGetSelectionValueIncremental);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetSelectionValuesIncremental" XM_POSTFIX, gxm_XtGetSelectionValuesIncremental_w, 7, 0, 0, H_XtGetSelectionValuesIncremental);
@@ -1518,6 +1481,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtUnmapWidget" XM_POSTFIX, gxm_XtUnmapWidget_w, 1, 0, 0, H_XtUnmapWidget);
    XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppContext" XM_POSTFIX, gxm_XtAppContext_w, 1, 0, 0, NULL);
 #endif
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XUniqueContext" XM_POSTFIX, gxm_XUniqueContext_w, 0, 0, 0, H_XUniqueContext);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XLoadQueryFont" XM_POSTFIX, gxm_XLoadQueryFont_w, 2, 0, 0, H_XLoadQueryFont);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XQueryFont" XM_POSTFIX, gxm_XQueryFont_w, 2, 0, 0, H_XQueryFont);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XGetMotionEvents" XM_POSTFIX, gxm_XGetMotionEvents_w, 4, 0, 0, H_XGetMotionEvents);
@@ -1994,7 +1958,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextFieldPasteLink" XM_POSTFIX, gxm_XmTextFieldPasteLink_w, 1, 0, 0, H_XmTextFieldPasteLink);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextGetCenterline" XM_POSTFIX, gxm_XmTextGetCenterline_w, 1, 0, 0, H_XmTextGetCenterline);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmToggleButtonGadgetSetValue" XM_POSTFIX, gxm_XmToggleButtonGadgetSetValue_w, 3, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmGetIconFileName" XM_POSTFIX, gxm_XmGetIconFileName_w, 5, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateIconGadget" XM_POSTFIX, gxm_XmCreateIconGadget_w, 3, 1, 0, H_XmCreateIconGadget);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateIconHeader" XM_POSTFIX, gxm_XmCreateIconHeader_w, 3, 1, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmObjectAtPoint" XM_POSTFIX, gxm_XmObjectAtPoint_w, 3, 0, 0, H_XmObjectAtPoint);
@@ -2046,7 +2009,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmScaleSetValue" XM_POSTFIX, gxm_XmScaleSetValue_w, 2, 0, 0, H_XmScaleSetValue);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmScaleGetValue" XM_POSTFIX, gxm_XmScaleGetValue_w, 1, 0, 0, H_XmScaleGetValue);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateScale" XM_POSTFIX, gxm_XmCreateScale_w, 3, 1, 0, H_XmCreateScale);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmClipboardBeginCopy" XM_POSTFIX, gxm_XmClipboardBeginCopy_w, 5, 0, 0, H_XmClipboardBeginCopy);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmClipboardStartCopy" XM_POSTFIX, gxm_XmClipboardStartCopy_w, 6, 0, 0, H_XmClipboardStartCopy);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmClipboardCopy" XM_POSTFIX, gxm_XmClipboardCopy_w, 7, 0, 0, H_XmClipboardCopy);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmClipboardEndCopy" XM_POSTFIX, gxm_XmClipboardEndCopy_w, 3, 0, 0, H_XmClipboardEndCopy);
@@ -2069,7 +2031,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmScrollBarGetValues" XM_POSTFIX, gxm_XmScrollBarGetValues_w, 1, 0, 0, H_XmScrollBarGetValues);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmScrollBarSetValues" XM_POSTFIX, gxm_XmScrollBarSetValues_w, 6, 0, 0, H_XmScrollBarSetValues);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateDialogShell" XM_POSTFIX, gxm_XmCreateDialogShell_w, 3, 1, 0, H_XmCreateDialogShell);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmScrolledWindowSetAreas" XM_POSTFIX, gxm_XmScrolledWindowSetAreas_w, 4, 0, 0, H_XmScrolledWindowSetAreas);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateScrolledWindow" XM_POSTFIX, gxm_XmCreateScrolledWindow_w, 3, 1, 0, H_XmCreateScrolledWindow);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmScrollVisible" XM_POSTFIX, gxm_XmScrollVisible_w, 4, 0, 0, H_XmScrollVisible);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmGetDragContext" XM_POSTFIX, gxm_XmGetDragContext_w, 2, 0, 0, H_XmGetDragContext);
@@ -2213,17 +2174,12 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmListYToPos" XM_POSTFIX, gxm_XmListYToPos_w, 2, 0, 0, H_XmListYToPos);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmListPosToBounds" XM_POSTFIX, gxm_XmListPosToBounds_w, 2, 0, 0, H_XmListPosToBounds);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmListGetMatchPos" XM_POSTFIX, gxm_XmListGetMatchPos_w, 2, 0, 0, H_XmListGetMatchPos);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmListGetSelectedPos" XM_POSTFIX, gxm_XmListGetSelectedPos_w, 1, 0, 0, H_XmListGetSelectedPos);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmListSetHorizPos" XM_POSTFIX, gxm_XmListSetHorizPos_w, 2, 0, 0, H_XmListSetHorizPos);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmListUpdateSelectedList" XM_POSTFIX, gxm_XmListUpdateSelectedList_w, 1, 0, 0, H_XmListUpdateSelectedList);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmListPosSelected" XM_POSTFIX, gxm_XmListPosSelected_w, 2, 0, 0, H_XmListPosSelected);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateList" XM_POSTFIX, gxm_XmCreateList_w, 3, 1, 0, H_XmCreateList);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateScrolledList" XM_POSTFIX, gxm_XmCreateScrolledList_w, 3, 1, 0, H_XmCreateScrolledList);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTranslateKey" XM_POSTFIX, gxm_XmTranslateKey_w, 3, 0, 0, H_XmTranslateKey);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmMainWindowSetAreas" XM_POSTFIX, gxm_XmMainWindowSetAreas_w, 6, 0, 0, H_XmMainWindowSetAreas);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmMainWindowSep1" XM_POSTFIX, gxm_XmMainWindowSep1_w, 1, 0, 0, H_XmMainWindowSep1);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmMainWindowSep2" XM_POSTFIX, gxm_XmMainWindowSep2_w, 1, 0, 0, H_XmMainWindowSep2);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmMainWindowSep3" XM_POSTFIX, gxm_XmMainWindowSep3_w, 1, 0, 0, H_XmMainWindowSep3);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateMainWindow" XM_POSTFIX, gxm_XmCreateMainWindow_w, 3, 1, 0, H_XmCreateMainWindow);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmInstallImage" XM_POSTFIX, gxm_XmInstallImage_w, 2, 0, 0, H_XmInstallImage);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmUninstallImage" XM_POSTFIX, gxm_XmUninstallImage_w, 1, 0, 0, H_XmUninstallImage);
@@ -2237,14 +2193,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCvtCTToXmString" XM_POSTFIX, gxm_XmCvtCTToXmString_w, 1, 0, 0, H_XmCvtCTToXmString);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCvtXmStringToCT" XM_POSTFIX, gxm_XmCvtXmStringToCT_w, 1, 0, 0, H_XmCvtXmStringToCT);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmConvertUnits" XM_POSTFIX, gxm_XmConvertUnits_w, 5, 0, 0, H_XmConvertUnits);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCvtToHorizontalPixels" XM_POSTFIX, gxm_XmCvtToHorizontalPixels_w, 3, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCvtToVerticalPixels" XM_POSTFIX, gxm_XmCvtToVerticalPixels_w, 3, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCvtFromHorizontalPixels" XM_POSTFIX, gxm_XmCvtFromHorizontalPixels_w, 3, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCvtFromVerticalPixels" XM_POSTFIX, gxm_XmCvtFromVerticalPixels_w, 3, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmSetFontUnits" XM_POSTFIX, gxm_XmSetFontUnits_w, 3, 0, 0, H_XmSetFontUnits);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmSetFontUnit" XM_POSTFIX, gxm_XmSetFontUnit_w, 2, 0, 0, H_XmSetFontUnit);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmSetMenuCursor" XM_POSTFIX, gxm_XmSetMenuCursor_w, 2, 0, 0, H_XmSetMenuCursor);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmGetMenuCursor" XM_POSTFIX, gxm_XmGetMenuCursor_w, 1, 0, 0, H_XmGetMenuCursor);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateSimpleMenuBar" XM_POSTFIX, gxm_XmCreateSimpleMenuBar_w, 3, 1, 0, H_XmCreateSimpleMenuBar);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateSimplePopupMenu" XM_POSTFIX, gxm_XmCreateSimplePopupMenu_w, 3, 1, 0, H_XmCreateSimplePopupMenu);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateSimplePulldownMenu" XM_POSTFIX, gxm_XmCreateSimplePulldownMenu_w, 3, 1, 0, H_XmCreateSimplePulldownMenu);
@@ -2258,30 +2206,17 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmVaCreateSimpleRadioBox" XM_POSTFIX, gxm_XmVaCreateSimpleRadioBox_w, 5, 0, 0, H_XmVaCreateSimpleRadioBox);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmVaCreateSimpleCheckBox" XM_POSTFIX, gxm_XmVaCreateSimpleCheckBox_w, 4, 0, 0, H_XmVaCreateSimpleCheckBox);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTrackingEvent" XM_POSTFIX, gxm_XmTrackingEvent_w, 3, 0, 0, H_XmTrackingEvent);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTrackingLocate" XM_POSTFIX, gxm_XmTrackingLocate_w, 3, 0, 0, H_XmTrackingLocate);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmSetColorCalculation" XM_POSTFIX, gxm_XmSetColorCalculation_w, 1, 0, 0, H_XmSetColorCalculation);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmGetColorCalculation" XM_POSTFIX, gxm_XmGetColorCalculation_w, 0, 0, 0, H_XmGetColorCalculation);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmGetColors" XM_POSTFIX, gxm_XmGetColors_w, 3, 0, 0, H_XmGetColors);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmChangeColor" XM_POSTFIX, gxm_XmChangeColor_w, 2, 0, 0, H_XmChangeColor);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringCreate" XM_POSTFIX, gxm_XmStringCreate_w, 2, 0, 0, H_XmStringCreate);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringCreateSimple" XM_POSTFIX, gxm_XmStringCreateSimple_w, 1, 0, 0, H_XmStringCreateSimple);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringCreateLocalized" XM_POSTFIX, gxm_XmStringCreateLocalized_w, 1, 0, 0, H_XmStringCreateLocalized);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringDirectionCreate" XM_POSTFIX, gxm_XmStringDirectionCreate_w, 1, 0, 0, H_XmStringDirectionCreate);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringSeparatorCreate" XM_POSTFIX, gxm_XmStringSeparatorCreate_w, 0, 0, 0, H_XmStringSeparatorCreate);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringSegmentCreate" XM_POSTFIX, gxm_XmStringSegmentCreate_w, 4, 0, 0, H_XmStringSegmentCreate);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringLtoRCreate" XM_POSTFIX, gxm_XmStringLtoRCreate_w, 2, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringCreateLtoR" XM_POSTFIX, gxm_XmStringCreateLtoR_w, 2, 0, 0, H_XmStringCreateLtoR);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringInitContext" XM_POSTFIX, gxm_XmStringInitContext_w, 1, 0, 0, H_XmStringInitContext);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringFreeContext" XM_POSTFIX, gxm_XmStringFreeContext_w, 1, 0, 0, H_XmStringFreeContext);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringGetNextComponent" XM_POSTFIX, gxm_XmStringGetNextComponent_w, 1, 0, 0, H_XmStringGetNextComponent);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringPeekNextComponent" XM_POSTFIX, gxm_XmStringPeekNextComponent_w, 1, 0, 0, H_XmStringPeekNextComponent);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringGetNextSegment" XM_POSTFIX, gxm_XmStringGetNextSegment_w, 1, 0, 0, H_XmStringGetNextSegment);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringGetLtoR" XM_POSTFIX, gxm_XmStringGetLtoR_w, 2, 0, 0, H_XmStringGetLtoR);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntryCreate" XM_POSTFIX, gxm_XmFontListEntryCreate_w, 3, 0, 0, H_XmFontListEntryCreate);
 #if MOTIF_2
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntryCreate_r" XM_POSTFIX, gxm_XmFontListEntryCreate_r_w, 4, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListCreate_r" XM_POSTFIX, gxm_XmFontListCreate_r_w, 3, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringCreateFontList_r" XM_POSTFIX, gxm_XmStringCreateFontList_r_w, 3, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringConcatAndFree" XM_POSTFIX, gxm_XmStringConcatAndFree_w, 2, 0, 0, H_XmStringConcatAndFree);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringIsVoid" XM_POSTFIX, gxm_XmStringIsVoid_w, 1, 0, 0, H_XmStringIsVoid);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCvtXmStringToByteStream" XM_POSTFIX, gxm_XmCvtXmStringToByteStream_w, 1, 0, 0, H_XmCvtXmStringToByteStream);
@@ -2330,28 +2265,9 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRenderTableRemoveRenditions" XM_POSTFIX, gxm_XmRenderTableRemoveRenditions_w, 3, 0, 0, H_XmRenderTableRemoveRenditions);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRenderTableAddRenditions" XM_POSTFIX, gxm_XmRenderTableAddRenditions_w, 4, 0, 0, H_XmRenderTableAddRenditions);
 #endif
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntryFree" XM_POSTFIX, gxm_XmFontListEntryFree_w, 1, 0, 0, H_XmFontListEntryFree);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntryGetFont" XM_POSTFIX, gxm_XmFontListEntryGetFont_w, 2, 0, 0, H_XmFontListEntryGetFont);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntryGetTag" XM_POSTFIX, gxm_XmFontListEntryGetTag_w, 1, 0, 0, H_XmFontListEntryGetTag);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListAppendEntry" XM_POSTFIX, gxm_XmFontListAppendEntry_w, 2, 0, 0, H_XmFontListAppendEntry);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListNextEntry" XM_POSTFIX, gxm_XmFontListNextEntry_w, 1, 0, 0, H_XmFontListNextEntry);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListRemoveEntry" XM_POSTFIX, gxm_XmFontListRemoveEntry_w, 2, 0, 0, H_XmFontListRemoveEntry);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntryLoad" XM_POSTFIX, gxm_XmFontListEntryLoad_w, 4, 0, 0, H_XmFontListEntryLoad);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListCreate" XM_POSTFIX, gxm_XmFontListCreate_w, 2, 0, 0, H_XmFontListCreate);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringCreateFontList" XM_POSTFIX, gxm_XmStringCreateFontList_w, 2, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListFree" XM_POSTFIX, gxm_XmFontListFree_w, 1, 0, 0, H_XmFontListFree);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListAdd" XM_POSTFIX, gxm_XmFontListAdd_w, 3, 0, 0, H_XmFontListAdd);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListCopy" XM_POSTFIX, gxm_XmFontListCopy_w, 1, 0, 0, H_XmFontListCopy);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListInitFontContext" XM_POSTFIX, gxm_XmFontListInitFontContext_w, 1, 0, 0, H_XmFontListInitFontContext);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListGetNextFont" XM_POSTFIX, gxm_XmFontListGetNextFont_w, 1, 0, 0, H_XmFontListGetNextFont);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListFreeFontContext" XM_POSTFIX, gxm_XmFontListFreeFontContext_w, 1, 0, 0, H_XmFontListFreeFontContext);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringConcat" XM_POSTFIX, gxm_XmStringConcat_w, 2, 0, 0, H_XmStringConcat);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringNConcat" XM_POSTFIX, gxm_XmStringNConcat_w, 3, 0, 0, H_XmStringNConcat);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringCopy" XM_POSTFIX, gxm_XmStringCopy_w, 1, 0, 0, H_XmStringCopy);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringNCopy" XM_POSTFIX, gxm_XmStringNCopy_w, 2, 0, 0, H_XmStringNCopy);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringByteCompare" XM_POSTFIX, gxm_XmStringByteCompare_w, 2, 0, 0, H_XmStringByteCompare);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringCompare" XM_POSTFIX, gxm_XmStringCompare_w, 2, 0, 0, H_XmStringCompare);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringLength" XM_POSTFIX, gxm_XmStringLength_w, 1, 0, 0, H_XmStringLength);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringEmpty" XM_POSTFIX, gxm_XmStringEmpty_w, 1, 0, 0, H_XmStringEmpty);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringHasSubstring" XM_POSTFIX, gxm_XmStringHasSubstring_w, 2, 0, 0, H_XmStringHasSubstring);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringFree" XM_POSTFIX, gxm_XmStringFree_w, 1, 0, 0, H_XmStringFree);
@@ -2369,8 +2285,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmGetTabGroup" XM_POSTFIX, gxm_XmGetTabGroup_w, 1, 0, 0, H_XmGetTabGroup);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmGetFocusWidget" XM_POSTFIX, gxm_XmGetFocusWidget_w, 1, 0, 0, H_XmGetFocusWidget);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmProcessTraversal" XM_POSTFIX, gxm_XmProcessTraversal_w, 2, 0, 0, H_XmProcessTraversal);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmAddTabGroup" XM_POSTFIX, gxm_XmAddTabGroup_w, 1, 0, 0, H_XmAddTabGroup);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRemoveTabGroup" XM_POSTFIX, gxm_XmRemoveTabGroup_w, 1, 0, 0, H_XmRemoveTabGroup);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateMenuShell" XM_POSTFIX, gxm_XmCreateMenuShell_w, 3, 1, 0, H_XmCreateMenuShell);
 
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsMessageBox" XM_POSTFIX, gxm_XmIsMessageBox_w, 1, 0, 0, NULL);
@@ -2426,6 +2340,77 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsMainWindow" XM_POSTFIX, gxm_XmIsMainWindow_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsManager" XM_POSTFIX, gxm_XmIsManager_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmIsMenuShell" XM_POSTFIX, gxm_XmIsMenuShell_w, 1, 0, 0, NULL);
+#endif
+
+#if (!XM_DISABLE_DEPRECATED)
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtWarning" XM_POSTFIX, gxm_XtWarning_w, 1, 0, 0, H_XtWarning);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppWarning" XM_POSTFIX, gxm_XtAppWarning_w, 2, 0, 0, H_XtAppWarning);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSetWarningMsgHandler" XM_POSTFIX, gxm_XtSetWarningMsgHandler_w, 1, 0, 0, H_XtSetWarningMsgHandler);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSetWarningHandler" XM_POSTFIX, gxm_XtSetWarningHandler_w, 1, 0, 0, H_XtSetWarningHandler);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtWarningMsg" XM_POSTFIX, gxm_XtWarningMsg_w, 6, 0, 0, H_XtWarningMsg);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtErrorMsg" XM_POSTFIX, gxm_XtErrorMsg_w, 6, 0, 0, H_XtErrorMsg);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtError" XM_POSTFIX, gxm_XtError_w, 1, 0, 0, H_XtError);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSetErrorMsgHandler" XM_POSTFIX, gxm_XtSetErrorMsgHandler_w, 1, 0, 0, H_XtSetErrorMsgHandler);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSetErrorHandler" XM_POSTFIX, gxm_XtSetErrorHandler_w, 1, 0, 0, H_XtSetErrorHandler);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtInitialize" XM_POSTFIX, gxm_XtInitialize_w, 6, 0, 0, H_XtInitialize);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCreateApplicationShell" XM_POSTFIX, gxm_XtCreateApplicationShell_w, 3, 1, 0, H_XtCreateApplicationShell);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSetSelectionTimeout" XM_POSTFIX, gxm_XtSetSelectionTimeout_w, 1, 0, 0, H_XtSetSelectionTimeout);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGetSelectionTimeout" XM_POSTFIX, gxm_XtGetSelectionTimeout_w, 0, 0, 0, H_XtGetSelectionTimeout);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAddActions" XM_POSTFIX, gxm_XtAddActions_w, 1, 0, 0, H_XtAddActions);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAddInput" XM_POSTFIX, gxm_XtAddInput_w, 3, 1, 0, H_XtAddInput);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAddWorkProc" XM_POSTFIX, gxm_XtAddWorkProc_w, 1, 1, 0, H_XtAddWorkProc);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAddTimeOut" XM_POSTFIX, gxm_XtAddTimeOut_w, 2, 1, 0, H_XtAddTimeOut);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtMainLoop" XM_POSTFIX, gxm_XtMainLoop_w, 0, 0, 0, H_XtMainLoop);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtProcessEvent" XM_POSTFIX, gxm_XtProcessEvent_w, 1, 0, 0, H_XtProcessEvent);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtPending" XM_POSTFIX, gxm_XtPending_w, 0, 0, 0, H_XtPending);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtNextEvent" XM_POSTFIX, gxm_XtNextEvent_w, 0, 0, 0, H_XtNextEvent);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtPeekEvent" XM_POSTFIX, gxm_XtPeekEvent_w, 0, 0, 0, H_XtPeekEvent);
+
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntryCreate" XM_POSTFIX, gxm_XmFontListEntryCreate_w, 3, 0, 0, H_XmFontListEntryCreate);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntryCreate_r" XM_POSTFIX, gxm_XmFontListEntryCreate_r_w, 4, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntryFree" XM_POSTFIX, gxm_XmFontListEntryFree_w, 1, 0, 0, H_XmFontListEntryFree);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntryGetFont" XM_POSTFIX, gxm_XmFontListEntryGetFont_w, 2, 0, 0, H_XmFontListEntryGetFont);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntryGetTag" XM_POSTFIX, gxm_XmFontListEntryGetTag_w, 1, 0, 0, H_XmFontListEntryGetTag);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListAppendEntry" XM_POSTFIX, gxm_XmFontListAppendEntry_w, 2, 0, 0, H_XmFontListAppendEntry);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListNextEntry" XM_POSTFIX, gxm_XmFontListNextEntry_w, 1, 0, 0, H_XmFontListNextEntry);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListRemoveEntry" XM_POSTFIX, gxm_XmFontListRemoveEntry_w, 2, 0, 0, H_XmFontListRemoveEntry);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntryLoad" XM_POSTFIX, gxm_XmFontListEntryLoad_w, 4, 0, 0, H_XmFontListEntryLoad);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListFree" XM_POSTFIX, gxm_XmFontListFree_w, 1, 0, 0, H_XmFontListFree);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListCopy" XM_POSTFIX, gxm_XmFontListCopy_w, 1, 0, 0, H_XmFontListCopy);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListInitFontContext" XM_POSTFIX, gxm_XmFontListInitFontContext_w, 1, 0, 0, H_XmFontListInitFontContext);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListFreeFontContext" XM_POSTFIX, gxm_XmFontListFreeFontContext_w, 1, 0, 0, H_XmFontListFreeFontContext);
+
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontContext?" XM_POSTFIX, XEN_XmFontContext_p_w, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntry?" XM_POSTFIX, XEN_XmFontListEntry_p_w, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontList?" XM_POSTFIX, XEN_XmFontList_p_w, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListCreate_r" XM_POSTFIX, gxm_XmFontListCreate_r_w, 3, 0, 0, H_XmFontListCreate_r);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListCreate" XM_POSTFIX, gxm_XmFontListCreate_w, 2, 0, 0, H_XmFontListCreate);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTrackingLocate" XM_POSTFIX, gxm_XmTrackingLocate_w, 3, 0, 0, H_XmTrackingLocate);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListGetNextFont" XM_POSTFIX, gxm_XmFontListGetNextFont_w, 1, 0, 0, H_XmFontListGetNextFont);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringByteCompare" XM_POSTFIX, gxm_XmStringByteCompare_w, 2, 0, 0, H_XmStringByteCompare);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringCreateLtoR" XM_POSTFIX, gxm_XmStringCreateLtoR_w, 2, 0, 0, H_XmStringCreateLtoR);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringCreateSimple" XM_POSTFIX, gxm_XmStringCreateSimple_w, 1, 0, 0, H_XmStringCreateSimple);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringGetLtoR" XM_POSTFIX, gxm_XmStringGetLtoR_w, 2, 0, 0, H_XmStringGetLtoR);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringGetNextSegment" XM_POSTFIX, gxm_XmStringGetNextSegment_w, 1, 0, 0, H_XmStringGetNextSegment);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringSegmentCreate" XM_POSTFIX, gxm_XmStringSegmentCreate_w, 4, 0, 0, H_XmStringSegmentCreate);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringPeekNextComponent" XM_POSTFIX, gxm_XmStringPeekNextComponent_w, 1, 0, 0, H_XmStringPeekNextComponent);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringGetNextComponent" XM_POSTFIX, gxm_XmStringGetNextComponent_w, 1, 0, 0, H_XmStringGetNextComponent);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRemoveTabGroup" XM_POSTFIX, gxm_XmRemoveTabGroup_w, 1, 0, 0, H_XmRemoveTabGroup);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListAdd" XM_POSTFIX, gxm_XmFontListAdd_w, 3, 0, 0, H_XmFontListAdd);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringLength" XM_POSTFIX, gxm_XmStringLength_w, 1, 0, 0, H_XmStringLength);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringNConcat" XM_POSTFIX, gxm_XmStringNConcat_w, 3, 0, 0, H_XmStringNConcat);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringNCopy" XM_POSTFIX, gxm_XmStringNCopy_w, 2, 0, 0, H_XmStringNCopy);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmScrolledWindowSetAreas" XM_POSTFIX, gxm_XmScrolledWindowSetAreas_w, 4, 0, 0, H_XmScrolledWindowSetAreas);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmSetFontUnits" XM_POSTFIX, gxm_XmSetFontUnits_w, 3, 0, 0, H_XmSetFontUnits);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmSetFontUnit" XM_POSTFIX, gxm_XmSetFontUnit_w, 2, 0, 0, H_XmSetFontUnit);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmGetMenuCursor" XM_POSTFIX, gxm_XmGetMenuCursor_w, 1, 0, 0, H_XmGetMenuCursor);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmSetMenuCursor" XM_POSTFIX, gxm_XmSetMenuCursor_w, 2, 0, 0, H_XmSetMenuCursor);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmListGetSelectedPos" XM_POSTFIX, gxm_XmListGetSelectedPos_w, 1, 0, 0, H_XmListGetSelectedPos);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmMainWindowSetAreas" XM_POSTFIX, gxm_XmMainWindowSetAreas_w, 6, 0, 0, H_XmMainWindowSetAreas);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmMainWindowSep1" XM_POSTFIX, gxm_XmMainWindowSep1_w, 1, 0, 0, H_XmMainWindowSep1);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmMainWindowSep2" XM_POSTFIX, gxm_XmMainWindowSep2_w, 1, 0, 0, H_XmMainWindowSep2);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmMainWindowSep3" XM_POSTFIX, gxm_XmMainWindowSep3_w, 1, 0, 0, H_XmMainWindowSep3);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmAddTabGroup" XM_POSTFIX, gxm_XmAddTabGroup_w, 1, 0, 0, H_XmAddTabGroup);
 #endif
 
 #if HAVE_XPM
@@ -2575,9 +2560,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmToggleButtonGadget?" XM_POSTFIX, gxm_XmIsToggleButtonGadget_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmDrawnButton?" XM_POSTFIX, gxm_XmIsDrawnButton_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmPrimitive?" XM_POSTFIX, gxm_XmIsPrimitive_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontList?" XM_POSTFIX, XEN_XmFontList_p_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontContext?" XM_POSTFIX, XEN_XmFontContext_p_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntry?" XM_POSTFIX, XEN_XmFontListEntry_p_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTextSource?" XM_POSTFIX, XEN_XmTextSource_p_w, 1, 0, 0, NULL);
 #endif
 #if HAVE_XPM
@@ -3387,3 +3369,4 @@ static void define_structs(void)
 #endif
 
 }
+

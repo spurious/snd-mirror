@@ -608,6 +608,8 @@ void mem_report(void)
     if (mus_file_fd_name(i))
       fprintf(Fp, "[%d]: %s\n", i, mus_file_fd_name(i));
   fprintf(Fp, "\n\nprevlist: %d %d\n", get_prevfile_end(), get_max_prevfile_end());
+  fprintf(Fp, "\n\n");
+  save_listener_text(Fp);
   fclose(Fp);
 }
 

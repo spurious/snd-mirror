@@ -680,10 +680,33 @@ static void print_button_pressed(GtkWidget *w, gpointer context)
   file_print_callback(w, context);
 }
 
+#if HAVE_GTK2
+static void env_browse_callback(GtkTreeSelection *selection, gpointer *gp)
+{
+  GtkTreeIter iter;
+  gchar *value;
+  int size, n;
+  char *str;
+  GtkTreeModel *model;
+  if (!(gtk_tree_selection_get_selected(selection, &model, &iter))) return;
+  gtk_tree_model_get(model, &iter, 0, &value, -1);
+  size = enved_all_envs_top();
+  for (n = 0; n < size; n++) 
+    {
+      str = enved_all_names(n);
+      if (strcmp(str, value) == 0)
+	{
+	  select_or_edit_env((snd_state *)gp, n);
+	  return;
+	}
+    }
+}
+#else
 static void env_browse_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
 {
   select_or_edit_env((snd_state *)context, row);
 }
+#endif
 
 static void graph_button_callback(GtkWidget *w, gpointer context)
 {

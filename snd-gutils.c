@@ -699,19 +699,6 @@ GtkWidget *make_scrolled_text(snd_state *ss, GtkWidget *parent, int editable, Gt
   return(new_text);
 }
 
-#if HAVE_GTK2
-static void g_sel(GtkTreeSelection *selection, GtkTreeModel *model, gpointer gp)
-{
-  GtkTreeIter iter;
-  gchar *value;
-  return; 
-  /* segfaults */
-  if (!(gtk_tree_selection_get_selected(selection, NULL, &iter))) return;
-  gtk_tree_model_get(model, &iter, 0, &value);
-  fprintf(stderr,"clicked: %s\n", value);
-}
-#endif
-
 GtkWidget *sg_make_list(gpointer gp, int num_items, char **items, GtkSignalFunc callback)
 {
   GtkWidget *list;
@@ -726,12 +713,19 @@ GtkWidget *sg_make_list(gpointer gp, int num_items, char **items, GtkSignalFunc 
   list = gtk_tree_view_new_with_model(GTK_TREE_MODEL(model));
   cell = gtk_cell_renderer_text_new();
   g_object_set(G_OBJECT(cell), "style", PANGO_STYLE_NORMAL, NULL);
+
   column = gtk_tree_view_column_new_with_attributes("a title", cell, "text", 0, NULL);
+#if 0
+  column = gtk_tree_view_column_new();
+  gtk_tree_view_column_pack_start(column, cell, TRUE);
+  gtk_tree_view_column_clear_attributes(column, cell);
+  gtk_tree_view_column_add_attribute(column, cell, "text", 0);
+  gtk_widget_hide(gtk_tree_view_column_get_widget(column));
+#endif
   gtk_tree_view_append_column(GTK_TREE_VIEW(list), column);
-  g_signal_connect (list, "row_activated", G_CALLBACK(callback), gp); /* double-click case */
   selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(list));
   gtk_tree_selection_set_mode (GTK_TREE_SELECTION (selection), GTK_SELECTION_BROWSE);
-  g_signal_connect(selection, "changed", G_CALLBACK(g_sel), gp);
+  g_signal_connect(selection, "changed", G_CALLBACK(callback), gp);
   for (i = 0; i < num_items; i++) 
     {
       gtk_tree_store_append(GTK_TREE_STORE(model), &iter, NULL);
@@ -754,3 +748,11 @@ GtkWidget *sg_make_list(gpointer gp, int num_items, char **items, GtkSignalFunc 
   return(list);
 }
 
+#if HAVE_GTK2
+void sg_list_append(GtkWidget *w, char *val)
+{
+  GtkTreeIter iter;
+  gtk_tree_store_append(GTK_TREE_STORE(w), &iter, NULL);
+  gtk_tree_store_set(GTK_TREE_STORE(w), &iter, 0, val, -1);
+}
+#endif

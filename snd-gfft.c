@@ -159,9 +159,8 @@ static int map_chans_transform_size(chan_info *cp, void *ptr)
   return(0);
 }
 
-static void size_browse_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
+static void gfft_size(snd_state *ss, int row)
 {
-  snd_state *ss = (snd_state *)context;
   int size;
   in_set_transform_size(ss, transform_sizes[row]);
   size = transform_size(ss);
@@ -174,20 +173,64 @@ static void size_browse_callback(GtkWidget *w, gint row, gint column, GdkEventBu
   graph_redisplay(ss);
 }
 
+#if HAVE_GTK2
+static void size_browse_callback(GtkTreeSelection *selection, gpointer *gp)
+{
+  GtkTreeIter iter;
+  gchar *value;
+  int size, i;
+  GtkTreeModel *model;
+  if (!(gtk_tree_selection_get_selected(selection, &model, &iter))) return;
+  gtk_tree_model_get(model, &iter, 0, &value, -1);
+  for (i = 0; i < NUM_TRANSFORM_SIZES; i++)
+    if (strcmp(value, TRANSFORM_SIZES[i]) == 0)
+      {
+	gfft_size((snd_state *)gp, i);
+	return;
+      }
+}
+#else
+static void size_browse_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
+{
+  gfft_size((snd_state *)context, row);
+}
+#endif
+
 static int map_chans_wavelet_type(chan_info *cp, void *ptr) {cp->wavelet_type = (*((int *)ptr)); return(0);}
 
-static void wavelet_browse_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
+static void gfft_wavelet(snd_state *ss, int row)
 {
-  snd_state *ss = (snd_state *)context;
   in_set_wavelet_type(ss, row);
   map_over_chans(ss, map_chans_wavelet_type, (void *)(&row));
   if (transform_type(ss) == WAVELET)
     map_over_chans(ss, calculate_fft, NULL);
 }
 
-static void window_browse_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
+#if HAVE_GTK2
+static void wavelet_browse_callback(GtkTreeSelection *selection, gpointer *gp)
 {
-  snd_state *ss = (snd_state *)context;
+  GtkTreeIter iter;
+  gchar *value;
+  int size, i;
+  GtkTreeModel *model;
+  if (!(gtk_tree_selection_get_selected(selection, &model, &iter))) return;
+  gtk_tree_model_get(model, &iter, 0, &value, -1);
+  for (i = 0; i < NUM_WAVELETS; i++)
+    if (strcmp(value, WAVELETS[i]) == 0)
+      {
+	gfft_wavelet((snd_state *)gp, i);
+	return;
+      }
+}
+#else
+static void wavelet_browse_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
+{
+  gfft_wavelet((snd_state *)context, row);
+}
+#endif
+
+static void gfft_window(snd_state *ss, int row)
+{
   in_set_fft_window(ss, row);
   map_over_chans(ss, calculate_fft, NULL);
   if (graph_frame) 
@@ -203,45 +246,59 @@ static void window_browse_callback(GtkWidget *w, gint row, gint column, GdkEvent
     }
 }
 
-static int map_chans_transform_type(chan_info *cp, void *ptr) {cp->transform_type = (*((int *)ptr)); return(0);}
-
 #if HAVE_GTK2
-#if 1
-static void transform_browse_callback(GtkTreeView *tree_view, GtkTreePath *path, GtkTreeViewColumn *column, gpointer *stuff)
+static void window_browse_callback(GtkTreeSelection *selection, gpointer *gp)
 {
   GtkTreeIter iter;
-  GtkTreeModel *model;
   gchar *value;
-  model = gtk_tree_view_get_model(tree_view);
-  gtk_tree_model_get_iter(model, &iter, path);
+  int size, i;
+  GtkTreeModel *model;
+  if (!(gtk_tree_selection_get_selected(selection, &model, &iter))) return;
   gtk_tree_model_get(model, &iter, 0, &value, -1);
-  fprintf(stderr,"got %s ", value);
+  for (i = 0; i < NUM_FFT_WINDOWS; i++)
+    if (strcmp(value, FFT_WINDOWS[i]) == 0)
+      {
+	gfft_window((snd_state *)gp, i);
+	return;
+      }
 }
 #else
-static void transform_browse_callback(GtkTreeSelection *selection, GtkTreeModel *model)
+static void window_browse_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
 {
-  GtkTreeIter iter;
-  GValue value = {0, };
-  if (!(gtk_tree_selection_get_selected(selection, NULL, &iter))) return;
-  gtk_tree_model_get_value(model, &iter, 0, &value);
-  if (g_value_get_string (&value))
-    fprintf(stderr,"got %s ",g_value_get_string (&value));
-  else fprintf(stderr,"not a string");
-  gtk_tree_model_get_value(model, &iter, 1, &value);
-  if (g_value_get_string (&value))
-    fprintf(stderr,"got %s ",g_value_get_string(&value));
-  else fprintf(stderr,"not a string");
-  g_value_unset (&value);
+  gfft_window((snd_state *)context, row);
 }
 #endif
-#else
-static void transform_browse_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
+
+static int map_chans_transform_type(chan_info *cp, void *ptr) {cp->transform_type = (*((int *)ptr)); return(0);}
+
+static void gfft_transform(snd_state *ss, int row)
 {
-  snd_state *ss = (snd_state *)context;
   map_over_chans(ss, force_fft_clear, NULL);
   in_set_transform_type(ss, row);
   map_over_chans(ss, map_chans_transform_type, (void *)(&row));
   map_over_chans(ss, calculate_fft, NULL);
+}
+
+#if HAVE_GTK2
+static void transform_browse_callback(GtkTreeSelection *selection, gpointer *gp)
+{
+  GtkTreeIter iter;
+  gchar *value;
+  int i;
+  GtkTreeModel *model;
+  if (!(gtk_tree_selection_get_selected(selection, &model, &iter))) return;
+  gtk_tree_model_get(model, &iter, 0, &value, -1);
+  for (i = 0; i < NUM_TRANSFORM_TYPES; i++)
+    if (strcmp(value, TRANSFORM_TYPES[i]) == 0)
+      {
+	gfft_transform((snd_state *)gp, i);
+	return;
+      }
+}
+#else
+static void transform_browse_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
+{
+  gfft_transform((snd_state *)context, row);
 }
 #endif
 

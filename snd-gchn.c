@@ -369,11 +369,24 @@ static void graph_mouse_leave(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
   gdk_window_set_cursor(w->window, (((snd_state *)data)->sgx)->arrow_cursor);
 }
 
+#if HAVE_GTK2
+static void history_select_callback(GtkTreeSelection *selection, gpointer *gp)
+{
+  GtkTreeIter iter;
+  gchar *value;
+  int size, i;
+  GtkTreeModel *model;
+  if (!(gtk_tree_selection_get_selected(selection, &model, &iter))) return;
+  gtk_tree_model_get(model, &iter, 0, &value, -1);
+  /* TODO: find the goddamn row somehow */
+}
+#else
 static void history_select_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
 {
   /* undo/redo to reach selected position */
   edit_select_callback((chan_info *)context, row, (event->state & snd_ControlMask));
 }
+#endif
 
 static void hide_gz_scrollbars(snd_info *sp)
 {

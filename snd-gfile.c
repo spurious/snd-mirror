@@ -415,10 +415,11 @@ void make_mix_file_dialog(snd_state *ss, int managed)
 
 /* -------- file data choices -------- */
 
-static void save_as_header_type_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
+#define NUM_HEADER_TYPES 7
+static char *header_short_names[NUM_HEADER_TYPES] = {"sun  ", "aifc ", "wave ", "raw  ", "aiff ", "ircam", "nist "};
+
+static void gfile_header_type(file_data *fd, int row)
 {
-  file_data *fd;
-  fd = (file_data *)get_user_data(GTK_OBJECT(w));
   fd->header_pos = row;
   if (fd->current_type != row)
     {
@@ -430,16 +431,58 @@ static void save_as_header_type_callback(GtkWidget *w, gint row, gint column, Gd
     }
 }
 
+#if HAVE_GTK2
+static void save_as_header_type_callback(GtkTreeSelection *selection, gpointer *gp)
+{
+  GtkTreeIter iter;
+  gchar *value;
+  int size, i;
+  GtkTreeModel *model;
+  if (!(gtk_tree_selection_get_selected(selection, &model, &iter))) return;
+  gtk_tree_model_get(model, &iter, 0, &value, -1);
+  for (i = 0; i < NUM_HEADER_TYPES; i++)
+    if (strcmp(value, header_short_names[i]) == 0)
+      {
+	gfile_header_type((file_data *)gp, i);
+	return;
+      }
+}
+#else
+static void save_as_header_type_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
+{
+  gfile_header_type((file_data *)context, row);
+}
+#endif
+
+#if HAVE_GTK2
+static void save_as_data_format_callback(GtkTreeSelection *selection, gpointer *gp)
+{
+  GtkTreeIter iter;
+  gchar *value;
+  int size, i;
+  GtkTreeModel *model;
+  int dformats = 0;
+  char **formats = NULL;
+  file_data *fd = (file_data *)gp;
+  if (!(gtk_tree_selection_get_selected(selection, &model, &iter))) return;
+  gtk_tree_model_get(model, &iter, 0, &value, -1);
+  formats = set_header_positions_from_type(fd, fd->current_type, fd->current_format);
+  dformats = fd->formats;
+  for (i = 0; i < dformats; i++)
+    if (strcmp(value, formats[i]) == 0)
+      {
+	fd->format_pos = i;
+	fd->current_format = data_format_from_position(fd->header_pos, i);
+      }
+}
+#else
 static void save_as_data_format_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
 {
-  file_data *fd;
-  fd = (file_data *)get_user_data(GTK_OBJECT(w));
+  file_data *fd = (file_data *)context;
   fd->format_pos = row;
   fd->current_format = data_format_from_position(fd->header_pos, row);
 }
-
-#define NUM_HEADER_TYPES 7
-static char *header_short_names[NUM_HEADER_TYPES] = {"sun  ", "aifc ", "wave ", "raw  ", "aiff ", "ircam", "nist "};
+#endif
 
 file_data *make_file_data_panel(snd_state *ss, GtkWidget *parent, char *name, 
 				int with_chan, int header_type, int data_format, int with_loc, int comment_as_entry)
@@ -463,9 +506,7 @@ file_data *make_file_data_panel(snd_state *ss, GtkWidget *parent, char *name,
   gtk_frame_set_label_align(GTK_FRAME(hlab), 0.5, 0.0);
   gtk_frame_set_shadow_type(GTK_FRAME(hlab), GTK_SHADOW_ETCHED_IN);
 
-  fdat->header_list = sg_make_list((gpointer)ss, NUM_HEADER_TYPES, header_short_names, GTK_SIGNAL_FUNC(save_as_header_type_callback));
-  set_user_data(GTK_OBJECT(fdat->header_list), (gpointer)fdat);
-
+  fdat->header_list = sg_make_list((gpointer)fdat, NUM_HEADER_TYPES, header_short_names, GTK_SIGNAL_FUNC(save_as_header_type_callback));
   hscroll = gtk_scrolled_window_new(NULL, NULL);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(hscroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
   gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(hscroll), fdat->header_list);
@@ -481,9 +522,7 @@ file_data *make_file_data_panel(snd_state *ss, GtkWidget *parent, char *name,
   gtk_frame_set_label_align(GTK_FRAME(dlab), 0.5, 0.0);
   gtk_frame_set_shadow_type(GTK_FRAME(dlab), GTK_SHADOW_ETCHED_IN);
 
-  fdat->format_list = sg_make_list((gpointer)ss, dformats, formats, GTK_SIGNAL_FUNC(save_as_data_format_callback));
-  set_user_data(GTK_OBJECT(fdat->format_list), (gpointer)fdat);
-
+  fdat->format_list = sg_make_list((gpointer)fdat, dformats, formats, GTK_SIGNAL_FUNC(save_as_data_format_callback));
   dscroll = gtk_scrolled_window_new(NULL, NULL);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(dscroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
   gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(dscroll), fdat->format_list);
@@ -1276,6 +1315,28 @@ static void raw_data_default_callback(GtkWidget *w, gpointer context)
   raw_done = 1;
 }
 
+#if HAVE_GTK2
+static void raw_data_browse_callback(GtkTreeSelection *selection, gpointer *gp)
+{
+  GtkTreeIter iter;
+  gchar *value;
+  int size, i;
+  GtkTreeModel *model;
+  char **names;
+  if (!(gtk_tree_selection_get_selected(selection, &model, &iter))) return;
+  gtk_tree_model_get(model, &iter, 0, &value, -1);
+  names = data_format_names();
+  for (i = 0; i < num_data_formats(); i++)
+    if (strcmp(value, names[i]) == 0)
+      {
+	int sr, oc, fr;
+	mus_header_raw_defaults(&sr, &oc, &fr);
+	fr = i + 1;
+	mus_header_set_raw_defaults(sr, oc, fr);
+	return;
+      }
+}
+#else
 static void raw_data_browse_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
 {
   int sr, oc, fr;
@@ -1283,6 +1344,7 @@ static void raw_data_browse_callback(GtkWidget *w, gint row, gint column, GdkEve
   fr = row + 1;
   mus_header_set_raw_defaults(sr, oc, fr);
 }
+#endif
 
 static void raw_data_help_callback(GtkWidget *w, gpointer context) 
 {
