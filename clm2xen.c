@@ -504,15 +504,15 @@ is the window parameter, if any:\n\
   return(make_vct(n, mus_make_fft_window(t, n, beta)));
 }
 
-static XEN g_spectrum(XEN url, XEN uim, XEN uwin, XEN un, XEN utype)
+static XEN g_spectrum(XEN url, XEN uim, XEN uwin, XEN utype)
 {
-  #define H_mus_spectrum "(" S_spectrum " rl im window (len) (type 1)): \
+  #define H_mus_spectrum "(" S_spectrum " rl im window (type 1)): \
 real and imaginary data in (vcts) rl and im, returns (in rl) the spectrum thereof; \
-len is the fft size (a power of 2), window is the data window (a vct as returned by make-fft-window), \
+window is the data window (a vct as returned by make-fft-window), \
 and type determines how the spectral data is scaled:\n\
-  1, the default = linear and normalized\n\
   0 = data in dB, \n\
-  anything else = linear and un-normalized."
+  1 (default) = linear and normalized\n\
+  2 = linear and un-normalized."
 
   int n, type, np;
   Float nf;
@@ -523,15 +523,7 @@ and type determines how the spectral data is scaled:\n\
   v1 = TO_VCT(url);
   v2 = TO_VCT(uim);
   if (XEN_NOT_FALSE_P(uwin)) v3 = TO_VCT(uwin);
-  if (XEN_INTEGER_P(un)) 
-    {
-      n = XEN_TO_C_INT(un); 
-      if (n <= 0)
-	XEN_OUT_OF_RANGE_ERROR(S_spectrum, 4, un, "size ~A <= 0?");
-      if (n > v1->length)
-	n = v1->length;
-    }
-  else n = v1->length;
+  n = v1->length;
   if (!(POWER_OF_2_P(n)))
     {
       nf = (log(n) / log(2.0));
@@ -539,6 +531,8 @@ and type determines how the spectral data is scaled:\n\
       n = (int)pow(2.0, np);
     }
   if (XEN_INTEGER_P(utype)) type = XEN_TO_C_INT(utype); else type = 1; /* linear normalized */
+  if ((type < 0) || (type > 2))
+    XEN_OUT_OF_RANGE_ERROR(S_spectrum, 4, utype, "type must be 0..2");
   mus_spectrum(v1->data, v2->data, (v3) ? (v3->data) : NULL, n, type);
   return(xen_return_first(url, uim, uwin));
 }
@@ -4715,7 +4709,7 @@ XEN_NARGIFY_2(g_polynomial_w, g_polynomial)
 XEN_ARGIFY_3(g_multiply_arrays_w, g_multiply_arrays)
 XEN_ARGIFY_3(g_make_fft_window_w, g_make_fft_window)
 XEN_ARGIFY_4(g_mus_fft_w, g_mus_fft)
-XEN_ARGIFY_5(g_spectrum_w, g_spectrum)
+XEN_ARGIFY_4(g_spectrum_w, g_spectrum)
 XEN_ARGIFY_3(g_convolution_w, g_convolution)
 XEN_NARGIFY_2(g_rectangular2polar_w, g_rectangular2polar)
 XEN_NARGIFY_2(g_polar2rectangular_w, g_polar2rectangular)
@@ -5271,7 +5265,7 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_multiply_arrays,      g_multiply_arrays_w, 2, 1, 0,      H_multiply_arrays);
   XEN_DEFINE_PROCEDURE(S_make_fft_window,      g_make_fft_window_w, 2, 1, 0,      H_make_fft_window);
   XEN_DEFINE_PROCEDURE(S_mus_fft,              g_mus_fft_w, 2, 2, 0,              H_mus_fft);
-  XEN_DEFINE_PROCEDURE(S_spectrum,             g_spectrum_w, 3, 2, 0,             H_mus_spectrum); 
+  XEN_DEFINE_PROCEDURE(S_spectrum,             g_spectrum_w, 3, 1, 0,             H_mus_spectrum); 
   XEN_DEFINE_PROCEDURE(S_convolution,          g_convolution_w, 2, 1, 0,          H_mus_convolution);
   XEN_DEFINE_PROCEDURE(S_rectangular2polar,    g_rectangular2polar_w, 2, 0, 0,    H_rectangular2polar);
   XEN_DEFINE_PROCEDURE(S_polar2rectangular,    g_polar2rectangular_w, 2, 0, 0,    H_polar2rectangular);

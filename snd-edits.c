@@ -172,7 +172,6 @@ static int add_ptree(chan_info *cp)
 static ed_list *free_ed_list(ed_list *ed, chan_info *cp);
 static void prune_edits(chan_info *cp, int edpt)
 {
-  int es = 0;
   int i;
   if (cp->edits[edpt]) 
     {
@@ -181,7 +180,6 @@ static void prune_edits(chan_info *cp, int edpt)
       for (i = edpt; i < cp->edit_size; i++) 
 	{
 	  cp->edits[i] = free_ed_list(cp->edits[i], cp);
-	  if (cp->amp_envs[i]) es++;
 	  cp->amp_envs[i] = free_amp_env(cp, i);
 	}
       release_pending_marks(cp, edpt);
@@ -1216,15 +1214,18 @@ void free_edit_list(chan_info *cp)
       if (cp->edits)
 	{
 	  for (i = 0; i < cp->edit_size; i++)
-	    {
-	      /* cp->edit_ctr follows current edit state (redo/undo) */
-	      if (cp->edits[i]) free_ed_list(cp->edits[i], cp);
-	      if (cp->amp_envs[i]) free_amp_env(cp, i);
-	    }
+	    if (cp->edits[i]) 
+	      free_ed_list(cp->edits[i], cp);
 	  FREE(cp->edits);
+	  cp->edits = NULL;
 	}
-      cp->edits = NULL;
-      if (cp->amp_envs) {FREE(cp->amp_envs); cp->amp_envs = NULL;}
+      if (cp->amp_envs)
+	{
+	  for (i = 0; i < cp->edit_size; i++)
+	    free_amp_env(cp, i);
+	  FREE(cp->amp_envs); 
+	  cp->amp_envs = NULL;
+	}
       cp->edit_ctr = -1;
       cp->edit_size = 0;
     }

@@ -63,7 +63,10 @@ env_info *free_amp_env(chan_info *cp, int pos)
   if ((cp) && 
       (cp->amp_envs) && 
       (pos < cp->edit_size))
-    return(free_env_info(cp->amp_envs[pos]));
+    {
+      free_env_info(cp->amp_envs[pos]);
+      cp->amp_envs[pos] = NULL;
+    }
   return(NULL);
 }
 

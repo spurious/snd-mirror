@@ -370,6 +370,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+24-Sep:  snd 6.12.\n\
 22-Sep:  env.rb, spectr.rb, and spectr.scm thanks to Michael Scholz.\n\
 19-Sep:  clm-ins.rb thanks to Michael Scholz.\n\
          removed menu-hook.\n\

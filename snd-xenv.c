@@ -531,13 +531,14 @@ void set_enved_click_to_delete(bool n) {click_to_delete = n;}
 
 static void drawer_button_release(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
-  if (!showing_all_envs)
+  if ((active_env) && (!showing_all_envs))
     {
-      if ((click_to_delete) && (!env_dragged) && (env_pos != 0) && (env_pos != active_env->pts - 1))
-	{
-	  if (check_enved_hook(active_env, env_pos, 0, 0, ENVED_DELETE_POINT) == 0)
-	    delete_point(active_env, env_pos);
-	}
+      if ((click_to_delete) && 
+	  (!env_dragged) && 
+	  (env_pos != 0) && 
+	  (env_pos != active_env->pts - 1) &&
+	  (check_enved_hook(active_env, env_pos, 0, 0, ENVED_DELETE_POINT) == 0))
+	delete_point(active_env, env_pos);
       do_env_edit(active_env, false);
       env_pos = 0;
       env_dragged = false;

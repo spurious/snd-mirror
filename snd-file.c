@@ -747,7 +747,6 @@ static snd_info *snd_open_file_1 (const char *filename, bool select, bool read_o
 	  else superimpose_sound(sp);
 	}
     }
-
   return(sp);
 }
 
@@ -1214,7 +1213,24 @@ static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
   sp->saved_controls = NULL;
   saved_sp = sound_store_chan_info(sp);
   old_cursors = (off_t *)CALLOC(sp_chans, sizeof(off_t));
-  for (i = 0; i < sp_chans; i++) old_cursors[i] = CURSOR(sp->chans[i]);
+  /* peak-env code saves the current peak-envs on exit (snd_close), but in this case, that
+   *   data is known to be out-of-date.  Since we'll be freeing it eventually anyway, we
+   *   do it first here, and the peak-env update-hook clobbers the existing files
+   */
+  for (i = 0; i < sp_chans; i++) 
+    {
+      chan_info *ncp;
+      ncp = sp->chans[i];
+      old_cursors[i] = CURSOR(ncp);
+      if (ncp->amp_envs)
+	{
+	  int k;
+	  for (k = 0; k < ncp->edit_size; k++) 
+	    ncp->amp_envs[k] = free_amp_env(ncp, k);
+	  FREE(ncp->amp_envs);
+	  ncp->amp_envs = NULL;
+	}
+    }
   snd_close_file(sp);
   /* this normalizes the fft/lisp/wave state so we need to reset it after reopen */
   alert_new_file();

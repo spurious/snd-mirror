@@ -3,14 +3,19 @@
  *   for tests and examples see snd-motif.scm, bess.scm, bess.rb, and snd-test.scm
  */
 
+/* TODO: several of the X functions take or return pixels, but these are ulongs still --
+ *       they should all be "wrapped" values instead. (I've marked the obvious cases with "ulong->pixel")
+ */
+
 #if defined(HAVE_CONFIG_H)
   #include <config.h>
 #endif
 
-#define XM_DATE "3-Sep-03"
+#define XM_DATE "26-Sep-03"
 
 
 /* HISTORY: 
+ *   26-Sep:    .event -> #f if event is NULL.
  *   3-Sep:     XmRenderTableGetRenditions was incorrectly freeing the XmRenditions.
  *   20-Aug:    XtEventHandler *flag set to false if handler returns 'done.
  *   11-Aug:    int -> bool.
@@ -8616,7 +8621,7 @@ associated with the colormap and stores the result in the specified colormap."
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XStoreNamedColor", "Display*");
   XEN_ASSERT_TYPE(XEN_Colormap_P(arg2), arg2, 2, "XStoreNamedColor", "Colormap");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg3), arg3, 3, "XStoreNamedColor", "char*");
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg4), arg4, 4, "XStoreNamedColor", "ulong");
+  XEN_ASSERT_TYPE(XEN_ULONG_P(arg4), arg4, 4, "XStoreNamedColor", "ulong"); /* ulong->pixel */
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XStoreNamedColor", "int");
   return(C_TO_XEN_INT(XStoreNamedColor(XEN_TO_C_Display(arg1), 
 				       XEN_TO_C_Colormap(arg2), 
@@ -8729,7 +8734,7 @@ static XEN gxm_XSetWindowBorder(XEN arg1, XEN arg2, XEN arg3)
   #define H_XSetWindowBorder "XSetWindowBorder(display, w, border_pixel) sets the border of the window to the pixel value you specify."
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XSetWindowBorder", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XSetWindowBorder", "Window");
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg3), arg3, 3, "XSetWindowBorder", "ulong");
+  XEN_ASSERT_TYPE(XEN_ULONG_P(arg3), arg3, 3, "XSetWindowBorder", "ulong"); /* ulong->pixel */
   return(C_TO_XEN_INT(XSetWindowBorder(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), XEN_TO_C_ULONG(arg3))));
 }
 
@@ -8750,7 +8755,7 @@ static XEN gxm_XSetWindowBackground(XEN arg1, XEN arg2, XEN arg3)
   #define H_XSetWindowBackground "XSetWindowBackground(display, w, background_pixel) sets the background of the window to the specified pixel value."
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XSetWindowBackground", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XSetWindowBackground", "Window");
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg3), arg3, 3, "XSetWindowBackground", "ulong");
+  XEN_ASSERT_TYPE(XEN_ULONG_P(arg3), arg3, 3, "XSetWindowBackground", "ulong"); /* ulong->pixel */
   return(C_TO_XEN_INT(XSetWindowBackground(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), XEN_TO_C_ULONG(arg3))));
 }
 
@@ -10355,7 +10360,7 @@ static XEN gxm_XFreeColors(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
   int len, val;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XFreeColors", "Display*");
   XEN_ASSERT_TYPE(XEN_Colormap_P(arg2), arg2, 2, "XFreeColors", "Colormap");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XFreeColors", "list of ulong");
+  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XFreeColors", "list of ulong"); /* ulong->pixel */
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XFreeColors", "int");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg5), arg5, 5, "XFreeColors", "ulong");
   len = XEN_TO_C_INT(arg4);
@@ -12402,8 +12407,8 @@ pixmap of the given depth and then does a bitmap-format XPutImage of the data in
   XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XCreatePixmapFromBitmapData", "list of char");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg4), arg4, 4, "XCreatePixmapFromBitmapData", "unsigned int");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg5), arg5, 5, "XCreatePixmapFromBitmapData", "unsigned int");
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg6), arg6, 6, "XCreatePixmapFromBitmapData", "ulong");
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg7), arg7, 7, "XCreatePixmapFromBitmapData", "ulong");
+  XEN_ASSERT_TYPE(XEN_ULONG_P(arg6), arg6, 6, "XCreatePixmapFromBitmapData", "ulong"); /* ulong->pixel */
+  XEN_ASSERT_TYPE(XEN_ULONG_P(arg7), arg7, 7, "XCreatePixmapFromBitmapData", "ulong"); /* ulong->pixel */
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg8), arg8, 8, "XCreatePixmapFromBitmapData", "unsigned int");
   len = XEN_LIST_LENGTH(arg3);
   if (len <= 0) XEN_ASSERT_TYPE(0, arg3, 3, "XCreatePixmapFromBitmapData", "positive integer");
@@ -12451,8 +12456,6 @@ program a bitmap file that was written out by XWriteBitmapFile"
 static XEN gxm_XCreatePixmap(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
   #define H_XCreatePixmap "Pixmap XCreatePixmap(display, d, width, height, depth)"
-  #define H_XCreatePixmapCursor "Cursor XCreatePixmapCursor(display, source, mask, foreground_color, background_color, x, y) creates \
-a cursor and returns the cursor ID associated with it."
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XCreatePixmap", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XCreatePixmap", "Drawable");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg3), arg3, 3, "XCreatePixmap", "unsigned int");
@@ -12517,6 +12520,8 @@ background_color) is similar to XCreatePixmapCursor except that the source and m
 
 static XEN gxm_XCreatePixmapCursor(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
 {
+  #define H_XCreatePixmapCursor "Cursor XCreatePixmapCursor(display, source, mask, foreground_color, background_color, x, y) creates \
+a cursor and returns the cursor ID associated with it."
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XCreatePixmapCursor", "Display*");
   XEN_ASSERT_TYPE(XEN_Pixmap_P(arg2), arg2, 2, "XCreatePixmapCursor", "Pixmap");
   XEN_ASSERT_TYPE(XEN_Pixmap_P(arg3) || XEN_INTEGER_P(arg3) || XEN_FALSE_P(arg3), arg3, 3, "XCreatePixmapCursor", "Pixmap");
@@ -19347,14 +19352,14 @@ static XEN gxm_XSetWindowAttributes(XEN arglist)
   r = (XSetWindowAttributes *)CALLOC(1, sizeof(XSetWindowAttributes));
   len = XEN_LIST_LENGTH(arglist);
   if ((len > 0) && (XEN_Pixmap_P(XEN_LIST_REF(arglist, 0)))) r->background_pixmap = XEN_TO_C_Pixmap(XEN_LIST_REF(arglist, 0));
-  if ((len > 1) && (XEN_ULONG_P(XEN_LIST_REF(arglist, 1)))) r->background_pixel = XEN_TO_C_ULONG(XEN_LIST_REF(arglist, 1));
+  if ((len > 1) && (XEN_ULONG_P(XEN_LIST_REF(arglist, 1)))) r->background_pixel = XEN_TO_C_ULONG(XEN_LIST_REF(arglist, 1)); /* ulong->pixel */
   if ((len > 2) && (XEN_Pixmap_P(XEN_LIST_REF(arglist, 2)))) r->border_pixmap = XEN_TO_C_Pixmap(XEN_LIST_REF(arglist, 2));
-  if ((len > 3) && (XEN_ULONG_P(XEN_LIST_REF(arglist, 3)))) r->border_pixel = XEN_TO_C_ULONG(XEN_LIST_REF(arglist, 3));
+  if ((len > 3) && (XEN_ULONG_P(XEN_LIST_REF(arglist, 3)))) r->border_pixel = XEN_TO_C_ULONG(XEN_LIST_REF(arglist, 3)); /* ulong->pixel */
   if ((len > 4) && (XEN_INTEGER_P(XEN_LIST_REF(arglist, 4)))) r->bit_gravity = XEN_TO_C_INT(XEN_LIST_REF(arglist, 4));
   if ((len > 5) && (XEN_INTEGER_P(XEN_LIST_REF(arglist, 5)))) r->win_gravity = XEN_TO_C_INT(XEN_LIST_REF(arglist, 5));
   if ((len > 6) && (XEN_INTEGER_P(XEN_LIST_REF(arglist, 6)))) r->backing_store = XEN_TO_C_INT(XEN_LIST_REF(arglist, 6));
   if ((len > 7) && (XEN_ULONG_P(XEN_LIST_REF(arglist, 7)))) r->backing_planes = XEN_TO_C_ULONG(XEN_LIST_REF(arglist, 7));
-  if ((len > 8) && (XEN_ULONG_P(XEN_LIST_REF(arglist, 8)))) r->backing_pixel = XEN_TO_C_ULONG(XEN_LIST_REF(arglist, 8));
+  if ((len > 8) && (XEN_ULONG_P(XEN_LIST_REF(arglist, 8)))) r->backing_pixel = XEN_TO_C_ULONG(XEN_LIST_REF(arglist, 8)); /* ulong->pixel */
   if ((len > 9) && (XEN_BOOLEAN_P(XEN_LIST_REF(arglist, 9)))) r->save_under = XEN_TO_C_BOOLEAN(XEN_LIST_REF(arglist, 9));
   if ((len > 10) && (XEN_INTEGER_P(XEN_LIST_REF(arglist, 10)))) r->event_mask = XEN_TO_C_INT(XEN_LIST_REF(arglist, 10));
   if ((len > 11) && (XEN_INTEGER_P(XEN_LIST_REF(arglist, 11)))) r->do_not_propagate_mask = XEN_TO_C_INT(XEN_LIST_REF(arglist, 11));
@@ -19518,7 +19523,7 @@ static XEN gxm_save_under(XEN ptr)
 static XEN gxm_backing_pixel(XEN ptr)
 {
   XM_FIELD_ASSERT_TYPE(XEN_XWindowAttributes_P(ptr) || XEN_XSetWindowAttributes_P(ptr), ptr, XEN_ONLY_ARG, "backing_pixel", "a struct with a backing_pixel field");
-  if (XEN_XWindowAttributes_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XWindowAttributes(ptr))->backing_pixel)));
+  if (XEN_XWindowAttributes_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XWindowAttributes(ptr))->backing_pixel))); /* ulong->pixel */
   return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XSetWindowAttributes(ptr))->backing_pixel)));
 }
 
@@ -19550,7 +19555,7 @@ static XEN gxm_bit_gravity(XEN ptr)
 static XEN gxm_border_pixel(XEN ptr)
 {
   XM_FIELD_ASSERT_TYPE(XEN_XSetWindowAttributes_P(ptr), ptr, XEN_ONLY_ARG, "border_pixel", "XSetWindowAttributes");
-  return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XSetWindowAttributes(ptr))->border_pixel)));
+  return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XSetWindowAttributes(ptr))->border_pixel))); /* ulong->pixel */
 }
 
 static XEN gxm_border_pixmap(XEN ptr)
@@ -19562,7 +19567,7 @@ static XEN gxm_border_pixmap(XEN ptr)
 static XEN gxm_background_pixel(XEN ptr)
 {
   XM_FIELD_ASSERT_TYPE(XEN_XSetWindowAttributes_P(ptr), ptr, XEN_ONLY_ARG, "background_pixel", "XSetWindowAttributes");
-  return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XSetWindowAttributes(ptr))->background_pixel)));
+  return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XSetWindowAttributes(ptr))->background_pixel))); /* ulong->pixel */
 }
 
 static XEN gxm_background_pixmap(XEN ptr)
@@ -21636,7 +21641,7 @@ static XEN gxm_killid(XEN ptr)
 static XEN gxm_base_pixel(XEN ptr)
 {
   XM_FIELD_ASSERT_TYPE(XEN_XStandardColormap_P(ptr), ptr, XEN_ONLY_ARG, "base_pixel", "XStandardColormap");
-  return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XStandardColormap(ptr))->base_pixel)));
+  return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XStandardColormap(ptr))->base_pixel))); /* ulong->pixel */
 }
 
 static XEN gxm_blue_mult(XEN ptr)

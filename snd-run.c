@@ -7862,33 +7862,18 @@ static char *descr_mus_spectrum_4v(int *args, ptree *pt)
 }
 static void mus_spectrum_4v(int *args, ptree *pt) 
 {
-  mus_spectrum(VCT_ARG_1->data, VCT_ARG_2->data, 
+  mus_spectrum(VCT_ARG_1->data, 
+	       VCT_ARG_2->data, 
 	       (VCT_ARG_3) ? (VCT_ARG_3->data) : NULL,
-	       INT_ARG_4, 1);
-  VCT_RESULT = VCT_ARG_1;
-}
-static char *descr_mus_spectrum_5v(int *args, ptree *pt) 
-{
-  if (VCT_ARG_3)
-    return(mus_format("spectrum(" VCT_PT ", " VCT_PT ", " VCT_PT ", " INT_PT ", " INT_PT ")", 
-		      args[1], DESC_VCT_ARG_1, args[2], DESC_VCT_ARG_2, args[3], DESC_VCT_ARG_3, args[4], INT_ARG_4, args[5], INT_ARG_5));
-  return(mus_format("spectrum(" VCT_PT ", " VCT_PT ", #f, " INT_PT ", " INT_PT ")", 
-		    args[1], DESC_VCT_ARG_1, args[2], DESC_VCT_ARG_2, args[4], INT_ARG_4, args[5], INT_ARG_5));
-}
-static void mus_spectrum_5v(int *args, ptree *pt) 
-{
-  mus_spectrum(VCT_ARG_1->data, VCT_ARG_2->data, 
-	       (VCT_ARG_3) ? (VCT_ARG_3->data) : NULL, 
-	       INT_ARG_4, INT_ARG_5);
+	       VCT_ARG_1->length,
+	       INT_ARG_4);
   VCT_RESULT = VCT_ARG_1;
 }
 static xen_value *mus_spectrum_1(ptree *prog, xen_value **args, int num_args) 
 {
   if (num_args == 2) return(package(prog, R_VCT, mus_spectrum_2v, descr_mus_spectrum_2v, args, 2));
   if (num_args == 3) return(package(prog, R_VCT, mus_spectrum_3v, descr_mus_spectrum_3v, args, 3));
-  if ((num_args == 4) && (args[4]->type == R_INT))
-    return(package(prog, R_VCT, mus_spectrum_4v, descr_mus_spectrum_4v, args, 4));
-  return(package(prog, R_VCT, mus_spectrum_5v, descr_mus_spectrum_5v, args, 5));
+  return(package(prog, R_VCT, mus_spectrum_4v, descr_mus_spectrum_4v, args, 4));
 }
 
 
@@ -10330,7 +10315,7 @@ static void init_walkers(void)
   INIT_WALKER(S_rectangular2polar, make_walker(rectangular2polar_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_VCT, R_VCT));
   INIT_WALKER(S_multiply_arrays, make_walker(multiply_arrays_1, NULL, NULL, 2, 3, R_VCT, false, 3, R_VCT, R_VCT, R_INT));
   INIT_WALKER(S_mus_fft, make_walker(mus_fft_1, NULL, NULL, 2, 4, R_VCT, false, 4, R_VCT, R_VCT, R_INT, R_INT));
-  INIT_WALKER(S_spectrum, make_walker(mus_spectrum_1, NULL, NULL, 2, 5, R_VCT, false, 5, R_VCT, R_VCT, R_ANY, R_INT, R_INT));
+  INIT_WALKER(S_spectrum, make_walker(mus_spectrum_1, NULL, NULL, 2, 4, R_VCT, false, 4, R_VCT, R_VCT, R_ANY, R_INT));
   INIT_WALKER(S_convolution, make_walker(convolution_1, NULL, NULL, 2, 3, R_VCT, false, 3, R_VCT, R_VCT, R_INT));
   INIT_WALKER(S_formant_bank, make_walker(formant_bank_1,NULL, NULL, 3, 3, R_FLOAT, false, 1, R_VCT));
   INIT_WALKER(S_frame_add, make_walker(mus_frame_add_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_CLM, R_CLM, R_CLM));

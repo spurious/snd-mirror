@@ -1,6 +1,5 @@
 /* 
  * SOMEDAY:  dB in VUs (code below -- needs labels and a switch somewhere)
- * SOMEDAY:  syncd sliders -- use control-drag as in snd-motif amp-controls 
  */
 
 #include "snd.h"
@@ -1005,9 +1004,27 @@ static void record_amp_click_callback(Widget w, XtPointer context, XtPointer inf
 
 static void record_amp_drag_callback(Widget w, XtPointer context, XtPointer info) 
 {
+  bool with_control = false;
+  int amp;
+  AMP *a = (AMP *)context;
+  XMotionEvent *ev;
+  XmScrollBarCallbackStruct *cbs = (XmScrollBarCallbackStruct *)info;
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
-  record_amp_changed((AMP *)context, 
-		     ((XmScrollBarCallbackStruct *)info)->value);
+  ev = (XMotionEvent *)(cbs->event);
+  with_control = ((ev) && (ev->state & snd_ControlMask));
+  amp = cbs->value;
+  record_amp_changed(a, amp);
+  if (with_control)
+    {
+      int i;
+      for (i = 0; i < MAX_OUT_CHANS; i++)
+	if ((AMP_rec_outs[i]) && (AMP_rec_outs[i] != a))
+	  {
+	    int value, size, incr, page;
+	    XmScrollBarGetValues(AMP_rec_outs[i]->slider, &value, &size, &incr, &page);
+	    XmScrollBarSetValues(AMP_rec_outs[i]->slider, amp, size, incr, page, true);
+	  }
+    }
 }
 
 static void record_amp_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
@@ -1640,6 +1657,12 @@ static void volume_callback(Widget w, XtPointer context, XtPointer info)
 
 /* ---- slider button matrix ---- */
 
+static char new_actions[] =
+  "c<Btn1Down>: Select()\n\
+   c<Btn1Motion>: Moved()\n\
+   c<Btn1Up>:   Release()\n";
+static XtTranslations new_actions_table = NULL;
+  
 static Widget make_recorder_slider(PANE *p, AMP *a, Widget last_slider, bool input)
 {
   int n;
@@ -1704,6 +1727,12 @@ static Widget make_recorder_slider(PANE *p, AMP *a, Widget last_slider, bool inp
   XtSetArg(args[n], XmNdragCallback, n1 = make_callback_list(record_amp_drag_callback, (XtPointer)a)); n++;
   XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(record_amp_valuechanged_callback, (XtPointer)a)); n++;
   a->slider = XtCreateManagedWidget("amp", xmScrollBarWidgetClass, p->pane, args, n);
+
+  {
+    if (!new_actions_table)
+      new_actions_table = XtParseTranslationTable(new_actions);
+    XtOverrideTranslations(a->slider, new_actions_table);
+  }
 
   FREE(n1);
   FREE(n2);

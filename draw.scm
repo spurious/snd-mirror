@@ -203,7 +203,6 @@ the y-zoom-slider controls the graph amp"
 		(let ((rx (inexact->exact (floor (* width (/ (right-sample snd chn) (frames snd chn))))))
 		      (lx (inexact->exact (floor (* width (/ (left-sample snd chn) (frames snd chn)))))))
 		  (fill-rectangle (+ x-offset lx) chan-offset (max 1 (- rx lx)) height snd grf-chn selection-context))
-		
 		(let ((old-env (channel-property 'inset-envelope snd chn)))
 		  (if (and old-env
 			   (= width (car old-env))

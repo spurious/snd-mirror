@@ -2363,7 +2363,7 @@ sound)\n") if cross_snd == :help
       if ctr == freq_inc
         samples2vct(inctr, fftsize, cross_snd, 0, fdr)
         inctr += freq_inc
-        spectrum(fdr, fdi, false, fftsize, 2)
+        spectrum(fdr, fdi, false, 2)
         vct_subtract!(fdr, spectr)
         vct_scale!(fdr, 1.0 / freq_inc)
         ctr = 0

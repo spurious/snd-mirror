@@ -33,6 +33,7 @@
 ;;; add-text-to-status-area puts a text widget in the notebook status area
 ;;; make-variable-display displays an arbitrary set of expressions/variables in a notebook widget
 ;;; with-minmax-button adds an open/close button to each sound pane
+;;; set-root-window-color
 
 (use-modules (ice-9 common-list) (ice-9 format))
 
@@ -2744,6 +2745,13 @@ Reverb-feedback sets the scaler on the feedback.\n\
 
 
 ;(add-hook! after-open-hook with-minmax-button)
+
+
+(define (set-root-window-color color)
+  (let* ((dpy (XtDisplay (cadr (main-widgets))))
+	 (root-window (DefaultRootWindow dpy)))
+    (XSetWindowBackground dpy root-window (cadr color))
+    (XClearWindow dpy root-window)))
 
 
 ;;; SOMEDAY: bess-translations (first case is bess.scm)

@@ -2179,7 +2179,7 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 		(begin
 		  (samples->vct inctr fftsize cross-snd 0 fdr)
 		  (set! inctr (+ inctr freq-inc))
-		  (spectrum fdr fdi #f fftsize 2)
+		  (spectrum fdr fdi #f 2)
 		  (vct-subtract! fdr spectr)
 		  (vct-scale! fdr (/ 1.0 freq-inc))
 		  (set! ctr 0)))
