@@ -572,7 +572,7 @@ void move_selection(chan_info *cp, int x)
   move_selection_1(cp, x);
 }
 
-int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, char *comment, int chan)
+int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, const char *comment, int chan)
 {
   /* type and format have already been checked */
   int ofd, comlen, err = MUS_NO_ERROR, reporting = 0, no_space, bps;

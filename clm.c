@@ -5212,6 +5212,8 @@ mus_any *mus_make_sample2file(const char *filename, int out_chans, int out_forma
   return(mus_make_sample2file_with_comment_1(filename, out_chans, out_format, out_type, NULL, FALSE));
 }
 
+/* the unchecked version of this would be sample_file(ptr, samp, chan, val) */
+
 Float mus_sample2file(mus_any *ptr, off_t samp, int chan, Float val)
 {
   return(mus_write_sample(ptr, samp, chan, val));

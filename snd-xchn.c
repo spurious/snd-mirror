@@ -1,6 +1,8 @@
 #include "snd.h"
 
 /* TODO: if chan > 0 edit history is open, then unite, then separate, list is not redisplayed (this is ok in gtk) */
+/*       if scrolled list is placed in frame, it insists on opening its pane */
+/*       explicit size set or un/remanage sequence does not open the list */
 
 enum {
     W_top, W_form,
@@ -729,7 +731,7 @@ void reflect_edit_counter_change(chan_info *cp)
 
 static void cp_graph_key_press(Widget w, XtPointer context, XEvent *event, Boolean *cont);
 
-void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, int insertion, Widget main, int button_style, int with_events)
+int add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, int insertion, Widget main, int button_style, int with_events)
 {
   Widget *cw;
   XtCallbackList n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14;
@@ -741,6 +743,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
   Arg args[32];
   make_widgets = ((sp->chans[channel]) == NULL);
   sp->chans[channel] = make_chan_info(sp->chans[channel], channel, sp, ss);
+  if ((main) && (!(XmIsForm(main)))) return(-1);
   cp = sp->chans[channel];
   cx = cp->cgx;
   if (cx->chan_widgets == NULL) 
@@ -1073,6 +1076,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
   cax->wn = XtWindow(cw[W_graph]);
   cax->dp = XtDisplay(cw[W_graph]);
   cax->gc = sx->basic_gc;
+  return(0);
 }
 
 static void set_graph_font(chan_info *cp, XFontStruct *bf)

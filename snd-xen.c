@@ -1558,7 +1558,7 @@ static XEN g_equalize_panes(XEN snd)
   else 
     {
       sp = get_sp(snd, NO_PLAYERS);
-      if (sp)
+      if ((sp) && (sp->inuse == SOUND_NORMAL))
 	equalize_sound_panes(get_global_state(), 
 			     sp,
 			     sp->chans[0],

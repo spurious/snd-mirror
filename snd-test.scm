@@ -45,15 +45,15 @@
 	  (snd-print "\n")
 	  (snd-print str)))))
 
-(define tests 1)
+(define tests 2)
 (if (not (defined? 'snd-test)) (define snd-test -1))
 (if (defined? 'disable-play) (disable-play))
-(define keep-going #f)
+(define keep-going #t)
 (define full-test (< snd-test 0))
 (define total-tests 28)
 (if (not (defined? 'with-exit)) (define with-exit (< snd-test 0)))
 (set! (with-background-processes) #f)
-(define all-args #f) ; huge arg testing
+(define all-args #t) ; huge arg testing
 (define with-big-file #f)
 (define debugging-device-channels 2)
 
@@ -6625,6 +6625,7 @@ EDITS: 5
 	(let ((var (catch #t (lambda () (insert-sample -12 1.0)) (lambda args args))))
 	  (if (not (eq? (car var) 'no-such-sample))
 	      (snd-display ";insert-sample bad pos: ~A" var)))
+	(set! (show-axes index 0) show-no-axes)
 	(update-transform-graph index) 
 	(update-time-graph index) 
 	(if (or (fneq (sample 100) .5)
@@ -7314,6 +7315,7 @@ EDITS: 5
 	  (if (< (window-height) 600)
 	      (set! (window-height) 600))
 	  (set! (x-bounds obind 0) (list 0.0 0.1))
+	  (set! (show-axes obind 0) show-x-axis)
 	  (update-time-graph)
 	  (set! (amp-control obind) 0.1)
 	  (select-channel 2)
@@ -7451,6 +7453,8 @@ EDITS: 5
 	  (test-orig (lambda (snd) (pad-channel 1000 2000 ind1)) (lambda (snd) (delete-samples 1000 2000 ind1)) 'pad-channel ind1)
 	  (test-orig (lambda (snd) (clm-channel (make-one-zero :a0 2.0 :a1 0.0)))
 		     (lambda (snd) (clm-channel (make-one-zero :a0 0.5 :a1 0.0))) 'clm-channel ind1)
+	  (test-orig (lambda (snd) (clm-channel (make-one-pole :a0 2.0 :b1 0.0)))
+		     (lambda (snd) (clm-channel (make-one-pole :a0 0.5 :b1 0.0))) 'clm-channel ind1)
 	  (test-orig (lambda (snd) (filter-sound (make-one-zero :a0 2.0 :a1 0.0) 0 ind1 0)) 
 		     (lambda (snd) (filter-sound (make-one-zero :a0 0.5 :a1 0.0)) 0 ind1 0) 'filter-sound ind1)
 	  
@@ -10776,7 +10780,10 @@ EDITS: 5
 	  (frame->buffer gen fr0)
 	  (set! fr1 (buffer->frame gen fr1))
 	  (if (not (equal? fr0 fr1)) (snd-display ";frame->buffer: ~A ~A?" fr0 fr1)))
-	(set! (mus-data gen) (make-vct 3)))
+	(set! (mus-data gen) (make-vct 2))
+	(set! (mus-length gen) 2)
+	(if (not (= (mus-length gen) 2)) (snd-display ";set buffer length: ~D?" (mus-length gen))))
+	
       (gc)
       (let ((gen (make-buffer 6))
 	    (fr1 (make-frame 2 .1 .2))
@@ -11181,6 +11188,11 @@ EDITS: 5
 	(if (not (eq? (car var) 'no-data))
 	    (snd-display ";make-filter no coeffs: ~A" var)))
       
+      (let ((fr (make-fir-filter 6 (vct 0 1 2 3 4 5))))
+	(if (not (= (mus-length fr) 6)) (snd-display ";filter-length: ~A" (mus-length fr)))
+	(set! (mus-length fr) 3)
+	(if (not (= (mus-length fr) 3)) (snd-display ";set filter-length: ~A" (mus-length fr))))
+
       (let ((ind (new-sound "test.snd" mus-next mus-bfloat)))
 	(pad-channel 0 10000)
 	(freq-sweep .45)
@@ -11894,6 +11906,14 @@ EDITS: 5
 			    (not (= j (1- chans))))
 		       (snd-display ";mone ~A ~A = ~A?" i j (mixer-ref mone i j)))))))))
        (list 1 2 4 8))
+
+      (let ((fr (make-frame 4)))
+	(if (not (= (mus-length fr) 4)) (snd-display ";frame-length: ~A" (mus-length fr)))
+	(set! (mus-length fr) 2)
+	(if (not (= (mus-length fr) 2)) (snd-display ";set frame-length: ~A" (mus-length fr))))
+      (let ((mx (make-mixer 4 4)))
+	(let ((tag (catch #t (lambda () (set! (mus-length mx) 2)) (lambda args (car args)))))
+	  (if (not (eq? tag 'mus-error)) (snd-display "set mixer-length: ~A ~A" tag (mus-length mx)))))
       
       (let ((gen (make-fft-window hamming-window 16)))
 	(if (not (vequal gen (vct 0.080 0.115 0.215 0.364 0.540 0.716 0.865 1.000 1.000 0.865 0.716 0.540 0.364 0.215 0.115 0.080)))
@@ -12282,7 +12302,10 @@ EDITS: 5
       (test-gen-equal (make-wave-train 440.0 0.0 (make-vct 20)) (make-wave-train 440.0 0.0 (make-vct 20)) (make-wave-train 440.0 1.0 (make-vct 20)))
       
       (let ((hi (make-wave-train :size 256)))
-	(if (not (= (mus-length hi) 256)) (snd-display ";wave-train set length: ~A?" (mus-length hi))))
+	(if (not (= (mus-length hi) 256)) (snd-display ";wave-train set length: ~A?" (mus-length hi)))
+	(set! (mus-length hi) 128)
+	(if (not (= (mus-length hi) 128)) (snd-display ";set wave-train set length: ~A?" (mus-length hi))))
+
       (let ((tag (catch #t (lambda () (make-wave-train :size 0)) (lambda args (car args)))))
 	(if (not (eq? tag 'out-of-range)) (snd-display ";wave-train size 0: ~A" tag)))
       
@@ -13483,6 +13506,12 @@ EDITS: 5
 	  (if (fneq (mus-increment genx) 128) (snd-display ";mus-increment phase-vocoder: ~A" (mus-increment genx)))
 	  (set! (mus-increment genx) 256)
 	  (if (fneq (mus-increment genx) 256) (snd-display ";set mus-increment phase-vocoder: ~A" (mus-increment genx)))
+	  (if (not (= (mus-hop genx) 128)) (snd-display ";phase vocoder hop: ~A" (mus-hop genx)))
+	  (set! (mus-hop genx) 64)
+	  (if (not (= (mus-hop genx) 64)) (snd-display ";set phase vocoder hop: ~A" (mus-hop genx)))
+	  (if (not (= (mus-length genx) 512)) (snd-display ";phase vocoder length: ~A" (mus-length genx)))
+	  (set! (mus-length genx) 64)
+	  (if (not (= (mus-length genx) 64)) (snd-display ";set phase vocoder length: ~A" (mus-length genx)))
 	  (let ((genxx genx))
 	    (if (not (equal? genx genxx)) (snd-display ";phase-vocoder equal: ~A ~A" genxx genx))))
 	(close-sound ind))
@@ -16063,7 +16092,11 @@ EDITS: 5
 	 (lambda (file)
 	   (catch 'mus-error
 		  (lambda () 
-		    (if (< (mus-sound-chans (string-append sf-dir file)) 256)
+		    (if (and (< (mus-sound-chans (string-append sf-dir file)) 256)
+			     (> (mus-sound-chans (string-append sf-dir file)) 0)
+			     (>= (mus-sound-data-format (string-append sf-dir file)) 0)
+			     (> (mus-sound-srate (string-append sf-dir file)) 0)
+			     (>= (mus-sound-frames (string-append sf-dir file)) 0))
 			(set! good-files (cons file good-files))))
 		  (lambda args 
 		    (car args))))
@@ -19993,6 +20026,27 @@ EDITS: 5
 	(reverse-channel 0 123 oboe 0)
 	(if (not (= (edit-position oboe) 10))
 	    (snd-display ";oboe reverse-channel? ~A ~A" (edit-position oboe) (edit-fragment)))
+	(let* ((rd (make-sample-reader 0))
+	       (sr (make-src :srate 2.0 :input (lambda (dir) (rd)))))
+	  (clm-channel sr 0 12345 oboe 0)
+	  (if (not (= (edit-position oboe) 11))
+	      (snd-display ";oboe clm-channel src? ~A ~A" (edit-position oboe) (edit-fragment))))
+	(let* ((rd (make-sample-reader 0))
+	       (sr (make-granulate :expansion 2.0 :input (lambda (dir) (rd)))))
+	  (clm-channel sr 0 12345 oboe 0)
+	  (if (not (= (edit-position oboe) 12))
+	      (snd-display ";oboe clm-channel granulate? ~A ~A" (edit-position oboe) (edit-fragment))))
+	(let* ((rd (make-sample-reader 0))
+	       (flt (vct 1.0 0.0 0.0 0.0))
+	       (sr (make-convolve :input (lambda (dir) (rd)) :filter flt)))
+	  (clm-channel sr 0 12345 oboe 0)
+	  (if (not (= (edit-position oboe) 13))
+	      (snd-display ";oboe clm-channel convolve? ~A ~A" (edit-position oboe) (edit-fragment))))
+	(let* ((rd (make-sample-reader 0))
+	       (sr (make-phase-vocoder :input (lambda (dir) (rd)))))
+	  (clm-channel sr 0 12345 oboe 0)
+	  (if (not (= (edit-position oboe) 14))
+	      (snd-display ";oboe clm-channel phase-vocoder? ~A ~A" (edit-position oboe) (edit-fragment))))
 	(revert-sound)
 	
 	(let ((tag (catch #t (lambda () (scale-channel 2.0 0 123 oboe 0 (lambda (hi) #f))) (lambda args (car args)))))
@@ -29560,6 +29614,13 @@ EDITS: 2
 		      (snd-display ";C-u -100 C-d: ~A ~A ~A" len (frames i1 0) (cursor)))
 		  
 		  (key (char->integer #\x) 4 i1)
+		  (key (char->integer #\e) 4 i1) (force-event)
+		  (let ((str (widget-text (list-ref (sound-widgets i1) 3)))
+			(size (widget-size (list-ref (sound-widgets i1) 3))))
+		    (if (not (string=? str "no macro active?"))
+			(snd-display ";C-x C-e report-in-minibuffer: ~A ~A?" str size)))
+
+		  (key (char->integer #\x) 4 i1)
 		  (key (char->integer #\() 0 i1)
 		  (let ((str (widget-text (list-ref (sound-widgets i1) 3))))
 		    (if (not (string=? str "defining macro..."))
@@ -32191,6 +32252,7 @@ EDITS: 2
 			(focus-widget begtxt)
 			(widget-string begtxt "0.5") (force-event)
 			(key-event begtxt snd-return-key 0) (force-event)
+			(update-time-graph ind 0)
 			(if (fneq (/ (mix-position id1) 22050.0) 0.5)
 			    (snd-display ";mix panel set id1 (~A) to 0.5: ~A ~A (~X ~A)" 
 					 id1 (mix-position id1) (/ (mix-position id1) 22050.0) 
@@ -36748,6 +36810,7 @@ EDITS: 2
       (define procs3 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 3)))) procs))
       (define set-procs3 (remove-if (lambda (n) (or (not (procedure? n)) (not (set-arity-ok n 4)))) set-procs))
       (define procs4 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 4)))) procs))
+      (define set-procs4 (remove-if (lambda (n) (or (not (procedure? n)) (not (set-arity-ok n 5)))) set-procs))
       (define procs5 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 5)))) procs))
       (define procs6 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 6)))) procs))
       (define procs8 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 8)))) procs))
@@ -36758,7 +36821,8 @@ EDITS: 2
       (if (or full-test (= snd-test 28) (and keep-going (<= snd-test 28)))
 	  (begin
 	    (run-hook before-test-hook 28)
-	    
+	    (do ((test-28 0 (1+ test-28)))
+		((= test-28 tests))
 	    (for-each (lambda (n)
 			(let ((tag
 			       (catch #t
@@ -37970,6 +38034,36 @@ EDITS: 2
 		   (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) 
 			 :input -1 0 #f #t '() (make-vector 0) 12345678901234567890))
 		  
+		  ;; ---------------- set! 4 Args
+		  (for-each 
+		   (lambda (arg1)
+		     (for-each 
+		      (lambda (arg2)
+			(for-each 
+			 (lambda (arg3)
+			   (for-each 
+			    (lambda (arg4)
+			      (for-each 
+			       (lambda (arg5)
+				 (for-each 
+				  (lambda (n)
+				    (let ((err (catch #t
+						      (lambda () (set! (n arg1 arg2 arg3 arg4) arg5))
+						      (lambda args (car args)))))
+				      (if (eq? err 'wrong-number-of-args)
+					  (snd-display ";set-procs4: ~A ~A" err (procedure-property n 'documentation)))))
+				  set-procs4))
+			       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) 
+				     :wave -1 0 3 16 #f #t '() (make-vector 0) 12345678901234567890)))
+			    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) 
+				  :initial-contents -1 0 3 16 #f #t '() (make-vector 0) 12345678901234567890)))
+			 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) 
+			       :srate -1 0 3 16 #f #t '() (make-vector 0) 12345678901234567890)))
+		      (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) 
+			    :input -1 0 3 16 #f #t '() (make-vector 0) 12345678901234567890)))
+		   (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) 
+			 :input -1 0 3 16 #f #t '() (make-vector 0) 12345678901234567890))
+		  
 		  ;; ---------------- 5 Args
 		  (for-each 
 		   (lambda (arg1)
@@ -38097,7 +38191,7 @@ EDITS: 2
 			 (list 1.5 "/hiho")))
 		      (list 1.5 -1)))
 		   (list #f 1234))
-		  (gc)))
+		  (gc))))
 	    
 	    (mus-audio-reinitialize)
 	    (run-hook after-test-hook 28)

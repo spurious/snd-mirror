@@ -5300,20 +5300,20 @@ void mus_xen_init(void)
   XEN_DEFINE_CONSTANT(S_mus_linear,             MUS_LINEAR,                 "locsig linear interpolation");
   XEN_DEFINE_CONSTANT(S_mus_sinusoidal,         MUS_SINUSOIDAL,             "locsig sinusoidal interpolation");
 
-  XEN_DEFINE_PROCEDURE(S_mus_inspect,  g_inspect_w, 1, 0, 0,  H_mus_inspect);
-  XEN_DEFINE_PROCEDURE(S_mus_describe, g_describe_w, 1, 0, 0, H_mus_describe);
-  XEN_DEFINE_PROCEDURE(S_mus_name,     g_name_w, 1, 0, 0,     H_mus_name);
-  XEN_DEFINE_PROCEDURE(S_mus_run,      g_run_w, 1, 2, 0,      H_mus_run);
-  XEN_DEFINE_PROCEDURE(S_mus_bank,     g_mus_bank_w, 2, 2, 0, H_mus_bank);
-  XEN_DEFINE_PROCEDURE(S_mus_offset,   g_offset_w, 1, 0, 0,   H_mus_offset);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_phase, g_phase_w, H_mus_phase, S_setB S_mus_phase, g_set_phase_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_scaler, g_scaler_w, H_mus_scaler, S_setB S_mus_scaler, g_set_scaler_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_width, g_width_w, H_mus_width, S_setB S_mus_width, g_set_width_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_frequency, g_frequency_w, H_mus_frequency, S_setB S_mus_frequency, g_set_frequency_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_length, g_length_w, H_mus_length, S_setB S_mus_length, g_set_length_w,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_data, g_data_w, H_mus_data, S_setB S_mus_data, g_set_data_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE(S_mus_inspect,   g_inspect_w, 1, 0, 0,   H_mus_inspect);
+  XEN_DEFINE_PROCEDURE(S_mus_describe,  g_describe_w, 1, 0, 0,  H_mus_describe);
+  XEN_DEFINE_PROCEDURE(S_mus_name,      g_name_w, 1, 0, 0,      H_mus_name);
+  XEN_DEFINE_PROCEDURE(S_mus_run,       g_run_w, 1, 2, 0,       H_mus_run);
+  XEN_DEFINE_PROCEDURE(S_mus_bank,      g_mus_bank_w, 2, 2, 0,  H_mus_bank);
+  XEN_DEFINE_PROCEDURE(S_mus_offset,    g_offset_w, 1, 0, 0,    H_mus_offset);
   XEN_DEFINE_PROCEDURE(S_mus_file_name, g_file_name_w, 1, 0, 0, H_mus_file_name);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_phase,     g_phase_w,     H_mus_phase,     S_setB S_mus_phase,     g_set_phase_w,      1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_scaler,    g_scaler_w,    H_mus_scaler,    S_setB S_mus_scaler,    g_set_scaler_w,     1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_width,     g_width_w,     H_mus_width,     S_setB S_mus_width,     g_set_width_w,      1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_frequency, g_frequency_w, H_mus_frequency, S_setB S_mus_frequency, g_set_frequency_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_length,    g_length_w,    H_mus_length,    S_setB S_mus_length,    g_set_length_w,     1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_data,      g_data_w,      H_mus_data,      S_setB S_mus_data,      g_set_data_w,       1, 0, 2, 0);
 
   XEN_DEFINE_PROCEDURE(S_oscil_p,    g_oscil_p_w, 1, 0, 0,    H_oscil_p);
   XEN_DEFINE_PROCEDURE(S_make_oscil, g_make_oscil_w, 0, 4, 0, H_make_oscil);

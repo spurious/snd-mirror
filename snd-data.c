@@ -243,7 +243,7 @@ void initialize_control_panel(snd_state *ss, snd_info *sp)
   sp->saved_controls = NULL;
 }
 
-snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_info *hdr, int snd_slot, int read_only)
+snd_info *make_snd_info(snd_info *sip, snd_state *state, const char *filename, file_info *hdr, int snd_slot, int read_only)
 {
   snd_info *sp = NULL;
   int chans, i;
@@ -543,7 +543,12 @@ int map_over_separate_chans(snd_state *ss, int (*func)(chan_info *, void *), voi
   return(val);
 }
 
-int snd_ok(snd_info *sp) {return((sp) && (sp->inuse != SOUND_IDLE) && (sp->active));}
+int snd_ok(snd_info *sp) 
+{
+  return((sp) && 
+	 (sp->inuse != SOUND_IDLE) && 
+	 (sp->active));
+}
 
 int active_channels(snd_state *ss, int count_virtual_channels)
 {
@@ -553,7 +558,8 @@ int active_channels(snd_state *ss, int count_virtual_channels)
   for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
-      if (snd_ok(sp) && (sp->inuse != SOUND_WRAPPER))
+      if (snd_ok(sp) && 
+	  (sp->inuse != SOUND_WRAPPER))
 	{
 	  if ((count_virtual_channels == WITH_VIRTUAL_CHANNELS) ||
 	      (sp->channel_style == CHANNELS_SEPARATE))
@@ -667,6 +673,7 @@ static XEN select_channel_hook;
 static void select_sound(snd_state *ss, snd_info *sp)
 {
   snd_info *osp = NULL;
+  if ((sp == NULL) || (sp->inuse != SOUND_NORMAL)) return;
   if (XEN_HOOKED(select_sound_hook))
     run_hook(select_sound_hook,
 	     XEN_LIST_1(C_TO_XEN_INT(sp->index)),
@@ -719,6 +726,7 @@ void select_channel(snd_info *sp, int chan)
 {
   snd_state *ss = sp->state;
   chan_info *cp, *ncp;
+  if ((sp == NULL) || (sp->inuse != SOUND_NORMAL)) return;
   cp = selected_channel(ss);
   if (cp != sp->chans[chan])
     {
@@ -816,7 +824,7 @@ sync_info *sync_to_chan(chan_info *cp)
   return(make_simple_sync(cp, 0));
 }
 
-snd_info *find_sound(snd_state *ss, char *name, int nth)
+snd_info *find_sound(snd_state *ss, const char *name, int nth)
 {
   snd_info *sp;
   char *sname;

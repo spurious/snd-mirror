@@ -58,14 +58,14 @@ char *copy_string(const char *str)
 #endif
 }
 
-int snd_strlen(char *str)
+int snd_strlen(const char *str)
 {
   /* strlen(NULL) -> seg fault! */
   if ((str) && (*str)) return(strlen(str));
   return(0);
 }
 
-char *snd_strcat(char *errmsg, char *str, int *size)
+char *snd_strcat(char *errmsg, const char *str, int *size)
 {
   int new_len, err_size;
   new_len = (snd_strlen(str) + snd_strlen(errmsg));
@@ -83,7 +83,7 @@ char *snd_strcat(char *errmsg, char *str, int *size)
 }
 
 
-char *filename_without_home_directory(char *name)
+char *filename_without_home_directory(const char *name)
 {
   /* since we don't want to mess with freeing these guys, I'll just return a pointer into the name */
   int i, len, last_slash;
@@ -262,7 +262,7 @@ static char *get_tmpdir(void)
 }
 
 static int sect_ctr = 0;
-char *shorter_tempnam(char *udir, char *prefix)
+char *shorter_tempnam(const char *udir, const char *prefix)
 {
   /* tempnam turns out names that are inconveniently long (in this case the filename is user-visible) */
   char *str, *tmpdir = NULL;
@@ -845,7 +845,30 @@ void stop_timing(void) {fprintf(stderr, "time: %d ",(int)((clock() - start) * 10
 
 #endif
 
+#if HAVE_GUILE
+static XEN g_file_to_string(XEN name)
+{ 
+  char *filename;
+  FILE *file;
+  int size;
+  char *content;
+  filename = XEN_TO_C_STRING(name);
+  if ((file = fopen(filename, "r")) == NULL) return(XEN_FALSE);
+  fseek(file, 0, SEEK_END);
+  size = ftell(file);
+  rewind(file);
+  content = (char *)CALLOC(size + 1, sizeof(char));
+  if (content == NULL) return(XEN_FALSE);
+  fread(content, 1, size, file);
+  fclose(file);
+  return(C_TO_XEN_STRING(content));
+}
+#endif
+
 void g_init_utils(void)
 {
   decimal_pt = local_decimal_point();
+#if HAVE_GUILE
+  XEN_DEFINE_PROCEDURE("file->string", g_file_to_string, 1, 0, 0, "file contents as string");
+#endif
 }

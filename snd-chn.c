@@ -2,7 +2,6 @@
 
 /* TODO: if united chans, select chan should set edit_history to reflect selected chan (label also to show which is affected) */
 /* TODO: if superimposed, how to see edit history pane of >1 chan (more panes? arrows?) */
-/* TODO: if superimposed, selected portion is wrong color (white) */
 /* TODO: if superimposed and 2chn cursor set, 1chan is xor'd, subsequent click sets both (and chan1 cursor takes precedence?) */
 
 
@@ -992,6 +991,7 @@ snd_info *make_simple_channel_display(snd_state *ss, int srate, int initial_leng
   snd_info *sp;
   chan_info *cp;
   file_info *hdr;
+  int err;
   sp = make_basic_snd_info(1); /* 1 chan */
   sp->nchans = 1;
   sp->inuse = SOUND_WRAPPER;
@@ -1004,7 +1004,14 @@ snd_info *make_simple_channel_display(snd_state *ss, int srate, int initial_leng
   hdr->srate = srate;
   hdr->comment = NULL;
   hdr->chans = 1;
-  add_channel_window(sp, 0, ss, 0, 0, container, with_arrows, with_events);
+  err = add_channel_window(sp, 0, ss, 0, 0, container, with_arrows, with_events);
+  if (err == -1)
+    {
+      FREE(sp->chans);
+      FREE(sp->hdr);
+      FREE(sp);
+      return(NULL);
+    }
   cp = sp->chans[0];
   cp->sound = sp;
   cp->hookable = FALSE;
@@ -3083,8 +3090,11 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
     {
       if ((with_time) && (cp->hookable)) /* hookable if not region graph */
 	{
-	  display_selection(cp);
-	  if ((cp->chan == 0) || (sp->channel_style != CHANNELS_SUPERIMPOSED)) display_channel_marks(cp);
+	  if ((cp->chan == 0) || (sp->channel_style != CHANNELS_SUPERIMPOSED)) 
+	    {
+	      display_selection(cp);
+	      display_channel_marks(cp);
+	    }
 	  if (cp->show_y_zero) display_zero(cp);
 	  if ((cp->mixes)) display_channel_mixes(cp);
 	}
@@ -6528,6 +6538,11 @@ to a standard Snd channel graph placed in the widget 'container'."
   initial_length = XEN_TO_C_INT_OR_ELSE(length, 8192);
   ss = get_global_state();
   sp = make_simple_channel_display(ss, rate, initial_length, WITH_FW_BUTTONS, graph_style(ss), (widget_t)(XEN_UNWRAP_WIDGET(container)), TRUE);
+  if (sp == NULL) /* can only happen if "container" is not a form widget */
+    XEN_ERROR(MUS_MISC_ERROR,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_make_variable_graph),
+			 C_TO_XEN_STRING("container must be a Form widget"),
+			 container));
   sp->read_only = TRUE;
   sp->state = ss;
   sp->index = find_free_sound_slot_for_channel_display(ss);

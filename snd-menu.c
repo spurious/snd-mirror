@@ -619,15 +619,21 @@ static int make_callback_slot(void)
 
 static void add_callback(int slot, XEN callback)
 {
-  menu_functions[slot] = callback;
-  snd_protect(callback);
+  if ((slot >= 0) && (slot < callbacks_size))
+    {
+      menu_functions[slot] = callback;
+      snd_protect(callback);
+    }
 }
 
 void unprotect_callback(int slot)
 {
-  if (XEN_PROCEDURE_P(menu_functions[slot]))
-    snd_unprotect(menu_functions[slot]);
-  menu_functions[slot] = XEN_UNDEFINED;
+  if ((slot >= 0) && (slot < callbacks_size))
+    {
+      if (XEN_PROCEDURE_P(menu_functions[slot]))
+	snd_unprotect(menu_functions[slot]);
+      menu_functions[slot] = XEN_UNDEFINED;
+    }
 }
 
 static XEN gl_add_to_main_menu(XEN label, XEN callback)

@@ -336,7 +336,7 @@ file_info *make_file_info(char *fullname, snd_state *ss)
   return(hdr);
 }
 
-file_info *make_temp_header(char *fullname, int srate, int chans, off_t samples, char *caller)
+file_info *make_temp_header(char *fullname, int srate, int chans, off_t samples, const char *caller)
 {
   file_info *hdr;
   hdr = (file_info *)CALLOC(1, sizeof(file_info));

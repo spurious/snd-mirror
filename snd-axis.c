@@ -153,6 +153,18 @@ Locus grf_y(Float val, axis_info *ap)
   return((Locus)(ap->y_base + val * ap->y_scale));
 }
 
+void init_axis_scales(axis_info *ap)
+{
+  if ((ap->x_axis_x0 == ap->x_axis_x1) || (ap->x0 == ap->x1))
+    ap->x_scale = 0.0;
+  else ap->x_scale = ((double)(ap->x_axis_x1 - ap->x_axis_x0)) / ((double)(ap->x1 - ap->x0));
+  ap->x_base = (double)(ap->x_axis_x0 - ap->x0 * ap->x_scale);
+  if ((ap->y_axis_y0 == ap->y_axis_y1) || (ap->y0 == ap->y1))
+    ap->y_scale = 0.0;
+  else ap->y_scale = (Float)(ap->y_axis_y1 - ap->y_axis_y0) / (ap->y1 - ap->y0);
+  ap->y_base = (Float)(ap->y_axis_y0 - ap->y0 * ap->y_scale);
+}
+
 static Locus tick_grf_x(double val, axis_info *ap, int style, int srate)
 {
   int res = 0;
@@ -321,15 +333,7 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
 	  ap->x_axis_x1 = ap->graph_x0 + (int)(0.9 * width);
 	  ap->x_axis_x0 = ap->graph_x0 + (int)(0.2 * width);
 	}
-      if ((ap->x_axis_x0 == ap->x_axis_x1) || (ap->x0 == ap->x1))
-	ap->x_scale = 0.0;
-      else ap->x_scale = ((double)(ap->x_axis_x1 - ap->x_axis_x0)) / ((double)(ap->x1 - ap->x0));
-      ap->x_base = (double)(ap->x_axis_x0 - ap->x0 * ap->x_scale);
-
-      if ((ap->y_axis_y0 == ap->y_axis_y1) || (ap->y0 == ap->y1))
-	ap->y_scale = 0.0;
-      else ap->y_scale = (ap->y_axis_y1 - ap->y_axis_y0) / (ap->y1 - ap->y0);
-      ap->y_base = (Float)(ap->y_axis_y0 - ap->y0 * ap->y_scale);
+      init_axis_scales(ap);
       return;
     }
 
@@ -541,15 +545,12 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
   ap->x_axis_x1 += ap->graph_x0;
   ap->x_label_x += ap->graph_x0;
   ap->x_axis_y0 = cury;
-  ap->x_scale = ((double)(ap->x_axis_x1 - ap->x_axis_x0)) / ((double)(ap->x1 - ap->x0));
-  ap->y_scale = (Float)(ap->y_axis_y1 - ap->y_axis_y0) / (ap->y1 - ap->y0);
   /* now if y_offset is in use, apply global shift in y direction */
   ap->x_axis_y0 += ap->y_offset;
   ap->y_axis_y0 += ap->y_offset;
   ap->y_axis_y1 += ap->y_offset;
   ap->x_label_y += ap->y_offset;
-  ap->x_base = (double)(ap->x_axis_x0 - ap->x0 * ap->x_scale);
-  ap->y_base = (Float)(ap->y_axis_y0 - ap->y0 * ap->y_scale);
+  init_axis_scales(ap);
   if ((printing) && (ap->cp) &&
       ((ap->cp->chan == 0) || (ap->cp->sound->channel_style != CHANNELS_SUPERIMPOSED)))
     ps_bg(ap, ax);

@@ -1763,7 +1763,7 @@ Cessate apply_controls(Indicium ptr)
   reset_controls(sp); /* i.e. clear it */
   sp->applying = FALSE;
   sgx = sp->sgx;
-  if (sgx->apply_in_progress) sgx->apply_in_progress = 0;
+  if ((sgx) && (sgx->apply_in_progress)) sgx->apply_in_progress = 0;
   if (XEN_HOOKED(after_apply_hook))
     run_hook(after_apply_hook, 
 	     XEN_LIST_1(C_TO_SMALL_XEN_INT(sp->index)),
@@ -1831,7 +1831,9 @@ static XEN g_sound_p(XEN snd_n)
   #define H_sound_p "(" S_sound_p " (index 0)): #t if sound associated with index is active (accessible)"
   snd_info *sp;
   sp = get_sp(snd_n, PLAYERS_OK);
-  return(C_TO_XEN_BOOLEAN((sp) && snd_ok(sp)));
+  return(C_TO_XEN_BOOLEAN((sp) && 
+			  (snd_ok(sp)) &&
+			  (sp->inuse == SOUND_NORMAL)));
 }
 
 static XEN g_select_sound(XEN snd_n)
@@ -1851,7 +1853,8 @@ static XEN g_select_sound(XEN snd_n)
 	  (val < ss->max_sounds))
 	{
 	  sp = ss->sounds[val];
-	  if (snd_ok(sp))
+	  if ((snd_ok(sp)) &&
+	      (sp->inuse == SOUND_NORMAL))
 	    {
 	      select_channel(sp, 0);
 	      equalize_sound_panes(ss, sp, sp->chans[0], FALSE);
@@ -1946,7 +1949,7 @@ static XEN sound_get(XEN snd_n, int fld, char *caller, int just_sound)
       ASSERT_SOUND(caller, snd_n, 1);
     }
   sp = get_sp(snd_n, PLAYERS_OK);
-  if (sp == NULL)
+  if ((sp == NULL) || (sp->inuse == SOUND_WRAPPER))
     return(snd_no_such_sound_error(caller, snd_n));
   switch (fld)
     {
@@ -2044,7 +2047,7 @@ static XEN sound_set(XEN snd_n, XEN val, int fld, char *caller)
     }
   ASSERT_JUST_SOUND(caller, snd_n, 2);
   sp = get_sp(snd_n, PLAYERS_OK);
-  if (sp == NULL) 
+  if ((sp == NULL) || (sp->inuse == SOUND_WRAPPER))
     return(snd_no_such_sound_error(caller, snd_n));
   ss = sp->state;
   switch (fld)
@@ -3269,7 +3272,7 @@ static XEN g_set_filter_control_env(XEN edata, XEN snd_n)
   int i;
   ASSERT_JUST_SOUND(S_setB S_filter_control_env, snd_n, 2);
   sp = get_sp(snd_n, PLAYERS_OK);
-  if (sp == NULL)
+  if ((sp == NULL) || (sp->inuse == SOUND_WRAPPER))
     return(snd_no_such_sound_error(S_setB S_filter_control_env, snd_n));
   if (sp->filter_control_env) sp->filter_control_env = free_env(sp->filter_control_env);  /* set to null in case get_env throws error */
   e = get_env(edata, S_setB S_filter_control_env);
@@ -3294,7 +3297,7 @@ static XEN g_filter_control_env(XEN snd_n)
   snd_info *sp = NULL;
   ASSERT_JUST_SOUND(S_filter_control_env, snd_n, 1);
   sp = get_sp(snd_n, PLAYERS_OK);
-  if (sp == NULL)
+  if ((sp == NULL) || (sp->inuse == SOUND_WRAPPER))
     return(snd_no_such_sound_error(S_filter_control_env, snd_n));
   return(env_to_xen(sp->filter_control_env)); 
 }
@@ -3316,7 +3319,7 @@ The 'choices' are 0 (apply to sound), 1 (apply to channel), and 2 (apply to sele
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(beg), beg, XEN_ARG_3, S_apply_controls, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(dur), dur, XEN_ARG_4, S_apply_controls, "an integer");
   sp = get_sp(snd, PLAYERS_OK);
-  if (sp) 
+  if (sp)
     {
       ss = sp->state;
       if (XEN_OFF_T_P(beg)) apply_beg = XEN_TO_C_OFF_T(beg); else apply_beg = 0;

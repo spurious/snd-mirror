@@ -957,10 +957,7 @@ void enved_show_background_waveform(snd_state *ss, axis_info *ap, axis_info *gra
 	      gray_ap->y1 = 1.0;
 	      gray_ap->x0 = 0.0;
 	      gray_ap->x1 = SND_SRATE(active_channel->sound) / 2;
-	      gray_ap->x_scale = ((double)(gray_ap->x_axis_x1 - gray_ap->x_axis_x0)) / ((double)(gray_ap->x1 - gray_ap->x0));
-	      gray_ap->y_scale = (gray_ap->y_axis_y1 - gray_ap->y_axis_y0) / (gray_ap->y1 - gray_ap->y0);
-	      gray_ap->x_base = (double)(gray_ap->x_axis_x0 - gray_ap->x0 * gray_ap->x_scale);
-	      gray_ap->y_base = (Float)(gray_ap->y_axis_y0 - gray_ap->y0 * gray_ap->y_scale);
+	      init_axis_scales(gray_ap);
 	      make_fft_graph(active_channel, active_channel->sound, gray_ap, gray_ap->ax, FALSE);
 	      /* last arg makes sure we don't call any hooks in make_fft_graph */
 	    }
@@ -1001,10 +998,7 @@ void enved_show_background_waveform(snd_state *ss, axis_info *ap, axis_info *gra
 	  gray_ap->x0 = 0.0;
 	  gray_ap->x1 = (Float)samps / (Float)srate;
 	}
-      gray_ap->x_scale = ((double)(gray_ap->x_axis_x1 - gray_ap->x_axis_x0)) / ((double)(gray_ap->x1 - gray_ap->x0));
-      gray_ap->y_scale = (gray_ap->y_axis_y1 - gray_ap->y_axis_y0) / (gray_ap->y1 - gray_ap->y0);
-      gray_ap->x_base = (double)(gray_ap->x_axis_x0 - gray_ap->x0 * gray_ap->x_scale);
-      gray_ap->y_base = (Float)(gray_ap->y_axis_y0 - gray_ap->y0 * gray_ap->y_scale);
+      init_axis_scales(gray_ap);
       active_channel->axis = gray_ap;
       old_time_graph_type = active_channel->time_graph_type;
       active_channel->time_graph_type = GRAPH_ONCE;

@@ -1119,7 +1119,7 @@ static void unlockapply(snd_info *sp, void *up)
 void unlock_apply(snd_state *ss, snd_info *sp)
 {
   for_each_sound(ss, unlockapply, (void *)sp);
-  if ((sp) && (!(ss->using_schemes))) 
+  if ((sp) && (!(ss->using_schemes)) && (sp->index >= 0))
     XmChangeColor(APPLY_BUTTON(sp), (Pixel)((ss->sgx)->basic_color));
 }
 

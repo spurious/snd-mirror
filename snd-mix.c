@@ -5,11 +5,9 @@
  * :channels, srate, data_location, data_size, data_format, header_type, comment, sync, (short)file_name
  * and others that don't assert sound first?? -- g_filter 
  */
-/* SOMEDAY: mix waveform in amp env as in enved
+/* mix waveform in amp env as in enved (this requires 1-chan mix readers, not currently implemented)
  * SOMEDAY: sync multichan mixes should change together in graph
  */
-
-/* SOMEDAY: if multiple mix panels, which one gets selected mix? -- a "copy" button? */
 
 #define NO_SUCH_TRACK XEN_ERROR_TYPE("no-such-track")
 

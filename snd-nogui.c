@@ -1,7 +1,7 @@
 #include "snd.h"
 
 void check_menu_labels(int key, int state, int extended) {}
-void add_channel_window(snd_info *sound, int channel, snd_state *ss, int chan_y, int insertion, widget_t main, int arrows, int with_events) {}
+int add_channel_window(snd_info *sound, int channel, snd_state *ss, int chan_y, int insertion, widget_t main, int arrows, int with_events) {return(0);}
 int snd_help(snd_state *ss, char *subject, char *help, int with_wrap) {fprintf(stdout, help); return(0);}
 void add_to_error_history(snd_state *ss, char *msg, int popup) {}
 void post_error_dialog(snd_state *ss, char *msg) {}

@@ -260,7 +260,7 @@ void superimpose_sound(snd_info *sp);
 int fixup_cp_cgx_ax_wn(chan_info *cp);
 void get_current_color(int colormap, int j, unsigned short *r, unsigned short *g, unsigned short *b);
 void change_channel_style(snd_info *sp, int new_style);
-void add_channel_window(snd_info *sound, int channel, snd_state *ss, int chan_y, int insertion, widget_t main, int arrows, int with_events);
+int add_channel_window(snd_info *sound, int channel, snd_state *ss, int chan_y, int insertion, widget_t main, int arrows, int with_events);
 
 
 /* -------- snd-xsnd.c -------- */

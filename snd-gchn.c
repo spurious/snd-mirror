@@ -589,7 +589,7 @@ static const gint config_attributes[] = {
 };
 #endif
 
-void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, int insertion, GtkWidget *main, int button_style, int with_events)
+int add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, int insertion, GtkWidget *main, int button_style, int with_events)
 {
   GtkWidget **cw;
   GtkObject **adjs;
@@ -882,6 +882,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
   cax = cx->ax;
   cax->gc = sx->basic_gc;
   /* cax->wn has to wait until update_graph */
+  return(0);
 }
 
 static void set_graph_font(chan_info *cp, PangoFontDescription *fnt)

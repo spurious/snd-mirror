@@ -249,7 +249,7 @@ end
 fof.c of Perry Cook and the article
 "Synthesis of the Singing Voice" by Bennett and Rodet in
 "Current Directions in Computer Music Research" (MIT Press).
-<b>pluck</b> is based on
+</p><p><b>pluck</b> is based on
 the Karplus-Strong algorithm as extended by David Jaffe and Julius Smith -- see 
 Jaffe and Smith, "Extensions of the Karplus-Strong Plucked-String Algorithm"
 CMJ vol 7 no 2 Summer 1983, reprinted in "The Music Machine".
@@ -445,17 +445,17 @@ include:
 <A NAME="drawdoc"></a><span class=box><h2>draw.scm</h2></span>
 
 <p>draw.scm has examples of graphics additions; some of these are shown in extsnd.html.
-<b>display-energy</b> is a lisp-graph-hook procedure that displays the current time
+</p><p><b>display-energy</b> is a lisp-graph-hook procedure that displays the current time
 domain data as energy, not amplitude, using the y zoom slider to control the
 y axis.  The other procedures in draw.scm are intended for use with the
 after-graph-hook.  
-<b>display-colored-samples</b> (color beg dur snd chn) displays samples from beg for dur in color
+</p><p><b>display-colored-samples</b> (color beg dur snd chn) displays samples from beg for dur in color
 whenever they're in the current view. This is intended for use with <b>color-samples</b>. 
 (<a name="colorsamples">color-samples</a> color #:optional beg dur snd chn) causes samples from beg to beg+dur to be displayed in color;
 to undo this, use <b>uncolor-samples</b>.
-<b>display-previous-edits</b> displays all edits of the current sound, with older versions gradually fading away.
-<b>overlay-sounds</b> overlays onto its first argument all subsequent arguments: (overlay-sounds 1 0 3).
-<b>make-current-window-display</b>
+</p><p><b>display-previous-edits</b> displays all edits of the current sound, with older versions gradually fading away.
+</p><p><b>overlay-sounds</b> overlays onto its first argument all subsequent arguments: (overlay-sounds 1 0 3).
+</p><p><b>make-current-window-display</b>
 displays in the upper right corner the overall current sound and where the current window fits in it.
 This info is implicit in the x sliders, but a redundant graph doesn't hurt.  If you click in that graph,
 the cursor is moved to the clicked point.
@@ -521,12 +521,12 @@ the listener?
 
 <p><b>dolph</b> is the Dolph-Chebyshev fft data window, taken
 from Richard Lyons, "Understanding DSP".
-<b>dht</b> is the slow form of the Hartley transform, 
+</p><p><b>dht</b> is the slow form of the Hartley transform, 
 taken from Perry Cook's SignalProcessor.m.
 The Hartley transform is a kind of Fourier transform.
 A similar function, using the DFT, is <b>find-sine</b>.
 It returns the amplitude and initial-phase (for sin) at freq between beg and dur.
-The simple Butterworth filters are taken from Sam Heisz's CLM version
+</p><p>The simple Butterworth filters are taken from Sam Heisz's CLM version
 of Paris Smaragdis's Csound version of Charles Dodge's code from "Computer Music: synthesis, composition, and performance".
 The second set (make-butter-lp et al) provide arbitrary order Butterworths.
 See also the notch filter in new-effects.scm.
@@ -547,15 +547,15 @@ then inverse ffting.
 (freqdiv 8)
 </pre>
 <p>
-Also from that package is <b>adsat</b>, "adaptive saturation".  <b>spike</b> performs 
+Also from that package is <b>adsat</b>, "adaptive saturation".  </p><p><b>spike</b> performs 
 a product of samples (as opposed to the more common sum); that is, it multiplies
 together several successive samples, causing a more spikey output.
-<b>compute-uniform-circular-string</b> and <b>compute-string</b> implement
+</p><p><b>compute-uniform-circular-string</b> and <b>compute-string</b> implement
 scanned synthesis of Bill Verplank and Max Mathews.
 To watch the wave, open some sound (so Snd has some place to put the graph), turn off
 the time domain display (to give our graph all the window)
 then <code>(testunif 1.0 0.1 0.0)</code>.
-The <A NAME="spotfreq">spot-freq</a> function is a simple first-pass at using autocorrelation for
+</p><p>The <A NAME="spotfreq"><b>spot-freq</b></a> function is a simple first-pass at using autocorrelation for
 pitch tracking; it's easily fooled, but could probably be made relatively robust.
 The code:
 </p>
@@ -595,7 +595,7 @@ Polynomials driven by a cosine). Three other similar functions are <b>sum-of-n-s
 </p>
 
 <p><b>brighten-slightly</b> is a slight simplification of contrast-enhancement.
-<b>make-hilbert-transform</b> and <b>hilbert-transform</b> provide an FIR filter approach to the Hilbert transform.
+</p><p><b>make-hilbert-transform</b> and <b>hilbert-transform</b> provide an FIR filter approach to the Hilbert transform.
 <b>make-lowpass</b> and <b>lowpass</b> provide FIR low pass filtering.
 <b>make-highpass</b> and <b>highpass</b> provide FIR high pass filtering.
 <b>make-bandpass</b> and <b>bandpass</b> provide FIR band pass filtering.
@@ -2365,36 +2365,8 @@ take any number of vcts, followed by a trailing function, and map the function's
 results (assumed to be a list that matches the current number of vcts) into the
 vct array.  In the map! case, the function takes one argument, the current number
 of vcts awaiting values; in the do! case, it takes two arguments, the vct
-number and the current loop index.  We could rewrite the cnvtest
-function to take stereo sounds:
+number and the current loop index.
 </p>
-<table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
-(define cnvtest
-  (lambda (snd0 snd1 amp0 amp1)
-    (if (and (= (channels snd0) 2)
-	     (= (channels snd1) 2))
-	(let* ((flt-len (frames snd0))
-	       (total-len (+ flt-len (frames snd1)))
-	       (cnv10 (make-convolve :filter (samples-&gt;vct 0 flt-len snd0 0)))
-	       (cnv11 (make-convolve :filter (samples-&gt;vct 0 flt-len snd0 1)))
-	       (sf10 (make-sample-reader 0 snd1 0))
-	       (sf11 (make-sample-reader 0 snd1 1))
-	       (out-data10 (make-vct total-len))
-	       (out-data11 (make-vct total-len)))
-	  (<em class=red>vcts-map!</em> out-data10 out-data11 
-		     (lambda (num)
-		       (list
-			(convolve cnv10 (lambda (dir) (read-sample sf10)))
-			(convolve cnv11 (lambda (dir) (read-sample sf11))))))
-	  (free-sample-reader sf10)
-	  (free-sample-reader sf11)
-	  (vct-scale! out-data10 amp0)
-	  (vct-scale! out-data11 amp1)
-	  (vct-&gt;samples 0 total-len out-data10 snd1 0)
-	  (vct-&gt;samples 0 total-len out-data11 snd1 1))
-	(snd-print "oops -- need stereo input"))))
-</pre></td></tr></table>
-<br><br>
 
 <A NAME="snd6doc"></a><span class=box><h2>snd6.scm</h2></span>
 
@@ -2402,15 +2374,15 @@ function to take stereo sounds:
 backwards compatibility within version 6.
 Currently, these are just some old (untypable) constant names,
 and some slightly inconsistent old function names.
-<b><a name="sndclearaudioinputs">clear-audio-inputs</a></b>
+</p><p><b><a name="sndclearaudioinputs">clear-audio-inputs</a></b>
 in Linux/OSS, tries to reduce soundcard background racket.
-<b><a name="sndappendtominibuffer">append-to-minibuffer</a></b> (msg <i>snd</i>)
+</p><p><b><a name="sndappendtominibuffer">append-to-minibuffer</a></b> (msg <i>snd</i>)
 appends <i>msg</i> to whatever is in <i>snd</i>'s minibuffer.
-<b><a name="sndselectmix">select-mix</a></b> sets the selected mix (#f = none).
-<b>dismiss-all-dialogs</b> deactivates all active dialogs.
-<b>with-html</b> sets up Help menu callbacks to send netscape 
+</p><p><b><a name="sndselectmix">select-mix</a></b> sets the selected mix (#f = none).
+</p><p><b>dismiss-all-dialogs</b> deactivates all active dialogs.
+</p><p><b>with-html</b> sets up Help menu callbacks to send netscape 
 a url to open, rather than opening Snd's help dialog.
-<b><a name="mixname">mix-name</a></b> asociates a name with a mix, and
+</p><p><b><a name="mixname">mix-name</a></b> asociates a name with a mix, and
 <b><a name="mixname2id">mix-name-&gt;id</a></b> returns the id given a mix name.
 </p>
 

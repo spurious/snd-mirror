@@ -8653,7 +8653,7 @@ static XEN g_redo(XEN ed_n, XEN snd_n, XEN chn_n) /* opt ed_n */
   return(C_TO_XEN_INT(1));
 }
 
-void as_one_edit(chan_info *cp, int one_edit, char *one_edit_origin) /* origin copied here */
+void as_one_edit(chan_info *cp, int one_edit, const char *one_edit_origin) /* origin copied here */
 {
   int need_backup = FALSE;
   ed_list *ed;
