@@ -6132,10 +6132,10 @@
 	  (do ((i 0 (1+ i))) ((= i 10)) (vector-set! v0 i 1.0))
 	  (insert-samples 0 10 v0 ind0) 
 	  (time (env-sound '(0 0 1 1) 0 10 1.0 ind0))
-	  (do ((i 0 (1+ i))) ((= i 10)) (if (fneq (sample i) (* i .1)) (snd-display ";env-sound[~D]: ~A?" i (sample i))))
+	  (do ((i 0 (1+ i))) ((= i 10)) (if (fneq (sample i) (* i .1)) (snd-display ";1 env-sound[~D]: ~A?" i (sample i))))
 	  (undo) 
 	  (env-sound (make-env '(0 0 1 1) :end 9) 0 10 1.0 ind0) 
-	  (do ((i 0 (1+ i))) ((= i 10)) (if (fneq (sample i) (* i .1)) (snd-display ";env-sound[~D]: ~A?" i (sample i))))
+	  (do ((i 0 (1+ i))) ((= i 10)) (if (fneq (sample i) (* i .1)) (snd-display ";2 env-sound[~D]: ~A?" i (sample i))))
 	  (undo) 
 	  (env-sound '(0 0 .5 1 1 1) 0 10 0.0 ind0) 
 	  (if (or (fneq (sample 3) 0.0) (fneq (sample 8) 1.0) )
@@ -6148,6 +6148,13 @@
 	  (env-sound (make-env '(0 0 1 1) :base 32.0 :end 9) 0 10 32.0 ind0) 
 	  (if (or (fneq (sample 3) 0.0589) (fneq (sample 8) 0.484) )
 	      (snd-display ";env-sound exp: ~A ~A?" (sample 3) (sample 8)))
+	  (undo)
+	  (env-sound '(0 2))
+	  (do ((i 0 (1+ i))) ((= i 10)) (if (fneq (sample i) 2.0) (snd-display ";3 env-sound[~D]: ~A?" i (sample i))))
+	  (undo)
+	  (env-sound '(0 2) 2 4 1.0 ind0)
+	  (if (or (fneq (sample 1) 1.0) (fneq (sample 2) 2.0) (fneq (sample 5) 2.0) (fneq (sample 8) 1.0))
+	      (snd-display ";3 env-sound exp: ~A ~A ~A ~A?" (sample 1) (sample 2) (sample 5) (sample 8)))
 	  (undo) 
 	  (do ((i 1 (1+ i))) ((= i 10)) (set! (sample i) 0.0))
 	  (filter-sound '(0 1 1 0) 4)
@@ -10785,6 +10792,74 @@ EDITS: 3
 	      (begin
 		(load "popup.scm")
 		(load "snd-motif.scm")
+
+		(let ((version (list-ref (|XGetWindowProperty (|XtDisplay (|Widget (cadr (main-widgets))) )
+							      (|XtWindow (|Widget (cadr (main-widgets))) )
+							      (|XInternAtom (|XtDisplay (|Widget (cadr (main-widgets))))
+									    "SND_VERSION"
+									    #f)
+							      0 32 #f |XA_STRING)
+					 5)))
+		  (if (not (string=? version (snd-version)))
+		      (snd-display ";SND_VERSION: ~A, ~A?" version (snd-version))))
+
+		(let* ((tabs (let ((ctr 0))
+			       (map
+				(lambda (n)
+				  (set! ctr (+ ctr 1))
+				  (|XmTabCreate n |XmINCHES (if (= ctr 1) |XmABSOLUTE |XmRELATIVE) |XmALIGNMENT_BEGINNING "."))
+				(list 1.5 1.5 1.5 1.5))))
+		       (tablist (|XmTabListInsertTabs #f tabs (length tabs) 0)))
+		  (if (not (= (|XmTabListTabCount tablist) (length tabs))) 
+		      (snd-display ";tablist len: ~A ~A~%" (|XmTabListTabCount tablist) (length tabs)))
+		  (if (not (equal? (|XmTabGetValues (|XmTabListGetTab tablist 0)) (list 1.5 5 0 0 ".")))
+		      (snd-display ";XmTabs 0: ~A" (|XmTabGetValues (|XmTabListGetTab tablist 0))))
+		  (if (not (equal? (|XmTabGetValues (|XmTabListGetTab tablist 2)) (list 1.5 5 1 0 ".")))
+		      (snd-display ";XmTabs 2: ~A" (|XmTabGetValues (|XmTabListGetTab tablist 0))))
+		  (let* ((fonts (list "fixed"
+				      "-adobe-times-bold-r-*-*-14-*-*-*-*-*-*-*"
+				      "-adobe-*-medium-i-*-*-18-*-*-*-*-*-*-*"
+				      "-*-helvetica-)-*-*-*-18-*-*-*-*-*-*-*"))
+			 (tags (list "one" "two" "three" "four"))
+			 (colors (list "red" "green" "blue" "orange"))
+			 (pixels
+			  (let* ((dpy (|XtDisplay (|Widget (cadr (main-widgets)))))
+				 (scr (|DefaultScreen dpy))
+				 (cmap (|DefaultColormap dpy scr)))
+			    (map
+			     (lambda (color)
+			       (let ((col (|XColor)))
+				 (if (= (|XAllocNamedColor dpy cmap color col col) 0)
+				     (snd-error "can't allocate ~S" color)
+				     (|pixel col))))
+			     colors)))
+			 (rendertable (|XmRenderTableAddRenditions #f 
+					(let ((ctr 0))
+					  (map (lambda (r)
+						 (set! ctr (+ ctr 1))
+						 (|XmRenditionCreate (|Widget (cadr (main-widgets)))
+								     r
+								     (append
+								      (if (= ctr 1)
+									  (list |XmNtabList tablist)
+									  '())
+								      (list |XmNrenditionForeground (list-ref pixels (1- ctr))
+									    |XmNfontName (list-ref fonts (1- ctr))
+									    |XmNfontType |XmFONT_IS_FONT))))
+					       tags))
+					(length tags)
+					|XmMERGE_NEW)))
+		    (if (not (equal? (|XmRenderTableGetTags rendertable) (list "one" "two" "three" "four")))
+			(snd-display ";tags: ~A~%" (|XmRenderTableGetTags rendertable)))
+		    (let ((r (|XmRenditionRetrieve (|XmRenderTableGetRendition rendertable "one")
+						   (list |XmNrenditionForeground 0
+							 |XmNfontName 0
+							 |XmNfontType 0
+							 |XmNtag 0))))
+		      (if (or (not (string=? (list-ref r 7) "one"))
+			      (not (string=? (list-ref r 3) "fixed")))
+			  (snd-display ";rendertable: ~A" r)))))
+
 		(install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))
 		(zync)
 		(make-hidden-controls-dialog)
@@ -11835,13 +11910,11 @@ EDITS: 3
 	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :order -1 0 1 #f #t '() 12345678901234567890))
 	    (gc)
 	    ))
-
       ))
 
 (set! (window-y) 10)
 (set! (basic-color) (make-color 0.96 0.96 0.86))
 (dismiss-all-dialogs)
-
 
 
 

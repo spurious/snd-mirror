@@ -1605,10 +1605,15 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
       if (scalable)
 	{
 	  val[0] *= scaler;
-	  scale_by(cp, val, 1, regexpr);
-	  return;
+	  if ((beg == 0) && 
+	      ((dur == 0) || (dur >= current_ed_samples(cp))))
+	    {
+	      scale_by(cp, val, 1, regexpr);
+	      return;
+	    }
 	}
     }
+  else scalable = 0;
   si = NULL;
   sp = cp->sound;
   ss = cp->state;
@@ -1623,6 +1628,13 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 	if (sfs[i]) 
 	  free_snd_fd(sfs[i]);
       free_sync_state(sc); 
+      return;
+    }
+  if (scalable)
+    {
+      for (i = 0; i < si->chans; i++) 
+	scale_channel(si->cps[i], val[0], beg, dur);
+      free_sync_state(sc);
       return;
     }
   if (e)

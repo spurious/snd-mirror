@@ -1,7 +1,3 @@
-;;; TODO: finish adding the target choice to all (relevant) effects
-;;;       (still needed in: gate adsat expsrc contrast various filters robotize)
-;;;       trailing procs still need the dialog support
-
 (use-modules (ice-9 format) (ice-9 common-list))
 
 (define pi 3.141592653589793)
@@ -319,9 +315,7 @@
 					     (lambda (w context info)
 					       (set! gain-amount (/ (|value info) 100.0)))
 					     100))))
-	      (add-target (|XtParent (car sliders)) 
-			  (lambda (target)
-			    (set! gain-target target)))))
+	      (add-target (|XtParent (car sliders)) (lambda (target) (set! gain-target target)))))
         (activate-dialog gain-dialog))
 
       (add-to-menu effects-menu "Gain" (lambda () (post-gain-dialog))))
@@ -379,9 +373,7 @@
 					     (lambda (w context info)
 					       (set! normalize-amount (/ (|value info) 100.0)))
 					     100))))
-	      (add-target (|XtParent (car sliders))
-			  (lambda (target)
-			    (set! normalize-target target)))))
+	      (add-target (|XtParent (car sliders)) (lambda (target) (set! normalize-target target)))))
 
 	(activate-dialog normalize-dialog))
 
@@ -531,10 +523,36 @@
 (define adsat-size 4.0)
 (define adsat-label "Adaptive saturation")
 (define adsat-dialog #f)
+(define adsat-target 'sound)
 
 (define (cp-adsat)
   "adsat does weird stuff by adsat size"
-  (adsat adsat-size))
+  (map-chan-over-target 
+   (lambda ()
+     (let ((mn 0.0)
+	   (mx 0.0)
+	   (n 0)
+	   (vals (make-vct adsat-size)))
+       (lambda (val)
+	 (if (= n adsat-size)
+	     (begin
+	       (do ((i 0 (1+ i)))
+		   ((= i adsat-size))
+		 (if (>= (vct-ref vals i) 0.0)
+		     (vct-set! vals i mx)
+		     (vct-set! vals i mn)))
+	       (set! n 0)
+	       (set! mx 0.0)
+	       (set! mn 0.0)
+	       vals)
+	     (begin
+	       (vct-set! vals n val)
+	       (if (> val mx) (set! mx val))
+	       (if (< val mn) (set! mn val))
+	       (set! n (1+ n))
+	       #f)))))
+   adsat-target))
+
 
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
@@ -560,7 +578,9 @@
 				 (list (list "adaptive saturation" 0.0 initial-adsat-size 10.0 
 					     (lambda (w context info)
 					       (set! adsat-size (/ (|value info) 100.0)))
-					     100))))))
+					     100))))
+	      (add-target (|XtParent (car sliders)) (lambda (target) (set! adsat-target target)))))
+
 	(activate-dialog adsat-dialog))
 
       (add-to-menu effects-menu "Adaptive saturation" (lambda () (post-adsat-dialog))))
@@ -616,9 +636,7 @@
 					     (lambda (w context info)
 					       (set! am-amount (|value info)))
 					     1))))
-	      (add-target (|XtParent (car sliders))
-			  (lambda (target)
-			    (set! am-target target)))))
+	      (add-target (|XtParent (car sliders)) (lambda (target) (set! am-target target)))))
 
 	(activate-dialog am-dialog))
 
@@ -688,9 +706,7 @@
                                                (set! ring-mod-radians (/ (|value info) 1)))
                                              1))))
 
-	      (add-target (|XtParent (car sliders))
-			  (lambda (target)
-			    (set! ring-mod-target target)))))
+	      (add-target (|XtParent (car sliders)) (lambda (target) (set! ring-mod-target target)))))
 
         (activate-dialog ring-mod-dialog))
 
@@ -746,9 +762,7 @@
                                              (lambda (w context info)
                                                (set! src-amount (/ (|value info) 100.0)))
                                              100))))
-              (add-target (|XtParent (car sliders))
-                          (lambda (target)
-                            (set! src-target target)))))
+              (add-target (|XtParent (car sliders)) (lambda (target) (set! src-target target)))))
         (activate-dialog src-dialog))
 
       (add-to-menu effects-menu "Sample rate conversion" (lambda () (post-src-dialog))))
@@ -771,6 +785,7 @@
 (define pitch-scale 1.0)
 (define expsrc-label "Time/Pitch scaling")
 (define expsrc-dialog #f)
+(define expsrc-target 'sound)
 
 (define (cp-expsrc)
   (save-controls)
@@ -784,7 +799,10 @@
           (set! (expand-control-hop) hop-size)
           (set! (expand-control-length) segment-length)
           (set! (expand-control-ramp) ramp-scale))))
-  (apply-controls)
+    (if (eq? expsrc-target 'marks)
+	(let ((ms (plausible-mark-samples)))
+	  (apply-controls (selected-sound) 0 (car ms) (1+ (- (cadr ms) (car ms)))))
+	(apply-controls (selected-sound) (if (eq? contrast-target 'sound) 0 2)))
   (restore-controls))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
@@ -838,7 +856,9 @@
 				       (list "pitch scale" 0.0 initial-pitch-scale 5.0
 					     (lambda (w context info)
 					       (set! pitch-scale (/ (|value info) 100.0)))
-					     100))))))
+					     100))))
+              (add-target (|XtParent (car sliders)) (lambda (target) (set! expsrc-target target)))))
+
 	(activate-dialog expsrc-dialog))
 
       (add-to-menu effects-menu "Time/Pitch scaling" (lambda () (post-expsrc-dialog))))
@@ -861,6 +881,7 @@
 (define reverb-feedback 1.09)
 (define reverb-label "McNabb reverb")
 (define reverb-dialog #f)
+(define reverb-target 'sound)
 
 (define (cp-reverb)
   (save-controls)
@@ -869,7 +890,10 @@
   (set! (reverb-control-scale) reverb-amount)
   (set! (reverb-control-lowpass) reverb-filter)
   (set! (reverb-control-feedback) reverb-feedback)
-  (apply-controls)
+  (if (eq? reverb-target 'marks)
+      (let ((ms (plausible-mark-samples)))
+	(apply-controls (selected-sound) 0 (car ms) (1+ (- (cadr ms) (car ms)))))
+      (apply-controls (selected-sound) (if (eq? contrast-target 'sound) 0 2)))
   (restore-controls))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
@@ -912,7 +936,9 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 				       (list "reverb feedback" 0.0 initial-reverb-feedback 1.25
 					     (lambda (w context info)
 					       (set! reverb-feedback (/ (|value info) 100.0)))
-					     100))))))
+					     100))))
+              (add-target (|XtParent (car sliders)) (lambda (target) (set! reverb-target target)))))
+
 	(activate-dialog reverb-dialog))
 
       (add-to-menu effects-menu "McNabb reverb" (lambda () (post-reverb-dialog))))
@@ -1154,9 +1180,7 @@ Move the sliders to set the numbers of the soundfiles to be convolved and the am
 					     (lambda (w context info)
 					       (set! echo-amount (/ (|value info) 100.0)))
 					     100))))
-              (add-target (|XtParent (car sliders))
-                          (lambda (target)
-                            (set! echo-target target)))))
+              (add-target (|XtParent (car sliders)) (lambda (target) (set! echo-target target)))))
 
 	(activate-dialog echo-dialog))
 
@@ -1230,9 +1254,7 @@ Move the sliders to set the numbers of the soundfiles to be convolved and the am
 					     (lambda (w context info)
 					       (set! flecho-delay (/ (|value info) 100.0)))
 					     100))))
-	      (add-target (|XtParent (car sliders))
-			  (lambda (target)
-			    (set! flecho-target target)))))
+	      (add-target (|XtParent (car sliders)) (lambda (target) (set! flecho-target target)))))
 
 	(activate-dialog flecho-dialog))
 
@@ -1322,9 +1344,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
                                              (lambda (w context info)
                                                (set! zecho-amp (/ (|value info) 100.0)))
                                              100))))
-	      (add-target (|XtParent (car sliders))
-			  (lambda (target)
-			    (set! zecho-target target)))))
+	      (add-target (|XtParent (car sliders)) (lambda (target) (set! zecho-target target)))))
 
 	(activate-dialog zecho-dialog))
 
@@ -1401,9 +1421,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 					     (lambda (w context info)
 					       (set! flange-time (/ (|value info) 100.0)))
 					     100))))
-              (add-target (|XtParent (car sliders))
-                          (lambda (target)
-                            (set! flange-target target)))))
+              (add-target (|XtParent (car sliders)) (lambda (target) (set! flange-target target)))))
 
 	(activate-dialog flange-dialog))
 
@@ -1425,6 +1443,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 (define contrast-amount 1.0)
 (define contrast-label "Contrast enhancement")
 (define contrast-dialog #f)
+(define contrast-target 'sound)
 
 (define (cp-contrast)
   (let ((peak (maxamp)))
@@ -1434,7 +1453,10 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
     (set! (contrast-control) contrast-amount)
     (set! (contrast-control-amp) (/ 1.0 peak))
     (set! (amp-control) peak)
-    (apply-controls)
+    (if (eq? contrast-target 'marks)
+	(let ((ms (plausible-mark-samples)))
+	  (apply-controls (selected-sound) 0 (car ms) (1+ (- (cadr ms) (car ms)))))
+	(apply-controls (selected-sound) (if (eq? contrast-target 'sound) 0 2)))
     (restore-controls)))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
@@ -1460,7 +1482,9 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 				 (list (list "contrast enhancement" 0.0 initial-contrast-amount 10.0
 					     (lambda (w context info)
 					       (set! contrast-maount (/ (|value info) 100.0)))
-					     100))))))
+					     100))))
+              (add-target (|XtParent (car sliders)) (lambda (target) (set! contrast-target target)))))
+
 	(activate-dialog contrast-dialog))
 
       (add-to-menu effects-menu "Contrast enhancement" (lambda () (post-contrast-dialog))))
@@ -1473,6 +1497,8 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
                              (set! contrast-label new-label)))
                          effects-list))
 
+
+;;; TODO: these filters don't notice the 'marks target yet
 
 ;;; -------- Butterworth filters
 ;;;
@@ -1505,11 +1531,14 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 (define band-pass-bw 100.0)
 (define band-pass-label "Band-pass filter")
 (define band-pass-dialog #f)
+(define band-pass-target 'sound)
 
 (define (cp-band-pass)
-"Butterworth band-pass filter"
-  (filter-sound (make-butter-band-pass band-pass-freq band-pass-bw)))
-
+  "Butterworth band-pass filter"
+  (if (eq? band-pass-target 'sound)
+      (filter-sound (make-butter-band-pass band-pass-freq band-pass-bw))
+      (if (eq? band-pass-target 'selection)
+	  (filter-selection (make-butter-band-pass band-pass-freq band-pass-bw)))))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -1541,7 +1570,9 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 				       (list "band-pass bandwidth" 0.0 initial-band-pass-bw 1000.0
 					     (lambda (w context info)
 					       (set! band-pass-bw (|value info)))
-					     1))))))
+					     1))))
+	      (add-target (|XtParent (car sliders)) (lambda (target) (set! band-pass-target target)))))
+
 	(activate-dialog band-pass-dialog))
 
       (add-to-menu effects-menu "Band-pass filter" (lambda () (post-band-pass-dialog))))
@@ -1573,11 +1604,14 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 (define notch-bw 100.0)
 (define notch-label "Band-reject filter")
 (define notch-dialog #f)
+(define notch-target 'sound)
 
 (define (cp-notch)
-"Butterworth band-reject filter"
-  (filter-sound (make-butter-band-reject notch-freq notch-bw)))
-
+  "Butterworth band-reject filter"
+  (if (eq? notch-target 'sound)
+      (filter-sound (make-butter-band-reject notch-freq notch-bw))
+      (if (eq? notch-target 'selection)
+	  (filter-selection (make-butter-band-reject notch-freq notch-bw)))))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -1609,7 +1643,9 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 				       (list "band-reject bandwidth" 0.0 initial-notch-bw 1000.0
 					     (lambda (w context info)
 					       (set! notch-bw (|value info)))
-					     1))))))
+					     1))))
+	      (add-target (|XtParent (car sliders)) (lambda (target) (set! notch-target target)))))
+
 	(activate-dialog notch-dialog))
 
       (add-to-menu effects-menu "Band-reject filter" (lambda () (post-notch-dialog))))
@@ -1642,10 +1678,14 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 (define high-pass-freq 100.0)
 (define high-pass-label "High-pass filter")
 (define high-pass-dialog #f)
+(define high-pass-target 'sound)
 
 (define (cp-high-pass)
-"Butterworth high-pass filter"
-  (filter-sound (make-butter-high-pass high-pass-freq)))
+  "Butterworth high-pass filter"
+  (if (eq? high-pass-target 'sound)
+      (filter-sound (make-butter-high-pass high-pass-freq))
+      (if (eq? high-pass-target 'selection)
+	  (filter-selection (make-butter-high-pass high-pass-freq)))))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -1670,7 +1710,9 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 				 (list (list "high-pass frequency" 0.0 initial-high-pass-freq 10000.0
 					     (lambda (w context info)
 					       (set! high-pass-freq (|value info)))
-					     1))))))
+					     1))))
+	      (add-target (|XtParent (car sliders)) (lambda (target) (set! high-pass-target target)))))
+
 	(activate-dialog high-pass-dialog))
 
       (add-to-menu effects-menu "High-pass filter" (lambda () (post-high-pass-dialog))))
@@ -1701,10 +1743,14 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 (define low-pass-freq 1000.0)
 (define low-pass-label "Low-pass filter")
 (define low-pass-dialog #f)
+(define low-pass-target 'sound)
 
 (define (cp-low-pass)
-"Butterworth low-pass filter"
-  (filter-sound (make-butter-low-pass low-pass-freq)))
+  "Butterworth low-pass filter"
+  (if (eq? low-pass-target 'sound)
+      (filter-sound (make-butter-low-pass low-pass-freq))
+      (if (eq? low-pass-target 'selection)
+	  (filter-selection (make-butter-low-pass low-pass-freq)))))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -1729,7 +1775,9 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 				 (list (list "low-pass frequency" 0.0 initial-low-pass-freq 10000.0
 					     (lambda (w context info)
 					       (set! low-pass-freq (|value info)))
-					     1))))))
+					     1))))
+	      (add-target (|XtParent (car sliders)) (lambda (target) (set! low-pass-target target)))))
+
 	(activate-dialog low-pass-dialog))
       (add-to-menu effects-menu "Low-pass filter" (lambda () (post-low-pass-dialog))))
 
@@ -1750,6 +1798,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 (define comb-size 50)
 (define comb-label "Comb filter")
 (define comb-dialog #f)
+(define comb-target 'sound)
 
 (define comb-filter
   (lambda (scaler size)
@@ -1773,7 +1822,8 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
                   (sliders '()))
               (set! comb-dialog 
 		    (make-effect-dialog comb-label
-					(lambda (w context info) (map-chan (comb-filter comb-scaler comb-size)))
+					(lambda (w context info) 
+					  (map-chan-over-target (lambda () (comb-filter comb-scaler comb-size)) comb-target))
 					(lambda (w context info) (|XtUnmanageChild comb-dialog))
 					(lambda (w context info)
 					  (help-dialog "Comb filter Help"
@@ -1792,7 +1842,9 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 				       (list "comb size" 0 initial-comb-size 100
 					     (lambda (w context info)
 					       (set! comb-size (|value info)))
-					     1))))))
+					     1))))
+	      (add-target (|XtParent (car sliders)) (lambda (target) (set! comb-target target)))))
+
 	(activate-dialog comb-dialog))
       (add-to-menu effects-menu "Comb filter" (lambda () (post-comb-dialog))))
 
@@ -1887,9 +1939,7 @@ Move the sliders to set the comb-chord parameters."))
                                              (lambda (w context info)
                                                (set! comb-chord-interval-two (/ (|value info) 100.0)))
                                              100))))
-              (add-target (|XtParent (car sliders))
-                          (lambda (target)
-                            (set! comb-chord-target target)))))
+              (add-target (|XtParent (car sliders)) (lambda (target) (set! comb-chord-target target)))))
 
         (activate-dialog comb-chord-dialog))
 
@@ -1966,9 +2016,7 @@ Move the sliders to set the comb-chord parameters."))
 					     (lambda (w context info)
 					       (set! resonance (/ (|value info) 100.0)))
 					     100))))
-	      (add-target (|XtParent (car sliders))
-			  (lambda (target)
-			    (set! moog-target target)))))
+	      (add-target (|XtParent (car sliders)) (lambda (target) (set! moog-target target)))))
 
 	(activate-dialog moog-dialog))
 
@@ -1990,14 +2038,14 @@ Move the sliders to set the comb-chord parameters."))
 (define osc-freq 20)
 (define robotize-label "Robotize")
 (define robotize-dialog #f)
+(define robotize-target 'sound)
 
-(if (not (defined? 'fp))
-    (define fp
-      (lambda (sr osamp osfrq)
-	(let* ((os (make-oscil osfrq))
+(define fp-1 ; fp from examp.scm with added beg end args
+  (lambda (sr osamp osfrq beg end)
+    (let* ((os (make-oscil osfrq))
 	       (sr (make-src :srate sr))
-	       (len (frames))
-	       (sf (make-sample-reader))
+	       (len (1+ (- end beg)))
+	       (sf (make-sample-reader beg))
 	       (out-data (make-vct len)))
 	  (vct-map! out-data
 		    (lambda () 
@@ -2007,11 +2055,23 @@ Move the sliders to set the comb-chord parameters."))
 				 (next-sample sf)
 				 (previous-sample sf))))))
 	  (free-sample-reader sf)
-	  (vct->samples 0 len out-data)))))
+	  (vct->samples beg len out-data))))
 
 (define (cp-robotize)
- "Robotize is similar to an effect used by the Barrons in the movie Forbidden Planet"
-  (fp samp-rate osc-amp osc-freq))
+  "Robotize is similar to an effect used by the Barrons in the movie Forbidden Planet"
+  (let ((ms (and (eq? robotize-target 'marks)
+		 (plausible-mark-samples))))
+    (fp-1 samp-rate osc-amp osc-freq
+	  (if (eq? robotize-target 'sound)
+	      0
+	      (if (eq? robotize-target 'selection)
+		  (selection-position)
+		  (car ms)))
+	  (if (eq? robotize-target 'sound)
+	      (1- (frames))
+	      (if (eq? robotize-target 'selection)
+		  (+ (selection-position) (selection-length))
+		  (cadr ms))))))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -2052,7 +2112,9 @@ Move the sliders to set the comb-chord parameters."))
 				       (list "oscillator frequency" 0.0 initial-osc-freq 60
 					     (lambda (w context info)
 					       (set! osc-freq (/ (|value info) 100.0)))
-					     100))))))
+					     100))))
+	      (add-target (|XtParent (car sliders)) (lambda (target) (set! robotize-target target)))))
+
 	(activate-dialog robotize-dialog))
 
       (add-to-menu effects-menu "Robotize" (lambda () (post-robotize-dialog))))
@@ -2147,9 +2209,7 @@ Move the sliders to set the comb-chord parameters."))
 					     (lambda (w context info)
 					       (set! wobble-amplitude (/ (|value info) 100.0)))
 					     100))))
-	      (add-target (|XtParent (car sliders))
-			  (lambda (target)
-			    (set! wobble-target target)))))
+	      (add-target (|XtParent (car sliders)) (lambda (target) (set! wobble-target target)))))
 
 	(activate-dialog wobble-dialog))
 
@@ -2347,9 +2407,7 @@ to be cross-synthesized, the synthesis amplitude, the FFT size, and the radius v
 		     (list 64 128 256 512 1024 4096))
 		    (|XmStringFree s1)))
 
-	      (add-target (|XtParent (car sliders))
-			  (lambda (target)
-			    (set! cross-synth-target target)))))
+	      (add-target (|XtParent (car sliders)) (lambda (target) (set! cross-synth-target target)))))
 
         (activate-dialog cross-synth-dialog))
 
@@ -2403,9 +2461,7 @@ to be cross-synthesized, the synthesis amplitude, the FFT size, and the radius v
                                              (lambda (w context info)
                                                (set! rubber-factor (/ (|value info) 100.0)))
                                              100))))
-              (add-target (|XtParent (car sliders))
-                          (lambda (target)
-                            (set! rubber-target target)))))
+              (add-target (|XtParent (car sliders)) (lambda (target) (set! rubber-target target)))))
         (activate-dialog rubber-dialog))
 
       (add-to-menu effects-menu "Rubber sound" (lambda () (post-rubber-dialog))))

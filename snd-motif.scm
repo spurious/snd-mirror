@@ -1449,8 +1449,6 @@ Reverb-feedback sets the scaler on the feedback.\n\
 
 
 ;;; -------- with-level-meters, make-level-meter, display-level
-;;;
-;;; TODO: needle pivot location can get confused
 
 (define red-pixel
   (let ((pix #f))
@@ -1548,7 +1546,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	   (rdeg (degrees->radians deg))
 	   (nx1 (inexact->exact (+ wid2 (* (+ wid2 major-tick) (sin rdeg)))))
 	   (ny1 (inexact->exact (- (+ wid2 top) (* (+ wid2 major-tick) (cos rdeg))))))
-      (|XDrawLine dpy win gc wid2 wid2 nx1 ny1)
+      (|XDrawLine dpy win gc wid2 (+ top wid2) nx1 ny1)
       (list-set! meter-data 3 val)
       (if (> val red-deg)
 	  (list-set! meter-data 4 val)
@@ -2012,7 +2010,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 ;;; TODO: bess-translations
 ;;; TODO: midi trigger
 ;;; TODO: equivalent of zync (x too) across sounds
-
+;;; TODO: radar scope style region cue list
 ;;; (create-sound-window (list-ref (main-widgets) 3) "pistol.snd")
 ;;;   will probably want to disable close here, or use replace?
 

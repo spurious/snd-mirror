@@ -265,14 +265,7 @@ void news_help(snd_state *ss)
   info = version_info();
   ssnd_help(ss, STR_News,
 	    info,
-#if HAVE_GUILE
-	    "\n    *features*: \n'",
-	    word_wrap(XEN_TO_C_STRING(XEN_TO_STRING(XEN_EVAL_C_STRING("*features*"))), 600),
-	    "\n\n",
-#else
-	    "\n",
-#endif
-	    "Recent changes include:\n\
+	    "\nRecent changes include:\n\
 \n\
 26-Sep:  after-edit-hook.\n\
 24-Sep:  changed mus-sound-max-amp to mus-sound-maxamp to match all other such cases (old name still exists)\n\
@@ -287,6 +280,13 @@ void news_help(snd_state *ss)
          region-play-list in examp.scm.\n\
 31-Aug:  Snd 5.2.\n\
 ",
+#if HAVE_GUILE
+	    "\n    *features*: \n'",
+	    word_wrap(XEN_TO_C_STRING(XEN_TO_STRING(XEN_EVAL_C_STRING("*features*"))), 600),
+	    "\n\n",
+#else
+	    "\n",
+#endif
 NULL);
   FREE(info);
 }
@@ -944,16 +944,16 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_dot_size "              1 (snd #t) (chn #t)\n\
   " S_enved_active_env "      '()\n\
   " S_enved_base "            1.0\n\
-  " S_enved_clip_p "          #f\n\
+  " S_enved_clip_p "           #f\n\
   " S_enved_in_dB "           #f\n\
-  " S_enved_exp_p "           #f\n\
+  " S_enved_exp_p "            #f\n\
   " S_enved_filter "          #t\n\
   " S_enved_filter_order "    40\n\
   " S_enved_power "           3.0\n\
   " S_enved_selected_env "    '()\n\
   " S_enved_target "          " S_enved_amplitude "\n\
   " S_enved_waveform_color "  blue\n\
-  " S_enved_wave_p "          #f\n\
+  " S_enved_wave_p "           #f\n\
   " S_eps_bottom_margin "     0\n\
   " S_eps_file "              \"snd.eps\"\n\
   " S_eps_left_margin "       0\n\
@@ -1026,13 +1026,13 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_spectro_y_scale "       1.0 (snd #t) (chn #t)\n\
   " S_spectro_z_angle "      -2.0 (snd #t) (chn #t)\n\
   " S_spectro_z_scale "       0.1 (snd #t) (chn #t)\n\
-  " S_speed_control_style "  " S_speed_control_as_float " (snd #t)\n\
+  " S_speed_control_style "   " S_speed_control_as_float " (snd #t)\n\
   " S_speed_control_tones "   12 (snd #t)\n\
   " S_temp_dir "              nil\n\
   " S_text_focus_color "      white\n\
   " S_transform_size "        256 (snd #t) (chn #t)\n\
-  " S_transform_graph_type " " S_graph_transform_once " (snd #t) (chn #t)\n\
-  " S_transform_type "       " S_fourier_transform " (snd #t) (chn #t)\n\
+  " S_transform_graph_type "  " S_graph_transform_once " (snd #t) (chn #t)\n\
+  " S_transform_type "        " S_fourier_transform " (snd #t) (chn #t)\n\
   " S_trap_segfault "         #t\n\
   " S_use_sinc_interp "       #f\n\
   " S_verbose_cursor "        #f (snd #t) (chn #t)\n\
@@ -1046,7 +1046,7 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_window_width "          0\n\
   " S_window_x "             -1\n\
   " S_window_y "             -1\n\
-  " S_with_mix_tags "        #t\n\
+  " S_with_mix_tags "         #t\n\
   " S_x_axis_style "          " S_x_axis_in_seconds "\n\
   " S_zero_pad "              0 (snd #t) (chn #t)\n\
   " S_zoom_color "            ivory4\n\
@@ -1138,7 +1138,7 @@ all refer to the same thing.\n\
   " S_backward_sample "   (count)\n\
   " S_bind_key "          (key state code ignore-prefix)\n\
   " S_c_g "               ()\n\
-  " S_c_g_x "             ()\n\
+  " S_c_g_x "              ()\n\
   " S_change_menu_label " (top-menu old-label new-label)\n\
   " S_channel_style "     (snd)\n\
   " S_channel_sync "      (snd chn)\n\
@@ -1148,7 +1148,7 @@ all refer to the same thing.\n\
   " S_close_sound "       (snd)\n\
   " S_close_sound_file "  (fd bytes)\n\
   " S_color_dialog "      ()\n\
-  " S_color_p "           (obj)\n\
+  " S_color_p "            (obj)\n\
   " S_comment "           (snd)\n\
   " S_contrast_control "  (snd)\n\
   " S_contrast_control_amp " (snd)\n\
@@ -1202,9 +1202,9 @@ all refer to the same thing.\n\
   " S_forward_sample "    (count)\n\
   " S_free_sample_reader "(rd)\n\
   " S_graph "             (data xlabel x0 x1 snd chn)\n\
-  " S_graph_lisp_p "      (snd chn)\n\
-  " S_graph_time_p "      (snd chn)\n\
-  " S_graph_transform_p " (snd chn)\n\
+  " S_graph_lisp_p "       (snd chn)\n\
+  " S_graph_time_p "       (snd chn)\n\
+  " S_graph_transform_p "  (snd chn)\n\
   " S_graph2ps "         ()\n\
   " S_header_type "       (snd)\n\
   " S_help_dialog "       (subject help)\n\
@@ -1221,7 +1221,6 @@ all refer to the same thing.\n\
   " S_listener_selection "()\n\
   " S_list2vct "         (lst)\n\
   " S_loop_samples "      (reader function calls origin environ)\n\
-  " S_mus_sound_length "      (snd chn)\n\
   " S_make_color "        (r g b)\n\
   " S_make_player "       (snd chn)\n\
   " S_make_region "       (beg end snd chn)\n\
@@ -1234,7 +1233,7 @@ all refer to the same thing.\n\
   " S_mark_sync "         (mark)\n\
   " S_mark_sync_max "     ()\n\
   " S_marks "             (snd chn pos)\n\
-  " S_mark_p "            (id)\n\
+  " S_mark_p "             (id)\n\
   " S_max_sounds "        ()\n\
   " S_maxamp "            (snd chn)\n\
   " S_mix "               (file samp in_chan snd chn)\n\
@@ -1255,7 +1254,8 @@ all refer to the same thing.\n\
   " S_mix_speed "         (mix)\n\
   " S_mix_track "         (mix)\n\
   " S_mix_vct "           (vct beg chans snd chn)\n\
-  " S_mix_p "             (id)\n\
+  " S_mix_p "              (id)\n\
+  " S_mus_sound_length "  (snd chn)\n\
   " S_next_sample "       (rd)\n\
   " S_new_sound "         (name type format srate chans)\n\
   " S_open_raw_sound "    (name chans srate format)\n\
@@ -1268,9 +1268,9 @@ all refer to the same thing.\n\
   " S_play_region "       (reg to-end)\n\
   " S_play_selection "    ()\n\
   " S_player_home "       (obj)\n\
-  " S_player_p "          (obj)\n\
-  " S_position2x "        (xpos snd chn ap)\n\
-  " S_position2y "        (ypos snd chn ap)\n\
+  " S_player_p "           (obj)\n\
+  " S_position2x "       (xpos snd chn ap)\n\
+  " S_position2y "       (ypos snd chn ap)\n\
   " S_preload_directory " (dir)\n\
   " S_preload_file "      (file)\n\
   " S_previous_sample "   (rd)\n\
@@ -1291,7 +1291,7 @@ all refer to the same thing.\n\
   " S_region_samples2vct "(samp samps reg chn)\n\
   " S_region_srate "      (reg)\n\
   " S_regions "           ()\n\
-  " S_region_p "          (id)\n\
+  " S_region_p "           (id)\n\
   " S_report_in_minibuffer "(msg snd)\n\
   " S_reset_controls "    (snd)\n\
   " S_restore_controls "  (snd)\n\
@@ -1307,7 +1307,7 @@ all refer to the same thing.\n\
   " S_sample "            (samp snd chn)\n\
   " S_sample_reader_at_end_p "(rd)\n\
   " S_sample_reader_home "(rd)\n\
-  " S_sample_reader_p "   (rd)\n\
+  " S_sample_reader_p "    (rd)\n\
   " S_samples "           (samp samps snd chn)\n\
   " S_samples2vct "      (samp samps snd chn)\n\
   " S_save_controls "     (snd)\n\
@@ -1323,6 +1323,8 @@ all refer to the same thing.\n\
   " S_scale_by "          (scalers snd chn)\n\
   " S_scale_selection_by "(scalers)\n\
   " S_scale_selection_to "(scalers)\n\
+  " S_scale_sound_by "    (scaler beg num snd chn)\n\
+  " S_scale_sound_to "    (norm beg num snd chn)\n\
   " S_scale_to "          (scalers snd chn)\n\
   " S_search_procedure "  (snd)\n\
   " S_selected_channel "  (snd)\n\
@@ -1333,14 +1335,14 @@ all refer to the same thing.\n\
   " S_selection_member "  (snd chn)\n\
   " S_selection_position "()\n\
   " S_selection_srate "   ()\n\
-  " S_selection_p "       ()\n\
+  " S_selection_p "        ()\n\
   " S_short_file_name "   (snd)\n\
   " S_show_controls "     (snd)\n\
   " S_show_listener "     ()\n\
   " S_smooth_selection "  ()\n\
   " S_smooth_sound "      (beg num snd chn)\n\
   " S_sound_files_in_directory "(dir)\n\
-  " S_sound_p "           (snd)\n\
+  " S_sound_p "            (snd)\n\
   " S_sounds "            ()\n\
   " S_snd_apropos "       (name)\n\
   " S_snd_error "         (str)\n\
@@ -1375,7 +1377,7 @@ all refer to the same thing.\n\
   " S_update_transform "  (snd chn)\n\
   " S_widget_position "   (wid)\n\
   " S_widget_size "       (wid)\n\
-  " S_vct_p "            (vobj)\n\
+  " S_vct_p "              (vobj)\n\
   " S_vct_addB "          (vobj1 vobj2)\n\
   " S_vct_copy "          (obj)\n\
   " S_vct_doB "           (obj proc)\n\
@@ -1398,10 +1400,10 @@ all refer to the same thing.\n\
   " S_window_height "     ()\n\
   " S_window_width "      ()\n\
   " S_x_bounds "          (snd chn)\n\
-  " S_x2position "        (x snd chn ap)\n\
+  " S_x2position "       (x snd chn ap)\n\
   " S_y_bounds "          (snd chn)\n\
-  " S_y2position "        (y snd chn ap)\n\
-  " S_yes_or_no_p "       (ques)\n\
+  " S_y2position "       (y snd chn ap)\n\
+  " S_yes_or_no_p "        (ques)\n\
 \n\
 ";
 

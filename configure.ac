@@ -435,17 +435,10 @@ else
 
   TEST_LIBS="$X_LIBS $X_PRE_LIBS -lXt -lX11 $X_EXTRA_LIBS"
 
-  dnl next two lib checks taken from scwm's configure.in
   AC_CHECK_LIB(Xext, XShapeCombineMask, 
     [
      XLIBS="$XLIBS -lXext"
      TEST_LIBS="$TEST_LIBS -lXext"
-    ], , $TEST_LIBS)
-
-  AC_CHECK_LIB(Xp, XpGetDocumentData, [
-    AC_DEFINE(HAVE_XP)
-    XLIBS="$XLIBS -lXp"
-    TEST_LIBS="$TEST_LIBS -lXp"
     ], , $TEST_LIBS)
 
   GX_FILES="X_O_FILES"
@@ -468,6 +461,12 @@ else
  	  GTKHTML_LIB=""
  	  GTKHTML_FLAGS=""
 	
+	  AC_CHECK_LIB(Xp, XpGetDocumentData, [
+	    AC_DEFINE(HAVE_XP)
+	    XLIBS="$XLIBS -lXp"
+	    TEST_LIBS="$TEST_LIBS -lXp"
+	    ], , $TEST_LIBS)
+
  	  AC_CHECK_LIB(Xpm, XpmReadFileToPixmap,
             [
   	     XLIBS="$XLIBS -lXpm"

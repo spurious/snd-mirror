@@ -6151,8 +6151,8 @@ the reverb.  The control panel procedures are:
 <!-- --><span class=defbox><code><em class=def><a name="applycontrols">apply-controls</a></em> (<i>snd target beg dur</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->equivalent to pushing <i>snd</i>'s 'apply' button (this is intended 
-<!-- -->for internal testing); <i>target</i> can be 0=sound, 1=channel, 2=selection.
+<!-- -->equivalent to pushing <i>snd</i>'s 'apply' button.
+<!-- --><i>target</i> can be 0=sound, 1=channel, 2=selection.
 <!-- --><i>beg</i> sets where (in samples) the apply starts; <code>(apply-controls 0 0 (mark-sample m))</code> starts from the given mark.
 <!-- --><i>dur</i> if given sets how many (original) samples to run the apply process.
 <!-- -->apply-controls can be used in conjunction with the various control panel variables:
