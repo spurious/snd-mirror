@@ -713,7 +713,7 @@ static int symit(snd_state *ss,char **str)
       if (strcmp(tok,S_env_selection) == 0)
 	{
 	  cp = get_cp(ss,str[3],str[4]);
-	  if (cp) apply_env(cp,scan_envelope(str[1]),0,0,1.0,TRUE,NOT_FROM_ENVED,S_env_selection);
+	  if (cp) apply_env(cp,scan_envelope(str[1]),0,0,1.0,TRUE,NOT_FROM_ENVED,S_env_selection,NULL);
 	  isym(ss,0);
 	  return(0);
 	}
@@ -725,7 +725,7 @@ static int symit(snd_state *ss,char **str)
 	    {
 	      if ((str[2]) && (*(str[2]))) samp = istr(str[2]); else samp = 0;
 	      if ((str[3]) && (*(str[3]))) dur = istr(str[3]); else dur = current_ed_samples(cp);
-	      apply_env(cp,scan_envelope(str[1]),samp,dur,1.0,FALSE,NOT_FROM_ENVED,S_env_sound);
+	      apply_env(cp,scan_envelope(str[1]),samp,dur,1.0,FALSE,NOT_FROM_ENVED,S_env_sound.NULL);
 	    }
 	  isym(ss,0);
 	  return(0);
@@ -1093,13 +1093,13 @@ static int symit(snd_state *ss,char **str)
       if (strcmp(tok,S_src_sound) == 0) 
 	{
 	  cp = get_cp(ss,str[3],str[4]); 
-	  src_env_or_num(ss,cp,NULL,fstr(str[1]),TRUE,NOT_FROM_ENVED,S_src_sound,FALSE); 
+	  src_env_or_num(ss,cp,NULL,fstr(str[1]),TRUE,NOT_FROM_ENVED,S_src_sound,FALSE,NULL); 
 	  isym(ss,0); 
 	  return(0);
 	} /* no env case */
       if (strcmp(tok,S_src_selection) == 0) 
 	{
-	  src_env_or_num(ss,NULL,NULL,fstr(str[1]),TRUE,NOT_FROM_ENVED,S_src_selection,TRUE); 
+	  src_env_or_num(ss,NULL,NULL,fstr(str[1]),TRUE,NOT_FROM_ENVED,S_src_selection,TRUE,NULL); 
 	  isym(ss,0); 
 	  return(0);
 	} /* no env case */

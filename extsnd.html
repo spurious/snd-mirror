@@ -636,7 +636,7 @@ the hook.
   <b><a name="starthook">start-hook</a></b> (filename)               called upon start-up. (<b>or</b>)
                                       If it returns #t, snd exits immediately.
 
-  <b><a name=playhook">play-hook</a></b> (samps)                   called each time a buffer (size: <i>samps</i>) is about to be 
+  <b><a name="playhook">play-hook</a></b> (samps)                   called each time a buffer (size: <i>samps</i>) is about to be 
                                       filled for the DAC (see enved.scm and marks.scm). (<b>progn</b>)
 
   <b><a name="startplayinghook">start-playing-hook</a></b> (snd)            called when a play request is triggered. (<b>or</b>)
@@ -1379,7 +1379,9 @@ these are indicated as <em class=targ>reg</em> below.
   <b><a name="snddeleteselection">delete-selection</a></b>  ()            same as cut (deletes currently selected portions).
 
   <b><a name="sndenvselection">env-selection</a></b>     (envelope <i>env-base snd chn</i>)
-                                  apply <i>envelope</i> to the currently selected portion of <i>snd</i>'s channel <i>chn</i> 
+                                  apply <i>envelope</i> to the currently selected portion of <i>snd</i>'s channel <i>chn</i>.
+                                  <i>envelope</i> can also be a CLM env generator (in this case, <i>env-base</i> 
+                                  is ignored).
 
   <b><a name="sndfilterselection">filter-selection</a></b>  (env order)   apply an FIR filter of order <i>order</i> and frequency response <i>env</i>
                                   to the current selection.  <i>env</i> can also be the filter coefficients
@@ -1417,7 +1419,7 @@ these are indicated as <em class=targ>reg</em> below.
   <b><a name="sndsmoothselection">smooth-selection</a></b>  ()            apply a smoothing function to the current selection 
 
   <b><a name="sndsrcselection">src-selection</a></b>     (num-or-env <i>base</i>) 
-                                  same as <i>src</i> but applied to current selection 
+                                  same as <i>src-sound</i> but applied to current selection.
 
   <b><a name="temptoselection">temp-to-selection</a></b> (data name origin) 
                                   read selected data from temp file (see <a href="grfsnd.html#programs">external programs</a>).
@@ -1572,6 +1574,9 @@ sets its value to val.
                                   (as in CLM).
 
                                       (env-sound '(0 0 1 1 2 0))
+
+                                  <i>envelope</i> can also be a CLM env generator (in this case, <i>env-base</i> 
+                                  is ignored, and it's assumed <i>samps</i> is reflected in the make-env call).
 
   <b><a name="sndexpand">expand</a></b>            (<em class=targ>snd</em>)         current <a href="snd.html#expand">expansion</a> amount (control panel).
 
@@ -2118,6 +2123,9 @@ sets its value to val.
                                   (if any) represents the difference of the new srate from 1.0 -- that is,
                                   (src-sound '(0 0 1 0)) is a no-op, whereas (src-sound '(0 0 1 1) moves
                                   up an octave over the course of the sound.
+
+                                  <i>num-or-env</i> can also be a CLM env generator (its duration should
+                                  be the same as the original sound).
 
   <b><a name="startplaying">start-playing</a></b>     (<i>chans srate background</i>)  
                                   if a play-list is waiting, start it.  <i>chans</i> defaults to 1, 

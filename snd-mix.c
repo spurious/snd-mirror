@@ -619,7 +619,11 @@ static mix_fd *init_mix_read_1(mix_info *md, int old, int type)
 	break;
       }
   if (mf->calc == C_ZERO) return(mf);
-  if (!(md->add_snd)) md->add_snd = make_mix_readable(md);
+  if (!(md->add_snd)) 
+    {
+      md->add_snd = make_mix_readable(md);
+      if (!(md->add_snd)) return(NULL);
+    }
   add_sp = md->add_snd;
   if (type == MIX_INPUT_SOUND)
     mf->sfs = (snd_fd **)CALLOC(chans,sizeof(snd_fd *));
@@ -719,6 +723,7 @@ static mix_fd *init_mix_input_amp_env_read(mix_info *md, int old, int hi)
   chan_info *cp;
   env_info *ep;
   mf = init_mix_read_1(md,old,MIX_INPUT_AMP_ENV);
+  if (!mf) return(NULL);
   sp = md->add_snd;
   mf->ctr = (int *)CALLOC(sp->nchans,sizeof(int));
   mf->samples = (int *)CALLOC(sp->nchans,sizeof(int));
@@ -1198,7 +1203,9 @@ static void remix_file(mix_info *md, char *origin)
   use_temp_file = (num >= MAX_BUFFER_SIZE);
 
   add = init_mix_read(md,0);
+  if (!add) return;
   sub = init_mix_read(md,1);
+  if (!sub) return;
   cur = init_sample_read(beg,cp,READ_FORWARD);
 
   if (use_temp_file)
@@ -1358,7 +1365,9 @@ static int make_temporary_amp_env_mixed_graph(chan_info *cp, axis_info *ap, mix_
   hi = ap->hisamp;
 
   new_fd = init_mix_read(md,0);
+  if (!new_fd) return(0);
   old_fd = init_mix_read(md,1);
+  if (!old_fd) return(0);
 
   ep = cp->amp_envs[cp->edit_ctr];
   main_loc = (int)((Float)(ap->losamp)/(Float)(ep->samps_per_bin));
@@ -1599,6 +1608,7 @@ static void make_temporary_graph(chan_info *cp, mix_info *md, console_state *cs)
    */
 
   ms = md->wg;
+  if (!(ms->p0)) return;
   oldbeg = cs->orig;
   newbeg = cs->beg;
   oldend = cs->end;
@@ -1617,7 +1627,9 @@ static void make_temporary_graph(chan_info *cp, mix_info *md, console_state *cs)
     {
       sf = init_sample_read(ap->losamp,cp,READ_FORWARD);
       add = init_mix_read(md,0);
+      if (!add) return;
       sub = init_mix_read(md,1);
+      if (!sub) return;
       if ((oldbeg < lo) && (lo < oldend)) 
 	for (i=oldbeg;i<lo;i++) 
 	  next_mix_sample(sub);
@@ -1656,7 +1668,9 @@ static void make_temporary_graph(chan_info *cp, mix_info *md, console_state *cs)
 	{
 	  sf = init_sample_read(ap->losamp,cp,READ_FORWARD);
 	  add = init_mix_read(md,0);
+	  if (!add) return;
 	  sub = init_mix_read(md,1);
+	  if (!sub) return;
 	  if ((oldbeg < lo) && (lo < oldend)) 
 	    for (i=oldbeg;i<lo;i++) 
 	      next_mix_sample(sub);
@@ -1902,6 +1916,7 @@ static int display_mix_waveform(chan_info *cp, mix_info *md, console_state *cs, 
   if ((samples_per_pixel < 5.0) && (samps < POINT_BUFFER_SIZE))
     {
       add = init_mix_read(md,0);
+      if (!add) return(0);
       if (lo > newbeg) 
 	{
 	  for (i=newbeg;i<lo;i++) next_mix_sample(add);
@@ -1943,6 +1958,7 @@ static int display_mix_waveform(chan_info *cp, mix_info *md, console_state *cs, 
       else
 	{
 	  add = init_mix_read(md,0);
+	  if (!add) return(0);
 	  if (lo > newbeg) 
 	    {
 	      for (i=newbeg;i<lo;i++) next_mix_sample(add);

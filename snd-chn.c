@@ -4049,7 +4049,7 @@ src_state *free_src(src_state *sr)
   return(NULL);
 }
 
-void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_num, int from_enved, char *origin, int over_selection)
+void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_num, int from_enved, char *origin, int over_selection, mus_any *gen)
 {
   snd_info *sp = NULL;
   int reporting = 0;
@@ -4057,7 +4057,7 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
   sync_info *si;
   snd_fd **sfs;
   snd_fd *sf;
-  int i;
+  int i,idiff,jj;
   MUS_SAMPLE_TYPE **data;
   file_info *hdr = NULL;
   int j,k,ofd = 0,datumb = 0,ok,err=0;
@@ -4065,14 +4065,14 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
   MUS_SAMPLE_TYPE *idata;
   src_state *sr;
   int scdur,dur;
-  Float *ef = NULL;
   int *old_marks = NULL,*new_marks = NULL;
   mark **mps;
-  int cur_mark=0,cur_mark_sample=-1,cur_marks=0,m,need_free_env=0;
-  Float env_val,env_incr,xoffset,xscaler,logbase=0.0,step_val;
-  int ef_ctr,pass,next_pass,diff,stop_point=0,need_step=0,need_exponential=0;
+  int cur_mark=0,cur_mark_sample=-1,cur_marks=0,m;
+  Float env_val;
+  int next_pass,stop_point=0;
+  mus_any *egen;
 
-  if ((!just_num) && (e == NULL)) return;
+  if ((!just_num) && (e == NULL) && (gen == NULL)) return;
 
   /* get envelope or src ratio */
   if (cp == NULL)
@@ -4092,23 +4092,6 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
   data = (MUS_SAMPLE_TYPE **)CALLOC(1,sizeof(MUS_SAMPLE_TYPE *));
   data[0] = (MUS_SAMPLE_TYPE *)CALLOC(MAX_BUFFER_SIZE,sizeof(MUS_SAMPLE_TYPE)); 
 
-  if (!just_num)
-    {
-      need_step = (e->base <= 0.0);
-      need_exponential = ((!need_step) && (e->base != 1.0));
-      if (need_exponential)
-	{
-	  xoffset = 0.0;
-	  xscaler = 1.0;
-	  logbase = log(e->base);
-	  ef = fixup_exp_env(e,&xoffset,&xscaler,e->base);
-	  if (ef == NULL) return;
-	  e = make_envelope(ef,e->pts*2);
-	  need_free_env=1;
-	  FREE(ef);
-	}
-    }
-  
   if (!(ss->stopped_explicitly))
     {
       for (i=0;i<si->chans;i++)
@@ -4177,21 +4160,14 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
 			}
 		    }
 		}
-	      ef = magify_env(e,dur,1.0); /* dur=input samples (might change, so re-magify) */
-	      ef_ctr = 0;
-	      env_val = e->data[1];
-	      step_val = env_val;
-	      env_incr = ef[1];
-	      pass = (int)(ef[0]);
+	      if (e)
+		egen = mus_make_env(e->data,e->pts,1.0,0.0,e->base,0.0,0,dur-1,NULL);
+	      else egen = gen;
 	      next_pass = sr->sample;
+	      env_val = mus_env(egen);
 	      for (k=0;sr->sample<dur;k++)
 		{
-		  if (need_step)
-		    idata[j] = (MUS_FLOAT_TO_SAMPLE(run_src(sr,step_val)));
-		  else
-		    if (need_exponential)
-		      idata[j] = (MUS_FLOAT_TO_SAMPLE(run_src(sr,xoffset + xscaler * (exp(logbase*env_val) - 1.0))));
-		    else idata[j] = (MUS_FLOAT_TO_SAMPLE(run_src(sr,env_val)));
+		  idata[j] = (MUS_FLOAT_TO_SAMPLE(run_src(sr,env_val)));
 		  j++;
 		  if (j == MAX_BUFFER_SIZE)
 		    {
@@ -4206,13 +4182,10 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
 		    }
 		  if (next_pass != sr->sample)  /* tick env forward dependent on sr->sample */
 		    {
-		      diff = (sr->sample - next_pass);
+		      idiff = sr->sample - next_pass;
 		      next_pass = sr->sample;
 		      if ((new_marks) && (cur_mark_sample != -1) && (next_pass >= (cur_mark_sample - si->begs[i]))) 
 			{
-#if DEBUGGING
-			  if (cur_mark >= cur_marks) abort();
-#endif
 			  /* not '==' because sr->sample can be incremented by more than 1 */
 			  new_marks[cur_mark] = k + si->begs[i];
 			  cur_mark++;
@@ -4220,27 +4193,12 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
 			    cur_mark_sample = old_marks[cur_mark];
 			  else cur_mark_sample = -1;
 			}
-		      env_val += (diff * env_incr);
-		      pass -= diff;
-		      if (pass <= 0)
-			{
-			  ef_ctr += 2;
-			  pass = (int)(ef[ef_ctr]);
-			  env_incr = ef[ef_ctr+1];
-			  step_val = env_val;
-			  /* 1 pass segments are special in this case */
-			  if (pass == 1)
-			    {
-			      env_val += env_incr;
-			      ef_ctr += 2;
-			      pass = (int)(ef[ef_ctr]);
-			      env_incr = ef[ef_ctr+1];
-			      step_val = env_val;
-			    }
-			}
+		      for (jj=0;jj<idiff;jj++) env_val = mus_env(egen);
 		    }
 		}
-	      FREE(ef);
+	      if (e) 
+		mus_free(egen);
+	      else mus_restart_env(gen);
 	    }
 	  if (reporting) finish_progress_report(sp,from_enved);
 	  sr = free_src(sr);
@@ -4307,7 +4265,6 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
   FREE(data);
   for (i=0;i<si->chans;i++) if (sfs[i]) free_snd_fd(sfs[i]);
   free_sync_state(sc);
-  if ((e) && (need_free_env)) free_env(e);
 }
 
 
@@ -4315,64 +4272,17 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
 
 static Float *env2array(int order, env *e)
 {
-  Float *fdata = NULL,*ef = NULL;
+  Float *fdata = NULL;
   Float x;
-  env *ne;
-  int i,j,cur_pt,ef_ctr,pass;
-  Float last_x,step,xoffset,xscaler,logbase,env_pow,env_incr;
-
+  int i,j;
+  Float last_x,step;
   if (!e) return(NULL);
   /* get the frequency envelope and design the FIR filter */
   fdata = (Float *)CALLOC(order,sizeof(Float));
   last_x = e->data[(e->pts-1)*2];
   step = 2*last_x/((Float)order-1);
-  if (e->base == 1.0)
-    {
-      for (i=0,x=0.0;i<order/2;i++,x+=step) 
-	fdata[i] = list_interp(x,e->data,e->pts);
-    }
-  else
-    {
-      if (e->base == 0.0)
-	{
-	  cur_pt = 2;
-	  for (i=0,x=0.0;i<order/2;i++,x+=step) 
-	    {
-	      while ((cur_pt < (e->pts*2)) && (x > e->data[cur_pt])) cur_pt+=2;
-	      fdata[i] = e->data[cur_pt - 1];
-	    }
-	}
-      else
-	{
-	  /* exponential segments */
-	  xoffset = 0.0;
-	  xscaler = 1.0;
-	  logbase = log(e->base);
-	  ef = fixup_exp_env(e,&xoffset,&xscaler,e->base);
-	  if (ef == NULL) {if (fdata) FREE(fdata); return(NULL);}
-	  ne = make_envelope(ef,e->pts*2);
-	  FREE(ef);
-	  ef = magify_env(ne,order/2,1.0);
-	  env_pow = ne->data[1];
-	  env_incr = ef[1];
-	  pass = (int)(ef[0]);
-	  ef_ctr = 0;
-	  for (i=0;i<order/2;i++)
-	    {
-	      fdata[i] = xoffset + xscaler * (exp(logbase * env_pow) - 1.0);
-	      env_pow += env_incr;
-	      pass--;
-	      if (pass <= 0) 
-		{
-		  ef_ctr += 2;
-		  pass = (int)(ef[ef_ctr]);
-		  env_incr = ef[ef_ctr+1];
-		}
-	    }
-	  FREE(ef);
-	  free_env(ne);
-	}
-    }
+  for (i=0,x=0.0;i<order/2;i++,x+=step) 
+    fdata[i] = list_interp(x,e->data,e->pts); /* not mus_env here since it's likely the points fall between the order-related samples */
   for (j=order/2-1,i=order/2;(i<order) && (j>=0);i++,j--) fdata[i] = fdata[j];
   return(fdata);
 }
@@ -4964,9 +4874,9 @@ static void reverse_sound(chan_info *ncp, int over_selection)
 
 
 /* amplitude envelopes */
+/*   changed to use mus_env 20-Dec-00 */
 
-
-void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexpr, int from_enved, char *origin)
+void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexpr, int from_enved, char *origin, mus_any *gen)
 {
   snd_fd *sf;
   snd_info *sp;
@@ -4974,40 +4884,34 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
   sync_state *sc;
   snd_fd **sfs;
   file_info *hdr;
-  Float *ef = NULL;
-  double *efd = NULL;
-  int i,j,k,ef_ctr,pass,ofd = 0,datumb = 0,temp_file,need_free_env=0,err=0,scalable=1;
+  int i,j,k,ofd = 0,datumb = 0,temp_file,err=0,scalable=1;
   MUS_SAMPLE_TYPE **data;
   MUS_SAMPLE_TYPE *idata;
   int reporting = 0;
-  Float env_val,env_incr,step_val;
   Float val[1];
-  double env_vald=0.0,env_incrd;
-  int need_doubles=0,need_exponential=0,need_step=0;
   char *ofile = NULL;
   snd_state *ss;
-  Float xoffset,xscaler,logbase=0.0,env_powd;
-
-  if (!e) return;
-  if (e->pts == 0) return;
-
-  val[0] = e->data[1];
-  for (i=1,j=2;i<e->pts;i++,j+=2)
-    if (e->data[j+1] != val[0]) 
-      {
-	scalable = 0; 
-	break;
-      }
-  if (scalable)
+  mus_any *egen;
+  Float egen_val;
+  
+  if ((!e) && (!gen)) return;
+  if (e)
     {
-      val[0] *= scaler;
-      scale_by(cp,val,1,regexpr);
-      return;
+      if (e->pts == 0) return;
+      val[0] = e->data[1];
+      for (i=1,j=2;i<e->pts;i++,j+=2)
+	if (e->data[j+1] != val[0]) 
+	  {
+	    scalable = 0; 
+	    break;
+	  }
+      if (scalable)
+	{
+	  val[0] *= scaler;
+	  scale_by(cp,val,1,regexpr);
+	  return;
+	}
     }
-
-  need_step = (e->base <= 0.0);
-  need_exponential = ((!need_step) && (e->base != 1.0) && (fabs(e->base-1.0) > 0.00001));
-  need_doubles = (((dur > 5000000) && (!need_step)) || (need_exponential));
   si = NULL;
   sp = cp->sound;
   ss = cp->state;
@@ -5023,6 +4927,10 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
       free_sync_state(sc); 
       return;
     }
+  if (e)
+    egen = mus_make_env(e->data,e->pts,scaler,0.0,e->base,0.0,0,dur-1,NULL);
+  else egen = gen;
+
   if (dur > MAX_BUFFER_SIZE) /* if smaller than this, we don't gain anything by using a temp file (its buffers are this large) */
     {
       temp_file = 1; 
@@ -5031,26 +4939,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
       datumb = mus_data_format_to_bytes_per_sample(hdr->format);
     }
   else temp_file = 0;
-  if (need_exponential)
-    {
-      xoffset = 0.0;
-      xscaler = 1.0;
-      logbase = log(e->base);
-      ef = fixup_exp_env(e,&xoffset,&xscaler,e->base);
-      if (ef == NULL) 
-	need_exponential = 0;
-      else 
-	{
-	  e = make_envelope(ef,e->pts*2);
-	  need_free_env=1;
-	  FREE(ef);
-	  ef = NULL;
-	  scaler = 1.0;
-	}
-    }
-  if (need_doubles)
-    efd = dmagify_env(e,dur,scaler);
-  else ef = magify_env(e,dur,scaler);
+
   data = (MUS_SAMPLE_TYPE **)CALLOC(si->chans,sizeof(MUS_SAMPLE_TYPE *));
   for (i=0;i<si->chans;i++) 
     {
@@ -5058,199 +4947,17 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 	data[i] = (MUS_SAMPLE_TYPE *)CALLOC(FILE_BUFFER_SIZE,sizeof(MUS_SAMPLE_TYPE)); 
       else data[i] = (MUS_SAMPLE_TYPE *)CALLOC(dur,sizeof(MUS_SAMPLE_TYPE)); 
     }
-  ef_ctr = 0;
+
   j=0;
   reporting = (dur > (MAX_BUFFER_SIZE * 4));
   if (reporting) start_progress_report(sp,from_enved);
-  if (!need_exponential)
+  if (si->chans > 1)
     {
-      if (!need_step)
-	{
-	  /* LINEAR SEGMENTS */
-	  if (need_doubles)
-	    { /* this case can take long enough that it probably should be a background process */
-	      env_vald = e->data[1];
-	      env_incrd = efd[1];
-	      pass = (int)(efd[0]);
-	      if (si->chans > 1)
-		{
-		  for (i=0;i<dur;i++)
-		    {
-		      for (k=0;k<si->chans;k++)
-			data[k][j] = MUS_FLOAT_TO_SAMPLE(next_sample_to_float(sfs[k])*env_vald);
-		      env_vald += env_incrd;
-		      pass--;
-		      if (pass <= 0) 
-			{
-			  ef_ctr += 2;
-			  pass = (int)(efd[ef_ctr]);
-			  env_incrd = efd[ef_ctr+1];
-			}
-		      j++;
-		      if (temp_file)
-			{
-			  if (j == FILE_BUFFER_SIZE)
-			    {
-			      progress_report(sp,S_env_sound,0,0,(Float)i/((Float)dur),from_enved);
-			      err = mus_file_write(ofd,0,j-1,si->chans,data);
-			      j=0;
-			      if (err == -1) break;
-			      if (ss->stopped_explicitly) break;
-			    }
-			}
-		    }
-		}
-	      else
-		{
-		  sf = sfs[0];
-		  idata = data[0];
-		  for (i=0;i<dur;i++)
-		    {
-		      idata[j] = MUS_FLOAT_TO_SAMPLE(next_sample_to_float(sf)*env_vald);
-		      env_vald += env_incrd;
-		      pass--;
-		      if (pass <= 0) 
-			{
-			  ef_ctr += 2;
-			  pass = (int)(efd[ef_ctr]);
-			  env_incrd = efd[ef_ctr+1];
-			}
-		      j++;
-		      if (temp_file)
-			{
-			  if (j == FILE_BUFFER_SIZE)
-			    {
-			      progress_report(sp,S_env_sound,0,0,(Float)i/((Float)dur),from_enved);
-			      err = mus_file_write(ofd,0,j-1,1,data);
-			      j=0;
-			      if (err == -1) break;
-			      if (ss->stopped_explicitly) break;
-			    }
-			}
-		    }
-		}
-	    }
-	  else /* Float case */
-	    {
-	      env_val = e->data[1];
-	      env_incr = ef[1];
-	      pass = (int)(ef[0]);
-	      if (si->chans > 1)
-		{
-		  for (i=0;i<dur;i++)
-		    {
-		      for (k=0;k<si->chans;k++)
-			data[k][j] = MUS_FLOAT_TO_SAMPLE(next_sample_to_float(sfs[k])*env_val);
-		      env_val += env_incr;
-		      pass--;
-		      if (pass <= 0) 
-			{
-			  ef_ctr += 2;
-			  pass = (int)(ef[ef_ctr]);
-			  env_incr = ef[ef_ctr+1];
-			}
-		      j++;
-		      if (temp_file)
-			{
-			  if (j == FILE_BUFFER_SIZE)
-			    {
-			      err = mus_file_write(ofd,0,j-1,si->chans,data);
-			      j=0;
-			      if (err == -1) break;
-			      if (reporting) progress_report(sp,S_env_sound,0,0,(Float)i/((Float)dur),from_enved);
-			      if (ss->stopped_explicitly) break;
-			    }
-			}
-		    }
-		}
-	      else
-		{
-		  sf = sfs[0];
-		  idata = data[0];
-		  for (i=0;i<dur;i++)
-		    {
-		      idata[j] = MUS_FLOAT_TO_SAMPLE(next_sample_to_float(sf)*env_val);
-		      env_val += env_incr;
-		      pass--;
-		      if (pass <= 0) 
-			{
-			  ef_ctr += 2;
-			  pass = (int)(ef[ef_ctr]);
-			  env_incr = ef[ef_ctr+1];
-			}
-		      j++;
-		      if (temp_file)
-			{
-			  if (j == FILE_BUFFER_SIZE)
-			    {
-			      err = mus_file_write(ofd,0,j-1,1,data);
-			      j=0;
-			      if (err == -1) break;
-			      if (reporting) progress_report(sp,S_env_sound,0,0,(Float)i/((Float)dur),from_enved);
-			      if (ss->stopped_explicitly) break;
-			    }
-			}
-		    }
-		}
-	    }
-	}
-      else
-	{
-	  /* STEP SEGMENTS -- I doubt this is actually ever useful */
-	  env_val = e->data[1];
-	  step_val = env_val;
-	  env_incr = ef[1];
-	  pass = (int)(ef[0]);
-	  for (i=0;i<dur;i++)
-	    {
-	      for (k=0;k<si->chans;k++)
-		data[k][j] = MUS_FLOAT_TO_SAMPLE(next_sample_to_float(sfs[k])*step_val);
-	      env_val += env_incr;
-	      pass--;
-	      if (pass <= 0) 
-		{
-		  ef_ctr += 2;
-		  pass = (int)(ef[ef_ctr]);
-		  env_incr = ef[ef_ctr+1];
-		  step_val = env_val;
-		}
-	      j++;
-	      if (temp_file)
-		{
-		  if (j == FILE_BUFFER_SIZE)
-		    {
-		      err = mus_file_write(ofd,0,j-1,si->chans,data);
-		      j=0;
-		      if (err == -1) break;
-		      if (reporting) progress_report(sp,S_env_sound,0,0,(Float)i/((Float)dur),from_enved);
-		      if (ss->stopped_explicitly) break;
-		    }
-		}
-	    }
-	}
-    }
-  else
-    {
-      /* EXPONENTIAL SEGMENTS */
-      env_powd = e->data[1];
-      env_incrd = efd[1];
-      pass = (int)(efd[0]);
       for (i=0;i<dur;i++)
 	{
-	  if (env_incrd != 0.0) 
-	    {
-	      env_vald = xoffset + xscaler * (exp(logbase * env_powd) - 1.0);
-	      env_powd += env_incrd;
-	    }
+	  egen_val = mus_env(egen);
 	  for (k=0;k<si->chans;k++)
-	    data[k][j] = MUS_FLOAT_TO_SAMPLE(next_sample_to_float(sfs[k])*env_vald);
-	  pass--;
-	  if (pass <= 0) 
-	    {
-	      ef_ctr += 2;
-	      pass = (int)(efd[ef_ctr]);
-	      env_incrd = efd[ef_ctr+1];
-	    }
+	    data[k][j] = MUS_FLOAT_TO_SAMPLE(next_sample_to_float(sfs[k])*egen_val);
 	  j++;
 	  if (temp_file)
 	    {
@@ -5265,6 +4972,28 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 	    }
 	}
     }
+  else
+    {
+      sf = sfs[0];
+      idata = data[0];
+      for (i=0;i<dur;i++)
+	{
+	  idata[j] = MUS_FLOAT_TO_SAMPLE(next_sample_to_float(sf)*mus_env(egen));
+	  j++;
+	  if (temp_file)
+	    {
+	      if (j == FILE_BUFFER_SIZE)
+		{
+		  progress_report(sp,S_env_sound,0,0,(Float)i/((Float)dur),from_enved);
+		  err = mus_file_write(ofd,0,j-1,1,data);
+		  j=0;
+		  if (err == -1) break;
+		  if (ss->stopped_explicitly) break;
+		}
+	    }
+	}
+    }
+
   if (temp_file)
     {
       if (j>0) mus_file_write(ofd,0,j-1,si->chans,data);
@@ -5294,11 +5023,9 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
       FREE(data[i]);
     }
   if ((temp_file) && (ofile)) {free(ofile); ofile=NULL;} /* safe only if snd_tempnam, not tmpnam used */
-  if (ef) FREE(ef);
-  if (efd) FREE(efd);
   if (data) FREE(data);
+  if (e) mus_free(egen);
   free_sync_state(sc);
-  if ((e) && (need_free_env)) free_env(e);
 }
 
 
@@ -6105,9 +5832,9 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	    {
 	      if (sp->amping != 1)
 		apply_env(active_chan,e,active_chan->cursor,sp->amping,1.0,sp->reging,NOT_FROM_ENVED,
-			  (char *)((sp->reging) ? "C-x a" : "C-x C-a"));
+			  (char *)((sp->reging) ? "C-x a" : "C-x C-a"),NULL);
 	      else apply_env(active_chan,e,0,current_ed_samples(active_chan),1.0,sp->reging,NOT_FROM_ENVED,
-			     (char *)((sp->reging) ? "C-x a" : "C-x C-a"));
+			     (char *)((sp->reging) ? "C-x a" : "C-x C-a"),NULL);
 	      free_env(e);
 	    }
 	  sp->reging = 0;

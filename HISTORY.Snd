@@ -2,6 +2,7 @@ snd change log
 
 2001 ----------------------------------------------------------------
 
+  21-Dec:    env|src-sound|selection can be passed CLM env.
   18-Dec:    enved.scm (suggested by Anders Vinjar).
              play-hook, player?.
   15-Dec:    update-lisp-graph. graph data arg can be envelope.

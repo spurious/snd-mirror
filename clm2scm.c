@@ -840,7 +840,11 @@ static short mus_scm_tag = 0;
 #define mus_get_any(arg) (((mus_scm *)GH_VALUE_OF(arg))->gen)
 #define mus_get_scm(arg) ((mus_scm *)GH_VALUE_OF(arg))
 
-static int mus_scm_p(SCM obj) {return((SCM_NIMP(obj)) && (GH_TYPE_OF(obj) == (SCM)mus_scm_tag));}
+int mus_scm_p(SCM obj);
+int mus_scm_p(SCM obj) {return((SCM_NIMP(obj)) && (GH_TYPE_OF(obj) == (SCM)mus_scm_tag));}
+
+mus_any *mus_scm_to_clm(SCM obj);
+mus_any *mus_scm_to_clm(SCM obj) {return(((mus_any *)(((mus_scm *)(GH_VALUE_OF(obj)))->gen)));}
 
 static SCM mark_mus_scm(SCM obj) 
 {

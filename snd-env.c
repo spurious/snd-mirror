@@ -86,7 +86,7 @@ env *make_envelope(Float *env_buffer, int len)
   return(e);
 }
 
-Float *magify_env(env *e, int dur, Float scaler)
+static Float *magify_env(env *e, int dur, Float scaler)
 { /* from magify-seg, mus.lisp, with less worry about special cases */
   int i,j,curx;
   Float x0,y0,x1,y1,xmag;
@@ -112,33 +112,7 @@ Float *magify_env(env *e, int dur, Float scaler)
   return(result);
 }
 
-double *dmagify_env(env *e, int dur, Float scaler)
-{ /* same as magify_env but using doubles for extreme durations */
-  int i,j,curx;
-  double x0,y0,x1,y1,xmag;
-  double *result;
-  if (!e) return(NULL);
-  x1 = e->data[0];
-  xmag = (double)dur/(double)(e->data[e->pts*2 - 2] - x1);
-  y1 = e->data[1];
-  result = (double *)CALLOC(e->pts*2,sizeof(double));
-  for (j=0,i=2;i<e->pts*2;i+=2,j+=2)
-    {
-      x0 = x1;
-      x1 = e->data[i];
-      y0 = y1;
-      y1 = e->data[i+1];
-      curx = (int)(xmag*(x1-x0)+0.5);
-      if (curx < 1) curx = 1;
-      result[j] = curx;
-      if (y0 == y1) result[j+1]=0.0;
-      else result[j+1] = scaler*(y1-y0)/(double)curx;
-    }
-  result[e->pts*2-2] = 100000000;
-  return(result);
-}
-
-Float *fixup_exp_env(env *e, Float *offset, Float *scaler, Float base)
+static Float *fixup_exp_env(env *e, Float *offset, Float *scaler, Float base)
 {
   Float min_y,max_y,val = 0.0,tmp = 0.0,b,b1;
   int flat,len,i;

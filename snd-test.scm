@@ -35,7 +35,7 @@
 (if (file-exists? "sndlib.gdbm") (delete-file "sndlib.gdbm"))
 
 (define tests 1)
-(define snd-test -1)
+(define snd-test 10)
 (define full-test (< snd-test 0))
 
 (define include-clm #f)
@@ -52,6 +52,7 @@
   (snd-print str))
 
 (define fneq (lambda (a b) (> (abs (- a b)) .001)))
+(define ffneq (lambda (a b) (> (abs (- a b)) .01)))
 (define feql
   (lambda (a b)
     (if (null? a)
@@ -2577,13 +2578,13 @@
 		  (v2 (env e1))
 		  (v3 (env-interp (* i .2) e2))
 		  (v4 (env e2)))
-	      (if (fneq v1 v2) (snd-display (format #f ";env-interp[rmp ~F]: ~A (~A)?" (* .1 i) v1 v2)))
-	      (if (fneq v3 v4) (snd-display (format #f ";env-interp[pyr ~F]: ~A (~A)?" (* .2 i) v3 v4)))))
+	      (if (ffneq v1 v2) (snd-display (format #f ";env-interp[rmp ~F]: ~A (~A)?" (* .1 i) v1 v2)))
+	      (if (ffneq v3 v4) (snd-display (format #f ";env-interp[pyr ~F]: ~A (~A)?" (* .2 i) v3 v4)))))
 	  (do ((i 0 (1+ i)))
 	      ((= i 100))
 	    (let ((v5 (env-interp (* i .02) e3))
 		  (v6 (env e3)))
-	      (if (fneq v5 v6) (snd-display (format #f ";env-interp[tri ~F]: ~A (~A)?" (* .2 i) v5 v6))))))
+	      (if (ffneq v5 v6) (snd-display (format #f ";env-interp[tri ~F]: ~A (~A)?" (* .2 i) v5 v6))))))
 
 	(set! gen (make-env '(0 0 1 1 2 0) :end 9))
 	(do ((i 0 (1+ i))) ((= i 4)) (env gen))
@@ -3502,11 +3503,18 @@
 	  (env-sound '(0 0 1 1) 0 10 1.0 ind0) 
 	  (do ((i 0 (1+ i))) ((= i 10)) (if (fneq (sample i) (* i .1)) (snd-display (format #f ";env-sound[~D]: ~A?" i (sample i)))))
 	  (undo) 
+	  (env-sound (make-env '(0 0 1 1) :end 9) 0 10 1.0 ind0) 
+	  (do ((i 0 (1+ i))) ((= i 10)) (if (fneq (sample i) (* i .1)) (snd-display (format #f ";env-sound[~D]: ~A?" i (sample i)))))
+	  (undo) 
 	  (env-sound '(0 0 .5 1 1 1) 0 10 0.0 ind0) 
 	  (if (or (fneq (sample 3) 0.0) (fneq (sample 8) 1.0) )
 	      (snd-display (format #f ";env-sound stepped: ~A?" (sample 3) (sample 8))))
 	  (undo) 
 	  (env-sound '(0 0 1 1) 0 10 32.0 ind0) 
+	  (if (or (fneq (sample 3) 0.0589) (fneq (sample 8) 0.484) )
+	      (snd-display (format #f ";env-sound exp: ~A ~A?" (sample 3) (sample 8))))
+	  (undo) 
+	  (env-sound (make-env '(0 0 1 1) :base 32.0 :end 9) 0 10 32.0 ind0) 
 	  (if (or (fneq (sample 3) 0.0589) (fneq (sample 8) 0.484) )
 	      (snd-display (format #f ";env-sound exp: ~A ~A?" (sample 3) (sample 8))))
 	  (undo) 
@@ -4424,6 +4432,7 @@
 	      (if (rs 0.5) (revert-sound cfd))
 	      (if (rs 0.5) (src-sound -.5 cfd))
 	      (if (rs 0.5) (src-sound '(0 .5 1 1.5) cfd))
+	      (if (rs 0.5) (src-sound (make-env '(0 .5 1 1.5) :end (1- (frames cfd))) cfd))
 	      (if (rs 0.5) (revert-sound cfd))
 	      (if (rs 0.5) (filter-sound '(0 1 .2 0 .5 1 1 0) 20 cfd))      ; FIR direct form
 	      (if (rs 0.5) (filter-sound '(0 0 .1 0 .11 1 .12 0 1 0) 2048)) ; convolution

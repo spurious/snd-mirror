@@ -256,6 +256,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+21-Dec:  env|src-sound|selection can be passed CLM env.\n\
 18-Dec:  enved.scm (suggested by Anders Vinjar).\n\
          play-hook, player?.\n\
 15-Dec:  update-lisp-graph. graph data arg can be envelope.\n\

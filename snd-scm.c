@@ -2622,6 +2622,8 @@ static SCM g_yes_or_no_p(SCM msg)
   RTNBOOL(snd_yes_or_no_p(state,gh_scm2newstr(msg,NULL)));
 }
 
+int mus_scm_p(SCM obj);
+mus_any *mus_scm_to_clm(SCM obj);
 
 static SCM g_env_selection(SCM edata, SCM base, SCM snd_n, SCM chn_n)
 {
@@ -2630,15 +2632,31 @@ static SCM g_env_selection(SCM edata, SCM base, SCM snd_n, SCM chn_n)
 
   chan_info *cp;
   env *e;
+  mus_any *egen;
   ERRCP(S_env_selection,snd_n,chn_n,3);
   if (selection_is_active() == 0) return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_env_selection))));
   cp = get_cp(snd_n,chn_n,S_env_selection);
-  e = get_env(edata,base,S_env_selection);
-  if (e)
+  if (gh_list_p(edata))
     {
-      apply_env(cp,e,0,0,1.0,TRUE,NOT_FROM_ENVED,S_env_selection);
-      free_env(e);
-      return(SCM_BOOL_T);
+      e = get_env(edata,base,S_env_selection);
+      if (e)
+	{
+	  apply_env(cp,e,0,0,1.0,TRUE,NOT_FROM_ENVED,S_env_selection,NULL);
+	  free_env(e);
+	  return(edata);
+	}
+    }
+  else
+    {
+      if (mus_scm_p(edata))
+	{
+	  egen = mus_scm_to_clm(edata);
+	  if (mus_env_p(egen))
+	    {
+	      apply_env(cp,NULL,0,0,1.0,TRUE,NOT_FROM_ENVED,S_env_selection,egen);
+	      return(edata);
+	    }
+	}
     }
   return(SCM_BOOL_F);
 }
@@ -2651,19 +2669,36 @@ static SCM g_env_sound(SCM edata, SCM samp_n, SCM samps, SCM base, SCM snd_n, SC
 
   chan_info *cp;
   env *e;
-  int dur;
+  int beg=0,dur;
+  mus_any *egen;
   ERRB2(samp_n,S_env_sound);
   ERRB3(samps,S_env_sound);
   ERRCP(S_env_sound,snd_n,chn_n,5);
   cp = get_cp(snd_n,chn_n,S_env_sound);
-  e = get_env(edata,base,S_env_sound);
-  if (e)
+  beg = g_scm2intdef(samp_n,0);
+  dur = g_scm2intdef(samps,0);
+  if (dur == 0) dur = current_ed_samples(cp);
+  if (gh_list_p(edata))
     {
-      dur = g_scm2intdef(samps,0);
-      if (dur == 0) dur = current_ed_samples(cp);
-      apply_env(cp,e,g_scm2intdef(samp_n,0),dur,1.0,FALSE,NOT_FROM_ENVED,S_env_sound);
-      free_env(e);
-      return(SCM_BOOL_T);
+      e = get_env(edata,base,S_env_sound);
+      if (e)
+	{
+	  apply_env(cp,e,beg,dur,1.0,FALSE,NOT_FROM_ENVED,S_env_sound,NULL);
+	  free_env(e);
+	  return(edata);
+	}
+    }
+  else
+    {
+      if (mus_scm_p(edata))
+	{
+	  egen = mus_scm_to_clm(edata);
+	  if (mus_env_p(egen))
+	    {
+	      apply_env(cp,NULL,beg,dur,1.0,FALSE,NOT_FROM_ENVED,S_env_sound,egen);
+	      return(edata);
+	    }
+	}
     }
   return(SCM_BOOL_F);
 }
@@ -2897,14 +2932,29 @@ static SCM g_src_sound(SCM ratio_or_env, SCM base, SCM snd_n, SCM chn_n)
 
   chan_info *cp;
   env *e = NULL;
+  mus_any *egen;
   ERRCP(S_src_sound,snd_n,chn_n,3);
   cp = get_cp(snd_n,chn_n,S_src_sound);
   if (gh_number_p(ratio_or_env))
-    src_env_or_num(state,cp,NULL,gh_scm2double(ratio_or_env),TRUE,NOT_FROM_ENVED,S_src_sound,FALSE);
+    src_env_or_num(state,cp,NULL,gh_scm2double(ratio_or_env),TRUE,NOT_FROM_ENVED,S_src_sound,FALSE,NULL);
   else 
     {
-      src_env_or_num(state,cp,e = get_env(ratio_or_env,base,S_src_sound),1.0,FALSE,NOT_FROM_ENVED,S_src_sound,FALSE);
-      if (e) free_env(e);
+      if (gh_list_p(ratio_or_env))
+	{
+	  src_env_or_num(state,cp,e = get_env(ratio_or_env,base,S_src_sound),1.0,FALSE,NOT_FROM_ENVED,S_src_sound,FALSE,NULL);
+	  if (e) free_env(e);
+	}
+      else
+	{
+	  if (mus_scm_p(ratio_or_env))
+	    {
+	      egen = mus_scm_to_clm(ratio_or_env);
+	      if (mus_env_p(egen))
+		{
+		  src_env_or_num(state,cp,NULL,1.0,FALSE,NOT_FROM_ENVED,S_src_sound,FALSE,egen);
+		}
+	    }
+	}
     }
   return(ratio_or_env);
 }
@@ -2914,15 +2964,30 @@ static SCM g_src_selection(SCM ratio_or_env, SCM base)
   #define H_src_selection "(" S_src_selection " ratio-or-env &optional (base 1.0)) sampling-rate converts the\n\
    currently selected data by ratio (which can be an envelope)"
   env *e = NULL;
+  mus_any *egen;
   chan_info *cp;
   if (selection_is_active() == 0) return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_src_selection))));
   cp = get_cp(SCM_BOOL_F,SCM_BOOL_F,S_src_selection);
   if (gh_number_p(ratio_or_env))
-    src_env_or_num(state,cp,NULL,gh_scm2double(ratio_or_env),TRUE,NOT_FROM_ENVED,S_src_selection,TRUE);
+    src_env_or_num(state,cp,NULL,gh_scm2double(ratio_or_env),TRUE,NOT_FROM_ENVED,S_src_selection,TRUE,NULL);
   else 
     {
-      src_env_or_num(state,cp,e = get_env(ratio_or_env,base,S_src_selection),1.0,FALSE,NOT_FROM_ENVED,S_src_selection,TRUE);
-      if (e) free_env(e);
+      if (gh_list_p(ratio_or_env))
+	{
+	  src_env_or_num(state,cp,e = get_env(ratio_or_env,base,S_src_selection),1.0,FALSE,NOT_FROM_ENVED,S_src_selection,TRUE,NULL);
+	  if (e) free_env(e);
+	}
+      else
+	{
+	  if (mus_scm_p(ratio_or_env))
+	    {
+	      egen = mus_scm_to_clm(ratio_or_env);
+	      if (mus_env_p(egen))
+		{
+		  src_env_or_num(state,cp,NULL,1.0,FALSE,NOT_FROM_ENVED,S_src_selection,TRUE,egen);
+		}
+	    }
+	}
     }
   return(ratio_or_env);
 }

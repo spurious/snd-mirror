@@ -453,6 +453,8 @@ functions invoked by the hook.
                                            (if (= (mus-sound-header-type name) mus-raw)
                                                (mus-file-set-prescaler fd 500.0))))
 
+                                      The prescaling affects only sound data made up of floats or doubles.
+
   exit-hook ()                        called upon exit. (or)
                                       If it returns #t, Snd does not exit.  This can be used to check
                                       for unsaved edits, or to perform cleanup activities.
@@ -557,7 +559,7 @@ functions invoked by the hook.
                                       If it returns #t, snd exits immediately.
 
   play-hook (samps)                   called each time a buffer (size: samps) is about to be
-                                      filled for the DAC (see enved.scm). (progn)
+                                      filled for the DAC (see enved.scm and marks.scm). (progn)
 
   start-playing-hook (snd)            called when a play request is triggered. (or)
                                       If it returns #t, snd does not play.
@@ -1260,7 +1262,9 @@ These are specific to the current selection (these can return the error
   delete-selection  ()            same as cut (deletes currently selected portions).
 
   env-selection     (envelope env-base snd chn)
-                                  apply envelope to the currently selected portion of snd's channel chn
+                                  apply envelope to the currently selected portion of snd's channel chn.
+                                  envelope can also be a CLM env generator (in this case, env-base
+                                  is ignored).
 
   filter-selection  (env order)   apply an FIR filter of order order and frequency response env
                                   to the current selection.  env can also be the filter coefficients
@@ -1298,7 +1302,7 @@ These are specific to the current selection (these can return the error
   smooth-selection  ()            apply a smoothing function to the current selection
 
   src-selection     (num-or-env base)
-                                  same as src but applied to current selection
+                                  same as src-sound but applied to current selection.
 
   temp-to-selection (data name origin)
                                   read selected data from temp file (see external programs).
@@ -1446,6 +1450,9 @@ value to val.
                                   (as in CLM).
 
                                       (env-sound '(0 0 1 1 2 0))
+
+                                  envelope can also be a CLM env generator (in this case, env-base
+                                  is ignored, and it's assumed samps is reflected in the make-env call).
 
   expand            (snd)         current expansion amount (control panel).
 
@@ -1991,6 +1998,9 @@ value to val.
                                   (if any) represents the difference of the new srate from 1.0 -- that is,
                                   (src-sound '(0 0 1 0)) is a no-op, whereas (src-sound '(0 0 1 1) moves
                                   up an octave over the course of the sound.
+
+                                  num-or-env can also be a CLM env generator (its duration should
+                                  be the same as the original sound).
 
   start-playing     (chans srate background)
                                   if a play-list is waiting, start it.  chans defaults to 1,

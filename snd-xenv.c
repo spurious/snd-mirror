@@ -161,7 +161,7 @@ static void apply_enved(snd_state *ss)
 		  set_mix_amp_env(mix_id,NO_SELECTION,active_env); /* chan = NO_SELECTION: use selected chan if more than 1 */
 		  active_channel = current_channel(ss);
 		}
-	      else apply_env(active_channel,active_env,0,current_ed_samples(active_channel),1.0,apply_to_selection,FROM_ENVED,"Enved: amp"); 
+	      else apply_env(active_channel,active_env,0,current_ed_samples(active_channel),1.0,apply_to_selection,FROM_ENVED,"Enved: amp",NULL); 
 	      /* calls update_graph, I think, but in short files that doesn't update the amp-env */
 	      if (enved_waving(ss)) env_redisplay(ss);
 	      break;
@@ -174,7 +174,7 @@ static void apply_enved(snd_state *ss)
 	      for (i=0,j=1;i<max_env->pts;i++,j+=2)
 		if (max_env->data[j] < .01) max_env->data[j] = .01;
 	      within_selection_src = 1;
-	      src_env_or_num(ss,active_channel,max_env,0.0,FALSE,FROM_ENVED,"Enved: src",apply_to_selection);
+	      src_env_or_num(ss,active_channel,max_env,0.0,FALSE,FROM_ENVED,"Enved: src",apply_to_selection,NULL);
 	      within_selection_src = 0;
 	      max_env = free_env(max_env);
 	      if (enved_waving(ss)) env_redisplay(ss);

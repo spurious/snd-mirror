@@ -1,6 +1,7 @@
 #include "snd.h"
 
 /* TODO need a way to set gtk_entry width
+ * TODO need to block signals if coming from scheme (see mix-panel in snd-test)
  */
 
 static GtkWidget *mix_panel = NULL;
