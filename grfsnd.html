@@ -1824,7 +1824,24 @@ This scripting mechanism actually will work in any version of Snd;
 to keep the Snd window from popping up, use the -b (-batch) switch in
 place of -l.
 </p>
-
+<p>Here's another script example; it looks for any sounds that are longer
+than 40 seconds in duration, and truncates them to 40 seconds:
+</p>
+<pre>
+#!/usr/local/bin/snd -l
+!#
+(if (= (length (script-args)) 2)
+  (display "usage: trunc.scm file-name...\n")
+  (do ((arg (+ (script-arg) 1) (1+ arg)))
+      ((= arg (length (script-args))))
+    (let* ((name (list-ref (script-args) arg)))
+      (if (&gt; (mus-sound-duration name) 40.0)
+	  (let* ((ind (open-sound name)))
+	    (set! (frames ind) (* 40 (srate ind)))
+	    (save-sound ind)
+	    (close-sound ind))))))
+(exit)
+</pre>
 <br>
 
 <span class=bbox><h3><A NAME="sndandruby">Snd with Ruby</a></h3></span>

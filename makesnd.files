@@ -20,9 +20,3 @@ GM_FILES = xm.o
 GM_SO_FILE = xm.so
 GG_FILES = xg.o
 GG_SO_FILE = xg.so
-
-prefix = /usr/local
-exec_prefix = ${prefix}
-bindir = ${exec_prefix}/bin
-INSTALL = install
-mkinstalldirs = :

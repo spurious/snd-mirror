@@ -859,6 +859,7 @@
 #define S_update_time_graph             "update-time-graph"
 #define S_update_transform              "update-transform"
 #define S_use_sinc_interp               "use-sinc-interp"
+#define S_vct_map                       "vct-map"
 #define S_vct2channel                   "vct->channel"
 #define S_vct2samples                   "vct->samples"
 #define S_vct2sound_file                "vct->sound-file"

@@ -5122,6 +5122,12 @@ the direction argument between the channel and edit-position.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->max amp of <i>snd</i>'s channel <i>chn</i>.  Used with set!, this is equivalent to scale-to.
+<!-- --><br><br>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(define (maxamp-all)
+  "(maxamp-all) returns the current maxamp of all currently open sounds"
+  (apply max (map (lambda (snd) (apply max (maxamp snd #t))) (sounds))))
+<!-- --></pre></td></tr></table>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5577,7 +5583,8 @@ the direction argument between the channel and edit-position.
 <!-- --><tr><td></td><td>
 <!-- -->save <i>snd</i> as <i>filename</i> (same as File Save as option).  If channel is specified,
 <!-- -->only that channel is saved (extracted).  <i>edpos</i>, if given, specifies which edit history position to save.
-<!-- -->Any argument can be #f which causes its value to be taken from the sound being saved. [<em class=error>cannot-save</em>].
+<!-- -->Any argument can be #f (the default for an optional argument)
+<!-- -->which causes its value to be taken from the sound being saved. [<em class=error>cannot-save</em>].
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!--

@@ -1601,8 +1601,12 @@ static XEN g_set_previous_files_sort_procedure(XEN proc)
   if (error == NULL)
     {
       ss->file_sort_proc = proc;
-      snd_protect(proc);
-      set_file_sort_sensitive(TRUE);
+      if (XEN_PROCEDURE_P(proc))
+	{
+	  snd_protect(proc);
+	  set_file_sort_sensitive(TRUE);
+	}
+      else set_file_sort_sensitive(FALSE);
     }
   else 
     {

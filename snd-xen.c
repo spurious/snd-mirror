@@ -1808,6 +1808,7 @@ subsequent " S_close_sound_file ". data can be written with " S_vct2sound_file
   ss = get_global_state();
   ss->catch_message = NULL;
   result = open_temp_file(name, chans, hdr, state);
+  mus_file_set_data_clipped(result, data_clipped(ss));
   if (result == -1) 
     {
       free_file_info(hdr);
@@ -3557,6 +3558,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   g_init_env();
   g_init_recorder();
   g_init_find();
+  g_init_run();
 #if (!USE_NO_GUI)
   g_init_gxutils();
   g_initialize_xgh();
@@ -3573,9 +3575,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   g_init_gxsnd();
 #if DEBUGGING
   g_init_gxfind();
-#endif
-#if WITH_RUN
-  g_init_run();
 #endif
 #endif
 #if HAVE_GUILE && HAVE_DLFCN_H

@@ -96,11 +96,11 @@ In each case the argument to the function is the full file
 name of the sound file.
 </p>
 <pre>
-  int mus_sound_samples (const char *arg)          /* samples of sound according to header (can be incorrect) */
-  int mus_sound_frames (const char *arg)           /* samples per channel */
+  off_t mus_sound_samples (const char *arg)        /* samples of sound according to header (can be incorrect) */
+  off_t mus_sound_frames (const char *arg)         /* samples per channel */
   float mus_sound_duration (const char *arg)
   int mus_sound_datum_size (const char *arg)       /* bytes per sample */
-  int mus_sound_data_location (const char *arg)    /* location of first sample (bytes) */
+  off_t mus_sound_data_location (const char *arg)  /* location of first sample (bytes) */
   int mus_sound_chans (const char *arg)            /* number of channels (samples are interleaved) */
   int mus_sound_srate (const char *arg)            /* sampling rate */
   int mus_sound_header_type (const char *arg)      /* header type (aiff etc) */
@@ -109,7 +109,7 @@ name of the sound file.
   char *mus_sound_comment (const char *arg)        /* comment if any */
   int mus_sound_comment_start (const char *arg)    /* comment start (bytes) if any */
   int mus_sound_comment_end (const char *arg)      /* comment end (bytes) */
-  int mus_sound_length (const char *arg)           /* true file length (for error checks) */
+  off_t mus_sound_length (const char *arg)         /* true file length (for error checks) */
   int mus_sound_fact_samples (const char *arg)     /* compression scheme data */
   int mus_sound_distributed (const char *arg)      /* is header scattered around in sound file */
   int mus_sound_write_date (const char *arg)       /* bare (uninterpreted) file write date */
@@ -155,13 +155,13 @@ sound file data:</p>
 <pre>
   int mus_sound_open_input (const char *arg) 
   int mus_sound_open_output (const char *arg, int srate, int chans, int data_format, int header_type, const char *comment)
-  int mus_sound_reopen_output (const char *arg, int type, int format, int data_loc)
+  int mus_sound_reopen_output (const char *arg, int type, int format, off_t data_loc)
   int mus_sound_close_input (int fd) 
-  int mus_sound_close_output (int fd, int bytes_of_data) 
+  int mus_sound_close_output (int fd, off_t bytes_of_data) 
   int mus_sound_read (int fd, int beg, int end, int chans, mus_sample_t **bufs) 
   int mus_sound_write (int fd, int beg, int end, int chans, mus_sample_t **bufs) 
-  int mus_sound_seek (int fd, long offset, int origin) 
-  int mus_sound_seek_frame (int fd, int frame)
+  off_t mus_sound_seek (int fd, off_t offset, int origin) 
+  off_t mus_sound_seek_frame (int fd, off_t frame)
 </pre>
 <p>mus_sample_t defaults to int, but can also be float -- it is set when
 sndlib is built and refers to Sndlib's internal representation of sample values.  
@@ -551,7 +551,8 @@ program code is available as noted below.</p>
 <pre>
 int main(int argc, char *argv[])
 {
-  int fd, chans, srate, samples;
+  int fd, chans, srate;
+  off_t samples;
   float length;
   time_t date;
   char *comment;
@@ -566,7 +567,7 @@ int main(int argc, char *argv[])
       chans = mus_sound_chans(argv[1]);
       samples = mus_sound_samples(argv[1]);
       comment = mus_sound_comment(argv[1]); 
-      length = (float)samples / (float)(chans * srate);
+      length = (double)samples / (float)(chans * srate);
       strftime(timestr, 64, "%a %d-%b-%y %H:%M %Z", localtime(&amp;date));
       fprintf(stdout, "%s:\n  srate: %d\n  chans: %d\n  length: %f\n", 
 	      argv[1], srate, chans, length);
@@ -589,7 +590,8 @@ int main(int argc, char *argv[])
 
 int main(int argc, char *argv[])
 {
-  int fd, afd, i, j, n, k, chans, srate, frames, outbytes;
+  int fd, afd, i, j, n, k, chans, srate, outbytes;
+  off_t frames;
   mus_sample_t **bufs;
   short *obuf;
   mus_sound_initialize();	
@@ -1043,8 +1045,8 @@ using these functions (this is normally done for you by the various
 "sound_" functions).</p>
 <pre>
   int mus_header_read (char *name)
-  int mus_header_write (char *name, int type, int in_srate, int in_chans, int loc, int size, int format, char *comment, int len)
-  int mus_header_update (char *name, int type, int size, int srate, int format, int chans, int loc)
+  int mus_header_write (char *name, int type, int in_srate, int in_chans, off_t loc, off_t size_in_samples, int format, char *comment, int len)
+  int mus_header_update (char *name, int type, off_t size, int srate, int format, int chans, off_t loc)
   int mus_header_writable(int type, int format)
 </pre>
 
@@ -1056,15 +1058,15 @@ used only to set the file size after the sound has been written.  <i>mus_header_
 the file descriptor (as returned by open), the corresponding lower level calls are:</p>
 <pre>
   int mus_header_read_with_fd (int fd)
-  int mus_header_write_with_fd (int fd, int type, int in_srate, int in_chans, int loc, int size, int format, char *comment, int len)
+  int mus_header_write_with_fd (int fd, int type, int in_srate, int in_chans, off_t loc, off_t size, int format, char *comment, int len)
   int mus_header_update_with_fd (int fd, int type, int siz)
 </pre>
 
 <p>Once mus_header_read has been called, the data in it can be accessed through:</p>
 <pre>
-  int mus_header_samples (void)              samples 
-  int mus_header_frames (void)               frames (samples / chans)
-  int mus_header_data_location (void)        location of data (bytes)
+  off_t mus_header_samples (void)            samples 
+  off_t mus_header_frames (void)             frames (samples / chans)
+  off_t mus_header_data_location (void)      location of data (bytes)
   int mus_header_chans (void)                channels
   int mus_header_srate (void)                srate
   int mus_header_type (void)                 header type (i.e. aiff, wave, etc)  (see sndlib.h)
@@ -1076,7 +1078,7 @@ the file descriptor (as returned by open), the corresponding lower level calls a
   int mus_header_aux_comment_end (int n)     if multiple comments, nth end location
   int mus_header_type_specifier (void)       original (header-specific) type ID
   int mus_header_bits_per_sample (void)      sample width in bits
-  int mus_header_true_length (void)          true (lseek) file length
+  off_t mus_header_true_length (void)        true (lseek) file length
   char *mus_header_type_name (int type)      header_type name
   char *mus_data_format_name (int format)    data_format name
 </pre>
@@ -1090,12 +1092,12 @@ see headers.c or sndlib.h for details.  The next functions handle various IO cal
   int mus_file_create (const char *arg)                 create file
   int mus_file_reopen_write (const char *arg)           open file read-write without changing anything
   int mus_file_close (int fd)                           close file
-  long mus_file_seek (int tfd, long offset, int origin) 
-  int mus_file_seek_frame (int tfd, int frame)          go to a specific frame in file
+  off_t mus_file_seek (int tfd, off_t offset, int origin) 
+  off_t mus_file_seek_frame (int tfd, off_t frame)      go to a specific frame in file
   int mus_file_read (int fd, int beg, int end, int chans, mus_sample_t **bufs)
   int mus_file_read_chans (int fd, int beg, int end, int chans, mus_sample_t **bufs, mus_sample_t *cm)
   int mus_file_read_any (int tfd, int beg, int chans, int nints, mus_sample_t **bufs, mus_sample_t *cm)
-  int mus_file_write_zeros (int tfd, int num)
+  int mus_file_write_zeros (int tfd, off_t num)
   int mus_file_write (int tfd, int beg, int end, int chans, mus_sample_t **bufs)
   int mus_sound_maxamp (char *ifile, mus_sample_t *vals)
   int mus_sound_maxamp_exists (char *ifile)

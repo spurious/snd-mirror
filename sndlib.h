@@ -509,7 +509,7 @@ off_t mus_file_seek                 PROTO((int tfd, off_t offset, int origin));
 off_t mus_file_seek_frame           PROTO((int tfd, off_t frame));
 int mus_file_read                   PROTO((int fd, int beg, int end, int chans, mus_sample_t **bufs));
 int mus_file_read_chans             PROTO((int fd, int beg, int end, int chans, mus_sample_t **bufs, mus_sample_t *cm));
-int mus_file_write_zeros            PROTO((int tfd, int num));
+off_t mus_file_write_zeros          PROTO((int tfd, off_t num));
 int mus_file_write                  PROTO((int tfd, int beg, int end, int chans, mus_sample_t **bufs));
 int mus_file_read_any               PROTO((int tfd, int beg, int chans, int nints, mus_sample_t **bufs, mus_sample_t *cm));
 int mus_file_read_file              PROTO((int tfd, int beg, int chans, int nints, mus_sample_t **bufs));

@@ -579,7 +579,6 @@ int open_temp_file(char *ofile, int chans, file_info *hdr, snd_state *ss)
 			    hdr->data_location,
 			    chans,
 			    hdr->type);
-  mus_file_set_data_clipped(ofd, data_clipped(ss)); /* TODO: this should only occur on user-requested output */
   lseek(ofd, hdr->data_location, SEEK_SET);
   return(ofd);
 }

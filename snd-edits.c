@@ -1,7 +1,5 @@
 #include "snd.h"
 
-/* TODO: save-as should use current data format etc */
-
 static int dont_edit(chan_info *cp) 
 {
   XEN res = XEN_FALSE;
@@ -2192,6 +2190,7 @@ static int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, o
   mus_sample_t **obufs;
   err = MUS_NO_ERROR;
   ofd = open_temp_file(ofile, chans, hdr, ss);
+  mus_file_set_data_clipped(ofd, data_clipped(ss));
   if (ofd == -1) return(MUS_CANT_OPEN_TEMP_FILE);
   datumb = mus_data_format_to_bytes_per_sample(hdr->format);
   obufs = (mus_sample_t **)MALLOC(chans * sizeof(mus_sample_t *));

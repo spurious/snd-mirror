@@ -476,7 +476,10 @@ static int mix_input_amp_env_usable(mix_info *md, Float samples_per_pixel)
  
 static Float next_mix_input_amp_env_sample(mix_fd *mf, int chan)
 {
-  if (mf->ctr[chan] < mf->samples[chan]) /* TODO: does this make sense?? */
+  if (mf->ctr[chan] < mf->samples[chan]) 
+    /* we check before calling that this is a MIX_INPUT_AMP_ENV case (not INPUT_SOUND), 
+     * so we're reading the amp env (optimized redisplay)
+     */
     {
       mf->ctr[chan]++;
       return(MUS_SAMPLE_TO_FLOAT(mf->idata[chan][mf->ctr[chan]]));

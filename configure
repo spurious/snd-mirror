@@ -850,7 +850,7 @@ Optional Packages:
   --with-static-gsl	  use libgsl.a to build Snd
   --with-static-xm	  include the xm module
   --with-guile		  use Guile
-  --with-run		  under development
+  --with-run		  Guile optimizer
   --with-html		  include the XmHTML or mozilla browser library
   --with-big-colormap	  assume at least 512 colors are available (default=yes)
   --with-motif		  use libXm to build Snd
@@ -2110,7 +2110,7 @@ MAKE_TARGET="snd"
 #   --with-static-xm      include xm module
 #   --with-temp-dir       directory to use for temp files
 #   --with-save-dir       directory to use for saved-state files
-#   --with-run            experimental...(Guile 1.5+ only)
+#   --with-run            Guile optimizer (default=yes)
 #--------------------------------------------------------------------------------
 
 
@@ -12793,14 +12793,16 @@ fi
     if test "`${GUILE_CONFIG_path}guile -c '(display (string<=? (version) "1.3.4"))'`" = "#t"; then
       echo found old out-of-date Guile library
     fi
-    if test "$with_run" = yes; then
+    if test "$with_run" != no; then
       if test "`${GUILE_CONFIG_path}guile -c '(display (string>=? (version) "1.5"))'`" = "#t"; then
         cat >>confdefs.h <<\_ACEOF
 #define WITH_RUN 1
 _ACEOF
 
       else
-        echo --with-run switch is not compatible with Guile versions before 1.5
+	if test "$with_run" = yes; then
+          echo --with-run switch is not compatible with Guile versions before 1.5
+	fi
       fi
     fi
   fi

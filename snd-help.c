@@ -204,6 +204,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+13-May:  snd 5.10.\n\
 9-May:   sound-loop-info bugfix (thanks to Dave Phillips).\n\
 6-May:   support for files larger than 2^31 bytes.\n\
 1-May:   maraca.scm, piano.scm.\n\
@@ -213,7 +214,6 @@ void news_help(snd_state *ss)
 12-Apr:  optimization variable, --with-run configure switch, snd-run.c.\n\
 9-Apr:   ramp-channel.\n\
 8-Apr:   virtualized envelopes.\n\
-4-Apr:   improvements in contrib/dlp, thanks to Dave Phillips.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

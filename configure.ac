@@ -63,7 +63,7 @@ MAKE_TARGET="snd"
 #   --with-static-xm      include xm module
 #   --with-temp-dir       directory to use for temp files
 #   --with-save-dir       directory to use for saved-state files
-#   --with-run            experimental...(Guile 1.5+ only)
+#   --with-run            Guile optimizer (default=yes)
 #--------------------------------------------------------------------------------
 
 AC_ARG_WITH(esd,        [  --with-esd		  use ESD])
@@ -75,7 +75,7 @@ AC_ARG_WITH(doubles,    [  --with-doubles	  use doubles throughout])
 AC_ARG_WITH(static-gsl, [  --with-static-gsl	  use libgsl.a to build Snd])
 AC_ARG_WITH(xm,         [  --with-static-xm	  include the xm module])
 AC_ARG_WITH(guile,      [  --with-guile		  use Guile])
-AC_ARG_WITH(run,        [  --with-run		  under development])
+AC_ARG_WITH(run,        [  --with-run		  Guile optimizer])
 
 if test "$with_doubles" = yes; then
   AC_DEFINE(Float,double)
@@ -653,11 +653,13 @@ if test $GUILE_CONFIG_works = yes; then
     if test "`${GUILE_CONFIG_path}guile -c '(display (string<=? (version) "1.3.4"))'`" = "#t"; then
       echo found old out-of-date Guile library
     fi
-    if test "$with_run" = yes; then
+    if test "$with_run" != no; then
       if test "`${GUILE_CONFIG_path}guile -c '(display (string>=? (version) "1.5"))'`" = "#t"; then
         AC_DEFINE(WITH_RUN)
       else
-        echo --with-run switch is not compatible with Guile versions before 1.5
+	if test "$with_run" = yes; then
+          echo --with-run switch is not compatible with Guile versions before 1.5
+	fi
       fi
     fi
   fi

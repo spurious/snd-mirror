@@ -1340,9 +1340,10 @@ int mus_file_read_chans(int tfd, int beg, int end, int chans, mus_sample_t **buf
 
 #define min(x, y)  ((x) < (y) ? (x) : (y))
 
-int mus_file_write_zeros(int tfd, int num)
+off_t mus_file_write_zeros(int tfd, off_t num)
 {
-  int lim, curnum, err;
+  off_t lim;
+  int err, curnum;
   io_fd *fd;
   char *charbuf = NULL;
   if (tfd == MUS_DAC_REVERB) return(0);

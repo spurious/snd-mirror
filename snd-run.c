@@ -86,9 +86,12 @@
  */
 
 #include "snd.h"
-#if HAVE_GUILE && WITH_RUN && HAVE_STRINGIZE
 #include "vct.h"
 #include "clm2xen.h"
+
+static XEN optimization_hook = XEN_FALSE;
+
+#if HAVE_GUILE && WITH_RUN && HAVE_STRINGIZE
 
 #define XEN_SYMBOL_TO_VALUE(a) XEN_VARIABLE_REF(scm_sym2var(a, scm_current_module_lookup_closure(), XEN_TRUE))
 #define XEN_SYMBOL_NAME_SET_VALUE(a, b) XEN_VARIABLE_SET(scm_sym2var(scm_str2symbol(a), scm_current_module_lookup_closure(), XEN_TRUE), b)
@@ -340,7 +343,6 @@ static xen_value *make_xen_value_1(int typ, int address, int constant, const cha
 
 #define OPTIMIZER_WARNING_BUFFER_SIZE 1024
 static char optimizer_warning_buffer[OPTIMIZER_WARNING_BUFFER_SIZE];
-static XEN optimization_hook = XEN_FALSE;
 static xen_value *run_warn(char *format, ...)
 {
   va_list ap;
@@ -5991,7 +5993,7 @@ static char *descr_sample2frame_2(int *args, int *ints, Float *dbls)
   return(mus_format( PTR_PT " = sample->frame(" PTR_PT ", " FLT_PT ")", 
 		     args[0], (mus_frame *)(INT_RESULT), args[1], (mus_any *)(INT_ARG_1), args[2], FLOAT_ARG_2));
 }
-static void sample2frame_2(int *args, int *ints, Float *dbls) {INT_RESULT = (int)mus_sample2frame((mus_any *)(INT_ARG_1), FLOAT_ARG_1, NULL);}
+static void sample2frame_2(int *args, int *ints, Float *dbls) {INT_RESULT = (int)mus_sample2frame((mus_any *)(INT_ARG_1), FLOAT_ARG_2, NULL);}
 static char *descr_sample2frame_3(int *args, int *ints, Float *dbls) 
 {
   return(mus_format( PTR_PT " = sample->frame(" PTR_PT ", " FLT_PT ", " PTR_PT ")", 
@@ -5999,7 +6001,7 @@ static char *descr_sample2frame_3(int *args, int *ints, Float *dbls)
 }
 static void sample2frame_3(int *args, int *ints, Float *dbls) 
 {
-  INT_RESULT = (int)mus_sample2frame((mus_any *)(INT_ARG_1), FLOAT_ARG_1, (mus_frame *)(INT_ARG_3));
+  INT_RESULT = (int)mus_sample2frame((mus_any *)(INT_ARG_1), FLOAT_ARG_2, (mus_frame *)(INT_ARG_3));
 }
 static xen_value *sample2frame_1(ptree *prog, xen_value **args, int num_args) 
 {
@@ -6681,14 +6683,14 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
   if (XEN_LIST_P(form))
     {
       XEN function, all_args;
-      char funcname[32];
+      char funcname[256];
       xen_value **args = NULL;
       int i, num_args, float_result = FALSE, constants = 0, booleans = 0, vcts = 0;
       int readers = 0, pendings = 0, clms = 0, chars = 0, strings = 0, arg_result = NEED_ANY_RESULT;
       xen_var *var;
       xen_value *v = NULL;
       function = XEN_CAR(form);
-      mus_snprintf(funcname, 32, "%s", XEN_AS_STRING(function)); /* protect from gc... */
+      mus_snprintf(funcname, 256, "%s", XEN_AS_STRING(function)); /* protect from gc... */
 
       if (strcmp(funcname, "lambda") == 0) return(lambda_form(prog, form, TRUE));
       if (strcmp(funcname, "declare") == 0) return(make_xen_value(R_BOOL, -1, TRUE));
@@ -7536,8 +7538,9 @@ static XEN g_run_eval(XEN code, XEN arg)
 	    code);
   return(XEN_FALSE);
 }
+#endif
+/* end with_run && have_guile and so on */
 
-#define S_vct_map "vct-map"
 
 #if 0
 /*
@@ -7581,12 +7584,19 @@ in multi-channel situations where you want the optimization that vct-map! provid
   int i, j, len, min_len = 0;
   vct **vs;
   XEN proc, obj, code;
+#if WITH_RUN
   ptree *pt = NULL;
+#endif
   Float *vals;
   mus_any *f;
+#if WITH_RUN
   proc = XEN_CAR(proc_and_code);
   code = XEN_CADR(proc_and_code);
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code) && (XEN_REQUIRED_ARGS(code) == 0), proc, XEN_ARG_1, S_vct_map, "a thunk");
+#else
+  proc = proc_and_code;
+  code = proc_and_code;
+#endif
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code) && (XEN_REQUIRED_ARGS(code) == 0), code, XEN_ARG_1, S_vct_map, "a thunk");
   len = XEN_LIST_LENGTH(arglist);
   if (len == 0)
     mus_misc_error(S_vct_map, "no vcts passed to vct-map", arglist);
@@ -7604,6 +7614,7 @@ in multi-channel situations where you want the optimization that vct-map! provid
 	    min_len = vs[i]->length;
 	}
     }
+#if WITH_RUN
   if (optimization(get_global_state()) > 0)
     {
       pt = (ptree *)form_to_ptree(proc_and_code);
@@ -7627,6 +7638,7 @@ in multi-channel situations where you want the optimization that vct-map! provid
       /* else fall through to guile */
       if (pt) free_ptree(pt);
     }
+#endif
   for (i = 0; i < min_len; i++) 
     {
       obj = XEN_CALL_0_NO_CATCH(code, S_vct_map);
@@ -7645,25 +7657,21 @@ in multi-channel situations where you want the optimization that vct-map! provid
   return(proc);
 }
 
-
 void g_init_run(void)
 {
-  XEN_DEFINE_PROCEDURE("run", g_run, 1, 0, 0, "run macro...");
-  XEN_DEFINE_PROCEDURE("run-eval", g_run_eval, 1, 1, 0, "run macro...");
-
+#if WITH_RUN
+  XEN_DEFINE_PROCEDURE("run", g_run, 1, 0, 0, "run macro testing...");
+  XEN_DEFINE_PROCEDURE("run-eval", g_run_eval, 1, 1, 0, "run macro testing...");
   XEN_DEFINE_PROCEDURE("vct-map-2",     g_vct_map, 2, 0, 0,      H_vct_map);
-  XEN_EVAL_C_STRING("(defmacro* vct-map (thunk #:rest args) `(vct-map-2 (list ',thunk ,thunk) (list ,@args)))");
-  scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL("vct-map"), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(H_vct_map));
+  XEN_EVAL_C_STRING("(defmacro* " S_vct_map " (thunk #:rest args) `(vct-map-2 (list ',thunk ,thunk) (list ,@args)))");
+  scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL(S_vct_map), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(H_vct_map));
+#else
+  XEN_DEFINE_PROCEDURE(S_vct_map, g_vct_map, 1, 0, 1, H_vct_map);
+#endif
 
   #define H_optimization_hook S_optimization_hook " (msg) is called possibly several times \
-during optimization to indicate where the optimizer ran into trouble"
+during optimization to indicate where the optimizer ran into trouble:\n\
+  (add-hook! optimization-hook (lambda (msg) (snd-print msg)))"
 
   XEN_DEFINE_HOOK(optimization_hook, S_optimization_hook, 1, H_optimization_hook);      /* arg = message */
 }
-
-#else
-/* no guile */
-void g_init_run(void)
-{
-}
-#endif
