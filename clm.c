@@ -54,7 +54,7 @@ enum {MUS_OSCIL, MUS_SUM_OF_COSINES, MUS_DELAY, MUS_COMB, MUS_NOTCH, MUS_ALL_PAS
       MUS_FILTER, MUS_FIR_FILTER, MUS_IIR_FILTER, MUS_CONVOLVE, MUS_ENV, MUS_LOCSIG,
       MUS_FRAME, MUS_READIN, MUS_FILE_TO_SAMPLE, MUS_FILE_TO_FRAME,
       MUS_SAMPLE_TO_FILE, MUS_FRAME_TO_FILE, MUS_MIXER, MUS_PHASE_VOCODER,
-      MUS_AVERAGE,
+      MUS_AVERAGE, MUS_SUM_OF_SINES,
       MUS_INITIAL_GEN_TAG};
 
 static int mus_class_tag = MUS_INITIAL_GEN_TAG;
@@ -138,7 +138,7 @@ Float mus_sin(Float phase)
   Float mus_sin(Float phase) {return(sin(phase));}
 #endif
 
-Float mus_sum_of_sines(Float *amps, Float *phases, int size)
+Float mus_sine_bank(Float *amps, Float *phases, int size)
 {
   int i;
   Float sum = 0.0;
@@ -776,13 +776,16 @@ typedef struct {
 
 Float mus_sum_of_cosines(mus_any *ptr, Float fm)
 {
-  Float val;
+  /* changed 25-Apr-04: use less stupid formula */
+  /*   (/ (- (/ (sin (* (+ n 0.5) angle)) (* 2 (sin (* 0.5 angle)))) 0.5) n) */
+  Float val, den;
   cosp *gen = (cosp *)ptr;
-  if ((gen->phase == 0.0) || (gen->phase == TWO_PI))
+  den = mus_sin(gen->phase * 0.5);
+  if (den == 0.0)
     val = 1.0;
   else 
     {
-      val = (gen->scaler * mus_sin(gen->phase * (gen->cosines + 0.5))) / mus_sin(gen->phase * 0.5);
+      val = (gen->scaler * (((mus_sin(gen->phase * (gen->cosines + 0.5))) / (2.0 * den)) - 0.5));
       if (val > 1.0) val = 1.0;
     }
   gen->phase += (gen->freq + fm);
@@ -801,7 +804,7 @@ static Float set_sum_of_cosines_phase(mus_any *ptr, Float val) {((cosp *)ptr)->p
 static Float sum_of_cosines_scaler(mus_any *ptr) {return(((cosp *)ptr)->scaler);}
 static Float set_sum_of_cosines_scaler(mus_any *ptr, Float val) {((cosp *)ptr)->scaler = val; return(val);}
 static off_t sum_of_cosines_cosines(mus_any *ptr) {return(((cosp *)ptr)->cosines);}
-static off_t set_sum_of_cosines_cosines(mus_any *ptr, off_t val) {((cosp *)ptr)->cosines = (int)val; return(val);}
+static off_t set_sum_of_cosines_cosines(mus_any *ptr, off_t val) {((cosp *)ptr)->cosines = (int)val; ((cosp *)ptr)->scaler = 1.0 / (Float)val; return(val);}
 static Float run_sum_of_cosines(mus_any *ptr, Float fm, Float unused) {return(mus_sum_of_cosines(ptr, fm));}
 
 static bool sum_of_cosines_equalp(mus_any *p1, mus_any *p2)
@@ -832,6 +835,8 @@ static char *inspect_sum_of_cosines(mus_any *ptr)
 	       gen->freq, gen->phase, gen->cosines, gen->scaler);
   return(describe_buffer);
 }
+
+static Float run_sum_of_sines(mus_any *ptr, Float fm, Float unused) {return(mus_sum_of_sines(ptr, fm));}
 
 static mus_any_class SUM_OF_COSINES_CLASS = {
   MUS_SUM_OF_COSINES,
@@ -865,10 +870,115 @@ mus_any *mus_make_sum_of_cosines(int cosines, Float freq, Float phase)
   gen = (cosp *)clm_calloc(1, sizeof(cosp), S_make_sum_of_cosines);
   gen->core = &SUM_OF_COSINES_CLASS;
   if (cosines == 0) cosines = 1;
-  gen->scaler = 1.0 / (Float)(1 + 2 * cosines);
+  gen->scaler = 1.0 / (Float)cosines;
   gen->cosines = cosines;
   gen->freq = mus_hz_to_radians(freq);
   gen->phase = phase;
+  return((mus_any *)gen);
+}
+
+
+/* ---------------- sum-of-sines ---------------- */
+
+static bool sum_of_sines_equalp(mus_any *p1, mus_any *p2)
+{
+  return((p1 == p2) ||
+	 ((mus_sum_of_sines_p((mus_any *)p1)) && (mus_sum_of_sines_p((mus_any *)p2)) &&
+	  ((((cosp *)p1)->freq) == (((cosp *)p2)->freq)) &&
+	  ((((cosp *)p1)->phase) == (((cosp *)p2)->phase)) &&
+	  ((((cosp *)p1)->cosines) == (((cosp *)p2)->cosines)) &&
+	  ((((cosp *)p1)->scaler) == (((cosp *)p2)->scaler))));
+}
+
+static char *describe_sum_of_sines(mus_any *ptr)
+{
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
+	       S_sum_of_sines " freq: %.3fHz, phase: %.3f, sines: %d",
+	       mus_radians_to_hz(((cosp *)ptr)->freq), 
+	       ((cosp *)ptr)->phase, 
+	       ((cosp *)ptr)->cosines);
+  return(describe_buffer);
+}
+
+bool mus_sum_of_sines_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_SUM_OF_SINES));}
+
+
+static Float sum_of_sines_maxamps[] = {1.0, 1.0, 1.761, 2.5, 3.24, 3.97, 4.7, 5.42, 6.15, 6.88,
+				       7.6, 8.33, 9.05, 9.78, 10.51, 11.23, 11.96, 12.68, 13.41, 14.13};
+
+static Float sum_of_sines_50 = .743;
+static Float sum_of_sines_100 = .733;
+
+static Float sum_of_sines_scaler(int sines)
+{
+  if (sines < 20)
+    return(1.0 / sum_of_sines_maxamps[sines]);
+  if (sines < 50)
+    return(1.0 / (sines * sum_of_sines_50));
+  return(1.0 / (sines * sum_of_sines_100));
+}
+
+static off_t set_sum_of_sines_sines(mus_any *ptr, off_t val) 
+{
+  cosp *gen = (cosp *)ptr;
+  gen->cosines = (int)val; 
+  gen->scaler = sum_of_sines_scaler((int)val);
+  return(val);
+}
+
+Float mus_sum_of_sines(mus_any *ptr, Float fm)
+{
+  /* (let* ((a2 (* angle 0.5))
+	    (den (sin a2)))
+       (if (= den 0.0)
+	   0.0
+	   (/ (* (sin (* n a2)) (sin (* (1+ n) a2))) den)))
+  */
+  Float val, den, a2;
+  cosp *gen = (cosp *)ptr;
+  a2 = gen->phase * 0.5;
+  den = mus_sin(a2);
+  if (den == 0.0)
+    val = 0.0;
+  else val = gen->scaler * mus_sin(gen->cosines * a2) * mus_sin(a2 * (gen->cosines + 1)) / den;
+  gen->phase += (gen->freq + fm);
+  while (gen->phase > TWO_PI) gen->phase -= TWO_PI;
+  while (gen->phase < 0.0) gen->phase += TWO_PI;
+  return(val);
+}
+
+static mus_any_class SUM_OF_SINES_CLASS = {
+  MUS_SUM_OF_SINES,
+  S_sum_of_sines,
+  &free_sum_of_cosines,
+  &describe_sum_of_sines,
+  &inspect_sum_of_cosines,
+  &sum_of_sines_equalp,
+  0, 0, /* data */
+  &sum_of_cosines_cosines,
+  &set_sum_of_sines_sines,
+  &sum_of_cosines_freq,
+  &set_sum_of_cosines_freq,
+  &sum_of_cosines_phase,
+  &set_sum_of_cosines_phase,
+  &sum_of_cosines_scaler,
+  &set_sum_of_cosines_scaler,
+  0, 0,
+  &run_sum_of_sines,
+  MUS_NOT_SPECIAL, 
+  NULL,
+  0,
+  0, 0, 0, 0, 0, 0, 
+  &sum_of_cosines_cosines, &set_sum_of_sines_sines, 0, 0,
+  0, 0, 0, 0, 0, 0, 0
+};
+
+mus_any *mus_make_sum_of_sines(int sines, Float freq, Float phase)
+{
+  cosp *gen;
+  gen = (cosp *)mus_make_sum_of_cosines(sines, freq, phase);
+  gen->core = &SUM_OF_SINES_CLASS;
+  gen->scaler = sum_of_sines_scaler(sines);
   return((mus_any *)gen);
 }
 
@@ -7241,12 +7351,12 @@ Float mus_apply(mus_any *gen, ...)
       /* might want a run_args field */
       switch ((gen->core)->type)
 	{
-	case MUS_OSCIL:	case MUS_DELAY:	case MUS_COMB:	case MUS_NOTCH:	case MUS_ALL_PASS: case MUS_WAVESHAPE:
+	case MUS_OSCIL:	case MUS_DELAY:	case MUS_COMB:	case MUS_NOTCH:	case MUS_ALL_PASS: case MUS_WAVESHAPE: case MUS_AVERAGE:
 	  f1 = NEXT_ARG; 
 	  f2 = NEXT_ARG; 
 	  break;
 
-	case MUS_SUM_OF_COSINES: case MUS_TABLE_LOOKUP: case MUS_SQUARE_WAVE: case MUS_SAWTOOTH_WAVE:
+	case MUS_SUM_OF_COSINES: case MUS_SUM_OF_SINES: case MUS_TABLE_LOOKUP: case MUS_SQUARE_WAVE: case MUS_SAWTOOTH_WAVE:
 	case MUS_TRIANGLE_WAVE: case MUS_PULSE_TRAIN: case MUS_RAND: case MUS_RAND_INTERP:  
 	case MUS_ASYMMETRIC_FM:	case MUS_ONE_ZERO: case MUS_ONE_POLE: case MUS_TWO_ZERO: case MUS_TWO_POLE:     
 	case MUS_FORMANT: case MUS_SRC: case MUS_SINE_SUMMATION: case MUS_WAVE_TRAIN:    
@@ -7541,7 +7651,7 @@ Float mus_phase_vocoder(mus_any *ptr, Float (*input)(void *arg, int direction))
 	  pv->phaseinc[i] += pv->freqs[i];
 	  pv->phases[i] += pv->phaseinc[i];
 	}
-      return(mus_sum_of_sines(pv->amps, pv->phases, N2));
+      return(mus_sine_bank(pv->amps, pv->phases, N2));
     }
 }
 

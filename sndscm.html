@@ -498,7 +498,7 @@ the listener?
   <tr><td><em class=emdef>both forms of asymmetric-fm</em></td><td></td></tr>
   <tr><td><em class=emdef>cosine-summation</em></td><td>sum-of-cosines stuff</td></tr>
   <tr><td><em class=emdef>kosine-summation</em></td><td>more sum-of-cosines stuff</td></tr>
-  <tr><td><em class=emdef>legendre-summation</em></td><td></td></tr>
+  <tr><td><em class=emdef>legendre</em></td><td></td></tr>
   <tr><td><em class=emdef>brighten-slightly</em> amount</td><td>add harmonics</td></tr>
   <tr><td><em class=emdef>spectrum-&gt;coeffs</em> order spectrum-envelope</td><td>frequency-response envelope -&gt; FIR coeffs</td></tr>
   <tr><td><a class=def name="makehilberttransform">make-hilbert-transform</a> length</td><td>Hilbert transform</td></tr>
@@ -606,10 +606,10 @@ the moving formant idea mentioned in the original article.
 the generating formula is much simpler, but the result is the same.  This
 can also be viewed as a version of the sum-of-cosines generator, giving control
 on the ratio between successive cosines in the sum (i.e. the "r" parameter in
-sine-summation, applied within the sum-of-cosines output).  <b>legendre-summation</b>
-uses the sum-of-cosines generator to produce a band-limited pulse-train whose
-cosine components have a decreasing amplitude (as if it were a sum of Lengendre
-Polynomials driven by a cosine). Three other similar functions are <b>sum-of-n-sines</b>,
+sine-summation, applied within the sum-of-cosines output).  <b>legendre</b>
+produces a band-limited pulse-train whose
+cosine components have a decreasing amplitude.
+Three other similar functions are <b>sum-of-n-sines</b>,
 <b>sum-of-n-odd-sines</b>, and <b>sum-of-n-odd-cosines</b>.
 <b>kosine-summation</b> is a variation on <b>cosine-summation</b>; it includes
 a sort of "FM index" parameter (named "k", hence the generator name) to vary the harmonic content at run-time.
@@ -2626,7 +2626,7 @@ appends <i>msg</i> to whatever is in <i>snd</i>'s minibuffer.
   <a class=def name="startwaterfall">start-waterfall</a> #:optional (scl 1.0) (pc-spectrum 0.2) (fft-size 512)
   <em class=emdef>stop-waterfall</em>
   <em class=emdef>gl-dump-state</em>
-  <em class=emdef>complexify</em>
+  <A class=def NAME="complexify">complexify</A>
 </pre>
 <p><b>gl-info</b> prints out information about the current GL system setup.  <b>start-waterfall</b> starts a
 waterfall spectrum display of the incoming audio data.  <b>stop-waterfall</b> turns it off.

@@ -213,7 +213,7 @@ static XEN kw_frequency, kw_initial_phase, kw_wave, kw_cosines, kw_amplitude,
   kw_direction, kw_degree, kw_distance, kw_reverb, kw_output, kw_fft_size,
   kw_expansion, kw_length, kw_hop, kw_ramp, kw_jitter,
   kw_type, kw_format, kw_comment, kw_channels, kw_filter, kw_revout, kw_width,
-  kw_edit, kw_synthesize, kw_analyze, kw_interp, kw_overlap, kw_pitch, kw_dur;
+  kw_edit, kw_synthesize, kw_analyze, kw_interp, kw_overlap, kw_pitch, kw_dur, kw_sines;
 
 static void init_keywords(void)
 {
@@ -281,6 +281,7 @@ static void init_keywords(void)
   kw_overlap = XEN_MAKE_KEYWORD("overlap");
   kw_pitch = XEN_MAKE_KEYWORD("pitch");
   kw_dur = XEN_MAKE_KEYWORD("dur");
+  kw_sines = XEN_MAKE_KEYWORD("sines");
 }
 
 
@@ -416,15 +417,15 @@ static XEN g_dot_product(XEN val1, XEN val2)
 			  val2));
 }
 
-static XEN g_sum_of_sines(XEN amps, XEN phases)
+static XEN g_sine_bank(XEN amps, XEN phases)
 {
-  #define H_sum_of_sines "(" S_sum_of_sines " amps phases): sum of amps[i] * sin(phases[i])"
+  #define H_sine_bank "(" S_sine_bank " amps phases): sum of amps[i] * sin(phases[i])"
   vct *v1, *v2;
-  XEN_ASSERT_TYPE(VCT_P(amps), amps, XEN_ARG_1, S_sum_of_sines, "a vct");
-  XEN_ASSERT_TYPE(VCT_P(phases), phases, XEN_ARG_2, S_sum_of_sines, "a vct");
+  XEN_ASSERT_TYPE(VCT_P(amps), amps, XEN_ARG_1, S_sine_bank, "a vct");
+  XEN_ASSERT_TYPE(VCT_P(phases), phases, XEN_ARG_2, S_sine_bank, "a vct");
   v1 = TO_VCT(amps);
   v2 = TO_VCT(phases);
-  return(xen_return_first(C_TO_XEN_DOUBLE(mus_sum_of_sines(v1->data, v2->data, v1->length)), 
+  return(xen_return_first(C_TO_XEN_DOUBLE(mus_sine_bank(v1->data, v2->data, v1->length)), 
 			  amps, 
 			  phases));
 }
@@ -1400,7 +1401,7 @@ static XEN g_sum_of_cosines_p(XEN obj)
 
 static XEN g_make_sum_of_cosines(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
 {
-  #define H_make_sum_of_cosines "(" S_make_sum_of_cosines " (:frequency 440.0) (:initial-phase 0.0) (:cosines 1)): \
+  #define H_make_sum_of_cosines "(" S_make_sum_of_cosines " (:cosines 1) (:frequency 440.0) (:initial-phase 0.0)): \
 return a new " S_sum_of_cosines " generator, producing a band-limited pulse train."
 
   mus_xen *gn;
@@ -1445,6 +1446,64 @@ get the next sample from the band-limited pulse-train produced by gen"
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_sum_of_cosines_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_sum_of_cosines, "a sum-of-cosines gen");
   if (XEN_NUMBER_P(fm)) fm1 = XEN_TO_C_DOUBLE(fm); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(fm), fm, XEN_ARG_2, S_sum_of_cosines, "a number");
   return(C_TO_XEN_DOUBLE(mus_sum_of_cosines(XEN_TO_MUS_ANY(obj), fm1)));
+}
+
+
+
+/* -------- sum-of-sines -------- */
+
+static XEN g_sum_of_sines_p(XEN obj) 
+{
+  #define H_sum_of_sines_p "(" S_sum_of_sines_p " gen): #t if gen is a " S_sum_of_sines
+  return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_sum_of_sines_p(XEN_TO_MUS_ANY(obj)))));
+}
+
+static XEN g_make_sum_of_sines(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
+{
+  #define H_make_sum_of_sines "(" S_make_sum_of_sines " (:sines 1) (:frequency 440.0) (:initial-phase 0.0)): \
+return a new " S_sum_of_sines " generator."
+
+  mus_xen *gn;
+  mus_any *ge;
+  XEN args[6]; 
+  XEN keys[3];
+  int orig_arg[3] = {0, 0, 0};
+  int vals;
+  int sines = 1;
+  Float freq = 440.0;
+  Float phase = 0.0;
+  keys[0] = kw_sines;
+  keys[1] = kw_frequency;
+  keys[2] = kw_initial_phase;
+  args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6; 
+  vals = mus_optkey_unscramble(S_make_sum_of_sines, 3, keys, args, orig_arg);
+  if (vals > 0)
+    {
+      sines = mus_optkey_to_int(keys[0], S_make_sum_of_sines, orig_arg[0], sines);
+      freq = mus_optkey_to_float(keys[1], S_make_sum_of_sines, orig_arg[1], freq);
+      phase = mus_optkey_to_float(keys[2], S_make_sum_of_sines, orig_arg[2], phase);
+    }
+  if (sines <= 0)
+    XEN_OUT_OF_RANGE_ERROR(S_make_sum_of_sines, orig_arg[0], keys[0], "sines ~A <= 0?");
+  ge = mus_make_sum_of_sines(sines, freq, phase);
+  if (ge)
+    {
+      gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
+      gn->gen = ge;
+      gn->nvcts = 0;
+      return(mus_xen_to_object(gn));
+    }
+  return(XEN_FALSE);
+}
+
+static XEN g_sum_of_sines(XEN obj, XEN fm)
+{
+  #define H_sum_of_sines "(" S_sum_of_sines " gen (fm 0.0)): get the next sample from " S_sum_of_sines " gen"
+
+  Float fm1 = 0.0;
+  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_sum_of_sines_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_sum_of_sines, "a sum-of-sines gen");
+  if (XEN_NUMBER_P(fm)) fm1 = XEN_TO_C_DOUBLE(fm); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(fm), fm, XEN_ARG_2, S_sum_of_sines, "a number");
+  return(C_TO_XEN_DOUBLE(mus_sum_of_sines(XEN_TO_MUS_ANY(obj), fm1)));
 }
 
 
@@ -4791,7 +4850,7 @@ XEN_ARGIFY_3(g_convolution_w, g_convolution)
 XEN_NARGIFY_2(g_rectangular_to_polar_w, g_rectangular_to_polar)
 XEN_NARGIFY_2(g_polar_to_rectangular_w, g_polar_to_rectangular)
 XEN_ARGIFY_3(g_array_interp_w, g_array_interp)
-XEN_NARGIFY_2(g_sum_of_sines_w, g_sum_of_sines)
+XEN_NARGIFY_2(g_sine_bank_w, g_sine_bank)
 XEN_NARGIFY_1(g_mus_inspect_w, g_mus_inspect)
 XEN_NARGIFY_1(g_mus_describe_w, g_mus_describe)
 XEN_NARGIFY_1(g_mus_name_w, g_mus_name)
@@ -4835,6 +4894,9 @@ XEN_NARGIFY_1(g_average_p_w, g_average_p)
 XEN_ARGIFY_6(g_make_sum_of_cosines_w, g_make_sum_of_cosines)
 XEN_ARGIFY_2(g_sum_of_cosines_w, g_sum_of_cosines)
 XEN_NARGIFY_1(g_sum_of_cosines_p_w, g_sum_of_cosines_p)
+XEN_ARGIFY_6(g_make_sum_of_sines_w, g_make_sum_of_sines)
+XEN_ARGIFY_2(g_sum_of_sines_w, g_sum_of_sines)
+XEN_NARGIFY_1(g_sum_of_sines_p_w, g_sum_of_sines_p)
 XEN_ARGIFY_4(g_make_rand_w, g_make_rand)
 XEN_ARGIFY_4(g_make_rand_interp_w, g_make_rand_interp)
 XEN_ARGIFY_2(g_rand_w, g_rand)
@@ -5048,7 +5110,7 @@ XEN_ARGIFY_7(g_mus_mix_w, g_mus_mix)
 #define g_rectangular_to_polar_w g_rectangular_to_polar
 #define g_polar_to_rectangular_w g_polar_to_rectangular
 #define g_array_interp_w g_array_interp
-#define g_sum_of_sines_w g_sum_of_sines
+#define g_sine_bank_w g_sine_bank
 #define g_mus_inspect_w g_mus_inspect
 #define g_mus_describe_w g_mus_describe
 #define g_mus_name_w g_mus_name
@@ -5092,6 +5154,9 @@ XEN_ARGIFY_7(g_mus_mix_w, g_mus_mix)
 #define g_make_sum_of_cosines_w g_make_sum_of_cosines
 #define g_sum_of_cosines_w g_sum_of_cosines
 #define g_sum_of_cosines_p_w g_sum_of_cosines_p
+#define g_make_sum_of_sines_w g_make_sum_of_sines
+#define g_sum_of_sines_w g_sum_of_sines
+#define g_sum_of_sines_p_w g_sum_of_sines_p
 #define g_make_rand_w g_make_rand
 #define g_make_rand_interp_w g_make_rand_interp
 #define g_rand_w g_rand
@@ -5359,7 +5424,7 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_rectangular_to_polar, g_rectangular_to_polar_w, 2, 0, 0, H_rectangular_to_polar);
   XEN_DEFINE_PROCEDURE(S_polar_to_rectangular, g_polar_to_rectangular_w, 2, 0, 0, H_polar_to_rectangular);
   XEN_DEFINE_PROCEDURE(S_array_interp,         g_array_interp_w,         2, 1, 0, H_array_interp);
-  XEN_DEFINE_PROCEDURE(S_sum_of_sines,         g_sum_of_sines_w,         2, 0, 0, H_sum_of_sines);
+  XEN_DEFINE_PROCEDURE(S_sine_bank,         g_sine_bank_w,         2, 0, 0, H_sine_bank);
 
   #define H_rectangular_window     "The un-window, so to speak"
   #define H_hann_window            "A simple raised cosine window"
@@ -5466,6 +5531,10 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_sum_of_cosines_p,    g_sum_of_cosines_p_w,    1, 0, 0, H_sum_of_cosines_p);
   #define H_mus_cosines "(" S_mus_cosines " gen): number of cosines produced by gen"
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_cosines, g_mus_hop_w, H_mus_cosines, S_setB S_mus_cosines, g_mus_set_hop_w, 1, 0, 2, 0);
+
+  XEN_DEFINE_PROCEDURE(S_make_sum_of_sines,   g_make_sum_of_sines_w,   0, 6, 0, H_make_sum_of_sines); 
+  XEN_DEFINE_PROCEDURE(S_sum_of_sines,        g_sum_of_sines_w,        1, 1, 0, H_sum_of_sines);
+  XEN_DEFINE_PROCEDURE(S_sum_of_sines_p,      g_sum_of_sines_p_w,      1, 0, 0, H_sum_of_sines_p);
 
 
   XEN_DEFINE_PROCEDURE(S_table_lookup_p,     g_table_lookup_p_w,     1, 0, 0, H_table_lookup_p);
@@ -5832,6 +5901,7 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_make_square_wave,
 	       S_make_src,
 	       S_make_sum_of_cosines,
+	       S_make_sum_of_sines,
 	       S_make_table_lookup,
 	       S_make_triangle_wave,
 	       S_make_two_pole,
@@ -5957,6 +6027,8 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_sum_of_cosines,
 	       S_sum_of_cosines_p,
 	       S_sum_of_sines,
+	       S_sum_of_sines_p,
+	       S_sine_bank,
 	       S_table_lookup,
 	       S_table_lookup_p,
 	       S_tap,

@@ -382,6 +382,7 @@ and any def-clm-struct name.
   <tr><td><a href="#square-wave">square-wave</a></td><td>square wave</td></tr>
   <tr><td><a href="#src">src</a></td><td>sampling rate conversion</td></tr>
   <tr><td><a href="#sum-of-cosines">sum-of-cosines</a></td><td>band-limited pulse train</td></tr>
+  <tr><td><a href="#sum-of-sines">sum-of-sines</a></td><td>sum of sines</td></tr>
   <tr><td><a href="#table-lookup">table-lookup</a></td><td>interpolated table lookup</td></tr>
   <tr><td><a href="#tap">tap</a></td><td>delay line tap</td></tr>
   <tr><td><a href="#triangle-wave">triangle-wave</a></td><td>triangle wave</td></tr>
@@ -843,7 +844,7 @@ geometric explanation.</p>
 <pre><small>
 based on:
   cos(x) + cos(2x) + ... cos(nx) = 
-    1/2(1 + (sin((n+.5)x) / sin(x/2)))
+    (sin((n+.5)x) / (2*sin(x/2))) - 1/2
 
   known as the Dirichlet kernel
   see "Special Functions", Andrews, Askey, Roy, 5.1.10
@@ -851,10 +852,33 @@ based on:
   a similar sum involves cos for sin above, AAR 5.6.2
   see also "Table of Integrals...", Gradshteyn and Ryzhik, 1.341 and 1.342
 </small></pre><br clear=left>
+<br>
 
-<p>The mus-cosines setf method does not try to fix up the scaler.  If you change the number
-of cosines on the fly, you'll probably want to set the scaler to (/ 1.0 (+ 1 (* 2 cosines))).
+<!-- TOPIC sum-of-sines -->
+<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>SUM-OF-SINES</h4></td></tr></table>
+<pre>
+  <a class=def name="make-sum-of-sines">make-sum-of-sines</a> <a href="#optional-key">&amp;optional-key</a> 
+        (<i>sines</i> 1) (<i>frequency</i> 440.0) (<i>initial-phase</i> 0.0)
+  <a class=def name="sum-of-sines">sum-of-sines</a> <i>cs</i> &amp;optional (<i>fm</i> 0.0)
+  <a class=def name="sum-of-sines?">sum-of-sines?</a> <i>cs</i>
+</pre>
+<p><b>Sum-of-sines</b> produces a sum of <i>sines</i> sines.
 </p>
+<table border align=left hspace=40 cellpadding=4>
+<tr><td colspan=2><center>sum-of-sines methods</center></td></tr>
+<tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
+<tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
+<tr><td><em class=gen>mus-scaler</em></td><td>(/ 1.0 (+ 1 (* 2 cosines)))</td></tr>
+<tr><td><em class=gen>mus-cosines</em></td><td>sines arg  used in make-&lt;gen&gt;</td></tr>
+<tr><td><em class=gen>mus-length</em></td><td>same as mus-cosines</td></tr>
+</table>
+<pre><small>
+based on:
+  sin(x) + sin(2x) + ... sin(nx) = 
+    sin(n*x/2) * (sin((n+.5)x) / sin(x/2))
+
+  known as the conjugate Dirichlet kernel
+</small></pre><br clear=left>
 <br>
 
 <!-- TOPIC wave-train -->
@@ -1715,7 +1739,7 @@ arguments are omitted from make-phase-vocoder.  The edit and synthesize argument
 phase-vocoder generator.  The analyze argument is a function of two arguments, the generator and
 the input function passed to phase-vocoder at run-time (if any). The default is to read input from the input function (an "as-needed"
 input source as in src or granulate), take the fft, get the new amplitudes and phases (as the edit
-function default), then resynthesize using sum-of-sines (the synthesize function default); so, the
+function default), then resynthesize using sine-bank (the synthesize function default); so, the
 default case simply returns a resynthesis of the original input.  <i>interp</i> sets the time between
 ffts (for time stretching etc). 
 </p>
@@ -2354,11 +2378,11 @@ treasure-trove of interesting polynomials.</p>
 <br>
 
 <!-- TOPIC array-interp -->
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>ARRAY-INTERP, DOT-PRODUCT, SUM-OF-SINES</h4></td></tr></table>
+<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>ARRAY-INTERP, DOT-PRODUCT, SINE-BANK</h4></td></tr></table>
 <pre>
   <a class=def name="array-interp">array-interp</a> <i>fn x</i> &amp;optional <i>size</i>
   <a class=def name="dot-product">dot-product</a> <i>in1 in2</i> &amp;optional (<i>start</i> 0)
-  <a class=def name="sum-of-sines">sum-of-sines</a> <i>amps phases</i>
+  <a class=def name="sine-bank">sine-bank</a> <i>amps phases</i>
 </pre>
 <p>These simple functions underlie some of the generators, and can be
 called within run, if you want to roll your own.  See <a href="mus.lisp">mus.lisp</a> for
@@ -2372,7 +2396,7 @@ of the companding function, then:
     (* (signum in-val) 
        (<em class=red>array-interp</em> compander (abs (* in-val (1- func-len))) func-len)))
 </pre>
-<p>sum-of-sines simply loops through its arrays of amps and phases, summing
+<p>sine-bank simply loops through its arrays of amps and phases, summing
 (* amp (sin phase)) -- it is mostly a convenience function for additive synthesis.
 <b>dot-product</b> is also known as scalar product, and in orthogonal coordinate systems is the same as the inner product.
 </p>
@@ -4299,7 +4323,7 @@ replace the current intermediate C file.
   <tr><td><em class=tab><a href="clm.html#*clm-srate*">*clm-srate*</a></em></td><td><em class=tab><a href="clm.html#inb">inb</a></em></td><td><em class=tab><a href="clm.html#mus-bshort">mus-bshort</a></em></td><td><em class=tab><a href="clm.html#radians-&gt;hz">radians-&gt;hz</a></em></td><td><em class=tab><a href="clm.html#stretch-envelope">stretch-envelope</a></em></td></tr>
   <tr><td><em class=tab><a href="clm.html#*clm-table-size*">*clm-table-size*</a></em></td><td><em class=tab><a href="clm.html#*input*">*input*</a></em></td><td><em class=tab><a href="clm.html#mus-channel">mus-channel</a></em></td><td><em class=tab><a href="clm.html#rand">rand</a></em></td><td><em class=tab><a href="clm.html#sum-of-cosines">sum-of-cosines</a></em></td></tr>
   <tr><td><em class=tab><a href="clm.html#*clm-version*">*clm-version*</a></em></td><td><em class=tab><a href="clm.html#ina-outa"><b>Input and output</b></a></em></td><td><em class=tab><a href="clm.html#mus-channels">mus-channels</a></em></td><td><em class=tab><a href="clm.html#rand-interp">rand-interp</a></em></td><td><em class=tab><a href="clm.html#sum-of-cosines?">sum-of-cosines?</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#close-input">close-input</a></em></td><td><em class=tab><a href="clm.html#ins-var">ins-var</a></em></td><td><em class=tab><a href="clm.html#mus-close">mus-close</a></em></td><td><em class=tab><a href="clm.html#rand-interp?">rand-interp?</a></em></td><td><em class=tab><a href="clm.html#sum-of-sines">sum-of-sines</a></em></td></tr>
+  <tr><td><em class=tab><a href="clm.html#close-input">close-input</a></em></td><td><em class=tab><a href="clm.html#ins-var">ins-var</a></em></td><td><em class=tab><a href="clm.html#mus-close">mus-close</a></em></td><td><em class=tab><a href="clm.html#rand-interp?">rand-interp?</a></em></td><td><em class=tab><a href="clm.html#sine-bank">sine-bank</a></em></td></tr>
   <tr><td><em class=tab><a href="clm.html#close-output">close-output</a></em></td><td><em class=tab><a href="clm.html#instrument-let">instrument-let</a></em></td><td><em class=tab><a href="clm.html#mus-cosines">mus-cosines</a></em></td><td><em class=tab><a href="clm.html#rand?">rand?</a></em></td><td><em class=tab><a href="clm.html#table-lookup">table-lookup</a></em></td></tr>
   <tr><td><em class=tab><a href="clm.html#comb">comb</a></em></td><td><em class=tab><a href="clm.html#ins-files"><b>Instruments</b></a></em></td><td><em class=tab><a href="clm.html#mus-create">mus-create</a></em></td><td><em class=tab><a href="clm.html#random-numbers"><b>Random numbers</b></a></em></td><td><em class=tab><a href="clm.html#table-lookup?">table-lookup?</a></em></td></tr>
   <tr><td><em class=tab><a href="clm.html#comb?">comb?</a></em></td><td><em class=tab><a href="clm.html#linear-&gt;db">linear-&gt;db</a></em></td><td><em class=tab><a href="clm.html#mus-data">mus-data</a></em></td><td><em class=tab><a href="clm.html#raw-data"><b>raw data </b></a></em></td><td><em class=tab><a href="clm.html#tap">tap</a></em></td></tr>

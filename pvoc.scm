@@ -146,7 +146,7 @@
 	  (vct-add! (pvoc-amps pv) (pvoc-ampinc pv))
 	  (vct-add! (pvoc-phaseinc pv) (pvoc-freqs pv))
 	  (vct-add! (pvoc-phases pv) (pvoc-phaseinc pv))
-	  (sum-of-sines (pvoc-amps pv) (pvoc-phases pv))))
+	  (sine-bank (pvoc-amps pv) (pvoc-phases pv))))
     ))
 
 ;;;   (let* ((ind (open-sound "oboe.snd"))

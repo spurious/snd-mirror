@@ -479,7 +479,7 @@
 ;;;
 ;;; this gives a sum of cosines of decreasing amp where the "k" parameter determines
 ;;;   the "index" (in FM nomenclature) -- higher k = more cosines; the actual amount
-;;;   of the nth cos involves hypergeometric series (looks like r^n/n! with a million other terms).
+;;;   of the nth cos involves hypergeometric series (looks like r^n/n! (~=e^n?) with a million other terms).
 
 (define (kosine-summation gen r k)
   (* (expt (- (+ 1.0 (* r r))
@@ -494,18 +494,21 @@
 ;;; there is still noticable DC offset if r != 0.5 -- could precompute it and subtract
 
 
-;;; -------- legendre-summation (sum-of-cosines with descreasing amps)
-;;;
-;;; from Andrews, Askey, Roy "Special Functions" p 314
+;;; -------- legendre, fejer
 
-(define (legendre-summation gen)
-  (let ((val (sum-of-cosines gen)))
+;; TODO: legendre test fejer doc/test
+
+(define (fejer angle n)
+  ;; from "Trigonometric Series" Zygmund p88
+  (let ((val (/ (sin (* 0.5 (+ n 1) angle)) (* 2 (sin (* 0.5 angle))))))
+    (* 2 (/ (* val val) (+ n 1)))))
+
+(define (legendre angle n)
+  ;; from Andrews, Askey, Roy "Special Functions" p 314
+  (let* ((val (/ (sin (* angle (+ n 0.5))) (sin (* 0.5 angle)))))
     (* val val)))
 
-(define (make-legendre-summation cosines frequency)
-  (make-sum-of-cosines (inexact->exact (floor (/ cosines 2))) frequency))
 
-;(let ((gen (make-legendre-summation 10 100))) (map-chan (lambda (y) (legendre-summation gen))))
 
 
 ;;; -------- variations on sum-of-cosines
@@ -515,8 +518,17 @@
   (let* ((a2 (* angle 0.5))
 	 (den (sin a2)))
     (if (= den 0.0)
-	0.0 ; I'm guessing...
+	0.0
 	(/ (* (sin (* n a2)) (sin (* (1+ n) a2))) den))))
+
+;;; identical to this is the "conjugate Dirichlet kernel" from "Trigonometric Series" Zygmund p49
+;;;  (let* ((a2 (* 0.5 angle))
+;;;	    (den (* 2 (sin a2))))
+;;;    (if (= den 0.0)
+;;;	  0.0
+;;;	  (/ (- (cos a2) (cos (* (+ n 0.5) angle))) den))))
+
+
 ;(let ((angle 0.0)) (map-channel (lambda (y) (let ((val (sum-of-n-sines angle 3))) (set! angle (+ angle .1)) (* .1 val)))))
 
 (define (sum-of-n-odd-sines angle n)

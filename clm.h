@@ -2,10 +2,12 @@
 #define CLM_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 44
-#define MUS_DATE "14-Apr-04"
+#define MUS_REVISION 45
+#define MUS_DATE "26-Apr-04"
 
 /*
+ * 26-Apr:     mus_sum_of_sines changed to mus_sine_bank.
+ *             new mus_sum_of_sines parallels mus_sum_of_cosines.
  * 14-Apr:     changed "2" to "_to_" in several function names.
  * 12-Apr:     mus_average, mus_average_p, mus_make_average.
  * 17-Mar:     edit function added to mus_granulate.
@@ -228,7 +230,7 @@ Float mus_samples_to_seconds(off_t samps);
 int mus_array_print_length(void);
 int mus_set_array_print_length(int val);
 Float mus_sin(Float phase);
-Float mus_sum_of_sines(Float *amps, Float *phases, int size);
+Float mus_sine_bank(Float *amps, Float *phases, int size);
 
 Float mus_ring_modulate(Float s1, Float s2);
 Float mus_amplitude_modulate(Float s1, Float s2, Float s3);
@@ -275,6 +277,9 @@ bool mus_sum_of_cosines_p(mus_any *ptr);
 mus_any *mus_make_sum_of_cosines(int cosines, Float freq, Float phase);
 #define mus_cosines(Gen) mus_hop(Gen)
 #define mus_set_cosines(Gen, Val) mus_set_hop(Gen, Val)
+Float mus_sum_of_sines(mus_any *ptr, Float fm);
+mus_any *mus_make_sum_of_sines(int sines, Float freq, Float phase);
+bool mus_sum_of_sines_p(mus_any *ptr);
 
 Float mus_delay(mus_any *gen, Float input, Float pm);
 Float mus_delay_1(mus_any *ptr, Float input);

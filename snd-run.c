@@ -7564,6 +7564,7 @@ GEN2(average)
 GEN2(rand)
 GEN2(rand_interp)
 GEN2(sum_of_cosines)
+GEN2(sum_of_sines)
 GEN2(sawtooth_wave)
 GEN2(pulse_train)
 GEN2(square_wave)
@@ -8307,7 +8308,7 @@ static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args)  \
   else return(package(prog, R_FLOAT, CName ## _3f, descr_ ## CName ## _3f, args, 3)); \
 }
 
-VCT_2_F(sum_of_sines, sum-of-sines)
+VCT_2_F(sine_bank, sine-bank)
 VCT_2_F(dot_product, dot-product)
 
 static void clm_0f(int *args, ptree *pt) {if (INT_ARG_1) FLOAT_RESULT = MUS_RUN(CLM_ARG_1, 0.0, 0.0);}
@@ -9263,6 +9264,7 @@ CLM_MAKE_FUNC(sine_summation)
 CLM_MAKE_FUNC(square_wave)
 CLM_MAKE_FUNC(src)
 CLM_MAKE_FUNC(sum_of_cosines)
+CLM_MAKE_FUNC(sum_of_sines)
 CLM_MAKE_FUNC(table_lookup)
 CLM_MAKE_FUNC(triangle_wave)
 CLM_MAKE_FUNC(two_pole)
@@ -10712,6 +10714,7 @@ static void init_walkers(void)
   INIT_WALKER(S_rand_p, make_walker(rand_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
   INIT_WALKER(S_rand_interp_p, make_walker(rand_interp_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
   INIT_WALKER(S_sum_of_cosines_p, make_walker(sum_of_cosines_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_sum_of_sines_p, make_walker(sum_of_sines_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
   INIT_WALKER(S_table_lookup_p, make_walker(table_lookup_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
   INIT_WALKER(S_sawtooth_wave_p, make_walker(sawtooth_wave_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
   INIT_WALKER(S_pulse_train_p, make_walker(pulse_train_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
@@ -10805,6 +10808,7 @@ static void init_walkers(void)
   INIT_WALKER(S_readin, make_walker(readin_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_CLM));
   INIT_WALKER(S_src, make_walker(src_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_FUNCTION));
   INIT_WALKER(S_sum_of_cosines, make_walker(sum_of_cosines_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_sum_of_sines, make_walker(sum_of_sines_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
   INIT_WALKER(S_sawtooth_wave, make_walker(sawtooth_wave_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
   INIT_WALKER(S_square_wave, make_walker(square_wave_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
   INIT_WALKER(S_sine_summation, make_walker(sine_summation_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
@@ -10847,7 +10851,7 @@ static void init_walkers(void)
   INIT_WALKER(S_amplitude_modulate, make_walker(amplitude_modulate_1, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_NUMBER, R_NUMBER, R_NUMBER));
   INIT_WALKER(S_contrast_enhancement, make_walker(contrast_enhancement_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_NUMBER, R_NUMBER));
   INIT_WALKER(S_dot_product, make_walker(dot_product_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_VCT, R_VCT));
-  INIT_WALKER(S_sum_of_sines, make_walker(sum_of_sines_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_VCT, R_VCT));
+  INIT_WALKER(S_sine_bank, make_walker(sine_bank_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_VCT, R_VCT));
   INIT_WALKER(S_polar_to_rectangular, make_walker(polar_to_rectangular_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_VCT, R_VCT));
   INIT_WALKER(S_rectangular_to_polar, make_walker(rectangular_to_polar_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_VCT, R_VCT));
   INIT_WALKER(S_multiply_arrays, make_walker(multiply_arrays_1, NULL, NULL, 2, 3, R_VCT, false, 3, R_VCT, R_VCT, R_INT));
@@ -10913,6 +10917,7 @@ static void init_walkers(void)
   INIT_WALKER(S_make_square_wave, make_walker(make_square_wave_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_src, make_walker(make_src_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_sum_of_cosines, make_walker(make_sum_of_cosines_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_sum_of_sines, make_walker(make_sum_of_sines_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_table_lookup, make_walker(make_table_lookup_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_triangle_wave, make_walker(make_triangle_wave_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_two_pole, make_walker(make_two_pole_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
