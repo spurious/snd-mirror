@@ -1012,8 +1012,6 @@ static char *describe_sum_of_cosines(mus_any *ptr)
   return(describe_buffer);
 }
 
-static Float run_sum_of_sines(mus_any *ptr, Float fm, Float unused) {return(mus_sum_of_sines(ptr, fm));}
-
 static mus_any_class SUM_OF_COSINES_CLASS = {
   MUS_SUM_OF_COSINES,
   S_sum_of_cosines,
@@ -1124,6 +1122,8 @@ Float mus_sum_of_sines(mus_any *ptr, Float fm)
   gen->phase += (gen->freq + fm);
   return(val);
 }
+
+static Float run_sum_of_sines(mus_any *ptr, Float fm, Float unused) {return(mus_sum_of_sines(ptr, fm));}
 
 static mus_any_class SUM_OF_SINES_CLASS = {
   MUS_SUM_OF_SINES,
@@ -1887,9 +1887,7 @@ Float *mus_partials_to_polynomial(int npartials, Float *partials, mus_polynomial
    [snd-xref/indices]
    [clm.html]
    [snd-run.c]
-   
-   PERHAPS: coeffs retro-fit to filters?
- */
+*/
 
 
 static void poly_reset(mus_any *ptr)
@@ -3029,8 +3027,8 @@ mus_any *mus_make_pulse_train(Float freq, Float amp, Float phase) /* TWO_PI init
   return((mus_any *)gen);
 }
 
-/* TODO: bl-pulse-train (blit code) 
- *       bl-sawtooth etc -- perhaps a band-limited arg to the existing make-*?
+/* PERHAPS: bl-pulse-train (blit code) 
+ *          bl-sawtooth etc -- perhaps a band-limited arg to the existing make-*?
  *    named? "band_limited_saw..." or "bl_saw..."?
  */
 
@@ -3087,11 +3085,6 @@ Float mus_frandom_1(void) /* 0.0 to 1.0 as Float */
 int mus_irandom(int amp)
 {
   return((int)(amp * next_random() * INVERSE_MAX_RAND2));
-}
-
-static int irandom(int amp) /* original form -- surely this off by a factor of 2? */
-{
-  return((int)(amp * next_random() * INVERSE_MAX_RAND));
 }
 
 static Float random_any(noi *gen) /* -amp to amp possibly through distribution */
@@ -6693,7 +6686,8 @@ mus_any *mus_make_granulate(Float (*input)(void *arg, int direction),
   spd->amp = scaler;
   spd->output_hop = (int)(hop * sampling_rate);
   spd->input_hop = (int)((Float)(spd->output_hop) / expansion);
-  spd->s20 = (int)(jitter * sampling_rate * hop); /* was *.05 here and *.02 below */
+  spd->s20 = 2 * (int)(jitter * sampling_rate * hop); /* was *.05 here and *.02 below */
+   /* added "2 *" 21-Mar-05 and replaced irandom with mus_irandom below */
   spd->s50 = (int)(jitter * sampling_rate * hop * 0.4);
   spd->out_data_len = outlen;
   spd->out_data = (Float *)clm_calloc(spd->out_data_len, sizeof(Float), "granulate out data");
@@ -6789,7 +6783,7 @@ Float mus_granulate_with_editor(mus_any *ptr, Float (*input)(void *arg, int dire
       {
 	int lim, steady_end, curstart, j;
 	lim = spd->grain_len;
-	curstart = irandom(spd->s20); /* start location in input buffer */
+	curstart = mus_irandom(spd->s20); /* start location in input buffer */
 	if ((curstart + spd->grain_len) > spd->in_data_len)
 	  lim = (spd->in_data_len - curstart);
 	if (lim > spd->grain_len)
@@ -6846,7 +6840,8 @@ Float mus_granulate_with_editor(mus_any *ptr, Float (*input)(void *arg, int dire
       
       /* set location of next grain calculation */
       spd->ctr = 0;
-      spd->cur_out = spd->output_hop + irandom(spd->s50) - (spd->s50 >> 1); /* this form suggested by Marc Lehmann */
+      spd->cur_out = spd->output_hop + mus_irandom(2 * spd->s50) - (spd->s50 >> 1); /* this form suggested by Marc Lehmann */
+                                               /* "2 *" added 21-Mar-05 and irandom replaced with mus_irandom */
       if (spd->cur_out < 0) spd->cur_out = 0;
 
       if (spd->first_samp)

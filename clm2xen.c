@@ -3433,9 +3433,9 @@ static XEN g_make_filter_1(xclm_fir_t choice, XEN arg1, XEN arg2, XEN arg3, XEN 
   XEN xwave = XEN_UNDEFINED, ywave = XEN_UNDEFINED;
   mus_any *fgen = NULL;
   mus_xen *gn = NULL;
-  XEN args[6]; 
-  XEN keys[3];
-  int orig_arg[3] = {0, 0, 0};
+  XEN args[8]; 
+  XEN keys[4];
+  int orig_arg[4] = {0, 0, 0, 0};
   vct *x = NULL, *y = NULL;
   int vals, order = 0;
   char *caller;
@@ -3443,8 +3443,9 @@ static XEN g_make_filter_1(xclm_fir_t choice, XEN arg1, XEN arg2, XEN arg3, XEN 
   keys[0] = kw_order;
   keys[1] = kw_x_coeffs;
   keys[2] = kw_y_coeffs;
-  args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6;
-  vals = mus_optkey_unscramble(caller, 3, keys, args, orig_arg);
+  keys[3] = kw_coeffs;
+  args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6; args[6] = XEN_UNDEFINED; args[7] = XEN_UNDEFINED;
+  vals = mus_optkey_unscramble(caller, 4, keys, args, orig_arg);
   if (vals > 0)
     {
       if (!(XEN_KEYWORD_P(keys[0])))
@@ -3473,6 +3474,24 @@ static XEN g_make_filter_1(xclm_fir_t choice, XEN arg1, XEN arg2, XEN arg3, XEN 
 	  ywave = keys[2];
 	  y = TO_VCT(ywave);
 	}
+      if ((choice != G_FILTER) && (!(XEN_KEYWORD_P(keys[3]))))
+        {
+	  XEN_ASSERT_TYPE(VCT_P(keys[3]), keys[3], orig_arg[3], caller, "a vct");
+	  if (choice == G_IIR_FILTER)
+	    {
+	      if (ywave)
+		mus_misc_error(caller, "coeffs and ycoeffs passed to " S_make_iir_filter "?", keys[3]);
+	      ywave = keys[3];
+	      y = TO_VCT(ywave);
+	    }
+	  else
+	    {
+	      if (xwave)
+		mus_misc_error(caller, "coeffs and xcoeffs passed to " S_make_fir_filter "?", keys[3]);
+	      xwave = keys[3];
+	      x = TO_VCT(xwave);
+	    }
+        }
     }
   if (choice == G_FILTER)
     {
@@ -3901,9 +3920,6 @@ handled by the output generator 'obj', in channel 'chan' at frame 'samp'"
 					    XEN_TO_C_DOUBLE(val))));
 }
 
-/* TODO: CL side of readin buffer size, make-readin arg in clm2xen, test all 3, snd-run [run.lisp+link]
- */
-
 static XEN g_make_file_to_frame(XEN name, XEN buffer_size)
 {
   #define H_make_file_to_frame "(" S_make_file_to_frame " filename buffer-size): return an input generator reading 'filename' (a sound file)"
@@ -4026,27 +4042,36 @@ static XEN g_readin(XEN obj)
   return(C_TO_XEN_DOUBLE(mus_readin(XEN_TO_MUS_ANY(obj))));
 }
 
-static XEN g_make_readin(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
+static XEN g_make_readin(XEN arglist)
 {
-  #define H_make_readin "(" S_make_readin " :file (:channel 0) (:start 0) (:direction 1)): \
+  #define H_make_readin "(" S_make_readin " :file (:channel 0) (:start 0) (:direction 1) :size): \
 return a new readin (file input) generator reading the sound file 'file' starting at frame \
 'start' in channel 'channel' and reading forward if 'direction' is not -1"
 
-  /* optkey file channel start direction */
+  /* optkey file channel start direction size */
   mus_any *ge;
   char *file = NULL;
-  XEN args[8]; 
-  XEN keys[4];
-  int orig_arg[4] = {0, 0, 0, 0};
-  int vals;
+  XEN args[MAX_ARGLIST_LEN]; 
+  XEN keys[5];
+  int orig_arg[5] = {0, 0, 0, 0, 0};
+  int i, vals, arglist_len, buffer_size;
   int channel = 0, direction = 1;
   off_t start = 0;
   keys[0] = kw_file;
   keys[1] = kw_channel;
   keys[2] = kw_start;
   keys[3] = kw_direction;
-  args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6; args[6] = arg7; args[7] = arg8; 
-  vals = mus_optkey_unscramble(S_make_readin, 4, keys, args, orig_arg);
+  keys[4] = kw_size;
+  buffer_size = mus_file_buffer_size();
+  arglist_len = XEN_LIST_LENGTH(arglist);
+  if (arglist_len > MAX_ARGLIST_LEN)
+    XEN_ERROR(MUS_MISC_ERROR,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_make_readin), 
+			 C_TO_XEN_STRING("too many args!"),
+			 arglist));
+  for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
+  for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = XEN_UNDEFINED;
+  vals = mus_optkey_unscramble(S_make_readin, 5, keys, args, orig_arg);
   if (vals > 0)
     {
       file = mus_optkey_to_string(keys[0], S_make_readin, orig_arg[0], NULL); /* not copied */
@@ -4055,6 +4080,9 @@ return a new readin (file input) generator reading the sound file 'file' startin
 	XEN_OUT_OF_RANGE_ERROR(S_make_readin, orig_arg[1], keys[1], "channel ~A < 0?");
       start = mus_optkey_to_off_t(keys[2], S_make_readin, orig_arg[2], start);
       direction = mus_optkey_to_int(keys[3], S_make_readin, orig_arg[3], direction);
+      buffer_size = mus_optkey_to_int(keys[4], S_make_readin, orig_arg[4], buffer_size);
+      if (buffer_size <= 0)
+	XEN_OUT_OF_RANGE_ERROR(S_make_readin, orig_arg[4], keys[4], "must be > 0");
     }
   if (file == NULL)
     XEN_OUT_OF_RANGE_ERROR(S_make_readin, orig_arg[0], keys[0], "no file name given");
@@ -4070,7 +4098,7 @@ return a new readin (file input) generator reading the sound file 'file' startin
 			 C_TO_XEN_STRING("chans <= 0")));
   if (channel >= mus_sound_chans(file))
     XEN_OUT_OF_RANGE_ERROR(S_make_readin, orig_arg[1], keys[1], "channel ~A > available chans?");
-  ge = mus_make_readin(file, channel, start, direction);
+  ge = mus_make_readin_with_buffer_size(file, channel, start, direction, buffer_size);
   if (ge) return(mus_xen_to_object(_mus_wrap_no_vcts(ge)));
   return(XEN_FALSE);
 }
@@ -5398,7 +5426,7 @@ XEN_NARGIFY_0(g_mus_file_buffer_size_w, g_mus_file_buffer_size)
 XEN_NARGIFY_1(g_mus_set_file_buffer_size_w, g_mus_set_file_buffer_size)
 XEN_NARGIFY_1(g_readin_p_w, g_readin_p)
 XEN_NARGIFY_1(g_readin_w, g_readin)
-XEN_ARGIFY_8(g_make_readin_w, g_make_readin)
+XEN_VARGIFY(g_make_readin_w, g_make_readin)
 XEN_NARGIFY_1(g_mus_channel_w, g_mus_channel)
 XEN_NARGIFY_1(g_mus_interp_type_w, g_mus_interp_type)
 XEN_NARGIFY_1(g_mus_location_w, g_mus_location)
@@ -6123,7 +6151,7 @@ the closer the radius is to 1.0, the narrower the resonance."
 
   XEN_DEFINE_PROCEDURE(S_readin_p,        g_readin_p_w,        1, 0, 0, H_readin_p);
   XEN_DEFINE_PROCEDURE(S_readin,          g_readin_w,          1, 0, 0, H_readin);
-  XEN_DEFINE_PROCEDURE(S_make_readin,     g_make_readin_w,     0, 8, 0, H_make_readin);
+  XEN_DEFINE_PROCEDURE(S_make_readin,     g_make_readin_w,     0, 0, 1, H_make_readin);
   XEN_DEFINE_PROCEDURE(S_mus_channel,     g_mus_channel_w,     1, 0, 0, H_mus_channel);
   XEN_DEFINE_PROCEDURE(S_mus_interp_type, g_mus_interp_type_w, 1, 0, 0, H_mus_interp_type);
 

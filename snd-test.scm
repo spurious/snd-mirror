@@ -15802,10 +15802,10 @@ EDITS: 5
 	(if (not (eq? (car tag) 'out-of-range)) (snd-display ";make-readin with bad chan: ~A" tag)))
       
       (test-gen-equal (make-readin "oboe.snd" 0) (make-readin "oboe.snd" 0) (make-readin "oboe.snd" 0 1230))
-      (test-gen-equal (make-readin "oboe.snd" 0) (make-readin "oboe.snd" 0) (make-readin "pistol.snd" 0))
+      (test-gen-equal (make-readin "oboe.snd" 0 :size 512) (make-readin "oboe.snd" 0 :size 512) (make-readin "pistol.snd" 0 :size 512))
       (test-gen-equal (make-readin "2.snd" 1) (make-readin "2.snd" 1) (make-readin "2.snd" 0))
       
-      (let ((gen (make-readin "2.snd" 1))
+      (let ((gen (make-readin "2.snd" 1 :size 1024))
 	    (v0 (make-vct 10)))
 	(print-and-check gen 
 			 "readin"
@@ -15880,7 +15880,7 @@ EDITS: 5
 	(if (not (= (mus-location gen) 1499)) (snd-display ";snd->sample location (2): ~A" (mus-location gen)))
 	(close-sound ind))
       
-      (let* ((fgen (make-file->sample "oboe.snd"))
+      (let* ((fgen (make-file->sample "oboe.snd" 512))
 	     (gen (make-xen->sample (lambda (samp chan) (* 2.0 (file->sample fgen samp chan)))))
 	     (gen1 (make-xen->sample (lambda (s c) 1.0)))
 	     (gen2 gen)
@@ -16046,7 +16046,7 @@ EDITS: 5
 	    (frame-set! fr0 1 (* i .01))
 	    (frame->file gen i fr0)))
 	(mus-close gen))
-      (let* ((gen (make-file->frame "fmv1.snd"))
+      (let* ((gen (make-file->frame "fmv1.snd" 1024))
 	     (val4 (file->frame gen 40))
 	     (frout (make-frame 2)))
 	(if (or (fneq (frame-ref val4 0) .04) (fneq (frame-ref val4 1) .4))
@@ -16993,10 +16993,10 @@ EDITS: 5
       
       (let ((gen (make-granulate :expansion 2.0))
 	    (v0 (make-vct 1000))
-	    (rd (make-readin "oboe.snd" 0 4000))
+	    (rd (make-readin "oboe.snd" 0 4000 1 2048))
 	    (gen1 (make-granulate :expansion 2.0))
 	    (v1 (make-vct 1000))
-	    (rd1b (make-readin "oboe.snd" 0 4000)))
+	    (rd1b (make-readin :file "oboe.snd" :channel 0 :start 4000 :direction 1 :size (mus-file-buffer-size))))
 	(print-and-check gen 
 			 "granulate"
 			 "granulate: expansion: 2.000 (551/1102), scaler: 0.600, length: 0.150 secs (3308 samps), ramp: 0.060")
@@ -54409,6 +54409,12 @@ EDITS: 2
 	    (check-error-tag 'out-of-range (lambda () (new-sound "test.snd" :channels 0)))
 	    (check-error-tag 'out-of-range (lambda () (new-sound "test.snd" :srate 0)))
 	    (check-error-tag 'out-of-range (lambda () (new-sound "test.snd" :size -1)))
+	    (check-error-tag 'out-of-range (lambda () (make-readin "oboe.snd" :size 0)))
+	    (check-error-tag 'out-of-range (lambda () (make-readin "oboe.snd" :size -1)))
+	    (check-error-tag 'out-of-range (lambda () (make-file->sample "oboe.snd" :size 0)))
+	    (check-error-tag 'out-of-range (lambda () (make-file->sample "oboe.snd" :size -1)))
+	    (check-error-tag 'out-of-range (lambda () (make-file->frame "oboe.snd" :size 0)))
+	    (check-error-tag 'out-of-range (lambda () (make-file->frame "oboe.snd" :size -1)))
 	    (check-error-tag 'out-of-range (lambda () (set! (default-output-format) -1)))
 	    (check-error-tag 'out-of-range (lambda () (set! (default-output-type) mus-soundfont)))
 	    (check-error-tag 'mus-error (lambda () (mus-sound-chans (string-append sf-dir "bad_location.nist"))))

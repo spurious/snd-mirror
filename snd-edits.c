@@ -4673,7 +4673,9 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 	      if (ed->origin) 
 		fprintf_with_possible_embedded_string(fd, ed->origin);
 	      else fprintf(fd, "\"\"");
-	      fprintf(fd, ")\n");
+ 	      fprintf(fd, ", [%d, " OFF_TD "])\n",
+ 		      (int)mus_sound_write_date(nfile),
+ 		      mus_sound_length(nfile));
 #else
 	      fprintf(fd, "      (%s \"%s\" " OFF_TD " sfile %d ", S_override_samples_with_origin, nfile, len, cp->chan);
 	      if (ed->origin) 
@@ -4792,6 +4794,10 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 		  fprintf(fd, " (list %d " OFF_TD ")",
 			  (int)mus_sound_write_date(nfile),
 			  mus_sound_length(nfile));
+#else
+ 		  fprintf(fd, ", [%d, " OFF_TD "]",
+  			  (int)mus_sound_write_date(nfile),
+  			  mus_sound_length(nfile));
 #endif
 		  FREE(nfile);
 		}

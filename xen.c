@@ -963,25 +963,31 @@ static VALUE xen_rb_hook_inspect(VALUE hook)
 void snd_rb_raise(XEN type, XEN info); /* XEN_ERROR */
 #endif
 
-static VALUE xen_rb_make_hook(int argc, VALUE *argv, VALUE klass)
+static XEN xen_rb_make_hook(int argc, XEN *argv, XEN klass)
 {
-  VALUE hook, name;
-  if (argc <= 4) {
+  XEN hook, name;
+  if (argc > 0 && argc < 4) {
     hook = xen_rb_hook_initialize(argc, argv, hook_alloc(xen_rb_cHook));
+    if (rb_block_given_p()) {
+      argv[0] = rb_str_new2("");
+      xen_rb_hook_add_hook(1, argv, hook);
+    }
   }
-  else if (argc < 4 && rb_block_given_p()) {
+  else if (argc == 4 && rb_block_given_p()) {
     hook = xen_rb_hook_initialize(3, argv, hook_alloc(xen_rb_cHook));
     argv[0] = argv[3];
-    argv[1] = argv[4];
     xen_rb_hook_add_hook(1, argv, hook);
   }
   else {
-      XEN_ERROR(XEN_ERROR_TYPE("wrong-number-of-args"),
-		XEN_LIST_1(C_TO_XEN_STRING("make_hook(name, arity = 0, help = \"\", hook_name = nil, &func)")));
+    XEN args_msg = C_TO_XEN_STRING("make_hook(name, arity=0, help=\"\", hook_name=\"\", &func)");
+    XEN args_error = XEN_ERROR_TYPE("wrong-number-of-args");
+#if USE_SND
+    snd_rb_raise(args_error, XEN_LIST_1(args_msg));
+#else
+    XEN_ERROR(args_error, XEN_LIST_1(args_msg));
+#endif
   }
-  /* set global ruby variable "#{@name} = #{hook}" */
   name = xen_rb_hook_name(hook);
-
   if (RSTRING(name)->ptr[0] != '$')
     name = C_TO_XEN_STRING(xen_scheme_global_variable_to_ruby(RSTRING(name)->ptr));
   XEN_ASSERT_TYPE(RSTRING(name)->len >= 2, name, XEN_ARG_1, c__FUNCTION__, "a char*, len >= 2");
