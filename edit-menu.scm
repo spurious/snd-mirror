@@ -66,9 +66,24 @@
 
 (add-to-menu edit-menu "Append selection" append-selection 10)
 
+;;; -------- make-stereofile
+(define (make-stereofile)
+  (let* ((ofile-name (file-name))
+	 (old-sound (selected-sound))
+	 (nsnd (new-sound (string-append ofile-name ".stereo") (header-type) (data-format) (srate) 2)))
+    (if (not nsnd)
+	(begin
+	  (display "Could not make new sound.")(newline))
+	(begin
+	  (insert-sound ofile-name 0 0 nsnd 0)
+	  (insert-sound ofile-name 0 (if (> 0 (channels old-sound)) 1 0) nsnd 1)))))
+
+(add-to-menu edit-menu "Make Stereofile" make-stereofile)
+
+;;; --------
+
 
 (add-to-menu edit-menu #f #f)
-
 
 ;;; -------- trim front and back (goes by first or last mark)
 

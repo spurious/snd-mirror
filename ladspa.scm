@@ -560,7 +560,7 @@
 	  (enableplugin)
 	  )
 
-	(define (Help)
+	(define (Help d)
 	  (let ((dashelp (assoc (string-append libraryname effectname) ladspa-help-assoclist)))
 	    (help-dialog author
 			 (string-append (if dashelp
@@ -568,33 +568,33 @@
 					    lisense)
 					"\n\nProcessing can be stopped by pressing C-g"))))
 	  
-	(define (OK)
+	(define (OK d)
 	  (MyStop)
 	  (disableplugin)
 	  (checkbutton-set onoffbutton #f)
 	  ((ladspa-object 'apply!)))
 
-	(define (Cancel)
+	(define (Cancel d)
+	  (checkbutton-set onoffbutton #f)
 	  (dialog-hide ladspa-dialog)
 	  (disableplugin)
 	  (if (string=? "vst" libraryname)
-	      ((ladspa-object 'close)))
-	  (checkbutton-set onoffbutton #f))
+	      ((ladspa-object 'close))))
 
-	(define (MyPlay)
+	(define (MyPlay d)
 	  (if (not (selection-member? (selected-sound)))
 	      (select-all (selected-sound)))
 	  (add-hook! stop-playing-selection-hook play-selection)
 	  (play-selection))
 
-	(define (MyStop)
+	(define (MyStop d)
 	  (remove-hook! stop-playing-selection-hook play-selection)
 	  (stop-playing))
 
 	(define (enableplugin)
 	  (if (not ((ladspa-object 'add-dac-hook!)))
 	      (begin
-		(display "Unable use ladspa plugin")
+		(display "Unable to use ladspa plugin.")
 		(newline))))
 
 	(define (disableplugin)
@@ -671,22 +671,22 @@
 				   (portname (list-ref (.PortNames descriptor) portnum))
 				   (onofffunc (ladspa-object 'input-control-set!))
 				   (ison (> ((ladspa-object 'get-input-control) portnum) 0)))
-			      (dialog-add-checkbutton ladspa-dialog
-						      portname
-						      (lambda (on)
-							(onofffunc portnum (if on hi lo)))
-						      ison)))
+			      (checkbutton-create ladspa-dialog
+						  portname
+						  (lambda (on)
+						    (onofffunc portnum (if on hi lo)))
+						  ison)))
 			  (my-filter (lambda (portnum) (ishint (car (list-ref (.PortRangeHints descriptor) portnum))  LADSPA_HINT_TOGGLED))
 				     ((ladspa-object 'input-control-ports))))
 		
 		
 	    
 		;; Add on/off button.
-		(set! onoffbutton (dialog-add-checkbutton ladspa-dialog
-							  "On/off"
-							  (lambda (on)
-							    (onoff on))
-							  #t))
+		(set! onoffbutton (checkbutton-create ladspa-dialog
+						      "On/off"
+						      (lambda (on)
+							(onoff on))
+						      #t))
 		(set! ismade #t))))
 
 	  

@@ -10,24 +10,24 @@
 
 ;; Set various variables. See Snd documentation.
 
-#!
-(set! %load-path (append (if (provided? 'snd-gtk)
-			     '("/home/kjetil/snd-7-gtk" "/home/kjetil/snd-7-gtk/dlp")
-			     '("/home/kjetil/snd-7" "/home/kjetil/snd-7/dlp"))
-			 %load-path))
-!#
 
 
+;; This is for my personal computers settings. May not suite your setup.
+(if #f
+    (begin
+      (set! (ladspa-dir) "/usr/lib/ladspa")
+      
+      (set! %load-path (cons "/hom/kjetism/snd/snd-7" %load-path))
+      
+      (set! (temp-dir) "/lyd/local/tmp")
+      (set! (save-dir) "/lyd/local/tmp")))
 
-(load-from-path "gui.scm")
+
 
 
 ;;(set! snd-remember-paths #t)
 
 (set! (just-sounds) #t)
-
-;;(set! (temp-dir) "/lyd/local/tmp")
-;;(set! (save-dir) "/lyd/local/tmp")
 
 (set! (default-output-srate) 44100)
 (set! (default-output-type) mus-riff)
@@ -115,6 +115,7 @@
 
 
 
+
 ;; Various general functions
 
 (define (c-for init pred least add proc)
@@ -123,21 +124,27 @@
         (proc init)
         (c-for (+ add init) pred least add proc))))
 
-(define (g-list-foreach glist func)
-  (c-for 0 < (g_list_length glist) 1
-	 (lambda (n)
-	   (func (g_list_nth_data glist n)))))
+(define (get-nameform snd)
+  (if use-gtk
+      (GTK_BOX (list-ref (sound-widgets snd) 10))
+      (find-child (list-ref (sound-widgets snd) 2) "snd-name-form")))
 
-(define (gtk-get-nameform-button snd name)
+(define (for-each-nameform-button snd name func)
+  (for-each-child (get-nameform snd)
+		  (lambda (w)
+		    (if use-gtk
+			(if (and (GTK_IS_BUTTON w)
+				 (string=? name (.label_text (GTK_BUTTON w))))
+			    (func (GTK_BUTTON w)))
+			(if (string=? (XtName w) name)
+			    (func w))))))
+
+(define (get-nameform-button snd name)
   (call-with-current-continuation
    (lambda (exit)
-     (g-list-foreach (gtk_container_get_children (GTK_CONTAINER (GTK_BOX (list-ref (sound-widgets snd) 10))))
-		     (lambda (w)
-		       (if (and (GTK_IS_BUTTON w)
-				(string=? name (.label_text (GTK_BUTTON w))))
-			   (exit (GTK_BUTTON w))))))))
-
-
+     (for-each-nameform-button snd name exit)
+     #f)))
+   
 (define (my-report text)
   (change-window-property "SND_VERSION" "WM_NAME"
 			  (if (string=? " " text)
@@ -200,9 +207,12 @@
 ;; Let the cursor move when playing.
 
 (add-hook! after-open-hook 
-	   (lambda (sp)
-	     (set! (cursor-follows-play sp) #t)
-	     (set-sound-cursor sp cursor-line)
+	   (lambda (snd)
+	     (c-for 0 < (channels snd) 1
+		    (lambda (i)
+		      (set! (cursor snd i) 0)))
+	     (set! (cursor-follows-play snd) #t)
+	     (set-sound-cursor snd cursor-line)
 	     #f))
 
 
@@ -457,7 +467,7 @@
 
 
 
-
+(load-from-path "gui.scm")
 
 
 ;; Fix mouse-selection handling.
@@ -824,27 +834,34 @@
 ;; -Remove the play button. Its useless now with the way p and space is configured.
 ;; -Added a loop button where the play button was.
 
+(define sound-list '())
+
 (define unique-sync-num 0)
 (define (get-unique-sync-num)
   (set! unique-sync-num (+ unique-sync-num 1))
   unique-sync-num)
 
+;;(display-widget-tree (list-ref (sound-widgets (selected-sound)) 2))
+;;(find-child (list-ref (sound-widgets (selected-sound)) 2) "snd-name-form")
+
+(add-hook! close-hook
+	   (lambda (snd)
+	     (for-each-nameform-button snd "loop" checkbutton-remove)
+	     (for-each-nameform-button snd "sync" checkbutton-remove)
+	     #f))
+
+;;(checkbutton-remove (get-nameform-button (selected-sound) "sync"))
+
 (add-hook! after-open-hook
 	   (lambda (snd)
-	     (let ((oldplay (if use-gtk
-				(gtk-get-nameform-button snd "play")
-				(find-child (list-ref (sound-widgets snd) 2) "play"))))
-	       (checkbutton-create (if use-gtk
-				       (list-ref (sound-widgets snd) 10)
-				       (XtParent oldplay))
+	     (let ((oldplay (get-nameform-button snd "play")))
+	       (checkbutton-create (get-nameform snd)
 				   "loop"
 				   (lambda (on)
 				     (set! islooping on)
 				     (for-each (lambda (s)
-						 (if (not (= s snd)) (checkbutton-set (if use-gtk
-											  (gtk-get-nameform-button s "loop")
-											  (find-child (list-ref (sound-widgets s) 2) "loop"))
-										      islooping)))
+						 (if (not (= s snd)) (for-each-nameform-button s "loop"
+											       (lambda (b) (checkbutton-set b islooping)))))
 					       (sounds))
 				     (focus-widget (list-ref (channel-widgets snd 0) 0)))
 				   islooping
@@ -855,12 +872,8 @@
 		 (set! (channel-style snd) channels-combined))
 	     (set! (sync snd) (get-unique-sync-num))
 	     
-	     (let ((oldsync (if use-gtk
-				(gtk-get-nameform-button snd "sync")
-				(find-child (list-ref (sound-widgets snd) 2) "sync"))))
-	       (checkbutton-create (if use-gtk
-				       (list-ref (sound-widgets snd) 10)
-				       (XtParent oldsync))
+	     (let ((oldsync (get-nameform-button snd "sync")))
+	       (checkbutton-create (get-nameform snd)
 				   "sync"
 				   (lambda (on)
 				     (if on
@@ -870,7 +883,7 @@
 				   #t
 				   (if use-gtk '() (list XmNx (car (widget-position oldsync)))))
 	       (checkbutton-remove oldsync))
-	  
+
 	     #f))
 
 

@@ -32,6 +32,22 @@
 
 (if (not (defined? 'sound-property)) (load-from-path "extensions.scm"))
 
+
+(define (g-list-foreach glist func)
+  (let ((i 0))
+    (while (< i (g_list_length glist))
+	   (func (g_list_nth_data glist i))
+	   (set! i (1+ i)))))
+
+
+(define (for-each-child w func)
+  "(for-each-child w func) applies func to w and each of its children"
+  (func w)
+  (g-list-foreach (gtk_container_get_children (GTK_CONTAINER w))
+		  (lambda (w)
+		    (func (GTK_WIDGET w)))))
+
+
 (define (host-name)
   "(host-name) -> name of current machine"
   (let ((val (gdk_property_get (car (main-widgets))
