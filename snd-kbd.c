@@ -1527,12 +1527,12 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      reflect_spectro(ss); 
 	      break;
 	    case snd_keypad_Multiply: 
-	      set_fft_size(ss, fft_size(ss) * 2); 
+	      set_transform_size(ss, transform_size(ss) * 2); 
 	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      break;
 	    case snd_keypad_Divide: 
-	      if (fft_size(ss) > 4) 
-		set_fft_size(ss, fft_size(ss) / 2); 
+	      if (transform_size(ss) > 4) 
+		set_transform_size(ss, transform_size(ss) / 2); 
 	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      break;
 #if HAVE_ARROW_KEYS
