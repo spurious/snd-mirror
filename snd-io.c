@@ -1,6 +1,5 @@
 #include "snd.h"
 
-
 /* file buffers (i.e. a sliding window on a given file's data */
 
 #define SND_AREF_BLOCK 0
@@ -95,6 +94,7 @@ static void reposition_file_buffers(snd_data *sd, int index)
   int fd = 0;
   int reclose = 0;
   file_info *hdr;
+  if (index < 0) index = 0; /* if reading in reverse, don't fall off the start of the buffer */
   if (sd->just_zeros)
     {
       sd->io[SND_IO_BEG] = index;

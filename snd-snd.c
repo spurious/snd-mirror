@@ -994,7 +994,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
   if (sp->expanding) mult_dur *= sp->expand;
   if (sp->reverbing) added_dur += (int)((SND_SRATE(sp)*reverb_decay(ss)));
   if ((ss->apply_choice != APPLY_TO_SELECTION) &&
-      (sp->srate == 1.0) &&
+      (sp->srate == 1.0) && (sp->play_direction == 1) &&
       (!(sp->filtering)) && (!(sp->expanding)) && (!(sp->reverbing)) && (!(sp->contrasting)))
     {
       old_sync = sp->syncing;

@@ -118,7 +118,7 @@ static SCM menu_hook;
 static int call_menu_hook(char *name, char *option)
 {
   SCM res = SCM_BOOL_T;
-  if (HOOKED(menu_hook))
+  if ((name) && (HOOKED(menu_hook)))
     res = g_c_run_or_hook(menu_hook,SCM_LIST2(gh_str02scm(name),gh_str02scm(option)));
   return(SCM_TRUE_P(res));
 }
@@ -1082,9 +1082,11 @@ static char *main_menu_names[MAX_MAIN_MENUS];
 static int *added_options_menus = NULL;
 static int added_options_size = 0;
 static int added_options_pos = 0;
+static int *added_options_callb = NULL;
 
 static char *main_menu_name(int callb)
 {
+  if ((callb < 0) || (callb >= MAX_MAIN_MENUS)) return(NULL);
   switch (added_options_menus[callb])
     {
     case 0: return(STR_File); break;
@@ -1096,15 +1098,25 @@ static char *main_menu_name(int callb)
   return(main_menu_names[added_options_menus[callb]]);
 }
 
+static int callb2option(int callb)
+{
+  int i;
+  for (i=0;i<added_options_pos;i++)
+    if (added_options_callb[i] == callb)
+      return(i);
+  return(-1);
+}
+
 static void GH_Callback(GtkWidget *w, gpointer cD) 
 {
-  int callb;
+  int callb,opt;
   callb = (int)gtk_object_get_user_data(GTK_OBJECT(w));
-  IF_MENU_HOOK(main_menu_name(callb),added_options_names[callb])
+  opt = callb2option(callb);
+  IF_MENU_HOOK(main_menu_name(opt),added_options_names[(opt < 0) ? 0 : opt])
     g_snd_callback(callb);
 }
 
-static void add_option(GtkWidget *w,int which_menu,char *label)
+static void add_option(GtkWidget *w,int which_menu,char *label,int callb)
 {
   int i;
   if (added_options_pos == added_options_size)
@@ -1115,18 +1127,25 @@ static void add_option(GtkWidget *w,int which_menu,char *label)
 	  added_options = (GtkWidget **)CALLOC(added_options_size,sizeof(GtkWidget *));
 	  added_options_names = (char **)CALLOC(added_options_size,sizeof(char *));
 	  added_options_menus = (int *)CALLOC(added_options_size,sizeof(int));
+	  added_options_callb = (int *)CALLOC(added_options_size,sizeof(int));
 	}
       else
 	{
 	  added_options = (GtkWidget **)REALLOC(added_options,added_options_size * sizeof(GtkWidget *));
 	  added_options_names = (char **)REALLOC(added_options_names,added_options_size * sizeof(char *));
 	  added_options_menus = (int *)REALLOC(added_options_menus,added_options_size * sizeof(int));
-	  for (i=added_options_pos;i<added_options_size;i++) added_options[i] = NULL;
+	  added_options_callb = (int *)REALLOC(added_options_callb,added_options_size * sizeof(int));
+	  for (i=added_options_pos;i<added_options_size;i++) 
+	    {
+	      added_options[i] = NULL;
+	      added_options_callb[i] = 0;
+	    }
 	}
     }
   added_options[added_options_pos] = w;
   added_options_menus[added_options_pos] = which_menu;
   added_options_names[added_options_pos] = copy_string(label);
+  added_options_callb[added_options_pos] = callb;
   added_options_pos++;
 }
 
@@ -1311,7 +1330,7 @@ int gh_add_to_menu(snd_state *ss, int which_menu, char *label, int callb)
   gtk_widget_show(m);
   gtk_object_set_user_data(GTK_OBJECT(m),(gpointer)callb);
   gtk_signal_connect(GTK_OBJECT(m),"activate",GTK_SIGNAL_FUNC(GH_Callback),(gpointer)ss);
-  add_option(m,which_menu,label);
+  add_option(m,which_menu,label,callb);
   return(0);
 }
 

@@ -15,21 +15,21 @@
  *
  *   Once mus_header_read has been called, the data in it can be accessed through:
  *
- *        int mus_header_samples (void):             samples 
- *        int mus_header_data_location (void)        location of data (bytes)
- *        int mus_header_chans (void)                channels
- *        int mus_header_srate (void)                srate
- *        int mus_header_type (void)                 header type (i.e. aiff, wave, etc)  (see sndlib.h)
- *        int mus_header_format (void)               data format (see sndlib.h)
- *        int mus_header_distributed (void)          true if header info is scattered around in the file
- *        int mus_header_comment_start (void)        comment start location (if any) (bytes)
- *        int mus_header_comment_end (void)          comment end location
- *        int mus_header_aux_comment_start (int n)   if multiple comments, nth start location
- *        int mus_header_aux_comment_end (int n)     if multiple comments, nth end location
- *        int mus_header_type_specifier (void)       original (header-specific) type ID
- *        int mus_header_bits_per_sample (void)      sample width in bits
- *        int mus_header_true_length (void)            true (lseek) file length
- *        int mus_header_data_format_to_bytes_per_sample (void)         sample width in bytes
+ *        int mus_header_samples (void):                        samples 
+ *        int mus_header_data_location (void)                   location of data (bytes)
+ *        int mus_header_chans (void)                           channels
+ *        int mus_header_srate (void)                           srate
+ *        int mus_header_type (void)                            header type (i.e. aiff, wave, etc)  (see sndlib.h)
+ *        int mus_header_format (void)                          data format (see sndlib.h)
+ *        int mus_header_distributed (void)                     true if header info is scattered around in the file
+ *        int mus_header_comment_start (void)                   comment start location (if any) (bytes)
+ *        int mus_header_comment_end (void)                     comment end location
+ *        int mus_header_aux_comment_start (int n)              if multiple comments, nth start location
+ *        int mus_header_aux_comment_end (int n)                if multiple comments, nth end location
+ *        int mus_header_type_specifier (void)                  original (header-specific) type ID
+ *        int mus_header_bits_per_sample (void)                 sample width in bits
+ *        int mus_header_true_length (void)                     true (lseek) file length
+ *        int mus_header_data_format_to_bytes_per_sample (void) sample width in bytes
  *
  *        int mus_header_aiff_p(void)                is header actually old-style AIFF, not AIFC
  *        int mus_header_writable(int type, int format)
@@ -315,25 +315,25 @@ int mus_data_format_to_bytes_per_sample (int format)
 {
   switch (format)
     {
-    case MUS_BYTE: return(1); break;
-    case MUS_BSHORT: return(2); break;
-    case MUS_UBYTE: return(1); break;
-    case MUS_MULAW: return(1); break;
-    case MUS_ALAW: return(1); break;
-    case MUS_BINT: return(4); break;
-    case MUS_BFLOAT: return(4); break;
-    case MUS_B24INT: return(3); break;
+    case MUS_BYTE:    return(1); break;
+    case MUS_BSHORT:  return(2); break;
+    case MUS_UBYTE:   return(1); break;
+    case MUS_MULAW:   return(1); break;
+    case MUS_ALAW:    return(1); break;
+    case MUS_BINT:    return(4); break;
+    case MUS_BFLOAT:  return(4); break;
+    case MUS_B24INT:  return(3); break;
     case MUS_BDOUBLE: return(8); break;
-    case MUS_LSHORT: return(2); break;
-    case MUS_LINT: return(4); break;
-    case MUS_LFLOAT: return(4); break;
+    case MUS_LSHORT:  return(2); break;
+    case MUS_LINT:    return(4); break;
+    case MUS_LFLOAT:  return(4); break;
     case MUS_LDOUBLE: return(8); break;
-    case MUS_L24INT: return(3); break;
+    case MUS_L24INT:  return(3); break;
     case MUS_UBSHORT: return(2); break;
     case MUS_ULSHORT: return(2); break;
-    case MUS_BINTN: return(4); break;
-    case MUS_LINTN: return(4); break;
-    default: return(1); break; /* we divide by this number, so 0 is not safe */
+    case MUS_BINTN:   return(4); break;
+    case MUS_LINTN:   return(4); break;
+    default:          return(1); break; /* we divide by this number, so 0 is not safe */
     }
 }
 
@@ -575,19 +575,19 @@ int mus_header_write_next_header (int chan, int srate, int chans, int loc, int s
   mus_bint_to_char((unsigned char *)(hdrbuf+8),siz);
   switch (format)
     {
-    case MUS_MULAW: mus_bint_to_char((unsigned char *)(hdrbuf+12),1); break;
-    case MUS_BYTE: mus_bint_to_char((unsigned char *)(hdrbuf+12),2); break;
-    case MUS_BSHORT: mus_bint_to_char((unsigned char *)(hdrbuf+12),3); break;
-    case MUS_B24INT: mus_bint_to_char((unsigned char *)(hdrbuf+12),4); break;
-    case MUS_BINT: mus_bint_to_char((unsigned char *)(hdrbuf+12),5); break;
-    case MUS_BFLOAT: mus_bint_to_char((unsigned char *)(hdrbuf+12),6); break;
-    case MUS_BDOUBLE: mus_bint_to_char((unsigned char *)(hdrbuf+12),7); break;
-    case MUS_LINT: mus_bint_to_char((unsigned char *)(hdrbuf+12),30); break; /* see above */
-    case MUS_LFLOAT: mus_bint_to_char((unsigned char *)(hdrbuf+12),31); break; /* see above */
-    case MUS_BINTN: mus_bint_to_char((unsigned char *)(hdrbuf+12),32); break; /* see above */
-    case MUS_LINTN: mus_bint_to_char((unsigned char *)(hdrbuf+12),33); break; /* see above */
+    case MUS_MULAW:   mus_bint_to_char((unsigned char *)(hdrbuf+12),1);  break;
+    case MUS_BYTE:    mus_bint_to_char((unsigned char *)(hdrbuf+12),2);  break;
+    case MUS_BSHORT:  mus_bint_to_char((unsigned char *)(hdrbuf+12),3);  break;
+    case MUS_B24INT:  mus_bint_to_char((unsigned char *)(hdrbuf+12),4);  break;
+    case MUS_BINT:    mus_bint_to_char((unsigned char *)(hdrbuf+12),5);  break;
+    case MUS_BFLOAT:  mus_bint_to_char((unsigned char *)(hdrbuf+12),6);  break;
+    case MUS_BDOUBLE: mus_bint_to_char((unsigned char *)(hdrbuf+12),7);  break;
+    case MUS_LINT:    mus_bint_to_char((unsigned char *)(hdrbuf+12),30); break; /* see above */
+    case MUS_LFLOAT:  mus_bint_to_char((unsigned char *)(hdrbuf+12),31); break; /* see above */
+    case MUS_BINTN:   mus_bint_to_char((unsigned char *)(hdrbuf+12),32); break; /* see above */
+    case MUS_LINTN:   mus_bint_to_char((unsigned char *)(hdrbuf+12),33); break; /* see above */
     case MUS_LDOUBLE: mus_bint_to_char((unsigned char *)(hdrbuf+12),34); break; /* see above */
-    case MUS_ALAW: mus_bint_to_char((unsigned char *)(hdrbuf+12),27); break;
+    case MUS_ALAW:    mus_bint_to_char((unsigned char *)(hdrbuf+12),27); break;
     default: 
       mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
 		"can't write NeXT/Sun data format: %d (%s)\n  [%s[%d] %s]",

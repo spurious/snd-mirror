@@ -1,5 +1,8 @@
 /* transform settings dialog */
 
+/* TODO if in dB window transform also in dB
+ */
+
 #include "snd.h"
 
 static Widget transform_dialog = NULL; /* main dialog shell */

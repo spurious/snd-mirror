@@ -24,6 +24,7 @@
 ;;; TODO  cscm + eff test (i.e. dynamically loaded code)
 ;;; TODO  all dialogs need more extensive tests
 ;;; TODO  menu-hook (see g_activate in snd-xscm -- tie this into local menu-hook tests)
+;;; TODO  some way to mimic selecting from effects menu
 ;;; TODO  need more careful insert-sound tests
 ;;; TODO  tests of various transforms and normalizations
 

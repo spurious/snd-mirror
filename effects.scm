@@ -4,7 +4,7 @@
 ;;;      normalize (normalization)
 ;;;      gain (gain-amount)
 ;;;      invert
-;;;      chordalize
+;;;      chordalize (chordalize-amount, chordalize-base)
 ;;;      flange (increase speed and amount to get phasing)
 ;;;      compand
 ;;;      reverberate (reverb-amount)
@@ -15,9 +15,10 @@
 ;;;      squelch (squelch-amount)
 ;;;      selection->new
 ;;;      cut selection->new
-;;;      add silence (at cursor)
+;;;      add silence (at cursor) (silence-amount)
 ;;;      append selection (and append sound)
 ;;;      remove DC
+;;;      expsrc (independent pitch/time scaling) (time-scale and pitch-scale)
 ;;;
 ;;; These follow sync lists starting from current chan
 ;;;
@@ -25,11 +26,9 @@
 ;;; TODO    ISO center freqs for a ten band EQ are (reported to be) (16), 31.5, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000
 ;;; TODO chorus (see below -- it works on some files)
 ;;; TODO noise reduction -- how?
-;;; TODO increase/decrease file length -- meaning src or expand?
 ;;; TODO mix/crossfade
 ;;; TODO phase-vocoder time/pitch
 ;;; TODO un-hum (notch)
-;;; TODO expsrc?
 ;;; TODO unvoice?
 ;;; TODO  for some of these, we should write C modules, loaded when this file is loaded -- see grfsnd.html (to speed up flanging etc)
 ;;;
@@ -136,7 +135,7 @@
       (let ((index (+ 8.0 (* 8.0 inval))))
 	(array-interp tbl index 17)))))
 
-(add-to-menu effects-menu "compand" (lambda () (map-chan-with-sync (compand) "compand")))
+(add-to-menu effects-menu "compand" (lambda () (map-chan-with-sync (lambda () (compand)) "compand")))
 
 
 ;;; -------- reverberate (reverberation set by reverb-amount)
@@ -449,3 +448,29 @@
 
 (add-to-menu effects-menu "remove DC" (lambda () (map-chan-with-sync (lambda () (block-dc)) "block-dc")))
 
+
+;;; -------- pitch and time scaling by granular synthesis and sampling rate conversion
+
+(define pitch-scale 1.0)
+(define time-scale 1.0)
+(define expsrc-label "expsrc")
+
+(define (cp-expsrc)
+  (save-control-panel)
+  (reset-control-panel)
+  (set! (speed) pitch-scale)
+  (let ((new-time (* pitch-scale time-scale)))
+    (if (not (= new-time 1.0))
+	(begin
+	  (set! (expanding) #t)
+	  (set! (expand) new-time))))
+  (call-apply)
+  (restore-control-panel))
+	    
+(add-to-menu effects-menu expsrc-label cp-expsrc)
+
+(set! effects-list (cons (lambda ()
+			   (let ((new-label (format #f "expsrc (~1,2F ~1,2F)" pitch-scale time-scale)))
+			     (change-menu-label effects-menu expsrc-label new-label)
+			     (set! expsrc-label new-label)))
+			 effects-list))
