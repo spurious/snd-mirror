@@ -894,6 +894,35 @@ static void init_mus_scm(void)
 #endif
 }
 
+static SCM mus_scm_to_smob(mus_scm *gn)
+{
+#if (!HAVE_GUILE_1_3_0)
+  SCM_RETURN_NEWSMOB(mus_scm_tag,gn);
+#else
+  SCM new_osc;
+  SCM_NEWCELL(new_osc);
+  SCM_SETCDR(new_osc,(SCM)gn);
+  SCM_SETCAR(new_osc,mus_scm_tag);
+  return(new_osc);
+#endif
+}
+
+#define MUS_DATA_POSITION 0
+
+static SCM mus_scm_to_smob_with_vct(mus_scm *gn, SCM v)
+{
+  SCM new_dly;
+#if (!HAVE_GUILE_1_3_0)
+  SCM_NEWSMOB(new_dly,mus_scm_tag,gn);
+#else
+  SCM_NEWCELL(new_dly);
+  SCM_SETCDR(new_dly,(SCM)gn);
+  SCM_SETCAR(new_dly,mus_scm_tag);
+#endif
+  gn->vcts[MUS_DATA_POSITION] = v;
+  return(new_dly);
+}
+
 
 
 /* ---------------- generic functions ---------------- */
@@ -984,8 +1013,6 @@ static SCM g_set_length(SCM gen, SCM val)
   SCM_ASSERT((SCM_NFALSEP(scm_real_p(val))),val,SCM_ARG2,S_mus_set_length);
   return(gh_int2scm(mus_set_length(mus_get_any(gen),g_scm2int(val))));
 }
-
-#define MUS_DATA_POSITION 0
 
 static SCM g_data(SCM gen) 
 {
@@ -1144,9 +1171,6 @@ static SCM g_mus_bank1(SCM amps, SCM gens, SCM inp, int type, char *caller)
 static SCM g_make_oscil(SCM arg1, SCM arg2, SCM arg3, SCM arg4)
 {
   #define H_make_oscil "(" S_make_oscil " &opt-key (frequency 440.0) (phase 0.0)) -> a new " S_oscil " (sinewave) generator"
-#if HAVE_GUILE_1_3_0
-  SCM new_osc;
-#endif
   mus_scm *gn;
   int vals;
   SCM args[4],keys[2];
@@ -1164,14 +1188,7 @@ static SCM g_make_oscil(SCM arg1, SCM arg2, SCM arg3, SCM arg4)
   gn = (mus_scm *)CALLOC(1,sizeof(mus_scm));
   gn->gen = mus_make_oscil(freq,phase);
   gn->nvcts = 0;
-#if (!HAVE_GUILE_1_3_0)
-  SCM_RETURN_NEWSMOB(mus_scm_tag,gn);
-#else
-  SCM_NEWCELL(new_osc);
-  SCM_SETCDR(new_osc,(SCM)gn);
-  SCM_SETCAR(new_osc,mus_scm_tag);
-  return(new_osc);
-#endif
+  return(mus_scm_to_smob(gn));
 }
 
 static SCM g_oscil(SCM os, SCM fm, SCM pm)
@@ -1266,7 +1283,6 @@ enum {G_DELAY,G_COMB,G_NOTCH,G_ALL_PASS};
 
 static SCM g_make_delay_1(int choice, SCM arglist)
 {
-  SCM new_dly;
   mus_scm *gn;
   vct *v;
   char *caller=NULL,*errstr;
@@ -1358,15 +1374,7 @@ static SCM g_make_delay_1(int choice, SCM arglist)
     case G_NOTCH: gn->gen = mus_make_notch(scaler,size,line,max_size); break;
     case G_ALL_PASS: gn->gen = mus_make_all_pass(feedback,feedforward,size,line,max_size); break;
     }
-#if (!HAVE_GUILE_1_3_0)
-  SCM_NEWSMOB(new_dly,mus_scm_tag,gn);
-#else
-  SCM_NEWCELL(new_dly);
-  SCM_SETCDR(new_dly,(SCM)gn);
-  SCM_SETCAR(new_dly,mus_scm_tag);
-#endif
-  gn->vcts[MUS_DATA_POSITION] = make_vct(max_size,line);
-  return(new_dly);
+  return(mus_scm_to_smob_with_vct(gn,make_vct(max_size,line)));
 }
 
 static SCM g_make_delay(SCM args) 
@@ -1559,9 +1567,6 @@ static SCM g_make_sum_of_cosines(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg
   #define H_make_sum_of_cosines "(" S_make_sum_of_cosines " &opt-key (frequency 440.0) (initial-phase 0.0) (cosines 1))\n\
    returns a new " S_sum_of_cosines " generator, producing a band-limited pulse train."
 
-#if HAVE_GUILE_1_3_0
-  SCM new_cosp;
-#endif
   mus_scm *gn;
   SCM args[6],keys[3];
   int orig_arg[3] = {0,0,0};
@@ -1583,14 +1588,7 @@ static SCM g_make_sum_of_cosines(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg
   gn = (mus_scm *)CALLOC(1,sizeof(mus_scm));
   gn->gen = mus_make_sum_of_cosines(cosines,freq,phase);
   gn->nvcts = 0;
-#if (!HAVE_GUILE_1_3_0)
-  SCM_RETURN_NEWSMOB(mus_scm_tag,gn);
-#else
-  SCM_NEWCELL(new_cosp);
-  SCM_SETCDR(new_cosp,(SCM)gn);
-  SCM_SETCAR(new_cosp,mus_scm_tag);
-  return(new_cosp);
-#endif
+  return(mus_scm_to_smob(gn));
 }
 
 static SCM g_sum_of_cosines(SCM obj, SCM fm)
@@ -1634,9 +1632,6 @@ static void init_cosp(void)
 
 static SCM g_make_noi(int rand_case, SCM arg1, SCM arg2, SCM arg3, SCM arg4)
 {
-#if HAVE_GUILE_1_3_0
-  SCM new_noi;
-#endif
   mus_scm *gn;
   SCM args[4],keys[2];
   int orig_arg[2] = {0,0};
@@ -1656,14 +1651,7 @@ static SCM g_make_noi(int rand_case, SCM arg1, SCM arg2, SCM arg3, SCM arg4)
   if (rand_case)
     gn->gen = mus_make_rand(freq,base);
   else gn->gen = mus_make_rand_interp(freq,base);
-#if (!HAVE_GUILE_1_3_0)
-  SCM_RETURN_NEWSMOB(mus_scm_tag,gn);
-#else
-  SCM_NEWCELL(new_noi);
-  SCM_SETCDR(new_noi,(SCM)gn);
-  SCM_SETCAR(new_noi,mus_scm_tag);
-  return(new_noi);
-#endif
+  return(mus_scm_to_smob(gn));
 }
 
 static SCM g_make_rand_interp(SCM arg1, SCM arg2, SCM arg3, SCM arg4)
@@ -1832,7 +1820,6 @@ static SCM g_make_table_lookup (SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5
      (set! gen (make-table-lookup 440.0 :wave (partials->wave '(1 1.0)))\n\
    is the same in effect as " S_make_oscil "."
 
-  SCM new_tbl;
   mus_scm *gn;
   int vals,table_size = DEFAULT_TABLE_SIZE;
   SCM args[6],keys[3];
@@ -1868,16 +1855,8 @@ static SCM g_make_table_lookup (SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5
   gn->nvcts = 1;
   gn->vcts[0] = SCM_EOL;
   gn->gen = mus_make_table_lookup(freq,phase,table,table_size);
-#if (!HAVE_GUILE_1_3_0)
-  SCM_NEWSMOB(new_tbl,mus_scm_tag,gn);
-#else
-  SCM_NEWCELL(new_tbl);
-  SCM_SETCDR(new_tbl,(SCM)gn);
-  SCM_SETCAR(new_tbl,mus_scm_tag);
-#endif
   if (SCM_UNBNDP(wave)) wave = make_vct(table_size,table);
-  gn->vcts[0] = wave;
-  return(new_tbl);
+  return(mus_scm_to_smob_with_vct(gn,wave));
 }
 
 static SCM g_table_lookup (SCM obj, SCM fm) 
@@ -1920,9 +1899,6 @@ enum {G_SAWTOOTH_WAVE,G_SQUARE_WAVE,G_TRIANGLE_WAVE,G_PULSE_TRAIN};
 
 static SCM g_make_sw(int type, Float def_phase, SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6)
 {
-#if HAVE_GUILE_1_3_0
-  SCM new_sw;
-#endif
   mus_scm *gn;
   char *caller=NULL;
   SCM args[6],keys[3];
@@ -1958,14 +1934,7 @@ static SCM g_make_sw(int type, Float def_phase, SCM arg1, SCM arg2, SCM arg3, SC
     case G_TRIANGLE_WAVE: gn->gen = mus_make_triangle_wave(freq,base,phase); break;
     case G_PULSE_TRAIN: gn->gen = mus_make_pulse_train(freq,base,phase); break;
     }
-#if (!HAVE_GUILE_1_3_0)
-  SCM_RETURN_NEWSMOB(mus_scm_tag,gn);
-#else
-  SCM_NEWCELL(new_sw);
-  SCM_SETCDR(new_sw,(SCM)gn);
-  SCM_SETCAR(new_sw,mus_scm_tag);
-  return(new_sw);
-#endif
+  return(mus_scm_to_smob(gn));
 }
 
 static SCM g_make_sawtooth_wave(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6) 
@@ -2088,9 +2057,6 @@ static SCM g_make_asymmetric_fm(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5
   #define H_make_asymmetric_fm "(" S_make_asymmetric_fm " &opt-key (frequency 440.0) (initial-phase 0.0) (r 1.0) (ratio 1.0))\n\
    returns a new " S_asymmetric_fm " generator."
 
-#if HAVE_GUILE_1_3_0
-  SCM new_asyfm;
-#endif
   mus_scm *gn;
   SCM args[8],keys[4];
   int orig_arg[4] = {0,0,0};
@@ -2114,14 +2080,7 @@ static SCM g_make_asymmetric_fm(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5
     }
   gn = (mus_scm *)CALLOC(1,sizeof(mus_scm));
   gn->gen = mus_make_asymmetric_fm(freq,phase,r,ratio);
-#if (!HAVE_GUILE_1_3_0)
-  SCM_RETURN_NEWSMOB(mus_scm_tag,gn);
-#else
-  SCM_NEWCELL(new_asyfm);
-  SCM_SETCDR(new_asyfm,(SCM)gn);
-  SCM_SETCAR(new_asyfm,mus_scm_tag);
-  return(new_asyfm);
-#endif
+  return(mus_scm_to_smob(gn));
 }
 
 static SCM g_asymmetric_fm(SCM obj, SCM index, SCM fm)
@@ -2181,9 +2140,6 @@ static char *smpflts[6] = {S_make_one_pole,S_make_one_zero,S_make_two_pole,S_mak
 
 static SCM g_make_smpflt_1(int choice, SCM arg1, SCM arg2, SCM arg3, SCM arg4)
 {
-#if HAVE_GUILE_1_3_0
-  SCM new_smpflt;
-#endif
   mus_scm *gn;
   SCM args[4],keys[2];
   int orig_arg[2] = {0,0};
@@ -2211,14 +2167,7 @@ static SCM g_make_smpflt_1(int choice, SCM arg1, SCM arg2, SCM arg3, SCM arg4)
     case G_ZPOLAR: gn->gen = mus_make_zpolar(a0,a1); break;
     case G_PPOLAR: gn->gen = mus_make_ppolar(a0,a1); break;
     }
-#if (!HAVE_GUILE_1_3_0)
-  SCM_RETURN_NEWSMOB(mus_scm_tag,gn);
-#else
-  SCM_NEWCELL(new_smpflt);
-  SCM_SETCDR(new_smpflt,(SCM)gn);
-  SCM_SETCAR(new_smpflt,mus_scm_tag);
-  return(new_smpflt);
-#endif
+  return(mus_scm_to_smob(gn));
 }
 
 static SCM g_make_one_zero(SCM arg1, SCM arg2, SCM arg3, SCM arg4)
@@ -2253,9 +2202,6 @@ static SCM g_make_ppolar(SCM arg1, SCM arg2, SCM arg3, SCM arg4)
 
 static SCM g_make_smpflt_2(int choice, SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6)
 {
-#if HAVE_GUILE_1_3_0
-  SCM new_smpflt;
-#endif
   mus_scm *gn;
   SCM args[6],keys[3];
   int orig_arg[3] = {0,0,0};
@@ -2287,14 +2233,7 @@ static SCM g_make_smpflt_2(int choice, SCM arg1, SCM arg2, SCM arg3, SCM arg4, S
   if (choice == G_TWO_ZERO)
     gn->gen = mus_make_two_zero(a0,a1,a2);
   else gn->gen = mus_make_two_pole(a0,a1,a2);
-#if (!HAVE_GUILE_1_3_0)
-  SCM_RETURN_NEWSMOB(mus_scm_tag,gn);
-#else
-  SCM_NEWCELL(new_smpflt);
-  SCM_SETCDR(new_smpflt,(SCM)gn);
-  SCM_SETCAR(new_smpflt,mus_scm_tag);
-  return(new_smpflt);
-#endif
+  return(mus_scm_to_smob(gn));
 }
 
 static SCM g_make_two_zero(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6) 
@@ -2477,9 +2416,6 @@ static SCM g_make_formant(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM 
    frequency sets the resonance center frequency (Hz).  gain is an overall amplitude\n\
    control."
 
-#if HAVE_GUILE_1_3_0
-  SCM new_osc;
-#endif
   mus_scm *gn;
   int vals;
   SCM args[6],keys[3];
@@ -2499,14 +2435,7 @@ static SCM g_make_formant(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM 
   gn = (mus_scm *)CALLOC(1,sizeof(mus_scm));
   gn->gen = mus_make_formant(radius,freq,gain);
   gn->nvcts = 0;
-#if (!HAVE_GUILE_1_3_0)
-  SCM_RETURN_NEWSMOB(mus_scm_tag,gn);
-#else
-  SCM_NEWCELL(new_osc);
-  SCM_SETCDR(new_osc,(SCM)gn);
-  SCM_SETCAR(new_osc,mus_scm_tag);
-  return(new_osc);
-#endif
+  return(mus_scm_to_smob(gn));
 }
 
 static SCM g_formant(SCM gen, SCM input)
@@ -2577,9 +2506,6 @@ static SCM g_make_frame(SCM arglist)
   /* make_empty_frame from first of arglist, then if more args, load vals */
   mus_scm *gn;
   mus_frame *fr;
-#if HAVE_GUILE_1_3_0
-  SCM new_frame;
-#endif
   SCM cararg;
   int size = 0,i,len;
   SCM_ASSERT((gh_list_p(arglist)),arglist,SCM_ARG1,S_make_frame);
@@ -2596,14 +2522,7 @@ static SCM g_make_frame(SCM arglist)
       for (i=1;i<len;i++)
 	fr->vals[i-1] = gh_scm2double(gh_list_ref(arglist,gh_int2scm(i)));
     }
-#if (!HAVE_GUILE_1_3_0)
-  SCM_RETURN_NEWSMOB(mus_scm_tag,gn);
-#else
-  SCM_NEWCELL(new_frame);
-  SCM_SETCDR(new_frame,(SCM)gn);
-  SCM_SETCAR(new_frame,mus_scm_tag);
-  return(new_frame);
-#endif
+  return(mus_scm_to_smob(gn));
 }
 
 static SCM g_frame_p(SCM obj) 
@@ -2618,20 +2537,10 @@ static SCM g_frame_p(SCM obj)
 static SCM g_wrap_frame(mus_frame *val, int dealloc)
 {
   mus_scm *gn;
-#if HAVE_GUILE_1_3_0
-  SCM new_frame;
-#endif
   gn = (mus_scm *)CALLOC(1,sizeof(mus_scm));
   gn->gen = (mus_any *)val;
   gn->nvcts = dealloc;
-#if (!HAVE_GUILE_1_3_0)
-  SCM_RETURN_NEWSMOB(mus_scm_tag,gn);
-#else
-  SCM_NEWCELL(new_frame);
-  SCM_SETCDR(new_frame,(SCM)gn);
-  SCM_SETCAR(new_frame,mus_scm_tag);
-  return(new_frame);
-#endif
+  return(mus_scm_to_smob(gn));
 }
 
 static SCM g_frame_add(SCM uf1, SCM uf2, SCM ures) /* optional res */
@@ -2732,20 +2641,10 @@ static SCM g_set_mixer_ref(SCM uf1, SCM in, SCM out, SCM val)
 static SCM g_wrap_mixer(mus_mixer *val, int dealloc)
 {
   mus_scm *gn;
-#if HAVE_GUILE_1_3_0
-  SCM new_mixer;
-#endif
   gn = (mus_scm *)CALLOC(1,sizeof(mus_scm));
   gn->gen = (mus_any *)val;
   gn->nvcts = dealloc;
-#if (!HAVE_GUILE_1_3_0)
-  SCM_RETURN_NEWSMOB(mus_scm_tag,gn);
-#else
-  SCM_NEWCELL(new_mixer);
-  SCM_SETCDR(new_mixer,(SCM)gn);
-  SCM_SETCAR(new_mixer,mus_scm_tag);
-  return(new_mixer);
-#endif  
+  return(mus_scm_to_smob(gn));
 }
 
 static SCM g_mixer_multiply(SCM uf1, SCM uf2, SCM ures) /* optional res */
@@ -2813,9 +2712,6 @@ static SCM g_make_mixer(SCM arglist)
   /* make_empty_mixer from first of arglist, then if more args, load vals */
   mus_scm *gn;
   mus_mixer *fr;
-#if HAVE_GUILE_1_3_0
-  SCM new_mixer;
-#endif
   SCM cararg;
   int size = 0,i,j,k,len;
   SCM_ASSERT((gh_list_p(arglist)),arglist,SCM_ARG1,S_make_mixer);
@@ -2842,14 +2738,7 @@ static SCM g_make_mixer(SCM arglist)
 	    }
 	}
     }
-#if (!HAVE_GUILE_1_3_0)
-  SCM_RETURN_NEWSMOB(mus_scm_tag,gn);
-#else
-  SCM_NEWCELL(new_mixer);
-  SCM_SETCDR(new_mixer,(SCM)gn);
-  SCM_SETCAR(new_mixer,mus_scm_tag);
-  return(new_mixer);
-#endif
+  return(mus_scm_to_smob(gn));
 }
 
 static void init_mixer(void)
@@ -2891,7 +2780,6 @@ static SCM g_make_buffer(SCM arg1, SCM arg2, SCM arg3, SCM arg4)
    and fill-time sets the time to the next request for more samples.  The intended use is in block\n\
    processing normally involving overlap-adds."
 
-  SCM new_rblk;
   mus_scm *gn;
   SCM args[4],keys[2];
   int orig_arg[2] = {0,0};
@@ -2915,15 +2803,7 @@ static SCM g_make_buffer(SCM arg1, SCM arg2, SCM arg3, SCM arg4)
   gn->vcts[0] = SCM_EOL;
   gn->nvcts = 1;
   gn->gen = mus_make_buffer(buf,siz,filltime);
-#if (!HAVE_GUILE_1_3_0)
-  SCM_NEWSMOB(new_rblk,mus_scm_tag,gn);
-#else
-  SCM_NEWCELL(new_rblk);
-  SCM_SETCDR(new_rblk,(SCM)gn);
-  SCM_SETCAR(new_rblk,mus_scm_tag);
-#endif
-  gn->vcts[0] = make_vct(siz,buf);
-  return(new_rblk);
+  return(mus_scm_to_smob_with_vct(gn,make_vct(siz,buf)));
 }
 
 static SCM g_buffer2sample(SCM obj)
@@ -2996,7 +2876,7 @@ static SCM g_make_wave_train(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, S
    returns a new wave-train generator (an extension of pulse-train).   Frequency is\n\
    the repetition rate of the wave found in wave. Successive waves can overlap."
 
-  SCM new_wt,gwave = SCM_UNDEFINED;
+  SCM gwave = SCM_UNDEFINED;
   mus_scm *gn;
   SCM args[6],keys[3];
   int orig_arg[3] = {0,0,0};
@@ -3033,16 +2913,8 @@ static SCM g_make_wave_train(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, S
   gn->vcts[0] = SCM_EOL;
   gn->nvcts = 1;
   gn->gen = mus_make_wave_train(freq,phase,wave,wsize);
-#if (!HAVE_GUILE_1_3_0)
-  SCM_NEWSMOB(new_wt,mus_scm_tag,gn);
-#else
-  SCM_NEWCELL(new_wt);
-  SCM_SETCDR(new_wt,(SCM)gn);
-  SCM_SETCAR(new_wt,mus_scm_tag);
-#endif
   if (SCM_UNBNDP(gwave)) gwave = make_vct(wsize,wave);
-  gn->vcts[0] = gwave;
-  return(new_wt);
+  return(mus_scm_to_smob_with_vct(gn,gwave));
 }
 
 static SCM g_wave_train(SCM obj, SCM fm)
@@ -3105,7 +2977,7 @@ static SCM g_make_waveshape(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SC
       (make-waveshape :wave (partials->waveshape '(1 1.0)))\n\
    is basically the same as make-oscil"
 
-  SCM new_wt,gwave = SCM_UNDEFINED;
+  SCM gwave = SCM_UNDEFINED;
   mus_scm *gn;
   SCM args[8],keys[4];
   int orig_arg[4] = {0,0,0,0};
@@ -3156,16 +3028,8 @@ static SCM g_make_waveshape(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SC
   gn->vcts[0] = SCM_EOL;
   gn->nvcts = 1;
   gn->gen = mus_make_waveshape(freq,0.0,wave,wsize);
-#if (!HAVE_GUILE_1_3_0)
-  SCM_NEWSMOB(new_wt,mus_scm_tag,gn);
-#else
-  SCM_NEWCELL(new_wt);
-  SCM_SETCDR(new_wt,(SCM)gn);
-  SCM_SETCAR(new_wt,mus_scm_tag);
-#endif
   if (SCM_UNBNDP(gwave)) gwave = make_vct(wsize,wave);
-  gn->vcts[0] = gwave;
-  return(new_wt);
+  return(mus_scm_to_smob_with_vct(gn,gwave));
 }
 
 static SCM g_waveshape(SCM obj, SCM index, SCM fm)
@@ -3258,9 +3122,6 @@ static SCM g_make_sine_summation(SCM arglist)
   #define H_make_sine_summation "(" S_make_sine_summation " &opt-key (frequency 440.0) (initial-phase 0.0) (n 1) (a 0.5) (ratio 1.0)\n\
    returns a new sine summation synthesis generator."
 
-#if HAVE_GUILE_1_3_0
-  SCM new_sss;
-#endif
   mus_scm *gn;
   SCM args[10],keys[5];
   int orig_arg[5] = {0,0,0,0,0};
@@ -3286,14 +3147,7 @@ static SCM g_make_sine_summation(SCM arglist)
     }
   gn = (mus_scm *)CALLOC(1,sizeof(mus_scm));
   gn->gen = mus_make_sine_summation(freq,phase,n,a,ratio);
-#if (!HAVE_GUILE_1_3_0)
-  SCM_RETURN_NEWSMOB(mus_scm_tag,gn);
-#else
-  SCM_NEWCELL(new_sss);
-  SCM_SETCDR(new_sss,(SCM)gn);
-  SCM_SETCAR(new_sss,mus_scm_tag);
-  return(new_sss);
-#endif
+  return(mus_scm_to_smob(gn));
 }
 
 static void init_sss(void)
@@ -3366,9 +3220,6 @@ enum {G_FILTER,G_FIR_FILTER,G_IIR_FILTER};
 
 static SCM g_make_filter_1(int choice, SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6)
 {
-#if HAVE_GUILE_1_3_0
-  SCM new_flt;
-#endif
   SCM xwave=SCM_UNDEFINED,ywave=SCM_UNDEFINED;
   mus_scm *gn;
   SCM args[6],keys[3];
@@ -3425,14 +3276,7 @@ static SCM g_make_filter_1(int choice, SCM arg1, SCM arg2, SCM arg3, SCM arg4, S
     }
   gn->vcts[0] = xwave;
   if (nkeys > 2) gn->vcts[1] = ywave;
-#if (!HAVE_GUILE_1_3_0)
-  SCM_RETURN_NEWSMOB(mus_scm_tag,gn);
-#else
-  SCM_NEWCELL(new_flt);
-  SCM_SETCDR(new_flt,(SCM)gn);
-  SCM_SETCAR(new_flt,mus_scm_tag);
-  return(new_flt);
-#endif
+  return(mus_scm_to_smob(gn));
 }
 
 static SCM g_make_filter(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6)
@@ -3541,7 +3385,6 @@ static SCM g_make_env(SCM arglist)
    either 'duration' (seconds) or 'start' and 'end' (samples).  If 'base' is 1.0, the connecting segments\n\
    are linear, if 0.0 you get a step function, and anything else produces an exponential connecting segment."
 
-  SCM new_e;
   mus_scm *gn;
   SCM args[14],keys[7];
   int orig_arg[7] = {0,0,0,0,0,0,0};
@@ -3594,15 +3437,7 @@ static SCM g_make_env(SCM arglist)
   gn->nvcts = 1;
   gn->gen = mus_make_env(brkpts,npts,scaler,offset,base,duration,start,end,odata);
   FREE(brkpts);
-#if (!HAVE_GUILE_1_3_0)
-  SCM_NEWSMOB(new_e,mus_scm_tag,gn);
-#else
-  SCM_NEWCELL(new_e);
-  SCM_SETCDR(new_e,(SCM)gn);
-  SCM_SETCAR(new_e,mus_scm_tag);
-#endif
-  gn->vcts[MUS_DATA_POSITION] = make_vct(len,odata);
-  return(new_e);
+  return(mus_scm_to_smob_with_vct(gn,make_vct(len,odata)));
 }
 
 static SCM g_env_interp(SCM x, SCM env)
@@ -3762,9 +3597,6 @@ static SCM g_make_file2sample(SCM name)
 {
   #define H_make_file2sample "(" S_make_file2sample " filename) returns an input generator reading 'filename' (a sound file)"
   char *filename;
-#if HAVE_GUILE_1_3_0
-  SCM new_e;
-#endif
   mus_scm *gn;
   SCM_ASSERT((gh_string_p(name)),name,SCM_ARG1,S_make_file2sample);
   gn = (mus_scm *)CALLOC(1,sizeof(mus_scm));
@@ -3772,14 +3604,7 @@ static SCM g_make_file2sample(SCM name)
   gn->gen = mus_make_file2sample(filename);
   free(filename);
   gn->nvcts = 0;
-#if (!HAVE_GUILE_1_3_0)
-  SCM_RETURN_NEWSMOB(mus_scm_tag,gn);
-#else
-  SCM_NEWCELL(new_e);
-  SCM_SETCDR(new_e,(SCM)gn);
-  SCM_SETCAR(new_e,mus_scm_tag);
-  return(new_e);
-#endif
+  return(mus_scm_to_smob(gn));
 }
 
 static SCM g_file2sample(SCM obj, SCM samp, SCM chan)
@@ -3805,9 +3630,6 @@ static SCM g_make_sample2file(SCM name, SCM chans, SCM out_format, SCM out_type)
       (make-sample->file \"test.snd\" 2 mus-lshort mus-riff)"
 
   char *filename;
-#if HAVE_GUILE_1_3_0
-  SCM new_e;
-#endif
   mus_scm *gn;
   SCM_ASSERT((gh_string_p(name)),name,SCM_ARG1,S_make_sample2file);
   SCM_ASSERT((SCM_NFALSEP(scm_real_p(chans))),chans,SCM_ARG2,S_make_sample2file);
@@ -3818,14 +3640,7 @@ static SCM g_make_sample2file(SCM name, SCM chans, SCM out_format, SCM out_type)
   gn->gen = mus_make_sample2file(filename,g_scm2int(chans),g_scm2int(out_format),g_scm2int(out_type));
   free(filename);
   gn->nvcts = 0;
-#if (!HAVE_GUILE_1_3_0)
-  SCM_RETURN_NEWSMOB(mus_scm_tag,gn);
-#else
-  SCM_NEWCELL(new_e);
-  SCM_SETCDR(new_e,(SCM)gn);
-  SCM_SETCAR(new_e,mus_scm_tag);
-  return(new_e);
-#endif
+  return(mus_scm_to_smob(gn));
 }
 
 static SCM g_sample2file(SCM obj, SCM samp, SCM chan, SCM val)
@@ -3844,9 +3659,6 @@ static SCM g_make_file2frame(SCM name)
 {
   #define H_make_file2frame "(" S_make_file2frame " filename) returns an input generator reading 'filename' (a sound file)"
   char *filename;
-#if HAVE_GUILE_1_3_0
-  SCM new_e;
-#endif
   mus_scm *gn;
   SCM_ASSERT((gh_string_p(name)),name,SCM_ARG1,S_make_file2frame);
   gn = (mus_scm *)CALLOC(1,sizeof(mus_scm));
@@ -3854,14 +3666,7 @@ static SCM g_make_file2frame(SCM name)
   gn->gen = mus_make_file2frame(filename);
   free(filename);
   gn->nvcts = 0;
-#if (!HAVE_GUILE_1_3_0)
-  SCM_RETURN_NEWSMOB(mus_scm_tag,gn);
-#else
-  SCM_NEWCELL(new_e);
-  SCM_SETCDR(new_e,(SCM)gn);
-  SCM_SETCAR(new_e,mus_scm_tag);
-  return(new_e);
-#endif
+  return(mus_scm_to_smob(gn));
 }
 
 static SCM g_file2frame(SCM obj, SCM samp, SCM outfr)
@@ -3883,9 +3688,6 @@ static SCM g_make_frame2file(SCM name, SCM chans, SCM out_format, SCM out_type)
       (make-frame->file \"test.snd\" 2 mus-lshort mus-riff)"
 
   char *filename;
-#if HAVE_GUILE_1_3_0
-  SCM new_e;
-#endif
   mus_scm *gn;
   SCM_ASSERT((gh_string_p(name)),name,SCM_ARG1,S_make_frame2file);
   SCM_ASSERT((SCM_NFALSEP(scm_real_p(chans))),chans,SCM_ARG2,S_make_frame2file);
@@ -3896,14 +3698,7 @@ static SCM g_make_frame2file(SCM name, SCM chans, SCM out_format, SCM out_type)
   gn->gen = mus_make_frame2file(filename,g_scm2int(chans),g_scm2int(out_format),g_scm2int(out_type));
   free(filename);
   gn->nvcts = 0;
-#if (!HAVE_GUILE_1_3_0)
-  SCM_RETURN_NEWSMOB(mus_scm_tag,gn);
-#else
-  SCM_NEWCELL(new_e);
-  SCM_SETCDR(new_e,(SCM)gn);
-  SCM_SETCAR(new_e,mus_scm_tag);
-  return(new_e);
-#endif
+  return(mus_scm_to_smob(gn));
 }
 
 static SCM g_frame2file(SCM obj, SCM samp, SCM val)
@@ -4020,7 +3815,6 @@ static SCM g_make_readin(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM a
    'start' in channel 'channel' and reading forward if 'direction' is not -1"
 
   /* optkey file channel start direction */
-  SCM new_rd;
   mus_scm *gn;
   char *file = NULL;
   SCM args[8],keys[4];
@@ -4047,15 +3841,8 @@ static SCM g_make_readin(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM a
     }
   gn = (mus_scm *)CALLOC(1,sizeof(mus_scm));
   gn->gen = mus_make_readin(file,channel,start,direction);
-#if (!HAVE_GUILE_1_3_0)
-  SCM_NEWSMOB(new_rd,mus_scm_tag,gn);
-#else
-  SCM_NEWCELL(new_rd);
-  SCM_SETCDR(new_rd,(SCM)gn);
-  SCM_SETCAR(new_rd,mus_scm_tag);
-#endif
   if (file) free(file); /* copied by mus_make_readin, allocated by gh_scm2newstr */
-  return(new_rd);
+  return(mus_scm_to_smob(gn));
 }
 
 static SCM g_increment(SCM obj)
@@ -4173,9 +3960,6 @@ static SCM g_make_locsig(SCM arglist)
   #define H_make_locsig "(" S_make_locsig " &opt-key (degree 0.0) (distance 1.0) (reverb 0.0) output revout (channels 1))\n\
    returns a new generator for signal placement in up to 4 channels.  Channel 0 corresponds to 0 degrees."
 
-#if HAVE_GUILE_1_3_0
-  SCM new_loc;
-#endif
   SCM out_obj = SCM_UNDEFINED,rev_obj = SCM_UNDEFINED;
   mus_scm *gn;
   mus_output *outp = NULL, *revp = NULL;
@@ -4231,14 +4015,7 @@ static SCM g_make_locsig(SCM arglist)
       gn->nvcts = vlen;
     }
   gn->gen = mus_make_locsig(degree,distance,reverb,out_chans,outp,revp);
-#if (!HAVE_GUILE_1_3_0)
-  SCM_RETURN_NEWSMOB(mus_scm_tag,gn);
-#else
-  SCM_NEWCELL(new_loc);
-  SCM_SETCDR(new_loc,(SCM)gn);
-  SCM_SETCAR(new_loc,mus_scm_tag);
-  return(new_loc);
-#endif
+  return(mus_scm_to_smob(gn));
 }
 
 static SCM g_channels(SCM obj)
@@ -4263,7 +4040,7 @@ static void init_locs(void)
 
 /* ---------------- src ---------------- */
 
-enum {INPUT_FUNCTION,ANALYZE_FUNCTION,EDIT_FUNCTION,SYNTHESIZE_FUNCTION};
+enum {INPUT_FUNCTION,ANALYZE_FUNCTION,EDIT_FUNCTION,SYNTHESIZE_FUNCTION,SELF_WRAPPER};
 
 static Float funcall1 (void *ptr, int direction) /* intended for "as-needed" input funcs */
 {
@@ -4325,9 +4102,6 @@ static SCM g_make_src(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6
    width (effectively the steepness of the low-pass filter), normally between 10 and 100.\n\
    'input' if given is an open file stream."
 
-#if HAVE_GUILE_1_3_0
-  SCM new_src;
-#endif
   SCM in_obj = SCM_UNDEFINED;
   mus_scm *gn;
   int vals,wid = 0;
@@ -4355,14 +4129,7 @@ static SCM g_make_src(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6
   if (!(SCM_UNBNDP(in_obj))) gn->vcts[INPUT_FUNCTION] = in_obj; else gn->vcts[INPUT_FUNCTION] = SCM_EOL;
   gn->nvcts = 1;
   gn->gen = mus_make_src(funcall1,srate,wid,gn);
-#if (!HAVE_GUILE_1_3_0)
-  SCM_RETURN_NEWSMOB(mus_scm_tag,gn);
-#else
-  SCM_NEWCELL(new_src);
-  SCM_SETCDR(new_src,(SCM)gn);
-  SCM_SETCAR(new_src,mus_scm_tag);
-  return(new_src);
-#endif
+  return(mus_scm_to_smob(gn));
 }
 
 static void init_sr(void)
@@ -4422,9 +4189,6 @@ static SCM g_make_granulate(SCM arglist)
    to avoid overflows, 'hop' is the spacing (seconds) between successive grains upon output\n\
    jitter controls the randomness in that spacing, input can be a file pointer."
 
-#if HAVE_GUILE_1_3_0
-  SCM new_e;
-#endif
   SCM in_obj = SCM_UNDEFINED;
   mus_scm *gn;
   SCM args[16],keys[8];
@@ -4465,14 +4229,7 @@ static SCM g_make_granulate(SCM arglist)
   if (!(SCM_UNBNDP(in_obj))) gn->vcts[INPUT_FUNCTION] = in_obj; else gn->vcts[INPUT_FUNCTION] = SCM_EOL;
   gn->nvcts = 1;
   gn->gen = mus_make_granulate(funcall1,expansion,segment_length,segment_scaler,output_hop,ramp_time,jitter,maxsize,gn);
-#if (!HAVE_GUILE_1_3_0)
-  SCM_RETURN_NEWSMOB(mus_scm_tag,gn);
-#else
-  SCM_NEWCELL(new_e);
-  SCM_SETCDR(new_e,(SCM)gn);
-  SCM_SETCAR(new_e,mus_scm_tag);
-  return(new_e);
-#endif
+  return(mus_scm_to_smob(gn));
 }
 
 static void init_spd(void)
@@ -4515,9 +4272,6 @@ static SCM g_make_convolve(SCM arglist)
   #define H_make_convolve "(" S_make_convolve " &opt-key input filter fft-size) returns\n\
    a new convolution generator which convolves its input with the impulse response 'filter'."
 
-#if HAVE_GUILE_1_3_0
-  SCM new_e;
-#endif
   mus_scm *gn;
   SCM args[6],keys[3];
   int orig_arg[3] = {0,0,0};
@@ -4559,14 +4313,7 @@ static SCM g_make_convolve(SCM arglist)
   if (!(SCM_UNBNDP(in_obj))) gn->vcts[INPUT_FUNCTION] = in_obj; else gn->vcts[INPUT_FUNCTION] = SCM_EOL;
   gn->vcts[1] = filt;
   gn->gen = mus_make_convolve(funcall1,filter->data,fft_size,filter->length,gn);
-#if (!HAVE_GUILE_1_3_0)
-  SCM_RETURN_NEWSMOB(mus_scm_tag,gn);
-#else
-  SCM_NEWCELL(new_e);
-  SCM_SETCDR(new_e,(SCM)gn);
-  SCM_SETCAR(new_e,mus_scm_tag);
-  return(new_e);
-#endif
+  return(mus_scm_to_smob(gn));
 }
 
 static SCM g_convolve_files(SCM file1, SCM file2, SCM maxamp, SCM outfile)
@@ -4603,16 +4350,35 @@ static void init_conv(void)
 /* ---------------- phase-vocoder ---------------- */
 
 
-static Float pvedit (void *ptr)
+/* these three functions provide a path for the call (clm.c) (*(pv->edit))(pv->environ)
+ *   which is calling a user-supplied edit function within the particular phase-vocoder
+ *   generator's context.  "environ" is an uninterpreted void pointer passed in by the
+ *   user, and passed here as the edit function argument.  In this file, pv->edit is
+ *   &pvedit, and (void *)ptr is environ; in make_phase_vocoder we set environ to be
+ *   the mus_scm object that shadows the phase-vocoder generator, with two special
+ *   pointers in the vcts field: vcts[EDIT_FUNCTION] is the (Scheme-side) function
+ *   passed by the user, and vcts[SELF_WRAPPER] is a pointer to the (Scheme-relevant)
+ *   smob that packages the mus_scm pointer for Scheme.  This way, the user's
+ *    (make-phase-vocoder ... (lambda (v) (mus-length v)) ...)
+ *   treats v as the current pv gen, vcts[SELF_WRAPPER] = v, vcts[EDIT_FUNCTION] = 
+ *   the lambda form, mus_scm obj->gen is the C-side pv struct pointer.  See above
+ *   under funcall1 for more verbiage.  (All this complication arises because clm.c
+ *   is pure C -- no notion that Scheme might be the caller, and the user's pv.scm
+ *   or whatever is pure Scheme -- no notion that C is actually doing the work,
+ *   and we have to tie everything together here including the Scheme-C-Scheme-C 
+ *   call chains).
+ */
+
+static int pvedit (void *ptr)
 {
   mus_scm *gn = (mus_scm *)ptr;
   if ((gn) && (gn->vcts) && (gn->vcts[EDIT_FUNCTION]) && (gh_procedure_p(gn->vcts[EDIT_FUNCTION])))
 #if USE_SND
-    return(gh_scm2double(g_call1(gn->vcts[EDIT_FUNCTION],gh_ulong2scm((unsigned long)(gn->gen)))));
+    return(gh_scm2bool(g_call1(gn->vcts[EDIT_FUNCTION],gn->vcts[SELF_WRAPPER])));
 #else
-    return(gh_scm2double(gh_call1(gn->vcts[EDIT_FUNCTION],gh_ulong2scm((unsigned long)(gn->gen)))));
+    return(gh_scm2bool(gh_call1(gn->vcts[EDIT_FUNCTION],gn->vcts[SELF_WRAPPER])));
 #endif
-  else return(0.0);
+  return(0);
 }
 
 static Float pvsynthesize (void *ptr)
@@ -4620,24 +4386,24 @@ static Float pvsynthesize (void *ptr)
   mus_scm *gn = (mus_scm *)ptr;
   if ((gn) && (gn->vcts) && (gn->vcts[SYNTHESIZE_FUNCTION]) && (gh_procedure_p(gn->vcts[SYNTHESIZE_FUNCTION])))
 #if USE_SND
-    return(gh_scm2double(g_call1(gn->vcts[SYNTHESIZE_FUNCTION],gh_ulong2scm((unsigned long)(gn->gen)))));
+    return(gh_scm2double(g_call1(gn->vcts[SYNTHESIZE_FUNCTION],gn->vcts[SELF_WRAPPER])));
 #else
-    return(gh_scm2double(gh_call1(gn->vcts[SYNTHESIZE_FUNCTION],gh_ulong2scm((unsigned long)(gn->gen)))));
+    return(gh_scm2double(gh_call1(gn->vcts[SYNTHESIZE_FUNCTION],gn->vcts[SELF_WRAPPER])));
 #endif
-  else return(0.0);
+  return(0.0);
 }
 
-static Float pvanalyze (void *ptr, Float (*input)(void *arg1, int direction))
+static int pvanalyze (void *ptr, Float (*input)(void *arg1, int direction))
 {
   mus_scm *gn = (mus_scm *)ptr;
   if ((gn) && (gn->vcts) && (gn->vcts[SYNTHESIZE_FUNCTION]) && (gh_procedure_p(gn->vcts[SYNTHESIZE_FUNCTION])))
     /* we can only get input func if it's already set up by the outer gen call, so (?) we can use that function here */
 #if USE_SND
-    return(gh_scm2double(g_call2(gn->vcts[SYNTHESIZE_FUNCTION],gh_ulong2scm((unsigned long)(gn->gen)),gn->vcts[INPUT_FUNCTION])));
+    return(gh_scm2bool(g_call2(gn->vcts[SYNTHESIZE_FUNCTION],gn->vcts[SELF_WRAPPER],gn->vcts[INPUT_FUNCTION])));
 #else
-    return(gh_scm2double(gh_call2(gn->vcts[SYNTHESIZE_FUNCTION],gh_ulong2scm((unsigned long)(gn->gen)),gn->vcts[INPUT_FUNCTION])));
+    return(gh_scm2bool(gh_call2(gn->vcts[SYNTHESIZE_FUNCTION],gn->vcts[SELF_WRAPPER],gn->vcts[INPUT_FUNCTION])));
 #endif
-  else return(0.0);
+  return(0);
 }
 
 #define S_phase_vocoder       "phase-vocoder"
@@ -4666,12 +4432,10 @@ static SCM g_make_phase_vocoder(SCM arglist)
    and synthesize are either #f or functions that replace the default innards of the generator, fft-size, overlap\n\
    and interp set the fftsize, the amount of overlap between ffts, and the time between new analysis calls."
 
-#if HAVE_GUILE_1_3_0
-  SCM new_phase_vocoder;
-#endif
   SCM in_obj = SCM_UNDEFINED,edit_obj = SCM_UNDEFINED,synthesize_obj = SCM_UNDEFINED,analyze_obj = SCM_UNDEFINED;
   mus_scm *gn;
   SCM args[14],keys[7];
+  SCM pv_obj;
   int orig_arg[7] = {0,0,0,0,0,0,0};
   int vals,arglist_len,i;
   int fft_size = 512,overlap = 4, interp = 128;
@@ -4697,41 +4461,126 @@ static SCM g_make_phase_vocoder(SCM arglist)
       if (gh_procedure_p(keys[6])) synthesize_obj = keys[6];
     }
   gn = (mus_scm *)CALLOC(1,sizeof(mus_scm));
-  gn->vcts = (SCM *)CALLOC(4,sizeof(SCM));
+  gn->nvcts = 5;
+  gn->vcts = (SCM *)CALLOC(gn->nvcts,sizeof(SCM));
   if (!(SCM_UNBNDP(in_obj))) gn->vcts[INPUT_FUNCTION] = in_obj; else gn->vcts[INPUT_FUNCTION] = SCM_EOL;
   if (!(SCM_UNBNDP(edit_obj))) gn->vcts[EDIT_FUNCTION] = edit_obj; else gn->vcts[EDIT_FUNCTION] = SCM_EOL;
   if (!(SCM_UNBNDP(analyze_obj))) gn->vcts[ANALYZE_FUNCTION] = analyze_obj; else gn->vcts[ANALYZE_FUNCTION] = SCM_EOL;
   if (!(SCM_UNBNDP(synthesize_obj))) gn->vcts[SYNTHESIZE_FUNCTION] = synthesize_obj; else gn->vcts[SYNTHESIZE_FUNCTION] = SCM_EOL;
-  gn->nvcts = 4;
   gn->gen = mus_make_phase_vocoder(funcall1,
 				   fft_size,overlap,interp,
 				   (SCM_UNBNDP(analyze_obj) ? NULL : pvanalyze),
 				   (SCM_UNBNDP(edit_obj) ? NULL : pvedit),
 				   (SCM_UNBNDP(synthesize_obj) ? NULL : pvsynthesize),
 				   (void *)gn);
-#if (!HAVE_GUILE_1_3_0)
-  SCM_RETURN_NEWSMOB(mus_scm_tag,gn);
-#else
-  SCM_NEWCELL(new_phase_vocoder);
-  SCM_SETCDR(new_phase_vocoder,(SCM)gn);
-  SCM_SETCAR(new_phase_vocoder,mus_scm_tag);
-  return(new_phase_vocoder);
-#endif
+  pv_obj = mus_scm_to_smob(gn);
+  /* need scheme-relative backpointer for possible function calls */
+  gn->vcts[SELF_WRAPPER] = pv_obj;
+  return(pv_obj);
 }
 
-/* temporary ! */
-static SCM g_pv_ampinc(SCM pv, SCM ind) {Float *ampinc; ampinc = mus_phase_vocoder_ampinc((void *)gh_scm2ulong(pv)); return(gh_double2scm(ampinc[gh_scm2int(ind)]));}
-static SCM g_set_pv_ampinc(SCM pv, SCM ind, SCM val) {Float *ampinc; ampinc = mus_phase_vocoder_ampinc((void *)gh_scm2ulong(pv)); ampinc[gh_scm2int(ind)] = gh_scm2double(val); return(val);}
-static SCM g_pv_amps(SCM pv, SCM ind) {Float *amps; amps = mus_phase_vocoder_amps((void *)gh_scm2ulong(pv)); return(gh_double2scm(amps[gh_scm2int(ind)]));}
-static SCM g_set_pv_amps(SCM pv, SCM ind, SCM val) {Float *amps; amps = mus_phase_vocoder_amps((void *)gh_scm2ulong(pv)); amps[gh_scm2int(ind)] = gh_scm2double(val); return(val);}
-static SCM g_pv_freqs(SCM pv, SCM ind) {Float *freqs; freqs = mus_phase_vocoder_freqs((void *)gh_scm2ulong(pv)); return(gh_double2scm(freqs[gh_scm2int(ind)]));}
-static SCM g_set_pv_freqs(SCM pv, SCM ind, SCM val) {Float *freqs; freqs = mus_phase_vocoder_freqs((void *)gh_scm2ulong(pv)); freqs[gh_scm2int(ind)] = gh_scm2double(val); return(val);}
-static SCM g_pv_phases(SCM pv, SCM ind) {Float *phases; phases = mus_phase_vocoder_phases((void *)gh_scm2ulong(pv)); return(gh_double2scm(phases[gh_scm2int(ind)]));}
-static SCM g_set_pv_phases(SCM pv, SCM ind, SCM val) {Float *phases; phases = mus_phase_vocoder_phases((void *)gh_scm2ulong(pv)); phases[gh_scm2int(ind)] = gh_scm2double(val); return(val);}
-static SCM g_pv_phaseinc(SCM pv, SCM ind) {Float *phaseinc; phaseinc = mus_phase_vocoder_phaseinc((void *)gh_scm2ulong(pv)); return(gh_double2scm(phaseinc[gh_scm2int(ind)]));}
-static SCM g_set_pv_phaseinc(SCM pv, SCM ind, SCM val) {Float *phaseinc; phaseinc = mus_phase_vocoder_phaseinc((void *)gh_scm2ulong(pv)); phaseinc[gh_scm2int(ind)] = gh_scm2double(val); return(val);}
-static SCM g_pv_lastphase(SCM pv, SCM ind) {Float *lastphase; lastphase = mus_phase_vocoder_lastphase((void *)gh_scm2ulong(pv)); return(gh_double2scm(lastphase[gh_scm2int(ind)]));}
-static SCM g_set_pv_lastphase(SCM pv, SCM ind, SCM val) {Float *lastphase; lastphase = mus_phase_vocoder_lastphase((void *)gh_scm2ulong(pv)); lastphase[gh_scm2int(ind)] = gh_scm2double(val); return(val);}
+static SCM g_pv_amps(SCM pv, SCM ind) 
+{
+  Float *amps; 
+  mus_scm *gn = mus_get_scm(pv);
+  amps = mus_phase_vocoder_amps((void *)(gn->gen)); 
+  return(gh_double2scm(amps[gh_scm2int(ind)]));
+}
+
+static SCM g_set_pv_amps(SCM pv, SCM ind, SCM val) 
+{
+  Float *amps; 
+  mus_scm *gn = mus_get_scm(pv);
+  amps = mus_phase_vocoder_amps((void *)(gn->gen)); 
+  amps[gh_scm2int(ind)] = gh_scm2double(val); 
+  return(val);
+}
+
+static SCM g_pv_freqs(SCM pv, SCM ind) 
+{
+  Float *freqs; 
+  mus_scm *gn = mus_get_scm(pv);
+  freqs = mus_phase_vocoder_freqs((void *)(gn->gen));
+  return(gh_double2scm(freqs[gh_scm2int(ind)]));
+}
+
+static SCM g_set_pv_freqs(SCM pv, SCM ind, SCM val) 
+{
+  Float *freqs; 
+  mus_scm *gn = mus_get_scm(pv);
+  freqs = mus_phase_vocoder_freqs((void *)(gn->gen)); 
+  freqs[gh_scm2int(ind)] = gh_scm2double(val);
+  return(val);
+}
+
+static SCM g_pv_phases(SCM pv, SCM ind) 
+{
+  Float *phases; 
+  mus_scm *gn = mus_get_scm(pv);
+  phases = mus_phase_vocoder_phases((void *)(gn->gen)); 
+  return(gh_double2scm(phases[gh_scm2int(ind)]));
+}
+
+static SCM g_set_pv_phases(SCM pv, SCM ind, SCM val) 
+{
+  Float *phases; 
+  mus_scm *gn = mus_get_scm(pv);
+  phases = mus_phase_vocoder_phases((void *)(gn->gen)); 
+  phases[gh_scm2int(ind)] = gh_scm2double(val); 
+  return(val);
+}
+
+/* temporary !?? */
+static SCM g_pv_ampinc(SCM pv, SCM ind) 
+{
+  Float *ampinc; 
+  mus_scm *gn = mus_get_scm(pv);
+  ampinc = mus_phase_vocoder_ampinc((void *)(gn->gen)); 
+  return(gh_double2scm(ampinc[gh_scm2int(ind)]));
+}
+
+static SCM g_set_pv_ampinc(SCM pv, SCM ind, SCM val) 
+{
+  Float *ampinc; 
+  mus_scm *gn = mus_get_scm(pv);
+  ampinc = mus_phase_vocoder_ampinc((void *)(gn->gen)); 
+  ampinc[gh_scm2int(ind)] = gh_scm2double(val); 
+  return(val);
+}
+
+static SCM g_pv_phaseinc(SCM pv, SCM ind) 
+{
+  Float *phaseinc; 
+  mus_scm *gn = mus_get_scm(pv);
+  phaseinc = mus_phase_vocoder_phaseinc((void *)(gn->gen)); 
+  return(gh_double2scm(phaseinc[gh_scm2int(ind)]));
+}
+
+static SCM g_set_pv_phaseinc(SCM pv, SCM ind, SCM val) 
+{
+  Float *phaseinc; 
+  mus_scm *gn = mus_get_scm(pv);
+  phaseinc = mus_phase_vocoder_phaseinc((void *)(gn->gen)); 
+  phaseinc[gh_scm2int(ind)] = gh_scm2double(val); 
+  return(val);
+}
+
+static SCM g_pv_lastphase(SCM pv, SCM ind) 
+{
+  Float *lastphase; 
+  mus_scm *gn = mus_get_scm(pv);
+  lastphase = mus_phase_vocoder_lastphase((void *)(gn->gen)); 
+  return(gh_double2scm(lastphase[gh_scm2int(ind)]));
+}
+
+static SCM g_set_pv_lastphase(SCM pv, SCM ind, SCM val) 
+{
+  Float *lastphase; 
+  mus_scm *gn = mus_get_scm(pv);
+  lastphase = mus_phase_vocoder_lastphase((void *)(gn->gen));
+  lastphase[gh_scm2int(ind)] = gh_scm2double(val); 
+  return(val);
+}
 
 static SCM g_hop(SCM obj)
 {

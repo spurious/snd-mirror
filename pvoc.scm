@@ -1,4 +1,4 @@
-;;; a version of the Moore-Klingbeil-Trevisani-Edwards pvocoder
+;;; versions of the Moore-Klingbeil-Trevisani-Edwards pvocoder
 ;;;
 
 (use-modules (ice-9 optargs))
@@ -27,8 +27,8 @@
 	   ;;      funcs: analysize, edit, resynthesize
 
       (list 
-       D                             ;output
-       D                             ;interp
+       interp                        ;output
+       interp                        ;interp
        0                             ;filptr
        N                             ;N
        (let ((window (make-fft-window hamming-window fftsize)))
@@ -201,3 +201,90 @@
 				          (next-sample reader)))
 		      #f))))))
 
+
+;;; ---------------- same thing using phase-vocoder gen
+
+(define test-pv-1
+  (lambda (freq)
+    (let ((pv (make-phase-vocoder #f
+				  512 4 128 
+				  #f ;no change to analysis
+				  #f ;no change to edits
+				  #f ;no change to synthesis
+				  ))
+	  (reader (make-sample-reader 0))
+	  )
+      (map-chan (lambda (val)
+	          (if val
+		      (phase-vocoder pv (lambda (dir) 
+				          (next-sample reader)))
+		      #f))))))
+
+(define test-pv-2
+  (lambda (freq)
+    (let ((pv (make-phase-vocoder #f
+				  512 4 128 
+				  #f ;no change to analysis
+				  (lambda (v)
+				    ; new editing func changes pitch
+				    (let* ((N (mus-length v)) ;mus-increment => interp, mus-data => in-data
+					   (D (mus-hop v)))
+				      (do ((k 0 (1+ k))
+					   (pscl (/ 1.0 D))
+					   (kscl (/ pi2 N)))
+					  ((= k (ifloor (/ N 2))))
+					(let ((phasediff (- (pv-freqs v k) (pv-lastphase v k))))
+					  (set-pv-lastphase v k (pv-freqs v k))
+					  (if (> phasediff pi) (do () ((<= phasediff pi)) (set! phasediff (- phasediff pi2))))
+					  (if (< phasediff (- pi)) (do () ((>= phasediff (- pi))) (set! phasediff (+ phasediff pi2))))
+					  (set-pv-freqs v k 
+							(* freq
+							   (+ (* pscl phasediff)
+							      (* k kscl))))))))
+				  #f ; no change to synthesis
+				  ))
+	  (reader (make-sample-reader 0)))
+      (map-chan (lambda (val)
+		  (if val
+		      (phase-vocoder pv (lambda (dir) 
+					  (next-sample reader)))
+		      #f))))))
+
+(define test-pv-3
+  (lambda (time)
+    (let* ((pv (make-phase-vocoder #f
+				   512 4 (inexact->exact (* 128 time))
+				   #f ;no change to analysis
+				   #f ;no change to edits
+				   #f ;no change to synthesis
+				   ))
+	   (reader (make-sample-reader 0))
+	   (len (inexact->exact (* time (frames))))
+	   (data (make-vct len))
+	   )
+      (vct-map! data
+		(lambda ()
+		  (phase-vocoder pv (lambda (dir) (next-sample reader)))))
+      (set-samples 0 len data))))
+
+(define test-pv-4
+  (lambda (gate)
+    (let ((pv (make-phase-vocoder #f
+				  512 4 128 
+				  #f ;no change to analysis
+				  (lambda (v)
+				    (let ((N (mus-length v)))
+				      (do ((i 0 (1+ i)))
+					  ((= i N))
+					(if (< (pv-ampinc v i) gate)
+					    (set-pv-ampinc v i 0.0)))
+				      #t))
+				  #f ;no change to synthesis
+				  ))
+	  (reader (make-sample-reader 0))
+	  )
+      (map-chan (lambda (val)
+	          (if val
+		      (phase-vocoder pv (lambda (dir) 
+				          (next-sample reader)))
+		      #f))))))

@@ -1133,7 +1133,7 @@ void play_selection(snd_state *ss)
       if (si)
 	{
 	  for (i=0;i<si->chans;i++)
-	    start_playing_chan_syncd((void *)(si->cps[i]),si->begs[i],FALSE,(i < (si->chans - 1)),si->begs[i] + dur);
+	    start_playing_chan_syncd(si->cps[i],si->begs[i],FALSE,(i < (si->chans - 1)),si->begs[i] + dur);
 	  free_sync_info(si);
 	}
     }

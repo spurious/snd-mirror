@@ -6240,8 +6240,8 @@ typedef struct {
   mus_any_class *core;
   Float (*input)(void *arg, int direction);
   void *environ;
-  Float (*analyze)(void *arg, Float (*input)(void *arg1, int direction));
-  Float (*edit)(void *arg);
+  int (*analyze)(void *arg, Float (*input)(void *arg1, int direction));
+  int (*edit)(void *arg);
   Float (*synthesize)(void *arg);
   int outctr,interp,filptr,N,D;
   Float *win,*ampinc,*amps,*freqs,*phases,*phaseinc,*lastphase,*in_data;
@@ -6374,8 +6374,8 @@ static mus_any_class PHASE_VOCODER_CLASS = {
 
 mus_any *mus_make_phase_vocoder(Float (*input)(void *arg,int direction), 
 				int fftsize, int overlap, int interp,
-				Float (*analyze)(void *arg, Float (*input)(void *arg1, int direction)),
-				Float (*edit)(void *arg), 
+				int (*analyze)(void *arg, Float (*input)(void *arg1, int direction)),
+				int (*edit)(void *arg), 
 				Float (*synthesize)(void *arg), 
 				void *environ)
 {
@@ -6390,12 +6390,11 @@ mus_any *mus_make_phase_vocoder(Float (*input)(void *arg,int direction),
     {
       pv->core = &PHASE_VOCODER_CLASS;
       N2 = (int)(fftsize / 2);
-      D = interp;
-      if (D <= 0) D = fftsize / overlap;
+      D = fftsize / overlap;
       pv->N = fftsize;
       pv->D = D;
-      pv->interp = D;
-      pv->outctr = D;
+      pv->interp = interp;
+      pv->outctr = interp;
       pv->filptr = 0;
       pv->ampinc = (Float *)CALLOC(fftsize,sizeof(Float));
       pv->freqs = (Float *)CALLOC(fftsize,sizeof(Float));
@@ -6425,9 +6424,7 @@ Float mus_phase_vocoder(mus_any *ptr, Float (*input)(void *arg,int direction))
   N2 = pv->N / 2;
   if (pv->outctr >= pv->interp)
     {
-      if (pv->analyze)
-	(*(pv->analyze))(pv->environ,input);
-      else
+      if ((pv->analyze == NULL) || ((*(pv->analyze))(pv->environ,input) != 0))
 	{
 	  mus_clear_array(pv->freqs,pv->N);
 	  pv->outctr = 0;
@@ -6456,9 +6453,7 @@ Float mus_phase_vocoder(mus_any *ptr, Float (*input)(void *arg,int direction))
 	  mus_rectangular2polar(pv->ampinc,pv->freqs,N2);
 	}
       
-      if (pv->edit)
-	(*(pv->edit))(pv->environ);
-      else
+      if ((pv->edit == NULL) || ((*(pv->edit))(pv->environ) != 0))
 	{
 	  pscl = 1.0 / (Float)(pv->D);
 	  kscl = TWO_PI / (Float)(pv->N);

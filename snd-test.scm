@@ -2409,6 +2409,69 @@
 	(file->array "fmv.snd" 0 0 3 v0)
 	(if (or (fneq (vct-ref v0 0) .6) (fneq (vct-ref v0 2) .38)) (snd-print (format #f ";mus-mix(4->4): ~A?" v0))))
       (if (rs .5) (gc))
+
+      (let* ((ind (open-sound "oboe.snd"))
+	     (pi2 (* 2.0 pi))
+	     (pv (make-phase-vocoder #f
+				    512 4 128 
+				    #f ;no change to analysis
+				    #f ;no change to edits
+				    #f ;no change to synthesis
+				    ))
+	    (reader (make-sample-reader 0)))
+	(select-sound ind)
+	(map-chan (lambda (val)
+		    (if val
+			(phase-vocoder pv (lambda (dir) 
+					    (next-sample reader)))
+			#f)))
+	(undo 1)
+	(free-sample-reader reader)
+	(set! pv (make-phase-vocoder #f
+				     512 4 128 
+				     #f ;no change to analysis
+				     (lambda (v)
+				       ; new editing func changes pitch
+				       (let* ((N (mus-length v)) ;mus-increment => interp, mus-data => in-data
+					      (D (mus-hop v)))
+					 (do ((k 0 (1+ k))
+					      (pscl (/ 1.0 D))
+					      (kscl (/ pi2 N)))
+					     ((= k (inexact->exact (floor (/ N 2)))))
+					   (let ((phasediff (- (pv-freqs v k) (pv-lastphase v k))))
+					     (set-pv-lastphase v k (pv-freqs v k))
+					     (if (> phasediff pi) (do () ((<= phasediff pi)) (set! phasediff (- phasediff pi2))))
+					     (if (< phasediff (- pi)) (do () ((>= phasediff (- pi))) (set! phasediff (+ phasediff pi2))))
+					     (set-pv-freqs v k 
+							   (* 0.5
+							      (+ (* pscl phasediff)
+								 (* k kscl))))))))
+				     #f ; no change to synthesis
+				     ))
+	(set! reader (make-sample-reader 0))
+	(map-chan (lambda (val)
+		    (if val
+			(phase-vocoder pv (lambda (dir) 
+					    (next-sample reader)))
+			#f)))
+	(undo 1)
+	(free-sample-reader reader)
+	(set! pv (make-phase-vocoder #f
+				     512 4 (inexact->exact (* 128 2.0))
+				     #f ;no change to analysis
+				     #f ;no change to edits
+				     #f ;no change to synthesis
+				     ))
+	(set! reader (make-sample-reader 0))
+	(let* ((len (inexact->exact (* 2.0 (frames ind))))
+	       (data (make-vct len)))
+	  (vct-map! data
+		    (lambda ()
+		      (phase-vocoder pv (lambda (dir) (next-sample reader)))))
+	  (set-samples 0 len data))
+	(undo 1)
+	(free-sample-reader reader)
+	(close-sound ind))
       ))
 
 

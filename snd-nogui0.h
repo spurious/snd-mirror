@@ -14,6 +14,7 @@
 #define BUTTON_1 0
 #define BUTTON_2 1
 #define BUTTON_3 2
+#define NUM_COLORMAPS 0
 
 typedef struct {
   void *ss;

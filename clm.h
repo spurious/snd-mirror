@@ -3,10 +3,10 @@
 
 #define MUS_VERSION 1
 #define MUS_REVISION 23
-#define MUS_DATE "19-Jul-00"
+#define MUS_DATE "20-Jul-00"
 
 /* 
- * 19-Jul:     added sum_of_sines, atan2 to rectangular->polar, phase_vocoder gen.
+ * 20-Jul:     added sum_of_sines, atan2 to rectangular->polar, phase_vocoder gen.
  * 22-June:    made mus_bessi0 local again.
  * 1-June:     bugfixes for linuxppc 2000.
  * 19-May:     added mus_apply.
@@ -503,10 +503,10 @@ int mus_fltarray2file           PROTO((const char *filename, Float *ddata, int l
 Float mus_apply                 PROTO((mus_any *gen, ...));
 
 int mus_phase_vocoder_p         PROTO((mus_any *ptr));
-mus_any *mus_make_phase_vocoder PROTO((Float (*input)(void *arg,int direction),
+mus_any *mus_make_phase_vocoder PROTO((Float (*input)(void *arg,int direction), 
 				       int fftsize, int overlap, int interp,
-				       Float (*analyze)(void *arg, Float (*input)(void *arg1, int direction)),
-				       Float (*edit)(void *arg), 
+				       int (*analyze)(void *arg, Float (*input)(void *arg1, int direction)),
+				       int (*edit)(void *arg), 
 				       Float (*synthesize)(void *arg), 
 				       void *environ));
 Float mus_phase_vocoder         PROTO((mus_any *ptr, Float (*input)(void *arg,int direction)));

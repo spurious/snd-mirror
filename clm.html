@@ -1497,11 +1497,20 @@ close to the original speed.
   <a name="phase-vocoder"><em class=def>phase-vocoder</em></a> <i>pv input</i>
   <a name="phase-vocoder?"><em class=def>phase-vocoder?</em></a> <i>pv</i>
 </pre>
+
+<table border>
+<tr><td colspan=2><center>phase-vocoder methods</center></tr>
+<tr><td><em class=gen>mus-length</em><td>fft-size ("N")</tr>
+<tr><td><em class=gen>mus-increment</em><td>interp</tr>
+<tr><td><em class=gen>mus-hop</em><td>fft-size / overlap ("D")</tr>
+</table>
+
 <p>phase-vocoder provides a generator to perform phase-vocoder analysis and resynthesis.  The process is
 split into three pieces, the analysis stage, editing of the amplitudes and phases, then the resynthesis.
 Each stage has a default that is invoked if the <i>analyze</i>, <i>edit</i>, or <i>synthesize</i>
-arguments are omitted from make-phase-vocoder.  Each of these is a function of one argument, the
-phase-vocoder generator.  The default is to read input (from the input function, an "as-needed"
+arguments are omitted from make-phase-vocoder.  The edit and synthesize arguments are functions of one argument, the
+phase-vocoder generator.  The analyze argument is a function of two arguments, the generator and
+the input function passed to phase-vocoder at run-time (if any). The default is to read input (from the input function, an "as-needed"
 input source as in src or granulate), take the fft, get the new amplitudes and phases (as the edit
 function default), then resynthesize using sum-of-sines (the synthesize function default); so, the
 default case simply returns a resynthesis of the original input.  <i>interp</i> sets the time between
@@ -1517,8 +1526,9 @@ control over the resynthesis pitch:
                 nil ;no change to analysis
 		(lambda (v)
 		  ; new editing func changes pitch
-		  (let* ((N (clm::pv-N v))         ; this could be mus-length, but the others need names
-		         (D (clm::pv-D v))
+		  (let* ((N (mus-length v))
+		         (D (mus-hop v))
+			  ;; FIX THIS TO REFLECT C/SCHEME!!
 			 (amps (clm::pv-ampinc v))
 		         (freqs (clm::pv-freqs v)))
 		    (do ((k 0 (1+ k))
@@ -1529,7 +1539,8 @@ control over the resynthesis pitch:
                        (setf (aref (clm::pv-lastphase v) k) (aref freqs k))
                        (if (&gt; phasediff pi) (do () ((&lt;= phasediff pi)) (setf phasediff (- phasediff (* 2 pi)))))
                        (if (&lt; phasediff (- pi)) (do () ((&gt;= phasediff (- pi))) (setf phasediff (+ phasediff (* 2 pi)))))
-                       (setf (aref freqs k) (* freq (+ (* pscl phasediff) (* k kscl))))))))
+                       (setf (aref freqs k) (* freq (+ (* pscl phasediff) (* k kscl))))))
+		     nil))
                 nil)) ; no change to synthesis
 	  (fil (open-input "oboe.snd")))
       (let ((ctr 0))

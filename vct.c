@@ -204,16 +204,16 @@ static SCM copy_vct(SCM obj)
   return(scm_return_first(SCM_BOOL_F,obj));
 }
 
-static SCM vct_move(SCM obj, SCM new, SCM old)
+static SCM vct_move(SCM obj, SCM newi, SCM oldi)
 {
   #define H_vct_moveB "(" S_vct_moveB " obj new old) moves obj data from old (back) to new"
   vct *v;
   int i,j;
   ERRVCT1(obj,S_vct_moveB);
-  ERRN2(new,S_vct_moveB);
-  ERRN3(old,S_vct_moveB);
+  ERRN2(newi,S_vct_moveB);
+  ERRN3(oldi,S_vct_moveB);
   v = get_vct(obj);
-  if (v) for (i=SCM_INUM(new),j=SCM_INUM(old);j<v->length;i++,j++) v->data[i] = v->data[j];
+  if (v) for (i=SCM_INUM(newi),j=SCM_INUM(oldi);j<v->length;i++,j++) v->data[i] = v->data[j];
   return(obj);
 }
 

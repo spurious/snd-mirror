@@ -189,6 +189,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+20-Jul:  added sum-of-sines, phase-vocoder.\n\
 18-Jul:  play-selection and added end arg to play etc.\n\
          C-u 0 C-x p -> play region 0, C-x p -> play selection.\n\
 17-Jul:  optargs keyword bug was caused by string-length which existed for guile 1.3.0 (fixed).\n\
@@ -210,9 +211,6 @@ void news_help(snd_state *ss)
          control-panel reverb can handle any number of chans (and now gets input from all).\n\
          show-axes variable changed: now has 3 values, show-all-axes (default), show-no-axes, show-x-axis.\n\
            removed View:Show Axes menu item; also these no longer affect the control-panel filter graph.\n\
-29-Jun:  many ardour-related improvements from Paul Barton-Davis.\n\
-28-Jun:  added channel argument to save-sound-as (for channel extraction).\n\
-         removed OSS-specific set-dsp-reset.\n\
 ",
 NULL);
   FREE(info);
