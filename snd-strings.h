@@ -528,6 +528,7 @@
 #define S_show_axes                     "show-axes"
 #define S_show_backtrace                "show-backtrace"
 #define S_show_controls                 "show-controls"
+#define S_show_grid                     "show-grid"
 #define S_show_indices                  "show-indices"
 #define S_show_listener                 "show-listener"
 #define S_show_marks                    "show-marks"

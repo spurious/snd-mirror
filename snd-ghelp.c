@@ -43,7 +43,7 @@ int help_text_width(const char *txt, int start, int end)
 }
 
 static int old_help_text_width = 0;
-static bool outer_with_wrap = false;
+static with_word_wrap_t outer_with_wrap = WITHOUT_WORD_WRAP;
 
 static gboolean help_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
@@ -53,7 +53,7 @@ static gboolean help_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpointer 
     old_help_text_width = curwid;
   else
     {
-      if ((outer_with_wrap) && (abs(curwid - old_help_text_width) > 10))
+      if ((outer_with_wrap == WITH_WORD_WRAP) && (abs(curwid - old_help_text_width) > 10))
 	{
 	  char *cur_help_str = NULL;
 	  char *new_help_str = NULL;
@@ -91,7 +91,7 @@ static bool new_help(const char *pattern)
 	  int gc_loc;
 	  gc_loc = snd_protect(xstr);
 	  xrefs = help_name_to_xrefs(pattern);
-	  snd_help_with_xrefs(pattern, XEN_TO_C_STRING(xstr), true, xrefs, NULL);
+	  snd_help_with_xrefs(pattern, XEN_TO_C_STRING(xstr), WITH_WORD_WRAP, xrefs, NULL);
 	  snd_unprotect_at(gc_loc);
 	  if (xrefs) FREE(xrefs);
 	  return(true);
@@ -102,7 +102,7 @@ static bool new_help(const char *pattern)
       xrefs = help_name_to_xrefs(pattern);
       if (xrefs)
 	{
-	  snd_help_with_xrefs(pattern, "(no help found)", true, xrefs, NULL);
+	  snd_help_with_xrefs(pattern, "(no help found)", WITH_WORD_WRAP, xrefs, NULL);
 	  FREE(xrefs);
 	  return(true);
 	}
@@ -284,7 +284,7 @@ static void create_help_monolog(void)
   set_dialog_widget(HELP_DIALOG, help_dialog);
 }
 
-GtkWidget *snd_help(const char *subject, const char *helpstr, bool with_wrap)
+GtkWidget *snd_help(const char *subject, const char *helpstr, with_word_wrap_t with_wrap)
 {
   /* place help string in scrollable help window */
   /* if window is already active, add this help at the top and reposition */
@@ -293,7 +293,7 @@ GtkWidget *snd_help(const char *subject, const char *helpstr, bool with_wrap)
   gtk_window_set_title(GTK_WINDOW(help_dialog), subject);
   original_help_text = (char *)helpstr;
   gtk_text_buffer_set_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(help_text)), "", 0);
-  if (with_wrap)
+  if (with_wrap == WITH_WORD_WRAP)
     {
       char *new_help = NULL;
       new_help = word_wrap(helpstr, (int)(widget_width(help_text) * 1.3));
@@ -304,7 +304,7 @@ GtkWidget *snd_help(const char *subject, const char *helpstr, bool with_wrap)
   return(help_dialog);
 }
 
-GtkWidget *snd_help_with_xrefs(const char *subject, const char *helpstr, bool with_wrap, char **xrefs, char **urls)
+GtkWidget *snd_help_with_xrefs(const char *subject, const char *helpstr, with_word_wrap_t with_wrap, char **xrefs, char **urls)
 {
   GtkWidget *w;
   w = snd_help(subject, helpstr, with_wrap);
@@ -316,4 +316,9 @@ GtkWidget *snd_help_with_xrefs(const char *subject, const char *helpstr, bool wi
 	sg_list_append(related_items, xrefs[i]);
     }
   return(w);
+}
+
+void snd_help_append(char *text)
+{
+  sg_text_insert(help_text, text);
 }

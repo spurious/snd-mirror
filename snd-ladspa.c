@@ -355,7 +355,7 @@ static void ladspa_help_callback(GtkWidget *w, gpointer info)
 	    }
 	  strcat(desc, "\n");
 	}
-      snd_help_with_xrefs("Available plugins", desc, false, ladspa_xrefs, NULL);
+      snd_help_with_xrefs("Available plugins", desc, WITHOUT_WORD_WRAP, ladspa_xrefs, NULL);
       FREE(desc);
     }
 }

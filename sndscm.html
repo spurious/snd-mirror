@@ -1289,7 +1289,7 @@ The two in examp.scm are:
   <a class=def name="exmarkloops">mark-loops</a>
 
 (<a class=quiet href="extsnd.html#bindkey">bind-key</a> (char-&gt;integer #\l) 0 
-          (lambda () 
+          (lambda () "move window to align with mark"
             (first-mark-in-window-at-left)))
 </pre>
 <p><b>first-mark-in-window-at-left</b> moves the (time domain) 
@@ -1600,7 +1600,7 @@ The code:
 </p>
 <pre>
 (<a class=quiet href="extsnd.html#bindkey">bind-key</a> (char-&gt;integer #\x) 4
-	  (lambda ()
+	  (lambda () "eval over selection"
 	    (if (<a class=quiet href="extsnd.html#selectionok">selection?</a>)
 		(<a class=quiet href="extsnd.html#promptinminibuffer">prompt-in-minibuffer</a> "selection eval:" eval-over-selection)
 		(<a class=quiet href="extsnd.html#reportinminibuffer">report-in-minibuffer</a> "no selection")))
@@ -1979,7 +1979,7 @@ between the leftmost marks in <i>snd</i>.
 </p>
 <pre>
 (<a class=quiet href="extsnd.html#bindkey">bind-key</a> (char-&gt;integer #\m) 0 
-	  (lambda ()
+	  (lambda () "eval between marks"
 	    (<a class=quiet href="extsnd.html#promptinminibuffer">prompt-in-minibuffer</a> "mark eval:" eval-between-marks)))
 </pre>
 <p><b>snap-marks</b> places marks at the start and end of the current selection.
@@ -2037,7 +2037,7 @@ To tie this into C-x C-q, in place of the default "mix" function,
 </p>
 <pre>
 (<a class=quiet href="extsnd.html#bindkey">bind-key</a> (char-&gt;integer #\q) 4 ; C-q
-	  (lambda ()
+	  (lambda () "pan mix"
 	    (<a class=quiet href="extsnd.html#promptinminibuffer">prompt-in-minibuffer</a> "mix:" (lambda (str) ; use pan-mix at cursor
 					   (<em class=red>pan-mix</em> str (or (<a class=quiet href="extsnd.html#cursor">cursor</a>) 0)) #f #t)))
 	  #t  ; an extended (C-x) command
@@ -2246,8 +2246,8 @@ To set up the keyboard
 as a kind of extended piano, we could map keys to sounds:
 </p>
 <pre>
-(<a class=quiet href="extsnd.html#bindkey">bind-key</a> (char-&gt;integer #\o) 0 (lambda () (<a class=quiet href="extsnd.html#play">play</a> "oboe.snd")))
-(<a class=quiet href="extsnd.html#bindkey">bind-key</a> (char-&gt;integer #\p) 0 (lambda () (<a class=quiet href="extsnd.html#play">play</a> "pistol.snd")))
+(<a class=quiet href="extsnd.html#bindkey">bind-key</a> (char-&gt;integer #\o) 0 (lambda () "play oboe" (<a class=quiet href="extsnd.html#play">play</a> "oboe.snd")))
+(<a class=quiet href="extsnd.html#bindkey">bind-key</a> (char-&gt;integer #\p) 0 (lambda () "play pistol" (<a class=quiet href="extsnd.html#play">play</a> "pistol.snd")))
 </pre>
 <p>The various play hooks can be used to play sounds over and over. 
 </p>
@@ -2256,8 +2256,8 @@ as a kind of extended piano, we could map keys to sounds:
   <A class=def NAME="explayuntilcg">play-until-c-g</A>
   <A class=def NAME="explayregionforever">play-region-forever</a> region
 
-(<a class=quiet href="extsnd.html#bindkey">bind-key</a> (char-&gt;integer #\p) 0 (lambda (n) (play-often (max 1 n))))
-(<a class=quiet href="extsnd.html#bindkey">bind-key</a> (char-&gt;integer #\r) 0 (lambda (n) (play-region-forever (max 0 n))))
+(<a class=quiet href="extsnd.html#bindkey">bind-key</a> (char-&gt;integer #\p) 0 (lambda (n) "play often" (play-often (max 1 n))))
+(<a class=quiet href="extsnd.html#bindkey">bind-key</a> (char-&gt;integer #\r) 0 (lambda (n) "play region forever" (play-region-forever (max 0 n))))
 </pre>
 <p>Now C-u 31 p plays the current sound 31 times; C-u 3 r plays region 3 until we type C-g.
 <b>play-often</b> uses stop-playing-hook, and <b>play-region-forever</b> uses stop-playing-region-hook.
@@ -4580,9 +4580,9 @@ So I bound a few keys:
 		 (set! (<a class=quiet href="extsnd.html#cursorfollowsplay">cursor-follows-play</a>) old-tracking)))
     (<a class=quiet href="extsnd.html#play">play</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>) #f #f #f #f (if current #f (1- (<a class=quiet href="extsnd.html#editposition">edit-position</a>))))))
 
-(<a class=quiet href="extsnd.html#bindkey">bind-key</a> (char-&gt;integer #\p) 0 (lambda () (play-from-cursor #t) keyboard-no-action))
-(<a class=quiet href="extsnd.html#bindkey">bind-key</a> (char-&gt;integer #\P) 1 (lambda () (play-from-cursor #f) keyboard-no-action))
-(<a class=quiet href="extsnd.html#bindkey">bind-key</a> (char-&gt;integer #\p) 4 (lambda () (play-from-cursor-with-tracking #t) keyboard-no-action))
+(<a class=quiet href="extsnd.html#bindkey">bind-key</a> (char-&gt;integer #\p) 0 (lambda () "play from cursor" (play-from-cursor #t) keyboard-no-action))
+(<a class=quiet href="extsnd.html#bindkey">bind-key</a> (char-&gt;integer #\P) 1 (lambda () "play previous from cursor" (play-from-cursor #f) keyboard-no-action))
+(<a class=quiet href="extsnd.html#bindkey">bind-key</a> (char-&gt;integer #\p) 4 (lambda () "play from cursor with tracking" (play-from-cursor-with-tracking #t) keyboard-no-action))
 </pre>
 <p>
 So, if the mouse is in the channel graph, 'p' plays from the cursor,

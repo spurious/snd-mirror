@@ -1325,7 +1325,7 @@ associated keyboard commands are:</p>
 <p>Insertion takes place just ahead of the cursor; to insert after the
 cursor, define a command something like:</p>
 <pre>
-  (<a class=quiet href="extsnd.html#bindkey">bind-key</a> (char-&gt;integer #\i) 0 (lambda () (<a class=quiet href="extsnd.html#insertregion">insert-region</a> (1+ (<a class=quiet href="extsnd.html#cursor">cursor</a>)))))
+  (<a class=quiet href="extsnd.html#bindkey">bind-key</a> (char-&gt;integer #\i) 0 (lambda () "insert region after cursor" (<a class=quiet href="extsnd.html#insertregion">insert-region</a> (1+ (<a class=quiet href="extsnd.html#cursor">cursor</a>)))))
 </pre>
 
 <h4><A NAME="multichannel">Multi-channel operations</a></h4>
@@ -2059,6 +2059,7 @@ all the samples between the cursor and the next mark.</p>
 <tr><td>C-[Space]</td><td colspan=2>start region definition (arg&lt;0 =&gt; cancel and deselect)</td></tr>
 <tr><td>C-?</td><td colspan=2>look for a function name and print snd-help for it</td></tr>
 <tr><td>C-M-g</td><td>delete listener text from start to cursor</td><td><code><small>(clear-listener)</small></code></td></tr>
+<tr><td>C-_</td><td>delete listener text back to previous command</td><td></td></td></tr>
         <!-- I(delete samples):K(C-d, C-h, C-k)(ck) --><!-- I(insert zeros):K(C-o, C-z)(cz) --><!-- I(insert zeros):A(co) -->
         <!-- I(cut selection):K(C-w)(cw) --><!-- I(define selection):K(C-[space], C-x c)(cxc) -->
 
@@ -2160,6 +2161,7 @@ not uncommon to make some typo or forget an argument while trying things out in 
 If the error happens within some long loop, you can get a raft of
 error messages.  C-g interrupts the computation, C-M-g clears out all the error messages,
 and M-p reloads the listener with the last line you typed, ready to be edited.
+To delete listener text back to the previous command, use C-_.
 </p>
         <!-- I(amp env):K(C-x C-a, C-x a)(cxca) --><!-- I(print file):K(C-x C-d)(cxcd) --><!-- I(insert file):K(C-x C-i)(cxci) -->
         <!-- I(insert file):A(cxci) --><!-- I(mix file):K(C-x C-q)(cxcq) -->

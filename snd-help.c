@@ -136,7 +136,7 @@ static void main_snd_help(const char *subject, ...)
   va_start(ap, subject);
   while ((helpstr = va_arg(ap, char *))) strcat(newstr, helpstr);
   va_end(ap);
-  snd_help_with_xrefs(subject, newstr, false, main_snd_xrefs, NULL);
+  snd_help_with_xrefs(subject, newstr, WITHOUT_WORD_WRAP, main_snd_xrefs, NULL);
   FREE(newstr);
 }  
 
@@ -383,6 +383,8 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+1-Mar:   show-grid.\n\
+         C-_ deletes text in listener to previous command.\n\
 23-Feb:  speed-control-tones, speed-control-style, reverb-control-decay\n\
            now handled like other control settings\n\
          removed Options:Speed Style menu\n\
@@ -434,7 +436,7 @@ Normally, the search applies only to the current channel. To search all current 
 "Searches in Snd depend completely on either Guile or Ruby.  Since neither is loaded,\
 the searching mechanisms are disabled.",
 #endif
-		      true,
+		      WITH_WORD_WRAP,
 		      snd_xrefs("Search"),
 		      snd_xref_urls("Search"));
 }
@@ -452,9 +454,10 @@ un-done edits.  Besides the Edit and Popup menu options, there are these keyboar
   C-x C-r   redo last edit\n\
   C-x C-u   undo last edit\n\
   C-_       undo last edit\n\
-\n\n\
-Revert is the same as undoing all edits.",
-		      true,
+\n\
+Revert is the same as undoing all edits.\n\n\
+In the listener, C-M-g deletes all text, and C-_ deletes back to the previous command.",
+		      WITH_WORD_WRAP,
 		      snd_xrefs("Undo"),
 		      snd_xref_urls("Undo"));
 }
@@ -472,7 +475,7 @@ void sync_help(void)
 For example, to get a multi-channel selection, set the sync button, then define the selection (by dragging \
 the mouse) in one channel, and the parallel portions of the other channels will also be selected. \
 Marks and mixes can also be sync'd together.",
-		      true,
+		      WITH_WORD_WRAP,
 		      sync_xrefs,
 		      NULL);
 }
@@ -512,7 +515,7 @@ See README.Snd for more about C-level troubles.  For CLM-based instruments, \
 variable-display in snd-motif.scm might help.  For debugging your own Scheme/Ruby \
 code (or Snd's for that matter), see the \"Errors and Debugging\" section of \
 extsnd.html, or snd-debug.  For notelist debugging, see ws-backtrace.",
-		      true,
+		      WITH_WORD_WRAP,
 		      debug_xrefs,
 		      debug_urls);
 }
@@ -530,7 +533,7 @@ applied to the entire file. \
 \n\n\
   C-x a     apply amplitude envelope to selection\n\
   C-x C-a   apply amplitude envelope to channel",
-		      true,
+		      WITH_WORD_WRAP,
 		      snd_xrefs("Envelope"),
 		      snd_xref_urls("Envelope"));
 }
@@ -561,7 +564,7 @@ often than the time domain. \
 The spectrum data is usually normalized to fit between 0.0 to 1.0; if you'd rather have un-normalized \
 data (the y-axis in this case changes to reflect the data values, to some extent), set the variable \
 transform-normalization to dont-normalize.",
-		      true,
+		      WITH_WORD_WRAP,
 		      snd_xrefs("FFT"),
 		      snd_xref_urls("FFT"));
 }
@@ -621,7 +624,7 @@ The keyboard commands associated with the control panel are: \
 \n\n\
   C-x C-o   show control panel\n\
   C-x C-c   hide control panel",
-		      true,
+		      WITH_WORD_WRAP,
 		      control_xrefs,
 		      NULL);
 }
@@ -650,7 +653,7 @@ than 0) will move together when one is moved, and so on.  The following keyboard
   C-x C-m   add named mark\n\
   C-j       go to mark\n\
   C-x j     go to named mark",
-		      true, 
+		      WITH_WORD_WRAP, 
 		      snd_xrefs("Mark"),
 		      snd_xref_urls("Mark"));
 }
@@ -680,7 +683,7 @@ each input channel, and the amplitude envelopes. \
 To move the cursor from one mix to the next, in the same manner as C-j moves through marks, use C-x C-j. \
 \n\n\
 A set of associated mixes is called a 'track' in Snd, and there's a help menu item for that subject.",
-		      true, 
+		      WITH_WORD_WRAP, 
 		      snd_xrefs("Mix"),
 		      snd_xref_urls("Mix"));
 }
@@ -694,7 +697,7 @@ track function returns the list of mixes that are members of the given track.  T
 take the track id as their initial argument.  A track has much the same structure as a mix: an amplitude, speed, \
 amplitude envelope, track, position, and so on.  If its track field is not 0, the entire track is a member \
 of the given track, just as a mix would be.",
-		      true,
+		      WITH_WORD_WRAP,
 		      snd_xrefs("Track"),
 		      snd_xref_urls("Track"));
 }
@@ -745,7 +748,7 @@ the recorder, press the 'reset' button at the bottom of the window. \
 Digital input is slightly tricky -- you need to set the sampling rate before you \
 click the 'digital input' button; otherwise you'll get a stuttering effect because the output \
 (monitor) rate doesn't match the input rate.",
-		      true,
+		      WITH_WORD_WRAP,
 		      record_xrefs,
 		      NULL);
 }
@@ -801,7 +804,7 @@ The file types listed above as 'automatically translated' are \
 decoded upon being opened, translated to some format Snd can read and write, \
 and rewritten as a new file with an added (possibly redundant) extension .snd, \
 and that file is the one the editor sees from then on.",
-		      true,
+		      WITH_WORD_WRAP,
 		      header_and_data_xrefs,
 		      header_and_data_urls);
 }
@@ -831,106 +834,102 @@ both the signal-processing functions, and much of the user interface. You can, f
 editing operations, or graphing alternatives. These extensions can be loaded at any time.",
 #else
 "Snd depends heavily on either Guile or Ruby to provide much of its functionality.  Since neither \
-is loaded, there's not much customization you can do.",
+is loaded, there's not much customization you can do.  Check out the X resource stuff in Snd.ad or \
+the gtk resource stuff in Snd.gtkrc.",
 #endif
-		      true,
+		      WITH_WORD_WRAP,
 		      init_file_xrefs,
 		      init_file_urls);
 }
 
-static char *key_xrefs[3] = {
+static char *key_xrefs[4] = {
   "To change a key binding: {bind-key}",
   "To undefine a key: {unbind-key}",
+  "Current key binding: {key-binding}",
   NULL};
+
+static void show_key_help(int key, int state, bool cx, char *help)
+{
+  char buf[1024];
+  if (help)
+    {
+      mus_snprintf(buf, 1024, "\n%s%s%s%s: %s", 
+		   (cx) ? "C-x " : "",
+		   (state & snd_ControlMask) ? "C-" : "",
+		   (state & snd_MetaMask) ? "M-" : "",
+		   (key == snd_K_less) ? "<" : 
+		   ((key == snd_K_greater) ? ">" : 
+		    ((key == snd_K_openparen) ? "(" :
+		     ((key == snd_K_closeparen) ? ")" :
+		      ((key == snd_K_slash) ? "/" :
+		       KEY_TO_NAME(key))))),
+		   help);
+      snd_help_append(buf);
+    }
+}
+
+static bool find_unbuckified_keys(int key, int state, bool cx, XEN func, char *origin)
+{
+  if ((key > 256) && (state == 0) && (!cx) && (XEN_BOUND_P(func)))
+    show_key_help(key, state, cx, key_binding_description(key, state, cx));
+  return(false);
+}
+
+static bool find_buckified_keys(int key, int state, bool cx, XEN func, char *origin)
+{
+  if ((key > 256) && (state == snd_ControlMask) && (!cx) && (XEN_BOUND_P(func)))
+    show_key_help(key, state, cx, key_binding_description(key, state, cx));
+  return(false);
+}
+
+static bool find_unbuckified_cx_keys(int key, int state, bool cx, XEN func, char *origin)
+{
+  if ((key > 256) && (state == 0) && (cx) && (XEN_BOUND_P(func)))
+    show_key_help(key, state, cx, key_binding_description(key, state, cx));
+  return(false);
+}
+
+static bool find_buckified_cx_keys(int key, int state, bool cx, XEN func, char *origin)
+{
+  if ((key > 256) && (state == snd_ControlMask) && (cx) && (XEN_BOUND_P(func)))
+    show_key_help(key, state, cx, key_binding_description(key, state, cx));
+  return(false);
+}
+
+static bool find_leftover_keys(int key, int state, bool cx, XEN func, char *origin)
+{
+  if ((key > 256) && (state & snd_MetaMask))
+    show_key_help(key, state, cx, key_binding_description(key, state, cx));
+  return(false);
+}
 
 void key_binding_help(void)
 {
+  /* TODO: how to handle shift in key binding help? -- how does shift work in general? */
+  int i;
   snd_help_with_xrefs("Key bindings",
-"[Down] zoom out\n\
-[Up] zoom in\n\
-[Left] move window left\n\
-[Right] move window right\n\
-<:   move cursor to sample 0\n\
->:   move cursor to last sample\n\
-C-<: move cursor to sample 0\n\
-C->: move cursor to last sample\n\
-C-a: move cursor to window start\n\
-C-b: move cursor back one sample\n\
-C-d: delete sample at cursor\n\
-C-e: move cursor to window end\n\
-C-f: move cursor ahead one sample\n\
-C-g: abort current command\n\
-C-h: delete previous sample\n\
-C-i: display cursor info\n\
-C-j: goto mark\n\
-C-k: delete one line's worth of samples\n\
-C-l: position window so cursor is in the middle\n\
-C-m: place (or remove) mark at cursor location\n\
-C-n: move cursor ahead one 'line'\n\
-C-o: insert one zero sample at cursor\n\
-C-p: move cursor back one 'line'\n\
-C-q: play current channel starting at cursor\n\
-C-r: search backwards\n\
-C-s: search forwards\n\
-C-t: stop playing\n\
-C-u: start count definition.  If followed by a\n\
-     float, the actual count is that number multiplied\n\
-     by the current sampling rate.  If the optional\n\
-     number is followed by C-m, the count returned\n\
-     is the distance from the cursor to the n-th\n\
-     successive mark.  That is, C-u C-m C-f is the\n\
-     same as C-j.\n\
-C-v: move cursor to mid-window\n\
-C-w: delete selection\n\
-C-y: insert selection.\n\
-C-z: set sample at cursor to 0.0\n\
-C-_: undo\n\
-C-[Space]: start selection definition\n\
-C-M-g: clear listener\n\
-\n\
-C-x a: apply envelope to selection\n\
-C-x b: position window so cursor is on left margin\n\
-C-x c: define selection from cursor to nth mark\n\
-C-x d: set temp dir name\n\
-C-x e: execute keyboard macro\n\
-C-x f: position window so cursor is on right margin\n\
-C-x i: insert region\n\
-C-x j: goto named mark\n\
-C-x k: close file\n\
-C-x l: position selection in mid-view\n\
-C-x o: move to next or previous graph\n\
-C-x p: play selection or region n\n\
-C-x q: mix in selection\n\
-C-x r: redo\n\
-C-x u: undo\n\
-C-x v: position window over selection\n\
-C-x w: save selection as file\n\
-C-x z: smooth selection\n\
-C-x /: place named mark\n\
-C-x (: begin keyboard macro definition\n\
-C-x ): end keyboard macro definition\n\
-\n\
-C-x C-a: apply envelope.\n\
-C-x C-b: set x window bounds (preceded by 1 arg)\n\
-C-x C-c: hide control panel\n\
-C-x C-d: print\n\
-C-x C-e: give last keyboard macro a name\n\
-C-x C-f: open file\n\
-C-x C-g: abort command\n\
-C-x C-i: insert file\n\
-C-x C-m: add named mark\n\
-C-x C-o: show control panel\n\
-C-x C-p: set window size (preceded by 1 arg)\n\
-C-x C-q: mix in file\n\
-C-x C-r: redo\n\
-C-x C-s: save file\n\
-C-x C-u: undo\n\
-C-x C-v: set window size as percentage of total\n\
-C-x C-w: save current channel in file\n\
-C-x C-z: smooth using cosine",
-		      false,
+		      "",
+		      WITHOUT_WORD_WRAP,
 		      key_xrefs,
 		      NULL);
+  /* run through bindings straight, C-key, C-x key, C-x C-key appending description in help dialog */
+  for (i = 0; i < 256; i++)
+    show_key_help(i, 0, false, key_binding_description(i, 0, false));
+  map_over_key_bindings(find_unbuckified_keys);
+  for (i = 0; i < 256; i++)
+    show_key_help(i, snd_ControlMask, false, key_binding_description(i, snd_ControlMask, false));
+  map_over_key_bindings(find_buckified_keys);
+  for (i = 0; i < 256; i++)
+    show_key_help(i, snd_MetaMask, false, key_binding_description(i, snd_MetaMask, false));
+  for (i = 0; i < 256; i++)
+    show_key_help(i, snd_ControlMask | snd_MetaMask, false, key_binding_description(i, snd_ControlMask | snd_MetaMask, false));
+  for (i = 0; i < 256; i++)
+    show_key_help(i, 0, true, key_binding_description(i, 0, true));
+  map_over_key_bindings(find_unbuckified_cx_keys);
+  for (i = 0; i < 256; i++)
+    show_key_help(i, snd_ControlMask, true, key_binding_description(i, snd_ControlMask, true));
+  map_over_key_bindings(find_buckified_cx_keys);
+  map_over_key_bindings(find_leftover_keys);
 }
 
 void play_help(void)
@@ -950,7 +949,7 @@ hold down the control key when you click 'play', the cursor follows along as the
 In a multi-channel file, C-q plays all channels from the current channel's \
 cursor if the sync button is on, and otherwise plays only the current channel. \
 Except in the browsers, what is actually played depends on the control panel.",
-		      true,
+		      WITH_WORD_WRAP,
 		      snd_xrefs("Play"),
 		      snd_xref_urls("Play"));
 }
@@ -960,7 +959,7 @@ void reverb_help(void)
   snd_help_with_xrefs("Reverb",
 "The reverb in the control panel is a version of Michael McNabb's Nrev.  There are other \
 reverbs mentioned in the related topics list.",
-		      true,
+		      WITH_WORD_WRAP,
 		      snd_xrefs("Reverb"),
 		      snd_xref_urls("Reverb"));
 }
@@ -976,7 +975,7 @@ not currently being edited in Snd, it is silently overwritten.  If you try to ov
 that file has active edits in a different Snd window, you'll be asked for confirmation. \
 If you want Snd to ask before overwriting a file in any case, set the resource overwriteCheck to 1, \
 or include the expression (set! (ask-before-overwrite) #t) in your Snd initialization file.",
-		      true,
+		      WITH_WORD_WRAP,
 		      snd_xrefs("Save"),
 		      snd_xref_urls("Save"));
 }
@@ -986,7 +985,7 @@ void filter_help(void)
   snd_help_with_xrefs("Filter",
 "There is an FIR Filter in the control panel, and a variety of other filters scattered around; \
 see dsp.scm in particular.",
-		      true,
+		      WITH_WORD_WRAP,
 		      snd_xrefs("Filter"),
 		      snd_xref_urls("Filter"));
 }
@@ -995,7 +994,7 @@ void resample_help(void)
 {
   snd_help_with_xrefs("Resample",
 "There is a sampling rate changer in the control panel; see the related topics list below.",
-		      true,
+		      WITH_WORD_WRAP,
 		      snd_xrefs("Resample"),
 		      snd_xref_urls("Resample"));
 }
@@ -1005,7 +1004,7 @@ void insert_help(void)
   snd_help_with_xrefs("Insert",
 "To insert a file, use C-x C-i, and to insert the selection C-x i.  C-o inserts a \
 zero sample at the cursor",
-		      true,
+		      WITH_WORD_WRAP,
 		      snd_xrefs("Insert"),
 		      snd_xref_urls("Insert"));
 }
@@ -1014,7 +1013,7 @@ void delete_help(void)
 {
   snd_help_with_xrefs("Delete",
 "To delete a sample, use C-d; to delete the selection, C-w",
-		      true,
+		      WITH_WORD_WRAP,
 		      snd_xrefs("Delete"),
 		      snd_xref_urls("Delete"));
 }
@@ -1064,7 +1063,7 @@ the bottom sets the 'base' of the exponential curves, just as in CLM.  If the en
 is selected), the 'wave' button shows the actual frequency response of the filter that will be applied to the waveform \
 by the 'apply' buttons.  Increase the enved-filter-order to \
 improve the fit.  In this case, the X axis goes from 0 Hz to half the sampling rate, labelled as 1.0.",
-		      true,
+		      WITH_WORD_WRAP,
 		      snd_xrefs("Envelope"),
 		      snd_xref_urls("Envelope"));
 }
@@ -1097,7 +1096,7 @@ The top three buttons in the transform dialog choose between a normal fft, a son
 spectrogram. The 'peaks' button affects whether peak info is displayed alongside the graph of the \
 spectrum. The 'dB' button selects between a linear and logarithmic Y (magnitude) axis. The 'log freq' \
 button makes a similar choice along the frequency axis.",
-		      true,
+		      WITH_WORD_WRAP,
 		      snd_xrefs("FFT"),
 		      snd_xref_urls("FFT"));
 }
@@ -1116,7 +1115,7 @@ void color_dialog_help(void)
   snd_help_with_xrefs("View Color",
 "This dialog sets the colormap and associated variables used during sonogram, spectrogram,  \
 and perhaps wavogram display. The cutoff scale refers to the minimum data value to be displayed.",
-		      true,
+		      WITH_WORD_WRAP,
 		      color_dialog_xrefs,
 		      NULL);
 }
@@ -1136,7 +1135,7 @@ along a given axis, 'hop' refers to the density of trace (the jump in samples be
 ffts), and 'percent of spectrum' is equivalent to dragging the fft frequency axis -- it changes \
 the amount of the spectrum that is displayed.  If the 'use openGL' button is set, the \
 spectrogram is drawn by openGL.",
-		      true,
+		      WITH_WORD_WRAP,
 		      orientation_dialog_xrefs,
 		      NULL);
 }
@@ -1152,7 +1151,7 @@ title, that region is displayed in the graph area.  The 'print' button produces 
 rendition of the current graph contents, using the default eps output name. 'play' plays the region.  \
 The 'edit' button loads the region into the main editor as a temporary file.  It can be edited or renamed, etc.  If you save \
 the file, the region is updated to reflect any edits you made.",
-		      true,
+		      WITH_WORD_WRAP,
 		      snd_xrefs("Region"),
 		      snd_xref_urls("Region"));
 }
@@ -1171,7 +1170,7 @@ void raw_data_dialog_help(void)
 of channels, and numerical format.  This dialog gives you a chance to set those fields. \
 To make the current settings the default for any future headerless files, click the \
 'Default' button.",
-		      true,
+		      WITH_WORD_WRAP,
 		      raw_xrefs,
 		      NULL);
 }
@@ -1180,7 +1179,7 @@ void completion_dialog_help(void)
 {
   snd_help("completion",
 	   "These are the completions that Snd thinks might be likely. If you select one, it will be used to complete the current name.",
-	   true);
+	   WITH_WORD_WRAP);
 }
 
 void save_as_dialog_help(void)
@@ -1195,7 +1194,7 @@ option, set the resource overwriteCheck to 1 (or the ask-before-overwrite variab
 If you give the current file name to Save As,  \
 any current edits will be saved and the current version in Snd will be updated (that is, in this \
 case, the edit tree is not preserved).",
-		      true,
+		      WITH_WORD_WRAP,
 		      snd_xrefs("Save"),
 		      snd_xref_urls("Save"));
 }
@@ -1214,7 +1213,7 @@ void open_file_dialog_help(void)
   snd_help_with_xrefs("File",
 "The selected file will be opened in a new pane. \
 If you click the 'Sound Files Only' button, only those files in the current directory that look vaguely like sound files will be displayed.",
-		      true,
+		      WITH_WORD_WRAP,
 		      open_file_xrefs,
 		      NULL);
 }
@@ -1224,7 +1223,7 @@ void mix_file_dialog_help(void)
   snd_help_with_xrefs("File",
 "The selected file will be mixed at the cursor in the selected sound. If you click the 'Sound Files Only' button, \
 only those files in the current directory that look vaguely like sound files will be displayed.",
-		      true,
+		      WITH_WORD_WRAP,
 		      snd_xrefs("Mix"),
 		      snd_xref_urls("Mix"));
 }
@@ -1235,7 +1234,7 @@ void find_dialog_help(void)
 "This search travels through all the current channels in parallel until a match is found.  The find \
 expression is a function of one argument,  the current sample value.  It should return #t when the \
 search is satisified.  For example, (lambda (n) (> n .1)) looks for the next sample that is greater than .1.",
-		      true,
+		      WITH_WORD_WRAP,
 		      snd_xrefs("Find"),
 		      snd_xref_urls("Find"));
 }
@@ -1251,7 +1250,7 @@ input channel; and finally, an envelope editor for the mix's (input) channels. \
 The current mix amp env is not actually changed until you click 'Apply Env'.\
 The editor envelope is drawn in black with dots whereas the current \
 mix amp env (if any) is drawn in blue.",
-		      true,
+		      WITH_WORD_WRAP,
 		      snd_xrefs("Mix"),
 		      snd_xref_urls("Mix"));
 }
@@ -1267,7 +1266,7 @@ and an envelope editor for the track's overall amplitude envelope. \
 The current track's amp env is not actually changed until you click 'Apply Env'.\
 The editor envelope is drawn in black with dots whereas the current \
 mix amp env (if any) is drawn in blue.",
-		      true,
+		      WITH_WORD_WRAP,
 		      snd_xrefs("Track"),
 		      snd_xref_urls("Track"));
 }
@@ -1283,7 +1282,7 @@ void new_file_dialog_help(void)
 {
   snd_help_with_xrefs("New File",
 "This dialog sets the new file's output header type, data format, srate, chans, and comment if any.",
-		      true,
+		      WITH_WORD_WRAP,
 		      new_file_xrefs,
 		      NULL);
 }
@@ -1294,7 +1293,7 @@ void edit_header_dialog_help(void)
 "This dialog edits the header of a sound file. No change is made to the actual sound data. \
 If you specify 'raw' as the type, any existing header is removed.  This dialog is aimed at adding or removing an entire header,  \
 or editing the header comments; anything else is obviously dangerous.",
-	   true);
+	   WITH_WORD_WRAP);
 }
 
 static char *print_xrefs[4] = {
@@ -1310,7 +1309,7 @@ void print_dialog_help(void)
 an eps file.  In the latter case, the file name is set either by the dialog, or taken from the \
 resource epsFile (normally snd.eps).  Currently the openGL graphics can't be printed by Snd, \
 but you can use Gimp or some such program to get a screenshot, and print that.",
-		      true,
+		      WITH_WORD_WRAP,
 		      print_xrefs,
 		      NULL);
 }
@@ -1341,7 +1340,7 @@ The 'sort' label on the right activates a menu of sorting choices; 'name' sorts 
 previous files list alphabetically, 'date' sorts by date written, 'size' sorts by the \
 number of samples in the sound, and 'entry' sorts by the order the sound appears in the \
 absence of explicit sorting.  The variable previous-files-sort refers to this menu.",
-		      true,
+		      WITH_WORD_WRAP,
 		      view_files_xrefs,
 		      NULL);
 }
@@ -1350,7 +1349,7 @@ static void copy_help(void)
 {
   snd_help_with_xrefs("Copy",
 		      "See also 'Save'",
-		      true,
+		      WITH_WORD_WRAP,
 		      snd_xrefs("Copy"),
 		      snd_xref_urls("Copy"));
 }
@@ -1367,7 +1366,7 @@ moves, in a sense dragging the data along to try to keep up with the mouse; the 
 is from the display, the faster the axis moves. A region can also be defined with keyboard commands, \
 much as in Emacs. C-[space] starts the region definition and the various cursor moving commands \
 continue the definition.",
-		      true,
+		      WITH_WORD_WRAP,
 		      snd_xrefs("Region"),
 		      snd_xref_urls("Region"));
 }
@@ -1377,7 +1376,7 @@ static void selection_help(void)
   snd_help_with_xrefs("Selection",
 "The selection is a high-lighted portion of the current sound. \
 You can create it by dragging the mouse, or via various functions.",
-		      true,
+		      WITH_WORD_WRAP,
 		      snd_xrefs("Selection"),
 		      snd_xref_urls("Selection"));
 }
@@ -1386,8 +1385,8 @@ static void cursor_help(void)
 {
   snd_help_with_xrefs("Cursor",
 "A big '+' marks the current sample.  This is Snd's cursor, and the \
-various Emacs cursor movinf commands apply to it.  See also 'Tracking cursor'",
-		      true,
+various Emacs cursor moving commands apply to it.  See also 'Tracking cursor'",
+		      WITH_WORD_WRAP,
 		      snd_xrefs("Cursor"),
 		      snd_xref_urls("Cursor"));
 }
@@ -1397,7 +1396,7 @@ static void tracking_cursor_help(void)
   snd_help_with_xrefs("Tracking cursor",
 "If you want the cursor to follow along more-or-less in time while \
 playing a sound, set cursor-follows-play to #t. See also 'Cursor'",
-		      true,
+		      WITH_WORD_WRAP,
 		      snd_xrefs("Tracking cursor"),
 		      snd_xref_urls("Tracking cursor"));
 }
@@ -1407,7 +1406,7 @@ static void smooth_help(void)
   snd_help_with_xrefs("Smoothing",
 "Smoothing applies a sinusoidal curve to a portion of a sound to smooth \
 out any clicks.  See also 'Filter'",
-		      true,
+		      WITH_WORD_WRAP,
 		      snd_xrefs("Smooth"),
 		      snd_xref_urls("Smooth"));
 }
@@ -1416,7 +1415,7 @@ static void maxamp_help(void)
 {
   snd_help_with_xrefs("Maxamp",
 "Maxamp refers to the maximium amplitude in a sound",
-		      true,
+		      WITH_WORD_WRAP,
 		      snd_xrefs("Maxamp"),
 		      snd_xref_urls("Maxamp"));
 }
@@ -1425,7 +1424,7 @@ static void reverse_help(void)
 {
   snd_help_with_xrefs("Reverse",
 "There are various things that can be reversed.  See the list below.",
-		      true,
+		      WITH_WORD_WRAP,
 		      snd_xrefs("Reverse"),
 		      snd_xref_urls("Reverse"));
 }
@@ -1434,7 +1433,7 @@ static void noise_reduction_help(void)
 {
   snd_help_with_xrefs("Noise Reduction",
 		      "",
-		      true,
+		      WITH_WORD_WRAP,
 		      snd_xrefs("Noise Reduction"),
 		      snd_xref_urls("Noise Reduction"));
 }
@@ -1478,7 +1477,7 @@ selection-color:  color of selected portion of graph.\n\
 text-focus-color:  color of text field when it has focus.\n\
 zoom-color:  zoom slider color.\n\
 ",
-		      true,
+		      WITH_WORD_WRAP,
 		      snd_xrefs("Colors"),
 		      snd_xref_urls("Colors"));
 }
@@ -1487,7 +1486,7 @@ static void window_size_help(void)
 {
   snd_help_with_xrefs("Window Size",
 		      "",
-		      true,
+		      WITH_WORD_WRAP,
 		      snd_xrefs("Window Size"),
 		      snd_xref_urls("Window Size"));
 }
@@ -2056,13 +2055,13 @@ static XEN g_help_dialog(XEN subject, XEN msg, XEN xrefs, XEN xurls)
 	}
       w = snd_help_with_xrefs(XEN_TO_C_STRING(subject),
 			      XEN_TO_C_STRING(msg), 
-			      true,
+			      WITH_WORD_WRAP,
 			      refs,
 			      urls);
     }
   else w = snd_help(XEN_TO_C_STRING(subject), 
 		    XEN_TO_C_STRING(msg), 
-		    true);
+		    WITH_WORD_WRAP);
   return(XEN_WRAP_WIDGET(w));
 }
 

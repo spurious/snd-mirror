@@ -11,9 +11,10 @@ typedef struct {
 
 /* -------- snd-ghelp.c -------- */
 
-GtkWidget *snd_help(const char *subject, const char *help, bool with_wrap);
-GtkWidget *snd_help_with_xrefs(const char *subject, const char *helpstr, bool with_wrap, char **xrefs, char **urls);
+GtkWidget *snd_help(const char *subject, const char *help, with_word_wrap_t with_wrap);
+GtkWidget *snd_help_with_xrefs(const char *subject, const char *helpstr, with_word_wrap_t with_wrap, char **xrefs, char **urls);
 int help_text_width(const char *txt, int start, int end);
+void snd_help_append(char *text);
 
 
 /* -------- snd-gerror.c -------- */
@@ -89,6 +90,7 @@ int listener_height(void);
 int listener_width(void);
 void goto_listener(void);
 void save_listener_text(FILE *fp);
+void listener_delete_text(int new_end);
 void append_listener_text(int end, char *msg);
 void listener_append(char *msg);
 void listener_append_and_prompt(char *msg);
@@ -102,6 +104,7 @@ void connect_mouse_to_text(GtkWidget *text);
 
 /* -------- snd-gmain.c -------- */
 
+color_t get_in_between_color(color_t fg, color_t bg);
 void snd_doit(int argc, char **argv);
 #ifdef SND_AS_WIDGET
   GtkWidget *snd_as_widget(int argc, char **argv, GtkWidget *parent, void (*error_func)(const char *));

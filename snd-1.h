@@ -246,7 +246,7 @@ typedef struct chan_info {
   /* moved from global to channel-local 4-Aug-00 */
   Float spectro_x_scale, spectro_y_scale, spectro_z_scale, spectro_z_angle, spectro_x_angle, spectro_y_angle, spectro_cutoff, spectro_start;
   Float lin_dB, min_dB, fft_window_beta, beats_per_minute;
-  bool show_y_zero, show_marks, verbose_cursor;
+  bool show_y_zero, show_marks, verbose_cursor, show_grid;
   int wavo_hop, wavo_trace, zero_pad, wavelet_type, max_transform_peaks;
   x_axis_style_t x_axis_style;
   show_axes_t show_axes;
@@ -374,7 +374,7 @@ typedef struct snd_state {
   Latus init_window_width, init_window_height;
   Locus init_window_x, init_window_y;
   bool graph_hook_active, lisp_graph_hook_active;
-  bool Show_Transform_Peaks, Show_Y_Zero, Show_Marks;
+  bool Show_Transform_Peaks, Show_Y_Zero, Show_Marks, Show_Grid;
   bool Fft_Log_Frequency, Fft_Log_Magnitude;
   channel_style_t Channel_Style;
   sound_style_t Sound_Style;
@@ -1289,6 +1289,7 @@ void g_init_utils(void);
 
 /* -------- snd-listener -------- */
 
+void backup_listener_to_previous_command(void);
 void command_return(widget_t w, int last_prompt);
 char *listener_prompt_with_cr(void);
 int check_balance(char *expr, int start, int end, bool in_listener);
@@ -1458,6 +1459,8 @@ void save_macro_state(FILE *fd);
 void clear_minibuffer(snd_info *sp);
 void clear_minibuffer_prompt(snd_info *sp);
 void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta);
+char *key_binding_description(int key, int state, bool cx_extended);
+bool map_over_key_bindings(bool (*func)(int, int, bool, XEN, char *));
 void keyboard_command (chan_info *cp, int keysym, int state);
 void control_g(snd_info *sp);
 void g_init_kbd(void);

@@ -2907,6 +2907,21 @@ Float *mus_ycoeffs(mus_any *ptr)
   return(NULL);
 }
 
+#define POW2_SIZE 31
+static int pow2s[POW2_SIZE] = {1, 2, 4, 8, 16, 32, 64, 128, 256, 
+			       512, 1024, 2048, 4096, 8192, 16384, 32768, 65536, 
+			       131072, 262144, 524288, 1048576, 2097152, 4194304, 8388608, 16777216, 
+			       33554432, 67108864, 134217728, 268435456, 536870912, 1073741824};
+static int mus_2pow2(int n)
+{
+  /* round up to next power of 2 */
+  int i;
+  for (i = 0; i < POW2_SIZE; i++)
+    if (pow2s[i] >= n)
+      return(pow2s[i]);
+  return(0);
+}
+
 Float *mus_make_fir_coeffs(int order, Float *envl, Float *aa)
 {
   /* envl = evenly sampled freq response, has order samples */
@@ -2940,7 +2955,7 @@ Float *mus_make_fir_coeffs(int order, Float *envl, Float *aa)
       Float *rl, *im;
       int fsize, lim;
       Float scl, offset;
-      fsize = 2 * snd_2pow2(order);
+      fsize = 2 * mus_2pow2(order);
       rl = (Float *)CALLOC(fsize, sizeof(Float));
       im = (Float *)CALLOC(fsize, sizeof(Float));
       lim = order / 2;

@@ -2465,6 +2465,11 @@ void post_it(const char *subject, const char *str)
   XmStringFree(xstr1);
 }
 
+void post_it_append(char *text)
+{
+  XmTextInsert(post_it_text, XmTextGetLastPosition(post_it_text), text);
+}
+
 void reflect_just_sounds_state(void)
 {
   if ((open_dialog) && (open_dialog->just_sounds_button))

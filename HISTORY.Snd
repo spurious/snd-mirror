@@ -1,5 +1,7 @@
 Snd change log
 
+  1-Mar:     show-grid.
+             C-_ deletes text in listener to previous command.
   23-Feb:    speed-control-tones, speed-control-style, reverb-control-decay now handled like other control settings
              removed Options:Speed Style menu
   20-Feb:    snd 7.2

@@ -907,46 +907,46 @@ XM_TYPE_PTR(GdkDisplayPointerHooks_, GdkDisplayPointerHooks*)
 #define XEN_TO_C_GtkCalendarDisplayOptions(Arg) (GtkCalendarDisplayOptions)(XEN_TO_C_INT(Arg))
 #define XEN_GtkCalendarDisplayOptions_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR(GtkEntryCompletion_, GtkEntryCompletion*)
-XM_TYPE_PTR(GtkEventBox_, GtkEventBox*)
+XM_TYPE_PTR_1(GtkEventBox_, GtkEventBox*)
 XM_TYPE_PTR(GtkToolItem_, GtkToolItem*)
 XM_TYPE(GtkFileChooserAction, GtkFileChooserAction)
-XM_TYPE_PTR(GtkTreeModelFilter_, GtkTreeModelFilter*)
+XM_TYPE_PTR_1(GtkTreeModelFilter_, GtkTreeModelFilter*)
 XM_TYPE_PTR(GtkAction_, GtkAction*)
 XM_TYPE_PTR(GtkActionGroup_, GtkActionGroup*)
-XM_TYPE_PTR(GtkActionEntry_, GtkActionEntry*)
-XM_TYPE_PTR(GtkToggleActionEntry_, GtkToggleActionEntry*)
-XM_TYPE_PTR(GtkComboBox_, GtkComboBox*)
-XM_TYPE_PTR(GtkComboBoxEntry_, GtkComboBoxEntry*)
-XM_TYPE_PTR(GtkExpander_, GtkExpander*)
-XM_TYPE_PTR(GtkFontButton_, GtkFontButton*)
-XM_TYPE_PTR(GtkColorButton_, GtkColorButton*)
-XM_TYPE(GtkEntryCompletionMatchFunc, GtkEntryCompletionMatchFunc)
+XM_TYPE_PTR_1(GtkActionEntry_, GtkActionEntry*)
+XM_TYPE_PTR_1(GtkToggleActionEntry_, GtkToggleActionEntry*)
+XM_TYPE_PTR_1(GtkComboBox_, GtkComboBox*)
+XM_TYPE_PTR_1(GtkComboBoxEntry_, GtkComboBoxEntry*)
+XM_TYPE_PTR_1(GtkExpander_, GtkExpander*)
+XM_TYPE_PTR_1(GtkFontButton_, GtkFontButton*)
+XM_TYPE_PTR_1(GtkColorButton_, GtkColorButton*)
+XM_TYPE_1(GtkEntryCompletionMatchFunc, GtkEntryCompletionMatchFunc)
 XM_TYPE_PTR(GtkUIManager_, GtkUIManager*)
-XM_TYPE(gssize, gssize)
-XM_TYPE(GtkUIManagerItemType, GtkUIManagerItemType)
-XM_TYPE_PTR(GtkRadioToolButton_, GtkRadioToolButton*)
+XM_TYPE_1(gssize, gssize)
+XM_TYPE_1(GtkUIManagerItemType, GtkUIManagerItemType)
+XM_TYPE_PTR_1(GtkRadioToolButton_, GtkRadioToolButton*)
 XM_TYPE_PTR(GtkRadioAction_, GtkRadioAction*)
-XM_TYPE_PTR(GtkSeparatorToolItem_, GtkSeparatorToolItem*)
+XM_TYPE_PTR_1(GtkSeparatorToolItem_, GtkSeparatorToolItem*)
 XM_TYPE_PTR(GtkToggleAction_, GtkToggleAction*)
-XM_TYPE_PTR(GtkToggleToolButton_, GtkToggleToolButton*)
-XM_TYPE(GSourceFunc, GSourceFunc)
+XM_TYPE_PTR_1(GtkToggleToolButton_, GtkToggleToolButton*)
+XM_TYPE_1(GSourceFunc, GSourceFunc)
 XM_TYPE_PTR(GtkFileFilter_, GtkFileFilter*)
 XM_TYPE(GtkFileFilterFlags, GtkFileFilterFlags)
-XM_TYPE(GtkFileFilterFunc, GtkFileFilterFunc)
-XM_TYPE_PTR(GtkFileFilterInfo_, GtkFileFilterInfo*)
-XM_TYPE_PTR(GtkCellLayout_, GtkCellLayout*)
-XM_TYPE(GtkCellLayoutDataFunc, GtkCellLayoutDataFunc)
-XM_TYPE_PTR(GtkFileChooser_, GtkFileChooser*)
-XM_TYPE_PTR(GError__, GError**)
+XM_TYPE_1(GtkFileFilterFunc, GtkFileFilterFunc)
+XM_TYPE_PTR_1(GtkFileFilterInfo_, GtkFileFilterInfo*)
+XM_TYPE_PTR_1(GtkCellLayout_, GtkCellLayout*)
+XM_TYPE_1(GtkCellLayoutDataFunc, GtkCellLayoutDataFunc)
+XM_TYPE_PTR_1(GtkFileChooser_, GtkFileChooser*)
+XM_TYPE_PTR_1(GError__, GError**)
 XM_TYPE_PTR(GtkIconTheme_, GtkIconTheme*)
 XM_TYPE_PTR(GtkIconInfo_, GtkIconInfo*)
-XM_TYPE(GtkIconLookupFlags, GtkIconLookupFlags)
-XM_TYPE_PTR(GtkToolButton_, GtkToolButton*)
-XM_TYPE(GtkClipboardTargetsReceivedFunc, GtkClipboardTargetsReceivedFunc)
+XM_TYPE_1(GtkIconLookupFlags, GtkIconLookupFlags)
+XM_TYPE_PTR_1(GtkToolButton_, GtkToolButton*)
+XM_TYPE_1(GtkClipboardTargetsReceivedFunc, GtkClipboardTargetsReceivedFunc)
 #endif
 
 #if HAVE_GTK_COMBO_BOX_POPUP
-XM_TYPE_PTR(GtkAccelMap_, GtkAccelMap*)
+XM_TYPE_PTR_2(GtkAccelMap_, GtkAccelMap*)
 #endif
 
 /* -------------------------------- gc protection -------------------------------- */
@@ -32994,10 +32994,10 @@ static bool xg_already_inited = false;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"25-Feb-04\")");
+      XEN_EVAL_C_STRING("(define xm-version \"28-Feb-04\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("25-Feb-04"));
+      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("28-Feb-04"));
 #endif
       xg_already_inited = true;
 #if WITH_GTK_AND_X11

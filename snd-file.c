@@ -1051,6 +1051,7 @@ static void copy_chan_info(chan_info *ncp, chan_info *ocp)
   ncp->fft_window_beta = ocp->fft_window_beta;
   ncp->beats_per_minute = ocp->beats_per_minute;
   ncp->show_y_zero = ocp->show_y_zero;
+  ncp->show_grid = ocp->show_grid;
   ncp->show_marks = ocp->show_marks;
   ncp->wavo_hop = ocp->wavo_hop;
   ncp->wavo_trace = ocp->wavo_trace;

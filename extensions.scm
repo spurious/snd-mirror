@@ -312,7 +312,7 @@ to end of channel, beg defaults to 0, snd defaults to the currently selected sou
 ;;;   the value returned by the function becomes the new selection value.
 
 (bind-key (char->integer #\x) 0
-	  (lambda ()
+	  (lambda () "eval over selection"
 	    (if (selection?)
 		(prompt-in-minibuffer "selection eval:" eval-over-selection)
 		(report-in-minibuffer "no selection")))
@@ -398,7 +398,7 @@ If 'check' is #f, the hooks are removed."
 			   reverb-control-lowpass reverb-control-scale reverb-control-scale-bounds
 			   speed-control speed-control-bounds speed-control-style speed-control-tones))
 	(channel-funcs (list time-graph? transform-graph? lisp-graph? x-bounds y-bounds cursor cursor-size
-			     cursor-style show-marks show-y-zero wavo-hop wavo-trace max-transform-peaks
+			     cursor-style show-marks show-y-zero show-grid wavo-hop wavo-trace max-transform-peaks
 			     show-transform-peaks fft-log-frequency fft-log-magnitude verbose-cursor zero-pad
 			     wavelet-type min-dB transform-size transform-graph-type time-graph-type fft-window
 			     transform-type transform-normalization time-graph-style show-mix-waveforms dot-size

@@ -281,6 +281,50 @@ XEN provide_listener_help(char *source)
 
 static XEN read_hook;
 
+static int current_listener_position = -1, listener_positions_size = 0;
+static int *listener_positions = NULL;
+
+static void add_listener_position(int pos)
+{
+  int i;
+  if (listener_positions_size == 0)
+    {
+      listener_positions_size = 32;
+      listener_positions = (int *)CALLOC(listener_positions_size, sizeof(int));
+      current_listener_position = 0;
+    }
+  else
+    {
+      if (pos > listener_positions[current_listener_position])
+	{
+	  current_listener_position++;
+	  if (current_listener_position >= listener_positions_size)
+	    {
+	      listener_positions_size += 32;
+	      listener_positions = (int *)REALLOC(listener_positions, listener_positions_size * sizeof(int));
+	      for (i = current_listener_position + 1; i < listener_positions_size; i++) listener_positions[i] = 0;
+	    }
+	}
+      else
+	{
+	  for (i = current_listener_position - 1; i >= 0; i--)
+	    if (listener_positions[i] < pos)
+	      break;
+	  current_listener_position = i + 1;
+	}
+    }
+  listener_positions[current_listener_position] = pos;
+}
+
+void backup_listener_to_previous_command(void)
+{
+  if (current_listener_position > 0)
+    {
+      current_listener_position--;
+      listener_delete_text(listener_positions[current_listener_position]);
+    }
+}
+
 void command_return(widget_t w, int last_prompt)
 {
 #if (!USE_NO_GUI)
@@ -298,7 +342,7 @@ void command_return(widget_t w, int last_prompt)
   start_of_text = current_position;
   end_of_text = current_position;
   last_position = GUI_TEXT_END(w);
-  
+  add_listener_position(last_position);
   if (XEN_HOOKED(read_hook))
     {
       XEN result;
@@ -509,6 +553,7 @@ void command_return(widget_t w, int last_prompt)
       GUI_LISTENER_TEXT_INSERT(w, new_eot, listener_prompt_with_cr());
     }
   cmd_eot = GUI_TEXT_END(w);
+  add_listener_position(cmd_eot);
   GUI_TEXT_GOTO(w, cmd_eot - 1);
   GUI_TEXT_SET_INSERTION_POSITION(w, cmd_eot + 1);
 #endif

@@ -187,6 +187,7 @@ typedef enum {NOT_IN_BACKGROUND, IN_BACKGROUND} play_process_t;
 typedef enum {WITHOUT_VIRTUAL_CHANNELS, WITH_VIRTUAL_CHANNELS} virtual_channels_t;
 typedef enum {WITH_FW_BUTTONS, WITH_ARROWS} fw_button_t;
 typedef enum {WITHOUT_HOOK, WITH_HOOK} with_hook_t;
+typedef enum {WITHOUT_WORD_WRAP, WITH_WORD_WRAP} with_word_wrap_t;
 
 #ifndef POPUP_BUTTON
   #define POPUP_BUTTON 3
@@ -662,6 +663,10 @@ typedef enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_U
 #define show_y_zero(ss) ss->Show_Y_Zero
 #define in_set_show_y_zero(a) ss->Show_Y_Zero = a
 #define DEFAULT_SHOW_Y_ZERO false
+
+#define show_grid(ss) ss->Show_Grid
+#define in_set_show_grid(a) ss->Show_Grid = a
+#define DEFAULT_SHOW_GRID false
 
 #define show_axes(ss) ss->Show_Axes
 #define in_set_show_axes(a) ss->Show_Axes = a

@@ -2298,6 +2298,7 @@ static XEN g_set_data_color(XEN color)
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_data_color, "a color"); 
   color_data(XEN_UNWRAP_PIXEL(color));
+  ss->sgx->grid_color = get_in_between_color(ss->sgx->data_color, ss->sgx->graph_color);
   for_each_chan(update_graph);
   return(color);
 }
@@ -2379,6 +2380,7 @@ static XEN g_set_selected_data_color(XEN color)
   chan_info *cp;
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_selected_data_color, "a color"); 
   color_selected_data(XEN_UNWRAP_PIXEL(color));
+  ss->sgx->selected_grid_color = get_in_between_color(ss->sgx->selected_data_color, ss->sgx->selected_graph_color);
   cp = selected_channel();
   if (cp) 
     {
@@ -2399,6 +2401,7 @@ static XEN g_set_graph_color(XEN color)
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_graph_color, "a color");
   color_graph(XEN_UNWRAP_PIXEL(color));
   color_unselected_graphs(XEN_UNWRAP_PIXEL(color));
+  ss->sgx->grid_color = get_in_between_color(ss->sgx->data_color, ss->sgx->graph_color);
   return(color);
 }
 
@@ -2413,6 +2416,7 @@ static XEN g_set_selected_graph_color(XEN color)
   chan_info *cp;
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_selected_graph_color, "a color");
   color_selected_graph(XEN_UNWRAP_PIXEL(color));
+  ss->sgx->selected_grid_color = get_in_between_color(ss->sgx->selected_data_color, ss->sgx->selected_graph_color);
   cp = selected_channel();
   if (cp) 
     {

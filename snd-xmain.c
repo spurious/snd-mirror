@@ -539,13 +539,36 @@ static void notebook_page_changed_callback(Widget w, XtPointer context, XtPointe
 }
 #endif
 
+color_t get_in_between_color(color_t fg, color_t bg)
+{
+  Colormap cmap;
+  Display *dpy;
+  int scr;
+  XColor fg_color, bg_color, new_color;
+  dpy = MAIN_DISPLAY(ss);
+  scr = DefaultScreen(dpy);
+  cmap = DefaultColormap(dpy, scr);
+  fg_color.flags = DoRed | DoGreen | DoBlue;
+  fg_color.pixel = fg;
+  XQueryColor(dpy, cmap, &fg_color);
+  bg_color.flags = DoRed | DoGreen | DoBlue;
+  bg_color.pixel = bg;
+  XQueryColor(dpy, cmap, &bg_color);
+  new_color.flags = DoRed | DoGreen | DoBlue;
+  new_color.red = (unsigned short)((fg_color.red + (2 * bg_color.red)) / 3);
+  new_color.green = (unsigned short)((fg_color.green + (2 * bg_color.green)) / 3);
+  new_color.blue = (unsigned short)((fg_color.blue + (2 * bg_color.blue)) / 3);
+  if ((XAllocColor(dpy, cmap, &new_color)) == 0)
+    return(fg);
+  return(new_color.pixel);
+}
+
 static Pixel get_color(Widget shell, char *rs_color, char *defined_color, char *fallback_color, char *second_fallback_color, bool use_white)
 {
   Colormap cmap;
   Display *dpy;
   int scr;
   XColor tmp_color, ignore;
-  /* this apparently only gets called in Motif 1 on the SGI */
   dpy = XtDisplay(shell);
   scr = DefaultScreen(dpy);
   cmap = DefaultColormap(dpy, scr);
@@ -758,6 +781,9 @@ void snd_doit(int argc, char **argv)
   sx->reset_button_color =    get_color(shell, snd_rs.reset_button_color,    RESET_BUTTON_COLOR,    NULL, NULL, false);
   sx->doit_button_color =     get_color(shell, snd_rs.doit_button_color,     DOIT_BUTTON_COLOR,     NULL, NULL, false);
   sx->doit_again_button_color = get_color(shell, snd_rs.doit_again_button_color, DOIT_AGAIN_BUTTON_COLOR, NULL, NULL, false);
+
+  sx->grid_color = get_in_between_color(sx->data_color, sx->graph_color);
+  sx->selected_grid_color = get_in_between_color(sx->selected_data_color, sx->selected_graph_color);
 
   if ((!(set_peaks_font(snd_rs.peaks_font))) &&
       (!(set_peaks_font(DEFAULT_PEAKS_FONT))) &&

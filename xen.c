@@ -100,6 +100,9 @@ double xen_to_c_double_or_else(XEN a, double b) {return((XEN_NUMBER_P(a)) ? (scm
 bool xen_to_c_boolean_or_true(XEN a) {return((!((XEN_FALSE_P(a) || ((SCM_INUMP(a)) && (SCM_INUM(a) == 0))))));}
 bool xen_integer_p(XEN a) 
 {
+#ifndef SCM_BOOLP
+  return(XEN_NOT_FALSE_P(scm_integer_p(a)));
+#else
   if (SCM_INUMP(a)) return(true);
   if (SCM_REALP(a))
     {
@@ -113,6 +116,7 @@ bool xen_integer_p(XEN a)
 	return(true);
     }
   return(false);
+#endif
 }
 
 #if HAVE_SCM_NUM2INT

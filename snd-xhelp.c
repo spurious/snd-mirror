@@ -4,13 +4,13 @@
 
 #if (XmVERSION == 1)
 
-Widget snd_help(const char *subject, const char *helpstr, bool with_wrap)
+Widget snd_help(const char *subject, const char *helpstr, with_word_wrap_t with_wrap)
 {
   post_it(subject, helpstr);
   return(NULL);
 }
 
-Widget snd_help_with_xrefs(const char *subject, const char *helpstr, bool with_wrap, char **xrefs, char **urls)
+Widget snd_help_with_xrefs(const char *subject, const char *helpstr, with_word_wrap_t with_wrap, char **xrefs, char **urls)
 {
   post_it(subject, helpstr);
   return(NULL);
@@ -19,6 +19,11 @@ Widget snd_help_with_xrefs(const char *subject, const char *helpstr, bool with_w
 int help_text_width(const char *txt, int start, int end)
 {
   return((end - start) * 8);
+}
+
+void snd_help_append(char *text)
+{
+  post_it_append(text);
 }
 
 #else
@@ -34,7 +39,7 @@ static Widget help_dialog = NULL;
 static Widget help_text = NULL;
 static char *original_help_text = NULL;
 static int old_help_text_width = 0; 
-static bool outer_with_wrap = false;
+static with_word_wrap_t outer_with_wrap = WITHOUT_WORD_WRAP;
 static char **help_urls = NULL;
 
 static void help_expose(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
@@ -45,7 +50,7 @@ static void help_expose(Widget w, XtPointer context, XEvent *event, Boolean *con
     old_help_text_width = curwid;
   else
     {
-      if ((outer_with_wrap) && (abs(curwid - old_help_text_width) > 10))
+      if ((outer_with_wrap == WITH_WORD_WRAP) && (abs(curwid - old_help_text_width) > 10))
 	{
 	  char *cur_help_str, *new_help_str = NULL;
 	  cur_help_str = XmTextGetString(help_text);
@@ -162,7 +167,7 @@ static bool new_help(const char *pattern)
 	  int gc_loc;
 	  gc_loc = snd_protect(xstr);
 	  xrefs = help_name_to_xrefs(pattern);
-	  snd_help_with_xrefs(pattern, XEN_TO_C_STRING(xstr), true, xrefs, NULL);
+	  snd_help_with_xrefs(pattern, XEN_TO_C_STRING(xstr), WITH_WORD_WRAP, xrefs, NULL);
 	  snd_unprotect_at(gc_loc);
 	  if (xrefs) FREE(xrefs);
 	  return(true);
@@ -173,7 +178,7 @@ static bool new_help(const char *pattern)
       xrefs = help_name_to_xrefs(pattern);
       if (xrefs)
 	{
-	  snd_help_with_xrefs(pattern, "(no help found)", true, xrefs, NULL);
+	  snd_help_with_xrefs(pattern, "(no help found)", WITH_WORD_WRAP, xrefs, NULL);
 	  FREE(xrefs);
 	  return(true);
 	}
@@ -476,7 +481,7 @@ int help_text_width(const char *txt, int start, int end)
 }
 
 
-Widget snd_help(const char *subject, const char *helpstr, bool with_wrap)
+Widget snd_help(const char *subject, const char *helpstr, with_word_wrap_t with_wrap)
 {
   /* place help string in scrollable help window */
   /* if window is already active, add this help at the top and reposition */
@@ -488,7 +493,7 @@ Widget snd_help(const char *subject, const char *helpstr, bool with_wrap)
   xstr1 = XmStringCreate((char *)subject, XmFONTLIST_DEFAULT_TAG);
   XtVaSetValues(help_dialog, XmNmessageString, xstr1, NULL);
   original_help_text = (char *)helpstr;
-  if (with_wrap)
+  if (with_wrap == WITH_WORD_WRAP)
     {
       char *new_help_str = NULL;
       new_help_str = word_wrap(helpstr, widget_width(help_text));
@@ -503,7 +508,7 @@ Widget snd_help(const char *subject, const char *helpstr, bool with_wrap)
   return(help_dialog);
 }
 
-Widget snd_help_with_xrefs(const char *subject, const char *helpstr, bool with_wrap, char **xrefs, char **urls)
+Widget snd_help_with_xrefs(const char *subject, const char *helpstr, with_word_wrap_t with_wrap, char **xrefs, char **urls)
 {
   Widget w;
   w = snd_help(subject, helpstr, with_wrap);
@@ -539,6 +544,11 @@ Widget snd_help_with_xrefs(const char *subject, const char *helpstr, bool with_w
       FREE(strs);
     }
   return(w);
+}
+
+void snd_help_append(char *text)
+{
+  XmTextInsert(help_text, XmTextGetLastPosition(help_text), text);
 }
 
 #endif

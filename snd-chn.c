@@ -115,6 +115,18 @@ static void set_zero_pad(int val)
   for_each_chan_1(chans_zero_pad, (void *)(&val));
 }
 
+static void chans_show_grid(chan_info *cp, void *ptr)
+{
+  cp->show_grid = (*((bool *)ptr));
+  update_graph(cp);
+}
+
+static void set_show_grid(bool val)
+{
+  in_set_show_grid(val);
+  for_each_chan_1(chans_show_grid, (void *)(&val));
+}
+
 static void chans_transform_graph_type(chan_info *cp, void *ptr) 
 {
   cp->transform_graph_type = (*((graph_type_t *)ptr)); 
@@ -955,7 +967,7 @@ static Locus local_grf_y(Float val, axis_info *ap)
   return((Locus)(ap->y_base + val * ap->y_scale));
 }
 
-static void display_zero(chan_info *cp)
+static void display_y_zero(chan_info *cp)
 {
   axis_info *ap;
   Locus zero;
@@ -3162,7 +3174,7 @@ static void display_channel_data_with_size (chan_info *cp,
 	      display_selection(cp);
 	      display_channel_marks(cp);
 	    }
-	  if (cp->show_y_zero) display_zero(cp);
+	  if (cp->show_y_zero) display_y_zero(cp);
 	  if ((cp->mixes)) display_channel_mixes(cp);
 	}
       if ((sp->channel_style != CHANNELS_SUPERIMPOSED) && (height > 10))
@@ -4331,7 +4343,7 @@ typedef enum {CP_GRAPH_TRANSFORM_P, CP_GRAPH_TIME_P, CP_FRAMES, CP_CURSOR, CP_GR
 	      CP_EDPOS_FRAMES, CP_X_AXIS_STYLE, CP_UPDATE_TIME, CP_UPDATE_TRANSFORM_GRAPH, CP_UPDATE_LISP, CP_PROPERTIES,
 	      CP_MIN_DB, CP_SPECTRO_X_ANGLE, CP_SPECTRO_Y_ANGLE, CP_SPECTRO_Z_ANGLE, CP_SPECTRO_X_SCALE, CP_SPECTRO_Y_SCALE, CP_SPECTRO_Z_SCALE,
 	      CP_SPECTRO_CUTOFF, CP_SPECTRO_START, CP_FFT_WINDOW_BETA, CP_AP_SX, CP_AP_SY, CP_AP_ZX, CP_AP_ZY, CP_MAXAMP, CP_EDPOS_MAXAMP,
-	      CP_BEATS_PER_MINUTE, CP_EDPOS_CURSOR
+	      CP_BEATS_PER_MINUTE, CP_EDPOS_CURSOR, CP_SHOW_GRID
 } cp_field_t;
 
 #define EDPOS_NOT_PROTECTED -1
@@ -4414,6 +4426,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, char *caller)
 	      return(cp->undo_hook);
 	      break;
 	    case CP_SHOW_Y_ZERO:             return(C_TO_XEN_BOOLEAN(cp->show_y_zero));                        break;
+	    case CP_SHOW_GRID:               return(C_TO_XEN_BOOLEAN(cp->show_grid));                          break;
 	    case CP_SHOW_MARKS:              return(C_TO_XEN_BOOLEAN(cp->show_marks));                         break;
 	    case CP_TIME_GRAPH_TYPE:         return(C_TO_XEN_INT((int)(cp->time_graph_type)));                 break;
 	    case CP_WAVO_HOP:                return(C_TO_XEN_INT(cp->wavo_hop));                               break;
@@ -4660,6 +4673,11 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, char *calle
       cp->show_y_zero = XEN_TO_C_BOOLEAN(on); 
       update_graph(cp); 
       return(C_TO_XEN_BOOLEAN(cp->show_y_zero));
+      break;
+    case CP_SHOW_GRID:
+      cp->show_grid = XEN_TO_C_BOOLEAN(on); 
+      update_graph(cp); 
+      return(C_TO_XEN_BOOLEAN(cp->show_grid));
       break;
     case CP_SHOW_MARKS:
       cp->show_marks = XEN_TO_C_BOOLEAN(on); 
@@ -5283,6 +5301,28 @@ static XEN g_set_show_y_zero(XEN on, XEN snd, XEN chn)
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_show_y_zero_reversed, g_set_show_y_zero)
+
+static XEN g_show_grid(XEN snd, XEN chn)
+{
+  #define H_show_grid "(" S_show_grid " (snd #f) (chn #f)): #t if Snd should display a background grid in the graphs"
+  if (XEN_BOUND_P(snd))
+    return(channel_get(snd, chn, CP_SHOW_GRID, S_show_grid));
+  return(C_TO_XEN_BOOLEAN(show_grid(ss)));
+}
+
+static XEN g_set_show_grid(XEN on, XEN snd, XEN chn) 
+{
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_show_grid, "a boolean");
+  if (XEN_BOUND_P(snd))
+    return(channel_set(snd, chn, on, CP_SHOW_GRID, S_setB S_show_grid));
+  else
+    {
+      set_show_grid(XEN_TO_C_BOOLEAN(on));
+      return(C_TO_XEN_BOOLEAN(show_grid(ss)));
+    }
+}
+
+WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_show_grid_reversed, g_set_show_grid)
 
 static XEN g_min_dB(XEN snd, XEN chn) 
 {
@@ -6725,6 +6765,8 @@ XEN_ARGIFY_2(g_max_transform_peaks_w, g_max_transform_peaks)
 XEN_ARGIFY_3(g_set_max_transform_peaks_w, g_set_max_transform_peaks)
 XEN_ARGIFY_2(g_show_y_zero_w, g_show_y_zero)
 XEN_ARGIFY_3(g_set_show_y_zero_w, g_set_show_y_zero)
+XEN_ARGIFY_2(g_show_grid_w, g_show_grid)
+XEN_ARGIFY_3(g_set_show_grid_w, g_set_show_grid)
 XEN_ARGIFY_2(g_show_marks_w, g_show_marks)
 XEN_ARGIFY_3(g_set_show_marks_w, g_set_show_marks)
 XEN_ARGIFY_2(g_time_graph_type_w, g_time_graph_type)
@@ -6857,6 +6899,8 @@ XEN_ARGIFY_2(g_colormap_ref_w, g_colormap_ref)
 #define g_set_max_transform_peaks_w g_set_max_transform_peaks
 #define g_show_y_zero_w g_show_y_zero
 #define g_set_show_y_zero_w g_set_show_y_zero
+#define g_show_grid_w g_show_grid
+#define g_set_show_grid_w g_set_show_grid
 #define g_show_marks_w g_show_marks
 #define g_set_show_marks_w g_set_show_marks
 #define g_time_graph_type_w g_time_graph_type
@@ -7035,6 +7079,9 @@ void g_init_chn(void)
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_show_y_zero, g_show_y_zero_w, H_show_y_zero,
 					    S_setB S_show_y_zero, g_set_show_y_zero_w, g_set_show_y_zero_reversed, 0, 2, 1, 2);
+  
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_show_grid, g_show_grid_w, H_show_grid,
+					    S_setB S_show_grid, g_set_show_grid_w, g_set_show_grid_reversed, 0, 2, 1, 2);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_show_marks, g_show_marks_w, H_show_marks,
 					    S_setB S_show_marks, g_set_show_marks_w, g_set_show_marks_reversed, 0, 2, 1, 2);

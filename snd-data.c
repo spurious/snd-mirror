@@ -50,6 +50,7 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
   cp->cursor_proc_loc = -1;
   cp->squelch_update = false;
   cp->show_y_zero = show_y_zero(ss);
+  cp->show_grid = show_grid(ss);
   cp->show_marks = show_marks(ss);
   cp->time_graph_type = time_graph_type(ss);
   cp->wavo_hop = wavo_hop(ss);

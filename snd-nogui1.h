@@ -5,9 +5,10 @@
 
 /* -------- snd-xhelp.c -------- */
 
-int snd_help(const char *subject, const char *help, bool with_wrap);
-int snd_help_with_xrefs(const char *subject, const char *helpstr, bool with_wrap, char **xrefs, char **urls);
+int snd_help(const char *subject, const char *help, with_word_wrap_t with_wrap);
+int snd_help_with_xrefs(const char *subject, const char *helpstr, with_word_wrap_t with_wrap, char **xrefs, char **urls);
 int help_text_width(const char *txt, int start, int end);
+void snd_help_append(char *text);
 
 
 /* -------- snd-xerror.c -------- */
@@ -76,6 +77,7 @@ void set_find_dialog_label(const char *str);
 
 void append_listener_text(int end, char *msg);
 void save_listener_text(FILE *fp);
+void listener_delete_text(int new_end);
 void listener_append_and_prompt(char *msg);
 void goto_listener(void);
 void listener_append(char *msg);
@@ -152,6 +154,7 @@ int menu_widget(int which_menu);
 
 /* -------- snd-xmain.c -------- */
 
+color_t get_in_between_color(color_t fg, color_t bg);
 void snd_doit(int argc, char **argv);
 #ifdef SND_AS_WIDGET
   void snd_as_widget(int argc, char **argv, int app, int parent, int *caller_args, int caller_argn);

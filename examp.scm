@@ -580,7 +580,7 @@ this can be confusing if fft normalization is on (the default)"
 		keyboard-no-action)
 	      (report-in-minibuffer "no mark in window"))))))
 
-;(bind-key (char->integer #\m) 0 (lambda () (first-mark-in-window-at-left)))
+;(bind-key (char->integer #\m) 0 (lambda () "align window left edge with mark" (first-mark-in-window-at-left)))
 
 
 ;;; -------- flash selected data red and green

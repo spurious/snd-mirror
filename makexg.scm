@@ -112,19 +112,26 @@
 		     "GdkEventSetting*" "GdkEventWindowState*" "GdkEventDND*" "GtkCellRendererPixbuf*" "GtkColorSelectionDialog*" "GtkDrawingArea*" 
 		     "GtkGammaCurve*" "GtkInputDialog*" "GtkInvisible*" "GtkMessageDialog*" "GdkScreen**" "GSignalAccumulator" "GSignalCMarshaller" 
 		     "GSignalEmissionHook" "GDestroyNotify" "GdkPixbufDestroyNotify" "GdkInterpType" "gsize" "GtkAccelMapForeach" "GtkMenuDetachFunc" 
-		     "GtkRcPropertyParser" "GtkTextCharPredicate" "GtkTextTagTableForeach"))
+		     "GtkRcPropertyParser" "GtkTextCharPredicate" "GtkTextTagTableForeach" "gssize" "GtkCellLayoutDataFunc"
+		     "GtkEventBox*" "GtkTreeModelFilter*" "GtkActionEntry*" "GtkToggleActionEntry*" "GtkComboBox*" "GtkComboBoxEntry*"
+		     "GtkExpander*" "GtkFontButton*" "GtkColorButton*" "GtkEntryCompletionMatchFunc" "GtkUIManagerItemType" "GtkRadioToolButton*"
+		     "GtkSeparatorToolItem*" "GtkToggleToolButton*" "GSourceFunc" "GtkFileFilterFunc" "GtkFileFilterInfo*" "GtkCellLayout*"
+		     "CellLayoutDataFunc" "GtkFileChooser*" "GError**" "GtkIconLookupFlags" "GtkToolButton*" "GtkClipboardTargetsReceivedFunc"
+		     ))
 
 (define no-xen-p (list "GdkXEvent*" "GdkVisualType*" "GError*" "GSignalInvocationHint*" "GtkAccelGroupEntry*" "GtkIconSize*" "AtkObject*"
 		       "GtkWidgetAuxInfo*" "PangoFontFamily**" "PangoFontset*" "PangoEngineShape*" "PangoLayoutRun*" "GdkDeviceAxis*"
 		       "GdkDeviceKey*" "GtkWidget**" "GtkLabelSelectionInfo*" "GtkItemFactoryCallback" "GtkNotebookPage*" "GtkRangeLayout*"
 		       "GData*" "GtkRangeStepTimer*" "GtkRcContext*" "GdkGC**" "GdkPixmap**" "GArray*" "GtkTextBTree*" "GtkTextLogAttrCache*"
-		       "GtkTableRowCol*"))
+		       "GtkTableRowCol*" "GtkAccelMap*"
+		       ))
 
 (define no-xen-to-c (list "GdkXEvent*" "GSignalInvocationHint*" "GdkVisualType*" "GError*" "GtkAccelGroupEntry*" "GtkIconSize*" "AtkObject*" 
 			  "GtkWidgetAuxInfo*" "PangoFontFamily**" "PangoFontset*" "PangoEngineShape*" "PangoLayoutRun*" "GdkDeviceAxis*" 
 			  "GdkDeviceKey*" "GtkWidget**" "GtkItemFactoryCallback" "GtkLabelSelectionInfo*" "GtkNotebookPage*" "GtkRangeLayout*" 
 			  "GtkRangeStepTimer*" "GData*" "GtkRcContext*" "GdkGC**" "GdkPixmap**" "GArray*" "GtkTableRowCol*" "GtkTextBTree*" 
-			  "GtkTextLogAttrCache*"))
+			  "GtkTextLogAttrCache*" "GtkAccelMap*"
+			  ))
 
 (define (cadr-str data)
   (let ((sp1 -1)

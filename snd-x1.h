@@ -11,9 +11,10 @@ typedef struct {
 
 /* -------- snd-xhelp.c -------- */
 
-Widget snd_help(const char *subject, const char *help, bool with_wrap);
-Widget snd_help_with_xrefs(const char *subject, const char *helpstr, bool with_wrap, char **xrefs, char **urls);
+Widget snd_help(const char *subject, const char *help, with_word_wrap_t with_wrap);
+Widget snd_help_with_xrefs(const char *subject, const char *helpstr, with_word_wrap_t with_wrap, char **xrefs, char **urls);
 int help_text_width(const char *txt, int start, int end);
+void snd_help_append(char *text);
 
 
 /* -------- snd-xerror.c -------- */
@@ -88,6 +89,7 @@ void mouse_enter_text_callback(Widget w, XtPointer context, XEvent *event, Boole
 void mouse_leave_text_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag);
 void add_completer_to_textfield(Widget w, int completer);
 void snd_completion_help(int matches, char **buffer);
+void listener_delete_text(int new_end);
 void listener_append_and_prompt(char *msg);
 void save_listener_text(FILE *fp);
 void append_listener_text(int end, char *msg);
@@ -183,6 +185,8 @@ void check_menu_labels(int key, int state, bool extended);
 /* -------- snd-xmain.c -------- */
 
 void snd_doit(int argc, char **argv);
+color_t get_in_between_color(color_t fg, color_t bg);
+
 #ifdef SND_AS_WIDGET
   void snd_as_widget(int argc, char **argv, XtAppContext app, Widget parent, Arg *caller_args, int caller_argn);
 #endif
@@ -461,6 +465,7 @@ void make_mix_file_dialog(bool managed);
 void g_init_gxfile(void);
 void clear_deleted_snd_info(void *fd);
 void post_it(const char *subject, const char *str);
+void post_it_append(char *text);
 void reflect_just_sounds_state(void);
 
 

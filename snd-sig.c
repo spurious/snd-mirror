@@ -1266,8 +1266,6 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, of
       if (!(POWER_OF_2_P(order)))
 	order = snd_2pow2(order);
       fsize = 2 * order; /* need room for convolution */
-	      
-      /* TODO: it would be better to use sample_linear_env + fft_filter rather than convolve gen */
       if (precalculated_coeffs)
 	fltdat = precalculated_coeffs;
       else fltdat = get_filter_coeffs(order, e);

@@ -1,7 +1,5 @@
 #include "snd.h"
 
-/* TODO: C-_ -> undo in listener */
-
 #if (XmVERSION >= 2)
   #define OVERRIDE_TOGGLE 1
   /* Motif 2.0 defines control-button1 to be "take focus" -- this is not a good idea!! */
@@ -167,7 +165,7 @@ static void No_op (Widget w, XEvent *ev, char **str, Cardinal *num)
 #define snd_K_u XK_u 
 #define snd_K_x XK_x 
 
-static void Activate_keyboard (Widget w, XEvent *ev, char **str, Cardinal *num) 
+static void Activate_keyboard(Widget w, XEvent *ev, char **str, Cardinal *num) 
 {
   /* make the current channel active preloading kbd cmd with str[0]+ctrl bit */
   chan_info *cp;
@@ -221,7 +219,6 @@ static void Begin_of_line(Widget w, XEvent *ev, char **ustr, Cardinal *num)
   XmTextPosition curpos, loc;
   int prompt_len;
   char *str = NULL;
-
   Boolean found;
   curpos = XmTextGetCursorPosition(w) - 1;
   found = XmTextFindString(w, curpos, "\n", XmTEXT_BACKWARD, &loc);
@@ -488,27 +485,28 @@ void append_listener_text(int end, char *msg)
 
 static bool dont_check_motion = false;
 
-static void clear_back_to_prompt(Widget w)
+void listener_delete_text(int new_end)
 {
-  int beg, end;
-  beg = printout_end + 1;
-  end = XmTextGetLastPosition(w);
-  if (end <= beg) return;
-  dont_check_motion = true;
-  XmTextSetSelection(listener_text, beg, end, CurrentTime);
-  XmTextRemove(listener_text);
-  dont_check_motion = false;
+  int old_end;
+  old_end = XmTextGetLastPosition(listener_text);
+  if (old_end > new_end)
+    {
+      dont_check_motion = true;
+      XmTextSetSelection(listener_text, new_end, old_end, CurrentTime);
+      XmTextRemove(listener_text);
+      dont_check_motion = false;
+    }
 }
 
 static void Listener_Meta_P(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
-  clear_back_to_prompt(w);
+  listener_delete_text(printout_end + 1);
   restore_listener_string(true);
 }
 
 static void Listener_Meta_N(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
-  clear_back_to_prompt(w);
+  listener_delete_text(printout_end + 1);
   restore_listener_string(false);
 }
 
@@ -619,8 +617,12 @@ static void Listener_g(Widget w, XEvent *event, char **str, Cardinal *num)
   control_g(any_selected_sound());
 }
 
+static void Listener_Backup(Widget w, XEvent *event, char **str, Cardinal *num) 
+{
+  backup_listener_to_previous_command();
+}
 
-#define NUM_ACTS 19
+#define NUM_ACTS 20
 static XtActionsRec acts[] = {
   {"no-op", No_op},
   {"activate-keyboard", Activate_keyboard},
@@ -640,6 +642,7 @@ static XtActionsRec acts[] = {
   {"listener-help", Listener_help},
   {"listener-meta-p", Listener_Meta_P},
   {"listener-meta-n", Listener_Meta_N},
+  {"delete-to-previous-command", Listener_Backup},
   {"complain", Complain},
 };
 
@@ -776,10 +779,10 @@ static char TextTrans4[] =
 	Ctrl <Key>l:	    redraw-display()\n\
 	Mod1 <Key>l:	    word-upper(l)\n\
 	Ctrl <Key>n:	    next-line()\n\
-        Meta <Key>n:        listener-meta-n()\n\
+        Mod1 <Key>n:        listener-meta-n()\n\
 	Ctrl <Key>o:	    newline-and-backup()\n\
 	Ctrl <Key>p:	    previous-line()\n\
-        Meta <Key>p:        listener-meta-p()\n\
+        Mod1 <Key>p:        listener-meta-p()\n\
 	Ctrl <Key>t:	    text-transpose()\n\
 	Ctrl <Key>u:	    activate-keyboard(u)\n\
 	Mod1 <Key>u:	    word-upper(u)\n\
@@ -793,6 +796,7 @@ static char TextTrans4[] =
 	Mod1 <Key>]:	    forward-paragraph()\n\
 	Mod1 <Key><:	    beginning-of-file()\n\
 	Mod1 <Key>>:	    end-of-file()\n\
+        Shift Ctrl <Key>-:  delete-to-previous-command()\n\
 	<Key>Delete:	    delete-previous-character()\n\
 	Mod1 <Key>Delete:   delete-to-start-of-line()\n\
 	Ctrl <Key>osfLeft:  page-left()\n\

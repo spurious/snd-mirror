@@ -150,6 +150,7 @@ typedef struct {
   Pixel basic_color, selection_color, zoom_color, position_color, highlight_color, enved_waveform_color;
   Pixel text_focus_color, filter_control_waveform_color, mix_color, pushed_button_color, sash_color;
   Pixel help_button_color, doit_again_button_color, doit_button_color, quit_button_color, reset_button_color;
+  Pixel selected_grid_color, grid_color;
 
   GC basic_gc, selected_basic_gc, combined_basic_gc;        
   GC cursor_gc, selected_cursor_gc;      

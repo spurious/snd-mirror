@@ -226,6 +226,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->Listener_Prompt = copy_string(DEFAULT_LISTENER_PROMPT);
   ss->Show_Transform_Peaks = DEFAULT_SHOW_TRANSFORM_PEAKS;
   ss->Show_Y_Zero = DEFAULT_SHOW_Y_ZERO;
+  ss->Show_Grid = DEFAULT_SHOW_GRID;
   ss->Show_Axes = DEFAULT_SHOW_AXES;
   ss->Show_Marks = DEFAULT_SHOW_MARKS;
   ss->Show_Indices = DEFAULT_SHOW_INDICES;

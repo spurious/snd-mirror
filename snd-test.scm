@@ -720,6 +720,9 @@
       (set! (show-y-zero) (show-y-zero))
       (if (not (equal? (show-y-zero)  #f )) 
 	  (snd-display ";show-y-zero set def: ~A" (show-y-zero)))
+      (set! (show-grid) (show-grid))
+      (if (not (equal? (show-grid)  #f )) 
+	  (snd-display ";show-grid set def: ~A" (show-grid)))
       (set! (sinc-width) (sinc-width))
       (if (not (equal? (sinc-width)  10 )) 
 	  (snd-display ";sinc-width set def: ~A" (sinc-width)))
@@ -956,6 +959,7 @@
 	'show-mix-waveforms (show-mix-waveforms) #t
 	'show-selection-transform (show-selection-transform) #f 
 	'show-y-zero (show-y-zero) #f 
+	'show-grid (show-grid) #f 
 	'show-controls (without-errors (show-controls)) 'no-such-sound
 	'sinc-width (sinc-width) 10 
 	'spectro-cutoff (spectro-cutoff) 1.0
@@ -1507,6 +1511,7 @@
 	  (list 'show-mix-waveforms show-mix-waveforms #t #f)
 	  (list 'show-selection-transform show-selection-transform #f #t)
 	  (list 'show-y-zero show-y-zero #f #t)
+	  (list 'show-grid show-grid #f #t)
 	  (list 'sinc-width sinc-width 10 40)
 	  (list 'spectro-cutoff spectro-cutoff 1.0 0.7)
 	  (list 'spectro-hop spectro-hop 4 10)
@@ -21243,6 +21248,7 @@ EDITS: 5
 		(list 'show-mix-waveforms show-mix-waveforms #t #f #t)
 		(list 'show-selection-transform show-selection-transform #f #f #t)
 		(list 'show-y-zero show-y-zero #f #f #t)
+		(list 'show-grid show-grid #f #f #t)
 		(list 'sinc-width sinc-width #f 4 100)
 		(list 'spectro-cutoff spectro-cutoff #f 0.5 0.8)
 		(list 'spectro-hop spectro-hop #f 2 20)
@@ -21314,21 +21320,21 @@ EDITS: 5
 
 (define funcs (list time-graph-type wavo-hop wavo-trace max-transform-peaks show-transform-peaks zero-pad transform-graph-type fft-window 
 		    verbose-cursor fft-log-frequency fft-log-magnitude min-dB wavelet-type transform-size fft-window-beta transform-type 
-		    transform-normalization show-mix-waveforms graph-style dot-size show-axes show-y-zero show-marks
+		    transform-normalization show-mix-waveforms graph-style dot-size show-axes show-y-zero show-grid show-marks
 		    spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale
 		    spectro-hop spectro-cutoff spectro-start graphs-horizontal x-axis-style beats-per-minute
 		    cursor-size cursor-style
 		    ))
 (define func-names (list 'time-graph-type 'wavo-hop 'wavo-trace 'max-transform-peaks 'show-transform-peaks 'zero-pad 'transform-graph-type 'fft-window
 			 'verbose-cursor 'fft-log-frequency 'fft-log-magnitude 'min-dB 'wavelet-type 'transform-size 'fft-window-beta 'transform-type
-			 'transform-normalization 'show-mix-waveforms 'graph-style 'dot-size 'show-axes 'show-y-zero 'show-marks
+			 'transform-normalization 'show-mix-waveforms 'graph-style 'dot-size 'show-axes 'show-y-zero 'show-grid 'show-marks
 			 'spectro-x-angle 'spectro-x-scale 'spectro-y-angle 'spectro-y-scale 'spectro-z-angle 'spectro-z-scale
 			 'spectro-hop 'spectro-cutoff 'spectro-start 'graphs-horizontal 'x-axis-style 'beats-per-minute
 			 'cursor-size 'cursor-style
 			 ))
 (define new-values (list graph-as-wavogram 12 512 3 #t 32 graph-as-sonogram cauchy-window
 			 #t #t #t -120.0 3 32 .5 autocorrelation
-			 0 #t graph-lollipops 8 show-no-axes #t #f
+			 0 #t graph-lollipops 8 show-no-axes #t #t #f
 			 32.0 .5 32.0 .5 32.0 .5
 			 14 .3 .1 #f x-axis-in-samples 120.0
 			 15 cursor-cross
@@ -28993,6 +28999,7 @@ EDITS: 2
 		(list lisp-graph? 'lisp-graph? ind-1 ind-2 #t equal? equal? #t #f)
 		(list squelch-update 'squelch-update ind-1 ind-2 #t equal? equal? #t #f)
 		(list show-y-zero 'show-y-zero ind-1 ind-2 #t equal? equal? #t #t)
+		(list show-grid 'show-grid ind-1 ind-2 #t equal? equal? #t #t)
 		(list show-marks 'show-marks ind-1 ind-2 #f equal? equal? #t #t)
 		(list show-transform-peaks 'show-transform-peaks ind-1 ind-2 #t equal? equal? #t #t)
 		(list fft-log-frequency 'fft-log-frequency ind-1 ind-2 #t equal? equal? #t #t)
@@ -41529,7 +41536,7 @@ EDITS: 2
 		     selected-channel selected-data-color selected-graph-color selected-sound
 		     selection-position selection-color selection-creates-region selection-frames selection-member? selection?
 		     short-file-name show-axes show-backtrace show-controls show-transform-peaks show-indices show-listener
-		     show-marks show-mix-waveforms show-selection-transform show-y-zero sinc-width
+		     show-marks show-mix-waveforms show-selection-transform show-y-zero sinc-width show-grid 
 		     smooth-sound smooth-selection snd-print snd-spectrum snd-tempnam snd-version sound-files-in-directory
 		     sound-loop-info sound-widgets soundfont-info sound? sounds spectro-cutoff spectro-hop spectro-start
 		     spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale
@@ -41627,7 +41634,7 @@ EDITS: 2
 			 reverb-control? sash-color ladspa-dir save-dir save-state-file selected-data-color selected-graph-color
 			 selection-color selection-creates-region show-axes show-backtrace show-controls
 			 show-transform-peaks show-indices show-marks show-mix-waveforms show-selection-transform show-listener
-			 show-y-zero sinc-width spectro-cutoff spectro-hop spectro-start spectro-x-angle
+			 show-y-zero show-grid sinc-width spectro-cutoff spectro-hop spectro-start spectro-x-angle
 			 spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale speed-control
 			 speed-control-style speed-control-tones squelch-update sync sound-properties temp-dir text-focus-color tiny-font y-bounds
 			 transform-type trap-segfault optimization verbose-cursor vu-font vu-font-size vu-size wavelet-type x-bounds
@@ -42039,7 +42046,7 @@ EDITS: 2
 			      left-sample make-graph-data map-chan max-transform-peaks maxamp min-dB mix-region
 			      transform-normalization peak-env-info peaks play play-and-wait position->x position->y reverse-sound
 			      revert-sound right-sample sample samples->vct samples->sound-data save-sound save-sound-as scan-chan
-			      select-channel show-axes show-transform-peaks show-marks show-mix-waveforms show-y-zero
+			      select-channel show-axes show-transform-peaks show-marks show-mix-waveforms show-y-zero show-grid 
 			      spectro-cutoff spectro-hop spectro-start spectro-x-angle spectro-x-scale spectro-y-angle
 			      spectro-y-scale spectro-z-angle spectro-z-scale squelch-update transform-sample
 			      transform-samples->vct transform-samples-size transform-type update-transform-graph update-time-graph
@@ -42066,7 +42073,7 @@ EDITS: 2
 			      make-graph-data map-chan max-transform-peaks maxamp min-dB mix-region transform-normalization
 			      peak-env-info peaks play play-and-wait position->x position->y reverse-sound right-sample sample
 			      samples->vct samples->sound-data save-sound-as scan-chan show-axes show-transform-peaks show-marks
-			      show-mix-waveforms show-y-zero spectro-cutoff spectro-hop spectro-start spectro-x-angle
+			      show-mix-waveforms show-y-zero show-grid spectro-cutoff spectro-hop spectro-start spectro-x-angle
 			      spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale squelch-update
 			      transform-sample transform-samples->vct transform-samples-size transform-type
 			      update-transform-graph update-time-graph update-lisp-graph wavelet-type time-graph? time-graph-type
@@ -42092,7 +42099,7 @@ EDITS: 2
 			      make-graph-data max-transform-peaks maxamp min-dB transform-normalization peak-env-info play
 			      play-and-wait position->x position->y redo reverse-sound revert-sound right-sample sample
 			      samples->vct samples->sound-data save-sound scale-by scale-to show-axes show-transform-peaks
-			      show-marks show-mix-waveforms show-y-zero spectro-cutoff spectro-hop spectro-start spectro-x-angle
+			      show-marks show-mix-waveforms show-y-zero show-grid spectro-cutoff spectro-hop spectro-start spectro-x-angle
 			      spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale squelch-update
 			      src-sound transform-sample transform-samples->vct scale-sound-by scale-sound-to
 			      transform-samples-size transform-type undo update-transform-graph update-time-graph update-lisp-graph
@@ -42146,7 +42153,7 @@ EDITS: 2
 			      transform-size transform-graph-type fft-window transform-graph? graph-style lisp-graph? left-sample
 			      time-graph-style lisp-graph-style transform-graph-style
 			      make-graph-data max-transform-peaks maxamp min-dB transform-normalization peak-env-info
-			      reverse-sound right-sample show-axes show-transform-peaks show-marks show-mix-waveforms show-y-zero
+			      reverse-sound right-sample show-axes show-transform-peaks show-marks show-mix-waveforms show-y-zero show-grid 
 			      spectro-cutoff spectro-hop spectro-start spectro-x-angle spectro-x-scale spectro-y-angle
 			      spectro-y-scale spectro-z-angle spectro-z-scale squelch-update transform-samples->vct
 			      transform-samples-size transform-type update-transform-graph update-time-graph update-lisp-graph
@@ -42170,7 +42177,7 @@ EDITS: 2
 			      transform-graph? graph-style lisp-graph? left-sample make-graph-data max-transform-peaks maxamp
 			      time-graph-style lisp-graph-style transform-graph-style
 			      min-dB transform-normalization peak-env-info reverse-sound right-sample show-axes 
-			      show-transform-peaks show-marks show-mix-waveforms show-y-zero spectro-cutoff spectro-hop
+			      show-transform-peaks show-marks show-mix-waveforms show-y-zero show-grid spectro-cutoff spectro-hop
 			      spectro-start spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle
 			      spectro-z-scale squelch-update transform-samples->vct transform-samples-size transform-type
 			      update-transform-graph update-time-graph update-lisp-graph wavelet-type time-graph? time-graph-type

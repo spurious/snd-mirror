@@ -353,6 +353,18 @@ static void SetupIcon(GtkWidget *shell)
 }
 #endif
 
+color_t get_in_between_color(color_t fg, color_t bg)
+{
+  GdkColor gcolor;
+  GdkColor *new_color;
+  gcolor.red = (unsigned short)((fg->red + (2 * bg->red)) / 3);
+  gcolor.green = (unsigned short)((fg->green + (2 * bg->green)) / 3);
+  gcolor.blue = (unsigned short)((fg->blue + (2 * bg->blue)) / 3);
+  new_color = gdk_color_copy(&gcolor);
+  gdk_rgb_find_color(gdk_colormap_get_system(), new_color);
+  return(new_color);
+}
+
 static GdkColor *get_color(char *defined_color, char *fallback_color, char *second_fallback_color, bool use_white)
 {
   GdkColor tmp_color;
@@ -507,6 +519,9 @@ void snd_doit(int argc, char **argv)
   sx->sash_color =            get_color(SASH_COLOR,            NULL, NULL, false);
   sx->pushed_button_color =   get_color(PUSHED_BUTTON_COLOR,   NULL, NULL, false);
   sx->text_focus_color =      get_color(TEXT_FOCUS_COLOR,      NULL, NULL, false);
+
+  sx->grid_color = get_in_between_color(sx->data_color, sx->graph_color);
+  sx->selected_grid_color = get_in_between_color(sx->selected_data_color, sx->selected_graph_color);
 
   if ((!(set_tiny_font(DEFAULT_TINY_FONT))) &&
       (!(set_tiny_font(FALLBACK_FONT))))

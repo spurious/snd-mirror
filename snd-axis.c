@@ -285,6 +285,28 @@ void reload_number_font(void)
   #define X_NUMBERS_OFFSET -5
 #endif
 
+static void draw_horizontal_grid_line(int y, axis_info *ap, axis_context *ax)
+{
+  color_t old_color;
+  old_color = get_foreground_color(ap->cp, ax);
+  if (ap->cp->cgx->selected)
+    set_foreground_color(ap->cp, ax, ss->sgx->selected_grid_color);
+  else set_foreground_color(ap->cp, ax, ss->sgx->grid_color);
+  draw_line(ax, ap->y_axis_x0, y, ap->x_axis_x1, y);
+  set_foreground_color(ap->cp, ax, old_color);
+}
+
+static void draw_vertical_grid_line(int x, axis_info *ap, axis_context *ax)
+{
+  color_t old_color;
+  old_color = get_foreground_color(ap->cp, ax);
+  if (ap->cp->cgx->selected)
+    set_foreground_color(ap->cp, ax, ss->sgx->selected_grid_color);
+  else set_foreground_color(ap->cp, ax, ss->sgx->grid_color);
+  draw_line(ax, x, ap->x_axis_y0, x, ap->y_axis_y1);
+  set_foreground_color(ap->cp, ax, old_color);
+}
+
 void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t axes, bool printing, bool show_x_axis)
 {
   Latus width, height;
@@ -292,7 +314,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
   Latus axis_thickness, left_border_width, bottom_border_width, top_border_width, right_border_width;
   Latus inner_border_width, tick_label_width;
   Latus major_tick_length, minor_tick_length, x_tick_spacing, y_tick_spacing;
-  bool include_x_label, include_x_ticks, include_x_tick_labels, include_y_ticks, include_y_tick_labels;
+  bool include_x_label, include_x_ticks, include_x_tick_labels, include_y_ticks, include_y_tick_labels, include_grid;
   Latus x_label_width, x_label_height, x_number_height;
   int num_ticks, majy, miny, majx, minx, x, y, tx, ty, x0, y0;
   double fy, fx;
@@ -307,6 +329,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
   width = ap->width;
   height = ap->height;
   ap->graph_active = ((width > 4) || (height > 10));
+  include_grid = ((ap->cp) && (ap->cp->show_grid));
 
   if ((axes == SHOW_NO_AXES) || (width < 40) || (height < 40) || (ap->xmax == 0.0))
     {
@@ -788,6 +811,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 #endif
       draw_line(ax, majx, ty, x0, ty);
       if (printing) ps_draw_line(ap, majx, ty, x0, ty);
+      if (include_grid) draw_horizontal_grid_line(ty, ap, ax);
       tens = 0.0;
       fy -= tdy->step;
       while (fy >= tdy->flo)
@@ -814,6 +838,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 #endif
 	  draw_line(ax, x, ty, x0, ty);
 	  if (printing) ps_draw_line(ap, x, ty, x0, ty);
+	  if (include_grid) draw_horizontal_grid_line(ty, ap, ax);
 	  fy -= tdy->step;
 	}
       tens = 0.0;
@@ -843,6 +868,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 #endif
 	  draw_line(ax, x, ty, x0, ty);
 	  if (printing) ps_draw_line(ap, x, ty, x0, ty);
+	  if (include_grid) draw_horizontal_grid_line(ty, ap, ax);
 	  fy += tdy->step;
 	}
     }
@@ -868,6 +894,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 #endif
       draw_line(ax, tx, majy, tx, y0);
       if (printing) ps_draw_line(ap, tx, majy, tx, y0);
+      if (include_grid) draw_vertical_grid_line(tx, ap, ax);
       tens = 0.0;
       fx -= tdx->step;
       while (fx >= tdx->flo)
@@ -894,6 +921,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 #endif
 	  draw_line(ax, tx, y, tx, y0);
 	  if (printing) ps_draw_line(ap, tx, y, tx, y0);
+	  if (include_grid) draw_vertical_grid_line(tx, ap, ax);
 	  fx -= tdx->step;
 	}
       tens = 0.0;
@@ -923,6 +951,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 #endif
 	  draw_line(ax, tx, y, tx, y0);
 	  if (printing) ps_draw_line(ap, tx, y, tx, y0);
+	  if (include_grid) draw_vertical_grid_line(tx, ap, ax);
 	  fx += tdx->step;
 	}
     }

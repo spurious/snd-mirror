@@ -1851,7 +1851,7 @@ Here's somewhat brute-force code to play a sound a given number of times.
     (add-hook! <em class=red>stop-playing-hook</em> play-once)
     (<a class=quiet href="#play">play</a>)))
 
-(<a class=quiet href="#bindkey">bind-key</a> (char-&gt;integer #\p) 0 (lambda (num) (play-often (max 1 num))))
+(<a class=quiet href="#bindkey">bind-key</a> (char-&gt;integer #\p) 0 (lambda (num) "play often" (play-often (max 1 num))))
 </pre></td></tr></table></td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -5531,8 +5531,8 @@ the "P" key to play the previous version of the current sound:<br><br>
 (define (play-from-cursor current)
   (<em class=red>play</em> (<a class=quiet href="#cursor">cursor</a>) #f #f #f #f (if current #f (1- (<a class=quiet href="#editposition">edit-position</a>)))))
 
-(<a class=quiet href="#bindkey">bind-key</a> (char-&gt;integer #\p) 0 (lambda () (play-from-cursor #t) keyboard-no-action))
-(<a class=quiet href="#bindkey">bind-key</a> (char-&gt;integer #\P) 1 (lambda () (play-from-cursor #f) keyboard-no-action))
+(<a class=quiet href="#bindkey">bind-key</a> (char-&gt;integer #\p) 0 (lambda () "play from cursor" (play-from-cursor #t) keyboard-no-action))
+(<a class=quiet href="#bindkey">bind-key</a> (char-&gt;integer #\P) 1 (lambda () "play previous version from cursor" (play-from-cursor #f) keyboard-no-action))
 </pre></td></tr></table><br>
 The following code plays from the cursor with a moving ("tracking") cursor:<br><br>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
@@ -5708,6 +5708,7 @@ more like Emacs (which prompts for confirmation first):
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (<a class=quiet href="#bindkey">bind-key</a> (char-&gt;integer #\k) 0 
   (lambda ()
+    "close sound"
     (<em class=red>prompt-in-minibuffer</em>
      (format #f "close ~S (cr=yes)?" (<a class=quiet href="#shortfilename">short-file-name</a>))
      (lambda (response)
@@ -6659,6 +6660,16 @@ either <code>show-x-axis-unlabelled</code> or <code>show-all-axes-unlabelled</co
 <tr><td colspan=2></td></tr>
 
 
+<!-- show-grid -->
+<tr><td colspan=2>
+<code><a class=def name="showgrid">show-grid</a> (<em class=narg>snd chn</em>)</code>
+</td></tr>
+<tr><td></td><td>
+If #t, a background grid is displayed (default is #f).
+</td></tr>
+<tr><td colspan=2></td></tr>
+
+
 <!-- show-marks -->
 <tr><td colspan=2>
 <code><a class=def name="showmarks">show-marks</a> (<em class=narg>snd chn</em>)</code>
@@ -7567,11 +7578,13 @@ of the fft points, making the display smoother.
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (<a class=quiet href="#bindkey">bind-key</a> (char-&gt;integer #\p) 0 
   (lambda () 
+    "increase zero-pad"
     (set! (zero-pad) (+ (<em class=red>zero-pad</em>) 1)) 
     (<a class=quiet href="#updatetransformgraph">update-transform-graph</a>)))
 
 (<a class=quiet href="#bindkey">bind-key</a> (char-&gt;integer #\m) 0 
   (lambda () 
+    "decrease zero-pad"
     (set! (zero-pad) (- (<em class=red>zero-pad</em>) 1)) 
     (<a class=quiet href="#updatetransformgraph">update-transform-graph</a>)))
 </pre></td></tr></table></td></tr>
@@ -8952,24 +8965,25 @@ Cause <i>key</i> (an integer) with modifiers <i>state</i> (and preceding C-x if 
 when the graph widget has keyboard "focus".  If bind-key seems to be a no-op, try clicking in the graph to
 force it to take the focus.
 If <i>origin</i> is included, it is the name reported if an error occurs.  The ugly default is "user key func".
+If you include a documentation string in the function, it is included in the Help menu's Key Bindings output.
 
 </td></tr><tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (<em class=red>bind-key</em> (char-&gt;integer #\a) 4 
           (lambda () 
-            "C-a prints hi in listener"
+            "print 'hi' in listener"
             (<a class=quiet href="#sndprint">snd-print</a> \"hi\") 
             <a class=quiet href="#bindkey">cursor-in-view</a>))
 
 (<em class=red>bind-key</em> (char-&gt;integer #\p) 0 
           (lambda () 
-            "p moves cursor to left edge of window"
+            "move cursor to left edge of window"
             <a class=quiet href="#bindkey">cursor-on-left</a>)
           #f "#\\p-&gt;cursor-on-left")
 
 (<em class=red>bind-key</em> (char-&gt;integer #\v) 4
 	  (lambda ()
-            "C-v redefined to behave as in Emacs (move ahead window)"
+            "move ahead one window"
 	    (if (&lt; (<a class=quiet href="#rightsample">right-sample</a>) (<a class=quiet href="#frames">frames</a>))
 		(set! (<a class=quiet href="#leftsample">left-sample</a>) (<a class=quiet href="#rightsample">right-sample</a>)))
 	    <a class=quiet href="#bindkey">keyboard-no-action</a>))
@@ -8995,8 +9009,10 @@ setting how how many samples to jump for the C-p and C-n keys.  We can implement
 <tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define line-size 128)
-(<em class=red>bind-key</em> (char-&gt;integer #\n) 4 (lambda (arg) (set! (<a class=quiet href="#cursor">cursor</a>) (+ (<a class=quiet href="#cursor">cursor</a>) (* line-size arg)))))
-(<em class=red>bind-key</em> (char-&gt;integer #\p) 4 (lambda (arg) (set! (<a class=quiet href="#cursor">cursor</a>) (- (<a class=quiet href="#cursor">cursor</a>) (* line-size arg)))))
+(<em class=red>bind-key</em> (char-&gt;integer #\n) 4 
+  (lambda (arg) "move cursor ahead 128 samples" (set! (<a class=quiet href="#cursor">cursor</a>) (+ (<a class=quiet href="#cursor">cursor</a>) (* line-size arg)))))
+(<em class=red>bind-key</em> (char-&gt;integer #\p) 4 
+  (lambda (arg) "move cursor back 128 samples" (set! (<a class=quiet href="#cursor">cursor</a>) (- (<a class=quiet href="#cursor">cursor</a>) (* line-size arg)))))
 </pre></td></tr></table></td></tr>
 
 <tr><td></td><td>
@@ -9006,12 +9022,12 @@ setting how how many samples to jump for the C-p and C-n keys.  We can implement
 <tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (<em class=red>bind-key</em> (char-&gt;integer #\o) 0 
-  (lambda () 
+  (lambda () "play oboe.snd"
     (<a class=quiet href="#play">play</a> "oboe.snd") 
     <a class=quiet href="#bindkey">keyboard-no-action</a>))
 
 (<em class=red>bind-key</em> (char-&gt;integer #\p) 0 
-  (lambda () 
+  (lambda () "play pistol.snd"
     (<a class=quiet href="#play">play</a> "pistol.snd") 
     <a class=quiet href="#bindkey">keyboard-no-action</a>))
 </pre></td></tr></table></td></tr>
@@ -9024,7 +9040,7 @@ forward two samples in the graph each time we type "l":
 <tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (<em class=red>bind-key</em> (char-&gt;integer #\l) 0 
-  (lambda () 
+  (lambda () "move window forward 2 samples"
     (set! (<a class=quiet href="#leftsample">left-sample</a> 0 0) (+ 2 (<a class=quiet href="#leftsample">left-sample</a> 0 0))) 
     <a class=quiet href="#bindkey">keyboard-no-action</a>))
 </pre></td></tr></table></td></tr>
@@ -9036,7 +9052,7 @@ Or, more useful perhaps, have C-c set the cursor at a particular sample:
 <tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (<em class=red>bind-key</em> (char-&gt;integer #\c) 4
-  (lambda (arg)
+  (lambda (arg) "move cursor to arg"
     (set! (<a class=quiet href="#cursor">cursor</a>) arg) 
     <a class=quiet href="#bindkey">cursor-in-middle</a>))
 </pre></td></tr></table></td></tr>
@@ -9045,7 +9061,7 @@ Or, more useful perhaps, have C-c set the cursor at a particular sample:
 The key codes can usually be found in the X header file X11R6/include/X11/keysymdef.h
 The End key if #xff57, so we could bind it to cause the full sound to be displayed:
 <pre>
-  (<em class=red>bind-key</em> #xff57 0 (lambda () (set! (<a class=quiet href="#xbounds">x-bounds</a>) (list 0.0 (/ (<a class=quiet href="#frames">frames</a>) (<a class=quiet href="#srate">srate</a>))))))
+  (<em class=red>bind-key</em> #xff57 0 (lambda () "view full sound" (set! (<a class=quiet href="#xbounds">x-bounds</a>) (list 0.0 (/ (<a class=quiet href="#frames">frames</a>) (<a class=quiet href="#srate">srate</a>))))))
 </pre>
 A similar set rebinds the arrow keys to give much more precise window position and size control:
 </td></tr>
@@ -9063,8 +9079,8 @@ A similar set rebinds the arrow keys to give much more precise window position a
 	(set! (<a class=quiet href="#leftsample">left-sample</a>) (max 0 (- lo samps-per-pixel))))
     keyboard-no-action))
 
-(<em class=red>bind-key</em> #xff51 0 (lambda () (move-one-pixel (<a class=quiet href="#selectedsound">selected-sound</a>) (<a class=quiet href="#selectedchannel">selected-channel</a>) #f))) ;left
-(<em class=red>bind-key</em> #xff53 0 (lambda () (move-one-pixel (<a class=quiet href="#selectedsound">selected-sound</a>) (<a class=quiet href="#selectedchannel">selected-channel</a>) #t))) ;right
+(<em class=red>bind-key</em> #xff51 0 (lambda () "move back one pixel" (move-one-pixel (<a class=quiet href="#selectedsound">selected-sound</a>) (<a class=quiet href="#selectedchannel">selected-channel</a>) #f)))    ;left
+(<em class=red>bind-key</em> #xff53 0 (lambda () "move forward one pixel" (move-one-pixel (<a class=quiet href="#selectedsound">selected-sound</a>) (<a class=quiet href="#selectedchannel">selected-channel</a>) #t))) ;right
 
 
 (define (<a NAME="zoomonepixel">zoom-one-pixel</a> s c in)
@@ -9085,8 +9101,8 @@ A similar set rebinds the arrow keys to give much more precise window position a
 	  (set! (<a class=quiet href="#xzoomslider">x-zoom-slider</a>) (exact-&gt;inexact (/ (min len (+ (- hi lo) (* 2 samps-per-pixel))) len)))))
     keyboard-no-action))
 
-(<em class=red>bind-key</em> #xff52 0 (lambda () (zoom-one-pixel (<a class=quiet href="#selectedsound">selected-sound</a>) (<a class=quiet href="#selectedchannel">selected-channel</a>) #f))) ;up
-(<em class=red>bind-key</em> #xff54 0 (lambda () (zoom-one-pixel (<a class=quiet href="#selectedsound">selected-sound</a>) (<a class=quiet href="#selectedchannel">selected-channel</a>) #t))) ;down
+(<em class=red>bind-key</em> #xff52 0 (lambda () "zoom out one pixel" (zoom-one-pixel (<a class=quiet href="#selectedsound">selected-sound</a>) (<a class=quiet href="#selectedchannel">selected-channel</a>) #f))) ;up
+(<em class=red>bind-key</em> #xff54 0 (lambda () "zoom in one pixel" (zoom-one-pixel (<a class=quiet href="#selectedsound">selected-sound</a>) (<a class=quiet href="#selectedchannel">selected-channel</a>) #t)))  ;down
 </pre></td></tr></table></td></tr>
 
 <tr><td></td><td>
@@ -9131,14 +9147,17 @@ In the next example, we rebind them to treat same-sense zero-crossings as line m
   (set! (<a class=quiet href="#cursor">cursor</a>) (find-zero forwards)))
 
 (<em class=red>bind-key</em> (char-&gt;integer #\k) 4 (lambda (arg) 
+                                  "delete to next zero crossing"
 				  (do ((i 0 (1+ i))) 
 				      ((= i (abs arg)))
 				    (delete-to-zero (&gt; arg 0)))))
 (<em class=red>bind-key</em> (char-&gt;integer #\n) 4 (lambda (arg) 
+                                  "go to next zero crossing"
 				  (do ((i 0 (1+ i))) 
 				      ((= i (abs arg)))
 				    (go-to-zero (&gt; arg 0)))))
 (<em class=red>bind-key</em> (char-&gt;integer #\p) 4 (lambda (arg) 
+                                  "go to previous zero crossing"
 				  (do ((i 0 (1+ i))) 
 				      ((= i (abs arg)))
 				    (go-to-zero (&lt; arg 0)))))
@@ -9287,7 +9306,7 @@ execute the keyboard command <i>key</i> with modifier keys <i>state</i>.
 
 <!-- key-binding -->
 <tr><td colspan=2>
-<code><a class=def name="keybinding">key-binding</a> (key state extended)</code></td></tr>
+<code><a class=def name="keybinding">key-binding</a> (key <i>(state 0) extended</i>)</code></td></tr>
 <tr><td></td><td>
 the user-defined (not built-in) procedure, if any, currently bound to key+state+extended.
 <i>state</i> is the bitwise OR of shift: 1, control: 4, meta: 8.  <i>extended</i> is #t if the command
@@ -9304,6 +9323,7 @@ starts the help dialog with help related to the selection if "h" is typed in the
 <pre>
   (<a class=quiet href="#bindkey">bind-key</a> (char-&gt;integer #\h) 0 
     (lambda ()
+      "start help dialog based on listener selected text"
       (let ((subject (<em class=red>listener-selection</em>)))
 	(if subject
             (<a class=quiet href="#helpdialog">help-dialog</a> subject (<a class=quiet href="#sndhelp">snd-help</a> subject))))))

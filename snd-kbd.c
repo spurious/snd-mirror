@@ -192,7 +192,15 @@ static void execute_named_macro(chan_info *cp, char *name, off_t count)
     }
 }
 
-typedef struct {int key; int state; int args; XEN func; bool cx_extended; char *origin;} key_entry; /* Sun/Forte C define "extended" somewhere */
+typedef struct {
+  int key; 
+  int state; 
+  int args; 
+  XEN func; 
+  bool cx_extended; /* Sun/Forte C defines "extended" somewhere */
+  char *origin;
+} key_entry; 
+
 static key_entry *user_keymap = NULL;
 static int keymap_size = 0;
 static int keymap_top = 0;
@@ -210,15 +218,150 @@ static int in_user_keymap(int key, int state, bool cx_extended)
   return(-1);
 }
 
+bool map_over_key_bindings(bool (*func)(int, int, bool, XEN, char *))
+{
+  int i;
+  for (i = 0; i < keymap_top; i++)
+    if (XEN_BOUND_P(user_keymap[i].func))
+      {
+	bool val;
+	val = (*func)(user_keymap[i].key, user_keymap[i].state, user_keymap[i].cx_extended, user_keymap[i].func, user_keymap[i].origin);
+	if (val) return(val);
+      }
+  return(false);
+}
+
+#define NUM_BUILT_IN_KEY_BINDINGS 77
+static key_entry built_in_key_bindings[NUM_BUILT_IN_KEY_BINDINGS] = {
+  {snd_K_Down, 0, 0, XEN_FALSE, false, "zoom out"},
+  {snd_K_Up, 0, 0, XEN_FALSE, false, "zoom in"},
+  {snd_K_Left, 0, 0, XEN_FALSE, false, "move window left"},
+  {snd_K_Right, 0, 0, XEN_FALSE, false, "move window right"},
+  {snd_K_less, 0, 0, XEN_FALSE, false, "move cursor to sample 0"},
+  {snd_K_greater, 0, 0, XEN_FALSE, false, "move cursor to last sample"},
+
+  {snd_K_less, snd_ControlMask, 0, XEN_FALSE, false, "move cursor to sample 0"},
+  {snd_K_greater, snd_ControlMask, 0, XEN_FALSE, false, "move cursor to last sample"},
+  {snd_K_a, snd_ControlMask, 0, XEN_FALSE, false, "move cursor to window start"},
+  {snd_K_b, snd_ControlMask, 0, XEN_FALSE, false, "move cursor back one sample"},
+  {snd_K_d, snd_ControlMask, 0, XEN_FALSE, false, "delete sample at cursor"},
+  {snd_K_e, snd_ControlMask, 0, XEN_FALSE, false, "move cursor to window end"},
+  {snd_K_f, snd_ControlMask, 0, XEN_FALSE, false, "move cursor ahead one sample"},
+  {snd_K_g, snd_ControlMask, 0, XEN_FALSE, false, "abort current command"},
+  {snd_K_h, snd_ControlMask, 0, XEN_FALSE, false, "delete previous sample"},
+  {snd_K_i, snd_ControlMask, 0, XEN_FALSE, false, "display cursor info"},
+  {snd_K_j, snd_ControlMask, 0, XEN_FALSE, false, "goto mark"},
+  {snd_K_k, snd_ControlMask, 0, XEN_FALSE, false, "delete one line's worth of samples"},
+  {snd_K_l, snd_ControlMask, 0, XEN_FALSE, false, "position window so cursor is in the middle"},
+  {snd_K_m, snd_ControlMask, 0, XEN_FALSE, false, "place (or remove) mark at cursor location"},
+  {snd_K_n, snd_ControlMask, 0, XEN_FALSE, false, "move cursor ahead one 'line'"},
+  {snd_K_o, snd_ControlMask, 0, XEN_FALSE, false, "insert one zero sample at cursor"},
+  {snd_K_p, snd_ControlMask, 0, XEN_FALSE, false, "move cursor back one 'line'"},
+  {snd_K_q, snd_ControlMask, 0, XEN_FALSE, false, "play current channel starting at cursor"},
+  {snd_K_r, snd_ControlMask, 0, XEN_FALSE, false, "search backwards"},
+  {snd_K_s, snd_ControlMask, 0, XEN_FALSE, false, "search forwards"},
+  {snd_K_t, snd_ControlMask, 0, XEN_FALSE, false, "stop playing"},
+  {snd_K_u, snd_ControlMask, 0, XEN_FALSE, false, "start arg count definition."},
+  {snd_K_v, snd_ControlMask, 0, XEN_FALSE, false, "move cursor to mid-window"},
+  {snd_K_w, snd_ControlMask, 0, XEN_FALSE, false, "delete selection"},
+  {snd_K_y, snd_ControlMask, 0, XEN_FALSE, false, "insert selection."},
+  {snd_K_z, snd_ControlMask, 0, XEN_FALSE, false, "set sample at cursor to 0.0"},
+  {snd_K_underscore, snd_ControlMask, 0, XEN_FALSE, false, "undo"},
+  {snd_K_space, snd_ControlMask, 0, XEN_FALSE, false, "start selection definition"},
+
+  {snd_K_g, snd_ControlMask | snd_MetaMask, 0, XEN_FALSE, false, "clear listener"},
+  {snd_K_less, snd_MetaMask, 0, XEN_FALSE, false, "move cursor to sample 0"},
+  {snd_K_greater, snd_MetaMask, 0, XEN_FALSE, false, "move cursor to last sample"},
+
+  {snd_K_a, 0, 0, XEN_FALSE, true, "apply envelope to selection"},
+  {snd_K_b, 0, 0, XEN_FALSE, true, "position window so cursor is on left margin"},
+  {snd_K_c, 0, 0, XEN_FALSE, true, "define selection from cursor to nth mark"},
+  {snd_K_d, 0, 0, XEN_FALSE, true, "set temp dir name"},
+  {snd_K_e, 0, 0, XEN_FALSE, true, "execute keyboard macro"},
+  {snd_K_f, 0, 0, XEN_FALSE, true, "position window so cursor is on right margin"},
+  {snd_K_i, 0, 0, XEN_FALSE, true, "insert region"},
+  {snd_K_j, 0, 0, XEN_FALSE, true, "goto named mark"},
+  {snd_K_k, 0, 0, XEN_FALSE, true, "close file"},
+  {snd_K_l, 0, 0, XEN_FALSE, true, "position selection in mid-view"},
+  {snd_K_o, 0, 0, XEN_FALSE, true, "move to next or previous graph"},
+  {snd_K_p, 0, 0, XEN_FALSE, true, "play selection or region n"},
+  {snd_K_q, 0, 0, XEN_FALSE, true, "mix in selection"},
+  {snd_K_r, 0, 0, XEN_FALSE, true, "redo"},
+  {snd_K_u, 0, 0, XEN_FALSE, true, "undo"},
+  {snd_K_v, 0, 0, XEN_FALSE, true, "position window over selection"},
+  {snd_K_w, 0, 0, XEN_FALSE, true, "save selection as file"},
+  {snd_K_z, 0, 0, XEN_FALSE, true, "smooth selection"},
+  {snd_K_slash, 0, 0, XEN_FALSE, true, "place named mark"},
+  {snd_K_openparen, 0, 0, XEN_FALSE, true, "begin keyboard macro definition"},
+  {snd_K_closeparen, 0, 0, XEN_FALSE, true, "end keyboard macro definition"},
+
+  {snd_K_a, snd_ControlMask, 0, XEN_FALSE, true, "apply envelope"},
+  {snd_K_b, snd_ControlMask, 0, XEN_FALSE, true, "set x window bounds (preceded by 1 arg)"},
+  {snd_K_c, snd_ControlMask, 0, XEN_FALSE, true, "hide control panel"},
+  {snd_K_d, snd_ControlMask, 0, XEN_FALSE, true, "print"},
+  {snd_K_e, snd_ControlMask, 0, XEN_FALSE, true, "give last keyboard macro a name"},
+  {snd_K_f, snd_ControlMask, 0, XEN_FALSE, true, "open file"},
+  {snd_K_g, snd_ControlMask, 0, XEN_FALSE, true, "abort command"},
+  {snd_K_i, snd_ControlMask, 0, XEN_FALSE, true, "insert file"},
+  {snd_K_m, snd_ControlMask, 0, XEN_FALSE, true, "add named mark"},
+  {snd_K_o, snd_ControlMask, 0, XEN_FALSE, true, "show control panel"},
+  {snd_K_p, snd_ControlMask, 0, XEN_FALSE, true, "set window size (preceded by 1 arg)"},
+  {snd_K_q, snd_ControlMask, 0, XEN_FALSE, true, "mix in file"},
+  {snd_K_r, snd_ControlMask, 0, XEN_FALSE, true, "redo"},
+  {snd_K_s, snd_ControlMask, 0, XEN_FALSE, true, "save file"},
+  {snd_K_u, snd_ControlMask, 0, XEN_FALSE, true, "undo"},
+  {snd_K_v, snd_ControlMask, 0, XEN_FALSE, true, "set window size as percentage of total"},
+  {snd_K_w, snd_ControlMask, 0, XEN_FALSE, true, "save current channel in file"},
+  {snd_K_z, snd_ControlMask, 0, XEN_FALSE, true, "smooth using cosine"},
+};
+
+char *key_binding_description(int key, int state, bool cx_extended)
+{
+  XEN value, help_text = XEN_FALSE;
+  int pos;
+  if ((key < MIN_KEY_CODE) || (key > MAX_KEY_CODE) ||
+      (state < MIN_KEY_STATE) || (state > MAX_KEY_STATE))
+    return(NULL);
+  pos = in_user_keymap(key, state, cx_extended);
+  if (pos >= 0)
+    {
+#if HAVE_GUILE
+      value = user_keymap[pos].func;
+      help_text = XEN_PROCEDURE_HELP(value);            /* (procedure-property ...) */
+      if (XEN_FALSE_P(help_text))
+	{
+	  help_text = XEN_PROCEDURE_SOURCE_HELP(value); /* (procedure-documentation ...) -- this is the first line of source if string */
+	  if (XEN_FALSE_P(help_text))
+	    help_text = scm_procedure_name(value);
+	}
+      if (!(XEN_FALSE_P(help_text))) 
+	{
+	  if (XEN_STRING_P(help_text))
+	    return(XEN_TO_C_STRING(help_text));
+	  return(XEN_AS_STRING(help_text));
+	}
+#endif
+      if (user_keymap[pos].origin)
+	return(user_keymap[pos].origin);
+      return("indescribable user-defined action"); /* NULL would mean "no binding" */
+    }
+  for (pos = 0; pos < NUM_BUILT_IN_KEY_BINDINGS; pos++)
+    if ((built_in_key_bindings[pos].key == key) && 
+	(built_in_key_bindings[pos].state == state) && 
+	(built_in_key_bindings[pos].cx_extended == cx_extended))
+      return(built_in_key_bindings[pos].origin);
+  return(NULL);
+}
+
 static XEN g_key_binding(XEN key, XEN state, XEN cx_extended)
 {
-  #define H_key_binding "(" S_key_binding " key state (extended #f)): function bound to this key"
+  #define H_key_binding "(" S_key_binding " key (state 0) (extended #f)): function bound to this key"
   int i, k, s;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(key), key, XEN_ARG_1, S_key_binding, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(state), state, XEN_ARG_2, S_key_binding, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(state), state, XEN_ARG_2, S_key_binding, "an integer");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(cx_extended), cx_extended, XEN_ARG_3, S_key_binding, "a boolean");
   k = XEN_TO_SMALL_C_INT(key);
-  s = XEN_TO_SMALL_C_INT(state);
+  s = XEN_TO_C_INT_OR_ELSE(state, 0);
   if ((k < MIN_KEY_CODE) || (k > MAX_KEY_CODE) ||
       (s < MIN_KEY_STATE) || (s > MAX_KEY_STATE))
     XEN_ERROR(NO_SUCH_KEY,
@@ -1963,7 +2106,7 @@ void g_init_kbd(void)
   XEN_DEFINE_CONSTANT(S_cursor_in_middle,        CURSOR_IN_MIDDLE,                    H_cursor_in_middle);
   XEN_DEFINE_CONSTANT(S_keyboard_no_action,      KEYBOARD_NO_ACTION,                  H_keyboard_no_action);
 
-  XEN_DEFINE_PROCEDURE(S_key_binding,            g_key_binding_w,            2, 1, 0, H_key_binding);
+  XEN_DEFINE_PROCEDURE(S_key_binding,            g_key_binding_w,            1, 2, 0, H_key_binding);
   XEN_DEFINE_PROCEDURE(S_bind_key,               g_bind_key_w,               3, 2, 0, H_bind_key);
   XEN_DEFINE_PROCEDURE(S_unbind_key,             g_unbind_key_w,             2, 1, 0, H_unbind_key);
   XEN_DEFINE_PROCEDURE(S_key,                    g_key_w,                    2, 2, 0, H_key);

@@ -259,6 +259,14 @@ static void back_to_start(void)
   if (full_str) g_free(full_str);
 }
 
+void listener_delete_text(int new_end)
+{
+  int old_end;
+  old_end = gtk_text_buffer_get_char_count(gtk_text_view_get_buffer(GTK_TEXT_VIEW(listener_text)));
+  if (new_end < old_end)
+    sg_text_delete(listener_text, new_end, old_end);
+}
+
 static void clear_back_to_prompt(GtkWidget *w)
 {
   int beg, end;
@@ -592,8 +600,14 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
 							      text_transpose(listener_text);
 							    }
 							  else
-							    return(false);
-							}}}}}}}}}}}}}}
+							    {
+							      if ((event->keyval == snd_K_underscore) && (event->state & snd_ControlMask))
+								{
+								  backup_listener_to_previous_command();
+								}
+							      else
+								return(false);
+							    }}}}}}}}}}}}}}}
   g_signal_stop_emission(GTK_OBJECT(w), g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(w))), 0);
   return(false);
 }
