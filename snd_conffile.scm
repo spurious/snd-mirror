@@ -5,26 +5,29 @@
 
 ;; This config-file is primarly made for use with gtk, so by
 ;; using motif you will get less functionality. (things change)
-(define use-gtk (if (provided? 'snd-gtk)
-		    #t
-		    #f))
 
 
 
 ;; Set various variables. See Snd documentation.
 
-(set! %load-path (append (if use-gtk
+#!
+(set! %load-path (append (if (provided? 'snd-gtk)
 			     '("/home/kjetil/snd-7-gtk" "/home/kjetil/snd-7-gtk/dlp")
 			     '("/home/kjetil/snd-7" "/home/kjetil/snd-7/dlp"))
 			 %load-path))
+!#
+
+
+
+(load-from-path "gui.scm")
 
 
 ;;(set! snd-remember-paths #t)
 
 (set! (just-sounds) #t)
 
-(set! (temp-dir) "/lyd/local/tmp")
-(set! (save-dir) "/lyd/local/tmp")
+;;(set! (temp-dir) "/lyd/local/tmp")
+;;(set! (save-dir) "/lyd/local/tmp")
 
 (set! (default-output-srate) 44100)
 (set! (default-output-type) mus-riff)
@@ -182,14 +185,14 @@
 ;; Set different color on the cursor when playing selection.
 (add-hook! start-playing-selection-hook
 	   (lambda ()
-;;	     (display "Start playing selection")(newline)
+	     ;;(display "Start playing selection")(newline)
 	     (set! (cursor-color) green)
 	     #f))
 
 
 (add-hook! stop-playing-selection-hook
 	   (lambda ()
-;;	     (display "Stop playing selection")(newline)
+	     ;;(display "Stop playing selection")(newline)
 	     (set! (cursor-color) blue)
 	     #f))
 
@@ -461,8 +464,7 @@
 
 (define region-generation 0)
 
-
-(begin
+(if #t (begin
   (define about-to-move #f)
   (define selection-starting-point #f)
   (define stop-handling #f)
@@ -599,8 +601,9 @@
 		       (g_signal_connect w "button_release_event"
 					 (lambda (w e i)
 					   (set! ispressed #f)
-					   (mouse-release-callback (.x (GDK_EVENT_BUTTON e)) (.state (GDK_EVENT_BUTTON e))))))))
-	       #f)))
+					   (mouse-release-callback (.x (GDK_EVENT_BUTTON e)) (.state (GDK_EVENT_BUTTON e)))
+					   )))))
+	       #f))))
 
 
 
@@ -828,87 +831,45 @@
 
 (add-hook! after-open-hook
 	   (lambda (snd)
-	     (if (not use-gtk)
-		 (begin
-		   (let* ((oldplay (find-child (list-ref (sound-widgets snd) 2) "play"))
-			  (playpos (widget-position oldplay)))
-		     
-		     (let ((loop (XtCreateManagedWidget "loop" xmToggleButtonWidgetClass (XtParent oldplay)
-							(list XmNbackground       (basic-color)
-							      XmNset              islooping
-							      XmNx                (car playpos)
-							      XmNselectColor      (yellow-pixel)))))
-		       (XtAddCallback loop
-				      XmNvalueChangedCallback
-				      (lambda (w c i)
-					(if (.set i)
-					    (begin
-					      (set! islooping #t))
-					    (begin 
-					      (set! islooping #f)))
-					(for-each (lambda (s)
-						    (if (not (= s snd))
-							(XtSetValues (find-child (list-ref (sound-widgets s) 2) "loop")
-								     (list XmNset islooping))))
-						  (sounds))
-					(focus-widget (list-ref (channel-widgets snd 0) 0)))))
-		     (XtUnmanageChild oldplay)))
-		 (let ((nameform (GTK_BOX (list-ref (sound-widgets snd) 10)))
-		       (loop (gtk_check_button_new_with_label "loop")))
-		   (gtk_box_pack_end nameform
-				     loop
-				     #f #f 0)
-		   (gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON loop) #t)
-		   (g_signal_connect loop "button_press_event"
-				     (lambda (w e i)
-				       (set! islooping (if islooping #f #t))
-				       (for-each (lambda (s)
-						   (gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (gtk-get-nameform-button s "loop")) islooping)
-						   (focus-widget (list-ref (channel-widgets snd 0) 0)))
-						 (sounds))))
-		   (gtk_widget_show loop)
-		   (hide-widget (GTK_WIDGET (gtk-get-nameform-button snd "play")))))
-
+	     (let ((oldplay (if use-gtk
+				(gtk-get-nameform-button snd "play")
+				(find-child (list-ref (sound-widgets snd) 2) "play"))))
+	       (checkbutton-create (if use-gtk
+				       (list-ref (sound-widgets snd) 10)
+				       (XtParent oldplay))
+				   "loop"
+				   (lambda (on)
+				     (set! islooping on)
+				     (for-each (lambda (s)
+						 (if (not (= s snd)) (checkbutton-set (if use-gtk
+											  (gtk-get-nameform-button s "loop")
+											  (find-child (list-ref (sound-widgets s) 2) "loop"))
+										      islooping)))
+					       (sounds))
+				     (focus-widget (list-ref (channel-widgets snd 0) 0)))
+				   islooping
+				   (if use-gtk '() (list XmNx (car (widget-position oldplay)))))
+	       (checkbutton-remove oldplay))
+	     
 	     (if (> (channels snd) 1)
 		 (set! (channel-style snd) channels-combined))
 	     (set! (sync snd) (get-unique-sync-num))
 	     
-	     (if (not use-gtk)
-		 (let* ((oldsync (find-child (list-ref (sound-widgets snd) 2) "sync"))
-			(syncpos (widget-position oldsync))
-			(newsync (XtCreateManagedWidget "sync" xmToggleButtonWidgetClass (XtParent oldsync)
-							(list XmNbackground       (basic-color)
-							      XmNset              #t
-							      XmNx                (car syncpos)
-							      XmNselectColor      (yellow-pixel)))))
-		   (XtAddCallback newsync
-				  XmNvalueChangedCallback
-				  (lambda (w c i)
-				    (if (.set i)
-					(begin
-					  (set! (sync snd) (get-unique-sync-num)))
-					(begin 
-					  (set! (sync snd) 0)))
-				    (focus-widget (list-ref (channel-widgets snd 0) 0))))
-		   (XtUnmanageChild oldsync))
-		 (begin
-		   (hide-widget (GTK_WIDGET (gtk-get-nameform-button snd "sync")))
-		   (let ((newsync (gtk_check_button_new_with_label "sync")))
-		     (gtk_box_pack_end (GTK_BOX (list-ref (sound-widgets snd) 10))
-				       newsync
-				       #f #f 0)
-		     (gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON newsync) #t)
-		     (g_signal_connect newsync "button_press_event"
-				       (lambda (w e i)
-					 (if (> (sync snd) 0)
-					     (begin
-					       (set! (sync snd) 0)
-					       (gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON newsync) #f))
-					     (begin
-					       (set! (sync snd) (get-unique-sync-num))
-					       (gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON newsync) #t)))
-					 (focus-widget (list-ref (channel-widgets snd 0) 0))))
-		     (gtk_widget_show newsync))))
+	     (let ((oldsync (if use-gtk
+				(gtk-get-nameform-button snd "sync")
+				(find-child (list-ref (sound-widgets snd) 2) "sync"))))
+	       (checkbutton-create (if use-gtk
+				       (list-ref (sound-widgets snd) 10)
+				       (XtParent oldsync))
+				   "sync"
+				   (lambda (on)
+				     (if on
+					 (set! (sync snd) (get-unique-sync-num))
+					 (set! (sync snd) 0))
+				     (focus-widget (list-ref (channel-widgets snd 0) 0)))
+				   #t
+				   (if use-gtk '() (list XmNx (car (widget-position oldsync)))))
+	       (checkbutton-remove oldsync))
 	  
 	     #f))
 
@@ -928,67 +889,73 @@
 (load-from-path "examp.scm")
 
 
+
 ;;;;;;;;;;;;;;;;;
 ;; Makes the buffer-menu a bit more pleasent to use. -Kjetil.
 ;;;;;;;;;;;;;;;;
 ;;(set! last-height 500)
 ;;(set! last-width 700)
 
-(define (my-switch-to-buf filename)
-  (let* ((width (car (widget-size (car (sound-widgets (car current-buffer))))))
-	 (height (cadr (widget-size (car (sound-widgets (car current-buffer)))))))
-    (call-with-current-continuation
-     (lambda (give-up)
-       (if (or (not (string? filename))
-	       (= (string-length filename) 0))
-	   (let ((temp current-buffer))
-	     (if last-buffer
-		 (set! current-buffer last-buffer)
-		 (let ((index (new-sound)))
-		   (set! current-buffer (list index 0))))
-	     (set! last-buffer temp))
-	   (let ((index (find-sound filename)))
-	     (if index
-		 (begin
-		   (set! last-buffer current-buffer)
-		   (set! current-buffer (list index 0)))
-		 (give-up (report-in-minibuffer (format #f "can't find ~A" response))))))
-       (close-all-buffers)
-       (report-in-minibuffer "")
-       (open-current-buffer width height)))))
 
-;;(set! (widget-size (car (sound-widgets (car current-buffer)))) (list 1000 1000) )
+;; For gtk, the -notebook switch doesn't seem to work very well.
+;; For motif, the -notebook switch doesn't seem to work very well.
+(if (or (not use-gtk)
+	(not (string=? "GtkNotebook" (gtk_widget_get_name (list-ref (main-widgets) 5)))))
+    (begin
+      (define (my-switch-to-buf filename)
+	(let* ((width (car (widget-size (car (sound-widgets (car current-buffer))))))
+	       (height (cadr (widget-size (car (sound-widgets (car current-buffer)))))))
+	  (call-with-current-continuation
+	   (lambda (give-up)
+	     (if (or (not (string? filename))
+		     (= (string-length filename) 0))
+		 (let ((temp current-buffer))
+		   (if last-buffer
+		       (set! current-buffer last-buffer)
+		       (let ((index (new-sound)))
+			 (set! current-buffer (list index 0))))
+		   (set! last-buffer temp))
+		 (let ((index (find-sound filename)))
+		   (if index
+		       (begin
+			 (set! last-buffer current-buffer)
+			 (set! current-buffer (list index 0)))
+		       (give-up (report-in-minibuffer (format #f "can't find ~A" response))))))
+	     (close-all-buffers)
+	     (report-in-minibuffer "")
+	     (open-current-buffer width height)))))
+      
+      ;;(set! (widget-size (car (sound-widgets (car current-buffer)))) (list 1000 1000) )
+      
+      (define (my-open-buffer filename)
+	"(open-buffer filename) adds a menu item that will select filename (use with open-hook)"
+	(if (member filename (map (lambda (snd) (file-name snd))
+				  (sounds)))
+	    #t
+	    (begin
+	      (add-to-menu buffer-menu 
+			   filename 
+			   (lambda () (my-switch-to-buf filename)))
+	      #f)))
+      
+      
+      (define buffer-menu (add-to-main-menu "Buffers"))
+      (add-hook! open-hook my-open-buffer)
+      (add-hook! close-hook close-buffer)
+      (bind-key (char->integer #\b) 0 (lambda (x) (switch-to-buf)))
+      (add-hook! close-hook xb-close)
+      (add-hook! after-open-hook xb-open)	    
+      
+      
 
-(define (my-open-buffer filename)
-  "(open-buffer filename) adds a menu item that will select filename (use with open-hook)"
-  (if (member filename (map (lambda (snd) (file-name snd))
-			    (sounds)))
-      #t
-      (begin
-	(add-to-menu buffer-menu 
-		     filename 
-		     (lambda () (my-switch-to-buf filename)))
+      
+      (define (first-time-open-soundfile . args)
+	(set! (window-width) 20)
+	(set! (window-height) 20)
+	(remove-hook! open-hook first-time-open-soundfile)
 	#f)))
-
-
-(define buffer-menu (add-to-main-menu "Buffers"))
-(add-hook! open-hook my-open-buffer)
-(add-hook! close-hook close-buffer)
-(bind-key (char->integer #\b) 0 (lambda (x) (switch-to-buf)))
-(add-hook! close-hook xb-close)
-(add-hook! after-open-hook xb-open)	    
-
-
-
-
-(define (first-time-open-soundfile . args)
-  (set! (window-width) 20)
-  (set! (window-height) 20)
-  (remove-hook! open-hook first-time-open-soundfile)
-  #f)
-
-;(add-hook! open-hook first-time-open-soundfile)
-
+      
+					;(add-hook! open-hook first-time-open-soundfile)
 
 
 ;;Show the little picture of the whole sound in the upper right corner.
@@ -1013,6 +980,9 @@
 (load-from-path  (if use-gtk
 		     "gtk-effects.scm"
 		     "new-effects.scm"))
+
+
+
 
 (load-from-path "ladspa.scm")
 
