@@ -1,19 +1,5 @@
 /* tie CLM module into Guile/Scheme or Ruby */
 
-/* This module uses the Float array support in vct.c -- it needs to be loaded with vct.o.
- * every generator that has embedded arrays handles these through an extra layer of
- * pointers; the problem here is that we allow the caller to access and set these directly,
- * (and don't want to copy data unnecessarily), so we can easily have many pointers
- * floating around to the same C memory; there's no way at this level to set up
- * reference counters, so in C, the various free_<gen> functions check that they
- * allocated the given memory (and all vcts are allocated elsewhere),
- * before freeing an embedded array; then here, all such arrays are wrapped up 
- * as separate XEN objects and at every level only the bottom-most reference allows 
- * the free to go forward.
- */
-
-/* it's important to check for mus_xen_p before de-referencing a gen arg */
-
 /*     
  *  we have mus-sound-srate in sndlib, mus-srate in clm.c, sound-srate and *clm-srate* in clm, mus-sound-srate and srate in snd
  *    perhaps a mus module, giving mus:sound-srate in xen, mus:sound-srate in clm, mus_sound_srate in C?
@@ -180,6 +166,8 @@ static void init_keywords(void)
   for (i = 0; i < NUM_KEYWORDS; i++) 
     all_keys[i] = XEN_MAKE_KEYWORD((char *)(keywords[i]));
 }
+
+/* SOMEDAY: user-defined keys, export all the optkey support (sndins) */
 
 int mus_decode_keywords(const char *caller, int nkeys, XEN *keys, int nargs, XEN *args, int *orig)
 {

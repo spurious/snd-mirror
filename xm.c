@@ -12,6 +12,7 @@
 
 /* HISTORY: 
  *   11-July:   Several int->Dimension|Position|short resource type changes.
+ *              removed several more undocumented resource names.
  *   23-June:   Motif 1 fixups.
  *   10-June:   added XmCvtByteStreamToXmString, XmCvtXmStringToByteStream, XmStringByteStreamLength.
                 removed XFreeStringList (a no-op).
@@ -2018,7 +2019,7 @@ static XEN C_TO_XEN_ANY(Widget w, Arg arg)
     {
     case XM_INT:	      return(C_TO_XEN_INT((*((int *)(arg.value)))));
     case XM_ULONG:	      return(C_TO_XEN_ULONG((*((unsigned long *)(arg.value)))));
-    case XM_UCHAR:	      return(C_TO_XEN_char((*((char *)(arg.value)))));
+    case XM_UCHAR:	      return(C_TO_XEN_INT((*((unsigned char *)(arg.value)))));
     case XM_FLOAT:	      return(C_TO_XEN_DOUBLE((*((double *)(arg.value)))));
     case XM_STRING:	      return(C_TO_XEN_STRING((char *)(*((char **)(arg.value)))));
     case XM_STRING_OR_XMSTRING: /* fileselectionbox here , not parsemapping */
@@ -22840,7 +22841,6 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNexportTargets, XM_ATOM_LIST);
   DEFINE_RESOURCE(XmNexposeCallback, XM_CALLBACK);
   DEFINE_RESOURCE(XmNextendedSelectionCallback, XM_CALLBACK);
-  /* DEFINE_RESOURCE(XmNfile, XM_ULONG); */
   DEFINE_RESOURCE(XmNfileListItemCount, XM_INT);
   DEFINE_RESOURCE(XmNfileListItems, XM_STRING_TABLE);
   DEFINE_RESOURCE(XmNfileListLabelString, XM_XMSTRING);
@@ -22860,7 +22860,6 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNheightInc, XM_INT);
   DEFINE_RESOURCE(XmNhelpCallback, XM_CALLBACK);
   DEFINE_RESOURCE(XmNhelpLabelString, XM_XMSTRING);
-  /* DEFINE_RESOURCE(XmNhighlight, XM_BOOLEAN); */
   DEFINE_RESOURCE(XmNhighlightColor, XM_PIXEL);
   DEFINE_RESOURCE(XmNhighlightOnEnter, XM_BOOLEAN);
   DEFINE_RESOURCE(XmNhighlightPixmap, XM_PIXMAP);
@@ -22916,7 +22915,6 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNleftPosition, XM_INT);
   DEFINE_RESOURCE(XmNleftWidget, XM_WIDGET);
   DEFINE_RESOURCE(XmNlightThreshold, XM_INT);
-  /* DEFINE_RESOURCE(XmNlineSpace, XM_INT); */
   DEFINE_RESOURCE(XmNlistItemCount, XM_INT);
   DEFINE_RESOURCE(XmNlistItems, XM_STRING_TABLE);
   DEFINE_RESOURCE(XmNlistLabelString, XM_XMSTRING);
@@ -23020,7 +23018,6 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNrefigureMode, XM_BOOLEAN);
   DEFINE_RESOURCE(XmNrepeatDelay, XM_INT);
   DEFINE_RESOURCE(XmNresizable, XM_BOOLEAN);
-  /* DEFINE_RESOURCE(XmNresize, XM_ULONG); */
   DEFINE_RESOURCE(XmNresizeCallback, XM_CALLBACK);
   DEFINE_RESOURCE(XmNresizeHeight, XM_BOOLEAN);
   DEFINE_RESOURCE(XmNresizePolicy, XM_UCHAR);
@@ -23056,7 +23053,6 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNselectThreshold, XM_INT);
   DEFINE_RESOURCE(XmNselectedItemCount, XM_INT);
   DEFINE_RESOURCE(XmNselectedItems, XM_STRING_TABLE);
-  /* DEFINE_RESOURCE(XmNselection, XM_ULONG); */
   DEFINE_RESOURCE(XmNselectionArray, XM_INT_TABLE);
   DEFINE_RESOURCE(XmNselectionArrayCount, XM_INT);
   DEFINE_RESOURCE(XmNselectionLabelString, XM_XMSTRING);
@@ -23065,7 +23061,6 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNseparatorOn, XM_BOOLEAN);
   DEFINE_RESOURCE(XmNseparatorType, XM_UCHAR);
   DEFINE_RESOURCE(XmNset, XM_UCHAR);
-  /* DEFINE_RESOURCE(XmNshadow, XM_ULONG); */
   DEFINE_RESOURCE(XmNshadowThickness, XM_DIMENSION);
   DEFINE_RESOURCE(XmNshadowType, XM_UCHAR);
   DEFINE_RESOURCE(XmNshowArrows, XM_BOOLEAN);
@@ -23091,7 +23086,6 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNspacing, XM_DIMENSION);
   DEFINE_RESOURCE(XmNspotLocation, XM_INT);
   DEFINE_RESOURCE(XmNstateCursorIcon, XM_WIDGET);
-  /* DEFINE_RESOURCE(XmNstring, XM_STRING); */
   DEFINE_RESOURCE(XmNsubMenuId, XM_WIDGET);
   DEFINE_RESOURCE(XmNsymbolPixmap, XM_PIXMAP);
   DEFINE_RESOURCE(XmNtearOffMenuActivateCallback, XM_CALLBACK);
@@ -23113,7 +23107,6 @@ static void define_strings(void)
 #endif
   DEFINE_RESOURCE(XmNtoBottomCallback, XM_CALLBACK);
   DEFINE_RESOURCE(XmNtoTopCallback, XM_CALLBACK);
-  /* DEFINE_RESOURCE(XmNtop, XM_UCHAR); */
   DEFINE_RESOURCE(XmNtopAttachment, XM_UCHAR);
   DEFINE_RESOURCE(XmNtopCharacter, XM_INT);
   DEFINE_RESOURCE(XmNtopItemPosition, XM_INT);
@@ -23234,7 +23227,6 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNlabelRenderTable, XM_RENDER_TABLE);
   DEFINE_RESOURCE(XmNlargeCellHeight, XM_DIMENSION);
   DEFINE_RESOURCE(XmNlargeCellWidth, XM_DIMENSION);
-  /* DEFINE_RESOURCE(XmNlargeIcon, XM_WIDGET); */
   DEFINE_RESOURCE(XmNlargeIconMask, XM_PIXMAP);
   DEFINE_RESOURCE(XmNlargeIconPixmap, XM_PIXMAP);
   DEFINE_RESOURCE(XmNlargeIconX, XM_FLOAT);
@@ -23307,7 +23299,6 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNsliderMark, XM_INT);
   DEFINE_RESOURCE(XmNsmallCellHeight, XM_DIMENSION);
   DEFINE_RESOURCE(XmNsmallCellWidth, XM_DIMENSION);
-  /* DEFINE_RESOURCE(XmNsmallIcon, XM_WIDGET); */
   DEFINE_RESOURCE(XmNsmallIconMask, XM_PIXMAP);
   DEFINE_RESOURCE(XmNsmallIconPixmap, XM_PIXMAP);
   DEFINE_RESOURCE(XmNsmallIconX, XM_FLOAT);
@@ -23329,7 +23320,6 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNtextField, XM_WIDGET);
   DEFINE_RESOURCE(XmNtextRenderTable, XM_RENDER_TABLE);
   DEFINE_RESOURCE(XmNtoggleMode, XM_UCHAR);
-  /* DEFINE_RESOURCE(XmNtotalLines, XM_INT); */
   DEFINE_RESOURCE(XmNunderlineType, XM_UCHAR);
   DEFINE_RESOURCE(XmNunselectColor, XM_PIXEL);
 
@@ -23365,25 +23355,6 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNdefaultFontList, XM_FONTLIST);
   DEFINE_RESOURCE(XmNshellUnitType, XM_UCHAR);
 #endif
-
-  /* the following are defined in XmStrDefs.h but don't appear in the documentation:
-     XmNavailability XmNchildPosition XmNdesktopParent XmNdragContextClass XmNdragIconClass XmNdragOverMode
-     XmNdropSiteManagerClass XmNdroptransferClass XmNextensionType XmNfocusMovedCallback XmNfocusPolicyChanged 
-     XmNiccHandle XmNinputCreate XmNlogicalParent XmNmessageProc XmNmodifyVerifyCallbackWcs XmNneedsMotion
-     XmNmwmMessages XmNnotifyProc XmNnumRectangles XmNoutputCreate XmNpostFromCount XmNpostFromList 
-     XmNprotocolCallback XmNrealizeCallback XmNsizePolicy XmNsourceIsExternal XmNsourceWidget XmNsourceWindow 
-     XmNstartTime XmNtextValue XmNtoPositionCallback XmNtraversalCallback XmNtraversalType XmNtreeUpdateProc 
-     XmNunselectPixmap XmNupdateSliderSize XmNvalueWcs XmNtextPath XmNeditingPath XmNbidirectionalCursor 
-     XmNdefaultGlyphPixmap XmNcontainerID XmNdragOverActiveMode XmNinstallColormap XmNownerEvents XmNforegroundState 
-     XmNbackgroundState XmNarea XmNprimaryColorSetId XmNsecondaryColorSetId XmNtextColorSetId XmNactiveColorSetId 
-     XmNinactiveColorSetId XmNuseTextColor XmNuseTextColorForList XmNuseMask XmNuseMultiColorIcons XmNuseIconFileCache 
-     XmNprintOrientation XmNprintOrientations XmNprintResolution XmNprintResolutions XmNdefaultPixmapResolution 
-     XmNeditType XmNfontSet XmNforceBars XmNfunction XmNindex XmNinnerHeight XmNinnerWidth XmNinnerWindow 
-     XmNinternalHeight XmNinternalWidth XmNjumpProc XmNjustify XmNlength XmNlowerRight XmNname XmNnotify XmNparameter 
-     XmNreverseVideo XmNscrollDCursor XmNscrollHCursor XmNscrollLCursor XmNscrollProc XmNscrollRCursor XmNscrollUCursor 
-     XmNscrollVCursor XmNshown XmNspace XmNtextOptions XmNtextSink XmNtextSource XmNthickness XmNthumb XmNthumbProc 
-     XmNupdate XmNuseBottom XmNuseRight 
-  */
 
   qsort((void *)xm_hash, hd_ctr, sizeof(hdata *), alphabet_compare);
   {

@@ -224,7 +224,7 @@ static int read_midi_sample_dump(char *oldname, char *newname, char *hdr)
 	      /* val |= (buf[inp] << shift1);  */
 	      val |= (buf[inp] >> shift2);
 	      state = 0; 
-	      mus_bshort_to_char((unsigned char *)(hdr + osp), val - offset);
+	      mus_bshort_to_char((unsigned char *)(hdr + osp), (short)(val - offset));
 	      osp += 2;
 	      outp += 2; 
 	      break;
@@ -344,7 +344,7 @@ static int read_ieee_text(char *oldname, char *newname, char *hdr)
 	    {
 	      str[s0] = '\0';
 	      sscanf(str, "%d", &j);
-	      mus_bshort_to_char((unsigned char *)(hdr + osp), j);
+	      mus_bshort_to_char((unsigned char *)(hdr + osp), (short)j);
 	      osp += 2;
 	      outp += 2;
 	      inp++;
@@ -450,20 +450,20 @@ static int read_mus10(char *oldname, char *newname, char *hdr)
 	      /* so we grab four at a time here to keep the pointers aligned */
 	      /* we've chosen an input buffer size that is a multiple of 9 so that this code need not constantly check bounds */
 	      val = ((buf[inp] & 0xF) << 12) | (buf[inp + 1] << 4) | (buf[inp + 2] >> 4);
-	      mus_bshort_to_char((unsigned char *)(hdr+osp), val); osp += 2;
+	      mus_bshort_to_char((unsigned char *)(hdr + osp), (short)val); osp += 2;
 	      val = ((buf[inp + 2] & 0xF) << 12) | (buf[inp + 3] << 4) | (buf[inp + 4] >> 4);
-	      mus_bshort_to_char((unsigned char *)(hdr + osp), val); osp += 2;
-	      mus_bshort_to_char((unsigned char *)(hdr + osp), ((buf[inp + 5] << 8) | buf[inp + 6])); osp += 2;
-	      mus_bshort_to_char((unsigned char *)(hdr + osp), ((buf[inp + 7] << 8) | buf[inp + 8])); osp += 2;
+	      mus_bshort_to_char((unsigned char *)(hdr + osp), (short)val); osp += 2;
+	      mus_bshort_to_char((unsigned char *)(hdr + osp), (short)((buf[inp + 5] << 8) | buf[inp + 6])); osp += 2;
+	      mus_bshort_to_char((unsigned char *)(hdr + osp), (short)((buf[inp + 7] << 8) | buf[inp + 8])); osp += 2;
 	      outp += 8;
 	      inp += 9;
 	    }
 	  else
 	    {
 	      val = (buf[inp] << 8) | (buf[inp + 1] & 0xF0);
-	      mus_bshort_to_char((unsigned char *)(hdr + osp), val); osp += 2;
+	      mus_bshort_to_char((unsigned char *)(hdr + osp), (short)val); osp += 2;
 	      val = ((buf[inp + 1] & 0xF) << 12) | (buf[inp + 2] << 4);
-	      mus_bshort_to_char((unsigned char *)(hdr + osp), val); osp += 2;
+	      mus_bshort_to_char((unsigned char *)(hdr + osp), (short)val); osp += 2;
 	      outp += 4;
 	      inp += 3;
 	    }
@@ -514,7 +514,7 @@ static int read_hcom(char *oldname, char *newname, char *hdr)
   isp = 0;
   happy = TRUE;
   outp = 2;
-  mus_bshort_to_char((unsigned char *)(hdr + osp), (sample - 128) * 0x100); osp += 2;
+  mus_bshort_to_char((unsigned char *)(hdr + osp), (short)((sample - 128) * 0x100)); osp += 2;
   bits = 0;
   while ((happy) && (count > 0))
     {
@@ -557,8 +557,8 @@ static int read_hcom(char *oldname, char *newname, char *hdr)
 	      if (!dc) sample = 0;
 	      sample = (sample + datum) & 0xff;
 	      count--;
-	      if (sample == 0) mus_bshort_to_char((unsigned char *)(hdr + osp), (-127 * 0x100));
-	      else mus_bshort_to_char((unsigned char *)(hdr + osp), ((sample - 128) * 0x100));
+	      if (sample == 0) mus_bshort_to_char((unsigned char *)(hdr + osp), (short)(-127 * 0x100));
+	      else mus_bshort_to_char((unsigned char *)(hdr + osp), (short)((sample - 128) * 0x100));
 	      osp += 2;
 	      outp += 2;
 	      di = 0;
@@ -675,10 +675,10 @@ static int read_nist_shortpack(char *oldname, char *newname, char *hdr)
 	  if (negative)
 	    {
 	      if (out != 0) 
-		mus_bshort_to_char((unsigned char *)(hdr + osp), -out);
-	      else mus_bshort_to_char((unsigned char *)(hdr + osp), 32767);
+		mus_bshort_to_char((unsigned char *)(hdr + osp), (short)(-out));
+	      else mus_bshort_to_char((unsigned char *)(hdr + osp), (short)32767);
 	    }
-	  else mus_bshort_to_char((unsigned char *)(hdr + osp), out);
+	  else mus_bshort_to_char((unsigned char *)(hdr + osp), (short)out);
 	  osp += 2; 
 	  outp += 2;
 	  i++;

@@ -1,8 +1,11 @@
 #include "snd.h"
 
-/* TODO: if united chans, select chan should set edit_history to reflect selected chan (label also to show which is affected) */
-/* TODO: if superimposed, how to see edit history pane of >1 chan (more panes? arrows?) */
-/* TODO: if superimposed and 2chn cursor set, 1chan is xor'd, subsequent click sets both (and chan1 cursor takes precedence?) */
+/* SOMEDAY: if united chans, select chan should set edit_history to reflect selected chan (label also to show which is affected) */
+/*    one problem here is select callback that uses context to find chan_info */
+/* SOMEDAY: if superimposed, how to see edit history pane of >1 chan (more panes? arrows?) */
+/*    even if switch available, see above... */
+/* SOMEDAY: if superimposed and 2chn cursor set, 1chan is xor'd, subsequent click sets both (and chan1 cursor takes precedence?) */
+/*    cursor redraw can check for this, but it gloms up code */
 
 
 enum {NOGRAPH, WAVE, FFT_AXIS, LISP, FFT_MAIN};    /* for marks, regions, mouse click detection */
@@ -4050,7 +4053,6 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time, Temp
 		  if (time_interval != 0)
 		    sp->speed_control = (Float)((double)(samps * 1000) / (double)(time_interval * SND_SRATE(sp)));
 		  else sp->speed_control = 0.0;
-		  /* TODO: smooth the speed-drag amount! */
 		}
 	    }
 	}

@@ -7072,9 +7072,6 @@ int mus_audio_read(int line, char *buf, int bytes)
 
 #include <windows.h>
 #include <mmsystem.h>
-#if HAVE_MMREG_H
-  #include <mmreg.h>
-#endif
 
 #define BUFFER_FILLED 1
 #define BUFFER_EMPTY 2
@@ -7407,52 +7404,6 @@ static float unlog(unsigned short val)
 #define SHORT_SAMPLE_BITS (WAVE_FORMAT_1S16 | WAVE_FORMAT_1M16 | WAVE_FORMAT_2S16 | WAVE_FORMAT_2M16 | WAVE_FORMAT_4S16 | WAVE_FORMAT_4M16)
 #define BYTE_SAMPLE_BITS (WAVE_FORMAT_1S08 | WAVE_FORMAT_1M08 | WAVE_FORMAT_2S08 | WAVE_FORMAT_2M08 | WAVE_FORMAT_4S08 | WAVE_FORMAT_4M08)
 
-static char *mfg(int mf)
-{
-#if HAVE_MMREG_H
-  switch (mf)
-    {
-    case MM_MICROSOFT: return("Microsoft"); break;              case MM_CREATIVE: return("Creative Labs"); break; 
-    case MM_MEDIAVISION: return("Media Vision"); break;         case MM_FUJITSU: return("Fujitsu Corp"); break;
-    case MM_ARTISOFT: return("Artisoft"); break;                case MM_TURTLE_BEACH: return("Turtle Beach"); break;
-    case MM_IBM: return("IBM"); break;                          case MM_VOCALTEC: return("Vocaltec"); break;
-    case MM_ROLAND: return("Roland"); break;                    case MM_DSP_SOLUTIONS: return("DSP Solutions"); break;
-    case MM_NEC: return("NEC"); break;                          case MM_ATI: return("ATI"); break;
-    case MM_WANGLABS: return("Wang Laboratories"); break;       case MM_TANDY: return("Tandy"); break;
-    case MM_VOYETRA: return("Voyetra"); break;                  case MM_ANTEX: return("Antex Electronics"); break;
-    case MM_ICL_PS: return("ICL Personal Systems"); break;      case MM_INTEL: return("Intel"); break;
-    case MM_GRAVIS: return("Advanced Gravis"); break;           case MM_VAL: return("Video Associates Labs"); break;
-    case MM_INTERACTIVE: return("InterActive"); break;          case MM_YAMAHA: return("Yamaha"); break;
-    case MM_EVEREX: return("Everex Systems"); break;            case MM_ECHO: return("Echo Speech"); break;
-    case MM_SIERRA: return("Sierra Semiconductor"); break;      case MM_CAT: return("Computer Aided Technologies"); break;
-    case MM_APPS: return("APPS Software"); break;               case MM_DSP_GROUP: return("DSP Group"); break;
-    case MM_MELABS: return("microEngineering Labs"); break;     case MM_COMPUTER_FRIENDS: return("Computer Friends"); break;
-    case MM_ESS: return("ESS Technology"); break;               case MM_AUDIOFILE: return("Audio"); break;
-    case MM_MOTOROLA: return("Motorola"); break;                case MM_CANOPUS: return("Canopus"); break;
-    case MM_EPSON: return("Seiko Epson"); break;                case MM_TRUEVISION: return("Truevision"); break;
-    case MM_AZTECH: return("Aztech Labs"); break;               case MM_VIDEOLOGIC: return("Videologic"); break;
-    case MM_SCALACS: return("SCALACS"); break;                  case MM_KORG: return("Korg"); break;
-    case MM_APT: return("Audio Processing Technology"); break;  case MM_ICS: return("Integrated Circuit Systems"); break;
-    case MM_ITERATEDSYS: return("Iterated Systems"); break;     case MM_METHEUS: return("Metheus"); break;
-    case MM_LOGITECH: return("Logitech"); break;                case MM_WINNOV: return("Winnov"); break;
-    case MM_NCR: return("NCR"); break;                          case MM_EXAN: return("EXAN"); break;
-    case MM_AST: return("AST Research"); break;                 case MM_WILLOWPOND: return("Willow Pond"); break;
-    case MM_SONICFOUNDRY: return("Sonic Foundry"); break;       case MM_VITEC: return("Vitec Multimedia"); break;
-    case MM_MOSCOM: return("MOSCOM"); break;                    case MM_SILICONSOFT: return("Silicon Soft"); break;
-    case MM_SUPERMAC: return("Supermac"); break;                case MM_AUDIOPT: return("Audio Processing Technology"); break;
-    case MM_SPEECHCOMP: return("Speech Compression"); break;    case MM_DOLBY: return("Dolby Laboratories"); break;
-    case MM_OKI: return("OKI"); break;                          case MM_AURAVISION: return("AuraVision"); break;
-    case MM_OLIVETTI: return("Olivetti"); break;                case MM_IOMAGIC: return("I/O Magic"); break;
-    case MM_MATSUSHITA: return("Matsushita Electric"); break;   case MM_CONTROLRES: return("Control Resources"); break;
-    case MM_XEBEC: return("Xebec Multimedia Solutions"); break; case MM_NEWMEDIA: return("New Media"); break;
-    case MM_NMS: return("Natural MicroSystems"); break;         case MM_LYRRUS: return("Lyrrus"); break;
-    case MM_COMPUSIC: return("Compusic"); break;                case MM_OPTI: return("OPTi Computers"); break;
-    case MM_DIALOGIC: return("Dialogic"); break;    
-    }
-#endif
-  return("");
-}
-
 static char *mixer_status_name(int status)
 {
   switch (status)
@@ -7549,9 +7500,8 @@ static void describe_audio_state_1(void)
             {
               version = wocaps.vDriverVersion;
               maker = wocaps.wMid;
-              mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "  %s %s: version %d.%d\n",
-                      mfg(maker), wocaps.szPname,
-                      version>>8, version&0xff);
+              mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "  %s: version %d.%d\n",
+			   wocaps.szPname, version >> 8, version & 0xff);
               pprint(audio_strbuf);
               if (wocaps.wChannels == 2) {chans = 2; pprint("    stereo");} else {chans = 1; pprint("    mono");}
               if (wocaps.dwFormats & SRATE_11025_BITS)  {srate = 11025; if (need_comma) pprint(", "); pprint(" 11025"); need_comma = 1;}
@@ -7631,7 +7581,7 @@ static void describe_audio_state_1(void)
           err = waveInGetDevCaps(dev, &wicaps, sizeof(wicaps));
           if (!err)
             {
-              mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "  %s%s", (wicaps.wMid != maker) ? mfg(wicaps.wMid) : "", wicaps.szPname);
+              mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "  %s", wicaps.szPname);
               pprint(audio_strbuf);
               if ((wicaps.wMid != maker) || (version != wicaps.vDriverVersion))
                 {
@@ -7660,11 +7610,11 @@ static void describe_audio_state_1(void)
           err = auxGetDevCaps(dev, &wacaps, sizeof(wacaps));
           if (!err)
             {
-              mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "  %s%s", (wacaps.wMid != maker) ? mfg(wacaps.wMid) : "", wacaps.szPname);
+              mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "  %s", wacaps.szPname);
               pprint(audio_strbuf);
               if ((wacaps.wMid != maker) || (version != wacaps.vDriverVersion))
                 mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, ": version %d.%d%s",
-                        (wacaps.vDriverVersion>>8), wacaps.vDriverVersion&0xff,
+                        (wacaps.vDriverVersion >> 8), wacaps.vDriverVersion & 0xff,
                         (wacaps.wTechnology & AUXCAPS_CDAUDIO) ? " (CD)" : "");
               else mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "%s\n", (wacaps.wTechnology & AUXCAPS_CDAUDIO) ? " (CD)" : "");
               pprint(audio_strbuf);
@@ -7697,7 +7647,7 @@ static void describe_audio_state_1(void)
           err = mixerGetDevCaps(dev, &wmcaps, sizeof(wmcaps));
           if (!err)
             {
-              mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "  %s%s", (wmcaps.wMid != maker) ? mfg(wmcaps.wMid) : "", wmcaps.szPname);
+              mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "  %s", wmcaps.szPname);
               pprint(audio_strbuf);
               if ((wmcaps.wMid != maker) || (version != wmcaps.vDriverVersion))
                 {
@@ -7723,13 +7673,13 @@ static void describe_audio_state_1(void)
                         {
                           mixline.dwDestination = dest;
                           mixline.cbStruct = sizeof(MIXERLINE);
-                          err = mixerGetLineInfo(mfd, &mixline, MIXER_GETLINEINFOF_DESTINATION);
+                          err = mixerGetLineInfo((HMIXEROBJ)mfd, &mixline, MIXER_GETLINEINFOF_DESTINATION);
                         }
                       else
                         {
                           mixline.dwSource = source;
                           mixline.cbStruct = sizeof(MIXERLINE);
-                          err = mixerGetLineInfo(mfd, &mixline, MIXER_GETLINEINFOF_SOURCE);
+                          err = mixerGetLineInfo((HMIXEROBJ)mfd, &mixline, MIXER_GETLINEINFOF_SOURCE);
                         }
                       if (!err)
                         {
@@ -7764,7 +7714,7 @@ static void describe_audio_state_1(void)
                               else linecontrols.cControls = mixline.cControls;
                               linecontrols.pamxctrl = mc;
                               linecontrols.cbmxctrl = sizeof(MIXERCONTROL);
-                              err = mixerGetLineControls(mfd, &linecontrols, MIXER_GETLINECONTROLSF_ALL);
+                              err = mixerGetLineControls((HMIXEROBJ)mfd, &linecontrols, MIXER_GETLINECONTROLSF_ALL);
                               if (!err)
                                 {
                                   mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, 
@@ -7793,7 +7743,7 @@ static void describe_audio_state_1(void)
                                            controldetails.cMultipleItems = mc[control].cMultipleItems;
                                            controldetails.cbDetails = sizeof(MIXERCONTROLDETAILS_LISTTEXT);
                                            controldetails.paDetails = clist;
-					   err = mixerGetControlDetails(mfd, &controldetails, MIXER_GETCONTROLDETAILSF_LISTTEXT);
+					   err = mixerGetControlDetails((HMIXEROBJ)mfd, &controldetails, MIXER_GETCONTROLDETAILSF_LISTTEXT);
 					   if (!err) 
 					     {
 					       for (chan = 0; chan < mixline.cChannels; chan++) 
@@ -7828,7 +7778,7 @@ static void describe_audio_state_1(void)
                                          pprint("\n");
                                        else
                                          {
-                                           err = mixerGetControlDetails(mfd, &controldetails, MIXER_GETCONTROLDETAILSF_VALUE);
+                                           err = mixerGetControlDetails((HMIXEROBJ)mfd, &controldetails, MIXER_GETCONTROLDETAILSF_VALUE);
                                            if (!err)
                                              {
                                                chans = controldetails.cChannels;
@@ -8044,8 +7994,8 @@ int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
       if (!err)
 	{
 	  if (chan == 0)
-	    val[0] = unlog((unsigned short)(lval>>16));
-	  else val[0] = unlog((unsigned short)(lval&0xffff));
+	    val[0] = unlog((unsigned short)(lval >> 16));
+	  else val[0] = unlog((unsigned short)(lval & 0xffff));
 	  return(MUS_NO_ERROR);
 	}
     }
@@ -8068,8 +8018,8 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
       if (!err)
 	{
 	  if (chan == 0)
-	    lval = (unsigned long)((lval & 0xffff) | (((unsigned short)(val[0]*65535))<<16));
-	  else lval = (unsigned long)((lval & 0xffff0000) | ((unsigned short)(val[0]*65535)));
+	    lval = (unsigned long)((lval & 0xffff) | (((unsigned short)(val[0] * 65535)) << 16));
+	  else lval = (unsigned long)((lval & 0xffff0000) | ((unsigned short)(val[0] * 65535)));
 	  err = auxSetVolume(sys, lval);
 	  if (err) return(MUS_NO_ERROR);
 	}

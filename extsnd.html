@@ -306,7 +306,10 @@ is turned off.
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="dacsize">dac-size</a></em></code></span></td>
 <td><code>256</code></td></tr>
 <tr><td></td><td colspan=2>Audio output buffer size (not always meaningful).  See <i>play-with-envs</i> in enved.scm or
-<i>play-sound</i> in play.scm.
+<i>play-sound</i> in play.scm.  When the various control panel controls are changed, the snappiness of the
+response is set, to some extent, by the dac-size.  The default of 256 gives a stair-case effect in many
+cases, whereas 2048 is smoother.  This also affects the resampling smoothness of playback while dragging the
+mark play triangle.  (Some audio choices, ALSA in particular, may ignore dac-size).
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -1121,7 +1124,8 @@ called when a mark is dragged.
 <span class=defbox><code><em class=def><a name="markdragtrianglehook">mark-drag-triangle-hook</a></em> (id x time dragged-before)</code></span></td><td align=right><b>progn</b>
 </td></tr>
 <tr><td></td><td colspan=2>
-called when a mark play triangle is dragged.
+called when a mark play triangle is dragged.  The smoothness of the response to the drag motion is
+largely determined by <a href="#dacsize">dac-size</a>.
 <i>dragged-before</i> is #f when the drag starts and #t thereafter.  <i>x</i> is the mouse x location in the current
 graph. <i>time</i> is the uninterpreted time at which the drag event was reported. <i>id</i> is the mark id. If the hook returns #t,
 Snd takes no further action.  To set up to play, then interpret the motion yourself, return #f on the first call,

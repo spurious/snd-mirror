@@ -765,7 +765,9 @@ static int start_dac(snd_state *ss, int srate, int channels, int background)
       snd_dacp->out_format = MUS_COMPATIBLE_FORMAT;
       if (snd_dacp->srate <= 0) snd_dacp->srate = 44100;
       snd_dacp->channels = channels;
-      snd_dacp->frames = 256; /* just a first guess */
+      if (dac_size(ss) > 0)
+	snd_dacp->frames = dac_size(ss);
+      else snd_dacp->frames = 256;
       snd_dacp->devices = 1;  /* just a first guess */
       snd_dacp->reverb_ring_frames = (off_t)(srate * reverb_control_decay(ss));
       if (disable_play) 
