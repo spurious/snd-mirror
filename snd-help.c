@@ -1715,7 +1715,7 @@ void env_help(snd_state *ss) {snd_help_with_url(ss,STR_Envelope,"#editenvelope",
 void marks_help(snd_state *ss) {snd_help_with_url(ss,STR_Marks,"#marks",mark_help_string);}
 void mix_help(snd_state *ss) {snd_help_with_url(ss,STR_Mixing,"#mixingfiles",mix_help_string);}
 void sound_files_help(snd_state *ss) {snd_help_with_url(ss,STR_Format,"#formats",sound_files_help_string);}
-void recording_help(snd_state *ss) {snd_help_with_url(ss,STR_Recording,recording_help_string,"#recordfile");}
+void recording_help(snd_state *ss) {snd_help_with_url(ss,STR_Recording,"#recordfile",recording_help_string);}
 void init_file_help(snd_state *ss) {ssnd_help_with_url(ss,STR_Customization,"extsnd.html",init_file_help_string,"\n",resource_help_string,NULL);}
 
 #if HAVE_GUILE

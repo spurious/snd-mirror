@@ -6238,6 +6238,7 @@ Float mus_apply(mus_any *gen, ...)
 
 typedef struct {
   mus_any_class *core;
+  Float pitch;
   Float (*input)(void *arg, int direction);
   void *environ;
   int (*analyze)(void *arg, Float (*input)(void *arg1, int direction));
@@ -6302,7 +6303,8 @@ static int free_phase_vocoder(void *ptr)
 
 static int pv_length(void *ptr) {return(((pv_info *)ptr)->N);}
 static int pv_set_length(void *ptr, int val) {((pv_info *)ptr)->N = val; return(val);}
-
+static Float pv_frequency(void *ptr) {return(((pv_info *)ptr)->pitch);}
+static Float pv_set_frequency(void *ptr, Float val) {((pv_info *)ptr)->pitch = val; return(val);}
 
 /* stop-gaps -- until I decide how to handle these, I'll kludge up some special names */
 Float *mus_phase_vocoder_ampinc(void *ptr) {return(((pv_info *)ptr)->ampinc);}
@@ -6367,13 +6369,15 @@ static mus_any_class PHASE_VOCODER_CLASS = {
   &phase_vocoder_data,0,
   &pv_length,
   &pv_set_length,
-  0,0,
+  &pv_frequency,
+  &pv_set_frequency,
   0,0,
   0,0
 };
 
 mus_any *mus_make_phase_vocoder(Float (*input)(void *arg,int direction), 
 				int fftsize, int overlap, int interp,
+				Float pitch,
 				int (*analyze)(void *arg, Float (*input)(void *arg1, int direction)),
 				int (*edit)(void *arg), 
 				Float (*synthesize)(void *arg), 
@@ -6396,6 +6400,7 @@ mus_any *mus_make_phase_vocoder(Float (*input)(void *arg,int direction),
       pv->interp = interp;
       pv->outctr = interp;
       pv->filptr = 0;
+      pv->pitch = pitch;
       pv->ampinc = (Float *)CALLOC(fftsize,sizeof(Float));
       pv->freqs = (Float *)CALLOC(fftsize,sizeof(Float));
       pv->amps = (Float *)CALLOC(N2,sizeof(Float));
@@ -6463,7 +6468,7 @@ Float mus_phase_vocoder(mus_any *ptr, Float (*input)(void *arg,int direction))
 	      pv->lastphase[i] = pv->freqs[i];
 	      while (diff > M_PI) diff -= TWO_PI;
 	      while (diff < -M_PI) diff += TWO_PI;
-	      pv->freqs[i] = diff*pscl + ks;
+	      pv->freqs[i] = pv->pitch * (diff*pscl + ks);
 	    }
 	}
       

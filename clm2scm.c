@@ -146,8 +146,9 @@ static int g_scm2int(SCM obj)
 #define SC_analyze          "analyze"
 #define SC_interp           "interp"
 #define SC_overlap          "overlap"
+#define SC_pitch            "pitch"
 
-#define NUM_KEYWORDS 61
+#define NUM_KEYWORDS 62
 enum {C_frequency,C_initial_phase,C_wave,C_cosines,C_amplitude,
       C_r,C_ratio,C_size,C_a0,C_a1,C_a2,C_b1,C_b2,C_max_size,
       C_input,C_srate,C_file,C_channel,C_start,
@@ -157,7 +158,7 @@ enum {C_frequency,C_initial_phase,C_wave,C_cosines,C_amplitude,
       C_direction,C_degree,C_distance,C_reverb,C_output,C_fft_size,
       C_expansion,C_length,C_hop,C_ramp,C_jitter,
       C_type,C_format,C_comment,C_channels,C_filter,C_revout,C_width,
-      C_edit,C_synthesize,C_analyze,C_interp,C_overlap
+      C_edit,C_synthesize,C_analyze,C_interp,C_overlap,C_pitch
 };
 
 static char *keywords[NUM_KEYWORDS] = {SC_frequency,SC_initial_phase,SC_wave,SC_cosines,SC_amplitude,
@@ -169,7 +170,7 @@ static char *keywords[NUM_KEYWORDS] = {SC_frequency,SC_initial_phase,SC_wave,SC_
 				       SC_direction,SC_degree,SC_distance,SC_reverb,SC_output,SC_fft_size,
 				       SC_expansion,SC_length,SC_hop,SC_ramp,SC_jitter,
 				       SC_type,SC_format,SC_comment,SC_channels,SC_filter,SC_revout,SC_width,
-				       SC_edit,SC_synthesize,SC_analyze,SC_interp,SC_overlap
+				       SC_edit,SC_synthesize,SC_analyze,SC_interp,SC_overlap,SC_pitch
 };
 static SCM all_keys[NUM_KEYWORDS];
 
@@ -301,8 +302,9 @@ static int decode_keywords(char *caller, int nkeys, SCM *keys, int nargs, SCM *a
 #define SC_analyze          ":analyze"
 #define SC_interp           ":interp"
 #define SC_overlap          ":overlap"
+#define SC_pitch            ":pitch"
 
-#define NUM_KEYWORDS 61
+#define NUM_KEYWORDS 62
 enum {C_frequency,C_initial_phase,C_wave,C_cosines,C_amplitude,
       C_r,C_ratio,C_size,C_a0,C_a1,C_a2,C_b1,C_b2,C_max_size,
       C_input,C_srate,C_file,C_channel,C_start,
@@ -312,7 +314,7 @@ enum {C_frequency,C_initial_phase,C_wave,C_cosines,C_amplitude,
       C_direction,C_degree,C_distance,C_reverb,C_output,C_fft_size,
       C_expansion,C_length,C_hop,C_ramp,C_jitter,
       C_type,C_format,C_comment,C_channels,C_filter,C_revout,C_width,
-      C_edit,C_synthesize,C_analyze,C_interp,C_overlap
+      C_edit,C_synthesize,C_analyze,C_interp,C_overlap,C_pitch
 };
 
 static char *keywords[NUM_KEYWORDS] = {SC_frequency,SC_initial_phase,SC_wave,SC_cosines,SC_amplitude,
@@ -324,7 +326,7 @@ static char *keywords[NUM_KEYWORDS] = {SC_frequency,SC_initial_phase,SC_wave,SC_
 				       SC_direction,SC_degree,SC_distance,SC_reverb,SC_output,SC_fft_size,
 				       SC_expansion,SC_length,SC_hop,SC_ramp,SC_jitter,
 				       SC_type,SC_format,SC_comment,SC_channels,SC_filter,SC_revout,SC_width,
-				       SC_edit,SC_synthesize,SC_analyze,SC_interp,SC_overlap
+				       SC_edit,SC_synthesize,SC_analyze,SC_interp,SC_overlap,SC_pitch
 };
 static SCM all_keys[NUM_KEYWORDS];
 /* what about user-declared keywords? */
@@ -4427,38 +4429,41 @@ static SCM g_phase_vocoder(SCM obj, SCM func)
 
 static SCM g_make_phase_vocoder(SCM arglist)
 {
-  #define H_make_phase_vocoder "(" S_make_phase_vocoder " &opt-key input fft-size overlap interp analyze edit synthesize\n\
+  #define H_make_phase_vocoder "(" S_make_phase_vocoder " &opt-key input fft-size overlap interp pitch analyze edit synthesize\n\
    returns a new phase-vocoder generator; input is the input function (if can be set at run-time), analyze, edit,\n\
    and synthesize are either #f or functions that replace the default innards of the generator, fft-size, overlap\n\
    and interp set the fftsize, the amount of overlap between ffts, and the time between new analysis calls."
 
   SCM in_obj = SCM_UNDEFINED,edit_obj = SCM_UNDEFINED,synthesize_obj = SCM_UNDEFINED,analyze_obj = SCM_UNDEFINED;
   mus_scm *gn;
-  SCM args[14],keys[7];
+  SCM args[16],keys[8];
   SCM pv_obj;
-  int orig_arg[7] = {0,0,0,0,0,0,0};
+  int orig_arg[8] = {0,0,0,0,0,0,0,0};
   int vals,arglist_len,i;
   int fft_size = 512,overlap = 4, interp = 128;
+  Float pitch = 1.0;
   keys[0] = all_keys[C_input];
   keys[1] = all_keys[C_fft_size];
   keys[2] = all_keys[C_overlap];
   keys[3] = all_keys[C_interp];
-  keys[4] = all_keys[C_analyze];
-  keys[5] = all_keys[C_edit];
-  keys[6] = all_keys[C_synthesize];
-  for (i=0;i<14;i++) args[i] = SCM_UNDEFINED;
+  keys[4] = all_keys[C_pitch];
+  keys[5] = all_keys[C_analyze];
+  keys[6] = all_keys[C_edit];
+  keys[7] = all_keys[C_synthesize];
+  for (i=0;i<16;i++) args[i] = SCM_UNDEFINED;
   arglist_len = gh_length(arglist);
   for (i=0;i<arglist_len;i++) args[i] = gh_list_ref(arglist,gh_int2scm(i));
-  vals = decode_keywords(S_make_phase_vocoder,7,keys,14,args,orig_arg);
+  vals = decode_keywords(S_make_phase_vocoder,8,keys,16,args,orig_arg);
   if (vals > 0)
     {
       if (gh_procedure_p(keys[0])) in_obj = keys[0];
       fft_size = ikeyarg(keys[1],S_make_phase_vocoder,orig_arg[1]+1,args[orig_arg[1]],fft_size);
       overlap = ikeyarg(keys[2],S_make_phase_vocoder,orig_arg[2]+1,args[orig_arg[2]],overlap);
       interp = ikeyarg(keys[3],S_make_phase_vocoder,orig_arg[3]+1,args[orig_arg[3]],interp);
-      if (gh_procedure_p(keys[4])) analyze_obj = keys[4];
-      if (gh_procedure_p(keys[5])) edit_obj = keys[5];
-      if (gh_procedure_p(keys[6])) synthesize_obj = keys[6];
+      pitch = fkeyarg(keys[4],S_make_phase_vocoder,orig_arg[4]+1,args[orig_arg[4]],pitch);
+      if (gh_procedure_p(keys[5])) analyze_obj = keys[5];
+      if (gh_procedure_p(keys[6])) edit_obj = keys[6];
+      if (gh_procedure_p(keys[7])) synthesize_obj = keys[7];
     }
   gn = (mus_scm *)CALLOC(1,sizeof(mus_scm));
   gn->nvcts = 5;
@@ -4468,7 +4473,7 @@ static SCM g_make_phase_vocoder(SCM arglist)
   if (!(SCM_UNBNDP(analyze_obj))) gn->vcts[ANALYZE_FUNCTION] = analyze_obj; else gn->vcts[ANALYZE_FUNCTION] = SCM_EOL;
   if (!(SCM_UNBNDP(synthesize_obj))) gn->vcts[SYNTHESIZE_FUNCTION] = synthesize_obj; else gn->vcts[SYNTHESIZE_FUNCTION] = SCM_EOL;
   gn->gen = mus_make_phase_vocoder(funcall1,
-				   fft_size,overlap,interp,
+				   fft_size,overlap,interp,pitch,
 				   (SCM_UNBNDP(analyze_obj) ? NULL : pvanalyze),
 				   (SCM_UNBNDP(edit_obj) ? NULL : pvedit),
 				   (SCM_UNBNDP(synthesize_obj) ? NULL : pvsynthesize),
@@ -4881,7 +4886,7 @@ static char CLM_help_string[] =
   make-one-pole       (a0 b1)\n\
   make-one-zero       (a0 a1)\n\
   make-oscil          (frequency initial-phase)\n\
-  make-phase-vocoder  (input fftsize overlap interp analyze edit synthesize)\n\
+  make-phase-vocoder  (input fftsize overlap interp pitch analyze edit synthesize)\n\
   make-ppolar         (radius frequency)\n\
   make-pulse-train    (frequency amplitude initial-phase)\n\
   make-rand           (frequency amplitude)\n\

@@ -19,6 +19,7 @@
 #define S_vct_peak       "vct-peak"
 #define S_vct_p          "vct?"
 #define S_list2vct       "list->vct"
+#define S_vct2list       "vct->list"
 #define S_vector2vct     "vector->vct"
 #define S_vct_moveB      "vct-move!"
 

@@ -485,8 +485,8 @@ void mus_convolve_files         PROTO((const char *file1, const char *file2, Flo
 int mus_granulate_p             PROTO((mus_any *ptr));
 Float mus_granulate             PROTO((mus_any *ptr, Float (*input)(void *arg, int direction)));
 mus_any *mus_make_granulate     PROTO((Float (*input)(void *arg,int direction), 
-				 Float expansion, Float length, Float scaler, 
-				 Float hop, Float ramp, Float jitter, int max_size, void *environ));
+				       Float expansion, Float length, Float scaler, 
+				       Float hop, Float ramp, Float jitter, int max_size, void *environ));
 int mus_ramp                    PROTO((mus_any *ptr));
 int mus_set_ramp                PROTO((mus_any *ptr, int val));
 int mus_hop                     PROTO((mus_any *ptr));
@@ -505,6 +505,7 @@ Float mus_apply                 PROTO((mus_any *gen, ...));
 int mus_phase_vocoder_p         PROTO((mus_any *ptr));
 mus_any *mus_make_phase_vocoder PROTO((Float (*input)(void *arg,int direction), 
 				       int fftsize, int overlap, int interp,
+				       Float pitch,
 				       int (*analyze)(void *arg, Float (*input)(void *arg1, int direction)),
 				       int (*edit)(void *arg), 
 				       Float (*synthesize)(void *arg), 
@@ -513,8 +514,8 @@ Float mus_phase_vocoder         PROTO((mus_any *ptr, Float (*input)(void *arg,in
 
 /* temporary names -- can't immediately think of better ones */
 Float *mus_phase_vocoder_ampinc PROTO((void *ptr));
-Float *mus_phase_vocoder_amps PROTO((void *ptr));
-Float *mus_phase_vocoder_freqs PROTO((void *ptr));
+Float *mus_phase_vocoder_amps   PROTO((void *ptr));
+Float *mus_phase_vocoder_freqs  PROTO((void *ptr));
 Float *mus_phase_vocoder_phases PROTO((void *ptr));
 Float *mus_phase_vocoder_phaseinc PROTO((void *ptr));
 Float *mus_phase_vocoder_lastphase PROTO((void *ptr));

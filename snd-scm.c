@@ -399,7 +399,7 @@ env *get_env(SCM e, SCM base, char *origin) /* list or vector in e */
   return(newenv);
 }
 
-static SCM array_to_list(Float *arr, int i, int len)
+SCM array_to_list(Float *arr, int i, int len)
 {
   if (i < (len-1))
     return(gh_cons(gh_double2scm(arr[i]),array_to_list(arr,i+1,len)));

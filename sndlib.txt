@@ -389,6 +389,7 @@ The other generators are:
    * src -- sampling rate conversion
    * granulate -- granular synthesis
    * convolve -- convolution
+   * phase-vocoder -- phase vocoder
 
 Some useful functions provided by clm.c are:
 
@@ -437,6 +438,7 @@ The more useful generic functions are:
    * int mus_type(mus_any *ptr)
    * float mus_scaler(mus_any *gen)
    * float mus_set_scaler(mus_any *gen, float val)
+   * float mus_apply(mus_any *gen, ...)
 
 Before using any of these functions, call init_mus_module. Errors are
 reported through mus_error which can be redirected or muffled. See clm2scm.c
@@ -807,17 +809,11 @@ ld -r audio.o io.o headers.o sound.o -o sndlib.a
 cc sndplay.c -o sndplay -O -DNEXT sndlib.a
 
 Some similar sequence should work on a Sun (-DSOLARIS) or in HP-UX (-DHPUX).
-On a Mac, you need to make a project in CodeWarrior or whatever that
-includes all the basic sndlib .c and .h files (io.c, audio.c headers.c,
-sound.c, sndlib.h) as source files. Add the main program you're interested
-in (say sndplay.c), and "Make" the project. When the project is "Run", a
-dialog pops up asking for the arguments to the program (in this case the
-name of the file to be played, as a quoted string). In the BeOS (Intel),
-rename audio.c to audio.cc, then use make (for some reason Be's version of
-g++ gets a segfault if the name is audio.c). In Windoze, you can use the C
-IDE (a project builder as in the Mac case), or run the compiler from a DOS
-shell. In the latter case, (in Watcom C) cl io.c -c -DWINDOZE to create the
-object files (io.obj and so on), then
+In the BeOS (Intel), rename audio.c to audio.cc, then use make (for some
+reason Be's version of g++ gets a segfault if the name is audio.c). In
+Windoze, you can use the C IDE (a project builder), or run the compiler from
+a DOS shell. In the latter case, (in Watcom C) cl io.c -c -DWINDOZE to
+create the object files (io.obj and so on), then
 
 cl sndplay sndplay.obj -DWINDOZE audio.obj io.obj headers.obj sound.obj
 

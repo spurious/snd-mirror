@@ -1493,13 +1493,14 @@ close to the original speed.
 <!-- TOPIC phase-vocoder -->
 <h4>PHASE-VOCODER</h4>
 <pre>
-  <a name="make-phase-vocoder"><em class=def>make-phase-vocoder</em></a> <a href="#optional-key">&amp;optional-key</a> (<i>fftsize</i> 512) (<i>overlap</i> 4) <i>interp analyze edit synthesize</i>
+  <a name="make-phase-vocoder"><em class=def>make-phase-vocoder</em></a> <a href="#optional-key">&amp;optional-key</a> (<i>fftsize</i> 512) (<i>overlap</i> 4) <i>interp pitch analyze edit synthesize</i>
   <a name="phase-vocoder"><em class=def>phase-vocoder</em></a> <i>pv input</i>
   <a name="phase-vocoder?"><em class=def>phase-vocoder?</em></a> <i>pv</i>
 </pre>
 
 <table border>
 <tr><td colspan=2><center>phase-vocoder methods</center></tr>
+<tr><td><em class=gen>mus-frequency</em><td>pitch shift</tr>
 <tr><td><em class=gen>mus-length</em><td>fft-size ("N")</tr>
 <tr><td><em class=gen>mus-increment</em><td>interp</tr>
 <tr><td><em class=gen>mus-hop</em><td>fft-size / overlap ("D")</tr>
@@ -1525,7 +1526,7 @@ control over the resynthesis pitch:
                 512 4 (/ 512 4)
                 nil ;no change to analysis
 		(lambda (v)
-		  ; new editing func changes pitch
+		  ; new editing func changes pitch (we could simply pass :pitch freq instead)
 		  (let* ((N (mus-length v))
 		         (D (mus-hop v))
 			  ;; FIX THIS TO REFLECT C/SCHEME!!

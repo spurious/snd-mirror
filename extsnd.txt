@@ -1177,6 +1177,7 @@ Snd is currently in flux.
   vct-scale!        (vobj scl)    vobj[i] *= scl, returns vobj.
   vct-set!          (vobj pos val) set vobj's data at location pos to val.
   vct-subtract!     (vobj1 vobj2) vobj1[i] -= vobj2[i], returns vobj1.
+  vct->list         (v1)          return list with elements of vct v1
   vct->samples      (samp samps data snd chn) synonym for set-samples.
   vct->sound-file   (fd vobj vals) write vals floats from vobj to fd.
   vcts-do!          (vobj... proc) vobj[vi][i] = (nth vi (funcall proc num i)).
@@ -1377,15 +1378,14 @@ Customizing Snd's appearance
 
 Snd's overall appearance is controlled first by the startup switches that
 choose the outermost widget; normally this is a paned window with a sound in
-each pane; -separate tries to put each sound in a separate window (this
-doesn't currently work very well), and -notebook puts each sound on a
-separate page of a notebook widget. Similarly -horizontal and -vertical
-determine which way the outer panes are layed out. The initial window size
-and location are set (in ~/.snd, the initialization file) via
-set-window-width, set-window-height, set-window-y, and set-window-x. The
-window manager normally determines whether Snd grows to accomodate added
-sounds; the auto-resize variable can be set to #f to try to keep Snd the
-same size as sounds come and go:
+each pane; -separate tries to put each sound in a separate window, and
+-notebook puts each sound on a separate page of a notebook widget. Similarly
+-horizontal and -vertical determine which way the outer panes are layed out.
+The initial window size and location are set (in ~/.snd, the initialization
+file) via set-window-width, set-window-height, set-window-y, and
+set-window-x. The window manager normally determines whether Snd grows to
+accomodate added sounds; the auto-resize variable can be set to #f to try to
+keep Snd the same size as sounds come and go:
 
   (set-auto-resize #f)
 

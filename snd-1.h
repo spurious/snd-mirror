@@ -780,6 +780,7 @@ char *added_transform_name(int type);
   SCM env2scm (env *e);
   SCM g_c_run_or_hook (SCM hook, SCM args);
   SCM g_c_run_progn_hook (SCM hook, SCM args);
+  SCM array_to_list(Float *arr, int i, int len);
 #endif
 env *string2env(char *str);
 /* Float string2Float(char *str); */

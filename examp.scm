@@ -88,7 +88,8 @@
 	       (sum 0.0))
 	  (do ((i 0 (1+ i))) 
 	      ((= i len) (sqrt (/ sum len)))
-	    (set! sum (+ sum (* (vector-ref data i) (vector-ref data i)))))))))
+	    (set! sum (+ sum (* (vector-ref data i) (vector-ref data i))))))
+	'no-such-region)))
 
 (define selection-rms-1
   (lambda ()
@@ -103,7 +104,8 @@
 		 (free-sample-reader reader) 
 		 (sqrt (/ sum len))))
 	    (let ((val (next-sample reader)))
-	      (set! sum (+ sum (* val val)))))))))
+	      (set! sum (+ sum (* val val))))))
+	'no-active-selection)))
 
 ;;; if you'd rather use recursion:
 (define selection-rms-2
@@ -120,7 +122,8 @@
 		  (sqrt (/ sum len))
 		  (let ((val (next-sample reader)))
 		    (rsum (1- leng) (+ sum (* val val)))))))
-	  (rsum len 0.0)))))
+	  (rsum len 0.0))
+	'no-active-selection)))
 
 ;;; but by far the fastest is:
 (define selection-rms
@@ -128,14 +131,16 @@
     "(selection-rms) -> rms of selection data using sample readers and dot-product"
     (if (selection?)
 	(let* ((data (region-samples->vct 0 0 0)))
-	  (sqrt (/ (dot-product data data) (vct-length data)))))))
+	  (sqrt (/ (dot-product data data) (vct-length data))))
+	'no-active-selection)))
 
 (define region-rms
   (lambda (n)
     "(region-rms n) -> rms of region n's data (chan 0)"
     (if (region? n)
 	(let* ((data (region-samples->vct 0 0 n)))
-	  (sqrt (/ (dot-product data data) (vct-length data)))))))
+	  (sqrt (/ (dot-product data data) (vct-length data))))
+	'no-such-region)))
 
 
 (define window-samples

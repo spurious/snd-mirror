@@ -5828,7 +5828,8 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      number_ctr = 0; 
 	      counting = 0; 
 	      dot_seen = 0; 
-	      cks(); 
+	      if ((cks() == -1) && (selection_is_current()))
+		deactivate_selection();
 	      defining_macro = 0;
 	      if (ss->checking_explicitly) ss->stopped_explicitly = 1; 
 	      /* this tries to break out of long filter/src computations (and perhaps others) */
@@ -5913,12 +5914,18 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      /* there is also the bare-number case below */
 	      break;
 	    case snd_K_space: 
-	      if ((cks() == -1) && (selection_is_current()))
-		deactivate_selection();
-	      if (count > 0)
+	      if (selection_is_current())
 		{
-		  start_keyboard_selection(cp,cp->cx); 
-		  redisplay = NO_ACTION;
+		  if (cks() == -1)
+		    deactivate_selection();
+		}
+	      else
+		{
+		  if (count > 0)
+		    {
+		      start_keyboard_selection(cp,cp->cx); 
+		      redisplay = NO_ACTION;
+		    }
 		}
 	      break;
 	    case snd_K_period: counting = 1; number_buffer[number_ctr]='.'; number_ctr++; dot_seen = 1; break;

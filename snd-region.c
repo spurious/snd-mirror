@@ -1221,7 +1221,7 @@ void define_selection(chan_info *cp)
 void define_region(chan_info *cp, int beg, int end, int cleared)
 {
   deactivate_selection();
-  if (beg >= end) return;
+  if (beg > end) return; /* was >=? */
   create_selection(cp);
   load_region(cp,regions[0],beg,end);
   if (cleared) clear_minibuffer(cp->sound);

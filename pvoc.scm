@@ -154,52 +154,6 @@
     ))
 
 
-(define test-pvoc-1
-  (lambda (freq)
-    (let ((pv (make-pvocoder 512 4 128 
-				  #f ;no change to analysis
-				  #f ;no change to edits
-				  #f ;no change to synthesis
-				  ))
-	  (reader (make-sample-reader 0))
-	  )
-      (map-chan (lambda (val)
-	          (if val
-		      (pvocoder pv (lambda () 
-				          (next-sample reader)))
-		      #f))))))
-
-(define test-pvoc-2
-  (lambda (freq)
-    (let ((pv (make-pvocoder 512 4 128 
-				  #f ;no change to analysis
-				  (lambda (v)
-				    ; new editing func changes pitch
-				    (let* ((N (pvoc-N v))
-					   (D (pvoc-D v))
-					   (amps (pvoc-ampinc v))
-					   (freqs (pvoc-freqs v)))
-				      (do ((k 0 (1+ k))
-					   (pscl (/ 1.0 D))
-					   (kscl (/ pi2 N)))
-					  ((= k (ifloor (/ N 2))))
-					(let ((phasediff (- (vct-ref freqs k) (vct-ref (pvoc-lastphase v) k))))
-					  (vct-set! (pvoc-lastphase v) k (vct-ref freqs k))
-					  (if (> phasediff pi) (do () ((<= phasediff pi)) (set! phasediff (- phasediff pi2))))
-					  (if (< phasediff (- pi)) (do () ((>= phasediff (- pi))) (set! phasediff (+ phasediff pi2))))
-					  (vct-set! freqs k 
-						    (* freq
-						       (+ (* pscl phasediff)
-							  (* k kscl))))))))
-				  #f ; no change to synthesis
-				  ))
-	  (reader (make-sample-reader 0))
-	  )
-      (map-chan (lambda (val)
-	          (if val
-		      (pvocoder pv (lambda () 
-				          (next-sample reader)))
-		      #f))))))
 
 
 ;;; ---------------- same thing using phase-vocoder gen
@@ -207,7 +161,7 @@
 (define test-pv-1
   (lambda (freq)
     (let ((pv (make-phase-vocoder #f
-				  512 4 128 
+				  512 4 128 1.0
 				  #f ;no change to analysis
 				  #f ;no change to edits
 				  #f ;no change to synthesis
@@ -223,24 +177,9 @@
 (define test-pv-2
   (lambda (freq)
     (let ((pv (make-phase-vocoder #f
-				  512 4 128 
+				  512 4 128 freq
 				  #f ;no change to analysis
-				  (lambda (v)
-				    ; new editing func changes pitch
-				    (let* ((N (mus-length v)) ;mus-increment => interp, mus-data => in-data
-					   (D (mus-hop v)))
-				      (do ((k 0 (1+ k))
-					   (pscl (/ 1.0 D))
-					   (kscl (/ pi2 N)))
-					  ((= k (ifloor (/ N 2))))
-					(let ((phasediff (- (pv-freqs v k) (pv-lastphase v k))))
-					  (set-pv-lastphase v k (pv-freqs v k))
-					  (if (> phasediff pi) (do () ((<= phasediff pi)) (set! phasediff (- phasediff pi2))))
-					  (if (< phasediff (- pi)) (do () ((>= phasediff (- pi))) (set! phasediff (+ phasediff pi2))))
-					  (set-pv-freqs v k 
-							(* freq
-							   (+ (* pscl phasediff)
-							      (* k kscl))))))))
+				  #f
 				  #f ; no change to synthesis
 				  ))
 	  (reader (make-sample-reader 0)))
@@ -253,7 +192,7 @@
 (define test-pv-3
   (lambda (time)
     (let* ((pv (make-phase-vocoder #f
-				   512 4 (inexact->exact (* 128 time))
+				   512 4 (inexact->exact (* 128 time)) 1.0
 				   #f ;no change to analysis
 				   #f ;no change to edits
 				   #f ;no change to synthesis
@@ -270,7 +209,7 @@
 (define test-pv-4
   (lambda (gate)
     (let ((pv (make-phase-vocoder #f
-				  512 4 128 
+				  512 4 128 1.0
 				  #f ;no change to analysis
 				  (lambda (v)
 				    (let ((N (mus-length v)))

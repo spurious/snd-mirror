@@ -1223,6 +1223,7 @@ would refer to the original form.  I may extend this to accept a list of (more t
   <a name="vctscale">vct-scale!</a>        (vobj scl)    vobj[i] *= scl, returns vobj.
   <a name="vctset">vct-set!</a>          (vobj pos val) set vobj's data at location pos to val.
   <a name="vctsubtract">vct-subtract!</a>     (vobj1 vobj2) vobj1[i] -= vobj2[i], returns vobj1.
+  <a name="vct2list">vct-&gt;list</a>         (v1)          return list with elements of vct <i>v1</i>
   <a name="vct2samples">vct-&gt;samples</a>      (samp samps data <i>snd chn</i>) synonym for <a href="#sndsetsamples">set-samples</a>.
   <a name="vct2soundfile">vct-&gt;sound-file</a>   (fd vobj vals) write <i>vals</i> floats from <i>vobj</i> to <i>fd</i>.
   <a name="vctsdo">vcts-do!</a>          (vobj... proc) vobj[vi][i] = (nth vi (funcall proc num i)).

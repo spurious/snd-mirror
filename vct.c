@@ -30,6 +30,7 @@
  *   (vcts-do! v1 v2 ... proc)             set each element of each vs from values of function proc(num,i)
  *   (vct-peak v1)                         max val (abs) in v
  *   (list->vct lst)                       return vct with elements of list lst
+ *   (vct->list v1)                        return list with elements of vct v1
  *   (vector->vct vect)                    return vct with elements of vector vect
  *   (vct-move! v new old)                 v[new++]=v[old++] -> v
  *
@@ -530,6 +531,15 @@ static SCM list2vct(SCM lst)
   return(scm_return_first(scv,lst));
 }
 
+static SCM vct2list(SCM vobj)
+{
+  #define H_vct2list "(" S_vct2list " v) -> a new list with elements of vct v"
+  vct *v;
+  ERRVCT1(vobj,S_vct2list);
+  v = get_vct(vobj);
+  return(scm_return_first(array_to_list(v->data,0,v->length),vobj));
+}
+
 static SCM vector2vct(SCM vect)
 {
   #define H_vector2vct "(" S_vector2vct " vect) -> a new vct object with the elements of vector vect"
@@ -558,6 +568,7 @@ void init_vct(void)
   DEFINE_PROC(gh_new_procedure1_0(S_vct_copy,copy_vct),H_vct_copy);
   DEFINE_PROC(gh_new_procedure1_0(S_vct_p,g_vct_p),H_vct_p);
   DEFINE_PROC(gh_new_procedure1_0(S_list2vct,list2vct),H_list2vct);
+  DEFINE_PROC(gh_new_procedure1_0(S_vct2list,vct2list),H_vct2list);
   DEFINE_PROC(gh_new_procedure1_0(S_vector2vct,vector2vct),H_vector2vct);
   DEFINE_PROC(gh_new_procedure1_0(S_vct_length,vct_length),H_vct_length);
   DEFINE_PROC(gh_new_procedure2_0(S_vct_ref,vct_ref),H_vct_ref);
