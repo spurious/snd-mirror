@@ -73,6 +73,7 @@
   "(down-n n) moves a sound down by power of 2 n"
   ;; I think this is "stretch" in DSP jargon -- to interpolate in the time domain we're squeezing the frequency domain
   ;;  the power-of-2 limitation is based on the underlying fft function's insistence on power-of-2 data sizes
+  ;;  see stretch-sound-via-dft below for a general version
   (let* ((len (frames))
 	 (pow2 (ceiling (/ (log len) (log 2))))
 	 (fftlen (inexact->exact (expt 2 pow2)))
@@ -94,6 +95,29 @@
 	(vct-set! im2 j (vct-ref im1 k)))
       (fft rl2 im2 -1)
       (vct->samples 0 (* n len) rl2))))
+
+(define (stretch-sound-via-dft factor)
+  ;; this is very slow! factor>1.0
+  (let* ((n (frames))
+	 (n2 (inexact->exact (floor (/ n 2.0))))
+	 (out-n (inexact->exact (round (* n factor))))
+	 (in-data (channel->vct))
+	 (out-data (make-vct out-n))
+	 (fr (make-vector out-n 0.0))
+	 (freq (/ (* 2 pi) n)))
+    (do ((i 0 (1+ i)))
+	((or (c-g?) (= i n)))
+      ;; DFT + split
+      (if (< i n2)
+	  (vector-set! fr i (edot-product (* freq 0.0-1.0i i) in-data))
+	  (vector-set! fr (+ i (- out-n n 1))  (edot-product (* freq 0.0-1.0i i) in-data))))
+    (set! freq (/ (* 2 pi) out-n))
+    (do ((i 0 (1+ i)))
+	((or (c-g?) (= i out-n)))
+      ;; inverse DFT
+      (vct-set! out-data i (real-part (/ (edot-product (* freq 0.0+1.0i i) fr) n))))
+    (vct->channel out-data)))
+
 
 
 ;;; -------- compute-uniform-circular-string
@@ -1426,7 +1450,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 ;;; end of JOS stuff
 
 
-(define* (ssb-am freq #:optional (order 40)) ; higher order = better cancellation
+(define* (map-ssb-am freq #:optional (order 40)) ; higher order = better cancellation
   (let* ((carrier-freq (abs freq))
 	 (cos-carrier (make-oscil carrier-freq (* .5 pi)))
 	 (sin-carrier (make-oscil carrier-freq))
@@ -1442,3 +1466,24 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 			    (* csin yh))
 			 (+ (* ccos yd) ; shift down
 			    (* csin yh))))))))
+
+(define* (make-ssb-am freq-1 #:optional (order 40))
+  (let* ((freq freq-1)
+	 (carrier-freq (abs freq-1))
+	 (cos-carrier (make-oscil carrier-freq (* .5 pi)))
+	 (sin-carrier (make-oscil carrier-freq))
+	 (dly (make-delay order))
+	 (hlb (make-hilbert-transform order)))
+    (lambda (y)
+      (let ((ccos (oscil cos-carrier))
+	    (csin (oscil sin-carrier))
+	    (yh (hilbert-transform hlb y))
+	    (yd (delay dly y)))
+	(if (> freq 0.0)
+	    (- (* ccos yd) ; shift up
+	       (* csin yh))
+	    (+ (* ccos yd) ; shift down
+	       (* csin yh)))))))
+
+(define (ssb-am gen y) (gen y))
+

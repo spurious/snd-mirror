@@ -561,7 +561,8 @@ It returns the FIR filter coefficients given the filter order and desired spectr
 </pre>
 <p>
 <b>down-oct</b> tries to move a sound down n (a power of 2) by goofing with the fft data,
-then inverse ffting.  
+then inverse ffting.  A more general version of this is stretch-sound-via-dft, but it's
+extremely slow.
 <b>freqdiv</b> implements
 "frequency division", taken from an effects package of sed_sed@my-dejanews.com.
 </p>
