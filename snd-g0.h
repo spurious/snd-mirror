@@ -226,7 +226,6 @@ typedef struct {
 #define snd_K_8 GDK_8 
 #define snd_K_9 GDK_9 
 #define snd_K_less GDK_less 
-#define snd_K_equal GDK_equal 
 #define snd_K_greater GDK_greater 
 #define snd_K_A GDK_A 
 #define snd_K_B GDK_B 

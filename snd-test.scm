@@ -29,13 +29,11 @@
 ;;; test 26: errors
 
 ;;; TODO: GL tests, gtk (xg) tests
-;;; TODO: send-netscape apply-ladspa set-enved-selected-env
 ;;; TODO: mix panel env editor (apply button (|XmMessageBoxGetChild mix_panel |XmDIALOG_CANCEL_BUTTON)
 ;;; TODO: [before-]transform-hook? output-name-hook [requires New dialog]?
 ;;; TODO: lisp-graph-hook with forward proc
 ;;; TODO: control-panel apply to channel [apply button with ctrl and no active selection]
 ;;; TODO: new data dialog help
-;;; TODO: activate order text
 
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs) (ice-9 syncase))
@@ -82,6 +80,7 @@
 (debug-enable 'debug 'backtrace)
 (read-enable 'positions)
 (define (irandom n) (inexact->exact (random n)))
+(add-hook! bad-header-hook (lambda (n) #t))
 
 (if (file-exists? "optimizer.log")
     (delete-file "optimizer.log"))
@@ -7886,7 +7885,7 @@
 	(set! reader (make-sample-reader 0))
 	(map-chan (lambda (val)
 		    (phase-vocoder pv (lambda (dir) 
-					(reader)))))
+					(next-sample reader)))))
 	(undo 1)
 	(free-sample-reader reader)
 	(set! pv (make-phase-vocoder #f
@@ -9563,6 +9562,7 @@
   (add-hook! select-mix-hook arg1) (carg1 select-mix-hook)
   (add-hook! print-hook arg1) (carg1 print-hook)
   (add-hook! read-hook arg1) (carg1 read-hook)
+  (add-hook! bad-header-hook arg1) (carg1 bad-header-hook)
   (add-hook! previous-files-select-hook arg1) (carg1 previous-files-select-hook)
 
   (add-hook! exit-hook arg0) (carg0 exit-hook)
@@ -9926,6 +9926,7 @@
 	(reset-hook! menu-hook))
 
       (test-hooks)
+      (add-hook! bad-header-hook (lambda (n) #t))
       (let ((ind (open-sound "oboe.snd")))
 	(set! (cursor) 2000)
 	(key (char->integer #\u) 4 ind)
@@ -17998,6 +17999,7 @@ EDITS: 5
 	    ;; resize-pane pane size 
 
 	    (reset-all-hooks)
+	    (add-hook! bad-header-hook (lambda (n) #t))
 	    (for-each all-help (cdr (main-widgets)))
 	    (set! (time-graph-type) graph-time-once)
 	    (set! (transform-graph-type) graph-transform-once)
@@ -19405,7 +19407,7 @@ EDITS: 5
 				   (snd-display ";move ~A ~A: ~A" (|XtName w) val (car newvals)))))
 			   (snd-display ";move-scroll ~A?" w)))))
 		(reset-all-hooks)
-
+		(add-hook! bad-header-hook (lambda (n) #t))
 		(let* ((ind (open-sound "pistol.snd"))
 		       (swids (sound-widgets ind))
 		       (spane (car swids))
@@ -19940,6 +19942,7 @@ EDITS: 5
 			(snd-display ";raw-data open: ~A" (list-ref (dialog-widgets) 9))
 			(let ((rd (list-ref (dialog-widgets) 9)))
 			  (click-button (|XmMessageBoxGetChild rd |XmDIALOG_CANCEL_BUTTON)) (force-event))))
+		  (reset-hook! bad-header-hook)
 		  (let ((ind (open-sound "/home/bil/sf1/bogus.snd")))
 		    (let ((rd (list-ref (dialog-widgets) 9)))
 		      (if (|XtIsManaged rd)
@@ -19947,6 +19950,7 @@ EDITS: 5
 			    (click-button (|XmMessageBoxGetChild rd |XmDIALOG_HELP_BUTTON)) (force-event)
 			    (click-button (|XmMessageBoxGetChild rd |XmDIALOG_CANCEL_BUTTON)) (force-event)))))
 		  (set! (with-background-processes) old-val))
+		(add-hook! bad-header-hook (lambda (n) #t))
 
 		;; ---------------- file:new dialog ----------------
 		(if (defined? 'new-file-dialog)
@@ -24532,6 +24536,7 @@ EDITS: 5
 			(list dac-hook 'dac-hook)
 			(list new-widget-hook 'new-widget-hook)
 			(list read-hook 'read-hook)
+			(list bad-header-hook 'bad-header-hook)
 			(list snd-error-hook 'snd-error-hook)
 			(list snd-warning-hook 'snd-warning-hook)
 			(list start-hook 'start-hook)

@@ -548,7 +548,7 @@ The lowest level procedures are:
 <!-- -->
 <!-- --><tr><td></td><td>
 <!-- -->draws lines following the (x y) pairs in the vector <i>lines</i> in the given context.
-<!-- --><i>make-bezier-1</i> in musglyphs.scm can be used to draw Bezier curves.
+<!-- --><i>make-bezier-1</i> in <a href="sndscm.html#musglyphs">musglyphs.scm</a> can be used to draw Bezier curves.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -1078,7 +1078,7 @@ when you save a sound via the "save" dialog.</p>
 <!-- --><tr><td>1:  </td><td> allow simple ops (if complex result possible, give up)</td></tr>
 <!-- --><tr><td>2:  </td><td>assume nothing will return a complex number</td></tr>
 <!-- --><tr><td>3:  </td><td>if undefined global variable encountered, try to determine eventual type from context</td></tr>
-<!-- --><tr><td>4:  </td><td>make dangerous assumptions about variable types, try to use procedure source</td></tr>
+<!-- --><tr><td>4:  </td><td>make dangerous assumptions about variable types</td></tr>
 <!-- --><tr><td>5:  </td><td>make dangerous assumptions about variable locations (for set!)</td></tr>
 <!-- --></table><br></td></tr>
 <!-- --><tr><td></td><td colspan=2><small>Currently, the optimizer is able to speed up Scheme code by factors between
@@ -1318,6 +1318,15 @@ the hook.
           (set! (channel-style snd) channels-combined)
           (set! (graph-style snd) graph-filled)))
 <!-- --></pre></td></tr></table></td></tr>
+<!-- --><tr><td colspan=3></td></tr>
+<!-- -->
+<!-- bad-header-hook -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="badheaderhook">bad-header-hook</a></em> (filename)</code></span><td align=right><b>or</b></td>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td colspan=2>
+<!-- -->called if a file has some bogus-looking header. Return #t to give up on that file. <code>(add-hook! bad-header-hook (lambda (n) #t))</code>
+<!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
 <!-- before-apply-hook -->
@@ -1904,7 +1913,7 @@ the hook.
 <!-- --><span class=defbox><code><em class=def><a name="mouseleavelabelhook">mouse-leave-label-hook</a></em> (type position name) </code></span><td align=right><b>progn</b></td>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
-<!-- -->called when the mouse exits one of the labels covered by mouse-enter-label-hook.
+<!-- -->called when the mouse exits one of the labels covered by mouse-enter-label-hook. (See nb.scm)
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
@@ -1997,7 +2006,7 @@ the hook.
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called each time a file is opened (before the actual open).
 <!-- -->If it returns #t, the file is not opened.
-<!-- -->If it returns a string, that file is opened instead of the original one.
+<!-- -->If it returns a string (a filename), that file is opened instead of the original one.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
@@ -2135,7 +2144,7 @@ the hook.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called when Snd sees a SND_COMMAND window property change.
-<!-- -->If it returns #t, the command is not evaluated.
+<!-- -->If it returns #t, the command is not evaluated.  (This is mostly an internal debugging hook).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
@@ -2835,10 +2844,10 @@ See play.scm and rtio.scm for example code. The most important Sndlib functions 
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2>
 <!-- --><pre>
-<!-- -->  mus-audio-amp       mus-audio-srate    mus-audio-channel mus-audio-format
-<!-- -->  mus-audio-imix      mus-audio-igain    mus-audio-reclev  mus-audio-pcm 
-<!-- -->  mus-audio-ogain     mus-audio-line     mus-audio-synth   mus-audio-bass
-<!-- -->  mus-audio-direction mus-audio-port     mus-audio-pcm2    mus-audio-treble
+<!-- -->  mus-audio-amp         mus-audio-srate    mus-audio-channel mus-audio-format
+<!-- -->  mus-audio-imix        mus-audio-igain    mus-audio-reclev  mus-audio-pcm 
+<!-- -->  mus-audio-ogain       mus-audio-line     mus-audio-synth   mus-audio-bass
+<!-- -->  mus-audio-direction   mus-audio-port     mus-audio-pcm2    mus-audio-treble
 <!-- -->  mus-audio-samples-per-channel
 <!-- --></pre>
 <!-- --></td></tr>
@@ -2866,14 +2875,14 @@ See play.scm and rtio.scm for example code. The most important Sndlib functions 
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2>
 <!-- --><pre>
-<!-- -->  mus-audio-default    mus-audio-duplex-default mus-audio-line-out
-<!-- -->  mus-audio-microphone mus-audio-speakers       mus-audio-dac-out    
-<!-- -->  mus-audio-aes-in     mus-audio-digital-in     mus-audio-digital-out
-<!-- -->  mus-audio-aes-out    mus-audio-dac-filter     mus-audio-mixer
-<!-- -->  mus-audio-line2      mus-audio-line3          mus-audio-aux-input 
-<!-- -->  mus-audio-line-in    mus-audio-aux-output     mus-audio-adat-in
-<!-- -->  mus-audio-adat-out   mus-audio-line1          mus-audio-cd 
-<!-- -->  mus-audio-spdif-in   mus-audio-spdif-out
+<!-- -->  mus-audio-default      mus-audio-duplex-default   mus-audio-line-out
+<!-- -->  mus-audio-microphone   mus-audio-speakers         mus-audio-dac-out    
+<!-- -->  mus-audio-aes-in       mus-audio-digital-in       mus-audio-digital-out
+<!-- -->  mus-audio-aes-out      mus-audio-dac-filter       mus-audio-mixer
+<!-- -->  mus-audio-line2        mus-audio-line3            mus-audio-aux-input 
+<!-- -->  mus-audio-line-in      mus-audio-aux-output       mus-audio-adat-in
+<!-- -->  mus-audio-adat-out     mus-audio-line1            mus-audio-cd 
+<!-- -->  mus-audio-spdif-in     mus-audio-spdif-out
 <!-- --></pre>
 <!-- --></td></tr>
 <!-- -->
@@ -7003,7 +7012,8 @@ one, and are exposed in many functions described above as the <i>pos</i> argumen
 <!-- --></td></tr>
 <!-- --><tr><td width=150></td><td>
 <!-- -->apply <i>func</i> (a function of no arguments), treating it as
-<!-- -->one edit (in all channels) in the edit history mechanism.
+<!-- -->one edit (in all channels) in the edit history mechanism.  To turn off (unnecessary) graphics
+<!-- -->updates during the 'func', see <a href="#squelchupdate">squelch-update</a>.
 <!-- --></td></tr>
 <!-- -->
 <!-- --><tr><td></td><td>
@@ -7056,7 +7066,8 @@ one, and are exposed in many functions described above as the <i>pos</i> argumen
 <!-- --><span class=defbox><code><em class=def><a name="sndedits">edits</a></em> (<em class=targ>snd chn</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->return a list with number of undo-able edits and redo-able edits.
+<!-- -->return a list with the number of undo-able edits and redo-able edits.  That is, if we have 2 undo-able edits and
+<!-- -->no re-doable edits, (edits) returns (list 2 0).
 <!-- --></td></tr>
 <!-- --><tr><td></td><td></td></tr>
 <!-- -->
@@ -8527,7 +8538,10 @@ run
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="sndpreloaddirectory">preload-directory</a></em> (dir)</code></span></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->preload sound files from directory <i>dir</i> (see -<a href="snd.html#minusp">p</a>).
+<!-- -->preload sound files from directory <i>dir</i> (see -<a href="snd.html#minusp">p</a>).  "Preloading" a file means
+<!-- -->placing it in the list of previous files in the View menu's <a href="snd.html#prevfiles">View Files</a> dialog.
+<!-- -->By preloading all the files you might want to use, you can use that dialog as a convenient access method, and so on.
+<!-- -->See <a href="sndscm.html#nbdoc">nb.scm</a> for example.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -8535,7 +8549,8 @@ run
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="sndpreloadfile">preload-file</a></em> (file)</code></span></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->preload <i>file</i> (see View menu's <a href="snd.html#prevfiles">View Files</a> option).
+<!-- -->preload <i>file</i>, placing it in the View menu's <a href="snd.html#prevfiles">View Files</a> dialog as
+<!-- -->a "previous" file (as if you had opened and closed it).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -8609,10 +8624,10 @@ run
 <!-- --><tr><td></td><td>
 <!-- -->return possible completions of <i>name</i> (a string or a symbol).
 <!-- --><pre>
-<!-- -->:<em class=typing>(snd-apropos "mouse-enter")</em>
-<!-- --><em class=listener>(guile): mouse-enter-graph-hook
-<!-- -->(guile): mouse-enter-label-hook
-<!-- -->(guile): mouse-enter-listener-hook
+:<em class=typing>(snd-apropos "mouse-enter")</em>
+<em class=listener>(guile): mouse-enter-graph-hook
+(guile): mouse-enter-label-hook
+(guile): mouse-enter-listener-hook
 <!-- --></em></pre>
 <!-- --></td></tr>
 <!-- -->

@@ -64,8 +64,8 @@ void set_spectro_x_scale(snd_state *ss, Float val);
 void set_spectro_y_scale(snd_state *ss, Float val);
 void set_spectro_z_scale(snd_state *ss, Float val);
 void set_spectro_cutoff(snd_state *ss, Float val);
-void view_orientation_callback(GtkWidget *w, gpointer clientData);
-void view_color_callback(GtkWidget * w, gpointer clientData);
+void view_orientation_callback(GtkWidget *w, gpointer info);
+void view_color_callback(GtkWidget * w, gpointer info);
 int color_dialog_is_active(void);
 int orientation_dialog_is_active(void);
 void reflect_spectro(snd_state *ss);
@@ -220,7 +220,7 @@ void reflect_play_region_stop(int n);
 int region_browser_is_active(void);
 void delete_region_and_update_browser(snd_state *ss, int n);
 void set_region_protect(int reg, int protect);
-void view_region_callback(GtkWidget *w, gpointer clientData);
+void view_region_callback(GtkWidget *w, gpointer info);
 void allocate_region_rows(int n);
 int region_dialog_is_active(void);
 void reflect_regions_in_region_browser(void);
@@ -304,7 +304,7 @@ void g_init_gxchn(void);
 
 /* -------- snd-gfind.c -------- */
 
-void edit_find_callback(GtkWidget *w, gpointer clientData);
+void edit_find_callback(GtkWidget *w, gpointer info);
 #if DEBUGGING
   void g_init_gxfind(void);
 #endif
@@ -546,7 +546,7 @@ void make_a_big_star_outa_me(char *shortname, int big_star);
 void set_file_browser_play_button(char *name, int state);
 void highlight_selected_sound(snd_state *ss);
 void set_file_sort_sensitive(int sensitive);
-void view_files_callback(GtkWidget *w, gpointer clientData);
+void view_files_callback(GtkWidget *w, gpointer info);
 GtkWidget *start_file_dialog(snd_state *ss, int width, int height);
 int file_dialog_is_active(void);
 file_info *raw_data_dialog_to_file_info(char *filename, snd_state *ss, const char *title);
@@ -560,7 +560,7 @@ void g_initialize_xgfile(void);
 
 /* -------- snd-gprint.c -------- */
 
-void file_print_callback(GtkWidget *w, gpointer clientData);
+void file_print_callback(GtkWidget *w, gpointer info);
 
 
 #endif

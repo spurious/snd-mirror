@@ -6298,6 +6298,16 @@ void mus_audio_restore (void)
       close(audio_fd);
     }
 }
+
+/* stubs needed by sndlib2clm.lisp */
+void mus_audio_mixer_save (const char *file) 
+{
+}
+
+void mus_audio_mixer_restore (const char *file) 
+{
+}
+
 #endif
 
 

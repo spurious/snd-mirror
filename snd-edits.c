@@ -514,28 +514,14 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 		      fprintf(fd, "%d ", MUS_SAMPLE_TO_INT(buffer[i]));
 #endif
 		      sample++;
-		      if (sample == ed->len)
-			{
-			  if (mus_file_close(ifd) != 0)
-			    snd_error("can't close %d (%s): %s! [%s[%d] %s]",
-				      ifd, sd->filename,
-				      strerror(errno),
-				      __FILE__, __LINE__, __FUNCTION__);
-			  fprintf(fd, ")");
-			  FREE(ibufs[0]);
-			  FREE(ibufs);
-			  return;
-			}
+		      if (sample == ed->len) goto ALL_DONE;
 		    }
 		}
+	    ALL_DONE:
+	      mus_file_close(ifd);
+	      fprintf(fd, ")");
 	      FREE(ibufs[0]);
 	      FREE(ibufs);
-	      fprintf(fd, ")");
-	      if (mus_file_close(ifd) != 0)
-		snd_error("can't close %d (%s): %s! [%s[%d] %s]",
-			  ifd, sd->filename,
-			  strerror(errno),
-			  __FILE__, __LINE__, __FUNCTION__);
 	    }
 	}
     }

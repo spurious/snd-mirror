@@ -200,7 +200,7 @@ static file_info *translate_file(char *filename, snd_state *ss, int type)
   return(hdr);
 }
 
-static XEN open_raw_sound_hook;
+static XEN open_raw_sound_hook, bad_header_hook;
 static char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr);
 
 file_info *make_file_info(char *fullname, snd_state *ss)
@@ -218,6 +218,12 @@ file_info *make_file_info(char *fullname, snd_state *ss)
 	  if ((mus_sound_srate(fullname) <= 0) || (mus_sound_srate(fullname) > 100000000) ||
 	      (mus_sound_chans(fullname) >= 256) || (mus_sound_chans(fullname) <= 0))
 	    {
+	      if ((XEN_HOOKED(bad_header_hook)) &&
+		  (XEN_TRUE_P(g_c_run_or_hook(bad_header_hook,
+					      XEN_LIST_1(C_TO_XEN_STRING(fullname)),
+					      S_bad_header_hook))))
+		return(NULL);
+	      
 	      type = mus_header_type();
 	      if ((type != MUS_MIDI_SAMPLE_DUMP) && 
 		  (type != MUS_IEEE) &&
@@ -258,15 +264,21 @@ file_info *make_file_info(char *fullname, snd_state *ss)
 	  if (XEN_HOOKED(open_raw_sound_hook))
 	    {
 #if HAVE_GUILE
-	      procs = XEN_HOOK_PROCEDURES (open_raw_sound_hook);
+	      procs = XEN_HOOK_PROCEDURES(open_raw_sound_hook);
 	      arg1 = C_TO_XEN_STRING(fullname);
-	      while (XEN_NOT_NULL_P(procs))
+	      while(XEN_NOT_NULL_P(procs))
 		{
-		  res = XEN_CALL_2(XEN_CAR(procs), arg1, res, S_open_raw_sound_hook);
-		  procs = XEN_CDR (procs);
+		  res = XEN_CALL_2(XEN_CAR(procs), 
+				   arg1, 
+				   res, 
+				   S_open_raw_sound_hook);
+		  procs = XEN_CDR(procs);
 		}
 #else
-	      res = XEN_CALL_2(open_raw_sound_hook, C_TO_XEN_STRING(fullname), XEN_FALSE, S_open_raw_sound_hook);
+	      res = XEN_CALL_2(open_raw_sound_hook, 
+			       C_TO_XEN_STRING(fullname), 
+			       XEN_FALSE, 
+			       S_open_raw_sound_hook);
 #endif
 	    }
 	  if (XEN_LIST_P(res)) /* empty list ok here -> accept all current defaults */
@@ -643,8 +655,8 @@ static XEN memo_sound;
 static XEN open_hook;
 static XEN close_hook;
 
-static void greet_me(snd_state *ss, char *shortname);
-static void remember_me(snd_state *ss, char *shortname, char *fullname);
+static void add_to_current_files(snd_state *ss, char *shortname);
+static void add_to_previous_files(snd_state *ss, char *shortname, char *fullname);
 
 
 static snd_info *snd_open_file_1 (char *filename, snd_state *ss, int select, int read_only)
@@ -689,7 +701,7 @@ static snd_info *snd_open_file_1 (char *filename, snd_state *ss, int select, int
 #if (!USE_NO_GUI)
       unlock_control_panel(sp);
 #endif
-      greet_me(ss, sp->short_filename);
+      add_to_current_files(ss, sp->short_filename);
     }
   map_over_separate_chans(ss, channel_open_pane, NULL);
   map_over_separate_chans(ss, channel_unlock_pane, NULL);
@@ -724,7 +736,7 @@ void snd_close_file(snd_info *sp, snd_state *ss)
 			  S_close_hook);
   if (XEN_TRUE_P(res)) return;
   sp->inuse = 0;
-  remember_me(ss, sp->short_filename, sp->filename);
+  add_to_previous_files(ss, sp->short_filename, sp->filename);
   if (sp->playing) stop_playing_sound(sp);
   if (sp->sgx) clear_minibuffer(sp);
   if (sp == selected_sound(ss)) 
@@ -1476,7 +1488,7 @@ void add_directory_to_prevlist(snd_state *ss, char *dirname)
   if (file_dialog_is_active()) make_prevfiles_list(ss);
 }
 
-static void remember_me(snd_state *ss, char *shortname, char *fullname)
+static void add_to_previous_files(snd_state *ss, char *shortname, char *fullname)
 {
   int i, j;
   file_prevlist(shortname, fullname);
@@ -1510,7 +1522,7 @@ void init_curfiles(int size)
     }
 }
 
-static void greet_me(snd_state *ss, char *shortname)
+static void add_to_current_files(snd_state *ss, char *shortname)
 {
   int i, new_size;
   if (curfile_end == curfile_size)
@@ -2485,7 +2497,7 @@ static XEN g_preload_file(XEN file)
   char *name = NULL;
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ONLY_ARG, S_preload_file, "a string");
   name = mus_expand_filename(XEN_TO_C_STRING(file));
-  remember_me(get_global_state(), 
+  add_to_previous_files(get_global_state(), 
 	      filename_without_home_directory(name), 
 	      name);
   if (name) FREE(name);
@@ -2595,9 +2607,13 @@ If it returns #t, the file is not closed."
   #define H_just_sounds_hook S_just_sounds_hook " (filename) is called on each file (after the sound file extension check) if the \
 just-sounds button is set. Return #f to filter out filename. "
 
+  #define H_bad_header_hook S_bad_header_hook " (filename) is called if a file has some bogus-looking header. \
+Return #t to give up on that file."
+
   XEN_DEFINE_HOOK(open_hook, S_open_hook, 1, H_open_hook);                        /* arg = filename */
   XEN_DEFINE_HOOK(close_hook, S_close_hook, 1, H_close_hook);                     /* arg = sound index */
   XEN_DEFINE_HOOK(just_sounds_hook, S_just_sounds_hook, 1, H_just_sounds_hook);   /* arg = filename */
+  XEN_DEFINE_HOOK(bad_header_hook, S_bad_header_hook, 1, H_bad_header_hook);      /* arg = filename */
 
   #define H_open_raw_sound_hook S_open_raw_sound_hook " (filename current-choices) is called when a headerless sound file is opened. \
 Its result can be a list describing the raw file's attributes (thereby bypassing the Raw File Dialog and so on). \
@@ -2615,7 +2631,7 @@ completion of the update operation; its argument is the (possibly different) sou
 Snd tries to maintain the index across the update, but if you change the number of channels \
 the newly updated sound may have a different index."
 
-  XEN_DEFINE_HOOK(update_hook,         S_update_hook,         1, H_update_hook);            /* arg = sound index */
+  XEN_DEFINE_HOOK(update_hook, S_update_hook, 1, H_update_hook);            /* arg = sound index */
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_previous_files_sort_procedure, g_previous_files_sort_procedure_w, H_previous_files_sort_procedure,
                                    "set-" S_previous_files_sort_procedure, g_set_previous_files_sort_procedure_w,  0, 0, 1, 0);

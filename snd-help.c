@@ -246,6 +246,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+27-Jun:  bad-header-hook.\n\
 20-Jun:  ptree-channel (an experiment) -- any func as virtual edit.\n\
          env-channel can take envelope (list) arg.\n\
 18-Jun:  snd colors now mimic xm/xg, snd-pixel is a no-op.\n\

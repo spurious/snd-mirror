@@ -8,14 +8,6 @@
  * "current" can change at any time.
  */
 
-/* if mark is handled as an smob, rather than a bare integer, we get better
- *   type-checking, but (for example) searching for a given mark becomes messy
- *
- * perhaps keep C-view as is, but in user-context use (list 'Mark index)
- *   (and 'Mix 'Region 'Sound -- but this becomes messy with channel number)
- *   or leave as is, but change to use lower(upper?) n (2? 3?) bits as type?
- */
-
 typedef mark *mark_map_func(chan_info *cp, mark *mp, void *m);
 
 static XEN mark_drag_hook;

@@ -254,6 +254,7 @@
 #define S_backward_graph                "backward-graph"
 #define S_backward_mark                 "backward-mark"
 #define S_backward_mix                  "backward-mix"
+#define S_bad_header_hook               "bad-header-hook"
 #define S_basic_color                   "basic-color"
 #define S_beats_per_minute              "beats-per-minute"
 #define S_before_apply_hook             "before-apply-hook"

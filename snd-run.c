@@ -19,7 +19,6 @@
  *   3: if undefined global variable encountered, try to determine eventual type from context;
  *      this is dangerous -- the tree may not recognize trouble until evaluation time.
  *   4: make more assumptions about non-local variables -- lots of errors will be unnoticed until eval time.
- *      try to use scm_procedure_source if procedure variable is passed
  *   5: try to set variable value in outer environment
  *
  *
@@ -90,6 +89,7 @@
 
 static XEN optimization_hook = XEN_FALSE;
 
+/* this code assumes a void* is the same size as int */
 #if HAVE_GUILE && WITH_RUN && HAVE_STRINGIZE
 
 #define XEN_SYMBOL_TO_VALUE(a) XEN_VARIABLE_REF(scm_sym2var(a, scm_current_module_lookup_closure(), XEN_TRUE))
@@ -6513,6 +6513,11 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	  val = XEN_SYMBOL_TO_VALUE(function);
 	  if ((sf_p(val)) || (mus_xen_p(val)))
 	    v = add_global_var_to_ptree(prog, function);
+
+	  /* if we had a way to handle arbitrary lambda args, this might pick up user func:
+	   *	   if (XEN_PROCEDURE_P(val))
+	   *         fprintf(stderr,"%s: %s\n", funcname, XEN_AS_STRING(scm_procedure_source(val)));
+	   */
 	}
       else v = var->v;
       if (v) 
@@ -7006,6 +7011,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	return(clean_up(NULL, args, num_args));
       return(make_xen_value(R_UNSPECIFIED, -1, R_CONSTANT));
     }
+
   if (XEN_NUMBER_P(form))
     {
       if ((XEN_EXACT_P(form)) && (XEN_INTEGER_P(form)))

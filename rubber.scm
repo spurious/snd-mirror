@@ -159,153 +159,150 @@
 
       ;; prepare sound (get rid of low freqs, resample)
 
-      (derumble-sound snd chn)
-      (sample-sound snd chn)
+      (as-one-edit
+       (lambda ()
+	 (set! (squelch-update snd chn) #t)
+	 (derumble-sound snd chn)
+	 (sample-sound snd chn)
 
-      (let* ((crosses (car (crossings snd chn)))
-	     (cross-samples (make-vector crosses))
-	     ;(cross-maxes (make-vector crosses))
-	     ;(cross-to-max-times (make-vector crosses))
-	     (cross-weights (make-vector crosses))
-	     (cross-marks (make-vector crosses))
-	     ;(cross-ids (make-vector crosses))
-	     (cross-periods (make-vector crosses)))
+	 (let* ((crosses (car (crossings snd chn)))
+		(cross-samples (make-vector crosses))
+					;(cross-maxes (make-vector crosses))
+					;(cross-to-max-times (make-vector crosses))
+		(cross-weights (make-vector crosses))
+		(cross-marks (make-vector crosses))
+					;(cross-ids (make-vector crosses))
+		(cross-periods (make-vector crosses)))
 
-	;; get cross points (sample numbers)
-	(let* ((sr0 (make-sample-reader 0 snd chn))
-	       (samp0 (next-sample sr0))
-	       (len (frames snd chn))
-	       (sum 0.0)
-	       (last-cross 0)
-	       (cross 0)
-	       (silences 0)
-	       (silence (* extension .001)))
-	  (do ((i 0 (1+ i)))
-	      ((= i len))
-	    (let ((samp1 (next-sample sr0)))
-	      (if (and (<= samp0 0.0)
-		       (> samp1 0.0)
-		       (> (- i last-cross) 4)
-		       (> sum silence))
-		  (begin
-		    (set! last-cross i)
-		    (set! sum 0.0)
-		    (vector-set! cross-samples cross i)
-		    (set! cross (+ cross 1))))
-	      (set! sum (+ sum (abs samp0)))
-	      (set! samp0 samp1)))
-	  (free-sample-reader sr0))
+	   ;; get cross points (sample numbers)
+	   (let* ((sr0 (make-sample-reader 0 snd chn))
+		  (samp0 (next-sample sr0))
+		  (len (frames snd chn))
+		  (sum 0.0)
+		  (last-cross 0)
+		  (cross 0)
+		  (silences 0)
+		  (silence (* extension .001)))
+	     (do ((i 0 (1+ i)))
+		 ((= i len))
+	       (let ((samp1 (next-sample sr0)))
+		 (if (and (<= samp0 0.0)
+			  (> samp1 0.0)
+			  (> (- i last-cross) 4)
+			  (> sum silence))
+		     (begin
+		       (set! last-cross i)
+		       (set! sum 0.0)
+		       (vector-set! cross-samples cross i)
+		       (set! cross (+ cross 1))))
+		 (set! sum (+ sum (abs samp0)))
+		 (set! samp0 samp1)))
+	     (free-sample-reader sr0))
 
-	(set! (squelch-update snd chn) #t)
-	;; now run through crosses getting period match info
+	   ;; now run through crosses getting period match info
 
-	(do ((i 0 (1+ i)))
-	    ((or (c-g?) (= i (1- crosses))))
-	  (let* ((start (vector-ref cross-samples i))
-		 (autolen (expected-length start snd chn)))
+	   (do ((i 0 (1+ i)))
+	       ((or (c-g?) (= i (1- crosses))))
+	     (let* ((start (vector-ref cross-samples i))
+		    (autolen (expected-length start snd chn)))
 
-	    (let* (;(id (add-mark start snd chn))
-		   (next-start (+ start autolen))
-		   (min-i (+ i 1))
-		   (min-samps (abs (- (vector-ref cross-samples min-i) next-start))))
-	      (do ((k (+ i 2) (1+ k)))
-		  ((= k (min crosses (+ i zeros-checked))))
-		(let ((dist (abs (- (vector-ref cross-samples k) next-start))))
-		  (if (< dist min-samps)
-		      (begin
-			(set! min-samps dist)
-			(set! min-i k)))))
-
-	      (let* ((current-mark min-i)
-		     (current-min (amp-weight start (vector-ref cross-samples current-mark) autolen snd chn)))
-		;(set! (mark-name id) (format #f "~A-~1,3F" autolen current-min))
-
-		(set! min-samps (* 0.5 current-min))
-
-		(let ((top (min (1- crosses) current-mark (+ i zeros-checked))))
-		  (do ((k (+ i 1) (1+ k)))
-		      ((= k top))
-		    (let ((wgt (amp-weight start (vector-ref cross-samples k) autolen snd chn)))
-		      (if (< wgt min-samps)
-			  (begin
-			    (set! min-samps wgt)
-			    (set! min-i k)))))
-
-		  (if (not (= current-mark min-i))
-		      (begin
-			;; these are confused, so effectively erase them
-			(vector-set! cross-weights i 1000.0)
-			)
-		      (begin
-			(vector-set! cross-weights i current-min)
-			(vector-set! cross-marks i current-mark)
-			;(vector-set! cross-ids i id)
-			(vector-set! cross-periods i (- (vector-ref cross-samples current-mark) (vector-ref cross-samples i)))
-			))
-
-		  )))))
-	
-	;; now sort weights to scatter the changes as evenly as possible
-	
-	(let* ((len (frames snd chn))
-	       (adding (> stretch 1.0))
-	       (samps (inexact->exact (* (abs (- stretch 1.0)) len)))
-	       (handled 0)
-	       (edit-list '()))
-	  
-	  (do ()
-	      ((>= handled samps))
-	  ;; need to find enough splice points to add/delete samps
-	    (let ((best-mark (min-weight cross-weights))
-		  (old-handled handled))
-	      (set! handled (+ handled (vector-ref cross-periods best-mark)))
-	      (if (or (< handled samps)
-		      (< (- handled samps) (- samps old-handled)))
-		  (set! edit-list (cons best-mark edit-list)))
-	      (vector-set! cross-weights best-mark 1000.0)))
-
-	  (set! edit-list (sort edit-list >))
-	  ;(snd-print (format #f "edits: ~A" edit-list))
-
-	  (do ((i 0 (1+ i)))
-	      ((= i (length edit-list)))
-	      
-	    (let ((best-mark (list-ref edit-list i)))
-	      
-	      (let ((new-samps
-		     (env-add (vector-ref cross-samples best-mark)
-			      (vector-ref cross-samples (vector-ref cross-marks best-mark))
-			      (vector-ref cross-periods best-mark)
-			      snd chn)))
-
+	       (let* (;(id (add-mark start snd chn))
+		      (next-start (+ start autolen))
+		      (min-i (+ i 1))
+		      (min-samps (abs (- (vector-ref cross-samples min-i) next-start))))
+		 (do ((k (+ i 2) (1+ k)))
+		     ((= k (min crosses (+ i zeros-checked))))
+		   (let ((dist (abs (- (vector-ref cross-samples k) next-start))))
+		     (if (< dist min-samps)
+			 (begin
+			   (set! min-samps dist)
+			   (set! min-i k)))))
+		 
+		 (let* ((current-mark min-i)
+			(current-min (amp-weight start (vector-ref cross-samples current-mark) autolen snd chn)))
+					;(set! (mark-name id) (format #f "~A-~1,3F" autolen current-min))
+		   
+		   (set! min-samps (* 0.5 current-min))
+		   
+		   (let ((top (min (1- crosses) current-mark (+ i zeros-checked))))
+		     (do ((k (+ i 1) (1+ k)))
+			 ((= k top))
+		       (let ((wgt (amp-weight start (vector-ref cross-samples k) autolen snd chn)))
+			 (if (< wgt min-samps)
+			     (begin
+			       (set! min-samps wgt)
+			       (set! min-i k)))))
+		     
+		     (if (not (= current-mark min-i))
+			 (begin
+			   ;; these are confused, so effectively erase them
+			   (vector-set! cross-weights i 1000.0)
+			   )
+			 (begin
+			   (vector-set! cross-weights i current-min)
+			   (vector-set! cross-marks i current-mark)
+					;(vector-set! cross-ids i id)
+			   (vector-set! cross-periods i (- (vector-ref cross-samples current-mark) (vector-ref cross-samples i)))
+			   ))
+		     
+		     )))))
+	   
+	   ;; now sort weights to scatter the changes as evenly as possible
+	   
+	   (let* ((len (frames snd chn))
+		  (adding (> stretch 1.0))
+		  (samps (inexact->exact (* (abs (- stretch 1.0)) len)))
+		  (handled 0)
+		  (edit-list '()))
+	     
+	     (do ()
+		 ((>= handled samps))
+	       ;; need to find enough splice points to add/delete samps
+	       (let ((best-mark (min-weight cross-weights))
+		     (old-handled handled))
+		 (set! handled (+ handled (vector-ref cross-periods best-mark)))
+		 (if (or (< handled samps)
+			 (< (- handled samps) (- samps old-handled)))
+		     (set! edit-list (cons best-mark edit-list)))
+		 (vector-set! cross-weights best-mark 1000.0)))
+	     
+	     (set! edit-list (sort edit-list >))
+					;(snd-print (format #f "edits: ~A" edit-list))
+	     
+	     (do ((i 0 (1+ i)))
+		 ((= i (length edit-list)))
+	       
+	       (let ((best-mark (list-ref edit-list i)))
+		 
+		 (let ((new-samps
+			(env-add (vector-ref cross-samples best-mark)
+				 (vector-ref cross-samples (vector-ref cross-marks best-mark))
+				 (vector-ref cross-periods best-mark)
+				 snd chn)))
+		   
 ;		(let ((id (add-mark (vector-ref cross-samples best-mark) snd chn)))
 ;		  (set! (mark-name id) (format #f "~D" best-mark)))
+		   
+		   (if adding
+		       (insert-samples (vector-ref cross-samples (vector-ref cross-marks best-mark))
+				       (vector-ref cross-periods best-mark)
+				       new-samps
+				       snd chn)
+		       (let ((beg (vector-ref cross-samples best-mark)))
+			 (delete-samples beg
+					 (* 2 (vector-ref cross-periods best-mark))
+					 snd chn)
+			 (insert-samples beg
+					 (vector-ref cross-periods best-mark)
+					 new-samps
+					 snd chn))))))
+	     
+	     ;; delete from mark for period samps
+	     ))
 
-		(if adding
-		    (insert-samples (vector-ref cross-samples (vector-ref cross-marks best-mark))
-				    (vector-ref cross-periods best-mark)
-				    new-samps
-				    snd chn)
-		    (let ((beg (vector-ref cross-samples best-mark)))
-		      (delete-samples beg
-				      (* 2 (vector-ref cross-periods best-mark))
-				      snd chn)
-		      (insert-samples beg
-				      (vector-ref cross-periods best-mark)
-				      new-samps
-				      snd chn))))))
-				      
-		  ;; delete from mark for period samps
-
-
-	  )
-
-
-
-        (set! (squelch-update snd chn) #f)
-	(update-time-graph snd chn)
-	;; and return to original srate
-	(unsample-sound snd chn)
-	))))
+	 ;; and return to original srate
+	 (unsample-sound snd chn)
+	 (set! (squelch-update snd chn) #f)) ; end of as-one-edit thunk
+       (format #f "(rubber-sound ~{~A~^ ~})" args)))))
 
 
