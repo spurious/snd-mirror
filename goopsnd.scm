@@ -1,6 +1,6 @@
 ;;; a first look at using goops in Snd
 
-(use-modules (oop goops))
+(use-modules (oop goops goopscore))
 (use-modules (ice-9 debug))
 (use-modules (ice-9 session))
 (use-modules (ice-9 format))

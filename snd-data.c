@@ -749,7 +749,7 @@ void display_info(snd_info *sp)
 #if (!defined(HAVE_CONFIG_H)) || defined(HAVE_STRFTIME)
 	  strftime(timestr,TIME_STR_SIZE,STRFTIME_FORMAT,localtime(&(sp->write_date)));
 #endif
-	  sprintf(buffer,"srate: %d\nchans: %d\nlength: %.3f (%d %s)\ntype: %s\nformat: %s\nwritten: %s\ncomment: %s\n",
+	  sprintf(buffer,"srate: %d\nchans: %d\nlength: %.3f (%d %s)\ntype: %s\nformat: %s\nwritten: %s%s%s\n",
 		  hdr->srate,
 		  hdr->chans,
 		  (Float)(hdr->samples)/(Float)(hdr->chans * hdr->srate),
@@ -758,6 +758,7 @@ void display_info(snd_info *sp)
 		  mus_header_type_name(hdr->type),
 		  mus_data_format_name(hdr->format),
 		  timestr,
+		  (comment) ? "\ncomment: " : "",
 		  (comment) ? comment : "");
 	  ssnd_help(sp->state,
 		    sp->shortname,

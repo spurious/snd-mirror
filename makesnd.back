@@ -1,12 +1,10 @@
 $(SNDLIB_O_FILES): $(SNDLIB_HEADERS)
-$(SNDLIB_SCM_FILES): $(SNDLIB_SCM_HEADERS)
 $(O_FILES): $(SND_HEADERS) $(SND_X_HEADERS)
 $(X_O_FILES): $(SND_HEADERS) $(SND_X_HEADERS)
 $(G_O_FILES): $(SND_HEADERS) $(SND_G_HEADERS)
 
 clean:
 	rm -f $(SNDLIB_O_FILES)
-	rm -f $(SNDLIB_SCM_FILES)
 	rm -f $(O_FILES)
 	rm -f $(X_O_FILES)
 	rm -f $(G_O_FILES)
@@ -16,20 +14,20 @@ clean:
 clmclean:
 	rm io.o headers.o audio.o sound.o clm.o
 
-sndplay: $(SNDLIB_HEADERS) $(SNDLIB_O_FILES) sndplay.o
-	$(CC) $(LDFLAGS) $(CFLAGS) $(SNDLIB_O_FILES) sndplay.o -o sndplay $(AUDIO_LIB) $(GDBM_LIB) $(LIBS)
+sndplay: $(SNDLIB_HEADERS) headers.o io.o audio.o sound.o sndplay.o
+	$(CC) $(LDFLAGS) $(CFLAGS) headers.o io.o audio.o sound.o sndplay.o -o sndplay $(AUDIO_LIB) $(GDBM_LIB) $(LIBS)
 
-sndrecord: $(SNDLIB_HEADERS) $(SNDLIB_O_FILES) sndrecord.o
-	$(CC) $(LDFLAGS) $(CFLAGS) $(SNDLIB_O_FILES) sndrecord.o -o sndrecord $(AUDIO_LIB) $(GDBM_LIB) $(LIBS)
+sndrecord: $(SNDLIB_HEADERS) headers.o io.o audio.o sound.o sndrecord.o
+	$(CC) $(LDFLAGS) $(CFLAGS) headers.o io.o audio.o sound.o sndrecord.o -o sndrecord $(AUDIO_LIB) $(GDBM_LIB) $(LIBS)
 
-sndinfo: $(SNDLIB_HEADERS) $(SNDLIB_O_FILES) sndinfo.o
-	$(CC) $(LDFLAGS) $(CFLAGS) $(SNDLIB_O_FILES) sndinfo.o -o sndinfo $(AUDIO_LIB) $(GDBM_LIB) $(LIBS)
+sndinfo: $(SNDLIB_HEADERS) headers.o io.o audio.o sound.o sndinfo.o
+	$(CC) $(LDFLAGS) $(CFLAGS) headers.o io.o audio.o sound.o sndinfo.o -o sndinfo $(AUDIO_LIB) $(GDBM_LIB) $(LIBS)
 
-sndsine: $(SNDLIB_HEADERS) $(SNDLIB_O_FILES) sndsine.o
-	$(CC) $(LDFLAGS) $(CFLAGS) $(SNDLIB_O_FILES) sndsine.o -o sndsine $(AUDIO_LIB) $(GDBM_LIB) $(LIBS)
+sndsine: $(SNDLIB_HEADERS) headers.o io.o audio.o sound.o clm.o sndsine.o
+	$(CC) $(LDFLAGS) $(CFLAGS) headers.o io.o audio.o sound.o clm.o sndsine.o -o sndsine $(AUDIO_LIB) $(GDBM_LIB) $(LIBS)
 
-audinfo: $(SNDLIB_HEADERS) $(SNDLIB_O_FILES) audinfo.o
-	$(CC) $(LDFLAGS) $(CFLAGS) $(SNDLIB_O_FILES) audinfo.o -o audinfo $(AUDIO_LIB) $(GDBM_LIB) $(LIBS)
+audinfo: $(SNDLIB_HEADERS) headers.o io.o audio.o sound.o audinfo.o
+	$(CC) $(LDFLAGS) $(CFLAGS) headers.o io.o audio.o sound.o audinfo.o -o audinfo $(AUDIO_LIB) $(GDBM_LIB) $(LIBS)
 
 
 install: snd

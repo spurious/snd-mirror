@@ -253,6 +253,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+29-Jan:  pvf headers.\n\
 23-Jan:  no-gui version now reads ~/.snd (thanks to Eliot Handelman)\n\
 16-Jan:  fm.html, sndscm.html.\n\
 15-Jan:  snd 4.10.\n\

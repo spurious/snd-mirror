@@ -1,10 +1,8 @@
-SNDLIB_HEADERS = sndlib.h sndlib-strings.h clm.h
-SNDLIB_SCM_HEADERS = sg.h vct.h sndlib2scm.h
+SNDLIB_HEADERS = sndlib.h sndlib-strings.h clm.h sg.h vct.h sndlib2scm.h
 SND_HEADERS = snd.h snd-0.h snd-1.h snd-strings.h snd-rec.h
 SND_X_HEADERS = snd-x0.h snd-x1.h
 SND_G_HEADERS = snd-g0.h snd-g1.h
-SNDLIB_O_FILES = headers.o audio.o io.o sound.o clm.o
-SNDLIB_SCM_FILES = vct.o sndlib2scm.o clm2scm.o
+SNDLIB_O_FILES = headers.o audio.o io.o sound.o clm.o vct.o sndlib2scm.o clm2scm.o
 NO_GUI_HEADERS = snd-nogui0.h snd-nogui1.h
 
 O_FILES = snd-io.o snd-utils.o snd-error.o snd-noscm.o snd-completion.o snd-menu.o snd-axis.o snd-data.o snd-fft.o snd-marks.o snd-file.o snd-edits.o snd-chn.o snd-dac.o snd-region.o snd-select.o snd-find.o snd-snd.o snd-help.o snd-main.o snd-print.o snd-trans.o snd-mix.o snd.o snd-env.o snd-scm.o snd-ladspa.o snd-rec.o

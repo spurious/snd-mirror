@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 11
-#define SNDLIB_REVISION 30
-#define SNDLIB_DATE "26-Jan-01"
+#define SNDLIB_REVISION 31
+#define SNDLIB_DATE "29-Jan-01"
 
 #ifndef HAVE_SNDLIB
   #define HAVE_SNDLIB 1
@@ -232,9 +232,9 @@ enum {MUS_NEXT,MUS_AIFC,MUS_RIFF,MUS_BICSF,MUS_NIST,MUS_INRS,MUS_ESPS,MUS_SVX,MU
       MUS_MIDI_SAMPLE_DUMP,MUS_DIAMONDWARE,MUS_REALAUDIO,MUS_ADF,MUS_SBSTUDIOII,MUS_DELUSION,
       MUS_FARANDOLE,MUS_SAMPLE_DUMP,MUS_ULTRATRACKER,MUS_YAMAHA_SY85,MUS_YAMAHA_TX16,MUS_DIGIPLAYER,
       MUS_COVOX,MUS_SPL,MUS_AVI,MUS_OMF,MUS_QUICKTIME,MUS_ASF,MUS_YAMAHA_SY99,MUS_KURZWEIL_2000,
-      MUS_AIFF,MUS_PAF,MUS_CSL,MUS_FILE_SAMP};
+      MUS_AIFF,MUS_PAF,MUS_CSL,MUS_FILE_SAMP,MUS_PVF};
 
-#define MUS_HEADER_TYPE_OK(n) (((n) > MUS_UNSUPPORTED) && ((n) <= MUS_FILE_SAMP))
+#define MUS_HEADER_TYPE_OK(n) (((n) > MUS_UNSUPPORTED) && ((n) <= MUS_PVF))
 
 enum {MUS_UNKNOWN,MUS_BSHORT,MUS_MULAW,MUS_BYTE,MUS_BFLOAT,MUS_BINT,MUS_ALAW,MUS_UBYTE,MUS_B24INT,
       MUS_BDOUBLE,MUS_LSHORT,MUS_LINT,MUS_LFLOAT,MUS_LDOUBLE,MUS_UBSHORT,MUS_ULSHORT,MUS_L24INT,
@@ -577,6 +577,9 @@ int mus_header_sf2_loop_end         PROTO((int n));
 char *mus_header_original_format_name PROTO((int format, int type));
 
 void mus_header_set_aifc            PROTO((int val)); /* backwards compatibility, sort of */
+char *mus_header_riff_aux_comment   PROTO((const char *name, int *starts, int *ends));
+char *mus_header_aiff_aux_comment   PROTO((const char *name, int *starts, int *ends));
+
 
 /* -------- sndlib2scm.c -------- */
 

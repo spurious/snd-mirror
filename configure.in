@@ -533,11 +533,13 @@ dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
 	;;
     *-*-sunos4*) 
         AC_DEFINE(SUN)
+	LIBS="-lm"
 	audio_system=Sun
         ;;
     *-*-solaris*) 
         AC_DEFINE(SOLARIS)
 	AC_DEFINE(SUN)
+	LIBS="-lm"
 	audio_system=Sun
         ;;
     *-*-hpux*) 

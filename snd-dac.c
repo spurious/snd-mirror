@@ -1955,6 +1955,14 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
       urn = gh_scm2newstr(samp_n,NULL);
       name = mus_file_full_name(urn);
       free(urn);
+      if (!(MUS_HEADER_TYPE_OK(mus_sound_header_type(name))))
+	return(scm_throw(MUS_MISC_ERROR,SCM_LIST3(samp_n,
+						  gh_str02scm("can't read header"),
+						  gh_str02scm(mus_header_type_name(mus_header_type())))));
+      if (!(MUS_DATA_FORMAT_OK(mus_sound_data_format(name))))
+	return(scm_throw(MUS_MISC_ERROR,SCM_LIST3(samp_n,
+						  gh_str02scm("can't read data"),
+						  gh_str02scm(mus_header_original_format_name(mus_sound_original_format(name),mus_sound_header_type(name))))));
       sp = make_sound_readable(get_global_state(),name,FALSE);
       if (sp == NULL) 
 	{

@@ -219,14 +219,18 @@ static mus_error_handler_t *old_sound_handler = NULL;
 
 static void sound_mus_error(int type, char *msg)
 {
-  if (local_filename)
+  if (old_sound_handler)
     {
-      if (sound_err_buf == NULL) sound_err_buf = (char *)CALLOC(512,sizeof(char));
-      sprintf(sound_err_buf,"%s\n  [sound.c[%d] %s: %s]",
-	      msg,local_line,local_func,local_filename);
-      (*old_sound_handler)(type,sound_err_buf);
+      if (local_filename)
+	{
+	  if (sound_err_buf == NULL) sound_err_buf = (char *)CALLOC(512,sizeof(char));
+	  sprintf(sound_err_buf,"%s\n  [sound.c[%d] %s: %s]",
+		  msg,local_line,local_func,local_filename);
+	  (*old_sound_handler)(type,sound_err_buf);
+	}
+      else (*old_sound_handler)(type,msg);
     }
-  else (*old_sound_handler)(type,msg);
+  else fprintf(stderr,sound_err_buf); /* ?? */
 }
 
 static void set_sound_error(const char *lfile, int line, const char *sfunc)
@@ -600,7 +604,10 @@ static void fill_sf_record(const char *name, sound_file *sf)
   sf->true_file_length = mus_header_true_length();
   sf->comment_start = mus_header_comment_start();
   sf->comment_end = mus_header_comment_end();
-  if (sf->header_type == MUS_AIFC)
+  if ((sf->header_type == MUS_AIFC) || 
+      (sf->header_type == MUS_AIFF) || 
+      (sf->header_type == MUS_RIFF))
+
     {
 #if (!HAVE_GDBM)
       sf->aux_comment_start = (int *)CALLOC(4,sizeof(int));
@@ -825,61 +832,48 @@ int mus_sound_aiff_p(const char *arg)
 
 char *mus_sound_comment(const char *name)
 {
-  int start,end,fd,len,i,full_len;
+  int start,end,fd,len,full_len;
   char *sc = NULL,*auxcom;
   sound_file *sf = NULL;
+  set_sound_error(name,__LINE__,__FUNCTION__);
+  sf = getsf(name); 
+  unset_sound_error();
+  if (sf == NULL) return(NULL);
   start = mus_sound_comment_start(name);
   end = mus_sound_comment_end(name);
-  if (end == 0) return(NULL);
+  if (end == 0) 
+    {
+      if (mus_sound_header_type(name) == MUS_RIFF) 
+	return(mus_header_riff_aux_comment(name,sf->aux_comment_start,sf->aux_comment_end));
+      if ((mus_sound_header_type(name) == MUS_AIFF) || (mus_sound_header_type(name) == MUS_AIFC)) 
+	return(mus_header_aiff_aux_comment(name,sf->aux_comment_start,sf->aux_comment_end));
+      return(NULL);
+    }
   len = end-start+1;
-  if (len>0)
+  if (len > 0)
     {
       /* open and get the comment */
-      sc = (char *)CALLOC(len+1,sizeof(char)); /* len+1 calloc'd => we'll always have a trailing null */
-#if MACOS
-      fd = open(name,O_RDONLY);
-#else
-  #ifdef WINDOZE
-      fd = open(name,O_RDONLY | O_BINARY);
-  #else
-      fd = open(name,O_RDONLY,0);
-  #endif
-#endif
+      fd = mus_file_open_read(name);
+      if (fd == -1) return(NULL);
       lseek(fd,start,SEEK_SET);
+      sc = (char *)CALLOC(len+1,sizeof(char)); /* len+1 calloc'd => we'll always have a trailing null */
       read(fd,sc,len);
+      close(fd);
 #ifndef MACOS
-      /* AIFC: look for aux comments (ANNO chunks) */
-      if (mus_sound_header_type(name) == MUS_AIFC)
+      if ((mus_sound_header_type(name) == MUS_AIFF) || (mus_sound_header_type(name) == MUS_AIFC)) 
 	{
-	  sf = find_sound_file(name);
-	  if ((sf) && (sf->aux_comment_start) && (sf->aux_comment_start[0] != 0))
+	  auxcom = mus_header_aiff_aux_comment(name,sf->aux_comment_start,sf->aux_comment_end);
+	  if (auxcom)
 	    {
-	      full_len = len;
-	      for (i=0;i<4;i++) /* 4 = AUX_COMMENTS (headers.c) */
-		{
-		  start = sf->aux_comment_start[i];
-		  end = sf->aux_comment_end[i];
-		  if ((start > 0) && (start < end))
-		    {
-		      len = end-start+1;
-		      auxcom = (char *)CALLOC(len+3,sizeof(char));
-		      lseek(fd,start,SEEK_SET);
-		      read(fd,auxcom,len);
-		      full_len += len;
-		      sc = (char *)REALLOC(sc,full_len * sizeof(char));
-		      strcat(sc,"\n");
-		      strcat(sc,auxcom);
-		      FREE(auxcom);
-		    }
-		  else break;
-		}
+	      full_len = strlen(auxcom) + strlen(sc) + 2;
+	      sc = (char *)REALLOC(sc,full_len * sizeof(char));
+	      strcat(sc,"\n");
+	      strcat(sc,auxcom);
 	    }
 	}
 #endif
-      close(fd);
-      return(sc);
     }
-  else return(NULL);
+  return(sc);
 }
 
 int mus_sound_open_input (const char *arg) 

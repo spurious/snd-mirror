@@ -1186,6 +1186,7 @@ int mus_file_read(int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **bufs)
   if (rtn == MUS_ERROR) return(MUS_ERROR);
   if (rtn<num) 
     {
+      /* this zeroing can be fooled if the file is chunked and has trailing, non-data chunks */
       for (k=0;k<chans;k++)
 	{
 	  buffer=(MUS_SAMPLE_TYPE *)(bufs[k]);

@@ -6,7 +6,7 @@ LIBS = `guile-config link` `gtk-config --libs`
 
 include makesnd.files
 
-snd: $(SNDLIB_HEADERS) $(SND_HEADERS) $(SND_X_HEADERS) $(SNDLIB_O_FILES) $(SNDLIB_SCM_FILES) $(O_FILES) $(G_O_FILES)
-	$(CC) $(SNDLIB_O_FILES) $(SNDLIB_SCM_FILES) $(O_FILES) $(G_O_FILES) -o snd $(LIBS)
+snd: $(SNDLIB_HEADERS) $(SND_HEADERS) $(SND_X_HEADERS) $(SNDLIB_O_FILES) $(O_FILES) $(G_O_FILES)
+	$(CC) $(SNDLIB_O_FILES) $(O_FILES) $(G_O_FILES) -o snd $(LIBS)
 
 include makesnd.back

@@ -53,6 +53,11 @@ int main(int argc, char *argv[])
     {
       date = mus_sound_write_date(argv[1]);
       srate = mus_sound_srate(argv[1]);
+      if (srate == MUS_ERROR)
+	{
+	  fprintf(stdout,"%s: not a sound file?\n",argv[1]);
+	  return(0);
+	}
       chans = mus_sound_chans(argv[1]);
       samples = mus_sound_samples(argv[1]);
       comment = mus_sound_comment(argv[1]); 
@@ -79,10 +84,11 @@ int main(int argc, char *argv[])
 #endif
       fprintf(stdout,"%s:\n  srate: %d\n  chans: %d\n  length: %f\n",
 	      argv[1],srate,chans,length);
-      fprintf(stdout,"  type: %s\n  format: %s\n  written: %s\n  comment: %s\n",
+      fprintf(stdout,"  type: %s\n  format: %s\n  written: %s\n",
 	      header_name,
 	      format_info,
-	      timestr,(comment) ? comment : "");
+	      timestr);
+      if (comment) fprintf(stdout,"  comment: %s\n",comment);
       if (loops)
 	{
 	  if (loops[0] != 0)

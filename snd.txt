@@ -10,7 +10,7 @@ each with any number of channels, and can be customized and extended using
 guile and guile-gtk. Snd is free (LGPL); the code is available via anonymous
 ftp as snd-4.tar.gz. Snd has a home page and a CVS repository.
 
-  related documentationextsnd.html   grfsnd.html   clm.html   sndlib.html
+related documentationextsnd.html   grfsnd.html   clm.html   sndlib.html    sndscm.html
 
 Contents
 
@@ -83,11 +83,38 @@ Contents
              + Snd and Motif
              + Snd and Gtk
              + Snd and gmeteor
+             + Snd with no GUI
              + Snd and LADSPA
              + Driving Snd remotely
              + Snd and OpenGL
         o Customization Index
+        o Scheme Functions included with Snd
    * Topical Index
+
+  File Menu    Edit Menu      View Menu     Options Menu     Help Menu
+
+  Open      Undo           Show controls   Transform     Click for help
+                                           Options
+  Close     Redo           Open listener   Speed style   Overview
+  Save      Find           Mix Panel       Focus style   FFT
+  Save as   Cut            Regions         Save options  Find
+  Revert    Paste          Files           Save State    Undo and Redo
+  Mix       Mix Selection  Color           Show stats    Sync
+
+  Update    Play           Orientation                   Speed
+            Selection
+
+  New       Save           Graph style                   Expand
+            Selection
+  Record    Select all     Verbose cursor                Reverb
+  View      Edit Envelope  Channel style                 Contrast
+  Print     Edit Header    Normalize                     Envelope
+  Exit                     Show y=0                      Marks
+                           X axis units                  Mixing
+                           Error History                 Formats
+                                                         Customization
+                                                         Recording
+                                                         News
 
 Getting Started
 
@@ -145,29 +172,6 @@ wherever an integer is expected (in the File:Save as dialog under "srate:"
 for example), you can type any Scheme expression that evaluates to an
 integer. Finally, there is a full-blown listener available under the
 View:Open Listener menu option.
-
-  ------------------------------------------------------------------------
-
-File Menu      Edit Menu      View Menu       Options Menu   Help Menu
-
-Open           Undo           Show controls   Transform      Click for help
-                                              Options
-Close          Redo           Open listener   Speed style    Overview
-Save           Find           Mix Panel       Focus style    FFT
-Save as        Cut            Regions         Save options   Find
-Revert         Paste          Files           Save State     Undo and Redo
-Mix            Mix Selection  Color           Show stats     Sync
-Update         Play Selection Orientation                    Speed
-New            Save Selection Graph style                    Expand
-Record         Select all     Verbose cursor                 Reverb
-View           Edit Envelope  Channel style                  Contrast
-Print          Edit Header    Normalize                      Envelope
-Exit                          Show y=0                       Marks
-                              X axis units                   Mixing
-                              Error History                  Formats
-                                                             Customization
-                                                             Recording
-                                                             News
 
 File Operations
 
@@ -242,7 +246,7 @@ Snd can handle the following file and data types:
         o no header
    * read-only (in selected data formats):
         o 8SVX (IFF), EBICSF, INRS, ESPS,
-        o SPPACK, ADC (OGI), AVR, VOC,
+        o SPPACK, ADC (OGI), AVR, VOC, PVF,
         o Sound Tools, Turtle Beach SMP, SoundFont 2.0,
         o Sound Designer I and II, PSION, MAUD, Kurzweil 2000,
         o Tandy DeskMate, Gravis Ultrasound, ASF, PAF, CSL,
@@ -428,6 +432,8 @@ blue (in dB with the min at -80dB); when the window has an associated
 parameter (sometimes known as "alpha" or "beta"), the slider beneath the
 window list is highlighted and can be used to choose the desired member of
 that family of windows.
+
+[transform dialog]
 
 The FFT is taken from the start (the left edge) of the current window and is
 updated as the window bounds change. If you'd like the fft size to reflect
@@ -1690,4 +1696,4 @@ Index
                      Zoom style
  zoom window                      [Up],[Down] x-bounds             control keys intensify
 
-  related documentationextsnd.html   grfsnd.html   clm.html   sndlib.html
+related documentationextsnd.html   grfsnd.html   clm.html   sndlib.html    sndscm.html

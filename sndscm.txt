@@ -27,10 +27,13 @@ related documentationsnd.html   extsnd.html   grfsnd.html   clm.html    sndlib.h
                               * v.scm: fm-violin
                              * ws.scm: with-sound
                      * zip.scm: the zipper (a cross-fader)
+                      * A Note on Scheme variables in Snd
+                    * A Note on "As-Needed" input functions
 
 This file contains a leisurely discourse upon the various *.scm files
 included with Snd. To use any of these files, (load <file>); for example
-(load "bell.scm"). To start Snd with the file already loaded, snd bell.scm.
+(load "bell.scm"). To start Snd with the file already loaded, snd -l
+bell.scm.
 
 bell.scm
 
@@ -1983,5 +1986,228 @@ then zips them together using test-zip in zip.scm:
                             [zipper ramp output]
 
 Needless to say, this is not intended to be a suave, romantic gesture!
+
+A Note on Scheme variables in Snd
+
+At first glance, Snd's use of functions for nearly all variable accesses
+(i.e. (listener-prompt) rather than the simpler listener-prompt) seems
+unmotivated. For example, the following little program defines "counter" as
+a scheme variable, accessible in C:
+
+#include <stdio.h>
+#include <guile/gh.h>
+
+void inner_main(int argc, char **argv)
+{
+  SCM counter;
+  int size = 512;
+  char **buffer = NULL;
+  buffer = (char **)calloc(1,sizeof(char *));
+  buffer[0] = (char *)calloc(512,sizeof(char));
+  counter = gh_define("counter",gh_int2scm(0));
+  while (1)
+    {
+      getline(buffer,&size,stdin);
+      gh_eval_str(buffer[0]);
+      fprintf(stdout,"counter is %d\n",gh_scm2int(gh_cdr(counter)));
+    }
+}
+
+int main(int argc, char *argv[])
+{
+  gh_enter(argc,argv,inner_main);
+  return(0);
+}
+
+Now we compile and load it (in Linux: cc g.c -o g -lguile), and it sits in a
+loop reading a line at a time, evaluating it, and printing the current value
+of our counter:
+
+/home/bil/cl/ g
+(+ 1 2)
+counter is 0
+(set! counter 123)
+counter is 123
+(set! counter (* counter 2))
+counter is 246
+
+But the C code itself doesn't see the set!, and there's no way to tell set!
+in Guile to call an auxiliary function when (for example) our counter is
+set. We need to see that set! as soon as it happens to make the user
+interface responsive. (set! basic-color red) would have no effect unless our
+C code could be informed that the basic-color variable's value had changed.
+In addition, in Snd, there are perhaps several hundred such variables, and
+our C code will run faster if we access C variables as much as possible,
+rather than calling gh_scm2int (or whatever) every time the value is needed.
+So, we first defined each variable along these lines:
+
+#include <stdio.h>
+#include <guile/gh.h>
+
+int counter = 0;
+
+SCM g_counter(void)
+{
+  return(gh_int2scm(counter));
+}
+
+SCM g_set_counter(SCM newval)
+{
+  counter = gh_scm2int(newval);
+  return(newval);
+}
+
+void inner_main(int argc, char **argv)
+{
+  int size = 512;
+  char **buffer = NULL;
+  buffer = (char **)calloc(1,sizeof(char *));
+  buffer[0] = (char *)calloc(512,sizeof(char));
+  gh_new_procedure0_0("counter",g_counter);
+  gh_new_procedure1_0("set-counter",g_set_counter);
+  while (1)
+    {
+      getline(buffer,&size,stdin);
+      gh_eval_str(buffer[0]);
+      fprintf(stdout,"counter is %d\n",counter);
+    }
+}
+
+int main(int argc, char *argv[])
+{
+  gh_enter(argc,argv,inner_main);
+  return(0);
+}
+
+Now we have two functions: counter returns (to the Scheme world) the current
+value of the C variable counter, and set-counter sets it:
+
+/home/bil/cl/ g
+(+ 1 2)
+counter is 0
+(set-counter 123)
+counter is 123
+(set-counter (* (counter) 2))
+counter is 246
+
+Now the g_set_counter procedure can reflect counter's new value within C,
+and the variable lives in C, so two of our problems are solved. But we don't
+really want the extra name "set-counter". So, we use Guile's generalized
+set! by replacing the two gh_new_procedure calls above with:
+
+  gh_define("counter",
+    scm_make_procedure_with_setter(
+      gh_new_procedure0_0("",g_counter),
+      gh_new_procedure1_0("",g_set_counter)));
+
+Now we have Snd's way of handling things:
+
+/home/bil/cl/ g
+(+ 1 2)
+counter is 0
+(set! (counter) 123)
+counter is 123
+(set! (counter) (* (counter) 2))
+counter is 246
+
+It's not completely ideal, but it's close enough that I don't find it
+painful to use.
+
+A Note on "As-Needed" input functions
+
+Several CLM generators work internally on buffers of data; only the code
+internal to the generator knows when it needs input, and how much it needs.
+So, src, granulate, convolve, and phase-vocoder are passed a function either
+at run-time or when the generator is allocated that they can call whenever a
+new value is needed. A simple C case is:
+
+#include <stdio.h>
+#include "clm.h"
+
+typedef struct {
+  float val;
+} src_state;
+
+float src_input_as_needed(void *arg, int dir)
+{
+  src_state *sr = (src_state *)arg;
+  sr->val += (dir * .01); /* just return a ramp */
+  return(sr->val);
+}
+
+int main(int argc, char **argv)
+{
+  mus_any *gen;
+  src_state *input;
+  int i;
+  input = (src_state *)calloc(1,sizeof(src_state));
+  input->val = 0.0;
+  gen = mus_make_src(&src_input_as_needed,0.5,10,(void *)input);
+  for (i=0;i<100;i++)
+    fprintf(stdout,"%f ",mus_src(gen,0.0,NULL));
+    /* or: fprintf(stdout,"%f ",mus_src(gen,0.0,src_input_as_needed)); */
+  mus_free(gen);
+  free(input);
+  return(0);
+}
+
+/* cc g1.c -o g1 -L/usr/local/lib -lguile /home/bil/sndlib/sndlib.a */
+/* g1: 0.010000 0.015440 0.020000 0.024761 0.029999 0.035170 0.039999 ... */
+
+To put that code in words, the src generator uses the function
+src_input_as_needed to fill its internal buffer (convolving it with sinc);
+in this case, the "srate" argument is 0.5, so src will pick up a new input
+sample (calling src_input_as_needed) on every other output sample. In the
+Scheme CLM (and Snd), the "as-needed" input function is a Scheme function
+passed in as Scheme code. A highly simplified example is:
+
+#include <stdio.h>
+#include <guile/gh.h>
+#include "clm.h"
+
+typedef struct {
+  SCM input_func;
+} src_state;
+
+float src_input_as_needed(void *ptr, int direction)
+{
+  src_state *sr = (src_state *)ptr;
+  return(gh_scm2double(gh_call1(sr->input_func,gh_int2scm(direction))));
+}
+
+void inner_main(int argc, char **argv)
+{
+  mus_any *gen;
+  src_state *input;
+  int i;
+  int size = 512;
+  char **buffer = NULL;
+  buffer = (char **)calloc(1,sizeof(char *));
+  buffer[0] = (char *)calloc(512,sizeof(char));
+  input = (src_state *)calloc(1,sizeof(src_state));
+  fprintf(stdout,"input function: ");
+  getline(buffer,&size,stdin);
+  input->input_func = gh_eval_str(buffer[0]);
+  gen = mus_make_src(&src_input_as_needed,0.5,10,(void *)input);
+  for (i=0;i<100;i++)
+    fprintf(stdout,"%f ",mus_src(gen,0.0,src_input_as_needed));
+  mus_free(gen);
+  free(input);
+}
+
+int main(int argc, char *argv[])
+{
+  gh_enter(argc,argv,inner_main);
+  return(0);
+}
+
+/* cc g1.c -o g1 -L/usr/local/lib -lguile /home/bil/sndlib/sndlib.a */
+/* g1
+   input function: (let ((val 0.0)) (lambda (dir) (set! val (+ val (* dir .01))) val))
+   0.010000 0.015440 0.020000 0.024761 0.029999 0.035170 0.039999
+*/
+
+In this case, src_input_as_needed is calling the user-supplied Scheme
+function (via gh_call1).
 
 related documentationsnd.html   extsnd.html   grfsnd.html   clm.html    sndlib.html

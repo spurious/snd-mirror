@@ -1352,7 +1352,7 @@ static SCM sp_iread(SCM snd_n, int fld, char *caller)
     case SP_COMMENT:
       str = mus_sound_comment(sp->fullname);
       res = gh_str02scm(str);
-      FREE(str);
+      if (str) FREE(str);
       return(res);
       break;
     }

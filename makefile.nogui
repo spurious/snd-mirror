@@ -6,7 +6,7 @@ LIBS = -lm `guile-config link`
 
 include makesnd.files
 
-snd: $(SNDLIB_HEADERS) $(SND_HEADERS) $(SNDLIB_O_FILES) $(SNDLIB_SCM_FILES) $(O_FILES) snd-nogui.o
-	$(CC) $(SNDLIB_O_FILES) $(SNDLIB_SCM_FILES) $(O_FILES) snd-nogui.o -o snd $(LIBS)
+snd: $(SNDLIB_HEADERS) $(SND_HEADERS) $(SNDLIB_O_FILES) $(O_FILES) snd-nogui.o
+	$(CC) $(SNDLIB_O_FILES) $(O_FILES) snd-nogui.o -o snd $(LIBS)
 
 include makesnd.back
