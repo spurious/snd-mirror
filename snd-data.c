@@ -74,7 +74,6 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
   cp->wavo = wavo(ss);
   cp->wavo_hop = wavo_hop(ss);
   cp->wavo_trace = wavo_trace(ss);
-  cp->line_size = line_size(ss);
   cp->max_fft_peaks = max_fft_peaks(ss);
   cp->show_fft_peaks = show_fft_peaks(ss);
   cp->zero_pad = zero_pad(ss);

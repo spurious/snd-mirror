@@ -47,9 +47,6 @@ void set_wavo_trace(snd_state *ss, int uval)
   map_over_chans(ss, map_chans_wavo_trace, (void *)(&val));
 }
 
-static int map_chans_line_size(chan_info *cp, void *ptr) {cp->line_size = (*((int *)ptr)); return(0);}
-static void set_line_size(snd_state *ss, int val) {in_set_line_size(ss, val); map_over_chans(ss, map_chans_line_size, (void *)(&val));}
-
 static int map_chans_max_fft_peaks(chan_info *cp, void *ptr) {cp->max_fft_peaks = (*((int *)ptr)); return(0);}
 static void set_max_fft_peaks(snd_state *ss, int uval) 
 {
@@ -3503,7 +3500,7 @@ static axis_context *combined_context (chan_info *cp)       {return(set_context(
 
 enum {CP_FFTING, CP_WAVING, CP_FRAMES, CP_CURSOR, CP_LISP_GRAPHING, CP_AP_LOSAMP, CP_AP_HISAMP, CP_SQUELCH_UPDATE,
       CP_EDIT_CTR, CP_CURSOR_STYLE, CP_EDIT_HOOK, CP_UNDO_HOOK,
-      CP_SHOW_Y_ZERO, CP_SHOW_MARKS, CP_WAVO, CP_WAVO_HOP, CP_WAVO_TRACE, CP_MAX_FFT_PEAKS, CP_LINE_SIZE,
+      CP_SHOW_Y_ZERO, CP_SHOW_MARKS, CP_WAVO, CP_WAVO_HOP, CP_WAVO_TRACE, CP_MAX_FFT_PEAKS, 
       CP_SHOW_FFT_PEAKS, CP_ZERO_PAD, CP_VERBOSE_CURSOR, CP_FFT_LOG_FREQUENCY, CP_FFT_LOG_MAGNITUDE,
       CP_WAVELET_TYPE, CP_SPECTRO_HOP, CP_FFT_SIZE, CP_FFT_STYLE, CP_FFT_WINDOW, CP_TRANSFORM_TYPE,
       CP_NORMALIZE_FFT, CP_SHOW_MIX_WAVEFORMS, CP_GRAPH_STYLE, CP_DOT_SIZE,
@@ -3566,7 +3563,6 @@ static SCM cp_iread(SCM snd_n, SCM chn_n, int fld, char *caller)
 	    case CP_WAVO:               return(TO_SCM_BOOLEAN(cp->wavo));                          break;
 	    case CP_WAVO_HOP:           return(TO_SCM_INT(cp->wavo_hop));                          break;
 	    case CP_WAVO_TRACE:         return(TO_SCM_INT(cp->wavo_trace));                        break;
-	    case CP_LINE_SIZE:          return(TO_SCM_INT(cp->line_size));                         break;
 	    case CP_MAX_FFT_PEAKS:      return(TO_SCM_INT(cp->max_fft_peaks));                     break;
 	    case CP_ZERO_PAD:           return(TO_SCM_INT(cp->zero_pad));                          break;
 	    case CP_WAVELET_TYPE:       return(TO_SCM_INT(cp->wavelet_type));                      break;
@@ -3737,10 +3733,6 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
       cp->wavo_trace = g_imin(1, on, DEFAULT_WAVO_TRACE); 
       update_graph(cp, NULL); 
       return(TO_SCM_INT(cp->wavo_trace));
-      break;
-    case CP_LINE_SIZE:
-      cp->line_size = TO_C_INT_OR_ELSE_WITH_ORIGIN(on, DEFAULT_LINE_SIZE, caller);
-      return(TO_SCM_INT(cp->line_size));
       break;
     case CP_MAX_FFT_PEAKS:
       cp->max_fft_peaks = g_imin(0, on, DEFAULT_MAX_FFT_PEAKS); 
@@ -4824,30 +4816,6 @@ static SCM g_set_wavo_trace(SCM val, SCM snd, SCM chn)
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_wavo_trace_reversed, g_set_wavo_trace)
 
-static SCM g_line_size(SCM snd, SCM chn)
-{
-  #define H_line_size "(" S_line_size " (snd #t) (chn #t)) -> number of samples in a 'line' (C-n and C-p) (128)"
-  if (BOUND_P(snd))
-    return(cp_iread(snd, chn, CP_LINE_SIZE, S_line_size));
-  return(TO_SCM_INT(line_size(get_global_state())));
-}
-
-static SCM g_set_line_size(SCM val, SCM snd, SCM chn)
-{
-  snd_state *ss;
-  ASSERT_TYPE(INTEGER_P(val), val, SCM_ARG1, "set-" S_line_size, "an integer"); 
-  if (BOUND_P(snd))
-    return(cp_iwrite(snd, chn, val, CP_LINE_SIZE, "set-" S_line_size));
-  else
-    {
-      ss = get_global_state();
-      set_line_size(ss, TO_C_INT(val));
-      return(TO_SCM_INT(line_size(ss)));
-    }
-}
-
-WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_line_size_reversed, g_set_line_size)
-
 static SCM g_fft_size(SCM snd, SCM chn)
 {
   #define H_fft_size "(" S_fft_size " (snd #t) (chn #t)) -> current fft size (256)"
@@ -5440,10 +5408,6 @@ void g_init_chn(SCM local_doc)
 
   define_procedure_with_reversed_setter(S_wavo_trace, SCM_FNC g_wavo_trace, H_wavo_trace,
 					"set-" S_wavo_trace, SCM_FNC g_set_wavo_trace, SCM_FNC g_set_wavo_trace_reversed,
-					local_doc, 0, 2, 0, 3);
-
-  define_procedure_with_reversed_setter(S_line_size, SCM_FNC g_line_size, H_line_size,
-					"set-" S_line_size, SCM_FNC g_set_line_size, SCM_FNC g_set_line_size_reversed,
 					local_doc, 0, 2, 0, 3);
 
   define_procedure_with_reversed_setter(S_show_fft_peaks, SCM_FNC g_show_fft_peaks, H_show_fft_peaks,

@@ -414,25 +414,28 @@ static char *snd_print_or_error(snd_state *ss, char *output)
       if (ccp == NULL) 
 	return(copy_string("nothing to print?"));
       si = sync_to_chan(ccp);
+      if ((si == NULL) || (si->chans == 0))
+	return(copy_string("no graphs to print?"));
       offsets = (int *)CALLOC(si->chans, sizeof(int));
       for (j = 0, i = (si->chans - 1); i >= 0; i--)
 	{
 	  offsets[i] = j;
 	  j += ((((axis_info *)((si->cps[i])->axis))->height) + PRINTED_VERTICAL_SPACING);
 	}
-      for (i = 0; i < si->chans; )
-	{
-	  sp = (si->cps[i])->sound;
-	  if (sp == NULL) break;
-	  if (sp->combining == CHANNELS_COMBINED)
-	    for (j = i + 1; j < i + sp->nchans; j++) 
-	      offsets[j] = offsets[i];
-	  else
-	    if (sp->combining == CHANNELS_SUPERIMPOSED)
-	      for (j = i; j < i + sp->nchans - 1; j++) 
-		offsets[j] = offsets[i + sp->nchans - 1];
-	  i += sp->nchans;
-	}
+      if (si->chans > 1)
+	for (i = 0; i < si->chans; )
+	  {
+	    sp = (si->cps[i])->sound;
+	    if (sp == NULL) break;
+	    if (sp->combining == CHANNELS_COMBINED)
+	      for (j = i + 1; (j < i + sp->nchans) && (j < si->chans); j++) 
+		offsets[j] = offsets[i];
+	    else
+	      if (sp->combining == CHANNELS_SUPERIMPOSED)
+		for (j = i; (j < i + sp->nchans - 1) && (j < si->chans); j++) 
+		  offsets[j] = offsets[i + sp->nchans - 1];
+	    i += sp->nchans;
+	  }
       err = start_ps_graph(output, ((si->cps[0])->sound)->fullname);
       if (err == 0)
 	{

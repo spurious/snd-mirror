@@ -8,6 +8,7 @@
  *         so the entire set is unneeded?
  *   isn't temp->selection|temp->sound actually separable from the preceding -- user could
  *      create such files at any time and use as an edit. 
+ * have vct->sound-file region-samples->vct settable samples and region-samples samples->vct vct->samples array<->file(clm2scm.c)
  */
 
 /* collect syncd chans */

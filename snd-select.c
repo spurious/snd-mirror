@@ -667,16 +667,15 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
 
 
 
-static SCM g_cut(void)
+static SCM g_delete_selection(void)
 {
-  #define H_cut "(" S_cut ") cuts (deletes) the currently selected portion (same as 'delete-selection')"
-  #define H_delete_selection "(" S_delete_selection ") deletes the currently selected portion (same as 'cut')"
+  #define H_delete_selection "(" S_delete_selection ") deletes the currently selected portion"
   if (selection_is_active())
     {
-      delete_selection(S_cut, UPDATE_DISPLAY);
+      delete_selection(S_delete_selection, UPDATE_DISPLAY);
       return(SCM_BOOL_T);
     }
-  snd_no_active_selection_error(S_cut);
+  snd_no_active_selection_error(S_delete_selection);
   return(SCM_BOOL_F);
 }
 
@@ -946,8 +945,7 @@ void g_init_selection(SCM local_doc)
 					local_doc, 0, 2, 1, 2);
 
   DEFINE_PROC(S_selectionQ,       g_selectionQ, 0, 0, 0,       H_selectionQ);
-  DEFINE_PROC(S_cut,              g_cut, 0, 0, 0,              H_cut);
-  DEFINE_PROC(S_delete_selection, g_cut, 0, 0, 0,              H_delete_selection);
+  DEFINE_PROC(S_delete_selection, g_delete_selection, 0, 0, 0, H_delete_selection);
   DEFINE_PROC(S_insert_selection, g_insert_selection, 0, 3, 0, H_insert_selection);
   DEFINE_PROC(S_mix_selection,    g_mix_selection, 0, 3, 0,    H_mix_selection);
   DEFINE_PROC(S_select_all,       g_select_all, 0, 2, 0,       H_select_all);

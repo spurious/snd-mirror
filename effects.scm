@@ -148,7 +148,7 @@
   (reset-control-panel)
   (set! (reverbing) #t)
   (set! (reverb-scale) reverb-amount)
-  (call-apply)
+  (apply-controls)
   (restore-control-panel))
 
 (add-to-menu effects-menu reverb-label reverberate)
@@ -172,7 +172,7 @@
     (set! (contrast) contrast-amount)
     (set! (contrast-amp) (/ 1.0 peak))
     (set! (amp) peak)
-    (call-apply)
+    (apply-controls)
     (restore-control-panel)))
 
 (add-to-menu effects-menu contrast-label intensify)
@@ -408,7 +408,7 @@
   (let ((new-file-name (format #f "sel-~D.snd" selctr)))
     (set! selctr (+ selctr 1))
     (save-selection new-file-name)
-    (cut)
+    (delete-selection)
     (open-sound new-file-name)))
 
 (add-to-menu effects-menu "cut selection->new" cut-selection->new)
@@ -470,7 +470,7 @@
 	(begin
 	  (set! (expanding) #t)
 	  (set! (expand) new-time))))
-  (call-apply)
+  (apply-controls)
   (restore-control-panel))
 	    
 (add-to-menu effects-menu expsrc-label cp-expsrc)

@@ -3112,7 +3112,6 @@ static SCM g_as_one_edit(SCM proc, SCM origin)
   SCM result = SCM_BOOL_F;
   char *errmsg;
   SCM errstr;
-  ASSERT_TYPE(PROCEDURE_P(proc), proc, SCM_ARG1, S_as_one_edit, "a procedure");
   errmsg = procedure_ok(proc, 0, 0, S_as_one_edit, "func", 1);
   if (errmsg)
     {
@@ -3268,6 +3267,9 @@ history position to read (defaults to current position)."
     }
   return(new_vect);
 }
+
+/* TODO: if file is multi-channel and chn not specified (or sync on?) set all using MUTLICHANNEL_DELETE etc */
+/*         file->samples could be a wrapper for this (similarly file->selection) */
 
 static SCM g_set_samples(SCM samp_0, SCM samps, SCM vect, SCM snd_n, SCM chn_n, SCM truncate)
 {

@@ -107,13 +107,13 @@ S_vct2sound_data
 static int sndlib_num_commands(void) {return(NUM_SNDLIB_NAMES);}
 static const char **sndlib_commands(void) {return(sndlib_names);}
 
-#define NUM_COMMANDS 553
+#define NUM_COMMANDS 550
 
 static char *snd_commands[NUM_COMMANDS] ={
   S_abort, S_activate_listener, S_add_mark, S_add_player, S_add_sound_file_extension, 
   S_add_to_main_menu, S_add_to_menu, S_add_transform,
   S_after_graph_hook, S_after_open_hook,
-  S_amp, S_amplitude_env, S_append_to_minibuffer, S_as_one_edit, S_ask_before_overwrite,
+  S_amp, S_amplitude_env, S_append_to_minibuffer, S_apply_controls, S_as_one_edit, S_ask_before_overwrite,
   S_audio_input_device, S_audio_output_device, S_audio_state_file,
   S_auto_resize, S_auto_update, S_autocorrelate, S_autocorrelation,
   S_axis_label_font, S_axis_numbers_font,
@@ -122,7 +122,7 @@ static char *snd_commands[NUM_COMMANDS] ={
   S_basic_color, S_before_fft_hook, S_bind_key,
   S_bold_button_font, S_bomb, S_button_font,
 
-  S_c_g, S_call_apply, S_cepstrum, S_change_menu_label, 
+  S_c_g, S_cepstrum, S_change_menu_label, 
   S_channel_style, S_channel_sync, S_channels, S_channels_combined, S_channels_separate,
   S_channels_superimposed, S_chans, S_chebyshev_transform, S_clear_audio_inputs,
   S_close_hook, S_close_sound, S_close_sound_file, 
@@ -131,7 +131,7 @@ static char *snd_commands[NUM_COMMANDS] ={
   S_convolve_arrays, S_convolve_selection_with, S_convolve_with, S_corruption_time, S_count_matches,
   S_cursor, S_cursor_color, S_cursor_cross,
   S_cursor_follows_play, S_cursor_in_middle, S_cursor_in_view, S_cursor_line, S_cursor_no_action,
-  S_cursor_on_left, S_cursor_on_right, S_cursor_style, S_cursor_update_display, S_cut,
+  S_cursor_on_left, S_cursor_on_right, S_cursor_style, S_cursor_update_display, 
 
   S_dac_folding, S_dac_size, S_data_clipped, S_data_color, S_data_format, S_data_location,
   S_default_output_chans, S_default_output_format, S_default_output_srate, S_default_output_type,
@@ -169,7 +169,7 @@ static char *snd_commands[NUM_COMMANDS] ={
 
   S_key, S_key_binding, S_key_press_hook, S_keyboard_no_action,
 
-  S_left_sample, S_line_size, S_listener_color, S_listener_font, S_listener_prompt, S_load_colormap, S_loop_samples,
+  S_left_sample, S_listener_color, S_listener_font, S_listener_prompt, S_load_colormap, S_loop_samples,
 
   S_make_color, S_make_mix_sample_reader, S_make_player,
   S_make_region, S_make_region_sample_reader, S_make_sample_reader, S_make_track_sample_reader, S_make_vct,
@@ -191,7 +191,7 @@ static char *snd_commands[NUM_COMMANDS] ={
   S_output_comment_hook, S_output_name_hook,
 
   S_peaks, S_play, S_play_and_wait, S_play_hook, S_play_mix, S_play_region, S_play_selection, S_play_track, S_playerQ,
-  S_position_color, S_prefix_arg, S_preload_directory, S_preload_file,
+  S_position_color, S_preload_directory, S_preload_file,
   S_previous_files_sort, S_previous_sample, S_print_length,
   S_progress_report, S_prompt_in_minibuffer, S_protect_region, S_pushed_button_color,
 

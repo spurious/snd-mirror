@@ -1,5 +1,10 @@
 snd change log
 
+  24-May:    removed line-size, prefix-arg (it's now an optional arg to the key function).
+             ignore-prefix arg to bind-key removed, Snd no longer handles prefix itself.
+             removed cut (use delete-selection).
+	     call-apply renamed apply-controls.
+	     prompt-in-minibuffer callback func now takes only the response arg (no longer the snd index).
   23-May:    OSS fragment defaults changed -- see extsnd.html or HISTORY.sndlib.
              fft-smoother added to examp.scm.
              smooth renamed smooth-sound.

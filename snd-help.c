@@ -267,6 +267,11 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+24-May:  removed line-size, prefix-arg (it's now an optional arg to the key function).\n\
+         ignore-prefix arg to bind-key removed, Snd no longer handles prefix itself.\n\
+         removed cut (use delete-selection).\n\
+         call-apply renamed apply-controls.\n\
+         prompt-in-minibuffer callback func now takes only the response arg (no longer the snd index).\n\
 23-May:  OSS fragment defaults changed -- see extsnd.html or HISTORY.sndlib\n\
          fft-smoother added to examp.scm.\n\
          smooth renamed smooth-sound.\n\
@@ -281,10 +286,6 @@ void news_help(snd_state *ss)
            scan/map/find funcs, frames and maxamps.\n\
          \"vector synthesis\" in examp.scm\n\
          Guile 1.5\n\
-1-May:   Alpha (64-bit) and FreeBSD (Old OSS) fixups.\n\
-25-Apr:  snd.1 (and mandir business in makefile.in)\n\
-24-Apr:  added mouse-enter|leave-text-hook.\n\
-23-Apr:  snd 4.13.\n\
 ",
 NULL);
   FREE(info);
@@ -973,7 +974,6 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_help_text_font "        varies\n\
   " S_highlight_color "       ivory1\n\
   " S_just_sounds "           #f\n\
-  " S_line_size "             128 (snd #t) (chn #t)\n\
   " S_listener_color "        aliceblue\n\
   " S_listener_font "         varies\n\
   " S_listener_prompt "       \">\"\n\
@@ -991,7 +991,6 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_normalize_fft "         normalize-by-channel (snd #t) (chn #t)\n\
   " S_normalize_on_open "     #t\n\
   " S_position_color "        ivory3\n\
-  " S_prefix_arg "            nil\n\
   " S_print_length "          12\n\
   " S_pushed_button_color "   lightsteelblue1\n\
   " S_recorder_autoload "     #f\n\
@@ -1166,7 +1165,6 @@ all refer to the same thing.\n\
   " S_cursor_position "   (snd chn)\n\
   " S_cursor_size "       (val snd chn)\n\
   " S_cursor_style "      (val snd chn)\n\
-  " S_cut "               ()\n\
   " S_data_format "       (snd)\n\
   " S_data_location "     (snd)\n\
   " S_delete_mark "       (id snd chn)\n\

@@ -349,10 +349,6 @@ enum {COLOR_POSITION, COLOR_ZOOM};
 #define set_trap_segfault(ss, a) ss->Trap_Segfault = a
 #define DEFAULT_TRAP_SEGFAULT 1
 
-#define line_size(ss) ss->Line_Size
-#define in_set_line_size(ss, a) ss->Line_Size = a
-#define DEFAULT_LINE_SIZE 128
-
 #define dot_size(ss) ss->Dot_Size
 #define in_set_dot_size(ss, a) ss->Dot_Size = a
 #define DEFAULT_DOT_SIZE 1
@@ -436,9 +432,6 @@ enum {COLOR_POSITION, COLOR_ZOOM};
 #define selection_creates_region(ss) ss->Selection_Creates_Region
 #define set_selection_creates_region(ss, a) ss->Selection_Creates_Region = a
 #define DEFAULT_SELECTION_CREATES_REGION 1
-
-#define prefix_arg(ss) ss->Prefix_Arg
-#define set_prefix_arg(ss, a) ss->Prefix_Arg = a
 
 #define filter_env_order(ss) ss->Filter_Env_Order
 #define in_set_filter_env_order(ss, a) ss->Filter_Env_Order = a

@@ -168,7 +168,7 @@ static void execute_named_macro(chan_info *cp, char *name, int count)
     }
 }
 
-typedef struct {int key; int state; int ignore_prefix; SCM func;} key_entry;
+typedef struct {int key; int state; int args; SCM func;} key_entry;
 static key_entry *user_keymap = NULL;
 static int keymap_size = 0;
 static int keymap_top = 0;
@@ -217,7 +217,7 @@ static SCM g_key_binding(SCM key, SCM state)
   return(SCM_UNDEFINED);
 }
 
-static void set_keymap_entry(int key, int state, int ignore, SCM func)
+static void set_keymap_entry(int key, int state, int args, SCM func)
 {
   int i;
   i = in_user_keymap(key, state);
@@ -252,26 +252,21 @@ static void set_keymap_entry(int key, int state, int ignore, SCM func)
       if (PROCEDURE_P(user_keymap[i].func))
 	snd_unprotect(user_keymap[i].func);
     }
-  /* already checked arity etc */
+  user_keymap[i].args = args;
   user_keymap[i].func = func;
   if (PROCEDURE_P(func)) snd_protect(func);
-  user_keymap[i].ignore_prefix = ignore;
 }
 
 static int call_user_keymap(int hashedsym, int count)
 {
-  int i, res = KEYBOARD_NO_ACTION;
-  SCM funcres;
+  int res = KEYBOARD_NO_ACTION;
   /* if guile call the associated scheme code, else see if basic string parser can handle it */
-  if (user_keymap[hashedsym].ignore_prefix) count = 1;
   if (BOUND_P(user_keymap[hashedsym].func))
-    for (i = 0; i < count; i++) 
-      {
-	funcres = CALL0(user_keymap[hashedsym].func, "user key func");
-	if (SYMBOL_P(funcres)) break; /* error tag returned? */
-	res = TO_C_INT_OR_ELSE(funcres, KEYBOARD_NO_ACTION);
-      }
-  /* in emacs, apparently, prefix-arg refers to the next command, and current-prefix-arg is this command */
+    {
+      if (user_keymap[hashedsym].args == 0)
+	res = TO_C_INT_OR_ELSE(CALL0(user_keymap[hashedsym].func, "user key func"), KEYBOARD_NO_ACTION);
+      else res = TO_C_INT_OR_ELSE(CALL1(user_keymap[hashedsym].func, TO_SCM_INT(count), "user key func"), KEYBOARD_NO_ACTION);
+    }
   return(res);
 }
 
@@ -810,7 +805,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	  proc = snd_catch_any(eval_str_wrapper, str, str);
 	  snd_protect(proc);
 	  if (PROCEDURE_P(sp->prompt_callback))
-	    CALL2(sp->prompt_callback, proc, TO_SMALL_SCM_INT(sp->index), "prompt callback func");
+	    CALL1(sp->prompt_callback, proc, "prompt callback func");
 	  snd_unprotect(proc);
 	  if (str) free(str);
 	  sp->prompting = 0;
@@ -1032,10 +1027,10 @@ int keyboard_command (chan_info *cp, int keysym, int state)
   /* this happens when the user presses Control or Shift etc prior to hitting the actual (modified) key */
   if (defining_macro) continue_macro(keysym, state);
   if (!m) count = 1; else m = 0;
-  if (u_count == 0) set_prefix_arg(ss, 0);
   
   /* should we check snd_keypad_Decimal as well as snd_K_period? -- is this assuming USA float syntax? */
   /*   (similarly snd_keypad_0...9) */
+  /* TODO: user-defined extended command? */
 
   if ((selection_creation_in_progress()) &&
       ((extended_mode) || (stop_selecting(keysym, state))))
@@ -1053,7 +1048,6 @@ int keyboard_command (chan_info *cp, int keysym, int state)
       number_ctr = 0;
       counting = 0;
       dot_seen = 0;
-      set_prefix_arg(ss, count);
       if (m) return(KEYBOARD_NO_ACTION);
     }
   u_count = 0;
@@ -1135,7 +1129,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      break;
 	    case snd_K_K: case snd_K_k: 
 	      cp->cursor_on = 1; 
-	      redisplay = cursor_delete(cp, count*cp->line_size, "C-k"); 
+	      redisplay = cursor_delete(cp, count * 128, "C-k");  /* TODO: delete this kbd command? */
 	      break;
 	    case snd_K_L: case snd_K_l: 
 	      cp->cursor_on = 1; 
@@ -1175,7 +1169,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      break;
 	    case snd_K_N: case snd_K_n: 
 	      cp->cursor_on = 1; 
-	      redisplay = cursor_move(cp, count * cp->line_size); 
+	      redisplay = cursor_move(cp, count * 128); 
 	      break;
 	    case snd_K_O: case snd_K_o: 
 	      cp->cursor_on = 1; 
@@ -1183,7 +1177,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      break;
 	    case snd_K_P: case snd_K_p: 
 	      cp->cursor_on = 1; 
-	      redisplay = cursor_move(cp, -count * cp->line_size); 
+	      redisplay = cursor_move(cp, -count * 128); 
 	      break;
 	    case snd_K_Q: case snd_K_q: 
 	      play_channel(cp, cp->cursor, NO_END_SPECIFIED, TRUE, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), "C-q");
@@ -1873,41 +1867,41 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 }
 
 
-static SCM g_bind_key(SCM key, SCM state, SCM code, SCM ignore_prefix)
+static SCM g_bind_key(SCM key, SCM state, SCM code)
 {
   #define H_bind_key "(" S_bind_key " key modifiers func (ignore-prefix #f)) causes 'key' (an integer) \
 when typed with 'modifiers' (1:shift, 4:control, 8:meta) to invoke 'func', a function of \
 no arguments.  If ignore-prefix is #t, preceding C-u arguments are not handled by Snd itself. \
 The function should return one of the cursor choices (e.g. cursor-no-action)."
 
-  int ip;
-  char *errmsg;
-  SCM errstr;
+  int args;
+  char *errstr;
+  SCM arity_list, errmsg;
   ASSERT_TYPE(INTEGER_P(key), key, SCM_ARG1, S_bind_key, "an integer");
   ASSERT_TYPE(INTEGER_P(state), state, SCM_ARG2, S_bind_key, "an integer");
   ASSERT_TYPE((FALSE_P(code) || PROCEDURE_P(code)), code, SCM_ARG3, S_bind_key, "#f or a procedure");
-  if ((FALSE_P(ignore_prefix)) || 
-      (NOT_BOUND_P(ignore_prefix)) ||  
-      ((NUMBER_P(ignore_prefix)) && 
-       (TO_C_INT_OR_ELSE(ignore_prefix, 0) == 0)))
-    ip = 0;
-  else ip = 1;
   if (FALSE_P(code))
     set_keymap_entry(TO_C_INT(key), 
 		     TO_C_INT(state), 
-		     ip, SCM_UNDEFINED);
+		     0,
+		     SCM_UNDEFINED);
   else 
     {
-      errmsg = procedure_ok(code, 0, 0, S_bind_key, "func", 3);
-      if (errmsg)
+      arity_list = ARITY(code);
+      args = TO_SMALL_C_INT(SCM_CAR(arity_list));
+      if (args > 1)
 	{
-	  errstr = TO_SCM_STRING(errmsg);
-	  FREE(errmsg);
-	  return(snd_bad_arity_error(S_bind_key, errstr, code));
+	  errstr = mus_format("bind-key function arg should take either zero or one args, not %d", args);
+	  errmsg = TO_SCM_STRING(errstr);
+	  FREE(errstr);
+	  return(snd_bad_arity_error(S_bind_key, 
+				     errmsg,
+				     code));
 	}
       set_keymap_entry(TO_C_INT(key), 
 		       TO_C_INT(state), 
-		       ip, code);
+		       args, 
+		       code);
     }
   return(SCM_BOOL_T);
 }
@@ -1944,9 +1938,11 @@ static SCM g_save_macros(void)
 static SCM g_prompt_in_minibuffer(SCM msg, SCM callback, SCM snd_n)
 {
   #define H_prompt_in_minibuffer "(" S_prompt_in_minibuffer " msg callback &optional snd) posts msg in snd's minibuffer \
-then when the user eventually responds, invokes the function callback with the response and snd (the index)"
+then when the user eventually responds, invokes the function callback with the response"
 
   snd_info *sp;
+  SCM arity_list;
+  int rargs, oargs, restargs;
   ASSERT_TYPE(STRING_P(msg), msg, SCM_ARG1, S_prompt_in_minibuffer, "a string");
   ASSERT_TYPE((NOT_BOUND_P(callback)) || (BOOLEAN_P(callback)) || PROCEDURE_P(callback), callback, SCM_ARG2, S_prompt_in_minibuffer, "#f or a procedure");
   SND_ASSERT_SND(S_prompt_in_minibuffer, snd_n, 3);
@@ -1955,12 +1951,22 @@ then when the user eventually responds, invokes the function callback with the r
     return(snd_no_such_sound_error(S_prompt_in_minibuffer, snd_n));
   if (PROCEDURE_P(sp->prompt_callback))
     snd_unprotect(sp->prompt_callback);
-  if (PROCEDURE_P(callback)) 
+  sp->prompt_callback = SCM_BOOL_F; /* just in case something goes awry */
+  if (PROCEDURE_P(callback))
     {
-      sp->prompt_callback = callback;
-      snd_protect(sp->prompt_callback);
+      arity_list = ARITY(callback);
+      snd_protect(arity_list);
+      rargs = TO_SMALL_C_INT(SCM_CAR(arity_list));
+      oargs = TO_SMALL_C_INT(SCM_CADR(arity_list));
+      restargs = ((TRUE_P(SCM_CADDR(arity_list))) ? 1 : 0);
+      snd_unprotect(arity_list);
+      if (rargs + oargs + restargs != 1)
+	return(snd_bad_arity_error(S_prompt_in_minibuffer, 
+				   TO_SCM_STRING("callback func should take one arg"), 
+				   callback));
+      snd_protect(callback);  
     }
-  else sp->prompt_callback = SCM_BOOL_F;
+  sp->prompt_callback = callback;
   make_minibuffer_label(sp, TO_C_STRING(msg));
   sp->minibuffer_on = 1;
   sp->minibuffer_temp = 0;
@@ -2034,7 +2040,7 @@ void g_init_kbd(SCM local_doc)
   DEFINE_PROC(S_backward_graph,          g_backward_graph, 0, 3, 0,          H_backward_graph);
 
   DEFINE_PROC(S_key_binding,             g_key_binding, 2, 0, 0,             H_key_binding);
-  DEFINE_PROC(S_bind_key,                g_bind_key, 3, 1, 0,                H_bind_key);
+  DEFINE_PROC(S_bind_key,                g_bind_key, 3, 0, 0,                H_bind_key);
   DEFINE_PROC(S_key,                     g_key, 2, 2, 0,                     H_key);
   DEFINE_PROC(S_save_macros,             g_save_macros, 0, 0, 0,             H_save_macros);
 

@@ -2624,13 +2624,13 @@ static SCM g_filter_env(SCM snd_n)
 
 WITH_REVERSED_ARGS(g_set_filter_env_reversed, g_set_filter_env)
 
-static SCM g_call_apply(SCM snd, SCM choice)
+static SCM g_apply_controls(SCM snd, SCM choice)
 {
-  #define H_call_apply "(" S_call_apply " &optional snd choice) is equivalent to clicking the control panel 'Apply' button"
+  #define H_apply_controls "(" S_apply_controls " &optional snd choice) is equivalent to clicking the control panel 'Apply' button"
   snd_info *sp;
   snd_state *ss;
-  SND_ASSERT_SND(S_call_apply, snd, 1);
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(choice), choice, SCM_ARG2, S_call_apply, "an integer");
+  SND_ASSERT_SND(S_apply_controls, snd, 1);
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(choice), choice, SCM_ARG2, S_apply_controls, "an integer");
   sp = get_sp(snd);
   if (sp) 
     {
@@ -2639,7 +2639,7 @@ static SCM g_call_apply(SCM snd, SCM choice)
       run_apply_to_completion(sp); 
       return(SCM_BOOL_F);
     }
-  return(snd_no_such_sound_error(S_call_apply, snd));
+  return(snd_no_such_sound_error(S_apply_controls, snd));
 }
 
 static SCM name_click_hook;
@@ -2835,7 +2835,7 @@ If it returns #t, the usual informative minibuffer babbling is squelched."
   DEFINE_PROC(S_new_sound,            g_new_sound, 0, 6, 0,            H_new_sound);
   DEFINE_PROC(S_revert_sound,         g_revert_sound, 0, 1, 0,         H_revert_sound);
   DEFINE_PROC(S_save_sound_as,        g_save_sound_as, 1, 6, 0,        H_save_sound_as);
-  DEFINE_PROC(S_call_apply,           g_call_apply, 0, 2, 0,           H_call_apply);
+  DEFINE_PROC(S_apply_controls,       g_apply_controls, 0, 2, 0,       H_apply_controls);
 
 
   define_procedure_with_reversed_setter(S_filter_env, SCM_FNC g_filter_env, H_filter_env,

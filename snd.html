@@ -1281,7 +1281,7 @@ associated keyboard commands are:</p>
 <pre>
   <A NAME="cd">C-d</a>      delete sample at cursor
   <A NAME="ch">C-h</a>      delete previous sample
-  <A NAME="ck">C-k</a>      delete a 'line' -- line-size (128) samples
+  <A NAME="ck">C-k</a>      delete a 'line' -- 128 samples
   <A NAME="cw">C-w</a>      delete current selected portion
 
   <A NAME="co">C-o</a>      insert a zero sample at cursor
@@ -1941,101 +1941,100 @@ For example, C-u C-m returns the number of samples between
 the cursor and the next mark, so C-u C-m C-z zeros
 all the samples between the cursor and the next mark.</p>
 
-<p>The commands are:</p>
-<pre>
-  [Down]  zoom out
-  [Up]    zoom in
-  [Left]  move window left
-  [Right] move window right
-  [Home]  update current file (re-read data from disk)
-  [Space] cancel and deselect selection, return to pre-select position
-          if playing, pause or continue playback
-  &lt;:      move cursor to sample 0
-  &gt;:      move cursor to last sample
-  C-&lt;:    move cursor to sample 0
-  C-&gt;:    move cursor to last sample
-  C-a:    move cursor to window start
-  C-b:    move cursor back one sample
-  C-d:    delete sample at cursor
-  C-e:    move cursor to window end
-  C-f:    move cursor ahead one sample
-  C-g:    abort current command
-  C-h:    delete previous sample
-  C-i:    display cursor info
-  C-j:    go to mark
-  C-k:    delete one line's worth of samples
-  C-l:    position window so cursor is in the middle
-  C-m:    place (or remove) mark at cursor location
-  C-n:    move cursor ahead one 'line'
-  C-o:    insert one zero sample at cursor
-  C-p:    move cursor back one 'line'
-  C-q:    play current channel(s) starting at cursor
-  C-r:    repeat last search backwards
-  C-s:    search according to an expression
-  C-t:    stop playing
-  C-u:    start count (numerical argument) specification
-  C-v:    move cursor to mid-window
-  C-w:    delete current region
-  C-x:    start extended command (see below)
-  C-y:    paste in region
-  C-z:    set current sample to 0.0
-  C-_:    undo last edit
-  C-[Space]: start region definition (arg&lt;0 =&gt; cancel and deselect)
-</pre>
+<p>The predefined commands are (<i>prompt</i> is an abbreviation for prompt-in-minibuffer):</p>
+<table border=0 cellpadding=0>
+<!-- TODO: finish these tables of key bindings -->
+<tr><td>[Down]</td><td>zoom out</td><td></td></tr>
+<tr><td>[Up]</td><td>zoom in</td><td></td></tr>
+<tr><td>[Left]</td><td>move window left</td><td></td></tr>
+<tr><td>[Right]</td><td>move window right</td><td></td></tr>
+<tr><td>[Home]</td><td>update current file (re-read data from disk)</td><td><code><small>(lambda () (update-sound))</small></code></td></tr>
+<tr><td>[Space]</td><td colspan=2>cancel selection; if playing, pause or continue playback</td></tr>
+<tr><td>&lt;</td><td>move cursor to sample 0</td><td><code><small>(lambda () (set! (cursor) 0))</small></code></td></tr>
+<tr><td>&gt;</td><td>move cursor to last sample</td><td><code><small>(lambda () (set! (cursor) (1- (frames))))</small></code></td></tr>
+<tr><td>C-&lt;</td><td>move cursor to sample 0</td><td><code><small>(lambda () (set! (cursor) 0))</small></code></td></tr>
+<tr><td>C-&gt;</td><td>move cursor to last sample</td><td><code><small>(lambda () (set! (cursor) (1- (frames))))</small></code></td></tr>
+<tr><td>C-a</td><td>move cursor to window start</td><td><code><small>(lambda () (set! (cursor) (left-sample)))</small></code></td></tr>
+<tr><td>C-b</td><td>move cursor back one sample</td><td><code><small>(lambda (arg) (set! (cursor) (max 0 (- (cursor) arg))))</small></code></td></tr>
+<tr><td>C-d</td><td>delete sample at cursor</td><td><code><small>(lambda (arg) (delete-samples (cursor) arg))</small></code></td></tr>
+<tr><td>C-e</td><td>move cursor to window end</td><td><code><small>(lambda () (set! (cursor) (right-sample)))</small></code></td></tr>
+<tr><td>C-f</td><td>move cursor ahead one sample</td><td><code><small>(lambda (arg) (set! (cursor) (min (1- (frames)) (+ (cursor) arg))))</small></code></td></tr>
+<tr><td>C-g</td><td>abort current command</td><td></td></tr>
+<tr><td>C-h</td><td>delete previous sample</td><td></td></tr>
+<tr><td>C-i</td><td>display cursor info</td><td></td></tr>
+<tr><td>C-j</td><td>go to mark</td><td></td></tr>
+<tr><td>C-k</td><td>delete one line's worth of samples</td><td><code><small>(lambda (arg) (delete-samples (cursor) (* 128 arg)))</small></code></td></tr>
+<tr><td>C-l</td><td>position window so cursor is in the middle</td><td></td></tr>
+<tr><td>C-m</td><td>place (or remove) mark at cursor location</td><td></td></tr>
+<tr><td>C-n</td><td>move cursor ahead one 'line'</td><td><code><small>(lambda (arg) (forward-sample (* 128 arg)))</small></code></td></tr>
+<tr><td>C-o</td><td>insert one zero sample at cursor</td><td><code><small>(lambda (arg) (insert-samples (cursor) arg (make-vct arg)))</small></code></td></tr>
+<tr><td>C-p</td><td>move cursor back one 'line'</td><td><code><small>(lambda (arg) (backward-sample (* 128 arg)))</small></code></td></tr>
+<tr><td>C-q</td><td>play current channel(s) starting at cursor</td><td></td></tr>
+<tr><td>C-r</td><td>repeat last search backwards</td><td></td></tr>
+<tr><td>C-s</td><td>search according to an expression</td><td></td></tr>
+<tr><td>C-t</td><td>stop playing</td><td></td></tr>
+<tr><td>C-u</td><td>start count (numerical argument) specification</td><td></td></tr>
+<tr><td>C-v</td><td>move cursor to mid-window</td><td></td></tr>
+<tr><td>C-w</td><td>delete current selection</td><td><code><small>(lambda () (delete-selection))</small></code></td></tr>
+<tr><td>C-x</td><td>start extended command (see below)</td><td></td></tr>
+<tr><td>C-y</td><td>paste in region</td><td><code><small>(lambda (arg) (insert-region (cursor) arg))</small></code></td></tr>
+<tr><td>C-z</td><td>set current sample to 0.0</td><td><code><small>(lambda (arg) (set! (samples (cursor) arg) (make-vct arg)))</small></code></td></tr>
+<tr><td>C-_</td><td>undo last edit</td><td><code><small>(lambda (arg) (undo arg))</small></code></td></tr>
+<tr><td>C-[Space]</td><td colspan=2>start region definition (arg&lt;0 =&gt; cancel and deselect)</td></tr>
+
         <!-- I(delete samples):K(C-d, C-h, C-k)(ck) --><!-- I(insert zeros):K(C-o, C-z)(cz) --><!-- I(insert zeros):A(co) -->
         <!-- I(cut selection):K(C-w)(cw) --><!-- I(define selection):K(C-[space], C-x c)(cxc) -->
 
-<p>The extended commands (preceded by C-x) are:</p>
-<pre>
-  a:    apply envelope to selection
-  b:    position window so cursor is on left margin
-  c:    define selection from cursor to nth mark
-  d:    get temp dir name
-  e:    execute keyboard macro
-  f:    position window so cursor is on right margin
-  i:    insert region
-  j:    go to named mark
-  k:    close file
-  l:    position selection in mid-view
-  n:    re-evaluate expression over selection
-  o:    move to next or previous graph
-  p:    play selection or region n
-  q:    mix in region
-  r:    redo last undone edit
-  u:    undo last edit
-  v:    position window over current selection
-  w:    save selection as file
-  x:    evaluate expression over selection
-  <A NAME="cxz">z</a>:    smooth selection
-  /:    place named mark
-  (:    begin keyboard macro definition
-  ):    end keyboard macro definition
+<tr><td>C-x a</td><td>apply envelope to selection</td><td><code><small>(lambda () (prompt "env:" env-selection))</small></code></td></tr>
+<tr><td>C-x b</td><td>position window so cursor is on left margin</td><td><code><small>(lambda () (set! (left-sample) (cursor)))</small></code></td></tr>
+<tr><td>C-x c</td><td>define selection from cursor to nth mark</td><td></td></tr>
+<tr><td>C-x d</td><td>get temp dir name</td><td><code><small>(lambda (arg) (prompt "temp dir:" (lambda (val) (set! (temp-dir) val))))</small></code></td></tr>
+<tr><td>C-x e</td><td>execute keyboard macro</td><td></td></tr>
+<tr><td>C-x f</td><td>position window so cursor is on right margin</td><td><code><small>(lambda () (set! (right-sample) (cursor)))</small></code></td></tr>
+<tr><td>C-x i</td><td>insert region</td><td><code><small>(lambda (arg) (insert-region (cursor) arg)) ;insert-selection if no arg</small></code></td></tr>
+<tr><td>C-x j</td><td>go to named mark</td><td></td></tr>
+<tr><td>C-x k</td><td>close file</td><td><code><small>(lambda () (close-sound))</small></code></td></tr>
+<tr><td>C-x l</td><td>position selection in mid-view</td><td></td></tr>
+<tr><td>C-x n</td><td>re-evaluate expression over selection</td><td></td></tr>
+<tr><td>C-x o</td><td>move to next or previous graph</td><td><code><small>(lambda (arg) (forward-graph arg))</small></code></td></tr>
+<tr><td>C-x p</td><td>play selection or region n</td><td><code><small>(lambda (arg) (play-region arg)) ;play-selection if no arg</small></code></td></tr>
+<tr><td>C-x q</td><td>mix in region</td><td><code><small>(lambda (arg) (mix-region (cursor) arg)) ;mix-selection if no arg</small></code></td></tr>
+<tr><td>C-x r</td><td>redo last undone edit</td><td><code><small>(lambda (arg) (redo arg))</small></code></td></tr>
+<tr><td>C-x u</td><td>undo last edit</td><td><code><small>(lambda (arg) (undo arg))</small></code></td></tr>
+<tr><td>C-x v</td><td>position window over current selection</td><td></td></tr>
+<tr><td>C-x w</td><td>save selection as file</td><td><code><small>(lambda (arg) (prompt "file:" save-region)) ;save-selection if no arg</small></code></td></tr>
+<tr><td>C-x x</td><td>evaluate expression over selection</td><td></td></tr>
+<tr><td>C-x <A NAME="cxz">z</a></td><td>smooth selection</td><td><code><small>(lambda () (smooth-selection))</small></code></td></tr>
+<tr><td>C-x /</td><td>place named mark</td><td></td></tr>
+<tr><td>C-x (</td><td>begin keyboard macro definition</td><td></td></tr>
+<tr><td>C-x )</td><td>end keyboard macro definition</td><td></td></tr>
+
         <!-- I(smooth selection):K(C-x z)(cxz) --><!-- I(smooth selection):A(cxz) --><!-- I(define mark):K(C-x /, C-x C-m)(cxcm) -->
         <!-- I(define mark):O(also C-m)(cm) --><!-- I(delete mark):K(- C-m)(cm) --><!-- I(delete mark):A(marks) -->
         <!-- I(smooth selection):L(smooth-selection)(sndsmoothselection) -->
 
-  C-a:  apply amplitude envelope
-  C-b:  set x window bounds (preceded by first sample number)
-  C-c:  hide ("close") controls
-  C-d:  print
-  C-f:  open file
-  C-g:  abort command
-  C-i:  insert file
-  C-j:  go to mix 
-  <A NAME="cxcl">C-l</a>:  load scm file
-  C-m:  add named mark
-  C-n:  re-evaluate expression
-  C-o:  show ("open") controls
-  C-p:  set (time domain display) window size (preceded by size)
-  C-q:  mix in file
-  C-r:  redo last undone edit
-  C-s:  save file
-  C-u:  undo last edit
-  C-v:  set (time domain display) window size as percentage of total
-  C-w:  save current channel in file
-  <A NAME="cxcx">C-x</a>:  evaluate expression
-  C-z:  smooth using cosine
-</pre>
+<tr><td>C-x C-a</td><td>apply amplitude envelope</td><td><code><small>(lambda () (prompt "amp env:" env-sound))</small></code></td></tr>
+<tr><td>C-x C-b</td><td>set left sample (via C-u arg)</td><td></td></tr>
+<tr><td>C-x C-c</td><td>hide ("close") controls</td><td><code><small>(lambda () (set! (show-controls) #f))</small></code></td></tr>
+<tr><td>C-x C-d</td><td>print</td><td><code><small>(lambda () (prompt "eps file:" graph-&gt;ps))</small></code></td></tr>
+<tr><td>C-x C-f</td><td>open file</td><td><code><small>(lambda () (prompt "file:" open-sound))</small></code></td></tr>
+<tr><td>C-x C-g</td><td>abort command</td><td></td></tr>
+<tr><td>C-x C-i</td><td>insert file</td><td><code><small>(lambda () (prompt "insert file:" (lambda (val) (insert-sound val (cursor)))))</small></code></td></tr>
+<tr><td>C-x C-j</td><td>go to mix </td><td></td></tr>
+<tr><td>C-x <A NAME="cxcl">C-l</a></td><td>load scm file</td><td><code><small>(lambda () (prompt "load:" load))</small></code></td></tr>
+<tr><td valign=top>C-x C-m</td><td valign=top>add named mark</td><td><code><small>(lambda () (prompt "mark:" (lambda (val) (set! (mark-name (add-mark (cursor))) val))))</small></code></td></tr>
+<tr><td>C-x C-n</td><td>re-evaluate expression</td><td></td></tr>
+<tr><td>C-x C-o</td><td>show ("open") controls</td><td><code><small>(lambda () (set! (show-controls) #t))</small></code></td></tr>
+<tr><td>C-x C-p</td><td>set window size (via C-u arg)</td><td></td></tr>
+<tr><td>C-x C-q</td><td>mix in file</td><td><code><small>(lambda (arg) (prompt "mix file:" (lambda (val) (mix-sound val (cursor)))))</small></code></td></tr>
+<tr><td>C-x C-r</td><td>redo last undone edit</td><td><code><small>(lambda (arg) (redo arg))</small></code></td></tr>
+<tr><td>C-x C-s</td><td>save file</td><td><code><small>(lambda () (save-sound))</small></code></td></tr>
+<tr><td>C-x C-u</td><td>undo last edit</td><td><code><small>(lambda (arg) (undo arg))</small></code></td></tr>
+<tr><td>C-x C-v</td><td>set window size as percentage of total</td><td></td></tr>
+<tr><td>C-x C-w</td><td>save current channel in file</td><td></td></tr>
+<tr><td>C-x <A NAME="cxcx">C-x</a></td><td>evaluate expression</td><td></td></tr>
+<tr><td>C-x C-z</td><td>smooth using cosine</td><td><code><small>(lambda (arg) (smooth-sound (cursor) arg))</small></code></td></tr>
+</table>
 <p>In addition, within the "minibuffer" and the filter text field the commands M-p and M-n
 march back and forth in the list of saved strings, much as in
 a shell (this applies only to the Motif version; in the Gtk+
@@ -2174,7 +2173,7 @@ panel are:</p>
   C-x C-o   show ("open") control panel
   C-x C-c   hide ("close") control panel
 </pre>
-<p>See also <a href="extsnd.html#callapply">call-apply</a>.</p>
+<p>See also <a href="extsnd.html#applycontrols">apply-controls</a>.</p>
 <br>
 
 <h2><A NAME="customization">Customization and Extension</a></h2>

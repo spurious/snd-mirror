@@ -473,7 +473,7 @@
     (add-hook! stop-playing-hook play-once)
     (play)))
 
-(bind-key (char->integer #\p) 0 (lambda () (play-often (max 1 (prefix-arg)))) #t)
+(bind-key (char->integer #\p) 0 (lambda (n) (play-often (max 1 n))))
 
 
 ;;; -------- play sound until c-g
@@ -498,7 +498,7 @@
   (add-hook! stop-playing-region-hook play-region-again)
   (play-region reg))
 
-(bind-key (char->integer #\p) 0 (lambda () (play-region-forever (max 0 (prefix-arg)))) #t)
+(bind-key (char->integer #\p) 0 (lambda (n) (play-region-forever (max 0 n))))
 
 
 
@@ -842,8 +842,8 @@
 		(report-in-minibuffer "no selection"))))
 
 (define eval-over-selection 
-  (lambda (func snd)
-    "(eval-over-selection func snd) evaluates func on each sample in the current selection"
+  (lambda (func)
+    "(eval-over-selection func) evaluates func on each sample in the current selection"
     (if (and (procedure? func) 
 	     (selection?))
 	(let* ((beg (selection-position))
@@ -860,15 +860,16 @@
 ;;; the same idea can be used to apply a function between two marks:
 
 (define eval-between-marks
-  (lambda (func snd)
-    "(eval-between-marks func snd) evaluates func between the leftmost marks in snd"
+  (lambda (func)
+    "(eval-between-marks func) evaluates func between the leftmost marks"
     (define (find-if pred l) ; this is from guile/ice-9/common-list.scm but returns l not car l
       (cond ((null? l) #f)
 	    ((pred (car l)) l)
 	    (else (find-if pred (cdr l)))))
     (if (procedure? func)
-	;; find leftmost two marks in selected chn of snd
-	(let ((chan (selected-channel snd)))
+	;; find leftmost two marks in selected chn
+	(let ((chan (selected-channel))
+	      (snd (selected-sound)))
 	  (if (< chan 0) (set! chan 0)) ;perhaps not current sound, so no selected channel in it
 	  (let ((mlist (marks snd chan)))
 	    (if (< (length mlist) 2)

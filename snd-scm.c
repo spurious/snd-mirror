@@ -329,6 +329,7 @@ char *procedure_ok(SCM proc, int req_args, int opt_args, const char *caller, con
     }
   else
     {
+      /* TODO: in many cases this is too restrictive -- arg could be req or opt or rest */
       arity_list = ARITY(proc);
       rargs = TO_SMALL_C_INT(SCM_CAR(arity_list));
       oargs = TO_SMALL_C_INT(SCM_CADR(arity_list));
@@ -1178,15 +1179,6 @@ static SCM g_set_normalize_on_open(SCM val)
   ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARGn, "set-" S_normalize_on_open, "a boolean");
   set_normalize_on_open(state, TO_C_BOOLEAN_OR_T(val));
   return(TO_SCM_BOOLEAN(normalize_on_open(state)));
-}
-
-static SCM g_prefix_arg(void) {return(TO_SCM_INT(prefix_arg(state)));}
-static SCM g_set_prefix_arg(SCM val) 
-{
-  #define H_prefix_arg "(" S_prefix_arg ") -> keyboard C-u argument"
-  ASSERT_TYPE(INTEGER_P(val), val, SCM_ARGn, "set-" S_prefix_arg, "an integer"); 
-  set_prefix_arg(state, TO_C_INT(val));
-  return(TO_SCM_INT(prefix_arg(state)));
 }
 
 static SCM g_print_length(void) {return(TO_SCM_INT(print_length(state)));}
@@ -3233,9 +3225,6 @@ void g_initialize_gh(snd_state *ss)
   define_procedure_with_setter(S_normalize_on_open, SCM_FNC g_normalize_on_open, H_normalize_on_open,
 			       "set-" S_normalize_on_open, SCM_FNC g_set_normalize_on_open, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_prefix_arg, SCM_FNC g_prefix_arg, H_prefix_arg,
-			       "set-" S_prefix_arg, SCM_FNC g_set_prefix_arg, local_doc, 0, 0, 0, 1);
-
   define_procedure_with_setter(S_print_length, SCM_FNC g_print_length, H_print_length,
 			       "set-" S_print_length, SCM_FNC g_set_print_length, local_doc, 0, 0, 0, 1);
 
@@ -3532,6 +3521,8 @@ If more than one hook function, results are concatenated. If none, the current c
   EVAL_STRING("(print-enable 'source)");  /* added 13-Feb-01 */
 
   EVAL_STRING("(define smooth smooth-sound)"); /* backwards compatibility (22-May-01) */
+  EVAL_STRING("(define cut delete-selection)");
+  EVAL_STRING("(define call-apply apply-controls)");
 
   /* from ice-9/r4rs.scm but with output to snd listener */
   EVAL_STRING("(define snd-last-file-loaded #f)");

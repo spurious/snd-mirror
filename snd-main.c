@@ -221,7 +221,6 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   if (auto_update(ss) != DEFAULT_AUTO_UPDATE) pss_ss(fd, S_auto_update, b2s(auto_update(ss)));
   if (color_inverted(ss) != DEFAULT_COLOR_INVERTED) pss_ss(fd, S_color_inverted, b2s(color_inverted(ss)));
   if (zero_pad(ss) != DEFAULT_ZERO_PAD) pss_sd(fd, S_zero_pad, zero_pad(ss));
-  if (line_size(ss) != DEFAULT_LINE_SIZE) pss_sd(fd, S_line_size, line_size(ss));
   if (ask_before_overwrite(ss) != DEFAULT_ASK_BEFORE_OVERWRITE) pss_ss(fd, S_ask_before_overwrite, b2s(ask_before_overwrite(ss)));
   if (dac_folding(ss) != DEFAULT_DAC_FOLDING) pss_ss(fd, S_dac_folding, b2s(dac_folding(ss)));
   if (wavo(ss) != DEFAULT_WAVO) pss_ss(fd, S_wavo, b2s(wavo(ss)));
@@ -263,7 +262,6 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   if (enved_dBing(ss) != DEFAULT_ENVED_DBING) pss_ss(fd, S_enved_dBing, b2s(enved_dBing(ss)));
   if (enved_clipping(ss) != DEFAULT_ENVED_CLIPPING) pss_ss(fd, S_enved_clipping, b2s(enved_clipping(ss)));
   if (enved_exping(ss) != DEFAULT_ENVED_EXPING) pss_ss(fd, S_enved_exping, b2s(enved_exping(ss)));
-  if (prefix_arg(ss) != 0) pss_sd(fd, S_prefix_arg, prefix_arg(ss));
 
   if (vu_font(ss) != DEFAULT_VU_FONT) pss_sq(fd, S_vu_font, vu_font(ss));
   if (save_state_file(ss) != NULL) pss_sq(fd, S_save_state_file, save_state_file(ss));
@@ -420,7 +418,6 @@ static int save_sound_state (snd_info *sp, void *ptr)
       if (cp->wavo != DEFAULT_WAVO) pcp_ss(fd, S_wavo, b2s(cp->wavo), chan);
       if (cp->wavo_hop != DEFAULT_WAVO_HOP) pcp_sd(fd, S_wavo_hop, cp->wavo_hop, chan);
       if (cp->wavo_trace != DEFAULT_WAVO_TRACE) pcp_sd(fd, S_wavo_trace, cp->wavo_trace, chan);
-      if (cp->line_size != DEFAULT_LINE_SIZE) pcp_sd(fd, S_line_size, cp->line_size, chan);
       if (cp->max_fft_peaks != DEFAULT_MAX_FFT_PEAKS) pcp_sd(fd, S_max_fft_peaks, cp->max_fft_peaks, chan);
       if (cp->show_fft_peaks != DEFAULT_SHOW_FFT_PEAKS) pcp_ss(fd, S_show_fft_peaks, b2s(cp->show_fft_peaks), chan);
       if (cp->fft_log_frequency != DEFAULT_FFT_LOG_FREQUENCY) pcp_ss(fd, S_fft_log_frequency, b2s(cp->fft_log_frequency), chan);

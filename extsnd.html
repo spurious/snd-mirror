@@ -1096,13 +1096,6 @@ when you save a sound via the "save" dialog.</p>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
-<!-- prefix-arg -->
-<!-- --><tr><td><code><em class=def><a name="prefixarg">prefix-arg</a></em></code></td>
-<!-- --><td><code>0</code></td>
-<!-- --><td>This is the keyboard <a href="snd.html#kcu">C-u</a> style argument (named current-prefix-arg in Emacs).
-<!-- --></td></tr>
-<!-- --><tr><td colspan=3></td></tr>
-<!-- -->
 <!-- save-dir -->
 <!-- --><tr><td valign=top><code><em class=def><a name="savedir">save-dir</a></em></code></td>
 <!-- --><td valign=top><code>""</code></td>
@@ -3514,18 +3507,11 @@ these are indicated as <em class=targ>reg</em> below.
 <!-- -->convolve the current selection with <i>file</i> 
 <!-- --></td></tr>
 <!-- -->
-<!-- cut -->
-<!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="sndcut">cut</a></em> ()</code></span></td>
-<!-- --><td>
-<!-- -->cut the current selection (a no-op if no active selection) 
-<!-- --></td></tr>
-<!-- -->
 <!-- delete-selection -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="snddeleteselection">delete-selection</a></em> ()</code></span></td>
 <!-- --><td>
-<!-- -->same as cut (deletes currently selected portions).
+<!-- -->deletes currently selected portion, if any.
 <!-- --></td></tr>
 <!-- -->
 <!-- env-selection -->
@@ -3757,6 +3743,27 @@ desired edit history position.
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
+<!-- apply-controls -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="applycontrols">apply-controls</a></em> (<i>snd target</i>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->equivalent to pushing <i>snd</i>'s 'apply' button (this is intended 
+<!-- -->for internal testing); <i>target</i> can be 0=sound, 1=channel, 2=selection.
+<!-- -->apply-controls can be used in conjunction with the various control panel variables:
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2 align=center>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+<!-- -->(define expnd 
+<!-- -->  (lambda (amt) 
+<!-- -->    (set! (expanding) #t) 
+<!-- -->    (set! (expand) amt) 
+<!-- -->    (<em class=red>apply-controls</em>)))
+<!-- --></pre></td></tr></table>
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
 <!-- backward-graph -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="sndbackwardgraph">backward-graph</a></em> (<i>count snd chn</i>)</code></span>
@@ -3784,27 +3791,6 @@ desired edit history position.
 <!-- -->display bomb icon in <i>snd's</i> minibuffer.  Set <i>on</i> to #f to erase bomb.  Each time <i>bomb</i>
 <!-- -->is called, the bomb icon moves to the next image in its sequence (showing the bomb's fuse burning down),
 <!-- -->restarting the sequence whenever it reaches the end. [<em class=error>no-such-sound</em>].
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- call-apply -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="callapply">call-apply</a></em> (<i>snd target</i>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->equivalent to pushing <i>snd</i>'s 'apply' button (this is intended 
-<!-- -->for internal testing); <i>target</i> can be 0=sound, 1=channel, 2=selection.
-<!-- -->call-apply can be used in conjunction with the various control panel variables:
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2 align=center>
-<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
-<!-- -->(define expnd 
-<!-- -->  (lambda (amt) 
-<!-- -->    (set! (expanding) #t) 
-<!-- -->    (set! (expand) amt) 
-<!-- -->    (<em class=red>call-apply</em>)))
-<!-- --></pre></td></tr></table>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4518,17 +4504,6 @@ desired edit history position.
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
-<!-- line-size -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="linesize">line-size</a></em> (<em class=narg>snd chn</em>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->Number of samples considered to be a 'line' (<a href="snd.html#cn">C-n</a> and <a href="snd.html#cp">C-p</a> commands). 
-<!-- -->default: 128.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
 <!-- loop-samples -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="loopsamples">loop-samples</a></em> (reader function calls origin <i>environ</i>)</code></span>
@@ -4875,15 +4850,15 @@ desired edit history position.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->Post <i>msg</i> in <i>snd</i>'s minibuffer, and when the user responds,
-<!-- -->call <i>callback</i> with the result and the <i>snd</i> (the sound's index).
+<!-- -->call <i>callback</i> with the result and the minibuffer's sound's index.
 <!-- -->If <i>callback</i> is specified it should be either #f or a function of 
-<!-- -->two arguments [<em class=error>no-such-sound</em>].
+<!-- -->two arguments.
 <!-- --></td></tr>
 <!-- -->
 <!-- --><tr><td colspan=2 align=center>
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
 <!-- -->(<em class=red>prompt-in-minibuffer</em> "sample 0 via func:"
-<!-- -->  (lambda (func snd) 
+<!-- -->  (lambda (func) 
 <!-- -->    (set! (sample 0) (func (sample 0)))))
 <!-- -->    ;; here we're assuming the user will type a function in response to the prompt
 <!-- -->    ;;   the value returned by the function will be the new sample 0 value
@@ -4894,6 +4869,17 @@ desired edit history position.
 <!-- -->
 <!-- --><tr><td></td><td>
 <!-- -->See eval-over-selection in <a href="sndscm.html#exampdoc">examp.scm</a> for a more useful example.
+<!-- -->We could also use a continuation here:
+<!-- --></td></tr>
+<!-- -->
+<!-- --><tr><td colspan=2 align=center>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+<!-- -->(define (<A NAME="extprompt">prompt</a> msg default)
+<!-- -->  (call-with-current-continuation
+<!-- -->   (lambda (rsvp)
+<!-- -->     (<em class=red>prompt-in-minibuffer</em> msg rsvp)
+<!-- -->     default)))
+<!-- --></pre></td></tr></table></td></tr>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5382,7 +5368,7 @@ desired edit history position.
 <!-- --><span class=defbox><code><em class=def><a name="sndshowcontrols">show-controls</a></em> (<em class=targ>snd</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->#t if <i>snd</i>'s control panel is open.
+<!-- -->if #t, opens <i>snd</i>'s control panel, else closes it.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -7299,7 +7285,7 @@ variable %load-verbosely to #t.
 <!-- -->
 <!-- bind-key -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndbindkey">bind-key</a></em> (key state func <i>ignore-prefix</i>) </code></span></td></tr>
+<!-- --><span class=defbox><code><em class=def><a name="sndbindkey">bind-key</a></em> (key state func) </code></span></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->Cause <i>key</i> (an integer) with modifiers <i>state</i> to evaluate <i>code</i>.<br><br>
 <!-- -->
@@ -7307,16 +7293,28 @@ variable %load-verbosely to #t.
 <!-- -->
 <!-- -->The modifier state is a combination of shift: 1, control: 4, meta: 8, 
 <!-- -->so this call causes C-a to print "hi" in the lisp listener.  The 
-<!-- -->value returned should be one of the cursor choices (see below) telling Snd what 
-<!-- -->action (if any) to take after evaluating <i>code</i>.  If <i>ignore-prefix</i> is 
-<!-- -->#t, Snd does not repeat the key based on the prefix argument (<a href="snd.html#kcu">C-u</a>) --
-<!-- -->in this case, the <i>code</i> can examine <a href="#prefixarg">prefix-arg</a> if desired.
+<!-- -->value returned should be one of the cursor choices telling Snd what 
+<!-- -->action (if any) to take after evaluating <i>code</i>.  
 <!-- -->Possible return values are:
 <!-- --><br><pre>
-<!-- -->  cursor-in-view     cursor-on-left     cursor-on-right   cursor-in-middle 
+<!-- -->  cursor-in-view     cursor-on-left      cursor-on-right    cursor-in-middle 
 <!-- -->  cursor-update-display cursor-no-action keyboard-no-action
 <!-- --></pre>
 <!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->The function bound to a key can take either no arguments (as above), or one
+<!-- -->argument.  In the latter case, the argument is the count (the C-u number prefixed to the keyboard command)
+<!-- -->defaulting to 1 if no prefix is typed.  For example, there used to be a "line-size" variable
+<!-- -->setting how how many samples to jump for the C-p and C-n keys.  We can implement the same idea:
+<!-- --></td></tr>
+<!-- -->
+<!-- --><tr><td colspan=2 align=center>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+<!-- -->(define line-size 128)
+<!-- -->(<em class=red>bind-key</em> (char->integer #\n) 4 (lambda (arg) (forward-sample (* line-size arg))))
+<!-- -->(<em class=red>bind-key</em> (char->integer #\p) 4 (lambda (arg) (backward-sample (* line-size arg))))
+<!-- --></pre></td></tr></table></td></tr>
+<!-- -->
 <!-- --><tr><td></td><td>
 <!-- -->We can use bind-key to turn the keyboard into a sort of extended piano:
 <!-- --></td></tr>
@@ -7865,8 +7863,8 @@ Say we want Snd to refuse to exit if there are unsaved edits.</p>
     (play)))
 
 (bind-key (char-&gt;integer #\p) 0 
-  (lambda () 
-    (play-often (max 1 (prefix-arg)))) #t)
+  (lambda (num) 
+    (play-often (max 1 num))))
 </pre></td></tr></table>
 
 <p>Say we are so annoyed by the X/Motif file browser that we want
@@ -8024,7 +8022,6 @@ found (this code obviously has to be in the init file):</p>
 	<!-- I(interrupt Snd):L(stop)(sndstop) -->
 	<!-- I(move window back):L(left-sample)(sndleftsample) -->
 	<!-- I(move window ahead):L(right-sample)(sndrightsample) -->
-	<!-- I(numeric arguments):L(prefix-arg)(prefixarg) -->
 	<!-- I(change tempo):L(expand)(sndexpand) -->
 	<!-- I(wavelets):L(wavelet-type)(wavelettype) -->
 	<!-- I(save macros):L(save-macros)(sndsavemacros) -->

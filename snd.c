@@ -156,7 +156,6 @@ static repv snd_rep_main(repv arg)
   ss->Color_Scale = DEFAULT_COLOR_SCALE;
   ss->Color_Inverted = DEFAULT_COLOR_INVERTED;
   ss->Zero_Pad = DEFAULT_ZERO_PAD;
-  ss->Line_Size = DEFAULT_LINE_SIZE;
   ss->Ask_Before_Overwrite = DEFAULT_ASK_BEFORE_OVERWRITE;
   ss->X_Axis_Style = DEFAULT_AXIS_STYLE;
   ss->Wavo = DEFAULT_WAVO;
@@ -232,7 +231,6 @@ static repv snd_rep_main(repv arg)
   ss->Enved_Clipping = DEFAULT_ENVED_CLIPPING;
   ss->Enved_Exping = DEFAULT_ENVED_EXPING;
   ss->Enved_Target = DEFAULT_ENVED_TARGET;
-  ss->Prefix_Arg = 0;
   ss->Dac_Size = DEFAULT_DAC_SIZE;
   ss->Dac_Folding = DEFAULT_DAC_FOLDING;
   ss->Corruption_Time = DEFAULT_CORRUPTION_TIME;

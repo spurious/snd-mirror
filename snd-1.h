@@ -191,7 +191,7 @@ typedef struct chan__info {
   Float spectro_x_scale, spectro_y_scale, spectro_z_scale, spectro_z_angle, spectro_x_angle, spectro_y_angle, spectro_cutoff, spectro_start;
   Float lin_dB, min_dB, fft_beta;
   int show_y_zero, show_marks, wavo, wavo_hop, wavo_trace, zero_pad, x_axis_style, wavelet_type, verbose_cursor, max_fft_peaks;
-  int show_fft_peaks, show_axes, line_size, graph_style, fft_log_frequency, fft_log_magnitude, fft_size, fft_style, fft_window;
+  int show_fft_peaks, show_axes, graph_style, fft_log_frequency, fft_log_magnitude, fft_size, fft_style, fft_window;
   Latus dot_size;
   int normalize_fft, transform_type, show_mix_waveforms, spectro_hop, graphs_horizontal;
   void *mix_md;
@@ -304,7 +304,7 @@ typedef struct snd__state {
   int Default_Output_Type, Default_Output_Format, Default_Output_Chans, Default_Output_Srate;
   int Spectro_Hop, Color_Map, Wavelet_Type, Transform_Type;
   Latus Dot_Size;
-  int Fft_Size, Fft_Window, Fft_Style, Zero_Pad, Ask_Before_Overwrite, Line_Size, Wavo_Hop, Wavo, Wavo_Trace;
+  int Fft_Size, Fft_Window, Fft_Style, Zero_Pad, Ask_Before_Overwrite, Wavo_Hop, Wavo, Wavo_Trace;
   Float Fft_Beta, Reverb_Decay;
   Float Color_Scale, Color_Cutoff;
   int Color_Inverted, Speed_Style, Movies, Normalize_Fft, Show_Mix_Waveforms, Mix_Waveform_Height, Fit_Data_On_Open;
@@ -314,7 +314,7 @@ typedef struct snd__state {
   int Print_Length, Dac_Size, Dac_Folding, Previous_Files_Sort, Show_Selection_Transform, With_Mix_Tags, Selection_Creates_Region;
   char *Save_State_File, *Listener_Prompt;
   Float Enved_Base, Enved_Power, Corruption_Time;
-  int Enved_Clipping, Enved_Exping, Enved_Target, Enved_Waving, Enved_dBing, Prefix_Arg, Graphs_Horizontal;
+  int Enved_Clipping, Enved_Exping, Enved_Target, Enved_Waving, Enved_dBing, Graphs_Horizontal;
   int Graph_Cursor, Use_Sinc_Interp, Data_Clipped, Show_Indices, Mix_Tag_Width, Mix_Tag_Height, Minibuffer_History_Length;
   Float min_dB, lin_dB, Hankel_Jn;
 #if HAVE_HTML
