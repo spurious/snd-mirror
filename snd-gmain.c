@@ -29,7 +29,7 @@
 #define PUSHED_BUTTON_COLOR  "lightsteelblue1"
 #define SASH_COLOR           "lightgreen"
 
-#define DEFAULT_SPECTROGRAM_COLOR BLACK_AND_WHITE /* just lines or index */
+#define DEFAULT_SPECTROGRAM_COLOR 0
 #define CHANNEL_SASH_INDENT -10
 #define CHANNEL_SASH_SIZE 10
 #define ENVED_POINT_SIZE 10

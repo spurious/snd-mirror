@@ -38,6 +38,7 @@ static int map_chans_time_graph_type(chan_info *cp, void *ptr)
   update_graph(cp, NULL); 
   return(0);
 }
+
 static void set_time_graph_type(snd_state *ss, int val) 
 {
   in_set_time_graph_type(ss, val); 
@@ -2063,14 +2064,11 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
        *          glRectf in bg color
        *          no action (something is still clearing the darn thing!)
        */
-      /* TODO: finish axis ticks and labels spacing and placement based on window width/height
-	 TODO: gl xrec labels
-	 SOMEDAY: editable spectrogram (select, apply any selection-proc)
+      /* SOMEDAY: editable spectrogram (select, apply any selection-proc)
 	 TODO: printing support (via pixmaps I guess) glReadBuffer(GL_BACK) then glReadPixels
 	        glReadPixels(fap->graph_x0, 0, fap->width, fap->height, GL_RGB, GL_UNSIGNED_SHORT, array_for_pixels)
 		then PS colorimage op [see gtkplotps.c, ps doc p 225]
 	 TODO: glLightfv needed in gl.c (and others -- is there a max size?)
-	 TODO: clean up axis stuff in snd-axis.c (axis thickness too)
       */
       if (((sp->nchans == 1) || (sp->channel_style == CHANNELS_SEPARATE)) &&
 	  (color_map(ss) != BLACK_AND_WHITE) &&
@@ -4255,6 +4253,9 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
       return(C_TO_XEN_OFF_T(cp->cursor));
       break;
     case CP_GRAPH_LISP_P:
+      /* TODO: should make_graph reset this value based on the lisp_graph_hook value?
+       *       should setting this to #f reset the hook?
+       */
       cp->graph_lisp_p = XEN_TO_C_BOOLEAN_OR_TRUE(on); 
       val = cp->graph_lisp_p; 
       update_graph(cp, NULL);

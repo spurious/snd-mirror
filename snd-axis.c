@@ -243,6 +243,9 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
   tick_descriptor *tdx = NULL, *tdy = NULL;
   Locus curx, cury, curdy;
   axis_context *ax;
+#if HAVE_GL
+  Float xthick, ythick, xmajorlen, xminorlen, ymajorlen, yminorlen;
+#endif
   ss = get_global_state();
   ax = ap->ax;
   width = ap->width;
@@ -298,6 +301,14 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
   major_tick_length = 9;
   minor_tick_length = 5;
   axis_thickness = 2;
+#if HAVE_GL
+  xthick = (Float)(2 * axis_thickness) / (Float)height;
+  ythick = (Float)(2 * axis_thickness) / (Float)width;
+  xmajorlen = (Float)(2 * major_tick_length) / (Float)height;
+  xminorlen = (Float)(2 * minor_tick_length) / (Float)height;
+  ymajorlen = (Float)(2 * major_tick_length) / (Float)width;
+  yminorlen = (Float)(2 * minor_tick_length) / (Float)width;
+#endif
 
   if (show_x_axis)
     {
@@ -379,6 +390,7 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
 	    }
 	  tdy->min_label = prettyf(tdy->mlo, tdy->tens);
 	  tdy->min_label_width = number_width(ss, tdy->min_label);
+
 	  if (tdy->max_label) 
 	    {
 	      FREE(tdy->max_label); 
@@ -504,7 +516,7 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
       if (ap->use_gl)
 	{
 	  Float yl;
-	  yl = -0.5 - .02 - ((Float)(2.5 * major_tick_length + x_label_height) / (Float)height);
+	  yl = -0.5 - xthick - ((Float)(4 * major_tick_length + x_label_height) / (Float)height);
 	  glColor3f(0.0, 0.0, 0.0);
 	  glRasterPos3f(-0.1, 0.0, yl);
 	  glListBase(label_base);
@@ -527,10 +539,10 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
 	{
 	  glBegin(GL_POLYGON);
 	  glColor3f(0.0, 0.0, 0.0);
-	  glVertex3f(-0.52, 0.0, -0.51);
-	  glVertex3f(0.51, 0.0, -0.51);
-	  glVertex3f(0.51, 0.0, -0.52);
-	  glVertex3f(-0.52, 0.0, -0.52);
+	  glVertex3f(-0.501 - ythick, 0.0, -0.501 - xthick);
+	  glVertex3f(0.50, 0.0, -0.501 - xthick);
+	  glVertex3f(0.50, 0.0, -0.501);
+	  glVertex3f(-0.501 - ythick, 0.0, -0.501);
 	  glEnd();
 	}
       else 
@@ -544,10 +556,10 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
 	{
 	  glBegin(GL_POLYGON);
 	  glColor3f(0.0, 0.0, 0.0);
-	  glVertex3f(-0.51, 0.0, -0.51);
-	  glVertex3f(-0.51, 0.0, 0.51);
-	  glVertex3f(-0.52, 0.0, 0.51);
-	  glVertex3f(-0.52, 0.0, -0.51);
+	  glVertex3f(-0.501 - ythick, 0.0, -0.501 - xthick);
+	  glVertex3f(-0.501, 0.0, -0.501 - xthick);
+	  glVertex3f(-0.501, 0.0, 0.50);
+	  glVertex3f(-0.501 - ythick, 0.0, 0.50);
 	  glEnd();
 	}
       else
@@ -574,12 +586,12 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
       if (ap->use_gl)
 	{
 	  Float xl;
-	  xl = -0.5 -.02 - ((Float)(2 * tdy->maj_tick_len + tdy->min_label_width + inner_border_width) / (Float)width);
+	  xl = -0.5 - ythick - ((Float)(3 * tdy->maj_tick_len + tdy->min_label_width + inner_border_width) / (Float)width);
 	  glRasterPos3f(xl, 0.0, (tdy->mlo - ap->y0) / (ap->y1 - ap->y0) - 0.51);
 	  glListBase(number_base);
 	  glCallLists(snd_strlen(tdy->min_label), GL_UNSIGNED_BYTE, (GLubyte *)(tdy->min_label));
 
-	  xl = -0.5 -.02 - ((Float)(2 * tdy->maj_tick_len + tdy->max_label_width + inner_border_width) / (Float)width);
+	  xl = -0.5 - ythick - ((Float)(3 * tdy->maj_tick_len + tdy->max_label_width + inner_border_width) / (Float)width);
 	  glRasterPos3f(xl, 0.0, (tdy->mhi - ap->y0) / (ap->y1 - ap->y0) - 0.51);
 	  glListBase(number_base);
 	  glCallLists(snd_strlen(tdy->max_label), GL_UNSIGNED_BYTE, (GLubyte *)(tdy->max_label));
@@ -627,7 +639,7 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
 	  if (ap->use_gl)
 	    {
 	      Float yl;
-	      yl = -0.5 - .02 - ((Float)(1.5 * major_tick_length + x_number_height) / (Float)height);
+	      yl = -0.5 - xthick - ((Float)(3 * major_tick_length + x_number_height + inner_border_width) / (Float)height);
 	      glRasterPos3f((tdx->mlo - ap->x0) / (ap->x1 - ap->x0) - 0.53, 0.0, yl);
 	      glListBase(number_base);
 	      glCallLists(snd_strlen(tdx->min_label), GL_UNSIGNED_BYTE, (GLubyte *)(tdx->min_label));
@@ -655,7 +667,7 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
 	  if (ap->use_gl)
 	    {
 	      Float yl;
-	      yl = -0.5 - .02 - ((Float)(1.5 * major_tick_length + x_number_height) / (Float)height);
+	      yl = -0.5 - xthick - ((Float)(3 * major_tick_length + x_number_height + inner_border_width) / (Float)height);
 	      glRasterPos3f((tdx->mhi - ap->x0) / (ap->x1 - ap->x0) - 0.53, 0.0, yl);
 	      glListBase(number_base);
 	      glCallLists(snd_strlen(tdx->max_label), GL_UNSIGNED_BYTE, (GLubyte *)(tdx->max_label));
@@ -685,10 +697,12 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
 #if HAVE_GL
       if (ap->use_gl)
 	{
+	  Float ypos;
+	  ypos = (fy - ap->y0) / (ap->y1 - ap->y0) - 0.5;
 	  glBegin(GL_LINES);
 	  glLineWidth(3.0);
-	  glVertex3f(-0.54, 0.0, (fy - ap->y0) / (ap->y1 - ap->y0) - 0.5);
-	  glVertex3f(-0.52, 0.0, (fy - ap->y0) / (ap->y1 - ap->y0) - 0.5);
+	  glVertex3f(-0.50 - ymajorlen, 0.0, ypos);
+	  glVertex3f(-0.501, 0.0, ypos);
 	  glEnd();
 	}
       else
@@ -710,10 +724,12 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
 #if HAVE_GL
 	  if (ap->use_gl)
 	    {
+	      Float ypos;
+	      ypos = (fy - ap->y0) / (ap->y1 - ap->y0) - 0.5;
 	      glBegin(GL_LINES);
 	      if (x == majx) glLineWidth(3.0); else glLineWidth(2.0);
-	      glVertex3f((x == majx) ? -0.54 : -0.53, 0.0, (fy - ap->y0) / (ap->y1 - ap->y0) - 0.5);
-	      glVertex3f(-0.52, 0.0, (fy - ap->y0) / (ap->y1 - ap->y0) - 0.5);
+	      glVertex3f(-0.50 - ((x == majx) ? ymajorlen : yminorlen), 0.0, ypos);
+	      glVertex3f(-0.501, 0.0, ypos);
 	      glEnd();
 	    }
 	  else
@@ -738,10 +754,12 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
 #if HAVE_GL
 	  if (ap->use_gl)
 	    {
+	      Float ypos;
+	      ypos = (fy - ap->y0) / (ap->y1 - ap->y0) - 0.5;
 	      glBegin(GL_LINES);
 	      if (x == majx) glLineWidth(3.0); else glLineWidth(2.0);
-	      glVertex3f((x == majx) ? -0.54 : -0.53, 0.0, (fy - ap->y0) / (ap->y1 - ap->y0) - 0.5);
-	      glVertex3f(-0.52, 0.0, (fy - ap->y0) / (ap->y1 - ap->y0) - 0.5);
+	      glVertex3f(-0.50 - ((x == majx) ? ymajorlen : yminorlen), 0.0, ypos);
+	      glVertex3f(-0.501, 0.0, ypos);
 	      glEnd();
 	    }
 	  else
@@ -762,10 +780,12 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
 #if HAVE_GL
       if (ap->use_gl)
 	{
+	  Float xpos;
+	  xpos = (fx - ap->x0) / (ap->x1 - ap->x0) - 0.5;
 	  glBegin(GL_LINES);
 	  glLineWidth(3.0);
-	  glVertex3f((fx - ap->x0) / (ap->x1 - ap->x0) - 0.5, 0.0, -0.54);
-	  glVertex3f((fx - ap->x0) / (ap->x1 - ap->x0) - 0.5, 0.0, -0.52);
+	  glVertex3f(xpos, 0.0, -0.50 - xmajorlen);
+	  glVertex3f(xpos, 0.0, -0.501);
 	  glEnd();
 	}
       else
@@ -787,10 +807,12 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
 #if HAVE_GL
 	  if (ap->use_gl)
 	    {
+	      Float xpos;
+	      xpos = (fx - ap->x0) / (ap->x1 - ap->x0) - 0.5;
 	      glBegin(GL_LINES);
 	      if (y == majy) glLineWidth(3.0); else glLineWidth(2.0);
-	      glVertex3f((fx - ap->x0) / (ap->x1 - ap->x0) - 0.5, 0.0, (y == majy) ? -0.54 : -0.53);
-	      glVertex3f((fx - ap->x0) / (ap->x1 - ap->x0) - 0.5, 0.0, -0.52);
+	      glVertex3f(xpos, 0.0, -0.50 - ((y == majy) ? xmajorlen : xminorlen));
+	      glVertex3f(xpos, 0.0, -0.501);
 	      glEnd();
 	    }
 	  else
@@ -815,10 +837,12 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
 #if HAVE_GL
 	  if (ap->use_gl)
 	    {
+	      Float xpos;
+	      xpos = (fx - ap->x0) / (ap->x1 - ap->x0) - 0.5;
 	      glBegin(GL_LINES);
 	      if (y == majy) glLineWidth(3.0); else glLineWidth(2.0);
-	      glVertex3f((fx - ap->x0) / (ap->x1 - ap->x0) - 0.5, 0.0, (y == majy) ? -0.54 : -0.53);
-	      glVertex3f((fx - ap->x0) / (ap->x1 - ap->x0) - 0.5, 0.0, -0.52);
+	      glVertex3f(xpos, 0.0, -0.50 - ((y == majy) ? xmajorlen : xminorlen));
+	      glVertex3f(xpos, 0.0, -0.501);
 	      glEnd();
 	    }
 	  else

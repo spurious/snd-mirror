@@ -727,7 +727,7 @@ The lowest level procedures are:
 <!-- --><span class=defbox><code><em class=def><a name="loadfont">load-font</a></em> (font-name)</code></span></td></tr>
 <!-- -->
 <!-- --><tr><td></td><td>
-<!-- -->loads the font <i>font-name</i> (an X-style font spec), and returns a handle for it (for <i>current-font</i> below).
+<!-- -->loads the font <i>font-name</i> (an X-style font spec), and returns a handle for it (for <a href="#currentfont">current-font</a>).
 <!-- --><pre>
 <!-- -->  (define new-font (<em class=red>load-font</em> "-adobe-helvetica-bold-r-*-*-14-*-*-*-*-*-*-*"))
 <!-- --></pre>
@@ -4854,7 +4854,8 @@ the direction argument between the channel and edit-position.
 <!-- --><span class=defbox><code><em class=def><a name="sndgraphing">graph-lisp?</a></em> (<i>snd chn</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->#t if lisp-generated graph is being displayed.
+<!-- -->#t if lisp-generated graph is being displayed.  (I can't decide how to handle the set! case; currently
+<!-- -->setting this field has no effect.)
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->

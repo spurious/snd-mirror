@@ -592,7 +592,7 @@ implements <a href="sndscm.html#effectsdoc">new-effects.scm</a>'s flanger in a f
 #include "clm.h"
 
 typedef struct {
-  mus_any *del,*ri;
+  mus_any *del, *ri;
 } flg;
 
 static flg *make_flange(float flg_speed, float flg_amount, float flg_time)
@@ -621,7 +621,6 @@ static void free_flange(flg *gens)
 
 static SCM g_make_flange(SCM speed, SCM amount, SCM time)
 {
-  SCM result;
   flg *gens;
   gens = make_flange(scm_num2dbl(speed, "make-flange"), scm_num2dbl(amount, "make-flange"), scm_num2dbl(time, "make-flange"));
   return(scm_ulong2num((unsigned long)(gens)));
@@ -634,7 +633,8 @@ static SCM g_get_flange(void)
 
 static SCM g_free_flange(SCM g_gens)
 {
-  free_flange((flg *)scm_num2ulong(g_gens));
+  free_flange((flg *)scm_num2ulong(g_gens, 0, "free-flange"));
+  return(XEN_FALSE);
 }
 
 void init_eff(void)
@@ -684,7 +684,7 @@ invoked:</p>
 <pre>
 (loop-samples (make-sample-reader 0) (get-flange) (frames) "flange" (make-flange 2.0 5.0 0.001))
 </pre>
-<p>which is about 30 times faster than the interpreted version in <a href="sndscm.html#effectsdoc">new-effects.scm</a>.  There is (yet another)
+<p>There is (yet another)
 gotcha in this business: if Snd is built in the normal way incorporating the sndlib code directly,
 the call (mus-srate) in the listener does not refer to the same thing that mus_srate refers to
 in eff.c; the latter is using the shared library's variable whereas Snd is using the variable

@@ -30,11 +30,11 @@
 
 ;;; TODO: test of off_t mark search
 ;;; TODO: GL tests
-;;; TODO: load-font current-font loop-samples+environ send-netscape apply-ladspa set-enved-selected-env
+;;; TODO: load-font current-font send-netscape apply-ladspa set-enved-selected-env
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs) (ice-9 syncase))
 
-;;; redefine if for tracing and so on (backtrace is sometimes very confused)
+;;; redefine 'if' for tracing and so on (backtrace is sometimes very confused)
 ;(define-syntax IF
 ;  (syntax-rules ()
 ;    ((IF <form1> <form2>) (begin <form2>))
@@ -3952,10 +3952,14 @@
 
 	(if (defined? 'get-test-a2)
 	    (let* ((ind4 (open-sound "oboe.snd"))
-		   (s1000 (sample 1000 ind4 0)))
+		   (s1000 (sample 1000 ind4 0))
+		   (max1 (maxamp)))
 	      (loop-samples (make-sample-reader 0 ind4 0) (get-test-a2) 50828 "a2")
 	      (IF (fneq (sample 1000 ind4) (* 2 s1000))
 		  (snd-display ";loop-samples ~A -> ~A" s1000 (sample 1000 ind4 0)))
+	      (IF (fneq (maxamp) (* 2 max1)) 
+		  (snd-display ";loop-samples test-a2 max: ~A ~A" max1 (maxamp)))
+	      (loop-samples (make-sample-reader 0 0 0) (get-flange) (frames) "flange" (make-flange 2.0 5.0 0.001))
 	      (close-sound ind4)))
 
 	(delete-samples 0 10000 ind1 0)

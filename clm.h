@@ -2,10 +2,11 @@
 #define MUS_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 7
-#define MUS_DATE "6-May-02"
+#define MUS_REVISION 8
+#define MUS_DATE "31-May-02"
 
 /* 
+ * 31-May:     changed mus_any_class.
  * 3-May:      many int->off_t changes for large files.
  * 8-Apr:      off-by-1 env bug (Lisp/C are now identical), env_interp of exp env beyond end bugfix.
  * 1-Apr:      sine-summation n=0 bugfix.
@@ -147,8 +148,11 @@ typedef struct mus__any_class {
   Float (*set_phase)(void *ptr, Float new_phase);
   Float (*scaler)(void *ptr);
   Float (*set_scaler)(void *ptr, Float val);
+  Float (*increment)(void *ptr);
+  Float (*set_increment)(void *ptr, Float val);
   Float (*run)(mus_any *gen, Float arg1, Float arg2);
   int extended_type;
+  void  *(*environ)(mus_any *gen);
 } mus_any_class;
 
 typedef struct {

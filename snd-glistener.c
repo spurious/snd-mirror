@@ -442,6 +442,9 @@ GtkWidget *snd_entry_new(snd_state *ss, GtkWidget *container, int with_white_bac
 static void make_command_widget(snd_state *ss, int height)
 {
   GtkWidget *frame;
+#if HAVE_GTK2
+  PangoLayout *layout;
+#endif
   if (!listener_text)
     {
       frame = gtk_frame_new(NULL);
@@ -451,6 +454,9 @@ static void make_command_widget(snd_state *ss, int height)
 	gtk_paned_add2(GTK_PANED(SOUND_PANE(ss)), frame);
       else gtk_container_add(GTK_CONTAINER(MAIN_PANE(ss)), frame);
       listener_text = make_scrolled_text(ss, frame, TRUE, NULL, NULL);
+#if HAVE_GTK2
+      layout = gtk_widget_create_pango_layout (listener_text, "");
+#endif
       SG_SIGNAL_CONNECT(GTK_OBJECT(listener_text), "key_press_event", GTK_SIGNAL_FUNC(listener_key_press), (gpointer)ss);
       SG_SIGNAL_CONNECT_AFTER(GTK_OBJECT(listener_text), "key_press_event", GTK_SIGNAL_FUNC(check_parens), (gpointer)ss);
       SG_SIGNAL_CONNECT(GTK_OBJECT(listener_text), "button_press_event", GTK_SIGNAL_FUNC(listener_button_press), (gpointer)ss);

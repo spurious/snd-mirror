@@ -7,7 +7,8 @@ static GtkWidget *transform_list, *size_list, *window_list, *wavelet_list,
                  *db_button, *peaks_button, *logfreq_button, *sono_button, *spectro_button, *normal_fft_button, *normalize_button, *selection_button,
                  *window_beta_scale, *graph_drawer = NULL, *graph_frame = NULL;
 static GtkObject *beta_adj;
-static GdkGC *gc, *fgc;
+static GdkGC *gc = NULL, *fgc = NULL;
+static int ignore_callbacks;
 
 #define GRAPH_SIZE 128
 static Float current_graph_data[GRAPH_SIZE]; /* fft window graph in transform options dialog */
@@ -303,6 +304,7 @@ static void transform_browse_callback(GtkWidget *w, gint row, gint column, GdkEv
 static void normal_fft_callback(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
+  if (ignore_callbacks) return;
   if (GTK_TOGGLE_BUTTON(w)->active)
     in_set_transform_graph_type(ss, GRAPH_TRANSFORM_ONCE);
   else in_set_transform_graph_type(ss, GRAPH_TRANSFORM_AS_SONOGRAM);
@@ -312,6 +314,7 @@ static void normal_fft_callback(GtkWidget *w, gpointer context)
 static void sonogram_callback(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
+  if (ignore_callbacks) return;
   if (GTK_TOGGLE_BUTTON(w)->active)
     in_set_transform_graph_type(ss, GRAPH_TRANSFORM_AS_SONOGRAM);
   else in_set_transform_graph_type(ss, GRAPH_TRANSFORM_ONCE);
@@ -321,6 +324,7 @@ static void sonogram_callback(GtkWidget *w, gpointer context)
 static void spectrogram_callback(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
+  if (ignore_callbacks) return;
   if (GTK_TOGGLE_BUTTON(w)->active)
     in_set_transform_graph_type(ss, GRAPH_TRANSFORM_AS_SPECTROGRAM);
   else in_set_transform_graph_type(ss, GRAPH_TRANSFORM_ONCE);
@@ -675,16 +679,18 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
 
       graph_drawer = gtk_drawing_area_new();
       gtk_container_add(GTK_CONTAINER(graph_frame), graph_drawer);
-      gc = graph_drawer->style->black_gc;
       set_background(graph_drawer, (ss->sgx)->white);
 
       fgc = gdk_gc_new(MAIN_WINDOW(ss));
       gdk_gc_set_background(fgc, (ss->sgx)->white);
       gdk_gc_set_foreground(fgc, (ss->sgx)->enved_waveform_color);
 
+      gc = gdk_gc_new(MAIN_WINDOW(ss));
+      gdk_gc_set_background(gc, (ss->sgx)->white);
+      gdk_gc_set_foreground(gc, (ss->sgx)->black);
+
       gtk_widget_show(graph_drawer);
       gtk_widget_show(graph_frame);
-
 
       SG_LIST_SELECT_ROW(transform_list, transform_type(ss));
       for (i = 0; i < NUM_TRANSFORM_SIZES; i++)
@@ -694,9 +700,13 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
 	    SG_LIST_MOVETO(size_list, i);
 	    break;
 	  }
+
+      ignore_callbacks = TRUE;
       if (transform_graph_type(ss) == GRAPH_TRANSFORM_ONCE) set_toggle_button(normal_fft_button, TRUE, FALSE, (gpointer)ss);
       if (transform_graph_type(ss) == GRAPH_TRANSFORM_AS_SONOGRAM) set_toggle_button(sono_button, TRUE, FALSE, (gpointer)ss);
       if (transform_graph_type(ss) == GRAPH_TRANSFORM_AS_SPECTROGRAM) set_toggle_button(spectro_button, TRUE, FALSE, (gpointer)ss);
+      ignore_callbacks = FALSE;
+
       set_toggle_button(peaks_button, show_transform_peaks(ss), FALSE, (gpointer)ss);
       set_toggle_button(db_button, fft_log_magnitude(ss), FALSE, (gpointer)ss);
       set_toggle_button(logfreq_button, fft_log_frequency(ss), FALSE, (gpointer)ss);
@@ -706,7 +716,6 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
       SG_LIST_MOVETO(window_list, fft_window(ss));
       SG_LIST_SELECT_ROW(wavelet_list, wavelet_type(ss));
       SG_LIST_MOVETO(wavelet_list, wavelet_type(ss));
-
       need_callback = 1;
       gtk_widget_show(outer_table);
       set_dialog_widget(ss, TRANSFORM_DIALOG, transform_dialog);

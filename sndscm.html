@@ -3494,8 +3494,10 @@ static mus_any_class FCOMB_CLASS = {
   0,0,                           /* mus_phase, mus_set_phase */
   &amp;fcomb_scaler,                 /* mus_scaler: the feedback term */
   &amp;set_fcomb_scaler,             /* mus_set_scaler */
+  0, 0,
   &amp;mus_fcomb,                    /* mus_run: the run-time fcomb function, MUS_RUN(gen) for speed */
-  0                              /* type extension (normally 0) */
+  0,                             /* type extension (normally 0) */
+  NULL                          
 };
 
 /* now a function to make a new generator */

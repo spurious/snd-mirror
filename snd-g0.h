@@ -318,10 +318,12 @@ typedef struct {
 
 #if HAVE_GTK2
 
-  #define SG_MAKE_RESIZABLE(Widget)          gtk_window_set_default_size(GTK_WINDOW(Widget), -1, -1); gtk_window_set_resizable(GTK_WINDOW(Widget), TRUE)
+  #define SG_MAKE_RESIZABLE(Widget)          if (GTK_IS_DIALOG(Widget)) {\
+                                               gtk_window_set_default_size(GTK_WINDOW(Widget), -1, -1); \
+                                               gtk_window_set_resizable(GTK_WINDOW(Widget), TRUE); }
   #define SG_SET_RESIZABLE(Window, Val)      gtk_window_set_resizable(Window, Val)
-  #define SG_SET_SIZE(Widget, Width, Height) gtk_window_set_default_size(GTK_WINDOW(Widget), Width, Height)
-  #define SG_SET_POSITION(Widget, X, Y)      gtk_window_move(GTK_WINDOW(Widget), X, Y)
+  #define SG_SET_SIZE(Widget, Width, Height) if (GTK_IS_DIALOG(Widget)) gtk_window_set_default_size(GTK_WINDOW(Widget), Width, Height)
+  #define SG_SET_POSITION(Widget, X, Y)      if (GTK_IS_DIALOG(Widget)) gtk_window_move(GTK_WINDOW(Widget), X, Y)
   #define SG_LABEL_TEXT(Widget)              (char *)gtk_label_get_text(Widget)
   #define SG_SET_GUTTER_SIZE(Widget, Size)
   #define SG_SET_HANDLE_SIZE(Widget, Size)
@@ -364,8 +366,11 @@ typedef struct {
 */
   #define SG_COLOR_ALLOC(CMap, Color)        gdk_rgb_find_color(CMap, Color)
 
+/* #define SG_PIXMAP_NEW(Map, Mask)           gtk_image_new_from_pixmap(Map, Mask) */
   #define SG_PIXMAP_NEW(Map, Mask)           gtk_pixmap_new(Map, Mask)
   #define SG_PIXMAP_NEW_XYD(Window, Width, Height, Depth) gdk_pixmap_new(Window, Width, Height, Depth)
+/* returns a widget, need to gtk_widget_show of it, then place it in a fixed widget as a holder (or a label) */
+/*   so, this needs to be a procedure, not a macro */
   #define SG_XPM_TO_PIXMAP(Window, Bits, Mask) gdk_pixmap_create_from_xpm_d(Window, &Mask, NULL, Bits)
   #define SG_PIXMAP_SET(Holder, Map, Mask)   gtk_pixmap_set(GTK_PIXMAP(Holder), Map, Mask)
 
