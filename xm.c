@@ -4,6 +4,8 @@
  */
 
 /* HISTORY: 
+ *   11-Oct:    xm-ruby XM_DEFINE* cleaned up (thanks to Michael Scholz).
+ *              removed all (ignored) XrmOptionDesc args (XtAppInitialize etc).
  *   8-Oct:     added WITH_EDITRES to include _XEditResCheckMessages.
  *   1-Oct:     some int args are now KeyCodes (Modifiermap stuff).
  *   23-Sep:    X ScreenSaver constants omitted earlier.
@@ -133,7 +135,7 @@
  * a sample program
 
 (let* ((shell-app (XtVaOpenApplication 
-		    "Test" 0 0 0 '() 0 applicationShellWidgetClass
+		    "Test" 0 '() applicationShellWidgetClass
 		    (list XmNallowShellResize #t)))
        (app (cadr shell-app))
        (shell (car shell-app))
@@ -14163,9 +14165,9 @@ static XEN gxm_argv_to_list(XEN lst, int argc, char **argv)
   return(lst);
 }
 
-static XEN gxm_XtOpenDisplay(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
+static XEN gxm_XtOpenDisplay(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg7, XEN arg8)
 {
-  #define H_XtOpenDisplay "Display *XtOpenDisplay(app_context, display_string, application_name, application_class, options, num_options, argc, argv) \
+  #define H_XtOpenDisplay "Display *XtOpenDisplay(app_context, display_string, application_name, application_class, argc, argv) \
 calls XOpenDisplay the specified display name."
   /* DIFF: XtOpenDisplay ignore arg5 6, argc is int, argv is list of strings, returns (list dpy argv ...)
    */
@@ -14177,8 +14179,8 @@ calls XOpenDisplay the specified display name."
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XtOpenDisplay", "char*");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg3), arg3, 3, "XtOpenDisplay", "char*");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg4), arg4, 4, "XtOpenDisplay", "char*");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg7), arg7, 7, "XtOpenDisplay", "int");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg8), arg8, 8, "XtOpenDisplay", "list of char*");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg7), arg7, 5, "XtOpenDisplay", "int");
+  XEN_ASSERT_TYPE(XEN_LIST_P(arg8), arg8, 6, "XtOpenDisplay", "list of char*");
   argc = XEN_TO_C_INT(arg7);
   argv = XEN_TO_C_Strings(arg8, argc);
   dpy = XtOpenDisplay(XEN_TO_C_XtAppContext(arg1), 
@@ -14193,9 +14195,9 @@ calls XOpenDisplay the specified display name."
 }
 
 #if (!XM_DISABLE_DEPRECATED) 
-static XEN gxm_XtInitialize(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
+static XEN gxm_XtInitialize(XEN arg1, XEN arg2, XEN arg5, XEN arg6)
 {
-  #define H_XtInitialize "Widget XtInitialize(shell_name, application_class, options, num_options, argc, argv) calls XtToolkitInitialize \
+  #define H_XtInitialize "Widget XtInitialize(shell_name, application_class, argc, argv) calls XtToolkitInitialize \
 followed by XtOpenDisplay with display_string NULL and application_name NULL, and finally calls XtAppCreateShell with appcation_name NULL, \
 widget_class applicationShellWidgetClass , and the specified args and num_args and returns the created shell. "
   /* DIFF: XtInitialize ignore arg 3 4, argc is int, argv is list of strings
@@ -14205,8 +14207,8 @@ widget_class applicationShellWidgetClass , and the specified args and num_args a
   Widget w;
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XtInitialize", "char*");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XtInitialize", "char*");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XtInitialize", "int");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg6), arg6, 6, "XtInitialize", "list of char*");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 3, "XtInitialize", "int");
+  XEN_ASSERT_TYPE(XEN_LIST_P(arg6), arg6, 4, "XtInitialize", "list of char*");
   argc = XEN_TO_C_INT(arg5);
   argv = XEN_TO_C_Strings(arg6, argc);
   w = XtInitialize(XEN_TO_C_STRING(arg1), XEN_TO_C_STRING(arg2), NULL, 0, &argc, argv);
@@ -14214,9 +14216,9 @@ widget_class applicationShellWidgetClass , and the specified args and num_args a
 }
 #endif
 
-static XEN gxm_XtVaAppInitialize(XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
+static XEN gxm_XtVaAppInitialize(XEN arg2, XEN arg5, XEN arg6, XEN arg8)
 {
-  #define H_XtVaAppInitialize "Widget XtVaAppInitialize(app_context_return, application_class, options, num_options, argc_in_out, argv_in_out, fallback_resources, ...)"
+  #define H_XtVaAppInitialize "Widget XtVaAppInitialize(application_class, argc_in_out, argv_in_out, args)"
   /* DIFF: XtVaAppInitialize [app] class {options numopts} {argc} argv resources -> (list widget app (new argv)), argc is int not int* fallback/options/num ignored
      Arg *args;
      app is returned not passed (list widget app) 
@@ -14227,12 +14229,12 @@ static XEN gxm_XtVaAppInitialize(XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg
   int argc, arglen;
   char **argv;
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 1, "XtVaAppInitialize", "char*");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 4, "XtVaAppInitialize", "int");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg6), arg6, 5, "XtVaAppInitialize", "list of String");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg8), arg8, 7, "XtVaAppInitialize", "arg list");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 2, "XtVaAppInitialize", "int");
+  XEN_ASSERT_TYPE(XEN_LIST_P(arg6), arg6, 3, "XtVaAppInitialize", "list of String");
+  XEN_ASSERT_TYPE(XEN_LIST_P(arg8), arg8, 4, "XtVaAppInitialize", "arg list");
   argc = XEN_TO_C_INT(arg5);
+  argv = XEN_TO_C_Strings(arg6, argc);
   args = XEN_TO_C_Args(arg8);
-  argv = XEN_TO_C_Strings(arg8, argc);
   res = XtAppInitialize(&app, 
 			XEN_TO_C_STRING(arg2), 
 			NULL,
@@ -14253,10 +14255,10 @@ static XEN gxm_XtVaAppInitialize(XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg
 }
 
 
-static XEN gxm_XtAppInitialize(XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8, XEN arg9)
+static XEN gxm_XtAppInitialize(XEN arg2, XEN arg5, XEN arg6, XEN arg8, XEN arg9)
 {
-  #define H_XtAppInitialize "Widget XtAppInitialize(app_context_return, application_class, options, num_options, argc_in_out, argv_in_out, \
-fallback_resources, args, num_args) calls XtToolkitInitialize followed by XtCreateApplicationContext ,then calls XtOpenDisplay with \
+  #define H_XtAppInitialize "Widget XtAppInitialize(application_class, argc_in_out, argv_in_out, \
+args, num_args) calls XtToolkitInitialize followed by XtCreateApplicationContext ,then calls XtOpenDisplay with \
 display_string NULL and application_name NULL, and finally calls XtAppCreateShell with appcation_name NULL, widget_class applicationShellWidgetClass , \
 and the specified args and num_args and returns the created shell. "
   /* DIFF: XtAppInitialize [app] class {options numopts} {argc} argv resources args numargs -> (list widget app), argc is int not int* fallback/options/num ignored
@@ -14269,13 +14271,14 @@ and the specified args and num_args and returns the created shell. "
   int argc, arglen;
   char **argv;
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 1, "XtAppInitialize", "char*");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 4, "XtAppInitialize", "int");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg6), arg6, 5, "XtAppInitialize", "list of String*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg8), arg8, 7, "XtAppInitialize", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg9), arg9, 8, "XtAppInitialize", "int");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 2, "XtAppInitialize", "int");
+  XEN_ASSERT_TYPE(XEN_LIST_P(arg6), arg6, 3, "XtAppInitialize", "list of String*");
+  XEN_ASSERT_TYPE(XEN_LIST_P(arg8), arg8, 4, "XtAppInitialize", "ArgList");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg9), arg9, 5, "XtAppInitialize", "int"); /* num_args */
   argc = XEN_TO_C_INT(arg5);
-  args = XEN_TO_C_Args(arg8);
   argv = XEN_TO_C_Strings(arg6, argc);
+  args = XEN_TO_C_Args(arg8);
+  if (XEN_INTEGER_P(arg9)) arglen = XEN_TO_C_INT(arg9); else arglen = XEN_LIST_LENGTH(arg8) / 2;
   res = XtAppInitialize(&app,
 			XEN_TO_C_STRING(arg2), 
 			NULL,
@@ -14284,7 +14287,7 @@ and the specified args and num_args and returns the created shell. "
 			argv,
 			NULL,
 			args,
-			arglen = XEN_TO_C_INT(arg9));
+			arglen);
   if (args)
     {
       fixup_args(res, args, arglen);
@@ -14295,9 +14298,9 @@ and the specified args and num_args and returns the created shell. "
 		    gxm_argv_to_list(XEN_EMPTY_LIST, argc, argv)));
 }
 
-static XEN gxm_XtVaOpenApplication(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
+static XEN gxm_XtVaOpenApplication(XEN arg1, XEN arg4, XEN arg5, XEN arg7, XEN arg8)
 {
-  #define H_XtVaOpenApplication "Widget XtVaOpenApplication(app_context_return, application_class, options, num_options, argc_in_out, argv_in_out, fallback_resources, widget_class, ...)"
+  #define H_XtVaOpenApplication "Widget XtVaOpenApplication(application_class, argc_in_out, argv_in_out, widget_class, ...)"
   /* DIFF: XtVaOpenApplication [app] name {options numopts} {argc} argv resources class args -> (list widget app), argc is int not int* options/num ignored
      Arg *args;
      app is returned not passed (list widget app) 
@@ -14308,13 +14311,13 @@ static XEN gxm_XtVaOpenApplication(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN a
   int argc, arglen;
   char **argv;
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XtVaOpenApplication", "char*");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XtVaOpenApplication", "int");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg5), arg5, 5, "XtVaOpenApplication", "list of String");
-  XEN_ASSERT_TYPE(XEN_WidgetClass_P(arg7), arg7, 7, "XtVaOpenApplication", "WidgetClass");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg8), arg8, 8, "XtVaOpenApplication", "arg list");
-  args = XEN_TO_C_Args(arg8);
-  argc = XEN_TO_C_INT(arg3);
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 2, "XtVaOpenApplication", "int"); /* was arg3 by mistake, 11-Oct-02 */
+  XEN_ASSERT_TYPE(XEN_LIST_P(arg5), arg5, 3, "XtVaOpenApplication", "list of String");
+  XEN_ASSERT_TYPE(XEN_WidgetClass_P(arg7), arg7, 4, "XtVaOpenApplication", "WidgetClass");
+  XEN_ASSERT_TYPE(XEN_LIST_P(arg8), arg8, 5, "XtVaOpenApplication", "arg list");
+  argc = XEN_TO_C_INT(arg4);
   argv = XEN_TO_C_Strings(arg5, argc);
+  args = XEN_TO_C_Args(arg8);
   res = XtOpenApplication(&app, 
 			  XEN_TO_C_STRING(arg1), 
 			  NULL,
@@ -14335,10 +14338,10 @@ static XEN gxm_XtVaOpenApplication(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN a
 		    gxm_argv_to_list(XEN_EMPTY_LIST, argc, argv)));
 }
 
-static XEN gxm_XtOpenApplication(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8, XEN arg9)
+static XEN gxm_XtOpenApplication(XEN arg1, XEN arg4, XEN arg5, XEN arg7, XEN arg8, XEN arg9)
 {
-  #define H_XtOpenApplication "Widget XtOpenApplication(app_context_return, application_class, options, num_options, argc_in_out, argv_in_out, \
-fallback_resources, widget_class, args, num_args) calls XtToolkitInitialize followed by XtCreateApplicationContext , then calls XtOpenDisplay \
+  #define H_XtOpenApplication "Widget XtOpenApplication(application_class, argc_in_out, argv_in_out, \
+widget_class, args, num_args) calls XtToolkitInitialize followed by XtCreateApplicationContext , then calls XtOpenDisplay \
 with display_string NULL and application_name NULL, and finally calls XtAppCreateShell with appcation_name NULL, widget_class \
 applicationShellWidgetClass ,and the specified args and num_args and returns the created shell."
   /* DIFF: XtOpenApplication [app] name {options numopts} {argc} argv resources class args argnum -> (list widget app), argc is int not int* options/num ignored
@@ -14353,14 +14356,15 @@ applicationShellWidgetClass ,and the specified args and num_args and returns the
   XEN_ASSERT_TYPE(XEN_LIST_P(arg5), arg5, 5, "XtOpenApplication", "list of String*");
   XEN_ASSERT_TYPE(XEN_WidgetClass_P(arg7), arg7, 7, "XtOpenApplication", "WidgetClass");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg8), arg8, 8, "XtOpenApplication", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg9), arg9, 9, "XtOpenApplication", "int");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg9), arg9, 9, "XtOpenApplication", "int");
   argc = XEN_TO_C_INT(arg4);
-  args = XEN_TO_C_Args(arg8);
   argv = XEN_TO_C_Strings(arg5, argc);
+  args = XEN_TO_C_Args(arg8);
+  if (XEN_INTEGER_P(arg9)) arglen = XEN_TO_C_INT(arg9); else arglen = XEN_LIST_LENGTH(arg8) / 2;
   res = XtOpenApplication(&app, XEN_TO_C_STRING(arg1), 
 			  NULL, 0, &argc,
 			  argv, NULL, XEN_TO_C_WidgetClass(arg7), 
-			  args, arglen = XEN_TO_C_INT(arg9));
+			  args, arglen);
   if (args)
     {
       fixup_args(res, args, arglen);
@@ -14371,11 +14375,9 @@ applicationShellWidgetClass ,and the specified args and num_args and returns the
 		    gxm_argv_to_list(XEN_EMPTY_LIST, argc, argv)));
 }
 
-/* (define appres (XtVaOpenApplication "hioh" 0 0 0 0 0 applicationShellWidgetClass (list XmNallowShellResize 1))) */
-
-static XEN gxm_XtDisplayInitialize(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
+static XEN gxm_XtDisplayInitialize(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg7, XEN arg8)
 {
-  #define H_XtDisplayInitialize "void XtDisplayInitialize(app_context, display, application_name, application_class, options, num_options, argc, argv) \
+  #define H_XtDisplayInitialize "void XtDisplayInitialize(app_context, display, application_name, application_class, argc, argv) \
 builds the resource database, calls the Xlib XrmParseCommand to parse the command line, and performs other per display initialization."
   /* DIFF: XtDisplayInitialize arg 5 6 ignored, argc is normal int, argv is list of strings, returns argv
    */
@@ -14385,8 +14387,8 @@ builds the resource database, calls the Xlib XrmParseCommand to parse the comman
   XEN_ASSERT_TYPE(XEN_Display_P(arg2), arg2, 2, "XtDisplayInitialize", "Display*");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg3), arg3, 3, "XtDisplayInitialize", "char*");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg4), arg4, 4, "XtDisplayInitialize", "char*");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg7), arg7, 7, "XtDisplayInitialize", "int");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg8), arg8, 8, "XtDisplayInitialize", "list of char*");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg7), arg7, 5, "XtDisplayInitialize", "int");
+  XEN_ASSERT_TYPE(XEN_LIST_P(arg8), arg8, 6, "XtDisplayInitialize", "list of char*");
   argc = XEN_TO_C_INT(arg7);
   argv = XEN_TO_C_Strings(arg8, argc);
   XtDisplayInitialize(XEN_TO_C_XtAppContext(arg1), 
@@ -16481,7 +16483,7 @@ static XEN gxm_XpEndDoc(XEN arg1)
 
 static XEN gxm_XpStartDoc(XEN arg1, XEN arg2)
 {
-  #define H_XpStartDoc "void XpStartDoc(Display *display,XPDocumentType type)"
+  #define H_XpStartDoc "void XpStartDoc(Display *display, XPDocumentType type)"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpStartDoc", "Display*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XpStartDoc", "XPDocumentType");
   XpStartDoc(XEN_TO_C_Display(arg1), (XPDocumentType)XEN_TO_C_INT(arg2));
@@ -16507,7 +16509,7 @@ static XEN gxm_XpEndJob(XEN arg1)
 
 static XEN gxm_XpStartJob(XEN arg1, XEN arg2)
 {
-  #define H_XpStartJob "void XpStartJob(Display *display,XPSaveData save_data)"
+  #define H_XpStartJob "void XpStartJob(Display *display, XPSaveData save_data)"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpStartJob", "Display*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XpStartJob", "XPSaveData");
   XpStartJob(XEN_TO_C_Display(arg1), (XPSaveData)XEN_TO_C_INT(arg2));
@@ -16524,7 +16526,7 @@ static XEN gxm_XpRehashPrinterList(XEN arg1)
 
 static XEN gxm_XpDestroyContext(XEN arg1, XEN arg2)
 {
-  #define H_XpDestroyContext "void XpDestroyContext(Display *display,XPContext print_context)"
+  #define H_XpDestroyContext "void XpDestroyContext(Display *display, XPContext print_context)"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpDestroyContext", "Display*");
   XEN_ASSERT_TYPE(XEN_XPContext_P(arg2), arg2, 2, "XpDestroyContext", "XPContext");
   XpDestroyContext(XEN_TO_C_Display(arg1), XEN_TO_C_XPContext(arg2));
@@ -16540,7 +16542,7 @@ static XEN gxm_XpGetContext(XEN arg1)
 
 static XEN gxm_XpSetContext(XEN arg1, XEN arg2)
 {
-  #define H_XpSetContext "void XpSetContext(Display *display,XPContext print_context)"
+  #define H_XpSetContext "void XpSetContext(Display *display, XPContext print_context)"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpSetContext", "Display*");
   XEN_ASSERT_TYPE(XEN_XPContext_P(arg2), arg2, 2, "XpSetContext", "XPContext");
   XpSetContext(XEN_TO_C_Display(arg1), XEN_TO_C_XPContext(arg2));
@@ -16557,7 +16559,7 @@ static XEN gxm_XpCreateContext(XEN arg1, XEN arg2)
 
 static XEN gxm_XpNotifyPdm(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
 {
-  #define H_XpNotifyPdm "char *XpNotifyPdm(Display *print_display,Window print_window,XPContext print_context, \
+  #define H_XpNotifyPdm "char *XpNotifyPdm(Display *print_display,Window print_window, XPContext print_context, \
 Display *video_display,Window video_window,Bool auth_flag)"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpNotifyPdm", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XpNotifyPdm", "Window");
@@ -16589,7 +16591,7 @@ static XEN gxm_XpSendAuth(XEN arg1, XEN arg2)
 
 static XEN gxm_XpGetImageResolution(XEN arg1, XEN arg2)
 {
-  #define H_XpGetImageResolution "int XpGetImageResolution(Display *display,XPContext print_context)"
+  #define H_XpGetImageResolution "int XpGetImageResolution(Display *display, XPContext print_context)"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpGetImageResolution", "Display*");
   XEN_ASSERT_TYPE(XEN_XPContext_P(arg2), arg2, 2, "XpGetImageResolution", "XPContext");
   return(C_TO_XEN_INT(XpGetImageResolution(XEN_TO_C_Display(arg1), XEN_TO_C_XPContext(arg2))));
@@ -16597,7 +16599,7 @@ static XEN gxm_XpGetImageResolution(XEN arg1, XEN arg2)
 
 static XEN gxm_XpGetOneAttribute(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
-  #define H_XpGetOneAttribute "char *XpGetOneAttribute(Display *display,XPContext print_context,XPAttributes type,char *attribute_name)"
+  #define H_XpGetOneAttribute "char *XpGetOneAttribute(Display *display, XPContext print_context, XPAttributes type,char *attribute_name)"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpGetOneAttribute", "Display*");
   XEN_ASSERT_TYPE(XEN_XPContext_P(arg2), arg2, 2, "XpGetOneAttribute", "XPContext");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XpGetOneAttribute", "XPAttributes");
@@ -16608,7 +16610,7 @@ static XEN gxm_XpGetOneAttribute(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 
 static XEN gxm_XpSetAttributes(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
-  #define H_XpSetAttributes "void XpSetAttributes(Display *display,XPContext print_context,XPAttributes type,char *pool,XPAttrReplacement replacement_rule)"
+  #define H_XpSetAttributes "void XpSetAttributes(Display *display, XPContext print_context, XPAttributes type,char *pool, XPAttrReplacement replacement_rule)"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpSetAttributes", "Display*");
   XEN_ASSERT_TYPE(XEN_XPContext_P(arg2), arg2, 2, "XpSetAttributes", "XPContext");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XpSetAttributes", "XPAttributes");
@@ -16622,7 +16624,7 @@ static XEN gxm_XpSetAttributes(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 
 static XEN gxm_XpGetAttributes(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XpGetAttributes "char *XpGetAttributes(Display *display,XPContext print_context,XPAttributes type)"
+  #define H_XpGetAttributes "char *XpGetAttributes(Display *display, XPContext print_context, XPAttributes type)"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpGetAttributes", "Display*");
   XEN_ASSERT_TYPE(XEN_XPContext_P(arg2), arg2, 2, "XpGetAttributes", "XPContext");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XpGetAttributes", "XPAttributes");
@@ -16632,7 +16634,7 @@ static XEN gxm_XpGetAttributes(XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XpGetScreenOfContext(XEN arg1, XEN arg2)
 {
-  #define H_XpGetScreenOfContext "Screen *XpGetScreenOfContext(Display *display,XPContext print_context)"
+  #define H_XpGetScreenOfContext "Screen *XpGetScreenOfContext(Display *display, XPContext print_context)"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpGetScreenOfContext", "Display*");
   XEN_ASSERT_TYPE(XEN_XPContext_P(arg2), arg2, 2, "XpGetScreenOfContext", "XPContext");
   return(C_TO_XEN_Screen(XpGetScreenOfContext(XEN_TO_C_Display(arg1), XEN_TO_C_XPContext(arg2))));
@@ -16640,7 +16642,7 @@ static XEN gxm_XpGetScreenOfContext(XEN arg1, XEN arg2)
 
 static XEN gxm_XpSendOneTicket(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
-  #define H_XpSendOneTicket "Status XpSendOneTicket(Display *display,Window window,Xauth *ticket,Bool more)"
+  #define H_XpSendOneTicket "Status XpSendOneTicket(Display *display,Window window, Xauth *ticket,Bool more)"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpSendOneTicket", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XpSendOneTicket", "Window");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg3), arg3, 3, "XpSendOneTicket", "Xauth*"); /* opaque */
@@ -16668,7 +16670,7 @@ static XEN gxm_XpGetAuthParams(XEN arg1, XEN arg2)
 
 static XEN gxm_XpGetPdmStartParams(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
-  #define H_XpGetPdmStartParams "Status XpGetPdmStartParams(Display *print_display,Window print_window,XPContext print_context, \
+  #define H_XpGetPdmStartParams "Status XpGetPdmStartParams(Display *print_display,Window print_window, XPContext print_context, \
 Display *video_display,Window video_window)"
   /* DIFF: XpGetPdmStartParams trailing 6 ref args omitted and returned
    */
@@ -16751,7 +16753,7 @@ static XEN gxm_XpFreePrinterList(XEN arg1)
 
 static XEN gxm_XpGetPageDimensions(XEN arg1, XEN arg2)
 {
-  #define H_XpGetPageDimensions "Status XpGetPageDimensions(Display *display,XPContext print_context)"
+  #define H_XpGetPageDimensions "Status XpGetPageDimensions(Display *display, XPContext print_context)"
   /* DIFF: XpGetPageDimensions omits and rtns last 3 args
    */
   unsigned short i1, i2;
@@ -16769,7 +16771,7 @@ static XEN gxm_XpGetPageDimensions(XEN arg1, XEN arg2)
 
 static XEN gxm_XpSetImageResolution(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
-  #define H_XpSetImageResolution "Bool XpSetImageResolution(Display *display,XPContext print_context,int image_res,int *prev_res)"
+  #define H_XpSetImageResolution "Bool XpSetImageResolution(Display *display, XPContext print_context,int image_res,int *prev_res)"
   /* DIFF: XpSetImageResolution last arg is int, val is returned
    */
   int i, val;
@@ -16808,7 +16810,7 @@ static XEN gxm_XpGetPrinterList(XEN arg1, XEN arg2)
 
 static XEN gxm_XpSelectInput(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XpSelectInput "void XpSelectInput(Display *display,XPContext print_context,unsigned long event_mask)"
+  #define H_XpSelectInput "void XpSelectInput(Display *display, XPContext print_context,unsigned long event_mask)"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpSelectInput", "Display*");
   XEN_ASSERT_TYPE(XEN_XPContext_P(arg2), arg2, 2, "XpSelectInput", "XPContext");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg3), arg3, 3, "XpSelectInput", "ulong");
@@ -16818,7 +16820,7 @@ static XEN gxm_XpSelectInput(XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XpInputSelected(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XpInputSelected "unsigned long XpInputSelected(Display *display,XPContext print_context,unsigned long *all_events_mask)"
+  #define H_XpInputSelected "unsigned long XpInputSelected(Display *display, XPContext print_context,unsigned long *all_events_mask)"
   /* DIFF: XpInputSelected arg3 is int, is returned
    */
   unsigned long val, i1;
@@ -16858,7 +16860,7 @@ static void gxm_XPFinishProc(Display *display, XPContext context, XPGetDocStatus
 
 static XEN gxm_XpGetDocumentData(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
-  #define H_XpGetDocumentData "Status XpGetDocumentData(Display *display,XPContext context,XPSaveProc save_proc,XPFinishProc finish_proc,XPointer client_data)"
+  #define H_XpGetDocumentData "Status XpGetDocumentData(Display *display, XPContext context, XPSaveProc save_proc, XPFinishProc finish_proc, XPointer client_data)"
   XEN descr;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpGetDocumentData", "Display*");
   XEN_ASSERT_TYPE(XEN_XPContext_P(arg2), arg2, 2, "XpGetDocumentData", "XPContext");
@@ -17374,12 +17376,12 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XtVaAppCreateShell, gxm_XtVaAppCreateShell, 5, 0, 0, H_XtVaAppCreateShell);
   XM_DEFINE_PROCEDURE(XtToolkitInitialize, gxm_XtToolkitInitialize, 0, 0, 0, H_XtToolkitInitialize);
   XM_DEFINE_PROCEDURE(XtSetLanguageProc, gxm_XtSetLanguageProc, 3, 0, 0, H_XtSetLanguageProc);
-  XM_DEFINE_PROCEDURE(XtDisplayInitialize, gxm_XtDisplayInitialize, 8, 0, 0, H_XtDisplayInitialize);
-  XM_DEFINE_PROCEDURE(XtOpenApplication, gxm_XtOpenApplication, 9, 0, 0, H_XtOpenApplication);
-  XM_DEFINE_PROCEDURE(XtVaOpenApplication, gxm_XtVaOpenApplication, 8, 0, 0, H_XtVaOpenApplication);
-  XM_DEFINE_PROCEDURE(XtAppInitialize, gxm_XtAppInitialize, 8, 0, 0, H_XtAppInitialize);
-  XM_DEFINE_PROCEDURE(XtVaAppInitialize, gxm_XtVaAppInitialize, 7, 0, 0, H_XtVaAppInitialize);
-  XM_DEFINE_PROCEDURE(XtOpenDisplay, gxm_XtOpenDisplay, 8, 0, 0, H_XtOpenDisplay);
+  XM_DEFINE_PROCEDURE(XtDisplayInitialize, gxm_XtDisplayInitialize, 6, 0, 0, H_XtDisplayInitialize);
+  XM_DEFINE_PROCEDURE(XtOpenApplication, gxm_XtOpenApplication, 5, 1, 0, H_XtOpenApplication);
+  XM_DEFINE_PROCEDURE(XtVaOpenApplication, gxm_XtVaOpenApplication, 5, 0, 0, H_XtVaOpenApplication);
+  XM_DEFINE_PROCEDURE(XtAppInitialize, gxm_XtAppInitialize, 4, 1, 0, H_XtAppInitialize);
+  XM_DEFINE_PROCEDURE(XtVaAppInitialize, gxm_XtVaAppInitialize, 4, 0, 0, H_XtVaAppInitialize);
+  XM_DEFINE_PROCEDURE(XtOpenDisplay, gxm_XtOpenDisplay, 6, 0, 0, H_XtOpenDisplay);
   XM_DEFINE_PROCEDURE(XtCreateApplicationContext, gxm_XtCreateApplicationContext, 0, 0, 0, H_XtCreateApplicationContext);
   XM_DEFINE_PROCEDURE(XtDestroyApplicationContext, gxm_XtDestroyApplicationContext, 1, 0, 0, H_XtDestroyApplicationContext);
   XM_DEFINE_PROCEDURE(XtInitializeWidgetClass, gxm_XtInitializeWidgetClass, 1, 0, 0, H_XtInitializeWidgetClass);
@@ -18348,7 +18350,7 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XtError, gxm_XtError, 1, 0, 0, H_XtError);
   XM_DEFINE_PROCEDURE(XtSetErrorMsgHandler, gxm_XtSetErrorMsgHandler, 1, 0, 0, H_XtSetErrorMsgHandler);
   XM_DEFINE_PROCEDURE(XtSetErrorHandler, gxm_XtSetErrorHandler, 1, 0, 0, H_XtSetErrorHandler);
-  XM_DEFINE_PROCEDURE(XtInitialize, gxm_XtInitialize, 6, 0, 0, H_XtInitialize);
+  XM_DEFINE_PROCEDURE(XtInitialize, gxm_XtInitialize, 4, 0, 0, H_XtInitialize);
   XM_DEFINE_PROCEDURE(XtCreateApplicationShell, gxm_XtCreateApplicationShell, 3, 1, 0, H_XtCreateApplicationShell);
   XM_DEFINE_PROCEDURE(XtSetSelectionTimeout, gxm_XtSetSelectionTimeout, 1, 0, 0, H_XtSetSelectionTimeout);
   XM_DEFINE_PROCEDURE(XtGetSelectionTimeout, gxm_XtGetSelectionTimeout, 0, 0, 0, H_XtGetSelectionTimeout);
@@ -24690,6 +24692,7 @@ static int xm_already_inited = 0;
       define_procedures();
       define_structs();
 #if HAVE_GUILE && HAVE_MOTIF
+      /* TODO: Ruby versions of WMProtocol procs */
       XEN_EVAL_C_STRING("(define (XmAddWMProtocols s p n) \
                            (XmAddProtocols s (XInternAtom (XtDisplay s) \"WM_PROTOCOLS\" #f) p n))");
       XEN_EVAL_C_STRING("(define (XmRemoveWMProtocols s p n) \
@@ -24719,7 +24722,7 @@ static int xm_already_inited = 0;
       XEN_DEFINE_PROCEDURE(S_add_resource, g_add_resource_w, 2, 0, 0, H_add_resource);
       XEN_YES_WE_HAVE("xm");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"8-Oct-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"11-Oct-02\")");
 #endif
       xm_already_inited = 1;
     }

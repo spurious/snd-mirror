@@ -1,10 +1,11 @@
 #include "snd.h"
 
-/* check_balance stolen from scwm-0.9/utilities/scwmrepl/scwmrepl.c, 
+/* check_balance originally from scwm-0.9/utilities/scwmrepl/scwmrepl.c, 
  *   revised by bil 9-Oct-02:
- *   original did not handle #\) (etc) correctly or #()
+ *   original did not handle #\) (and many others) correctly or #()
  *            had support for #{} which doesn't seem to mean anything in Scheme
  *            mishandled \" in a quoted string
+ *            and more changes followed
  */
 
 /*
@@ -16,14 +17,64 @@
   (char->integer #\))
   )
 */
-int check_balance(char *expr, int start, int end) 
+
+int find_matching_paren(char *str, int parens, int pos, char *prompt, int *highlight_pos)
+{
+  int i, j, quoting = FALSE, up_comment = -1;
+  for (i = pos - 1; i > 0;)
+    {
+      if ((i > 0) && (str[i] == prompt[0]) && (str[i - 1] == '\n'))
+	break;
+      if ((str[i] == '\"') && (str[i - 1] != '\\'))
+	quoting = !quoting;
+      if (!quoting)
+	{
+	  if ((i <= 1) || (str[i - 1] != '\\') || (str[i - 2] != '#'))
+	    {
+	      if (str[i] == ')') parens++; else
+	      if (str[i] == '(') parens--; else
+	      if (str[i] == '\n')
+		{
+		  /* check for comment on next line up */
+		  /* TODO: " in comment on upper line */
+		  int up_quoting = FALSE;
+		  for (j = i - 1; j > 0; j--)
+		    {
+		      if (str[j] == '\n') break;
+		      if ((str[j] == '\"') && (str[j - 1] != '\\'))
+			up_quoting = !up_quoting;
+		      if (!up_quoting)
+			{
+			  if ((str[j] == ';') &&
+			      ((j <= 1) || (str[j - 1] != '\\') || (str[j - 2] != '#')))
+			    up_comment = j;
+			}
+		    }
+		  if (up_comment > 0)
+		    i = up_comment;
+		}
+	    }
+	}
+      if (parens == 0)
+	{
+	  (*highlight_pos) = i;
+	  break;
+	}
+      i--;
+    }
+  return(parens);
+}
+
+void highlight_unbalanced_paren(void);
+/* TODO: #! !# 
+ */
+int check_balance(char *expr, int start, int end, int in_listener) 
 {
   int i;
   int non_whitespace_p = 0;
   int paren_count = 0;
   int prev_separator = 1;
   int quote_wait = 0;
-
   i = start;
   while (i < end) 
     {
@@ -75,7 +126,7 @@ int check_balance(char *expr, int start, int end)
 	  break;
 	case '#' :
 	  if ((non_whitespace_p) && (paren_count == 0) && (!quote_wait))
-	    return i;
+	    return(i);
 	  else 
 	    {
 	      if ((prev_separator) && (i + 1 < end) && (expr[i + 1] =='('))
@@ -133,7 +184,11 @@ int check_balance(char *expr, int start, int end)
 	  break;
 	}
     }
-  return 0;
+#if USE_MOTIF
+  if (in_listener)
+    highlight_unbalanced_paren();
+#endif
+  return(0);
 }
 
 static char listener_prompt_buffer[LABEL_BUFFER_SIZE];
@@ -306,7 +361,7 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
 	  /* fprintf(stderr, "got: %s %d parens ", str, parens); */
 	  if (parens)
 	    {
-	      end_of_text = check_balance(str, 0, end_of_text);
+	      end_of_text = check_balance(str, 0, end_of_text, TRUE); /* last-arg->we are in the listener */
 	      /* fprintf(stderr, "now eot: %d (%d) ", end_of_text, slen); */
 	      if ((end_of_text > 0) && 
 		  (end_of_text < slen))

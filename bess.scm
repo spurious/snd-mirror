@@ -24,7 +24,7 @@
 
 ;;; set up our user-interface
 (let* ((shell-app (XtVaOpenApplication 
-                    "FM Forever!" 0 0 0 '() 0 applicationShellWidgetClass
+                    "FM Forever!" 0 '() applicationShellWidgetClass
                     (list XmNallowShellResize #t)))
        (app (cadr shell-app))
        (shell (car shell-app))

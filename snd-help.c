@@ -268,6 +268,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+11-Oct:  add-find-to-listener in snd-motif.scm.\n\
 18-Sep:  show-font-name et al in snd-motif.scm.\n\
 16-Sep:  snd 6.1.\n\
 12-Sep:  removed \"set-\" names -- use -DWITH_SET_NAME=1 to restore them.\n\

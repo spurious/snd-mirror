@@ -28,6 +28,7 @@
 ;;; (show-all-atoms) shows all X atoms
 ;;; show-font-name shows the Snd-related name and the X-related name of a font
 ;;; show-minibuffer-font shows what font is associated with the minibuffer
+;;; add-find-to-listener enables C-s and C-r in the listener
 
 (use-modules (ice-9 common-list) (ice-9 format))
 
@@ -2286,4 +2287,92 @@ in a widget's font list"
 				       (list XmNfontList 0)))))
 
 
+;;; -------- enable C-s and C-r in listener
 
+(define add-find-to-listener
+  (let ((dialog #f)
+	(find-text #f)
+	(find-forward #t)
+	(find-new #t)
+	(listener-text (list-ref (main-widgets) 4))
+	(shell (cadr (main-widgets)))
+	(snd-app (car (main-widgets))))
+    (lambda ()
+
+      (define (start-dialog)
+	(if (not dialog)
+	    (let ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
+		  (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
+		  (xfind (XmStringCreate "Find" XmFONTLIST_DEFAULT_TAG)))
+	      (set! dialog (XmCreateMessageDialog shell
+						  "Find"
+						  (list XmNcancelLabelString   xdismiss
+							XmNokLabelString       xfind
+							XmNhelpLabelString     xhelp
+							XmNautoUnmanage        #f
+							XmNresizePolicy        XmRESIZE_GROW
+							XmNnoResize            #f
+							XmNtransient           #f
+							XmNbackground          (basic-color))))
+	      (for-each
+	       (lambda (button)
+		 (XtVaSetValues (XmMessageBoxGetChild dialog button)
+				(list XmNarmColor   (pushed-button-color)
+				      XmNbackground (basic-color))))
+	       (list XmDIALOG_HELP_BUTTON XmDIALOG_CANCEL_BUTTON XmDIALOG_OK_BUTTON))
+	      (XtAddCallback dialog XmNcancelCallback (lambda (w context info) (XtUnmanageChild dialog)))
+	      (XtAddCallback dialog XmNhelpCallback (lambda (w context info) (help-dialog "Find" "no help yet")))
+	      (XtAddCallback dialog XmNokCallback (lambda (w context info) (find-it)))
+	      (XmStringFree xhelp)
+	      (XmStringFree xdismiss)
+	      (XmStringFree xfind)
+	      (set! find-text (XtCreateManagedWidget "text" xmTextFieldWidgetClass dialog
+						     (list XmNleftAttachment      XmATTACH_FORM
+							   XmNrightAttachment     XmATTACH_FORM
+							   XmNtopAttachment       XmATTACH_FORM
+							   XmNbottomAttachment    XmATTACH_WIDGET
+							   XmNbottomWidget        (XmMessageBoxGetChild dialog XmDIALOG_SEPARATOR)
+							   XmNbackground          (basic-color))))
+	      (XtAddCallback find-text XmNfocusCallback 
+			     (lambda (w c i)
+			       (XtVaSetValues w (list XmNbackground (WhitePixelOfScreen (DefaultScreenOfDisplay (XtDisplay shell)))))))
+	      (XtAddCallback find-text XmNlosingFocusCallback (lambda (w c i) (XtSetValues w (list XmNbackground (basic-color)))))
+	      (XtAddCallback find-text XmNvalueChangedCallback (lambda (w c i) (set! find-new #t)))))
+	(XtManageChild dialog))
+
+      (define (find-it)
+	(let* ((search-str (XmTextFieldGetString find-text))
+	       (len (string-length search-str))
+	       (pos (XmTextFindString listener-text
+				      (+ (XmTextGetCursorPosition listener-text)
+					 (if find-new 0 (if find-forward 1 -1)))
+				      search-str
+				      (if find-forward XmTEXT_FORWARD XmTEXT_BACKWARD))))
+	  (if (not pos)
+	      (set! pos (XmTextFindString listener-text
+					  (if find-forward 0 (XmTextGetLastPosition listener-text))
+					  search-str
+					  (if find-forward XmTEXT_FORWARD XmTEXT_BACKWARD))))
+	  (if (number? pos)
+	      (begin
+		(XmTextSetInsertionPosition listener-text pos)
+		(XmTextSetHighlight listener-text pos (+ pos len) XmHIGHLIGHT_SELECTED) ; flash the string briefly
+		(XtAppAddTimeOut snd-app 200 
+				 (lambda (context id) 
+				   (XmTextSetHighlight listener-text pos (+ pos len) XmHIGHLIGHT_NORMAL)))))
+	  (set! find-new #f)))
+	  
+      (XtAppAddActions snd-app
+		       (list (list "search-forward" 
+				   (lambda args 
+				     (set! find-forward #t)
+				     (start-dialog)))
+			     (list "search-backward"
+				   (lambda args
+				     (set! find-forward #f)
+				     (start-dialog)))))
+      (XtOverrideTranslations listener-text
+			      (XtParseTranslationTable "Ctrl <Key>s: search-forward()\n\
+						        Ctrl <Key>r: search-backward()\n")))))
+  
+  

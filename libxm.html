@@ -69,7 +69,7 @@ You can use libxm directly in guile.  Here is an example script:
   (dynamic-call (dynamic-func "init_xm" libxm) #f))
 
 (let* ((shell-app (XtVaOpenApplication 
-		    "Test" 0 0 0 '() 0 applicationShellWidgetClass
+		    "Test" 0 '() applicationShellWidgetClass
 		    (list XmNallowShellResize #t)))
        (app (cadr shell-app))
        (shell (car shell-app))

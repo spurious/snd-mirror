@@ -789,6 +789,7 @@ static char TextTrans3[] =
 static XtTranslations transTable3 = NULL;
 
 /* for lisp listener */
+
 static char TextTrans4[] =
        "Ctrl <Key>a:	    begin-of-line()\n\
 	Ctrl <Key>b:	    backward-character()\n\
@@ -986,14 +987,67 @@ static void command_return_callback(Widget w, XtPointer context, XtPointer info)
     command_return(w, (snd_state *)context, printout_end);
 }
 
+static int flashes = 0;
+static int paren_pos = -1;
+#define FLASH_TIME 150
+
+static void flash_unbalanced_paren(XtPointer context, XtIntervalId *id)
+{
+  snd_state *ss;
+  ss = get_global_state();
+  flashes--;
+  XmTextSetHighlight(listener_text, paren_pos, paren_pos + 1, (flashes & 1) ? XmHIGHLIGHT_NORMAL : XmHIGHLIGHT_SELECTED);
+  if (flashes > 0)
+    XtAppAddTimeOut(MAIN_APP(ss),
+		    (unsigned long)FLASH_TIME,
+		    (XtTimerCallbackProc)flash_unbalanced_paren,
+		    NULL);
+  else 
+    {
+      XmTextSetHighlight(listener_text, paren_pos, paren_pos + 1, XmHIGHLIGHT_NORMAL);
+      paren_pos = -1;
+    }
+}
+
+void highlight_unbalanced_paren(void);
+void highlight_unbalanced_paren(void)
+{
+  /* if cursor is positioned at close paren, try to find reason for unbalanced expr and highlight it */
+  int pos;
+  char *str = NULL;
+  snd_state *ss;
+  ss = get_global_state();
+  pos = XmTextGetInsertionPosition(listener_text);
+  if (pos > 2)
+    {
+      str = XmTextGetString(listener_text);
+      if ((str[pos - 1] == ')') &&
+	  ((str[pos - 2] != '\\') || (str[pos - 3] != '#')))
+	{
+	  int parens;
+	  parens = find_matching_paren(str, 2, pos - 1, listener_prompt(ss), &paren_pos);
+	  if (parens == 0)
+	    {
+	      XmTextSetHighlight(listener_text, paren_pos, paren_pos + 1, XmHIGHLIGHT_SELECTED);
+	      flashes = 4;
+	      XtAppAddTimeOut(MAIN_APP(ss),
+			      (unsigned long)FLASH_TIME,
+			      (XtTimerCallbackProc)flash_unbalanced_paren,
+			      NULL);
+	    }
+	}
+      if (str) XtFree(str);
+    }
+}
+
 static int last_highlight_position = -1;
 
 static void command_motion_callback(Widget w, XtPointer context, XtPointer info)
 {
   XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *)info;
   snd_state *ss = (snd_state *)context;
-  char *str = NULL, *prompt;
-  int pos, i, parens;
+  char *str = NULL;
+  int pos, parens;
   cbs->doit = TRUE; 
   if (dont_check_motion) return;
   if (last_highlight_position != -1)
@@ -1004,54 +1058,13 @@ static void command_motion_callback(Widget w, XtPointer context, XtPointer info)
   pos = cbs->newInsert - 1;
   if (pos > 0)
     {
-      prompt = listener_prompt(ss);
       str = XmTextGetString(w);
       if ((str[pos] == ')') && 
 	  ((pos <= 1) || (str[pos - 1] != '\\') || (str[pos - 2] != '#')))
 	{
-	  int quoting = FALSE, up_comment = -1;
-	  parens = 1;
-	  for (i = pos - 1; i > 0;)
-	    {
-	      if ((i > 0) && (str[i] == prompt[0]) && (str[i - 1] == '\n'))
-		break;
-	      if ((str[i] == '\"') && (str[i - 1] != '\\'))
-		quoting = !quoting;
-	      if (!quoting)
-		{
-		  if ((i <= 1) || (str[i - 1] != '\\') || (str[i - 2] != '#'))
-		    {
-		      if (str[i] == ')') parens++;
-		      if (str[i] == '(') parens--;
-		      if (str[i] == '\n')
-			{
-			  /* check for comment on next line up */
-			  int j, up_quoting = FALSE;
-			  for (j = i - 1; j > 0; j--)
-			    {
-			      if (str[j] == '\n') break;
-			      if ((str[j] == '\"') && (str[j - 1] != '\\'))
-				up_quoting = !up_quoting;
-			      if (!up_quoting)
-				{
-				  if ((str[j] == ';') &&
-				      ((j <= 1) || (str[j - 1] != '\\') || (str[j - 2] != '#')))
-				    up_comment = j;
-				}
-			    }
-			  if (up_comment > 0)
-			    i = up_comment;
-			}
-		    }
-		}
-	      if (parens == 0)
-		{
-		  XmTextSetHighlight(w, i, i + 1, XmHIGHLIGHT_SECONDARY_SELECTED);
-		  last_highlight_position = i;
-		  break;
-		}
-	      i--;
-	    }
+	  parens = find_matching_paren(str, 1, pos, listener_prompt(ss), &last_highlight_position);
+	  if (parens == 0)
+	    XmTextSetHighlight(w, last_highlight_position, last_highlight_position + 1, XmHIGHLIGHT_SECONDARY_SELECTED);
 	}
       if (str) XtFree(str);
     }

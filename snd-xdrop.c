@@ -55,7 +55,7 @@ static void massage_selection(Widget w, XtPointer context, Atom *selection, Atom
 		  select_channel(sp, chn);
 		  origin = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
 		  mus_snprintf(origin, PRINT_BUFFER_SIZE, "drop mix %s " OFF_TD, str, sp->chans[chn]->cursor);
-		  mix_complete_file(sp, str, origin, with_mix_tags(ss)); 
+		  mix_complete_file_at_cursor(sp, str, origin, with_mix_tags(ss)); 
 		  FREE(origin);
 		}
 #if DEBUGGING

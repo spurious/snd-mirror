@@ -359,9 +359,9 @@ static void file_mix_ok_callback(GtkWidget *w, gpointer context)
   snd_state *ss = (snd_state *)context;
   gtk_widget_hide(mix_dialog->dialog);
   file_dialog_stop_playing(mix_dialog);
-  mix_complete_file(any_selected_sound(ss),
-		    snd_gtk_get_filename(mix_dialog->dialog),
-		    "File: mix", with_mix_tags(ss));
+  mix_complete_file_at_cursor(any_selected_sound(ss),
+			      snd_gtk_get_filename(mix_dialog->dialog),
+			      "File: mix", with_mix_tags(ss));
 }
 
 void make_mix_file_dialog(snd_state *ss, int managed)

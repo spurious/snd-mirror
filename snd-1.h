@@ -1198,7 +1198,8 @@ XEN show_stack(void);
 
 void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt);
 char *listener_prompt_with_cr(snd_state *ss);
-int check_balance(char *expr, int start, int end);
+int check_balance(char *expr, int start, int end, int in_listener);
+int find_matching_paren(char *str, int parens, int pos, char *prompt, int *highlight_pos);
 
 void g_init_listener(void);
 
@@ -1212,7 +1213,7 @@ mix_context *make_mix_context(chan_info *cp);
 mix_context *free_mix_context(mix_context *ms);
 void free_mix_list(chan_info *cp);
 void free_mixes(chan_info *cp);
-int mix_complete_file(snd_info *sp, char *str, const char *origin, int with_tag);
+void mix_complete_file_at_cursor(snd_info *sp, char *str, const char *origin, int with_tag);
 int mix_file_and_delete(off_t beg, off_t num, char *file, chan_info **cps, int out_chans, const char *origin, int with_tag);
 int copy_file_and_mix(off_t beg, off_t num, char *file, chan_info **cps, int out_chans, const char *origin, int with_tag);
 void backup_mix_list(chan_info *cp, int edit_ctr);

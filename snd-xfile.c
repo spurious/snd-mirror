@@ -604,10 +604,10 @@ static void file_mix_ok_callback(Widget w, XtPointer context, XtPointer info)
   file_dialog_stop_playing(fd);
   if (!(is_directory(filename)))               /* this can be a directory name if the user clicked 'ok' when he meant 'cancel' */
     {
-      mix_complete_file(any_selected_sound(ss), 
-			filename,
-			"File: mix",
-			with_mix_tags(ss));
+      mix_complete_file_at_cursor(any_selected_sound(ss), 
+				  filename,
+				  "File: mix",
+				  with_mix_tags(ss));
     }
   else snd_error("%s is a directory", filename);
 }

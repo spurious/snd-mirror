@@ -714,7 +714,7 @@ static char *stdin_check_for_full_expression(char *newstr)
       FREE(str);
     }
   else stdin_str = copy_string(newstr);
-  end_of_text = check_balance(stdin_str, 0, snd_strlen(stdin_str));
+  end_of_text = check_balance(stdin_str, 0, snd_strlen(stdin_str), FALSE); /* last-arg->not in listener */
   if (end_of_text > 0)
     {
       if (end_of_text + 1 < snd_strlen(stdin_str))

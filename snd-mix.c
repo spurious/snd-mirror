@@ -931,7 +931,6 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *tempfile, chan_inf
   int ofd, ifd;
   char *ofile;
   mus_sample_t **data;
-  Float scaler;
   mus_sample_t *chandata;
   int in_chans, base, no_space, err = 0;
   off_t i, j, cursamps, len, size;
@@ -949,15 +948,8 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *tempfile, chan_inf
   sp = cp->sound;
   in_chans = ihdr->chans;
   if (in_chans <= chan) 
-    {
-      base = 0; 
-      scaler = 0.0;
-    } 
-  else 
-    {
-      base = chan; 
-      scaler = 1.0;
-    }
+    base = 0; 
+  else base = chan;  /* TODO: does this make any sense? */
   ofile = snd_tempnam(ss);
   ohdr = make_temp_header(ofile, SND_SRATE(sp), 1, 0, (char *)origin);
   ofd = open_temp_file(ofile, 1, ohdr, ss);
@@ -999,7 +991,7 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *tempfile, chan_inf
   chandata = data[base];
   lseek(ofd, ohdr->data_location, SEEK_SET);
   lseek(ifd, ihdr->data_location, SEEK_SET);
-  if (scaler == 0.0)
+  if (in_chans <= chan)
     {
       for (i = 0; i < num; i += MAX_BUFFER_SIZE)
 	{
@@ -1062,7 +1054,7 @@ static int mix(off_t beg, off_t num, int chans, chan_info **cps, char *mixinfile
     {
       ids[i] = -1;
       sp = cps[i]->sound;
-      md = file_mix_samples(beg, num, mixinfile, cps[i], i, temp, origin, with_tag); /* explode in this file, or mix in snd-clm.c */
+      md = file_mix_samples(beg, num, mixinfile, cps[i], i, temp, origin, with_tag);
       if (md) 
 	{
 	  if (id == -1) id = md->id;
@@ -1096,52 +1088,53 @@ int mix_file_and_delete(off_t beg, off_t num, char *file, chan_info **cps, int o
   return(mix(beg, num, out_chans, cps, file, DELETE_ME, origin, with_tag));
 }
 
-int mix_complete_file(snd_info *sp, char *str, const char *origin, int with_tag)
+static int mix_complete_file(snd_info *sp, off_t beg, char *fullname, const char *origin, int with_tag)
 {
   /* no need to save as temp here, but we do need sync info (from menu and keyboard) */
   chan_info *cp;
   chan_info **cps = NULL;
-  int nc, chans, id = -1;
+  int chans, id = -1;
   off_t len;
   sync_info *si = NULL;
+  len = mus_sound_frames(fullname);
+  if (len <= 0) return(-2);
+  cp = any_selected_channel(sp);
+  if (sp->sync != 0)
+    {
+      si = snd_sync(sp->state, sp->sync); 
+      cps = si->cps;
+      chans = si->chans;
+    }
+  else
+    {
+      cps = (chan_info **)CALLOC(1, sizeof(chan_info *));
+      cps[0] = cp;
+      chans = 1;
+    }
+  id = mix(beg, len, chans, cps, fullname, DONT_DELETE_ME, origin, with_tag);
+  if (si) 
+    si = free_sync_info(si); 
+  else 
+    if (cps) 
+      FREE(cps);
+  return(id);
+}
+
+void mix_complete_file_at_cursor(snd_info *sp, char *str, const char *origin, int with_tag)
+{
+  chan_info *cp;
+  int err;
   char *fullname = NULL;
   if ((sp) && (str) && (*str))
     {
-      clear_minibuffer(sp);
       fullname = mus_expand_filename(str);
-      nc = mus_sound_chans(fullname);
-      if (nc != -1)
-	{
-	  len = mus_sound_samples(fullname) / nc;
-	  if (len == 0)
-	    {
-	      if (fullname) FREE(fullname);
-	      return(-2);
-	    }
-	  cp = any_selected_channel(sp);
-	  if (sp->sync != 0)
-	    {
-	      si = snd_sync(sp->state, sp->sync); 
-	      cps = si->cps;
-	      chans = si->chans;
-	    }
-	  else
-	    {
-	      cps = (chan_info **)CALLOC(1, sizeof(chan_info *));
-	      cps[0] = cp;
-	      chans = 1;
-	    }
-	  id = mix(cp->cursor, len, chans, cps, fullname, DONT_DELETE_ME, origin, with_tag);
-	  if (si) 
-	    si = free_sync_info(si); 
-	  else 
-	    if (cps) FREE(cps);
-	}
-      else 
-	report_in_minibuffer_and_save(sp, "can't open file: %s, %s ", fullname, strerror(errno));
+      clear_minibuffer(sp);
+      cp = any_selected_channel(sp);
+      err = mix_complete_file(sp, cp->cursor, fullname, origin, with_tag);
+      if (err == -2) 
+	report_in_minibuffer_and_save(sp, "can't mix file: %s, %s ", str, strerror(errno));
       if (fullname) FREE(fullname);
     }
-  return(id);
 }
 
 #define CONSOLE_INCREMENT 8
@@ -3959,17 +3952,19 @@ static XEN g_backward_mix(XEN count, XEN snd, XEN chn)
 static XEN g_mix(XEN file, XEN chn_samp_n, XEN file_chn, XEN snd_n, XEN chn_n, XEN console)
 {
   #define H_mix "(" S_mix " file &optional (chn-start 0) (file-chan 0) snd chn with-console))\n\
-mixes file channel file-chan into snd's channel chn starting at chn-start (or at the cursor location if chan-start \
+mixes file channel file-chan into snd's channel chn starting at chn-start (or at the cursor location if chn-start \
 is omitted), returning the new mix's id.  if with-console is #f, the data is mixed (no console is created). \
-If chn is omitted, file's channels are mixed until snd runs out of channels.  If the file-to-be-mixed has \
-no data, the 'id' value returned is -2, and no edit takes place."
+If file_chn is omitted, file's channels are mixed until snd runs out of channels."
 
+  /* TODO: test all these cases!
+   */
   chan_info *cp = NULL;
   char *name = NULL;
-  int chans, id = -1;
+  int chans, id = -1, file_channel;
   int with_mixer = 1;
   snd_state *ss;
   mix_info *md;
+  off_t beg;
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, S_mix, "a string");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(chn_samp_n), chn_samp_n, XEN_ARG_2, S_mix, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(file_chn), file_chn, XEN_ARG_3, S_mix, "an integer");
@@ -3986,9 +3981,10 @@ no data, the 'id' value returned is -2, and no edit takes place."
   if (XEN_NOT_BOUND_P(console))
     with_mixer = with_mix_tags(ss);
   else with_mixer = XEN_TO_C_BOOLEAN_OR_TRUE(console);
-  if (XEN_NOT_BOUND_P(chn_samp_n))
+  beg = XEN_TO_C_OFF_T_OR_ELSE(chn_samp_n, 0);
+  if (XEN_NOT_BOUND_P(file_chn))
     {
-      id = mix_complete_file(any_selected_sound(ss), name, S_mix, with_mixer);
+      id = mix_complete_file(any_selected_sound(ss), beg, name, S_mix, with_mixer);
       if (id == -1) 
 	{
 	  if (name) FREE(name);
@@ -4003,14 +3999,20 @@ no data, the 'id' value returned is -2, and no edit takes place."
     {
       cp = get_cp(snd_n, chn_n, S_mix);
       chans = mus_sound_chans(name);
+      file_channel = XEN_TO_C_INT(file_chn);
+      if (file_channel >= chans)
+	XEN_ERROR(NO_SUCH_CHANNEL,
+		  XEN_LIST_3(C_TO_XEN_STRING(S_mix),
+			     file,
+			     file_chn));
       if (chans > 0)
 	{
 	  ss->catch_message = NULL;
-	  md = file_mix_samples(XEN_TO_C_OFF_T_OR_ELSE(chn_samp_n, 0),
-				mus_sound_samples(name) / chans, 
+	  md = file_mix_samples(beg,
+				mus_sound_frames(name), 
 				name,
 				cp, 
-				XEN_TO_C_INT_OR_ELSE(file_chn, 0),
+				file_channel,
 				DONT_DELETE_ME, 
 				S_mix,
 				with_mixer);
