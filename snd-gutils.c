@@ -524,3 +524,15 @@ void fixup_axis_context(axis_context *ax, GtkWidget *w, GdkGC *gc)
   if (gc) ax->gc = gc;
   ax->current_font = AXIS_NUMBERS_FONT(ax->ss);
 }
+
+#define OUR_DATA "SndData"
+void set_user_data(GtkObject *obj, gpointer data)
+{
+  /* apparently gtk_object_get|set_user_data are used internally in Gtk and aren't considered safe */
+  gtk_object_set_data(obj, OUR_DATA, data);
+}
+
+gpointer get_user_data(GtkObject *obj)
+{
+  return(gtk_object_get_data(obj, OUR_DATA));
+}

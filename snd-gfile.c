@@ -359,7 +359,7 @@ void make_mix_file_dialog(snd_state *ss, int managed)
 static void save_as_header_type_Callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
 {
   file_data *fd;
-  fd = (file_data *)gtk_object_get_user_data(GTK_OBJECT(w));
+  fd = (file_data *)get_user_data(GTK_OBJECT(w));
   fd->header_pos = row;
   if (fd->current_type != row)
     {
@@ -374,7 +374,7 @@ static void save_as_header_type_Callback(GtkWidget *w, gint row, gint column, Gd
 static void save_as_data_format_Callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
 {
   file_data *fd;
-  fd = (file_data *)gtk_object_get_user_data(GTK_OBJECT(w));
+  fd = (file_data *)get_user_data(GTK_OBJECT(w));
   fd->format_pos = row;
   fd->current_format = data_format_from_position(fd->header_pos, row);
 }
@@ -405,7 +405,7 @@ file_data *sndCreateFileDataForm(snd_state *ss, GtkWidget *parent, char *name,
   gtk_frame_set_shadow_type(GTK_FRAME(hlab), GTK_SHADOW_ETCHED_IN);
 
   fdat->header_list = gtk_clist_new(1);
-  gtk_object_set_user_data(GTK_OBJECT(fdat->header_list), (gpointer)fdat);
+  set_user_data(GTK_OBJECT(fdat->header_list), (gpointer)fdat);
   gtk_clist_set_selection_mode(GTK_CLIST(fdat->header_list), GTK_SELECTION_SINGLE);
   gtk_clist_set_shadow_type(GTK_CLIST(fdat->header_list), GTK_SHADOW_ETCHED_IN);
   gtk_clist_column_titles_passive(GTK_CLIST(fdat->header_list));
@@ -433,7 +433,7 @@ file_data *sndCreateFileDataForm(snd_state *ss, GtkWidget *parent, char *name,
   gtk_frame_set_shadow_type(GTK_FRAME(dlab), GTK_SHADOW_ETCHED_IN);
 
   fdat->format_list = gtk_clist_new(1);
-  gtk_object_set_user_data(GTK_OBJECT(fdat->format_list), (gpointer)fdat);
+  set_user_data(GTK_OBJECT(fdat->format_list), (gpointer)fdat);
   gtk_clist_set_selection_mode(GTK_CLIST(fdat->format_list), GTK_SELECTION_SINGLE);
   gtk_clist_set_shadow_type(GTK_CLIST(fdat->format_list), GTK_SHADOW_ETCHED_IN);
   gtk_clist_column_titles_passive(GTK_CLIST(fdat->format_list));
@@ -763,7 +763,7 @@ static gint mouse_name(XEN hook, GtkWidget *w, const char *caller)
   regrow *r;
   if (XEN_HOOKED(hook))
     {
-      r = (regrow *)gtk_object_get_user_data(GTK_OBJECT(w));
+      r = (regrow *)get_user_data(GTK_OBJECT(w));
       if (r)
 	{
 	  if (r->parent == CURRENT_FILE_VIEWER)
@@ -830,7 +830,7 @@ regrow *make_regrow(snd_state *ss, GtkWidget *ww,
   gtk_signal_connect(GTK_OBJECT(r->nm), "clicked", GTK_SIGNAL_FUNC(third_callback), (gpointer)r);
   gtk_signal_connect(GTK_OBJECT(r->nm), "enter_notify_event", GTK_SIGNAL_FUNC(label_enter_callback), (gpointer)r);
   gtk_signal_connect(GTK_OBJECT(r->nm), "leave_notify_event", GTK_SIGNAL_FUNC(label_leave_callback), (gpointer)r);
-  gtk_object_set_user_data(GTK_OBJECT(r->nm), (gpointer)r);
+  set_user_data(GTK_OBJECT(r->nm), (gpointer)r);
   gtk_widget_show(r->nm);
 
   return(r);

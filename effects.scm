@@ -150,10 +150,13 @@
                 (list |XmNbackground       (|Pixel (snd-pixel (basic-color)))
 		      |XmNset              on
 		      |XmNselectColor      (yellow-pixel)
+		      |XmNindicatorType    |XmONE_OF_MANY_ROUND
 		      |XmNarmCallback      (list (lambda (w c i) (target-callback type)) #f))))
      (list "entire sound" "selection" "between marks")
      (list 'sound 'selection 'marks)
      (list #t #f #f))))
+
+;;; TODO: finish adding the target choice to all effects
 
 (define (activate-dialog dialog)
   (if (not (|XtIsManaged dialog))

@@ -8,20 +8,21 @@
 
 
 /* TODO: selection-oriented Xt callbacks
- *       xm-test.scm regression tests
- *       XEvent fields should be settable
- *       check for memory leaks etc
- *       struct accessors for XIconSize (see min_height)?
- *       XtTypedArg and XtVaNestedList
- *       XmVaCreateSimple* (need special arglist handlers)
- *       XtAppAddActions currently only handles 8 actions (globally)
+ * TODO: xm-test.scm regression tests
+ * TODO: XEvent fields should be settable
+ * TODO: check for memory leaks etc
+ * TODO: struct accessors for XIconSize (see min_height)?
+ * TODO: XtTypedArg and XtVaNestedList
+ * TODO: XmVaCreateSimple* (need special arglist handlers)
+ * TODO: XtAppAddActions currently only handles 8 actions (globally)
  */
 
 /* HISTORY: 
- *   13-Aug:    added Xp bindings, X11 predefined Atoms
- *   6-Aug:     added XmTransfer functions inadvertently omitted earlier
- *   3-Aug:     added type checks to XtSetValues
- *   23-Jul-01: use lists rather than vectors 
+ *   12-Sep:    xm-version.
+ *   13-Aug:    Xp bindings, X11 predefined Atoms.
+ *   6-Aug:     XmTransfer functions inadvertently omitted earlier.
+ *   3-Aug:     type checks in XtSetValues.
+ *   23-Jul-01: use lists rather than vectors.
  */
 
 #if defined(HAVE_CONFIG_H)
@@ -3669,6 +3670,26 @@ static XEN gxm_XmTrackingEvent(XEN arg1, XEN arg2, XEN arg3)
      Apparently we need to run through the args, split out the special args,
      collect arglists, add to arglist buttons, buttonCount etc, then call the
      underlying simple creator. (see lesstif lib/Xm/VaSimple.c)
+
+   rowcol = XmVaCreateSimpleCheckBox(toplevel, "checkBox", cb,
+				     XmNspacing, 2,
+				     XmNmarginHeight, 4,
+				     XmVaCHECKBUTTON, s1, 0, NULL, NULL,
+				     XmVaCHECKBUTTON, s2, 0, NULL, NULL,
+				     NULL);
+
+   option = XmVaCreateSimpleOptionMenu(form, "option", cs("MyLabel"), 
+				      (KeySym) 'M', 1, SimpleCallbackProc,
+				      XmVaPUSHBUTTON, cs("Red"), (int) 'R', 
+				      "", XmNULL,
+				      XmVaCASCADEBUTTON, cs("Help"), (int) 'H',
+				      XmVaSEPARATOR,
+				      XmVaPUSHBUTTON, cs("Green"), (int) 'G', 
+				      "", XmNULL,
+				      XmVaSEPARATOR,
+				      XmVaPUSHBUTTON, cs("Blue"), (int) 'B', 
+				      "", XmNULL,
+				      NULL);				    
 */
 
 static XEN gxm_XmVaCreateSimpleCheckBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
@@ -25165,6 +25186,9 @@ static int xm_already_inited = 0;
       define_procedures();
       define_structs();
       XEN_YES_WE_HAVE("xm");
+#if HAVE_GUILE
+      XEN_EVAL_C_STRING("(define xm-version \"12-Sep-01\")");
+#endif
       xm_already_inited = 1;
     }
   return(XEN_FALSE);

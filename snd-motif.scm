@@ -2006,12 +2006,9 @@ Reverb-feedback sets the scaler on the feedback.\n\
       8)))
 
 
-;;; drawnbutton+workproc sound-button example
-;;; bess-translations
-;;; midi trigger
-;;; save/restore -separate window details
-;;; chan-grf, enved
-;;; equivalent of zync (x too) across sounds
+;;; TODO: bess-translations
+;;; TODO: midi trigger
+;;; TODO: equivalent of zync (x too) across sounds
 
 ;;; (create-sound-window (list-ref (main-widgets) 3) "pistol.snd")
 ;;;   will probably want to disable close here, or use replace?

@@ -133,6 +133,22 @@ static char* vstrcat(char *buf, ...)
   return(buf);
 }
 
+#if HAVE_GUILE
+static char *xm_version(void)
+{
+  char *version = NULL;
+  XEN xm_val;
+  xm_val = XEN_EVAL_C_STRING("(and (provided? 'xm) xm-version)");
+  if (XEN_STRING_P(xm_val))
+    {
+      version = (char *)CALLOC(32, sizeof(char));
+      mus_snprintf(version, 32, "\n    xm: %s", XEN_TO_C_STRING(xm_val));
+      return(version);
+    }
+  return("");
+}
+#endif
+
 char *version_info(void)
 {
   #define NUM_ITOAS 19
@@ -187,6 +203,9 @@ char *version_info(void)
 	  ", Glib ",     itoa[12] = snd_itoa(GLIB_MAJOR_VERSION), ".", 
                          itoa[13] = snd_itoa(GLIB_MINOR_VERSION), ".", 
                          itoa[14] = snd_itoa(GLIB_MICRO_VERSION),
+#endif
+#if HAVE_GUILE
+	  xm_version(),
 #endif
 #if HAVE_GTKEXTRA
 	  "\n    gtkextra",

@@ -86,6 +86,7 @@ mix_context *make_mix_context(chan_info *cp)
   mix_context *g;
   g = (mix_context *)CALLOC(1, sizeof(mix_context));
   g->graph = channel_graph(cp);
+  g->color = cp->state->sgx->mix_color;
   return(g);
 }
 
@@ -267,7 +268,6 @@ static mix_info *make_mix_info(chan_info *cp)
   md->add_snd = NULL;
   md->temporary = DONT_DELETE_ME;
   md->wg = set_mix_info_context(cp);
-  md->wg->color = ss->sgx->mix_color;
   md->anchor = 0;
   md->y = 0;
   md->selected_chan = 0;

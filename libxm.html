@@ -1,0 +1,113 @@
+<html>
+<head>
+<title>xm</title>
+<style type="text/css">
+<!-- 
+	EM.red {color:red; font-style:normal}
+        EM.typing {color:maroon; font-style: normal}
+        EM.listener {color:darkblue; font-style: normal}
+        EM.tab {font-style: normal; font-size: small; font-family: fixed}
+	EM.def {font-weight: bold; font-style: normal}
+	H1 {text-align: center}
+	UL {list-style-type: none}
+	SPAN.box {background: beige; width: 100%; font-style: normal; text-align: center; border-width: thin; border-style: ridge}
+	SPAN.bbox {background: lightsteelblue; width: 100%; font-style: normal; border-width: thin; border-style: ridge}
+	SPAN.cbox {background: lightgreen; width: 100%; font-style: normal; border-width: thin; border-style: ridge}
+	SPAN.htmlbox {background: tan; font-style: normal; font-size: small; border-width: thin; border-style: ridge}
+-->
+</style>
+</head>
+<body bgcolor=white>
+
+<A NAME="xm"></a>
+<span class=box><h1>xm</h1></span>
+<br>
+<p>libxm provides Guile/Ruby bindings for Xlib, Xt, Xp, Xpm, and Xm (Motif).
+You can build it with just X, and so on -- see README.libxm for details.
+There are several example files In the libxm package -- anything with
+the extension "scm".  libxm can be used directly with Guile (or Ruby),
+providing a graphical user-interface for scripts and so on.
+</p>
+<p>
+All libxm names are exactly the same as the C name except that
+a "|" is prepended (in Guile) -- this can be set via the macros
+XM_PREFIX and XM_POSTFIX to whatever you like --
+"x:" or "<" and ">", etc.  In Ruby, I'm prepending "R".
+There are several differences between the C versions and the libxm
+versions; these are listed in detail at the start of xm.c.  Briefly,
+an Arg list is lisp list of name/value pairs and the "len" arg associated with it is optional;
+ref args are usually returned by proc, and not passed in unless init val is needed;
+array args are passed as lists, and returned as lists;
+pointers to structs are '(type val) where val is opaque except via accessors  
+(that is, all non-simple types are lists in xm where the first element is a symbol describing the type
+and the second is usually the C value stored directly as an unsigned long);
+"Va" args are passed and returned as lists, and the list length argument is optional;
+XtCallback procedure args are passed by value;
+the various "client data" args are optional;
+XtCallbackLists are passed as lists of procedure/data pairs;
+where an explicit NULL is needed as arg, use #f (or '() for list args);
+structs are accessed by the field name and the lisp variable (which contains the struct type) --
+(|pixel color) for example, or (|foreground gcvalue);
+blank structs, where needed, can be created via (|Name) -- (|XColor) or (|XGCValues) for example.
+</p>
+
+For example, load this into guile after loading libxm.so:
+</p>
+<pre>
+(let* ((shell-app (|XtVaOpenApplication 
+		    "Test" 0 0 0 '() 0 |applicationShellWidgetClass
+		    (list |XmNallowShellResize #t)))
+       (app (cadr shell-app))
+       (shell (car shell-app))
+       (black (|BlackPixelOfScreen 
+		(|DefaultScreenOfDisplay 
+		  (|XtDisplay shell)))))
+  (if (not (|XtIsApplicationShell shell))
+      (display "not appshell"?))
+  (|XtSetValues shell (list |XmNtitle "Hi!") 1)
+  (let* ((main-pane 
+	  (|XtVaCreateManagedWidget 
+	    "main-pane" |xmFormWidgetClass shell
+	    (list |XmNforeground       black
+		  |XmNtopAttachment    |XmATTACH_FORM
+		  |XmNbottomAttachment |XmATTACH_FORM
+		  |XmNleftAttachment   |XmATTACH_FORM
+		  |XmNrightAttachment  |XmATTACH_FORM
+		  |XmNallowResize      #t)))
+	 (button (|XtCreateManagedWidget 
+		   "push me" |xmPushButtonWidgetClass main-pane '() 0)))
+    (|XtAddCallback button |XmNactivateCallback 
+		    (lambda (widget context event-info)
+		      (display widget)
+		      (display (|reason event-info))
+		      (display context))
+		    123)
+    (|XtRealizeWidget shell)
+    (|XtAppMainLoop app)))
+</pre>
+<p>To use libxm from some existing program, you need only
+export the caller's XtAppContext and main shell widget (mainly to
+get the Display variable).  In Snd, the g_main_widgets procedure
+passes back a list:
+</p>
+<pre>
+  return(XEN_CONS(XEN_WRAP_C_POINTER(MAIN_APP(ss)),
+	   XEN_CONS(XEN_WRAP_C_POINTER(MAIN_SHELL(ss)),
+             XEN_CONS(XEN_WRAP_C_POINTER(MAIN_PANE(ss)),...))));
+</pre>
+<p>The XEN entities are from the xen package that provides
+a wrapper for Guile-specific (or Ruby-specific) functions
+and macros.  Once exported, we import them into the libxm
+world via the C-style casting procedures |Widget and
+|XtAppContext:
+</p>
+<pre>
+  (set! app (|XtAppContext (car (main-widgets))))
+</pre>
+<p>And now "app" can be used wherever a libxm procedure
+expects to get an XtAppContext argument.  There are several
+other "casters": |Pixel, etc. See snd-motif.scm and friends.
+</p>
+
+</body>
+</html>

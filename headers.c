@@ -2391,7 +2391,7 @@ static int read_ircam_header (int chan)
       if (little) 
 	{
 	  if (mus_char_to_lint((unsigned char *)hdrbuf) == I_IRCAM_VAX)
-	    data_format = MUS_BFLOAT;
+	    data_format = MUS_BFLOAT; /* MUS_VAX_FLOAT; */
 	  else data_format = MUS_LFLOAT;
 	}
       else data_format = MUS_BFLOAT;

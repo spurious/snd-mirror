@@ -696,11 +696,8 @@ static void update_mix_panel(int mix_id)
 
 void reflect_mix_in_mix_panel(int mix_id)
 {
-  snd_state *ss;
-  if ((mix_panel) && (XtIsManaged(mix_panel)))
-    {
-      ss = get_global_state();
-      if (current_mix_id(ss) == mix_id)
-	update_mix_panel(mix_id);
-    }
+  if ((mix_panel) && 
+      (XtIsManaged(mix_panel)) &&
+      (current_mix_id(get_global_state()) == mix_id))
+    update_mix_panel(mix_id);
 }

@@ -1,6 +1,5 @@
 /* TODO  buttons that choose which devices to display are no-ops
  * TODO  vertical slider labels aren't centered correctly
- * TODO  vu-button box (if > 2 chans) place sliders as they're chosen, not in chan order
  */
 
 #include "snd.h"
@@ -843,7 +842,7 @@ static void device_button_callback(GtkWidget *w, gpointer context)
   output = 0;
 #endif
 
-  button = (int)gtk_object_get_user_data(GTK_OBJECT(w));
+  button = (int)get_user_data(GTK_OBJECT(w));
   on = GTK_TOGGLE_BUTTON(w)->active;
 
 #if OLD_SGI_AL
@@ -1106,7 +1105,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, GtkWidget *fil
       device_buttons[i] = gtk_check_button_new_with_label(name);
       gtk_box_pack_start(GTK_BOX(button_holder), device_buttons[i], TRUE, TRUE, 0);
       gtk_widget_show(device_buttons[i]);
-      gtk_object_set_user_data(GTK_OBJECT(device_buttons[i]), (gpointer)i);
+      set_user_data(GTK_OBJECT(device_buttons[i]), (gpointer)i);
       gtk_signal_connect(GTK_OBJECT(device_buttons[i]), "toggled", GTK_SIGNAL_FUNC(device_button_callback), (gpointer)all_panes[i]);
       set_toggle_button(device_buttons[i], TRUE, FALSE, (void *)(all_panes[i]));
     }

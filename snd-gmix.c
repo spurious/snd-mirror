@@ -1,8 +1,5 @@
 #include "snd.h"
 
-/* TODO need to block signals if coming from scheme (see mix-panel in snd-test)
- */
-
 static GtkWidget *mix_panel = NULL;
 static int dragging = 0;
 static void update_mix_panel(int mix_id);
@@ -154,7 +151,7 @@ static void amp_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   int chan;
   snd_state *ss = (snd_state *)data;
-  chan = (int)gtk_object_get_user_data(GTK_OBJECT(w));
+  chan = (int)get_user_data(GTK_OBJECT(w));
   change_mix_amp(current_mix_id(ss), chan, 1.0);
   GTK_ADJUSTMENT(w_amp_adjs[chan])->value = 0.5;
   gtk_adjustment_value_changed(GTK_ADJUSTMENT(w_amp_adjs[chan]));
@@ -184,7 +181,7 @@ static void amp_changed_callback(GtkAdjustment *adj, gpointer data)
   int chan;
   Float scrollval;
   snd_state *ss = (snd_state *)data;
-  chan = (int)gtk_object_get_user_data(GTK_OBJECT(adj));
+  chan = (int)get_user_data(GTK_OBJECT(adj));
   scrollval = GTK_ADJUSTMENT(w_amp_adjs[chan])->value;
   if (dragging == 0) start_mix_drag(current_mix_id(ss));
   dragging = 1;
@@ -196,7 +193,7 @@ static void amp_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer data
   int chan;
   Float scrollval;
   snd_state *ss = (snd_state *)data;
-  chan = (int)gtk_object_get_user_data(GTK_OBJECT(w));
+  chan = (int)get_user_data(GTK_OBJECT(w));
   scrollval = GTK_ADJUSTMENT(w_amp_adjs[chan])->value;
   dragging = 0;
   change_mix_amp(current_mix_id(ss), chan, scroll_to_amp(scrollval));
@@ -473,7 +470,7 @@ GtkWidget *make_mix_panel(snd_state *ss)
 	  mus_snprintf(amplab, LABEL_BUFFER_SIZE, "amp %d:", i);
 	  w_amp_labels[i] = gtk_label_new(amplab);
 	  gtk_container_add(GTK_CONTAINER(w_amp_events[i]), w_amp_labels[i]);
-	  gtk_object_set_user_data(GTK_OBJECT(w_amp_events[i]), (gpointer)i);
+	  set_user_data(GTK_OBJECT(w_amp_events[i]), (gpointer)i);
 	  gtk_widget_show(w_amp_labels[i]);
       
 	  w_amp_numbers[i] = gtk_label_new(amp_number_buffer);
@@ -485,8 +482,8 @@ GtkWidget *make_mix_panel(snd_state *ss)
 	  gtk_box_pack_start(GTK_BOX(w_amp_forms[i]), w_amps[i], TRUE, TRUE, 4);
 	  gtk_signal_connect(GTK_OBJECT(w_amp_adjs[i]), "value_changed", GTK_SIGNAL_FUNC(amp_changed_callback), (gpointer)ss);
 	  gtk_signal_connect(GTK_OBJECT(w_amps[i]), "button_release_event", GTK_SIGNAL_FUNC(amp_release_callback), (gpointer)ss);
-	  gtk_object_set_user_data(GTK_OBJECT(w_amps[i]), (gpointer)i);	  
-	  gtk_object_set_user_data(GTK_OBJECT(w_amp_adjs[i]), (gpointer)i);
+	  set_user_data(GTK_OBJECT(w_amps[i]), (gpointer)i);	  
+	  set_user_data(GTK_OBJECT(w_amp_adjs[i]), (gpointer)i);
 	  gtk_widget_show(w_amps[i]);
       
 	  gtk_widget_show(w_amp_forms[i]);
@@ -587,12 +584,8 @@ static void update_mix_panel(int mix_id)
 
 void reflect_mix_in_mix_panel(int mix_id)
 {
-  snd_state *ss;
-  if (mix_panel)
-    {
-      ss = get_global_state();
-      if (current_mix_id(ss) == mix_id)
-	update_mix_panel(mix_id);
-      gtk_widget_show(mix_panel);
-    }
+  if ((mix_panel) &&
+      (GTK_WIDGET_VISIBLE(mix_panel)) &&
+      (current_mix_id(get_global_state()) == mix_id))
+    update_mix_panel(mix_id);
 }

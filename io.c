@@ -351,6 +351,48 @@ void mus_ldouble_to_char(unsigned char *j, double x)
 #endif
 }
 
+#if 0
+/* Vax float translation taken from Mosaic libdtm/vaxcvt.c */
+static float mus_vax_float_to_float(unsigned char *inp)
+{
+  unsigned char exp;
+  unsigned char c0, c1, c2, c3;
+  float o;
+  unsigned char *outp;
+  outp = (unsigned char *)&o;
+  c0 = inp[0]; c1 = inp[1]; c2 = inp[2]; c3 = inp[3];
+  exp = (c1 << 1) | (c0 >> 7);             /* extract exponent */
+  if (!exp && !c1) return(0.0);            /* zero value */
+  else
+    if (exp > 2) 
+      {                        /* normal value */
+	outp[0] = c1 - 1;                      /* subtracts 2 from exponent */
+	outp[1] = c0;                          /* copy mantissa, LSB of exponent */
+	outp[2] = c3;
+	outp[3] = c2;
+      }
+    else 
+      if (exp) 
+	{                          /* denormalized number */
+	  unsigned int shft;
+	  outp[0] = c1 & 0x80;                   /* keep sign, zero exponent */
+	  shft = 3 - exp;
+	  /* shift original mant by 1 or 2 to get denormalized mant */
+	  /* prefix mantissa with '1'b or '01'b as appropriate */
+	  outp[1] = ((c0 & 0x7f) >> shft) | (0x10 << exp);
+	  outp[2] = (c0 << (8-shft)) | (c3 >> shft);
+	  outp[3] = (c3 << (8-shft)) | (c2 >> shft);
+	}
+      else 
+	{                                   /* sign=1 -> infinity or NaN */
+	  outp[0] = 0xff;                        /* set exp to 255 */
+	  outp[1] = c0 | 0x80;                   /* LSB of exp = 1 */
+	  outp[2] = c3;
+	  outp[3] = c2;
+	}
+}
+#endif
+
 #if MUS_LITTLE_ENDIAN
 
   #define m_big_endian_short(n)                   (mus_char_to_bshort(n))
@@ -1179,6 +1221,12 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, MUS_SAMPLE_TYP
 			    buffer[loc] = (MUS_SAMPLE_TYPE) (prescaling * (m_little_endian_float(jchar)));
 			}
 		      break;
+#if 0
+		    case MUS_VAX_FLOAT:
+		      for (; loc < loclim; loc++, jchar += siz_chans) 
+			buffer[loc] = MUS_FLOAT_TO_SAMPLE(mus_vax_float_to_float(jchar));
+		      break;
+#endif
 		    case MUS_LDOUBLE:   
 		      for (; loc < loclim; loc++, jchar += siz_chans) 
 			buffer[loc] = (MUS_SAMPLE_TYPE) (prescaling * (m_little_endian_double(jchar)));
