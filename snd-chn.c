@@ -5345,6 +5345,20 @@ static XEN g_set_frames(XEN on, XEN snd_n, XEN chn_n)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(on), on, XEN_ARG_1, S_setB S_frames, "a number");
   return(channel_set(snd_n, chn_n, on, CP_FRAMES, S_setB S_frames));
 }
+/*
+==32250== 684 bytes in 3 blocks are definitely lost in loss record 372 of 488
+==32250==    at 0x40029B2A: calloc (vg_replace_malloc.c:284)
+==32250==    by 0x8103EC0: init_sample_read_any_with_bufsize (snd-edits.c:6429)
+==32250==    by 0x81041AF: init_sample_read (snd-edits.c:6523)
+==32250==    by 0x815D074: make_enved_spectrum (snd-env.c:1150)
+==32250==    by 0x815D407: enved_show_background_waveform (snd-env.c:1239)
+==32250==    by 0x81DFF22: env_redisplay_1 (snd-genv.c:230)
+==32250==    by 0x81DFF9C: env_redisplay (snd-genv.c:236)
+==32250==    by 0x80F624F: after_edit (snd-edits.c:18)
+==32250==    by 0x8101F9A: delete_samples (snd-edits.c:5554)
+==32250==    by 0x8116D57: channel_set (snd-chn.c:5005)
+==32250==    by 0x8118397: g_set_frames (snd-chn.c:5346)
+*/
 
 WITH_REVERSED_CHANNEL_ARGS(g_set_frames_reversed, g_set_frames)
 

@@ -351,8 +351,8 @@ void xen_add_help(char *name, const char *help)
 	  xr_help_data = (char **)realloc(xr_help_data, help_size * sizeof(char *));
 	}
     }
-  xr_help_names[help_top] = name;
-  xr_help_data[help_top] = (char *)help;
+  xr_help_names[help_top] = strdup(name);
+  xr_help_data[help_top] = strdup(help);
   help_top++;
 }
 

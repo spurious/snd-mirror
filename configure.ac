@@ -1,6 +1,6 @@
 # Configuration script for Snd
 
-AC_INIT(snd, 7.9, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-7.tar.gz)
+AC_INIT(snd, 7.10, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-7.tar.gz)
 
 INVOKED_PROG="$[0]"
 INVOKED_ARGS="$[@]"
@@ -17,7 +17,7 @@ audio_system="unknown"
 MAKE_TARGET="snd"
 
 PACKAGE=snd
-VERSION=7.9
+VERSION=7.10
 AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE")
 AC_DEFINE_UNQUOTED(VERSION, "$VERSION")
 AC_SUBST(PACKAGE)
@@ -1097,7 +1097,7 @@ case "$host" in
 	AC_DEFINE(LINUX)
         LDSO_FLAGS="-shared"
         LIBS="-lm"
-#     This ^ used to be "" but in redhat 7 the -lm needs to be explicit for make sndsine etc
+#     This ^ used to be "" but in redhat 7 the -lm needs it to be explicit
 #     it was "" to cancel -lXpm without the needed -L<dir> for the same case
 
         audio_system=OSS

@@ -371,7 +371,8 @@
     (lambda (text fs)
       (if (or (not smpte-font-wh)
 	      (not (string=? smpte-font-name (axis-numbers-font))))
-	  (let ((layout (pango_layout_new (gdk_pango_context_get))))
+	  (let* ((ctx (gdk_pango_context_get))
+		 (layout (pango_layout_new ctx)))
 	    (set! smpte-font-name (axis-numbers-font))
 	    (if layout
 		(begin
@@ -380,6 +381,7 @@
 		  (let ((wid (pango_layout_get_pixel_size layout #f)))
 		    (g_object_unref (GPOINTER layout))
 		    (set! smpte-font-wh wid)
+		    (g_object_unref (GPOINTER ctx))
 		    wid))
 		#f))
 	  smpte-font-wh))))

@@ -3770,7 +3770,7 @@ static char *descr_dbl_check_3(int *args, ptree *pt)
   return(mus_format("if (isnan(" FLT_PT ") mus-error", args[3], FLOAT_ARG_3));
 }
 
-static xen_value *safe_package(ptree *prog,
+static void safe_package(ptree *prog,
 			       int type, 
 			       void (*function)(int *arg_addrs, ptree *pt),
 			       char *(*descr)(int *arg_addrs, ptree *pt),
@@ -3778,8 +3778,7 @@ static xen_value *safe_package(ptree *prog,
 			       int num_args)
 {
   /* package with added float arg checks for NaN; run_safety already checked */
-  xen_value *result;
-  result = package(prog, type, function, descr, args, num_args);
+  temp_package(prog, type, function, descr, args, num_args);
 #if HAVE_DECL_ISNAN
   if (num_args >= 1)
     {
@@ -3794,7 +3793,6 @@ static xen_value *safe_package(ptree *prog,
 	}
     }
 #endif
-  return(result);
 }
 
 static xen_value *package_n(ptree *prog,
@@ -8478,7 +8476,7 @@ static xen_value *clm_n(ptree *prog, xen_value **args, int num_args, xen_value *
     case 0: add_triple_to_ptree(prog, va_make_triple(clm_0f, descr_clm_0f, 2, args[0], sf)); break;
     case 1: add_triple_to_ptree(prog, va_make_triple(clm_1f, descr_clm_1f, 3, args[0], sf, args[1])); break;
     case 2: add_triple_to_ptree(prog, va_make_triple(clm_2f, descr_clm_2f, 4, args[0], sf, args[1], args[2])); break;
-    default: return(NULL); break;
+    default: if (sf) FREE(sf); return(NULL); break;
     }
   return(args[0]);
 }
@@ -10271,18 +10269,20 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 	  else v = var->v;
 	  if (v) 
 	    {
+	      xen_value *res = NULL;
 	      switch (v->type)
 		{
-		case R_READER:       if (num_args == 0) return(clean_up(reader_0(prog, args, v), args, num_args));       break;
-		case R_MIX_READER:   if (num_args == 0) return(clean_up(mix_reader_0(prog, args, v), args, num_args));   break;
-		case R_TRACK_READER: if (num_args == 0) return(clean_up(track_reader_0(prog, args, v), args, num_args)); break;
-		case R_CLM:          return(clean_up(clm_n(prog, args, num_args, v), args, num_args));                   break;
+		case R_READER:       if (num_args == 0) res = reader_0(prog, args, v);       break;
+		case R_MIX_READER:   if (num_args == 0) res = mix_reader_0(prog, args, v);   break;
+		case R_TRACK_READER: if (num_args == 0) res = track_reader_0(prog, args, v); break;
+		case R_CLM:          res = clm_n(prog, args, num_args, v); break;
 		case R_BOOL:
-		case R_GOTO:         if (num_args == 0) return(clean_up(goto_0(prog, args, v), args, num_args));         break;
-		case R_FUNCTION:     return(clean_up(funcall_n(prog, args, num_args, v), args, num_args));               break;
+		case R_GOTO:         if (num_args == 0) res = goto_0(prog, args, v);         break;
+		case R_FUNCTION:     res = funcall_n(prog, args, num_args, v);               break;
 		  /* fall through here if unknown function encountered (will give up later) */
 		}
-	      if (var == NULL) FREE(v);
+	      if (var == NULL) {FREE(v); v = NULL;}
+	      if (res) return(clean_up(res, args, num_args)); 
 	    }
 	  if (prog->goto_ctr > 0)
 	    {

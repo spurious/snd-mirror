@@ -110,9 +110,7 @@ make
 echo ' '
 echo ' '
 ./snd --version
-make sndsine
 make sndinfo
-./sndsine test.snd
 ./sndinfo test.snd
 
 echo ' '

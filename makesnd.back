@@ -16,8 +16,8 @@ clean:
 	rm -f $(GG_FILES)
 	rm -f $(GG_SO_FILE)
 	rm -f $(GL_FILES)
-	rm -f sndplay.o audinfo.o sndrecord.o sndinfo.o sndsine.o
-	rm -f snd sndplay audinfo sndrecord sndinfo sndsine
+	rm -f sndplay.o audinfo.o sndrecord.o sndinfo.o
+	rm -f snd sndplay audinfo sndrecord sndinfo
 
 distclean: clean
 	rm -f config.h config.log config.status makefile
@@ -29,7 +29,7 @@ allclean:
 	rm -f *.o
 	rm -f *.so
 	rm -f *.a
-	rm -f snd sndplay audinfo sndrecord sndinfo sndsine
+	rm -f snd sndplay audinfo sndrecord sndinfo
 
 sndplay: $(SNDLIB_HEADERS) headers.o io.o audio.o sound.o sndplay.o
 	$(CC) $(LDFLAGS) $(CFLAGS) headers.o io.o audio.o sound.o sndplay.o -o sndplay $(AUDIO_LIB) $(LIBS)
@@ -39,10 +39,6 @@ sndrecord: $(SNDLIB_HEADERS) headers.o io.o audio.o sound.o sndrecord.o
 
 sndinfo: $(SNDLIB_HEADERS) headers.o io.o audio.o sound.o sndinfo.o
 	$(CC) $(LDFLAGS) $(CFLAGS) headers.o io.o audio.o sound.o sndinfo.o -o sndinfo $(AUDIO_LIB) $(LIBS)
-
-# sndsine will fail to build if the configuration process includes either Ruby or Guile
-sndsine: $(SNDLIB_HEADERS) headers.o io.o audio.o sound.o clm.o sndsine.o
-	$(CC) $(LDFLAGS) $(GSL_FLAGS) $(CFLAGS) headers.o io.o audio.o sound.o clm.o sndsine.o -o sndsine $(AUDIO_LIB) $(GSL_LIBS) $(FFTW_LIBS) $(LIBS)
 
 audinfo: $(SNDLIB_HEADERS) headers.o io.o audio.o sound.o audinfo.o
 	$(CC) $(LDFLAGS) $(CFLAGS) headers.o io.o audio.o sound.o audinfo.o -o audinfo $(AUDIO_LIB) $(LIBS)

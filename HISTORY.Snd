@@ -1,6 +1,7 @@
 Snd change log
 
   10-Jan:    colormap?
+             moved sndsine.c to documentation
   5-Jan:     snd 7.9.
   3-Jan:     removed next-to-last (xen fallback) arg to ptree-channel, and associated xen-channel stuff.
 

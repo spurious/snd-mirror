@@ -138,12 +138,9 @@ See also http://ccrma.stanford.edu/planetccrma/software/.
 
 ----------------------------------------------------------------
 Included with Snd are five command-line programs that might
-be of interest: sndplay, sndrecord, sndinfo, sndsine, and audinfo:
+be of interest: sndplay, sndrecord, sndinfo, and audinfo:
 
   make sndplay
-
-sndsine is slightly special: the makefile assumes it has been
-configured --without-guile --without-ruby.
 
 
 ----------------------------------------------------------------

@@ -4,7 +4,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Mar 25 23:21:37 CET 2003
-# Last: Wed Mar 03 01:38:39 CET 2004
+# Last: Wed Dec 15 20:15:29 CET 2004
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -48,7 +48,7 @@
 
 # Commentary:
 
-# Tested with Snd 7.3, Motif 2.2.2, Gtk+ 2.2.1, Ruby 1.6.6, 1.6.8 and 1.9.0.
+# Tested with Snd 7.10, Motif 2.2.2, Gtk+ 2.2.1, Ruby 1.6.6, 1.6.8 and 1.9.0.
 #
 # The code is a translation of the Lisp code of Fernando Lopez Lezcano
 # found in clm-2/dlocsig of the CLM distribution.  An extensive
@@ -111,9 +111,9 @@
 #                        :rbm_reverb,          $rbm_reverb
 #                        :output_power,        1.5
 #                        :reverb_power,        0.5
-#                        :render_using,        Amplitude_panning
-#                                           or B_format_ambisonics
-#                                           or Decoded_ambisonics
+#                        :render_using,        :amplitude_panning
+#                                           or :b_format_ambisonics
+#                                           or :decoded_ambisonics
 #
 # Sample instruments (sinewave() and move() below) show how to replace
 # the usual make_locsig() and locsig() by DL.make_dlocsig() and
@@ -531,6 +531,18 @@ module DL
   Amplitude_panning   = 1
   B_format_ambisonics = 2
   Decoded_ambisonics  = 3
+  def which_render(val)
+    case val
+    when :amplitude_panning, Amplitude_panning
+      Amplitude_panning
+    when :b_format_ambisonics, B_format_ambisonics
+      B_format_ambisonics
+    when :decoded_ambisonics, Decoded_ambisonics
+      Decoded_ambisonics
+    else
+      Amplitude_panning
+    end
+  end
 
   def cis(r)
     Complex(cos(r), sin(r))
@@ -612,7 +624,7 @@ module DL
   end
   
   class Speaker_config < Dlocsig_base
-    Group = Struct.new("Group", :size, :vertices, :speakers, :matrix)
+    Groups = Struct.new("Groups", :size, :vertices, :speakers, :matrix)
 
     def initialize
       super
@@ -717,7 +729,7 @@ module DL
                  else
                    nil
                  end
-        Group.new(size, vertices, group, matrix)
+        Groups.new(size, vertices, group, matrix)
       end
     end
   end
@@ -728,7 +740,6 @@ module DL
       @render_using = Amplitude_panning
       @output_power = 1.5
       @reverb_power = 0.5
-      @reverb_amount = 0.05
       @rbm_output = nil
       @rbm_reverb = nil
       @out_channels = 4
@@ -813,16 +824,16 @@ module DL
       end
     end
     
-    # Amplitude_panning
-    # B_format_ambisonics
-    # Decoded_ambisonics
+    # :amplitude_panning
+    # :b_format_ambisonics
+    # :decoded_ambisonics
     def make_dlocsig(startime, dur, *args)
       path           = get_args(args, :path, nil)
       scaler         = get_args(args, :scaler, 1.0)
-      @reverb_amount = get_args(args, :reverb_amount, 0.05)
+      rev_amount     = get_args(args, :reverb_amount, 0.05)
       @output_power  = get_args(args, :output_power, 1.5)
       @reverb_power  = get_args(args, :reverb_power, 0.5)
-      @render_using  = get_args(args, :render_using, Amplitude_panning)
+      @render_using  = which_render(get_args(args, :render_using, Amplitude_panning))
       @rbm_output    = get_args(args, :rbm_output, $rbm_output)
       @rbm_reverb    = get_args(args, :rbm_reverb, $rbm_reverb)
       @out_channels  = get_args(args, :out_channels, 4)
@@ -883,13 +894,13 @@ module DL
         make_env(:envelope, @channel_gains[i], :scaler, unity_gain, :duration, real_dur)
       end
       if @rev_channels.nonzero?
-        unity_rev_gain = @reverb_amount * scaler * min_dist_unity ** @reverb_power
+        unity_rev_gain = rev_amount * scaler * min_dist_unity ** @reverb_power
         @reverb_gains = make_array(@rev_channels) do |i|
           make_env(:envelope, @channel_rev_gains[i], :scaler, unity_rev_gain, :duration, real_dur)
         end
       end
       @delays = make_env(:envelope, @delay, :offset, -min_delay, :duration, real_dur)
-      @path = make_delay(:size, 0, "max-size".intern, [1, dist2samples(@max_dist)].max)
+      @path = make_delay(:size, 1, "max-size".intern, [1, dist2samples(@max_dist)].max)
       self
     end
 
@@ -903,36 +914,36 @@ module DL
     end
 
     def transition_point_3(vert_a, vert_b, xa, ya, za, xb, yb, zb)
-      line_b = [xa, ya, za]
-      line_m = tr3_sub([xb, yb, zb], line_b)
+      line_b = vct(xa, ya, za)
+      line_m = tr3_sub(vct(xb, yb, zb), line_b)
       normal = tr3_cross(vert_a, vert_b)
       if (denominator = tr3_dot(normal, line_m)).abs <= 0.000001
         false
       else
-        tr3_add(line_b, tr3_scale(line_m, -tr3_dot(normal, line_b) / denominator))
+        vct2list(tr3_add(line_b, tr3_scale(line_m, -tr3_dot(normal, line_b) / denominator)))
       end
     end
 
     def tr3_cross(v1, v2)
-      [v1[1] * v2[2] - v1[2] * v2[1],
-       v1[2] * v2[0] - v1[0] * v2[2],
-       v1[0] * v2[1] - v1[1] * v2[0]]
+      vct(v1[1] * v2[2] - v1[2] * v2[1],
+          v1[2] * v2[0] - v1[0] * v2[2],
+          v1[0] * v2[1] - v1[1] * v2[0])
     end
 
     def tr3_dot(v1, v2)
-      v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2]
+      dot_product(v1, v2)
     end
 
     def tr3_sub(v1, v2)
-      [v1[0] - v2[0], v1[1] - v2[1], v1[2] - v2[2]]
+      vct_subtract!(vct_copy(v1), v2)
     end
 
     def tr3_add(v1, v2)
-      [v1[0] + v2[0], v1[1] + v2[1], v1[2] + v2[2]]
+      vct_add!(vct_copy(v1), v2)
     end
 
     def tr3_scale(v1, c)
-      [v1[0] * c, v1[1] * c, v1[2] * c]
+      vct_scale!(vct_copy(v1), c)
     end
 
     def transition_point_2(vert, xa, ya, xb, yb)
@@ -958,35 +969,28 @@ module DL
       if mat = group.matrix
         if x.abs < zero_coord and y.abs < zero_coord and z.abs < zero_coord
           [true, [1.0, 1.0, 1.0]]
-        elsif size == 3
-          gain_a = mat[0][0] * x + mat[0][1] * y + mat[0][2] * z
-          gain_b = mat[1][0] * x + mat[1][1] * y + mat[1][2] * z
-          gain_c = mat[2][0] * x + mat[2][1] * y + mat[2][2] * z
-          mag = distance(gain_a, gain_b, gain_c)
-          if gain_a.abs < zero_gain
-            gain_a = 0.0
+        else
+          case size
+          when 3
+            gain_a = mat[0][0] * x + mat[0][1] * y + mat[0][2] * z
+            gain_b = mat[1][0] * x + mat[1][1] * y + mat[1][2] * z
+            gain_c = mat[2][0] * x + mat[2][1] * y + mat[2][2] * z
+            mag = distance(gain_a, gain_b, gain_c)
+            if gain_a.abs < zero_gain then gain_a = 0.0 end
+            if gain_b.abs < zero_gain then gain_b = 0.0 end
+            if gain_c.abs < zero_gain then gain_c = 0.0 end
+            [(gain_a >= 0 and gain_b >= 0 and gain_c >= 0),
+              [gain_a / mag, gain_b / mag, gain_c / mag]]
+          when 2
+            gain_a = mat[0][0] * x + mat[0][1] * y
+            gain_b = mat[1][0] * x + mat[1][1] * y
+            mag = distance(gain_a, gain_b, 0.0)
+            if gain_a.abs < zero_gain then gain_a = 0.0 end
+            if gain_b.abs < zero_gain then gain_b = 0.0 end
+            [(gain_a >= 0 and gain_b >= 0), [gain_a / mag, gain_b / mag]]
+          when 1
+            [true, [1.0]]
           end
-          if gain_b.abs < zero_gain
-            gain_b = 0.0
-          end
-          if gain_c.abs < zero_gain
-            gain_c = 0.0
-          end
-          [(gain_a >= 0 and gain_b >= 0 and gain_c >= 0),
-           [gain_a / mag, gain_b / mag, gain_c / mag]]
-        elsif size == 2
-          gain_a = mat[0][0] * x + mat[0][1] * y
-          gain_b = mat[1][0] * x + mat[1][1] * y
-          mag = distance(gain_a, gain_b, 0.0)
-          if gain_a.abs < zero_gain
-            gain_a = 0.0
-          end
-          if gain_b.abs < zero_gain
-            gain_b = 0.0
-          end
-          [(gain_a >= 0 and gain_b >= 0), [gain_a / mag, gain_b / mag]]
-        elsif size == 1
-          [true, [1.0]]
         end
       else
         [true, [1.0, 1.0, 1.0]]
@@ -1011,8 +1015,12 @@ module DL
     end
 
     def push_gains(group, gains, dist, time)
-      outputs = make_array(@out_channels, 0.0)
-      rev_outputs = make_array(@rev_channels, 0.0)
+      outputs = make_vct(@out_channels)
+      revputs = if @rev_channels > 0
+                  make_vct(@rev_channels)
+                else
+                  false
+                end
       if dist >= 1.0
         att = 1.0 / dist ** @output_power
         ratt = 1.0 / dist ** @reverb_power
@@ -1025,7 +1033,7 @@ module DL
           gain = gains[i]
           outputs[speaker] = gain * att
           if @rev_channels > 1
-            rev_outputs[speaker] = gain * ratt
+            revputs[speaker] = gain * ratt
           end
         end
       else
@@ -1034,26 +1042,21 @@ module DL
             gain = gains[found]
             outputs[speaker] = gain + (1.0 - gain) * att
             if @rev_channels > 1
-              rev_outputs[speaker] = gain + (1.0 - gain) * ratt
+              revputs[speaker] = gain + (1.0 - gain) * ratt
             end
           else
             outputs[speaker] = att
             if @rev_channels > 1
-              rev_outputs[speaker] = ratt
+              revputs[speaker] = ratt
             end
           end
         end
       end
-      # FIXME
-      if t = @channel_gains[0][-2] and t > time
-        # debug("skipping %f (prev time %f)", time, t)
-      else
-        outputs.each_with_index do |val, i| @channel_gains[i].push(time, val) end
-        if @rev_channels == 1
-          @channel_rev_gains[0].push(time, ratt)
-        elsif @rev_channels > 1
-          rev_outputs.each_with_index do |val, i| @channel_rev_gains[i].push(time, val) end
-        end
+      vct2list(outputs).each_with_index do |val, i| @channel_gains[i].push(time, val) end
+      if @rev_channels == 1
+        @channel_rev_gains[0].push(time, ratt)
+      elsif @rev_channels > 1
+        vct2list(revputs).each_with_index do |val, i| @channel_rev_gains[i].push(time, val) end
       end
     end
     
@@ -1077,16 +1080,20 @@ module DL
                 ti = @prev_time +
                      (distance(xi - @prev_x, yi - @prev_y, zi - @prev_z) / \
                       distance(x - @prev_x, y - @prev_y, z - @prev_z)) * (time - @prev_time)
-                inside, gains = calculate_gains(xi, yi, zi, @prev_group)
-                if inside
-                  push_gains(@prev_group, gains, di, ti)
-                else
-                  inside, gains = calculate_gains(xi, yi, zi, group)
+                if ti < @prev_time
+                  inside, gains = calculate_gains(xi, yi, zi, @prev_group)
                   if inside
-                    push_gains(group, gains, di, ti)
+                    push_gains(@prev_group, gains, di, ti)
                   else
-                    error("%s#%s: outside of both adjacent groups", self.class, get_func_name)
+                    inside, gains = calculate_gains(xi, yi, zi, group)
+                    if inside
+                      push_gains(group, gains, di, ti)
+                    else
+                      error("%s#%s: outside of both adjacent groups", self.class, get_func_name)
+                    end
                   end
+                else
+                  warn("%s#%s: current time <= previous time", self.class, get_func_name) if $DEBUG
                 end
               end
             elsif edge.length == 1 and group.size == 2
@@ -1096,15 +1103,19 @@ module DL
                 ti = @prev_time +
                      (distance(xi - @prev_x, yi - @prev_y, 0.0) / \
                       distance(x - @prev_x, y - @prev_y, 0.0)) * (time - @prev_time)
-                inside, gains = calculate_gains(xi, yi, 0.0, @prev_group)
-                if inside
-                  push_gains(@prev_group, gains, di, ti)
-                  inside, gains = calculate_gains(xi, yi, 0.0, group)
+                if ti < @prev_time
+                  inside, gains = calculate_gains(xi, yi, 0.0, @prev_group)
                   if inside
-                    push_gains(group, gains, di, ti)
-                  else
-                    error("%s#%s: outside of both adjacent groups", self.class, get_func_name)
+                    push_gains(@prev_group, gains, di, ti)
+                    inside, gains = calculate_gains(xi, yi, 0.0, group)
+                    if inside
+                      push_gains(group, gains, di, ti)
+                    else
+                      error("%s#%s: outside of both adjacent groups", self.class, get_func_name)
+                    end
                   end
+                else
+                  warn("%s#%s: current time <= previous time", self.class, get_func_name) if $DEBUG
                 end
               end
             elsif edge.length == 1
@@ -1263,11 +1274,10 @@ module DL
         xi, yi, zi = nearest_point(xa, ya, za, xb, yb, zb, 0.0, 0.0, 0.0)
         if (((xa < xb) ? (xa <= xi and xi <= xb) : (xb <= xi and xi <= xa)) and
             ((ya < yb) ? (ya <= yi and yi <= yb) : (yb <= yi and yi <= ya)) and
-              ((za < zb) ? (za <= zi and zi <= zb) : (zb <= zi and zi <= za)))
+            ((za < zb) ? (za <= zi and zi <= zb) : (zb <= zi and zi <= za)))
           walk_all_rooms(xi, yi, zi,
-                         tb + (ta - tb) * \
-                         (distance(xb - xi, yb - yi, zb - zi) / \
-                          distance(xb - xa, yb - ya, zb - za)))
+                         tb + (ta - tb) * (distance(xb - xi, yb - yi, zb - zi) / \
+                                           distance(xb - xa, yb - ya, zb - za)))
         end
       end
     end
@@ -1320,7 +1330,7 @@ module DL
     end
 
     def minimum_segment_length(xa, ya, za, ta, xb, yb, zb, tb)
-      if (dist = distance(xb - xa, yb - ya, zb - za)) < 1.0
+      if distance(xb - xa, yb - ya, zb - za) < 1.0
         intersects_inside_radius(xa, ya, za, ta, xb, yb, zb, tb)
       else
         xi = (xa + xb) * 0.5
@@ -1771,11 +1781,7 @@ module DL
 
     def bezier_point(u, c)
       u1 = 1.0 - u
-      cr = make_array(3) do |i|
-        make_array(3) do |j|
-          u1 * c[i][j] + u * c[i][j + 1]
-        end
-      end
+      cr = make_array(3) do |i| make_array(3) do |j| u1 * c[i][j] + u * c[i][j + 1] end end
       1.downto(0) do |i|
         0.upto(i) do |j|
           3.times do |k| cr[k][j] = u1 * cr[k][j] + u * cr[k][j + 1] end
@@ -2483,7 +2489,7 @@ if provided? "snd-motif" or provided? "snd-gtk"
 
   # comment string
   def dlocsig_strings
-    dlstr = ["", "Amplitude_panning", "B_format_ambisonics", "Decoded_ambisonics"]
+    dlstr = ["", :amplitude_panning, :b_format_ambisonics, :decoded_ambisonics]
     format("%s, output_power: %1.2f, reverb_power: %1.2f",
            dlstr[@render_using],
            @output_power,

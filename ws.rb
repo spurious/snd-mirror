@@ -1,10 +1,10 @@
 # ws.rb -- with_sound and friends for Snd/Ruby -*- snd-ruby -*-
 
-# Copyright (C) 2003--2004 Michael Scholz
+# Copyright (C) 2003--2005 Michael Scholz
 
 # Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Apr 08 17:05:03 CEST 2003
-# Last: Sat Oct 30 15:26:26 CEST 2004
+# Last: Thu Jan 06 16:22:07 CET 2005
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -379,7 +379,7 @@ with_silence do
 end
 require "hooks"
 
-$rbm_version          = "30-10-2004"
+$rbm_version          = "06-01-2004"
 $rbm_output           = false
 $rbm_reverb           = false
 $rbm_file_name        = "test.snd" unless defined? $rbm_file_name
@@ -395,6 +395,7 @@ $rbm_delete_reverb    = false      unless defined? $rbm_delete_reverb
 $rbm_verbose          = $VERBOSE   unless defined? $rbm_verbose
 $rbm_info             = false      unless defined? $rbm_info
 $rbm_notehook         = nil        unless defined? $rbm_notehook
+$rbm_audio_format     = Mus_lshort unless defined? $rbm_audio_format
 
 if provided? "snd"
   $rbm_srate         = default_output_srate  unless defined? $rbm_srate
@@ -408,7 +409,7 @@ else
   $rbm_srate         = 22050             unless defined? $rbm_srate
   $rbm_channels      = 1                 unless defined? $rbm_channels
   $rbm_header_type   = Mus_next          unless defined? $rbm_header_type
-  $rbm_data_format   = Mus_lshort        unless defined? $rbm_data_format
+  $rbm_data_format   = Mus_lfloat        unless defined? $rbm_data_format
   $rbm_locsig_type   = Mus_interp_linear unless defined? $rbm_locsig_type
   $rbm_rt_bufsize    = 512               unless defined? $rbm_rt_bufsize
   $rbm_output_device = Mus_audio_default unless defined? $rbm_output_device
@@ -582,6 +583,7 @@ class With_sound
     @srate           = get_args(args, :srate, $rbm_srate).to_f
     @header_type     = get_args(args, :header_type, $rbm_header_type)
     @data_format     = get_args(args, :data_format, $rbm_data_format)
+    @audio_format    = get_args(args, :audio_format, $rbm_audio_format)
 
     @reverb          = get_args(args, :reverb, $rbm_reverb_func)
     @reverb_data     = get_args(args, :reverb_data, $rbm_reverb_data)
@@ -728,6 +730,7 @@ installs the @with_sound_note_hook and prints the line
                    :srate,             get_args(args, :srate, @srate).to_f,
                    :header_type,       get_args(args, :header_type, @header_type),
                    :data_format,       get_args(args, :data_format, @data_format),
+                   :audio_format,      get_args(args, :audio_format, @audio_format),
                    :verbose,           get_args(args, :verbose, @verbose),
                    :info,              get_args(args, :info, @info),
                    :offset,            get_args(args, :offset, 0.0),
@@ -1011,6 +1014,7 @@ installs the @with_sound_note_hook and prints the line
 #   :srate,             $rbm_srate (#$rbm_srate)
 #   :header_type,       $rbm_header_type (#$rbm_header_type)
 #   :data_format,       $rbm_data_format (#$rbm_data_format)
+#   :audio_format,      $rbm_audio_format (#$rbm_audio_format)
 # 
 #   :reverb,            $rbm_reverb_func (#{$rbm_reverb_func.inspect})
 #   :reverb_data,       $rbm_reverb_data (#{$rbm_reverb_data.inspect})
@@ -1578,17 +1582,15 @@ Example: rbm_mix(\"tmp\")\n") if filename == :help
   
   def statistics
     super(mus_sound_frames(@output), mus_sound_data_format(@output), mus_sound_header_type(@output))
-    str = ""
+    ch = "@"
     mus_sound_maxamp(@output).each_pair do |s, v|
-      str << format("%1.3f (%1.3fs), ", v, s / @srate)
+      message("maxamp %s: %1.3f (near %1.3f secs)", ch.next!, v, s / @srate)
     end
-    message(" max out: [%s]", str[0..-3])
     if @reverb
-      str = ""
+      ch = "@"
       mus_sound_maxamp(@revfile).each_pair do |s, v|
-        str << format("%1.3f (%1.3fs), ", v, s / @srate)
+        message("revamp %s: %1.3f (near %1.3f secs)", ch.next!, v, s / @srate)
       end
-      message(" max rev: [%s]", str[0..-3])
     end
   end
   
@@ -1655,7 +1657,7 @@ class With_DAC < Snd_Instrument
       idxs = []
       dac_vct = make_vct(@bufsize)
       ws_interrupt?
-      # calls all instruments in current sample-window bufsize times
+      # calls bufsize times all instruments in current sample-window
       # and accumulates the result in dac_vct
       @instruments.each_with_index do |arg, idx|
         beg, ends, body = arg
@@ -1666,8 +1668,7 @@ class With_DAC < Snd_Instrument
           idxs.push(idx)
         end
       end
-      # delete collected instrument-entries <= current sample
-      idxs.reverse.each do |idx| @instruments.delete_at(idx) end
+      idxs.each do |idx| @instruments.delete_at(idx) end
       dac_data = make_sound_data(@channels, @bufsize)
       ws_interrupt?
       @channels.times do |chn|
@@ -1680,7 +1681,7 @@ class With_DAC < Snd_Instrument
 
   protected
   def before_output
-    @ws_output = mus_audio_open_output(@device, @srate.round, @channels, @data_format,
+    @ws_output = mus_audio_open_output(@device, @srate.round, @channels, @audio_format,
                                        @bufsize * @channels * 2)
     if @ws_output < 0
       ws_error("%s#%s: can't open DAC (%s)", self.class, get_func_name, @ws_output.inspect)

@@ -7,7 +7,6 @@ fgrep -e " #(" *.scm
 echo ' -------------------------------- basic configure test -------------------------------- '
 rm -f snd
 rm -f config.cache
-rm -f sndsine
 echo ' CFLAGS="-Wall"  '
 ./configure --quiet CFLAGS="-Wall" 
 make allclean
@@ -109,11 +108,8 @@ make
 echo ' '
 echo ' '
 ./snd --version
-rm -f sndsine
 rm -f sndinfo
-make sndsine
 make sndinfo
-./sndsine test.snd
 ./sndinfo test.snd
 
 echo ' '

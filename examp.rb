@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Last: Sat Oct 30 15:20:20 CEST 2004
+# Last: Sun Dec 26 14:51:22 CET 2004
 
 # Commentary:
 #
@@ -133,7 +133,7 @@ if $DEBUG and RUBY_VERSION < "1.8.0"
         self.class.class_eval do define_method(id, lambda do self.to_s end) end
         id.id2name
       else
-        raise(NameError, "undefined method `#{id.id2name}'", caller(1))
+        raise(NameError, format("[version %s] undefined method `%s'", RUBY_VERSION, id.id2name))
       end
     end
   end
@@ -163,7 +163,8 @@ def make_array(len = 0, init = nil, &body)
           0
         end
   ary = Array.new(len, init)
-  if block_given? then ary.map!(&body) end
+  # if block_given? then ary.map!(&body) end
+  len.times do |i| ary[i] = body.call(i) end if block_given?
   ary
 end
 

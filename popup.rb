@@ -2,13 +2,13 @@
 
 # Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Thu Sep 05 22:28:49 CEST 2002
-# Last: Fri Nov 05 18:48:56 CET 2004
+# Last: Sat Jan 08 16:29:24 CET 2005
 
 # Commentary:
 #
 # Requires --with-motif or --with-gtk and module libxm.so or --with-static-xm!
 #
-# Tested with Snd 7.8, Motif 2.2.2, Gtk+ 2.2.1, Ruby 1.6.6, 1.6.8 and 1.9.0.
+# Tested with Snd 7.10, Motif 2.2.2, Gtk+ 2.2.1, Ruby 1.6.6, 1.6.8 and 1.9.0.
 #
 # $info_comment_hook: lambda do |file, info_string| ...; new_info_string; end
 #
@@ -282,7 +282,7 @@ If it returns non-nil or non-false, the menu will be posted.")
           @popups.push([snd, chn])
           RXtAddCallback(channel_widgets(snd, chn)[Graph],
                          RXmNpopupHandlerCallback,
-                         method(:channel_cb).to_proc,
+                         lambda do |w, c, i| channel_cb(w, c, i) end,
                          [snd, chn])
         end
       end

@@ -484,8 +484,8 @@ static void file_open_dialog_ok(GtkWidget *w, gpointer data)
   snd_info *sp;
   char *filename;
   filename = snd_filer_get_filename(open_dialog->dialog);
-  int hide_me = 0;
-  hide_me = (int)g_object_get_data(G_OBJECT(w), "hide-me");
+  gpointer hide_me = 0;
+  hide_me = g_object_get_data(G_OBJECT(w), "hide-me"); /* see snd-gtk.scm where this is set */
   if (hide_me == 0)
     gtk_widget_hide(open_dialog->dialog);
   file_dialog_stop_playing(open_dialog);
@@ -568,8 +568,8 @@ static gint file_mix_delete_callback(GtkWidget *w, GdkEvent *event, gpointer con
 
 static void file_mix_ok_callback(GtkWidget *w, gpointer context)
 {
-  int hide_me = 0;
-  hide_me = (int)g_object_get_data(G_OBJECT(w), "hide-me");
+  gpointer hide_me = 0;
+  hide_me = g_object_get_data(G_OBJECT(w), "hide-me");
   if (hide_me == 0)
     gtk_widget_hide(mix_dialog->dialog);
   file_dialog_stop_playing(mix_dialog);
@@ -772,7 +772,7 @@ static void save_as_ok_callback(GtkWidget *w, gpointer data)
   int type, format, srate, chans;
   bool need_update = false;
   off_t location, samples;
-  int hide_me = 0;
+  gpointer hide_me = 0;
   snd_info *sp;
   comment = read_file_data_choices(save_as_file_data, &srate, &chans, &type, &format, &location, &samples);
   last_save_as_filename = snd_filer_get_filename(save_as_dialog);
@@ -783,7 +783,7 @@ static void save_as_ok_callback(GtkWidget *w, gpointer data)
     if (sp) 
       report_in_minibuffer(sp, _("not saved (no name given)"));
   if (comment) FREE(comment);
-  hide_me = (int)g_object_get_data(G_OBJECT(w), "hide-me");
+  hide_me = g_object_get_data(G_OBJECT(w), "hide-me");
   if (hide_me == 0)
     gtk_widget_hide(save_as_dialog);
   if ((sp) && (last_save_as_filename) &&

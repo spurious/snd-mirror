@@ -40,7 +40,12 @@ void draw_string (axis_context *ax, int x0, int y0, char *str, int len)
       gdk_draw_layout(ax->wn, ax->gc, (gint)x0, (gint)y0, layout);
       g_object_unref(G_OBJECT(layout));
     }
-  g_free(ctx);
+  g_object_unref(ctx);
+  /* this is apparently obsolete code now.  I think the new way (untested) is to set up a context
+   * on each widget (geezus...) via gtk_widget_create_pango_layout(), then re-use that context
+   * at this level via gtk_widget_get_pango_context(w).  But do I need a new context or layout
+   * for every font, and do I have to update the fonts every time one changes? 
+   */
 }
 
 void fill_polygon(axis_context *ax, int points, ...)
