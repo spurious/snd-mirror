@@ -3017,10 +3017,10 @@ static BACKGROUND_TYPE tick_it(GUI_POINTER pet)
   XEN peak;
   env_tick *et = (env_tick *)pet;
   es = et->es;
+  cp = et->cp;
   val = tick_amp_env(cp, es);
   if (val)
     {
-      cp = et->cp;
       if (es->sf) free_snd_fd(es->sf);
       FREE(es);
       peak = g_env_info_to_vectors(cp->amp_envs[0], et->len);

@@ -15,7 +15,7 @@
 (if (not (provided? 'xm))
     (let ((hxm (dlopen "xm.so")))
       (if (string? hxm)
-	  (snd-error (format #f "snd-motif.scm needs the xm module: ~A" hxm))
+	  (snd-error (format #f "popup.scm needs the xm module: ~A" hxm))
 	  (dlinit hxm "init_xm"))))
 
 (define (for-each-child w func)
@@ -147,6 +147,14 @@
 		(let ((new-file-name (format #f "newf-~D.snd" selctr)))
 		  (set! selctr (+ selctr 1))
 		  (save-selection new-file-name)
+		  (open-sound new-file-name)))))
+      (list "Cut->New"   |xmPushButtonWidgetClass every-menu 
+	    (let ((selctr 0)) 
+	      (lambda (w c i) 
+		(let ((new-file-name (format #f "newf-~D.snd" selctr)))
+		  (set! selctr (+ selctr 1))
+		  (save-selection new-file-name)
+		  (delete-selection)
 		  (open-sound new-file-name)))))
       (list "Snap marks" |xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)

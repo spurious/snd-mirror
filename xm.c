@@ -1,6 +1,6 @@
 /* xm.c: Guile/Ruby bindings for X/Xt/Xpm/Xm/Xp
  *   needs xen.h
- *   for tests and examples see xm-test.scm and snd-motif.scm
+ *   for tests and examples see snd-motif.scm and snd-test.scm
  */
 
 
@@ -8,7 +8,7 @@
 
 
 /* TODO: selection-oriented Xt callbacks
- * TODO: xm-test.scm regression tests
+ * TODO: more regression tests
  * TODO: XEvent fields should be settable
  * TODO: struct accessors for XIconSize (see min_height)?
  * TODO: XmVaCreateSimple* (need special arglist handlers)
@@ -1374,6 +1374,7 @@ static Arg *XEN_TO_C_Args(XEN inarg)
   XEN descr, value, xname;
   char *name;
   len = XEN_LIST_LENGTH(inarg) / 2;
+  if (len == 0) return(NULL);
   args = (Arg *)CALLOC(len, sizeof(Arg));
   for (i = 0; i < len; i++, inarg = XEN_CDDR(inarg))
     {
@@ -2153,26 +2154,35 @@ transfers data to a destination"
 }
 #endif
 
-static XEN gxm_XmCreateMenuShell(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static XEN gxm_new_widget(const char *caller, Widget (*func)(Widget parent, char *name, ArgList al, Cardinal ac), XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
-  #define H_XmCreateMenuShell "Widget XmCreateMenuShell(Widget parent, String name, ArgList arglist, Cardinal argcount) \
-The MenuShell widget creation function"
   Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateMenuShell", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateMenuShell", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateMenuShell", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateMenuShell", "int");
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, caller, "Widget");
+  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, caller, "char*");
+  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, caller, "ArgList");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, caller, "int");
   {
     Arg *args;
     int arglen;
     args = XEN_TO_C_Args(arg3);
-    w = XmCreateMenuShell(XEN_TO_C_Widget(arg1), 
-			  XEN_TO_C_STRING(arg2), 
-			  args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
+    w = (*func)(XEN_TO_C_Widget(arg1), 
+		XEN_TO_C_STRING(arg2), 
+		args, 
+		arglen = XEN_TO_C_INT_DEF(arg4, arg3));
+    if (args)
+      {
+	fixup_args(w, args, arglen);
+	FREE(args);
+      }
   }
   return(C_TO_XEN_Widget(w));
+}
+
+static XEN gxm_XmCreateMenuShell(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+{
+  #define H_XmCreateMenuShell "Widget XmCreateMenuShell(Widget parent, String name, ArgList arglist, Cardinal argcount) \
+The MenuShell widget creation function"
+  return(gxm_new_widget("XmCreateMenuShell", XmCreateMenuShell, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmRemoveTabGroup(XEN arg1)
@@ -2380,7 +2390,7 @@ creates a rendition"
     w = XmRenditionCreate(XEN_TO_C_Widget(arg1), 
 			  XEN_TO_C_STRING(arg2), 
 			  args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    FREE(args);
+    if (args) FREE(args);
   }
   return(C_TO_XEN_XmRendition(w));
 }
@@ -2440,7 +2450,7 @@ modifies resources"
     args = XEN_TO_C_Args(arg2);
     XmRenditionUpdate(XEN_TO_C_XmRendition(arg1), 
 		      args, arglen = XEN_TO_C_INT_DEF(arg3, arg2));
-    FREE(args);
+    if (args) FREE(args);
   }
   return(XEN_FALSE);
 }
@@ -2594,14 +2604,17 @@ returns tab values"
   unsigned char a1, a2;
   char **a3;
   float res;
+  XEN val;
   a3 = (char **)CALLOC(1, sizeof(char *));
   XEN_ASSERT_TYPE(XEN_XmTab_P(arg1), arg1, 1, "XmTabGetValues", "XmTab");
   res = XmTabGetValues(XEN_TO_C_XmTab(arg1), &a1, &off, &a2, a3);
-  return(XEN_LIST_5(C_TO_XEN_DOUBLE((double)res),
-		    C_TO_XEN_INT((int)a1),
-		    C_TO_XEN_INT((int)off),
-		    C_TO_XEN_INT((int)a2),
-		    C_TO_XEN_STRING(a3[0])));
+  val = XEN_LIST_5(C_TO_XEN_DOUBLE((double)res),
+		   C_TO_XEN_INT((int)a1),
+		   C_TO_XEN_INT((int)off),
+		   C_TO_XEN_INT((int)a2),
+		   C_TO_XEN_STRING(a3[0]));
+  FREE(a3);
+  return(val);
 }
 
 static XEN gxm_XmTabSetValue(XEN arg1, XEN arg2)
@@ -2666,7 +2679,7 @@ retrieves attributes of a parse mapping"
     args = XEN_TO_C_Args(arg2);
     XmParseMappingGetValues(XEN_TO_C_XmParseMapping(arg1), 
 			    args, arglen = XEN_TO_C_INT_DEF(arg3, arg2));
-    FREE(args);
+    if (args) FREE(args);
   }
   return(XEN_FALSE);
 }
@@ -2684,6 +2697,7 @@ sets attributes of a parse mapping"
     args = XEN_TO_C_Args(arg2);
     XmParseMappingSetValues(XEN_TO_C_XmParseMapping(arg1), 
 			    args, arglen = XEN_TO_C_INT_DEF(arg3, arg2));
+    if (args) FREE(args);
     return(XEN_FALSE);
   }
 }
@@ -2699,7 +2713,7 @@ static XEN gxm_XmParseMappingCreate(XEN arg1, XEN arg2)
     int arglen;
     args = XEN_TO_C_Args(arg1);
     w = XmParseMappingCreate(args, arglen = XEN_TO_C_INT_DEF(arg2, arg1));
-    FREE(args);
+    if (args) FREE(args);
   }
   return(C_TO_XEN_XmParseMapping(w));
 }
@@ -3734,8 +3748,11 @@ static XEN gxm_XmVaCreateSimpleCheckBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 			       XEN_TO_C_STRING(arg2), 
 			       args,
 			       arglen = XEN_LIST_LENGTH(arg4) / 2);
-    fixup_args(w, args, arglen);
-    FREE(args);
+    if (args)
+      {
+	fixup_args(w, args, arglen);
+	FREE(args);
+      }
   }
   return(C_TO_XEN_Widget(w));
 
@@ -3759,12 +3776,15 @@ static XEN gxm_XmVaCreateSimpleRadioBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4, 
     int arglen;
     Arg *args;
     args = XEN_TO_C_Args(arg5);
-    w =XmCreateSimpleRadioBox(XEN_TO_C_Widget(arg1), 
-			      XEN_TO_C_STRING(arg2), 
-			      args,
-			      arglen = XEN_LIST_LENGTH(arg5) / 2);
-    fixup_args(w, args, arglen);
-    FREE(args);
+    w = XmCreateSimpleRadioBox(XEN_TO_C_Widget(arg1), 
+			       XEN_TO_C_STRING(arg2), 
+			       args,
+			       arglen = XEN_LIST_LENGTH(arg5) / 2);
+    if (args)
+      {
+	fixup_args(w, args, arglen);
+	FREE(args);
+      }
   }
   return(C_TO_XEN_Widget(w));
 }
@@ -3798,8 +3818,11 @@ KeySym option_mnemonic, int button_set, XtCallbackProc callback)"
 				 XEN_TO_C_STRING(arg2), 
 				 args,
 				 arglen = XEN_LIST_LENGTH(arg7) / 2);
-    fixup_args(w, args, arglen);
-    FREE(args);
+    if (args)
+      {
+	fixup_args(w, args, arglen);
+	FREE(args);
+      }
   }
   return(C_TO_XEN_Widget(w));
 }
@@ -3826,8 +3849,11 @@ static XEN gxm_XmVaCreateSimplePulldownMenu(XEN arg1, XEN arg2, XEN arg3, XEN ar
 				   XEN_TO_C_STRING(arg2), 
 				   args,
 				   arglen = XEN_LIST_LENGTH(arg5) / 2);
-    fixup_args(w, args, arglen);
-    FREE(args);
+    if (args)
+      {
+	fixup_args(w, args, arglen);
+	FREE(args);
+      }
   }
   return(C_TO_XEN_Widget(w));
 }
@@ -3851,8 +3877,11 @@ static XEN gxm_XmVaCreateSimplePopupMenu(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 				XEN_TO_C_STRING(arg2), 
 				args,
 				arglen = XEN_LIST_LENGTH(arg4) / 2);
-    fixup_args(w, args, arglen);
-    FREE(args);
+    if (args)
+      {
+	fixup_args(w, args, arglen);
+	FREE(args);
+      }
   }
   return(C_TO_XEN_Widget(w));
 }
@@ -3872,8 +3901,11 @@ static XEN gxm_XmVaCreateSimpleMenuBar(XEN arg1, XEN arg2, XEN arg3)
 				XEN_TO_C_STRING(arg2),
 				args,
 				arglen = XEN_LIST_LENGTH(arg3) / 2);
-    fixup_args(w, args, arglen);
-    FREE(args);
+    if (args)
+      {
+	fixup_args(w, args, arglen);
+	FREE(args);
+      }
   }
   return(C_TO_XEN_Widget(w));
 }
@@ -3881,127 +3913,37 @@ static XEN gxm_XmVaCreateSimpleMenuBar(XEN arg1, XEN arg2, XEN arg3)
 static XEN gxm_XmCreateSimpleCheckBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateSimpleCheckBox "Widget XmCreateSimpleCheckBox(Widget parent, String name, ArgList arglist, Cardinal argcount)"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateSimpleCheckBox", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateSimpleCheckBox", "String");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateSimpleCheckBox", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateSimpleCheckBox", "int");
-  {
-    int arglen;
-    Arg *args;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateSimpleCheckBox(XEN_TO_C_Widget(arg1), 
-			       XEN_TO_C_STRING(arg2), 
-			       args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateSimpleCheckBox", XmCreateSimpleCheckBox, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmCreateSimpleRadioBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateSimpleRadioBox "Widget XmCreateSimpleRadioBox(Widget parent, String name, ArgList arglist, Cardinal argcount)"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateSimpleRadioBox", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateSimpleRadioBox", "String");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateSimpleRadioBox", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateSimpleRadioBox", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateSimpleRadioBox(XEN_TO_C_Widget(arg1), 
-			       XEN_TO_C_STRING(arg2), 
-			       args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateSimpleRadioBox", XmCreateSimpleRadioBox, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmCreateSimpleOptionMenu(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateSimpleOptionMenu "Widget XmCreateSimpleOptionMenu(Widget parent, String name, ArgList arglist, Cardinal argcount)"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateSimpleOptionMenu", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateSimpleOptionMenu", "String");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateSimpleOptionMenu", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateSimpleOptionMenu", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateSimpleOptionMenu(XEN_TO_C_Widget(arg1), 
-				 XEN_TO_C_STRING(arg2), 
-				 args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateSimpleOptionMenu", XmCreateSimpleOptionMenu, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmCreateSimplePulldownMenu(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateSimplePulldownMenu "Widget XmCreateSimplePulldownMenu(Widget parent, String name, ArgList arglist, Cardinal argcount)"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateSimplePulldownMenu", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateSimplePulldownMenu", "String");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateSimplePulldownMenu", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateSimplePulldownMenu", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateSimplePulldownMenu(XEN_TO_C_Widget(arg1), 
-				   XEN_TO_C_STRING(arg2), 
-				   args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateSimplePulldownMenu", XmCreateSimplePulldownMenu, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmCreateSimplePopupMenu(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateSimplePopupMenu "Widget XmCreateSimplePopupMenu(Widget parent, String name, ArgList arglist, Cardinal argcount)"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateSimplePopupMenu", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateSimplePopupMenu", "String");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateSimplePopupMenu", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateSimplePopupMenu", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateSimplePopupMenu(XEN_TO_C_Widget(arg1), 
-				XEN_TO_C_STRING(arg2), 
-				args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateSimplePopupMenu", XmCreateSimplePopupMenu, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmCreateSimpleMenuBar(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateSimpleMenuBar "Widget XmCreateSimpleMenuBar(Widget parent, String name, ArgList arglist, Cardinal argcount)"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateSimpleMenuBar", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateSimpleMenuBar", "String");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateSimpleMenuBar", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateSimpleMenuBar", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateSimpleMenuBar(XEN_TO_C_Widget(arg1), 
-			      XEN_TO_C_STRING(arg2), 
-			      args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateSimpleMenuBar", XmCreateSimpleMenuBar, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmGetMenuCursor(XEN arg1)
@@ -4251,22 +4193,7 @@ static XEN gxm_XmCreateMainWindow(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateMainWindow "Widget XmCreateMainWindow(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The MainWindow widget creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateMainWindow", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateMainWindow", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateMainWindow", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateMainWindow", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateMainWindow(XEN_TO_C_Widget(arg1), 
-			   XEN_TO_C_STRING(arg2), 
-			   args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateMainWindow", XmCreateMainWindow, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmMainWindowSep3(XEN arg1)
@@ -4326,43 +4253,13 @@ static XEN gxm_XmCreateScrolledList(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateScrolledList "Widget XmCreateScrolledList(Widget parent, String name, ArgList arglist, Cardinal argcount) The List \
 ScrolledList creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateScrolledList", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateScrolledList", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateScrolledList", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateScrolledList", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateScrolledList(XEN_TO_C_Widget(arg1), 
-			     XEN_TO_C_STRING(arg2), 
-			     args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateScrolledList", XmCreateScrolledList, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmCreateList(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateList "Widget XmCreateList(Widget parent, String name, ArgList arglist, Cardinal argcount) The List widget creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateList", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateList", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateList", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateList", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateList(XEN_TO_C_Widget(arg1), 
-		     XEN_TO_C_STRING(arg2), 
-		     args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateList", XmCreateList, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmListPosSelected(XEN arg1, XEN arg2)
@@ -4832,87 +4729,27 @@ static XEN gxm_XmIsMotifWMRunning(XEN arg1)
 static XEN gxm_XmCreateLabel(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateLabel "Widget XmCreateLabel(Widget parent, String name, ArgList arglist, Cardinal argcount) The Label widget creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateLabel", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateLabel", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateLabel", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateLabel", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateLabel(XEN_TO_C_Widget(arg1), 
-		      XEN_TO_C_STRING(arg2), 
-		      args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateLabel", XmCreateLabel, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmCreateLabelGadget(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateLabelGadget "Widget XmCreateLabelGadget(Widget parent, String name, ArgList arglist, Cardinal argcount) The LabelGadget creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateLabelGadget", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateLabelGadget", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateLabelGadget", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateLabelGadget", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateLabelGadget(XEN_TO_C_Widget(arg1), 
-			    XEN_TO_C_STRING(arg2), 
-			    args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateLabelGadget", XmCreateLabelGadget, arg1, arg2, arg3, arg4));
 }
 
 #if MOTIF_2
 static XEN gxm_XmCreateIconHeader(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateIconHeader "Widget XmCreateIconHeader(Widget parent, String name, ArgList arglist, Cardinal argcount)"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateIconHeader", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateIconHeader", "String");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateIconHeader", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateIconHeader", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateIconHeader(XEN_TO_C_Widget(arg1), 
-			   XEN_TO_C_STRING(arg2), 
-			   args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateIconHeader", XmCreateIconHeader, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmCreateIconGadget(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateIconGadget "Widget XmCreateIconGadget(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The IconGadget widget creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateIconGadget", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateIconGadget", "String");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateIconGadget", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateIconGadget", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateIconGadget(XEN_TO_C_Widget(arg1),
-			   XEN_TO_C_STRING(arg2), 
-			   args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateIconGadget", XmCreateIconGadget, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmGetIconFileName(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
@@ -4935,22 +4772,7 @@ static XEN gxm_XmCreateToggleButton(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateToggleButton "Widget XmCreateToggleButton(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The ToggleButton widget creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateToggleButton", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateToggleButton", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateToggleButton", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateToggleButton", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateToggleButton(XEN_TO_C_Widget(arg1),
-			     XEN_TO_C_STRING(arg2), 
-			     args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateToggleButton", XmCreateToggleButton, arg1, arg2, arg3, arg4));
 }
 
 #if MOTIF_2
@@ -4988,22 +4810,7 @@ static XEN gxm_XmCreateToggleButtonGadget(XEN arg1, XEN arg2, XEN arg3, XEN arg4
 {
   #define H_XmCreateToggleButtonGadget "Widget XmCreateToggleButtonGadget(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The ToggleButtonGadget creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateToggleButtonGadget", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateToggleButtonGadget", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateToggleButtonGadget", "Arg*");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateToggleButtonGadget", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateToggleButtonGadget(XEN_TO_C_Widget(arg1), 
-				   XEN_TO_C_STRING(arg2), 
-				   args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateToggleButtonGadget", XmCreateToggleButtonGadget, arg1, arg2, arg3, arg4));
 }
 
 #if MOTIF_2
@@ -5019,22 +4826,7 @@ static XEN gxm_XmToggleButtonGadgetSetValue(XEN arg1, XEN arg2, XEN arg3)
 static XEN gxm_XmCreateGrabShell(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateGrabShell "Widget XmCreateGrabShell(Widget parent, char *name, ArgList al, Cardinal ac) -> a new GrabShell"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateGrabShell", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateGrabShell", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateGrabShell", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateGrabShell", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateGrabShell(XEN_TO_C_Widget(arg1), 
-			  XEN_TO_C_STRING(arg2), 
-			  args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateGrabShell", XmCreateGrabShell, arg1, arg2, arg3, arg4));
 }
 
 #endif
@@ -5061,65 +4853,20 @@ the state of a ToggleButtonGadget"
 static XEN gxm_XmCreateFrame(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateFrame "Widget XmCreateFrame(Widget parent, String name, ArgList arglist, Cardinal argcount) The Frame widget creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateFrame", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateFrame", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateFrame", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateFrame", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateFrame(XEN_TO_C_Widget(arg1), 
-		      XEN_TO_C_STRING(arg2), 
-		      args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateFrame", XmCreateFrame, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmCreateFormDialog(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateFormDialog "Widget XmCreateFormDialog(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 A Form FormDialog creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateFormDialog", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateFormDialog", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateFormDialog", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateFormDialog", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateFormDialog(XEN_TO_C_Widget(arg1), 
-			   XEN_TO_C_STRING(arg2), 
-			   args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateFormDialog", XmCreateFormDialog, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmCreateForm(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateForm "Widget XmCreateForm(Widget parent, String name, ArgList arglist, Cardinal argcount) The Form widget creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateForm", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateForm", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateForm", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateForm", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateForm(XEN_TO_C_Widget(arg1), 
-		     XEN_TO_C_STRING(arg2), 
-		     args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateForm", XmCreateForm, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmTextFindString(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
@@ -5496,44 +5243,14 @@ retrieves a copy of a portion of the internal text buffer"
 static XEN gxm_XmCreateText(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateText "Widget XmCreateText(Widget parent, String name, ArgList arglist, Cardinal argcount) The Text widget creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateText", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateText", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateText", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateText", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateText(XEN_TO_C_Widget(arg1), 
-		     XEN_TO_C_STRING(arg2), 
-		     args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateText", XmCreateText, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmCreateScrolledText(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateScrolledText "Widget XmCreateScrolledText(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The Text ScrolledText creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateScrolledText", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateScrolledText", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateScrolledText", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateScrolledText", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateScrolledText(XEN_TO_C_Widget(arg1), 
-			     XEN_TO_C_STRING(arg2), 
-			     args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateScrolledText", XmCreateScrolledText, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmTextSetHighlight(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
@@ -5555,44 +5272,14 @@ static XEN gxm_XmCreateFileSelectionDialog(XEN arg1, XEN arg2, XEN arg3, XEN arg
 {
   #define H_XmCreateFileSelectionDialog "Widget XmCreateFileSelectionDialog(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The FileSelectionBox FileSelectionDialog creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateFileSelectionDialog", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateFileSelectionDialog", "String");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateFileSelectionDialog", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateFileSelectionDialog", "int");
-  {
-    int arglen;
-    Arg *args;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateFileSelectionDialog(XEN_TO_C_Widget(arg1), 
-				    XEN_TO_C_STRING(arg2), 
-				    args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateFileSelectionDialog", XmCreateFileSelectionDialog, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmCreateFileSelectionBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateFileSelectionBox "Widget XmCreateFileSelectionBox(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The FileSelectionBox widget creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateFileSelectionBox", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateFileSelectionBox", "String");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateFileSelectionBox", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateFileSelectionBox", "int");
-  {
-    int arglen;
-    Arg *args;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateFileSelectionBox(XEN_TO_C_Widget(arg1), 
-				 XEN_TO_C_STRING(arg2), 
-				 args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateFileSelectionBox", XmCreateFileSelectionBox, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmFileSelectionDoSearch(XEN arg1, XEN arg2)
@@ -5618,22 +5305,7 @@ static XEN gxm_XmCreateTextField(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateTextField "Widget XmCreateTextField(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The TextField widget creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateTextField", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateTextField", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateTextField", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateTextField", "int");
-  {
-    int arglen;
-    Arg *args;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateTextField(XEN_TO_C_Widget(arg1), 
-			  XEN_TO_C_STRING(arg2), 
-			  args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateTextField", XmCreateTextField, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmTextFieldGetBaseline(XEN arg1)
@@ -5968,8 +5640,11 @@ initiates a drop transfer"
     args = XEN_TO_C_Args(arg2);
     w = XmDropTransferStart(XEN_TO_C_Widget(arg1), 
 			    args, arglen = XEN_TO_C_INT_DEF(arg3, arg2));
-    fixup_args(w, args, arglen);
-    FREE(args);
+    if (args)
+      {
+	fixup_args(w, args, arglen);
+	FREE(args);
+      }
   }
   return(C_TO_XEN_Widget(w));
 }
@@ -6022,7 +5697,7 @@ retrieves resource values set on a drop site"
     args = XEN_TO_C_Args(arg2);
     XmDropSiteRetrieve(XEN_TO_C_Widget(arg1), 
 		       args, arglen = XEN_TO_C_INT_DEF(arg3, arg2));
-    FREE(args);
+    if (args) FREE(args);
   }
   return(XEN_FALSE);
 }
@@ -6049,8 +5724,11 @@ resource values for a drop site"
     w = XEN_TO_C_Widget(arg1);
     args = XEN_TO_C_Args(arg2);
     XmDropSiteUpdate(w, args, arglen = XEN_TO_C_INT_DEF(arg3, arg2));
-    fixup_args(w, args, arglen);
-    FREE(args);
+    if (args)
+      {
+	fixup_args(w, args, arglen);
+	FREE(args);
+      }
   }
   return(XEN_FALSE);
 }
@@ -6095,8 +5773,11 @@ identifies a drop site and assigns resources that specify its behavior"
     w = XEN_TO_C_Widget(arg1);
     args = XEN_TO_C_Args(arg2);
     XmDropSiteRegister(w, args, arglen = XEN_TO_C_INT_DEF(arg3, arg2));
-    fixup_args(w, args, arglen);
-    FREE(args);
+    if (args)
+      {
+	fixup_args(w, args, arglen);
+	FREE(args);
+      }
   }
   return(XEN_FALSE);
 }
@@ -6133,23 +5814,8 @@ static XEN gxm_XmSimpleSpinBoxAddItem(XEN arg1, XEN arg2, XEN arg3)
 static XEN gxm_XmCreateSimpleSpinBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateSimpleSpinBox "Widget XmCreateSimpleSpinBox(Widget parent, String name, ArgList arglist, Cardinal argcount) \
-the SimpleSpinBox widget creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateSimpleSpinBox", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateSimpleSpinBox", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateSimpleSpinBox", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateSimpleSpinBox", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateSimpleSpinBox(XEN_TO_C_Widget(arg1), 
-			      XEN_TO_C_STRING(arg2), 
-			      args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+The SimpleSpinBox widget creation function"
+  return(gxm_new_widget("XmCreateSimpleSpinBox", XmCreateSimpleSpinBox, arg1, arg2, arg3, arg4));
 }
 #endif
 
@@ -6157,22 +5823,7 @@ static XEN gxm_XmCreateDrawnButton(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateDrawnButton "Widget XmCreateDrawnButton(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The DrawnButton widget creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateDrawnButton", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateDrawnButton", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateDrawnButton", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateDrawnButton", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateDrawnButton(XEN_TO_C_Widget(arg1), 
-			    XEN_TO_C_STRING(arg2), 
-			    args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateDrawnButton", XmCreateDrawnButton, arg1, arg2, arg3, arg4));
 }
 
 #if MOTIF_2
@@ -6191,22 +5842,7 @@ the specified XmSpinBox child into a valid position"
 static XEN gxm_XmCreateSpinBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateSpinBox "The SpinBox creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateSpinBox", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateSpinBox", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateSpinBox", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateSpinBox", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateSpinBox(XEN_TO_C_Widget(arg1), 
-			XEN_TO_C_STRING(arg2),
-			args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateSpinBox", XmCreateSpinBox, arg1, arg2, arg3, arg4));
 }
 #endif
 
@@ -6214,88 +5850,28 @@ static XEN gxm_XmCreateDrawingArea(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateDrawingArea "Widget XmCreateDrawingArea(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The DrawingArea widget creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateDrawingArea", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateDrawingArea", "String");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateDrawingArea", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateDrawingArea", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateDrawingArea(XEN_TO_C_Widget(arg1), 
-			    XEN_TO_C_STRING(arg2), 
-			    args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateDrawingArea", XmCreateDrawingArea, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmCreateSeparator(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateSeparator "Widget XmCreateSeparator(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The Separator widget creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateSeparator", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateSeparator", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateSeparator", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateSeparator", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateSeparator(XEN_TO_C_Widget(arg1), 
-			  XEN_TO_C_STRING(arg2), 
-			  args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateSeparator", XmCreateSeparator, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmCreateDragIcon(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateDragIcon "Widget XmCreateDragIcon(Widget widget, String name, ArgList arglist, Cardinal argcount) \
 creates a DragIcon widget"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateDragIcon", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateDragIcon", "String");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateDragIcon", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateDragIcon", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateDragIcon(XEN_TO_C_Widget(arg1), 
-			 XEN_TO_C_STRING(arg2), 
-			 args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateDragIcon", XmCreateDragIcon, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmCreateSeparatorGadget(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateSeparatorGadget "Widget XmCreateSeparatorGadget(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The SeparatorGadget creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateSeparatorGadget", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateSeparatorGadget", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateSeparatorGadget", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateSeparatorGadget", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateSeparatorGadget(XEN_TO_C_Widget(arg1), 
-				XEN_TO_C_STRING(arg2), 
-				args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateSeparatorGadget", XmCreateSeparatorGadget, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmTargetsAreCompatible(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
@@ -6345,8 +5921,11 @@ initiates a drag and drop transaction"
     w = XmDragStart(XEN_TO_C_Widget(arg1), 
 		    XEN_TO_C_XEvent(arg2), 
 		    args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
+    if (args)
+      {
+	fixup_args(w, args, arglen);
+	FREE(args);
+      }
   }
   return(C_TO_XEN_Widget(w));
 }
@@ -6355,66 +5934,21 @@ static XEN gxm_XmCreatePromptDialog(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreatePromptDialog "Widget XmCreatePromptDialog(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The SelectionBox PromptDialog creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreatePromptDialog", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreatePromptDialog", "String");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreatePromptDialog", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreatePromptDialog", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreatePromptDialog(XEN_TO_C_Widget(arg1), 
-			     XEN_TO_C_STRING(arg2), 
-			     args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreatePromptDialog", XmCreatePromptDialog, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmCreateSelectionDialog(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateSelectionDialog "Widget XmCreateSelectionDialog(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The SelectionBox SelectionDialog creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateSelectionDialog", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateSelectionDialog", "String");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateSelectionDialog", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateSelectionDialog", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateSelectionDialog(XEN_TO_C_Widget(arg1), 
-				XEN_TO_C_STRING(arg2),
-				args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateSelectionDialog", XmCreateSelectionDialog, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmCreateSelectionBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateSelectionBox "Widget XmCreateSelectionBox(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The SelectionBox widget creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateSelectionBox", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateSelectionBox", "String");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateSelectionBox", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateSelectionBox", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateSelectionBox(XEN_TO_C_Widget(arg1), 
-			     XEN_TO_C_STRING(arg2), 
-			     args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateSelectionBox", XmCreateSelectionBox, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmSelectionBoxGetChild(XEN arg1, XEN arg2)
@@ -6458,22 +5992,7 @@ static XEN gxm_XmCreateScrolledWindow(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateScrolledWindow "Widget XmCreateScrolledWindow(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The ScrolledWindow widget creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateScrolledWindow", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateScrolledWindow", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateScrolledWindow", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateScrolledWindow", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateScrolledWindow(XEN_TO_C_Widget(arg1),
-			       XEN_TO_C_STRING(arg2), 
-			       args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateScrolledWindow", XmCreateScrolledWindow, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmScrolledWindowSetAreas(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
@@ -6494,22 +6013,7 @@ static XEN gxm_XmCreateDialogShell(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateDialogShell "Widget XmCreateDialogShell(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The DialogShell widget creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateDialogShell", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateDialogShell", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateDialogShell", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateDialogShell", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateDialogShell(XEN_TO_C_Widget(arg1), 
-			    XEN_TO_C_STRING(arg2), 
-			    args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateDialogShell", XmCreateDialogShell, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmScrollBarSetValues(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
@@ -6548,22 +6052,7 @@ static XEN gxm_XmCreateScrollBar(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateScrollBar "Widget XmCreateScrollBar(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The ScrollBar widget creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateScrollBar", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateScrollBar", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateScrollBar", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateScrollBar", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateScrollBar(XEN_TO_C_Widget(arg1), 
-			  XEN_TO_C_STRING(arg2), 
-			  args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateScrollBar", XmCreateScrollBar, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmGetXmScreen(XEN arg1)
@@ -6907,22 +6396,7 @@ static XEN gxm_XmCreateScale(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateScale "Widget XmCreateScale(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The Scale widget creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateScale", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateScale", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateScale", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateScale", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateScale(XEN_TO_C_Widget(arg1), 
-		      XEN_TO_C_STRING(arg2), 
-		      args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateScale", XmCreateScale, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmScaleGetValue(XEN arg1)
@@ -7027,22 +6501,7 @@ static XEN gxm_XmCreateContainer(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateContainer "Widget XmCreateContainer(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The Container creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateContainer", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateContainer", "String");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateContainer", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateContainer", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateContainer(XEN_TO_C_Widget(arg1),
-			  XEN_TO_C_STRING(arg2), 
-			  args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateContainer", XmCreateContainer, arg1, arg2, arg3, arg4));
 }
 #endif
 
@@ -7084,66 +6543,21 @@ static XEN gxm_XmCreatePulldownMenu(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreatePulldownMenu "Widget XmCreatePulldownMenu(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 A RowColumn widget creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreatePulldownMenu", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreatePulldownMenu", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreatePulldownMenu", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreatePulldownMenu", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreatePulldownMenu(XEN_TO_C_Widget(arg1), 
-			     XEN_TO_C_STRING(arg2), 
-			     args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreatePulldownMenu", XmCreatePulldownMenu, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmCreatePopupMenu(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreatePopupMenu "Widget XmCreatePopupMenu(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 A RowColumn widget creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreatePopupMenu", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreatePopupMenu", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreatePopupMenu", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreatePopupMenu", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreatePopupMenu(XEN_TO_C_Widget(arg1), 
-			  XEN_TO_C_STRING(arg2), 
-			  args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreatePopupMenu", XmCreatePopupMenu, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmCreateMenuBar(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateMenuBar "Widget XmCreateMenuBar(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 A RowColumn widget creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateMenuBar", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateMenuBar", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateMenuBar", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateMenuBar", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateMenuBar(XEN_TO_C_Widget(arg1), 
-			XEN_TO_C_STRING(arg2), 
-			args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateMenuBar", XmCreateMenuBar, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmOptionButtonGadget(XEN arg1)
@@ -7166,88 +6580,28 @@ static XEN gxm_XmCreateOptionMenu(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateOptionMenu "Widget XmCreateOptionMenu(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 A RowColumn widget creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateOptionMenu", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateOptionMenu", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateOptionMenu", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateOptionMenu", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateOptionMenu(XEN_TO_C_Widget(arg1), 
-			   XEN_TO_C_STRING(arg2), 
-			   args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateOptionMenu", XmCreateOptionMenu, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmCreateRadioBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateRadioBox "Widget XmCreateRadioBox(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 A RowColumn widget creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateRadioBox", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateRadioBox", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateRadioBox", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateRadioBox", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateRadioBox(XEN_TO_C_Widget(arg1), 
-			 XEN_TO_C_STRING(arg2), 
-			 args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateRadioBox", XmCreateRadioBox, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmCreateWorkArea(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateWorkArea "Widget XmCreateWorkArea(Widget parent, String name, ArgList arglist, Cardinal argcount) \
- creates a RowColumn WorkArea"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateWorkArea", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateWorkArea", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateWorkArea", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateWorkArea", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateWorkArea(XEN_TO_C_Widget(arg1), 
-			 XEN_TO_C_STRING(arg2), 
-			 args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+creates a RowColumn WorkArea"
+  return(gxm_new_widget("XmCreateWorkArea", XmCreateWorkArea, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmCreateRowColumn(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateRowColumn "Widget XmCreateRowColumn(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The RowColumn widget creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateRowColumn", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateRowColumn", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateRowColumn", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateRowColumn", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateRowColumn(XEN_TO_C_Widget(arg1), 
-			  XEN_TO_C_STRING(arg2), 
-			  args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateRowColumn", XmCreateRowColumn, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmMenuPosition(XEN arg1, XEN arg2)
@@ -7263,22 +6617,7 @@ static XEN gxm_XmCreateCommandDialog(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateCommandDialog "Widget XmCreateCommandDialog(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The Command CommandDialog creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateCommandDialog", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateCommandDialog", "String");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateCommandDialog", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateCommandDialog", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateCommandDialog(XEN_TO_C_Widget(arg1), 
-			      XEN_TO_C_STRING(arg2), 
-			      args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateCommandDialog", XmCreateCommandDialog, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmCommandError(XEN arg1, XEN arg2)
@@ -7321,22 +6660,7 @@ static XEN gxm_XmCreateCommand(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateCommand "Widget XmCreateCommand(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The Command widget creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateCommand", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateCommand", "String");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateCommand", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateCommand", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateCommand(XEN_TO_C_Widget(arg1), 
-			XEN_TO_C_STRING(arg2), 
-			args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateCommand", XmCreateCommand, arg1, arg2, arg3, arg4));
 }
 
 #if MOTIF_2
@@ -7390,66 +6714,21 @@ static XEN gxm_XmCreateDropDownList(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateDropDownList "Widget XmCreateDropDownList(Widget parent, String name, ArgList arglist, Cardinal arg_count) \
 The Drop-down list ComboBox widget creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateDropDownList", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateDropDownList", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateDropDownList", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateDropDownList", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateDropDownList(XEN_TO_C_Widget(arg1), 
-			     XEN_TO_C_STRING(arg2), 
-			     args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateDropDownList", XmCreateDropDownList, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmCreateDropDownComboBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateDropDownComboBox "Widget XmCreateDropDownComboBox(Widget parent, String name, ArgList arglist, Cardinal arg_count) \
 The Drop-down ComboBox widget creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateDropDownComboBox", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateDropDownComboBox", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateDropDownComboBox", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateDropDownComboBox", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateDropDownComboBox(XEN_TO_C_Widget(arg1), 
-				 XEN_TO_C_STRING(arg2), 
-				 args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateDropDownComboBox", XmCreateDropDownComboBox, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmCreateComboBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateComboBox "Widget XmCreateComboBox(Widget parent, String name, ArgList arglist, Cardinal arg_count) \
 The default ComboBox widget creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateComboBox", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateComboBox", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateComboBox", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateComboBox", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateComboBox(XEN_TO_C_Widget(arg1), 
-			 XEN_TO_C_STRING(arg2), 
-			 args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateComboBox", XmCreateComboBox, arg1, arg2, arg3, arg4));
 }
 #endif
 
@@ -7457,44 +6736,14 @@ static XEN gxm_XmCreatePushButton(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreatePushButton "Widget XmCreatePushButton(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The PushButton widget creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreatePushButton", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreatePushButton", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreatePushButton", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreatePushButton", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreatePushButton(XEN_TO_C_Widget(arg1), 
-			   XEN_TO_C_STRING(arg2), 
-			   args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreatePushButton", XmCreatePushButton, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmCreatePushButtonGadget(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreatePushButtonGadget "Widget XmCreatePushButtonGadget(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The PushButtonGadget creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreatePushButtonGadget", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreatePushButtonGadget", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreatePushButtonGadget", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreatePushButtonGadget", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreatePushButtonGadget(XEN_TO_C_Widget(arg1), 
-				 XEN_TO_C_STRING(arg2), 
-				 args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreatePushButtonGadget", XmCreatePushButtonGadget, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmCascadeButtonHighlight(XEN arg1, XEN arg2)
@@ -7511,22 +6760,7 @@ static XEN gxm_XmCreateCascadeButton(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateCascadeButton "Widget XmCreateCascadeButton(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The CascadeButton widget creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateCascadeButton", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateCascadeButton", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateCascadeButton", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateCascadeButton", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateCascadeButton(XEN_TO_C_Widget(arg1), 
-			      XEN_TO_C_STRING(arg2), 
-			      args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateCascadeButton", XmCreateCascadeButton, arg1, arg2, arg3, arg4));
 }
 
 static void gxm_ProtocolProc(Widget w, XtPointer context, XtPointer info)
@@ -7693,22 +6927,7 @@ static XEN gxm_XmCreateCascadeButtonGadget(XEN arg1, XEN arg2, XEN arg3, XEN arg
 {
   #define H_XmCreateCascadeButtonGadget "Widget XmCreateCascadeButtonGadget(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The CascadeButtonGadget creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateCascadeButtonGadget", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateCascadeButtonGadget", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateCascadeButtonGadget", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateCascadeButtonGadget", "int");
-  {
-    int arglen;
-    Arg *args;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateCascadeButtonGadget(XEN_TO_C_Widget(arg1), 
-				    XEN_TO_C_STRING(arg2), 
-				    args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateCascadeButtonGadget", XmCreateCascadeButtonGadget, arg1, arg2, arg3, arg4));
 }
 
 #if MOTIF_2 && HAVE_XP
@@ -7764,8 +6983,11 @@ setup and create a Print Shell widget"
 		     XEN_TO_C_Screen(arg2), 
 		     XEN_TO_C_STRING(arg3), 
 		     args, arglen = XEN_TO_C_INT_DEF(arg5, arg4));
-    fixup_args(w, args, arglen);
-    FREE(args);
+    if (args)
+      {
+	fixup_args(w, args, arglen);
+	FREE(args);
+      }
   }
   return(C_TO_XEN_Widget(w));
 }
@@ -7775,66 +6997,21 @@ static XEN gxm_XmCreateBulletinBoardDialog(XEN arg1, XEN arg2, XEN arg3, XEN arg
 {
   #define H_XmCreateBulletinBoardDialog "Widget XmCreateBulletinBoardDialog(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The BulletinBoard BulletinBoardDialog creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateBulletinBoardDialog", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateBulletinBoardDialog", "String");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateBulletinBoardDialog", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateBulletinBoardDialog", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateBulletinBoardDialog(XEN_TO_C_Widget(arg1), 
-				    XEN_TO_C_STRING(arg2), 
-				    args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateBulletinBoardDialog", XmCreateBulletinBoardDialog, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmCreateBulletinBoard(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateBulletinBoard "Widget XmCreateBulletinBoard(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The BulletinBoard widget creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateBulletinBoard", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateBulletinBoard", "String");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateBulletinBoard", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateBulletinBoard", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateBulletinBoard(XEN_TO_C_Widget(arg1),
-			      XEN_TO_C_STRING(arg2),
-			      args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateBulletinBoard", XmCreateBulletinBoard, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmCreatePanedWindow(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreatePanedWindow "Widget XmCreatePanedWindow(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The PanedWindow widget creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreatePanedWindow", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreatePanedWindow", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreatePanedWindow", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreatePanedWindow", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreatePanedWindow(XEN_TO_C_Widget(arg1), 
-			    XEN_TO_C_STRING(arg2), 
-			    args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreatePanedWindow", XmCreatePanedWindow, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmGetAtomName(XEN arg1, XEN arg2)
@@ -7868,22 +7045,7 @@ A Notebook function that returns page information"
 static XEN gxm_XmCreateNotebook(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateNotebook "void XmCreateNotebook(Widget parent, String name, ArgList arglist, Cardinal argcount) The Notebook widget creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateNotebook", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateNotebook", "String");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateNotebook", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateNotebook", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateNotebook(XEN_TO_C_Widget(arg1), 
-			 XEN_TO_C_STRING(arg2), 
-			 args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateNotebook", XmCreateNotebook, arg1, arg2, arg3, arg4));
 }
 #endif
 
@@ -7891,44 +7053,14 @@ static XEN gxm_XmCreateArrowButton(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateArrowButton "Widget XmCreateArrowButton(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The ArrowButton widget creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateArrowButton", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateArrowButton", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateArrowButton", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateArrowButton", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateArrowButton(XEN_TO_C_Widget(arg1), 
-			    XEN_TO_C_STRING(arg2), 
-			    args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateArrowButton", XmCreateArrowButton, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmCreateArrowButtonGadget(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateArrowButtonGadget "Widget XmCreateArrowButtonGadget(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The ArrowButtonGadget creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateArrowButtonGadget", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateArrowButtonGadget", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateArrowButtonGadget", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateArrowButtonGadget", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateArrowButtonGadget(XEN_TO_C_Widget(arg1),
-				  XEN_TO_C_STRING(arg2),
-				  args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateArrowButtonGadget", XmCreateArrowButtonGadget, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmMessageBoxGetChild(XEN arg1, XEN arg2)
@@ -7943,176 +7075,56 @@ static XEN gxm_XmCreateTemplateDialog(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateTemplateDialog "Widget XmCreateTemplateDialog(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 A MessageBox TemplateDialog creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateTemplateDialog", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateTemplateDialog", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateTemplateDialog", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateTemplateDialog", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateTemplateDialog(XEN_TO_C_Widget(arg1),
-			       XEN_TO_C_STRING(arg2),
-			       args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateTemplateDialog", XmCreateTemplateDialog, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmCreateWorkingDialog(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateWorkingDialog "Widget XmCreateWorkingDialog(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The MessageBox WorkingDialog creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateWorkingDialog", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateWorkingDialog", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateWorkingDialog", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateWorkingDialog", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateWorkingDialog(XEN_TO_C_Widget(arg1), 
-			      XEN_TO_C_STRING(arg2), 
-			      args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateWorkingDialog", XmCreateWorkingDialog, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmCreateWarningDialog(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateWarningDialog "Widget XmCreateWarningDialog(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The MessageBox WarningDialog creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateWarningDialog", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateWarningDialog", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateWarningDialog", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateWarningDialog", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateWarningDialog(XEN_TO_C_Widget(arg1), 
-			      XEN_TO_C_STRING(arg2), 
-			      args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateWarningDialog", XmCreateWarningDialog, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmCreateQuestionDialog(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateQuestionDialog "Widget XmCreateQuestionDialog(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The MessageBox QuestionDialog creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateQuestionDialog", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateQuestionDialog", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateQuestionDialog", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateQuestionDialog", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateQuestionDialog(XEN_TO_C_Widget(arg1),
-			       XEN_TO_C_STRING(arg2), 
-			       args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateQuestionDialog", XmCreateQuestionDialog, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmCreateInformationDialog(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateInformationDialog "Widget XmCreateInformationDialog(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The MessageBox InformationDialog creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateInformationDialog", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateInformationDialog", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateInformationDialog", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateInformationDialog", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateInformationDialog(XEN_TO_C_Widget(arg1), 
-				  XEN_TO_C_STRING(arg2), 
-				  args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateInformationDialog", XmCreateInformationDialog, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmCreateErrorDialog(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateErrorDialog "Widget XmCreateErrorDialog(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The MessageBox ErrorDialog creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateErrorDialog", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateErrorDialog", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateErrorDialog", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateErrorDialog", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateErrorDialog(XEN_TO_C_Widget(arg1), 
-			    XEN_TO_C_STRING(arg2),
-			    args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateErrorDialog", XmCreateErrorDialog, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmCreateMessageDialog(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateMessageDialog "Widget XmCreateMessageDialog(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The MessageBox MessageDialog creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateMessageDialog", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateMessageDialog", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateMessageDialog", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateMessageDialog", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateMessageDialog(XEN_TO_C_Widget(arg1), 
-			      XEN_TO_C_STRING(arg2), 
-			      args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateMessageDialog", XmCreateMessageDialog, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmCreateMessageBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateMessageBox "Widget XmCreateMessageBox(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The MessageBox widget creation function"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCreateMessageBox", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmCreateMessageBox", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmCreateMessageBox", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XmCreateMessageBox", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg3);
-    w = XmCreateMessageBox(XEN_TO_C_Widget(arg1), 
-			   XEN_TO_C_STRING(arg2), 
-			   args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    fixup_args(w, args, arglen);
-    FREE(args);
-  }
-  return(C_TO_XEN_Widget(w));
+  return(gxm_new_widget("XmCreateMessageBox", XmCreateMessageBox, arg1, arg2, arg3, arg4));
 }
 
 static XEN gxm_XmIsMessageBox(XEN arg)
@@ -9903,7 +8915,7 @@ parent window ID, a pointer to the list of children windows and the number of ch
   /* DIFF: XQueryTree last 4 arg omit, returns (list val root parent (list children))
    */
   unsigned int arrlen;
-  Window **ws;
+  Window *ws;
   Window root, parent;
   int i, val, loc;
   XEN lst = XEN_EMPTY_LIST;
@@ -9911,10 +8923,10 @@ parent window ID, a pointer to the list of children windows and the number of ch
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XQueryTree", "Window");
   val = XQueryTree(XEN_TO_C_Display(arg1), 
 		   XEN_TO_C_Window(arg2), 
-		   &root, &parent, ws, &arrlen);
+		   &root, &parent, &ws, &arrlen);
   loc = xm_protect(lst);
   for (i = arrlen - 1; i >= 0; i--)
-    lst = XEN_CONS(C_TO_XEN_Window(*(ws[i])), lst);
+    lst = XEN_CONS(C_TO_XEN_Window(ws[i]), lst);
   XFree(ws);
   xm_unprotect_at(loc);
   return(XEN_LIST_4(C_TO_XEN_INT(val),
@@ -14726,8 +13738,11 @@ static XEN gxm_XtVaSetValues(XEN arg1, XEN arg2)
     args = XEN_TO_C_Args(arg2);
     w = XEN_TO_C_Widget(arg1);
     XtSetValues(w, args, arglen = XEN_LIST_LENGTH(arg2) / 2);
-    fixup_args(w, args, arglen);
-    FREE(args);
+    if (args)
+      {
+	fixup_args(w, args, arglen);
+	FREE(args);
+      }
   }
   return(XEN_FALSE);
 }
@@ -14750,8 +13765,11 @@ of a widget, (" XM_PREFIX "XtSetValues" XM_POSTFIX " w (list " XM_PREFIX "XmNhei
     w = XEN_TO_C_Widget(arg1);
     args = XEN_TO_C_Args(arg2);
     XtSetValues(w, args, arglen = XEN_TO_C_INT_DEF(arg3, arg2));
-    fixup_args(w, args, arglen);
-    FREE(args);
+    if (args)
+      {
+	fixup_args(w, args, arglen);
+	FREE(args);
+      }
   }
   return(XEN_FALSE);
 }
@@ -14894,8 +13912,11 @@ static XEN gxm_XtVaAppInitialize(XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg
 			NULL,
 			args,
 			arglen = XEN_LIST_LENGTH(arg8) / 2);
-  fixup_args(res, args, arglen);
-  FREE(args);
+  if (args)
+    {
+      fixup_args(res, args, arglen);
+      FREE(args);
+    }
   loc = xm_protect(argl);
   for (i = argc - 1; i >= 0; i--)
     argl = XEN_CONS(C_TO_XEN_STRING(argv[i]), argl);
@@ -14936,8 +13957,11 @@ static XEN gxm_XtAppInitialize(XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6,
 			NULL,
 			args,
 			arglen = XEN_TO_C_INT(arg9));
-  fixup_args(res, args, arglen);
-  FREE(args);
+  if (args)
+    {
+      fixup_args(res, args, arglen);
+      FREE(args);
+    }
   loc = xm_protect(argl);
   for (i = argc - 1; i >= 0; i--)
     argl = XEN_CONS(C_TO_XEN_STRING(argv[i]), argl);
@@ -14979,8 +14003,11 @@ static XEN gxm_XtVaOpenApplication(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN a
 			  XEN_TO_C_WidgetClass(arg7), 
 			  args, 
 			  arglen = XEN_LIST_LENGTH(arg8) / 2);
-  fixup_args(res, args, arglen);
-  FREE(args);
+  if (args)
+    {
+      fixup_args(res, args, arglen);
+      FREE(args);
+    }
   loc = xm_protect(argl);
   for (i = argc - 1; i >= 0; i--)
     argl = XEN_CONS(C_TO_XEN_STRING(argv[i]), argl);
@@ -15018,8 +14045,11 @@ applicationShellWidgetClass ,and the specified args and num_args and returns the
 			  NULL, 0, &argc,
 			  argv, NULL, XEN_TO_C_WidgetClass(arg7), 
 			  args, arglen = XEN_TO_C_INT(arg9));
-  fixup_args(res, args, arglen);
-  FREE(args);
+  if (args)
+    {
+      fixup_args(res, args, arglen);
+      FREE(args);
+    }
   loc = xm_protect(argl);
   for (i = argc - 1; i >= 0; i--)
     argl = XEN_CONS(C_TO_XEN_STRING(argv[i]), argl);
@@ -15138,8 +14168,11 @@ static XEN gxm_XtVaAppCreateShell(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN ar
 		       XEN_TO_C_Display(arg4), 
 		       args,
 		       arglen = XEN_LIST_LENGTH(arg5) / 2);
-  fixup_args(w, args, arglen);
-  FREE(args);
+  if (args)
+    {
+      fixup_args(w, args, arglen);
+      FREE(args);
+    }
   return(C_TO_XEN_Widget(w));
 }
 
@@ -15163,8 +14196,11 @@ the specified application name and application class for qualifying all widget r
 		       XEN_TO_C_Display(arg4), 
 		       args, 
 		       arglen = XEN_TO_C_INT_DEF(arg6, arg5));
-  fixup_args(w, args, arglen);
-  FREE(args);
+  if (args)
+    {
+      fixup_args(w, args, arglen);
+      FREE(args);
+    }
   return(C_TO_XEN_Widget(w));
 }
 
@@ -15181,8 +14217,11 @@ static XEN gxm_XtCreateApplicationShell(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   w = XtCreateApplicationShell(XEN_TO_C_STRING(arg1), 
 			       XEN_TO_C_WidgetClass(arg2), 
 			       args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-  fixup_args(w, args, arglen);
-  FREE(args);
+  if (args)
+    {
+      fixup_args(w, args, arglen);
+      FREE(args);
+    }
   return(C_TO_XEN_Widget(w));
 }
 
@@ -15202,8 +14241,11 @@ static XEN gxm_XtVaCreateManagedWidget(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 			    XEN_TO_C_Widget(arg3), 
 			    args,
 			    arglen = XEN_LIST_LENGTH(arg4) / 2);
-  fixup_args(w, args, arglen);
-  FREE(args);
+  if (args)
+    {
+      fixup_args(w, args, arglen);
+      FREE(args);
+    }
   return(C_TO_XEN_Widget(w));
 }
 
@@ -15223,8 +14265,11 @@ static XEN gxm_XtVaCreateWidget(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 		     XEN_TO_C_Widget(arg3), 
 		     args,
 		     arglen = XEN_LIST_LENGTH(arg4) / 2);
-  fixup_args(w, args, arglen);
-  FREE(args);
+  if (args)
+    {
+      fixup_args(w, args, arglen);
+      FREE(args);
+    }
   return(C_TO_XEN_Widget(w));
 }
 
@@ -15245,8 +14290,11 @@ that calls XtCreateWidget and XtManageChild."
 			    XEN_TO_C_WidgetClass(arg2), 
 			    XEN_TO_C_Widget(arg3), 
 			    args, arglen = XEN_TO_C_INT_DEF(arg5, arg4));
-  fixup_args(w, args, arglen);
-  FREE(args);
+  if (args)
+    {
+      fixup_args(w, args, arglen);
+      FREE(args);
+    }
   return(C_TO_XEN_Widget(w));
 }
 
@@ -15266,8 +14314,11 @@ static XEN gxm_XtCreateWidget(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 		     XEN_TO_C_WidgetClass(arg2), 
 		     XEN_TO_C_Widget(arg3), 
 		     args, arglen = XEN_TO_C_INT_DEF(arg5, arg4));
-  fixup_args(w, args, arglen);
-  FREE(args);
+  if (args)
+    {
+      fixup_args(w, args, arglen);
+      FREE(args);
+    }
   return(C_TO_XEN_Widget(w));
 }
 
@@ -15348,8 +14399,11 @@ static XEN gxm_XtVaCreatePopupShell(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 			   XEN_TO_C_Widget(arg3),
 			   args,
 			   arglen = XEN_LIST_LENGTH(arg4) / 2);
-  fixup_args(w, args, arglen);
-  FREE(args);
+  if (args)
+    {
+      fixup_args(w, args, arglen);
+      FREE(args);
+    }
   return(C_TO_XEN_Widget(w));
 }
 
@@ -15369,8 +14423,11 @@ static XEN gxm_XtCreatePopupShell(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN ar
 			   XEN_TO_C_WidgetClass(arg2), 
 			   XEN_TO_C_Widget(arg3), 
 			   args, arglen = XEN_TO_C_INT_DEF(arg5, arg4));
-    fixup_args(w, args, arglen);
-    FREE(args);
+    if (args)
+      {
+	fixup_args(w, args, arglen);
+	FREE(args);
+      }
   }
   return(C_TO_XEN_Widget(w));
 }
@@ -25211,7 +24268,7 @@ static int xm_already_inited = 0;
       define_structs();
       XEN_YES_WE_HAVE("xm");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"12-Sep-01\")");
+      XEN_EVAL_C_STRING("(define xm-version \"1-Oct-01\")");
 #endif
       xm_already_inited = 1;
     }

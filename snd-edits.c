@@ -3194,6 +3194,7 @@ static XEN g_as_one_edit(XEN proc, XEN origin)
   XEN result = XEN_FALSE;
   char *errmsg;
   XEN errstr;
+  XEN_ASSERT_TYPE((XEN_PROCEDURE_P(proc)), proc, XEN_ARG_1, S_as_one_edit, "a procedure");
   errmsg = procedure_ok(proc, 0, S_as_one_edit, "edit", 1);
   if (errmsg)
     {
@@ -3291,7 +3292,7 @@ between beg and beg + num to peak value norm.  If channel is omitted, the scalin
   snd_info *sp;
   chan_info *cp;
   int i, samp, samps;
-  Float scaler, maxamp;
+  Float scaler, maxamp = 0.0;
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg), beg, XEN_ARG_2, S_scale_sound_to, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(num), num, XEN_ARG_3, S_scale_sound_to, "a number");
   ASSERT_SOUND(S_scale_sound_to, snd, 4);

@@ -248,7 +248,7 @@ static void region_samples(int reg, int chn, int beg, int num, Float *data)
 {
   region *r;
   snd_fd *sf;
-  int i, j;
+  int i, j = 0;
   deferred_region *drp;
   r = id_to_region(reg);
   if (r)

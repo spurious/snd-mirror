@@ -336,7 +336,7 @@ file_info *make_temp_header(char *fullname, int srate, int chans, int samples, c
   /* want direct read/writes for temp files */
 #if (DEBUGGING) && (HAVE_EXECINFO_H)
   {
-    char *comment;
+    char *comment = NULL;
     int i, len = 0;
     void *ba[10];
     int n = backtrace (ba, sizeof (ba) / sizeof (ba[0]));

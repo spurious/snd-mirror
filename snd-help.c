@@ -267,6 +267,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+1-Oct:   Snd 5.3.\n\
 26-Sep:  after-edit-hook.\n\
 24-Sep:  changed mus-sound-max-amp to mus-sound-maxamp to match all other such cases (old name still exists)\n\
 18-Sep:  backwards incompatible change to save-state of small regions\n\
@@ -278,7 +279,6 @@ void news_help(snd_state *ss)
          optional position arg to add-to-menu.\n\
 1-Sep:   zero-phase, rotate-phase in dsp.scm (Scott McNab).\n\
          region-play-list in examp.scm.\n\
-31-Aug:  Snd 5.2.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'",

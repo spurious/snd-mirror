@@ -53,114 +53,75 @@ static XEN g_sound_loop_info(XEN filename)
   return(sres);
 }
 
+static XEN gmus_sound(const char *caller, int (*func)(const char *file), XEN filename)
+{
+  char *tmpstr = NULL;
+  int res;
+  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ONLY_ARG, caller, "a string"); 
+  tmpstr = mus_expand_filename(XEN_TO_C_STRING(filename));
+  res = (*func)(tmpstr);
+  if (tmpstr) FREE(tmpstr);
+  return(C_TO_XEN_INT(res));
+}
+
 static XEN g_sound_samples(XEN filename) 
 {
   #define H_mus_sound_samples "(" S_mus_sound_samples " filename) -> samples (frames*channels) in sound"
-  char *tmpstr = NULL;
-  int res;
-  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ONLY_ARG, S_mus_sound_samples, "a string"); 
-  res = mus_sound_samples(tmpstr = mus_expand_filename(XEN_TO_C_STRING(filename)));
-  if (tmpstr) FREE(tmpstr);
-  return(C_TO_XEN_INT(res));
+  return(gmus_sound(S_mus_sound_samples, mus_sound_samples, filename));
 }
 
 static XEN g_sound_frames(XEN filename) 
 {
   #define H_mus_sound_frames "(" S_mus_sound_frames " filename) -> frames (samples/channel) in sound"
-  char *tmpstr = NULL;
-  int res;
-  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ONLY_ARG, S_mus_sound_frames, "a string"); 
-  res = mus_sound_frames(tmpstr = mus_expand_filename(XEN_TO_C_STRING(filename)));
-  if (tmpstr) FREE(tmpstr);
-  return(C_TO_XEN_INT(res));
+  return(gmus_sound(S_mus_sound_frames, mus_sound_frames, filename));
 }
 
 static XEN g_sound_datum_size(XEN filename) 
 {
   #define H_mus_sound_datum_size "(" S_mus_sound_datum_size " filename) -> bytes per sample of data in sound"
-  char *tmpstr = NULL;
-  int res;
-  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ONLY_ARG, S_mus_sound_datum_size, "a string"); 
-  res = mus_sound_datum_size(tmpstr = mus_expand_filename(XEN_TO_C_STRING(filename)));
-  if (tmpstr) FREE(tmpstr);
-  return(C_TO_XEN_INT(res));
+  return(gmus_sound(S_mus_sound_datum_size, mus_sound_datum_size, filename));
 }
 
 static XEN g_sound_data_location(XEN filename) 
 {
   #define H_mus_sound_data_location "(" S_mus_sound_data_location " filename) -> location (bytes) of first sample of sound data"
-  char *tmpstr = NULL;
-  int res;
-  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ONLY_ARG, S_mus_sound_data_location, "a string"); 
-  res = mus_sound_data_location(tmpstr = mus_expand_filename(XEN_TO_C_STRING(filename)));
-  if (tmpstr) FREE(tmpstr);
-  return(C_TO_XEN_INT(res));
+  return(gmus_sound(S_mus_sound_data_location, mus_sound_data_location, filename));
 }
 
 static XEN g_sound_chans(XEN filename) 
 {
   #define H_mus_sound_chans "(" S_mus_sound_chans " filename) -> channels of sound"
-  char *tmpstr = NULL;
-  int res;
-  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ONLY_ARG, S_mus_sound_chans, "a string"); 
-  res = mus_sound_chans(tmpstr = mus_expand_filename(XEN_TO_C_STRING(filename)));
-  if (tmpstr) FREE(tmpstr);
-  return(C_TO_XEN_INT(res));
+  return(gmus_sound(S_mus_sound_chans, mus_sound_chans, filename));
 }
 
 static XEN g_sound_srate(XEN filename) 
 {
   #define H_mus_sound_srate "(" S_mus_sound_srate " filename) -> sampling rate of sound"
-  char *tmpstr = NULL;
-  int res;
-  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ONLY_ARG, S_mus_sound_srate, "a string"); 
-  res = mus_sound_srate(tmpstr = mus_expand_filename(XEN_TO_C_STRING(filename)));
-  if (tmpstr) FREE(tmpstr);
-  return(C_TO_XEN_INT(res));
+  return(gmus_sound(S_mus_sound_srate, mus_sound_srate, filename));
 }
 
 static XEN g_sound_header_type(XEN filename) 
 {
   #define H_mus_sound_header_type "(" S_mus_sound_header_type " filename) -> header type (e.g. AIFF) of sound"
-  char *tmpstr = NULL;
-  int res;
-  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ONLY_ARG, S_mus_sound_header_type, "a string"); 
-  res = mus_sound_header_type(tmpstr = mus_expand_filename(XEN_TO_C_STRING(filename)));
-  if (tmpstr) FREE(tmpstr);
-  return(C_TO_XEN_INT(res));
+  return(gmus_sound(S_mus_sound_header_type, mus_sound_header_type, filename));
 }
 
 static XEN g_sound_data_format(XEN filename) 
 {
   #define H_mus_sound_data_format "(" S_mus_sound_data_format " filename) -> data format (e.g. big endian short) of sound"
-  char *tmpstr = NULL;
-  int res;
-  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ONLY_ARG, S_mus_sound_data_format, "a string"); 
-  res = mus_sound_data_format(tmpstr = mus_expand_filename(XEN_TO_C_STRING(filename)));
-  if (tmpstr) FREE(tmpstr);
-  return(C_TO_XEN_INT(res));
+  return(gmus_sound(S_mus_sound_data_format, mus_sound_data_format, filename));
 }
 
 static XEN g_sound_length(XEN filename) 
 {
   #define H_mus_sound_length "(" S_mus_sound_length " filename) -> file length in bytes"
-  char *tmpstr = NULL;
-  int res;
-  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ONLY_ARG, S_mus_sound_length, "a string"); 
-  res = mus_sound_length(tmpstr = mus_expand_filename(XEN_TO_C_STRING(filename)));
-  if (tmpstr) FREE(tmpstr);
-  return(C_TO_XEN_INT(res));
+  return(gmus_sound(S_mus_sound_length, mus_sound_length, filename));
 }
 
 static XEN g_sound_type_specifier(XEN filename) 
 {
   #define H_mus_sound_type_specifier "(" S_mus_sound_type_specifier " filename) -> original file type identifier (e.g. 0x2e736e64)"
-  char *tmpstr = NULL;
-  int res;
-  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ONLY_ARG, S_mus_sound_type_specifier, "a string"); 
-  res = mus_sound_type_specifier(tmpstr = mus_expand_filename(XEN_TO_C_STRING(filename)));
-  if (tmpstr) FREE(tmpstr);
-  return(C_TO_XEN_INT(res));
+  return(gmus_sound(S_mus_sound_type_specifier, mus_sound_type_specifier, filename));
 }
 
 static XEN g_sound_comment(XEN filename) 
@@ -179,12 +140,7 @@ static XEN g_sound_comment(XEN filename)
 static XEN g_sound_write_date(XEN filename) 
 {
   #define H_mus_sound_write_date "(" S_mus_sound_write_date " filename) -> write_date of sound"
-  char *tmpstr = NULL;
-  int date;
-  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ONLY_ARG, S_mus_sound_write_date, "a string"); 
-  date = mus_sound_write_date(tmpstr = mus_expand_filename(XEN_TO_C_STRING(filename)));
-  if (tmpstr) FREE(tmpstr);
-  return(C_TO_XEN_INT(date));
+  return(gmus_sound(S_mus_sound_write_date, mus_sound_write_date, filename));
 }
 
 static XEN g_sound_type_name(XEN type) 

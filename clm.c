@@ -3211,11 +3211,15 @@ static void dmagify_env(seg *e, Float *data, int pts, int dur, Float scaler)
 { 
   int i, j, passes;
   double curx, curpass = 0.0;
-  double x0, y0, x1, y1, xmag;
+  double x0, y0, x1, y1, xmag = 1.0;
   e->size = pts;
-  x1 = data[0];
-  xmag = (double)dur / (double)(data[pts * 2 - 2] - x1);
-  y1 = data[1];
+  if (pts > 1)
+    {
+      x1 = data[0];
+      if (data[pts * 2 - 2] != x1)
+	xmag = (double)dur / (double)(data[pts * 2 - 2] - x1);
+      y1 = data[1];
+    }
   e->rates = (double *)CALLOC(pts, sizeof(double));
   e->passes = (int *)CALLOC(pts, sizeof(int));
   for (j = 0, i = 2; i < pts * 2; i += 2, j++)

@@ -6886,10 +6886,10 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
 	  else
 	    {
 	      ratio = (float)rc / (float)(rc + lc);
-	      info.play.balance = AUDIO_RIGHT_BALANCE * ratio;
+	      info.play.balance = (unsigned char)(AUDIO_RIGHT_BALANCE * ratio);
 	      if (rc > lc) 
-		info.play.gain = rc;
-	      else info.play.gain = lc;
+		info.play.gain = (int)rc;
+	      else info.play.gain = (int)lc;
 	    }
 	  break;
         case MUS_AUDIO_CHANNEL: 
@@ -6912,7 +6912,7 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
       switch (field)
 	{
         case MUS_AUDIO_AMP: 
-	  info.record.gain = AUDIO_MAX_GAIN * val[0];
+	  info.record.gain = (int)(AUDIO_MAX_GAIN * val[0]);
 	  info.record.balance = 0;
 	  break;
         case MUS_AUDIO_CHANNEL: 
@@ -6922,7 +6922,7 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
 	  info.record.sample_rate = 8000; 
 	  break;
 	case MUS_AUDIO_IGAIN: 
-	  info.monitor_gain = AUDIO_MAX_GAIN * val[0]; 
+	  info.monitor_gain = (int)(AUDIO_MAX_GAIN * val[0]); 
 	  break;
         default: 
 	  RETURN_ERROR_EXIT(MUS_AUDIO_CANT_WRITE, audio_fd,
@@ -6946,15 +6946,15 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
 	  if (chan == 0)
 	    lc = AUDIO_MAX_GAIN * val[0];
 	  else rc = AUDIO_MAX_GAIN * val[0];
-	  gain = (rc + lc);
+	  gain = (int)(rc + lc);
 	  if (gain == 0)
 	    info.record.gain = 0;
 	  else
 	    {
-	      info.record.balance = AUDIO_RIGHT_BALANCE * ((float)rc / (float)(rc + lc));
+	      info.record.balance = (unsigned char)(AUDIO_RIGHT_BALANCE * ((float)rc / (float)(rc + lc)));
 	      if (rc > lc) 
-		info.record.gain = rc;
-	      else info.record.gain = lc;
+		info.record.gain = (int)rc;
+	      else info.record.gain = (int)lc;
 	    }
 	  break;
         case MUS_AUDIO_CHANNEL: 
@@ -6964,7 +6964,7 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
 	  info.record.sample_rate = (int)val[0]; 
 	  break;
 	case MUS_AUDIO_IGAIN: 
-	  info.monitor_gain = AUDIO_MAX_GAIN * val[0]; 
+	  info.monitor_gain = (int)(AUDIO_MAX_GAIN * val[0]); 
 	  break;
         default: 
 	  RETURN_ERROR_EXIT(MUS_AUDIO_CANT_WRITE, audio_fd,
