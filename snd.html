@@ -383,7 +383,7 @@ cases, the button on the right side turns the
 option on or off.
 </p>
 <p>
-But all this is standard stuff for a sound editor; even the
+But this is all standard stuff; even the
 various dialogs scattered around the menus will present
 no surprises.  The GL spectrograph is somewhat unusual,
 and I like the paned window approach to multichannel sounds ("<i>de gustibus...</i>").
@@ -394,7 +394,7 @@ Everything in Snd from the low-level data readers to the
 high-level editing operations is tied into the extension
 language.  You can do anything you want with sounds.
 Rather than try to present endless menus full of
-canned "effects" and editing operations, Snd gives
+canned "effects", Snd gives
 you full programming power over sounds, and you can 
 extend it to include whatever you want.  But if you
 are in a big hurry, or not yet confident in your ability as a programmer, many such
@@ -2167,7 +2167,10 @@ the change in tempo.  This doesn't work in all
 files -- it sometimes sounds like execrable reverb
 or is too buzzy -- but it certainly is more
 robust than the phase vocoder approach to the
-same problem. The expander is on only if the expand
+same problem. The best quality time expansion
+comes from rubber-sound in rubber.scm, but unfortunately
+it only works on "well-behaved" sounds.
+The expander is on only if the expand
 button is set.
         <!-- I(change tempo):O(see 'expand' control)(expand) --><!-- I(change tempo):A(expand) -->
 </p>
@@ -2203,12 +2206,13 @@ button is set.
 
 <p>The <A NAME="filtercontrol">filter</a> is an arbitrary (even) order FIR filter
 specified by giving the frequency response 
-envelope (the envelope is assumed to go from 0 to half the sampling rate -- see <a href="extsnd.html#filterenvinhz">filter-env-in-hz</a>)
+envelope 
 and filter order in the text windows provided.
+The envelope X axis goes from 0 to half the sampling rate -- see <a href="extsnd.html#filterenvinhz">filter-env-in-hz</a>.
 If you raise the control pane from its default height, 
 a graph is revealed beneath the filter text field;
 this is an envelope editor like the envelope editor dialog
-but specialized for filtering.  The actual frequency response
+but specialized for filtering.  The actual frequency response (given the current filter order)
 is displayed in blue.  As with all the user interface text entry widgets,
 anything you type in the filter envelope text field is evaluated,
 returning in this case a list of breakpoints; you can, for example,

@@ -523,12 +523,7 @@ Widget add_menu(snd_state *ss)
   static Arg in_args[12];
   static Arg high_args[12];
   Arg sep_args[12];
-  int in_n, n, high_n, main_n, start_high_n, k, j, p;
-  /* this mainly passes the global data pointer (ss) to all the menu-related callbacks */
-  
-  in_n = 0;
-  main_n = 0;
-  high_n = 0;
+  int in_n = 0, n, high_n = 0, main_n = 0, start_high_n, k, j;
   if (!(ss->using_schemes))
     {
       XtSetArg(main_args[main_n], XmNbackground, (ss->sgx)->basic_color); main_n++;
@@ -539,24 +534,24 @@ Widget add_menu(snd_state *ss)
   XtSetArg(in_args[in_n], XmNsensitive, FALSE); in_n++;
   
   n = high_n;
-  XtSetArg(high_args[n], XmNuserData, ss); n++; /* used in snd-xdrop.c by drop site to get main state data from whatever widget got the drop */
-  p = n;
-  XtSetArg(high_args[p], XmNtopAttachment, XmATTACH_FORM); p++;
-  XtSetArg(high_args[p], XmNbottomAttachment, XmATTACH_NONE); p++;
-  XtSetArg(high_args[p], XmNleftAttachment, XmATTACH_FORM); p++;
-  XtSetArg(high_args[p], XmNrightAttachment, XmATTACH_FORM); p++;
+  XtSetArg(high_args[n], XmNtopAttachment, XmATTACH_FORM); n++;
+  XtSetArg(high_args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+  XtSetArg(high_args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+  XtSetArg(high_args[n], XmNrightAttachment, XmATTACH_FORM); n++;
 #ifdef SND_AS_WIDGET
-  mw[menu_menu] = XtCreateWidget("mb", xmRowColumnWidgetClass, MAIN_PANE(ss), high_args, p);
+  mw[menu_menu] = XtCreateWidget("mb", xmRowColumnWidgetClass, MAIN_PANE(ss), high_args, n);
 #else
-  mw[menu_menu] = XmCreateMenuBar(MAIN_PANE(ss), "menuBar", high_args, p);
+  mw[menu_menu] = XmCreateMenuBar(MAIN_PANE(ss), "menuBar", high_args, n);
 #endif
 
   /* FILE MENU */
-  mw[file_menu] = XmCreatePulldownMenu(mw[menu_menu], "File", main_args, main_n);
+  XtSetArg(main_args[main_n], XmNuserData, 0);
+  mw[file_menu] = XmCreatePulldownMenu(mw[menu_menu], "File", main_args, main_n + 1);
   
   high_n = start_high_n;
   XtSetArg(high_args[high_n], XmNsubMenuId, mw[file_menu]); high_n++;
   XtSetArg(high_args[high_n], XmNmnemonic, 'F'); high_n++;
+  XtSetArg(high_args[high_n], XmNuserData, 0); high_n++;
   mw[f_cascade_menu] = XtCreateManagedWidget(_("File"), xmCascadeButtonWidgetClass, mw[menu_menu], high_args, high_n);
 
   mw[f_open_menu] = XtCreateManagedWidget(_("Open   C-x C-f"), xmPushButtonWidgetClass, mw[file_menu], main_args, main_n);
@@ -613,11 +608,13 @@ Widget add_menu(snd_state *ss)
 
 
   /* EDIT MENU */
-  mw[edit_menu] = XmCreatePulldownMenu(mw[menu_menu], "Edit", main_args, main_n);
+  XtSetArg(main_args[main_n], XmNuserData, 1);
+  mw[edit_menu] = XmCreatePulldownMenu(mw[menu_menu], "Edit", main_args, main_n + 1);
 
   high_n = start_high_n;
   XtSetArg(high_args[high_n], XmNsubMenuId, mw[edit_menu]); high_n++;
   XtSetArg(high_args[high_n], XmNmnemonic, 'E'); high_n++;
+  XtSetArg(high_args[high_n], XmNuserData, 1); high_n++;
   mw[e_cascade_menu] = XtCreateManagedWidget(_("Edit"), xmCascadeButtonWidgetClass, mw[menu_menu], high_args, high_n);
   
   mw[e_undo_menu] = XtCreateManagedWidget(_("Undo    C-x C-u"), xmPushButtonWidgetClass, mw[edit_menu], in_args, in_n);
@@ -672,11 +669,13 @@ Widget add_menu(snd_state *ss)
 
 
   /* VIEW MENU */
-  mw[view_menu] = XmCreatePulldownMenu(mw[menu_menu], "View", main_args, main_n);
+  XtSetArg(main_args[main_n], XmNuserData, 2);
+  mw[view_menu] = XmCreatePulldownMenu(mw[menu_menu], "View", main_args, main_n + 1);
 
   high_n = start_high_n;
   XtSetArg(high_args[high_n], XmNsubMenuId, mw[view_menu]); high_n++;
   XtSetArg(high_args[high_n], XmNmnemonic, 'V'); high_n++;
+  XtSetArg(high_args[high_n], XmNuserData, 2); high_n++;
   mw[v_cascade_menu] = XtCreateManagedWidget(_("View"), xmCascadeButtonWidgetClass, mw[menu_menu], high_args, high_n);
   XtAddCallback(mw[v_cascade_menu], XmNcascadingCallback, view_menu_update, NULL);
 
@@ -790,11 +789,13 @@ Widget add_menu(snd_state *ss)
 
 
   /* OPTIONS MENU */
-  mw[option_menu] = XmCreatePulldownMenu(mw[menu_menu], "Option", main_args, main_n);
+  XtSetArg(main_args[main_n], XmNuserData, 3);
+  mw[option_menu] = XmCreatePulldownMenu(mw[menu_menu], "Option", main_args, main_n + 1);
 
   high_n = start_high_n;
   XtSetArg(high_args[high_n], XmNsubMenuId, mw[option_menu]); high_n++;
   XtSetArg(high_args[high_n], XmNmnemonic, 'O'); high_n++;
+  XtSetArg(high_args[high_n], XmNuserData, 3); high_n++;
   mw[o_cascade_menu] = XtCreateManagedWidget(_("Options"), xmCascadeButtonWidgetClass, mw[menu_menu], high_args, high_n);
 
   mw[o_transform_menu] = XtCreateManagedWidget(_("Transform Options"), xmPushButtonWidgetClass, mw[option_menu], main_args, main_n);
@@ -849,11 +850,13 @@ Widget add_menu(snd_state *ss)
 
 
   /* HELP MENU */
-  mw[help_menu] = XmCreatePulldownMenu(mw[menu_menu], "Help", main_args, main_n);
+  XtSetArg(main_args[main_n], XmNuserData, 4);
+  mw[help_menu] = XmCreatePulldownMenu(mw[menu_menu], "Help", main_args, main_n + 1);
 
   high_n = start_high_n;
   XtSetArg(high_args[high_n], XmNsubMenuId, mw[help_menu]); high_n++;
   XtSetArg(high_args[high_n], XmNmnemonic, 'H'); high_n++;
+  XtSetArg(high_args[high_n], XmNuserData, 4); high_n++;
   mw[h_cascade_menu] = XtCreateManagedWidget(_("Help"), xmCascadeButtonWidgetClass, mw[menu_menu], high_args, high_n);
 
   mw[h_about_snd_menu] = XtCreateManagedWidget(_("Overview"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
@@ -912,41 +915,21 @@ Widget add_menu(snd_state *ss)
 #ifndef SND_AS_WIDGET
   XtManageChild(mw[menu_menu]);
 #endif
-
   return(mw[menu_menu]);
 }
 
-/* TODO: get rid of added_options list altogether -- they make remove_from_menu a necessary memory leak.
- */
-static Widget added_menus[MAX_MAIN_MENUS];
-static int new_menu = 5;
-static Widget *added_options = NULL;
-static char **added_options_names = NULL;
-static int *added_options_menus = NULL;
-static int added_options_size = 0;
-static int added_options_pos = 0;
-static int *added_options_callb = NULL;
-enum {FILE_MENU, EDIT_MENU, VIEW_MENU, OPTIONS_MENU, HELP_MENU, POPUP_MENU};
 #define INVALID_MENU -1
-
-static int callb2option(int callb)
-{
-  int i;
-  for (i = 0; i < added_options_pos; i++)
-    if (added_options_callb[i] == callb)
-      return(i);
-  return(-1);
-}
+#define CALL_INDEX(Data) (Data >> 16)
+#define MENU_INDEX(Data) (Data & 0xffff)
+#define PACK_MENU_DATA(Slot, Menu) ((Slot << 16) | (Menu))
 
 static void SND_callback(Widget w, XtPointer cD, XtPointer mD) 
 {
-  int callb, opt;
-  XtVaGetValues(w, XmNuserData, &callb, NULL);
-  opt = callb2option(callb);
-  if (opt != -1)
+  int callb;
+  if (call_menu_hook(w))
     {
-      if (call_menu_hook(w))
-	g_snd_callback(callb); /* menu option activate callback */
+      XtVaGetValues(w, XmNuserData, &callb, NULL);
+      g_snd_callback(CALL_INDEX(callb)); /* menu option activate callback */
     }
 }
 
@@ -954,61 +937,59 @@ static void GHC_callback(Widget w, XtPointer cD, XtPointer mD)
 {
   int slot;
   XtVaGetValues(w, XmNuserData, &slot, NULL);
-  g_snd_callback(slot); /* main menu cascading callback */
+  g_snd_callback(CALL_INDEX(slot)); /* main menu cascading callback */
 }
 
-static void add_option(Widget w, int which_menu, char *label, int callb)
-{
-  int i;
-  if (added_options_pos == added_options_size)
-    {
-      added_options_size += 8;
-      if (added_options_pos == 0)
-	{
-	  added_options = (Widget *)CALLOC(added_options_size, sizeof(Widget));
-	  added_options_names = (char **)CALLOC(added_options_size, sizeof(char *));
-	  added_options_menus = (int *)CALLOC(added_options_size, sizeof(int));
-	  added_options_callb = (int *)CALLOC(added_options_size, sizeof(int));
-	}
-      else
-	{
-	  added_options = (Widget *)REALLOC(added_options, added_options_size * sizeof(Widget));
-	  added_options_names = (char **)REALLOC(added_options_names, added_options_size * sizeof(char *));
-	  added_options_menus = (int *)REALLOC(added_options_menus, added_options_size * sizeof(int));
-	  added_options_callb = (int *)REALLOC(added_options_callb, added_options_size * sizeof(int));
-	  for (i = added_options_pos; i < added_options_size; i++) 
-	    {
-	      added_options[i] = NULL;
-	      added_options_callb[i] = 0;
-	    }
-	}
-    }
-  added_options[added_options_pos] = w;
-  added_options_menus[added_options_pos] = which_menu;
-  added_options_names[added_options_pos] = copy_string(label);
-  added_options_callb[added_options_pos] = callb;
-  added_options_pos++;
-}
+#include <X11/IntrinsicP.h>
 
 Widget menu_widget(int which_menu)
 {
-  switch (which_menu)
+  unsigned int i;
+  Widget w, subw;
+  CompositeWidget cw;
+  int menu;
+  if (which_menu == 5) return(popup_menu); /* special case -- not in main menuBar, presumably */
+  w = get_menubar();
+  cw = (CompositeWidget)w;
+  for (i = 0; i < cw->composite.num_children; i++)
     {
-    case FILE_MENU:    return(mw[file_menu]); break;
-    case EDIT_MENU:    return(mw[edit_menu]); break;
-    case VIEW_MENU:    return(mw[view_menu]); break;
-    case OPTIONS_MENU: return(mw[option_menu]); break;
-    case HELP_MENU:    return(mw[help_menu]); break;
-    case POPUP_MENU:   return(popup_menu); break;
-    default: 
-      if (which_menu < MAX_MAIN_MENUS)
-	return(added_menus[which_menu]); 
-      break;
+      w = cw->composite.children[i];
+      if ((w) && (XtIsManaged(w)))
+	{
+	  XtVaGetValues(w, XmNuserData, &menu, NULL);
+	  /* fprintf(stderr,"%s: menu: %d, slot: %d (%x)\n", XtName(w), MENU_INDEX(menu), CALL_INDEX(menu), menu); */
+	  if (which_menu == MENU_INDEX(menu))
+	    {
+	      XtVaGetValues(w, XmNsubMenuId, &subw, NULL);
+	      return(subw);
+	    }
+	}
     }
   return(NULL);
 }
 
-static void clobber_menu(Widget w, void *lab)
+static int or_over_children(Widget w, int (*func)(Widget, void *), void *userptr)
+{
+  unsigned int i;
+  int val;
+  if (w)
+    {
+      val = (*func)(w, userptr);
+      if (val) return(val);
+      if (XtIsComposite(w))
+	{
+	  CompositeWidget cw = (CompositeWidget)w;
+	  for (i = 0; i < cw->composite.num_children; i++)
+	    {
+	      val = or_over_children(cw->composite.children[i], func, userptr);
+	      if (val) return(val);
+	    }
+	}
+    }
+  return(0);
+}
+
+static int clobber_menu(Widget w, void *lab)
 {
   char *name, *wname;
   name = (char *)lab;
@@ -1017,9 +998,11 @@ static void clobber_menu(Widget w, void *lab)
     {
       int slot;
       XtVaGetValues(w, XmNuserData, &slot, NULL);
-      unprotect_callback(slot);
+      unprotect_callback(CALL_INDEX(slot));
       XtUnmanageChild(w);
+      return(1);
     }
+  return(0);
 }
 
 int g_remove_from_menu(int which_menu, char *label)
@@ -1028,55 +1011,106 @@ int g_remove_from_menu(int which_menu, char *label)
   top_menu = menu_widget(which_menu);
   if (top_menu)
     {
-      map_over_children(top_menu, clobber_menu, (void *)label);
+      or_over_children(top_menu, clobber_menu, (void *)label);
+      /* TODO: widget should be destroyed or re-used -- memleak currently */
       return(0);
     }
   return(INVALID_MENU);
 }
 
+static int change_menu(Widget w, void *ulabels)
+{
+  char *name, *wname;
+  char **labels = (char **)ulabels;
+  name = labels[0];
+  wname = XtName(w);
+  if ((wname) && (name) && (strcmp(name, wname) == 0) && (XtIsManaged(w)))
+    {
+      set_button_label(w, labels[1]);
+      return(1);
+    }
+  return(0);
+}
+
 int g_change_menu_label(int which_menu, char *old_label, char *new_label)
 {
-  int i;
-  for (i = 0; i < added_options_pos; i++)
-    if ((added_options_menus[i] == which_menu) && 
-	(added_options_names[i]) &&
-	(strcmp(old_label, added_options_names[i]) == 0) && 
-	(added_options[i]))
-      {
-	set_button_label(added_options[i], new_label);
-	if (added_options_names[i]) FREE(added_options_names[i]);
-	added_options_names[i] = copy_string(new_label);
-	return(0);
-      }
+  Widget top_menu;
+  char *labels[2];
+  labels[0] = old_label;
+  labels[1] = new_label;
+  top_menu = menu_widget(which_menu);
+  if (top_menu)
+    {
+      or_over_children(top_menu, change_menu, (void *)labels);
+      return(0);
+    }
   return(INVALID_MENU);
+}
+
+typedef struct {
+  char *label;
+  int on;
+} smenu;
+
+static int sensitize_menu(Widget w, void *usm)
+{
+  smenu *ism = (smenu *)usm;
+  char *name, *wname;
+  name = ism->label;
+  wname = XtName(w);
+  if ((wname) && (name) && (strcmp(name, wname) == 0) && (XtIsManaged(w)))
+    {
+      set_sensitive(w, ism->on);
+      return(1);
+    }
+  return(0);
 }
 
 int g_set_menu_sensitive(int which_menu, char *old_label, int on)
 {
-  int i;
-  for (i = 0; i < added_options_pos; i++)
-    if ((added_options_menus[i] == which_menu) && 
-	(added_options_names[i]) &&
-	(strcmp(old_label, added_options_names[i]) == 0) && 
-	(added_options[i]))
-      {
-	set_sensitive(added_options[i], on);
-	return(0);
-      }
+  Widget top_menu;
+  smenu sm;
+  top_menu = menu_widget(which_menu);
+  if (top_menu)
+    {
+      sm.label = old_label;
+      sm.on = on;
+      or_over_children(top_menu, sensitize_menu, (void *)(&sm));
+      return(0);
+    }
   return(INVALID_MENU);
+}
+
+static int is_sensitive_menu(Widget w, void *usm)
+{
+  smenu *ism = (smenu *)usm;
+  char *name, *wname;
+  name = ism->label;
+  wname = XtName(w);
+  if ((wname) && (name) && (strcmp(name, wname) == 0) && (XtIsManaged(w)))
+    {
+      ism->on = is_sensitive(w);
+      return(1);
+    }
+  return(0);
 }
 
 int g_menu_is_sensitive(int which_menu, char *old_label)
 {
-  int i;
-  for (i = 0; i < added_options_pos; i++)
-    if ((added_options_menus[i] == which_menu) && 
-	(added_options_names[i]) &&
-	(strcmp(old_label, added_options_names[i]) == 0) && 
-	(added_options[i]))
-      return(is_sensitive(added_options[i]));
-  return(0);
+  Widget top_menu;
+  smenu sm;
+  top_menu = menu_widget(which_menu);
+  if (top_menu)
+    {
+      sm.label = old_label;
+      sm.on = FALSE;
+      or_over_children(top_menu, is_sensitive_menu, (void *)(&sm));
+      return(sm.on);
+    }
+  return(FALSE);
 }
+
+static int new_menu = 5;
 
 int g_add_to_main_menu(snd_state *ss, char *label, int slot)
 {
@@ -1086,25 +1120,21 @@ int g_add_to_main_menu(snd_state *ss, char *label, int slot)
 
   if (auto_resize(ss)) XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, FALSE, NULL);
 
+  new_menu++;
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
+  XtSetArg(args[n], XmNuserData, PACK_MENU_DATA(slot, new_menu)); n++;
   m = XmCreatePulldownMenu(mw[menu_menu], label, args, n);
 
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
   XtSetArg(args[n], XmNsubMenuId, m); n++;
-  XtSetArg(args[n], XmNuserData, slot); n++;
+  XtSetArg(args[n], XmNuserData, PACK_MENU_DATA(slot, new_menu)); n++;
   cas = XtCreateManagedWidget(label, xmCascadeButtonWidgetClass, mw[menu_menu], args, n);
   if (slot >= 0) XtAddCallback(cas, XmNcascadingCallback, GHC_callback, NULL);
 
   if (auto_resize(ss)) XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, TRUE, NULL);
-  new_menu++;
-  if (new_menu < MAX_MAIN_MENUS)
-    {
-      added_menus[new_menu] = m;
-      return(new_menu);
-    }
-  else return(INVALID_MENU);
+  return(new_menu);
 }
 
 int g_add_to_menu(snd_state *ss, int which_menu, char *label, int callb, int position)
@@ -1119,10 +1149,9 @@ int g_add_to_menu(snd_state *ss, int which_menu, char *label, int callb, int pos
   if (position >= 0) {XtSetArg(args[n], XmNpositionIndex, position); n++;}
   if (label)
     {
-      XtSetArg(args[n], XmNuserData, callb); n++;
+      XtSetArg(args[n], XmNuserData, PACK_MENU_DATA(callb, which_menu)); n++;
       m = XtCreateManagedWidget(label, xmPushButtonWidgetClass, menw, args, n);
       XtAddCallback(m, XmNactivateCallback, SND_callback, ss);
-      add_option(m, which_menu, label, callb);
     }
   else
     {
@@ -1230,7 +1259,8 @@ void create_popup_menu(snd_state *ss)
 #if (XmVERSION >= 2)
       XtSetArg(args[n], XmNpopupEnabled, XmPOPUP_AUTOMATIC_RECURSIVE); n++;
 #endif
-      popup_menu = XmCreatePopupMenu(mainp, "popup-menu", args, n);
+      XtSetArg(args[n], XmNuserData, 5);
+      popup_menu = XmCreatePopupMenu(mainp, "popup-menu", args, n + 1);
 #if (XmVERSION == 1)
       XtAddEventHandler(mainp, ButtonPressMask, FALSE, post_popup_menu, popup_menu);
 #endif

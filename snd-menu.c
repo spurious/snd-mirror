@@ -673,7 +673,6 @@ menu is the index returned by add-to-main-menu, func should be a function of no 
       if (err == -1) 
 	return(snd_no_such_menu_error(S_add_to_menu, menu));
       if (XEN_PROCEDURE_P(callback)) add_callback(slot, callback);
-      /* TODO: plug memleak here: menu widget hidden and never re-used (and XtDestroyWidget causes segfaults) */
     }
   else 
     {

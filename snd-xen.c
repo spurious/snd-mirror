@@ -3453,7 +3453,12 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
                                                 (if (not (member new-path %load-path))\
 	                                            (set! %load-path (cons new-path %load-path))))))))");
 #endif
-  /* TODO: Ruby clm-print support (and snd-apropos?, and debugger for that matter?) */
+  /* TODO: Ruby clm-print support (and snd-apropos?, and debugger for that matter?) 
+                format is Kernel.format or Kernel.sprintf
+		def clm_print(str, *args) 
+                  snd_print format(str, *args)
+                  end
+   */
 
 #if HAVE_STATIC_XM
 #if HAVE_GUILE

@@ -3259,7 +3259,7 @@ static XEN g_swap_channels(XEN snd0, XEN chn0, XEN snd1, XEN chn1, XEN beg, XEN 
   #define H_swap_channels "(" S_swap_channels " &optional snd0 chn0 snd1 chn1 beg dur edpos0 edpos1) swaps the indicated channels"
   chan_info *cp0 = NULL, *cp1 = NULL;
   off_t dur0 = 0, dur1 = 0, beg0 = 0, num;
-  int old_squelch0, old_squelch1, pos0, pos1;
+  int pos0, pos1;
   snd_info *sp = NULL;
   env_info *e0, *e1;
   ASSERT_CHANNEL(S_swap_channels, snd0, chn0, 1);
@@ -3284,6 +3284,7 @@ static XEN g_swap_channels(XEN snd0, XEN chn0, XEN snd1, XEN chn1, XEN beg, XEN 
 	}
       else cp1 = sp->chans[0];
     }
+  if (cp0 == cp1) return(XEN_FALSE);
   if ((cp0) && (cp1))
     {
       if (XEN_NUMBER_P(beg)) 
@@ -3310,21 +3311,12 @@ static XEN g_swap_channels(XEN snd0, XEN chn0, XEN snd1, XEN chn1, XEN beg, XEN 
 	    {
 	      /* common special case -- just setup a new ed-list entry with the channels/sounds swapped */
 	      if ((dur0 == 0) && (dur1 == 0)) return(XEN_FALSE);
-	      old_squelch0 = cp0->squelch_update;
-	      old_squelch1 = cp1->squelch_update;
 	      e0 = amp_env_copy(cp0, FALSE, cp0->edit_ctr);
 	      e1 = amp_env_copy(cp1, FALSE, cp1->edit_ctr);
-	      cp0->squelch_update = TRUE;
-	      cp1->squelch_update = TRUE;
 	      file_override_samples(dur1, cp1->sound->filename, cp0, cp1->chan, DONT_DELETE_ME, LOCK_MIXES, S_swap_channels);
 	      file_override_samples(dur0, cp0->sound->filename, cp1, cp0->chan, DONT_DELETE_ME, LOCK_MIXES, S_swap_channels);
-	      if ((e0) && (e1))
-		{
-		  cp0->amp_envs[cp0->edit_ctr] = e1;
-		  cp1->amp_envs[cp1->edit_ctr] = e0;
-		}
-	      cp0->squelch_update = old_squelch0;
-	      cp1->squelch_update = old_squelch1;
+	      cp0->amp_envs[cp0->edit_ctr] = e1;
+	      cp1->amp_envs[cp1->edit_ctr] = e0;
 	      swap_marks(cp0, cp1);
 	      update_graph(cp0);
 	      update_graph(cp1);

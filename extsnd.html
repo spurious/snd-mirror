@@ -4231,7 +4231,7 @@ If you set this field (you don't want to do this!), the underlying file is immed
 <tr><td></td><td>
 delete sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
 <pre><small><blockquote>
-To delete a file: use the Guile function delete-file
+To delete a file: use the Guile function delete-file or Ruby's File.delete.
 To delete a region: <a href="#snddeleteregion">forget-region</a>
 To delete the currently selected samples: <a href="#snddeleteselection">delete-selection</a>
 To delete the selection and smooth the splice: <a href="sndscm.html#exdeleteselectionandsmooth">delete-selection-and-smooth</a>
@@ -5211,7 +5211,7 @@ The functions <i>start-progress-report</i>, <i>progress-report</i>, and
 <i>finish-progress-report</i> handle the animated hour-glass icon used 
 to amuse the idle user while some long computation is in progress.  
 The <i>pct</i> argument is a float between 0.0 and 1.0 which indicates how 
-far along we are in the computation (there are actually only 20 separate 
+far along we are in the computation (there are only 20 separate 
 icons, so there's no point in calling this more often than that).  
 start-progress-report posts the initial icon, and finish-progress-report 
 removes it.  If the icons are not available, a message is posted in 
@@ -5409,7 +5409,7 @@ for example,
 will not save the "outer" declaration in the saved state file. 
 This is a general problem with save-state; there's no obvious way in Guile to
 save the current closure as text.
-You can fix the saved state file by hand (it is just Scheme code, of course),
+You can fix the saved state file by hand (it is just Scheme or Ruby code, of course),
 but that's not a very elegant solution.
 
 <br><br>Another limitation is that Guile may garbage collect the enclosing environment.
@@ -5474,7 +5474,7 @@ depend on the run macro) will work only in Guile.  We could define xen-channel:
 (define* (ptree-xramp r0 r1 ubase #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
   "exponential version of ramp-channel"
   ;; this is essentially what CLM's exponential envelope generator is doing
-  ;;   to accomodate C, it actually uses (exp (* power (log base))) prescaling power by (log base)
+  ;;   to accomodate C, it uses (exp (* power (log base))) prescaling power by (log base)
   (let* ((base (if (&gt; r0 r1) (/ 1.0 ubase) ubase)))
     (<em class=red>ptree-channel</em>
      (lambda (y data forward)
@@ -5865,7 +5865,7 @@ normalizes the samples in the given channel between beg and beg + num to norm.  
 </td></tr>
 <tr><td></td><td>
 <b>scan-chan</b> applies <i>func</i> to samples in the specified channel.
-An optional subsequence of the data can be requested via
+A subsequence of the data can be requested via
 'start' and 'end' points.  'start' defaults to 0; 'end'
 defaults to the end of the channel.
 The function is passed the current sample as its argument.
@@ -5932,7 +5932,7 @@ In this case, we found such a sample at position 4423.<br>
 </td></tr>
 <tr><td></td><td>
 <b>scan-channel</b> is the <a href="#regularizedargs">regularized</a> version of <a href="#scanchan">scan-chan</a>.
-In scan-chan, scan-channel, find, and count-matches (all actually the same underlying procedure), an attempt to jump back
+In scan-chan, scan-channel, find, and count-matches (all the same underlying procedure), an attempt to jump back
 into a previous call will not work.  That is,<br><br>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (let ((not-a-good-idea #f))
@@ -7219,7 +7219,7 @@ style (default: 12).
 <p>An edit list (in other editors this is called an "edit decision list", I guess because it sounds decisive)
 describes the edit history of a channel. When, for example, you type C-d, nothing actually
 happens to any data, despite the fact that the graph no longer shows that sample, it's omitted when you play the
-channel, and so on.  What actually happens is that a descriptor is appended to the edit history of that
+channel, and so on.  Instead, a descriptor is appended to the edit history of that
 channel saying "sample n was deleted".  Undo and redo move around in this list (they simply move the
 pointer to the current edit history position); all the positions are accessible just like the current
 one, and are exposed in many functions described above as the <i>pos</i> argument.
@@ -7383,7 +7383,7 @@ edit sequences can be compared).
 directly, than to run Snd and invoke the <a href="snd.html#savedstate">"Save State"</a> menu option.
 To save a particular sound's or channel's edit list(s), use the
 function <a href="#sndsaveedithistory">save-edit-history</a>.
-These lists are simply Scheme programs, just like anything else
+These lists are simply Scheme or Ruby programs, just like anything else
 discussed in this document.  You could even write them from
 scratch.  Say we want to make a stereo file that consists
 of four mono files mixed at various points; we know where they
@@ -7421,8 +7421,8 @@ Many editing operations within Snd actually only affect the current
 edit lists.  For example, if you delete a portion of a sound, the
 only thing that happens is that the edit list of that sound is
 updated to reflect the jump over the deleted portion.  Similarly,
-all scaling operations (normalization etc), operations resulting
-in zeros, most non-exponential envelopes, and simple cases of channel swaps are actually only editing
+all scaling operations, silences,
+envelopes, and simple cases of channel swaps only affect
 the edit list.  This means that ideally such operations are instantaneous
 and take no disk space no matter how large the sound being edited
 (in other cases we have to save at least the changed portion of the
@@ -7499,7 +7499,7 @@ And an example that ties the Hilbert transform in dsp.scm into the user-interfac
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="sndautocorrelate">autocorrelate</a></em> (data)</code></span></td></tr>
 <tr><td></td><td>
-return (in place) autocorrelation of <i>data</i> (a vct).  See <a href="sndscm.html#spotfreq">spot-freq</a> in dsp.scm, 
+return the (in place) autocorrelation of <i>data</i> (a vct).  See <a href="sndscm.html#spotfreq">spot-freq</a> in dsp.scm, 
 or <a href="sndscm.html#rubberdoc">rubber.scm</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -7520,7 +7520,7 @@ name and rl2 is not a vector, <i>convolve-with</i> is called instead.
 <span class=defbox><code><em class=def><a name="sndfft">fft</a></em> (rl im <i>sgn</i>)</code></span></td></tr>
 <tr><td></td><td>
 perform an FFT on <i>rl</i> and <i>im</i> (the real and imaginary parts of the
-input data. <i>sgn</i> is 1 for an FFT, -1 for an inverse FFT; (default 1).
+input data). <i>sgn</i> is 1 for an FFT, -1 for an inverse FFT; (default 1).
 </td></tr>
 <tr><td colspan=2></td></tr>
 </table>
@@ -7788,7 +7788,7 @@ See <i>html</i> in index.scm.
 <td>The amount of the frequency domain to include in the spectrum display.
 This number changes as you drag the frequency axis, for example.  
 This is the slider labelled '% of spectrum' in the View Orientation dialog.
-default: 1.0.
+Its default value is 1.0.
 </td></tr>
 
 <tr><td valign=top><span class=defbox><code><a href="#spectrohop">spectro-hop</a> ()</code></span></td>
@@ -7798,13 +7798,13 @@ default: 4.
 </td></tr>
 
 <tr><td><span class=defbox><code><a href="#spectrostart">spectro-start</a> ()</code></span></td>
-<td>The start point of the frequency domain to include in the spectrum display. default: 0.0</td></tr>
+<td>The starting point of the frequency domain in the spectrum display. default: 0.0</td></tr>
 
 <tr><td><span class=defbox><code><a href="#spectroxangle">spectro-x-angle</a> ()</code></span></td>
 <td>Default spectrogram x-axis viewing angle. default: 90.0</td></tr>
 
 <tr><td><span class=defbox><code><a href="#spectroxscale">spectro-x-scale</a> ()</code></span></td>
-<td>Default scaler (stretch) along the spectrogram x axis. (default: 1.0)</td></tr>
+<td>Default scaler (stretch) along the spectrogram x axis. default: 1.0</td></tr>
 
 <tr><td><span class=defbox><code><a href="#spectroyangle">spectro-y-angle</a> ()</code></span></td>
 <td>Same for y-axis. default: 0.0</td></tr>
@@ -7929,7 +7929,7 @@ between responsiveness and clicks in some cases). (4096)
 
 <tr><td><span class=defbox><code><em class=def><a name="sndtransformdialog">transform-dialog</a></em> (<i>managed</i>)</code></span></td>
 <td>create the Transform Dialog, if necessary, activate it (if <i>managed</i> is #t, the default), 
-and return the dialog widget.  (This is Option menu's Transform Options choice).</td></tr>
+and return the dialog widget.  This is Option menu's Transform Options choice.</td></tr>
 
 <!-- yes-or-no? -->
 
@@ -7998,9 +7998,10 @@ click its button.
 
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndaddtomainmenu">add-to-main-menu</a></em> (menu-label <i>update-callback</i>)</code></span></td></tr>
 <tr><td width=150></td><td>
-add new top-level menu named <i>menu-label</i>, return menu index.
-<i>update-callback</i> can be a procedure of no arguments that will be 
-called each time the menu is displayed. (See <a href="sndscm.html#effectsdoc">new-effects.scm</a> for an example).
+add a new top-level menu named <i>menu-label</i> and return its menu index.  This index
+identifies the menu for add-to-menu and others.
+<i>update-callback</i> is a procedure of no arguments that is
+called each time the menu is displayed. See <a href="sndscm.html#effectsdoc">new-effects.scm</a> for an example.
 <br><br><pre>
   &gt;<em class=typing>(add-to-main-menu "Tools")</em>
   <em class=listener>5</em>
@@ -8012,7 +8013,7 @@ called each time the menu is displayed. (See <a href="sndscm.html#effectsdoc">ne
 <tr><td></td><td>
 add menu <i>menu-label</i> to top-level menu whose index is 
 <i>top-menu</i> with the callback function <i>callback</i>.  The built-in
-Snd menus are numbered from 0 ('File') to 5 ('Popup') ('Help' is 4).  If label and callback are #f, a separator is added to the menu.
+Snd menus are numbered from 0 ('File') to 5 ('Popup'); 'Help' is menu 4.  If the label and callback are #f, a separator is added to the menu.
 <i>position</i> sets the position of the new menu option; it defaults to the end of the menu.  See new-effects.scm for many examples.
 <br><br><pre>
   (<em class=red>add-to-menu</em> 1 "Stop Playing" 
@@ -8040,7 +8041,9 @@ As a slightly more elaborate example, the following adds a Delete option to the 
 <!-- change-menu-label -->
 
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndchangemenulabel">change-menu-label</a></em> (top-menu old-label new-label)</code></span></td></tr>
-<tr><td></td><td></td></tr>
+<tr><td></td><td>
+change the label of the given menu from <i>old-label</i> to <i>new-label</i>.
+</td></tr>
 
 <!-- remove-from-menu -->
 
@@ -8052,11 +8055,13 @@ remove menu <i>menu-label</i> from the top top-level menu whose index is <i>top-
 <!-- menu-sensitive -->
 
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="menusensitive">menu-sensitive</a></em> (top-menu label)</code></span></td></tr>
-
+<tr><td></td><td>
+#t if the given menu is currently sensitive (clickable).  This can be set.
+</td></tr>
 </table>
 
 
-<p>In addition, the hook <em class=def><a name="menuhook">menu-hook</a></em> is checked each time a menu item is selected;
+<p>The hook <em class=def><a name="menuhook">menu-hook</a></em> is checked each time a menu item is selected;
 its entries should be functions of two arguments, the parent menu name and the option
 selected (both as strings), and should return #f if it wants to override the default
 menu action.</p>
@@ -8081,10 +8086,9 @@ to do!
 
 <p> When something goes awry, the various functions can "throw" an error (a symbol)
 which is normally "caught" by the default error handler (this is a kind of "goto" 
-but without the embarrassment); it prints out some message,
-and in some cases appends a stack trace.  So, as a simple example, selection-position
-throws 'no-active-selection if there isn't a selection. In the default case, you
-get behavior like this:
+but without the embarrassment).  It prints out some message,
+and sometimes appends a stack trace.  So, as a simple example, selection-position
+throws 'no-active-selection if there isn't a selection:
 </p>
 <pre>
 &gt;<em class=typing>(selection-position)</em>
@@ -8115,7 +8119,7 @@ etc.  The Snd-specific errors are:</p>
 'no-such-color   'no-such-widget 'no-such-plugin     'no-such-graphics-context
 'gsl-error       'no-such-direction
 </pre>
-<p><i>bad-arity</i> is jargon indicating that a procedure takes the
+<p><i>bad-arity</i> is jargon indicating that a procedure has been passed the
 wrong number of arguments.  <i>gsl-error</i> indicates that the GSL
 library is the source of the error.
 The symbol #t stands for all errors in this case, so we can 
@@ -8127,7 +8131,7 @@ run rough-shod over any error with:</p>
 	    ,func)
 	  (lambda args (car args))))
 </pre>
-<p>You can use these errors in your code, if you like.  The following
+<p>You can use these errors in your code, if you like, or add your own.  The following
 throws the error 'no-such-file:</p>
 <pre>
 (define look-for-file
@@ -8136,7 +8140,7 @@ throws the error 'no-such-file:</p>
 	(throw 'no-such-file (list "look-for-file" file)))))
 </pre>
 <p>The mix.scm track functions can return 'no-such-track if a
-given track has no associated valid mixes.
+given track has no mixes.
 </p>
 
 <hr>
@@ -8422,10 +8426,10 @@ use <a href="#sndabort">C-g</a>.
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="addsoundfileextension">add-sound-file-extension</a></em> (ext)</code></span></td></tr>
 <tr><td></td><td>
-add <i>ext</i> to the list of (case sensitive) sound file extensions (used by <a href="#soundfilesindirectory">sound-files-in-directory</a>).
+add <i>ext</i> to the list of (case sensitive) sound file extensions used by <a href="#soundfilesindirectory">sound-files-in-directory</a>.
 The initial list is ("snd" "aiff" "aif" "wav" "au" "aifc" "voc" "wve" "WAV" "sf2").
 To add "ogg" as a recognized extension: <code>(add-sound-file-extension "ogg")</code><br>
-A scheme implementation: <a href="sndscm.html#addsoundextension1">add-sound-file-extension-1</a>.
+A Scheme implementation: <a href="sndscm.html#addsoundextension1">add-sound-file-extension-1</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -8539,8 +8543,8 @@ Similarly, the End key if #xFF57, so we could bind it to cause the full sound to
 
 <tr><td></td><td>
 The emacs-style line-oriented commands C-p, C-n, and C-k aren't very useful in Snd,
-since there's no reason 128 samples would consititute the audio analog of a line of text.
-In the next example, we'll rebind them to treat same-sense zero-crossings as line markers:
+since there's no reason for 128 samples to consititute the audio analog of a line of text.
+In the next example, we rebind them to treat same-sense zero-crossings as line markers:
 </td></tr>
 
 <tr><td></td><td>
@@ -8630,7 +8634,7 @@ delete listener text from the beginning to the cursor position (C-M-g is bound t
 <span class=defbox><code><em class=def><a name="sndclosesoundfile">close-sound-file</a></em> (fd bytes)</code></span></td></tr>
 <tr><td></td><td>
 close file (opened by open-sound-file) updating header to report <i>bytes</i> bytes of data.  This refers to data files
-handled directly, not sounds displayed in Snd (the latter handled by <a href="#sndopen">open-sound</a> and <a href="#sndclose">close-sound</a>).
+handled directly, not sounds displayed in Snd (the latter are handled by <a href="#sndopen">open-sound</a> and <a href="#sndclose">close-sound</a>).
 See <i>save-track</i> in mix.scm.
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -8639,8 +8643,8 @@ See <i>save-track</i> in mix.scm.
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="sndabort">c-g?</a></em> ()</code></span></td></tr>
 <tr><td></td><td>
-check for C-g to interrupt on-going computation (and let other UI 
-events through).  <i>c-g?</i> is especially useful in loops; we could define our own safe 'while' loop as follows
+check for C-g to interrupt an on-going computation, and let other UI 
+events through.  <i>c-g?</i> is especially useful in loops; we could define our own safe 'while' loop as follows
 (this is a slight revision of Guile's while macro from ice-9/boot-9.scm):
 </td></tr>
 <tr><td></td><td>
@@ -8683,7 +8687,7 @@ so that Snd and CLM can share envelope files.
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="sndequalizepanes">equalize-panes</a></em> (<i>snd</i>)</code></span></td></tr>
 <tr><td></td><td>
-equalize Snd panes as in View menu <a href="snd.html#equalizepanes">Equalize Panes</a> option.
+equalize Snd panes as in the View menu <a href="snd.html#equalizepanes">Equalize Panes</a> option.
 If the <i>snd</i> argument is given, only that sound's panes are affected.
 </td></tr>
 <tr><td></td><td>
@@ -8695,9 +8699,9 @@ If the <i>snd</i> argument is given, only that sound's panes are affected.
 
 <!-- exit -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="sndexit">exit</a></em>              (<i>exit-value</i>)</code></span></td></tr>
+<span class=defbox><code><em class=def><a name="sndexit">exit</a></em> (<i>exit-value</i>)</code></span></td></tr>
 <tr><td></td><td>
-   exit Snd.
+exit Snd.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -8789,7 +8793,7 @@ Open (create) a sound file <i>name</i> (defaults to "test.snd" or "test.wav").
 It is assumed that the data will be floats in the native format (written by 
 the caller interleaving channels), and that the file will be closed by 
 close-sound-file. One simple way to write the data is to call 
-<a href="#vct2soundfile">vct-&gt;sound-file</a>.  <i>open-sound-file</i> opens a file external to Snd, where <i>open-sound</i>
+<a href="#vct2soundfile">vct-&gt;sound-file</a>.  <i>open-sound-file</i> opens a file external to Snd, whereas <i>open-sound</i>
 loads a file into Snd for editing.
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -8859,7 +8863,7 @@ save options (Snd global variable settings) in <i>filename</i>.
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="sndsavestate">save-state</a></em> (filename)</code></span></td></tr>
 <tr><td></td><td>
-save current state of Snd in <i>filename</i>.  The saved-state file is a Scheme (or Ruby) program that when loaded
+save current state of Snd in <i>filename</i>.  The saved-state file is a Scheme or Ruby program that when loaded
 into Snd, recreates the state of Snd (as far as possible) at the point of the save.  There are a variety of
 limitations to this process; the worst is that save-state does not try to save hook values or global variable values --
 see also <a href="#ptreechannel">ptree-channel</a> in this regard.
@@ -8899,9 +8903,9 @@ return possible completions of <i>name</i> (a string or a symbol).
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="snderror">snd-error</a></em> (str)</code></span></td></tr>
 <tr><td></td><td>
-report error message <i>str</i> (normally via the Error dialog), save <i>str</i> in the error history list 
+reports the error message <i>str</i> in the Error dialog, saves <i>str</i> in the error history list 
 (see <a href="snd.html#errorhistory">View:Error History</a>), 
-and return <i>str</i>.  See also <a href="#muserrorhook">mus-error-hook</a> and <a href="#snderrorhook">snd-error-hook</a>.
+and returns <i>str</i>.  See also <a href="#muserrorhook">mus-error-hook</a> and <a href="#snderrorhook">snd-error-hook</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -8928,7 +8932,7 @@ help (and apropos) support which uses 'regexps' and so forth.
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="sndprint">snd-print</a></em> (str)</code></span></td></tr>
 <tr><td></td><td>
-display <i>str</i> in lisp listener, return <i>str</i>.  (This is intended as a
+displays <i>str</i> in lisp the listener, then returns <i>str</i>.  (This is intended as a
 debugging aid -- there's still nothing like a lowly print statement).
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -8937,9 +8941,9 @@ debugging aid -- there's still nothing like a lowly print statement).
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="sndrememberpaths">snd-remember-paths</a></em></code></span></td></tr>
 <tr><td></td><td>
-A variable (not a function); if #t (default is #f), Snd adds code to the Guile %load-hook that makes sure the
+A variable (not a function); if #t (its default is #f), Snd adds code to the Guile %load-hook that makes sure the
 current file's path is included in %load-path when load or load-from-file is called.  This makes it possible to
-use load-from-path inside a scheme file when you don't know in advance where that file will reside at load time.
+use load-from-path inside a Scheme file when you don't know in advance where that file will reside at load time.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -8947,11 +8951,12 @@ use load-from-path inside a scheme file when you don't know in advance where tha
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="sndspectrum">snd-spectrum</a></em> (data window length <i>linear beta in-place normalized</i>)</code></span></td></tr>
 <tr><td></td><td>
-return spectrum (vct) of <i>data</i> (also a vct) using fft-window <i>win</i>.
-length of data (and fft) is <i>length</i>. <code>(let ((spectr (snd-spectrum data rectangular-window (transform-size)))) ...)</code>
-If <i>linear</i> is #f (default is #t), the spectrum is returned as dB values.
+returns the spectrum (as a vct) of <i>data</i> (also a vct) using fft-window <i>win</i>.
+<i>length</i> is the number of samples 
+of data. <code>(let ((spectr (snd-spectrum data rectangular-window (transform-size)))) ...)</code>
+If <i>linear</i> is #f (its default is #t), the spectrum is returned in dB.
 <i>beta</i> is the fft data window "family" parameter; it is scaled internally so here it should be between 0.0 and 1.0.
-If <i>in-place</i> is #t, the spectrum is returned in <i>data</i>, otherwise a newly created vct is returned.
+If <i>in-place</i> is #t, the spectrum is returned in <i>data</i>, otherwise snd-spectrum returns a new vct.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -8959,7 +8964,7 @@ If <i>in-place</i> is #t, the spectrum is returned in <i>data</i>, otherwise a n
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="sndtempnam">snd-tempnam</a></em> ()</code></span></td></tr>
 <tr><td></td><td>
-New temp file name using Snd's <a href="#tempdir">temp-dir</a>.
+returns a new temp file name using Snd's <a href="#tempdir">temp-dir</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -8967,7 +8972,7 @@ New temp file name using Snd's <a href="#tempdir">temp-dir</a>.
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="sndversion">snd-version</a></em> ()</code></span></td></tr>
 <tr><td></td><td>
-Snd version (a string, normally a date). <b>version</b> is a Guile function.
+Snd version: a string, normally a date. <b>version</b> is a Guile function.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -8975,7 +8980,7 @@ Snd version (a string, normally a date). <b>version</b> is a Guile function.
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="sndwarning">snd-warning</a></em> (str)</code></span></td></tr>
 <tr><td></td><td>
-report warning message <i>str</i> (normally by posting it in the minibuffer), return <i>str</i>.
+posts a warning message, <i>str</i>, in the minibuffer, and returns <i>str</i>.
 See also <a href="#sndwarninghook">snd-warning-hook</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -8984,10 +8989,10 @@ See also <a href="#sndwarninghook">snd-warning-hook</a>.
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="soundfilesindirectory">sound-files-in-directory</a></em> (<i>dir</i>)</code></span></td></tr>
 <tr><td></td><td>
-return a list of sound file names.  A file is considered a sound file if it is non-empty and
+returns a list of sound file names.  A file is considered a sound if it has data and
 its extension is on the sound file extension list (see <a href="#addsoundfileextension">add-sound-file-extension</a>).
 The directory name defaults to the current directory.
-This is useful for "batch" processing of sounds.  The following,
+This is useful for batch processing of sounds.  The following,
 for example, prints the names of all the stereo AIFC files it finds:
 </td></tr>
 
@@ -9011,7 +9016,7 @@ See also map-sound-files in <a href="sndscm.html#snd4doc">snd4.scm</a>, and
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="sndunbindkey">unbind-key</a></em> (key state extended)</code></span></td></tr>
 <tr><td></td><td>
-cause <i>key</i> with modifiers <i>state</i> to be a no-op.
+causes <i>key</i> with modifiers <i>state</i> to be a no-op.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -9019,7 +9024,7 @@ cause <i>key</i> with modifiers <i>state</i> to be a no-op.
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="widgetposition">widget-position</a></em> (widget)</code></span></td></tr>
 <tr><td></td><td>
-return a list giving the widget x and y coordinates (pixels).  Can be set.  See <a href="#sndwidgets">Snd widgets</a> below,
+returns a list giving the widget x and y coordinates (pixels).  Can be set.  See <a href="#sndwidgets">Snd widgets</a> below,
 and nb.scm where it uses the current window position to try to find a convenient place for the help dialog.
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -9028,7 +9033,7 @@ and nb.scm where it uses the current window position to try to find a convenient
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="widgetsize">widget-size</a></em> (widget) </code></span></td></tr>
 <tr><td></td><td>
-return a list giving the widget width and height (pixels).  Can be set. See nb.scm and examp.scm.
+returns a list giving the widget width and height (pixels).  Can be set. See nb.scm and examp.scm.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -9212,7 +9217,7 @@ The font variables are:
 
 <p>See also <a href="#loadfont">load-font</a> and <a href="#currentfont">current-font</a> below.
 In Gtk2, Pango-style names are used for the fonts: "Monospace 8" for example.
-If the requested font can't be loaded, the set! statement will return the old (unchanged) font name.
+If the requested font can't be loaded, the set! statement returns the old (unchanged) font name.
 </p>
 <pre>
 &gt;<em class=typing>(set! (axis-label-font) "8x14")</em>
@@ -9221,9 +9226,6 @@ If the requested font can't be loaded, the set! statement will return the old (u
 <br>
 <br>
 <span class=cbox><h4><A NAME="sndwidgets">Widgets</a></h4></span>
-
-<p>This section is new, and in flux, but here's what's currently implemented:
-</p>
 
 <table cellspacing=0>
 <tr><td><code><em class=def>widget-position</em> (widget)</code></td>
@@ -9261,8 +9263,8 @@ The four "-widgets" procedure return lists of possibly useful widgets:
                      17:print_dialog 18:recorder_dialog 19:region_dialog)
 </pre>
 <p>I've only included the ones I needed immediately (for autotesting), but all Snd widgets are potentially (and easily)
-accessible; if you need access to one that
-isn't included, let me know.  <i>dialog-widgets</i> entries will be #f for any dialogs that have not
+accessible; if you need to get at one that
+isn't included, let me know.  <i>dialog-widgets</i> entries are #f for any dialog that has not
 yet been created.  In gtk, the first element of the main-widgets list is the top level shell's window.
 </p>
 <pre>
@@ -9326,7 +9328,7 @@ See <i>draw-smpte-label</i> in snd-motif.scm, or <i>make-current-window-display<
 <tr><td></td><td>
 <i>colormap-ref</i> returns the rgb values of the colormap <i>map</i> at position <i>pos</i>,
 suitable for use with make-color.  'map' can be a number
-between 0.0 and 1.0 with 'pos' omitted; in this case the colormap choice and so on comes from the color dialog.
+between 0.0 and 1.0 with 'pos' omitted; in this case the colormap choice comes from the color dialog.
 See <i>samples-via-colormap</i> in draw.scm.
 </td></tr><tr><td colspan=2></td></tr>
 
@@ -9417,7 +9419,7 @@ See <i>make-current-window-display</i> in draw.scm.
 <span class=defbox><code><em class=def><a name="drawstring">draw-string</a></em> (text x0 y0 snd chn context)</code></span></td></tr>
 
 <tr><td></td><td>
-draws a string (<i>text</i>) in the current font and foreground color starting at (x0 y0) in the given context.
+draws a string (<i>text</i>) in the current font and foreground color starting at (x0 y0) in the given graphics context.
 The next procedures use the channel-property list (extensions.scm) to maintain a list
 of sample-oriented comments, displaying a given comment if its associated sample is
 currently in the time-domain graph:
@@ -9459,7 +9461,7 @@ currently in the time-domain graph:
 <span class=defbox><code><em class=def><a name="fillrectangle">fill-rectangle</a></em> (x0 y0 width height snd chn context)</code></span></td></tr>
 
 <tr><td></td><td>
-draws a filled rectangle (in the current foreground color) from (x0 y0) of size (width height).
+draws a filled rectangle in the current foreground color from (x0 y0) of size (width height).
 See draw.scm, snd-motif.scm, or <a href="#showoriginal">show-original</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -9493,7 +9495,7 @@ draws a filled polygon whose vertices are in <i>points</i>.</td></tr>
 </pre></td></tr></table></td></tr>
 <tr><td colspan=2></td></tr>
 <tr><td></td><td>
-musglyphs.scm has some elaborate examples that use fill-polygon to draw various music symbols.
+musglyphs.scm has some elaborate examples that use fill-polygon to draw music notation symbols.
 </td></tr>
 <tr><td colspan=2></td></tr>
 <!-- foreground-color -->
@@ -9623,15 +9625,15 @@ load-font could be (should have been!) defined using the xm module as:
 <span class=defbox><code><em class=def><a name="makegraphdata">make-graph-data</a></em> (snd chn edit-position low-sample high-sample)</code></span></td></tr>
 
 <tr><td></td><td>
-Use <i>make-graph-data</i> to get the currently displayed data (i.e. the actual waveform displayed
-in the graph, which can be based on an overall envelope rather than the
-actual samples).
+Use <i>make-graph-data</i> to get the currently displayed data (i.e. the waveform displayed
+in the graph, which can be based on an overall "peak" envelope rather than the
+individual samples).
 It returns either a vct (if the graph has one trace), or a
-list of two vcts (the two sides of the envelope graph).
+list of two vcts (the two sides of the peak envelope graph).
 <i>edit-position</i> defaults to the current edit history position,
 <i>low-sample</i> defaults to the current window left sample, and
 <i>high-sample</i> defaults to the current rightmost sample.
-The result can be use in the "lisp graph":
+The result can be used in the lisp graph:
 
 </td></tr>
 <tr><td></td><td>
@@ -9688,7 +9690,7 @@ the graphics context for XOR drawing in the selection color.</td></tr>
 <span class=defbox><code><em class=def><a name="sendnetscape">send-netscape</a></em>(url)</code></span></td></tr>
 
 <tr><td></td><td>
-send netscape (starting it, if necessary), the location 'url'.
+Start netscape, if necessary, and tell it to go to the location 'url'.
 <tr><td colspan=2></td></tr>
 
 <!-- snd-gcs -->
