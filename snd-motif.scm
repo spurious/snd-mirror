@@ -271,7 +271,8 @@
 
 (define (remove-dragger snd)
   (if (dragger snd) (apply unsync-y-zooms (dragger snd)))
-  (set! draggers (remove-if (lambda (n) (= (car n) snd)) draggers)))
+  (set! draggers (remove-if (lambda (n) (= (car n) snd)) draggers))
+  #f)
 
 (define (add-dragger snd)
   (set! draggers (cons (list snd (sync-y-zooms snd)) draggers)))
@@ -1074,7 +1075,8 @@ Reverb-feedback sets the scaler on the feedback.\n\
   (define (unremark snd)
     (do ((i 0 (1+ i)))
 	((= i (chans snd)))
-      (deactivate-channel snd i)))
+      (deactivate-channel snd i))
+    #f)
 
   (define (open-remarks snd)
     (do ((i 0 (1+ i)))
@@ -2014,3 +2016,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 ;;;   will probably want to disable close here, or use replace?
 
 
+(define (change-label widget new-label)
+  (let ((str (|XmStringCreateLocalized new-label)))
+    (|XtSetValues widget (list |XmNlabelString str))
+    (|XmStringFree str)))

@@ -1522,7 +1522,7 @@ static XEN sp_iwrite(XEN snd_n, XEN val, int fld, char *caller)
   snd_info *sp;
   snd_state *ss;
   char *com;
-  int i, ival;
+  int i, ival, old_format;
   if (XEN_TRUE_P(snd_n))
     {
       ss = get_global_state();
@@ -1585,18 +1585,29 @@ static XEN sp_iwrite(XEN snd_n, XEN val, int fld, char *caller)
       sp->speed_control_style = mus_iclamp(0, XEN_TO_C_INT(val), MAX_SPEED_CONTROL_STYLE);
       break;
     case SP_SRATE:
-      mus_sound_set_srate(sp->filename, XEN_TO_C_INT(val));
+      ival = XEN_TO_C_INT(val);
+      mus_sound_set_srate(sp->filename, ival);
+      sp->hdr->srate = ival;
       snd_update(ss, sp); 
       break;
     case SP_NCHANS: 
-      mus_sound_set_chans(sp->filename, XEN_TO_C_INT(val));
+      ival = XEN_TO_C_INT(val);
+      mus_sound_set_chans(sp->filename, ival);
+      sp->hdr->chans = ival;
       snd_update(ss, sp); 
       break;
     case SP_DATA_FORMAT:
       ival = XEN_TO_C_INT(val);
       if (MUS_DATA_FORMAT_OK(ival))
 	{
+	  old_format = sp->hdr->format;
 	  mus_sound_set_data_format(sp->filename, ival);
+	  sp->hdr->format = ival;
+	  if (mus_data_format_to_bytes_per_sample(old_format) != mus_data_format_to_bytes_per_sample(ival))
+	    {
+	      sp->hdr->samples = (sp->hdr->samples * mus_data_format_to_bytes_per_sample(old_format)) / mus_data_format_to_bytes_per_sample(ival);
+	      mus_sound_set_samples(sp->filename, sp->hdr->samples);
+	    }
 	  snd_update(ss, sp);
 	}
       else mus_misc_error("set-" S_data_format, "unknown data format", val);

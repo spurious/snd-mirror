@@ -2329,8 +2329,7 @@ static int save_edits_and_update_display(snd_info *sp)
   chan_info *cp;
   axis_info *ap;
   snd_fd **sf;
-  double *axis_data;
-  int *ffts, *waves;
+  axes_data *sa;
   file_info *sphdr = NULL;
   ss = sp->state;
   if (dont_save(sp, NULL)) return(MUS_NO_ERROR);
@@ -2338,20 +2337,7 @@ static int save_edits_and_update_display(snd_info *sp)
   err = MUS_NO_ERROR;
   ofile = snd_tempnam(ss); 
   /* this will use user's TMPDIR if temp_dir(ss) is not set, else stdio.h's P_tmpdir else /tmp */
-  axis_data = (double *)CALLOC(4 * sp->nchans, sizeof(double));
-  ffts = (int *)CALLOC(sp->nchans, sizeof(int));
-  waves = (int *)CALLOC(sp->nchans, sizeof(int));
-  for (i = 0; i < sp->nchans; i++)
-    {
-      cp = sp->chans[i];
-      ap = cp->axis;
-      axis_data[(i * 4) + 0] = ap->x0;
-      axis_data[(i * 4) + 1] = ap->x1;
-      axis_data[(i * 4) + 2] = ap->y0;
-      axis_data[(i * 4) + 3] = ap->y1;
-      waves[i] = cp->graph_time_p;
-      ffts[i] = cp->graph_transform_p;
-    }
+  sa = make_axes_data(sp);
   sf = (snd_fd **)CALLOC(sp->nchans, sizeof(snd_fd *));
   for (i = 0; i < sp->nchans; i++)
     {
@@ -2368,9 +2354,7 @@ static int save_edits_and_update_display(snd_info *sp)
     {
       for (i = 0; i < sp->nchans; i++) free_snd_fd(sf[i]);
       FREE(sf);
-      FREE(ffts);
-      FREE(waves);
-      FREE(axis_data);
+      sa = free_axes_data(sa);
       return(err);
     }
   sphdr->samples = samples * sp->nchans;
@@ -2406,26 +2390,9 @@ static int save_edits_and_update_display(snd_info *sp)
     }
   else saved_errno = errno;
   sp->write_date = file_write_date(sp->filename);
-
   add_sound_data(sp->filename, sp, ss, WITHOUT_INITIAL_GRAPH_HOOK);
-
-  for (i = 0; i < sp->nchans; i++)
-    {
-      cp = sp->chans[i];
-      set_axes(cp, 
-	       axis_data[(i * 4) + 0], 
-	       axis_data[(i * 4) + 1], 
-	       axis_data[(i * 4) + 2],
-	       axis_data[(i * 4) + 3]);
-      update_graph(cp, NULL); /* get normalized state before messing with it */
-      if (ffts[i]) fftb(cp, TRUE);
-      if (!(waves[i])) waveb(cp, FALSE);
-      reflect_edit_history_change(cp);
-    }
-  FREE(axis_data);
-  FREE(waves);
-  FREE(ffts);
-
+  restore_axes_data(sp, sa, mus_sound_duration(sp->filename), TRUE);
+  sa = free_axes_data(sa);
   reflect_file_revert_in_label(sp);
   reflect_file_save_in_menu(ss);
   if (err)

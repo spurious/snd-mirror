@@ -639,6 +639,7 @@ I'm slowly dividing out related groups of procedures to separate files.
 <small>
   <ul>
     <li>swap selection chans
+    <li>replace with selection
   </ul>
 </small>
 <li><a href="#ssmixes">mixes</a>
@@ -981,6 +982,7 @@ a sound as a key is held down).
   <em class=def><a name="exselectionrms">selection-rms</a></em>
   <em class=def><A NAME="exregionrms1">region-rms-1</a></em> region
   <em class=def><a name="exregionrms">region-rms</a></em> region
+  <em class=def><A NAME="exreplacewithselection">replace-with-selection</a></em>
 </pre>
 <p>
 <i>swap-selection-channels</i> swaps the currently selected data's channels.
@@ -995,6 +997,10 @@ of ways. The fastest and simplest uses CLM's dot-product function:
 	(sqrt (/ (dot-product data data) (vct-length data))))
       (throw 'no-such-region (list "region-rms" n))))
 </pre>
+<p><i>replace-with-selection</i> replaces data at the cursor with the
+current selection.
+</p>
+
 
 
 <!-- -------------------------------- MIXES -------------------------------- -->

@@ -63,6 +63,7 @@
 ;;; searching examples (zero+, next-peak, find-pitch)
 ;;; sound-data->list
 ;;; file->vct and a sort of cue-list, I think, and region-play-list, region-play-sequence
+;;; replace-with-selection
 
 ;;; TODO: decide how to handle the CLM examples
 ;;; TODO: robust pitch tracker
@@ -548,7 +549,7 @@
 ;;;
 ;;;   (shell "df") for example -- there's probably a more elegant way to do this is in Scheme
 ;;; or to play a sound whenever a file is closed:
-;;;   (add-hook! close-hook (lambda (snd) (shell \"sndplay wood16.wav\")))
+;;;   (add-hook! close-hook (lambda (snd) (shell \"sndplay wood16.wav\") #f))
 
 (use-modules (ice-9 popen))  
 
@@ -2811,3 +2812,12 @@ read, even if not playing.  'files' is a list of files to be played."
 	  (set! time (+ time (/ (region-length id) (region-srate id))))
 	  (list cur id)))
       data))))
+
+
+;;; -------- replace-with-selection
+
+(define (replace-with-selection)
+  (let ((beg (cursor))
+	(len (selection-length)))
+    (delete-samples beg len)
+    (insert-selection beg)))

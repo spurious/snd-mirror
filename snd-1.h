@@ -134,6 +134,12 @@ typedef struct {
 } axis_info;
 
 typedef struct {
+  int chans, fields;
+  double *axis_data;
+  int *fftp, *wavep;
+} axes_data;
+
+typedef struct {
   int *len;
   Float **data;
   int graphs;
@@ -1103,6 +1109,9 @@ void clear_filter_strings(snd_info *sp);
 
 /* -------- snd-file -------- */
 
+axes_data *free_axes_data(axes_data *sa);
+axes_data *make_axes_data(snd_info *sp);
+int restore_axes_data(snd_info *sp, axes_data *sa, Float new_duration, int need_edit_history_update);
 int disk_kspace (char *filename);
 time_t file_write_date(char *filename);
 int is_link(char *filename);

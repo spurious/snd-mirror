@@ -16,7 +16,8 @@
   (set! envelopes (remove-if 
 		   (lambda (n) 
 		     (= (car n) snd)) 
-		   envelopes)))
+		   envelopes))
+  #f)
 
 (define (remove-channel-envelope snd chn)
   (set! envelopes (remove-if 

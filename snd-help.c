@@ -274,6 +274,7 @@ void news_help(snd_state *ss)
 #endif
 	    "Recent changes include:\n\
 \n\
+14-Sep:  peak-env.scm.\n\
 7-Sep:   define-selection-via-marks in marks.scm.\n\
 4-Sep:   eps-size.\n\
 3-Sep:   mix-file-dialog.\n\
@@ -287,15 +288,6 @@ void news_help(snd_state *ss)
 21-Aug:  added explicit FIR/FFT choice to envelope editor (enved-filter).\n\
          fft-squelch in examp.scm.\n\
 20-Aug:  add-listener-popup, fft-popup in popup.scm.\n\
-17-Aug:  GSL 0.9. Gtk+extra 0.99.16.\n\
-16-Aug:  removed load-colormap.\n\
-14-Aug:  added recorder-in-device for OSS.\n\
-13-Aug:  stop-dac-hook, file-save-as-dialog, stop-playing-selection-hook.\n\
-         remember-sound-state in extensions.scm.\n\
-10-Aug:  make-level-meter, with-level-meters in snd-motif.scm.\n\
-         added dac-hook, sound-data-maxamp.\n\
-9-Aug:   show-smpte-label in snd-motif.scm.\n\
-         added region-graph-style.\n\
 ",
 NULL);
   FREE(info);

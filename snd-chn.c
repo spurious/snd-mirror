@@ -457,7 +457,7 @@ void add_channel_data(char *filename, chan_info *cp, file_info *hdr, snd_state *
 static void set_y_bounds(axis_info *ap)
 {
   Float range;
-  range = ap->zy*ap->y_ambit;
+  range = ap->zy * ap->y_ambit;
   ap->y0 = ap->ymin + ap->sy * ap->y_ambit;
   ap->y1 = (ap->y0 + range);
   if (ap->y1 > ap->ymax)
@@ -575,15 +575,16 @@ static void set_x_axis_x1(chan_info *cp, int right)
 
 static void set_y_axis_y0y1 (chan_info *cp, Float y0, Float y1) 
 {
+  /* used only in set y-bounds */
   axis_info *ap;
   ap = cp->axis;
-  if (y0 < ap->ymin) ap->ymin = y0;
-  if (y1 > ap->ymax) ap->ymax = y1;
+  ap->ymin = y0;
+  ap->ymax = y1;
   ap->y_ambit = (ap->ymax - ap->ymin);
   ap->y0 = y0;
   ap->y1 = y1;
-  ap->zy = (y1 - y0) / ap->y_ambit;
-  ap->sy = (y0 - ap->ymin) / ap->y_ambit;
+  ap->zy = 1.0;
+  ap->sy = 0.0;
   resize_sy(cp);
   resize_zy(cp);
   apply_y_axis_change(ap, cp);
@@ -3235,7 +3236,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 				snd_round(ungrf_x(cp->axis, x) * 
 					  (double)SND_SRATE(sp)));
 		  draw_graph_cursor(cp);
-		  paste_region(0, cp, "Btn2");
+		  paste_region(stack_position_to_id(0), cp, "Btn2");
 		}
 	      else 
 		{
@@ -3913,11 +3914,15 @@ static XEN cp_iwrite(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
       curlen = current_ed_samples(cp);
       newlen = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(on, curlen, caller);
       if (curlen > newlen)
-	delete_samples(newlen-1, curlen-newlen, cp, "(set-frames)");
+	{
+	  if (newlen > 0)
+	    delete_samples(newlen - 1, curlen - newlen, cp, "(set-frames)");
+	  else delete_samples(0, curlen, cp, "(set-frames)");
+	}
       else
 	{
 	  if (newlen > curlen)
-	    extend_with_zeros(cp, curlen, newlen-curlen, "(set-frames)");
+	    extend_with_zeros(cp, curlen, newlen - curlen, "(set-frames)");
 	}
       update_graph(cp, NULL);
       break;

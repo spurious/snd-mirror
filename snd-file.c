@@ -875,81 +875,129 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
   return(sp);
 }
 
-static snd_info *snd_update_1(snd_state *ss, snd_info *sp, char *ur_filename)
+axes_data *free_axes_data(axes_data *sa)
 {
-  /* we can't be real smart here because the channel number may have changed and so on */
-  double *axis_data;
-  int *ffts, *waves;
-  int i, j, old_chans, old_sync, old_combine, need_update, read_only;
-  Float duration;
+  if (sa)
+    {
+      if (sa->axis_data) {FREE(sa->axis_data); sa->axis_data = NULL;}
+      if (sa->fftp) {FREE(sa->fftp); sa->fftp = NULL;}
+      if (sa->wavep) {FREE(sa->wavep); sa->wavep = NULL;}
+    }
+  return(NULL);
+}
+
+enum {SA_X0, SA_X1, SA_Y0, SA_Y1, SA_XMIN, SA_XMAX, SA_YMIN, SA_YMAX};
+
+axes_data *make_axes_data(snd_info *sp)
+{
+  axes_data *sa;
   chan_info *cp;
   axis_info *ap;
-  snd_info *nsp;
-  char *filename;
-  need_update = 0;
-  filename = copy_string(ur_filename);
-  old_chans = sp->nchans;
-  old_sync = sp->sync;
-  old_combine = sp->channel_style;
-  read_only = sp->read_only;
-  axis_data = (double *)CALLOC(4 * old_chans, sizeof(double));
-  ffts = (int *)CALLOC(old_chans, sizeof(int));
-  waves = (int *)CALLOC(old_chans, sizeof(int));
-  for (i = 0; i < old_chans; i++)
+  int i, loc;
+  sa = (axes_data *)CALLOC(1, sizeof(axes_data));
+  sa->chans = sp->nchans;
+  sa->fields = 8;
+  sa->axis_data = (double *)CALLOC(sa->fields * sa->chans, sizeof(double));
+  sa->fftp = (int *)CALLOC(sa->chans, sizeof(int));
+  sa->wavep = (int *)CALLOC(sa->chans, sizeof(int));
+  for (i = 0; i < sa->chans; i++)
     {
       cp = sp->chans[i];
       ap = cp->axis;
-      axis_data[(i * 4) + 0] = ap->x0;
-      axis_data[(i * 4) + 1] = ap->x1;
-      axis_data[(i * 4) + 2] = ap->y0;
-      axis_data[(i * 4) + 3] = ap->y1;
-      waves[i] = cp->graph_time_p;
-      ffts[i] = cp->graph_transform_p;
+      loc = i * sa->fields;
+      sa->axis_data[loc + SA_X0] = ap->x0;
+      sa->axis_data[loc + SA_X1] = ap->x1;
+      sa->axis_data[loc + SA_Y0] = ap->y0;
+      sa->axis_data[loc + SA_Y1] = ap->y1;
+      sa->axis_data[loc + SA_XMIN] = ap->xmin;
+      sa->axis_data[loc + SA_XMAX] = ap->xmax;
+      sa->axis_data[loc + SA_YMIN] = ap->ymin;
+      sa->axis_data[loc + SA_YMAX] = ap->ymax;
+      sa->wavep[i] = cp->graph_time_p;
+      sa->fftp[i] = cp->graph_transform_p;
     }
-  snd_close_file(sp, ss);
-  /* this normalizes the fft/lisp/wave state so we need to reset it after reopen */
-  alert_new_file();
-  /* if it's a raw sound file being updated, we don't want to re-confirm the sound format and whatnot
-   * so we set the use-raw-defaults flag in a sort of ugly wrapper around the snd_open_file
-   */
-  ss->reloading_updated_file = TRUE;
-  nsp = snd_open_file(filename, ss, read_only);
-  ss->reloading_updated_file = FALSE;
-  /* end wrapper */
-  duration = (Float)mus_sound_samples(filename) / (Float)(mus_sound_chans(filename) * mus_sound_srate(filename));
-  for (i = 0, j = 0; i < nsp->nchans; i++)
+  return(sa);
+}
+
+int restore_axes_data(snd_info *sp, axes_data *sa, Float new_duration, int need_edit_history_update)
+{
+  int i, j, loc, need_update = 0;
+  Float old_duration;
+  chan_info *cp;
+  axis_info *ap;
+  for (i = 0, j = 0; i < sp->nchans; i++)
     {
-      cp = nsp->chans[i];
-      if (duration < axis_data[(j * 4) + 0]) 
-	axis_data[(j * 4) + 0] = duration - .1;
-      if (duration < axis_data[(j * 4) + 1]) 
-	axis_data[(j * 4) + 1] = duration;
+      cp = sp->chans[i];
+      loc = j * sa->fields;
+      old_duration = sa->axis_data[loc + SA_X1] - sa->axis_data[loc + SA_X0];  /* old duration is x1 - x0 */
+      if (new_duration < sa->axis_data[loc + SA_X0])                           /* new duration < old x0 */
+	sa->axis_data[loc + SA_X0] = new_duration - old_duration;              /* try to maintain old window size */
+      if (sa->axis_data[loc + SA_X0] < 0.0) 
+	sa->axis_data[loc + SA_X0] = 0.0;
+      if (new_duration < sa->axis_data[loc + SA_X1]) 
+	sa->axis_data[loc + SA_X1] = new_duration;                             /* new x1 */
+      sa->axis_data[loc + SA_XMAX] = new_duration;                             /* new xmax */
+      ap = cp->axis;
+      ap->xmin = sa->axis_data[loc + SA_XMIN];
+      ap->xmax = sa->axis_data[loc + SA_XMAX];
+      ap->ymin = sa->axis_data[loc + SA_YMIN];
+      ap->ymax = sa->axis_data[loc + SA_YMAX];
+      ap->y_ambit = ap->ymax - ap->ymin;
+      ap->x_ambit = ap->xmax - ap->xmin;
       set_axes(cp,
-	       axis_data[(j * 4) + 0], 
-	       axis_data[(j * 4) + 1], 
-	       axis_data[(j * 4) + 2], 
-	       axis_data[(j * 4) + 3]);
+	       sa->axis_data[loc + SA_X0], 
+	       sa->axis_data[loc + SA_X1], 
+	       sa->axis_data[loc + SA_Y0], 
+	       sa->axis_data[loc + SA_Y1]);
       update_graph(cp, NULL); /* get normalized state before messing with it */
-      if (ffts[j]) 
+      if (sa->fftp[j]) 
 	{
 	  fftb(cp, TRUE); 
 	  need_update = 1;
 	}
-      if (!(waves[j])) 
+      if (!(sa->wavep[j])) 
 	{
 	  waveb(cp, FALSE); 
 	  need_update = 1;
 	}
-      if (j < (old_chans - 1)) j++;
+      if (need_edit_history_update) 
+	reflect_edit_history_change(cp);
+      if (j < (sa->chans - 1)) j++;
     }
+  return(need_update);
+}
+
+static snd_info *snd_update_1(snd_state *ss, snd_info *sp, char *ur_filename)
+{
+  /* we can't be real smart here because the channel number may have changed and so on */
+  int i, old_sync, old_combine, need_update = 0, read_only, old_srate, old_chans, old_format;
+  axes_data *sa;
+  snd_info *nsp;
+  char *filename;
+  filename = copy_string(ur_filename);
+  old_sync = sp->sync;
+  old_combine = sp->channel_style;
+  read_only = sp->read_only;
+  sa = make_axes_data(sp);
+  mus_header_raw_defaults(&old_srate, &old_chans, &old_format);
+  if (sp->hdr->type == MUS_RAW) 
+    mus_header_set_raw_defaults(sp->hdr->srate, sp->hdr->chans, sp->hdr->format);
+  snd_close_file(sp, ss);
+  /* this normalizes the fft/lisp/wave state so we need to reset it after reopen */
+  alert_new_file();
+  ss->reloading_updated_file = TRUE;
+  nsp = snd_open_file(filename, ss, read_only);
+  ss->reloading_updated_file = FALSE;
+  if (sp->hdr->type == MUS_RAW) 
+    mus_header_set_raw_defaults(old_srate, old_chans, old_format);
+  /* end wrapper */
+  need_update = restore_axes_data(nsp, sa, mus_sound_duration(filename), FALSE);
   if (nsp->channel_style != old_combine) set_sound_channel_style(nsp, old_combine);
   if (nsp->sync != old_sync) syncb(nsp, old_sync);
   if (need_update) 
     for (i = 0; i < nsp->nchans; i++) 
       update_graph(nsp->chans[i], NULL);
-  FREE(axis_data);
-  FREE(waves);
-  FREE(ffts);
+  sa = free_axes_data(sa);
   FREE(filename);
   return(nsp);
 }

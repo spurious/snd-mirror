@@ -34,15 +34,27 @@
 (define total-tests 23)
 (define with-exit (< snd-test 0))
 
+(define home-dir "/home")
+(define sf-dir "/sf1")
+
+(if (not (file-exists? (string-append home-dir "/bil/cl/oboe.snd")))
+    (begin
+      (set! home-dir "/usr/people")
+      (set! sf-dir "/sf")))
+(if (not (file-exists? (string-append home-dir "/bil/cl/oboe.snd")))
+    (begin
+      (set! home-dir "/space/home")
+      (set! sf-dir "/sf")))
+
 (if (and (not (file-exists? "4.aiff"))
-	 (not (string=? (getcwd) "/home/bil/cl")))
-    (copy-file "/home/bil/cl/4.aiff" (string-append (getcwd) "/4.aiff")))
+	 (not (string=? (getcwd) (string-append home-dir "/bil/cl"))))
+    (copy-file (string-append home-dir "/bil/cl/4.aiff") (string-append (getcwd) "/4.aiff")))
 (if (and (not (file-exists? "2.snd"))
-	 (not (string=? (getcwd) "/home/bil/cl")))
-    (copy-file "/home/bil/cl/2.snd" (string-append (getcwd) "/2.snd")))
+	 (not (string=? (getcwd) (string-append home-dir "/bil/cl"))))
+    (copy-file (string-append home-dir "/bil/cl/2.snd") (string-append (getcwd) "/2.snd")))
 (if (and (not (file-exists? "sndxtest"))
-	 (not (string=? (getcwd) "/home/bil/cl")))
-    (copy-file "/home/bil/cl/sndxtest" (string-append (getcwd) "/sndxtest")))
+	 (not (string=? (getcwd) (string-append home-dir "/bil/cl"))))
+    (copy-file (string-append home-dir "/bil/cl/sndxtest") (string-append (getcwd) "/sndxtest")))
 
 (define times '())
 (defmacro time (a) 
@@ -807,20 +819,11 @@
 
 
 ;;; headers
-(define sf-dir "/home/bil/sf1/") 
+(define sf-dir (string-append home-dir "/bil" sf-dir "/"))
 (if (not (file-exists? (string-append sf-dir "alaw.wav")))
     (begin
-      (set! sf-dir "/home/bil/sf/")
-      (if (not (file-exists? (string-append sf-dir "alaw.wav")))
-	  (begin
-	    (set! sf-dir "/usr/people/bil/sf/")
-	    (if (not (file-exists? (string-append sf-dir "alaw.wav")))
-		(begin
-		  (set! sf-dir "/space/home/bil/sf/")
-		  (if (not (file-exists? (string-append sf-dir "alaw.wav")))
-		      (begin
-			(snd-display "can't find sf directory!")
-			(set! sf-dir #f)))))))))
+      (snd-display "can't find sf directory!")
+      (set! sf-dir #f)))
 
 
 ;;; ---------------- test 2: headers ----------------
@@ -1659,8 +1662,10 @@
 	  (if (not (= (mus-sound-data-format "test.snd") mus-bshort)) 
 	      (snd-display ";saved-as short -> ~A?" (mus-data-format-name (mus-sound-data-format "test.snd"))))
 	  (if (fneq (sample 1000 ab) samp) (snd-display ";next (short)[1000] = ~A?" (sample 1000 ab)))
+	  (set! (y-bounds ab 0) (list -3.0 3.0))
 	  (set! (data-format ab) mus-lshort)
 	  (if (not (= (data-format ab) mus-lshort)) (snd-display ";set data-format: ~A?" (mus-data-format-name (data-format ab))))
+	  (if (not (equal? (y-bounds ab 0) (list -3.0 3.0))) (snd-display ";set data format y-bounds: ~A?" (y-bounds ab 0)))
 	  (set! (header-type ab) mus-aifc)
 	  (if (not (= (header-type ab) mus-aifc)) (snd-display ";set header-type: ~A?" (mus-header-type-name (header-type ab))))
 	  (set! (channels ab) 3)
@@ -1936,7 +1941,7 @@
 	      (snd-display ";re-read/write[~A]: ~A?" i (sound-data-channel->list sdata i))))
 	(mus-sound-close-input fd))
 
-      (let ((ind (open-sound "/home/bil/sf1/32bit.sf")))
+      (let ((ind (open-sound (string-append sf-dir "32bit.sf"))))
 	(if (fneq (maxamp ind 0) .228) (snd-display ";32bit max: ~A" (maxamp ind 0)))
 	(close-sound ind))
 
@@ -5523,7 +5528,7 @@
 	    (let ((reader-string (format #f "~A" mr)))
 	      (if (not (string=? (substring reader-string 0 22) "#<mix-sample-reader 0x"))
 		  (snd-display ";mix sample reader actually got: [~S]" (substring reader-string 0 22)))
-	      (if (not (string=? (substring reader-string 29 62) ": /home/bil/cl/pistol.snd via mix"))
+	      (if (not (string=? (substring reader-string 29 62) (string-append ": " home-dir "/bil/cl/pistol.snd via mix")))
 		  (snd-display ";mix sample reader actually got: [~S]" (substring reader-string 29 62))))
 	    (do ((i 0 (1+ i)))
 		((= i 99))
@@ -5684,7 +5689,7 @@
 		 (reader-string (format #f "~A" mr)))
 	      (if (not (string=? (substring reader-string 0 24) "#<track-sample-reader 0x"))
 		  (snd-display ";track sample reader actually got: [~S]" (substring reader-string 0 24)))
-	      (if (not (string=? (substring reader-string 31) ": /home/bil/cl/oboe.snd chan 0 via mixes '(9 11 13)>"))
+	      (if (not (string=? (substring reader-string 31) (string-append ": " home-dir "/bil/cl/oboe.snd chan 0 via mixes '(9 11 13)>")))
 		  (snd-display ";track sample reader actually got: [~S]" (substring reader-string 31)))
 	      (free-track-sample-reader mr))
 	  (let ((curend (track-end (track 1))))
@@ -6010,7 +6015,7 @@
 		  (close-sound sd))
 		(let ((file (save-marks fd)))
 		  (if (or (not file)
-			  (not (string=? file "/home/bil/cl/oboe.marks")))
+			  (not (string=? file (string-append home-dir "/bil/cl/oboe.marks"))))
 		      (snd-display ";save-marks -> ~A?" file)))
 		(close-sound fd)
 		(let ((fd (open-sound "pistol.snd")))
@@ -8292,6 +8297,10 @@
 	(if (not (= (frames id 0) 75000)) (snd-display ";set-frames 75000: ~A?" (frames id 0)))
 	(if (not (= (edit-position id 0) 2)) (snd-display ";set-frames 75000 edit: ~A?" (edit-position id 0)))
 	(if (fneq (sample 30000 id 0) 0.0) (snd-display ";set-frames 75000 zeros: ~A?" (sample 30000 id 0)))
+	(set! (frames id 0) 0)
+	(if (not (= (frames id 0) 0)) (snd-display ";set-frames 0: ~A?" (frames id 0)))
+	(set! (frames id 0) 100)
+	(if (not (= (frames id 0) 100)) (snd-display ";set-frames 100: ~A?" (frames id 0)))
 	(revert-sound)
 	(if (fneq (sample 30000 id 0) -0.0844) (snd-display ";revert from set-frames: ~A?" (sample 30000 id 0)))
 	(if (not (= fr (frames id 0))) (snd-display ";revert set-frames: ~A ~= ~A?" (frames id 0) fr))
@@ -10207,10 +10216,10 @@ EDITS: 3
 		(let ((tmp (temp-dir)))
 		  (key-event (widget-window name-button) (char->integer #\x) 4) (force-event)
 		  (key-event (widget-window name-button) (char->integer #\d) 0) (force-event)
-		  (widget-string minibuffer "/home/bil/test/snd-5")
+		  (widget-string minibuffer (string-append home-dir "/bil/test/snd-5"))
 		  (key-event (widget-window minibuffer) snd-return-key 0) (force-event)
 		  (if (or (not (string? (temp-dir)))
-			  (not (string=? (temp-dir) "/home/bil/test/snd-5")))
+			  (not (string=? (temp-dir) (string-append home-dir "/bil/test/snd-5"))))
 		      (snd-display ";temp-dir via prompt: ~A?" (temp-dir)))
 		  (set! (temp-dir) tmp)
 		  (if (not (equal? (temp-dir) tmp))

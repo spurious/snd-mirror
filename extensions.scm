@@ -14,6 +14,7 @@
 ;;; check-for-unsaved-edits
 ;;; remember-sound-state
 
+(use-modules (ice-9 common-list))
 
 
 ;;; -------- accessors for graph-style fields
@@ -499,7 +500,8 @@
 					       (do ((i 0 (1+ i)))
 						   ((= i (chans snd)))
 						 (set! scs (cons (list snd i) scs)))
-					       (reverse scs)))))))
+					       (reverse scs)))))
+			    #f))
     (add-hook! after-open-hook (lambda (snd)
 				 ;; restore previous state, if any
 				 (let ((state (saved-state snd)))
