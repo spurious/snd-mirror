@@ -1534,7 +1534,7 @@ snd_info *add_sound_window(char *filename, bool read_only)
       gtk_box_pack_start(GTK_BOX(sw[W_amp_form]), sw[W_amp_number], false, false, 0);
       gtk_widget_show(sw[W_amp_number]);
       
-      adjs[W_amp_adj] = gtk_adjustment_new(0.5, 0.0, 1.0, 0.001, 0.01, .1);
+      adjs[W_amp_adj] = gtk_adjustment_new(amp_to_scroll(sp->amp_control_min, 1.0, sp->amp_control_max), 0.0, 1.0, 0.001, 0.01, .1);
       sw[W_amp] = gtk_hscrollbar_new(GTK_ADJUSTMENT(adjs[W_amp_adj]));
       gtk_box_pack_start(GTK_BOX(sw[W_amp_form]), sw[W_amp], true, true, 4);
       g_signal_connect_closure_by_id(GTK_OBJECT(adjs[W_amp_adj]),
@@ -1579,7 +1579,7 @@ snd_info *add_sound_window(char *filename, bool read_only)
       gtk_box_pack_start(GTK_BOX(sw[W_speed_form]), sw[W_speed_number], false, false, 0);
       gtk_widget_show(sw[W_speed_number]);
       
-      adjs[W_speed_adj] = gtk_adjustment_new(0.45, 0.0, 1.0, 0.001, 0.01, .1);
+      adjs[W_speed_adj] = gtk_adjustment_new(speed_to_scroll(sp->speed_control_min, 1.0, sp->speed_control_max), 0.0, 1.0, 0.001, 0.01, .1);
       sw[W_speed] = gtk_hscrollbar_new(GTK_ADJUSTMENT(adjs[W_speed_adj]));
       gtk_box_pack_start(GTK_BOX(sw[W_speed_form]), sw[W_speed], true, true, 4);
       g_signal_connect_closure_by_id(GTK_OBJECT(adjs[W_speed_adj]),
@@ -1635,7 +1635,7 @@ snd_info *add_sound_window(char *filename, bool read_only)
       gtk_box_pack_start(GTK_BOX(sw[W_expand_form]), sw[W_expand_number], false, false, 0);
       gtk_widget_show(sw[W_expand_number]);
       
-      adjs[W_expand_adj] = gtk_adjustment_new(0.45, 0.0, 1.0, 0.001, 0.01, .1);
+      adjs[W_expand_adj] = gtk_adjustment_new(expand_to_scroll(sp->expand_control_min, 1.0, sp->expand_control_max), 0.0, 1.0, 0.001, 0.01, .1);
       sw[W_expand] = gtk_hscrollbar_new(GTK_ADJUSTMENT(adjs[W_expand_adj]));
       gtk_box_pack_start(GTK_BOX(sw[W_expand_form]), sw[W_expand], true, true, 4);
       g_signal_connect_closure_by_id(GTK_OBJECT(adjs[W_expand_adj]),
@@ -1765,7 +1765,7 @@ snd_info *add_sound_window(char *filename, bool read_only)
       gtk_box_pack_start(GTK_BOX(sw[W_reverb_form]), sw[W_revlen_number], false, false, 0);
       gtk_widget_show(sw[W_revlen_number]);
       
-      adjs[W_revlen_adj] = gtk_adjustment_new(0.2, 0.0, 1.0, 0.001, 0.01, .1);
+      adjs[W_revlen_adj] = gtk_adjustment_new(revlen_to_scroll(sp->reverb_control_length_min, sp->reverb_control_length, sp->reverb_control_length_max), 0.0, 1.0, 0.001, 0.01, .1);
       sw[W_revlen] = gtk_hscrollbar_new(GTK_ADJUSTMENT(adjs[W_revlen_adj]));
       gtk_box_pack_start(GTK_BOX(sw[W_reverb_form]), sw[W_revlen], true, true, 4);
       g_signal_connect_closure_by_id(GTK_OBJECT(adjs[W_revlen_adj]),

@@ -551,7 +551,7 @@ Reverb-feedback sets the scaler on the feedback.
   (define (reset-all-sliders)
     (for-each
      (lambda (ctl)
-       (set! ((caddr ctl) #t) (cadr ctl))
+       (set! ((caddr ctl)) (cadr ctl))
        (set! (.value (GTK_ADJUSTMENT (car ctl))) (cadr ctl))
        (gtk_adjustment_value_changed (GTK_ADJUSTMENT (car ctl))))
      hidden-controls))
@@ -611,7 +611,7 @@ Reverb-feedback sets the scaler on the feedback.
 					       (g_signal_lookup "value_changed" (G_OBJECT_TYPE (GTK_OBJECT adj)))
 					       0
 					       (g_cclosure_new (lambda (adj data)
-								 (set! (func #t) (.value (GTK_ADJUSTMENT adj))))
+								 (set! (func) (.value (GTK_ADJUSTMENT adj))))
 							       #f #f)
 					       #f)
 	       (gtk_widget_show slider)

@@ -3917,6 +3917,10 @@ the <i>snd</i> and <i>chn</i> arguments can be #t, referring to all current soun
 this possibility is identified below by marking the arguments as
 <em class=narg>snd</em> or <em class=narg>snd chn</em>;
 in such a case, if the <i>snd</i> argument is #t, the channel defaults to the selected channel.
+In cases where it makes sense, if the <em class=narg>snd</em> argument is omitted, the
+reference is to the global default value.  So, <code>(set! (amp-control-bounds) '(0.0 2.0))</code>
+sets the global amp control (slider) bounds to be between 0.0 and 2.0, whereas
+<code>(set! (amp-control-bounds snd) '(0.0 2.0))</code> sets it only for the sound referred to by 'snd'.
 </p>
 
 <p>Many of the procedures also have an <i>edpos</i> argument (standing for "edit position").
@@ -4304,7 +4308,7 @@ Display data about sample under cursor: <a href="#verbosecursor">verbose cursor<
 </td></tr>
 <tr><td></td><td>
 #t if cursor is following along in the sound as it plays.  To make this the default:<br><br>
-<code>(add-hook! after-open-hook (lambda (sp) (set! (cursor-follows-play sp) #t)))</code>.<br><br>
+<code>(set! (cursor-follows-play) #t)</code>.<br><br>
 A better name for this might be <i>with-tracking-cursor</i>, but the word "track" already has too many meanings in this context;
 I wonder whether "track" or "frame" has the most uses.
 
@@ -7642,6 +7646,7 @@ apply button (<a class=quiet href="#applycontrols">apply-controls</a>) and playb
 <tr><td></td><td>
 The amp-control min and max amounts as a list.  The default is
 (list 0.0 8.0).  The value 1.0 should be in the given range, since it is placed in the middle of the slider's range.
+If no <i>snd</i> argument is given, this also affects the Mix, Track, and Record dialogs.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -8016,6 +8021,7 @@ current <a class=quiet href="snd.html#speed">speed</a>.  A speed of 2 plays the 
 <tr><td></td><td>
 The speed-control min and max amounts as a list.  The default is
 (list 0.05 20.0).
+If no <i>snd</i> argument is given, this also affects the Mix and Track.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -8769,6 +8775,10 @@ If it returns a string, that becomes the output filename.
 
 <tr><td colspan=2><code><em class=emdef><a href="#savelistener">save-listener</a></em> (filename) </code></td></tr>
 <tr><td></td><td>save listener text in <i>filename</i>.</td></tr>
+
+<!-- tempo-control-bounds -->
+<tr><td colspan=2><code><a class=def name="tempocontrolbounds">tempo-control-bounds</a> ()</code></td></tr>
+<tr><td></td><td>Track dialog tempo slider bounds (defaults to (list 0.0 8.0)).</td></tr>
 
 <!-- track-dialog -->
 <tr><td colspan=2><code><a class=def name="trackdialog">track-dialog</a> ()</code></td></tr>

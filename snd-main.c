@@ -188,12 +188,15 @@ static char *b2s(bool val) {if (val) return("#t"); else return("#f");}
 #endif
 
 #define white_space "      "
+static bool b_ok = false;
 
 #if HAVE_RUBY
 static void pss_ss(FILE *fd, const char *name, const char *val) {fprintf(fd, "set_%s(%s)\n", TO_PROC_NAME(name), val);}
 static void pss_sq(FILE *fd, const char *name, const char *val) {fprintf(fd, "set_%s(\"%s\")\n", TO_PROC_NAME(name), val);}
 static void pss_sd(FILE *fd, const char *name, int val)   {fprintf(fd, "set_%s(%d)\n", TO_PROC_NAME(name), val);}
 static void pss_sf(FILE *fd, const char *name, Float val) {fprintf(fd, "set_%s(%.4f)\n", TO_PROC_NAME(name), val);}
+static void pss_sl(FILE *fd, const char *name, Float val1, Float val2) 
+  {fprintf(fd, "%sset_%s([%f, %f])\n", white_space, TO_PROC_NAME(name), val1, val2);}
 
 static void psp_ss(FILE *fd, const char *name, const char *val) {fprintf(fd, "%sset_%s(%s, sfile)\n", white_space, TO_PROC_NAME(name), val);}
 static void psp_sd(FILE *fd, const char *name, int val)   {fprintf(fd, "%sset_%s(%d, sfile)\n", white_space, TO_PROC_NAME(name), val);}
@@ -213,18 +216,27 @@ static void pss_ss(FILE *fd, const char *name, const char *val) {fprintf(fd, "(s
 static void pss_sq(FILE *fd, const char *name, const char *val) {fprintf(fd, "(set! (%s) \"%s\")\n", name, val);}
 static void pss_sd(FILE *fd, const char *name, int val)   {fprintf(fd, "(set! (%s) %d)\n", name, val);}
 static void pss_sf(FILE *fd, const char *name, Float val) {fprintf(fd, "(set! (%s) %.4f)\n", name, val);}
+static void pss_sl(FILE *fd, const char *name, Float val1, Float val2) {fprintf(fd, "%s(set! (%s) (list %f %f))\n", white_space, name, val1, val2);}
 
-static void psp_ss(FILE *fd, const char *name, const char *val) {fprintf(fd, "%s(set! (%s sfile) %s)\n", white_space, name, val);}
-static void psp_sd(FILE *fd, const char *name, int val)   {fprintf(fd, "%s(set! (%s sfile) %d)\n", white_space, name, val);}
-static void psp_sf(FILE *fd, const char *name, Float val) {fprintf(fd, "%s(set! (%s sfile) %.4f)\n", white_space, name, val);}
-static void psp_sl(FILE *fd, const char *name, Float val1, Float val2) {fprintf(fd, "%s(set! (%s sfile) (list %f %f))\n", white_space, name, val1, val2);}
+static void psp_ss(FILE *fd, const char *name, const char *val) 
+  {b_ok = true; fprintf(fd, "%s(set! (%s sfile) %s)\n", white_space, name, val);}
+static void psp_sd(FILE *fd, const char *name, int val)   
+  {b_ok = true; fprintf(fd, "%s(set! (%s sfile) %d)\n", white_space, name, val);}
+static void psp_sf(FILE *fd, const char *name, Float val) 
+  {b_ok = true; fprintf(fd, "%s(set! (%s sfile) %.4f)\n", white_space, name, val);}
+static void psp_sl(FILE *fd, const char *name, Float val1, Float val2) 
+  {b_ok = true; fprintf(fd, "%s(set! (%s sfile) (list %f %f))\n", white_space, name, val1, val2);}
 
-static void pcp_ss(FILE *fd, const char *name, const char *val, int chan) {fprintf(fd, "%s(set! (%s sfile %d) %s)\n", white_space, name, chan, val);}
-static void pcp_sd(FILE *fd, const char *name, int val, int chan)   {fprintf(fd, "%s(set! (%s sfile %d) %d)\n", white_space, name, chan, val);}
-static void pcp_sod(FILE *fd, const char *name, off_t val, int chan)   {fprintf(fd, "%s(set! (%s sfile %d) " OFF_TD ")\n", white_space, name, chan, val);}
-static void pcp_sf(FILE *fd, const char *name, Float val, int chan) {fprintf(fd, "%s(set! (%s sfile %d) %.4f)\n", white_space, name, chan, val);}
+static void pcp_ss(FILE *fd, const char *name, const char *val, int chan) 
+  {b_ok = true; fprintf(fd, "%s(set! (%s sfile %d) %s)\n", white_space, name, chan, val);}
+static void pcp_sd(FILE *fd, const char *name, int val, int chan)   
+  {b_ok = true; fprintf(fd, "%s(set! (%s sfile %d) %d)\n", white_space, name, chan, val);}
+static void pcp_sod(FILE *fd, const char *name, off_t val, int chan)   
+  {b_ok = true; fprintf(fd, "%s(set! (%s sfile %d) " OFF_TD ")\n", white_space, name, chan, val);}
+static void pcp_sf(FILE *fd, const char *name, Float val, int chan) 
+  {b_ok = true; fprintf(fd, "%s(set! (%s sfile %d) %.4f)\n", white_space, name, chan, val);}
 static void pcp_sl(FILE *fd, const char *name, Float val1, Float val2, int chan) 
-  {fprintf(fd, "%s(set! (%s sfile %d) (list %f %f))\n", white_space, name, chan, val1, val2);}
+  {b_ok = true; fprintf(fd, "%s(set! (%s sfile %d) (list %f %f))\n", white_space, name, chan, val1, val2);}
 #endif
 
 static void save_snd_state_options (FILE *fd)
@@ -354,6 +366,44 @@ static void save_snd_state_options (FILE *fd)
   if (fneq(eps_bottom_margin(ss), DEFAULT_EPS_BOTTOM_MARGIN)) pss_sf(fd, S_eps_bottom_margin, eps_bottom_margin(ss));
   if (fneq(eps_left_margin(ss), DEFAULT_EPS_LEFT_MARGIN)) pss_sf(fd, S_eps_left_margin, eps_left_margin(ss));
   if (fneq(eps_size(ss), DEFAULT_EPS_SIZE)) pss_sf(fd, S_eps_size, eps_size(ss));
+
+  if ((fneq(contrast_control_min(ss), DEFAULT_CONTRAST_CONTROL_MIN)) ||
+      (fneq(contrast_control_max(ss), DEFAULT_CONTRAST_CONTROL_MAX)))
+    pss_sl(fd, S_contrast_control_bounds, contrast_control_min(ss), contrast_control_max(ss));
+  if (fneq(contrast_control_amp(ss), DEFAULT_CONTRAST_CONTROL_AMP)) pss_sf(fd, S_contrast_control_amp, contrast_control_amp(ss));
+  if ((fneq(expand_control_min(ss), DEFAULT_EXPAND_CONTROL_MIN)) ||
+      (fneq(expand_control_max(ss), DEFAULT_EXPAND_CONTROL_MAX)))
+    pss_sl(fd, S_expand_control_bounds, expand_control_min(ss), expand_control_max(ss));
+  if (fneq(expand_control_ramp(ss), DEFAULT_EXPAND_CONTROL_RAMP)) pss_sf(fd, S_expand_control_ramp, expand_control_ramp(ss));
+  if (fneq(expand_control_hop(ss), DEFAULT_EXPAND_CONTROL_HOP)) pss_sf(fd, S_expand_control_hop, expand_control_hop(ss));
+  if (fneq(expand_control_jitter(ss), DEFAULT_EXPAND_CONTROL_JITTER)) pss_sf(fd, S_expand_control_jitter, expand_control_jitter(ss));
+  if (fneq(expand_control_length(ss), DEFAULT_EXPAND_CONTROL_LENGTH)) pss_sf(fd, S_expand_control_length, expand_control_length(ss));
+  if (speed_control_tones(ss) != DEFAULT_SPEED_CONTROL_TONES) pss_sd(fd, S_speed_control_tones, speed_control_tones(ss));
+  if (speed_control_style(ss) != DEFAULT_SPEED_CONTROL_STYLE) pss_ss(fd, S_speed_control_style, speed_control_style_name(speed_control_style(ss)));
+  if ((fneq(speed_control_min(ss), DEFAULT_SPEED_CONTROL_MIN)) ||
+      (fneq(speed_control_max(ss), DEFAULT_SPEED_CONTROL_MAX)))
+    pss_sl(fd, S_speed_control_bounds, speed_control_min(ss), speed_control_max(ss));
+  if ((fneq(reverb_control_scale_min(ss), DEFAULT_REVERB_CONTROL_SCALE_MIN)) ||
+      (fneq(reverb_control_scale_max(ss), DEFAULT_REVERB_CONTROL_SCALE_MAX)))
+    pss_sl(fd, S_reverb_control_scale_bounds, reverb_control_scale_min(ss), reverb_control_scale_max(ss));
+  if ((fneq(reverb_control_length_min(ss), DEFAULT_REVERB_CONTROL_LENGTH_MIN)) ||
+      (fneq(reverb_control_length_max(ss), DEFAULT_REVERB_CONTROL_LENGTH_MAX)))
+    pss_sl(fd, S_reverb_control_length_bounds, reverb_control_length_min(ss), reverb_control_length_max(ss));
+  if (fneq(reverb_control_feedback(ss), DEFAULT_REVERB_CONTROL_FEEDBACK)) pss_sf(fd, S_reverb_control_feedback, reverb_control_feedback(ss));
+  if (fneq(reverb_control_lowpass(ss), DEFAULT_REVERB_CONTROL_LOWPASS)) pss_sf(fd, S_reverb_control_lowpass, reverb_control_lowpass(ss));
+  if (fneq(reverb_control_decay(ss), DEFAULT_REVERB_CONTROL_DECAY)) pss_sf(fd, S_reverb_control_decay, reverb_control_decay(ss));
+  if ((fneq(amp_control_min(ss), DEFAULT_AMP_CONTROL_MIN)) ||
+      (fneq(amp_control_max(ss), DEFAULT_AMP_CONTROL_MAX)))
+    pss_sl(fd, S_amp_control_bounds, amp_control_min(ss), amp_control_max(ss));
+  if (filter_control_order(ss) != DEFAULT_FILTER_CONTROL_ORDER) pss_sd(fd, S_filter_control_order, filter_control_order(ss));
+  if (filter_control_in_dB(ss) != DEFAULT_FILTER_CONTROL_IN_DB) pss_ss(fd, S_filter_control_in_dB, b2s(filter_control_in_dB(ss)));
+  if (filter_control_in_hz(ss) != DEFAULT_FILTER_CONTROL_IN_HZ) pss_ss(fd, S_filter_control_in_hz, b2s(filter_control_in_hz(ss)));
+  if (cursor_follows_play(ss) != DEFAULT_CURSOR_FOLLOWS_PLAY)
+    pss_ss(fd, S_cursor_follows_play, b2s((bool)(cursor_follows_play(ss)))); /* a boolean from the user's point of view */
+  if ((fneq(tempo_control_min(ss), DEFAULT_TEMPO_CONTROL_MIN)) ||
+      (fneq(tempo_control_max(ss), DEFAULT_TEMPO_CONTROL_MAX)))
+    pss_sl(fd, S_tempo_control_bounds, tempo_control_min(ss), tempo_control_max(ss));
+  if (in_show_controls(ss) != DEFAULT_SHOW_CONTROLS) pss_ss(fd, S_show_controls, b2s(in_show_controls(ss)));
 
   save_recorder_state(fd);
 
@@ -496,8 +546,20 @@ void close_save_sound_block(FILE *fd)
 #if HAVE_RUBY
   fprintf(fd, "end\n");
 #else
+  if (!b_ok) fprintf(fd, "      #f\n"); /* avoid empty begin if no field was output */
   fprintf(fd, "      )))\n");
 #endif
+}
+
+static bool default_envelope_p(env *e)
+{
+  return((e) &&
+	 (e->pts == 2) &&
+	 (e->base == 1.0) &&
+	 (e->data[0] == 0.0) &&
+	 (e->data[1] == 1.0) &&
+	 (e->data[2] == 1.0) &&
+	 (e->data[3] == 1.0));
 }
 
 static void save_sound_state (snd_info *sp, void *ptr) 
@@ -510,24 +572,26 @@ static void save_sound_state (snd_info *sp, void *ptr)
   char *tmpstr = NULL;
   fd = (FILE *)ptr;
   open_save_sound_block(sp, fd, true);
+  b_ok = false; /* can't have empty begin statement */
   if (sp->sync != DEFAULT_SYNC) psp_sd(fd, S_sync, sp->sync);
   if (sp->contrast_control_p != DEFAULT_CONTRAST_CONTROL_P) psp_ss(fd, S_contrast_control_p, b2s(sp->contrast_control_p));
-  if (sp->contrast_control != DEFAULT_CONTRAST_CONTROL) psp_sf(fd, S_contrast_control, sp->contrast_control);
-  if ((sp->contrast_control_min != DEFAULT_CONTRAST_CONTROL_MIN) ||
-      (sp->contrast_control_max != DEFAULT_CONTRAST_CONTROL_MAX))
+  if (fneq(sp->contrast_control, DEFAULT_CONTRAST_CONTROL)) psp_sf(fd, S_contrast_control, sp->contrast_control);
+  if ((fneq(sp->contrast_control_min, DEFAULT_CONTRAST_CONTROL_MIN)) ||
+      (fneq(sp->contrast_control_max, DEFAULT_CONTRAST_CONTROL_MAX)))
     psp_sl(fd, S_contrast_control_bounds, sp->contrast_control_min, sp->contrast_control_max);
+  if (fneq(sp->contrast_control_amp, DEFAULT_CONTRAST_CONTROL_AMP)) psp_sf(fd, S_contrast_control_amp, sp->contrast_control_amp);
   if (sp->expand_control_p != DEFAULT_EXPAND_CONTROL_P) psp_ss(fd, S_expand_control_p, b2s(sp->expand_control_p));
-  if (sp->expand_control != DEFAULT_EXPAND_CONTROL) psp_sf(fd, S_expand_control, sp->expand_control);
-  if ((sp->expand_control_min != DEFAULT_EXPAND_CONTROL_MIN) ||
-      (sp->expand_control_max != DEFAULT_EXPAND_CONTROL_MAX))
+  if (fneq(sp->expand_control, DEFAULT_EXPAND_CONTROL)) psp_sf(fd, S_expand_control, sp->expand_control);
+  if ((fneq(sp->expand_control_min, DEFAULT_EXPAND_CONTROL_MIN)) ||
+      (fneq(sp->expand_control_max, DEFAULT_EXPAND_CONTROL_MAX)))
     psp_sl(fd, S_expand_control_bounds, sp->expand_control_min, sp->expand_control_max);
-  if (sp->expand_control_ramp != DEFAULT_EXPAND_CONTROL_RAMP) psp_sf(fd, S_expand_control_ramp, sp->expand_control_ramp);
-  if (sp->expand_control_hop != DEFAULT_EXPAND_CONTROL_HOP) psp_sf(fd, S_expand_control_hop, sp->expand_control_hop);
-  if (sp->expand_control_jitter != DEFAULT_EXPAND_CONTROL_JITTER) psp_sf(fd, S_expand_control_jitter, sp->expand_control_jitter);
-  if (sp->expand_control_length != DEFAULT_EXPAND_CONTROL_LENGTH) psp_sf(fd, S_expand_control_length, sp->expand_control_length);
+  if (fneq(sp->expand_control_ramp, DEFAULT_EXPAND_CONTROL_RAMP)) psp_sf(fd, S_expand_control_ramp, sp->expand_control_ramp);
+  if (fneq(sp->expand_control_hop, DEFAULT_EXPAND_CONTROL_HOP)) psp_sf(fd, S_expand_control_hop, sp->expand_control_hop);
+  if (fneq(sp->expand_control_jitter, DEFAULT_EXPAND_CONTROL_JITTER)) psp_sf(fd, S_expand_control_jitter, sp->expand_control_jitter);
+  if (fneq(sp->expand_control_length, DEFAULT_EXPAND_CONTROL_LENGTH)) psp_sf(fd, S_expand_control_length, sp->expand_control_length);
   if (sp->speed_control_tones != DEFAULT_SPEED_CONTROL_TONES) psp_sd(fd, S_speed_control_tones, sp->speed_control_tones);
   if (sp->speed_control_style != DEFAULT_SPEED_CONTROL_STYLE) psp_ss(fd, S_speed_control_style, speed_control_style_name(sp->speed_control_style));
-  if (sp->speed_control != DEFAULT_SPEED_CONTROL) 
+  if (fneq(sp->speed_control, DEFAULT_SPEED_CONTROL)) 
     {
 #if HAVE_SCM_MAKE_RATIO
       if (sp->speed_control == SPEED_CONTROL_AS_RATIO)
@@ -539,30 +603,30 @@ static void save_sound_state (snd_info *sp, void *ptr)
 #endif
       psp_sf(fd, S_speed_control, sp->speed_control);
     }
-  if ((sp->speed_control_min != DEFAULT_SPEED_CONTROL_MIN) ||
-      (sp->speed_control_max != DEFAULT_SPEED_CONTROL_MAX))
+  if ((fneq(sp->speed_control_min, DEFAULT_SPEED_CONTROL_MIN)) ||
+      (fneq(sp->speed_control_max, DEFAULT_SPEED_CONTROL_MAX)))
     psp_sl(fd, S_speed_control_bounds, sp->speed_control_min, sp->speed_control_max);
   if (sp->reverb_control_p != DEFAULT_REVERB_CONTROL_P) psp_ss(fd, S_reverb_control_p, b2s(sp->reverb_control_p));
-  if (sp->reverb_control_scale != DEFAULT_REVERB_CONTROL_SCALE) psp_sf(fd, S_reverb_control_scale, sp->reverb_control_scale);
-  if ((sp->reverb_control_scale_min != DEFAULT_REVERB_CONTROL_SCALE_MIN) ||
-      (sp->reverb_control_scale_max != DEFAULT_REVERB_CONTROL_SCALE_MAX))
+  if (fneq(sp->reverb_control_scale, DEFAULT_REVERB_CONTROL_SCALE)) psp_sf(fd, S_reverb_control_scale, sp->reverb_control_scale);
+  if ((fneq(sp->reverb_control_scale_min, DEFAULT_REVERB_CONTROL_SCALE_MIN)) ||
+      (fneq(sp->reverb_control_scale_max, DEFAULT_REVERB_CONTROL_SCALE_MAX)))
     psp_sl(fd, S_reverb_control_scale_bounds, sp->reverb_control_scale_min, sp->reverb_control_scale_max);
-  if (sp->reverb_control_length != DEFAULT_REVERB_CONTROL_LENGTH) psp_sf(fd, S_reverb_control_length, sp->reverb_control_length);
-  if ((sp->reverb_control_length_min != DEFAULT_REVERB_CONTROL_LENGTH_MIN) ||
-      (sp->reverb_control_length_max != DEFAULT_REVERB_CONTROL_LENGTH_MAX))
+  if (fneq(sp->reverb_control_length, DEFAULT_REVERB_CONTROL_LENGTH)) psp_sf(fd, S_reverb_control_length, sp->reverb_control_length);
+  if ((fneq(sp->reverb_control_length_min, DEFAULT_REVERB_CONTROL_LENGTH_MIN)) ||
+      (fneq(sp->reverb_control_length_max, DEFAULT_REVERB_CONTROL_LENGTH_MAX)))
     psp_sl(fd, S_reverb_control_length_bounds, sp->reverb_control_length_min, sp->reverb_control_length_max);
-  if (sp->reverb_control_feedback != DEFAULT_REVERB_CONTROL_FEEDBACK) psp_sf(fd, S_reverb_control_feedback, sp->reverb_control_feedback);
-  if (sp->reverb_control_lowpass != DEFAULT_REVERB_CONTROL_LOWPASS) psp_sf(fd, S_reverb_control_lowpass, sp->reverb_control_lowpass);
-  if (sp->reverb_control_decay != DEFAULT_REVERB_CONTROL_DECAY) psp_sf(fd, S_reverb_control_decay, sp->reverb_control_decay);
-  if (sp->amp_control != DEFAULT_AMP_CONTROL) psp_sf(fd, S_amp_control, sp->amp_control);
-  if ((sp->amp_control_min != DEFAULT_AMP_CONTROL_MIN) ||
-      (sp->amp_control_max != DEFAULT_AMP_CONTROL_MAX))
+  if (fneq(sp->reverb_control_feedback, DEFAULT_REVERB_CONTROL_FEEDBACK)) psp_sf(fd, S_reverb_control_feedback, sp->reverb_control_feedback);
+  if (fneq(sp->reverb_control_lowpass, DEFAULT_REVERB_CONTROL_LOWPASS)) psp_sf(fd, S_reverb_control_lowpass, sp->reverb_control_lowpass);
+  if (fneq(sp->reverb_control_decay, DEFAULT_REVERB_CONTROL_DECAY)) psp_sf(fd, S_reverb_control_decay, sp->reverb_control_decay);
+  if (fneq(sp->amp_control, DEFAULT_AMP_CONTROL)) psp_sf(fd, S_amp_control, sp->amp_control);
+  if ((fneq(sp->amp_control_min, DEFAULT_AMP_CONTROL_MIN)) ||
+      (fneq(sp->amp_control_max, DEFAULT_AMP_CONTROL_MAX)))
     psp_sl(fd, S_amp_control_bounds, sp->amp_control_min, sp->amp_control_max);
   if (sp->filter_control_p != DEFAULT_FILTER_CONTROL_P) psp_ss(fd, S_filter_control_p, b2s(sp->filter_control_p));
   if (sp->filter_control_order != DEFAULT_FILTER_CONTROL_ORDER) psp_sd(fd, S_filter_control_order, sp->filter_control_order);
   if (sp->filter_control_in_dB != DEFAULT_FILTER_CONTROL_IN_DB) psp_ss(fd, S_filter_control_in_dB, b2s(sp->filter_control_in_dB));
   if (sp->filter_control_in_hz != DEFAULT_FILTER_CONTROL_IN_HZ) psp_ss(fd, S_filter_control_in_hz, b2s(sp->filter_control_in_hz));
-  if (sp->filter_control_envelope) 
+  if ((sp->filter_control_envelope) && (!(default_envelope_p(sp->filter_control_envelope))))
     {
       psp_ss(fd, S_filter_control_envelope, tmpstr = env_to_string(sp->filter_control_envelope));
       if (tmpstr) FREE(tmpstr);

@@ -1,5 +1,7 @@
 #include "snd.h"
 
+/* TODO: amp/speed bounds to gmix */
+
 /* ---------------- mix dialog ---------------- */
 
 static GtkWidget *mix_dialog = NULL;
@@ -1142,38 +1144,35 @@ static GtkWidget *w_track_tempo, *w_track_tempo_label, *w_track_tempo_number, *w
 static GtkObject *w_track_tempo_adj;
 static bool track_tempo_pressed = false, track_tempo_dragged = false;
 
-static Float tempo_to_scroll(Float tempo)
+static Float tempo_to_scroll(Float minval, Float val, Float maxval)
 {
-  if (tempo <= 0.0)
-    return(0.0);
+  if (val <= minval) return(0.0);
+  if (val >= maxval) return(0.9);
+  if (val >= 1.0)
+    return(0.9 * 0.5 * (1.0 + (val - 1.0) / (maxval - 1.0)));
+  return(0.9 * 0.5 * ((val - minval) / (1.0 - minval)));
+}
+
+static Float scroll_to_tempo(Float val)
+{
+  char tempo_number_buffer[5];
+  Float tempo;
+  if (val <= 0.0) 
+    tempo = tempo_control_min(ss);
   else
     {
-      if (tempo < .173)
-	return(tempo * .867);
-      else return(log(tempo) * 0.2 + 0.5);
+      if (val >= 0.9)
+	tempo = tempo_control_max(ss);
+      else
+	{
+	  if (val > (0.5 * 0.9))
+	    tempo = (((val / (0.5 * 0.9)) - 1.0) * (tempo_control_max(ss) - 1.0)) + 1.0;
+	  else tempo = (val * (1.0 - tempo_control_min(ss)) / (0.5 * 0.9)) + tempo_control_min(ss);
+	}
     }
-}
-
-static Float scroll_to_tempo(Float scrollval)
-{
-  if (scrollval < .15)
-    return(scrollval * 1.13);
-  else return(exp((scrollval - 0.5) * 5.0));
-}
-
-static void reflect_track_tempo(Float val)
-{
-  char sfs[6];
-  mus_snprintf(sfs, 6, "%.2f", val);
-  gtk_label_set_text(GTK_LABEL(w_track_tempo_number), sfs);
-  GTK_ADJUSTMENT(w_track_tempo_adj)->value = tempo_to_scroll(val);
-  gtk_adjustment_value_changed(GTK_ADJUSTMENT(w_track_tempo_adj));
-}
-
-static void change_track_tempo(Float val)
-{
-  reflect_track_tempo(val);
-  track_dialog_set_tempo(track_dialog_id, val, track_dialog_slider_dragging);
+  mus_snprintf(tempo_number_buffer, 5, "%.2f", tempo);
+  gtk_label_set_text(GTK_LABEL(w_track_tempo_number), tempo_number_buffer);
+  return(tempo);
 }
 
 static gboolean track_tempo_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
@@ -1182,7 +1181,10 @@ static gboolean track_tempo_click_callback(GtkWidget *w, GdkEventButton *ev, gpo
   track_tempo_dragged = false;
   track_dialog_slider_dragging = false;
   if (!(track_p(track_dialog_id))) return(false);
-  change_track_tempo(1.0);
+  track_dialog_set_tempo(track_dialog_id, 1.0, false);
+  gtk_label_set_text(GTK_LABEL(w_track_tempo_number), "1.00");
+  GTK_ADJUSTMENT(w_track_tempo_adj)->value = tempo_to_scroll(tempo_control_min(ss), 1.0, tempo_control_max(ss));
+  gtk_adjustment_value_changed(GTK_ADJUSTMENT(w_track_tempo_adj));
   return(false);
 }
 
@@ -1193,7 +1195,7 @@ static gboolean track_tempo_motion_callback(GtkWidget *w, GdkEventButton *ev, gp
   if (!(track_p(track_dialog_id))) return(false);
   if (!track_dialog_slider_dragging) track_dialog_start_slider_drag(track_dialog_id);
   track_dialog_slider_dragging = true;
-  change_track_tempo(scroll_to_tempo(GTK_ADJUSTMENT(w_track_tempo_adj)->value));
+  track_dialog_set_tempo(track_dialog_id, scroll_to_tempo(GTK_ADJUSTMENT(w_track_tempo_adj)->value), true);
   return(false);
 }
 
@@ -1203,7 +1205,7 @@ static gboolean track_tempo_release_callback(GtkWidget *w, GdkEventButton *ev, g
   track_dialog_slider_dragging = false;
   if (!track_tempo_dragged) return(false);
   if (!(track_p(track_dialog_id))) return(false);
-  change_track_tempo(scroll_to_tempo(GTK_ADJUSTMENT(w_track_tempo_adj)->value));
+  track_dialog_set_tempo(track_dialog_id, scroll_to_tempo(GTK_ADJUSTMENT(w_track_tempo_adj)->value), false);
   return(false);
 }
 
@@ -2064,7 +2066,10 @@ static void update_track_dialog(int track_id)
 	      gtk_entry_set_text(GTK_ENTRY(w_track_beg), lab);
 	    }
 	  val = track_dialog_track_tempo(track_id);
-	  reflect_track_tempo(val);
+	  mus_snprintf(lab, 5, "%.2f", val);
+	  gtk_label_set_text(GTK_LABEL(w_track_tempo_number), lab);
+	  GTK_ADJUSTMENT(w_track_tempo_adj)->value = tempo_to_scroll(tempo_control_min(ss), val, tempo_control_max(ss));
+	  gtk_adjustment_value_changed(GTK_ADJUSTMENT(w_track_tempo_adj));
 	  val = track_dialog_track_amp(track_id);
 	  reflect_track_amp(val);
 	  track_amp_env_resize(w_track_env);

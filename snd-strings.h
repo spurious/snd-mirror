@@ -603,6 +603,7 @@
 #define S_sync                          "sync"
 #define S_syncd_marks                   "syncd-marks"
 #define S_temp_dir                      "temp-dir"
+#define S_tempo_control_bounds          "tempo-control-bounds"
 #define S_text_focus_color              "text-focus-color"
 #define S_time_graph                    "time-graph"
 #define S_time_graph_p                  "time-graph?"

@@ -920,27 +920,33 @@ void recorder_set_vu_out_val(int chan, mus_sample_t val) {set_vu_val(rec_out_VU[
 #define INPUT_AMP 0
 #define OUTPUT_AMP 1
 
-#define RECORD_SCROLLBAR_MAX 300
-#define RECORD_SCROLLBAR_MID 150
-#define RECORD_SCROLLBAR_LINEAR_MAX 50
-#define RECORD_SCROLLBAR_LINEAR_MULT 0.00365368
-#define RECORD_SCROLLBAR_CHANGEOVER_VALUE 0.188
-/* final low end portion is linear -- multiplier is (exp-value-at-linear-max) / linear_max */
+static int amp_to_scroll(Float minval, Float val, Float maxval)
+{
+  if (val <= minval) return(0);
+  if (val >= maxval) return((int)(0.9 * SCROLLBAR_MAX));
+  if (val >= 1.0)
+    return(snd_round(0.9 * 0.5 * SCROLLBAR_MAX * (1.0 + (val - 1.0) / (maxval - 1.0))));
+  return(snd_round(0.9 * 0.5 * SCROLLBAR_MAX * ((val - minval) / (1.0 - minval))));
+}
+
+static Float scroll_to_amp(int val)
+{
+  if (val <= 0) 
+    return(amp_control_min(ss));
+  if (val >= (0.9 * SCROLLBAR_MAX)) 
+    return(amp_control_max(ss));
+  if (val > (0.5 * 0.9 * SCROLLBAR_MAX))
+    return((((val / (0.5 * 0.9 * SCROLLBAR_MAX)) - 1.0) * (amp_control_max(ss) - 1.0)) + 1.0);
+  else return((val * (1.0 - amp_control_min(ss)) / (0.5 * 0.9 * SCROLLBAR_MAX)) + amp_control_min(ss));
+}
 
 static void record_amp_changed(AMP *ap, int val)
 {
-  char sfs[6];
   Float amp;
   recorder_info *rp;
+  char sfs[6];
   rp = get_recorder_info();
-  if (val == 0) 
-    amp = 0.0;
-  else 
-    {
-      if (val < RECORD_SCROLLBAR_LINEAR_MAX)
-	amp = (Float)val * RECORD_SCROLLBAR_LINEAR_MULT;
-      else amp = exp((Float)(val - RECORD_SCROLLBAR_MID) / ((Float)RECORD_SCROLLBAR_MAX * .2));
-    }
+  amp = scroll_to_amp(val);
   mus_snprintf(sfs, 6, "%.2f", amp);
   set_button_label(ap->number, sfs);
   if (ap->type == INPUT_AMP)
@@ -948,18 +954,7 @@ static void record_amp_changed(AMP *ap, int val)
   else rp->out_amps[ap->out] = amp;
 }
 
-static int amp_to_slider(Float val)
-{
-  /* reverse calc above */
-  if (val <= 0.0) 
-    return(0);
-  else
-    {
-      if (val <= RECORD_SCROLLBAR_CHANGEOVER_VALUE)
-	return((int)(val / RECORD_SCROLLBAR_LINEAR_MULT));
-      else return(mus_iclamp(0, (int)(RECORD_SCROLLBAR_MID + ((RECORD_SCROLLBAR_MAX * .2) * log(val))), 100));
-    }
-}
+static int amp_to_slider(Float val) {return(amp_to_scroll(amp_control_min(ss), val, amp_control_max(ss)));}
 
 static Float global_amp(AMP *a)
 {
@@ -980,7 +975,7 @@ static void record_amp_click_callback(Widget w, XtPointer context, XtPointer inf
   ev = (XButtonEvent *)(cb->event);
   if (ev->state & (snd_ControlMask | snd_MetaMask)) 
     val = ap->last_amp; 
-  else val = RECORD_SCROLLBAR_MID;
+  else val = amp_to_slider(1.0);
   record_amp_changed(ap, val);
   XtVaSetValues(ap->slider, XmNvalue, val, NULL);
 }
@@ -1707,7 +1702,7 @@ static Widget make_recorder_slider(PANE *p, AMP *a, Widget last_slider, bool inp
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNrightWidget, p->button_vertical_sep); n++;
   XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
-  XtSetArg(args[n], XmNmaximum, RECORD_SCROLLBAR_MAX); n++;
+  XtSetArg(args[n], XmNmaximum, SCROLLBAR_MAX); n++;
   XtSetArg(args[n], XmNvalue, amp_to_slider(global_amp(a))); n++;
   XtSetArg(args[n], XmNdragCallback, n1 = make_callback_list(record_amp_drag_callback, (XtPointer)a)); n++;
   XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(record_amp_valuechanged_callback, (XtPointer)a)); n++;
@@ -3302,6 +3297,23 @@ void reflect_recorder_out_amp(int ind, Float val)
       temp = amp_to_slider(val); 
       record_amp_changed(AMP_rec_outs[ind], temp); 
       XtVaSetValues(AMP_rec_outs[ind]->slider, XmNvalue, temp, NULL); 
+    }
+}
+
+void reflect_amp_control_bounds_change_in_recorder(void)
+{
+  int ic, oc;
+  recorder_info *rp;
+  rp = get_recorder_info();
+  if (recorder)
+    {
+      for (ic = 0; ic < rp->possible_input_chans; ic++)
+	for (oc = 0; oc < MAX_OUT_CHANS; oc++)
+	  if ((AMP_rec_ins[ic][oc]) && (AMP_rec_ins[ic][oc]->slider))
+	    XtVaSetValues(AMP_rec_ins[ic][oc]->slider, XmNvalue, amp_to_slider(rp->in_amps[ic][oc]), NULL); 
+      for (oc = 0; oc < MAX_OUT_CHANS; oc++)
+	if ((AMP_rec_outs[oc]) && (AMP_rec_outs[oc]->slider))
+	  XtVaSetValues(AMP_rec_outs[oc]->slider, XmNvalue, amp_to_slider(rp->out_amps[oc]), NULL); 
     }
 }
 

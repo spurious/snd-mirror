@@ -1,5 +1,6 @@
 #include "snd.h"
 
+void reflect_amp_control_bounds_change_in_recorder(void) {}
 void snd_help_back_to_top(void) {}
 color_t get_in_between_color(color_t fg, color_t bg) {return(0);}
 void set_find_dialog_label(const char *str) {}

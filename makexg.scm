@@ -79,10 +79,12 @@
 (define ulongs-23 '())
 (define ints-23 '())
 (define ints-234 '())
+(define ints-235 '())
 
 (define funcs-231 '())
 (define funcs-232 '())
 (define funcs-234 '())
+(define funcs-235 '())
 (define casts-234 '())
 (define checks-234 '())
 (define types-234 '())
@@ -333,7 +335,7 @@
 						 (not (member type types-22))
 						 (not (member type types-23)))
 					    (set! types-23 (cons type types-23)))
-					(if (eq? extra '234)
+					(if (or (eq? extra '234) (eq? extra '235))
 					    (if (and (not (member type types))
 						     (not (member type types-21))
 						     (not (member type types-22))
@@ -808,6 +810,22 @@
 	    (set! funcs-234 (cons (list name type strs args) funcs-234))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
+(define* (CFNC-235 data)
+  (let ((name (cadr-str data))
+	(args (caddr-str data)))
+    (if (assoc name names)
+	(no-way "~A CFNC-235~%" name)
+	(let ((type (car-str data)))
+	  (if (and (not (member type types))
+		   (not (member type types-21))
+		   (not (member type types-22))
+		   (not (member type types-23))
+		   (not (member type types-234)))
+	      (set! types-234 (cons type types-234)))
+	  (let ((strs (parse-args args '235)))
+	    (set! funcs-235 (cons (list name type strs args) funcs-235))
+	    (set! names (cons (cons name (func-type strs)) names)))))))
+
 (define* (CFNC-22 data)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
@@ -942,6 +960,13 @@
       (no-way "~A CINT-234~%" name)
       (begin
 	(set! ints-234 (cons name ints-234))
+	(set! names (cons (cons name 'int) names)))))
+
+(define* (CINT-235 name #:optional type)
+  (if (assoc name names)
+      (no-way "~A CINT-235~%" name)
+      (begin
+	(set! ints-235 (cons name ints-235))
 	(set! names (cons (cons name 'int) names)))))
 
 (define* (CINT-extra name #:optional type)
@@ -1137,6 +1162,11 @@
   (thunk)
   (dpy "#endif~%~%"))
 
+(define (with-235 dpy thunk)
+  (dpy "#if HAVE_GTK_COMBO_BOX_ENTRY_NEW_TEXT~%")
+  (thunk)
+  (dpy "#endif~%~%"))
+
 
 ;;; ---------------------------------------- write output files ----------------------------------------
 (hey "/* xg.c: Guile and Ruby bindings for gdk/gtk/pango, some of glib~%")
@@ -1152,6 +1182,7 @@
 (hey " *     HAVE_GTK_EXPANDER_GET_USE_MARKUP for gtk+-2.3.1~%")
 (hey " *     HAVE_GTK_MENU_SHELL_CANCEL for gtk+-2.3.2~%")
 (hey " *     HAVE_GTK_COMBO_BOX_POPUP for gtk+-2.3.4~%")
+(hey " *     HAVE_GTK_COMBO_BOX_ENTRY_NEW_TEXT for gtk+-2.3.5~%")
 
 (let ((ifs '()))
   (for-each
@@ -1197,6 +1228,7 @@
 (hey " * ~A: test suite (snd-test 24)~%" (string-append "T" "ODO"))
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     4-Mar:     gtk 2.3.5 changes.~%")
 (hey " *     26-Feb:    gtk 3.2.4 changes.~%")
 (hey " *     12-Feb:    added g_list_nth_data (Kjetil S. Matheussen).~%")
 (hey " *     6-Feb:     gtk 2.3.2 changes.~%")
@@ -1944,6 +1976,7 @@
 (if (not (null? funcs-231)) (with-231 hey (lambda () (for-each handle-func (reverse funcs-231)))))
 (if (not (null? funcs-232)) (with-232 hey (lambda () (for-each handle-func (reverse funcs-232)))))
 (if (not (null? funcs-234)) (with-234 hey (lambda () (for-each handle-func (reverse funcs-234)))))
+(if (not (null? funcs-235)) (with-235 hey (lambda () (for-each handle-func (reverse funcs-235)))))
 
 (define cast-it
  (lambda (cast)
@@ -2029,6 +2062,7 @@
 (if (not (null? funcs-231)) (with-231 say (lambda () (for-each argify-func (reverse funcs-231)))))
 (if (not (null? funcs-232)) (with-232 say (lambda () (for-each argify-func (reverse funcs-232)))))
 (if (not (null? funcs-234)) (with-234 say (lambda () (for-each argify-func (reverse funcs-234)))))
+(if (not (null? funcs-235)) (with-235 say (lambda () (for-each argify-func (reverse funcs-235)))))
 
 (define (ruby-cast func) (say "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" (no-arg (car func)) (no-arg (car func)))) 
 (for-each ruby-cast (reverse casts))
@@ -2163,6 +2197,7 @@
 (if (not (null? funcs-231)) (with-231 say-hey (lambda () (for-each defun (reverse funcs-231)))))
 (if (not (null? funcs-232)) (with-232 say-hey (lambda () (for-each defun (reverse funcs-232)))))
 (if (not (null? funcs-234)) (with-234 say-hey (lambda () (for-each defun (reverse funcs-234)))))
+(if (not (null? funcs-235)) (with-235 say-hey (lambda () (for-each defun (reverse funcs-235)))))
 
 (define (cast-out func)
   (hey "  XG_DEFINE_PROCEDURE(~A, gxg_~A, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-arg (car func)))
@@ -2490,6 +2525,8 @@
     (with-23 hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(~A);~%" val)) (reverse ints-23)))))
 (if (not (null? ints-234))
     (with-234 hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(~A);~%" val)) (reverse ints-234)))))
+(if (not (null? ints-235))
+    (with-235 hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(~A);~%" val)) (reverse ints-235)))))
 
 
 (for-each 

@@ -274,6 +274,36 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->init_window_height = DEFAULT_INIT_WINDOW_HEIGHT;
   ss->click_time = 100;
 
+  ss->Expand_Control_Min = DEFAULT_EXPAND_CONTROL_MIN;
+  ss->Expand_Control_Max = DEFAULT_EXPAND_CONTROL_MAX;
+  ss->Amp_Control_Min = DEFAULT_AMP_CONTROL_MIN;
+  ss->Amp_Control_Max = DEFAULT_AMP_CONTROL_MAX;
+  ss->Speed_Control_Min = DEFAULT_SPEED_CONTROL_MIN;
+  ss->Speed_Control_Max = DEFAULT_SPEED_CONTROL_MAX;
+  ss->Contrast_Control_Min = DEFAULT_CONTRAST_CONTROL_MIN;
+  ss->Contrast_Control_Max = DEFAULT_CONTRAST_CONTROL_MAX;
+  ss->Contrast_Control_Amp = DEFAULT_CONTRAST_CONTROL_AMP;
+  ss->Expand_Control_Length = DEFAULT_EXPAND_CONTROL_LENGTH;
+  ss->Expand_Control_Ramp = DEFAULT_EXPAND_CONTROL_RAMP;
+  ss->Expand_Control_Hop = DEFAULT_EXPAND_CONTROL_HOP;
+  ss->Expand_Control_Jitter = DEFAULT_EXPAND_CONTROL_JITTER;
+  ss->Reverb_Control_Feedback = DEFAULT_REVERB_CONTROL_FEEDBACK;
+  ss->Reverb_Control_Lowpass = DEFAULT_REVERB_CONTROL_LOWPASS;
+  ss->Reverb_Control_Scale_Min = DEFAULT_REVERB_CONTROL_SCALE_MIN;
+  ss->Reverb_Control_Scale_Max = DEFAULT_REVERB_CONTROL_SCALE_MAX;
+  ss->Reverb_Control_Decay = DEFAULT_REVERB_CONTROL_DECAY;
+  ss->Speed_Control_Tones = DEFAULT_SPEED_CONTROL_TONES;
+  ss->Speed_Control_Style = DEFAULT_SPEED_CONTROL_STYLE;
+  ss->Reverb_Control_Length_Min = DEFAULT_REVERB_CONTROL_LENGTH_MIN;
+  ss->Reverb_Control_Length_Max = DEFAULT_REVERB_CONTROL_LENGTH_MAX;
+  ss->Filter_Control_Order = DEFAULT_FILTER_CONTROL_ORDER;
+  ss->Filter_Control_In_Db = DEFAULT_FILTER_CONTROL_IN_DB;
+  ss->Filter_Control_In_Hz = DEFAULT_FILTER_CONTROL_IN_HZ;
+  ss->Tempo_Control_Min = DEFAULT_TEMPO_CONTROL_MIN;
+  ss->Tempo_Control_Max = DEFAULT_TEMPO_CONTROL_MAX;
+  ss->Show_Controls = DEFAULT_SHOW_CONTROLS;
+  ss->Cursor_Follows_Play = DEFAULT_CURSOR_FOLLOWS_PLAY;
+
   init_sound_file_extensions();
 
   ss->max_sounds = 4;                 /* expands to accommodate any number of files */

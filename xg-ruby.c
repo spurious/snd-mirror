@@ -2506,8 +2506,6 @@ XEN_NARGIFY_2(gxg_gtk_cell_layout_clear_attributes_w, gxg_gtk_cell_layout_clear_
 XEN_NARGIFY_0(gxg_gtk_file_chooser_get_type_w, gxg_gtk_file_chooser_get_type)
 XEN_NARGIFY_2(gxg_gtk_file_chooser_set_action_w, gxg_gtk_file_chooser_set_action)
 XEN_NARGIFY_1(gxg_gtk_file_chooser_get_action_w, gxg_gtk_file_chooser_get_action)
-XEN_NARGIFY_2(gxg_gtk_file_chooser_set_folder_mode_w, gxg_gtk_file_chooser_set_folder_mode)
-XEN_NARGIFY_1(gxg_gtk_file_chooser_get_folder_mode_w, gxg_gtk_file_chooser_get_folder_mode)
 XEN_NARGIFY_2(gxg_gtk_file_chooser_set_local_only_w, gxg_gtk_file_chooser_set_local_only)
 XEN_NARGIFY_1(gxg_gtk_file_chooser_get_local_only_w, gxg_gtk_file_chooser_get_local_only)
 XEN_NARGIFY_2(gxg_gtk_file_chooser_set_select_multiple_w, gxg_gtk_file_chooser_set_select_multiple)
@@ -2681,6 +2679,23 @@ XEN_NARGIFY_2(gxg_gtk_radio_menu_item_new_with_label_from_widget_w, gxg_gtk_radi
 XEN_NARGIFY_1(gxg_gtk_scale_get_layout_w, gxg_gtk_scale_get_layout)
 XEN_ARGIFY_3(gxg_gtk_scale_get_layout_offsets_w, gxg_gtk_scale_get_layout_offsets)
 XEN_ARGIFY_3(gxg_gtk_tooltips_get_info_from_tip_window_w, gxg_gtk_tooltips_get_info_from_tip_window)
+#endif
+
+#if HAVE_GTK_COMBO_BOX_ENTRY_NEW_TEXT
+XEN_NARGIFY_0(gxg_gtk_combo_box_entry_new_text_w, gxg_gtk_combo_box_entry_new_text)
+XEN_NARGIFY_1(gxg_gtk_drag_source_get_target_list_w, gxg_gtk_drag_source_get_target_list)
+XEN_NARGIFY_2(gxg_gtk_drag_source_set_target_list_w, gxg_gtk_drag_source_set_target_list)
+XEN_NARGIFY_2(gxg_gtk_entry_set_alignment_w, gxg_gtk_entry_set_alignment)
+XEN_NARGIFY_1(gxg_gtk_entry_get_alignment_w, gxg_gtk_entry_get_alignment)
+XEN_NARGIFY_2(gxg_gtk_file_chooser_set_use_preview_label_w, gxg_gtk_file_chooser_set_use_preview_label)
+XEN_NARGIFY_1(gxg_gtk_file_chooser_get_use_preview_label_w, gxg_gtk_file_chooser_get_use_preview_label)
+XEN_NARGIFY_2(gxg_gtk_file_chooser_widget_new_with_backend_w, gxg_gtk_file_chooser_widget_new_with_backend)
+XEN_NARGIFY_1(gxg_gtk_rc_reset_styles_w, gxg_gtk_rc_reset_styles)
+XEN_NARGIFY_1(gxg_gtk_widget_list_mnemonic_labels_w, gxg_gtk_widget_list_mnemonic_labels)
+XEN_NARGIFY_2(gxg_gtk_widget_add_mnemonic_label_w, gxg_gtk_widget_add_mnemonic_label)
+XEN_NARGIFY_2(gxg_gtk_widget_remove_mnemonic_label_w, gxg_gtk_widget_remove_mnemonic_label)
+XEN_NARGIFY_2(gxg_gtk_window_activate_key_w, gxg_gtk_window_activate_key)
+XEN_NARGIFY_2(gxg_gtk_window_propagate_key_event_w, gxg_gtk_window_propagate_key_event)
 #endif
 
 XEN_NARGIFY_1(gxg_GDK_COLORMAP_w, gxg_GDK_COLORMAP)
@@ -6247,8 +6262,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_file_chooser_get_type, gxg_gtk_file_chooser_get_type_w, 0, 0, 0, H_gtk_file_chooser_get_type);
   XG_DEFINE_PROCEDURE(gtk_file_chooser_set_action, gxg_gtk_file_chooser_set_action_w, 2, 0, 0, H_gtk_file_chooser_set_action);
   XG_DEFINE_PROCEDURE(gtk_file_chooser_get_action, gxg_gtk_file_chooser_get_action_w, 1, 0, 0, H_gtk_file_chooser_get_action);
-  XG_DEFINE_PROCEDURE(gtk_file_chooser_set_folder_mode, gxg_gtk_file_chooser_set_folder_mode_w, 2, 0, 0, H_gtk_file_chooser_set_folder_mode);
-  XG_DEFINE_PROCEDURE(gtk_file_chooser_get_folder_mode, gxg_gtk_file_chooser_get_folder_mode_w, 1, 0, 0, H_gtk_file_chooser_get_folder_mode);
   XG_DEFINE_PROCEDURE(gtk_file_chooser_set_local_only, gxg_gtk_file_chooser_set_local_only_w, 2, 0, 0, H_gtk_file_chooser_set_local_only);
   XG_DEFINE_PROCEDURE(gtk_file_chooser_get_local_only, gxg_gtk_file_chooser_get_local_only_w, 1, 0, 0, H_gtk_file_chooser_get_local_only);
   XG_DEFINE_PROCEDURE(gtk_file_chooser_set_select_multiple, gxg_gtk_file_chooser_set_select_multiple_w, 2, 0, 0, H_gtk_file_chooser_set_select_multiple);
@@ -6422,6 +6435,23 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_scale_get_layout, gxg_gtk_scale_get_layout_w, 1, 0, 0, H_gtk_scale_get_layout);
   XG_DEFINE_PROCEDURE(gtk_scale_get_layout_offsets, gxg_gtk_scale_get_layout_offsets_w, 1, 2, 0, H_gtk_scale_get_layout_offsets);
   XG_DEFINE_PROCEDURE(gtk_tooltips_get_info_from_tip_window, gxg_gtk_tooltips_get_info_from_tip_window_w, 1, 2, 0, H_gtk_tooltips_get_info_from_tip_window);
+#endif
+
+#if HAVE_GTK_COMBO_BOX_ENTRY_NEW_TEXT
+  XG_DEFINE_PROCEDURE(gtk_combo_box_entry_new_text, gxg_gtk_combo_box_entry_new_text_w, 0, 0, 0, H_gtk_combo_box_entry_new_text);
+  XG_DEFINE_PROCEDURE(gtk_drag_source_get_target_list, gxg_gtk_drag_source_get_target_list_w, 1, 0, 0, H_gtk_drag_source_get_target_list);
+  XG_DEFINE_PROCEDURE(gtk_drag_source_set_target_list, gxg_gtk_drag_source_set_target_list_w, 2, 0, 0, H_gtk_drag_source_set_target_list);
+  XG_DEFINE_PROCEDURE(gtk_entry_set_alignment, gxg_gtk_entry_set_alignment_w, 2, 0, 0, H_gtk_entry_set_alignment);
+  XG_DEFINE_PROCEDURE(gtk_entry_get_alignment, gxg_gtk_entry_get_alignment_w, 1, 0, 0, H_gtk_entry_get_alignment);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_set_use_preview_label, gxg_gtk_file_chooser_set_use_preview_label_w, 2, 0, 0, H_gtk_file_chooser_set_use_preview_label);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_get_use_preview_label, gxg_gtk_file_chooser_get_use_preview_label_w, 1, 0, 0, H_gtk_file_chooser_get_use_preview_label);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_widget_new_with_backend, gxg_gtk_file_chooser_widget_new_with_backend_w, 2, 0, 0, H_gtk_file_chooser_widget_new_with_backend);
+  XG_DEFINE_PROCEDURE(gtk_rc_reset_styles, gxg_gtk_rc_reset_styles_w, 1, 0, 0, H_gtk_rc_reset_styles);
+  XG_DEFINE_PROCEDURE(gtk_widget_list_mnemonic_labels, gxg_gtk_widget_list_mnemonic_labels_w, 1, 0, 0, H_gtk_widget_list_mnemonic_labels);
+  XG_DEFINE_PROCEDURE(gtk_widget_add_mnemonic_label, gxg_gtk_widget_add_mnemonic_label_w, 2, 0, 0, H_gtk_widget_add_mnemonic_label);
+  XG_DEFINE_PROCEDURE(gtk_widget_remove_mnemonic_label, gxg_gtk_widget_remove_mnemonic_label_w, 2, 0, 0, H_gtk_widget_remove_mnemonic_label);
+  XG_DEFINE_PROCEDURE(gtk_window_activate_key, gxg_gtk_window_activate_key_w, 2, 0, 0, H_gtk_window_activate_key);
+  XG_DEFINE_PROCEDURE(gtk_window_propagate_key_event, gxg_gtk_window_propagate_key_event_w, 2, 0, 0, H_gtk_window_propagate_key_event);
 #endif
 
   XG_DEFINE_PROCEDURE(GDK_COLORMAP, gxg_GDK_COLORMAP_w, 1, 0, 0, NULL);

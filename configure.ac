@@ -601,6 +601,8 @@ else
 	# gtk 2.3.2
 	AC_CHECK_LIB(m, gtk_combo_box_popup, [AC_DEFINE(HAVE_GTK_COMBO_BOX_POPUP)], ,$GTK_LIBS)
 	# gtk 2.3.4
+	AC_CHECK_LIB(m, gtk_combo_box_entry_new_text, [AC_DEFINE(HAVE_GTK_COMBO_BOX_ENTRY_NEW_TEXT)], ,$GTK_LIBS)
+	# gtk 2.3.5
 
         if test "$with_x11" = yes ; then
 	  AC_DEFINE(WITH_GTK_AND_X11)

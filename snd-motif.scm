@@ -558,11 +558,11 @@ Reverb-feedback sets the scaler on the feedback.
 	       (XtAddCallback slider
 			      XmNvalueChangedCallback 
 			      (lambda (w context info)
-				(set! (func #t) (/ (.value info) 100.0))))
+				(set! (func) (/ (.value info) 100.0))))
 	       (XtAddCallback slider
 			      XmNdragCallback 
 			      (lambda (w context info)
-				(set! (func #t) (/ (.value info) 100.0))))))
+				(set! (func) (/ (.value info) 100.0))))))
 	   (list (list "expand-hop" 0.01 1.0 0.05  expand-control-hop)
 		 (list "expand-length" 0.01 .5 0.15 expand-control-length)
 		 (list "expand-ramp" 0.01 .5 0.4 expand-control-ramp)

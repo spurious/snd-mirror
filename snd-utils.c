@@ -154,7 +154,7 @@ static char local_decimal_point(void)
 #if HAVE_LANGINFO_RADIXCHAR
   return(nl_langinfo(RADIXCHAR)[0]);
 #endif
-  return(STR_decimal);
+  return('.');
 }
 
 static char prtbuf[256];

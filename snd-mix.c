@@ -7916,6 +7916,29 @@ static XEN g_track_dialog(void)
   return(XEN_WRAP_WIDGET(w));
 }
 
+static XEN g_tempo_control_bounds(void) 
+{
+  #define H_tempo_control_bounds "(" S_tempo_control_bounds "): current (Track dialog) tempo slider bounds (default: '(0.0 8.0))"
+  return(XEN_LIST_2(C_TO_XEN_DOUBLE(tempo_control_min(ss)), 
+		    C_TO_XEN_DOUBLE(tempo_control_max(ss))));
+}
+
+static XEN g_set_tempo_control_bounds(XEN on) 
+{
+  XEN_ASSERT_TYPE(XEN_LIST_P(on), on, XEN_ARG_1, S_setB S_tempo_control_bounds, "a list of the new min and max values"); 
+  if ((XEN_LIST_LENGTH(on) != 2) ||
+      (!(XEN_NUMBER_P(XEN_CAR(on)))) ||
+      (!(XEN_NUMBER_P(XEN_CADR(on)))))
+    XEN_WRONG_TYPE_ARG_ERROR(S_setB S_tempo_control_bounds, XEN_ARG_1, on, "a list of 2 numbers");
+  if (XEN_TO_C_DOUBLE(XEN_CAR(on)) >= XEN_TO_C_DOUBLE(XEN_CADR(on)))
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_tempo_control_bounds, 1, on, "min >= max");
+
+  in_set_tempo_control_min(ss, XEN_TO_C_DOUBLE(XEN_CAR(on)));
+  in_set_tempo_control_max(ss, XEN_TO_C_DOUBLE(XEN_CADR(on)));
+  reflect_mix_or_track_change(ANY_MIX_ID, track_dialog_track(), false);
+  return(on);
+}
+
 
 
 /* ---------------- init track xen connection ---------------- */
@@ -7956,6 +7979,8 @@ XEN_NARGIFY_0(g_track_dialog_track_w, g_track_dialog_track)
 XEN_NARGIFY_1(g_set_track_dialog_track_w, g_set_track_dialog_track)
 XEN_NARGIFY_0(g_mix_dialog_w, g_mix_dialog)
 XEN_NARGIFY_0(g_track_dialog_w, g_track_dialog)
+XEN_NARGIFY_0(g_tempo_control_bounds_w, g_tempo_control_bounds)
+XEN_NARGIFY_1(g_set_tempo_control_bounds_w, g_set_tempo_control_bounds)
 #else
 #define g_make_track_sample_reader_w g_make_track_sample_reader
 #define g_read_track_sample_w g_read_track_sample
@@ -7992,6 +8017,8 @@ XEN_NARGIFY_0(g_track_dialog_w, g_track_dialog)
 #define g_set_track_dialog_track_w g_set_track_dialog_track
 #define g_mix_dialog_w g_mix_dialog
 #define g_track_dialog_w g_track_dialog
+#define g_tempo_control_bounds_w g_tempo_control_bounds
+#define g_set_tempo_control_bounds_w g_set_tempo_control_bounds
 #endif
 
 void g_init_track(void)
@@ -8039,6 +8066,11 @@ void g_init_track(void)
 				   S_setB S_mix_dialog_mix, g_set_mix_dialog_mix_w, 0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_track_dialog_track, g_track_dialog_track_w, H_track_dialog_track, 
 				   S_setB S_track_dialog_track, g_set_track_dialog_track_w, 0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_tempo_control_bounds, g_tempo_control_bounds_w, H_tempo_control_bounds,
+				   S_setB S_tempo_control_bounds, g_set_tempo_control_bounds_w,
+				   0, 0, 1, 0);
+
 }
 
 /* 

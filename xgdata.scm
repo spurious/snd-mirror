@@ -5154,8 +5154,9 @@
 (CFNC-23 "GType gtk_file_chooser_get_type void") 
 (CFNC-23 "void gtk_file_chooser_set_action GtkFileChooser* chooser GtkFileChooserAction action") 
 (CFNC-23 "GtkFileChooserAction gtk_file_chooser_get_action GtkFileChooser* chooser") 
-(CFNC-23 "void gtk_file_chooser_set_folder_mode GtkFileChooser* chooser gboolean folder_mode") 
-(CFNC-23 "gboolean gtk_file_chooser_get_folder_mode GtkFileChooser* chooser") 
+;;; (CFNC-23 "void gtk_file_chooser_set_folder_mode GtkFileChooser* chooser gboolean folder_mode") 
+;;; (CFNC-23 "gboolean gtk_file_chooser_get_folder_mode GtkFileChooser* chooser") 
+;;; 2.3.5
 (CFNC-23 "void gtk_file_chooser_set_local_only GtkFileChooser* chooser gboolean files_only") 
 (CFNC-23 "gboolean gtk_file_chooser_get_local_only GtkFileChooser* chooser") 
 (CFNC-23 "void gtk_file_chooser_set_select_multiple GtkFileChooser* chooser gboolean select_multiple") 
@@ -5319,4 +5320,26 @@
 (CFNC-234 "PangoLayout* gtk_scale_get_layout GtkScale* scale")
 (CFNC-234 "void gtk_scale_get_layout_offsets GtkScale* scale gint* [x] gint* [y]")
 (CFNC-234 "gboolean gtk_tooltips_get_info_from_tip_window GtkWindow* tip_window GtkTooltips** [tooltips] GtkWidget** [current_widget]")
+
+
+(CINT-235 "GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER" "GtkFileChooserAction")
+(CINT-235 "GTK_FILE_CHOOSER_ACTION_CREATE_FOLDER" "GtkFileChooserAction")
+
+(CFNC-235 "GtkWidget* gtk_combo_box_entry_new_text void")
+(CFNC-235 "GtkTargetList* gtk_drag_source_get_target_list GtkWidget* widget")
+(CFNC-235 "void gtk_drag_source_set_target_list GtkWidget* widget GtkTargetList* target_list")
+(CFNC-235 "void gtk_entry_set_alignment GtkEntry* entry gfloat xalign")
+(CFNC-235 "gfloat gtk_entry_get_alignment GtkEntry* entry")
+(CFNC-235 "void gtk_file_chooser_set_use_preview_label GtkFileChooser* chooser gboolean use_label")
+(CFNC-235 "gboolean gtk_file_chooser_get_use_preview_label GtkFileChooser* chooser")
+(CFNC-235 "GtkWidget* gtk_file_chooser_widget_new_with_backend GtkFileChooserAction action gchar* backend")
+(CFNC-235 "void gtk_rc_reset_styles GtkSettings* settings")
+;;;(CFNC-235 "void gtk_text_layout_set_keyboard_direction GtkTextLayout* layout GtkTextDirection keyboard_dir")
+;;;GtkTextLayout is buggy
+(CFNC-235 "GList* gtk_widget_list_mnemonic_labels GtkWidget* widget")
+(CFNC-235 "void gtk_widget_add_mnemonic_label GtkWidget* widget GtkWidget* label")
+(CFNC-235 "void gtk_widget_remove_mnemonic_label GtkWidget* widget GtkWidget* label")
+(CFNC-235 "gboolean gtk_window_activate_key GtkWindow* window GdkEventKey* event")
+(CFNC-235 "gboolean gtk_window_propagate_key_event GtkWindow* window GdkEventKey* event")
+
 

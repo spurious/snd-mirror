@@ -387,6 +387,7 @@ void unlock_recording_audio(void);
 void cleanup_recording (void);
 void snd_record_file(void);
 bool record_dialog_is_active(void);
+void reflect_amp_control_bounds_change_in_recorder(void);
 
 
 /* -------- snd-gxutils.c -------- */

@@ -1357,7 +1357,7 @@ void restore_controls(snd_info *sp)
       cs->contrast = DEFAULT_CONTRAST_CONTROL;
       cs->contrast_on = DEFAULT_CONTRAST_CONTROL_P;
       cs->filter_on = DEFAULT_FILTER_CONTROL_P;
-      cs->filter_order = DEFAULT_FILTER_CONTROL_ORDER;
+      cs->filter_order = filter_control_order(ss);
       cs->filter_env = NULL;
     }
   toggle_expand_button(sp, cs->expand_on);
@@ -1395,7 +1395,7 @@ void reset_controls(snd_info *sp)
   set_expand(sp, DEFAULT_EXPAND_CONTROL);
   set_revscl(sp, DEFAULT_REVERB_CONTROL_SCALE);
   set_revlen(sp, DEFAULT_REVERB_CONTROL_LENGTH);
-  set_filter_order(sp, DEFAULT_FILTER_CONTROL_ORDER);
+  set_filter_order(sp, filter_control_order(ss));
   if (sp->filter_control_envelope) sp->filter_control_envelope = free_env(sp->filter_control_envelope);
   sp->filter_control_envelope = default_env(sp->filter_control_xmax, 1.0);
   tmpstr = env_to_string(sp->filter_control_envelope);
@@ -2094,6 +2094,37 @@ static XEN sound_get(XEN snd_n, sp_field_t fld, char *caller)
   return(XEN_FALSE);
 }
 
+static XEN sound_get_global(XEN snd_n, sp_field_t fld, char *caller)
+{
+  if (XEN_NOT_BOUND_P(snd_n))
+    switch (fld)
+      {
+      case SP_FILTER_DBING:        return(C_TO_XEN_BOOLEAN(filter_control_in_dB(ss)));   break;
+      case SP_FILTER_HZING:        return(C_TO_XEN_BOOLEAN(filter_control_in_hz(ss)));   break;
+      case SP_FILTER_ORDER:        return(C_TO_XEN_INT(filter_control_order(ss)));       break;
+      case SP_CURSOR_FOLLOWS_PLAY: return(C_TO_XEN_BOOLEAN(cursor_follows_play(ss)));    break;
+      case SP_SHOW_CONTROLS:       return(C_TO_XEN_BOOLEAN(in_show_controls(ss)));       break;
+      case SP_SPEED_TONES:         return(C_TO_XEN_INT(speed_control_tones(ss)));        break;
+      case SP_SPEED_STYLE:         return(C_TO_XEN_INT((int)(speed_control_style(ss)))); break;
+      case SP_AMP_BOUNDS:          return(XEN_LIST_2(C_TO_XEN_DOUBLE(amp_control_min(ss)), C_TO_XEN_DOUBLE(amp_control_max(ss)))); break;
+      case SP_CONTRAST_BOUNDS:     return(XEN_LIST_2(C_TO_XEN_DOUBLE(contrast_control_min(ss)), C_TO_XEN_DOUBLE(contrast_control_max(ss)))); break;
+      case SP_CONTRAST_AMP:        return(C_TO_XEN_DOUBLE(contrast_control_amp(ss)));    break;
+      case SP_EXPAND_BOUNDS:       return(XEN_LIST_2(C_TO_XEN_DOUBLE(expand_control_min(ss)), C_TO_XEN_DOUBLE(expand_control_max(ss)))); break;
+      case SP_EXPAND_LENGTH:       return(C_TO_XEN_DOUBLE(expand_control_length(ss)));   break;
+      case SP_EXPAND_RAMP:         return(C_TO_XEN_DOUBLE(expand_control_ramp(ss)));     break;
+      case SP_EXPAND_HOP:          return(C_TO_XEN_DOUBLE(expand_control_hop(ss)));      break;
+      case SP_EXPAND_JITTER:       return(C_TO_XEN_DOUBLE(expand_control_jitter(ss)));   break;
+      case SP_SPEED_BOUNDS:        return(XEN_LIST_2(C_TO_XEN_DOUBLE(speed_control_min(ss)), C_TO_XEN_DOUBLE(speed_control_max(ss)))); break;
+      case SP_REVERB_LENGTH_BOUNDS: return(XEN_LIST_2(C_TO_XEN_DOUBLE(reverb_control_length_min(ss)), C_TO_XEN_DOUBLE(reverb_control_length_max(ss)))); break;
+      case SP_REVERB_FEEDBACK:     return(C_TO_XEN_DOUBLE(reverb_control_feedback(ss))); break;
+      case SP_REVERB_SCALE_BOUNDS: return(XEN_LIST_2(C_TO_XEN_DOUBLE(reverb_control_scale_min(ss)), C_TO_XEN_DOUBLE(reverb_control_scale_max(ss)))); break;
+      case SP_REVERB_LOW_PASS:     return(C_TO_XEN_DOUBLE(reverb_control_lowpass(ss)));  break;
+      case SP_REVERB_DECAY:        return(C_TO_XEN_DOUBLE(reverb_control_decay(ss)));    break;
+      default: break;
+      }
+  return(sound_get(snd_n, fld, caller));
+}
+
 static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
 {
   snd_info *sp;
@@ -2446,6 +2477,119 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
   return(val);
 }
 
+static XEN sound_set_global(XEN snd_n, XEN val, sp_field_t fld, char *caller)
+{
+  Float fval;
+  if (XEN_NOT_BOUND_P(snd_n))
+    switch (fld)
+      {
+      case SP_FILTER_DBING:   
+	in_set_filter_control_in_dB(ss, XEN_TO_C_BOOLEAN(val));
+	return(sound_set(XEN_TRUE, val, fld, caller));
+	break;
+      case SP_FILTER_HZING:   
+	in_set_filter_control_in_hz(ss, XEN_TO_C_BOOLEAN(val));
+	return(sound_set(XEN_TRUE, val, fld, caller));
+	break;
+      case SP_FILTER_ORDER:
+	if (XEN_TO_C_INT(val) > 0)
+	  in_set_filter_control_order(ss, XEN_TO_C_INT(val));
+	return(sound_set(XEN_TRUE, val, fld, caller));
+	break;
+      case SP_CURSOR_FOLLOWS_PLAY:
+	if (XEN_TO_C_BOOLEAN(val))
+	  in_set_cursor_follows_play(ss, FOLLOW_ALWAYS); /* ??? */
+	else in_set_cursor_follows_play(ss, DONT_FOLLOW);
+	return(sound_set(XEN_TRUE, val, fld, caller));
+	break;
+      case SP_SHOW_CONTROLS:
+	in_set_show_controls(ss, XEN_TO_C_BOOLEAN(val));
+	return(sound_set(XEN_TRUE, val, fld, caller));
+	break;
+      case SP_SPEED_TONES:
+	in_set_speed_control_tones(ss, XEN_TO_C_INT(val));
+	return(sound_set(XEN_TRUE, val, fld, caller));
+	break;
+      case SP_SPEED_STYLE:
+	in_set_speed_control_style(ss, (speed_style_t)XEN_TO_C_INT(val)); /* range checked already */
+	return(sound_set(XEN_TRUE, val, fld, caller));
+	break;
+      case SP_AMP_BOUNDS:
+	in_set_amp_control_min(ss, XEN_TO_C_DOUBLE(XEN_CAR(val)));
+	in_set_amp_control_max(ss, XEN_TO_C_DOUBLE(XEN_CADR(val)));
+	reflect_amp_control_bounds_change_in_recorder();
+	reflect_mix_or_track_change(mix_dialog_mix(), track_dialog_track(), false);
+	return(sound_set(XEN_TRUE, val, fld, caller));
+	break;
+      case SP_CONTRAST_BOUNDS:
+	in_set_contrast_control_min(ss, XEN_TO_C_DOUBLE(XEN_CAR(val)));
+	in_set_contrast_control_max(ss, XEN_TO_C_DOUBLE(XEN_CADR(val)));
+	return(sound_set(XEN_TRUE, val, fld, caller));
+	break;
+      case SP_CONTRAST_AMP:  
+	in_set_contrast_control_amp(ss, XEN_TO_C_DOUBLE_WITH_CALLER(val, caller));
+	return(sound_set(XEN_TRUE, val, fld, caller));
+	break;
+      case SP_EXPAND_BOUNDS:
+	in_set_expand_control_min(ss, XEN_TO_C_DOUBLE(XEN_CAR(val)));
+	in_set_expand_control_max(ss, XEN_TO_C_DOUBLE(XEN_CADR(val)));
+	return(sound_set(XEN_TRUE, val, fld, caller));
+	break;
+      case SP_EXPAND_LENGTH: 
+	fval = XEN_TO_C_DOUBLE_WITH_CALLER(val, caller);
+	if (fval > 0.0)
+	  in_set_expand_control_length(ss, fval);
+	return(sound_set(XEN_TRUE, val, fld, caller));
+	break;
+      case SP_EXPAND_RAMP:
+	fval = XEN_TO_C_DOUBLE_WITH_CALLER(val, caller);
+	if ((fval >= 0.0) && (fval < 0.5)) 
+	  in_set_expand_control_ramp(ss, fval);
+	return(sound_set(XEN_TRUE, val, fld, caller));
+	break;
+      case SP_EXPAND_HOP:
+	fval = XEN_TO_C_DOUBLE_WITH_CALLER(val, caller);
+	if (fval > 0.0)
+	  in_set_expand_control_hop(ss, fval);
+	return(sound_set(XEN_TRUE, val, fld, caller));
+	break;
+      case SP_EXPAND_JITTER:    
+	in_set_expand_control_jitter(ss, XEN_TO_C_DOUBLE_WITH_CALLER(val, caller));
+	return(sound_set(XEN_TRUE, val, fld, caller));
+	break;
+      case SP_SPEED_BOUNDS:
+	in_set_speed_control_min(ss, XEN_TO_C_DOUBLE(XEN_CAR(val)));
+	in_set_speed_control_max(ss, XEN_TO_C_DOUBLE(XEN_CADR(val)));
+	reflect_mix_or_track_change(mix_dialog_mix(), track_dialog_track(), false);
+	return(sound_set(XEN_TRUE, val, fld, caller));
+	break;
+      case SP_REVERB_LENGTH_BOUNDS:
+	in_set_reverb_control_length_min(ss, XEN_TO_C_DOUBLE(XEN_CAR(val)));
+	in_set_reverb_control_length_max(ss, XEN_TO_C_DOUBLE(XEN_CADR(val)));
+	return(sound_set(XEN_TRUE, val, fld, caller));
+	break;
+      case SP_REVERB_FEEDBACK:  
+	in_set_reverb_control_feedback(ss, XEN_TO_C_DOUBLE_WITH_CALLER(val, caller));
+	return(sound_set(XEN_TRUE, val, fld, caller));
+	break;
+      case SP_REVERB_SCALE_BOUNDS:
+	in_set_reverb_control_scale_min(ss, XEN_TO_C_DOUBLE(XEN_CAR(val)));
+	in_set_reverb_control_scale_max(ss, XEN_TO_C_DOUBLE(XEN_CADR(val)));
+	return(sound_set(XEN_TRUE, val, fld, caller));
+	break;
+      case SP_REVERB_LOW_PASS:  
+	in_set_reverb_control_lowpass(ss, XEN_TO_C_DOUBLE_WITH_CALLER(val, caller));
+	return(sound_set(XEN_TRUE, val, fld, caller));
+	break;
+      case SP_REVERB_DECAY:     
+	in_set_reverb_control_decay(ss, XEN_TO_C_DOUBLE_WITH_CALLER(val, caller));
+	return(sound_set(XEN_TRUE, val, fld, caller));
+	break;
+      default: break;
+      }
+  return(sound_set(snd_n, val, fld, caller));
+}
+
 static XEN g_channels(XEN snd_n)
 {
   #define H_channels "("  S_channels " (snd #f)): how many channels snd has"
@@ -2703,28 +2847,28 @@ WITH_REVERSED_BOOLEAN_ARGS(g_set_filter_control_p_reversed, g_set_filter_control
 
 static XEN g_filter_control_in_dB(XEN snd_n) 
 {
-  #define H_filter_control_in_dB "(" S_filter_control_in_dB " (snd #f)): #t if snd's filter envelope is displayed in dB in control panel"
-  return(sound_get(snd_n, SP_FILTER_DBING, S_filter_control_in_dB));
+  #define H_filter_control_in_dB "(" S_filter_control_in_dB " (snd)): #t if snd's filter envelope is displayed in dB in control panel"
+  return(sound_get_global(snd_n, SP_FILTER_DBING, S_filter_control_in_dB));
 }
 
 static XEN g_set_filter_control_in_dB(XEN on, XEN snd_n) 
 {
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_filter_control_in_dB, "a boolean");
-  return(sound_set(snd_n, on, SP_FILTER_DBING, S_setB S_filter_control_in_dB));
+  return(sound_set_global(snd_n, on, SP_FILTER_DBING, S_setB S_filter_control_in_dB));
 }
 
 WITH_REVERSED_BOOLEAN_ARGS(g_set_filter_control_in_dB_reversed, g_set_filter_control_in_dB)
 
 static XEN g_filter_control_in_hz(XEN snd_n) 
 {
-  #define H_filter_control_in_hz "(" S_filter_control_in_hz " (snd #f)): #t if snd's filter envelope x axis should be in hz (control panel filter)"
-  return(sound_get(snd_n, SP_FILTER_HZING, S_filter_control_in_hz));
+  #define H_filter_control_in_hz "(" S_filter_control_in_hz " (snd)): #t if snd's filter envelope x axis should be in hz (control panel filter)"
+  return(sound_get_global(snd_n, SP_FILTER_HZING, S_filter_control_in_hz));
 }
 
 static XEN g_set_filter_control_in_hz(XEN on, XEN snd_n) 
 {
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_filter_control_in_hz, "a boolean");
-  return(sound_set(snd_n, on, SP_FILTER_HZING, S_setB S_filter_control_in_hz));
+  return(sound_set_global(snd_n, on, SP_FILTER_HZING, S_setB S_filter_control_in_hz));
 }
 
 WITH_REVERSED_BOOLEAN_ARGS(g_set_filter_control_in_hz_reversed, g_set_filter_control_in_hz)
@@ -2737,14 +2881,14 @@ static XEN g_filter_control_coeffs(XEN snd_n)
 
 static XEN g_filter_control_order(XEN snd_n) 
 {
-  #define H_filter_control_order "(" S_filter_control_order " (snd #f)): filter order (in control panel)"
-  return(sound_get(snd_n, SP_FILTER_ORDER, S_filter_control_order));
+  #define H_filter_control_order "(" S_filter_control_order " (snd)): filter order (in control panel)"
+  return(sound_get_global(snd_n, SP_FILTER_ORDER, S_filter_control_order));
 }
 
 static XEN g_set_filter_control_order(XEN on, XEN snd_n) 
 {
   XEN_ASSERT_TYPE(XEN_INTEGER_P(on), on, XEN_ARG_1, S_setB S_filter_control_order, "an integer"); 
-  return(sound_set(snd_n, on, SP_FILTER_ORDER, S_setB S_filter_control_order));
+  return(sound_set_global(snd_n, on, SP_FILTER_ORDER, S_setB S_filter_control_order));
 }
 
 #if HAVE_GUILE
@@ -2763,28 +2907,28 @@ WITH_REVERSED_ARGS(g_set_filter_control_order_reversed, g_set_filter_control_ord
 
 static XEN g_cursor_follows_play(XEN snd_n) 
 {
-  #define H_cursor_follows_play "("  S_cursor_follows_play " (snd #f)): #t if cursor moves along in waveform display as sound is played (#f)"
-  return(sound_get(snd_n, SP_CURSOR_FOLLOWS_PLAY, S_cursor_follows_play));
+  #define H_cursor_follows_play "("  S_cursor_follows_play " (snd)): #t if cursor moves along in waveform display as sound is played (#f)"
+  return(sound_get_global(snd_n, SP_CURSOR_FOLLOWS_PLAY, S_cursor_follows_play));
 }
 
 static XEN g_set_cursor_follows_play(XEN on, XEN snd_n) 
 {
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_cursor_follows_play, "a boolean");
-  return(sound_set(snd_n, on, SP_CURSOR_FOLLOWS_PLAY, S_setB S_cursor_follows_play));
+  return(sound_set_global(snd_n, on, SP_CURSOR_FOLLOWS_PLAY, S_setB S_cursor_follows_play));
 }
 
 WITH_REVERSED_BOOLEAN_ARGS(g_set_cursor_follows_play_reversed, g_set_cursor_follows_play)
 
 static XEN g_show_controls(XEN snd_n) 
 {
-  #define H_show_controls "(" S_show_controls " (snd #f)): #t if snd's control panel is known to be open"
-  return(sound_get(snd_n, SP_SHOW_CONTROLS, S_show_controls));
+  #define H_show_controls "(" S_show_controls " (snd)): #t if snd's control panel is known to be open"
+  return(sound_get_global(snd_n, SP_SHOW_CONTROLS, S_show_controls));
 }
 
 static XEN g_set_show_controls(XEN on, XEN snd_n)
 {
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_show_controls, "a boolean");
-  return(sound_set(snd_n, on, SP_SHOW_CONTROLS, S_setB S_show_controls));
+  return(sound_set_global(snd_n, on, SP_SHOW_CONTROLS, S_setB S_show_controls));
 }
 
 WITH_REVERSED_BOOLEAN_ARGS(g_set_show_controls_reversed, g_set_show_controls)
@@ -3149,8 +3293,8 @@ The 'initial-length' argument sets the number of samples (zeros) in the newly cr
 
 static XEN g_speed_control_style(XEN snd)
 {
-  #define H_speed_control_style "(" S_speed_control_style " (snd #f)): speed control panel interpretation choice (" S_speed_control_as_float ")"
-  return(sound_get(snd, SP_SPEED_STYLE, S_speed_control_style));
+  #define H_speed_control_style "(" S_speed_control_style " (snd)): speed control panel interpretation choice (" S_speed_control_as_float ")"
+  return(sound_get_global(snd, SP_SPEED_STYLE, S_speed_control_style));
 }
 
 static XEN g_set_speed_control_style(XEN speed, XEN snd) 
@@ -3162,21 +3306,21 @@ static XEN g_set_speed_control_style(XEN speed, XEN snd)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_speed_control_style, 
 			   1, speed, 
 			   "~A, but must be " S_speed_control_as_float ", " S_speed_control_as_ratio ", or " S_speed_control_as_semitone);
-  return(sound_set(snd, speed, SP_SPEED_STYLE, S_setB S_speed_control_style));
+  return(sound_set_global(snd, speed, SP_SPEED_STYLE, S_setB S_speed_control_style));
 }
 
 WITH_REVERSED_ARGS(g_set_speed_control_style_reversed, g_set_speed_control_style)
 
 static XEN g_speed_control_tones(XEN snd)
 {
-  #define H_speed_control_tones "(" S_speed_control_tones " (snd #f)): if " S_speed_control_style " is " S_speed_control_as_semitone ", this chooses the octave divisions (12)"
-  return(sound_get(snd, SP_SPEED_TONES, S_speed_control_tones));
+  #define H_speed_control_tones "(" S_speed_control_tones " (snd)): if " S_speed_control_style " is " S_speed_control_as_semitone ", this chooses the octave divisions (12)"
+  return(sound_get_global(snd, SP_SPEED_TONES, S_speed_control_tones));
 }
 
 static XEN g_set_speed_control_tones(XEN val, XEN snd)
 {
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_setB S_speed_control_tones, "a number"); 
-  return(sound_set(snd, val, SP_SPEED_TONES, S_setB S_speed_control_tones));
+  return(sound_set_global(snd, val, SP_SPEED_TONES, S_setB S_speed_control_tones));
 }
 
 WITH_REVERSED_ARGS(g_set_speed_control_tones_reversed, g_set_speed_control_tones)
@@ -3215,8 +3359,8 @@ WITH_REVERSED_CHANNEL_ARGS(g_set_amp_control_reversed, g_set_amp_control)
 
 static XEN g_amp_control_bounds(XEN snd_n) 
 {
-  #define H_amp_control_bounds "(" S_amp_control_bounds " (snd #f)): current amp slider bounds (default: '(0.0 8.0))"
-  return(sound_get(snd_n, SP_AMP_BOUNDS, S_amp_control_bounds));
+  #define H_amp_control_bounds "(" S_amp_control_bounds " (snd)): current amp slider bounds (default: '(0.0 8.0))"
+  return(sound_get_global(snd_n, SP_AMP_BOUNDS, S_amp_control_bounds));
 }
 
 static XEN g_set_amp_control_bounds(XEN on, XEN snd_n) 
@@ -3228,7 +3372,7 @@ static XEN g_set_amp_control_bounds(XEN on, XEN snd_n)
     XEN_WRONG_TYPE_ARG_ERROR(S_setB S_amp_control_bounds, XEN_ARG_1, on, "a list of 2 numbers");
   if (XEN_TO_C_DOUBLE(XEN_CAR(on)) >= XEN_TO_C_DOUBLE(XEN_CADR(on)))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_amp_control_bounds, 1, on, "min >= max");
-  return(sound_set(snd_n, on, SP_AMP_BOUNDS, S_setB S_amp_control_bounds));
+  return(sound_set_global(snd_n, on, SP_AMP_BOUNDS, S_setB S_amp_control_bounds));
 }
 
 WITH_REVERSED_ARGS(g_set_amp_control_bounds_reversed, g_set_amp_control_bounds)
@@ -3250,8 +3394,8 @@ WITH_REVERSED_ARGS(g_set_contrast_control_reversed, g_set_contrast_control)
 
 static XEN g_contrast_control_bounds(XEN snd_n) 
 {
-  #define H_contrast_control_bounds "(" S_contrast_control_bounds " (snd #f)): current contrast slider bounds (default: '(0.0 10.0))"
-  return(sound_get(snd_n, SP_CONTRAST_BOUNDS, S_contrast_control_bounds));
+  #define H_contrast_control_bounds "(" S_contrast_control_bounds " (snd)): current contrast slider bounds (default: '(0.0 10.0))"
+  return(sound_get_global(snd_n, SP_CONTRAST_BOUNDS, S_contrast_control_bounds));
 }
 
 static XEN g_set_contrast_control_bounds(XEN on, XEN snd_n) 
@@ -3263,23 +3407,23 @@ static XEN g_set_contrast_control_bounds(XEN on, XEN snd_n)
     XEN_WRONG_TYPE_ARG_ERROR(S_setB S_contrast_control_bounds, XEN_ARG_1, on, "a list of 2 numbers");
   if (XEN_TO_C_DOUBLE(XEN_CAR(on)) >= XEN_TO_C_DOUBLE(XEN_CADR(on)))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_contrast_control_bounds, 1, on, "min >= max");
-  return(sound_set(snd_n, on, SP_CONTRAST_BOUNDS, S_setB S_contrast_control_bounds));
+  return(sound_set_global(snd_n, on, SP_CONTRAST_BOUNDS, S_setB S_contrast_control_bounds));
 }
 
 WITH_REVERSED_ARGS(g_set_contrast_control_bounds_reversed, g_set_contrast_control_bounds)
 
 static XEN g_contrast_control_amp(XEN snd_n) 
 {
-  #define H_contrast_control_amp "(" S_contrast_control_amp " (snd #f)): snd's contrast amp\n\
+  #define H_contrast_control_amp "(" S_contrast_control_amp " (snd)): snd's contrast amp\n\
    (scaler on data before contrast operation in control panel, 1.0)"
 
-  return(sound_get(snd_n, SP_CONTRAST_AMP, S_contrast_control_amp));
+  return(sound_get_global(snd_n, SP_CONTRAST_AMP, S_contrast_control_amp));
 }
 
 static XEN g_set_contrast_control_amp(XEN on, XEN snd_n) 
 {
   XEN_ASSERT_TYPE(XEN_NUMBER_P(on), on, XEN_ARG_1, S_setB S_contrast_control_amp, "a number");
-  return(sound_set(snd_n, on, SP_CONTRAST_AMP, S_setB S_contrast_control_amp));
+  return(sound_set_global(snd_n, on, SP_CONTRAST_AMP, S_setB S_contrast_control_amp));
 }
 
 WITH_REVERSED_ARGS(g_set_contrast_control_amp_reversed, g_set_contrast_control_amp)
@@ -3300,8 +3444,8 @@ WITH_REVERSED_ARGS(g_set_expand_control_reversed, g_set_expand_control)
 
 static XEN g_expand_control_bounds(XEN snd_n) 
 {
-  #define H_expand_control_bounds "(" S_expand_control_bounds " (snd #f)): current expand slider bounds (default: '(0.001 20.0))"
-  return(sound_get(snd_n, SP_EXPAND_BOUNDS, S_expand_control_bounds));
+  #define H_expand_control_bounds "(" S_expand_control_bounds " (snd)): current expand slider bounds (default: '(0.001 20.0))"
+  return(sound_get_global(snd_n, SP_EXPAND_BOUNDS, S_expand_control_bounds));
 }
 
 static XEN g_set_expand_control_bounds(XEN on, XEN snd_n) 
@@ -3313,7 +3457,7 @@ static XEN g_set_expand_control_bounds(XEN on, XEN snd_n)
     XEN_WRONG_TYPE_ARG_ERROR(S_setB S_expand_control_bounds, XEN_ARG_1, on, "a list of 2 numbers");
   if (XEN_TO_C_DOUBLE(XEN_CAR(on)) >= XEN_TO_C_DOUBLE(XEN_CADR(on)))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_expand_control_bounds, 1, on, "min >= max");
-  return(sound_set(snd_n, on, SP_EXPAND_BOUNDS, S_setB S_expand_control_bounds));
+  return(sound_set_global(snd_n, on, SP_EXPAND_BOUNDS, S_setB S_expand_control_bounds));
 }
 
 WITH_REVERSED_ARGS(g_set_expand_control_bounds_reversed, g_set_expand_control_bounds)
@@ -3321,56 +3465,56 @@ WITH_REVERSED_ARGS(g_set_expand_control_bounds_reversed, g_set_expand_control_bo
 
 static XEN g_expand_control_length(XEN snd_n) 
 {
-  #define H_expand_control_length "(" S_expand_control_length " (snd #f)): current expansion segment length in seconds (.15)"
-  return(sound_get(snd_n, SP_EXPAND_LENGTH, S_expand_control_length));
+  #define H_expand_control_length "(" S_expand_control_length " (snd)): current expansion segment length in seconds (.15)"
+  return(sound_get_global(snd_n, SP_EXPAND_LENGTH, S_expand_control_length));
 }
 
 static XEN g_set_expand_control_length(XEN on, XEN snd_n) 
 {
   XEN_ASSERT_TYPE(XEN_NUMBER_P(on), on, XEN_ARG_1, S_setB S_expand_control_length, "a number"); 
-  return(sound_set(snd_n, on, SP_EXPAND_LENGTH, S_setB S_expand_control_length));
+  return(sound_set_global(snd_n, on, SP_EXPAND_LENGTH, S_setB S_expand_control_length));
 }
 
 WITH_REVERSED_ARGS(g_set_expand_control_length_reversed, g_set_expand_control_length)
 
 static XEN g_expand_control_ramp(XEN snd_n) 
 {
-  #define H_expand_control_ramp "(" S_expand_control_ramp " (snd #f)): current expansion ramp time (.4)"
-  return(sound_get(snd_n, SP_EXPAND_RAMP, S_expand_control_ramp));
+  #define H_expand_control_ramp "(" S_expand_control_ramp " (snd)): current expansion ramp time (.4)"
+  return(sound_get_global(snd_n, SP_EXPAND_RAMP, S_expand_control_ramp));
 }
 
 static XEN g_set_expand_control_ramp(XEN on, XEN snd_n) 
 {
   XEN_ASSERT_TYPE(XEN_NUMBER_P(on), on, XEN_ARG_1, S_setB S_expand_control_ramp, "a number");
-  return(sound_set(snd_n, on, SP_EXPAND_RAMP, S_setB S_expand_control_ramp));
+  return(sound_set_global(snd_n, on, SP_EXPAND_RAMP, S_setB S_expand_control_ramp));
 }
 
 WITH_REVERSED_ARGS(g_set_expand_control_ramp_reversed, g_set_expand_control_ramp)
 
 static XEN g_expand_control_hop(XEN snd_n) 
 {
-  #define H_expand_control_hop "(" S_expand_control_hop " (snd #f)): current expansion output grain spacing in seconds (0.05)"
-  return(sound_get(snd_n, SP_EXPAND_HOP, S_expand_control_hop));
+  #define H_expand_control_hop "(" S_expand_control_hop " (snd)): current expansion output grain spacing in seconds (0.05)"
+  return(sound_get_global(snd_n, SP_EXPAND_HOP, S_expand_control_hop));
 }
 
 static XEN g_set_expand_control_hop(XEN on, XEN snd_n) 
 {
   XEN_ASSERT_TYPE(XEN_NUMBER_P(on), on, XEN_ARG_1, S_setB S_expand_control_hop, "a number"); 
-  return(sound_set(snd_n, on, SP_EXPAND_HOP, S_setB S_expand_control_hop));
+  return(sound_set_global(snd_n, on, SP_EXPAND_HOP, S_setB S_expand_control_hop));
 }
 
 WITH_REVERSED_ARGS(g_set_expand_control_hop_reversed, g_set_expand_control_hop)
 
 static XEN g_expand_control_jitter(XEN snd_n) 
 {
-  #define H_expand_control_jitter "(" S_expand_control_jitter " (snd #f)): current expansion output grain spacing jitter (0.1)"
-  return(sound_get(snd_n, SP_EXPAND_JITTER, S_expand_control_jitter));
+  #define H_expand_control_jitter "(" S_expand_control_jitter " (snd)): current expansion output grain spacing jitter (0.1)"
+  return(sound_get_global(snd_n, SP_EXPAND_JITTER, S_expand_control_jitter));
 }
 
 static XEN g_set_expand_control_jitter(XEN on, XEN snd_n) 
 {
   XEN_ASSERT_TYPE(XEN_NUMBER_P(on), on, XEN_ARG_1, S_setB S_expand_control_jitter, "a number"); 
-  return(sound_set(snd_n, on, SP_EXPAND_JITTER, S_setB S_expand_control_jitter));
+  return(sound_set_global(snd_n, on, SP_EXPAND_JITTER, S_setB S_expand_control_jitter));
 }
 
 WITH_REVERSED_ARGS(g_set_expand_control_jitter_reversed, g_set_expand_control_jitter)
@@ -3391,8 +3535,8 @@ WITH_REVERSED_ARGS(g_set_speed_control_reversed, g_set_speed_control)
 
 static XEN g_speed_control_bounds(XEN snd_n) 
 {
-  #define H_speed_control_bounds "(" S_speed_control_bounds " (snd #f)): current speed slider bounds (default: '(0.05 20.0))"
-  return(sound_get(snd_n, SP_SPEED_BOUNDS, S_speed_control_bounds));
+  #define H_speed_control_bounds "(" S_speed_control_bounds " (snd)): current speed slider bounds (default: '(0.05 20.0))"
+  return(sound_get_global(snd_n, SP_SPEED_BOUNDS, S_speed_control_bounds));
 }
 
 static XEN g_set_speed_control_bounds(XEN on, XEN snd_n) 
@@ -3404,7 +3548,9 @@ static XEN g_set_speed_control_bounds(XEN on, XEN snd_n)
     XEN_WRONG_TYPE_ARG_ERROR(S_setB S_speed_control_bounds, XEN_ARG_1, on, "a list of 2 numbers");
   if (XEN_TO_C_DOUBLE(XEN_CAR(on)) >= XEN_TO_C_DOUBLE(XEN_CADR(on)))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_speed_control_bounds, 1, on, "min >= max");
-  return(sound_set(snd_n, on, SP_SPEED_BOUNDS, S_setB S_speed_control_bounds));
+  if (XEN_TO_C_DOUBLE(XEN_CAR(on)) <= 0.0)
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_speed_control_bounds, 1, on, "min <= 0.0");
+  return(sound_set_global(snd_n, on, SP_SPEED_BOUNDS, S_setB S_speed_control_bounds));
 }
 
 WITH_REVERSED_ARGS(g_set_speed_control_bounds_reversed, g_set_speed_control_bounds)
@@ -3426,8 +3572,8 @@ WITH_REVERSED_ARGS(g_set_reverb_control_length_reversed, g_set_reverb_control_le
 
 static XEN g_reverb_control_length_bounds(XEN snd_n) 
 {
-  #define H_reverb_control_length_bounds "(" S_reverb_control_length_bounds " (snd #f)): current reverb length slider bounds (default: '(0.0 5.0))"
-  return(sound_get(snd_n, SP_REVERB_LENGTH_BOUNDS, S_reverb_control_length_bounds));
+  #define H_reverb_control_length_bounds "(" S_reverb_control_length_bounds " (snd)): current reverb length slider bounds (default: '(0.0 5.0))"
+  return(sound_get_global(snd_n, SP_REVERB_LENGTH_BOUNDS, S_reverb_control_length_bounds));
 }
 
 static XEN g_set_reverb_control_length_bounds(XEN on, XEN snd_n) 
@@ -3439,7 +3585,7 @@ static XEN g_set_reverb_control_length_bounds(XEN on, XEN snd_n)
     XEN_WRONG_TYPE_ARG_ERROR(S_setB S_reverb_control_length_bounds, XEN_ARG_1, on, "a list of 2 numbers");
   if (XEN_TO_C_DOUBLE(XEN_CAR(on)) >= XEN_TO_C_DOUBLE(XEN_CADR(on)))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_reverb_control_length_bounds, 1, on, "min >= max");
-  return(sound_set(snd_n, on, SP_REVERB_LENGTH_BOUNDS, S_setB S_reverb_control_length_bounds));
+  return(sound_set_global(snd_n, on, SP_REVERB_LENGTH_BOUNDS, S_setB S_reverb_control_length_bounds));
 }
 
 WITH_REVERSED_ARGS(g_set_reverb_control_length_bounds_reversed, g_set_reverb_control_length_bounds)
@@ -3447,14 +3593,14 @@ WITH_REVERSED_ARGS(g_set_reverb_control_length_bounds_reversed, g_set_reverb_con
 
 static XEN g_reverb_control_feedback(XEN snd_n) 
 {
-  #define H_reverb_control_feedback "(" S_reverb_control_feedback " (snd #f)): reverb feedback scaler"
-  return(sound_get(snd_n, SP_REVERB_FEEDBACK, S_reverb_control_feedback));
+  #define H_reverb_control_feedback "(" S_reverb_control_feedback " (snd)): reverb feedback scaler"
+  return(sound_get_global(snd_n, SP_REVERB_FEEDBACK, S_reverb_control_feedback));
 }
 
 static XEN g_set_reverb_control_feedback(XEN on, XEN snd_n) 
 {
   XEN_ASSERT_TYPE(XEN_NUMBER_P(on), on, XEN_ARG_1, S_setB S_reverb_control_feedback, "a number"); 
-  return(sound_set(snd_n, on, SP_REVERB_FEEDBACK, S_setB S_reverb_control_feedback));
+  return(sound_set_global(snd_n, on, SP_REVERB_FEEDBACK, S_setB S_reverb_control_feedback));
 }
 
 WITH_REVERSED_ARGS(g_set_reverb_control_feedback_reversed, g_set_reverb_control_feedback)
@@ -3475,8 +3621,8 @@ WITH_REVERSED_ARGS(g_set_reverb_control_scale_reversed, g_set_reverb_control_sca
 
 static XEN g_reverb_control_scale_bounds(XEN snd_n) 
 {
-  #define H_reverb_control_scale_bounds "(" S_reverb_control_scale_bounds " (snd #f)): current reverb scale slider bounds (default: '(0.0 4.0))"
-  return(sound_get(snd_n, SP_REVERB_SCALE_BOUNDS, S_reverb_control_scale_bounds));
+  #define H_reverb_control_scale_bounds "(" S_reverb_control_scale_bounds " (snd)): current reverb scale slider bounds (default: '(0.0 4.0))"
+  return(sound_get_global(snd_n, SP_REVERB_SCALE_BOUNDS, S_reverb_control_scale_bounds));
 }
 
 static XEN g_set_reverb_control_scale_bounds(XEN on, XEN snd_n) 
@@ -3488,7 +3634,7 @@ static XEN g_set_reverb_control_scale_bounds(XEN on, XEN snd_n)
     XEN_WRONG_TYPE_ARG_ERROR(S_setB S_reverb_control_scale_bounds, XEN_ARG_1, on, "a list of 2 numbers");
   if (XEN_TO_C_DOUBLE(XEN_CAR(on)) >= XEN_TO_C_DOUBLE(XEN_CADR(on)))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_reverb_control_scale_bounds, 1, on, "min >= max");
-  return(sound_set(snd_n, on, SP_REVERB_SCALE_BOUNDS, S_setB S_reverb_control_scale_bounds));
+  return(sound_set_global(snd_n, on, SP_REVERB_SCALE_BOUNDS, S_setB S_reverb_control_scale_bounds));
 }
 
 WITH_REVERSED_ARGS(g_set_reverb_control_scale_bounds_reversed, g_set_reverb_control_scale_bounds)
@@ -3496,28 +3642,28 @@ WITH_REVERSED_ARGS(g_set_reverb_control_scale_bounds_reversed, g_set_reverb_cont
 
 static XEN g_reverb_control_lowpass(XEN snd_n) 
 {
-  #define H_reverb_control_lowpass "(" S_reverb_control_lowpass " (snd #f)): reverb lowpass filter coefficient"
-  return(sound_get(snd_n, SP_REVERB_LOW_PASS, S_reverb_control_lowpass));
+  #define H_reverb_control_lowpass "(" S_reverb_control_lowpass " (snd)): reverb lowpass filter coefficient"
+  return(sound_get_global(snd_n, SP_REVERB_LOW_PASS, S_reverb_control_lowpass));
 }
 
 static XEN g_set_reverb_control_lowpass(XEN on, XEN snd_n) 
 {
   XEN_ASSERT_TYPE(XEN_NUMBER_P(on), on, XEN_ARG_1, S_setB S_reverb_control_lowpass, "a number"); 
-  return(sound_set(snd_n, on, SP_REVERB_LOW_PASS, S_setB S_reverb_control_lowpass));
+  return(sound_set_global(snd_n, on, SP_REVERB_LOW_PASS, S_setB S_reverb_control_lowpass));
 }
 
 WITH_REVERSED_ARGS(g_set_reverb_control_lowpass_reversed, g_set_reverb_control_lowpass)
 
 static XEN g_reverb_control_decay(XEN snd)
 {
-  #define H_reverb_control_decay "(" S_reverb_control_decay " (snd #f)): 'Apply' button reverb decay time (1.0 seconds)"
-  return(sound_get(snd, SP_REVERB_DECAY, S_reverb_control_decay));
+  #define H_reverb_control_decay "(" S_reverb_control_decay " (snd)): 'Apply' button reverb decay time (1.0 seconds)"
+  return(sound_get_global(snd, SP_REVERB_DECAY, S_reverb_control_decay));
 }
 
 static XEN g_set_reverb_control_decay(XEN val, XEN snd)
 {
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_setB S_reverb_control_decay, "a number"); 
-  return(sound_set(snd, val, SP_REVERB_DECAY, S_setB S_reverb_control_decay));
+  return(sound_set_global(snd, val, SP_REVERB_DECAY, S_setB S_reverb_control_decay));
 }
 
 WITH_REVERSED_ARGS(g_set_reverb_control_decay_reversed, g_set_reverb_control_decay)

@@ -378,6 +378,8 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+4-Mar:   tempo-control-bounds, and all other such variables' global defaults can be set\n\
+           including cursor-follows-play.\n\
 3-Mar:   read|write-speex for Speex files and read|write-flac for FLAC files (examp.scm)\n\
 1-Mar:   show-grid.\n\
          C-_ deletes text in listener to previous command.\n\

@@ -574,15 +574,33 @@ void recorder_set_vu_out_val(int chan, mus_sample_t val) {set_vu_val(rec_out_VU[
 #define INPUT_AMP 0
 #define OUTPUT_AMP 1
 
+static Float amp_to_scroll(Float minval, Float val, Float maxval)
+{
+  if (val <= minval) return(0.0);
+  if (val >= maxval) return(0.9);
+  if (val >= 1.0)
+    return(0.9 * 0.5 * (1.0 + (val - 1.0) / (maxval - 1.0)));
+  return(0.9 * 0.5 * ((val - minval) / (1.0 - minval)));
+}
+
+static Float scroll_to_amp(Float val)
+{
+  if (val <= 0.0) 
+    return(amp_control_min(ss));
+  if (val >= 0.9) 
+    return(amp_control_max(ss));
+  if (val > (0.5 * 0.9))
+    return((((val / (0.5 * 0.9)) - 1.0) * (amp_control_max(ss) - 1.0)) + 1.0);
+  else return((val * (1.0 - amp_control_min(ss)) / (0.5 * 0.9)) + amp_control_min(ss));
+}
+
 static void record_amp_changed(AMP *ap, Float scrollval)
 {
   char sfs[6];
   Float amp;
   recorder_info *rp;
   rp = get_recorder_info();
-  if (scrollval < .15)
-    amp = (scrollval * 1.13);
-  else amp = (exp((scrollval - 0.5) * 5.0));
+  amp = scroll_to_amp(scrollval);
   mus_snprintf(sfs, 6, "%.2f", amp);
   set_button_label(ap->number, sfs);
   if (ap->type == INPUT_AMP)
@@ -590,18 +608,7 @@ static void record_amp_changed(AMP *ap, Float scrollval)
   else rp->out_amps[ap->out] = amp;
 }
 
-static Float amp_to_slider(Float amp)
-{
-  /* reverse calc above */
-  if (amp <= 0.0)
-    return(0.0);
-  else
-    {
-      if (amp < .173)
-	return(amp * .867);
-      else return(log(amp) * 0.2 + 0.5);
-    }
-}
+static Float amp_to_slider(Float amp) {return(amp_to_scroll(amp_control_min(ss), amp, amp_control_max(ss)));}
 
 static Float global_amp(AMP *a)
 {
@@ -612,13 +619,15 @@ static Float global_amp(AMP *a)
   else return(rp->out_amps[a->out]);
 }
 
+static bool ignore_callback = false;
+
 static gboolean record_amp_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   AMP *ap = (AMP *)data;
   Float val;
   if (ev->state & (snd_ControlMask | snd_MetaMask)) 
     val = ap->last_amp; 
-  else val = 0.5;
+  else val = amp_to_slider(1.0);
   record_amp_changed(ap, val);
   GTK_ADJUSTMENT(ap->adj)->value = val;
   gtk_adjustment_value_changed(GTK_ADJUSTMENT(ap->adj));
@@ -627,6 +636,7 @@ static gboolean record_amp_click_callback(GtkWidget *w, GdkEventButton *ev, gpoi
 
 static void record_amp_drag_callback(GtkAdjustment *adj, gpointer data)
 {
+  if (ignore_callback) return;
   record_amp_changed((AMP *)data, adj->value);
 }
 
@@ -2082,8 +2092,10 @@ void reflect_recorder_in_amp(int in, int out, Float val)
       a = AMP_rec_ins[in][out];
       temp = amp_to_slider(val); 
       record_amp_changed(a, temp); 
-      GTK_ADJUSTMENT(a->adj)->value = val;
+      ignore_callback = true;
+      GTK_ADJUSTMENT(a->adj)->value = temp;
       gtk_adjustment_value_changed(GTK_ADJUSTMENT(a->adj));
+      ignore_callback = false;
     }
 }
 
@@ -2096,8 +2108,38 @@ void reflect_recorder_out_amp(int ind, Float val)
       a = AMP_rec_outs[ind];
       temp = amp_to_slider(val); 
       record_amp_changed(a, temp);
-      GTK_ADJUSTMENT(a->adj)->value = val;
+      ignore_callback = true;
+      GTK_ADJUSTMENT(a->adj)->value = temp;
       gtk_adjustment_value_changed(GTK_ADJUSTMENT(a->adj));
+      ignore_callback = false;
+    }
+}
+
+void reflect_amp_control_bounds_change_in_recorder(void)
+{
+  int ic, oc;
+  recorder_info *rp;
+  AMP *a;
+  rp = get_recorder_info();
+  if (recorder)
+    {
+      ignore_callback = true;
+      for (ic = 0; ic < rp->possible_input_chans; ic++)
+	for (oc = 0; oc < MAX_OUT_CHANS; oc++)
+	  if (AMP_rec_ins[ic][oc])
+	    {
+	      a = AMP_rec_ins[ic][oc];
+	      GTK_ADJUSTMENT(a->adj)->value = amp_to_slider(rp->in_amps[ic][oc]);
+	      gtk_adjustment_value_changed(GTK_ADJUSTMENT(a->adj));
+	    }
+      for (oc = 0; oc < MAX_OUT_CHANS; oc++)
+	if (AMP_rec_outs[oc])
+	  {
+	    a = AMP_rec_outs[oc];
+	    GTK_ADJUSTMENT(a->adj)->value = amp_to_slider(rp->out_amps[oc]);
+	    gtk_adjustment_value_changed(GTK_ADJUSTMENT(a->adj));
+	  }
+      ignore_callback = false;
     }
 }
 

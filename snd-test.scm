@@ -32,6 +32,7 @@
 
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; TODO: replace all the (buggy) keystroke junk with snd-simulate-keystroke 
+;;; TODO: new globals tested
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen) (ice-9 session))
 
@@ -856,7 +857,7 @@
       (test-defaults
        (list
 	'amp-control (without-errors (amp-control)) 'no-such-sound
-	'amp-control-bounds (without-errors (amp-control-bounds)) 'no-such-sound
+	'amp-control-bounds (cadr (amp-control-bounds)) 8.0
 	'ask-before-overwrite (ask-before-overwrite) #f 
 	'audio-output-device (audio-output-device) 0
 	'auto-resize (auto-resize) #t 
@@ -867,11 +868,11 @@
 	'color-scale (color-scale) 1.0 
 	'colormap (colormap) (if (provided? 'gl) 2 -1)
 	'contrast-control (without-errors (contrast-control)) 'no-such-sound
-	'contrast-control-bounds (without-errors (contrast-control-bounds)) 'no-such-sound
-	'contrast-control-amp (without-errors (contrast-control-amp)) 'no-such-sound
+	'contrast-control-bounds (cadr (contrast-control-bounds)) 10.0
+	'contrast-control-amp (contrast-control-amp) 1.0
 	'contrast-control? (without-errors (contrast-control?)) 'no-such-sound
 	'auto-update-interval (auto-update-interval) 60.0 
-	'cursor-follows-play (without-errors (cursor-follows-play)) 'no-such-sound
+	'cursor-follows-play (cursor-follows-play) #f
 	'cursor-size (cursor-size) 15
 	'cursor-style (cursor-style) cursor-cross
 	'dac-combines-channels (dac-combines-channels) #t
@@ -899,11 +900,11 @@
 	'eps-left-margin (eps-left-margin) 0.0
 	'eps-size (eps-size) 1.0
 	'expand-control (without-errors (expand-control)) 'no-such-sound
-	'expand-control-bounds (without-errors (expand-control-bounds)) 'no-such-sound
-	'expand-control-hop (without-errors (expand-control-hop)) 'no-such-sound
-	'expand-control-jitter (without-errors (expand-control-jitter)) 'no-such-sound
-	'expand-control-length (without-errors (expand-control-length)) 'no-such-sound
-	'expand-control-ramp (without-errors (expand-control-ramp)) 'no-such-sound
+	'expand-control-bounds (cadr (expand-control-bounds)) 20.0
+	'expand-control-hop (expand-control-hop) 0.05
+	'expand-control-jitter (expand-control-jitter) 0.1
+	'expand-control-length (expand-control-length) 0.15
+	'expand-control-ramp (expand-control-ramp) 0.4
 	'expand-control? (without-errors (expand-control?)) 'no-such-sound
 	'fft-window-beta (fft-window-beta) 0.0 
 	'fft-log-frequency (fft-log-frequency) #f 
@@ -912,11 +913,11 @@
 	'transform-graph-type (transform-graph-type) 0
 	'fft-window (fft-window) 6 
 	'transform-graph? (without-errors (transform-graph?)) 'no-such-sound
-	'filter-control-in-dB (without-errors (filter-control-in-dB)) 'no-such-sound
+	'filter-control-in-dB (filter-control-in-dB) #f
 	'filter-control-coeffs (without-errors (filter-control-coeffs)) 'no-such-sound
 	'filter-control-envelope (without-errors (filter-control-envelope)) 'no-such-sound
-	'filter-control-in-hz (without-errors (filter-control-in-hz)) 'no-such-sound
-	'filter-control-order (without-errors (filter-control-order)) 'no-such-sound
+	'filter-control-in-hz (filter-control-in-hz) #f
+	'filter-control-order (filter-control-order) 20
 	'filter-control? (without-errors (filter-control?)) 'no-such-sound
 	'graph-cursor (graph-cursor) 34
 	'graph-style (graph-style) graph-lines
@@ -942,12 +943,12 @@
 	'recorder-srate (recorder-srate) 22050 
 	'recorder-trigger (recorder-trigger) 0.0
 	'region-graph-style (region-graph-style) graph-lines
-	'reverb-control-feedback (without-errors (reverb-control-feedback)) 'no-such-sound
+	'reverb-control-feedback (reverb-control-feedback) 1.09
 	'reverb-control-length (without-errors (reverb-control-length)) 'no-such-sound
-	'reverb-control-length-bounds (without-errors (reverb-control-length-bounds)) 'no-such-sound
-	'reverb-control-lowpass (without-errors (reverb-control-lowpass)) 'no-such-sound
+	'reverb-control-length-bounds (cadr (reverb-control-length-bounds)) 5.0
+	'reverb-control-lowpass (reverb-control-lowpass) 0.7
 	'reverb-control-scale (without-errors (reverb-control-scale)) 'no-such-sound
-	'reverb-control-scale-bounds (without-errors (reverb-control-scale-bounds)) 'no-such-sound
+	'reverb-control-scale-bounds (cadr (reverb-control-scale-bounds)) 4.0
 	'reverb-control? (without-errors (reverb-control?)) 'no-such-sound
 	'save-state-file (save-state-file) "saved-snd.scm" 
 	'show-axes (show-axes) 1
@@ -959,7 +960,7 @@
 	'show-selection-transform (show-selection-transform) #f 
 	'show-y-zero (show-y-zero) #f 
 	'show-grid (show-grid) #f 
-	'show-controls (without-errors (show-controls)) 'no-such-sound
+	'show-controls (show-controls) #f
 	'sinc-width (sinc-width) 10 
 	'spectro-cutoff (spectro-cutoff) 1.0
 	'spectro-hop (spectro-hop) 4 
@@ -971,7 +972,7 @@
 	'spectro-z-angle (spectro-z-angle) (if (provided? 'gl) 0.0 358.0)
 	'spectro-z-scale (spectro-z-scale) (if (provided? 'gl) 1.0 0.1)
 	'speed-control (without-errors (speed-control)) 'no-such-sound
-	'speed-control-bounds (without-errors (speed-control-bounds)) 'no-such-sound
+	'speed-control-bounds (cadr (speed-control-bounds)) 20.0
 	'sync (without-errors (sync)) 'no-such-sound
 	'temp-dir (temp-dir) #f 
 	'ladspa-dir (ladspa-dir) #f 
@@ -1552,16 +1553,17 @@
 			     (setfnc (lambda (val) (set! (getfnc) val)))
 			     (initval (list-ref (car lst) 2))
 			     (newvals (list-ref (car lst) 3)))
-			(map (lambda (n)
-			       (catch #t 
-				      (lambda ()
-					(setfnc n))
-				      (lambda args (car args)))
-			       (let ((nowval (getfnc)))
-				 (if (equal? n nowval)
-				     (snd-display ";~A = ~A (~A)" name n initval))
-				 (setfnc initval)))
-			     newvals)
+			(for-each
+			 (lambda (n)
+			   (catch #t 
+				  (lambda ()
+				    (setfnc n))
+				  (lambda args (car args)))
+			   (let ((nowval (getfnc)))
+			     (if (equal? n nowval)
+				 (snd-display ";~A = ~A (~A)" name n initval))
+			     (setfnc initval)))
+			 newvals)
 			(test-bad-args (cdr lst)))))))
 	(test-bad-args
 	 (list
@@ -17726,6 +17728,15 @@ EDITS: 5
 	      (close-sound ind)))
 
 	(set! (with-mix-tags) old-with-mix-tags))
+
+      (let ((old (tempo-control-bounds)))
+	(if (or (fneq (car old) 0.0) (fneq (cadr old) 8.0))
+	    (snd-display ";tempo-control-bounds defaults: ~A" old))
+	(set! (tempo-control-bounds) (list 0.0 2.0))
+	(set! old (tempo-control-bounds))
+	(if (or (fneq (car old) 0.0) (fneq (cadr old) 2.0))
+	    (snd-display ";tempo-control-bounds set (0.0 2.0): ~A" old))
+	(set! (tempo-control-bounds) (list 0.0 8.0)))
       
       (run-hook after-test-hook 9)
       ))
@@ -20968,7 +20979,8 @@ EDITS: 5
 		(set! (contrast-control-amp #t) .75)
 		(if (fneq (contrast-control-amp cfd2) .75) (snd-display ";set-contrast-control-amp .75 #t -> ~A?" (contrast-control-amp cfd2)))
 		(set! (contrast-control-bounds cfd2) (list 2.0 3.0))
-		(if (not (feql (contrast-control-bounds) (list 2.0 3.0))) (snd-display ";contrast-control-bounds: ~A" (contrast-control-bounds cfd2)))
+		(if (not (feql (contrast-control-bounds cfd2) (list 2.0 3.0))) 
+		    (snd-display ";cfd2 contrast-control-bounds: ~A" (contrast-control-bounds cfd2)))
 		(set! (expand-control-length #t) .025)
 		(if (fneq (expand-control-length cfd2) .025) (snd-display ";set-expand-control-length .025 #t -> ~A?" (expand-control-length cfd2)))
 		(set! (expand-control-hop #t) .025)
@@ -28839,65 +28851,24 @@ EDITS: 2
 	    (list channels 'channels ind-1 ind-2 0 = equal? #f)
 	    (list chans 'chans ind-1 ind-2 0 = equal? #f)
 	    (list header-type 'header-type ind-1 ind-2 0 = equal? #f)
-	    (list filter-control-order 'filter-control-order ind-1 ind-2 64 = equal? #t)
-	    (list speed-control-style 'speed-control-style ind-1 ind-2 speed-control-as-ratio = equal? #t)
-	    (list speed-control-tones 'speed-control-tones ind-1 ind-2 14 = equal? #t)
 	    
 	    (list amp-control 'amp-control ind-1 ind-2 .5 (lambda (a b) (< (abs (- a b)) .01)) feql #t)
 	    (list contrast-control 'contrast-control ind-1 ind-2 .5 (lambda (a b) (< (abs (- a b)) .01)) feql #t)
-	    (list contrast-control-amp 'contrast-control-amp ind-1 ind-2 .5 (lambda (a b) (< (abs (- a b)) .01)) feql #t)
 	    (list expand-control 'expand-control ind-1 ind-2 .5 (lambda (a b) (< (abs (- a b)) .01)) feql #t)
-	    (list expand-control-hop 'expand-control-hop ind-1 ind-2 .5 (lambda (a b) (< (abs (- a b)) .01)) feql #t)
-	    (list expand-control-jitter 'expand-control-jitter ind-1 ind-2 .15 (lambda (a b) (< (abs (- a b)) .01)) feql #t)
-	    (list expand-control-length 'expand-control-length ind-1 ind-2 .05 (lambda (a b) (< (abs (- a b)) .01)) feql #t)
-	    (list expand-control-ramp 'expand-control-ramp ind-1 ind-2 .05 (lambda (a b) (< (abs (- a b)) .01)) feql #t)
 	    (list speed-control 'speed-control ind-1 ind-2 .5 (lambda (a b) (< (abs (- a b)) .01)) feql #t)
-	    (list reverb-control-decay 'reverb-control-decay ind-1 ind-2 .5 (lambda (a b) (< (abs (- a b)) .01)) feql #t)
-	    (list reverb-control-feedback 'reverb-control-feedback ind-1 ind-2 .5 (lambda (a b) (< (abs (- a b)) .01)) feql #t)
 	    (list reverb-control-length 'reverb-control-length ind-1 ind-2 .5 (lambda (a b) (< (abs (- a b)) .01)) feql #t)
 	    (list reverb-control-scale 'reverb-control-scale ind-1 ind-2 .5 (lambda (a b) (< (abs (- a b)) .01)) feql #t)
-	    (list reverb-control-lowpass 'reverb-control-lowpass ind-1 ind-2 .5 (lambda (a b) (< (abs (- a b)) .01)) feql #t)
 	    
 	    (list contrast-control? 'contrast-control? ind-1 ind-2 #t equal? equal? #t)
 	    (list expand-control? 'expand-control? ind-1 ind-2 #t equal? equal? #t)
 	    (list filter-control? 'filter-control? ind-1 ind-2 #t equal? equal? #t)
 	    (list reverb-control? 'reverb-control? ind-1 ind-2 #t equal? equal? #t)
-	    (list show-controls 'show-controls ind-1 ind-2 #t equal? equal? #f)
 	    (list read-only 'read-only ind-1 ind-2 #t equal? equal? #t)
-	    (list cursor-follows-play 'cursor-follows-play ind-1 ind-2 #t equal? equal? #t)
-	    (list filter-control-in-dB 'filter-control-in-dB ind-1 ind-2 #t equal? equal? #t)
-	    (list filter-control-in-hz 'filter-control-in-hz ind-1 ind-2 #t equal? equal? #t)
 	    
 	    (list file-name 'file-name ind-1 ind-2 #f string=? equal? #f)
 	    (list short-file-name 'short-file-name ind-1 ind-2 #f string=? equal? #f)
-	    (list comment 'comment ind-1 ind-2 #f string=? equal? #f)
+	    (list comment 'comment ind-1 ind-2 #f string=? equal? #f)))
 	    
-	    (list amp-control-bounds 'amp-control-bounds ind-1 ind-2 (list 0.5 1.5) feql 
-		  (lambda (a b) (and (list? a) (list? b) (list? (car a)) (list? (cadr a)) (list? (car b)) (list? (cadr b))
-				     (feql (car a) (car b)) (feql (cadr a) (cadr b)))) #t)
-	    (list speed-control-bounds 'speed-control-bounds ind-1 ind-2 (list 0.5 1.5) feql 
-		  (lambda (a b) (and (list? a) (list? b) (list? (car a)) (list? (cadr a)) (list? (car b)) (list? (cadr b))
-				     (feql (car a) (car b)) (feql (cadr a) (cadr b)))) #t)
-	    (list expand-control-bounds 'expand-control-bounds ind-1 ind-2 (list 0.5 1.5) feql 
-		  (lambda (a b) (and (list? a) (list? b) (list? (car a)) (list? (cadr a)) (list? (car b)) (list? (cadr b))
-				     (feql (car a) (car b)) (feql (cadr a) (cadr b)))) #t)
-	    (list contrast-control-bounds 'contrast-control-bounds ind-1 ind-2 (list 0.0 1.5) feql 
-		  (lambda (a b) (and (list? a) (list? b) (list? (car a)) (list? (cadr a)) (list? (car b)) (list? (cadr b))
-				     (feql (car a) (car b)) (feql (cadr a) (cadr b)))) #t)
-	    (list reverb-control-scale-bounds 'reverb-control-scale-bounds ind-1 ind-2 (list 0.5 1.5) feql 
-		  (lambda (a b) (and (list? a) (list? b) (list? (car a)) (list? (cadr a)) (list? (car b)) (list? (cadr b))
-				     (feql (car a) (car b)) (feql (cadr a) (cadr b)))) #t)
-	    (list reverb-control-length-bounds 'reverb-control-length-bounds ind-1 ind-2 (list 0.5 1.5) feql 
-		  (lambda (a b) (and (list? a) (list? b) (list? (car a)) (list? (cadr a)) (list? (car b)) (list? (cadr b))
-				     (feql (car a) (car b)) (feql (cadr a) (cadr b)))) #t)
-	    (list filter-control-envelope 'filter-control-envelope ind-1 ind-2 (list 0.0 1.0 1.0 0.0) feql
-		  (lambda (a b) (and (list? a) (list? b) (list? (car a)) (list? (cadr a)) (list? (car b)) (list? (cadr b))
-				     (feql (car a) (car b)) (feql (cadr a) (cadr b)))) #t)
-	    
-	    (list filter-control-coeffs 'filter-control-coeffs ind-1 ind-2 (let ((val (make-vct (filter-control-order)))) (vct-set! val 0 1.0) val) vequal
-		  (lambda (a b) (and (list? a) (list? b) (vct? (car a)) (vct? (cadr a)) (vct? (car b)) (vct? (cadr b))
-				     (vequal (car a) (car b)) (vequal (cadr a) (cadr b)))) #f)))
-	  
 	  (save-controls #t)
 	  (restore-controls #t)
 	  (reset-controls #t)

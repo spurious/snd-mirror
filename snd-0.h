@@ -134,10 +134,6 @@
 #define STRFTIME_FORMAT "%a %d-%b-%Y %H:%M %Z"
 #endif
 
-#define STR_decimal '.'
-/* defines the decimal point character used where I'm making float representations by hand */
-/* if nl_langinfo is available, its decimal point will override this */
-
 #define XOR(a, b) ((a) ^ (b))
 /* can't get used to this operator -- in the good old days, ^ meant exponentiation */
 
@@ -273,40 +269,132 @@ typedef enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_U
 #define BLACK_AND_WHITE -1
 
 #define DEFAULT_AMP_CONTROL 1.0
-#define DEFAULT_AMP_CONTROL_MIN 0.0
-#define DEFAULT_AMP_CONTROL_MAX 8.0
 #define DEFAULT_CONTRAST_CONTROL 0.0
-#define DEFAULT_CONTRAST_CONTROL_MIN 0.0
-#define DEFAULT_CONTRAST_CONTROL_MAX 10.0
-#define DEFAULT_CONTRAST_CONTROL_AMP 1.0
-#define DEFAULT_CONTRAST_CONTROL_P false
 #define DEFAULT_EXPAND_CONTROL 1.0
-#define DEFAULT_EXPAND_CONTROL_MIN 0.05
-#define DEFAULT_EXPAND_CONTROL_MAX 20.0
-#define DEFAULT_EXPAND_CONTROL_P false
-#define DEFAULT_EXPAND_CONTROL_HOP 0.05
-#define DEFAULT_EXPAND_CONTROL_JITTER 0.1
-#define DEFAULT_EXPAND_CONTROL_LENGTH 0.15
-#define DEFAULT_EXPAND_CONTROL_RAMP 0.4
-#define DEFAULT_FILTER_CONTROL_P false
-#define DEFAULT_FILTER_CONTROL_ORDER 20
-#define DEFAULT_FILTER_CONTROL_IN_DB false
-#define DEFAULT_FILTER_CONTROL_IN_HZ false
-#define DEFAULT_REVERB_CONTROL_P false
-#define DEFAULT_REVERB_CONTROL_FEEDBACK 1.09
 #define DEFAULT_REVERB_CONTROL_LENGTH 1.0
-#define DEFAULT_REVERB_CONTROL_LENGTH_MIN 0.0
-#define DEFAULT_REVERB_CONTROL_LENGTH_MAX 5.0
-#define DEFAULT_REVERB_CONTROL_SCALE_MIN 0.0
-#define DEFAULT_REVERB_CONTROL_SCALE_MAX 4.0
-#define DEFAULT_REVERB_CONTROL_LOWPASS 0.7
 #define DEFAULT_REVERB_CONTROL_SCALE 0.0
 #define DEFAULT_SPEED_CONTROL 1.0
-#define DEFAULT_SPEED_CONTROL_MIN 0.05
-#define DEFAULT_SPEED_CONTROL_MAX 20.0
-#define DEFAULT_REVERB_CONTROL_DECAY 1.0
+#define DEFAULT_CONTRAST_CONTROL_P false
+#define DEFAULT_EXPAND_CONTROL_P false
+#define DEFAULT_FILTER_CONTROL_P false
+#define DEFAULT_REVERB_CONTROL_P false
+
+#define filter_control_in_dB(ss) ss->Filter_Control_In_Db
+#define in_set_filter_control_in_dB(ss, val) ss->Filter_Control_In_Db = val
+#define DEFAULT_FILTER_CONTROL_IN_DB false
+
+#define filter_control_in_hz(ss) ss->Filter_Control_In_Hz
+#define in_set_filter_control_in_hz(ss, val) ss->Filter_Control_In_Hz = val
+#define DEFAULT_FILTER_CONTROL_IN_HZ false
+
+#define speed_control_tones(ss) ss->Speed_Control_Tones
+#define in_set_speed_control_tones(ss, val) ss->Speed_Control_Tones = val
 #define DEFAULT_SPEED_CONTROL_TONES 12
+
+#define speed_control_style(ss) ss->Speed_Control_Style
+#define in_set_speed_control_style(ss, val) ss->Speed_Control_Style = val
 #define DEFAULT_SPEED_CONTROL_STYLE SPEED_CONTROL_AS_FLOAT
+
+#define expand_control_length(ss) ss->Expand_Control_Length
+#define in_set_expand_control_length(ss, val) ss->Expand_Control_Length = val
+#define DEFAULT_EXPAND_CONTROL_LENGTH 0.15
+
+#define expand_control_ramp(ss) ss->Expand_Control_Ramp
+#define in_set_expand_control_ramp(ss, val) ss->Expand_Control_Ramp = val
+#define DEFAULT_EXPAND_CONTROL_RAMP 0.4
+
+#define expand_control_hop(ss) ss->Expand_Control_Hop
+#define in_set_expand_control_hop(ss, val) ss->Expand_Control_Hop = val
+#define DEFAULT_EXPAND_CONTROL_HOP 0.05
+
+#define expand_control_jitter(ss) ss->Expand_Control_Jitter
+#define in_set_expand_control_jitter(ss, val) ss->Expand_Control_Jitter = val
+#define DEFAULT_EXPAND_CONTROL_JITTER 0.1
+
+#define contrast_control_amp(ss) ss->Contrast_Control_Amp
+#define in_set_contrast_control_amp(ss, val) ss->Contrast_Control_Amp = val
+#define DEFAULT_CONTRAST_CONTROL_AMP 1.0
+
+#define reverb_control_feedback(ss) ss->Reverb_Control_Feedback
+#define in_set_reverb_control_feedback(ss, val) ss->Reverb_Control_Feedback = val
+#define DEFAULT_REVERB_CONTROL_FEEDBACK 1.09
+
+#define reverb_control_lowpass(ss) ss->Reverb_Control_Lowpass
+#define in_set_reverb_control_lowpass(ss, val) ss->Reverb_Control_Lowpass = val
+#define DEFAULT_REVERB_CONTROL_LOWPASS 0.7
+
+#define reverb_control_decay(ss) ss->Reverb_Control_Decay
+#define in_set_reverb_control_decay(ss, val) ss->Reverb_Control_Decay = val
+#define DEFAULT_REVERB_CONTROL_DECAY 1.0
+
+#define contrast_control_min(ss) ss->Contrast_Control_Min
+#define in_set_contrast_control_min(ss, val) ss->Contrast_Control_Min = val
+#define DEFAULT_CONTRAST_CONTROL_MIN 0.0
+
+#define contrast_control_max(ss) ss->Contrast_Control_Max
+#define in_set_contrast_control_max(ss, val) ss->Contrast_Control_Max = val
+#define DEFAULT_CONTRAST_CONTROL_MAX 10.0
+
+#define expand_control_min(ss) ss->Expand_Control_Min
+#define in_set_expand_control_min(ss, val) ss->Expand_Control_Min = val
+#define DEFAULT_EXPAND_CONTROL_MIN 0.05
+
+#define expand_control_max(ss) ss->Expand_Control_Max
+#define in_set_expand_control_max(ss, val) ss->Expand_Control_Max = val
+#define DEFAULT_EXPAND_CONTROL_MAX 20.0
+
+#define speed_control_min(ss) ss->Speed_Control_Min
+#define in_set_speed_control_min(ss, val) ss->Speed_Control_Min = val
+#define DEFAULT_SPEED_CONTROL_MIN 0.05
+
+#define speed_control_max(ss) ss->Speed_Control_Max
+#define in_set_speed_control_max(ss, val) ss->Speed_Control_Max = val
+#define DEFAULT_SPEED_CONTROL_MAX 20.0
+
+#define amp_control_min(ss) ss->Amp_Control_Min
+#define in_set_amp_control_min(ss, val) ss->Amp_Control_Min = val
+#define DEFAULT_AMP_CONTROL_MIN 0.0
+
+#define amp_control_max(ss) ss->Amp_Control_Max
+#define in_set_amp_control_max(ss, val) ss->Amp_Control_Max = val
+#define DEFAULT_AMP_CONTROL_MAX 8.0
+
+#define reverb_control_scale_min(ss) ss->Reverb_Control_Scale_Min
+#define in_set_reverb_control_scale_min(ss, val) ss->Reverb_Control_Scale_Min = val
+#define DEFAULT_REVERB_CONTROL_SCALE_MIN 0.0
+
+#define reverb_control_scale_max(ss) ss->Reverb_Control_Scale_Max
+#define in_set_reverb_control_scale_max(ss, val) ss->Reverb_Control_Scale_Max = val
+#define DEFAULT_REVERB_CONTROL_SCALE_MAX 4.0
+
+#define reverb_control_length_min(ss) ss->Reverb_Control_Length_Min
+#define in_set_reverb_control_length_min(ss, val) ss->Reverb_Control_Length_Min = val
+#define DEFAULT_REVERB_CONTROL_LENGTH_MIN 0.0
+
+#define reverb_control_length_max(ss) ss->Reverb_Control_Length_Max
+#define in_set_reverb_control_length_max(ss, val) ss->Reverb_Control_Length_Max = val
+#define DEFAULT_REVERB_CONTROL_LENGTH_MAX 5.0
+
+#define filter_control_order(ss) ss->Filter_Control_Order
+#define in_set_filter_control_order(ss, val) ss->Filter_Control_Order = val
+#define DEFAULT_FILTER_CONTROL_ORDER 20
+
+#define tempo_control_min(ss) ss->Tempo_Control_Min
+#define in_set_tempo_control_min(ss, val) ss->Tempo_Control_Min = val
+#define DEFAULT_TEMPO_CONTROL_MIN 0.0
+
+#define tempo_control_max(ss) ss->Tempo_Control_Max
+#define in_set_tempo_control_max(ss, val) ss->Tempo_Control_Max = val
+#define DEFAULT_TEMPO_CONTROL_MAX 8.0
+
+#define in_show_controls(ss) ss->Show_Controls
+#define in_set_show_controls(ss, val) ss->Show_Controls = val
+#define DEFAULT_SHOW_CONTROLS false
+
+#define cursor_follows_play(ss) ss->Cursor_Follows_Play
+#define in_set_cursor_follows_play(ss, val) ss->Cursor_Follows_Play = val
+#define DEFAULT_CURSOR_FOLLOWS_PLAY DONT_FOLLOW
+
 
 #define DEFAULT_SYNC 0
 #define DEFAULT_INIT_WINDOW_X -1
