@@ -879,6 +879,7 @@ static SCM g_restore_region(SCM n, SCM chans, SCM len, SCM srate, SCM maxamp, SC
 {
   region *r;
   int i,j,k,regn;
+  SCM *vdata;
   r = (region *)CALLOC(1,sizeof(region));
   regn = gh_scm2int(n);
   regions[regn] = r;
@@ -904,15 +905,18 @@ static SCM g_restore_region(SCM n, SCM chans, SCM len, SCM srate, SCM maxamp, SC
       r->filename = NULL;
       r->data = (MUS_SAMPLE_TYPE **)CALLOC(r->chans,sizeof(MUS_SAMPLE_TYPE *));
       k=0; 
+      vdata = SCM_VELTS(data);
       for (i=0;i<r->chans;i++)
 	{
 	  r->data[i] = (MUS_SAMPLE_TYPE *)CALLOC(r->frames,sizeof(MUS_SAMPLE_TYPE));
 	  for (j=0;j<r->frames;j++,k++)
+	    {
 #if SNDLIB_USE_FLOATS
-	    r->data[i][j] = gh_scm2double(scm_vector_ref(data,gh_int2scm(k)));
+	      r->data[i][j] = gh_scm2double(vdata[k]);
 #else
-	    r->data[i][j] = gh_scm2int(scm_vector_ref(data,gh_int2scm(k)));
+	      r->data[i][j] = SCM_INUM(vdata[k]);
 #endif
+	    }
 	}
     }
   reflect_regions_in_menu();
@@ -1192,6 +1196,7 @@ static SCM g_region_samples(SCM beg_n, SCM num, SCM reg_n, SCM chn_n)
    region's samples starting at samp for samps from channel chan"
 
   SCM new_vect;
+  SCM *vdata;
   Float *data;
   int len,reg,i,chn;
   ERRB1(beg_n,S_region_samples);
@@ -1208,9 +1213,10 @@ static SCM g_region_samples(SCM beg_n, SCM num, SCM reg_n, SCM chn_n)
       if (len > 0)
 	{
 	  new_vect = gh_make_vector(gh_int2scm(len),gh_double2scm(0.0));
+	  vdata = SCM_VELTS(new_vect);
 	  data = (Float *)CALLOC(len,sizeof(Float));
 	  region_samples(reg,chn,g_scm2intdef(beg_n,0),len,data);
-	  for (i=0;i<len;i++) gh_vector_set_x(new_vect,gh_int2scm(i),gh_double2scm(data[i]));
+	  for (i=0;i<len;i++) vdata[i] = gh_double2scm(data[i]);
 	  FREE(data);
 	  return(new_vect);
 	}

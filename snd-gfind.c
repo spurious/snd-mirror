@@ -22,9 +22,11 @@ static void edit_find_help(GtkWidget *w,gpointer clientData)
   snd_help((snd_state *)clientData,
 	   "Global Find",
 "This search travels through all the current channels\n\
-in parallel until a match is found.  The expression\n\
-uses a C-like syntax.  y>.1, for example, searches\n\
-until a sample is found greater than .1.\n\
+in parallel until a match is found.  The find\n\
+expression is a Scheme function of one argument,\n\
+the current sample value.  It should return #t when the\n\
+search is satisified.  For example, (lambda (n) (> n .1)\n\
+looks for the next sample that is greater than .1.\n\
 ");
 } 
 

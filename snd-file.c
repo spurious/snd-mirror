@@ -1961,6 +1961,7 @@ static SCM g_sound_files_in_directory(SCM dirname)
   char *name = NULL;
   int i,numfiles;
   SCM vect = SCM_BOOL_F;
+  SCM *vdata;
   SCM_ASSERT(gh_string_p(dirname),dirname,SCM_ARG1,S_sound_files_in_directory);
   name = gh_scm2newstr(dirname,NULL);
   if (name)
@@ -1971,8 +1972,9 @@ static SCM g_sound_files_in_directory(SCM dirname)
 	{
 	  numfiles = dp->len;
 	  vect = gh_make_vector(gh_int2scm(numfiles),SCM_BOOL_F);
+	  vdata = SCM_VELTS(vect);
 	  for (i=0;i<numfiles;i++)
-	    gh_vector_set_x(vect,gh_int2scm(i),gh_str02scm(dp->files[i]));
+	    vdata[i] = gh_str02scm(dp->files[i]);
 	  free_dir(dp);
 	}
     }

@@ -256,6 +256,7 @@ static SCM g_sound_max_amp(SCM file)
   int chans,rtn,i;
   MUS_SAMPLE_TYPE *vals;
   char *filename;
+  SCM *vdata;
   SCM vect = SCM_BOOL_F;
   SCM_ASSERT(gh_string_p(file),file,SCM_ARG1,S_mus_sound_max_amp);
   filename = full_filename(file);
@@ -267,10 +268,11 @@ static SCM g_sound_max_amp(SCM file)
       if (rtn > 0)
 	{
 	  vect = gh_make_vector(gh_int2scm(chans*2),gh_int2scm(0));
+	  vdata = SCM_VELTS(vect);
 	  for (i=0;i<chans*2;i+=2)
 	    {
-	      gh_vector_set_x(vect,gh_int2scm(i),gh_int2scm((int)(vals[i])));
-	      gh_vector_set_x(vect,gh_int2scm(i+1),gh_double2scm(MUS_SAMPLE_TO_FLOAT(vals[i+1])));
+	      vdata[i] = gh_int2scm((int)(vals[i]));
+	      vdata[i+1] = gh_double2scm(MUS_SAMPLE_TO_FLOAT(vals[i+1]));
 	    }
 	}
       FREE(vals);
@@ -754,6 +756,7 @@ static SCM g_read_audio_state(SCM dev, SCM field, SCM chan, SCM vals)
   #define H_mus_audio_mixer_read "(" S_mus_audio_mixer_read " device field channel vals) reads sound card 'mixer' state"
   int val,i,len;
   float *fvals;
+  SCM *vdata;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(dev)),dev,SCM_ARG1,S_mus_audio_mixer_read);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(field)),field,SCM_ARG2,S_mus_audio_mixer_read);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(chan)),chan,SCM_ARG3,S_mus_audio_mixer_read);
@@ -763,7 +766,8 @@ static SCM g_read_audio_state(SCM dev, SCM field, SCM chan, SCM vals)
     fvals = (float *)CALLOC(1,sizeof(float));
   else fvals = (float *)CALLOC(len,sizeof(float));
   val = mus_audio_mixer_read(g_scm2int(dev),g_scm2int(field),g_scm2int(chan),fvals);
-  for (i=0;i<len;i++) gh_vector_set_x(vals,gh_int2scm(i),gh_double2scm(fvals[i]));
+  vdata = SCM_VELTS(vals);
+  for (i=0;i<len;i++) vdata[i] = gh_double2scm(fvals[i]);
   FREE(fvals);
   return(gh_int2scm(val));
 }
@@ -773,6 +777,7 @@ static SCM g_write_audio_state(SCM dev, SCM field, SCM chan, SCM vals)
   #define H_mus_audio_mixer_write "(" S_mus_audio_mixer_write " device field channel vals) changes the sound card's 'mixer' state"
   int i,len,res;
   float *fvals;
+  SCM *vdata;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(dev)),dev,SCM_ARG1,S_mus_audio_mixer_write);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(field)),field,SCM_ARG2,S_mus_audio_mixer_write);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(chan)),chan,SCM_ARG3,S_mus_audio_mixer_write);
@@ -783,7 +788,8 @@ static SCM g_write_audio_state(SCM dev, SCM field, SCM chan, SCM vals)
   else
     {
       fvals = (float *)CALLOC(len,sizeof(float));
-      for (i=0;i<len;i++) fvals[i] = gh_scm2double(gh_vector_ref(vals,gh_int2scm(i)));
+      vdata = SCM_VELTS(vals);
+      for (i=0;i<len;i++) fvals[i] = gh_scm2double(vdata[i]);
     }
   res = mus_audio_mixer_write(g_scm2int(dev),g_scm2int(field),g_scm2int(chan),fvals);
   FREE(fvals);

@@ -1913,6 +1913,7 @@ static SCM mix_vct(SCM obj, SCM beg, SCM snd, SCM chn, SCM with_consoles, SCM or
 MUS_SAMPLE_TYPE *g_floats_to_samples(SCM obj, int *size, char *caller, int position)
 {
   MUS_SAMPLE_TYPE *vals = NULL;
+  SCM *vdata;
   vct *v;
   int i,num = 0;
   SCM lst;
@@ -1929,8 +1930,9 @@ MUS_SAMPLE_TYPE *g_floats_to_samples(SCM obj, int *size, char *caller, int posit
 	{
 	  if ((*size) == 0) num = gh_vector_length(obj); else num = (*size);
 	  vals = (MUS_SAMPLE_TYPE *)CALLOC(num,sizeof(MUS_SAMPLE_TYPE));
+	  vdata = SCM_VELTS(obj);
 	  for (i=0;i<num;i++) 
-	    vals[i] = MUS_FLOAT_TO_SAMPLE(gh_scm2double(gh_vector_ref(obj,gh_int2scm(i))));
+	    vals[i] = MUS_FLOAT_TO_SAMPLE(gh_scm2double(vdata[i]));
 	}
       else
 	{
@@ -2003,6 +2005,7 @@ static SCM g_samples(SCM samp_0, SCM samps, SCM snd_n, SCM chn_n, SCM pos)
   snd_fd *sf;
   int i,len,beg,edpos;
   SCM new_vect;
+  SCM *vdata;
   ERRB1(samp_0,S_samples);
   ERRB2(samps,S_samples);
   ERRCP(S_samples,snd_n,chn_n,3);
@@ -2014,8 +2017,9 @@ static SCM g_samples(SCM samp_0, SCM samps, SCM snd_n, SCM chn_n, SCM pos)
   sf = init_sample_read_any(beg,cp,READ_FORWARD,edpos);
   if (sf)
     {
+      vdata = SCM_VELTS(new_vect);
       for (i=0;i<len;i++) 
-	gh_vector_set_x(new_vect,gh_int2scm(i),gh_double2scm(next_sample_to_float(sf)));
+	vdata[i] = gh_double2scm(next_sample_to_float(sf));
       free_snd_fd(sf);
     }
   return(new_vect);
@@ -2081,6 +2085,7 @@ static SCM g_change_samples_with_origin(SCM samp_0, SCM samps, SCM origin, SCM v
   MUS_SAMPLE_TYPE *ivals;
   char *str,*fstr;
   int i,len,beg;
+  SCM *vdata;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(samp_0)),samp_0,SCM_ARG1,S_change_samples_with_origin);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(samps)),samps,SCM_ARG2,S_change_samples_with_origin);
   SCM_ASSERT(gh_string_p(origin),origin,SCM_ARG3,S_change_samples_with_origin);
@@ -2093,10 +2098,11 @@ static SCM g_change_samples_with_origin(SCM samp_0, SCM samps, SCM origin, SCM v
   if (gh_vector_p(vect))
     {
       ivals = (MUS_SAMPLE_TYPE *)CALLOC(len,sizeof(MUS_SAMPLE_TYPE));
+      vdata = SCM_VELTS(vect);
 #if SNDLIB_USE_FLOATS
-      for (i=0;i<len;i++) ivals[i] = gh_scm2double(gh_vector_ref(vect,gh_int2scm(i)));
+      for (i=0;i<len;i++) ivals[i] = gh_scm2double(vdata[i]);
 #else
-      for (i=0;i<len;i++) ivals[i] = g_scm2int(gh_vector_ref(vect,gh_int2scm(i)));
+      for (i=0;i<len;i++) ivals[i] = g_scm2int(vdata[i]);
 #endif
       change_samples(beg,len,ivals,cp,LOCK_MIXES,str);
       FREE(ivals);
@@ -2217,6 +2223,7 @@ static SCM g_insert_samples_with_origin(SCM samp, SCM samps, SCM origin, SCM vec
   MUS_SAMPLE_TYPE *ivals;
   char *str,*fstr;
   int i,beg,len;
+  SCM *vdata;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(samp)),samp,SCM_ARG1,S_insert_samples_with_origin);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(samps)),samps,SCM_ARG2,S_insert_samples_with_origin);
   SCM_ASSERT(gh_string_p(origin),origin,SCM_ARG3,S_insert_samples_with_origin);
@@ -2229,10 +2236,11 @@ static SCM g_insert_samples_with_origin(SCM samp, SCM samps, SCM origin, SCM vec
   if (gh_vector_p(vect))
     {
       ivals = (MUS_SAMPLE_TYPE *)CALLOC(len,sizeof(MUS_SAMPLE_TYPE));
+      vdata = SCM_VELTS(vect);
 #if SNDLIB_USE_FLOATS
-      for (i=0;i<len;i++) ivals[i] = gh_scm2double(gh_vector_ref(vect,gh_int2scm(i)));
+      for (i=0;i<len;i++) ivals[i] = gh_scm2double(vdata[i]);
 #else
-      for (i=0;i<len;i++) ivals[i] = g_scm2int(gh_vector_ref(vect,gh_int2scm(i)));
+      for (i=0;i<len;i++) ivals[i] = g_scm2int(vdata[i]);
 #endif
       insert_samples(beg,len,ivals,cp,str);
       FREE(ivals);
@@ -2434,6 +2442,7 @@ static SCM g_transform_samples(SCM snd_n, SCM chn_n)
   sono_info *si;
   int bins,slices,i,j,len;
   SCM new_vect,tmp_vect;
+  SCM *vdata,*tdata;
   ERRCP(S_transform_samples,snd_n,chn_n,1);
   cp = get_cp(snd_n,chn_n,S_transform_samples);
   if (cp->ffting)
@@ -2447,7 +2456,8 @@ static SCM g_transform_samples(SCM snd_n, SCM chn_n)
 	    {
 	      len = fp->current_size;
 	      new_vect = gh_make_vector(gh_int2scm(len),gh_double2scm(0.0));
-	      for (i=0;i<len;i++) gh_vector_set_x(new_vect,gh_int2scm(i),gh_double2scm(fp->data[i]));
+	      vdata = SCM_VELTS(new_vect);
+	      for (i=0;i<len;i++) vdata[i] = gh_double2scm(fp->data[i]);
 	      return(new_vect);
 	    }
 	  else 
@@ -2458,12 +2468,14 @@ static SCM g_transform_samples(SCM snd_n, SCM chn_n)
 		  slices = si->active_slices;
 		  bins = si->target_bins;
 		  new_vect = gh_make_vector(gh_int2scm(slices),gh_double2scm(0.0));
+		  vdata = SCM_VELTS(new_vect);
 		  for (i=0;i<slices;i++)
 		    {
 		      tmp_vect = gh_make_vector(gh_int2scm(bins),gh_double2scm(0.0));
-		      gh_vector_set_x(new_vect,gh_int2scm(i),tmp_vect);
+		      tdata = SCM_VELTS(tmp_vect);
+		      vdata[i] = tmp_vect;
 		      for (j=0;j<bins;j++)
-			gh_vector_set_x(tmp_vect,gh_int2scm(j),gh_double2scm(si->data[i][j]));
+			tdata[j] = gh_double2scm(si->data[i][j]);
 		    }
 		  return(new_vect);
 		}
@@ -2478,6 +2490,7 @@ static Float *load_Floats(SCM scalers, int *result_len)
   int len,i;
   Float *scls;
   SCM lst;
+  SCM *vdata;
   if (gh_vector_p(scalers))
     len = gh_vector_length(scalers);
   else
@@ -2488,8 +2501,9 @@ static Float *load_Floats(SCM scalers, int *result_len)
   scls = (Float *)CALLOC(len,sizeof(Float));
   if (gh_vector_p(scalers))
     {
+      vdata = SCM_VELTS(scalers);
       for (i=0;i<len;i++) 
-	scls[i] = (Float)gh_scm2double(gh_vector_ref(scalers,gh_int2scm(i)));
+	scls[i] = (Float)gh_scm2double(vdata[i]);
     }
   else
     if (gh_list_p(scalers))
@@ -2726,6 +2740,7 @@ static SCM g_fft_1(SCM reals, SCM imag, SCM sign, int use_fft)
   vct *v1 = NULL,*v2 = NULL;
   int ipow,n,n2,i,isign = 1;
   Float *rl,*im;
+  SCM *rvdata,*ivdata;
   SCM_ASSERT(((vct_p(reals)) || (gh_vector_p(reals))),reals,SCM_ARG1,((use_fft) ? S_fft : S_convolve_arrays));
   SCM_ASSERT(((vct_p(imag)) || (gh_vector_p(imag))),imag,SCM_ARG2,((use_fft) ? S_fft : S_convolve_arrays));
   if ((vct_p(reals)) && (vct_p(imag)))
@@ -2752,10 +2767,12 @@ static SCM g_fft_1(SCM reals, SCM imag, SCM sign, int use_fft)
   if (isign == 0) isign = 1;
   if (v1 == NULL)
     {
+      rvdata = SCM_VELTS(reals);
+      ivdata = SCM_VELTS(imag);
       for (i=0;i<n;i++)
 	{
-	  rl[i] = gh_scm2double(gh_vector_ref(reals,gh_int2scm(i)));
-	  im[i] = gh_scm2double(gh_vector_ref(imag,gh_int2scm(i)));
+	  rl[i] = gh_scm2double(rvdata[i]);
+	  im[i] = gh_scm2double(ivdata[i]);
 	}
     }
   else
@@ -2774,10 +2791,12 @@ static SCM g_fft_1(SCM reals, SCM imag, SCM sign, int use_fft)
       mus_fft(rl,im,n2,isign);
       if (v1 == NULL)
 	{
+	  rvdata = SCM_VELTS(reals);
+	  ivdata = SCM_VELTS(imag);
 	  for (i=0;i<n;i++)
 	    {
-	      gh_vector_set_x(reals,gh_int2scm(i),gh_double2scm(rl[i]));
-	      gh_vector_set_x(imag,gh_int2scm(i),gh_double2scm(im[i]));
+	      rvdata[i] = gh_double2scm(rl[i]);
+	      ivdata[i] = gh_double2scm(im[i]);
 	    }
 	}
       else
@@ -2797,8 +2816,9 @@ static SCM g_fft_1(SCM reals, SCM imag, SCM sign, int use_fft)
       mus_convolution(rl,im,n2);
       if (v1 == NULL)
 	{
+	  rvdata = SCM_VELTS(reals);
 	  for (i=0;i<n;i++)
-	    gh_vector_set_x(reals,gh_int2scm(i),gh_double2scm(rl[i]));
+	    rvdata[i] = gh_double2scm(rl[i]);
 	}
       else
 	{
@@ -3100,6 +3120,7 @@ static SCM g_graph(SCM ldata, SCM xlabel, SCM x0, SCM x1, SCM y0, SCM y1, SCM sn
   SCM data = SCM_UNDEFINED,lst;
   char *label = NULL;
   vct *v = NULL;
+  SCM *vdata;
   int i,len,graph,graphs,need_update=0;
   Float ymin,ymax,val,nominal_x0,nominal_x1;
   /* ldata can be a vct object, a vector, or a list of either */
@@ -3186,8 +3207,9 @@ static SCM g_graph(SCM ldata, SCM xlabel, SCM x0, SCM x1, SCM y0, SCM y1, SCM sn
 	    }
 	  else 
 	    {
+	      vdata = SCM_VELTS(data);
 	      for (i=0;i<len;i++) 
-		lg->data[graph][i] = gh_scm2double(gh_vector_ref(data,gh_int2scm(i)));
+		lg->data[graph][i] = gh_scm2double(vdata[i]);
 	    }
 	  if ((!gh_number_p(y0)) || (!gh_number_p(y1)))
 	    {

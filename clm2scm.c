@@ -1085,13 +1085,15 @@ static Float *whatever_to_floats(SCM inp, int size, int *free_invals)
   Float *invals = NULL;
   int i;
   vct *v;
+  SCM *data;
   Float inval;
   if ((SCM_UNBNDP(inp)) || (gh_boolean_p(inp))) return(NULL);
   if (gh_vector_p(inp))
     {
       invals = (Float *)CALLOC(size,sizeof(Float));
       (*free_invals) = 1;
-      for (i=0;i<size;i++) invals[i] = gh_scm2double(gh_vector_ref(inp,gh_int2scm(i)));
+      data = SCM_VELTS(inp);
+      for (i=0;i<size;i++) invals[i] = gh_scm2double(data[i]);
     }
   else
     {
@@ -1134,12 +1136,14 @@ static SCM g_mus_bank(SCM gens, SCM amps, SCM inp, SCM inp2)
   int i,size,free_scls=0,free_invals=0, free_invals2=0;
   Float *scls=NULL,*invals=NULL,*invals2=NULL;
   mus_any **gs;
+  SCM *data;
   size = gh_vector_length(gens);
   invals = whatever_to_floats(inp,size,&free_invals);
   invals2 = whatever_to_floats(inp2,size,&free_invals2);
   scls = whatever_to_floats(amps,size,&free_scls);
   gs = (mus_any **)CALLOC(size,sizeof(mus_any *));
-  for (i=0;i<size;i++) gs[i] = mus_get_any(gh_vector_ref(gens,gh_int2scm(i)));
+  data = SCM_VELTS(gens);
+  for (i=0;i<size;i++) gs[i] = mus_get_any(data[i]);
   outval = mus_bank(gs,scls,invals,invals2,size);
   if ((scls) && (free_scls)) FREE(scls);
   if ((invals) && (free_invals)) FREE(invals);

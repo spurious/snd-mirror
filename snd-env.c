@@ -1375,14 +1375,16 @@ env *get_env(SCM e, SCM base, char *origin) /* list or vector in e */
   Float *buf = NULL;
   int i,len;
   env *newenv=NULL;
+  SCM *vdata;
   SCM lst;
   SCM_ASSERT(((gh_vector_p(e)) || (gh_list_p(e))),e,SCM_ARG1,origin);
   if (gh_vector_p(e))
     {
       len = gh_vector_length(e);
       buf = (Float *)CALLOC(len,sizeof(Float));
+      vdata = SCM_VELTS(e);
       for (i=0;i<len;i++) 
-	buf[i] = gh_scm2double(gh_vector_ref(e,gh_int2scm(i)));
+	buf[i] = gh_scm2double(vdata[i]);
     }
   else
     if (gh_list_p(e))

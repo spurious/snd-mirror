@@ -2124,6 +2124,7 @@ static SCM g_autocorrelate(SCM reals)
   /* assumes length is power of 2 */
   vct *v1 = NULL;
   int n,i;
+  SCM *vdata;
   Float *rl;
   SCM_ASSERT(((vct_p(reals)) || (gh_vector_p(reals))),reals,SCM_ARG1,S_autocorrelate);
   if (vct_p(reals))
@@ -2136,12 +2137,14 @@ static SCM g_autocorrelate(SCM reals)
     {
       n = gh_vector_length(reals);
       rl = (Float *)CALLOC(n,sizeof(Float));
-      for (i=0;i<n;i++) rl[i] = gh_scm2double(gh_vector_ref(reals,gh_int2scm(i)));
+      vdata = SCM_VELTS(reals);
+      for (i=0;i<n;i++) rl[i] = gh_scm2double(vdata[i]);
     }
   autocorrelation(rl,n);
   if (v1 == NULL) 
     {
-      for (i=0;i<n;i++) gh_vector_set_x(reals,gh_int2scm(i),gh_double2scm(rl[i]));
+      vdata = SCM_VELTS(reals);
+      for (i=0;i<n;i++) vdata[i] = gh_double2scm(rl[i]);
       FREE(rl);
     }
   return(reals);

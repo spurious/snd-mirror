@@ -22,8 +22,6 @@
 ;;; test 19: save and restore
 ;;; test 20: transforms
 
-;;; TODO: vct-move with back arg 
-
 (use-modules (ice-9 format) (ice-9 debug))
 
 (if (file-exists? "sndlib.gdbm") (delete-file "sndlib.gdbm"))
@@ -1659,6 +1657,13 @@
 	(if (fneq (vct-ref v2 2) 2.0) (snd-display (format #f ";vector->vct: ~A?" v2)))
 	(vct-move! v2 0 2)
 	(if (fneq (vct-ref v2 0) 2.0) (snd-display (format #f ";vct-move!: ~A?" v2))))
+      (let ((v2 (make-vct 4)))
+	(do ((i 0 (1+ i)))
+	    ((= i 4))
+	  (vct-set! v2 i i))
+	(vct-move! v2 3 2 #t)
+	(if (or (fneq (vct-ref v2 3) 2.0) (fneq (vct-ref v2 2) 1.0))
+	    (snd-display (format #f ";vct-move! back: ~A?" v2))))
       (do ((i 0 (1+ i)))
 	  ((= i 10))
 	(if (fneq (vct-ref v0 i) 1.0) (snd-display (format #f ";fill v0[~D] = ~F?" i (vct-ref v0 i))))

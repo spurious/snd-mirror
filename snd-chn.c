@@ -2993,8 +2993,9 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
   sync_info *si;
   snd_info *sp;
   snd_fd **sfs;
+  SCM *vdata;
   int kp,ip,pos = 0,len,num,reporting = 0,rpt = 0,rpt4;
-  SCM res=SCM_UNDEFINED,args,gh_chans,zero;
+  SCM res=SCM_UNDEFINED,args,gh_chans;
   sp = cp->sound;
   switch (chan_choice)
     {
@@ -3009,6 +3010,7 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
   rpt4 = MAX_BUFFER_SIZE / 4;
   gh_chans = gh_int2scm(si->chans);
   args = gh_make_vector(gh_chans,SCM_BOOL_F);
+  vdata = SCM_VELTS(args);
   /* fixup for different length chans as above, but in this case
    * we need to capture the longest of the channels, padding the
    * others with zero.
@@ -3026,10 +3028,9 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
   if (reporting) start_progress_report(sp,NOT_FROM_ENVED);
   if (si->chans == 1)
     { /* optimize common special case */
-      zero = gh_int2scm(0);
       for (kp=0;kp<num;kp++)
 	{
-	  gh_vector_set_x(args,zero,gh_double2scm((double)next_sample_to_float(sfs[0])));
+	  vdata[0] = gh_double2scm((double)next_sample_to_float(sfs[0]));
 	  res = g_call2(proc,args,gh_chans);
 	  if ((SCM_NFALSEP(res)) || (SCM_SYMBOLP(res))) {pos = kp+beg; break;}
 	  if (reporting) 
@@ -3050,7 +3051,7 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
       for (kp=0;kp<num;kp++)
 	{
 	  for (ip=0;ip<si->chans;ip++)
-	    gh_vector_set_x(args,gh_int2scm(ip),gh_double2scm((double)next_sample_to_float(sfs[ip])));
+	    vdata[ip] = gh_double2scm((double)next_sample_to_float(sfs[ip]));
 	  res = g_call2(proc,args,gh_chans);
 	  if ((SCM_NFALSEP(res)) || (SCM_SYMBOLP(res))) {pos = kp+beg; break;}
 	  if (reporting) 
@@ -3284,6 +3285,7 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
   sync_info *si;
   snd_info *sp;
   snd_fd **sfs;
+  SCM *vdata,*vargs;
   output_state **os_arr;
   int kp,k,n,ip,len,num,val_size,res_size,reporting = 0,rpt = 0,rpt4;
   MUS_SAMPLE_TYPE *vals;
@@ -3315,10 +3317,11 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
     os_arr[ip] = start_output(MAX_BUFFER_SIZE,sp->hdr,num);
   gh_chans = gh_int2scm(si->chans);
   args = gh_make_vector(gh_chans,SCM_BOOL_F);
+  vargs = SCM_VELTS(args);
   for (kp=0;kp<num;kp++)
     {
       for (ip=0;ip<si->chans;ip++)
-	gh_vector_set_x(args,gh_int2scm(ip),gh_double2scm((double)next_sample_to_float(sfs[ip])));
+	vargs[ip] = gh_double2scm((double)next_sample_to_float(sfs[ip]));
       res = g_call2(proc,args,gh_chans);
       /* #f -> no output in any channel, #t -> halt */
       if (SCM_NFALSEP(res)) /* if #f, no output on this pass */
@@ -3330,9 +3333,10 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
 	      if (gh_vector_p(res))
 		{
 		  res_size = gh_vector_length(res);
+		  vdata = SCM_VELTS(res);
 		  for (n=0;n<res_size;n++)
 		    {
-		      resval = gh_vector_ref(res,gh_int2scm(n));
+		      resval = vdata[n];
 		      if (SCM_NFALSEP(resval))
 			{
 			  if (gh_number_p(resval)) /* one number -> replace current sample */
@@ -7452,11 +7456,13 @@ static SCM g_temp_filenames(SCM data)
   #define H_temp_filenames "(" S_temp_filenames " data) -> vector of temp filenames (used by sound-to-temp et al)"
   snd_exf *program_data;
   int i;
+  SCM *vlst;
   SCM lst;
   program_data = (snd_exf *)(gh_scm2ulong(data));
   lst = gh_make_vector(gh_int2scm(program_data->files),SCM_BOOL_F);
+  vlst = SCM_VELTS(lst);
   for (i=0;i<program_data->files;i++)
-    gh_vector_set_x(lst,gh_int2scm(i),gh_str02scm(program_data->old_filenames[i]));
+    vlst[i] = gh_str02scm(program_data->old_filenames[i]);
   return(lst);
 }
 

@@ -272,10 +272,9 @@ global file is read before the user's local file; both can, of course, be
 absent.  To override reading the global init file when Snd is invoked, include the switch -noglob.
 To override the local init file, use -noinit.  To set the global file name in
 a makefile include (for example) -DSND_CONF='"/home/bil/cl/sndconf"' in CFLAGS.
+Here's a more extended example:
 </p>
-<p>As a more extended example, here is my initialization file (or, I wish it
-were this neat; the actual file is
-more full of junk than my garage):</p>
+
 <pre>
 (use-modules (ice-9 popen) (ice-9 debug))
 

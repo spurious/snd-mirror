@@ -1,6 +1,3 @@
-/* TODO: snd-help should call netscape if help-with-html flag is #t
-*/
-
 #include "snd.h"
 #include "sndlib-strings.h"
 #include "vct.h"
@@ -259,10 +256,6 @@ void news_help(snd_state *ss)
 16-Jan:  fm.html, sndscm.html.\n\
 15-Jan:  snd 4.10.\n\
 9-Jan:   rubber-sound in rubber.scm.\n\
-28-Dec:  filter-sound|selection can be passed any CLM filtering gen (Butterworth in examp.scm).\n\
-21-Dec:  env|src-sound|selection can be passed CLM env.\n\
-18-Dec:  enved.scm (suggested by Anders Vinjar).\n\
-         play-hook, player?.\n\
 ",
 NULL);
   FREE(info);
@@ -401,12 +394,11 @@ static char graph_help_string[] =
   c-p: move cursor back one 'line'\n\
   c-q: play current channel starting at cursor\n\
   c-r: repeat last search backwards\n\
-  c-s: search according to an expression\n\
-       'y' is the current sample value,\n\
-       'y(n) is the value of the sample n from the current\n\
-       the find expression syntax is C-like and\n\
-       supports much of C and its math library.\n\
-       c-s y>.1 finds the next sample greater than .1\n\
+  c-s: search until a function returns true\n\
+       The function should take one argument.\n\
+       the current sample value.  For example.\n\
+       to search for a sample greater than .1,\n\
+       (lambda (val) (> val .1))\n\
   c-t: stop playing\n\
   c-u: start count definition.  If followed by a\n\
        float, the actual count is that number multiplied\n\
@@ -422,8 +414,8 @@ static char graph_help_string[] =
        to paste in earlier regions.\n\
   c-z: set sample at cursor to 0.0\n\
   c-_: undo\n\
-  c-[Space]: start region definition\n\
-       - c-[Space] to remove region\n\
+  c-[Space]: start selection definition\n\
+       - c-[Space] to deactivate selection\n\
 \n\
 The extended commands (preceded by c-x) are:\n\
   a: apply envelope to selection\n\
@@ -597,7 +589,7 @@ static char find_help_string[] =
 "Searches in Snd refer to the sound data, and are\n\
 in general patterned after Emacs.  When you type\n\
 c-s or c-r, the minibuffer below the graph is\n\
-activated and you are asked for the search expression.\n\
+activated and you are asked for the search function.\n\
 The expression is a Scheme function of one argument,\n\
 the current sample value.  It should return #t when the\n\
 search is satisified.  For example, (lambda (n) (> n .1)\n\
@@ -763,10 +755,10 @@ read/write (many data formats):\n\
      ----\n\
 read-only (in selected data formats):\n\
      8SVX (IFF), EBICSF, INRS, ESPS,\n\
-     SPPACK, ADC (OGI), AVR, VOC,\n\
+     SPPACK, ADC (OGI), AVR, VOC, PVF,\n\
      Sound Tools, Turtle Beach SMP, SoundFont 2.0,\n\
      Sound Designer I and II, PSION, MAUD, Kurzweil 2000,\n\
-     Tandy DeskMate, Gravis Ultrasound, ASF, Ensoniq Paris,\n\
+     Tandy DeskMate, Gravis Ultrasound, ASF, PAF, CSL,\n\
      Comdisco SPW, Goldwave sample, omf, quicktime\n\
      Sonic Foundry, SBStudio II, Delusion digital,\n\
      Digiplayer ST3, Farandole Composer WaveSample,\n\
@@ -856,6 +848,7 @@ FFT Window type:\n\
   bartlett-window     hamming-window      blackman2-window   blackman3-window\n\
   blackman4-window    exponential-window  riemann-window     kaiser-window\n\
   cauchy-window       poisson-window      gaussian-window    tukey-window\n\
+  dolph-chebychev-window\n\
 \n\
 Transform normalization choice:\n\
   dont-normalize    normalize-by-channel normalize-by-sound  normalize-globally\n\
@@ -1351,7 +1344,8 @@ all refer to the same thing.\n\
   " S_vct_fillB "         (vobj val)\n\
   " S_vct_length "        (vobj)\n\
   " S_vct_mapB "          (obj proc)\n\
-  " S_vct_moveB "         (obj new old)\n\
+  " S_vct_moveB "         (obj new old back)\n\
+  " S_vct_subseq "        (obj start end v)\n\
   " S_vct_multiplyB "     (vobj1 vobj2)\n\
   " S_vct_offsetB "       (vobj val)\n\
   " S_vct_ref "           (vobj pos)\n\
@@ -1460,7 +1454,7 @@ displayed as a separate waveform above\n\
 the main waveform with a red tag at the\n\
 beginning.  You can drag the tag to\n\
 reposition the mix. The underlying sound\n\
-begin mixed can be edited by the same\n\
+being mixed can be edited by the same\n\
 functions used throughout Snd; the mix\n\
 number is used as the first (only)\n\
 member of a list where the functions\n\

@@ -637,12 +637,14 @@ static SCM g_load_colormap(SCM colors)
   int i,len;
   Pixel *xcs;
   snd_color *v;
+  SCM *vdata;
   SCM_ASSERT((gh_vector_p(colors)),colors,SCM_ARG1,S_load_colormap);
   len = gh_vector_length(colors);
   xcs = (Pixel *)CALLOC(len,sizeof(Pixel));
+  vdata = SCM_VELTS(colors);
   for (i=0;i<len;i++)
     {
-      v = get_snd_color(gh_vector_ref(colors,gh_int2scm(i)));
+      v = get_snd_color(vdata[i]);
       xcs[i] = v->color;
     }
   x_load_colormap(xcs);

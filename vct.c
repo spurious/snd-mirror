@@ -612,12 +612,14 @@ static SCM vector2vct(SCM vect)
   #define H_vector2vct "(" S_vector2vct " vect) -> a new vct object with the elements of vector vect"
   int len,i;
   vct *v;
+  SCM *vdata;
   SCM scv;
   SCM_ASSERT(gh_vector_p(vect),vect,SCM_ARG1,S_vector2vct);
   len = gh_vector_length(vect);
   scv = make_vct(len,(Float *)CALLOC(len,sizeof(Float)));
   v = get_vct(scv);
-  for (i=0;i<len;i++) v->data[i] = (Float)gh_scm2double(scm_vector_ref(vect,gh_int2scm(i)));
+  vdata = SCM_VELTS(vect);
+  for (i=0;i<len;i++) v->data[i] = (Float)gh_scm2double(vdata[i]);
   return(scm_return_first(scv,vect));
 }
 
