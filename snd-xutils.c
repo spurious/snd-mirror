@@ -146,12 +146,8 @@ int label_width(char *txt)
 
 int mark_name_width(char *txt)
 {
-  state_context *sgx;
   if (txt)
-    {
-      sgx = ss->sgx;
-      return(XTextWidth(sgx->peaks_fontstruct, txt, strlen(txt)));
-    }
+    return(XTextWidth(ss->sgx->peaks_fontstruct, txt, strlen(txt)));
   return(0);
 }
 

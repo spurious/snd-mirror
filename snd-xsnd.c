@@ -128,7 +128,7 @@ static void name_click_callback(Widget w, XtPointer context, XtPointer info)
 
 /* ---------------- AMP-CONTROL ---------------- */
 
-static int amp_to_scroll(Float minval, Float val, Float maxval)
+int amp_to_scroll(Float minval, Float val, Float maxval)
 {
   if (val <= minval) return(0);
   if (val >= maxval) return((int)(0.9 * SCROLLBAR_MAX));

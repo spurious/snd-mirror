@@ -362,8 +362,6 @@ char *version_info(void)
   return(result);
 }
 
-/* TODO: might be nice to make "news" clickable -> more details about a given change */
-
 void about_snd_help(void)
 {
   char *info = NULL, *features = NULL;
@@ -388,7 +386,7 @@ void about_snd_help(void)
          removed Options:Speed Style menu\n\
 20-Feb:  snd 7.2\n\
 19-Feb:  filter-channel (regularized filter-sound)\n\
-18-Feb:  an enormous number of improvements to the Ruby code and snd-inf.el thanks to Michael Scholz.\n\
+18-Feb:  an enormous number of improvements to the Ruby code and inf-snd.el thanks to Michael Scholz.\n\
            also new: snd-motif.rb.\n\
 16-Feb:  *-control-bounds.\n\
 12-Feb:  gui.scm and many other improvements thanks to Kjetil S. Matheussen.\n\
@@ -397,10 +395,6 @@ void about_snd_help(void)
          play-sine, play-sines, open-play-oputput in play.scm.\n\
          notch-channel and notch-selection in dsp.scm\n\
 6-Feb:   expand-control-jitter.\n\
-29-Jan:  removed X resources epsfile (use eps-file) and overwriteCheck (use ask-before-overwrite)\n\
-26-Jan:  changed filter-control-env to filter-control-envelope, \n\
-           filter-waveform-color to filter-control-waveform-color,\n\
-           also filter-env-in-hz to filter-control-in-hz as a sound-local variable\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

@@ -454,7 +454,7 @@ static gboolean name_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer d
 
 /* -------- AMP CALLBACKS -------- */
 
-static Float amp_to_scroll(Float minval, Float val, Float maxval)
+Float amp_to_scroll(Float minval, Float val, Float maxval)
 {
   if (val <= minval) return(0.0);
   if (val >= maxval) return(0.9);

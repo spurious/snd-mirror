@@ -518,7 +518,6 @@ static regrow *region_row(int n)
     {
       if (region_rows[n] == NULL)
 	{
-	  
 	  r = make_regrow(region_ww, 
 			  (n > 0) ? (region_rows[n - 1]->rw) : NULL, 
 			  region_play_callback, region_focus_callback);

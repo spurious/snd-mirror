@@ -410,6 +410,7 @@ void set_play_button(snd_info *sp, bool val);
 void play_button_pause(bool pausing);
 void syncb(snd_info *sp, int on);
 void set_amp(snd_info *sp, Float val);
+Float amp_to_scroll(Float minval, Float val, Float maxval);
 void set_expand(snd_info *sp, Float val);
 void set_contrast(snd_info *sp, Float val);
 void set_speed(snd_info *sp, Float val);

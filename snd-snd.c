@@ -1,7 +1,7 @@
 #include "snd.h"
 #include "sndlib-strings.h"
 
-/* TODO: draggable (focusable) freq axis in filter control */
+/* SOMEDAY: draggable (focusable) freq axis in filter control */
 
 snd_info *snd_new_file(char *newname, int header_type, int data_format, int srate, int chans, char *new_comment, off_t samples)
 {
@@ -3457,6 +3457,8 @@ static XEN g_set_expand_control_bounds(XEN on, XEN snd_n)
     XEN_WRONG_TYPE_ARG_ERROR(S_setB S_expand_control_bounds, XEN_ARG_1, on, "a list of 2 numbers");
   if (XEN_TO_C_DOUBLE(XEN_CAR(on)) >= XEN_TO_C_DOUBLE(XEN_CADR(on)))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_expand_control_bounds, 1, on, "min >= max");
+  if (XEN_TO_C_DOUBLE(XEN_CAR(on)) <= 0.0)
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_expand_control_bounds, 1, on, "min <= 0.0");
   return(sound_set_global(snd_n, on, SP_EXPAND_BOUNDS, S_setB S_expand_control_bounds));
 }
 
@@ -4603,8 +4605,3 @@ If it returns #t, the apply is aborted."
   XEN_DEFINE_PROCEDURE(S_read_peak_env_info_file,  g_read_peak_env_info_file_w,  3, 0, 0, H_read_peak_env_info_file);
   XEN_DEFINE_PROCEDURE(S_channel_amp_envs,         g_channel_amp_envs_w,         0, 5, 0, H_channel_amp_envs);
 }
-
-/* noise reduction notes:
-   TODO: pop fixer, auto click remover
-   TODO: env editor x axis in Hz and draggable
-*/

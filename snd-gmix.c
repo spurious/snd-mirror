@@ -1,7 +1,5 @@
 #include "snd.h"
 
-/* TODO: amp/speed bounds to gmix */
-
 /* ---------------- mix dialog ---------------- */
 
 static GtkWidget *mix_dialog = NULL;
@@ -16,33 +14,34 @@ static GtkObject *w_speed_adj;
 static bool speed_pressed = false, speed_dragged = false;
 /* can't use value_changed on adjustment and motion event happens even when the mouse merely moves across the slider without dragging */
 
-static Float set_mix_speed_label(snd_info *sp, Float uval)
+static Float speed_to_scroll(Float minval, Float val, Float maxval)
 {
-  Float val;
-  char sfs[6];
-  val = speed_changed(uval,
-		      sfs,
-		      sp->speed_control_style,
-		      sp->speed_control_tones,
-		      6);
-  gtk_label_set_text(GTK_LABEL(w_speed_number), sfs);
-  return(val);
+  if (val <= minval) return(0.0);
+  if (val >= maxval) return(0.9);
+  return(0.9 * ((log(val) - log(minval)) / (log(maxval) - log(minval))));
 }
 
-static void change_mix_speed(int mix_id, Float val)
+static Float scroll_to_speed(Float scroll)
 {
-  chan_info *cp;
-  cp = mix_dialog_mix_channel(mix_id);
-  mix_dialog_set_mix_speed(mix_id, set_mix_speed_label(cp->sound, val), mix_dialog_slider_dragging);
+  return(exp((scroll * (log(speed_control_max(ss)) - log(speed_control_min(ss))) / 0.9) + log(speed_control_min(ss))));
 }
 
-static void reflect_mix_speed(Float uval, snd_info *sp)
+static Float set_speed_label(GtkWidget *label, Float in_speed)
 {
-  Float val;
-  val = set_mix_speed_label(sp, uval);
-  if (val > 0.0)
-    GTK_ADJUSTMENT(w_speed_adj)->value = .45 + .15 * log(val);
-  else GTK_ADJUSTMENT(w_speed_adj)->value = 0.0;
+  Float speed;
+  char speed_number_buffer[6];
+  speed = speed_changed(in_speed,
+			speed_number_buffer,
+			speed_control_style(ss),
+			speed_control_tones(ss),
+			6);
+  gtk_label_set_text(GTK_LABEL(label), speed_number_buffer);
+  return(speed);
+}
+
+static void reflect_mix_speed(Float speed)
+{
+  GTK_ADJUSTMENT(w_speed_adj)->value = speed_to_scroll(speed_control_min(ss), set_speed_label(w_speed_number, speed), speed_control_max(ss));
   gtk_adjustment_value_changed(GTK_ADJUSTMENT(w_speed_adj));
 }
 
@@ -52,9 +51,8 @@ static gboolean speed_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer 
   speed_pressed = false;
   speed_dragged = false;
   if (!(mix_ok(mix_dialog_id))) return(false);
-  change_mix_speed(mix_dialog_id, 1.0);
-  GTK_ADJUSTMENT(w_speed_adj)->value = 0.45;
-  gtk_adjustment_value_changed(GTK_ADJUSTMENT(w_speed_adj));
+  mix_dialog_set_mix_speed(mix_dialog_id, 1.0, mix_dialog_slider_dragging);
+  reflect_mix_speed(1.0);
   return(false);
 }
 
@@ -65,7 +63,9 @@ static gboolean speed_motion_callback(GtkWidget *w, GdkEventMotion *ev, gpointer
   if (!(mix_ok(mix_dialog_id))) return(false);
   if (!mix_dialog_slider_dragging) mix_dialog_start_drag(mix_dialog_id);
   mix_dialog_slider_dragging = true;
-  change_mix_speed(mix_dialog_id, exp((Float)(GTK_ADJUSTMENT(w_speed_adj)->value - 0.45) / .15));
+  mix_dialog_set_mix_speed(mix_dialog_id, 
+			   set_speed_label(w_speed_number, scroll_to_speed(GTK_ADJUSTMENT(w_speed_adj)->value)), 
+			   true);
   return(false);
 }
 
@@ -76,7 +76,9 @@ static gboolean speed_release_callback(GtkWidget *w, GdkEventButton *ev, gpointe
   speed_dragged = false;
   mix_dialog_slider_dragging = false;
   if (!(mix_ok(mix_dialog_id))) return(false);
-  change_mix_speed(mix_dialog_id, exp((Float)(GTK_ADJUSTMENT(w_speed_adj)->value - 0.45) / .15));
+  mix_dialog_set_mix_speed(mix_dialog_id, 
+			   set_speed_label(w_speed_number, scroll_to_speed(GTK_ADJUSTMENT(w_speed_adj)->value)), 
+			   false);
   return(false);
 }
 
@@ -92,23 +94,15 @@ static GtkWidget **w_amps, **w_amp_labels, **w_amp_numbers, **w_amp_events, **w_
 static GtkObject **w_amp_adjs;
 #define CHANS_ALLOCATED 8
 
-static Float amp_to_scroll(Float amp)
+static Float scroll_to_amp(Float val)
 {
-  if (amp <= 0.0)
-    return(0.0);
-  else
-    {
-      if (amp < .173)
-	return(amp * .867);
-      else return(log(amp) * 0.2 + 0.5);
-    }
-}
-
-static Float scroll_to_amp(Float scrollval)
-{
-  if (scrollval < .15)
-    return(scrollval * 1.13);
-  else return(exp((scrollval - 0.5) * 5.0));
+  if (val <= 0.0) 
+    return(amp_control_min(ss));
+  if (val >= 0.9) 
+    return(amp_control_max(ss));
+  if (val > (0.5 * 0.9))
+    return((((val / (0.5 * 0.9)) - 1.0) * (amp_control_max(ss) - 1.0)) + 1.0);
+  else return((val * (1.0 - amp_control_min(ss)) / (0.5 * 0.9)) + amp_control_min(ss));
 }
 
 static bool amp_pressed = false, amp_dragged = false;;
@@ -116,7 +110,7 @@ static bool amp_pressed = false, amp_dragged = false;;
 static void reflect_mix_amp(Float val, int chan)
 {
   char sfs[6];
-  GTK_ADJUSTMENT(w_amp_adjs[chan])->value = amp_to_scroll(val);
+  GTK_ADJUSTMENT(w_amp_adjs[chan])->value = amp_to_scroll(amp_control_min(ss), val, amp_control_max(ss));
   gtk_adjustment_value_changed(GTK_ADJUSTMENT(w_amp_adjs[chan]));
   mus_snprintf(sfs, 6, "%.2f", val);
   gtk_label_set_text(GTK_LABEL(w_amp_numbers[chan]), sfs);
@@ -131,7 +125,7 @@ static gboolean amp_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer da
   chan = get_user_int_data(G_OBJECT(w));
   reflect_mix_amp(1.0, chan);
   mix_dialog_set_mix_amp(mix_dialog_id, chan, 1.0, mix_dialog_slider_dragging);    
-  GTK_ADJUSTMENT(w_amp_adjs[chan])->value = 0.5;
+  GTK_ADJUSTMENT(w_amp_adjs[chan])->value = amp_to_scroll(amp_control_min(ss), 1.0, amp_control_max(ss));
   gtk_adjustment_value_changed(GTK_ADJUSTMENT(w_amp_adjs[chan]));
   return(false);
 }
@@ -1009,7 +1003,7 @@ static void update_mix_dialog(int mix_id)
 	{
 	  cp = mix_dialog_mix_channel(mix_dialog_id);
 	  val = mix_dialog_mix_speed(mix_dialog_id);
-	  reflect_mix_speed(val, cp->sound);
+	  reflect_mix_speed(val);
 	  mus_snprintf(lab, LABEL_BUFFER_SIZE, "%d", mix_dialog_mix_track(mix_dialog_id));
 	  gtk_entry_set_text(GTK_ENTRY(w_track), lab);
 	  mus_snprintf(lab, LABEL_BUFFER_SIZE, "%d", mix_dialog_id);
@@ -1074,29 +1068,10 @@ static GtkWidget *w_track_speed, *w_track_speed_label, *w_track_speed_number, *w
 static GtkObject *w_track_speed_adj;
 static bool track_speed_pressed = false, track_speed_dragged = false;
 
-static Float reflect_track_speed(Float uval)
+static void reflect_track_speed(Float speed)
 {
-  Float val;
-  char sfs[6];
-  chan_info *cp;
-  if (!(track_p(track_dialog_id))) return(1.0);
-  cp = track_channel(track_dialog_id, 0);
-  val = speed_changed(uval,
-		      sfs,
-		      (cp) ? cp->sound->speed_control_style : DEFAULT_SPEED_CONTROL_STYLE,
-		      (cp) ? cp->sound->speed_control_tones : DEFAULT_SPEED_CONTROL_TONES,
-		      6);
-  gtk_label_set_text(GTK_LABEL(w_track_speed_number), sfs);
-  if (val > 0.0)
-    GTK_ADJUSTMENT(w_track_speed_adj)->value = .45 + .15 * log(val);
-  else GTK_ADJUSTMENT(w_track_speed_adj)->value = 0.0;
+  GTK_ADJUSTMENT(w_track_speed_adj)->value = speed_to_scroll(speed_control_min(ss), set_speed_label(w_track_speed_number, speed), speed_control_max(ss));
   gtk_adjustment_value_changed(GTK_ADJUSTMENT(w_track_speed_adj));
-  return(val);
-}
-
-static void change_track_speed(Float val)
-{
-  track_dialog_set_speed(track_dialog_id, reflect_track_speed(val), track_dialog_slider_dragging);
 }
 
 static gboolean track_speed_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
@@ -1105,7 +1080,8 @@ static gboolean track_speed_click_callback(GtkWidget *w, GdkEventButton *ev, gpo
   track_speed_dragged = false;
   track_dialog_slider_dragging = false;
   if (!(track_p(track_dialog_id))) return(false);
-  change_track_speed(1.0);
+  track_dialog_set_speed(track_dialog_id, 1.0, track_dialog_slider_dragging);
+  reflect_track_speed(1.0);
   return(false);
 }
 
@@ -1116,7 +1092,9 @@ static gboolean track_speed_motion_callback(GtkWidget *w, GdkEventMotion *ev, gp
   if (!(track_p(track_dialog_id))) return(false);
   if (!track_dialog_slider_dragging) track_dialog_start_slider_drag(track_dialog_id);
   track_dialog_slider_dragging = true;
-  change_track_speed(exp((GTK_ADJUSTMENT(w_track_speed_adj)->value - .45) / .15));
+  track_dialog_set_speed(track_dialog_id, 
+			 set_speed_label(w_track_speed_number, scroll_to_speed(GTK_ADJUSTMENT(w_track_speed_adj)->value)), 
+			 true);
   return(false);
 }
 
@@ -1127,7 +1105,9 @@ static gboolean track_speed_release_callback(GtkWidget *w, GdkEventButton *ev, g
   if (!track_speed_dragged) return(false);
   track_speed_dragged = false;
   if (!(track_p(track_dialog_id))) return(false);
-  change_track_speed(exp((GTK_ADJUSTMENT(w_track_speed_adj)->value - .45) / .15));
+  track_dialog_set_speed(track_dialog_id, 
+			 set_speed_label(w_track_speed_number, scroll_to_speed(GTK_ADJUSTMENT(w_track_speed_adj)->value)), 
+			 false);
   return(false);
 }
 
@@ -1228,7 +1208,7 @@ static void reflect_track_amp(Float val)
   char sfs[6];
   mus_snprintf(sfs, 6, "%.2f", val);
   gtk_label_set_text(GTK_LABEL(w_track_amp_number), sfs);
-  GTK_ADJUSTMENT(w_track_amp_adj)->value = amp_to_scroll(val);
+  GTK_ADJUSTMENT(w_track_amp_adj)->value = amp_to_scroll(amp_control_min(ss), val, amp_control_max(ss));
   gtk_adjustment_value_changed(GTK_ADJUSTMENT(w_track_amp_adj));
 }
 

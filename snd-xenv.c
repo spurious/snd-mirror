@@ -2,9 +2,6 @@
 
 /* envelope editor and viewer */
 
-/* TODO: env editor x axis in Hz and draggable
- */
-
 static Widget enved_dialog = NULL;
 static Widget applyB, apply2B, cancelB, drawer, showB, saveB, revertB, undoB, redoB;
 static Widget printB, brkptL, graphB, fltB, ampB, srcB, clipB;

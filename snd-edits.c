@@ -2897,10 +2897,10 @@ enum {ED_SIMPLE, ED_ZERO,
       ED_PTREE_XRAMP_RAMP_PTREE_RAMP2, ED_PTREE_XRAMP_RAMP_PTREE_XRAMP_RAMP,
 
       /* xen ops */
-      ED_XEN, ED_XEN_RAMP, ED_XEN_XRAMP, ED_XEN_ZERO, ED_XEN_RAMP2, ED_XEN_RAMP3,
-      ED_RAMP_XEN, ED_RAMP2_XEN, ED_RAMP3_XEN, ED_RAMP_XEN_ZERO, ED_RAMP2_XEN_ZERO, ED_RAMP3_XEN_ZERO,
+      ED_XEN, ED_XEN_RAMP, ED_XEN_XRAMP, ED_XEN_ZERO, ED_XEN_RAMP2, ED_XEN_RAMP3, ED_XEN_RAMP4,
+      ED_RAMP_XEN, ED_RAMP2_XEN, ED_RAMP3_XEN, ED_RAMP4_XEN, ED_RAMP_XEN_ZERO, ED_RAMP2_XEN_ZERO, ED_RAMP3_XEN_ZERO, ED_RAMP4_XEN_ZERO,
       ED_XRAMP_XEN, ED_XRAMP_XEN_ZERO,
-      ED_RAMP_XEN_RAMP, ED_RAMP2_XEN_RAMP, ED_RAMP_XEN_RAMP2,
+      ED_RAMP_XEN_RAMP, ED_RAMP2_XEN_RAMP, ED_RAMP3_XEN_RAMP, ED_RAMP_XEN_RAMP2,
       NUM_OPS
 };
 
@@ -2937,7 +2937,7 @@ static fragment_type_info type_info[NUM_OPS] = {
    "ed_ramp2", next_ramp2, previous_ramp2, NULL, NULL},
   {ED_RAMP3, ED_RAMP4, ED_XRAMP_RAMP3, ED_PTREE_RAMP3, ED_XEN_RAMP3, 3, 0, false, 
    "ed_ramp3", next_ramp3, previous_ramp3, NULL, NULL},
-  {ED_RAMP4, -1, -1, ED_PTREE_RAMP4, -1, 4, 0, false, 
+  {ED_RAMP4, -1, -1, ED_PTREE_RAMP4, ED_XEN_RAMP4, 4, 0, false, 
    "ed_ramp4", next_ramp4, previous_ramp4, NULL, NULL},
   {ED_XRAMP, ED_XRAMP_RAMP, ED_XRAMP2, ED_PTREE_XRAMP, ED_XEN_XRAMP, 0, 1, false, 
    "ed_xramp", next_xramp, previous_xramp, NULL, NULL},
@@ -3521,26 +3521,34 @@ static fragment_type_info type_info[NUM_OPS] = {
    "ed_xen_ramp2", next_xen_rampn, previous_xen_rampn, next_ramp2_to_float, previous_ramp2_to_float},
   {ED_XEN_RAMP3, -1, -1, -1, -1, 3, 0, false, 
    "ed_xen_ramp3", next_xen_rampn, previous_xen_rampn, next_ramp3_to_float, previous_ramp3_to_float},
+  {ED_XEN_RAMP4, -1, -1, -1, -1, 4, 0, false, 
+   "ed_xen_ramp4", next_xen_rampn, previous_xen_rampn, next_ramp4_to_float, previous_ramp4_to_float},
   {ED_RAMP_XEN, ED_RAMP2_XEN, -1, -1, -1, 1, 0, false, 
    "ed_ramp_xen", next_rampn_xen, previous_rampn_xen, next_ramp_to_float, previous_ramp_to_float},
   {ED_RAMP2_XEN, ED_RAMP3_XEN, -1, -1, -1, 2, 0, false, 
    "ed_ramp2_xen", next_rampn_xen, previous_rampn_xen, next_ramp2_to_float, previous_ramp2_to_float},
-  {ED_RAMP3_XEN, -1, -1, -1, -1, 3, 0, false, 
+  {ED_RAMP3_XEN, ED_RAMP4_XEN, -1, -1, -1, 3, 0, false, 
    "ed_ramp3_xen", next_rampn_xen, previous_rampn_xen, next_ramp3_to_float, previous_ramp3_to_float},
+  {ED_RAMP4_XEN, -1, -1, -1, -1, 4, 0, false, 
+   "ed_ramp4_xen", next_rampn_xen, previous_rampn_xen, next_ramp4_to_float, previous_ramp4_to_float},
   {ED_RAMP_XEN_ZERO, ED_RAMP2_XEN_ZERO, -1, -1, -1, 1, 0, true, 
    "ed_ramp_xen_zero", next_rampn_xen, previous_rampn_xen, next_ramp_to_float, previous_ramp_to_float},
   {ED_RAMP2_XEN_ZERO, ED_RAMP3_XEN_ZERO, -1, -1, -1, 2, 0, true, 
    "ed_ramp2_xen_zero", next_rampn_xen, previous_rampn_xen, next_ramp2_to_float, previous_ramp2_to_float},
-  {ED_RAMP3_XEN_ZERO, -1, -1, -1, -1, 3, 0, true, 
+  {ED_RAMP3_XEN_ZERO, ED_RAMP4_XEN_ZERO, -1, -1, -1, 3, 0, true, 
    "ed_ramp3_xen_zero", next_rampn_xen, previous_rampn_xen, next_ramp3_to_float, previous_ramp3_to_float},
+  {ED_RAMP4_XEN_ZERO, -1, -1, -1, -1, 4, 0, true, 
+   "ed_ramp4_xen_zero", next_rampn_xen, previous_rampn_xen, next_ramp4_to_float, previous_ramp4_to_float},
   {ED_XRAMP_XEN, -1, -1, -1, -1, 0, 1, false, 
    "ed_xramp_xen", next_xramp_xen, previous_xramp_xen, NULL, NULL},
   {ED_XRAMP_XEN_ZERO, -1, -1, -1, -1, 0, 1, true, 
    "ed_xramp_xen_zero", next_xramp_xen, previous_xramp_xen, NULL, NULL},
   {ED_RAMP_XEN_RAMP, ED_RAMP2_XEN_RAMP, -1, -1, -1, 2, 0, false, 
    "ed_ramp_xen_ramp", next_rampn_xen_ramp, previous_rampn_xen_ramp, next_ramp1_2_to_float, previous_ramp1_2_to_float},
-  {ED_RAMP2_XEN_RAMP, -1, -1, -1, -1, 3, 0, false, 
+  {ED_RAMP2_XEN_RAMP, ED_RAMP3_XEN_RAMP, -1, -1, -1, 3, 0, false, 
    "ed_ramp2_xen_ramp", next_rampn_xen_ramp, previous_rampn_xen_ramp, next_ramp2_2_to_float, previous_ramp2_2_to_float},
+  {ED_RAMP3_XEN_RAMP, -1, -1, -1, -1, 4, 0, false, 
+   "ed_ramp3_xen_ramp", next_rampn_xen_ramp, previous_rampn_xen_ramp, next_ramp3_2_to_float, previous_ramp3_2_to_float},
   {ED_RAMP_XEN_RAMP2, -1, -1, -1, -1, 3, 0, false, 
    "ed_ramp_xen_ramp2", next_ramp_xen_ramp2, previous_ramp_xen_ramp2, NULL, NULL},
 };
@@ -3905,6 +3913,7 @@ static void choose_accessor(snd_fd *sf)
     case ED_XRAMP_RAMP3:
     case ED_RAMP4_PTREE: case ED_RAMP4_PTREE_ZERO:
     case ED_RAMP4_PTREE2: case ED_RAMP4_PTREE2_ZERO:
+    case ED_RAMP4_XEN: case ED_RAMP4_XEN_ZERO:
     case ED_XRAMP_RAMP3_PTREE: case ED_XRAMP_RAMP3_PTREE_ZERO:
     case ED_XRAMP_RAMP3_PTREE2: case ED_XRAMP_RAMP3_PTREE2_ZERO:
     case ED_XRAMP2_RAMP2_PTREE: case ED_XRAMP2_RAMP2_PTREE_ZERO:
@@ -3944,6 +3953,7 @@ static void choose_accessor(snd_fd *sf)
       break;
     case ED_PTREE_RAMP4:
     case ED_PTREE2_RAMP4:
+    case ED_XEN_RAMP4:
     case ED_PTREE_XRAMP_RAMP3:
     case ED_PTREE2_XRAMP_RAMP3:
     case ED_PTREE_XRAMP2_RAMP2:
@@ -3978,6 +3988,7 @@ static void choose_accessor(snd_fd *sf)
       break;
     case ED_RAMP3_PTREE_RAMP:
     case ED_RAMP3_PTREE2_RAMP:
+    case ED_RAMP3_XEN_RAMP:
     case ED_XRAMP_RAMP2_PTREE_RAMP:
     case ED_XRAMP_RAMP2_PTREE2_RAMP:
     case ED_XRAMP2_RAMP_PTREE_RAMP:
@@ -5082,7 +5093,7 @@ bool extend_with_zeros(chan_info *cp, off_t beg, off_t num, const char *origin, 
   off_t len, new_len;
   ed_fragment *cb;
   ed_list *ed;
-  if (num <= 0) return(true); /* false if can't edit, but this is no-op */
+  if (num <= 0) return(true); /* false if can't edit, but this is a no-op */
   len = cp->samples[edpos];
   if (beg > len) 
     {
@@ -8986,23 +8997,17 @@ append the rest?
 */
 
 /* 
-      PERHAPS: since ramps are basically no-ops, what about ramp-n (i.e expandable array of ramps)?
+      since ramps are basically no-ops, what about ramp-n (i.e expandable array of ramps)?
         would still have n-split cases + associated reader_scaler confusion
         but any ramp4 could circle in rampn
 
-      PERHAPS: more xen cases? (xen2 as well?)
-        same on ptree3[zero] -- doesn't seem useful yet (need real-life stats here)
+      ptree3[zero] -- doesn't seem useful yet (need real-life stats here)
         ptree3 could piggy-back on ptree2 (about 125 ops currently) -- add to ptree base readers,
 	  add ops, everything else (all accessors/ramp setup etc) remains the same.
           so ca 50 lines of real code + 300 lines of case entries to get ptree3
 	xen2 could piggy-back on xen in the same manner
 
-      PERHAPS: reverse as pure-top-level (i.e. any split=>make explicit)
-        but init_read within reversed fragment needs to get beg correctly etc
-
-      SOMEDAY: change over to an array of functions: ramp_start_number, xramp+scale, ptree(zero), etc
+      change over to an array of functions: ramp_start_number, xramp+scale, ptree(zero), etc
         the basic accessor sequence can be (*(arr[1]))(sf, ((*(arr[0]))(sf, sf->data[loc...]))) --
         means changing function type slightly, and ptree_zero case is sticky, and scalers are tricky 
-
-      SOMEDAY: coalesce neighboring ED_ZERO fragments, ED_SIMPLE if scl=scl?
 */

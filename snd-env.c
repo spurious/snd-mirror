@@ -7,7 +7,6 @@
    verbose-cursor, with-background-processes, with-mix-tags,
    with-relative-panes, with-gl, mus-file-data-clipped -- too many!
  */
-/* mix-amp-env track-amp-env */
 
 #define ENVED_DOT_SIZE 10
 

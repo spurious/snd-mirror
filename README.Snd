@@ -430,29 +430,10 @@ sequence is tricky.
 
 OpenGL comes with the SGI, but its drawing area widget seems to be less
 than adequate -- I use Mesa on Linux where X drawing commands can be mixed
-with OpenGL.  On the SGI, the colors are all messed up.
-
-
----- Gtk/OpenGL ----
-
-I'm currently depending on the user to do something reasonable in regard
-to placement of the GtkGLext headers and libraries.  If they aren't in
-automatically searched directories, you'll have to fix up the makefile
-by hand.  For example, I built GtkGLext --prefix=/home/bil/test, so
-I added the two /home/bil/test directories to the makefile:
-
-  GL_LIBS = -lGLU -lGL -L/home/bil/test/lib -lgdkglext-x11-0.x -lgtkglext-x11-0.x
+with OpenGL.  On the SGI when using GL, the colors are all messed up.
 
 Don't run the Motif/GL and the Gtk/GL versions of Snd at the same time.
 This can kill the X server!
-
-Another problem with gtkglext is that its developers have been screwing
-up library version numbers, so if you want to upgrade your version, first
-completely delete every trace of the former version -- check especially
-/usr/local/lib!  If the loader gets confused by leftovers, you'll get
-an error along these lines:
-
-(snd:16515): GLib-GObject-WARNING **: specified class size for type `GdkGLWindow' is smaller than the parent type's `GdkDrawable' class size
 
 
 
@@ -497,7 +478,6 @@ also need to be fixed:
 # GX_FILES = $(NO_GUI_O_FILES)
 GX_HEADERS = $(SND_X_HEADERS)
 GX_FILES = $(X_O_FILES)
-
 
 
 If the openmotif package forgot to include libXm.a, a version is
@@ -597,12 +577,12 @@ You'll need to uninstall Lesstif and install OpenMotif.
 
 
 So to sum up: 
-  either a recent GCC or GSL 0.8 or later
   if Gtk, then Gtk+ 2.0.0 or later
   Motif 2.n but not Lesstif (I no longer have any way to test Motif 1)
   in Linux, ALSA 0.9beta8 or later (or any version of OSS)
   Guile 1.3.4 or later but Snd's Scheme files need 1.5.0 or later
   Ruby 1.6.4 or later
+  if GSL, version 0.8 or later
   
 
 ----------------------------------------------------------------

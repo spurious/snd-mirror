@@ -389,6 +389,7 @@ void sound_unlock_control_panel(snd_info *sp, void *ptr);
 void sound_lock_control_panel(snd_info *sp, void *ptr);
 void snd_info_cleanup(snd_info *sp);
 void set_amp(snd_info *sp, Float val);
+int amp_to_scroll(Float minval, Float val, Float maxval);
 void set_expand(snd_info *sp, Float val);
 void set_contrast(snd_info *sp, Float val);
 void set_speed(snd_info *sp, Float val);

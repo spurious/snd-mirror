@@ -6287,22 +6287,6 @@ FLOAT_INT_OP(region_maxamp);
 
 char *r_mark_name(int n);
 
-/* PERHAPS: simple snd ops
-  bool from 0: selection?
-  int from 0: [selection-position(2)] [selection-frames(2)] [selected-sound -> #f]
-  int from 1/2: track-position track-frames 
-  flt from 1/2: selection-maxamp mix-amp
-  str from 1 or 0/1: mark-name short-file-name file-name
-  str from 0 with need for free: snd-tempnam
-  int/bool from 1: sync selected-channel
-
-     select-channel select-sound
-
-     error returns?
-     set cases?
-*/
-
-
 
 /* ---------------- snd utils ---------------- */
 

@@ -574,15 +574,6 @@ void recorder_set_vu_out_val(int chan, mus_sample_t val) {set_vu_val(rec_out_VU[
 #define INPUT_AMP 0
 #define OUTPUT_AMP 1
 
-static Float amp_to_scroll(Float minval, Float val, Float maxval)
-{
-  if (val <= minval) return(0.0);
-  if (val >= maxval) return(0.9);
-  if (val >= 1.0)
-    return(0.9 * 0.5 * (1.0 + (val - 1.0) / (maxval - 1.0)));
-  return(0.9 * 0.5 * ((val - minval) / (1.0 - minval)));
-}
-
 static Float scroll_to_amp(Float val)
 {
   if (val <= 0.0) 

@@ -7,10 +7,11 @@
 #include <config.h>
 #endif
 
-#define XM_DATE "12-Jan-04"
+#define XM_DATE "8-Mar-04"
 
 /* HISTORY: 
  *
+ *   8-Mar:     XtAppAddActionHook arity bugfix.
  *   12-Jan:    resources for XmFontSelector.
  *   8-Jan:     various changes for the SGI C compiler, thanks to Avi Bercovich.
  *   5-Jan-04:  added (Motif 2.2.3) XmCreateFontSelector, XmCreateColorSelector.
@@ -16624,7 +16625,7 @@ a list maintained in the application context."
   int gc_loc;
   XEN descr;
   XEN_ASSERT_TYPE(XEN_XtAppContext_P(arg1), arg1, 1, "XtAppAddActionHook", "XtAppContext");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg2) && (XEN_REQUIRED_ARGS(arg2) == 6), arg2, 2, "XtAppAddActionHook", "XtActionHookProc");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg2) && (XEN_REQUIRED_ARGS(arg2) == 5), arg2, 2, "XtAppAddActionHook", "XtActionHookProc");
   descr = C_TO_XEN_XM_ActionHook(arg2, (XEN_BOUND_P(arg3)) ? arg3 : XEN_FALSE);
   gc_loc = xm_protect(descr);
   id = XtAppAddActionHook(XEN_TO_C_XtAppContext(arg1), gxm_XtActionHookProc, (XtPointer)descr);
