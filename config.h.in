@@ -26,7 +26,6 @@
 #undef HAVE_OPENDIR
 #undef HAVE_SIGNAL
 #undef HAVE_MEMSET
-#undef HAVE_MEMMOVE
 #undef HAVE_FINITE
 #undef HAVE_ISNAN
 #undef HAVE_STRDUP

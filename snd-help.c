@@ -264,6 +264,8 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+7-May:   added edit-position arg to various play functions.\n\
+         \"vector synthesis\" in examp.scm\n\
 1-May:   Alpha (64-bit) and FreeBSD (Old OSS) fixups.\n\
 25-Apr:  snd.1 (and mandir business in makefile.in)\n\
 24-Apr:  added mouse-enter|leave-text-hook.\n\
@@ -276,10 +278,6 @@ void news_help(snd_state *ss)
 23-Mar:  removed syncing (use sync), and abort? (use c-g?).\n\
          removed support for Guile 1.3.0 (Snd now needs 1.3.4 or later).\n\
          select-region-hook, select-mix-hook.\n\
-22-Mar:  removed snd-noscm.c.\n\
-         sndlib-scm calls that fail throw 'mus-error now, rather than returning -1.\n\
-         files-popup-buffer in examp.scm (thanks to Anders Vinjar).\n\
-         select-sound-hook, select-channel-hook.\n\
 ",
 NULL);
   FREE(info);

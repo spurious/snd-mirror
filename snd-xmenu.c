@@ -250,7 +250,7 @@ static void Edit_Redo_Callback(Widget w, XtPointer cD, XtPointer mD)
 
 static void Edit_Play_Callback(Widget w, XtPointer cD, XtPointer mD) 
 {
-  IF_MENU_HOOK(STR_Edit, STR_Play_selection) play_selection(IN_BACKGROUND);
+  IF_MENU_HOOK(STR_Edit, STR_Play_selection) play_selection(IN_BACKGROUND, AT_CURRENT_EDIT_POSITION);
 }
 
 static void Edit_Header_Callback(Widget w, XtPointer cD, XtPointer mD)
@@ -1222,7 +1222,7 @@ static void Popup_Play_Callback(Widget w, XtPointer cD, XtPointer mD)
       sp = any_selected_sound(ss);
       if (sp)
 	{
-	  play_sound(sp, 0, NO_END_SPECIFIED, IN_BACKGROUND);
+	  play_sound(sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, AT_CURRENT_EDIT_POSITION);
 	  set_play_button(sp, 1);
 	}
     }

@@ -503,9 +503,6 @@ static int paste_region_1(int n, chan_info *cp, int add, int beg, const char *or
 {
   region *r;
   int i, err = MUS_NO_ERROR, id = -1, idtmp;
-#if (!HAVE_MEMMOVE)
-  int j;
-#endif
   snd_info *sp;
   sync_info *si;
   chan_info *ncp;
@@ -542,12 +539,7 @@ static int paste_region_1(int n, chan_info *cp, int add, int beg, const char *or
 	  if (r->use_temp_file == REGION_ARRAY)
 	    {
 	      data = (MUS_SAMPLE_TYPE *)MALLOC(r->frames * sizeof(MUS_SAMPLE_TYPE));
-#if HAVE_MEMMOVE
-	      memmove((void *)data, (void *)(r->data[i]), r->frames * sizeof(MUS_SAMPLE_TYPE));
-#else
-	      for (j = 0; j < r->frames; j++) 
-		data[j] = r->data[i][j];
-#endif
+	      memcpy((void *)data, (void *)(r->data[i]), r->frames * sizeof(MUS_SAMPLE_TYPE));
 	      insert_samples(beg, r->frames, data, ncp, origin);
 	      FREE(data);
 	    }
@@ -1115,7 +1107,7 @@ static SCM g_play_region (SCM n, SCM wait)
   #define H_play_region "(" S_play_region " &optional (n 0) (wait #f)) play region n, if wait is #t, play to end before returning"
   int rg, wt = 0;
   ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, SCM_ARG1, S_play_region, "an integer");
-  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(wait), wait, SCM_ARG2, S_play_region, "an integer");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(wait), wait, SCM_ARG2, S_play_region, "a boolean");
   rg = TO_C_INT_OR_ELSE(n, 0);
   if (TRUE_P(wait)) wt = 1;
   if (region_ok(rg))
@@ -1131,7 +1123,7 @@ if val is #t protects region n from being pushed off the end of the region list"
 
   int rg;
   ASSERT_TYPE(INTEGER_P(n), n, SCM_ARG1, S_protect_region, "an integer");
-  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(protect), protect, SCM_ARG2, S_protect_region, "an integer");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(protect), protect, SCM_ARG2, S_protect_region, "a boolean");
   rg = TO_C_INT(n);
   if (region_ok(rg))
     set_region_protect(rg, TO_C_BOOLEAN_OR_T(protect)); 

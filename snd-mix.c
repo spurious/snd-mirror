@@ -659,11 +659,11 @@ static mix_fd *init_mix_read_1(mix_info *md, int old, int type)
   if (type == MIX_INPUT_SOUND)
     {
       if (mf->calc == C_STRAIGHT)
-	mf->sfs[mf->base] = init_sample_read_any(0, add_sp->chans[mf->base], READ_FORWARD, cs->mix_edit_ctr[mf->base]);
+	mf->sfs[mf->base] = init_sample_read_any(0, add_sp->chans[mf->base], READ_FORWARD, cs->mix_edit_ctr[mf->base]); /* TODO: pos? */
       else
 	{
 	  for (i = 0; i < chans; i++)
-	    mf->sfs[i] = init_sample_read_any(0, add_sp->chans[i], READ_FORWARD, cs->mix_edit_ctr[i]);
+	    mf->sfs[i] = init_sample_read_any(0, add_sp->chans[i], READ_FORWARD, cs->mix_edit_ctr[i]); /* TODO: pos? */
 	}
     }
   if (mf->calc == C_SPEED)
@@ -3463,7 +3463,7 @@ static SCM g_set_mix_locked(SCM n, SCM val)
   mix_info *md;
   int on;
   ASSERT_TYPE(INTEGER_P(n), n, SCM_ARG1, "set-" S_mix_locked, "an integer");
-  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(val), val, SCM_ARG2, "set-" S_mix_locked, "an integer");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARG2, "set-" S_mix_locked, "a boolean");
   md = md_from_id(TO_C_INT(n));
   if (md)
     {
@@ -4089,7 +4089,7 @@ mixes data (a vct object) into snd's channel chn starting at beg; returns the ne
   ASSERT_TYPE(VCT_P(obj), obj, SCM_ARG1, S_mix_vct, "a vct");
   SND_ASSERT_CHAN(S_mix_vct, snd, chn, 3);
   ASSERT_TYPE(INTEGER_IF_BOUND_P(beg), beg, SCM_ARG2, S_mix_vct, "an integer");
-  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(with_consoles), with_consoles, SCM_ARG5, S_mix_vct, "an integer");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(with_consoles), with_consoles, SCM_ARG5, S_mix_vct, "a boolean");
   v = TO_VCT(obj);
   if (v)
     {

@@ -3,10 +3,10 @@
 <title>Snd Customization and Extension</title>
 <style type="text/css">
 <!-- 
-	EM.red {color:red; font-style:normal}
-        EM.error {color:chocolate; font-style:normal}
-        EM.narg {color:chocolate; font-style:italic}
-        EM.targ {color:darkgreen; font-style:italic}
+	EM.red {color:red; font-style: normal}
+        EM.error {color:chocolate; font-style: normal}
+        EM.narg {color:chocolate; font-style: normal}
+        EM.targ {color:darkgreen; font-style: normal}
         EM.typing {color:maroon; font-style: normal}
         EM.listener {color:darkblue; font-style: normal}
 	EM.def {font-weight: bold; font-style: normal}
@@ -21,6 +21,46 @@
 </style>
 </head>
 <!-- TODO: change remaining <i> and <b> into <em class=mumble> -->
+
+
+<!-- -------------------------------------------------------------------------------- -->
+<!-- an experiment: click button to post an example -- I'd like the buttons on the right to take less space somehow -->
+<!--    also, need some automatic way to update the location references etc -->
+<!-- func args: title example-code definition-loc related-stuff comments... -->
+<SCRIPT>
+var win = null;
+function example()
+{
+  if ((win == null) || (win.closed))
+    {
+      win = window.open("","example","width=500,height=300,resizable");
+      win.document.open();
+     }
+  win.document.write('<body bgcolor=white><p><b>', arguments[0], '</b></p>');
+  if (arguments.length > 1)
+    {
+      win.document.write('<pre>', arguments[1], '</pre>');
+      if (arguments.length > 2)
+        {
+          win.document.write('<p>defined: ', arguments[2], '</p>');
+          if (arguments.length > 3)
+            {
+              win.document.write('<p>see also: ', arguments[3], '</p>');
+              if (arguments.length > 4)
+                {
+                  win.document.write('<hr>');
+                  for (var i = 4; i < arguments.length; i++)
+                    win.document.write('<p>', arguments[i], '</p>');
+		}
+            }
+	}
+    }
+  win.document.write('</body>');
+  win.document.close();
+  return true;
+}
+</SCRIPT>
+<!-- -------------------------------------------------------------------------------- -->
 
 <body bgcolor=white>
 
@@ -300,47 +340,6 @@ This is still kludgey, but the following shows how to use it:
 
 <p>The color object handlers are:</p>
 
-<!-- -------------------------------------------------------------------------------- -->
-<!-- an experiment: click button to post an example -- I'd like the buttons on the right to take less space somehow -->
-<!--    also, need some automatic way to update the location references etc -->
-<!-- func args: title example-code definition-loc related-stuff comments... -->
-<SCRIPT>
-var win = null;
-function example()
-{
-  if ((win == null) || (win.closed))
-    {
-      win = window.open("","example","width=500,height=300,resizable");
-      win.document.open();
-     }
-  win.document.write('<body bgcolor=white><p><b>', arguments[0], '</b></p>');
-  if (arguments.length > 1)
-    {
-      win.document.write('<pre>', arguments[1], '</pre>');
-      if (arguments.length > 2)
-        {
-          win.document.write('<p>defined: ', arguments[2], '</p>');
-          if (arguments.length > 3)
-            {
-              win.document.write('<p>see also: ', arguments[3], '</p>');
-              if (arguments.length > 4)
-                {
-                  win.document.write('<hr>');
-                  for (var i = 4; i < arguments.length; i++)
-                    win.document.write('<p>', arguments[i], '</p>');
-		}
-            }
-	}
-    }
-  win.document.write('</body>');
-  win.document.close();
-  return true;
-}
-</SCRIPT>
-
-
-<!-- -------------------------------------------------------------------------------- -->
-
 <form>
 <table border=0 cellspacing=0 cellpadding=0 width="100%">
 <tr>
@@ -371,10 +370,18 @@ function example()
 <td>return a color object using the red/green/blue values.  If the object is called
 as a function, it returns the list of rgb values.
 If, for example, blue is a defined color, <code>(blue)</code> is the same as <code>(color->list blue)</code>.
+Two colors are equal (i.e. equal? returns #t) if their rgb values are the same.
 </td>
 <td valign=top><input type="button" value="->" onClick="example(
   'make-color', 
-  '(define red (make-color 1 0 0))\n(define beige (make-color 0.96 0.96 0.86))',
+  '(define red (make-color 1 0 0))\
+(define beige (make-color 0.96 0.96 0.86))\
+(red)\
+  => (1.0 0.0 0.0)\
+(eq? red (make-color 1 0 0))\
+  => #f\
+(equal? red (make-color 1 0 0))\
+  => #t',
   '<code>snd-x|gscm.c g_make_snd_color</code>',
   'rbg.scm',
   'The arguments are floats between 0.0 and 1.0 (as in Postscript).'
@@ -3526,9 +3533,9 @@ these are indicated as <em class=targ>reg</em> below.
 <!-- -->
 <!-- play-selection -->
 <!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="sndplayselection">play-selection</a></em> (<i>wait</i>)</code></span></td>
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="sndplayselection">play-selection</a></em> (<i>wait pos</i>)</code></span></td>
 <!-- --><td>
-<!-- -->play the currently selected data 
+<!-- -->play the currently selected data.  If <i>pos</i> is given, it sets the edit position to be played.
 <!-- --></td></tr>
 <!-- -->
 <!-- reverse-selection -->
@@ -3681,10 +3688,11 @@ sets its value to val.
 <!-- -->
 <!-- add-player -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="addplayer">add-player</a></em> (player <i>start end</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="addplayer">add-player</a></em> (player <i>start end pos</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td width=150></td><td>
-<!-- -->add <i>player</i> to the play-list (see <a href="#makeplayer">make-player</a>). [<em class=error>no-such-player</em>]
+<!-- -->add <i>player</i> to the play-list (see <a href="#makeplayer">make-player</a>). 
+<!-- -->If <i>pos</i> is given, play at that edit position. [<em class=error>no-such-player</em>]
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4719,28 +4727,34 @@ sets its value to val.
 <!-- -->
 <!-- play -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndplay">play</a></em> (<i>samp snd chn sync end</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="sndplay">play</a></em> (<i>samp snd chn sync end pos</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->play <i>snd</i>'s channel <i>chn</i> starting from sample <i>samp</i>. 
-<!-- -->If 'sync' is #t, play all sounds syncd to snd.  If 'end' is not given, 
+<!-- -->If 'sync' is #t, play all sounds syncd to snd.  If 'end' is not given or #f, 
 <!-- -->play until end of sound. If 'end' is given (as a sample number), the 
 <!-- -->actual end point may be off by a few samples; Snd only checks on 
 <!-- -->dac-buffer boundaries (normally around 256 samples).  <i>samp</i> can
 <!-- -->also be a filename (a string).  In this case, <i>snd</i> can be the start 
 <!-- -->sample (default 0), and <i>chn</i> can be the end sample (default end-of-file).
+<!-- -->If <i>pos</i> is given, play at that edit position.
 <!-- -->[<em class=error>no-such-file, no-such-sound</em>]
+<!-- --><br><br>
+<!-- -->The <i>pos</i> argument makes it easier to try "A:B" comparisons.
+<!-- --><code>(play 0 #f #f #f #f (1- (edit-position)))</code> plays version before the latest edit.
+<!-- --><code>(define (play-then-and-now) (play-and-wait 0 #f #f #f #f (1- (edit-position))) (play))</code>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
 <!-- play-and-wait -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndplayandwait">play-and-wait</a></em> (<i>samp snd chn sync end</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="sndplayandwait">play-and-wait</a></em> (<i>samp snd chn sync end pos</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->play <i>snd</i>'s channel <i>chn</i> starting from sample <i>samp</i> and wait 
 <!-- -->for it to finish.
+<!-- -->If <i>pos</i> is given, play at that edit position.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->

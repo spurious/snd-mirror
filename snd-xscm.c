@@ -143,6 +143,9 @@ static SCM g_make_snd_color(SCM r, SCM g, SCM b)
   /* someday accept a list as r */
   ASSERT_TYPE(NUMBER_P(g), g, SCM_ARG2, S_make_color, "a number");
   ASSERT_TYPE(NUMBER_P(b), b, SCM_ARG3, S_make_color, "a number");
+
+  /* TODO: check rgb for 0.0 .. 1.0 and (perhaps) send NO_SUCH_COLOR or range-error if outside */
+
   new_color = (snd_color *)CALLOC(1, sizeof(snd_color));
   dpy = XtDisplay(MAIN_SHELL(state));
   cmap = DefaultColormap(dpy, DefaultScreen(dpy));
@@ -151,6 +154,7 @@ static SCM g_make_snd_color(SCM r, SCM g, SCM b)
   tmp_color.green = (unsigned short)(65535 * TO_C_DOUBLE(g));
   tmp_color.blue = (unsigned short)(65535 * TO_C_DOUBLE(b));
   if ((XAllocColor(dpy, cmap, &tmp_color)) == 0)
+    /* TODO: should this throw NO_SUCH_COLOR? */
     new_color->color = BlackPixel(dpy, DefaultScreen(dpy)); 
   else new_color->color = tmp_color.pixel;
   SND_RETURN_NEWSMOB(snd_color_tag, new_color);

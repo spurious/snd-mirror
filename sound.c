@@ -328,7 +328,8 @@ int mus_sound_forget(const char *name)
 
 static sound_file *check_write_date(const char *name, sound_file *sf)
 {
-  int chan, data_size;
+  int chan;
+  off_t data_size;
   time_t date;
   if (sf)
     {

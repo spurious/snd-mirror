@@ -776,6 +776,7 @@ static int print_mus_scm(SCM obj, SCM port, scm_print_state *pstate)
 static SCM equalp_mus_scm(SCM obj1, SCM obj2) 
 {
   return(TO_SCM_BOOLEAN(mus_equalp(TO_CLM(obj1), TO_CLM(obj2))));
+
 }
 
 #if HAVE_APPLICABLE_SMOB
@@ -966,16 +967,9 @@ static SCM g_set_data(SCM gen, SCM val)
 static Float *copy_vct_data(vct *v)
 {
   Float *line = NULL;
-#if (!HAVE_MEMMOVE)
-  int i;
-#endif
   line = (Float *)MALLOC(v->length * sizeof(Float));
   if (line) 
-#if HAVE_MEMMOVE
-    memmove((void *)line, (void *)(v->data), (v->length * sizeof(Float)));
-#else
-    for (i = 0; i < v->length; i++) line[i] = v->data[i];
-#endif
+    memcpy((void *)line, (void *)(v->data), (v->length * sizeof(Float)));
   return(line);
 }
 

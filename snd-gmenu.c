@@ -245,7 +245,7 @@ static void Edit_Redo_Callback(GtkWidget *w, gpointer cD)
 
 static void Edit_Play_Callback(GtkWidget *w, gpointer cD) 
 {
-  IF_MENU_HOOK(STR_Edit, STR_Play_selection) play_selection(IN_BACKGROUND);
+  IF_MENU_HOOK(STR_Edit, STR_Play_selection) play_selection(IN_BACKGROUND, AT_CURRENT_EDIT_POSITION);
 }
 
 static void Edit_Header_Callback(GtkWidget *w, gpointer cD)
@@ -1384,7 +1384,7 @@ static void Popup_Play_Callback(GtkWidget *w, gpointer cD)
       sp = any_selected_sound(ss);
       if (sp)
 	{
-	  play_sound(sp, 0, NO_END_SPECIFIED, IN_BACKGROUND);
+	  play_sound(sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, AT_CURRENT_EDIT_POSITION);
 	  set_play_button(sp, 1);
 	}
     }

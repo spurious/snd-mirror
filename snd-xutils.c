@@ -188,14 +188,14 @@ int number_height(axis_context *ax)
 {
   XFontStruct *numbers_font;
   numbers_font = AXIS_NUMBERS_FONT(ax->ss);
-  return(numbers_font->ascent+numbers_font->descent);
+  return(numbers_font->ascent + numbers_font->descent);
 }
 
 int label_height(axis_context *ax)
 {
   XFontStruct *label_font;
   label_font = AXIS_LABEL_FONT(ax->ss);
-  return(label_font->ascent+label_font->descent);
+  return(label_font->ascent + label_font->descent);
 }
 
 void clear_window(axis_context *ax)

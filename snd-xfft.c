@@ -190,12 +190,7 @@ static void get_fft_window_data(snd_state *ss)
       current_graph_ffti[i] = 0.0;
     }
 #endif
-#if HAVE_MEMMOVE
-  memmove((void *)current_graph_fftr, (void *)current_graph_data, GRAPH_SIZE * sizeof(Float));
-#else
-  for (i = 0; i < GRAPH_SIZE; i++)
-    current_graph_fftr[i] = current_graph_data[i];
-#endif
+  memcpy((void *)current_graph_fftr, (void *)current_graph_data, GRAPH_SIZE * sizeof(Float));
   mus_spectrum(current_graph_fftr, current_graph_ffti, NULL, GRAPH_SIZE * 2, 0);
   for (i = 0; i < GRAPH_SIZE; i++)
     current_graph_fftr[i] = (current_graph_fftr[i] + 80.0)/80.0;

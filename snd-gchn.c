@@ -292,7 +292,7 @@ static void Channel_Expose_Callback(GtkWidget *w, GdkEventExpose *ev, gpointer d
   snd_state *ss;
 
   cp = (chan_info *)data;
-  if (!(cp->active)) return;
+  if ((cp == NULL) || (cp->active != 1) || (cp->sound == NULL)) return;
   ss = cp->state;
 
   if ((cp->mixes) && (mix_dragging())) return;
@@ -313,8 +313,7 @@ static void Channel_Resize_Callback(GtkWidget *w, GdkEventConfigure *ev, gpointe
   snd_info *sp;
   chan_info *cp;
   cp = (chan_info *)data;
-  /* fprintf(stderr, "resize chan "); */
-
+  if ((cp == NULL) || (cp->active != 1) || (cp->sound == NULL)) return;
   sp = cp->sound;
   if (sp == NULL) return;
   if (sp->combining != CHANNELS_SEPARATE)

@@ -77,13 +77,12 @@
 ;;; local hook
 ;;; pointer focus within Snd
 ;;; View: Files dialog chooses which sound is displayed
-
+;;; "vector synthesis"
 
 ;;; TODO: robust pitch tracker
 ;;; TODO: adaptive notch filter
 ;;; TODO: ins: singer piano flute fade
 ;;; TODO: data-file rw case for pvoc.scm
-
 
 (use-modules (ice-9 debug))
 (use-modules (ice-9 format))
@@ -2254,6 +2253,8 @@
 ;;; the time domain display (to give our graph all the window -- I may make this available
 ;;; in a simpler form), then (testunif 1.0 0.1 0.0) or whatever.
 
+;;; TODO: make it straight-forward to define/use an unattached lisp graph
+
 (define compute-uniform-circular-string
   (lambda (size x0 x1 x2 mass xspring damp)
     (define circle-vct-ref 
@@ -3115,3 +3116,112 @@
 (add-hook! mouse-enter-label-hook files-popup-buffer)
 
 ;;; TODO: add C-x b support here using select-sound-hook
+
+
+;;; -------- "vector synthesis"
+;;;
+;;; this idea (and the weird name) from linux-audio-development mailing list discussion
+;;;   apparently some commercial synths (or software?) provide this
+
+(define (vector-synthesis driver files read-even-when-not-playing)
+
+  "(vector-synthesis driver files read-even-when-not-playing) uses 'driver', a \
+function of two args (the number of files, and the number of samples between calls) to decide which file to play.  If \
+'read-even-when-not-playing' is #t (default is #f), the input files are constantly \
+read, even if not playing.  'files' is a list of files to be played."
+  
+  (let ((files-len (length files)))
+    (if (> files-len 0)
+	(let* ((bufsize 256)
+	       (srate (mus-sound-srate (car files)))
+	       (chans (apply max (map mus-sound-chans files)))
+	       (data (make-sound-data chans bufsize))
+	       (readers (map make-file->frame files))
+	       (locs (make-vector files-len 0))
+	       (frames (make-vector files-len 0))
+	       (current-file 0)
+	       (reading #t)
+	       (out-port (mus-audio-open-output mus-audio-default srate chans mus-lshort (* bufsize 2))))
+	  (if (< out-port 0)
+	      (snd-error "can't open audio port! ~A" out-port)
+	      (begin
+		(do ((i 0 (1+ i)))
+		    ((= i files-len))
+		  (vector-set! frames i (mus-sound-frames (list-ref files i))))
+		(catch #t
+		       (lambda ()
+			 (while reading
+				(let ((next-file (driver files-len bufsize)))
+				  (if (not (= next-file current-file))
+				      (let* ((ramp-down 1.0)
+					     (ramp (/ 1.0 bufsize))
+					     (current (list-ref readers current-file))
+					     (current-loc (vector-ref locs current-file))
+					     (next (list-ref readers next-file))
+					     (next-loc (vector-ref locs next-file))
+					     (downs (mus-channels current))
+					     (ups (mus-channels next))
+					     (up (make-frame ups))
+					     (down (make-frame downs)))
+					(do ((i 0 (1+ i)))
+					    ((= i bufsize))
+					  (file->frame next (+ next-loc i) up)
+					  (file->frame current (+ current-loc i) down)
+					  (do ((j 0 (1+ j)))
+					      ((= j chans))
+					    (sound-data-set! data j i 
+							     (+ (if (< j downs) 
+								    (* ramp-down (frame-ref down j))
+								    0.0)
+								(if (< j ups) 
+								    (* (- 1.0 ramp-down) (frame-ref up j))
+								    0.0))))
+					  (set! ramp-down (- ramp-down ramp)))
+					(if read-even-when-not-playing
+					    (do ((i 0 (1+ i)))
+						((= i files-len))
+					      (vector-set! locs i (+ (vector-ref locs i) bufsize)))
+					    (begin
+					      (vector-set! locs current-file (+ (vector-ref locs current-file) bufsize))
+					      (vector-set! locs next-file (+ (vector-ref locs next-file) bufsize))))
+					(set! current-file next-file))
+				      (let* ((current (list-ref readers current-file))
+					     (current-loc (vector-ref locs current-file))
+					     (ons (mus-channels current))
+					     (on (make-frame ons)))
+					(do ((i 0 (1+ i)))
+					    ((= i bufsize))
+					  (file->frame current (+ current-loc i) on)
+					  (do ((k 0 (1+ k)))
+					      ((= k chans))
+					    (sound-data-set! data k i (if (< k ons) (frame-ref on k) 0.0))))
+					(if read-even-when-not-playing
+					    (do ((i 0 (1+ i)))
+						((= i files-len))
+					      (vector-set! locs i (+ (vector-ref locs i) bufsize)))
+					    (vector-set! locs current-file (+ (vector-ref locs current-file) bufsize)))))
+				  (mus-audio-write out-port data bufsize)
+				  (set! reading (and (not (c-g?))
+						     (letrec ((any-data-left 
+							       (lambda (f)
+								 (if (= f files-len)
+								     #f
+								     (or (< (vector-ref locs f) (vector-ref frames f))
+									 (any-data-left (1+ f)))))))
+						       (any-data-left 0)))))))
+		       (lambda args (begin (snd-print (format #f "error ~A" args)) (car args))))
+		(mus-audio-close out-port)))))))
+
+#!
+(vector-synthesis (let ((ctr 0) (file 0)) 
+		    (lambda (files bufsize)
+		      (if (> ctr 4)
+			  (begin
+			    (set! file (1+ file))
+			    (set! ctr 0)
+			    (if (>= file files)
+				(set! file 0)))
+			  (set! ctr (1+ ctr)))
+		      file))
+		  (list "oboe.snd" "pistol.snd") #t)
+!#

@@ -994,7 +994,7 @@ void view_curfiles_play(snd_state *ss, int pos, int play)
       if (sp->playing) stop_playing_sound(sp);
       if (play)
 	{
-	  play_sound(sp, 0, NO_END_SPECIFIED, IN_BACKGROUND);
+	  play_sound(sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, AT_CURRENT_EDIT_POSITION);
 	  set_play_button(sp, 1);
 	}
       else set_play_button(sp, 0);
@@ -1053,7 +1053,7 @@ int view_prevfiles_play(snd_state *ss, int pos, int play)
 	{
 	  play_sp->shortname = prevnames[pos];
 	  play_sp->fullname = NULL;
-	  play_sound(play_sp, 0, NO_END_SPECIFIED, IN_BACKGROUND);
+	  play_sound(play_sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, AT_CURRENT_EDIT_POSITION);
 	}
       else return(1); /* can't find or setup file */
     }

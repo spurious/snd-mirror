@@ -1722,7 +1722,7 @@ static SCM g_read_only(SCM snd_n)
 
 static SCM g_set_read_only(SCM on, SCM snd_n) 
 {
-  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_read_only, "an integer");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_read_only, "a boolean");
   return(sp_iwrite(snd_n, on, SP_READ_ONLY, "set-" S_read_only));
 }
 
@@ -1736,7 +1736,7 @@ static SCM g_contrasting(SCM snd_n)
 
 static SCM g_set_contrasting(SCM on, SCM snd_n) 
 {
-  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_contrasting, "an integer");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_contrasting, "a boolean");
   return(sp_iwrite(snd_n, on, SP_CONTRASTING, "set-" S_contrasting));
 }
 
@@ -1750,7 +1750,7 @@ static SCM g_expanding(SCM snd_n)
 
 static SCM g_set_expanding(SCM on, SCM snd_n) 
 {
-  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_expanding, "an integer");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_expanding, "a boolean");
   return(sp_iwrite(snd_n, on, SP_EXPANDING, "set-" S_expanding));
 }
 
@@ -1764,7 +1764,7 @@ static SCM g_reverbing(SCM snd_n)
 
 static SCM g_set_reverbing(SCM on, SCM snd_n) 
 {
-  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_reverbing, "an integer");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_reverbing, "a boolean");
   return(sp_iwrite(snd_n, on, SP_REVERBING, "set-" S_reverbing));
 }
 
@@ -1778,7 +1778,7 @@ static SCM g_filtering(SCM snd_n)
 
 static SCM g_set_filtering(SCM on, SCM snd_n) 
 {
-  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_filtering, "an integer");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_filtering, "a boolean");
   return(sp_iwrite(snd_n, on, SP_FILTERING, "set-" S_filtering));
 }
 
@@ -1792,7 +1792,7 @@ static SCM g_filter_dBing(SCM snd_n)
 
 static SCM g_set_filter_dBing(SCM on, SCM snd_n) 
 {
-  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_filter_dBing, "an integer");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_filter_dBing, "a boolean");
   return(sp_iwrite(snd_n, on, SP_FILTER_DBING, "set-" S_filter_dBing));
 }
 
@@ -1820,7 +1820,7 @@ static SCM g_cursor_follows_play(SCM snd_n)
 
 static SCM g_set_cursor_follows_play(SCM on, SCM snd_n) 
 {
-  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_cursor_follows_play, "an integer");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_cursor_follows_play, "a boolean");
   return(sp_iwrite(snd_n, on, SP_CURSOR_FOLLOWS_PLAY, "set-" S_cursor_follows_play));
 }
 
@@ -1834,7 +1834,7 @@ static SCM g_show_controls(SCM snd_n)
 
 static SCM g_set_show_controls(SCM on, SCM snd_n)
 {
-  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_show_controls, "an integer");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_show_controls, "a boolean");
   return(sp_iwrite(snd_n, on, SP_SHOW_CONTROLS, "set-" S_show_controls));
 }
 

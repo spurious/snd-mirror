@@ -28,20 +28,13 @@ env *free_env(env *e)
 env *copy_env(env *e)
 {
   env *ne;
-#if (!HAVE_MEMMOVE)
-  int i;
-#endif
   if (e)
     {
       ne = (env *)CALLOC(1, sizeof(env));
       ne->pts = e->pts;
       ne->data_size = e->pts * 2;
       ne->data = (Float *)MALLOC(e->pts * 2 * sizeof(Float));
-#if HAVE_MEMMOVE
-      memmove((void *)(ne->data), (void *)(e->data), e->pts * 2 * sizeof(Float));
-#else
-      for (i = 0; i < e->pts * 2; i++) ne->data[i] = e->data[i];
-#endif
+      memcpy((void *)(ne->data), (void *)(e->data), e->pts * 2 * sizeof(Float));
       ne->base = e->base;
       return(ne);
     }

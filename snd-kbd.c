@@ -1183,7 +1183,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      redisplay = cursor_move(cp, -count * cp->line_size); 
 	      break;
 	    case snd_K_Q: case snd_K_q: 
-	      play_channel(cp, cp->cursor, NO_END_SPECIFIED, TRUE); 
+	      play_channel(cp, cp->cursor, NO_END_SPECIFIED, TRUE, AT_CURRENT_EDIT_POSITION); 
 	      set_play_button(sp, 1); 
 	      redisplay = NO_ACTION; 
 	      break;
@@ -1760,8 +1760,8 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      break;
 	    case snd_K_P: case snd_K_p: 
 	      if (ext_count == NO_CX_ARG_SPECIFIED)
-		play_selection(IN_BACKGROUND);
-	      else play_region(ss, ext_count, IN_BACKGROUND);  /* was false?? */
+		play_selection(IN_BACKGROUND, AT_CURRENT_EDIT_POSITION);
+	      else play_region(ss, ext_count, IN_BACKGROUND);
 	      redisplay = NO_ACTION;
 	      break;
 	    case snd_K_Q: case snd_K_q: 

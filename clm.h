@@ -2,10 +2,11 @@
 #define MUS_H
 
 #define MUS_VERSION 1
-#define MUS_REVISION 45
-#define MUS_DATE "16-Apr-01"
+#define MUS_REVISION 46
+#define MUS_DATE "7-May-01"
 
 /* 
+ * 7-May:      filled in some leftover equal_p methods.
  * 1-Apr:      mus_make_file2sample_with_comment and mus_length for file->sample/sample->file.
  *             mus_file_buffer_size.
  * 26-Mar:     extended_type field added to mus_any_class for more robust type checking.

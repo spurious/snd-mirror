@@ -216,7 +216,7 @@ static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
 #define LIST_P(Arg)               (scm_ilength(Arg) >= 0)
 #define LIST_P_WITH_LENGTH(Arg, Len) ((Len = ((int)scm_ilength(Arg))) >= 0)
 #define LIST_LENGTH(Arg)          ((int)(scm_ilength(Arg)))
-#define VECTOR_LENGTH(Arg)        (SCM_VECTOR_LENGTH(Arg))
+#define VECTOR_LENGTH(Arg)        ((int)(SCM_VECTOR_LENGTH(Arg)))
 #define PROCEDURE_P(Arg)          (NOT_FALSE_P(scm_procedure_p(Arg)))
 #define CONS(Arg1, Arg2)          scm_cons(Arg1, Arg2)
 #define CONS2(Arg1, Arg2, Arg3)   scm_cons2(Arg1, Arg2, Arg3)

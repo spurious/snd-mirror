@@ -257,7 +257,7 @@ int update_graph(chan_info *cp, void *ptr)
   snd_info *sp;
   axis_info *ap;
   if ((updating) || 
-      (cp->active == 0) ||
+      (cp->active != 1) ||
       (cp->cgx == NULL) || 
       (cp->squelch_update) || 
       (cp->sounds == NULL) || 
@@ -1931,8 +1931,8 @@ static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 		  rotate(xyz, matrix);
 		  yval = xyz[1] + xyz[2];
 		  xval = xyz[0];
-		  set_grf_point((int)(xval + x0), i, 
-				(int)(yval + y0));
+		  set_grf_point((Locus)(xval + x0), i, 
+				(Locus)(yval + y0));
 		  if (cp->printing) 
 		    ps_set_grf_point(ungrf_x(fap, (int)(xval + x0)), i, 
 				     ungrf_y(fap, (int)(yval + y0)));
@@ -2061,8 +2061,8 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	      rotate(xyz, matrix);
 	      yval = xyz[1] + xyz[2];
 	      xval = xyz[0];
-	      set_grf_point((int)(xval + x0), i, 
-			    (int)(yval + y0));
+	      set_grf_point((Locus)(xval + x0), i, 
+			    (Locus)(yval + y0));
 	      if (cp->printing) 
 		ps_set_grf_point(ungrf_x(ap, (int)(xval + x0)), i, 
 				 ungrf_y(ap, (int)(y0 + yval)));
@@ -2529,19 +2529,22 @@ static void display_channel_data_1 (chan_info *cp, snd_info *sp, snd_state *ss, 
 	  full_height = (int)((Float)height / size);
 	  chan_height = full_height / sp->nchans;
 	  bottom = (int)(full_height * val);
-	  top = (int)(full_height * (val+size));
+	  top = (int)(full_height * (val + size));
 	  y1 = (sp->nchans - cp->chan) * chan_height;
 	  y0 = y1 - chan_height;
 	  offset = top - y1;
-	  if ((cp->chan == 0) && (offset > 0))
+	  if ((cp->chan == 0) && 
+	      (offset > 0))
 	    {
 	      /* round off trouble can lead to garbage collecting at the top of the window (similarly at the bottom I suppose) */
 	      chan_height += offset;
 	      offset = 0;
 	    }
-	  if ((cp->chan == (sp->nchans - 1)) && ((offset + chan_height) < height))
+	  if ((cp->chan == (sp->nchans - 1)) && 
+	      ((offset + chan_height) < height))
 	    chan_height = height - offset;
-	  if (((y0 < top) && (y0 >= bottom)) || ((y1 > bottom) && (y1 <= top)))
+	  if (((y0 < top) && (y0 >= bottom)) || 
+	      ((y1 > bottom) && (y1 <= top)))
 	    display_channel_data_with_size(cp, sp, ss, width, chan_height, offset, just_fft, just_lisp);
 	  else 
 	    {
@@ -3189,7 +3192,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 	    {
 	      if (play_mark->sync)
 		play_syncd_mark(cp, play_mark);
-	      else play_channel(cp, play_mark->samp, NO_END_SPECIFIED, TRUE);
+	      else play_channel(cp, play_mark->samp, NO_END_SPECIFIED, TRUE, AT_CURRENT_EDIT_POSITION);
 	      sp->playing_mark = play_mark;
 	      set_play_button(sp, 1);
 	    }
@@ -3355,7 +3358,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, TIME_TYPE time, T
 	      dragged = 1;
 	      sp->srate = 0.0;
 	      mouse_cursor = cp->cursor;
-	      play_channel(cp, play_mark->samp, NO_END_SPECIFIED, TRUE);
+	      play_channel(cp, play_mark->samp, NO_END_SPECIFIED, TRUE, AT_CURRENT_EDIT_POSITION);
 	      set_play_button(sp, 1);
 	    }
 	  else
@@ -3925,7 +3928,7 @@ static SCM cp_fread(SCM snd_n, SCM chn_n, int fld, char *caller)
     case CP_SPECTRO_CUTOFF:  return(TO_SCM_DOUBLE(cp->spectro_cutoff));               break;
     case CP_SPECTRO_START:   return(TO_SCM_DOUBLE(cp->spectro_start));                break;
     case CP_FFT_BETA:        return(TO_SCM_DOUBLE(cp->fft_beta));                     break;
-    case CP_MAXAMP:          return(TO_SCM_DOUBLE(get_maxamp(cp->sound, cp)));         break;
+    case CP_MAXAMP:          return(TO_SCM_DOUBLE(get_maxamp(cp->sound, cp)));        break;
     }
   return(SCM_BOOL_F);
 }
@@ -4051,7 +4054,7 @@ static SCM g_ffting(SCM snd_n, SCM chn_n)
 
 static SCM g_set_ffting(SCM on, SCM snd_n, SCM chn_n) 
 {
-  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_ffting, "an integer");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_ffting, "a boolean");
   return(cp_iwrite(snd_n, chn_n, on, CP_FFTING, "set-" S_ffting));
 }
 
@@ -4065,7 +4068,7 @@ static SCM g_waving(SCM snd_n, SCM chn_n)
 
 static SCM g_set_waving(SCM on, SCM snd_n, SCM chn_n) 
 {
-  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_waving, "an integer");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_waving, "a boolean");
   return(cp_iwrite(snd_n, chn_n, on, CP_WAVING, "set-" S_waving));
 }
 
@@ -4079,7 +4082,7 @@ static SCM g_graphing(SCM snd_n, SCM chn_n)
 
 static SCM g_set_graphing(SCM on, SCM snd_n, SCM chn_n) 
 {
-  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_graphing, "an integer");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_graphing, "a boolean");
   return(cp_iwrite(snd_n, chn_n, on, CP_LISP_GRAPHING, "set-" S_graphing));
 }
 
@@ -4169,7 +4172,7 @@ static SCM g_squelch_update(SCM snd_n, SCM chn_n)
 
 static SCM g_set_squelch_update(SCM on, SCM snd_n, SCM chn_n) 
 {
-  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_squelch_update, "an integer");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_squelch_update, "a boolean");
   return(cp_iwrite(snd_n, chn_n, on, CP_SQUELCH_UPDATE, "set-" S_squelch_update));
 }
 
@@ -4255,7 +4258,7 @@ static SCM g_show_y_zero(SCM snd, SCM chn)
 static SCM g_set_show_y_zero(SCM on, SCM snd, SCM chn) 
 {
   snd_state *ss;
-  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_show_y_zero, "an integer");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_show_y_zero, "a boolean");
   if (BOUND_P(snd))
     return(cp_iwrite(snd, chn, on, CP_SHOW_Y_ZERO, "set-" S_show_y_zero));
   else
@@ -4550,7 +4553,7 @@ static SCM g_show_marks(SCM snd, SCM chn)
 static SCM g_set_show_marks(SCM on, SCM snd, SCM chn)
 {
   snd_state *ss;
-  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_show_marks, "an integer");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_show_marks, "a boolean");
   if (BOUND_P(snd))
     return(cp_iwrite(snd, chn, on, CP_SHOW_MARKS, "set-" S_show_marks));
   else
@@ -4574,7 +4577,7 @@ static SCM g_show_fft_peaks(SCM snd, SCM chn)
 static SCM g_set_show_fft_peaks(SCM val, SCM snd, SCM chn)
 {
   snd_state *ss;
-  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(val), val, SCM_ARG1, "set-" S_show_fft_peaks, "an integer");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARG1, "set-" S_show_fft_peaks, "a boolean");
   if (BOUND_P(snd))
     return(cp_iwrite(snd, chn, val, CP_SHOW_FFT_PEAKS, "set-" S_show_fft_peaks));
   else
@@ -4646,7 +4649,7 @@ static SCM g_fft_log_frequency(SCM snd, SCM chn)
 static SCM g_set_fft_log_frequency(SCM on, SCM snd, SCM chn)
 {
   snd_state *ss;
-  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_fft_log_frequency, "an integer");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_fft_log_frequency, "a boolean");
   if (BOUND_P(snd))
     return(cp_iwrite(snd, chn, on, CP_FFT_LOG_FREQUENCY, "set-" S_fft_log_frequency));
   else
@@ -4670,7 +4673,7 @@ static SCM g_fft_log_magnitude(SCM snd, SCM chn)
 static SCM g_set_fft_log_magnitude(SCM on, SCM snd, SCM chn)
 {
   snd_state *ss;
-  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_fft_log_magnitude, "an integer");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_fft_log_magnitude, "a boolean");
   if (BOUND_P(snd))
     return(cp_iwrite(snd, chn, on, CP_FFT_LOG_MAGNITUDE, "set-" S_fft_log_magnitude));
   else
@@ -4694,7 +4697,7 @@ static SCM g_show_mix_waveforms(SCM snd, SCM chn)
 static SCM g_set_show_mix_waveforms(SCM on, SCM snd, SCM chn)
 {
   snd_state *ss;
-  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_show_mix_waveforms, "an integer");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_show_mix_waveforms, "a boolean");
   if (BOUND_P(snd))
     return(cp_iwrite(snd, chn, on, CP_SHOW_MIX_WAVEFORMS, "set-" S_show_mix_waveforms));
   else
@@ -4718,7 +4721,7 @@ static SCM g_verbose_cursor(SCM snd, SCM chn)
 static SCM g_set_verbose_cursor(SCM on, SCM snd, SCM chn)
 {
   snd_state *ss;
-  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_verbose_cursor, "an integer");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_verbose_cursor, "a boolean");
   if (BOUND_P(snd))
     return(cp_iwrite(snd, chn, on, CP_VERBOSE_CURSOR, "set-" S_verbose_cursor));
   else
@@ -4744,7 +4747,7 @@ static SCM g_set_wavo(SCM val, SCM snd, SCM chn)
 {
   int on;
   snd_state *ss;
-  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(val), val, SCM_ARG1, "set-" S_wavo, "an integer");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARG1, "set-" S_wavo, "a boolean");
   if (BOUND_P(snd))
     return(cp_iwrite(snd, chn, val, CP_WAVO, "set-" S_wavo));
   else
@@ -5085,7 +5088,7 @@ static SCM g_graphs_horizontal(SCM snd, SCM chn)
 static SCM g_set_graphs_horizontal(SCM val, SCM snd, SCM chn)
 {
   snd_state *ss;
-  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(val), val, SCM_ARG1, "set-" S_graphs_horizontal, "an integer");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARG1, "set-" S_graphs_horizontal, "a boolean");
   if (BOUND_P(snd))
     return(cp_iwrite(snd, chn, val, CP_GRAPHS_HORIZONTAL, "set-" S_graphs_horizontal));
   else
@@ -5172,7 +5175,7 @@ static SCM g_edits(SCM snd_n, SCM chn_n)
   for (i = cp->edit_ctr + 1; i < cp->edit_size; i++)
     if (!(cp->edits[i])) break;
   return(SCM_LIST2(TO_SCM_INT(cp->edit_ctr),
-		   TO_SCM_INT(i-cp->edit_ctr-1)));
+		   TO_SCM_INT(i - cp->edit_ctr - 1)));
 }
 
 static SCM g_set_x_bounds(SCM bounds, SCM snd_n, SCM chn_n)

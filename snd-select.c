@@ -855,7 +855,7 @@ static SCM g_set_selection_member(SCM on, SCM snd, SCM chn)
 {
   chan_info *cp;
   SND_ASSERT_CHAN("set-" S_selection_member, snd, chn, 2);
-  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_selection_member, "an integer");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_selection_member, "a boolean");
   cp = get_cp(snd, chn, "set-" S_selection_member);
   if (TO_C_INT_OR_ELSE(on, 1))
     {

@@ -25,7 +25,7 @@
 
 (use-modules (ice-9 format) (ice-9 debug))
 
-(define tests 1)
+(define tests 10)
 (define snd-test -1)
 (define full-test (< snd-test 0))
 
@@ -92,7 +92,7 @@
 	0 ;sigh...
 	(random n))))
 
-;(define rs (lambda (n) (< (my-random 1.0) n)))
+(define rsp (lambda (n) (< (my-random 1.0) n)))
 (define rs (lambda (n) #t))
 
 ;;; preliminaries -- check constants, default variable values (assumes -noinit), sndlib and clm stuff
@@ -1252,8 +1252,17 @@
 	  (sound-data-set! sdata 0 i (* i .01)))
 	(if (not (string=? "#<sound-data: 1 chan, 100 frames>" (format #f "~A" sdata)))
 	    (snd-display (format #f ";print sound-data: ~A?" (format #f "~A" sdata))))
-	(let ((edat sdata))
-	  (if (not (equal? sdata edat)) (snd-display (format #f ";sound-data equal? ~A ~A" sdata edat))))
+	(let ((edat sdata)
+	      (edat1 (make-sound-data 1 100))
+	      (edat2 (make-sound-data 2 100)))
+	  (if (not (eq? sdata edat)) (snd-display (format #f ";sound-data not eq? ~A ~A" sdata edat)))
+	  (if (not (equal? sdata edat)) (snd-display (format #f ";sound-data not equal? ~A ~A" sdata edat)))
+	  (if (equal? sdata edat1) (snd-display (format #f ";sound-data 1 equal? ~A ~A" sdata edat1)))
+	  (if (equal? edat2 edat1) (snd-display (format #f ";sound-data 2 equal? ~A ~A" edat2 edat1)))
+	  (do ((i 0 (1+ i)))
+	      ((= i 100))
+	    (sound-data-set! edat1 0 i (sound-data-ref sdata 0 i)))
+	  (if (not (equal? sdata edat1)) (snd-display (format #f ";sound-data 3 not equal? ~A ~A" sdata edat1))))
 	(let ((v0 (make-vct 100)))
 	  (sound-data->vct sdata 0 v0) 
 	  (if (fneq (vct-ref v0 10) .1) (snd-display (format #f ";sound-data->vct: ~A?" v0)))
@@ -1356,6 +1365,7 @@
       (play-and-wait "oboe.snd")
       (play-and-wait "oboe.snd" 12000)
       (play-and-wait "oboe.snd" 12000 15000)
+      (play-and-wait 0 #f #f #f #f (1- (edit-position)))
       (bomb index #t)
       (if (not (= (transform-size) 0)) (snd-display (format #f ";transform-size ~A?" (transform-size))))
       (set! (ffting) #t)
@@ -2122,6 +2132,15 @@
       (if (not (= (vct-length v0) 10)) (snd-display (format #f ";v0 length = ~D?" (vct-length v0))))
       (vct-fill! v0 1.0)
       (vct-fill! v1 0.5)
+      (if (equal? v0 v1) (snd-display (format #f ";vct equal? ~A ~A" v0 v1)))
+      (if (eq? v0 v1) (snd-display (format #f ";vct eq? ~A ~A" v0 v1)))
+      (let ((v2 v1)
+	    (v3 (make-vct 10))
+	    (v4 (make-vct 3)))
+	(if (not (eq? v1 v2)) (snd-display (format #f ";vct not eq? ~A ~A" v1 v2)))
+	(vct-fill! v3 0.5) 
+	(if (not (equal? v3 v1)) (snd-display (format #f ";vct not equal? ~A ~A" v3 v1)))
+	(if (equal? v4 v1) (snd-display (format #f ";len diff vct equal? ~A ~A" v4 v1))))
       (vct-set! vlst 1 .1)
       (if (not (feql (vct->list vlst) (list 0.0 0.1 0.0))) (snd-display (format #f ";vct->list: ~A?" (vct->list vlst))))
       (let* ((vect #(0 1 2 3))
@@ -2271,8 +2290,12 @@
 		      (test-color (cdr lst)))))))
       (if (procedure? trace-hook) (trace-hook 7))
       (let* ((c1 (make-color 0 0 1))
-	     (c2 c1))
-	(if (not (equal? c1 c2)) (snd-display (format #f ";color=? ~A ~A?" c1 c2)))
+	     (c2 c1)
+	     (c3 (make-color 0 0 1)))
+	(if (not (equal? c1 c2)) (snd-display (format #f ";color equal? ~A ~A?" c1 c2)))
+	(if (not (eq? c1 c2)) (snd-display (format #f ";color eq? ~A ~A?" c1 c2)))
+	(if (not (equal? c1 c3)) (snd-display (format #f ";diff color equal? ~A ~A?" c1 c3)))
+	(if (eq? c1 c3) (snd-display (format #f ";diff color eq? ~A ~A?" c1 c3)))
 	(let ((str (format #f "~A" c1)))
 	  (if (not (string=? str "#<color: (0.00 0.00 1.00)>"))
 	      (snd-display (format #f ";print color: ~A ~A?" str c1)))))
@@ -2334,8 +2357,40 @@
     (if (not (equal? egen gen))
 	(snd-display (format #f ";equal? ~A: ~A?" gen egen)))))
 
+(define (test-gen-equal g0 g1 g2)
+  ;; g0 = g1 at start != g2
+  (let ((g3 g0)
+	(gad (make-frame 2)))
+    (if (not (eq? g0 g3))
+	(snd-display (format #f ";let ~A eq? ~A ~A" (mus-name g0) g0 g3)))
+    (if (eq? g0 g1)
+	(snd-display (format #f ";arg ~A eq? ~A ~A" (mus-name g0) g0 g1)))
+    (if (not (equal? g0 g1))
+	(snd-display (format #f ";~A equal? ~A ~A" (mus-name g0) g0 g1)))
+    (if (equal? g0 g2)
+	(snd-display (format #f ";~A not equal? ~A ~A" (mus-name g0) g0 g2)))
+    (if (equal? g0 gad)
+	(snd-display (format #f ";~A equal frame? ~A ~A" (mus-name g0) g0 gad)))
+    (if (provided? 'snd-new-smob)
+	(begin
+	  (g0)
+	  (g3)
+	  (g3)
+	  (if (not (eq? g0 g3))
+	      (snd-display (format #f ";run let ~A eq? ~A ~A" (mus-name g0) g0 g3)))
+	  (if (eq? g0 g1)
+	      (snd-display (format #f ";arg ~A eq? ~A ~A" (mus-name g0) g0 g1)))
+	  (if (equal? g0 g1)
+	      (snd-display (format #f ";run ~A equal? ~A ~A" (mus-name g0) g0 g1)))
+	  (if (equal? g0 g2)
+	      (snd-display (format #f ";run ~A not equal? ~A ~A" (mus-name g0) g0 g2)))))))
+    
+(define ggctr 0)
+(define (gc1) (snd-display (format #f "~A" ggctr)) (set! ggctr (1+ ggctr)))
+
 (if (or full-test (= snd-test 8))
     (do ((clmtest 0 (1+ clmtest))) ((= clmtest tests))
+(set! ggctr 0)
       (if (procedure? trace-hook) (trace-hook 8))
       (log-mem clmtest)
       (if (> tests 1) (snd-display (format #f ";clm test ~D " clmtest)))
@@ -2369,7 +2424,7 @@
 	(if (not (fveql v3 '(1.000 2.000 -8.000 0.000 16.000 0.000) 0)) (snd-display (format #f ";partials->polynomial(4): ~A?" v3)))
 	(if (not (fveql v4 '(-0.510 0.700 1.180 0.400 -0.480 0.000 0.320) 0)) (snd-display (format #f ";partials->polynomial(5): ~A?" v4)))
 	(if (not (fveql v5 '(0.900 1.060 0.400 -0.320 0.000 0.320 0.000) 0)) (snd-display (format #f ";partials->polynomial(6): ~A?" v5))))
-      
+
       (let* ((amps (list->vct '(1.0)))
 	     (phases (list->vct '(0.0)))
 	     (val (sum-of-sines amps phases)))
@@ -2381,7 +2436,7 @@
 	(set! phases (list->vct '(1.0 0.5 2.0)))
 	(set! val (sum-of-sines amps phases))
 	(if (fneq val 1.44989) (snd-display (format #f ";sum-of-sines: ~A 1.449?" val))))
-      
+
       (let ((rdat (make-vct 16))
 	    (idat (make-vct 16))
 	    (vdat (make-vct 16)))
@@ -2393,7 +2448,7 @@
 	      ((= i 8)) ;should all be 1.0 (impulse in)
 	    (if (fneq (vct-ref v0 i) (vct-ref v1 i))
 		(snd-display (format #f ";spectra not equal: ~A ~A" v0 v1))))))
-      
+
       (let ((rdat (make-vct 16))
 	    (idat (make-vct 16))
 	    (xdat (make-vct 16))
@@ -2410,7 +2465,7 @@
 	      ((= i 8)) 
 	    (if (fneq (vct-ref v0 i) (vct-ref v1 i))
 		(snd-display (format #f ";convolutions not equal: ~A ~A" v0 v1))))))
-      
+
       (let ((rdat (make-vct 16))
 	    (idat (make-vct 16))
 	    (xdat (make-vct 16))
@@ -2429,7 +2484,7 @@
 	      (snd-display (format #f ";fft real[~D]: ~A ~A?" i (vct-ref rdat i) (vct-ref xdat i))))
 	  (if (or (fneq (vct-ref idat i) 0.0) (fneq (vct-ref ydat i) 0.0))
 	      (snd-display (format #f ";fft imag[~D]: ~A ~A?" i (vct-ref idat i) (vct-ref ydat i))))))
-      
+
       (let ((rdat (make-vector 16))
 	    (idat (make-vector 16)))
 	(do ((i 0 (1+ i)))
@@ -2442,7 +2497,7 @@
 	(if (or (fneq (vector-ref rdat 3) 16.0)
 		(fneq (vector-ref rdat 4) 0.0))
 	    (snd-display (format #f ";vector fft real[~D]: ~A ~A?" i (vector-ref rdat 3) (vector-ref rdat 4)))))
-      
+
       (let* ((size 256)
 	     (rdat (make-vct 256))
 	     (idat (make-vct 256))
@@ -2471,7 +2526,7 @@
 	    (snd-display (format #f ";ifft: ~A" (vct-ref rdat 3))))
 	(if (fneq (vct-ref xdat 4) 0.0)
 	    (snd-display (format #f ";ifht: ~A" (vct-ref xdat 3)))))
-      
+
       (let ((v0 (make-vct 10))
 	    (v1 (make-vct 10)))
 	(vct-fill! v0 1.0)
@@ -2486,7 +2541,7 @@
 	(vct-fill! v1 0.5)
 	(let ((v2 (rectangular->polar v0 v1)))
 	  (if (fneq (vct-ref v2 0) 1.118) (snd-display (format #f ";rectangular->polar: ~A?" v2)))))
-      
+
       (let ((v0 (make-vct 3)))
 	(vct-set! v0 0 1.0)
 	(vct-set! v0 1 0.5)
@@ -2498,7 +2553,7 @@
 				 (polynomial v0 0.0)
 				 (polynomial v0 1.0)
 				 (polynomial v0 2.0)))))
-      
+
       (let ((v0 (make-vct 10)))
 	(do ((i 0 (1+ i))) ((= i 10))
 	  (vct-set! v0 i i))
@@ -2514,7 +2569,7 @@
 	(if (fneq (array-interp v0 9.1) 8.1) (snd-display (format #f ";array-interp(9.1): ~F?" (array-interp v0 9.1))))
 	(if (fneq (array-interp v0 9.9) 0.9) (snd-display (format #f ";array-interp(9.9): ~F?" (array-interp v0 9.9))))
 	(if (fneq (array-interp v0 10.1) 0.1) (snd-display (format #f ";array-interp(10.1): ~F?" (array-interp v0 10.1)))))
-      
+
       (let ((gen (make-delay 3))
 	    (gen1 (make-delay 4 :initial-contents '(1.0 0.5 0.25 0.0)))
 	    (v0 (make-vct 10)))
@@ -2535,7 +2590,15 @@
 		(fneq (delay gen1) 0.0)
 		(fneq (delay gen1) 0.0))
 	    (snd-display (format #f ";delay with initial-contents confused"))))
-      
+
+      (test-gen-equal (let ((d1 (make-delay 3))) (delay d1 1.0) d1) 
+		      (let ((d2 (make-delay 3))) (delay d2 1.0) d2)
+		      (let ((d3 (make-delay 4))) (delay d3 1.0) d3))
+      (test-gen-equal (make-delay 3 :initial-element 1.0) (make-delay 3 :initial-element 1.0) (make-delay 3 :initial-element 0.5))
+      (test-gen-equal (make-delay 3 :initial-contents '(1.0 0.0 0.0)) 
+		      (make-delay 3 :initial-contents '(1.0 0.0 0.0)) 
+		      (make-delay 3 :initial-contents '(1.0 1.0 1.0)))
+
       (let ((gen (make-all-pass .4 .6 3))
 	    (v0 (make-vct 10)))
 	(print-and-check gen 
@@ -2554,7 +2617,20 @@
 	    (snd-display (format #f ";all-pass output: ~A" v0)))
 	(set! (mus-feedback gen) 0.5) (if (fneq (mus-feedback gen) .5) (snd-display (format #f ";all-pass set-feedback: ~F?" (mus-feedback gen))))
 	(set! (mus-feedforward gen) 0.5) (if (fneq (mus-feedforward gen) .5) (snd-display (format #f ";all-pass set-feedforward: ~F?" (mus-feedforward gen)))))
-      
+
+      (test-gen-equal (let ((d1 (make-all-pass 0.7 0.5 3))) (all-pass d1 1.0) d1)
+		      (let ((d2 (make-all-pass 0.7 0.5 3))) (all-pass d2 1.0) d2) 
+		      (let ((d3 (make-all-pass 0.7 0.5 4))) (all-pass d3 1.0) d3))
+      (test-gen-equal (make-all-pass 0.7 0.5 3 :initial-element 1.0) 
+		      (make-all-pass 0.7 0.5 3 :initial-element 1.0) 
+		      (make-all-pass 0.7 0.5 3 :initial-element 0.5))
+      (test-gen-equal (make-all-pass 0.7 0.5 3 :initial-element 1.0) 
+		      (make-all-pass 0.7 0.5 3 :initial-element 1.0) 
+		      (make-all-pass 0.5 0.5 3 :initial-element 1.0))
+      (test-gen-equal (make-all-pass 0.7 0.5 3 :initial-contents '(1.0 0.0 0.0)) 
+		      (make-all-pass 0.7 0.5 3 :initial-contents '(1.0 0.0 0.0)) 
+		      (make-all-pass 0.7 0.5 3 :initial-contents '(1.0 1.0 1.0)))
+
       (let ((gen (make-comb .4 3))
 	    (v0 (make-vct 10)))
 	(print-and-check gen 
@@ -2570,7 +2646,20 @@
 	(if (fneq (mus-feedback gen) .4) (snd-display (format #f ";comb feedback: ~F?" (mus-feedback gen))))
 	(if (or (fneq (vct-ref v0 1) 0.0) (fneq (vct-ref v0 4) 1.0) (fneq (vct-ref v0 8) 1.4))
 	    (snd-display (format #f ";comb output: ~A" v0))))
-      
+
+      (test-gen-equal (let ((d1 (make-comb 0.7 3))) (comb d1 1.0) d1) 
+		      (let ((d2 (make-comb 0.7 3))) (comb d2 1.0) d2) 
+		      (let ((d3 (make-comb 0.7 4))) (comb d3 1.0) d3))
+      (test-gen-equal (make-comb 0.7 3 :initial-element 1.0) 
+		      (make-comb 0.7 3 :initial-element 1.0) 
+		      (make-comb 0.7 3 :initial-element 0.5))
+      (test-gen-equal (make-comb 0.7 3 :initial-element 1.0) 
+		      (make-comb 0.7 3 :initial-element 1.0) 
+		      (make-comb 0.5 3 :initial-element 1.0))
+      (test-gen-equal (make-comb 0.7 3 :initial-contents '(1.0 0.0 0.0)) 
+		      (make-comb 0.7 3 :initial-contents '(1.0 0.0 0.0)) 
+		      (make-comb 0.7 3 :initial-contents '(1.0 1.0 1.0)))
+
       (let ((gen (make-notch .4 3))
 	    (v0 (make-vct 10)))
 	(print-and-check gen 
@@ -2586,7 +2675,20 @@
 	(if (fneq (mus-feedforward gen) .4) (snd-display (format #f ";notch feedforward: ~F?" (mus-feedforward gen))))
 	(if (or (fneq (vct-ref v0 1) 0.4) (fneq (vct-ref v0 4) 1.4) (fneq (vct-ref v0 8) 1.4))
 	    (snd-display (format #f ";notch output: ~A" v0))))
-      
+
+      (test-gen-equal (let ((d1 (make-notch 0.7 3))) (notch d1 1.0) d1)
+		      (let ((d2 (make-notch 0.7 3))) (notch d2 1.0) d2)
+		      (let ((d3 (make-notch 0.7 4))) (notch d3 1.0) d3))
+      (test-gen-equal (make-notch 0.7 3 :initial-element 1.0) 
+		      (make-notch 0.7 3 :initial-element 1.0) 
+		      (make-notch 0.7 3 :initial-element 0.5))
+      (test-gen-equal (make-notch 0.7 3 :initial-element 1.0) 
+		      (make-notch 0.7 3 :initial-element 1.0) 
+		      (make-notch 0.5 3 :initial-element 1.0))
+      (test-gen-equal (make-notch 0.7 3 :initial-contents '(1.0 0.0 0.0)) 
+		      (make-notch 0.7 3 :initial-contents '(1.0 0.0 0.0)) 
+		      (make-notch 0.7 3 :initial-contents '(1.0 1.0 1.0)))
+
       (let ((gen (make-one-pole .4 .7))
 	    (v0 (make-vct 10)))
 	(print-and-check gen 
@@ -2602,7 +2704,7 @@
 	(if (fneq (mus-b1 gen) .7) (snd-display (format #f ";one-pole b1: ~F?" (mus-b1 gen))))
 	(if (or (fneq (vct-ref v0 1) 0.120) (fneq (vct-ref v0 4) 0.275) (fneq (vct-ref v0 8) 0.245))
 	    (snd-display (format #f ";one-pole output: ~A" v0))))
-      
+
       (let ((gen (make-one-zero .4 .7))
 	    (v0 (make-vct 10)))
 	(print-and-check gen
@@ -2617,7 +2719,7 @@
 	(if (fneq (mus-a0 gen) .4) (snd-display (format #f ";one-zero a0: ~F?" (mus-a0 gen))))
 	(if (fneq (mus-a1 gen) .7) (snd-display (format #f ";one-zero a1: ~F?" (mus-a1 gen))))
 	(if (fneq (vct-ref v0 1) 1.1) (snd-display (format #f ";one-zero output: ~A" v0))))
-      
+
       (let ((gen (make-two-zero .4 .7 .3))
 	    (v0 (make-vct 10)))
 	(print-and-check gen 
@@ -2633,7 +2735,7 @@
 	(if (fneq (mus-a1 gen) .7) (snd-display (format #f ";two-zero a1: ~F?" (mus-a1 gen))))
 	(if (fneq (mus-a2 gen) .3) (snd-display (format #f ";two-zero a2: ~F?" (mus-a2 gen))))
 	(if (or (fneq (vct-ref v0 1) 1.1) (fneq (vct-ref v0 8) 1.4)) (snd-display (format #f ";two-zero output: ~A" v0))))
-      
+
       (let ((gen (make-two-pole .4 .7 .3))
 	    (v0 (make-vct 10)))
 	(print-and-check gen 
@@ -2649,7 +2751,7 @@
 	(if (fneq (mus-b1 gen) .7) (snd-display (format #f ";two-pole b1: ~F?" (mus-b1 gen))))
 	(if (fneq (mus-b2 gen) .3) (snd-display (format #f ";two-pole b2: ~F?" (mus-b2 gen))))
 	(if (or (fneq (vct-ref v0 1) 0.12) (fneq (vct-ref v0 8) 0.201)) (snd-display (format #f ";two-pole output: ~A" v0))))
-      
+
       (let ((gen (make-oscil 440.0))
 	    (gen1 (make-oscil 440.0))
 	    (v0 (make-vct 10))
@@ -2675,7 +2777,7 @@
 	    ((= i 10))
 	  (if (fneq (vct-ref v0 i) (vct-ref v1 i))
 	      (snd-display (format #f ";mus-apply oscil at ~D: ~A ~A?" i (vct-ref v0 i) (vct-ref v1 i))))))
-      
+
       (let ((gen (make-oscil 440.0))
 	    (gen1 (make-oscil 440.0)))
 	(do ((i 0 (1+ i)))
@@ -2684,7 +2786,7 @@
 		(mval (mus-run gen1 .1)))
 	    (if (fneq oval mval)
 		(snd-display (format #f ";mus-run ~A but oscil ~A?" mval oval))))))
-      
+
       (let ((gen (make-oscil 440.0))
 	    (gen1 (make-oscil 440.0))
 	    (gen2 (make-oscil 440.0))
@@ -2702,6 +2804,9 @@
 	    ((= i 10))
 	  (if (fneq (vct-ref v0 i) (vct-ref v1 i))
 	      (snd-display (format #f ";mus-apply fm oscil at ~D: ~A ~A?" i (vct-ref v0 i) (vct-ref v1 i))))))
+
+      (test-gen-equal (make-oscil 440.0) (make-oscil 440.0) (make-oscil 100.0))
+      (test-gen-equal (make-oscil 440.0) (make-oscil 440.0) (make-oscil 440.0 1.0))
       
       (if (provided? 'snd-new-smob)
 	  (let ((gen (make-oscil 440.0))
@@ -2713,7 +2818,7 @@
 	      (vct-set! v0 i (gen 0.0 (* pm-index (gen1 0.0)))))
 	    (if (or (fneq (vct-ref v0 1) 0.367) (fneq (vct-ref v0 6) 0.854) (fneq (vct-ref v0 8) 0.437))
 		(snd-display (format #f ";oscil pm output: ~A" v0)))))
-      
+
       (let ((amps (make-vector 3))
 	    (oscils (make-vector 3))
 	    (fms (make-vector 3))
@@ -2728,7 +2833,7 @@
 		(fneq (vector-ref results 5) 0.48203)
 		(fneq (vector-ref results 9) 0.41001))
 	    (snd-display (format #f ";oscil-bank: ~A?" results))))
-      
+
       (let ((amps (make-vector 3))
 	    (oscils (make-vector 3))
 	    (fms (make-vector 3))
@@ -2743,7 +2848,7 @@
 		(fneq (vector-ref results 5) 0.48203)
 		(fneq (vector-ref results 9) 0.41001))
 	    (snd-display (format #f ";mus-bank: ~A?" results))))
-      
+
       (let ((gen (make-buffer 3)))
 	(if (not (buffer-empty? gen)) (snd-display (format #f ";new buf not buffer-empty: ~A?" gen)))
 	(sample->buffer gen 1.0)
@@ -2764,7 +2869,20 @@
 	  (frame->buffer gen fr0)
 	  (set! fr1 (buffer->frame gen fr1))
 	  (if (not (equal? fr0 fr1)) (snd-display (format #f ";frame->buffer: ~A ~A?" fr0 fr1)))))
-      
+
+      (test-gen-equal (make-buffer 3) (make-buffer 3) (make-buffer 4))
+      (let ((gen (make-buffer 3))
+	    (gen1 (make-buffer 3))
+	    (gen2 (make-buffer 3)))
+	(sample->buffer gen 1.0)
+	(sample->buffer gen 0.5)
+	(sample->buffer gen1 1.0)
+	(sample->buffer gen1 0.5)
+	(sample->buffer gen2 1.0)
+	(sample->buffer gen2 0.5)
+	(sample->buffer gen2 0.25)
+	(test-gen-equal gen gen1 gen2))
+
       (let ((gen (make-sum-of-cosines 10 440.0))
 	    (v0 (make-vct 10)))
 	(print-and-check gen 
@@ -2782,7 +2900,11 @@
 	(if (not (= (mus-length gen) 10)) (snd-display (format #f ";sum-of-cosines length: ~D?" (mus-length gen))))
 	(if (or (fneq (vct-ref v0 1) 0.736) (fneq (vct-ref v0 8) -0.089)) (snd-display (format #f ";sum-of-cosines output: ~A" v0)))
 	(set! (mus-scaler gen) .5) (if (fneq (mus-scaler gen) 0.5) (snd-display (format #f ";sum-of-cosines set-scaler: ~F?" (mus-scaler gen)))))
-      
+
+      (test-gen-equal (make-sum-of-cosines 3 440.0) (make-sum-of-cosines 3 440.0) (make-sum-of-cosines 5 440.0))
+      (test-gen-equal (make-sum-of-cosines 3 440.0) (make-sum-of-cosines 3 440.0) (make-sum-of-cosines 3 440.0 1.0))
+      (test-gen-equal (make-sum-of-cosines 3 440.0) (make-sum-of-cosines 3 440.0) (make-sum-of-cosines 3 400.0))
+
       (let ((gen (make-sine-summation 440.0))
 	    (v0 (make-vct 10)))
 	(print-and-check gen 
@@ -2796,7 +2918,11 @@
 	(if (fneq (mus-phase gen) 1.253787) (snd-display (format #f ";sine-summation phase: ~F?" (mus-phase gen))))
 	(if (fneq (mus-frequency gen) 440.0) (snd-display (format #f ";sine-summation frequency: ~F?" (mus-frequency gen))))
 	(if (or (fneq (vct-ref v0 1) 0.249) (fneq (vct-ref v0 8) 1.296)) (snd-display (format #f ";sine-summation output: ~A" v0))))
-      
+
+      (test-gen-equal (make-sine-summation 440.0) (make-sine-summation 440.0) (make-sine-summation 100.0))
+      (test-gen-equal (make-sine-summation 440.0) (make-sine-summation 440.0) (make-sine-summation 440.0 1.0))
+      (test-gen-equal (make-sine-summation 440.0) (make-sine-summation 440.0) (make-sine-summation 440.0 0.0 3))
+
       (let ((gen (make-asymmetric-fm 440.0))
 	    (v0 (make-vct 10)))
 	(print-and-check gen 
@@ -2810,7 +2936,11 @@
 	(if (fneq (mus-phase gen) 1.253787) (snd-display (format #f ";asymmetric-fm phase: ~F?" (mus-phase gen))))
 	(if (fneq (mus-frequency gen) 440.0) (snd-display (format #f ";asymmetric-fm frequency: ~F?" (mus-frequency gen))))
 	(if (or (fneq (vct-ref v0 1) 0.248) (fneq (vct-ref v0 8) .962)) (snd-display (format #f ";asymmetric-fm output: ~A" v0))))
-      
+
+      (test-gen-equal (make-asymmetric-fm 440.0) (make-asymmetric-fm 440.0) (make-asymmetric-fm 100.0))
+      (test-gen-equal (make-asymmetric-fm 440.0) (make-asymmetric-fm 440.0) (make-asymmetric-fm 440.0 1.0))
+      (test-gen-equal (make-asymmetric-fm 440.0) (make-asymmetric-fm 440.0) (make-asymmetric-fm 440.0 0.0 3))
+
       (let ((gen (make-fir-filter 3 (list->vct '(.5 .25 .125))))
 	    (v0 (make-vct 10)))
 	(print-and-check gen 
@@ -2826,7 +2956,14 @@
 	(if (or (fneq (vct-ref v0 1) 0.25) (fneq (vct-ref v0 2) .125)) (snd-display (format #f ";fir-filter output: ~A" v0)))
 	(let ((data (mus-xcoeffs gen)))
 	  (if (fneq (vct-ref data 1) .25) (snd-display (format #f ";fir-filter xcoeffs: ~A?" data)))))
-      
+
+      (test-gen-equal (let ((f1 (make-fir-filter 3 (list->vct '(.5 .25 .125))) )) (fir-filter f1 1.0) f1)
+		      (let ((f2 (make-fir-filter 3 (list->vct '(.5 .25 .125))) )) (fir-filter f2 1.0) f2)
+		      (let ((f3 (make-fir-filter 3 (list->vct '(.75 .25 .125))))) (fir-filter f3 1.0) f3))
+      (test-gen-equal (let ((f1 (make-fir-filter 3 (list->vct '(.5 .25 .125))) )) (fir-filter f1 1.0) f1)
+		      (let ((f2 (make-fir-filter 3 (list->vct '(.5 .25 .125))) )) (fir-filter f2 1.0) f2)
+		      (let ((f3 (make-fir-filter 2 (list->vct '(.5 .25))))) (fir-filter f3 1.0) f3))
+
       (let* ((coeffs (list .1 .2 .3 .4 .4 .3 .2 .1))
 	     (flt (make-fir-filter 8 (list->vct coeffs)))
 	     (es (make-vector 8)))
@@ -2848,7 +2985,7 @@
 		  (fneq (vct-ref data 18) 0.166)
 		  (fneq (vct-ref data 89) 0.923))
 	      (snd-display (format #f ";filter xcoeffs: ~A?" data)))))
-      
+
       (let ((gen (make-iir-filter 3 (list->vct '(.5 .25 .125))))
 	    (v0 (make-vct 10)))
 	(print-and-check gen 
@@ -2864,7 +3001,14 @@
 	(if (or (fneq (vct-ref v0 1) -0.25) (fneq (vct-ref v0 2) -.062)) (snd-display (format #f ";iir-filter output: ~A" v0)))
 	(let ((data (mus-ycoeffs gen)))
 	  (if (fneq (vct-ref data 1) .25) (snd-display (format #f ";iir-filter ycoeffs: ~A?" data)))))
-      
+
+      (test-gen-equal (let ((f1 (make-iir-filter 3 (list->vct '(.5 .25 .125))))) (iir-filter f1 1.0) f1)
+		      (let ((f2 (make-iir-filter 3 (list->vct '(.5 .25 .125))) )) (iir-filter f2 1.0) f2)
+		      (let ((f3 (make-iir-filter 3 (list->vct '(.75 .25 .125))))) (iir-filter f3 1.0) f3))
+      (test-gen-equal (let ((f1 (make-iir-filter 3 (list->vct '(.5 .25 .125))) )) (iir-filter f1 1.0) f1)
+		      (let ((f2 (make-iir-filter 3 (list->vct '(.5 .25 .125))) )) (iir-filter f2 1.0) f2)
+		      (let ((f3 (make-iir-filter 2 (list->vct '(.5 .25))))) (iir-filter f3 1.0) f3))
+
       (let ((gen (make-filter 3 (list->vct '(.5 .25 .125)) (list->vct '(.5 .25 .125))))
 	    (v0 (make-vct 10)))
 	(print-and-check gen 
@@ -2883,7 +3027,14 @@
 	  (if (or (not (equal? xs (list->vct '(.5 .25 .125))))
 		  (not (equal? xs ys)))
 	      (snd-display (format #f ";mus-xcoeffs: ~A ~A?" xs ys)))))
-      
+
+      (test-gen-equal (let ((f1 (make-filter 3 (list->vct '(.5 .25 .125)) (list->vct '(.5 .25 .125))))) (filter f1 1.0) f1)
+		      (let ((f2 (make-filter 3 (list->vct '(.5 .25 .125)) (list->vct '(.5 .25 .125))))) (filter f2 1.0) f2)
+		      (let ((f3 (make-filter 3 (list->vct '(.5 .25 .125)) (list->vct '(.5 .5))))) (filter f3 1.0) f3))
+      (test-gen-equal (let ((f1 (make-filter 3 (list->vct '(.5 .25 .125)) (list->vct '(.5 .25 .125))))) (filter f1 1.0) f1)
+		      (let ((f2 (make-filter 3 (list->vct '(.5 .25 .125)) (list->vct '(.5 .25 .125))))) (filter f2 1.0) f2)
+		      (let ((f3 (make-filter 3 (list->vct '(.5 .5 .125)) (list->vct '(.5 .25 .125 .0625))))) (filter f3 1.0) f3))
+
       (let ((gen (make-sawtooth-wave 440.0))
 	    (v0 (make-vct 10)))
 	(print-and-check gen 
@@ -2898,7 +3049,11 @@
 	(if (fneq (mus-frequency gen) 440.0) (snd-display (format #f ";sawtooth-wave frequency: ~F?" (mus-frequency gen))))
 	(if (fneq (mus-scaler gen) 1.0) (snd-display (format #f ";sawtooth-wave scaler: ~F?" (mus-scaler gen))))
 	(if (or (fneq (vct-ref v0 1) 0.04) (fneq (vct-ref v0 8) .319)) (snd-display (format #f ";sawtooth-wave output: ~A" v0))))
-      
+
+      (test-gen-equal (make-sawtooth-wave 440.0) (make-sawtooth-wave 440.0) (make-sawtooth-wave 120.0))
+      (test-gen-equal (make-sawtooth-wave 440.0) (make-sawtooth-wave 440.0) (make-sawtooth-wave 440.0 1.0 1.0))
+      (test-gen-equal (make-sawtooth-wave 440.0) (make-sawtooth-wave 440.0) (make-sawtooth-wave 440.0 0.5))
+
       (let ((gen (make-square-wave 440.0))
 	    (v0 (make-vct 10)))
 	(print-and-check gen 
@@ -2913,7 +3068,11 @@
 	(if (fneq (mus-frequency gen) 440.0) (snd-display (format #f ";square-wave frequency: ~F?" (mus-frequency gen))))
 	(if (fneq (mus-scaler gen) 1.0) (snd-display (format #f ";square-wave scaler: ~F?" (mus-scaler gen))))
 	(if (or (fneq (vct-ref v0 1) 1.0) (fneq (vct-ref v0 8) 1.0)) (snd-display (format #f ";square-wave output: ~A" v0))))
-      
+
+      (test-gen-equal (make-square-wave 440.0) (make-square-wave 440.0) (make-square-wave 120.0))
+      (test-gen-equal (make-square-wave 440.0) (make-square-wave 440.0) (make-square-wave 440.0 1.0 1.0))
+      (test-gen-equal (make-square-wave 440.0) (make-square-wave 440.0) (make-square-wave 440.0 0.5))
+
       (let ((gen (make-triangle-wave 440.0))
 	    (v0 (make-vct 10)))
 	(print-and-check gen 
@@ -2928,7 +3087,11 @@
 	(if (fneq (mus-frequency gen) 440.0) (snd-display (format #f ";triangle-wave frequency: ~F?" (mus-frequency gen))))
 	(if (fneq (mus-scaler gen) 1.0) (snd-display (format #f ";triangle-wave scaler: ~F?" (mus-scaler gen))))
 	(if (or (fneq (vct-ref v0 1) 0.080) (fneq (vct-ref v0 8) 0.639)) (snd-display (format #f ";triangle-wave output: ~A" v0))))
-      
+
+      (test-gen-equal (make-triangle-wave 440.0) (make-triangle-wave 440.0) (make-triangle-wave 120.0))
+      (test-gen-equal (make-triangle-wave 440.0) (make-triangle-wave 440.0) (make-triangle-wave 440.0 1.0 1.0))
+      (test-gen-equal (make-triangle-wave 440.0) (make-triangle-wave 440.0) (make-triangle-wave 440.0 0.5))
+
       (let ((gen (make-pulse-train 440.0))
 	    (v0 (make-vct 10)))
 	(print-and-check gen 
@@ -2943,7 +3106,11 @@
 	(if (fneq (mus-frequency gen) 440.0) (snd-display (format #f ";pulse-train frequency: ~F?" (mus-frequency gen))))
 	(if (fneq (mus-scaler gen) 1.0) (snd-display (format #f ";pulse-train scaler: ~F?" (mus-scaler gen))))
 	(if (or (fneq (vct-ref v0 0) 1.0) (fneq (vct-ref v0 8) 0.0)) (snd-display (format #f ";pulse-train output: ~A" v0))))
-      
+
+      (test-gen-equal (make-pulse-train 440.0) (make-pulse-train 440.0) (make-pulse-train 120.0))
+      (test-gen-equal (make-pulse-train 440.0) (make-pulse-train 440.0) (make-pulse-train 440.0 1.0 1.0))
+      (test-gen-equal (make-pulse-train 440.0) (make-pulse-train 440.0) (make-pulse-train 440.0 0.5))
+
       (let ((gen (make-ppolar .1 1200.0))
 	    (v0 (make-vct 10)))
 	(vct-set! v0 0 (two-pole gen 1.0))
@@ -2956,7 +3123,17 @@
 	(if (fneq (mus-b1 gen) -.188) (snd-display (format #f ";ppolar b1: ~F?" (mus-b1 gen))))
 	(if (fneq (mus-b2 gen) .01) (snd-display (format #f ";ppolar b2: ~F?" (mus-b2 gen))))
 	(if (or (fneq (vct-ref v0 0) 1.0) (fneq (vct-ref v0 1) .188)) (snd-display (format #f ";ppolar output: ~A" v0))))
-      
+
+      (test-gen-equal (let ((z1 (make-ppolar .1 600.0))) (two-pole z1 1.0) z1)
+		      (let ((z2 (make-ppolar .1 600.0))) (two-pole z2 1.0) z2)
+		      (let ((z3 (make-ppolar .1 1200.0))) (two-pole z3 1.0) z3))
+      (test-gen-equal (let ((z1 (make-ppolar .1 600.0))) (two-pole z1 1.0) z1)
+		      (let ((z2 (make-ppolar .1 600.0))) (two-pole z2 1.0) z2)
+		      (let ((z3 (make-ppolar .2 1200.0))) (two-pole z3 1.0) z3))
+      (test-gen-equal (let ((z1 (make-ppolar .1 600.0))) (two-pole z1 1.0) z1)
+		      (let ((z2 (make-ppolar .1 600.0))) (two-pole z2 1.0) z2)
+		      (let ((z3 (make-ppolar .1 600.0))) (two-pole z3 0.5) z3))
+
       (let ((gen (make-zpolar .1 1200.0))
 	    (v0 (make-vct 10)))
 	(vct-set! v0 0 (two-zero gen 1.0))
@@ -2969,7 +3146,17 @@
 	(if (fneq (mus-a1 gen) -.188) (snd-display (format #f ";zpolar a1: ~F?" (mus-a1 gen))))
 	(if (fneq (mus-a2 gen) .01) (snd-display (format #f ";zpolar a2: ~F?" (mus-a2 gen))))
 	(if (or (fneq (vct-ref v0 0) 1.0) (fneq (vct-ref v0 1) -.188)) (snd-display (format #f ";zpolar output: ~A" v0))))
-      
+
+      (test-gen-equal (let ((z1 (make-zpolar .1 600.0))) (two-zero z1 1.0) z1)
+		      (let ((z2 (make-zpolar .1 600.0))) (two-zero z2 1.0) z2)
+		      (let ((z3 (make-zpolar .1 1200.0))) (two-zero z3 1.0) z3))
+      (test-gen-equal (let ((z1 (make-zpolar .1 600.0))) (two-zero z1 1.0) z1)
+		      (let ((z2 (make-zpolar .1 600.0))) (two-zero z2 1.0) z2)
+		      (let ((z3 (make-zpolar .2 1200.0))) (two-zero z3 1.0) z3))
+      (test-gen-equal (let ((z1 (make-zpolar .1 600.0))) (two-zero z1 1.0) z1)
+		      (let ((z2 (make-zpolar .1 600.0))) (two-zero z2 1.0) z2)
+		      (let ((z3 (make-zpolar .1 600.0))) (two-zero z3 0.5) z3))
+
       (let ((gen (make-formant .9 1200.0 1.0))
 	    (v0 (make-vct 10)))
 	(print-and-check gen 
@@ -2996,7 +3183,17 @@
 	(set! (mus-b1 gen) .5) (if (fneq (mus-b1 gen) 0.5) (snd-display (format #f ";formant set-b1: ~F?" (mus-b1 gen))))
 	(set! (mus-b2 gen) .5) (if (fneq (mus-b2 gen) 0.5) (snd-display (format #f ";formant set-b2: ~F?" (mus-b2 gen))))
 	(set! (mus-formant-radius gen) .01) (if (fneq (mus-formant-radius gen) 0.01) (snd-display (format #f ";formant set-radius: ~F?" (mus-formant-radius gen)))))
-      
+
+      (test-gen-equal (let ((f1 (make-formant .9 1200.0 1.0))) (formant f1 1.0) f1)
+		      (let ((f2 (make-formant .9 1200.0 1.0))) (formant f2 1.0) f2)
+		      (let ((f3 (make-formant .9 600.0 1.0))) (formant f3 1.0) f3))
+      (test-gen-equal (let ((f1 (make-formant .9 1200.0 1.0))) (formant f1 1.0) f1)
+		      (let ((f2 (make-formant .9 1200.0 1.0))) (formant f2 1.0) f2)
+		      (let ((f3 (make-formant .99 1200.0 1.0))) (formant f3 1.0) f3))
+      (test-gen-equal (let ((f1 (make-formant .9 1200.0 1.0))) (formant f1 1.0) f1)
+		      (let ((f2 (make-formant .9 1200.0 1.0))) (formant f2 1.0) f2)
+		      (let ((f3 (make-formant .9 1200.0 0.5))) (formant f3 1.0) f3))
+
       (let ((ob (open-sound "oboe.snd")))
 	(define (poltergeist frek amp R gain frek-env R-env)
 	  ;; test courtesy of Anders Vinjar
@@ -3010,7 +3207,7 @@
 	(map-chan (poltergeist 300 0.1 0.0 30.0 '(0 100 1 4000.0) '(0 0.99 1 .9)))  ;; should sound like "whyieee?"
 	(play-and-wait 0 ob)
 	(close-sound ob))
-      
+
       (let ((gen (make-mixer 2 .5 .25 .125 1.0))
 	    (fr0 (make-frame 2 1.0 1.0))
 	    (fr1 (make-frame 2 0.0 0.0)))
@@ -3075,7 +3272,7 @@
 	  (let ((frout (make-frame 2)))
 	    (sample->frame mx2 1.0 frout)
 	    (if (not (equal? frout fr0)) (snd-display (format #f ";sample->frame via frout: ~A ~A?" frout fr0))))))
-      
+
       (let ((gen (make-fft-window hamming-window 16)))
 	(if (not (vequal gen (vct 0.080 0.115 0.215 0.364 0.540 0.716 0.865 1.000 1.000 0.865 0.716 0.540 0.364 0.215 0.115 0.080)))
 	    (snd-display (format #f ";hamming window: ~A" gen))))
@@ -3128,7 +3325,7 @@
        (let ((gen (make-fft-window dolph-chebyshev-window 16 1.0)))
 	 (if (not (vequal gen (vct 0.000 0.494 0.604 0.710 0.806 0.887 0.949 0.987 1.000 0.987 0.949 0.887 0.806 0.710 0.604 0.494)))
 	     (snd-display (format #f ";dolph-chebyshev window: ~A" gen)))))
-      
+
       (let ((v0 (make-vct 10))
 	    (gen (make-env '(0 0 1 1 2 0) :scaler 0.5 :end 9)))
 	(print-and-check gen 
@@ -3201,7 +3398,11 @@
 	  (set! (mus-location gen) 6)
 	  (let ((val (env gen)))
 	    (if (fneq val 0.8) (snd-display (format #f ";mus-set-location 6 -> ~A (0.8)?" val))))))
-      
+
+      (test-gen-equal (make-env '(0 0 1 1 2 0) :scaler 0.5 :end 9) (make-env '(0 0 1 1 2 0) :scaler 0.5 :end 9) (make-env '(0 0 1 1 2 0) :scaler 0.25 :end 9))
+      (test-gen-equal (make-env '(0 0 1 1 2 0) :scaler 0.5 :end 9) (make-env '(0 0 1 1 2 0) :scaler 0.5 :end 9) (make-env '(0 0 1 1 2 0) :scaler 0.5 :end 10))
+      (test-gen-equal (make-env '(0 0 1 1 2 0) :scaler 0.5 :end 9) (make-env '(0 0 1 1 2 0) :scaler 0.5 :end 9) (make-env '(0 0 1 1 3 0) :scaler 0.5 :end 9))
+
       (let ((gen (make-table-lookup 440.0 :wave (partials->wave '(1 1 2 1))))
 	    (gen1 (make-table-lookup 440.0 :wave (partials->wave '(1 1 2 1))))
 	    (gen2 (partials->wave '(1 1 2 1 3 1 4 1) #f #t))
@@ -3234,7 +3435,14 @@
 		(fneq (vct-peak (partials->wave '(1 1 2 1) #f #t)) 1.0)
 		(fneq (vct-peak (partials->wave '(1 1 2 1 3 1 4 1) #f #t)) 1.0))
 	    (snd-display (format #f ";normalized partials?"))))
-      
+
+      (test-gen-equal (make-table-lookup 440.0 :wave (partials->wave '(1 1 2 1)))
+		      (make-table-lookup 440.0 :wave (partials->wave '(1 1 2 1)))
+		      (make-table-lookup 100.0 :wave (partials->wave '(1 1 2 1))))
+      (test-gen-equal (make-table-lookup 440.0 :wave (partials->wave '(1 1 2 1)))
+		      (make-table-lookup 440.0 :wave (partials->wave '(1 1 2 1)))
+		      (make-table-lookup 440.0 :wave (partials->wave '(1 1 2 .5))))
+
       (let ((gen0 (make-waveshape 440.0 :wave (partials->waveshape '(1 1))))
 	    (gen (make-waveshape 440.0 :partials '(1 1)))
 	    (v0 (make-vct 10)))
@@ -3253,7 +3461,10 @@
 	(if (fneq (mus-phase gen) 1.253787) (snd-display (format #f ";waveshape phase: ~F?" (mus-phase gen))))
 	(if (fneq (mus-frequency gen) 440.0) (snd-display (format #f ";waveshape frequency: ~F?" (mus-frequency gen))))
 	(if (or (fneq (vct-ref v0 1) 0.125) (fneq (vct-ref v0 8) .843)) (snd-display (format #f ";waveshape output: ~A" v0))))
-      
+
+      (test-gen-equal (make-waveshape 440.0 :partials '(1 1)) (make-waveshape 440.0 :partials '(1 1)) (make-waveshape 100.0 :partials '(1 1)))
+      (test-gen-equal (make-waveshape 440.0 :partials '(1 1)) (make-waveshape 440.0 :partials '(1 1)) (make-waveshape 4400.0 :partials '(1 1 2 .5)))
+
       (let ((gen (make-wave-train 440.0 0.0 (make-vct 20)))
 	    (v0 (make-vct 10)))
 	(print-and-check gen 
@@ -3272,7 +3483,10 @@
 	(if (fneq (mus-phase gen) 0.0) (snd-display (format #f ";wave-train phase: ~F?" (mus-phase gen))))
 	(if (fneq (mus-frequency gen) 440.0) (snd-display (format #f ";wave-train frequency: ~F?" (mus-frequency gen))))
 	(if (or (fneq (vct-ref v0 1) 0.5) (fneq (vct-ref v0 8) 4.0)) (snd-display (format #f ";wave-train output: ~A" v0))))
-      
+
+      (test-gen-equal (make-wave-train 440.0 0.0 (make-vct 20)) (make-wave-train 440.0 0.0 (make-vct 20)) (make-wave-train 100.0 0.0 (make-vct 20)))
+      (test-gen-equal (make-wave-train 440.0 0.0 (make-vct 20)) (make-wave-train 440.0 0.0 (make-vct 20)) (make-wave-train 440.0 1.0 (make-vct 20)))
+
       (let ((gen (make-readin "oboe.snd" 0 1490))
 	    (v0 (make-vct 10)))
 	(print-and-check gen 
@@ -3290,7 +3504,10 @@
 	(if (not (= (mus-location gen) 1000)) (snd-display (format #f ";mus-set-location: ~A?" (mus-location gen))))
 	(let ((val (readin gen)))
 	  (if (fneq val 0.033) (snd-display (format #f ";mus-set-location readin: ~A?" val)))))
-      
+
+      (test-gen-equal (make-readin "oboe.snd" 0) (make-readin "oboe.snd" 0) (make-readin "oboe.snd" 1230))
+      (test-gen-equal (make-readin "oboe.snd" 0) (make-readin "oboe.snd" 0) (make-readin "pistol.snd" 0))
+
       (let ((gen (make-file->sample "oboe.snd"))
 	    (v0 (make-vct 10)))
 	(print-and-check gen 
@@ -3302,7 +3519,7 @@
 	  (vct-set! v0 i (file->sample gen (+ 1490 i))))
 	(if (not (file->sample? gen)) (snd-display (format #f ";~A not file->sample?" gen)))
 	(if (or (fneq (vct-ref v0 1) -0.009) (fneq (vct-ref v0 7) .029)) (snd-display (format #f ";file->sample output: ~A" v0))))
-      
+
       (let ((gen (make-file->frame "oboe.snd"))
 	    (v0 (make-vct 10)))
 	(print-and-check gen 
@@ -3314,7 +3531,7 @@
 	  (vct-set! v0 i (frame-ref (file->frame gen (+ 1490 i)) 0)))
 	(if (not (file->frame? gen)) (snd-display (format #f ";~A not file->frame?" gen)))
 	(if (or (fneq (vct-ref v0 1) -0.009) (fneq (vct-ref v0 7) .029)) (snd-display (format #f ";file->frame output: ~A" v0))))
-      
+
       (if (file-exists? "fmv.snd") (delete-file "fmv.snd"))
       (if (file-exists? "fmv1.snd") (delete-file "fmv1.snd"))
       (if (file-exists? "fmv2.snd") (delete-file "fmv2.snd"))
@@ -3426,7 +3643,7 @@
 	  (do ((i 0 (1+ i)))
 	      ((= i 1000))
 	    (if (fneq (vct-ref v0 i) (vct-ref v1 i)) (snd-display (format #f ";array->file->array: ~A ~A ~A?" i (vct-ref v0 i) (vct-ref v1 i)))))))
-      
+
       (let ((gen (make-rand 10000.0))
 	    (v0 (make-vct 10)))
 	(print-and-check gen 
@@ -3440,7 +3657,10 @@
 	(if (fneq (mus-phase gen) 3.3624296) (snd-display (format #f ";rand phase: ~F?" (mus-phase gen))))
 	(if (fneq (mus-frequency gen) 10000.0) (snd-display (format #f ";rand frequency: ~F?" (mus-frequency gen))))
 	(if (= (vct-ref v0 1) (vct-ref v0 8)) (snd-display (format #f ";rand output: ~A" v0))))
-      
+
+      (test-gen-equal (make-rand 1000) (make-rand 1000) (make-rand 500))
+      (test-gen-equal (make-rand 1000) (make-rand 1000) (make-rand 1000 0.5))
+
       (let ((gen (make-rand-interp 4000.0))
 	    (v0 (make-vct 10)))
 	(print-and-check gen 
@@ -3454,19 +3674,27 @@
 	(if (fneq (mus-phase gen) 5.114882) (snd-display (format #f ";rand-interp phase: ~F?" (mus-phase gen))))
 	(if (fneq (mus-frequency gen) 4000.0) (snd-display (format #f ";rand-interp frequency: ~F?" (mus-frequency gen))))
 	(if (= (vct-ref v0 1) (vct-ref v0 8)) (snd-display (format #f ";rand-interp output: ~A" v0))))
-      
+(gc1)            
       (let* ((gen (make-locsig 30.0 :channels 2))
+	     (gen1 (make-locsig 60.0 :channels 2))
+	     (gen2 (make-locsig 60.0 :channels 4))
+	     (gen3 gen1)
 	     (fr0 (locsig gen 0 1.0)))
 	(print-and-check gen 
 			 "locsig"
 			 "locsig: chans 2, outn: [0.667 0.333]"
 			 "locs outn[2]: [0.667 0.333], revn[0]: nil")
 	(if (not (locsig? gen)) (snd-display (format #f ";~A not locsig?" gen)))
+	(if (not (eq? gen1 gen3)) (snd-display (format #f ";locsig eq? ~A ~A" gen1 gen3)))
+	(if (not (equal? gen1 gen3)) (snd-display (format #f ";locsig equal? ~A ~A" gen1 gen3)))
+	(if (eq? gen1 gen2) (snd-display (format #f ";locsig 1 eq? ~A ~A" gen1 gen2)))
+	(if (equal? gen gen1) (snd-display (format #f ";locsig 2 equal? ~A ~A" gen gen1)))
+	(if (equal? gen gen2) (snd-display (format #f ";locsig 3 equal? ~A ~A" gen gen2)))
 	(if (or (fneq (frame-ref fr0 0) .667) (fneq (frame-ref fr0 1) .333)) (snd-display (format #f ";locsig output: ~A" fr0)))
 	(if (or (fneq (locsig-ref gen 0) .667) (fneq (locsig-ref gen 1) .333))
 	    (snd-display (format #f ";locsig ref: ~F ~F?" (locsig-ref gen 0) (locsig-ref gen 1))))
 	(locsig-set! gen 0 .5)
-	(if (rs .1) (gc))
+	(if (rs .1) (gc1))
 	(set! fr0 (locsig gen 0 1.0))
 	(if (fneq (frame-ref fr0 0) .5) (snd-display (format #f ";locsig-set: ~F?" (frame-ref fr0 0))))
 	(set! gen (make-locsig 120.0 2.0 .1 :channels 4))
@@ -3475,7 +3703,7 @@
 	(set! gen (make-locsig 300.0 2.0 .1 :channels 4))
 	(set! fr0 (locsig gen 0 1.0))
 	(if (or (fneq (frame-ref fr0 3) .333) (fneq (frame-ref fr0 0) .167)) (snd-display (format #f ";300 locsig quad output: ~A" fr0))))
-
+(gc1)      
       (if (file-exists? "fmv4.snd") (delete-file "fmv4.snd"))
       (if (file-exists? "fmv4.reverb") (delete-file "fmv4.reverb"))
       (let* ((gen (make-frame->file "fmv4.snd" 2 mus-bshort mus-next))
@@ -3497,7 +3725,7 @@
 	  (file->array "fmv4.reverb" 0 0 100 v2)
 	  (if (fneq (vct-ref v2 0) .1) (snd-display (format #f ";locsig reverb: ~A?" v2)))
 	  (if (fneq (* 2 (vct-ref v0 0)) (vct-ref v1 0)) (snd-display (format #f ";locsig direct: ~A?" (vct-ref v0 0) (vct-ref v1 0))))))
-
+(gc1)      
       (let ((gen (make-src :srate 2.0))
 	    (v0 (make-vct 10))
 	    (rd (make-readin "oboe.snd" 0 2000)))
@@ -3511,7 +3739,7 @@
 	(if (not (src? gen)) (snd-display (format #f ";~A not scr?" gen)))
 	(if (or (fneq (vct-ref v0 1) .001) (fneq (vct-ref v0 7) .021)) (snd-display (format #f ";src output: ~A" v0)))
 	(if (fneq (mus-increment gen) 2.0) (snd-display (format #f ";src increment: ~F?" (mus-increment gen)))))
-      
+(gc1)            
       (let ((gen (make-granulate :expansion 2.0))
 	    (v0 (make-vct 1000))
 	    (rd (make-readin "oboe.snd" 0 4000)))
@@ -3535,7 +3763,7 @@
 	(set! (mus-length gen) 3000) (if (not (= (mus-length gen) 3000)) (snd-display (format #f ";granulate set-length: ~A?" (mus-length gen))))
 	(set! (mus-increment gen) 3.0)
 	(if (> (abs (- (mus-increment gen) 3.0)) .01) (snd-display (format #f ";granulate set-increment: ~F?" (mus-increment gen)))))
-      
+(gc1)            
       (let* ((v0 (make-vct 32))
 	     (v1 (make-vct 256))
 	     (v2 (make-vct 256)))
@@ -3563,7 +3791,7 @@
 	(if (fneq (vector-ref (mus-sound-max-amp "fmv.snd") 1) .5) 
 	    (snd-display (format #f ";convolve-files: ~A /= .5?" (vector-ref (mus-sound-max-amp "fmv.snd") 1))))
 	(play-sound "fmv.snd"))
-      
+(gc1)            
       (let* ((fd (mus-sound-open-input "oboe.snd"))
 	     (chans (mus-sound-chans "oboe.snd"))
 	     (data (make-sound-data chans 2000)))
@@ -3574,7 +3802,7 @@
 	(let ((val (sound-data-ref data 0 1497)))
 	  (mus-sound-close-input fd)
 	  (if (fneq val 0.02893066) (snd-display (format #f ";mus-sound-read: ~F?" val)))))
-
+(gc1)      
       (let ((nind (new-sound "fmv.snd" mus-aifc mus-bshort 22050 1 "this is a comment")))
 	(time (fm-violin 0 1 440 .1))
 	(fofins 1 1 270 .2 .001 730 .6 1090 .3 2440 .1) 
@@ -3602,7 +3830,7 @@
 	(revert-sound nind)
 	(close-sound nind))
       (if (file-exists? "fmv.snd") (delete-file "fmv.snd"))
-
+(gc1)      
       (let ((nind (new-sound "fmv.snd")))
 	(if (not (= (header-type nind) (default-output-type)))
 	    (snd-display (format #f ";new-sound default header-type: ~A ~A?"
@@ -3690,7 +3918,7 @@
 	(pqw-vox 0 1 300 300 .1 '(0 0 50 1 100 0) '(0 0 100 0) 0 '(0 L 100 L) '(.33 .33 .33) '((1 1 2 .5) (1 .5 2 .5 3 1) (1 1 4 .5)))
 	(play-and-wait 0 nind)
 	(close-sound nind))
-
+(gc1)      
       (if (file-exists? "fmv.snd") (delete-file "fmv.snd"))
       (if (file-exists? "fmv1.snd") (delete-file "fmv1.snd"))
       (if (file-exists? "fmv2.snd") (delete-file "fmv2.snd"))
@@ -3733,8 +3961,8 @@
 	(mus-mix "fmv.snd" "fmv3.snd" 0 2 0)
 	(file->array "fmv.snd" 0 0 3 v0)
 	(if (or (fneq (vct-ref v0 0) .6) (fneq (vct-ref v0 2) .38)) (snd-display (format #f ";mus-mix(4->4): ~A?" v0))))
-      (if (rs .5) (gc))
-
+      (if (rs .5) (gc1))
+(gc1)      
       (let* ((ind (open-sound "oboe.snd"))
 	     (pi2 (* 2.0 pi))
 	     (pv (make-phase-vocoder #f
@@ -3832,7 +4060,7 @@
 	(undo 1)
 	(free-sample-reader reader)
 	(close-sound ind))
-
+(gc1)      
       ))
 
 
@@ -5694,22 +5922,22 @@
 			    
 			    (if index
 				(if (equal? minval #f)
-				    (setfnc (rs 0.5) index)
+				    (setfnc (rsp 0.5) index)
 				  (if (exact? minval)
 				      (if (equal? name #t)
 					  (setfnc (inexact->exact
-						   (floor (expt 2 (ceiling (/ (log (+ minval (floor (* (- maxval minval) (my-random 1.0))))) 
-									      (log 2)))))) 
+						   (floor (expt 2 (min 31 (ceiling (/ (log (+ minval (floor (* (- maxval minval) (my-random 1.0))))) 
+											(log 2)))))))
 						  index)
 					(setfnc (+ minval (inexact->exact (floor (* (- maxval minval) (my-random 1.0))))) index))
 				    (setfnc (+ minval (* (- maxval minval) (my-random 1.0))) index)))
 			      (if (equal? minval #f)
-				  (setfnc (rs 0.5))
+				  (setfnc (rsp 0.5))
 				(if (exact? minval)
 				    (if (equal? name #t)
 					(setfnc (inexact->exact
-						 (floor (expt 2 (ceiling (/ (log (+ minval (floor (* (- maxval minval) (my-random 1.0))))) 
-									    (log 2)))))))
+						 (floor (expt 2 (min 31 (ceiling (/ (log (+ minval (floor (* (- maxval minval) (my-random 1.0))))) 
+										    (log 2))))))))
 				      (setfnc (+ minval (inexact->exact (floor (* (- maxval minval) (my-random 1.0)))))))
 				  (setfnc (+ minval (* (- maxval minval) (my-random 1.0)))))))
 			    (reset-vars (cdr lst)))))))

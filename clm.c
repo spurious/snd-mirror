@@ -3,7 +3,7 @@
  * in gdb, p mus_describe(arg) will show the user-view of arg
  *         p mus_inspect(arg) will show every internal field of arg
  *
- * restart method? feedback? channels? increment? user-addmethod? filter class (and filter_p) for a0 etc?
+ * restart method? feedback? channels? increment? user-addmethod? mus-copy? filter class (and filter_p) for a0 etc?
  *   more macros like MUS_RUN?
  */
 
@@ -985,7 +985,26 @@ static char *describe_all_pass(void *ptr)
 
 static int delay_equalp(void *p1, void *p2)
 {
-  return((p1 == p2)); /* should we actually check the delay lines?? */
+  int i;
+  dly *d1 = (dly *)p1;
+  dly *d2 = (dly *)p2;
+  if (p1 == p2) return(TRUE);
+  if ((d1) && (d2) &&
+      (d1->core->type == d2->core->type) &&
+      (d1->size == d2->size) &&
+      (d1->loc == d2->loc) &&
+      (d1->zdly == d2->zdly) &&
+      (d1->zloc == d2->zloc) &&
+      (d1->zsize == d2->zsize) &&
+      (d1->xscl == d2->xscl) &&
+      (d1->yscl == d2->yscl))
+    {
+      for (i = 0; i < d1->size; i++)
+	if (d1->line[i] != d2->line[i])
+	  return(FALSE);
+      return(TRUE);
+    }
+  return(FALSE);
 }
 
 static int delay_length(void *ptr) {return(((dly *)ptr)->size);}
@@ -1324,7 +1343,23 @@ static char *inspect_table_lookup(void *ptr)
 
 static int table_lookup_equalp(void *p1, void *p2)
 {
-  return(p1 == p2); /* check entire tables?? */
+  int i;
+  tbl *t1 = (tbl *)p1;
+  tbl *t2 = (tbl *)p2;
+  if (p1 == p2) return(TRUE);
+  if ((t1) && (t2) &&
+      (t1->core->type == t2->core->type) &&
+      (t1->table_size == t2->table_size) &&
+      (t1->freq == t2->freq) &&
+      (t1->phase == t2->phase) &&
+      (t1->internal_mag == t2->internal_mag))
+    {
+      for (i = 0; i < t1->table_size; i++)
+	if (t1->table[i] != t2->table[i])
+	  return(FALSE);
+      return(TRUE);
+    }
+  return(FALSE);
 }
 
 static int free_table_lookup(void *ptr) 
@@ -1444,12 +1479,16 @@ static Float set_sawtooth_scaler(void *ptr, Float val) {((sw *)ptr)->base = val 
 
 static int sw_equalp(void *p1, void *p2)
 {
+  sw *s1, *s2;
+  s1 = (sw *)p1;
+  s2 = (sw *)p2;
   return((p1 == p2) ||
-	 (((((sw *)p1)->core)->type == (((sw *)p2)->core)->type) &&
-	  ((((sw *)p1)->freq) == (((sw *)p2)->freq)) &&
-	  ((((sw *)p1)->phase) == (((sw *)p2)->phase)) &&
-	  ((((sw *)p1)->base) == (((sw *)p2)->base)) &&
-	  ((((sw *)p1)->current_value) == (((sw *)p2)->current_value))));
+	 ((s1) && (s2) &&
+	  (s1->core->type == s2->core->type) &&
+	  (s1->freq == s2->freq) &&
+	  (s1->phase == s2->phase) &&
+	  (s1->base == s2->base) &&
+	  (s1->current_value == s2->current_value)));
 }
 
 static char *describe_sawtooth(void *ptr)
@@ -1817,7 +1856,8 @@ static int noi_equalp(void *p1, void *p2)
   noi *g1 = (noi *)p1;
   noi *g2 = (noi *)p2;
   return((p1 == p2) ||
-	 (((g1->core)->type == (g2->core)->type) &&
+	 ((g1) && (g2) &&
+	  (g1->core->type == g2->core->type) &&
 	  (g1->freq == g2->freq) &&
 	  (g1->phase == g2->phase) &&
 	  (g1->output == g2->output) &&
@@ -2067,7 +2107,7 @@ static int smpflt_equalp(void *p1, void *p2)
   smpflt *g1 = (smpflt *)p1;
   smpflt *g2 = (smpflt *)p2;
   return((p1 == p2) ||
-	 (((g1->core)->type == (g2->core)->type) &&
+	 ((g1->core->type == g2->core->type) &&
 	  (g1->a0 == g2->a0) &&
 	  (g1->a1 == g2->a1) &&
 	  (g1->a2 == g2->a2) &&
@@ -2734,7 +2774,29 @@ static int free_filter(void *ptr)
 }
 
 static int filter_length(void *ptr) {return(((flt *)ptr)->order);}
-static int filter_equalp(void *p1, void *p2) {return(p1 == p2);}
+
+static int filter_equalp(void *p1, void *p2) 
+{
+  flt *f1, *f2;
+  int i;
+  if (((((mus_any *)p1)->core)->type == (((mus_any *)p2)->core)->type) &&
+      ((mus_filter_p((mus_any *)p1)) || (mus_fir_filter_p((mus_any *)p1)) || (mus_iir_filter_p((mus_any *)p1))))
+    {
+      f1 = (flt *)p1;
+      f2 = (flt *)p2;
+      if (f1->order == f2->order)
+	{
+	  for (i = 0; i < f1->order; i++)
+	    {
+	      if ((f1->x) && (f2->x) && (f1->x[i] != f2->x[i])) return(FALSE);
+	      if ((f1->y) && (f2->y) && (f1->y[i] != f2->y[i])) return(FALSE);
+	      if (f1->state[i] != f2->state[i]) return(FALSE);
+	    }
+	  return(TRUE);
+	}
+    }
+  return(FALSE);
+}
 
 static char *describe_filter(void *ptr)
 {
@@ -2968,7 +3030,27 @@ static Float set_ws_phase(void *ptr, Float val) {((ws *)ptr)->phase = val; retur
 static int ws_size(void *ptr) {return(((ws *)ptr)->table_size);}
 static int set_ws_size(void *ptr, int val) {((ws *)ptr)->table_size = val; return(val);}
 static Float *ws_data(void *ptr) {return(((ws *)ptr)->table);}
-static int ws_equalp(void *p1, void *p2) {return(p1 == p2);}
+
+static int ws_equalp(void *p1, void *p2)
+{
+  int i;
+  ws *w1 = (ws *)p1;
+  ws *w2 = (ws *)p2;
+  if (p1 == p2) return(TRUE);
+  if ((w1) && (w2) &&
+      (w1->core->type == w2->core->type) &&
+      (w1->freq == w2->freq) &&
+      (w1->phase == w2->phase) &&
+      (w1->table_size == w2->table_size) &&
+      (w1->offset == w2->offset))
+    {
+      for (i = 0; i < w1->table_size; i++)
+	if (w1->table[i] != w2->table[i])
+	  return(FALSE);
+      return(TRUE);
+    }
+  return(FALSE);
+}
 
 static Float *set_ws_data(void *ptr, Float *val) 
 {
@@ -3331,7 +3413,37 @@ static Float *fixup_exp_env(seg *e, Float *data, int pts, Float offset, Float sc
   return(result);
 }
 
-static int env_equalp(void *p1, void *p2) {return(p1 == p2);}
+static int env_equalp(void *p1, void *p2)
+{
+  int i;
+  seg *e1 = (seg *)p1;
+  seg *e2 = (seg *)p2;
+  if (p1 == p2) return(TRUE);
+  if ((e1) && (e2) &&
+      (e1->core->type == e2->core->type) &&
+      (e1->pass == e2->pass) &&
+      (e1->end == e2->end) &&
+      (e1->style == e2->style) &&
+      (e1->index == e2->index) &&
+      (e1->size == e2->size) &&
+
+      (e1->rate == e2->rate) &&
+      (e1->base == e2->base) &&
+      (e1->power == e2->power) &&
+      (e1->b1 == e2->b1) &&
+      (e1->current_value == e2->current_value) &&
+      (e1->scaler == e2->scaler) &&
+      (e1->offset == e2->offset) &&
+      (e1->init_y == e2->init_y) &&
+      (e1->init_power == e2->init_power))
+    {
+      for (i = 0; i < e1->size * 2; i++)
+	if (e1->original_data[i] != e2->original_data[i])
+	  return(FALSE);
+      return(TRUE);
+    }
+  return(FALSE);
+}
 
 static char *describe_env(void *ptr)
 {
@@ -3345,7 +3457,7 @@ static char *describe_env(void *ptr)
 		"env: %s, pass: %d (dur: %d), index: %d, data: %s",
 		((e->style == ENV_SEG) ? "linear" : ((e->style == ENV_EXP) ? "exponential" : "step")),
 		e->pass, e->end + 1, e->index,
-		str = print_array(e->original_data, e->size*2, 0));
+		str = print_array(e->original_data, e->size * 2, 0));
       else describe_bad_gen(ptr, desc, describe_big_buffer_size, "env", "an");
       if (str) FREE(str);
     }
@@ -3988,7 +4100,29 @@ static int mus_free_buffer(void *gen)
 static Float *rblk_data(void *ptr) {return(((rblk *)ptr)->buf);}
 static int rblk_length(void *ptr) {return(((rblk *)ptr)->size);}
 static int rblk_set_length(void *ptr, int new_size) {((rblk *)ptr)->size = new_size; return(new_size);}
-static int rblk_equalp(void *p1, void *p2) {return(p1 == p2);}
+
+int mus_buffer_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_BUFFER));}
+
+static int rblk_equalp(void *p1, void *p2) 
+{
+  int i;
+  rblk *b1 = (rblk *)p1;
+  rblk *b2 = (rblk *)p2;
+  if (p1 == p2) return(TRUE);
+  if ((b1) && (b2) &&
+      (b1->core->type == b2->core->type) &&
+      (b1->size == b2->size) &&
+      (b1->loc == b2->loc) &&
+      (b1->fill_time == b2->fill_time) &&
+      (b1->empty == b2->empty))
+    {
+      for (i = 0; i < b1->size; i++)
+	if (b1->buf[i] != b2->buf[i])
+	  return(FALSE);
+      return(TRUE);
+    }
+  return(FALSE);
+}
 
 static Float *rblk_set_data(void *ptr, Float *new_data) 
 {
@@ -4045,7 +4179,7 @@ Float mus_sample2buffer(mus_any *ptr, Float val)
   Float *tmp;
 #endif
   rblk *gen = (rblk *)ptr;
-  if (gen->fill_time >= gen->size)
+  if (gen->fill_time >= (Float)(gen->size))
     {
       if (gen->loc == 0)
 	{
@@ -4076,6 +4210,8 @@ Float mus_sample2buffer(mus_any *ptr, Float val)
   return(val);
 }
 
+static Float run_buffer (mus_any *ptr, Float unused1, Float unused2) {return(mus_buffer2sample(ptr));}
+
 static mus_any_class BUFFER_CLASS = {
   MUS_BUFFER,
   "buffer",
@@ -4089,7 +4225,7 @@ static mus_any_class BUFFER_CLASS = {
   &rblk_set_length,
   0, 0, 0, 0,
   0, 0,
-  0,
+  &run_buffer,
   0
 };
 
@@ -4129,14 +4265,12 @@ mus_any *mus_make_buffer(Float *preloaded_buffer, int size, Float current_fill_t
   return(NULL);
 }
 
-int mus_buffer_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_BUFFER));}
-
 int mus_buffer_empty_p(mus_any *ptr) {return(((rblk *)ptr)->empty);}
 
 int mus_buffer_full_p(mus_any *ptr)
 {
   rblk *gen = (rblk *)ptr;
-  return((gen->fill_time >= gen->size) && (gen->loc == 0));
+  return((gen->fill_time >= (Float)(gen->size)) && (gen->loc == 0));
 }
 
 mus_any *mus_frame2buffer(mus_any *rb, mus_any *fr)
@@ -4198,7 +4332,26 @@ static Float set_wt_phase(void *ptr, Float val) {((wt *)ptr)->phase = (val * ((w
 static int wt_length(void *ptr) {return(((wt *)ptr)->wsize);}
 static int wt_set_length(void *ptr, int val) {((wt *)ptr)->wsize = val; return(val);}
 static Float *wt_data(void *ptr) {return(((wt *)ptr)->wave);}
-static int wt_equalp(void *p1, void *p2) {return(p1 == p2);}
+
+static int wt_equalp(void *p1, void *p2)
+{
+  int i;
+  wt *w1 = (wt *)p1;
+  wt *w2 = (wt *)p2;
+  if (p1 == p2) return(TRUE);
+  if ((w1) && (w2) &&
+      (w1->core->type == w2->core->type) &&
+      (w1->freq == w2->freq) &&
+      (w1->phase == w2->phase) &&
+      (w1->wsize == w2->wsize))
+    {
+      for (i = 0; i < w1->wsize; i++)
+	if (w1->wave[i] != w2->wave[i])
+	  return(FALSE);
+      return(mus_equalp((mus_any *)(w1->b), (mus_any *)(w2->b)));
+    }
+  return(FALSE);
+}
 
 static Float *wt_set_data(void *ptr, Float *data) 
 {
@@ -4381,7 +4534,20 @@ static char *describe_file2sample(void *ptr)
   return(desc);
 }
 
-static int file2sample_equalp(void *p1, void *p2) {return(p1 == p2);}
+static int rdin_equalp(void *p1, void *p2) 
+{
+  rdin *r1 = (rdin *)p1;
+  rdin *r2 = (rdin *)p2;
+  return ((p1 == p2) ||
+	  ((r1) && (r2) &&
+	   (r1->core->type == r2->core->type) &&
+	   (r1->chan == r2->chan) &&
+	   (r1->loc == r2->loc) &&
+	   (r1->dir == r2->dir) &&
+	   (r1->file_name) &&
+	   (r2->file_name) &&
+	   (strcmp(r1->file_name, r2->file_name) == 0)));
+}
 
 static int free_file2sample(void *p) 
 {
@@ -4403,7 +4569,7 @@ static mus_any_class FILE2SAMPLE_CLASS = {
   &free_file2sample,
   &describe_file2sample,
   &inspect_rdin,
-  &file2sample_equalp,
+  &rdin_equalp,
   0, 0, 
   &file2sample_length, 0,
   0, 0, 0, 0,
@@ -4543,8 +4709,6 @@ static char *describe_readin(void *ptr)
   return(desc);
 }
 
-static int readin_equalp(void *p1, void *p2) {return(p1 == p2);}
-
 static int free_readin(void *p) 
 {
   rdin *ptr = (rdin *)p;
@@ -4565,7 +4729,7 @@ static mus_any_class READIN_CLASS = {
   &free_readin,
   &describe_readin,
   &inspect_rdin,
-  &readin_equalp,
+  &rdin_equalp,
   0, 0, 0, 0,
   0, 0, 0, 0,
   0, 0,
@@ -4728,7 +4892,7 @@ static mus_any_class FILE2FRAME_CLASS = {
   &free_file2sample,
   &describe_file2frame,
   &inspect_rdin,
-  &file2sample_equalp,
+  &rdin_equalp,
   0, 0, 0, 0,
   0, 0, 0, 0,
   0, 0,
@@ -5158,18 +5322,25 @@ static int locsig_equalp(void *p1, void *p2)
   locs *g1 = (locs *)p1;
   locs *g2 = (locs *)p2;
   int i;
-  if (p1 != p2) return(FALSE);
-  if ((g1->core)->type != (g2->core)->type) return(FALSE);
-  if (g1->chans != g2->chans) return(FALSE);
-  for (i = 0; i < g1->chans; i++) 
-    if (g1->outn[i] != g2->outn[i]) return(FALSE);
-  if (g1->revn)
+  if (p1 == p2) return(TRUE);
+  if ((g1) && (g2) &&
+      (g1->core->type == g2->core->type) &&
+      (g1->chans == g2->chans))
     {
-      if (!(g2->revn)) return(FALSE);
-      if (g1->revn[0] != g2->revn[0]) return(FALSE);
+      for (i = 0; i < g1->chans; i++) 
+	if (g1->outn[i] != g2->outn[i]) 
+	  return(FALSE);
+      if (g1->revn)
+	{
+	  if (!(g2->revn)) return(FALSE);
+	  if (g1->revn[0] != g2->revn[0]) return(FALSE);
+	}
+      else 
+	if (g2->revn) 
+	  return(FALSE);
+      return(TRUE);
     }
-  else if (g2->revn) return(FALSE);
-  return(TRUE);
+  return(FALSE);
 }
 
 static char *describe_locsig(void *ptr)

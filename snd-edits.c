@@ -337,6 +337,14 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
     }
 }
 
+/* TODO: copy_edit_list, edit_list_to_function (branch-sound with place of branching)
+ *          if we had copy, you could branch at a given edit without save+open
+ *          if edits->function, the current edit sequence could be applied to any sound
+ *            but to do this we need "true" edit history info (which may mean saving user-functions etc)
+ * (save-sound-as "new-name"), (open-sound "new-name") is the current branch (pos?)
+ * (save-sound) with pos = save it up to here
+ */
+
 void edit_history_to_file(FILE *fd, chan_info *cp)
 {
   /* write edit list as a snd-guile program to fd (open for writing) for subsequent load */
@@ -826,9 +834,6 @@ snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize)
 snd_data *make_snd_data_buffer(MUS_SAMPLE_TYPE *data, int len, int ctr)
 {
   snd_data *sf;
-#if (!HAVE_MEMMOVE)
-  int i;
-#endif
   sf = (snd_data *)CALLOC(1, sizeof(snd_data));
   sf->type = SND_DATA_BUFFER;
   sf->buffered_data = (MUS_SAMPLE_TYPE *)MALLOC((len + 1) * sizeof(MUS_SAMPLE_TYPE));
@@ -836,12 +841,7 @@ snd_data *make_snd_data_buffer(MUS_SAMPLE_TYPE *data, int len, int ctr)
   /*   the real problem here is that I never decided whether insert starts at the cursor or just past it */
   /*   when the cursor is on the final sample, this causes cross-fragment ambiguity as to the length of a trailing insertion */
   /*   C > (make-region 1000 2000) (insert-region (cursor)) C-v hits this empty slot and gets confused about the previously final sample value */
-#if HAVE_MEMMOVE
-  memmove((void *)(sf->buffered_data), (void *)data, len * sizeof(MUS_SAMPLE_TYPE));
-#else
-  for (i = 0; i < len; i++) 
-    sf->buffered_data[i] = data[i];
-#endif
+  memcpy((void *)(sf->buffered_data), (void *)data, len * sizeof(MUS_SAMPLE_TYPE));
   sf->edit_ctr = ctr;
   sf->copy = FALSE;
   sf->inuse = FALSE;
@@ -1695,12 +1695,7 @@ void parse_tree_scale_by(chan_info *cp, Float scl)
   prepare_edit_list(cp, len);
   new_ed = make_ed_list(cp->edits[pos]->size);
   cp->edits[cp->edit_ctr] = new_ed;
-#if HAVE_MEMMOVE
-  memmove((void *)(new_ed->fragments), (void *)(old_ed->fragments), new_ed->size * ED_SIZE * sizeof(int));
-#else
-  for (i = 0; i < new_ed->size * ED_SIZE; i++) 
-    new_ed->fragments[i] = old_ed->fragments[i];
-#endif
+  memcpy((void *)(new_ed->fragments), (void *)(old_ed->fragments), new_ed->size * ED_SIZE * sizeof(int)); /* old_ed->size? */
   for (i = 0; i < new_ed->size; i++) 
     {
       ed_scl = (float)(scl * INT_AS_FLOAT(FRAGMENT_SCALER(new_ed, i)));
@@ -2190,7 +2185,7 @@ static int only_save_edits(snd_info *sp, file_info *nhdr, char *ofile)
   sf = (snd_fd **)MALLOC(sp->nchans * sizeof(snd_fd *));
   for (i = 0; i < sp->nchans; i++) 
     {
-      sf[i] = init_sample_read(0, sp->chans[i], READ_FORWARD);
+      sf[i] = init_sample_read(0, sp->chans[i], READ_FORWARD);  /* TODO: bring out edit position here (and elsewhere) */
       if (sf[i] == NULL) err = MUS_ERROR;
     }
   if (err == MUS_NO_ERROR)
@@ -2243,7 +2238,7 @@ static int save_edits_1(snd_info *sp)
   sf = (snd_fd **)CALLOC(sp->nchans, sizeof(snd_fd *));
   for (i = 0; i < sp->nchans; i++)
     {
-      sf[i] = init_sample_read(0, sp->chans[i], READ_FORWARD);
+      sf[i] = init_sample_read(0, sp->chans[i], READ_FORWARD); /* TODO: pos? */
       if (sf[i] == NULL) err = MUS_ERROR;
     }
   if (err == MUS_NO_ERROR)
@@ -2382,7 +2377,7 @@ int chan_save_edits(chan_info *cp, char *ofile)
       /* here we're overwriting the current (possibly multi-channel) file with one of its channels */
       nfile = snd_tempnam(ss); 
       sf = (snd_fd **)MALLOC(sizeof(snd_fd *));
-      sf[0] = init_sample_read(0, cp, READ_FORWARD);
+      sf[0] = init_sample_read(0, cp, READ_FORWARD); /* TODO: pos? */
       if (sf[0] == NULL)
 	err = MUS_ERROR;
       else
@@ -2401,7 +2396,7 @@ int chan_save_edits(chan_info *cp, char *ofile)
   else
     {
       sf = (snd_fd **)MALLOC(sizeof(snd_fd *));
-      sf[0] = init_sample_read(0, cp, READ_FORWARD);
+      sf[0] = init_sample_read(0, cp, READ_FORWARD); /* TODO: pos? */
       if (sf[0] == NULL)
 	err = MUS_ERROR;
       else
@@ -2436,8 +2431,11 @@ void save_edits(snd_info *sp, void *ptr)
 	  errno = 0;
 	  /* check for change to file while we were editing it */
 	  current_write_date = file_write_date(sp->fullname);
-	  if (current_write_date != sp->write_date)
+	  if ((current_write_date - sp->write_date) > 1) /* weird!! In Redhat 7.1 these can differ by 1?? */
 	    {
+#if DEBUGGING
+	      fprintf(stderr,"current: %d, sp: %d ",current_write_date, sp->write_date);
+#endif
 	      err = snd_yes_or_no_p(sp->state, "%s changed on disk! Save anyway?", sp->shortname);
 	      if (err == 0) return;
 	    }
@@ -2591,7 +2589,8 @@ static SCM g_display_edits(SCM snd, SCM chn)
   FILE *tmp = NULL;
   char *buf, *name;
   chan_info *cp;
-  int len, fd;
+  int fd;
+  off_t len;
   snd_state *ss;
   SCM res;
   SND_ASSERT_CHAN(S_display_edits, snd, chn, 1);

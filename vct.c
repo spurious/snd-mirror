@@ -215,21 +215,13 @@ static SCM copy_vct(SCM obj)
   vct *v;
   Float *copied_data;
   int len;
-#if (!HAVE_MEMMOVE)
-  int i;
-#endif
   ASSERT_TYPE(VCT_P(obj), obj, SCM_ARGn, S_vct_copy, "a vct");
   v = TO_VCT(obj);
   if (v)
     {
       len = v->length;
       copied_data = (Float *)MALLOC(len * sizeof(Float));
-#if HAVE_MEMMOVE
-      memmove((void *)copied_data, (void *)(v->data), (len * sizeof(Float)));
-#else
-      for (i = 0; i < len; i++) 
-	copied_data[i] = v->data[i];
-#endif
+      memcpy((void *)copied_data, (void *)(v->data), (len * sizeof(Float)));
       return(make_vct(len, copied_data));
     }
   return(scm_return_first(SCM_BOOL_F, obj));

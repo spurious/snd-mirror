@@ -211,6 +211,7 @@ static char *get_tmpdir(void)
     if (tmpdir == NULL) tmpdir = "/tmp";
   #endif
 #endif
+  if (tmpdir == NULL) tmpdir = ".";
   return(tmpdir);
 }
 
@@ -220,7 +221,7 @@ char *shorter_tempnam(char *udir, char *prefix)
   /* tempnam turns out names that are inconveniently long (in this case the filename is user-visible) */
   char *str;
   str = (char *)CALLOC(512, sizeof(char));
-  if ((udir == NULL) || (strlen(udir) == 0)) udir = get_tmpdir();
+  if ((udir == NULL) || (snd_strlen(udir) == 0)) udir = get_tmpdir(); /* incoming dir could be "" */
   mus_snprintf(str, 512, "%s/%s%d_%d.snd", udir, (prefix) ? prefix : "snd_", getpid(), sect_ctr++);
   return(str);
 }

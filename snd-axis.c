@@ -8,7 +8,8 @@ typedef struct {
   int max_ticks;
   double flo, fhi, mlo, mhi, step, tenstep;
   int tens, min_label_width, max_label_width;
-  int min_label_x, max_label_x, maj_tick_len, min_tick_len;
+  Locus min_label_x, max_label_x;
+  Latus maj_tick_len, min_tick_len;
   char *min_label, *max_label;
 } tick_descriptor;
 
@@ -48,7 +49,7 @@ static tick_descriptor *describe_ticks(tick_descriptor *gd_td, Float lo, Float h
   hilo_diff = hi - lo;
   flt_ten = log10(hilo_diff);
   ten = (int)floor(flt_ten);
-  frac = flt_ten-ten;
+  frac = flt_ten - ten;
   if (frac > .9999) ten++;
   eten = pow(10, ten);
   hib = (int)floor(hi / eten);
@@ -164,18 +165,19 @@ enum {AXIS_X_BOTTOM, AXIS_X_MIDDLE};
 
 void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
 {
-  int width, height;
+  Latus width, height;
   int axis_style;                 /* x_bottom or x_middle or xy_middle => |_ or |- or + */
   double x_range, y_range, tens;
-  int axis_thickness, left_border_width, bottom_border_width, top_border_width, right_border_width;
-  int inner_border_width, tick_label_width;
-  int major_tick_length, minor_tick_length, x_tick_spacing, y_tick_spacing;
-  int include_x_label, include_x_ticks, include_x_tick_labels, include_y_ticks, include_y_tick_labels;
-  int x_label_width, x_label_height, x_number_height;
+  Latus axis_thickness, left_border_width, bottom_border_width, top_border_width, right_border_width;
+  Latus inner_border_width, tick_label_width;
+  Latus major_tick_length, minor_tick_length, x_tick_spacing, y_tick_spacing;
+  int include_x_label, include_x_ticks, include_x_tick_labels, include_y_ticks, include_y_tick_labels, show_x_axis = 1;
+  Latus x_label_width, x_label_height, x_number_height;
   int num_ticks, majy, miny, majx, minx, x, y, tx, ty, x0, y0;
   double fy, fx;
   tick_descriptor *tdx = NULL, *tdy = NULL;
-  int curx, cury, curdy, show_x_axis = 1;
+  Locus curx, cury;
+  int curdy;
   axis_context *ax;
   snd_info *sp;
   sp = cp->sound;

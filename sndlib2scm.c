@@ -409,10 +409,21 @@ static int print_sound_data(SCM obj, SCM port, scm_print_state *pstate)
 
 static SCM equalp_sound_data(SCM obj1, SCM obj2)
 {
+  int i, chn;
   sound_data *v1, *v2;
   v1 = (sound_data *)SND_VALUE_OF(obj1);
   v2 = (sound_data *)SND_VALUE_OF(obj2);
   if (v1 == v2) return(SCM_BOOL_T);
+  if ((v1) && (v2) &&
+      (v1->chans == v2->chans) &&
+      (v1->length == v2->length))
+    {
+      for (chn = 0; chn < v1->chans; chn++)
+	for (i = 0; i < v1->length; i++)
+	  if (v1->data[chn][i] != v2->data[chn][i])
+	    return(SCM_BOOL_F);
+      return(SCM_BOOL_T);
+    }
   return(scm_return_first(SCM_BOOL_F, obj1, obj2));
 }
 

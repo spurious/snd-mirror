@@ -491,6 +491,7 @@ static void Channel_Expose_Callback(Widget w, XtPointer context, XtPointer info)
   XmDrawingAreaCallbackStruct *cb = (XmDrawingAreaCallbackStruct *)info;
   XExposeEvent *ev;
   TIME_TYPE curtime;
+  if ((cp == NULL) || (cp->active != 1) || (cp->sound == NULL)) return;
   ev = (XExposeEvent *)(cb->event);
   curtime = GUI_CURRENT_TIME(cp->state);
   if ((ev->width < 15) && 
@@ -508,6 +509,7 @@ static void Channel_Resize_Callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_info *sp;
   chan_info *cp = (chan_info *)context;
+  if ((cp == NULL) || (cp->active != 1) || (cp->sound == NULL)) return;
   sp = cp->sound;
   if (sp->combining != CHANNELS_SEPARATE)
     map_over_sound_chans(sp, update_graph, NULL);

@@ -24,6 +24,8 @@ static void free_sync_state(sync_state *sc)
     }
 }
 
+/* TODO: map|scan-chan|find|count-matches pos? */
+
 static sync_state *get_sync_state_1(snd_state *ss, snd_info *sp, chan_info *cp, int beg, int regexpr, int forwards, int prebeg)
 {
   /* can return NULL if regexpr and no current selection */
@@ -1168,7 +1170,7 @@ Float get_maxamp(snd_info *sp, chan_info *cp)
   if (amp_env_maxamp_ok(cp)) return(amp_env_maxamp(cp));
   val = ed_maxamp(cp);
   if (val >= 0.0) return(val);
-  sf = init_sample_read(0, cp, READ_FORWARD);
+  sf = init_sample_read(0, cp, READ_FORWARD); /* TODO: pos? */
   if (sf == NULL) return(0.0);
   ymax = 0.0;
   len = current_ed_samples(cp);

@@ -277,7 +277,9 @@ typedef struct snd__state {
   char *pending_change;
   int print_choice, apply_choice, just_time, memory_available;
   int stopped_explicitly, checking_explicitly;
-  int result_printout, listening, init_window_width, init_window_height, init_window_x, init_window_y;
+  int result_printout, listening;
+  Latus init_window_width, init_window_height;
+  Locus init_window_x, init_window_y;
   int fft_hook_active, graph_hook_active;
 
   /* user-visible global variables
@@ -909,10 +911,10 @@ void stop_playing_sound_no_toggle(snd_info *sp);
 void stop_playing_all_sounds(void);
 void stop_playing_region(int n);
 void play_region(snd_state *ss, int n, int background);
-void play_channel(chan_info *cp, int start, int end, int background);
-void play_sound(snd_info *sp, int start, int end, int background);
-void play_channels(chan_info **cps, int chans, int *starts, int *ends, int background);
-void play_selection(int background);
+void play_channel(chan_info *cp, int start, int end, int background, int edpos);
+void play_sound(snd_info *sp, int start, int end, int background, int edpos);
+void play_channels(chan_info **cps, int chans, int *starts, int *ends, int background, int edpos);
+void play_selection(int background, int edpos);
 void toggle_dac_pausing(snd_state *ss); /* snd-dac.c */
 int play_in_progress(void);
 void initialize_apply(snd_info *sp, int chans, int frames);

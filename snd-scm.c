@@ -1626,9 +1626,9 @@ static SCM g_window_y(void)
 static SCM g_set_window_height(SCM height) 
 {
   #define H_set_window_height "(" "set-" S_window_height " val) sets the Snd window height in pixels"
-  int val;
+  Latus val;
   ASSERT_TYPE(NUMBER_P(height), height, SCM_ARGn, "set-" S_window_height, "a number"); 
-  set_widget_height(MAIN_SHELL(state), val = TO_C_INT_OR_ELSE(height, 0));
+  set_widget_height(MAIN_SHELL(state), val = (Latus)TO_C_INT_OR_ELSE(height, 0));
   state->init_window_height = val;
   return(height);
 }
@@ -1636,9 +1636,9 @@ static SCM g_set_window_height(SCM height)
 static SCM g_set_window_width(SCM width) 
 {
   #define H_set_window_width "(" "set-" S_window_width " val) sets the Snd window width in pixels"
-  int val;
+  Latus val;
   ASSERT_TYPE(NUMBER_P(width), width, SCM_ARGn, "set-" S_window_width, "a number"); 
-  set_widget_width(MAIN_SHELL(state), val = TO_C_INT_OR_ELSE(width, 0)); 
+  set_widget_width(MAIN_SHELL(state), val = (Latus)TO_C_INT_OR_ELSE(width, 0)); 
   state->init_window_width = val;
   return(width);
 }
@@ -1646,9 +1646,9 @@ static SCM g_set_window_width(SCM width)
 static SCM g_set_window_x(SCM val) 
 {
   #define H_set_window_x "(" "set-" S_window_x " val) sets the Snd window x position in pixels"
-  int x;
+  Locus x;
   ASSERT_TYPE(NUMBER_P(val), val, SCM_ARGn, "set-" S_window_x, "a number"); 
-  set_widget_x(MAIN_SHELL(state), x = TO_C_INT_OR_ELSE(val, 0));
+  set_widget_x(MAIN_SHELL(state), x = (Locus)TO_C_INT_OR_ELSE(val, 0));
   state->init_window_x = x;
   return(val);
 }
@@ -1656,9 +1656,9 @@ static SCM g_set_window_x(SCM val)
 static SCM g_set_window_y(SCM val) 
 {
   #define H_set_window_y "(" "set-" S_window_y " val) sets the Snd window y position in pixels"
-  int y;
+  Locus y;
   ASSERT_TYPE(NUMBER_P(val), val, SCM_ARGn, "set-" S_window_y, "a number"); 
-  set_widget_y(MAIN_SHELL(state), y = TO_C_INT_OR_ELSE(val, 0)); 
+  set_widget_y(MAIN_SHELL(state), y = (Locus)TO_C_INT_OR_ELSE(val, 0)); 
   state->init_window_y = y;
   return(val);
 }
@@ -2103,6 +2103,7 @@ static SCM g_update_lisp_graph(SCM snd, SCM chn)
   return(SCM_BOOL_F);
 }
 
+/* TODO: these should return the dialog widget */
 static SCM g_help_dialog(SCM subject, SCM msg)
 {
   #define H_help_dialog "(" S_help_dialog " subject message) fires up the Help window with subject and message"
@@ -2280,14 +2281,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
 	      lg->len[graph] = len;
 	    }
 	  if (v)
-	    {
-#if HAVE_MEMMOVE
-	      memmove((void *)(lg->data[graph]), (void *)(v->data), len * sizeof(Float));
-#else
-	      for (i = 0; i < len; i++) 
-		lg->data[graph][i] = v->data[i];
-#endif
-	    }
+	    memcpy((void *)(lg->data[graph]), (void *)(v->data), len * sizeof(Float));
 	  else 
 	    {
 	      vdata = SCM_VELTS(data);

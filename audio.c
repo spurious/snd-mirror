@@ -1493,7 +1493,7 @@ static int *audio_dsp = NULL;
 static int *audio_mixer = NULL; 
 static int *audio_type = NULL; 
 static int *audio_mode = NULL; 
-enum {NORMAL_CARD, SONORUS_STUDIO, RME_HAMMERFALL, SAM9407_DSP};
+enum {NORMAL_CARD, SONORUS_STUDIO, RME_HAMMERFALL, SAM9407_DSP, DELTA_66};
 /* the Sonorus Studi/o card is a special case in all regards */
 
 static int sound_cards = 0;
@@ -1801,48 +1801,68 @@ static int oss_mus_audio_initialize(void)
 	  /* can't change volume yet of Sonorus, so the method above won't work --
 	   * try to catch this case via the mixer's name
 	   */
+
+	  /* TODO: apparently this is also the case for delta cards in OSS:
+	   * /dev/mixer0 (M Audio Delta 66) (no reported devices)/dev/dsp0:
+	   */
+
 	  status = ioctl(md, SOUND_MIXER_INFO, &mixinfo);
 	  if ((status == 0) && 
 	      (mixinfo.name) && 
 	      (*(mixinfo.name)) && 
-	      (strlen(mixinfo.name) > 6) && 
-	      (strncmp("STUDI/O", mixinfo.name, 7) == 0))
+	      (strlen(mixinfo.name) > 6))
 	    {
-	      /* a special case in every regard */
-	      audio_type[sound_cards] = SONORUS_STUDIO;
-	      audio_mixer[sound_cards] = nmix; 
-	      nmix++;
-	      audio_dsp[sound_cards] = ndsp; 
-	      if (num_dsps >= 21)
+	      if (strncmp("STUDI/O", mixinfo.name, 7) == 0)
 		{
-		  ndsp += 21;
-		  audio_mode[sound_cards] = 1;
+		  /* a special case in every regard */
+		  audio_type[sound_cards] = SONORUS_STUDIO;
+		  audio_mixer[sound_cards] = nmix; 
+		  nmix++;
+		  audio_dsp[sound_cards] = ndsp; 
+		  if (num_dsps >= 21)
+		    {
+		      ndsp += 21;
+		      audio_mode[sound_cards] = 1;
+		    }
+		  else
+		    {
+		      ndsp += 9;
+		      audio_mode[sound_cards] = 0;
+		    }
+		  sound_cards++;
+		  close(fd);
+		  close(md);
+		  continue;
 		}
 	      else
 		{
-		  ndsp += 9;
-		  audio_mode[sound_cards] = 0;
+		  if (strncmp("RME Digi96", mixinfo.name, 10) == 0)
+		    {
+		      audio_type[sound_cards] = RME_HAMMERFALL;
+		      audio_mixer[sound_cards] = nmix; 
+		      nmix++;
+		      audio_dsp[sound_cards] = ndsp; 
+		      sound_cards++;
+		      close(fd);
+		      close(md);
+		      continue;
+		    }
+		  else
+		    {
+		      if (strncmp("M Audio Delta", mixinfo.name, 13) == 0)
+			{
+			  audio_type[sound_cards] = DELTA_66;
+			  audio_mixer[sound_cards] = nmix; 
+			  nmix++;
+			  ndsp += 6; /* just a guess */
+			  audio_dsp[sound_cards] = ndsp; 
+			  sound_cards++;
+			  close(fd);
+			  close(md);
+			  continue;
+			}
+		    }
 		}
-	      sound_cards++;
-	      close(fd);
-	      close(md);
-	      continue;
-	    }
-	  if ((status == 0) && 
-	      (mixinfo.name) && 
-	      (*(mixinfo.name)) && 
-	      (strlen(mixinfo.name) > 10) && 
-	      (strncmp("RME Digi96", mixinfo.name, 10) == 0))
-	    {
-	      /* a special case in every regard */
-	      audio_type[sound_cards] = RME_HAMMERFALL;
-	      audio_mixer[sound_cards] = nmix; 
-	      nmix++;
-	      audio_dsp[sound_cards] = ndsp; 
-	      sound_cards++;
-	      close(fd);
-	      close(md);
-	      continue;
 	    }
 #endif
 	  err = ioctl(md, SOUND_MIXER_READ_DEVMASK, &devmask);
@@ -2295,6 +2315,7 @@ static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int format
     ioctl(audio_fd, SNDCTL_DSP_SETDUPLEX, &err); /* not always a no-op! */
 #endif
   if (audio_type[sys] == RME_HAMMERFALL) return(audio_fd);
+  if (audio_type[sys] == DELTA_66) return(audio_fd);
   /* need to make sure the desired recording source is active -- does this actually have any effect? */
   switch (dev)
     {
@@ -2788,6 +2809,7 @@ static int oss_mus_audio_mixer_write(int ur_dev, int field, int chan, float *val
 
   if (audio_type[sys] == SONORUS_STUDIO) return(MUS_NO_ERROR); /* there are apparently volume controls, but they're not accessible yet */
   if (audio_type[sys] == RME_HAMMERFALL) return(MUS_NO_ERROR);
+  if (audio_type[sys] == DELTA_66) return(MUS_NO_ERROR);
 
   fd = linux_audio_open(dev_name = mixer_name(sys), O_RDWR | O_NONBLOCK, 0, sys);
   if (fd == -1) 
