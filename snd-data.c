@@ -121,6 +121,8 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
   cp->hookable = 1;
   cp->gzy = 1.0;
   cp->gsy = 1.0;
+  cp->cx = 0;
+  cp->cy = 0;
   cp->selection_transform_size = 0;
   cp->last_search_result = SEARCH_OK;
   if (cp->last_sonogram) 

@@ -360,6 +360,8 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
 	GUI_LISTENER_TEXT_INSERT(w, GUI_TEXT_END(w), str);
       GUI_SET_CURSOR(w, (ss->sgx)->wait_cursor);
       GUI_UPDATE(w); /* not sure about this... */
+      if ((snd_strlen(str) > 1) || (str[0] != '\n'))
+	remember_listener_string(str);
       /* 
        * the division into a read, a free, then an eval is needed to handle continuations correctly:
        *   
@@ -414,15 +416,25 @@ static XEN g_save_listener(XEN filename)
   return(filename);
 }
 
+static XEN g_clear_listener(void)
+{
+  #define H_clear_listener "(" S_clear_listener ") removes listener text from the beginning to the cursor"
+  clear_listener();
+  return(XEN_FALSE);
+}
+
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_1(g_save_listener_w, g_save_listener)
+XEN_NARGIFY_0(g_clear_listener_w, g_clear_listener);
 #else
 #define g_save_listener_w g_save_listener
+#define g_clear_listener_w g_clear_listener);
 #endif
 
 void g_init_listener(void)
 {
   XEN_DEFINE_PROCEDURE(S_save_listener, g_save_listener_w, 1, 0, 0, H_save_listener);
+  XEN_DEFINE_PROCEDURE(S_clear_listener, g_clear_listener, 0, 0, 0, H_clear_listener);
 
   #define H_read_hook S_read_hook " (text) is called each time a line is typed into the listener (triggered by the carriage return). \
 If it returns #t, Snd assumes you've dealt the text yourself, and does not try to evaluate it. \n\

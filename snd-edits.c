@@ -1,5 +1,8 @@
 #include "snd.h"
 
+/* TODO: samples should return vct, not vector -- all vectors probably should be removed 
+ */
+
 /* from snd-io.c */
 MUS_SAMPLE_TYPE *file_state_channel_array(int *io, int chan);
 int file_state_buffer_size(int *io);

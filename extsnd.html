@@ -1038,7 +1038,7 @@ when you save a sound via the "save" dialog.</p>
 <!-- --><tr><td valign=top><code><em class=def><a name="minibufferhistorylength">minibuffer-history-length</a></em></code></td>
 <!-- --><td valign=top><code>8</code></td>
 <!-- --><td>Length of minibuffer M-p/M-n history.  If set, sounds that are currently open 
-<!-- -->are not affected, only subsequently opened sounds.
+<!-- -->are not affected, only subsequently opened sounds.  Also affects the listener history.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
@@ -1445,6 +1445,18 @@ the hook.
 	    (set! (dot-size snd chn) 5))))
       #f)))
 <!-- --></pre></td></tr></table></td></tr>
+<!-- --><tr><td colspan=3></td></tr>
+<!-- -->
+<!-- help-hook -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="helphook">help-hook</a></em> (subject help-string)</code></span><td align=right><b>concat</b></td>
+<!-- --></td></tr>
+<!-- --><tr><td width=150></td><td colspan=2>
+<!-- -->called from snd-help with the current help subject and default help-string.  Say we want the index.scm
+<!-- -->procedure 'html' called any time snd-help is called (from C-? for example):<br><br>
+<!-- --><code>(add-hook! help-hook (lambda (subject help) (html subject) #f))</code><br><br>
+<!-- -->If there is more than one hook function, results are concatenated (return #f to leave the original string unchanged).  
+<!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
 <!-- initial-graph-hook -->
@@ -1951,7 +1963,7 @@ the hook.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called in Save-As dialog, passed current sound's comment, if any.
-<!-- -->If more than one hook function, results are concatenated.  
+<!-- -->If there is more than one hook function, results are concatenated (return #f to leave the original string unchanged).  
 <!-- -->If the hook is empty, the current comment is used.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
@@ -2022,7 +2034,7 @@ the hook.
 <!-- -->If it returns some non-#f result, Snd assumes you've sent the text out yourself, as well as any needed prompt.
 <!-- -->The prompt is important!  Snd uses it to find the current form to evaluate, so if your print hook
 <!-- -->forgets to include it, you can end up with a comatose listener.  To get out of this state, include
-<!-- -->the prompt by hand (i.e. type ">(reset-hook! print-hook)").
+<!-- -->the prompt by hand (i.e. type "&gt;(reset-hook! print-hook)").
 <!-- -->This is intended to make it possible to
 <!-- -->distinguish Snd responses from user-typing, or add arbitrarily fancy prompts, etc.  Here are two
 <!-- -->examples, the first adds a timestamp, the second (in Gtk) displays Snd's responses in red:
@@ -4178,7 +4190,7 @@ the direction argument between the channel and edit-position.
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
 (add-hook! after-open-hook 
   (lambda (snd)
-    (if (> (chans snd) 4)
+    (if (&gt; (chans snd) 4)
         (set! (channel-style snd) channels-combined))))
 <!-- --></pre></td></tr></table>
 <!-- --></td></tr>
@@ -4475,7 +4487,7 @@ the direction argument between the channel and edit-position.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- --><b>env-channel</b> is the <a href="#regularizedargs">regularized</a> version of <a href="#sndenv">env-sound</a>.  <i>clm-env-gen</i>
-<!-- -->must be a CLM envelope generator.<br><code>(env-channel (make-env '(0 0 1 1 2 0) :end (1- (frames))))</code></br>
+<!-- -->must be a CLM envelope generator.<br><code>(env-channel (make-env '(0 0 1 1 2 0) :end (1- (frames))))</code><br>
 <!-- -->You can speed up simple envelopes by splitting out the "steady state" (the portion that
 <!-- -->doesn't change), handling it as with scale-by (or nothing if the value is 1.0), then the rest as ramps.
 <!-- --></td></tr>
@@ -5177,7 +5189,7 @@ the direction argument between the channel and edit-position.
 <!-- -->[<em class=error>no-such-file, no-such-sound</em>]
 <!-- --><br><br>
 <!-- -->The <i>pos</i> argument makes it easier to try "A:B" comparisons.
-<!-- --><br><code>(play 0 #f #f #f #f (1- (edit-position)))</code></br> plays the version before the latest edit.
+<!-- --><br><code>(play 0 #f #f #f #f (1- (edit-position)))</code><br> plays the version before the latest edit.
 <!-- -->The following code plays from the cursor with a moving ("tracking") cursor:
 <!-- --><br><br>
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
@@ -7990,8 +8002,7 @@ run
 
 <p><b>Key binding</b> cursor action:</p>
 <pre>
-  <a name="cursorchoices">cursor-in-view</a>     cursor-on-left     cursor-on-right   cursor-in-middle 
-  cursor-update-display cursor-no-action keyboard-no-action
+  <a name="cursorchoices">cursor-in-view</a>     cursor-on-left     cursor-on-right   cursor-in-middle  keyboard-no-action
 </pre><br>
 
 <p><b>Cursor</b> style:</p>
@@ -8051,8 +8062,7 @@ run
 <!-- -->action (if any) to take after evaluating <i>code</i>.  
 <!-- -->Possible return values are:
 <!-- --><br><pre>
-<!-- -->  cursor-in-view     cursor-on-left      cursor-on-right    cursor-in-middle 
-<!-- -->  cursor-update-display cursor-no-action keyboard-no-action
+<!-- -->  cursor-in-view  cursor-on-left  cursor-on-right  cursor-in-middle  keyboard-no-action
 <!-- --></pre>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
@@ -8096,7 +8106,7 @@ run
 (<em class=red>bind-key</em> (char-&gt;integer #\l) 0 
   (lambda () 
     (set! (left-sample 0 0) (+ 2 (left-sample 0 0))) 
-    cursor-update-display))
+    keyboard-no-action))
 <!-- --></pre></td></tr></table></td></tr>
 <!-- -->
 <!-- --><tr><td></td><td>
@@ -8178,7 +8188,15 @@ run
 				      ((= i (abs arg)))
 				    (go-to-zero (&lt; arg 0)))))
 <!-- --></pre></td></tr></table></td></tr>
-<!-- --><tr><td></td><td>Most of the predefined key definitions are given in <a href="snd.html#builtinkeys">Keyboard Commands</a>.</td></tr>
+<!-- --><tr><td></td><td>Most of the predefined key definitions are given in <a href="snd.html#builtinkeys">Keyboard Commands</a>.
+<!-- -->The key bindings set by bind-key are active only when the active widget is a graph; when the listener is receiving
+<!-- -->key strokes, the underlying text widget interprets them itself.  You can change the listener's interpretation
+<!-- -->in the following manner (this assumes you're using Motif and have the xm module loaded):
+<!-- --><tr><td></td><td>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(|XtAppAddActions (car (main-widgets)) (list (list "hiho" (lambda args (snd-print "hiho")))))
+(|XtOverrideTranslations (list-ref (main-widgets) 4) (|XtParseTranslationTable "Ctrl <Key>i: hiho()\n"))
+<!-- --></pre></td></tr></table><br></td></tr>
 <!-- -->
 <!-- clear-audio-inputs -->
 <!-- --><tr><td colspan=2>
@@ -8188,12 +8206,20 @@ run
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
+<!-- clear-listener -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndclearlistener">clear-listener</a></em> ()</code></span></td></tr>
+<!-- --><tr><td width=150></td><td>
+<!-- -->delete listener text from the beginning to the cursor position (C-M-g is bound to this function).
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
 <!-- close-sound-file -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="sndclosesoundfile">close-sound-file</a></em> (fd bytes)</code></span></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->close file (opened by open-sound-file) updating header to report <i>bytes</i> bytes of data.  This refers to data files
-<!-- -->handled directly, not sounds displayed in Snd (handled by <a href="#sndopen">open-sound</a> and <a href="#sndclose">close-sound</a>).
+<!-- -->handled directly, not sounds displayed in Snd (the latter handled by <a href="#sndopen">open-sound</a> and <a href="#sndclose">close-sound</a>).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->

@@ -203,7 +203,7 @@
 		      (if (= (|XtHasCallbacks button |XmNactivateCallback) |XtCallbackHasSome)
 			  (|XtCallCallbacks button |XmNactivateCallback
 					    (let ((arr (|XmArrowButtonCallbackStruct)))
-					      (set! (|click_count but) 0)
+					      (set! (|click_count arr) 0)
 					      (set! (|event arr) 
 						    (let ((e (|XEvent |ButtonPress)))
 						      (set! (|state e) (or bits 0))

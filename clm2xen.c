@@ -902,10 +902,11 @@ static Float *whatever_to_floats(XEN inp, int size, const char *caller)
 		    {
 		      invals = (Float *)MALLOC(size * sizeof(Float));
 		      for (i = 0; i < size; i++) 
-			invals[i] = XEN_TO_C_DOUBLE(XEN_CALL_1(inp, C_TO_XEN_INT(i), caller));
+			invals[i] = XEN_TO_C_DOUBLE(XEN_CALL_1_NO_CATCH(inp, C_TO_XEN_INT(i), caller));
 		    }
 		  else mus_misc_error(caller, "wrong number of args to function (want 1)", inp);
 		}
+	      /* not an error if #<undefined> or the like -- just return NULL */
 	    }
 	}
     }
@@ -3906,7 +3907,7 @@ static Float funcall1 (void *ptr, int direction) /* intended for "as-needed" inp
   mus_xen *gn = (mus_xen *)ptr;
   if ((gn) && (gn->vcts) && (XEN_BOUND_P(gn->vcts[INPUT_FUNCTION])) && (XEN_PROCEDURE_P(gn->vcts[INPUT_FUNCTION])))
     /* the gh_procedure_p call can be confused by 0 -> segfault! */
-    return(XEN_TO_C_DOUBLE(XEN_CALL_1(gn->vcts[INPUT_FUNCTION], C_TO_SMALL_XEN_INT(direction), "as-needed-input")));
+    return(XEN_TO_C_DOUBLE(XEN_CALL_1_NO_CATCH(gn->vcts[INPUT_FUNCTION], C_TO_SMALL_XEN_INT(direction), "as-needed-input")));
   else return(0.0);
 }
 
@@ -4227,7 +4228,7 @@ static int pvedit (void *ptr)
 {
   mus_xen *gn = (mus_xen *)ptr;
   if ((gn) && (gn->vcts) && (XEN_BOUND_P(gn->vcts[EDIT_FUNCTION])) && (XEN_PROCEDURE_P(gn->vcts[EDIT_FUNCTION])))
-    return(XEN_TO_C_BOOLEAN(XEN_CALL_1(gn->vcts[EDIT_FUNCTION], gn->vcts[SELF_WRAPPER], __FUNCTION__)));
+    return(XEN_TO_C_BOOLEAN(XEN_CALL_1_NO_CATCH(gn->vcts[EDIT_FUNCTION], gn->vcts[SELF_WRAPPER], __FUNCTION__)));
   return(0);
 }
 
@@ -4235,7 +4236,7 @@ static Float pvsynthesize (void *ptr)
 {
   mus_xen *gn = (mus_xen *)ptr;
   if ((gn) && (gn->vcts) && (XEN_BOUND_P(gn->vcts[SYNTHESIZE_FUNCTION])) && (XEN_PROCEDURE_P(gn->vcts[SYNTHESIZE_FUNCTION])))
-    return(XEN_TO_C_DOUBLE(XEN_CALL_1(gn->vcts[SYNTHESIZE_FUNCTION], gn->vcts[SELF_WRAPPER], __FUNCTION__)));
+    return(XEN_TO_C_DOUBLE(XEN_CALL_1_NO_CATCH(gn->vcts[SYNTHESIZE_FUNCTION], gn->vcts[SELF_WRAPPER], __FUNCTION__)));
   return(0.0);
 }
 
@@ -4244,7 +4245,7 @@ static int pvanalyze (void *ptr, Float (*input)(void *arg1, int direction))
   mus_xen *gn = (mus_xen *)ptr;
   if ((gn) && (gn->vcts) && (XEN_BOUND_P(gn->vcts[ANALYZE_FUNCTION])) && (XEN_PROCEDURE_P(gn->vcts[ANALYZE_FUNCTION])))
     /* we can only get input func if it's already set up by the outer gen call, so (?) we can use that function here */
-    return(XEN_TO_C_BOOLEAN(XEN_CALL_2(gn->vcts[ANALYZE_FUNCTION], gn->vcts[SELF_WRAPPER], gn->vcts[INPUT_FUNCTION], __FUNCTION__)));
+    return(XEN_TO_C_BOOLEAN(XEN_CALL_2_NO_CATCH(gn->vcts[ANALYZE_FUNCTION], gn->vcts[SELF_WRAPPER], gn->vcts[INPUT_FUNCTION], __FUNCTION__)));
   return(0);
 }
 
@@ -4650,7 +4651,7 @@ it in conjunction with mixer to scale/envelope all the various ins and outs."
       vdata0 = XEN_VECTOR_ELEMENTS(envs);
       for (i = 0; i < in_len; i++)
 	if (!(XEN_VECTOR_P(vdata0[i])))
-	  XEN_ERROR(MUS_MISC_ERROR,
+	  XEN_ERROR(BAD_TYPE,
 		    XEN_LIST_3(C_TO_XEN_STRING(S_mus_mix),
 			       vdata0[i],
 			       C_TO_XEN_STRING("each element of env vector must be a vector of envelopes")));

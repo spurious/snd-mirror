@@ -265,12 +265,12 @@ static void call_user_keymap(int hashedsym, int count)
   if (XEN_BOUND_P(user_keymap[hashedsym].func))
     {
       if (user_keymap[hashedsym].args == 0)
-	res = XEN_TO_C_INT_OR_ELSE(XEN_CALL_0(user_keymap[hashedsym].func, 
-					      "user key func"), 
+	res = XEN_TO_C_INT_OR_ELSE(XEN_CALL_0_NO_CATCH(user_keymap[hashedsym].func, 
+						       "user key func"), 
 				   KEYBOARD_NO_ACTION);
-      else res = XEN_TO_C_INT_OR_ELSE(XEN_CALL_1(user_keymap[hashedsym].func, 
-						 C_TO_XEN_INT(count), 
-						 "user key func"),
+      else res = XEN_TO_C_INT_OR_ELSE(XEN_CALL_1_NO_CATCH(user_keymap[hashedsym].func, 
+							  C_TO_XEN_INT(count), 
+							  "user key func"),
 				      KEYBOARD_NO_ACTION);
     }
   handle_cursor(selected_channel(get_global_state()), res);
@@ -371,7 +371,7 @@ void clear_minibuffer_prompt(snd_info *sp)
   sp->minibuffer_temp = 0;
 }
 
-static int prompt(snd_info *sp, char *msg, char *preload)
+static void prompt(snd_info *sp, char *msg, char *preload)
 {
   if (preload)
     {
@@ -384,8 +384,6 @@ static int prompt(snd_info *sp, char *msg, char *preload)
   sp->minibuffer_on = 1;
   sp->minibuffer_temp = 0;
   goto_minibuffer(sp);
-
-  return(CURSOR_NO_ACTION); /* make sure verbose cursor doesn't preload our prompt text field with garbage! */
 }
 
 static int region_count = 0;
@@ -396,7 +394,7 @@ static void get_amp_expression(snd_info *sp, int count, int regexpr)
   sp->reging = regexpr;
 }
 
-static int prompt_named_mark(chan_info *cp) 
+static void prompt_named_mark(chan_info *cp) 
 {
   snd_info *sp = cp->sound;
   clear_minibuffer(sp);
@@ -404,7 +402,6 @@ static int prompt_named_mark(chan_info *cp)
   sp->minibuffer_on = 1;
   goto_minibuffer(sp);
   sp->marking = cp->cursor + 1; /*  + 1 so it's not confused with 0 (if (sp->marking)...) */
-  return(CURSOR_IN_VIEW);
 }
 
 
@@ -839,12 +836,12 @@ static int stop_fft_in_progress(chan_info *cp, void *ptr)
   return(0);
 }
 
-static int cursor_moveto_end(chan_info *cp)
+static void cursor_moveto_end(chan_info *cp)
 {
-  return(cursor_moveto(cp, current_ed_samples(cp) - 1));
+  cursor_moveto(cp, current_ed_samples(cp) - 1);
 }
 
-static int set_window_bounds(chan_info *cp, int count) 
+static void set_window_bounds(chan_info *cp, int count) 
 {
   /* count = sample number to start at */
   axis_info *ap;
@@ -852,10 +849,9 @@ static int set_window_bounds(chan_info *cp, int count)
   ap = cp->axis;
   sx = (((double)count / (double)SND_SRATE(cp->sound)) - ap->xmin) / ap->x_ambit;
   reset_x_display(cp, sx, ap->zx);
-  return(CURSOR_IN_VIEW);
 }
 
-static int set_window_size(chan_info *cp, int count) 
+static void set_window_size(chan_info *cp, int count) 
 {
   /* set samples within window */
   axis_info *ap;
@@ -863,10 +859,9 @@ static int set_window_size(chan_info *cp, int count)
   ap = cp->axis;
   zx = ((double)count / (((double)SND_SRATE(cp->sound)) * ap->x_ambit));
   reset_x_display(cp, ap->sx, zx);
-  return(CURSOR_IN_VIEW);
 }
 
-static int set_window_percentage(chan_info *cp, int count) 
+static void set_window_percentage(chan_info *cp, int count) 
 {
   /* set percentage of file within window */
   axis_info *ap;
@@ -874,7 +869,6 @@ static int set_window_percentage(chan_info *cp, int count)
   ap = cp->axis;
   zx = (double)count / (double)SND_SRATE(cp->sound);
   reset_x_display(cp, ap->sx, zx);
-  return(CURSOR_IN_VIEW);
 }
 
 static void window_frames_selection(chan_info *cp)
@@ -972,7 +966,7 @@ static int dot_seen = 0;
 static int counting = 0;
 static int extended_mode = 0;
 
-static void c_g(snd_state *ss, snd_info *sp)
+void control_g(snd_state *ss, snd_info *sp)
 {
   number_ctr = 0; 
   counting = 0; 
@@ -980,6 +974,7 @@ static void c_g(snd_state *ss, snd_info *sp)
   extended_mode = 0;
   deactivate_selection();
   defining_macro = 0;
+  clear_stdin();
   if ((ss->checking_explicitly) || (play_in_progress())) ss->stopped_explicitly = 1; 
   /* this tries to break out of long filter/src computations (and perhaps others) */
   if (sp)
@@ -989,7 +984,6 @@ static void c_g(snd_state *ss, snd_info *sp)
       map_over_sound_chans(sp, stop_fft_in_progress, NULL);
       clear_minibuffer(sp);
     }
-  clear_listener();
   ss->error_lock = 0;
 }
 
@@ -1002,7 +996,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
   static char number_buffer[NUMBER_BUFFER_SIZE];
   static int count = 1, got_count = 0;
   static int m = 0;
-  int redisplay, searching, cursor_searching, hashloc, loc, sync_num, i;
+  int searching, cursor_searching, hashloc, loc, sync_num, i, clear_search = TRUE;
   static int ext_count = NO_CX_ARG_SPECIFIED;
   snd_info *sp;
   axis_info *ap;
@@ -1011,7 +1005,6 @@ void keyboard_command (chan_info *cp, int keysym, int state)
   mark *mk = NULL;
   /* fprintf(stderr, "kbd: %d %d %d ", keysym, state, extended_mode); */
   if (!cp) return;
-  redisplay = CURSOR_IN_VIEW;
   searching = 0;
   cursor_searching = 0;
   /* cp->cursor_on = 1; */
@@ -1085,11 +1078,11 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      break;
 	    case snd_K_B: case snd_K_b: 
 	      cp->cursor_on = 1; 
-	      redisplay = cursor_move(cp, -count); 
+	      cursor_move(cp, -count); 
 	      break;
 	    case snd_K_D: case snd_K_d: 
 	      cp->cursor_on = 1; 
-	      redisplay = cursor_delete(cp, count, "C-d"); 
+	      cursor_delete(cp, count, "C-d"); 
 	      break;
 	    case snd_K_E: case snd_K_e:
 	      cp->cursor_on = 1; 
@@ -1099,14 +1092,16 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      break;
 	    case snd_K_F: case snd_K_f:
 	      cp->cursor_on = 1; 
-	      redisplay = cursor_move(cp, count); 
+	      cursor_move(cp, count); 
 	      break;
 	    case snd_K_G: case snd_K_g: 
-	      c_g(ss, sp);
+	      if (state & snd_MetaMask)
+		clear_listener();
+	      else control_g(ss, sp);
 	      break;
 	    case snd_K_H: case snd_K_h: 
 	      cp->cursor_on = 1; 
-	      redisplay = cursor_delete_previous(cp, count, "C-h"); 
+	      cursor_delete_previous(cp, count, "C-h"); 
 	      break; 
 	    case snd_K_I: case snd_K_i: 
 	      show_cursor_info(cp); 
@@ -1114,15 +1109,15 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      break;
 	    case snd_K_J: case snd_K_j: 
 	      cp->cursor_on = 1; 
-	      redisplay = goto_mark(cp, count); 
+	      goto_mark(cp, count); 
 	      break;
 	    case snd_K_K: case snd_K_k: 
 	      cp->cursor_on = 1; 
-	      redisplay = cursor_delete(cp, count * 128, "C-k");
+	      cursor_delete(cp, count * 128, "C-k");
 	      break;
 	    case snd_K_L: case snd_K_l: 
 	      cp->cursor_on = 1; 
-	      redisplay = CURSOR_IN_MIDDLE; 
+	      handle_cursor(cp, CURSOR_IN_MIDDLE);
 	      break;
 	    case snd_K_M: case snd_K_m:
 	      if (count > 0) 
@@ -1158,31 +1153,30 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      break;
 	    case snd_K_N: case snd_K_n: 
 	      cp->cursor_on = 1; 
-	      redisplay = cursor_move(cp, count * 128); 
+	      cursor_move(cp, count * 128); 
 	      break;
 	    case snd_K_O: case snd_K_o: 
 	      cp->cursor_on = 1; 
-	      redisplay = cursor_insert(cp, cp->cursor, count, "C-o"); 
+	      cursor_insert(cp, cp->cursor, count, "C-o"); 
 	      break;
 	    case snd_K_P: case snd_K_p: 
 	      cp->cursor_on = 1; 
-	      redisplay = cursor_move(cp, -count * 128); 
+	      cursor_move(cp, -count * 128); 
 	      break;
 	    case snd_K_Q: case snd_K_q: 
 	      play_channel(cp, cp->cursor, NO_END_SPECIFIED, TRUE, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "C-q", 0);
 	      set_play_button(sp, 1); 
-	      redisplay = NO_ACTION; 
 	      break;
 #if HAVE_EXTENSION_LANGUAGE
 	    case snd_K_R: case snd_K_r: 
 	      cp->cursor_on = 1; 
-	      redisplay = cursor_search(cp, -count); 
+	      cursor_search(cp, -count); 
 	      searching = 1; 
 	      cursor_searching = 1; 
 	      break;
 	    case snd_K_S: case snd_K_s: 
 	      cp->cursor_on = 1; 
-	      redisplay = cursor_search(cp, count); 
+	      cursor_search(cp, count); 
 	      searching = 1; 
 	      cursor_searching = 1; 
 	      break;
@@ -1190,7 +1184,6 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	    case snd_K_T: case snd_K_t: 
 	      stop_playing_sound(sp); 
 	      set_play_button(sp, 0);
-	      redisplay = NO_ACTION; 
 	      break;
 	    case snd_K_U: case snd_K_u: 
 	      counting = 1; 
@@ -1201,11 +1194,10 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	    case snd_K_V: case snd_K_v:
 	      cp->cursor_on = 1;
 	      /* in emacs this is move ahead one window, but for some reason in Snd it's center cursor?? */
-	      redisplay = cursor_moveto(cp, (int)((ap->losamp + ap->hisamp) / 2));
+	      cursor_moveto(cp, (int)((ap->losamp + ap->hisamp) / 2));
 	      break;
 	    case snd_K_W: case snd_K_w: 
 	      delete_selection("C-w", UPDATE_DISPLAY); 
-	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      break;
 	    case snd_K_X: case snd_K_x: 
 	      extended_mode = 1; 
@@ -1219,11 +1211,10 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      if (got_count)
 		paste_region(count, cp, "C-y"); 
 	      else paste_region(stack_position_to_id(0), cp, "C-y");
-	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      break;
 	    case snd_K_Z: case snd_K_z: 
 	      cp->cursor_on = 1; 
-	      redisplay = cursor_zeros(cp, count, 0); 
+	      cursor_zeros(cp, count, 0); 
 	      break;
 	    case snd_K_Right: 
 	      sx_incremented(cp, state_amount(state)); 
@@ -1249,7 +1240,8 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      if (count > 0)
 		{
 		  start_selection_creation(cp, cp->cursor);
-		  redisplay = NO_ACTION;
+		  report_in_minibuffer(sp, "selection starts at %d", cp->cursor);
+		  clear_search = FALSE;
 		}
 	      break;
 	    case snd_K_period:
@@ -1260,11 +1252,11 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      break;
 	    case snd_K_greater: 
 	      cp->cursor_on = 1; 
-	      redisplay = cursor_moveto_end(cp); 
+	      cursor_moveto_end(cp); 
 	      break;
 	    case snd_K_less: 
 	      cp->cursor_on = 1; 
-	      redisplay = cursor_moveto(cp ,0); 
+	      cursor_moveto(cp ,0); 
 	      break;
 	    case snd_K_minus: 
 	      counting = 1; 
@@ -1273,52 +1265,43 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      break;
 	    case snd_K_underscore: 
 	      undo_edit_with_sync(cp, count); 
-	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      break;
 #if HAVE_ARROW_KEYS
 	    case snd_keypad_Left: 
 	    case snd_keypad_4: 
 	      set_spectro_y_angle(ss, spectro_y_angle(ss) - 1.0);
-	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      reflect_spectro(ss); 
 	      break;
 	    case snd_keypad_Right: 
 	    case snd_keypad_6: 
 	      set_spectro_y_angle(ss, spectro_y_angle(ss) + 1.0);
-	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      reflect_spectro(ss); 
 	      break;
 	    case snd_keypad_Down: 
 	    case snd_keypad_2: 
 	      set_spectro_x_angle(ss, spectro_x_angle(ss) - 1.0);
-	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      reflect_spectro(ss); 
 	      break;
 	    case snd_keypad_Up: 
 	    case snd_keypad_8: 
 	      set_spectro_x_angle(ss, spectro_x_angle(ss) + 1.0);
-	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      reflect_spectro(ss); 
 	      break;
 #else
 	    case snd_keypad_4: 
 	      set_spectro_y_angle(ss, spectro_y_angle(ss) - 1.0);
-	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      reflect_spectro(ss); 
 	      break;
 	    case snd_keypad_6: 
 	      set_spectro_y_angle(ss, spectro_y_angle(ss) + 1.0);
-	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      reflect_spectro(ss); 
 	      break;
 	    case snd_keypad_2:
 	      set_spectro_x_angle(ss, spectro_x_angle(ss) - 1.0);
-	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      reflect_spectro(ss); 
 	      break;
 	    case snd_keypad_8: 
 	      set_spectro_x_angle(ss, spectro_x_angle(ss) + 1.0);
-	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      reflect_spectro(ss); 
 	      break;
 #endif
@@ -1337,49 +1320,48 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	    case snd_K_A: case snd_K_a: 
 	      get_amp_expression(sp, ext_count, 0);
 	      searching = 1; 
-	      redisplay = CURSOR_IN_VIEW; 
 	      break;
 	    case snd_K_B: case snd_K_b: 
-	      redisplay = set_window_bounds(cp, ext_count); 
+	      set_window_bounds(cp, ext_count); 
 	      break;
 	    case snd_K_C: case snd_K_c: 
 	      sound_hide_ctrls(sp); 
 	      break;
 	    case snd_K_D: case snd_K_d: 
-	      redisplay = prompt(sp, "eps file:", NULL); 
+	      prompt(sp, "eps file:", NULL); 
 	      sp->printing = ext_count; 
 	      searching = 1; 
 	      break;
 	    case snd_K_E: case snd_K_e: 
-	      redisplay = prompt(sp, "macro name:", NULL); 
+	      prompt(sp, "macro name:", NULL); 
 	      sp->filing = MACRO_FILING; 
 	      searching = 1; 
 	      break;
 	    case snd_K_F: case snd_K_f: 
-	      redisplay = prompt(sp, "file:", NULL); 
+	      prompt(sp, "file:", NULL); 
 	      sp->filing = INPUT_FILING; 
 	      searching = 1; 
 	      break;
 	    case snd_K_G: case snd_K_g: 
-	      c_g(ss, sp);
+	      control_g(ss, sp);
 	      break;
 	    case snd_K_I: case snd_K_i: 
-	      redisplay = prompt(sp, "insert file:", NULL); 
+	      prompt(sp, "insert file:", NULL); 
 	      sp->filing = INSERT_FILING; 
 	      searching = 1; 
 	      break;
 	    case snd_K_J: case snd_K_j:
 	      cp->cursor_on = 1; 
-	      redisplay = goto_mix(cp, ext_count); 
+	      goto_mix(cp, ext_count); 
 	      break;
 	    case snd_K_L: case snd_K_l: 
-	      redisplay = prompt(sp, "load:", NULL); 
+	      prompt(sp, "load:", NULL); 
 	      sp->loading = 1;
 	      searching = 1; 
 	      break;
 	    case snd_K_M: case snd_K_m:
 	      cp->cursor_on = 1; 
-	      redisplay = prompt_named_mark(cp);
+	      prompt_named_mark(cp);
 	      set_show_marks(ss, 1); 
 	      searching = 1; 
 	      break;
@@ -1387,41 +1369,36 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      sound_show_ctrls(sp); 
 	      break;
 	    case snd_K_P: case snd_K_p: 
-	      redisplay = set_window_size(cp, ext_count); 
+	      set_window_size(cp, ext_count); 
 	      break;
 	    case snd_K_Q: case snd_K_q: 
-	      redisplay = prompt(sp, STR_mix_file_p, NULL); 
+	      prompt(sp, STR_mix_file_p, NULL); 
 	      sp->filing = CHANGE_FILING; 
 	      searching = 1; 
 	      break;
 	    case snd_K_R: case snd_K_r: 
 	      redo_edit_with_sync(cp, ext_count); 
-	      redisplay = CURSOR_UPDATE_DISPLAY;
 	      break;
 	    case snd_K_S: case snd_K_s: 
 	      save_edits(sp, NULL); 
-	      redisplay = CURSOR_IN_VIEW; 
 	      break;
 	    case snd_K_T: case snd_K_t: 
 	      stop_playing_sound(sp); 
-	      redisplay = NO_ACTION; 
 	      break;
 	    case snd_K_U: case snd_K_u: 
 	      undo_edit_with_sync(cp, ext_count); 
-	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      break;
 	    case snd_K_V: case snd_K_v:
-	      redisplay = set_window_percentage(cp, ext_count);
+	      set_window_percentage(cp, ext_count);
 	      break;
 	    case snd_K_W: case snd_K_w: 
-	      redisplay = prompt(sp, STR_file_p, NULL); 
+	      prompt(sp, STR_file_p, NULL); 
 	      sp->filing = CHANNEL_FILING; 
 	      searching = 1; 
 	      break;
 	    case snd_K_Z: case snd_K_z: 
 	      cp->cursor_on = 1; 
 	      cos_smooth(cp, cp->cursor, ext_count, 0, "C-x C-z"); 
-	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      break;
 	    case snd_K_Right: 
 	      sx_incremented(cp, state_amount(state)); 
@@ -1464,11 +1441,11 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      break;
 	    case snd_K_greater: 
 	      cp->cursor_on = 1; 
-	      redisplay = cursor_moveto_end(cp); 
+	      cursor_moveto_end(cp); 
 	      break;
 	    case snd_K_less: 
 	      cp->cursor_on = 1; 
-	      redisplay = cursor_moveto(cp, 0); 
+	      cursor_moveto(cp, 0); 
 	      break;
 	    case snd_K_minus: 
 	      counting = 1; 
@@ -1500,43 +1477,35 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 #if HAVE_ARROW_KEYS
 	    case snd_keypad_Up: case snd_keypad_8: 
 	      set_spectro_z_scale(ss, spectro_z_scale(ss) + .01);
-	      redisplay = CURSOR_UPDATE_DISPLAY;
 	      reflect_spectro(ss);
 	      break;
 	    case snd_keypad_Down: case snd_keypad_2: 
 	      set_spectro_z_scale(ss, spectro_z_scale(ss) - .01);
-	      redisplay = CURSOR_UPDATE_DISPLAY;
 	      reflect_spectro(ss);
 	      break;
 	    case snd_keypad_Left: case snd_keypad_4: 
 	      set_spectro_z_angle(ss, spectro_z_angle(ss) - 1.0);
-	      redisplay = CURSOR_UPDATE_DISPLAY;
 	      reflect_spectro(ss);
 	      break;
 	    case snd_keypad_Right: case snd_keypad_6: 
 	      set_spectro_z_angle(ss, spectro_z_angle(ss) + 1.0);
-	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      reflect_spectro(ss); 
 	      break;
 #else
 	    case snd_keypad_8: 
 	      set_spectro_z_scale(ss, spectro_z_scale(ss) + .01);
-	      redisplay = CURSOR_UPDATE_DISPLAY;
 	      reflect_spectro(ss);
 	      break;
 	    case snd_keypad_2: 
 	      set_spectro_z_scale(ss, spectro_z_scale(ss) - .01);
-	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      reflect_spectro(ss); 
 	      break;
 	    case snd_keypad_4: 
 	      set_spectro_z_angle(ss, spectro_z_angle(ss) - 1.0);
-	      redisplay = CURSOR_UPDATE_DISPLAY;
 	      reflect_spectro(ss);
 	      break;
 	    case snd_keypad_6: 
 	      set_spectro_z_angle(ss, spectro_z_angle(ss) + 1.0);
-	      redisplay = CURSOR_UPDATE_DISPLAY;
 	      reflect_spectro(ss); 
 	      break;
 #endif
@@ -1544,7 +1513,6 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      if (time_graph_type(ss) == GRAPH_TIME_AS_WAVOGRAM) 
 		set_wavo_trace(ss, wavo_trace(ss) + 1); 
 	      else set_spectro_hop(ss, spectro_hop(ss) + 1);
-	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      reflect_spectro(ss); 
 	      break;
 	    case snd_keypad_Subtract: 
@@ -1558,63 +1526,52 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 		  if (spectro_hop(ss)>1) 
 		    set_spectro_hop(ss, spectro_hop(ss) - 1);
 		}
-	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      reflect_spectro(ss); 
 	      break;
 	    case snd_keypad_Multiply: 
 	      set_transform_size(ss, transform_size(ss) * 2); 
-	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      break;
 	    case snd_keypad_Divide: 
 	      if (transform_size(ss) > 4) 
 		set_transform_size(ss, transform_size(ss) / 2); 
-	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      break;
 #if HAVE_ARROW_KEYS
 	    case snd_keypad_Delete: case snd_keypad_Decimal: 
 	      set_dot_size(ss, dot_size(ss) + 1); 
-	      redisplay = KEYBOARD_NO_ACTION; 
 	      break;
 	    case snd_keypad_Insert: case snd_keypad_0: 
 	      if (dot_size(ss) > 1) 
 		set_dot_size(ss, dot_size(ss) - 1); 
-	      redisplay = KEYBOARD_NO_ACTION; 
 	      break;
 	    case snd_keypad_PageDown: case snd_keypad_3: 
 	      set_spectro_cutoff(ss, spectro_cutoff(ss) * .95); 
-	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      reflect_spectro(ss); 
 	      break;
 	    case snd_keypad_PageUp: case snd_keypad_9: 
 	      if (spectro_cutoff(ss) < 1.0) 
 		set_spectro_cutoff(ss, spectro_cutoff(ss) / .95); 
-	      redisplay = CURSOR_UPDATE_DISPLAY; reflect_spectro(ss); 
+	      reflect_spectro(ss); 
 	      break;
 #else
 	    case snd_keypad_Decimal: 
 	      set_dot_size(ss, dot_size(ss) + 1);
-	      redisplay = KEYBOARD_NO_ACTION; 
 	      break;
 	    case_snd_keypad_0: 
 	      if (dot_size(ss) > 1) 
 		set_dot_size(ss, dot_size(ss) - 1); 
-	      redisplay = KEYBOARD_NO_ACTION;
 	      break;
 	    case snd_keypad_3: 
 	      set_spectro_cutoff(ss, spectro_cutoff(ss) * .95); 
-	      redisplay = CURSOR_UPDATE_DISPLAY;
 	      reflect_spectro(ss); 
 	      break;
 	    case snd_keypad_9: 
 	      if (spectro_cutoff(ss) < 1.0) 
 		set_spectro_cutoff(ss, spectro_cutoff(ss) / .95); 
-	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      reflect_spectro(ss); 
 	      break;
 #endif
 	    case snd_keypad_Enter: 
 	      reset_spectro(ss); 
-	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      reflect_spectro(ss); 
 	      break;
 	    default:
@@ -1644,7 +1601,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 		    ss->mx_sp = sp;
 		    prompt(sp, "M-x:", buf);
 		    sp->macroing = count;
-		    redisplay = NO_ACTION;
+		    clear_search = FALSE;
 		  }
 	      }
 #else
@@ -1669,99 +1626,80 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 		{
 		  get_amp_expression(sp, (ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count, 1); 
 		  searching = 1; 
-		  redisplay = CURSOR_IN_VIEW;
 		} 
 	      else no_selection_error(sp); 
 	      break;
 	    case snd_K_B: case snd_K_b: 
 	      cp->cursor_on = 1; 
-	      redisplay = CURSOR_ON_LEFT; 
-	      handle_cursor(cp, redisplay);
+	      handle_cursor(cp, CURSOR_ON_LEFT);
 	      break;
 	    case snd_K_C: case snd_K_c: 
 	      mark_define_region(cp, (ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count); 
-	      redisplay = CURSOR_UPDATE_DISPLAY;
 	      break;
 	    case snd_K_D: case snd_K_d: 
-	      redisplay = prompt(sp, "temp dir:", NULL); 
+	      prompt(sp, "temp dir:", NULL); 
 	      sp->filing = TEMP_FILING; 
 	      searching = 1; 
 	      break;
 	    case snd_K_E: case snd_K_e: 
 	      execute_last_macro(cp, (ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count);
-	      redisplay = cursor_decision(cp);
-	      if (redisplay == CURSOR_IN_VIEW) 
-		redisplay = CURSOR_UPDATE_DISPLAY; 
+	      handle_cursor(cp, cursor_decision(cp));
 	      break;
 	    case snd_K_F: case snd_K_f: 
 	      cp->cursor_on = 1; 
-	      redisplay = CURSOR_ON_RIGHT; 
-	      handle_cursor(cp, redisplay);
+	      handle_cursor(cp, CURSOR_ON_RIGHT); 
 	      break;
 	    case snd_K_I: case snd_K_i: 
 	      insert_selection_or_region(ss, (ext_count == NO_CX_ARG_SPECIFIED) ? 0 : ext_count, cp, "C-x i");
-	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      break;
 	    case snd_K_J: case snd_K_j: 
-	      redisplay = prompt(sp, "mark:", NULL); 
+	      prompt(sp, "mark:", NULL); 
 	      sp->finding_mark = 1; 
 	      searching = 1; 
 	      break;
 	    case snd_K_K: case snd_K_k: 
 	      snd_close_file(sp, ss); 
-	      redisplay = CURSOR_NO_ACTION; 
 	      break;
 	    case snd_K_L: case snd_K_l: 
 	      cp->cursor_on = 1;
 	      if (selection_is_active_in_channel(cp))
 		cursor_moveto(cp, (int)(selection_beg(cp) + 0.5 * selection_len()));
 	      else no_selection_error(sp); 
-	      redisplay = CURSOR_IN_MIDDLE;
+	      handle_cursor(cp, CURSOR_IN_MIDDLE);
 	      break;
 	    case snd_K_O: case snd_K_o: 
 	      if (ext_count > 0) 
 		goto_next_graph(cp, ext_count); 
 	      else goto_previous_graph(cp, ext_count); 
-	      redisplay = CURSOR_NO_ACTION; 
 	      break;
 	    case snd_K_P: case snd_K_p: 
 	      if (ext_count == NO_CX_ARG_SPECIFIED)
 		play_selection(IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "C-x p", 0);
 	      else play_region(ss, ext_count, IN_BACKGROUND);
-	      redisplay = NO_ACTION;
 	      break;
 	    case snd_K_Q: case snd_K_q: 
 	      add_selection_or_region(ss, (ext_count == NO_CX_ARG_SPECIFIED) ? 0 : ext_count, cp, "C-x q"); 
-	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      break;
 	    case snd_K_R: case snd_K_r: 
 	      redo_edit_with_sync(cp, (ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count); 
-	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      break;
 	    case snd_K_U: case snd_K_u: 
 	      undo_edit_with_sync(cp, (ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count); 
-	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      break;
 	    case snd_K_V: case snd_K_v: 
 	      if (selection_is_active_in_channel(cp))
-		{
-		  window_frames_selection(cp); 
-		  redisplay = CURSOR_UPDATE_DISPLAY; 
-		}
+		window_frames_selection(cp); 
 	      else no_selection_error(sp); 
 	      break;
 	    case snd_K_W: case snd_K_w:
 	      region_count = ((ext_count == NO_CX_ARG_SPECIFIED) ? 0 : ext_count);
-	      redisplay = prompt(sp, STR_file_p, NULL); 
+	      prompt(sp, STR_file_p, NULL); 
 	      sp->filing = REGION_FILING; 
 	      searching = 1;
 	      break;
 	    case snd_K_Z: case snd_K_z: 
 	      if (selection_is_active_in_channel(cp))
-		{
-		  cos_smooth(cp, cp->cursor, (ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count, 1, "C-x z"); 
-		  redisplay = CURSOR_UPDATE_DISPLAY; 
-		}
+		cos_smooth(cp, cp->cursor, (ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count, 1, "C-x z"); 
 	      else no_selection_error(sp); 
 	      break;
 	    case snd_K_Right:   
@@ -1778,11 +1716,11 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      break;
 	    case snd_K_less:
 	      cp->cursor_on = 1; 
-	      redisplay = cursor_moveto(cp, 0); 
+	      cursor_moveto(cp, 0); 
 	      break;
 	    case snd_K_greater: 
 	      cp->cursor_on = 1; 
-	      redisplay = cursor_moveto_end(cp);
+	      cursor_moveto_end(cp);
 	      break;
 	    case snd_K_openparen:
 	      if (defining_macro) 
@@ -1792,7 +1730,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 		  start_defining_macro(); 
 		  report_in_minibuffer(sp, "defining macro..."); 
 		}
-	      redisplay = NO_ACTION; 
+	      clear_search = FALSE; 
 	      break;
 	    case snd_K_closeparen: 
 	      if (defining_macro)
@@ -1800,11 +1738,11 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 		  stop_defining_macro(); 
 		  clear_minibuffer(sp); 
 		}
-	      redisplay = NO_ACTION;
+	      clear_search = FALSE;
 	      break;
 	    case snd_K_slash: 
 	      cp->cursor_on = 1;
-	      redisplay = prompt_named_mark(cp); 
+	      prompt_named_mark(cp); 
 	      set_show_marks(ss, 1); 
 	      searching = 1; 
 	      break;
@@ -1815,12 +1753,13 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	}
     }
   if (!extended_mode) ext_count = NO_CX_ARG_SPECIFIED;
-  if (redisplay != NO_ACTION)
+  if (clear_search)
     {
       if ((sp->minibuffer_on) && (!searching)) 
 	clear_minibuffer(sp);
-      else if (!cursor_searching) 
-	sp->searching = 0;
+      else 
+	if (!cursor_searching) 
+	  sp->searching = 0;
     }
 }
 
@@ -2006,12 +1945,12 @@ static XEN g_backward_graph(XEN count, XEN snd, XEN chn)
 		    C_TO_SMALL_XEN_INT(cp->chan)));
 }
 
-static XEN g_c_g_x(void)
+static XEN g_control_g_x(void)
 {
-  #define H_c_g_x "(" S_c_g_x ") simulates typing C-g"
+  #define H_control_g_x "(" S_c_g_x ") simulates typing C-g"
   snd_state *ss;
   ss = get_global_state();
-  c_g(ss, any_selected_sound(ss));
+  control_g(ss, any_selected_sound(ss));
   return(XEN_FALSE);
 }
 
@@ -2023,7 +1962,7 @@ XEN_ARGIFY_4(g_bind_key_w, g_bind_key)
 XEN_ARGIFY_3(g_unbind_key_w, g_unbind_key)
 XEN_ARGIFY_4(g_key_w, g_key)
 XEN_NARGIFY_0(g_save_macros_w, g_save_macros)
-XEN_NARGIFY_0(g_c_g_x_w, g_c_g_x)
+XEN_NARGIFY_0(g_control_g_x_w, g_control_g_x)
 XEN_ARGIFY_2(g_report_in_minibuffer_w, g_report_in_minibuffer)
 XEN_ARGIFY_4(g_prompt_in_minibuffer_w, g_prompt_in_minibuffer)
 XEN_ARGIFY_2(g_append_to_minibuffer_w, g_append_to_minibuffer)
@@ -2035,7 +1974,7 @@ XEN_ARGIFY_2(g_append_to_minibuffer_w, g_append_to_minibuffer)
 #define g_unbind_key_w g_unbind_key
 #define g_key_w g_key
 #define g_save_macros_w g_save_macros
-#define g_c_g_x_w g_c_g_x
+#define g_control_g_x_w g_control_g_x
 #define g_report_in_minibuffer_w g_report_in_minibuffer
 #define g_prompt_in_minibuffer_w g_prompt_in_minibuffer
 #define g_append_to_minibuffer_w g_append_to_minibuffer
@@ -2051,7 +1990,7 @@ void g_init_kbd(void)
   XEN_DEFINE_PROCEDURE(S_unbind_key,              g_unbind_key_w, 2, 1, 0,              H_unbind_key);
   XEN_DEFINE_PROCEDURE(S_key,                     g_key_w, 2, 2, 0,                     H_key);
   XEN_DEFINE_PROCEDURE(S_save_macros,             g_save_macros_w, 0, 0, 0,             H_save_macros);
-  XEN_DEFINE_PROCEDURE(S_c_g_x,                   g_c_g_x_w, 0, 0, 0,                   H_c_g_x);  
+  XEN_DEFINE_PROCEDURE(S_c_g_x,                   g_control_g_x_w, 0, 0, 0,             H_control_g_x);  
 
   XEN_DEFINE_PROCEDURE(S_report_in_minibuffer,    g_report_in_minibuffer_w, 1, 1, 0,    H_report_in_minibuffer);
   XEN_DEFINE_PROCEDURE(S_prompt_in_minibuffer,    g_prompt_in_minibuffer_w, 1, 3, 0,    H_prompt_in_minibuffer);

@@ -115,6 +115,29 @@ static int completions(char *text)
 static int completions(char *text) {return(0);}
 #endif
 
+int is_separator_char(char c)
+{
+  return((!(isalpha((int)c))) &&
+	 (!(isdigit((int)c))) &&
+#if HAVE_RUBY
+	 (c != '?') &&
+	 (c != '!') &&
+	 (c != '_') &&
+#else
+	 (c != '-') &&
+	 (c != '_') &&
+	 (c != '>') &&
+	 (c != '?') &&
+	 (c != '!') &&
+	 (c != '=') &&
+	 (c != '<') &&
+	 (c != '*') &&
+	 (c != '+') &&
+	 (c != '%') &&
+	 (c != ':') &&
+#endif
+	 (c != '$'));
+}
 
 char *command_completer(char *original_text)
 {
@@ -127,26 +150,7 @@ char *command_completer(char *original_text)
     {
       len = strlen(original_text);
       for (i = len - 1; i >= 0; i--)
-	if ((!(isalpha((int)(original_text[i])))) &&
-	    (!(isdigit((int)(original_text[i])))) &&
-#if HAVE_RUBY
-	    (original_text[i] != '?') &&
-	    (original_text[i] != '!') &&
-	    (original_text[i] != '_') &&
-#else
-	    (original_text[i] != '-') &&
-	    (original_text[i] != '_') &&
-	    (original_text[i] != '>') &&
-	    (original_text[i] != '?') &&
-	    (original_text[i] != '!') &&
-	    (original_text[i] != '=') &&
-	    (original_text[i] != '<') &&
-	    (original_text[i] != '*') &&
-	    (original_text[i] != '+') &&
-	    (original_text[i] != '%') &&
-	    (original_text[i] != ':') &&
-#endif
-	    (original_text[i] != '$'))
+	if (is_separator_char(original_text[i]))
 	  break;
       beg = i + 1;
       if (beg == len) 

@@ -1,7 +1,9 @@
 #include "snd.h"
 
-/* TODO  make completions list mouse sensitive as in Motif version (requires dialog etc)
+/* TODO: make completions list mouse sensitive as in Motif version (requires dialog etc)
  *        -> use click(select) callback!
+ * TODO: C-? for help, C-M-g for text deletion (checked)
+ * TODO: M-p and M-n for listener
  */
 
 static GtkWidget *listener_text = NULL;
@@ -550,6 +552,11 @@ static XEN g_reset_listener_cursor(void)
       gdk_window_set_cursor(listener_text->window, (ss->sgx)->arrow_cursor);
     }
   return(XEN_FALSE);
+}
+
+void clear_listener(void)
+{
+  sg_text_delete(listener_text, 1, SG_TEXT_GET_POINT(listener_text));
 }
 
 #ifdef XEN_ARGIFY_1

@@ -1,5 +1,8 @@
 #include "snd.h"
 
+/* TODO: check more of the XEN_CALLs for possible catch removal
+ */
+
 /* collect syncd chans */
 typedef struct {
   sync_info *si;
@@ -337,11 +340,14 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 	      if (cp == NULL)
 		{
 		  delete_samples(si->begs[ip], sc->dur, ucp, origin, ucp->edit_ctr);
-		  file_insert_samples(si->begs[ip], filtersize + filesize, ofile, ucp, 0, DELETE_ME, origin, ucp->edit_ctr);
-		  reactivate_selection(ucp, si->begs[ip], si->begs[ip] + filtersize + filesize);
-		  backup_edit_list(ucp); 
-		  if (ucp->marks) 
-		    ripple_trailing_marks(ucp, si->begs[ip], sc->dur, filtersize + filesize);
+		  if ((filtersize + filesize) > 0)
+		    {
+		      file_insert_samples(si->begs[ip], filtersize + filesize, ofile, ucp, 0, DELETE_ME, origin, ucp->edit_ctr);
+		      reactivate_selection(ucp, si->begs[ip], si->begs[ip] + filtersize + filesize);
+		      backup_edit_list(ucp); 
+		      if (ucp->marks) 
+			ripple_trailing_marks(ucp, si->begs[ip], sc->dur, filtersize + filesize);
+		    }
 		  update_graph(ucp, NULL); 
 		}
 	      else file_override_samples(filtersize + filesize, ofile, ucp, 0, DELETE_ME, LOCK_MIXES, origin);
@@ -840,12 +846,15 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, int beg, int dur,
       else
 	{
 	  delete_samples(beg, dur, cp, origin, cp->edit_ctr);
-	  file_insert_samples(beg, k, ofile, cp, 0, DELETE_ME, origin, cp->edit_ctr);
-	  if (over_selection)
-	    reactivate_selection(cp, beg, beg + k); /* backwards compatibility */
-	  backup_edit_list(cp);
-	  if (cp->marks) 
-	    ripple_marks(cp, 0, 0);
+	  if (k > 0)
+	    {
+	      file_insert_samples(beg, k, ofile, cp, 0, DELETE_ME, origin, cp->edit_ctr);
+	      if (over_selection)
+		reactivate_selection(cp, beg, beg + k); /* backwards compatibility */
+	      backup_edit_list(cp);
+	      if (cp->marks) 
+		ripple_marks(cp, 0, 0);
+	    }
 	  update_graph(cp, NULL);
 	}
     }
@@ -2014,7 +2023,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
   free_sync_state(sc);
 }
 
-int cursor_delete(chan_info *cp, int count, const char *origin)
+void cursor_delete(chan_info *cp, int count, const char *origin)
 {
   int i, beg;
   snd_info *sp;
@@ -2042,22 +2051,23 @@ int cursor_delete(chan_info *cp, int count, const char *origin)
 	delete_samples(beg, count, cp, origin, cp->edit_ctr);
       else delete_samples(beg + count, -count, cp, origin, cp->edit_ctr);
     }
-  return(CURSOR_UPDATE_DISPLAY);
 }
 
-int cursor_delete_previous(chan_info *cp, int count, const char *origin)
+void cursor_delete_previous(chan_info *cp, int count, const char *origin)
 {
-  if (cp->cursor <= 0) return(CURSOR_UPDATE_DISPLAY);
-  cp->cursor -= count;
-  if (cp->cursor < 0)
+  if (cp->cursor > 0)
     {
-      count += cp->cursor;
-      cp->cursor = 0;
+      cp->cursor -= count;
+      if (cp->cursor < 0)
+	{
+	  count += cp->cursor;
+	  cp->cursor = 0;
+	}
+      cursor_delete(cp, count, origin);
     }
-  return(cursor_delete(cp, count, origin));
 }
 
-int cursor_insert(chan_info *cp, int beg, int count, const char *origin)
+void cursor_insert(chan_info *cp, int beg, int count, const char *origin)
 {
   int i;
   snd_info *sp;
@@ -2093,17 +2103,16 @@ int cursor_insert(chan_info *cp, int beg, int count, const char *origin)
 			cp->edit_ctr);
       update_graph(cp, NULL);
     }
-  return(CURSOR_UPDATE_DISPLAY);
 }
 
-int cursor_zeros(chan_info *cp, int count, int regexpr)
+void cursor_zeros(chan_info *cp, int count, int regexpr)
 {
   int i, num, old_sync, beg;
   snd_info *sp, *nsp;
   sync_info *si = NULL;
   chan_info *ncp;
   Float scaler[1];
-  if (count == 0) return(CURSOR_NO_ACTION);
+  if (count == 0) return;
   if (count < 0) num = -count; else num = count;
   sp = cp->sound;
   if ((sp->sync != 0) && (!regexpr))
@@ -2148,7 +2157,6 @@ int cursor_zeros(chan_info *cp, int count, int regexpr)
 	}
     }
   si = free_sync_info(si);
-  return(CURSOR_IN_VIEW);
 }
 
 static void smooth_channel(chan_info *cp, int beg, int dur, int edpos, const char *origin)
@@ -2194,7 +2202,7 @@ void cos_smooth(chan_info *cp, int beg, int num, int regexpr, const char *origin
 #include "vct.h"
 #include "clm2xen.h"
 
-static XEN g_map_chan_1(XEN proc, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN chn, XEN edpos, XEN s_dur) 
+static XEN g_map_chan_1(XEN proc, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN chn, XEN edpos, XEN s_dur, char *fallback_caller) 
 { 
   snd_state *ss;
   chan_info *cp;
@@ -2203,7 +2211,7 @@ static XEN g_map_chan_1(XEN proc, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN ch
   snd_info *sp;
   snd_fd *sf = NULL;
   XEN errstr;
-  int kp, len, num, reporting = 0, rpt = 0, rpt4, i, j, cured, pos;
+  int kp, len, num, reporting = 0, rpt = 0, rpt4, i, j = 0, cured, pos;
   XEN res = XEN_FALSE;
   char *errmsg;
   char *filename;
@@ -2212,7 +2220,7 @@ static XEN g_map_chan_1(XEN proc, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN ch
   vct *v;
   if (XEN_STRING_P(org)) 
     caller = XEN_TO_C_STRING(org);
-  else caller = S_map_chan;
+  else caller = fallback_caller;
   XEN_ASSERT_TYPE((XEN_PROCEDURE_P(proc)), proc, XEN_ARG_1, caller, "a procedure");
   ASSERT_SAMPLE_TYPE(caller, s_beg, XEN_ARG_2);
   ASSERT_SAMPLE_TYPE(caller, s_end, XEN_ARG_3);
@@ -2256,9 +2264,10 @@ static XEN g_map_chan_1(XEN proc, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN ch
       j = 0;
       for (kp = 0; kp < num; kp++)
 	{
-	  res = XEN_CALL_1(proc, 
-			   C_TO_XEN_DOUBLE((double)next_sample_to_float(sf)),
-			   caller);
+	  /* changed here to remove catch 24-Mar-02 */
+	  res = XEN_CALL_1_NO_CATCH(proc, 
+				    C_TO_XEN_DOUBLE((double)next_sample_to_float(sf)),
+				    caller);
 	  if (XEN_NUMBER_P(res))                         /* one number -> replace current sample */
 	    mus_outa(j++, XEN_TO_C_DOUBLE(res), (mus_output *)outgen);
 	  else
@@ -2292,6 +2301,9 @@ static XEN g_map_chan_1(XEN proc, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN ch
 				  for (i = 0; i < len; i++, res = XEN_CDR(res)) 
 				    mus_outa(j++, XEN_TO_C_DOUBLE(XEN_CAR(res)), (mus_output *)outgen);
 				}
+			      else XEN_ERROR(BAD_TYPE,
+					     XEN_LIST_2(C_TO_XEN_STRING(caller),
+							res));
 			    }
 			}
 		    }
@@ -2323,12 +2335,15 @@ static XEN g_map_chan_1(XEN proc, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN ch
 	    {
 	      cured = cp->edit_ctr;
 	      delete_samples(beg, num, cp, caller, cp->edit_ctr);
-	      file_insert_samples(beg, j, filename, cp, 0, DELETE_ME, caller, cp->edit_ctr);
-	      backup_edit_list(cp);
-	      if (cp->edit_ctr > cured)
-		backup_edit_list(cp);
-	      if (cp->marks) 
-		ripple_trailing_marks(cp, beg, num, j);
+	      if (j > 0)
+		{
+		  file_insert_samples(beg, j, filename, cp, 0, DELETE_ME, caller, cp->edit_ctr);
+		  backup_edit_list(cp);
+		  if (cp->edit_ctr > cured)
+		    backup_edit_list(cp);
+		  if (cp->marks) 
+		    ripple_trailing_marks(cp, beg, num, j);
+		}
 	    }
 	  update_graph(cp, NULL);
 	}
@@ -2391,9 +2406,9 @@ static XEN g_sp_scan(XEN proc, XEN s_beg, XEN s_end, XEN snd, XEN chn,
       if (reporting) start_progress_report(sp, NOT_FROM_ENVED);
       for (kp = 0; kp < num; kp++)
 	{
-	  res = XEN_CALL_1(proc,
-			   C_TO_XEN_DOUBLE((double)next_sample_to_float(sf)),
-			   caller);
+	  res = XEN_CALL_1_NO_CATCH(proc,
+				    C_TO_XEN_DOUBLE((double)next_sample_to_float(sf)),
+				    caller);
 	  if (XEN_NOT_FALSE_P(res))
 	    {
 	      if ((counting) &&
@@ -2466,7 +2481,7 @@ static XEN g_map_chan(XEN proc, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN chn,
   #define H_map_chan "(" S_map_chan " func &optional (start 0) end edname snd chn edpos)\n\
 apply func to samples in current channel, edname is the edit history name for this editing operation.\n\
   (map-chan abs)"
-  return(g_map_chan_1(proc, s_beg, s_end, org, snd, chn, edpos, XEN_FALSE));
+  return(g_map_chan_1(proc, s_beg, s_end, org, snd, chn, edpos, XEN_FALSE, S_map_chan));
 }
 
 static XEN g_map_channel(XEN proc, XEN s_beg, XEN s_dur, XEN snd, XEN chn, XEN edpos, XEN org) 
@@ -2474,7 +2489,7 @@ static XEN g_map_channel(XEN proc, XEN s_beg, XEN s_dur, XEN snd, XEN chn, XEN e
   #define H_map_channel "(" S_map_channel " func &optional (start 0) dur snd chn edpos edname)\n\
 apply func to samples in current channel, edname is the edit history name for this editing operation.\n\
   (map-channel abs)"
-  return(g_map_chan_1(proc, s_beg, XEN_FALSE, org, snd, chn, edpos, s_dur));
+  return(g_map_chan_1(proc, s_beg, XEN_FALSE, org, snd, chn, edpos, s_dur, S_map_channel));
 }
 
 static XEN g_find(XEN expr, XEN sample, XEN snd_n, XEN chn_n, XEN edpos)

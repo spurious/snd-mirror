@@ -5,12 +5,12 @@
 
 /* TODO: finish selection-oriented Xt callbacks
  * TODO: XmVaCreateSimple* (need special arglist handlers)
- * TODO: Motif 2.2 has a bunch of widgets that seem to be partly ICS-specific? (Xi... rather than Xm...)
  * TODO: callback struct print (and tie makers into Ruby)
  * TODO: finish the -> converters
  * TODO: XmParseProc callback (p860)
  * TODO: add_resource
  * TODO: get Xprt to work and test the Xp stuff
+ * TODO: rest of help strings and check in snd-help.
  */
 
 /* HISTORY: 

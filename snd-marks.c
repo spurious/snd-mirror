@@ -693,29 +693,27 @@ static mark *find_nth_mark(chan_info *cp, int count)
   return(mp);
 }
 
-int goto_mark(chan_info *cp, int count)
+void goto_mark(chan_info *cp, int count)
 {
   mark *mp;
   if ((!cp) || (!cp->marks))
     {
       if (cp) report_in_minibuffer(cp->sound, "no marks");
-      return(CURSOR_IN_VIEW);
     }
-  mp = find_nth_mark(cp, count);
-  if (!mp) 
+  else
     {
-      report_in_minibuffer(cp->sound, "no such mark");
-      return(CURSOR_IN_VIEW);
+      mp = find_nth_mark(cp, count);
+      if (!mp) 
+	report_in_minibuffer(cp->sound, "no such mark");
+      else cursor_moveto(cp, mp->samp);
     }
-  return(cursor_moveto(cp, mp->samp));
 }
 
-int goto_named_mark(chan_info *cp, char *name)
+void goto_named_mark(chan_info *cp, char *name)
 {
   mark *mp;
   mp = find_named_mark(cp, name);
-  if (mp) return(cursor_moveto(cp, mp->samp));
-  return(CURSOR_IN_VIEW);
+  if (mp) cursor_moveto(cp, mp->samp);
 }
 
 static mark *active_mark_1(chan_info *cp, mark *mp, void *m)

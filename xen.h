@@ -388,6 +388,11 @@
   #define XEN_CALL_4(Func, Arg1, Arg2, Arg3, Arg4, Caller) g_call_any(Func, XEN_LIST_4(Arg1, Arg2, Arg3, Arg4), Caller) 
   #define XEN_CALL_5(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Caller) g_call_any(Func, XEN_LIST_5(Arg1, Arg2, Arg3, Arg4, Arg5), Caller) 
   #define XEN_CALL_6(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Caller) g_call_any(Func, XEN_LIST_6(Arg1, Arg2, Arg3, Arg4, Arg5, Arg6), Caller) 
+  #define XEN_CALL_0_NO_CATCH(Func, Caller)                   g_call0_unprotected(Func)
+  #define XEN_CALL_1_NO_CATCH(Func, Arg1, Caller)             g_call1_unprotected(Func, Arg1)
+  #define XEN_CALL_2_NO_CATCH(Func, Arg1, Arg2, Caller)       g_call2_unprotected(Func, Arg1, Arg2)
+  #define XEN_CALL_3_NO_CATCH(Func, Arg1, Arg2, Arg3, Caller) g_call3_unprotected(Func, Arg1, Arg2, Arg3)
+  #define XEN_APPLY_NO_CATCH(Func, Args, Caller)              g_call_any_unprotected(Func, Args)
 #else
   #define XEN_CALL_0(Func, Caller)                   scm_apply(Func, XEN_EMPTY_LIST, XEN_EMPTY_LIST)
   #define XEN_CALL_1(Func, Arg1, Caller)             scm_apply(Func, Arg1, scm_listofnull)
@@ -400,6 +405,11 @@
      scm_apply(Func, Arg1, scm_cons2(Arg2, Arg3, scm_cons2(Arg4, Arg5, scm_listofnull)))
   #define XEN_CALL_6(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Caller) \
      scm_apply(Func, Arg1, scm_cons2(Arg2, Arg3, scm_cons2(Arg4, Arg5, scm_cons(Arg6, scm_listofnull))))
+  #define XEN_CALL_0_NO_CATCH(Func, Caller)                   scm_apply(Func, XEN_EMPTY_LIST, XEN_EMPTY_LIST)
+  #define XEN_CALL_1_NO_CATCH(Func, Arg1, Caller)             scm_apply(Func, Arg1, scm_listofnull)
+  #define XEN_CALL_2_NO_CATCH(Func, Arg1, Arg2, Caller)       scm_apply(Func, Arg1, scm_cons(Arg2, scm_listofnull))
+  #define XEN_CALL_3_NO_CATCH(Func, Arg1, Arg2, Arg3, Caller) scm_apply(Func, Arg1, scm_cons2(Arg2, Arg3, scm_listofnull))
+  #define XEN_APPLY_NO_CATCH(Func, Args, Caller)              scm_apply(Func, Args, XEN_EMPTY_LIST)
 #endif
 
 #define XEN_APPLY_ARG_LIST_END            scm_listofnull
@@ -637,6 +647,11 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #define XEN_CALL_6(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Caller) rb_funcall(Func, rb_intern("call"), 6, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6)
 #define XEN_APPLY(Func, Args, Caller)              xen_rb_apply(Func, Args)
 #define XEN_APPLY_ARG_LIST_END          Qnil
+#define XEN_CALL_0_NO_CATCH(Func, Caller)                   xen_rb_funcall_0(Func)
+#define XEN_CALL_1_NO_CATCH(Func, Arg1, Caller)             rb_funcall(Func, rb_intern("call"), 1, Arg1)
+#define XEN_CALL_2_NO_CATCH(Func, Arg1, Arg2, Caller)       rb_funcall(Func, rb_intern("call"), 2, Arg1, Arg2)
+#define XEN_CALL_3_NO_CATCH(Func, Arg1, Arg2, Arg3, Caller) rb_funcall(Func, rb_intern("call"), 3, Arg1, Arg2, Arg3)
+#define XEN_APPLY_NO_CATCH(Func, Args, Caller)              xen_rb_apply(Func, Args)
 
 #define XEN_ARITY(Func)                 rb_funcall(Func, rb_intern("arity"), 0)
 #define XEN_REQUIRED_ARGS(Func)         xen_rb_required_args(XEN_ARITY(Func))
@@ -911,6 +926,11 @@ XEN xen_rb_copy_list(XEN val); /* Ruby arrays (lists) are passed by reference */
 #define XEN_CALL_6(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Caller) 0
 #define XEN_APPLY(Func, Args, Caller) 0
 #define XEN_APPLY_ARG_LIST_END 0
+#define XEN_CALL_0_NO_CATCH(Func, Caller) 0
+#define XEN_CALL_1_NO_CATCH(Func, Arg1, Caller) 0
+#define XEN_CALL_2_NO_CATCH(Func, Arg1, Arg2, Caller) 0
+#define XEN_CALL_3_NO_CATCH(Func, Arg1, Arg2, Arg3, Caller) 0
+#define XEN_APPLY_NO_CATCH(Func, Args, Caller) 0
 #define XEN_ARITY(Func) 0
 #define XEN_REQUIRED_ARGS(Func) 0
 #define XEN_KEYWORD_P(Obj) 0

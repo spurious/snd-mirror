@@ -416,18 +416,12 @@ static XEN vct_map(XEN obj, XEN proc)
   #define H_vct_mapB "(" S_vct_mapB " v proc) -> v with each element set to value of proc: v[i] = (proc)"
   int i;
   vct *v;
-  XEN val;
   XEN_ASSERT_TYPE(VCT_P(obj), obj, XEN_ARG_1, S_vct_mapB, "a vct");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc) && (XEN_REQUIRED_ARGS(proc) == 0), proc, XEN_ARG_2, S_vct_mapB, "a thunk");
   v = TO_VCT(obj);
   if (v) 
     for (i = 0; i < v->length; i++) 
-      {
-	val = XEN_CALL_0(proc, S_vct_mapB);
-	if (XEN_SYMBOL_P(val))
-	  break;
-	else v->data[i] = XEN_TO_C_DOUBLE(val);
-      }
+      v->data[i] = XEN_TO_C_DOUBLE(XEN_CALL_0_NO_CATCH(proc, S_vct_mapB));
   return(xen_return_first(obj, proc));
 }
 
@@ -436,18 +430,12 @@ static XEN vct_do(XEN obj, XEN proc)
   #define H_vct_doB "(" S_vct_doB " v proc) -> v with each element set to value of proc: v[i] = (proc i)"
   int i;
   vct *v;
-  XEN val;
   XEN_ASSERT_TYPE(VCT_P(obj), obj, XEN_ARG_1, S_vct_doB, "a vct");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc) && (XEN_REQUIRED_ARGS(proc) == 1), proc, XEN_ARG_2, S_vct_doB, "a procedure of one arg");
   v = TO_VCT(obj);
   if (v) 
     for (i = 0; i < v->length; i++) 
-      {
-	val = XEN_CALL_1(proc, C_TO_SMALL_XEN_INT(i), S_vct_doB);
-	if (XEN_SYMBOL_P(val))
-	  break;
-	else v->data[i] = XEN_TO_C_DOUBLE(val);
-      }
+      v->data[i] = XEN_TO_C_DOUBLE(XEN_CALL_1_NO_CATCH(proc, C_TO_SMALL_XEN_INT(i), S_vct_doB));
   return(xen_return_first(obj, proc));
 }
 
@@ -489,13 +477,15 @@ static XEN vcts_map(XEN args)
       vsize = v[i]->length;
   for (i = 0; i < vsize; i++)
     {
-      arg = XEN_CALL_1(proc, svi, S_vcts_mapB);
+      arg = XEN_CALL_1_NO_CATCH(proc, svi, S_vcts_mapB);
       if (XEN_LIST_P(arg))
-	for (vi = 0, lst = arg; vi < vnum; vi++, lst = XEN_CDR(lst))
-	  v[vi]->data[i] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
-      else
-	if (XEN_SYMBOL_P(arg))
-	  break;
+	{
+	  for (vi = 0, lst = arg; vi < vnum; vi++, lst = XEN_CDR(lst))
+	    v[vi]->data[i] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
+	}
+      else XEN_ERROR(BAD_TYPE,
+		     XEN_LIST_2(C_TO_XEN_STRING(S_vcts_mapB),
+				arg));
     }
   FREE(v);
   return(xen_return_first(C_TO_SMALL_XEN_INT(vnum), args));
@@ -538,13 +528,15 @@ static XEN vcts_do(XEN args)
       vsize = v[i]->length;
   for (i = 0; i < vsize; i++)
     {
-      arg = XEN_CALL_2(proc, svi, C_TO_SMALL_XEN_INT(i), S_vcts_doB);
+      arg = XEN_CALL_2_NO_CATCH(proc, svi, C_TO_SMALL_XEN_INT(i), S_vcts_doB);
       if (XEN_LIST_P(arg))
-	for (vi = 0, lst = arg; vi < vnum; vi++, lst = XEN_CDR(lst))
-	  v[vi]->data[i] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
-      else
-	if (XEN_SYMBOL_P(arg))
-	  break;
+	{
+	  for (vi = 0, lst = arg; vi < vnum; vi++, lst = XEN_CDR(lst))
+	    v[vi]->data[i] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
+	}
+      else XEN_ERROR(BAD_TYPE,
+		     XEN_LIST_2(C_TO_XEN_STRING(S_vcts_doB),
+				arg));
     }
   FREE(v);
   return(xen_return_first(C_TO_SMALL_XEN_INT(vnum), args));

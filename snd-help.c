@@ -278,6 +278,10 @@ void news_help(snd_state *ss)
 24-Mar:  removed ALSA 0.5 support.\n\
          cosine-summation, legendre-summation in dsp.scm.\n\
          mus-sound-forget and mus-sound-prune bindings.\n\
+         clear-listener (bound to C-M-g). C-? tries to invoke snd-help.  added help-hook.\n\
+         M-p and M-n now work in the listener (it has a history of previous forms).\n\
+         added bad-type error and removed internal catch from map-chan et al\n\
+         removed cursor-no-action, cursor-update-display\n\
 18-Mar:  squelch-vowels in examp.scm (and ramp gen).\n\
 13-Mar:  snd 5.8.\n\
 12-Mar:  header editor bugfix (thanks to Ludger Brummer).\n\
@@ -445,6 +449,7 @@ static char graph_help_string[] =
   c-_: undo\n\
   c-[Space]: start selection definition\n\
        - c-[Space] to deactivate selection\n\
+  c-m-g: clear listener\n\
 \n\
 The extended commands (preceded by c-x) are:\n\
   a: apply envelope to selection\n\
@@ -856,7 +861,7 @@ Graph Line style:\n\
 \n\
 Keyboard action choices:\n\
   " S_cursor_in_view "     " S_cursor_on_left "     " S_cursor_on_right "   " S_cursor_in_middle "\n\
-  " S_cursor_update_display " " S_cursor_no_action " " S_keyboard_no_action "\n\
+  " S_keyboard_no_action "\n\
 \n\
 Cursor style:\n\
   " S_cursor_cross "    " S_cursor_line "\n\
@@ -2013,6 +2018,8 @@ char* word_wrap(char *text, int widget_len)
   return(new_text);
 }
 
+static XEN help_hook = XEN_FALSE;
+
 XEN g_help(XEN text, int widget_wid)
 {
   #define H_snd_help "(" S_snd_help " arg) returns the documentation associated with its argument. (snd-help make-vct) \
@@ -2021,15 +2028,20 @@ The argument can be a string, a symbol, or the object itself.  In some cases, on
 In the help descriptions, '&optional' marks optional arguments, and \
 '&opt-key' marks CLM-style optional keyword arguments.  If you load index.scm \
 the functions html and ? can be used in place of help to go to the HTML description, \
-and the location of the associated C code will be displayed, if it can be found."
+and the location of the associated C code will be displayed, if it can be found. \
+If help-hook is not empty, it is invoked with the subject and the snd-help result \
+and its value is returned."
 
   XEN help_text = XEN_FALSE; 
-  char *str = NULL;
+  char *str = NULL, *new_str, *subject = NULL;
 #if HAVE_GUILE
   XEN value; XEN loc_val = XEN_UNDEFINED; XEN snd_urls; 
   char *estr;
   if (XEN_EQ_P(text, XEN_UNDEFINED))                              /* if no arg, describe snd-help */
-    help_text = C_TO_XEN_STRING(H_snd_help);
+    {
+      help_text = C_TO_XEN_STRING(H_snd_help);
+      subject = H_snd_help;
+    }
   else
     {
       if ((XEN_STRING_P(text)) || (XEN_SYMBOL_P(text)))            /* arg can be name (string), symbol, or the value */
@@ -2037,6 +2049,7 @@ and the location of the associated C code will be displayed, if it can be found.
 	  if (XEN_STRING_P(text))
 	    str = XEN_TO_C_STRING(text);
 	  else str = XEN_SYMBOL_TO_C_STRING(text);
+	  subject = str;
 	  value = XEN_NAME_AS_C_STRING_TO_VALUE(str);
 	}
       else value = text;
@@ -2064,7 +2077,11 @@ and the location of the associated C code will be displayed, if it can be found.
 	      if ((XEN_LIST_P(loc_val)) &&
 		  (XEN_LIST_LENGTH(loc_val) == 3))
 		{ 
-		  str = word_wrap(XEN_TO_C_STRING(help_text), widget_wid);
+		  if (subject) 
+		    new_str = g_c_run_concat_hook(help_hook, S_help_hook, XEN_TO_C_STRING(help_text), subject);
+		  else new_str = copy_string(XEN_TO_C_STRING(help_text));
+		  str = word_wrap(new_str, widget_wid);
+		  if (new_str) FREE(new_str);
 		  estr = (char *)CALLOC(snd_strlen(str) + 128, sizeof(char));
 		  sprintf(estr, "%s (%s[%d]:%s)", 
 			  str, 
@@ -2084,11 +2101,7 @@ and the location of the associated C code will be displayed, if it can be found.
   /*   this means all the H_doc strings in Snd need to omit line-feeds except where necessary (i.e. code) */
 
   if (XEN_STRING_P(help_text))
-    {
-      str = word_wrap(XEN_TO_C_STRING(help_text), widget_wid);
-      help_text = C_TO_XEN_STRING(str);
-      if (str) FREE(str);
-    }
+    str = XEN_TO_C_STRING(help_text);
 #endif
 #if HAVE_RUBY
   if (XEN_STRING_P(text))
@@ -2097,13 +2110,17 @@ and the location of the associated C code will be displayed, if it can be found.
     if (XEN_SYMBOL_P(text))
        str = xen_help(XEN_SYMBOL_TO_C_STRING(text));
     else str = H_snd_help;
+#endif
   if (str)
     {
-      str = word_wrap(str, widget_wid);
+      if (subject)
+	new_str = g_c_run_concat_hook(help_hook, S_help_hook, str, subject);
+      else new_str = copy_string(str);
+      str = word_wrap(new_str, widget_wid);
+      if (new_str) FREE(new_str);
       help_text = C_TO_XEN_STRING(str);
       if (str) FREE(str);
     }
-#endif
   return(help_text);
 }
 
@@ -2129,4 +2146,9 @@ XEN_ARGIFY_1(g_listener_help_w, g_listener_help)
 void g_init_help(void)
 {
   XEN_DEFINE_PROCEDURE(S_snd_help, g_listener_help_w, 0, 1, 0, H_snd_help);
+
+  #define H_help_hook S_help_hook "(subject help-string) is called from snd-help.  If \
+if returns a string, it replaces 'help-string' (the default help)"
+
+  XEN_DEFINE_HOOK(help_hook, S_help_hook, 2, H_help_hook);    /* args = subject help-string */
 }

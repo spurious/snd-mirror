@@ -1,7 +1,8 @@
-/* TODO  if controls close, drag main sash should keep it closed
- */
-
 #include "snd.h"
+
+/* TODO: if controls close, drag main sash should keep it closed
+ * TODO: M-p and M-n in filter/mini?
+ */
 
 enum {W_pane, W_pane_box, W_control_panel,
       W_name_form, W_name, W_name_event, W_name_icon, W_name_pix, W_info_label, W_info, W_info_sep,

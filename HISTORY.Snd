@@ -3,6 +3,10 @@ snd change log
   24-Mar:    removed ALSA 0.5 support.
              cosine-summation, legendre-summation in dsp.scm.
              mus-sound-forget and mus-sound-prune bindings.
+             clear-listener (bound to C-M-g). C-? tries to invoke snd-help. added help-hook.
+             M-p and M-n now work in the listener (it has a history of previous forms).
+             added bad-type error and removed internal catch from map-chan et al
+             removed cursor-no-action, cursor-update-display.
   18-Mar:    squelch-vowels in examp.scm (and ramp gen).
   13-Mar:    snd 5.8.
   12-Mar:    header editor bugfix (thanks to Ludger Brummer).

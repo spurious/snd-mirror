@@ -1541,7 +1541,7 @@ control over the resynthesis pitch:
 <small>
 (defun test-pv (freq)
   (with-sound ()
-    (let ((pv (make-phase-vocoder
+    (let ((pv (<em class=red>make-phase-vocoder</em>
 	        nil
                 512 4 (/ 512 4) 1.0
                 nil ;no change to analysis
@@ -1563,7 +1563,7 @@ control over the resynthesis pitch:
           (fil (open-input "oboe.snd")))
       (let ((ctr 0))
         (dotimes (i (* 22050 2.3))
-          (outa i (phase-vocoder pv (lambda (dir) (let ((val (ina ctr fil))) (incf ctr) val)))))))))
+          (outa i (<em class=red>phase-vocoder</em> pv (lambda (dir) (let ((val (ina ctr fil))) (incf ctr) val)))))))))
 
 (test-pv 0.5)
 </small>
@@ -1672,7 +1672,7 @@ See  Palamin and Palamin, "A Method of Generating and Controlling Asymmetrical
 Spectra" JAES vol 36, no 9, Sept 88, p671-685:  this is another extension of
 the <a href="#sine-summation">sine-summation</a> and <a href="#sum-of-cosines">sum-of-cosines</a> approach.
 The generator's output amplitude is not always easy to predict.  <i>r</i> is the ratio between successive 
-sideband amplitudes, <i>r</i> > 1.0 pushes energy above the carrier, <i>r</i> < 1.0 pushes it below. (<i>r</i> = 1.0
+sideband amplitudes, <i>r</i> &gt; 1.0 pushes energy above the carrier, <i>r</i> &lt; 1.0 pushes it below. (<i>r</i> = 1.0
 gives essentially normal FM). <i>ratio</i>
 is the ratio between the carrier and modulator (i.e. sideband spacing). It's somewhat inconsistent
 that asymmetric-fm takes <i>index</i> (the fm-index) as its second argument, but otherwise it
@@ -2024,7 +2024,7 @@ Phenomena" by J Blauert).
 </p>
 
 <p>Locsig can send output to any number of channels.
-If channels > 2, the speakers are assumed to be evenly spaced in
+If channels &gt; 2, the speakers are assumed to be evenly spaced in
 a circle.
 You can use locsig-set! and locsig-ref to override the placement decisions.
 For example, to have full output to both channels,</p>
@@ -2199,7 +2199,7 @@ of the companding function, then:
   (let ((in-val (readin rd))            ; in-coming signal
         (func-len (length compander)))  ; size of array
     (* (signum in-val) 
-       (array-interp compander (abs (* in-val (1- func-len))) func-len)))
+       (<em class=red>array-interp</em> compander (abs (* in-val (1- func-len))) func-len)))
 </pre>
 <p>sum-of-sines simply loops through its arrays of amps and phases, summing
 (* amp (sin phase)) -- it is mostly a convenience function for additive synthesis.
@@ -2629,7 +2629,7 @@ def bird(start, dur, frequency, freqskew, amplitude, freq_envelope, amp_envelope
   vct_add!($out_data, local_data, beg)
 end
 </small></pre>
-</br>
+<br>
 
 <span class=box><h2><A NAME="note-lists">Note Lists</a></h2></span>
 <!-- INDEX note-lists:Note lists  -->

@@ -596,6 +596,16 @@ char *sg_get_text(GtkWidget *w, int start, int end)
   return(gtk_text_buffer_get_text(buf, &s, &e, TRUE));
 }
 
+void sg_text_delete(GtkWidget *w, int start, int end)
+{
+  GtkTextIter s, e;
+  GtkTextBuffer *buf;
+  buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
+  gtk_text_buffer_get_iter_at_offset(buf, &s, start);
+  gtk_text_buffer_get_iter_at_offset(buf, &e, end);  /* this is utterly idiotic!!! */
+  gtk_text_buffer_delete(buf, &s, &e);
+}
+
 void sg_text_insert(GtkWidget *w, char *text)
 {
   GtkTextIter pos;
@@ -661,6 +671,15 @@ void sg_unselect_text(GtkWidget *w)
 #else
 
 char *sg_label_text(GtkLabel *w) {char *text; gtk_label_get(w, &text); return(text);}
+
+void sg_text_delete(GtkWidget *w, int start, int end)
+{
+  int pos;
+  pos = gtk_editable_get_position(GTK_EDITABLE(w));
+  gtk_editable_set_position(GTK_EDITABLE(w), start);
+  gtk_text_forward_delete(GTK_TEXT(w), end - start);
+  gtk_editable_set_position(GTK_EDITABLE(w), start);
+}
 
 #endif
 

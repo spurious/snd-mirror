@@ -568,7 +568,7 @@ this can be confusing if fft normalization is on (the default)"
 	  (if (number? leftmost)
 	      (begin
 		(set! (left-sample keysnd keychn) leftmost)
-		cursor-update-display)
+		keyboard-no-action)
 	      (report-in-minibuffer "no mark in window"))))))
 
 ;(bind-key (char->integer #\m) 0 (lambda () (first-mark-in-window-at-left)))

@@ -2688,7 +2688,7 @@ void handle_cursor(chan_info *cp, int redisplay)
   snd_info *sp;
   double gx = 0.0;
   if (cp == NULL) return;
-  if ((redisplay != CURSOR_NO_ACTION) && (redisplay != KEYBOARD_NO_ACTION))
+  if (redisplay != KEYBOARD_NO_ACTION)
     {
       sp = cp->sound;
       if ((cp->verbose_cursor) && (sp->minibuffer_on == 0)) /* don't overwrite M-X results with cursor garbage! */
@@ -2696,49 +2696,42 @@ void handle_cursor(chan_info *cp, int redisplay)
 	  show_cursor_info(cp); 
 	  sp->minibuffer_on = 0;
 	} 
-      if (redisplay == CURSOR_UPDATE_DISPLAY)
+      if (redisplay != CURSOR_IN_VIEW)
 	{
-	  update_graph(cp, NULL);
-	}
-      else
-	{
-	  if (redisplay != CURSOR_IN_VIEW)
+	  ap = cp->axis;
+	  if (cp->cursor_visible)
 	    {
-	      ap = cp->axis;
-	      if (cp->cursor_visible)
-		{
-		  ax = cursor_context(cp);
-		  draw_line(ax, cp->cx, cp->cy - cp->cursor_size, cp->cx, cp->cy + cp->cursor_size);
-		  draw_line(ax, cp->cx - cp->cursor_size, cp->cy, cp->cx + cp->cursor_size, cp->cy);
-		  cp->cursor_visible = 0; /* don't redraw at old location */
-		}
-	      switch (redisplay)
-		{
-		case CURSOR_ON_LEFT: 
-		  gx = (double)(cp->cursor) / (double)SND_SRATE(sp); 
-		  break;
-		case CURSOR_ON_RIGHT: 
-		  gx = (double)(cp->cursor) / (double)SND_SRATE(sp) - ap->zx * ap->x_ambit; 
-		  break;
-		case CURSOR_IN_MIDDLE: 
-		  gx = (double)(cp->cursor) / (double)SND_SRATE(sp) - ap->zx * 0.5 * ap->x_ambit; 
-		  break;
-		}
-	      if (gx < 0.0) gx = 0.0;
-	      reset_x_display(cp, (gx - ap->xmin) / ap->x_ambit, ap->zx);
+	      ax = cursor_context(cp);
+	      draw_line(ax, cp->cx, cp->cy - cp->cursor_size, cp->cx, cp->cy + cp->cursor_size);
+	      draw_line(ax, cp->cx - cp->cursor_size, cp->cy, cp->cx + cp->cursor_size, cp->cy);
+	      cp->cursor_visible = 0; /* don't redraw at old location */
 	    }
-	  else {if (cp->cursor_on) draw_graph_cursor(cp);}
+	  switch (redisplay)
+	    {
+	    case CURSOR_ON_LEFT: 
+	      gx = (double)(cp->cursor) / (double)SND_SRATE(sp); 
+	      break;
+	    case CURSOR_ON_RIGHT: 
+	      gx = (double)(cp->cursor) / (double)SND_SRATE(sp) - ap->zx * ap->x_ambit; 
+	      break;
+	    case CURSOR_IN_MIDDLE: 
+	      gx = (double)(cp->cursor) / (double)SND_SRATE(sp) - ap->zx * 0.5 * ap->x_ambit; 
+	      break;
+	    }
+	  if (gx < 0.0) gx = 0.0;
+	  reset_x_display(cp, (gx - ap->xmin) / ap->x_ambit, ap->zx);
 	}
+      else {if (cp->cursor_on) draw_graph_cursor(cp);}
     }
   update_possible_selection_in_progress(cp->cursor);
 }
 
-int cursor_moveto (chan_info *cp, int samp)
+void cursor_moveto (chan_info *cp, int samp)
 {
   snd_info *sp;
   chan_info *ncp;
   sync_info *si;
-  int i, val = 0;
+  int i;
   sp = cp->sound;
   if ((sp) && (sp->sync != 0))
     {
@@ -2747,21 +2740,20 @@ int cursor_moveto (chan_info *cp, int samp)
 	{
 	  ncp = si->cps[i];
 	  ncp->cursor = samp;
-	  handle_cursor(ncp, val = cursor_decision(ncp)); /* checks len */
+	  handle_cursor(ncp, cursor_decision(ncp)); /* checks len */
 	}
       si = free_sync_info(si);
     }
   else 
     {
       cp->cursor = samp;
-      handle_cursor(cp, val = cursor_decision(cp));
+      handle_cursor(cp, cursor_decision(cp));
     }
-  return(val);
 }
 
-int cursor_move (chan_info *cp, int samps)
+void cursor_move (chan_info *cp, int samps)
 {
-  return(cursor_moveto(cp, cp->cursor + samps));
+  cursor_moveto(cp, cp->cursor + samps);
 }
 
 void show_cursor_info(chan_info *cp)

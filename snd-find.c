@@ -283,58 +283,52 @@ static void get_find_expression(snd_info *sp, int count)
   sp->searching = count;
 }
 
-int cursor_search(chan_info *cp, int count)
+void cursor_search(chan_info *cp, int count)
 {
   int samp;
   snd_info *sp;
   char *s1, *s2;
   sp = cp->sound;
   if (search_in_progress) 
+    report_in_minibuffer(sp, "search in progress");
+  else
     {
-      report_in_minibuffer(sp, "search in progress");
-      return(KEYBOARD_NO_ACTION);
-    }
-  if (sp->searching)
-    {
-      if (!(XEN_PROCEDURE_P(sp->search_proc))) return(CURSOR_IN_VIEW); /* no search expr */
-
-      if (sp->search_expr)
+      if (sp->searching)
 	{
-	  /* see note above about closures */
-	  snd_unprotect(sp->search_proc);
-	  sp->search_proc = snd_catch_any(eval_str_wrapper, sp->search_expr, sp->search_expr);
-	  snd_protect(sp->search_proc);
-	}
+	  if (!(XEN_PROCEDURE_P(sp->search_proc))) return; /* no search expr */
+	  
+	  if (sp->search_expr)
+	    {
+	      /* see note above about closures */
+	      snd_unprotect(sp->search_proc);
+	      sp->search_proc = snd_catch_any(eval_str_wrapper, sp->search_expr, sp->search_expr);
+	      snd_protect(sp->search_proc);
+	    }
 
-      if (count > 0)
-	samp = cursor_find_forward(sp, cp, count);
-      else samp = cursor_find_backward(sp, cp, -count);
-      if (samp == -1) 
-	{ 
-	  report_in_minibuffer(sp, "%s: not found%s", sp->search_expr, (cp->last_search_result == SEARCH_FAILED) ? " (wrapped)" : "");
-	  cp->last_search_result = SEARCH_FAILED;
-	  return(CURSOR_IN_VIEW);
+	  if (count > 0)
+	    samp = cursor_find_forward(sp, cp, count);
+	  else samp = cursor_find_backward(sp, cp, -count);
+	  if (samp == -1) 
+	    { 
+	      report_in_minibuffer(sp, "%s: not found%s", sp->search_expr, (cp->last_search_result == SEARCH_FAILED) ? " (wrapped)" : "");
+	      cp->last_search_result = SEARCH_FAILED;
+	    }
+	  else
+	    {
+	      report_in_minibuffer(sp, "%s%sy = %s at %s (%d)",
+				   (sp->search_expr) ? sp->search_expr : "",
+				   (sp->search_expr) ? ": " : "",
+				   s1 = prettyf(chn_sample(samp, cp, cp->edit_ctr), 2),
+				   s2 = prettyf((double)samp / (double)SND_SRATE(sp), 2),
+				   samp);
+	      cp->last_search_result = SEARCH_OK;
+	      FREE(s1);
+	      FREE(s2);
+	      cursor_moveto(cp, samp);
+	    }
 	}
-      else
-	{
-	  report_in_minibuffer(sp, "%s%sy = %s at %s (%d)",
-			       (sp->search_expr) ? sp->search_expr : "",
-			       (sp->search_expr) ? ": " : "",
-			       s1 = prettyf(chn_sample(samp, cp, cp->edit_ctr), 2),
-			       s2 = prettyf((double)samp / (double)SND_SRATE(sp), 2),
-			       samp);
-	  cp->last_search_result = SEARCH_OK;
-	  FREE(s1);
-	  FREE(s2);
-	}
-      cursor_moveto(cp, samp);
-      if ((cp->cursor >= (cp->axis)->losamp) && 
-	  (cp->cursor <= (cp->axis)->hisamp))
-	return(CURSOR_IN_VIEW);
-      else return(CURSOR_IN_MIDDLE);
+      else get_find_expression(sp, count);
     }
-  else get_find_expression(sp, count);
-  return(CURSOR_IN_VIEW);
 }
 
 static XEN g_search_procedure(XEN snd)

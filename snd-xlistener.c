@@ -150,21 +150,6 @@ static void Activate_keyboard (Widget w, XEvent *ev, char **str, Cardinal *num)
     }
 }
 
-static void Activate_channel (Widget w, XEvent *ev, char **str, Cardinal *num) 
-{
-  /* make the current channel active and abort if anything in progress */
-  chan_info *cp;
-  snd_state *ss;
-  ss = get_global_state();
-  clear_listener();
-  ss->error_lock = 0;
-  if ((ss->checking_explicitly) || 
-      (play_in_progress())) 
-    ss->stopped_explicitly = 1; 
-  cp = current_channel(ss);
-  if (cp) goto_graph(cp);
-}
-
 static char *listener_selection = NULL;
 
 static void Kill_line(Widget w, XEvent *ev, char **str, Cardinal *num) 
@@ -438,9 +423,36 @@ void append_listener_text(int end, char *msg)
 {
   if (listener_text)
     {
+      if (end == -1) end = XmTextGetLastPosition(listener_text);
       XmTextInsert(listener_text, end, msg);
       XmTextSetCursorPosition(listener_text, XmTextGetLastPosition(listener_text));
     }
+}
+
+static int dont_check_motion = 0;
+
+static void clear_back_to_prompt(Widget w)
+{
+  int beg, end;
+  beg = printout_end + 1;
+  end = XmTextGetLastPosition(w);
+  if (end <= beg) return;
+  dont_check_motion = 1;
+  XmTextSetSelection(listener_text, beg, end, CurrentTime);
+  XmTextRemove(listener_text);
+  dont_check_motion = 0;
+}
+
+static void Listener_Meta_P(Widget w, XEvent *event, char **str, Cardinal *num) 
+{
+  clear_back_to_prompt(w);
+  restore_listener_string(TRUE);
+}
+
+static void Listener_Meta_N(Widget w, XEvent *event, char **str, Cardinal *num) 
+{
+  clear_back_to_prompt(w);
+  restore_listener_string(FALSE);
 }
 
 void save_listener_text(FILE *fp)
@@ -453,6 +465,45 @@ void save_listener_text(FILE *fp)
 	{
 	  fwrite((void *)str, sizeof(char), snd_strlen(str), fp);
 	  XtFree(str);
+	}
+    }
+}
+
+static void Listener_help(Widget w, XEvent *event, char **str, Cardinal *num) 
+{
+  char *source = NULL, *name;
+  int end = 0, beg, len, i, j, start_of_name = -1;
+  XEN result;
+  end = XmTextGetLastPosition(w);
+  beg = end - 1024;
+  if (beg < 0) beg = 0;
+  if (beg >= end) return;
+  len = end - beg + 1;
+  source = (char *)CALLOC(len + 1, sizeof(char));
+  XmTextGetSubstring(w, beg, len, len + 1, source);
+  if (source)
+    {
+      /* look for "(name...)" */
+      for (i = len - 1; i > 0; i--)
+	{
+	  if (source[i] == '(')
+	    {
+	      start_of_name = i + 1;
+	      /* look forward for a name */
+	      for (j = i + 2; j < len; j++)
+		if (is_separator_char(source[j]))
+		  {
+		    name = (char *)CALLOC(j - i + 1, sizeof(char));
+		    strncpy(name, (char *)(source + i + 1), j - i - 1);
+                    result = g_help(C_TO_XEN_STRING(name), listener_width());
+		    FREE(name);
+		    if (XEN_STRING_P(result))
+		      {
+			listener_append_and_prompt(get_global_state(), XEN_TO_C_STRING(result));
+			return;
+		      }
+		  }
+	    }
 	}
     }
 }
@@ -525,11 +576,21 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
     }
 }
 
-#define NUM_ACTS 14
+static void Listener_clear(Widget w, XEvent *event, char **str, Cardinal *num) 
+{
+  clear_listener();
+}
+
+static void Listener_g(Widget w, XEvent *event, char **str, Cardinal *num) 
+{
+  control_g(get_global_state(), any_selected_sound(get_global_state()));
+}
+
+
+#define NUM_ACTS 18
 static XtActionsRec acts[] = {
   {"no-op", No_op},
   {"activate-keyboard", Activate_keyboard},
-  {"activate-channel", Activate_channel},
   {"yank", Yank},
   {"delete-region", Delete_region},
   {"kill-line", Kill_line},
@@ -541,6 +602,11 @@ static XtActionsRec acts[] = {
   {"word-upper", Word_upper},
   {"name-completion", Name_completion},
   {"listener-completion", Listener_completion},
+  {"listener-clear", Listener_clear},
+  {"listener-g", Listener_g},
+  {"listener-help", Listener_help},
+  {"listener-meta-p", Listener_Meta_P},
+  {"listener-meta-n", Listener_Meta_N},
 };
 
 /* translation tables for emacs compatibility and better inter-widget communication */
@@ -653,15 +719,18 @@ static char TextTrans4[] =
 	Ctrl <Key>e:	    end-of-line()\n\
 	Ctrl <Key>f:	    forward-character()\n\
 	Mod1 <Key>f:	    forward-word()\n\
-	Ctrl <Key>g:	    activate-channel()\n\
+	Ctrl Meta <Key>g:   listener-clear()\n\
+	Ctrl <Key>g:	    listener-g()\n\
 	Ctrl <Key>h:	    delete-previous-character()\n\
 	Ctrl <Key>j:	    newline-and-indent()\n\
 	Ctrl <Key>k:	    kill-line()\n\
 	Ctrl <Key>l:	    redraw-display()\n\
 	Mod1 <Key>l:	    word-upper(l)\n\
 	Ctrl <Key>n:	    next-line()\n\
+        Meta <Key>n:        listener-meta-n()\n\
 	Ctrl <Key>o:	    newline-and-backup()\n\
 	Ctrl <Key>p:	    previous-line()\n\
+        Meta <Key>p:        listener-meta-p()\n\
 	Ctrl <Key>t:	    text-transpose()\n\
 	Ctrl <Key>u:	    activate-keyboard(u)\n\
 	Mod1 <Key>u:	    word-upper(u)\n\
@@ -686,6 +755,7 @@ static char TextTrans4[] =
 	<Btn1Up>:	    b1-release()\n\
 	<Btn1Motion>:	    b1-move()\n\
 	<Key>Tab:	    listener-completion()\n\
+        Ctrl <Key>?:        listener-help()\n\
 	<Key>Return:	    activate()\n";
 static XtTranslations transTable4 = NULL;
 
@@ -846,6 +916,7 @@ static void command_motion_callback(Widget w, XtPointer context, XtPointer info)
   char *str = NULL, *prompt;
   int pos, i, parens;
   cbs->doit = TRUE; 
+  if (dont_check_motion) return;
   if (last_highlight_position != -1)
     {
       XmTextSetHighlight(w, last_highlight_position, last_highlight_position + 1, XmHIGHLIGHT_NORMAL);
@@ -884,7 +955,7 @@ static void command_modify_callback(Widget w, XtPointer context, XtPointer info)
   snd_state *ss = (snd_state *)context;
   char *str = NULL, *prompt;
   int len;
-  if ((cbs->text)->length > 0)
+  if (((cbs->text)->length > 0) || (dont_check_motion))
     cbs->doit = TRUE;
   else
     { 
@@ -1118,6 +1189,15 @@ static XEN g_reset_listener_cursor(void)
 		    XtWindow(listener_text)); 
   return(XEN_FALSE);
 }
+
+void clear_listener(void)
+{
+  dont_check_motion = 1;
+  XmTextSetSelection(listener_text, 1, XmTextGetCursorPosition(listener_text), CurrentTime);
+  XmTextRemove(listener_text);
+  dont_check_motion = 0;
+}
+
 
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_0(g_listener_selected_text_w, g_listener_selected_text)

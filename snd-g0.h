@@ -343,13 +343,14 @@ typedef struct {
   /*  or  gtk_text_buffer_get_bounds (buffer, &start, &end);  gtk_text_buffer_delete (buffer, &start, &end); */
   #define SG_TEXT_FREEZE(Widget)
   #define SG_TEXT_THAW(Widget)
+  #define SG_TEXT_DELETE(Widget, Start, End) sg_text_delete(Widget, Start, End)
 
   #define SG_TEXT_SET_POINT(Widget, Point)   sg_set_cursor(Widget, Point)
   #define SG_TEXT_GET_POINT(Widget)          sg_cursor_position(Widget)
   #define SG_TEXT_UNSELECT(Widget)           sg_unselect_text(Widget)
   #define SG_TEXT_SELECT(Widget, Start, End) sg_select_text(Widget, Start, End)
   #define SG_TEXT_INSERT(Widget, Font, FG, BG, Text, Length) sg_text_insert(Widget, Text)
-  #define SG_TEXT_BACKWARD_DELETE(Wid, Num)  
+  #define SG_TEXT_BACKWARD_DELETE(Wid, Num)  sg_text_delete(Wid, SG_TEXT_GET_POINT(Wid) - Num, Num)
   #define SG_LIST_SELECT_ROW(Widget, Row)    
   #define SG_LIST_MOVETO(Widget, Row)        
   #define SG_LIST_CLEAR(Widget)              gtk_tree_store_clear(GTK_TREE_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(Widget))))
@@ -415,6 +416,7 @@ typedef struct {
   #define SG_TEXT_SELECT(Widget, Start, End) gtk_editable_select_region(GTK_EDITABLE(Widget), Start, End)
   #define SG_TEXT_INSERT(Widget, Font, FG, BG, Text, Length) gtk_text_insert(GTK_TEXT(Widget), Font, FG, BG, Text, Length)
   #define SG_TEXT_BACKWARD_DELETE(Wid, Num)  gtk_text_backward_delete(GTK_TEXT(Wid), Num)
+  #define SG_TEXT_DELETE(Widget, Start, End) sg_text_delete(Widget, Start, End)
   #define SG_LIST_SELECT_ROW(Widget, Row)    gtk_clist_select_row(GTK_CLIST(Widget), Row, 0)
   #define SG_LIST_MOVETO(Widget, Row)        gtk_clist_moveto(GTK_CLIST(Widget), Row, 0, 0.5, 0.5);
   #define SG_LIST_CLEAR(Widget)              gtk_clist_clear(GTK_CLIST(Widget))

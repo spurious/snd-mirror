@@ -531,6 +531,7 @@ char *filename_completer(char *text);
 char *srate_completer(char *text);
 char *info_completer(char *text);
 char *complete_listener_text(char *old_text, int end, int *try_completion, char **to_file_text);
+int is_separator_char(char c);
 
 
 /* -------- snd-print.c -------- */
@@ -578,8 +579,8 @@ mark *add_mark(int samp, char *name, chan_info *cp);
 void delete_mark_samp(int samp, chan_info *cp);
 void free_mark_list(chan_info *cp, int ignore);
 void collapse_marks (snd_info *sp);
-int goto_mark(chan_info *cp, int count);
-int goto_named_mark(chan_info *cp, char *name);
+void goto_mark(chan_info *cp, int count);
+void goto_named_mark(chan_info *cp, char *name);
 mark *active_mark(chan_info *cp);
 int mark_beg(chan_info *cp);
 void display_channel_marks (chan_info *cp);
@@ -741,6 +742,11 @@ XEN g_call1(XEN proc, XEN arg, const char *caller);
 XEN g_call2(XEN proc, XEN arg1, XEN arg2, const char *caller);
 XEN g_call3(XEN proc, XEN arg1, XEN arg2, XEN arg3, const char *caller);
 XEN g_call_any(XEN proc, XEN arglist, const char *caller);
+XEN g_call0_unprotected(XEN proc);
+XEN g_call1_unprotected(XEN proc, XEN arg);
+XEN g_call2_unprotected(XEN proc, XEN arg1, XEN arg2);
+XEN g_call3_unprotected(XEN proc, XEN arg1, XEN arg2, XEN arg3);
+XEN g_call_any_unprotected(XEN proc, XEN arglist);
 char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name, int argn);
 int procedure_ok_with_error(XEN proc, int req_args, const char *caller, const char *arg_name, int argn);
 void snd_protect(XEN obj);
@@ -748,6 +754,7 @@ void snd_unprotect(XEN obj);
 XEN g_c_run_or_hook (XEN hook, XEN args, const char *caller);
 XEN g_c_run_and_hook (XEN hook, XEN args, const char *caller);
 XEN g_c_run_progn_hook (XEN hook, XEN args, const char *caller);
+char *g_c_run_concat_hook(XEN hook, const char *caller, char *initial_string, char *subject);
 void during_open(int fd, char *file, int reason);
 void after_open(int index);
 int listener_print_p(char *msg);
@@ -763,8 +770,7 @@ XEN snd_report_listener_result(snd_state *ss, XEN form);
 void snd_eval_property_str(snd_state *ss, char *buf);
 void snd_eval_stdin_str(snd_state *ss, char *buf);
 void g_snd_callback(int callb);
-void clear_listener(void);
-
+void clear_stdin(void);
 
 
 /* -------- snd-select.c -------- */
@@ -922,7 +928,7 @@ void zx_incremented(chan_info *cp, double amount);
 int cursor_decision(chan_info *cp);
 void reset_x_display(chan_info *cp, double sx, double zx);
 void set_x_axis_x0x1 (chan_info *cp, double x0, double x1);
-int cursor_move (chan_info *cp, int samps);
+void cursor_move (chan_info *cp, int samps);
 void set_wavo_trace(snd_state *ss, int uval);
 void set_dot_size(snd_state *ss, int val);
 chan_info *virtual_selected_channel(chan_info *cp);
@@ -961,7 +967,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 void graph_button_motion_callback(chan_info *cp, int x, int y, TIME_TYPE time, TIME_TYPE click_time);
 int make_graph(chan_info *cp, snd_info *sp, snd_state *ss);
 void reset_spectro(snd_state *state);
-int cursor_moveto (chan_info *cp, int samp);
+void cursor_moveto (chan_info *cp, int samp);
 
 void g_init_chn(void);
 XEN make_graph_data(chan_info *cp, int edit_pos, int losamp, int hisamp);
@@ -1043,7 +1049,9 @@ void clear_mini_strings(snd_info *sp);
 void remember_filter_string(snd_info *sp, char *str);
 void restore_filter_string(snd_info *s, int back);
 void clear_filter_strings(snd_info *sp);
-
+void remember_listener_string(char *str);
+void restore_listener_string(int back);
+void clear_listener_strings(void);
 
 
 /* -------- snd-file -------- */
@@ -1174,7 +1182,7 @@ void lock_affected_mixes(chan_info *cp, int beg, int end);
 void release_pending_mixes(chan_info *cp, int edit_ctr);
 void reset_mix_list(chan_info *cp);
 void ripple_mixes(chan_info *cp, int beg, int change);
-int goto_mix(chan_info *cp, int count);
+void goto_mix(chan_info *cp, int count);
 int mix_length(int n);
 int any_mix_id(void);
 int mix_ok_and_unlocked(int n);
@@ -1218,7 +1226,7 @@ int mix_ok(int n);
 /* -------- snd-find.c -------- */
 
 char *global_search(snd_state *ss, int direction);
-int cursor_search(chan_info *cp, int count);
+void cursor_search(chan_info *cp, int count);
 
 void g_init_find(void);
 
@@ -1265,9 +1273,8 @@ void clear_minibuffer_prompt(snd_info *sp);
 void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta);
 int use_filename_completer(int filing);
 void keyboard_command (chan_info *cp, int keysym, int state);
-
+void control_g(snd_state *ss, snd_info *sp);
 void g_init_kbd(void);
-
 
 
 /* -------- snd-sig.c -------- */
@@ -1286,10 +1293,10 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 	       int from_enved, const char *origin, mus_any *gen, XEN edpos, int arg_pos, Float e_base);
 void cos_smooth(chan_info *cp, int beg, int num, int regexpr, const char *origin);
 void display_frequency_response(snd_state *ss, env *e, axis_info *ap, axis_context *gax, int order, int dBing);
-int cursor_delete(chan_info *cp, int count, const char *origin);
-int cursor_delete_previous(chan_info *cp, int count, const char *origin);
-int cursor_zeros(chan_info *cp, int count, int regexpr);
-int cursor_insert(chan_info *cp, int beg, int count, const char *origin);
+void cursor_delete(chan_info *cp, int count, const char *origin);
+void cursor_delete_previous(chan_info *cp, int count, const char *origin);
+void cursor_zeros(chan_info *cp, int count, int regexpr);
+void cursor_insert(chan_info *cp, int beg, int count, const char *origin);
 void fht(int powerOfFour, Float *array);
 
 void g_init_sig(void);

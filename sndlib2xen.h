@@ -28,6 +28,7 @@
 #define NO_SUCH_AXIS_CONTEXT XEN_ERROR_TYPE("no-such-graphics-context")
 #define BAD_ARITY            XEN_ERROR_TYPE("bad-arity")
 #define NO_SUCH_DIRECTION    XEN_ERROR_TYPE("no-such-direction")
+#define BAD_TYPE             XEN_ERROR_TYPE("bad-type")
 
 #if HAVE_GSL
   #define SND_GSL_ERROR      XEN_ERROR_TYPE("gsl-error")

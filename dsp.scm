@@ -605,3 +605,13 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
   (make-sum-of-cosines (inexact->exact (/ cosines 2)) frequency))
 
 ;(let ((gen (make-legendre-summation 10 100))) (map-chan (lambda (y) (legendre-summation gen))))
+
+
+;;; -------- brighten-slightly
+
+(define (brighten-slightly amount)
+  ;; a slightly simplified form of contrast-enhancement ('amount' between ca .1 and 1)
+  (let* ((mx (maxamp))
+	 (brt (/ (* 2 pi amount) mx)))
+    (map-channel (lambda (y)
+		   (* mx (sin (* y brt)))))))

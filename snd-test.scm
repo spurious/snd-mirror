@@ -30,6 +30,8 @@
 ;;; TODO: gtk tests
 ;;; TODO: Xt selection tests?
 ;;; TODO: rest of Snd callbacks triggered
+;;; TODO: mix|mark-drag with large files (amp env case)
+;;; TODO: mix play with various amp/speed settings
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs) (ice-9 syncase))
 
@@ -52,7 +54,7 @@
 
 (define tests 1)
 (define snd-test -1)
-(if (provided? 'snd-debug) (disable-play))
+;(if (provided? 'snd-debug) (disable-play))
 (define keep-going #f)
 (define full-test (< snd-test 0))
 (define total-tests 25)
@@ -273,10 +275,8 @@
 	'chebyshev-transform chebyshev-transform 5 
 	'cursor-in-middle cursor-in-middle 3
 	'cursor-in-view cursor-in-view 0 
-	'cursor-no-action cursor-no-action 5 
 	'cursor-on-left cursor-on-left 1 
 	'cursor-on-right cursor-on-right 2 
-	'cursor-update-display cursor-update-display 4 
 	'dolph-chebyshev-window dolph-chebyshev-window 16
 	'exponential-window exponential-window 9 
 	'zoom-focus-active zoom-focus-active 2
@@ -656,7 +656,7 @@
       (IF (fneq (spectro-y-scale)  1.0 )
 	  (snd-display ";spectro-y-scale set def: ~A" (spectro-y-scale)))
       (set! (spectro-z-angle) (spectro-z-angle))
-      (IF (fneq (spectro-z-angle)  -2.0)
+      (IF (fneq (spectro-z-angle)  358.0)
 	  (snd-display ";spectro-z-angle set def: ~A" (spectro-z-angle)))
       (set! (spectro-z-scale) (spectro-z-scale))
       (IF (fneq (spectro-z-scale)  0.1 )
@@ -862,7 +862,7 @@
 	'spectro-x-scale (spectro-x-scale) 1.0
 	'spectro-y-angle (spectro-y-angle) 0.0 
 	'spectro-y-scale (spectro-y-scale) 1.0 
-	'spectro-z-angle (spectro-z-angle) -2.0
+	'spectro-z-angle (spectro-z-angle) 358.0
 	'spectro-z-scale (spectro-z-scale) 0.1 
 	'speed-control (without-errors (speed-control)) 'no-such-sound
 	'speed-control-style (speed-control-style) 0 
@@ -1172,6 +1172,8 @@
 	  (snd-display ";output-name-hook: ~A?" output-name-hook))
       (IF (or (not (hook? output-comment-hook)) (not (hook-empty? output-comment-hook)))
 	  (snd-display ";output-comment-hook: ~A?" output-comment-hook))
+      (IF (or (not (hook? help-hook)) (not (hook-empty? help-hook)))
+	  (snd-display ";help-hook: ~A?" help-hook))
       (IF (or (not (hook? mark-drag-hook)) (not (hook-empty? mark-drag-hook)))
 	  (snd-display ";mark-drag-hook: ~A?" mark-drag-hook))
       (IF (or (not (hook? mouse-drag-hook)) (not (hook-empty? mouse-drag-hook)))
@@ -1750,7 +1752,8 @@
 	    (snd-display ";set-transform-normalization #f -> ~A" (transform-normalization ob 0)))
 	(set! (filter-env-in-hz) #t)
 	(let ((ab (open-sound "test.snd")))
-	  (if (and (provided? 'snd-motif) (provided? 'snd-debug)) (|XtCallCallbacks (cadr (sound-widgets ab)) |XmNactivateCallback (snd-sound-pointer ab)))
+	  (if (and (provided? 'xm) (provided? 'snd-debug))
+	      (|XtCallCallbacks (cadr (sound-widgets ab)) |XmNactivateCallback (snd-sound-pointer ab)))
 	  (IF (not (= (header-type ab) mus-aifc)) 
 	      (snd-display ";save-as aifc -> ~A?" (mus-header-type-name (header-type ab))))
 	  (IF (not (= (mus-sound-header-type "test.snd") mus-aifc)) 
@@ -1767,7 +1770,7 @@
 	(set! (filter-env-in-hz) #f)
 	(save-sound-as "test.snd" ob mus-raw)
 	(let ((ab (open-raw-sound "test.snd" 1 22050 mus-bshort)))
-	  (if (and (provided? 'snd-motif) (provided? 'snd-debug)) (|XtCallCallbacks (cadr (sound-widgets ab)) |XmNactivateCallback (snd-sound-pointer ab)))
+	  (if (and (provided? 'xm) (provided? 'snd-debug)) (|XtCallCallbacks (cadr (sound-widgets ab)) |XmNactivateCallback (snd-sound-pointer ab)))
 	  (IF (not (= (header-type ab) mus-raw)) 
 	      (snd-display ";save-as raw -> ~A?" (mus-header-type-name (header-type ab))))
 	  (IF (not (= (mus-sound-header-type "test.snd") mus-raw)) 
@@ -1776,7 +1779,7 @@
 	  (close-sound ab))
 	(save-sound-as "test.snd" ob mus-nist mus-bint)
 	(let ((ab (open-sound "test.snd")))
-	  (if (and (provided? 'snd-motif) (provided? 'snd-debug)) (|XtCallCallbacks (cadr (sound-widgets ab)) |XmNactivateCallback (snd-sound-pointer ab)))
+	  (if (and (provided? 'xm) (provided? 'snd-debug)) (|XtCallCallbacks (cadr (sound-widgets ab)) |XmNactivateCallback (snd-sound-pointer ab)))
 	  (IF (not (= (header-type ab) mus-nist)) 
 	      (snd-display ";save-as nist -> ~A?" (mus-header-type-name (header-type ab))))
 	  (IF (not (= (mus-sound-header-type "test.snd") mus-nist)) 
@@ -1793,7 +1796,7 @@
 	(save-sound-as "test.snd" ob mus-riff mus-lfloat)
 	(reset-hook! output-comment-hook)
 	(let ((ab (open-sound "test.snd")))
-	  (if (and (provided? 'snd-motif) (provided? 'snd-debug)) (|XtCallCallbacks (cadr (sound-widgets ab)) |XmNactivateCallback (snd-sound-pointer ab)))
+	  (if (and (provided? 'xm) (provided? 'snd-debug)) (|XtCallCallbacks (cadr (sound-widgets ab)) |XmNactivateCallback (snd-sound-pointer ab)))
 	  (IF (not (= (header-type ab) mus-riff)) 
 	      (snd-display ";save-as riff -> ~A?" (mus-header-type-name (header-type ab))))
 	  (IF (not (= (mus-sound-header-type "test.snd") mus-riff)) 
@@ -1811,7 +1814,7 @@
 	  (close-sound ab))
 	(save-sound-as "test.snd" ob mus-aiff mus-b24int)
 	(let ((ab (open-sound "test.snd")))
-	  (if (and (provided? 'snd-motif) (provided? 'snd-debug)) (|XtCallCallbacks (cadr (sound-widgets ab)) |XmNactivateCallback (snd-sound-pointer ab)))
+	  (if (and (provided? 'xm) (provided? 'snd-debug)) (|XtCallCallbacks (cadr (sound-widgets ab)) |XmNactivateCallback (snd-sound-pointer ab)))
 	  (IF (not (= (header-type ab) mus-aiff)) 
 	      (snd-display ";save-as aiff -> ~A?" (mus-header-type-name (header-type ab))))
 	  (IF (not (= (mus-sound-header-type "test.snd") mus-aiff)) 
@@ -1824,7 +1827,7 @@
 	  (close-sound ab))
 	(save-sound-as "test.snd" ob mus-ircam mus-mulaw)
 	(let ((ab (open-sound "test.snd")))
-	  (if (and (provided? 'snd-motif) (provided? 'snd-debug)) (|XtCallCallbacks (cadr (sound-widgets ab)) |XmNactivateCallback (snd-sound-pointer ab)))
+	  (if (and (provided? 'xm) (provided? 'snd-debug)) (|XtCallCallbacks (cadr (sound-widgets ab)) |XmNactivateCallback (snd-sound-pointer ab)))
 	  (IF (not (= (header-type ab) mus-ircam)) 
 	      (snd-display ";save-as ircam -> ~A?" (mus-header-type-name (header-type ab))))
 	  (IF (not (= (mus-sound-header-type "test.snd") mus-ircam)) 
@@ -1837,7 +1840,7 @@
 	  (close-sound ab))
 	(save-sound-as "test.snd" ob mus-next mus-alaw)
 	(let ((ab (open-sound "test.snd")))
-	  (if (and (provided? 'snd-motif) (provided? 'snd-debug)) (|XtCallCallbacks (cadr (sound-widgets ab)) |XmNactivateCallback (snd-sound-pointer ab)))
+	  (if (and (provided? 'xm) (provided? 'snd-debug)) (|XtCallCallbacks (cadr (sound-widgets ab)) |XmNactivateCallback (snd-sound-pointer ab)))
 	  (IF (not (= (header-type ab) mus-next)) 
 	      (snd-display ";save-as next -> ~A?" (mus-header-type-name (header-type ab))))
 	  (IF (not (= (mus-sound-header-type "test.snd") mus-next)) 
@@ -1850,7 +1853,7 @@
 	  (close-sound ab))
 	(save-sound-as "test.snd" ob mus-next mus-bdouble)
 	(let ((ab (open-sound "test.snd")))
-	  (if (and (provided? 'snd-motif) (provided? 'snd-debug)) (|XtCallCallbacks (cadr (sound-widgets ab)) |XmNactivateCallback (snd-sound-pointer ab)))
+	  (if (and (provided? 'xm) (provided? 'snd-debug)) (|XtCallCallbacks (cadr (sound-widgets ab)) |XmNactivateCallback (snd-sound-pointer ab)))
 	  (IF (not (= (header-type ab) mus-next)) 
 	      (snd-display ";save-as dbl next -> ~A?" (mus-header-type-name (header-type ab))))
 	  (IF (not (= (data-format ab) mus-bdouble)) 
@@ -1859,7 +1862,7 @@
 	  (close-sound ab))
 	(save-sound-as "test.snd" ob mus-next mus-bshort)
 	(let ((ab (open-sound "test.snd")))
-	  (if (and (provided? 'snd-motif) (provided? 'snd-debug)) (|XtCallCallbacks (cadr (sound-widgets ab)) |XmNactivateCallback (snd-sound-pointer ab)))
+	  (if (and (provided? 'xm) (provided? 'snd-debug)) (|XtCallCallbacks (cadr (sound-widgets ab)) |XmNactivateCallback (snd-sound-pointer ab)))
 	  (IF (not (= (header-type ab) mus-next)) 
 	      (snd-display ";save-as next -> ~A?" (mus-header-type-name (header-type ab))))
 	  (IF (not (= (mus-sound-header-type "test.snd") mus-next)) 
@@ -1891,7 +1894,7 @@
 	  (close-sound ab))
 	(save-sound-as "test.snd" ob mus-next mus-bfloat)
 	(let ((ab (open-sound "test.snd")))
-	  (if (and (provided? 'snd-motif) (provided? 'snd-debug)) (|XtCallCallbacks (cadr (sound-widgets ab)) |XmNactivateCallback (snd-sound-pointer ab)))
+	  (if (and (provided? 'xm) (provided? 'snd-debug)) (|XtCallCallbacks (cadr (sound-widgets ab)) |XmNactivateCallback (snd-sound-pointer ab)))
 	  (IF (not (= (header-type ab) mus-next)) 
 	      (snd-display ";save-as next -> ~A?" (mus-header-type-name (header-type ab))))
 	  (IF (not (= (mus-sound-header-type "test.snd") mus-next)) 
@@ -1905,7 +1908,7 @@
 	(save-sound-as "test.snd" ob mus-next mus-bshort)
 	(close-sound ob)
 	(let ((ab (open-sound "test.snd")))
-	  (if (and (provided? 'snd-motif) (provided? 'snd-debug)) (|XtCallCallbacks (cadr (sound-widgets ab)) |XmNactivateCallback (snd-sound-pointer ab)))
+	  (if (and (provided? 'xm) (provided? 'snd-debug)) (|XtCallCallbacks (cadr (sound-widgets ab)) |XmNactivateCallback (snd-sound-pointer ab)))
 	  (set! (data-format) mus-lshort)
 	  (IF (not (= ab (find-sound "test.snd"))) (set! ab (find-sound "test.snd")))
 	  (IF (not (= (data-format) mus-lshort)) (snd-display ";set data-format: ~A?" (mus-data-format-name (data-format))))
@@ -4335,35 +4338,51 @@
 
       (let ((v (make-vct 4))
 	    (vv (make-vct 4)))
-	(vct-map! v (let ((ctr 0)) 
-		      (lambda () 
-			(set! ctr (1+ ctr)) 
-			(if (< ctr 3) ctr 'oops))))
+	(let ((tag (catch #t
+			  (lambda ()
+			    (vct-map! v (let ((ctr 0)) 
+					  (lambda () 
+					    (set! ctr (1+ ctr)) 
+					    (if (< ctr 3) ctr 'oops)))))
+			  (lambda args (car args)))))
+	  (IF (not (eq? tag 'wrong-type-arg)) (snd-display ";vct-map! oops tag: ~A" tag)))
 	(IF (not (vequal v (vct 1.0 2.0 0.0 0.0)))
 	    (snd-display ";vct-map! with symbol: ~A" v))
 	(vct-fill! v 10.0)
-	(vct-do! v (let ((ctr 0)) 
-		     (lambda (n) 
-		       (set! ctr (1+ ctr)) 
-		       (if (< ctr 3) n 'oops))))
+	(let ((tag (catch #t
+			  (lambda ()
+			    (vct-do! v (let ((ctr 0)) 
+					 (lambda (n) 
+					   (set! ctr (1+ ctr)) 
+					   (if (< ctr 3) n 'oops)))))
+			  (lambda args (car args)))))
+	  (IF (not (eq? tag 'wrong-type-arg)) (snd-display ";vct-do! oops tag: ~A" tag)))
 	(IF (not (vequal v (vct 0.0 1.0 10.0 10.0)))
 	    (snd-display ";vct-do! with symbol: ~A" v))
 	(vct-fill! v 10.0)
 	(vct-fill! vv 10.0)
-	(vcts-map! v vv (let ((ctr 0)) 
-			  (lambda (len) 
-			    (set! ctr (1+ ctr)) 
-			    (if (< ctr 3) (list ctr (1+ ctr)) 'oops))))
+	(let ((tag (catch #t
+			  (lambda ()
+			    (vcts-map! v vv (let ((ctr 0)) 
+					      (lambda (len) 
+						(set! ctr (1+ ctr)) 
+						(if (< ctr 3) (list ctr (1+ ctr)) 'oops)))))
+			  (lambda args (car args)))))
+	  (IF (not (eq? tag 'bad-type)) (snd-display ";vcts-map! oops tag: ~A" tag)))
 	(IF (not (vequal v (vct 1.0 2.0 10.0 10.0)))
 	    (snd-display ";vcts-do! with symbol (1): ~A" v))
 	(IF (not (vequal vv (vct 2.0 3.0 10.0 10.0)))
 	    (snd-display ";vcts-do! with symbol (2): ~A" vv))
 	(vct-fill! v 10.0)
 	(vct-fill! vv 10.0)
-	(vcts-do! v vv (let ((ctr 0)) 
-			 (lambda (len n) 
-			   (set! ctr (1+ ctr)) 
-			   (if (< ctr 3) (list n (1+ n)) 'oops))))
+	(let ((tag (catch #t
+			  (lambda ()
+			    (vcts-do! v vv (let ((ctr 0)) 
+					     (lambda (len n) 
+					       (set! ctr (1+ ctr)) 
+					       (if (< ctr 3) (list n (1+ n)) 'oops)))))
+			  (lambda args (car args)))))
+	  (IF (not (eq? tag 'bad-type)) (snd-display ";vcts-do! oops tag: ~A" tag)))
 	(IF (not (vequal v (vct 0.0 1.0 10.0 10.0)))
 	    (snd-display ";vcts-do! with symbol (1): ~A" v))
 	(IF (not (vequal vv (vct 1.0 2.0 10.0 10.0)))
@@ -8778,6 +8797,7 @@
   (add-hook! mouse-leave-graph-hook arg2) (carg2 mouse-leave-graph-hook)
   (add-hook! open-raw-sound-hook arg2) (carg2 open-raw-sound-hook)
   (add-hook! select-channel-hook arg2) (carg2 select-channel-hook)
+  (add-hook! help-hook arg2) (carg2 help-hook)
 
   (add-hook! after-open-hook arg1) (carg1 after-open-hook)
   (add-hook! close-hook arg1) (carg1 close-hook)
@@ -8877,6 +8897,13 @@
       (remove-from-menu mb "not here")
       (add-to-menu 3 "Denoise" (lambda () (report-in-minibuffer "denoise")))
       (change-menu-label 3 "Denoise" "hiho")
+      (reset-hook! help-hook)
+      (let ((hi (snd-help 'cursor-position)))
+	(add-hook! help-hook (lambda (a b) "hiho:"))
+	(let ((ho (snd-help 'cursor-position)))
+	  (IF (not (= (string-length ho) (+ 5 (string-length hi))))
+	      (snd-display ";help-hook ~A -> ~A" hi ho))
+	  (reset-hook! help-hook)))
       (if include-clm
 	  (begin
 	    (clm-fm-violin .1 660 .1)
@@ -11600,6 +11627,7 @@
 		(snd-display ";env-channel step 1: ~A" v1)))
 	  (close-sound ind))
 
+	(set! (x-axis-style) x-axis-as-percentage)
 	(let* ((ind (open-sound "2.snd"))
 	       (fr (frames))
 	       (m0 (maxamp ind 0))
@@ -11613,6 +11641,7 @@
 	  (IF (or (fneq m0 (maxamp ind 1)) (fneq m1 (maxamp ind 0)))
 	      (snd-display "swapped: ~A ~A -> ~A ~A" m0 m1 (maxamp ind 0) (maxamp ind 1)))
 	  (close-sound ind))
+	(set! (x-axis-style) x-axis-in-seconds)
 
 	(let ((oboe0 (open-sound "oboe.snd"))
 	      (oboe1 (open-sound "oboe.snd")))
@@ -11692,9 +11721,14 @@
 	  (close-sound oboe0)
 	  (close-sound oboe1))
 
+	(set! (x-axis-style) x-axis-in-beats)
 	(let ((ind (open-sound "storm.snd")))
 	  (reverse-channel 500000 1000000)
+	  (set! (sample 0 ind 0 current-edit-position) .1)
+	  (IF (fneq (sample 0 ind 0 current-edit-position) .1) 
+	      (snd-display ";set sample + edpos: ~A" (sample 0 ind 0 current-edit-position)))
 	  (close-sound ind))
+	(set! (x-axis-style) x-axis-in-seconds)
 
 	(for-each 
 	 (lambda (out-chans)
@@ -11769,6 +11803,22 @@
 	      (list "2a.snd" "1a.snd" "4a.snd"))
 	     (close-sound ind)))
 	 (list 1 2 4))
+
+	(let ((ind (open-sound "oboe.snd")))
+	  (map-channel (lambda (y) #f))
+	  (IF (not (= (frames ind) 0)) (snd-display ";map-channel #f frames: ~A" (frames ind)))
+	  (IF (equal? (edits ind) (list 0 0)) (snd-display ";map-channel #f edits backed up"))
+	  (undo ind)
+	  (IF (= (frames ind) 0) (snd-display ";map-channel #f frames after undo: ~A" (frames ind)))
+	  (let ((tag (catch #t (lambda () (map-channel (lambda (y) "hiho"))) (lambda args (car args)))))
+	    (IF (not (eq? tag 'bad-type)) (snd-display ";map-channel bad-type: ~A" tag)))
+	  (let* ((ctr 0)
+		 (tag (catch #t (lambda () (scan-channel (lambda (y) (set! ctr (1+ ctr)) (asdf)))) (lambda args (car args)))))
+	    (IF (not (= ctr 1)) (snd-display ";scan-channel error exit: ~A" ctr))
+	    (IF (not (eq? tag 'unbound-variable)) (snd-display ";scan-channel unbound: ~A" tag)))
+	  (close-sound ind))
+	;; TODO: rest of 'bad-type errors
+	      
 	)))
 
 
@@ -13276,7 +13326,24 @@ EDITS: 4
 		    (widget-string lst "(set! mxa (+ 1 4))" #f)
 		    (key-event lst snd-return-key 0) (force-event)
 		    (IF (not (= mxa 5))
-			(snd-display ";set! mxa in listener: ~A" mxa)))
+			(snd-display ";set! mxa in listener: ~A" mxa))
+		    (widget-string lst "(set! mxa 32)" #f)
+		    (key-event lst snd-return-key 0) (force-event)
+		    (IF (not (= mxa 32))
+			(snd-display ";preset M-p mxa in listener: ~A" mxa))
+		    (key-event lst snd-return-key 0) (force-event)
+		    (key-event lst (char->integer #\p) 8) (force-event)
+		    (key-event lst (char->integer #\p) 8) (force-event)
+		    (key-event lst snd-return-key 0) (force-event)
+		    (IF (not (= mxa 5))
+			(snd-display ";M-p mxa in listener: ~A" mxa))
+		    (key-event lst (char->integer #\p) 8) (force-event)
+		    (key-event lst (char->integer #\p) 8) (force-event)
+		    (key-event lst (char->integer #\p) 8) (force-event)
+		    (key-event lst (char->integer #\n) 8) (force-event)
+		    (key-event lst snd-return-key 0) (force-event)
+		    (IF (not (= mxa 32))
+			(snd-display ";M-n mxa in listener: ~A" mxa)))
 
 		  (take-keyboard-focus cwid)
 		  (key-event cwid (char->integer #\x) 4) (force-event)
@@ -13385,7 +13452,14 @@ EDITS: 4
 		    (IF (not (= (edit-position) (1+ eds)))
 			(snd-display ";move mix edits: ~A ~A" eds (edit-position)))
 		    (set! xy (mix-tag-position md))
-		    (click-event cwid 1 0 (+ (car xy) 1) (- (cadr xy) 2)) (force-event))
+		    (click-event cwid 1 0 (+ (car xy) 1) (- (cadr xy) 2)) (force-event)
+		    (set! (x-bounds) (list 0.0 (/ (frames) (srate))))
+		    (update-time-graph)
+		    (set! xy (mix-tag-position md))
+		    (set! x (+ (car xy) 1))
+		    (set! y (- (cadr xy) 2))
+		    (drag-event cwid 1 0 x y (- x 150) y) (force-event)
+		    )
 		  (let* ((mrk (add-mark 100))
 			 (x (x->position (/ (mark-sample mrk) (srate))))
 			 (y 10))
@@ -14898,10 +14972,23 @@ EDITS: 4
 		  (set! (with-background-processes) old-val))
 
 		;; ---------------- region dialog ----------------
+		(let ((ind (open-sound "4.aiff")))
+		  (do ((i 0 (1+ i)))
+		      ((= i 4))
+		    (set! (selection-member? ind i) #t)
+		    (set! (selection-position ind i) 0)
+		    (set! (selection-length ind i) 100))
+		  (let ((id (make-region)))
+		    (IF (not (= (region-chans id) 4)) (snd-display ";region(dialog) ~A chans ~A" id (region-chans id))))
+		  (let ((id (make-region)))
+		    (IF (not (= (region-chans id) 4)) (snd-display ";region(dialog) ~A chans ~A" id (region-chans id))))
+		  (close-sound ind))
                 (region-dialog)
                 (let* ((regd (list-ref (dialog-widgets) 19))
 		       (prtb (find-child regd "print"))
 		       (grf (find-child regd "grf"))
+		       (downb (find-child grf "down"))
+		       (upb (find-child grf "up"))
 		       (frm (find-child regd "formw"))
 		       (rw1 (find-child frm "rw"))
 		       (sv1 (find-child rw1 "sv"))
@@ -14919,8 +15006,21 @@ EDITS: 4
 		    (IF (string=? name1 name)
 			(snd-display ";delete in region dialog: ~A?" name)))
 		  (click-button prtb) (force-event)
-		  (click-button (find-child grf "down") #t)
-		  (click-button (find-child grf "up") #t)
+		  (let* ((reglist (find-child regd "reglist"))
+			 (ww (find-child reglist "ww")))
+		    (IF (not (|Widget? ww)) (snd-display ";can't find region dialog region list"))
+		    (for-each-child ww 
+				    (lambda (w) 
+				      (if (|XmIsPushButton w)
+					  (let ((label (widget-text w)))
+					    (if (and (string? label)
+						     (> (string-length label) 3))
+						(begin
+						  (|XtCallCallbacks w |XmNactivateCallback #f)
+						  (if (|XtIsSensitive downb)
+						      (begin
+							(click-button downb #t) (force-event)
+							(click-button upb #t) (force-event))))))))))
 		  (let ((snds (sounds)))
 		   (click-button editb #t) (force-event)
 		   (let ((new-snds (sounds)))
@@ -17300,12 +17400,10 @@ EDITS: 4
 		  (IF (not (equal? fw txtf1))
 		      (snd-display ";XmGetFocusWidget: ~A" fw)))
 		(|XtRemoveAllCallbacks txtf1 |XmNdestinationCallback))
-
 	      (|XtAppAddActions (car (main-widgets)) (list (list "hiho" (lambda args (snd-print "hiho")))))
 	      (|XtAugmentTranslations txt (|XtParseTranslationTable "Ctrl <Key>i: hiho()\n"))
 	      (|XtCallActionProc txt "hiho" (|XEvent) #f 0)
 	      (|XtUninstallTranslations txt)
-
 	      (|XtUnmanageChild frm)))
 
 	    (let* ((shell (cadr (main-widgets)))
@@ -18260,7 +18358,7 @@ EDITS: 4
 	       vct? list->vct vct->list vector->vct vct-move!  vct-subseq vct little-endian?
 	       clm-channel env-channel map-channel scan-channel play-channel reverse-channel 
 	       smooth-channel vct->channel channel->vct src-channel scale-channel pad-channel
-	       cursor-position
+	       cursor-position clear-listener mus-sound-prune mus-sound-forget
 	       ))
 
 (define set-procs (list 
@@ -18977,6 +19075,7 @@ EDITS: 4
 			(list after-apply-hook 'after-apply-hook)
 			(list open-hook 'open-hook)
 			(list output-comment-hook 'output-comment-hook)
+			(list help-hook 'help-hook)
 			(list multichannel-mix-hook 'multichannel-mix-hook)
 			(list play-hook 'play-hook)
 			(list dac-hook 'dac-hook)

@@ -286,7 +286,7 @@ void unsensitize_control_buttons(void) {}
 void reflect_recorder_duration(Float new_dur) {}
 void make_open_file_dialog(snd_state *ss, int read_only, int managed) {}
 void make_mix_file_dialog(snd_state *ss, int managed) {}
-
+void clear_listener(void) {}
 int menu_widget(int which_menu) {return(0);}
 void get_current_color(int colormap, int j, unsigned short *r, unsigned short *g, unsigned short *b) {}
 

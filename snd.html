@@ -1988,8 +1988,10 @@ all the samples between the cursor and the next mark.</p>
 <tr><td>C-l</td><td>position window so cursor is in the middle</td><td><code><small>(lambda () cursor-in-middle)</small></code></td></tr>
 <tr><td>C-m</td><td>place (or remove) mark at cursor location</td><td><code><small>(lambda () (add-mark (cursor)))</small></code></td></tr>
 <tr><td>C-n</td><td>move cursor ahead one 'line'</td><td><code><small>(lambda (arg) (forward-sample (* 128 arg)))</small></code></td></tr>
+<tr><td>M-n</td><td colspan=2>move ahead one form in history</td></tr>
 <tr><td>C-o</td><td>insert one zero sample at cursor</td><td><code><small>(lambda (arg) (insert-samples (cursor) arg (make-vct arg))) ;see <a href="extsnd.html#newcp">go-to-zero</a></small></code></td></tr>
 <tr><td>C-p</td><td>move cursor back one 'line'</td><td><code><small>(lambda (arg) (backward-sample (* 128 arg)))</small></code></td></tr>
+<tr><td>M-p</td><td colspan=2>move back one form in history</td></tr>
 <tr><td>C-q</td><td>play current channel(s) starting at cursor</td><td><code><small>(lambda () (play (cursor) (selected-sound) (selected-channel)))</small></code></td></tr>
 <tr><td>C-r</td><td>search backwards</td><td></td></tr>
 <tr><td>C-s</td><td>search forwards</td><td><code><small>(lambda () (prompt "find:" find))</small></code></td></tr>
@@ -2002,7 +2004,8 @@ all the samples between the cursor and the next mark.</p>
 <tr><td>C-z</td><td>set current sample to 0.0</td><td><code><small>(lambda (arg) (set! (samples (cursor) arg) (make-vct arg)))</small></code></td></tr>
 <tr><td>C-_</td><td>undo last edit</td><td><code><small>(lambda (arg) (undo arg))</small></code></td></tr>
 <tr><td>C-[Space]</td><td colspan=2>start region definition (arg&lt;0 =&gt; cancel and deselect)</td></tr>
-
+<tr><td>C-?</td><td colspan=2>look for a function name and print snd-help for it</td></tr>
+<tr><td>C-M-g</td><td>delete listener text from start to cursor</td><td><code><small>(clear-listener)</small></code></td></tr>
         <!-- I(delete samples):K(C-d, C-h, C-k)(ck) --><!-- I(insert zeros):K(C-o, C-z)(cz) --><!-- I(insert zeros):A(co) -->
         <!-- I(cut selection):K(C-w)(cw) --><!-- I(define selection):K(C-[space], C-x c)(cxc) -->
 
@@ -2095,10 +2098,15 @@ all the samples between the cursor and the next mark.</p>
 </pre></small></code></td></tr>
 <tr><td>C-x C-z</td><td>smooth using cosine</td><td><code><small>(lambda (arg) (smooth-sound (cursor) arg))</small></code></td></tr>
 </table>
-<p>In addition, within the "minibuffer" and the filter text field the commands M-p and M-n
+<p>In addition, within the listener, the "minibuffer", and the filter text field the commands, M-p and M-n
 march back and forth in the list of saved strings, much as in
 a shell (this applies only to the Motif version; in the Gtk+
 version, M-p and M-n are menu accelerators).
+This is especially useful in the listener in conjunction with C-M-g (clear listener).  It is
+not uncommon to make some typo or forget an argument while trying things out in the listener.
+If the error happens within map-channel or some other long loop, you get a raft of
+error messages.  C-g interrupts the computation, C-M-g clears out all the error messages,
+and M-p reloads the listener with the last line you typed, ready to be edited.
 </p>
         <!-- I(amp env):K(C-x C-a, C-x a)(cxca) --><!-- I(print file):K(C-x C-d)(cxcd) --><!-- I(insert file):K(C-x C-i)(cxci) -->
         <!-- I(insert file):A(cxci) --><!-- I(mix file):K(C-x C-q)(cxcq) -->

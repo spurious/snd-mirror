@@ -92,7 +92,7 @@ void save_listener_text(FILE *fp);
 void append_listener_text(int end, char *msg);
 void listener_append(snd_state *ss, char *msg);
 void listener_append_and_prompt(snd_state *ss, char *msg);
-
+void clear_listener(void);
 void g_init_gxlistener(void);
 GtkWidget *snd_entry_new(snd_state *ss, GtkWidget *container, int with_white_background);
 
@@ -391,6 +391,7 @@ gpointer get_user_data(GtkObject *obj);
 #endif
 GtkWidget *make_scrolled_text(snd_state *ss, GtkWidget *parent, int editable, GtkWidget *boxer, GtkWidget *paner);
 GtkWidget *sg_make_list(gpointer gp, int num_items, char **items, GtkSignalFunc callback);
+void sg_text_delete(GtkWidget *w, int start, int end);
 
 
 /* -------- snd-gsnd.c -------- */

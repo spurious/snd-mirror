@@ -1008,27 +1008,31 @@ typedef struct {
   int strings_size, strings_pos, first_time;
 } mini_history;
   
-enum {MINIBUFFER, FILTER_TEXT};
+static mini_history *listener_history = NULL;
+enum {MINIBUFFER, FILTER_TEXT, LISTENER_TEXT};
 
 static void remember_string(snd_info *sp, char *str, int which)
 {
+  /* sp can be NULL */
   mini_history *mh = NULL;
   int i, top;
   switch (which)
     {
     case MINIBUFFER: mh = (mini_history *)(sp->minibuffer_history); break;
     case FILTER_TEXT: mh = (mini_history *)(sp->filter_history); break;
+    case LISTENER_TEXT: mh = listener_history; break;
     default: return; break;
     }
   if (mh == NULL)
     {
       mh = (mini_history *)CALLOC(1, sizeof(mini_history));
-      mh->strings_size = minibuffer_history_length(sp->state);
+      mh->strings_size = minibuffer_history_length(get_global_state());
       mh->strings = (char **)CALLOC(mh->strings_size, sizeof(char *));
       switch (which)
 	{
 	case MINIBUFFER: sp->minibuffer_history = (void *)mh; break;
 	case FILTER_TEXT: sp->filter_history = (void *)mh; break;
+	case LISTENER_TEXT: listener_history = mh; break;
 	}
     }
   top = mh->strings_size - 1;
@@ -1041,15 +1045,18 @@ static void remember_string(snd_info *sp, char *str, int which)
 
 void remember_mini_string(snd_info *sp, char *str) {remember_string(sp, str, MINIBUFFER);}
 void remember_filter_string(snd_info *sp, char *str) {remember_string(sp, str, FILTER_TEXT);}
+void remember_listener_string(char *str) {remember_string(NULL, str, LISTENER_TEXT);}
 
 static void restore_string(snd_info *sp, int back, int which)
 {
+  /* sp can be NULL */
   mini_history *mh = NULL;
   char *str;
   switch (which)
     {
     case MINIBUFFER: mh = (mini_history *)(sp->minibuffer_history); break;
     case FILTER_TEXT: mh = (mini_history *)(sp->filter_history); break;
+    case LISTENER_TEXT: mh = listener_history; break;
     }
   if (mh)
     {
@@ -1069,6 +1076,7 @@ static void restore_string(snd_info *sp, int back, int which)
 	    {
 	    case MINIBUFFER: set_minibuffer_string(sp, str); break;
 	    case FILTER_TEXT: set_filter_text(sp, str); break;
+	    case LISTENER_TEXT: append_listener_text(-1, str); break;
 	    }
 	}
     }
@@ -1076,15 +1084,18 @@ static void restore_string(snd_info *sp, int back, int which)
 
 void restore_mini_string(snd_info *sp, int back) {restore_string(sp, back, MINIBUFFER);}
 void restore_filter_string(snd_info *sp, int back) {restore_string(sp, back, FILTER_TEXT);}
+void restore_listener_string(int back) {restore_string(NULL, back, LISTENER_TEXT);}
 
 static void clear_strings(snd_info *sp, int which)
 {
+  /* sp can be NULL */
   mini_history *mh = NULL;
   int i;
   switch (which)
     {
     case MINIBUFFER: mh = (mini_history *)(sp->minibuffer_history); break;
     case FILTER_TEXT: mh = (mini_history *)(sp->filter_history); break;
+    case LISTENER_TEXT: mh = listener_history; break;
     }
   if (mh)
     {
@@ -1092,6 +1103,7 @@ static void clear_strings(snd_info *sp, int which)
 	{
 	case MINIBUFFER: sp->minibuffer_history = NULL; break;
 	case FILTER_TEXT: sp->filter_history = NULL; break;
+	case LISTENER_TEXT: listener_history = NULL; break;
 	}
       for (i = 0; i < mh->strings_size; i++) 
 	if (mh->strings[i])
@@ -1103,6 +1115,7 @@ static void clear_strings(snd_info *sp, int which)
 
 void clear_mini_strings(snd_info *sp) {clear_strings(sp, MINIBUFFER);}
 void clear_filter_strings(snd_info *sp) {clear_strings(sp, FILTER_TEXT);}
+void clear_listener_strings(void) {clear_strings(NULL, LISTENER_TEXT);}
 
 
 /* ---------------- control panel apply button ---------------- */
@@ -1363,11 +1376,14 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 		    {
 		      int ok;
 		      ok = delete_selection("Apply to selection", DONT_UPDATE_DISPLAY);
-		      for (i = 0; i < si->chans; i++)
+		      if (apply_dur > 0)
 			{
-			  file_insert_samples(si->begs[i], apply_dur, ap->ofile, si->cps[i], 0, DELETE_ME, "Apply to selection", si->cps[i]->edit_ctr);
-			  reactivate_selection(si->cps[i], si->begs[i], si->begs[i] + apply_dur);
-			  if (ok) backup_edit_list(si->cps[i]);
+			  for (i = 0; i < si->chans; i++)
+			    {
+			      file_insert_samples(si->begs[i], apply_dur, ap->ofile, si->cps[i], 0, DELETE_ME, "Apply to selection", si->cps[i]->edit_ctr);
+			      reactivate_selection(si->cps[i], si->begs[i], si->begs[i] + apply_dur);
+			      if (ok) backup_edit_list(si->cps[i]);
+			    }
 			}
 		    }
 		  si = free_sync_info(si); 

@@ -97,7 +97,7 @@ Widget make_togglebutton_widget(char *name, Widget parent, Arg *args, int n);
 Widget make_pushbutton_widget(char *name, Widget parent, Arg *args, int n);
 Widget make_text_widget(snd_state *ss, char *name, Widget parent, Arg *args, int n);
 Widget make_textfield_widget(snd_state *ss, char *name, Widget parent, Arg *args, int n, int activatable, int completer);
-
+void clear_listener(void);
 void g_init_gxlistener(void);
 
 

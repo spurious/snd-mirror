@@ -2619,13 +2619,13 @@ static int compare_consoles(const void *umx1, const void *umx2)
   return(-1);
 }
 
-int goto_mix(chan_info *cp, int count)
+void goto_mix(chan_info *cp, int count)
 {
   int i, j, k;
   mix_info *md;
   int *css;
   console_state *cs;
-  if ((!cp) || (!cp->mixes)) return(CURSOR_IN_VIEW);
+  if ((!cp) || (!cp->mixes)) return;
   k = 0;
   for (i = 0; i < mix_infos_ctr; i++)
     {
@@ -2690,11 +2690,7 @@ int goto_mix(chan_info *cp, int count)
 	    cursor_moveto(cp, css[0]);
 	}
       FREE(css);
-      if ((count > 0) && (cp->cursor > (cp->axis)->hisamp)) return(CURSOR_IN_MIDDLE);
-      if ((count < 0) && (cp->cursor < (cp->axis)->losamp)) return(CURSOR_IN_MIDDLE);
-      return(CURSOR_IN_VIEW);
     }
-  return(CURSOR_IN_VIEW);
 }
 
 

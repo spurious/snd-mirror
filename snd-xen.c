@@ -3,6 +3,9 @@
 #include "clm2xen.h"
 #include "sndlib-strings.h"
 
+/* TODO: remove movies switch
+ */
+
 static snd_state *state = NULL;
 
 /* Snd defines its own exit, delay, and frame? clobbering (presumably) the Guile versions,
@@ -170,7 +173,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
 	      if ((XEN_EQ_P(tag, NO_SUCH_SOUND)) || (XEN_EQ_P(tag, NO_SUCH_MIX)) || (XEN_EQ_P(tag, NO_SUCH_MARK)) ||
 		  (XEN_EQ_P(tag, NO_SUCH_MENU)) || (XEN_EQ_P(tag, NO_SUCH_REGION)) || (XEN_EQ_P(tag, MUS_MISC_ERROR)) ||
 		  (XEN_EQ_P(tag, NO_SUCH_CHANNEL)) || (XEN_EQ_P(tag, NO_SUCH_EDIT)) || (XEN_EQ_P(tag, NO_SUCH_DIRECTION)) ||
-		  (XEN_EQ_P(tag, NO_SUCH_AXIS_INFO)) || (XEN_EQ_P(tag, NO_SUCH_AXIS_CONTEXT)) ||
+		  (XEN_EQ_P(tag, NO_SUCH_AXIS_INFO)) || (XEN_EQ_P(tag, NO_SUCH_AXIS_CONTEXT)) || XEN_EQ_P(tag, BAD_TYPE) ||
 		  (XEN_EQ_P(tag, CANNOT_SAVE)) || (XEN_EQ_P(tag, CANNOT_PRINT)) || (XEN_EQ_P(tag, BAD_ARITY)) ||
 #if HAVE_LADSPA
 		  (XEN_EQ_P(tag, NO_SUCH_PLUGIN)) || (XEN_EQ_P(tag, PLUGIN_ERROR)) ||
@@ -233,19 +236,18 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
     string_to_stdout(ss, name_buf);
   else
     {
-      if (ss->mx_sp)
-	{
-	  sp = ss->mx_sp;
-	  clear_minibuffer_prompt(sp);
-	  report_in_minibuffer(sp, name_buf);
-	}
       if (listener_height() > 5)
 	listener_append_and_prompt(ss, name_buf);
       else 
 	{
-	  if (!(ss->mx_sp))
-	    snd_error(name_buf);
-	  else add_to_error_history(ss, name_buf, FALSE);
+	  if (ss->mx_sp)
+	    {
+	      sp = ss->mx_sp;
+	      clear_minibuffer_prompt(sp);
+	      report_in_minibuffer(sp, name_buf);
+	      add_to_error_history(ss, name_buf, FALSE);
+	    }
+	  else snd_error(name_buf);
 	}
     }
 #endif
@@ -429,6 +431,15 @@ static XEN g_call0_1(void *arg)
 }
 #endif
 
+XEN g_call0_unprotected(XEN proc)
+{
+#if HAVE_GUILE
+  return(scm_apply(proc, XEN_EMPTY_LIST, XEN_EMPTY_LIST));
+#else
+  return(proc);
+#endif
+}
+
 XEN g_call0(XEN proc, const char *caller) /* replacement for gh_call0 -- protect ourselves from premature exit(!$#%@$) */
 {
 #if HAVE_GUILE
@@ -446,6 +457,15 @@ static XEN g_call1_1(void *arg)
  		   XEN_APPLY_ARG_LIST_END));
 }
 #endif
+
+XEN g_call1_unprotected(XEN proc, XEN arg)
+{
+#if HAVE_GUILE
+  return(scm_apply(proc, arg, XEN_APPLY_ARG_LIST_END));
+#else
+  return(arg);
+#endif
+}
 
 XEN g_call1(XEN proc, XEN arg, const char *caller)
 {
@@ -468,6 +488,15 @@ static XEN g_call_any_1(void *arg)
 }
 #endif
 
+XEN g_call_any_unprotected(XEN proc, XEN arglist)
+{
+#if HAVE_GUILE
+  return(scm_apply(proc, arglist, XEN_EMPTY_LIST));
+#else
+  return(arglist);
+#endif
+}
+
 XEN g_call_any(XEN proc, XEN arglist, const char *caller)
 {
   XEN args[2];
@@ -488,6 +517,15 @@ static XEN g_call2_1(void *arg)
  		   XEN_CONS(((XEN *)arg)[2], XEN_APPLY_ARG_LIST_END)));
 }
 #endif
+
+XEN g_call2_unprotected(XEN proc, XEN arg1, XEN arg2)
+{
+#if HAVE_GUILE
+  return(scm_apply(proc, arg1, XEN_CONS(arg2, XEN_APPLY_ARG_LIST_END)));
+#else
+  return(arg1);
+#endif
+}
 
 XEN g_call2(XEN proc, XEN arg1, XEN arg2, const char *caller)
 {
@@ -512,6 +550,15 @@ static XEN g_call3_1(void *arg)
 			      XEN_APPLY_ARG_LIST_END)));
 }
 #endif
+
+XEN g_call3_unprotected(XEN proc, XEN arg1, XEN arg2, XEN arg3)
+{
+#if HAVE_GUILE
+  return(scm_apply(proc, arg1, XEN_CONS_2(arg2, arg3, XEN_APPLY_ARG_LIST_END)));
+#else
+  return(arg1);
+#endif
+}
 
 XEN g_call3(XEN proc, XEN arg1, XEN arg2, XEN arg3, const char *caller)
 {
@@ -647,13 +694,10 @@ void snd_eval_property_str(snd_state *ss, char *buf)
 
 static char *stdin_str = NULL;
 
-void clear_listener(void)
+void clear_stdin(void)
 {
-  snd_state *ss;
-  ss = get_global_state();
   if (stdin_str) FREE(stdin_str);
   stdin_str = NULL;
-  listener_append_and_prompt(ss, "");
 }
 
 static char *stdin_check_for_full_expression(char *newstr)
@@ -2745,7 +2789,7 @@ XEN g_c_run_or_hook (XEN hook, XEN args, const char *caller)
 #endif
 }
 
-XEN g_c_run_and_hook (XEN hook, XEN args, const char *caller)
+XEN g_c_run_and_hook(XEN hook, XEN args, const char *caller)
 {
 #if HAVE_GUILE
   XEN result = XEN_TRUE; /* (and) -> #t */
@@ -2784,49 +2828,60 @@ void after_open(int index)
 		       S_after_open_hook);
 }
 
+char *g_c_run_concat_hook(XEN hook, const char *caller, char *initial_string, char *subject)
+{
+  char *newstr = NULL, *tmpstr = NULL;
+  if (initial_string) 
+    newstr = copy_string(initial_string);
+  if (XEN_HOOKED(hook))
+    {
+      XEN result;
+      XEN procs = XEN_HOOK_PROCEDURES(hook);
+      int size = 0, args = 1;
+#if HAVE_GUILE
+      while (XEN_NOT_NULL_P(procs))
+	{
+	  if (subject)
+	    result = XEN_CALL_2(XEN_CAR(procs),
+				C_TO_XEN_STRING(subject),
+				C_TO_XEN_STRING(newstr),
+				caller);
+	  else result = XEN_CALL_1(XEN_CAR(procs),
+			      C_TO_XEN_STRING(newstr),
+			      caller);
+#else
+	  if (subject)
+	    result = XEN_CALL_2(procs,
+				C_TO_XEN_STRING(subject),
+				C_TO_XEN_STRING(newstr),
+				caller);
+	  else result = XEN_CALL_1(procs,
+				   C_TO_XEN_STRING(newstr),
+				   caller);
+#endif
+	  if (XEN_STRING_P(result))
+	    tmpstr = XEN_TO_C_STRING(result);
+	  else tmpstr = NULL;
+	  if (tmpstr)
+	    {
+	      if ((snd_strlen(tmpstr) + snd_strlen(newstr)) >= size)
+		size = ((snd_strlen(tmpstr) + snd_strlen(newstr)) * 2);
+	      if (newstr == NULL)
+		newstr = (char *)CALLOC(size, sizeof(char));
+	      else newstr = (char *)REALLOC(newstr, size * sizeof(char));
+	      strcat(newstr, tmpstr);
+	    }
+#if HAVE_GUILE
+	  procs = XEN_CDR(procs);
+	}
+#endif
+    }
+  return(newstr);
+}
 
 char *output_comment(file_info *hdr)
 {
-  char *com = NULL;
-  if ((hdr) && (hdr->comment)) com = copy_string(hdr->comment);
-  if (XEN_HOOKED(output_comment_hook))
-    {
-      XEN result;
-      XEN procs = XEN_HOOK_PROCEDURES (output_comment_hook);
-      int comment_size = 0;
-      char *new_comment = NULL, *tmpstr = NULL;
-#if HAVE_GUILE
-      while (XEN_NOT_NULL_P (procs))
-	{
-	  result = XEN_CALL_1(XEN_CAR(procs),
-			      C_TO_XEN_STRING(com),
-			      S_output_comment_hook);
-#else
-	  result = XEN_CALL_1(procs,
-			      C_TO_XEN_STRING(com),
-			      S_output_comment_hook);
-#endif
-	  tmpstr = XEN_TO_C_STRING(result);
-	  if (tmpstr)
-	    {
-	      if ((snd_strlen(tmpstr) + snd_strlen(new_comment)) >= comment_size)
-		{
-		  comment_size = ((snd_strlen(tmpstr) + snd_strlen(new_comment)) * 2);
-		  if (comment_size < 1024) 
-		    comment_size = 1024;
-		}
-	      if (new_comment == NULL)
-		new_comment = (char *)CALLOC(comment_size, sizeof(char));
-	      else new_comment = (char *)REALLOC(new_comment, comment_size * sizeof(char));
-	      strcat(new_comment, tmpstr);
-	    }
-#if HAVE_GUILE
-	  procs = XEN_CDR (procs);
-	}
-#endif
-      return(new_comment);
-    }
-  return(com);
+  return(g_c_run_concat_hook(output_comment_hook, S_output_comment_hook, hdr->comment, NULL));
 }
 
 #if HAVE_LADSPA
@@ -3351,16 +3406,12 @@ void g_initialize_gh(snd_state *ss)
   #define H_cursor_on_left "The value for an " S_bind_key " function that causes it to shift the window so that the cursor is at the left edge"
   #define H_cursor_on_right "The value for an " S_bind_key " function that causes it to shift the window so that the cursor is at the right edge"
   #define H_cursor_in_middle "The value for an " S_bind_key " function that causes it to shift the window so that the cursor is in the middle"
-  #define H_cursor_update_display "The value for an " S_bind_key " function that causes it to redraw the graph"
-  #define H_cursor_no_action "The value for an " S_bind_key " function that causes it do nothing with the graph window"
   #define H_keyboard_no_action "The value for an " S_bind_key " function that causes it do nothing upon return"
 
   XEN_DEFINE_CONSTANT(S_cursor_in_view,        CURSOR_IN_VIEW,        H_cursor_in_view);
   XEN_DEFINE_CONSTANT(S_cursor_on_left,        CURSOR_ON_LEFT,        H_cursor_on_left);
   XEN_DEFINE_CONSTANT(S_cursor_on_right,       CURSOR_ON_RIGHT,       H_cursor_on_right);
   XEN_DEFINE_CONSTANT(S_cursor_in_middle,      CURSOR_IN_MIDDLE,      H_cursor_in_middle);
-  XEN_DEFINE_CONSTANT(S_cursor_update_display, CURSOR_UPDATE_DISPLAY, H_cursor_update_display);
-  XEN_DEFINE_CONSTANT(S_cursor_no_action,      CURSOR_NO_ACTION,      H_cursor_no_action);
   XEN_DEFINE_CONSTANT(S_keyboard_no_action,    KEYBOARD_NO_ACTION,    H_keyboard_no_action);
 
   XEN_DEFINE_CONSTANT(S_time_graph,            TIME_AXIS_INFO,        "time domain graph");
