@@ -220,31 +220,31 @@ static const unsigned char I__WAV[4] = {' ','S','A','M'};  /* second word */
 static const unsigned char I_SRFS[4] = {'S','R','F','S'};  /* first word Sonic Resource Foundry file(?) */
 static const unsigned char I_Diam[4] = {'D','i','a','m'};  /* first word DiamondWare file */
 static const unsigned char I_ondW[4] = {'o','n','d','W'};  /* second word */
-static const unsigned char I_Drat[4] = {'.','r','a','\xfd'};  /* first word real audio file */
+static const unsigned char I_Drat[4] = {'.','r','a',(unsigned char)'\xfd'};  /* first word real audio file */
 static const unsigned char I_CSRE[4] = {'C','S','R','E'};  /* adf first word -- second starts with "40" */
 static const unsigned char I_SND_[4] = {'S','N','D',' '};  /* SBStudio II */
 static const unsigned char I_SNIN[4] = {'S','N','I','N'};
 static const unsigned char I_SNDT[4] = {'S','N','D','T'};
 static const unsigned char I_DDSF[4] = {'D','D','S','F'};  /* Delusion Digital Sound File */
-static const unsigned char I_FSMt[4] = {'F','S','M','\376'};  /* Farandole Composer WaveSample */
+static const unsigned char I_FSMt[4] = {'F','S','M',(unsigned char)'\376'};  /* Farandole Composer WaveSample */
 static const unsigned char I_SDXc[4] = {'S','D','X',':'};  /* Sample dump exchange format */
 static const unsigned char I_UWFD[4] = {'U','W','F','D'};  /* Ultratracker Wavesample */
 static const unsigned char I_LM89[4] = {'L','M','8','9'};  /* Yamaha TX-16 */
 static const unsigned char I_SY80[4] = {'S','Y','8','0'};  /* Yamaha SY-99 */
 static const unsigned char I_SY85[4] = {'S','Y','8','5'};  /* Yamaha SY-85 */
 static const unsigned char I_SCRS[4] = {'S','C','R','S'};  /* Digiplayer ST3 */
-static const unsigned char I_covox[4] = {'\377','\125','\377','\252'};
+static const unsigned char I_covox[4] = {(unsigned char)'\377','\125',(unsigned char)'\377',(unsigned char)'\252'};
 static const unsigned char I_DSPL[4] = {'D','S','P','L'};  /* Digitracker SPL (now obsolete) */
 static const unsigned char I_AVI_[4] = {'A','V','I',' '};  /* RIFF AVI */
 static const unsigned char I_strf[4] = {'s','t','r','f'};  
 static const unsigned char I_movi[4] = {'m','o','v','i'};  
 static const unsigned char I_PRAM[4] = {'P','R','A','M'};  /* Kurzweil 2000 */
-static const unsigned char I_ones[4] = {'\377','\377','\377','\377'};
+static const unsigned char I_ones[4] = {(unsigned char)'\377',(unsigned char)'\377',(unsigned char)'\377',(unsigned char)'\377'};
 static const unsigned char I_zeros[4] = {'\0','\0','\0','\0'};
-static const unsigned char I_asf0[4] = {'\321','\051','\342','\326'};
-static const unsigned char I_asf1[4] = {'\332','\065','\321','\021'};
-static const unsigned char I_asf2[4] = {'\220','\064','\000','\240'};
-static const unsigned char I_asf3[4] = {'\311','\003','\111','\276'};
+static const unsigned char I_asf0[4] = {(unsigned char)'\321','\051',(unsigned char)'\342',(unsigned char)'\326'};
+static const unsigned char I_asf1[4] = {(unsigned char)'\332','\065',(unsigned char)'\321','\021'};
+static const unsigned char I_asf2[4] = {(unsigned char)'\220','\064','\000',(unsigned char)'\240'};
+static const unsigned char I_asf3[4] = {(unsigned char)'\311','\003','\111',(unsigned char)'\276'};
 static const unsigned char I__PAF[4] = {' ','p','a','f'};  /* Paris Ensoniq */
 static const unsigned char I_FAP_[4] = {'f','a','p',' '};  /* Paris Ensoniq */
 static const unsigned char I_DS16[4] = {'D','S','1','6'};  /* CSL */
@@ -379,7 +379,7 @@ static void write_four_chars(unsigned char *head, const unsigned char *match)
   head[3] = match[3];
 }
 
-char *mus_header_type_name(int type)
+const char *mus_header_type_name(int type)
 {
   switch (type)
     {
@@ -448,7 +448,7 @@ char *mus_header_type_name(int type)
     }
 }
 
-char *mus_data_format_name(int format)
+const char *mus_data_format_name(int format)
 {
   switch (format)
     {
@@ -477,7 +477,7 @@ char *mus_data_format_name(int format)
     }
 }
 
-static char *any_data_format_name(int sndlib_format)
+static const char *any_data_format_name(int sndlib_format)
 {
   if (MUS_DATA_FORMAT_OK(sndlib_format))
     return(mus_data_format_name(sndlib_format));
@@ -592,7 +592,7 @@ static int read_next_header (int chan)
   return(err);
 }
 
-int mus_header_write_next_header (int chan, int srate, int chans, int loc, int siz, int format, const char *comment, int len)
+int mus_header_write_next_header (int chan, int wsrate, int wchans, int loc, int siz, int format, const char *comment, int len)
 {
   int i, j;
   write_four_chars((unsigned char *)hdrbuf, I_DSND); /* ".snd" */
@@ -625,8 +625,8 @@ int mus_header_write_next_header (int chan, int srate, int chans, int loc, int s
       return(MUS_ERROR); 
       break;
     }
-  mus_bint_to_char((unsigned char *)(hdrbuf + 16), srate);
-  mus_bint_to_char((unsigned char *)(hdrbuf + 20), chans);
+  mus_bint_to_char((unsigned char *)(hdrbuf + 16), wsrate);
+  mus_bint_to_char((unsigned char *)(hdrbuf + 20), wchans);
   write(chan, hdrbuf, 24);
   j = 0;
   for (i = 0; i < len; i++) 
@@ -766,20 +766,20 @@ static unsigned int myDoubleToUlong(double val)
 static double ieee_80_to_double(unsigned char *p)
 {
   unsigned char sign;
-  short exp = 0;
+  short lexp = 0;
   unsigned int mant1 = 0;
   unsigned int mant0 = 0;
   double val;
-  exp = *p++;  exp <<= 8;  exp |= *p++;  sign = (exp & 0x8000) ? 1 : 0;  exp &= 0x7FFF;
+  lexp = *p++;  lexp <<= 8;  lexp |= *p++;  sign = (lexp & 0x8000) ? 1 : 0;  lexp &= 0x7FFF;
   mant1 = *p++;  mant1 <<= 8;  mant1 |= *p++;  mant1 <<= 8;  mant1 |= *p++;  mant1 <<= 8;  mant1 |= *p++;
   mant0 = *p++;  mant0 <<= 8;  mant0 |= *p++;  mant0 <<= 8;  mant0 |= *p++;  mant0 <<= 8;  mant0 |= *p++;
-  if(mant1 == 0 && mant0 == 0 && exp == 0 && sign == 0)
+  if(mant1 == 0 && mant0 == 0 && lexp == 0 && sign == 0)
     return 0.0;
   else
     {
       val = myUlongToDouble(mant0) * pow(2.0, -63.0);
       val += myUlongToDouble(mant1) * pow(2.0, -31.0);
-      val *= pow(2.0, ((double) exp) - 16383.0);
+      val *= pow(2.0, ((double) lexp) - 16383.0);
       return sign ? -val : val;
     }
 }
@@ -787,20 +787,20 @@ static double ieee_80_to_double(unsigned char *p)
 static void double_to_ieee_80(double val, unsigned char *p)
 {
   unsigned char sign = 0;
-  short exp = 0;
+  short lexp = 0;
   unsigned int mant1 = 0;
   unsigned int mant0 = 0;
   if(val < 0.0)	{  sign = 1;  val = -val; }
   if(val != 0.0)	/* val identically zero -> all elements zero */
     {
-      exp = (short)(log(val)/log(2.0) + 16383.0);
-      val *= pow(2.0, 31.0+16383.0-(double)exp);
+      lexp = (short)(log(val)/log(2.0) + 16383.0);
+      val *= pow(2.0, 31.0+16383.0-(double)lexp);
       mant1 = myDoubleToUlong(val);
       val -= myUlongToDouble(mant1);
       val *= pow(2.0, 32.0);
       mant0 = myDoubleToUlong(val);
     }
-  *p++ = ((sign<<7)|(exp>>8));  *p++ = 0xFF & exp;  
+  *p++ = ((sign<<7)|(lexp>>8));  *p++ = 0xFF & lexp;  
   *p++ = 0xFF & (mant1>>24);  *p++ = 0xFF & (mant1>>16);  *p++ = 0xFF & (mant1>> 8);  *p++ = 0xFF & (mant1);
   *p++ = 0xFF & (mant0>>24);  *p++ = 0xFF & (mant0>>16);  *p++ = 0xFF & (mant0>> 8);  *p++ = 0xFF & (mant0);
 }
@@ -888,7 +888,7 @@ static int read_aiff_header (int chan, int overall_offset)
 	  else data_format = MUS_UNSUPPORTED;
 	  srate = (int)ieee_80_to_double((unsigned char *)(hdrbuf + 16));
 	  /* if AIFC, compression type over-rides (possibly bogus) original_data_format */
-	  if (type_specifier == mus_char_to_uninterpreted_int((unsigned char *)I_AIFC))
+	  if (type_specifier == mus_char_to_uninterpreted_int((unsigned const char *)I_AIFC))
 	    {
 	      /* some aifc files assume the compression field is a new and very weird chunk!! -- surely a bug? */
 	      /* AIFF spec says COMM size is always 18, but this is amended in the newer AIFC spec */
@@ -1065,7 +1065,7 @@ static int read_aiff_header (int chan, int overall_offset)
   return(MUS_NO_ERROR);
 }
 
-int mus_header_aiff_p(void) {return(type_specifier == mus_char_to_uninterpreted_int((unsigned char *)I_AIFF));}
+int mus_header_aiff_p(void) {return(type_specifier == mus_char_to_uninterpreted_int((unsigned const char *)I_AIFF));}
 
 static int *aiff_loop_info = NULL;
 
@@ -1075,7 +1075,7 @@ void mus_header_set_aiff_loop_info(int *data)
   /* assuming 6 fields, 4 mark positions, followed by (as ints) the base note and detune */
 }
 
-static int write_aif_header (int chan, int srate, int chans, int siz, int format, const char *comment, int len, int aifc_header)
+static int write_aif_header (int chan, int wsrate, int wchans, int siz, int format, const char *comment, int len, int aifc_header)
 {
   /* we write the simplest possible AIFC header: AIFC | COMM | APPL-MUS_ if needed | SSND eof. */
   /* the assumption being that we're going to be appending sound data once the header is out   */
@@ -1116,8 +1116,8 @@ static int write_aif_header (int chan, int srate, int chans, int siz, int format
   if (aifc_header) 
     mus_bint_to_char((unsigned char *)(hdrbuf + 16), 18 + 10); 
   else mus_bint_to_char((unsigned char *)(hdrbuf + 16), 18);
-  mus_bshort_to_char((unsigned char *)(hdrbuf + 20), (short)chans);
-  mus_bint_to_char((unsigned char *)(hdrbuf + 22), siz / (chans * mus_data_format_to_bytes_per_sample(format)));
+  mus_bshort_to_char((unsigned char *)(hdrbuf + 20), (short)wchans);
+  mus_bint_to_char((unsigned char *)(hdrbuf + 22), siz / (wchans * mus_data_format_to_bytes_per_sample(format)));
   switch (format)
     {
     case MUS_BSHORT: case MUS_LSHORT: case MUS_UBSHORT: 
@@ -1150,7 +1150,7 @@ static int write_aif_header (int chan, int srate, int chans, int siz, int format
       return(MUS_ERROR);
       break;
     }
-  double_to_ieee_80((double)srate, (unsigned char *)(hdrbuf + 28));
+  double_to_ieee_80((double)wsrate, (unsigned char *)(hdrbuf + 28));
   if (aifc_header)
     {
       switch (format)
@@ -1581,7 +1581,7 @@ static int read_riff_header (int chan)
   return(MUS_NO_ERROR);
 }
 
-static int write_riff_header (int chan, int srate, int chans, int siz, int format, const char *comment, int len)
+static int write_riff_header (int chan, int wsrate, int wchans, int siz, int format, const char *comment, int len)
 {
   int offset, i, j, lenhdr, extra, curend;
   lenhdr = 0;
@@ -1637,13 +1637,13 @@ static int write_riff_header (int chan, int srate, int chans, int siz, int forma
       break;
     }
   mus_lshort_to_char((unsigned char *)(hdrbuf + 22),
-		     (short)chans);
+		     (short)wchans);
   mus_lint_to_char((unsigned char *)(hdrbuf + 24),
-		   srate);
+		   wsrate);
   mus_lint_to_char((unsigned char *)(hdrbuf + 28),
-		   srate * chans * mus_data_format_to_bytes_per_sample(format)); /* added chans 10-Mar-99 */
+		   wsrate * wchans * mus_data_format_to_bytes_per_sample(format)); /* added chans 10-Mar-99 */
   mus_lshort_to_char((unsigned char *)(hdrbuf + 32),
-		     (short)(chans * mus_data_format_to_bytes_per_sample(format)));
+		     (short)(wchans * mus_data_format_to_bytes_per_sample(format)));
 
   offset = 36;
   i = 36;
@@ -2226,14 +2226,14 @@ static int read_nist_header (int chan)
   return(MUS_NO_ERROR);
 }
 
-static int write_nist_header (int chan, int srate, int chans, int siz, int format)
+static int write_nist_header (int chan, int wsrate, int wchans, int siz, int format)
 {
   char *header;
   int datum;
   datum = mus_data_format_to_bytes_per_sample(format);
   header = (char *)CALLOC(1024, sizeof(char));
   sprintf(header, "NIST_1A\n   1024\nchannel_count -i %d\nsample_rate -i %d\nsample_n_bytes -i %d\nsample_byte_format -s2 %s\nsample_sig_bits -i %d\nsample_count -i %d\nend_head\n",
-	  chans, srate, datum,
+	  wchans, wsrate, datum,
 	  ((format == MUS_BSHORT) || (format == MUS_B24INT) || (format == MUS_BINT)) ? "10" : "01",
 	  datum * 8, siz / datum);
 #ifndef MACOS
@@ -2423,7 +2423,7 @@ static int read_ircam_header (int chan)
   return(MUS_NO_ERROR);
 }
 
-static int write_ircam_header (int chan, int srate, int chans, int format, const char *comment, int len)
+static int write_ircam_header (int chan, int wsrate, int wchans, int format, const char *comment, int len)
 {
   int i, j;
 #ifdef NEXT
@@ -2431,8 +2431,8 @@ static int write_ircam_header (int chan, int srate, int chans, int format, const
 #else
   mus_bint_to_char((unsigned char *)hdrbuf, 0x2a364); /* SUN id */
 #endif
-  mus_bfloat_to_char((unsigned char *)(hdrbuf + 4), (float)srate);
-  mus_bint_to_char((unsigned char *)(hdrbuf + 8), chans);
+  mus_bfloat_to_char((unsigned char *)(hdrbuf + 4), (float)wsrate);
+  mus_bint_to_char((unsigned char *)(hdrbuf + 8), wchans);
   switch (format)
     {
     case MUS_MULAW: mus_bint_to_char((unsigned char *)(hdrbuf + 12), 0x20001); break;
@@ -5034,7 +5034,7 @@ int mus_header_update_with_fd(int chan, int type, int size)
   return(MUS_NO_ERROR);
 }
 
-int mus_header_update (const char *name, int type, int size, int srate, int format, int chans, int loc)
+int mus_header_update (const char *name, int type, int size, int wsrate, int format, int wchans, int loc)
 {
   int chan, siz, err;
   chan = mus_file_reopen_write(name);
@@ -5050,16 +5050,16 @@ int mus_header_update (const char *name, int type, int size, int srate, int form
   err = mus_header_update_with_fd(chan, type, siz);
   if (type == MUS_NEXT)
     {
-      if (srate != 0)
+      if (wsrate != 0)
 	{
 	  lseek(chan, 16L, SEEK_SET);
-	  mus_bint_to_char((unsigned char *)hdrbuf, srate);
+	  mus_bint_to_char((unsigned char *)hdrbuf, wsrate);
 	  write(chan, hdrbuf, 4);
 	}
-      if (chans != 0)
+      if (wchans != 0)
 	{
 	  lseek(chan, 20L, SEEK_SET);
-	  mus_bint_to_char((unsigned char *)hdrbuf, chans);
+	  mus_bint_to_char((unsigned char *)hdrbuf, wchans);
 	  write(chan, hdrbuf, 4);
 	}
       if (loc != 0)
@@ -5533,15 +5533,15 @@ for (i = 0; i < HDRBUFSIZ; i++)
 0	string		.RMF\0\0\0	realmedia file        
 */
 
+static char aifc_format[5];
 
 void mus_header_set_aifc(int val) {} /* backwards compatibility, sort of */
 
 /* sfs files apparently start with SFS\0 */
 
 /* try to give some info on data formats that aren't supported by sndlib */
-char *mus_header_original_format_name(int format, int type)
+const char *mus_header_original_format_name(int format, int type)
 {
-  char *f4;
   switch (type)
     {
     case MUS_NEXT:
@@ -5557,19 +5557,15 @@ char *mus_header_original_format_name(int format, int type)
 	}
       break;
     case MUS_AIFC:
-      if (format)
-	{
-	  f4 = (char *)calloc(5, sizeof(char));
 #if MUS_LITTLE_ENDIAN
-	  sprintf(f4, "%c%c%c%c", format & 0xff, (format >> 8) & 0xff, (format >> 16) & 0xff, (format >> 24) & 0xff);
+      sprintf(aifc_format, "%c%c%c%c", format & 0xff, (format >> 8) & 0xff, (format >> 16) & 0xff, (format >> 24) & 0xff);
 #else
-	  sprintf(f4, "%c%c%c%c", (format >> 24) & 0xff, (format >> 16) & 0xff, (format >> 8) & 0xff, format & 0xff);
+      sprintf(aifc_format, "%c%c%c%c", (format >> 24) & 0xff, (format >> 16) & 0xff, (format >> 8) & 0xff, format & 0xff);
 #endif	
-	  return(f4);
-	}
+      return(aifc_format);
       break;
     case MUS_PVF:
-      if (type_specifier == mus_char_to_uninterpreted_int((unsigned char *)I_PVF2))
+      if (type_specifier == mus_char_to_uninterpreted_int((unsigned const char *)I_PVF2))
 	return("ascii text");
       break;
     case MUS_RIFF:

@@ -120,6 +120,7 @@
 #define TO_C_DOUBLE_WITH_ORIGIN(a, b) 0.0
 #define TO_C_INT(a) 0
 #define TO_C_INT_OR_ELSE(a, b) 0
+#define TO_C_INT_OR_ELSE_WITH_ORIGIN(a, b, c) 0
 #define TO_C_STRING(STR) NULL
 #define TO_SCM_DOUBLE(a) 0
 #define TO_SCM_INT(a) 0

@@ -97,7 +97,7 @@ static void add_point (env *e, int pos, Float x, Float y)
       e->data_size += 16;
       e->data = (Float *)REALLOC(e->data, (e->data_size) * sizeof(Float));
     }
-  for (i = e->pts - 1, j=(e->pts - 1) * 2; i >= pos; i--, j -= 2)
+  for (i = e->pts - 1, j = (e->pts - 1) * 2; i >= pos; i--, j -= 2)
     {
       e->data[j + 2] = e->data[j];
       e->data[j + 3] = e->data[j + 1];
@@ -1178,7 +1178,7 @@ void save_envelope_editor_state(FILE *fd)
 env *scm2env(SCM res)
 {
   SCM el, lst;
-  int i, len;
+  int i, len = 0;
   Float *data;
   env *rtn = NULL;
   if (LIST_P_WITH_LENGTH(res, len))
@@ -1384,7 +1384,7 @@ int check_enved_hook(env *e, int pos, Float x, Float y, int reason)
 {
   SCM result = SCM_BOOL_F;
   SCM procs, env_list;
-  int env_changed = 0, len;
+  int env_changed = 0, len = 0;
   if (HOOKED(enved_hook))
     {
       /* if hook procedure returns a list, that is the new contents of the

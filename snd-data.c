@@ -124,6 +124,7 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
       FREE(cp->last_sonogram); 
       cp->last_sonogram = NULL;
     }
+  cp->active = 1;
   return(cp);
 }
 
@@ -131,6 +132,14 @@ static chan_info *free_chan_info(chan_info *cp)
 {
   /* this does not free the associated widgets -- they are merely unmanaged */
   snd_state *ss;
+  cp->active = 0;
+  /* need an indication right away that this channel is being deleted -- during free_snd_info (close-sound),
+   *   an error may occur (an edit list temp file might have vanished for example), and normally Snd
+   *   attempts to post an error message in the sound's minibuffer.  To force this out, we have to
+   *   call XmUpdate or equivalent, which can cause all the sound's channels to attempt to redisplay;
+   *   since the one causing the error is half-deallocated, trouble can ensue.  So both the channel
+   *   and the sound have "active" flags that are 1 only when everything is ship-shape.
+   */
   chan_info_cleanup(cp);
   ss = cp->state;
   cp->squelch_update = 1;
@@ -309,6 +318,7 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
       for (i = 0; i < sp->nchans; i++)
 	sp->fit_data_amps[i] = MUS_SAMPLE_TO_FLOAT(vals[i * 2 + 1]);
     }
+  sp->active = 1;
   return(sp);
 }
 
@@ -316,6 +326,7 @@ void free_snd_info(snd_info *sp)
 {
   int i;
   /* leave most for reuse as in free_chan_info */
+  sp->active = 0;
   if (sp->sgx)
     {
       if ((sp->sgx)->apply_in_progress) remove_apply(sp);

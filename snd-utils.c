@@ -92,7 +92,7 @@ static char prtbuf[256];
 
 char *prettyf(Float num, int tens)
 { /* try to prettify float display -- if tens < 0, return int */
-  int fullf, len, i;
+  int fullf, len, i, lim;
   Float rounder;
   char *newval, *sp, *sn, *zp;
   zp = NULL;
@@ -155,7 +155,8 @@ char *prettyf(Float num, int tens)
       sn++;
       (*sn) = STR_decimal;
       sn++;
-      for (i = 0; i < abs(len - tens - 1); i++) 
+      lim = abs(len - tens - 1);
+      for (i = 0; i < lim; i++) 
 	{
 	  (*sn) = '0';
 	  sn++;

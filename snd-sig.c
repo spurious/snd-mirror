@@ -334,8 +334,7 @@ static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, 
 	      res = CALL1(proc,
 			  TO_SCM_DOUBLE((double)next_sample_to_float(sf)),
 			  origin);
-	      if ((NOT_FALSE_P(res)) || 
-		  (SYMBOL_P(res)))
+	      if (NOT_FALSE_P(res))
 		{
 		  if ((counting) &&
 		      (TRUE_P(res)))
@@ -457,8 +456,7 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
 	{
 	  vdata[0] = TO_SCM_DOUBLE((double)next_sample_to_float(sfs[0]));
 	  res = CALL2(proc, args, g_chns, origin);
-	  if ((NOT_FALSE_P(res)) || 
-	      (SYMBOL_P(res))) 
+	  if (NOT_FALSE_P(res))
 	    {
 	      pos = kp + beg; 
 	      break;
@@ -482,8 +480,7 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
 	  for (ip = 0; ip < si->chans; ip++)
 	    vdata[ip] = TO_SCM_DOUBLE((double)next_sample_to_float(sfs[ip]));
 	  res = CALL2(proc, args, g_chns, origin);
-	  if ((NOT_FALSE_P(res)) || 
-	      (SYMBOL_P(res))) 
+	  if (NOT_FALSE_P(res))
 	    {
 	      pos = kp + beg; 
 	      break;
@@ -676,6 +673,7 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
 	      res = CALL1(proc, 
 			  TO_SCM_DOUBLE((double)next_sample_to_float(sf)),
 			  origin);
+
 	      if (NUMBER_P(res))                         /* one number -> replace current sample */
 		output_sample(ss, os, SND_SRATE(sp), MUS_FLOAT_TO_SAMPLE(TO_C_DOUBLE(res)));
 	      else
@@ -1106,6 +1104,7 @@ Float get_maxamp(snd_info *sp, chan_info *cp)
   val = ed_maxamp(cp);
   if (val >= 0.0) return(val);
   sf = init_sample_read(0, cp, READ_FORWARD);
+  if (sf == NULL) return(0.0);
   ymax = 0.0;
   len = current_ed_samples(cp);
   for (i = 0; i < len; i++)
@@ -1127,6 +1126,7 @@ static Float get_selection_maxamp(chan_info *cp)
   val = ed_selection_maxamp(cp);
   if (val >= 0.0) return(val);
   sf = init_sample_read(selection_beg(cp), cp, READ_FORWARD);
+  if (sf == NULL) return(0.0);
   len = selection_end(cp) - selection_beg(cp) + 1;
   ymax = 0.0;
   for (i = 0; i < len; i++)

@@ -472,12 +472,67 @@ static SCM g_remove_input(SCM id)
   return(id);
 }
 
+static SCM *idler_code = NULL;
+static BACKGROUND_FUNCTION_TYPE *idler_id = NULL;
+static int idlers = 0;
+static BACKGROUND_FUNCTION_TYPE remember_idler(SCM code, BACKGROUND_FUNCTION_TYPE id)
+{
+  int i, loc = -1;
+  if (idlers == 0)
+    {
+      idlers = 4;
+      idler_code = (SCM *)MALLOC(idlers * sizeof(SCM));
+      for (i = 0; i< idlers; i++) idler_code[i] = SCM_UNDEFINED;
+      idler_id = (BACKGROUND_FUNCTION_TYPE *)CALLOC(idlers, sizeof(BACKGROUND_FUNCTION_TYPE));
+      loc = 0;
+    }
+  else
+    {
+      for (i = 0; i < idlers; i++)
+	if (idler_id[i] == 0)
+	  {
+	    loc = i;
+	    break;
+	  }
+      if (loc < 0)
+	{
+	  loc = idlers;
+	  idlers *= 2;
+	  idler_code = (SCM *)REALLOC(idler_code, idlers * sizeof(SCM));
+	  idler_id = (BACKGROUND_FUNCTION_TYPE *)REALLOC(idler_id, idlers * sizeof(BACKGROUND_FUNCTION_TYPE));
+	  for (i = loc; i < idlers; i++) 
+	    {
+	      idler_id[i] = 0;
+	      idler_code[i] = SCM_UNDEFINED;
+	    }
+	}
+    }
+  idler_code[loc] = code;
+  snd_protect(code);
+  idler_id[loc] = id;
+  return(id);
+}
+
+static BACKGROUND_FUNCTION_TYPE forget_idler(SCM code, BACKGROUND_FUNCTION_TYPE id)
+{
+  int i;
+  for (i = 0; i < idlers; i++)
+    if (((id != 0) && (id == idler_id[i])) ||
+	((BOUND_P(code)) && (SCM_EQ_P(code, idler_code[i]))))
+      {
+	idler_id[i] = 0;
+	if (BOUND_P(idler_code[i]))
+	  snd_unprotect(idler_code[i]);
+	return(id);
+      }
+  return(id);
+}
 
 static BACKGROUND_TYPE call_idler(GUI_POINTER code)
 {
   if (TRUE_P(CALL0(SND_UNWRAP((SCM)code), "idler callback")))
     return(BACKGROUND_CONTINUE);
-  snd_unprotect((SCM)code);
+  forget_idler((SCM)code, (BACKGROUND_FUNCTION_TYPE)0);
   return(BACKGROUND_QUIT);
 }
 
@@ -485,17 +540,15 @@ static SCM g_add_idler(SCM code)
 {
   if (!(procedure_fits(code, 0)))
     mus_misc_error(S_add_idler, "argument should be a procedure of no args", code);
-  snd_protect(code);
-  return(SND_WRAP(BACKGROUND_ADD(get_global_state(), 
-				 call_idler, 
-				 (GUI_POINTER)SND_WRAP(code))));
+  return(SND_WRAP(remember_idler(code, BACKGROUND_ADD(get_global_state(), 
+						      call_idler, 
+						      (GUI_POINTER)SND_WRAP(code)))));
 }
 
 static SCM g_remove_idler(SCM id)
 {
   SCM_ASSERT(SND_WRAPPED(id), id, SCM_ARG1, S_remove_idler);
-  /* TODO: need to snd_unprotect the associated code */
-  BACKGROUND_REMOVE(SND_UNWRAP(id));
+  BACKGROUND_REMOVE(forget_idler(SCM_UNDEFINED, (BACKGROUND_FUNCTION_TYPE)(SND_UNWRAP(id))));
   return(id);
 }
 

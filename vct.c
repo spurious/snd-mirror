@@ -197,9 +197,7 @@ static SCM g_make_vct(SCM len)
   size = TO_C_INT(len);
   if (size <= 0) 
     scm_out_of_range(S_make_vct, len);
-  return(scm_return_first(make_vct(size,
-				   (Float *)CALLOC(size, sizeof(Float))),
-			  len));
+  return(make_vct(size, (Float *)CALLOC(size, sizeof(Float))));
 }
 
 static SCM copy_vct(SCM obj)
@@ -447,6 +445,45 @@ int procedure_fits(SCM proc, int args)
   return(0);
 }
 
+#if USE_SND && USE_OPT_APPLY
+typedef struct {
+  SCM code;
+  vct *v;
+} vthunk;
+
+static SCM vct_thunk(void *arg)
+{
+  /* about half the total time is going into setting up the catch, another 25% or so into scm_apply type checking
+   * so here we bypass all that... (this way is about 3 times faster overall than using the call0 and call1 fallbacks)
+   */
+  int i;
+  vthunk *vt = (vthunk *)arg;
+  vct *v;
+  SCM code;
+  v = vt->v;
+  code = vt->code;
+  for (i = 0; i < v->length; i++) 
+    v->data[i] = TO_C_DOUBLE(scm_eval_body(SCM_CDR(SCM_CODE(code)), SCM_ENV(code)));
+  return(code);
+}
+
+static SCM vct_call_1(void *arg)
+{
+  int i;
+  vthunk *vt = (vthunk *)arg;
+  vct *v;
+  SCM code;
+  v = vt->v;
+  code = vt->code;
+  for (i = 0; i < v->length; i++) 
+    v->data[i] = TO_C_DOUBLE(scm_eval_body(SCM_CDR(SCM_CODE(code)), 
+					   SCM_EXTEND_ENV(SCM_CAR(SCM_CODE(code)),
+							  SCM_LIST1(TO_SMALL_SCM_INT(i)),
+							  SCM_ENV(code))));
+  return(code);
+}
+#endif
+
 static SCM vct_map(SCM obj, SCM proc)
 {
   #define H_vct_mapB "(" S_vct_mapB " v proc) -> v with each element set to value of proc: v[i] = (proc)"
@@ -458,8 +495,20 @@ static SCM vct_map(SCM obj, SCM proc)
     scm_wrong_type_arg(S_vct_mapB, 2, proc);
   v = TO_VCT(obj);
   if (v) 
-    for (i = 0; i < v->length; i++) 
-      v->data[i] = TO_C_DOUBLE(CALL0(proc, S_vct_mapB));
+    {
+#if USE_SND && USE_OPT_APPLY
+      vthunk vt;
+      if (SCM_CLOSUREP(proc))
+	{
+	  vt.code = proc;
+	  vt.v = v;
+	  snd_catch_any(vct_thunk, (void *)(&vt), S_vct_mapB);
+	}
+      else
+#endif
+	for (i = 0; i < v->length; i++) 
+	  v->data[i] = TO_C_DOUBLE(CALL0(proc, S_vct_mapB));
+    }
   return(obj);
 }
 
@@ -474,8 +523,20 @@ static SCM vct_do(SCM obj, SCM proc)
     scm_wrong_type_arg(S_vct_doB, 2, proc);
   v = TO_VCT(obj);
   if (v) 
-    for (i = 0; i < v->length; i++) 
-      v->data[i] = TO_C_DOUBLE(CALL1(proc, TO_SMALL_SCM_INT(i), S_vct_doB));
+    {
+#if USE_SND && USE_OPT_APPLY
+      vthunk vt;
+      if (SCM_CLOSUREP(proc))
+	{
+	  vt.code = proc;
+	  vt.v = v;
+	  snd_catch_any(vct_call_1, (void *)(&vt), S_vct_doB);
+	}
+      else
+#endif
+	for (i = 0; i < v->length; i++) 
+	  v->data[i] = TO_C_DOUBLE(CALL1(proc, TO_SMALL_SCM_INT(i), S_vct_doB));
+    }
   return(obj);
 }
 

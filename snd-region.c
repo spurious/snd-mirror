@@ -1015,7 +1015,7 @@ static SCM region_read(int field, SCM n, char *caller)
     }
   else
     {
-      rg = TO_C_INT_OR_ELSE(n, 0);
+      rg = TO_C_INT_OR_ELSE_WITH_ORIGIN(n, 0, caller);
       if (region_ok(rg))
 	{
 	  switch (field)

@@ -75,6 +75,17 @@
 	(if (fneq (car b) (vct-ref a i))
 	    #f
 	    (fveql a (cdr b) (+ i 1))))))
+
+(define (vequal v0 v1)
+  (define (dequal ctr len)
+    (if (= ctr len)
+	#t
+	(and (< (abs (- (vct-ref v0 ctr) (vct-ref v1 ctr))) .001)
+	     (dequal (1+ ctr) len))))
+  (let ((len (vct-length v0)))
+    (and (= len (vct-length v1))
+	 (dequal 0 len))))
+
 (define my-random
   (lambda (n)
     (if (= n 0) 
@@ -890,6 +901,7 @@
 	  (snd-display (format #f ";window x: ~A /= 123?" (window-x))))
       (if (not (equal? (window-y) 321))
 	  (snd-display (format #f ";window y: ~A /= 321?" (window-y))))
+      (set! (window-y) 10) ; get it back out of harm's way
       (set! (vu-font) "8x15")
 
       (close-sound 0) 
@@ -1272,7 +1284,7 @@
       (key (char->integer #\a) 0) 
       (if (not (= a-ctr 3)) (snd-display (format #f ";bind-key: ~A?" a-ctr)))
       (let ((str (with-output-to-string (lambda () (display (key-binding (char->integer #\a) 0))))))
-	(if (not (string=? str "#<procedure () (set! a-ctr 3)>"))
+	(if (not (string=? str "#<procedure #f (() (set! a-ctr 3))>"))
 	    (snd-display (format #f ";key-binding: ~A?" str))))
       (unbind-key (char->integer #\a) 0)
       (set! a-ctr 0)
@@ -1735,7 +1747,7 @@
 		  (snd-display (format #f ";cursor-position: ~A ~A ~A?" (car xy) (position->x (car xy)) (/ (cursor obind) (srate obind))))))
 	    (if (fneq (position->x (x->position xpos)) xpos)
 		(snd-display (format #f ";x<->position: ~A ~A?" (position->x (x->position xpos)) xpos)))
-	    (if (fneq (position->y (y->position ypos)) ypos)
+	    (if (> (abs (- (position->y (y->position ypos)) ypos)) .5)
 		(snd-display (format #f ";y<->position: ~A ~A?" (position->y (y->position ypos)) ypos)))
 	    )
 	  (close-sound obind)))
@@ -2041,11 +2053,13 @@
 	    (file->array "hiho.snd" 0 0 10 v3)
 	    (if (fneq (vct-ref v3 5) (vct-ref v2 5))
 		(snd-display (format #f ";vct->sound-file: ~A ~A?" v2 v3))))))
-      (if (fneq ((vct 1.0 2.0 3.0) 1) 2.0)
-	  (snd-display (format #f ";(vct...) = ~A?" ((vct 1.0 2.0 3.0) 1))))
-      (let ((v1 (vct 1 2 3 4)))
-	(if (fneq (v1 1) 2.0)
-	    (snd-display (format #f ";(v1 1) = ~A?" (v1 1)))))
+      (if (provided? 'snd-new-smob)
+	  (begin
+	    (if (fneq ((vct 1.0 2.0 3.0) 1) 2.0)
+		(snd-display (format #f ";(vct...) = ~A?" ((vct 1.0 2.0 3.0) 1))))
+	    (let ((v1 (vct 1 2 3 4)))
+	      (if (fneq (v1 1) 2.0)
+		  (snd-display (format #f ";(v1 1) = ~A?" (v1 1)))))))
       (let ((nind (new-sound "tmp.snd" mus-next mus-bshort 22050 1 "hiho a comment")))
 	(test-prc95)
 	(play-and-wait 0 nind)
@@ -2515,15 +2529,16 @@
 	  (if (fneq (vct-ref v0 i) (vct-ref v1 i))
 	      (snd-display (format #f ";mus-apply fm oscil at ~D: ~A ~A?" i (vct-ref v0 i) (vct-ref v1 i))))))
       
-      (let ((gen (make-oscil 440.0))
-	    (gen1 (make-oscil 440.0))
-	    (pm-index 2.0)
-	    (v0 (make-vct 10)))
-	(do ((i 0 (1+ i)))
-	    ((= i 10))
-	  (vct-set! v0 i (gen 0.0 (* pm-index (gen1 0.0)))))
-	(if (or (fneq (vct-ref v0 1) 0.367) (fneq (vct-ref v0 6) 0.854) (fneq (vct-ref v0 8) 0.437))
-	    (snd-display (format #f ";oscil pm output: ~A" v0))))
+      (if (provided? 'snd-new-smob)
+	  (let ((gen (make-oscil 440.0))
+		(gen1 (make-oscil 440.0))
+		(pm-index 2.0)
+		(v0 (make-vct 10)))
+	    (do ((i 0 (1+ i)))
+		((= i 10))
+	      (vct-set! v0 i (gen 0.0 (* pm-index (gen1 0.0)))))
+	    (if (or (fneq (vct-ref v0 1) 0.367) (fneq (vct-ref v0 6) 0.854) (fneq (vct-ref v0 8) 0.437))
+		(snd-display (format #f ";oscil pm output: ~A" v0)))))
       
       (let ((amps (make-vector 3))
 	    (oscils (make-vector 3))
@@ -2874,56 +2889,56 @@
 	    (if (not (equal? frout fr0)) (snd-display (format #f ";sample->frame via frout: ~A ~A?" frout fr0))))))
       
       (let ((gen (make-fft-window hamming-window 16)))
-	(if (or (fneq (vct-ref gen 0) 0.080) (fneq (vct-ref gen 8) 1.0))
+	(if (not (vequal gen (vct 0.080 0.115 0.215 0.364 0.540 0.716 0.865 1.000 1.000 0.865 0.716 0.540 0.364 0.215 0.115 0.080)))
 	    (snd-display (format #f ";hamming window: ~A" gen))))
       (let ((gen (make-fft-window rectangular-window 16)))
-	(if (or (fneq (vct-ref gen 0) 1.0) (fneq (vct-ref gen 8) 1.0))
+	(if (not (vequal gen (vct 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000)))
 	    (snd-display (format #f ";rectangular window: ~A" gen))))
       (let ((gen (make-fft-window hanning-window 16)))
-	(if (or (fneq (vct-ref gen 1) 0.038) (fneq (vct-ref gen 8) 1.0))
+	(if (not (vequal gen (vct 0.000 0.038 0.146 0.309 0.500 0.691 0.854 1.000 1.000 0.854 0.691 0.500 0.309 0.146 0.038 0.000)))
 	    (snd-display (format #f ";hanning window: ~A" gen))))
       (let ((gen (make-fft-window welch-window 16)))
-	(if (or (fneq (vct-ref gen 1) 0.234) (fneq (vct-ref gen 8) 1.0))
+	(if (not (vequal gen (vct 0.000 0.234 0.438 0.609 0.750 0.859 0.938 1.000 1.000 0.938 0.859 0.750 0.609 0.438 0.234 0.000)))
 	    (snd-display (format #f ";welch window: ~A" gen))))
       (let ((gen (make-fft-window parzen-window 16)))
-	(if (or (fneq (vct-ref gen 1) 0.125) (fneq (vct-ref gen 8) 1.0))
+	(if (not (vequal gen (vct 0.000 0.125 0.250 0.375 0.500 0.625 0.750 1.000 1.000 0.750 0.625 0.500 0.375 0.250 0.125 0.000)))
 	    (snd-display (format #f ";parzen window: ~A" gen))))
       (let ((gen (make-fft-window bartlett-window 16)))
-	(if (or (fneq (vct-ref gen 1) 0.125) (fneq (vct-ref gen 8) 1.0))
+	(if (not (vequal gen (vct 0.000 0.125 0.250 0.375 0.500 0.625 0.750 1.000 1.000 0.750 0.625 0.500 0.375 0.250 0.125 0.000)))
 	    (snd-display (format #f ";bartlett window: ~A" gen))))
       (let ((gen (make-fft-window blackman2-window 16)))
-	(if (or (fneq (vct-ref gen 1) 0.020) (fneq (vct-ref gen 8) 1.0))
+	(if (not (vequal gen (vct 0.005 0.020 0.071 0.177 0.344 0.558 0.775 1.000 1.000 0.775 0.558 0.344 0.177 0.071 0.020 0.005)))
 	    (snd-display (format #f ";blackman2 window: ~A" gen))))
       (let ((gen (make-fft-window blackman3-window 16)))
-	(if (or (fneq (vct-ref gen 1) 0.003) (fneq (vct-ref gen 8) 1.0))
+	(if (not (vequal gen (vct 0.000 0.003 0.022 0.083 0.217 0.435 0.696 1.000 1.000 0.696 0.435 0.217 0.083 0.022 0.003 0.000)))
 	    (snd-display (format #f ";blackman3 window: ~A" gen))))
       (let ((gen (make-fft-window blackman4-window 16)))
-	(if (or (fneq (vct-ref gen 1) 0.002) (fneq (vct-ref gen 8) 1.0))
+	(if (not (vequal gen (vct 0.002 0.002 0.003 0.017 0.084 0.263 0.562 1.000 1.000 0.562 0.263 0.084 0.017 0.003 0.002 0.002)))
 	    (snd-display (format #f ";blackman4 window: ~A" gen))))
       (let ((gen (make-fft-window exponential-window 16)))
-	(if (or (fneq (vct-ref gen 1) 0.087) (fneq (vct-ref gen 8) 0.944))
+	(if (not (vequal gen (vct 0.000 0.087 0.181 0.283 0.394 0.515 0.646 0.944 0.944 0.646 0.515 0.394 0.283 0.181 0.087 0.000)))
 	    (snd-display (format #f ";exponential window: ~A" gen))))
       (let ((gen (make-fft-window riemann-window 16)))
-	(if (or (fneq (vct-ref gen 1) 0.139) (fneq (vct-ref gen 8) 1.0))
+	(if (not (vequal gen (vct 0.000 0.139 0.300 0.471 0.637 0.784 0.900 1.000 1.000 0.900 0.784 0.637 0.471 0.300 0.139 0.000)))
 	    (snd-display (format #f ";riemann window: ~A" gen))))
       (let ((gen (make-fft-window kaiser-window 16 2.5)))
-	(if (or (fneq (vct-ref gen 0) 0.304) (fneq (vct-ref gen 8) 1.0))
+	(if (not (vequal gen (vct 0.304 0.426 0.550 0.670 0.779 0.871 0.941 1.000 1.000 0.941 0.871 0.779 0.670 0.550 0.426 0.304)))
 	    (snd-display (format #f ";kaiser window: ~A" gen))))
       (let ((gen (make-fft-window cauchy-window 16 2.5)))
-	(if (or (fneq (vct-ref gen 0) 0.138) (fneq (vct-ref gen 8) 1.0))
+	(if (not (vequal gen (vct 0.138 0.173 0.221 0.291 0.390 0.532 0.719 1.000 1.000 0.719 0.532 0.390 0.291 0.221 0.173 0.138)))
 	    (snd-display (format #f ";cauchy window: ~A" gen))))
       (let ((gen (make-fft-window poisson-window 16 2.5)))
-	(if (or (fneq (vct-ref gen 0) 0.082) (fneq (vct-ref gen 8) 1.0))
+	(if (not (vequal gen (vct 0.082 0.112 0.153 0.210 0.287 0.392 0.535 1.000 1.000 0.535 0.392 0.287 0.210 0.153 0.112 0.082)))
 	    (snd-display (format #f ";poisson window: ~A" gen))))
       (let ((gen (make-fft-window gaussian-window 16 1.0)))
-	(if (or (fneq (vct-ref gen 0) 0.607) (fneq (vct-ref gen 8) 1.0))
+	(if (not (vequal gen (vct 0.607 0.682 0.755 0.823 0.882 0.932 0.969 1.000 1.000 0.969 0.932 0.882 0.823 0.755 0.682 0.607)))
 	    (snd-display (format #f ";gaussian window: ~A" gen))))
       (let ((gen (make-fft-window tukey-window 16)))
-	(if (or (fneq (vct-ref gen 1) 0.038) (fneq (vct-ref gen 8) 1.0))
+	(if (not (vequal gen (vct 0.000 0.038 0.146 0.309 0.500 0.691 0.854 1.000 1.000 0.854 0.691 0.500 0.309 0.146 0.038 0.000)))
 	    (snd-display (format #f ";tukey window: ~A" gen))))
       (without-errors
        (let ((gen (make-fft-window dolph-chebyshev-window 16 1.0)))
-	 (if (or (fneq (vct-ref gen 1) 0.494) (fneq (vct-ref gen 8) 1.0))
+	 (if (not (vequal gen (vct 0.000 0.494 0.604 0.710 0.806 0.887 0.949 0.987 1.000 0.987 0.949 0.887 0.806 0.710 0.604 0.494)))
 	     (snd-display (format #f ";dolph-chebyshev window: ~A" gen)))))
       
       (let ((v0 (make-vct 10))
@@ -3579,13 +3594,15 @@
 					 #f))
 				     #f ; no change to synthesis
 				     ))
-	(set! reader (make-sample-reader 0))
-	(map-chan (lambda (val)
-		    (phase-vocoder pv (lambda (dir) 
-					(reader)))
-		    #f))
-	(undo 1)
-	(free-sample-reader reader)
+	(if (provided? 'snd-new-smob)
+	    (begin
+	      (set! reader (make-sample-reader 0))
+	      (map-chan (lambda (val)
+			  (phase-vocoder pv (lambda (dir) 
+					      (reader)))
+			  #f))
+	      (undo 1)
+	      (free-sample-reader reader)))
 	(set! pv (make-phase-vocoder #f
 				     512 4 (inexact->exact (* 128 2.0)) 1.0
 				     #f ;no change to analysis
@@ -3635,9 +3652,10 @@
 	      (let ((mx (next-mix-sample mr))
 		    (sx (sample (+ 100 i))))
 		(if (fneq mx sx) (snd-display (format #f ";next-mix-sample: ~A ~A?" mx sx)))))
-	    (let ((mx (mr))
-		  (sx (sample 199)))
-	      (if (fneq mx sx) (snd-display (format #f ";mix-sample 100: ~A ~A?" mx sx))))
+	    (if (provided? 'snd-new-smob)
+		(let ((mx (mr))
+		      (sx (sample 199)))
+		  (if (fneq mx sx) (snd-display (format #f ";mix-sample 100: ~A ~A?" mx sx)))))
 	    (free-mix-sample-reader mr)
 	    (if (not (= pos 100)) (snd-display (format #f ";mix-position: ~A?" pos)))
 	    (if (not (= len 41623)) (snd-display (format #f ";mix-length: ~A?" len)))
@@ -3703,15 +3721,16 @@
 		(snd-display (format #f ";mix edits: ~A?" eds)))
 	    (if (not (= (edit-position (list mix-id)) (car eds)))
 		(snd-display (format #f ";mix edit-position: ~A ~A?" (edit-position (list mix-id)) eds))))
-	  (let ((samps1 (samples->vct 0 50828 (list mix-id) 0))
-		(vr (make-sample-reader 0 (list mix-id) 0 1)))
-	    (if (not (sample-reader? vr)) (snd-display (format #f ";(mix) ~A not sample-reader?" vr)))
-	    (do ((i 0 (1+ i)))
-		((= i 50828))
-	      (if (not (= (vr) (samps1 i)))
-		  (snd-display (format #f ";(mix) readers disagree at ~D" i))))
-	    (if (rs .5) (gc))
-	    (free-sample-reader vr))
+	  (if (provided? 'snd-new-smob)
+	      (let ((samps1 (samples->vct 0 50828 (list mix-id) 0))
+		    (vr (make-sample-reader 0 (list mix-id) 0 1)))
+		(if (not (sample-reader? vr)) (snd-display (format #f ";(mix) ~A not sample-reader?" vr)))
+		(do ((i 0 (1+ i)))
+		    ((= i 50828))
+		  (if (not (= (vr) (samps1 i)))
+		      (snd-display (format #f ";(mix) readers disagree at ~D" i))))
+		(if (rs .5) (gc))
+		(free-sample-reader vr)))
 	  (insert-sample 100 .5 (list mix-id)) 
 	  (if (or (fneq (sample 100 (list mix-id)) .5)
 		  (not (= (frames (list mix-id)) 50829)))
@@ -4346,37 +4365,37 @@
 
   (defmacro carg0 (hook)
     `(let ((str (with-output-to-string (lambda () (display (hook->list ,hook))))))
-       (if (not (string=? str "(#<procedure arg0 () 32>)"))
+       (if (not (string=? str "(#<procedure arg0 (() 32)>)"))
 	   (snd-display (format #f ";~A: ~A?" ',hook str)))))
 
   (defmacro carg1 (hook)
     `(let ((str (with-output-to-string (lambda () (display (hook->list ,hook))))))
-       (if (not (string=? str "(#<procedure arg1 (n) (+ n 32)>)"))
+       (if (not (string=? str "(#<procedure arg1 ((n) (+ n 32))>)"))
 	   (snd-display (format #f ";~A: ~A?" ',hook str)))))
 
   (defmacro carg2 (hook)
     `(let ((str (with-output-to-string (lambda () (display (hook->list ,hook))))))
-       (if (not (string=? str "(#<procedure arg2 (n m) (+ n m 32)>)"))
+       (if (not (string=? str "(#<procedure arg2 ((n m) (+ n m 32))>)"))
 	   (snd-display (format #f ";~A: ~A?" ',hook str)))))
   
   (defmacro carg3 (hook)
     `(let ((str (with-output-to-string (lambda () (display (hook->list ,hook))))))
-       (if (not (string=? str "(#<procedure arg3 (a b c) (+ a b c 32)>)"))
+       (if (not (string=? str "(#<procedure arg3 ((a b c) (+ a b c 32))>)"))
 	   (snd-display (format #f ";~A: ~A?" ',hook str)))))
 
   (defmacro carg4 (hook)
     `(let ((str (with-output-to-string (lambda () (display (hook->list ,hook))))))
-       (if (not (string=? str "(#<procedure arg4 (a b c d) (+ a b c d 32)>)"))
+       (if (not (string=? str "(#<procedure arg4 ((a b c d) (+ a b c d 32))>)"))
 	   (snd-display (format #f ";~A: ~A?" ',hook str)))))
   
   (defmacro carg5 (hook)
     `(let ((str (with-output-to-string (lambda () (display (hook->list ,hook))))))
-       (if (not (string=? str "(#<procedure arg5 (a b c d e) (list 0 0 1 1)>)"))
+       (if (not (string=? str "(#<procedure arg5 ((a b c d e) (list 0 0 1 1))>)"))
 	   (snd-display (format #f ";~A: ~A?" ',hook str)))))
   
   (defmacro carg6 (hook)
     `(let ((str (with-output-to-string (lambda () (display (hook->list ,hook))))))
-       (if (not (string=? str "(#<procedure arg6 (a b c d e f) (+ a b c d e f 32)>)"))
+       (if (not (string=? str "(#<procedure arg6 ((a b c d e f) (+ a b c d e f 32))>)"))
 	   (snd-display (format #f ";~A: ~A?" ',hook str)))))
 
 (define (test-hooks)
@@ -4553,18 +4572,18 @@
 	(if (not (= (cursor ind 0) 4423))
 	    (snd-display (format #f ";search-procedure C-s C-s cursor: ~D?" (cursor ind 0))))
 	(let ((str (with-output-to-string (lambda () (display (search-procedure ind))))))
-	  (if (not (string=? str "#<procedure (n) (> n 0.1)>"))
+	  (if (not (string=? str "#<procedure #f ((n) (> n 0.1))>"))
 	      (snd-display (format #f ";search-procedure: ~A?" str))))
 	(reset-hook! (edit-hook ind 0))
 	(add-hook! (edit-hook ind 0) (lambda () (+ snd chn)))
 	(let ((str (with-output-to-string (lambda () (display (hook->list (edit-hook ind 0)))))))
-	  (if (not (string=? str "(#<procedure () (+ snd chn)>)"))
+	  (if (not (string=? str "(#<procedure #f (() (+ snd chn))>)"))
 	      (snd-display (format #f ";edit-hook: ~A?" str))))
 	(reset-hook! (edit-hook ind 0))
 	(reset-hook! (undo-hook ind 0))
 	(add-hook! (undo-hook ind 0) (lambda () (+ snd chn)))
 	(let ((str (with-output-to-string (lambda () (display (hook->list (undo-hook ind 0)))))))
-	  (if (not (string=? str "(#<procedure () (+ snd chn)>)"))
+	  (if (not (string=? str "(#<procedure #f (() (+ snd chn))>)"))
 	      (snd-display (format #f ";undo-hook: ~A?" str))))
 	(reset-hook! (undo-hook ind 0))
 	(close-sound ind)
@@ -5685,7 +5704,7 @@
 	       (new-reader (make-sample-reader beg ind 0 1 pos)))
 	  (do ((i 0 (1+ i)))
 	      ((= i len))
-	    (let* ((ov (* scaler (old-reader)))
+	    (let* ((ov (* scaler (if (provided? 'snd-new-smob) (old-reader) (next-sample old-reader))))
 		   (nv (next-sample new-reader))
 		   (val (abs (- ov nv))))
 	      (set! diff (+ diff val))))
@@ -6462,7 +6481,7 @@
 	       forward-graph forward-mark forward-mix forward-sample frames free-mix-sample-reader free-sample-reader free-track-sample-reader graph
 	       graph-color graph-cursor graph-data graph->ps graph-style graphing graphs-horizontal header-type help-dialog hide-listener help-text-font
 	       highlight-color id-region in insert-region insert-sample insert-samples insert-samples-with-origin insert-selection insert-silence
-	       insert-sound just-sounds key key-binding left-sample line-size listener-color listener-font listener-prompt listener-text-color
+	       insert-sound just-sounds key key-binding left-sample line-size listener-color listener-font listener-prompt listener-selection listener-text-color
 	       load-colormap load-font loop-samples main-widgets make-color make-graph-data make-mix-sample-reader make-player make-region
 	       make-region-sample-reader make-sample-reader make-track-sample-reader map-across-all-chans map-across-chans map-across-sound-chans
 	       map-chan map-chans map-sound-chans map-all-chans mark-color mark-name mark-sample mark-sync mark-sync-max mark->sound marks mark?
@@ -7411,11 +7430,12 @@
 	    ))
       ))
 
+(set! (window-y) 10)
+(set! (basic-color) (make-color 0.96 0.96 0.86))
+(dismiss-all-dialogs)
+
 
 ;;; ---------------- test 21: transforms ----------------
-
-;;; TODO: test data windows also
-;;; TODO: find actual test cases
 
 (define (bes-j0 x)				;returns J0(x) for any real x
   (if (< (abs x) 8.0)			;direct rational function fit
@@ -7460,16 +7480,6 @@
 	  (begin
 	    (set! peak (vct-ref data i))
 	    (set! loc i))))))
-
-(define (vequal v0 v1)
-  (define (dequal ctr len)
-    (if (= ctr len)
-	#t
-	(and (< (abs (- (vct-ref v0 ctr) (vct-ref v1 ctr))) .001)
-	     (dequal (1+ ctr) len))))
-  (let ((len (vct-length v0)))
-    (and (= len (vct-length v1))
-	 (dequal 0 len))))
 
 (define (chebyshev-polynomial a x kind lim)	
   ;; evaluate the sum of the Chebyshev polynomials (coeffs in a) at x
@@ -7573,9 +7583,6 @@
 	((= i n))
       (vct-set! data i (vct-ref data1 i)))
     data))
-
-;;; --------------------------------
-;;; coefficients
 
 (define daub4 (vct 0.4829629131445341 0.8365163037378079 0.2241438680420134 -0.1294095225512604))
 (define daub6 (vct 0.332670552950 0.806891509311 0.459877502118 -0.135011020010 -0.085441273882 0.035226291886))
@@ -7953,7 +7960,7 @@
        (list 16 64))
 
 
-      ;; -------- hadamard
+      ;; -------- hadamard (assuming blindly here that it should be its own inverse)
 
       (set! d0 (make-vct 8))
       (vct-set! d0 2 1.0)
@@ -7978,6 +7985,7 @@
       ))
 
 ;;; -------------------------------- clean up and quit -------------------------------- 
+
 (if include-clm 
     (begin
       (set! (save-dir) "/home/bil/snd-4")
@@ -8000,13 +8008,14 @@
 (set! (listener-prompt) original-prompt)
 (update-usage-stats)
 (snd-display (format #f ";all done!~%~A" original-prompt))
-(snd-display (format #f "timings:~%  ~A: total~%  GC: ~A~%~{    ~A~%~})~%" 
-		     (/ (- (get-internal-real-time) overall-start-time) 100) 
-		     (* (cdar (gc-stats)) .001)
-		     (let ((lst (gc-stats)))
-		       (list (list-ref lst 1) 
-			     (list-ref lst 5) 
-			     (list-ref lst 9)))))
+(if (provided? 'snd-new-smob)
+    (snd-display (format #f "timings:~%  ~A: total~%  GC: ~A~%~{    ~A~%~})~%" 
+			 (/ (- (get-internal-real-time) overall-start-time) 100) 
+			 (* (cdar (gc-stats)) .001)
+			 (let ((lst (gc-stats)))
+			   (list (list-ref lst 1) 
+				 (list-ref lst 5) 
+				 (list-ref lst 9))))))
 (if (not (null? times))
     (for-each (lambda (n)
 		(snd-display (format #f "  ~A: ~A~%" (cadr n) (car n))))

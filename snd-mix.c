@@ -951,6 +951,7 @@ static mix_info *file_mix_samples(int beg, int num, char *tempfile, chan_info *c
       return(NULL);
     }
   csf = init_sample_read(beg, cp, READ_FORWARD);
+  if (csf == NULL) return(NULL);
   ifd = snd_open_read(ss, tempfile);
   mus_file_open_descriptors(ifd, tempfile,
 			   ihdr->format,
@@ -1206,6 +1207,7 @@ static void remix_file(mix_info *md, const char *origin)
   sub = init_mix_read(md, 1);
   if (!sub) return;
   cur = init_sample_read(beg, cp, READ_FORWARD);
+  if (cur == NULL) return;
 
   if (use_temp_file)
     {
@@ -1658,6 +1660,7 @@ static void make_temporary_graph(chan_info *cp, mix_info *md, console_state *cs)
       (samps < POINT_BUFFER_SIZE))
     {
       sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
+      if (sf == NULL) return;
       add = init_mix_read(md, 0);
       if (!add) return;
       sub = init_mix_read(md, 1);
@@ -1699,6 +1702,7 @@ static void make_temporary_graph(chan_info *cp, mix_info *md, console_state *cs)
       else
 	{
 	  sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
+	  if (sf == NULL) return;
 	  add = init_mix_read(md, 0);
 	  if (!add) return;
 	  sub = init_mix_read(md, 1);

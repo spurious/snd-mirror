@@ -60,6 +60,10 @@ static repv snd_rep_main(repv arg)
   #include <sys/fpu.h>
 #endif
 
+#if HAVE_GSL
+  #include <gsl/gsl_ieee_utils.h>
+#endif
+
 #if SND_AS_WIDGET
   snd_state *snd_main(int argc, char **argv)
 #else
@@ -70,7 +74,7 @@ static repv snd_rep_main(repv arg)
   #endif
 #endif
 {
-  int i;
+  int i, need_ieee_setup = 1;
 #if HAVE_LONG_LONGS
   FILE *md;
 #endif
@@ -79,18 +83,21 @@ static repv snd_rep_main(repv arg)
   union fpc_csr f; f.fc_word = get_fpc_csr(); f.fc_struct.flush = 1; set_fpc_csr(f.fc_word);
 #endif
 
+  /* if HAVE_GSL and the environment variable GSL_IEEE_MODE exists, use it */
+#if HAVE_GSL
+  /* GSL_IEEE_MODE=double-precision,mask-underflow,mask-denormalized */
+  if (getenv("GSL_IEEE_MODE")) need_ieee_setup = 0;
+  gsl_ieee_env_setup();
+#endif
 #if HAVE_FPU_CONTROL_H
   #if __GLIBC_MINOR__ < 1
     /* in linux there's <fpu_control.h> with __setfpucw which Clisp calls as __setfpucw(_FPU_IEEE); */
     /* this appears to be useful in getting rid of idiotic NaN's */
-    __setfpucw(_FPU_IEEE);
+  if (need_ieee_setup) {__setfpucw(_FPU_IEEE);}
   #else
     #ifndef __alpha__
-      int __fpu_ieee = _FPU_IEEE;
-      _FPU_SETCW(__fpu_ieee);
+      {int __fpu_ieee = _FPU_IEEE; if (need_ieee_setup) {_FPU_SETCW(__fpu_ieee);}}
       /* this bugfix thanks to Paul Barton-Davis */
-    #else
-      int __fpu_ieee = 0;
     #endif
   #endif
 #endif

@@ -393,7 +393,7 @@ static void drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data
       if (x < x0) x = x0;
       if (x > x1) x = x1;
       if (env_pos == 0) x = active_env->data[0];
-      if (env_pos == (active_env->pts-1)) x = active_env->data[(active_env->pts - 1) * 2];
+      if (env_pos == (active_env->pts - 1)) x = active_env->data[(active_env->pts - 1) * 2];
       y = ungrf_y(ap, evy);
       if ((enved_clipping(ss)) || (enved_dBing(ss)))
 	{

@@ -302,7 +302,7 @@ void revert_file_from_menu(snd_state *ss)
 
 static SCM exit_hook;
 
-int dont_exit(snd_state *ss)
+int dont_exit(void)
 {
   SCM res = SCM_BOOL_F;
   if (HOOKED(exit_hook))
@@ -314,7 +314,7 @@ int dont_exit(snd_state *ss)
   
 void exit_from_menu(snd_state *ss)
 {
-  if (dont_exit(ss)) return;
+  if (dont_exit()) return;
   snd_exit_cleanly(ss);
   snd_exit(1);
 }

@@ -1379,6 +1379,7 @@ static void make_mark_graph(chan_info *cp, snd_info *sp, int initial_sample, int
   if ((samples_per_pixel < 5.0) && (samps < POINT_BUFFER_SIZE))
     {
       sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
+      if (sf == NULL) return;
       incr = (double)1.0 / cur_srate;
 
       if (current_sample < initial_sample)
@@ -1406,6 +1407,7 @@ static void make_mark_graph(chan_info *cp, snd_info *sp, int initial_sample, int
   else
     {
       sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
+      if (sf == NULL) return;
       j = 0;      /* graph point counter */
       x = ap->x0;
       xi = grf_x(x, ap);
@@ -1537,8 +1539,8 @@ static SCM iread_mark(SCM n, int fld, int pos_n, char *caller)
   int pos;
   chan_info *ncp[1];
   mark *m;
-  pos = TO_C_INT_OR_ELSE(pos_n, -1);
-  m = find_mark_id(ncp, TO_C_INT_OR_ELSE(n, 0), pos);
+  pos = TO_C_INT_OR_ELSE_WITH_ORIGIN(pos_n, -1, caller);
+  m = find_mark_id(ncp, TO_C_INT_OR_ELSE_WITH_ORIGIN(n, 0, caller), pos);
   if (m == NULL) 
     snd_no_such_mark_error(caller, n);
   switch (fld)
@@ -1566,20 +1568,20 @@ static SCM iwrite_mark(SCM mark_n, SCM val, int fld, char *caller)
 {
   chan_info *cp[1];
   mark *m;
-  m = find_mark_id(cp, TO_C_INT_OR_ELSE(mark_n, 0), -1);
+  m = find_mark_id(cp, TO_C_INT_OR_ELSE_WITH_ORIGIN(mark_n, 0, caller), -1);
   if (m == NULL) 
     snd_no_such_mark_error(caller, mark_n);
   switch (fld)
     {
     case MARK_SAMPLE: 
       m->samp = iclamp(0, 
-		       TO_C_INT_OR_ELSE(val, 0),
+		       TO_C_INT_OR_ELSE_WITH_ORIGIN(val, 0, caller),
 		       current_ed_samples(cp[0]));
       sort_marks(cp[0]); /* update and re-sort current mark list */
       update_graph(cp[0], NULL);
       break;
     case MARK_SYNC: 
-      set_mark_sync(m, TO_C_INT_OR_ELSE(val, 0));
+      set_mark_sync(m, TO_C_INT_OR_ELSE_WITH_ORIGIN(val, 0, caller));
       break;
     case MARK_NAME:
       if (m->name) FREE(m->name);

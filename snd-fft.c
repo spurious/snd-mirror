@@ -3,6 +3,8 @@
 /* handling of "beta" changed drastically 28-June-98 
  * it is now a number between 0 and 1 from ss point of view,
  * and is scaled by the window max before being applied 
+ *
+ * returned to old wavelet code 18-Apr-01, and finally wrote the snd-test.scm tests.
  */
 
 #define NUM_CACHED_FFT_WINDOWS 8
@@ -145,7 +147,7 @@ static void hankel_transform(int size, Float *input, Float *output)
   gsl_dht_transform *t;
   double *in1, *out1;
   int i;
-  t = gsl_dht_transform_new(size / 2, 0.0, (double)(size / 2));
+  t = gsl_dht_transform_new(size / 2, 0.0, (double)(size / 2));  /* TODO: bring out Jn (0.0 here?) */
   if (sizeof(Float) == sizeof(double))
     gsl_dht_transform_apply(t, (double *)input, (double *)output); /* the casts exist only to squelch dumb compiler complaints */
   else
@@ -262,23 +264,7 @@ static void abel (Float *f, Float *g)
     }
   g[0] *= 2.0;
 }
-
-/*
-;;; test cases:
-
-(with-sound (:output "j") ; sum of bessel funcs
-  (loop for i from 0 below 1024 and r from 0.0 by (/ 1.0 1024) do 
-    (outa i (* .5 (+ (bes-jn 0 (* 500 pi r)) 
-                     (bes-jn 0 (* 150 pi r)))))))
-
-(with-sound (:output "jinc") ; jinc
-  (loop for i from 0 below 1024 and r from 0.0 by (/ 1.0 1024) do
-    (if (= r 0.0)
-	(outa i .999)
-      (outa i (/ (bes-j1 (* 40 pi r)) (* r 20 pi))))))
-*/
 #endif
-
 
 
 /* -------------------------------- WAVELET TRANSFORM -------------------------------- */
@@ -295,7 +281,7 @@ static Float *data1 = NULL;
 static void wavelet_transform(Float *data, int num, Float *cc, int cc_size)
 {
   Float sig = -1.0;
-  Float *cr;
+  Float *cr = NULL;
   int i, j, n, n1, nmod, nh, joff, ii, ni, k, jf;
   cr = (Float *)CALLOC(cc_size, sizeof(Float));
   for (i = 0, j = cc_size - 1; i < cc_size; i++, j--)
@@ -329,6 +315,7 @@ static void wavelet_transform(Float *data, int num, Float *cc, int cc_size)
       for (i = 0; i < n; i++)
 	data[i] = data1[i];
     }
+  if (cr) FREE(cr);
 }
 
 static Float daub4[4] = {0.4829629131445341, 0.8365163037378079, 0.2241438680420134, -0.1294095225512604};
@@ -389,8 +376,6 @@ static Float *wavelet_data[NUM_WAVELETS] =
    Battle_Lemarie, Burt_Adelson, Beylkin, coif2, coif4, coif6,
    sym2, sym3, sym4, sym5, sym6};
 
-
-/* tested with pulse train and oboe.snd */
 
 
 /* -------------------------------- HAAR TRANSFORM -------------------------------- */
@@ -511,13 +496,6 @@ static void chebyshev_transform(Float *data, int n)
   if (n > MAX_PN_SIZE) FREE(Pn);
 }
 
-/* 
-;;; test case (bessel.lisp):
-
-   (with-sound (:output "wave") 
-     (let ((a (make-array 8 :initial-contents '(0 0 0 .25 0 0 0 0.5))))
-       (loop for i from 0 below 256 do (outa i (* .5 (chebyshev-polynomial a (- (/ i 128) 1.0)))))))
-*/
 
 
 /* -------------------------------- WALSH TRANSFORM -------------------------------- */
@@ -1352,6 +1330,7 @@ static int apply_fft_window(fft_state *fs)
 	ind0 = (cp->axis)->losamp + fs->beg;
     }
   sf = init_sample_read(ind0, cp, READ_FORWARD);
+  if (sf == NULL) return(-1); /* error exit indication below */
   switch (cp->transform_type)
     {
     case FOURIER:

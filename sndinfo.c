@@ -79,17 +79,17 @@ int main(int argc, char *argv[])
       length = (float)samples / (float)(chans * srate);
       loops = mus_sound_loop_info(argv[1]);
       type = mus_sound_header_type(argv[1]);
-      header_name = mus_header_type_name(type);
+      header_name = (char *)mus_header_type_name(type);
       format = mus_sound_data_format(argv[1]);
       if (mus_sound_max_amp_exists(argv[1]))
 	ampstr = display_max_amps(argv[1], chans);
       if (format != MUS_UNSUPPORTED)
-	format_info = mus_data_format_name(format);
+	format_info = (char *)mus_data_format_name(format);
       else
 	{
 	  format_info = (char *)calloc(64, sizeof(char));
 	  format = mus_sound_original_format(argv[1]);
-	  format_name = mus_header_original_format_name(format, type);
+	  format_name = (char *)mus_header_original_format_name(format, type);
 	  if (format_name)
 	    sprintf(format_info, "%d (%s)", format, format_name);
 	  else sprintf(format_info, "%d", format);

@@ -257,6 +257,7 @@ int update_graph(chan_info *cp, void *ptr)
   snd_info *sp;
   axis_info *ap;
   if ((updating) || 
+      (cp->active == 0) ||
       (cp->cgx == NULL) || 
       (cp->squelch_update) || 
       (cp->sounds == NULL) || 
@@ -987,6 +988,7 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
        *   mouse uses grf_x so in this case we have to also (to make the cursor hit the dots etc) 
        */
       sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
+      if (sf == NULL) return(0);
       incr = (double)1.0 / cur_srate;
       grfpts = ap->hisamp - ap->losamp + 1;
       for (j = 0, x = ((double)(ap->losamp) / cur_srate); j < grfpts; j++, x += incr)
@@ -1026,6 +1028,7 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 		}
 	    }
 	  sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
+	  if (sf == NULL) return(0);
 	  j = 0;      /* graph point counter */
 	  x = ap->x0;
 	  xi = local_grf_x(x, ap);
@@ -1119,8 +1122,9 @@ SCM make_graph_data(chan_info *cp, int edit_pos, int losamp, int hisamp)
        (samps < POINT_BUFFER_SIZE)))
     {
       data_size = samps;
-      data = (Float *)MALLOC(data_size * sizeof(Float));
       sf = init_sample_read_any(losamp, cp, READ_FORWARD, edit_pos);
+      if (sf == NULL) return(SCM_BOOL_F); /* should this throw an error? (CHANNEL_BEING_DEALLOCATED) */
+      data = (Float *)MALLOC(data_size * sizeof(Float));
       for (i = 0; i < data_size; i++)
 	data[i] = next_sample_to_float(sf);
     }
@@ -1169,9 +1173,10 @@ SCM make_graph_data(chan_info *cp, int edit_pos, int losamp, int hisamp)
       else
 	{
 	  data_size = pixels + 1;
+	  sf = init_sample_read_any(losamp, cp, READ_FORWARD, edit_pos);
+	  if (sf == NULL) return(SCM_BOOL_F);
 	  data = (Float *)CALLOC(data_size, sizeof(Float));
 	  data1 = (Float *)CALLOC(data_size, sizeof(Float));
-	  sf = init_sample_read_any(losamp, cp, READ_FORWARD, edit_pos);
 	  j = 0;      /* graph point counter */
 	  ymin = 100.0;
 	  ymax = -100.0;
@@ -2020,6 +2025,7 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
   ap = cp->axis;
   if (sp) ap->losamp = (int)(ap->x0 * SND_SRATE(sp));
   sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
+  if (sf == NULL) return;
   allocate_grf_points();
   if (cp->printing) ps_allocate_grf_points();
   width = (ap->x_axis_x1 - ap->x_axis_x0);
@@ -3629,7 +3635,7 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
   switch (fld)
     {
     case CP_EDIT_CTR:
-      val = TO_C_INT_OR_ELSE(on, 0);
+      val = TO_C_INT_OR_ELSE_WITH_ORIGIN(on, 0, caller);
       if (cp->edit_ctr < val)
 	redo_edit(cp, val - cp->edit_ctr);
       else undo_edit(cp, cp->edit_ctr - val);
@@ -3645,7 +3651,7 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
       break;
     case CP_CURSOR:
       cp->cursor_on = 1; 
-      handle_cursor(cp, cursor_moveto(cp, val = TO_C_INT_OR_ELSE(on, 1)));
+      handle_cursor(cp, cursor_moveto(cp, val = TO_C_INT_OR_ELSE_WITH_ORIGIN(on, 1, caller)));
       break;
     case CP_LISP_GRAPHING:
       cp->lisp_graphing = TO_C_BOOLEAN_OR_T(on); 
@@ -3653,18 +3659,18 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
       update_graph(cp, NULL);
       break;
     case CP_AP_LOSAMP:
-      set_x_axis_x0(cp, val = TO_C_INT_OR_ELSE(on, 0)); 
+      set_x_axis_x0(cp, val = TO_C_INT_OR_ELSE_WITH_ORIGIN(on, 0, caller)); 
       return(on);
       break;
     case CP_AP_HISAMP:
-      set_x_axis_x1(cp, val = TO_C_INT_OR_ELSE(on, 1)); 
+      set_x_axis_x1(cp, val = TO_C_INT_OR_ELSE_WITH_ORIGIN(on, 1, caller)); 
       return(on);
       break;
     case CP_SQUELCH_UPDATE:
       cp->squelch_update = TO_C_BOOLEAN_OR_T(on);
       break;
     case CP_CURSOR_SIZE:
-      cp->cursor_size = TO_C_INT_OR_ELSE(on, DEFAULT_CURSOR_SIZE);
+      cp->cursor_size = TO_C_INT_OR_ELSE_WITH_ORIGIN(on, DEFAULT_CURSOR_SIZE, caller);
       update_graph(cp, NULL); 
       return(TO_SCM_INT(cp->cursor_size));
       break;
@@ -3729,7 +3735,7 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
       return(TO_SCM_INT(cp->wavo_trace));
       break;
     case CP_LINE_SIZE:
-      cp->line_size = TO_C_INT_OR_ELSE(on, DEFAULT_LINE_SIZE);
+      cp->line_size = TO_C_INT_OR_ELSE_WITH_ORIGIN(on, DEFAULT_LINE_SIZE, caller);
       return(TO_SCM_INT(cp->line_size));
       break;
     case CP_MAX_FFT_PEAKS:
@@ -3812,7 +3818,7 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
       return(TO_SCM_BOOLEAN(cp->show_mix_waveforms));
       break;
     case CP_GRAPH_STYLE:
-      cp->graph_style = TO_C_INT_OR_ELSE(on, DEFAULT_GRAPH_STYLE);
+      cp->graph_style = TO_C_INT_OR_ELSE_WITH_ORIGIN(on, DEFAULT_GRAPH_STYLE, caller);
       update_graph(cp, NULL); 
       return(TO_SCM_INT(cp->graph_style));
       break;
@@ -3822,7 +3828,7 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
       return(TO_SCM_INT(cp->dot_size));
       break;
     case CP_SHOW_AXES:
-      cp->show_axes = TO_C_INT_OR_ELSE(on, DEFAULT_SHOW_AXES); 
+      cp->show_axes = TO_C_INT_OR_ELSE_WITH_ORIGIN(on, DEFAULT_SHOW_AXES, caller); 
       update_graph(cp, NULL); 
       return(TO_SCM_INT(cp->show_axes));
       break;
@@ -3832,13 +3838,13 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
       return(TO_SCM_BOOLEAN(cp->graphs_horizontal));
       break;
     case CP_SYNC:
-      cp->sync = TO_C_INT_OR_ELSE(on, 1); 
+      cp->sync = TO_C_INT_OR_ELSE_WITH_ORIGIN(on, 1, caller); 
       return(TO_SCM_INT(cp->sync)); 
       break;
     case CP_FRAMES:
       /* if less than current, delete, else zero pad */
       curlen = current_ed_samples(cp);
-      newlen = TO_C_INT_OR_ELSE(on, curlen);
+      newlen = TO_C_INT_OR_ELSE_WITH_ORIGIN(on, curlen, caller);
       if (curlen > newlen)
 	delete_samples(newlen-1, curlen-newlen, cp, "(set-frames)");
       else
@@ -5186,7 +5192,7 @@ WITH_REVERSED_CHANNEL_ARGS(g_set_x_bounds_reversed, g_set_x_bounds)
 static SCM g_set_y_bounds(SCM bounds, SCM snd_n, SCM chn_n)
 {
   chan_info *cp;
-  Float low, hi, len;
+  Float low, hi, len = 0;
   SCM y0 = SCM_UNDEFINED, y1 = SCM_UNDEFINED;
   SND_ASSERT_CHAN("set-" S_y_bounds, snd_n, chn_n, 2);
   SCM_ASSERT(LIST_P_WITH_LENGTH(bounds, len), bounds, SCM_ARG1, "set-" S_y_bounds);

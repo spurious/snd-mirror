@@ -320,6 +320,7 @@ int mus_sound_forget(const char *name)
 	  (strcmp(name, sound_table[i]->file_name) == 0))
 	{
 	  free_sound_file(sound_table[i]);
+	  sound_table[i] = NULL;
 	  return(MUS_NO_ERROR);
 	}
   return(MUS_ERROR);

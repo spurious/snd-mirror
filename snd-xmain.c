@@ -426,7 +426,9 @@ static BACKGROUND_TYPE startup_funcs(XtPointer context)
 	}
       break;
     case 3: 
+#ifndef CCRMA
       CreateOpenDialog(tm->shell, (XtPointer)ss);
+#endif
       break;
     case 4:
       if (ss->init_window_width > 0) set_widget_width(MAIN_SHELL(ss), ss->init_window_width);

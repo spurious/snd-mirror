@@ -29,7 +29,7 @@ void snd_warning(char *format, ...)
   if (ss)
     {
       sp = any_selected_sound(ss);
-      if (sp)
+      if ((sp) && (sp->active))
 	report_in_minibuffer(sp, snd_error_buffer);
       else fprintf(stderr, snd_error_buffer);
     }
@@ -89,7 +89,7 @@ void snd_error(char *format, ...)
 #endif
       add_to_error_history(ss, snd_error_buffer, TRUE);
       sp = selected_sound(ss);
-      if (sp)
+      if ((sp) && (sp->active))
 	report_in_minibuffer(sp, snd_error_buffer);
       else post_error_dialog(ss, snd_error_buffer);
 #ifdef SND_AS_WIDGET

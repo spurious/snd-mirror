@@ -1245,7 +1245,8 @@
     (black-throated-sparrow 112)
     (black-chinned-sparrow 115)
     (set! (squelch-update out-file 0) #f)
-    (various-gull-cries-from-end-of-colony-5 118)))
+    (various-gull-cries-from-end-of-colony-5 118))
+  (set! out-data #f))
 
 ;;; the examp.scm with-sound macro could be used here:
 ;;;   (with-sound () (orchard-oriole 0) ... )

@@ -673,7 +673,7 @@ static SCM g_exit(SCM val)
   #define H_exit "(" S_exit ") exits Snd"
   snd_state *ss;
   ss = get_global_state();
-  if (dont_exit(ss)) return(SCM_BOOL_T);
+  if (dont_exit()) return(SCM_BOOL_T);
   snd_exit_cleanly(ss); 
   snd_exit(TO_C_INT_OR_ELSE(val,1)); 
   return(SCM_BOOL_F);

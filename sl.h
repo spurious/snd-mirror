@@ -108,6 +108,7 @@
 #define TO_C_DOUBLE_WITH_ORIGIN(a, b) rep_get_float(a)
 #define TO_C_INT(Arg) rep_INT(Arg)
 #define TO_C_INT_OR_ELSE(a, b) (INTEGER_P(a) ? rep_INT(a) : b)
+#define TO_C_INT_OR_ELSE_WITH_ORIGIN(a, b, c) (INTEGER_P(a) ? rep_INT(a) : b)
 #define TO_C_STRING(Str) ((char *)(rep_STR(Str)))
 #define TO_SCM_DOUBLE(a) rep_make_float(a, rep_FALSE)
 #define TO_SCM_INT(Arg) rep_MAKE_INT(Arg)

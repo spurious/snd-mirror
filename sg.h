@@ -62,6 +62,7 @@
 #define TO_C_DOUBLE_WITH_ORIGIN(a, b) scm_num2dbl(a, b)
 #define TO_C_INT(a) ((int)gh_scm2int(a))
 #define TO_C_INT_OR_ELSE(a, b) to_c_int_or_else(a, b, __FUNCTION__)
+#define TO_C_INT_OR_ELSE_WITH_ORIGIN(a, b, c) to_c_int_or_else(a, b, c)
 
 #ifndef SCM_STRING_CHARS
   #define TO_C_STRING(STR) SCM_CHARS(STR)
@@ -218,10 +219,14 @@ static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
 #else
   #define MAKE_VECTOR(Num, Fill) scm_make_vector(TO_SCM_INT(Num), Fill)
 #endif
-#define CHAR_P(Arg) gh_char_p(Arg)
+#ifdef SCM_CHARP
+  #define CHAR_P(Arg) (SCM_CHARP(Arg))
+#else
+  #define CHAR_P(Arg) gh_char_p(Arg)
+#endif
 #define TO_C_CHAR(Arg) gh_scm2char(Arg)
 #define ARITY(Func) scm_i_procedure_arity(Func)
-#define KEYWORD_P(Obj) (NOT_FALSE_P(scm_keyword_p(Obj)))
+#define KEYWORD_P(Obj) (SCM_KEYWORDP(Obj))
 #define MAKE_KEYWORD(Arg) scm_c_make_keyword(Arg)
 
 
@@ -248,6 +253,10 @@ static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
   #define CALL2(Func, Arg1, Arg2, Caller) gh_call2(Func, Arg1, Arg2)
   #define CALL3(Func, Arg1, Arg2, Arg3, Caller) gh_call3(Func, Arg1, Arg2, Arg3)
   #define APPLY(Func, Args, Caller) gh_apply(Func, Args)
+#endif
+
+#ifndef USE_OPT_APPLY
+  #define USE_OPT_APPLY 1
 #endif
 
 #endif

@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 12
-#define SNDLIB_REVISION 16
-#define SNDLIB_DATE "18-Apr-01"
+#define SNDLIB_REVISION 18
+#define SNDLIB_DATE "23-Apr-01"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 /* gcc has various compile-time macros like #cpu, but we're hoping to run in Metroworks C, Watcom C, MSC, MPW, etc */
@@ -378,8 +378,8 @@ int mus_sound_set_data_format PROTO((const char *arg, int val));
 int mus_sound_set_data_location PROTO((const char *arg, int val));
 int mus_sound_set_samples     PROTO((const char *arg, int val));
 
-char *mus_header_type_name    PROTO((int type));
-char *mus_data_format_name    PROTO((int format));
+const char *mus_header_type_name PROTO((int type));
+const char *mus_data_format_name PROTO((int format));
 char *mus_sound_comment       PROTO((const char *name));
 int mus_data_format_to_bytes_per_sample PROTO((int format));
 float mus_sound_duration      PROTO((const char *arg));
@@ -430,7 +430,7 @@ void mus_audio_save           PROTO((void));
 void mus_audio_restore        PROTO((void));
 int mus_audio_initialize      PROTO((void));
 int mus_audio_systems         PROTO((void));
-char *mus_audio_system_name   PROTO((int system));
+char *mus_audio_system_name   PROTO((int sys));
 char *mus_audio_moniker       PROTO((void));
 
 #if HAVE_OSS
@@ -583,7 +583,7 @@ int mus_header_sf2_start            PROTO((int n));
 int mus_header_sf2_end              PROTO((int n));
 int mus_header_sf2_loop_start       PROTO((int n));
 int mus_header_sf2_loop_end         PROTO((int n));
-char *mus_header_original_format_name PROTO((int format, int type));
+const char *mus_header_original_format_name PROTO((int format, int type));
 
 void mus_header_set_aifc            PROTO((int val)); /* backwards compatibility, sort of */
 char *mus_header_riff_aux_comment   PROTO((const char *name, int *starts, int *ends));

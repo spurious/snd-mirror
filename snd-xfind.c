@@ -1,5 +1,8 @@
 #include "snd.h"
 
+/* TODO: find text widget should become active when the mouse is over it
+ */
+
 /* -------- edit find -------- */
 
 static Widget edit_find_dialog, edit_find_text, cancelB, edit_find_label;

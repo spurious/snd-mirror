@@ -194,7 +194,7 @@ typedef struct chan__info {
   int dot_size, normalize_fft, transform_type, show_mix_waveforms, spectro_hop, graphs_horizontal;
   void *mix_md;
   SCM edit_hook, undo_hook, cursor_proc;
-  int selection_visible, old_x0, old_x1, sync;
+  int selection_visible, old_x0, old_x1, sync, active;
 } chan_info;
 
 typedef struct snd__info {
@@ -250,6 +250,7 @@ typedef struct snd__info {
   int speed_style, speed_tones;
   Float reverb_decay, filter_env_xmax;
   void *minibuffer_history, *filter_history;
+  int active;
 } snd_info;
 
 #define SND_SRATE(sp) (((sp)->hdr)->srate)
@@ -481,7 +482,7 @@ void set_x_axis_style(snd_state *ss, int val);
 void set_channel_style(snd_state *ss, int val);
 
 void g_init_menu(SCM local_doc);
-int dont_exit(snd_state *ss);
+int dont_exit(void);
 
 
 /* -------- snd-main.c -------- */

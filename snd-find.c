@@ -9,7 +9,7 @@ static int prepare_global_search (chan_info *cp, void *g0)
   direction = g->direction;
   g->cps[g->n] = cp;
   g->fds[g->n] = init_sample_read((direction == READ_FORWARD) ? (cp->cursor+1) : (cp->cursor-1), cp, direction);
-  g->n++;
+  if (g->fds[g->n] != NULL) g->n++;
   return(0);
 }
 

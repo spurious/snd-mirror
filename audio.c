@@ -1911,8 +1911,6 @@ static int oss_mus_audio_initialize(void)
   return(MUS_NO_ERROR);
 }
 
-/* TODO: fix this to handle aux devices correctly */
-
 static int linux_audio_open(const char *pathname, int flags, mode_t mode, int system)
 {
   /* sometimes this is simply searching for a device (so failure is not a mus_error) */

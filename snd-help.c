@@ -266,6 +266,8 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+23-Apr:  snd 4.13.\n\
+19-Apr:  use GSL_IEEE_MODE if it exists.\n\
 17-Apr:  Haar transform.\n\
 16-Apr:  mus-out-format, listener-selection.\n\
 9-Apr:   noguile.h, sl.h (moving toward librep support).\n\
@@ -2413,7 +2415,7 @@ somehow gets out of sync with the actual data.\n\
 ");
 }
 
-
+#ifndef _MSC_VER
 static char CLM_help_string[] = 
 "  all-pass            (gen input pm)       all-pass filter\n\
   all-pass?           (gen)                #t if gen is all-pass filter\n\
@@ -2627,6 +2629,9 @@ static char CLM_help_string[] =
   waveshape           (gen index fm)       waveshaping generator\n\
   waveshape?          (gen)                #t if gen is waveshape generator\n\
 ";
+#else
+static char CLM_help_string[] = "";
+#endif
 
 static char *CLM_help(void) {return(CLM_help_string);}
 void clm_help(snd_state *ss) {snd_help_with_url(ss, STR_CLM, "grfsnd.html#sndwithclm", CLM_help());}

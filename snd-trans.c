@@ -1565,7 +1565,7 @@ static int read_g72x_adpcm(char *oldname, char *newname, char *hdr, int which_g)
 
 static int MUS_CANT_TRANSLATE = 0;
 
-static char *any_format_name(char *name)
+static const char *any_format_name(char *name)
 {
   int format;
   format = mus_sound_data_format(name);

@@ -304,7 +304,13 @@ Here's a more extended example:
   (lambda (widget) 
     (focus-widget widget)))
 </pre>
-
+<p>
+If you loaded Snd with GSL, and have set the GSL_IEEE_MODE environment variable,
+it will override Snd's default arithmetic mode settings.  GSL recommends the setting:
+</p>
+<pre>
+GSL_IEEE_MODE=double-precision,mask-underflow,mask-denormalized
+</pre>
 
 <br>
 <span class=box><h2><A NAME="snddynamic">Runtime modules and external programs</a></h2></span>

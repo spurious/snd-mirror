@@ -181,10 +181,10 @@
 #endif
 #include "snd-strings.h"
 
-#define SND_VERSION "19-Apr-01"
-#define SND_RPM_VERSION "4.12"
+#define SND_VERSION "23-Apr-01"
+#define SND_RPM_VERSION "4.13"
 #define SND_MAJOR_VERSION 4
-#define SND_MINOR_VERSION 12
+#define SND_MINOR_VERSION 13
 
 #endif
 

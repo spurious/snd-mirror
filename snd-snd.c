@@ -211,6 +211,7 @@ int tick_amp_env(chan_info *cp, env_state *es)
 	  if (es->sf == NULL) 
 	    es->sf = init_sample_read(ep->bin * ep->samps_per_bin, cp, READ_FORWARD);
 	  sfd = es->sf;
+	  if (sfd == NULL) return(FALSE);
 	  for (n = 0; n < lm; n++, sb++)
 	    {
 	      val = next_sample(sfd);
@@ -543,6 +544,7 @@ void amp_env_scale_selection_by(chan_info *cp, Float scl, int beg, int num)
 		  segend = cursamp + new_ep->samps_per_bin - end;
 		  if (segend < 0) segend = new_ep->samps_per_bin;
 		  sf = init_sample_read(cursamp, cp, READ_FORWARD);
+		  if (sf == NULL) return;
 		  ymin = MUS_SAMPLE_0;
 		  ymax = MUS_SAMPLE_0;
 		  for (n = 0; n < new_ep->samps_per_bin; n++)
@@ -1493,12 +1495,12 @@ static SCM sp_iwrite(SCM snd_n, SCM val, int fld, char *caller)
     {
     case SP_SYNC:  
       if (NUMBER_P(val))
-	syncb(sp, TO_C_INT_OR_ELSE(val, 1));
+	syncb(sp, TO_C_INT_OR_ELSE_WITH_ORIGIN(val, 1, caller));
       else syncb(sp, TO_C_BOOLEAN(val));
       break;
     case SP_UNITE:      
       if (NUMBER_P(val))    
-	combineb(sp, TO_C_INT_OR_ELSE(val, 1));
+	combineb(sp, TO_C_INT_OR_ELSE_WITH_ORIGIN(val, 1, caller));
       else combineb(sp, TO_C_BOOLEAN(val));
       break;
     case SP_READ_ONLY:

@@ -174,16 +174,17 @@ enum {C_frequency, C_initial_phase, C_wave, C_cosines, C_amplitude,
       C_edit, C_synthesize, C_analyze, C_interp, C_overlap, C_pitch
 };
 
-static char *keywords[NUM_KEYWORDS] = {SC_frequency, SC_initial_phase, SC_wave, SC_cosines, SC_amplitude,
-				       SC_r, SC_ratio, SC_size, SC_a0, SC_a1, SC_a2, SC_b1, SC_b2, SC_max_size,
-				       SC_input, SC_srate, SC_file, SC_channel, SC_start,
-				       SC_initial_contents, SC_initial_element, SC_scaler, SC_feedforward, SC_feedback,
-				       SC_radius, SC_gain, SC_partials, SC_fill_time, SC_a, SC_n,
-				       SC_order, SC_x_coeffs, SC_y_coeffs, SC_envelope, SC_base, SC_duration, SC_offset, SC_end,
-				       SC_direction, SC_degree, SC_distance, SC_reverb, SC_output, SC_fft_size,
-				       SC_expansion, SC_length, SC_hop, SC_ramp, SC_jitter,
-				       SC_type, SC_format, SC_comment, SC_channels, SC_filter, SC_revout, SC_width,
-				       SC_edit, SC_synthesize, SC_analyze, SC_interp, SC_overlap, SC_pitch
+static const char *keywords[NUM_KEYWORDS] = 
+  {SC_frequency, SC_initial_phase, SC_wave, SC_cosines, SC_amplitude,
+   SC_r, SC_ratio, SC_size, SC_a0, SC_a1, SC_a2, SC_b1, SC_b2, SC_max_size,
+   SC_input, SC_srate, SC_file, SC_channel, SC_start,
+   SC_initial_contents, SC_initial_element, SC_scaler, SC_feedforward, SC_feedback,
+   SC_radius, SC_gain, SC_partials, SC_fill_time, SC_a, SC_n,
+   SC_order, SC_x_coeffs, SC_y_coeffs, SC_envelope, SC_base, SC_duration, SC_offset, SC_end,
+   SC_direction, SC_degree, SC_distance, SC_reverb, SC_output, SC_fft_size,
+   SC_expansion, SC_length, SC_hop, SC_ramp, SC_jitter,
+   SC_type, SC_format, SC_comment, SC_channels, SC_filter, SC_revout, SC_width,
+   SC_edit, SC_synthesize, SC_analyze, SC_interp, SC_overlap, SC_pitch
 };
 static SCM all_keys[NUM_KEYWORDS];
 
@@ -191,7 +192,7 @@ static void init_keywords(void)
 {
   int i;
   for (i = 0; i < NUM_KEYWORDS; i++) 
-    all_keys[i] = MAKE_KEYWORD(keywords[i]);
+    all_keys[i] = MAKE_KEYWORD((char *)(keywords[i]));
 }
 
 static int decode_keywords(char *caller, int nkeys, SCM *keys, int nargs, SCM *args, int *orig)
@@ -255,7 +256,7 @@ static Float fkeyarg (SCM key, char *caller, int n, SCM val, Float def)
   if (!(KEYWORD_P(key)))
     {
       if (NUMBER_P(key))
-	return(TO_C_DOUBLE(key));
+	return(TO_C_DOUBLE_WITH_ORIGIN(key, caller));
       else scm_wrong_type_arg(caller, n, val);
     }
   return(def);
@@ -266,7 +267,7 @@ static int ikeyarg (SCM key, char *caller, int n, SCM val, int def)
   if (!(KEYWORD_P(key)))
     {
       if (NUMBER_P(key))
-	return(TO_C_INT_OR_ELSE(key, 0));
+	return(TO_C_INT_OR_ELSE_WITH_ORIGIN(key, 0, caller));
       else scm_wrong_type_arg(caller, n, val);
     }
   return(def);
@@ -277,7 +278,7 @@ static Float fkeyarg_or_error (SCM key, char *caller, int n, SCM val, Float def)
   if (!(KEYWORD_P(key)))
     {
       if (NUMBER_P(key))
-	return(TO_C_DOUBLE(key));
+	return(TO_C_DOUBLE_WITH_ORIGIN(key, caller));
       else return(MUS_MISC_ERROR);
     }
   return(def);
@@ -288,7 +289,7 @@ static int ikeyarg_or_error (SCM key, char *caller, int n, SCM val, int def)
   if (!(KEYWORD_P(key)))
     {
       if (NUMBER_P(key))
-	return(TO_C_INT_OR_ELSE(key, 0));
+	return(TO_C_INT_OR_ELSE_WITH_ORIGIN(key, 0, caller));
       else return(MUS_MISC_ERROR);
     }
   return(def);
@@ -477,7 +478,7 @@ static SCM g_fft_window_1(char *caller, int choice, SCM val1, SCM val2, SCM ulen
   v2 = TO_VCT(val2);
   if (NUMBER_P(ulen)) 
     {
-      len = TO_C_INT_OR_ELSE(ulen, 0); 
+      len = TO_C_INT_OR_ELSE_WITH_ORIGIN(ulen, 0, caller); 
       if (len > v1->length) len = v1->length;
     }
   else 
@@ -3048,7 +3049,10 @@ is basically the same as make-oscil"
         }
     }
   if (wsize <= 0)
-    mus_misc_error(S_make_waveshape, "size <= 0?", keys[2]);
+    {
+      if (partials_allocated) {FREE(partials); partials = NULL;}
+      mus_misc_error(S_make_waveshape, "size <= 0?", keys[2]);
+    }
   if (wave == NULL) 
     {
       if (partials == NULL) return(SCM_BOOL_F);

@@ -1,9 +1,4 @@
 #include "snd.h"
-
-/* TODO: be more restrictive about what counts as a boolean!
- * TODO: check rest of snd_error calls for homogenization
- */
-
 #include "vct.h"
 #include "clm2scm.h"
 #include "sndlib-strings.h"
@@ -428,14 +423,6 @@ static SCM eval_file_wrapper(void *data)
   return(res);
 }
 
-#ifndef USE_OPT_APPLY
-  #if HAVE_GUILE
-    #define USE_OPT_APPLY 1
-  #else
-    #define USE_OPT_APPLY 0
-  #endif
-#endif
-
 static SCM g_call0_1(void *arg)
 {
 #if USE_OPT_APPLY
@@ -446,7 +433,7 @@ static SCM g_call0_1(void *arg)
     case scm_tc7_subr_0:
       return(SCM_SUBRF(code)());
     case scm_tcs_closures:
-      return scm_eval_body(SCM_CDR(SCM_CODE(code)), SCM_ENV(code)); /* not sure about env here */
+      return(scm_eval_body(SCM_CDR(SCM_CODE(code)), SCM_ENV(code))); /* not sure about env here */
     default:
       return(scm_apply(code, SCM_EOL, SCM_EOL));
     }
@@ -472,16 +459,13 @@ static SCM g_call1_1(void *arg)
 #ifdef __cplusplus
       return(((SCM (*)(SCM a))SCM_SUBRF(code))(obj));
 #else
-      return SCM_SUBRF(code)(obj);
+      return(SCM_SUBRF(code)(obj));
 #endif
     case scm_tcs_closures:
-      /* moving this out of the find loop (for example), and using SCM_SETCDR to set the arg value
-       *   made no speed difference
-       */
       env = SCM_EXTEND_ENV(SCM_CAR(SCM_CODE(code)),
 			   SCM_LIST1(obj),
 			   SCM_ENV(code));
-      return scm_eval_body(SCM_CDR (SCM_CODE(code)), env);
+      return(scm_eval_body(SCM_CDR (SCM_CODE(code)), env));
     default:
       return(scm_apply(code, obj, scm_listofnull)); /* scm_listofnull, not SCM_EOL!  (the latter causes segfaults here) */
     }
@@ -528,13 +512,13 @@ static SCM g_call2_1(void *arg)
 #ifdef __cplusplus
       return(((SCM (*)(SCM a, SCM b))SCM_SUBRF(code))(arg1, arg2));
 #else
-      return SCM_SUBRF(code)(arg1, arg2);
+      return(SCM_SUBRF(code)(arg1, arg2));
 #endif
     case scm_tcs_closures:
       env = SCM_EXTEND_ENV(SCM_CAR(SCM_CODE(code)),
 			   SCM_LIST2(arg1, arg2),
 			   SCM_ENV(code));
-      return scm_eval_body(SCM_CDR (SCM_CODE(code)), env);
+      return(scm_eval_body(SCM_CDR (SCM_CODE(code)), env));
     default:
       return(scm_apply(code, arg1, CONS(arg2, scm_listofnull)));
     }
@@ -568,13 +552,13 @@ static SCM g_call3_1(void *arg)
 #ifdef __cplusplus
       return(((SCM (*)(SCM a, SCM b, SCM c))SCM_SUBRF(code))(arg1, arg2, arg3));
 #else
-      return SCM_SUBRF(code)(arg1, arg2, arg3);
+      return(SCM_SUBRF(code)(arg1, arg2, arg3));
 #endif
     case scm_tcs_closures:
       env = SCM_EXTEND_ENV(SCM_CAR(SCM_CODE(code)),
 			   SCM_LIST3(arg1, arg2, arg3),
 			   SCM_ENV(code));
-      return scm_eval_body(SCM_CDR (SCM_CODE(code)), env);
+      return(scm_eval_body(SCM_CDR (SCM_CODE(code)), env));
     default:
       return(scm_apply(code, arg1, CONS2(arg2, arg3, scm_listofnull)));
     }
@@ -830,7 +814,6 @@ static SCM g_snd_print(SCM msg)
       else str = gl_print(msg, S_snd_print);
     }
   check_for_event(state);
-  /* TODO: print-hook */
   snd_append_command(state, str);
   if (str) free(str);
   return(msg);
@@ -1802,9 +1785,11 @@ static void unset_temp_fd(int fd)
 }
 
 static mus_error_handler_t *old_mus_error;
+static file_info *open_hdr = NULL;
 
 static void mus_local_error(int type, char *msg)
 {
+  if (open_hdr) open_hdr = free_file_info(open_hdr);
   mus_error_set_handler(old_mus_error);           /* make sure subsequent errors are handled by the default handler */
   scm_throw(CANNOT_SAVE,
 	    SCM_LIST2(TO_SCM_STRING(S_save_sound_as),
@@ -1864,9 +1849,11 @@ subsequent " S_close_sound_file ". data can be written with " S_vct_sound_file
   hdr->type = type;
   if (comment)
     hdr->comment = copy_string(comment);
+  open_hdr = hdr;
   old_mus_error = mus_error_set_handler(mus_local_error);
   result = open_temp_file(name, chans, hdr, state);
   mus_error_set_handler(old_mus_error);
+  open_hdr = NULL;
   if (result == -1) 
     {
       free_file_info(hdr);
@@ -3527,6 +3514,9 @@ If more than one hook function, results are concatenated. If none, the current c
 #endif
 #if USE_NO_GUI
   scm_add_feature("snd-nogui");
+#endif
+#if HAVE_APPLICABLE_SMOB
+  scm_add_feature("snd-new-smob"); /* needed for backwards compatibility in the test suite */
 #endif
 
   scm_add_feature("snd");

@@ -72,7 +72,7 @@ void draw_points (axis_context *ax, XPoint *points, int num, int size)
   else
     {
       /* create squares or whatever centered on each point */
-      size2 = size/2;
+      size2 = size / 2;
       rs = (XArc *)CALLOC(num, sizeof(XArc));
       for (i = 0; i < num; i++)
 	{
@@ -116,13 +116,13 @@ static void fill_polygons (axis_context *ax, XPoint *points, int num, int y0)
   int i;
   for (i = 1; i < num; i++)
     {
-      polypts[0].x = points[i-1].x;
-      polypts[0].y = points[i-1].y;
+      polypts[0].x = points[i - 1].x;
+      polypts[0].y = points[i - 1].y;
       polypts[1].x = points[i].x;
       polypts[1].y = points[i].y;
       polypts[2].x = polypts[1].x;
       polypts[2].y = y0;
-      polypts[3].x = points[i-1].x;
+      polypts[3].x = points[i - 1].x;
       polypts[3].y = y0;
       XFillPolygon(ax->dp, ax->wn, ax->gc, polypts, 4, Convex, CoordModeOrigin);
     }
@@ -133,14 +133,14 @@ static void fill_two_sided_polygons(axis_context *ax, XPoint *points, XPoint *po
   int i;
   for (i = 1; i < num; i++)
     {
-      polypts[0].x = points[i-1].x;
-      polypts[0].y = points[i-1].y;
+      polypts[0].x = points[i - 1].x;
+      polypts[0].y = points[i - 1].y;
       polypts[1].x = points[i].x;
       polypts[1].y = points[i].y;
       polypts[2].x = points1[i].x;
       polypts[2].y = points1[i].y;
-      polypts[3].x = points1[i-1].x;
-      polypts[3].y = points1[i-1].y;
+      polypts[3].x = points1[i - 1].x;
+      polypts[3].y = points1[i - 1].y;
       XFillPolygon(ax->dp, ax->wn, ax->gc, polypts, 4, Convex, CoordModeOrigin);
     }
 }
@@ -203,8 +203,8 @@ void draw_both_grf_points(chan_info *cp, axis_context *ax, int j, int graph_styl
 	}
       else
 	{
-	  size8 = cp->dot_size/8;
-	  size4 = cp->dot_size/4;
+	  size8 = cp->dot_size / 8;
+	  size4 = cp->dot_size / 4;
 	  if (size4 < 1) size4 = 1;
 	  draw_points(ax, points, j, cp->dot_size);
 	  draw_points(ax, points1, j, cp->dot_size);
@@ -319,21 +319,21 @@ void erase_and_draw_grf_points(mix_context *ms, chan_info *cp, int nj)
   min = ((nj < previous_j) ? nj : previous_j);
   if (cp->graph_style == GRAPH_LINES)
     {
-      for (i = 0, j = 1; i < min-1; i++, j++)
+      for (i = 0, j = 1; i < min - 1; i++, j++)
 	{
 	  XDrawLine(dpy, wn, undraw_gc, ms->p0[i].x, ms->p0[i].y, ms->p0[j].x, ms->p0[j].y);
 	  XDrawLine(dpy, wn, draw_gc, points[i].x, points[i].y, points[j].x, points[j].y);
 	}
       if (nj > previous_j)
 	{
-	  for (i = min-1; i < nj-1; i++) 
+	  for (i = min - 1; i < nj - 1; i++) 
 	    XDrawLine(dpy, wn, draw_gc, points[i].x, points[i].y, points[i+1].x, points[i+1].y);
 	}
       else
 	{
 	  if (previous_j > nj)
 	    {
-	      for (i = min-1; i < previous_j-1; i++) 
+	      for (i = min - 1; i < previous_j - 1; i++) 
 		XDrawLine(dpy, wn, undraw_gc, ms->p0[i].x, ms->p0[i].y, ms->p0[i+1].x, ms->p0[i+1].y);
 	    }
 	}
@@ -384,7 +384,7 @@ void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int nj)
   min = ((nj < previous_j) ? nj : previous_j);
   if (cp->graph_style == GRAPH_LINES)
     {
-      for (i = 0, j = 1; i < min-1; i++, j++)
+      for (i = 0, j = 1; i < min - 1; i++, j++)
 	{
 	  XDrawLine(dpy, wn, undraw_gc, ms->p0[i].x, ms->p0[i].y, ms->p0[j].x, ms->p0[j].y);
 	  XDrawLine(dpy, wn, draw_gc, points[i].x, points[i].y, points[j].x, points[j].y);
@@ -393,19 +393,19 @@ void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int nj)
 	}
       if (nj > previous_j)
 	{
-	  for (i = min-1; i < nj-1; i++) 
+	  for (i = min - 1; i < nj - 1; i++) 
 	    {
 	      XDrawLine(dpy, wn, draw_gc, points[i].x, points[i].y, points[i+1].x, points[i+1].y);
-	      XDrawLine(dpy, wn, draw_gc, points1[i].x, points1[i].y, points1[i+1].x, points1[i+1].y);
+	      XDrawLine(dpy, wn, draw_gc, points1[i].x, points1[i].y, points1[i + 1].x, points1[i + 1].y);
 	    }
 	}
       else
 	if (previous_j > nj)
 	  {
-	    for (i = min-1; i < previous_j-1; i++) 
+	    for (i = min - 1; i < previous_j - 1; i++) 
 	      {
-		XDrawLine(dpy, wn, undraw_gc, ms->p0[i].x, ms->p0[i].y, ms->p0[i+1].x, ms->p0[i+1].y);
-		XDrawLine(dpy, wn, undraw_gc, ms->p1[i].x, ms->p1[i].y, ms->p1[i+1].x, ms->p1[i+1].y);
+		XDrawLine(dpy, wn, undraw_gc, ms->p0[i].x, ms->p0[i].y, ms->p0[i + 1].x, ms->p0[i + 1].y);
+		XDrawLine(dpy, wn, undraw_gc, ms->p1[i].x, ms->p1[i].y, ms->p1[i + 1].x, ms->p1[i + 1].y);
 	      }
 	  }
     }
@@ -506,7 +506,8 @@ void allocate_sono_rects(snd_state *ss, int size)
     {
       for (i = 0; i < GRAY_SCALES; i++)
 	{
-	  if ((sono_size > 0) && (sono_data[i])) FREE(sono_data[i]); 
+	  if ((sono_size > 0) && (sono_data[i])) 
+	    FREE(sono_data[i]); 
 	  sono_data[i] = NULL;
 	}
       for (i = 0; i < GRAY_SCALES; i++)

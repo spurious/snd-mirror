@@ -480,7 +480,7 @@ char *filename_completer(char *text)
 
   full_name = mus_expand_filename(text);
   len = snd_strlen(full_name);
-  for (i = len-1; i > 0; i--)
+  for (i = len - 1; i > 0; i--)
     if (full_name[i] == '/')
       break;
 
@@ -533,7 +533,7 @@ char *filename_completer(char *text)
     {
       /* attach matched portion to user's indication of dir */
       len = snd_strlen(text);
-      for (i = len-1; i >= 0; i--)
+      for (i = len - 1; i >= 0; i--)
 	if (text[i] == '/')
 	  break;
       if (i < 0) return(current_match);
@@ -604,7 +604,7 @@ static int find_indentation(char *str, int loc)
 {
   int line_beg = 0, open_paren = -1, parens, i;
   parens = 0;
-  for (i = loc-1; i >= 0; i--)
+  for (i = loc - 1; i >= 0; i--)
     {
       if (str[i] == ')') parens--;
       if (str[i] == '(') parens++;
@@ -631,7 +631,7 @@ char *complete_listener_text(char *old_text, int end, int *try_completion, char 
   int len, i, k, spaces, text_pos = 0, cr_pos = 0;
   char *new_text = NULL, *file_text = NULL, *new_file = NULL;
   len = strlen(old_text);
-  for (i = len-1; i > 0; i--)
+  for (i = len - 1; i > 0; i--)
     {
       if (old_text[i] == '\n')
 	{
@@ -655,7 +655,7 @@ char *complete_listener_text(char *old_text, int end, int *try_completion, char 
 	{
 	  /* this isn't quite right, but how much effort should we put in it? */
 	  spaces = 20;
-	  for (k = i-1; k > 0; k--) 
+	  for (k = i - 1; k > 0; k--) 
 	    if (old_text[k] == '\n') 
 	      {
 		cr_pos = k; 

@@ -1,5 +1,8 @@
 #include "snd.h"
 
+/* TODO: bottom-lit spectrogram 
+ */
+
 /* most the dialogs present a view of the various file header possibilities */
 
 #define NUM_VISIBLE_HEADERS 4
@@ -1347,18 +1350,21 @@ void highlight_selected_sound(snd_state *ss)
   if (sp)
     {
       i = find_curfile_regrow(sp->shortname);
-      if (i != -1) curfile_highlight(ss, i); else curfile_unhighlight(ss);
+      if (i != -1) 
+	curfile_highlight(ss, i); 
+      else curfile_unhighlight(ss);
     }
   else curfile_unhighlight(ss);
 }
 
 void make_curfiles_list (snd_state *ss)
 {
-  int i;
+  int i, lim;
   Widget last_row = NULL;
   char *str;
   regrow *r;
-  for (i = 0; i < get_curfile_end(); i++)
+  lim = get_curfile_end();
+  for (i = 0; i < lim; i++)
     {
       r = cur_name_row[i];
       if (r == NULL)
@@ -1379,13 +1385,11 @@ void make_curfiles_list (snd_state *ss)
       XtManageChild(r->rw);
       last_row = r->rw;
     }
-  for (i = get_curfile_end(); i < get_max_curfile_end(); i++)
-    {
-      if ((r = cur_name_row[i]))
-	{
-	  if (XtIsManaged(r->rw)) XtUnmanageChild(r->rw);
-	}
-    }
+  lim = get_max_curfile_end();
+  for (i = get_curfile_end(); i < lim; i++)
+    if ((r = cur_name_row[i]))
+      if (XtIsManaged(r->rw)) 
+	XtUnmanageChild(r->rw);
   set_max_curfile_end(get_curfile_end());
   highlight_selected_sound(ss);
   XtManageChild(vf_curlst);
@@ -1421,13 +1425,14 @@ static void sort_prevfiles_by_entry_order(Widget w, XtPointer context, XtPointer
 
 void make_prevfiles_list (snd_state *ss)
 {
-  int i;
+  int i, lim;
   Widget last_row = NULL;
   regrow *r;
   if (get_prevfile_end() >= 0)
     {
       make_prevfiles_list_1(ss);
-      for (i = 0; i <= get_prevfile_end(); i++)
+      lim = get_prevfile_end();
+      for (i = 0; i <= lim; i++)
 	{
 	  if (!((r = prev_name_row[i])))
 	    {
@@ -1446,7 +1451,8 @@ void make_prevfiles_list (snd_state *ss)
 	  last_row = r->rw;
 	}
     }
-  for (i = get_prevfile_end()+1; i <= get_max_prevfile_end(); i++)
+  lim = get_max_prevfile_end();
+  for (i = get_prevfile_end()+1; i <= lim; i++)
     {
       if ((r = prev_name_row[i]))
 	{

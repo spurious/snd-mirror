@@ -1,5 +1,7 @@
 snd change log
 
+  23-Apr:    snd 4.13.
+  19-Apr:    use GSL_IEEE_MODE if it exists.
   17-Apr:    Haar transform.
   16-Apr:    mus-out-format, listener-selection.
   9-Apr:     noguile.h, sl.h (moving toward Librep support, and maybe Ruby).  

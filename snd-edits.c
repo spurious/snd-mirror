@@ -1812,6 +1812,7 @@ snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_po
   int len, i, k, ind0, ind1, indx, curlen;
   int *cb;
   snd_data *first_snd = NULL;
+  if (cp->active == 0) return(NULL);
   if ((edit_position < 0) || (edit_position > cp->edit_size)) return(NULL);
   ed = (ed_list *)(cp->edits[edit_position]);
   if (!ed) return(NULL);
@@ -2174,13 +2175,17 @@ int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, int leng
 static int only_save_edits(snd_info *sp, file_info *nhdr, char *ofile)
 {
   snd_state *ss;
-  int i, err;
+  int i, err = MUS_NO_ERROR;
   snd_fd **sf;
   ss = sp->state;
   sf = (snd_fd **)MALLOC(sp->nchans * sizeof(snd_fd *));
   for (i = 0; i < sp->nchans; i++) 
-    sf[i] = init_sample_read(0, sp->chans[i], READ_FORWARD);
-  err = snd_make_file(ofile, sp->nchans, nhdr, sf, current_ed_samples(sp->chans[0]), ss);
+    {
+      sf[i] = init_sample_read(0, sp->chans[i], READ_FORWARD);
+      if (sf[i] == NULL) err = MUS_ERROR;
+    }
+  if (err == MUS_NO_ERROR)
+    err = snd_make_file(ofile, sp->nchans, nhdr, sf, current_ed_samples(sp->chans[0]), ss);
   for (i = 0; i < sp->nchans; i++) 
     free_snd_fd(sf[i]);
   FREE(sf);
@@ -2197,7 +2202,7 @@ static int save_edits_1(snd_info *sp)
   /* have to decide here what header/data type to write as well -- original? */
   /* if latter, must be able to write all headers! -- perhaps warn user and use snd/aiff/riff/ircam */
   char *ofile = NULL;
-  int err, saved_errno = 0;
+  int err = MUS_NO_ERROR, saved_errno = 0;
   snd_state *ss;
   int i, samples;
   chan_info *cp;
@@ -2205,7 +2210,7 @@ static int save_edits_1(snd_info *sp)
   snd_fd **sf;
   Float *axis_data;
   int *ffts, *waves;
-  file_info *sphdr;
+  file_info *sphdr = NULL;
   ss = sp->state;
   if (dont_save(ss, sp, NULL)) return(MUS_NO_ERROR);
   samples = current_ed_samples(sp->chans[0]);
@@ -2227,11 +2232,17 @@ static int save_edits_1(snd_info *sp)
       ffts[i] = cp->ffting;
     }
   sf = (snd_fd **)CALLOC(sp->nchans, sizeof(snd_fd *));
-  for (i = 0; i < sp->nchans; i++) 
-    sf[i] = init_sample_read(0, sp->chans[i], READ_FORWARD);
-  report_in_minibuffer(sp, "saving %s", sp->shortname);
-  sphdr = sp->hdr;
-  err = snd_make_file(ofile, sp->nchans, sp->hdr, sf, samples, ss);
+  for (i = 0; i < sp->nchans; i++)
+    {
+      sf[i] = init_sample_read(0, sp->chans[i], READ_FORWARD);
+      if (sf[i] == NULL) err = MUS_ERROR;
+    }
+  if (err == MUS_NO_ERROR)
+    {
+      report_in_minibuffer(sp, "saving %s", sp->shortname);
+      sphdr = sp->hdr;
+      err = snd_make_file(ofile, sp->nchans, sp->hdr, sf, samples, ss);
+    }
   if (err != MUS_NO_ERROR) 
     {
       for (i = 0; i < sp->nchans; i++) free_snd_fd(sf[i]);
@@ -2363,8 +2374,13 @@ int chan_save_edits(chan_info *cp, char *ofile)
       nfile = snd_tempnam(ss); 
       sf = (snd_fd **)MALLOC(sizeof(snd_fd *));
       sf[0] = init_sample_read(0, cp, READ_FORWARD);
-      err = snd_make_file(nfile, 1, sp->hdr, sf, current_ed_samples(cp), cp->state);
-      free_snd_fd(sf[0]);
+      if (sf[0] == NULL)
+	err = MUS_ERROR;
+      else
+	{
+	  err = snd_make_file(nfile, 1, sp->hdr, sf, current_ed_samples(cp), cp->state);
+	  free_snd_fd(sf[0]);
+	}
       FREE(sf);
       if (err != MUS_NO_ERROR)
 	report_in_minibuffer(sp, "save channel as temp: %s: %s)", nfile, strerror(errno));
@@ -2377,8 +2393,13 @@ int chan_save_edits(chan_info *cp, char *ofile)
     {
       sf = (snd_fd **)MALLOC(sizeof(snd_fd *));
       sf[0] = init_sample_read(0, cp, READ_FORWARD);
-      err = snd_make_file(ofile, 1, sp->hdr, sf, current_ed_samples(cp), cp->state);
-      free_snd_fd(sf[0]);
+      if (sf[0] == NULL)
+	err = MUS_ERROR;
+      else
+	{
+	  err = snd_make_file(ofile, 1, sp->hdr, sf, current_ed_samples(cp), cp->state);
+	  free_snd_fd(sf[0]);
+	}
       FREE(sf);
     }
   return(err);
