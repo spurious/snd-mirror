@@ -1,37 +1,23 @@
-Snd 7.8:
+Snd 7.9
 
-new version of gfm package (sndlib/gfm) thanks to Mike Scholz,
-  now included (along with sndins) in the Snd tarball.
-  also many other improvements
+bugfixes/improvements thanks to Kjetil Matheussen, including one
+  in the granulate generator that affected the "jitter" argument.
+  also eval-c.scm.
 
-various bugfixes and improvements thanks to Kjetil S. Matheussen
+added:  tools/snd.supp -- Valgrind suppressions file for Snd
+          (valgrind turned up numerous minor bugs)
+	quick.html
+        mark-tag-width|height
+        after-save-as-hook, replacing emacs-style-save-as (see snd7.scm)
+        more virtual ops (and removed the "xen-channel" fallback option --
+          this affects the next-to-last optional arg to ptree-channel)
 
-added:
-  recorder-in-chans
-  vct->string
-  normalize-channel
-  controls->channel
-  sound-data->sound-data (for oscope)
-  rms-envelope in env.scm (based on Bret Battey's rmsenv.ins)
-  edit history pane popup menu (popup.scm and gtk-popup.scm) (unfinished)
+xg (gtk) type checking is much fussier now.
 
-  oscope.scm: oscilloscope dialog
+CMN: woodblock glyph and bugfixes from Anders Vinjar.
 
-removed:
-  track-id arg to mix-selection
-  edpos arg to play-selection
-  mus_audio_save|restore (audio.c) and Scheme/Ruby correlates
-  the dumb buttons at the bottom of the controls (Apply etc)
-    these are now in various popup menus
+checked: Guile 1.6.6, gtk 2.5.6 and 2.6.0, sbcl 0.8.17 and 0.8.18
 
-moved scale-sound-by and scale-sound-to to snd7.scm.
-
-changed handling of recorder-out-chans -- it now sets the max out chans
-  displayed in the recorder dialog, as well as the default output file chans.
-
-checked: gtk 2.5.4|5, sbcl 0.8.16, ruby 1.8.2-preview3
-
-with much help from: Mike Scholz, Heinrich Gudenus, Kjetil S. Matheussen,
-  Dave Phillips, Michal Seta, Thomas F. Bechteler, Frank Barknecht, Peter Lutek,
-  Tim Orford, Juan Reyes
-
+with much help from: Eric Sandall, Julian Stecklina,  Kjetil S. Matheussen,
+  Bruce Beach, Roman Kosellek, Tim Blechmann, Gary Scavone, Michael Uplawski,
+  Anders Vinjar, Russell Aspinwall.

@@ -539,13 +539,13 @@
    fun:*
 }
 
-{
-   scm-16
-   Memcheck:Cond
-   fun:scm_from_uint32
-   fun:gxm_XGetFontProperty
-   fun:*
-}
+#{
+#   scm-16
+#   Memcheck:Cond
+#   fun:scm_from_uint32
+#   fun:gxm_XGetFontProperty
+#   fun:*
+#}
 # ==19816== Conditional jump or move depends on uninitialised value(s)
 # ==19816==    at 0x4062172D: scm_from_uint32 (conv-uinteger.i.c:98)
 
@@ -553,41 +553,6 @@
    scm-17
    Memcheck:Value4
    fun:scm_i_sweep_card
-   fun:*
-}
-
-{
-   scm-18
-   Memcheck:Addr1
-   fun:scm_from_locale_stringn
-   fun:scm_from_locale_string
-   fun:*
-}
-# ==30535== Invalid read of size 1
-# ==30535==    at 0x406352A3: scm_from_locale_stringn (strings.c:817)
-# ==30535==    by 0x406352CC: scm_from_locale_string (strings.c:826)
-
-{
-   scm-19
-   Memcheck:Addr1
-   fun:memcpy
-   fun:scm_from_locale_stringn
-   fun:scm_from_locale_string
-   fun:*
-}
-
-{
-   scm-20
-   Memcheck:Cond
-   fun:scm_from_int32
-   fun:*
-}
-
-{
-   scm-21
-   Memcheck:Cond
-   fun:__gmpz_init_set_si
-   fun:scm_from_int32
    fun:*
 }
 

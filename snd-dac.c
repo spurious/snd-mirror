@@ -411,6 +411,8 @@ static void free_dac_info(dac_info *dp, play_stop_t reason)
   if (dp->spd) free_expand(dp->spd);
   if (dp->src) free_src(dp->src);
   if (dp->flt) mus_free(dp->flt);
+  dp->sp = NULL;
+  dp->cp = NULL;
   FREE(dp);
 }
 
@@ -563,7 +565,7 @@ static void stop_playing_with_toggle(dac_info *dp, dac_toggle_t toggle, with_hoo
   if ((dp == NULL) || (play_list == NULL)) return;
   sp = dp->sp;
   cp = dp->cp;
-  if (sp) 
+  if ((sp) && (sp->inuse != SOUND_IDLE))
     {
       sp->playing_mark = NULL;
       if (sp->playing > 0) sp->playing--;
@@ -2364,13 +2366,17 @@ static void free_player(snd_info *sp)
       player_chans[PLAYER(sp)] = 0;
     }
   FREE(sp->filename);
+  sp->filename = NULL;
   FREE(sp->chans);
+  sp->chans = NULL;
   if (sp->filter_control_envelope) sp->filter_control_envelope = free_env(sp->filter_control_envelope);
+  sp->inuse = SOUND_IDLE;
   FREE(sp);
 }
 
 void clear_players(void)
 {
+  /* called only in free_snd_info, snd-data.c -- make sure currently closing sound is not playing */
   int i;
   for (i = 0; i < players_size; i++)
     {
