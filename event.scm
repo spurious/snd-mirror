@@ -173,35 +173,54 @@
       (if (|XtIsSensitive button)
 	  (if (or (|XmIsPushButton button)
 		  (|XmIsPushButtonGadget button))
-	      (|XtCallCallbacks button |XmNactivateCallback 
-		  (let ((but (|XmPushButtonCallbackStruct)))
-		    (set! (|click_count but) 0)
-		    (set! (|event but) 
-			  (let ((e (|XEvent |ButtonPress)))
-			    (set! (|state e) (or bits 0))
-			    e))
-		    but))
+	      (if (= (|XtHasCallbacks button |XmNactivateCallback) |XtCallbackHasSome)
+		  (|XtCallCallbacks button |XmNactivateCallback 
+				    (let ((but (|XmPushButtonCallbackStruct)))
+				      (set! (|click_count but) 0)
+				      (set! (|event but) 
+					    (let ((e (|XEvent |ButtonPress)))
+					      (set! (|state e) (or bits 0))
+					      e))
+				      but))
+		  (display (format #f 
+				   ";pushbutton ~A has no activate callbacks~%" 
+				   (|XtName button))))
 	      (if (or (|XmIsToggleButton button)
 		      (|XmIsToggleButtonGadget button))
-		  (|XtCallCallbacks button |XmNvalueChangedCallback 
-			(let ((tgl (|XmToggleButtonCallbackStruct)))
-			  (set! (|set tgl) value)
-			  (set! (|event tgl) 
-				(let ((e (|XEvent |ButtonPress)))
-				  (set! (|state e) (or bits 0))
-				  e))
-			  tgl))
+		  (if (= (|XtHasCallbacks button |XmNvalueChangedCallback) |XtCallbackHasSome)
+		      (|XtCallCallbacks button |XmNvalueChangedCallback 
+					(let ((tgl (|XmToggleButtonCallbackStruct)))
+					  (set! (|set tgl) value)
+					  (set! (|event tgl) 
+						(let ((e (|XEvent |ButtonPress)))
+						  (set! (|state e) (or bits 0))
+						  e))
+					  tgl))
+		      (display (format #f 
+				       ";togglebutton ~A has no valueChanged callbacks~%" 
+				       (|XtName button))))
 		  (if (|XmIsArrowButton button)
-		      (|XtCallCallbacks button |XmNactivateCallback
-			  (let ((arr (|XmArrowButtonCallbackStruct)))
-			    (set! (|click_count but) 0)
-			    (set! (|event arr) 
-				  (let ((e (|XEvent |ButtonPress)))
-				    (set! (|state e) (or bits 0))
-				    e))
-			    arr))
-		      (display (format #f ";~A (~A) is not a push or toggle button" (|XtName button) (|XtName (|XtParent button))))))))
-      (display (format #f "~A is not a widget" button))))
+		      (if (= (|XtHasCallbacks button |XmNactivateCallback) |XtCallbackHasSome)
+			  (|XtCallCallbacks button |XmNactivateCallback
+					    (let ((arr (|XmArrowButtonCallbackStruct)))
+					      (set! (|click_count but) 0)
+					      (set! (|event arr) 
+						    (let ((e (|XEvent |ButtonPress)))
+						      (set! (|state e) (or bits 0))
+						      e))
+					      arr))
+			  (display (format #f 
+					   ";arrowbutton ~A has no activate callbacks~%" 
+					   (|XtName button))))
+		      (display (format #f 
+				       ";~A (~A) is not a push or toggle button~%" 
+				       (|XtName button) (|XtName (|XtParent button)))))))
+	  (display (format #f 
+			   ";~A is not sensitive~%" 
+			   (|XtName button))))
+      (display (format #f 
+		       ";~A is not a widget~%" 
+		       button))))
 
 (define (resize-pane wid height)
   (|XtUnmanageChild wid)

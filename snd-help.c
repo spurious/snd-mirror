@@ -275,17 +275,13 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+12-Mar:  header editor bugfix (thanks to Ludger Brummer).\n\
 11-Mar:  removed channel-sync.\n\
 28-Feb:  edit-position bugfix (thanks to Ludger Brummer).\n\
 27-Feb:  color-scale bugfix (thanks to Anders Vinjar).\n\
 25-Feb:  gtk2 port with xg (see example in grfsnd.html).\n\
 11-Feb:  snd 5.7.\n\
          xg.c (gtk2 bindings), makexg.scm, xgdata.scm.\n\
-30-Jan:  removed stats dialog, snd-xstats.c, snd-gstats.c, show-usage-stats, update-usage-stats.\n\
-28-Jan:  Alpha bugfix thanks to Stefan Schwandter.\n\
-23-Jan:  color-samples (draw.scm).\n\
-21-Jan:  bird.rb.\n\
-         channel-properties, sound-properties (accessors in extensions.scm).\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

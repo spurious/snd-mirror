@@ -512,11 +512,6 @@ file_data *make_file_data_panel(snd_state *ss, GtkWidget *parent, char *name,
   gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(hscroll), fdat->header_list);
   gtk_container_add(GTK_CONTAINER(hlab), hscroll);
 
-  SG_LIST_SELECT_ROW(fdat->header_list, fdat->header_pos);
-  gtk_widget_show(hlab);
-  gtk_widget_show(fdat->header_list);
-  gtk_widget_show(hscroll);
-
   dlab = gtk_frame_new(STR_data);
   gtk_box_pack_start(GTK_BOX(form), dlab, TRUE, TRUE, 2);
   gtk_frame_set_label_align(GTK_FRAME(dlab), 0.5, 0.0);
@@ -528,7 +523,13 @@ file_data *make_file_data_panel(snd_state *ss, GtkWidget *parent, char *name,
   gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(dscroll), fdat->format_list);
   gtk_container_add(GTK_CONTAINER(dlab), dscroll);
 
+  SG_LIST_SELECT_ROW(fdat->header_list, fdat->header_pos);
   SG_LIST_SELECT_ROW(fdat->format_list, fdat->format_pos);
+
+  gtk_widget_show(hlab);
+  gtk_widget_show(fdat->header_list);
+  gtk_widget_show(hscroll);
+
   gtk_widget_show(dlab);
   gtk_widget_show(fdat->format_list);
   gtk_widget_show(dscroll);
@@ -1592,6 +1593,7 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
 
 static GtkWidget *edit_header_dialog = NULL;
 static file_data *edit_header_data;
+static snd_info *edit_header_sp = NULL;
 
 static void edit_header_help_callback(GtkWidget *w, gpointer context) 
 {
@@ -1610,12 +1612,10 @@ static void edit_header_delete_callback(GtkWidget *w, GdkEvent *event, gpointer 
 
 static void edit_header_ok_callback(GtkWidget *w, gpointer context) 
 {
-  snd_state *ss;
-  snd_info *sp = (snd_info *)context;
-  ss = sp->state;
-  if (!(sp->read_only))
-    edit_header_callback(ss, sp, edit_header_data);
-  else snd_error("%s is write-protected", sp->short_filename);
+  snd_state *ss = (snd_state *)context;
+  if (!(edit_header_sp->read_only))
+    edit_header_callback(ss, edit_header_sp, edit_header_data);
+  else snd_error("%s is write-protected", edit_header_sp->short_filename);
   gtk_widget_hide(edit_header_dialog);
 }
 
@@ -1631,6 +1631,7 @@ GtkWidget *edit_header(snd_info *sp)
   char *str;
   file_info *hdr;
   if (!sp) return(NULL);
+  edit_header_sp = sp;
   ss = sp->state;
   hdr = sp->hdr;
 
@@ -1653,7 +1654,7 @@ GtkWidget *edit_header(snd_info *sp)
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(edit_header_dialog)->action_area), help_button, TRUE, TRUE, 10);
       SG_SIGNAL_CONNECT(GTK_OBJECT(cancel_button), "clicked", GTK_SIGNAL_FUNC(edit_header_cancel_callback), (gpointer)ss);
       SG_SIGNAL_CONNECT(GTK_OBJECT(help_button), "clicked", GTK_SIGNAL_FUNC(edit_header_help_callback), (gpointer)ss);
-      SG_SIGNAL_CONNECT(GTK_OBJECT(save_button), "clicked", GTK_SIGNAL_FUNC(edit_header_ok_callback), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(save_button), "clicked", GTK_SIGNAL_FUNC(edit_header_ok_callback), (gpointer)ss);
       set_pushed_button_colors(help_button, ss);
       set_pushed_button_colors(cancel_button, ss);
       set_pushed_button_colors(save_button, ss);
@@ -1663,7 +1664,6 @@ GtkWidget *edit_header(snd_info *sp)
 
       edit_header_data = make_file_data_panel(ss, GTK_DIALOG(edit_header_dialog)->vbox, STR_Edit_Header, TRUE, 
 					      hdr->type, hdr->format, TRUE, FALSE);
-      load_header_and_data_lists(edit_header_data, hdr->type, hdr->format, hdr->srate, hdr->chans, hdr->data_location, hdr->comment);
       set_dialog_widget(ss, EDIT_HEADER_DIALOG, edit_header_dialog);
     }
 
@@ -1671,6 +1671,8 @@ GtkWidget *edit_header(snd_info *sp)
   mus_snprintf(str, PRINT_BUFFER_SIZE, STR_Edit_header_of, sp->short_filename);
   gtk_window_set_title(GTK_WINDOW(edit_header_dialog), str);
   FREE(str);
+  load_header_and_data_lists(edit_header_data, hdr->type, hdr->format, hdr->srate, hdr->chans, hdr->data_location, hdr->comment);
+
   gtk_widget_show(edit_header_dialog);
   return(edit_header_dialog);
 }

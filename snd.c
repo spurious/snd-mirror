@@ -45,6 +45,13 @@ static void mus_print2snd(char *msg)
     if (msg)
       {
 	listener_append(ss, ";");
+	{
+	  int i, len;
+	  len = strlen(msg);
+	  for (i = 1; i < len - 1; i++)
+	    if ((msg[i] == '\n') && (msg[i + 1] == ' '))
+	      msg[i + 1] = ';';
+	}
 	if (msg[0] == '\n')
 	  listener_append(ss, (char *)(msg + 1));
 	else listener_append(ss, msg);

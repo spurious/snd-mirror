@@ -527,6 +527,7 @@ static void w_toggle_callback(Widget w, XtPointer context, XtPointer info)
 static void channel_expose_callback(Widget w, XtPointer context, XtPointer info)
 {
   static TIME_TYPE last_expose_event_time = 0;
+  static chan_info *last_cp = NULL;
   snd_info *sp;
   chan_info *cp = (chan_info *)context;
   XmDrawingAreaCallbackStruct *cb = (XmDrawingAreaCallbackStruct *)info;
@@ -537,7 +538,8 @@ static void channel_expose_callback(Widget w, XtPointer context, XtPointer info)
   ev = (XExposeEvent *)(cb->event);
   if (ev->count > 0) return;
   curtime = GUI_CURRENT_TIME(cp->state);
-  if ((ev->width < 15) && (last_expose_event_time == curtime)) return;
+  if ((ev->width < 15) && (last_expose_event_time == curtime) && (cp == last_cp)) return;
+  last_cp = cp;
   last_expose_event_time = curtime;
   sp = cp->sound;
   if (sp->channel_style != CHANNELS_SEPARATE)

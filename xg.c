@@ -48,6 +48,7 @@
  * TODO: test suite (snd-test 24)
  *
  * HISTORY:
+ *     12-Mar:    support for GtkDestroyNotify callbacks
  *     27-Feb:    remove gtk_tree_view_column_cell_render, gtk_tree_view_column_cell_focus, 
  *                  gtk_tree_view_column_cell_draw_focus and gtk_tree_view_column_cell_set_dirty (privatized in 1.3.15)
  *                add (on HAVE-* switches) gtk_file_selection_get_selections, gtk_file_selection_set_select_multiple
@@ -141,56 +142,58 @@ static void define_xm_obj(void)
   static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));} /* if NULL ok, should be explicit */
 
 /* type checks for callback wrappers */
-#define XEN_lambda2_P(Arg)  XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 2)
-#define XEN_lambda3_P(Arg)  XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 3)
-#define XEN_GdkInputFunction_P(Arg)  XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 3)
-#define XEN_GtkCallback_P(Arg)  XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 2)
-#define XEN_GtkTimeoutFunction_P(Arg)  XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 1)
-#define XEN_GdkFilterFunc_P(Arg)  XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 3)
-#define XEN_GdkEventFunc_P(Arg)  XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 2)
-#define XEN_GdkSpanFunc_P(Arg)  XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 2)
-#define XEN_GtkFunction_P(Arg)  XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 1)
-#define XEN_GtkKeySnoopFunc_P(Arg)  XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 3)
-#define XEN_GtkTranslateFunc_P(Arg)  XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 2)
-#define XEN_GtkMenuPositionFunc_P(Arg)  XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 5)
-#define XEN_GtkTreeModelForeachFunc_P(Arg)  XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 4)
-#define XEN_GtkTreeSelectionForeachFunc_P(Arg)  XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 4)
-#define XEN_GtkClipboardReceivedFunc_P(Arg)  XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 3)
-#define XEN_GtkClipboardTextReceivedFunc_P(Arg)  XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 3)
-#define XEN_GtkTreeViewColumnDropFunc_P(Arg)  XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 5)
-#define XEN_GtkTreeViewMappingFunc_P(Arg)  XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 3)
-#define XEN_GtkTreeViewSearchEqualFunc_P(Arg)  XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 5)
-#define XEN_GtkTreeCellDataFunc_P(Arg)  XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 5)
-#define XEN_GtkTreeIterCompareFunc_P(Arg)  XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 4)
-#define XEN_GtkTreeSelectionFunc_P(Arg)  XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 5)
-#define XEN_GtkClipboardGetFunc_P(Arg)  XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 4)
-#define XEN_GtkClipboardClearFunc_P(Arg)  XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 2)
+#define XEN_lambda2_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 2))
+#define XEN_lambda3_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 3))
+#define XEN_GdkInputFunction_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 3))
+#define XEN_GtkCallback_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 2))
+#define XEN_GtkTimeoutFunction_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 1))
+#define XEN_GtkDestroyNotify_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 1))
+#define XEN_GdkFilterFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 3))
+#define XEN_GdkEventFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 2))
+#define XEN_GdkSpanFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 2))
+#define XEN_GtkFunction_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 1))
+#define XEN_GtkKeySnoopFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 3))
+#define XEN_GtkTranslateFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 2))
+#define XEN_GtkMenuPositionFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 5))
+#define XEN_GtkTreeModelForeachFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 4))
+#define XEN_GtkTreeSelectionForeachFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 4))
+#define XEN_GtkClipboardReceivedFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 3))
+#define XEN_GtkClipboardTextReceivedFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 3))
+#define XEN_GtkTreeViewColumnDropFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 5))
+#define XEN_GtkTreeViewMappingFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 3))
+#define XEN_GtkTreeViewSearchEqualFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 5))
+#define XEN_GtkTreeCellDataFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 5))
+#define XEN_GtkTreeIterCompareFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 4))
+#define XEN_GtkTreeSelectionFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 5))
+#define XEN_GtkClipboardGetFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 4))
+#define XEN_GtkClipboardClearFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 2))
 #define XEN_lambda_P(Arg) XEN_PROCEDURE_P(Arg)
 #define XEN_GtkSignalFunc_P(Arg) XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 2)
-#define XEN_TO_C_lambda2(Arg) gxg_child_func
-#define XEN_TO_C_lambda3(Arg) gxg_find_func
-#define XEN_TO_C_GdkInputFunction(Arg) gxg_input_func
-#define XEN_TO_C_GtkCallback(Arg) gxg_func2
-#define XEN_TO_C_GtkTimeoutFunction(Arg) gxg_timeout_func
-#define XEN_TO_C_GdkFilterFunc(Arg) gxg_filter_func
-#define XEN_TO_C_GdkEventFunc(Arg) gxg_event_func
-#define XEN_TO_C_GdkSpanFunc(Arg) gxg_span_func
-#define XEN_TO_C_GtkFunction(Arg) gxg_func1
-#define XEN_TO_C_GtkKeySnoopFunc(Arg) gxg_snoop_func
-#define XEN_TO_C_GtkTranslateFunc(Arg) gxg_translate_func
-#define XEN_TO_C_GtkMenuPositionFunc(Arg) gxg_menu_position_func
-#define XEN_TO_C_GtkTreeModelForeachFunc(Arg) gxg_model_func
-#define XEN_TO_C_GtkTreeSelectionForeachFunc(Arg) gxg_tree_selection_func
-#define XEN_TO_C_GtkClipboardReceivedFunc(Arg) gxg_clip_received
-#define XEN_TO_C_GtkClipboardTextReceivedFunc(Arg) gxg_clip_text_received
-#define XEN_TO_C_GtkTreeViewColumnDropFunc(Arg) gxg_tree_column
-#define XEN_TO_C_GtkTreeViewMappingFunc(Arg) gxg_tree_mapping
-#define XEN_TO_C_GtkTreeViewSearchEqualFunc(Arg) gxg_tree_search
-#define XEN_TO_C_GtkTreeCellDataFunc(Arg) gxg_cell_data
-#define XEN_TO_C_GtkTreeIterCompareFunc(Arg) gxg_iter_compare
-#define XEN_TO_C_GtkTreeSelectionFunc(Arg) gxg_tree_selection
-#define XEN_TO_C_GtkClipboardGetFunc(Arg) gxg_clip_get
-#define XEN_TO_C_GtkClipboardClearFunc(Arg) gxg_clip_clear
+#define XEN_TO_C_lambda2(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_child_func
+#define XEN_TO_C_lambda3(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_find_func
+#define XEN_TO_C_GdkInputFunction(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_input_func
+#define XEN_TO_C_GtkCallback(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_func2
+#define XEN_TO_C_GtkTimeoutFunction(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_timeout_func
+#define XEN_TO_C_GtkDestroyNotify(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_destroy_func
+#define XEN_TO_C_GdkFilterFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_filter_func
+#define XEN_TO_C_GdkEventFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_event_func
+#define XEN_TO_C_GdkSpanFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_span_func
+#define XEN_TO_C_GtkFunction(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_func1
+#define XEN_TO_C_GtkKeySnoopFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_snoop_func
+#define XEN_TO_C_GtkTranslateFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_translate_func
+#define XEN_TO_C_GtkMenuPositionFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_menu_position_func
+#define XEN_TO_C_GtkTreeModelForeachFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_model_func
+#define XEN_TO_C_GtkTreeSelectionForeachFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_tree_selection_func
+#define XEN_TO_C_GtkClipboardReceivedFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_clip_received
+#define XEN_TO_C_GtkClipboardTextReceivedFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_clip_text_received
+#define XEN_TO_C_GtkTreeViewColumnDropFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_tree_column
+#define XEN_TO_C_GtkTreeViewMappingFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_tree_mapping
+#define XEN_TO_C_GtkTreeViewSearchEqualFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_tree_search
+#define XEN_TO_C_GtkTreeCellDataFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_cell_data
+#define XEN_TO_C_GtkTreeIterCompareFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_iter_compare
+#define XEN_TO_C_GtkTreeSelectionFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_tree_selection
+#define XEN_TO_C_GtkClipboardGetFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_clip_get
+#define XEN_TO_C_GtkClipboardClearFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_clip_clear
 #define XEN_TO_C_GtkSignalFunc(Arg) (GtkSignalFunc)gxg_func2
 #define XEN_TO_C_lambda_data(Arg) (gpointer)gxg_ptr
 #define XEN_lambda_data_P(Arg) 1
@@ -198,6 +201,7 @@ static void define_xm_obj(void)
 #define C_TO_XEN_GtkTreeIterCompareFunc(Arg) WRAP_FOR_XEN("GtkTreeViewSearchEqualFunc", Arg)
 #define C_TO_XEN_GtkTreeSelectionFunc(Arg) WRAP_FOR_XEN("GtkTreeSelectionFunc", Arg)
 #define C_TO_XEN_GtkMenuPositionFunc(Arg) WRAP_FOR_XEN("GtkMenuPositionFunc", Arg)
+#define C_TO_XEN_GtkDestroyNotify(Arg) WRAP_FOR_XEN("GtkDestroyNotify", Arg)
 #define XEN_TO_C_GdkFilterReturn(Arg) XEN_TO_C_INT(Arg)
 
 
@@ -624,7 +628,6 @@ XM_TYPE_PTR(GtkIMMulticontext_, GtkIMMulticontext*)
 XM_TYPE_PTR(GtkMenuShell_, GtkMenuShell*)
 XM_TYPE_PTR(GtkItemFactory_, GtkItemFactory*)
 XM_TYPE_PTR(GtkItemFactoryEntry_, GtkItemFactoryEntry*)
-XM_TYPE(GtkDestroyNotify, GtkDestroyNotify)
 XM_TYPE_PTR(GtkLabel_, GtkLabel*)
 #define C_TO_XEN_GtkJustification(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkJustification(Arg) XEN_TO_C_INT(Arg)
@@ -1384,6 +1387,13 @@ static gint gxg_timeout_func(gpointer func_data)
   return(call_again);
 }
 #endif
+
+static void gxg_destroy_func(gpointer func_data)
+{
+  XEN_CALL_1(XEN_CADDDR((XEN)func_data),
+             XEN_CADR((XEN)func_data),
+             __FUNCTION__);
+}
 
 static GdkFilterReturn gxg_filter_func(GdkXEvent* xevent, GdkEvent* event, gpointer func_data)
 {
@@ -2944,7 +2954,7 @@ GDestroyNotify notify)"
   XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 2, "gdk_event_handler_set", "lambda_data");
   XEN_ASSERT_TYPE(XEN_GDestroyNotify_P(notify), notify, 3, "gdk_event_handler_set", "GDestroyNotify");
   {
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     xm_protect(gxg_ptr);
     gdk_event_handler_set(XEN_TO_C_GdkEventFunc(func), XEN_TO_C_lambda_data(func_data), XEN_TO_C_GDestroyNotify(notify));
     return(XEN_FALSE);
@@ -2974,7 +2984,7 @@ lambda_data func_data)"
   if (XEN_NOT_BOUND_P(func_data)) func_data = XEN_FALSE; 
   else XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 3, "gdk_add_client_message_filter", "lambda_data");
   {
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     xm_protect(gxg_ptr);
     gdk_add_client_message_filter(XEN_TO_C_GdkAtom(message_type), XEN_TO_C_GdkFilterFunc(func), XEN_TO_C_lambda_data(func_data));
     return(XEN_FALSE);
@@ -4396,7 +4406,7 @@ GdkSpan* spans, int n_spans, gboolean sorted, GdkSpanFunc func, lambda_data func
   else XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 6, "gdk_region_spans_intersect_foreach", "lambda_data");
   {
     int loc;
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     loc = xm_protect(gxg_ptr);
     XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
     gdk_region_spans_intersect_foreach(XEN_TO_C_GdkRegion_(region), XEN_TO_C_GdkSpan_(spans), XEN_TO_C_int(n_spans), XEN_TO_C_gboolean(sorted), 
@@ -4983,7 +4993,7 @@ lambda_data func_data)"
   if (XEN_NOT_BOUND_P(func_data)) func_data = XEN_FALSE; 
   else XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 3, "gdk_window_add_filter", "lambda_data");
   {
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     xm_protect(gxg_ptr);
     gdk_window_add_filter(XEN_TO_C_GdkWindow_(window), XEN_TO_C_GdkFilterFunc(func), XEN_TO_C_lambda_data(func_data));
     return(XEN_FALSE);
@@ -4999,7 +5009,7 @@ lambda_data func_data)"
   if (XEN_NOT_BOUND_P(func_data)) func_data = XEN_FALSE; 
   else XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 3, "gdk_window_remove_filter", "lambda_data");
   {
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     xm_protect(gxg_ptr);
     gdk_window_remove_filter(XEN_TO_C_GdkWindow_(window), XEN_TO_C_GdkFilterFunc(func), XEN_TO_C_lambda_data(func_data));
     return(XEN_FALSE);
@@ -5388,7 +5398,7 @@ GdkRegion* region, lambda2 func, lambda_data func_data)"
   else XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 4, "gdk_window_invalidate_maybe_recurse", "lambda_data");
   {
     int loc;
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     loc = xm_protect(gxg_ptr);
     XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
     gdk_window_invalidate_maybe_recurse(XEN_TO_C_GdkWindow_(window), XEN_TO_C_GdkRegion_(region), XEN_TO_C_lambda2(func), XEN_TO_C_lambda_data(func_data));
@@ -6389,7 +6399,7 @@ lambda_data func_data)"
   {
     XEN result = XEN_FALSE;
     int loc;
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     loc = xm_protect(gxg_ptr);
     XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
     result = C_TO_XEN_GtkAccelKey_(gtk_accel_group_find(XEN_TO_C_GtkAccelGroup_(accel_group), XEN_TO_C_lambda3(func), XEN_TO_C_lambda_data(func_data)));
@@ -7643,7 +7653,7 @@ lambda_data func_data)"
   else XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 6, "gtk_clipboard_set_with_data", "lambda_data");
   {
     XEN result = XEN_FALSE;
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     xm_protect(gxg_ptr);
     XEN_LIST_SET(gxg_ptr, 2, clear_func);
     result = C_TO_XEN_gboolean(gtk_clipboard_set_with_data(XEN_TO_C_GtkClipboard_(clipboard), XEN_TO_C_GtkTargetEntry_(targets), 
@@ -7690,7 +7700,7 @@ GdkAtom target, GtkClipboardReceivedFunc func, lambda_data func_data)"
   else XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 4, "gtk_clipboard_request_contents", "lambda_data");
   {
     int loc;
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     loc = xm_protect(gxg_ptr);
     XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
     gtk_clipboard_request_contents(XEN_TO_C_GtkClipboard_(clipboard), XEN_TO_C_GdkAtom(target), XEN_TO_C_GtkClipboardReceivedFunc(func), 
@@ -7710,7 +7720,7 @@ lambda_data func_data)"
   else XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 3, "gtk_clipboard_request_text", "lambda_data");
   {
     int loc;
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     loc = xm_protect(gxg_ptr);
     XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
     gtk_clipboard_request_text(XEN_TO_C_GtkClipboard_(clipboard), XEN_TO_C_GtkClipboardTextReceivedFunc(func), XEN_TO_C_lambda_data(func_data));
@@ -8080,7 +8090,7 @@ lambda_data func_data)"
   else XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 3, "gtk_container_foreach", "lambda_data");
   {
     int loc;
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     loc = xm_protect(gxg_ptr);
     XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
     gtk_container_foreach(XEN_TO_C_GtkContainer_(container), XEN_TO_C_GtkCallback(func), XEN_TO_C_lambda_data(func_data));
@@ -10286,20 +10296,25 @@ guint mouse_button, guint32 time)"
   return(XEN_FALSE);
 }
 
-static XEN gxg_gtk_item_factory_popup_with_data(XEN ifactory, XEN popup_data, XEN destroy, XEN x, XEN y, XEN mouse_button, XEN time)
+static XEN gxg_gtk_item_factory_popup_with_data(XEN ifactory, XEN func_data, XEN destroy, XEN x, XEN y, XEN mouse_button, XEN time)
 {
   #define H_gtk_item_factory_popup_with_data "void gtk_item_factory_popup_with_data(GtkItemFactory* ifactory, \
-gpointer popup_data, GtkDestroyNotify destroy, guint x, guint y, guint mouse_button, guint32 time)"
+gpointer func_data, GtkDestroyNotify destroy, guint x, guint y, guint mouse_button, guint32 time)"
   XEN_ASSERT_TYPE(XEN_GtkItemFactory__P(ifactory), ifactory, 1, "gtk_item_factory_popup_with_data", "GtkItemFactory*");
-  XEN_ASSERT_TYPE(XEN_gpointer_P(popup_data), popup_data, 2, "gtk_item_factory_popup_with_data", "gpointer");
+  XEN_ASSERT_TYPE(XEN_gpointer_P(func_data), func_data, 2, "gtk_item_factory_popup_with_data", "gpointer");
   XEN_ASSERT_TYPE(XEN_GtkDestroyNotify_P(destroy), destroy, 3, "gtk_item_factory_popup_with_data", "GtkDestroyNotify");
   XEN_ASSERT_TYPE(XEN_guint_P(x), x, 4, "gtk_item_factory_popup_with_data", "guint");
   XEN_ASSERT_TYPE(XEN_guint_P(y), y, 5, "gtk_item_factory_popup_with_data", "guint");
   XEN_ASSERT_TYPE(XEN_guint_P(mouse_button), mouse_button, 6, "gtk_item_factory_popup_with_data", "guint");
   XEN_ASSERT_TYPE(XEN_guint32_P(time), time, 7, "gtk_item_factory_popup_with_data", "guint32");
-  gtk_item_factory_popup_with_data(XEN_TO_C_GtkItemFactory_(ifactory), XEN_TO_C_gpointer(popup_data), XEN_TO_C_GtkDestroyNotify(destroy), 
-                                   XEN_TO_C_guint(x), XEN_TO_C_guint(y), XEN_TO_C_guint(mouse_button), XEN_TO_C_guint32(time));
-  return(XEN_FALSE);
+  {
+    XEN gxg_ptr = XEN_LIST_5(XEN_FALSE, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
+    xm_protect(gxg_ptr);
+    XEN_LIST_SET(gxg_ptr, 3, destroy);
+    gtk_item_factory_popup_with_data(XEN_TO_C_GtkItemFactory_(ifactory), XEN_TO_C_gpointer(func_data), XEN_TO_C_GtkDestroyNotify(destroy), 
+                                 XEN_TO_C_guint(x), XEN_TO_C_guint(y), XEN_TO_C_guint(mouse_button), XEN_TO_C_guint32(time));
+    return(XEN_FALSE);
+   }
 }
 
 static XEN gxg_gtk_item_factory_popup_data(XEN ifactory)
@@ -10325,8 +10340,9 @@ GtkTranslateFunc func, lambda_data func_data, GtkDestroyNotify notify)"
   XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 3, "gtk_item_factory_set_translate_func", "lambda_data");
   XEN_ASSERT_TYPE(XEN_GtkDestroyNotify_P(notify), notify, 4, "gtk_item_factory_set_translate_func", "GtkDestroyNotify");
   {
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     xm_protect(gxg_ptr);
+    XEN_LIST_SET(gxg_ptr, 3, notify);
     gtk_item_factory_set_translate_func(XEN_TO_C_GtkItemFactory_(ifactory), XEN_TO_C_GtkTranslateFunc(func), XEN_TO_C_lambda_data(func_data), 
                                     XEN_TO_C_GtkDestroyNotify(notify));
     return(XEN_FALSE);
@@ -10976,7 +10992,7 @@ static XEN gxg_gtk_init_add(XEN func, XEN func_data)
   else XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 2, "gtk_init_add", "lambda_data");
   {
     int loc;
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     loc = xm_protect(gxg_ptr);
     XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
     gtk_init_add(XEN_TO_C_GtkFunction(func), XEN_TO_C_lambda_data(func_data));
@@ -11004,7 +11020,7 @@ static XEN gxg_gtk_quit_add(XEN main_level, XEN func, XEN func_data)
   {
     XEN result = XEN_FALSE;
     int loc;
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     loc = xm_protect(gxg_ptr);
     XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
     result = C_TO_XEN_guint(gtk_quit_add(XEN_TO_C_guint(main_level), XEN_TO_C_GtkFunction(func), XEN_TO_C_lambda_data(func_data)));
@@ -11025,9 +11041,10 @@ lambda_data func_data, GtkDestroyNotify destroy)"
   {
     XEN result = XEN_FALSE;
     int loc;
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     loc = xm_protect(gxg_ptr);
     XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
+    XEN_LIST_SET(gxg_ptr, 3, destroy);
     result = C_TO_XEN_guint(gtk_quit_add_full(XEN_TO_C_guint(main_level), XEN_TO_C_GtkFunction(func), XEN_TO_C_GtkCallbackMarshal(marshal), 
                                               XEN_TO_C_lambda_data(func_data), XEN_TO_C_GtkDestroyNotify(destroy)));
     XEN_LIST_SET(gxg_ptr, 2, XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("idler"), result, C_TO_XEN_INT(loc)));
@@ -11064,7 +11081,7 @@ static XEN gxg_gtk_timeout_add(XEN interval, XEN func, XEN func_data)
   {
     XEN result = XEN_FALSE;
     int loc;
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     loc = xm_protect(gxg_ptr);
     XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
     result = C_TO_XEN_guint(gtk_timeout_add(XEN_TO_C_guint32(interval), XEN_TO_C_GtkTimeoutFunction(func), XEN_TO_C_lambda_data(func_data)));
@@ -11084,9 +11101,10 @@ GtkCallbackMarshal marshal, lambda_data func_data, GtkDestroyNotify destroy)"
   {
     XEN result = XEN_FALSE;
     int loc;
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     loc = xm_protect(gxg_ptr);
     XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
+    XEN_LIST_SET(gxg_ptr, 3, destroy);
     result = C_TO_XEN_guint(gtk_timeout_add_full(XEN_TO_C_guint32(interval), XEN_TO_C_GtkTimeoutFunction(func), XEN_TO_C_GtkCallbackMarshal(marshal), 
                                                  XEN_TO_C_lambda_data(func_data), XEN_TO_C_GtkDestroyNotify(destroy)));
     return(result);
@@ -11111,7 +11129,7 @@ static XEN gxg_gtk_idle_add(XEN func, XEN func_data)
   {
     XEN result = XEN_FALSE;
     int loc;
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     loc = xm_protect(gxg_ptr);
     XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
     result = C_TO_XEN_guint(gtk_idle_add(XEN_TO_C_GtkFunction(func), XEN_TO_C_lambda_data(func_data)));
@@ -11130,7 +11148,7 @@ static XEN gxg_gtk_idle_add_priority(XEN priority, XEN func, XEN func_data)
   {
     XEN result = XEN_FALSE;
     int loc;
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     loc = xm_protect(gxg_ptr);
     XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
     result = C_TO_XEN_guint(gtk_idle_add_priority(XEN_TO_C_gint(priority), XEN_TO_C_GtkFunction(func), XEN_TO_C_lambda_data(func_data)));
@@ -11151,9 +11169,10 @@ lambda_data func_data, GtkDestroyNotify destroy)"
   {
     XEN result = XEN_FALSE;
     int loc;
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     loc = xm_protect(gxg_ptr);
     XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
+    XEN_LIST_SET(gxg_ptr, 3, destroy);
     result = C_TO_XEN_guint(gtk_idle_add_full(XEN_TO_C_gint(priority), XEN_TO_C_GtkFunction(func), XEN_TO_C_GtkCallbackMarshal(marshal), 
                                               XEN_TO_C_lambda_data(func_data), XEN_TO_C_GtkDestroyNotify(destroy)));
     XEN_LIST_SET(gxg_ptr, 2, XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("idler"), result, C_TO_XEN_INT(loc)));
@@ -11192,9 +11211,10 @@ GtkCallbackMarshal marshal, lambda_data func_data, GtkDestroyNotify destroy)"
   {
     XEN result = XEN_FALSE;
     int loc;
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     loc = xm_protect(gxg_ptr);
     XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
+    XEN_LIST_SET(gxg_ptr, 3, destroy);
     result = C_TO_XEN_guint(gtk_input_add_full(XEN_TO_C_gint(source), XEN_TO_C_GdkInputCondition(condition), XEN_TO_C_GdkInputFunction(func), 
                                                XEN_TO_C_GtkCallbackMarshal(marshal), XEN_TO_C_lambda_data(func_data), XEN_TO_C_GtkDestroyNotify(destroy)));
     XEN_LIST_SET(gxg_ptr, 2, XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("idler"), result, C_TO_XEN_INT(loc)));
@@ -11220,7 +11240,7 @@ static XEN gxg_gtk_key_snooper_install(XEN func, XEN func_data)
   {
     XEN result = XEN_FALSE;
     int loc;
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     loc = xm_protect(gxg_ptr);
     XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
     result = C_TO_XEN_guint(gtk_key_snooper_install(XEN_TO_C_GtkKeySnoopFunc(func), XEN_TO_C_lambda_data(func_data)));
@@ -11316,7 +11336,7 @@ GtkMenuPositionFunc func, lambda_data func_data, guint button, guint32 activate_
   XEN_ASSERT_TYPE(XEN_guint_P(button), button, 6, "gtk_menu_popup", "guint");
   XEN_ASSERT_TYPE(XEN_guint32_P(activate_time), activate_time, 7, "gtk_menu_popup", "guint32");
   {
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     xm_protect(gxg_ptr);
     gtk_menu_popup(XEN_TO_C_GtkMenu_(menu), XEN_TO_C_GtkWidget_(parent_menu_shell), XEN_TO_C_GtkWidget_(parent_menu_item), XEN_TO_C_GtkMenuPositionFunc(func), 
                XEN_TO_C_lambda_data(func_data), XEN_TO_C_guint(button), XEN_TO_C_guint32(activate_time));
@@ -16872,7 +16892,7 @@ char* tooltip_text, char* tooltip_private_text, GtkWidget* icon, GtkSignalFunc f
   {
     XEN result = XEN_FALSE;
     int loc;
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     loc = xm_protect(gxg_ptr);
     XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
     result = C_TO_XEN_GtkWidget_(gtk_toolbar_append_item(XEN_TO_C_GtkToolbar_(toolbar), XEN_TO_C_char_(text), XEN_TO_C_char_(tooltip_text), 
@@ -16897,7 +16917,7 @@ char* tooltip_text, char* tooltip_private_text, GtkWidget* icon, GtkSignalFunc f
   {
     XEN result = XEN_FALSE;
     int loc;
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     loc = xm_protect(gxg_ptr);
     XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
     result = C_TO_XEN_GtkWidget_(gtk_toolbar_prepend_item(XEN_TO_C_GtkToolbar_(toolbar), XEN_TO_C_char_(text), XEN_TO_C_char_(tooltip_text), 
@@ -16923,7 +16943,7 @@ gint position)"
   {
     XEN result = XEN_FALSE;
     int loc;
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     loc = xm_protect(gxg_ptr);
     XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
     result = C_TO_XEN_GtkWidget_(gtk_toolbar_insert_item(XEN_TO_C_GtkToolbar_(toolbar), XEN_TO_C_char_(text), XEN_TO_C_char_(tooltip_text), 
@@ -16948,7 +16968,7 @@ char* tooltip_text, char* tooltip_private_text, GtkSignalFunc func, lambda_data 
   {
     XEN result = XEN_FALSE;
     int loc;
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     loc = xm_protect(gxg_ptr);
     XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
     result = C_TO_XEN_GtkWidget_(gtk_toolbar_insert_stock(XEN_TO_C_GtkToolbar_(toolbar), XEN_TO_C_gchar_(stock_id), XEN_TO_C_char_(tooltip_text), 
@@ -17013,7 +17033,7 @@ lambda_data func_data)"
   {
     XEN result = XEN_FALSE;
     int loc;
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     loc = xm_protect(gxg_ptr);
     XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
     result = C_TO_XEN_GtkWidget_(gtk_toolbar_append_element(XEN_TO_C_GtkToolbar_(toolbar), XEN_TO_C_GtkToolbarChildType(type), 
@@ -17042,7 +17062,7 @@ GtkWidget* icon, GtkSignalFunc func, lambda_data func_data)"
   {
     XEN result = XEN_FALSE;
     int loc;
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     loc = xm_protect(gxg_ptr);
     XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
     result = C_TO_XEN_GtkWidget_(gtk_toolbar_prepend_element(XEN_TO_C_GtkToolbar_(toolbar), XEN_TO_C_GtkToolbarChildType(type), 
@@ -17082,7 +17102,7 @@ lambda_data func_data, gint position)"
   {
     XEN result = XEN_FALSE;
     int loc;
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     loc = xm_protect(gxg_ptr);
     XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
     result = C_TO_XEN_GtkWidget_(gtk_toolbar_insert_element(XEN_TO_C_GtkToolbar_(toolbar), XEN_TO_C_GtkToolbarChildType(type), 
@@ -17769,7 +17789,7 @@ lambda_data func_data)"
   else XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 3, "gtk_tree_model_foreach", "lambda_data");
   {
     int loc;
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     loc = xm_protect(gxg_ptr);
     XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
     gtk_tree_model_foreach(XEN_TO_C_GtkTreeModel_(model), XEN_TO_C_GtkTreeModelForeachFunc(func), XEN_TO_C_lambda_data(func_data));
@@ -17945,8 +17965,9 @@ GtkTreeSelectionFunc func, lambda_data func_data, GtkDestroyNotify destroy)"
   XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 3, "gtk_tree_selection_set_select_function", "lambda_data");
   XEN_ASSERT_TYPE(XEN_GtkDestroyNotify_P(destroy), destroy, 4, "gtk_tree_selection_set_select_function", "GtkDestroyNotify");
   {
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     xm_protect(gxg_ptr);
+    XEN_LIST_SET(gxg_ptr, 3, destroy);
     gtk_tree_selection_set_select_function(XEN_TO_C_GtkTreeSelection_(selection), XEN_TO_C_GtkTreeSelectionFunc(func), XEN_TO_C_lambda_data(func_data), 
                                        XEN_TO_C_GtkDestroyNotify(destroy));
     return(XEN_FALSE);
@@ -17988,7 +18009,7 @@ GtkTreeSelectionForeachFunc func, lambda_data func_data)"
   else XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 3, "gtk_tree_selection_selected_foreach", "lambda_data");
   {
     int loc;
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     loc = xm_protect(gxg_ptr);
     XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
     gtk_tree_selection_selected_foreach(XEN_TO_C_GtkTreeSelection_(selection), XEN_TO_C_GtkTreeSelectionForeachFunc(func), XEN_TO_C_lambda_data(func_data));
@@ -18128,8 +18149,9 @@ gint sort_column_id, GtkTreeIterCompareFunc func, lambda_data func_data, GtkDest
   XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 4, "gtk_tree_sortable_set_sort_func", "lambda_data");
   XEN_ASSERT_TYPE(XEN_GtkDestroyNotify_P(destroy), destroy, 5, "gtk_tree_sortable_set_sort_func", "GtkDestroyNotify");
   {
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     xm_protect(gxg_ptr);
+    XEN_LIST_SET(gxg_ptr, 3, destroy);
     gtk_tree_sortable_set_sort_func(XEN_TO_C_GtkTreeSortable_(sortable), XEN_TO_C_gint(sort_column_id), XEN_TO_C_GtkTreeIterCompareFunc(func), 
                                 XEN_TO_C_lambda_data(func_data), XEN_TO_C_GtkDestroyNotify(destroy));
     return(XEN_FALSE);
@@ -18145,8 +18167,9 @@ GtkTreeIterCompareFunc func, lambda_data func_data, GtkDestroyNotify destroy)"
   XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 3, "gtk_tree_sortable_set_default_sort_func", "lambda_data");
   XEN_ASSERT_TYPE(XEN_GtkDestroyNotify_P(destroy), destroy, 4, "gtk_tree_sortable_set_default_sort_func", "GtkDestroyNotify");
   {
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     xm_protect(gxg_ptr);
+    XEN_LIST_SET(gxg_ptr, 3, destroy);
     gtk_tree_sortable_set_default_sort_func(XEN_TO_C_GtkTreeSortable_(sortable), XEN_TO_C_GtkTreeIterCompareFunc(func), XEN_TO_C_lambda_data(func_data), 
                                         XEN_TO_C_GtkDestroyNotify(destroy));
     return(XEN_FALSE);
@@ -18400,8 +18423,9 @@ GtkCellRenderer* cell_renderer, GtkTreeCellDataFunc func, lambda_data func_data,
   XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 4, "gtk_tree_view_column_set_cell_data_func", "lambda_data");
   XEN_ASSERT_TYPE(XEN_GtkDestroyNotify_P(destroy), destroy, 5, "gtk_tree_view_column_set_cell_data_func", "GtkDestroyNotify");
   {
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     xm_protect(gxg_ptr);
+    XEN_LIST_SET(gxg_ptr, 3, destroy);
     gtk_tree_view_column_set_cell_data_func(XEN_TO_C_GtkTreeViewColumn_(tree_column), XEN_TO_C_GtkCellRenderer_(cell_renderer), 
                                         XEN_TO_C_GtkTreeCellDataFunc(func), XEN_TO_C_lambda_data(func_data), XEN_TO_C_GtkDestroyNotify(destroy));
     return(XEN_FALSE);
@@ -18904,7 +18928,7 @@ GDestroyNotify dnotify)"
   XEN_ASSERT_TYPE(XEN_GDestroyNotify_P(dnotify), dnotify, 7, "gtk_tree_view_insert_column_with_data_func", "GDestroyNotify");
   {
     XEN result = XEN_FALSE;
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     xm_protect(gxg_ptr);
     result = C_TO_XEN_gint(gtk_tree_view_insert_column_with_data_func(XEN_TO_C_GtkTreeView_(tree_view), XEN_TO_C_gint(position), 
                                                                       XEN_TO_C_gchar_(title), XEN_TO_C_GtkCellRenderer_(cell), 
@@ -18968,9 +18992,10 @@ GtkTreeViewColumnDropFunc func, lambda_data func_data, GtkDestroyNotify destroy)
   XEN_ASSERT_TYPE(XEN_GtkDestroyNotify_P(destroy), destroy, 4, "gtk_tree_view_set_column_drag_function", "GtkDestroyNotify");
   {
     int loc;
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     loc = xm_protect(gxg_ptr);
     XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
+    XEN_LIST_SET(gxg_ptr, 3, destroy);
     gtk_tree_view_set_column_drag_function(XEN_TO_C_GtkTreeView_(tree_view), XEN_TO_C_GtkTreeViewColumnDropFunc(func), XEN_TO_C_lambda_data(func_data), 
                                        XEN_TO_C_GtkDestroyNotify(destroy));
     xm_unprotect_at(loc);
@@ -19059,7 +19084,7 @@ GtkTreeViewMappingFunc func, lambda_data func_data)"
   else XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 3, "gtk_tree_view_map_expanded_rows", "lambda_data");
   {
     int loc;
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     loc = xm_protect(gxg_ptr);
     XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
     gtk_tree_view_map_expanded_rows(XEN_TO_C_GtkTreeView_(tree_view), XEN_TO_C_GtkTreeViewMappingFunc(func), XEN_TO_C_lambda_data(func_data));
@@ -19347,9 +19372,10 @@ GtkTreeViewSearchEqualFunc func, lambda_data func_data, GtkDestroyNotify search_
   XEN_ASSERT_TYPE(XEN_GtkDestroyNotify_P(search_destroy), search_destroy, 4, "gtk_tree_view_set_search_equal_func", "GtkDestroyNotify");
   {
     int loc;
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     loc = xm_protect(gxg_ptr);
     XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
+    XEN_LIST_SET(gxg_ptr, 3, search_destroy);
     gtk_tree_view_set_search_equal_func(XEN_TO_C_GtkTreeView_(tree_view), XEN_TO_C_GtkTreeViewSearchEqualFunc(func), XEN_TO_C_lambda_data(func_data), 
                                     XEN_TO_C_GtkDestroyNotify(search_destroy));
     xm_unprotect_at(loc);
@@ -23577,7 +23603,7 @@ lambda_data func_data, GdkDestroyNotify destroy)"
   {
     XEN result = XEN_FALSE;
     int loc;
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     loc = xm_protect(gxg_ptr);
     XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
     result = C_TO_XEN_gint(gdk_input_add_full(XEN_TO_C_gint(source), XEN_TO_C_GdkInputCondition(condition), XEN_TO_C_GdkInputFunction(func), 
@@ -23599,7 +23625,7 @@ lambda_data func_data)"
   {
     XEN result = XEN_FALSE;
     int loc;
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     loc = xm_protect(gxg_ptr);
     XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
     result = C_TO_XEN_gint(gdk_input_add(XEN_TO_C_gint(source), XEN_TO_C_GdkInputCondition(condition), XEN_TO_C_GdkInputFunction(func), 
@@ -24348,16 +24374,21 @@ static XEN gxg_gtk_clist_set_row_data(XEN clist, XEN row, XEN data)
   return(XEN_FALSE);
 }
 
-static XEN gxg_gtk_clist_set_row_data_full(XEN clist, XEN row, XEN data, XEN destroy)
+static XEN gxg_gtk_clist_set_row_data_full(XEN clist, XEN row, XEN func_data, XEN destroy)
 {
   #define H_gtk_clist_set_row_data_full "void gtk_clist_set_row_data_full(GtkCList* clist, gint row, \
-gpointer data, GtkDestroyNotify destroy)"
+gpointer func_data, GtkDestroyNotify destroy)"
   XEN_ASSERT_TYPE(XEN_GtkCList__P(clist), clist, 1, "gtk_clist_set_row_data_full", "GtkCList*");
   XEN_ASSERT_TYPE(XEN_gint_P(row), row, 2, "gtk_clist_set_row_data_full", "gint");
-  XEN_ASSERT_TYPE(XEN_gpointer_P(data), data, 3, "gtk_clist_set_row_data_full", "gpointer");
+  XEN_ASSERT_TYPE(XEN_gpointer_P(func_data), func_data, 3, "gtk_clist_set_row_data_full", "gpointer");
   XEN_ASSERT_TYPE(XEN_GtkDestroyNotify_P(destroy), destroy, 4, "gtk_clist_set_row_data_full", "GtkDestroyNotify");
-  gtk_clist_set_row_data_full(XEN_TO_C_GtkCList_(clist), XEN_TO_C_gint(row), XEN_TO_C_gpointer(data), XEN_TO_C_GtkDestroyNotify(destroy));
-  return(XEN_FALSE);
+  {
+    XEN gxg_ptr = XEN_LIST_5(XEN_FALSE, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
+    xm_protect(gxg_ptr);
+    XEN_LIST_SET(gxg_ptr, 3, destroy);
+    gtk_clist_set_row_data_full(XEN_TO_C_GtkCList_(clist), XEN_TO_C_gint(row), XEN_TO_C_gpointer(func_data), XEN_TO_C_GtkDestroyNotify(destroy));
+    return(XEN_FALSE);
+   }
 }
 
 static XEN gxg_gtk_clist_get_row_data(XEN clist, XEN row)
@@ -24546,9 +24577,10 @@ GtkCallbackMarshal marshal, lambda_data func_data, GtkDestroyNotify notify)"
   XEN_ASSERT_TYPE(XEN_GtkDestroyNotify_P(notify), notify, 5, "gtk_container_foreach_full", "GtkDestroyNotify");
   {
     int loc;
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     loc = xm_protect(gxg_ptr);
     XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
+    XEN_LIST_SET(gxg_ptr, 3, notify);
     gtk_container_foreach_full(XEN_TO_C_GtkContainer_(container), XEN_TO_C_GtkCallback(func), XEN_TO_C_GtkCallbackMarshal(marshal), 
                            XEN_TO_C_lambda_data(func_data), XEN_TO_C_GtkDestroyNotify(notify));
     xm_unprotect_at(loc);
@@ -24742,7 +24774,7 @@ lambda_data func_data)"
   else XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 3, "gtk_container_forall", "lambda_data");
   {
     int loc;
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     loc = xm_protect(gxg_ptr);
     XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
     gtk_container_forall(XEN_TO_C_GtkContainer_(container), XEN_TO_C_GtkCallback(func), XEN_TO_C_lambda_data(func_data));
@@ -25408,16 +25440,21 @@ gpointer data)"
   return(XEN_FALSE);
 }
 
-static XEN gxg_gtk_ctree_node_set_row_data_full(XEN ctree, XEN node, XEN data, XEN destroy)
+static XEN gxg_gtk_ctree_node_set_row_data_full(XEN ctree, XEN node, XEN func_data, XEN destroy)
 {
   #define H_gtk_ctree_node_set_row_data_full "void gtk_ctree_node_set_row_data_full(GtkCTree* ctree, \
-GtkCTreeNode* node, gpointer data, GtkDestroyNotify destroy)"
+GtkCTreeNode* node, gpointer func_data, GtkDestroyNotify destroy)"
   XEN_ASSERT_TYPE(XEN_GtkCTree__P(ctree), ctree, 1, "gtk_ctree_node_set_row_data_full", "GtkCTree*");
   XEN_ASSERT_TYPE(XEN_GtkCTreeNode__P(node), node, 2, "gtk_ctree_node_set_row_data_full", "GtkCTreeNode*");
-  XEN_ASSERT_TYPE(XEN_gpointer_P(data), data, 3, "gtk_ctree_node_set_row_data_full", "gpointer");
+  XEN_ASSERT_TYPE(XEN_gpointer_P(func_data), func_data, 3, "gtk_ctree_node_set_row_data_full", "gpointer");
   XEN_ASSERT_TYPE(XEN_GtkDestroyNotify_P(destroy), destroy, 4, "gtk_ctree_node_set_row_data_full", "GtkDestroyNotify");
-  gtk_ctree_node_set_row_data_full(XEN_TO_C_GtkCTree_(ctree), XEN_TO_C_GtkCTreeNode_(node), XEN_TO_C_gpointer(data), XEN_TO_C_GtkDestroyNotify(destroy));
-  return(XEN_FALSE);
+  {
+    XEN gxg_ptr = XEN_LIST_5(XEN_FALSE, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
+    xm_protect(gxg_ptr);
+    XEN_LIST_SET(gxg_ptr, 3, destroy);
+    gtk_ctree_node_set_row_data_full(XEN_TO_C_GtkCTree_(ctree), XEN_TO_C_GtkCTreeNode_(node), XEN_TO_C_gpointer(func_data), XEN_TO_C_GtkDestroyNotify(destroy));
+    return(XEN_FALSE);
+   }
 }
 
 static XEN gxg_gtk_ctree_node_get_row_data(XEN ctree, XEN node)
@@ -26046,25 +26083,35 @@ static XEN gxg_gtk_object_unref(XEN object)
 }
 #endif
 
-static XEN gxg_gtk_object_weakref(XEN object, XEN notify, XEN data)
+static XEN gxg_gtk_object_weakref(XEN object, XEN notify, XEN func_data)
 {
-  #define H_gtk_object_weakref "void gtk_object_weakref(GtkObject* object, GtkDestroyNotify notify, gpointer data)"
+  #define H_gtk_object_weakref "void gtk_object_weakref(GtkObject* object, GtkDestroyNotify notify, gpointer func_data)"
   XEN_ASSERT_TYPE(XEN_GtkObject__P(object), object, 1, "gtk_object_weakref", "GtkObject*");
   XEN_ASSERT_TYPE(XEN_GtkDestroyNotify_P(notify), notify, 2, "gtk_object_weakref", "GtkDestroyNotify");
-  XEN_ASSERT_TYPE(XEN_gpointer_P(data), data, 3, "gtk_object_weakref", "gpointer");
-  gtk_object_weakref(XEN_TO_C_GtkObject_(object), XEN_TO_C_GtkDestroyNotify(notify), XEN_TO_C_gpointer(data));
-  return(XEN_FALSE);
+  XEN_ASSERT_TYPE(XEN_gpointer_P(func_data), func_data, 3, "gtk_object_weakref", "gpointer");
+  {
+    XEN gxg_ptr = XEN_LIST_5(XEN_FALSE, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
+    xm_protect(gxg_ptr);
+    XEN_LIST_SET(gxg_ptr, 3, notify);
+    gtk_object_weakref(XEN_TO_C_GtkObject_(object), XEN_TO_C_GtkDestroyNotify(notify), XEN_TO_C_gpointer(func_data));
+    return(XEN_FALSE);
+   }
 }
 
-static XEN gxg_gtk_object_weakunref(XEN object, XEN notify, XEN data)
+static XEN gxg_gtk_object_weakunref(XEN object, XEN notify, XEN func_data)
 {
   #define H_gtk_object_weakunref "void gtk_object_weakunref(GtkObject* object, GtkDestroyNotify notify, \
-gpointer data)"
+gpointer func_data)"
   XEN_ASSERT_TYPE(XEN_GtkObject__P(object), object, 1, "gtk_object_weakunref", "GtkObject*");
   XEN_ASSERT_TYPE(XEN_GtkDestroyNotify_P(notify), notify, 2, "gtk_object_weakunref", "GtkDestroyNotify");
-  XEN_ASSERT_TYPE(XEN_gpointer_P(data), data, 3, "gtk_object_weakunref", "gpointer");
-  gtk_object_weakunref(XEN_TO_C_GtkObject_(object), XEN_TO_C_GtkDestroyNotify(notify), XEN_TO_C_gpointer(data));
-  return(XEN_FALSE);
+  XEN_ASSERT_TYPE(XEN_gpointer_P(func_data), func_data, 3, "gtk_object_weakunref", "gpointer");
+  {
+    XEN gxg_ptr = XEN_LIST_5(XEN_FALSE, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
+    xm_protect(gxg_ptr);
+    XEN_LIST_SET(gxg_ptr, 3, notify);
+    gtk_object_weakunref(XEN_TO_C_GtkObject_(object), XEN_TO_C_GtkDestroyNotify(notify), XEN_TO_C_gpointer(func_data));
+    return(XEN_FALSE);
+   }
 }
 
 static XEN gxg_gtk_object_set_data(XEN object, XEN key, XEN data)
@@ -26077,16 +26124,21 @@ static XEN gxg_gtk_object_set_data(XEN object, XEN key, XEN data)
   return(XEN_FALSE);
 }
 
-static XEN gxg_gtk_object_set_data_full(XEN object, XEN key, XEN data, XEN destroy)
+static XEN gxg_gtk_object_set_data_full(XEN object, XEN key, XEN func_data, XEN destroy)
 {
-  #define H_gtk_object_set_data_full "void gtk_object_set_data_full(GtkObject* object, gchar* key, gpointer data, \
+  #define H_gtk_object_set_data_full "void gtk_object_set_data_full(GtkObject* object, gchar* key, gpointer func_data, \
 GtkDestroyNotify destroy)"
   XEN_ASSERT_TYPE(XEN_GtkObject__P(object), object, 1, "gtk_object_set_data_full", "GtkObject*");
   XEN_ASSERT_TYPE(XEN_gchar__P(key), key, 2, "gtk_object_set_data_full", "gchar*");
-  XEN_ASSERT_TYPE(XEN_gpointer_P(data), data, 3, "gtk_object_set_data_full", "gpointer");
+  XEN_ASSERT_TYPE(XEN_gpointer_P(func_data), func_data, 3, "gtk_object_set_data_full", "gpointer");
   XEN_ASSERT_TYPE(XEN_GtkDestroyNotify_P(destroy), destroy, 4, "gtk_object_set_data_full", "GtkDestroyNotify");
-  gtk_object_set_data_full(XEN_TO_C_GtkObject_(object), XEN_TO_C_gchar_(key), XEN_TO_C_gpointer(data), XEN_TO_C_GtkDestroyNotify(destroy));
-  return(XEN_FALSE);
+  {
+    XEN gxg_ptr = XEN_LIST_5(XEN_FALSE, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
+    xm_protect(gxg_ptr);
+    XEN_LIST_SET(gxg_ptr, 3, destroy);
+    gtk_object_set_data_full(XEN_TO_C_GtkObject_(object), XEN_TO_C_gchar_(key), XEN_TO_C_gpointer(func_data), XEN_TO_C_GtkDestroyNotify(destroy));
+    return(XEN_FALSE);
+   }
 }
 
 static XEN gxg_gtk_object_remove_data(XEN object, XEN key)
@@ -26142,16 +26194,21 @@ gpointer data)"
   return(XEN_FALSE);
 }
 
-static XEN gxg_gtk_object_set_data_by_id_full(XEN object, XEN data_id, XEN data, XEN destroy)
+static XEN gxg_gtk_object_set_data_by_id_full(XEN object, XEN data_id, XEN func_data, XEN destroy)
 {
   #define H_gtk_object_set_data_by_id_full "void gtk_object_set_data_by_id_full(GtkObject* object, GQuark data_id, \
-gpointer data, GtkDestroyNotify destroy)"
+gpointer func_data, GtkDestroyNotify destroy)"
   XEN_ASSERT_TYPE(XEN_GtkObject__P(object), object, 1, "gtk_object_set_data_by_id_full", "GtkObject*");
   XEN_ASSERT_TYPE(XEN_GQuark_P(data_id), data_id, 2, "gtk_object_set_data_by_id_full", "GQuark");
-  XEN_ASSERT_TYPE(XEN_gpointer_P(data), data, 3, "gtk_object_set_data_by_id_full", "gpointer");
+  XEN_ASSERT_TYPE(XEN_gpointer_P(func_data), func_data, 3, "gtk_object_set_data_by_id_full", "gpointer");
   XEN_ASSERT_TYPE(XEN_GtkDestroyNotify_P(destroy), destroy, 4, "gtk_object_set_data_by_id_full", "GtkDestroyNotify");
-  gtk_object_set_data_by_id_full(XEN_TO_C_GtkObject_(object), XEN_TO_C_GQuark(data_id), XEN_TO_C_gpointer(data), XEN_TO_C_GtkDestroyNotify(destroy));
-  return(XEN_FALSE);
+  {
+    XEN gxg_ptr = XEN_LIST_5(XEN_FALSE, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
+    xm_protect(gxg_ptr);
+    XEN_LIST_SET(gxg_ptr, 3, destroy);
+    gtk_object_set_data_by_id_full(XEN_TO_C_GtkObject_(object), XEN_TO_C_GQuark(data_id), XEN_TO_C_gpointer(func_data), XEN_TO_C_GtkDestroyNotify(destroy));
+    return(XEN_FALSE);
+   }
 }
 
 static XEN gxg_gtk_object_get_data_by_id(XEN object, XEN data_id)
@@ -26639,7 +26696,7 @@ lambda_data func_data)"
   if (XEN_NOT_BOUND_P(func_data)) func_data = XEN_FALSE; 
   else XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 4, "gtk_signal_connect", "lambda_data");
   {
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     xm_protect(gxg_ptr);
     if (XEN_REQUIRED_ARGS(func) == 2)
        return(C_TO_XEN_guint(gtk_signal_connect(XEN_TO_C_GtkObject_(object), XEN_TO_C_gchar_(name), (GtkSignalFunc)gxg_func2, 
@@ -26693,7 +26750,7 @@ lambda func, lambda_data func_data)"
   if (XEN_NOT_BOUND_P(func_data)) func_data = XEN_FALSE; 
   else XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 4, "gtk_signal_connect_after", "lambda_data");
   {
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     xm_protect(gxg_ptr);
     if (XEN_REQUIRED_ARGS(func) == 2)
        return(C_TO_XEN_guint(gtk_signal_connect_after(XEN_TO_C_GtkObject_(object), XEN_TO_C_gchar_(name), (GtkSignalFunc)gxg_func2, 
@@ -26718,8 +26775,9 @@ gint after)"
   XEN_ASSERT_TYPE(XEN_gint_P(object_signal), object_signal, 7, "gtk_signal_connect_full", "gint");
   XEN_ASSERT_TYPE(XEN_gint_P(after), after, 8, "gtk_signal_connect_full", "gint");
   {
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     xm_protect(gxg_ptr);
+    XEN_LIST_SET(gxg_ptr, 3, destroy_func);
     if (XEN_REQUIRED_ARGS(func) == 2)
        return(C_TO_XEN_guint(gtk_signal_connect_full(XEN_TO_C_GtkObject_(object), XEN_TO_C_gchar_(name), (GtkSignalFunc)gxg_func2, 
                                                      XEN_TO_C_GtkCallbackMarshal(marshal), XEN_TO_C_lambda_data(func_data), 
@@ -26743,7 +26801,7 @@ lambda func, lambda_data func_data, GtkObject* alive_object)"
   XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 4, "gtk_signal_connect_while_alive", "lambda_data");
   XEN_ASSERT_TYPE(XEN_GtkObject__P(alive_object), alive_object, 5, "gtk_signal_connect_while_alive", "GtkObject*");
   {
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     xm_protect(gxg_ptr);
     if (XEN_REQUIRED_ARGS(func) == 2)
        gtk_signal_connect_while_alive(XEN_TO_C_GtkObject_(object), XEN_TO_C_gchar_(signal), (GtkSignalFunc)gxg_func2, XEN_TO_C_lambda_data(func_data), 
@@ -26773,7 +26831,7 @@ lambda_data func_data)"
   if (XEN_NOT_BOUND_P(func_data)) func_data = XEN_FALSE; 
   else XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 3, "gtk_signal_disconnect_by_func", "lambda_data");
   {
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     xm_protect(gxg_ptr);
     if (XEN_REQUIRED_ARGS(func) == 2)
        gtk_signal_disconnect_by_func(XEN_TO_C_GtkObject_(object), (GtkSignalFunc)gxg_func2, XEN_TO_C_lambda_data(func_data));
@@ -26801,7 +26859,7 @@ lambda func, lambda_data func_data)"
   if (XEN_NOT_BOUND_P(func_data)) func_data = XEN_FALSE; 
   else XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 3, "gtk_signal_handler_block_by_func", "lambda_data");
   {
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     xm_protect(gxg_ptr);
     if (XEN_REQUIRED_ARGS(func) == 2)
        gtk_signal_handler_block_by_func(XEN_TO_C_GtkObject_(object), (GtkSignalFunc)gxg_func2, XEN_TO_C_lambda_data(func_data));
@@ -26829,7 +26887,7 @@ lambda func, lambda_data func_data)"
   if (XEN_NOT_BOUND_P(func_data)) func_data = XEN_FALSE; 
   else XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 3, "gtk_signal_handler_unblock_by_func", "lambda_data");
   {
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     xm_protect(gxg_ptr);
     if (XEN_REQUIRED_ARGS(func) == 2)
        gtk_signal_handler_unblock_by_func(XEN_TO_C_GtkObject_(object), (GtkSignalFunc)gxg_func2, XEN_TO_C_lambda_data(func_data));
@@ -26860,7 +26918,7 @@ guint signal_id, gboolean may_be_blocked, lambda func, lambda_data func_data)"
   if (XEN_NOT_BOUND_P(func_data)) func_data = XEN_FALSE; 
   else XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 5, "gtk_signal_handler_pending_by_func", "lambda_data");
   {
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     xm_protect(gxg_ptr);
     if (XEN_REQUIRED_ARGS(func) == 2)
        return(C_TO_XEN_guint(gtk_signal_handler_pending_by_func(XEN_TO_C_GtkObject_(object), XEN_TO_C_guint(signal_id), XEN_TO_C_gboolean(may_be_blocked), 
@@ -26933,7 +26991,7 @@ lambda_data func_data, GSignalMatchType match, guint action)"
   XEN_ASSERT_TYPE(XEN_GSignalMatchType_P(match), match, 4, "gtk_signal_compat_matched", "GSignalMatchType");
   XEN_ASSERT_TYPE(XEN_guint_P(action), action, 5, "gtk_signal_compat_matched", "guint");
   {
-    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     xm_protect(gxg_ptr);
     if (XEN_REQUIRED_ARGS(func) == 2)
        gtk_signal_compat_matched(XEN_TO_C_GtkObject_(object), (GtkSignalFunc)gxg_func2, XEN_TO_C_lambda_data(func_data), 
@@ -39621,7 +39679,7 @@ static int xg_already_inited = 0;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"07-Mar-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"11-Mar-02\")");
 #endif
       xg_already_inited = 1;
     }

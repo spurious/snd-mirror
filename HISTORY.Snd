@@ -1,5 +1,6 @@
 snd change log
 
+  12-Mar:    header editor bugfix (thanks to Ludger Brummer).
   11-Mar:    removed channel-sync.
   28-Feb:    edit-position bugfix (thanks to Ludger Brummer).
   27-Feb:    color-scale bugfix (thanks to Anders Vinjar).

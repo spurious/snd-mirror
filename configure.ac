@@ -873,73 +873,32 @@ AC_SUBST(A_LD_FLAGS)
 dnl statfs is a mess
 statfs_args=0
 AC_MSG_CHECKING([stafs args])
-AC_TRY_COMPILE(
-  [#include <sys/statfs.h>],
-  [struct statfs buf; 
-   int err,fd; 
-   err=statfs(fd,&buf,sizeof(buf),0)
-  ],
-  statfs_args=4)
-
+AC_TRY_COMPILE([#include <sys/statfs.h>],[struct statfs buf; statfs("test.snd",&buf,sizeof(buf),0)],statfs_args=4)
 if test $statfs_args = 0; then
-  AC_TRY_COMPILE(
-    [#include <sys/vfs.h>],
-    [struct statfs buf; 
-     int err,fd; 
-     err=statfs(fd,&buf,sizeof(buf),0)
-    ],
-    statfs_args=4)
+  AC_TRY_COMPILE([#include <sys/vfs.h>],[struct statfs buf; statfs("test.snd",&buf,sizeof(buf),0)],statfs_args=4)
 fi
 if test $statfs_args = 0; then
   AC_TRY_COMPILE(
     [#include <dirent.h>
      #include <sys/vfs.h>
      #include <sys/statfs.h>
-    ],
-    [struct statfs buf;
-     int err,fd; 
-     err=statfs(fd,&buf,sizeof(buf),0)
-    ],
-    statfs_args=4)
+    ],[struct statfs buf; statfs("test.snd",&buf,sizeof(buf),0)],statfs_args=4)
 fi
 if test $statfs_args = 0; then
-  AC_TRY_COMPILE(
-    [#include <sys/statfs.h>],
-    [struct statfs buf; 
-     int err,fd; 
-     err=statfs(fd,&buf)
-    ],
-    statfs_args=2)
+  AC_TRY_COMPILE([#include <sys/statfs.h>],[struct statfs buf; statfs("test.snd",&buf)],statfs_args=2)
 fi
 if test $statfs_args = 0; then
-  AC_TRY_COMPILE(
-    [#include <sys/vfs.h>],
-    [struct statfs buf; 
-     int err,fd; 
-     err=statfs(fd,&buf)
-    ],
-    statfs_args=2)
+  AC_TRY_COMPILE([#include <sys/vfs.h>],[struct statfs buf; statfs("test.snd",&buf)],statfs_args=2)
 fi
 if test $statfs_args = 0; then
-  AC_TRY_COMPILE(
-    [#include <sys/mount.h>],
-    [struct statfs buf; 
-     int err,fd;
-     err=statfs(fd,&buf)
-    ],
-    statfs_args=2)
+  AC_TRY_COMPILE([#include <sys/mount.h>],[struct statfs buf; statfs("test.snd",&buf)],statfs_args=2)
 fi
 if test $statfs_args = 0; then
   AC_TRY_COMPILE(
     [#include <dirent.h>
      #include <sys/vfs.h>
      #include <sys/statfs.h>
-    ],
-    [struct statfs buf; 
-     int err,fd; 
-     err=statfs(fd,&buf)
-    ],
-    statfs_args=2)
+    ],[struct statfs buf; statfs("test.snd",&buf)],statfs_args=2)
 fi
 if test $statfs_args = 0; then
   statfs_args=2

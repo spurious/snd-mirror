@@ -2563,17 +2563,16 @@ static XEN g_buffer2sample(XEN obj)
 
 static XEN g_buffer2frame(XEN obj, XEN fr)
 {
-  mus_frame *ufr;
   #define H_buffer2frame "(" S_buffer2frame " gen &optional frame) -> next frame of samples in buffer, removing them"
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_buffer_p(MUS_XEN_TO_CLM(obj))), obj, XEN_ARG_1, S_buffer2frame, "a buffer gen");
   if (XEN_BOUND_P(fr))
     {
       XEN_ASSERT_TYPE((MUS_XEN_P(fr)) && (mus_frame_p(MUS_XEN_TO_CLM(fr))), fr, XEN_ARG_2, S_buffer2frame, "a frame");
-      ufr = (mus_frame *)(MUS_XEN_TO_CLM(fr));
+      /* the "{}" here are not redundant!!  SCM_ASSERT_TYPE expands into if ... then error... */
     }
-  else ufr = mus_make_empty_frame(1);
-  return(g_wrap_frame((mus_frame *)mus_buffer2frame((mus_any *)(MUS_XEN_TO_CLM(obj)), (mus_any *)ufr),
-		      ((XEN_BOUND_P(fr)) ? DONT_FREE_FRAME : FREE_FRAME)));
+  else fr = g_make_frame(XEN_LIST_1(C_TO_XEN_INT(1)));
+  mus_buffer2frame((mus_any *)(MUS_XEN_TO_CLM(obj)), (mus_any *)(MUS_XEN_TO_CLM(fr)));
+  return(fr);
 }
 
 static XEN g_buffer_empty_p(XEN obj)
@@ -2604,9 +2603,8 @@ static XEN g_frame2buffer(XEN obj, XEN val)
   #define H_frame2buffer "(" S_frame2buffer " gen f) appends sample in frame f to end of data in buffer"
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_buffer_p(MUS_XEN_TO_CLM(obj))), obj, XEN_ARG_1, S_frame2buffer, "a buffer gen");
   XEN_ASSERT_TYPE((MUS_XEN_P(val)) && (mus_frame_p(MUS_XEN_TO_CLM(val))), val, XEN_ARG_2, S_frame2buffer, "a frame");
-  return(g_wrap_frame((mus_frame *)mus_frame2buffer(MUS_XEN_TO_CLM(obj),
-						    MUS_XEN_TO_CLM(val)),
-		      DONT_FREE_FRAME));
+  mus_frame2buffer(MUS_XEN_TO_CLM(obj), MUS_XEN_TO_CLM(val));
+  return(val);
 }
 
 

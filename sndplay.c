@@ -29,7 +29,12 @@
   #if defined(MAC_OSX)
     #define BUFFER_SIZE 512
   #else
-    #define BUFFER_SIZE 4096
+    #if defined(WIN32)
+      /* this setting from Scott Middleton (actually used 8096) */
+      #define BUFFER_SIZE 8192
+    #else
+      #define BUFFER_SIZE 4096
+    #endif
   #endif
 #endif
 

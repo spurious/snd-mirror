@@ -298,6 +298,11 @@
 			      "timeout_func"
 			      (parse-args "lambda_data func_data" 'callback)
 			      'timeout)
+			(list 'GtkDestroyNotify
+			      "void"
+			      "destroy_func"
+			      (parse-args "lambda_data func_data" 'callback)
+			      'permanent)
 			(list 'GdkFilterFunc
 			      "GdkFilterReturn"
 			      "filter_func"
@@ -988,6 +993,7 @@
 (hey " * TODO: test suite (snd-test 24)~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     12-Mar:    support for GtkDestroyNotify callbacks~%")
 (hey " *     27-Feb:    remove gtk_tree_view_column_cell_render, gtk_tree_view_column_cell_focus, ~%")
 (hey " *                  gtk_tree_view_column_cell_draw_focus and gtk_tree_view_column_cell_set_dirty (privatized in 1.3.15)~%")
 (hey " *                add (on HAVE-* switches) gtk_file_selection_get_selections, gtk_file_selection_set_select_multiple~%")
@@ -1083,7 +1089,7 @@
 
 (for-each 
  (lambda (func)
-   (hey "#define XEN_~A_P(Arg)  XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == ~D)~%"
+   (hey "#define XEN_~A_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == ~D))~%"
 	(symbol->string (callback-name func))
 	(length (callback-args func))))
  callbacks)
@@ -1093,7 +1099,7 @@
 
 (for-each
  (lambda (func)
-   (hey "#define XEN_TO_C_~A(Arg) gxg_~A~%"
+   (hey "#define XEN_TO_C_~A(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_~A~%"
 	(symbol->string (callback-name func))
 	(callback-func func)))
  callbacks)
@@ -1106,6 +1112,7 @@
 (hey "#define C_TO_XEN_GtkTreeIterCompareFunc(Arg) WRAP_FOR_XEN(\"GtkTreeViewSearchEqualFunc\", Arg)~%")
 (hey "#define C_TO_XEN_GtkTreeSelectionFunc(Arg) WRAP_FOR_XEN(\"GtkTreeSelectionFunc\", Arg)~%")
 (hey "#define C_TO_XEN_GtkMenuPositionFunc(Arg) WRAP_FOR_XEN(\"GtkMenuPositionFunc\", Arg)~%")
+(hey "#define C_TO_XEN_GtkDestroyNotify(Arg) WRAP_FOR_XEN(\"GtkDestroyNotify\", Arg)~%")
 (hey "#define XEN_TO_C_GdkFilterReturn(Arg) XEN_TO_C_INT(Arg)~%")
 
 
@@ -1269,7 +1276,9 @@
 		    (length args)
 		    (if (eq? fname 'GtkClipboardClearFunc)
 			"XEN_CADDR"
-			"XEN_CAR"))
+			(if (eq? fname 'GtkDestroyNotify)
+			    "XEN_CADDDR"
+			    "XEN_CAR")))
 	       (for-each
 		(lambda (arg)
 		  (hey (substring "                                                                   " 0 castlen))
@@ -1430,8 +1439,18 @@
 	     (hey "  {~%")
 	     (if using-result (hey "    XEN result = XEN_FALSE;~%"))
 	     (if using-loc (hey "    int loc;~%"))
-	     (hey "    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);~%")
-	     ;; TODO: if destroynotify or callbackmarshal, append these to this list, add callbacks that access list-ref 3 and 4 using same func_data
+	     (hey "    XEN gxg_ptr = XEN_LIST_5(~A, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);~%"
+		  (call-with-current-continuation
+		   (lambda (name-it)
+		     (for-each
+		      (lambda (arg)
+			(let ((argname (cadr arg))
+			      (argtype (car arg)))
+			  (if (string=? argname "func")
+			      (name-it "func"))))
+		      args)
+		     "XEN_FALSE")))
+	     ;; TODO: if destroynotify(gdk/d) or callbackmarshal, append these to this list, add callbacks that access list-ref 3 and 4 using same func_data
 	     (if using-loc
 		 (hey "    loc = xm_protect(gxg_ptr);~%")
 		 (hey "    xm_protect(gxg_ptr);~%"))
@@ -1439,6 +1458,13 @@
 		 (hey "    XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));~%")
 		 (if (eq? lambda-type 'GtkClipboardGetFunc)
 		     (hey "    XEN_LIST_SET(gxg_ptr, 2, clear_func);~%")))
+	     (for-each
+	      (lambda (arg)
+		(let ((argname (cadr arg))
+		      (argtype (car arg)))
+		  (if (string=? argtype "GtkDestroyNotify")
+		      (hey "    XEN_LIST_SET(gxg_ptr, 3, ~A);~%" argname))))
+	      args)
 	     (hey-start)
 	     (if using-result
 		 (hey-on "    result = C_TO_XEN_~A(" (no-stars return-type))

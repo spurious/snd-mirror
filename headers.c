@@ -5256,6 +5256,7 @@ int mus_header_change_type(const char *filename, int new_type, int new_format)
 		  read(ifd, (unsigned char *)comment, len);
 		  close(ifd);
 		}
+	      data_size = data_size * mus_data_format_to_bytes_per_sample(data_format) / mus_data_format_to_bytes_per_sample(new_format);
 	      mus_header_write(new_file, new_type, srate, chans, loc, data_size, new_format, comment, len);
 	    }
 	  else mus_file_create(new_file);

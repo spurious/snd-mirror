@@ -2290,6 +2290,7 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
 
 static Widget edit_header_dialog = NULL;
 static file_data *edit_header_data;
+static snd_info *edit_header_sp = NULL;
 
 static void edit_header_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -2303,16 +2304,14 @@ static void edit_header_cancel_callback(Widget w, XtPointer context, XtPointer i
 
 static void edit_header_ok_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss;
-  snd_info *sp = (snd_info *)context;
+  snd_state *ss = (snd_state *)context;
   XmAnyCallbackStruct *cb = (XmAnyCallbackStruct *)info;
-  ss = sp->state;
-  if ((ss) && (sp->active == 1))
+  if ((ss) && (edit_header_sp->active == 1))
     {
       if (cb->event == ((ss->sgx)->text_activate_event)) return; /* <cr> in one of text fields */
-      if (!(sp->read_only))
-	edit_header_callback(ss, sp, edit_header_data);
-      else snd_error("%s is write-protected", sp->short_filename);
+      if (!(edit_header_sp->read_only))
+	edit_header_callback(ss, edit_header_sp, edit_header_data);
+      else snd_error("%s is write-protected", edit_header_sp->short_filename);
     }
   XtUnmanageChild(edit_header_dialog);
 }
@@ -2331,8 +2330,13 @@ Widget edit_header(snd_info *sp)
   file_info *hdr;
   char *str;
   if (!sp) return(NULL);
+  edit_header_sp = sp;
   ss = sp->state;
   hdr = sp->hdr;
+  str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+  mus_snprintf(str, PRINT_BUFFER_SIZE, STR_Edit_header_of, sp->short_filename);
+  xstr4 = XmStringCreate(str, XmFONTLIST_DEFAULT_TAG);
+  FREE(str);
 
   if (!edit_header_dialog)
     {
@@ -2341,10 +2345,6 @@ Widget edit_header(snd_info *sp)
       xstr2 = XmStringCreate(STR_Help, XmFONTLIST_DEFAULT_TAG);
       xstr3 = XmStringCreate(STR_Save, XmFONTLIST_DEFAULT_TAG);
       titlestr = XmStringCreate(STR_Edit_Header, XmFONTLIST_DEFAULT_TAG);
-      str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-      mus_snprintf(str, PRINT_BUFFER_SIZE, STR_Edit_header_of, sp->short_filename);
-      xstr4 = XmStringCreate(str, XmFONTLIST_DEFAULT_TAG);
-      FREE(str);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNcancelLabelString, xstr1); n++;
       XtSetArg(args[n], XmNhelpLabelString, xstr2); n++;
@@ -2359,11 +2359,10 @@ Widget edit_header(snd_info *sp)
 
       XtAddCallback(edit_header_dialog, XmNcancelCallback, edit_header_cancel_callback, ss);
       XtAddCallback(edit_header_dialog, XmNhelpCallback, edit_header_help_callback, ss);
-      XtAddCallback(edit_header_dialog, XmNokCallback, edit_header_ok_callback, sp);
+      XtAddCallback(edit_header_dialog, XmNokCallback, edit_header_ok_callback, ss);
       XmStringFree(xstr1);
       XmStringFree(xstr2);
       XmStringFree(xstr3);
-      XmStringFree(xstr4);
       XmStringFree(titlestr);
 
       n = 0;
@@ -2385,7 +2384,13 @@ Widget edit_header(snd_info *sp)
 	}
       set_dialog_widget(ss, EDIT_HEADER_DIALOG, edit_header_dialog);
     }
-  else raise_dialog(edit_header_dialog);
+  else 
+    {
+      XtVaSetValues(edit_header_dialog, XmNmessageString, xstr4, NULL);
+      load_header_and_data_lists(edit_header_data, hdr->type, hdr->format, hdr->srate, hdr->chans, hdr->data_location, hdr->comment);
+      raise_dialog(edit_header_dialog);
+    }
+  XmStringFree(xstr4);
   if (!(XtIsManaged(edit_header_dialog))) XtManageChild(edit_header_dialog);
   return(edit_header_dialog);
 }

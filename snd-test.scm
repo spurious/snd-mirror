@@ -2153,7 +2153,7 @@
 			     ((= k chans))
 			   (do ((i 0 (1+ i)))
 			       ((= i samps))
-			     (IF (fneq (sound-data-ref sdata k i) (sound-data-ref ndata k i))
+			     (if (fneq (sound-data-ref sdata k i) (sound-data-ref ndata k i))
 				 (throw 'read-write-error
 					(car df-ht) (mus-data-format-name (car df-ht))
 					(cadr df-ht) (mus-header-type-name (cadr df-ht))
@@ -2609,7 +2609,7 @@
 		 (lambda ()
 		   (do ((i 0 (1+ i)))
 		       ((= i 50827))
-		     (IF (not (= (next-sample vr) (vct-ref samps1 i) (vct-ref samps2 i)))
+		     (if (not (= (next-sample vr) (vct-ref samps1 i) (vct-ref samps2 i)))
 			 (begin
 			   (snd-display ";readers disagree at ~D" i)
 			   (throw 'break)))))
@@ -5248,6 +5248,7 @@
 	(sample->buffer gen 1.0)
 	(sample->buffer gen 0.5)
 	(sample->buffer gen 0.25)
+
 	(print-and-check gen 
 			 "buffer"
 			 "buffer: length: 3, loc: 0, fill: 3.000"
@@ -5271,18 +5272,21 @@
 	    (fr3 (make-frame 2 .5 .6))
 	    (fr4 (make-frame 2 .7 .8)))
 	(frame->buffer gen fr1)
+
 	(print-and-check gen 
 			 "buffer"
 			 "buffer: length: 6, loc: 0, fill: 2.000"
 			 "rblk buf[6 (external)]: [0.100 0.200 0.000 0.000 0.000 0.000], loc: 0, fill_time: 2.000000, empty: 1")
 	(frame->buffer gen fr2)
 	(frame->buffer gen fr3)
+
 	(print-and-check gen 
 			 "buffer"
 			 "buffer: length: 6, loc: 0, fill: 6.000"
 			 "rblk buf[6 (external)]: [0.100 0.200 0.300 0.400 0.500 0.600], loc: 0, fill_time: 6.000000, empty: 1")
 	(buffer->frame gen fr2)
 	(IF (not (equal? fr2 fr1)) (snd-display ";buffer->frame: ~A ~A?" fr1 fr2))
+
 	(print-and-check gen 
 			 "buffer"
 			 "buffer: length: 6, loc: 2, fill: 6.000"
@@ -5293,6 +5297,7 @@
 	  (buffer->frame gen fr1)
 	  (IF (not (equal? fr1 (make-frame 2 .4 .5))) (snd-display ";buffer->frame offset: ~A?" fr1))
 	  (frame->buffer gen fr4)
+
 	(print-and-check gen 
 			 "buffer"
 			 "buffer: length: 6, loc: 0, fill: 3.000"
@@ -7152,7 +7157,7 @@
 		   (lambda ()
 		     (do ((i 0 (1+ i)))
 			 ((= i 50828))
-		       (IF (not (= (vr) (samps1 i)))
+		       (if (not (= (vr) (samps1 i)))
 			   (begin
 			     (snd-display ";(mix) readers disagree at ~D" i)
 			     (throw 'break)))))
@@ -10279,7 +10284,7 @@
 	  (do ((i 0 (1+ i)))
 	      ((= i len))
 	    (let* ((nv (abs (next-sample new-reader))))
-	      (IF (> nv newmax) (set! newmax nv))))
+	      (if (> nv newmax) (set! newmax nv))))
 	  (IF (fneq newmax maxval)
 	      (snd-display ";scale-selection-to (~D ~D) ~A: ~A?" beg len maxval newmax))
 	  (free-sample-reader new-reader)))
@@ -13178,7 +13183,7 @@ EDITS: 4
 	      (select-channel 1)
 	      (click-button cf #t) (force-event)
 	      (IF (not (graph-transform? ind 1)) (snd-display ";cf click but not fft"))
-	      (click-button cw #f)
+	      (click-button cw #f) (force-event)
 	      (IF (graph-time? ind 1) (snd-display ";cw click but still time"))
 	      (click-button cf #f 4) (force-event)
 	      (click-button cw #t) (force-event)
@@ -14211,6 +14216,42 @@ EDITS: 4
 
 		;; ---------------- edit header dialog ----------------
                 (let ((ind (open-sound "oboe.snd")))
+		  (define (type->pos type)
+		    (if (= type mus-next) 1
+			(if (= type mus-aifc) 2
+			    (if (= type mus-riff) 3
+				(if (= type mus-raw) 4
+				    (if (= type mus-aiff) 5
+					(if (= type mus-ircam) 6
+					    7)))))))
+
+		  (define (format->pos type format)
+		    (let ((next-formats (list mus-bshort mus-mulaw mus-byte mus-bfloat mus-bint mus-alaw mus-b24int mus-bdouble))
+			  (ircam-formats (list mus-bshort mus-mulaw mus-bfloat mus-bint mus-alaw))
+			  (wave-formats (list mus-mulaw mus-alaw mus-ubyte mus-lshort mus-lint mus-lfloat mus-ldouble mus-l24int))
+			  (aifc-formats (list mus-bshort mus-mulaw mus-byte mus-bint mus-alaw mus-b24int 
+					      mus-bfloat mus-bdouble mus-ubyte mus-lshort mus-lint mus-l24int mus-ubshort))
+			  (aiff-formats (list mus-bshort mus-bint mus-byte mus-b24int))
+			  (nist-formats (list mus-bshort mus-lshort mus-bint mus-lint mus-byte mus-b24int mus-l24int))
+			  (raw-formats (list mus-bshort mus-mulaw mus-byte mus-bfloat mus-bint mus-alaw mus-ubyte mus-b24int 
+					     mus-bdouble mus-lshort mus-lint mus-lfloat mus-ldouble mus-ubshort mus-ulshort
+					     mus-l24int mus-bintn mus-lintn)))
+		      (define (position val lst pos)
+			(call-with-current-continuation
+			 (lambda (return)
+			   (if (null? lst)
+			       #f
+			       (if (= val (car lst))
+				   (return pos)
+				   (position val (cdr lst) (1+ pos)))))))
+		      (if (= type mus-next) (position format next-formats 1)
+			  (if (= type mus-aifc) (position format aifc-formats 1)
+			      (if (= type mus-riff) (position format wave-formats 1)
+				  (if (= type mus-raw) (position format raw-formats 1)
+				      (if (= type mus-aiff) (position format aiff-formats 1)
+					  (if (= type mus-ircam) (position format ircam-formats 1)
+					      (position format nist-formats 1)))))))))
+
 		  (if (file-exists? "fmv.snd") (delete-file "fmv.snd"))
 		  (save-sound-as "fmv.snd" ind)
 		  (close-sound ind)
@@ -14224,15 +14265,15 @@ EDITS: 4
 			 (chtxt (find-child editd "chans-text"))
 			 (loctxt (find-child editd "location-text"))
 			 (comtxt (find-child editd "comment-text")))
-		    (|XmListSelectPos types 3 #t)
-		    (|XmListSelectPos formats 6 #t)
+		    (|XmListSelectPos types (type->pos mus-riff) #t)
+		    (|XmListSelectPos formats (format->pos mus-riff mus-lfloat) #t)
 		    (|XmTextSetString srtxt "8")
 		    (key-event srtxt snd-tab-key 0) (force-event)
 		    (|XmUpdateDisplay srtxt)
 		    (|XmTextSetString loctxt "44")
 		    (|XmTextSetString comtxt "saved from edit-header dialog")
 		    (click-button (|XmMessageBoxGetChild editd |XmDIALOG_OK_BUTTON)) (force-event)
-		    (update-sound ind)
+		    (set! ind (find-sound "fmv.snd"))
 		    (IF (not (= (header-type ind) mus-riff))
 			(snd-display ";edit-header -> riff? ~A" (mus-header-type-name (header-type ind))))
 		    (IF (not (= (data-format ind) mus-lfloat))
@@ -14244,9 +14285,103 @@ EDITS: 4
 			(snd-display ";edit header comment: ~A" (comment ind)))
 		    (IF (|XtIsManaged editd)
 			(snd-display "why is edit header dialog active?"))
-		    (edit-header-dialog)
-		    (click-button (|XmMessageBoxGetChild editd |XmDIALOG_CANCEL_BUTTON)) (force-event)
-		    (close-sound ind)))
+		    (close-sound ind)
+		    (set! ind (open-sound "4.aiff"))
+		    (let ((old-data (channel->vct 250000 500 ind 1))
+			  (old-silence (channel->vct 103000 500 ind 1))
+			  (old-length (mus-sound-duration "4.aiff")))
+		      (close-sound ind)
+		      (system "cp -f 4.aiff test.aiff")
+		      (set! ind (open-sound "test.aiff"))
+		      (IF (not (sound? ind)) (snd-display ";cp -> test.aiff: ~A" ind))
+		      (for-each
+		       (lambda (typ frm chns sr com backout nominal-length)
+			 (edit-header-dialog)
+			 (IF (not (|XtIsManaged editd))
+			     (snd-display "why isn't the edit header dialog active?"))
+			 (|XmListSelectPos types (type->pos typ) #t)
+			 (|XmListSelectPos formats (format->pos typ frm) #t)
+			 (click-button (|XmMessageBoxGetChild editd |XmDIALOG_OK_BUTTON)) (force-event)
+			 (set! ind (find-sound "test.aiff"))
+			 (IF (not (= (header-type ind) typ))
+			     (snd-display ";ledit-header type -> ~A ~A" typ (mus-header-type-name (header-type ind))))
+			 (edit-header-dialog)
+			 (|XmTextSetString srtxt (number->string sr))
+			 (click-button (|XmMessageBoxGetChild editd |XmDIALOG_OK_BUTTON)) (force-event)
+			 (set! ind (find-sound "test.aiff"))
+			 (IF (not (= (data-format ind) frm))
+			     (snd-display ";ledit-header format -> ~A ~A (~A ~A) [~A]" 
+					  frm (data-format ind) 
+					  (mus-data-format-name (data-format ind))
+					  (mus-data-format-name frm)
+					  (mus-header-type-name typ)))
+			 (IF (not (= (srate ind) sr))
+			     (snd-display ";ledit-header srate -> ~A ~A" sr (srate ind)))
+			 (edit-header-dialog)
+			 (if com (|XmTextSetString comtxt com))
+			 (|XmTextSetString chtxt (number->string chns))
+			 (click-button (|XmMessageBoxGetChild editd |XmDIALOG_OK_BUTTON)) (force-event)
+			 (set! ind (find-sound "test.aiff"))
+			 (if com
+			     (IF (or (not (string? (comment ind)))
+				     (not (string=? (comment ind) com)))
+				 (snd-display ";edit header comment ~A: ~A" com (comment ind))))
+			 (IF (not (= (chans ind) chns))
+			     (snd-display ";ledit-header chans -> ~A ~A" chns (chans ind)))
+			 (IF (and nominal-length
+				  (fneq (mus-sound-duration "test.aiff") nominal-length))
+			     (snd-display ";ledit-header duration: nominal: ~A, current: ~A [~A ~A ~A ~A]" 
+					  nominal-length (mus-sound-duration "test.aiff") 
+					  (mus-header-type-name typ) 
+					  (mus-data-format-name frm)
+					  sr chns))
+			 (if backout
+			     (let ((new-data (channel->vct 250000 500 ind 1))
+				   (new-silence (channel->vct 103000 500 ind 1)))
+			       (IF (not (vequal new-data old-data))
+				   (snd-display ";backout data diffs: ~A ~A ~A"
+						(let ((sum 0.0)
+						      (sub-data (vct-copy new-data)))
+						  (vct-subtract! sub-data old-data)
+						  (do ((i 0 (1+ i)))
+						      ((= i 500))
+						    (set! sum (+ sum (abs (vct-ref sub-data i)))))
+						  sum)
+						old-data new-data))
+			       (IF (not (vequal new-silence old-silence))
+				   (snd-display ";backout silence diffs: ~A ~A ~A"
+						(let ((sum 0.0)
+						      (sub-silence (vct-copy new-silence)))
+						  (vct-subtract! sub-silence old-silence)
+						  (do ((i 0 (1+ i)))
+						      ((= i 500))
+						    (set! sum (+ sum (abs (vct-ref sub-silence i)))))
+						  sum)
+						old-silence new-silence)))))
+		       (list mus-aiff mus-aifc mus-next mus-aifc mus-riff 
+			     mus-next mus-next mus-aiff mus-aifc
+			     mus-nist mus-ircam mus-aifc mus-aifc)
+		       (list mus-bshort mus-bshort mus-bshort mus-bshort mus-lfloat 
+			     mus-bshort mus-bfloat mus-bshort mus-bshort
+			     mus-lint mus-alaw mus-bshort mus-bint)
+		       (list 2 4 2 4 4 
+			     2 2 2 4
+			     2 4 4 4)
+		       (list 22050 22050 44100 22050 22050 
+			     22050 22050 22050 22050
+			     44100 8000 44100 22050)
+		       (list #f #f "this is a comment" "this is another comment" "riff time" 
+			     "next time" #f "aiff time" "aifc time"
+			     #f "ircam time" "aifc time" #f)
+		       (list #f #t #f #t #f 
+			     #f #f #f #t
+			     #f #f #t #f)
+		       (list (* 2 old-length) old-length old-length old-length (* 0.5 old-length) 
+			     (* 2 old-length) old-length (* 2 old-length) old-length
+			     #f #f (* 0.5 old-length) (* 0.5 old-length))))
+		    (close-sound ind)
+		    (click-button (|XmMessageBoxGetChild editd |XmDIALOG_CANCEL_BUTTON)) (force-event)))
+		(if (file-exists? "test.aiff") (delete-file "test.aiff"))
 
 		;; ---------------- edit:find dialog ----------------
 		(if (defined? 'edit-find-dialog)
