@@ -265,6 +265,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+20-Mar:  mouse-enter-label hook function needs full filename (thanks to Anders Vinjar).\n\
 19-Mar:  snd 4.12.\n\
          removed gdbm support from sndlib.\n\
 16-Mar:  read|write-peak-env-info-file.\n\

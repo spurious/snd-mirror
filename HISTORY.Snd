@@ -1,5 +1,6 @@
 snd change log
 
+  20-Mar:    mouse-enter-label hook function needs full filename (thanks to Anders Vinjar).
   19-Mar:    snd 4.12.
              removed gdbm support from sndlib.
   16-Mar:    read|write-peak-env-info-file.

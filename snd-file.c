@@ -903,7 +903,8 @@ static int max_curfile_end = 0;
 static int max_prevfile_end = -1;
 static int prevtime = 0;
 
-char *get_prevnames(int n) {return(prevnames[n]);}
+char *get_prevname(int n) {return(prevnames[n]);}
+char *get_prevfullname(int n) {return(prevfullnames[n]);}
 int get_max_prevfile_end(void) {return(max_prevfile_end);}
 void set_max_prevfile_end(int n) {max_prevfile_end = n;}
 int get_prevfile_end(void) {return(prevfile_end);}
@@ -912,6 +913,16 @@ void set_max_curfile_end(int n) {max_curfile_end = n;}
 int get_curfile_end(void) {return(curfile_end);}
 int get_curfile_size(void) {return(curfile_size);}
 int get_prevfile_size(void) {return(prevfile_size);}
+
+char *get_curfullname(int pos)
+{
+  snd_info *sp;
+  snd_state *ss;
+  ss = get_global_state();
+  sp = find_sound(ss, curnames[pos]);
+  if (sp) return(sp->fullname);
+  return(NULL);
+}
 
 char *view_curfiles_name(int pos)
 {

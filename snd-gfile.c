@@ -640,15 +640,25 @@ static gint mouse_name(SCM hook, GtkWidget *w)
   regrow *r;
   if (HOOKED(hook))
     {
-      gtk_label_get(GTK_LABEL(GTK_BIN(w)->child), &label);
-      if (label)
+      r = (regrow *)gtk_object_get_user_data(GTK_OBJECT(w));
+      if (r)
 	{
-	  r = (regrow *)gtk_object_get_user_data(GTK_OBJECT(w));
-	  if (r)
-	    g_c_run_progn_hook(hook,
-			       SCM_LIST3(TO_SMALL_SCM_INT(r->parent),
-					 TO_SMALL_SCM_INT(r->pos),
-					 TO_SCM_STRING(label)));
+	  if (r->parent == CURRENT_FILE_VIEWER)
+	    label = get_curfullname(r->pos);
+	  else
+	    {
+	      if (r->parent == PREVIOUS_FILE_VIEWER)
+		label = get_prevfullname(r->pos);
+	      else
+		gtk_label_get(GTK_LABEL(GTK_BIN(w)->child), &label);
+	    }
+	  if (label)
+	    {
+	      g_c_run_progn_hook(hook,
+				 SCM_LIST3(TO_SMALL_SCM_INT(r->parent),
+					   TO_SMALL_SCM_INT(r->pos),
+					   TO_SCM_STRING(label)));
+	    }
 	}
     }
   return(0);
@@ -842,7 +852,7 @@ static void View_CurFiles_Select_Callback(GtkWidget *w, gpointer context)
 static void View_PrevFiles_Unlist_Callback(GtkWidget *w, gpointer context) 
 {
   regrow *r = (regrow *)context;
-  file_unprevlist(get_prevnames(r->pos));
+  file_unprevlist(get_prevname(r->pos));
   make_prevfiles_list(r->ss);
 }
 
@@ -961,7 +971,7 @@ void make_prevfiles_list (snd_state *ss)
 	      r->ss = ss;
 	      r->parent = PREVIOUS_FILE_VIEWER;
 	    }
-	  set_button_label_bold(r->nm, get_prevnames(r->pos));
+	  set_button_label_bold(r->nm, get_prevname(r->pos));
 	  set_toggle_button(r->sv, FALSE, FALSE, (void *)r);
 	  set_toggle_button(r->pl, FALSE, FALSE, (void *)r);
 	  gtk_widget_show(r->rw);

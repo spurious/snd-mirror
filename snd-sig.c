@@ -2500,7 +2500,7 @@ static void reverse_sound(chan_info *ncp, int over_selection)
 void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexpr, 
 	       int from_enved, const char *origin, mus_any *gen)
 {
-  snd_fd *sf;
+  snd_fd *sf = NULL;
   snd_info *sp;
   sync_info *si;
   sync_state *sc;
@@ -2560,6 +2560,16 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
       temp_file = 1; 
       ofile = snd_tempnam(ss); /* see warning below -- don't use tmpnam without deleting free */
       ofd = open_temp_file(ofile, si->chans, hdr, ss);
+      if (ofd == -1)
+	{
+	  free(ofile);
+	  if (e) mus_free(egen);
+	  for (i = 0; i < si->chans; i++) 
+	    if (sfs[i]) 
+	      free_snd_fd(sfs[i]);
+	  free_sync_state(sc);
+	  return; /* hopefully someone raised an error flag?? */
+	}
       datumb = mus_data_format_to_bytes_per_sample(hdr->format);
     }
   else temp_file = 0;
@@ -2587,7 +2597,8 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 	    {
 	      if (j == FILE_BUFFER_SIZE)
 		{
-		  progress_report(sp, S_env_sound, 0, 0, (Float)i / ((Float)dur), from_enved);
+		  if (reporting) 
+		    progress_report(sp, S_env_sound, 0, 0, (Float)i / ((Float)dur), from_enved);
 		  err = mus_file_write(ofd, 0, j - 1, si->chans, data);
 		  j = 0;
 		  if (err == -1) break;
@@ -2608,7 +2619,8 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 	    {
 	      if (j == FILE_BUFFER_SIZE)
 		{
-		  progress_report(sp, S_env_sound, 0, 0, (Float)i / ((Float)dur), from_enved);
+		  if (reporting)
+		    progress_report(sp, S_env_sound, 0, 0, (Float)i / ((Float)dur), from_enved);
 		  err = mus_file_write(ofd, 0, j - 1, 1, data);
 		  j = 0;
 		  if (err == -1) break;

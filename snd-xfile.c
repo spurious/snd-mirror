@@ -1076,14 +1076,24 @@ static void mouse_name_leave_or_enter(regrow *r, SCM hook)
   if ((r) &&
       (HOOKED(hook)))
     {
-      /* it's a bit tedious to get the current button label... */
-      XtVaGetValues(r->nm, XmNlabelString, &s1, NULL);
-      XmStringGetLtoR(s1, XmFONTLIST_DEFAULT_TAG, &label);
-      if (label == NULL)
+      if (r->parent == CURRENT_FILE_VIEWER)
+	label = get_curfullname(r->pos);
+      else
 	{
-	  XmStringGetLtoR(s1, "button_font", &label);
-	  if (label == NULL)
-	    XmStringGetLtoR(s1, "bold_button_font", &label);
+	  if (r->parent == PREVIOUS_FILE_VIEWER)
+	    label = get_prevfullname(r->pos);
+	  else
+	    {
+	      /* it's a bit tedious to get the current button label... */
+	      XtVaGetValues(r->nm, XmNlabelString, &s1, NULL);
+	      XmStringGetLtoR(s1, XmFONTLIST_DEFAULT_TAG, &label);
+	      if (label == NULL)
+		{
+		  XmStringGetLtoR(s1, "button_font", &label);
+		  if (label == NULL)
+		    XmStringGetLtoR(s1, "bold_button_font", &label);
+		}
+	    }
 	}
       if (label)
 	g_c_run_progn_hook(hook,
@@ -1318,7 +1328,7 @@ static void View_CurFiles_Select_Callback(Widget w, XtPointer context, XtPointer
 static void View_PrevFiles_Unlist_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   regrow *r = (regrow *)context;
-  file_unprevlist(get_prevnames(r->pos));
+  file_unprevlist(get_prevname(r->pos));
   make_prevfiles_list(r->ss);
 }
 
@@ -1438,7 +1448,7 @@ void make_prevfiles_list (snd_state *ss)
 	      r->parent = PREVIOUS_FILE_VIEWER;
 	    }
 	  XtUnmanageChild(r->rw);
-	  set_button_label_bold(r->nm, get_prevnames(r->pos));
+	  set_button_label_bold(r->nm, get_prevname(r->pos));
 	  XmToggleButtonSetState(r->sv, FALSE, FALSE);
 	  XmToggleButtonSetState(r->pl, FALSE, FALSE);
 	  XtManageChild(r->rw);
