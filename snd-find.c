@@ -146,6 +146,7 @@ char *global_search(snd_state *ss, int direction)
       fd->cps = (chan_info **)CALLOC(chans, sizeof(chan_info *));
       for_each_chan_1(ss, prepare_global_search, (void *)fd);
       fd->n = -1;
+      ss->stopped_explicitly = FALSE;
       while (!(run_global_search(ss, fd)))
 	{
 	  passes++;
@@ -175,7 +176,7 @@ char *global_search(snd_state *ss, int direction)
 	  /* now in its own info window show find state, and update graph if needed */
 	  show_cursor_info(cp);
 	}
-      ss->stopped_explicitly = 0;
+      ss->stopped_explicitly = FALSE;
       for (i = 0; i < chans; i++) 
 	if (fd->cps[i]) 
 	  free_snd_fd(fd->fds[i]);
@@ -222,6 +223,7 @@ static off_t cursor_find_forward(snd_info *sp, chan_info *cp, int count)
     }
   else
     {
+      ss->stopped_explicitly = FALSE;
       for (i = start, passes = 0; i < end; i++, passes++)
 	{
 	  res = XEN_CALL_1(sp->search_proc, 
@@ -242,7 +244,7 @@ static off_t cursor_find_forward(snd_info *sp, chan_info *cp, int count)
 	  if (ss->stopped_explicitly) break;
 	}
     }
-  ss->stopped_explicitly = 0;
+  ss->stopped_explicitly = FALSE;
   free_snd_fd(sf);
   search_in_progress = 0;
   if (count != 0) return(-1); /* impossible sample number, so => failure */
@@ -285,6 +287,7 @@ static off_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
     }
   else
     {
+      ss->stopped_explicitly = FALSE;
       for (i = start, passes = 0; i >= 0; i--, passes++)
 	{
 	  /* sp search proc as ptree */
@@ -306,7 +309,7 @@ static off_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
 	  if (ss->stopped_explicitly) break;
 	}
     }
-  ss->stopped_explicitly = 0;
+  ss->stopped_explicitly = FALSE;
   free_snd_fd(sf);
   search_in_progress = 0;
   if (count != 0) return(-1); /* impossible sample number, so => failure */

@@ -2915,6 +2915,7 @@ static void play_track(snd_state *ss, chan_info **ucps, int chans, int track_num
 				     dac_size(ss));
       if (playfd != -1)
 	{
+	  ss->stopped_explicitly = FALSE;
 	  for (i = 0; i < samps; i += frames)
 	    {
 #if MAC_OSX
@@ -2942,7 +2943,7 @@ static void play_track(snd_state *ss, chan_info **ucps, int chans, int track_num
 	      check_for_event(ss);
 	      if (ss->stopped_explicitly)
 		{
-		  ss->stopped_explicitly = 0;
+		  ss->stopped_explicitly = FALSE;
 		  report_in_minibuffer(cps[0]->sound, "stopped");
 		  break;
 		}
@@ -3026,6 +3027,7 @@ static void play_mix(snd_state *ss, mix_info *md)
       mf = init_mix_read(md, FALSE);
       if (mf)
 	{
+	  ss->stopped_explicitly = FALSE;
 	  for (i = 0; i < samps; i += frames)
 	    {
 #if MAC_OSX
@@ -3047,7 +3049,7 @@ static void play_mix(snd_state *ss, mix_info *md)
 	      check_for_event(ss);
 	      if ((ss->stopped_explicitly) || (mix_play_stopped()))
 		{
-		  ss->stopped_explicitly = 0;
+		  ss->stopped_explicitly = FALSE;
 		  report_in_minibuffer(cp->sound, "stopped");
 		  break;
 		}

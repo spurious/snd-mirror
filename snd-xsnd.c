@@ -3256,17 +3256,11 @@ void finish_progress_report(snd_info *sp, int from_enved)
   else snd_file_glasses_icon(sp, FALSE, 0);
   clear_minibuffer_prompt(sp);
 #else
-  char *expr_str;
   snd_state *ss;
   ss = get_global_state();
-  expr_str = (char *)CALLOC(32, sizeof(char));
-  if (ss->stopped_explicitly) 
-    sprintf(expr_str, "stopped"); 
-  else expr_str[0] ='\0';
   if (from_enved)
-    display_enved_progress(expr_str, 0);
-  else report_in_minibuffer(sp, expr_str);
-  FREE(expr_str);
+    display_enved_progress((ss->stopped_explicitly) ? "stopped" : "", 0);
+  else report_in_minibuffer(sp, (ss->stopped_explicitly) ? "stopped" : "");
 #endif
 }
 
@@ -3275,14 +3269,8 @@ void start_progress_report(snd_info *sp, int from_enved)
 #if HAVE_XPM
   if (!(from_enved)) snd_file_glasses_icon(sp, TRUE, 0);
 #else
-  char *expr_str;
   if (from_enved)
-    {
-      expr_str = (char *)CALLOC(4, sizeof(char));
-      expr_str[0] ='\0';
-      display_enved_progress(expr_str, 0);
-      FREE(expr_str);
-    }
+    display_enved_progress("", 0);
 #endif
 }
 

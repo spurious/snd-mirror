@@ -1115,6 +1115,7 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	  ymax = MUS_SAMPLE_MIN;
 	  if (cp->printing) pinc = samples_per_pixel/cur_srate;
 	  ap->changed = FALSE;
+	  ss->stopped_explicitly = FALSE;
 	  for (ioff = ap->losamp, xf = 0.0; ioff <= ap->hisamp; ioff++)
 	    {
 	      samp = read_sample(sf);
@@ -1141,7 +1142,7 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 		      check_for_event(ss);
 		      if ((ap->changed) || (ss->stopped_explicitly))
 			{
-			  ss->stopped_explicitly = 0;
+			  ss->stopped_explicitly = FALSE;
 			  ap->changed = FALSE;
 			  break;
 			}
@@ -1274,6 +1275,7 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
 	  j = 0;      /* graph point counter */
 	  ymin = 100.0;
 	  ymax = -100.0;
+	  ss->stopped_explicitly = FALSE;
 	  for (ioff = losamp, xf = 0.0; ioff <= hisamp; ioff++)
 	    {
 	      samp = read_sample_to_float(sf);
@@ -1292,7 +1294,7 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
 		    {
 		      if ((ap->changed) || (ss->stopped_explicitly))
 			{
-			  ss->stopped_explicitly = 0;
+			  ss->stopped_explicitly = FALSE;
 			  ap->changed = FALSE;
 			  break;
 			}
@@ -1873,6 +1875,7 @@ static void make_sonogram(chan_info *cp, snd_info *sp, snd_state *ss)
       xfincr = ((Float)fwidth / (Float)(si->target_slices));
       xf = 2 + fap->x_axis_x0;
       ax = copy_context(cp);
+      ss->stopped_explicitly = FALSE;
       for (slice = 0; slice < si->active_slices; slice++, xf += xfincr)
 	{
 	  memset((void *)js, 0, COLORMAP_SIZE * sizeof(int));
@@ -1905,7 +1908,7 @@ static void make_sonogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	      check_for_event(ss);
 	      if ((ss->stopped_explicitly) || (!(cp->active))) /* user closed file while trying to print */
 		{
-		  ss->stopped_explicitly = 0;
+		  ss->stopped_explicitly = FALSE;
 		  report_in_minibuffer(sp, "stopped");
 		  break;
 		}
@@ -2283,6 +2286,7 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
       ax = copy_context(cp);
       if (color_map(ss) == BLACK_AND_WHITE)
 	{
+	  ss->stopped_explicitly = FALSE;
 	  for (slice = 0, xoff = fap->x_axis_x0, yoff = fap->y_axis_y0; 
 	       slice < si->active_slices;
 	       slice++, yoff += yincr)
@@ -2317,7 +2321,7 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 		  check_for_event(ss);
 		  if ((ss->stopped_explicitly) || (!(cp->active)))
 		    {
-		      ss->stopped_explicitly = 0;
+		      ss->stopped_explicitly = FALSE;
 		      report_in_minibuffer(sp, "stopped");
 		      break;
 		    }
@@ -2328,6 +2332,7 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	{
 	  /* spectrogram in various colors */
 	  allocate_color_map(ss, color_map(ss));
+	  ss->stopped_explicitly = FALSE;
 	  for (slice = 0, xoff = fap->x_axis_x0, yoff = fap->y_axis_y0; 
 	       slice < si->active_slices; 
 	       slice++, yoff += yincr)
@@ -2373,7 +2378,7 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 		  check_for_event(ss);
 		  if ((ss->stopped_explicitly) || (!(cp->active)))
 		    {
-		      ss->stopped_explicitly = 0;
+		      ss->stopped_explicitly = FALSE;
 		      report_in_minibuffer(sp, "stopped");
 		      break;
 		    }

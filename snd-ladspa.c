@@ -14,6 +14,7 @@
 
 /* CHANGES:
  *
+ * bil: 21-Nov-02 better checks for C-g interrupt.
  * bil: 2-May-02  use off_t for sample number.
  * bil: 14-Dec-01 various C++ cleanups.
  * bil: 28-Nov-01 input chans need not equal output chans now.
@@ -645,6 +646,7 @@ Information about about parameters can be acquired using analyse-ladspa."
     psDescriptor->activate(psHandle);
 
   lAt = 0;
+  state->stopped_explicitly = FALSE;
   while (lAt < num) {
 
     /* Decide how much audio to process this frame. */
@@ -692,22 +694,29 @@ Information about about parameters can be acquired using analyse-ladspa."
 
   /* Discard tmp header. */
   hdr = free_file_info(hdr);
-
-  for (i = 0, j = 0; i < outchans; i++)
+  if (!(state->stopped_explicitly))
     {
-      ncp = sf[j]->cp;
-      file_change_samples(sf[j]->initial_samp,
-			  num,
-			  ofile,
-			  ncp,
-			  i,
-			  (outchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
-			  LOCK_MIXES,
-			  XEN_TO_C_STRING(origin),
-			  ncp->edit_ctr);
-      update_graph(ncp);
-      j++;
-      if (j >= inchans) j = 0;
+      for (i = 0, j = 0; i < outchans; i++)
+	{
+	  ncp = sf[j]->cp;
+	  file_change_samples(sf[j]->initial_samp,
+			      num,
+			      ofile,
+			      ncp,
+			      i,
+			      (outchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
+			      LOCK_MIXES,
+			      XEN_TO_C_STRING(origin),
+			      ncp->edit_ctr);
+	  update_graph(ncp);
+	  j++;
+	  if (j >= inchans) j = 0;
+	}
+    }
+  else 
+    {
+      report_in_minibuffer(sp, S_apply_ladspa " interrupted");
+      state->stopped_explicitly = FALSE;
     }
   if (ofile) FREE(ofile);
   for (i = 0; i < inchans; i++)

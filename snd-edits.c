@@ -2531,7 +2531,7 @@ static int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, o
   if (ofd == -1) return(MUS_CANT_OPEN_TEMP_FILE);
   datumb = mus_data_format_to_bytes_per_sample(hdr->format);
   obufs = (mus_sample_t **)MALLOC(chans * sizeof(mus_sample_t *));
-  ss->stopped_explicitly = 0;
+  ss->stopped_explicitly = FALSE;
   for (i = 0; i < chans; i++)
     obufs[i] = (mus_sample_t *)CALLOC(FILE_BUFFER_SIZE, sizeof(mus_sample_t));
   j = 0;
@@ -2562,7 +2562,7 @@ static int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, o
 		  check_for_event(ss);
 		  if (ss->stopped_explicitly)
 		    {
-		      ss->stopped_explicitly = 0;
+		      ss->stopped_explicitly = FALSE;
 		      snd_warning("file save cancelled by C-g");
 		      err = MUS_INTERRUPTED;
 		      break;
@@ -2597,7 +2597,7 @@ static int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, o
 	      check_for_event(ss);
 	      if (ss->stopped_explicitly)
 		{
-		  ss->stopped_explicitly = 0;
+		  ss->stopped_explicitly = FALSE;
 		  snd_warning("file save cancelled by C-g");
 		  err = MUS_INTERRUPTED;
 		  break;
@@ -3371,6 +3371,7 @@ replacing current data with the function results; origin is the edit-history nam
   data = (mus_sample_t **)MALLOC(sizeof(mus_sample_t *));
   data[0] = (mus_sample_t *)CALLOC(MAX_BUFFER_SIZE, sizeof(mus_sample_t)); 
   idata = data[0];
+  ss->stopped_explicitly = FALSE;
   if (envp)
     {
       for (i = 0; i < num; i++)
@@ -3399,11 +3400,20 @@ replacing current data with the function results; origin is the edit-history nam
 	    }
 	}
     }
-  if (j > 0) mus_file_write(ofd, 0, j - 1, 1, data);
+  if (!(ss->stopped_explicitly))
+    if (j > 0) mus_file_write(ofd, 0, j - 1, 1, data);
   close_temp_file(ofd, hdr, num * datumb, sp);
   hdr = free_file_info(hdr);
-  file_change_samples(sf->initial_samp, num, ofile, cp, 0, DELETE_ME, LOCK_MIXES, XEN_TO_C_STRING(origin), cp->edit_ctr);
-  update_graph(cp);
+  if (!(ss->stopped_explicitly))
+    {
+      file_change_samples(sf->initial_samp, num, ofile, cp, 0, DELETE_ME, LOCK_MIXES, XEN_TO_C_STRING(origin), cp->edit_ctr);
+      update_graph(cp);
+    }
+  else 
+    {
+      ss->stopped_explicitly = FALSE;
+      report_in_minibuffer(sp, S_loop_samples " interrupted...");
+    }
   if (ofile) FREE(ofile);
   FREE(data[0]);
   FREE(data);
@@ -3644,6 +3654,7 @@ Float local_maxamp(chan_info *cp, off_t beg, off_t num, int edpos)
   if (num > (1 << 30))
     {
       ss = cp->state;
+      ss->stopped_explicitly = FALSE;
       for (i = 0; i < num; i++)
 	{
 	  mval = read_sample(sf);
@@ -3655,7 +3666,7 @@ Float local_maxamp(chan_info *cp, off_t beg, off_t num, int edpos)
 	      check_for_event(ss);
 	      if (ss->stopped_explicitly)
 		{
-		  ss->stopped_explicitly = 0;
+		  ss->stopped_explicitly = FALSE;
 		  report_in_minibuffer(cp->sound, "maxamp check interrupted...");
 		  break;
 		}

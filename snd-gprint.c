@@ -41,7 +41,7 @@ static void file_print_ok_callback(GtkWidget *w, gpointer context)
   char *name;
   snd_info *nsp = NULL;
   if (printing) 
-    ss->stopped_explicitly = 1;
+    ss->stopped_explicitly = TRUE;
   else
     {
       if (ss->print_choice == PRINT_SND)

@@ -129,7 +129,7 @@ static void dismiss_enved_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_state *ss = (snd_state *)context;
   if (ss->checking_explicitly)
-    ss->stopped_explicitly = 1;
+    ss->stopped_explicitly = TRUE;
   else XtUnmanageChild(enved_dialog);
 }
 

@@ -1,5 +1,6 @@
 Snd change log
 
+  22-Nov:    added contrib/v.rb thanks to Michael Scholz.
   13-Nov:    snd 6.3.
   8-Nov:     gtk-effects.scm.
   1-Nov:     snd-gtk.scm.

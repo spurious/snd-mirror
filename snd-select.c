@@ -652,6 +652,7 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
   for (i = 0; i < chans; i++) 
     data[i] = (mus_sample_t *)CALLOC(FILE_BUFFER_SIZE, sizeof(mus_sample_t)); 
   j = 0;
+  ss->stopped_explicitly = FALSE;
   for (ioff = 0; ioff < dur; ioff++)
     {
       for (k = 0; k < chans; k++)
@@ -670,7 +671,7 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
 	    progress_report(sp, "save-selection", chans - 1, chans, (Float)((double)ioff / (double)dur), NOT_FROM_ENVED);
 	  if (ss->stopped_explicitly)
 	    {
-	      ss->stopped_explicitly = 0;
+	      ss->stopped_explicitly = FALSE;
 	      snd_warning("save selection stopped");
 	      break;
 	    }

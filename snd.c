@@ -291,7 +291,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   init_sound_file_extensions();
 
   ss->max_sounds = 4;                 /* expands to accommodate any number of files */
-  ss->stopped_explicitly = 0;
+  ss->stopped_explicitly = FALSE;     /* C-g sets this flag so that we can interrupt various loops */
   ss->reloading_updated_file = 0;
   ss->selected_sound = NO_SELECTION;
   ss->selected_mix = INVALID_MIX_ID;

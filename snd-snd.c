@@ -1599,6 +1599,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 	     XEN_LIST_1(C_TO_SMALL_XEN_INT(sp->index)),
 	     S_after_apply_hook);
   FREE(ap);
+  ss->stopped_explicitly = FALSE;
   return(BACKGROUND_QUIT);
 }
 

@@ -79,7 +79,7 @@ static void edit_find_cancel_callback(Widget w, XtPointer context, XtPointer inf
   if (cb->event != (ss->sgx)->text_activate_event)
     {
       if (ss->checking_explicitly)
-	ss->stopped_explicitly = 1;
+	ss->stopped_explicitly = TRUE;
       else XtUnmanageChild(edit_find_dialog);
     }
   else edit_find_next_callback(w, context, info);

@@ -8,7 +8,7 @@ static void edit_find_dismiss(GtkWidget *w, gpointer context)
 { /* "Done" */
   snd_state *ss = (snd_state *)context;
   if (ss->checking_explicitly)
-    ss->stopped_explicitly = 1;
+    ss->stopped_explicitly = TRUE;
   else gtk_widget_hide(edit_find_dialog);
 } 
 

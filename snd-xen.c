@@ -1635,7 +1635,7 @@ static XEN g_abortq(void)
   check_for_event(ss);
   if (ss->stopped_explicitly)
     {
-      ss->stopped_explicitly = 0;
+      ss->stopped_explicitly = FALSE;
       return(XEN_TRUE);
     }
   return(XEN_FALSE);

@@ -36,7 +36,7 @@ static void file_print_ok_callback(Widget w, XtPointer context, XtPointer info)
   XmString plab, slab;
   snd_info *nsp = NULL;
   if (printing) 
-    ss->stopped_explicitly = 1;
+    ss->stopped_explicitly = TRUE;
   else
     {
       if (ss->print_choice == PRINT_SND)

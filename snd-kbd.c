@@ -979,8 +979,9 @@ void control_g(snd_state *ss, snd_info *sp)
   deactivate_selection();
   defining_macro = 0;
   clear_stdin();
-  if ((ss->checking_explicitly) || (play_in_progress())) ss->stopped_explicitly = 1; 
+  if ((ss->checking_explicitly) || (play_in_progress())) ss->stopped_explicitly = TRUE; 
   /* this tries to break out of long filter/src computations (and perhaps others) */
+  /*   but, as in other such cases, it leaves this flag set so all subsequent uses of it need to clear it first */
   if (sp)
     {
       if (sp->playing) stop_playing_all_sounds();
