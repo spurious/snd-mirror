@@ -869,7 +869,8 @@ static void update_mix_dialog(int mix_id)
 	  len = mix_frames(mix_dialog_id);
 	  mus_snprintf(lab, LABEL_BUFFER_SIZE, "%.3f : %.3f",
 		       (float)((double)beg / (float)SND_SRATE(cp->sound)),
-		       (float)((double)(beg + len) / (float)SND_SRATE(cp->sound)));
+		       (float)((double)(beg + len) / (float)SND_SRATE(cp->sound)),
+		       (mix_ok_and_unlocked(mix_dialog_id)) ? "" : " (locked)");
 	  gtk_entry_set_text(GTK_ENTRY(w_beg), lab);
 	  chans = mix_dialog_mix_input_chans(mix_dialog_id);
 	  if (chans > 8) chans = 8;

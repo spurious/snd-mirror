@@ -1,8 +1,6 @@
 #include "snd.h"
 
 /* SOMEDAY: save mix/track stuff in edit-history saved-state stuff, so they remain as they were upon reload */
-/* TODO: is there some confusion if mix is used in as-one-edit? */
-/* TODO: if mix locked but still in mix dialog, need some indication that everything is inactivated (except "play") */
 
 typedef struct {
   int chans;
@@ -1262,6 +1260,7 @@ int mix_file(off_t beg, off_t num, int chans, chan_info **cps, char *mixinfile, 
   /* loop through out_chans cps writing the new mixed temp files and fixing up the edit trees */
   int id = MIX_FILE_NO_MIX, in_chans;
   mix_info *md;
+  char *new_origin = NULL;
   in_chans =  mus_sound_chans(mixinfile);
   if (chans > in_chans) chans = in_chans;
   if (chans > 1)
@@ -1276,22 +1275,30 @@ int mix_file(off_t beg, off_t num, int chans, chan_info **cps, char *mixinfile, 
 	  chan_info *cp;
 	  cp = cps[i];
 	  edpos = cp->edit_ctr + 1;
-	  md = file_mix_samples(beg, num, mixinfile, cp, i, temp, origin, with_tag, track_id, false);
+	  if (!origin)
+	    new_origin = mus_format("%s \"%s\" " OFF_TD " %d", S_mix, mixinfile, beg, i);
+	  else new_origin = copy_string(origin);
+	  md = file_mix_samples(beg, num, mixinfile, cp, i, temp, new_origin, with_tag, track_id, false);
 	  if (md)
 	    {
 	      if (id == MIX_FILE_NO_MIX) id = md->id;
 	      while (cp->edit_ctr > edpos) backup_edit_list(cp);
 	      backup_mix_list(cp, edpos);
 	      if (cp->edits[cp->edit_ctr]->origin) FREE(cp->edits[cp->edit_ctr]->origin);
-	      cp->edits[cp->edit_ctr]->origin = copy_string(origin);
+	      cp->edits[cp->edit_ctr]->origin = copy_string(new_origin);
 	      update_graph(cp);
 	    }
+	  if (new_origin) {FREE(new_origin); new_origin = NULL;}
 	}
     }
   else 
     {
-      md = file_mix_samples(beg, num, mixinfile, cps[0], 0, temp, origin, with_tag, track_id, true);
+      if (!origin)
+	new_origin = mus_format("%s \"%s\" " OFF_TD " 0", S_mix, mixinfile, beg);
+      else new_origin = copy_string(origin);
+      md = file_mix_samples(beg, num, mixinfile, cps[0], 0, temp, new_origin, with_tag, track_id, true);
       if (md) id = md->id;
+      if (new_origin) FREE(new_origin);
     }
   return(id);
 }
@@ -1302,7 +1309,6 @@ typedef struct {
   int chans, track_id;
   chan_info **cps;
   char *fullname;
-  const char *origin;
   bool with_tag;
   file_delete_t auto_delete;
   sync_info *si;
@@ -1316,8 +1322,7 @@ static XEN mix_file_body(void *context)
 {
   mix_file_context *mx = (mix_file_context *)context;
   int id;
-  id = mix_file(mx->beg, mx->len, mx->chans, mx->cps, mx->fullname, 
-		mx->auto_delete, mx->origin, mx->with_tag, mx->track_id);
+  id = mix_file(mx->beg, mx->len, mx->chans, mx->cps, mx->fullname, mx->auto_delete, NULL, mx->with_tag, mx->track_id);
   return(C_TO_XEN_INT(id));
 }
 
@@ -1334,16 +1339,12 @@ static void after_mix_file(void *context)
 }
 #endif
 
-/* TODO: need origin here: perhaps via "mix" and explicit in chan? */
-/*       (mix file samp in-chan snd chn with-mix-tags auto-delete (track 0)) */
-
 static int mix_complete_file(snd_info *sp, off_t beg, char *fullname, bool with_tag, file_delete_t auto_delete, int track_id, bool all_chans)
 {
   /* no need to save as temp here, but we do need sync info (from menu and keyboard) */
   /* returns -1 if with_tag is false, -2 if no such file */
   chan_info *cp;
   chan_info **cps = NULL;
-  char *origin = NULL;
   int i, chans, id = MIX_FILE_NO_MIX, old_sync = 0, new_sync = 1;
   off_t len;
   sync_info *si = NULL;
@@ -1388,7 +1389,6 @@ static int mix_complete_file(snd_info *sp, off_t beg, char *fullname, bool with_
     mx->chans = chans;
     mx->track_id = track_id;
     mx->cps = cps;
-    mx->origin = origin;
     mx->fullname = fullname;
     mx->si = si;
     mx->sp = sp;
@@ -1403,7 +1403,7 @@ static int mix_complete_file(snd_info *sp, off_t beg, char *fullname, bool with_
     id = XEN_TO_C_INT(result);
   }
 #else
-  id = mix_file(beg, len, chans, cps, fullname, auto_delete, origin, with_tag, track_id);
+  id = mix_file(beg, len, chans, cps, fullname, auto_delete, NULL, with_tag, track_id);
   if (si) 
     si = free_sync_info(si); 
   else 
@@ -1411,7 +1411,6 @@ static int mix_complete_file(snd_info *sp, off_t beg, char *fullname, bool with_
       FREE(cps);
   sp->sync = old_sync;
 #endif
-  if (origin) FREE(origin);
   return(id);
 }
 
@@ -4287,8 +4286,6 @@ static XEN g_set_mix_tag_height(XEN val)
   for_each_normal_chan(update_graph);
   return(C_TO_XEN_INT(mix_tag_height(ss)));
 }
-
-/* TODO: need a regularized mix-channel (or some such name) for edit-list->function */
 
 static XEN g_mix(XEN file, XEN chn_samp_n, XEN file_chn, XEN snd_n, XEN chn_n, XEN tag, XEN auto_delete, XEN track_id)
 {

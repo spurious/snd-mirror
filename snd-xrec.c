@@ -1845,7 +1845,7 @@ static void button_matrix_button_release(Widget w, XtPointer context, XEvent *ev
 	case OUTPUT_BUTTON:
 	  XtVaGetValues(w, XmNx, &x, NULL);
 	  x += (ev->x - p->bx);
-	  bout = x*p->out_chans/p->bw;
+	  bout = x * p->out_chans / p->bw;
 	  on = (button_matrix_button == 1);
 	  for (row = 0; row < p->in_chans; row++)
 	    if (on != p->active_sliders[row][bout])
@@ -1854,7 +1854,7 @@ static void button_matrix_button_release(Widget w, XtPointer context, XEvent *ev
 	case INPUT_BUTTON:
 	  XtVaGetValues(w, XmNy, &y, NULL);
 	  y += (ev->y - p->by);
-	  bin = y*p->in_chans/p->bh;
+	  bin = y * p->in_chans / p->bh;
 	  on = (button_matrix_button == 1);
 	  for (col = 0; col < p->out_chans; col++)
 	    if (on != p->active_sliders[bin][col])

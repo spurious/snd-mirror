@@ -5962,7 +5962,11 @@ bool scale_channel_with_origin(chan_info *cp, Float scl, off_t beg, off_t num, i
   new_ed->selection_end = old_ed->selection_end;
   ripple_all(cp, 0, 0); /* 0,0 -> copy marks */
   lock_affected_mixes(cp, beg, beg + num);
-  if (!in_as_one_edit) update_graph(cp);
+  if (!in_as_one_edit) 
+    {
+      update_graph(cp);
+      reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
+    }
   after_edit(cp);
   return(true);
 }
@@ -6151,6 +6155,7 @@ static bool all_ramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler
   new_ed->selection_end = old_ed->selection_end;
   ripple_all(cp, 0, 0); /* 0,0 -> copy marks */
   lock_affected_mixes(cp, beg, beg + num);
+  reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
   after_edit(cp);
   return(true);
 }
@@ -6274,6 +6279,7 @@ bool ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, bo
   new_ed->selection_end = old_ed->selection_end;
   ripple_all(cp, 0, 0); /* 0,0 -> copy marks */
   lock_affected_mixes(cp, beg, beg + num);
+  reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
   after_edit(cp);
   update_graph(cp);
   return(true);

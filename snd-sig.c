@@ -4313,18 +4313,36 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos, const c
       if (VCT_P(e)) /* the filter coefficients direct */
 	{
 	  vct *v;
+	  char *new_origin = NULL, *estr = NULL;
 	  v = TO_VCT(e);
 	  if (len > v->length) 
 	    XEN_OUT_OF_RANGE_ERROR(caller, 2, order, "order ~A > length coeffs?");
-	  apply_filter(cp, len, NULL, NOT_FROM_ENVED, caller, origin, over_selection, v->data, NULL, edpos, 5, truncate);
+	  if ((!origin) && (v->length < 16))
+	    {
+	      estr = vct_to_readable_string(v);
+	      new_origin = mus_format("%s %s %d%s", caller, estr, len, (over_selection) ? "" : " 0 #f");
+	    }
+	  else new_origin = copy_string(origin);
+	  apply_filter(cp, len, NULL, NOT_FROM_ENVED, caller, new_origin, over_selection, v->data, NULL, edpos, 5, truncate);
+	  if (estr) FREE(estr);
+	  if (new_origin) FREE(new_origin);
 	}
       else 
 	{
 	  env *ne = NULL;
+	  char *new_origin = NULL, *estr = NULL;
 	  XEN_ASSERT_TYPE(XEN_LIST_P(e), e, XEN_ARG_1, caller, "a list, vct, or env generator");
 	  ne = get_env(e, caller); /* arg here must be a list */
-	  apply_filter(cp, len, ne, NOT_FROM_ENVED, caller, origin, over_selection, NULL, NULL, edpos, 5, truncate);
+	  if (!origin)
+	    {
+	      estr = env_to_string(ne);
+	      new_origin = mus_format("%s %s %d%s", caller, estr, len, (over_selection) ? "" : " 0 #f");
+	    }
+	  else new_origin = copy_string(origin);
+	  apply_filter(cp, len, ne, NOT_FROM_ENVED, caller, new_origin, over_selection, NULL, NULL, edpos, 5, truncate);
 	  if (ne) free_env(ne); 
+	  if (estr) FREE(estr);
+	  if (new_origin) FREE(new_origin);
 	}
     }
   return(xen_return_first(XEN_TRUE, e));
@@ -4340,8 +4358,6 @@ applies FIR filter to snd's channel chn. 'filter' is either the frequency respon
 		    S_filter_sound, (XEN_STRING_P(origin)) ? XEN_TO_C_STRING(origin) : NULL, 
 		    OVER_SOUND, false));
 }
-
-/* TODO: origins for filter-selection, insert-selection? */
 
 static XEN g_filter_selection(XEN e, XEN order, XEN truncate)
 {

@@ -1376,11 +1376,13 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		}
 	      if (dp->end != NO_END_SPECIFIED)
 		{
-		  if (dp->end <= current_location(dp->chn_fd))
+		  if ((dp->chn_fd->at_eof) || 
+		      (dp->chn_fd->cb == NULL) ||
+		      (dp->end <= current_location(dp->chn_fd)))
 		    dp->end = 0;
 		}
 	    }
-	}/* fill-case loop through max_active_slot */
+	} /* fill-case loop through max_active_slot */
 
       if (global_rev) 
 	for (i = 0; i < frames; i++)

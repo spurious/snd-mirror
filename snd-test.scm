@@ -1,35 +1,35 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [360]
-;;;  test 1: defaults                           [909]
-;;;  test 2: headers                            [1082]
-;;;  test 3: variables                          [1381]
-;;;  test 4: sndlib                             [1768]
-;;;  test 5: simple overall checks              [3559]
-;;;  test 6: vcts                               [10798]
-;;;  test 7: colors                             [11048]
-;;;  test 8: clm                                [11544]
-;;;  test 9: mix                                [17776]
-;;;  test 10: marks                             [20772]
-;;;  test 11: dialogs                           [21470]
-;;;  test 12: extensions                        [21780]
-;;;  test 13: menus, edit lists, hooks, etc     [22194]
-;;;  test 14: all together now                  [23463]
-;;;  test 15: chan-local vars                   [24514]
-;;;  test 16: regularized funcs                 [25774]
-;;;  test 17: dialogs and graphics              [30111]
-;;;  test 18: enved                             [30185]
-;;;  test 19: save and restore                  [30205]
-;;;  test 20: transforms                        [31577]
-;;;  test 21: new stuff                         [32661]
-;;;  test 22: run                               [33420]
-;;;  test 23: with-sound                        [38502]
-;;;  test 24: user-interface                    [39487]
-;;;  test 25: X/Xt/Xm                           [42662]
-;;;  test 26: Gtk                               [47181]
-;;;  test 27: GL                                [50292]
-;;;  test 28: errors                            [50396]
-;;;  test all done                              [52396]
+;;;  test 0: constants                          [359]
+;;;  test 1: defaults                           [911]
+;;;  test 2: headers                            [1085]
+;;;  test 3: variables                          [1384]
+;;;  test 4: sndlib                             [1772]
+;;;  test 5: simple overall checks              [3581]
+;;;  test 6: vcts                               [10823]
+;;;  test 7: colors                             [11057]
+;;;  test 8: clm                                [11553]
+;;;  test 9: mix                                [17813]
+;;;  test 10: marks                             [20877]
+;;;  test 11: dialogs                           [21574]
+;;;  test 12: extensions                        [21891]
+;;;  test 13: menus, edit lists, hooks, etc     [22305]
+;;;  test 14: all together now                  [23575]
+;;;  test 15: chan-local vars                   [24626]
+;;;  test 16: regularized funcs                 [25886]
+;;;  test 17: dialogs and graphics              [30223]
+;;;  test 18: enved                             [30297]
+;;;  test 19: save and restore                  [30317]
+;;;  test 20: transforms                        [31790]
+;;;  test 21: new stuff                         [32874]
+;;;  test 22: run                               [33633]
+;;;  test 23: with-sound                        [38715]
+;;;  test 24: user-interface                    [39700]
+;;;  test 25: X/Xt/Xm                           [42862]
+;;;  test 26: Gtk                               [47381]
+;;;  test 27: GL                                [50492]
+;;;  test 28: errors                            [50596]
+;;;  test all done                              [52596]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -19397,9 +19397,6 @@ EDITS: 5
 	    (if (not (apply = (map mix-track mixids))) (snd-display ";multimix 2: ~A" (map mix-track mixids)))
 	    (if (not (= 1 (edit-position ind 0) (edit-position ind 1)))
 		(snd-display ";multimix 3 edpos: ~A ~A" (edit-position ind 0) (edit-position ind 1)))
-	    (if (or (not (equal? (edit-fragment 1 ind 0) (list "mix" "set" 100 4412)))
-		    (not (equal? (edit-fragment 1 ind 1) (list "mix" "set" 100 4412))))
-		(snd-display ";multimix 4 origin? ~A ~A" (edit-fragment 1 ind 0) (edit-fragment 1 ind 1)))
 	    (if (not (= (track-chans trk) 2)) (snd-display ";track-chans stereo mix: ~A" (track-chans trk)))
 
 	    ;; track properties
@@ -33028,25 +33025,25 @@ EDITS: 2
 	(undo)
 	(make-selection 5 15)
 	(filter-selection '(0 1 1 1) 100)
-	(if (not (equal? (edit-fragment 2) (list "filter-selection" "set" 5 11)))
-	    (snd-display ";filter-selection truncated: ~A" (edit-fragment 2)))
+	(if (not (equal? (edit-fragment 2) (list "filter-selection '(0.000 1.000 1.000 1.000) 100" "set" 5 11)))
+	    (snd-display ";filter-selection truncated: ~S" (edit-fragment 2)))
 	(if (not (vequal (channel->vct 20 10) (make-vct 10 0.0)))
 	    (snd-display ";filter-selection trunc overwrote: ~A" (channel->vct 20 10)))
 	(undo)
 	(filter-selection '(0 1 1 1) 100 #f)  
-	(if (not (equal? (edit-fragment 2) (list "filter-selection" "set" 5 111)))
-	    (snd-display ";filter-selection not truncated: ~A" (edit-fragment 2)))
+	(if (not (equal? (edit-fragment 2) (list "filter-selection '(0.000 1.000 1.000 1.000) 100" "set" 5 111)))
+	    (snd-display ";filter-selection not truncated: ~S" (edit-fragment 2)))
 	(if (not (vequal (channel->vct 50 10) (vct -0.016 0.018 -0.021 0.024 -0.029 0.035 -0.045 0.064 -0.106 0.318)))
 	    (snd-display ";filter-selection no trunc: ~A" (channel->vct 50 10)))
 	(undo)
 	(filter-selection '(0 1 1 1) 1000 #t)
-	(if (not (equal? (edit-fragment 2) (list "filter-selection" "set" 5 11)))
-	    (snd-display ";filter-selection truncated (1000): ~A" (edit-fragment 2)))
+	(if (not (equal? (edit-fragment 2) (list "filter-selection '(0.000 1.000 1.000 1.000) 1000" "set" 5 11)))
+	    (snd-display ";filter-selection truncated (1000): ~S" (edit-fragment 2)))
 	(if (fneq (maxamp) 0.0) (snd-display ";filter-selection 1000 untrunc? ~A" (maxamp)))
 	(undo)
 	(filter-selection '(0 1 1 1) 1000 #f)
-	(if (not (equal? (edit-fragment 2) (list "filter-selection" "set" 5 1011)))
-	    (snd-display ";filter-selection not truncated (1000): ~A" (edit-fragment 2)))
+	(if (not (equal? (edit-fragment 2) (list "filter-selection '(0.000 1.000 1.000 1.000) 1000" "set" 5 1011)))
+	    (snd-display ";filter-selection not truncated (1000): ~S" (edit-fragment 2)))
 	(if (fneq (maxamp) 0.318) (snd-display ";filter-selection 1000 no trunc? ~A" (maxamp)))
 	(if (not (vequal (channel->vct 505 10) (vct 0.035 -0.045 0.064 -0.106 0.318 0.318 -0.106 0.064 -0.045 0.035)))
 	    (snd-display ";filter-selection 1000 no trunc: ~A" (channel->vct 505 10)))
