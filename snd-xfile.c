@@ -276,13 +276,7 @@ static void sound_file_search(Widget FSB_w, XmFileSelectionBoxCallbackStruct *in
     fd = open_dialog;
   else fd = mix_dialog;
   if (fd == NULL)
-    {
-      snd_error("sound file search procedure called with %d (%p %p)?", which_dialog, open_dialog, mix_dialog);
-#if DEBUGGING
-      abort();
-#endif
-      return;
-    }
+    snd_error("sound file search procedure called with %d (%p %p)?", which_dialog, open_dialog, mix_dialog);
 
   XmStringGetLtoR (data->pattern, XmFONTLIST_DEFAULT_TAG, &pattern);
   XmStringGetLtoR (data->dir, XmFONTLIST_DEFAULT_TAG, &our_dir);
@@ -1495,7 +1489,7 @@ static void view_files_clear_callback(Widget w, XtPointer context, XtPointer inf
 static void view_files_update_callback(Widget w, XtPointer context, XtPointer info) 
 {
   /* run through previous files list looking for any that have been deleted behind our back */
-  update_prevlist((snd_state *)context);
+  update_prevlist();
   if (file_dialog_is_active()) make_prevfiles_list((snd_state *)context);
 }
 

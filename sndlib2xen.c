@@ -885,14 +885,12 @@ static XEN g_write_audio(XEN line, XEN sdata, XEN frames)
 to the audio line from the sound-data object sdata."
 
   char *obuf;
-  MUS_SAMPLE_TYPE **bufs;
   sound_data *sd;
   int outbytes, val, frms, fmt, fd;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(line), line, XEN_ARG_1, S_mus_audio_write, "an integer");
   XEN_ASSERT_TYPE(SOUND_DATA_P(sdata), sdata, XEN_ARG_2, S_mus_audio_write, "a sound-data object");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(frames), frames, XEN_ARG_3, S_mus_audio_write, "an integer");
   sd = (sound_data *)XEN_OBJECT_REF(sdata);
-  bufs = sd->data;
   frms = XEN_TO_C_INT(frames);
   if (frms > sd->length)
     mus_misc_error(S_mus_audio_write, 
@@ -917,12 +915,10 @@ from the audio line into the sound-data object sdata."
   char *inbuf;
   sound_data *sd;
   int val, inbytes, frms, fd, fmt;
-  MUS_SAMPLE_TYPE **bufs;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(line), line, XEN_ARG_1, S_mus_audio_read, "an integer");
   XEN_ASSERT_TYPE(SOUND_DATA_P(sdata), sdata, XEN_ARG_2, S_mus_audio_read, "a sound-data object");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(frames), frames, XEN_ARG_3, S_mus_audio_read, "an integer");
   sd = (sound_data *)XEN_OBJECT_REF(sdata);
-  bufs = sd->data;
   frms = XEN_TO_C_INT(frames);
   fd = XEN_TO_C_INT(line);
   fmt = audio_io_read_format(fd);

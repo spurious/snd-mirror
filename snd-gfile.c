@@ -879,7 +879,7 @@ static void view_files_clear_callback(GtkWidget *w, gpointer context)
 static void view_files_update_callback(GtkWidget *w, gpointer context) 
 {
   /* run through previous files list looking for any that have been deleted behind our back */
-  update_prevlist((snd_state *)context);
+  update_prevlist();
   if (file_dialog_is_active()) make_prevfiles_list((snd_state *)context);
 }
 

@@ -204,6 +204,7 @@ static file_info *translate_file(char *filename, snd_state *ss, int type)
 }
 
 static XEN open_raw_sound_hook;
+static char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr);
 
 file_info *make_file_info(char *fullname, snd_state *ss)
 {
@@ -1479,7 +1480,7 @@ void clear_prevlist(snd_state *ss)
     }
 }
 
-void update_prevlist(snd_state *ss)
+void update_prevlist(void)
 {
   /* here we need the file's full name */
   int i, j, fd;
@@ -1566,7 +1567,7 @@ void make_prevfiles_list_1(snd_state *ss)
 {
   heapdata **data;
   int i, len;
-  update_prevlist(ss);
+  update_prevlist();
   if (prevfile_end >= 0)
     {
       len = prevfile_end + 1;
@@ -2170,7 +2171,7 @@ static short swap_short (short n)
   return(o);
 }
 
-char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr)
+static char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr)
 {
   char *reason_str, *tmp_str, *file_string;
   int ns, better_srate = 0, better_chans = 0;

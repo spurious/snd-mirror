@@ -7703,33 +7703,6 @@
 	  (test-spectral-difference (string-append sf-dir "wood.riff") (string-append sf-dir "wood.sds") 1.0)
 	  (test-spectral-difference (string-append sf-dir "nist-10.wav") (string-append sf-dir "nist-shortpack.wav") 1.0)
 
-	  (let ((obind (open-sound "pistol.snd")))
-	    (set-reverb-control-procedures snd-freeverb make-snd-freeverb free-snd-freeverb)
-	    (set! (reverb-control-scale obind) .1)
-	    (set! (reverb-control? obind) #t)
-	    (play-and-wait 0 obind)
-	    (set-reverb-control-procedures snd-nrev make-snd-nrev free-snd-nrev)
-	    (set! (reverb-control-length obind) 2.0)
-	    (play-and-wait 0 obind)
-
-	    (let ((delay-line #f)
-		  (delay-time 0.5))
-	      (set-reverb-control-procedures
-	       (lambda (ptr invals outvals)
-		 (vct-fill! outvals 0.0)
-		 (vct-set! outvals 0 (delay delay-line (+ (* .75 (tap delay-line)) (vct-ref invals 0))))
-		 outvals)
-	       (lambda (snd chans)
-		 (set! delay-line (make-delay (inexact->exact (* (srate snd) delay-time))))
-		 delay-line)
-	       (lambda (ptr)
-		 (set! delay-line #f)
-		 ptr)
-	       ))
-
-	    (play-and-wait 0 obind)
-	    (set-reverb-control-procedures snd-nrev make-snd-nrev free-snd-nrev)
-	    (close-sound obind))
 	  )))
 
 (define read-or-run
@@ -9129,27 +9102,6 @@
 	      (close-sound cfd2)
 	      (close-sound cfd)
 	      (set! (use-sinc-interp) #f)))
-
-	  (if (and (rs .5) (not rev-funcs-set))
-	      (begin
-		(set! rev-funcs-set #t)
-		(set-reverb-control-procedures
-		 (lambda (ptr invals outvals)
-		   (vct-fill! outvals 0.0)
-		   (vct-set! outvals 0 (delay delay-line (+ (* .75 (tap delay-line)) (vct-ref invals 0))))
-		   outvals)
-		 (lambda (snd chans)
-		   (set! delay-line (make-delay (inexact->exact (* (srate snd) delay-time))))
-		   delay-line)
-		 (lambda (ptr)
-		   (set! delay-line #f)
-		   ptr)
-		 )
-		(set-contrast-control-procedure (lambda (a b) (* a b))))
-	      (begin
-		(set! rev-funcs-set #f)
-		(set-reverb-control-procedures snd-nrev make-snd-nrev free-snd-nrev)
-		(set-contrast-control-procedure snd-contrast)))
 
 	  (add-hook! (edit-hook) (lambda () #f))
 	  (as-one-edit (lambda () (set! (sample 200) .2) (set! (sample 300) .3)))
@@ -13578,7 +13530,7 @@ EDITS: 3
 	       button-font c-g?  apply-controls change-menu-label change-samples-with-origin channel-style channel-sync
 	       channel-widgets channels chans clear-audio-inputs close-sound close-sound-file color-cutoff color-dialog
 	       color-inverted color-scale color->list colormap color?  comment contrast-control contrast-control-amp
-	       contrast-control-procedure contrast-control?  convolve-arrays convolve-selection-with convolve-with
+	       contrast-control?  convolve-arrays convolve-selection-with convolve-with
 	       auto-update-interval count-matches current-font cursor cursor-color cursor-follows-play cursor-size
 	       cursor-style dac-combines-channels dac-size data-clipped data-color data-format data-location
 	       default-output-chans default-output-format default-output-srate default-output-type define-envelope
@@ -13614,7 +13566,7 @@ EDITS: 3
 	       recorder-out-chans recorder-out-format recorder-srate recorder-trigger redo region-chans region-dialog
 	       region-graph-style region-length region-maxamp region-sample region-samples region-samples->vct
 	       region-srate regions region?  remove-from-menu report-in-minibuffer reset-controls restore-controls
-	       restore-marks restore-region reverb-control-decay reverb-control-feedback reverb-control-procedures
+	       restore-marks restore-region reverb-control-decay reverb-control-feedback 
 	       reverb-control-length reverb-control-lowpass reverb-control-scale reverb-control?  reverse-sound
 	       reverse-selection revert-sound right-sample sample sample-reader-at-end?  sample-reader? samples
 	       samples->vct samples->sound-data sash-color save-controls ladspa-dir save-dir save-edit-history save-envelopes
@@ -13681,7 +13633,7 @@ EDITS: 3
 		   amp-control ask-before-overwrite audio-input-device audio-output-device audio-state-file auto-resize
 		   auto-update axis-label-font axis-numbers-font basic-color bold-button-font button-font channel-style
 		   channel-sync color-cutoff color-inverted color-scale contrast-control contrast-control-amp
-		   contrast-control-procedure contrast-control? auto-update-interval current-font cursor cursor-color
+		   contrast-control? auto-update-interval current-font cursor cursor-color
 		   cursor-follows-play cursor-size cursor-style dac-combines-channels dac-size data-clipped data-color
 		   default-output-chans default-output-format default-output-srate default-output-type dot-size
 		   enved-active-env enved-base enved-clip? enved-in-dB enved-exp? enved-power enved-selected-env
@@ -13699,7 +13651,7 @@ EDITS: 3
 		   recorder-autoload recorder-buffer-size recorder-dialog recorder-file recorder-gain recorder-in-amp
 		   recorder-in-format recorder-max-duration recorder-out-amp recorder-out-chans recorder-out-format
 		   recorder-srate region-graph-style recorder-trigger reverb-control-decay reverb-control-feedback
-		   reverb-control-procedures reverb-control-length reverb-control-lowpass reverb-control-scale
+		   reverb-control-length reverb-control-lowpass reverb-control-scale
 		   reverb-control? sash-color ladspa-dir save-dir save-state-file selected-data-color selected-graph-color
 		   selected-mix-color selection-color selection-creates-region show-axes show-backtrace show-controls
 		   show-transform-peaks show-indices show-marks show-mix-waveforms show-selection-transform show-listener
@@ -14483,8 +14435,6 @@ EDITS: 3
 	  (set! (read-only ind) #t)
 	  (check-error-tag 'cannot-save (lambda () (set! (sound-loop-info ind) '(0 0 1 1))))
 	  (close-sound ind))
-	(check-error-tag 'bad-arity (lambda () (set-reverb-control-procedures abs map +)))
-	(check-error-tag 'bad-arity (lambda () (set-contrast-control-procedure (lambda () 1.0))))
 	(check-error-tag 'bad-arity (lambda () (add-transform "hiho" "time" 0 1 (lambda () 1.0))))
 	(check-error-tag 'cannot-save (lambda () (save-options "/bad/baddy")))
 	(check-error-tag 'cannot-save (lambda () (save-state "/bad/baddy")))

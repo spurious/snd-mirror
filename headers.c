@@ -182,7 +182,6 @@ static const unsigned char I_MUS_[4] = {'C','L','M',' '};  /* I hereby claim thi
 static const unsigned char I_RIFF[4] = {'R','I','F','F'};  /* RIFF first word */
 static const unsigned char I_RIFX[4] = {'R','I','F','X'};  /* RIFX first word (big-endian RIFF file) */
 static const unsigned char I_WAVE[4] = {'W','A','V','E'};
-static const unsigned char I_wave[4] = {'w','a','v','e'};
 static const unsigned char I_fmt_[4] = {'f','m','t',' '};
 static const unsigned char I_data[4] = {'d','a','t','a'};
 static const unsigned char I_fact[4] = {'f','a','c','t'};  /* used by compressed RIFF files */

@@ -602,13 +602,11 @@ static int paste_region_1(int n, chan_info *cp, int add, int beg, const char *or
 {
   region *r;
   int i, err = MUS_NO_ERROR, id = -1, idtmp;
-  snd_info *sp;
   sync_info *si;
   chan_info *ncp;
   snd_state *ss;
   char *tempfile = NULL;
   ss = cp->state;
-  sp = cp->sound;
   si = NULL;
   r = id_to_region(n);
   if (r == NULL) return(INVALID_REGION);
@@ -1169,10 +1167,8 @@ static XEN g_restore_region(XEN pos, XEN chans, XEN len, XEN srate, XEN maxamp, 
   r->name = copy_string(XEN_TO_C_STRING(name));
   r->start = copy_string(XEN_TO_C_STRING(start));
   r->end = copy_string(XEN_TO_C_STRING(end));
-
-      r->use_temp_file = REGION_FILE;
-      r->filename = copy_string(XEN_TO_C_STRING(data));
-
+  r->use_temp_file = REGION_FILE;
+  r->filename = copy_string(XEN_TO_C_STRING(data));
   reflect_regions_in_menu();
   reflect_regions_in_region_browser();
   return(C_TO_XEN_INT(r->id));

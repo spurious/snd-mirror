@@ -13,7 +13,7 @@ static XEN transform_hook;
 static XEN graph_hook;
 static XEN after_graph_hook;
 
-static void after_fft(snd_state *ss, chan_info *cp, Float scaler)
+static void after_fft(chan_info *cp, Float scaler)
 {
   if (XEN_HOOKED(transform_hook))
     g_c_run_progn_hook(transform_hook,
@@ -62,7 +62,7 @@ void set_wavo_trace(snd_state *ss, int uval)
   map_over_chans(ss, map_chans_wavo_trace, (void *)(&val));
 }
 
-void set_beats_per_minute(snd_state *ss, Float val) 
+static void set_beats_per_minute(snd_state *ss, Float val) 
 {
   if (val > 0.0) 
     {
@@ -961,7 +961,7 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
   int pixels, grfpts;
   snd_fd *sf = NULL;
   int x_start, x_end;
-  double start_time = 0.0, cur_srate = 1.0;
+  double cur_srate = 1.0;
   axis_context *ax = NULL;
   chan_context *cgx;
   env_info *ep;
@@ -978,7 +978,6 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
       cur_srate = (double)SND_SRATE(sp);
       ap->losamp = (int)(snd_round(ap->x0 * cur_srate)); /* was ceil??? */
       if (ap->losamp < 0) ap->losamp = 0;
-      start_time = (double)(ap->losamp) / cur_srate;
       ap->hisamp = (int)(ap->x1 * cur_srate);
       if ((ap->losamp == 0) && (ap->hisamp == 0)) return(0);
     }
@@ -1117,7 +1116,7 @@ XEN make_graph_data(chan_info *cp, int edit_pos, int losamp, int hisamp)
   int pixels;
   snd_fd *sf = NULL;
   int x_start, x_end;
-  double start_time = 0.0, cur_srate = 1.0;
+  double cur_srate = 1.0;
   Float *data = NULL, *data1 = NULL;
   int data_size = 0;
   ap = cp->axis;
@@ -1125,7 +1124,6 @@ XEN make_graph_data(chan_info *cp, int edit_pos, int losamp, int hisamp)
   cur_srate = (double)SND_SRATE(sp);
   if (losamp == -1)
     losamp = (int)(snd_round(ap->x0 * cur_srate));
-  start_time = (double)(losamp) / cur_srate;
   if (hisamp < 0)
     hisamp = (int)(ap->x1 * cur_srate);
 
@@ -1404,7 +1402,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
   if (peak_amps) FREE(peak_amps);
 }
 
-void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss, axis_info *fap, axis_context *ax, int with_hooks)
+void make_fft_graph(chan_info *cp, snd_info *sp, axis_info *fap, axis_context *ax, int with_hooks)
 {
   /* axes are already set, data is in the fft_info struct -- don't reset here! */
   /* since the fft size menu callback can occur while we are calculating the next fft, we have to lock the current size until the graph goes out */
@@ -1589,7 +1587,7 @@ void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss, axis_info *fap, 
 			 hisamp, samples_per_pixel, 1, 0.0);
     }
   if (cp->selection_transform_size != 0) display_selection_transform_size(cp, fap);
-  if (with_hooks) after_fft(ss, cp, scale);
+  if (with_hooks) after_fft(cp, scale);
 }
 
 static int display_transform_peaks(chan_info *ucp, char *filename)
@@ -1824,7 +1822,7 @@ static void make_sonogram(chan_info *cp, snd_info *sp, snd_state *ss)
       if (cp->printing) ps_reset_color();
       FREE(hfdata);
       FREE(hidata);
-      if (cp->hookable) after_fft(ss, cp, 1.0/scl);
+      if (cp->hookable) after_fft(cp, 1.0 / scl);
     }
 }
 
@@ -2022,7 +2020,7 @@ static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	    }
 	  if (cp->printing) ps_reset_color();
 	}
-      if (cp->hookable) after_fft(ss, cp, 1.0 / scl);
+      if (cp->hookable) after_fft(cp, 1.0 / scl);
     }
 }
 
@@ -2459,7 +2457,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	  switch (cp->transform_graph_type)
 	    {
 	    case GRAPH_TRANSFORM_ONCE:
-	      make_fft_graph(cp, sp, ss,
+	      make_fft_graph(cp, sp,
 			     cp->fft->axis,
 			     (sp->channel_style == CHANNELS_SUPERIMPOSED) ? combined_context(cp) : copy_context(cp),
 			     cp->hookable);
@@ -4951,10 +4949,6 @@ static XEN g_set_transform_size(XEN val, XEN snd, XEN chn)
       if (POWER_OF_2_P(len))
 	set_transform_size(ss, len);
       else set_transform_size(ss, (int)pow(2.0, (int)(log(len + 1) / log(2.0))));
-#if DEBUGGING
-      if (transform_size(ss) > len)
-	fprintf(stderr,"set-transform-size (snd-chn.c): %d %d\n", transform_size(ss), len);
-#endif
       return(C_TO_XEN_INT(transform_size(ss)));
     }
 }

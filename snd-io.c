@@ -395,7 +395,7 @@ int snd_write_header(snd_state *ss, const char *name, int type, int srate, int c
   return(fd);
 }
 
-char *snd_remove_with_error(const char *name)
+static char *snd_remove_with_error(const char *name)
 {
   int err = 0;
   mus_sound_forget(name); /* no error here if not in sound tables */

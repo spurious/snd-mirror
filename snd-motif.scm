@@ -19,7 +19,7 @@
 ;;; (keep-file-dialog-open-upon-ok) changes File:Open so that clicking "ok" does not "unmanage" the dialog
 ;;;   also keep-mix-file-dialog-open-upon-ok
 ;;; (add-amp-controls) adds amp sliders to the control panel for multi-channel sounds
-;;; (add-very-useful-icons) adds some very useful icons
+;;; commented out -- (add-very-useful-icons) adds some very useful icons -- replaced by contrib/dlp/new-buttons.scm
 ;;; (remove-main-menu menu) removes a top-level menu
 ;;; add delete and rename options to the file menu (add-delete-option) (add-rename-option)
 ;;; (mark-sync-color new-color) sets the color of syncd marks
@@ -1747,7 +1747,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 
 ;(add-hook! after-open-hook show-disk-space)
 
-
+#!
 ;;; -------- add-very-useful-icons adds some very useful icons
 
 (define (add-very-useful-icons)
@@ -1795,6 +1795,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	     (snd-print "xdbx"))
 	   (lambda (w c i)
 	     (snd-print "icl8"))))))
+!#
 
 
 ;;; -------- add amp sliders in control panel for multi-channel sounds

@@ -112,17 +112,9 @@ static void add_point (env *e, int pos, Float x, Float y)
     {
       e->data[j + 2] = e->data[j];
       e->data[j + 3] = e->data[j + 1];
-#if DEBUGGING
-      if ((j + 3) >= e->data_size) abort();
-#endif
-
     }
   e->data[pos * 2] = x;
   e->data[pos * 2 + 1] = y;
-#if DEBUGGING
-  if ((pos * 2 + 1) >= e->data_size) abort();
-#endif
-
   e->pts++;
 }
 
@@ -130,10 +122,6 @@ void move_point (env *e, int pos, Float x, Float y)
 {
   e->data[pos * 2] = x;
   e->data[pos * 2 + 1] = y;
-#if DEBUGGING
-  if ((pos * 2 + 1) >= e->data_size) abort();
-#endif
-
 }
 
 void delete_point(env *e, int pos)
@@ -143,9 +131,6 @@ void delete_point(env *e, int pos)
     {
       e->data[j] = e->data[j + 2];
       e->data[j + 1] = e->data[j + 3];
-#if DEBUGGING
-      if ((j + 1) >= e->data_size) abort();
-#endif
     }
   e->pts--;
 }
@@ -1027,7 +1012,7 @@ void enved_show_background_waveform(snd_state *ss, chan_info *axis_cp, axis_info
 	      gray_ap->y_scale = (gray_ap->y_axis_y1 - gray_ap->y_axis_y0) / (gray_ap->y1 - gray_ap->y0);
 	      gray_ap->x_base = (double)(gray_ap->x_axis_x0 - gray_ap->x0 * gray_ap->x_scale);
 	      gray_ap->y_base = (Float)(gray_ap->y_axis_y0 - gray_ap->y0 * gray_ap->y_scale);
-	      make_fft_graph(active_channel, active_channel->sound, ss, gray_ap, gray_ap->ax, FALSE);
+	      make_fft_graph(active_channel, active_channel->sound, gray_ap, gray_ap->ax, FALSE);
 	      /* last arg makes sure we don't call any hooks in make_fft_graph */
 	    }
 	}

@@ -833,12 +833,7 @@ snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize)
   hdr = sd->hdr;
   fd = snd_open_read(cp->state, sd->filename);
   if (fd == -1) 
-    {
-#if DEBUGGING
-      fprintf(stderr,"snd_data copy failed: %s\n", strerror(errno));
-#endif
-      return(NULL);
-    }
+    return(NULL);
   mus_file_open_descriptors(fd,
 			    sd->filename,
 			    hdr->format,
@@ -863,7 +858,7 @@ snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize)
   return(sf);
 }
 
-snd_data *make_snd_data_buffer(MUS_SAMPLE_TYPE *data, int len, int ctr)
+static snd_data *make_snd_data_buffer(MUS_SAMPLE_TYPE *data, int len, int ctr)
 {
   snd_data *sf;
   sf = (snd_data *)CALLOC(1, sizeof(snd_data));
@@ -1380,7 +1375,7 @@ void file_insert_samples(int beg, int num, char *inserted_file, chan_info *cp, i
     }
 }
 
-void insert_samples(int beg, int num, MUS_SAMPLE_TYPE *vals, chan_info *cp, const char *origin, int edpos)
+static void insert_samples(int beg, int num, MUS_SAMPLE_TYPE *vals, chan_info *cp, const char *origin, int edpos)
 {
   int len;
   int *cb;
@@ -2171,7 +2166,7 @@ int close_temp_file(int ofd, file_info *hdr, long bytes, snd_info *sp)
   return(mus_file_close(ofd));
 }
 
-int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, int length, snd_state *ss)
+static int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, int length, snd_state *ss)
 {
   /* create ofile, fill it by following sfs, use hdr for srate/type/format decisions */
   /* used only in this file and snd-chn (for external temps, snd->temp) */
@@ -2526,10 +2521,8 @@ void save_edits(snd_info *sp, void *ptr)
 
 void revert_edits(chan_info *cp, void *ptr)
 {
-  snd_info *sp;
   int old_ctr;
   old_ctr = cp->edit_ctr;
-  sp = cp->sound;
   cp->edit_ctr = 0;
   clear_transform_edit_ctrs(cp);
   reflect_edit_counter_change(cp);
@@ -2600,10 +2593,8 @@ void undo_edit_with_sync(chan_info *cp, int count)
 
 void redo_edit(chan_info *cp, int count)
 {
-  snd_info *sp;
   if (cp)
     {
-      sp = cp->sound;
       cp->edit_ctr += count; 
       while ((cp->edit_ctr >= cp->edit_size) || 
 	     (!(cp->edits[cp->edit_ctr]))) 
@@ -3336,7 +3327,7 @@ between beg and beg + num to peak value norm.  If channel is omitted, the scalin
   return(norm);
 }
 
-MUS_SAMPLE_TYPE *g_floats_to_samples(XEN obj, int *size, const char *caller, int position)
+static MUS_SAMPLE_TYPE *g_floats_to_samples(XEN obj, int *size, const char *caller, int position)
 {
   MUS_SAMPLE_TYPE *vals = NULL;
   XEN *vdata;

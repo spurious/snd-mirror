@@ -5,6 +5,8 @@
  */
 
 /* this was sound-oriented; changed to be channel-oriented 31-Aug-00 */
+/* removed reverb-control-procedures (with freeverb and fcomb) and contrast-control-procedure 13-Dec-01 */
+
 /*
  * each channel currently being played has an associated dac_info struct
  *   all active dac_info structs are held in a play_list
@@ -132,7 +134,7 @@ static int max_expand_control_len(snd_info *sp)
   return((int)(SND_SRATE(sp) * .5));
 }
 
-static void *make_expand(snd_info *sp, Float sampling_rate, Float initial_ex, dac_info *dp)
+static void *make_expand(snd_info *sp, Float initial_ex, dac_info *dp)
 {
   spd_info *spd;
   spd = (spd_info *)CALLOC(1, sizeof(spd_info));
@@ -170,7 +172,7 @@ static Float expand(dac_info *dp, Float sr, Float ex)
   return(mus_granulate(spd->gen, &expand_input_as_needed));
 }
 
-
+/* reverb */
 static int prime (int num)
 {
   int lim, i;
@@ -196,282 +198,18 @@ static int get_prime(int num)
   return(i);
 }
 
-
-/* -------------------------------- user-defined control-panel functions -------------------------------- */
-
-enum {NREVERB, FREEVERB, USERVERB};
-static int which_reverb = NREVERB;
-
-char *reverb_name(void)
-{
-  switch (which_reverb)
-    {
-    case USERVERB: return("yervrb:"); break;
-    case FREEVERB: return("frevrb:"); break;
-    default: return(STR_reverb); break;
-    }
-}
-
-/* user hooks into reverb */
-static XEN g_make_reverb = XEN_FALSE; 
-static XEN g_reverb = XEN_FALSE; 
-static XEN g_free_reverb = XEN_FALSE;
-
-static XEN g_reverb_procedures(void) 
-{
-  return(XEN_LIST_3(g_reverb, g_make_reverb, g_free_reverb));
-}
-
-static XEN g_set_reverb_procedures(XEN rev, XEN make_rev, XEN free_rev)
-{
-  #define H_reverb_control_procedures "(" S_reverb_control_procedures ") -> list of the 3 reverb procedures (reverb make-reverb free-reverb)"
-  #define H_set_reverb_control_procedures "(" "set-" S_reverb_control_procedures " reverb make-reverb free-reverb) sets the current reverb procedures"
-
-  char *errmsg;
-  XEN errstr; XEN bad_func = XEN_FALSE;
-
-  errmsg = procedure_ok(rev, 3, "set-" S_reverb_control_procedures, "reverb", 1);
-  if (errmsg == NULL) 
-    {
-      errmsg = procedure_ok(make_rev, 2, "set-" S_reverb_control_procedures, "make-reverb", 2); 
-      if (errmsg == NULL) 
-	{
-	  errmsg = procedure_ok(free_rev, 1, "set-" S_reverb_control_procedures, "free-reverb", 3); 
-	  if (errmsg) bad_func = free_rev;
-	}
-      else bad_func = make_rev;
-    }
-  else bad_func = rev;
-  if (errmsg)
-    {
-      errstr = C_TO_XEN_STRING(errmsg);
-      FREE(errmsg);
-      return(snd_bad_arity_error(S_reverb_control_procedures, errstr, bad_func));
-    }
-  if (XEN_PROCEDURE_P(g_reverb)) snd_unprotect(g_reverb);
-  if (XEN_PROCEDURE_P(g_make_reverb)) snd_unprotect(g_make_reverb);
-  if (XEN_PROCEDURE_P(g_free_reverb)) snd_unprotect(g_free_reverb);
-
-  if (XEN_NOT_FALSE_P(rev))
-    {
-      g_reverb = rev;
-      g_make_reverb = make_rev;
-      g_free_reverb = free_rev;
-      if (XEN_EQ_P(g_reverb, XEN_NAME_AS_C_STRING_TO_VALUE("snd-nrev")))
-	which_reverb = NREVERB;
-      else
-	{
-	  if (XEN_EQ_P(g_reverb, XEN_NAME_AS_C_STRING_TO_VALUE("snd-freeverb")))
-	    which_reverb = FREEVERB;
-	  else which_reverb = USERVERB;
-	}
-    }
-  else 
-    {
-      g_make_reverb = XEN_NAME_AS_C_STRING_TO_VALUE("make-snd-nrev");
-      g_reverb = XEN_NAME_AS_C_STRING_TO_VALUE("snd-nrev");
-      g_free_reverb = XEN_NAME_AS_C_STRING_TO_VALUE("free-snd-nrev");
-      which_reverb = NREVERB;
-    }
-  set_reverb_labels(reverb_name());
-  snd_protect(g_reverb);
-  snd_protect(g_make_reverb);
-  snd_protect(g_free_reverb);
-  return(rev);
-}
-
-/* user hook into contrast */
-static XEN g_contrast = XEN_FALSE;
-static int use_g_contrast = 0;
-
-static XEN g_contrast_procedure(void) 
-{
-  return(g_contrast);
-}
-
-static XEN g_set_contrast_procedure(XEN func)
-{
-  #define H_contrast_control_procedure "(" S_contrast_control_procedure ") -> current contrast procedure"
-  #define H_set_contrast_control_procedure "(" "set-" S_contrast_control_procedure " proc) sets the current contrast procedure"
-
-  char *errmsg;
-  XEN errstr;
-
-  errmsg = procedure_ok(func, 2, "set-" S_contrast_control_procedure, "contrast", 1);
-  if (errmsg)
-    {
-      errstr = C_TO_XEN_STRING(errmsg);
-      FREE(errmsg);
-      return(snd_bad_arity_error(S_contrast_control_procedure, errstr, func));
-    }
-
-  if (XEN_PROCEDURE_P(g_contrast)) snd_unprotect(g_contrast);
-  if (XEN_NOT_FALSE_P(func))
-    {
-      g_contrast = func;
-      use_g_contrast = 1;
-    }
-  else 
-    {
-      g_contrast = XEN_NAME_AS_C_STRING_TO_VALUE("snd-contrast");
-      use_g_contrast = 0;
-    }
-  snd_protect(g_contrast);
-  return(func);
-}
-
-static XEN play_hook;
-static XEN start_playing_hook;
-static XEN stop_playing_hook;
-static XEN stop_playing_region_hook;
-static XEN stop_playing_channel_hook;
-static XEN stop_playing_selection_hook;
-
-
-
-/* -------------------------------- fcomb gen ----------------------- */
-
-static int MUS_FCOMB = 0;
-
-typedef struct {
-  mus_any_class *core;
-  int loc, size;
-  Float *line;
-  Float xscl, a0, a1, x1;
-} fcomb;
-
-static int mus_fcomb_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_FCOMB));}
-
-static char *inspect_fcomb(void *ptr) 
-{
-  fcomb *gen = (fcomb *)ptr;
-  char *desc = NULL;
-  desc = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-  if (desc) 
-    mus_snprintf(desc, PRINT_BUFFER_SIZE, "fcomb line[%d at %d], xscl: %f, a0: %f, a1: %f, x1: %f",
-		 gen->size, gen->loc, gen->xscl, gen->a0, gen->a1, gen->x1);
-  return(desc);
-}
-
-static char *describe_fcomb(void *ptr) 
-{
-  char *desc = NULL;
-  fcomb *gen = (fcomb *)ptr;
-  desc = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-  if (desc)
-    {
-      if (mus_fcomb_p((mus_any *)ptr))
-	mus_snprintf(desc, PRINT_BUFFER_SIZE, "fcomb: scaler: %.3f, a0: %.3f, a1: %.3f, line[%d]",
-		     gen->xscl, gen->a0, gen->a1, gen->size);
-      else mus_snprintf(desc, PRINT_BUFFER_SIZE, "not an fcomb gen");
-    }
-  return(desc);
-}
-
-static int fcomb_equalp(void *p1, void *p2) {return(p1 == p2);}
-static int fcomb_length(void *ptr) {return(((fcomb *)ptr)->size);}
-static Float *fcomb_data(void *ptr) {return(((fcomb *)ptr)->line);}
-static Float fcomb_scaler(void *ptr) {return(((fcomb *)ptr)->xscl);}
-static Float set_fcomb_scaler(void *ptr, Float val) {((fcomb *)ptr)->xscl = val; return(val);}
-static Float set_fcomb_coeff(void *ptr, Float val) {((fcomb *)ptr)->a1 = val; ((fcomb *)ptr)->a0 = 1.0 - val; return(val);}
-
-static int free_fcomb(void *uptr) 
-{
-  fcomb *ptr = (fcomb *)uptr;
-  if (ptr)
-    {
-      if (ptr->line) 
-	{
-	  FREE(ptr->line);
-	  ptr->line = NULL;
-	}
-      FREE(ptr); 
-    }
-  return(0);
-}
-
-static Float mus_fcomb (mus_any *ptr, Float input, Float ignored) 
-{
-  fcomb *gen = (fcomb *)ptr;
-  Float tap_result, filter_result;
-  tap_result = gen->line[gen->loc];
-  filter_result = (gen->a0 * tap_result) + (gen->a1 * gen->x1);
-  gen->x1 = tap_result;
-  gen->line[gen->loc] = input + filter_result * gen->xscl;
-  gen->loc++;
-  if (gen->loc >= gen->size) gen->loc = 0;
-  return(tap_result);
-}
-
-static mus_any_class FCOMB_CLASS = {
-  -1, /* MUS_FCOMB eventually */
-  "fcomb",
-  &free_fcomb,
-  &describe_fcomb,
-  &inspect_fcomb,
-  &fcomb_equalp,
-  &fcomb_data,
-  0,
-  &fcomb_length,
-  0,
-  0, 0, 0, 0, /* freq phase */
-  &fcomb_scaler,
-  &set_fcomb_scaler,
-  &mus_fcomb,
-  0
-};
-
-static mus_any *mus_make_fcomb (Float scaler, int size, Float a0, Float a1)
-{
-  fcomb *gen = NULL;
-  gen = (fcomb *)CALLOC(1, sizeof(fcomb));
-  if (gen == NULL) 
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate struct for mus_make_fcomb!");
-  else
-    {
-      gen->core = &FCOMB_CLASS;
-      if (MUS_FCOMB == 0) MUS_FCOMB = mus_make_class_tag();
-      gen->core->type = MUS_FCOMB;
-      gen->loc = 0;
-      gen->xscl = scaler;
-      gen->x1 = 0.0;
-      gen->a0 = a0;
-      gen->a1 = a1;
-      gen->size = size;
-      gen->line = (Float *)CALLOC(size, sizeof(Float));
-      if (gen->line == NULL) 
-	mus_error(MUS_MEMORY_ALLOCATION_FAILED,
-		  "can't allocate %d bytes for fcomb delay line in mus_make_fcomb!",
-		  (int)(size * sizeof(Float)));
-    }
-  return((mus_any *)gen);
-}
-
-
-/* ---------------- reverbs ---------------- */
-/*
- * call sequence is a bit convoluted because we want two internal reverb choices + user-defined XEN func choices,
- *   freeverb wants multi-channel inputs,
- *   g_calln is not fast enough to depend on in real time (where we could be running reverb+expand+src+filter)
- * so, wherever possible we call direct, but XEN backups exist as well (for possible explicit call)
- */
-
-static void *global_rev = NULL;
-
 typedef struct {
   int num_combs;
   mus_any **combs;
   int num_allpasses;
   mus_any **allpasses;
   mus_any *onep;
-  int chan_combs, chan_allpasses;
-  mus_any **predelays;
-  int num_predelays;
 } rev_info;
 
-static void nrev(void *ur, Float *rins, Float *routs, int chans)
+static rev_info *global_rev = NULL;
+
+static void nrev(rev_info *r, Float *rins, Float *routs, int chans)
 {
-  rev_info *r = (rev_info *)ur;
   Float rout, rin = 0.0;
   int i;
   for (i = 0; i < chans; i++) rin += rins[i];
@@ -490,51 +228,10 @@ static void nrev(void *ur, Float *rins, Float *routs, int chans)
     routs[i] = mus_all_pass(r->allpasses[i + 4], rout, 0.0);
 }
 
-static void freeverb(void *ur, Float *rins, Float *routs, int chans)
-{
-  rev_info *r = (rev_info *)ur;
-  int i, j, k = 0, m = 0;
-  for (i = 0; i < chans; i++)
-    {
-      rins[i] = mus_delay(r->predelays[i], rins[i], 0.0);
-      routs[i] = 0.0;
-      for (j = 0; j < r->chan_combs; j++)
-	routs[i] += mus_fcomb(r->combs[k++], rins[i], 0.0);
-      for (j = 0; j < r->chan_allpasses; j++)
-	routs[i] = mus_all_pass(r->allpasses[m++], routs[i], 0.0);
-    }
-}
-
-#include "vct.h"
-#include "clm2xen.h"
-
-static XEN g_nrev(XEN ptr, XEN invals, XEN outvals)
-{
-  vct *inp, *outp;
-  inp = TO_VCT(invals);
-  outp = TO_VCT(outvals);
-  nrev((void *)XEN_UNWRAP_C_POINTER(ptr), inp->data, outp->data, outp->length);
-  return(outvals);
-}
-
-static XEN g_freeverb(XEN ptr, XEN invals, XEN outvals)
-{
-  /* actually just a place-holder */
-  vct *inp, *outp;
-  inp = TO_VCT(invals);
-  outp = TO_VCT(outvals);
-  freeverb((void *)XEN_UNWRAP_C_POINTER(ptr), inp->data, outp->data, outp->length);
-  return(outvals);
-}
-
-static XEN v_ins = XEN_FALSE;
-static XEN v_outs = XEN_FALSE;
-
 static Float *r_ins, *r_outs;
-static void free_reverb(void *ur);
 static int reverb_chans = 0;
 
-static void reverb(void *ur, Float **rins, MUS_SAMPLE_TYPE **outs, int ind)
+static void reverb(rev_info *r, Float **rins, MUS_SAMPLE_TYPE **outs, int ind)
 {
   int i, chans;
   chans = reverb_chans;
@@ -543,42 +240,16 @@ static void reverb(void *ur, Float **rins, MUS_SAMPLE_TYPE **outs, int ind)
       r_ins[i] = rins[i][ind];
       r_outs[i] = 0.0;
     }
-  switch (which_reverb)
-    {
-    case NREVERB: 
-      nrev(ur, r_ins, r_outs, chans); 
-      break;
-    case FREEVERB: 
-      freeverb(ur, r_ins, r_outs, chans); 
-      break;
-    case USERVERB:
-      {
-	XEN res;
-	if (!ur) return;
-#if (SCM_DEBUG_TYPING_STRICTNESS == 2)
-	res = XEN_CALL_3(g_reverb, XEN_FALSE, v_ins, v_outs, __FUNCTION__);
-#else
-	res = XEN_CALL_3(g_reverb, (XEN)ur, v_ins, v_outs, __FUNCTION__);
-#endif
-	if (!(VCT_P(res)))
-	  {
-	    stop_playing_all_sounds();
-	    free_reverb(global_rev);
-	    snd_warning("play stopped due to reverb error");
-	  }
-      }
-      break;
-    }
+  nrev(r, r_ins, r_outs, chans); 
   for (i = 0; i < chans; i++)
     outs[i][ind] += MUS_FLOAT_TO_SAMPLE(r_outs[i]);
 }
 
-
-static void free_rev(void) 
+static void free_reverb(void) 
 {
   int i;
   rev_info *r;
-  r = (rev_info *)global_rev;
+  r = global_rev;
   if (r)
     {
       if (r->combs)
@@ -596,45 +267,14 @@ static void free_rev(void)
 	      mus_free(r->allpasses[i]);
 	  FREE(r->allpasses);
 	}
-      if (r->predelays)
-	{
-	  for (i = 0; i < r->num_predelays; i++)
-	    if (r->predelays[i])
-	      mus_free(r->predelays[i]);
-	  FREE(r->predelays);
-	}
       FREE(r);
-    }
-}
-
-static XEN g_free_rev(XEN ptr) 
-{
-  free_rev();
-  return(XEN_FALSE);
-}
-
-static void free_reverb(void *ur)
-{
-  switch (which_reverb)
-    {
-    case NREVERB: 
-    case FREEVERB: 
-      free_rev(); 
-      break;
-    case USERVERB:
-#if (SCM_DEBUG_TYPING_STRICTNESS == 2)
-      XEN_CALL_1(g_free_reverb, XEN_FALSE, "free-reverb");
-#else
-      XEN_CALL_1(g_free_reverb, (XEN)ur, "free-reverb");
-#endif
-      break;
     }
   global_rev = NULL;
 }
 
 static Float *comb_factors = NULL;
 
-static void *make_nrev(snd_info *sp, int chans) 
+static rev_info *make_nrev(snd_info *sp, int chans) 
 {
   /* Mike McNabb's nrev from Mus10 days (ca. 1978) */
   #define BASE_DLY_LEN 14
@@ -650,8 +290,6 @@ static void *make_nrev(snd_info *sp, int chans)
   for (i = 0; i < BASE_DLY_LEN; i++) 
     dly_len[i] = get_prime((int)(srscale * base_dly_len[i]));
   r = (rev_info *)CALLOC(1, sizeof(rev_info));
-  r->predelays = NULL;
-  r->num_predelays = 0;
   r->num_combs = NREV_COMBS;
   r->combs = (mus_any **)CALLOC(r->num_combs, sizeof(mus_any *));
   r->num_allpasses = 4 + chans;
@@ -673,112 +311,30 @@ static void *make_nrev(snd_info *sp, int chans)
       else len = get_prime((int)(40 + mus_random(20.0)));
       r->allpasses[i + 4] = mus_make_all_pass(-0.700, 0.700, len, NULL, len);
     }
-  return((void *)r);
+  return(r);
 }
 
-
-static void *make_freeverb(snd_info *sp, int chans) 
-{
-  int freeverb_stereo_spread = 23;
-  #define FREEVERB_COMBS 8
-  static int freeverb_comb_tuning[FREEVERB_COMBS] = {1116, 1188, 1277, 1356, 1422, 1491, 1557, 1617};
-  #define FREEVERB_ALLPASSES 4
-  static int freeverb_allpass_tuning[FREEVERB_ALLPASSES] = {556, 441, 341, 225};
-  Float freeverb_room_decay = 0.5;
-  Float freeverb_damping = 0.5;
-  Float freeverb_predelay = 0.03;
-  Float freeverb_scale_damping = 0.4;
-  Float freeverb_scale_room_decay = 0.28;
-  Float freeverb_offset_room_decay = 0.7;
-  int i, j, k, delay_len;
-  rev_info *r;
-  Float srscale, fcmb;
-  if (sp == NULL) return(NULL);
-  srscale = sp->reverb_control_length * SND_SRATE(sp) / 44100.0;
-  r = (rev_info *)CALLOC(1, sizeof(rev_info));
-  r->num_predelays = chans;
-  r->predelays = (mus_any **)CALLOC(chans, sizeof(mus_any *));
-  delay_len = (int)(SND_SRATE(sp) * freeverb_predelay);
-  for (i = 0; i < chans; i++)
-    r->predelays[i] = mus_make_delay(delay_len, NULL, delay_len);
-  r->chan_combs = FREEVERB_COMBS;
-  r->chan_allpasses = FREEVERB_ALLPASSES;
-  r->num_combs = r->chan_combs * chans;
-  r->num_allpasses = r->chan_allpasses * chans;
-  r->combs = (mus_any **)CALLOC(r->num_combs, sizeof(mus_any *));
-  r->allpasses = (mus_any **)CALLOC(r->num_allpasses, sizeof(mus_any *));
-  if (comb_factors) FREE(comb_factors);
-  comb_factors = (Float *)CALLOC(r->num_combs, sizeof(Float));
-  k = 0;
-  for (i = 0; i < chans; i++)
-    for (j = 0; j < r->chan_combs; j++)
-      {
-	delay_len = (int)(srscale * freeverb_comb_tuning[j]);
-	if (i & 1) 
-	  delay_len += (int)(srscale * freeverb_stereo_spread);
-	fcmb = (freeverb_scale_damping * freeverb_damping) * sp->reverb_control_lowpass / DEFAULT_REVERB_CONTROL_LOWPASS;
-	comb_factors[k] = (freeverb_room_decay * freeverb_scale_room_decay + freeverb_offset_room_decay) * 
-	                  sp->reverb_control_feedback / DEFAULT_REVERB_CONTROL_FEEDBACK;
-	r->combs[k] = mus_make_fcomb(comb_factors[k], delay_len, 1.0 - fcmb, fcmb);
-	k++;
-      }
-  k = 0;
-  for (i = 0; i < chans; i++)
-    for (j = 0; j < r->chan_allpasses; j++)
-      {
-	delay_len = (int)(srscale * freeverb_allpass_tuning[j]);
-	if (i & 1) delay_len += (int)(srscale * freeverb_stereo_spread);
-	r->allpasses[k] = mus_make_all_pass(0.5, -1.0, delay_len, NULL, delay_len);
-	k++;
-      }
-  return((void *)r);
-}
-
-static snd_info *ind2sp(int i)
-{
-  snd_state *ss;
-  ss = get_global_state();
-  return(ss->sounds[i]);
-}
-
-static XEN g_make_nrev(XEN ind, XEN chns) 
-{
-  return(XEN_WRAP_C_POINTER(make_nrev(ind2sp(XEN_TO_SMALL_C_INT(ind)),
-				      XEN_TO_SMALL_C_INT(chns))));
-}
-
-static XEN g_make_freeverb(XEN ind, XEN chns) 
-{
-  return(XEN_WRAP_C_POINTER(make_freeverb(ind2sp(XEN_TO_SMALL_C_INT(ind)),
-					  XEN_TO_SMALL_C_INT(chns))));
-}
-
-static void *make_reverb(snd_info *sp, int chans)
+static void make_reverb(snd_info *sp, int chans)
 { 
   reverb_chans = chans;
-  switch (which_reverb)
+  global_rev = make_nrev(sp, chans);
+}
+
+static void set_reverb_filter_coeff(Float newval)
+{
+  if (global_rev)
     {
-    case NREVERB: 
-      global_rev = make_nrev(sp, chans);
-      break;
-    case FREEVERB:
-      global_rev = make_freeverb(sp, chans);
-      break;
-    case USERVERB:
-#if (SCM_DEBUG_TYPING_STRICTNESS != 2)
-      global_rev = (void *)XEN_CALL_2(g_make_reverb,
-				      C_TO_SMALL_XEN_INT(sp->index),
-				      C_TO_SMALL_XEN_INT(chans),
-				      __FUNCTION__);
-      if (XEN_SYMBOL_P((XEN)global_rev))
-	{
-	  report_in_minibuffer(sp, "make-reverb unhappy?");
-	  global_rev = NULL;
-	}
-#endif
-      break;
+      mus_set_a0(global_rev->onep, newval);
+      mus_set_b1(global_rev->onep, 1.0 - newval);
     }
-  return(global_rev);
+}
+
+static void set_reverb_comb_factors(Float val)
+{
+  int j;
+  if (global_rev)
+    for (j = 0; j < global_rev->num_combs; j++)
+      mus_set_scaler(global_rev->combs[j], comb_factors[j] * val);
 }
 
 
@@ -786,73 +342,8 @@ static void *make_reverb(snd_info *sp, int chans)
 
 static Float contrast (dac_info *dp, Float amp, Float index, Float inval)
 {
-  if (use_g_contrast)
-    return(amp * XEN_TO_C_DOUBLE(XEN_CALL_2(g_contrast,
-					    C_TO_XEN_DOUBLE(dp->contrast_amp * inval),
-					    C_TO_XEN_DOUBLE(index),
-					    __FUNCTION__)));
   return(amp * mus_contrast_enhancement(dp->contrast_amp * inval, index));
 }
-
-static XEN g_mus_contrast(XEN inval, XEN index)
-{
-#ifdef SCM_REAL_VALUE
-  return(C_TO_XEN_DOUBLE(mus_contrast_enhancement(SCM_REAL_VALUE(inval), SCM_REAL_VALUE(index))));
-#else
-  return(C_TO_XEN_DOUBLE(mus_contrast_enhancement(XEN_TO_C_DOUBLE(inval), XEN_TO_C_DOUBLE(index))));
-#endif
-}
-
-
-static void set_nrev_filter_coeff(Float newval)
-{
-  rev_info *r;
-  r = (rev_info *)global_rev;
-  mus_set_a0(r->onep, newval);
-  mus_set_b1(r->onep, 1.0 - newval);
-}
-
-static void set_freeverb_filter_coeff(Float newval)
-{
-  int j;
-  rev_info *r;
-  r = (rev_info *)global_rev;
-  if (r)
-    {
-      for (j = 0; j < r->num_combs; j++)
-	set_fcomb_coeff(r->combs[j], newval / DEFAULT_REVERB_CONTROL_LOWPASS);
-    }
-}
-
-static void set_reverb_filter_coeff(Float newval)
-{
-  switch (which_reverb)
-    {
-    case NREVERB: set_nrev_filter_coeff(newval); break;
-    case FREEVERB: set_freeverb_filter_coeff(newval); break;
-    default: break;
-    }
-}
-
-static void set_reverb_comb_factors(Float newval)
-{
-  rev_info *r;
-  int j;
-  Float val;
-  if (which_reverb != USERVERB)
-    {
-      r = (rev_info *)global_rev;
-      if (which_reverb == FREEVERB)
-	val = newval / DEFAULT_REVERB_CONTROL_FEEDBACK;
-      else val = newval;
-      if (r)
-	{
-	  for (j = 0; j < r->num_combs; j++)
-	    mus_set_scaler(r->combs[j], comb_factors[j] * val);
-	}
-    }
-}
-
 
 
 Float list_interp(Float x, Float *e, int pts)
@@ -904,7 +395,7 @@ static dac_info *make_dac_info(chan_info *cp, snd_info *sp, snd_fd *fd)
       /* that is, if user wants fancy src, he needs to say so before we start */
       if (dp->expanding) 
 	{
-	  dp->spd = (spd_info *)make_expand(sp, (Float)SND_SRATE(sp), sp->expand_control, dp);
+	  dp->spd = (spd_info *)make_expand(sp, sp->expand_control, dp);
 	  dp->expand_ring_frames = (int)(SND_SRATE(sp) * sp->expand_control * sp->expand_control_length * 2);
 	}
       if (dp->filtering)
@@ -1034,6 +525,12 @@ void dac_set_reverb_lowpass(snd_info *sp, Float newval) {dac_set_field(sp, newva
 /* -------------------------------- stop playing (remove from play-list) -------------------------------- */
 
 static int dac_running = 0;
+static XEN play_hook;
+static XEN start_playing_hook;
+static XEN stop_playing_hook;
+static XEN stop_playing_region_hook;
+static XEN stop_playing_channel_hook;
+static XEN stop_playing_selection_hook;
 
 #define MAX_DEVICES 8
 static int dev_fd[MAX_DEVICES];
@@ -1262,7 +759,7 @@ static void start_dac(snd_state *ss, int srate, int channels, int background)
 	  if ((dp->reverbing) && 
 	      (dp->sp) && 
 	      (global_rev == NULL))
-	    global_rev = (void *)make_reverb(dp->sp, channels);
+	    make_reverb(dp->sp, channels);
           if (dp->audio_chan >= channels)                 /* if dac_running, the number of channels has already been set and won't change */
 	    {
 	      if (dac_combines_channels(ss))
@@ -1771,7 +1268,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 	      dacp->reverb_ring_frames -= frames;
 	      if (dacp->reverb_ring_frames <= 0) 
 		{
-		  free_reverb(global_rev);
+		  free_reverb();
 		}
 	    }
 	}
@@ -1911,23 +1408,6 @@ static void make_dac_buffers(dac_state *dacp)
       if (r_ins) FREE(r_ins);
       r_outs = (Float *)CALLOC(dacp->channels, sizeof(Float));
       r_ins = (Float *)CALLOC(dacp->channels, sizeof(Float));
-      if (!(VCT_P(v_ins)))
-	{
-	  v_ins = make_vct_wrapper(dacp->channels, r_ins);
-	  v_outs = make_vct_wrapper(dacp->channels, r_outs);
-	  snd_protect(v_ins);
-	  snd_protect(v_outs);
-	}
-      else
-	{
-	  vct *v;
-	  v = TO_VCT(v_ins);
-	  v->data = r_ins;
-	  v->length = dacp->channels;
-	  v = TO_VCT(v_outs);
-	  v->data = r_outs;
-	  v->length = dacp->channels;
-	}
     }
   bytes = dacp->channels * dac_buffer_size * mus_data_format_to_bytes_per_sample(dacp->out_format);
   if ((audio_bytes_size < bytes) || 
@@ -2186,7 +1666,7 @@ static int start_audio_output_1 (dac_state *dacp)
 	      dac_running = 0;
 	      cleanup_dac_hook();
 	      unlock_recording_audio();
-	      if (global_rev) free_reverb(global_rev);
+	      if (global_rev) free_reverb();
 	      max_active_slot = -1;
 	      return(FALSE);
 	    }
@@ -2353,7 +1833,7 @@ static int start_audio_output (dac_state *dacp)
 	      if ((dp->reverbing) && 
 		  (dp->sp) && 
 		  (global_rev == NULL))
-		global_rev = (void *)make_reverb(dp->sp, dacp->channels);
+		make_reverb(dp->sp, dacp->channels);
 
 	      if (dp->audio_chan >= dacp->channels)
 		{
@@ -2384,7 +1864,7 @@ static void stop_audio_output (dac_state *dacp)
    cleanup_dac_hook();
    unlock_recording_audio();
    dac_pausing = 0;
-   if (global_rev) free_reverb(global_rev);
+   if (global_rev) free_reverb();
    max_active_slot = -1;
    unlock_apply(dacp->ss, NULL);
 }
@@ -2478,7 +1958,7 @@ void finalize_apply(snd_info *sp)
   dac_running = 0;
   cleanup_dac_hook();
   if (snd_dacp) free_dac_state();
-  if (global_rev) free_reverb(global_rev);
+  if (global_rev) free_reverb();
 }
 
 int run_apply(int ofd)
@@ -2838,16 +2318,6 @@ static XEN g_player_p(XEN snd_chn)
 
 
 #ifdef XEN_ARGIFY_1
-XEN_NARGIFY_2(g_make_nrev_w, g_make_nrev)
-XEN_NARGIFY_3(g_nrev_w, g_nrev)
-XEN_NARGIFY_1(g_free_rev_w, g_free_rev)
-XEN_NARGIFY_2(g_mus_contrast_w, g_mus_contrast)
-XEN_NARGIFY_2(g_make_freeverb_w, g_make_freeverb)
-XEN_NARGIFY_3(g_freeverb_w, g_freeverb)
-XEN_NARGIFY_0(g_reverb_procedures_w, g_reverb_procedures)
-XEN_NARGIFY_3(g_set_reverb_procedures_w, g_set_reverb_procedures)
-XEN_NARGIFY_0(g_contrast_procedure_w, g_contrast_procedure)
-XEN_NARGIFY_1(g_set_contrast_procedure_w, g_set_contrast_procedure)
 XEN_ARGIFY_6(g_play_w, g_play)
 XEN_ARGIFY_5(g_play_channel_w, g_play_channel)
 XEN_ARGIFY_2(g_play_selection_w, g_play_selection)
@@ -2860,16 +2330,6 @@ XEN_ARGIFY_3(g_start_playing_w, g_start_playing)
 XEN_NARGIFY_1(g_stop_player_w, g_stop_player)
 XEN_NARGIFY_1(g_player_p_w, g_player_p)
 #else
-#define g_make_nrev_w g_make_nrev
-#define g_nrev_w g_nrev
-#define g_free_rev_w g_free_rev
-#define g_mus_contrast_w g_mus_contrast
-#define g_make_freeverb_w g_make_freeverb
-#define g_freeverb_w g_freeverb
-#define g_reverb_procedures_w g_reverb_procedures
-#define g_set_reverb_procedures_w g_set_reverb_procedures
-#define g_contrast_procedure_w g_contrast_procedure
-#define g_set_contrast_procedure_w g_set_contrast_procedure
 #define g_play_w g_play
 #define g_play_channel_w g_play_channel
 #define g_play_selection_w g_play_selection
@@ -2885,13 +2345,6 @@ XEN_NARGIFY_1(g_player_p_w, g_player_p)
 
 void g_init_dac(void)
 {
-  XEN_DEFINE_PROCEDURE(S_reverb_control_procedures, g_reverb_procedures_w, 0, 0, 0, H_reverb_control_procedures);
-  XEN_DEFINE_PROCEDURE("set-" S_reverb_control_procedures, g_set_reverb_procedures_w, 3, 0, 0, H_set_reverb_control_procedures);
-  /* can't use generalized set here because it's confused by the 3 args -- perhaps a list would be ok */
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_contrast_control_procedure, g_contrast_procedure_w, H_contrast_control_procedure,
-				   "set-" S_contrast_control_procedure, g_set_contrast_procedure_w,  0, 0, 1, 0);
-
   XEN_DEFINE_PROCEDURE(S_play,           g_play_w, 0, 6, 0,           H_play);
   XEN_DEFINE_PROCEDURE(S_play_channel,   g_play_channel_w, 0, 5, 0,   H_play_channel);
   XEN_DEFINE_PROCEDURE(S_play_selection, g_play_selection_w, 0, 2, 0, H_play_selection);
@@ -2923,23 +2376,4 @@ If it returns #t, the sound is not played."
   XEN_DEFINE_HOOK(dac_hook, S_dac_hook, 1, H_dac_hook);                                                    /* args = data as sound_data obj */
   XEN_DEFINE_HOOK(stop_dac_hook, S_stop_dac_hook, 0, H_stop_dac_hook);                                     /* no args */
   XEN_DEFINE_HOOK(stop_playing_selection_hook, S_stop_playing_selection_hook, 0, H_stop_playing_selection_hook); /* no args */
-
-  g_make_reverb = XEN_FALSE;
-  g_reverb = XEN_FALSE;
-  g_free_reverb = XEN_FALSE;
-  g_contrast = XEN_FALSE;
-  v_ins = XEN_FALSE;
-  v_outs = XEN_FALSE;
-  XEN_DEFINE_PROCEDURE("make-snd-nrev",     g_make_nrev_w, 2, 0, 0,     "make-snd-nrev is the default reverb make function");
-  XEN_DEFINE_PROCEDURE("snd-nrev",          g_nrev_w, 3, 0, 0,          "snd-nrev is the default reverb");
-  XEN_DEFINE_PROCEDURE("free-snd-nrev",     g_free_rev_w, 1, 0, 0,      "free-snd-nrev is the default reverb free function");
-  XEN_DEFINE_PROCEDURE("snd-contrast",      g_mus_contrast_w, 2, 0, 0,  "snd-contrast is the default contrast function");
-  XEN_DEFINE_PROCEDURE("make-snd-freeverb", g_make_freeverb_w, 2, 0, 0, "make-snd-freeverb is the freeverb reverb make function");
-  XEN_DEFINE_PROCEDURE("snd-freeverb",      g_freeverb_w, 3, 0, 0,      "snd-freeverb is the freeverb reverb");
-  XEN_DEFINE_PROCEDURE("free-snd-freeverb", g_free_rev_w, 1, 0, 0,      "free-snd-freeverb is the freeverb reverb free function");
-
-#if HAVE_GUILE
-  XEN_EVAL_C_STRING("(set-reverb-control-procedures snd-nrev make-snd-nrev free-snd-nrev)");
-  XEN_EVAL_C_STRING("(set-contrast-control-procedure snd-contrast)");
-#endif
 }

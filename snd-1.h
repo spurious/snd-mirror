@@ -396,7 +396,6 @@ void file_buffers_forward(int ind0, int ind1, int indx, snd_fd *sf, snd_data *cu
 void file_buffers_back(int ind0, int ind1, int indx, snd_fd *sf, snd_data *cur_snd);
 MUS_SAMPLE_TYPE snd_file_read_sample(snd_data *ur_sd, int index, chan_info *cp);
 int *make_zero_file_state(int size);
-char *snd_remove_with_error(const char *name);
 int snd_remove(const char *name);
 int sf_beg(snd_data *sd);
 int sf_end(snd_data *sd);
@@ -669,13 +668,11 @@ void backup_edit_list(chan_info *cp);
 void remember_temp(char *filename, int chans);
 void forget_temps(void);
 snd_data *make_snd_data_file(char *name, int *io, file_info *hdr, int temp, int ctr, int temp_chan);
-snd_data *make_snd_data_buffer(MUS_SAMPLE_TYPE *data, int len, int ctr);
 void free_sound_list (chan_info *cp);
 void gather_usage_stats(chan_info *cp);
 void update_all_usage_stats(snd_state *ss);
 int current_ed_samples(chan_info *cp);
 void extend_with_zeros(chan_info *cp, int beg, int num, const char *origin, int edpos);
-void insert_samples(int beg, int num, MUS_SAMPLE_TYPE *vals, chan_info *cp, const char *origin, int edpos);
 void file_insert_samples(int beg, int num, char *tempfile, chan_info *cp, int chan, int auto_delete, const char *origin, int edpos);
 void delete_samples(int beg, int num, chan_info *cp, const char *origin, int edpos);
 void change_samples(int beg, int num, MUS_SAMPLE_TYPE *vals, chan_info *cp, int lock, const char *origin, int edpos);
@@ -714,12 +711,8 @@ int save_edits_without_display(snd_info *sp, char *new_name, int type, int forma
 void revert_edits(chan_info *cp, void *ptr);
 int open_temp_file(char *ofile, int chans, file_info *hdr, snd_state *ss);
 int close_temp_file(int ofd, file_info *hdr, long bytes, snd_info *sp);
-int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, int length, snd_state *ss);
 int current_location(snd_fd *sf);
-
 void g_init_edits(void);
-MUS_SAMPLE_TYPE *g_floats_to_samples(XEN obj, int *size, const char *caller, int position);
-
 snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize);
 snd_data *free_snd_data(snd_data *sf);
 
@@ -749,7 +742,7 @@ BACKGROUND_TYPE safe_fft_in_slices(void *fftData);
 BACKGROUND_TYPE sonogram_in_slices(void *sono);
 char *added_transform_name(int type);
 void clear_transform_edit_ctrs(chan_info *cp);
-void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss, axis_info *fap, axis_context *ax, int with_hooks);
+void make_fft_graph(chan_info *cp, snd_info *sp, axis_info *fap, axis_context *ax, int with_hooks);
 void g_init_fft(void);
 
 
@@ -796,7 +789,6 @@ void snd_eval_property_str(snd_state *ss, char *buf);
 void snd_eval_stdin_str(snd_state *ss, char *buf);
 void g_snd_callback(int callb);
 void clear_listener(void);
-char *gl_print(XEN result, const char *caller);
 
 
 
@@ -918,7 +910,6 @@ int check_enved_hook(env *e, int pos, Float x, Float y, int reason);
 
 /* -------- snd-dac.c -------- */
 
-char *reverb_name(void);
 void cleanup_dac(void);
 Float list_interp(Float x, Float *e, int pts);
 void stop_playing_sound(snd_info *sp);
@@ -965,7 +956,6 @@ void handle_cursor(chan_info *cp, int redisplay);
 void map_chans_field(snd_state *ss, int field, Float val);
 void in_set_transform_graph_type(snd_state *ss, int val);
 void in_set_fft_window(snd_state *ss, int val);
-void set_beats_per_minute(snd_state *ss, Float val);
 void combine_sound(snd_info *sp);
 void separate_sound(snd_info *sp);
 void superimpose_sound(snd_info *sp);
@@ -1129,7 +1119,7 @@ void save_prevlist(FILE *fd);
 int find_curfile_regrow(char *shortname);
 int find_prevfile_regrow(char *shortname);
 void clear_prevlist(snd_state *ss);
-void update_prevlist(snd_state *ss);
+void update_prevlist(void);
 void init_curfiles(int size);
 void init_prevfiles(int size);
 void file_unprevlist(char *filename);
@@ -1141,7 +1131,6 @@ char **data_format_names(void);
 char **set_header_and_data_positions(file_data *fdat, int type, int format);
 int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *str, int save_type, int srate, int type, int format, char *comment);
 void edit_header_callback(snd_state *ss, snd_info *sp, file_data *edit_header_data);
-char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr);
 snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *new_comment);
 
 int header_type_from_position(int pos);
@@ -1195,14 +1184,13 @@ void g_init_listener(void);
 
 /* -------- snd-mix.c -------- */
 
-int disk_space_p(snd_info *sp, int fd, int bytes, int other_bytes, char *filename);
+int disk_space_p(snd_info *sp, int bytes, int other_bytes, char *filename);
 mix_context *cp_to_mix_context(chan_info *cp);
 mix_context *make_mix_context(chan_info *cp);
 mix_context *free_mix_context(mix_context *ms);
 void free_mix_list(chan_info *cp);
 void free_mixes(chan_info *cp);
 int mix_complete_file(snd_info *sp, char *str, const char *origin, int with_tag);
-int mix_array(int beg, int num, MUS_SAMPLE_TYPE **data, chan_info **out_cps, int in_chans, int out_chans, int nominal_srate, const char *origin, int with_tag);
 int mix_file_and_delete(int beg, int num, char *file, chan_info **cps, int out_chans, const char *origin, int with_tag);
 int copy_file_and_mix(int beg, int num, char *file, chan_info **cps, int out_chans, const char *origin, int with_tag);
 void backup_mix_list(chan_info *cp, int edit_ctr);
@@ -1331,7 +1319,6 @@ int cursor_delete_previous(chan_info *cp, int count, const char *origin);
 int cursor_zeros(chan_info *cp, int count, int regexpr);
 int cursor_insert(chan_info *cp, int beg, int count, const char *origin);
 void fht(int powerOfFour, Float *array);
-Float get_selection_maxamp(chan_info *cp);
 
 void g_init_sig(void);
 int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos);

@@ -593,7 +593,7 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
 	    {
 	      bps = mus_data_format_to_bytes_per_sample(format);
 	      num = dur * bps * chans;
-	      no_space = disk_space_p(sp, ofd, num, 0, ofile);
+	      no_space = disk_space_p(sp, num, 0, ofile);
 	      if (no_space == GIVE_UP)
 		{
 		  /* has already interacted with user about disk problem */

@@ -6502,12 +6502,8 @@ next to the Contrast function, if it is running, and then the result
 is scaled by the Amp slider's value.  The filter is run next, if
 it's on, and finally the sample is scaled by the reverb slider and
 passed to the reverb, if any, which adds its result to the sample;
-the final result is sent to the speakers.  Besides the various user
-interface controls, and variables such as expand-control-hop, you can also
-change this sequence by replacing the contrast or reverb
-functions with your own.  <b>set-contrast-control-procedure</b> replaces the
-contrast-enhancement function; <b>set-reverb-control-procedures</b> replaces
-the reverb.  The control panel procedures are:
+the final result is sent to the speakers.
+The control panel procedures are:
 </p>
 <!-- -------------------------------- CONTROL PANEL -------------------------------- -->
 <table border=0 cellspacing=10>
@@ -6759,66 +6755,6 @@ the reverb.  The control panel procedures are:
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->same as pushing the control panel '<a href="snd.html#savcontrols">s</a>' button.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- set-contrast-control-procedure -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="contrastfunc">set-contrast-control-procedure</a></em> (func)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->set contrast procedure to <i>func</i>, a function of two arguments, 
-<!-- -->the current sample and the current 'contrast' slider setting, 
-<!-- -->returning a new sample, the result of the control panel contrast 
-<!-- -->function; <i>func</i> replaces the built-in contrast procedure.
-<!-- -->The built-in default (mus-contrast-enhancement) is snd-contrast.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- set-reverb-control-procedures -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="reverbfuncs">set-reverb-control-procedures</a></em> (reverb make-reverb free-reverb)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->This function replaces the built-in Snd reverb with your own.
-<!-- --></td></tr>
-<!-- -->
-<!-- --><tr><td></td><td>
-<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
-(define delay-line #f)
-(define delay-time 0.5)
-
-(<em class=red>set-reverb-control-procedures</em>
-  (lambda (ptr invals outvals)
-    (vct-set! outvals 0 
-      (delay delay-line 
-             (+ (* .75 (tap delay-line)) 
-                (vct-ref invals 0))))
-    outvals)
-  (lambda (snd chans)
-    (set! delay-line 
-      (make-delay (inexact-&gt;exact (* (srate snd) delay-time))))
-    delay-line)
-  (lambda (ptr)
-    ptr))
-<!-- --></pre></td></tr></table></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->The three arguments are the reverb, the function that makes or
-<!-- -->initializes the reverb, and the function to free the reverb.
-<!-- -->The built-in defaults are snd-nrev, make-snd-nrev, and free-snd-nrev.
-<!-- -->Another choice is Jezar Wakefield's Freeverb: snd-freeverb, etc.
-<!-- -->The make-reverb function takes two arguments, the current sound's index,
-<!-- -->and the number of output channels active; it returns an opaque object that 
-<!-- -->is subsequently passed to the reverb and free-reverb functions
-<!-- -->The reverb function takes 3 arguments, the thing returned by make-reverb, 
-<!-- -->the current reverb input samples (a vct object), and the output vct object
-<!-- -->which it should fill with the current reverb output contribution.
-<!-- --><br><br>
-<!-- -->I may change this to take a list of three functions, rather than the
-<!-- -->three functions themselves; as it is, there's no generalized set! for
-<!-- -->reverb-procedures.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->

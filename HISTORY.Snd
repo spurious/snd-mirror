@@ -3,6 +3,8 @@ snd change log
 
 2002 ----------------------------------------------------------------
 
+  14-Dec:    removed icons.scm and backgrounds.scm (replaced by contrib/dlp code).
+             removed reverb-control-procedures and contrast-control-procedure.
   10-Dec:    midi.c.
   6-Dec:     play.scm.
   3-Dec:     snd-5.5.

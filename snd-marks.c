@@ -598,7 +598,7 @@ static void delete_mark_id(int id, chan_info *cp)
 
 static void delete_marks (chan_info *cp)
 {
-  int i, ed, id = -1;
+  int i, ed;
   mark *mp;
   mark **mps;
   axis_info *ap;
@@ -615,7 +615,6 @@ static void delete_marks (chan_info *cp)
 		{
 		  ap = cp->axis;
 		  if ((mp->samp >= ap->losamp) && (mp->samp <= ap->hisamp)) erase_mark(cp, ap, mp); 
-		  id = mark_id(mp);
 		  free_mark(mp);
 		  mps[i] = NULL;
 		}
@@ -1514,10 +1513,8 @@ static XEN g_restore_marks(XEN size, XEN snd, XEN chn, XEN marklist)
   chan_info *cp;
   snd_info *sp;
   char *str;
-  snd_state *ss;
   int i, j, list_size, in_size, id, sync;
   ASSERT_CHANNEL(S_restore_marks, snd, chn, 2);
-  ss = get_global_state();
   sp = get_sp(snd);
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_restore_marks, snd));

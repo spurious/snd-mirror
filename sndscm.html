@@ -436,6 +436,9 @@ adds its update function to the effects-list when it is loaded:
 effects in more detail.  The code is mostly straight-forward, and
 it's not hard to try them out.
 </p>		   
+<p>effects.scm has been replaced by contrib/dlp/new-effects.scm, but this
+documentation more or less applies anyway.
+</p>
 
 <A NAME="envdoc"></a><span class=box><h2>env.scm</h2></span>
 
@@ -2109,7 +2112,8 @@ on the partition of the associated sound.
 <b>keep-file-dialog-open-upon-ok</b> changes File:Open so that clicking "ok" does not "unmanage" the dialog.
 <b>add-amp-controls</b> adds amp sliders to the control panel
 for multi-channel sounds.
-<b>add-very-useful-icons</b> adds some very useful icons.
+<b>add-very-useful-icons</b> adds some very useful icons. (It is now commented out, replaced 
+by contrib/dlp/new-buttons.scm).
 <b>add-rename-option</b> adds a "Rename" option to the File menu; similarly
 <b>add-delete-option</b> adds a "Delete" option.
 <b>mark-sync-color</b> uses the draw-mark-hook to set the color of sync'd marks.

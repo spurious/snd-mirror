@@ -882,13 +882,6 @@ void g_init_draw(void)
 
   /* ---------------- unstable ---------------- */
 
-#if DEBUGGING
-  XEN_DEFINE_CONSTANT("erase-context",        CHAN_IGC,       "graphics context to erase a line");
-  XEN_DEFINE_CONSTANT("mix-context",          CHAN_GC,        "graphics context for mix waveforms");
-  XEN_DEFINE_CONSTANT("selected-mix-context", CHAN_SELMXGC,   "graphics context for selected mix waveforms");
-  XEN_DEFINE_CONSTANT("combined-context",     CHAN_TMPGC,     "graphics context for superimposed graphics");
-#endif
-
   XEN_DEFINE_PROCEDURE("set-widget-foreground", g_set_widget_foreground_w, 2, 0, 0, H_set_widget_foreground);
   XEN_DEFINE_PROCEDURE(S_make_bezier,     g_make_bezier_w, 0, 0, 1,     H_make_bezier);
 

@@ -826,7 +826,7 @@ void free_mixes(chan_info *cp)
   cp->mixes = 0;
 }
 
-int disk_space_p(snd_info *sp, int fd, int bytes, int other_bytes, char *filename)
+int disk_space_p(snd_info *sp, int bytes, int other_bytes, char *filename)
 {
   int kfree, kneeded, kother, go_on;
   kfree = disk_kspace(filename);
@@ -870,7 +870,7 @@ static char *save_as_temp_file(MUS_SAMPLE_TYPE **raw_data, int chans, int len, i
   mus_file_open_descriptors(ofd, newname, format, 4, 28, chans, MUS_NEXT);
   mus_file_set_data_clipped(ofd, data_clipped(ss));
   lseek(ofd, 28, SEEK_SET);
-  no_space = disk_space_p(any_selected_sound(ss), ofd, len * chans * 4, 0, newname);
+  no_space = disk_space_p(any_selected_sound(ss), len * chans * 4, 0, newname);
   if (no_space != GIVE_UP)
     mus_file_write(ofd, 0, len - 1, chans, raw_data);
   if (mus_file_close(ofd) != 0)
@@ -965,7 +965,7 @@ static mix_info *file_mix_samples(int beg, int num, char *tempfile, chan_info *c
       snd_error("mix temp file %s: %s", ofile, strerror(errno)); 
       return(NULL);
     }
-  no_space = disk_space_p(sp, ofd, num * 4, 0, ofile);
+  no_space = disk_space_p(sp, num * 4, 0, ofile);
   if (no_space == GIVE_UP)
     {
       if (ihdr) free_file_info(ihdr);
@@ -1072,7 +1072,7 @@ static int mix(int beg, int num, int chans, chan_info **cps, char *mixinfile, in
   return(id);
 }
 
-int mix_array(int beg, int num, MUS_SAMPLE_TYPE **data, chan_info **out_cps, 
+static int mix_array(int beg, int num, MUS_SAMPLE_TYPE **data, chan_info **out_cps, 
 	      int in_chans, int out_chans, int nominal_srate, const char *origin, int with_tag)
 {
   /* always write to tempfile */
@@ -1254,7 +1254,7 @@ static void remix_file(mix_info *md, const char *origin)
 
   if (use_temp_file)
     {
-      no_space = disk_space_p(cursp, ofd, num * 4, num * 2, ofile);
+      no_space = disk_space_p(cursp, num * 4, num * 2, ofile);
       switch (no_space)
 	{
 	case GIVE_UP:

@@ -550,24 +550,6 @@ void toggle_contrast_button(snd_info *sp, int state)
 }
 
 
-void set_reverb_labels(const char *new_label)
-{
-  snd_state *ss;
-  int i;
-  snd_info *sp;
-  Widget lab;
-  ss = get_global_state();
-  for (i = 0; i < ss->max_sounds; i++)
-    {
-      sp = ss->sounds[i];
-      if ((sp) && (sp->sgx) && (sp->sgx->snd_widgets))
-	{
-	  lab = sp->sgx->snd_widgets[W_revscl_label];
-	  if (lab) set_label(lab, new_label);
-	}
-    }
-}
-
 static char revscl_number_buffer[7] ={'0', STR_decimal, '0', '0', '0', '0', '\0'};
 static char number_long_zero[7] ={'0', STR_decimal, '0', '0', '0', '0', '\0'};
 
@@ -2033,7 +2015,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       /* REVERB */
       /* REVSCL */
       n = 0;
-      s1 = XmStringCreate(reverb_name(), XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreate(STR_reverb, XmFONTLIST_DEFAULT_TAG);
       if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -2469,7 +2451,6 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       for (k = 0; k < nchans; k++) 
 	add_channel_window(sp, k, ss, chan_min_y, 0, NULL, WITH_FW_BUTTONS);
       set_button_label(sw[W_name], shortname_indexed(sp));
-      set_button_label(sw[W_revscl_label], reverb_name());
       if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
 	XtVaSetValues(sw[W_ctrls],
 		      XmNpaneMinimum, 1,

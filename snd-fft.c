@@ -1782,22 +1782,6 @@ void *make_fft_state(chan_info *cp, int simple)
       if ((cp->zero_pad == 0) && (POWER_OF_2_P(cp->transform_size)))
 	fftsize = cp->transform_size;
       else fftsize = (int)pow(2.0, (int)((log((Float)(cp->transform_size * (1 + cp->zero_pad))) / log(2.0)) + .001));
-#if DEBUGGING
-      if (fftsize != cp->transform_size)
-	{
-	  if (!(POWER_OF_2_P(cp->transform_size)))
-	    fprintf(stderr,"make_fft_state: %d transform size?\n", cp->transform_size);
-	  else
-	    {
-	      if (cp->zero_pad == 1)
-		{
-		  if ((fftsize >> 1) != cp->transform_size)
-		    fprintf(stderr,"make_fft_state: pad 1 but %d != %d?\n", fftsize >> 1, cp->transform_size);
-		}
-	      else fprintf(stderr,"make_fft_state: sizes: %d %d %d?\n", cp->transform_size, fftsize, cp->zero_pad);
-	    }
-	}
-#endif
       cp->selection_transform_size = 0;
     }
 
@@ -1883,9 +1867,6 @@ static BACKGROUND_TYPE fft_in_slices(void *fftData)
     case 8: res = display_snd_fft(fs);           break;
     default: 
       snd_error("impossible fft slice! %d", fs->slice); 
-#if DEBUGGING
-      abort();
-#endif
       return(BACKGROUND_QUIT);
       break;
     }

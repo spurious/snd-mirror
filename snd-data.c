@@ -822,7 +822,7 @@ void g_init_data(void)
 Its argument is the sound index."
 
   #define H_select_channel_hook S_select_channel_hook " is called whenever a channel is selected. \
-Its argument is the sound index and the channel number."
+Its arguments are the sound index and the channel number."
 
   XEN_DEFINE_HOOK(select_sound_hook, S_select_sound_hook, 1, H_select_sound_hook);       /* arg = sound index */
   XEN_DEFINE_HOOK(select_channel_hook, S_select_channel_hook, 2, H_select_channel_hook); /* args = sound index, channel */

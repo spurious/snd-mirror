@@ -367,7 +367,7 @@ static unsigned char p_speaker_bits[] = {
 
 Widget make_mix_panel(snd_state *ss) 
 {
-  Widget mainform, w_row, last_label, last_number, w_track_label, w_id_label;
+  Widget mainform, w_row, last_label, last_number;
   Pixmap speaker_r;
   XmString xdismiss, xhelp, xtitle, s1;
   int n, chans, i;
@@ -427,7 +427,7 @@ Widget make_mix_panel(snd_state *ss)
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-      w_id_label = XtCreateManagedWidget("mix id:", xmLabelWidgetClass, w_row, args, n);
+      XtCreateManagedWidget("mix id:", xmLabelWidgetClass, w_row, args, n);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -449,7 +449,7 @@ Widget make_mix_panel(snd_state *ss)
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-      w_track_label = XtCreateManagedWidget("track:", xmLabelWidgetClass, w_row, args, n);
+      XtCreateManagedWidget("track:", xmLabelWidgetClass, w_row, args, n);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}

@@ -192,7 +192,7 @@ static void mus_print2snd(char *msg)
   ss->Dot_Size = DEFAULT_DOT_SIZE;
   ss->Vu_Size = DEFAULT_VU_SIZE;
   ss->Vu_Font_Size = DEFAULT_VU_FONT_SIZE;
-  if (DEFAULT_VU_FONT) ss->Vu_Font = copy_string(DEFAULT_VU_FONT); else ss->Vu_Font = NULL;
+  if (DEFAULT_VU_FONT != NULL) ss->Vu_Font = copy_string(DEFAULT_VU_FONT); else ss->Vu_Font = NULL;
   ss->Speed_Control_Style = DEFAULT_SPEED_CONTROL_STYLE;
   ss->Movies = DEFAULT_MOVIES;
   ss->Selection_Creates_Region = DEFAULT_SELECTION_CREATES_REGION;
@@ -204,15 +204,15 @@ static void mus_print2snd(char *msg)
   ss->Enved_Filter_Order = DEFAULT_ENVED_FILTER_ORDER;
   ss->Filter_Env_In_Hz = DEFAULT_FILTER_ENV_IN_HZ;
   ss->Verbose_Cursor = DEFAULT_VERBOSE_CURSOR;
-  if (DEFAULT_TEMP_DIR) ss->Temp_Dir = copy_string(DEFAULT_TEMP_DIR); else ss->Temp_Dir = NULL;
-  if (DEFAULT_SAVE_DIR) ss->Save_Dir = copy_string(DEFAULT_SAVE_DIR); else ss->Save_Dir = NULL;
-  if (DEFAULT_LADSPA_DIR) ss->Ladspa_Dir = copy_string(DEFAULT_LADSPA_DIR); else ss->Ladspa_Dir = NULL;
-  if (DEFAULT_EPS_FILE) ss->Eps_File = copy_string(DEFAULT_EPS_FILE); else ss->Eps_File = NULL;
+  if (DEFAULT_TEMP_DIR != NULL) ss->Temp_Dir = copy_string(DEFAULT_TEMP_DIR); else ss->Temp_Dir = NULL;
+  if (DEFAULT_SAVE_DIR != NULL) ss->Save_Dir = copy_string(DEFAULT_SAVE_DIR); else ss->Save_Dir = NULL;
+  if (DEFAULT_LADSPA_DIR != NULL) ss->Ladspa_Dir = copy_string(DEFAULT_LADSPA_DIR); else ss->Ladspa_Dir = NULL;
+  if (DEFAULT_EPS_FILE != NULL) ss->Eps_File = copy_string(DEFAULT_EPS_FILE); else ss->Eps_File = NULL;
   ss->Eps_Bottom_Margin = DEFAULT_EPS_BOTTOM_MARGIN;
   ss->Eps_Left_Margin = DEFAULT_EPS_LEFT_MARGIN;
   ss->Eps_Size = DEFAULT_EPS_SIZE;
   ss->Listener_Prompt = copy_string(DEFAULT_LISTENER_PROMPT);
-  if (DEFAULT_AUDIO_STATE_FILE) ss->Audio_State_File = copy_string(DEFAULT_AUDIO_STATE_FILE); else ss->Audio_State_File = NULL;
+  if (DEFAULT_AUDIO_STATE_FILE != NULL) ss->Audio_State_File = copy_string(DEFAULT_AUDIO_STATE_FILE); else ss->Audio_State_File = NULL;
   ss->Show_Transform_Peaks = DEFAULT_SHOW_TRANSFORM_PEAKS;
   ss->Show_Y_Zero = DEFAULT_SHOW_Y_ZERO;
   ss->Show_Axes = DEFAULT_SHOW_AXES;
@@ -238,7 +238,7 @@ static void mus_print2snd(char *msg)
   ss->Mix_Tag_Width = DEFAULT_MIX_TAG_WIDTH;
   ss->Mix_Tag_Height = DEFAULT_MIX_TAG_HEIGHT;
   ss->Show_Usage_Stats = DEFAULT_SHOW_USAGE_STATS;
-  if (DEFAULT_SAVE_STATE_FILE) ss->Save_State_File = copy_string(DEFAULT_SAVE_STATE_FILE); else ss->Save_State_File = NULL;
+  if (DEFAULT_SAVE_STATE_FILE != NULL) ss->Save_State_File = copy_string(DEFAULT_SAVE_STATE_FILE); else ss->Save_State_File = NULL;
   ss->Enved_Base = DEFAULT_ENVED_BASE;
   ss->Enved_Power = DEFAULT_ENVED_POWER;
   ss->Enved_Wave_p = DEFAULT_ENVED_WAVE_P;

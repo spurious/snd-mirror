@@ -535,7 +535,7 @@ char *g_print_1(XEN obj, const char *caller) /* don't free return val */
   return(str1);
 }
 
-char *gl_print(XEN result, const char *caller)
+static char *gl_print(XEN result, const char *caller)
 {
   char *newbuf = NULL, *str = NULL;
   int i, ilen, savelen, savectr, slen;
@@ -1080,7 +1080,7 @@ static XEN g_set_previous_files_sort(XEN val)
 {
   #define H_previous_files_sort "(" S_previous_files_sort ") -> sort choice in view files (0 = unsorted, 1 = by name, etc)"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set-" S_previous_files_sort, "an integer"); 
-  update_prevlist(state);
+  update_prevlist();
   set_previous_files_sort(state, mus_iclamp(0,
 					    XEN_TO_C_INT(val),
 					    5));

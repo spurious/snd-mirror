@@ -1332,7 +1332,7 @@ static XtCallbackList XEN_TO_C_XtCallbackList(XEN call_list)
       if ((XEN_PROCEDURE_P(func)) && (XEN_REQUIRED_ARGS(func) == 3))
 	{
 	  cl[call_i].callback = gxm_XtCallbackProc;
-	  descr = C_TO_XEN_XM_XtCallback(XEN_CAR(call_list), XEN_CADR(call_list));
+	  descr = C_TO_XEN_XM_XtCallback(XEN_CAR(call_list), data);
 	  cl[call_i].closure = (XtPointer)descr;
 	  XEN_LIST_SET(descr, CALLBACK_GC_LOC, C_TO_XEN_INT(xm_protect(descr)));
 	}
@@ -5755,10 +5755,9 @@ retrieves resource values set on a drop site"
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg3), arg3, 3, "XmDropSiteRetrieve", "int");
   {  
     Arg *args;
-    int arglen;
     args = XEN_TO_C_Args(arg2);
     XmDropSiteRetrieve(XEN_TO_C_Widget(arg1), 
-		       args, arglen = XEN_TO_C_INT_DEF(arg3, arg2));
+		       args, XEN_TO_C_INT_DEF(arg3, arg2));
     if (args) FREE(args);
   }
   return(XEN_FALSE);
@@ -6143,16 +6142,16 @@ returns a list of data ID/private ID pairs"
    */
   unsigned long len;
   XmClipboardPendingList clst;
-  int val, i, loc;
+  int i, loc;
   XEN lst = XEN_EMPTY_LIST;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XmClipboardInquirePendingItems", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XmClipboardInquirePendingItems", "Window");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg3), arg3, 3, "XmClipboardInquirePendingItems", "char*");
-  val = XmClipboardInquirePendingItems(XEN_TO_C_Display(arg1), 
-				       XEN_TO_C_Window(arg2), 
-				       XEN_TO_C_STRING(arg3), 
-				       &clst,
-				       &len);
+  XmClipboardInquirePendingItems(XEN_TO_C_Display(arg1), 
+				 XEN_TO_C_Window(arg2), 
+				 XEN_TO_C_STRING(arg3), 
+				 &clst,
+				 &len);
   loc = xm_protect(lst);
   for (i = len - 1; i >= 0; i--)
     lst = XEN_CONS(XEN_LIST_2(C_TO_XEN_INT(clst[i].DataId), 
@@ -8313,7 +8312,7 @@ pixel members of the XColor structures."
   /* DIFF: XStoreColors arg 3 is list of XColor 
    */
   XColor *xc, *xc1;
-  int i, len, val;
+  int i, len;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XStoreColors", "Display*");
   XEN_ASSERT_TYPE(XEN_Colormap_P(arg2), arg2, 2, "XStoreColors", "Colormap");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XStoreColors", "list of XColor");
@@ -8331,9 +8330,9 @@ pixel members of the XColor structures."
       xc[i].flags = xc1->flags;
       xc[i].pad = xc1->pad;
     }
-  val = XStoreColors(XEN_TO_C_Display(arg1), 
-		     XEN_TO_C_Colormap(arg2),
-		     xc, len);
+  XStoreColors(XEN_TO_C_Display(arg1), 
+	       XEN_TO_C_Colormap(arg2),
+	       xc, len);
   FREE(xc);
   return(C_TO_XEN_INT(len));
 }
@@ -9745,12 +9744,11 @@ to the XKeyboardState structure."
   /* DIFF: XGetKeyboardControl omits arg2 and rtns list of fields
    */
   XKeyboardState ks;
-  int val;
   XEN v;
   XEN *velts;
   int i, loc;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XGetKeyboardControl", "Display*");
-  val = XGetKeyboardControl(XEN_TO_C_Display(arg1), &ks);
+  XGetKeyboardControl(XEN_TO_C_Display(arg1), &ks);
   v = XEN_MAKE_VECTOR(32, XEN_ZERO);
   loc = xm_protect(v);
   velts = XEN_VECTOR_ELEMENTS(v);
@@ -11382,10 +11380,10 @@ and returns a string list."
   char **argv;
   int argc;
   XEN lst = XEN_EMPTY_LIST;
-  int i, rtn, loc;
+  int i, loc;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XGetCommand", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XGetCommand", "Window");
-  rtn = XGetCommand(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), &argv, &argc);
+  XGetCommand(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), &argv, &argc);
   loc = xm_protect(lst);
   for (i = argc - 1; i >= 0; i--)
     lst = XEN_CONS(C_TO_XEN_STRING(argv[1]), lst);

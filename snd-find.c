@@ -282,8 +282,6 @@ int cursor_search(chan_info *cp, int count)
   int samp;
   snd_info *sp;
   char *s1, *s2;
-  snd_state *ss;
-  ss = cp->state;
   sp = cp->sound;
   if (search_in_progress) 
     {

@@ -267,6 +267,8 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+14-Dec:  removed icons.scm and backgrounds.scm (replaced by contrib/dlp code).\n\
+         removed reverb-control-procedures and contrast-control-procedure.\n\
 10-Dec:  midi.c.\n\
 6-Dec:   play.scm.\n\
 3-Dec:   snd-5.5.\n\

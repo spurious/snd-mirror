@@ -332,7 +332,6 @@ void set_snd_contrast(snd_info *sp, Float val) {sp->contrast_control = val;}
 void set_snd_srate(snd_info *sp, Float val) {sp->speed_control = val;}
 void set_snd_revlen(snd_info *sp, Float val) {sp->reverb_control_length = val;}
 void set_snd_revscl(snd_info *sp, Float val) {sp->reverb_control_scale = val;}
-void set_reverb_labels(const char *new_label) {}
 void set_snd_filter_order(snd_info *sp, int val) {sp->filter_control_order = val;}
 void set_filter_in_dB(snd_info *sp, int val) {sp->filter_control_in_dB = val;}
 

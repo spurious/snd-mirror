@@ -324,6 +324,9 @@
 					  (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* gain-amount 100)))))))
 	      (|XtVaSetValues gain-dialog (list |XmNnoResize #t |XmNresizePolicy |XmRESIZE_NONE))
 	      ;; TODO: fix this (the no resize kludge should not be needed)
+	      ;;       but, I think what is needed here is an outer form widget holding the row-column widget
+	      ;;       that is the current "parent", and that requires re-parenting the latter, or knowing
+	      ;;       in advance that we'll want an envelope editor (i.e. before calling add-sliders)
 	      (set! sliders
 		    (add-sliders gain-dialog
 				 (list (list "gain" 0.0 initial-gain-amount 5.0

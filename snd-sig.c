@@ -397,7 +397,7 @@ Float get_maxamp(snd_info *sp, chan_info *cp, int edpos)
   return(ymax);
 }
 
-Float get_selection_maxamp(chan_info *cp)
+static Float get_selection_maxamp(chan_info *cp)
 {
   snd_fd *sf;
   Float ymax, val;
@@ -2810,9 +2810,6 @@ static XEN g_fft_1(XEN reals, XEN imag, XEN sign, int use_fft)
       ipow = (int)(log(n + 1) / log(2.0));
       n2 = (int)pow(2.0, (Float)ipow);
     }
-#if DEBUGGING
-  if (n2 < n) abort();
-#endif
   if ((!v1) || (n != n2))
     {
       rl = (Float *)CALLOC(n2, sizeof(Float));

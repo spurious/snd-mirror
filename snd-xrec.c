@@ -962,9 +962,6 @@ static void record_amp_click_callback(Widget w, XtPointer context, XtPointer inf
   int val;
   ASSERT_WIDGET_TYPE(XmIsPushButton(w), w);
   ev = (XButtonEvent *)(cb->event);
-#if DEBUGGING
-  if ((int)ev <= 0) return;
-#endif
   if (ev->state & (snd_ControlMask | snd_MetaMask)) 
     val = ap->last_amp; 
   else val = RECORD_SCROLLBAR_MID;
@@ -2080,9 +2077,6 @@ static void button_matrix_button_release(Widget w, XtPointer context, XEvent *ev
   Position x, y;
   int row, col, on;
   int bin = 0, bout = 0;
-#if DEBUGGING
-  if ((int)ev <= 0) return;
-#endif
   if (!active_button)
     {
       switch (initial_button)

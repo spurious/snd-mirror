@@ -1,9 +1,7 @@
 /* (simple, low level) midi support, work in progress... */
 /*   based on code of Scott Wilson and Craig Sapp */
 
-/* TODO: OSX support
- *       test
- *       tie into CLM (rt.lisp, sndlib2clm.lisp etc)
+/* TODO: test, tie into CLM (rt.lisp, sndlib2clm.lisp etc)
  */
 
 /*
@@ -410,7 +408,9 @@ int mus_midi_write(int line, unsigned char *buffer, int bytes)
 char *mus_midi_device_name(int sysdev)
 {
   mus_midi_initialize();
-  return(mdGetName(MUS_AUDIO_DEVICE(sysdev)));
+  if (midi_ports > 0)
+    return(mdGetName(MUS_AUDIO_DEVICE(sysdev)));
+  return(NULL);
 }
 
 char *mus_midi_describe(void)
@@ -428,6 +428,7 @@ char *mus_midi_describe(void)
 	  strcat(buf, name);
 	}
     }
+  else sprintf(buf, "no midi");
   return(buf);
 }
 
@@ -517,16 +518,12 @@ char *mus_midi_describe(void)
 
 
 /* ---------------- Mac OSX ---------------- */
-/*
- * MIDIInput|OutputPortCreate(90)
- * MIDIPortDispose, MIDISend, MIDIReceived (not a typo) -- based on "packet lists" (sigh...)
- *
- * forced to go through callbacks here, so we'll have to buffer junk ourselves (read side)
- */
 
 #ifdef MAC_OSX
 #define MIDI_OK
 #include <CoreMIDI/MIDIServices.h>
+
+/* for now, just one in and one out */
 
 char *mus_midi_describe(void)
 {
@@ -560,12 +557,101 @@ char *mus_midi_describe(void)
   return(buf);
 }
 
+#if 0
+#define BUFFER_SIZE 1024
+static MIDIClientRef us = NULL;
+static MIDIPortRef inp = NULL, outp = NULL;
+static int reader = 0, writer = 0;
+static unsigned char *buffer = NULL;
+
+static void init_midi(void)
+{
+  if (buffer == NULL)
+    {
+      buffer = (unsigned char *)CALLOC(BUFFER_SIZE, sizeof(unsigned char));
+      reader = 0;
+      writer = 0;
+    }
+}
+
+static void midi_read_callback(const MIDIPacketList *list, void *ref, void *con)
+{
+  int i, j;
+  MIDIPacket *pk;
+  pk = (MIDIPacket *)(list->packet);
+  for (i = 0; i < list->numPackets; i++)
+    {
+      for (j = 0; j < pk->length; j++)
+	{
+	  buffer[writer++] = pk->data[j];
+	  if (writer >= BUFFER_SIZE)
+	    writer = 0;
+	}
+      pk = MIDIPacketNext(pk);
+    }
+}
+
+int mus_midi_read(int line, unsigned char *buf, int bytes)
+{
+  int i;
+  if ((line < 0) || (buffer == NULL) || (inp == NULL)) return(-1);
+  for (i = 0; i < bytes; i++)
+    {
+      if (reader == writer) return(i);
+      buf[i] = buffer[reader++];
+      if (reader >= BUFFER_SIZE)
+	reader = 0;
+    }
+  return(bytes);
+}
+
+static Byte bb[1024];
+int mus_midi_write(int line, unsigned char *buffer, int bytes)
+{
+  int i;
+  MIDIPacketList *list = (MIDIPacketList *)bb;
+  MIDIPacket *pk;
+  if ((line < 1) || (buffer == NULL) || (outp == NULL)) return(-1);
+  /* create the packetlist and packet */
+  pk = MIDIPackListInit(list);
+  MIDIPacketListAdd(list, sizeof(bb), pk, 0, bytes, (Byte *)buffer);  /* 0 is the time stamp = now? */
+  MIDISend(outp, MIDIGetDestination(0), &list);
+}
+
+int mus_midi_open_read(const char *name)
+{
+  init_midi();
+  if (us == NULL) 
+    MIDIClientCreate(CFSTR("MIDI Read"), NULL, NULL, &us);
+  if (inp == NULL)
+    MIDIInputPortCreate(us, CFSTR("Input port"), midi_read_callback, NULL, &inp);
+  MIDIPortConnectSource(inp, MIDIGetSource(0), NULL);
+  return(0);
+}
+
+int mus_midi_open_write(const char *name)
+{
+  init_midi();
+  if (us == NULL) 
+    MIDIClientCreate(CFSTR("MIDI Write"), NULL, NULL, &us);
+  if (outp == NULL)
+    MIDIOutputPortCreate(us, CFSTR("Output port"), &outp);
+  return(1);
+}
+
+int mus_midi_close(int line)
+{
+  return(0);
+}
+
+#else
 int mus_midi_open_read(const char *name) {return(-1);}
 int mus_midi_open_write(const char *name) {return(-1);}
 int mus_midi_close(int line) {return(-1);}
 int mus_midi_read(int line, unsigned char *buffer, int bytes) {return(-1);}
 int mus_midi_write(int line, unsigned char *buffer, int bytes) {return(-1);}
 char *mus_midi_device_name(int sysdev) {return("none");}
+#endif
 
 #endif
 

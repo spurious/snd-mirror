@@ -227,7 +227,7 @@
   XEN_NEW_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg)
 #else
 #define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
-  if (Doc) \
+  if (Doc != NULL) \
     scm_set_procedure_property_x(XEN_NEW_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(Doc)); \
   else XEN_NEW_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg)
 #endif
@@ -552,21 +552,21 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
   do { \
       rb_define_global_function(xen_scheme_procedure_to_ruby(Name), XEN_PROCEDURE_CAST Func, ((RstArg > 0) ? -2 : (OptArg > 0) ? -1 : ReqArg)); \
-      if (Doc) xen_add_help(xen_scheme_procedure_to_ruby(Name), Doc); \
+      if (Doc != NULL) xen_add_help(xen_scheme_procedure_to_ruby(Name), Doc); \
     } while (0)
 
 #define XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
   do { \
     XEN_DEFINE_PROCEDURE(Get_Name, XEN_PROCEDURE_CAST Get_Func, Get_Req, Get_Opt, 0, Get_Help); \
     XEN_DEFINE_PROCEDURE(Set_Name, XEN_PROCEDURE_CAST Set_Func, Set_Req, Set_Opt, 0, Get_Help); \
-    if (Get_Help) xen_add_help(xen_scheme_procedure_to_ruby(Get_Name), Get_Help); \
+    if (Get_Help != NULL) xen_add_help(xen_scheme_procedure_to_ruby(Get_Name), Get_Help); \
     } while (0)
 
 #define XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
   do { \
     XEN_DEFINE_PROCEDURE(Get_Name, XEN_PROCEDURE_CAST Get_Func, Get_Req, Get_Opt, 0, Get_Help); \
     XEN_DEFINE_PROCEDURE(Set_Name, XEN_PROCEDURE_CAST Set_Func, Set_Req, Set_Opt, 0, Get_Help); \
-    if (Get_Help) xen_add_help(xen_scheme_procedure_to_ruby(Get_Name), Get_Help); \
+    if (Get_Help != NULL) xen_add_help(xen_scheme_procedure_to_ruby(Get_Name), Get_Help); \
     } while (0)
 
 #define XEN_DEFINE_CONSTANT(Name, Value, Help) \
