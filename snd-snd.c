@@ -273,12 +273,12 @@ int tick_amp_env(chan_info *cp, env_state *es)
 	   */
 	  fd = mus_file_open_read(sp->filename);
 	  mus_file_open_descriptors(fd,
-				   sp->filename,
-				   mus_sound_data_format(sp->filename),
-				   mus_sound_datum_size(sp->filename),
-				   mus_sound_data_location(sp->filename),
-				   sp->nchans,
-				   mus_sound_header_type(sp->filename));
+				    sp->filename,
+				    mus_sound_data_format(sp->filename),
+				    mus_sound_datum_size(sp->filename),
+				    mus_sound_data_location(sp->filename),
+				    sp->nchans,
+				    mus_sound_header_type(sp->filename));
 	  mus_file_seek_frame(fd, ep->bin * ep->samps_per_bin);
 	  mus_file_read_any(fd, 0,
 			    sp->nchans * subsamp,

@@ -89,9 +89,6 @@ void snd_unprotect(XEN obj)
 
 /* -------- error handling -------- */
 
-#define MAX_ERROR_STRING_LENGTH 0
-/* what is this number actually affecting? I can set it to 0 with no ill effects */
-
 #if HAVE_GUILE
   #include <libguile/fluids.h>
 #endif
@@ -123,14 +120,12 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
 
 #ifdef SCM_MAKE_CHAR
   port = scm_mkstrport(XEN_ZERO, 
-		       scm_make_string(C_TO_XEN_INT(MAX_ERROR_STRING_LENGTH), 
-				       SCM_MAKE_CHAR(0)),
+		       scm_make_string(XEN_ZERO, SCM_MAKE_CHAR(0)),
 		       SCM_OPN | SCM_WRTNG,
 		       __FUNCTION__);
 #else
   port = scm_mkstrport(XEN_ZERO, 
-		       scm_make_string(C_TO_XEN_INT(MAX_ERROR_STRING_LENGTH), 
-				       XEN_UNDEFINED),
+		       scm_make_string(XEN_ZERO, XEN_UNDEFINED),
 		       SCM_OPN | SCM_WRTNG,
 		       __FUNCTION__);
 #endif
@@ -140,8 +135,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
     /* force out an error before possible backtrace call */
     XEN lport;
     lport = scm_mkstrport(XEN_ZERO, 
-			  scm_make_string(C_TO_XEN_INT(MAX_ERROR_STRING_LENGTH), 
-					  SCM_MAKE_CHAR(0)),
+			  scm_make_string(XEN_ZERO, SCM_MAKE_CHAR(0)),
 			  SCM_OPN | SCM_WRTNG,
 			  __FUNCTION__);
     scm_display(tag, lport);

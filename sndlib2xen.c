@@ -1189,8 +1189,8 @@ static XEN sound_data_compare(XEN vr1, XEN vr2)
         if (v1->data[j][i] > v2->data[j][i])
           return(C_TO_XEN_INT(1));
   len = v1->length - v2->length;
-  if (len == 0) return(C_TO_XEN_INT(0));
-  if (len > 0) return(C_TO_XEN_INT(1));
+  if (len == 0) return(XEN_ZERO);
+  if (len > 0) return(C_TO_SMALL_XEN_INT(1));
   return(C_TO_XEN_INT(-1));
 }
 #endif

@@ -747,8 +747,8 @@ static XEN g_mix_selection(XEN beg, XEN snd, XEN chn)
       if (cp == NULL) 
 	return(snd_no_such_channel_error(S_mix_selection, snd, chn));
       return(C_TO_XEN_INT(mix_selection(ss, cp, 
-				      XEN_TO_C_INT_OR_ELSE(beg, 0), 
-				      S_mix_selection)));
+					XEN_TO_C_INT_OR_ELSE(beg, 0), 
+					S_mix_selection)));
     }
   snd_no_active_selection_error(S_mix_selection);
   return(beg);
@@ -955,8 +955,8 @@ saves the current selection in filename using the indicated file attributes.  If
   if (err == MUS_NO_ERROR) 
     return(filename);
   else XEN_ERROR(CANNOT_SAVE,
-	     XEN_LIST_2(C_TO_XEN_STRING(S_save_selection),
-		       C_TO_XEN_STRING(ss->catch_message)));
+		 XEN_LIST_2(C_TO_XEN_STRING(S_save_selection),
+			    C_TO_XEN_STRING(ss->catch_message)));
   return(C_TO_XEN_INT(err));
 }
 

@@ -584,8 +584,7 @@ static void graph_mouse_leave(Widget w, XtPointer context, XEvent *event, Boolea
 static void graph_button_press(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
   XButtonEvent *ev = (XButtonEvent *)event;
-  snd_state *ss = (snd_state *)context;
-  if ((ev->button == 3) && (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS))
+  if ((ev->button == 3) && (sound_style(get_global_state()) == SOUNDS_IN_SEPARATE_WINDOWS))
     post_popup(ev);
   else graph_button_press_callback((chan_info *)context, ev->x, ev->y, ev->state, ev->button, ev->time);
 }
@@ -1055,7 +1054,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  XtAddCallback(cw[W_graph], XmNexposeCallback, Channel_Expose_Callback, (XtPointer)cp);
 	  XtAddEventHandler(cw[W_graph], EnterWindowMask, FALSE, graph_mouse_enter, (XtPointer)(cp->state));
 	  XtAddEventHandler(cw[W_graph], LeaveWindowMask, FALSE, graph_mouse_leave, (XtPointer)cp);
-	  XtAddEventHandler(cw[W_graph], ButtonPressMask, FALSE, graph_button_press, (XtPointer)(cp->state));
+	  XtAddEventHandler(cw[W_graph], ButtonPressMask, FALSE, graph_button_press, (XtPointer)cp);
 	  XtAddEventHandler(cw[W_graph], ButtonMotionMask, FALSE, graph_button_motion, (XtPointer)cp);
 	  XtAddEventHandler(cw[W_graph], ButtonReleaseMask, FALSE, graph_button_release, (XtPointer)cp);
 	  XtAddEventHandler(cw[W_graph], KeyPressMask, FALSE, cp_graph_key_press, (XtPointer)cp);
