@@ -20,11 +20,12 @@
  */
 
 #define XEN_MAJOR_VERSION 1
-#define XEN_MINOR_VERSION 24
-#define XEN_VERSION "1.24"
+#define XEN_MINOR_VERSION 25
+#define XEN_VERSION "1.25"
 
 /* HISTORY:
  *
+ *  4-Jan-05:  more guile changes, deprecated XEN_VECTOR_ELEMENTS.
  *  31-Dec-04: removed "caller" arg from *_NO_CATCH.
  *  10-Nov-04: scm_c_vector* (new Guile functions)
  *  21-Oct-04: XEN_LIST_REVERSE, (using rb_ary_dup available in 1.8)
@@ -452,10 +453,14 @@
   #define XEN_STRING_P(Arg)           (SCM_STRINGP(Arg))
 #endif
 
+#if HAVE_SCM_IS_SIMPLE_VECTOR
+  #define XEN_VECTOR_P(Arg)           (scm_is_simple_vector(Arg))
+#else
 #if HAVE_SCM_IS_VECTOR
   #define XEN_VECTOR_P(Arg)           (scm_is_vector(Arg))
 #else
   #define XEN_VECTOR_P(Arg)           (SCM_VECTORP(Arg))
+#endif
 #endif
 
 #define XEN_LIST_P(Arg)               (scm_ilength(Arg) >= 0)
@@ -491,21 +496,24 @@
 #endif
 #define XEN_APPEND(a, b)                  scm_append(XEN_LIST_2(a, b))
 
+#if HAVE_SCM_IS_SIMPLE_VECTOR
+  #define XEN_VECTOR_LENGTH(Arg)          SCM_SIMPLE_VECTOR_LENGTH(Arg)
+#else
 #if HAVE_SCM_IS_VECTOR
-  #define XEN_VECTOR_LENGTH(Arg)      (scm_c_vector_length(Arg))
+  #define XEN_VECTOR_LENGTH(Arg)          (scm_c_vector_length(Arg))
 #else
 #ifndef SCM_VECTOR_LENGTH
-  #define XEN_VECTOR_LENGTH(Arg)      ((int)(gh_vector_length(Arg)))
+  #define XEN_VECTOR_LENGTH(Arg)          ((int)(gh_vector_length(Arg)))
 #else
-  #define XEN_VECTOR_LENGTH(Arg)      ((int)(SCM_VECTOR_LENGTH(Arg)))
+  #define XEN_VECTOR_LENGTH(Arg)          ((int)(SCM_VECTOR_LENGTH(Arg)))
 #endif
 #endif
-#ifdef SCM_WRITABLE_VELTS
-  #define XEN_VECTOR_ELEMENTS(a)      SCM_WRITABLE_VELTS(a)
-#else
-  #define XEN_VECTOR_ELEMENTS(a)      SCM_VELTS(a)
 #endif
 
+#if HAVE_SCM_IS_SIMPLE_VECTOR
+  #define XEN_VECTOR_REF(Vect, Num)      SCM_SIMPLE_VECTOR_REF(Vect, Num)
+  #define XEN_VECTOR_SET(Vect, Num, Val) SCM_SIMPLE_VECTOR_SET(Vect, Num, Val)
+#else
 #if HAVE_SCM_IS_VECTOR
   #define XEN_VECTOR_REF(Vect, Num)      scm_c_vector_ref(Vect, Num)
   #define XEN_VECTOR_SET(Vect, Num, Val) scm_c_vector_set_x(Vect, Num, Val)
@@ -516,6 +524,7 @@
 #else
   #define XEN_VECTOR_REF(Vect, Num)      scm_vector_ref(Vect, C_TO_XEN_INT(Num))
   #define XEN_VECTOR_SET(Vect, Num, Val) scm_vector_set_x(Vect, C_TO_XEN_INT(Num), Val)
+#endif
 #endif
 #endif
 
@@ -956,7 +965,6 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
 #define XEN_VARIABLE_SET(a, b)          rb_gv_set(xen_scheme_global_variable_to_ruby(a), b)
 #define XEN_VARIABLE_REF(a)             rb_gv_get(xen_scheme_global_variable_to_ruby(a))
 
-#define XEN_VECTOR_ELEMENTS(a)          RARRAY(a)->ptr
 #define XEN_VECTOR_LENGTH(Arg)          RARRAY(Arg)->len
 #define XEN_VECTOR_REF(Vect, Num)       rb_ary_entry(Vect, Num)
 #define XEN_VECTOR_SET(a, b, c)         rb_ary_store(a, b, c)
@@ -1410,7 +1418,6 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_CDR(a) 0
 #define XEN_CDDR(a) 0
 #define XEN_COPY_ARG(Lst) Lst
-#define XEN_VECTOR_ELEMENTS(a) ((XEN *)a)
 #define XEN_MARK_OBJECT_TYPE         XEN
 #define XEN_MAKE_OBJECT(a, b, c, ig1, ig2)
 #define XEN_MAKE_OBJECT_TYPE(Typ, Siz) 0
@@ -1606,5 +1613,24 @@ void xen_gc_mark(XEN val);
   #define XEN_TO_C_BOOLEAN_OR_TRUE(a) (!(XEN_FALSE_P(a)))
   #define XEN_TO_C_INT_OR_ELSE_WITH_CALLER(a, b, c) XEN_TO_C_INT_OR_ELSE(a, b)
   #define XEN_TO_C_DOUBLE_WITH_CALLER(a, b) XEN_TO_C_DOUBLE(a)
+
+  #if HAVE_GUILE
+    #if HAVE_SCM_IS_SIMPLE_VECTOR
+      #define XEN_VECTOR_ELEMENTS(a)          SCM_I_VECTOR_WELTS(a)
+    #else
+      #ifdef SCM_WRITABLE_VELTS
+        #define XEN_VECTOR_ELEMENTS(a)        SCM_WRITABLE_VELTS(a)
+      #else
+        #define XEN_VECTOR_ELEMENTS(a)        SCM_VELTS(a)
+      #endif
+    #endif
+  #else
+    #if HAVE_RUBY
+      #define XEN_VECTOR_ELEMENTS(a)          RARRAY(a)->ptr
+    #else
+      #define XEN_VECTOR_ELEMENTS(a)          ((XEN *)a)
+    #endif
+  #endif
 #endif
+
 #endif

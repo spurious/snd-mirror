@@ -23,22 +23,24 @@ void dump_protection(FILE *Fp)
 {
   if (XEN_VECTOR_P(gc_protection))
     {
-      XEN *gcdata;
       int i;
-      gcdata = XEN_VECTOR_ELEMENTS(gc_protection);
       fprintf(Fp, "\n\nsnd_protect (%d table size, used: %d):\n", gc_protection_size, max_gc_index);
       for (i = 0; i < gc_protection_size; i++)
-	if (!(XEN_EQ_P(gcdata[i], DEFAULT_GC_VALUE)))
-	  {
+	{
+	  XEN gcdat;
+	  gcdat = XEN_VECTOR_REF(gc_protection, i);
+	  if (!(XEN_EQ_P(gcdat, DEFAULT_GC_VALUE)))
+	    {
 #if HAVE_GUILE
-	    fprintf(Fp,"  %s:%d %s", snd_protect_callers[i], i, XEN_AS_STRING(gcdata[i]));
-	    if (XEN_HOOK_P(gcdata[i]))
-	      fprintf(Fp, " -> %s", XEN_AS_STRING(scm_hook_to_list(gcdata[i])));
+	      fprintf(Fp,"  %s:%d %s", snd_protect_callers[i], i, XEN_AS_STRING(gcdat));
+	      if (XEN_HOOK_P(gcdat))
+		fprintf(Fp, " -> %s", XEN_AS_STRING(scm_hook_to_list(gcdat)));
 #else
-	    fprintf(Fp,"  %s:%d %d %s", snd_protect_callers[i], i, (int)gcdata[i], XEN_AS_STRING(gcdata[i]));
+	      fprintf(Fp,"  %s:%d %d %s", snd_protect_callers[i], i, (int)gcdat, XEN_AS_STRING(gcdat));
 #endif
-	    fprintf(Fp, "\n");
-	  }
+	      fprintf(Fp, "\n");
+	    }
+	}
     }
 }
 #endif
@@ -51,7 +53,6 @@ int snd_protect(XEN obj)
 {
   int i, old_size;
   XEN tmp;
-  XEN *gcdata;
   if ((XEN_NUMBER_P(obj)) || 
       (XEN_EQ_P(obj, XEN_EMPTY_LIST)) ||
       (XEN_FALSE_P(obj)) || 
@@ -72,9 +73,8 @@ int snd_protect(XEN obj)
     }
   else
     {
-      gcdata = XEN_VECTOR_ELEMENTS(gc_protection);
       if ((gc_last_cleared >= 0) && 
-	  XEN_EQ_P(gcdata[gc_last_cleared], DEFAULT_GC_VALUE))
+	  XEN_EQ_P(XEN_VECTOR_REF(gc_protection, gc_last_cleared), DEFAULT_GC_VALUE))
 	{
 	  XEN_VECTOR_SET(gc_protection, gc_last_cleared, obj);
 #if DEBUGGING
@@ -85,7 +85,7 @@ int snd_protect(XEN obj)
 	  return(gc_last_set);
 	}
       for (i = 0; i < gc_protection_size; i++)
-	if (XEN_EQ_P(gcdata[i], DEFAULT_GC_VALUE))
+	if (XEN_EQ_P(XEN_VECTOR_REF(gc_protection, i), DEFAULT_GC_VALUE))
 	  {
 	    XEN_VECTOR_SET(gc_protection, i, obj);
 #if DEBUGGING
@@ -129,11 +129,9 @@ int snd_protect(XEN obj)
 void snd_unprotect(XEN obj)
 {
   int i;
-  XEN *gcdata;
   if (XEN_EQ_P(obj, XEN_EMPTY_LIST)) return;
-  gcdata = XEN_VECTOR_ELEMENTS(gc_protection);
   if ((gc_last_set >= 0) && 
-      (XEN_EQ_P(gcdata[gc_last_set], obj)))
+      (XEN_EQ_P(XEN_VECTOR_REF(gc_protection, gc_last_set), obj)))
     {
       XEN_VECTOR_SET(gc_protection, gc_last_set, DEFAULT_GC_VALUE);
       gc_last_cleared = gc_last_set;
@@ -141,7 +139,7 @@ void snd_unprotect(XEN obj)
       return;
     }
   for (i = 0; i < gc_protection_size; i++)
-    if (XEN_EQ_P(gcdata[i], obj))
+    if (XEN_EQ_P(XEN_VECTOR_REF(gc_protection, i), obj))
       {
 	XEN_VECTOR_SET(gc_protection, i, DEFAULT_GC_VALUE);
 	gc_last_cleared = i;

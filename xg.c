@@ -49,6 +49,8 @@
  *     win32-specific functions
  *
  * HISTORY:
+ *     4-Jan:     removed deprecated XEN_VECTOR_ELEMENTS.
+ *     --------
  *     30-Dec:    gtk 2.6.0 changes.
  *     8-Dec:     added some g_log handler funcs.
  *     6-Dec:     added check for lost callback context.
@@ -80,7 +82,7 @@
  *     1-Apr:     gdk_property_get uses scm_mem2string in some cases now.
  *     31-Mar:    gchar* -> xen string bugfix (thanks to Friedrich Delgado Friedrichs).
  *     10-Mar:    Ruby Xm_Version.
- *     6-Jan-03:  gtk 2.2 changes.
+ *     6-Jan:     gtk 2.2 changes.
  *     --------
  *     18-Nov:    Ruby/Gtk bugfixes.
  *     28-Oct:    gtk 2.1 additions.
@@ -894,6 +896,7 @@ XM_TYPE_PTR_1(GtkColorSelectionDialog_, GtkColorSelectionDialog*)
 XM_TYPE_PTR_2(GdkGC__, GdkGC**)
 XM_TYPE_PTR_2(GdkPixmap__, GdkPixmap**)
 XM_TYPE_PTR_2(GArray_, GArray*)
+XM_TYPE_PTR_1(GValue_, GValue*)
 #if HAVE_GDK_DRAW_PIXBUF
 XM_TYPE_PTR(GdkDisplay_, GdkDisplay*)
 XM_TYPE_PTR(GdkScreen_, GdkScreen*)
@@ -956,7 +959,6 @@ XM_TYPE_PTR_2(GtkAccelMap_, GtkAccelMap*)
 #if HAVE_GTK_ABOUT_DIALOG_NEW
 XM_TYPE_PTR(GtkIconView_, GtkIconView*)
 XM_TYPE_PTR_1(GtkCellView_, GtkCellView*)
-XM_TYPE_PTR_1(GValue_, GValue*)
 XM_TYPE_PTR_1(GtkAboutDialog_, GtkAboutDialog*)
 #endif
 
@@ -1009,34 +1011,31 @@ static int xm_protect(XEN obj)
 {
   int i, new_size;
   XEN new_table;
-  XEN *older, *newer;
-  older = XEN_VECTOR_ELEMENTS(xm_protected);
   if (last_xm_unprotect >= 0)
     {
       i = last_xm_unprotect;
-      if (XEN_FALSE_P(older[i]))
+      if (XEN_FALSE_P(XEN_VECTOR_REF(xm_protected, i)))
 	{
-	  older[i] = obj;
+	  XEN_VECTOR_SET(xm_protected, i, obj);
 	  last_xm_unprotect = -1;
 	  return(i);
 	}
       last_xm_unprotect = -1;
     }
   for (i = 0; i < xm_protected_size; i++)
-    if (XEN_FALSE_P(older[i]))
+    if (XEN_FALSE_P(XEN_VECTOR_REF(xm_protected, i)))
       {
-	older[i] = obj;
+	XEN_VECTOR_SET(xm_protected, i, obj);
 	return(i);
       }
   new_size = xm_protected_size * 2;
   new_table = XEN_MAKE_VECTOR(new_size, XEN_FALSE);
-  newer = XEN_VECTOR_ELEMENTS(new_table);
   for (i = 0; i < xm_protected_size; i++)
     {
-      newer[i] = older[i];
-      older[i] = XEN_FALSE;
+      XEN_VECTOR_SET(new_table, i, XEN_VECTOR_REF(xm_protected, i));
+      XEN_VECTOR_SET(xm_protected, i, XEN_FALSE);
     }
-  newer[xm_protected_size] = obj;
+  XEN_VECTOR_SET(new_table, xm_protected_size, obj);
   XEN_VECTOR_SET(xm_gc_table, 0, new_table);
   i = xm_protected_size;
   xm_protected_size = new_size;
@@ -1048,12 +1047,10 @@ static int xm_protect(XEN obj)
 static void xm_unprotect_idler(guint id)
 {
   int i;
-  XEN *velts;
   XEN cur, idler;
-  velts = XEN_VECTOR_ELEMENTS(xm_protected);
   for (i = 0; i < xm_protected_size; i++)
     {
-      cur = velts[i];
+      cur = XEN_VECTOR_REF(xm_protected, i);
       if ((XEN_LIST_P(cur)) && (XEN_LIST_LENGTH(cur) == 3) && (XEN_LIST_P(XEN_CADDR(cur))))
         {
           idler = XEN_CADDR(cur);
@@ -1069,9 +1066,7 @@ static void xm_unprotect_idler(guint id)
 #endif
 static void xm_unprotect_at(int ind)
 {
-  XEN *velts;
-  velts = XEN_VECTOR_ELEMENTS(xm_protected);
-  velts[ind] = XEN_FALSE;
+  XEN_VECTOR_SET(xm_protected, ind, XEN_FALSE);
   last_xm_unprotect = ind;
 }
 
@@ -22984,18 +22979,6 @@ static XEN gxg_gtk_cell_view_new_with_pixbuf(XEN pixbuf)
   XEN_ASSERT_TYPE(XEN_GdkPixbuf__P(pixbuf), pixbuf, 1, "gtk_cell_view_new_with_pixbuf", "GdkPixbuf*");
   return(C_TO_XEN_GtkWidget_(gtk_cell_view_new_with_pixbuf(XEN_TO_C_GdkPixbuf_(pixbuf))));
 }
-static XEN gxg_gtk_cell_view_set_value(XEN cell_view, XEN renderer, XEN property, XEN value)
-{
-  #define H_gtk_cell_view_set_value "void gtk_cell_view_set_value(GtkCellView* cell_view, GtkCellRenderer* renderer, \
-gchar* property, GValue* value)"
-  XEN_ASSERT_TYPE(XEN_GtkCellView__P(cell_view), cell_view, 1, "gtk_cell_view_set_value", "GtkCellView*");
-  XEN_ASSERT_TYPE(XEN_GtkCellRenderer__P(renderer), renderer, 2, "gtk_cell_view_set_value", "GtkCellRenderer*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(property), property, 3, "gtk_cell_view_set_value", "gchar*");
-  XEN_ASSERT_TYPE(XEN_GValue__P(value), value, 4, "gtk_cell_view_set_value", "GValue*");
-  gtk_cell_view_set_value(XEN_TO_C_GtkCellView_(cell_view), XEN_TO_C_GtkCellRenderer_(renderer), XEN_TO_C_gchar_(property), 
-                          XEN_TO_C_GValue_(value));
-  return(XEN_FALSE);
-}
 static XEN gxg_gtk_cell_view_set_model(XEN cell_view, XEN model)
 {
   #define H_gtk_cell_view_set_model "void gtk_cell_view_set_model(GtkCellView* cell_view, GtkTreeModel* model)"
@@ -24750,27 +24733,6 @@ GtkTextIter* iter, gint* trailing, gint x, gint y)"
                                      XEN_TO_C_gint(x), XEN_TO_C_gint(y));
   return(XEN_FALSE);
 }
-static XEN gxg_pango_attr_size_new_absolute(XEN size)
-{
-  #define H_pango_attr_size_new_absolute "PangoAttribute* pango_attr_size_new_absolute(int size)"
-  XEN_ASSERT_TYPE(XEN_int_P(size), size, 1, "pango_attr_size_new_absolute", "int");
-  return(C_TO_XEN_PangoAttribute_(pango_attr_size_new_absolute(XEN_TO_C_int(size))));
-}
-static XEN gxg_pango_font_description_set_absolute_size(XEN desc, XEN size)
-{
-  #define H_pango_font_description_set_absolute_size "void pango_font_description_set_absolute_size(PangoFontDescription* desc, \
-double size)"
-  XEN_ASSERT_TYPE(XEN_PangoFontDescription__P(desc), desc, 1, "pango_font_description_set_absolute_size", "PangoFontDescription*");
-  XEN_ASSERT_TYPE(XEN_double_P(size), size, 2, "pango_font_description_set_absolute_size", "double");
-  pango_font_description_set_absolute_size(XEN_TO_C_PangoFontDescription_(desc), XEN_TO_C_double(size));
-  return(XEN_FALSE);
-}
-static XEN gxg_pango_layout_get_font_description(XEN layout)
-{
-  #define H_pango_layout_get_font_description "PangoFontDescription* pango_layout_get_font_description(PangoLayout* layout)"
-  XEN_ASSERT_TYPE(XEN_PangoLayout__P(layout), layout, 1, "pango_layout_get_font_description", "PangoLayout*");
-  return(C_TO_XEN_PangoFontDescription_(pango_layout_get_font_description(XEN_TO_C_PangoLayout_(layout))));
-}
 #endif
 
 #define WRAPPED_OBJECT_P(Obj) (XEN_LIST_P(Obj) && (XEN_LIST_LENGTH(Obj) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Obj))))
@@ -25176,17 +25138,15 @@ static XEN gxg_vector2GdkPoints(XEN arg1)
 {
   #define H_vector2GdkPoints "(vector->GdkPoints vect) packages point data in vect as an (opaque) array of GdkPoints"
   int i, j, len;
-  XEN *velts;
   GdkPoint *pt;
   XEN_ASSERT_TYPE(XEN_VECTOR_P(arg1), arg1, XEN_ONLY_ARG, "vector->GdkPoints", "vector of x,y values");
   len = XEN_VECTOR_LENGTH(arg1) / 2;
   if (len <= 0) XEN_ASSERT_TYPE(0, arg1, 1, "vector->GdkPoints", "positive integer");
-  velts = XEN_VECTOR_ELEMENTS(arg1);
   pt = (GdkPoint *)CALLOC(len, sizeof(GdkPoint));
   for (i = 0, j = 0; i < len; i++, j += 2)
     {
-      pt[i].x = XEN_TO_C_INT(velts[j]);
-      pt[i].y = XEN_TO_C_INT(velts[j + 1]);
+      pt[i].x = XEN_TO_C_INT(XEN_VECTOR_REF(arg1, j));
+      pt[i].y = XEN_TO_C_INT(XEN_VECTOR_REF(arg1, j + 1));
     }
   return(C_TO_XEN_ULONG((unsigned long)pt));
 }
@@ -27889,7 +27849,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_cell_view_new_with_text, gxg_gtk_cell_view_new_with_text, 1, 0, 0, H_gtk_cell_view_new_with_text);
   XG_DEFINE_PROCEDURE(gtk_cell_view_new_with_markup, gxg_gtk_cell_view_new_with_markup, 1, 0, 0, H_gtk_cell_view_new_with_markup);
   XG_DEFINE_PROCEDURE(gtk_cell_view_new_with_pixbuf, gxg_gtk_cell_view_new_with_pixbuf, 1, 0, 0, H_gtk_cell_view_new_with_pixbuf);
-  XG_DEFINE_PROCEDURE(gtk_cell_view_set_value, gxg_gtk_cell_view_set_value, 4, 0, 0, H_gtk_cell_view_set_value);
   XG_DEFINE_PROCEDURE(gtk_cell_view_set_model, gxg_gtk_cell_view_set_model, 2, 0, 0, H_gtk_cell_view_set_model);
   XG_DEFINE_PROCEDURE(gtk_cell_view_set_displayed_row, gxg_gtk_cell_view_set_displayed_row, 2, 0, 0, H_gtk_cell_view_set_displayed_row);
   XG_DEFINE_PROCEDURE(gtk_cell_view_get_displayed_row, gxg_gtk_cell_view_get_displayed_row, 1, 0, 0, H_gtk_cell_view_get_displayed_row);
@@ -28132,9 +28091,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_list_store_insert_with_values, gxg_gtk_list_store_insert_with_values, 3, 0, 0, H_gtk_list_store_insert_with_values);
   XG_DEFINE_PROCEDURE(gtk_list_store_insert_with_valuesv, gxg_gtk_list_store_insert_with_valuesv, 6, 0, 0, H_gtk_list_store_insert_with_valuesv);
   XG_DEFINE_PROCEDURE(gtk_text_view_get_iter_at_position, gxg_gtk_text_view_get_iter_at_position, 5, 0, 0, H_gtk_text_view_get_iter_at_position);
-  XG_DEFINE_PROCEDURE(pango_attr_size_new_absolute, gxg_pango_attr_size_new_absolute, 1, 0, 0, H_pango_attr_size_new_absolute);
-  XG_DEFINE_PROCEDURE(pango_font_description_set_absolute_size, gxg_pango_font_description_set_absolute_size, 2, 0, 0, H_pango_font_description_set_absolute_size);
-  XG_DEFINE_PROCEDURE(pango_layout_get_font_description, gxg_pango_layout_get_font_description, 1, 0, 0, H_pango_layout_get_font_description);
 #endif
 
   XG_DEFINE_PROCEDURE(GPOINTER, gxg_GPOINTER, 1, 0, 0, NULL);
@@ -31624,10 +31580,6 @@ static void define_integers(void)
   DEFINE_INTEGER(G_LOG_FATAL_MASK);
 #endif
 
-#if HAVE_GTK_TEXT_LAYOUT_GET_ITER_AT_POSITION
-  DEFINE_INTEGER(PANGO_WEIGHT_SEMIBOLD);
-#endif
-
   DEFINE_ULONG(GDK_TYPE_PIXBUF);
   DEFINE_ULONG(GDK_TYPE_PIXBUF_ANIMATION);
   DEFINE_ULONG(GDK_TYPE_PIXBUF_ANIMATION_ITER);
@@ -32153,10 +32105,10 @@ static bool xg_already_inited = false;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"29-Dec-04\")");
+      XEN_EVAL_C_STRING("(define xm-version \"03-Jan-05\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("29-Dec-04"));
+      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("03-Jan-05"));
 #endif
       xg_already_inited = true;
 #if WITH_GTK_AND_X11

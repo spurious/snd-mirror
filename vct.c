@@ -572,16 +572,14 @@ static XEN vector_to_vct(XEN vect)
   #define H_vector_to_vct "(" S_vector_to_vct " vect): returns a new vct with the elements of vector vect"
   int len, i;
   vct *v;
-  XEN *vdata;
   XEN scv;
   XEN_ASSERT_TYPE(XEN_VECTOR_P(vect), vect, XEN_ONLY_ARG, S_vector_to_vct, "a vector");
   len = XEN_VECTOR_LENGTH(vect);
   if (len == 0) return(XEN_FALSE);
   scv = make_vct(len, (Float *)CALLOC(len, sizeof(Float)));
   v = TO_VCT(scv);
-  vdata = XEN_VECTOR_ELEMENTS(vect);
   for (i = 0; i < len; i++) 
-    v->data[i] = (Float)XEN_TO_C_DOUBLE(vdata[i]);
+    v->data[i] = (Float)XEN_TO_C_DOUBLE(XEN_VECTOR_REF(vect, i));
   return(xen_return_first(scv, vect));
 }
 
@@ -591,7 +589,6 @@ static XEN vct_to_vector(XEN vobj)
   vct *v;
   int i, len;
   XEN new_vect;
-  XEN *vdata;
   XEN_ASSERT_TYPE(VCT_P(vobj), vobj, XEN_ONLY_ARG, S_vct_to_vector, "a vct");
   v = TO_VCT(vobj);
   len = v->length;
@@ -603,10 +600,8 @@ static XEN vct_to_vector(XEN vobj)
    *   being created is causing the trouble?
    */
 #endif
-  vdata = XEN_VECTOR_ELEMENTS(new_vect);
-  /* VECTOR_SET here */
   for (i = 0; i < len; i++) 
-    vdata[i] = C_TO_XEN_DOUBLE(v->data[i]);
+    XEN_VECTOR_SET(new_vect, i, C_TO_XEN_DOUBLE(v->data[i]));
 #if HAVE_RUBY && HAVE_RB_GC_DISABLE
   rb_gc_enable();
 #endif

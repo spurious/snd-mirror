@@ -8109,15 +8109,13 @@ static mus_sample_t *g_floats_to_samples(XEN obj, int *size, const char *caller,
     {
       if (XEN_VECTOR_P(obj))
 	{
-	  XEN *vdata;
 	  num = XEN_VECTOR_LENGTH(obj); 
 	  if (num == 0) return(NULL);
 	  if (((*size) > 0) && (num > (*size)))
 	    num = (*size);
 	  vals = (mus_sample_t *)MALLOC(num * sizeof(mus_sample_t));
-	  vdata = XEN_VECTOR_ELEMENTS(obj);
 	  for (i = 0; i < num; i++) 
-	    vals[i] = MUS_FLOAT_TO_SAMPLE(XEN_TO_C_DOUBLE_OR_ELSE(vdata[i], 0.0));
+	    vals[i] = MUS_FLOAT_TO_SAMPLE(XEN_TO_C_DOUBLE_OR_ELSE(XEN_VECTOR_REF(obj, i), 0.0));
 	}
       else
 	{
@@ -8455,16 +8453,14 @@ static XEN g_change_samples_with_origin(XEN samp_0, XEN samps, XEN origin, XEN v
   pos = to_c_edit_position(cp, edpos, S_change_samples_with_origin, 7);
   if (XEN_VECTOR_P(vect))
     {
-      XEN *vdata;
       mus_sample_t *ivals;
       ivals = (mus_sample_t *)MALLOC(len * sizeof(mus_sample_t));
-      vdata = XEN_VECTOR_ELEMENTS(vect);
       if (len > XEN_VECTOR_LENGTH(vect)) len = XEN_VECTOR_LENGTH(vect);
       if (len <= 0) return(XEN_FALSE); /* should this be an error? */
 #if SNDLIB_USE_FLOATS
-      for (i = 0; i < len; i++) ivals[i] = XEN_TO_C_DOUBLE(vdata[i]);
+      for (i = 0; i < len; i++) ivals[i] = XEN_TO_C_DOUBLE(XEN_VECTOR_REF(vect, i));
 #else
-      for (i = 0; i < len; i++) ivals[i] = XEN_TO_C_INT_OR_ELSE(vdata[i], 0);
+      for (i = 0; i < len; i++) ivals[i] = XEN_TO_C_INT_OR_ELSE(XEN_VECTOR_REF(vect, i), 0);
 #endif
       change_samples(beg, len, ivals, cp, LOCK_MIXES, XEN_TO_C_STRING(origin), pos);
       FREE(ivals);
@@ -8702,17 +8698,15 @@ static XEN g_insert_samples_with_origin(XEN samp, XEN samps, XEN origin, XEN vec
   pos = to_c_edit_position(cp, edpos, S_insert_samples_with_origin, 7);
   if (XEN_VECTOR_P(vect))
     {
-      XEN *vdata;
       mus_sample_t *ivals;
       int i;
       ivals = (mus_sample_t *)MALLOC(len * sizeof(mus_sample_t));
-      vdata = XEN_VECTOR_ELEMENTS(vect);
       if (len > XEN_VECTOR_LENGTH(vect)) len = XEN_VECTOR_LENGTH(vect);
       if (len <= 0) return(XEN_FALSE); /* should this be an error? */
 #if SNDLIB_USE_FLOATS
-      for (i = 0; i < len; i++) ivals[i] = XEN_TO_C_DOUBLE(vdata[i]);
+      for (i = 0; i < len; i++) ivals[i] = XEN_TO_C_DOUBLE(XEN_VECTOR_REF(vect, i));
 #else
-      for (i = 0; i < len; i++) ivals[i] = XEN_TO_C_INT_OR_ELSE(vdata[i], MUS_SAMPLE_0);
+      for (i = 0; i < len; i++) ivals[i] = XEN_TO_C_INT_OR_ELSE(XEN_VECTOR_REF(vect, i), MUS_SAMPLE_0);
 #endif
       insert_samples(beg, len, ivals, cp, XEN_TO_C_STRING(origin), pos);
       FREE(ivals);

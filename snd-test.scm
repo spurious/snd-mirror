@@ -6842,6 +6842,16 @@ EDITS: 5
 	    (snd-display ";ptree3 67: ~A" (edit-tree)))
 	(revert-sound ind)
 
+	(map-chan (lambda (y) 1.0) 0 10)
+	(ptree-channel (lambda (y) (* y 0.5)))
+	(ptree-channel (lambda (y) (+ y 1.5)))
+	(ptree-channel (lambda (y) (* y 2.0)))
+	(ptree-channel (lambda (y) (* y 0.1)))
+	(if (not (vequal (channel->vct) (make-vct 11 0.4)))
+	    (snd-display ";ptree4: ~A" (channel->vct)))
+	(if (not (feql (car (edit-tree)) (list 0 2 0 10 1.0 0.0 0.0 0)))
+	    (snd-display ";ptree4: ~A" (edit-tree)))
+
 	(close-sound ind))
 
       (let ((data (make-vct 101 1.0))
@@ -23074,10 +23084,10 @@ EDITS: 5
 				      (apply-ladspa (list (make-sample-reader 0) (make-sample-reader 0)) (list #f) 1000 "delayed"))
 				    (lambda args (car args)))))
 		    (if (not (eq? tag 'wrong-type-arg)) (snd-display ";apply-ladspa tag: ~A" tag))))
-		(snd-display ";ladspa loaded but can't find plugin directory: ~A" (ladspa-dir))))
+		(snd-display ";ladspa loaded but can't find plugin directory: ~A" (ladspa-dir)))))
 	
-	(revert-sound fd)
-	(close-sound fd))
+      (revert-sound fd)
+      (close-sound fd)
       
       (test-hooks)
       (add-hook! bad-header-hook (lambda (n) #t))
@@ -23641,7 +23651,8 @@ EDITS: 5
 		   (lambda (snd)
 		     (if (not (= snd ind))
 			 (snd-display ";close-hook: ~A not ~A?" snd ind))
-		     (set! cl #t)))
+		     (set! cl #t)
+		     #f))
 	
 	(close-sound ind)
 	(if (not cl) (snd-display ";close-hook not called?"))

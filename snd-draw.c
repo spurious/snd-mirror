@@ -129,19 +129,17 @@ static point_t *TO_C_POINTS(XEN pts, const char *caller)
 {
   int i, j, len;
   point_t *pack_pts;
-  XEN *data;
   len = XEN_VECTOR_LENGTH(pts) / 2;
   if (len <= 0) 
     XEN_ERROR(NO_DATA,
 	      XEN_LIST_3(C_TO_XEN_STRING(caller), 
 			 C_TO_XEN_STRING("empty vector?"), 
 			 pts));
-  data = XEN_VECTOR_ELEMENTS(pts);
   pack_pts = (point_t *)CALLOC(len, sizeof(point_t));
   for (i = 0, j = 0; i < len; i++, j += 2)
     {
-      pack_pts[i].x = XEN_TO_C_INT_OR_ELSE(data[j], 0);
-      pack_pts[i].y = XEN_TO_C_INT_OR_ELSE(data[j + 1], 0);
+      pack_pts[i].x = XEN_TO_C_INT_OR_ELSE(XEN_VECTOR_REF(pts, j), 0);
+      pack_pts[i].y = XEN_TO_C_INT_OR_ELSE(XEN_VECTOR_REF(pts, j + 1), 0);
     }
   return(pack_pts);
 }
@@ -214,7 +212,6 @@ defined by the 4 controlling points x0..y3; 'n' is how many points to return"
   int y[4];
   int n = 50;
   XEN pts, args;
-  XEN *data;
   args = XEN_COPY_ARG(args1);
   for (i = 0; i < 4; i++)
     {
@@ -232,14 +229,12 @@ defined by the 4 controlling points x0..y3; 'n' is how many points to return"
   ay = y[3] - (y[0] + cy + by);
   incr = 1.0 / (float)n;
   pts = XEN_MAKE_VECTOR(2 * (n + 1), C_TO_XEN_INT(0));
-  data = XEN_VECTOR_ELEMENTS(pts);
-  /* VECTOR_SET here */
-  data[0] = C_TO_XEN_INT(x[0]);
-  data[1] = C_TO_XEN_INT(y[0]);
+  XEN_VECTOR_SET(pts, 0, C_TO_XEN_INT(x[0]));
+  XEN_VECTOR_SET(pts, 1, C_TO_XEN_INT(y[0]));
   for (i = 1, val = incr; i <= n; i++, val += incr)
     {
-      data[i * 2] = C_TO_XEN_INT((int)(x[0] + val * (cx + (val * (bx + (val * ax))))));
-      data[i * 2 + 1] = C_TO_XEN_INT((int)(y[0] + val * (cy + (val * (by + (val * ay))))));
+      XEN_VECTOR_SET(pts, i * 2, C_TO_XEN_INT((int)(x[0] + val * (cx + (val * (bx + (val * ax)))))));
+      XEN_VECTOR_SET(pts, i * 2 + 1, C_TO_XEN_INT((int)(y[0] + val * (cy + (val * (by + (val * ay)))))));
     }
   return(pts);
 }

@@ -1109,11 +1109,9 @@ static void unattach_ptree(ptree *inner, ptree *outer)
 static void int_vect_into_vector(vect *v, XEN vectr)
 {
   int len, i;
-  XEN *vdata;
   len = XEN_VECTOR_LENGTH(vectr);
-  vdata = XEN_VECTOR_ELEMENTS(vectr);
   for (i = 0; i < len; i++) 
-    vdata[i] = R_C_TO_XEN_INT(v->data.ints[i]);
+    XEN_VECTOR_SET(vectr, i, R_C_TO_XEN_INT(v->data.ints[i]));
 }
 
 static void free_vect(vect *v, int type)
@@ -1136,14 +1134,12 @@ static vct *vector_to_vct(XEN vectr)
 {
   int len, i;
   vct *v;
-  XEN *vdata;
   len = XEN_VECTOR_LENGTH(vectr);
   if (len == 0) return(NULL);
   v = c_make_vct(len);
-  vdata = XEN_VECTOR_ELEMENTS(vectr);
   for (i = 0; i < len; i++) 
-    if (XEN_DOUBLE_P(vdata[i]))
-      v->data[i] = (Float)XEN_TO_C_DOUBLE(vdata[i]);
+    if (XEN_DOUBLE_P(XEN_VECTOR_REF(vectr, i)))
+      v->data[i] = (Float)XEN_TO_C_DOUBLE(XEN_VECTOR_REF(vectr, i));
     else
       {
 	c_free_vct(v);
@@ -1155,12 +1151,9 @@ static vct *vector_to_vct(XEN vectr)
 static void vct_into_vector(vct *v, XEN vectr)
 {
   int len, i;
-  XEN *vdata;
   len = XEN_VECTOR_LENGTH(vectr);
-  vdata = XEN_VECTOR_ELEMENTS(vectr);
-  /* VECTOR_SET here */
   for (i = 0; i < len; i++) 
-    vdata[i] = C_TO_XEN_DOUBLE(v->data[i]);
+    XEN_VECTOR_SET(vectr, i, C_TO_XEN_DOUBLE(v->data[i]));
 }
 
 static xen_var *free_xen_var(ptree *prog, xen_var *var)
@@ -1919,23 +1912,25 @@ static vect *read_int_vector(XEN vectr)
 {
   int len, i;
   vect *v;
-  XEN *vdata;
   len = XEN_VECTOR_LENGTH(vectr);
   if (len == 0) return(NULL);
   v = (vect *)CALLOC(1, sizeof(vect));
   v->length = len;
   v->data.ints = (Int *)CALLOC(len, sizeof(Int));
-  vdata = XEN_VECTOR_ELEMENTS(vectr);
   for (i = 0; i < len; i++) 
-    if (XEN_OFF_T_P(vdata[i]))
-      v->data.ints[i] = R_XEN_TO_C_INT(vdata[i]);
-    else
-      {
-	run_warn("initial int vector value at %d is %s: will try to abort ptree evaluation...", i, XEN_AS_STRING(vdata[i]));
-	FREE(v->data.ints);
-	FREE(v);
-	return(NULL);
-      }
+    {
+      XEN datum;
+      datum = XEN_VECTOR_REF(vectr, i);
+      if (XEN_OFF_T_P(datum))
+	v->data.ints[i] = R_XEN_TO_C_INT(datum);
+      else
+	{
+	  run_warn("initial int vector value at %d is %s: will try to abort ptree evaluation...", i, XEN_AS_STRING(datum));
+	  FREE(v->data.ints);
+	  FREE(v);
+	  return(NULL);
+	}
+    }
   return(v);
 }
 
@@ -1943,23 +1938,25 @@ static vect *read_vct_vector(XEN vectr)
 {
   int len, i;
   vect *v;
-  XEN *vdata;
   len = XEN_VECTOR_LENGTH(vectr);
   if (len == 0) return(NULL);
   v = (vect *)CALLOC(1, sizeof(vect));
   v->length = len;
   v->data.vcts = (vct **)CALLOC(len, sizeof(vct *));
-  vdata = XEN_VECTOR_ELEMENTS(vectr);
   for (i = 0; i < len; i++) 
-    if (VCT_P(vdata[i]))
-      v->data.vcts[i] = get_vct(vdata[i]);
-    else
-      {
-	run_warn("initial vct vector value at %d is %s: will try to abort ptree evaluation...", i, XEN_AS_STRING(vdata[i]));
-	FREE(v->data.vcts);
-	FREE(v);
-	return(NULL);
-      }
+    {
+      XEN datum;
+      datum = XEN_VECTOR_REF(vectr, i);
+      if (VCT_P(datum))
+	v->data.vcts[i] = get_vct(datum);
+      else
+	{
+	  run_warn("initial vct vector value at %d is %s: will try to abort ptree evaluation...", i, XEN_AS_STRING(datum));
+	  FREE(v->data.vcts);
+	  FREE(v);
+	  return(NULL);
+	}
+    }
   return(v);
 }
 
@@ -1967,26 +1964,28 @@ static vect *read_clm_vector(XEN vectr)
 {
   int len, i;
   vect *v;
-  XEN *vdata;
   len = XEN_VECTOR_LENGTH(vectr);
   if (len == 0) return(NULL);
   v = (vect *)CALLOC(1, sizeof(vect));
   v->length = len;
   v->data.gens = (mus_any **)CALLOC(len, sizeof(mus_any *));
-  vdata = XEN_VECTOR_ELEMENTS(vectr);
   for (i = 0; i < len; i++) 
-    if (mus_xen_p(vdata[i]))
-      v->data.gens[i] = XEN_TO_MUS_ANY(vdata[i]);
-    else
-      {
-	if (!(XEN_FALSE_P(vdata[i])))
-	  {
-	    run_warn("initial clm vector value at %d is %s: will try to abort ptree evaluation...", i, XEN_AS_STRING(vdata[i]));
-	    FREE(v->data.gens);
-	    FREE(v);
-	    return(NULL);
-	  }
-      }
+    {
+      XEN datum;
+      datum = XEN_VECTOR_REF(vectr, i);
+      if (mus_xen_p(datum))
+	v->data.gens[i] = XEN_TO_MUS_ANY(datum);
+      else
+	{
+	  if (!(XEN_FALSE_P(datum)))
+	    {
+	      run_warn("initial clm vector value at %d is %s: will try to abort ptree evaluation...", i, XEN_AS_STRING(datum));
+	      FREE(v->data.gens);
+	      FREE(v);
+	      return(NULL);
+	    }
+	}
+    }
   return(v);
 }
 

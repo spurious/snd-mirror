@@ -5,10 +5,12 @@
 
 #include <config.h>
 
-#define XM_DATE "30-Dec-04"
+#define XM_DATE "4-Jan-05"
 
 /* HISTORY: 
  *
+ *   4-Jan:     replace XEN_VECTOR_ELEMENTS usages.
+ *   --------
  *   30-Dec:    plug various memory leaks.
  *   23-Nov:    resource type lookup indexing bugfix.
  *   22-Sep:    various minor cleanups.
@@ -2448,35 +2450,31 @@ static int xm_protect(XEN obj)
 {
   int i, new_size;
   XEN new_table;
-  XEN *older, *newer;
-  older = XEN_VECTOR_ELEMENTS(xm_protected);
-  /* VECTOR_SET here and below */
   if (last_xm_unprotect >= 0)
     {
       i = last_xm_unprotect;
-      if (XEN_FALSE_P(older[i]))
+      if (XEN_FALSE_P(XEN_VECTOR_REF(xm_protected, i)))
 	{
-	  older[i] = obj;
+	  XEN_VECTOR_SET(xm_protected, i, obj);
 	  last_xm_unprotect = -1;
 	  return(i);
 	}
       last_xm_unprotect = -1;
     }
   for (i = 0; i < xm_protected_size; i++)
-    if (XEN_FALSE_P(older[i]))
+    if (XEN_FALSE_P(XEN_VECTOR_REF(xm_protected, i)))
       {
-	older[i] = obj;
+	XEN_VECTOR_SET(xm_protected, i, obj);
 	return(i);
       }
   new_size = xm_protected_size * 2;
   new_table = XEN_MAKE_VECTOR(new_size, XEN_FALSE);
-  newer = XEN_VECTOR_ELEMENTS(new_table);
   for (i = 0; i < xm_protected_size; i++)
     {
-      newer[i] = older[i];
-      older[i] = XEN_FALSE;
+      XEN_VECTOR_SET(new_table, i, XEN_VECTOR_REF(xm_protected, i));
+      XEN_VECTOR_SET(xm_protected, i, XEN_FALSE);
     }
-  newer[xm_protected_size] = obj;
+  XEN_VECTOR_SET(new_table, xm_protected_size, obj);
   XEN_VECTOR_SET(xm_gc_table, 0, new_table);
   i = xm_protected_size;
   xm_protected_size = new_size;
@@ -2487,12 +2485,10 @@ static int xm_protect(XEN obj)
 static void xm_unprotect(XEN obj)
 {
   int i;
-  XEN *velts;
-  velts = XEN_VECTOR_ELEMENTS(xm_protected);
   for (i = 0; i < xm_protected_size; i++)
-    if (XEN_EQ_P(velts[i], obj))
+    if (XEN_EQ_P(XEN_VECTOR_REF(xm_protected, i), obj))
       {
-	velts[i] = XEN_FALSE;
+	XEN_VECTOR_SET(xm_protected, i, XEN_FALSE);
 	last_xm_unprotect = i;
 	return;
       }
@@ -2500,28 +2496,22 @@ static void xm_unprotect(XEN obj)
 
 static void xm_unprotect_at(int ind)
 {
-  XEN *velts;
-  velts = XEN_VECTOR_ELEMENTS(xm_protected);
-  velts[ind] = XEN_FALSE;
+  XEN_VECTOR_SET(xm_protected, ind, XEN_FALSE);
   last_xm_unprotect = ind;
 }
 
 static int map_over_protected_elements(bool (*func)(XEN val, int loc, unsigned long fid), unsigned long id)
 {
   int i;
-  XEN *velts;
-  velts = XEN_VECTOR_ELEMENTS(xm_protected);
   for (i = 0; i < xm_protected_size; i++)
-    if (func(velts[i], i, id))
+    if (func(XEN_VECTOR_REF(xm_protected, i), i, id))
       return(i);
   return(-1);
 }
 
 static XEN xm_protected_element(int loc)
 {
-  XEN *velts;
-  velts = XEN_VECTOR_ELEMENTS(xm_protected);
-  return(velts[loc]);
+  return(XEN_VECTOR_REF(xm_protected, loc));
 }
 
 
@@ -7936,7 +7926,6 @@ static XEN gxm_XmRemoveProtocolCallback(XEN arg1, XEN arg2, XEN arg3, XEN arg4, 
 XtPointer closure) removes a callback from the internal list"
   XEN descr;
   int loc, dloc;
-  XEN *velts;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmRemoveProtocolCallback", "Widget");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg2), arg2, 2, "XmRemoveProtocolCallback", "Atom");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg3), arg3, 3, "XmRemoveProtocolCallback", "Atom"); 
@@ -7944,12 +7933,11 @@ XtPointer closure) removes a callback from the internal list"
   descr = C_TO_XEN_XM_ProtocolProc(arg4, arg5, arg2, arg3);
   dloc = xm_protect(descr);
   loc = map_over_protected_elements(unprotect_protocolproc, (unsigned long)descr);
-  velts = XEN_VECTOR_ELEMENTS(xm_protected);
   XmRemoveProtocolCallback(XEN_TO_C_Widget(arg1), 
 			   XEN_TO_C_Atom(arg2), 
 			   XEN_TO_C_Atom(arg3), 
 			   gxm_ProtocolProc,
-			   (XtPointer)(velts[loc])); /* this was the original tag passed in */
+			   (XtPointer)(XEN_VECTOR_REF(xm_protected, loc))); /* this was the original tag passed in */
   /* now unprotect the proc and our descr */
   xm_unprotect_at(dloc);
   xm_unprotect_at(loc);
@@ -10899,16 +10887,13 @@ to the XKeyboardState structure."
    */
   XKeyboardState ks;
   XEN v;
-  XEN *velts;
   int i, loc;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XGetKeyboardControl", "Display*");
   XGetKeyboardControl(XEN_TO_C_Display(arg1), &ks);
   v = XEN_MAKE_VECTOR(32, XEN_ZERO);
   loc = xm_protect(v);
-  velts = XEN_VECTOR_ELEMENTS(v);
-  /* VECTOR_SET here */
   for (i = 0; i < 32; i++)
-    velts[i] = C_TO_XEN_INT((int)(ks.auto_repeats[i]));
+    XEN_VECTOR_SET(v, i, C_TO_XEN_INT((int)(ks.auto_repeats[i])));
   xm_unprotect_at(loc);
   return(XEN_LIST_7(C_TO_XEN_INT(ks.key_click_percent),
 		    C_TO_XEN_INT(ks.bell_percent),
@@ -11616,19 +11601,17 @@ static XEN gxm_Vector2XPoints(XEN arg1)
 {
   #define H_vector2XPoints "(vector->XPoints vect) packages point data in vect as (opaque) array of XPoints"
   int i, j, len;
-  XEN *velts;
   /* vector assumed to be sequence of x y pairs (not XPoints from local view)
    */
   XPoint *pt;
   XEN_ASSERT_TYPE(XEN_VECTOR_P(arg1), arg1, XEN_ONLY_ARG, "vector->XPoints", "vector of x,y values");
   len = XEN_VECTOR_LENGTH(arg1) / 2;
   if (len <= 0) XEN_ASSERT_TYPE(0, arg1, 1, "vector->XPoints", "positive integer");
-  velts = XEN_VECTOR_ELEMENTS(arg1);
   pt = (XPoint *)CALLOC(len, sizeof(XPoint));
   for (i = 0, j = 0; i < len; i++, j += 2)
     {
-      pt[i].x = XEN_TO_C_INT(velts[j]);
-      pt[i].y = XEN_TO_C_INT(velts[j + 1]);
+      pt[i].x = XEN_TO_C_INT(XEN_VECTOR_REF(arg1, j));
+      pt[i].y = XEN_TO_C_INT(XEN_VECTOR_REF(arg1, j + 1));
     }
   return(C_TO_XEN_ULONG((unsigned long)pt));
 }

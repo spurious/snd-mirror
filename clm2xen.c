@@ -2527,22 +2527,24 @@ static XEN g_formant_bank(XEN amps, XEN gens, XEN inp)
   vct *scl_1;
   Float *scls = NULL;
   mus_any **gs;
-  XEN *data;
   XEN_ASSERT_TYPE(XEN_VECTOR_P(gens), gens, XEN_ARG_2, S_formant_bank, "a vector of formant generators");
   XEN_ASSERT_TYPE(VCT_P(amps), amps, XEN_ARG_1, S_formant_bank, "a vct");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(inp), inp, XEN_ARG_3, S_formant_bank, "a number");
   size = XEN_VECTOR_LENGTH(gens);
   if (size == 0) return(XEN_ZERO);
   gs = (mus_any **)CALLOC(size, sizeof(mus_any *));
-  data = XEN_VECTOR_ELEMENTS(gens);
-  for (i = 0; i < size; i++) 
-    if (MUS_XEN_P(data[i]))
-      gs[i] = XEN_TO_MUS_ANY(data[i]);
-    else 
-      {
-	if (gs) FREE(gs);
-	XEN_WRONG_TYPE_ARG_ERROR(S_formant_bank, i, data[i], "a formant generator");
-      }
+  for (i = 0; i < size; i++)
+    {
+      XEN datum;
+      datum = XEN_VECTOR_REF(gens, i);
+      if (MUS_XEN_P(datum))
+	gs[i] = XEN_TO_MUS_ANY(datum);
+      else 
+	{
+	  if (gs) FREE(gs);
+	  XEN_WRONG_TYPE_ARG_ERROR(S_formant_bank, i, datum, "a formant generator");
+	}
+    }
   scl_1 = get_vct(amps);
   if (scl_1->length < size) size = scl_1->length;
   scls = scl_1->data;
@@ -4977,7 +4979,6 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
 			 C_TO_XEN_STRING("output chans <= 0")));
   if ((XEN_BOUND_P(envs)) && (!(XEN_FALSE_P(envs))))
     {
-      XEN *vdata0, *vdata1;
       int in_len = 0, out_len, j;
       /* pack into a C-style array of arrays of env pointers */
       in_len = XEN_VECTOR_LENGTH(envs);
@@ -4986,40 +4987,46 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
 		  XEN_LIST_3(C_TO_XEN_STRING(S_mus_mix),
 			     envs,
 			     C_TO_XEN_STRING("env vector can't be empty")));
-      vdata0 = XEN_VECTOR_ELEMENTS(envs);
       for (i = 0; i < in_len; i++)
-	if (!(XEN_VECTOR_P(vdata0[i])))
-	  XEN_ERROR(BAD_TYPE,
-		    XEN_LIST_3(C_TO_XEN_STRING(S_mus_mix),
-			       vdata0[i],
-			       C_TO_XEN_STRING("each element of env vector must be a vector (of envelopes)")));
-      out_len = XEN_VECTOR_LENGTH(vdata0[0]);
+	{
+	  XEN datum;
+	  datum = XEN_VECTOR_REF(envs, i);
+	  if (!(XEN_VECTOR_P(datum)))
+	    XEN_ERROR(BAD_TYPE,
+		      XEN_LIST_3(C_TO_XEN_STRING(S_mus_mix),
+				 datum,
+				 C_TO_XEN_STRING("each element of env vector must be a vector (of envelopes)")));
+	}
+      out_len = XEN_VECTOR_LENGTH(XEN_VECTOR_REF(envs, 0));
       if (in_len < in_chans) in_size = in_chans; else in_size = in_len;
       if (out_len < out_chans) out_size = out_chans; else out_size = out_len;
       envs1 = (mus_any ***)CALLOC(in_size, sizeof(mus_any **));
       for (i = 0; i < in_size; i++) envs1[i] = (mus_any **)CALLOC(out_size, sizeof(mus_any *));
       for (i = 0; i < in_len; i++)
 	{
-	  vdata1 = XEN_VECTOR_ELEMENTS(vdata0[i]);
 	  for (j = 0; j < out_len; j++) 
-	    if (MUS_XEN_P(vdata1[j]))
-	      {
-		if (mus_env_p(XEN_TO_MUS_ANY(vdata1[j])))
-		  envs1[i][j] = XEN_TO_MUS_ANY(vdata1[j]);
-		else 
-		  {
-		    for (i = 0; i < in_size; i++) if (envs1[i]) FREE(envs1[i]);
-		    FREE(envs1);
-		    if (infile) free(infile);
-		    if (outfile) free(outfile);
-		    XEN_ERROR(BAD_TYPE,
-			      XEN_LIST_5(C_TO_XEN_STRING(S_mus_mix),
-					 vdata1[j],
-					 C_TO_XEN_STRING("each (non #f) element of (inner) envs vector must be an envelope: "),
-					 C_TO_XEN_INT(i),
-					 C_TO_XEN_INT(j)));
-		  }
-	      }
+	    {
+	      XEN datum1;
+	      datum1 = XEN_VECTOR_REF(XEN_VECTOR_REF(envs, i), j);
+	      if (MUS_XEN_P(datum1))
+		{
+		  if (mus_env_p(XEN_TO_MUS_ANY(datum1)))
+		    envs1[i][j] = XEN_TO_MUS_ANY(datum1);
+		  else 
+		    {
+		      for (i = 0; i < in_size; i++) if (envs1[i]) FREE(envs1[i]);
+		      FREE(envs1);
+		      if (infile) free(infile);
+		      if (outfile) free(outfile);
+		      XEN_ERROR(BAD_TYPE,
+				XEN_LIST_5(C_TO_XEN_STRING(S_mus_mix),
+					   datum1,
+					   C_TO_XEN_STRING("each (non #f) element of (inner) envs vector must be an envelope: "),
+					   C_TO_XEN_INT(i),
+					   C_TO_XEN_INT(j)));
+		    }
+		}
+	    }
 	}
     }
   if ((infile) && (outfile))
@@ -5108,18 +5115,15 @@ static XEN g_ssb_bank(XEN ssbs, XEN filters, XEN inval, XEN size)
   /* an experiment */
   int i, len;
   Float sum = 0.0, val = 0.0;
-  XEN *sb, *flt;
   XEN_ASSERT_TYPE(XEN_VECTOR_P(ssbs), ssbs, XEN_ARG_1, "ssb-bank", "vector of ssb-am gens");
   XEN_ASSERT_TYPE(XEN_VECTOR_P(filters), filters, XEN_ARG_2, "ssb-bank", "vector of fir-filter gens");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(inval), inval, XEN_ARG_3, "ssb-bank", "number");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(size), size, XEN_ARG_4, "ssb-bank", "int");
-  sb = XEN_VECTOR_ELEMENTS(ssbs);
-  flt = XEN_VECTOR_ELEMENTS(filters);
   len = XEN_TO_C_INT(size);
   val = XEN_TO_C_DOUBLE(inval);
   for (i = 0; i < len; i++)
-    sum += mus_ssb_am_1(XEN_TO_MUS_ANY(sb[i]),
-			mus_fir_filter(XEN_TO_MUS_ANY(flt[i]), val));
+    sum += mus_ssb_am_1(XEN_TO_MUS_ANY(XEN_VECTOR_REF(ssbs, i)),
+			mus_fir_filter(XEN_TO_MUS_ANY(XEN_VECTOR_REF(filters, i)), val));
   return(C_TO_XEN_DOUBLE(sum));
 }
 
