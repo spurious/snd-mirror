@@ -48,7 +48,7 @@ static SCM g_in(SCM ms, SCM code)
 
 /* color support */
 
-static int snd_color_tag = 0;
+static SND_TAG_TYPE snd_color_tag = 0;
 
 typedef struct {
   Pixel color;
@@ -62,7 +62,7 @@ static SCM mark_snd_color(SCM obj)
 
 static int snd_color_p(SCM obj)
 {
-  return((SCM_NIMP(obj)) && (GH_TYPE_OF(obj) == (SCM)snd_color_tag));
+  return((SCM_NIMP(obj)) && (SND_SMOB_TYPE(snd_color_tag,obj)));
 }
 
 static SCM g_color_p(SCM obj) 
@@ -74,7 +74,7 @@ static SCM g_color_p(SCM obj)
 static snd_color *get_snd_color(SCM arg)
 {
   if (snd_color_p(arg))
-    return((snd_color *)GH_VALUE_OF(arg));
+    return((snd_color *)SND_VALUE_OF(arg));
   return(NULL);
 }
 
@@ -82,7 +82,7 @@ static scm_sizet free_snd_color(SCM obj)
 {
   Colormap cmap;
   Display *dpy;
-  snd_color *v = (snd_color *)GH_VALUE_OF(obj);
+  snd_color *v = (snd_color *)SND_VALUE_OF(obj);
   dpy=XtDisplay(MAIN_SHELL(state));
   cmap=DefaultColormap(dpy,DefaultScreen(dpy));
   XFreeColors(dpy,cmap,&(v->color),1,0);
@@ -93,7 +93,7 @@ static scm_sizet free_snd_color(SCM obj)
 static int print_snd_color(SCM obj, SCM port, scm_print_state *pstate)
 {
   char *buf = NULL;
-  snd_color *v = (snd_color *)GH_VALUE_OF(obj);
+  snd_color *v = (snd_color *)SND_VALUE_OF(obj);
   Colormap cmap;
   XColor tmp_color;
   Display *dpy;
@@ -120,7 +120,7 @@ static SCM g_color2list(SCM obj)
   XColor tmp_color;
   Display *dpy;
   SCM_ASSERT(snd_color_p(obj),obj,SCM_ARG1,S_color2list); 
-  v = (snd_color *)GH_VALUE_OF(obj);
+  v = (snd_color *)SND_VALUE_OF(obj);
   dpy=XtDisplay(MAIN_SHELL(state));
   cmap=DefaultColormap(dpy,DefaultScreen(dpy));
   tmp_color.flags = DoRed | DoGreen | DoBlue;
@@ -135,8 +135,8 @@ static SCM g_color2list(SCM obj)
 static SCM equalp_snd_color(SCM obj1, SCM obj2)
 {
   snd_color *v1,*v2;
-  v1 = (snd_color *)GH_VALUE_OF(obj1);
-  v2 = (snd_color *)GH_VALUE_OF(obj2);
+  v1 = (snd_color *)SND_VALUE_OF(obj1);
+  v2 = (snd_color *)SND_VALUE_OF(obj2);
   RTNBOOL(v1->color == v2->color);
 }
 

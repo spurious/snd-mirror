@@ -1744,11 +1744,11 @@ static SCM samples2sound_data(SCM samp_0, SCM samps, SCM snd_n, SCM chn_n, SCM s
     {
       chn = g_scm2intdef(sdchan,0);
       if (sound_data_p(sdobj))
-	sd = (sound_data *)GH_VALUE_OF(sdobj);
+	sd = (sound_data *)SND_VALUE_OF(sdobj);
       else
 	{
 	  newsd = make_sound_data(chn+1,len);
-	  sd = (sound_data *)GH_VALUE_OF(newsd);
+	  sd = (sound_data *)SND_VALUE_OF(newsd);
 	}
       if (chn < sd->chans)
 	{
@@ -2712,8 +2712,8 @@ static SCM g_fft_1(SCM reals, SCM imag, SCM sign, int use_fft)
   SCM_ASSERT(((vct_p(imag)) || (gh_vector_p(imag))),imag,SCM_ARG2,((use_fft) ? S_fft : S_convolve_arrays));
   if ((vct_p(reals)) && (vct_p(imag)))
     {
-      v1 = (vct *)GH_VALUE_OF(reals);
-      v2 = (vct *)GH_VALUE_OF(imag);
+      v1 = (vct *)SND_VALUE_OF(reals);
+      v2 = (vct *)SND_VALUE_OF(imag);
       n = v1->length;
     }
   else
@@ -3150,7 +3150,7 @@ static SCM g_graph(SCM ldata, SCM xlabel, SCM x0, SCM x1, SCM y0, SCM y1, SCM sn
 	  else data = ldata;
 	  if (vct_p(data))
 	    {
-	      v = (vct *)GH_VALUE_OF(data);
+	      v = (vct *)SND_VALUE_OF(data);
 	      len = v->length;
 	    }
 	  else len = gh_vector_length(data);

@@ -3602,9 +3602,9 @@ static SCM g_mix(SCM file, SCM chn_samp_n, SCM file_chn, SCM snd_n, SCM chn_n, S
 
 /* ---------------- mix sample readers ---------------- */
 
-static int mf_tag = 0;
+static SND_TAG_TYPE mf_tag = 0;
 static SCM mark_mf(SCM obj) {SCM_SETGC8MARK(obj); return(SCM_BOOL_F);}
-static int mf_p(SCM obj) {return((SCM_NIMP(obj)) && (GH_TYPE_OF(obj) == (SCM)mf_tag));}
+static int mf_p(SCM obj) {return((SCM_NIMP(obj)) && (SND_SMOB_TYPE(mf_tag,obj)));}
 
 static SCM g_mf_p(SCM obj) 
 {
@@ -3612,7 +3612,7 @@ static SCM g_mf_p(SCM obj)
   RTNBOOL(mf_p(obj));
 }
 
-static mix_fd *get_mf(SCM obj) {if (mf_p(obj)) return((mix_fd *)GH_VALUE_OF(obj)); else return(NULL);}
+static mix_fd *get_mf(SCM obj) {if (mf_p(obj)) return((mix_fd *)SND_VALUE_OF(obj)); else return(NULL);}
 static SCM equalp_mf(SCM obj1, SCM obj2) {RTNBOOL(get_mf(obj1) == get_mf(obj2));}
 
 static int print_mf(SCM obj, SCM port, scm_print_state *pstate) 
@@ -3639,7 +3639,7 @@ static int print_mf(SCM obj, SCM port, scm_print_state *pstate)
 
 static scm_sizet free_mf(SCM obj) 
 {
-  mix_fd *fd = (mix_fd *)GH_VALUE_OF(obj); 
+  mix_fd *fd = (mix_fd *)SND_VALUE_OF(obj); 
   if (fd) free_mix_fd(fd); 
   return(0);
 }
@@ -3682,7 +3682,7 @@ static SCM g_free_mix_sample_reader(SCM obj)
   mix_fd *mf;
   SCM_ASSERT(mf_p(obj),obj,SCM_ARG1,S_free_mix_sample_reader);
   mf = get_mf(obj);
-  GH_SET_VALUE_OF(obj,(SCM)NULL);
+  SND_SET_VALUE_OF(obj,(SCM)NULL);
   free_mix_fd(mf);
   return(scm_return_first(SCM_BOOL_F,obj));
 }
@@ -3691,9 +3691,9 @@ static SCM g_free_mix_sample_reader(SCM obj)
 
 /* ---------------- track sample readers ---------------- */
 
-static int tf_tag = 0;
+static SND_TAG_TYPE tf_tag = 0;
 static SCM mark_tf(SCM obj) {SCM_SETGC8MARK(obj); return(SCM_BOOL_F);}
-static int tf_p(SCM obj) {return((SCM_NIMP(obj)) && (GH_TYPE_OF(obj) == (SCM)tf_tag));}
+static int tf_p(SCM obj) {return((SCM_NIMP(obj)) && (SND_SMOB_TYPE(tf_tag,obj)));}
 
 static SCM g_tf_p(SCM obj) 
 {
@@ -3701,7 +3701,7 @@ static SCM g_tf_p(SCM obj)
   RTNBOOL(tf_p(obj));
 }
 
-static track_fd *get_tf(SCM obj) {if (tf_p(obj)) return((track_fd *)GH_VALUE_OF(obj)); else return(NULL);}
+static track_fd *get_tf(SCM obj) {if (tf_p(obj)) return((track_fd *)SND_VALUE_OF(obj)); else return(NULL);}
 static SCM equalp_tf(SCM obj1, SCM obj2) {RTNBOOL(get_tf(obj1) == get_tf(obj2));}
 
 static int print_tf(SCM obj, SCM port, scm_print_state *pstate) 
@@ -3745,7 +3745,7 @@ static int print_tf(SCM obj, SCM port, scm_print_state *pstate)
 
 static scm_sizet free_tf(SCM obj) 
 {
-  track_fd *fd = (track_fd *)GH_VALUE_OF(obj); 
+  track_fd *fd = (track_fd *)SND_VALUE_OF(obj); 
   if (fd) free_track_fd(fd); 
   return(0);
 }
@@ -3789,7 +3789,7 @@ static SCM g_free_track_sample_reader(SCM obj)
   track_fd *tf = NULL;
   SCM_ASSERT(tf_p(obj),obj,SCM_ARG1,S_free_track_sample_reader);
   tf = get_tf(obj);
-  GH_SET_VALUE_OF(obj,(SCM)NULL);
+  SND_SET_VALUE_OF(obj,(SCM)NULL);
   free_track_fd(tf);
   return(scm_return_first(SCM_BOOL_F,obj));
 }

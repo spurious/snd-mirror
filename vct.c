@@ -79,7 +79,7 @@
   #define MIN(a,b) ((a > b) ? (b) : (a))
 #endif
 
-static int vct_tag = 0;
+static SND_TAG_TYPE vct_tag = 0;
 static int vct_print_length = VCT_PRINT_LENGTH;
 void set_vct_print_length(int len) {vct_print_length = len;}
 
@@ -91,7 +91,7 @@ static SCM mark_vct(SCM obj)
 
 int vct_p(SCM obj)
 {
-  return((SCM_NIMP(obj)) && (GH_TYPE_OF(obj) == (SCM)vct_tag));
+  return((SCM_NIMP(obj)) && (SND_SMOB_TYPE(vct_tag,obj)));
 }
 
 static SCM g_vct_p(SCM obj) 
@@ -103,19 +103,19 @@ static SCM g_vct_p(SCM obj)
 vct *get_vct(SCM arg)
 {
   if (vct_p(arg))
-    return((vct *)GH_VALUE_OF(arg));
+    return((vct *)SND_VALUE_OF(arg));
   return(NULL);
 }
 
 static scm_sizet free_vct(SCM obj)
 {
-  vct *v = (vct *)GH_VALUE_OF(obj);
+  vct *v = (vct *)SND_VALUE_OF(obj);
   if (v)
     {
       if ((v->dont_free == 0) && (v->data)) FREE(v->data);
       v->data = NULL;
       FREE(v);
-      GH_SET_VALUE_OF(obj,(SCM)NULL);
+      SND_SET_VALUE_OF(obj,(SCM)NULL);
     }
   return(0);
 }
@@ -124,7 +124,7 @@ static int print_vct(SCM obj, SCM port, scm_print_state *pstate)
 {
   int len,i;
   char *buf;
-  vct *v = (vct *)GH_VALUE_OF(obj);
+  vct *v = (vct *)SND_VALUE_OF(obj);
   buf = (char *)CALLOC(64,sizeof(char));
   sprintf(buf,"#<vct[len=%d]:",v->length);
   scm_puts(buf,port);
@@ -150,8 +150,8 @@ static SCM equalp_vct(SCM obj1, SCM obj2)
 {
   vct *v1,*v2;
   int i;
-  v1 = (vct *)GH_VALUE_OF(obj1);
-  v2 = (vct *)GH_VALUE_OF(obj2);
+  v1 = (vct *)SND_VALUE_OF(obj1);
+  v2 = (vct *)SND_VALUE_OF(obj2);
   if (v1->length != v2->length) return(SCM_BOOL_F);
   for (i=0;i<v1->length;i++)
     if (v1->data[i] != v2->data[i])

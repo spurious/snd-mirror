@@ -789,7 +789,15 @@ If you have Guile 1.4.1 or later, it's possible to access a vct objects
 elements with the syntax (obj index), equivalent to (vct-ref obj index).
 This is using a feature called "applicable smobs" in Guile; I may extend it
 to handle vct-set! and perhaps others: sound-data objects, the various
-sample readers (returning the current sample?), and so on.
+sample readers (returning the current sample?), and so on. The clm
+generators can now use this syntax:
+
+  >(define hi (make-oscil 440.0))
+  #<unspecified>
+  >(hi)
+  0.0
+  >(oscil hi)
+  0.125050634145737
 
 Sound-data and Sndlib
 

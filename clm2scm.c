@@ -341,10 +341,10 @@ static char *keywords[NUM_KEYWORDS] = {SC_frequency,SC_initial_phase,SC_wave,SC_
 static SCM all_keys[NUM_KEYWORDS];
 /* what about user-declared keywords? */
 
-short keyword_tag = 0;
+static SND_TAG_TYPE keyword_tag = 0;
 static SCM mark_keyword(SCM obj) {SCM_SETGC8MARK(obj); return(SCM_BOOL_F);}
 static int keyword_p(SCM obj) {return((SCM_NIMP(obj)) && (SCM_TYP16(obj) == (SCM)keyword_tag));}
-#define get_keyword(arg) ((int)GH_VALUE_OF(arg))
+#define get_keyword(arg) ((int)SND_VALUE_OF(arg))
 static scm_sizet free_keyword(SCM obj) {return(0);}
 static int print_keyword(SCM obj, SCM port, scm_print_state *pstate) {scm_puts(keywords[get_keyword(obj)],port); return(1);}
 
@@ -837,15 +837,15 @@ typedef struct {
   int nvcts;
 } mus_scm;
 
-static short mus_scm_tag = 0;
-#define mus_get_any(arg) (((mus_scm *)GH_VALUE_OF(arg))->gen)
-#define mus_get_scm(arg) ((mus_scm *)GH_VALUE_OF(arg))
+static SND_TAG_TYPE mus_scm_tag = 0;
+#define mus_get_any(arg) (((mus_scm *)SND_VALUE_OF(arg))->gen)
+#define mus_get_scm(arg) ((mus_scm *)SND_VALUE_OF(arg))
 
 int mus_scm_p(SCM obj);
-int mus_scm_p(SCM obj) {return((SCM_NIMP(obj)) && (GH_TYPE_OF(obj) == (SCM)mus_scm_tag));}
+int mus_scm_p(SCM obj) {return((SCM_NIMP(obj)) && (SND_SMOB_TYPE(mus_scm_tag,obj)));}
 
 mus_any *mus_scm_to_clm(SCM obj);
-mus_any *mus_scm_to_clm(SCM obj) {return(((mus_any *)(((mus_scm *)(GH_VALUE_OF(obj)))->gen)));}
+mus_any *mus_scm_to_clm(SCM obj) {return(((mus_any *)(((mus_scm *)(SND_VALUE_OF(obj)))->gen)));}
 
 static SCM mark_mus_scm(SCM obj) 
 {
@@ -881,6 +881,15 @@ static SCM equalp_mus_scm(SCM obj1, SCM obj2)
   return((mus_equalp(mus_get_any(obj1),mus_get_any(obj2))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
+#if HAVE_APPLICABLE_SMOB
+static SCM mus_scm_apply(SCM gen, SCM arg1, SCM arg2)
+{
+  return(gh_double2scm(mus_run(mus_get_any(gen),
+			       (SCM_NFALSEP(scm_real_p(arg1))) ? gh_scm2double(arg1) : 0.0,
+			       (SCM_NFALSEP(scm_real_p(arg2))) ? gh_scm2double(arg2) : 0.0)));
+}
+#endif
+
 #if (!(HAVE_NEW_SMOB))
 static scm_smobfuns mus_scm_smobfuns = {
   &mark_mus_scm,
@@ -897,6 +906,9 @@ static void init_mus_scm(void)
   scm_set_smob_print(mus_scm_tag,print_mus_scm);
   scm_set_smob_free(mus_scm_tag,free_mus_scm);
   scm_set_smob_equalp(mus_scm_tag,equalp_mus_scm);
+#if HAVE_APPLICABLE_SMOB
+  scm_set_smob_apply(mus_scm_tag,mus_scm_apply,0,2,0);
+#endif
 #else
   mus_scm_tag = scm_newsmob(&mus_scm_smobfuns); 
 #endif
@@ -1059,7 +1071,7 @@ static SCM g_set_data(SCM gen, SCM val)
   ms = mus_get_scm(gen);
   if (ms->vcts)
     {
-      v = (vct *)GH_VALUE_OF(val);
+      v = (vct *)SND_VALUE_OF(val);
       ma = ms->gen;
       mus_set_data(ma,v->data);  /* TO REMEMBER: if allocated, should have freed, and set to not allocated */
       ms->vcts[MUS_DATA_POSITION] = val;

@@ -1302,7 +1302,7 @@ env *name_to_env(char *str)
 {
   /* called to see if str is a known envelope -- return its current value or nil if unknown */
   /* get str as list var and turn into env */
-  return(scm2env(GH_LOOKUP(str)));
+  return(scm2env(SND_LOOKUP(str)));
 }
 
 static SCM g_define_envelope(SCM a, SCM b)
@@ -1361,7 +1361,7 @@ void add_or_edit_symbol(char *name, env *val)
   SCM e;
   char *buf,*tmpstr=NULL;
   buf = (char *)CALLOC(256,sizeof(char));
-  e = GH_LOOKUP(name);
+  e = SND_LOOKUP(name);
   if ((e) && (SCM_NFALSEP(e)) && (!(SCM_UNBNDP(e))) && (gh_list_p(e)))
     sprintf(buf,"(set! %s %s)",name,tmpstr=env_to_string(val));
   else sprintf(buf,"(define %s %s)",name,tmpstr=env_to_string(val));

@@ -15,6 +15,8 @@ Alpha port: I'm told there are lingering long int problems in this
 
 Libool-ize sndlib.  Parallel support in Snd's configuration process.
 
+add modules to tie sndlib into CL, Python, Octave, etc (via SWIG?).
+
 Snd name completion tied into the Emacs-Snd subjob connection (this
   apparently will require "raw" mode in ilisp).
 
@@ -32,8 +34,7 @@ Sawfish connection: it should be possible to send commands to sawfish,
 gtk-html support (and the XmHTML stuff is not very recent).
 
 A more direct connection to gmeteor (perhaps using the control-panel filter
-  text widget). This requires a way to bypass the current frequency-response
-  to coefficients step.
+  text widget).  use (filter-sound(make-filter ...)).
 
 A graphic-EQ effect (effects.scm) -- this could use guile-gtk and the
   CLM formant generator.  The other effects in that file could use
@@ -73,4 +74,10 @@ Gettext support, if there's interest. (How does gettext handle Scheme-style
 
   but if translation requires that the args be reversed (as in the %2$d msgfmt business),
   does msgfmt know about things like ~A and SCM_LIST2?
+
+
+A motif module parallel to guile-gtk; there's something like this in
+cmucl.
+
+Mac-OSX Snd port (since gtk and guile have been ported, Snd shouldn't be difficult).
 

@@ -1367,7 +1367,7 @@ static int apply_fft_window(fft_state *fs)
 	    len = v->length;
 	    for (i=0;i<len;i++) fft_data[i] = v->data[i];
 	  }
-	GH_SET_VALUE_OF(sfd,(SCM)NULL); /* don't let guile's gc mess with it */
+	SND_SET_VALUE_OF(sfd,(SCM)NULL); /* don't let guile's gc mess with it */
 	snd_unprotect(res);
 	snd_unprotect(sfd);
       }
@@ -2127,7 +2127,7 @@ static SCM g_autocorrelate(SCM reals)
   SCM_ASSERT(((vct_p(reals)) || (gh_vector_p(reals))),reals,SCM_ARG1,S_autocorrelate);
   if (vct_p(reals))
     {
-      v1 = (vct *)GH_VALUE_OF(reals);
+      v1 = (vct *)SND_VALUE_OF(reals);
       rl = v1->data;
       n = v1->length;
     }

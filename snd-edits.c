@@ -2659,11 +2659,11 @@ static SCM g_edit_tree(SCM snd, SCM chn, SCM upos)
 
 /* ---------------- sample readers ---------------- */
 
-static int sf_tag = 0;
+static SND_TAG_TYPE sf_tag = 0;
 static SCM mark_sf(SCM obj) {SCM_SETGC8MARK(obj); return(SCM_BOOL_F);}
 
 int sf_p(SCM obj); /* currently for snd-ladspa.c */
-int sf_p(SCM obj) {return((SCM_NIMP(obj)) && (GH_TYPE_OF(obj) == (SCM)sf_tag));}
+int sf_p(SCM obj) {return((SCM_NIMP(obj)) && (SND_SMOB_TYPE(sf_tag,obj)));}
 
 static SCM g_sf_p(SCM obj) 
 {
@@ -2672,7 +2672,7 @@ static SCM g_sf_p(SCM obj)
 }
 
 snd_fd *get_sf(SCM obj); /* currently for snd-ladspa.c */
-snd_fd *get_sf(SCM obj) {if (sf_p(obj)) return((snd_fd *)GH_VALUE_OF(obj)); else return(NULL);}
+snd_fd *get_sf(SCM obj) {if (sf_p(obj)) return((snd_fd *)SND_VALUE_OF(obj)); else return(NULL);}
 
 static int print_sf(SCM obj, SCM port, scm_print_state *pstate) 
 {
@@ -2714,7 +2714,7 @@ static SCM equalp_sf(SCM obj1, SCM obj2)
 
 static scm_sizet free_sf(SCM obj) 
 {
-  snd_fd *fd = (snd_fd *)GH_VALUE_OF(obj); 
+  snd_fd *fd = (snd_fd *)SND_VALUE_OF(obj); 
   snd_info *sp = NULL;
   if (fd) 
     {
@@ -2834,7 +2834,7 @@ static SCM g_free_sample_reader(SCM obj)
   fd = get_sf(obj);
   sp = fd->local_sp; 
   fd->local_sp = NULL;
-  GH_SET_VALUE_OF(obj,(SCM)NULL);
+  SND_SET_VALUE_OF(obj,(SCM)NULL);
   free_snd_fd(fd);
   /* free_snd_fd looks at its snd_data field to see if the latter's copy flag is set,
    *   free_snd_info may free this snd_data structure (via free_sound_list), so we have to

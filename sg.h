@@ -15,27 +15,30 @@
 #endif
 
 #if HAVE_NEW_SMOB
-#define SND_RETURN_NEWSMOB(Tag,Val) SCM_RETURN_NEWSMOB(Tag,(SCM)Val)
+  #define SND_RETURN_NEWSMOB(Tag,Val) SCM_RETURN_NEWSMOB(Tag,(SCM)Val)
+  #define SND_TAG_TYPE scm_bits_t
 #else
-#define SND_RETURN_NEWSMOB(Tag,Val) \
-  do { \
-     SCM New_Cell; \
-     SCM_NEWCELL(New_Cell); \
-     SCM_SETCDR(New_Cell,(SCM)Val); \
-     SCM_SETCAR(New_Cell,Tag); \
-     return(New_Cell); \
-     } while (0)
+  #define SND_RETURN_NEWSMOB(Tag,Val) \
+    do { \
+       SCM New_Cell; \
+       SCM_NEWCELL(New_Cell); \
+       SCM_SETCDR(New_Cell,(SCM)Val); \
+       SCM_SETCAR(New_Cell,Tag); \
+       return(New_Cell); \
+       } while (0)
+  #define SND_TAG_TYPE long
 #endif
 
-#define GH_LOOKUP(a) scm_symbol_value0(a)
-#define GH_TYPE_OF(a) (SCM_TYP16(a))
+#define SND_LOOKUP(a) scm_symbol_value0(a)
 
 #if HAVE_NEW_SMOB
-  #define GH_VALUE_OF(a) SCM_SMOB_DATA(a)
-  #define GH_SET_VALUE_OF(a,b) SCM_SET_SMOB_DATA(a,b)
+  #define SND_VALUE_OF(a) SCM_SMOB_DATA(a)
+  #define SND_SET_VALUE_OF(a,b) SCM_SET_SMOB_DATA(a,b)
+  #define SND_SMOB_TYPE(TAG,OBJ) SCM_SMOB_PREDICATE(TAG,OBJ)
 #else
-  #define GH_VALUE_OF(a) gh_cdr(a)
-  #define GH_SET_VALUE_OF(a,b) SCM_SETCDR(a,b)
+  #define SND_VALUE_OF(a) gh_cdr(a)
+  #define SND_SET_VALUE_OF(a,b) SCM_SETCDR(a,b)
+  #define SND_SMOB_TYPE(TAG,OBJ) (SCM_TYP16(OBJ) == (SCM)TAG)
 #endif
 
 #if HAVE_SCM_REMEMBER_UPTO_HERE

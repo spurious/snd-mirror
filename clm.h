@@ -2,10 +2,11 @@
 #define MUS_H
 
 #define MUS_VERSION 1
-#define MUS_REVISION 38
-#define MUS_DATE "4-Jan-01"
+#define MUS_REVISION 39
+#define MUS_DATE "5-Jan-01"
 
 /* 
+ * 5-Jan:      clm2scm gens are applicable.
  * 4-Jan:      mus_bank.
  * 2-Jan:      mus_run method.
  * 28-Dec:     mus_clear_filter_state and other minor tweaks for Snd.

@@ -957,7 +957,7 @@ static int callb2option(int callb)
   return(-1);
 }
 
-static void GH_Callback(Widget w,XtPointer cD,XtPointer mD) 
+static void SND_Callback(Widget w,XtPointer cD,XtPointer mD) 
 {
   int callb,opt;
   XtVaGetValues(w,XmNuserData,&callb,NULL);
@@ -1196,7 +1196,7 @@ int gh_add_to_menu(snd_state *ss, int which_menu, char *label, int callb)
   if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
   XtSetArg(args[n],XmNuserData,callb); n++;
   m = XtCreateManagedWidget(label,xmPushButtonWidgetClass,menw,args,n);
-  XtAddCallback(m,XmNactivateCallback,GH_Callback,ss);
+  XtAddCallback(m,XmNactivateCallback,SND_Callback,ss);
   add_option(m,which_menu,label,callb);
   return(0);
 }
