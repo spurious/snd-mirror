@@ -38,7 +38,6 @@
 
 (define plug-menu (main-menu plugins-menu))
 
-;(define delay-menu (main-menu (add-to-main-menu "Delay Testing" (lambda () #f)))) ; just to test this
 (define ladspa-delay-menu-list '()) ; just for testing
 (define ladspa-mod-menu-list '()) ; just for testing
 (define ladspa-freq-menu-list '()) ; just for testing
@@ -92,7 +91,16 @@
                (if (= (sync snd) snc)
                    ;; replace map-chan with apply-ladspa
                    (apply-ladspa
-                    (make-sample-reader beg snd chn)
+
+	(let* ((snd (selected-sound))
+	       	(chns (channels snd)))
+       		(if (= chns 1)
+           	(make-sample-reader beg snd chn)
+	           ;; assume stereo -- this could collect an arbitrary list
+        	   (list (make-sample-reader beg snd chn)
+                	 (make-sample-reader beg snd chn))))
+
+;                    (make-sample-reader beg snd chn)
                     ladspa-description
                     dur
                     origin))))
@@ -2428,7 +2436,6 @@
 (define am-pitchshifter-dialog #f)
 (define am-pitchshifter-label "AM Pitchshifter")
 (define am-pitchshifter-target 'sound)
-(define am-pitchshifter-truncate #t)
 (define am-pitchshifter-menu-widget #f)
 
 (define (post-am-pitchshifter-dialog)
@@ -2444,9 +2451,7 @@
                  (apply-ladspa-over-target-with-sync
                   (list "am_pitchshift_1433" "amPitchshift" am-pitchshifter-pitch-shift am-pitchshifter-buffer-size)
                   am-pitchshifter-target
-                  "AM Pitchshifter"
-                  (and am-pitchshifter-truncate
-                       (* 4 am-pitchshifter-pitch-shift))))
+                  "AM Pitchshifter" #f))
                (lambda (w context info) (XtUnmanageChild am-pitchshifter-dialog)) ; not needed in new-effects.scm version
 
                (lambda (w context info)
@@ -2468,8 +2473,7 @@
                                          (set! am-pitchshifter-buffer-size (/ (.value info) 1)))
                                        1))))
         (add-target (XtParent (car sliders))
-                    (lambda (target) (set! am-pitchshifter-target target))
-                    (lambda (truncate) (set! am-pitchshifter-truncate truncate)))))
+                    (lambda (target) (set! am-pitchshifter-target target)) #f)))
 
   (activate-dialog am-pitchshifter-dialog))
 
@@ -2485,7 +2489,9 @@
               ladspa-freq-menu-list)))
 
 
-;;; Harmonic generator
+
+
+;;; LADSPA Harmonic generator
 ;;;
 
 (define hg-fundamental-magnitude 0.0)
@@ -2500,28 +2506,27 @@
 (define hg-harmonic-magnitude-10 0.0)
 (define hg-dialog #f)
 (define hg-label "Harmonic generator")
+(define hg-target 'sound)
+(define hg-menu-widget #f)
 
-(define (cp-hg)
-   (apply-ladspa (make-sample-reader (cursor))
-      (list "harmonic_gen_1220" "harmonicGen" hg-fundamental-magnitude hg-harmonic-magnitude-2 hg-harmonic-magnitude-3 hg-harmonic-magnitude-4 hg-harmonic-magnitude-5 hg-harmonic-magnitude-6 hg-harmonic-magnitude-7 hg-harmonic-magnitude-8 hg-harmonic-magnitude-9 hg-harmonic-magnitude-10)
-         (- (frames) (cursor))
-         "harmonic generator"))
+(define (post-hg-dialog)
+  (if (not hg-dialog)
+      ;; if hg-dialog doesn't exist, create it
+      (let ((sliders '()))
+        (set! hg-dialog
+              (make-effect-dialog
+               hg-label
+               (lambda (w context info)
+                 (apply-ladspa-over-target-with-sync
+                  (list "harmonic_gen_1220" "harmonicGen"  hg-fundamental-magnitude hg-harmonic-magnitude-2 hg-harmonic-magnitude-3 hg-harmonic-magnitude-4 hg-harmonic-magnitude-5 hg-harmonic-magnitude-6 hg-harmonic-magnitude-7 hg-harmonic-magnitude-8 hg-harmonic-magnitude-9 hg-harmonic-magnitude-10)
+                  hg-target
+                  "harmonic generator" #f))
+               (lambda (w context info) (XtUnmanageChild hg-dialog)) ; not needed in new-effects.scm version
 
-(if (and (provided? 'snd-ladspa)
-         (provided? 'xm))
-  (begin
+               (lambda (w context info)
+                 (help-dialog "Harmonic generator" "Allows you to add harmonics and remove the fundamental from any audio signal.\n\ Known bugs: There is no bandwidth limiting filter on the output, so it is easy to create excessive high-frequency harmonics that could cause aliasing problems. However, in practice this doesn't seem to be a serious problem.\n\ Examples: There are many interesting effects you can achieve with sine waves. One example is producing band-limited square waves from sine waves. To do this, set the parameters to 1, 0, -0.3333, 0, 0.2, 0, -0.14285, 0, 0.11111. To get a triangle-like signal use 1, 0, -0.3333, 0, -0.2, 0, -0.14285, 0, -0.11111.\n\ Fundamental magnitude: The amplitude of the fundamental of the signal. Reduce it to 0 to remove the base signal altogether, or -1 to phase-invert it.\n\ 2nd harmonic magnitude: The 2nd harmonic, its frequency is twice the frequency of the fundamental.\n\ 3rd harmonic magnitude: The 3rd harmonic, its frequency is three times the frequency of the fundamental.\n\ Even harmonics add a distorted feel to the sound. Valve (tube) amplifiers introduce distortions at all the harmonics, transistor amplifiers only introduce distortion into the odd harmonics."))
 
-    (define (post-hg-dialog)
-       (if (not (Widget? hg-dialog))
-           (let ((sliders '()))
-             (set! hg-dialog
-                   (make-effect-dialog "harmonic generator ladspa plugin"
-                                       (lambda (w context info) (cp-hg))
-                                       (lambda (w context info) (XtUnmanageChild hg-dialog))
-                                       (lambda (w context info)
-                                         (help-dialog "Harmonic generator" 
-						"Allows you to add harmonics and remove the fundamental from any audio signal.\n\ Known bugs: There is no bandwidth limiting filter on the output, so it is easy to create excessive high-frequency harmonics that could cause aliasing problems. However, in practice this doesn't seem to be a serious problem.\n\ Examples: There are many interesting effects you can achieve with sine waves. One example is producing band-limited square waves from sine waves. To do this, set the parameters to 1, 0, -0.3333, 0, 0.2, 0, -0.14285, 0, 0.11111. To get a triangle-like signal use 1, 0, -0.3333, 0, -0.2, 0, -0.14285, 0, -0.11111.\n\ Fundamental magnitude: The amplitude of the fundamental of the signal. Reduce it to 0 to remove the base signal altogether, or -1 to phase-invert it.\n\ 2nd harmonic magnitude: The 2nd harmonic, its frequency is twice the frequency of the fundamental.\n\ 3rd harmonic magnitude: The 3rd harmonic, its frequency is three times the frequency of the fundamental.\n\ Even harmonics add a distorted feel to the sound. Valve (tube) amplifiers introduce distortions at all the harmonics, transistor amplifiers only introduce distortion into the odd harmonics."))
-                                       (lambda (w c i)
+                (lambda (w c i)
                                          (set! hg-fundamental-magnitude 0.0)
                                          (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* hg-fundamental-magnitude 100))))
                                          (set! hg-harmonic-magnitude-2 0.0)
@@ -2542,10 +2547,11 @@
                                          (XtSetValues (list-ref sliders 8) (list XmNvalue (inexact->exact (* hg-harmonic-magnitude-9 100))))
                                          (set! hg-harmonic-magnitude-10 0.0)
                                          (XtSetValues (list-ref sliders 9) (list XmNvalue (inexact->exact (* hg-harmonic-magnitude-10 100)))))))
+             
              (set! sliders
-                   (add-sliders hg-dialog
+              (add-sliders hg-dialog
                                 (list 
-				      (list "fundamental magnitude" -1.0 0.0 1.0
+                                      (list "fundamental magnitude" -1.0 0.0 1.0
                                             (lambda (w context info)
                                               (set! hg-fundamental-magnitude (/ (.value info) 100)))
                                             100)
@@ -2584,14 +2590,23 @@
                                       (list "10th harmonic magnitude" -1.0 0.0 1.0
                                             (lambda (w context info)
                                               (set! hg-harmonic-magnitude-10 (/ (.value info) 100)))
-                                            100))))))
-       (activate-dialog hg-dialog))))
+                                            100))))
 
-      (let ((child (XtCreateManagedWidget "Harmonic generator" xmPushButtonWidgetClass ladspa-freq-menu
-                                           (list XmNbackground (basic-color)))))
-        (XtAddCallback child XmNactivateCallback
-                        (lambda (w c i)
-                          (post-hg-dialog))))
+        (add-target (XtParent (car sliders))
+                    (lambda (target) (set! hg-target target)) #f)))
+
+  (activate-dialog hg-dialog))
+
+(let ((child (XtCreateManagedWidget "Harmonic generator" xmPushButtonWidgetClass ladspa-freq-menu
+                                    (list XmNbackground (basic-color)))))
+  (XtAddCallback child XmNactivateCallback
+                 (lambda (w c i)
+                   (post-hg-dialog)))
+  (set! ladspa-freq-menu-list
+        (cons (lambda ()
+                (let ((new-label (format #f "Harmonic generator (~1,2F ~1,2F ~1,2F ~1,2F ~1,2F ~1,2F ~1,2F ~1,2F ~1,2F ~1,2F)" hg-fundamental-magnitude hg-harmonic-magnitude-2 hg-harmonic-magnitude-3 hg-harmonic-magnitude-4 hg-harmonic-magnitude-5 hg-harmonic-magnitude-6 hg-harmonic-magnitude-7 hg-harmonic-magnitude-8 hg-harmonic-magnitude-9 hg-harmonic-magnitude-10)))
+                  (change-label child new-label)))
+              ladspa-freq-menu-list)))
 
 
 
@@ -2602,7 +2617,6 @@
 (define pitch-scaler-dialog #f)
 (define pitch-scaler-label "Pitch scaler")
 (define pitch-scaler-target 'sound)
-(define pitch-scaler-truncate #t)
 (define pitch-scaler-menu-widget #f)
 
 (define (post-pitch-scaler-dialog)
@@ -2617,9 +2631,7 @@
                  (apply-ladspa-over-target-with-sync
                   (list "pitch_scale_1194" "pitchScaleHQ" pitch-scaler-coefficient)
                   pitch-scaler-target
-                  "Pitch scaler"
-                  (and pitch-scaler-truncate
-                       (* 4 pitch-scaler-coefficient))))
+                  "Pitch scaler"#f))
                (lambda (w context info) (XtUnmanageChild pitch-scaler-dialog)) ; not needed in new-effects.scm version
 
                (lambda (w context info)
@@ -2635,8 +2647,7 @@
                                          (set! pitch-scaler-coefficient (/ (.value info) 100)))
                                        100))))
         (add-target (XtParent (car sliders))
-                    (lambda (target) (set! pitch-scaler-target target))
-                    (lambda (truncate) (set! pitch-scaler-truncate truncate)))))
+                    (lambda (target) (set! pitch-scaler-target target)) #f)))
 
   (activate-dialog pitch-scaler-dialog))
 
