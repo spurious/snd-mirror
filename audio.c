@@ -1505,8 +1505,6 @@ int mus_audio_oss_buffer_size(void)
   else return(16 * 4096); 
 }
 
-/* SOMEDAY: these should be set per-card, not globally */
-
 #define MAX_SOUNDCARDS 8
 #define MAX_DSPS 8
 #define MAX_MIXERS 8

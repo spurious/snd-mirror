@@ -49,6 +49,7 @@ static void mus_error2snd(int type, char *msg)
 	{
 	  snd_error("%s: %s", mus_error_to_string(type), msg);
 #if HAVE_SETJMP_H
+	  ss->jump_ok = TRUE;
 	  top_level_catch(1); /* sigh -- try to keep going */
 #endif
 	}
@@ -253,6 +254,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
 #else
   ss->Trap_Segfault = DEFAULT_TRAP_SEGFAULT;
 #endif
+  ss->jump_ok = FALSE;
   ss->Optimization = DEFAULT_OPTIMIZATION;
   ss->Print_Length = DEFAULT_PRINT_LENGTH;
   ss->Previous_Files_Sort = DEFAULT_PREVIOUS_FILES_SORT;

@@ -38,22 +38,27 @@ int find_matching_paren(char *str, int parens, int pos, char *prompt, int *highl
 	      if (str[i] == '\n')
 		{
 		  /* check for comment on next line up */
-		  /* TODO: " in comment on upper line */
-		  int up_quoting = FALSE;
+		  int up_quoting = FALSE, quote_comment = -1;
 		  for (j = i - 1; j > 0; j--)
 		    {
 		      if (str[j] == '\n') break;
 		      if ((str[j] == '\"') && (str[j - 1] != '\\'))
 			up_quoting = !up_quoting;
-		      if (!up_quoting)
+		      if ((str[j] == ';') &&
+			  ((j <= 1) || (str[j - 1] != '\\') || (str[j - 2] != '#')))
 			{
-			  if ((str[j] == ';') &&
-			      ((j <= 1) || (str[j - 1] != '\\') || (str[j - 2] != '#')))
+			  if (!up_quoting)
 			    up_comment = j;
+			  else quote_comment = j;
 			}
 		    }
 		  if (up_comment > 0)
 		    i = up_comment;
+		  else
+		    {
+		      if ((up_quoting) && (quote_comment > 0))
+			i = quote_comment;
+		    }
 		}
 	    }
 	}

@@ -4336,8 +4336,8 @@ static int mus_header_read_with_fd_and_name(int chan, const char *filename)
   bytes = read(chan, hdrbuf, INITIAL_READ_SIZE);
   /* if it's a 0 length file we need to get out */
   if (bytes < 0) 
-    return(mus_error(MUS_HEADER_READ_FAILED,	"%s%sread header failed: %s",
-		     (filename) ? filename : "", (filename) ? ": " : "",
+    return(mus_error(MUS_HEADER_READ_FAILED,	"%s: %s",
+		     (filename) ? filename : "read header failed",
 		     (errno) ? strerror(errno) : "bytes read < 0?"));
   if (bytes == 0) 
     return(mus_error(MUS_HEADER_READ_FAILED,	"%s%sattempt to read header of empty file",

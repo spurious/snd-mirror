@@ -6926,7 +6926,6 @@ static xen_value *mus_set_srate_1(ptree *prog, xen_value *v)
 }
 
 /* def-clm-struct support */
-/* TODO: test def-clm-struct in run (more) */
 /* TODO: tie setter from def-clm-struct into run (needs list-set!) */
 
 static int clm_structs = 0;
@@ -6961,6 +6960,7 @@ static XEN g_add_clm_field(XEN name, XEN offset)
 }
 
 static char **clm_types = NULL;
+static char **clm_qtypes = NULL;
 static int clm_types_size = 0;
 static int clm_types_top = 0;
 
@@ -6973,6 +6973,7 @@ static XEN g_add_clm_type(XEN name)
     {
       clm_types_size = 4;
       clm_types = (char **)CALLOC(clm_types_size, sizeof(char *));
+      clm_qtypes = (char **)CALLOC(clm_types_size, sizeof(char *));
     }
   else
     {
@@ -6980,9 +6981,13 @@ static XEN g_add_clm_type(XEN name)
 	{
 	  clm_types_size = clm_types_top + 4;
 	  clm_types = (char **)REALLOC(clm_types, clm_types_size * sizeof(char *));
+	  clm_qtypes = (char **)REALLOC(clm_qtypes, clm_types_size * sizeof(char *));
 	}
     }
-  clm_types[clm_types_top++] = copy_string(XEN_TO_C_STRING(name));
+  clm_types[clm_types_top] = copy_string(XEN_TO_C_STRING(name));
+  clm_qtypes[clm_types_top] = (char *)CALLOC(strlen(clm_types[clm_types_top]) + 2, sizeof(char));
+  sprintf(clm_qtypes[clm_types_top], "%s?", clm_types[clm_types_top]);
+  clm_types_top++;
   return(name);
 }
 
@@ -7256,7 +7261,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 		if (strcmp(funcname, clm_struct_names[k]) == 0)
 		  return(clean_up(unwrap_xen_object(prog, XEN_LIST_REF(lst, clm_struct_offsets[k]), funcname), args, num_args));
 	      for (k = 0; k < clm_types_top; k++)
-		if (strcmp(funcname, clm_types[k]) == 0)
+		if (strcmp(funcname, clm_qtypes[k]) == 0)
 		  return(clean_up(make_xen_value(R_BOOL, 
 						 add_int_to_ptree(prog, check_clm_type(XEN_CAR(lst), clm_types[k])), 
 						 R_CONSTANT), 

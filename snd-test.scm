@@ -31,7 +31,6 @@
 ;;; test 28: errors
 
 ;;; TODO: GL tests (test/gl/Mesa-4.0.2/samples/), gtk (xg) tests
-;;; TODO: mix panel env editor (apply button (XmMessageBoxGetChild mix_panel XmDIALOG_CANCEL_BUTTON)
 ;;; TODO: test midi.c: mus-midi-|open|close|read|write|describe|device-name
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs) (ice-9 syncase))
@@ -19270,10 +19269,40 @@ EDITS: 2
       (define bst3 #f)
       (let ((tst 0))
 	(run (lambda () (set! tst (st3-one svar))))
-	(if (not (= tst 1)) (snd-display ";run st3-one: ~A" (st3-one svar)))
+	(if (not (= tst 1)) (snd-display ";run st3-one: ~A ~A" tst (st3-one svar)))
 	(itst '(st3-two svar) 2)
 	(run (lambda () (set! bst3 (st3? svar))))
 	(if (not bst3) (snd-display ";st3? ~A" (st3? svar))))
+
+      (set! svar (make-st3 :one 1.5 :two "hi"))
+      (let ((tst 0.0))
+	(run (lambda () (set! tst (st3-one svar))))
+	(if (fneq tst 1.5) (snd-display ";run st3-one (1.5): ~A ~A" tst (st3-one svar)))
+	(stst '(st3-two svar) "hi"))
+
+      (set! svar (make-st3 :one (make-vct 3 1.0) :two (make-vector 3 2.0)))
+      (let ((tst 0.0))
+	(run (lambda () (set! tst (vct-ref (st3-one svar) 1))))
+	(if (fneq tst 1.0) (snd-display ";run st3-one (1.0 vct): ~A ~A" tst (st3-one svar)))
+	(run (lambda () (set! tst (vector-ref (st3-two svar) 1)))) ; not optimized
+	(if (fneq tst 2.0) (snd-display ";run st3-one (2.0 vector): ~A ~A" tst (st3-two svar))))
+
+      (def-clm-struct st4 (one 1) (two 2.0))
+      (define svar (make-st4))
+      (define bst4 #f)
+      (let ((tst 0))
+	(run (lambda () (set! tst (st4-one svar))))
+	(if (not (= tst 1)) (snd-display ";run st4-one: ~A ~A" tst (st4-one svar)))
+	(ftst '(st4-two svar) 2.0)
+	(run (lambda () (set! bst4 (st4? svar))))
+	(if (not bst4) (snd-display ";st4? ~A ~A" svar (st4? svar))))
+
+      (set! svar (make-st4 :one 1.5))
+      (let ((tst 0.0))
+	(run (lambda () (set! tst (st4-one svar))))
+	(if (fneq tst 1.5) (snd-display ";run st4-one (1.5): ~A ~A" tst (st4-one svar)))
+	(ftst '(st4-two svar) 2.0))
+
 
       (let ((lst (list 1 2 (vct-fill! (make-vct 4) 3.14) 3))
 	    (k 123.0))
@@ -23158,6 +23187,11 @@ EDITS: 2
 			    (drag-event ampenv 1 0 x0 y0 (+ x0 20) (+ y0 20)))
 			  (snd-display ";mix-dialog ampenv: ~A" ampenv))
 		      (force-event)
+		      (let ((edp (edit-position ind)))
+			(click-button (XmMessageBoxGetChild mixd XmDIALOG_CANCEL_BUTTON)) (force-event)
+			(if (= edp (edit-position ind)) 
+			    (snd-display ";apply mix env: ~A" edp)
+			    (undo 1 ind 0)))
 		      (focus-widget begtxt)
 		      (widget-string begtxt "0.5") (force-event)
 		      (key-event begtxt snd-return-key 0) (force-event)

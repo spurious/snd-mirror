@@ -635,7 +635,9 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 #endif
   if (setjmp(top_level_jump))
     {
-      snd_error("Caught top level error (this must be a Snd bug; will try to continue):\n");
+      if (!(ss->jump_ok))
+	snd_error("Caught top level error (will try to continue):\n");
+      else ss->jump_ok = FALSE;
     }
 #endif
 
