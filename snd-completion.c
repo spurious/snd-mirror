@@ -411,7 +411,7 @@ char *info_completer(char *text)
   snd_info *sp = NULL;
   char *new_text, *new_file;
   int i, beg, parens, len;
-  sp = selected_sound();
+  sp = any_selected_sound();
   if (sp)
     {
       if (sp->searching) return(copy_string(text));      /* C-s or C-r so as above */

@@ -1483,7 +1483,8 @@ void *free_ptree(void *upt)
 			      pt->vects[v->addr] = NULL;   
 			    }
 			  break;
-			case R_STRING:       
+			case R_STRING:
+			  /* I don' think this currently can happen */
 			  if (pt->strs[v->addr]) 
 			    {
 			      FREE(pt->strs[v->addr]);
@@ -10410,15 +10411,17 @@ static XEN eval_ptree_to_xen(ptree *pt)
   XEN result = XEN_FALSE;
   switch (pt->result->type)
     {
-    case R_FLOAT:   result = C_TO_XEN_DOUBLE(pt->dbls[pt->result->addr]); break;
-    case R_INT:     result = R_C_TO_XEN_INT(pt->ints[pt->result->addr]); break;
+    case R_FLOAT:   result = C_TO_XEN_DOUBLE(pt->dbls[pt->result->addr]);       break;
+    case R_INT:     result = R_C_TO_XEN_INT(pt->ints[pt->result->addr]);        break;
     case R_CHAR:    result = C_TO_XEN_CHAR((char)(pt->ints[pt->result->addr])); break;
-    case R_STRING:  result = C_TO_XEN_STRING(pt->strs[pt->result->addr]); break;
-    case R_BOOL:    result = C_TO_XEN_BOOLEAN(pt->ints[pt->result->addr]); break;
+    case R_STRING:  result = C_TO_XEN_STRING(pt->strs[pt->result->addr]);       break;
+    case R_BOOL:    result = C_TO_XEN_BOOLEAN(pt->ints[pt->result->addr]);      break;
+    case R_XCLM:
     case R_LIST:
     case R_PAIR:
     case R_SYMBOL:
-    case R_KEYWORD: result = pt->xens[pt->result->addr]; break;
+    case R_KEYWORD: result = pt->xens[pt->result->addr];                        break;
+    case R_CLM:     result = mus_wrap_generator(pt->clms[pt->result->addr]);    break;
     case R_VCT:
       {
 	vct *v;
@@ -10426,9 +10429,6 @@ static XEN eval_ptree_to_xen(ptree *pt)
 	result = make_vct(v->length, v->data);
 	FREE(v);
       }
-      break;
-    case R_CLM:
-      run_warn("can't wrap gen?"); 
       break;
     default:
       if (pt->result->type > R_ANY)

@@ -152,7 +152,7 @@ void reflect_play_selection_stop(void)
 static void edit_header_callback_1(GtkWidget *w, gpointer info)
 {
   snd_info *sp;
-  sp = selected_sound();
+  sp = any_selected_sound();
   if (sp) edit_header(sp);
 }
 
@@ -1430,7 +1430,7 @@ static void popup_info_callback(GtkWidget *w, gpointer info)
 {
   snd_info *sp;
       {
-      sp = selected_sound();
+      sp = any_selected_sound();
       if (sp) display_info(sp);
     }
   gtk_widget_hide(popup_menu);

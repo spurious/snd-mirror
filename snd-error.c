@@ -95,7 +95,7 @@ void snd_error(char *format, ...)
 	  {
 	    snd_info *sp;
 	    add_to_error_history(snd_error_buffer, true);
-	    sp = selected_sound();
+	    sp = any_selected_sound();
 	    ss->catch_message = snd_error_buffer;
 	    if ((direct_snd_error_call) ||
 		(ss->catch_exists == 0))

@@ -794,37 +794,6 @@ mus_any *mus_optkey_to_mus_any(XEN key, const char *caller, int n, mus_any *def)
   return(def);
 }
 
-static void *wrap_no_vcts(mus_any *ge)
-{
-  mus_xen *gn;
-  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-  gn->gen = ge;
-  gn->nvcts = 0;
-  return((void *)gn);
-}
-
-static void *wrap_one_vct(mus_any *ge)
-{
-  mus_xen *gn;
-  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-  gn->gen = ge;
-  gn->nvcts = 1;
-  gn->vcts = make_vcts(gn->nvcts);
-  gn->vcts[MUS_DATA_WRAPPER] = make_vct(mus_length(ge), mus_data(ge));
-  return((void *)gn);
-}
-
-static void *wrap_one_vct_wrapped(mus_any *ge)
-{
-  mus_xen *gn;
-  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-  gn->gen = ge;
-  gn->nvcts = 1;
-  gn->vcts = make_vcts(gn->nvcts);
-  gn->vcts[MUS_DATA_WRAPPER] = make_vct_wrapper(mus_length(ge), mus_data(ge));
-  return((void *)gn);
-}
-
 
 
 /* ---------------- generic functions ---------------- */
@@ -1159,11 +1128,7 @@ static XEN g_make_oscil(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
       phase = mus_optkey_to_float(keys[1], S_make_oscil, orig_arg[1], phase);
     }
   ge = mus_make_oscil(freq, phase);
-  if (ge) 
-    {
-      ge->core->wrapper = &wrap_no_vcts;
-      return(mus_xen_to_object((mus_xen *)wrap_no_vcts(ge)));
-    }
+  if (ge) return(mus_xen_to_object((mus_xen *)_mus_wrap_no_vcts(ge)));
   return(XEN_FALSE);
 }
 
@@ -1392,11 +1357,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
     case G_ALL_PASS: ge = mus_make_all_pass(feedback, feedforward, size, line, max_size, interp_type); break;
     }
   mus_error_set_handler(old_error_handler);
-  if (ge)
-    {
-      ge->core->wrapper = &wrap_one_vct_wrapped;
-      return(mus_xen_to_object((mus_xen *)wrap_one_vct(ge)));
-    }
+  if (ge) return(mus_xen_to_object((mus_xen *)_mus_wrap_one_vct(ge)));
   if (line) FREE(line);
   return(xen_return_first(clm_mus_error(local_error_type, local_error_msg), arglist));
 }
@@ -1592,11 +1553,7 @@ return a new " S_sum_of_cosines " generator, producing a band-limited pulse trai
   if (cosines <= 0)
     XEN_OUT_OF_RANGE_ERROR(S_make_sum_of_cosines, orig_arg[0], keys[0], "cosines ~A <= 0?");
   ge = mus_make_sum_of_cosines(cosines, freq, phase);
-  if (ge)
-    {
-      ge->core->wrapper = &wrap_no_vcts;
-      return(mus_xen_to_object((mus_xen *)wrap_no_vcts(ge)));
-    }
+  if (ge) return(mus_xen_to_object((mus_xen *)_mus_wrap_no_vcts(ge)));
   return(XEN_FALSE);
 }
 
@@ -1648,11 +1605,7 @@ return a new " S_sum_of_sines " generator."
   if (sines <= 0)
     XEN_OUT_OF_RANGE_ERROR(S_make_sum_of_sines, orig_arg[0], keys[0], "sines ~A <= 0?");
   ge = mus_make_sum_of_sines(sines, freq, phase);
-  if (ge)
-    {
-      ge->core->wrapper = &wrap_no_vcts;
-      return(mus_xen_to_object((mus_xen *)wrap_no_vcts(ge)));
-    }
+  if (ge) return(mus_xen_to_object((mus_xen *)_mus_wrap_no_vcts(ge)));
   return(XEN_FALSE);
 }
 
@@ -1818,10 +1771,9 @@ static XEN g_make_noi(bool rand_case, const char *caller, XEN arglist)
     }
   if (ge)
     {
-      ge->core->wrapper = &wrap_no_vcts; /* can't get mus_data of rand in snd-run until we implement local wrappers */
       if (distribution)
-	return(mus_xen_to_object((mus_xen *)wrap_one_vct(ge)));
-      else return(mus_xen_to_object((mus_xen *)wrap_no_vcts(ge)));
+	return(mus_xen_to_object((mus_xen *)_mus_wrap_one_vct(ge)));
+      else return(mus_xen_to_object((mus_xen *)_mus_wrap_no_vcts(ge)));
     }
   return(XEN_FALSE);
 }
@@ -2055,11 +2007,7 @@ is the same in effect as " S_make_oscil "."
   old_error_handler = mus_error_set_handler(local_mus_error); /* currently not needed (no recoverable errors from mus_make_table_lookup) */
   ge = mus_make_table_lookup(freq, phase, table, table_size, type);
   mus_error_set_handler(old_error_handler);
-  if (ge)
-    {
-      ge->core->wrapper = &wrap_one_vct_wrapped;
-      return(mus_xen_to_object((mus_xen *)wrap_one_vct(ge)));
-    }
+  if (ge) return(mus_xen_to_object((mus_xen *)_mus_wrap_one_vct(ge)));
   if (need_free) FREE(table);
   return(clm_mus_error(local_error_type, local_error_msg));
 }
@@ -2117,11 +2065,7 @@ static XEN g_make_sw(xclm_wave_t type, Float def_phase, XEN arg1, XEN arg2, XEN 
     case G_TRIANGLE_WAVE: ge = mus_make_triangle_wave(freq, base, phase); break;
     case G_PULSE_TRAIN: ge = mus_make_pulse_train(freq, base, phase); break;
     }
-  if (ge)
-    {
-      ge->core->wrapper = &wrap_no_vcts;
-      return(mus_xen_to_object((mus_xen *)wrap_no_vcts(ge)));
-    }
+  if (ge) return(mus_xen_to_object((mus_xen *)_mus_wrap_no_vcts(ge)));
   return(XEN_FALSE);
 }
 
@@ -2249,11 +2193,7 @@ return a new " S_asymmetric_fm " generator."
       ratio = mus_optkey_to_float(keys[3], S_make_asymmetric_fm, orig_arg[3], ratio);
     }
   ge = mus_make_asymmetric_fm(freq, phase, r, ratio);
-  if (ge)
-    {
-      ge->core->wrapper = &wrap_no_vcts;
-      return(mus_xen_to_object((mus_xen *)wrap_no_vcts(ge)));
-    }
+  if (ge) return(mus_xen_to_object((mus_xen *)_mus_wrap_no_vcts(ge)));
   return(XEN_FALSE);
 }
 
@@ -2310,11 +2250,7 @@ static XEN g_make_smpflt_1(xclm_filter_t choice, XEN arg1, XEN arg2, XEN arg3, X
     case G_PPOLAR: gen = mus_make_ppolar(a0, a1); break;
     default: break;
     }
-  if (gen)
-    {
-      gen->core->wrapper = &wrap_no_vcts;
-      return(mus_xen_to_object((mus_xen *)wrap_no_vcts(gen)));
-    }
+  if (gen) return(mus_xen_to_object((mus_xen *)_mus_wrap_no_vcts(gen)));
   return(XEN_FALSE);
 }
 
@@ -2381,11 +2317,7 @@ static XEN g_make_smpflt_2(xclm_filter_t choice, XEN arg1, XEN arg2, XEN arg3, X
   if (choice == G_TWO_ZERO)
     gen = mus_make_two_zero(a0, a1, a2);
   else gen = mus_make_two_pole(a0, a1, a2);
-  if (gen)
-    {
-      gen->core->wrapper = &wrap_no_vcts;
-      return(mus_xen_to_object((mus_xen *)wrap_no_vcts(gen)));
-    }
+  if (gen) return(mus_xen_to_object((mus_xen *)_mus_wrap_no_vcts(gen)));
   return(XEN_FALSE);
 }
 
@@ -2495,11 +2427,7 @@ control."
       gain = mus_optkey_to_float(keys[2], S_make_formant, orig_arg[2], gain);
     }
   ge = mus_make_formant(radius, freq, gain);
-  if (ge)
-    {
-      ge->core->wrapper = &wrap_no_vcts;
-      return(mus_xen_to_object((mus_xen *)wrap_no_vcts(ge)));
-    }
+  if (ge) return(mus_xen_to_object((mus_xen *)_mus_wrap_no_vcts(ge)));
   return(XEN_FALSE);
 }
 
@@ -2580,8 +2508,7 @@ with chans samples, each sample set from the trailing arguments (defaulting to 0
 		XEN_WRONG_TYPE_ARG_ERROR(S_make_frame, i, XEN_CAR(lst), "not a number?");
 	      }
 	}
-      ge->core->wrapper = &wrap_one_vct_wrapped;
-      return(mus_xen_to_object((mus_xen *)wrap_one_vct_wrapped(ge)));
+      return(mus_xen_to_object((mus_xen *)_mus_wrap_one_vct_wrapped(ge)));
     }
   return(xen_return_first(XEN_FALSE, arglist));
 }
@@ -2596,8 +2523,12 @@ static XEN g_wrap_frame(mus_any *val, bool dealloc)
 {
   mus_xen *gn;
   gn = (mus_xen *)mus_wrapper(val);
-  gn->dont_free_gen = dealloc;           /* free_mus_xen checks this before deallocating */
-  return(mus_xen_to_object(gn));
+  if (gn)
+    {
+      gn->dont_free_gen = dealloc;           /* free_mus_xen checks this before deallocating */
+      return(mus_xen_to_object(gn));
+    }
+  return(XEN_FALSE);
 }
 
 static XEN g_frame_add(XEN uf1, XEN uf2, XEN ures) /* optional res */
@@ -2825,8 +2756,7 @@ giving | (a*.5 + b*.125) (a*.25 + b*1.0) |"
 		}
 	    }
 	}
-      ge->core->wrapper = &wrap_no_vcts; /* it's Float** rather than Float*, so what to wrap? */
-      return(mus_xen_to_object((mus_xen *)wrap_no_vcts(ge)));
+      return(mus_xen_to_object((mus_xen *)_mus_wrap_no_vcts(ge)));
     }
   return(xen_return_first(XEN_FALSE, arglist));
 }
@@ -2873,11 +2803,7 @@ processing, normally involving overlap-adds."
   old_error_handler = mus_error_set_handler(local_mus_error); /* currently not needed */
   ge = mus_make_buffer(buf, siz, filltime);
   mus_error_set_handler(old_error_handler);
-  if (ge)
-    {
-      ge->core->wrapper = &wrap_one_vct_wrapped;
-      return(mus_xen_to_object((mus_xen *)wrap_one_vct(ge)));
-    }
+  if (ge) return(mus_xen_to_object((mus_xen *)_mus_wrap_one_vct(ge)));
   FREE(buf);
   return(clm_mus_error(local_error_type, local_error_msg));
 }
@@ -2999,11 +2925,7 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
   old_error_handler = mus_error_set_handler(local_mus_error); /* currently not needed */
   ge = mus_make_wave_train(freq, phase, wave, wsize, type);
   mus_error_set_handler(old_error_handler);
-  if (ge)
-    {
-      ge->core->wrapper = &wrap_one_vct_wrapped;
-      return(mus_xen_to_object((mus_xen *)wrap_one_vct(ge)));
-    }
+  if (ge) return(mus_xen_to_object((mus_xen *)_mus_wrap_one_vct(ge)));
   if (need_free) FREE(wave);
   return(clm_mus_error(local_error_type, local_error_msg));
 }
@@ -3117,11 +3039,7 @@ is the same in effect as make-oscil"
     }
   if (partials_allocated) {FREE(partials); partials = NULL;}
   ge = mus_make_waveshape(freq, 0.0, wave, wsize);
-  if (ge)
-    {
-      ge->core->wrapper = &wrap_one_vct_wrapped;
-      return(mus_xen_to_object((mus_xen *)wrap_one_vct(ge)));
-    }
+  if (ge) return(mus_xen_to_object((mus_xen *)_mus_wrap_one_vct(ge)));
   return(XEN_FALSE);
 }
 
@@ -3250,11 +3168,7 @@ return a new sine summation synthesis generator."
       ratio = mus_optkey_to_float(keys[4], S_make_sine_summation, orig_arg[4], ratio);
     }
   ge = mus_make_sine_summation(freq, phase, n, a, ratio);
-  if (ge)
-    {
-      ge->core->wrapper = &wrap_no_vcts;
-      return(mus_xen_to_object((mus_xen *)wrap_no_vcts(ge)));
-    }
+  if (ge) return(mus_xen_to_object((mus_xen *)_mus_wrap_no_vcts(ge)));
   return(XEN_FALSE);
 }
 
@@ -3324,21 +3238,6 @@ static XEN g_iir_filter(XEN obj, XEN input)
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_iir_filter_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_iir_filter, "an IIR filter");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(input), input, XEN_ARG_2, S_iir_filter, "a number");
   return(C_TO_XEN_DOUBLE(mus_iir_filter(XEN_TO_MUS_ANY(obj), XEN_TO_C_DOUBLE(input))));
-}
-
-static void *wrap_filter(mus_any *gen)
-{
-  mus_xen *gn;
-  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-  gn->gen = gen;
-  gn->nvcts = 3;
-  gn->vcts = make_vcts(gn->nvcts);
-  gn->vcts[G_FILTER_STATE] = make_vct_wrapper(mus_order(gen), mus_data(gen));
-  if (!mus_iir_filter_p(gen))
-    gn->vcts[G_FILTER_XCOEFFS] = make_vct_wrapper(mus_order(gen), mus_xcoeffs(gen));
-  if (!mus_fir_filter_p(gen))
-    gn->vcts[G_FILTER_YCOEFFS] = make_vct_wrapper(mus_order(gen), mus_ycoeffs(gen));
-  return((void *)gn);
 }
 
 static XEN g_make_filter_1(xclm_fir_t choice, XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
@@ -3433,7 +3332,6 @@ static XEN g_make_filter_1(xclm_fir_t choice, XEN arg1, XEN arg2, XEN arg3, XEN 
     }
   if (fgen)
     {
-      fgen->core->wrapper = &wrap_filter;
       gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
       gn->gen = fgen;                                    /* delay gn allocation since make_filter can throw an error */
       gn->nvcts = 3;
@@ -3585,11 +3483,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
   ge = mus_make_env(brkpts, npts, scaler, offset, base, duration, start, end, odata);
   mus_error_set_handler(old_error_handler);
   FREE(brkpts);
-  if (ge)
-    {
-      ge->core->wrapper = &wrap_one_vct_wrapped;
-      return(mus_xen_to_object((mus_xen *)wrap_one_vct(ge)));
-    }
+  if (ge) return(mus_xen_to_object((mus_xen *)_mus_wrap_one_vct(ge)));
   FREE(odata);
   return(clm_mus_error(local_error_type, local_error_msg));
 }
@@ -3729,11 +3623,7 @@ static XEN g_make_file_to_sample(XEN name)
 			 name,
 			 C_TO_XEN_STRING(strerror(errno))));
   ge = mus_make_file_to_sample(XEN_TO_C_STRING(name));
-  if (ge)
-    {
-      ge->core->wrapper = &wrap_no_vcts;
-      return(xen_return_first(mus_xen_to_object((mus_xen *)wrap_no_vcts(ge)), name));
-    }
+  if (ge) return(xen_return_first(mus_xen_to_object((mus_xen *)_mus_wrap_no_vcts(ge)), name));
   return(XEN_FALSE);
 }
 
@@ -3781,11 +3671,7 @@ should be sndlib identifiers:\n\
 							  df,
 							  ht,
 							  (XEN_STRING_P(comment)) ? XEN_TO_C_STRING(comment) : NULL);
-	      if (rgen)
-		{
-		  rgen->core->wrapper = &wrap_no_vcts;
-		  return(xen_return_first(mus_xen_to_object((mus_xen *)wrap_no_vcts(rgen)), name));
-		}
+	      if (rgen) return(xen_return_first(mus_xen_to_object((mus_xen *)_mus_wrap_no_vcts(rgen)), name));
 	    }
 	  else XEN_OUT_OF_RANGE_ERROR(S_make_sample_to_file, 2, chans, "chans ~A <= 0?");
 	}
@@ -3803,11 +3689,7 @@ that reopens an existing sound file 'filename' ready for output via " S_sample_t
   mus_any *rgen = NULL;
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_continue_sample_to_file, "a string");
   rgen = mus_continue_sample_to_file(XEN_TO_C_STRING(name));
-  if (rgen)
-    {
-      rgen->core->wrapper = &wrap_no_vcts;
-      return(xen_return_first(mus_xen_to_object((mus_xen *)wrap_no_vcts(rgen)), name));
-    }
+  if (rgen) return(xen_return_first(mus_xen_to_object((mus_xen *)_mus_wrap_no_vcts(rgen)), name));
   return(XEN_FALSE);
 }
 
@@ -3838,11 +3720,7 @@ static XEN g_make_file_to_frame(XEN name)
 			 name,
 			 C_TO_XEN_STRING(strerror(errno))));
   ge = mus_make_file_to_frame(XEN_TO_C_STRING(name));
-  if (ge)
-    {
-      ge->core->wrapper = &wrap_no_vcts;
-      return(xen_return_first(mus_xen_to_object((mus_xen *)wrap_no_vcts(ge)), name));
-    }
+  if (ge) return(xen_return_first(mus_xen_to_object((mus_xen *)_mus_wrap_no_vcts(ge)), name));
   return(XEN_FALSE);
 }
 
@@ -3878,11 +3756,7 @@ should be sndlib identifiers:\n\
 				XEN_TO_C_INT(chans),
 				XEN_TO_C_INT(out_format),
 				XEN_TO_C_INT(out_type));
-  if (fgen)
-    {
-      fgen->core->wrapper = &wrap_no_vcts;
-      return(xen_return_first(mus_xen_to_object((mus_xen *)wrap_no_vcts(fgen)), name));
-    }
+  if (fgen) return(xen_return_first(mus_xen_to_object((mus_xen *)_mus_wrap_no_vcts(fgen)), name));
   return(XEN_FALSE);
 }
 
@@ -4049,11 +3923,7 @@ return a new readin (file input) generator reading the sound file 'file' startin
   if (channel >= mus_sound_chans(file))
     XEN_OUT_OF_RANGE_ERROR(S_make_readin, orig_arg[1], keys[1], "channel ~A > available chans?");
   ge = mus_make_readin(file, channel, start, direction);
-  if (ge)
-    {
-      ge->core->wrapper = &wrap_no_vcts;
-      return(mus_xen_to_object((mus_xen *)wrap_no_vcts(ge)));
-    }
+  if (ge) return(mus_xen_to_object((mus_xen *)_mus_wrap_no_vcts(ge)));
   return(XEN_FALSE);
 }
 
@@ -4250,7 +4120,6 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
   ge = mus_make_locsig(degree, distance, reverb, out_chans, outp, revp, type);
   if (ge)
     {
-      ge->core->wrapper = &wrap_no_vcts;
       gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
       if (vlen > 0)
 	{
@@ -4348,16 +4217,6 @@ included an 'input' argument, input-function is ignored."
   return(C_TO_XEN_DOUBLE(mus_src(XEN_TO_MUS_ANY(obj), pm1, 0)));
 }
 
-static void *wrap_src(mus_any *ge)
-{
-  mus_xen *gn;
-  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-  gn->nvcts = MAX_VCTS;
-  gn->vcts = make_vcts(gn->nvcts);
-  gn->gen = ge;
-  return((void *)gn);
-}
-
 static XEN g_make_src(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
 {
   #define H_make_src "(" S_make_src " :input (:srate 1.0) (:width 10)): \
@@ -4398,7 +4257,6 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
   mus_error_set_handler(old_error_handler);
   if (ge)
     {
-      ge->core->wrapper = &wrap_src;
       gn->gen = ge;
       return(mus_xen_to_object(gn));
     }
@@ -4453,16 +4311,6 @@ static int grnedit (void *ptr)
   return(XEN_TO_C_INT(XEN_CALL_1_NO_CATCH(gn->vcts[MUS_EDIT_FUNCTION], 
 					  gn->vcts[MUS_SELF_WRAPPER],
 					  "granulate edit function")));
-}
-
-static void *wrap_granulate(mus_any *ge)
-{
-  mus_xen *gn;
-  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-  gn->nvcts = MAX_VCTS;
-  gn->vcts = make_vcts(gn->nvcts);
-  gn->gen = ge;
-  return(gn);
 }
 
 static XEN g_make_granulate(XEN arglist)
@@ -4534,7 +4382,6 @@ The edit function, if any, should return the length in samples of the grain, or 
   mus_error_set_handler(old_error_handler);
   if (ge)
     {
-      ge->core->wrapper = &wrap_granulate;
       gn->nvcts = MAX_VCTS;
       gn->vcts = make_vcts(gn->nvcts);
       if (XEN_BOUND_P(edit_obj)) gn->vcts[MUS_DATA_WRAPPER] = make_vct_wrapper(mus_granulate_grain_max_length(ge), mus_data(ge));
@@ -4625,7 +4472,6 @@ return a new convolution generator which convolves its input with the impulse re
   mus_error_set_handler(old_error_handler);
   if (ge)
     {
-      ge->core->wrapper = &wrap_no_vcts; /* no local vcts... */
       gn->nvcts = MAX_VCTS;
       gn->vcts = make_vcts(gn->nvcts);
       gn->vcts[MUS_INPUT_FUNCTION] = in_obj;
@@ -4798,7 +4644,6 @@ is run.  'synthesize' is a function of 1 arg, the generator; it is called to get
   mus_error_set_handler(old_error_handler);
   if (ge)
     {
-      ge->core->wrapper = &wrap_no_vcts; /* the "vcts" here are actually functions, so this should be safe */
       gn->nvcts = MAX_VCTS;
       gn->vcts = make_vcts(gn->nvcts);
       gn->vcts[MUS_INPUT_FUNCTION] = in_obj;
@@ -5072,11 +4917,7 @@ return a new " S_ssb_am " generator."
   if (order <= 0)
     XEN_OUT_OF_RANGE_ERROR(S_make_ssb_am, orig_arg[1], keys[1], "order ~A <= 0?");
   ge = mus_make_ssb_am(freq, order);
-  if (ge)
-    {
-      ge->core->wrapper = &wrap_no_vcts;
-      return(mus_xen_to_object((mus_xen *)wrap_no_vcts(ge)));
-    }
+  if (ge) return(mus_xen_to_object((mus_xen *)_mus_wrap_no_vcts(ge)));
   return(XEN_FALSE);
 }
 

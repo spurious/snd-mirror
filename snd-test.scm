@@ -23,7 +23,7 @@
 ;;; test 20: transforms                          [29966]
 ;;; test 21: new stuff                           [31022]
 ;;; test 22: run                                 [31766]
-;;; test 23: with-sound                          [36660]
+;;; test 23: with-sound                          [36773]
 ;;; test 24: Snd user-interface                  [37408]
 ;;; test 25: X/Xt/Xm/Xpm                         [40577]
 ;;; test 26: Glib/gdk/gtk                        [45096]
@@ -35875,8 +35875,7 @@ EDITS: 2
 		       (display "---------------------------------------------------------------") (display #\newline)
 		       (display 3) (display .14) (display "15") (display #\1) (display #f) 
 		       (display osc) (display vi) (display vf) (display v) (display vv) (display vc) (display sm)
-		       (display mxr) (display trkr) (display sd)
-		       (display vi1) (display vv1) (display vc1)
+		       (display mxr) (display trkr) (display sd) (display vi1) (display vv1) (display vc1)
 		       (snd-print "snd-print test...")
 		       (snd-warning "snd-warning test...")
 		       (report-in-minibuffer "report-in-minibuffer test..." ind)
@@ -36750,6 +36749,7 @@ EDITS: 2
 	(if (not (= val 1)) (snd-display ";run b30 ~A" val)))
       (let ((val (run-eval '(begin (case 0 ((0) -1) ((1) 0) (else -2)) 2))))
 	(if (not (= val 2)) (snd-display ";run b31 ~A" val)))
+
       (let ((val (run (lambda () (let ((a :ho)) (define (hi b) (declare (b keyword)) b) (hi a))))))
 	(if (not (equal? val :ho)) (snd-display ";run b32 ~A" val)))
       (let ((val (run (lambda () (let ((a 'ho)) (define (hi b) (declare (b symbol)) b) (hi a))))))
@@ -36758,6 +36758,14 @@ EDITS: 2
 	(if (not (equal? val "ho")) (snd-display ";run b34 ~A" val)))
       (let ((val (run (lambda () (let ((a unique-int-vector)) (define (hi b) (declare (b int-vector)) b) (vector-ref (hi a) 0))))))
 	(if (not (= val 1)) (snd-display ";run b35 ~A" val)))
+      (set! unique-generator (make-delay 3))
+      (let ((val (run-eval '(vct-ref (mus-data unique-generator) 0)))) ; if oscil here, segfault
+	(if (fneq val 0.0) (snd-display ";run b36 ~A" val)))
+      
+      (let ((val (run-eval '(make-oscil 440.0))))
+	(if (not (oscil? val)) (snd-display ";run -> gen: ~A" val)))
+      (let ((val (run-eval '(let ((a 1)) (if (odd? a) (make-oscil))))))
+	(if (not (oscil? val)) (snd-display ";run if -> gen: ~A" val)))
 
       (run-hook after-test-hook 22)
       ))
@@ -36833,14 +36841,22 @@ EDITS: 2
       (set! (mus-srate) 22050)
       (set! (default-output-srate) 22050)
       
-      (with-sound (:srate 22050) (fm-violin 0 .1 440 .1))
-      (let ((ind (find-sound "test.snd")))
-	(if (not ind) (snd-display ";with-sound: ~A" (map file-name (sounds))))
-	(let ((mx (maxamp)))
-	  (if (fneq mx .1) (snd-display ";with-sound max: ~A" (maxamp)))
-	  (if (not (= (srate ind) 22050)) (snd-display ";with-sound srate: ~A (~A, ~A)" 
-						       (srate ind) (mus-srate) (mus-sound-srate "test.snd")))
-	  (if (not (= (frames ind) 2205)) (snd-display ";with-sound frames: ~A" (frames ind)))))
+      (if (defined? 'enable-play) (enable-play))
+      (let ((old-opt (optimization)))
+	(do ((opt 0 (1+ opt)))
+	    ((> opt max-optimization))
+	  (set! (optimization) opt)
+	  (with-sound (:srate 22050) (fm-violin 0 .1 (* 110 (1+ opt)) .1))
+	  (let ((ind (find-sound "test.snd")))
+	    (if (not ind) (snd-display ";with-sound: ~A" (map file-name (sounds))))
+	    (let ((mx (maxamp)))
+	      (if (fneq mx .1) (snd-display ";with-sound max: ~A" (maxamp)))
+	      (if (not (= (srate ind) 22050)) (snd-display ";with-sound srate: ~A (~A, ~A)" 
+							   (srate ind) (mus-srate) (mus-sound-srate "test.snd")))
+	      (if (not (= (frames ind) 2205)) (snd-display ";with-sound frames: ~A" (frames ind))))
+	    (play-and-wait ind)))
+	(set! (optimization) old-opt))
+      (if (defined? 'disable-play) (disable-play))
       
       (with-sound (:continue-old-file #t) (fm-violin .2 .1 440 .25))
       (let ((ind (find-sound "test.snd")))
@@ -36878,7 +36894,13 @@ EDITS: 2
 	(if (not (= (frames ind) (+ 22050 2205))) (snd-display ";with-sound reverbed frames (2): ~A" (frames ind)))
 	(close-sound ind))
       
-      (with-sound (:srate 22050 :output "test1.snd" :reverb jc-reverb) (fm-violin 0 .1 440 .1))
+      (let ((old-opt (optimization)))
+	(do ((opt 0 (1+ opt)))
+	    ((> opt max-optimization))
+	  (set! (optimization) opt)
+	  (with-sound (:srate 22050 :output "test1.snd" :reverb jc-reverb) (fm-violin 0 .1 440 .1))
+	(set! (optimization) old-opt)))
+
       (let ((ind (find-sound "test1.snd")))
 	(if (not ind) (snd-display ";with-sound (3): ~A" (map file-name (sounds))))
 	(if (not (= (frames ind) (+ 22050 2205))) (snd-display ";with-sound reverbed frames (3): ~A" (frames ind)))
@@ -37119,7 +37141,7 @@ EDITS: 2
       (let ((ind (find-sound "test.snd")))
 	(play-and-wait ind)
 	(close-sound ind))
-      
+
       (with-sound (:srate 22050) 
 		  (fm-violin 0 .01 440 .1 :noise-amount 0.0)
 		  (pluck 0.05 .01 330 .1 .95 .95)

@@ -615,6 +615,12 @@ void mus_clear_sinc_tables(void);
 void *mus_environ(mus_any *rd);
 void *mus_wrapper(mus_any *gen);
 
+/* for internal use */
+void *_mus_wrap_no_vcts(mus_any *ge);
+void *_mus_wrap_one_vct(mus_any *ge);
+void *_mus_wrap_one_vct_wrapped(mus_any *ge);
+/* end internal stuff */
+
 #ifndef CLM_DISABLE_DEPRECATED
 /* backwards compatibility */
 #define mus_radians2hz(Radians) mus_radians_to_hz(Radians)

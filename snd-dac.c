@@ -2538,9 +2538,11 @@ static XEN g_set_dac_size(XEN val)
   int len;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_dac_size, "a number");
   len = XEN_TO_C_INT_OR_ELSE(val, 0);
+#if 0
 #if MAC_OSX
   if (len > 256) len = 256;
   /* actual built-in buffer seems to be 4096, and with auto-conversions, that means 512 or greater can overflow. */
+#endif
 #endif
   if (len > 0)
     set_dac_size(len);

@@ -154,7 +154,7 @@ void reflect_play_selection_stop(void)
 static void edit_header_callback_1(Widget w, XtPointer info, XtPointer context)
 {
   snd_info *sp;
-  sp = selected_sound();
+  sp = any_selected_sound();
   if (sp) edit_header(sp);
 }
 
@@ -897,7 +897,7 @@ static void popup_equalize_panes_callback(Widget w, XtPointer info, XtPointer co
 static void popup_info_callback(Widget w, XtPointer info, XtPointer context) 
 {
   snd_info *sp;
-  sp = selected_sound();
+  sp = any_selected_sound();
   if (sp) display_info(sp);
 }
 

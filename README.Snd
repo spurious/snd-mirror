@@ -559,6 +559,24 @@ The dac-size variable seems to matter a lot in OSX.  If you're
 getting distorted playback, try various powers of 2.  It defaults
 to 64.
 
+Rick Taube mentions this for tracing the load process:
+
+  [...]you can set the DYLD_PRINT_LIBRARIES shell variable:
+
+        DYLD_PRINT_LIBRARIES=1
+        export DYLD_PRINT_LIBRARIES
+
+  some other useful dylib variables:
+
+        DYLD_FRAMEWORK_PATH
+        DYLD_FALLBACK_FRAMEWORK_PATH
+        DYLD_LIBRARY_PATH
+        DYLD_FALLBACK_LIBRARY_PATH
+
+Also, you can check the "about Snd" option under the Help menu
+to find out where Guile is finding its boot files.
+
+
 
 ---- Motif: ----
 If you installed OpenMotif, then upgraded to RedHat 7.2, Redhat
