@@ -1081,7 +1081,7 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 				  startup_filename = copy_string(argname);
 				  if (dont_start(startup_filename)) snd_exit(1);
 				}
-			      snd_open_file_unselected(argname, false);
+			      snd_open_file_unselected(argname);
 			    }
 			}
 		    }

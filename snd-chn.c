@@ -3145,9 +3145,6 @@ static void display_channel_data_with_size (chan_info *cp,
 	  cp->selection_visible = false;
 	  points = make_graph(cp);
 	  if (points == 0) return;
-	  if ((cp->have_mixes) &&
-	      (cp->mix_dragging)) 
-	    mix_save_graph(cp_to_mix_context(cp), points);
 	  if (cp->cursor_on) draw_graph_cursor(cp);
 	}
     }

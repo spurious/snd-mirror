@@ -1049,7 +1049,7 @@ static void make_save_as_dialog(char *sound_name, int header_type, int format_ty
       xmstr1 = XmStringCreate(_("Save"), XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n], XmNokLabelString, xmstr1); n++;
       file_string = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-      mus_snprintf(file_string, PRINT_BUFFER_SIZE, _("saving %s"), sound_name);
+      mus_snprintf(file_string, PRINT_BUFFER_SIZE, _("save %s"), sound_name);
       xmstr2 = XmStringCreate(file_string, XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n], XmNdialogTitle, xmstr2); n++;
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
@@ -1086,7 +1086,7 @@ static void make_save_as_dialog(char *sound_name, int header_type, int format_ty
     {
       XmString xmstr2;
       file_string = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-      mus_snprintf(file_string, PRINT_BUFFER_SIZE, _("saving %s"), sound_name);
+      mus_snprintf(file_string, PRINT_BUFFER_SIZE, _("save %s"), sound_name);
       xmstr2 = XmStringCreate(file_string, XmFONTLIST_DEFAULT_TAG);
       XtVaSetValues(save_as_dialog, XmNdialogTitle, xmstr2, NULL);
       XmStringFree(xmstr2);

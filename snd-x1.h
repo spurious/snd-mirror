@@ -384,7 +384,7 @@ int control_panel_height(snd_info *sp);
 Widget w_snd_pane(snd_info *sp);
 Widget w_snd_name(snd_info *sp);
 Widget unite_button(snd_info *sp);
-void set_control_panel_play_button(snd_info *sp, bool val);
+void set_control_panel_play_button(snd_info *sp);
 Widget filter_graph(snd_info *sp);
 void make_minibuffer_label(snd_info *sp, char *str);
 void goto_minibuffer(snd_info *sp);

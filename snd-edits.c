@@ -6436,7 +6436,6 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
   sf->initial_samp = samp;
   sf->cp = cp;
   sf->fscaler = MUS_FIX_TO_FLOAT;
-  sf->rscaler = (Float)(MUS_FLOAT_TO_FIX);
   sf->direction = direction;
   sf->current_state = ed;
   sf->edit_ctr = edit_position;
@@ -6462,7 +6461,6 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
 	  indx = READER_LOCAL_POSITION(sf) + sf->frag_pos;
 	  ind1 = READER_LOCAL_END(sf);
 	  sf->fscaler = MUS_FIX_TO_FLOAT * READER_SCALER(sf);
-	  sf->rscaler = MUS_FLOAT_TO_FIX * READER_SCALER(sf);
 	  if (ZERO_OP(READER_TYPE(sf)))
 	    {
 	      sf->current_sound = NULL;
@@ -6575,7 +6573,6 @@ static void previous_sound_1 (snd_fd *sf)
       ind0 = READER_LOCAL_POSITION(sf);
       ind1 = READER_LOCAL_END(sf);
       sf->fscaler = MUS_FIX_TO_FLOAT * READER_SCALER(sf);
-      sf->rscaler = MUS_FLOAT_TO_FIX * READER_SCALER(sf);
       if (ZERO_OP(READER_TYPE(sf)))
 	{
 	  sf->current_sound = NULL;
@@ -6670,7 +6667,6 @@ static void next_sound_1(snd_fd *sf)
       ind0 = READER_LOCAL_POSITION(sf);
       ind1 = READER_LOCAL_END(sf);
       sf->fscaler = MUS_FIX_TO_FLOAT * READER_SCALER(sf);
-      sf->rscaler = MUS_FLOAT_TO_FIX * READER_SCALER(sf);
       if (ZERO_OP(READER_TYPE(sf)))
 	{
 	  sf->current_sound = NULL;
@@ -7068,7 +7064,7 @@ void save_edits(snd_info *sp, void *ptr)
     report_in_minibuffer_and_save(sp, _("can't write %s (it is read-only)"), sp->short_filename);
 }
 
-void revert_edits(chan_info *cp, void *ptr)
+void revert_edits(chan_info *cp)
 {
   int old_ctr;
   if (cp->edit_ctr == 0) return;

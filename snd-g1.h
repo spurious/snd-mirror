@@ -404,7 +404,7 @@ GtkWidget *w_snd_pane(snd_info *sp);
 GtkWidget *w_snd_pane_box(snd_info *sp);
 GtkWidget *w_snd_name(snd_info *sp);
 GtkWidget *unite_button(snd_info *sp);
-void set_control_panel_play_button(snd_info *sp, bool val);
+void set_control_panel_play_button(snd_info *sp);
 GtkWidget *filter_graph(snd_info *sp);
 void snd_file_lock_icon(snd_info *sp, bool on);
 void snd_file_bomb_icon(snd_info *sp, bool on);

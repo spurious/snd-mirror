@@ -805,7 +805,7 @@ static snd_info *snd_open_file_1 (const char *filename, bool select, bool read_o
 }
 
 snd_info *snd_open_file(const char *filename, bool read_only) {return(snd_open_file_1(filename, true, read_only));}
-snd_info *snd_open_file_unselected(const char *filename, bool read_only) {return(snd_open_file_1(filename, false, read_only));}
+snd_info *snd_open_file_unselected(const char *filename) {return(snd_open_file_1(filename, false, false));}
 
 void snd_close_file(snd_info *sp)
 {

@@ -3096,7 +3096,7 @@ static XEN g_revert_sound(XEN index)
     return(snd_no_such_sound_error(S_revert_sound, index));
   for (i = 0; i < sp->nchans; i++) 
     {
-      revert_edits(sp->chans[i], NULL); 
+      revert_edits(sp->chans[i]); 
       update_graph(sp->chans[i]);
     }
   reflect_file_revert_in_label(sp);

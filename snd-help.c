@@ -835,35 +835,35 @@ static void show_key_help(int key, int state, bool cx, char *help)
     }
 }
 
-static bool find_unbuckified_keys(int key, int state, bool cx, XEN func, char *origin)
+static bool find_unbuckified_keys(int key, int state, bool cx, XEN func)
 {
   if ((key > 256) && (state == 0) && (!cx) && (XEN_BOUND_P(func)))
     show_key_help(key, state, cx, key_binding_description(key, state, cx));
   return(false);
 }
 
-static bool find_buckified_keys(int key, int state, bool cx, XEN func, char *origin)
+static bool find_buckified_keys(int key, int state, bool cx, XEN func)
 {
   if ((key > 256) && (state == snd_ControlMask) && (!cx) && (XEN_BOUND_P(func)))
     show_key_help(key, state, cx, key_binding_description(key, state, cx));
   return(false);
 }
 
-static bool find_unbuckified_cx_keys(int key, int state, bool cx, XEN func, char *origin)
+static bool find_unbuckified_cx_keys(int key, int state, bool cx, XEN func)
 {
   if ((key > 256) && (state == 0) && (cx) && (XEN_BOUND_P(func)))
     show_key_help(key, state, cx, key_binding_description(key, state, cx));
   return(false);
 }
 
-static bool find_buckified_cx_keys(int key, int state, bool cx, XEN func, char *origin)
+static bool find_buckified_cx_keys(int key, int state, bool cx, XEN func)
 {
   if ((key > 256) && (state == snd_ControlMask) && (cx) && (XEN_BOUND_P(func)))
     show_key_help(key, state, cx, key_binding_description(key, state, cx));
   return(false);
 }
 
-static bool find_leftover_keys(int key, int state, bool cx, XEN func, char *origin)
+static bool find_leftover_keys(int key, int state, bool cx, XEN func)
 {
   if ((key > 256) && (state & snd_MetaMask))
     show_key_help(key, state, cx, key_binding_description(key, state, cx));

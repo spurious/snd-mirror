@@ -288,7 +288,7 @@ void revert_file_from_menu(void)
     {
       int i;
       for (i = 0; i < sp->nchans; i++) 
-	revert_edits(sp->chans[i], NULL);
+	revert_edits(sp->chans[i]);
       reflect_file_revert_in_label(sp);
       reflect_file_revert_in_menu();
     }

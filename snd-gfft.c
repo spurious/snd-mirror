@@ -671,7 +671,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       set_dialog_widget(TRANSFORM_DIALOG, transform_dialog);
     }
   else raise_dialog(transform_dialog);
-  gtk_widget_show(transform_dialog);
+  if (managed) gtk_widget_show(transform_dialog);
 
   if (need_callback)
     {

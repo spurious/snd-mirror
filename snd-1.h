@@ -98,7 +98,7 @@ typedef struct snd_fd {
   off_t initial_samp;
   struct chan_info *cp;
   struct snd_info *local_sp;
-  Float fscaler, rscaler;
+  Float fscaler;
   int iscaler;
   off_t frag_pos;
   void *ptree, *ptree2, *ptree3;
@@ -237,7 +237,6 @@ typedef struct chan_info {
   printing_t printing;
   fft_change_t fft_changed;
   Float gsy, gzy;
-  void *mix_dragging;
   int height;
   bool have_mixes;
   off_t original_cursor, original_left_sample, original_window_size;   /* for cursor reset after cursor-moving play */
@@ -812,7 +811,7 @@ void redo_edit(chan_info *cp, int count);
 int save_channel_edits(chan_info *cp, char *ofile, int pos);
 void save_edits(snd_info *sp, void *ptr);
 int save_edits_without_display(snd_info *sp, char *new_name, int type, int format, int srate, char *comment, int pos);
-void revert_edits(chan_info *cp, void *ptr);
+void revert_edits(chan_info *cp);
 off_t current_location(snd_fd *sf);
 void g_init_edits(void);
 void set_ed_maxamp(chan_info *cp, int edpos, Float val);
@@ -1251,7 +1250,7 @@ void init_sound_file_extensions(void);
 dir *find_sound_files_in_dir (const char *name);
 dir *filter_sound_files(dir *dp, char *pattern);
 snd_info *snd_open_file (const char *filename, bool read_only);
-snd_info *snd_open_file_unselected (const char *filename, bool read_only);
+snd_info *snd_open_file_unselected (const char *filename);
 void snd_close_file(snd_info *sp);
 int copy_file(const char *oldname, const char *newname);
 int move_file(const char *oldfile, const char *newfile);
@@ -1347,7 +1346,6 @@ void g_init_listener(void);
 /* -------- snd-mix.c -------- */
 
 disk_space_t disk_space_p(snd_info *sp, off_t bytes, off_t other_bytes, char *filename);
-mix_context *cp_to_mix_context(chan_info *cp);
 mix_context *make_mix_context(chan_info *cp);
 mix_context *free_mix_context(mix_context *ms);
 void free_mix_list(chan_info *cp);
@@ -1511,7 +1509,7 @@ void clear_minibuffer_prompt(snd_info *sp);
 void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta);
 char *key_binding_description(int key, int state, bool cx_extended);
 char *make_key_name(char *buf, int buf_size, int key, int state, bool extended);
-bool map_over_key_bindings(bool (*func)(int, int, bool, XEN, char *));
+bool map_over_key_bindings(bool (*func)(int, int, bool, XEN));
 void keyboard_command (chan_info *cp, int keysym, int state);
 void control_g(snd_info *sp);
 void g_init_kbd(void);

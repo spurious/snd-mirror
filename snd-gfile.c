@@ -813,11 +813,13 @@ static gint save_as_delete_callback(GtkWidget *w, GdkEvent *event, gpointer cont
 static void make_save_as_dialog(char *sound_name, int header_type, int format_type)
 {
   /* save old as new, close old, open new */
+  char *file_string;
+  file_string = mus_format(_("save %s"), sound_name);
   if (!save_as_dialog)
     {
       GtkWidget *fbox;
 #if HAVE_GFCDN
-      save_as_dialog = snd_filer_new(_("save as:"), true,
+      save_as_dialog = snd_filer_new(file_string, true,
 				     (GtkSignalFunc)save_as_delete_callback,
 				     save_as_ok_callback,
 				     save_as_cancel_callback,
@@ -827,7 +829,7 @@ static void make_save_as_dialog(char *sound_name, int header_type, int format_ty
       save_as_file_data = make_file_data_panel(fbox, "data-form", false, header_type, format_type, false, false, false);
       gtk_file_chooser_set_preview_widget_active(GTK_FILE_CHOOSER(save_as_dialog), true);
 #else
-      save_as_dialog = snd_filer_new(_("save as:"), true,
+      save_as_dialog = snd_filer_new(file_string, true,
 				     (GtkSignalFunc)save_as_delete_callback,
 				     (GtkSignalFunc)save_as_ok_callback,
 				     (GtkSignalFunc)save_as_cancel_callback);
@@ -838,6 +840,11 @@ static void make_save_as_dialog(char *sound_name, int header_type, int format_ty
 #endif
       set_dialog_widget(FILE_SAVE_AS_DIALOG, save_as_dialog);
     }
+  else
+    {
+      gtk_window_set_title(GTK_WINDOW(save_as_dialog), file_string);
+    }
+  FREE(file_string);
 }
 
 widget_t make_file_save_as_dialog(bool managed)
@@ -1787,9 +1794,7 @@ GtkWidget *edit_header(snd_info *sp)
 					      hdr->type, hdr->format, true, false, true);
       set_dialog_widget(EDIT_HEADER_DIALOG, edit_header_dialog);
     }
-
-  str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-  mus_snprintf(str, PRINT_BUFFER_SIZE, _("Edit header of %s"), sp->short_filename);
+  str = mus_format(_("Edit header of %s"), sp->short_filename);
   gtk_window_set_title(GTK_WINDOW(edit_header_dialog), str);
   FREE(str);
 

@@ -149,14 +149,6 @@ mix_context *free_mix_context(mix_context *ms)
   return(NULL);
 }
 
-mix_context *cp_to_mix_context(chan_info *cp)
-{
-  mix_info *md;
-  md = (mix_info *)(cp->mix_dragging);
-  if (md) return(md->wg);
-  return(NULL);
-}
-
 
 /* -------- history of mix dialog settings -------- */
 

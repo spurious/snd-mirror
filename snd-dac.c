@@ -545,7 +545,7 @@ void cleanup_dac(void)
 static void reflect_play_stop (snd_info *sp) 
 {
 #if (!USE_NO_GUI)
-  set_control_panel_play_button(sp, false);
+  set_control_panel_play_button(sp);
 #endif
   if (sp->short_filename)
     set_file_browser_play_button(sp->short_filename, 0);
@@ -748,7 +748,7 @@ static int find_slot_to_play(void)
   return(old_size);
 }
 
-static dac_info *init_dp(int slot, chan_info *cp, snd_info *sp, snd_fd *fd, off_t beg, off_t end, int out_chan)
+static dac_info *init_dp(int slot, chan_info *cp, snd_info *sp, snd_fd *fd, off_t end, int out_chan)
 {
   dac_info *dp;
   dp = make_dac_info(cp, sp, fd, out_chan); /* sp == NULL if region */
@@ -900,7 +900,7 @@ static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, off_t sta
 	      cursor_moveto_without_verbosity(cp, start);
 	    }
 	}
-      return(init_dp(slot, cp, sp, sf, start, end, out_chan));
+      return(init_dp(slot, cp, sp, sf, end, out_chan));
     }
   return(NULL);
 }
@@ -913,7 +913,7 @@ static dac_info *add_region_channel_to_play_list(int region, int chan, off_t beg
   if (slot == -1) return(NULL);
   fd = init_region_read(beg, region, chan, READ_FORWARD);
   if (fd)
-    return(init_dp(slot, fd->cp, NULL, fd, beg, end, out_chan));
+    return(init_dp(slot, fd->cp, NULL, fd, end, out_chan));
   return(NULL);
 }
 

@@ -347,7 +347,7 @@ static Cessate startup_funcs(gpointer context)
 }
 
 #ifndef SND_AS_WIDGET
-static void SetupIcon(GtkWidget *shell)
+static void set_up_icon(void)
 {
   GdkPixmap *pix;
   GdkBitmap *mask;
@@ -784,7 +784,7 @@ widget \"*.reset_button\" style \"reset\"\n\
 #endif
 
 #ifndef SND_AS_WIDGET
-  SetupIcon(shell);
+  set_up_icon();
   gtk_main();
 #else
   return(shell);

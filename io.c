@@ -1522,7 +1522,6 @@ void mus_snprintf(char *buffer, int buffer_len, const char *format, ...)
 
 char *mus_format(const char *format, ...)
 {
-  /* this is primarily intended for error messages */
   /* caller should free result */
   char *buf = NULL, *rtn = NULL;
 #if HAVE_VPRINTF

@@ -225,14 +225,14 @@ static int in_user_keymap(int key, int state, bool cx_extended)
   return(-1);
 }
 
-bool map_over_key_bindings(bool (*func)(int, int, bool, XEN, char *))
+bool map_over_key_bindings(bool (*func)(int, int, bool, XEN))
 {
   int i;
   for (i = 0; i < keymap_top; i++)
     if (XEN_BOUND_P(user_keymap[i].func))
       {
 	bool val;
-	val = (*func)(user_keymap[i].key, user_keymap[i].state, user_keymap[i].cx_extended, user_keymap[i].func, user_keymap[i].origin);
+	val = (*func)(user_keymap[i].key, user_keymap[i].state, user_keymap[i].cx_extended, user_keymap[i].func);
 	if (val) return(val);
       }
   return(false);
