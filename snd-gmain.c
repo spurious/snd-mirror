@@ -1,8 +1,5 @@
 #include "snd.h"
 
-/* TODO: check the callback arg number throughout
- */
-
 #define FALLBACK_FONT "fixed"
 #define HIGHLIGHT_COLOR      "ivory1"
 #define BASIC_COLOR          "ivory2"

@@ -5420,9 +5420,9 @@ mus_any *mus_make_src(Float (*input)(void *arg, int direction), Float srate, int
       srp->environ = environ;
       srp->incr = srate;
       srp->width = wid;
-      lim = 2*wid;
+      lim = 2 * wid;
       srp->len = wid * SRC_SINC_DENSITY;
-      srp->data = (Float *)CALLOC(lim+1, sizeof(Float));
+      srp->data = (Float *)CALLOC(lim + 1, sizeof(Float));
       srp->sinc_table = init_sinc_table(wid);
       if (srp->data == NULL) 
 	mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate src data array in mus_make_src!");
@@ -5464,7 +5464,7 @@ Float mus_src(mus_any *srptr, Float sr_change, Float (*input)(void *arg, int dir
   if (srx < 0.0) srx = -srx;
   if (srx > 1.0) factor = 1.0 / srx; else factor = 1.0;
   zf = factor * (Float)SRC_SINC_DENSITY;
-  for (i = 0, x = zf*(1.0 - srp->x - srp->width); i < lim; i++, x+=zf)
+  for (i = 0, x = zf * (1.0 - srp->x - srp->width); i < lim; i++, x += zf)
     {
       /* we're moving backwards in the data array, so the sr->x field has to mimic that (hence the '1.0 - srp->x') */
       if (x < 0) k = (int)(-x); else k = (int)x;
@@ -5474,8 +5474,8 @@ Float mus_src(mus_any *srptr, Float sr_change, Float (*input)(void *arg, int dir
       /* this (non-interpolating) form requires a very large sinc table, here's the interpolating form: */
       if (x < 0.0) xx = -x; else xx = x;
       k = (int)xx;
-      frac = xx-k;
-      sum += (srp->data[i] * (srp->sinc_table[k] + (frac * (srp->sinc_table[k+1] - srp->sinc_table[k]))));
+      frac = xx - k;
+      sum += (srp->data[i] * (srp->sinc_table[k] + (frac * (srp->sinc_table[k + 1] - srp->sinc_table[k]))));
 #endif
     }
   srp->x += srx;

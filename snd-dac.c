@@ -1144,16 +1144,13 @@ static void stop_playing_sound_with_toggle(snd_info *sp, int toggle)
    */
   int i;
   if ((sp) && (play_list))
-    {
-      for (i = 0; i <= max_active_slot; i++)
+    for (i = 0; i <= max_active_slot; i++)
+      if ((play_list[i]) && 
+	  (sp == (play_list[i]->sp)))
 	{
-	  if ((play_list[i]) && (sp == (play_list[i]->sp)))
-	    {
-	      stop_playing_with_toggle(play_list[i], toggle);
-	      play_list[i] = NULL;
-	    }
+	  stop_playing_with_toggle(play_list[i], toggle);
+	  play_list[i] = NULL;
 	}
-    }
 }
 
 void stop_playing_sound(snd_info *sp) {stop_playing_sound_with_toggle(sp, TRUE);}
@@ -1163,32 +1160,24 @@ void stop_playing_all_sounds (void)
 {
   int i;
   if (play_list)
-    {
-      for (i = 0; i <= max_active_slot; i++)
-	{
-	  stop_playing(play_list[i]);
-	  play_list[i] = NULL;
-	}
-    }
+    for (i = 0; i <= max_active_slot; i++)
+      {
+	stop_playing(play_list[i]);
+	play_list[i] = NULL;
+      }
 }
 
 void stop_playing_region(int n)
 {
   int i;
   if (play_list)
-    {
-      for (i = 0; i <= max_active_slot; i++)
+    for (i = 0; i <= max_active_slot; i++)
+      if ((play_list[i]) &&
+	  (play_list[i]->region == n))
 	{
-	  if (play_list[i])
-	    {
-	      if (play_list[i]->region == n)
-		{
-		  stop_playing(play_list[i]);
-		  play_list[i] = NULL;
-		}
-	    }
+	  stop_playing(play_list[i]);
+	  play_list[i] = NULL;
 	}
-    }
 }
 
 /* -------------------------------- play (add to play-list) -------------------------------- */
@@ -1202,9 +1191,8 @@ static int find_slot_to_play(void)
       play_list = (dac_info **)CALLOC(dac_max_sounds, sizeof(dac_info *));
     }
   for (i = 0; i < dac_max_sounds; i++) 
-    {
-      if (!play_list[i]) return(i);
-    }
+    if (!play_list[i]) 
+      return(i);
   old_size = dac_max_sounds;
   dac_max_sounds += INITIAL_MAX_SOUNDS;
   play_list = (dac_info **)REALLOC(play_list, dac_max_sounds * sizeof(dac_info *));
@@ -1411,21 +1399,21 @@ void play_sound(snd_info *sp, int start, int end, int background)
 {
   /* just plays one sound (ignores possible sync) */
   int i;
-  dac_info *dp;
-  if ((background == NOT_IN_BACKGROUND) && (play_list_members > 0)) return;
+  if ((background == NOT_IN_BACKGROUND) && 
+      (play_list_members > 0)) 
+    return;
   if (!(sp->inuse)) return;
 #if HAVE_GUILE
   if (call_start_playing_hook(sp))
     {
-      reflect_play_stop(sp); /* turns off buttons */
-      if (sp->delete_me) completely_free_snd_info(sp); /* dummy snd_info struct for (play "filename") in snd-scm.c */
+      reflect_play_stop(sp);           /* turns off buttons */
+      if (sp->delete_me) 
+	completely_free_snd_info(sp);  /* dummy snd_info struct for (play "filename") in snd-scm.c */
       return;
     }
 #endif
   for (i = 0; i < sp->nchans; i++) 
-    {
-      dp = add_channel_to_play_list(sp->chans[i], sp, start, end);
-    }
+    add_channel_to_play_list(sp->chans[i], sp, start, end);
   start_dac(sp->state, SND_SRATE(sp), sp->nchans, background);
 }
 
@@ -1434,20 +1422,22 @@ void play_channels(chan_info **cps, int chans, int *starts, int *ur_ends, int ba
   /* ends can be NULL */
   int i;
   snd_info *sp = NULL;
-  dac_info *dp;
   int *ends;
-  if ((background == NOT_IN_BACKGROUND) && (play_list_members > 0)) return;
+  if ((background == NOT_IN_BACKGROUND) && 
+      (play_list_members > 0)) 
+    return;
   if (ur_ends)
     ends = ur_ends;
   else
     {
       ends = (int *)CALLOC(chans, sizeof(int));
-      for (i = 0; i < chans; i++) ends[i] = NO_END_SPECIFIED;
+      for (i = 0; i < chans; i++) 
+	ends[i] = NO_END_SPECIFIED;
     }
   for (i = 0; i < chans; i++) 
-    {
-      dp = add_channel_to_play_list(cps[i], sp = (cps[i]->sound), starts[i], ends[i]);
-    }
+    add_channel_to_play_list(cps[i], 
+			     sp = (cps[i]->sound), 
+			     starts[i], ends[i]);
   if (ur_ends == NULL) FREE(ends);
   if (sp) start_dac(sp->state, SND_SRATE(sp), chans, background);
 }

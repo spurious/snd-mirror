@@ -4918,7 +4918,7 @@ void init_mus2scm_module(void)
 /*
 void scm_init_sndlib_clm_module ()
 {
-  scm_register_module_xxx("sndlib clm", init_mus2scm_module);
+  scm_register_module_xxx("mus clm", init_mus2scm_module);
 }
 */
 #endif

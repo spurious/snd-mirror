@@ -377,16 +377,16 @@ static void listener_button_press(GtkWidget *w, GdkEventButton *ev, gpointer dat
 #if HAVE_HOOKS
 static SCM mouse_enter_listener_hook, mouse_leave_listener_hook;
 
-static gint listener_focus_callback(GtkWidget *w, GdkEventCrossing *ev)
+static gint listener_focus_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
 {
-  /* should this take a 3rd arg? it seems to work both ways! */
+  /* apparently called in gtkmarshal.c via gtk_marshal_BOOL__POINTER which passes 3 args */
   if (HOOKED(mouse_enter_listener_hook))
     g_c_run_progn_hook(mouse_enter_listener_hook,
 		       SCM_LIST1(SND_WRAP(listener_text)));
   return(0);
 }
 
-static gint listener_unfocus_callback(GtkWidget *w, GdkEventCrossing *ev)
+static gint listener_unfocus_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
 {
   if (HOOKED(mouse_leave_listener_hook))
     g_c_run_progn_hook(mouse_leave_listener_hook,

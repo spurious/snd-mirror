@@ -4560,7 +4560,7 @@
 	    (backward-graph (choose-fd))
 	    (forward-mix (choose-fd))
 	    (backward-mix (choose-fd))
-	  
+
 	    (without-errors (select-region 2))
 	    (without-errors (protect-region 2 #t))
 	    (without-errors (play-region 2 #t))
@@ -4654,7 +4654,7 @@
 		     (scale-selection-to .5)
 		     (reverse-selection)
 		     (undo 2)
-		     (src-selection '(.5 0 1 1))
+		     (src-selection '(0 .5 1 1))
 		     (undo)))
 	       (revert-sound cfd)
 	       (if (not (null? (cdr open-files))) (revert-sound (cadr open-files)))))
@@ -4731,7 +4731,7 @@
 		   (insert-sample 1200 .1 cfd)
 		   (if (fneq (sample 1200 cfd) .1) (snd-display (format #f ";insert-sample(looped): ~A?" (sample 1200 cfd))))))
 	      (revert-sound cfd))
-	  
+
 	  (let ((cfd (open-sound "oboe.snd")))
 	    (select-sound cfd)
 	    (let ((cfd1 (open-alternate-sound "obtest.snd")))
@@ -4745,6 +4745,7 @@
 		(test-panel speed 'speed)
 		(call-apply) 
 		(play-and-wait)
+
 		(set! (reverbing) #t)
 		(set! (reverb-scale) .2) 
 		(test-panel reverb-scale 'reverb-scale)
@@ -5038,6 +5039,7 @@
 	  (save-options "hiho.scm")
 	  (if (not (= (transform-type) fourier-transform))
 	      (set! (fft-size) (min (fft-size) 128)))
+
 	  )))
       (if open-files (map close-sound open-files))
       (set! open-files '())

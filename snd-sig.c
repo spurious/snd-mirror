@@ -1608,6 +1608,7 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
 	  datumb = mus_data_format_to_bytes_per_sample(hdr->format);
 	  sf = sfs[i];
 	  idata = data[0];
+	  if (!just_num) ratio = 0.0;            /* added 14-Mar-01 otherwise the envelope is an offset? */
 	  sr = make_src(ss, ratio, sf);
 	  j = 0;
 	  if (just_num)
@@ -3148,6 +3149,7 @@ the current sample, to each sample in snd's channel chn, starting at 'start-samp
   SCM_ASSERT(gh_procedure_p(expr), expr, SCM_ARG1, S_find);
   SCM_ASSERT(bool_or_arg_p(sample), sample, SCM_ARG2, S_find);
   SND_ASSERT_CHAN(S_find, snd_n, chn_n, 3);
+  if (!(procedure_ok(expr, 1, 0, S_find, "func", 1))) return(SCM_BOOL_F);
   return(g_sp_scan(expr, SCAN_CURRENT_CHAN, sample, SCM_BOOL_F, TRUE, TRUE, SCM_BOOL_F, snd_n, chn_n));
 }
 
@@ -3163,6 +3165,9 @@ samples satisfy func (a function of one argument, the current sample, returning 
   SCM_ASSERT(bool_or_arg_p(sample), sample, SCM_ARG2, S_count_matches);
   SND_ASSERT_CHAN(S_count_matches, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_count_matches);
+  if (!(procedure_ok(expr, 1, 0, S_count_matches, "func", 1))) return(SCM_BOOL_F);
+  /* TODO: check all gp_scan funcs for arity, and issue standard error, not snd_error call */
+  /*       is snd-error ever the right thing for this? */
   samp = TO_C_INT_OR_ELSE(sample, 0);
   matches = 0;
   lim = current_ed_samples(cp);
@@ -3170,7 +3175,8 @@ samples satisfy func (a function of one argument, the current sample, returning 
     {
       cursamp = TO_SCM_INT(samp);
       match = g_sp_scan(expr, SCAN_CURRENT_CHAN, cursamp, SCM_BOOL_F, TRUE, TRUE, SCM_BOOL_F, snd_n, chn_n);
-      if ((gh_list_p(match)) && (SCM_TRUE_P(SCM_CAR(match))))
+      if ((gh_list_p(match)) && 
+	  (SCM_TRUE_P(SCM_CAR(match))))
 	{
 	  matches++;
 	  samp = TO_C_INT_OR_ELSE(SCM_CADR(match), 0) + 1;
@@ -3471,7 +3477,9 @@ applies envelope 'env' to the currently selected portion of snd's channel chn us
 	      apply_env(cp, NULL, 0, 0, 1.0, TRUE, NOT_FROM_ENVED, S_env_selection, egen);
 	      return(edata);
 	    }
+	  else scm_wrong_type_arg(S_env_selection, 1, edata);
 	}
+      else scm_wrong_type_arg(S_env_selection, 1, edata);
     }
   return(SCM_BOOL_F);
 }
@@ -3513,7 +3521,9 @@ either to the end of the sound or for 'samps' samples, with segments interpolati
 	      apply_env(cp, NULL, beg, dur, 1.0, FALSE, NOT_FROM_ENVED, S_env_sound, egen);
 	      return(edata);
 	    }
+	  else scm_wrong_type_arg(S_env_sound, 1, edata);
 	}
+      else scm_wrong_type_arg(S_env_sound, 1, edata);
     }
   return(SCM_BOOL_F);
 }
@@ -3770,6 +3780,45 @@ static SCM g_convolve(SCM reals, SCM imag)
   else return(g_fft_1(reals, imag, TO_SMALL_SCM_INT(1), FALSE));
 }
 
+static Float check_src_envelope(env *e, char *caller)
+{
+  /* can't go through zero here, and if negative need to return 1.0 */
+  int i;
+  Float res = 0.0;
+  for (i = 0; i < (2 * e->pts); i += 2)
+    {
+
+      if (e->data[i + 1] == 0.0)
+	scm_throw(MUS_MISC_ERROR,
+		  SCM_LIST4(TO_SCM_STRING("src envelope is 0.0 at "),
+			    TO_SCM_INT(i / 2),
+			    env2scm(e),
+			    TO_SCM_STRING(caller)));
+      else
+	{
+	  if (e->data[i + 1] < 0.0)
+	    {
+	      if (res <= 0.0)
+		res = -1.0;
+	      else scm_throw(MUS_MISC_ERROR,
+			     SCM_LIST3(TO_SCM_STRING("src envelope passes through 0.0"),
+				       env2scm(e),
+				       TO_SCM_STRING(caller)));
+	    }
+	  else
+	    {
+	      if (res >= 0)
+		res = 1.0;
+	      else scm_throw(MUS_MISC_ERROR,
+			     SCM_LIST3(TO_SCM_STRING("src envelope passes through 0.0"),
+				       env2scm(e),
+				       TO_SCM_STRING(caller)));
+	    }
+	}
+    }
+  return(res);
+}
+
 static SCM g_src_sound(SCM ratio_or_env, SCM base, SCM snd_n, SCM chn_n)
 {
   #define H_src_sound "(" S_src_sound " ratio-or-env &optional (base 1.0) snd chn)\n\
@@ -3778,6 +3827,7 @@ sampling-rate converts snd's channel chn by ratio, or following an envelope. Neg
   chan_info *cp;
   env *e = NULL;
   mus_any *egen;
+  Float e_ratio = 1.0;
   SND_ASSERT_CHAN(S_src_sound, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_src_sound);
   if (gh_number_p(ratio_or_env))
@@ -3786,9 +3836,10 @@ sampling-rate converts snd's channel chn by ratio, or following an envelope. Neg
     {
       if (gh_list_p(ratio_or_env))
 	{
+	  e = get_env(ratio_or_env, base, S_src_sound);
+	  e_ratio = check_src_envelope(e, S_src_sound);
 	  src_env_or_num(cp->state, cp,
-			 e = get_env(ratio_or_env, base, S_src_sound),
-			 1.0, FALSE, NOT_FROM_ENVED, S_src_sound, FALSE, NULL);
+			 e, e_ratio, FALSE, NOT_FROM_ENVED, S_src_sound, FALSE, NULL);
 	  if (e) free_env(e);
 	}
       else
@@ -3797,10 +3848,13 @@ sampling-rate converts snd's channel chn by ratio, or following an envelope. Neg
 	    {
 	      egen = mus_scm_to_clm(ratio_or_env);
 	      if (mus_env_p(egen))
-		{
-		  src_env_or_num(cp->state, cp, NULL, 1.0, FALSE, NOT_FROM_ENVED, S_src_sound, FALSE, egen);
-		}
+		src_env_or_num(cp->state, cp, NULL, 1.0, FALSE, NOT_FROM_ENVED, S_src_sound, FALSE, egen);
+	      else scm_throw(MUS_MISC_ERROR,
+			     SCM_LIST3(TO_SCM_STRING(S_src_sound),
+				       TO_SCM_STRING(mus_format("can't use %s generator:", mus_name(egen))),
+				       ratio_or_env));
 	    }
+	  else scm_wrong_type_arg(S_src_sound, 1, ratio_or_env);
 	}
     }
   return(ratio_or_env);
@@ -3812,6 +3866,7 @@ static SCM g_src_selection(SCM ratio_or_env, SCM base)
 sampling-rate converts the currently selected data by ratio (which can be an envelope)"
   env *e = NULL;
   mus_any *egen;
+  Float e_ratio = 1.0;
   chan_info *cp;
   if (selection_is_active() == 0) 
     return(scm_throw(NO_ACTIVE_SELECTION,
@@ -3825,9 +3880,10 @@ sampling-rate converts the currently selected data by ratio (which can be an env
     {
       if (gh_list_p(ratio_or_env))
 	{
+	  e = get_env(ratio_or_env, base, S_src_selection);
+	  e_ratio = check_src_envelope(e, S_src_selection);
 	  src_env_or_num(cp->state, cp,
-			 e = get_env(ratio_or_env, base, S_src_selection),
-			 1.0, FALSE, NOT_FROM_ENVED, S_src_selection, TRUE, NULL);
+			 e, e_ratio, FALSE, NOT_FROM_ENVED, S_src_selection, TRUE, NULL);
 	  if (e) free_env(e);
 	}
       else
@@ -3835,11 +3891,16 @@ sampling-rate converts the currently selected data by ratio (which can be an env
 	  if (mus_scm_p(ratio_or_env))
 	    {
 	      egen = mus_scm_to_clm(ratio_or_env);
+	      /* TODO: current value to set e_ratio in this case (and src_sound above) */
 	      if (mus_env_p(egen))
 		src_env_or_num(cp->state, cp, 
-			       NULL, 
-			       1.0, FALSE, NOT_FROM_ENVED, S_src_selection, TRUE, egen);
+			       NULL, 1.0, FALSE, NOT_FROM_ENVED, S_src_selection, TRUE, egen);
+	      else scm_throw(MUS_MISC_ERROR,
+			     SCM_LIST3(TO_SCM_STRING(S_src_selection),
+				       TO_SCM_STRING(mus_format("can't use %s generator:", mus_name(egen))),
+				       ratio_or_env));
 	    }
+	  else scm_wrong_type_arg(S_src_selection, 1, ratio_or_env);
 	}
     }
   return(ratio_or_env);
