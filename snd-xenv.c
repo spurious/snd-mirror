@@ -1,7 +1,5 @@
 #include "snd.h"
 
-/* TODO: if font is 6x10 or 5x8, formd goes berserk */
-
 /* envelope editor and viewer */
 
 static Widget enved_dialog = NULL;
@@ -361,7 +359,6 @@ static void undo_and_apply_enved_callback(Widget w, XtPointer context, XtPointer
       undo_edit_with_sync(active_channel, 1);
       active_channel->squelch_update = false;
       clear_minibuffer(active_channel->sound);
-      /* TODO: this is not updating the thumbnail sketch? perhaps no new env? */
     }
   apply_enved();
   last_active_channel = active_channel;

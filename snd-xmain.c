@@ -543,9 +543,7 @@ static void notebook_page_changed_callback(Widget w, XtPointer context, XtPointe
 }
 #endif
 
-static Pixel get_color(Widget shell,
-		       char *rs_color, char *defined_color, char *fallback_color, char *second_fallback_color,
-		       bool use_white)
+static Pixel get_color(Widget shell, char *rs_color, char *defined_color, char *fallback_color, char *second_fallback_color, bool use_white)
 {
   Colormap cmap;
   Display *dpy;
@@ -600,11 +598,9 @@ void snd_doit(int argc, char **argv)
 #else
   XtSetLanguageProc(NULL, NULL, NULL);
 #endif
-
   ss->ctrls_height = CLOSED_CTRLS_HEIGHT;
   ss->channel_min_height = CHANNEL_MIN_HEIGHT;
   ss->Graph_Cursor = XC_crosshair;
-
 #ifndef SND_AS_WIDGET
 #if SCO5 || UW2 || ALPHA
   XtSetArg(args[0], XtNwidth, 640);
@@ -872,7 +868,6 @@ void snd_doit(int argc, char **argv)
 	scroll = XtCreateWidget("scroller", xmScrollBarWidgetClass, sx->soundpane, NULL, 0);
       }
       XtManageChild(sx->soundpane);
-
       XtAddCallback(sx->soundpane, XmNpageChangedCallback, notebook_page_changed_callback, NULL);
       map_over_children(sx->soundpane, set_main_color_of_widget, NULL); /* appears to be a no-op */
       break;
@@ -883,9 +878,7 @@ void snd_doit(int argc, char **argv)
   #if ICON_TYPE
     SetupIcon(shell);
   #endif
-
   XtRealizeWidget(shell);
-
   if (auto_resize(ss) != AUTO_RESIZE_DEFAULT) 
     XtVaSetValues(shell, XmNallowShellResize, auto_resize(ss), NULL);
 #endif

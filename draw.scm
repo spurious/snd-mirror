@@ -317,7 +317,12 @@ the y-zoom-slider controls the graph amp"
 	(set! (channel-property 'save-state-ignore s i)
 	      (cons 'inset-envelope 
 		    (or (channel-property 'save-state-ignore s i) 
-			(list 'save-state-ignore)))))))
+			(list 'save-state-ignore))))
+	(add-hook! (undo-hook s i)
+		   (lambda ()
+		     (let ((vals (channel-property 'inset-envelope s i)))
+		       (if vals
+			   (list-set! vals 2 -2)))))))) ; set edit-position to impossible value
   (add-hook! after-graph-hook display-current-window-location)
   (add-hook! mouse-click-hook click-current-window-location)
   (add-hook! update-hook update-current-window-location))

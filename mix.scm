@@ -1,9 +1,3 @@
-;;; this file is being changed to move most of the previous track
-;;;   functions into Snd -- all the previous functionality will be
-;;;   re-implemented eventually.
-
-
-
 ;;; various mix and track related utilities
 ;;;
 ;;; (pan-mix file frame envelope) mixes file into current sound starting at frame using envelope to pan (0: all chan 0, 1: all chan 1)

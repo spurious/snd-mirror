@@ -7923,7 +7923,6 @@ void g_init_track(void)
    mix/track stuff:
    SOMEDAY: how to save|restore-(mix|track)-state? -- mixes are not currently saved, but the track states could be
    SOMEDAY: what about saving all dialog state? mix|track-properties? (see marks.scm save-mark-properties)
-   TODO: autotest save/restore with track ops (drag esp) -- see tmp17.scm for as-one-edit save-state bugs
    SOMEDAY: pan choices with sinusoidal, exponential envs
    TODO: synchronization across mixes ("snap")
    SOMEDAY: choice of y-style (i.e. split out tracks vertically -- track all at same height)
@@ -7932,9 +7931,7 @@ void g_init_track(void)
    TODO: some way to squelch mix-tag/wave in 2nd chan (less clutter in track etc)
    TODO: axis movement stops if track drag motion stops when outside axis?
    TODO: initial dpy leaves start|end points unerased?
-   TODO: initialization for drag is slow if 100 mixes in track -- 100 edits added to list?
 
    TODO: vct-map! and backtrace troubles in new guile
    SOMEDAY: copy-*? [have mix|track|region|sample-reader, copy-mix|track|file, vct-copy, clone-sound-as], xref tables for copy
-   TODO: get openmcl 0.14, OSX 10.3
 */

@@ -24214,14 +24214,15 @@ EDITS: 3
 	    (vct-set! vals i 1.0))
 	  (check-edit-tree '((0 14 0 24 1.0 0.0 0.0 0) (25 12 25 49 1.0 0.0 0.0 0) (50 13 0 0 1.0 0.0 0.0 0) (51 12 51 74 1.0 0.0 0.0 0) (75 15 0 24 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
 			   vals "clobber env end")
-	  (save-edit-history "hiho.scm")
-	  (revert-sound ind)
-	  (set! sfile ind)
-	  (load "hiho.scm")
-	  (check-edit-tree '((0 14 0 24 1.0 0.0 0.0 0) (25 12 25 49 1.0 0.0 0.0 0) (50 13 0 0 1.0 0.0 0.0 0) (51 12 51 74 1.0 0.0 0.0 0) (75 15 0 24 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
-			   vals "reload edits")
-	  (if (not (equal? (edits) (list 27 0))) (snd-display ";edits after reload: ~A" (edits)))
-	  (delete-file "hiho.scm")
+;;; this can't be expected to work anymore -- internal backup can change edit tree bounds
+;	  (save-edit-history "hiho.scm")
+;	  (revert-sound ind)
+;	  (set! sfile ind)
+;	  (load "hiho.scm")
+;	  (check-edit-tree '((0 14 0 24 1.0 0.0 0.0 0) (25 12 25 49 1.0 0.0 0.0 0) (50 13 0 0 1.0 0.0 0.0 0) (51 12 51 74 1.0 0.0 0.0 0) (75 15 0 24 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
+;			   vals "reload edits")
+;	  (if (not (equal? (edits) (list 27 0))) (snd-display ";edits after reload: ~A" (edits)))
+;	  (delete-file "hiho.scm")
 	  
 	  (env-channel (make-env '(0 1 1 0 2 1) :end 19) 50 20)
 	  (let ((e (make-env '(0 1 1 0 2 1) :end 19)))
@@ -26506,6 +26507,210 @@ EDITS: 2
 	(close-sound ind0)
 	(close-sound ind1))
         
+      (let ((ctr 1))
+	(for-each 
+	 (lambda (func test)
+	   (let ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 1 "mono save-state tests" 100)))
+	     (func ind)
+	     (save-state "s61.scm")
+	     (close-sound ind)
+	     (load "s61.scm")
+	     (set! ind (find-sound "test.snd"))
+	     (if (not (sound? ind)) 
+		 (snd-display ";save-state test ~D no test.snd?" ctr)
+		 (begin
+		   (test ind)
+		   (close-sound ind)))
+	     (set! ctr (1+ ctr))))
+	 
+	 (list 
+	  
+	  ;; basic choices
+	  (lambda (ind) (insert-sample 10 .5 ind 0))
+	  (lambda (ind) (delete-sample 10 ind 0))
+	  (lambda (ind) (set! (sample 10 ind 0) .5))
+	  (lambda (ind) (set! (sample 10 ind 0) .5) (scale-channel .5))
+	  (lambda (ind) (vct->channel (make-vct 10 .5) 10 5 ind 0) (pad-channel 12 5 ind 0))
+	  (lambda (ind) (map-channel (lambda (y) 1.0)) (env-channel '(0 0 1 1) 0 11 ind 0))
+	  (lambda (ind) (ptree-channel (lambda (y) (+ y .1))))
+	  
+	  ;; map-channel as backup
+	  (lambda (ind)
+	    (let ((ctr 0))
+	      (map-channel (lambda (y) (set! ctr (1+ ctr)) (if (even? ctr) .1 #f)))))
+	  
+	  ;; as-one-edit
+	  (lambda (ind)
+	    ;; change
+	    (as-one-edit 
+	     (lambda ()
+	       (vct->channel (vct .1 .2 .3 .4 .5 .6 .7 .8 .9 1.0) 0 10 ind 0)
+	       (vct->channel (vct .1 .2 .3 .4 .5 .6 .7 .8 .9 1.0) 20 10 ind 0))))
+	  
+	  (lambda (ind)
+	    ;; scale
+	    (as-one-edit
+	     (lambda ()
+	       (vct->channel (vct .1 .2 .3 .4 .5 .6 .7 .8 .9 1.0) 0 10 ind 0)
+	       (scale-by .5))))
+	  
+	  (lambda (ind)
+	    ;; delete
+	    (as-one-edit
+	     (lambda ()
+	       (vct->channel (vct .1 .2 .3 .4 .5 .6 .7 .8 .9 1.0) 0 10 ind 0)
+	       (delete-samples 5 5))))
+	  
+	  (lambda (ind)
+	    ;; insert
+	    (as-one-edit
+	     (lambda ()
+	       (delete-samples 5 5)
+	       (insert-samples 5 2 (vct .1 .2)))))
+	  
+	  ;; track/mix ops
+	  (lambda (ind)
+	    (let ((mix1 (mix-vct (make-vct 3 .3) 0))
+		  (mix2 (mix-vct (make-vct 2 .2) 3))
+		  (mix3 (mix-vct (make-vct 5 .5) 5))
+		  (trk (make-track)))
+	      (set! (mix-track mix1) trk)
+	      (set! (mix-track mix2) trk)
+	      (set! (mix-track mix3) trk)
+	      (set! (track-position trk) 10)))
+	  
+	  (lambda (ind)
+	    (let ((mix1 (mix-vct (make-vct 3 .3) 0))
+		  (mix2 (mix-vct (make-vct 2 .2) 3))
+		  (mix3 (mix-vct (make-vct 5 .5) 5))
+		  (trk (make-track)))
+	      (set! (mix-track mix1) trk)
+	      (set! (mix-track mix2) trk)
+	      (set! (mix-track mix3) trk)
+	      (set! (track-amp trk) 2.0)))
+	  
+	  (lambda (ind)
+	    (let ((mix1 (mix-vct (make-vct 3 .3) 0))
+		  (mix2 (mix-vct (make-vct 2 .2) 3))
+		  (mix3 (mix-vct (make-vct 5 .5) 5))
+		  (trk (make-track)))
+	      (set! (mix-track mix1) trk)
+	      (set! (mix-track mix2) trk)
+	      (set! (mix-track mix3) trk)
+	      (set! (track-amp-env trk) '(0 0 1 5))
+	      (lock-track trk)))
+	  
+	  ;; 2 embedded as-one-edits
+	  (lambda (ind)
+	    (map-channel (lambda (y) -1.0))
+	    (as-one-edit
+	     (lambda ()
+	       (delete-samples 5 5)
+	       (insert-samples 5 2 (vct .1 .2))))
+	    (scale-channel 2.0)
+	    (as-one-edit 
+	     (lambda ()
+	       (vct->channel (vct .1 .2 .3 .4 .5 .6 .7 .8 .9 1.0) 10 10 ind 0)
+	       (vct->channel (vct .1 .2 .3 .4 .5 .6 .7 .8 .9 1.0) 20 10 ind 0)))
+	    (delete-samples 15 10))
+	  
+	  )
+	 
+	 (list
+	  ;; basic cases
+	  (lambda (ind)
+	    (if (fneq (sample 10) .5) (snd-display ";insert-sample save-state: ~A" (channel->vct 5 10 ind 0)))
+	    (if (not (= (frames ind 0) 101)) (snd-display ";insert-sample save-state len: ~A" (frames ind 0))))
+	  (lambda (ind)
+	    (if (fneq (sample 10) 0.0) (snd-display ";delete-sample save-state: ~A" (channel->vct 5 10 ind 0)))
+	    (if (not (= (frames ind 0) 99)) (snd-display ";delete-sample save-state len: ~A" (frames ind 0))))
+	  (lambda (ind)
+	    (if (fneq (sample 10) .5) (snd-display ";set sample save-state: ~A" (channel->vct 5 10 ind 0)))
+	    (if (not (= (frames ind 0) 100)) (snd-display ";set sample save-state len: ~A" (frames ind 0))))
+	  (lambda (ind)
+	    (if (fneq (sample 10) .25) (snd-display ";scl sample save-state: ~A" (channel->vct 5 10 ind 0)))
+	    (if (not (= (frames ind 0) 100)) (snd-display ";scl sample save-state len: ~A" (frames ind 0)))
+	    (if (not (= (edit-position ind 0) 2)) (snd-display ";scl sample save-state edpos: ~A" (edit-position ind 0))))
+	  (lambda (ind)
+	    (if (not (= (frames ind 0) 105)) (snd-display ";pad sample save-state len: ~A" (frames ind 0)))
+	    (if (not (= (edit-position ind 0) 2)) (snd-display ";pad sample save-state edpos: ~A" (edit-position ind 0)))
+	    (if (not (vequal (vct .5 .5 0 0 0 0 0 .5 .5 .5) (channel->vct 10 10 ind 0)))
+		(snd-display ";pad sample save-state: ~A" (channel->vct 10 10 ind 0))))
+	  (lambda (ind)
+	    (if (not (= (frames ind 0) 100)) (snd-display ";env sample save-state len: ~A" (frames ind 0)))
+	    (if (not (= (edit-position ind 0) 2)) (snd-display ";env sample save-state edpos: ~A" (edit-position ind 0)))
+	    (if (not (vequal (vct 0 .1 .2 .3 .4 .5 .6 .7 .8 .9 1.0 1.0 1.0 1.0 1.0) (channel->vct 0 15 ind 0)))
+		(snd-display ";env sample save-state: ~A" (channel->vct 0 15 ind 0))))
+	  (lambda (ind)
+	    (if (not (= (frames ind 0) 100)) (snd-display ";ptree sample save-state len: ~A" (frames ind 0)))
+	    (if (not (= (edit-position ind 0) 1)) (snd-display ";ptree sample save-state edpos: ~A" (edit-position ind 0)))
+	    (if (fneq (maxamp ind 0) .1) (snd-display ";ptree save-state max: ~A" (maxamp ind 0)))
+	    (if (not (vequal (make-vct 10 .1) (channel->vct 0 10))) (snd-display ";ptree save-state vals: ~A" (channel->vct 0 10 ind 0))))
+	  
+	  ;; map-channel as backup
+	  (lambda (ind)
+	    (if (not (= (frames ind 0) 50)) (snd-display ";map #f save-state len: ~A" (frames ind 0)))
+	    (if (not (= (edit-position ind 0) 1)) (snd-display ";map #f save-state edpos: ~A" (edit-position ind 0)))
+	    (if (fneq (maxamp ind 0) .1) (snd-display ";map #f save-state max: ~A" (maxamp ind 0)))
+	    (if (not (vequal (make-vct 10 .1) (channel->vct 0 10))) (snd-display ";map #f save-state vals: ~A" (channel->vct 0 10 ind 0))))
+	  
+	  ;; as-one-edit
+	  (lambda (ind)
+	    (if (not (= (edit-position ind 0) 1)) (snd-display ";save-state backup 2 vcts edpos: ~A" (edit-position ind 0)))
+	    (if (not (vequal (channel->vct 0 10 ind 0) (vct .1 .2 .3 .4 .5 .6 .7 .8 .9 1.0)))
+		(snd-display ";as-one-edit save-state 1: ~A" (channel->vct 0 10 ind 0)))
+	    (if (not (vequal (channel->vct 20 10 ind 0) (vct .1 .2 .3 .4 .5 .6 .7 .8 .9 1.0)))
+		(snd-display ";as-one-edit save-state 2: ~A" (channel->vct 0 10 ind 0))))
+	  
+	  (lambda (ind)
+	    (if (not (= (edit-position ind 0) 1)) (snd-display ";save-state backup vct+scl edpos: ~A" (edit-position ind 0)))
+	    (if (not (vequal (channel->vct 0 10 ind 0) (vct-scale! (vct .1 .2 .3 .4 .5 .6 .7 .8 .9 1.0) .5)))
+		(snd-display ";as-one-edit save-state 3: ~A" (channel->vct 0 10 ind 0))))
+	  
+	  (lambda (ind)
+	    (if (not (= (edit-position ind 0) 1)) (snd-display ";save-state backup vct+del edpos: ~A" (edit-position ind 0)))
+	    (if (not (vequal (channel->vct 0 10 ind 0) (vct .1 .2 .3 .4 .5 0 0 0 0 0)))
+		(snd-display ";as-one-edit save-state 4: ~A" (channel->vct 0 10 ind 0))))
+	  
+	  (lambda (ind)
+	    (if (not (= (edit-position ind 0) 1)) (snd-display ";save-state backup del+insert edpos: ~A" (edit-position ind 0)))
+	    (if (not (vequal (channel->vct 0 10 ind 0) (vct 0 0 0 0 0 .1 .2 0 0 0)))
+		(snd-display ";as-one-edit save-state 5: ~A" (channel->vct 0 10 ind 0)))
+	    (if (not (= (frames ind 0) 97)) (snd-display ";save-state backup del+insert len: ~A" (frames ind 0))))
+	  
+	  ;; track/mix ops
+	  (lambda (ind)
+	    (if (not (= (edit-position ind 0) 7)) (snd-display ";save-state track pos edpos: ~A" (edit-position ind 0)))
+	    (if (not (vequal (channel->vct 0 30 ind 0) (vct 0 0 0 0 0 0 0 0 0 0 .3 .3 .3 .2 .2 .5 .5 .5 .5 .5 0 0 0 0 0 0 0 0 0 0)))
+		(snd-display ";track pos save-state 6: ~A" (channel->vct 0 30 ind 0)))
+	    (if (not (= (frames ind 0) 100)) (snd-display ";save-state track pos len: ~A" (frames ind 0))))
+	  
+	  (lambda (ind)
+	    (if (not (= (edit-position ind 0) 7)) (snd-display ";save-state track amp edpos: ~A" (edit-position ind 0)))
+	    (if (not (vequal (channel->vct 0 20 ind 0) (vct .6 .6 .6 .4 .4 1.0 1.0 1.0 1.0 1.0 0 0 0 0 0 0 0 0 0 0)))
+		(snd-display ";track amp save-state 7: ~A" (channel->vct 0 20 ind 0)))
+	    (if (not (= (frames ind 0) 100)) (snd-display ";save-state track amp len: ~A" (frames ind 0))))
+	  
+	  (lambda (ind)
+	    (if (not (= (edit-position ind 0) 8)) (snd-display ";save-state track amp env edpos: ~A" (edit-position ind 0)))
+	    (if (not (vequal (channel->vct 0 15 ind 0) (vct 0.0 0.225 0.45 0.3 0.5 1.25 1.562 1.875 2.188 2.5 0.0 0.0 0 0 0)))
+		(snd-display ";track amp env save-state 7: ~A" (channel->vct 0 15 ind 0)))
+	    (if (not (= (frames ind 0) 100)) (snd-display ";save-state track amp env len: ~A" (frames ind 0))))
+	  
+	  ;; 2 embedded as-one-edits 
+	  (lambda (ind)
+	    (if (not (= (edit-position ind 0) 5)) (snd-display ";embed save-state edpos: ~A" (edit-position ind 0)))
+	    (if (not (= (frames ind 0) 87)) (snd-display ";embed save-state track len: ~A" (frames ind 0)))
+	    (if (not (vequal (channel->vct 0 25)
+			     (vct -2 -2 -2 -2 -2
+				  .2 .4
+				  -2 -2 -2
+				  .1 .2 .3 .4 .5
+				  .6 .7 .8 .9 1.0
+				  -2 -2 -2 -2 -2)))
+		(snd-display ";embed save-state vals: ~A" (channel->vct 0 25 ind 0))))
+	  )))
+      
       (mus-sound-prune)
       (run-hook after-test-hook 19)
       ))
@@ -41325,55 +41530,3 @@ EDITS: 2
   "envs.save"))
 
 (if with-exit (exit))
-
-
-
-#!
-;;; TODO: as-one-edit save-state bugs:
-(for-each 
- (lambda (func test)
-   (let ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 1 "save-state tests" 100)))
-	  (as-one-edit (lambda () (func ind)))
-	  (save-state "s61.scm")
-	  (close-sound ind)
-	  (load "s61.scm")
-	  (set! ind (find-sound "test.snd"))
-	  (if (not (sound? ind))
-	      (snd-display ";as-one-edit save-state can't find test.snd?")
-	      (begin
-		(test ind)
-		(close-sound ind)))))
- (list 
-  (lambda (ind)
-    ;; change
-    (vct->channel (vct .1 .2 .3 .4 .5 .6 .7 .8 .9 1.0) 0 10 ind 0)
-    (vct->channel (vct .1 .2 .3 .4 .5 .6 .7 .8 .9 1.0) 20 10 ind 0))
-
-  (lambda (ind)
-    ;; scale
-    (vct->channel (vct .1 .2 .3 .4 .5 .6 .7 .8 .9 1.0) 0 10 ind 0)
-    (scale-by .5))
-
-  (lambda (ind)
-    ;; delete
-    (vct->channel (vct .1 .2 .3 .4 .5 .6 .7 .8 .9 1.0) 0 10 ind 0)
-    (delete-samples 5 5))
-  )
-	  
- (list
-  (lambda (ind)
-    (if (not (vequal (channel->vct 0 10 ind 0) (vct .1 .2 .3 .4 .5 .6 .7 .8 .9 1.0)))
-	(snd-display ";as-one-edit save-state 1: ~A" (channel->vct 0 10 ind 0)))
-    (if (not (vequal (channel->vct 20 10 ind 0) (vct .1 .2 .3 .4 .5 .6 .7 .8 .9 1.0)))
-	(snd-display ";as-one-edit save-state 2: ~A" (channel->vct 0 10 ind 0))))
-
-  (lambda (ind)
-    (if (not (vequal (channel->vct 0 10 ind 0) (vct-scale! (vct .1 .2 .3 .4 .5 .6 .7 .8 .9 1.0) .5)))
-	(snd-display ";as-one-edit save-state 3: ~A" (channel->vct 0 10 ind 0))))
-
-  (lambda (ind)
-    (if (not (vequal (channel->vct 0 10 ind 0) (vct .1 .2 .3 .4 .5 0 0 0 0 0)))
-	(snd-display ";as-one-edit save-state 4: ~A" (channel->vct 0 10 ind 0))))
-  
-  ))
-!#

@@ -138,11 +138,11 @@ static env_state *make_env_state(chan_info *cp, off_t samples)
 	      old_samples = cp->samples[pos - 1];
 	      if (snd_abs_off_t(samples - old_samples) < (samples / 2))
 		{
-		  start = edit_changes_begin_at(cp);
+		  start = edit_changes_begin_at(cp, cp->edit_ctr);
 		  /* as-one-edit backs up edit records without resetting any beg/len values.
 		   *   but this is tricky stuff -- not worth pushing...
 		   */
-		  end = edit_changes_end_at(cp);
+		  end = edit_changes_end_at(cp, cp->edit_ctr);
 		  if (snd_abs_off_t(end - start) < (samples / 2))
 		    {
 		      /* here we'll try to take advantage of an existing envelope */

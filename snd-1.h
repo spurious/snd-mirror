@@ -714,8 +714,8 @@ void g_init_data(void);
 
 void allocate_ed_list(chan_info *cp);
 ed_list *initial_ed_list(off_t beg, off_t end);
-off_t edit_changes_begin_at(chan_info *cp);
-off_t edit_changes_end_at(chan_info *cp);
+off_t edit_changes_begin_at(chan_info *cp, int edpos);
+off_t edit_changes_end_at(chan_info *cp, int edpos);
 char *run_save_state_hook(char *filename);
 void edit_history_to_file(FILE *fd, chan_info *cp);
 char *edit_to_string(chan_info *cp, int edit);
