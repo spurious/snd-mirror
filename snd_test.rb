@@ -1,4 +1,4 @@
-# snd.rb: Snd Ruby code and tests
+# snd_test.rb: Snd Ruby code and tests
 
 def provided?(feature) feature == $".find{|obj| obj == feature} end
 # not sure this is kosher in Ruby -- I'm using $" via rb_provided as a feature list, but doc says its a filename array
