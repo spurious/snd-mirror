@@ -380,7 +380,7 @@ static gint listener_focus_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer
   /* apparently called in gtkmarshal.c via gtk_marshal_BOOL__POINTER which passes 3 args */
   if (XEN_HOOKED(mouse_enter_listener_hook))
     g_c_run_progn_hook(mouse_enter_listener_hook,
-		       XEN_LIST_1(XEN_WRAP_C_POINTER(listener_text)),
+		       XEN_LIST_1(XEN_WRAP_WIDGET(listener_text)),
 		       S_mouse_enter_listener_hook);
   return(0);
 }
@@ -389,7 +389,7 @@ static gint listener_unfocus_callback(GtkWidget *w, GdkEventCrossing *ev, gpoint
 {
   if (XEN_HOOKED(mouse_leave_listener_hook))
     g_c_run_progn_hook(mouse_leave_listener_hook,
-		       XEN_LIST_1(XEN_WRAP_C_POINTER(listener_text)),
+		       XEN_LIST_1(XEN_WRAP_WIDGET(listener_text)),
 		       S_mouse_leave_listener_hook);
   return(0);
 }
@@ -398,7 +398,7 @@ static void mouse_enter_text_callback(GtkWidget *w, GdkEventCrossing *ev, gpoint
 {
   if (XEN_HOOKED(mouse_enter_text_hook))
     g_c_run_progn_hook(mouse_enter_text_hook,
-		       XEN_LIST_1(XEN_WRAP_C_POINTER(w)),
+		       XEN_LIST_1(XEN_WRAP_WIDGET(w)),
 		       S_mouse_enter_text_hook);
 }
 
@@ -406,7 +406,7 @@ static void mouse_leave_text_callback(GtkWidget *w, GdkEventCrossing *ev, gpoint
 {
   if (XEN_HOOKED(mouse_leave_text_hook))
     g_c_run_progn_hook(mouse_leave_text_hook,
-		       XEN_LIST_1(XEN_WRAP_C_POINTER(w)),
+		       XEN_LIST_1(XEN_WRAP_WIDGET(w)),
 		       S_mouse_leave_text_hook);
 }
 

@@ -2822,15 +2822,15 @@ static XEN g_sound_widgets(XEN snd)
   sp = get_sp(snd);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_sound_widgets, snd));
-  return(XEN_CONS(XEN_WRAP_C_POINTER(w_snd_pane(sp)),
-	  XEN_CONS(XEN_WRAP_C_POINTER(w_snd_name(sp)),
-           XEN_CONS(XEN_WRAP_C_POINTER(w_snd_ctrls(sp)),
-	    XEN_CONS(XEN_WRAP_C_POINTER(w_snd_minibuffer(sp)),
-	     XEN_CONS(XEN_WRAP_C_POINTER(w_snd_play(sp)),
-	      XEN_CONS(XEN_WRAP_C_POINTER(w_snd_filter_env(sp)), /* this is the drawingarea widget */
-	       XEN_CONS(XEN_WRAP_C_POINTER(w_snd_combine(sp)),
-	        XEN_CONS(XEN_WRAP_C_POINTER(w_snd_minibuffer_label(sp)),
-	         XEN_CONS(XEN_WRAP_C_POINTER(w_snd_name_icon(sp)),
+  return(XEN_CONS(XEN_WRAP_WIDGET(w_snd_pane(sp)),
+	  XEN_CONS(XEN_WRAP_WIDGET(w_snd_name(sp)),
+           XEN_CONS(XEN_WRAP_WIDGET(w_snd_ctrls(sp)),
+	    XEN_CONS(XEN_WRAP_WIDGET(w_snd_minibuffer(sp)),
+	     XEN_CONS(XEN_WRAP_WIDGET(w_snd_play(sp)),
+	      XEN_CONS(XEN_WRAP_WIDGET(w_snd_filter_env(sp)), /* this is the drawingarea widget */
+	       XEN_CONS(XEN_WRAP_WIDGET(w_snd_combine(sp)),
+	        XEN_CONS(XEN_WRAP_WIDGET(w_snd_minibuffer_label(sp)),
+	         XEN_CONS(XEN_WRAP_WIDGET(w_snd_name_icon(sp)),
 	          XEN_EMPTY_LIST))))))))));
 }
 #endif

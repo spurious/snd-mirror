@@ -122,11 +122,11 @@ void edit_find_callback(GtkWidget *w, gpointer context)
 static XEN g_find_dialog_widgets(void)
 {
   if (edit_find_dialog)
-    return(XEN_CONS(XEN_WRAP_C_POINTER(edit_find_dialog),
-	     XEN_CONS(XEN_WRAP_C_POINTER(edit_find_text),
-  	       XEN_CONS(XEN_WRAP_C_POINTER(next_button),
-		 XEN_CONS(XEN_WRAP_C_POINTER(previous_button),
-		   XEN_CONS(XEN_WRAP_C_POINTER(cancelB),
+    return(XEN_CONS(XEN_WRAP_WIDGET(edit_find_dialog),
+	     XEN_CONS(XEN_WRAP_WIDGET(edit_find_text),
+  	       XEN_CONS(XEN_WRAP_WIDGET(next_button),
+		 XEN_CONS(XEN_WRAP_WIDGET(previous_button),
+		   XEN_CONS(XEN_WRAP_WIDGET(cancelB),
 		     XEN_EMPTY_LIST))))));
   return(XEN_EMPTY_LIST);
 }

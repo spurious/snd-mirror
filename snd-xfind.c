@@ -162,11 +162,11 @@ void edit_find_callback(Widget w, XtPointer context, XtPointer info)
 static XEN g_find_dialog_widgets(void)
 {
   if (edit_find_dialog)
-    return(XEN_CONS(XEN_WRAP_C_POINTER(edit_find_dialog),
-	     XEN_CONS(XEN_WRAP_C_POINTER(edit_find_text),
-  	       XEN_CONS(XEN_WRAP_C_POINTER(findnextB),
-		 XEN_CONS(XEN_WRAP_C_POINTER(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_CANCEL_BUTTON)), /* find previous */
-		   XEN_CONS(XEN_WRAP_C_POINTER(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_OK_BUTTON)),   /* cancel */
+    return(XEN_CONS(XEN_WRAP_WIDGET(edit_find_dialog),
+	     XEN_CONS(XEN_WRAP_WIDGET(edit_find_text),
+  	       XEN_CONS(XEN_WRAP_WIDGET(findnextB),
+		 XEN_CONS(XEN_WRAP_WIDGET(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_CANCEL_BUTTON)), /* find previous */
+		   XEN_CONS(XEN_WRAP_WIDGET(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_OK_BUTTON)),   /* cancel */
 			XEN_EMPTY_LIST))))));
   return(XEN_EMPTY_LIST);
 }

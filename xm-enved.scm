@@ -161,12 +161,12 @@
 
 
   (if (not (member |XmNbackground args))
-      (set! args (append args (list |XmNbackground (|Pixel (snd-pixel (graph-color)))))))
+      (set! args (append args (list |XmNbackground (snd-pixel (graph-color))))))
   (if (not (member |XmNforeground args))
-      (set! args (append args (list |XmNforeground (|Pixel (snd-pixel (data-color)))))))
+      (set! args (append args (list |XmNforeground (snd-pixel (data-color))))))
   (let* ((drawer (|XtCreateManagedWidget name |xmDrawingAreaWidgetClass parent args))
-	 (gc (|GC (car (snd-gcs))))
-	 (egc (|GC (list-ref (snd-gcs) 7)))
+	 (gc (car (snd-gcs)))
+	 (egc (list-ref (snd-gcs) 7))
 	 (x0 (car axis-bounds))
 	 (x1 (cadr axis-bounds)) ; too confusing! -- change internally below
 	 (y0 (caddr axis-bounds))

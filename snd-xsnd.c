@@ -2950,7 +2950,7 @@ static XEN g_add_sound_window (XEN parent, XEN filename, XEN read_only)
   snd_info *sp;
   snd_state *ss;
   ss = get_global_state();
-  sp = add_sound_window_with_parent((Widget)(XEN_TO_C_ULONG(parent)), 
+  sp = add_sound_window_with_parent((Widget)XEN_UNWRAP_WIDGET(parent), 
 				    XEN_TO_C_STRING(filename), 
 				    ss,
 				    XEN_TO_C_BOOLEAN_OR_TRUE(read_only));

@@ -1590,7 +1590,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, int beg, int dur, XEN ed
   else 
     {
       int sbin, ebin, i, j;
-      Float min1, max1;
+      MUS_SAMPLE_TYPE min1, max1;
       ep = amp_env_copy(cp, FALSE, edpos);
       if (ep) 
 	{

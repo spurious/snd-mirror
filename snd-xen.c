@@ -1155,7 +1155,7 @@ spring, summer, colorcube, flag, and lines.  -1 means black and white."
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set-" S_colormap, "an integer"); 
   set_color_map(state, mus_iclamp(0,
 				  XEN_TO_C_INT(val),
-				  NUM_COLORMAPS-1));
+				  NUM_COLORMAPS - 1));
   return(C_TO_XEN_INT(color_map(state)));
 }
 
@@ -1965,38 +1965,38 @@ static XEN g_help_dialog(XEN subject, XEN msg)
   #define H_help_dialog "(" S_help_dialog " subject message) fires up the Help window with subject and message"
   XEN_ASSERT_TYPE(XEN_STRING_P(subject), subject, XEN_ARG_1, S_help_dialog, "a string");
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ARG_2, S_help_dialog, "a string");
-  return(XEN_WRAP_C_POINTER(snd_help_with_wrap(get_global_state(), XEN_TO_C_STRING(subject), XEN_TO_C_STRING(msg))));
+  return(XEN_WRAP_WIDGET(snd_help_with_wrap(get_global_state(), XEN_TO_C_STRING(subject), XEN_TO_C_STRING(msg))));
 }
 
 static XEN g_mix_panel(void)
 {
   #define H_mix_panel "(" S_mix_panel ") starts (and returns) the mix panel"
-  return(XEN_WRAP_C_POINTER(make_mix_panel(get_global_state())));
+  return(XEN_WRAP_WIDGET(make_mix_panel(get_global_state())));
 }
 
 static XEN g_color_dialog(void) 
 {
   #define H_color_dialog "(" S_color_dialog ") fires up the Color dialog"
-  return(XEN_WRAP_C_POINTER(start_color_dialog(get_global_state(), 0, 0))); 
+  return(XEN_WRAP_WIDGET(start_color_dialog(get_global_state(), 0, 0))); 
 }
 
 static XEN g_orientation_dialog(void) 
 {
   #define H_orientation_dialog "(" S_orientation_dialog ") fires up the Orientation dialog"
-  return(XEN_WRAP_C_POINTER(start_orientation_dialog(get_global_state(), 0, 0))); 
+  return(XEN_WRAP_WIDGET(start_orientation_dialog(get_global_state(), 0, 0))); 
 }
 
 static XEN g_transform_dialog(XEN managed) 
 {
   #define H_transform_dialog "(" S_transform_dialog " (managed #t)) creates and (if managed) fires up the Transforms dialog"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_transform_dialog, "a boolean");
-  return(XEN_WRAP_C_POINTER(fire_up_transform_dialog(get_global_state(), XEN_TO_C_BOOLEAN_OR_TRUE(managed))));
+  return(XEN_WRAP_WIDGET(fire_up_transform_dialog(get_global_state(), XEN_TO_C_BOOLEAN_OR_TRUE(managed))));
 }
 
 static XEN g_file_dialog(void) 
 {
   #define H_file_dialog "(" S_file_dialog ") fires up the View Current/Previous File dialog"
-  return(XEN_WRAP_C_POINTER(start_file_dialog(get_global_state(), 0, 0)));
+  return(XEN_WRAP_WIDGET(start_file_dialog(get_global_state(), 0, 0)));
 }
 
 static XEN g_edit_header_dialog(XEN snd_n) 
@@ -2006,7 +2006,7 @@ static XEN g_edit_header_dialog(XEN snd_n)
   sp = get_sp(snd_n);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_edit_header_dialog, snd_n));
-  return(XEN_WRAP_C_POINTER(edit_header(sp))); 
+  return(XEN_WRAP_WIDGET(edit_header(sp))); 
 }
 
 static XEN g_edit_save_as_dialog(void) 
@@ -2659,7 +2659,7 @@ static XEN g_basic_color(void)
   return(pixel2color((state->sgx)->basic_color));
 }
 
-static XEN g_set_basic_color (XEN color) 
+static XEN g_set_basic_color(XEN color) 
 {
   snd_color *v; 
   COLOR_TYPE old_color;
@@ -2682,13 +2682,13 @@ static XEN during_open_hook;
 static XEN after_open_hook;
 static XEN output_comment_hook;
 
-XEN g_c_run_progn_hook (XEN hook, XEN args, const char *caller)
+XEN g_c_run_progn_hook(XEN hook, XEN args, const char *caller)
 {
 #if HAVE_GUILE
   /* Guile built-in scm_c_run_hook doesn't return the value of the hook procedure(s) and exits on error */
   XEN result = XEN_FALSE;
-  XEN procs = XEN_HOOK_PROCEDURES (hook);
-  while (XEN_NOT_NULL_P (procs))
+  XEN procs = XEN_HOOK_PROCEDURES(hook);
+  while (XEN_NOT_NULL_P(procs))
     {
       if (!(XEN_EQ_P(args, XEN_EMPTY_LIST)))
 	result = XEN_APPLY(XEN_CAR(procs), args, caller);

@@ -58,7 +58,7 @@
 
 (define selection-popup-menu 
   ;; used in graph if pointer is inside selected portion
-  (let ((every-menu (list |XmNbackground (|Pixel (snd-pixel (highlight-color)))))
+  (let ((every-menu (list |XmNbackground (snd-pixel (highlight-color))))
 	(stopping #f)
 	(stopping1 #f)
 	(stop-widget #f)
@@ -74,9 +74,9 @@
 
     (make-popup-menu 
      "selection-popup"
-     (|Widget (caddr (main-widgets)))
+     (caddr (main-widgets))
      (list |XmNpopupEnabled #t
-	   |XmNbackground (|Pixel (snd-pixel (highlight-color))))
+	   |XmNbackground (snd-pixel (highlight-color)))
      (list
       (list "Selection" |xmLabelWidgetClass      every-menu)
       (list "sep"       |xmSeparatorWidgetClass  every-menu)
@@ -178,7 +178,7 @@
 
 (define graph-popup-menu 
   ;; used within graph if pointer is not inside selected portion
-  (let ((every-menu (list |XmNbackground (|Pixel (snd-pixel (highlight-color)))))
+  (let ((every-menu (list |XmNbackground (snd-pixel (highlight-color))))
 	(stopping #f)
 	(stop-widget #f))
 
@@ -192,9 +192,9 @@
 
     (make-popup-menu 
      "graph-popup"
-     (|Widget (caddr (main-widgets)))
+     (caddr (main-widgets))
      (list |XmNpopupEnabled #t
-	   |XmNbackground (|Pixel (snd-pixel (highlight-color))))
+	   |XmNbackground (snd-pixel (highlight-color)))
      (list
 
       (list "Snd"                |xmLabelWidgetClass      every-menu) 
@@ -413,8 +413,8 @@
 
 (define fft-popup-menu 
   ;; used within graph if pointer is in the fft graph
-  (let* ((every-menu (list |XmNbackground (|Pixel (snd-pixel (highlight-color)))))
-	 (fft-popup (|XmCreatePopupMenu (|Widget (caddr (main-widgets))) "fft-popup"
+  (let* ((every-menu (list |XmNbackground (snd-pixel (highlight-color))))
+	 (fft-popup (|XmCreatePopupMenu (caddr (main-widgets)) "fft-popup"
 		       (append (list |XmNpopupEnabled #t) every-menu))))
 
     (define (choose-chan)
@@ -562,7 +562,7 @@
       (do ((chn 0 (1+ chn)))
 	  ((= chn (chans snd)))
 	(if (not (find-popup snd chn popups))
-	    (let ((chn-grf (|Widget (car (channel-widgets snd chn)))))
+	    (let ((chn-grf (car (channel-widgets snd chn))))
 	      (set! popups (cons (list snd chn) popups))
 	      (|XtAddCallback chn-grf |XmNpopupHandlerCallback 
 		 (lambda (w data info)
@@ -624,7 +624,7 @@
   ;; new-color can be the color name, an xm Pixel, a snd color, or a list of rgb values (as in Snd's make-color)
   (let ((color-pixel
 	 (if (string? new-color) ; assuming X11 color names here
-	     (let* ((shell (|Widget (cadr (main-widgets))))
+	     (let* ((shell (cadr (main-widgets)))
 		    (dpy (|XtDisplay shell))
 		    (scr (|DefaultScreen dpy))
 		    (cmap (|DefaultColormap dpy scr))
@@ -633,11 +633,11 @@
 		   (snd-error "can't allocate ~S" new-color)
 		   (|pixel col)))
 	     (if (color? new-color)
-		 (|Pixel (snd-pixel new-color))
-		 (if (|Pixel? new-color)
+		 (snd-pixel new-color)
+		 (if  new-color
 		     new-color
 		     ;; assume a list of rgb vals?
-		     (|Pixel (snd-pixel (apply make-color new-color))))))))
+		     (snd-pixel (apply make-color new-color)))))))
     (for-each-child
      menu
      (lambda (n)
@@ -712,12 +712,12 @@
       (list 'Popdown top-one top-two top-two-cascade collector))))
 
 (define (add-listener-popup)
-  (let* ((listener (|Widget (or (list-ref (main-widgets) 4)
-				(begin
-				  (show-listener)
-				  (set! (show-listener) #f)
-				  (list-ref (main-widgets) 4)))))
-	 (every-menu (list |XmNbackground (|Pixel (snd-pixel (highlight-color)))))
+  (let* ((listener (or (list-ref (main-widgets) 4)
+		       (begin
+			 (show-listener)
+			 (set! (show-listener) #f)
+			 (list-ref (main-widgets) 4))))
+	 (every-menu (list |XmNbackground (snd-pixel (highlight-color))))
 	 (listener-popup (|XmCreatePopupMenu listener "listener-popup"
 			   (append (list |XmNpopupEnabled #t) every-menu))))
 
@@ -764,15 +764,15 @@
 
 		 (make-popdown-entry "Focus" listener-popup 
 				     (lambda (us)
-				       (let* ((pane (|Widget (car (sound-widgets us))))
+				       (let* ((pane (car (sound-widgets us)))
 					      (old-resize (auto-resize)))
-					 (|XtSetValues (|Widget (cadr (main-widgets))) (list |XmNallowShellResize #f))
+					 (|XtSetValues (cadr (main-widgets)) (list |XmNallowShellResize #f))
 					 (for-each 
 					  (lambda (them)
-					    (|XtUnmanageChild (|Widget (car (sound-widgets them)))))
+					    (|XtUnmanageChild (car (sound-widgets them))))
 					  (sounds))
 					 (|XtManageChild pane)
-					 (|XtSetValues (|Widget (cadr (main-widgets))) (list |XmNallowShellResize (auto-resize)))))
+					 (|XtSetValues (cadr (main-widgets)) (list |XmNallowShellResize (auto-resize)))))
 				     every-menu focused #f)
 
 		 (|XtCreateManagedWidget "sep" |xmSeparatorWidgetClass listener-popup every-menu)

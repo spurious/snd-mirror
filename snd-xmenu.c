@@ -1317,12 +1317,12 @@ void create_popup_menu(snd_state *ss)
 static XEN g_menu_widgets(void)
 {
   #define H_menu_widgets "(" S_menu_widgets ") returns list of top level menu widgets ((0)main (1)file (2)edit (3)view (4)options (5)help)"
-  return(XEN_CONS(XEN_WRAP_C_POINTER(mw[menu_menu]),
-	  XEN_CONS(XEN_WRAP_C_POINTER(mw[f_cascade_menu]),
-           XEN_CONS(XEN_WRAP_C_POINTER(mw[e_cascade_menu]),
-            XEN_CONS(XEN_WRAP_C_POINTER(mw[v_cascade_menu]),
-             XEN_CONS(XEN_WRAP_C_POINTER(mw[o_cascade_menu]),
-              XEN_CONS(XEN_WRAP_C_POINTER(mw[h_cascade_menu]),
+  return(XEN_CONS(XEN_WRAP_WIDGET(mw[menu_menu]),
+	  XEN_CONS(XEN_WRAP_WIDGET(mw[f_cascade_menu]),
+           XEN_CONS(XEN_WRAP_WIDGET(mw[e_cascade_menu]),
+            XEN_CONS(XEN_WRAP_WIDGET(mw[v_cascade_menu]),
+             XEN_CONS(XEN_WRAP_WIDGET(mw[o_cascade_menu]),
+              XEN_CONS(XEN_WRAP_WIDGET(mw[h_cascade_menu]),
 	       XEN_EMPTY_LIST)))))));
 }
 

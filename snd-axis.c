@@ -753,7 +753,7 @@ x0 0.0, x1 1.0, y0 -1.0, y1 1.0, style x-axis-in-seconds, axes #t."
   int len;
   len = XEN_LIST_LENGTH(args);
   XEN_ASSERT_TYPE((len >= 3) && (len < 10), args, XEN_ONLY_ARG, S_draw_axes, "3 required and 6 optional args");
-  w = (Widget)(XEN_TO_C_ULONG(XEN_CADR(XEN_LIST_REF(args, 0))));
+  w = (Widget)(XEN_UNWRAP_WIDGET(XEN_LIST_REF(args, 0)));
   gc = (GC)(XEN_TO_C_ULONG(XEN_CADR(XEN_LIST_REF(args, 1))));
   xlabel = XEN_TO_C_STRING(XEN_LIST_REF(args, 2));
   if (len > 3) x0 = XEN_TO_C_DOUBLE(XEN_LIST_REF(args, 3));

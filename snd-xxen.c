@@ -178,7 +178,7 @@ static XEN g_snd_pixel(XEN color)
   XEN_ASSERT_TYPE(COLOR_P(color), color, XEN_ONLY_ARG, S_snd_pixel, "a Snd color");
   v = TO_SND_COLOR(color); 
   if (v)
-    return(C_TO_XEN_ULONG((unsigned long)(v->color)));
+    return(XEN_WRAP_PIXEL((unsigned long)(v->color)));
   return(XEN_ZERO);
 }
 

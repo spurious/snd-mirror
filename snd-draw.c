@@ -433,6 +433,11 @@ in the drawing mode graphic-style."
   return(XEN_FALSE);
 }
 
+#define XEN_WIDGET_P(Value) (XEN_LIST_P(Value) &&\
+                            (XEN_LIST_LENGTH(Value) >= 2) &&\
+                            (XEN_SYMBOL_P(XEN_CAR(Value))) &&\
+                            (strcmp("Widget", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
+
 static XEN g_main_widgets(void)
 {
   #define H_main_widgets "(" S_main_widgets ") -> top level widgets \
@@ -441,16 +446,16 @@ static XEN g_main_widgets(void)
   XEN main_win;
   ss = get_global_state();
 #if USE_MOTIF
-  main_win = XEN_WRAP_C_POINTER(MAIN_APP(ss));
+  main_win = XEN_WRAP_APPCONTEXT(MAIN_APP(ss));
 #else
-  main_win = XEN_WRAP_C_POINTER(MAIN_WINDOW(ss));
+  main_win = XEN_WRAP_WINDOW(MAIN_WINDOW(ss));
 #endif
   return(XEN_CONS(main_win,
-	   XEN_CONS(XEN_WRAP_C_POINTER(MAIN_SHELL(ss)),
-             XEN_CONS(XEN_WRAP_C_POINTER(MAIN_PANE(ss)),
-               XEN_CONS(XEN_WRAP_C_POINTER(SOUND_PANE(ss)),
-		 XEN_CONS((ss->sgx->listener_pane) ? XEN_WRAP_C_POINTER(ss->sgx->listener_pane) : XEN_FALSE,
-		   XEN_CONS(SOUND_PANE_BOX(ss) ? XEN_WRAP_C_POINTER(SOUND_PANE_BOX(ss)) : XEN_FALSE,
+	   XEN_CONS(XEN_WRAP_WIDGET(MAIN_SHELL(ss)),
+             XEN_CONS(XEN_WRAP_WIDGET(MAIN_PANE(ss)),
+               XEN_CONS(XEN_WRAP_WIDGET(SOUND_PANE(ss)),
+		 XEN_CONS((ss->sgx->listener_pane) ? XEN_WRAP_WIDGET(ss->sgx->listener_pane) : XEN_FALSE,
+		   XEN_CONS(SOUND_PANE_BOX(ss) ? XEN_WRAP_WIDGET(SOUND_PANE_BOX(ss)) : XEN_FALSE,
 		     XEN_EMPTY_LIST)))))));
 }
 
@@ -460,7 +465,7 @@ static XEN new_widget_hook;
 void run_new_widget_hook(GUI_WIDGET w)
 {
   if (XEN_HOOKED(new_widget_hook))
-    g_c_run_progn_hook(new_widget_hook, XEN_LIST_1(XEN_WRAP_C_POINTER(w)), S_new_widget_hook);
+    g_c_run_progn_hook(new_widget_hook, XEN_LIST_1(XEN_WRAP_WIDGET(w)), S_new_widget_hook);
 }
 
 static XEN g_dialog_widgets(void)
@@ -493,7 +498,7 @@ void set_dialog_widget(snd_state *ss, int which, GUI_WIDGET wid)
     }
   XEN_VECTOR_SET(dialog_widgets, 
 		 which, 
-		 XEN_WRAP_C_POINTER(wid));
+		 XEN_WRAP_WIDGET(wid));
   run_new_widget_hook(wid);
 }
 
@@ -501,8 +506,8 @@ static XEN g_widget_position(XEN wid)
 {
   #define H_widget_position "(" S_widget_position " wid) -> '(x y)"
   GUI_WIDGET w;
-  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(wid), wid, XEN_ONLY_ARG, S_widget_position, "a wrapped object");  
-  w = (GUI_WIDGET)(XEN_UNWRAP_C_POINTER(wid));
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ONLY_ARG, S_widget_position, "a Widget");  
+  w = (GUI_WIDGET)(XEN_UNWRAP_WIDGET(wid));
   if (w)
     return(XEN_LIST_2(C_TO_XEN_INT(widget_x(w)),
 		      C_TO_XEN_INT(widget_y(w))));
@@ -515,9 +520,9 @@ static XEN g_widget_position(XEN wid)
 static XEN g_set_widget_position(XEN wid, XEN xy)
 {
   GUI_WIDGET w;
-  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(wid), wid, XEN_ONLY_ARG, "set-" S_widget_position, "a wrapped object");  
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ONLY_ARG, "set-" S_widget_position, "a Widget");  
   XEN_ASSERT_TYPE(XEN_LIST_P(xy) && (XEN_LIST_LENGTH(xy) == 2), xy, XEN_ARG_2, "set-" S_widget_position, "a list: (x y)");  
-  w = (GUI_WIDGET)(XEN_UNWRAP_C_POINTER(wid));
+  w = (GUI_WIDGET)(XEN_UNWRAP_WIDGET(wid));
   if (w)
     set_widget_position(w,
 			XEN_TO_C_INT(XEN_CAR(xy)),
@@ -533,8 +538,8 @@ static XEN g_widget_size(XEN wid)
 {
   #define H_widget_size "(" S_widget_size " wid) -> '(width height)"
   GUI_WIDGET w;
-  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(wid), wid, XEN_ONLY_ARG, S_widget_size, "a wrapped object"); 
-  w = (GUI_WIDGET)(XEN_UNWRAP_C_POINTER(wid));
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ONLY_ARG, S_widget_size, "a Widget"); 
+  w = (GUI_WIDGET)(XEN_UNWRAP_WIDGET(wid));
   if (w)
     return(XEN_LIST_2(C_TO_XEN_INT(widget_width(w)),
 		      C_TO_XEN_INT(widget_height(w))));
@@ -547,9 +552,9 @@ static XEN g_widget_size(XEN wid)
 static XEN g_set_widget_size(XEN wid, XEN wh)
 {
   GUI_WIDGET w;
-  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(wid), wid, XEN_ARG_1, "set-" S_widget_size, "a wrapped object");  
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ARG_1, "set-" S_widget_size, "a Widget");  
   XEN_ASSERT_TYPE(XEN_LIST_P(wh) && (XEN_LIST_LENGTH(wh) == 2), wh, XEN_ARG_2, "set-" S_widget_size, "a list: (width height)");  
-  w = (GUI_WIDGET)(XEN_UNWRAP_C_POINTER(wid));
+  w = (GUI_WIDGET)(XEN_UNWRAP_WIDGET(wid));
   if (w)
     set_widget_size(w,
 		    XEN_TO_C_INT(XEN_CAR(wh)),
@@ -566,8 +571,8 @@ static XEN g_widget_text(XEN wid)
   #define H_widget_text "(" S_widget_text " wid) -> text)"
   GUI_WIDGET w;
   XEN res = XEN_FALSE;
-  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(wid), wid, XEN_ARG_1, S_widget_text, "a wrapped object");
-  w = (GUI_WIDGET)(XEN_UNWRAP_C_POINTER(wid));
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ARG_1, S_widget_text, "a Widget");
+  w = (GUI_WIDGET)(XEN_UNWRAP_WIDGET(wid));
   if (w)
     {
 #if USE_MOTIF
@@ -607,9 +612,9 @@ static XEN g_widget_text(XEN wid)
 static XEN g_set_widget_text(XEN wid, XEN text)
 {
   GUI_WIDGET w;
-  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(wid), wid, XEN_ARG_1, "set-" S_widget_text, "a wrapped object");
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ARG_1, "set-" S_widget_text, "a Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(text), text, XEN_ARG_2, "set-" S_widget_text, "a string");
-  w = (GUI_WIDGET)(XEN_UNWRAP_C_POINTER(wid));
+  w = (GUI_WIDGET)(XEN_UNWRAP_WIDGET(wid));
   if (w)
     {
 #if USE_MOTIF
@@ -633,9 +638,9 @@ static XEN g_recolor_widget(XEN wid, XEN color)
 {
   #define H_recolor_widget "(" S_recolor_widget " wid color) resets widget color"
   GUI_WIDGET w;
-  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(wid), wid, XEN_ARG_1, S_recolor_widget, "a wrapped object");  
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ARG_1, S_recolor_widget, "a Widget");  
   XEN_ASSERT_TYPE(COLOR_P(color), color, XEN_ARG_2, S_recolor_widget, "a color object"); 
-  w = (GUI_WIDGET)(XEN_UNWRAP_C_POINTER(wid));
+  w = (GUI_WIDGET)(XEN_UNWRAP_WIDGET(wid));
   if (w)
     {
 #if USE_MOTIF
@@ -656,8 +661,8 @@ static XEN g_hide_widget(XEN wid)
 {
   #define H_hide_widget "(" S_hide_widget " widget) undisplays widget"
   GUI_WIDGET w;
-  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(wid), wid, XEN_ONLY_ARG, S_hide_widget, "a wrapped object");  
-  w = (GUI_WIDGET)(XEN_UNWRAP_C_POINTER(wid));
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ONLY_ARG, S_hide_widget, "a Widget");  
+  w = (GUI_WIDGET)(XEN_UNWRAP_WIDGET(wid));
   if (w)
     {
 #if USE_MOTIF
@@ -676,8 +681,8 @@ static XEN g_show_widget(XEN wid)
 {
   #define H_show_widget "(" S_show_widget " widget) displays widget"
   GUI_WIDGET w;
-  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(wid), wid, XEN_ONLY_ARG, S_show_widget, "a wrapped object");  
-  w = (GUI_WIDGET)(XEN_UNWRAP_C_POINTER(wid));
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ONLY_ARG, S_show_widget, "a Widget");  
+  w = (GUI_WIDGET)(XEN_UNWRAP_WIDGET(wid));
   if (w)
     {
 #if USE_MOTIF
@@ -696,8 +701,8 @@ static XEN g_focus_widget(XEN wid)
 {
   #define H_focus_widget "(" S_focus_widget " widget) causes widget to receive input ('focus')"
   GUI_WIDGET w;
-  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(wid), wid, XEN_ONLY_ARG, S_focus_widget, "a wrapped object");
-  w = (GUI_WIDGET)(XEN_UNWRAP_C_POINTER(wid));
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ONLY_ARG, S_focus_widget, "a Widget");
+  w = (GUI_WIDGET)(XEN_UNWRAP_WIDGET(wid));
   if (w)
     goto_window(w);
   else XEN_ERROR(NO_SUCH_WIDGET,
@@ -729,22 +734,22 @@ selected_mix fltenv_basic fltenv_data speed)"
   ss = get_global_state();
   sx = ss->sgx;
   if (sx)
-    return(XEN_CONS(C_TO_XEN_ULONG(sx->basic_gc),
-	    XEN_CONS(C_TO_XEN_ULONG(sx->selected_basic_gc), 
-	     XEN_CONS(C_TO_XEN_ULONG(sx->combined_basic_gc), 
-	      XEN_CONS(C_TO_XEN_ULONG(sx->cursor_gc), 
-               XEN_CONS(C_TO_XEN_ULONG(sx->selected_cursor_gc), 
-                XEN_CONS(C_TO_XEN_ULONG(sx->selection_gc), 
-                 XEN_CONS(C_TO_XEN_ULONG(sx->selected_selection_gc), 
-                  XEN_CONS(C_TO_XEN_ULONG(sx->erase_gc), 
-                   XEN_CONS(C_TO_XEN_ULONG(sx->selected_erase_gc), 
-                    XEN_CONS(C_TO_XEN_ULONG(sx->mark_gc), 
-                     XEN_CONS(C_TO_XEN_ULONG(sx->selected_mark_gc), 
-                      XEN_CONS(C_TO_XEN_ULONG(sx->mix_gc), 
-                       XEN_CONS(C_TO_XEN_ULONG(sx->selected_mix_gc), 
-                        XEN_CONS(C_TO_XEN_ULONG(sx->fltenv_basic_gc), 
-                         XEN_CONS(C_TO_XEN_ULONG(sx->fltenv_data_gc), 
-                          XEN_CONS(C_TO_XEN_ULONG(sx->speed_gc),
+    return(XEN_CONS(XEN_WRAP_GC(sx->basic_gc),
+	    XEN_CONS(XEN_WRAP_GC(sx->selected_basic_gc), 
+	     XEN_CONS(XEN_WRAP_GC(sx->combined_basic_gc), 
+	      XEN_CONS(XEN_WRAP_GC(sx->cursor_gc), 
+               XEN_CONS(XEN_WRAP_GC(sx->selected_cursor_gc), 
+                XEN_CONS(XEN_WRAP_GC(sx->selection_gc), 
+                 XEN_CONS(XEN_WRAP_GC(sx->selected_selection_gc), 
+                  XEN_CONS(XEN_WRAP_GC(sx->erase_gc), 
+                   XEN_CONS(XEN_WRAP_GC(sx->selected_erase_gc), 
+                    XEN_CONS(XEN_WRAP_GC(sx->mark_gc), 
+                     XEN_CONS(XEN_WRAP_GC(sx->selected_mark_gc), 
+                      XEN_CONS(XEN_WRAP_GC(sx->mix_gc), 
+                       XEN_CONS(XEN_WRAP_GC(sx->selected_mix_gc), 
+                        XEN_CONS(XEN_WRAP_GC(sx->fltenv_basic_gc), 
+                         XEN_CONS(XEN_WRAP_GC(sx->fltenv_data_gc), 
+                          XEN_CONS(XEN_WRAP_GC(sx->speed_gc),
 			   XEN_EMPTY_LIST)))))))))))))))));
   return(XEN_EMPTY_LIST);
 }

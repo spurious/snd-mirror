@@ -5451,14 +5451,14 @@ XEN g_channel_widgets_1(chan_info *cp)
 static XEN g_channel_widgets_1(chan_info *cp)
 #endif
 {
-  return(XEN_CONS(XEN_WRAP_C_POINTER(channel_graph(cp)),
-	   XEN_CONS(XEN_WRAP_C_POINTER(channel_w(cp)),
-	     XEN_CONS(XEN_WRAP_C_POINTER(channel_f(cp)),
-	       XEN_CONS(XEN_WRAP_C_POINTER(channel_sx(cp)),
-	         XEN_CONS(XEN_WRAP_C_POINTER(channel_sy(cp)),
-	           XEN_CONS(XEN_WRAP_C_POINTER(channel_zx(cp)),
-	             XEN_CONS(XEN_WRAP_C_POINTER(channel_zy(cp)),
-		       XEN_CONS(XEN_WRAP_C_POINTER(channel_edhist(cp)),
+  return(XEN_CONS(XEN_WRAP_WIDGET(channel_graph(cp)),
+	   XEN_CONS(XEN_WRAP_WIDGET(channel_w(cp)),
+	     XEN_CONS(XEN_WRAP_WIDGET(channel_f(cp)),
+	       XEN_CONS(XEN_WRAP_WIDGET(channel_sx(cp)),
+	         XEN_CONS(XEN_WRAP_WIDGET(channel_sy(cp)),
+	           XEN_CONS(XEN_WRAP_WIDGET(channel_zx(cp)),
+	             XEN_CONS(XEN_WRAP_WIDGET(channel_zy(cp)),
+		       XEN_CONS(XEN_WRAP_WIDGET(channel_edhist(cp)),
 	                 XEN_EMPTY_LIST)))))))));
 }
 

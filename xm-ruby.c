@@ -446,7 +446,7 @@
   XEN_NARGIFY_2(gxm_XGetFontProperty_w, gxm_XGetFontProperty)
   XEN_NARGIFY_3(gxm_XGetGCValues_w, gxm_XGetGCValues)
   XEN_NARGIFY_0(gxm_XGCValues_w, gxm_XGCValues)
-  XEN_NARGIFY_0(gxm_XEvent_w, gxm_XEvent)
+  XEN_ARGIFY_1(gxm_XEvent_w, gxm_XEvent)
   XEN_NARGIFY_2(gxm_XGetGeometry_w, gxm_XGetGeometry)
   XEN_NARGIFY_2(gxm_XGetIconName_w, gxm_XGetIconName)
   XEN_NARGIFY_1(gxm_XGetInputFocus_w, gxm_XGetInputFocus)
@@ -1735,7 +1735,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XGetFontProperty" XM_POSTFIX, gxm_XGetFontProperty_w, 2, 0, 0, H_XGetFontProperty);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XGetGCValues" XM_POSTFIX, gxm_XGetGCValues_w, 3, 0, 0, H_XGetGCValues);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XGCValues" XM_POSTFIX, gxm_XGCValues_w, 0, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XEvent" XM_POSTFIX, gxm_XEvent_w, 0, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XEvent" XM_POSTFIX, gxm_XEvent_w, 0, 1, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XGetGeometry" XM_POSTFIX, gxm_XGetGeometry_w, 2, 0, 0, H_XGetGeometry);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XGetIconName" XM_POSTFIX, gxm_XGetIconName_w, 2, 0, 0, H_XGetIconName);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XGetInputFocus" XM_POSTFIX, gxm_XGetInputFocus_w, 1, 0, 0, H_XGetInputFocus);

@@ -612,7 +612,7 @@ static XEN g_region_dialog(void)
   ss = get_global_state();
   if (snd_regions() > 0) 
     view_region_callback(MAIN_PANE(ss), (XtPointer)ss, NULL);
-  return(XEN_WRAP_C_POINTER(region_dialog));
+  return(XEN_WRAP_WIDGET(region_dialog));
 }
 
 #if DEBUGGING
@@ -620,12 +620,12 @@ XEN g_channel_widgets_1(chan_info *cp);
 static XEN g_region_dialog_widgets(void)
 {
   if (region_dialog)
-    return(XEN_CONS(XEN_WRAP_C_POINTER(region_dialog),
-             XEN_CONS(XEN_WRAP_C_POINTER(prtb),
-	       XEN_CONS(XEN_WRAP_C_POINTER(editb),
-		 XEN_CONS(XEN_WRAP_C_POINTER(XmMessageBoxGetChild(region_dialog, XmDIALOG_OK_BUTTON)),
-		   XEN_CONS(XEN_WRAP_C_POINTER(XmMessageBoxGetChild(region_dialog, XmDIALOG_CANCEL_BUTTON)),
-		     XEN_CONS(XEN_WRAP_C_POINTER(XmMessageBoxGetChild(region_dialog, XmDIALOG_HELP_BUTTON)),
+    return(XEN_CONS(XEN_WRAP_WIDGET(region_dialog),
+             XEN_CONS(XEN_WRAP_WIDGET(prtb),
+	       XEN_CONS(XEN_WRAP_WIDGET(editb),
+		 XEN_CONS(XEN_WRAP_WIDGET(XmMessageBoxGetChild(region_dialog, XmDIALOG_OK_BUTTON)),
+		   XEN_CONS(XEN_WRAP_WIDGET(XmMessageBoxGetChild(region_dialog, XmDIALOG_CANCEL_BUTTON)),
+		     XEN_CONS(XEN_WRAP_WIDGET(XmMessageBoxGetChild(region_dialog, XmDIALOG_HELP_BUTTON)),
 		       (reg_sp) ? g_channel_widgets_1(reg_sp->chans[0]) : XEN_EMPTY_LIST)))))));
   return(XEN_EMPTY_LIST);
 }
@@ -637,7 +637,7 @@ static XEN g_region_row_widgets(void)
   for (i = region_rows_size - 1; i >= 0; i--)
     if ((region_rows[i]) &&
 	(XtIsManaged(region_rows[i]->nm)))
-      lst = XEN_CONS(XEN_WRAP_C_POINTER(region_rows[i]->nm), lst);
+      lst = XEN_CONS(XEN_WRAP_WIDGET(region_rows[i]->nm), lst);
   return(lst);
 }
 #endif

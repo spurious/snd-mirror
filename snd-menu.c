@@ -758,7 +758,7 @@ static XEN g_main_menu(XEN which)
     XEN_ERROR(NO_SUCH_MENU,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_main_menu),
 			 which));
-  return(C_TO_XEN_ULONG((unsigned long)menu_widget(which_menu)));
+  return(XEN_WRAP_WIDGET(menu_widget(which_menu)));
 }
 
 

@@ -550,7 +550,7 @@ static XEN g_region_dialog(void)
   ss = get_global_state();
   if (snd_regions() > 0) 
     view_region_callback(MAIN_PANE(ss), (gpointer)ss); 
-  return(XEN_WRAP_C_POINTER(region_dialog));
+  return(XEN_WRAP_WIDGET(region_dialog));
 }
 
 #if DEBUGGING
@@ -558,12 +558,12 @@ XEN g_channel_widgets_1(chan_info *cp);
 static XEN g_region_dialog_widgets(void)
 {
   if (region_dialog)
-    return(XEN_CONS(XEN_WRAP_C_POINTER(region_dialog),
-             XEN_CONS(XEN_WRAP_C_POINTER(print_button),
-	       XEN_CONS(XEN_WRAP_C_POINTER(edit_button),
-		 XEN_CONS(XEN_WRAP_C_POINTER(dismiss_button),
-		   XEN_CONS(XEN_WRAP_C_POINTER(delete_button),
-		     XEN_CONS(XEN_WRAP_C_POINTER(help_button),
+    return(XEN_CONS(XEN_WRAP_WIDGET(region_dialog),
+             XEN_CONS(XEN_WRAP_WIDGET(print_button),
+	       XEN_CONS(XEN_WRAP_WIDGET(edit_button),
+		 XEN_CONS(XEN_WRAP_WIDGET(dismiss_button),
+		   XEN_CONS(XEN_WRAP_WIDGET(delete_button),
+		     XEN_CONS(XEN_WRAP_WIDGET(help_button),
 		       (reg_sp) ? g_channel_widgets_1(reg_sp->chans[0]) : XEN_EMPTY_LIST)))))));
   return(XEN_EMPTY_LIST);
 }
@@ -575,7 +575,7 @@ static XEN g_region_row_widgets(void)
   for (i = region_rows_size - 1; i >= 0; i--)
     if ((region_rows[i]) &&
 	(GTK_WIDGET_IS_SENSITIVE(region_rows[i]->nm)))
-      lst = XEN_CONS(XEN_WRAP_C_POINTER(region_rows[i]->nm), lst);
+      lst = XEN_CONS(XEN_WRAP_WIDGET(region_rows[i]->nm), lst);
   return(lst);
 }
 #endif
