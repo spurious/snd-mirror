@@ -552,6 +552,8 @@ If 'check' is #f, the hooks are removed."
 
 ;;; -------- sine-ramp sine-env-channel 
 
+(if (not (defined? 'pi)) (define pi 3.141592653589793))
+
 (define* (sine-ramp rmp0 rmp1 #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
   ;; vct: angle incr off scl
   (ptree-channel

@@ -633,11 +633,11 @@ a sort of "FM index" parameter (named "k", hence the generator name) to vary the
 <p>edit-menu.scm adds some useful options to the Edit menu:
 </p>
 <pre>
-  trim front and trim back (to/from marks)
-  crop (first and last marks)
-  selection-&gt;new
-  cut selection-&gt;new
-  append selection (and append sound)
+  <b>trim front</b> and <b>trim back</b> (to/from marks)
+  <b>crop</b> (first and last marks)
+  <b>selection-&gt;new</b>
+  <b>cut selection-&gt;new</b>
+  <b>append selection</b> (and append sound)
 </pre>
 <!-- I(trim sound):M(Edit: Trim)(editmenudoc) -->
 <!-- I(trim sound):A(editmenudoc) -->
@@ -651,22 +651,22 @@ to control most of the effects.  (Use gtk-effects.scm with Gtk, obviously).
 The effects include:
 </p>
 <pre>
-  reverse
-  normalize (normalization)
-  gain (gain-amount)
-  invert
-  chordalize (chordalize-amount, chordalize-base)
-  flange (increase speed and amount to get phasing, flange-speed, flange-amount, flange-time)
-  compand, compand-channel
-  reverberate (reverb-amount)
-  intensify (contrast-amount)
-  echo (echo-length, echo-amount)
-  squelch (squelch-amount, omit-silence)
-  add silence (at cursor) (silence-amount)
-  remove DC
-  expsrc (independent pitch/time scaling) (time-scale and pitch-scale)
-  various filters
-  cross synthesis
+  <b>reverse</b>
+  <b>normalize</b> (normalization)
+  <b>gain</b> (gain-amount)
+  <b>invert</b>
+  <b>chordalize</b> (chordalize-amount, chordalize-base)
+  <b>flange</b> (increase speed and amount to get phasing, flange-speed, flange-amount, flange-time)
+  <b>compand</b>, compand-channel
+  <b>reverberate</b> (reverb-amount)
+  <b>intensify</b> (contrast-amount)
+  <b>echo</b> (echo-length, echo-amount)
+  <b>squelch</b> (squelch-amount, omit-silence)
+  <b>add silence</b> (at cursor) (silence-amount)
+  <b>remove DC</b>
+  <b>expsrc</b> (independent pitch/time scaling) (time-scale and pitch-scale)
+  <b>filter</b>
+  <b>cross synthesis</b>
 </pre>
 
 <!-- I(reverse samples):M(Effects: Reverse)(effectsdoc) -->
@@ -1679,6 +1679,23 @@ a sum of cosines, and <b>env-squared-channel</b> connects the dots with an x^2 c
 positive exponent, use <b>env-expt-channel</b>.  The <i>symmetric</i> argument determines whether the
 up and down moving ramps look symmetrical around a break point.
 </p>
+
+<!--
+(env-channel '(0 0 1 1 2 -.75 3 0)) 
+(env-sound '(0 0 1 1 2 -.75 3 0) 0 100 32.0)  
+(env-sound '(0 0 1 1 2 -.75 3 0) 0 100 .032) 
+(env-sound '(0 0 1 1 2 -.75 3 0) 0 100 0.0)
+(sine-env-channel '(0 0 1 1 2 -.75 3 0))
+(env-squared-channel '(0 0 1 1 2 -.75 3 0))
+(blackman4-env-channel '(0 0 1 1 2 -.75 3 0))
+(env-squared-channel '(0 0 1 1 2 -.75 3 0) #f)
+(env-expt-channel '(0 0 1 1 2 -.75 3 0) 3.0)
+(env-expt-channel '(0 0 1 1 2 -.75 3 0) 3.0 #f)
+(env-expt-channel '(0 0 1 1 2 -.75 3 0) .3)
+(env-expt-channel '(0 0 1 1 2 -.75 3 0) .3)
+-->
+
+<center><img src="exptenvs.png"></center>
 <br><br>
 
 
@@ -2233,6 +2250,8 @@ any of several classic papers also by Julius Smith.  Perry's own version of this
 found in <a href="www-ccrma.stanford.edu/CCRMA/Software/STK/">STK</a>.
 The example instruments are:
 </p>
+<table border=0>
+<tr><td>
 <pre>
   <em class=emdef>plucky</em> beg dur freq amplitude maxa
   <em class=emdef>bow</em> beg dur frq amplitude maxa
@@ -2240,14 +2259,15 @@ The example instruments are:
   <em class=emdef>clarinet</em> beg dur freq amplitude maxa
   <em class=emdef>flute</em> beg dur freq amplitude maxa
 
-(define (test-prc95)
-  (plucky 0 .3 440 .2 1.0)
-  (bow .5 .3 220 .2 1.0)
-  (brass 1 .3 440 .2 1.0)
-  (clarinet 1.5 .3 440 .2 1.0)
-  (flute 2 .3 440 .2 1.0))
+  (define (test-prc95)
+    (plucky 0 .3 440 .2 1.0)
+    (bow .5 .3 220 .2 1.0)
+    (brass 1 .3 440 .2 1.0)
+    (clarinet 1.5 .3 440 .2 1.0)
+    (flute 2 .3 440 .2 1.0))
 </pre>
-
+</td>
+<td>
 <table border=3 bordercolor="tan" hspace=40><tr><td>
 <blockquote><small>
 <br>
@@ -2262,6 +2282,7 @@ plucked string: pluck in clm-ins.scm<br>
 plate-reverb: ladspa.scm<br>
 <br>
 </small></blockquote>
+</td></tr></table>
 </td></tr></table>
 <br>
 

@@ -3594,13 +3594,13 @@ return a vct containing <i>samps</i> samples starting at <i>samp</i> in region <
 channel <i>chn</i>. If v (a vct) is provided, it is filled, 
 rather than creating a new vct.
 </td></tr>
-<tr><td colspan=2>
-<center><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<tr><td></td><td>
+<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define (region-rms n)
   (let* ((data (<em class=red>region-samples-&gt;vct</em> 0 0 n)) ; len=0 =&gt; entire region
 	 (len (<a class=quiet href="#vctlength">vct-length</a> data)))
     (sqrt (/ (<a class=quiet href="clm.html#dot-product">dot-product</a> data data len) len))))
-</pre></td></tr></table></center>
+</pre></td></tr></table>
 </td></tr>
 
 <!-- region-srate -->

@@ -8103,6 +8103,30 @@ char *device_name(AudioDeviceID deviceID, int input_case)
   return(full_name);
 }	
 
+static int max_chans_via_stream_configuration(AudioDeviceID device, bool input_case)
+{
+  /* apparently MOTU 828 has to be different (this code from portaudio) */
+  UInt32 size = 0;
+  Boolean writable;
+  OSStatus err = noErr;
+  err = AudioDeviceGetPropertyInfo(device, 0, input_case, kAudioDevicePropertyStreamConfiguration, &size, &writable);
+  if (err == noErr)
+    {
+      AudioBufferList *list;
+      list = (AudioBufferList *)malloc(size);
+      err = AudioDeviceGetProperty(device, 0, input_case, kAudioDevicePropertyStreamConfiguration, &size, list);
+      if (err == noErr)
+	{
+	  int chans = 0, i;
+	  for (i = 0; i < list->mNumberBuffers; i++)
+	    chans += list->mBuffers[i].mNumberChannels;
+	  free(list);
+	  return(chans);
+	}
+    }
+  return(-1);
+}
+
 static void describe_audio_state_1(void) 
 {
   OSStatus err = noErr;
@@ -8167,11 +8191,20 @@ static void describe_audio_state_1(void)
 	  err = AudioDeviceGetProperty(device, 0, input_case, kAudioDevicePropertyStreamFormat, &size, &desc);
 	  if (err == noErr) 
 	    {
+	      int config_chans;
 	      unsigned int trans;
 	      trans = (unsigned int)(desc.mFormatID);
-	      mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "\n    srate: %d, chans: %d, bits/sample: %d, format: %c%c%c%c",
+	      mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "\n    srate: %d, chans: %d",
 			   (int)(desc.mSampleRate), 
-			   (int)(desc.mChannelsPerFrame), 
+			   (int)(desc.mChannelsPerFrame));
+	      pprint(audio_strbuf);
+	      config_chans = max_chans_via_stream_configuration(device, input_case);
+	      if ((config_chans > 0) && (config_chans != (int)(desc.mChannelsPerFrame)))
+		{
+		  mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, " (or %d?)", config_chans);
+		  pprint(audio_strbuf);
+		}
+	      mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, ", bits/sample: %d, format: %c%c%c%c",
 			   (int)(desc.mBitsPerChannel),
 			   (trans >> 24) & 0xff, (trans >> 16) & 0xff, (trans >> 8) & 0xff, trans & 0xff);
 	      pprint(audio_strbuf);
@@ -8706,7 +8739,7 @@ int mus_audio_read(int line, char *buf, int bytes)
 
 static int max_chans(AudioDeviceID device, int input)
 {
-  int maxc = 0, formats, k;
+  int maxc = 0, formats, k, config_chans;
   UInt32 size;
   OSStatus err;
   AudioStreamBasicDescription desc;
@@ -8731,6 +8764,8 @@ static int max_chans(AudioDeviceID device, int input)
 	}
     }
   else fprintf(stderr, "read chans hit: %s\n", osx_error(err));
+  config_chans = max_chans_via_stream_configuration(device, input);
+  if (config_chans > maxc) return(config_chans);
   return(maxc);
 }
 
