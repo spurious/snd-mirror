@@ -258,3 +258,20 @@
 	(begin
 	  (|XChangeProperty dpy window (|XInternAtom dpy name #f) |XA_STRING 8 |PropModeReplace command)
 	  (|XFlush dpy)))))
+
+(define beep-state
+  (make-procedure-with-setter
+   (lambda ()
+     ;; returns amp pitch duration
+     (let ((vals (|XGetKeyboardControl (|XtDisplay (cadr (main-widgets))))))
+       (list (list-ref vals 1) (list-ref vals 2) (list-ref vals 3))))
+   (lambda (lst) 
+     ; amp pitch dur
+     ; (set! (beep-state) (list 100 200 100))
+     (|XChangeKeyboardControl 
+       (|XtDisplay (cadr (main-widgets)))
+       (logior |KBBellPercent |KBBellPitch |KBBellDuration)
+       (cons 0 lst)))))
+
+(define (beep)
+  (|XBell (|XtDisplay (cadr (main-widgets))) 100))

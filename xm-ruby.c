@@ -218,8 +218,6 @@
   XEN_NARGIFY_2(gxm_XtCreateSelectionRequest_w, gxm_XtCreateSelectionRequest)
   XEN_NARGIFY_3(gxm_XtSendSelectionRequest_w, gxm_XtSendSelectionRequest)
   XEN_NARGIFY_2(gxm_XtCancelSelectionRequest_w, gxm_XtCancelSelectionRequest)
-  XEN_NARGIFY_1(gxm_XtReservePropertyAtom_w, gxm_XtReservePropertyAtom)
-  XEN_NARGIFY_2(gxm_XtReleasePropertyAtom_w, gxm_XtReleasePropertyAtom)
   XEN_NARGIFY_6(gxm_XtGrabKey_w, gxm_XtGrabKey)
   XEN_NARGIFY_3(gxm_XtUngrabKey_w, gxm_XtUngrabKey)
   XEN_NARGIFY_5(gxm_XtGrabKeyboard_w, gxm_XtGrabKeyboard)
@@ -1447,8 +1445,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCreateSelectionRequest" XM_POSTFIX, gxm_XtCreateSelectionRequest_w, 2, 0, 0, H_XtCreateSelectionRequest);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSendSelectionRequest" XM_POSTFIX, gxm_XtSendSelectionRequest_w, 3, 0, 0, H_XtSendSelectionRequest);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCancelSelectionRequest" XM_POSTFIX, gxm_XtCancelSelectionRequest_w, 2, 0, 0, H_XtCancelSelectionRequest);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtReservePropertyAtom" XM_POSTFIX, gxm_XtReservePropertyAtom_w, 1, 0, 0, H_XtReservePropertyAtom);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtReleasePropertyAtom" XM_POSTFIX, gxm_XtReleasePropertyAtom_w, 2, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGrabKey" XM_POSTFIX, gxm_XtGrabKey_w, 6, 0, 0, H_XtGrabKey);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtUngrabKey" XM_POSTFIX, gxm_XtUngrabKey_w, 3, 0, 0, H_XtUngrabKey);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGrabKeyboard" XM_POSTFIX, gxm_XtGrabKeyboard_w, 5, 0, 0, H_XtGrabKeyboard);
@@ -1756,7 +1752,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetLineAttributes" XM_POSTFIX, gxm_XSetLineAttributes_w, 6, 0, 0, H_XSetLineAttributes);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetModifierMapping" XM_POSTFIX, gxm_XSetModifierMapping_w, 2, 0, 0, H_XSetModifierMapping);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetPlaneMask" XM_POSTFIX, gxm_XSetPlaneMask_w, 3, 0, 0, H_XSetPlaneMask);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetPointerMapping" XM_POSTFIX, gxm_XSetPointerMapping_w, 3, 0, 0, H_XSetPointerMapping);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetPointerMapping" XM_POSTFIX, gxm_XSetPointerMapping_w, 2, 1, 0, H_XSetPointerMapping);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetScreenSaver" XM_POSTFIX, gxm_XSetScreenSaver_w, 5, 0, 0, H_XSetScreenSaver);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetSelectionOwner" XM_POSTFIX, gxm_XSetSelectionOwner_w, 4, 0, 0, H_XSetSelectionOwner);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetState" XM_POSTFIX, gxm_XSetState_w, 6, 0, 0, H_XSetState);

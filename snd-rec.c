@@ -1513,14 +1513,18 @@ void cleanup_recording (void)
     }
 }
 
-static BACKGROUND_TYPE run_adc(GUI_POINTER ss)
+static BACKGROUND_TYPE run_adc(GUI_POINTER uss)
 {
   BACKGROUND_TYPE val;
-  val = read_adc((snd_state *)ss);
-  if (val == BACKGROUND_QUIT) 
+  snd_state *ss = (snd_state *)uss;
+  val = read_adc(ss);
+#if DEBUGGING
+  if (!(with_background_processes(ss))) val = BACKGROUND_QUIT;
+#endif
+  if (val == BACKGROUND_QUIT)
     {
       rp->recording = 0;
-      finish_recording((snd_state *)ss, rp);
+      finish_recording(ss, rp);
     }
   return(val);
 }

@@ -40,6 +40,7 @@
   <li><a href="#effectsdoc">new-effects.scm: an Effects menu</a>
   <li><a href="#envdoc">env.scm: envelope functions</a>
   <li><a href="#enveddoc">enved.scm: envelope editor</a>
+  <li><a href="#eventdoc">event.scm: xm module stuff</a>
   <li><a href="#exampdoc">examp.scm: many examples</a>
   <li><a href="#extensionsdoc">extensions.scm: various generally useful Snd extensions</a>
   <li><a href="#fmvdoc">fmv.scm: a controller for the fm-violin</a>
@@ -599,6 +600,17 @@ the second if you're setting it to something new:
 (set! (channel-envelope s c) e)
 </pre>
 <br clear=right>
+
+
+<A NAME="eventdoc"></a><span class=box><h2>event.scm</h2></span>
+
+<p>event.scm has functions used by snd-test.scm to exercise the user interface.
+These functions use the xm module and XSendEvent primarily, but there are
+also scheme implementations of some of the built-in functions (change-prop).
+Once the gtk2 version of Snd is usable, I'll start moving most of the
+graphics extensions out of C and into Scheme.
+</p>
+
 
 <A NAME="exampdoc"></a><span class=box><h2>examp.scm</h2></span>
 

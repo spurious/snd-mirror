@@ -23,8 +23,13 @@
 ;;; test 20: transforms
 ;;; test 21: goops
 ;;; test 22: Snd user-interface
-;;; test 23: X/Xt/Xm
-;;; test 24: errors
+;;; test 23: X/Xt/Xm/Xpm
+;;; test 24: Glib/gdk/gdk-pixbuf/pango/gtk
+;;; test 25: errors
+
+;;; TODO: gtk tests
+;;; TODO: Xt selection tests? rest of Motif tests?
+;;; TODO: rest of Snd callbacks triggered
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs) (ice-9 syncase))
 
@@ -49,7 +54,7 @@
 (define snd-test -1)
 (define keep-going #f)
 (define full-test (< snd-test 0))
-(define total-tests 24)
+(define total-tests 25)
 (define with-exit (< snd-test 0))
 (set! (with-background-processes) #f)
 (define all-args #f) ; huge arg testing
@@ -2495,7 +2500,7 @@
       (set! a-ctr 0)
       (key (char->integer #\a) 0) 
       (do ((i 0 (1+ i)))
-	  ((= i 4))
+	  ((= i 5))
 	(let ((psf (eps-file)))
 	  (if (and psf (string? psf))
 	      (begin
@@ -7478,6 +7483,7 @@
 	    (snd-display ";4th scale-by mix ~A: ~A ~A" md vals new-vals)))
       (IF (not (equal? (edits (list md)) (list 2 0)))
 	  (snd-display ";4th scaled mix edits: ~A?" (edits (list md))))
+      (set! (mix-length md) 4)
       (close-sound oboe)
       )
 
@@ -12092,6 +12098,8 @@ EDITS: 4
 	    (IF (fneq fval gval)
 		(snd-display ";fcomb at ~A: ~A ~A?" i fval gval)))))))
 
+(if (provided? 'snd-nogui) (exit))
+
 
 ;;; ---------------- test 22: user-interface ----------------
 
@@ -13155,6 +13163,35 @@ EDITS: 4
 		(close-sound ind)
 		))
 
+	    ;; -------- recorder dialog
+	    (if (provided? 'snd-debug)
+		(begin
+		  (recorder-dialog)
+		  (let* ((recd (list-ref (dialog-widgets) 18))
+			 (record-button (find-child recd "record-button"))
+			 (reset-button (|XmMessageBoxGetChild recd |XmDIALOG_CANCEL_BUTTON))
+			 (dismiss-button (|XmMessageBoxGetChild recd |XmDIALOG_OK_BUTTON))
+			 (panes (find-child recd "rec-panes"))
+			 (file-pane (find-child panes "file-pane"))
+			 (fdata (find-child file-pane "file-data"))
+			 (ff (find-child fdata "ff-form"))
+			 (file-text (find-child ff "text"))
+			 (buttons '()))
+		    (for-each-child recd (lambda (w) 
+					   (if (and (|XmIsPushButton w) 
+						    (string=? (|XtName w) "A")) 
+					       (set! buttons (cons w buttons)))))
+		    (|XmTextSetString file-text "fmv.snd")
+		    (for-each
+		     (lambda (w)
+		       (click-button w #t))
+		     buttons)
+		    (click-button record-button #t)
+		    (click-button record-button #f)
+		    (click-button reset-button)
+		    (click-button dismiss-button))))
+	      
+
 	    ;; -------- edit find dialog
 	    (if (defined? 'edit-find-dialog)
 		(begin
@@ -13285,6 +13322,7 @@ EDITS: 4
 			(if (> (random 1.0) .9) (begin (click-button save-button) (force-event)))
 			(if (> (random 1.0) .9) (begin (click-button print-button) (force-event)))
 			(if (> (random 1.0) .9) (begin (click-button dB-button) (force-event)))
+			(if (> (random 1.0) .9) (begin (set! (enved-base) 0.0) (click-button exp-button) (force-event)))
 			(if (> (random 1.0) .9) (begin (set! (enved-base) (random 2.0)) (click-button exp-button) (force-event)))
 			(if (> (random 1.0) .9) (begin (click-button lin-button) (force-event)))
 			(let* ((e (enved-active-env)))
@@ -13348,6 +13386,13 @@ EDITS: 4
 			    (snd-display ";apply flt fragment: ~A?" (edit-fragment 3)))
 			(IF (not (> (frames ind) (* 2 fr)))
 			    (snd-display ";apply src length: ~A ~A?" fr (frames ind)))
+			(click-button (find-child (car enved-widgets) "exp:"))
+			(|XtCallCallbacks (find-child (car enved-widgets) "expscl") |XmNdragCallback
+					  (let ((cb (|XmScrollBarCallbackStruct)))
+					    (set! (|value cb) 65)
+					    (set! (|event cb) (|XEvent))
+					    cb))
+			(click-button show-button) (force-event)
 			(close-sound ind))
 		      
 		      (click-button dismiss-button) (force-event)
@@ -14006,6 +14051,29 @@ EDITS: 4
 			  (snd-display ";amp mix-panel at 2001: ~A (~A)?" (sample 2001) s2001))
 		      (click-button playb)
 		      (move-scroll spdscr 20)
+		      (for-each
+		       (lambda (scrl)
+			 (|XtCallCallbacks scrl |XmNdragCallback
+					   (let ((cb (|XmScrollBarCallbackStruct)))
+					     (set! (|value cb) 50)
+					     (set! (|event cb) (|XEvent))
+					     cb)))
+		       (list spdscr ampscr))
+		      (for-each
+		       (lambda (n)
+			 (click-button n #t 0)
+			 (click-button n #t |ControlMask))
+		       (map
+			(lambda (w) (find-child mixd w))
+			(list "speed-label" "amp-label")))
+		      (widget-string begtxt "0.5") (force-event)
+		      (key-event begtxt snd-return-key 0) (force-event)
+		      (widget-string trktxt "2") (force-event)
+		      (key-event trktxt snd-return-key 0) (force-event)
+		      (widget-string nametxt "3") (force-event)
+		      (key-event nametxt snd-return-key 0) (force-event)
+		      (widget-string idtxt "2") (force-event)
+		      (key-event idtxt snd-return-key 0) (force-event)
 		      (click-button (|XmMessageBoxGetChild mixd |XmDIALOG_OK_BUTTON)) (force-event)     ;dismiss
 		      (IF (|XtIsManaged mixd)
 			  (snd-display ";why is mix-panel dialog alive?"))))
@@ -14318,6 +14386,8 @@ EDITS: 4
 		(IF (= (|XParseColor dpy cmap "blue" col) 0) (snd-display ";XParseColor?"))
 		(IF (not (= (|red col) 0)) (snd-display ";XParseColor: ~A" (|red col))))
 
+	      (|XSetAfterFunction dpy (lambda (n) 0))
+	      (|XSetAfterFunction dpy #f)
 	      (IF (not (equal? (|XDisplayKeycodes dpy) (list 1 8 255)))
 		  (snd-display "XDisplayKeycodes: ~A" (|XDisplayKeycodes dpy)))
 	      (let ((str (|XFetchName dpy win)))
@@ -14343,9 +14413,23 @@ EDITS: 4
 		(IF (or (not (= (car focus) 1))
 			(not (|Window? (cadr focus))))
 		    (snd-display ";XGetInputFocus: ~A" focus)))
-	      (|XGetPointerControl dpy)
-	      (|XGetKeyboardControl dpy)
-	      (|XGetPointerMapping dpy 0 3)
+	      (let ((vals (|XGetPointerControl dpy)))
+		(IF (not (equal? vals (list 1 2 1 4))) (snd-display "pointer state: ~A" vals))
+		(|XChangePointerControl dpy #f #t 2 1 8)
+		(set! vals (|XGetPointerControl dpy))
+		(IF (not (equal? vals (list 1 2 1 8))) (snd-display "set pointer state: ~A" vals))
+		(|XChangePointerControl dpy #f #t 2 1 4))
+	      (let ((vals (beep-state)))
+		(IF (not (= (cadr vals) 400)) (snd-display ";beep state: ~A" vals))
+		(set! (beep-state) (list 100 200 100))
+		(set! vals (beep-state))
+		(IF (not (= (cadr vals) 200)) (snd-display ";set beep state: ~A" vals)))
+	      (|XAutoRepeatOff dpy)
+	      (IF (not (= (list-ref (|XGetKeyboardControl dpy) 5) 0)) (snd-display ";AutoRepeatOff?"))
+	      (|XAutoRepeatOn dpy)
+	      (IF (not (= (list-ref (|XGetKeyboardControl dpy) 5) 1)) (snd-display ";AutoRepeatOn?"))
+	      (let ((vals (|XGetPointerMapping dpy 0 3)))
+		(IF (not (equal? vals (list 1 2 3))) (snd-display ";XGetPointerMapping: ~A" vals)))
 	      (|XGetScreenSaver dpy)
 	      (|XMoveWindow dpy win 100 10)
 	      (|XSync dpy #f)
@@ -14368,6 +14452,8 @@ EDITS: 4
 		(IF (not (|map_installed attr)) (snd-display ";XGetWindowAttributes map_installed: ~A" (|map_installed attr)))
 		(IF (not (= (|backing_pixel attr) 0)) (snd-display ";XGetWindowAttributes backing_pixel: ~A" (|backing_pixel attr)))
 		(IF (not (= (|map_state attr) 2)) (snd-display ";XGetWindowAttributes map_state: ~A" (|map_state attr)))
+		(IF (not (= (|your_event_mask attr) #x628033)) (snd-display ";your_event_mask: ~X" (|your_event_mask attr)))
+		(IF (not (= (|all_event_masks attr) #xe28033)) (snd-display ";all_event_masks: ~X" (|all_event_masks attr)))
 		(IF (not (|Screen? (|screen attr))) (snd-display ";XGetWindowAttributes screen: ~A" (|screen attr)))
 		(IF (not (= (|do_not_propagate_mask attr) 0)) (snd-display ";XGetWindowAttributes do_not_propagate_mask: ~A" (|do_not_propagate_mask attr)))
 		(IF (|save_under attr) (snd-display ";XGetWindowAttributes save_under ~A" (|save_under attr)))
@@ -14830,6 +14916,7 @@ EDITS: 4
 	      (IF (not (= (|blue c) 1)) (snd-display ";Xcolor blue: ~A" (|blue c)))
 	      (set! (|flags c) |DoRed)
 	      (IF (not (= (|flags c) |DoRed)) (snd-display ";Xcolor flags: ~A" (|flags c)))
+	      (IF (not (= (|pad c) 0)) (snd-display ";pad: ~A" (|pad c)))
 	      (set! (|pixel c) (snd-pixel (basic-color)))
 	      (IF (not (equal? (|pixel c) (snd-pixel (basic-color)))) (snd-display ";Xcolor pixel: ~A" (|pixel c))))
 
@@ -15022,6 +15109,9 @@ EDITS: 4
 		    (snd-display ";X(t)ConvertCase: ~A ~A" k x)))
 	      )
 
+	    (let ((pop (|XtCreatePopupShell "hiho" |xmGrabShellWidgetClass (cadr (main-widgets)) '())))
+	      (|XtPopup pop |XtGrabNone)
+	      (|XtPopdown pop))
 	    (|XtSetWarningHandler (lambda (n) 
 				    (IF (not (string=? n "hiho"))
 					(snd-display "XtWarning: ~A" n))))
@@ -15227,8 +15317,16 @@ EDITS: 4
 		(IF (not (|XRectangle? r)) (snd-display ";XmWidgetGetDisplayRect: ~A" r)))
 	      (|XDrawImageString dpy (list 'Window (cadr pix)) gc 0 10 "hiho" 4)
 	      (let* ((data (|XtCalloc (* 11 11 depth) 1))
-		     (before (|XCreateImage dpy vis depth |XYPixmap 0 data 10 10 8 0)))
-		(|XGetSubImage dpy (list 'Window (cadr pix)) 0 0 10 10 |AllPlanes |XYPixmap before 0 0)
+		     (before (|XCreateImage dpy vis depth |XYPixmap 0 data 10 10 8 0))
+		     (newimage (|XGetSubImage dpy (list 'Window (cadr pix)) 0 0 10 10 |AllPlanes |XYPixmap before 0 0)))
+		(|XSubImage newimage 0 0 3 3)
+		(IF (not (= (|bytes_per_line newimage) 2)) (snd-display "bytes_per_line: ~A" (|bytes_per_line newimage)))
+		(IF (not (= (|byte_order newimage) 0)) (snd-display "byte_order: ~A" (|byte_order newimage)))
+		(IF (not (= (|bitmap_pad newimage) 8)) (snd-display "bitmap_pad: ~A" (|bitmap_pad newimage)))
+		(IF (not (= (|bitmap_bit_order newimage) 0)) (snd-display "bitmap_bit_order: ~A" (|bitmap_bit_order newimage)))
+		(IF (not (= (|bitmap_unit newimage) 32)) (snd-display "bitmap_unit: ~A" (|bitmap_unit newimage)))
+		(IF (not (= (|obdata newimage) 0)) (snd-display "obdata: ~A" (|obdata newimage)))
+		(IF (not (= (|xoffset newimage) 0)) (snd-display "xoffset: ~A" (|xoffset newimage)))
 		(|XPutPixel before 1 1 (snd-pixel (basic-color)))
 		(|XGetPixel before 1 1)
 		(|XPutImage dpy (list 'Window (cadr rotpix)) gc before 0 0 0 0 10 10)
@@ -15250,6 +15348,9 @@ EDITS: 4
 		  (set! (|valuemask attr) (logior |XpmColorSymbols |XpmDepth |XpmColormap |XpmVisual))
 		  (IF (not (= (|valuemask attr) (logior |XpmColorSymbols |XpmDepth |XpmColormap |XpmVisual)))
 		      (snd-display ";valuemask: ~A" (|valuemask attr)))
+		  (IF (not (= (|x_hotspot attr) 0)) (snd-display ";x_hotspot: ~A" (|x_hotspot attr)))
+		  (IF (not (= (|y_hotspot attr) 0)) (snd-display ";y_hotspot: ~A" (|y_hotspot attr)))
+		  (IF (not (= (|npixels attr) 0)) (snd-display ";npixels: ~A" (|npixels attr)))
 		  (let ((err (|XpmCreatePixmapFromData dpy win 
 						       (list "16 14 6 1"
 							     " 	c None s None"
@@ -15557,7 +15658,7 @@ EDITS: 4
 						      |XmNrightAttachment     |XmATTACH_FORM
 						      |XmNtopAttachment       |XmATTACH_FORM
 						      |XmNbottomAttachment    |XmATTACH_NONE)))
-		   (txtf (|XtCreateManagedWidget "textfield" |xmTextFieldWidgetClass frm
+		   (txtf (|XtVaCreateManagedWidget "textfield" |xmTextFieldWidgetClass frm
 						(list |XmNeditable #t
 						      |XmNleftAttachment      |XmATTACH_FORM
 						      |XmNrightAttachment     |XmATTACH_FORM
@@ -16089,7 +16190,7 @@ EDITS: 4
 		         |XtGetSelectionValues |XtAppSetSelectionTimeout |XtSetSelectionTimeout |XtAppGetSelectionTimeout
 		         |XtGetSelectionTimeout |XtGetSelectionRequest |XtGetSelectionValueIncremental
 		         |XtGetSelectionValuesIncremental |XtCreateSelectionRequest |XtSendSelectionRequest
-		         |XtCancelSelectionRequest |XtReservePropertyAtom |XtReleasePropertyAtom |XtGrabKey |XtUngrabKey
+		         |XtCancelSelectionRequest |XtGrabKey |XtUngrabKey
 		         |XtGrabKeyboard |XtUngrabKeyboard |XtGrabButton |XtUngrabButton |XtGrabPointer |XtUngrabPointer
 		         |XtGetApplicationNameAndClass |XtGetDisplays |XtToolkitThreadInitialize |XtAppLock |XtAppUnlock |XtIsRectObj |XtIsWidget
 		         |XtIsComposite |XtIsConstraint |XtIsShell |XtIsOverrideShell |XtIsWMShell |XtIsVendorShell
@@ -16485,13 +16586,23 @@ EDITS: 4
 	      ))))
 
 
-;;; ---------------- test 24: errors ----------------
+;;; -------------------- test 24: Gtk --------------------
+
+(if (or full-test (= snd-test 24) (and keep-going (<= snd-test 24)))
+    (begin
+      (if (procedure? test-hook) (test-hook 24))
+      (if (and (provided? 'snd-gtk)
+	       (provided? 'xg))
+	  (begin
+	    (IF (not (|GTK_IS_WIDGET (cadr (main-widgets)))) (snd-display ";GTK_IS_WIDGET?"))
+	    ))))
+
+
+;;; ---------------- test 25: errors ----------------
 
 (mem-report)
 (if (file-exists? "memlog")
     (system "mv memlog memlog.22")) ; save pre-error version
-
-(if (provided? 'snd-nogui) (exit))
 
 (define (check-error-tag expected-tag thunk)
   (let ((tag
@@ -16686,9 +16797,9 @@ EDITS: 4
 
 (reset-all-hooks)
 
-(if (or full-test (= snd-test 24) (and keep-going (<= snd-test 24)))
+(if (or full-test (= snd-test 25) (and keep-going (<= snd-test 25)))
     (begin
-      (if (procedure? test-hook)  (test-hook 24))
+      (if (procedure? test-hook)  (test-hook 25))
 
       (for-each (lambda (n)
 		  (let ((tag

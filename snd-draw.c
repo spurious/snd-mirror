@@ -449,8 +449,8 @@ static XEN g_main_widgets(void)
 	   XEN_CONS(XEN_WRAP_WIDGET(MAIN_SHELL(ss)),
              XEN_CONS(XEN_WRAP_WIDGET(MAIN_PANE(ss)),
                XEN_CONS(XEN_WRAP_WIDGET(SOUND_PANE(ss)),
-		 XEN_CONS((ss->sgx->listener_pane) ? XEN_WRAP_WIDGET(ss->sgx->listener_pane) : XEN_FALSE,
-		   XEN_CONS(SOUND_PANE_BOX(ss) ? XEN_WRAP_WIDGET(SOUND_PANE_BOX(ss)) : XEN_FALSE,
+		 XEN_CONS(XEN_WRAP_WIDGET(ss->sgx->listener_pane),
+		   XEN_CONS(XEN_WRAP_WIDGET(SOUND_PANE_BOX(ss)),
 		     XEN_EMPTY_LIST)))))));
 }
 

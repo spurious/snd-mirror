@@ -228,7 +228,7 @@ static gint listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
     {
       cp = current_channel(ss);
       graph_key_press(channel_graph(cp), event, (gpointer)cp); 
-      return(TRUE);
+      return(FALSE);
     }
   else
     {
@@ -249,7 +249,7 @@ static gint listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 		      (event->state & snd_ControlMask))
 		    {
 		      grab_line(ss);
-		      return(TRUE);
+		      return(FALSE);
 		    }
 		  else
 		    {
@@ -279,7 +279,7 @@ static gint listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 					  (strcmp(fstr, listener_prompt_with_cr(ss)) != 0))
 					{
 					  g_free(fstr);
-					  return(TRUE);
+					  return(FALSE);
 					}
 				      g_free(fstr);
 				    }
@@ -299,7 +299,7 @@ static gint listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 					}
 				      else 
 					{
-					  return(TRUE);
+					  return(FALSE);
 					}
 				    }
 				}
@@ -311,7 +311,7 @@ static gint listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 	}
     }
   SG_SIGNAL_EMIT_STOP_BY_NAME(GTK_OBJECT(w), "key_press_event");
-  return(TRUE);
+  return(FALSE);
 }
 
 static gint clear_paren_check(gpointer nada)
@@ -368,6 +368,7 @@ static void listener_button_press(GtkWidget *w, GdkEventButton *ev, gpointer dat
 {
   snd_state *ss = (snd_state *)data;
   (ss->sgx)->graph_is_active = 0;
+  goto_listener();
 }
 
 static XEN mouse_enter_listener_hook;

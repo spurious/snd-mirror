@@ -8430,12 +8430,18 @@ static XEN gxm_XSetScreenSaver(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 static XEN gxm_XSetPointerMapping(XEN arg1, XEN arg2, XEN arg3)
 {
   #define H_XSetPointerMapping "int XSetPointerMapping(display, map, nmap) sets the mapping of the pointer."
+  int i, len, rtn;
+  unsigned char *map;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XSetPointerMapping", "Display*");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XSetPointerMapping", "unsigned char*");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XSetPointerMapping", "int");
-  return(C_TO_XEN_INT(XSetPointerMapping(XEN_TO_C_Display(arg1), 
-					 (unsigned char *)XEN_TO_C_STRING(arg2), 
-					 XEN_TO_C_INT(arg3))));
+  XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XSetPointerMapping", "list of ints");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg3), arg3, 3, "XSetPointerMapping", "int");
+  if (XEN_INTEGER_P(arg3)) len = XEN_TO_C_INT(arg3); else len = XEN_LIST_LENGTH(arg2);
+  map = (unsigned char *)CALLOC(len, sizeof(unsigned char));
+  for (i = 0; i < len; i++)
+    map[i] = (unsigned char)XEN_TO_C_INT(XEN_LIST_REF(arg2, i));
+  rtn = XSetPointerMapping(XEN_TO_C_Display(arg1), map, len);
+  FREE(map);
+  return(C_TO_XEN_INT(rtn));
 }
 
 static XEN gxm_XSetPlaneMask(XEN arg1, XEN arg2, XEN arg3)
@@ -9619,8 +9625,9 @@ static XEN gxm_XGetPointerMapping(XEN arg1, XEN arg2, XEN arg3)
 {
   #define H_XGetPointerMapping "int XGetPointerMapping(display, ignored, len) returns the current mapping of the pointer."
   /* DIFF: XGetPointerMapping ignores arg2, returns list
+   * (|XGetPointerMapping (|XtDisplay (cadr (main-widgets))) 0 3)
    */
-  int i, len, loc;
+  int i, len, loc, rtn;
   unsigned char *map;
   XEN lst = XEN_EMPTY_LIST;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XGetPointerMapping", "Display*");
@@ -9628,9 +9635,10 @@ static XEN gxm_XGetPointerMapping(XEN arg1, XEN arg2, XEN arg3)
   len = XEN_TO_C_INT(arg3);
   if (len <= 0) XEN_ASSERT_TYPE(0, arg3, 3, "XGetPointerMapping", "positive integer");
   map = (unsigned char *)CALLOC(len, sizeof(unsigned char));
-  len = XGetPointerMapping(XEN_TO_C_Display(arg1), map, len);
+  rtn = XGetPointerMapping(XEN_TO_C_Display(arg1), map, len);
+  if (len > rtn) len = rtn;
   loc = xm_protect(lst);
-  for (i = len - 1; i > 0; i--)
+  for (i = len - 1; i >= 0; i--)
     lst = XEN_CONS(C_TO_XEN_INT((int)(map[i])), lst);
   FREE(map);
   xm_unprotect_at(loc);
@@ -10960,13 +10968,28 @@ the XKeyboardControl structure."
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XChangeKeyboardControl", "ulong");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XChangeKeyboardControl", "XKeyboardControl*");
   kc.key_click_percent = XEN_TO_C_INT(XEN_CAR(arg3)); arg3 = XEN_CDR(arg3);
-  kc.bell_percent = XEN_TO_C_INT(XEN_CAR(arg3)); arg3 = XEN_CDR(arg3);
-  kc.bell_pitch = XEN_TO_C_INT(XEN_CAR(arg3)); arg3 = XEN_CDR(arg3);
-  kc.bell_duration = XEN_TO_C_INT(XEN_CAR(arg3)); arg3 = XEN_CDR(arg3);
-  kc.led = XEN_TO_C_INT(XEN_CAR(arg3)); arg3 = XEN_CDR(arg3);
-  kc.led_mode = XEN_TO_C_INT(XEN_CAR(arg3)); arg3 = XEN_CDR(arg3);
-  kc.key = XEN_TO_C_INT(XEN_CAR(arg3)); arg3 = XEN_CDR(arg3);
-  kc.auto_repeat_mode = XEN_TO_C_INT(XEN_CAR(arg3));
+  if (!(XEN_NULL_P(arg3))) 
+    {
+      kc.bell_percent = XEN_TO_C_INT(XEN_CAR(arg3)); arg3 = XEN_CDR(arg3);
+      if (!(XEN_NULL_P(arg3)))
+	{
+	  kc.bell_pitch = XEN_TO_C_INT(XEN_CAR(arg3)); arg3 = XEN_CDR(arg3);
+	  if (!(XEN_NULL_P(arg3)))
+	    {
+	      kc.bell_duration = XEN_TO_C_INT(XEN_CAR(arg3)); arg3 = XEN_CDR(arg3);
+	      if (!(XEN_NULL_P(arg3)))
+		{
+		  kc.led = XEN_TO_C_INT(XEN_CAR(arg3)); arg3 = XEN_CDR(arg3);
+		  if (!(XEN_NULL_P(arg3)))
+		    {
+		      kc.led_mode = XEN_TO_C_INT(XEN_CAR(arg3)); arg3 = XEN_CDR(arg3);
+		      if (!(XEN_NULL_P(arg3)))
+			{
+			  kc.key = XEN_TO_C_INT(XEN_CAR(arg3)); arg3 = XEN_CDR(arg3);
+			  if (!(XEN_NULL_P(arg3)))
+			    {
+			      kc.auto_repeat_mode = XEN_TO_C_INT(XEN_CAR(arg3));
+			    }}}}}}}
   return(C_TO_XEN_INT(XChangeKeyboardControl(XEN_TO_C_Display(arg1), XEN_TO_C_ULONG(arg2), &kc)));
 }
 
@@ -12058,11 +12081,13 @@ static XEN gxm_XInternAtom(XEN arg1, XEN arg2, XEN arg3)
 }
 
 static XEN xm_AfterFunction = XEN_FALSE;
+static int default_after_function(Display *dpy) {return(0);}
 static int gxm_AfterFunction(Display *dpy)
 {
-  return(XEN_TO_C_INT(XEN_CALL_1(xm_AfterFunction, 
-				 C_TO_XEN_Display(dpy),
-				 __FUNCTION__)));
+  return(XEN_TO_C_INT_OR_ELSE(XEN_CALL_1(xm_AfterFunction, 
+					 C_TO_XEN_Display(dpy),
+					 __FUNCTION__),
+			      0));
 }
 
 static XEN gxm_XSetAfterFunction(XEN arg1, XEN arg2)
@@ -12073,7 +12098,9 @@ static XEN gxm_XSetAfterFunction(XEN arg1, XEN arg2)
   xm_protect(arg2);
   old_func = xm_AfterFunction;
   xm_AfterFunction = arg2;
-  XSetAfterFunction(XEN_TO_C_Display(arg1), gxm_AfterFunction);
+  if (XEN_PROCEDURE_P(arg2))
+    XSetAfterFunction(XEN_TO_C_Display(arg1), gxm_AfterFunction);
+  else XSetAfterFunction(XEN_TO_C_Display(arg1), default_after_function);
   if (XEN_PROCEDURE_P(old_func)) xm_unprotect(old_func);
   return(old_func);
 }
@@ -12919,23 +12946,6 @@ widget's window as the grab window if the widget is realized."
   return(XEN_FALSE);
 }
 
-static XEN gxm_XtReleasePropertyAtom(XEN arg1, XEN arg2)
-{
-  #define H_XtReleasePropertyAtom "XtReleasePropertyAtom(Widget, Atom) releases reserved atom"
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtReleasePropertyAtom", "Widget");
-  XEN_ASSERT_TYPE(XEN_Atom_P(arg2), arg2, 2, "XtReleasePropertyAtom", "Atom");
-  XtReleasePropertyAtom(XEN_TO_C_Widget(arg1), XEN_TO_C_Atom(arg2));
-  return(XEN_FALSE);
-}
-
-static XEN gxm_XtReservePropertyAtom(XEN arg1)
-{
-  #define H_XtReservePropertyAtom "Widget XtReservePropertyAtom(w) returns an atom that may be used for properties in conjunction with \
-conversion requests from widget w. "
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtReservePropertyAtom", "Widget");
-  return(C_TO_XEN_Atom(XtReservePropertyAtom(XEN_TO_C_Widget(arg1))));
-}
-
 static XEN gxm_XtCancelSelectionRequest(XEN arg1, XEN arg2)
 {
   #define H_XtCancelSelectionRequest "void XtCancelSelectionRequest(requestor, selection)"
@@ -13042,7 +13052,7 @@ static XEN gxm_XtAppGetSelectionTimeout(XEN arg1)
 
 static XEN gxm_XtAppSetSelectionTimeout(XEN arg1, XEN arg2)
 {
-  #define H_XtAppSetSelectionTimeout "void XtAppSetSelectionTimeout(app_context, timeout) sets the 's selection timeout mechanism."
+  #define H_XtAppSetSelectionTimeout "void XtAppSetSelectionTimeout(app_context, timeout) sets the app's selection timeout mechanism."
   XEN_ASSERT_TYPE(XEN_XtAppContext_P(arg1), arg1, 1, "XtAppSetSelectionTimeout", "XtAppContext");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XtAppSetSelectionTimeout", "ulong");
   XtAppSetSelectionTimeout(XEN_TO_C_XtAppContext(arg1), XEN_TO_C_ULONG(arg2));
@@ -17045,8 +17055,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCreateSelectionRequest" XM_POSTFIX, gxm_XtCreateSelectionRequest, 2, 0, 0, H_XtCreateSelectionRequest);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtSendSelectionRequest" XM_POSTFIX, gxm_XtSendSelectionRequest, 3, 0, 0, H_XtSendSelectionRequest);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCancelSelectionRequest" XM_POSTFIX, gxm_XtCancelSelectionRequest, 2, 0, 0, H_XtCancelSelectionRequest);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtReservePropertyAtom" XM_POSTFIX, gxm_XtReservePropertyAtom, 1, 0, 0, H_XtReservePropertyAtom);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtReleasePropertyAtom" XM_POSTFIX, gxm_XtReleasePropertyAtom, 2, 0, 0, H_XtReleasePropertyAtom);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGrabKey" XM_POSTFIX, gxm_XtGrabKey, 6, 0, 0, H_XtGrabKey);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtUngrabKey" XM_POSTFIX, gxm_XtUngrabKey, 3, 0, 0, H_XtUngrabKey);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtGrabKeyboard" XM_POSTFIX, gxm_XtGrabKeyboard, 5, 0, 0, H_XtGrabKeyboard);
@@ -17353,7 +17361,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetLineAttributes" XM_POSTFIX, gxm_XSetLineAttributes, 6, 0, 0, H_XSetLineAttributes);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetModifierMapping" XM_POSTFIX, gxm_XSetModifierMapping, 2, 0, 0, H_XSetModifierMapping);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetPlaneMask" XM_POSTFIX, gxm_XSetPlaneMask, 3, 0, 0, H_XSetPlaneMask);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetPointerMapping" XM_POSTFIX, gxm_XSetPointerMapping, 3, 0, 0, H_XSetPointerMapping);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetPointerMapping" XM_POSTFIX, gxm_XSetPointerMapping, 2, 1, 0, H_XSetPointerMapping);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetScreenSaver" XM_POSTFIX, gxm_XSetScreenSaver, 5, 0, 0, H_XSetScreenSaver);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetSelectionOwner" XM_POSTFIX, gxm_XSetSelectionOwner, 4, 0, 0, H_XSetSelectionOwner);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetState" XM_POSTFIX, gxm_XSetState, 6, 0, 0, H_XSetState);
@@ -19636,7 +19644,7 @@ static XEN gxm_set_same_screen(XEN ptr, XEN val)
 static XEN gxm_keycode(XEN ptr)
 {
   XEN_ASSERT_TYPE(XEN_XKeyEvent_P(ptr), ptr, XEN_ONLY_ARG, "keycode", "XKeyEvent");
-  return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XKeyEvent(ptr))->keycode)));
+  return(C_TO_XEN_KeyCode((XEN_TO_C_XKeyEvent(ptr))->keycode));
 }
 
 static XEN gxm_set_keycode(XEN ptr, XEN val)
@@ -22839,6 +22847,19 @@ static void define_integers(void)
   DEFINE_INTEGER(XM_PREFIX "PropModeReplace" XM_POSTFIX,	      PropModeReplace);
   DEFINE_INTEGER(XM_PREFIX "PropModePrepend" XM_POSTFIX,	      PropModePrepend);
   DEFINE_INTEGER(XM_PREFIX "PropModeAppend" XM_POSTFIX,		      PropModeAppend);
+  DEFINE_INTEGER(XM_PREFIX "KBKeyClickPercent" XM_POSTFIX,            KBKeyClickPercent);
+  DEFINE_INTEGER(XM_PREFIX "KBBellPercent" XM_POSTFIX,                KBBellPercent);
+  DEFINE_INTEGER(XM_PREFIX "KBBellPitch" XM_POSTFIX,                  KBBellPitch);
+  DEFINE_INTEGER(XM_PREFIX "KBBellDuration" XM_POSTFIX,               KBBellDuration);
+  DEFINE_INTEGER(XM_PREFIX "KBLed" XM_POSTFIX,                        KBLed);
+  DEFINE_INTEGER(XM_PREFIX "KBLedMode" XM_POSTFIX,                    KBLedMode);
+  DEFINE_INTEGER(XM_PREFIX "KBKey" XM_POSTFIX,                        KBKey);
+  DEFINE_INTEGER(XM_PREFIX "KBAutoRepeatMode" XM_POSTFIX,             KBAutoRepeatMode);
+  DEFINE_INTEGER(XM_PREFIX "AutoRepeatModeOff" XM_POSTFIX,            AutoRepeatModeOff);
+  DEFINE_INTEGER(XM_PREFIX "AutoRepeatModeOn" XM_POSTFIX,             AutoRepeatModeOn);
+  DEFINE_INTEGER(XM_PREFIX "AutoRepeatModeDefault" XM_POSTFIX,        AutoRepeatModeDefault);
+  DEFINE_INTEGER(XM_PREFIX "LedModeOff" XM_POSTFIX,                   LedModeOff);
+  DEFINE_INTEGER(XM_PREFIX "LedModeOn" XM_POSTFIX,                    LedModeOn);
   DEFINE_INTEGER(XM_PREFIX "GXclear" XM_POSTFIX,		      GXclear);
   DEFINE_INTEGER(XM_PREFIX "GXand" XM_POSTFIX,			      GXand);
   DEFINE_INTEGER(XM_PREFIX "GXandReverse" XM_POSTFIX,		      GXandReverse);

@@ -12,9 +12,7 @@
 ;;;   GdkColor|GC|GCValues|Event* make?
 ;;; TODO: add unicode handlers from glib
 ;;; TODO: unprotect *_remove?
-;;; TODO: GList <-> list; avoid glist altogether since type of data is apparently implicit (also need g_list_free here)
-;;; TODO: check the GtkSignalFunc toolbar stuff (why "loc")
-;;; TODO: mark ptr args that can be null []
+;;; TODO: mark ptr args that can be null
 
 (use-modules (ice-9 debug))
 (use-modules (ice-9 format))
@@ -120,11 +118,19 @@
       (string-set! str i (char-upcase (string-ref name i))))
     str))
 
+(define (ref-arg? arg)
+  (and (= (length arg) 3)
+       (string? (caddr arg))))
+
+(define (null-arg? arg)
+  (and (= (length arg) 3)
+       (eq? (caddr arg) 'null)))
+
 (define (ref-args args)
   (let ((ctr 0))
     (for-each
      (lambda (arg)
-       (if (= (length arg) 3)
+       (if (ref-arg? arg)
 	   (set! ctr (1+ ctr))))
      args)
     ctr))
@@ -182,14 +188,19 @@
 		  (if type
 		      (let* ((given-name (substring args (1+ sp) (if (= i (1- len)) (1+ i) i)))
 			     (reftype #f))
-			(if (char=? (string-ref given-name 0) #\[) 
-			    (begin
-			      (set! reftype (deref-type (list type)))
-			      (set! data (cons (list type 
-						     (substring given-name 1 (- (string-length given-name) 1))
-						     given-name) 
-					       data)))
-			    (set! data (cons (list type given-name) data)))
+			(if (char=? (string-ref given-name 0) #\@)
+			    (set! data (cons (list type 
+						   (substring given-name 1 (string-length given-name))
+						   'null)
+					       data))
+			    (if (char=? (string-ref given-name 0) #\[) 
+				(begin
+				  (set! reftype (deref-type (list type)))
+				  (set! data (cons (list type 
+							 (substring given-name 1 (- (string-length given-name) 1))
+							 given-name) 
+						   data)))
+				(set! data (cons (list type given-name) data))))
 			(if reftype (set! type reftype))
 
 			(if (eq? broken 'broken)
@@ -622,23 +633,25 @@
     (display initial)
     (do ((i 0 (1+ i)))
 	((= i len))
-      (if (char=? (string-ref args i) #\space)
-	  (if typed
-	      (begin
-		(display ", ")
-		(set! line-len (+ line-len 2))
-		(if (> line-len help-max)
-		    (begin
-		      (hey "\\~%")
-		      (set! line-len 0)))
-		(set! typed #f))
-	      (begin
-		(set! line-len (1+ line-len))
-		(display " ")
-		(set! typed #t)))
-	  (begin
-	    (set! line-len (1+ line-len))
-	    (display (string-ref args i)))))
+      (let ((ch (string-ref args i)))
+	(if (char=? ch #\space)
+	    (if typed
+		(begin
+		  (display ", ")
+		  (set! line-len (+ line-len 2))
+		  (if (> line-len help-max)
+		      (begin
+			(hey "\\~%")
+			(set! line-len 0)))
+		  (set! typed #f))
+		(begin
+		  (set! line-len (1+ line-len))
+		  (display " ")
+		  (set! typed #t)))
+	    (if (not (char=? ch #\@))
+		(begin
+		  (set! line-len (1+ line-len))
+		  (display ch))))))
     (hey ")\"~%")))
 
 (define (CATOM name)
@@ -1254,7 +1267,7 @@
      (if (> refargs 0)
 	 (for-each
 	  (lambda (arg)
-	    (if (= (length arg) 3)
+	    (if (ref-arg? arg)
 		(hey "  ~A ~A;~%" (deref-type arg) (deref-name arg))))
 	  args))
      (if (and (>= (length args) max-args)
@@ -1273,7 +1286,7 @@
 	   (let ((ctr 0)) ; list-ref counts from 0
 	     (for-each
 	      (lambda (arg)
-		(if (= (length arg) 2) ; ref args ignored
+		(if (not (ref-arg? arg))
 		    (hey "  ~A = XEN_LIST_REF(arglist, ~D);~%" (cadr arg) ctr))
 		(set! ctr (1+ ctr)))
 	      args))))
@@ -1283,154 +1296,161 @@
 	    (lambda (arg)
 	      (let ((argname (cadr arg))
 		    (argtype (car arg)))
-		(if (= (length arg) 2)
-		    (hey "  XEN_ASSERT_TYPE(XEN_~A_P(~A), ~A, ~D, ~S, ~S);~%" ; TODO: if NULL ok, mark somehow []?
-			 (no-stars argtype) argname argname ctr name argtype))
+		(if (not (ref-arg? arg))
+		    (if (not (null-arg? arg))
+			(hey "  XEN_ASSERT_TYPE(XEN_~A_P(~A), ~A, ~D, ~S, ~S);~%"
+			     (no-stars argtype) argname argname ctr name argtype)
+			(hey "  XEN_ASSERT_TYPE(XEN_~A_P(~A) || XEN_FALSE_P(~A), ~A, ~D, ~S, ~S);~%" 
+			     (no-stars argtype) argname argname argname ctr name argtype)))
 		(set! ctr (1+ ctr))))
 	    args)))
-     (if (not (eq? lambda-type 'fnc))
-	 (begin
-	   (hey "  {~%")
-	   (hey "    XEN result = XEN_FALSE;~%")
-	   (if (or (eq? lambda-type 'GtkSignalFunc)
-		   (and callback-data
-			(or (eq? (callback-gc callback-data) 'temporary)
-			    (eq? (callback-gc callback-data) 'semi-permanent)
-			    (eq? (callback-gc callback-data) 'timeout))))
-	       (hey "    int loc;~%"))
-	   (hey "    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);~%")
-	   (if (and callback-data
-		    (or (eq? (callback-gc callback-data) 'temporary)
-			(eq? (callback-gc callback-data) 'timeout)
-			(eq? (callback-gc callback-data) 'semi-permanent)))
-	       (hey "    loc = xm_protect(gxg_ptr);~%")
-	       (hey "    xm_protect(gxg_ptr);~%"))
-	   (if (and callback-data
-		    (eq? (callback-gc callback-data) 'timeout))
-	       (hey "    XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));~%")
-	       (if (eq? lambda-type 'GtkClipboardGetFunc)
-		   (hey "    XEN_LIST_SET(gxg_ptr, 2, clear_func);~%")))
-	   (hey-start)
-	   (if (and (not (string=? return-type "void"))
-		    (not (eq? lambda-type 'lambda)))
-	       (hey-on "    result = C_TO_XEN_~A(" (no-stars return-type))
-	       (hey "    ")))
-	 (begin
-	   (if (and (> refargs 0)
-		    (not (string=? return-type "void")))
-	       (begin
-		 (hey "  {~%")
-		 (hey "    XEN result = XEN_FALSE;~%")))
-	   (hey-start)
-	   (if (not (string=? return-type "void"))
-	       (if (= refargs 0)
-		   (hey-on "  return(C_TO_XEN_~A(" (no-stars return-type))
-		   (hey-on "    result = C_TO_XEN_~A(" (no-stars return-type)))
-	       (hey-on "  "))))
-     (if (not (eq? lambda-type 'lambda))
-	 (begin
-	   (hey-on "~A(" name)
-	   (hey-mark)
-	   (if (> (length args) 0)
-	       (let ((previous-arg #f))
-		 (for-each
-		  (lambda (arg)
-		    (let ((argname (cadr arg))
-			  (argtype (car arg)))
-		      (if previous-arg (hey-ok ", "))
-		      (if (and (not previous-arg)
-			       (> (length data) 4)
-			       (eq? (list-ref data 4) 'const))
-			(hey "(const ~A)" argtype))
-		      (set! previous-arg #t)
-		      (if (= (length arg) 3)
-			  (hey-on "&~A" (deref-name arg))
-			  (hey-on "XEN_TO_C_~A(~A)" (no-stars argtype) argname))))
-		  args)))
-	   (if (not (eq? lambda-type 'fnc))
-	       (if (not (string=? return-type "void")) 
-		   (hey ")"))
-	       (if (not (string=? return-type "void"))
-		   (if (= refargs 0)
-		       (hey "))")
-		       (hey ")"))))
-	   (hey ");~%")
-	   (if (not (eq? lambda-type 'fnc))
-	       (begin
-		 (if (and callback-data
-			  (eq? (callback-gc callback-data) 'temporary))
-		     (hey "    xm_unprotect_at(loc);~%"))
-		 (if (and callback-data
-			  (eq? (callback-gc callback-data) 'semi-permanent))
-		     (hey "    XEN_LIST_SET(gxg_ptr, 2, XEN_LIST_3(C_STRING_TO_XEN_SYMBOL(\"idler\"), result, C_TO_XEN_INT(loc)));~%"))
-		 (hey "    return(result);~%")
-		 (hey "   }~%"))
-	       (begin
-		 (if (> refargs 0)
-		     (let* ((restoo (not (string=? return-type "void")))
-			    (previous-arg restoo))
-		       (if restoo (hey "  "))
-		       (hey "  return(XEN_LIST_~D(" (+ refargs (if restoo 1 0)))
-		       (if restoo
-			   (hey "result"))
-		       (for-each 
-			(lambda (arg)
-			  (if (= (length arg) 3)
-			      (begin
-				(if previous-arg (hey ", "))
-				(hey "C_TO_XEN_~A(~A)" (no-stars (deref-type arg)) (deref-name arg))
-				(set! previous-arg #t))))
-			args)
-		       (hey "));~%")
-		       (if restoo (hey "   }~%")))
-		     (begin
-		       (if (member name idlers)
-			   (if (string=? name "gtk_idle_remove")
-			       (hey "  xm_unprotect_idler(XEN_TO_C_guint(~A));~%" (cadr (car args)))
-			       (hey "  xm_unprotect_at(XEN_TO_C_INT(XEN_CADDR(~A)));~%" (cadr (car args)))))
-		       (if (string=? return-type "void")
-			   (hey "  return(XEN_FALSE);~%")))))))
-	 (begin ; 'lambda
-	   (hey "if (XEN_REQUIRED_ARGS(func) == 2)~%")
-	   (hey-start)
-	   (if (not (string=? return-type "void"))
-	       (hey-on "       return(C_TO_XEN_~A(~A(" (no-stars return-type) name)
-	       (hey-on "       ~A(" name))
-	   (hey-mark)
-	   (let ((previous-arg #f))
-	     (for-each
-	      (lambda (arg)
-		(let ((argname (cadr arg))
-		      (argtype (car arg)))
-		  (if previous-arg (hey-ok ", "))
-		  (set! previous-arg #t)
-		  (if (string=? argtype "lambda")
-		      (display "(GtkSignalFunc)gxg_func2")
-		      (hey-on "XEN_TO_C_~A(~A)" (no-stars argtype) argname))))
-	      args))
-	   (if (not (string=? return-type "void"))
-	       (hey ")));~%")
-	       (hey ");~%"))
-	   (hey "     else~%")
-	   (hey-start)
-	   (if (not (string=? return-type "void"))
-	       (hey-on "       return(C_TO_XEN_~A(~A(" (no-stars return-type) name)
-	       (hey-on "       ~A(" name))
-	   (hey-mark)
-	   (let ((previous-arg #f))
-	     (for-each
-	      (lambda (arg)
-		(let ((argname (cadr arg))
-		      (argtype (car arg)))
-		  (if previous-arg (hey-ok ", "))
-		  (set! previous-arg #t)
-		  (if (string=? argtype "lambda")
-		      (display "(GtkSignalFunc)gxg_func3")
-		      (hey-on "XEN_TO_C_~A(~A)" (no-stars argtype) argname))))
-	      args))
-	   (if (not (string=? return-type "void"))
-	       (hey ")));~%  }~%")
-	       (hey ");~%  return(result);~%  }~%"))))
+     (let ((using-result #f)
+	   (using-loc #f))
+       (if (not (eq? lambda-type 'fnc))
+	   (begin
+	     (set! using-loc (or (eq? lambda-type 'GtkSignalFunc)
+				 (and callback-data
+				      (or (eq? (callback-gc callback-data) 'temporary)
+					  (eq? (callback-gc callback-data) 'semi-permanent)
+					  (eq? (callback-gc callback-data) 'timeout)))))
+	     (set! using-result (and (not (string=? return-type "void"))
+				     (not (eq? lambda-type 'lambda))))
+	     (hey "  {~%")
+	     (if using-result (hey "    XEN result = XEN_FALSE;~%"))
+	     (if using-loc (hey "    int loc;~%"))
+	     (hey "    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);~%")
+	     (if using-loc
+		 (hey "    loc = xm_protect(gxg_ptr);~%")
+		 (hey "    xm_protect(gxg_ptr);~%"))
+	     (if using-loc
+		 (hey "    XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));~%")
+		 (if (eq? lambda-type 'GtkClipboardGetFunc)
+		     (hey "    XEN_LIST_SET(gxg_ptr, 2, clear_func);~%")))
+	     (hey-start)
+	     (if using-result
+		 (hey-on "    result = C_TO_XEN_~A(" (no-stars return-type))
+		 (hey "    ")))
+	   (begin
+	     (set! using-result (and (> refargs 0)
+				     (not (string=? return-type "void"))))
+	     (if using-result
+		 (begin
+		   (hey "  {~%")
+		   (hey "    XEN result = XEN_FALSE;~%")))
+	     (hey-start)
+	     (if (not (string=? return-type "void"))
+		 (if (= refargs 0)
+		     (hey-on "  return(C_TO_XEN_~A(" (no-stars return-type))
+		     (hey-on "    result = C_TO_XEN_~A(" (no-stars return-type)))
+		 (hey-on "  "))))
+       (if (not (eq? lambda-type 'lambda))
+	   (begin
+	     (hey-on "~A(" name)
+	     (hey-mark)
+	     (if (> (length args) 0)
+		 (let ((previous-arg #f))
+		   (for-each
+		    (lambda (arg)
+		      (let ((argname (cadr arg))
+			    (argtype (car arg)))
+			(if previous-arg (hey-ok ", "))
+			(if (and (not previous-arg)
+				 (> (length data) 4)
+				 (eq? (list-ref data 4) 'const))
+			    (hey "(const ~A)" argtype))
+			(set! previous-arg #t)
+			(if (ref-arg? arg)
+			    (hey-on "&~A" (deref-name arg))
+			    (hey-on "XEN_TO_C_~A(~A)" (no-stars argtype) argname))))
+		    args)))
+	     (if (not (eq? lambda-type 'fnc))
+		 (if (not (string=? return-type "void")) 
+		     (hey ")"))
+		 (if (not (string=? return-type "void"))
+		     (if (= refargs 0)
+			 (hey "))")
+			 (hey ")"))))
+	     (hey ");~%")
+	     (if (not (eq? lambda-type 'fnc))
+		 (begin
+		   (if (and callback-data
+			    (eq? (callback-gc callback-data) 'temporary))
+		       (hey "    xm_unprotect_at(loc);~%"))
+		   (if (and callback-data
+			    (eq? (callback-gc callback-data) 'semi-permanent))
+		       (hey "    XEN_LIST_SET(gxg_ptr, 2, XEN_LIST_3(C_STRING_TO_XEN_SYMBOL(\"idler\"), ~A, C_TO_XEN_INT(loc)));~%"
+			    (if (string=? return-type "void") "XEN_FALSE" "result")))
+		   (if using-result
+		       (hey "    return(result);~%")
+		       (hey "    return(XEN_FALSE);~%"))
+		   (hey "   }~%"))
+		 (begin
+		   (if (> refargs 0)
+		       (let* ((previous-arg using-result))
+			 (if using-result (hey "  "))
+			 (hey "  return(XEN_LIST_~D(" (+ refargs (if using-result 1 0)))
+			 (if using-result (hey "result"))
+			 (for-each 
+			  (lambda (arg)
+			    (if (ref-arg? arg)
+				(begin
+				  (if previous-arg (hey ", "))
+				  (hey "C_TO_XEN_~A(~A)" (no-stars (deref-type arg)) (deref-name arg))
+				  (set! previous-arg #t))))
+			  args)
+			 (hey "));~%")
+			 (if using-result (hey "   }~%")))
+		       (begin
+			 (if (member name idlers)
+			     (if (string=? name "gtk_idle_remove")
+				 (hey "  xm_unprotect_idler(XEN_TO_C_guint(~A));~%" (cadr (car args)))
+				 (hey "  xm_unprotect_at(XEN_TO_C_INT(XEN_CADDR(~A)));~%" (cadr (car args)))))
+			 (if (string=? return-type "void")
+			     (hey "  return(XEN_FALSE);~%")))))))
+	   (begin ; 'lambda
+	     (hey "if (XEN_REQUIRED_ARGS(func) == 2)~%")
+	     (hey-start)
+	     (if (not (string=? return-type "void"))
+		 (hey-on "       return(C_TO_XEN_~A(~A(" (no-stars return-type) name)
+		 (hey-on "       ~A(" name))
+	     (hey-mark)
+	     (let ((previous-arg #f))
+	       (for-each
+		(lambda (arg)
+		  (let ((argname (cadr arg))
+			(argtype (car arg)))
+		    (if previous-arg (hey-ok ", "))
+		    (set! previous-arg #t)
+		    (if (string=? argtype "lambda")
+			(display "(GtkSignalFunc)gxg_func2")
+			(hey-on "XEN_TO_C_~A(~A)" (no-stars argtype) argname))))
+		args))
+	     (if (not (string=? return-type "void"))
+		 (hey ")));~%")
+		 (hey ");~%"))
+	     (hey "     else~%")
+	     (hey-start)
+	     (if (not (string=? return-type "void"))
+		 (hey-on "       return(C_TO_XEN_~A(~A(" (no-stars return-type) name)
+		 (hey-on "       ~A(" name))
+	     (hey-mark)
+	     (let ((previous-arg #f))
+	       (for-each
+		(lambda (arg)
+		  (let ((argname (cadr arg))
+			(argtype (car arg)))
+		    (if previous-arg (hey-ok ", "))
+		    (set! previous-arg #t)
+		    (if (string=? argtype "lambda")
+			(display "(GtkSignalFunc)gxg_func3")
+			(hey-on "XEN_TO_C_~A(~A)" (no-stars argtype) argname))))
+		args))
+	     (if (string=? return-type "void")
+		 (begin
+		   (hey ");~%")
+		   (hey "    return(XEN_FALSE);~%"))
+		 (hey ")));~%"))
+	     (hey "  }~%"))))
      (hey "}~%")
      (if (and (> (length data) 4)
 	      (eq? (list-ref data 4) 'if))
@@ -1635,18 +1655,17 @@
 	    (member (deref-type (list type)) types))
        (array->list type)))
  types)
+;;; gotta handle GList* by hand
+(hey "  if (strcmp(ctype, \"GList*\") == 0)~%")
+(hey "    { /* tagging these pointers is currently up to the caller */~%")
+(hey "      GList* lst;~%")
+(hey "      int i, len;~%")
+(hey "      lst = (GList*)XEN_CADR(val);~%")
+(hey "      len = g_list_length(lst);~%")
+(hey "      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_ULONG(g_list_nth_data(lst, i)), result);~%")
+(hey "    }~%")
 (hey "  return(result);~%")
 (hey "}~%~%")
-
-;;; gotta handle GList* by hand -- how to tell the type?
-;(hey "  if (strcmp(ctype, \"GList*\") == 0)~%")
-;(hey "    {~%")
-;(hey "      GList* lst;~%")
-;(hey "      int i, len;~%")
-;(hey "      lst = (GList*)XEN_CADR(val);~%")
-;(hey "      len = g_list_length(lst);~%")
-;(hey "      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_ULONG(g_list_nth_data(lst, i)), result);~%")
-;(hey "    }~%"))
 
 (hey "static XEN xen_list_to_c_array(XEN val, XEN type)~%")
 (hey "{~%")
@@ -1946,13 +1965,14 @@
 (hey "      define_strings();~%")
 (hey "      XEN_YES_WE_HAVE(\"xg\");~%")
 (hey "#if HAVE_GUILE~%")
-(hey "      XEN_EVAL_C_STRING(\"(define xm-version \\\"21-Feb-02\\\")\");~%")
+(hey "      XEN_EVAL_C_STRING(\"(define xm-version \\\"~A\\\")\");~%" (strftime "%d-%b-%y" (localtime (current-time))))
 (hey "#endif~%")
 (hey "      xg_already_inited = 1;~%")
 (hey "    }~%")
 (hey "  return(XEN_FALSE);~%")
 (hey "}~%")
 
+;(hey "~A~%~A~%" funcs struct-fields)
 
 ;/* cc -c xg.c -g3 -DUSE_GTK -DDEBUGGING -DDEBUG_MEMORY -DLINUX -DUSE_SND -DWITH_BIG_COLORMAP -DHAVE_GNU_LIBC_VERSION_H -DHAVE_GSL -DHAVE_DLFCN_H -DHAVE_GUILE -DHAVE_LLONGS -DHAVE_APPLICABLE_SMOB -DHAVE_SCM_REMEMBER_UPTO_HERE -DHAVE_SCM_OBJECT_TO_STRING -DHAVE_SCM_NUM2LONG_LONG -DHAVE_SCM_C_MAKE_VECTOR -DHAVE_SCM_C_DEFINE -DHAVE_SCM_NUM2INT -DHAVE_SCM_C_DEFINE_GSUBR -DHAVE_SCM_LIST_N -DHAVE_SCM_C_EVAL_STRING -DHAVE_SCM_STR2SYMBOL -DHAVE_SCM_MAKE_REAL -DHAVE_SCM_T_CATCH_BODY -DHAVE_EXTENSION_LANGUAGE -DHAVE_STATIC_XM -DHAVE_GTK2 -I/home/bil/test/g3/include -I/home/bil/test/g3/include/glib-2.0 -I/home/bil/test/g3/include/pango-1.0 -I/home/bil/test/g3/include/gtk-2.0 -I/home/bil/test/g3/lib/gtk-2.0/include -I/home/bil/test/g3/include/atk-1.0 -I/home/bil/test/include -DGTK_ENABLE_BROKEN -DPANGO_ENABLE_ENGINE -DPANGO_ENABLE_BACKEND -DGDK_ENABLE_BROKEN */
 

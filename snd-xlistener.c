@@ -442,11 +442,14 @@ void append_listener_text(int end, char *msg)
 void save_listener_text(FILE *fp)
 {
   char *str = NULL;
-  str = XmTextGetString(listener_text);
-  if (str)
+  if (listener_text)
     {
-      fwrite((void *)str, sizeof(char), snd_strlen(str), fp);
-      XtFree(str);
+      str = XmTextGetString(listener_text);
+      if (str)
+	{
+	  fwrite((void *)str, sizeof(char), snd_strlen(str), fp);
+	  XtFree(str);
+	}
     }
 }
 
