@@ -1,5 +1,76 @@
 #include "snd.h"
 
+/* TODO: there's a lot of inconsistency in the *-sound|selection arguments:
+ *       and not clear which of these follows the sync fields, and which take chn=#f to mean all chans
+ *          convolve-with file amp s c e
+ *          env-sound env beg dur s c e
+ *          filter-sound env order s c e
+ *          map|scan-chan func beg end origin s c e
+ *          play beg s c sync end e
+ *          reverse-sound s c e
+ *          scale-sound-to|by scl beg dur s c
+ *          set-samples beg dur data s c trunc fchan
+ *          smooth-sound beg dur s c
+ *          src-sound num base s c e
+ *          swap-channels s1 c1 s2 c2 beg dur
+ *          samples->vct beg dur snd chn v e
+ *          vct->samples beg dur vct s c 
+ */
+
+/* perhaps ignore sync business, and have a set that affects one channel from beg for dur
+ *
+ *  scale-channel scl beg dur s c e                                maps but needs e
+ *  reverse-channel beg dur s c e                                  needs beg dur
+ *  env-channel env beg dur s c e (assume gen)                     maps as is 
+ *  filter-channel flt beg dur s c e [overlap #t] (assume gen)     needs beg dur (if gen, isn't order accessible?)
+ *  play-channel beg dur s c e                                     maps if end->dur
+ *  smooth-channel beg dur s c e                                   maps if e
+ *  channel->vct, vct->channel [vct] beg dur s c e [->vct]         e not in -> case
+ *  src-channel beg dur s c e (new len changes)                    needs beg??
+ *  convolve-channel vct beg dur s c e [overlap #t]                needs beg dur + in vct 
+ *  fft-channel -> fft vct (spectrum-channel?)                     needs all+pad
+ *  map-channel func beg dur s c e edname (just real)              end->dur
+ *  scan-channel func beg dur s c e (just bool)                    end->dur
+ *
+ *  this can be done with one basic case:
+ *      gen-channel gen beg dur s c e [overlap-amount 0]
+ *      so env src convolve reverse filter are easy
+ *    and [map+scan], smooth, fft, <->, scale separate (e and we're there)
+
+ (define* (map-channel func #:optional (beg 0) dur snd chn (edpos current-edit-position) (edname "map-channel"))
+   (let* ((end (if dur (+ beg dur) (1- (frames snd chn edpos)))))
+     (map-chan func beg end edname snd chn edpos)))
+
+ (define* (scan-channel func #:optional (beg 0) dur snd chn (edpos current-edit-position))
+   (let* ((end (if dur (+ beg dur) (1- (frames snd chn edpos)))))
+     (scan-chan func beg end snd chn edpos)))
+
+ (define* (vct->channel v #:optional (beg 0) dur snd chn)
+   (let* ((samps (or dur (- (frames snd chn edpos) beg))))
+     (vct->samples beg samps v snd chn)))
+
+ (define* (channel->vct #:optional (beg 0) dur snd chn (edpos current-edit-position))
+   (let* ((samps (or dur (- (frames snd chn edpos) beg))))
+     (samples->vct beg samps snd chn #f edpos)))
+
+ (define* (play-channel #:optional (beg 0) dur snd chn (edpos current-edit-position))
+   (let* ((end (if dur (+ beg dur) (1- (frames snd chn edpos)))))
+     (play beg (or snd (selected-sound)) (or chn (selected-channel)) #f end edpos)))
+
+
+ (define* (scale-channel scl #:optional (beg 0) dur snd chn (edpos current-edit-position))
+   (let* ((samps (or dur (- (frames snd chn edpos) beg))))
+     ;; #f chn to scale-sound-by scales all chans
+     (scale-sound-by scl beg samps (or snd (selected-sound)) (or chn (selected-channel)) [NEEDS EDPOS])))
+
+ (define* (env-channel env #:optional (beg 0) dur snd chn (edpos current-edit-position) (edname "env-channel"))
+   (let* ((samps (or dur (- (frames snd chn edpos) beg)))
+          (egen (if (env? env) env (make-env :envelope env :end samps))))
+     (gen-channel egen beg samps snd chn edpos edname)))
+
+ */
+
+
 /* collect syncd chans */
 typedef struct {
   sync_info *si;
@@ -3108,16 +3179,3 @@ void g_init_sig(void)
 }
 
 
-/* TODO: there's a lot of inconsistency in the *-sound|selection arguments:
- *          convolve-with file amp s c e
- *          env-sound env beg dur s c e
- *          filter-sound env order s c e
- *          map|scan-chan func beg end origin s c e
- *          play beg s c sync end e
- *          reverse-sound s c e
- *          scale-sound-to|by scl beg dur s c
- *          set-samples beg dur data s c trunc fchan
- *          smooth-sound beg dur s c
- *          src-sound num base s c e
- *          swap-channels s1 c1 s2 c2 beg dur
- */
