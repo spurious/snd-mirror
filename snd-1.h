@@ -74,8 +74,8 @@ typedef struct {
   Float y0, y1;                         /* scroller-dependent axis bounds */
   double x0, x1;
   Float xmin, xmax, ymin, ymax;           /* data-dependent absolute limits */
-  Float y_scale, y_base;
-  double x_scale, x_base;
+  Float y_scale, y_base, y_ambit;
+  double x_scale, x_base, x_ambit;
   char *xlabel;
   int x_label_x, x_label_y;
   int y_axis_x0, x_axis_x0,
@@ -492,6 +492,7 @@ int snd_not_current(snd_info *sp, void *dat);
 int save_options (snd_state *ss);
 FILE *open_snd_init_file (snd_state *ss);
 int save_state (snd_state *ss, char *save_state_name);
+char *save_state_or_error (snd_state *ss, char *save_state_name);
 int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_file_names, int with_title);
 #if HAVE_GUILE
   void g_init_main(SCM local_doc);
@@ -532,6 +533,9 @@ char *info_completer(char *text);
 char *complete_listener_text(char *old_text, int end, int *try_completion, char **to_file_text);
 #if HAVE_GUILE
   void g_init_completions(SCM local_doc);
+  #ifdef SCM_MODULE_OBARRAY
+    SCM g_help(SCM text);
+  #endif
 #endif
 
 
@@ -557,6 +561,7 @@ void ps_set_tiny_numbers_font(chan_info *cp);
 void snd_print(snd_state *ss, char *output);
 void region_print(char *output, char* title, chan_info *cp);
 void print_enved(char *output, chan_info *cp, int y0);
+char *snd_print_or_error(snd_state *ss, char *output);
 
 
 /* -------- snd-marks.c -------- */
@@ -981,6 +986,7 @@ int keyboard_command (chan_info *cp, int keysym, int state);
   void g_init_chn(SCM local_doc);
 #endif
 void convolve_with(char *filename, Float amp, chan_info *cp);
+char *convolve_with_or_error(char *filename, Float amp, chan_info *cp);
 void scale_by(chan_info *cp, Float *scalers, int len, int selection);
 void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *scalers, int len, int selection);
 Float get_maxamp(snd_info *sp, chan_info *cp);
@@ -989,6 +995,7 @@ Float run_src(src_state *sr, Float sr_change);
 src_state *free_src(src_state *sr);
 void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_num, int from_enved, char *origin, int over_selection, mus_any *gen);
 void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origin, int over_selection, Float *ur_a, mus_any *gen);
+char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_enved, char *origin, int over_selection, Float *ur_a, mus_any *gen);
 void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexpr, int from_enved, char *origin, mus_any *gen);
 void save_macro_state(FILE *fd);
 void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta);

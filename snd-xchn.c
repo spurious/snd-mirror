@@ -103,9 +103,13 @@ static void zx_changed(int value, chan_info *cp)
   ss = cp->state;
   ap = cp->axis;
   if (ap->xmax == 0.0) return;
-  if (ap->xmax <= ap->xmin) ap->xmax = ap->xmin + .001;
+  if (ap->xmax <= ap->xmin) 
+    {
+      ap->xmax = ap->xmin + .001;
+      ap->x_ambit = .001;
+    }
   if (value < 1) value = 1;
-  if ((ap->xmax-ap->xmin) < X_RANGE_CHANGEOVER)
+  if (ap->x_ambit < X_RANGE_CHANGEOVER)
     ap->zx = sqr(get_scrollbar(channel_zx(cp), value, SCROLLBAR_MAX));
   else ap->zx = cube(get_scrollbar(channel_zx(cp), value, SCROLLBAR_MAX));
   /* if cursor visible, focus on that, else selection, else mark, else left side */
@@ -202,7 +206,7 @@ void initialize_scrollbars(chan_info *cp)
   sp = cp->sound;
   set_scrollbar(channel_sx(cp), ap->sx, ap->zx, sp->sx_scroll_max);
   set_scrollbar(channel_sy(cp), ap->sy, ap->zy, SCROLLBAR_SY_MAX);
-  if ((ap->xmax-ap->xmin) < X_RANGE_CHANGEOVER)
+  if (ap->x_ambit < X_RANGE_CHANGEOVER)
     set_scrollbar(channel_zx(cp), sqrt(ap->zx), .1, SCROLLBAR_MAX);  /* assume size is 10% of scrollbar length */
   else set_scrollbar(channel_zx(cp), pow(ap->zx, .333), .1, SCROLLBAR_MAX);
   set_scrollbar(channel_zy(cp), ap->zy, .1, SCROLLBAR_MAX);          /* assume 1.0 here so sqrt/cube decision, if any, is not needed */
@@ -219,8 +223,8 @@ void resize_sy(chan_info *cp)
   axis_info *ap;
   ap = cp->axis;
   set_scrollbar(channel_sy(cp),
-		(ap->y0 - ap->ymin) / (ap->ymax - ap->ymin),
-		(ap->y1 - ap->y0) / (ap->ymax - ap->ymin),
+		(ap->y0 - ap->ymin) / ap->y_ambit,
+		(ap->y1 - ap->y0) / ap->y_ambit,
 		SCROLLBAR_SY_MAX);
 }
 
@@ -231,8 +235,8 @@ void resize_sx(chan_info *cp)
   ap = cp->axis;
   sp = cp->sound;
   set_scrollbar(channel_sx(cp),
-		(ap->x0 - ap->xmin) / (ap->xmax - ap->xmin),
-		(ap->x1 - ap->x0) / (ap->xmax - ap->xmin),
+		(ap->x0 - ap->xmin) / ap->x_ambit,
+		(ap->x1 - ap->x0) / ap->x_ambit,
 		sp->sx_scroll_max);
 }
 
@@ -240,7 +244,7 @@ void resize_zx(chan_info *cp)
 {
   axis_info *ap;
   ap = cp->axis;
-  if ((ap->xmax - ap->xmin) < X_RANGE_CHANGEOVER)
+  if (ap->x_ambit < X_RANGE_CHANGEOVER)
     set_scrollbar(channel_zx(cp), sqrt(ap->zx) * .9, .1, SCROLLBAR_MAX);
   else set_scrollbar(channel_zx(cp), pow(ap->zx * .9, 1.0 / 3.0), .1, SCROLLBAR_MAX);
 }
@@ -666,7 +670,10 @@ void reflect_save_as_in_edit_history(chan_info *cp, char *filename)
       if (lst)
 	{
 	  new_line = (char *)CALLOC(256, sizeof(char));
-	  sprintf(new_line, "%s: (save-sound-as \"%s\")", edit_to_string(cp, cp->edit_ctr), filename);
+	  sprintf(new_line, 
+		  "%s: (save-sound-as \"%s\")", 
+		  edit_to_string(cp, cp->edit_ctr), 
+		  filename);
 	  str = XmStringCreate(new_line, XmFONTLIST_DEFAULT_TAG);
 	  pos = cp->edit_ctr + 1;
 	  XmListReplacePositions(lst, &pos, &str, 1);
@@ -1049,22 +1056,20 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 #endif
       if ((sp->combining != CHANNELS_COMBINED) || (channel == 0))
 	for (i = 0; i < NUM_CHAN_WIDGETS; i++)
-	  {
-	    if (cw[i])
-	      {
-		if  (!XtIsManaged(cw[i])) 
-		  XtManageChild(cw[i]);
-		if (i == W_sx) 
-		  {
-		    int current_size;
-		    XtVaSetValues(cw[i], XmNvalue, 0, NULL);
-		    XtVaGetValues(cw[i], XmNsliderSize, &current_size, NULL);
-		    if (current_size > sp->sx_scroll_max) 
-		      XtVaSetValues(cw[i], XmNsliderSize, sp->sx_scroll_max / 2, NULL);
-		    XtVaSetValues(cw[i], XmNmaximum, sp->sx_scroll_max, NULL);
-		  }
-	      }
-	  }
+	  if (cw[i])
+	    {
+	      if  (!XtIsManaged(cw[i])) 
+		XtManageChild(cw[i]);
+	      if (i == W_sx) 
+		{
+		  int current_size;
+		  XtVaSetValues(cw[i], XmNvalue, 0, NULL);
+		  XtVaGetValues(cw[i], XmNsliderSize, &current_size, NULL);
+		  if (current_size > sp->sx_scroll_max) 
+		    XtVaSetValues(cw[i], XmNsliderSize, sp->sx_scroll_max / 2, NULL);
+		  XtVaSetValues(cw[i], XmNmaximum, sp->sx_scroll_max, NULL);
+		}
+	    }
       recolor_graph(cp, FALSE); /* in case selection color left over from previous use */
     }
 #if (XmVERSION > 1)

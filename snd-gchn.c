@@ -79,7 +79,7 @@ static void zy_changed(float value, chan_info *cp)
   if (value < .01) value = .01;
   old_zy = ap->zy;
   ap->zy = sqr(value);
-  ap->sy += (.5*(old_zy - ap->zy)); /* try to keep wave centered */
+  ap->sy += (.5 * (old_zy - ap->zy)); /* try to keep wave centered */
   if (ap->sy < 0) ap->sy = 0;
   apply_y_axis_change(ap, cp);
   resize_sy(cp);
@@ -97,9 +97,13 @@ static void zx_changed(float value, chan_info *cp)
   ap = cp->axis;
   if (ap == NULL) return;
   if (ap->xmax == 0.0) return;
-  if (ap->xmax <= ap->xmin) ap->xmax = ap->xmin+.001;
+  if (ap->xmax <= ap->xmin) 
+    {
+      ap->xmax = ap->xmin + .001;
+      ap->x_ambit = .001;
+    }
   if (value < .01) value = .01;
-  if ((ap->xmax-ap->xmin) < X_RANGE_CHANGEOVER)
+  if (ap->x_ambit < X_RANGE_CHANGEOVER)
     ap->zx = sqr(value);
   else ap->zx = cube(value);
   /* if cursor visible, focus on that, else selection, else mark, else left side */
@@ -134,7 +138,7 @@ static void gzy_changed(float value, chan_info *cp)
 static void gsy_changed(float value, chan_info *cp)
 {
   if (cp->axis == NULL) return;
-  cp->gsy = cp->gzy*value;
+  cp->gsy = cp->gzy * value;
   map_over_sound_chans(cp->sound, update_graph, NULL);
 }
 
@@ -156,14 +160,16 @@ void initialize_scrollbars(chan_info *cp)
   sp = cp->sound;
   set_scrollbar(sx_adj(cp), ap->sx, ap->zx);
   set_scrollbar(sy_adj(cp), 1.0 - ap->sy, ap->zy);
-  if ((ap->xmax-ap->xmin) < X_RANGE_CHANGEOVER)
+  if (ap->x_ambit < X_RANGE_CHANGEOVER)
     set_scrollbar(zx_adj(cp), sqrt(ap->zx), .1);  /* assume size is 10% of scrollbar length */
   else set_scrollbar(zx_adj(cp), pow(ap->zx, .333), .1);
   set_scrollbar(zy_adj(cp), 1.0 - ap->zy, .1);          /* assume 1.0 here so sqrt/cube decision, if any, is not needed */
   if ((sp->nchans > 1) && (cp->chan == 0) && (gsy_adj(cp)))
     {
       set_scrollbar(gsy_adj(cp), 1.0 - cp->gsy, cp->gzy);
-      set_scrollbar(gzy_adj(cp), 1.0 - cp->gzy, 1.0/(Float)(sp->nchans));
+      set_scrollbar(gzy_adj(cp), 
+		    1.0 - cp->gzy, 
+		    1.0 / (Float)(sp->nchans));
     }
 }
 
@@ -174,8 +180,10 @@ void resize_sy(chan_info *cp)
   Float size;
   ap = cp->axis;
   if (ap == NULL) return;
-  size = (ap->y1-ap->y0)/(ap->ymax-ap->ymin);
-  set_scrollbar(sy_adj(cp), 1.0 - ((ap->y0-ap->ymin)/(ap->ymax-ap->ymin) + size), size);
+  size = (ap->y1 - ap->y0) / ap->y_ambit;
+  set_scrollbar(sy_adj(cp), 
+		1.0 - ((ap->y0 - ap->ymin) / ap->y_ambit + size), 
+		size);
 }
 
 void resize_sx(chan_info *cp)
@@ -186,8 +194,8 @@ void resize_sx(chan_info *cp)
   if (ap == NULL) return;
   sp = cp->sound;
   set_scrollbar(sx_adj(cp),
-		(ap->x0-ap->xmin)/(ap->xmax-ap->xmin),
-		(ap->x1-ap->x0)/(ap->xmax-ap->xmin));
+		(ap->x0 - ap->xmin) / ap->x_ambit,
+		(ap->x1 - ap->x0) / ap->x_ambit);
 }
 
 void resize_zx(chan_info *cp)
@@ -195,9 +203,9 @@ void resize_zx(chan_info *cp)
   axis_info *ap;
   ap = cp->axis;
   if (ap == NULL) return;
-  if ((ap->xmax-ap->xmin) < X_RANGE_CHANGEOVER)
+  if (ap->x_ambit < X_RANGE_CHANGEOVER)
     set_scrollbar(zx_adj(cp), sqrt(ap->zx), .1);
-  else set_scrollbar(zx_adj(cp), pow(ap->zx, 1.0/3.0), .1);
+  else set_scrollbar(zx_adj(cp), pow(ap->zx, 1.0 / 3.0), .1);
 }
 
 void resize_zy(chan_info *cp)
@@ -258,13 +266,17 @@ static void W_gsy_ValueChanged_Callback(GtkAdjustment *adj, gpointer context)
 
 static gint F_Button_Callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 { 
-  f_button_callback((chan_info *)data, !(GTK_TOGGLE_BUTTON(w)->active), (ev->state & snd_ControlMask));
+  f_button_callback((chan_info *)data, 
+		    !(GTK_TOGGLE_BUTTON(w)->active), 
+		    (ev->state & snd_ControlMask));
   return(TRUE);
 }
 
 static gint W_Button_Callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
-  w_button_callback((chan_info *)data, !(GTK_TOGGLE_BUTTON(w)->active), (ev->state & snd_ControlMask));
+  w_button_callback((chan_info *)data, 
+		    !(GTK_TOGGLE_BUTTON(w)->active), 
+		    (ev->state & snd_ControlMask));
   return(TRUE);
 }
 
@@ -284,7 +296,9 @@ static void Channel_Expose_Callback(GtkWidget *w, GdkEventExpose *ev, gpointer d
   ss = cp->state;
 
   if ((cp->mixes) && (mix_dragging())) return;
-  if ((ev->area.height < MIN_REGRAPH_Y) || (ev->area.width < MIN_REGRAPH_X)) return;
+  if ((ev->area.height < MIN_REGRAPH_Y) || 
+      (ev->area.width < MIN_REGRAPH_X)) 
+    return;
     
   sp = cp->sound;
   if (sp->combining != CHANNELS_SEPARATE)
@@ -405,7 +419,10 @@ void reflect_save_as_in_edit_history(chan_info *cp, char *filename)
       if (lst)
 	{
 	  new_line = (char *)CALLOC(256, sizeof(char));
-	  sprintf(new_line, "%s: (save-sound-as \"%s\")", edit_to_string(cp, cp->edit_ctr), filename);
+	  sprintf(new_line, 
+		  "%s: (save-sound-as \"%s\")", 
+		  edit_to_string(cp, cp->edit_ctr), 
+		  filename);
 	  gtk_clist_set_text(GTK_CLIST(lst), cp->edit_ctr, 0, new_line);
 	  FREE(new_line);
 	}

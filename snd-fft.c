@@ -273,7 +273,7 @@ static void abel (Float *f, Float *g)
 }
 
 /*
-; ; ; test cases:
+;;; test cases:
 
 (with-sound (:output "j") ; sum of bessel funcs
   (loop for i from 0 below 1024 and r from 0.0 by (/ 1.0 1024) do 
@@ -477,7 +477,7 @@ static void chebyshev_transform(Float *data, int n)
 }
 
 /* 
-; ; ; test case (bessel.lisp):
+;;; test case (bessel.lisp):
 
    (with-sound (:output "wave") 
      (let ((a (make-array 8 :initial-contents '(0 0 0 .25 0 0 0 0.5))))
@@ -709,13 +709,11 @@ int find_and_sort_peaks(Float *buf, fft_peak *found, int num_peaks, int size)
 	      minval = peaks[0];
 	      minpk = 0;
 	      for (j = 1; j < num_peaks; j++)
-		{
-		  if (peaks[j] < minval) 
-		    {
-		      minval = peaks[j];
-		      minpk = j;
-		    }
-		}
+		if (peaks[j] < minval) 
+		  {
+		    minval = peaks[j];
+		    minpk = j;
+		  }
 	      if (ca > minval)
 		{
 		  inds[minpk] = i-1;

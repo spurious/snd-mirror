@@ -1,6 +1,7 @@
 #include "snd.h"
 
-/* TODO  make completions list mouse sensitive as in Motif version (gad I'm sick of dialogs)
+/* TODO  make completions list mouse sensitive as in Motif version
+ *        -> use click(select) callback!
  */
 
 static GtkWidget *listener_text = NULL;

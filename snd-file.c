@@ -2025,6 +2025,7 @@ static SCM g_soundfont_info(SCM snd)
   return(outlist);
 }
 
+/* TODO: no such directory? */
 static SCM g_preload_directory(SCM directory) 
 {
   #define H_preload_directory "(" S_preload_directory " dir) preloads (into the View:Files dialog) any sounds in dir"
@@ -2034,6 +2035,7 @@ static SCM g_preload_directory(SCM directory)
   return(directory);
 }
 
+/* TODO: no such file? */
 static SCM g_preload_file(SCM file) 
 {
   #define H_preload_file "(" S_preload_file " file) preloads file (into the View:Files dialog)"

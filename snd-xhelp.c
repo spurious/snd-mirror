@@ -65,15 +65,13 @@ static void add_anchor(int html, char *anchor)
     {
       current_anchor++;
       if (anchors[current_anchor]) 
-	{
-	  for (i = current_anchor; i < MAX_HTML_HISTORY; i++) 
-	    if (anchors[i])
-	      {
-		FREE(anchors[i]);
-		anchors[i] = NULL;
-	      }
+	for (i = current_anchor; i < MAX_HTML_HISTORY; i++) 
+	  if (anchors[i])
+	    {
+	      FREE(anchors[i]);
+	      anchors[i] = NULL;
+	    }
 	  else break;
-	}
     }
   anchors[current_anchor] = copy_string(anchor);
   html_files[current_anchor] = html;
@@ -194,6 +192,65 @@ static void help_help_callback(Widget w, XtPointer context, XtPointer info)
   help_dialog_help((snd_state *)context);
 }
 
+#if (!HAVE_HTML)
+static char* word_wrap(char *text, int widget_len)
+{
+  char *new_text;
+  int new_len, old_len, i, j, line_len = 0, desired_len;
+  old_len = snd_strlen(text);
+  new_len = old_len + 32;
+  new_text = (char *)CALLOC(new_len, sizeof(char));
+  desired_len = widget_len / 10;
+  for (i = 0, j = 0; i < old_len; i++)
+    {
+      if ((text[i] == '\n') || (text[i] == ' '))
+	{
+	  if (line_len >= desired_len)
+	    {
+	      new_text[j++] = '\n';
+	      line_len = 0;
+	    }
+	  else
+	    {
+	      new_text[j++] = ' ';
+	      line_len++;
+	    }
+	}
+      else
+	{
+	  new_text[j++] = text[i];
+	  line_len++;
+	}
+    }
+  return(new_text);
+}
+
+static void hit_help(Widget w, XtPointer context, XtPointer info) 
+{
+  char *new_text = NULL, *selection;
+  selection = XmTextGetSelection(w);
+  if (selection)
+    {
+      /* find help relating to selection and post it */
+#ifdef SCM_MODULE_OBARRAY
+      {
+	SCM help_text;
+	help_text = g_help(TO_SCM_STRING(selection));
+	if (gh_string_p(help_text))
+	  {
+	    snd_help(get_global_state(),
+		     selection,
+		     new_text = word_wrap(SCM_STRING_CHARS(help_text),
+					  widget_width(w)));
+	    if (new_text) FREE(new_text);
+	  }
+      }
+#endif
+      XtFree(selection);
+    }
+}
+#endif
+
 static void create_help_monolog(snd_state *ss)
 {
   /* create scrollable but not editable text window */
@@ -272,6 +329,7 @@ static void create_help_monolog(snd_state *ss)
       XtSetArg(args[n], XmNbackground, (ss->sgx)->white); n++;
     }
   help_text = XmCreateScrolledText(help_dialog, "help-text", args, n);
+  XtAddCallback(help_text,XmNgainPrimaryCallback,(XtCallbackProc)hit_help,NULL);
   XtManageChild(help_text);
 #endif
 

@@ -5,7 +5,7 @@
  *         but would be much faster if we can wait until the amp-env is computed
  *         via after-open-hook?
  * TODO  sample-color?
- * TODO  should snd-out soft-port (examp.scm) be built-in?
+ * TODO: all gh_defines -> DEFINE_VAR, also the hooks
  */
 
 #if HAVE_GUILE
@@ -192,6 +192,7 @@ SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error handler */
 		  if ((SCM_EQ_P(tag, NO_SUCH_SOUND)) || (SCM_EQ_P(tag, NO_SUCH_MIX)) || (SCM_EQ_P(tag, NO_SUCH_MARK)) ||
 		      (SCM_EQ_P(tag, NO_SUCH_MENU)) || (SCM_EQ_P(tag, NO_SUCH_REGION)) ||
 		      (SCM_EQ_P(tag, NO_SUCH_CHANNEL)) || (SCM_EQ_P(tag, NO_SUCH_EDIT)) ||
+		      (SCM_EQ_P(tag, CANNOT_SAVE)) || (SCM_EQ_P(tag, CANNOT_PRINT)) ||
 		      (SCM_EQ_P(tag, IMPOSSIBLE_BOUNDS)) || (SCM_EQ_P(tag, NO_SUCH_SAMPLE)))
 		    {
 		      scm_display(tag, port);
@@ -625,6 +626,7 @@ void snd_load_file(char *filename)
       sprintf(str1, "%s.scm", str);
       if (!mus_file_probe(str1))
 	snd_error("can't load %s: %s", filename, strerror(errno));
+      /* snd_error ok here because all uses of this are user-interface generated (autoload, memo-file, etc) */
       else snd_internal_stack_catch(SCM_BOOL_T, eval_file_wrapper, str1, snd_catch_scm_error, NULL);
       FREE(str1);
     }
@@ -751,6 +753,7 @@ static SCM g_set_channel_style(SCM style)
   #define H_channel_style "(" S_channel_style ") -> how multichannel sounds layout the channels\n\
    default is channels-separate, other values are channels-combined and channels-superimposed.\n\
    this is the default setting for each sound's 'unite' button."
+
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(style)), style, SCM_ARG1, "set-" S_channel_style); 
   set_channel_style(state, iclamp(CHANNELS_SEPARATE,
 				 TO_C_INT_OR_ELSE(style, 0),
@@ -823,6 +826,7 @@ static SCM g_set_default_output_type(SCM val)
   #define H_default_output_type "(" S_default_output_type ") -> default header type when a new or temporary file is created\n\
    normally this is mus-next, -1 here indicates you want Snd to use the current sound's header type, if possible\n\
    other writable headers include mus-aiff, mus-riff, mus-ircam, mus-nist, mus-aifc, mus-raw"
+
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)), val, SCM_ARG1, "set-" S_default_output_type); 
   typ = TO_C_INT_OR_ELSE(val, 0);
   if (mus_header_writable(typ, -2))
@@ -839,6 +843,7 @@ static SCM g_set_default_output_format(SCM val)
   #define H_default_output_format "(" S_default_output_format ") -> default data format when a new or temporary file is created\n\
    normally mus-bshort, -1 here means try to use the current sound's data format; many other formats\n\
    are available, but not all are compatible with all header types"
+
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)), val, SCM_ARG1, "set-" S_default_output_format); 
   format = TO_C_INT_OR_ELSE(val, 0);
   if (mus_header_writable(default_output_type(state), format))
@@ -882,6 +887,7 @@ static SCM g_set_enved_exping(SCM val)
 {
   #define H_enved_exping "(" S_enved_exping ") -> envelope editor 'exp' and 'lin' buttons\n\
    if enved-exping, the connecting segments use exponential curves rather than straight lines."
+
   SCM_ASSERT(bool_or_arg_p(val), val, SCM_ARG1, "set-" S_enved_exping);
   set_enved_exping(state, bool_int_or_one(val)); 
   return(TO_SCM_BOOLEAN(enved_clipping(state)));
@@ -893,6 +899,7 @@ static SCM g_set_enved_target(SCM val)
   int n; 
   #define H_enved_target "(" S_enved_target ") determines how the envelope is applied to data in the envelope editor\n\
    choices are amplitude-env, srate-env, and spectrum-env"
+
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)), val, SCM_ARG1, "set-" S_enved_target); 
   n = iclamp(AMPLITUDE_ENV,
 	     TO_C_INT_OR_ELSE(val, AMPLITUDE_ENV),
@@ -1318,13 +1325,26 @@ static SCM g_set_zoom_focus_style(SCM focus)
   return(TO_SCM_INT(zoom_focus_style(state)));
 }
 
-/* TODO: a lot of these should throw an error indication, not call snd_error or return #f */
-
-static SCM g_graph2ps(void) 
+static SCM g_graph2ps(SCM filename)
 {
-  #define H_graph2ps "(" S_graph_ps ") writes the current Snd displays to an EPS file"
-  snd_print(state, eps_file(state));  /* if error THROW NO_SUCH_CHANNEL or something */
-  return(TO_SCM_STRING(eps_file(state)));
+  #define H_graph2ps "(" S_graph_ps " &optional filename) writes the current Snd displays to an EPS file"
+
+  char *error,*file;
+  SCM result;
+  if (gh_string_p(filename))
+    file = SCM_STRING_CHARS(filename);
+  else file = eps_file(state);
+  error = snd_print_or_error(state, file);
+  if (error)
+    {
+      result = TO_SCM_STRING(error);
+      FREE(error);
+      return(scm_throw(CANNOT_PRINT,
+		       SCM_LIST3(TO_SCM_STRING(S_graph_ps),
+				 TO_SCM_STRING(file),
+				 result)));
+    }
+  return(TO_SCM_STRING(file));
 }
 
 static SCM g_snd_version(void) 
@@ -1336,10 +1356,21 @@ static SCM g_snd_version(void)
 static SCM g_save_state(SCM filename) 
 {
   #define H_save_state "(" S_save_state " filename) saves the current Snd state in filename; (load filename) restores it)"
+
+  char *error;
+  SCM result;
   SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_save_state);
-  if (save_state(state, SCM_STRING_CHARS(filename)) == -1) 
-    return(SCM_BOOL_F);  /* THROW CANNOT_SAVE or should this be built into snd-error? (as in muserror in snd.c) */
-  else return(filename);
+  error = save_state_or_error(state, SCM_STRING_CHARS(filename));
+  if (error)
+    {
+      result = TO_SCM_STRING(error);
+      FREE(error);
+      return(scm_throw(CANNOT_SAVE,
+		       SCM_LIST3(TO_SCM_STRING(S_save_state),
+				 filename,
+				 result)));
+    }
+  return(filename);
 }
 
 static SCM g_max_sounds(void) 
@@ -2994,7 +3025,7 @@ static SCM g_convolve_with(SCM file, SCM new_amp, SCM snd_n, SCM chn_n)
 
   chan_info *cp;
   Float amp;
-  char *fname = NULL;
+  char *fname = NULL, *error;
   SCM_ASSERT(gh_string_p(file), file, SCM_ARG1, S_convolve_with);
   SND_ASSERT_CHAN(S_convolve_with, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_convolve_with);
@@ -3008,7 +3039,14 @@ static SCM g_convolve_with(SCM file, SCM new_amp, SCM snd_n, SCM chn_n)
     }
   fname = full_filename(file);
   if (mus_file_probe(fname))
-    convolve_with(fname, amp, cp);
+    {
+      error = convolve_with_or_error(fname, amp, cp);
+      if (error)
+	return(scm_throw(MUS_MISC_ERROR,
+			 SCM_LIST3(TO_SCM_STRING(S_convolve_with),
+				   file,
+				   TO_SCM_STRING(error))));
+    }
   else 
     {
       if (fname) FREE(fname);
@@ -3080,7 +3118,7 @@ static SCM g_convolve_selection_with(SCM file, SCM new_amp)
    with file; amp is the resultant peak amp"
 
   Float amp;
-  char *fname = NULL;
+  char *fname = NULL, *error;
   SCM_ASSERT(gh_string_p(file), file, SCM_ARG1, S_convolve_selection_with);
   if (selection_is_active() == 0) 
     return(scm_throw(NO_ACTIVE_SELECTION,
@@ -3095,7 +3133,14 @@ static SCM g_convolve_selection_with(SCM file, SCM new_amp)
     }
   fname = full_filename(file);
   if (mus_file_probe(fname))
-    convolve_with(fname, amp, NULL);
+    {
+      error = convolve_with_or_error(fname, amp, NULL);
+      if (error)
+	return(scm_throw(MUS_MISC_ERROR,
+			 SCM_LIST3(TO_SCM_STRING(S_convolve_selection_with),
+				   file,
+				   TO_SCM_STRING(error))));
+    }
   else 
     {
       if (fname) FREE(fname);
@@ -3201,10 +3246,19 @@ static SCM g_filter_sound(SCM e, SCM order, SCM snd_n, SCM chn_n)
   vct *v;
   int len;
   env *ne = NULL;
+  char *error;
   SND_ASSERT_CHAN(S_filter_sound, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_filter_sound);
   if (mus_scm_p(e))
-    apply_filter(cp, 0, NULL, NOT_FROM_ENVED, S_filter_sound, FALSE, NULL, mus_scm_to_clm(e));
+    {
+      error = apply_filter_or_error(cp, 0, NULL, NOT_FROM_ENVED, S_filter_sound, FALSE, NULL, mus_scm_to_clm(e));
+      if (error)
+	return(scm_throw(MUS_MISC_ERROR,
+			 SCM_LIST4(TO_SCM_STRING(S_filter_sound),
+				   e, 
+				   order,
+				   TO_SCM_STRING(error))));
+    }
   else
     {
       len = TO_C_INT_OR_ELSE(order, 0);
@@ -3557,9 +3611,9 @@ void g_initialize_gh(snd_state *ss)
 
   /* ---------------- CONSTANTS ---------------- */
 
-  gh_define(S_amplitude_env,         TO_SMALL_SCM_INT(AMPLITUDE_ENV));
-  gh_define(S_spectrum_env,          TO_SMALL_SCM_INT(SPECTRUM_ENV));
-  gh_define(S_srate_env,             TO_SMALL_SCM_INT(SRATE_ENV));
+  DEFINE_VAR(S_amplitude_env,         TO_SMALL_SCM_INT(AMPLITUDE_ENV), "The value for " S_enved_target " that sets the envelope editor 'amp' button");
+  DEFINE_VAR(S_spectrum_env,          TO_SMALL_SCM_INT(SPECTRUM_ENV), "The value for " S_enved_target " that sets the envelope editor 'flt' button");
+  DEFINE_VAR(S_srate_env,             TO_SMALL_SCM_INT(SRATE_ENV), "The value for " S_enved_target " that sets the envelope editor 'src' button");
 
   gh_define(S_graph_lines,           TO_SMALL_SCM_INT(GRAPH_LINES));
   gh_define(S_graph_dots,            TO_SMALL_SCM_INT(GRAPH_DOTS));
@@ -3884,7 +3938,7 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure(S_show_listener,       SCM_FNC g_show_listener, 0, 0, 0),       H_show_listener);
   DEFINE_PROC(gh_new_procedure(S_hide_listener,       SCM_FNC g_hide_listener, 0, 0, 0),       H_hide_listener);
   DEFINE_PROC(gh_new_procedure(S_activate_listener,   SCM_FNC g_activate_listener, 0, 0, 0),   H_activate_listener);
-  DEFINE_PROC(gh_new_procedure(S_graph_ps,            SCM_FNC g_graph2ps, 0, 0, 0),            H_graph2ps);
+  DEFINE_PROC(gh_new_procedure(S_graph_ps,            SCM_FNC g_graph2ps, 0, 1, 0),            H_graph2ps);
   DEFINE_PROC(gh_new_procedure(S_save_state,          SCM_FNC g_save_state, 1, 0, 0),          H_save_state);
   DEFINE_PROC(gh_new_procedure(S_scale_to,            SCM_FNC g_scale_to, 0, 3, 0),            H_scale_to);
   DEFINE_PROC(gh_new_procedure(S_scale_by,            SCM_FNC g_scale_by, 0, 3, 0),            H_scale_by);
@@ -3925,13 +3979,14 @@ void g_initialize_gh(snd_state *ss)
 
   /* ---------------- HOOKS ---------------- */
 
-  /* I think this is the actual hook object, not the "vcell" so it might make sense to set its documentation property */
-  /*   or is this a per-hook function thing? -- then the help function could run through the hook list displaying docs? */
   during_open_hook = MAKE_HOOK(S_during_open_hook, 3);       /* args = fd filename reason */
   after_open_hook = MAKE_HOOK(S_after_open_hook, 1);         /* args = sound */
   exit_hook = MAKE_HOOK(S_exit_hook, 0);
   start_hook = MAKE_HOOK(S_start_hook, 1);                   /* arg = argv filename if any */
   output_comment_hook = MAKE_HOOK(S_output_comment_hook, 1); /* arg = current mus_sound_comment(hdr) if any */
+
+  /* scm_set_object_property_x(start_hook,local_doc,TO_SCM_STRING("hiho")); */
+  /* TODO: make this a part of MAKE_HOOK macro */
 
   g_init_marks(local_doc);
   g_init_regions(local_doc);
@@ -3967,32 +4022,18 @@ void g_initialize_gh(snd_state *ss)
                    \"(unbind-key key state) undoes the effect of a prior bind-key call\"\
                    (bind-key key state #f)))");
 
+  /* TODO:
+     (snd-help 'unbind-key)
+     #f
+     (procedure-documentation unbind-key)
+     "(unbind-key key state) undoes the effect of a prior bind-key call"
+  */
+
   gh_eval_str("(defmacro defvar (a b)\
                  `(begin\
                     (define , a , b)\
                     (define-envelope (symbol->string ', a) , b)))");
   /* this is trying to keep track of envelopes for the envelope editor */
-
-  gh_eval_str("(define snd-help\
-                 (lambda n\
-                   \"snd-help returns the procedure documentation associated with its argument.\n\
-(snd-help make-vct) for example, prints out a brief description of make-vct.\n\
-In the help descriptions, '&optional' marks optional arguments, and\n\
-'&opt-key' marks CLM-style optional keyword arguments.  If you load index.scm\n\
-the functions html and ? can be used in place of help to go to the HTML description\"\
-                   (if (null? n)\
-                       (snd-help snd-help)\
-                     (let ((func (car n)))\
-                       (if (procedure? func)\
-                           (or (procedure-property func 'documentation)\
-                               (procedure-documentation func)\
-                               (object-property func 'documentation))\
-                           (object-property func 'documentation))))))");
-  /* TODO: should we append apropos results here, or a cf list? */
-  /* TODO    to handle (extend) apropos from session.scm, we need to set up the Snd module, I think */
-  /*     Guile's help uses procedure-documentation, but that (at the C level) just picks up the
-   *     first line of the function's source!
-   */
 
   gh_eval_str("(read-set! keywords 'prefix)");
   gh_eval_str("(print-enable 'source)");  /* added 13-Feb-01 */
@@ -4002,7 +4043,7 @@ the functions html and ? can be used in place of help to go to the HTML descript
   gh_eval_str("(set! %load-hook (lambda (filename)\
                                   (set! snd-last-file-loaded filename)\
                                   (if %load-verbosely\
-                                    (snd-print (format #f \"; ; ; loading ~S\" filename)))))");
+                                    (snd-print (format #f \";;; loading ~S\" filename)))))");
 
   /* backwards compatibility */
   gh_eval_str("(define abort? c-g?)"); 
@@ -4165,3 +4206,4 @@ char *output_comment(file_info *hdr)
   return(com);
 #endif
 }
+

@@ -486,25 +486,25 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 
   set_sound_style(ss, SOUNDS_VERTICAL);
   for (i = 1; i < argc; i++)
-    {
-      if ((strcmp(argv[i], "-h") == 0) || (strcmp(argv[i], "-horizontal") == 0))
-	set_sound_style(ss, SOUNDS_HORIZONTAL);
+    if ((strcmp(argv[i], "-h") == 0) || 
+	(strcmp(argv[i], "-horizontal") == 0))
+      set_sound_style(ss, SOUNDS_HORIZONTAL);
+    else
+      if ((strcmp(argv[i], "-v") == 0) || 
+	  (strcmp(argv[i], "-vertical") == 0))
+	set_sound_style(ss, SOUNDS_VERTICAL);
       else
-	if ((strcmp(argv[i], "-v") == 0) || (strcmp(argv[i], "-vertical") == 0))
-	  set_sound_style(ss, SOUNDS_VERTICAL);
+	if (strcmp(argv[i], "-notebook") == 0)
+	  set_sound_style(ss, SOUNDS_IN_NOTEBOOK);
 	else
-	  if (strcmp(argv[i], "-notebook") == 0)
-	    set_sound_style(ss, SOUNDS_IN_NOTEBOOK);
+	  if (strcmp(argv[i], "-separate") == 0)
+	    set_sound_style(ss, SOUNDS_IN_SEPARATE_WINDOWS);
 	  else
-	    if (strcmp(argv[i], "-separate") == 0)
-	      set_sound_style(ss, SOUNDS_IN_SEPARATE_WINDOWS);
+	    if (strcmp(argv[i], "-noglob") == 0)
+	      noglob = 1;
 	    else
-	      if (strcmp(argv[i], "-noglob") == 0)
-		noglob = 1;
-	      else
-		if (strcmp(argv[i], "-noinit") == 0)
-		  noinit = 1;
-    }
+	      if (strcmp(argv[i], "-noinit") == 0)
+		noinit = 1;
 
   ss->using_schemes = 0;
   set_auto_resize(ss, AUTO_RESIZE_DEFAULT);
@@ -523,32 +523,32 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   sx->graph_is_active = 0;
 
   /* the gray shades are an attempt to get around Netscape which hogs all the colors */
-  sx->white = get_color(WHITE_COLOR, NULL, NULL, TRUE);
-  sx->black = get_color(BLACK_COLOR, NULL, NULL, FALSE);
-  sx->light_blue = get_color(LIGHT_BLUE_COLOR, NULL, NULL, TRUE);
-  sx->lighter_blue = get_color(LIGHTER_BLUE_COLOR, NULL, NULL, TRUE);
-  sx->red = get_color(RED_COLOR, NULL, NULL, FALSE);
-  sx->green = get_color(GREEN_COLOR, NULL, NULL, FALSE);
-  sx->yellow = get_color(YELLOW_COLOR, NULL, NULL, TRUE);
-  sx->highlight_color = get_color(HIGHLIGHT_COLOR, "gray90", NULL, TRUE);
-  sx->basic_color = get_color(BASIC_COLOR, "gray80", "gray", TRUE);
-  sx->position_color = get_color(POSITION_COLOR, "gray60", "gray", FALSE);
-  sx->zoom_color = get_color(ZOOM_COLOR, "gray20", "gray", FALSE);
-  sx->cursor_color = get_color(CURSOR_COLOR, NULL, NULL, FALSE);
-  sx->selection_color = get_color(SELECTION_COLOR, "gray80", NULL, FALSE);
-  sx->mix_color = get_color(MIX_COLOR, NULL, NULL, FALSE);
-  sx->selected_mix_color = get_color(SELECTED_MIX_COLOR, NULL, NULL, FALSE);
-  sx->enved_waveform_color = get_color(ENVED_WAVEFORM_COLOR, NULL, NULL, FALSE);
+  sx->white =                 get_color(WHITE_COLOR,           NULL, NULL, TRUE);
+  sx->black =                 get_color(BLACK_COLOR,           NULL, NULL, FALSE);
+  sx->light_blue =            get_color(LIGHT_BLUE_COLOR,      NULL, NULL, TRUE);
+  sx->lighter_blue =          get_color(LIGHTER_BLUE_COLOR,    NULL, NULL, TRUE);
+  sx->red =                   get_color(RED_COLOR,             NULL, NULL, FALSE);
+  sx->green =                 get_color(GREEN_COLOR,           NULL, NULL, FALSE);
+  sx->yellow =                get_color(YELLOW_COLOR,          NULL, NULL, TRUE);
+  sx->highlight_color =       get_color(HIGHLIGHT_COLOR,       "gray90", NULL, TRUE);
+  sx->basic_color =           get_color(BASIC_COLOR,           "gray80", "gray", TRUE);
+  sx->position_color =        get_color(POSITION_COLOR,        "gray60", "gray", FALSE);
+  sx->zoom_color =            get_color(ZOOM_COLOR,            "gray20", "gray", FALSE);
+  sx->cursor_color =          get_color(CURSOR_COLOR,          NULL, NULL, FALSE);
+  sx->selection_color =       get_color(SELECTION_COLOR,       "gray80", NULL, FALSE);
+  sx->mix_color =             get_color(MIX_COLOR,             NULL, NULL, FALSE);
+  sx->selected_mix_color =    get_color(SELECTED_MIX_COLOR,    NULL, NULL, FALSE);
+  sx->enved_waveform_color =  get_color(ENVED_WAVEFORM_COLOR,  NULL, NULL, FALSE);
   sx->filter_waveform_color = get_color(FILTER_WAVEFORM_COLOR, NULL, NULL, FALSE);
-  sx->listener_color = get_color(LISTENER_COLOR, NULL, NULL, TRUE);
-  sx->graph_color = get_color(GRAPH_COLOR, NULL, NULL, TRUE);
-  sx->selected_graph_color = get_color(SELECTED_GRAPH_COLOR, NULL, NULL, TRUE);
-  sx->data_color = get_color(DATA_COLOR, NULL, NULL, FALSE);
-  sx->selected_data_color = get_color(SELECTED_DATA_COLOR, NULL, NULL, FALSE);
-  sx->mark_color = get_color(MARK_COLOR, NULL, NULL, FALSE);
-  sx->sash_color = get_color(SASH_COLOR, NULL, NULL, FALSE);
-  sx->pushed_button_color = get_color(PUSHED_BUTTON_COLOR, NULL, NULL, FALSE);
-  sx->text_focus_color = get_color(TEXT_FOCUS_COLOR, NULL, NULL, FALSE);
+  sx->listener_color =        get_color(LISTENER_COLOR,        NULL, NULL, TRUE);
+  sx->graph_color =           get_color(GRAPH_COLOR,           NULL, NULL, TRUE);
+  sx->selected_graph_color =  get_color(SELECTED_GRAPH_COLOR,  NULL, NULL, TRUE);
+  sx->data_color =            get_color(DATA_COLOR,            NULL, NULL, FALSE);
+  sx->selected_data_color =   get_color(SELECTED_DATA_COLOR,   NULL, NULL, FALSE);
+  sx->mark_color =            get_color(MARK_COLOR,            NULL, NULL, FALSE);
+  sx->sash_color =            get_color(SASH_COLOR,            NULL, NULL, FALSE);
+  sx->pushed_button_color =   get_color(PUSHED_BUTTON_COLOR,   NULL, NULL, FALSE);
+  sx->text_focus_color =      get_color(TEXT_FOCUS_COLOR,      NULL, NULL, FALSE);
 
   if ((!(set_button_font(ss, DEFAULT_BUTTON_FONT))) &&
       (!(set_button_font(ss, FALLBACK_FONT))))

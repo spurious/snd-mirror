@@ -18,8 +18,6 @@ add modules to tie sndlib into Python, Octave, etc (via SWIG?).
 Snd name completion tied into the Emacs-Snd subjob connection (this
   apparently will require "raw" mode in ilisp).
 
-Snd's help and apropos merged with Guile's (this is harder than it
-ought to be: see note in snd-scm.c).
 
 --------
 OpenGL spectrum display (the communication with Snd is in glfft.c). This
@@ -129,7 +127,7 @@ dB display in VU meters (in the record dialog).  A nicer VU meter background.
 loop syntax filled in (loop.scm).
 
 Translate more CLM instruments to Scheme: 
-  singer piano flute fade
+  singer piano flute fade maraca
 
 More effects (see list of suggestions in effects.scm)
 
@@ -160,3 +158,5 @@ cmucl, and a Scheme binding in xscm; perhaps the latter can be ported
 to Guile.
 
 Mac-OSX Snd port (since gtk and guile have been ported, Snd shouldn't be difficult).
+
+Translate the rest of env.lisp to env.scm.

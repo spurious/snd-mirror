@@ -2,6 +2,9 @@
 #include "sndlib-strings.h"
 #include "vct.h"
 
+/* TODO: make these help strings click-sensitive (i.e. urls)
+ */
+
 void ssnd_help(snd_state *ss, char *subject, ...)
 {
   va_list ap;
@@ -272,6 +275,8 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+26-Feb:  Tab-completion is much smarter in Guile 1.4.1.\n\
+23-Feb:  --with-gsl is the default in configure.\n\
 21-Feb:  snd 4.11.\n\
 14-Feb:  vct func now built-in (was in examp.scm).\n\
 13-Feb:  added search-procedure, key-binding.\n\
@@ -279,8 +284,6 @@ void news_help(snd_state *ss)
 6-Feb:   removed expand-funcs: it could not have worked given the \"hidden controls\" exposure.\n\
 30-Jan:  rtio.scm.\n\
 29-Jan:  pvf headers.\n\
-23-Jan:  no-gui version now reads ~/.snd (thanks to Eliot Handelman)\n\
-16-Jan:  fm.html, sndscm.html.\n\
 ",
 NULL);
   FREE(info);
@@ -1719,14 +1722,6 @@ void sound_files_help(snd_state *ss) {snd_help_with_url(ss, STR_Format, "#format
 void recording_help(snd_state *ss) {snd_help_with_url(ss, STR_Recording, "#recordfile", recording_help_string);}
 void init_file_help(snd_state *ss) {ssnd_help_with_url(ss, STR_Customization, "extsnd.html", init_file_help_string, "\n", resource_help_string, NULL);}
 
-#if HAVE_GUILE
-char *CLM_help(void);
-#else
-static char *CLM_help(void) {return("");}
-#endif
-
-void clm_help(snd_state *ss) {snd_help_with_url(ss, STR_CLM, "grfsnd.html#sndwithclm", CLM_help());}
-
 #if HAVE_CLICK_FOR_HELP
 
 /* -------- click for help -------- */
@@ -2392,4 +2387,221 @@ somehow gets out of sync with the actual data.\n\
 ");
 }
 
+
+static char CLM_help_string[] = 
+"  all-pass            (gen input pm)       all-pass filter\n\
+  all-pass?           (gen)                #t if gen is all-pass filter\n\
+  amplitude-modulate  (carrier in1 in2)    amplitude modulation\n\
+  array-interp        (arr x)              interpolated array lookup\n\
+  array->file         (filename vct len srate channels)\n\
+  asymmetric-fm       (gen index fm)       asymmetric-fm generator\n\
+  asymmetric-fm?      (gen)                #t if gen is asymmetric-fm generator\n\
+  buffer->frame       (gen frame           buffer generator returning frame\n\
+  buffer->sample      (gen)                buffer generator returning sample\n\
+  buffer-empty?       (gen)                #t if buffer has no data\n\
+  buffer?             (gen)                #t if gen is buffer generator\n\
+  clear-array         (arr)                set all elements of arr to 0.0\n\
+  comb                (gen input pm)       comb filter\n\
+  comb?               (gen)                #t if gen is comb filter\n\
+  contrast-enhancement(input (index 1.0))  a kind of phase modulation\n\
+  convolution         (sig1 sig2 n)        convolve sig1 with sig2 (size n), returning new sig1\n\
+  convolve            (gen input-function) convolve generator\n\
+  convolve?           (gen)                #t if gen is convolve generator\n\
+  convolve-files      (f1 f2 maxamp outf)  convolve f1 with f2, normalize to maxamp, write outf\n\
+  db->linear          (db)                 translate dB value to linear\n\
+  degrees->radians    (deg)                translate degrees to radians\n\
+  delay               (gen input pm)       delay line\n\
+  delay?              (gen)                #t if gen is delay line\n\
+  dot-product         (sig1 sig2)          return dot-product of sig1 with sig2\n\
+  env                 (gen)                envelope generator\n\
+  env-interp          (x env (base 1.0))   return value of env at x\n\
+  env?                (gen)                #t if gen is env (from make-env)\n\
+  mus-fft             (rl im n sign)       fft of rl and im (sign = -1 for ifft), result in rl\n\
+  file->array         (filename chan start len vct)\n\
+  file->frame         (gen loc frame)      return frame from file at loc\n\
+  file->frame?        (gen)                #t if gen is file->frame generator\n\
+  file->sample        (gen loc chan)       return sample from file at loc\n\
+  file->sample?       (gen)                #t if gen is file->sample generator\n\
+  filter              (gen input)          filter\n\
+  filter?             (gen)                #t if gen is filter\n\
+  fir-filter          (gen input)          FIR filter\n\
+  fir-filter?         (gen)                #t if gen is fir filter\n\
+  formant             (gen input)          formant generator\n\
+  formant-bank        (scls gens inval)    bank for formants\n\
+  formant?            (gen)                #t if gen is formant generator\n\
+  frame*              (fr1 fr2 outfr)      element-wise multiply\n\
+  frame+              (fr1 fr2 outfr)      element-wise add\n\
+  frame->buffer       (buf frame)          add frame to buffer\n\
+  frame->file         (gen loc frame)      write (add) frame to file at loc\n\
+  frame->file?        (gen)                #t if gen is frame->file generator\n\
+  frame->frame        (mixer frame outfr)  pass frame through mixer\n\
+  frame->list         (frame)              return list of  frame's contents\n\
+  frame-ref           (frame chan)         return frame[chan]\n\
+  frame->sample       (frmix frame)        pass frame through frame or mixer to produce sample\n\
+  frame-set!          (frame chan val)     frame[chan] = val\n\
+  frame?              (gen)                #t if gen is frame object\n\
+  granulate           (gen input-function) granular synthesis generator\n\
+  granulate?          (gen)                #t if gen is granulate generator\n\
+  hz->radians         (freq)               translate freq to radians/sample\n\
+  iir-filter          (gen input)          IIR filter\n\
+  iir-filter?         (gen)                #t if gen is iir-filter\n\
+  in-any              (loc chan stream)    return sample in stream at loc and chan\n\
+  in-hz               (freq)               translate freq to radians/sample\n\
+  ina                 (loc stream)         return sample in stream at loc, chan 0\n\
+  inb                 (loc stream)         return sample in stream at loc, chan 1\n\
+  linear->db          (val)                translate linear val to dB\n\
+  locsig              (gen loc input)      place input in output channels at loc\n\
+  locsig-ref          (gen chan)           locsig-scaler[chan]\n\
+  locsig-reverb-ref   (gen chan)           locsig-reverb-scaler[chan]\n\
+  locsig-set!         (gen chan val)       locsig-scaler[chan] = val\n\
+  locsig-reverb-set!  (gen chan val)       locsig-reverb-scaler[chan] = val\n\
+  locsig?             (gen)                #t if gen is locsig generator\n\
+  make-all-pass       (feedback feedforward size max-size initial-contents initial-element)\n\
+  make-asymmetric-fm  (frequency initial-phase r ratio)\n\
+  make-buffer         (size fill-time)\n\
+  make-comb           (scaler size max-size initial-contents initial-element)\n\
+  make-convolve       (input filter fft-size)\n\
+  make-delay          (size initial-contents initial-element max-size)\n\
+  make-env            (envelope scaler duration offset base end start)\n\
+  make-fft-window     (type size)\n\
+  make-file->frame    (name)\n\
+  make-file->sample   (name)\n\
+  make-filter         (order xcoeffs ycoeffs)\n\
+  make-fir-filter     (order xcoeffs)\n\
+  make-formant        (radius frequency gain)\n\
+  make-frame          (chans &rest vals)\n\
+  make-frame->file    (name chans format type)\n\
+  make-granulate      (input expansion length scaler hop ramp jitter max-size)\n\
+  make-iir-filter     (order ycoeffs)\n\
+  make-locsig         (degree distance reverb output revout channels)\n\
+  make-mixer          (chans &rest vals)\n\
+  make-notch          (scaler size max-size initial-contents initial-element)\n\
+  make-one-pole       (a0 b1)\n\
+  make-one-zero       (a0 a1)\n\
+  make-oscil          (frequency initial-phase)\n\
+  make-phase-vocoder  (input fftsize overlap interp pitch analyze edit synthesize)\n\
+  make-ppolar         (radius frequency)\n\
+  make-pulse-train    (frequency amplitude initial-phase)\n\
+  make-rand           (frequency amplitude)\n\
+  make-rand-interp    (frequency amplitude)\n\
+  make-readin         (file channel start)\n\
+  make-sample->file   (name chans format type)\n\
+  make-sawtooth-wave  (frequency amplitude initial-phase)\n\
+  make-sine-summation (frequency initial-phase n a ratio)\n\
+  make-square-wave    (frequency amplitude initial-phase)\n\
+  make-src            (input srate width)\n\
+  make-sum-of-cosines (frequency initial-phase cosines)\n\
+  make-table-lookup   (frequency initial-phase wave)\n\
+  make-triangle-wave  (frequency amplitude initial-phase)\n\
+  make-two-pole       (a0 b1 b2)\n\
+  make-two-zero       (a0 a1 a2)\n\
+  make-wave-train     (frequency initial-phase wave)\n\
+  make-waveshape      (frequency partials)\n\
+  make-zpolar         (radius frequency)\n\
+  mixer*              (mix1 mix2 outmx)    matrix multiply of mix1 and mix2\n\
+  mixer-ref           (mix in out)         mix-scaler[in, out]\n\
+  mixer-set!          (mix in out val)     mix-scaler[in, out] = val\n\
+  mixer?              (gen)                #t if gen is mixer object\n\
+  multiply-arrays     (arr1 arr2)          arr1[i] *= arr2[i]\n\
+  ;; the \"mus-\" functions are generic functions, to set use mus-set-var as in mus-set-frequency\n\
+  mus-a0              (gen)                a0 field (simple filters)\n\
+  mus-a1              (gen)                a1 field (simple filters)\n\
+  mus-a2              (gen)                a2 field (simple filters)\n\
+  mus-array-print-length ()                how many array elements to print in mus_describe\n\
+  mus-b1              (gen)                b1 field (simple filters)\n\
+  mus-b2              (gen)                b2 field (simple filters)\n\
+  mus-bank            (gens amps &optional args1 args2)\n\
+  mus-channel         (gen)                channel of gen\n\
+  mus-channels        (gen)                channels of gen\n\
+  mus-cosines         (gen)                cosines of sum-of-cosines gen\n\
+  mus-data            (gen)                data array of gen\n\
+  mus-feedback        (gen)                feedback term of gen (simple filters)\n\
+  mus-feedforward     (gen)                feedforward term of gen (all-pass)\n\
+  mus-formant-radius  (gen)                formant radius\n\
+  mus-frequency       (gen)                frequency of gen (Hz)\n\
+  mus-hop             (gen)                hop amount of gen (granulate)\n\
+  mus-increment       (gen)                increment of gen (src, readin, granulate)\n\
+  mus-input?          (gen)                #t if gen is input source\n\
+  mus-length          (gen)                length of gen\n\
+  mus-location        (gen)                location (read point) of gen\n\
+  mus-mix             (outfile infile outloc frames inloc mixer envs)\n\
+  mus-order           (gen)                order of gen (filters)\n\
+  mus-output?         (gen)                #t if gen is output generator\n\
+  mus-phase           (gen)                phase of gen (radians)\n\
+  mus-ramp            (gen)                ramp time of gen (granulate)\n\
+  mus-random          (val)                random numbers bewteen -val and val\n\
+  mus-run             (gen arg1 arg2)      apply gen to args\n\
+  mus-scaler          (gen)                scaler of gen\n\
+  mus-set-rand-seed   (val)                set random number generator seed to val\n\
+  mus-set-srate       (val)                also (set! (mus-srate) val)\n\
+  mus-srate           ()                   current sampling rate\n\
+  mus-xcoeffs         (gen)                feedforward (FIR) coeffs of filter\n\
+  mus-ycoeffs         (gen)                feedback (IIR) coeefs of filter\n\
+  notch               (gen input pm)       notch filter\n\
+  notch?              (gen)                #t if gen is notch filter\n\
+  one-pole            (gen input)          one-pole filter\n\
+  one-pole?           (gen)                #t if gen is one-pole filter\n\
+  one-zero            (gen input)          one-zero filter\n\
+  one-zero?           (gen)                #t if gen is one-zero filter\n\
+  oscil               (gen fm pm)          sine wave generator\n\
+  oscil-bank          (scls gens invals)   bank for oscils\n\
+  oscil?              (gen)                #t if gen is oscil generator\n\
+  out-any             (loc samp chan stream) write (add) samp to stream at loc in channel chan\n\
+  outa                (loc samp stream)    write (add) samp to stream at loc in chan 0\n\
+  outb                (loc samp stream)    write (add) samp to stream at loc in chan 1\n\
+  outc                (loc samp stream)    write (add) samp to stream at loc in chan 2\n\
+  outd                (loc samp stream)    write (add) samp to stream at loc in chan 3\n\
+  partials->polynomial(partials kind)      create waveshaping polynomial from partials\n\
+  partials->wave      (synth-data table norm) load table from synth-data\n\
+  partials->waveshape (partials norm size) create waveshaping table from partials\n\
+  phase-partials->wave(synth-data table norm) load table from synth-data\n\
+  phase-vocoder       (gen input)          phase vocoder generator\n\
+  phase-vocoder?      (gen)                #t if gen is a phase-vocoder generator\n\
+  polynomial          (coeffs x)           evaluate polynomial at x\n\
+  pulse-train         (gen fm)             pulse-train generator\n\
+  pulse-train?        (gen)                #t if gen is pulse-train generator\n\
+  radians->degrees    (rads)               convert radians to degrees\n\
+  radians->hz         (rads)               convert radians/sample to Hz\n\
+  rand                (gen fm)             random number generator\n\
+  rand-interp         (gen fm)             interpolating random number generator\n\
+  rand-interp?        (gen)                #t if gen is interpolating random number generator\n\
+  rand?               (gen)                #t if gen is random number generator\n\
+  readin              (gen)                read one value from associated input stream\n\
+  readin?             (gen)                #t if gen is readin generator\n\
+  rectangular->polar  (rl im)              translate from rectangular to polar coordinates\n\
+  restart-env         (env)                return to start of env\n\
+  ring-modulate       (sig1 sig2)          sig1 * sig2 (element-wise)\n\
+  sample->buffer      (buf samp)           store samp in buffer\n\
+  sample->file        (gen loc chan val)   store val in file at loc in channel chan\n\
+  sample->file?       (gen)                #t if gen is sample->file generator\n\
+  sample->frame       (frmix samp outfr)   convert samp to frame\n\
+  sawtooth-wave       (gen fm)             sawtooth-wave generator\n\
+  sawtooth-wave?      (gen)                #t if gen is sawtooth-wave generator\n\
+  sine-summation      (gen fm)             sine-summation generator\n\
+  sine-summation?     (gen)                #t if gen is sine-summation generator\n\
+  spectrum            (rl im win type)     produce spectrum of data in rl\n\
+  square-wave         (gen fm)             square-wave generator\n\
+  square-wave?        (gen)                #t if gen is square-wave generator\n\
+  src                 (gen fm input-function) sample rate converter\n\
+  src?                (gen)                #t if gen is sample-rate converter\n\
+  sum-of-cosines      (gen fm)             sum-of-cosines (pulse-train) generator\n\
+  sum-of-cosines?     (gen)                #t if gen is sum-of-cosines generator\n\
+  sum-of-sines        (amps phases)        additive synthesis\n\
+  table-lookup        (gen fm)             table-lookup generator\n\
+  table-lookup?       (gen)                #t if gen is table-lookup generator\n\
+  tap                 (gen pm)             delay line tap\n\
+  triangle-wave       (gen fm)             triangle-wave generator\n\
+  triangle-wave?      (gen)                #t if gen is triangle-wave generator\n\
+  two-pole            (gen input)          two-pole filter\n\
+  two-pole?           (gen)                #t if gen is two-pole filter\n\
+  two-zero            (gen input)          two-zero filter\n\
+  two-zero?           (gen)                #t if gen is two-zero filter\n\
+  wave-train          (gen fm)             wave-train generator\n\
+  wave-train?         (gen)                #t if gen is wave-train generator\n\
+  waveshape           (gen index fm)       waveshaping generator\n\
+  waveshape?          (gen)                #t if gen is waveshape generator\n\
+";
+
+static char *CLM_help(void) {return(CLM_help_string);}
+void clm_help(snd_state *ss) {snd_help_with_url(ss, STR_CLM, "grfsnd.html#sndwithclm", CLM_help());}
 

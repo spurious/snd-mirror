@@ -2966,7 +2966,11 @@ static void oss_describe_audio_state_1(void)
 		    {
 		      sprintf(strbuf, "  device %d: %s, %s\n", i, minfo.name, synth_name(minfo.dev_type)); 
 		      pprint(strbuf);
-		    }}}}}
+		    }
+		}
+	    }
+	}
+    }
   if (fd != -1) close(fd);
   pprint("--------------------------------\n");
 
@@ -3145,7 +3149,11 @@ AUDIO_INFO:
 		      if (set_dsp(fd, channels, bits, &max_rate) == -1) continue;
 		      sprintf(strbuf, "  %4d  %8d  %8d  %8d\n", channels, bits, min_rate, max_rate); 
 		      pprint(strbuf);
-		    }}}}}
+		    }
+		}
+	    }
+	}
+    }
   pprint("--------------------------------\n");
   linux_audio_close(fd); fd=-1;
   dsp_num++; 
@@ -7021,9 +7029,16 @@ static void describe_audio_state_1(void)
                               sprintf(strbuf, "    srates available:"); 
                               pprint(strbuf);
                               if (range)
-                                {sprintf(strbuf, "%d to %d", vals[0], vals[1]); pprint(strbuf);}
+                                {
+				  sprintf(strbuf, "%d to %d", vals[0], vals[1]); 
+				  pprint(strbuf);
+				}
                               else
-                                {for (j = 0; j < rates; j++) {sprintf(strbuf, " %d", vals[j]); pprint(strbuf);}}
+                                for (j = 0; j < rates; j++) 
+				  {
+				    sprintf(strbuf, " %d", vals[j]); 
+				    pprint(strbuf);
+				  }
                               sprintf(strbuf, ", current srate: %d\n",
                                       input_device_get_srate(refnum));
                               pprint(strbuf);

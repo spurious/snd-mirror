@@ -138,3 +138,70 @@
 	(car e)
       (max-x (cddr e)))))
 
+
+;;; return a new envelope taking into account the attack and decay times given
+(define (stretch-envelope . args)
+  (let ((fn (list-ref args 0))
+	(old-att (if (> (length args) 1) (list-ref args 1) #f))
+	(new-att (if (> (length args) 2) (list-ref args 2) #f))
+	(old-dec (if (> (length args) 3) (list-ref args 3) #f))
+	(new-dec (if (> (length args) 4) (list-ref args 4) #f)))
+    (if (and old-att
+	     (not new-att))
+	(snd-error (format #f "old-attack but no new-attack? (stretch-envelope ~{~A ~})" args))
+	(if (not new-att)
+	    fn
+	    (if (and old-dec
+		     (not new-dec))
+		(snd-error (format #f "old-decay but no new-decay? (stretch-envelope ~{~A ~})" args))
+		(let* ((x0 (car fn))
+		       (new-x x0)
+		       (last-x (list-ref fn (- (length fn) 2)))
+		       (y0 (cadr fn))
+		       (new-fn (list y0 x0))
+		       (scl (/ (- new-att x0) (max .0001 (- old-att x0)))))
+		  (define (stretch-envelope-1 new-fn old-fn)
+		    (if (null? old-fn)
+			new-fn
+			(let ((x1 (car old-fn))
+			      (y1 (cadr old-fn)))
+			  (if (and (< x0 old-att)
+				   (>= x1 old-att))
+			      (begin
+				(if (= x1 old-att)
+				    (set! y0 y1)
+				    (set! y0 (+ y0 (* (- y1 y0) (/ (- old-att x0) (- x1 x0))))))
+				(set! x0 old-att)
+				(set! new-x new-att)
+				(set! new-fn (cons new-x new-fn))
+				(set! new-fn (cons y0 new-fn))
+				(set! scl (if old-dec 
+					      (/ (- new-dec new-att) (- old-dec old-att))
+					      (/ (- last-x new-att) (- last-x old-att))))))
+			  (if (and old-dec
+				   (< x0 old-dec)
+				   (>= x1 old-dec))
+			      (begin
+				(if (= x1 old-dec)
+				    (set! y0 y1)
+				    (set! y0 (+ y0 (* (- y1 y0) (/ (- old-dec x0) (- x1 x0))))))
+				(set! x0 old-dec)
+				(set! new-x new-dec)
+				(set! new-fn (cons new-x new-fn))
+				(set! new-fn (cons y0 new-fn))
+				(set! scl (/ (- last-x new-dec) (- last-x old-dec)))))
+			  (if (not (= x0 x1))
+			      (begin
+				(set! new-x (+ new-x (* scl (- x1 x0))))
+				(set! new-fn (cons new-x new-fn))
+				(set! new-fn (cons y1 new-fn))
+				(set! x0 x1)
+				(set! y0 y1)))
+			  (stretch-envelope-1 new-fn (cddr old-fn)))))
+		  
+		  (if (and old-dec 
+			   (= old-dec old-att)) 
+		      (set! old-dec (* .000001 last-x)))
+		  (reverse (stretch-envelope-1 new-fn (cddr fn)))))))))
+
+    

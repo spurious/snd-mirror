@@ -2,8 +2,7 @@
 #include "vct.h"
 #include "sndlib-strings.h"
 
-/* TODO  snd-apropos and help merged with Guile's?
- * TODO  completion activated in emacs (snd-as-subjob)
+/* TODO  completion activated in emacs (snd-as-subjob)
  */
 
 #if HAVE_DIRENT_H
@@ -20,6 +19,111 @@
     #include <ndir.h>
   #endif
 #endif
+
+static char *current_match = NULL;
+
+#ifdef SCM_MODULE_OBARRAY
+/* -------------------------------- new completion -------------------------------- */
+/* new form searches through Guile's module's hash tables */
+
+static int scan_tab(SCM tab, char *text, int len, int matches)
+{
+  int i, j, n, curlen;
+  char *sym;
+  n = SCM_VECTOR_LENGTH(tab);
+  for (i = 0; i < n; ++i)
+    {
+      SCM ls = SCM_VELTS(tab)[i], handle;
+      while (SCM_NNULLP(ls))
+	{
+	  handle = SCM_CAR(ls);
+	  sym = SCM_SYMBOL_CHARS(SCM_CAR(handle));
+	  if (strncmp(text, sym, len) == 0)
+	    {
+	      matches++;
+	      add_possible_completion(sym);
+	      if (current_match == NULL)
+		current_match = copy_string(sym);
+	      else 
+		{
+		  curlen = snd_strlen(current_match);
+		  for (j = 0; j < curlen; j++)
+		    if (current_match[j] != sym[j])
+		      {
+			current_match[j] = '\0';
+			break;
+		      }
+		}
+	    }
+	  ls = SCM_CDR(ls);
+	}
+    }
+  return(matches);
+}
+
+static int completions(char *text)
+{
+  int len, matches = 0;
+  SCM curmod, uses;
+  len = strlen(text);
+  curmod = scm_current_module();
+  matches = scan_tab(SCM_MODULE_OBARRAY(curmod), 
+		     text, len, 0);
+  uses = SCM_MODULE_USES(curmod);
+  while (SCM_CONSP(uses))
+    {
+      matches = scan_tab(SCM_MODULE_OBARRAY(SCM_CAR(uses)), 
+			 text, len, matches);
+      uses = SCM_CDR(uses);
+    }
+  return(matches);
+}
+#else
+/* -------------------------------- old completion -------------------------------- */
+/* use old form (stores a bunch of strings and scans them) -- there might be some way around this, but... */
+
+#include "sndlib-strings.h"
+
+#define NUM_SNDLIB_NAMES 112
+static const char *sndlib_names[] = {
+S_make_sound_data, S_mus_aifc, S_mus_aiff, S_mus_alaw,
+S_mus_audio_adat_in, S_mus_audio_adat_out, S_mus_audio_aes_in, S_mus_audio_aes_out,
+S_mus_audio_amp, S_mus_audio_aux_input, S_mus_audio_aux_output,
+S_mus_audio_bass, S_mus_audio_cd, S_mus_audio_channel, S_mus_audio_close,
+S_mus_audio_dac_filter, S_mus_audio_dac_out, S_mus_audio_default,
+S_mus_audio_digital_in, S_mus_audio_digital_out, S_mus_audio_direction, S_mus_audio_duplex_default,
+S_mus_audio_format, S_mus_audio_igain, S_mus_audio_imix, S_mus_audio_line,
+S_mus_audio_line_in, S_mus_audio_line_out, S_mus_audio_line1,
+S_mus_audio_line2, S_mus_audio_line3,
+S_mus_audio_microphone, S_mus_audio_mixer, S_mus_audio_mixer_read,
+S_mus_audio_mixer_write, S_mus_audio_ogain, S_mus_audio_open_input,
+S_mus_audio_open_output, S_mus_audio_pcm, S_mus_audio_pcm2,
+S_mus_audio_port, S_mus_audio_read, S_mus_audio_reclev,
+S_mus_audio_report, S_mus_audio_restore, S_mus_audio_samples_per_channel, S_mus_audio_save,
+S_mus_audio_spdif_in, S_mus_audio_spdif_out, S_mus_audio_speakers,
+S_mus_audio_srate, S_mus_audio_sun_outputs, S_mus_audio_synth,
+S_mus_audio_systems, S_mus_audio_treble, S_mus_audio_write,
+S_mus_b24int, S_mus_bdouble, S_mus_bfloat, S_mus_bint, S_mus_bshort,
+S_mus_byte, S_mus_data_format_bytes_per_sample, S_mus_data_format_name,
+S_mus_file_prescaler, S_mus_file_set_data_clipped,
+S_mus_file_set_prescaler, S_mus_header_type_name, S_mus_ircam,
+S_mus_l24int, S_mus_ldouble, S_mus_lfloat, S_mus_lint, S_mus_lshort,
+S_mus_mulaw, S_mus_next, S_mus_nist, S_mus_raw, S_mus_riff,
+S_mus_sound_chans, S_mus_sound_close_input, S_mus_sound_close_output,
+S_mus_sound_comment, S_mus_sound_data_format, S_mus_sound_data_location,
+S_mus_sound_datum_size, S_mus_sound_duration, S_mus_sound_frames,
+S_mus_sound_header_type, S_mus_sound_length, S_mus_sound_loop_info,
+S_mus_sound_max_amp, S_mus_sound_open_input, S_mus_sound_open_output,
+S_mus_sound_read, S_mus_sound_reopen_output, S_mus_sound_samples,
+S_mus_sound_seek, S_mus_sound_seek_frame, S_mus_sound_srate,
+S_mus_sound_type_specifier, S_mus_sound_write, S_mus_ubshort,
+S_mus_ubyte, S_mus_ulshort, S_sound_data2vct, S_sound_data_chans,
+S_sound_data_length, S_sound_data_ref, S_sound_data_setB, S_sound_data_p,
+S_vct2sound_data
+};
+
+static int sndlib_num_commands(void) {return(NUM_SNDLIB_NAMES);}
+static const char **sndlib_commands(void) {return(sndlib_names);}
 
 #define NUM_COMMANDS 563
 
@@ -166,8 +270,6 @@ static char *snd_commands[NUM_COMMANDS] ={
   S_zero_pad, S_zoom_color, S_zoom_focus_style
 };
 
-static char *current_match = NULL;
-
 static int complete_one_set(char *text, int num_commands, char **commands)
 {
   int i, j, len, curlen, matches = 0;
@@ -199,46 +301,6 @@ static int complete_one_set(char *text, int num_commands, char **commands)
   return(matches);
 }
 
-#if HAVE_GUILE
-  int mus_num_commands(void);
-  char **mus_commands(void);
-#endif
-
-int sndlib_num_commands(void);
-const char **sndlib_commands(void);
-
-#if DEBUGGING
-void check_snd_commands(void);
-void check_snd_commands(void)
-{
-  int i, len;
-  char **names;
-  if (strcmp(snd_commands[NUM_COMMANDS-1], S_zoom_focus_style) != 0)
-    fprintf(stderr, "last command (%d) is %s?", 
-	    NUM_COMMANDS, 
-	    snd_commands[NUM_COMMANDS - 1]);
-  for (i = 1; i < NUM_COMMANDS; i++)
-    if (strcmp(snd_commands[i-1], snd_commands[i]) >= 0)
-      fprintf(stderr, "%s >= %s\n", 
-	      snd_commands[i-1], 
-	      snd_commands[i]);
-  names = (char **)sndlib_commands();
-  len = sndlib_num_commands();
-  for (i = 1; i < len; i++)
-    if (strcmp(names[i-1], names[i]) >= 0)
-      fprintf(stderr, "%s >= %s\n", 
-	      names[i-1], 
-	      names[i]);
-#if HAVE_GUILE
-  names = mus_commands();
-  len = mus_num_commands();
-  for (i = 1; i < len; i++)
-    if (strcmp(names[i-1], names[i]) >= 0)
-      fprintf(stderr, "%s >= %s\n", 
-	      names[i-1], 
-	      names[i]);
-#endif
-}
 #endif
 
 
@@ -257,20 +319,23 @@ char *command_completer(char *original_text)
 	    (!(isdigit((int)(original_text[i])))) &&
 	    (original_text[i] != '-'))
 	  break;
-      beg = i+1;
-      if (beg == len) return(copy_string(original_text));
+      beg = i + 1;
+      if (beg == len) 
+	return(copy_string(original_text));
       if (beg > 0) 
-	text = (char *)(original_text+beg);
+	text = (char *)(original_text + beg);
       else text = original_text;
+#ifdef SCM_MODULE_OBARRAY
+      matches = completions(text);
+#else
       matches = complete_one_set(text, NUM_COMMANDS, snd_commands);
       matches += complete_one_set(text, sndlib_num_commands(), (char **)sndlib_commands());
-#if HAVE_GUILE
-      matches += complete_one_set(text, mus_num_commands(), mus_commands());
 #endif
     }
   else return(copy_string(original_text));
   set_completion_matches(matches);
-  if ((current_match) && (*current_match))
+  if ((current_match) && 
+      (*current_match))
     {
       if (beg == 0)
 	return(current_match);
@@ -305,7 +370,7 @@ int add_completer_func(char *(*func)(char *))
     }
   completer_funcs[completer_funcs_end] = func;
   completer_funcs_end++;
-  return(completer_funcs_end-1);
+  return(completer_funcs_end - 1);
 }
 
 static int completion_matches = 0;
@@ -366,6 +431,7 @@ char *filename_completer(char *text)
   /* get directory name, opendir, read files checking for match */
   /* return name of same form as original (i.e. don't change user's directory indication) */
   /* if directory, add "/" -- is_directory(name) static in snd-xfile.c */
+
   char *full_name = NULL, *dir_name = NULL, *file_name = NULL, *current_match = NULL;
   int i, j, k, len, curlen, matches = 0;
   struct dirent *dirp;
@@ -377,10 +443,10 @@ char *filename_completer(char *text)
     if (full_name[i] == '/')
       break;
 
-  dir_name = (char *)CALLOC(i+1, sizeof(char));
+  dir_name = (char *)CALLOC(i + 1, sizeof(char));
   strncpy(dir_name, full_name, i);
-  file_name = (char *)CALLOC(len-i+2, sizeof(char));
-  for (j = 0, k = i+1; k < len; j++, k++) 
+  file_name = (char *)CALLOC(len - i + 2, sizeof(char));
+  for (j = 0, k = i + 1; k < len; j++, k++) 
     file_name[j] = full_name[k];
   if (full_name) 
     {
@@ -391,29 +457,24 @@ char *filename_completer(char *text)
   if ((dpos = opendir(dir_name)) != NULL)
     {
       while ((dirp = readdir(dpos)) != NULL)
-	{
-	  if (dirp->d_name[0] != '.')
-	    {
-	      /* match dirp->d_name against rest of text */
-	      if (strncmp(dirp->d_name, file_name, len) == 0)
-		{
-		  matches++;
-		  add_possible_completion(dirp->d_name);
-		  if (current_match == NULL)
-		    current_match = copy_string(dirp->d_name);
-		  else 
+	if ((dirp->d_name[0] != '.') && 
+	    (strncmp(dirp->d_name, file_name, len) == 0)) /* match dirp->d_name against rest of text */
+	  {
+	    matches++;
+	    add_possible_completion(dirp->d_name);
+	    if (current_match == NULL)
+	      current_match = copy_string(dirp->d_name);
+	    else 
+	      {
+		curlen = strlen(current_match);
+		for (j = 0; j < curlen; j++)
+		  if (current_match[j] != dirp->d_name[j])
 		    {
-		      curlen = strlen(current_match);
-		      for (j = 0; j < curlen; j++)
-			if (current_match[j] != dirp->d_name[j])
-			  {
-			    current_match[j] = '\0';
-			    break;
-			  }
-		      }
-		}
-	    }
-	}
+		      current_match[j] = '\0';
+		      break;
+		    }
+	      }
+	  }
 #if defined(CLOSEDIR_VOID)
       closedir(dpos);
 #else
@@ -426,7 +487,8 @@ char *filename_completer(char *text)
   if (dir_name) FREE(dir_name);
   if (file_name) FREE(file_name);
   set_completion_matches(matches);
-  if ((current_match) && (*current_match))
+  if ((current_match) && 
+      (*current_match))
     {
       /* attach matched portion to user's indication of dir */
       len = snd_strlen(text);
@@ -436,9 +498,10 @@ char *filename_completer(char *text)
       if (i < 0) return(current_match);
       curlen = strlen(current_match) + len + 3;
       file_name = (char *)CALLOC(curlen, sizeof(char));
-      strncpy(file_name, text, i+1);
+      strncpy(file_name, text, i + 1);
       strcat(file_name, current_match);
-      if (is_directory(file_name)) strcat(file_name, "/");
+      if (is_directory(file_name)) 
+	strcat(file_name, "/");
       FREE(current_match);
       return(file_name);
     }
@@ -533,14 +596,12 @@ static int find_indentation(char *str, int loc)
     }
   if (open_paren == -1) return(1);
   if (open_paren == 0) return(3);
-  for (i = open_paren-1; i > 0; i--)
-    {
-      if (str[i] == '\n') 
-	{
-	  line_beg = i; 
-	  break;
-	}
-    }
+  for (i = open_paren - 1; i > 0; i--)
+    if (str[i] == '\n') 
+      {
+	line_beg = i; 
+	break;
+      }
   if (line_beg == 0) return(1);
   return(open_paren - line_beg + 2);
 }
@@ -560,7 +621,8 @@ char *complete_listener_text(char *old_text, int end, int *try_completion, char 
 	  if (spaces > 0)
 	    {
 	      file_text = (char *)CALLOC(spaces + 1, sizeof(char));
-	      for (k = 0; k < spaces; k++) file_text[k] = ' ';
+	      for (k = 0; k < spaces; k++) 
+		file_text[k] = ' ';
 	      file_text[spaces] = 0;
 	      append_listener_text(end, file_text);
 	      FREE(file_text);
@@ -589,7 +651,8 @@ char *complete_listener_text(char *old_text, int end, int *try_completion, char 
 	  if (text_pos < spaces)
 	    {
 	      file_text = (char *)CALLOC(spaces + 2, sizeof(char));
-	      for (k = text_pos+1; k < spaces; k++) file_text[k - text_pos - 1] = ' ';
+	      for (k = text_pos+1; k < spaces; k++) 
+		file_text[k - text_pos - 1] = ' ';
 	      file_text[spaces] = ';';
 	      file_text[spaces + 1] = 0;
 	      append_listener_text(end - 1, file_text);
@@ -629,7 +692,11 @@ static char *snd_apropos(char *old_text)
   set_save_completions(TRUE);
   new_text = command_completer(old_text);
   matches = get_completion_matches();
-  if (new_text) {FREE(new_text); new_text = NULL;}
+  if (new_text) 
+    {
+      FREE(new_text); 
+      new_text = NULL;
+    }
   if ((matches > 0) && (possible_completions_ctr > 0))
     {
       for (i = 0; i < possible_completions_ctr; i++) 
@@ -655,7 +722,11 @@ static SCM g_apropos(SCM text)
     str = TO_NEW_C_STRING(text);
   else str = gh_symbol2newstr(text, NULL);
   res = snd_apropos(str);
-  if (str) {free(str); str = NULL;}
+  if (str) 
+    {
+      free(str); 
+      str = NULL;
+    }
   if (res) 
     {
       val = TO_SCM_STRING(res);
@@ -664,25 +735,55 @@ static SCM g_apropos(SCM text)
   return(val);
 }
 
+SCM g_help(SCM text)
+{
+  SCM help_text = SCM_BOOL_F, value;
+  char *str = NULL;
+
+  if (SCM_EQ_P(text,SCM_UNDEFINED))
+    return(TO_SCM_STRING(
+
+"snd-help returns the documentation associated with its argument.\n\
+(snd-help make-vct) for example, prints out a brief description of make-vct.\n\
+In the help descriptions, '&optional' marks optional arguments, and\n\
+'&opt-key' marks CLM-style optional keyword arguments.  If you load index.scm\n\
+the functions html and ? can be used in place of help to go to the HTML description\n\
+"));
+
+  SCM_ASSERT((gh_string_p(text) || gh_symbol_p(text)), text, SCM_ARG1, "new-help");
+  if (gh_string_p(text))
+    str = TO_NEW_C_STRING(text);
+  else str = gh_symbol2newstr(text, NULL);
+  value = SND_LOOKUP(str);
+  help_text = scm_object_property(value, 
+				  gh_symbol2scm("documentation"));
+  if ((SCM_FALSEP(help_text)) &&
+      (gh_procedure_p(value)))
+    help_text = scm_procedure_property(value, 
+				       gh_symbol2scm("documentation"));
+  if (SCM_FALSEP(help_text))
+    help_text = scm_object_property(gh_symbol2scm(str), 
+				    gh_symbol2scm("documentation"));
+  if (str) 
+    {
+      free(str); 
+      str = NULL;
+    }
+  return(help_text);
+}
+
 static SCM g_save_listener(SCM filename)
 {
   #define H_save_listener "(" S_save_listener " filename) saves the current listener text in filename"
-  char *urn = NULL;
   FILE *fp = NULL;
   SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_save_listener);
-  urn = TO_NEW_C_STRING(filename);
-  fp = fopen(urn, "w");
-  if (fp)
-    {
-      save_listener_text(fp);
-      if (fclose(fp) != 0)
-	snd_error("save-listener: close file %s: %s\n", urn, strerror(errno));
-    }
-  else scm_throw(CANNOT_SAVE,
-		 SCM_LIST3(TO_SCM_STRING(S_save_listener),
-			   filename,
-			   TO_SCM_STRING(strerror(errno))));
-  if (urn) free(urn);
+  fp = fopen(SCM_STRING_CHARS(filename), "w");
+  if (fp) save_listener_text(fp);
+  if ((!fp) || (fclose(fp) != 0))
+    scm_throw(CANNOT_SAVE,
+	      SCM_LIST3(TO_SCM_STRING(S_save_listener),
+			filename,
+			TO_SCM_STRING(strerror(errno))));
   return(filename);
 }
 
@@ -690,5 +791,6 @@ void g_init_completions(SCM local_doc)
 {
   DEFINE_PROC(gh_new_procedure(S_snd_apropos,   SCM_FNC g_apropos, 1, 0, 0),       H_apropos);
   DEFINE_PROC(gh_new_procedure(S_save_listener, SCM_FNC g_save_listener, 1, 0, 0), H_save_listener);
+  gh_new_procedure0_1("snd-help",g_help);
 }
 #endif

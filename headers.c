@@ -3864,7 +3864,7 @@ static int read_sample_dump_header(int chan)
   if ((srate < 100) || (srate > 100000)) srate = 8000;
   chans = 1; 
   header_distributed = 0;
-  data_location = i+3+len+23; ;
+  data_location = i + 3 + len + 23;
   true_file_length = lseek(chan, 0L, SEEK_END);
   data_size = (true_file_length-data_location);
   if (hdrbuf[0] == 0)

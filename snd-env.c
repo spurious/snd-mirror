@@ -605,6 +605,8 @@ void init_env_axes(chan_info *acp, char *name, int x_offset, int ex0, int ey0, i
   ap->xmax = xmax;
   ap->ymin = ymin;
   ap->ymax = ymax;
+  ap->y_ambit = ap->ymax - ap->ymin;
+  ap->x_ambit = ap->xmax - ap->xmin;
   ap->xlabel = copy_string(name);
   ap->x0 = xmin;
   ap->x1 = xmax;
@@ -863,14 +865,12 @@ void view_envs(snd_state *ss, int env_window_width, int env_window_height)
   height = (int)((Float)env_window_height / (Float)rows);
   k = 0;
   for (i = 0, x = 0; i < cols; i++, x+=width)
-    {
-      for (j = 0, y = 0; j < rows; j++, y+=height)
-	{
-	  display_enved_env_with_selection(ss, all_envs[k], all_names[k], x, y, width, height, 0);
-	  k++;
-	  if (k == all_envs_top) return;
-	}
-    }
+    for (j = 0, y = 0; j < rows; j++, y+=height)
+      {
+	display_enved_env_with_selection(ss, all_envs[k], all_names[k], x, y, width, height, 0);
+	k++;
+	if (k == all_envs_top) return;
+      }
 }
 
 int hit_env(int xe, int ye, int env_window_width, int env_window_height)
@@ -891,17 +891,13 @@ int hit_env(int xe, int ye, int env_window_width, int env_window_height)
 	  height = (int)((Float)env_window_height / (Float)rows);
 	  k = 0;
 	  for (i = 0, x = width; i < cols; i++, x+=width)
-	    {
-	      if (x > xe)
+	    if (x > xe)
+	      for (j = 0, y = height; j < rows; j++, y+=height)
 		{
-		  for (j = 0, y = height; j < rows; j++, y+=height)
-		    {
-		      if (y > ye) return(k);
-		      k++;
-		    }
+		  if (y > ye) return(k);
+		  k++;
 		}
-	      else k += rows;
-	    }
+	    else k += rows;
 	}
     }
   return(0);
@@ -1215,25 +1211,23 @@ char *env_name_completer(char *text)
     {
       len = strlen(text);
       for (i = 0; i < all_envs_top; i++)
-	{
-	  if (strncmp(text, all_names[i], len) == 0)
-	    {
-	      matches++;
-	      add_possible_completion(all_names[i]);
-	      if (current_match == NULL)
-		current_match = copy_string(all_names[i]);
-	      else 
-		{
-		  curlen = strlen(current_match);
-		  for (j = 0; j < curlen; j++)
-		    if (current_match[j] != all_names[i][j])
-		      {
-			current_match[j] = '\0';
-			break;
-		      }
-		}
-	    }
-	}
+	if (strncmp(text, all_names[i], len) == 0)
+	  {
+	    matches++;
+	    add_possible_completion(all_names[i]);
+	    if (current_match == NULL)
+	      current_match = copy_string(all_names[i]);
+	    else 
+	      {
+		curlen = strlen(current_match);
+		for (j = 0; j < curlen; j++)
+		  if (current_match[j] != all_names[i][j])
+		    {
+		      current_match[j] = '\0';
+		      break;
+		    }
+	      }
+	  }
     }
   set_completion_matches(matches);
   if ((current_match) && (*current_match))
@@ -1250,6 +1244,7 @@ void save_envelope_editor_state(FILE *fd)
       estr = env_to_string(all_envs[i]);
       if (estr)
 	{
+	  /* TODO: should this be (if (not (defined? env)) (defvar env ...)? */
 	  fprintf(fd, "(defvar %s %s)", all_names[i], estr);
 	  if (all_envs[i]->base != 1.0)
 #if HAVE_GENERALIZED_SET
@@ -1446,27 +1441,20 @@ static SCM g_save_envelopes(SCM filename)
     name = full_filename(filename);
   else name = copy_string("envs.save");
   fd = fopen(name, "w");
-  if (fd)
-    {
-      save_envelope_editor_state(fd);
-      if (fclose(fd) != 0)
-	snd_error("can't close %s! [%s[%d] %s]", 
-		  name,
-		  __FILE__, __LINE__, __FUNCTION__);
-      if (name) FREE(name);
-      return(filename);
-    }
+  if (fd) save_envelope_editor_state(fd);
   if (name) FREE(name);
-  return(scm_throw(CANNOT_SAVE,
-		   SCM_LIST3(TO_SCM_STRING(S_save_envelopes),
-			     filename,
-			     TO_SCM_STRING(strerror(errno)))));
+  if ((!fd) || (fclose(fd) != 0))
+    return(scm_throw(CANNOT_SAVE,
+		     SCM_LIST3(TO_SCM_STRING(S_save_envelopes),
+			       filename,
+			       TO_SCM_STRING(strerror(errno)))));
+  return(filename);
 }
 
 void g_init_env(SCM local_doc)
 {
-  DEFINE_PROC(gh_new_procedure0_1(S_save_envelopes, g_save_envelopes),   H_save_envelopes);
-  DEFINE_PROC(gh_new_procedure2_0(S_define_envelope, g_define_envelope), H_define_envelope);
+  DEFINE_PROC(gh_new_procedure0_1(S_save_envelopes,  g_save_envelopes),   H_save_envelopes);
+  DEFINE_PROC(gh_new_procedure2_0(S_define_envelope, g_define_envelope),  H_define_envelope);
   define_procedure_with_setter(S_env_base, SCM_FNC g_env_base, H_env_base,
 			       "set-" S_env_base, SCM_FNC g_set_env_base, local_doc, 1, 0, 2, 0);
 }

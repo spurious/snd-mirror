@@ -404,19 +404,15 @@ int map_over_chans (snd_state *ss, int (*func)(chan_info *, void *), void *userp
   chan_info *cp;
   val = 0;
   if (ss)
-    {
-      for (i = 0; i < ss->max_sounds; i++)
-	{
-	  if ((sp = ((snd_info *)(ss->sounds[i]))))
+    for (i = 0; i < ss->max_sounds; i++)
+      if ((sp = ((snd_info *)(ss->sounds[i]))) && 
+	  (sp->inuse))
+	for (j = 0; j<(sp->nchans); j++)
+	  if ((cp = ((chan_info *)(sp->chans[j]))))
 	    {
-	      if (sp->inuse)
-		{
-		  for (j = 0; j<(sp->nchans); j++)
-		    {
-		      if ((cp = ((chan_info *)(sp->chans[j]))))
-			{
-			  val = (*func)(cp, userptr);
-			  if (val) return(val);}}}}}}
+	      val = (*func)(cp, userptr);
+	      if (val) return(val);
+	    }
   return(val);
 }
 
@@ -442,15 +438,13 @@ int map_over_sounds (snd_state *ss, int (*func)(snd_info *, void *), void *userp
   snd_info *sp;
   val = 0;
   if (ss)
-    {
-      for (i = 0; i < ss->max_sounds; i++)
+    for (i = 0; i < ss->max_sounds; i++)
+      if ((sp = ((snd_info *)(ss->sounds[i]))) &&
+	  (sp->inuse))
 	{
-	  if ((sp = ((snd_info *)(ss->sounds[i]))))
-	    {
-	      if (sp->inuse)
-		{
-		  val = (*func)(sp, userptr);
-		  if (val) return(val);}}}}
+	  val = (*func)(sp, userptr);
+	  if (val) return(val);
+	}
   return(val);
 }
 
@@ -460,17 +454,15 @@ int map_over_separate_chans(snd_state *ss, int (*func)(chan_info *, void *), voi
   snd_info *sp;
   val = 0;
   if (ss)
-    {
-      for (i = 0; i < ss->max_sounds; i++)
+    for (i = 0; i < ss->max_sounds; i++)
+      if ((sp = ((snd_info *)(ss->sounds[i]))) && 
+	  (sp->inuse))
 	{
-	  if ((sp = ((snd_info *)(ss->sounds[i]))))
-	    {
-	      if (sp->inuse)
-		{
-		  if (sp->combining != CHANNELS_SEPARATE)
-		    val = (*func)(sp->chans[0], userptr);
-		  else val = map_over_sound_chans(sp, func, userptr);
-		  if (val) return(val);}}}}
+	  if (sp->combining != CHANNELS_SEPARATE)
+	    val = (*func)(sp->chans[0], userptr);
+	  else val = map_over_sound_chans(sp, func, userptr);
+	  if (val) return(val);
+	}
   return(val);
 }
 
@@ -482,15 +474,13 @@ int active_channels (snd_state *ss, int count_virtual_channels)
   snd_info *sp;
   chans = 0;
   for (i = 0; i < ss->max_sounds; i++)
-    {
-      if (snd_ok(sp = (ss->sounds[i])))
-	{
-	  if ((count_virtual_channels == WITH_VIRTUAL_CHANNELS) ||
-	      (sp->combining == CHANNELS_SEPARATE))
-	    chans += sp->nchans;
-	  else chans++;
-	}
-    }
+    if (snd_ok(sp = (ss->sounds[i])))
+      {
+	if ((count_virtual_channels == WITH_VIRTUAL_CHANNELS) ||
+	    (sp->combining == CHANNELS_SEPARATE))
+	  chans += sp->nchans;
+	else chans++;
+      }
   return(chans);
 }
 
@@ -528,15 +518,15 @@ static snd_info *any_active_sound(snd_state *ss)
   snd_info *sp;
   int i;
   for (i = 0; i < ss->max_sounds; i++)
-    {
-      if ((sp = (ss->sounds[i])) && (sp->inuse)) return(sp);
-    }
+    if ((sp = (ss->sounds[i])) && (sp->inuse)) 
+      return(sp);
   return(NULL);
 }
 
 snd_info *selected_sound(snd_state *ss)
 {
-  if (ss->selected_sound != NO_SELECTION) return(ss->sounds[ss->selected_sound]);
+  if (ss->selected_sound != NO_SELECTION)
+    return(ss->sounds[ss->selected_sound]);
   return(NULL);
 }
 
@@ -550,7 +540,8 @@ snd_info *any_selected_sound (snd_state *ss)
 
 chan_info *any_selected_channel(snd_info *sp)
 {
-  if (sp->selected_channel != NO_SELECTION) return(sp->chans[sp->selected_channel]);
+  if (sp->selected_channel != NO_SELECTION) 
+    return(sp->chans[sp->selected_channel]);
   return(sp->chans[0]);
 }
 
@@ -804,13 +795,16 @@ static void file_maxamps(char *ifile, Float *vals, int ichans, int format)
       return;
     }
   ibufs = (MUS_SAMPLE_TYPE **)CALLOC(ichans, sizeof(MUS_SAMPLE_TYPE *));
-  for (i = 0; i < ichans; i++) ibufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(FILE_BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE));
+  for (i = 0; i < ichans; i++) 
+    ibufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(FILE_BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE));
   amps = (MUS_SAMPLE_TYPE *)CALLOC(ichans, sizeof(MUS_SAMPLE_TYPE));
   bufnum = (FILE_BUFFER_SIZE);
-  for (n = 0; n < samples; n+=bufnum)
+  for (n = 0; n < samples; n += bufnum)
     {
-      if ((n + bufnum) < samples) cursamples = bufnum; else cursamples = (samples - n);
-      mus_file_read(ifd, 0, cursamples-1, ichans, ibufs);
+      if ((n + bufnum) < samples) 
+	cursamples = bufnum; 
+      else cursamples = (samples - n);
+      mus_file_read(ifd, 0, cursamples - 1, ichans, ibufs);
       for (chn = 0; chn < ichans; chn++)
 	{
 	  buffer = (MUS_SAMPLE_TYPE *)(ibufs[chn]);
@@ -826,8 +820,10 @@ static void file_maxamps(char *ifile, Float *vals, int ichans, int format)
 	  amps[chn] = fc;
 	}
     }
-  for (chn = 0; chn < ichans; chn++) vals[chn] = MUS_SAMPLE_TO_FLOAT(amps[chn]);
-  for (i = 0; i < ichans; i++) FREE(ibufs[i]);
+  for (chn = 0; chn < ichans; chn++) 
+    vals[chn] = MUS_SAMPLE_TO_FLOAT(amps[chn]);
+  for (i = 0; i < ichans; i++) 
+    FREE(ibufs[i]);
   FREE(ibufs);
   FREE(amps);
   if (mus_file_close(ifd) != 0)

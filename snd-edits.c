@@ -912,50 +912,49 @@ static int gather_usage_stats_1(chan_info *cp, void *ptr)
   if (cp)
     {
       if (cp->stats) 
-	{for (i = 0; i < 8; i++) cp->stats[i] = 0;}
+	for (i = 0; i < 8; i++) 
+	  cp->stats[i] = 0;
       else cp->stats = (int *)CALLOC(8, sizeof(int));
       if (cp->amp_envs)
-	{
-	  for (i = 0; i < cp->edit_size; i++)
+	for (i = 0; i < cp->edit_size; i++)
+	  {
+	    ep = cp->amp_envs[i];
+	    if (ep)
+	      {
+		cp->stats[AMP_ENVS_ACTIVE]++;
+		cp->stats[AMP_ENV_USAGE] += (2 * ((cp->amp_envs[i])->amp_env_size) * sizeof(int));
+	      }
+	  }
+      if (cp->sounds)
+	for (i = 0; i < cp->sound_size; i++)
+	  if ((sf = (cp->sounds[i])))
 	    {
-	      ep = cp->amp_envs[i];
-	      if (ep)
+	      if (sf->type == SND_DATA_BUFFER)
 		{
-		  cp->stats[AMP_ENVS_ACTIVE]++;
-		  cp->stats[AMP_ENV_USAGE] += (2 * ((cp->amp_envs[i])->amp_env_size) * sizeof(int));
+		  if (sf->buffered_data) 
+		    {
+		      cp->stats[ARRAY_USAGE] += sf->len;
+		      cp->stats[ARRAYS_ACTIVE]++;
+		    }
+		}
+	      else 
+		{
+		  if (sf->io)
+		    {
+		      cp->stats[ARRAY_USAGE] += (file_state_buffer_size(sf->io) * 4);
+		      cp->stats[ARRAYS_ACTIVE]++;
+		    }
+		  if (sf->temporary == DELETE_ME)
+		    {
+		      cp->stats[TEMP_USAGE] += sf->len;
+		      cp->stats[TEMPS_ACTIVE]++;
+		      if (sf->open == FD_OPEN) cp->stats[TEMPS_OPEN]++;
+		    }
+		  else
+		    cp->stats[FILE_USAGE] += (sf->len) / ((cp->sound)->nchans);
 		}
 	    }
-	}
-      if (cp->sounds)
-	{
-	  for (i = 0; i < cp->sound_size; i++)
-	    {
-	      if ((sf = (cp->sounds[i])))
-		{
-		  if (sf->type == SND_DATA_BUFFER)
-		    {
-		      if (sf->buffered_data) 
-			{
-			  cp->stats[ARRAY_USAGE] += sf->len;
-			  cp->stats[ARRAYS_ACTIVE]++;
-			}
-		    }
-		  else 
-		    {
-		      if (sf->io)
-			{
-			  cp->stats[ARRAY_USAGE] += (file_state_buffer_size(sf->io) * 4);
-			  cp->stats[ARRAYS_ACTIVE]++;
-			}
-		      if (sf->temporary == DELETE_ME)
-			{
-			  cp->stats[TEMP_USAGE] += sf->len;
-			  cp->stats[TEMPS_ACTIVE]++;
-			  if (sf->open == FD_OPEN) cp->stats[TEMPS_OPEN]++;
-			}
-		      else
-			cp->stats[FILE_USAGE] += (sf->len) / ((cp->sound)->nchans);
-		    }}}}}
+    }
   return(0);
 }
 
@@ -1123,6 +1122,7 @@ static void reflect_sample_change_in_axis(chan_info *cp)
     {
       samps = current_ed_samples(cp);
       ap->xmax = (double)samps / (double)SND_SRATE(cp->sound);
+      ap->x_ambit = ap->xmax - ap->xmin;
       if (ap->x1 > ap->xmax) ap->x1 = ap->xmax;
       if ((samps == 0) || (ap->no_data))
 	{
@@ -2571,27 +2571,23 @@ static SCM g_display_edits(SCM snd, SCM chn)
   name = snd_tempnam(ss);
   display_edits(get_cp(snd, chn, S_display_edits), stderr);
   tmp = fopen(name, "w");
-  if (tmp)
-    {
-      display_edits(get_cp(snd, chn, S_display_edits), tmp);
-      if (fclose(tmp) != 0)
-	snd_error("can't close %s: %s [%s[%d] %s]",
-		  name, strerror(errno),
-		  __FILE__, __LINE__, __FUNCTION__);
-      fd = mus_file_open_read(name);
-      len = lseek(fd, 0L, SEEK_END);
-      buf = (char *)CALLOC(len + 1, sizeof(char));
-      lseek(fd, 0L, SEEK_SET);
-      read(fd, buf, len);
-      close(fd);
-      remove(name);
-      snd_append_command(ss, buf);
-      FREE(buf);
-    }
-  else snd_error("can't open %s: %s [%s[%d] %s]",
-		 name, strerror(errno),
-		 __FILE__, __LINE__, __FUNCTION__);
-  return(SCM_BOOL_F);
+  if (tmp) display_edits(get_cp(snd, chn, S_display_edits), tmp);
+  if ((!tmp) || (fclose(tmp) != 0))
+    return(scm_throw(CANNOT_SAVE,
+		     SCM_LIST3(TO_SCM_STRING(S_display_edits),
+			       TO_SCM_STRING(name),
+			       TO_SCM_STRING(strerror(errno)))));
+  fd = mus_file_open_read(name);
+  len = lseek(fd, 0L, SEEK_END);
+  buf = (char *)CALLOC(len + 1, sizeof(char));
+  lseek(fd, 0L, SEEK_SET);
+  read(fd, buf, len);
+  close(fd);
+  remove(name);
+  if (name) free(name);
+  snd_append_command(ss, buf);
+  FREE(buf);
+  return(SCM_BOOL_T);
 }
 
 static SCM g_edit_fragment(SCM uctr, SCM snd, SCM chn)
@@ -2973,14 +2969,13 @@ static SCM g_save_edit_history(SCM filename, SCM snd, SCM chn)
 		    edit_history_to_file(fd, sp->chans[j]);
 	    }
 	}
-      if (fclose(fd) != 0)
-	snd_error("can't close %s! [%s[%d] %s]",
-		  SCM_STRING_CHARS(filename),
-		  __FILE__, __LINE__, __FUNCTION__);
-      return(SCM_BOOL_T);
     }
-  return(scm_throw(CANNOT_SAVE,
-		   SCM_LIST1(TO_SCM_STRING(S_save_edit_history))));
+  if ((!fd) || (fclose(fd) != 0))
+    return(scm_throw(CANNOT_SAVE,
+		     SCM_LIST3(TO_SCM_STRING(S_save_edit_history),
+			       filename,
+			       TO_SCM_STRING(strerror(errno)))));
+  return(filename);
 }
 
 static SCM g_undo(SCM ed_n, SCM snd_n, SCM chn_n) /* opt ed_n */

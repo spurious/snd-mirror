@@ -356,7 +356,8 @@ static void who_called(Widget w, XtPointer context, XEvent *event, Boolean *cont
   if (ev->atom == snd_c)
     {
       if (((XGetWindowProperty(XtDisplay(w), XtWindow(w), snd_c, 0L, (long)BUFSIZ, False,
-			       XA_STRING, &type, &format, &nitems, &bytesafter, (unsigned char **)version)) == Success) && 
+			       XA_STRING, &type, &format, &nitems, &bytesafter, 
+			       (unsigned char **)version)) == Success) && 
 	  (type != None))
 	if (version[0])
 	  {
@@ -436,7 +437,8 @@ static BACKGROUND_TYPE startup_funcs(XtPointer context)
 
       snd_v = XInternAtom(tm->dpy, "SND_VERSION", FALSE);
       snd_c = XInternAtom(tm->dpy, "SND_COMMAND", FALSE);
-      XChangeProperty(tm->dpy, XtWindow(tm->shell), snd_v, XA_STRING, 8, PropModeReplace, (unsigned char *)(SND_VERSION), strlen(SND_VERSION)+1);
+      XChangeProperty(tm->dpy, XtWindow(tm->shell), snd_v, XA_STRING, 8, PropModeReplace, 
+		      (unsigned char *)(SND_VERSION), strlen(SND_VERSION) + 1);
       XtAddEventHandler(tm->shell, PropertyChangeMask, FALSE, who_called, (XtPointer)ss);
       XtAddEventHandler(tm->shell, StructureNotifyMask, FALSE, minify_maxify_window, (XtPointer)ss);
 #endif
@@ -453,14 +455,19 @@ static BACKGROUND_TYPE startup_funcs(XtPointer context)
        * but try to read stdin (needed to support the emacs subjob connection).  If
        * we don't do this, the background job is suspended when the shell sends SIGTTIN.
        */
-      stdin_id = XtAppAddInput(MAIN_APP(ss), fileno(stdin), (XtPointer)XtInputReadMask, GetStdinString, (XtPointer)ss);
+      stdin_id = XtAppAddInput(MAIN_APP(ss), 
+			       fileno(stdin), 
+			       (XtPointer)XtInputReadMask, 
+			       GetStdinString, 
+			       (XtPointer)ss);
 #endif
       break;
     case 2: 
       if (auto_open_files > 0)
 	{
 	  auto_open_ctr = handle_next_startup_arg(ss, auto_open_ctr, auto_open_file_names, FALSE);
-	  if (auto_open_ctr < auto_open_files) return(BACKGROUND_CONTINUE); /* i.e. come back to this branch */
+	  if (auto_open_ctr < auto_open_files) 
+	    return(BACKGROUND_CONTINUE); /* i.e. come back to this branch */
 	}
       break;
     case 3: 
@@ -468,11 +475,12 @@ static BACKGROUND_TYPE startup_funcs(XtPointer context)
 #if HAVE_OPENDIR
       files = 0;
       if ((dp = opendir(".")) != NULL)
-	{
-	  while ((files < 400) && (readdir(dp) != NULL)) files++;
-	}
+	while ((files < 400) && 
+	       (readdir(dp) != NULL)) 
+	  files++;
       closedir(dp);
-      if (files < 400) CreateOpenDialog(tm->shell, (XtPointer)ss);
+      if (files < 400) 
+	CreateOpenDialog(tm->shell, (XtPointer)ss);
 #endif
       break;
     case 4:
@@ -480,7 +488,10 @@ static BACKGROUND_TYPE startup_funcs(XtPointer context)
       if (ss->init_window_height > 0) set_widget_height(MAIN_SHELL(ss), ss->init_window_height);
       if (ss->init_window_x != DEFAULT_INIT_WINDOW_X) set_widget_x(MAIN_SHELL(ss), ss->init_window_x);
       if (ss->init_window_y != DEFAULT_INIT_WINDOW_Y) set_widget_y(MAIN_SHELL(ss), ss->init_window_y);
-      XtAppAddTimeOut(MAIN_APP(ss), (unsigned long)(corruption_time(ss)*1000), corruption_check, (XtPointer)ss);
+      XtAppAddTimeOut(MAIN_APP(ss), 
+		      (unsigned long)(corruption_time(ss) * 1000), 
+		      corruption_check, 
+		      (XtPointer)ss);
 #if TRAP_SEGFAULT
       if (trap_segfault(ss)) signal(SIGSEGV, segv);
 #endif
@@ -553,7 +564,9 @@ static void ss_graph_key_press(Widget w, XtPointer context, XEvent *event, Boole
   snd_state *ss = (snd_state *)context;
   snd_info *sp;
   key_state = ev->state;
-  keysym = XKeycodeToKeysym(XtDisplay(w), (int)(ev->keycode), (key_state & ShiftMask) ? 1 : 0);
+  keysym = XKeycodeToKeysym(XtDisplay(w), 
+			    (int)(ev->keycode), 
+			    (key_state & ShiftMask) ? 1 : 0);
   sp = any_selected_sound(ss);
   if (sp)
     key_press_callback(any_selected_channel(sp), ev->x, ev->y, ev->state, keysym);
@@ -573,8 +586,10 @@ static Pixel get_color(Widget shell,
   cmap = DefaultColormap(dpy, scr);
   if ((!XAllocNamedColor(dpy, cmap, rs_color, &tmp_color, &ignore)) &&
       (!XAllocNamedColor(dpy, cmap, defined_color, &tmp_color, &ignore)) &&
-      ((!fallback_color) || (!XAllocNamedColor(dpy, cmap, fallback_color, &tmp_color, &ignore))) &&
-      ((!second_fallback_color) || (!XAllocNamedColor(dpy, cmap, second_fallback_color, &tmp_color, &ignore))))
+      ((!fallback_color) || 
+       (!XAllocNamedColor(dpy, cmap, fallback_color, &tmp_color, &ignore))) &&
+      ((!second_fallback_color) || 
+       (!XAllocNamedColor(dpy, cmap, second_fallback_color, &tmp_color, &ignore))))
     {
       /* snd_error here causes a seg fault (it builds on mainpane which has not yet been created) */
       if (use_white)
@@ -659,32 +674,34 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   dpy = XtDisplay(shell);
   XtGetApplicationResources(shell, &snd_rs, resources, XtNumber(resources), NULL, 0);
   XtVaGetValues(shell, XmNtitle, &app_title, NULL);  /* perhaps caller included -title arg */
-  if (app_title) ss->startup_title = copy_string(app_title); else ss->startup_title = copy_string("snd");
+  if (app_title) 
+    ss->startup_title = copy_string(app_title); 
+  else ss->startup_title = copy_string("snd");
 
   set_sound_style(ss, snd_rs.horizontal_panes);
   for (i = 1; i < argc; i++)
-    {
-      if ((strcmp(argv[i], "-h") == 0) || (strcmp(argv[i], "-horizontal") == 0))
-	set_sound_style(ss, SOUNDS_HORIZONTAL);
+    if ((strcmp(argv[i], "-h") == 0) || 
+	(strcmp(argv[i], "-horizontal") == 0))
+      set_sound_style(ss, SOUNDS_HORIZONTAL);
+    else
+      if ((strcmp(argv[i], "-v") == 0) || 
+	  (strcmp(argv[i], "-vertical") == 0))
+	set_sound_style(ss, SOUNDS_VERTICAL);
       else
-	if ((strcmp(argv[i], "-v") == 0) || (strcmp(argv[i], "-vertical") == 0))
-	  set_sound_style(ss, SOUNDS_VERTICAL);
+	if (strcmp(argv[i], "-notebook") == 0)
+	  {
+	    set_sound_style(ss, SOUNDS_IN_NOTEBOOK);
+	    snd_rs.auto_resize = 0;
+	  }
 	else
-	  if (strcmp(argv[i], "-notebook") == 0)
-	    {
-	      set_sound_style(ss, SOUNDS_IN_NOTEBOOK);
-		snd_rs.auto_resize = 0;
-	      }
+	  if (strcmp(argv[i], "-separate") == 0)
+	    set_sound_style(ss, SOUNDS_IN_SEPARATE_WINDOWS);
 	  else
-	    if (strcmp(argv[i], "-separate") == 0)
-	      set_sound_style(ss, SOUNDS_IN_SEPARATE_WINDOWS);
+	    if (strcmp(argv[i], "-noglob") == 0)
+	      noglob = 1;
 	    else
-	      if (strcmp(argv[i], "-noglob") == 0)
-		noglob = 1;
-	      else
-		if (strcmp(argv[i], "-noinit") == 0)
-		  noinit = 1;
-    }
+	      if (strcmp(argv[i], "-noinit") == 0)
+		noinit = 1;
 
 #if HAVE_HTML
   set_html_width(ss, snd_rs.html_width);
@@ -711,7 +728,8 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 #endif
 
 #ifdef SGI
-  ss->using_schemes = ((snd_rs.use_schemes) && (strcmp(snd_rs.use_schemes, "all") == 0)); /* so *useSchemes: All still gets our color scheme */
+  ss->using_schemes = ((snd_rs.use_schemes) && 
+		       (strcmp(snd_rs.use_schemes, "all") == 0)); /* so *useSchemes: All still gets our color scheme */
 #else
   ss->using_schemes = 0;
 #endif 
@@ -742,32 +760,32 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 #endif
 
   /* the gray shades are an attempt to get around Netscape which hogs all the colors */
-  sx->white = get_color(shell, snd_rs.white_color, WHITE_COLOR, NULL, NULL, TRUE);
-  sx->black = get_color(shell, snd_rs.black_color, BLACK_COLOR, NULL, NULL, FALSE);
-  sx->light_blue = get_color(shell, snd_rs.light_blue_color, LIGHT_BLUE_COLOR, NULL, NULL, TRUE);
-  sx->lighter_blue = get_color(shell, snd_rs.lighter_blue_color, LIGHTER_BLUE_COLOR, NULL, NULL, TRUE);
-  sx->red = get_color(shell, snd_rs.red_color, RED_COLOR, NULL, NULL, FALSE);
-  sx->green = get_color(shell, snd_rs.green_color, GREEN_COLOR, NULL, NULL, FALSE);
-  sx->yellow = get_color(shell, snd_rs.yellow_color, YELLOW_COLOR, NULL, NULL, TRUE);
-  sx->highlight_color = get_color(shell, snd_rs.highlight_color, HIGHLIGHT_COLOR, "gray90", NULL, TRUE);
-  sx->basic_color = get_color(shell, snd_rs.basic_color, BASIC_COLOR, "gray80", "gray", TRUE);
-  sx->position_color = get_color(shell, snd_rs.position_color, POSITION_COLOR, "gray60", "gray", FALSE);
-  sx->zoom_color = get_color(shell, snd_rs.zoom_color, ZOOM_COLOR, "gray20", "gray", FALSE);
-  sx->cursor_color = get_color(shell, snd_rs.cursor_color, CURSOR_COLOR, NULL, NULL, FALSE);
-  sx->selection_color = get_color(shell, snd_rs.selection_color, SELECTION_COLOR, "gray80", NULL, FALSE);
-  sx->mix_color = get_color(shell, snd_rs.mix_color, MIX_COLOR, NULL, NULL, FALSE);
-  sx->selected_mix_color = get_color(shell, snd_rs.selected_mix_color, SELECTED_MIX_COLOR, NULL, NULL, FALSE);
-  sx->enved_waveform_color = get_color(shell, snd_rs.enved_waveform_color, ENVED_WAVEFORM_COLOR, NULL, NULL, FALSE);
+  sx->white =                 get_color(shell, snd_rs.white_color,           WHITE_COLOR,           NULL, NULL, TRUE);
+  sx->black =                 get_color(shell, snd_rs.black_color,           BLACK_COLOR,           NULL, NULL, FALSE);
+  sx->light_blue =            get_color(shell, snd_rs.light_blue_color,      LIGHT_BLUE_COLOR,      NULL, NULL, TRUE);
+  sx->lighter_blue =          get_color(shell, snd_rs.lighter_blue_color,    LIGHTER_BLUE_COLOR,    NULL, NULL, TRUE);
+  sx->red =                   get_color(shell, snd_rs.red_color,             RED_COLOR,             NULL, NULL, FALSE);
+  sx->green =                 get_color(shell, snd_rs.green_color,           GREEN_COLOR,           NULL, NULL, FALSE);
+  sx->yellow =                get_color(shell, snd_rs.yellow_color,          YELLOW_COLOR,          NULL, NULL, TRUE);
+  sx->highlight_color =       get_color(shell, snd_rs.highlight_color,       HIGHLIGHT_COLOR,       "gray90", NULL, TRUE);
+  sx->basic_color =           get_color(shell, snd_rs.basic_color,           BASIC_COLOR,           "gray80", "gray", TRUE);
+  sx->position_color =        get_color(shell, snd_rs.position_color,        POSITION_COLOR,        "gray60", "gray", FALSE);
+  sx->zoom_color =            get_color(shell, snd_rs.zoom_color,            ZOOM_COLOR,            "gray20", "gray", FALSE);
+  sx->cursor_color =          get_color(shell, snd_rs.cursor_color,          CURSOR_COLOR,          NULL, NULL, FALSE);
+  sx->selection_color =       get_color(shell, snd_rs.selection_color,       SELECTION_COLOR,       "gray80", NULL, FALSE);
+  sx->mix_color =             get_color(shell, snd_rs.mix_color,             MIX_COLOR,             NULL, NULL, FALSE);
+  sx->selected_mix_color =    get_color(shell, snd_rs.selected_mix_color,    SELECTED_MIX_COLOR,    NULL, NULL, FALSE);
+  sx->enved_waveform_color =  get_color(shell, snd_rs.enved_waveform_color,  ENVED_WAVEFORM_COLOR,  NULL, NULL, FALSE);
   sx->filter_waveform_color = get_color(shell, snd_rs.filter_waveform_color, FILTER_WAVEFORM_COLOR, NULL, NULL, FALSE);
-  sx->listener_color = get_color(shell, snd_rs.listener_color, LISTENER_COLOR, NULL, NULL, TRUE);
-  sx->graph_color = get_color(shell, snd_rs.graph_color, GRAPH_COLOR, NULL, NULL, TRUE);
-  sx->selected_graph_color = get_color(shell, snd_rs.selected_graph_color, SELECTED_GRAPH_COLOR, NULL, NULL, TRUE);
-  sx->data_color = get_color(shell, snd_rs.data_color, DATA_COLOR, NULL, NULL, FALSE);
-  sx->selected_data_color = get_color(shell, snd_rs.selected_data_color, SELECTED_DATA_COLOR, NULL, NULL, FALSE);
-  sx->mark_color = get_color(shell, snd_rs.mark_color, MARK_COLOR, NULL, NULL, FALSE);
-  sx->sash_color = get_color(shell, snd_rs.sash_color, SASH_COLOR, NULL, NULL, FALSE);
-  sx->pushed_button_color = get_color(shell, snd_rs.pushed_button_color, PUSHED_BUTTON_COLOR, NULL, NULL, FALSE);
-  sx->text_focus_color = get_color(shell, snd_rs.text_focus_color, TEXT_FOCUS_COLOR, NULL, NULL, FALSE);
+  sx->listener_color =        get_color(shell, snd_rs.listener_color,        LISTENER_COLOR,        NULL, NULL, TRUE);
+  sx->graph_color =           get_color(shell, snd_rs.graph_color,           GRAPH_COLOR,           NULL, NULL, TRUE);
+  sx->selected_graph_color =  get_color(shell, snd_rs.selected_graph_color,  SELECTED_GRAPH_COLOR,  NULL, NULL, TRUE);
+  sx->data_color =            get_color(shell, snd_rs.data_color,            DATA_COLOR,            NULL, NULL, FALSE);
+  sx->selected_data_color =   get_color(shell, snd_rs.selected_data_color,   SELECTED_DATA_COLOR,   NULL, NULL, FALSE);
+  sx->mark_color =            get_color(shell, snd_rs.mark_color,            MARK_COLOR,            NULL, NULL, FALSE);
+  sx->sash_color =            get_color(shell, snd_rs.sash_color,            SASH_COLOR,            NULL, NULL, FALSE);
+  sx->pushed_button_color =   get_color(shell, snd_rs.pushed_button_color,   PUSHED_BUTTON_COLOR,   NULL, NULL, FALSE);
+  sx->text_focus_color =      get_color(shell, snd_rs.text_focus_color,      TEXT_FOCUS_COLOR,      NULL, NULL, FALSE);
 
   if ((!(set_button_font(ss, snd_rs.button_font))) &&
       (!(set_button_font(ss, DEFAULT_BUTTON_FONT))) &&
@@ -883,7 +901,8 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 
   XtRealizeWidget(shell);
 
-  if (auto_resize(ss) != AUTO_RESIZE_DEFAULT) XtVaSetValues(shell, XmNallowShellResize, auto_resize(ss), NULL);
+  if (auto_resize(ss) != AUTO_RESIZE_DEFAULT) 
+    XtVaSetValues(shell, XmNallowShellResize, auto_resize(ss), NULL);
 #endif
 
   wn = XtWindow(shell);

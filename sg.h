@@ -101,9 +101,15 @@
 #define HOOKED(a) (!(SCM_NULLP(SCM_HOOK_PROCEDURES(a))))
 
 #define DEFINE_PROC(a, b) scm_set_procedure_property_x(a, local_doc, gh_str02scm(b))
+#define DEFINE_VAR(a, b, c) \
+  { \
+    gh_define(a, b); \
+    scm_set_object_property_x(gh_symbol2scm(a), local_doc, TO_SCM_STRING(c)); \
+  }
 
 /* DEFINE_PROC(proc, doc) sets the documentation property of procedure proc to the text doc
  *   the assumption is that it will be used with gh_new_procedure and scm_string_to_symbol
+ * DEFINE_VAR sets the symbol's documentation property (gh_define returns the value) 
  */
 
 #define WITH_REVERSED_CHANNEL_ARGS(name_reversed, name) \
@@ -131,6 +137,7 @@ static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
 #define NO_SUCH_ENVELOPE gh_symbol2scm("no-such-envelope")
 #define NO_SUCH_EDIT gh_symbol2scm("no-such-edit")
 #define CANNOT_SAVE gh_symbol2scm("cannot-save")
+#define CANNOT_PRINT gh_symbol2scm("cannot-print")
 #define IMPOSSIBLE_BOUNDS gh_symbol2scm("impossible-bounds")
 #define NO_ACTIVE_SELECTION gh_symbol2scm("no-active-selection")
 #define MUS_MISC_ERROR gh_symbol2scm("mus-error")

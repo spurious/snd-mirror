@@ -2909,6 +2909,7 @@ etc.  The Snd-specific errors are:</p>
 'no-such-menu    'no-such-file   'no-such-region     'no-such-sample
 'no-such-edit    'cannot-save    'impossible-bounds  'no-active-selection
 'no-such-widget  'mus-error      'no-such-track      'no-such-envelope
+'cannot-print
 </pre>
 <p>The symbol #t stands for all errors in this case, so we can 
 run rough-shod over any error with:</p>
@@ -3095,7 +3096,8 @@ Axis choice:
 
                                      (find (lambda (y) (&gt; y .1)))
 
-  <b><a name="sndgraph2ps">graph-&gt;ps</a></b>         ()            create Postscript description of current display (see <a href="#epsfile">eps-file</a>).
+  <b><a name="sndgraph2ps">graph-&gt;ps</a></b>         (<i>file</i>)        create Postscript description of current display 
+                                  <i>file</i> defaults to <a href="#epsfile">eps-file</a>. [<em class=error>cannot-print</em>].
 
   <b><a name="gin">in</a></b>                (ms thunk)    <i>ms</i> milliseconds from now, evaluate <i>thunk</i>, a function of no arguments.
 
@@ -3119,7 +3121,7 @@ Axis choice:
 
   <b><a name="sndsaveoptions">save-options</a></b>      (filename)    save options in <i>filename</i> [<em class=error>cannot-save</em>].
 
-  <b><a name="sndsavestate">save-state</a></b>        (filename)    save current state of Snd in <i>filename</i>.
+  <b><a name="sndsavestate">save-state</a></b>        (filename)    save current state of Snd in <i>filename</i> [<em class=error>cannot-save</em>].
 
   <b><a name="sndapropos">snd-apropos</a></b>       (name)        return possible completions of <i>name</i> (a string or a symbol).
 

@@ -1236,6 +1236,11 @@
 		(if (not (file-exists? psf)) 
 		    (snd-display (format #f ";graph->ps: ~A?" psf))
 		    (delete-file psf))))))
+      (let ((err (catch 'cannot-print 
+		   (lambda () 
+		     (graph->ps "/bad/bad.eps"))
+		   (lambda args 12345))))
+	(if (not (= err 12345)) (snd-display (format #f ";graph->ps err: ~A?" err))))
       (if (not (= a-ctr 0)) (snd-display (format #f ";unbind-key: ~A?" a-ctr)))
       (if (fneq xp 0.0) (snd-display (format #f ";x-position-slider: ~A?" xp)))
       (if (fneq yp 0.0) (snd-display (format #f ";y-position-slider: ~A?" yp)))
@@ -5714,6 +5719,29 @@
 	  (close-sound a4)
 	  (close-sound oboe)))
 
+      (load "env.scm")
+      (if (fneq (envelope-interp .1 '(0 0 1 1)) 0.1) 
+	  (snd-display (format #f ";envelope-interp .1 -> ~A?" (envelope-interp .1 '(0 0 1 1)))))
+      (if (fneq (envelope-interp .1 '(0 0 1 1) 32.0) 0.01336172) 
+	  (snd-display (format #f ";envelope-interp .013 -> ~A?" (envelope-interp .1 '(0 0 1 1) 32.0))))
+      (if (fneq (envelope-interp .1 '(0 0 1 1) .012) 0.36177473) 
+	  (snd-display (format #f ";envelope-interp .361 -> ~A?" (envelope-interp .1 '(0 0 1 1) .012)))) 
+      (if (not (feql (window-envelope 1.0 3.0 '(0.0 0.0 5.0 1.0)) (list 1.0 0.2 3.0 0.6))) 
+	  (snd-display (format #f ";window-envelope: ~A?" (window-envelope 1.0 3.0 '(0.0 0.0 5.0 1.0)))))
+      (if (not (feql (multiply-envelopes '(0 0 1 1) '(0 0 1 1 2 0)) (list 0 0 0.5 0.5 1 0))) 
+	  (snd-display (format #f ";multiply-envelopes: ~A?" (multiply-envelopes '(0 0 1 1) '(0 0 1 1 2 0)))))
+      (if (fneq (max-envelope '(0 0 1 1 2 3 4 0)) 3.0)
+	  (snd-display (format #f ";max-envelope: ~A?" (max-envelope '(0 0 1 1 2 3 4 0)))))
+      (if (fneq (integrate-envelope '(0 0 1 1)) 0.5) 
+	  (snd-display (format #f ";integrate-envelope: ~A?" (integrate-envelope '(0 0 1 1)))))
+      (if (fneq (integrate-envelope '(0 1 1 1)) 1.0) 
+	  (snd-display (format #f ";integrate-envelope: ~A?" (integrate-envelope '(0 1 1 1)))))
+      (if (fneq (integrate-envelope '(0 0 1 1 2 .5)) 1.25) 
+	  (snd-display (format #f ";integrate-envelope: ~A?" (integrate-envelope '(0 0 1 1 2 .5)))))
+      (if (not (feql (stretch-envelope '(0 0 1 1) .1 .2) (list 0 0 0.2 0.1 1.0 1))) 
+	  (snd-display (format #f ";stretch-envelope att: ~A?" (stretch-envelope '(0 0 1 1) .1 .2))))
+      (if (not (feql (stretch-envelope '(0 0 1 1 2 0) .1 .2 1.5 1.6) (list 0 0 0.2 0.1 1.1 1 1.6 0.5 2.0 0))) 
+	  (snd-display (format #f ";stretch-envelope dec: ~A?" (stretch-envelope '(0 0 1 1 2 0) .1 .2 1.5 1.6))))
       ))
 
 (if #f (begin
@@ -5789,6 +5817,19 @@
 			   (list (list 0 0 0 11 1.0) (list 12 0 13 50827 1.0) (list 50827 -2 0 0 0.0))))
 	      (snd-display (format #f ";save edit tree: ~A" (edit-tree ind 0))))
 	  (close-sound ind)
+
+	  (let ((err (catch 'cannot-save
+		   (lambda () 
+		     (save-state "/bad/bad.save"))
+		   (lambda args 12345))))
+	    (if (not (= err 12345)) (snd-display (format #f ";save-state err: ~A?" err))))
+
+	  (let ((err (catch 'cannot-save
+		   (lambda () 
+		     (save-listener "/bad/bad.save"))
+		   (lambda args 12345))))
+	    (if (not (= err 12345)) (snd-display (format #f ";save-listener err: ~A?" err))))
+
 	  ))))
 
 
@@ -5869,10 +5910,13 @@
   (save-listener "test.output")
   (set! (listener-prompt) original-prompt)
   (snd-display (format #f ";all done!~%~A" original-prompt))
-  (snd-display (format #f "timings:~%  ~A: total~%  GC: ~{    ~A~%~})~%" 
+  (snd-display (format #f "timings:~%  ~A: total~%  GC: ~A~%~{    ~A~%~})~%" 
 		       (/ (- (get-internal-real-time) overall-start-time) 1000) 
+		       (* (car (gc-stats)) .001)
 		       (let ((lst (gc-stats)))
-			 (list (list-ref lst 0) (list-ref lst 4) (list-ref lst 5)))))
+			 (list (list-ref lst 1) 
+			       (list-ref lst 5) 
+			       (list-ref lst 9)))))
   (if (not (null? times))
       (for-each (lambda (n)
 		  (snd-display (format #f "  ~A: ~A~%" (cadr n) (car n))))

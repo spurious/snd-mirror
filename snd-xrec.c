@@ -195,36 +195,36 @@ static Pixmap transform_text (Widget w, char *str, XFontStruct *font, Float angl
   vis = DefaultVisual(dp, scr);
 
   XtVaGetValues(w, XmNdepth, &depth, NULL);
-  depth_bytes = (depth>>3);
+  depth_bytes = (depth >> 3);
   if (depth_bytes == 0) depth_bytes = 1; /* unsigned so can't be negative */
 
   /* find extent of original text, expand out to byte boundaries */
   XSetFont(dp, draw_gc, font->fid);
   width = XTextWidth(font, str, strlen(str));
   height = (font->ascent+font->descent);
-  if (width%8) width = 8*(1 + (int)(width/8));
-  if (height%8) height = 8*(1+(int)(height/8));
+  if (width % 8) width = 8 * (1 + (int)(width / 8));
+  if (height % 8) height = 8 * (1 + (int)(height / 8));
 
   /* get bounding box of transformed text */
   bx0 = 0; bx1 = 0; by0 = 0; by1 = 0;
-  b=(int)(width*matrix[0]);
+  b = (int)(width * matrix[0]);
   if (b < 0) bx0 = b; else bx1 = b;
-  b=(int)(height*matrix[2]);
-  if (b < 0) bx0+=b; else bx1+=b;
-  b=(int)(width*matrix[1]);
+  b = (int)(height * matrix[2]);
+  if (b < 0) bx0 += b; else bx1 += b;
+  b = (int)(width * matrix[1]);
   if (b < 0) by0 = b; else by1 = b;
-  b=(int)(height*matrix[3]);
-  if (b < 0) by0+=b; else by1+=b;
+  b = (int)(height * matrix[3]);
+  if (b < 0) by0 += b; else by1 += b;
   
   /* set translation vector so we're centered in the resultant pixmap */
-  if (bx0 < 0) tx=-bx0; else tx = 0;
-  if (by0 < 0) ty=-by0; else ty = 0;
-  nx = bx1-bx0;
-  ny = by1-by0;
+  if (bx0 < 0) tx = -bx0; else tx = 0;
+  if (by0 < 0) ty = -by0; else ty = 0;
+  nx = bx1 - bx0;
+  ny = by1 - by0;
 
   /* expand result bounds to byte boundaries */
-  if (nx%8) nwidth = 8*(1+(int)(nx/8)); else nwidth = nx;
-  if (ny%8) nheight = 8*(1+(int)(ny/8)); else nheight = ny;
+  if (nx % 8) nwidth = 8 * (1 + (int)(nx / 8)); else nwidth = nx;
+  if (ny % 8) nheight = 8 * (1 + (int)(ny / 8)); else nheight = ny;
   (*nw) = nwidth;
   (*nh) = nheight;
 
@@ -244,41 +244,43 @@ static Pixmap transform_text (Widget w, char *str, XFontStruct *font, Float angl
   XDrawImageString(dp, pix, draw_gc, 0, height, str, strlen(str));
 
   /* dump pixmap bits into an "image", image data will be freed automatically later */
-  data = (char *)CALLOC((width+1)*(height+1)*depth_bytes, sizeof(char));
+  data = (char *)CALLOC((width + 1) * (height + 1) * depth_bytes, sizeof(char));
   before = XCreateImage(dp, vis, depth, XYPixmap, 0, data, width, height, 8, 0);
   XGetSubImage(dp, pix, 0, 0, width, height, AllPlanes, XYPixmap, before, 0, 0);
-  data = (char *)CALLOC((nwidth+1)*(nheight+1)*depth_bytes, sizeof(char));
+  data = (char *)CALLOC((nwidth + 1) * (nheight + 1) * depth_bytes, sizeof(char));
   after = XCreateImage(dp, vis, depth, XYPixmap, 0, data, nwidth, nheight, 8, 0);
 
   /* clear background of result image */
-  for (x = 0; x < nwidth; x++) {for (y = 0; y < nheight; y++) XPutPixel(after, x, y, bg);}
+  for (x = 0; x < nwidth; x++) 
+    for (y = 0; y < nheight; y++) 
+      XPutPixel(after, x, y, bg);
 
   /* write transformed pixels to result image */
   for (x = 0; x < width; x++)
-    {
-      for (y = 0; y < height; y++)
-	{
-	  px = XGetPixel(before, x, y);
-	  if (px != bg)
-	    {
-	      bx0 = (int)xscl; if (bx0 == 0) bx0 = 1;  /* draw full lines if possible (i.e. fill in scaled gaps) */
-	      by0 = (int)yscl; if (by0 == 0) by0 = 1;
-	      for (i = 0; i < bx0; i++)
+    for (y = 0; y < height; y++)
+      {
+	px = XGetPixel(before, x, y);
+	if (px != bg)
+	  {
+	    bx0 = (int)xscl; 
+	    if (bx0 == 0) bx0 = 1;  /* draw full lines if possible (i.e. fill in scaled gaps) */
+	    by0 = (int)yscl; 
+	    if (by0 == 0) by0 = 1;
+	    for (i = 0; i < bx0; i++)
+	      for (j = 0; j < by0; j++)
 		{
-		  for (j = 0; j < by0; j++)
-		    {
-		      inx = tx + round((x+(Float)i/xscl)*matrix[0] + (y+(Float)j/yscl)*matrix[2]);  
-		      if (inx < 0) inx = 0; 
-		      if (inx >=(int)nwidth) inx = nwidth-1;
-		      iny = ty + round((x+(Float)i/xscl)*matrix[1] + (y+(Float)j/yscl)*matrix[3]); 
-		      if (iny < 0) iny = 0; 
-		      if (iny >=(int)nheight) iny = nheight-1;
-		      XPutPixel(after, inx, iny, px);
-		    }
+		  inx = tx + round((x + (Float)i / xscl) * matrix[0] + 
+				   (y + (Float)j / yscl) * matrix[2]);  
+		  if (inx < 0) inx = 0; 
+		  if (inx >= (int)nwidth) inx = nwidth - 1;
+		  iny = ty + round((x + (Float)i / xscl) * matrix[1] + 
+				   (y + (Float)j / yscl) * matrix[3]); 
+		  if (iny < 0) iny = 0; 
+		  if (iny >= (int)nheight) iny = nheight-1;
+		  XPutPixel(after, inx, iny, px);
 		}
-	    }
-	}
-    }
+	  }
+      }
 
   /* dump image into result pixmap (needed for later display) */
   XPutImage(dp, rotpix, draw_gc, after, 0, 0, 0, 0, nwidth, nheight);
@@ -347,23 +349,23 @@ static Pixmap device_icon(int device)
 {
   switch (device)
     {
-    case MUS_AUDIO_CD:      return(cd_icon); break;
+    case MUS_AUDIO_CD:         return(cd_icon);         break;
     case MUS_AUDIO_DIGITAL_OUT:
     case MUS_AUDIO_LINE_OUT:
     case MUS_AUDIO_DEFAULT:
     case MUS_AUDIO_DAC_OUT:
     case MUS_AUDIO_DUPLEX_DEFAULT:
-    case MUS_AUDIO_SPEAKERS:   return(speaker_icon); break;
+    case MUS_AUDIO_SPEAKERS:   return(speaker_icon);    break;
     case MUS_AUDIO_ADAT_OUT:
-    case MUS_AUDIO_ADAT_IN:    return(adat_icon); break;
+    case MUS_AUDIO_ADAT_IN:    return(adat_icon);       break;
     case MUS_AUDIO_SPDIF_IN:
     case MUS_AUDIO_SPDIF_OUT:
     case MUS_AUDIO_AES_OUT:  
-    case MUS_AUDIO_AES_IN:     return(aes_icon); break;
-    case MUS_AUDIO_LINE_IN:    return(line_in_icon); break;
+    case MUS_AUDIO_AES_IN:     return(aes_icon);        break;
+    case MUS_AUDIO_LINE_IN:    return(line_in_icon);    break;
     case MUS_AUDIO_DIGITAL_IN: return(digital_in_icon); break;
     case MUS_AUDIO_MICROPHONE: 
-    default:                return(mic_icon); break;
+    default:                   return(mic_icon);        break;
     }
 
 }
@@ -377,7 +379,7 @@ static XFontStruct *get_vu_font(snd_state *ss, Float size)
   int font_size;
   char *vu_font_name;
   XFontStruct *label_font;
-  font_size = (int)(size*12*vu_font_size(ss));
+  font_size = (int)(size * 12 * vu_font_size(ss));
   if (font_size < 5) font_size = 5;
   vu_font_name = vu_font(ss);
   if (!vu_font_name)
@@ -414,7 +416,11 @@ static XFontStruct *get_vu_font(snd_state *ss, Float size)
 	      sprintf(font_name, "-*-*-*-*-*-*-%d-*-*-*-*-*-*", font_size);
 	      label_font = XLoadQueryFont(MAIN_DISPLAY(ss), font_name);
 	      font_size++;
-	      if (font_size > 60) {label_font = XLoadQueryFont(MAIN_DISPLAY(ss), "-*-*-*-*-*-*-*-*-*-*-*-*-*"); break;}
+	      if (font_size > 60) 
+		{
+		  label_font = XLoadQueryFont(MAIN_DISPLAY(ss), "-*-*-*-*-*-*-*-*-*-*-*-*-*");
+		  break;
+		}
 	    }
 	}
     }
@@ -469,7 +475,7 @@ static int allocate_meter_2(Widget w, vu_label *vu)
 #define CLIPPED_TRIGGER 0.99
 #define VU_NEEDLE_SPEED 0.25
 #define VU_BUBBLE_SPEED 0.025
-#define VU_BUBBLE_SIZE (15*64)
+#define VU_BUBBLE_SIZE (15 * 64)
 
 #define LIGHT_X 120
 #define LIGHT_Y 100
@@ -508,8 +514,8 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
   Float BAND_Y;
 
   size = vu->size;
-  BAND_X = 2.75*size;
-  BAND_Y = 3.25*size;
+  BAND_X = 2.75 * size;
+  BAND_Y = 3.25 * size;
   red = (ss->sgx)->red;
   dp = XtDisplay(recorder);
   wn = XtWindow(recorder);
@@ -525,15 +531,15 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
       tmp_color.red = (unsigned short)65535;
       for (i = 0; i < VU_COLORS; i++)
 	{
-	  tmp_color.blue = (unsigned short)(256*yellow_vals[i]);
-	  tmp_color.green = (unsigned short)(256*230 + 26*yellow_vals[i]);
+	  tmp_color.blue = (unsigned short)(256 * yellow_vals[i]);
+	  tmp_color.green = (unsigned short)(256 * 230 + 26 * yellow_vals[i]);
 	  XAllocColor(dp, cmap, &tmp_color);
 	  yellows[i] = tmp_color.pixel;
 	}
       for (i = 0; i < VU_COLORS; i++)
 	{
-	  tmp_color.blue = (unsigned short)(128*yellow_vals[i]);
-	  tmp_color.green = (unsigned short)(128*yellow_vals[i]);
+	  tmp_color.blue = (unsigned short)(128 * yellow_vals[i]);
+	  tmp_color.green = (unsigned short)(128 * yellow_vals[i]);
 	  XAllocColor(dp, cmap, &tmp_color);
 	  reds[i] = tmp_color.pixel;
 	}
@@ -561,19 +567,29 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
       band = 1;
       if (k == 1)
 	{
-	  vu->clip_label = XCreatePixmap(dp, wn, (unsigned int)(CENTER_X*2*size), (unsigned int)(CENTER_Y*size), depth);
+	  vu->clip_label = XCreatePixmap(dp, wn, 
+					 (unsigned int)(CENTER_X * 2 * size), 
+					 (unsigned int)(CENTER_Y * size), 
+					 depth);
 	  XSetForeground(dp, draw_gc, reds[0]);	    
-	  XFillRectangle(dp, vu->clip_label, draw_gc, 0, 0, (unsigned int)(CENTER_X*2*size), (unsigned int)(CENTER_Y*size));
+	  XFillRectangle(dp, vu->clip_label, draw_gc, 0, 0, 
+			 (unsigned int)(CENTER_X * 2 * size), 
+			 (unsigned int)(CENTER_Y * size));
 	}
       else 
 	{
-	  vu->on_label = XCreatePixmap(dp, wn, (unsigned int)(CENTER_X*2*size), (unsigned int)(CENTER_Y*size), depth);
+	  vu->on_label = XCreatePixmap(dp, wn, 
+				       (unsigned int)(CENTER_X * 2 * size), 
+				       (unsigned int)(CENTER_Y * size), 
+				       depth);
 	  XSetForeground(dp, draw_gc, yellows[2]);
-	  XFillRectangle(dp, vu->on_label, draw_gc, 0, 0, (unsigned int)(CENTER_X*2*size), (unsigned int)(CENTER_Y*size));
+	  XFillRectangle(dp, vu->on_label, draw_gc, 0, 0, 
+			 (unsigned int)(CENTER_X * 2 * size), 
+			 (unsigned int)(CENTER_Y * size));
 	}
       /* initialize the sequence of nested polygons */
-      pts[0].x = (short)(LIGHT_X*size - BAND_X);
-      pts[0].y = (short)(LIGHT_Y*size);
+      pts[0].x = (short)(LIGHT_X * size - BAND_X);
+      pts[0].y = (short)(LIGHT_Y * size);
       pts[1].x = pts[0].x;
       pts[1].y = (short)(pts[0].y - BAND_Y + 1);
       pts[2].x = pts[1].x + 1;
@@ -597,18 +613,20 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
 	    XSetForeground(dp, draw_gc, reds[i]); 
 	  else 
 	    {
-	      if (i < 2) XSetForeground(dp, draw_gc, yellows[2]); else XSetForeground(dp, draw_gc, yellows[i]);
+	      if (i < 2) 
+		XSetForeground(dp, draw_gc, yellows[2]); 
+	      else XSetForeground(dp, draw_gc, yellows[i]);
 	    }
-	  pts[6].x = (short)(LIGHT_X*size + band*BAND_X);
+	  pts[6].x = (short)(LIGHT_X * size + band * BAND_X);
 	  pts[6].y = pts[5].y;
 	  pts[7].x = pts[6].x;
-	  pts[7].y = (short)(LIGHT_Y*size - band*(BAND_Y - 1));
-	  pts[8].x = (short)(LIGHT_X*size + band*(BAND_X - 1));
-	  pts[8].y = (short)(LIGHT_Y*size - band*BAND_Y);
-	  pts[9].x = (short)(LIGHT_X*size - band*(BAND_X - 1));
+	  pts[7].y = (short)(LIGHT_Y * size - band * (BAND_Y - 1));
+	  pts[8].x = (short)(LIGHT_X * size + band * (BAND_X - 1));
+	  pts[8].y = (short)(LIGHT_Y * size - band * BAND_Y);
+	  pts[9].x = (short)(LIGHT_X * size - band * (BAND_X - 1));
 	  pts[9].y = pts[8].y;
-	  pts[10].x = (short)(LIGHT_X*size - band*BAND_X);
-	  pts[10].y = (short)(LIGHT_Y*size - band*(BAND_Y - 1));
+	  pts[10].x = (short)(LIGHT_X * size - band * BAND_X);
+	  pts[10].y = (short)(LIGHT_Y * size - band * (BAND_Y - 1));
 	  pts[11].x = pts[10].x;
 	  pts[11].y = pts[6].y;
 	  pts[12].x = pts[0].x;
@@ -625,24 +643,29 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
 	}
     }
 
-  vu->off_label = XCreatePixmap(dp, wn, (unsigned int)(CENTER_X*2*size), (unsigned int)(CENTER_Y*size), depth);
+  vu->off_label = XCreatePixmap(dp, wn, 
+				(unsigned int)(CENTER_X * 2 * size), 
+				(unsigned int)(CENTER_Y * size), 
+				depth);
   /* not on, so just display a white background */
   XSetForeground(dp, draw_gc, white);
-  XFillRectangle(dp, vu->off_label, draw_gc, 0, 0, (unsigned int)(CENTER_X*2*size), (unsigned int)(CENTER_Y*size));
+  XFillRectangle(dp, vu->off_label, draw_gc, 0, 0, 
+		 (unsigned int)(CENTER_X * 2 * size), 
+		 (unsigned int)(CENTER_Y * size));
 
   XSetForeground(dp, draw_gc, black);
 
   /* draw the numbers */
-  xs[0] = (int)(((size >= 1.0) ? (size*(CENTER_X - 114)) : (size*(CENTER_X - 116))));
-  ys[0] = (int)(((size >= 1.0) ? (size*(CENTER_Y - 116)) : (size*(CENTER_Y - 119))));
-  xs[1] = (int)(size*(CENTER_X - 71));
-  ys[1] = (int)(size*(CENTER_Y - 147));
-  xs[2] = (int)(size*(CENTER_X - 11));
-  ys[2] = (int)(size*(CENTER_Y - 153));
-  xs[3] = (int)(size*(CENTER_X + 42));
-  ys[3] = (int)(size*(CENTER_Y - 145));
-  xs[4] = (int)(size*(CENTER_X + 88));
-  ys[4] = (int)(size*(CENTER_Y - 116));
+  xs[0] = (int)(((size >= 1.0) ? (size * (CENTER_X - 114)) : (size * (CENTER_X - 116))));
+  ys[0] = (int)(((size >= 1.0) ? (size * (CENTER_Y - 116)) : (size * (CENTER_Y - 119))));
+  xs[1] = (int)(size * (CENTER_X - 71));
+  ys[1] = (int)(size * (CENTER_Y - 147));
+  xs[2] = (int)(size * (CENTER_X - 11));
+  ys[2] = (int)(size * (CENTER_Y - 153));
+  xs[3] = (int)(size * (CENTER_X + 42));
+  ys[3] = (int)(size * (CENTER_Y - 145));
+  xs[4] = (int)(size * (CENTER_X + 88));
+  ys[4] = (int)(size * (CENTER_Y - 116));
 
   j = 0;
   XCopyArea(dp, numbers[j], vu->on_label, draw_gc, 0, 0, wids[j], hgts[j], xs[0], ys[0]); j++;
@@ -666,38 +689,38 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
   XCopyArea(dp, numbers[j], vu->clip_label, draw_gc, 0, 0, wids[j], hgts[j], xs[4], ys[4]);
 
   /* draw the arcs */
-  xs[0] = (int)(size*(CENTER_X - 120));
-  ys[0] = (int)(size*(CENTER_Y - 120));
-  xs[1] = (int)(size*(CENTER_X - 119));
-  ys[1] = (int)(size*(CENTER_Y - 120));
-  xs[2] = (int)(size*(CENTER_X - 119));
-  ys[2] = (int)(size*(CENTER_Y - 119));
-  xs[3] = (int)(size*(CENTER_X - 116));
-  ys[3] = (int)(size*(CENTER_Y - 116));
+  xs[0] = (int)(size * (CENTER_X - 120));
+  ys[0] = (int)(size * (CENTER_Y - 120));
+  xs[1] = (int)(size * (CENTER_X - 119));
+  ys[1] = (int)(size * (CENTER_Y - 120));
+  xs[2] = (int)(size * (CENTER_X - 119));
+  ys[2] = (int)(size * (CENTER_Y - 119));
+  xs[3] = (int)(size * (CENTER_X - 116));
+  ys[3] = (int)(size * (CENTER_Y - 116));
 
-  XDrawArc(dp, vu->on_label, draw_gc, xs[0], ys[0], (unsigned int)(size*(240)), (unsigned int)(size*(240)), 45*64, 90*64);
-  XDrawArc(dp, vu->on_label, draw_gc, xs[1], ys[1], (unsigned int)(size*(239)), (unsigned int)(size*(239)), 45*64, 89*64);
-  XDrawArc(dp, vu->on_label, draw_gc, xs[2], ys[2], (unsigned int)(size*(239)), (unsigned int)(size*(239)), 45*64, 89*64);
-  XDrawArc(dp, vu->on_label, draw_gc, xs[3], ys[3], (unsigned int)(size*(232)), (unsigned int)(size*(232)), 45*64, 90*64);
+  XDrawArc(dp, vu->on_label, draw_gc, xs[0], ys[0], (unsigned int)(size * (240)), (unsigned int)(size * (240)), 45 * 64, 90 * 64);
+  XDrawArc(dp, vu->on_label, draw_gc, xs[1], ys[1], (unsigned int)(size * (239)), (unsigned int)(size * (239)), 45 * 64, 89 * 64);
+  XDrawArc(dp, vu->on_label, draw_gc, xs[2], ys[2], (unsigned int)(size * (239)), (unsigned int)(size * (239)), 45 * 64, 89 * 64);
+  XDrawArc(dp, vu->on_label, draw_gc, xs[3], ys[3], (unsigned int)(size * (232)), (unsigned int)(size * (232)), 45 * 64, 90 * 64);
 
-  XDrawArc(dp, vu->off_label, draw_gc, xs[0], ys[0], (unsigned int)(size*(240)), (unsigned int)(size*(240)), 45*64, 90*64);
-  XDrawArc(dp, vu->off_label, draw_gc, xs[1], ys[1], (unsigned int)(size*(239)), (unsigned int)(size*(239)), 45*64, 89*64);
-  XDrawArc(dp, vu->off_label, draw_gc, xs[2], ys[2], (unsigned int)(size*(239)), (unsigned int)(size*(239)), 45*64, 89*64);
-  XDrawArc(dp, vu->off_label, draw_gc, xs[3], ys[3], (unsigned int)(size*(232)), (unsigned int)(size*(232)), 45*64, 90*64);
+  XDrawArc(dp, vu->off_label, draw_gc, xs[0], ys[0], (unsigned int)(size * (240)), (unsigned int)(size * (240)), 45 * 64, 90 * 64);
+  XDrawArc(dp, vu->off_label, draw_gc, xs[1], ys[1], (unsigned int)(size * (239)), (unsigned int)(size * (239)), 45 * 64, 89 * 64);
+  XDrawArc(dp, vu->off_label, draw_gc, xs[2], ys[2], (unsigned int)(size * (239)), (unsigned int)(size * (239)), 45 * 64, 89 * 64);
+  XDrawArc(dp, vu->off_label, draw_gc, xs[3], ys[3], (unsigned int)(size * (232)), (unsigned int)(size * (232)), 45 * 64, 90 * 64);
 
-  XDrawArc(dp, vu->clip_label, draw_gc, xs[0], ys[0], (unsigned int)(size*(240)), (unsigned int)(size*(240)), 45*64, 90*64);
-  XDrawArc(dp, vu->clip_label, draw_gc, xs[1], ys[1], (unsigned int)(size*(239)), (unsigned int)(size*(239)), 45*64, 89*64);
-  XDrawArc(dp, vu->clip_label, draw_gc, xs[2], ys[2], (unsigned int)(size*(239)), (unsigned int)(size*(239)), 45*64, 89*64);
-  XDrawArc(dp, vu->clip_label, draw_gc, xs[3], ys[3], (unsigned int)(size*(232)), (unsigned int)(size*(232)), 45*64, 90*64);
+  XDrawArc(dp, vu->clip_label, draw_gc, xs[0], ys[0], (unsigned int)(size * (240)), (unsigned int)(size * (240)), 45 * 64, 90 * 64);
+  XDrawArc(dp, vu->clip_label, draw_gc, xs[1], ys[1], (unsigned int)(size * (239)), (unsigned int)(size * (239)), 45 * 64, 89 * 64);
+  XDrawArc(dp, vu->clip_label, draw_gc, xs[2], ys[2], (unsigned int)(size * (239)), (unsigned int)(size * (239)), 45 * 64, 89 * 64);
+  XDrawArc(dp, vu->clip_label, draw_gc, xs[3], ys[3], (unsigned int)(size * (232)), (unsigned int)(size * (232)), 45 * 64, 90 * 64);
 
   /* draw the axis ticks */
   for (i = 0; i < 5; i++)
     {
       rdeg = mus_degrees2radians(45-i*22.5);
-      x0 = (int)(CENTER_X*size+120*size*sin(rdeg));
-      y0 = (int)(CENTER_Y*size-120*size*cos(rdeg));
-      x1 = (int)(CENTER_X*size+130*size*sin(rdeg));
-      y1 = (int)(CENTER_Y*size-130*size*cos(rdeg));
+      x0 = (int)(CENTER_X * size + 120 * size * sin(rdeg));
+      y0 = (int)(CENTER_Y * size - 120 * size * cos(rdeg));
+      x1 = (int)(CENTER_X * size + 130 * size * sin(rdeg));
+      y1 = (int)(CENTER_Y * size - 130 * size * cos(rdeg));
       XDrawLine(dp, vu->on_label, draw_gc, x0, y0, x1, y1);
       XDrawLine(dp, vu->on_label, draw_gc, x0+1, y0, x1+1, y1);
       XDrawLine(dp, vu->off_label, draw_gc, x0, y0, x1, y1);
@@ -705,21 +728,20 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
       XDrawLine(dp, vu->clip_label, draw_gc, x0, y0, x1, y1);
       XDrawLine(dp, vu->clip_label, draw_gc, x0+1, y0, x1+1, y1);
       if (i < 4)
-	{
-	  for (j = 1; j < 6; j++)
-	    {
-	      rdeg = mus_degrees2radians(45-i*22.5-j*(90.0/20.0));
-	      x0 = (int)(CENTER_X*size+120*size*sin(rdeg));
-	      y0 = (int)(CENTER_Y*size-120*size*cos(rdeg));
-	      x1 = (int)(CENTER_X*size+126*size*sin(rdeg));
-	      y1 = (int)(CENTER_Y*size-126*size*cos(rdeg));
-	      XDrawLine(dp, vu->on_label, draw_gc, x0, y0, x1, y1);
-	      XDrawLine(dp, vu->off_label, draw_gc, x0, y0, x1, y1);
-	      XDrawLine(dp, vu->clip_label, draw_gc, x0, y0, x1, y1);
-	    }
-	}
+	for (j = 1; j < 6; j++)
+	  {
+	    rdeg = mus_degrees2radians(45 - i * 22.5 - j * (90.0 / 20.0));
+	    x0 = (int)(CENTER_X * size + 120 * size * sin(rdeg));
+	    y0 = (int)(CENTER_Y * size - 120 * size * cos(rdeg));
+	    x1 = (int)(CENTER_X * size + 126 * size * sin(rdeg));
+	    y1 = (int)(CENTER_Y * size - 126 * size * cos(rdeg));
+	    XDrawLine(dp, vu->on_label, draw_gc, x0, y0, x1, y1);
+	    XDrawLine(dp, vu->off_label, draw_gc, x0, y0, x1, y1);
+	    XDrawLine(dp, vu->clip_label, draw_gc, x0, y0, x1, y1);
+	  }
     }
-  for (i = 0; i < VU_NUMBERS; i++) XFreePixmap(dp, numbers[i]);
+  for (i = 0; i < VU_NUMBERS; i++) 
+    XFreePixmap(dp, numbers[i]);
 }
 
 #if 0
@@ -771,16 +793,17 @@ static void display_vu_meter(VU *vu)
       break;
     case VU_ON: label = vu->on_label; break;
     }
-  if (label) XCopyArea(vu->dp, label, vu->wn, vu_gc, 0, 0, vu->center_x*2, vu->center_y, 0, 0);
-  val = vu->current_val*VU_NEEDLE_SPEED + (vu->last_val*(1.0-VU_NEEDLE_SPEED));
+  if (label) 
+    XCopyArea(vu->dp, label, vu->wn, vu_gc, 0, 0, vu->center_x * 2, vu->center_y, 0, 0);
+  val = vu->current_val * VU_NEEDLE_SPEED + (vu->last_val * (1.0 - VU_NEEDLE_SPEED));
   vu->last_val = val;
-  deg = -45.0 + val*90.0;
+  deg = -45.0 + val * 90.0;
   /* if (deg < -45.0) deg = -45.0; else if (deg > 45.0) deg = 45.0; */
   rdeg = mus_degrees2radians(deg);
-  nx0 = vu->center_x - (int)((Float)(vu->center_y - vu->light_y) / tan(mus_degrees2radians(deg+90)));
+  nx0 = vu->center_x - (int)((Float)(vu->center_y - vu->light_y) / tan(mus_degrees2radians(deg + 90)));
   ny0 = vu->light_y;
-  nx1 = (int)(vu->center_x + 130*size*sin(rdeg));
-  ny1 = (int)(vu->center_y - 130*size*cos(rdeg));
+  nx1 = (int)(vu->center_x + 130 * size * sin(rdeg));
+  ny1 = (int)(vu->center_y - 130 * size * cos(rdeg));
   XSetForeground(vu->dp, vu_gc, sx->black);
   XDrawLine(vu->dp, vu->wn, vu_gc, nx0, ny0, nx1, ny1);
 
@@ -794,8 +817,8 @@ static void display_vu_meter(VU *vu)
 	  XSetForeground(vu->dp, vu_gc, sx->pushed_button_color);
 	else XSetForeground(vu->dp, vu_gc, sx->white);
       if (deg < 0.0)
-	XDrawLine(vu->dp, vu->wn, vu_gc, nx0-1, ny0, nx1-1, ny1);
-      else XDrawLine(vu->dp, vu->wn, vu_gc, nx0+1, ny0, nx1+1, ny1);
+	XDrawLine(vu->dp, vu->wn, vu_gc, nx0 - 1, ny0, nx1 - 1, ny1);
+      else XDrawLine(vu->dp, vu->wn, vu_gc, nx0 + 1, ny0, nx1 + 1, ny1);
       XSetForeground(vu->dp, vu_gc, sx->black);
     }
 
@@ -803,14 +826,16 @@ static void display_vu_meter(VU *vu)
     {
       if (vu->current_val > vu->red_deg) 
 	vu->red_deg = vu->current_val;
-      else vu->red_deg = vu->current_val*VU_BUBBLE_SPEED + (vu->red_deg*(1.0 - VU_BUBBLE_SPEED));
+      else vu->red_deg = vu->current_val * VU_BUBBLE_SPEED + (vu->red_deg * (1.0 - VU_BUBBLE_SPEED));
       XSetForeground(vu->dp, vu_gc, sx->red);
-      redx = (int)(vu->red_deg * 90*64);
-      if (redx<(VU_BUBBLE_SIZE)) redy = redx; else redy = VU_BUBBLE_SIZE;
-      bub0 = (int)(size*117);
-      bub1 = (int)(size*119);
-      for (i = bub0, j = bub0*2; i <= bub1; i++, j+=(int)(2*size))
-	XDrawArc(vu->dp, vu->wn, vu_gc, vu->center_x - i, vu->center_y - i, j, j, 135*64 - redx, redy);
+      redx = (int)(vu->red_deg * 90 * 64);
+      if (redx < (VU_BUBBLE_SIZE)) 
+	redy = redx; 
+      else redy = VU_BUBBLE_SIZE;
+      bub0 = (int)(size * 117);
+      bub1 = (int)(size * 119);
+      for (i = bub0, j = bub0 * 2; i <= bub1; i++, j += (int)(2 * size))
+	XDrawArc(vu->dp, vu->wn, vu_gc, vu->center_x - i, vu->center_y - i, j, j, 135 * 64 - redx, redy);
       XSetForeground(vu->dp, vu_gc, sx->black);
     }
 }
@@ -839,10 +864,10 @@ static VU *make_vu_meter(Widget meter, int light_x, int light_y, int center_x, i
   vu->last_val = 0.0;
   vu->clipped = 0;
   vu->max_val = 0.0;
-  vu->light_x = (int)(light_x*size);
-  vu->light_y = (int)(light_y*size);
-  vu->center_x = (int)(center_x*size);
-  vu->center_y = (int)(center_y*size);
+  vu->light_x = (int)(light_x * size);
+  vu->light_y = (int)(light_y * size);
+  vu->center_x = (int)(center_x * size);
+  vu->center_y = (int)(center_y * size);
   vu->ss = ss;
   for (i = 0; i < current_vu_label; i++)
     if (vu_labels[i]->size == size) 
@@ -868,7 +893,12 @@ static VU *make_vu_meter(Widget meter, int light_x, int light_y, int center_x, i
       if ((vl->size == 1.0) || (vl->size > 4.0) || (vl->size < .25))
 	err = allocate_meter_2(recorder, vl);
       else allocate_meter_1(ss, vl);
-      if (err != XpmSuccess) {vl->on_label = 0; vl->off_label = 0; vl->clip_label = 0;}
+      if (err != XpmSuccess) 
+	{
+	  vl->on_label = 0; 
+	  vl->off_label = 0; 
+	  vl->clip_label = 0;
+	}
 #else
       allocate_meter_1(ss, vl);
 #endif
@@ -901,9 +931,9 @@ void recorder_set_vu_out_val(int chan, MUS_SAMPLE_TYPE val) {set_vu_val(rec_out_
 #define INPUT_AMP 0
 #define OUTPUT_AMP 1
 
-static char record_one[5] ={'1', STR_decimal,'0','0','\0'};
-static char record_zero[5] ={'0', STR_decimal,'0','0','\0'};
-static char amp_number_buffer[5] ={'1', STR_decimal,'0','0','\0'};
+static char record_one[5] ={'1', STR_decimal, '0', '0', '\0'};
+static char record_zero[5] ={'0', STR_decimal, '0', '0', '\0'};
+static char amp_number_buffer[5] ={'1', STR_decimal, '0', '0', '\0'};
 
 #define RECORD_SCROLLBAR_MAX 300
 #define RECORD_SCROLLBAR_MID 150
@@ -924,7 +954,7 @@ static void record_amp_changed(AMP *ap, int val)
     {
       if (val < RECORD_SCROLLBAR_LINEAR_MAX)
 	amp = (Float)val * RECORD_SCROLLBAR_LINEAR_MULT;
-      else amp = exp((Float)(val-RECORD_SCROLLBAR_MID)/((Float)RECORD_SCROLLBAR_MAX*.2));
+      else amp = exp((Float)(val-RECORD_SCROLLBAR_MID) / ((Float)RECORD_SCROLLBAR_MAX * .2));
     }
   sfs = prettyf(amp, 2);
   fill_number(sfs, amp_number_buffer);
@@ -978,14 +1008,17 @@ static void Record_Amp_Click_Callback(Widget w, XtPointer context, XtPointer inf
 #if DEBUGGING
   if ((int)ev <= 0) return;
 #endif
-  if (ev->state & (snd_ControlMask | snd_MetaMask)) val = ap->last_amp; else val = RECORD_SCROLLBAR_MID;
+  if (ev->state & (snd_ControlMask | snd_MetaMask)) 
+    val = ap->last_amp; 
+  else val = RECORD_SCROLLBAR_MID;
   record_amp_changed(ap, val);
   XtVaSetValues(ap->slider, XmNvalue, val, NULL);
 }
 
 static void Record_Amp_Drag_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  record_amp_changed((AMP *)context, ((XmScrollBarCallbackStruct *)info)->value);
+  record_amp_changed((AMP *)context, 
+		     ((XmScrollBarCallbackStruct *)info)->value);
 }
 
 static void Record_Amp_ValueChanged_Callback(Widget w, XtPointer context, XtPointer info) 
@@ -1148,13 +1181,13 @@ static void change_trigger_Callback(Widget w, XtPointer context, XtPointer info)
 {
   /* if val = 0, set record button normal label to 'Record', else 'Triggered Record' */
   XmScaleCallbackStruct *cb = (XmScaleCallbackStruct *)info;
-  internal_trigger_set((Float)(cb->value)/100.0);
+  internal_trigger_set((Float)(cb->value) / 100.0);
 }
 
 static void drag_trigger_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmScaleCallbackStruct *cb = (XmScaleCallbackStruct *)info;
-  make_trigger_label((Float)(cb->value)/100.0);
+  make_trigger_label((Float)(cb->value) / 100.0);
 }
 
 static void device_button_callback(Widget w, XtPointer context, XtPointer info) 
@@ -1218,7 +1251,8 @@ static void device_button_callback(Widget w, XtPointer context, XtPointer info)
   	  if (active_device_button != -1)
 	    {
 	      p = all_panes[active_device_button];
-	      for (i = p->in_chan_loc, j = 0; j < p->in_chans; j++, i++) rp->input_channel_active[i] = 0;
+	      for (i = p->in_chan_loc, j = 0; j < p->in_chans; j++, i++) 
+		rp->input_channel_active[i] = 0;
 	      if (active_device_button != button)
 		{
 		  /* XtVaGetValues(p->pane, XmNheight, &(p->pane_size), NULL); */
@@ -1230,17 +1264,19 @@ static void device_button_callback(Widget w, XtPointer context, XtPointer info)
 	    }
 	  active_device_button = button;
 	  p = all_panes[button];
-	  for (i = p->in_chan_loc, j = 0; j < p->in_chans; j++, i++) rp->input_channel_active[i] = 1;
+	  for (i = p->in_chan_loc, j = 0; j < p->in_chans; j++, i++) 
+	    rp->input_channel_active[i] = 1;
 	  rp->input_channels[0] = p->in_chans;
 
 	  /* if digital in, get its srate (and reflect in srate text) */
-	  if ((p->device == MUS_AUDIO_AES_IN) || (p->device == MUS_AUDIO_ADAT_IN))
+	  if ((p->device == MUS_AUDIO_AES_IN) || 
+	      (p->device == MUS_AUDIO_ADAT_IN))
 	    {
 	      mus_audio_mixer_read(p->device, MUS_AUDIO_SRATE, 0, val);
 	      set_recorder_srate(rp, (int)val[0]);
 	    }
 	  rp->input_ports[0] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(0) | p->device,
-					  rp->srate, rp->input_channels[0], rp->in_format, rp->buffer_size);
+						    rp->srate, rp->input_channels[0], rp->in_format, rp->buffer_size);
 	  if (rp->input_ports[0] == -1)
 	    record_report(messages, recorder_device_name(p->device), NULL);
 	  else
@@ -1257,7 +1293,7 @@ static void device_button_callback(Widget w, XtPointer context, XtPointer info)
 	      if (!rp->monitoring)
 		{
 		  rp->monitor_port = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_DAC_OUT,
-						 rp->srate, rp->monitor_chans, rp->out_format, rp->buffer_size);
+							   rp->srate, rp->monitor_chans, rp->out_format, rp->buffer_size);
 		  if (rp->monitor_port == -1)
 		    {
 		      record_report(messages, "open output", NULL);
@@ -1870,7 +1906,9 @@ static void Meter_Button_Callback(Widget w, XtPointer context, XtPointer info)
 	}
       else n = 0;
       val = 0;
-      for (i = 0; i < p->active_size; i++) {if (p->active[i]) val++;}
+      for (i = 0; i < p->active_size; i++) 
+	if (p->active[i]) 
+	  val++;
       if ((val > 0) && (val != n))
 	{
 	  sprintf(timbuf, "%d", val);
@@ -1891,7 +1929,7 @@ static void volume_callback(Widget w, XtPointer context, XtPointer info)
 {
   Wdesc *wd = (Wdesc *)context;
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
-  set_mixer_gain(wd->system, wd->device, wd->chan, wd->gain, wd->field, (Float)cbs->value/100.0);
+  set_mixer_gain(wd->system, wd->device, wd->chan, wd->gain, wd->field, (Float)(cbs->value) / 100.0);
 }
 
 /* ---- slider button matrix ---- */
@@ -1943,7 +1981,8 @@ static Widget sndCreateRecorderSlider(snd_state *ss, PANE *p, AMP *a, Widget las
   s1 = XmStringCreate("     ", "button_font");
   XtSetArg(args[n], XmNlabelString, s1); n++;
 #endif
-  a->label = sndCreatePushButtonWidget(gain_channel_name(p->in_chans, p->out_chans, input, a->device_in_chan, a->out), p->pane, args, n);
+  a->label = sndCreatePushButtonWidget(gain_channel_name(p->in_chans, p->out_chans, input, a->device_in_chan, a->out), 
+				       p->pane, args, n);
   XtAddCallback(a->label, XmNactivateCallback, Record_Amp_Click_Callback, a);
   XtAddCallback(a->label, XmNhelpCallback, amp_slider_help_Callback, a->wd);
   
@@ -2066,7 +2105,8 @@ static void Matrix_Button_Callback(Widget mb, XtPointer context, XtPointer info)
   int curamp;
   p = si->p;
   curamp = si->out_chan * p->in_chans + si->in_chan;
-  handle_matrix_slider(mb, p, si->in_chan, si->out_chan, curamp, (p->active_sliders[si->in_chan][si->out_chan]));
+  handle_matrix_slider(mb, p, si->in_chan, si->out_chan, curamp, 
+		       p->active_sliders[si->in_chan][si->out_chan]);
 }
 
 static int button_matrix_button = 0;
@@ -2095,7 +2135,11 @@ static void button_matrix_button_motion(Widget w, XtPointer context, XEvent *eve
   XtVaGetValues(w, XmNx, &x, XmNy, &y, NULL);
   x += (ev->x - p->bx);
   y += (ev->y - p->by);
-  if ((x > (Position)(p->bw)) || (y > (Position)(p->bh)) || (x < 0) || (y < 0)) return;
+  if ((x > (Position)(p->bw)) || 
+      (y > (Position)(p->bh)) ||
+      (x < 0) || 
+      (y < 0)) 
+    return;
   bin = (int)y * p->in_chans / p->bh;
   bout = (int)x * p->out_chans / p->bw;
   current_button = p->matrix_buttons[bin][bout];
@@ -2103,7 +2147,9 @@ static void button_matrix_button_motion(Widget w, XtPointer context, XEvent *eve
       (((p->active_sliders[bin][bout]) && (button_matrix_button == 2)) ||
        ((!(p->active_sliders[bin][bout])) && (button_matrix_button == 1))))
     {
-      handle_matrix_slider(current_button, p, bin, bout, bout * p->in_chans + bin, (p->active_sliders[bin][bout]));
+      handle_matrix_slider(current_button, p, bin, bout, 
+			   bout * p->in_chans + bin, 
+			   p->active_sliders[bin][bout]);
       active_button = current_button;
     }
 }
@@ -2168,7 +2214,7 @@ static Widget sndCreateButtonMatrix(snd_state *ss, PANE *p, char *name, Widget p
   active_sliders = p->active_sliders;
   vu_rows = p->in_chans / 4;
   if (vu_rows == 0) vu_rows = 1;
-  height = (int)(vu_rows*(3*2 + LIGHT_Y*meter_size));
+  height = (int)(vu_rows * (3 * 2 + LIGHT_Y * meter_size));
   width = height;
   XtSetArg(in_args[in_n], XmNshadowType, XmSHADOW_ETCHED_IN); in_n++;
   outer_frame = sndCreateFrameWidget(name, parent, in_args, in_n);
@@ -2279,7 +2325,8 @@ static Widget sndCreateButtonMatrix(snd_state *ss, PANE *p, char *name, Widget p
   ins = p->in_chans;
   outs = p->out_chans;
   p->matrix_buttons = (Widget **)CALLOC(ins, sizeof(Widget *));
-  for (row = 0; row < ins; row++) p->matrix_buttons[row] = (Widget *)CALLOC(outs, sizeof(Widget));
+  for (row = 0; row < ins; row++) 
+    p->matrix_buttons[row] = (Widget *)CALLOC(outs, sizeof(Widget));
 
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -2320,7 +2367,12 @@ static Widget sndCreateButtonMatrix(snd_state *ss, PANE *p, char *name, Widget p
 	if (active_sliders[row][col]) XmChangeColor(mb, (Pixel)((ss->sgx)->green));
 	p->matrix_buttons[row][col] = mb;
       }
-  XtVaGetValues(inner_frame, XmNx, &(p->bx), XmNy, &(p->by), XmNwidth, &(p->bw), XmNheight, &(p->bh), NULL);
+  XtVaGetValues(inner_frame, 
+		XmNx, &(p->bx), 
+		XmNy, &(p->by), 
+		XmNwidth, &(p->bw), 
+		XmNheight, &(p->bh), 
+		NULL);
   return(outer_frame);
 }
 
@@ -2400,13 +2452,14 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
   left_frame = NULL;
   meter_size = vu_size(ss);
   if (vu_meters > 4) meter_size *= .6; else if (vu_meters > 2) meter_size *= .8;
-  if ((vu_meters%5) == 0) meter_size *= 0.8;
+  if ((vu_meters % 5) == 0) meter_size *= 0.8;
 
-  if ((input) && ((p->in_chans*p->out_chans) > 8))
+  if ((input) && ((p->in_chans * p->out_chans) > 8))
     {
       for (i = 0; i < p->in_chans; i++) 
 	for (k = 0; k < p->out_chans; k++) 
-	  if (i == k) p->active_sliders[i][k] = 1;
+	  if (i == k) 
+	    p->active_sliders[i][k] = 1;
 
       /* rather than default to posting 64 (or 256!) sliders, set up a channel matrix where desired sliders can be set */
       n = 0;
@@ -2529,8 +2582,8 @@ static Widget make_vu_meters(snd_state *ss, PANE *p, int vu_meters, Widget *fram
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNwidth, CENTER_X*2*meter_size); n++;
-      XtSetArg(args[n], XmNheight, LIGHT_Y*meter_size); n++;
+      XtSetArg(args[n], XmNwidth, CENTER_X * 2 * meter_size); n++;
+      XtSetArg(args[n], XmNheight, LIGHT_Y * meter_size); n++;
       XtSetArg(args[n], XmNallowResize, FALSE); n++;
       meter = sndCreateDrawingAreaWidget("vu", frame, args, n);
       p->meters[i] = make_vu_meter(meter, LIGHT_X, LIGHT_Y, CENTER_X, CENTER_Y, ss, meter_size);
@@ -2550,7 +2603,8 @@ static Widget make_vu_meters(snd_state *ss, PANE *p, int vu_meters, Widget *fram
       wd->system = p->system;
       XtAddCallback(meter, XmNhelpCallback, Meter_Help_Callback, wd);
       last_frame = frame;
-      if ((i == (columns*(row+1) - 1)) && (vu_meters > (i+1))) 
+      if ((i == (columns*(row+1) - 1)) && 
+	  (vu_meters > (i + 1))) 
 	{
 	  last_frame = NULL;
 	  first_frame = NULL;
@@ -2594,7 +2648,7 @@ static Widget make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE 
 					 int num_gains, int gain_ctr, int *mixflds, int input)
 {
   /* vertical scalers on the right (with icon) */
-  int n, i, chan, this_device = 0, last_device=-1;
+  int n, i, chan, this_device = 0, last_device = -1;
   Arg args[32];
   Widget icon_label, last_slider;
   Wdesc *wd;
@@ -2610,8 +2664,13 @@ static Widget make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE 
   XtSetArg(args[n], XmNlabelType, XmPIXMAP); n++;
 #if (HAVE_OSS || HAVE_ALSA)
   if (input)
-    {XtSetArg(args[n], XmNlabelPixmap, device_icon((mixflds[MUS_AUDIO_MICROPHONE]>0) ? MUS_AUDIO_MICROPHONE : MUS_AUDIO_LINE_IN)); n++;}
-  else {XtSetArg(args[n], XmNlabelPixmap, device_icon(p->device)); n++;}
+    {
+      XtSetArg(args[n], XmNlabelPixmap, device_icon((mixflds[MUS_AUDIO_MICROPHONE]>0) ? MUS_AUDIO_MICROPHONE : MUS_AUDIO_LINE_IN)); n++;
+    }
+  else 
+    {
+      XtSetArg(args[n], XmNlabelPixmap, device_icon(p->device)); n++;
+    }
   if (input)
     {
       if (mixflds[MUS_AUDIO_MICROPHONE]<= 0)
@@ -2630,8 +2689,13 @@ static Widget make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE 
   else {XtSetArg(args[n], XmNalignment, XmALIGNMENT_END); n++;}
 #if (HAVE_OSS || HAVE_ALSA)
   if (input)
-    {XtSetArg(args[n], XmNwidth, (mixflds[last_device] == 2) ? 30 : 15); n++;}
-  else {XtSetArg(args[n], XmNwidth, 30); n++;}
+    {
+      XtSetArg(args[n], XmNwidth, (mixflds[last_device] == 2) ? 30 : 15); n++;
+    }
+  else 
+    {
+      XtSetArg(args[n], XmNwidth, 30); n++;
+    }
 #else
   XtSetArg(args[n], XmNwidth, 30); n++;
 #endif
@@ -2647,9 +2711,11 @@ static Widget make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE 
       this_device = recorder_sort_mixer_device((void *)wd, i, chan, input, p->device, mixflds);
       wd->ss = ss;
       wd->p = p;
-      wd->gain = gain_ctr+chan;
+      wd->gain = gain_ctr + chan;
       if (wd->gain > rp->num_mixer_gains) 
-	snd_error("%s[%d] %s: overflow %d > %d", __FILE__, __LINE__, __FUNCTION__, wd->gain, rp->num_mixer_gains);
+	snd_error("%s[%d] %s: overflow %d > %d", 
+		  __FILE__, __LINE__, __FUNCTION__,
+		  wd->gain, rp->num_mixer_gains);
       gain_sliders[wd->gain] = wd;
       vol = mixer_gain(wd->system, wd->device, wd->chan, wd->gain, wd->field);
       if (vol < 0.0) vol = 0.0;
@@ -2806,7 +2872,7 @@ static Widget make_button_box(snd_state *ss, recorder_info *rp, PANE *p, Float m
   columns = recorder_columns(vu_meters);
 
   row = 0;
-  button_size = 100/columns;
+  button_size = 100 / columns;
 
   for (i = 0; i < vu_meters; i++)
     {
@@ -2832,11 +2898,11 @@ static Widget make_button_box(snd_state *ss, recorder_info *rp, PANE *p, Float m
 	  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
 	}
       if (meter_size < SMALL_FONT_CUTOFF) {XtSetArg(args[n], XM_FONT_RESOURCE, small_fontlist); n++;}
-      if (((i+1)%columns) != 0)
+      if (((i + 1) % columns) != 0)
 	{
 	  /* these are the right sides of the buttons before the rightmost one */
 	  XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
-	  XtSetArg(args[n], XmNrightPosition, ((i+1)%columns)*button_size); n++;
+	  XtSetArg(args[n], XmNrightPosition, ((i + 1) % columns) * button_size); n++;
 	}
       else 
 	{
@@ -2872,10 +2938,10 @@ static Widget make_button_box(snd_state *ss, recorder_info *rp, PANE *p, Float m
 	{
 	  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
 	}
-      if (((i+1)%columns) != 0)
+      if (((i + 1) % columns) != 0)
 	{
 	  XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
-	  XtSetArg(args[n], XmNrightPosition, button_size*((i+1)%columns)); n++;
+	  XtSetArg(args[n], XmNrightPosition, button_size * ((i + 1) % columns)); n++;
 	}
       else
 	{
@@ -2902,7 +2968,8 @@ static Widget make_button_box(snd_state *ss, recorder_info *rp, PANE *p, Float m
       vu->max_val = 0.0;
       XtAddCallback(max_label, XmNhelpCallback, VU_Max_Help_Callback, wd);
 
-      if ((i == (columns*(row+1) - 1)) && (vu_meters > (i+1))) 
+      if ((i == (columns * (row + 1) - 1)) && 
+	  (vu_meters > (i + 1))) 
 	{
 	  last_button = NULL; 
 	  last_max = NULL;
@@ -3038,20 +3105,16 @@ void sensitize_control_buttons(void)
 {
   int i;
   for (i = 0; i < device_buttons_size-1; i++) /* last button is autoload_file */
-    {
-      if (device_buttons[i])
-	set_sensitive(device_buttons[i], TRUE);
-    }
+    if (device_buttons[i])
+      set_sensitive(device_buttons[i], TRUE);
 }
 
 void unsensitize_control_buttons(void)
 {
   int i;
   for (i = 0; i < device_buttons_size-1; i++)
-    {
-      if (device_buttons[i])
-	set_sensitive(device_buttons[i], FALSE);
-    }
+    if (device_buttons[i])
+      set_sensitive(device_buttons[i], FALSE);
 }
 
 static void RecordCleanupCB(Widget w, XtPointer context, XtPointer info)
@@ -3164,7 +3227,7 @@ void finish_recording(snd_state *ss, recorder_info *rp)
 	      __FILE__, __LINE__, __FUNCTION__);
   mus_header_update_with_fd(rp->output_file_descriptor,
 			    rp->output_header_type,
-			    rp->total_output_frames*rp->out_chans*mus_data_format_to_bytes_per_sample(rp->out_format));
+			    rp->total_output_frames * rp->out_chans * mus_data_format_to_bytes_per_sample(rp->out_format));
   if (close(rp->output_file_descriptor) != 0)
     snd_error("can't close %d (%s): %s [%s[%d] %s]",
 	      rp->output_file_descriptor,
@@ -3178,7 +3241,8 @@ void finish_recording(snd_state *ss, recorder_info *rp)
   str = (char *)CALLOC(256, sizeof(char));
   sprintf(str, "recorded %s:\n  duration: %.2f\n  srate: %d, chans: %d\n  type: %s, format: %s",
 	  rp->output_file, duration, rp->srate, rp->out_chans,
-	  mus_header_type_name(rp->output_header_type), mus_data_format_name(rp->out_format));
+	  mus_header_type_name(rp->output_header_type), 
+	  mus_data_format_name(rp->out_format));
   record_report(messages, str, NULL);
   FREE(str);
   if (rp->autoload)
@@ -3235,7 +3299,9 @@ static void Record_Button_Callback(Widget w, XtPointer context, XtPointer info)
 	  if (out_chans_active() != rp->out_chans)
 	    {
 	      if (msgbuf == NULL) msgbuf = (char *)CALLOC(512, sizeof(char));
-	      sprintf(msgbuf, "chans field (%d) doesn't match file out panel (%d channels active)", rp->out_chans, out_chans_active());
+	      sprintf(msgbuf, 
+		      "chans field (%d) doesn't match file out panel (%d channels active)",
+		      rp->out_chans, out_chans_active());
 	      record_report(messages, msgbuf, NULL);
 	      wd = (Wdesc *)CALLOC(1, sizeof(Wdesc));
 	      wd->ss = ss;
@@ -3315,7 +3381,7 @@ void snd_record_file(snd_state *ss)
       input_devices = recorder_get_devices(rp, &output_devices);
       if (input_devices == -1) return;
 
-      all_panes = (PANE **)CALLOC(input_devices+1, sizeof(PANE *));
+      all_panes = (PANE **)CALLOC(input_devices + 1, sizeof(PANE *));
       device_buttons_size = input_devices + 2; /* inputs, one output, autoload_file */
       device_buttons = (Widget *)CALLOC(device_buttons_size, sizeof(Widget));
       gain_sliders = (Wdesc **)CALLOC(rp->num_mixer_gains, sizeof(Wdesc *));
@@ -3332,7 +3398,8 @@ void snd_record_file(snd_state *ss)
       AMP_rec_outs = (AMP **)CALLOC(MAX_OUT_CHANS, sizeof(AMP *));
 
       /* now create recording dialog using the info gathered above */
-      small_fontstruct = XLoadQueryFont(MAIN_DISPLAY(ss), (vu_size(ss) < SMALLER_FONT_CUTOFF) ? SMALLER_FONT : SMALL_FONT);
+      small_fontstruct = XLoadQueryFont(MAIN_DISPLAY(ss), 
+					(vu_size(ss) < SMALLER_FONT_CUTOFF) ? SMALLER_FONT : SMALL_FONT);
 #if (USE_RENDITIONS)
       {
 	XmRendition rend;
@@ -3494,7 +3561,8 @@ void snd_record_file(snd_state *ss)
 void set_recorder_autoload(recorder_info *rp, int val)
 {
   rp->autoload = val;
-  if (recorder) XmToggleButtonSetState(device_buttons[rp->autoload_button], val, FALSE); 
+  if (recorder) 
+    XmToggleButtonSetState(device_buttons[rp->autoload_button], val, FALSE); 
 }
 
 void reflect_recorder_in_amp(int in, int out, Float val)
@@ -3560,15 +3628,10 @@ static void initialize_recorder(recorder_info *rp)
   /* for simplicity, and until someone complains, new SGI AL machines will just have one active input device */
   active_device_button = rp->microphone_button;
   for (i = 0; i < device_buttons_size-1; i++)
-    {
-      if (device_buttons[i])
-	{
-	  if ((i != rp->microphone_button) && (recorder_input_device(all_panes[i]->device)))
-	    {
-	      XmToggleButtonSetState(device_buttons[i], FALSE, TRUE); 
-	    }
-	}
-    }
+    if ((device_buttons[i]) &&
+	(i != rp->microphone_button) && 
+	(recorder_input_device(all_panes[i]->device)))
+      XmToggleButtonSetState(device_buttons[i], FALSE, TRUE); 
 #endif
   if (rp->trigger != 0.0) set_recorder_trigger(rp, rp->trigger);
   if (rp->max_duration <= 0.0) rp->max_duration = 1000000.0;
@@ -3595,7 +3658,7 @@ void set_recorder_trigger(recorder_info *rp, Float val)
   rp->trigger = val;
   if (recorder)
     {
-      XmScaleSetValue(trigger_scale, (int)(100*val));
+      XmScaleSetValue(trigger_scale, (int)(100 * val));
       internal_trigger_set(val);
     }
 }

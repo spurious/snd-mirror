@@ -402,7 +402,7 @@ void ps_set_tiny_numbers_font(chan_info *cp)
 
 #define PRINTED_VERTICAL_SPACING 25 
 
-void snd_print(snd_state *ss, char *output)
+char *snd_print_or_error(snd_state *ss, char *output)
 {
   int j, i, err;
   int *offsets = NULL;
@@ -413,10 +413,7 @@ void snd_print(snd_state *ss, char *output)
     {
       ccp = current_channel(ss);
       if (ccp == NULL) 
-	{
-	  snd_error("nothing to print?");
-	  return;
-	}
+	return(copy_string("nothing to print?"));
       si = sync_to_chan(ccp);
       offsets = (int *)CALLOC(si->chans, sizeof(int));
       for (j = 0, i=(si->chans-1); i >= 0; i--)
@@ -429,33 +426,38 @@ void snd_print(snd_state *ss, char *output)
 	  sp = (si->cps[i])->sound;
 	  if (sp == NULL) break;
 	  if (sp->combining == CHANNELS_COMBINED)
-	    {
-	      for (j = i+1; j < i+sp->nchans; j++) offsets[j] = offsets[i];
-	    }
+	    for (j = i + 1; j < i + sp->nchans; j++) 
+	      offsets[j] = offsets[i];
 	  else
-	    {
-	      if (sp->combining == CHANNELS_SUPERIMPOSED)
-		{
-		  for (j = i; j < i+sp->nchans-1; j++) 
-		    offsets[j] = offsets[i + sp->nchans - 1];
-		}
-	    }
+	    if (sp->combining == CHANNELS_SUPERIMPOSED)
+	      for (j = i; j < i + sp->nchans - 1; j++) 
+		offsets[j] = offsets[i + sp->nchans - 1];
 	  i += sp->nchans;
 	}
       err = start_ps_graph(output, ((si->cps[0])->sound)->fullname);
       if (err == 0)
 	{
 	  for (i = 0; i < si->chans; i++)
-	    {
-	      ps_graph(si->cps[i], 0, offsets[i]);
-	    }
+	    ps_graph(si->cps[i], 0, offsets[i]);
 	  end_ps_graph();
 	}
-      else snd_error("print %s failed: %s", output, strerror(errno));
+      else return(mus_format("print %s failed: %s", output, strerror(errno)));
       si = free_sync_info(si);
       if (offsets) FREE(offsets);
+      return(NULL);
     }
-  else snd_error("print sound: eps file name needed");
+  else return(copy_string("print sound: eps file name needed"));
+}
+
+void snd_print(snd_state *ss, char *output)
+{
+  char *error;
+  error = snd_print_or_error(ss,output);
+  if (error)
+    {
+      snd_error(error);
+      FREE(error);
+    }
 }
 
 void region_print(char *output, char* title, chan_info *cp)

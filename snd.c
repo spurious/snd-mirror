@@ -14,10 +14,6 @@
   #include <fpu_control.h>
 #endif
 
-#if DEBUGGING
-  void check_snd_commands(void);
-#endif
-
 static snd_state *ss;                      /* global state info, carried around via callData arg in callbacks */
 
 static void mus_error2snd(int type, char *msg)
@@ -269,9 +265,6 @@ static void mus_print2snd(char *msg)
   ss->search_proc = SCM_UNDEFINED;
 #else
   init_mus_module();
-#endif
-#if DEBUGGING
-  check_snd_commands();
 #endif
   mus_error_set_handler(mus_error2snd);
   mus_print_set_handler(mus_print2snd);

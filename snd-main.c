@@ -208,9 +208,9 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
 #if HAVE_STRFTIME
   time(&ts);
   strftime(time_buf, TIME_STR_SIZE, STRFTIME_FORMAT, localtime(&ts));
-  fprintf(fd, "\n; ; ; Snd %s (%s) options saved %s\n", SND_RPM_VERSION, SND_VERSION, time_buf);
+  fprintf(fd, "\n;;; Snd %s (%s) options saved %s\n", SND_RPM_VERSION, SND_VERSION, time_buf);
 #else
-  fprintf(fd, "\n; ; ; Snd %s (%s)\n", SND_RPM_VERSION, SND_VERSION);
+  fprintf(fd, "\n;;; Snd %s (%s)\n", SND_RPM_VERSION, SND_VERSION);
 #endif
 
   if (fft_size(ss) != DEFAULT_FFT_SIZE) pss_sd(fd, S_fft_size, fft_size(ss));
@@ -339,7 +339,7 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   if (fneq(eps_left_margin(ss), DEFAULT_EPS_LEFT_MARGIN)) pss_sf(fd, S_eps_left_margin, eps_left_margin(ss));
   save_recorder_state(fd);
 
-  fprintf(fd, "; ; ; end of snd options\n");
+  fprintf(fd, ";;; end of snd options\n");
   if (locale)
     {
 #if HAVE_SETLOCALE
@@ -375,20 +375,29 @@ FILE *open_snd_init_file (snd_state *ss)
   return(open_restart_file(ss->init_file, TRUE));
 }
 
-int save_options(snd_state *ss)
+static char *save_options_or_error(snd_state *ss)
 {
   FILE *fd;
   fd = open_snd_init_file(ss);
-  if (fd)
+  if (fd) save_snd_state_options(ss, fd);
+  if ((!fd) || (fclose(fd) != 0))
+    return(mus_format("save-options in %s: %s",
+		      ss->init_file,
+		      strerror(errno)));
+  return(NULL);
+}
+
+int save_options(snd_state *ss)
+{
+  char *error;
+  error = save_options_or_error(ss);
+  if (error)
     {
-      save_snd_state_options(ss, fd);
-      if (fclose(fd) != 0)
-	snd_error("can't close %s: %s [%s[%d] %s]", 
-		  ss->init_file, strerror(errno), 
-		  __FILE__, __LINE__, __FUNCTION__);
-      return(0);
+      snd_error(error);
+      FREE(error);
+      return(-1);
     }
-  else return(-1);
+  return(0);
 }
 
 static int save_sound_state (snd_info *sp, void *ptr) 
@@ -438,8 +447,8 @@ static int save_sound_state (snd_info *sp, void *ptr)
 #if HAVE_HOOKS
   if (gh_procedure_p(sp->search_proc))
     {
-      fprintf(fd, "      ; ; ; currently not trying to restore the local search procedure\n");
-      fprintf(fd, "      ; ; ; %s\n", gh_print_1(sp->search_proc, __FUNCTION__));
+      fprintf(fd, "      ;;; currently not trying to restore the local search procedure\n");
+      fprintf(fd, "      ;;; %s\n", gh_print_1(sp->search_proc, __FUNCTION__));
     }
 #endif
   for (chan = 0; chan < sp->nchans; chan++)
@@ -501,16 +510,16 @@ static int save_sound_state (snd_info *sp, void *ptr)
   return(0);
 }
 
-int save_state (snd_state *ss, char *save_state_name)
+char *save_state_or_error (snd_state *ss, char *save_state_name)
 {
   FILE *save_fd;
   char *locale = NULL;
   save_fd = open_restart_file(save_state_name, FALSE);
   if (save_fd == NULL) 
-    {
-      snd_error("can't write %s: %s", save_state_name, strerror(errno));
-      return(-1);
-    }
+    return(mus_format("can't write %s: %s", 
+		      save_state_name, 
+		      strerror(errno)));
+
   else
     {
 #if HAVE_SETLOCALE
@@ -553,13 +562,18 @@ int save_state (snd_state *ss, char *save_state_name)
 	    "exit-hook", "start-hook", "output-comment-hook", "name-click-hook"};
 
 	  /* TODO: save edit_hook undo_hook */
+	  /* TODO: run through obarray setting up forms: 
+	   *            (if (not (defined? <NAME)) (define <NAME> <VALUE>))
+	   *       but somehow leave out built-ins (and only include types we can safely decode...)
+	   */
 
 	  /* the problem here (with saving hooks) is that it is not straightforward to save the function source
 	   *   (with the current print-set! source option, or with an earlier procedure->string function using
 	   *   procedure_environment etc); many types print in this case in ways that are not readable.
 	   *   The functions may depend on globals that are not in loaded files, or that were changed since
 	   *   loading, and trying to map over the current module's obarray, saving each such variable in
-	   *   its current form, is a major undertaking; additionally, what if the user has changed these
+	   *   its current form, is a major undertaking (although this can be done for simple vars; additionally, 
+	   *   what if the user has changed these
 	   *   before restoring -- should the old forms be restored?  Perhaps the new files associated
 	   *   with dumping (libguile/dump.c) will address this issue.  And, things like search functions
 	   *   and hooks might be viewed as temporary to begin with. If the function source is long,
@@ -573,8 +587,8 @@ int save_state (snd_state *ss, char *save_state_name)
 		{
 		  if (!sent_comment)
 		    {
-		      fprintf(save_fd, "\n; ; ; hook values follow but are commented out since I'm not sure they should be saved");
-		      fprintf(save_fd, "\n; ; ;   (they can depend on things that I'm not yet saving for example)\n");
+		      fprintf(save_fd, "\n;;; hook values follow but are commented out since I'm not sure they should be saved");
+		      fprintf(save_fd, "\n;;;   (they can depend on things that I'm not yet saving for example)\n");
 		      sent_comment = 1;
 		    }
 		  fprintf(save_fd, "\n; %s\n", hook_names[i]);
@@ -589,8 +603,8 @@ int save_state (snd_state *ss, char *save_state_name)
 
 	  if (!sent_comment)
 	    {
-	      fprintf(save_fd, "\n; ; ; these bindings are commented out since I'm not sure they should be saved");
-	      fprintf(save_fd, "\n; ; ;   (they can depend on things that I'm not yet saving for example)");
+	      fprintf(save_fd, "\n;;; these bindings are commented out since I'm not sure they should be saved");
+	      fprintf(save_fd, "\n;;;   (they can depend on things that I'm not yet saving for example)");
 	      sent_comment = 1;
 	    }
 
@@ -602,9 +616,6 @@ int save_state (snd_state *ss, char *save_state_name)
 	}
 #endif
 
-      if (fclose(save_fd) != 0)
-	snd_error("can't close %s: %s [%s[%d] %s]", save_state_name, strerror(errno), __FILE__, __LINE__, __FUNCTION__);
-
       if (locale)
 	{
 #if HAVE_SETLOCALE
@@ -612,6 +623,25 @@ int save_state (snd_state *ss, char *save_state_name)
 #endif
 	  FREE(locale);
 	}
+
+      if (fclose(save_fd) != 0)
+	return(mus_format("can't close %s: %s [%s[%d] %s]", 
+			  save_state_name, strerror(errno), 
+			  __FILE__, __LINE__, __FUNCTION__));
+
+    }
+  return(NULL);
+}
+
+int save_state (snd_state *ss, char *save_state_name)
+{
+  char *error;
+  error = save_state_or_error(ss, save_state_name);
+  if (error)
+    {
+      snd_error(error);
+      FREE(error);
+      return(-1);
     }
   return(0);
 }
@@ -656,9 +686,12 @@ int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_f
 	    {
 	      if ((strcmp("-l", argname) == 0) ||
 		  (strcmp("-load", argname) == 0) ||
-		  ((file_extension(argname)) && (strcmp(file_extension(argname), "scm") == 0)))
+		  ((file_extension(argname)) && 
+		   (strcmp(file_extension(argname), "scm") == 0)))
 		{
-		  if ((strcmp("-l", argname) == 0) || (strcmp("-load", argname) == 0)) auto_open_ctr++;
+		  if ((strcmp("-l", argname) == 0) || 
+		      (strcmp("-load", argname) == 0)) 
+		    auto_open_ctr++;
 		  snd_load_file(auto_open_file_names[auto_open_ctr]);
 		}
 	      else
@@ -672,7 +705,8 @@ int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_f
 		    }
 		  else
 		    {
-		      if ((with_title) && (strcmp("-title", argname) == 0))
+		      if ((with_title) && 
+			  (strcmp("-title", argname) == 0))
 			{
 			  auto_open_ctr++;
 			  ss->startup_title = copy_string(auto_open_file_names[auto_open_ctr]);
@@ -705,18 +739,13 @@ static SCM g_save_options(SCM filename)
   name = full_filename(filename);
   fd = fopen(name, "w");
   if (name) FREE(name);
-  if (fd) 
-    {
-      save_snd_state_options(get_global_state(), fd);
-      if (fclose(fd) != 0)
-	snd_error("can't close %s: %s [%s[%d] %s]", 
-		  SCM_STRING_CHARS(filename), 
-		  strerror(errno),
-		  __FILE__, __LINE__, __FUNCTION__);
-      return(filename);
-    }
-  return(scm_throw(CANNOT_SAVE, 
-		   SCM_LIST1(TO_SCM_STRING(S_save_options))));
+  if (fd) save_snd_state_options(get_global_state(), fd);
+  if ((!fd) || (fclose(fd) != 0))
+    return(scm_throw(CANNOT_SAVE, 
+		     SCM_LIST3(TO_SCM_STRING(S_save_options),
+			       filename,
+			       TO_SCM_STRING(strerror(errno)))));
+  return(filename);
 }
 
 static SCM g_mem_report(void) 

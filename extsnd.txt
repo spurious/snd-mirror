@@ -2768,6 +2768,7 @@ errors are:
 'no-such-menu    'no-such-file   'no-such-region     'no-such-sample
 'no-such-edit    'cannot-save    'impossible-bounds  'no-active-selection
 'no-such-widget  'mus-error      'no-such-track      'no-such-envelope
+'cannot-print
 
 The symbol #t stands for all errors in this case, so we can run rough-shod
 over any error with:
@@ -2910,7 +2911,7 @@ These functions don't seem to fit anywhere else:
 
                                      (count-matches (lambda (y) (> y .1)))
 
-  exit              ()            exit Snd.
+  exit              (exit-value)   exit Snd.
 
   fft               (rl im sgn)   perform an FFT on rl and im (the real and imaginary parts of the
                                   input data. sgn is 1 for an FFT, -1 for an inverse FFT; (default 1).
@@ -2944,7 +2945,8 @@ These functions don't seem to fit anywhere else:
 
                                      (find (lambda (y) (> y .1)))
 
-  graph->ps         ()            create Postscript description of current display (see eps-file).
+  graph->ps         (file)        create Postscript description of current display
+                                  file defaults to eps-file. [cannot-print].
 
   in                (ms thunk)    ms milliseconds from now, evaluate thunk, a function of no arguments.
 
@@ -2968,7 +2970,7 @@ These functions don't seem to fit anywhere else:
 
   save-options      (filename)    save options in filename [cannot-save].
 
-  save-state        (filename)    save current state of Snd in filename.
+  save-state        (filename)    save current state of Snd in filename [cannot-save].
 
   snd-apropos       (name)        return possible completions of name (a string or a symbol).
 

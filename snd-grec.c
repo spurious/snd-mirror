@@ -225,7 +225,7 @@ static GdkFont *get_vu_font(snd_state *ss, Float size)
   int font_size;
   char *vu_font_name;
   GdkFont *label_font;
-  font_size = (int)(size*12*vu_font_size(ss));
+  font_size = (int)(size * 12 * vu_font_size(ss));
   if (font_size < 5) font_size = 5;
   vu_font_name = vu_font(ss);
   if (!vu_font_name)

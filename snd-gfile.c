@@ -105,7 +105,9 @@ static void load_header_and_data_lists(file_data *fdat, int type, int format, in
     {
       chars = gtk_text_get_length(GTK_TEXT(fdat->comment_text));
       if (chars > 0) gtk_editable_delete_text(GTK_EDITABLE(fdat->comment_text), 0, -1);
-      gtk_text_insert(GTK_TEXT(fdat->comment_text), (ss->sgx)->help_text_fnt, (ss->sgx)->black, (ss->sgx)->white, comment, -1);
+      gtk_text_insert(GTK_TEXT(fdat->comment_text), 
+		      (ss->sgx)->help_text_fnt, 
+		      (ss->sgx)->black, (ss->sgx)->white, comment, -1);
     }
   if ((location >= 0) && (fdat->location_text))
     {
@@ -475,8 +477,14 @@ static void make_save_as_dialog(snd_state *ss, char *sound_name, int save_type, 
       add_dialog(ss, save_as_dialog);
       set_background(save_as_dialog, (ss->sgx)->basic_color);
       gtk_signal_connect(GTK_OBJECT(save_as_dialog), "delete_event", (GtkSignalFunc)save_as_delete_callback, NULL);
-      gtk_signal_connect(GTK_OBJECT(GTK_FILE_SELECTION(save_as_dialog)->ok_button), "clicked", (GtkSignalFunc)save_as_ok_callback, (GtkObject *)ss);
-      gtk_signal_connect_object(GTK_OBJECT(GTK_FILE_SELECTION(save_as_dialog)->cancel_button), "clicked", (GtkSignalFunc)save_as_cancel_callback, (GtkObject *)ss);
+      gtk_signal_connect(GTK_OBJECT(GTK_FILE_SELECTION(save_as_dialog)->ok_button), 
+			 "clicked", 
+			 (GtkSignalFunc)save_as_ok_callback, 
+			 (GtkObject *)ss);
+      gtk_signal_connect_object(GTK_OBJECT(GTK_FILE_SELECTION(save_as_dialog)->cancel_button), 
+				"clicked", 
+				(GtkSignalFunc)save_as_cancel_callback, 
+				(GtkObject *)ss);
 #if (!HAVE_GTKEXTRA)
       if (last_filename) gtk_file_selection_set_filename(GTK_FILE_SELECTION(open_dialog), last_filename);
 #endif
@@ -847,7 +855,10 @@ void make_curfiles_list (snd_state *ss)
       r = cur_name_row[i];
       if (r == NULL)
 	{
-	  r = make_regrow(ss, vf_curww, (void (*)())View_CurFiles_Save_Callback, (void (*)())View_CurFiles_Play_Callback, (void (*)())View_CurFiles_Select_Callback);
+	  r = make_regrow(ss, vf_curww, 
+			  (void (*)())View_CurFiles_Save_Callback, 
+			  (void (*)())View_CurFiles_Play_Callback, 
+			  (void (*)())View_CurFiles_Select_Callback);
 	  cur_name_row[i] = r;
 	  r->pos = i;
 	  r->ss = ss;
@@ -860,12 +871,9 @@ void make_curfiles_list (snd_state *ss)
       gtk_widget_show(r->rw);
     }
   for (i = get_curfile_end(); i < get_max_curfile_end(); i++)
-    {
-      if ((r = cur_name_row[i]))
-	{
-	  if (GTK_WIDGET_VISIBLE(r->rw)) gtk_widget_hide(r->rw);
-	}
-    }
+    if ((r = cur_name_row[i]))
+      if (GTK_WIDGET_VISIBLE(r->rw)) 
+	gtk_widget_hide(r->rw);
   set_max_curfile_end(get_curfile_end());
   highlight_selected_sound(ss);
   gtk_widget_show(vf_curlst);
@@ -914,7 +922,10 @@ void make_prevfiles_list (snd_state *ss)
 	{
 	  if (!((r = prev_name_row[i])))
 	    {
-	      r = make_regrow(ss, vf_prevww, (void (*)())View_PrevFiles_Unlist_Callback, (void (*)())View_PrevFiles_Play_Callback, (void (*)())View_PrevFiles_Select_Callback);
+	      r = make_regrow(ss, vf_prevww, 
+			      (void (*)())View_PrevFiles_Unlist_Callback,
+			      (void (*)())View_PrevFiles_Play_Callback, 
+			      (void (*)())View_PrevFiles_Select_Callback);
 	      prev_name_row[i] = r;
 	      r->pos = i;
 	      r->ss = ss;
@@ -926,12 +937,9 @@ void make_prevfiles_list (snd_state *ss)
 	}
     }
   for (i = get_prevfile_end()+1; i <= get_max_prevfile_end(); i++)
-    {
-      if ((r = prev_name_row[i]))
-	{
-	  if (GTK_WIDGET_VISIBLE(r->rw)) gtk_widget_hide(r->rw);
-	}
-    }
+    if ((r = prev_name_row[i]))
+      if (GTK_WIDGET_VISIBLE(r->rw)) 
+	gtk_widget_hide(r->rw);
   set_max_prevfile_end(get_prevfile_end());
   if (!(GTK_WIDGET_VISIBLE(vf_prevlst))) gtk_widget_show(vf_prevlst);
 }
@@ -1204,7 +1212,8 @@ static file_info *read_raw_dialog(char *filename, snd_state *ss)
   if ((str) && (*str)) raw_data_location = string2int(str);
   mus_header_set_raw_defaults(raw_srate(ss), raw_chans(ss), raw_format(ss));
   mus_sound_override_header(filename, raw_srate(ss), raw_chans(ss), raw_format(ss), MUS_RAW, raw_data_location, 
-			mus_bytes_to_samples(raw_format(ss), mus_sound_length(filename) - raw_data_location));
+			mus_bytes_to_samples(raw_format(ss), 
+					     mus_sound_length(filename) - raw_data_location));
   hdr = (file_info *)CALLOC(1, sizeof(file_info));
   hdr->name = copy_string(filename);
   hdr->type = MUS_RAW;
@@ -1322,7 +1331,8 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
       gtk_entry_set_text(GTK_ENTRY(new_file_name), newname);
       gtk_widget_show(new_file_name);
 
-      new_dialog_data = sndCreateFileDataForm(ss, GTK_DIALOG(new_dialog)->vbox, "data-form", TRUE, default_output_type(ss), default_output_format(ss), FALSE, FALSE);
+      new_dialog_data = sndCreateFileDataForm(ss, GTK_DIALOG(new_dialog)->vbox, "data-form", TRUE, 
+					      default_output_type(ss), default_output_format(ss), FALSE, FALSE);
     }
   else
     {
@@ -1461,7 +1471,8 @@ void edit_header(snd_info *sp)
       gtk_widget_show(save_button);
       gtk_widget_show(help_button);
 
-      edit_header_data = sndCreateFileDataForm(ss, GTK_DIALOG(edit_header_dialog)->vbox, STR_Edit_Header, TRUE, hdr->type, hdr->format, TRUE, FALSE);
+      edit_header_data = sndCreateFileDataForm(ss, GTK_DIALOG(edit_header_dialog)->vbox, STR_Edit_Header, TRUE, 
+					       hdr->type, hdr->format, TRUE, FALSE);
       load_header_and_data_lists(edit_header_data, hdr->type, hdr->format, hdr->srate, hdr->chans, hdr->data_location, hdr->comment);
     }
 

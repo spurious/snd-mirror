@@ -243,6 +243,7 @@ provides several envelope functions that are often useful:
   multiply-envelopes env1 env2
   max-envelope env
   integrate-envelope env
+  stretch-envelope env old-attack new-attack old-decay new-decay
   max-x env
 
 These are translated from CLM's env.lisp which has many more useful
@@ -303,6 +304,14 @@ the sampling rate, for example.
 1.0
 :(integrate-envelope '(0 0 1 1 2 .5))
 1.25
+
+stretch-envelope applies attack and optionally decay times to an envelope,
+much like divseg in clm-1.
+
+:(stretch-envelope '(0 0 1 1) .1 .2)
+(0 0 0.2 0.1 1.0 1)
+:(stretch-envelope '(0 0 1 1 2 0) .1 .2 1.5 1.6)
+(0 0 0.2 0.1 1.1 1 1.6 0.5 2.0 0)
 
 More of env.lisp will be translated eventually.
 
@@ -675,6 +684,10 @@ instead:
     (lambda () #f))             ;  thunk for closing port -- hmm should this go back to the previous?
    "w"))
 (set-current-output-port snd-out)
+
+You could also (set! display snd-print), if you're willing to live
+dangerously; this replaces Guile's built-in display procedure with Snd's
+snd-print.
 
 There are also a few brief examples showing simple display customizations.
 For example, the following makes the graph dot size dependent on the number
@@ -2113,20 +2126,20 @@ void inner_main(int argc, char **argv)
   SCM counter;
   int size = 512;
   char **buffer = NULL;
-  buffer = (char **)calloc(1,sizeof(char *));
-  buffer[0] = (char *)calloc(512,sizeof(char));
-  counter = gh_define("counter",gh_int2scm(0));
+  buffer = (char **)calloc(1, sizeof(char *));
+  buffer[0] = (char *)calloc(512, sizeof(char));
+  counter = gh_define("counter", gh_int2scm(0));
   while (1)
     {
-      getline(buffer,&size,stdin);
+      getline(buffer, &size, stdin);
       gh_eval_str(buffer[0]);
-      fprintf(stdout,"counter is %d\n",gh_scm2int(gh_cdr(counter)));
+      fprintf(stdout, "counter is %d\n", gh_scm2int(gh_cdr(counter)));
     }
 }
 
 int main(int argc, char *argv[])
 {
-  gh_enter(argc,argv,inner_main);
+  gh_enter(argc, argv, inner_main);
   return(0);
 }
 
@@ -2172,21 +2185,21 @@ void inner_main(int argc, char **argv)
 {
   int size = 512;
   char **buffer = NULL;
-  buffer = (char **)calloc(1,sizeof(char *));
-  buffer[0] = (char *)calloc(512,sizeof(char));
-  gh_new_procedure0_0("counter",g_counter);
-  gh_new_procedure1_0("set-counter",g_set_counter);
+  buffer = (char **)calloc(1, sizeof(char *));
+  buffer[0] = (char *)calloc(512, sizeof(char));
+  gh_new_procedure0_0("counter", g_counter);
+  gh_new_procedure1_0("set-counter", g_set_counter);
   while (1)
     {
-      getline(buffer,&size,stdin);
+      getline(buffer, &size, stdin);
       gh_eval_str(buffer[0]);
-      fprintf(stdout,"counter is %d\n",counter);
+      fprintf(stdout, "counter is %d\n", counter);
     }
 }
 
 int main(int argc, char *argv[])
 {
-  gh_enter(argc,argv,inner_main);
+  gh_enter(argc,argv, inner_main);
   return(0);
 }
 
@@ -2208,8 +2221,8 @@ set! by replacing the two gh_new_procedure calls above with:
 
   gh_define("counter",
     scm_make_procedure_with_setter(
-      gh_new_procedure0_0("",g_counter),
-      gh_new_procedure1_0("",g_set_counter)));
+      gh_new_procedure0_0("", g_counter),
+      gh_new_procedure1_0("", g_set_counter)));
 
 Now we have Snd's way of handling things:
 
@@ -2251,12 +2264,12 @@ int main(int argc, char **argv)
   mus_any *gen;
   src_state *input;
   int i;
-  input = (src_state *)calloc(1,sizeof(src_state));
+  input = (src_state *)calloc(1, sizeof(src_state));
   input->val = 0.0;
-  gen = mus_make_src(&src_input_as_needed,0.5,10,(void *)input);
-  for (i=0;i<100;i++)
-    fprintf(stdout,"%f ",mus_src(gen,0.0,NULL));
-    /* or: fprintf(stdout,"%f ",mus_src(gen,0.0,src_input_as_needed)); */
+  gen = mus_make_src(&src_input_as_needed, 0.5, 10, (void *)input);
+  for (i=0; i < 100; i++)
+    fprintf(stdout, "%f ", mus_src(gen, 0.0, NULL));
+    /* or: fprintf(stdout, "%f ", mus_src(gen, 0.0, src_input_as_needed)); */
   mus_free(gen);
   free(input);
   return(0);
@@ -2283,7 +2296,7 @@ typedef struct {
 float src_input_as_needed(void *ptr, int direction)
 {
   src_state *sr = (src_state *)ptr;
-  return(gh_scm2double(gh_call1(sr->input_func,gh_int2scm(direction))));
+  return(gh_scm2double(gh_call1(sr->input_func, gh_int2scm(direction))));
 }
 
 void inner_main(int argc, char **argv)
@@ -2293,15 +2306,15 @@ void inner_main(int argc, char **argv)
   int i;
   int size = 512;
   char **buffer = NULL;
-  buffer = (char **)calloc(1,sizeof(char *));
-  buffer[0] = (char *)calloc(512,sizeof(char));
-  input = (src_state *)calloc(1,sizeof(src_state));
-  fprintf(stdout,"input function: ");
-  getline(buffer,&size,stdin);
+  buffer = (char **)calloc(1, sizeof(char *));
+  buffer[0] = (char *)calloc(512, sizeof(char));
+  input = (src_state *)calloc(1, sizeof(src_state));
+  fprintf(stdout, "input function: ");
+  getline(buffer, &size, stdin);
   input->input_func = gh_eval_str(buffer[0]);
-  gen = mus_make_src(&src_input_as_needed,0.5,10,(void *)input);
-  for (i=0;i<100;i++)
-    fprintf(stdout,"%f ",mus_src(gen,0.0,src_input_as_needed));
+  gen = mus_make_src(&src_input_as_needed, 0.5, 10, (void *)input);
+  for (i=0; i < 100; i++)
+    fprintf(stdout, "%f ", mus_src(gen, 0.0, src_input_as_needed));
   mus_free(gen);
   free(input);
 }
@@ -2410,9 +2423,9 @@ static int MUS_FCOMB = 0; /* this will be our fcomb type identifier */
 
 typedef struct {
   mus_any_class *core;
-  int loc,size;
+  int loc, size;
   Float *line;
-  Float xscl,a0,a1,x1;
+  Float xscl, a0, a1, x1;
 } fcomb;
 
 /* each CLM-in-C generator has mus_any_class *core as the first thing in its structure.
@@ -2434,13 +2447,13 @@ static char *describe_fcomb(void *ptr)
 {
   char *desc = NULL;
   fcomb *gen = (fcomb *)ptr;
-  desc = (char *)calloc(1024,sizeof(char));
+  desc = (char *)calloc(1024, sizeof(char));
   if (desc)
     {
       if (mus_fcomb_p((mus_any *)ptr))
-        sprintf(desc,"fcomb: scaler: %.3f, a0: %.3f, a1: %.3f, line[%d]",
-                gen->xscl,gen->a0,gen->a1,gen->size);
-      else sprintf(desc,"not an fcomb gen");
+        sprintf(desc, "fcomb: scaler: %.3f,  a0: %.3f,  a1: %.3f,  line[%d]",
+                gen->xscl, gen->a0, gen->a1, gen->size);
+      else sprintf(desc, "not an fcomb gen");
     }
   return(desc);
 }
@@ -2469,7 +2482,7 @@ static int free_fcomb(void *uptr)
 static Float mus_fcomb (mus_any *ptr, Float input, Float ignored)
 {
   fcomb *gen = (fcomb *)ptr;
-  Float tap_result,filter_result;
+  Float tap_result, filter_result;
   tap_result = gen->line[gen->loc];
   filter_result = (gen->a0 * tap_result) + (gen->a1 * gen->x1);
   gen->x1 = tap_result;
@@ -2504,7 +2517,7 @@ static mus_any_class FCOMB_CLASS = {
 static mus_any *mus_make_fcomb (Float scaler, int size, Float a0, Float a1)
 {
   fcomb *gen = NULL;
-  gen = (fcomb *)calloc(1,sizeof(fcomb));
+  gen = (fcomb *)calloc(1, sizeof(fcomb));
   if (gen == NULL)
     mus_error(MUS_MEMORY_ALLOCATION_FAILED,
               "can't allocate struct for mus_make_fcomb!");
@@ -2522,7 +2535,7 @@ static mus_any *mus_make_fcomb (Float scaler, int size, Float a0, Float a1)
       gen->a0 = a0;
       gen->a1 = a1;
       gen->size = size;
-      gen->line = (Float *)calloc(size,sizeof(Float));
+      gen->line = (Float *)calloc(size, sizeof(Float));
       if (gen->line == NULL)
         mus_error(MUS_MEMORY_ALLOCATION_FAILED,
                   "can't allocate %d bytes for fcomb delay line in mus_make_fcomb!",
@@ -2536,7 +2549,7 @@ static mus_any *mus_make_fcomb (Float scaler, int size, Float a0, Float a1)
 
 static SCM g_fcomb(SCM obj, SCM input)
 {
-  return(gh_double2scm(mus_fcomb(mus_get_any(obj),TO_C_DOUBLE(input),0.0)));
+  return(gh_double2scm(mus_fcomb(mus_get_any(obj), TO_C_DOUBLE(input), 0.0)));
 }
 
 static SCM g_fcomb_p(SCM obj)
@@ -2549,16 +2562,19 @@ static SCM g_make_fcomb(SCM scaler, SCM size, SCM a0, SCM a1)
 {
   mus_scm *gn;
   gn = (mus_scm *)CALLOC(1,sizeof(mus_scm));
-  gn->gen = mus_make_fcomb(TO_C_DOUBLE(scaler),TO_C_INT(size),TO_C_DOUBLE(a0),TO_C_DOUBLE(a1));
+  gn->gen = mus_make_fcomb(TO_C_DOUBLE(scaler),
+                           TO_C_INT(size),
+                           TO_C_DOUBLE(a0),
+                           TO_C_DOUBLE(a1));
   gn->nvcts = 0;
   return(mus_scm_to_smob(gn));
 }
 
 static void init_fcomb(void)
 {
-  gh_new_procedure("fcomb?",SCM_FNC g_fcomb_p,1,0,0);
-  gh_new_procedure("make-fcomb",SCM_FNC g_make_fcomb,4,0,0);
-  gh_new_procedure("fcomb",SCM_FNC g_fcomb,2,0,0);
+  gh_new_procedure("fcomb?", SCM_FNC g_fcomb_p, 1, 0, 0);
+  gh_new_procedure("make-fcomb", SCM_FNC g_make_fcomb, 4, 0, 0);
+  gh_new_procedure("fcomb", SCM_FNC g_fcomb, 2, 0, 0);
 }
 
 related documentationsnd.html   extsnd.html   grfsnd.html   clm.html    sndlib.html

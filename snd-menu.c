@@ -318,8 +318,6 @@ void save_options_from_menu(snd_state *ss)
       if (any_selected_sound(ss))
 	report_in_minibuffer(any_selected_sound(ss), "saved options in %s", ss->init_file);
     }
-  else 
-    snd_error("can't save options in %s: %s", ss->init_file, strerror(errno));
 }
 
 void save_state_from_menu(snd_state *ss)

@@ -655,6 +655,8 @@ axis_info *make_axis_info (chan_info *cp, Float xmin, Float xmax, Float ymin, Fl
   ap->y0 = y0;
   ap->y1 = y1;
   ap->y_offset = 0;
+  ap->y_ambit = ap->ymax - ap->ymin;
+  ap->x_ambit = ap->xmax - ap->xmin;
   return(ap);
 }
 
