@@ -638,8 +638,8 @@ static mix_fd *init_mix_read_any(mix_info *md, bool old, int type, off_t beg)
   chan_info *cp;
   mix_state *cs;
   int i, chans;
-  if (old == PREVIOUS_MIX) 
-    cs = md->states[md->current_state];
+  if (old == PREVIOUS_MIX)
+     cs = md->states[md->current_state];
   else cs = md->active_mix_state;
   
   /*
@@ -1527,6 +1527,9 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
       close_temp_file(ofd, ohdr, 0, cursp);
       return;
     }
+  /*
+  fprintf(stderr,"add: %s, sub: %s\n", mix_calc_names[add->calc], mix_calc_names[sub->calc]);
+  */
   cur = init_sample_read(beg, cp, READ_FORWARD);
   if (cur == NULL) 
     {
@@ -1691,6 +1694,7 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
     }
   if (redisplay) update_graph(cp);
 }
+
 
 /* ---------------- MIX GRAPHS ---------------- */
 
@@ -2328,7 +2332,7 @@ static int display_mix_waveform(chan_info *cp, mix_info *md, mix_state *cs, bool
 
 /* -------------------------------- moving mix tags -------------------------------- */
 
-typedef struct {int *xs; int orig, x; off_t *origs;} track_graph_t;
+typedef struct {int *xs; int orig, x; off_t *origs; int *edpos;} track_graph_t;
 static track_graph_t *track_drag_data;
 static track_graph_t *track_save_graph(mix_info *orig_md);
 static void finish_dragging_track(int track_id, track_graph_t *data, bool remix);
@@ -2396,9 +2400,7 @@ void move_mix_tag(int mix_tag, int x)
       /* track drag */
       if ((md->save_needed) && (track_drag_data == NULL))
 	{
-	  /* map over track mixes setting all amps to 0 and saving old, then remix track */
-	  track_drag_data = track_save_graph(md);
-	  /* map over again resetting amps */
+	  track_drag_data = track_save_graph(md); /* calls mix_save_graph */
 	  md->save_needed = false;
 	}
       track_drag_data->x = x;
@@ -5826,14 +5828,28 @@ static track_graph_t *track_save_graph(mix_info *orig_md)
   mix_info *md;
   mix_state *cs;
   chan_info *cp = NULL;
-  int i, pts = 0, track_id;
+  int i, k, pts = 0, track_id;
   track_id = orig_md->active_mix_state->track;
   trk = track_mixes(track_id);
   if (trk->lst_ctr > 0)
     {
+      mix_state **old_cs;
+      old_cs = (mix_state **)CALLOC(trk->lst_ctr, sizeof(mix_state *));
       tg = (track_graph_t *)CALLOC(1, sizeof(track_graph_t));
       tg->xs = (int *)CALLOC(trk->lst_ctr, sizeof(int));
       tg->origs = (off_t *)CALLOC(trk->lst_ctr, sizeof(off_t));
+      tg->edpos = (int *)CALLOC(trk->cps_ctr, sizeof(int));
+      for (i = 0; i < trk->cps_ctr; i++)
+	tg->edpos[i] = trk->cps[i]->edit_ctr + 1;
+      for (i = 0; i < trk->lst_ctr; i++)
+	{
+	  md = md_from_id(trk->lst[i]);
+	  cs = md->active_mix_state;
+	  old_cs[i] = copy_mix_state(cs);
+	  for (k = 0; k < md->in_chans; k++) 
+	    cs->scalers[k] = 0.0;
+	  remix_file(md, "dragging track...", false);
+	}
       for (i = 0; i < trk->lst_ctr; i++)
 	{
 	  md = md_from_id(trk->lst[i]);
@@ -5848,6 +5864,14 @@ static track_graph_t *track_save_graph(mix_info *orig_md)
 	    }
 	  mix_save_graph(md->wg, pts);
 	}
+      for (i = 0; i < trk->lst_ctr; i++)
+	{
+	  md = md_from_id(trk->lst[i]);
+	  free_mix_state(md->active_mix_state);
+	  md->active_mix_state = old_cs[i];
+	  old_cs[i]->edit_ctr = md->cp->edit_ctr;
+	}
+      FREE(old_cs);
     }
   free_track_mix_list(trk);
   return(tg);
@@ -5874,30 +5898,49 @@ static void move_track(int track_id, track_graph_t *data)
 static void finish_dragging_track(int track_id, track_graph_t *data, bool remix)
 {
   track_mix_list_t *trk;
-  int i;
+  int i, k;
   mix_info *md;
   mix_context *ms;
   mix_state *cs;
+  chan_info *cp;
   off_t change = 0;
   trk = track_mixes(track_id);
+  
+  md = md_from_id(trk->lst[data->orig]);
+  md->x = data->x;
+  move_mix(md);          /* update to last beg */
+  cs = md->active_mix_state; 
+  change = cs->beg - cs->orig;
+
   for (i = 0; i < trk->lst_ctr; i++)
     {
       md = md_from_id(trk->lst[i]);
       ms = md->wg;
       ms->lastpj = 0;
-      if (i == data->orig)
-	{
-	  md->x = data->x;
-	  move_mix(md);          /* update to last beg */
-	  cs = md->active_mix_state; 
-	  change = cs->beg - cs->orig;
-	}
       cs = md->active_mix_state;
       cs->orig = data->origs[i]; /* clear out temp drag-related changes */
-      cs->beg = data->origs[i];
+      cs->beg = cs->orig + change;
     }
+
+  for (i = 0; i < trk->lst_ctr; i++)
+    {
+      md = md_from_id(trk->lst[i]);
+      cs = md->states[md->current_state];
+      for (k = 0; k < md->in_chans; k++) 
+	cs->as_built->scalers[k] = 0.0;
+      remix_file(md, "drag track", false);
+    }
+  
+  for (i = 0; i < trk->cps_ctr; i++)      /* drag is one edit */
+    {
+      cp = trk->cps[i];
+      while (cp->edit_ctr > data->edpos[i]) backup_edit_list(cp);
+      backup_mix_list(cp, data->edpos[i]);
+    }
+
+  for (i = 0; i < trk->cps_ctr; i++)
+    update_graph(trk->cps[i]);
   free_track_mix_list(trk);
-  remix_track(track_id, set_track_position_1, (void *)(&change));
   reflect_mix_or_track_change(ANY_MIX_ID, track_id, false);
 }
 
@@ -5907,6 +5950,7 @@ static track_graph_t *free_track_graph(track_graph_t *ptr)
     {
       if (ptr->origs) FREE(ptr->origs);
       if (ptr->xs) FREE(ptr->xs);
+      if (ptr->edpos) FREE(ptr->edpos);
       FREE(ptr);
     }
   return(NULL);
@@ -7495,6 +7539,7 @@ void g_init_track(void)
 }
 
 /* SOMEDAY: how to save|restore-(mix|track)-state? -- mixes are not currently saved, but the track states could be
+   SOMEDAY: what about saving all dialog state?
    TODO: test lock-track and make it work with undo/redo somehow (similarly for mix-locked?/inverted?)
    SOMEDAY: pan choices with linear, sinusoidal, exponential envs
    TODO: synchronization across mixes ("snap")
@@ -7507,5 +7552,15 @@ void g_init_track(void)
    TODO: mix waveform not fixed up alongside waveform if track dragging (and lags in mix dialog)
    TODO: some way to squelch mix-tag/wave in 2nd chan (less clutter in track etc)
    TODO: in gmix, display is confused until update
-   SOMEDAY: describe-* [mix|mark|selection|sound|channel|track|region, gen|(mix,track)reader|player|(sound)file|key|plugin|hook|dialog(i.e. recorder)|audio]
+   SOMEDAY: describe-* [mix|mark|selection|sound|channel|track|cursor|region, gen|(mix,track)reader|
+                       player|(sound)file|key|plugin|hook|dialog(i.e. recorder)|audio]
+   SOMEDAY: copy-*?
+   TODO: c-x c-q with pan-mix example
+
+   if mix speed and amp env, speed drag needs to remake env
+   track amp/speed drag not erased correctly yet
+   if drag mix-at-end backwards, stop when first hits 0
+   axis movement stops if track drag motion stops when outside axis?
+   initial dpy leaves end points unerased?
+   if sub/add 0, omit that portion of remix (reader/change samps)
 */

@@ -409,13 +409,13 @@ static sound_file *check_write_date(const char *name, sound_file *sf)
 static sound_file *find_sound_file(const char *name)
 {
   int i;
-  /* perhaps we already have the needed data... */
+  /* perhaps we already have the needed data... (90% hit rate here) */
   if ((previous_sf) &&
       (strcmp(previous_sf->file_name, name) == 0) &&
       (previous_sf->write_date == local_file_write_date(name)))
     return(previous_sf);
   if (name)
-    for (i = 0; i < sound_table_size; i++)
+    for (i = 0; i < sound_table_size; i++) /* SOMEDAY: this happens enough that a hash table is probably worth the bother */
       if ((sound_table[i]) &&
 	  (strcmp(name, sound_table[i]->file_name) == 0))
 	{

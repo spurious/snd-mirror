@@ -308,8 +308,9 @@
 	   (new-files '())
 	   (vct-out (make-vct maxbuf))
 	   (sdobj (make-sound-data chans maxbuf))
+	   (isbreaked #f)
 	   (readers '()))
-
+      
       (define (apply-open)
 	(if (not (string=? "vst" libname))
 	    (open (minimum-num-handles chans min_num_audios))
@@ -320,7 +321,7 @@
 	    (display "Could not start plugin.")
 	    (newline))
 	  (begin
-
+	    
 	    ;; Set up sample readers and tempfilenames for each channel.
 	    (c-for 0 < chans 1
 		   (lambda (ch)
@@ -349,38 +350,42 @@
 			   ;;(display "N: ")(display n)
 			   ;;(display " len: ")(display len)
 			   ;;(display " length: ")(display length)(newline)
-			   
-			   ;; Update hour-glass
-			   (progress-report (/ n length) "doing the ladspa" chans chans snd)
+
+			   (if (or isbreaked (c-g?))
+			       (if (not isbreaked) (set! isbreaked #t))
+			       (begin
+			       
+				 ;; Update hour-glass
+				 (progress-report (/ n length) "doing the ladspa" chans chans snd)
+				 
+				 
+				 ;; Only happens at last iteration.
+				 (if (< len maxbuf)
+				     (set! sdobj (make-sound-data chans len))
+				     (set! vct-out (make-vct len)))
 
 
-			   ;; Only happens at last iteration.
-			   (if (< len maxbuf)
-			       (set! sdobj (make-sound-data chans len))
-			       (set! vct-out (make-vct len)))
-
-
-			   ;; Reading data into soundobject from soundfile.
-			   (if (not no_audio_inputs)
-			       (let ((ch 0))
-				 (for-each (lambda (reader)
-					     (vct-map! vct-out
-						       (lambda () (next-sample reader)))
-					     (vct->sound-data vct-out sdobj ch)
-					     (set! ch (+ ch 1)))
-					   readers)))
-
-			   ;; Process soundobject
-			   (apply-soundobject sdobj)
-
-
-			   ;; Writing data from soundobject into temporary file.
-			   (c-for 0 < chans 1
-				  (lambda (ch)
-				    (sound-data->vct sdobj ch vct-out)
-				    (vct->sound-file (list-ref new-files ch)
-						     vct-out
-						     len)))))))
+				 ;; Reading data into soundobject from soundfile.
+				 (if (not no_audio_inputs)
+				     (let ((ch 0))
+				       (for-each (lambda (reader)
+						   (vct-map! vct-out
+							     (lambda () (next-sample reader)))
+						   (vct->sound-data vct-out sdobj ch)
+						   (set! ch (+ ch 1)))
+						 readers)))
+				 
+				 ;; Process soundobject
+				 (apply-soundobject sdobj)
+				 
+				 
+				 ;; Writing data from soundobject into temporary file.
+				 (c-for 0 < chans 1
+					(lambda (ch)
+					  (sound-data->vct sdobj ch vct-out)
+					  (vct->sound-file (list-ref new-files ch)
+							   vct-out
+							   len)))))))))
 	    
 
 	    ;; Close temporary files.
@@ -388,15 +393,16 @@
 		      new-files)
 
 	    ;; Let snd know about the new files.
-	    (let ((ch startchan))
-	      (for-each (lambda (filename)
-			  (set! (samples start
-					 length
-					 snd
-					 ch)
-				filename)
-			  (set! ch (+ ch 1)))
-			(reverse tempfilenames)))
+	    (if (not isbreaked)
+		(let ((ch startchan))
+		  (for-each (lambda (filename)
+			      (set! (samples start
+					     length
+					     snd
+					     ch)
+				    filename)
+			      (set! ch (+ ch 1)))
+			    (reverse tempfilenames))))
 	    
 	    ;; Close hour-glass
 	    (finish-progress-report)
@@ -639,10 +645,11 @@
 	(define (Help)
 	  (let ((dashelp (assoc (string-append libraryname effectname) ladspa-help-assoclist)))
 	    (help-dialog author
-			 (if dashelp
-			     (caddr dashelp)
-			     lisense))))
-	
+			 (string-append (if dashelp
+					    (caddr dashelp)
+					    lisense)
+					"\n\nProcessing can be stopped by pressing C-g"))))
+	  
 	(define (OK)
 	  (MyStop)
 	  (disableplugin)

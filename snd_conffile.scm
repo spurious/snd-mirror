@@ -3,26 +3,26 @@
 ;; -Kjetil S. Matheussen.
 
 
-;; Set this one to #t if you use gtk. This config-file is primarly made for use with motif, so by
-;; using gtk you will get less functionality out of this config-file.
-(define use-gtk #f)
 
-
-(set! (ladspa-dir) "/usr/lib/ladspa")
+;; This config-file is primarly made for use with motif, so by
+;; using gtk you will get less functionality.
+(define use-gtk (if (provided? 'snd-gtk)
+		    #t
+		    #f))
 
 
 ;; Set various variables. See Snd documentation.
 
+
 #!
-(set! %load-path (cons
-		  (if use-gtk
-		      "/home/kjetil/snd-6-gtk2"
-		      "/home/kjetil/snd-6")
-		  %load-path))
+(set! %load-path (append (if use-gtk
+			     '("/home/kjetil/snd-7-gtk" "/home/kjetil/snd-7-gtk/dlp")
+			     '("/home/kjetil/snd-7" "/home/kjetil/snd-7/dlp"))
+			 %load-path))
 !#
 
 
-;(set! snd-remember-paths #t)
+;;(set! snd-remember-paths #t)
 
 (set! (just-sounds) #t)
 
@@ -47,12 +47,15 @@
 ;; This is the value for the loop-button.
 (define islooping #t)
 
-
-;; Selection-position and selection-frames doesnt allways work properly
+;; Selection-position and selection-frames doesnt allways work properly.
 (define (my-selection-position)
   (selection-position (selected-sound)))
 (define (my-selection-frames)
   (selection-frames (selected-sound)))
+
+;; Like (selection?) but only for the selected sound.
+(define (my-selection?)
+  (selection-member? (selected-sound)))
 
 (load-from-path "rgb.scm")
 
@@ -74,7 +77,6 @@
 	     (set! (cursor-color) blue)
 	     #f))
 
-
 ;; Set different color on the cursor when playing selection.
 (add-hook! start-playing-selection-hook
 	   (lambda ()
@@ -91,6 +93,7 @@
 
 
 ;; Let the cursor move when playing.
+
 (add-hook! after-open-hook 
 	   (lambda (sp)
 	     (set! (cursor-follows-play sp) #t)
@@ -100,7 +103,6 @@
 
 ;; Set graph-style to filled.
 (set! (graph-style) graph-filled)
-
 
 
 ;; Removes default mouse-click-hook handling. The possibility to paste with
@@ -121,7 +123,18 @@
 
     (add-hook! mouse-click-hook
 	       (lambda (snd chn button state x y axis)
-		 (if (= axis time-graph)
+		 (define myplay play)
+#!
+		 (define (myplay samp)
+		   (let ((chans (chans snd)))
+		     (do ((chan 0 (1+ chan)))
+			 ((= chan chans))
+		       (let ((player (make-player snd chan)))
+			 (add-player player samp)))
+		     (start-playing chans (srate snd))))
+!#
+
+		   (if (= axis time-graph)
 		     (let ((samp (inexact->exact (* (srate snd) (position->x x snd chn))))
 			   (dasspeed (speed-control)))
 		       (if (< samp 0) (set! samp 0))
@@ -130,7 +143,7 @@
 		       (cond ((= button 4)
 			      (if (< dasspeed 0)
 				  (set! (speed-control) (* -1 dasspeed)))
-			      (play samp))
+			      (myplay samp))
 			     ((= button 5)
 			      (if (> dasspeed 0)
 				  (set! (speed-control) (* -1 dasspeed)))
@@ -158,7 +171,7 @@
 
 
 ;(define (play-selection-with-play)
-;  (play (selection-position) #f #f #f (+ (selection-position) (selection-frames))))
+;  (play (my-selection-position) #f #f #f (+ (my-selection-position) (my-selection-frames))))
 
 (define (my-play-selection2)
   (if islooping
@@ -263,7 +276,52 @@
 	  (lambda ()
 	    (exit))
 	  #t)
-	    
+
+
+(bind-key (char->integer #\z) 0
+	  (lambda ()
+	    (set! (speed-control) (* -1 (speed-control)))))
+
+
+(bind-key (char->integer #\q) 0
+	  (lambda ()
+	    (set! (speed-control) (* 0.75 (speed-control)))))
+(bind-key (char->integer #\w) 0
+          (lambda ()
+            (set! (speed-control) (* (if (< (speed-control) 0)
+					 (if (= 1 (random 10)) 1 -1)
+					 (if (= 1 (random 10)) -1 1))
+				     (/ (random 1000) 500)))))
+(bind-key (char->integer #\e) 0
+	  (lambda ()
+	    (set! (speed-control) (* 1.25 (speed-control)))))
+
+
+
+(define max-mark-sync 1000)
+(define (my-mark-sync-max)
+  (set! max-mark-sync (max (1+ (mark-sync-max)) (1+ max-mark-sync)))
+  max-mark-sync)
+
+; Let the m-key make a named mark, and sync it if the current sound is synced.
+(bind-key (char->integer #\m) 0
+	  (lambda ()
+	    (define (my-add-mark sample snd ch syncnum name)
+	      (if (> ch -1)
+		  (let ((newmark (add-mark sample snd ch)))
+		    (set! (mark-sync newmark) syncnum)
+		    (set! (mark-name newmark) name)
+		    (my-add-mark sample snd (1- ch) syncnum name))))
+	    (report-in-minibuffer "")
+	    (prompt-in-minibuffer "mark: "
+				  (lambda (ret)
+				    (if (> (sync) 0)
+					(my-add-mark (cursor) (selected-sound) (1- (channels)) (my-mark-sync-max) ret)
+					(set! (mark-name (add-mark (cursor))) ret)))
+				  (selected-sound)
+				  #t)))
+					      
+					
 
 (load-from-path "draw.scm")
 
@@ -274,6 +332,8 @@
 (define backgroundcolor  (make-color 0.8 0.8 0.78))
 (set! (selected-graph-color) backgroundcolor)
 (set! (graph-color) backgroundcolor)
+
+;;(set! (selected-graph-color) (make-color 0.86 0.86 0.84))
 
 ;; Selection
 ;;(set! (selection-color) (make-color 0.5 0.6 0.4))
@@ -328,13 +388,13 @@
   
   (define (mouse-motion-callback w context ev flag)
     (if (and (not stop-handling)
-	     (selection?))
+	     (my-selection?))
 	(let* ((x (.x ev))
 	       (snd (selected-sound))
 	       (chn (selected-channel))
 	       (samp (max 0 (inexact->exact (* (srate snd) (position->x x snd chn)))))
-	       (selstart (selection-position))
-	       (selframes (selection-frames))
+	       (selstart (my-selection-position))
+	       (selframes (my-selection-frames))
 	       (newselstart (if (< samp selection-starting-point)
 				samp
 				selection-starting-point))
@@ -359,6 +419,7 @@
 	       #f))
 
   (add-hook! mix-release-hook
+  ;;(add-hook! mix-dragged-hook
 	     (lambda (id samps)
 	       (set! stop-handling #f)
 	       #f))
@@ -390,8 +451,9 @@
 
 
 
-;; Replace the old C-y and C-w keybindings. These are equal, but writes
-;; "Please wait" to the minibuffer, and colorize the inserted region.
+;; Replace the C-y and C-w keybindings. These are equal, but writes
+;; "Please wait" to the minibuffer, colorize the inserted region and
+;; automaticly creates regions when needed if (selection-crates-region) is false.
 
 
 (define iscolorized #f)
@@ -410,7 +472,7 @@
 	  (begin
 	    (set! region-generation 0)
 	    (make-region)))))
-;;	    (make-region (* 8 (srate (selected-sound))) (* 10 (srate (selected-sound))) (selected-sound) #t)))))
+
 
 (bind-key (char->integer #\r) 0
 	  my-make-region)
@@ -440,28 +502,21 @@
 		    (report-in-minibuffer " "))))))
 
 
+
+
+
 (bind-key (char->integer #\w) 4
 	  (lambda ()
-	    (report-in-minibuffer "Please wait...")
-	    (let ((curspos (selection-position)))
-	      (color-samples-allchans (channels) 'black 0 0)
-	      (set! (cursor #t #t) curspos)
-	      (my-make-region)
-	      (delete-selection)
-	      (set! iscolorized #f)
-	      (report-in-minibuffer " "))))
+	    (if (my-selection?)
+		(let ((curspos (my-selection-position)))
+		  (report-in-minibuffer "Please wait...")
+		  (color-samples-allchans (channels) 'black 0 0)
+		  (set! (cursor #t #t) curspos)
+		  (my-make-region)
+		  (delete-selection)
+		  (set! iscolorized #f)
+		  (report-in-minibuffer " ")))))
 
-
-#!
-(add-hook! mouse-click-hook
-	   (lambda (snd chn button state x y axis)
-	     (if iscolorized
-		 (begin
-		   (color-samples-allchans (channels) 'black 0 0)
-		   (set! iscolorized #f)))
-	     #f))
-		 
-!#
 
 (define last-report-value 0.0)
 
@@ -495,36 +550,39 @@
 
 (define lastpainted '(#f #f #f))
 
-(define (dodasprint string level color framepos)
-  (let* ((old-color (foreground-color))
-	 (sound-widget (list-ref (channel-widgets (selected-sound) 0) 0))
-	 (fontlen 9)
-	 (width (- (car (widget-size sound-widget)) fontlen))
-	 (height (cadr (widget-size sound-widget)))
-	 (stringlen (* fontlen 7))
-	 (fontheight 12)
+(define* (dodasprint string level color framepos #:optional (force #f))
+  (let* ((sound-widget (list-ref (channel-widgets (selected-sound) 0) 0))
+	 (fontwidth 9)
+	 (width (- (car (widget-size sound-widget)) fontwidth))
+	 (stringlen (* fontwidth 7))
 	 (x (min (- width stringlen) (x->position (/ framepos (srate)))))
-;	 (x (/ width 5))
-	 (y (+ (* fontheight level)
-	       (- (/ (- height fontheight) 2) (* fontheight 2)))))
-;	       (- (/ (- height fontheight) 2) 5))))
-    (let ((olddim (list-ref lastpainted level)))
-      (if olddim
-	  (begin
-	    (set! (foreground-color) backgroundcolor)
-	    (fill-rectangle (car olddim) (cadr olddim) (caddr olddim) fontheight))))
-    (set! (foreground-color) color)
-    (draw-string string x (+ y fontheight))
-    (let ((i -1))
-      (set! lastpainted
-	    (map (lambda (dasx)
-		   (set! i (1+ i))
-		   (if (= i level)
-		       (list x y stringlen)
-		       dasx))
-		 lastpainted)))
-    (set! (foreground-color) old-color)))
+	 (olddim (list-ref lastpainted level)))
 
+    (define (reallydodasprint)
+      (let* ((old-color (foreground-color))
+	     (height (cadr (widget-size sound-widget)))
+	     (fontheight 12)
+	     (y (+ (* fontheight level)
+		   (- (/ (- height fontheight) 2) (* fontheight 2))))
+	     (newdim (list x y stringlen)))
+	(if olddim
+	    (begin
+	      (set! (foreground-color) backgroundcolor)
+	      (if #f
+		  (draw-string (cadddr olddim) (car olddim) (+ (cadr olddim) fontheight))
+		  (fill-rectangle (car olddim) (cadr olddim) (caddr olddim) fontheight))))
+	(set! (foreground-color) color)
+	(draw-string string x (+ y fontheight))
+	(case level
+	  ((0) (set-car! lastpainted newdim))
+	  ((1) (set-car! (cdr lastpainted) newdim))
+	  ((2) (set-car! (cddr lastpainted) newdim)))
+	(set! (foreground-color) old-color)))
+
+    (if (or force
+	    (not olddim)
+	    (not (= x (car olddim))))
+	(reallydodasprint))))
 
 
 ;; Show cursor and selection position in minutes and seconds and 1/10th seconds. -Kjetil.
@@ -544,28 +602,32 @@
 			 ":")
 		     (number->string seconds))))
 
-  (if (and (= (channels) 2) (= (channel-style (selected-sound)) channels-combined))
-      (if (selection?)
-	  (begin
-	    (dodasprint (get-time-string dastime) 0 red dastime)
-	    (dodasprint (get-time-string (my-selection-position)) 1 blue (my-selection-position))
-	    (dodasprint (get-time-string (+ (my-selection-position) (my-selection-frames))) 2 blue (+ (my-selection-position) (my-selection-frames))))
-	  (dodasprint (get-time-string dastime) 0 red dastime))
-      (if (or force
-	      (>= (abs (- dastime last-time-showed)) (/ (srate (selected-sound)) 10)))
-	  (begin
-	    (report-in-minibuffer (string-append (get-time-string dastime)
-						 (if (selection?)
-						     (begin
-						       (string-append " "
-								      (get-time-string (my-selection-position))
-								      " "
-								      (get-time-string (+ (my-selection-position) (my-selection-frames)))))
-						     "")))
-	    (set! last-time-showed dastime)))))
-   
+  (let* ((largetimechange (>= (abs (- dastime last-time-showed))
+			      (/ (srate (selected-sound)) 5)))
+	 (stereocombined (and (= (channels) 2) 
+			      (= (channel-style (selected-sound)) channels-combined)))
+	 (wanttoupdate (or force largetimechange)))
+    (if wanttoupdate
+	(set! last-time-showed dastime))
+    (if stereocombined
+	(begin
+	  (dodasprint (get-time-string dastime) 0 red dastime wanttoupdate)
+	  (if (and force (my-selection?))
+	      (begin
+		(dodasprint (get-time-string (my-selection-position)) 1 blue (my-selection-position) #t)
+		(dodasprint (get-time-string (+ (my-selection-position) (my-selection-frames))) 2 blue (+ (my-selection-position) (my-selection-frames)) #t))))
+	(if wanttoupdate
+	    (report-in-minibuffer (if (my-selection?)
+				      (string-append (get-time-string dastime)
+						     " "
+						     (get-time-string (my-selection-position))
+						     " "
+						     (get-time-string (+ (my-selection-position) (my-selection-frames))))
+				      (get-time-string dastime)))))))
+
 
 ;; Show the time in the minibuffer when playing
+
 (add-hook! play-hook
 	   (lambda (samples)
 	     (show-times (cursor))
@@ -576,27 +638,16 @@
 	     (show-times (cursor) #t)
 	     #f))
 
-; Show the time in the minibuffer when clicking.
-;(add-hook! mouse-click-hook
-;	   (lambda snd 
-;	     (show-times (cursor))
-;	     #f))
-
-; This one don't work.
-;(add-hook! mouse-drag-hook
-;	   (lambda (snd chn button state x y)
-;	     (let ((samp (inexact->exact (* (srate snd) (position->x x snd chn)))))
-;	       (display "asdf")(newline)
-;	       (show-times samp)) #f))
-
-
-
 
 ;; Shows the full sound after opening.
-(add-hook! after-open-hook
-	   (lambda (n)
-	     (set! (x-bounds) (list 0.0 (/ (frames) (srate)))) 
-	     #f))
+(add-hook! initial-graph-hook
+	   (lambda (snd chn dur)
+	     (list 0.0 dur)))
+
+;;(add-hook! after-open-hook
+;;	   (lambda (n)
+;;	     (set! (x-bounds) (list 0.0 (/ (frames) (srate)))) 
+;;	     #f))
 
 
 
@@ -646,7 +697,6 @@
 		 (set! (channel-style snd) channels-combined))
 	     (set! (sync snd) (get-unique-sync-num))
 	     
-
 	     (if (not use-gtk)
 		 (begin
 		   (let* ((oldsync (find-child (list-ref (sound-widgets snd) 2) "sync"))
@@ -681,24 +731,8 @@
 (check-for-unsaved-edits #t)
 
 
-
-;; "Easy edit". See source. -Kjetil.
-;;(load-from-path "edit123.scm")
-
-
-
-;;(load-from-path "dsp.scm")
-
-
-;;(load-from-path "snd-motif.scm")
-
-;(define (Widget wid) (if (list? wid) wid (list 'Widget wid)))
-(load-from-path "edit-menu.scm")
-
-;; Shows an envelope editor for each channel. Didn't understand how to use it, and it segfaulted. -Kjetil.
-;;(load-from-path "enved.scm")
-;;(start-enveloping)
-
+(if (not use-gtk)
+    (load-from-path "edit-menu.scm"))
 
 
 (load-from-path "examp.scm")
@@ -764,29 +798,6 @@
 ;(add-hook! open-hook first-time-open-soundfile)
 
 
-(define max-mark-sync 1000)
-(define (my-mark-sync-max)
-  (set! max-mark-sync (max (1+ (mark-sync-max)) (1+ max-mark-sync)))
-  max-mark-sync)
-
-; Let the m-key make a named mark, and sync it if the current sound is synced.
-(bind-key (char->integer #\m) 0
-	  (lambda ()
-	    (define (my-add-mark sample snd ch syncnum name)
-	      (if (> ch -1)
-		  (let ((newmark (add-mark sample snd ch)))
-		    (set! (mark-sync newmark) syncnum)
-		    (set! (mark-name newmark) name)
-		    (my-add-mark sample snd (1- ch) syncnum name))))
-	    (report-in-minibuffer "")
-	    (prompt-in-minibuffer "mark: "
-				  (lambda (ret)
-				    (if (> (sync) 0)
-					(my-add-mark (cursor) (selected-sound) (1- (channels)) (my-mark-sync-max) ret)
-					(set! (mark-name (add-mark (cursor))) ret)))
-				  (selected-sound)
-				  #t)))
-
 
 ;;Show the little picture of the whole sound in the upper right corner.
 (load-from-path "draw.scm")
@@ -801,13 +812,6 @@
 
 
 
-; Would be nice, perhaps, but prints out a lot of error messages. -Kjetil.
-;;(if-cursor-follows-play-it-stays-where-play-stopped #t)
-
-
-
-
-
 ;; Adds a lot of things when pressing the right mouse button. Very nice. -Kjetil.
 (load-from-path (if use-gtk
 		    "gtk-popup.scm"
@@ -815,25 +819,9 @@
 
 
 
-;; Adds the "Effects" menu. Very very Nice. -Kjetil.
-;;(load-from-path "new-effects.scm")
-
-
-;; My ladspa menu stuff. -Kjetil.
-;;(load "/hom/kjetism/snd/ladspa2.scm")
-;(load "/home/kjetil/snd/ladspa2.scm")
-
 (load-from-path  (if use-gtk
 		     "gtk-effects.scm"
 		     "ladspa.scm"))
-;;(load-from-path "/home/kjetil/snd-6/ladspa.scm")
-
-; Lots of functions. But I Don't understand what they do. -Kjetil.
-;;(load-from-path "marks.scm")
-
-
-; "provide pop-up help in the Files viewer". Didn't see any pop-up help. -Kjetil.
-;;(load-from-path "nb.scm")
 
 
 
@@ -861,6 +849,7 @@
 ;; Add rename option to the file menu. -Kjetil.
 (if (not use-gtk)
     (add-rename-option))
+
 
 
 ;; Dave Phillips fft-menu. (Loads an incompatible make-effect-dialog function)
@@ -901,6 +890,8 @@
 
 ;; Load files from previous session.
 
+
+
 (system (string-append "touch " (open-sounds-filename) " >/dev/null 2>/dev/null"))
 (let ((fd (open-file (open-sounds-filename) "r")))
   (define (myread)
@@ -910,19 +901,13 @@
 	    (open-sound line)
 	    (myread))
 	  (begin
-	    (set! (auto-resize) #f)
+	    ;;(set! (auto-resize) #f)
 	    (in 2000
 		(lambda ()
 		  (set! (window-width) 800)
 		  (set! (window-height) 600)))))))
-  (set! (auto-resize) #t)
+  ;:(set! (auto-resize) #t)
   (myread))
-
-
-
-
-
-
 
 
 
