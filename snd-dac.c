@@ -502,6 +502,7 @@ static XEN stop_playing_hook;
 static XEN stop_playing_region_hook;
 static XEN stop_playing_channel_hook;
 static XEN stop_playing_selection_hook;
+static XEN start_playing_selection_hook;
 
 #define MAX_DEVICES 8
 static int dev_fd[MAX_DEVICES];
@@ -886,6 +887,14 @@ static int call_start_playing_hook(snd_info *sp)
   return(FALSE);
 }
 
+static int call_start_playing_selection_hook(void)
+{
+  return((XEN_HOOKED(start_playing_selection_hook)) &&
+	 (XEN_TRUE_P(run_or_hook(start_playing_selection_hook,
+				 XEN_EMPTY_LIST,
+				 S_start_playing_selection_hook))));
+}
+
 void play_channel(chan_info *cp, off_t start, off_t end, int background, XEN edpos, const char *caller, int arg_pos)
 {
   /* just plays one channel (ignores possible sync), includes start-hook */
@@ -933,7 +942,14 @@ void play_channels(chan_info **cps, int chans, off_t *starts, off_t *ur_ends, in
       (play_list_members > 0)) 
     return;
   if (chans <= 0) return;
-  if ((!selection) && (call_start_playing_hook(cps[0]->sound))) return;
+  if (!selection)
+    {
+      if (call_start_playing_hook(cps[0]->sound)) return;
+    }
+  else 
+    {
+      if (call_start_playing_selection_hook()) return;
+    }
   if (ur_ends)
     ends = ur_ends;
   else
@@ -2429,6 +2445,7 @@ XEN_NARGIFY_0(g_dac_combines_channels_w, g_dac_combines_channels)
 XEN_NARGIFY_1(g_set_dac_combines_channels_w, g_set_dac_combines_channels)
 XEN_NARGIFY_0(g_disable_play_w, g_disable_play)
 XEN_NARGIFY_0(g_enable_play_w, g_enable_play)
+XEN_NARGIFY_0(g_dac_is_running_w, g_dac_is_running)
 #else
 #define g_play_w g_play
 #define g_play_channel_w g_play_channel
@@ -2447,6 +2464,7 @@ XEN_NARGIFY_0(g_enable_play_w, g_enable_play)
 #define g_set_dac_combines_channels_w g_set_dac_combines_channels
 #define g_disable_play_w g_disable_play
 #define g_enable_play_w g_enable_play
+#define g_dac_is_running_w g_dac_is_running
 #endif
 
 void g_init_dac(void)
@@ -2456,7 +2474,7 @@ void g_init_dac(void)
   XEN_DEFINE_PROCEDURE(S_play_selection, g_play_selection_w, 0, 2, 0, H_play_selection);
   XEN_DEFINE_PROCEDURE(S_play_and_wait,  g_play_and_wait_w, 0, 6, 0,  H_play_and_wait);
   XEN_DEFINE_PROCEDURE(S_stop_playing,   g_stop_playing_w, 0, 1, 0,   H_stop_playing);
-  XEN_DEFINE_PROCEDURE(S_dac_is_running, g_dac_is_running, 0, 0, 0,   H_dac_is_running);
+  XEN_DEFINE_PROCEDURE(S_dac_is_running, g_dac_is_running_w, 0, 0, 0, H_dac_is_running);
 
   XEN_DEFINE_PROCEDURE(S_make_player,    g_make_player_w, 0, 2, 0,    H_make_player);
   XEN_DEFINE_PROCEDURE(S_add_player,     g_add_player_w, 1, 3, 0,     H_add_player);
@@ -2480,6 +2498,7 @@ If it returns #t, the sound is not played."
   #define H_dac_hook S_dac_hook " (sdobj): called just before data is sent to DAC passing data as sound-data object"
   #define H_stop_dac_hook S_stop_dac_hook " (): called upon mus_audio_close (when DAC is turned off)"
   #define H_stop_playing_selection_hook S_stop_playing_selection_hook " (): called when the selection stops playing"
+  #define H_start_playing_selection_hook S_start_playing_selection_hook " (): called when the selection starts playing"
 
   XEN_DEFINE_HOOK(stop_playing_hook, S_stop_playing_hook, 1, H_stop_playing_hook);                         /* arg = sound */
   XEN_DEFINE_HOOK(stop_playing_channel_hook, S_stop_playing_channel_hook, 2, H_stop_playing_channel_hook); /* args = sound channel */
@@ -2489,6 +2508,7 @@ If it returns #t, the sound is not played."
   XEN_DEFINE_HOOK(dac_hook, S_dac_hook, 1, H_dac_hook);                                                    /* args = data as sound_data obj */
   XEN_DEFINE_HOOK(stop_dac_hook, S_stop_dac_hook, 0, H_stop_dac_hook);                                     /* no args */
   XEN_DEFINE_HOOK(stop_playing_selection_hook, S_stop_playing_selection_hook, 0, H_stop_playing_selection_hook); /* no args */
+  XEN_DEFINE_HOOK(start_playing_selection_hook, S_start_playing_selection_hook, 0, H_start_playing_selection_hook); /* no args */
 
   XEN_DEFINE_PROCEDURE("disable-play", g_disable_play_w, 0, 0, 0, "internal testing function");
   XEN_DEFINE_PROCEDURE("enable-play", g_enable_play_w, 0, 0, 0, "internal testing function");

@@ -299,8 +299,9 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+11-Aug:  start-playing-selection-hook (suggested by Kjetil S. Matheussen).\n\
 7-Aug:   dac-is-running.\n\
-1-Aug:   ladspa.scm thanks to Kjetil S. Matheussen.\n\
+1-Aug:   ladspa.scm and ladspa-help.scm thanks to Kjetil S. Matheussen.\n\
          ladspa struct constants and accessors.\n\
 28-Jul:  Sun disk space bugfix (thanks to Russell Aspinwall).\n\
 22-Jul:  removed protect-region.\n\

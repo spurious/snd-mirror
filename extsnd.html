@@ -1808,8 +1808,18 @@ found (this code obviously has to be in the ~/.snd init file):
 <span class=defbox><code><em class=def><a name="startplayinghook">start-playing-hook</a></em> (snd)</code></span></td><td align=right><b>or</b>
 </td></tr>
 <tr><td></td><td colspan=2>
-called when a play request is triggered.
+called when a sound is about to be played.
 If it returns #t, Snd does not play (see <i>report-mark-names</i> in marks.scm).
+</td></tr>
+<tr><td colspan=3></td></tr>
+
+<!-- start-playing-selection-hook -->
+<tr><td colspan=2>
+<span class=defbox><code><em class=def><a name="startplayingselectionhook">start-playing-selection-hook</a></em> ()</code></span></td><td align=right><b>or</b>
+</td></tr>
+<tr><td></td><td colspan=2>
+called when the selection is about to be played.
+If it returns #t, Snd does not play the selection.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -3024,32 +3034,36 @@ the list of ids reflects the mark list at that time in the edit history.  See de
 
 </table>
 
-<br>
 <!-- INDEX markexamples:Marking -->
 <A NAME="markexamples"></a>
 <p>
 See <a href="sndscm.html#marksdoc">marks.scm</a> for
 more examples including:
 </p>
-<table border=0>
-<tr><td width=240><em class=def><a href="sndscm.html#markname2id">mark-name-&gt;id</a></em></td><td>global find-mark</td></tr>
-<tr><td><em class=def><a href="sndscm.html#describemark">describe-mark</a></em></td><td>mark history</td></tr>
-<tr><td><em class=def><a href="sndscm.html#syncup">syncup</a></em></td><td>synchronize marks by inserting silences</td></tr>
-<tr><td><em class=def><a href="sndscm.html#fitselectionbetweenmarks">fit-selection-between-marks</a></em></td><td>squeeze selection between marks</td></tr>
-<tr><td><em class=def><a href="sndscm.html#padmarks">pad-marks</a></em></td><td>insert silence before marks</td></tr>
-<tr><td><em class=def><a href="sndscm.html#movesyncdmarks">move-syncd-marks</a></em></td><td>move syncd marks</td></tr>
-<tr><td><em class=def><a href="sndscm.html#playsyncdmarks">play-syncd-marks</a></em></td><td>play starting from syncd marks</td></tr>
-<tr><td><em class=def><a href="sndscm.html#exevalbetweenmarks">eval-between-marks</a></em></td><td>evaluate function between marks</td></tr>
-<tr><td><em class=def><a href="sndscm.html#exsnapmarks">snap-marks</a></em></td><td>place marks at selection start and end</td></tr>
-<tr><td><em class=def><a href="sndscm.html#exdefineselectionviamarks">define-selection-via-marks</a></em></td><td>define selection via marks</td></tr>
-<tr><td><em class=def><a href="sndscm.html#exsnapmarktobeat">snap-mark-to-beat</a></em></td><td>force dragged mark to land on a beat</td></tr>
-<tr><td><em class=def><a href="sndscm.html#exloopbetweenmarks">loop-between-marks</a></em></td><td>loop continuously between the two specified marks</td></tr>
-<tr><td><em class=def><a href="sndscm.html#exmarkexplode">mark-explode</a></em></td><td>split sound into separate files based on mark placement</td></tr>
-<tr><td><em class=def><a href="sndscm.html#markproperty">mark-property</a></em></td><td>mark property lists</td></tr>
-<tr><td><em class=def><a href="sndscm.html#savemarkproperties">save-mark-properties</a></em></td><td>save mark properties in saved state file</td></tr>
-<tr><td><em class=def><a href="sndscm.html#markclickinfo">mark-click-info</a></em></td><td>show mark properties upon click</td></tr>
-</table>
-<p>Other examples can be found in Dave Phillips' dlp/marks-menu.scm, snd-motif.scm (<i>add-mark-pane</i>),
+<table border=3 bordercolor="tan" hspace=40><tr><td>
+<blockquote><small>
+<br>
+global find-mark: <a href="sndscm.html#markname2id">mark-name-&gt;id</a><br>
+mark history: <a href="sndscm.html#describemark">describe-mark</a><br>
+synchronize marks by inserting silences: <a href="sndscm.html#syncup">syncup</a><br>
+squeeze selection between marks: <a href="sndscm.html#fitselectionbetweenmarks">fit-selection-between-marks</a><br>
+insert silence before marks: <a href="sndscm.html#padmarks">pad-marks</a><br>
+move syncd marks: <a href="sndscm.html#movesyncdmarks">move-syncd-marks</a><br>
+play starting from syncd marks: <a href="sndscm.html#playsyncdmarks">play-syncd-marks</a><br>
+evaluate function between marks: <a href="sndscm.html#exevalbetweenmarks">eval-between-marks</a><br>
+place marks at selection start and end: <a href="sndscm.html#exsnapmarks">snap-marks</a><br>
+define selection via marks: <a href="sndscm.html#exdefineselectionviamarks">define-selection-via-marks</a><br>
+force dragged mark to land on a beat: <a href="sndscm.html#exsnapmarktobeat">snap-mark-to-beat</a><br>
+loop continuously between the two specified marks: <a href="sndscm.html#exloopbetweenmarks">loop-between-marks</a><br>
+split sound into separate files based on mark placement: <a href="sndscm.html#exmarkexplode">mark-explode</a><br>
+mark property lists: <a href="sndscm.html#markproperty">mark-property</a><br>
+save mark properties in saved state file: <a href="sndscm.html#savemarkproperties">save-mark-properties</a><br>
+show mark properties upon click: <a href="sndscm.html#markclickinfo">mark-click-info</a><br>
+</small></blockquote>
+<br>
+</td></tr></table>
+
+<p>Other examples can be found in Dave Phillips' dlp/marks-menu.scm, snd-motif.scm (<i>add-mark-pane</i>),<br>
 edit-menu.scm (trim from mark, etc), examp.scm (move window to correspond to mark, looping).
 </p>
 <br>
@@ -3276,7 +3290,7 @@ See mix.scm for more mix-related (and track-related) functions including:
 <!-- INDEX mixingexamples:Mixing -->
 <A NAME="mixingexamples"></a>
 <br>
-<table border=3 bordercolor="red" hspace=40><tr><td>
+<table border=3 bordercolor="tan" hspace=40><tr><td>
 
 <blockquote><small>
 <br>
@@ -3430,7 +3444,7 @@ is mus-next), with header comment <i>comment</i>.
 </table>
 <!-- INDEX regionexamples:Regions -->
 <A NAME="regionexamples"></a>
-<table border=3 bordercolor="red" hspace=40><tr><td>
+<table border=3 bordercolor="tan" hspace=40><tr><td>
 <small><blockquote>
 See also:<br>
 Max length of region list: <a href="#maxregions">max-regions</a><br>
@@ -3614,7 +3628,7 @@ this is the same as <i>src-sound</i> but applied to selection.
 
 <!-- INDEX selectionexamples:Selections -->
 <A NAME="selectionexamples"></a>
-<table border=3 bordercolor="red" hspace=40><tr><td>
+<table border=3 bordercolor="tan" hspace=40><tr><td>
 <small><blockquote>
 See also:<br>
 <a href="#selectioncolor">selection-color</a>: color of selected portion<br>
@@ -4061,7 +4075,7 @@ cursor in the currently selected channel if you don't specify otherwise.
 <!-- INDEX cursorexamples:Cursors -->
 <A NAME="cursorexamples"></a>
 <br><br>
-<table border=3 bordercolor="red" hspace=40><tr><td>
+<table border=3 bordercolor="tan" hspace=40><tr><td>
 <blockquote><small>
 <br>
 Tracking cursor: <a href="#sndcursorfollowsplay">cursor-follows-play</a><br>
@@ -4088,7 +4102,7 @@ I wonder whether "track" or "frame" has the most uses.
 <!-- INDEX trackingcursors:Tracking cursors -->
 <A NAME="trackingcursors"></a>
 <br><br>
-<table border=3 bordercolor="red" hspace=40><tr><td>
+<table border=3 bordercolor="tan" hspace=40><tr><td>
 <blockquote><small>
 <br>
 To play from the current cursor position with a tracking cursor:  <a href="#pfc">pfc</a>.<br>
@@ -4274,7 +4288,7 @@ delete sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
 <!-- INDEX deletionexamples:Deletions -->
 <A NAME="deletionexamples"></a>
 <br><br>
-<table border=3 bordercolor="red" hspace=40><tr><td>
+<table border=3 bordercolor="tan" hspace=40><tr><td>
 <small><blockquote>
 To delete a file: use the Guile function delete-file or Ruby's File.delete.<br>
 To delete a region: <a href="#forgetregion">forget-region</a><br>
@@ -4324,7 +4338,7 @@ can be either a CLM envelope generator or an envelope (a list of breakpoints). <
 <!-- INDEX envexamples:Envelopes -->
 <A NAME="envexamples"></a>
 <br><br>
-<table border=3 bordercolor="red" hspace=40><tr><td>
+<table border=3 bordercolor="tan" hspace=40><tr><td>
 <blockquote><small>
 <br>
 envelopes in Snd:<br>
@@ -4483,7 +4497,7 @@ form of CLM's filter generator:
 some other form, see <b>cascade-&gt;canonical</b> in dsp.scm, and the examples that follow.
 </p>
 <!-- INDEX filtersinsnd:Filters -->
-<table border=3 bordercolor="red" hspace=40><tr><td>
+<table border=3 bordercolor="tan" hspace=40><tr><td>
 <blockquote><small>
 <br>
 <A NAME="filtersinsnd">Filters</a> in Snd:<br>
@@ -4530,7 +4544,7 @@ In the find dialog and in C-s or C-r searches, if the value returned is an integ
 <!-- INDEX searchexamples:Searching -->
 <A NAME="searchexamples"></a>
 <br><br>
-<table border=3 bordercolor="red" hspace=40><tr><td>
+<table border=3 bordercolor="tan" hspace=40><tr><td>
 <blockquote><small>
 <br>
 Example find procedures: <a href="sndscm.html#exsearchforclick">search-for-click, zero+, next-peak, find-pitch</a><br>
@@ -4715,7 +4729,7 @@ insert sample <i>value</i> at sample <i>samp</i> in <i>snd</i>'s channel <i>chn<
 <!-- INDEX insertionexamples:Insertions -->
 <A NAME="insertionexamples"></a>
 <br><br>
-<table border=3 bordercolor="red" hspace=40><tr><td>
+<table border=3 bordercolor="tan" hspace=40><tr><td>
 <small><blockquote>
 To insert some portion of a channel: <a href="sndscm.html#insertchannel">insert-channel</a><br>
 To insert a silence: <a href="#padchannel">pad-channel</a>, <a href="#sndinsertsilence">insert-silence</a><br>
@@ -5049,7 +5063,7 @@ max amp of <i>snd</i>'s channel <i>chn</i>.  Used with set!, this is equivalent 
 <!-- INDEX maxampexamples:Maxamps -->
 <A NAME="maxampexamples"></a>
 <br><br>
-<table border=3 bordercolor="red" hspace=40><tr><td>
+<table border=3 bordercolor="tan" hspace=40><tr><td>
 <blockquote><small>
 <br>
 Sound file maxamp: <a href="#mussoundmaxamp">mus-sound-maxamp</a><br>
@@ -5250,7 +5264,7 @@ The following code plays from the cursor with a moving ("tracking") cursor:<br><
 <!-- INDEX playexamples:Playing -->
 <A NAME="playexamples"></a>
 <br><br>
-<table border=3 bordercolor="red" hspace=40><tr><td>
+<table border=3 bordercolor="tan" hspace=40><tr><td>
 <small><blockquote>
 To play one channel: <a href="#playchannel">play-channel</a>, play button in control panel or files dialog<br>
 To play from cursor: C-q and example above<br>
@@ -5719,7 +5733,7 @@ temporary messages.  C-g clears it.
 <!-- INDEX reverseexamples:Reversing -->
 <br><br>
 <A NAME="reverseexamples"></a>
-<table border=3 bordercolor="red" hspace=40><tr><td>
+<table border=3 bordercolor="tan" hspace=40><tr><td>
 <blockquote><small>
 <br>
 To reverse selected portion: <a href="#sndreverseselection">reverse-selection</a><br>
@@ -5858,7 +5872,7 @@ save <i>snd</i>; same as File menu's Save option. <a href="#savehook">save-hook<
 <!-- INDEX saveexamples:Saving -->
 <br><br>
 <A NAME="saveexamples"></a>
-<table border=3 bordercolor="red" hspace=40><tr><td>
+<table border=3 bordercolor="tan" hspace=40><tr><td>
 <small><blockquote>
 To save all sounds: <code>(for-each save-sound (sounds))</code>.<br>
 To save a sound under a different name: <a href="#sndsaveas">save-sound-as</a><br>
@@ -6266,7 +6280,7 @@ If #t, the y=0 axis is displayed.  This is the '<a href="snd.html#viewy0">Show Y
 <!-- INDEX smoothexamples:Smoothing -->
 <br><br>
 <A NAME="smoothexamples"></a>
-<table border=3 bordercolor="red" hspace=40><tr><td>
+<table border=3 bordercolor="tan" hspace=40><tr><td>
 <small><blockquote>
 To smooth all channels: <a href="#sndsmooth">smooth-sound</a><br>
 To smooth selection: <a href="#sndsmoothselection">smooth-selection</a><br>
@@ -6528,7 +6542,7 @@ This is the <a href="#regularizedargs">regularized</a> version of <a href="#snds
 <!-- INDEX resampleexamples:Resampling -->
 <br><br>
 <A NAME="resampleexamples"></a>
-<table border=3 bordercolor="red" hspace=40><tr><td>
+<table border=3 bordercolor="tan" hspace=40><tr><td>
 <small><blockquote>
 resample all chans: <a href="#sndsrc">src-sound</a><br>
 resample selection: <a href="#sndsrcselection">src-selection</a><br>
@@ -7725,7 +7739,7 @@ This function is the same as <a href="clm.html#convolution">convolution</a>.
 </p>
 <!-- INDEX fftexamples:FFTs -->
 <A NAME="fftexamples"></a>
-<table border=3 bordercolor="red" hspace=40><tr><td>
+<table border=3 bordercolor="tan" hspace=40><tr><td>
 <small><blockquote>
 CLM fft function: <a href="clm.html#fft">mus-fft</a><br>
 CLM spectrum: <a href="clm.html#spectrum">spectrum</a><br>

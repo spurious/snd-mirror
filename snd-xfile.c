@@ -583,7 +583,12 @@ void make_open_file_dialog(snd_state *ss, int read_only, int managed)
   if (open_dialog == NULL)
     {
       open_dialog = make_file_dialog(ss, read_only, _("Open"), _("open:"), FILE_OPEN_DIALOG, file_open_ok_callback);
-      if (just_sounds_state) XtVaSetValues(open_dialog->dialog, XmNfileSearchProc, sound_file_search, NULL);
+      if (just_sounds_state) 
+	{
+	  XtVaSetValues(open_dialog->dialog, XmNfileSearchProc, sound_file_search, NULL);
+	  open_dialog->need_update = TRUE;
+	  force_directory_reread(open_dialog->dialog);
+	}
     }
   if (open_dialog->new_file_written) 
     {
@@ -624,7 +629,12 @@ void make_mix_file_dialog(snd_state *ss, int managed)
   if (mix_dialog == NULL)
     {
       mix_dialog = make_file_dialog(ss, TRUE, _("Mix"), _("mix in:"), FILE_MIX_DIALOG, file_mix_ok_callback);
-      if (just_sounds_state) XtVaSetValues(mix_dialog->dialog, XmNfileSearchProc, sound_file_search, NULL);
+      if (just_sounds_state) 
+	{
+	  XtVaSetValues(mix_dialog->dialog, XmNfileSearchProc, sound_file_search, NULL);
+	  mix_dialog->need_update = TRUE;
+	  force_directory_reread(mix_dialog->dialog);
+	}
     }
   if ((managed) && (!XtIsManaged(mix_dialog->dialog)))
     XtManageChild(mix_dialog->dialog);

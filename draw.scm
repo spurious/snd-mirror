@@ -4,7 +4,7 @@
 
 (if (not (defined? 'channel-property)) (load-from-path "extensions.scm"))
 
-(define (display-colored-samples color beg dur snd chn)
+(define* (display-colored-samples color beg dur #:optional snd chn)
   "(display-colored-samples color beg dur snd chn) displays samples from beg for dur in color \
 whenever they're in the current view."
   (let ((left (left-sample snd chn))
@@ -18,7 +18,7 @@ whenever they're in the current view."
 	      (let* ((samps (- (min right end) (max left beg)))
 		     (offset (max 0 (- beg left)))
 		     (new-data (vct-subseq data offset (+ offset samps))))
-		(set! (foreground-color snd chn) red)
+		(set! (foreground-color snd chn) color)
 		(graph-data new-data snd chn copy-context (max beg left) (min end right))
 		(set! (foreground-color snd chn) old-color))
 	      (let* ((low-data (car data))
@@ -31,11 +31,11 @@ whenever they're in the current view."
 		     (right-bin (inexact->exact (floor (/ (* size right-offset) samps))))
 		     (new-low-data (vct-subseq low-data left-bin right-bin))
 		     (new-high-data (vct-subseq high-data left-bin right-bin)))
-		(set! (foreground-color snd chn) red)
+		(set! (foreground-color snd chn) color)
 		(graph-data (list new-low-data new-high-data) snd chn copy-context left-bin right-bin)
 		(set! (foreground-color snd chn) old-color)))))))
 
-(define (display-samples-in-color snd chn)
+(define* (display-samples-in-color snd chn)
   ;; intended as after-graph-hook member 
   ;; run through 'colored-samples lists passing each to display-colored-samples
   (let ((colors (channel-property 'colored-samples snd chn)))

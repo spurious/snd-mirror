@@ -1067,7 +1067,7 @@ int add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, int
   if (cw[W_edhist]) 
     XtVaSetValues(XtParent(cw[W_edhist]), XmNpaneMaximum, LOTSA_PIXELS, NULL);
 #endif
-  if ((need_extra_scrollbars) && (sp->channel_style == CHANNELS_SEPARATE)) 
+  if ((need_extra_scrollbars) && (sp->channel_style != CHANNELS_COMBINED)) 
     hide_gz_scrollbars(sp); /* default is on in this case */  
   cax = cx->ax;
   cax->wn = XtWindow(cw[W_graph]);

@@ -9,6 +9,7 @@
 							   ((car fft))
 							   (update-label (cdr fft)))))
 						   (update-label fft-list))))
+(if (not (defined? 'all-chans))
 (define (all-chans)
   (let ((sndlist '())
 	(chnlist '()))
@@ -18,8 +19,9 @@
 		  (set! sndlist (cons snd sndlist))
 		  (set! chnlist (cons i chnlist))))
 	      (sounds))
-    (list sndlist chnlist)))
+    (list sndlist chnlist))))
 
+(if (not (defined? 'map-chan-with-sync))
 (define map-chan-with-sync
   (lambda (func origin)
     (let ((snc (sync)))
@@ -29,9 +31,10 @@
 		   (if (= (sync snd) snc)
 		       (map-chan (func) #f #f origin snd chn)))
 		 (all-chans))
-	  (map-chan (func) #f #f origin)))))
+	  (map-chan (func) #f #f origin))))))
 
-(define (make-effect-dialog label ok-callback dismiss-callback help-callback reset-callback)
+(if (not (defined? 'make-effect-dialog))
+(define (make-effect-dialog label ok-callback help-callback reset-callback)
   ;; make a standard dialog
   (let* ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
          (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
@@ -56,7 +59,7 @@
                 XmNbackground (basic-color))))
      (list XmDIALOG_HELP_BUTTON XmDIALOG_CANCEL_BUTTON XmDIALOG_OK_BUTTON))
 
-    (XtAddCallback new-dialog XmNcancelCallback dismiss-callback) ; "Dismiss"
+    (XtAddCallback new-dialog XmNcancelCallback (lambda (w c i) (XtUnmanageChild new-dialog)))
     (XtAddCallback new-dialog XmNhelpCallback help-callback)  ; "Help"
     (XtAddCallback new-dialog XmNokCallback ok-callback)    ; "DoIt"
 
@@ -71,8 +74,9 @@
     (XmStringFree xok)
     (XmStringFree xdismiss)
     (XmStringFree titlestr)
-    new-dialog))
+    new-dialog)))
 
+(if (not (defined? 'add-sliders))
 (define (add-sliders dialog sliders)
   ;; sliders is a list of lists, each inner list being (title low initial high callback scale)
   ;; returns list of widgets (for reset callbacks)
@@ -107,7 +111,7 @@
          (XmStringFree title)
          (XtAddCallback new-slider XmNvalueChangedCallback func)
          new-slider))
-     sliders)))
+     sliders))))
 
 
 ;;; ------ FFT edit
@@ -134,8 +138,6 @@
                     (make-effect-dialog fft-edit-label
                                         (lambda (w context info)
                                           (cp-fft-edit))
-                                        (lambda (w context info)
-                                          (XtUnmanageChild fft-edit-dialog))
                                         (lambda (w context info)
                                           (help-dialog "FFT notch filter"
                                                        "A simple example of FFT-based editing. It takes an FFT of the entire sound, removes all energy below the low frequency\n\ and above the high frequency, then computes the inverse FFT."))
@@ -190,8 +192,6 @@
                     (make-effect-dialog fft-squelch-label
                                         (lambda (w context info)
                                           (cp-fft-squelch))
-                                        (lambda (w context info)
-                                          (XtUnmanageChild fft-squelch-dialog))
                                         (lambda (w context info)
                                           (help-dialog "FFT squelch"
                                                 "Removes all energy below the squelch amount.\n\ This is sometimes useful for noise-reduction."))

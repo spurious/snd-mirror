@@ -1,7 +1,8 @@
 Snd change log
 
+  11-Aug:    start-playing-selection-hook (suggested by Kjetil S. Matheussen).
   7-Aug:     dac-is-running.
-  1-Aug:     ladspa.scm thanks to Kjetil S. Matheussen.
+  1-Aug:     ladspa.scm and ladspa-help.scm thanks to Kjetil S. Matheussen.
              ladspa struct constants and accessors.
   28-Jul:    Sun disk space bugfix (thanks to Russell Aspinwall).
   22-Jul:    removed protect-region.

@@ -880,7 +880,7 @@ int add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, int
   if ((sp->channel_style != CHANNELS_COMBINED) || (channel == 0))
     gtk_widget_show_all(cw[W_main_window]);
 
-  if ((need_extra_scrollbars) && (sp->channel_style == CHANNELS_SEPARATE)) 
+  if ((need_extra_scrollbars) && (sp->channel_style != CHANNELS_COMBINED))
     hide_gz_scrollbars(sp); /* default is on in this case */  
 
   cax = cx->ax;

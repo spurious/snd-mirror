@@ -19,10 +19,9 @@
 (load-from-path "marks-menu.scm") 
 (load-from-path "mix-menu.scm") 
 (load-from-path "new-buttons.scm") 
-;(load-from-path "effects.scm") 
-(load-from-path "dp-new-effects.scm") 
 (load-from-path "panic.scm") 
-(load-from-path "plugins-menu.scm") 
+(load-from-path "ladspa.scm") 
+(load-from-path "ladspa-help.scm") 
 (load-from-path "fft-menu.scm") 
 (load-from-path "edit123.scm") 
 

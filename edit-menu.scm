@@ -142,7 +142,7 @@
 ;;; -------- add these to the Edit menu, if possible
 
 (if (provided? 'xm)
-    (let* ((edit-cascade (Widget (list-ref (menu-widgets) 2)))
+    (let* ((edit-cascade (list-ref (menu-widgets) 2))
 	   (edit-menu (cadr (XtGetValues edit-cascade (list XmNsubMenuId 0)))))
 
       (define (for-each-child w func)

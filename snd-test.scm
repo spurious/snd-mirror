@@ -31,6 +31,8 @@
 ;;; test 28: errors
 
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
+;;; TODO: jc-reverb as map-chan call
+;;; TODO: extend mouse-drag-hook to time/fft graphs (needs added arg)
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen) (ice-9 syncase) (ice-9 session))
 
@@ -1300,6 +1302,8 @@
 	  (snd-display ";mouse-press-hook: ~A?" mouse-press-hook))
       (if (or (not (hook? start-playing-hook)) (not (hook-empty? start-playing-hook)))
 	  (snd-display ";start-playing-hook: ~A?" start-playing-hook))
+      (if (or (not (hook? start-playing-selection-hook)) (not (hook-empty? start-playing-selection-hook)))
+	  (snd-display ";start-playing-selection-hook: ~A?" start-playing-selection-hook))
       (if (or (not (hook? stop-playing-hook)) (not (hook-empty? stop-playing-hook)))
 	  (snd-display ";stop-playing-hook: ~A?" stop-playing-hook))
       (if (or (not (hook? key-press-hook)) (not (hook-empty? key-press-hook)))
@@ -13806,9 +13810,10 @@ EDITS: 5
 	      (let ((newmaxa (maxamp (list mix-id))))
 		(if (fneq newmaxa .5) (snd-display ";(mix) scale-to: ~A?" newmaxa))
 		(undo)
+		(if (fneq (maxamp (list mix-id)) maxa) (snd-display ";(mix) scale-to+undo: ~A ~A" maxa (maxamp (list mix-id))))
 		(scale-by 2.0 (list mix-id)) 
 		(set! newmaxa (maxamp (list mix-id)))
-		(if (fneq newmaxa (* 2.0 maxa)) (snd-display ";(mix) scale-by: ~A?" newmaxa))
+		(if (fneq newmaxa (* 2.0 maxa)) (begin (snd-display ";(mix) scale-by: ~A (~A)?" newmaxa maxa) (throw 'oops)))
 		(revert-sound)
 		(let ((tag (catch 'no-such-mix
 				  (lambda ()
@@ -16549,6 +16554,7 @@ EDITS: 5
   (add-hook! stop-playing-selection-hook arg0) (carg0 stop-playing-selection-hook)
   (add-hook! color-hook arg0) (carg0 color-hook)
   (add-hook! orientation-hook arg0) (carg0 orientation-hook)
+  (add-hook! start-playing-selection-hook arg0) (carg0 start-playing-selection-hook)
   
   (add-hook! during-open-hook arg3) (carg3 during-open-hook)
   (add-hook! transform-hook arg3) (carg3 transform-hook)
@@ -17319,6 +17325,7 @@ EDITS: 5
 	  (if (not ph) (snd-display ";play-hook not called?"))
 	  (if (not ph1) (snd-display ";dac-hook not called?"))
 	  (reset-hook! start-playing-hook)
+	  (reset-hook! start-playing-selection-hook)
 	  (reset-hook! stop-playing-hook)
 	  (reset-hook! stop-playing-channel-hook)
 	  (reset-hook! play-hook)
@@ -34321,7 +34328,7 @@ EDITS: 2
 	      (if (not (equal? (caddr (main-widgets)) (XtNameToWidget (cadr (main-widgets)) "mainpane")))
 		  (snd-display ";XtNameToWidget: ~A ~A" (caddr (main-widgets)) (XtNameToWidget (cadr (main-widgets)) "mainpane")))
 	      (XtVaCreatePopupShell "hiho" vendorShellWidgetClass (cadr (main-widgets)) '())
-	      (XtResolvePathname (XtDisplay (Widget (cadr (main-widgets)))) "app-defaults" #f #f #f #f 0 #f)
+	      (XtResolvePathname (XtDisplay (cadr (main-widgets))) "app-defaults" #f #f #f #f 0 #f)
 	      (XtFindFile ".snd" #f 0 #f)
 	      (let ((val (XtFindFile "/lib/%N:/usr/lib/%N:/usr/local/lib/%N" (list (list #\N "libxm.so")) 1 file-exists?)))
 		(if (or (not (string? val))
@@ -38084,6 +38091,7 @@ EDITS: 2
 			    (list snd-warning-hook 'snd-warning-hook)
 			    (list start-hook 'start-hook)
 			    (list start-playing-hook 'start-playing-hook)
+			    (list start-playing-selection-hook 'start-playing-selection-hook)
 			    (list stop-playing-hook 'stop-playing-hook)
 			    (list stop-playing-region-hook 'stop-playing-region-hook)
 			    (list mouse-enter-listener-hook 'mouse-enter-listener-hook)
