@@ -2177,6 +2177,16 @@
 	(test-data (string-append sf-dir "b32.wave") 1000 10 (vct -0.160 -0.216 -0.254 -0.239 -0.175 -0.102 -0.042 0.005 0.041 0.059))
 	(test-data (string-append sf-dir "b32.snd") 1000 10 (vct -0.160 -0.216 -0.254 -0.239 -0.175 -0.102 -0.042 0.005 0.041 0.059))
 	(test-data (string-append sf-dir "32bit.sf") 1000 10 (vct 0.016 0.014 0.013 0.011 0.010 0.010 0.010 0.010 0.012 0.014))
+
+	(test-data (string-append sf-dir "nist-shortpack.wav") 10000 10 (vct 0.021 0.018 0.014 0.009 0.004 -0.001 -0.004 -0.006 -0.007 -0.008))
+	(test-data (string-append sf-dir "wood.sds") 1000 10 (vct -0.160 -0.216 -0.254 -0.239 -0.175 -0.102 -0.042 0.005 0.041 0.059))
+	(test-data (string-append sf-dir "oboe.g721") 1000 10 (vct -0.037 -0.040 -0.040 -0.041 -0.042 -0.038 -0.028 -0.015 -0.005 0.002))
+	(test-data (string-append sf-dir "oboe.g723_40") 1000 10 (vct -0.037 -0.040 -0.041 -0.041 -0.041 -0.038 -0.028 -0.015 -0.005 0.003))
+	(test-data (string-append sf-dir "mus10.snd") 10000 10 (vct 0.004 0.001 0.005 0.009 0.017 0.015 0.008 0.011 0.009 0.012))
+	(test-data (string-append sf-dir "ieee-text-16.snd") 1000 10 (vct -0.052 -0.056 -0.069 -0.077 -0.065 -0.049 -0.054 -0.062 -0.066 -0.074))
+	(test-data (string-append sf-dir "hcom-16.snd") 10000 10 (vct 0.000 0.000 0.000 0.008 0.000 -0.016 -0.016 -0.016 -0.008 0.000))
+	(test-data (string-append sf-dir "ce-c3.w02") 1000 10 (vct 0.581 0.598 0.596 0.577 0.552 0.530 0.508 0.479 0.449 0.425))
+	(test-data (string-append sf-dir "nasahal.avi") 20000 10 (vct 0.464 0.189 -0.458 -0.150 0.593 0.439 -0.208 -0.130 0.460 0.429))
 	)
       ))))
 
@@ -3507,6 +3517,14 @@
 	(play-and-wait 0 ind1 0 #f #f (lambda (snd chn) (edit-position snd chn)))
 	(undo 1 ind1 0)
 	(play-and-wait 0 ind1 0 #f #f 1)
+
+	(if (defined? 'get-test-a2)
+	    (let* ((ind4 (open-sound "oboe.snd"))
+		   (s1000 (sample 1000 ind4 0)))
+	      (loop-samples (make-sample-reader 0 ind4 0) (get-test-a2) 50828 "a2")
+	      (if (fneq (sample 1000 ind4) (* 2 s1000))
+		  (snd-display ";loop-samples ~A -> ~A" s1000 (sample 1000 ind4 0)))
+	      (close-sound ind4)))
 
 	(delete-samples 0 10000 ind1 0)
 	(save-sound-as "fmv.snd" ind1 #f #f #f #f 0)
@@ -9879,6 +9897,7 @@
 	  (if (not (= (data-location oboe-aif) 28)) (snd-display ";set! data-location: ~A?" (data-location oboe-aif)))
 	  (set! (data-format oboe-aif) mus-mulaw)
 	  (if (not (= (data-format oboe-aif) mus-mulaw)) (snd-display ";set! format: ~A?" (mus-data-format-name (data-format oboe-aif))))
+	  (save-sound-as "test.aif" oboe-aif mus-aifc mus-bshort 22050 0)
 	  (close-sound oboe-aif)
 	  (delete-file "test.aif")
 	  (set! (selected-sound) a4)
@@ -10874,6 +10893,11 @@ EDITS: 3
 	      (set! (x-bounds) (list 0.0 0.1))
 	      (if (< (cadr (widget-size (car (channel-widgets)))) 250)
 		  (set! (widget-size (car (sound-widgets))) (list (car (widget-size (car (channel-widgets)))) 400)))
+
+	      (if (defined? 'popup-display-info)
+		  (begin
+		    (select-sound ind)
+		    (popup-display-info)))
 
 	      (let* ((swids (sound-widgets))
 		     (name-button (list-ref swids 1))

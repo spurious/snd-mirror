@@ -3923,6 +3923,11 @@ XEN_ARGIFY_9(g_set_samples_w, g_set_samples)
 #define g_set_samples_w g_set_samples
 #endif
 
+#if DEBUGGING
+static float test_a2(float b) {return(b * 2.0);}
+static XEN g_get_test_a2(void) {return(XEN_WRAP_C_POINTER(test_a2));}
+#endif
+
 void g_init_edits(void)
 {
   sf_tag = XEN_MAKE_OBJECT_TYPE("SampleReader", sizeof(snd_fd));
@@ -3986,5 +3991,9 @@ If it returns #t, the file is not saved.  'name' is #f unless \
 the file is being saved under a new name (as in sound-save-as)."
 
   XEN_DEFINE_HOOK(save_hook, S_save_hook, 2, H_save_hook);      /* arg = sound index, possible new name */
+
+#if DEBUGGING
+  XEN_DEFINE_PROCEDURE("get-test-a2", g_get_test_a2, 0, 0, 0, "internal test function");
+#endif
 }
 /* TODO: ask-before-overwrite could be handled by save-hook, but they seem to be checked at different times? */

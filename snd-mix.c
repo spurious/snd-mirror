@@ -440,6 +440,14 @@ static int mix_input_amp_env_usable(mix_info *md, Float samples_per_pixel)
   chan_info *cp;
   snd_info *sp;
   Float samps_per_bin = 0.0;
+  console_state *cs;
+  cs = md->current_cs;
+  if ((cs) && (cs->amp_envs))
+    {
+      for (i = 0; i < cs->chans; i++)
+	if (cs->amp_envs[i])
+	  return(FALSE);
+    }
   sp = make_mix_readable(md);
   if (sp)
     {
@@ -1835,7 +1843,7 @@ static void make_temporary_graph(chan_info *cp, mix_info *md, console_state *cs)
   ms->lastpj = j;
 }
 
-static int display_mix_amp_env(mix_info *md, Float scl, int yoff, int newbeg, int newend, chan_info *cp, axis_info *ap, int draw)
+static int display_mix_amp_env(mix_info *md, Float scl, int yoff, int newbeg, int newend, chan_info *cp, Float srate, axis_info *ap, int draw)
 {
   /* need min and max readers */
   snd_state *ss;
@@ -1869,15 +1877,15 @@ static int display_mix_amp_env(mix_info *md, Float scl, int yoff, int newbeg, in
     }
   else 
     {
-      xstart = (Float)(newbeg) / (Float)SND_SRATE(cp->sound);
+      xstart = (Float)(newbeg) / srate;
       ymin = 100.0;
       ymax = -100.0;
     }
 
   if (hi < newend)
     xend = ap->x1;
-  else xend = (Float)(newend) / (Float)SND_SRATE(cp->sound);
-  xstep = (Float)(max_fd->samps_per_bin) / (Float)SND_SRATE(cp->sound);
+  else xend = (Float)(newend) / srate;
+  xstep = (Float)(max_fd->samps_per_bin) / srate;
   lastx = local_grf_x(xstart, ap);
   for (j = 0; xstart < xend; xstart += xstep)
     {
@@ -2036,8 +2044,8 @@ static int display_mix_waveform(chan_info *cp, mix_info *md, console_state *cs, 
     }
   else
     {
-      if (mix_input_amp_env_usable(md, samples_per_pixel))
-	j = display_mix_amp_env(md, scl, yoff, newbeg, newend, cp, ap, draw);
+      if ((cp->sound) && (mix_input_amp_env_usable(md, samples_per_pixel)))
+	j = display_mix_amp_env(md, scl, yoff, newbeg, newend, cp, (Float)cur_srate, ap, draw);
       else
 	{
 	  add = init_mix_read(md, 0);
@@ -2065,6 +2073,7 @@ static int display_mix_waveform(chan_info *cp, mix_info *md, console_state *cs, 
 	    }
 	  for (i = newbeg; i <= endi; i++)
 	    {
+
 	      ina = next_mix_sample(add);
 	      if (ina > ymax) ymax = ina;
 	      if (ina < ymin) ymin = ina;

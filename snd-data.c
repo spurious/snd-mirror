@@ -807,6 +807,14 @@ void display_info(snd_info *sp)
     }
 }
 
+#if DEBUGGING
+static XEN g_display_info(void)
+{
+  display_info(selected_sound(get_global_state()));
+  return(XEN_FALSE);
+}
+#endif
+
 void g_init_data(void)
 {
   #define H_select_sound_hook S_select_sound_hook " is called whenever a sound is selected. \
@@ -817,5 +825,9 @@ Its argument is the sound index and the channel number."
 
   XEN_DEFINE_HOOK(select_sound_hook, S_select_sound_hook, 1, H_select_sound_hook);       /* arg = sound index */
   XEN_DEFINE_HOOK(select_channel_hook, S_select_channel_hook, 2, H_select_channel_hook); /* args = sound index, channel */
+
+#if DEBUGGING
+  XEN_DEFINE_PROCEDURE("popup-display-info", g_display_info, 0, 0, 0, "internal test function");
+#endif
 }
 
