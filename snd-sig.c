@@ -3061,7 +3061,7 @@ using data returned by the latter and origin as the edit history entry for the e
   program_data = (snd_exf *)(SND_UNWRAP(data));
   program_data->new_filenames[0] = TO_NEW_C_STRING(new_name);
   temp_to_snd(program_data, TO_C_STRING(origin));
-  return(SCM_BOOL_T);
+  return(new_name);
 }
 
 static SCM g_temps_to_sound(SCM data, SCM new_names, SCM origin)
@@ -3081,7 +3081,7 @@ using data returned by the latter and origin as the edit history entry for the e
   for (i = 0; i < len; i++)
     program_data->new_filenames[i] = TO_NEW_C_STRING(vdata[i]);
   temp_to_snd(program_data, TO_C_STRING(origin));
-  return(SCM_BOOL_T);
+  return(new_names);
 }
 
 static SCM g_sp_scan(SCM proc, int chan_choice, SCM s_beg, SCM s_end, int series, int scan, SCM snd, SCM chn, 

@@ -20,6 +20,7 @@
 
 #define scm_apply(a, b, c) rep_apply(a, b)
 SCM scm_return_first(SCM a, ...);
+#define scm_must_malloc(size, str) malloc(size)
 
 #define SCM_EQ_P(a, b)  ((a) == (b))
 #define SCM_LIST0       Qnil
@@ -55,7 +56,6 @@ SCM scm_return_first(SCM a, ...);
 #define SND_TAG_TYPE                 int
 #define SND_SMOB_TYPE(TAG, OBJ)      Qnil
 #define SMOB_TYPE_P(OBJ, TAG)        Qnil
-#define SND_SETGCMARK(X)
 #define TRUE_P(a)                    ((a) == Qt)
 #define FALSE_P(a)                   ((a) == Qnil)
 #define NOT_TRUE_P(a)                ((a) != Qt))

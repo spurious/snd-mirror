@@ -1,6 +1,9 @@
 #ifndef SND_NOGUILE_H
 #define SND_NOGUILE_H
 
+
+/* TODO: get rid of gcmark */
+
 /* these are the extension-language entities called by Snd.
  *   In this case, since we're making Snd without any such language,
  *   they're mostly 0 and no-ops.  sl.h is an on-going Librep
@@ -35,6 +38,7 @@
 
 #define scm_apply(a, b, c) 0
 SCM scm_return_first(SCM a, ...);
+#define scm_must_malloc(size, str) malloc(size)
 
 #define SCM_EQ_P(a, b) 0
 #define SCM_LIST0 0
@@ -65,7 +69,6 @@ SCM scm_return_first(SCM a, ...);
 #define SND_TAG_TYPE int
 #define SND_SMOB_TYPE(TAG, OBJ) 0
 #define SMOB_TYPE_P(OBJ, TAG) 0
-#define SND_SETGCMARK(X)
 #define TRUE_P(a) 0
 #define FALSE_P(a) 0
 #define NOT_TRUE_P(a) 0

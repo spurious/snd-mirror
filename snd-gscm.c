@@ -36,12 +36,6 @@ static SCM g_in(SCM ms, SCM code)
 
 static SND_TAG_TYPE snd_color_tag = 0;
 
-static SCM mark_snd_color(SCM obj)
-{
-  /* SND_SETGCMARK(obj); */
-  return(SCM_BOOL_F);
-}
-
 int snd_color_p(SCM obj)
 {
   return(SMOB_TYPE_P(obj, snd_color_tag));
@@ -254,7 +248,6 @@ void g_initialize_xgh(snd_state *ss, SCM local_doc)
   state = ss;
 #if HAVE_GUILE
   snd_color_tag = scm_make_smob_type("col" STR_OR, sizeof(snd_color));
-  scm_set_smob_mark(snd_color_tag, mark_snd_color);
   scm_set_smob_print(snd_color_tag, print_snd_color);
   scm_set_smob_free(snd_color_tag, free_snd_color);
   scm_set_smob_equalp(snd_color_tag, equalp_snd_color);

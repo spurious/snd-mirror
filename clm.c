@@ -9,8 +9,10 @@
 
 #if defined(HAVE_CONFIG_H)
   #include "config.h"
-#else
-  #define HAVE_VPRINTF 1
+#endif
+
+#if USE_SND
+  #include "snd.h"
 #endif
 
 #include <stddef.h>

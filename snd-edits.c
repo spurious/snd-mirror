@@ -2688,8 +2688,6 @@ static SCM g_edit_tree(SCM snd, SCM chn, SCM upos)
 /* ---------------- sample readers ---------------- */
 
 static SND_TAG_TYPE sf_tag = 0;
-static SCM mark_sf(SCM obj) {/* SND_SETGCMARK(obj); */ return(SCM_BOOL_F);}
-
 int sf_p(SCM obj); /* currently for snd-ladspa.c */
 int sf_p(SCM obj) {return(SMOB_TYPE_P(obj, sf_tag));}
 #define SAMPLE_READER_P(Obj) SMOB_TYPE_P(Obj, sf_tag)
@@ -2733,11 +2731,6 @@ static int print_sf(SCM obj, SCM port, scm_print_state *pstate)
       FREE(desc);
     }
   return(1);
-}
-
-static SCM equalp_sf(SCM obj1, SCM obj2) 
-{
-  return(TO_SCM_BOOLEAN(get_sf(obj1) == get_sf(obj2)));
 }
 
 static scm_sizet free_sf(SCM obj) 
@@ -3063,10 +3056,10 @@ static int finish_as_one_edit(chan_info *cp, void *ptr)
   int one_edit;
   ed_list *ed;
   one_edit = (((int *)ptr)[chan_ctr] + 1);
-  if (cp->edit_ctr > one_edit)
+  if (cp->edit_ctr >= one_edit)                 /* ">=" here because the origin needs to be set even if there were no extra edits */
     {
       while (cp->edit_ctr > one_edit) backup_edit_list(cp);
-      if (cp->mixes) backup_mix_list(cp, one_edit);
+      if ((cp->edit_ctr > one_edit) && (cp->mixes)) backup_mix_list(cp, one_edit);
       if (as_one_edit_origin)
 	{
 	  ed = cp->edits[cp->edit_ctr];
@@ -3077,7 +3070,7 @@ static int finish_as_one_edit(chan_info *cp, void *ptr)
 	      reflect_edit_history_change(cp);
 	    }
 	}
-      prune_edits(cp, cp->edit_ctr + 1);
+      if (cp->edit_ctr > one_edit) prune_edits(cp, cp->edit_ctr + 1);
       update_graph(cp, NULL); 
     }
   chan_ctr++; 
@@ -3091,13 +3084,13 @@ static SCM g_as_one_edit(SCM proc, SCM origin)
   int *cur_edits;
   snd_state *ss;
   SCM result = SCM_BOOL_F;
-  ASSERT_TYPE(PROCEDURE_P(proc), proc, SCM_ARG1, S_as_one_edit, "a procedure");
+  ASSERT_TYPE(PROCEDURE_P(proc), proc, SCM_ARG1, S_as_one_edit, "a procedure"); /* TODO: arity check?? */
   ss = get_global_state();
   chans = active_channels(ss, WITH_VIRTUAL_CHANNELS);
   if (chans > 0)
     {
       if (STRING_P(origin))
-	as_one_edit_origin = TO_NEW_C_STRING(origin);
+	as_one_edit_origin = copy_string(TO_C_STRING(origin)); /* not TO_NEW_C_STRING since we have to use FREE elsewhere */
       else as_one_edit_origin = NULL;
       cur_edits = (int *)CALLOC(chans, sizeof(int));
       chan_ctr = 0;
@@ -3557,10 +3550,8 @@ void g_init_edits(SCM local_doc)
 {
 #if HAVE_GUILE
   sf_tag = scm_make_smob_type("sf", sizeof(snd_fd));
-  scm_set_smob_mark(sf_tag, mark_sf);
   scm_set_smob_print(sf_tag, print_sf);
   scm_set_smob_free(sf_tag, free_sf);
-  scm_set_smob_equalp(sf_tag, equalp_sf);
 #if HAVE_APPLICABLE_SMOB
   scm_set_smob_apply(sf_tag, SCM_FNC g_next_sample, 0, 0, 0);
 #endif

@@ -133,7 +133,7 @@ int to_c_int_or_else(SCM obj, int fallback, const char *origin)
 
 /* -------- error handling -------- */
 
-#define MAX_ERROR_STRING_LENGTH 1024
+#define MAX_ERROR_STRING_LENGTH 0
 /* what is this number actually affecting? I can set it to 0 with no ill effects */
 
 #if HAVE_GUILE
@@ -2997,6 +2997,16 @@ static SCM g_gc_on(void) {--scm_block_gc; return(TO_SCM_INT(scm_block_gc));}
 
 #if GCING
 /* need someplace findable in gdb (without knowing much about Guile) to get the last call+args upon segfault */
+static int last_mallocated = 0;
+static SCM g_gc_hook(void)
+{
+  /*
+  if (scm_mallocated < last_mallocated)
+    fprintf(stderr,"[%d] ", last_mallocated - scm_mallocated);
+  last_mallocated = scm_mallocated;
+  */
+  return(SCM_BOOL_F);
+}
 static char *this_proc = NULL, *these_args = NULL;
 static SCM g_set_last_proc(SCM proc, SCM args)
 {
@@ -3015,9 +3025,10 @@ void g_initialize_gh(snd_state *ss)
 
 #if GCING
   gh_new_procedure("set-last-proc", SCM_FNC g_set_last_proc, 2, 0, 0);
+  gh_new_procedure("g-gc-hook", SCM_FNC g_gc_hook, 0, 0, 0);
   DEFINE_VAR("g-gc-step", 10, "");
   DEFINE_VAR("g-gc-ctr", 0, "");
-  gh_eval_str("(define (gc-1) (if (> g-gc-step 0) (begin (if (> g-gc-ctr g-gc-step) (begin (set! g-gc-ctr 0) (gc)) (set! g-gc-ctr (1+ g-gc-ctr))))))");
+  gh_eval_str("(define (gc-1) (g-gc-hook) (if (> g-gc-step 0) (begin (if (> g-gc-ctr g-gc-step) (begin (set! g-gc-ctr 0) (gc)) (set! g-gc-ctr (1+ g-gc-ctr))))))");
   YES_WE_HAVE("gcing");
 #endif
 

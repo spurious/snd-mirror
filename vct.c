@@ -97,12 +97,6 @@ static SND_TAG_TYPE vct_tag = 0;
 static int vct_print_length = VCT_PRINT_LENGTH;
 void set_vct_print_length(int len) {vct_print_length = len;}
 
-static SCM mark_vct(SCM obj)
-{
-  /* SND_SETGCMARK(obj); */
-  return(SCM_BOOL_F);
-}
-
 int vct_p(SCM obj)
 {
   return(SMOB_TYPE_P(obj, vct_tag));
@@ -689,7 +683,6 @@ void init_vct(void)
   SCM local_doc;
 #if HAVE_GUILE
   vct_tag = scm_make_smob_type("vct", sizeof(vct));
-  scm_set_smob_mark(vct_tag, mark_vct);
   scm_set_smob_print(vct_tag, print_vct);
   scm_set_smob_free(vct_tag, free_vct);
   scm_set_smob_equalp(vct_tag, equalp_vct);

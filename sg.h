@@ -37,11 +37,9 @@
 #if HAVE_SCM_REMEMBER_UPTO_HERE
   #define SND_TAG_TYPE scm_bits_t
   #define SND_SMOB_TYPE(TAG, OBJ) SCM_SMOB_PREDICATE(TAG, OBJ)
-  #define SND_SETGCMARK(X) SCM_SETGCMARK(X)
 #else
   #define SND_TAG_TYPE long
   #define SND_SMOB_TYPE(TAG, OBJ) (SCM_TYP16(OBJ) == (SCM)TAG)
-  #define SND_SETGCMARK(X) SCM_SETGC8MARK(X)
 #endif
 
 #define SMOB_TYPE_P(Obj, Type) ((SCM_NIMP(Obj)) && (SND_SMOB_TYPE(Type, Obj)))

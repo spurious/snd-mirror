@@ -344,13 +344,6 @@ static SCM g_sound_set_max_amp(SCM file, SCM vals)
 /* to support the actual sound file/audio port stuff, we need an "smob" for the int** arrays */
 
 static SND_TAG_TYPE sound_data_tag = 0;
-
-static SCM mark_sound_data(SCM obj)
-{
-  /* SND_SETGCMARK(obj); */
-  return(SCM_BOOL_F);
-}
-
 int sound_data_p(SCM obj) {return(SMOB_TYPE_P(obj, sound_data_tag));}
 #define SOUND_DATA_P(Obj) SMOB_TYPE_P(Obj, sound_data_tag)
 
@@ -1060,7 +1053,6 @@ void mus_sndlib2scm_initialize(void)
 
 #if HAVE_GUILE
   sound_data_tag = scm_make_smob_type("sound-data", sizeof(sound_data));
-  scm_set_smob_mark(sound_data_tag, mark_sound_data);
   scm_set_smob_print(sound_data_tag, print_sound_data);
   scm_set_smob_free(sound_data_tag, free_sound_data);
   scm_set_smob_equalp(sound_data_tag, equalp_sound_data);

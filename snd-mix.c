@@ -3799,7 +3799,6 @@ If chn is omitted, file's channels are mixed until snd runs out of channels"
 /* ---------------- mix sample readers ---------------- */
 
 static SND_TAG_TYPE mf_tag = 0;
-static SCM mark_mf(SCM obj) {/* SND_SETGCMARK(obj); */ return(SCM_BOOL_F);}
 static int mf_p(SCM obj) {return(SMOB_TYPE_P(obj, mf_tag));}
 #define TO_MIX_SAMPLE_READER(obj) ((mix_fd *)SND_VALUE_OF(obj))
 #define MIX_SAMPLE_READER_P(Obj) SMOB_TYPE_P(Obj, mf_tag)
@@ -3817,10 +3816,12 @@ static mix_fd *get_mf(SCM obj)
   else return(NULL);
 }
 
+/*
 static SCM equalp_mf(SCM obj1, SCM obj2) 
 {
   return(TO_SCM_BOOLEAN(get_mf(obj1) == get_mf(obj2)));
 }
+*/
 
 static int print_mf(SCM obj, SCM port, scm_print_state *pstate) 
 {
@@ -3899,7 +3900,6 @@ static SCM g_free_mix_sample_reader(SCM obj)
 /* ---------------- track sample readers ---------------- */
 
 static SND_TAG_TYPE tf_tag = 0;
-static SCM mark_tf(SCM obj) {/* SND_SETGCMARK(obj); */ return(SCM_BOOL_F);}
 static int tf_p(SCM obj) {return(SMOB_TYPE_P(obj, tf_tag));}
 #define TO_TRACK_SAMPLE_READER(obj) ((track_fd *)SND_VALUE_OF(obj))
 #define TRACK_SAMPLE_READER_P(Obj) SMOB_TYPE_P(Obj, tf_tag)
@@ -3910,8 +3910,14 @@ static SCM g_tf_p(SCM obj)
   return(TO_SCM_BOOLEAN(tf_p(obj)));
 }
 
-static track_fd *get_tf(SCM obj) {if (TRACK_SAMPLE_READER_P(obj)) return((track_fd *)SND_VALUE_OF(obj)); else return(NULL);}
-static SCM equalp_tf(SCM obj1, SCM obj2) {return(TO_SCM_BOOLEAN(get_tf(obj1) == get_tf(obj2)));}
+static track_fd *get_tf(SCM obj) 
+{
+  if (TRACK_SAMPLE_READER_P(obj))
+    return((track_fd *)SND_VALUE_OF(obj));
+  return(NULL);
+}
+
+/* static SCM equalp_tf(SCM obj1, SCM obj2) {return(TO_SCM_BOOLEAN(get_tf(obj1) == get_tf(obj2)));} */
 
 static int print_tf(SCM obj, SCM port, scm_print_state *pstate) 
 {
@@ -4144,10 +4150,8 @@ void g_init_mix(SCM local_doc)
 {
 #if HAVE_GUILE
   mf_tag = scm_make_smob_type("mf", sizeof(sizeof(mix_fd)));
-  scm_set_smob_mark(mf_tag, mark_mf);
   scm_set_smob_print(mf_tag, print_mf);
   scm_set_smob_free(mf_tag, free_mf);
-  scm_set_smob_equalp(mf_tag, equalp_mf);
 #if HAVE_APPLICABLE_SMOB
   scm_set_smob_apply(mf_tag, SCM_FNC g_next_mix_sample, 0, 0, 0);
 #endif
@@ -4160,10 +4164,8 @@ void g_init_mix(SCM local_doc)
 
 #if HAVE_GUILE
   tf_tag = scm_make_smob_type("tf", sizeof(track_fd));
-  scm_set_smob_mark(tf_tag, mark_tf);
   scm_set_smob_print(tf_tag, print_tf);
   scm_set_smob_free(tf_tag, free_tf);
-  scm_set_smob_equalp(tf_tag, equalp_tf);
 #if HAVE_APPLICABLE_SMOB
   scm_set_smob_apply(tf_tag, SCM_FNC g_next_track_sample, 0, 0, 0);
 #endif

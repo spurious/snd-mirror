@@ -747,7 +747,6 @@ static SCM mark_mus_scm(SCM obj)
 	  scm_gc_mark(ms->vcts[i]);
     }
 #endif
-  /* SND_SETGCMARK(obj);  */
   return(SCM_BOOL_F);
 }
 

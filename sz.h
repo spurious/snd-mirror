@@ -26,6 +26,7 @@
 
 #define scm_apply(a, b, c)
 SCM scm_return_first(SCM a, ...);
+#define scm_must_malloc(size, str) malloc(size)
 
 #define SCM_EQ_P(a, b)                  scheme_eq(a, b)
 #define SCM_LIST0                       scheme_null
@@ -53,7 +54,6 @@ SCM scm_return_first(SCM a, ...);
 #define SND_TAG_TYPE int
 #define SND_SMOB_TYPE(TAG, OBJ) 0
 #define SMOB_TYPE_P(OBJ, TAG) 0
-#define SND_SETGCMARK(X)
 
 #define TRUE_P(a)                       scheme_eq(a, SCM_BOOL_T)
 #define FALSE_P(a)                      SCHEME_FALSEP(a)

@@ -50,6 +50,10 @@
   #include "config.h"
 #endif
 
+#if USE_SND
+  #include "snd.h"
+#endif
+
 #include <math.h>
 #include <stdio.h>
 #if (!defined(HAVE_CONFIG_H)) || (defined(HAVE_FCNTL_H))
