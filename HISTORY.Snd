@@ -1,6 +1,7 @@
 Snd change log
 
   6-May:     mono->stereo, mono-files->stereo, stereo->mono (extensions.scm).
+             channel-variance etc in dsp.scm, taken from J Smith "Mathematics of the DFT"
   5-May:     reverse-channels, scramble-channels, rotate-channel, scramble-channel (extsnd.html, examp.scm)
   22-Apr:    complexify in snd-gl.scm.
   19-Apr:    add-to-menu now returns the new menu label widget.

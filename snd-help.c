@@ -374,6 +374,7 @@ void about_snd_help(void)
 	    "\nRecent changes include:\n\
 \n\
 6-May:   mono->stereo, mono-files->stereo, stereo->mono (extensions.scm).\n\
+         channel-variance etc in dsp.scm, taken from J Smith \"Mathematics of the DFT\"\n\
 5-May:   reverse-channels, scramble-channels, rotate-channel, scramble-channel (extsnd.html, examp.scm)\n\
 22-Apr:  complexify in snd-gl.scm.\n\
 19-Apr:  add-to-menu now returns the new menu label widget.\n\

@@ -39,6 +39,8 @@
 
 (define (down-oct n)
   "(down-n n) moves a sound down by power of 2 n"
+  ;; I think this is "stretch" in DSP jargon -- to interpolate in the time domain we're squeezing the frequency domain
+  ;;  the power-of-2 limitation is based on the underlying fft function's insistence on power-of-2 data sizes
   (let* ((len (frames))
 	 (pow2 (ceiling (/ (log len) (log 2))))
 	 (fftlen (inexact->exact (expt 2 pow2)))

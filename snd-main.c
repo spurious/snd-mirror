@@ -1051,7 +1051,7 @@ static XEN g_exit(XEN val)
 {
   #define H_exit "(" S_exit "): exit Snd"
   if (snd_exit_cleanly(false))
-    snd_exit(XEN_TO_C_INT_OR_ELSE(val,1)); 
+    snd_exit(XEN_TO_C_INT_OR_ELSE(val, 1)); 
   return(XEN_FALSE);
 }
 

@@ -1883,7 +1883,7 @@ called just after an FFT (or spectrum) is calculated.
 
 <tr><td></td><td colspan=2>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-(define (fft-peak snd chn scale)
+(define (<A NAME="fftpeak">fft-peak</A> snd chn scale)
   (if (and (<a class=quiet href="#transformgraphp">transform-graph?</a>) 
            (= (<a class=quiet href="#transformgraphtype">transform-graph-type</a>) <a class=quiet href="#transformgraphtype">graph-once</a>))
       (<a class=quiet href="#reportinminibuffer">report-in-minibuffer</a> 
@@ -6245,6 +6245,9 @@ for some timings.  In Ruby, its possible to use the <a href="http://www.zenspide
 </td></tr>
 <tr><td></td><td>
 value of sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
+<pre>
+  (set! (sample 100) .5)
+</pre>
 If the desired sample happens to fall outside the current buffer 
 for the indicated channel, this function grinds to a halt -- if you're 
 running a loop through a bunch of samples, use the <a href="#samplereaders">sample-readers</a> 
@@ -6525,18 +6528,6 @@ In this case, we found such a sample at position 4423.<br>
 	   (<a class=quiet href="#freesamplereader">free-sample-reader</a> reader)
 	   val))
       (set! result (func (<a class=quiet href="#readsample">read-sample</a> reader))))))
-</pre></td></tr></table>
-<br>snd4.scm has Snd-4 style scanning functions:<br><br>
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-(define* (scan-all-chans proc #:optional (beg 0) end edpos)
-  (catch 'done
-	 (lambda ()
-	   (apply for-each 
-		  (lambda (snd chn)
-		    (let ((result (<em class=red>scan-chan</em> proc beg end snd chn edpos)))
-		      (if result (throw 'done (append result (list snd chn))))))
-		  (all-chans)))
-	 (lambda args (cadr args))))
 </pre></td></tr></table>
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -6977,7 +6968,7 @@ Same for z-axis (default 0.1, in GL: 1.0).
 <code><a class=def name="squelchupdate">squelch-update</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-#t if graphic updates squelched (turned off).  If you're doing a sequence of edits where intermediate
+#t if graphic updates are currently squelched (turned off).  If you're doing a sequence of edits where intermediate
 states aren't of great interest, you can save time by turning off redisplays.
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -7148,8 +7139,9 @@ If no argument is given, stop all sounds (channels) in progress.  See play.scm o
 Swap the indicated channels, between beg and beg+dur.  See <i>swap-selection-channels</i> in examp.scm.
 In simple cases, this is a virtual operation.  swap-channels can be used to change channel order arbitrarily.
 For example, the following function reverses the channel order:
-<br>
-<pre>
+</td></tr>
+<tr><td></td><td>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define* (<a name="reversechannels">reverse-channels</a> #:optional snd)
   (let* ((ind (or snd (<a class=quiet href="#selectedsound">selected-sound</a>) (car (<a class=quiet href="#sounds">sounds</a>))))
 	 (chns (<a class=quiet href="#channels">chans</a> ind)))
@@ -7160,8 +7152,13 @@ For example, the following function reverses the channel order:
 	      (j (1- chns) (1- j)))
 	     ((= i swaps))
 	   (<em class=red>swap-channels</em> ind i ind j)))))))
-</pre>
+</pre></td></tr></table>
+</td></tr><tr><td></td><td>
 Channel rotation is similar, though slightly more work; see scramble-channels in examp.scm.
+Since swap-channels is a virtual operation in many cases, it's worth using it even
+where just a channel copy is desired.  See <a href="sndscm.html#monotostereo">mono-&gt;stereo</a>
+in extensions.scm for an example.  Here the "extra" channel is empty (brand-new) anyway, so
+nothing is wasted.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7280,6 +7277,7 @@ sonogram or spectrogram) <i>slice</i> in <i>snd</i>'s channel <i>chn</i>.
 <tr><td></td><td>
 return vct struct with the transform data currently in <i>snd</i>'s channel <i>chn</i>.
 If v (a vct) is provided, it is filled, rather than creating a new vct.
+See <a href="#fftpeak">fft-peak</a> for an example.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -9353,7 +9351,7 @@ delete listener text from the beginning to the cursor position (C-M-g is bound t
 <tr><td colspan=2>
 <code><a class=def name="closesoundfile">close-sound-file</a> (fd bytes)</code></td></tr>
 <tr><td></td><td>
-close file (opened by open-sound-file) updating header to report <i>bytes</i> bytes of data.  This refers to data files
+close file (opened by <a href="#opensoundfile">open-sound-file</a>) updating header to report <i>bytes</i> bytes of data.  This refers to data files
 handled directly, not sounds displayed in Snd (the latter are handled by <a href="#opensound">open-sound</a> and <a href="#closesound">close-sound</a>).
 See <i>save-track</i> in mix.scm.
 </td></tr>
@@ -9515,7 +9513,11 @@ the newly opened sound's index.  This supports the snd-memo feature
 in CLM, but can be used independently of CLM to store marks, selections,
 or whatever that you want associated with a particular sound. Confusingly
 enough, this is a variable, unlike all the others -- that is, you
-refer to it directly, not as a procedure call.
+refer to it directly, not as a procedure call.  Say we have a sound file "now.snd",
+and we want it to use the grid-graph whenever it is viewed.  We make "now.snd.scm"
+and put in it: <code>(set! (show-grid memo-sound) #t)</code>.  When now.snd is
+opened, so is now.snd.scm, with memo-sound holding the index of now.snd.
+There are other fancier ways to do this (e.g. <a href="extsnd.html#exremembersoundstate">remember-sound-state</a>).
 </td></tr>
 
 <!-- open-sound-file -->
@@ -9528,6 +9530,11 @@ the caller interleaving channels), and that the file will be closed by
 <a href="#closesoundfile">close-sound-file</a>. One simple way to write the data is to call 
 <a href="#vct2soundfile">vct-&gt;sound-file</a>.  <i>open-sound-file</i> opens an output file external to Snd, whereas <i>open-sound</i>
 loads a file into Snd for editing.
+<pre>
+  (let ((fd (<em class=red>open-sound-file</em> "hiho.snd" 1 :srate 22050 :comment "hiho is from snd-test")))
+    (<em class=red>vct-&gt;sound-file</em> fd v2 10) ; v2 has 10 samples of sound data, presumably
+    (<em class=red>close-sound-file</em> fd 10))
+</pre>
 </td></tr>
 
 <!-- preload-directory -->
@@ -9536,7 +9543,7 @@ loads a file into Snd for editing.
 <tr><td></td><td>
 preload sound files from directory <i>dir</i> (see -<a href="snd.html#minusp">p</a>).  Preloading a file means
 placing it in the list of previous files in the View menu's <a href="snd.html#prevfiles">View Files</a> dialog.
-By preloading all the files you might want to use, you can use that dialog as a convenient access method, and so on.
+By preloading all the files you might want to use, you can use that dialog to access them conveniently.
 See <a href="sndscm.html#nbdoc">nb.scm</a>.
 </td></tr>
 
@@ -9698,6 +9705,10 @@ return a new temp file name using Snd's <a href="#tempdir">temp-dir</a>.
 <code><a class=def name="sndurl">snd-url</a> (name)</code></td></tr>
 <tr><td></td><td>
 return the url (in the Snd documentation) corresponding to <i>name</i>; <i>name</i> can be a string or a symbol.
+<pre>
+<em class=listener>:</em><em class=typing>(snd-url 'open-sound)</em>
+<em class=listener>"extsnd.html#opensound"</em>
+</pre>
 </td></tr>
 
 <!-- snd-urls -->

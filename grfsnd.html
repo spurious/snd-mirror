@@ -143,7 +143,7 @@ To override the local init file, use -noinit.
 Here's a more elaborate initialization file:
 </p>
 
-<pre>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (use-modules (ice-9 debug) (ice-9 format) (ice-9 optargs))
 (debug-set! stack 0)                ;turn off Guile's stack-size check
 (set! snd-remember-paths #t)        ;remember paths making "load" smarter
@@ -197,14 +197,15 @@ Here's a more elaborate initialization file:
     (if (provided? 'snd-gtk)
         (load "/home/bil/cl/gtk-popup.scm")))
 
-(add-hook! <a class=quiet href="extsnd.html#afteropenhook">after-open-hook</a>         ;if sound has many chans, use just one pane for all
+(add-hook! <a class=quiet href="extsnd.html#afteropenhook">after-open-hook</a>          ;if sound has many chans, use just one pane for all
   (lambda (snd)
     (if (&gt; (<a class=quiet href="extsnd.html#chans">chans</a> snd) 4)
         (set! (<a class=quiet href="extsnd.html#channelstyle">channel-style</a> snd) <a class=quiet href="extsnd.html#channelstyle">channels-combined</a>))))
 
-(set! (<a class=quiet href="extsnd.html#optimization">optimization</a>) 6)             ;turn on full optimization (live dangerously...)
+(set! (<a class=quiet href="extsnd.html#optimization">optimization</a>) 6)              ;turn on full optimization (live dangerously...)
 (set! (<a class=quiet href="extsnd.html#selectioncreatesregion">selection-creates-region</a>) #f) ;turn off automatic region creation
-</pre>
+</pre></td></tr></table>
+
 <p>
 If you loaded Snd with GSL, and have set the GSL_IEEE_MODE environment variable,
 it will override Snd's default arithmetic mode settings.  GSL recommends the setting:

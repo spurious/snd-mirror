@@ -7,7 +7,7 @@
 #include <config.h>
 #endif
 
-/* TODO: tests for Motif 2.4 additions */
+/* TODO: tests for Motif 2.2.4 additions */
 
 #define XM_DATE "26-Apr-04"
 

@@ -5017,7 +5017,7 @@ static xen_value *ceiling_1(ptree *prog, xen_value **args, int num_args)
       return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, ceil(prog->dbls[args[1]->addr])), R_CONSTANT));
     }
   if (prog->walk_result == NEED_INT_RESULT)
-    return(package(prog, R_INT, ceiling_i, descr_ceiling_i, args,1));
+    return(package(prog, R_INT, ceiling_i, descr_ceiling_i, args, 1));
   return(package(prog, R_FLOAT, ceiling_f, descr_ceiling_f, args, 1));
 }
 
@@ -5029,7 +5029,7 @@ static xen_value *exact2inexact_1(ptree *prog, xen_value **args, int num_args)
     return(copy_xen_value(args[1]));
   if (prog->constants == 1)
     return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, (Double)(prog->ints[args[1]->addr])), R_CONSTANT));
-  return(package(prog, R_FLOAT, store_i_f, descr_store_i_f, args,1));
+  return(package(prog, R_FLOAT, store_i_f, descr_store_i_f, args, 1));
 }
 
 static void i2e_f(int *args, ptree *pt) {INT_RESULT = (Int)floor(FLOAT_ARG_1 + 0.5);}

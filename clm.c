@@ -615,8 +615,18 @@ static Float *array_normalize(Float *table, int table_size)
 
 typedef struct {
   mus_any_class *core;
-  Float phase, freq;
+  double phase, freq;
 } osc;
+
+/* 6-May-04: try an experiment: if using double for freq and phase throughout,
+   the phase size checks and subsequent fmods can be omitted because we have
+   52 bits of significand, so when we run an oscil at 1000 Hz for 40 hours,
+   the phase is around 2^30 which still leaves 20 some bits for the add of
+   the phase increment ["freq" in local terminology] -- this would have failed
+   with float long before that point.  Since sin uses doubles anyway,
+   it shouldn't be a lot slower (initial timing tests show no obvious change).
+   Also tests with an initial-phase of 2^30 showed no signs of distress.
+*/
 
 Float mus_oscil(mus_any *ptr, Float fm, Float pm)
 {
@@ -624,7 +634,7 @@ Float mus_oscil(mus_any *ptr, Float fm, Float pm)
   osc *gen = (osc *)ptr;
   result = sin(gen->phase + pm);
   gen->phase += (gen->freq + fm);
-  if ((gen->phase > 1000.0) || (gen->phase < -1000.0)) gen->phase = fmod(gen->phase, TWO_PI);
+  /* if ((gen->phase > 1000.0) || (gen->phase < -1000.0)) gen->phase = fmod(gen->phase, TWO_PI); */
   return(result);
 }
 
@@ -635,7 +645,7 @@ Float mus_oscil_0(mus_any *ptr)
   osc *gen = (osc *)ptr;
   result = sin(gen->phase);
   gen->phase += gen->freq;
-  if ((gen->phase > 1000.0) || (gen->phase < -1000.0)) gen->phase = fmod(gen->phase, TWO_PI);
+  /* if ((gen->phase > 1000.0) || (gen->phase < -1000.0)) gen->phase = fmod(gen->phase, TWO_PI); */
   return(result);
 }
 
@@ -645,7 +655,7 @@ Float mus_oscil_1(mus_any *ptr, Float fm)
   osc *gen = (osc *)ptr;
   result = sin(gen->phase);
   gen->phase += (gen->freq + fm);
-  if ((gen->phase > 1000.0) || (gen->phase < -1000.0)) gen->phase = fmod(gen->phase, TWO_PI);
+  /* if ((gen->phase > 1000.0) || (gen->phase < -1000.0)) gen->phase = fmod(gen->phase, TWO_PI); */
   return(result);
 }
 
@@ -724,9 +734,8 @@ mus_any *mus_make_oscil(Float freq, Float phase)
 typedef struct {
   mus_any_class *core;
   int cosines;
-  Float scaler;
-  Float phase;
-  Float freq;
+  Float scaler, cos5;
+  double phase, freq;
 } cosp;
 
 Float mus_sum_of_cosines(mus_any *ptr, Float fm)
@@ -740,12 +749,14 @@ Float mus_sum_of_cosines(mus_any *ptr, Float fm)
     val = 1.0;
   else 
     {
-      val = (gen->scaler * (((sin(gen->phase * (gen->cosines + 0.5))) / (2.0 * den)) - 0.5));
+      val = (gen->scaler * (((sin(gen->phase * gen->cos5)) / (2.0 * den)) - 0.5));
       if (val > 1.0) val = 1.0;
     }
   gen->phase += (gen->freq + fm);
+  /*
   while (gen->phase > TWO_PI) gen->phase -= TWO_PI;
   while (gen->phase < 0.0) gen->phase += TWO_PI;
+  */
   return(val);
 }
 
@@ -759,7 +770,14 @@ static Float set_sum_of_cosines_phase(mus_any *ptr, Float val) {((cosp *)ptr)->p
 static Float sum_of_cosines_scaler(mus_any *ptr) {return(((cosp *)ptr)->scaler);}
 static Float set_sum_of_cosines_scaler(mus_any *ptr, Float val) {((cosp *)ptr)->scaler = val; return(val);}
 static off_t sum_of_cosines_cosines(mus_any *ptr) {return(((cosp *)ptr)->cosines);}
-static off_t set_sum_of_cosines_cosines(mus_any *ptr, off_t val) {((cosp *)ptr)->cosines = (int)val; ((cosp *)ptr)->scaler = 1.0 / (Float)val; return(val);}
+static off_t set_sum_of_cosines_cosines(mus_any *ptr, off_t val) 
+{
+  cosp *gen = (cosp *)ptr;
+  gen->cosines = (int)val;
+  gen->cos5 = val + 0.5;
+  gen->scaler = 1.0 / (Float)val; 
+  return(val);
+}
 static Float run_sum_of_cosines(mus_any *ptr, Float fm, Float unused) {return(mus_sum_of_cosines(ptr, fm));}
 
 static bool sum_of_cosines_equalp(mus_any *p1, mus_any *p2)
@@ -827,6 +845,7 @@ mus_any *mus_make_sum_of_cosines(int cosines, Float freq, Float phase)
   if (cosines == 0) cosines = 1;
   gen->scaler = 1.0 / (Float)cosines;
   gen->cosines = cosines;
+  gen->cos5 = cosines + 0.5;
   gen->freq = mus_hz_to_radians(freq);
   gen->phase = phase;
   return((mus_any *)gen);
@@ -877,7 +896,8 @@ static Float sum_of_sines_scaler(int sines)
 static off_t set_sum_of_sines_sines(mus_any *ptr, off_t val) 
 {
   cosp *gen = (cosp *)ptr;
-  gen->cosines = (int)val; 
+  gen->cosines = (int)val;
+  gen->cos5 = val + 1.0;
   gen->scaler = sum_of_sines_scaler((int)val);
   return(val);
 }
@@ -896,10 +916,12 @@ Float mus_sum_of_sines(mus_any *ptr, Float fm)
   den = sin(a2);
   if (den == 0.0)
     val = 0.0;
-  else val = gen->scaler * sin(gen->cosines * a2) * sin(a2 * (gen->cosines + 1)) / den;
+  else val = gen->scaler * sin(gen->cosines * a2) * sin(a2 * gen->cos5) / den;
   gen->phase += (gen->freq + fm);
+  /*
   while (gen->phase > TWO_PI) gen->phase -= TWO_PI;
   while (gen->phase < 0.0) gen->phase += TWO_PI;
+  */
   return(val);
 }
 
@@ -935,6 +957,7 @@ mus_any *mus_make_sum_of_sines(int sines, Float freq, Float phase)
   gen = (cosp *)mus_make_sum_of_cosines(sines, freq, phase);
   gen->core = &SUM_OF_SINES_CLASS;
   gen->scaler = sum_of_sines_scaler(sines);
+  gen->cos5 = gen->cosines + 1.0;
   return((mus_any *)gen);
 }
 
@@ -2185,9 +2208,8 @@ mus_any *mus_make_rand_interp_with_distribution(Float freq, Float base, Float *d
 typedef struct {
   mus_any_class *core;
   Float r;
-  Float freq;
+  double freq, phase;
   Float ratio;
-  Float phase;
   Float cosr;
   Float sinr;
 } asyfm;
@@ -2250,7 +2272,7 @@ Float mus_asymmetric_fm(mus_any *ptr, Float index, Float fm)
   result = exp(index * gen->cosr * cos(mth)) * sin(gen->phase + index * gen->sinr * sin(mth));
   /* second index factor added 4-Mar-02 */
   gen->phase += (gen->freq + fm);
-  if ((gen->phase > 100.0) || (gen->phase < -100.0)) gen->phase = fmod(gen->phase, TWO_PI);
+  /* if ((gen->phase > 100.0) || (gen->phase < -100.0)) gen->phase = fmod(gen->phase, TWO_PI); */
   return(result);
 }
 
@@ -2262,7 +2284,7 @@ Float mus_asymmetric_fm_1(mus_any *ptr, Float index) /* mostly for internal opti
   result = exp(index * gen->cosr * cos(mth)) * sin(gen->phase + index * gen->sinr * sin(mth));
   /* second index factor added 4-Mar-02 */
   gen->phase += gen->freq;
-  if ((gen->phase > 100.0) || (gen->phase < -100.0)) gen->phase = fmod(gen->phase, TWO_PI);
+  /* if ((gen->phase > 100.0) || (gen->phase < -100.0)) gen->phase = fmod(gen->phase, TWO_PI); */
   return(result);
 }
 
@@ -2313,8 +2335,7 @@ mus_any *mus_make_asymmetric_fm(Float freq, Float phase, Float r, Float ratio) /
 
 typedef struct {
   mus_any_class *core;
-  Float freq;
-  Float phase;
+  double freq, phase;
   Float a, b, an, a2;
   int n;
 } sss;
@@ -2388,7 +2409,7 @@ Float mus_sine_summation(mus_any *ptr, Float fm)
 		 (gen->an * (sin(gen->phase + (B * (gen->n + 1))) - 
 			     (gen->a * sin(gen->phase + (B * gen->n)))))) / divisor;
   gen->phase += (gen->freq + fm);
-  gen->phase = fmod(gen->phase, TWO_PI);
+  /* gen->phase = fmod(gen->phase, TWO_PI); */
   return(result);
 }
 
@@ -3222,8 +3243,7 @@ Float mus_set_y2(mus_any *gen, Float val)
 
 typedef struct {
   mus_any_class *core;
-  Float freq;
-  Float phase;
+  double freq, phase;
   Float *table;
   int table_size;
   Float offset;
@@ -3355,7 +3375,7 @@ Float mus_waveshape(mus_any *ptr, Float index, Float fm)
   Float oscval, table_index;
   oscval = sin(gen->phase);
   gen->phase += (gen->freq + fm);
-  if ((gen->phase > 100.0) || (gen->phase < -100.0)) gen->phase = fmod(gen->phase, TWO_PI);
+  /* if ((gen->phase > 100.0) || (gen->phase < -100.0)) gen->phase = fmod(gen->phase, TWO_PI); */
   table_index = gen->offset * (1.0 + (oscval * index));
   return(mus_array_interp(gen->table, table_index, gen->table_size));
 }
@@ -3366,7 +3386,7 @@ Float mus_waveshape_1(mus_any *ptr, Float index)
   Float oscval, table_index;
   oscval = sin(gen->phase);
   gen->phase += gen->freq;
-  if ((gen->phase > 100.0) || (gen->phase < -100.0)) gen->phase = fmod(gen->phase, TWO_PI);
+  /* if ((gen->phase > 100.0) || (gen->phase < -100.0)) gen->phase = fmod(gen->phase, TWO_PI); */
   table_index = gen->offset * (1.0 + (oscval * index));
   return(mus_array_interp(gen->table, table_index, gen->table_size));
 }
