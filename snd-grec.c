@@ -2050,7 +2050,6 @@ void snd_record_file(void)
 
       make_file_info_pane(rp, file_info_pane, rp->ordered_devices_size);
       messages = make_scrolled_text(NULL, false, NULL, rec_panes);
-      gtk_widget_modify_base(messages, GTK_STATE_NORMAL, ss->sgx->white);
       set_dialog_widget(RECORDER_DIALOG, recorder);
       initialize_recorder(rp);
     }

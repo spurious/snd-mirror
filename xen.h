@@ -5,10 +5,15 @@
  *
  * Guile:     covers 1.3.4 to present (1.7.0) given the configuration macros in the Snd or Libxm config.h.in.
  * Ruby:      still a few gaps, tested in 1.6.6, 1.6.7, 1.6.8, 1.7.2, 1.8.0
- * Elk:       underway...
  * None:      covers all known versions of None
  *
- * (I also have incomplete versions for SCM, MzScheme, Python, and librep if anyone is interested enough to tackle one)
+ * I also have incomplete versions for SCM, MzScheme, Python, and librep if anyone is interested,
+ *   and much of Elk, but the latter defines Object, False, and True which collide with Xt's Object etc.
+ *   MzScheme is a bother because its basic object is a pointer, making it hard to have a list of ids after XEN.
+ *   Also, last I looked, its user-defined-type stuff was not very good.
+ *   Librep's main problem is that any code that uses it is completely undebuggable.
+ *   Python doesn't strike me as very different from Ruby.
+ *   SCM, like MIT_Scheme, isn't really oriented toward extending C programs.
  *
  * "xen" from Greek xenos (guest, foreigner)
  */
@@ -1157,171 +1162,6 @@ XEN xen_rb_copy_list(XEN val); /* Ruby arrays (lists) are passed by reference */
 XEN xen_rb_str_new2(char *arg);
 #endif
 /* end HAVE_RUBY */
-
-
-/* ------------------------------ ELK ------------------------------ */
-
-#if HAVE_ELK
-
-#include <elk/scheme.h>
-
-#define XEN_OK 1
-
-#define XEN                                          Object
-#define XEN_FALSE                                    False /* yow!  how does Xt work with this? */
-#define XEN_TRUE                                     True
-#define XEN_EMPTY_LIST                               Null
-#define XEN_UNDEFINED
-
-#define XEN_FILE_EXTENSION                           "scm"
-#define XEN_COMMENT_STRING                           ";"
-
-#define XEN_EQ_P(a, b)                               EQ(a, b)
-#define XEN_EMPTY_LIST 
-#define XEN_LIST_1(a)                                
-#define XEN_LIST_2(a, b)                             
-#define XEN_LIST_3(a, b, c) 
-#define XEN_LIST_4(a, b, c, d) 
-#define XEN_LIST_5(a, b, c, d, e) 
-#define XEN_LIST_6(a, b, c, d, e, f) 
-#define XEN_LIST_7(a, b, c, d, e, f, g) 
-#define XEN_LIST_8(a, b, c, d, e, f, g, h) 
-#define XEN_LIST_9(a, b, c, d, e, f, g, h, i) 
-#define XEN_CAR(a)                                    P_Car(a)
-#define XEN_CADR(a)                                   P_Cadr(a)
-#define XEN_CADDR(a)                                  P_Caddr(a)
-#define XEN_CADDDR(a)                                 P_Cadddr(a)
-#define XEN_CDR(a)                                    P_Cdr(a)
-#define XEN_CDDR(a)                                   P_Cddr(a)
-#define XEN_COPY_ARG(Lst) 
-#define XEN_VECTOR_ELEMENTS(a)                        VECTOR(a)->data
-#define XEN_MARK_OBJECT_TYPE
-#define XEN_MAKE_OBJECT(a, b, c, ig1, ig2)
-#define XEN_MAKE_OBJECT_TYPE(Typ, Siz)
-#define XEN_MAKE_OBJECT_PRINT_PROCEDURE(Type, Wrapped_Print, Original_Print)
-#define XEN_MAKE_OBJECT_FREE_PROCEDURE(Type, Wrapped_Free, Original_Free)
-#define XEN_HOOK_PROCEDURES(a)
-#define XEN_VARIABLE_SET(a, b)
-#define XEN_VARIABLE_REF(a)
-
-#define XEN_MAKE_AND_RETURN_OBJECT(Tag, Val, ig1, ig2)
-#define XEN_OBJECT_REF(a)
-#define XEN_NAME_AS_C_STRING_TO_VALUE(a)
-#define XEN_OBJECT_TYPE
-#define XEN_OBJECT_TYPE_P(OBJ, TAG)
-#define XEN_TRUE_P(a)                                 Truep(a)
-#define XEN_FALSE_P(a)                                (!(Truep(a)))
-#define XEN_NULL_P(a)                                 (TYPE(Arg) == T_Null)
-#define XEN_BOUND_P(Arg)                              (TYPE(Arg) != T_Unbound)
-#define XEN_NOT_BOUND_P(Arg)                          (TYPE(Arg) == T_Unbound)
-#define XEN_ZERO                                      Zero
-#define XEN_DOUBLE_P(Arg)                             (TYPE(Arg) == T_Flonum)
-
-#define XEN_TO_C_DOUBLE(a)                            FLONUM(a)
-#define XEN_TO_C_DOUBLE_OR_ELSE(a, b)
-#define XEN_TO_C_DOUBLE_WITH_CALLER(a, b)
-#define XEN_TO_C_INT(a)                               FIXNUM(a)
-#define XEN_TO_C_INT_OR_ELSE(a, b)
-#define XEN_TO_C_INT_OR_ELSE_WITH_CALLER(a, b, c)
-#define XEN_TO_C_STRING(STR)                          STRING(a)
-#define C_TO_XEN_DOUBLE(a)                             Make_Flonum(a)
-#define C_TO_XEN_INT(a)                                Make_Integer(a)
-#define C_TO_SMALL_XEN_INT(a)                          Make_Integer(a)
-#define XEN_TO_SMALL_C_INT(a)                          FIXNUM(a)
-#define C_TO_XEN_LONG_LONG(a)                          Make_Long(a)
-#define XEN_TO_C_LONG_LONG(a)                          Get_Long(a)
-#define C_TO_XEN_STRING(a)                            /* Make_String(a, len?) Make_Const_String? */
-#define C_TO_XEN_BOOLEAN(a)                           ((a) ? True : False)
-#define C_STRING_TO_XEN_SYMBOL(a)                     /* String_To_Symbol(Make_String...) */
-#define XEN_TO_C_BOOLEAN_OR_TRUE(a)
-#define XEN_TO_C_BOOLEAN(a)                          Truep(a)
-#define C_STRING_TO_XEN_FORM(Str)
-#define XEN_EVAL_FORM(Form)                          P_Eval(Form)
-#define XEN_SYMBOL_TO_C_STRING(a)                    STRING(Symbol_To_String(a))
-#define XEN_WRAP_C_POINTER(a)
-#define XEN_UNWRAP_C_POINTER(a)
-#define XEN_WRAPPED_C_POINTER_P(a)
-#define XEN_HOOKED(a)
-#define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
-  P_Define_Primitive(Func, Name, ReqArg, ReqArg + OptArg)
-#define XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt)
-#define XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt)
-#define XEN_DEFINE_CONSTANT(a, b, c)
-#define XEN_DEFINE_VARIABLE(a, b, c)                    /* Define_Variable(???) */
-#define XEN_BOOLEAN_P(Arg)                              (TYPE(Arg) == T_Boolean)
-#define XEN_NUMBER_P(Arg)
-#define XEN_INTEGER_P(Arg)                              (TYPE(Arg) == T_Fixnum)
-#define XEN_OFF_T_P(Arg)                                
-#define XEN_SYMBOL_P(Arg)                               (TYPE(Arg) == T_Symbol)
-#define XEN_STRING_P(Arg)                               (TYPE(Arg) == T_String)
-#define XEN_VECTOR_P(Arg)                               (TYPE(Arg) == T_Vector)
-#define XEN_TO_C_ULONG(a)
-#define C_TO_XEN_ULONG(a)
-#define XEN_ULONG_P(Arg)
-#define XEN_HOOK_P(Arg)
-#define XEN_EXACT_P(Arg)
-#define XEN_LIST_P(Arg)
-#define XEN_LIST_P_WITH_LENGTH(Arg, Len)
-#define XEN_LIST_LENGTH(Arg)                            Fast_Length(Arg)
-#define XEN_VECTOR_LENGTH(Arg)                         VECTOR(Arg)->size
-#define XEN_PROCEDURE_P(Arg)                           ((TYPE(Arg) == T_Primitive) || (TYPE(Arg) == T_Compound))
-#define XEN_CONS(Arg1, Arg2)                              P_Cons(Arg1, Arg2)
-#define XEN_CONS_2(Arg1, Arg2, Arg3)                      P_Cons(Arg1, P_Cons(Arg2, Arg3))
-#define XEN_LIST_REF(Lst, Num)                            P_List_Ref(Lst, Make_Integer(Num))
-#define XEN_LIST_SET(Lst, Num, Val)
-#define XEN_VECTOR_REF(Vect, Num)                       VECTOR(Vect)->data[Num]
-#define XEN_VECTOR_SET(a, b, c)                         VECTOR(a)->data[b] = c
-#define XEN_EVAL_C_STRING(Arg)
-#define XEN_MAKE_VECTOR(Num, Fill)                      P_Make_Vector(Num, Fill)
-#define XEN_VECTOR_TO_LIST(Vect)                        P_Vector_To_List(Vect)
-#define XEN_DEFINE_HOOK(Var, Name, Arity, Help)
-#define XEN_DEFINE_SIMPLE_HOOK(Var, Arity)
-#define XEN_CLEAR_HOOK(Arg)
-#define XEN_CHAR_P(Arg)                                      (P_Charp(Arg) ? true : false)
-#define XEN_TO_C_CHAR(Arg)                                   CHAR(a)
-#define XEN_CALL_0(Func, Caller)
-#define XEN_CALL_1(Func, Arg1, Caller)
-#define XEN_CALL_2(Func, Arg1, Arg2, Caller)
-#define XEN_CALL_3(Func, Arg1, Arg2, Arg3, Caller)
-#define XEN_CALL_4(Func, Arg1, Arg2, Arg3, Arg4, Caller)
-#define XEN_CALL_5(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Caller)
-#define XEN_CALL_6(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Caller)
-#define XEN_APPLY(Func, Args, Caller)
-#define XEN_APPLY_ARG_LIST_END
-#define XEN_CALL_0_NO_CATCH(Func, Caller)
-#define XEN_CALL_1_NO_CATCH(Func, Arg1, Caller)
-#define XEN_CALL_2_NO_CATCH(Func, Arg1, Arg2, Caller)
-#define XEN_CALL_3_NO_CATCH(Func, Arg1, Arg2, Arg3, Caller)
-#define XEN_APPLY_NO_CATCH(Func, Args, Caller)
-#define XEN_ARITY(Func)
-#define XEN_REQUIRED_ARGS(Func)
-#define XEN_KEYWORD_P(Obj)
-#define XEN_KEYWORD_EQ_P(k1, k2)
-#define XEN_MAKE_KEYWORD(Arg)
-#define XEN_YES_WE_HAVE(Feature)                                    P_Provide(Intern(Feature))
-#define XEN_DOCUMENTATION_SYMBOL                                    Intern("Documentation")
-#define XEN_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type)
-#define XEN_PROTECT_FROM_GC(a)
-#define XEN_LOAD_FILE(a)                                            P_Load_File(a)
-#define XEN_ERROR_TYPE(Typ)
-#define XEN_ERROR(Type, Info)
-#define XEN_TO_STRING(Obj)
-#define XEN_WRONG_TYPE_ARG_ERROR(Caller, ArgN, Arg, Descr)
-#define XEN_OUT_OF_RANGE_ERROR(Caller, ArgN, Arg, Descr)
-#define XEN_APPEND(X, Y)                                            P_Append(X, Y)
-#define XEN_ONLY_ARG 0
-#define XEN_ARG_1    1
-#define XEN_ARG_2    2
-#define XEN_ARG_3    3
-#define XEN_ARG_4    4
-#define XEN_ARG_5    5
-#define XEN_ARG_6    6
-#define XEN_ARG_7    7
-#define XEN_ARG_8    8
-#define XEN_ARG_9    9
-
-#endif
-/* end HAVE_ELK */
 
 
 /* ------------------------------ NO EXTENSION LANGUAGE ------------------------------ */

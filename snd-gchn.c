@@ -703,6 +703,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
 				     g_cclosure_new(GTK_SIGNAL_FUNC(sx_valuechanged_callback), (gpointer)cp, 0),
 				     0);
       gtk_widget_show(cw[W_sx]);
+      gtk_widget_set_name(cw[W_sx], "sx_slider");
 
       adjs[W_zx_adj] = gtk_adjustment_new(0.0, 0.0, 1.1, 0.001, 0.01, .1);
       cw[W_zx] = gtk_hscrollbar_new(GTK_ADJUSTMENT(adjs[W_zx_adj]));
@@ -713,6 +714,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(zx_valuechanged_callback), (gpointer)cp, 0),
 				     0);
+      gtk_widget_set_name(cw[W_zx], "zx_slider");
       gtk_widget_show(cw[W_zx]);
 
 
@@ -785,6 +787,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
 				     g_cclosure_new(GTK_SIGNAL_FUNC(zy_valuechanged_callback), (gpointer)cp, 0),
 				     0);
       gtk_widget_show(cw[W_zy]);
+      gtk_widget_set_name(cw[W_zy], "zy_slider");
 
       adjs[W_sy_adj] = gtk_adjustment_new(0.5, 0.0, 1.01, 0.001, 0.01, .01);
       cw[W_sy] = gtk_vscrollbar_new(GTK_ADJUSTMENT(adjs[W_sy_adj]));
@@ -799,6 +802,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
 				     g_cclosure_new(GTK_SIGNAL_FUNC(sy_valuechanged_callback), (gpointer)cp, 0),
 				     0);
       gtk_widget_show(cw[W_sy]);
+      gtk_widget_set_name(cw[W_sy], "sy_slider");
 
       if (need_extra_scrollbars)
 	{
@@ -815,6 +819,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
 					 g_cclosure_new(GTK_SIGNAL_FUNC(gsy_valuechanged_callback), (gpointer)cp, 0),
 					 0);
 	  gtk_widget_show(cw[W_gsy]);
+	  gtk_widget_set_name(cw[W_gsy], "gsy_slider");
 
 	  adjs[W_gzy_adj] = gtk_adjustment_new(1.0, 0.0, 1.00, 0.001, 0.01, .01);
 	  cw[W_gzy] = gtk_vscrollbar_new(GTK_ADJUSTMENT(adjs[W_gzy_adj]));
@@ -829,6 +834,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
 					 g_cclosure_new(GTK_SIGNAL_FUNC(gzy_valuechanged_callback), (gpointer)cp, 0),
 					 0);
 	  gtk_widget_show(cw[W_gzy]);
+	  gtk_widget_set_name(cw[W_gzy], "gzy_slider");
 	  
 	  gtk_widget_hide(cw[W_gsy]);
 	  gtk_widget_hide(cw[W_gzy]);

@@ -932,10 +932,7 @@ void set_control_panel_play_button(snd_info *sp, bool val)
     {
       set_toggle_button(PLAY_BUTTON(sp), false, false, sp);
       if (!val) 
-	{
-	  
-	  XtVaSetValues(PLAY_BUTTON(sp), XmNselectColor, (ss->sgx)->pushed_button_color, NULL);
-	}
+	XtVaSetValues(PLAY_BUTTON(sp), XmNselectColor, (ss->sgx)->pushed_button_color, NULL);
     }
 }
 

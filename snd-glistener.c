@@ -707,10 +707,7 @@ static void make_command_widget(int height)
 	gtk_paned_add2(GTK_PANED(SOUND_PANE(ss)), frame);
       else gtk_container_add(GTK_CONTAINER(MAIN_PANE(ss)), frame);
       listener_text = make_scrolled_text(frame, true, NULL, NULL);
-
-      if (LISTENER_FONT(ss)) gtk_widget_modify_font(listener_text, LISTENER_FONT(ss));
-      gtk_widget_modify_base(listener_text, GTK_STATE_NORMAL, (ss->sgx)->listener_color);
-      gtk_widget_modify_text(listener_text, GTK_STATE_NORMAL, (ss->sgx)->listener_text_color);
+      gtk_widget_set_name(listener_text, "listener_text");
 
       {
 	/* sigh... activate Emacs key bindings to some extent */

@@ -39,7 +39,6 @@ static void create_snd_error_dialog(bool popup)
 				 0);
   gtk_widget_show(ok_button);
   snd_error_history = make_scrolled_text(GTK_DIALOG(snd_error_dialog)->vbox, false, NULL, NULL);
-  gtk_widget_modify_base(snd_error_history, GTK_STATE_NORMAL, ss->sgx->white);
   if (popup) gtk_widget_show(snd_error_dialog);
   set_dialog_widget(ERROR_DIALOG, snd_error_dialog);
 }

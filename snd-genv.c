@@ -849,6 +849,7 @@ GtkWidget *create_envelope_editor (void)
       gtk_container_set_border_width(GTK_CONTAINER(enved_dialog), 4);
       gtk_widget_realize(enved_dialog);
       gtk_window_resize(GTK_WINDOW(enved_dialog), 500, 500);
+      gtk_widget_modify_bg(enved_dialog, GTK_STATE_NORMAL, ss->sgx->highlight_color);
 
       gc = gdk_gc_new(MAIN_WINDOW(ss));
       gdk_gc_set_background(gc, (ss->sgx)->white);

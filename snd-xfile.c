@@ -168,11 +168,15 @@ static void color_file_selection_box(Widget w)
 	{
 	  XtAddCallback(wtmp, XmNfocusCallback, textfield_focus_callback, NULL);
 	  XtAddCallback(wtmp, XmNlosingFocusCallback, textfield_unfocus_callback, NULL);
+	  XtAddEventHandler(wtmp, EnterWindowMask, false, mouse_enter_text_callback, NULL);
+	  XtAddEventHandler(wtmp, LeaveWindowMask, false, mouse_leave_text_callback, NULL);
 	}
       if (ftmp)
 	{
 	  XtAddCallback(ftmp, XmNfocusCallback, textfield_focus_callback, NULL);
 	  XtAddCallback(ftmp, XmNlosingFocusCallback, textfield_unfocus_callback, NULL);
+	  XtAddEventHandler(ftmp, EnterWindowMask, false, mouse_enter_text_callback, NULL);
+	  XtAddEventHandler(ftmp, LeaveWindowMask, false, mouse_leave_text_callback, NULL);
 	}
     }
 }
@@ -527,7 +531,6 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title,
     wtmp = XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_TEXT);
   if (wtmp) 
     add_completer_to_textfield(wtmp, add_completer_func(filename_completer));
-      
   wtmp = XtNameToWidget(fd->dialog, "FilterText");
   if (!wtmp) 
     wtmp = XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_FILTER_TEXT);

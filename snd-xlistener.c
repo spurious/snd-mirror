@@ -812,7 +812,7 @@ static XtTranslations transTable4 = NULL;
 static XEN mouse_enter_text_hook;
 static XEN mouse_leave_text_hook;
 
-static void mouse_enter_text_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag)
+void mouse_enter_text_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
   if (XEN_HOOKED(mouse_enter_text_hook))
     run_hook(mouse_enter_text_hook,
@@ -820,7 +820,7 @@ static void mouse_enter_text_callback(Widget w, XtPointer context, XEvent *event
 	     S_mouse_enter_text_hook);
 }
 
-static void mouse_leave_text_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag)
+void mouse_leave_text_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
   if (XEN_HOOKED(mouse_leave_text_hook))
     run_hook(mouse_leave_text_hook,

@@ -283,8 +283,10 @@ void set_play_button(snd_info *sp, bool val)
 void set_control_panel_play_button(snd_info *sp, bool val)
 {
   if ((sp) && (sp->sgx) && (PLAY_BUTTON(sp)))
-    set_toggle_button(PLAY_BUTTON(sp), false, false, sp);
-  if (!val) set_button_base(PLAY_BUTTON(sp), ss->sgx->white);
+    {
+      set_toggle_button(PLAY_BUTTON(sp), false, false, sp);
+      if (!val) set_button_base(PLAY_BUTTON(sp), ss->sgx->white);
+    }
 }
 
 static int last_play_state = 0;

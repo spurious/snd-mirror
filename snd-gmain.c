@@ -546,6 +546,10 @@ style \"default\"\n\
   base[NORMAL]    = { 1.00, 1.00, 1.00 }\n\
   bg[PRELIGHT]    = { 0.70, 0.70, 0.64 }\n\
   fg[PRELIGHT]    = { 1.0,  0.0,  0.0}\n\
+\n\
+  GtkPaned::handle_size = 6\n\
+  GtkButton::default_border = { 0, 0, 0, 0 }\n\
+  GtkButton::default_outside_border = { 0, 0, 0, 0 }\n\
 }\n\
 \n\
 style \"default_button\" = \"default\"\n\
@@ -565,7 +569,7 @@ style \"default_pane\" = \"default\"\n\
   bg[PRELIGHT] = { 0.26, 0.8, 0.26}\n\
 }\n\
 \n\
-style \"default_text\" = \"default\"\n\
+style \"default_entry\" = \"default\"\n\
 {\n\
   base[ACTIVE]      = { 0.93, 0.93, 0.87 }\n\
   base[SELECTED]    = { 1.0, 1.0, 1.0 }\n\
@@ -580,13 +584,50 @@ style \"default_text\" = \"default\"\n\
   base[INSENSITIVE] = { 0.93, 0.93, 0.87 }\n\
 }\n\
 \n\
+style \"default_text\" = \"default_entry\"\n\
+{\n\
+  base[NORMAL] = { 1.0, 1.0, 1.0 }\n\
+}\n\
+\n\
+style \"default_slider\" = \"default\"\n\
+{\n\
+  bg[NORMAL] = { 0.90, 0.90, 0.85 }\n\
+  bg[ACTIVE] = { 0.80, 0.80, 0.75 }\n\
+  bg[PRELIGHT] = { 0.70, 0.70, 0.64 }\n\
+\n\
+  GtkRange::slider_width = 10\n\
+  GtkRange::stepper_size = 10\n\
+}\n\
+\n\
 class \"GtkWidget\" style \"default\"\n\
 class \"GtkButton\" style \"default_button\"\n\
 class \"GtkMenu\" style \"default_menu\"\n\
 class \"GtkMenuBar\" style \"default_menu\"\n\
-class \"GtkEntry\" style \"default_text\"\n\
+class \"GtkEntry\" style \"default_entry\"\n\
 class \"GtkTextView\" style \"default_text\"\n\
 class \"GtkPaned\" style \"default_pane\"\n\
+class \"GtkRange\" style \"default_slider\"\n\
+\n\
+style \"zoom_slider\" = \"default_slider\"\n\
+{\n\
+  bg[NORMAL] = { 0.70, 0.70, 0.64 }\n\
+  bg[ACTIVE] = { 0.54, 0.54, 0.51 }\n\
+  bg[PRELIGHT] = { 0.44, 0.44, 0.36 }\n\
+}\n\
+\n\
+widget \"*.zx_slider\" style \"zoom_slider\"\n\
+widget \"*.zy_slider\" style \"zoom_slider\"\n\
+widget \"*.gzy_slider\" style \"zoom_slider\"\n\
+\n\
+style \"listener\" = \"default\"\n\
+{\n\
+  font_name = \"Monospace 10\"\n\
+\n\
+  base[NORMAL] = { 0.94, 0.97, 1.0 }\n\
+  text[NORMAL] = { 0.0, 0.0, 0.0 }\n\
+}\n\
+\n\
+widget \"*.listener_text\" style \"listener\"\n\
 ");
 
   MAIN_PANE(ss) = gtk_vbox_new(false, 0); /* not homogenous, spacing 0 */

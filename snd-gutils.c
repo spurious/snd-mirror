@@ -553,13 +553,13 @@ GtkWidget *sg_make_list(const char *title, GtkWidget *parent, int paned, gpointe
   GtkTreeIter iter;
   GtkTreeViewColumn *column;
   GtkWidget *scrolled_win;
+  GtkCellRenderer *celler;
 
   model = gtk_list_store_new(1, G_TYPE_STRING);
   list = gtk_tree_view_new_with_model(GTK_TREE_MODEL(model));
-  column = gtk_tree_view_column_new_with_attributes(title,
-						    gtk_cell_renderer_text_new (),
-						    "text", 0,
-						    NULL);
+  celler = gtk_cell_renderer_text_new();
+  celler->ypad = 0;
+  column = gtk_tree_view_column_new_with_attributes(title, celler, "text", 0, NULL);
   gtk_tree_view_column_set_sizing(column, GTK_TREE_VIEW_COLUMN_AUTOSIZE);
   gtk_tree_view_append_column(GTK_TREE_VIEW(list), column);
   scrolled_win = gtk_scrolled_window_new(NULL, NULL);
@@ -575,9 +575,9 @@ GtkWidget *sg_make_list(const char *title, GtkWidget *parent, int paned, gpointe
     case PANED_ADD: gtk_paned_add1(GTK_PANED(parent), scrolled_win); break;
     case BOX_PACK: gtk_box_pack_start(GTK_BOX(parent), scrolled_win, true, true, 0); break;
     case TABLE_ATTACH: gtk_table_attach(GTK_TABLE(parent), scrolled_win, t1, t2, t3, t4,
-			     (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
-			     (GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
-			     0, 0);
+					(GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
+					(GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
+					0, 0);
       break;
     case CONTAINER_ADD: gtk_container_add(GTK_CONTAINER(parent), scrolled_win); break;
     }

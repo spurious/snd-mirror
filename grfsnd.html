@@ -167,13 +167,11 @@ is equivalent to the -h flag; if 1, sounds are layed out
 horizontally rather than vertically;  if 2, you get a notebook
 widget holding the sounds.
 </p>
-<p>In Gtk2, the (pango) font defaults are:</p>
-<pre>
-tiny-font         "Monospace 8"
-axis-numbers-font "Monospace 10"
-axis-label-font   "Serif 14"
-help-text-font    "Monospace 14"
-</pre>
+<p>In Gtk, the various default colors and fonts can be found in
+Snd.gtkrc.  Currently the font and color variables mentioned above have little or no
+effect in Gtk.
+</p>
+
 
 <p><A NAME="aboutcolors"></a>The various color resources are:</p>
 
@@ -213,10 +211,6 @@ envedPointSize.  And several more color resources: whitecolor (list background),
 blackcolor (recorder VU meter text), redcolor (buttons, VU clipping, etc), 
 greencolor (a few buttons),
 yellowcolor (a few envelope editor buttons), lightbluecolor (the recorder), and lighterbluecolor (the fft option panel).
-</p>
-
-<p>In the GTK version, you can use Snd.gtkrc to override all the Snd defaults (see Snd.gtkrc
-in the Snd tarball for the built-in defaults).
 </p>
 
         <!-- I(print file):O(epsFile resource)(epsresource) -->
@@ -1481,10 +1475,9 @@ Here's the scale-dialog in xg/gtk:
 
 (create-scale-dialog (cadr (main-widgets)))
 </pre>
-<p>The only change from the C code was the addition of GTK_ADJUSTMENT in the scale value_changed
+<p>The only change from the C code is the addition of GTK_ADJUSTMENT in the scale value_changed
 callback -- currently the xg module assumes the first argument to the two-argument callback is
-a GtkWidget, so we have to cast a GtkAdjustment back to its original type.  Once I figure out
-how the "marshaller" works in Gtk, I may be able to fix this.
+a GtkWidget, so we have to cast a GtkAdjustment back to its original type.
 </p>
 
 <br>

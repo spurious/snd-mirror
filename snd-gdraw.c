@@ -731,7 +731,7 @@ void view_color_callback(GtkWidget *w, gpointer context)
       gtk_widget_show(cutoff_box);
 
       ccd->invert = gtk_check_button_new_with_label(_("invert"));
-      gtk_table_attach(GTK_TABLE(outer_table), ccd->invert, 0, 1, 2, 3, (GtkAttachOptions)0, (GtkAttachOptions)0, 0, 4);
+      gtk_table_attach(GTK_TABLE(outer_table), ccd->invert, 0, 1, 2, 3, (GtkAttachOptions)GTK_FILL, (GtkAttachOptions)0, 0, 4);
       g_signal_connect_closure_by_id(GTK_OBJECT(ccd->invert),
 				     g_signal_lookup("toggled", G_OBJECT_TYPE(GTK_OBJECT(ccd->invert))),
 				     0,

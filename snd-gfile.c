@@ -137,10 +137,34 @@ static void load_header_and_data_lists(file_data *fdat, int type, int format, in
     }
 }
 
+static void unpad(gpointer w, gpointer data)
+{
+  if (GTK_IS_CELL_RENDERER_TEXT(w))
+    GTK_CELL_RENDERER(w)->ypad = 0;
+}
+
 static GtkWidget *snd_gtk_file_selection_new(char *title, GtkSignalFunc gdelete, GtkSignalFunc ok, GtkSignalFunc cancel)
 {
-  GtkWidget *new_dialog;
+  GtkWidget *new_dialog, *entry;
+  GList *cells;
+  GtkTreeViewColumn *dirl;
   new_dialog = gtk_file_selection_new(title);
+
+  /* get rid of ridiculous padding in lists */
+  dirl = gtk_tree_view_get_column(GTK_TREE_VIEW(GTK_FILE_SELECTION(new_dialog)->dir_list), 0);
+  cells = gtk_tree_view_column_get_cell_renderers(dirl);
+  g_list_foreach(cells, unpad, NULL);
+  g_list_free(cells);
+  dirl = gtk_tree_view_get_column(GTK_TREE_VIEW(GTK_FILE_SELECTION(new_dialog)->file_list), 0);
+  cells = gtk_tree_view_column_get_cell_renderers(dirl);
+  g_list_foreach(cells, unpad, NULL);
+  g_list_free(cells);
+
+  /* make entry widget look like one of ours */
+  entry = GTK_FILE_SELECTION(new_dialog)->selection_entry;
+  gtk_widget_modify_bg(entry, GTK_STATE_NORMAL, ss->sgx->white);
+  connect_mouse_to_text(entry);
+
   g_signal_connect_closure_by_id(GTK_OBJECT(new_dialog),
 				 g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(new_dialog))),
 				 0,
@@ -584,30 +608,15 @@ static void make_save_as_dialog(char *sound_name, int header_type, int format_ty
   GtkWidget *fbox;
   if (!save_as_dialog)
     {
-      save_as_dialog = gtk_file_selection_new(_("save as:"));
-      g_signal_connect_closure_by_id(GTK_OBJECT(save_as_dialog),
-				     g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(save_as_dialog))),
-				     0,
-				     g_cclosure_new((GtkSignalFunc)save_as_delete_callback, NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(GTK_FILE_SELECTION(save_as_dialog)->ok_button),
-				     g_signal_lookup(
-						     "clicked", G_OBJECT_TYPE(GTK_OBJECT(GTK_FILE_SELECTION(save_as_dialog)->ok_button))),
-				     0,
-				     g_cclosure_new((GtkSignalFunc)save_as_ok_callback, NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(GTK_FILE_SELECTION(save_as_dialog)->cancel_button), 
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(GTK_FILE_SELECTION(save_as_dialog)->cancel_button))),
-				     0,
-				     g_cclosure_new_swap((GtkSignalFunc)save_as_cancel_callback, NULL, 0),
-				     0);
-      gtk_file_selection_hide_fileop_buttons(GTK_FILE_SELECTION(save_as_dialog));
-
+      save_as_dialog = snd_gtk_file_selection_new(_("save as:"),
+						  (GtkSignalFunc)save_as_delete_callback,
+						  (GtkSignalFunc)save_as_ok_callback,
+						  (GtkSignalFunc)save_as_cancel_callback);
       fbox = gtk_vbox_new(false, 0);
       gtk_box_pack_start(GTK_BOX(GTK_FILE_SELECTION(save_as_dialog)->main_vbox), fbox, true, true, 0);
       gtk_widget_show(fbox);
 
-      save_as_file_data = make_file_data_panel(fbox, "data-form", false, header_type, format_type, false, false, false);
+      save_as_file_data = make_file_data_panel(fbox, "data-form", false, header_type, format_type, false, false, true);
       set_dialog_widget(FILE_SAVE_AS_DIALOG, save_as_dialog);
     }
 }
@@ -626,7 +635,8 @@ void make_file_save_as_dialog(void)
   load_header_and_data_lists(save_as_file_data,
 			     save_as_file_data->current_type,
 			     save_as_file_data->current_format,
-			     (hdr) ? hdr->srate : selection_srate(), 0, -1, -1,
+			     (hdr) ? hdr->srate : selection_srate(), 0, -1,
+			     (hdr) ? hdr->samples : selection_len(),
 			     com = output_comment(hdr));
   if (com) FREE(com);
   gtk_widget_show(save_as_dialog);
@@ -639,7 +649,9 @@ void make_edit_save_as_dialog(void)
   load_header_and_data_lists(save_as_file_data,
 			     save_as_file_data->current_type,
 			     save_as_file_data->current_format,
-			     selection_srate(), 0, -1, -1, NULL);
+			     selection_srate(), 0, -1,
+			     selection_len(),
+			     NULL);
   gtk_widget_show(save_as_dialog);
 }
 
