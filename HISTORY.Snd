@@ -1,5 +1,6 @@
 snd change log
 
+  23-Jul:    xm.c (Motif module).
   12-Jul:    ALSA 0.9 support from Fernando.
   9-Jul:     xen.c, xen.html.  
              MzScheme support.

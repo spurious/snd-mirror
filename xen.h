@@ -149,6 +149,11 @@
 #define XEN_TO_C_UNSIGNED_LONG(a)     scm_num2ulong(a, 0, __FUNCTION__)
 #define C_TO_XEN_UNSIGNED_LONG(a)     scm_ulong2num(a)
 
+/* those names are too long-winded! */
+#define XEN_TO_C_ULONG(a)             scm_num2ulong(a, 0, __FUNCTION__)
+#define C_TO_XEN_ULONG(a)             scm_ulong2num((unsigned long)a)
+#define XEN_ULONG_P(Arg1)             (XEN_NOT_FALSE_P(scm_number_p(Arg1)))
+
 #ifndef SCM_STRING_CHARS
   #define XEN_TO_C_STRING(STR)        SCM_CHARS(STR)
 #else
@@ -290,6 +295,7 @@
 
 #define XEN_BOOLEAN_P(Arg)            (SCM_BOOLP(Arg))
 #define XEN_NUMBER_P(Arg)             (XEN_NOT_FALSE_P(scm_real_p(Arg)))
+#define XEN_DOUBLE_P(Arg)             (XEN_NOT_FALSE_P(scm_real_p(Arg)))
 #define XEN_INTEGER_P(Arg)            (XEN_NOT_FALSE_P(scm_integer_p(Arg)))
 #define XEN_SYMBOL_P(Arg)             (SCM_SYMBOLP(Arg))
 #define XEN_PROCEDURE_P(Arg)          (XEN_NOT_FALSE_P(scm_procedure_p(Arg)))
@@ -297,10 +303,11 @@
 #define XEN_VECTOR_P(Arg)             (SCM_VECTORP(Arg))
 #define XEN_LIST_P(Arg)               (scm_ilength(Arg) >= 0)
 #define XEN_LIST_P_WITH_LENGTH(Arg, Len) ((Len = ((int)scm_ilength(Arg))) >= 0)
-#define XEN_UNSIGNED_LONG_P(Arg)      (scm_number_p(Arg))
+#define XEN_UNSIGNED_LONG_P(Arg1)      (XEN_NOT_FALSE_P(scm_number_p(Arg1)))
 
 #define XEN_LIST_LENGTH(Arg)          ((int)(scm_ilength(Arg)))
 #define XEN_LIST_REF(Lst, Num)        scm_list_ref(Lst, C_TO_SMALL_XEN_INT(Num))
+#define XEN_LIST_SET(Lst, Loc, Val)   scm_list_set_x(Lst, C_TO_XEN_INT(Loc), Val)
 #define XEN_CONS(Arg1, Arg2)          scm_cons(Arg1, Arg2)
 #define XEN_CONS_2(Arg1, Arg2, Arg3)  scm_cons2(Arg1, Arg2, Arg3)
 #if HAVE_SCM_LIST_N
@@ -311,6 +318,7 @@
   #define XEN_LIST_5(a, b, c, d, e)       scm_list_5(a, b, c, d, e)
   #define XEN_LIST_6(a, b, c, d, e, f)    scm_list_n(a, b, c, d, e, f, XEN_UNDEFINED)
   #define XEN_LIST_7(a, b, c, d, e, f, g) scm_list_n(a, b, c, d, e, f, g, XEN_UNDEFINED)
+  #define XEN_LIST_8(a, b, c, d, e, f, g, h) scm_list_n(a, b, c, d, e, f, g, h, XEN_UNDEFINED)
 #else
   #define XEN_LIST_1(a)                   SCM_LIST1(a)
   #define XEN_LIST_2(a, b)                SCM_LIST2(a, b)
@@ -319,7 +327,9 @@
   #define XEN_LIST_5(a, b, c, d, e)       SCM_LIST5(a, b, c, d, e)
   #define XEN_LIST_6(a, b, c, d, e, f)    SCM_LIST6(a, b, c, d, e, f)
   #define XEN_LIST_7(a, b, c, d, e, f, g) SCM_LIST7(a, b, c, d, e, f, g)
+  #define XEN_LIST_8(a, b, c, d, e, f, g, h) SCM_LIST8(a, b, c, d, e, f, g, h)
 #endif
+#define XEN_APPEND(a, b)                  scm_append(XEN_LIST_2(a, b))
 
 #ifndef SCM_VECTOR_LENGTH
   #define XEN_VECTOR_LENGTH(Arg)      ((int)(gh_vector_length(Arg)))
@@ -483,6 +493,8 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #define XEN_TO_SMALL_C_INT(a)             FIX2INT(a)
 #define XEN_TO_C_UNSIGNED_LONG(a)         NUM2ULONG(a)
 #define C_TO_XEN_UNSIGNED_LONG(a)         rb_int2inum(a)
+#define XEN_TO_C_ULONG(a)                 NUM2ULONG(a)
+#define C_TO_XEN_ULONG(a)                 rb_int2inum(a)
 
 #define C_TO_XEN_STRING(a)                rb_str_new2(a)
 #define XEN_TO_C_STRING(Str)              RSTRING(Str)->ptr
@@ -551,6 +563,7 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #define XEN_STRING_P(Arg)                (TYPE(Arg) == T_STRING)
 #define XEN_VECTOR_P(Arg)                (TYPE(Arg) == T_ARRAY)
 #define XEN_PROCEDURE_P(Arg)             (XEN_BOUND_P(Arg) && (rb_obj_is_kind_of(Arg, rb_cProc)))
+#define XEN_ULONG_P(Arg1)                XEN_INTEGER_P(Arg1)  /* TODO: what is ulong type in ruby? */
 
 #define XEN_LIST_P(Arg)                  (TYPE(Arg) == T_ARRAY)
 #define XEN_LIST_P_WITH_LENGTH(Arg, Len) ((XEN_LIST_P(Arg)) ? (Len = RARRAY(Arg)->len) : 0)
@@ -563,6 +576,7 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #define XEN_LIST_5(a, b, c, d, e)       rb_ary_new3(5, a, b, c, d, e) 
 #define XEN_LIST_6(a, b, c, d, e, f)    rb_ary_new3(6, a, b, c, d, e, f)
 #define XEN_LIST_7(a, b, c, d, e, f, g) rb_ary_new3(7, a, b, c, d, e, f, g)
+#define XEN_LIST_8(a, b, c, d, e, f, g, h) rb_ary_new3(8, a, b, c, d, e, f, g, h)
 #define XEN_CAR(a)                      rb_ary_entry(a, 0)
 #define XEN_CADR(a)                     rb_ary_entry(a, 1)
 #define XEN_CADDR(a)                    rb_ary_entry(a, 2)
@@ -572,6 +586,8 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #define XEN_CONS(Arg1, Arg2)            xen_rb_cons(Arg1, Arg2)
 #define XEN_CONS_2(Arg1, Arg2, Arg3)    xen_rb_cons2(Arg1, Arg2, Arg3)
 #define XEN_LIST_REF(Lst, Num)          rb_ary_entry(Lst, Num)
+#define XEN_LIST_SET(Lst, Num, Val)     rb_ary_store(Lst, Num, Val)
+#define XEN_APPEND(X, Y)                rb_ary_concat(X, Y)
 
 #define XEN_HOOK_PROCEDURES(a)          a
 #define XEN_CLEAR_HOOK(a)               a = Qnil
@@ -834,6 +850,9 @@ XEN xen_rb_funcall_0(XEN func);
 #define XEN_SYMBOL_P(Arg) 0
 #define XEN_STRING_P(Arg) 0
 #define XEN_VECTOR_P(Arg) 0
+#define XEN_TO_C_ULONG(a) 0
+#define C_TO_XEN_ULONG(a) 0
+#define XEN_ULONG_P(Arg) 0
 #define XEN_LIST_P(Arg) 0
 #define XEN_LIST_P_WITH_LENGTH(Arg, Len) 0
 #define XEN_LIST_LENGTH(Arg) 0
@@ -842,6 +861,7 @@ XEN xen_rb_funcall_0(XEN func);
 #define XEN_CONS(Arg1, Arg2) 0
 #define XEN_CONS_2(Arg1, Arg2, Arg3) 0
 #define XEN_LIST_REF(Lst, Num) 0
+#define XEN_LIST_SET(Lst, Num, Val)
 #define XEN_VECTOR_REF(Vect, Num) 0
 #define XEN_VECTOR_SET(a, b, c)
 #define XEN_EVAL_C_STRING(Arg) 0
@@ -870,6 +890,7 @@ XEN xen_rb_funcall_0(XEN func);
 #define XEN_ERROR(Type, Info) fprintf(stderr, Info)
 #define XEN_TO_STRING(Obj) "(unknown)"
 #define XEN_WRONG_TYPE_ARG_ERROR(Caller, ArgN, Arg, Descr)
+#define XEN_APPEND(X, Y) 0
 
 #endif
 /* end NO EXTENSION LANGUAGE */
@@ -891,6 +912,7 @@ XEN xen_rb_funcall_0(XEN func);
 #define XEN_NUMBER_OR_BOOLEAN_IF_BOUND_P(Arg)  ((XEN_BOOLEAN_P(Arg))   || (XEN_NOT_BOUND_P(Arg)) || (XEN_NUMBER_P(Arg)))
 #define XEN_NUMBER_OR_BOOLEAN_P(Arg)           ((XEN_BOOLEAN_P(Arg))   || (XEN_NUMBER_P(Arg)))
 #define XEN_INTEGER_OR_BOOLEAN_P(Arg)          ((XEN_BOOLEAN_P(Arg))   || (XEN_INTEGER_P(Arg)))
+#define XEN_ULONG_IF_BOUND_P(Arg)              ((XEN_NOT_BOUND_P(Arg)) || (XEN_ULONG_P(Arg)))
 
 
 XEN xen_return_first(XEN a, ...);

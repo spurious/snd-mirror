@@ -540,8 +540,8 @@ static XEN g_add_idler(XEN code)
   if (!(procedure_fits(code, 0)))
     mus_misc_error(S_add_idler, "argument should be a procedure of no args", code);
   return(XEN_WRAP_C_POINTER(remember_idler(code, BACKGROUND_ADD(get_global_state(), 
-						      call_idler, 
-						      (GUI_POINTER)code))));
+								call_idler, 
+								(GUI_POINTER)code))));
 #endif
 }
 

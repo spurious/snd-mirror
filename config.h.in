@@ -101,6 +101,7 @@
 #undef HAVE_RUBY
 #undef HAVE_EXTENSION_LANGUAGE
 #undef HAVE_XPM
+#undef HAVE_XP
 #undef FSTATFS_ARGS
 #undef TRAP_SEGFAULT
 #undef HAVE_HTML
@@ -111,6 +112,7 @@
 #undef USE_GTK
 #undef USE_MOTIF
 #undef USE_NO_GUI
+#undef HAVE_MOTIF
 #undef NEED_XPM_GET_ERROR_STRING
 #undef HAVE_GUILE_GTK
 #undef GUILE_GTK_VERSION

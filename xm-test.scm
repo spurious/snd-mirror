@@ -1,0 +1,132 @@
+(use-modules (ice-9 format))
+
+(define (snd-display . args)
+  (let ((str (apply format #f args)))
+    (display str)
+    (if (not (provided? 'snd-nogui))
+	(begin
+	  (snd-print "\n")
+	  (snd-print str)))))
+
+(init-xm)
+
+(define c1 #f)
+
+(let* ((wids (main-widgets))
+       (app (|XtAppContext (car wids)))
+       (shell (|Widget (cadr wids)))
+       (sound-pane (|Widget (cadddr wids)))
+       (listener (|Widget (list-ref (dialog-widgets) 21)))
+       (dpy (|XtDisplay shell))
+       (black (|BlackPixelOfScreen 
+		(|DefaultScreenOfDisplay 
+		  dpy)))
+       (white (|WhitePixelOfScreen 
+		(|XDefaultScreenOfDisplay 
+		  dpy))))
+  (if (not (|XtIsApplicationShell shell))
+      (snd-display ";~A not appshell?" shell))
+  (if (not (= (|XScreenCount dpy) (|ScreenCount dpy)))
+      (snd-display ";ScreenCount: ~D ~D~%" (|XScreenCount dpy) (|ScreenCount dpy)))
+  (if (not (= (|XScreenNumberOfScreen (|DefaultScreenOfDisplay dpy)) 0))
+      (snd-display ";ScreenNumberOfScreen: ~D~%" (|XScreenNumberOfScreen (|DefaultScreenOfDisplay dpy))))
+  (if (not (|Screen? (|ScreenOfDisplay dpy 0)))
+      (snd-display ";ScreenOfDisplay: ~A?" (|ScreenOfDisplay dpy 0)))
+  (if (not (|Screen? (|XScreenOfDisplay dpy 0)))
+      (snd-display ";XScreenOfDisplay: ~A?" (|XScreenOfDisplay dpy 0)))
+  (if (not (equal? (|XScreenOfDisplay dpy 0) (|ScreenOfDisplay dpy 0)))
+      (snd-display ";ScreenOfDisplay: ~A ~A~%" (|XScreenOfDisplay dpy 0) (|ScreenOfDisplay dpy 0)))
+  (let ((scrn (|XScreenNumberOfScreen (|DefaultScreenOfDisplay dpy))))
+    (if (not (= (|DefaultDepth dpy scrn) 24))
+	(snd-display ";DefaultDepth: ~A?" (|DefaultDepth dpy scrn) 24))
+    (if (not (= (|XDefaultDepth dpy scrn) (|DefaultDepth dpy scrn)))
+	(snd-display ";default depth ~D ~D~%" (|XDefaultDepth dpy scrn) (|DefaultDepth dpy scrn)))
+    (if (not (= (|XDefaultScreen dpy) (|DefaultScreen dpy)))
+	(snd-display ";default screen number: ~D ~D~%" (|XDefaultScreen dpy) (|DefaultScreen dpy)))
+    (if (not (|Screen?  (|DefaultScreenOfDisplay dpy)))
+	(snd-display ";defaultscreenofdisplay: ~A" (|DefaultScreenOfDisplay dpy)))
+    (if (not (equal? (|DefaultScreenOfDisplay dpy) (|XDefaultScreenOfDisplay dpy))) 
+	(snd-display ";default screen of display: ~A ~A~%" (|XDefaultScreenOfDisplay dpy) (|DefaultScreenOfDisplay dpy)))
+
+
+    (|XtSetValues shell (list |XmNtitle "Hi!") 1)
+    (let* ((main-pane 
+	    (|XtVaCreateManagedWidget 
+	      "main-pane" |xmFormWidgetClass sound-pane
+	      (list |XmNbackground       black
+		    |XmNtopAttachment    |XmATTACH_FORM
+		    |XmNbottomAttachment |XmATTACH_FORM
+		    |XmNleftAttachment   |XmATTACH_FORM
+		    |XmNrightAttachment  |XmATTACH_FORM
+		    |XmNallowResize      #t)))
+	   (button (|XtCreateManagedWidget 
+		     "push me" |xmPushButtonWidgetClass main-pane 
+		     (list |XmNleftAttachment   |XmATTACH_FORM
+			   |XmNbottomAttachment |XmATTACH_NONE
+			   |XmNrightAttachment  |XmATTACH_NONE
+			   |XmNtopAttachment    |XmATTACH_FORM) 4))
+	   (toggle (|XtCreateManagedWidget
+		     "toggle" |xmToggleButtonWidgetClass main-pane
+		     (list |XmNleftAttachment   |XmATTACH_WIDGET
+			   |XmNleftWidget       button
+                           |XmNrightAttachment  |XmATTACH_FORM
+			   |XmNbottomAttachment |XmATTACH_NONE
+			   |XmNtopAttachment    |XmATTACH_FORM) 5))
+	   (drawer (|XtCreateManagedWidget
+		     "drawer" |xmDrawingAreaWidgetClass main-pane
+		     (list |XmNleftAttachment   |XmATTACH_FORM
+			   |XmNbottomAttachment |XmATTACH_FORM
+			   |XmNrightAttachment  |XmATTACH_FORM
+			   |XmNtopAttachment    |XmATTACH_WIDGET
+			   |XmNtopWidget        button
+			   |XmNbackground       white)
+		     6))
+	   (scr (|DefaultScreen dpy))
+	   (cmap (|DefaultColormap dpy scr))
+	   (col (|XColor))
+	   (gv (|XGCValues)))
+      
+      (if (= (|XAllocNamedColor dpy cmap "red" col col) 0)
+	  (display "oops"))
+
+      (set! c1 main-pane)
+
+      (set! (|foreground gv) (|pixel col))
+      (let ((gc (|XCreateGC dpy (|XtWindow shell) |GCForeground gv))
+	    (draw-window (|XtWindow drawer))
+	    (draw-display (|XtDisplay drawer)))
+	
+	(|XtSetValues button (list |XmNbackground (|pixel col)) 1)
+
+	(|XtAppAddWorkProc app (let ((ctr 0))
+				 (lambda (n)
+				   (if (= ctr 3)
+				       #t
+				       (begin
+					 (display ctr)
+					 (set! ctr (+ ctr 1))
+					 #f))))
+			   #f)
+
+	(|XtAddCallback button |XmNactivateCallback 
+			(lambda (widget context event-info)
+			  (display (|event event-info))
+			  (display (|reason event-info))
+			  (display (|state (|event event-info)))
+			  (|XtAppAddTimeOut app 1000 (lambda (me id)
+						       (display me))
+					    "ho!"))
+			123)
+	(|XtAddCallback toggle |XmNvalueChangedCallback
+			(lambda (widget context info)
+			  (display info)
+			  (|XDrawLine draw-display draw-window gc 0 0 120 100)
+			  (display (|set info)))
+			#f)
+	(|XtAddEventHandler drawer |EnterWindowMask #f
+			    (lambda (w context ev flag)
+			      (display "hi"))
+			    #f)
+
+    
+      ))))

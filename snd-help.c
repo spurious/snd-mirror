@@ -253,6 +253,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+23-Jul:  xm.c (Motif module).\n\
 12-Jul:  ALSA 0.9 support from Fernando.\n\
 9-Jul:   xen.c, xen.html.\n\
 6-Jul:   sg.h, sl.h, noguile.h, sr.h, sz.h -> xen.h.\n\
