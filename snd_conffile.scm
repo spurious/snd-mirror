@@ -264,8 +264,6 @@
 
 
 
-
-
 ;;##############################################################
 ;; Various more or less general functions
 ;;##############################################################
@@ -732,7 +730,10 @@
 	  (lambda ()
 	    (c-zoom (/ 1 c-zoomfactor))))
 
-
+;(new-sound "test.snd" :channels 2 :size 2)
+;(set! (sync) 1)
+;(set! (channel-style) channels-combined)
+;(set! (x-bounds) (list 0.0 (/ (+ (frames) 1) (srate))))
 
 ;; Shows the full sound after opening.
 (add-hook! after-open-hook
@@ -1548,12 +1549,24 @@ Does not work.
 		       (set! ws (cons w ws))
 		       (for-each-child w
 				       (lambda (w)
-					 (if (GTK_IS_CHECK_BUTTON w)
-					     (c-g_signal_connect w "button_release_event"
-								 (lambda (w e i)
-								   (c-dosomepause (lambda ()
-										    (gtk_button_released (GTK_BUTTON w))
-										    (focus-widget (c-editor-widget snd)))))))
+					 (if (and (GTK_IS_BUTTON w)
+						  (string? (gtk_button_get_label (GTK_BUTTON w)))
+						  (string=? "Apply" (gtk_button_get_label (GTK_BUTTON w))))
+					     (begin
+					       (c-remove-handler w "clicked")
+					       (c-g_signal_connect w "clicked"
+								   (lambda (w c)
+								     (if (selection-member? snd)
+									 (apply-controls snd 2)
+									 (apply-controls))
+								     (focus-widget (c-editor-widget snd))
+								     #t)))
+					     (if (GTK_IS_CHECK_BUTTON w)
+						 (c-g_signal_connect w "button_release_event"
+								     (lambda (w e i)
+								       (c-dosomepause (lambda ()
+											(gtk_button_released (GTK_BUTTON w))
+											(focus-widget (c-editor-widget snd))))))))
 					 (if (GTK_IS_CONTAINER w)
 					     (fixit w)))))))
 	       (fixit (caddr (sound-widgets snd))))))
@@ -1790,10 +1803,8 @@ Does not work.
 
 
 
-
-
 ;;##############################################################
-;; Add things to the edit-menu
+;; Add/Remove things to the edit-menu
 ;;##############################################################
 
 ;;; -------- Insert/append file
@@ -1823,6 +1834,12 @@ Does not work.
 
 (add-to-menu edit-menu #f #f)
 
+(for-each (lambda (name) (remove-from-menu edit-menu name))
+	  (list "Delete Selection"
+		"Insert Selection"
+		"Play Selection"
+		"Mix Selection"))
+		 
 
 
 

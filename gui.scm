@@ -903,28 +903,15 @@ void das_init(){
 
 
 (if (not use-gtk)
-    (c-display "c-remove-motionhandler not implemented for motif")
+    (c-display "c-remove-handler not implemented for motif")
     (c-eval-c2 (string-append (string #\`) "pkg-config --cflags gtk+-2.0" (string #\`))
 	       "#include <gtk/gtk.h>"
-	    
-	       ;; A function to remove all the gtk mousehandlers in snd for a widget.
-	       '((c-remove-mousehandlers (w))
-		 "  gpointer g=(gpointer)GET_POINTER2(w);"
-		 "  g_signal_handler_disconnect(g,g_signal_handler_find(g,"
+
+	       '((c-remove-handler (w handlername))
+		 " gpointer g=(gpointer)GET_POINTER2(w);"
+		 " g_signal_handler_disconnect(g,g_signal_handler_find(g,"
 		 "						      G_SIGNAL_MATCH_ID,"
-		 " 						      g_signal_lookup(\"motion_notify_event\",G_OBJECT_TYPE(g)),"
-		 "						      0,0,0,0));"
-		 "  g_signal_handler_disconnect(g,g_signal_handler_find(g,"
-		 "						      G_SIGNAL_MATCH_ID,"
-		 "						      g_signal_lookup(\"button_press_event\",G_OBJECT_TYPE(g)),"
-		 "						      0,0,0,0));"
-		 "  g_signal_handler_disconnect(g,g_signal_handler_find(g,"
-		 "						      G_SIGNAL_MATCH_ID,"
-		 "						      g_signal_lookup(\"button_release_event\",G_OBJECT_TYPE(g)),"
-		 "						      0,0,0,0));"
-		 "  g_signal_handler_disconnect(g,g_signal_handler_find(g,"
-		 "						      G_SIGNAL_MATCH_ID,"
-		 "						      g_signal_lookup(\"scroll_event\",G_OBJECT_TYPE(g)),"
+		 "						      g_signal_lookup(GET_STRING(handlername),G_OBJECT_TYPE(g)),"
 		 "						      0,0,0,0));"
 		 "  return SCM_UNSPECIFIED;")
 
@@ -937,6 +924,13 @@ void das_init(){
 		 "  return SCM_UNSPECIFIED;")
 	       ))
 
+
+;; Remove all gtk mousehandlers for a widget.
+(define (c-remove-mousehandlers w)
+  (c-remove-handler w "motion_notify_event")
+  (c-remove-handler w "button_press_event")
+  (c-remove-handler w "button_release_event")
+  (c-remove-handler w "scroll_event"))
 
 
 (add-hook! after-open-hook
