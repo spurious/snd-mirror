@@ -23,7 +23,6 @@
   #include <console.h>
 #endif
 
-/* TODO: make bufsize an argument to sndplay (matters mainly in OSX) */
 #if MAC_OSX
   #define BUFFER_SIZE 256
 #else
@@ -43,10 +42,10 @@
   #define MUS_CONVERT(samp) MUS_SAMPLE_TO_SHORT(samp)
 #endif
 
-#if (HAVE_OSS || HAVE_ALSA)
-static char x_string[2] = {'x','\0'};
 static void set_buffers(char *bufs)
 {
+#if (HAVE_OSS || HAVE_ALSA)
+static char x_string[2] = {'x','\0'};
   char *arg;
   int a, b;
   arg = strtok(bufs, x_string);
@@ -54,8 +53,8 @@ static void set_buffers(char *bufs)
   arg = strtok(NULL, x_string);
   b = atoi(arg);
   mus_audio_set_oss_buffers(a, b);
-}
 #endif
+}
 
 /* special case multicard quad code split out for clarity (it could be folded into the main branches) */
 
@@ -84,35 +83,36 @@ static int main_not_alsa(int argc, char *argv[])
   OutSample *obuf;
   float val[1];
   int use_multi_card_code = 0;
-  int afd0, afd1, buffer_size, curframes, sample_size, out_chans, outbytes;
+  int afd0, afd1, buffer_size = BUFFER_SIZE, curframes, sample_size, out_chans, outbytes;
   mus_sample_t **qbufs;
   short *obuf0, *obuf1;
   char *name = NULL;
 
-#if defined(LINUX) || defined(__bsdi__)
-  /* for clisp-based clm use, we need a couple added switches
-   * -describe => call mus_audio_describe and exit
-   * -buffers axb => set OSS fragment numbers 
-   */
-  for (i = 1; i < argc; )
+  for (i = 1; i < argc; i++)
     {
       if (strcmp(argv[i], "-describe") == 0) 
 	{
 	  mus_audio_describe(); 
 	  exit(0);
 	}
-      else 
-	if (strcmp(argv[i], "-buffers") == 0) 
-	  {
-	    set_buffers(argv[i + 1]); 
-	    i++;
-	  }
-      else name = argv[i];
-      i++;
+      else
+	{
+	  if (strcmp(argv[i], "-buffers") == 0) 
+	    {
+	      set_buffers(argv[i + 1]); 
+	      i++;
+	    }
+	  else
+	    {
+	      if (strcmp(argv[i], "-bufsize") == 0) 
+		{
+		  buffer_size = atoi(argv[i + 1]);
+		  i++;
+		}
+	      else name = argv[i];
+	    }
+	}
     }
-#else
-  name = argv[1];
-#endif
   if (name == NULL) 
     {
       printf("usage: sndplay file\n"); 
@@ -164,10 +164,9 @@ static int main_not_alsa(int argc, char *argv[])
       if (!use_multi_card_code)
 	{
 	  bufs = (mus_sample_t **)CALLOC(chans, sizeof(mus_sample_t *));
-	  for (i = 0; i < chans; i++) bufs[i] = (mus_sample_t *)CALLOC(BUFFER_SIZE, sizeof(mus_sample_t));
-	  obuf = (OutSample *)CALLOC(BUFFER_SIZE * out_chans, sizeof(OutSample));
-	  outbytes = BUFFER_SIZE * out_chans * sample_size;
-	  buffer_size = BUFFER_SIZE;
+	  for (i = 0; i < chans; i++) bufs[i] = (mus_sample_t *)CALLOC(buffer_size, sizeof(mus_sample_t));
+	  obuf = (OutSample *)CALLOC(buffer_size * out_chans, sizeof(OutSample));
+	  outbytes = buffer_size * out_chans * sample_size;
 	  for (m = 0; m < frames; m += buffer_size)
 	    {
 	      if ((m + buffer_size) <= frames)

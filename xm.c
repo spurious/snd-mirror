@@ -7,10 +7,11 @@
 #include <config.h>
 #endif
 
-#define XM_DATE "8-Jan-04"
+#define XM_DATE "12-Jan-04"
 
 /* HISTORY: 
  *
+ *   12-Jan:    resources for XmFontSelector.
  *   8-Jan:     various changes for the SGI C compiler, thanks to Avi Bercovich.
  *   5-Jan-04:  added (Motif 2.2.3) XmCreateFontSelector, XmCreateColorSelector.
  *   --------
@@ -13560,19 +13561,19 @@ static XEN gxm_XShapeCombineRectangles(XEN dpy, XEN win, XEN kind, XEN x, XEN y,
 
 #if HAVE_MOTIF
 
-enum {CANCEL_CONVERT, CONVERT, LOSE, DONE, CONVERT_INCR, LOSE_INCR, DONE_INCR};
+typedef enum {CANCEL_CONVERT, CONVERT, LOSE, DONE, CONVERT_INCR, LOSE_INCR, DONE_INCR} xm_selmap_t;
 /* need a way to map from widget to selection proc */
 
 typedef struct {
   Widget w;
-  int type;
+  xm_selmap_t type;
   XEN proc;
 } selmap;
 
 static selmap *selmaps = NULL;
 static int selmap_size = 0;
 static int selmap_ctr = 0;
-static void add_selmap(Widget w, int type, XEN proc)
+static void add_selmap(Widget w, xm_selmap_t type, XEN proc)
 {
   if (selmap_size == 0)
     selmaps = (selmap *)CALLOC(8, sizeof(selmap));
@@ -13592,7 +13593,7 @@ static void add_selmap(Widget w, int type, XEN proc)
   selmaps[selmap_ctr++].proc = proc;
 }
 
-static XEN unselmap(Widget w, int type)
+static XEN unselmap(Widget w, xm_selmap_t type)
 {
   int i;
   for (i = 0; i < selmap_ctr; i++)
@@ -24026,6 +24027,59 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNfontList, XM_FONTLIST);
   DEFINE_RESOURCE(XmNdefaultFontList, XM_FONTLIST);
   DEFINE_RESOURCE(XmNshellUnitType, XM_UCHAR);
+#endif
+#if HAVE_XmCreateFontSelector
+  /* presumably in a "correct" setup these would be defined in Xm/XmStrDefs.h */
+  #ifndef XmNcurrentFont
+    #define XmN100DPIstring "100DPIstring"
+    #define XmN75DPIstring "75DPIstring"
+    #define XmNanyLowerString "anyLowerString"
+    #define XmNanyString "anyString"
+    #define XmNboldString "boldString"
+    #define XmNbothString "bothString"
+    #define XmNcurrentFont "currentFont"
+    #define XmNdefaultEncodingString "defaultEncodingString"
+    #define XmNencodingList "encodingList"
+    #define XmNencodingString "encodingString"
+    #define XmNfamilyString "familyString"
+    #define XmNitalicString "italicString"
+    #define XmNmonoSpaceString "monoSpaceString"
+    #define XmNoptionString "optionString"
+    #define XmNotherString "otherString"
+    #define XmNpropSpaceString "propSpaceString"
+    #define XmNsampleText "sampleText"
+    #define XmNscalingString "scalingString"
+    #define XmNshowFontName "showFontName"
+    #define XmNshowNameString "showNameString"
+    #define XmNsizeString "sizeString"
+    #define XmNtextRows "textRows"
+    #define XmNuseScaling "useScaling"
+    #define XmNxlfdString "xlfdString"
+  #endif
+  DEFINE_RESOURCE(XmN100DPIstring, XM_XMSTRING);
+  DEFINE_RESOURCE(XmN75DPIstring, XM_XMSTRING);
+  DEFINE_RESOURCE(XmNanyLowerString, XM_XMSTRING);
+  DEFINE_RESOURCE(XmNanyString, XM_XMSTRING);
+  DEFINE_RESOURCE(XmNboldString, XM_XMSTRING);
+  DEFINE_RESOURCE(XmNbothString, XM_XMSTRING);
+  DEFINE_RESOURCE(XmNcurrentFont, XM_STRING);
+  DEFINE_RESOURCE(XmNdefaultEncodingString, XM_STRING);
+  DEFINE_RESOURCE(XmNencodingList, XM_STRING_TABLE);
+  DEFINE_RESOURCE(XmNencodingString, XM_XMSTRING);
+  DEFINE_RESOURCE(XmNfamilyString, XM_XMSTRING);
+  DEFINE_RESOURCE(XmNitalicString, XM_XMSTRING);
+  DEFINE_RESOURCE(XmNmonoSpaceString, XM_XMSTRING);
+  DEFINE_RESOURCE(XmNoptionString, XM_XMSTRING);
+  DEFINE_RESOURCE(XmNotherString, XM_XMSTRING);
+  DEFINE_RESOURCE(XmNpropSpaceString, XM_XMSTRING);
+  DEFINE_RESOURCE(XmNsampleText, XM_XMSTRING);
+  DEFINE_RESOURCE(XmNscalingString, XM_XMSTRING);
+  DEFINE_RESOURCE(XmNshowFontName, XM_BOOLEAN);
+  DEFINE_RESOURCE(XmNshowNameString, XM_XMSTRING);
+  DEFINE_RESOURCE(XmNsizeString, XM_XMSTRING);
+  DEFINE_RESOURCE(XmNtextRows, XM_DIMENSION);
+  DEFINE_RESOURCE(XmNuseScaling, XM_BOOLEAN);
+  DEFINE_RESOURCE(XmNxlfdString, XM_XMSTRING);
 #endif
 
   qsort((void *)xm_hash, hd_ctr, sizeof(hdata *), alphabet_compare);

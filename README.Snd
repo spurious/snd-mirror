@@ -168,21 +168,21 @@ legalese).  Send bug reports or suggestions to bil@ccrma.stanford.edu.
 
 Authors:
 Bill Schottstaedt sat around and watched these guys work:
+Michael Scholz: the German translation, the Ruby code, and the Forth version of sndlib.
+Fernando Lopez-Lezcano: the current ALSA support.
+Dave Phillips: the tutorial, new-effects.scm, and many other files.
+Kjetil S. Matheussen: snd_conffile.scm, ladspa.scm, and the Jack audio support.
+Richard W.E. Furse: the original LADSPA support.
+Nick Bailey: the ESD support.
 Larry Plona: the OpenServer and UnixWare ports.
 Volker Kuhlmann and Seppo Ingalsuo: the Solaris port.
 Seppo Ingalsuo: the HPUX port.
 Juan Reyes: the DEC Alpha port.
 Guenter Geiger and Stefan Schwandter: the Linux Alpha port.
 Paul Davis: the original ALSA support.
-Fernando Lopez-Lezcano: the current ALSA support.
 Gerd Rausch: the Sam 9407 support.
-Richard W.E. Furse: the original LADSPA support.
-Nick Bailey: the ESD support.
 Steven Schultz: the BSD port.
 Ludger Brummer and Charles Nichols: the Mac-OSX port.
-Dave Phillips: the tutorial, new-effects.scm, and many other files.
-Michael Scholz: the German translation, the Ruby code, and the Forth version of sndlib.
-Kjetil S. Matheussen: snd_conffile.scm, ladspa.scm, and the Jack audio support.
 Plus many other contributions from
   Dave Phillips, 
   Fernando Lopez-Lezcano, 

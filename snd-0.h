@@ -605,7 +605,11 @@ typedef enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_U
 
 #define with_mix_tags(ss) ss->With_Mix_Tags
 #define set_with_mix_tags(a) ss->With_Mix_Tags = a
-#define DEFAULT_WITH_MIX_TAGS true
+#if USE_NO_GUI
+  #define DEFAULT_WITH_MIX_TAGS false
+#else
+  #define DEFAULT_WITH_MIX_TAGS true
+#endif
 
 #define with_relative_panes(ss) ss->With_Relative_Panes
 #define set_with_relative_panes(a) ss->With_Relative_Panes = a

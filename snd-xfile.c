@@ -1,6 +1,8 @@
 #include "snd.h"
 
 /* TODO: the view:files menu might be better as a container widget.  Not sure the "current files" list is useful.
+ * PERHAPS: thumbnail sketch in file selection info box? connection to nb database? (preview-file-hook?)
+ *             need accessors for peak-env dir/files (peak-env.scm), Snd preview widget (for drawingarea or pixmap)
  */
 
 #define NUM_VISIBLE_HEADERS 4
@@ -219,9 +221,14 @@ typedef struct {
   snd_info *file_play_sp;
 } file_dialog_info;
 
-static void file_help_callback (Widget w, XtPointer context, XtPointer info) 
+static void open_file_help_callback (Widget w, XtPointer context, XtPointer info) 
 {
   open_file_dialog_help();
+}
+
+static void mix_file_help_callback (Widget w, XtPointer context, XtPointer info) 
+{
+  mix_file_dialog_help();
 }
 
 static void file_dialog_stop_playing(file_dialog_info *fd)
@@ -497,7 +504,8 @@ static void file_dialog_select_callback(Widget w, XtPointer context, XtPointer i
 }
 #endif
 
-static file_dialog_info *make_file_dialog(bool read_only, char *title, char *select_title, snd_dialog_t which_dialog, XtCallbackProc file_ok_proc)
+static file_dialog_info *make_file_dialog(bool read_only, char *title, char *select_title, snd_dialog_t which_dialog, 
+					  XtCallbackProc file_ok_proc, XtCallbackProc file_help_proc)
 {
   Widget w;
   file_dialog_info *fd;
@@ -566,7 +574,7 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
   XtVaGetValues(fd->dialog, XmNfileSearchProc, &(fd->default_search_proc), NULL);
   XtAddCallback(fd->dialog, XmNokCallback, file_ok_proc, (XtPointer)fd);
   XtAddCallback(fd->dialog, XmNcancelCallback, file_cancel_callback, (XtPointer)fd);
-  XtAddCallback(fd->dialog, XmNhelpCallback, file_help_callback, NULL);
+  XtAddCallback(fd->dialog, XmNhelpCallback, file_help_proc, NULL);
   XtAddCallback(fd->just_sounds_button, XmNvalueChangedCallback, just_sounds_callback, (XtPointer)fd);
   XtAddCallback(fd->play_selected_button, XmNvalueChangedCallback, play_selected_callback, (XtPointer)fd);
 #if (XmVERSION > 1)
@@ -614,7 +622,7 @@ void make_open_file_dialog(bool read_only, bool managed)
     }
   if (open_dialog == NULL)
     {
-      open_dialog = make_file_dialog(read_only, title, select_title, FILE_OPEN_DIALOG, file_open_ok_callback);
+      open_dialog = make_file_dialog(read_only, title, select_title, FILE_OPEN_DIALOG, file_open_ok_callback, open_file_help_callback);
       if (ss->just_sounds_state) 
 	{
 	  XtVaSetValues(open_dialog->dialog, XmNfileSearchProc, sound_file_search, NULL);
@@ -669,7 +677,7 @@ void make_mix_file_dialog(bool managed)
   /* called from the menu */
   if (mix_dialog == NULL)
     {
-      mix_dialog = make_file_dialog(true, _("Mix"), _("mix in:"), FILE_MIX_DIALOG, file_mix_ok_callback);
+      mix_dialog = make_file_dialog(true, _("Mix"), _("mix in:"), FILE_MIX_DIALOG, file_mix_ok_callback, mix_file_help_callback);
       if (ss->just_sounds_state) 
 	{
 	  XtVaSetValues(mix_dialog->dialog, XmNfileSearchProc, sound_file_search, NULL);

@@ -416,14 +416,17 @@ void snd_doit(int argc, char **argv)
                (define " S_color_hook " (make-hook 0))\
                (define " S_orientation_hook " (make-hook 0))\
                (define " S_listener_click_hook " (make-hook 1)) \
+               (define " S_recorder_file_hook " (make-hook 1)) \
                (define " S_window_property_changed_hook " (make-hook 1))");
 
-  XEN_EVAL_C_STRING("(define " S_enved_active_env " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
-               (define " S_enved_selected_env " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+  XEN_EVAL_C_STRING("(define " S_enved_envelope " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_just_sounds " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_copy_context " 0)\
                (define " S_cursor_context " 3)\
                (define " S_selection_context " 2)\
+               (define " S_time_graph " 0)\
+               (define " S_transform_graph " 1)\
+               (define " S_lisp_graph " 2)\
                (define (" S_axis_info " . args) #f)\
                (define (" S_change_window_property " . args) #f)\
                (define (" S_dialog_widgets ") #f)\

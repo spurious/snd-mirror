@@ -232,7 +232,7 @@
 					;(snd-display (gc-stats))
 					;(if (file-exists? "memlog")
 					;	 (system (format #f "cp memlog memlog.~D" (1- n))))
-					;(mem-report)
+					;(if (defined? 'mem-report) (mem-report))
 			      ))
 
 ;(add-hook! after-test-hook (lambda (n) (snd-display ";...~D" n)))
@@ -247,7 +247,7 @@
 
 (define (log-mem tst) 
   (if (> tests 1) (snd-display ";test ~D " (1+ tst)))
-  (if (and (> tests 50) (= (modulo tst 10) 0))  (mem-report)))
+  (if (and (> tests 50) (= (modulo tst 10) 0))  (if (defined? 'mem-report) (mem-report))))
 
 (defmacro without-errors (func)
   `(catch #t 
@@ -593,9 +593,9 @@
 	  (snd-display ";enved-wave? set def: ~A" (enved-wave?)))
       (if with-gui
 	  (begin
-	    (set! (enved-active-env) (enved-active-env))
-	    (if (not (equal? (enved-active-env)  '())) 
-		(snd-display ";enved-active-env set def: ~A" (enved-active-env)))))
+	    (set! (enved-envelope) (enved-envelope))
+	    (if (not (equal? (enved-envelope)  '())) 
+		(snd-display ";enved-envelope set def: ~A" (enved-envelope)))))
       (set! (eps-file) (eps-file))
       (if (not (equal? (eps-file)  "snd.eps" )) 
 	  (snd-display ";eps-file set def: ~A" (eps-file)))
@@ -898,8 +898,7 @@
 	'enved-power (enved-power) 3.0
 	'enved-target (enved-target) 0 
 	'enved-wave? (enved-wave?) #f 
-	'enved-active-env (enved-active-env) '()
-	'enved-selected-env (enved-selected-env) '()
+	'enved-envelope (enved-envelope) '()
 	'eps-file (eps-file) "snd.eps" 
 	'eps-bottom-margin (eps-bottom-margin) 0.0
 	'eps-left-margin (eps-left-margin) 0.0
@@ -1375,12 +1374,12 @@
 	  (begin
 	    (enved-dialog) 
 	    (if (not (list-ref (dialog-widgets) 2)) (snd-display ";enved-dialog?"))
-	    (set! (enved-active-env) '(0.0 0.0 1.0 1.0 2.0 0.0))
-	    (if (not (equal? (enved-active-env) (list 0.0 0.0 1.0 1.0 2.0 0.0)))
-		(snd-display ";set enved-active-env: ~A?" (enved-active-env)))
-	    (set! (enved-active-env) (enved-active-env))
-	    (if (not (equal? (enved-active-env) (list 0.0 0.0 1.0 1.0 2.0 0.0)))
-		(snd-display ";set enved-active-env to self: ~A?" (enved-active-env)))
+	    (set! (enved-envelope) '(0.0 0.0 1.0 1.0 2.0 0.0))
+	    (if (not (equal? (enved-envelope) (list 0.0 0.0 1.0 1.0 2.0 0.0)))
+		(snd-display ";set enved-envelope: ~A?" (enved-envelope)))
+	    (set! (enved-envelope) (enved-envelope))
+	    (if (not (equal? (enved-envelope) (list 0.0 0.0 1.0 1.0 2.0 0.0)))
+		(snd-display ";set enved-envelope to self: ~A?" (enved-envelope)))
 	    (orientation-dialog) 
 	    (if (not (list-ref (dialog-widgets) 1)) (snd-display ";orientation-dialog?"))))
       
@@ -1637,10 +1636,10 @@
       (if (not (= (enved-filter-order) 6)) (snd-display ";set enved-filter-order 5: ~A" (enved-filter-order)))
       (if with-gui
 	  (begin
-	    (set! (enved-active-env) 'zero_to_one) ; funcs.cl above
-	    (if (not (feql (enved-active-env) zero_to_one)) (snd-display ";set symbol enved-active-env: ~A ~A" (enved-active-env) zero_to_one))
-	    (set! (enved-active-env) "mod_down")
-	    (if (not (feql (enved-active-env) mod_down)) (snd-display ";set string enved-active-env: ~A ~A" (enved-active-env) mod_down))))
+	    (set! (enved-envelope) 'zero_to_one) ; funcs.cl above
+	    (if (not (feql (enved-envelope) zero_to_one)) (snd-display ";set symbol enved-envelope: ~A ~A" (enved-envelope) zero_to_one))
+	    (set! (enved-envelope) "mod_down")
+	    (if (not (feql (enved-envelope) mod_down)) (snd-display ";set string enved-envelope: ~A ~A" (enved-envelope) mod_down))))
       (close-sound ind) 
       (dismiss-all-dialogs)
       
@@ -31272,10 +31271,43 @@ EDITS: 2
 	    (btst '(>= (mus-random 1.0) -1.0) #t)
 	    (let* ((ind (open-sound "oboe.snd"))
 		   (reg (make-region 0 10))
+		   (mx (mix-vct (vct 0 .1 .2) 0))
+		   (mrk (add-mark 123))
+		   (trk (make-track))
 		   (reg-val -100.0))
 	      (btst '(sample-reader? (make-sample-reader)) #t)
 	      (btst '(let ((a (make-sample-reader))) (and (eq? a a) (eqv? a a) (equal? a a))) #t)
 	      (btst '(let ((a (make-sample-reader)) (b (make-sample-reader))) (or (eq? a b) (eqv? a b) (equal? a b))) #f)
+	      (let ((ok #f))
+		(run (lambda () (set! ok (sound? ind))))
+		(if (not ok) (snd-display ";run sound?")))
+	      (let ((ok #f))
+		(run (lambda () (set! ok (sound? (1+ ind)))))
+		(if ok (snd-display ";run not sound?")))
+	      (let ((ok #f))
+		(run (lambda () (set! ok (mark? mrk))))
+		(if (not ok) (snd-display ";run mark?")))
+	      (let ((ok #f))
+		(run (lambda () (set! ok (mark? (1+ mrk)))))
+		(if ok (snd-display ";run not mark?")))
+	      (let ((ok #f))
+		(run (lambda () (set! ok (region? reg))))
+		(if (not ok) (snd-display ";run region?")))
+	      (let ((ok #f))
+		(run (lambda () (set! ok (region? (1+ reg)))))
+		(if ok (snd-display ";run not region?")))
+	      (let ((ok #f))
+		(run (lambda () (set! ok (mix? mx))))
+		(if (not ok) (snd-display ";run mix?")))
+	      (let ((ok #f))
+		(run (lambda () (set! ok (mix? (1+ mx)))))
+		(if ok (snd-display ";run not mix?")))
+	      (let ((ok #f))
+		(run (lambda () (set! ok (track? trk))))
+		(if (not ok) (snd-display ";run track?")))
+	      (let ((ok #f))
+		(run (lambda () (set! ok (track? (1+ trk)))))
+		(if ok (snd-display ";run not track?")))
 	      (run (lambda () 
 		     (let ((a (make-region-sample-reader 0 reg 0)))
 		       (set! reg-val (read-region-sample a)))))
@@ -35074,20 +35106,9 @@ EDITS: 2
 			 (fir-button (list-ref enved-widgets 25)) ; proc button is 26
 			 (ewid drawer)
 			 (senv #f))
-		    
 		    (click-button reset-button) (force-event)
-		    
 		    (select-item env-list 1) (force-event)
-		    (let ((e1 (enved-selected-env)))
-		      (if (or (not e1)
-			      (null? e1))
-			  (snd-display ";select env failed? ~A" e1)
-			  (begin
-			    (select-item env-list 0)  (force-event)
-			    (if (equal? e1 (enved-selected-env))
-				(snd-display ";select env 0 is same as 1? ~A" e1)))))
-		    
-		    (set! senv (enved-selected-env))
+		    (set! senv (enved-envelope))
 		    (click-event ewid 1 0 (enved-x 0.5) (enved-y 1.0)) (force-event)
 		    (widget-string text-widget "new-env")
 		    (click-button save-button) (force-event)
@@ -35096,7 +35117,7 @@ EDITS: 2
 			(if (not (ffeql new-env (list 0.0 0.0 0.5 1.0 1.0 0.0)))
 			    (snd-display ";saved new-env: ~A?" new-env)))
 		    (click-event ewid 1 0 (enved-x 0.5) (enved-y 1.0)) (force-event)
-		    (let ((active-env (enved-active-env)))
+		    (let ((active-env (enved-envelope)))
 		      (if (not (ffeql active-env (list 0.0 0.0 1.0 0.0)))
 			  (snd-display ";enved mid-click to delete: ~A?" active-env)))
 		    (set! (enved-base) 1.0)
@@ -35105,17 +35126,17 @@ EDITS: 2
 			((= i 50))
 		      (click-event ewid 1 0 (enved-x (random 0.999)) (enved-y (random 1.0))) (force-event)
 		      (click-event ewid 1 0 (enved-x (random 0.999)) (enved-y (random 1.0))) (force-event)
-		      (let* ((e (enved-active-env))
+		      (let* ((e (enved-envelope))
 			     (len (length e)))
 			(if (> len 4)
 			    (let* ((pos (+ 2 (random (- len 4))))
 				   (rx (list-ref e (if (odd? pos) (- pos 1) pos)))
 				   (ry (list-ref e (if (odd? pos) pos (+ pos 1)))))
 			      (click-event ewid 1 0 (enved-x rx) (enved-y ry)) (force-event)
-;			      (if (>= (length (enved-active-env)) (length e))
+;			      (if (>= (length (enved-envelope)) (length e))
 ;				  (snd-display "; enved loop missed a hit ~A ~A ~A" (enved-x rx) (enved-y ry) (enved-axis-info)))
 			      ))))
-		    (let ((len (length (enved-active-env))))
+		    (let ((len (length (enved-envelope))))
 		      (do ((i 0 (1+ i)))
 			  ((= i 10))
 			(if (XtIsSensitive undo-button)
@@ -35150,7 +35171,7 @@ EDITS: 2
 		      (if (> (random 1.0) .9) (begin (set! (enved-base) 0.0) (click-button exp-button) (force-event)))
 		      (if (> (random 1.0) .9) (begin (set! (enved-base) (random 2.0)) (click-button exp-button) (force-event)))
 		      (if (> (random 1.0) .9) (begin (click-button lin-button) (force-event)))
-		      (let* ((e (enved-active-env)))
+		      (let* ((e (enved-envelope)))
 			(if (> (length e) 4)
 			    (let* ((pos (+ 2 (random (- (length e) 4))))
 				   (rx (list-ref e (if (odd? pos) (- pos 1) pos)))
@@ -35241,8 +35262,6 @@ EDITS: 2
 		    (let ((firB (enved-filter)))
 		      (click-button fir-button) (force-event)
 		      (if (eq? (enved-filter) firB) (snd-display ";fir button had no effect?")))
-		    
-		    (set! (enved-selected-env) "env1")
 		    (click-button delete-button) (force-event)
 		    (click-button dismiss-button) (force-event)
 		    )
@@ -40839,7 +40858,7 @@ EDITS: 2
 ;;; ---------------- test 28: errors ----------------
 
 (gc)
-(mem-report)
+(if (defined? 'mem-report) (mem-report))
 (if (file-exists? "memlog")
     (system "mv memlog memlog.22")) ; save pre-error version
 ;;; regions exist here (etc) so it's not a cleaned-out state
@@ -40875,8 +40894,8 @@ EDITS: 2
 		     delete-mark delete-marks forget-region delete-sample delete-samples delete-samples-with-origin
 		     delete-selection dialog-widgets display-edits dot-size draw-dot draw-dots draw-line
 		     draw-lines draw-string edit-header-dialog edit-fragment edit-position edit-tree edits env-selection
-		     env-sound enved-active-env enved-base enved-clip? enved-in-dB enved-dialog enved-style enved-power
-		     enved-selected-env enved-target enved-waveform-color enved-wave? eps-file eps-left-margin emacs-style-save-as
+		     env-sound enved-envelope enved-base enved-clip? enved-in-dB enved-dialog enved-style enved-power
+		     enved-target enved-waveform-color enved-wave? eps-file eps-left-margin emacs-style-save-as
 		     eps-bottom-margin eps-size expand-control expand-control-hop expand-control-length expand-control-ramp
 		     expand-control? fft fft-window-beta fft-log-frequency fft-log-magnitude transform-size disk-kspace
 		     transform-graph-type fft-window transform-graph? file-dialog mix-file-dialog file-name fill-polygon
@@ -40994,7 +41013,7 @@ EDITS: 2
 			 contrast-control? auto-update-interval current-font cursor cursor-color channel-properties
 			 cursor-follows-play cursor-size cursor-style dac-combines-channels dac-size data-clipped data-color
 			 default-output-chans default-output-format default-output-srate default-output-type dot-size
-			 enved-active-env enved-base enved-clip? enved-in-dB enved-style enved-power enved-selected-env
+			 enved-envelope enved-base enved-clip? enved-in-dB enved-style enved-power
 			 enved-target enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin eps-size
 			 expand-control expand-control-hop expand-control-length expand-control-ramp expand-control?
 			 fft-window-beta fft-log-frequency fft-log-magnitude transform-size transform-graph-type fft-window
@@ -41694,8 +41713,8 @@ EDITS: 2
 			      auto-resize auto-update axis-label-font axis-numbers-font basic-color bind-key
 			      channel-style color-cutoff color-dialog color-inverted color-scale
 			      cursor-color dac-combines-channels dac-size data-clipped data-color default-output-chans emacs-style-save-as
-			      default-output-format default-output-srate default-output-type enved-active-env enved-base
-			      enved-clip? enved-in-dB enved-dialog enved-style  enved-power enved-selected-env enved-target
+			      default-output-format default-output-srate default-output-type enved-envelope enved-base
+			      enved-clip? enved-in-dB enved-dialog enved-style  enved-power enved-target
 			      enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin eps-size
 			      foreground-color graph-color graph-cursor highlight-color just-sounds key-binding
 			      listener-color listener-font listener-prompt listener-text-color max-regions
@@ -41800,8 +41819,7 @@ EDITS: 2
 			    (list start-playing-selection-hook 'start-playing-selection-hook)
 			    (list selection-changed-hook 'selection-changed-hook)))
 	    
-	    (check-error-tag 'no-such-envelope (lambda () (set! (enved-active-env) "not-an-env")))
-	    (check-error-tag 'no-such-envelope (lambda () (set! (enved-selected-env) "not-an-env")))
+	    (check-error-tag 'no-such-envelope (lambda () (set! (enved-envelope) "not-an-env")))
 	    (check-error-tag 'cannot-save (lambda () (save-envelopes "/bad/baddy")))
 	    (check-error-tag 'bad-arity (lambda () (set! (search-procedure) (lambda (a b c) a))))
 	    (check-error-tag 'no-such-sound (lambda () (set! (search-procedure 1234) (lambda (a) a))))
@@ -42599,7 +42617,7 @@ EDITS: 2
 (close-output-port optimizer-log)
 ;;;(mus-sound-report-cache "hiho.tmp")
 (gc)
-(mem-report)
+(if (defined? 'mem-report) (mem-report))
 (if (and full-test
 	 (file-exists? "oldopt.log"))
     (system "diff -w optimizer.log oldopt.log"))

@@ -2,18 +2,10 @@
 
 /* TODO: transparent pixmaps */
 
-#if 0
-#define APPLY_BUTTON_COLOR    "doit_button"
-#define REMEMBER_BUTTON_COLOR "doit_again_button"
-#define RESET_BUTTON_COLOR    "reset_button"
-#define RESTORE_BUTTON_COLOR  "quit_button"
-#else
 #define APPLY_BUTTON_COLOR    "panel_button"
 #define REMEMBER_BUTTON_COLOR "panel_button"
 #define RESET_BUTTON_COLOR    "panel_button"
 #define RESTORE_BUTTON_COLOR  "panel_button"
-#endif
-
 
 enum {W_pane, W_pane_box, W_control_panel,
       W_name_form, W_name, W_name_event, W_name_pix, W_info_label, W_info, W_info_sep,

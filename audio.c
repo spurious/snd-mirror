@@ -1516,10 +1516,10 @@ static int *audio_fd = NULL;
 static int *audio_open_ctr = NULL; 
 static int *audio_dsp = NULL; 
 static int *audio_mixer = NULL; 
-static int *audio_type = NULL; 
 static int *audio_mode = NULL; 
-enum {NORMAL_CARD, SONORUS_STUDIO, RME_HAMMERFALL, SAM9407_DSP, DELTA_66};
+typedef enum {NORMAL_CARD, SONORUS_STUDIO, RME_HAMMERFALL, SAM9407_DSP, DELTA_66} audio_card_t;
 /* the Sonorus Studi/o card is a special case in all regards */
+static audio_card_t *audio_type = NULL; 
 
 static int sound_cards = 0;
 static int new_oss_running = 0;
@@ -1533,7 +1533,7 @@ static int oss_mus_audio_systems(void)
 static char *mixer_name(int sys)
 {
 #if HAVE_SAM_9407
-  if(sys < sound_cards && audio_type[sys] == SAM9407_DSP)
+  if((sys < sound_cards) && (audio_type[sys] == SAM9407_DSP))
     {
       mus_snprintf(dev_name, LABEL_BUFFER_SIZE, "/dev/sam%d_mixer", audio_mixer[sys]);
       return(dev_name);
@@ -1562,7 +1562,7 @@ static char *mixer_name(int sys)
 static char *oss_mus_audio_system_name(int system) 
 {
 #if HAVE_SAM_9407
-  if(system < sound_cards && audio_type[system] == SAM9407_DSP)
+  if((system < sound_cards) && (audio_type[system] == SAM9407_DSP))
     {
       int fd;
       fd = open(mixer_name(system), O_RDONLY, 0);
@@ -1625,7 +1625,7 @@ static char *oss_mus_audio_moniker(void)
 static char *dac_name(int sys, int offset)
 {
 #if HAVE_SAM_9407
-  if (sys < sound_cards && audio_type[sys] == SAM9407_DSP) 
+  if ((sys < sound_cards) && (audio_type[sys] == SAM9407_DSP))
     {
       mus_snprintf(dev_name, LABEL_BUFFER_SIZE, "/dev/sam%d_dsp", audio_dsp[sys]);
       return(dev_name);
@@ -1666,7 +1666,7 @@ static int oss_mus_audio_initialize(void)
       audio_open_ctr = (int *)CALLOC(MAX_SOUNDCARDS, sizeof(int));
       audio_dsp = (int *)CALLOC(MAX_SOUNDCARDS, sizeof(int));
       audio_mixer = (int *)CALLOC(MAX_SOUNDCARDS, sizeof(int));
-      audio_type = (int *)CALLOC(MAX_SOUNDCARDS, sizeof(int));
+      audio_type = (audio_card_t *)CALLOC(MAX_SOUNDCARDS, sizeof(audio_card_t));
       audio_mode = (int *)CALLOC(MAX_SOUNDCARDS, sizeof(int));
       dev_name = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
       init_srate = (int *)CALLOC(MAX_SOUNDCARDS, sizeof(int));
@@ -8351,8 +8351,8 @@ int mus_audio_close(int line)
   return(MUS_ERROR);
 }
 
-enum {CONVERT_NOT, CONVERT_COPY, CONVERT_SKIP, CONVERT_COPY_AND_SKIP, CONVERT_SKIP_N, CONVERT_COPY_AND_SKIP_N};
-static int conversion_choice = CONVERT_NOT;
+typedef enum {CONVERT_NOT, CONVERT_COPY, CONVERT_SKIP, CONVERT_COPY_AND_SKIP, CONVERT_SKIP_N, CONVERT_COPY_AND_SKIP_N} audio_convert_t;
+static audio_convert_t conversion_choice = CONVERT_NOT;
 static float conversion_multiplier = 1.0;
 static int dac_out_chans, dac_out_srate;
 static int incoming_out_chans = 1, incoming_out_srate = 44100;

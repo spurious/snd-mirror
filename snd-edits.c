@@ -8995,4 +8995,5 @@ append the rest?
 
       could ptree-channel have an only-forward version?
       cleaner ptree-channel interface: split "dir" into read-forward and read-backward funcs?
+      could delay-channel be just offset from beg + 0 limiter at ends? -- need to mess with reader here
 */

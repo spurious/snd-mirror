@@ -6198,15 +6198,23 @@ static xen_value *goto_0(ptree *prog, xen_value **args, xen_value *sf)
 }
 
 /* ---------------- simple snd ops ---------------- */
-#define INT_OP(CName) \
+#define INT_INT_OP(CName) \
 static void CName ## _i(int *args, ptree *pt) {INT_RESULT = CName(INT_ARG_1);} \
-static char *descr_ ## CName ## _i(int *args, ptree *pt)  \
-{ return(mus_format( INT_PT " = " #CName "(" INT_PT ")", args[0], INT_RESULT, args[1], INT_ARG_1));} \
-static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) \
-{return(package(prog, R_INT, CName ## _i, descr_ ##CName ## _i, args, 1));}
+static char *descr_ ## CName ## _i(int *args, ptree *pt) {return(mus_format( INT_PT " = " #CName "(" INT_PT ")", args[0], INT_RESULT, args[1], INT_ARG_1));} \
+static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_INT, CName ## _i, descr_ ##CName ## _i, args, 1));}
+
+#define BOOL_INT_OP(CName) \
+static void CName ## _i(int *args, ptree *pt) {BOOL_RESULT = CName(INT_ARG_1);} \
+static char *descr_ ## CName ## _i(int *args, ptree *pt) {return(mus_format( BOOL_PT " = " #CName "(" INT_PT ")", args[0], B2S(BOOL_RESULT), args[1], INT_ARG_1));} \
+static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_BOOL, CName ## _i, descr_ ##CName ## _i, args, 1));}
+
+#define INT_VOID_OP(CName) \
+static void CName ## _i(int *args, ptree *pt) {INT_RESULT = CName();} \
+static char *descr_ ## CName ## _i(int *args, ptree *pt) {return(mus_format( INT_PT " = " #CName "()", args[0], INT_RESULT));} \
+static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_INT, CName ## _i, descr_ ##CName ## _i, args, 0));}
 
 /*
-  bool from 1: sound? mix? mark? mix-inverted? mix-locked? track? region?
+  bool from 1: mix-inverted? mix-locked?
   bool from 0: selection?
   int from 0: selection-position selection-chans selection-frames select-all selected-channel selected-sound mark-sync-max
   int from 1: mark-sample mark-sync mix-track mix-chans mix-frames mix-position region-chans region-frames region-srate track-track track-chans
@@ -6221,7 +6229,14 @@ static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) \
      select-channel select-sound
 */
 
-INT_OP(mus_bytes_per_sample)
+INT_INT_OP(mus_bytes_per_sample)
+bool r_sound_p(int i);
+BOOL_INT_OP(r_sound_p);
+BOOL_INT_OP(mix_ok);
+BOOL_INT_OP(track_p);
+BOOL_INT_OP(region_ok);
+bool r_mark_p(int n);
+BOOL_INT_OP(r_mark_p);
 
   /* others need export */
 
@@ -10862,6 +10877,11 @@ static void init_walkers(void)
   INIT_WALKER(S_mus_header_type_name, make_walker(mus_header_type_name_1, NULL, NULL, 1, 1, R_STRING, false, 1, R_INT));
   INIT_WALKER(S_mus_data_format_name, make_walker(mus_data_format_name_1, NULL, NULL, 1, 1, R_STRING, false, 1, R_INT));
   INIT_WALKER(S_mus_bytes_per_sample, make_walker(mus_bytes_per_sample_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
+  INIT_WALKER(S_sound_p, make_walker(r_sound_p_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_INT));
+  INIT_WALKER(S_mix_p, make_walker(mix_ok_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_INT));
+  INIT_WALKER(S_track_p, make_walker(track_p_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_INT));
+  INIT_WALKER(S_region_p, make_walker(region_ok_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_INT));
+  INIT_WALKER(S_mark_p, make_walker(r_mark_p_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_INT));
 
   INIT_WALKER(S_vct_ref, make_walker(vct_ref_1, NULL, vct_set_1, 2, 2, R_FLOAT, false, 2, R_VCT, R_INT));
   INIT_WALKER(S_vct_length, make_walker(vct_length_1, NULL, NULL, 1, 1, R_INT, false, 1, R_VCT));

@@ -1925,6 +1925,15 @@ static XEN g_mark_p(XEN id_n)
   return(XEN_FALSE);
 }
 
+#if WITH_RUN
+bool r_mark_p(int n);
+bool r_mark_p(int n)
+{
+  chan_info *ncp[1];
+  return((bool)(find_mark_from_id(n, ncp, -1)));
+}
+#endif
+
 static XEN g_mark_sample(XEN mark_n, XEN pos_n) 
 {
   #define H_mark_sample "(" S_mark_sample " (id #f) (pos #f)): mark's location (sample number) at edit history pos"

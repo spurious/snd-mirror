@@ -244,7 +244,7 @@ static void save_snd_state_options (FILE *fd)
 
   if (transform_size(ss) != DEFAULT_TRANSFORM_SIZE) pss_sd(fd, S_transform_size, transform_size(ss));
   if (minibuffer_history_length(ss) != DEFAULT_MINIBUFFER_HISTORY_LENGTH) pss_sd(fd, S_minibuffer_history_length, minibuffer_history_length(ss));
-  if (fft_window(ss) != DEFAULT_FFT_WINDOW) pss_ss(fd, S_fft_window, mus_fft_window_name(fft_window(ss)));
+  if (fft_window(ss) != DEFAULT_FFT_WINDOW) pss_ss(fd, S_fft_window, TO_VAR_NAME(mus_fft_window_name(fft_window(ss))));
   if (transform_graph_type(ss) != DEFAULT_TRANSFORM_GRAPH_TYPE) pss_ss(fd, S_transform_graph_type, transform_graph_type_name(transform_graph_type(ss)));
   if (time_graph_type(ss) != DEFAULT_TIME_GRAPH_TYPE) pss_ss(fd, S_time_graph_type, time_graph_type_name(time_graph_type(ss)));
   if (x_axis_style(ss) != DEFAULT_X_AXIS_STYLE) pss_ss(fd, S_x_axis_style, x_axis_style_name(x_axis_style(ss)));
@@ -254,7 +254,7 @@ static void save_snd_state_options (FILE *fd)
   if (speed_control_style(ss) != DEFAULT_SPEED_CONTROL_STYLE) pss_ss(fd, S_speed_control_style, speed_control_style_name(speed_control_style(ss)));
   if (channel_style(ss) != DEFAULT_CHANNEL_STYLE) pss_ss(fd, S_channel_style, channel_style_name(channel_style(ss)));
   if (enved_target(ss) != DEFAULT_ENVED_TARGET) pss_ss(fd, S_enved_target, enved_target_name(enved_target(ss)));
-  if (transform_type(ss) != DEFAULT_TRANSFORM_TYPE) pss_ss(fd, S_transform_type, transform_type_name(transform_type(ss)));
+  if (transform_type(ss) != DEFAULT_TRANSFORM_TYPE) pss_ss(fd, S_transform_type, TO_VAR_NAME(transform_type_name(transform_type(ss))));
   if (zoom_focus_style(ss) != ZOOM_FOCUS_ACTIVE) pss_ss(fd, S_zoom_focus_style, zoom_focus_style_name(zoom_focus_style(ss)));
   if (transform_normalization(ss) != DEFAULT_TRANSFORM_NORMALIZATION) pss_ss(fd, S_transform_normalization, transform_normalization_name(transform_normalization(ss)));
   if (optimization(ss) != DEFAULT_OPTIMIZATION) pss_sd(fd, S_optimization, optimization(ss));
@@ -590,8 +590,8 @@ static void save_sound_state (snd_info *sp, void *ptr)
       if (cp->transform_size != transform_size(ss)) pcp_sd(fd, S_transform_size, cp->transform_size, chan);
       if (cp->transform_graph_type != transform_graph_type(ss)) pcp_ss(fd, S_transform_graph_type, transform_graph_type_name(cp->transform_graph_type), chan);
       if (cp->time_graph_type != time_graph_type(ss)) pcp_ss(fd, S_time_graph_type, time_graph_type_name(cp->time_graph_type), chan);
-      if (cp->fft_window != fft_window(ss)) pcp_ss(fd, S_fft_window, mus_fft_window_name(cp->fft_window), chan);
-      if (cp->transform_type != transform_type(ss)) pcp_ss(fd, S_transform_type, transform_type_name(cp->transform_type), chan);
+      if (cp->fft_window != fft_window(ss)) pcp_ss(fd, S_fft_window, TO_VAR_NAME(mus_fft_window_name(cp->fft_window)), chan);
+      if (cp->transform_type != transform_type(ss)) pcp_ss(fd, S_transform_type, TO_VAR_NAME(transform_type_name(cp->transform_type)), chan);
       /* this is assuming the added transform definition (if any) can be found -- maybe not a good idea */
       if (cp->transform_normalization != transform_normalization(ss)) pcp_ss(fd, S_transform_normalization, transform_normalization_name(cp->transform_normalization), chan);
       if (cp->time_graph_style != graph_style(ss)) pcp_ss(fd, S_time_graph_style, graph_style_name(cp->time_graph_style), chan);
@@ -921,19 +921,21 @@ static XEN g_exit(XEN val)
   return(XEN_FALSE);
 }
 
+#if DEBUG_MEMORY
 static XEN g_mem_report(void) 
 {
-#if DEBUG_MEMORY
   mem_report(); 
-#endif
   return(XEN_FALSE);
 }
+#endif
 
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_1(g_save_options_w, g_save_options)
 XEN_NARGIFY_1(g_save_state_w, g_save_state)
 XEN_ARGIFY_1(g_exit_w, g_exit)
-XEN_NARGIFY_0(g_mem_report_w, g_mem_report)
+#if DEBUG_MEMORY
+  XEN_NARGIFY_0(g_mem_report_w, g_mem_report)
+#endif
 XEN_NARGIFY_0(g_script_arg_w, g_script_arg)
 XEN_NARGIFY_1(g_set_script_arg_w, g_set_script_arg)
 XEN_NARGIFY_0(g_script_args_w, g_script_args)
@@ -941,7 +943,9 @@ XEN_NARGIFY_0(g_script_args_w, g_script_args)
 #define g_save_options_w g_save_options
 #define g_save_state_w g_save_state
 #define g_exit_w g_exit
-#define g_mem_report_w g_mem_report
+#if DEBUG_MEMORY
+  #define g_mem_report_w g_mem_report
+#endif
 #define g_script_arg_w g_script_arg
 #define g_set_script_arg_w g_set_script_arg
 #define g_script_args_w g_script_args
@@ -953,7 +957,9 @@ void g_init_main(void)
   XEN_DEFINE_PROCEDURE(S_save_state,   g_save_state_w, 1, 0, 0,   H_save_state);
   XEN_DEFINE_PROCEDURE(S_exit,         g_exit_w, 0, 1, 0,         H_exit);
 
+#if DEBUG_MEMORY
   XEN_DEFINE_PROCEDURE("mem-report",   g_mem_report_w, 0, 0, 0, "(mem-report) writes memory usage stats to memlog");
+#endif
 
   #define H_start_hook S_start_hook " (filename): called upon start-up. If it returns #t, snd exits immediately."
   XEN_DEFINE_HOOK(start_hook, S_start_hook, 1, H_start_hook);                   /* arg = argv filename if any */

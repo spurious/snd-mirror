@@ -18,8 +18,9 @@
 ;;; make-pixmap
 ;;; notebook-with-top-tabs
 
-;;; TODO: add font selection dialog to view menu and tie choice to various fonts
-;;; TODO: add color selection dialog and so forth
+;;; TODO: add font selection dialog to view menu and tie choice to various fonts [example in gtk/tests/testcalendar]
+;;;      (in Xm, XmFontSelector is not usable yet -- "sizes" not a ComboBox, etc)
+;;; TODO: add color selection dialog and so forth [example in gtk/tests/testgtk]
 
 (use-modules (ice-9 format))
 

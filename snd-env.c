@@ -7,6 +7,9 @@
    verbose-cursor, with-background-processes, with-mix-tags,
    with-relative-panes, with-gl, mus-file-data-clipped -- too many!
  */
+/* filter-control-env -> envelope, similarly filter-env-in-hz (axis?)
+   mix-amp-env track-amp-env
+ */
 
 
 /* TODO: tie sine-env (et al) into the envelope editors (enved, mix, xm-enved)
@@ -15,9 +18,10 @@
            add list of user-defined seg-funcs to enved
            use enved-proc if ENVELOPE_LAMBDA in display and everywhere else
 */
-/* TODO: add env name field to mix/track enveds */
+/* TODO: add env name field to mix/track enveds (undo/redo? lin/exp/proc?) */
+/* TODO: add waveform display to mix/track enveds */
 /* TODO: xm-enved packaged enved access (widgets and callbacks) */
-/* TODO: clip/dB buttons in mix/track dialogs */
+/* TODO: clip/dB buttons in mix/track dialogs (exp scale?) */
 /* TODO: incorporate env props throughout Snd (env.scm?) */
 
 
@@ -1346,7 +1350,10 @@ and 'base' into the envelope editor."
       e->base = b;
     }
   alert_envelope_editor(XEN_TO_C_STRING(name), e);
+
   /* TODO: if already defined, define-envelope should just set to new value/properties (current code works) */
+  /* TODO: define_envelope doesn't seem to work in Ruby? define_envelope("hiho", [0, 0, 1, 1], 32.0) */
+
   XEN_DEFINE_VARIABLE(XEN_TO_C_STRING(name), temp, data); /* already gc protected */
 #if HAVE_GUILE
   /* add properties */

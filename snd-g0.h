@@ -129,6 +129,7 @@ typedef struct {
 typedef enum {WITHOUT_PANED_WINDOW, WITH_PANED_WINDOW} dialog_paned_t;
 typedef enum {DONT_PAD_TITLE, PAD_TITLE_ON_RIGHT, PAD_TITLE_ON_LEFT} dialog_pad_t;
 typedef enum {WITHOUT_SORT_BUTTON, WITH_SORT_BUTTON} dialog_sort_t;
+typedef enum {CONTAINER_ADD, PANED_ADD, BOX_PACK, TABLE_ATTACH} widget_add_t;
 
 typedef struct {
   GtkWidget *ww;
@@ -165,8 +166,6 @@ typedef struct {
 #define KEY_TO_NAME(key) gdk_keyval_name(key)
 
 /* #define GUI_CURRENT_TIME(ss) GDK_CURRENT_TIME */
-
-enum {CONTAINER_ADD, PANED_ADD, BOX_PACK, TABLE_ATTACH};
 
 /* now pull in the key names (gdk/gdkkeysyms.h) */
 #define snd_K_Shift_L GDK_Shift_L	 

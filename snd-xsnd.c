@@ -8,18 +8,10 @@
   #define TOGGLE_MARGIN 0
 #endif
 
-#if 0
-/* these strike me as hokey-looking */
-#define APPLY_BUTTON_COLOR    (Pixel)((ss->sgx)->doit_button_color)
-#define REMEMBER_BUTTON_COLOR (Pixel)((ss->sgx)->doit_again_button_color)
-#define RESET_BUTTON_COLOR    (Pixel)((ss->sgx)->reset_button_color)
-#define RESTORE_BUTTON_COLOR  (Pixel)((ss->sgx)->quit_button_color)
-#else
 #define APPLY_BUTTON_COLOR    (Pixel)((ss->sgx)->position_color)
 #define REMEMBER_BUTTON_COLOR (Pixel)((ss->sgx)->position_color)
 #define RESET_BUTTON_COLOR    (Pixel)((ss->sgx)->position_color)
 #define RESTORE_BUTTON_COLOR  (Pixel)((ss->sgx)->position_color)
-#endif
 
 enum {W_pane,
       W_name_form, W_amp_form,

@@ -378,6 +378,8 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+12-Jan:  removed enved-selected-env, changed enved-active-env to enved-envelope.\n\
+9-Jan:   snd 7.1\n\
 8-Jan:   extensions.rb thanks to Michael Scholz.\n\
 5-Jan:   envelopes can now have the properties 'envelope-base, 'envelope-type, and\n\
            'envelope-lambda.  The envelope editor manages these, and define-envelope\n\
@@ -1204,10 +1206,21 @@ static char *open_file_xrefs[7] = {
 void open_file_dialog_help(void)
 {
   snd_help_with_xrefs("File",
-"If you click the 'Sound Files Only' button, only those files in the current directory that look vaguely like sound files will be displayed.",
+"The selected file will be opened in a new pane. \
+If you click the 'Sound Files Only' button, only those files in the current directory that look vaguely like sound files will be displayed.",
 		      true,
 		      open_file_xrefs,
 		      NULL);
+}
+
+void mix_file_dialog_help(void)
+{
+  snd_help_with_xrefs("File",
+"The selected file will be mixed at the cursor in the selected sound. If you click the 'Sound Files Only' button, \
+only those files in the current directory that look vaguely like sound files will be displayed.",
+		      true,
+		      snd_xrefs("Mix"),
+		      snd_xref_urls("Mix"));
 }
 
 void find_dialog_help(void)

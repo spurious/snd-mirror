@@ -460,6 +460,17 @@ void init_sound_file_extensions(void)
 
 static XEN just_sounds_hook;
 
+bool run_just_sounds_hook(const char *name)
+{
+  XEN res = XEN_TRUE;
+  if (XEN_HOOKED(just_sounds_hook))
+    res = run_or_hook(just_sounds_hook,
+		      XEN_LIST_1(C_TO_XEN_STRING(name)),
+		      S_just_sounds_hook);
+  return(XEN_TRUE_P(res));
+}
+
+
 bool sound_file_p(char *name)
 {
   int i;
@@ -500,12 +511,7 @@ dir *find_sound_files_in_dir(const char *name)
 		if ((strcmp(dot, sound_file_extensions[i]) == 0) && 
 		    (!(empty_file_p(dirp->d_name))))
 		  {
-		    XEN res = XEN_TRUE;
-		    if (XEN_HOOKED(just_sounds_hook))
-		      res = run_or_hook(just_sounds_hook,
-					XEN_LIST_1(C_TO_XEN_STRING(dirp->d_name)),
-					S_just_sounds_hook);
-		    if (XEN_TRUE_P(res))
+		    if (run_just_sounds_hook(dirp->d_name))
 		      add_snd_file_to_dir_list(dp, dirp->d_name);
 		    break;
 		  }

@@ -6,7 +6,7 @@
 	EM.red {color: red; font-style: normal}
 	EM.def {font-weight: bold; font-style: normal}
 	EM.gen {font-weight: bold; font-style: normal}
-        EM.tab {font-style: normal; font-size: small; font-family: fixed}
+        EM.tab {font-style: normal; font-size: small}
 	H1 {text-align: center}
 	UL {list-style-type: none}
 -->
@@ -2986,7 +2986,9 @@ to interrupt the dac in those cases, use <b>stop-dac</b>.  To set the dac volume
 returns the current volume settings.
 Currently, <b>dac</b> calls the sndplay program if possible; <b>sl-dac</b> is
 the same thing, but calls the sl_dac function.  The latter gives you control over the
-output device (sndplay will also someday).
+output device (sndplay will also someday).  In some cases, sndplay's default buffer
+size is not ideal; you can use <a href="#*clm-player*">*clm-player*</a> and sndplay's bufsize argument to
+set it to the correct value for your audio system.
 </p>
 
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>Direct to DAC and Realtime Controls</h4></td></tr></table>
@@ -3362,6 +3364,10 @@ calls sndplay in most cases); say we want to send the sound
 to an ADAT output:</p>
 <pre>
 (setf *clm-player* (lambda (name) (sl-dac name mus-audio-adat-out)))
+</pre>
+or change the sndplay buffer size:
+<pre>
+(setf *clm-player* (lambda (name) (clm::run-in-shell "sndplay" (format nil "~A -bufsize 1024" name))))
 </pre>
 
 <p>On machines with plenty of memory and slow disks, you can speed up CLM

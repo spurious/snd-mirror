@@ -325,7 +325,6 @@ static void select_or_edit_env(int pos)
       set_button_label(showB, _("view envs"));
     }
   if (active_env) active_env = free_env(active_env);
-  /* selected_env = enved_all_envs(pos); */
   selected_env = position_to_env(pos);
   if (!selected_env) return;
   active_env = copy_env(selected_env);
@@ -1271,54 +1270,26 @@ void color_enved_waveform(GdkColor *pix)
     }
 }
 
-static XEN g_enved_active_env(void)
+static XEN g_enved_envelope(void)
 {
-  #define H_enved_active_env "(" S_enved_active_env "): current envelope editor displayed (active) envelope"
+  #define H_enved_envelope "(" S_enved_envelope "): current envelope editor displayed (active) envelope"
   return(env_to_xen(active_env));
 }
 
-static XEN g_set_enved_active_env(XEN e)
+static XEN g_set_enved_envelope(XEN e)
 {
-  XEN_ASSERT_TYPE(XEN_LIST_P(e) || XEN_STRING_P(e) || XEN_SYMBOL_P(e), e, XEN_ONLY_ARG, S_setB S_enved_active_env, "a list, symbol, or string");
+  XEN_ASSERT_TYPE(XEN_LIST_P(e) || XEN_STRING_P(e) || XEN_SYMBOL_P(e), e, XEN_ONLY_ARG, S_setB S_enved_envelope, "a list, symbol, or string");
   if (active_env) active_env = free_env(active_env);
   if ((XEN_STRING_P(e)) || (XEN_SYMBOL_P(e)))
     active_env = copy_env(name_to_env((XEN_STRING_P(e)) ? XEN_TO_C_STRING(e) : XEN_SYMBOL_TO_C_STRING(e)));
   else active_env = xen_to_env(e);
   if ((!active_env) && (!(XEN_LIST_P(e))))
     XEN_ERROR(NO_SUCH_ENVELOPE,
-	      XEN_LIST_2(C_TO_XEN_STRING(S_setB S_enved_active_env),
+	      XEN_LIST_2(C_TO_XEN_STRING(S_setB S_enved_envelope),
 			 e));
   if (enved_dialog) 
     env_redisplay();
   return(e);
-}
-
-static XEN g_enved_selected_env(void)
-{
-  #define H_enved_selected_env "(" S_enved_selected_env "): current envelope editor selected envelope"
-  return(env_to_xen(selected_env));
-}
-
-static XEN g_set_enved_selected_env(XEN name)
-{
-  char *cname;
-  XEN_ASSERT_TYPE(XEN_STRING_P(name) || XEN_SYMBOL_P(name), name, XEN_ONLY_ARG, S_setB S_enved_selected_env, "a string or symbol");
-  cname = (XEN_STRING_P(name)) ? XEN_TO_C_STRING(name) : XEN_SYMBOL_TO_C_STRING(name);
-  selected_env = copy_env(name_to_env(cname));
-  if (selected_env)
-    {
-      if (enved_dialog)
-	{
-	  int pos;
-	  pos = find_env(cname);
-	  sg_list_select(env_list, pos);
-	  sg_list_moveto(env_list, pos);
-	}
-    }
-  else XEN_ERROR(NO_SUCH_ENVELOPE,
-		 XEN_LIST_2(C_TO_XEN_STRING(S_setB S_enved_selected_env),
-			    name));
-  return(name);
 }
 
 static XEN g_enved_filter(void)
@@ -1393,10 +1364,8 @@ static XEN g_enved_axis_info(void)
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_0(g_enved_filter_w, g_enved_filter)
 XEN_NARGIFY_1(g_set_enved_filter_w, g_set_enved_filter)
-XEN_NARGIFY_0(g_enved_active_env_w, g_enved_active_env)
-XEN_NARGIFY_1(g_set_enved_active_env_w, g_set_enved_active_env)
-XEN_NARGIFY_0(g_enved_selected_env_w, g_enved_selected_env)
-XEN_NARGIFY_1(g_set_enved_selected_env_w, g_set_enved_selected_env)
+XEN_NARGIFY_0(g_enved_envelope_w, g_enved_envelope)
+XEN_NARGIFY_1(g_set_enved_envelope_w, g_set_enved_envelope)
 #if DEBUGGING
 XEN_NARGIFY_0(g_enved_dialog_widgets_w, g_enved_dialog_widgets)
 XEN_NARGIFY_0(g_enved_axis_info_w, g_enved_axis_info)
@@ -1404,10 +1373,8 @@ XEN_NARGIFY_0(g_enved_axis_info_w, g_enved_axis_info)
 #else
 #define g_enved_filter_w g_enved_filter
 #define g_set_enved_filter_w g_set_enved_filter
-#define g_enved_active_env_w g_enved_active_env
-#define g_set_enved_active_env_w g_set_enved_active_env
-#define g_enved_selected_env_w g_enved_selected_env
-#define g_set_enved_selected_env_w g_set_enved_selected_env
+#define g_enved_envelope_w g_enved_envelope
+#define g_set_enved_envelope_w g_set_enved_envelope
 #if DEBUGGING
 #define g_enved_dialog_widgets_w g_enved_dialog_widgets
 #define g_enved_axis_info_w g_enved_axis_info
@@ -1418,10 +1385,8 @@ void g_init_gxenv(void)
 {
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_filter, g_enved_filter_w, H_enved_filter,
 				   S_setB S_enved_filter, g_set_enved_filter_w,  0, 0, 1, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_active_env, g_enved_active_env_w, H_enved_active_env,
-				   S_setB S_enved_active_env, g_set_enved_active_env_w,  0, 0, 1, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_selected_env, g_enved_selected_env_w, H_enved_selected_env,
-				   S_setB S_enved_selected_env, g_set_enved_selected_env_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_envelope, g_enved_envelope_w, H_enved_envelope,
+				   S_setB S_enved_envelope, g_set_enved_envelope_w,  0, 0, 1, 0);
 
 #if DEBUGGING
   XEN_DEFINE_PROCEDURE("enved-dialog-widgets", g_enved_dialog_widgets_w, 0, 0, 0, "");

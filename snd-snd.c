@@ -1895,6 +1895,14 @@ static XEN g_sound_p(XEN snd_n)
 			  (sp->inuse == SOUND_NORMAL)));
 }
 
+#if WITH_RUN
+bool r_sound_p(int i);
+bool r_sound_p(int i)
+{
+  return((i < ss->max_sounds) && (snd_ok(ss->sounds[i])) && (ss->sounds[i]->inuse == SOUND_NORMAL));
+}
+#endif
+
 static XEN g_select_sound(XEN snd_n)
 {
   #define H_select_sound "(" S_select_sound " (snd #f)): select snd."

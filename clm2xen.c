@@ -400,9 +400,9 @@ static XEN g_sum_of_sines(XEN amps, XEN phases)
 			  phases));
 }
 
-enum {G_MULTIPLY_ARRAYS, G_RECTANGULAR_POLAR, G_POLAR_RECTANGULAR};
+typedef enum {G_MULTIPLY_ARRAYS, G_RECTANGULAR_POLAR, G_POLAR_RECTANGULAR} xclm_window_t;
 
-static XEN g_fft_window_1(char *caller, int choice, XEN val1, XEN val2, XEN ulen) 
+static XEN g_fft_window_1(char *caller, xclm_window_t choice, XEN val1, XEN val2, XEN ulen) 
 {
   vct *v1, *v2;
   int len;
@@ -1045,9 +1045,9 @@ static XEN g_mus_apply(XEN arglist)
 
 /* ---------------- delay ---------------- */
 
-enum {G_DELAY, G_COMB, G_NOTCH, G_ALL_PASS};
+typedef enum {G_DELAY, G_COMB, G_NOTCH, G_ALL_PASS} xclm_delay_t;
 
-static XEN g_make_delay_1(int choice, XEN arglist)
+static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 {
   mus_xen *gn;
   mus_any *ge = NULL;
@@ -1653,9 +1653,9 @@ with 'wrap-around' when gen's phase marches off either end of its table."
 
 /* ---------------- sawtooth et al ---------------- */
 
-enum {G_SAWTOOTH_WAVE, G_SQUARE_WAVE, G_TRIANGLE_WAVE, G_PULSE_TRAIN};
+typedef enum {G_SAWTOOTH_WAVE, G_SQUARE_WAVE, G_TRIANGLE_WAVE, G_PULSE_TRAIN} xclm_wave_t;
 
-static XEN g_make_sw(int type, Float def_phase, XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
+static XEN g_make_sw(xclm_wave_t type, Float def_phase, XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
 {
   mus_xen *gn;
   mus_any *ge = NULL;
@@ -1856,10 +1856,10 @@ static XEN g_asymmetric_fm_p(XEN obj)
 
 /* ---------------- simple filters ---------------- */
 
-enum {G_ONE_POLE, G_ONE_ZERO, G_TWO_POLE, G_TWO_ZERO, G_ZPOLAR, G_PPOLAR};
+typedef enum {G_ONE_POLE, G_ONE_ZERO, G_TWO_POLE, G_TWO_ZERO, G_ZPOLAR, G_PPOLAR} xclm_filter_t;
 static char *smpflts[6] = {S_make_one_pole, S_make_one_zero, S_make_two_pole, S_make_two_zero, S_make_zpolar, S_make_ppolar};
 
-static XEN g_make_smpflt_1(int choice, XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+static XEN g_make_smpflt_1(xclm_filter_t choice, XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   mus_xen *gn;
   mus_any *gen = NULL;
@@ -1888,6 +1888,7 @@ static XEN g_make_smpflt_1(int choice, XEN arg1, XEN arg2, XEN arg3, XEN arg4)
     case G_ONE_POLE: gen = mus_make_one_pole(a0, a1); break;
     case G_ZPOLAR: gen = mus_make_zpolar(a0, a1); break;
     case G_PPOLAR: gen = mus_make_ppolar(a0, a1); break;
+    default: break;
     }
   if (gen)
     {
@@ -1928,7 +1929,7 @@ Use this in conjunction with the " S_two_pole " generator"
   return(g_make_smpflt_1(G_PPOLAR, arg1, arg2, arg3, arg4));
 }
 
-static XEN g_make_smpflt_2(int choice, XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
+static XEN g_make_smpflt_2(xclm_filter_t choice, XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
 {
   mus_xen *gn;
   mus_any *gen = NULL;
@@ -3009,11 +3010,11 @@ static XEN g_iir_filter(XEN obj, XEN input)
   return(C_TO_XEN_DOUBLE(mus_iir_filter(XEN_TO_MUS_ANY(obj), XEN_TO_C_DOUBLE(input))));
 }
 
-enum {G_FILTER, G_FIR_FILTER, G_IIR_FILTER};
+typedef enum {G_FILTER, G_FIR_FILTER, G_IIR_FILTER} xclm_fir_t;
 enum {G_FILTER_STATE, G_FILTER_XCOEFFS, G_FILTER_YCOEFFS};
 /* G_FILTER_STATE must = MUS_DATA_POSITION */
 
-static XEN g_make_filter_1(int choice, XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
+static XEN g_make_filter_1(xclm_fir_t choice, XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
 {
   XEN xwave = XEN_UNDEFINED, ywave = XEN_UNDEFINED;
   mus_any *fgen = NULL;

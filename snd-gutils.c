@@ -530,7 +530,7 @@ GtkWidget *make_scrolled_text(GtkWidget *parent, bool editable, GtkWidget *boxer
   return(new_text);
 }
 
-GtkWidget *sg_make_list(const char *title, GtkWidget *parent, int paned, gpointer gp, 
+GtkWidget *sg_make_list(const char *title, GtkWidget *parent, widget_add_t paned, gpointer gp, 
 			int num_items, char **items, GtkSignalFunc callback, int t1, int t2, int t3, int t4)
 {
   GtkWidget *list;

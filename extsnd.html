@@ -1008,8 +1008,7 @@ just-sounds button is set. Return #f to filter out <i>filename</i>.
          (= (mus-sound-chans name) 2))))
 </pre></td></tr></table></td></tr>
 <tr><td></td><td colspan=2>
-This currently only works in Motif; the Gtk file selection dialogs 
-don't provide a way to specialize the directory read.
+This works only in Motif or Gtk versions 2.3 and higher.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -4949,6 +4948,7 @@ To insert a region: <a href="#sndinsertregion">insert-region</a><br>
 To insert the selection: <a href="#sndinsertselection">insert-selection</a><br>
 To insert a vct of samples: <a href="#sndinsertsamples">insert-samples</a><br>
 To insert a sound: <a href="#sndinsertfile">insert-sound</a><br>
+To append a sound and silence: <a href="#appendsound">append-sound</a><br>
 </blockquote></small>
 </td></tr></TABLE>
 </td></tr>
@@ -4990,7 +4990,12 @@ with one small change: insert-silence forces <i>beg</i> to be within the current
 <tr><td></td><td>
 insert channel <i>in-chan</i> of <i>file</i> at sample <i>beg</i> in <i>snd</i>'s channel <i>chn</i>.
 beg defaults to the cursor position; if <i>in-chan</i> is not given, all 
-channels are inserted. 
+channels are inserted. To append a sound to another, padding at the end with some silence:
+<pre>
+(define* (<a name="appendsound">append-sound</a> file #:optional (silence 1.0))
+  (<em class=red>insert-sound</em> file (frames))
+  (<em class=red>insert-silence</em> (frames) (inexact-&gt;exact (round (* (srate) silence)))))
+</pre>
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -8182,23 +8187,27 @@ Simple rt spectrum: <a href="sndscm.html#exshowinputfft">show-input-fft</a>, <a 
 
 <!-- just-sounds -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="justsounds">just-sounds</a></em> ()</code></span></td></tr>
-<tr><td width=50></td><td>reflects the just-sounds button (if any). See also <a href="#justsoundshook">just-sounds-hook</a>.</td></tr>
+<tr><td width=50></td><td>In Motif and in Gtk versions 2.3 or later,
+if <i>just-sounds</i> is #t,
+the file lists displayed by the file selection dialogs are filtered to show just
+sound files (see <a href="#addsoundfileextension">add-sound-file-extension</a> and
+<a href="#justsoundshook">just-sounds-hook</a>).</td></tr>
 
 <!-- file-dialog -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndfiledialog">file-dialog</a></em> ()</code></span></td></tr>
-<tr><td></td><td>create the <a href="snd.html#prevfiles">list</a> of current and previous files (not the file browser), if necessary, activate it, and return the dialog widget.</td></tr>
+<tr><td></td><td>create and activate the View:Files <a href="snd.html#prevfiles">list</a> of current and previous files (not the file browser).</td></tr>
 
 <!-- mix-file-dialog -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixfiledialog">mix-file-dialog</a></em> (managed)</code></span></td></tr>
-<tr><td></td><td>create the File:Mix file selection dialog, if necessary, and make it visible if <i>managed</i>.</td></tr>
+<tr><td></td><td>create and activate the File:Mix file selection dialog.</td></tr>
 
 <!-- open-file-dialog -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndopenfiledialog">open-file-dialog</a></em> (managed)</code></span></td></tr>
-<tr><td></td><td>create the File:Open file selection dialog, if necessary, and make it visible if <i>managed</i> (see snd-motif.scm).</td></tr>
+<tr><td></td><td>create and activate the File:Open file selection dialog (see snd-motif.scm for examples).</td></tr>
 
 <!-- previous-files-sort -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="previousfilessort">previous-files-sort</a></em> ()</code></span></td></tr>
-<tr><td></td><td>Sort choice in files dialog (0=unsorted, 1=name, 2=date, 3=size, 4=entry, 5=user procedure).</td></tr>
+<tr><td></td><td>The sort function choice in the View:Files dialog (0=unsorted, 1=name, 2=date, 3=size, 4=entry, 5=user procedure).</td></tr>
 
 <!-- previous-files-sort-procedure -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="filessortproc">previous-files-sort-procedure</a></em> ()</code></span></td></tr>
@@ -8240,10 +8249,6 @@ Add an envelope to the envelope editor's list, under the name 'name', using the 
 'envelope-base, 'envelope-type, and 'envelope-procedure.
 </td></tr>
 
-<!-- enved-active-env -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="envedactiveenv">enved-active-env</a></em> ()</code></span></td></tr>
-<tr><td></td><td>current envelope in the envelope editor's graph window (list).</td></tr>
-
 <!-- enved-base -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="envedbase">enved-base</a></em> () </code></span></td></tr>
 <tr><td></td><td>envelope editor exponential base value (1.0)</td></tr>
@@ -8259,6 +8264,35 @@ Add an envelope to the envelope editor's list, under the name 'name', using the 
 <!-- enved-dialog -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndenveddialog">enved-dialog</a></em> ()</code></span></td></tr>
 <tr><td></td><td>start the Envelope editor dialog, return the dialog widget.</td></tr>
+
+<!-- enved-envelope -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="envedenvelope">enved-envelope</a></em> ()</code></span></td></tr>
+<tr><td></td><td>current envelope in the envelope editor's graph window (list).</td></tr>
+
+<!-- enved-filter -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="filterenv">enved-filter</a></em> ()</code></span></td></tr>
+<tr><td></td><td>The type of the Envelope editor's filter. (default #t: FIR, #f is FFT).  To get the fft display in the envelope editor
+as the default:
+</td></tr>
+
+<tr><td></td><td><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+(define (enved-fft)
+  (set! (<em class=red>enved-filter)</em> #f)
+  (set! (enved-wave?) #t)
+  (set! (enved-target) enved-spectrum)
+  (add-hook! after-open-hook (lambda (snd)
+			       (set! (transform-size snd) 
+				     (expt 2 (ceiling (/ (log (max 1 (frames snd)))
+							 (log 2.0))))))))
+</pre></td></tr></table></td></tr>
+
+<!-- enved-filter-order -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="filterenvorder">enved-filter-order</a></em> ()</code></span></td></tr>
+<tr><td></td><td>The order of the envelope editor's FIR filter. (default is 40)</td></tr>
+
+<!-- enved-power -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="envedpower">enved-power</a></em> ()</code></span></td></tr>
+<tr><td></td><td>envelope editor base scale range (9.0^power). (3.0)</td></tr>
 
 <!-- enved-style -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="envedstyle">enved-style</a></em> ()</code></span></td></tr>
@@ -8284,36 +8318,6 @@ sinusoid:
      (let ((incr (/ pi frag-dur)))
        (vct (+ (* -1.0 pi) (* frag-beg incr)) incr rmp0 (- rmp1 rmp0)))))
 </pre></td></tr></table></td></tr>
-
-<!-- enved-filter -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="filterenv">enved-filter</a></em> ()</code></span></td></tr>
-<tr><td></td><td>The type of the Envelope editor's filter. (default #t: FIR, #f is FFT).  To get the fft display in the envelope editor
-as the default:
-</td></tr>
-
-<tr><td></td><td><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(define (enved-fft)
-  (set! (<em class=red>enved-filter)</em> #f)
-  (set! (enved-wave?) #t)
-  (set! (enved-target) enved-spectrum)
-  (add-hook! after-open-hook (lambda (snd)
-			       (set! (transform-size snd) 
-				     (expt 2 (ceiling (/ (log (frames snd)) 
-							 (log 2.0))))))))
-</pre></td></tr></table></td></tr>
-
-<!-- enved-filter-order -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="filterenvorder">enved-filter-order</a></em> ()</code></span></td></tr>
-<tr><td></td><td>The order of the envelope editor's FIR filter. (default is 40)</td></tr>
-
-<!-- enved-power -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="envedpower">enved-power</a></em> ()</code></span></td></tr>
-<tr><td></td><td>envelope editor base scale range (9.0^power). (3.0)</td></tr>
-
-<!-- enved-selected-env -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="envedselectedenv">enved-selected-env</a></em> ()</code></span></td></tr>
-<tr><td></td><td>envelope editor selected envelope (list) -- this is the unedited form; the
-version in the editor's graph window is called <a href="#envedactiveenv">enved-active-env</a>.</td></tr>
 
 <!-- enved-target -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="envedtarget">enved-target</a></em> ()</code></span></td></tr>
@@ -8401,15 +8405,15 @@ See <i>html</i> in index.scm.
 
 <!-- mix-dialog -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixdialog">mix-dialog</a></em> ()</code></span></td></tr>
-<tr><td></td><td>create the Mix Dialog, if necessary, activate it, and return the dialog widget.</td></tr>
+<tr><td></td><td>create and activate the Mix Dialog.</td></tr>
 
 <!-- mix-dialog-mix -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixdialogmix">mix-dialog-mix</a></em> ()</code></span></td></tr>
-<tr><td></td><td>return or set the id of the mix displayed by the mix dialog</td></tr>
+<tr><td></td><td>the id of the mix displayed by the mix dialog</td></tr>
 
 <!-- orientation-dialog -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndorientationdialog">orientation-dialog</a></em> ()</code></span></td></tr>
-<tr><td></td><td>Create the <a href="snd.html#orientationbrowser">Orientation</a> dialog, if necessary, activate it, and return the dialog widget.</td></tr>
+<tr><td></td><td>Create and activate the <a href="snd.html#orientationbrowser">Orientation</a> dialog.</td></tr>
 
 <tr><td colspan=2><span class=defbox><code><a href="#spectrocutoff">spectro-cutoff</a> ()</code></span></td></tr>
 <tr><td></td><td>The amount of the frequency domain to include in the spectrum display.
@@ -8538,18 +8542,18 @@ If it returns a string, that becomes the output filename.
 
 <!-- show-listener -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndshowlistener">show-listener</a></em> ()</code></span></td></tr>
-<tr><td></td><td>if set to #t open the lisp listener pane, else close it.  For backwards compatibility, if called outside set!, it opens the pane.</td></tr>
+<tr><td></td><td>if #t, open the lisp listener pane, else close it.  For backwards compatibility, if called outside set!, it opens the pane.</td></tr>
 
 <tr><td colspan=2><span class=defbox><code><em class=def><a href="sndsavelistener">save-listener</a></em> (filename) </code></span></td></tr>
-<tr><td></td><td>save listener text in filename.</td></tr>
+<tr><td></td><td>save listener text in <i>filename</i>.</td></tr>
 
 <!-- track-dialog -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndtrackdialog">track-dialog</a></em> ()</code></span></td></tr>
-<tr><td></td><td>create the Track Dialog, if necessary, activate it, and return the dialog widget.</td></tr>
+<tr><td></td><td>create and activate the Track dialog.</td></tr>
 
 <!-- track-dialog-track -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndtrackdialogtrack">track-dialog-track</a></em> ()</code></span></td></tr>
-<tr><td></td><td>return or set the id of the track currently displayed by the track dialog.</td></tr>
+<tr><td></td><td>the id of the track currently displayed by the track dialog.</td></tr>
 
 <!-- vu-font -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="vufont">vu-font</a></em> ()</code></span></td></tr>
@@ -8567,12 +8571,11 @@ If it returns a string, that becomes the output filename.
 
 <!-- region-dialog -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndregiondialog">region-dialog</a></em> ()</code></span></td></tr>
-<tr><td></td><td>start the <a href="snd.html#regionbrowser">region browser</a> (a no-op if no regions).</td></tr>
+<tr><td></td><td>start the <a href="snd.html#regionbrowser">region browser</a> (a no-op if there are no regions).</td></tr>
 
 <!-- transform-dialog -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndtransformdialog">transform-dialog</a></em> (<i>managed</i>)</code></span></td></tr>
-<tr><td></td><td>create the Transform Dialog, if necessary, activate it (if <i>managed</i> is #t, the default), 
-and return the dialog widget.  This is Option menu's Transform Options choice.</td></tr>
+<tr><td></td><td>create and activate the Options:Transform transform dialog).</td></tr>
 
 <!-- yes-or-no? -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndyesornop">yes-or-no?</a></em> (ques)</code></span></td></tr>

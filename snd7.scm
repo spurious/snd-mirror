@@ -10,3 +10,6 @@
      (= (enved-style envelope-exponential)))
    (lambda (val)
      (set! (enved-style) (if val envelope-exponential envelope-linear)))))
+
+(define enved-active-env enved-envelope)
+(define enved-selected-env enved-envelope)
