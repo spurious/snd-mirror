@@ -265,7 +265,10 @@ static void corruption_check(XtPointer clientData, XtIntervalId *id)
 	{
 	  map_over_sounds(ss,snd_not_current,NULL);
 	}
-      XtAppAddTimeOut(MAIN_APP(ss),(unsigned long)(corruption_time(ss)*1000),(XtTimerCallbackProc)corruption_check,clientData);
+      XtAppAddTimeOut(MAIN_APP(ss),
+		      (unsigned long)(corruption_time(ss)*1000),
+		      (XtTimerCallbackProc)corruption_check,
+		      clientData);
     }
 }
 
@@ -306,7 +309,8 @@ void dismiss_all_dialogs(snd_state *ss)
   if (sx->dialog_list_size > 0)
     for (i=0;i<sx->ndialogs;i++)
       if (sx->dialogs[i])
-	if (XtIsManaged(sx->dialogs[i])) XtUnmanageChild(sx->dialogs[i]);
+	if (XtIsManaged(sx->dialogs[i])) 
+	  XtUnmanageChild(sx->dialogs[i]);
 }
 
 #if 0
@@ -981,7 +985,7 @@ void snd_doit(snd_state *ss,int argc, char **argv)
 
 #if TRAP_SEGFAULT
   if (sigsetjmp(envHandleEventsLoop,1))
-    snd_error("Caught seg fault. trying to continue...");
+    snd_error("Caught seg fault; trying to continue...");
 #endif
 
 #ifndef SND_AS_WIDGET

@@ -5,7 +5,7 @@
 ;;;      gain (gain-amount)
 ;;;      invert
 ;;;      chordalize (chordalize-amount, chordalize-base)
-;;;      flange (increase speed and amount to get phasing)
+;;;      flange (increase speed and amount to get phasing, flange-speed, flange-amount, flange-time)
 ;;;      compand
 ;;;      reverberate (reverb-amount)
 ;;;      intensify (contrast-amount)

@@ -5,7 +5,6 @@
  */
 
 /* TODO: mus_bank (gens scalers *args...) -> loop through gens accumulating scaler * gen(args)
- * TODO: are the Blackman windows correct? (p65 -74dB should be .40217 .49703 .09892 .00188?)
  */
 
 #if defined(HAVE_CONFIG_H)

@@ -19,14 +19,6 @@
 ;;; test 16: define-syntax 
 ;;; test 17: guile-gtk dialogs
 
-
-;;; TODO  add to test-spectral-difference set (reading o2 etc)
-;;; TODO  cscm + eff test (i.e. dynamically loaded code)
-;;; TODO  all dialogs need more extensive tests
-;;; TODO  need more careful insert-sound tests
-;;; TODO  tests of various transforms and normalizations
-
-
 (use-modules (ice-9 format) (ice-9 debug))
 
 (if (file-exists? "sndlib.gdbm") (delete-file "sndlib.gdbm"))
@@ -5036,6 +5028,7 @@
 (reset-hook! exit-hook)
 (reset-hook! graph-hook)
 (reset-hook! name-click-hook)
+(reset-hook! menu-hook)
 (gc)
 (clear-sincs)
 (set! (listener-prompt) original-prompt)

@@ -220,7 +220,7 @@ int main(int argc, char *argv[])
 
 #else
 
-/* HAVE_ALSA here */
+/* HAVE_ALSA here
    there should be a command line argument to control this,
    set to 0 to enable using more than one device. */
 

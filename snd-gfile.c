@@ -471,7 +471,9 @@ static void make_save_as_dialog(snd_state *ss, char *sound_name, int save_type, 
       gtk_signal_connect(GTK_OBJECT(save_as_dialog),"destroy",(GtkSignalFunc)save_as_delete_callback,NULL);
       gtk_signal_connect(GTK_OBJECT(GTK_FILE_SELECTION(save_as_dialog)->ok_button),"clicked",(GtkSignalFunc)save_as_ok_callback,(GtkObject *)ss);
       gtk_signal_connect_object(GTK_OBJECT(GTK_FILE_SELECTION(save_as_dialog)->cancel_button),"clicked",(GtkSignalFunc)save_as_cancel_callback,(GtkObject *)ss);
+#if (!HAVE_GTK_EXTRA)
       if (last_filename) gtk_file_selection_set_filename(GTK_FILE_SELECTION(open_dialog),last_filename);
+#endif
       gtk_file_selection_hide_fileop_buttons(GTK_FILE_SELECTION(save_as_dialog));
       set_pushed_button_colors(GTK_FILE_SELECTION(save_as_dialog)->ok_button,ss);
       set_pushed_button_colors(GTK_FILE_SELECTION(save_as_dialog)->cancel_button,ss);

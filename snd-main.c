@@ -518,6 +518,11 @@ int save_state (snd_state *ss, char *save_state_name)
       if (record_dialog_is_active()) fprintf(save_fd,"(%s)\n",S_recorder_dialog);
       fclose(save_fd);
       /* TODO save mix? */
+      /* TODO save hooks?
+       *    (procedure-source (car (hook->list exit-hook))) (map it)
+       */
+      /* TODO save search proc et al? */
+      /* TODO save added menus? added transforms? */
       if (locale)
 	{
 #if HAVE_SETLOCALE
