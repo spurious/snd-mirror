@@ -5845,7 +5845,7 @@ static ed_list *copy_and_split_list(off_t beg, off_t num, ed_list *current_state
   return(new_state);
 }
 
-bool scale_channel(chan_info *cp, Float scl, off_t beg, off_t num, int pos, bool in_as_one_edit)
+bool scale_channel_with_origin(chan_info *cp, Float scl, off_t beg, off_t num, int pos, bool in_as_one_edit, const char *origin)
 {
   /* copy current ed-list and reset scalers */
   off_t len = 0;
@@ -5903,17 +5903,11 @@ bool scale_channel(chan_info *cp, Float scl, off_t beg, off_t num, int pos, bool
     }
   new_ed->edit_type = SCALED_EDIT;
   new_ed->sound_location = 0;
-  if (num == len)
-    {
-#if HAVE_RUBY
-      new_ed->origin = mus_format("%s(%.3f, " OFF_TD ", false", TO_PROC_NAME(S_scale_channel), scl, beg);
-#else
-      new_ed->origin = mus_format("%s %.3f " OFF_TD " #f", S_scale_channel, scl, beg);
-#endif
-    }
+  if (origin)
+    new_ed->origin = copy_string(origin);
   else
     {
-      if (len == num)
+      if (num == len)
 	{
 #if HAVE_RUBY
 	  new_ed->origin = mus_format("%s(%.3f, " OFF_TD ", false", TO_PROC_NAME(S_scale_channel), scl, beg);
@@ -5923,11 +5917,22 @@ bool scale_channel(chan_info *cp, Float scl, off_t beg, off_t num, int pos, bool
 	}
       else
 	{
+	  if (len == num)
+	    {
 #if HAVE_RUBY
-	  new_ed->origin = mus_format("%s(%.3f, " OFF_TD ", " OFF_TD, TO_PROC_NAME(S_scale_channel), scl, beg, num);
+	      new_ed->origin = mus_format("%s(%.3f, " OFF_TD ", false", TO_PROC_NAME(S_scale_channel), scl, beg);
 #else
-	  new_ed->origin = mus_format("%s %.3f " OFF_TD " " OFF_TD, S_scale_channel, scl, beg, num);
+	      new_ed->origin = mus_format("%s %.3f " OFF_TD " #f", S_scale_channel, scl, beg);
 #endif
+	    }
+	  else
+	    {
+#if HAVE_RUBY
+	      new_ed->origin = mus_format("%s(%.3f, " OFF_TD ", " OFF_TD, TO_PROC_NAME(S_scale_channel), scl, beg, num);
+#else
+	      new_ed->origin = mus_format("%s %.3f " OFF_TD " " OFF_TD, S_scale_channel, scl, beg, num);
+#endif
+	    }
 	}
     }
   new_ed->edpos = pos;
@@ -5938,6 +5943,11 @@ bool scale_channel(chan_info *cp, Float scl, off_t beg, off_t num, int pos, bool
   if (!in_as_one_edit) update_graph(cp);
   after_edit(cp);
   return(true);
+}
+
+bool scale_channel(chan_info *cp, Float scl, off_t beg, off_t num, int pos, bool in_as_one_edit)
+{
+  return(scale_channel_with_origin(cp, scl, beg, num, pos, in_as_one_edit, NULL));
 }
 
 static void setup_ramp_fragments(ed_list *new_ed, int i, double seg0, double seg1, Float scaler, Float offset, bool is_xramp)
@@ -7932,7 +7942,42 @@ scale samples in the given sound/channel between beg and beg + num by scaler."
   return(scl);
 }			  
 
-Float local_maxamp(chan_info *cp, off_t beg, off_t num, int edpos)
+static XEN g_normalize_channel(XEN scl, XEN beg, XEN num, XEN snd, XEN chn, XEN edpos)
+{
+  #define H_normalize_channel "(" S_normalize_channel " norm (beg 0) (dur len) (snd #f) (chn #f) (edpos #f)): \
+scale samples in the given sound/channel between beg and beg + num to norm."
+
+  Float norm, cur_max;
+  chan_info *cp;
+  off_t samp, samps;
+  int pos;
+  char *origin = NULL;
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(scl), scl, XEN_ARG_1, S_normalize_channel, "a number");
+  ASSERT_SAMPLE_TYPE(S_normalize_channel, beg, XEN_ARG_2);
+  ASSERT_SAMPLE_TYPE(S_normalize_channel, num, XEN_ARG_3);
+  ASSERT_SOUND(S_normalize_channel, snd, 4);
+  norm = XEN_TO_C_DOUBLE(scl);
+  samp = beg_to_sample(beg, S_normalize_channel);
+  cp = get_cp(snd, chn, S_normalize_channel);
+  pos = to_c_edit_position(cp, edpos, S_normalize_channel, 6);
+  samps = dur_to_samples(num, samp, cp, pos, 3, S_normalize_channel);
+  if ((samp == 0) && (samps == CURRENT_SAMPLES(cp)))
+    {
+      cur_max = channel_maxamp(cp, pos);
+      origin = mus_format("%s %.3f 0 #f", S_normalize_channel, norm);
+    }
+  else 
+    {
+      cur_max = channel_local_maxamp(cp, samp, samps, pos);
+      origin = mus_format("%s %.3f " OFF_TD " " OFF_TD, S_normalize_channel, norm, samp, samps);
+    }
+  if (cur_max != 0.0)
+    scale_channel_with_origin(cp, norm / cur_max, samp, samps, pos, false, origin);
+  if (origin) FREE(origin);
+  return(scl);
+}			  
+
+Float channel_local_maxamp(chan_info *cp, off_t beg, off_t num, int edpos)
 {
   snd_fd *sf;
   mus_sample_t ymax, mval;
@@ -9003,6 +9048,7 @@ XEN_ARGIFY_7(g_vct_to_channel_w, g_vct_to_channel)
 XEN_ARGIFY_5(g_channel_to_vct_w, g_channel_to_vct)
 XEN_ARGIFY_7(g_insert_sound_w, g_insert_sound)
 XEN_ARGIFY_6(g_scale_channel_w, g_scale_channel)
+XEN_ARGIFY_6(g_normalize_channel_w, g_normalize_channel)
 XEN_ARGIFY_8(g_change_samples_with_origin_w, g_change_samples_with_origin)
 XEN_NARGIFY_6(g_delete_samples_with_origin_w, g_delete_samples_with_origin)
 XEN_ARGIFY_8(g_insert_samples_with_origin_w, g_insert_samples_with_origin)
@@ -9045,6 +9091,7 @@ XEN_NARGIFY_1(g_make_xen_to_sample_w, g_make_xen_to_sample)
 #define g_channel_to_vct_w g_channel_to_vct
 #define g_insert_sound_w g_insert_sound
 #define g_scale_channel_w g_scale_channel
+#define g_normalize_channel_w g_normalize_channel
 #define g_change_samples_with_origin_w g_change_samples_with_origin
 #define g_delete_samples_with_origin_w g_delete_samples_with_origin
 #define g_insert_samples_with_origin_w g_insert_samples_with_origin
@@ -9116,6 +9163,7 @@ void g_init_edits(void)
   XEN_DEFINE_PROCEDURE(S_channel_to_vct,            g_channel_to_vct_w,            0, 5, 0, H_channel_to_vct);
   XEN_DEFINE_PROCEDURE(S_insert_sound,              g_insert_sound_w,              1, 6, 0, H_insert_sound);
   XEN_DEFINE_PROCEDURE(S_scale_channel,             g_scale_channel_w,             1, 5, 0, H_scale_channel);
+  XEN_DEFINE_PROCEDURE(S_normalize_channel,         g_normalize_channel_w,         1, 5, 0, H_normalize_channel);
 
   XEN_DEFINE_PROCEDURE(S_change_samples_with_origin,   g_change_samples_with_origin_w,   7, 1, 0, "internal function used in save-state");
   XEN_DEFINE_PROCEDURE(S_delete_samples_with_origin,   g_delete_samples_with_origin_w,   6, 0, 0, "internal function used in save-state");

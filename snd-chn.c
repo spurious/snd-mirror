@@ -4653,8 +4653,8 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, char *caller)
 	    case CP_SPECTRO_CUTOFF:   return(C_TO_XEN_DOUBLE(cp->spectro_cutoff));               break;
 	    case CP_SPECTRO_START:    return(C_TO_XEN_DOUBLE(cp->spectro_start));                break;
 	    case CP_FFT_WINDOW_BETA:  return(C_TO_XEN_DOUBLE(cp->fft_window_beta));              break;
-	    case CP_MAXAMP:           return(C_TO_XEN_DOUBLE(get_maxamp(cp->sound, cp, AT_CURRENT_EDIT_POSITION))); break;
-	    case CP_EDPOS_MAXAMP:     return(C_TO_XEN_DOUBLE(get_maxamp(cp->sound, cp, to_c_edit_position(cp, cp_edpos, S_maxamp, 3)))); break;
+	    case CP_MAXAMP:           return(C_TO_XEN_DOUBLE(channel_maxamp(cp, AT_CURRENT_EDIT_POSITION))); break;
+	    case CP_EDPOS_MAXAMP:     return(C_TO_XEN_DOUBLE(channel_maxamp(cp, to_c_edit_position(cp, cp_edpos, S_maxamp, 3)))); break;
 	    case CP_BEATS_PER_MINUTE: return(C_TO_XEN_DOUBLE(cp->beats_per_minute));             break;
 
 	    }
@@ -5042,7 +5042,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, char *calle
       return(C_TO_XEN_DOUBLE(cp->fft_window_beta));             
       break;
     case CP_MAXAMP:
-      curamp = get_maxamp(cp->sound, cp, AT_CURRENT_EDIT_POSITION);
+      curamp = channel_maxamp(cp, AT_CURRENT_EDIT_POSITION);
       newamp[0] = XEN_TO_C_DOUBLE(on);
       if (curamp != newamp[0])
 	{
@@ -6621,7 +6621,7 @@ static XEN g_set_y_bounds(XEN bounds, XEN snd_n, XEN chn_n)
   else
     {
       /* if no bounds given, use maxamp */
-      hi = get_maxamp(cp->sound, cp, AT_CURRENT_EDIT_POSITION);
+      hi = channel_maxamp(cp, AT_CURRENT_EDIT_POSITION);
       if (hi < 0.0) hi = -hi;
       if (hi == 0.0) hi = .001;
       low = -hi;

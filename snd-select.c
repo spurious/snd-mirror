@@ -158,10 +158,10 @@ Float selection_maxamp(chan_info *cp)
     {
       val = ed_selection_maxamp(cp);
       if (val >= 0.0) return(val);
-      val = local_maxamp(cp, 
-			 selection_beg(cp), 
-			 selection_end(cp) - selection_beg(cp) + 1,
-			 cp->edit_ctr);
+      val = channel_local_maxamp(cp, 
+				 selection_beg(cp), 
+				 selection_end(cp) - selection_beg(cp) + 1,
+				 cp->edit_ctr);
       set_ed_selection_maxamp(cp, val);
     }
   return(val);

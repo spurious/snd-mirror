@@ -4043,20 +4043,22 @@ The following substitutions can be made:
 </p>
 <small>
 <pre>
+<a href="#convolvewith">convolve-with</a> file amp s c e                    <a href="#clmchannel">clm-channel</a> convolve-gen beg dur s c e
 <a href="#envsound">env-sound</a> env beg dur base s c e                <a href="#envchannel">env-channel</a> env beg dur s c e
 <a href="#filtersound">filter-sound</a> env order s c e                    <a href="#clmchannel">clm-channel</a> clm-filter-gen beg dur s c e overlap or <a href="#filterchannel">filter-channel</a> env order beg dur s c e trunc
+<a href="#insertsilence">insert-silence</a> beg dur s c                      <a href="#padchannel">pad-channel</a> beg dur s c e
+<a href="#insertsound">insert-sound</a> file beg filechn s c e             <a href="sndscm.html#insertchannel">insert-channel</a> filedat beg dur s c e
+<a href="#mix">mix</a> file beg filechn s c with-tags              <a href="sndscm.html#mixchannel">mix-channel</a> filedat beg dur s c e
 <a href="#play">play</a> beg s c sync end e                         <a href="#playchannel">play-channel</a> beg dur s c e
+<a href="#redo">redo</a> edits s c                                  <a href="#redochannel">redo-channel</a> edits s c
 <a href="#reversesound">reverse-sound</a> s c e                             <a href="#reversechannel">reverse-channel</a> beg dur s c e
+<A href="#scaleby">scale-by</a> scls s c                               <a href="#scalechannel">scale-channel</a> scl beg dur s c e
+<A href="#scaleto">scale-to</a> scls s c                               <a href="#normalizechannel">normalize-channel</a> norm beg dur s c e
 <a href="#setsamples">set-samples</a> beg dur data s c trunc origin fchan <a href="#vct_to_channel">vct-&gt;channel</a> vct beg dur s c e
 <a href="#smoothsound">smooth-sound</a> beg dur s c                        <a href="#smoothchannel">smooth-channel</a> beg dur s c e
-<a href="#insertsilence">insert-silence</a> beg dur s c                      <a href="#padchannel">pad-channel</a> beg dur s c e
 <a href="#srcsound">src-sound</a> num base s c e                        <a href="#srcchannel">src-channel</a> ratio-or-env beg dur s c e
-<a href="#convolvewith">convolve-with</a> file amp s c e                    <a href="#clmchannel">clm-channel</a> convolve-gen beg dur s c e
-<a href="grfsnd.html#applyladspa">apply-ladspa</a> reader dat dur origin              <a href="grfsnd.html#ladspachannel">ladspa-channel</a> dat beg dur s c e
-<a href="#mix">mix</a> file beg filechn s c with-tags              <a href="sndscm.html#mixchannel">mix-channel</a> filedat beg dur s c e
-<a href="#insertsound">insert-sound</a> file beg filechn s c e             <a href="sndscm.html#insertchannel">insert-channel</a> filedat beg dur s c e
-<a href="#redo">redo</a> edits s c                                  <a href="#redochannel">redo-channel</a> edits s c
 <a href="#undo">undo</a> edits s c                                  <a href="#undochannel">undo-channel</a> edits s c
+<a href="grfsnd.html#applyladspa">apply-ladspa</a> reader dat dur origin              <a href="grfsnd.html#ladspachannel">ladspa-channel</a> dat beg dur s c e
 </pre>
 </small>
 <p><small>Another case that might deserve "regularization" is make-sample-reader which confusingly interpolates
@@ -5554,6 +5556,18 @@ Header-types are:
 mus-next mus-aifc mus-riff mus-nist mus-raw mus-ircam mus-aiff mus-soundfont mus-bicsf mus-voc mus-svx
 </pre>
 To be informed whenever a new sound is created, use <a href="#newsoundhook">new-sound-hook</a> (see ws.scm).
+</td></tr>
+<tr><td colspan=2></td></tr>
+
+
+<!-- normalize-channel -->
+<tr><td colspan=2>
+<code><a class=def name="normalizechannel">normalize-channel</a> (norm <i>beg dur snd chn edpos</i>)</code>
+</td></tr>
+<tr><td></td><td>
+<b>normalize-channel</b> 
+scales (changes the amplitude) of a sound so that its new peak amplitude is <i>norm</i>.  This
+is the "regularized" form of <a href="#scaleto">scale-to</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 

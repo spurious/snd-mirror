@@ -460,23 +460,19 @@ void scale_by(chan_info *cp, Float *ur_scalers, int len, bool over_selection)
   free_sync_info(si);
 }
 
-Float get_maxamp(snd_info *sp, chan_info *cp, int edpos)
+Float channel_maxamp(chan_info *cp, int edpos)
 {
   Float val;
   int pos;
-  if (!sp) return(0.0);
-  if (!cp) cp = sp->chans[0];
   if (edpos == AT_CURRENT_EDIT_POSITION) pos = cp->edit_ctr; else pos = edpos;
   if (amp_env_maxamp_ok(cp, pos)) 
     return(amp_env_maxamp(cp, pos));
   val = ed_maxamp(cp, pos);
   if (val >= 0.0) return(val);
-  val = local_maxamp(cp, 0, cp->samples[pos], pos);
+  val = channel_local_maxamp(cp, 0, cp->samples[pos], pos);
   set_ed_maxamp(cp, pos, val);
   return(val);
 }
-
-/* TODO: scale-to for edit list funcs needs higher level origin */
 
 bool scale_to(snd_info *sp, chan_info *cp, Float *ur_scalers, int len, bool over_selection)
 {
@@ -488,8 +484,9 @@ bool scale_to(snd_info *sp, chan_info *cp, Float *ur_scalers, int len, bool over
   off_t beg, frames;
   sync_info *si = NULL;
   chan_info *ncp;
-  Float maxamp = -1.0, val;
+  Float maxamp = -1.0, val, norm = 1.0;
   Float *scalers;
+  char *origin = NULL;
   if ((!over_selection) && (cp == NULL)) return(false);
   if (over_selection) 
     {
@@ -520,7 +517,7 @@ bool scale_to(snd_info *sp, chan_info *cp, Float *ur_scalers, int len, bool over
 	      ncp = si->cps[i];
 	      if (over_selection)
 		val = selection_maxamp(ncp);
-	      else val = get_maxamp(ncp->sound, ncp, AT_CURRENT_EDIT_POSITION);
+	      else val = channel_maxamp(ncp, AT_CURRENT_EDIT_POSITION);
 	      if (val > maxamp) maxamp = val;
 	    }
 	  if ((!(data_clipped(ss))) && 
@@ -548,7 +545,7 @@ bool scale_to(snd_info *sp, chan_info *cp, Float *ur_scalers, int len, bool over
 	    {
 	      if (over_selection)
 		val = selection_maxamp(ncp);
-	      else val = get_maxamp(ncp->sound, ncp, AT_CURRENT_EDIT_POSITION);
+	      else val = channel_maxamp(ncp, AT_CURRENT_EDIT_POSITION);
 	      if (val > maxamp) maxamp = val;
 	      if (val != 0.0)
 		{
@@ -572,17 +569,30 @@ bool scale_to(snd_info *sp, chan_info *cp, Float *ur_scalers, int len, bool over
       for (i = 0; i < si->chans; i++)
 	{
 	  ncp = si->cps[i];
+	  if (nlen > i) norm = ur_scalers[i]; else norm = ur_scalers[0];
 	  if (over_selection)
 	    {
 	      beg = selection_beg(ncp);
 	      frames = selection_end(ncp) - beg + 1;
+#if HAVE_RUBY
+	      origin = mus_format("%s(%.3f, " OFF_TD ", " OFF_TD, TO_PROC_NAME(S_normalize_channel), norm, beg, frames);
+#else
+	      origin = mus_format("%s %.3f " OFF_TD " " OFF_TD, S_normalize_channel, norm, beg, frames);
+#endif
 	    }
 	  else
 	    {
 	      beg = 0;
 	      frames = CURRENT_SAMPLES(ncp);
+#if HAVE_RUBY
+	      origin = mus_format("%s(%.3f, 0, false", TO_PROC_NAME(S_normalize_channel), norm);
+#else
+	      origin = mus_format("%s %.3f 0 #f", S_normalize_channel, norm);
+#endif
 	    }
-	  scale_channel(ncp, scalers[i], beg, frames, ncp->edit_ctr, false);
+	  scale_channel_with_origin(ncp, scalers[i], beg, frames, ncp->edit_ctr, false, origin);
+	  if (origin) FREE(origin);
+	  origin = NULL;
 	}
       scaled = true;
     }

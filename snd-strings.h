@@ -355,6 +355,7 @@
 #define S_next_sample                   "next-sample"
 #define S_normalize_by_channel          "normalize-by-channel"
 #define S_normalize_by_sound            "normalize-by-sound"
+#define S_normalize_channel             "normalize-channel"
 #define S_normalize_globally            "normalize-globally"
 #define S_open_file_dialog              "open-file-dialog"
 #define S_open_hook                     "open-hook"

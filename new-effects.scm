@@ -1986,7 +1986,24 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 ;;; REVERBS
 ;;;
 
-;;; TODO: finish effects origins
+(define* (effects-cnv snd0 amp #:optional snd chn)
+  (let* ((flt-len (frames snd0))
+	 (total-len (+ flt-len (frames snd chn)))
+	 (cnv (make-convolve :filter (channel->vct 0 flt-len snd0)))
+	 (sf (make-sample-reader 0 snd chn))
+	 (out-data (make-vct total-len)))
+    (vct-map! out-data (lambda () (convolve cnv (lambda (dir) (next-sample sf)))))
+    (free-sample-reader sf)
+    (vct-scale! out-data amp)
+    (let ((max-samp (vct-peak out-data)))
+      (vct->channel out-data 0 total-len snd chn #f (format #f "effects-cnv ~A ~A" snd0 amp))
+      (if (> max-samp 1.0) (set! (y-bounds snd chn) (list (- max-samp) max-samp)))
+      max-samp)))
+  
+;;; TODO: finish effects origins: jcrev place-sound cross-synthesis
+;;; TODO: make effects optimizable throughout
+
+
 
 (let* ((reverb-menu-list '())
        (reverb-menu (XmCreatePulldownMenu (main-menu effects-menu) "Reverbs"
@@ -2179,22 +2196,6 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 	(convolve-label "Convolution")
 	(convolve-dialog #f))
     
-    (define cnvtest
-      ;; returns new max sample
-      (lambda (snd0 snd1 amp)
-	(let* ((flt-len (frames snd0))
-	       (total-len (+ flt-len (frames snd1)))
-	       (cnv (make-convolve :filter (channel->vct 0 flt-len snd0)))
-	       (sf (make-sample-reader 0 snd1))
-	       (out-data (make-vct total-len)))
-	  (vct-map! out-data (lambda () (convolve cnv (lambda (dir) (next-sample sf)))))
-	  (free-sample-reader sf)
-	  (vct-scale! out-data amp)
-	  (let ((max-samp (vct-peak out-data)))
-	    (vct->channel out-data 0 total-len snd1)
-	    (if (> max-samp 1.0) (set! (y-bounds snd1) (list (- max-samp) max-samp)))
-	    max-samp))))
-  
     (define (post-convolve-dialog)
       (if (not (Widget? convolve-dialog))
 	  ;; if convolve-dialog doesn't exist, create it
@@ -2206,7 +2207,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 		  (make-effect-dialog 
 		   convolve-label
 		   (lambda (w context info) 
-		     (cnvtest convolve-sound-one convolve-sound-two convolve-amp))
+		     (effects-cnv convolve-sound-one convolve-amp convolve-sound-two))
 		   (lambda (w context info)
 		     (help-dialog "Convolution"
 				  "Very simple convolution. Move the sliders to set the numbers of the soundfiles to be convolved and the amount for the amplitude scaler. Output will be scaled to floating-point values, resulting in very large (but not clipped) amplitudes. Use the Normalize amplitude effect to rescale the output. The convolution data file typically defines a natural reverberation source, and the output from this effect can provide very striking reverb effects. You can find convolution data files on sites listed at http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
@@ -2288,6 +2289,18 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
     (vct->channel out-data beg len snd chn #f
 		  (format #f "effects-fp ~A ~A ~A ~A ~A" srf osamp osfrq beg (if (= len (frames snd chn)) #f len)))))
     
+(define* (effects-flange amount speed time #:optional beg dur snd chn)
+  (let* ((ri (make-rand-interp :frequency speed :amplitude amount))
+	 (len (inexact->exact (round (* time (srate)))))
+	 (del (make-delay len :max-size (+ len amount 1))))
+    (map-channel (lambda (inval)
+		   (* .75 (+ inval
+			     (delay del
+				    inval
+				    (rand-interp ri)))))
+		 beg dur snd chn #f (format #f "effects-flange ~A ~A ~A ~A ~A"
+					    amount speed time beg (if (and (number? dur) (not (= dur (frames snd chn)))) dur #f)))))
+
 
 (let* ((misc-menu-list '())
        (misc-menu (XmCreatePulldownMenu (main-menu effects-menu) "Various"
@@ -2737,7 +2750,8 @@ the synthesis amplitude, the FFT size, and the radius value."))
 					     inval
 					     (rand-interp ri)))))))
     		      flange-target 
-		      (lambda (target samps) "flange" )
+		      (lambda (target samps) 
+			(format #f "effects-flange ~A ~A ~A" flange-amount flange-speed flange-time))
 		      #f))
 		   (lambda (w context info)
 		     (help-dialog "Flange"

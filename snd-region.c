@@ -1068,7 +1068,7 @@ void save_region_backpointer(snd_info *sp)
   for (i = 0; i < sp->nchans; i++)
     {
       Float val;
-      val = get_maxamp(sp, sp->chans[i], AT_CURRENT_EDIT_POSITION);
+      val = channel_maxamp(sp->chans[i], AT_CURRENT_EDIT_POSITION);
       if (val > r->maxamp) r->maxamp = val;
     }
   /* make new region temp file */

@@ -28070,7 +28070,7 @@ EDITS: 3
 	  (check-edit-tree '((0 1 0 9 1.0 0.0 0.0 0) (10 1 10 14 0.5 0.0 0.0 0) (15 1 15 24 0.5 -1.49011614158923e-9 1.0 1)
 			     (25 1 25 29 0.5 0.0 0.0 0) (30 1 30 99 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0)) 
 			   vals "env-channel 15 10")
-	  (scale-to 1.0)
+	  (normalize-channel 1.0)
 	  (check-edit-tree '((0 1 0 9 1.0 0.0 0.0 0) (10 1 10 14 0.5 0.0 0.0 0) (15 1 15 24 0.5 -1.49011614158923e-9 1.0 1)
 			     (25 1 25 29 0.5 0.0 0.0 0) (30 1 30 99 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0)) 
 			   vals "env-channel 15 10 a")
@@ -28230,7 +28230,7 @@ EDITS: 3
 	    (set! x (+ x incr)))
 	  (check-edit-tree '((0 8 0 19 1.0 0.0 0.0 0) (20 8 20 24 1.0 -2.69948563502709e-10 0.0579710155725479 2) (25 1 25 27 0.5 0.0724637657403946 0.101449273526669 2) (28 -1 0 11 0.0 0.0 0.0 1) (40 1 40 49 1.0 0.289855062961578 0.420289844274521 2) (50 1 50 59 0.0 0.0 0.0 1) (60 1 60 60 0.0 0.0 0.0 1) (61 1 61 70 1.0 0.594202876091003 0.724637687206268 2) (71 1 71 74 0.0 0.0 0.0 1) (75 6 0 9 1.0 0.797101438045502 0.927536249160767 2) (85 1 85 89 1.0 0.942028999328613 1.0 2) (90 1 90 99 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
 			   vals "env-selection")
-	  (scale-to .5)
+	  (normalize-channel .5)
 	  (vct-scale! vals .5)
 	  (check-edit-tree '((0 8 0 19 0.5 0.0 0.0 0) (20 8 20 24 0.5 -2.69948563502709e-10 0.0579710155725479 2) (25 1 25 27 0.25 0.0724637657403946 0.101449273526669 2) (28 -1 0 11 0.0 0.0 0.0 1) (40 1 40 49 0.5 0.289855062961578 0.420289844274521 2) (50 1 50 59 0.0 0.0 0.0 1) (60 1 60 60 0.0 0.0 0.0 1) (61 1 61 70 0.5 0.594202876091003 0.724637687206268 2) (71 1 71 74 0.0 0.0 0.0 1) (75 6 0 9 0.5 0.797101438045502 0.927536249160767 2) (85 1 85 89 0.5 0.942028999328613 1.0 2) (90 1 90 99 0.5 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
 			   vals "scale-to")
@@ -30824,26 +30824,12 @@ EDITS: 2
 	    (if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (scale-channel 2.0 0 #f snd chn))"))
 		(snd-display ";edit-list->function 1a: ~A" (object->string (procedure-source func)))))
 	  (revert-sound ind)
-	  (scale-sound-by 2.0)
-	  (let ((func (edit-list->function)))
-	    (if (not (procedure? func)) 
-		(snd-display ";edit-list->function 1b: ~A" func))
-	    (if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (scale-channel 2.0 0 #f snd chn))"))
-		(snd-display ";edit-list->function 1b: ~A" (object->string (procedure-source func)))))
-	  (revert-sound ind)
-	  (scale-to 1.0)
+	  (normalize-channel 1.0)
 	  (let ((func (edit-list->function)))
 	    (if (not (procedure? func)) 
 		(snd-display ";edit-list->function 1c: ~A" func))
-	    (if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (scale-channel 6.791 0 #f snd chn))"))
+	    (if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (normalize-channel 1.0 0 #f snd chn))"))
 		(snd-display ";edit-list->function 1c: ~A" (object->string (procedure-source func)))))
-	  (revert-sound ind)
-	  (scale-sound-to 1.0)
-	  (let ((func (edit-list->function)))
-	    (if (not (procedure? func)) 
-		(snd-display ";edit-list->function 1d: ~A" func))
-	    (if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (scale-channel 6.791 0 #f snd chn))"))
-		(snd-display ";edit-list->function 1d: ~A" (object->string (procedure-source func)))))
 	  (revert-sound ind)
 	  
 	  ;; ---- simple delete
@@ -31143,7 +31129,7 @@ EDITS: 2
 	    (if (not (procedure? func)) 
 		(snd-display ";edit-list->function 13a: ~A" func))
 	    (if (not (string=? (object->string (procedure-source func)) 
-			       "(lambda (snd chn) (scale-channel 7.432 1000 10001 snd chn))"))
+			       "(lambda (snd chn) (normalize-channel 1.0 1000 10001 snd chn))"))
 		(snd-display ";edit-list->function 13a: ~A" (object->string (procedure-source func)))))
 	  (revert-sound ind)
 	  
@@ -31413,6 +31399,8 @@ EDITS: 2
 	      (lambda () (effects-bbr 1000.0 100.0 0 #f))
 	      (lambda () (effects-bhp 1000.0 0 #f))
 	      (lambda () (effects-blp 1000.0 0 #f))
+	      (lambda () (effects-hello-dentist 50.0 0.5 0 #f))
+	      (lambda () (effects-fp 1.0 0.3 20.0 0 #f))
 
 	      )
 	     (list 
@@ -31478,6 +31466,8 @@ EDITS: 2
 	      "(lambda (snd chn) (effects-bbr 1000.0 100.0 0 #f snd chn))"
 	      "(lambda (snd chn) (effects-bhp 1000.0 0 #f snd chn))"
 	      "(lambda (snd chn) (effects-blp 1000.0 0 #f snd chn))"
+	      "(lambda (snd chn) (effects-hello-dentist 50.0 0.5 0 #f snd chn))"
+	      "(lambda (snd chn) (effects-fp 1.0 0.3 20.0 0 #f snd chn))"
 
 	      )
 	     ))
@@ -50630,7 +50620,7 @@ EDITS: 2
 		     vct-length vct-multiply! vct-offset! vct-ref vct-scale! vct-fill! vct-set! mus-audio-describe vct-peak
 		     vct? list->vct vct->list vector->vct vct->vector vct-move! vct-reverse! vct-subseq vct little-endian? vct->string
 		     clm-channel env-channel map-channel scan-channel play-channel reverse-channel seconds->samples samples->seconds
-		     smooth-channel vct->channel channel->vct src-channel scale-channel ramp-channel pad-channel
+		     smooth-channel vct->channel channel->vct src-channel scale-channel ramp-channel pad-channel normalize-channel
 		     cursor-position clear-listener mus-sound-prune mus-sound-forget xramp-channel ptree-channel
 		     snd->sample xen->sample snd->sample? xen->sample? make-snd->sample make-xen->sample make-scalar-mixer
 		     
@@ -51232,7 +51222,7 @@ EDITS: 2
 			      spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale squelch-update  grid-density
 			      src-sound transform-sample transform->vct scale-sound-by scale-sound-to
 			      transform-frames transform-type undo update-transform-graph update-time-graph update-lisp-graph
-			      update-sound wavelet-type time-graph? time-graph-type wavo-hop wavo-trace x-bounds x-position-slider
+			      update-sound wavelet-type time-graph? time-graph-type wavo-hop wavo-trace x-bounds x-position-slider normalize-channel
 			      x->position x-zoom-slider y-bounds y-position-slider x-axis-label y->position y-zoom-slider zero-pad scale-channel)))
 	    
 	    (let ((ctr 0))

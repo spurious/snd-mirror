@@ -784,6 +784,7 @@ bool sf_p(XEN obj);
 snd_fd *get_sf(XEN obj);
 snd_fd *free_snd_fd_almost(snd_fd *sf);
 bool scale_channel(chan_info *cp, Float scaler, off_t beg, off_t num, int pos, bool in_as_one_edit);
+bool scale_channel_with_origin(chan_info *cp, Float scl, off_t beg, off_t num, int pos, bool in_as_one_edit, const char *origin);
 bool ramp_channel(chan_info *cp, Float rmp0, Float rmp1, off_t beg, off_t num, int pos, bool in_as_one_edit);
 bool xramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler, Float offset, 
 		   off_t beg, off_t num, int pos, bool in_as_one_edit, mus_any *e, int e_pos);
@@ -798,7 +799,7 @@ bool ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos, bool i
 #define read_sample_to_float(Sf) (*((Sf)->runf))(Sf)
 Float protected_next_sample_to_float(snd_fd *sf);
 Float protected_previous_sample_to_float(snd_fd *sf);
-Float local_maxamp(chan_info *cp, off_t beg, off_t num, int edpos);
+Float channel_local_maxamp(chan_info *cp, off_t beg, off_t num, int edpos);
 void undo_edit_with_sync(chan_info *cp, int count);
 void redo_edit_with_sync(chan_info *cp, int count);
 void undo_edit(chan_info *cp, int count);
@@ -1507,7 +1508,7 @@ void g_init_kbd(void);
 
 void scale_by(chan_info *cp, Float *scalers, int len, bool selection);
 bool scale_to(snd_info *sp, chan_info *cp, Float *scalers, int len, bool selection);
-Float get_maxamp(snd_info *sp, chan_info *cp, int edpos);
+Float channel_maxamp(chan_info *cp, int edpos);
 src_state *make_src(Float srate, snd_fd *sf, Float initial_srate);
 Float src_input_as_needed(void *arg, int dir);
 src_state *free_src(src_state *sr);

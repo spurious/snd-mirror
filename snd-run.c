@@ -6489,7 +6489,7 @@ static void maxamp_f(int *args, ptree *pt)
 {
   chan_info *cp; 
   cp = run_get_cp(1, args, pt->ints);
-  if (cp) FLOAT_RESULT = get_maxamp(cp->sound, cp, AT_CURRENT_EDIT_POSITION);
+  if (cp) FLOAT_RESULT = channel_maxamp(cp, AT_CURRENT_EDIT_POSITION);
 }
 
 static char *descr_maxamp_f(int *args, ptree *pt) 
