@@ -743,6 +743,7 @@ char *added_transform_name(int type);
   int g_scm2intdef(SCM obj,int fallback);
   int bool_int_or_one(SCM n);
   SCM g_c_run_or_hook (SCM hook, SCM args);
+  SCM g_c_run_and_hook (SCM hook, SCM args);
   SCM g_c_run_progn_hook (SCM hook, SCM args);
   void define_procedure_with_setter(char *get_name, SCM (*get_func)(), char *get_help,
 				    char *set_name, SCM (*set_func)(), 

@@ -4,6 +4,7 @@
 /* -------- snd-xhelp.c -------- */
 
 void snd_help(snd_state *ss, char *subject, char *help);
+void snd_completion_help(snd_state *ss,int matches,char **buffer);
 
 
 /* -------- snd-xerror.c -------- */

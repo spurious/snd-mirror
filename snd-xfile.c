@@ -369,6 +369,7 @@ void CreateOpenDialog(Widget w,XtPointer clientData)
       XtAddCallback(open_dialog,XmNhelpCallback,File_Open_Help_Callback,clientData);
       XtAddCallback(just_sounds_button,XmNvalueChangedCallback,just_sounds_Callback,NULL);
       XtAddCallback(just_sounds_button,XmNhelpCallback,just_sounds_help_Callback,clientData);
+      add_dialog(ss,open_dialog);
     }
 }
 
@@ -807,6 +808,8 @@ static void make_save_as_dialog(snd_state *ss, char *sound_name, int header_type
 	  XtVaSetValues(save_as_file_data->format_list,XmNbackground,(ss->sgx)->white,XmNforeground,(ss->sgx)->black,NULL);
 	  XtVaSetValues(save_as_file_data->header_list,XmNbackground,(ss->sgx)->white,XmNforeground,(ss->sgx)->black,NULL);
 	}
+
+      add_dialog(ss,save_as_dialog);
     }
   else
     {
@@ -1811,7 +1814,7 @@ file_info *get_raw_file_info(char *filename, snd_state *ss)
 	return(make_file_info_1(filename,ss));
       else
 	{
-	  snd_error("can't find %s: %s",filename,strerror(errno));
+	  snd_error("can't find raw (headerless) file %s: %s",filename,strerror(errno));
 	  return(NULL);
 	}
     }
@@ -2032,7 +2035,7 @@ void File_Mix_Callback(Widget w,XtPointer clientData,XtPointer callData)
       wtmp = XtNameToWidget(file_mix_dialog,"FilterText");
       if (!wtmp) wtmp = XmFileSelectionBoxGetChild(file_mix_dialog,XmDIALOG_FILTER_TEXT);
       if (wtmp) add_completer_to_textfield(ss,wtmp,add_completer_func(filename_completer));
-
+      add_dialog(ss,file_mix_dialog);
     }
   if (!XtIsManaged(file_mix_dialog)) XtManageChild(file_mix_dialog);
 }

@@ -3727,7 +3727,7 @@ SCM g_c_run_progn_hook (SCM hook, SCM args)
 SCM g_c_run_or_hook (SCM hook, SCM args)
 {
   /* Guile built-in scm_c_run_hook doesn't return the value of the hook procedure(s) and calls everything on the list */
-  SCM result = SCM_BOOL_F;
+  SCM result = SCM_BOOL_F; /* (or) -> #f */
   SCM procs = SCM_HOOK_PROCEDURES (hook);
   while (SCM_NIMP (procs))
     {
@@ -3735,6 +3735,21 @@ SCM g_c_run_or_hook (SCM hook, SCM args)
 	result = g_call_any(SCM_CAR(procs),args);
       else result = g_call0(SCM_CAR(procs));
       if (SCM_NFALSEP(result)) return(result);
+      procs = SCM_CDR (procs);
+    }
+  return(scm_return_first(result,args));
+}
+
+SCM g_c_run_and_hook (SCM hook, SCM args)
+{
+  SCM result = SCM_BOOL_T; /* (and) -> #t */
+  SCM procs = SCM_HOOK_PROCEDURES (hook);
+  while (SCM_NIMP (procs))
+    {
+      if (args != SCM_LIST0)
+	result = g_call_any(SCM_CAR(procs),args);
+      else result = g_call0(SCM_CAR(procs));
+      if (SCM_FALSEP(result)) return(result);
       procs = SCM_CDR (procs);
     }
   return(scm_return_first(result,args));

@@ -129,6 +129,7 @@ void File_Print_Callback(Widget w,XtPointer clientData,XtPointer callData)
   if (ss->print_choice == PRINT_SND)
     {
       nsp = any_selected_sound(ss);
+      if (!nsp) return;
       sprintf(print_string,"print %s",nsp->shortname);
       xmstr4 = XmStringCreate(print_string,XmFONTLIST_DEFAULT_TAG);
     }
@@ -206,6 +207,7 @@ void File_Print_Callback(Widget w,XtPointer clientData,XtPointer callData)
 	  XtVaSetValues(XmMessageBoxGetChild(file_print_dialog,XmDIALOG_HELP_BUTTON),XmNarmColor,(ss->sgx)->pushed_button_color,NULL);
 	  XtVaSetValues(file_print_eps_or_lpr,XmNselectColor,(ss->sgx)->pushed_button_color,NULL);
 	}
+      add_dialog(ss,file_print_dialog);
     }
   else
     {

@@ -74,7 +74,6 @@
 ;;;       adaptive notch filter
 ;;;       ins: singer piano flute prc-toolkit fade
 ;;;       data-file rw case for pvoc.scm
-;;;       shorten (via autocorrelation, vowel detection), remove-vib, change-pitch (vowel oriented)
 ;;;       with-sound needs all the bells and whistles
 
 

@@ -117,6 +117,10 @@ void add_dialog(snd_state *ss, GtkWidget *dialog)
   state_context *sx;
   int i;
   sx = ss->sgx;
+  if (sx->dialogs)
+    for (i=0;i<sx->ndialogs;i++)
+      if (sx->dialogs[i] == dialog)
+	return;
   if (sx->dialog_list_size == 0)
     {
       sx->dialog_list_size = 8;
@@ -138,21 +142,14 @@ void add_dialog(snd_state *ss, GtkWidget *dialog)
 
 void dismiss_all_dialogs(snd_state *ss)
 {
-  /* TODO: why don't all the dialogs actually go away?? */
   state_context *sx;
   int i;
   sx = ss->sgx;
   if (record_dialog_is_active()) close_recorder_audio();
   if (sx->dialog_list_size > 0)
-    {
-      for (i=0;i<sx->ndialogs;i++)
-	{
-	  if (sx->dialogs[i])
-	    {
-	      if (GTK_WIDGET_VISIBLE(sx->dialogs[i])) gtk_widget_hide(sx->dialogs[i]); 
-	    }
-	}
-    }
+    for (i=0;i<sx->ndialogs;i++)
+      if (sx->dialogs[i])
+	gtk_widget_hide(sx->dialogs[i]);
 }
 
 #ifndef SND_AS_WIDGET
@@ -190,7 +187,7 @@ static void who_called(GtkWidget *w,GdkEvent *event, gpointer clientData)
 #if TRAP_SEGFAULT
 #include <setjmp.h>
 /* stolen from scwm.c */
-static jmp_buf envHandleEventsLoop;
+static sigjmp_buf envHandleEventsLoop;
 
 static RETSIGTYPE segv(int ignored)
 {

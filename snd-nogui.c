@@ -130,6 +130,7 @@ void set_region_protect(int reg, int protect) {}
 int region_dialog_is_active(void) {return(0);}
 void allocate_region_rows(snd_state *ss, int n) {}
 axis_context *free_axis_context(axis_context *ax) {return(NULL);}
+void snd_completion_help(snd_state *ss,int matches,char **buffer) {}
 int set_help_text_font(snd_state *ss, char *font) {return(0);}
 int set_tiny_font(snd_state *ss, char *font) {return(0);}
 int set_listener_font(snd_state *ss, char *font) {return(0);}

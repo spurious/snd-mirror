@@ -61,6 +61,14 @@
 #define ED_SIZE 5
 #define INT_AS_FLOAT(X) (*((float *)(&(X))))
 #define FLOAT_AS_INT(X) (*((int *)(&(X))))
+/* we're assuming here that float and int are the same size, and that we'll be careful
+ *   below not to use Float by mistake (since it can be double)
+ */
+#if __GNUC__
+#if (defined(SIZEOF_FLOAT)) && (defined(SIZEOF_INT)) && (SIZEOF_INT != SIZEOF_FLOAT)
+  #warning edit tree scalers assume ints and floats are the same size but they are different here!
+#endif
+#endif
 #define UNWRAP_SAMPLE(X,ED) ((X) * (INT_AS_FLOAT(ED)))
 #define UNWRAP_SAMPLE_TO_FLOAT(X,SF) ((X) * (SF->scaler))
 
@@ -1678,7 +1686,7 @@ void parse_tree_scale_by(chan_info *cp, Float scl)
 {
   /* copy current ed-list and reset scalers */
   int len,pos,i;
-  Float ed_scl;
+  float ed_scl;
   ed_list *new_ed,*old_ed;
   len = current_ed_samples(cp);
   pos = cp->edit_ctr;
@@ -1689,7 +1697,7 @@ void parse_tree_scale_by(chan_info *cp, Float scl)
   for (i=0;i<new_ed->size * ED_SIZE;i++) new_ed->fragments[i] = old_ed->fragments[i];
   for (i=0;i<new_ed->size;i++) 
     {
-      ed_scl = scl * INT_AS_FLOAT(FRAGMENT_SCALER(new_ed,i));
+      ed_scl = (float)(scl * INT_AS_FLOAT(FRAGMENT_SCALER(new_ed,i)));
       FRAGMENT_SCALER(new_ed,i) = FLOAT_AS_INT(ed_scl);
     }
   new_ed->sfnum = PACK_EDIT(PARSED_EDIT,0);
@@ -1709,7 +1717,7 @@ void parse_tree_selection_scale_by(chan_info *cp, Float scl, int beg, int num)
 {
   /* copy current ed-list and reset scalers */
   int len,pos,i;
-  Float ed_scl;
+  float ed_scl;
   ed_list *new_ed,*old_ed;
   len = current_ed_samples(cp);
   pos = cp->edit_ctr;
@@ -1725,7 +1733,7 @@ void parse_tree_selection_scale_by(chan_info *cp, Float scl, int beg, int num)
       if (FRAGMENT_GLOBAL_POSITION(new_ed,i) > (beg+num-1)) break; /* not >= (1 sample selections) */
       if (FRAGMENT_GLOBAL_POSITION(new_ed,i) >= beg)
 	{
-	  ed_scl = scl * INT_AS_FLOAT(FRAGMENT_SCALER(new_ed,i));
+	  ed_scl = (float)(scl * INT_AS_FLOAT(FRAGMENT_SCALER(new_ed,i)));
 	  FRAGMENT_SCALER(new_ed,i) = FLOAT_AS_INT(ed_scl);
 	}
     }

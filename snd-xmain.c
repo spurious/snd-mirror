@@ -274,6 +274,10 @@ void add_dialog(snd_state *ss, Widget dialog)
   state_context *sx;
   int i;
   sx = ss->sgx;
+  if (sx->dialogs)
+    for (i=0;i<sx->ndialogs;i++)
+      if (sx->dialogs[i] == dialog)
+	return;
   if (sx->dialog_list_size == 0)
     {
       sx->dialog_list_size = 8;
@@ -300,16 +304,31 @@ void dismiss_all_dialogs(snd_state *ss)
   sx = ss->sgx;
   if (record_dialog_is_active()) close_recorder_audio();
   if (sx->dialog_list_size > 0)
-    {
-      for (i=0;i<sx->ndialogs;i++)
-	{
-	  if (sx->dialogs[i])
-	    {
-	      if (XtIsManaged(sx->dialogs[i])) XtUnmanageChild(sx->dialogs[i]);
-	    }
-	}
-    }
+    for (i=0;i<sx->ndialogs;i++)
+      if (sx->dialogs[i])
+	if (XtIsManaged(sx->dialogs[i])) XtUnmanageChild(sx->dialogs[i]);
 }
+
+#if 0
+static void push_buttons(Widget w, void *ignore)
+{
+  if ((w) && (XmIsPushButton(w)) && (XtIsSensitive(w)))
+    XtCallCallbacks(w,XmNactivateCallback,(void *)get_global_state()); 
+}
+
+void test_all_dialogs(snd_state *ss);
+void test_all_dialogs(snd_state *ss)
+{
+  state_context *sx;
+  int i;
+  sx = ss->sgx;
+  if (sx->dialog_list_size > 0)
+    for (i=0;i<sx->ndialogs;i++)
+      if (sx->dialogs[i])
+	if (XtIsManaged(sx->dialogs[i]))
+	  map_over_children(sx->dialogs[i],push_buttons,NULL);
+}
+#endif
 
 static void minify_maxify_window(Widget w,XtPointer clientData,XEvent *event,Boolean *cont) 
 {
@@ -352,7 +371,7 @@ static void who_called(Widget w,XtPointer clientData,XEvent *event,Boolean *cont
 #if TRAP_SEGFAULT
 #include <setjmp.h>
 /* stolen from scwm.c */
-static jmp_buf envHandleEventsLoop;
+static sigjmp_buf envHandleEventsLoop;
 
 static RETSIGTYPE segv(int ignored)
 {

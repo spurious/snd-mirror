@@ -4481,6 +4481,14 @@ static void fht(int powerOfFour, Float *array)
 	    }
 	}
     }		  
+#if DEBUGGING
+  FREE(fht_sines);
+  fht_sines = NULL;
+  FREE(fht_cosines);
+  fht_cosines = NULL;
+  fht_last_length = 0;
+  fht_length = 0;
+#endif
 }
 
 

@@ -189,7 +189,7 @@
 (define echo-amount .2)
 (define echo-label "echo")
 
-(define (echo)
+(define (cp-echo)
   "echo adds echos spaced by echo-length seconds and scaled by echo-amount"
   (let ((del (make-delay (round (* echo-length (srate))))))
     (lambda (inval)
@@ -197,7 +197,7 @@
 	 (delay del 
 		(* echo-amount (+ (tap del) inval)))))))
 
-(add-to-menu effects-menu echo-label (lambda () (map-chan-with-sync (lambda () (echo)) "echo")))
+(add-to-menu effects-menu echo-label (lambda () (map-chan-with-sync (lambda () (cp-echo)) "echo")))
 
 (set! effects-list (cons (lambda ()
 			   (let ((new-label (format #f "echo (~1,2F, ~1,2F)" echo-length echo-amount)))

@@ -48,6 +48,7 @@ static void create_snd_error_dialog(snd_state *ss, int popup)
       XtVaSetValues(XtNameToWidget(snd_error_dialog,"OK"),XmNarmColor,(ss->sgx)->pushed_button_color,NULL);
       XtVaSetValues(snd_error_history,XmNbackground,(ss->sgx)->white,XmNforeground,(ss->sgx)->black,NULL);
     }
+  add_dialog(ss,snd_error_dialog);
 }
 
 void add_to_error_history(snd_state *ss, char *msg, int popup)

@@ -239,6 +239,7 @@ AC_CHECK_SIZEOF(char)
 AC_CHECK_SIZEOF(short)
 AC_CHECK_SIZEOF(long)
 AC_CHECK_SIZEOF(int *)
+AC_CHECK_SIZEOF(float)
 dnl need some kind of error message here if these are all 0 -- this happened to AV!
 
 dnl this taken from Guile's configure.in
@@ -685,7 +686,7 @@ dnl look for sigsetjmp for segfault trap
 trap_segfault=no
 AC_MSG_CHECKING([for sigsetjmp])
 AC_TRY_LINK([#include <setjmp.h>],
-[jmp_buf hi; sigsetjmp(hi,1)],
+[sigjmp_buf hi; sigsetjmp(hi,1)],
 trap_segfault=yes)
 if test $trap_segfault = yes; then
   AC_DEFINE(TRAP_SEGFAULT,1)

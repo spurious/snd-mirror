@@ -5924,7 +5924,7 @@ char *mus_audio_moniker(void)
   if (getenv(AUDIODEV_ENV) != NULL) 
     dev_name = getenv(AUDIODEV_ENV); 
   else dev_name = DAC_NAME;
-  audio_fd = open(dev_name,O_RDONLY,0);
+  audio_fd = open(dev_name,O_RDONLY | O_NONBLOCK,0);
   if (audio_fd == -1) 
     {
       audio_fd = open("/dev/audioctl",O_RDONLY | O_NONBLOCK,0);

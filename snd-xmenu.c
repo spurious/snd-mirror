@@ -113,14 +113,10 @@ static int call_menu_hook(char *name, char *option)
 {
   SCM res = SCM_BOOL_T;
   if ((name) && (HOOKED(menu_hook)))
-    res = g_c_run_or_hook(menu_hook,SCM_LIST2(gh_str02scm(name),gh_str02scm(option)));
+    res = g_c_run_and_hook(menu_hook,SCM_LIST2(gh_str02scm(name),gh_str02scm(option)));
   return(SCM_TRUE_P(res));
 }
 #define IF_MENU_HOOK(NAME,OPTION) if (call_menu_hook(NAME,OPTION))
-void g_init_gxmenu(void)
-{
-  menu_hook = scm_create_hook(S_menu_hook,2);
-}
 #else
 #define IF_MENU_HOOK(NAME,OPTION)
 #endif
@@ -188,6 +184,16 @@ static void File_Exit_Callback(Widget w,XtPointer cD,XtPointer mD)
   IF_MENU_HOOK(STR_File,STR_Exit) exit_from_menu((snd_state *)cD);
 }
 
+static void File_Mix_Callback_1(Widget w,XtPointer cD,XtPointer mD) 
+{
+  IF_MENU_HOOK(STR_File,STR_Mix) File_Mix_Callback(w,cD,mD);
+}
+
+static void File_Print_Callback_1(Widget w,XtPointer cD,XtPointer mD) 
+{
+  IF_MENU_HOOK(STR_File,STR_Print) File_Print_Callback(w,cD,mD);
+}
+
 
 
 /* -------------------------------- EDIT MENU -------------------------------- */
@@ -252,6 +258,11 @@ static void Edit_Header_Callback(Widget w,XtPointer cD,XtPointer mD)
       sp = selected_sound(ss);
       if (sp) edit_header(sp);
     }
+}
+
+static void Edit_Find_Callback_1(Widget w,XtPointer cD,XtPointer mD) 
+{
+  IF_MENU_HOOK(STR_Edit,STR_Find) Edit_Find_Callback(w,cD,mD);
 }
 
 
@@ -343,6 +354,26 @@ static void View_Ctrls_Callback(Widget w,XtPointer cD,XtPointer mD)
 	show_controls(ss); 
       else hide_controls(ss); /* snd-xmain.c */
     }
+}
+
+static void View_Region_Callback_1(Widget w,XtPointer cD,XtPointer mD) 
+{
+  IF_MENU_HOOK(STR_View,STR_Regions) View_Region_Callback(w,cD,mD);
+}
+
+static void View_Orientation_Callback_1(Widget w,XtPointer cD,XtPointer mD) 
+{
+  IF_MENU_HOOK(STR_View,STR_Orientation) View_Orientation_Callback(w,cD,mD);
+}
+
+static void View_Color_Callback_1(Widget w,XtPointer cD,XtPointer mD) 
+{
+  IF_MENU_HOOK(STR_View,STR_Color) View_Color_Callback(w,cD,mD);
+}
+
+static void View_Files_Callback_1(Widget w,XtPointer cD,XtPointer mD) 
+{
+  IF_MENU_HOOK(STR_View,STR_Files) View_Files_Callback(w,cD,mD);
 }
 
 
@@ -553,7 +584,7 @@ Widget add_menu(snd_state *ss)
   XtVaSetValues(mw[f_revert_menu],XmNmnemonic,'R',NULL);
   
   mw[f_mix_menu] = XtCreateManagedWidget(STR_Mix,xmPushButtonWidgetClass,mw[file_menu],in_args,in_n);
-  XtAddCallback(mw[f_mix_menu],XmNactivateCallback,File_Mix_Callback,ss);
+  XtAddCallback(mw[f_mix_menu],XmNactivateCallback,File_Mix_Callback_1,ss);
   XtVaSetValues(mw[f_mix_menu],XmNmnemonic,'M',NULL);
 
   mw[f_update_menu] = XtCreateManagedWidget(STR_Update,xmPushButtonWidgetClass,mw[file_menu],in_args,in_n);
@@ -572,7 +603,7 @@ Widget add_menu(snd_state *ss)
   XtVaSetValues(mw[f_view_menu],XmNmnemonic,'V',NULL);
 
   mw[f_print_menu] = XtCreateManagedWidget(STR_Print,xmPushButtonWidgetClass,mw[file_menu],in_args,in_n);
-  XtAddCallback(mw[f_print_menu],XmNactivateCallback,File_Print_Callback,ss);
+  XtAddCallback(mw[f_print_menu],XmNactivateCallback,File_Print_Callback_1,ss);
   XtVaSetValues(mw[f_print_menu],XmNmnemonic,'P',NULL);
 
   j=0;
@@ -603,7 +634,7 @@ Widget add_menu(snd_state *ss)
   XtVaSetValues(mw[e_redo_menu],XmNmnemonic,'R',NULL);
 
   mw[e_find_menu] = XtCreateManagedWidget(STR_Find,xmPushButtonWidgetClass,mw[edit_menu],in_args,in_n);
-  XtAddCallback(mw[e_find_menu],XmNactivateCallback,Edit_Find_Callback,ss);
+  XtAddCallback(mw[e_find_menu],XmNactivateCallback,Edit_Find_Callback_1,ss);
   XtVaSetValues(mw[e_find_menu],XmNmnemonic,'F',NULL);
 
   mw[e_select_sep_menu] = XtCreateManagedWidget("",xmSeparatorWidgetClass,mw[edit_menu],sep_args,j);
@@ -664,18 +695,18 @@ Widget add_menu(snd_state *ss)
   XtAddCallback(mw[v_mix_panel_menu],XmNactivateCallback,View_Mix_Panel_Callback,ss);
 
   mw[v_region_menu] = XtCreateManagedWidget(STR_Regions,xmPushButtonWidgetClass,mw[view_menu],in_args,in_n);
-  XtAddCallback(mw[v_region_menu],XmNactivateCallback,View_Region_Callback,ss);
+  XtAddCallback(mw[v_region_menu],XmNactivateCallback,View_Region_Callback_1,ss);
   XtVaSetValues(mw[v_region_menu],XmNmnemonic,'R',NULL);
 
   mw[v_files_menu] = XtCreateManagedWidget(STR_Files,xmPushButtonWidgetClass,mw[view_menu],main_args,main_n);
-  XtAddCallback(mw[v_files_menu],XmNactivateCallback,View_Files_Callback,ss);
+  XtAddCallback(mw[v_files_menu],XmNactivateCallback,View_Files_Callback_1,ss);
   XtVaSetValues(mw[v_files_menu],XmNmnemonic,'F',NULL);
 
   mw[v_color_menu] = XtCreateManagedWidget(STR_Color,xmPushButtonWidgetClass,mw[view_menu],main_args,main_n);
-  XtAddCallback(mw[v_color_menu],XmNactivateCallback,View_Color_Callback,ss);
+  XtAddCallback(mw[v_color_menu],XmNactivateCallback,View_Color_Callback_1,ss);
 
   mw[v_orientation_menu] = XtCreateManagedWidget(STR_Orientation,xmPushButtonWidgetClass,mw[view_menu],main_args,main_n);
-  XtAddCallback(mw[v_orientation_menu],XmNactivateCallback,View_Orientation_Callback,ss);
+  XtAddCallback(mw[v_orientation_menu],XmNactivateCallback,View_Orientation_Callback_1,ss);
   XtVaSetValues(mw[v_orientation_menu],XmNmnemonic,'O',NULL);
 
   mw[v_sep2_menu] = XtCreateManagedWidget("",xmSeparatorWidgetClass,mw[view_menu],sep_args,j);
@@ -905,7 +936,7 @@ static int *added_options_callb = NULL;
 
 static char *main_menu_name(int callb)
 {
-  if ((callb < 0) || (callb >= MAX_MAIN_MENUS)) return(NULL); 
+  if ((callb < 0) || (added_options_menus[callb] >= MAX_MAIN_MENUS)) return(NULL); 
   switch (added_options_menus[callb])
     {
     case 0: return(STR_File); break;
@@ -1271,3 +1302,34 @@ void add_popup_handler(Widget w)
 {
   XtAddEventHandler(w,ButtonPressMask,FALSE,Post_Popup_Menu,popup_menu);
 }
+
+#if HAVE_GUILE
+
+static SCM g_test_menus(void) 
+{
+  int i;
+  snd_state *ss;
+  ss = get_global_state();
+#ifndef SGI
+  for (i=0;i<NUM_MENU_WIDGETS;i++)
+    if ((mw[i]) && (XmIsPushButton(mw[i])) && (XtIsSensitive(mw[i])) &&
+	(i != f_exit_menu) && (i != f_save_menu) && (i != f_close_menu) &&
+	(i != f_new_menu) && (i != h_click_for_help_menu) && (i != v_mix_panel_menu))
+      XtCallCallbacks(mw[i],XmNactivateCallback,(void *)ss);
+  /* test_all_dialogs(ss); */
+#endif
+  for (i=0;i<added_options_pos;i++)
+    if ((added_options[i]) && (XmIsPushButton(mw[i])) && (XtIsSensitive(mw[i])))
+      XtCallCallbacks(added_options[i],XmNactivateCallback,(void *)ss);
+  dismiss_all_dialogs(ss);
+  return(SCM_BOOL_F);
+}
+
+void g_init_gxmenu(void)
+{
+#if HAVE_HOOKS
+  menu_hook = scm_create_hook(S_menu_hook,2);
+#endif
+  gh_new_procedure("test-menus",SCM_FNC g_test_menus,0,0,0);
+}
+#endif

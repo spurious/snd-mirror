@@ -696,10 +696,6 @@ static SCM g_make_bg(SCM wid, SCM hgt)
 
 #endif
 
-#if DEBUGGING
-static SCM g_file_open_dialog(void) {XtCallCallbacks(file_open_menu(),XmNactivateCallback,(void *)get_global_state());  return(SCM_BOOL_F);}
-#endif
-
 void g_initialize_xgh(snd_state *ss, SCM local_doc)
 {
   state = ss;
@@ -720,10 +716,6 @@ void g_initialize_xgh(snd_state *ss, SCM local_doc)
 			       "set-" S_html_dir,SCM_FNC g_set_html_dir,local_doc,0,0,1,0);
 #endif
   
-#if DEBUGGING
-  DEFINE_PROC(gh_new_procedure("file-open-dialog",SCM_FNC g_file_open_dialog,0,0,0),"hiho!");
-#endif
-
   DEFINE_PROC(gh_new_procedure0_0(S_region_dialog,g_region_dialog),H_region_dialog);
   DEFINE_PROC(gh_new_procedure2_0(S_in,g_in),H_in);
   DEFINE_PROC(gh_new_procedure3_0(S_make_color,g_make_snd_color),H_make_color);

@@ -238,7 +238,7 @@ void save_file_from_menu(snd_state *ss)
 {
   snd_info *sp;
   sp = any_selected_sound(ss);
-  save_edits(sp,NULL);
+  if (sp) save_edits(sp,NULL);
 }
 
 static int file_update(snd_info *sp, void *ptr)
@@ -295,9 +295,12 @@ void revert_file_from_menu(snd_state *ss)
   snd_info *sp;
   int i;
   sp = any_selected_sound(ss);
-  for (i=0;i<sp->nchans;i++) revert_edits(sp->chans[i],NULL);
-  reflect_file_revert_in_label(sp);
-  reflect_file_revert_in_menu(ss);
+  if (sp)
+    {
+      for (i=0;i<sp->nchans;i++) revert_edits(sp->chans[i],NULL);
+      reflect_file_revert_in_label(sp);
+      reflect_file_revert_in_menu(ss);
+    }
 }
 
 void exit_from_menu(snd_state *ss)

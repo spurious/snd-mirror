@@ -65,6 +65,7 @@
 #define SIZEOF_LONG 0
 #define SIZEOF_SHORT 0
 #define SIZEOF_INT_P 0
+#define SIZEOF_FLOAT 0
 
 #undef LINUX
 #undef SGI

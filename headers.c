@@ -271,7 +271,8 @@ static const unsigned char I_SD_B[4] = {'S','D','_','B'};
 static const unsigned char I_NOTE[4] = {'N','O','T','E'};  
 static const unsigned char I_file[4] = {'f','i','l','e'};  /* snack "SMP" */
 static const unsigned char I__sam[4] = {'=','s','a','m'};  
-
+static const unsigned char I_SU7M[4] = {'S','U','7','M'};  
+static const unsigned char I_SU7R[4] = {'S','U','7','R'};  
 
 /* .glt and .shp -> Perry Cook's SPASM data files */
 
@@ -802,7 +803,6 @@ static int read_aiff_header (int chan, int overall_offset)
 {
   /* we know we have checked for FORM xxxx AIFF|AIFC when we arrive here */
   /* as far as I can tell, the COMM block has the header data we seek, and the SSND block has the sound data */
-  /* everything else will be ignored -- apparently we can depend on seeing a "chunk" name, then size */
   int chunksize,offset,frames,chunkloc,happy,i,j,num_marks,m,moff,msize;
   type_specifier = mus_char_to_uninterpreted_int((unsigned char *)(hdrbuf+8+overall_offset));
   update_ssnd_location = 0;
@@ -948,6 +948,17 @@ static int read_aiff_header (int chan, int overall_offset)
 			  /* It is nothing more than the actual string -- remember to pad to even length here. */
 			  comment_start = offset + 12;
 			  comment_end = comment_start + chunksize - 5;
+			}
+		      else 
+			{
+			  if ((match_four_chars((unsigned char *)(hdrbuf+8),I_SU7M)) ||
+			      (match_four_chars((unsigned char *)(hdrbuf+8),I_SU7R)))
+			    {
+			      mus_print("this is an SU700 ssp file?");
+			      data_location = 512;
+			      chans = 1;
+			      /* actually SU7M and SU7R point to 2 chan data as separate chunks */
+			    }
 			}
 		    }
 		  else

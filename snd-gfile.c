@@ -1216,7 +1216,7 @@ file_info *get_raw_file_info(char *filename, snd_state *ss)
 	return(make_file_info_1(filename,ss));
       else
 	{
-	  snd_error("can't find %s: %s",filename,strerror(errno));
+	  snd_error("can't find raw (headerless) file %s: %s",filename,strerror(errno));
 	  return(NULL);
 	}
     }
@@ -1360,10 +1360,13 @@ void File_Mix_Callback(GtkWidget *w,gpointer clientData)
 {
   snd_state *ss = (snd_state *)clientData;
   if (!file_mix_dialog)
-    file_mix_dialog = snd_gtk_file_selection_new(ss,STR_mix_file_p,
-						 (GtkSignalFunc)file_mix_delete_callback,
-						 (GtkSignalFunc)file_mix_ok_callback,
-						 (GtkSignalFunc)file_mix_cancel_callback);
+    {
+      file_mix_dialog = snd_gtk_file_selection_new(ss,STR_mix_file_p,
+						   (GtkSignalFunc)file_mix_delete_callback,
+						   (GtkSignalFunc)file_mix_ok_callback,
+						   (GtkSignalFunc)file_mix_cancel_callback);
+      add_dialog(ss,file_mix_dialog);
+    }
   gtk_widget_show(file_mix_dialog);
 }
 

@@ -23,8 +23,6 @@
 ;;; TODO  add to test-spectral-difference set (reading o2 etc)
 ;;; TODO  cscm + eff test (i.e. dynamically loaded code)
 ;;; TODO  all dialogs need more extensive tests
-;;; TODO  menu-hook (see g_activate in snd-xscm -- tie this into local menu-hook tests)
-;;; TODO  some way to mimic selecting from effects menu
 ;;; TODO  need more careful insert-sound tests
 ;;; TODO  tests of various transforms and normalizations
 
@@ -3500,7 +3498,54 @@
 		    (if (fneq (vector-ref vc i) (vct-ref v0 i)) 
 			(snd-display (format #f ";transform-samples[~D]: ~A ~A?" i (vector-ref vc i) (vct-ref v0 i))))))
 		(snd-display (format #f ";fft not ready yet: ~A ~A" v0 vc)))))
-      (close-sound fd)))
+      (close-sound fd)
+      (set! fd (open-sound "obtest.snd"))
+      (load "effects.scm")
+      (add-hook! menu-hook
+		 (lambda (name option)
+		   (if (and (string=? name "File")
+			    (string=? option "Exit"))
+		       (begin
+			 (snd-display ";no exit!")
+			 #f)
+		       #t))) ; #t to make sure other menu items remain active
+      (let ((ctr 0))
+	(add-hook! menu-hook
+		   (lambda (name option)
+		     (if (and (string=? name "Options")
+			      (or (string=? option "Show stats")
+				  (string=? option "Ignore stats")))
+			 (begin
+			   (set! ctr (+ ctr 1))
+			   #f)
+			 #t)))
+	(add-hook! menu-hook
+		   (lambda (name option)
+		     (if (and (string=? name "Options")
+			      (string=? option "Save options"))
+			 (begin
+			   (set! ctr (+ ctr 1))
+			   #f)
+			 #t)))
+	(add-hook! menu-hook
+		   (lambda (name option)
+		     (if (and (string=? name "View")
+			      (string=? option "Files"))
+			 (set! ctr (+ ctr 1)))
+		     #t))
+	(add-hook! menu-hook
+		   (lambda (name option)
+		     (if (and (string=? name "Effects")
+			      (string=? option "invert"))
+			 (set! ctr (+ ctr 1)))
+		     #t))
+	(test-menus) ; built-in self-test function
+	(revert-sound fd)
+	(close-sound fd)
+	(if (not (= ctr 4)) (snd-display (format #f ";ctr after test-menus: ~A? " ctr)))
+	(reset-hook! menu-hook))
+
+      ))
 
 (define test-panel
   (lambda (func name)
@@ -4184,7 +4229,7 @@
 		    (list 'graphs-horizontal #f #f set-graphs-horizontal #t)
 		    (list 'line-size #f 8 set-line-size 512)
 		    (list 'max-fft-peaks #f 1 set-max-fft-peaks 100)
-		    (list 'max-regions #f 1 set-max-regions 64)
+		    (list 'max-regions #f 1 set-max-regions 32)
 		    (list 'min-dB #f -120.0 set-min-dB -30.0)
 		    (list 'movies #f #f set-movies #t)
 		    (list 'selection-creates-region #f #f set-selection-creates-region #t)

@@ -218,6 +218,7 @@ static void region_focus_Callback(Widget w,XtPointer clientData,XtPointer callDa
   regrow *r = (regrow *)clientData;
   ss = r->ss;
   unhighlight_region(ss);
+  if (!(region_ok(r->pos))) return; /* needed by auto-tester */
   current_region=r->pos;
   cp = reg_sp->chans[0];
   cp->chan  = 0;
@@ -226,6 +227,7 @@ static void region_focus_Callback(Widget w,XtPointer clientData,XtPointer callDa
   set_sensitive(channel_w(cp),(region_chans(current_region) > 1));
   set_sensitive(selectw,(current_region != 0));
   reg_sp->hdr = fixup_region_data(cp,0,current_region);
+  if (reg_sp->hdr == NULL) return;
   make_region_labels(reg_sp->hdr);
   region_update_graph(cp);
 }

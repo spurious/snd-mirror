@@ -1,8 +1,5 @@
 /* transform settings dialog */
 
-/* TODO if in dB window transform also in dB
- */
-
 #include "snd.h"
 
 static Widget transform_dialog = NULL; /* main dialog shell */
@@ -107,6 +104,11 @@ static axis_context *make_axis_cp(snd_state *ss, Widget w)
   return(ax);
 }
 
+static Float fp_dB(snd_state *ss, Float py)
+{
+  return((py <= ss->lin_dB) ? 0.0 : (1.0 - ((20.0*(log10(py))) / ss->min_dB)));
+}
+
 static void graph_redisplay(snd_state *ss)
 {
   Display *dp;
@@ -143,11 +145,12 @@ static void graph_redisplay(snd_state *ss)
       ix0 = ix1;
       iy0 = iy1;
       ix1 = grf_x(x,axis_cp->axis);
-      iy1 = grf_y(current_graph_fftr[i],axis_cp->axis);
+      if (fft_log_magnitude(ss))
+	iy1 = grf_y(fp_dB(ss,current_graph_fftr[i]),axis_cp->axis);
+      else iy1 = grf_y(current_graph_fftr[i],axis_cp->axis);
       XDrawLine(dp,wn,fgc,ix0,iy0,ix1,iy1);
     }
 }
-
 
 static void size_help_Callback(Widget w,XtPointer clientData,XtPointer callData) 
 {

@@ -601,6 +601,9 @@ static void mix_button_pressed(Widget w, XtPointer clientData,XtPointer callData
   int chan = 0;
   int mxchan,mix_id=NO_SELECTION;
   ev = (XButtonEvent *)(cb->event);
+#if DEBUGGING
+  if ((int)ev <= 0) return;
+#endif
   apply_to_mix = (!apply_to_mix);
   if (apply_to_mix) 
     {
@@ -1065,6 +1068,9 @@ static void Base_Click_Callback(Widget w,XtPointer clientData,XtPointer callData
   XButtonEvent *ev;
   int val;
   ev = (XButtonEvent *)(cb->event);
+#if DEBUGGING
+  if ((int)ev <= 0) return;
+#endif
   if (ev->state & (snd_ControlMask | snd_MetaMask)) val = base_last_value; else val = BASE_MID;
   base_changed(ss,val);
   XtVaSetValues(baseScale,XmNvalue,val,NULL);
@@ -1767,6 +1773,5 @@ void g_init_gxenv(SCM local_doc)
 			       "set-" S_enved_active_env,SCM_FNC g_set_enved_active_env,local_doc,0,0,1,0);
   define_procedure_with_setter(S_enved_selected_env,SCM_FNC g_enved_selected_env,H_enved_selected_env,
 			       "set-" S_enved_selected_env,SCM_FNC g_set_enved_selected_env,local_doc,0,0,1,0);
-
 }
 #endif
