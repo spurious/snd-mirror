@@ -4123,7 +4123,10 @@ static int alsa_mus_audio_initialize(void)
  * 	memcpy(buffer->buf + buffer->size, str, size);
  * 
  * where you actually have "err" bytes available, not "size" -- 
- * this code looks very buggy...
+ */
+
+/* TODO: re-enable snd_output in Alsa based on version number or something (1.0.8?):
+ * #if ((SND_LIB_MAJOR >= 1) && ((SND_LIB_MINOR > 0) || (SND_LIB_SUBMINOR > 7))
  */
 
 static void alsa_dump_configuration(char *name, snd_pcm_hw_params_t *hw_params, snd_pcm_sw_params_t *sw_params)

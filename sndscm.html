@@ -4737,7 +4737,7 @@ telephone recordings, I assumed anything under 40 Hz or above
 	   (/ 7000.0 cur-srate) 1.0 
 	   (/ 8000.0 cur-srate) 0.0   ; end passband (40..4000)
 	   1.0 0.0)                   ; get rid of some of the hiss
-     ;; since I'm the minimum band is 10 Hz here, 
+     ;; since I'm assuming the minimum band is 10 Hz here, 
      ;;   cur-srate/10 rounded up to next power of 2 seems a safe filter size
      ;;   filter-sound will actually use overlap-add convolution in this case
      (inexact-&gt;exact (expt 2 (ceiling (/ (log (/ cur-srate 10.0)) (log 2.0)))))

@@ -64,7 +64,7 @@ AC_DEFINE_UNQUOTED(CONFIGURE_ARGS, "$INVOKED_ARGS")
 #   --without-fftw        omit FFTW even if it exists
 #   --without-xpm         omit XPM even if it exists (for testing)
 #   --without-xp          omit libXp even if it exists (for testing)
-#   --with-profiling      add profiling flags (for testing)
+#   --with-profiling      add profiling flags [branch counts] (for testing)
 #   --with-midi           include sndlib midi module
 #   GUILE_CONFIG_path     where to look for guile-config
 #   GUILE_CONFIG_name     Fink (OSX) includes guile-config under funny names
