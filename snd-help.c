@@ -379,6 +379,8 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+27-Jul:  --with-hobbit and --with-builtin-gtkrc configure switches\n\
+         clm23.scm.\n\
 30-Jun:  snd-hobbit.scm thanks to Kjetil\n\
          snd 7.5.\n\
 23-Jun:  new configure variables GUILE_CONFIG_name and GUILE_name (for OSX/fink)\n\

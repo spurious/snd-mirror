@@ -82,9 +82,6 @@
  *   args to same type (i.e. int->float done just once, if possible)
  */
 
-/* TODO: if edit func, optimizer is assuming arg is int -- probably should give up, or somehow fixup internals?
- */
-
 #include "snd.h"
 #include "sndlib2xen.h"
 #include "clm2xen.h"
@@ -2474,9 +2471,15 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define FNC_ARG_1 ((ptree **)(pt->fncs))[args[1]]
 #define FNC_ARG_2 ((ptree **)(pt->fncs))[args[2]]
 #define FNC_ARG_3 ((ptree **)(pt->fncs))[args[3]]
+#define FNC_ARG_4 ((ptree **)(pt->fncs))[args[4]]
+#define FNC_ARG_5 ((ptree **)(pt->fncs))[args[5]]
+#define FNC_ARG_6 ((ptree **)(pt->fncs))[args[6]]
 #define DESC_FNC_ARG_1 ((args[1] < pt->fnc_ctr) ? pt->fncs[args[1]] : NULL)
 #define DESC_FNC_ARG_2 ((args[2] < pt->fnc_ctr) ? pt->fncs[args[2]] : NULL)
 #define DESC_FNC_ARG_3 ((args[3] < pt->fnc_ctr) ? pt->fncs[args[3]] : NULL)
+#define DESC_FNC_ARG_4 ((args[4] < pt->fnc_ctr) ? pt->fncs[args[4]] : NULL)
+#define DESC_FNC_ARG_5 ((args[5] < pt->fnc_ctr) ? pt->fncs[args[5]] : NULL)
+#define DESC_FNC_ARG_6 ((args[6] < pt->fnc_ctr) ? pt->fncs[args[6]] : NULL)
 #define RXEN_ARG_1 pt->xens[args[1]]
 #define RXEN_ARG_2 pt->xens[args[2]]
 #define DESC_RXEN_ARG_1 ((args[1] < pt->xen_ctr) ? pt->xens[args[1]] : NULL)
@@ -2634,6 +2637,14 @@ static triple *set_var(ptree *pt, xen_value *var, xen_value *init_val)
 	  describe_xen_value(init_val, pt), type_name(init_val->type), init_val->type);
   */
   return(NULL);
+}
+
+static triple *set_var_no_opt(ptree *pt, xen_value *var, xen_value *init_val)
+{
+  triple *trp;
+  trp = set_var(pt, var, init_val);
+  if (trp) trp->no_opt = true;
+  return(trp);
 }
 
 static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result);
@@ -3012,7 +3023,7 @@ static xen_value *if_form(ptree *prog, XEN form, walk_result_t need_result)
   if (need_result != DONT_NEED_RESULT)
     {
       result = add_empty_var_to_ptree(prog, true_result->type);
-      set_var(prog, result, true_result);
+      set_var_no_opt(prog, result, true_result);
     }
   if (has_false) 
     {
@@ -3056,7 +3067,7 @@ static xen_value *if_form(ptree *prog, XEN form, walk_result_t need_result)
 	      if (true_result) FREE(true_result);
 	      return(NULL);
 	    }
-	  set_var(prog, result, false_result);
+	  set_var_no_opt(prog, result, false_result);
 	}
       prog->ints[jump_to_end->addr] = prog->triple_ctr - false_pc - 1;              /* fixup jump-past-false addr */
       FREE(jump_to_end);
@@ -3734,6 +3745,7 @@ static xen_value *set_form(ptree *prog, XEN form, walk_result_t need_result)
 	  return(NULL);
 	  /* this limitation could be removed, but is it worth the bother? */
 	}
+      /* optimize out redundant sets (can be cancelled via trp->no_opt) */
       if (((v->type == R_FLOAT) || (v->type == R_INT)) &&
 	  (XEN_LIST_P(setval)) && /* this by itself assumes that any list represents an expression (i.e. a temp in effect)
 				   *   but clm-def-struct field references are lists that can be the target of a set
@@ -3755,6 +3767,7 @@ static xen_value *set_form(ptree *prog, XEN form, walk_result_t need_result)
 	      return(copy_xen_value(var->v));
 	    }
 	}
+
       set_var(prog, var->v, v);
       var->unclean = true;
       return(v);
@@ -7173,6 +7186,7 @@ static char *descr_vct_set_i(int *args, ptree *pt)
 }
 static void vct_set_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v)
 {
+  /* set! vct-ref */
   xen_var *var;
   var = find_var_in_ptree_via_addr(prog, in_v->type, in_v->addr);
   if (var) var->unclean = true;
@@ -7190,6 +7204,7 @@ static void vct_set_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value 
 }
 static xen_value *vct_set_2(ptree *prog, xen_value **args, int num_args)
 {
+  /* vct-set! */
   xen_var *var;
   var = find_var_in_ptree_via_addr(prog, args[1]->type, args[1]->addr);
   if (var) var->unclean = true;
@@ -7707,7 +7722,11 @@ static char *descr_str_gen0(int *args, ptree *pt, const char *which)
 }
 #define STR_GEN0(Name) \
   static char *descr_ ## Name ## _0s(int *args, ptree *pt) {return(descr_str_gen0(args, pt, #Name));} \
-  static void Name ## _0s(int *args, ptree *pt) {STRING_RESULT = copy_string(mus_ ## Name (CLM_ARG_1));} \
+  static void Name ## _0s(int *args, ptree *pt) \
+    { \
+      if (STRING_RESULT) FREE(STRING_RESULT); \
+      STRING_RESULT = copy_string(mus_ ## Name (CLM_ARG_1)); \
+    } \
   static xen_value * mus_ ## Name ## _0(ptree *prog, xen_value **args, int num_args) \
   { \
     return(package(prog, R_STRING, Name ## _0s, descr_ ## Name ## _0s, args, 1)); \
@@ -7740,15 +7759,20 @@ static char *descr_set_gen0(int *args, ptree *pt, const char *which)
 {
   return(mus_format("%s(" CLM_PT ", " INT_PT ", " FLT_PT ")", which, args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2, args[3], FLOAT_ARG_3));
 }
+static char *descr_set_gen0_i(int *args, ptree *pt, const char *which)
+{
+  return(mus_format("%s(" CLM_PT ", " INT_PT ", " INT_PT ")", which, args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3));
+}
 #define SET_GEN0(Name) \
   static char *descr_ ## Name ## _0r(int *args, ptree *pt) {return(descr_set_gen0(args, pt, #Name));} \
-  static void Name ## _0r(int *args, ptree *pt) \
-    { \
-      mus_ ## Name (CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3); \
-    } \
+  static void Name ## _0r(int *args, ptree *pt) {mus_ ## Name (CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);} \
+  static char *descr_ ## Name ## _ir(int *args, ptree *pt) {return(descr_set_gen0_i(args, pt, #Name));} \
+  static void Name ## _ir(int *args, ptree *pt) {mus_ ## Name (CLM_ARG_1, INT_ARG_2, (Float)(INT_ARG_3));} \
   static xen_value * Name ## _2(ptree *prog, xen_value **args, int num_args) \
   { \
-    return(package(prog, R_FLOAT, Name ## _0r, descr_ ## Name ## _0r, args, 3)); \
+    if (args[3]->type == R_FLOAT) \
+      return(package(prog, R_FLOAT, Name ## _0r, descr_ ## Name ## _0r, args, 3)); \
+    return(package(prog, R_FLOAT, Name ## _ir, descr_ ## Name ## _ir, args, 3)); \
   } \
   static void Name ## _1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v) \
   { \
@@ -7770,7 +7794,6 @@ static xen_value *mixer_ref_1(ptree *prog, xen_value **args, int num_args)
 {
   return(package(prog, R_FLOAT, mixer_ref_0, descr_mixer_ref_0, args, 3));
 }
-
 static char *descr_mixer_set_0(int *args, ptree *pt)
 {
   return(mus_format("mixer-set!(" CLM_PT ", " INT_PT ", " INT_PT ", " FLT_PT ")", 
@@ -7780,12 +7803,25 @@ static void mixer_set_0(int *args, ptree *pt)
 {
   mus_mixer_set(CLM_ARG_1, INT_ARG_2, INT_ARG_3, FLOAT_ARG_4);
 }
+static char *descr_mixer_set_i(int *args, ptree *pt)
+{
+  return(mus_format("mixer-set!(" CLM_PT ", " INT_PT ", " INT_PT ", " INT_PT ")", 
+		    args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3, args[4], INT_ARG_4));
+}
+static void mixer_set_i(int *args, ptree *pt) 
+{
+  mus_mixer_set(CLM_ARG_1, INT_ARG_2, INT_ARG_3, (Float)INT_ARG_4);
+}
 static xen_value *mixer_set_2(ptree *prog, xen_value **args, int num_args)
 {
-  return(package(prog, R_FLOAT, mixer_set_0, descr_mixer_set_0, args, 4));
+  /* mixer-set! */
+  if (args[4]->type == R_FLOAT)
+    return(package(prog, R_FLOAT, mixer_set_0, descr_mixer_set_0, args, 4));
+  return(package(prog, R_FLOAT, mixer_set_i, descr_mixer_set_i, args, 4));
 }
 static void mixer_set_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v)
 {
+  /* set! mixer-ref */
   add_triple_to_ptree(prog, va_make_triple(mixer_set_0, descr_mixer_set_0, 5, NULL, in_v, in_v1, in_v2, v));
 }
 
@@ -7905,6 +7941,36 @@ static xen_value *mus_bank_1(ptree *prog, xen_value **args, int num_args)
   if (num_args == 2) return(package(prog, R_FLOAT, mus_bank_1f, descr_mus_bank_1f, args, 2));
   if (num_args == 3) return(package(prog, R_FLOAT, mus_bank_2f, descr_mus_bank_2f, args, 3));
   return(package(prog, R_FLOAT, mus_bank_3f, descr_mus_bank_3f, args, 4));
+}
+
+
+/* TODO: tests for opt oscil-bank */
+/* ---------------- oscil-bank ---------------- */
+
+static char *descr_oscil_bank_2f(int *args, ptree *pt) 
+{
+  return(mus_format( FLT_PT " = oscil-bank(" VCT_PT ", " VECT_PT ", " VCT_PT ")", 
+		     args[0], FLOAT_RESULT, args[1], DESC_VCT_ARG_1, args[2], DESC_VECT_ARG_2, args[3], DESC_VCT_ARG_3));
+}
+static void oscil_bank_2f(int *args, ptree *pt) 
+{
+  FLOAT_RESULT = mus_oscil_bank(VCT_ARG_1->data, VECT_ARG_2->data.gens, VCT_ARG_3->data, VCT_ARG_2->length);
+}
+
+static char *descr_oscil_bank_3f(int *args, ptree *pt) 
+{
+  return(mus_format( FLT_PT " = oscil-bank(" VCT_PT ", " VECT_PT ", " VCT_PT ", " INT_PT ")", 
+		     args[0], FLOAT_RESULT, args[1], DESC_VCT_ARG_1, args[2], DESC_VECT_ARG_2, args[3], DESC_VCT_ARG_3, args[4], INT_ARG_4));
+}
+static void oscil_bank_3f(int *args, ptree *pt) 
+{
+  FLOAT_RESULT = mus_oscil_bank(VCT_ARG_1->data, VECT_ARG_2->data.gens,	VCT_ARG_3->data, INT_ARG_4);
+}
+
+static xen_value *oscil_bank_1(ptree *prog, xen_value **args, int num_args) 
+{
+  if (num_args == 3) return(package(prog, R_FLOAT, oscil_bank_2f, descr_oscil_bank_2f, args, 3));
+  return(package(prog, R_FLOAT, oscil_bank_3f, descr_oscil_bank_3f, args, 4));
 }
 
 
@@ -8086,13 +8152,18 @@ static char *descr_mixer_scale_2(int *args, ptree *pt)
 {
   return(mus_format( CLM_PT " = mixer-scale(" CLM_PT ", " FLT_PT ")", args[0], DESC_CLM_RESULT, args[1], DESC_CLM_ARG_1, args[2], FLOAT_ARG_2));
 }
-static void mixer_scale_2(int *args, ptree *pt) 
+static void mixer_scale_2(int *args, ptree *pt) {CLM_RESULT = mus_mixer_scale(CLM_ARG_1, FLOAT_ARG_2, NULL);}
+static char *descr_mixer_scale_3(int *args, ptree *pt) 
 {
-  CLM_RESULT = mus_mixer_scale(CLM_ARG_1, FLOAT_ARG_2, NULL);
+  return(mus_format( CLM_PT " = mixer-scale(" CLM_PT ", " FLT_PT ", " CLM_PT ")", 
+		     args[0], DESC_CLM_RESULT, args[1], DESC_CLM_ARG_1, args[2], FLOAT_ARG_2, args[3], DESC_CLM_ARG_3));
 }
+static void mixer_scale_3(int *args, ptree *pt) {CLM_RESULT = mus_mixer_scale(CLM_ARG_1, FLOAT_ARG_2, CLM_ARG_3);}
 static xen_value *mixer_scale_1(ptree *prog, xen_value **args, int num_args) 
 {
-  return(package(prog, R_CLM, mixer_scale_2, descr_mixer_scale_2, args, 2));
+  if (num_args == 2)
+    return(package(prog, R_CLM, mixer_scale_2, descr_mixer_scale_2, args, 2));
+  return(package(prog, R_CLM, mixer_scale_3, descr_mixer_scale_3, args, 3));
 }
 
 /* ---------------- frame->sample ---------------- */
@@ -8532,12 +8603,17 @@ static char *descr_src_0f(int *args, ptree *pt)
 static void src_0f(int *args, ptree *pt) {FLOAT_RESULT = mus_src(CLM_ARG_1, 0.0, NULL);}
 static xen_value *src_1(ptree *prog, xen_value **args, int num_args) 
 {
+  /* input function arg may be #f */
   if ((num_args > 1) && (args[2]->type == R_INT)) single_to_float(prog, args, 2);
   if (num_args == 3)
     {
-      ptree *pt;
-      pt = ((ptree **)(prog->fncs))[args[3]->addr];
-      if (pt->arity != 1) return(run_warn("src: wrong number of args to input function"));
+      if (args[3]->type == R_FUNCTION)
+	{
+	  ptree *pt;
+	  pt = ((ptree **)(prog->fncs))[args[3]->addr];
+	  if (pt->arity != 1) return(run_warn("src: wrong number of args to input function"));
+	}
+      else num_args = 2;
     }
   switch (num_args)
     {
@@ -8547,37 +8623,352 @@ static xen_value *src_1(ptree *prog, xen_value **args, int num_args)
     }
 }
 
-#define GEN_AS_NEEDED(Name) \
-static char *descr_ ## Name ## _1f(int *args, ptree *pt)  \
-{ \
-  return(mus_format( FLT_PT " = " #Name "(" CLM_PT ", " FNC_PT ")", args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1, args[2], DESC_FNC_ARG_2)); \
-} \
-static void Name ## _1f(int *args, ptree *pt)  \
-{ \
-  ((mus_xen *)mus_environ(CLM_ARG_1))->input_ptree = (void *)(FNC_ARG_2); \
-  FLOAT_RESULT = mus_ ## Name(CLM_ARG_1, src_input); \
-} \
-static char *descr_ ## Name ## _0f(int *args, ptree *pt)  \
-{ \
-  return(mus_format( FLT_PT " = " #Name "(" CLM_PT ")", args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1)); \
-} \
-static void Name ## _0f(int *args, ptree *pt) {FLOAT_RESULT = mus_ ## Name(CLM_ARG_1, NULL);} \
-static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args)  \
-{ \
-  if (num_args == 2) \
-    { \
-      ptree *pt; \
-      pt = ((ptree **)(prog->fncs))[args[2]->addr]; \
-      if (pt->arity != 1) return(run_warn(#Name ": wrong number of args to input function")); \
-    } \
-  if (num_args == 1) \
-    return(package(prog, R_FLOAT, Name ## _0f, descr_ ## Name ## _0f, args, 1)); \
-  else return(package(prog, R_FLOAT, Name ## _1f, descr_ ## Name ## _1f, args, 2)); \
+
+/* ---------------- convolve ---------------- */
+
+static char *descr_convolve_1f(int *args, ptree *pt)
+{
+  return(mus_format( FLT_PT " = convolve(" CLM_PT ", " FNC_PT ")", args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1, args[2], DESC_FNC_ARG_2));
+}
+static void convolve_1f(int *args, ptree *pt)
+{
+  ((mus_xen *)mus_environ(CLM_ARG_1))->input_ptree = (void *)(FNC_ARG_2);
+  FLOAT_RESULT = mus_convolve(CLM_ARG_1, src_input);
+}
+static char *descr_convolve_0f(int *args, ptree *pt)
+{
+  return(mus_format( FLT_PT " = convolve(" CLM_PT ")", args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1));
+}
+static void convolve_0f(int *args, ptree *pt) {FLOAT_RESULT = mus_convolve(CLM_ARG_1, NULL);}
+static xen_value *convolve_1(ptree *prog, xen_value **args, int num_args)
+{
+  if (num_args == 2)
+    {
+      if (args[2]->type == R_FUNCTION)
+	{
+	  ptree *pt;
+	  pt = ((ptree **)(prog->fncs))[args[2]->addr];
+	  if (pt->arity != 1) return(run_warn("convolve: wrong number of args to input function"));
+	}
+      else num_args = 1;
+    }
+  if (num_args == 1)
+    return(package(prog, R_FLOAT, convolve_0f, descr_convolve_0f, args, 1));
+  return(package(prog, R_FLOAT, convolve_1f, descr_convolve_1f, args, 2));
 }
 
-GEN_AS_NEEDED(convolve)
-GEN_AS_NEEDED(granulate)
-GEN_AS_NEEDED(phase_vocoder)
+
+/* ---------------- granulate ---------------- */
+
+static int grn_edit(void *arg)
+{
+  mus_xen *gn = (mus_xen *)arg;
+  ptree *pt, *outer;
+  pt = (ptree *)(gn->edit_ptree);
+  outer = (ptree *)(pt->outer_tree);
+#if DEBUGGING
+  if (outer->clms_size <= pt->args[0])
+    {
+      fprintf(stderr,"outer: %p[%d] (%d)\n", outer->clms, pt->args[0], outer->clms_size);
+      abort();
+    }
+#endif
+  outer->clms[pt->args[0]] = gn->gen;
+  eval_embedded_ptree(pt, outer);
+  return(outer->ints[pt->result->addr]);
+}
+
+static char *descr_granulate_2f(int *args, ptree *pt)
+{
+  return(mus_format( FLT_PT " = granulate(" CLM_PT ", " FNC_PT ", " FNC_PT ")",
+          args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1, args[2], DESC_FNC_ARG_2, args[3], DESC_FNC_ARG_3));
+}
+static void granulate_2f(int *args, ptree *pt)
+{
+  mus_xen *gn = (mus_xen *)mus_environ(CLM_ARG_1);
+  gn->input_ptree = (void *)(FNC_ARG_2);
+  gn->edit_ptree = (void *)(FNC_ARG_3);
+  FLOAT_RESULT = mus_granulate_with_editor(CLM_ARG_1, src_input, grn_edit);
+}
+static char *descr_granulate_2f_split(int *args, ptree *pt)
+{
+  return(mus_format( FLT_PT " = granulate(" CLM_PT ", null, " FNC_PT ")", args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1, args[3], DESC_FNC_ARG_3));
+}
+static void granulate_2f_split(int *args, ptree *pt)
+{
+  mus_xen *gn = (mus_xen *)mus_environ(CLM_ARG_1);
+  gn->edit_ptree = (void *)(FNC_ARG_3);
+  FLOAT_RESULT = mus_granulate_with_editor(CLM_ARG_1, NULL, grn_edit);
+}
+static char *descr_granulate_1f(int *args, ptree *pt)
+{
+  return(mus_format( FLT_PT " = granulate(" CLM_PT ", " FNC_PT ")", args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1, args[2], DESC_FNC_ARG_2));
+}
+static void granulate_1f(int *args, ptree *pt)
+{
+  ((mus_xen *)mus_environ(CLM_ARG_1))->input_ptree = (void *)(FNC_ARG_2);
+  FLOAT_RESULT = mus_granulate(CLM_ARG_1, src_input);
+}
+static char *descr_granulate_0f(int *args, ptree *pt)
+{
+  return(mus_format( FLT_PT " = granulate(" CLM_PT ")", args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1));
+}
+static void granulate_0f(int *args, ptree *pt) {FLOAT_RESULT = mus_granulate(CLM_ARG_1, NULL);}
+static xen_value *granulate_1(ptree *prog, xen_value **args, int num_args)
+{
+  bool got_edit = false, got_input = false;
+  if (num_args >= 2)
+    {
+      if (num_args == 3)
+	{
+	  if (args[3]->type == R_FUNCTION)
+	    {
+	      ptree *pt;
+	      pt = ((ptree **)(prog->fncs))[args[3]->addr];
+	      if (pt->arity != 1) return(run_warn("granulate: wrong number of args to edit function"));
+	      got_edit = true;
+	    }
+	  else num_args = 2;
+	}
+      if (args[2]->type == R_FUNCTION)
+	{
+	  ptree *pt;
+	  pt = ((ptree **)(prog->fncs))[args[2]->addr];
+	  if (pt->arity != 1) return(run_warn("granulate: wrong number of args to input function"));
+	  got_input = true;
+	}
+      else
+	{
+	  if (num_args == 2) 
+	    num_args = 1;
+	}
+    }
+  if (num_args == 1)
+    return(package(prog, R_FLOAT, granulate_0f, descr_granulate_0f, args, 1));
+  if (num_args == 2)
+    return(package(prog, R_FLOAT, granulate_1f, descr_granulate_1f, args, 2));
+  if (got_input)
+    return(package(prog, R_FLOAT, granulate_2f, descr_granulate_2f, args, 3));
+  return(package(prog, R_FLOAT, granulate_2f_split, descr_granulate_2f_split, args, 3));
+}
+
+
+
+/* ---------------- phase-vocoder ---------------- */
+
+static bool pv_analyze(void *arg, Float (*input)(void *arg1, int direction))
+{
+  mus_xen *gn = (mus_xen *)arg;
+  ptree *pt, *outer;
+  pt = (ptree *)(gn->analyze_ptree);
+  outer = (ptree *)(pt->outer_tree);
+#if DEBUGGING
+  if (outer->clms_size <= pt->args[0])
+    {
+      fprintf(stderr,"analyze outer: %p[%d] (%d)\n", outer->clms, pt->args[0], outer->clms_size);
+      abort();
+    }
+#endif
+  outer->clms[pt->args[0]] = gn->gen;
+  /* TODO: how to pass input reader?? -- args[1] = gn->input if its XEN proc? */
+  eval_embedded_ptree(pt, outer);
+  return(outer->ints[pt->result->addr]);
+}
+
+static Float pv_synthesize(void *arg)
+{
+  /* TODO: synthesize arg doesn't work? -- run-time pv needs a lot of tests! */
+  mus_xen *gn = (mus_xen *)arg;
+  ptree *pt, *outer;
+  pt = (ptree *)(gn->synthesize_ptree);
+  outer = (ptree *)(pt->outer_tree);
+#if DEBUGGING
+  if (outer->clms_size <= pt->args[0])
+    {
+      fprintf(stderr,"synthesize outer: %p[%d] (%d)\n", outer->clms, pt->args[0], outer->clms_size);
+      abort();
+    }
+#endif
+  outer->clms[pt->args[0]] = gn->gen;
+  eval_embedded_ptree(pt, outer);
+  return(outer->dbls[pt->result->addr]);
+}
+
+static char *descr_phase_vocoder_5f(int *args, ptree *pt)
+{
+  return(mus_format( FLT_PT " = phase-vocoder(" CLM_PT ", " FNC_PT ", " FNC_PT ", " FNC_PT ", " FNC_PT ")",
+		     args[0], FLOAT_RESULT, 
+		     args[2], DESC_CLM_ARG_2, 
+		     (INT_ARG_1 & 1) ? args[3] : 0, (INT_ARG_1 & 1) ? DESC_FNC_ARG_3 : 0,
+		     (INT_ARG_1 & 2) ? args[4] : 0, (INT_ARG_1 & 2) ? DESC_FNC_ARG_4 : 0,
+		     (INT_ARG_1 & 4) ? args[5] : 0, (INT_ARG_1 & 4) ? DESC_FNC_ARG_5 : 0,
+		     (INT_ARG_1 & 8) ? args[6] : 0, (INT_ARG_1 & 8) ? DESC_FNC_ARG_6 : 0));
+}
+static void phase_vocoder_5f(int *args, ptree *pt)
+{
+  /* in-coming arg1 is descr of which funcs are active -- all arg ctrs are shifted over one to make room */
+  mus_xen *gn = (mus_xen *)mus_environ(CLM_ARG_2);
+  /*
+  fprintf(stderr,"funcs: %lld\n", INT_ARG_1);
+  */
+  if (INT_ARG_1 & 1) gn->input_ptree = (void *)(FNC_ARG_3);
+  if (INT_ARG_1 & 2) gn->analyze_ptree = (void *)(FNC_ARG_4);
+  if (INT_ARG_1 & 4) gn->edit_ptree = (void *)(FNC_ARG_5);
+  if (INT_ARG_1 & 8) gn->synthesize_ptree = (void *)(FNC_ARG_6);
+  FLOAT_RESULT = mus_phase_vocoder_with_editors(CLM_ARG_2, 
+						(INT_ARG_1 & 1) ? src_input : NULL, 
+						(INT_ARG_1 & 2) ? pv_analyze : NULL, 
+						(INT_ARG_1 & 4) ? grn_edit : NULL, 
+						(INT_ARG_1 & 8) ? pv_synthesize : NULL);
+}
+static char *descr_phase_vocoder_1f(int *args, ptree *pt)
+{
+  return(mus_format( FLT_PT " = phase-vocoder(" CLM_PT ", " FNC_PT ")", args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1, args[2], DESC_FNC_ARG_2));
+}
+static void phase_vocoder_1f(int *args, ptree *pt)
+{
+  ((mus_xen *)mus_environ(CLM_ARG_1))->input_ptree = (void *)(FNC_ARG_2);
+  FLOAT_RESULT = mus_phase_vocoder(CLM_ARG_1, src_input);
+}
+static char *descr_phase_vocoder_0f(int *args, ptree *pt)
+{
+  return(mus_format( FLT_PT " = phase-vocoder(" CLM_PT ")", args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1));
+}
+static void phase_vocoder_0f(int *args, ptree *pt) {FLOAT_RESULT = mus_phase_vocoder(CLM_ARG_1, NULL);}
+static xen_value *phase_vocoder_1(ptree *prog, xen_value **args, int num_args)
+{
+  bool got_input = false, got_edit = false, got_analyze = false, got_synthesize = false;
+  if (num_args == 5)
+    {
+      if (args[5]->type == R_FUNCTION)
+	{
+	  ptree *pt;
+	  pt = ((ptree **)(prog->fncs))[args[5]->addr];
+	  if (pt->arity != 1) return(run_warn("phase-vocoder: wrong number of args to synthesize function"));
+	  got_synthesize = true;
+	}
+      else num_args = 4;
+    }
+  if (num_args >= 4)
+    {
+      if (args[4]->type == R_FUNCTION)
+	{
+	  ptree *pt;
+	  pt = ((ptree **)(prog->fncs))[args[4]->addr];
+	  if (pt->arity != 1) return(run_warn("phase-vocoder: wrong number of args to edit function"));
+	  got_edit = true;
+	}
+      else 
+	{
+	  if (num_args == 4)
+	    num_args = 3;
+	}
+    }
+  if (num_args >= 3)
+    {
+      if (args[3]->type == R_FUNCTION)
+	{
+	  ptree *pt;
+	  pt = ((ptree **)(prog->fncs))[args[3]->addr];
+	  if (pt->arity != 2) return(run_warn("phase-vocoder: wrong number of args to analyze function"));
+	  got_analyze = true;
+	}
+      else 
+	{
+	  if (num_args == 3)
+	    num_args = 2;
+	}
+    }
+  if (num_args >= 2)
+    {
+      if (args[2]->type == R_FUNCTION)
+	{
+	  ptree *pt;
+	  pt = ((ptree **)(prog->fncs))[args[2]->addr];
+	  if (pt->arity != 1) return(run_warn("phase-vocoder: wrong number of args to input function"));
+	  got_input = true;
+	}
+      else 
+	{
+	  if (num_args == 2)
+	    num_args = 1;
+	}
+    }
+  if (num_args == 1)
+    return(package(prog, R_FLOAT, phase_vocoder_0f, descr_phase_vocoder_0f, args, 1));
+  if (num_args == 2)
+    return(package(prog, R_FLOAT, phase_vocoder_1f, descr_phase_vocoder_1f, args, 2));
+  /* rather than make 16 different callers, I'll pass along which args are functions in an inserted arg1 */
+  {
+    int i;
+    xen_value **new_args;
+    new_args = (xen_value **)CALLOC(num_args + 2, sizeof(xen_value *));
+    for (i = 1; i <= num_args; i++)
+      new_args[i + 1] = args[i];
+    new_args[1] = make_xen_value(R_INT, 
+				 add_int_to_ptree(prog, 
+						  ((got_input) ? 1 : 0) +
+						  ((got_analyze) ? 2: 0) + 
+						  ((got_edit) ? 4 : 0) + 
+						  ((got_synthesize) ? 8 : 0)), 
+				 R_CONSTANT);
+    new_args[0] = add_empty_var_to_ptree(prog, R_FLOAT);
+    args[0] = new_args[0];
+    add_triple_to_ptree(prog, make_triple(phase_vocoder_5f, descr_phase_vocoder_5f, new_args, num_args + 2));
+    FREE(new_args[1]);
+    FREE(new_args);
+    return(args[0]);
+  }
+}
+
+#define PV_VCT_1(Name) \
+static char *descr_pv_ ## Name ## _0(int *args, ptree *pt) \
+{ \
+  return(mus_format( VCT_PT " = phase-vocoder-" #Name "(" LST_PT ")", args[0], DESC_VCT_RESULT, args[1], DESC_RXEN_ARG_1)); \
+} \
+static void pv_ ## Name ## _0(int *args, ptree *pt) \
+{ \
+  mus_xen *gn; \
+  gn = XEN_TO_MUS_XEN(RXEN_ARG_1); \
+  if (!VCT_RESULT) \
+    { \
+      VCT_RESULT = (vct *)malloc(sizeof(vct)); \
+      VCT_RESULT->length = mus_length(gn->gen); \
+      VCT_RESULT->data = mus_phase_vocoder_ ## Name (gn->gen); \
+      VCT_RESULT->dont_free = true; \
+    } \
+} \
+static char *descr_pv_ ## Name ## _1(int *args, ptree *pt) \
+{ \
+  return(mus_format( VCT_PT " = phase-vocoder-" #Name "(" LST_PT ")", args[0], DESC_VCT_RESULT, args[1], DESC_CLM_ARG_1)); \
+} \
+static void pv_ ## Name ## _1(int *args, ptree *pt) \
+{ \
+  if (!VCT_RESULT) \
+    { \
+      VCT_RESULT = (vct *)malloc(sizeof(vct)); \
+      VCT_RESULT->length = mus_length(CLM_ARG_1); \
+      VCT_RESULT->data = mus_phase_vocoder_ ## Name (CLM_ARG_1); \
+      VCT_RESULT->dont_free = true; \
+    } \
+} \
+static xen_value *phase_vocoder_ ##Name ## _1(ptree *prog, xen_value **args, int num_args) \
+{ \
+  if (args[1]->type == R_XCLM) \
+    return(package(prog, R_VCT, pv_ ## Name ## _0, descr_pv_ ## Name ## _0, args, 1)); \
+  if (args[1]->type == R_CLM) \
+    return(package(prog, R_VCT, pv_ ## Name ## _1, descr_pv_ ## Name ## _1, args, 1)); \
+  return(run_warn("wrong type arg (%s) to mus_phase_vocoder_ " #Name , type_name(args[1]->type))); \
+}
+
+PV_VCT_1(amps)
+PV_VCT_1(amp_increments)
+PV_VCT_1(freqs)
+PV_VCT_1(phases)
+PV_VCT_1(phase_increments)
+
+INT_GEN0(phase_vocoder_outctr)
+  /* SET_INT_GEN0(phase_vocoder_outctr) -- needs to be mus_phase_vocoder_set_outctr */
 
 GEN_P(src)
 GEN_P(convolve)
@@ -8758,9 +9149,27 @@ static void Name ## _0(int *args, ptree *pt) \
   if ((gn) && (gn->vcts)) \
     VCT_RESULT = (vct *)(XEN_OBJECT_REF(gn->vcts[Position])); \
 } \
+static char *descr_ ## Name ## _1(int *args, ptree *pt) \
+{ \
+  return(mus_format( VCT_PT " = mus-" #Name "(" LST_PT ")", args[0], DESC_VCT_RESULT, args[1], DESC_CLM_ARG_1)); \
+} \
+static void Name ## _1(int *args, ptree *pt) \
+{ \
+  if (!VCT_RESULT) \
+    { \
+      VCT_RESULT = (vct *)malloc(sizeof(vct)); \
+      VCT_RESULT->length = mus_length(CLM_ARG_1); \
+      VCT_RESULT->data = mus_ ## Name (CLM_ARG_1); \
+      VCT_RESULT->dont_free = true; \
+    } \
+} \
 static xen_value *mus_ ##Name ## _1(ptree *prog, xen_value **args, int num_args) \
 { \
-  return(package(prog, R_VCT, Name ## _0, descr_ ## Name ## _0, args, 1)); \
+  if (args[1]->type == R_XCLM) \
+    return(package(prog, R_VCT, Name ## _0, descr_ ## Name ## _0, args, 1)); \
+  if (args[1]->type == R_CLM) \
+    return(package(prog, R_VCT, Name ## _1, descr_ ## Name ## _1, args, 1)); \
+  return(run_warn("wrong type arg (%s) to mus_ " #Name , type_name(args[1]->type))); \
 }
 
 MUS_VCT_1(data, 0)
@@ -9984,7 +10393,7 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 		{
 		  if ((w->arg_types[i] != args[i + 1]->type) &&
 		      (w->arg_types[i] != R_ANY) &&
-		      (!((POINTER_P(w->arg_types[i])) && (args[i + 1]->type == R_BOOL))))
+		      (!(((POINTER_P(w->arg_types[i])) || (w->arg_types[i] == R_FUNCTION)) && (args[i + 1]->type == R_BOOL))))
 		    {
 		      if (w->arg_types[i] == R_NUMBER)
 			{
@@ -10019,13 +10428,25 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 				      if (var)
 					{
 					  xen_value *old_v, *new_v;
+					  /*
+					  fprintf(stderr, "\nclm: %s, clms: %p, clms[addr]: %p\n", 
+						  describe_xen_var(var, prog), prog->clms, prog->clms[var->v->addr]);
+					  */
 					  old_v = args[i + 1];
 					  if ((prog->clms) &&
 					      (prog->clms[var->v->addr]))
 					    new_v = make_xen_value(R_XCLM, 
 								   add_xen_to_ptree(prog, mus_wrap_generator(prog->clms[var->v->addr])),
 								   R_VARIABLE);
-					  else return(clean_up(run_warn("can't handle this local generator"), args, num_args));
+					  else 
+					    {
+					      /* one case here is local function arg: gen not expected to be set up yet */
+					      /*   I think we can assume the funcaller will set up the arg in time */
+					      new_v = make_xen_value(R_CLM, var->v->addr, R_VARIABLE);
+					      /*
+					      return(clean_up(run_warn("can't handle this local generator"), args, num_args));
+					      */
+					    }
 					  FREE(old_v);
 					  args[i + 1] = new_v;
 					}
@@ -10914,9 +11335,9 @@ static void init_walkers(void)
   INIT_WALKER(S_mus_scaler, make_walker(mus_scaler_0, NULL, mus_set_scaler_1, 1, 1, R_FLOAT, false, 1, R_CLM));
   INIT_WALKER(S_mus_offset, make_walker(mus_offset_0, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_CLM));
   INIT_WALKER(S_mus_formant_radius, make_walker(mus_formant_radius_0, NULL, mus_set_formant_radius_1, 1, 1, R_FLOAT, false, 1, R_CLM));
-  INIT_WALKER(S_mus_data, make_walker(mus_data_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_XCLM));
-  INIT_WALKER(S_mus_xcoeffs, make_walker(mus_xcoeffs_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_XCLM));
-  INIT_WALKER(S_mus_ycoeffs, make_walker(mus_ycoeffs_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_XCLM));
+  INIT_WALKER(S_mus_data, make_walker(mus_data_1, NULL, NULL, 1, 1, R_VCT, false, 0)); /* 1, R_XCLM)); */
+  INIT_WALKER(S_mus_xcoeffs, make_walker(mus_xcoeffs_1, NULL, NULL, 1, 1, R_VCT, false, 0)); /* 1, R_XCLM)); */
+  INIT_WALKER(S_mus_ycoeffs, make_walker(mus_ycoeffs_1, NULL, NULL, 1, 1, R_VCT, false, 0)); /* 1, R_XCLM)); */
   INIT_WALKER(S_mus_xcoeff, make_walker(mus_xcoeff_1, NULL, mus_set_xcoeff_1, 2, 2, R_FLOAT, false, 2, R_CLM, R_INT));
   INIT_WALKER(S_mus_ycoeff, make_walker(mus_ycoeff_1, NULL, mus_set_ycoeff_1, 2, 2, R_FLOAT, false, 2, R_CLM, R_INT));
   INIT_WALKER(S_mus_feedforward, make_walker(mus_feedforward_0, NULL, mus_set_feedforward_1, 1, 1, R_FLOAT, false, 1, R_CLM));
@@ -10970,7 +11391,15 @@ static void init_walkers(void)
   INIT_WALKER(S_two_pole, make_walker(two_pole_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
   INIT_WALKER(S_tap, make_walker(tap_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
   INIT_WALKER(S_pulse_train, make_walker(pulse_train_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_phase_vocoder, make_walker(phase_vocoder_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_FUNCTION));
+  INIT_WALKER(S_phase_vocoder, make_walker(phase_vocoder_1, NULL, NULL, 1, 5, R_FLOAT, false, 5, R_CLM, R_FUNCTION, R_FUNCTION, R_FUNCTION, R_FUNCTION));
+
+  INIT_WALKER(S_phase_vocoder_amps, make_walker(phase_vocoder_amps_1, NULL, NULL, 1, 1, R_VCT, false, 0));
+  INIT_WALKER(S_phase_vocoder_amp_increments, make_walker(phase_vocoder_amp_increments_1, NULL, NULL, 1, 1, R_VCT, false, 0));
+  INIT_WALKER(S_phase_vocoder_freqs, make_walker(phase_vocoder_freqs_1, NULL, NULL, 1, 1, R_VCT, false, 0));
+  INIT_WALKER(S_phase_vocoder_phases, make_walker(phase_vocoder_phases_1, NULL, NULL, 1, 1, R_VCT, false, 0));
+  INIT_WALKER(S_phase_vocoder_phase_increments, make_walker(phase_vocoder_phase_increments_1, NULL, NULL, 1, 1, R_VCT, false, 0));
+  INIT_WALKER(S_phase_vocoder_outctr, make_walker(mus_phase_vocoder_outctr_0, NULL, NULL, 1, 1, R_INT, false, 1, R_CLM));
+
   INIT_WALKER(S_formant, make_walker(formant_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
   INIT_WALKER(S_filter, make_walker(filter_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
   INIT_WALKER(S_fir_filter, make_walker(fir_filter_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
@@ -11013,7 +11442,7 @@ static void init_walkers(void)
   INIT_WALKER(S_frame_multiply, make_walker(mus_frame_multiply_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_CLM, R_CLM, R_CLM));
   INIT_WALKER(S_mixer_multiply, make_walker(mus_mixer_multiply_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_CLM, R_CLM, R_CLM));
   INIT_WALKER(S_mixer_add, make_walker(mus_mixer_add_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_CLM, R_CLM, R_CLM));
-  INIT_WALKER(S_mixer_scale, make_walker(mixer_scale_1, NULL, NULL, 2, 2, R_CLM, false, 2, R_CLM, R_FLOAT));
+  INIT_WALKER(S_mixer_scale, make_walker(mixer_scale_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_CLM, R_FLOAT, R_CLM)); 
   INIT_WALKER(S_frame_to_frame, make_walker(mus_frame_to_frame_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_CLM, R_CLM, R_CLM));
   INIT_WALKER(S_frame_to_sample, make_walker(frame_to_sample_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_CLM, R_CLM));
   INIT_WALKER(S_sample_to_frame, make_walker(sample_to_frame_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_CLM, R_FLOAT, R_CLM));
@@ -11023,6 +11452,7 @@ static void init_walkers(void)
   INIT_WALKER(S_frame_to_file, make_walker(frame_to_file_1, NULL, NULL, 3, 3, R_CLM, false, 3, R_CLM, R_NUMBER, R_CLM));
   INIT_WALKER(S_file_to_frame, make_walker(file_to_frame_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_CLM, R_NUMBER, R_CLM));
   INIT_WALKER(S_mus_bank, make_walker(mus_bank_1, NULL, NULL, 2, 4, R_FLOAT, false, 4, R_CLM_VECTOR, R_VCT, R_VCT, R_VCT));
+  INIT_WALKER(S_oscil_bank, make_walker(oscil_bank_1, NULL, NULL, 3, 4, R_FLOAT, false, 4, R_VCT, R_VECTOR, R_VCT, R_INT));
 
   INIT_WALKER(S_radians_to_hz, make_walker(mus_radians_to_hz_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
   INIT_WALKER(S_hz_to_radians, make_walker(mus_hz_to_radians_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));

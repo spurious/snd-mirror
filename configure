@@ -879,6 +879,8 @@ Optional Packages:
   --with-editres	  include editres in xm
   --with-ladspa  	  include support for LADSPA plugins
   --with-x11		  include X funcs from xm.c with xg.c
+  --with-hobbit 	  include hobbit-style function arity checking
+  --with-builtin-gtkrc	  include built-in gtkrc fallbacks
   --with-gsl		  use GSL, default=yes
   --with-fftw		  use fftw, default=yes
   --with-xpm		  use xpm, default=yes
@@ -2921,6 +2923,7 @@ _ACEOF
 #   --with-guile          try to use Guile as the extension language (default=yes)
 #   --with-ruby           try to use Ruby as the extension language
 #   --with-ruby-prefix    set location of Ruby
+#   --with-hobbit         include hobbit-style function arity checking
 #   --with-static-xm      include xm module
 #   --with-temp-dir       directory to use for temp files
 #   --with-save-dir       directory to use for saved-state files
@@ -2931,6 +2934,7 @@ _ACEOF
 #   --with-editres 	  include EditRes in xm
 #   --with-shared-sndlib  load sndlib.so if possible
 #   --with-x11            if gtk, this also includes X funcs from xm.c
+#   --with-builtin-gtkrc  include built-in gtkrc fallbacks (default=yes)
 #   --without-gsl         omit GSL even if it exists
 #   --without-fftw        omit FFTW even if it exists
 #   --without-xpm         omit XPM even if it exists (for testing)
@@ -3054,6 +3058,18 @@ if test "${with_x11+set}" = set; then
 
 fi;
 
+# Check whether --with-hobbit or --without-hobbit was given.
+if test "${with_hobbit+set}" = set; then
+  withval="$with_hobbit"
+
+fi;
+
+# Check whether --with-builtin-gtkrc or --without-builtin-gtkrc was given.
+if test "${with_builtin_gtkrc+set}" = set; then
+  withval="$with_builtin_gtkrc"
+
+fi;
+
 # these are primarily for testing
 
 # Check whether --with-gsl or --without-gsl was given.
@@ -3094,6 +3110,20 @@ _ACEOF
 else
   cat >>confdefs.h <<\_ACEOF
 #define Float float
+_ACEOF
+
+fi
+
+if test "$with_hobbit" = yes; then
+  cat >>confdefs.h <<\_ACEOF
+#define WITH_HOBBIT 1
+_ACEOF
+
+fi
+
+if test "$with_builtin_gtkrc" != no; then
+  cat >>confdefs.h <<\_ACEOF
+#define WITH_BUILTIN_GTKRC 1
 _ACEOF
 
 fi
@@ -19175,15 +19205,13 @@ _ACEOF
 	LDSO_FLAGS="-G"
 # if __SUNPRO_C we could add -xO3
         ;;
-    *-next*)
+    *-*-hpux*)
         cat >>confdefs.h <<\_ACEOF
-#define NEXT 1
+#define HPUX 1
 _ACEOF
 
-	audio_system=NeXT
-        LIBS=""
-	SO_INSTALL=":"
-	SO_LD=":"
+	audio_system=Hpux
+	LDSO_FLAGS="+z -Ae +DA1.1"
         ;;
     *-sgi*)
         cat >>confdefs.h <<\_ACEOF

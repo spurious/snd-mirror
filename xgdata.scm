@@ -2,9 +2,8 @@
 ;;; || for ref arg list, {} for ref arg int as list len
 ;;; & in struct for settable field
 
-;;; gtk 2.5 TODO: new widgets: GtkIconView, GtkAboutDialog, GtkCellView
-;;;      new funcs (GtkComboBox, GtkComboBoxEntry
-;;;      other randomness
+;;; gtk 2.5 TODO: new widgets: GtkIconView, GtkCellView
+;;;      new funcs (GtkComboBox, GtkComboBoxEntry)
 
 (CFNC "gchar* g_type_name GType type")
 (CFNC "GQuark g_type_qname GType type")
@@ -5128,7 +5127,7 @@
 (CFNC-250 "void gtk_icon_view_set_orientation GtkIconView* icon_view GtkOrientation orientation")
 (CFNC-250 "GtkOrientation gtk_icon_view_get_orientation GtkIconView* icon_view")
 (CFNC-250 "GtkTreePath* gtk_icon_view_get_path_at_pos GtkIconView* icon_view gint x gint y")
-(CFNC-250 "void gtk_icon_view_selected_foreach GtkIconView* icon_view GtkIconViewForeachFunc func gpointer data")
+(CFNC-250 "void gtk_icon_view_selected_foreach GtkIconView* icon_view GtkIconViewForeachFunc func lambda_data func_data")
 (CFNC-250 "void gtk_icon_view_set_selection_mode GtkIconView* icon_view GtkSelectionMode mode")
 (CFNC-250 "GtkSelectionMode gtk_icon_view_get_selection_mode GtkIconView* icon_view")
 ;;;; these two are in the header file but not the c file

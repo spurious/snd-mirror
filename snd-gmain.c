@@ -566,6 +566,7 @@ void snd_doit(int argc, char **argv)
 	  str = mus_expand_filename("~/Snd.gtkrc");
 	  if (mus_file_probe(str))
 	    gtk_rc_parse(str);
+#if WITH_BUILTIN_GTKRC
 	  else 
 	    {
 	      gtk_rc_parse_string("\n\
@@ -710,7 +711,10 @@ style \"reset\" = \"default_button\"\n\
 \n\
 widget \"*.reset_button\" style \"reset\"\n\
 ");
-      }}}
+      }
+#endif
+    }
+  }
   if (str) FREE(str);
 
   MAIN_PANE(ss) = gtk_vbox_new(false, 0); /* not homogenous, spacing 0 */

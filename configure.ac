@@ -48,6 +48,7 @@ AC_DEFINE_UNQUOTED(CONFIGURE_ARGS, "$INVOKED_ARGS")
 #   --with-guile          try to use Guile as the extension language (default=yes)
 #   --with-ruby           try to use Ruby as the extension language
 #   --with-ruby-prefix    set location of Ruby
+#   --with-hobbit         include hobbit-style function arity checking
 #   --with-static-xm      include xm module
 #   --with-temp-dir       directory to use for temp files
 #   --with-save-dir       directory to use for saved-state files
@@ -58,6 +59,7 @@ AC_DEFINE_UNQUOTED(CONFIGURE_ARGS, "$INVOKED_ARGS")
 #   --with-editres 	  include EditRes in xm
 #   --with-shared-sndlib  load sndlib.so if possible
 #   --with-x11            if gtk, this also includes X funcs from xm.c
+#   --with-builtin-gtkrc  include built-in gtkrc fallbacks (default=yes)
 #   --without-gsl         omit GSL even if it exists
 #   --without-fftw        omit FFTW even if it exists
 #   --without-xpm         omit XPM even if it exists (for testing)
@@ -90,6 +92,8 @@ AC_ARG_WITH(modules,     [  --with-modules	  use if sndlib uses modules])
 AC_ARG_WITH(editres,     [  --with-editres	  include editres in xm])
 AC_ARG_WITH(ladspa,	 [  --with-ladspa  	  include support for LADSPA plugins])
 AC_ARG_WITH(x11,	 [  --with-x11		  include X funcs from xm.c with xg.c])
+AC_ARG_WITH(hobbit,      [  --with-hobbit 	  include hobbit-style function arity checking])
+AC_ARG_WITH(builtin-gtkrc,[  --with-builtin-gtkrc	  include built-in gtkrc fallbacks])
 
 # these are primarily for testing
 AC_ARG_WITH(gsl,         [  --with-gsl		  use GSL, default=yes])
@@ -102,6 +106,14 @@ if test "$with_doubles" = yes; then
   AC_DEFINE(Float,double)
 else
   AC_DEFINE(Float,float)
+fi
+
+if test "$with_hobbit" = yes; then
+  AC_DEFINE(WITH_HOBBIT)
+fi
+
+if test "$with_builtin_gtkrc" != no; then
+  AC_DEFINE(WITH_BUILTIN_GTKRC)
 fi
 
 LOCAL_SNDLIB_BITS="24"
@@ -1181,12 +1193,10 @@ dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
 	LDSO_FLAGS="-G"
 # if __SUNPRO_C we could add -xO3
         ;;
-    *-next*) 
-        AC_DEFINE(NEXT)
-	audio_system=NeXT
-        LIBS=""
-	SO_INSTALL=":"
-	SO_LD=":"
+    *-*-hpux*) 
+        AC_DEFINE(HPUX)
+	audio_system=Hpux
+	LDSO_FLAGS="+z -Ae +DA1.1"
         ;;
     *-sgi*) 
         AC_DEFINE(SGI)

@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 1
-#define MUS_DATE "21-July-04"
+#define MUS_REVISION 2
+#define MUS_DATE "27-July-04"
 
 /*
+ * 27-July:    mus_granulate_with_editor and mus_phase_vocoder_with_editors.
  * 21-July:    edit-func as run-time arg to granulate (for CL/clm compatibility)
  * 19-July:    clm 3.0!
  *             deprecated mus_ina|b, mus-outa|b|c|d.
@@ -573,6 +574,7 @@ void mus_convolve_files(const char *file1, const char *file2, Float maxamp, cons
 
 bool mus_granulate_p(mus_any *ptr);
 Float mus_granulate(mus_any *ptr, Float (*input)(void *arg, int direction));
+Float mus_granulate_with_editor(mus_any *ptr, Float (*input)(void *arg, int direction), int (*edit)(void *closure));
 mus_any *mus_make_granulate(Float (*input)(void *arg, int direction), 
 			    Float expansion, Float length, Float scaler, 
 			    Float hop, Float ramp, Float jitter, int max_size, 
@@ -605,6 +607,11 @@ mus_any *mus_make_phase_vocoder(Float (*input)(void *arg, int direction),
 				Float (*synthesize)(void *arg), 
 				void *closure);
 Float mus_phase_vocoder(mus_any *ptr, Float (*input)(void *arg, int direction));
+Float mus_phase_vocoder_with_editors(mus_any *ptr, 
+				     Float (*input)(void *arg, int direction),
+				     bool (*analyze)(void *arg, Float (*input)(void *arg1, int direction)),
+				     int (*edit)(void *arg), 
+				     Float (*synthesize)(void *arg));
 
 Float *mus_phase_vocoder_amp_increments(mus_any *ptr);
 Float *mus_phase_vocoder_amps(mus_any *ptr);

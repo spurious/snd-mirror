@@ -421,11 +421,13 @@ latter are (configure --help):
 <tr><td></td><td>--with-editres</td><td>include editres in xm</td></tr>
 <tr><td></td><td>--with-xpm</td><td>use xpm, default=yes</td></tr>
 <tr><td></td><td>--with-xp</td><td>use xp, default=no; this is the Xprint library which is not tied into Snd at all</td></tr>
+<tr><td></td><td>--with-builtin-gtkrc</td><td>include built-in gtkrc fallbacks (default=yes) (some don't like my happy pastel color scheme)</td></tr>
 
 <tr><td colspan=2>Language choices</td><td></td></tr>
 <tr><td></td><td>--with-guile</td><td>use Guile (default=yes), GUILE_CONFIG_path sets Guile location; version 1.3.4 or later</td></tr>
 <tr><td></td><td>--with-ruby</td><td>try to use Ruby as the extension language; version 1.6.4 or later</td></tr>
 <tr><td></td><td>--with-ruby-prefix=PFX</td><td>where Ruby is installed</td></tr>
+<tr><td></td><td>--with-hobbit</td><td>include hobbit-style function arity checking (hobbit is a Scheme compiler)</td></tr>
 
 <tr><td colspan=2>Numerical choices</td><td></td></tr>
 <tr><td></td><td>--with-doubles</td><td>use doubles throughout (default=no)</td></tr>
@@ -439,7 +441,7 @@ latter are (configure --help):
 <tr><td></td><td>--with-ladspa</td><td>include support for LADSPA plugins (in Linux default=yes)</td></tr>
 <tr><td></td><td>--with-shared-sndlib</td><td>try to load libsndlib.so, rather than building it into Snd</td></tr>
 <tr><td></td><td>--with-modules</td><td>use this switch with --with-shared-sndlib if sndlib.so uses modules</td></tr>
-<tr><td></td><td>--disable-deprecated</td><td>do not include any deprecated stuff from gtk, guile, or sndlib</td></tr>
+<tr><td></td><td>--disable-deprecated</td><td>do not include any deprecated stuff from gtk, guile, sndlib, xen, clm, etc</td></tr>
 
 <tr><td colspan=2>Directory choices</td><td></td></tr>
 <tr><td></td><td>--with-temp-dir</td><td>directory to use for temp files (default: ".")</td></tr>
@@ -806,6 +808,7 @@ sampling rate <i>srate</i>, and <i>len</i> samples (not frames).
 <tr><td><a href="clm.html#clear-array">clear-array</a></td><td>(arr)</td><td>set all elements of arr to 0.0</td></tr>
 <tr><td><a href="clm.html#comb">comb</a></td><td>(gen input <i>pm</i>)</td><td>comb filter</td></tr>
 <tr><td><a href="clm.html#comb?">comb?</a></td><td>(gen)</td><td>#t if gen is comb filter</td></tr>
+<tr><td><a href="clm.html#continue-frame-&gt;file">continue-frame-&gt;file</a></td><td>(file)</td><td>reopen file for more output</td></tr>
 <tr><td><a href="clm.html#continue-sample-&gt;file">continue-sample-&gt;file</a></td><td>(file)</td><td>reopen file for more output</td></tr>
 <tr><td><a href="clm.html#contrast-enhancement">contrast-enhancement</a></td><td>(input (<i>index</i> 1.0))</td><td>a kind of phase modulation or companding</td></tr>
 <tr><td><a href="clm.html#convolution">convolution</a></td><td>(sig1 sig2 n)</td><td>convolve sig1 with sig2 (size n), returning new sig1</td></tr>
@@ -939,7 +942,6 @@ In Guile <b>frame?</b> is part of the debugger; it is renamed <b>%frame?</b> her
 <tr><td><a href="clm.html#move-locsig">move-locsig</a></td><td colspan=2>(gen degree distance)</td></tr>
 <tr><td><a href="clm.html#multiply-arrays">multiply-arrays</a></td><td>(arr1 arr2)</td><td>arr1[i] *= arr2[i]</td></tr>
 <tr><td><a class=def name="musarrayprintlength">mus-array-print-length</a></td><td>()</td><td>how many array (vct) elements to print in mus_describe</td></tr>
-<tr><td><a href="clm.html#musbank">mus-bank</a></td><td>(gens amps <i>args1 args2</i>)</td><td></td></tr>
 <tr><td><a href="clm.html#mus-channel">mus-channel</a></td><td>(gen)</td><td>channel of gen</td></tr>
 <tr><td><a href="clm.html#mus-channels">mus-channels</a></td><td>(gen)</td><td>channels of gen</td></tr>
 <tr><td><a href="clm.html#mus-cosines">mus-cosines</a></td><td>(gen)</td><td>cosines of sum-of-cosines gen</td></tr>
@@ -1082,7 +1084,7 @@ bank of generators (the second argument) is assumed to be a vector full of gener
     (set! sum (+ sum (* (vector-ref amps i)
                         (<a class=quiet href="clm.html#formant">formant</a> (vector-ref gens i) inval)))))
 </pre>
-<p>in the all-vector case.  <a href="clm.html#musbank">mus-bank</a> is the general case.
+<p>in the all-vector case.
 Here are a few more examples, taken from <a href="sndscm.html#exampdoc">examp.scm</a>.
 </p>
 <pre>

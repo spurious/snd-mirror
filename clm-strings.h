@@ -27,6 +27,7 @@
 #define S_comb_p                     "comb?"
 #define S_connes_window              "connes-window"
 #define S_continue_sample_to_file    "continue-sample->file"
+#define S_continue_frame_to_file     "continue-frame->file"
 #define S_contrast_enhancement       "contrast-enhancement"
 #define S_convolution                "convolution"
 #define S_convolve                   "convolve"

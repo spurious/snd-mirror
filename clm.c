@@ -297,7 +297,7 @@ int mus_free(mus_any *gen)
 char *mus_describe(mus_any *gen)
 {
   if (gen == NULL)
-    return("null clm gen");
+    return("null");
   if ((gen->core) && ((gen->core)->describe))
     return((*((gen->core)->describe))(gen));
   else mus_error(MUS_NO_DESCRIBE, "can't describe %s", mus_name(gen));
@@ -307,7 +307,7 @@ char *mus_describe(mus_any *gen)
 char *mus_inspect(mus_any *gen)
 {
   if (gen == NULL)
-    return("null clm gen");
+    return("null");
   if ((gen->core) && ((gen->core)->inspect))
     return((*((gen->core)->inspect))(gen));
   else mus_error(MUS_NO_INSPECT, "can't inspect %s", mus_name(gen));
@@ -4275,7 +4275,7 @@ static bool equalp_frame(mus_any *p1, mus_any *p2)
       (g1->chans != g2->chans))
     return(false);
   for (i = 0; i < g1->chans; i++)
-    if (g1->vals[i] != g2->vals[i])
+    if (fabs(g1->vals[i] - g2->vals[i]) > .0000001)
       return(false);
   return(true);
 }
@@ -4493,7 +4493,7 @@ static bool equalp_mixer(mus_any *p1, mus_any *p2)
     return(false);
   for (i = 0; i < g1->chans; i++)
     for (j = 0; j < g1->chans; j++)
-      if (g1->vals[i][j] != g2->vals[i][j])
+      if (fabs(g1->vals[i][j] - g2->vals[i][j]) > .0000001)
 	return(false);
   return(true);
 }
@@ -5939,7 +5939,6 @@ mus_any *mus_frame_to_file(mus_any *ptr, off_t samp, mus_any *udata)
   return((mus_any *)data);
 }
 
-/* TODO: clm2xen/doc/test */
 mus_any *mus_continue_frame_to_file(const char *filename)
 {
   rdout *gen = NULL;
@@ -6849,7 +6848,7 @@ void mus_granulate_set_edit_function(mus_any *ptr, int (*edit)(void *closure))
   gen->edit = edit;
 }
 
-Float mus_granulate(mus_any *ptr, Float (*input)(void *arg, int direction))
+Float mus_granulate_with_editor(mus_any *ptr, Float (*input)(void *arg, int direction), int (*edit)(void *closure))
 { 
   grn_info *spd = (grn_info *)ptr;
   int start, end, len, extra, i, j, k, steady_end, curstart;
@@ -6892,8 +6891,10 @@ Float mus_granulate(mus_any *ptr, Float (*input)(void *arg, int direction))
       incr = (Float)(spd->amp) / (Float)(spd->rmp);
       steady_end = (spd->len - spd->rmp);
       curstart = irandom(spd->s20);
-      if (spd->edit)
+      if ((edit) || (spd->edit))
 	{
+	  if (!(spd->grain))
+	    spd->grain = (Float *)clm_calloc(spd->in_data_len, sizeof(Float), "run-time granulate grain");
 	  memset((void *)(spd->grain), 0, spd->in_data_len * sizeof(Float));
 	  out_data = spd->grain;
 	}
@@ -6907,10 +6908,12 @@ Float mus_granulate(mus_any *ptr, Float (*input)(void *arg, int direction))
 	    if (i > steady_end) 
 	      amp -= incr;
 	}
-      if (spd->edit)
+      if ((edit) || (spd->edit))
 	{
 	  int new_len;
-	  new_len = (*(spd->edit))(spd->closure);
+	  if (edit)
+	    new_len = (*edit)(spd->closure);
+	  else new_len = (*(spd->edit))(spd->closure);
 	  if (new_len <= 0) 
 	    new_len = spd->len;
 	  else
@@ -6928,6 +6931,11 @@ Float mus_granulate(mus_any *ptr, Float (*input)(void *arg, int direction))
       if (spd->cur_out < 0) spd->cur_out = 0;
     }
   return(result);
+}
+
+Float mus_granulate(mus_any *ptr, Float (*input)(void *arg, int direction))
+{
+  return(mus_granulate_with_editor(ptr, input, NULL));
 }
 
 
@@ -8132,7 +8140,11 @@ mus_any *mus_make_phase_vocoder(Float (*input)(void *arg, int direction),
   return((mus_any *)pv);
 }
 
-Float mus_phase_vocoder(mus_any *ptr, Float (*input)(void *arg, int direction))
+Float mus_phase_vocoder_with_editors(mus_any *ptr, 
+				     Float (*input)(void *arg, int direction),
+				     bool (*analyze)(void *arg, Float (*input)(void *arg1, int direction)),
+				     int (*edit)(void *arg), 
+				     Float (*synthesize)(void *arg))
 {
   pv_info *pv = (pv_info *)ptr;
   int N2, i, j, buf;
@@ -8140,8 +8152,9 @@ Float mus_phase_vocoder(mus_any *ptr, Float (*input)(void *arg, int direction))
   N2 = pv->N / 2;
   if (pv->outctr >= pv->interp)
     {
-      if ((pv->analyze == NULL) || 
-	  ((*(pv->analyze))(pv->closure, input)))
+      if (((pv->analyze == NULL) && (analyze == NULL)) ||
+	  ((analyze) && ((*analyze)(pv->closure, input))) ||
+	  ((pv->analyze) && (*(pv->analyze))(pv->closure, input)))
 	{
 	  mus_clear_array(pv->freqs, pv->N);
 	  pv->outctr = 0;
@@ -8188,8 +8201,9 @@ Float mus_phase_vocoder(mus_any *ptr, Float (*input)(void *arg, int direction))
 #endif
 	}
       
-      if ((pv->edit == NULL) || 
-	  ((*(pv->edit))(pv->closure)))
+      if (((pv->edit == NULL) && (edit == NULL)) ||
+	  ((edit) && ((*edit)(pv->closure))) ||
+	  ((pv->edit) && (*(pv->edit))(pv->closure)))
 	{
 	  pscl = 1.0 / (Float)(pv->D);
 	  kscl = TWO_PI / (Float)(pv->N);
@@ -8212,18 +8226,22 @@ Float mus_phase_vocoder(mus_any *ptr, Float (*input)(void *arg, int direction))
     }
   
   pv->outctr++;
+  if (synthesize)
+    return((*synthesize)(pv->closure));
   if (pv->synthesize)
     return((*(pv->synthesize))(pv->closure));
-  else
+  for (i = 0; i < N2; i++)
     {
-      for (i = 0; i < N2; i++)
-	{
-	  pv->amps[i] += pv->ampinc[i];
-	  pv->phaseinc[i] += pv->freqs[i];
-	  pv->phases[i] += pv->phaseinc[i];
-	}
-      return(mus_sine_bank(pv->amps, pv->phases, N2));
+      pv->amps[i] += pv->ampinc[i];
+      pv->phaseinc[i] += pv->freqs[i];
+      pv->phases[i] += pv->phaseinc[i];
     }
+  return(mus_sine_bank(pv->amps, pv->phases, N2));
+}
+
+Float mus_phase_vocoder(mus_any *ptr, Float (*input)(void *arg, int direction))
+{
+  return(mus_phase_vocoder_with_editors(ptr, input, NULL, NULL, NULL));
 }
 
 

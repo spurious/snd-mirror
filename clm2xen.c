@@ -192,12 +192,35 @@ vct *mus_optkey_to_vct(XEN key, const char *caller, int n, vct *def)
   return(def);
 }
 
+static bool local_arity_ok(XEN proc, int args) /* from snd-xen.c minus (inconvenient) gc protection */
+{
+  XEN arity;
+  int rargs;
+#if (!HAVE_RUBY)
+  int oargs, restargs;
+#endif
+  arity = XEN_ARITY(proc);
+#if HAVE_RUBY
+  rargs = XEN_TO_C_INT(arity);
+  if ((rargs > args) ||
+      ((rargs < 0) && (-rargs > args)))
+    return(false);
+#else
+  rargs = XEN_TO_C_INT(XEN_CAR(arity));
+  oargs = XEN_TO_C_INT(XEN_CADR(arity));
+  restargs = ((XEN_TRUE_P(XEN_CADDR(arity))) ? 1 : 0);
+  if (rargs > args) return(false);
+  if ((restargs == 0) && ((rargs + oargs) < args)) return(false);
+#endif
+  return(true);
+}
+
 XEN mus_optkey_to_procedure(XEN key, const char *caller, int n, XEN def, int required_args, const char *err)
 {
   if ((!(XEN_KEYWORD_P(key))) && (!(XEN_FALSE_P(key))))
     {
       XEN_ASSERT_TYPE(XEN_PROCEDURE_P(key), key, n, caller, "a procedure");
-      if (!(XEN_REQUIRED_ARGS_OK(key, required_args)))
+      if (!(local_arity_ok(key, required_args)))
 	XEN_BAD_ARITY_ERROR(caller, n, key, err);
       return(key);
     }
@@ -3809,6 +3832,18 @@ should be sndlib identifiers:\n\
   return(XEN_FALSE);
 }
 
+static XEN g_continue_frame_to_file(XEN name)
+{
+  #define H_continue_frame_to_file "(" S_continue_frame_to_file " filename): return an output generator \
+that reopens an existing sound file 'filename' ready for output via " S_frame_to_file
+
+  mus_any *rgen = NULL;
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_continue_frame_to_file, "a string");
+  rgen = mus_continue_frame_to_file(XEN_TO_C_STRING(name));
+  if (rgen) return(xen_return_first(mus_xen_to_object((mus_xen *)_mus_wrap_no_vcts(rgen)), name));
+  return(XEN_FALSE);
+}
+
 static XEN g_frame_to_file(XEN obj, XEN samp, XEN val)
 {
   #define H_frame_to_file "(" S_frame_to_file " obj samp val): add frame 'val' to the output stream \
@@ -4625,17 +4660,51 @@ static XEN g_phase_vocoder_p(XEN obj)
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_phase_vocoder_p(XEN_TO_MUS_ANY(obj)))));
 }
 
-static XEN g_phase_vocoder(XEN obj, XEN func) 
+static XEN g_phase_vocoder(XEN obj, XEN func, XEN analyze_func, XEN edit_func, XEN synthesize_func)
 {
-  #define H_phase_vocoder "(" S_phase_vocoder " gen (input-function)): next phase vocoder value"
+  #define H_phase_vocoder "(" S_phase_vocoder " gen input-function analyze-func edit-func synthesize-func): next phase vocoder value"
   mus_xen *gn;
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_phase_vocoder_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_phase_vocoder, "a phase-vocoder gen");
   gn = XEN_TO_MUS_XEN(obj);
-  if (XEN_PROCEDURE_P(func))
+  if (XEN_BOUND_P(func))
     {
-      if (XEN_REQUIRED_ARGS_OK(func, 1))
-	gn->vcts[MUS_INPUT_FUNCTION] = func;
-      else XEN_BAD_ARITY_ERROR(S_phase_vocoder, 2, func, "phase-vocoder input function wants 1 arg");
+      bool (*analyze)(void *arg, Float (*input)(void *arg1, int direction)) = NULL;
+      int (*edit)(void *arg) = NULL;
+      Float (*synthesize)(void *arg) = NULL;
+      if (XEN_PROCEDURE_P(func))
+	{
+	  if (XEN_REQUIRED_ARGS_OK(func, 1))
+	    gn->vcts[MUS_INPUT_FUNCTION] = func; /* funcall1 set at make time will pick this up */
+	  else XEN_BAD_ARITY_ERROR(S_phase_vocoder, 2, func, "phase-vocoder input function wants 1 arg");
+	}
+      if (XEN_PROCEDURE_P(analyze_func))
+	{
+	  if (XEN_REQUIRED_ARGS_OK(analyze_func, 2))
+	    {
+	      gn->vcts[MUS_ANALYZE_FUNCTION] = analyze_func;
+	      analyze = pvanalyze;
+	    }
+	  else XEN_BAD_ARITY_ERROR(S_phase_vocoder, 3, analyze_func, "phase-vocoder analyze function wants 2 args");
+	}
+      if (XEN_PROCEDURE_P(edit_func))
+	{
+	  if (XEN_REQUIRED_ARGS_OK(edit_func, 1))
+	    {
+	      gn->vcts[MUS_EDIT_FUNCTION] = edit_func;
+	      edit = pvedit;
+	    }
+	  else XEN_BAD_ARITY_ERROR(S_phase_vocoder, 4, edit_func, "phase-vocoder edit function wants 1 arg");
+	}
+      if (XEN_PROCEDURE_P(synthesize_func))
+	{
+	  if (XEN_REQUIRED_ARGS_OK(synthesize_func, 1))
+	    {
+	      gn->vcts[MUS_SYNTHESIZE_FUNCTION] = synthesize_func;
+	      synthesize = pvsynthesize;
+	    }
+	  else XEN_BAD_ARITY_ERROR(S_phase_vocoder, 5, synthesize_func, "phase-vocoder synthesize function wants 1 arg");
+	}
+      return(C_TO_XEN_DOUBLE(mus_phase_vocoder_with_editors(XEN_TO_MUS_ANY(obj), NULL, analyze, edit, synthesize)));
     }
   return(C_TO_XEN_DOUBLE(mus_phase_vocoder(XEN_TO_MUS_ANY(obj), NULL)));
 }
@@ -5213,6 +5282,7 @@ XEN_ARGIFY_3(g_file_to_frame_w, g_file_to_frame)
 XEN_NARGIFY_1(g_sample_to_file_p_w, g_sample_to_file_p)
 XEN_ARGIFY_5(g_make_sample_to_file_w, g_make_sample_to_file)
 XEN_NARGIFY_1(g_continue_sample_to_file_w, g_continue_sample_to_file)
+XEN_NARGIFY_1(g_continue_frame_to_file_w, g_continue_frame_to_file)
 XEN_NARGIFY_4(g_sample_to_file_w, g_sample_to_file)
 XEN_NARGIFY_1(g_frame_to_file_p_w, g_frame_to_file_p)
 XEN_NARGIFY_3(g_frame_to_file_w, g_frame_to_file)
@@ -5266,7 +5336,7 @@ XEN_ARGIFY_2(g_convolve_w, g_convolve)
 XEN_VARGIFY(g_make_convolve_w, g_make_convolve)
 XEN_ARGIFY_4(g_convolve_files_w, g_convolve_files)
 XEN_NARGIFY_1(g_phase_vocoder_p_w, g_phase_vocoder_p)
-XEN_ARGIFY_2(g_phase_vocoder_w, g_phase_vocoder)
+XEN_ARGIFY_5(g_phase_vocoder_w, g_phase_vocoder)
 XEN_VARGIFY(g_make_phase_vocoder_w, g_make_phase_vocoder)
 XEN_NARGIFY_1(g_phase_vocoder_outctr_w, g_phase_vocoder_outctr)
 XEN_NARGIFY_2(g_phase_vocoder_set_outctr_w, g_phase_vocoder_set_outctr)
@@ -5474,6 +5544,7 @@ XEN_NARGIFY_1(g_ssb_am_p_w, g_ssb_am_p)
 #define g_sample_to_file_p_w g_sample_to_file_p
 #define g_make_sample_to_file_w g_make_sample_to_file
 #define g_continue_sample_to_file_w g_continue_sample_to_file
+#define g_continue_frame_to_file_w g_continue_frame_to_file
 #define g_sample_to_file_w g_sample_to_file
 #define g_frame_to_file_p_w g_frame_to_file_p
 #define g_frame_to_file_w g_frame_to_file
@@ -5915,6 +5986,7 @@ the closer the radius is to 1.0, the narrower the resonance."
   XEN_DEFINE_PROCEDURE(S_sample_to_file_p,        g_sample_to_file_p_w,        1, 0, 0, H_sample_to_file_p);
   XEN_DEFINE_PROCEDURE(S_make_sample_to_file,     g_make_sample_to_file_w,     4, 1, 0, H_make_sample_to_file);
   XEN_DEFINE_PROCEDURE(S_continue_sample_to_file, g_continue_sample_to_file_w, 1, 0, 0, H_continue_sample_to_file);
+  XEN_DEFINE_PROCEDURE(S_continue_frame_to_file,  g_continue_frame_to_file_w,  1, 0, 0, H_continue_frame_to_file);
   XEN_DEFINE_PROCEDURE(S_sample_to_file,          g_sample_to_file_w,          4, 0, 0, H_sample_to_file);
   XEN_DEFINE_PROCEDURE(S_frame_to_file_p,         g_frame_to_file_p_w,         1, 0, 0, H_frame_to_file_p);
   XEN_DEFINE_PROCEDURE(S_frame_to_file,           g_frame_to_file_w,           3, 0, 0, H_frame_to_file);
@@ -5966,7 +6038,7 @@ the closer the radius is to 1.0, the narrower the resonance."
   XEN_DEFINE_PROCEDURE(S_convolve_files, g_convolve_files_w, 2, 2, 0, H_convolve_files);
 
   XEN_DEFINE_PROCEDURE(S_phase_vocoder_p,                  g_phase_vocoder_p_w,                1, 0, 0, H_phase_vocoder_p);
-  XEN_DEFINE_PROCEDURE(S_phase_vocoder,                    g_phase_vocoder_w,                  1, 1, 0, H_phase_vocoder);
+  XEN_DEFINE_PROCEDURE(S_phase_vocoder,                    g_phase_vocoder_w,                  1, 4, 0, H_phase_vocoder);
   XEN_DEFINE_PROCEDURE(S_make_phase_vocoder,               g_make_phase_vocoder_w,             0, 0, 1, H_make_phase_vocoder);
   XEN_DEFINE_PROCEDURE(S_phase_vocoder_amp_increments,     g_phase_vocoder_amp_increments_w,   1, 0, 0, H_phase_vocoder_amp_increments);
   XEN_DEFINE_PROCEDURE(S_phase_vocoder_amps,               g_phase_vocoder_amps_w,             1, 0, 0, H_phase_vocoder_amps);
@@ -6013,6 +6085,7 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_comb_p,
 	       S_connes_window,
 	       S_continue_sample_to_file,
+	       S_continue_frame_to_file,
 	       S_contrast_enhancement,
 	       S_convolution,
 	       S_convolve,

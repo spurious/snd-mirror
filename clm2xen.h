@@ -9,6 +9,9 @@ typedef struct {
   int nvcts;
   bool dont_free_gen;
   void *input_ptree; /* added 24-Apr-02 for snd-run.c optimizer */
+  void *edit_ptree;  /* ditto 26-Jul-04 */
+  void *analyze_ptree;
+  void *synthesize_ptree;
 } mus_xen;
 
 #define XEN_TO_MUS_XEN(arg) ((mus_xen *)XEN_OBJECT_REF(arg))

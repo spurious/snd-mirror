@@ -103,13 +103,6 @@
 		     "gtk_quit_remove" "gtk_quit_remove_by_data" 
 		     "gtk_key_snooper_remove"))
 
-;;; TODO:
-;;; xg.c:941: warning: `C_TO_XEN_GtkCellView_' defined but not used
-;;; xg.c:942: warning: `C_TO_XEN_GValue_' defined but not used
-;;; xg.c:943: warning: `C_TO_XEN_GtkAboutDialog_' defined but not used
-;;; xg.c:944: warning: `C_TO_XEN_GtkIconView_' defined but not used
-;;; xg.c:945: warning: `C_TO_XEN_GtkIconViewForeachFunc' defined but not used
-
 (define no-c-to-xen 
   (list "CellLayoutDataFunc" "GClosureNotify" "GDestroyNotify" "GError**" "GParamSpec*" "GQuark*" "GSignalAccumulator"
 	"GSignalCMarshaller" "GSignalEmissionHook" "GSignalQuery*" "GSourceFunc" "GString*" "GTimeVal*" "GType*"
@@ -134,6 +127,7 @@
 	"GtkTreeDragSource*" "GtkTreeModel**" "GtkTreeModelFilter*" "GtkTreeModelSort*" "GtkTreeSortable*" "GtkUIManagerItemType"
 	"GtkViewport*" "PangoAnalysis*" "PangoAttrList**" "PangoFontDescription**" "PangoFontFace*" "PangoFontMap*" "PangoRectangle*"
 	"gchar***" "gfloat*" "gint8*" "gsize" "gssize" "guint16*" "guint8*" "gunichar*"
+	"GtkCellView*" "GValue*" "GtkAboutDialog*"
 	))
 
 (define no-xen-p 
@@ -545,6 +539,11 @@
 			     "gboolean"
 			     "row_separator"
 			     (parse-args "GtkTreeModel* model GtkTreeIter* iter lambda_data func_data" 'callback-250)
+			     'permanent)
+		       (list 'GtkIconViewForeachFunc
+			     "void"
+			     "icon_view_foreach"
+			     (parse-args "GtkIconView* icon_view GtkTreePath* path lambda_data func_data" 'callback-250)
 			     'permanent)
 		       ))
 

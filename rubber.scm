@@ -167,7 +167,7 @@
 			 (min-samps (inexact->exact (abs (- (vct-ref cross-samples min-i) next-start)))))
 		    (do ((k (+ i 2) (1+ k)))
 			((= k (min crosses (+ i zeros-checked))))
-		      (let ((dist (abs (- (vct-ref cross-samples k) next-start))))
+		      (let ((dist (inexact->exact (abs (- (vct-ref cross-samples k) next-start)))))
 			(if (< dist min-samps)
 			    (begin
 			      (set! min-samps dist)

@@ -229,6 +229,7 @@ static void define_xm_obj(void)
 
 #if HAVE_GTK_ABOUT_DIALOG_NEW
 #define XEN_GtkTreeViewRowSeparatorFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS_OK(Arg, 3)))
+#define XEN_GtkIconViewForeachFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS_OK(Arg, 3)))
 #endif
 
 #define XEN_lambda_P(Arg) XEN_PROCEDURE_P(Arg)
@@ -267,6 +268,7 @@ static void define_xm_obj(void)
 
 #if HAVE_GTK_ABOUT_DIALOG_NEW
 #define XEN_TO_C_GtkTreeViewRowSeparatorFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_row_separator
+#define XEN_TO_C_GtkIconViewForeachFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_icon_view_foreach
 #endif
 
 #define XEN_TO_C_GCallback(Arg) ((XEN_REQUIRED_ARGS_OK(Arg, 3)) ? (GCallback)gxg_func3 : (GCallback)gxg_func2)
@@ -938,11 +940,10 @@ XM_TYPE_PTR_2(GtkAccelMap_, GtkAccelMap*)
 #endif
 
 #if HAVE_GTK_ABOUT_DIALOG_NEW
-XM_TYPE_PTR(GtkCellView_, GtkCellView*)
-XM_TYPE_PTR(GValue_, GValue*)
-XM_TYPE_PTR(GtkAboutDialog_, GtkAboutDialog*)
 XM_TYPE_PTR(GtkIconView_, GtkIconView*)
-XM_TYPE(GtkIconViewForeachFunc, GtkIconViewForeachFunc)
+XM_TYPE_PTR_1(GtkCellView_, GtkCellView*)
+XM_TYPE_PTR_1(GValue_, GValue*)
+XM_TYPE_PTR_1(GtkAboutDialog_, GtkAboutDialog*)
 #endif
 
 #define XLS(a, b) XEN_TO_C_gchar_(XEN_LIST_REF(a, b))
@@ -1283,6 +1284,14 @@ static gboolean gxg_row_separator(GtkTreeModel* model, GtkTreeIter* iter, gpoint
                                       C_TO_XEN_GtkTreeIter_(iter),
                                       XEN_CADR((XEN)func_data),
                                       c__FUNCTION__)));
+}
+static void gxg_icon_view_foreach(GtkIconView* icon_view, GtkTreePath* path, gpointer func_data)
+{
+  XEN_CALL_3(XEN_CAR((XEN)func_data),
+             C_TO_XEN_GtkIconView_(icon_view),
+             C_TO_XEN_GtkTreePath_(path),
+             XEN_CADR((XEN)func_data),
+             c__FUNCTION__);
 }
 #endif
 
@@ -23550,15 +23559,19 @@ gint x, gint y)"
   XEN_ASSERT_TYPE(XEN_gint_P(y), y, 3, "gtk_icon_view_get_path_at_pos", "gint");
   return(C_TO_XEN_GtkTreePath_(gtk_icon_view_get_path_at_pos(XEN_TO_C_GtkIconView_(icon_view), XEN_TO_C_gint(x), XEN_TO_C_gint(y))));
 }
-static XEN gxg_gtk_icon_view_selected_foreach(XEN icon_view, XEN func, XEN data)
+static XEN gxg_gtk_icon_view_selected_foreach(XEN icon_view, XEN func, XEN func_data)
 {
   #define H_gtk_icon_view_selected_foreach "void gtk_icon_view_selected_foreach(GtkIconView* icon_view, \
-GtkIconViewForeachFunc func, gpointer data)"
+GtkIconViewForeachFunc func, lambda_data func_data)"
   XEN_ASSERT_TYPE(XEN_GtkIconView__P(icon_view), icon_view, 1, "gtk_icon_view_selected_foreach", "GtkIconView*");
   XEN_ASSERT_TYPE(XEN_GtkIconViewForeachFunc_P(func), func, 2, "gtk_icon_view_selected_foreach", "GtkIconViewForeachFunc");
-  XEN_ASSERT_TYPE(XEN_gpointer_P(data), data, 3, "gtk_icon_view_selected_foreach", "gpointer");
-  gtk_icon_view_selected_foreach(XEN_TO_C_GtkIconView_(icon_view), XEN_TO_C_GtkIconViewForeachFunc(func), XEN_TO_C_gpointer(data));
-  return(XEN_FALSE);
+  XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 3, "gtk_icon_view_selected_foreach", "lambda_data");
+  {
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
+    xm_protect(gxg_ptr);
+    gtk_icon_view_selected_foreach(XEN_TO_C_GtkIconView_(icon_view), XEN_TO_C_GtkIconViewForeachFunc(func), XEN_TO_C_lambda_data(func_data));
+    return(XEN_FALSE);
+   }
 }
 static XEN gxg_gtk_icon_view_set_selection_mode(XEN icon_view, XEN mode)
 {
@@ -30729,10 +30742,10 @@ static bool xg_already_inited = false;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"21-Jul-04\")");
+      XEN_EVAL_C_STRING("(define xm-version \"25-Jul-04\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("21-Jul-04"));
+      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("25-Jul-04"));
 #endif
       xg_already_inited = true;
 #if WITH_GTK_AND_X11

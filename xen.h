@@ -525,7 +525,7 @@
 
 #define XEN_ARITY(Func)               scm_i_procedure_arity(Func)
 
-#if 1
+#if (!WITH_HOBBIT)
 #define XEN_REQUIRED_ARGS(Func)       XEN_TO_C_INT(XEN_CAR(XEN_ARITY(Func)))
 #else
 #define XEN_REQUIRED_ARGS(Func) \
