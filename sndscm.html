@@ -70,7 +70,7 @@
   <li><a href="#snd5doc">snd5.scm: Backwards compatibility for version 5</a>
   <li><a href="#snd6doc">snd6.scm: Backwards compatibility for version 6</a>
   <li><a href="#sndgldoc">snd-gl.scm: OpenGL examples (gl.c)</a>
-  <li><a href="#sndmotifdoc">snd-motif.scm: Motif module (xm.c)</a>
+  <li><a href="#sndmotifdoc">snd-motif.scm, snd-gtk.scm: Motif/Gtk module (xm.c, xg.c)</a>
   <li><a href="#sndtestdoc">snd-test.scm, snd.rb, and event.scm: Snd regression tests</a>
   <li><a href="#vdoc">v.scm: fm-violin</a>
   <li><a href="#wsdoc">ws.scm: with-sound</a>
@@ -2213,6 +2213,7 @@ and some slightly inconsistent old function names.
 </pre>
 
 <p>snd-motif.scm has procedures that rely on the Motif module (xm.c).
+Some of these have been translated to Gtk and xg.c -- snd-gtk.scm.
 <b>install-searcher</b> places
 our own search procedure into the "filter" mechanism in the File:Open
 dialog. The pair <b>zync</b> and <b>unzync</b> cause the

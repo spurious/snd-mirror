@@ -430,9 +430,9 @@ file_data *make_file_data_panel(snd_state *ss, GtkWidget *parent, char *name,
   gtk_box_pack_start(GTK_BOX(parent), form, FALSE, FALSE, 4); /* ??? */
   gtk_widget_show(form);
 
-  fdat->header_list = sg_make_list("header", form, 2, (gpointer)fdat, NUM_HEADER_TYPES, header_short_names, 
+  fdat->header_list = sg_make_list("header", form, BOX_PACK, (gpointer)fdat, NUM_HEADER_TYPES, header_short_names, 
 				   GTK_SIGNAL_FUNC(save_as_header_type_callback), 0, 0, 0, 0);
-  fdat->format_list = sg_make_list("data", form, 2, (gpointer)fdat, dformats, formats, 
+  fdat->format_list = sg_make_list("data", form, BOX_PACK, (gpointer)fdat, dformats, formats, 
 				   GTK_SIGNAL_FUNC(save_as_data_format_callback), 0, 0, 0, 0);
   sg_list_select(fdat->header_list, fdat->header_pos);
   sg_list_select(fdat->format_list, fdat->format_pos);
@@ -1409,7 +1409,7 @@ static void make_raw_data_dialog(snd_state *ss)
 
   raw_location_text = snd_entry_new(ss, lochbox, TRUE);
   gtk_entry_set_text(GTK_ENTRY(raw_location_text), "0");
-  lst = sg_make_list("data format:", GTK_DIALOG(raw_data_dialog)->vbox, 2, (gpointer)ss, MUS_LAST_DATA_FORMAT, data_format_names(),
+  lst = sg_make_list("data format:", GTK_DIALOG(raw_data_dialog)->vbox, BOX_PACK, (gpointer)ss, MUS_LAST_DATA_FORMAT, data_format_names(),
 		     GTK_SIGNAL_FUNC(raw_data_browse_callback), 0, 0, 0, 0);
   gtk_widget_show(lst);
   set_dialog_widget(ss, RAW_DATA_DIALOG, raw_data_dialog);

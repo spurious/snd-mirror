@@ -1652,7 +1652,7 @@ def create_scale_dialog(parent)
       RXtAddCallback(scale, RXmNvalueChangedCallback, 
                      Proc.new { |w, context, info| $current_scaler = Rvalue(info) / 100.0})
       RXtAddCallback(scale, RXmNdragCallback, 
-                     Proc.new { |w, context, info | $current_scaler = Rvalue(info) / 100.0})
+                     Proc.new { |w, context, info| $current_scaler = Rvalue(info) / 100.0})
       RXtManageChild $scale_dialog
     end
 end
@@ -2337,7 +2337,7 @@ you have to poll for the change.  In Snd, change-property can be used
 to talk to the others; in CLM clm-send-snd and clm-receive-snd, in
 CMN cmn-send-snd and cmn-receive-snd.  
 </p>
-<p>[this section under development...]
+<p>[this section was under development... now stalled...]
 </p>
 <br>
 

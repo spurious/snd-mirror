@@ -1,4 +1,8 @@
 ;;; translations from snd-motif.scm
+;;;
+;;; display-scanned-synthesis
+;;; show-smpte-label
+;;; mark-sync-color
 
 (use-modules (ice-9 common-list) (ice-9 format))
 
@@ -19,10 +23,6 @@
 ;;; TODO: add audio output
 
 (define scanned-synthesis-pane #f)
-
-;;; still need to make the graph background white (needs xg.c support for this)
-;;; (set! (.red (.bg (gtk_style_copy (gtk_widget_get_style w)))) 0) etc
-;;;   the next is (list 'GdkColor_ (+ (cadr (.bg style)) (* 10 GTK_STATE_NORMAL)))
 
 (define (display-scanned-synthesis)
 
@@ -78,6 +78,7 @@
 		      (gtk_widget_set_events grf GDK_ALL_EVENTS_MASK)
 		      (gtk_box_pack_start (GTK_BOX scan-outer) grf #t #t 0)
 		      (gtk_widget_show grf)
+		      (gdk_window_set_background (.window grf) (graph-color))
 		      grf))
 	 ;; the controllers
 	 (scan-start (let ((label (gtk_button_new_with_label "Start")))
@@ -256,3 +257,152 @@
   (gtk_widget_hide scanned-synthesis-pane))
 
 
+
+;;; -------- show-smpte-label
+;;;
+;;; (show-smpte-label #:optional on-or-off)
+;;;   turns on/off a label in the time-domain graph showing the current smpte frame of the leftmost sample
+
+(define smpte-frames-per-second 24.0)
+
+(define get-text-width-and-height
+  (let ((smpte-font-wh #f)
+	(smpte-font-name ""))
+    (lambda (text fs)
+      (if (or (not smpte-font-wh)
+	      (not (string=? smpte-font-name (axis-numbers-font))))
+	  (let ((layout (pango_layout_new (gdk_pango_context_get))))
+	    (set! smpte-font-name (axis-numbers-font))
+	    (if layout
+		(begin
+		  (pango_layout_set_font_description layout fs)
+		  (pango_layout_set_text layout text -1)
+		  (let ((wid (pango_layout_get_pixel_size layout #f)))
+		    (g_object_unref (list 'gpointer (cadr layout)))
+		    (set! smpte-font-wh wid)
+		    wid))
+		#f))
+	  smpte-font-wh))))
+
+(define draw-smpte-label
+
+  (let* ((fs (pango_font_description_from_string (axis-numbers-font)))
+	 (wh (get-text-width-and-height "00:00:00:00" fs))
+	 (width (+ 8 (car wh)))
+	 (height (+ 8 (cadr wh))))
+
+    (define (smpte-label samp sr)
+      (define (round-down val) (inexact->exact (truncate val)))
+      (let* ((seconds (/ samp sr))
+	     (frames (* seconds smpte-frames-per-second))
+	     (minutes (round-down (/ seconds 60)))
+	     (hours (round-down (/ minutes 60))))
+	(format #f "~2,'0D:~2,'0D:~2,'0D:~2,'0D"
+		hours
+		(- minutes (* hours 60))
+		(round-down (- seconds (* minutes 60)))
+		(round-down (- frames (* (round-down seconds) smpte-frames-per-second))))))
+	    
+    (lambda (snd chn)
+      (let* ((axinf (axis-info snd chn))
+	     (x (list-ref axinf 10))
+	     (y (list-ref axinf 13))
+	     (grf-width (- (list-ref axinf 12) x))
+	     (grf-height (- (list-ref axinf 11) y)))
+	(if (and (> grf-height (* 2 height))
+		 (> grf-width (* 1.5 width))
+		 (time-graph? snd chn))
+	    (let* ((smpte (smpte-label (car axinf) (srate snd)))
+		   (samp (car axinf)))
+	      (fill-rectangle x y width 2 snd chn)
+	      (fill-rectangle x (+ y height) width 2 snd chn)
+	      (fill-rectangle x y 2 height snd chn)
+	      (fill-rectangle (+ x width -2) y 2 height snd chn)
+	      (set! (current-font snd chn) (cadr fs))
+	      (draw-string smpte (+ x 4) (+ y 4) snd chn)))))))
+
+(define show-smpte-label
+  (lambda arg
+    (if (or (null? arg)
+	    (car arg))
+      (if (not (member draw-smpte-label (hook->list after-graph-hook)))
+	  (begin
+	    (add-hook! after-graph-hook draw-smpte-label)
+	    (update-time-graph #t #t)))
+      (begin
+	(remove-hook! after-graph-hook draw-smpte-label)
+	(update-time-graph #t #t)))))
+
+
+;;; -------- mark-sync-color
+;;;
+;;; (mark-sync-color "blue")
+
+(define mark-sync-color
+  (let ((orig-g-color #f)
+	(orig-sg-color #f)
+	(gm-color #f)
+	(sgm-color #f)
+	(ogm-color #f)
+	(osgm-color #f))
+
+    (define get-color
+      (let ((tmp (GdkColor)))
+	(lambda (color-name)
+	  (if (not (gdk_color_parse color-name tmp))
+	      (snd-error "can't find: ~A" color-name)
+	      (let ((col (gdk_color_copy tmp)))
+		(gdk_rgb_find_color (gdk_colormap_get_system) col)
+		col)))))
+    
+    (define (xor-color col1 col2)
+      (GdkColor (logxor (.pixel col1) (.pixel col2))
+		(logxor (.red col1) (.red col2))
+		(logxor (.green col1) (.green col2))
+		(logxor (.blue col1) (.blue col2))))
+    
+    (lambda (new-color)
+      (let* ((mark-gc (list-ref (snd-gcs) 9))
+	     (selected-mark-gc (list-ref (snd-gcs) 10))
+	     (color (get-color new-color))
+	     (gmc (if (or (not gm-color)
+			  (not (eq? orig-g-color (graph-color))))
+		      (let ((new-color (xor-color (graph-color) color)))
+			(set! orig-g-color (graph-color))
+			(set! gm-color new-color)
+			new-color)
+		      gm-color))
+	     (sgmc (if (or (not sgm-color)
+			   (not (eq? orig-sg-color (selected-graph-color))))
+		       (let ((new-color (xor-color (selected-graph-color) color)))
+			 (set! orig-sg-color (selected-graph-color))
+			 (set! sgm-color new-color)
+			 new-color)
+		       sgm-color))
+	     (ogmc (if (or (not ogm-color)
+			   (not (eq? orig-g-color (graph-color))))
+		       (let ((new-color (xor-color (graph-color) (mark-color))))
+			 (set! ogm-color new-color)
+			 new-color)
+		       ogm-color))
+	     (osgmc (if (or (not osgm-color)
+			    (not (eq? orig-sg-color (selected-graph-color))))
+			(let ((new-color (xor-color (selected-graph-color) (mark-color))))
+			  (set! osgm-color new-color)
+			  new-color)
+			osgm-color)))
+	
+	(if (not (hook-empty? draw-mark-hook)) 
+	    (reset-hook! draw-mark-hook))
+	(add-hook! draw-mark-hook
+		   (lambda (id)
+		     (if (> (mark-sync id) 0)
+			 (begin
+			   (gdk_gc_set_foreground mark-gc gmc)
+			   (gdk_gc_set_foreground selected-mark-gc sgmc))
+			 (begin
+			   (gdk_gc_set_foreground mark-gc ogmc)
+			   (gdk_gc_set_foreground selected-mark-gc osgmc)))
+		     #f))))))
+  
+  

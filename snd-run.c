@@ -68,6 +68,7 @@
  *         (set-object-property! <func> 'ptree pt) [scm_set_object_property_x in objprop]
  *              procedure-property? -- this has name and arity
  *         would also need an initialization process(?)
+ *         timing tests indicate that the walk portion is either lost in the noise (i.e. 0), or less than 10% (singer.scm being the bad case)
  * TODO: possible Snd additions: cursor(settable) sample samples(2vct) add-mark maxamp sample-reader-position
  * TODO: split Scheme from Snd/Clm here and do the latter via an FFI of some sort
  *
@@ -8106,9 +8107,3 @@ during optimization to indicate where the optimizer ran into trouble:\n\
 
   XEN_DEFINE_HOOK(optimization_hook, S_optimization_hook, 1, H_optimization_hook);      /* arg = message */
 }
-
-/*
-    (load "t.scm")
-    (define hi (make-vct 3))
-    (let ((gen (make-oscil 440))) (vct-map! hi (lambda () (oscil gen 0.0))))
-*/

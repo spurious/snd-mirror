@@ -15,6 +15,7 @@
  *    (xm-version) -> date string.
  *    (c-array->list arr len) derefs each member of arr, returning lisp list
  *    (list->c-array lst ctype) packages each member of list as c-type "type" returning (wrapped) c array
+ *    (GdkColor #:optional pixel red green blue) -> GdkColor struct
  *    (GdkCursor #:optional type ref_count) -> GdkCursor struct
  *    (GdkPoint #:optional x y) -> GdkPoint struct
  *    (GdkRectangle #:optional x y width height) -> GdkRectangle struct
@@ -19813,22 +19814,22 @@ PangoRectangle* ink_rect, PangoRectangle* logical_rect)"
 }
 static XEN gxg_pango_layout_get_size(XEN layout, XEN width, XEN height)
 {
-  #define H_pango_layout_get_size "void pango_layout_get_size(PangoLayout* layout, int* width, int* height)"
+  #define H_pango_layout_get_size "void pango_layout_get_size(PangoLayout* layout, int* [width], int* [height])"
+  int ref_width;
+  int ref_height;
   XEN_ASSERT_TYPE(XEN_PangoLayout__P(layout), layout, 1, "pango_layout_get_size", "PangoLayout*");
-  XEN_ASSERT_TYPE(XEN_int__P(width), width, 2, "pango_layout_get_size", "int*");
-  XEN_ASSERT_TYPE(XEN_int__P(height), height, 3, "pango_layout_get_size", "int*");
-  pango_layout_get_size(XEN_TO_C_PangoLayout_(layout), XEN_TO_C_int_(width), XEN_TO_C_int_(height));
-  return(XEN_FALSE);
+  pango_layout_get_size(XEN_TO_C_PangoLayout_(layout), &ref_width, &ref_height);
+  return(XEN_LIST_2(C_TO_XEN_int(ref_width), C_TO_XEN_int(ref_height)));
 }
 static XEN gxg_pango_layout_get_pixel_size(XEN layout, XEN width, XEN height)
 {
-  #define H_pango_layout_get_pixel_size "void pango_layout_get_pixel_size(PangoLayout* layout, int* width, \
-int* height)"
+  #define H_pango_layout_get_pixel_size "void pango_layout_get_pixel_size(PangoLayout* layout, int* [width], \
+int* [height])"
+  int ref_width;
+  int ref_height;
   XEN_ASSERT_TYPE(XEN_PangoLayout__P(layout), layout, 1, "pango_layout_get_pixel_size", "PangoLayout*");
-  XEN_ASSERT_TYPE(XEN_int__P(width), width, 2, "pango_layout_get_pixel_size", "int*");
-  XEN_ASSERT_TYPE(XEN_int__P(height), height, 3, "pango_layout_get_pixel_size", "int*");
-  pango_layout_get_pixel_size(XEN_TO_C_PangoLayout_(layout), XEN_TO_C_int_(width), XEN_TO_C_int_(height));
-  return(XEN_FALSE);
+  pango_layout_get_pixel_size(XEN_TO_C_PangoLayout_(layout), &ref_width, &ref_height);
+  return(XEN_LIST_2(C_TO_XEN_int(ref_width), C_TO_XEN_int(ref_height)));
 }
 static XEN gxg_pango_layout_get_line_count(XEN layout)
 {
@@ -20021,12 +20022,12 @@ PangoRectangle* ink_rect, PangoRectangle* logical_rect)"
 static XEN gxg_pango_layout_iter_get_line_yrange(XEN iter, XEN y0, XEN y1)
 {
   #define H_pango_layout_iter_get_line_yrange "void pango_layout_iter_get_line_yrange(PangoLayoutIter* iter, \
-int* y0, int* y1)"
+int* [y0], int* [y1])"
+  int ref_y0;
+  int ref_y1;
   XEN_ASSERT_TYPE(XEN_PangoLayoutIter__P(iter), iter, 1, "pango_layout_iter_get_line_yrange", "PangoLayoutIter*");
-  XEN_ASSERT_TYPE(XEN_int__P(y0), y0, 2, "pango_layout_iter_get_line_yrange", "int*");
-  XEN_ASSERT_TYPE(XEN_int__P(y1), y1, 3, "pango_layout_iter_get_line_yrange", "int*");
-  pango_layout_iter_get_line_yrange(XEN_TO_C_PangoLayoutIter_(iter), XEN_TO_C_int_(y0), XEN_TO_C_int_(y1));
-  return(XEN_FALSE);
+  pango_layout_iter_get_line_yrange(XEN_TO_C_PangoLayoutIter_(iter), &ref_y0, &ref_y1);
+  return(XEN_LIST_2(C_TO_XEN_int(ref_y0), C_TO_XEN_int(ref_y1)));
 }
 static XEN gxg_pango_layout_iter_get_layout_extents(XEN iter, XEN ink_rect, XEN logical_rect)
 {
@@ -21021,10 +21022,12 @@ static XEN gxg_freeGdkPoints(XEN arg1)
 static XEN c_array_to_xen_list(XEN val, XEN clen);
 static XEN xen_list_to_c_array(XEN val, XEN type);
 
+  #define XG_DEFINE_PROCEDURE(Name, Value, A1, A2, A3, Help) XEN_DEFINE_PROCEDURE(XG_PRE #Name XG_POST, Value, A1, A2, A3, Help)
+  #define XGS_DEFINE_PROCEDURE(Name, Value, A1, A2, A3, Help) XEN_DEFINE_PROCEDURE(XG_FIELD_PRE #Name XG_POST, Value, A1, A2, A3, Help)
+
 #if HAVE_GUILE
 static void define_functions(void)
 {
-  #define XG_DEFINE_PROCEDURE(Name, Value, A1, A2, A3, Help) XEN_DEFINE_PROCEDURE(XG_PRE #Name XG_POST, Value, A1, A2, A3, Help)
   xm_gc_table = XEN_MAKE_VECTOR(1, XEN_FALSE);
   XEN_PROTECT_FROM_GC(xm_gc_table);
   xm_protected_size = 512;
@@ -23278,8 +23281,8 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(pango_layout_xy_to_index, gxg_pango_layout_xy_to_index, 5, 0, 0, H_pango_layout_xy_to_index);
   XG_DEFINE_PROCEDURE(pango_layout_get_extents, gxg_pango_layout_get_extents, 3, 0, 0, H_pango_layout_get_extents);
   XG_DEFINE_PROCEDURE(pango_layout_get_pixel_extents, gxg_pango_layout_get_pixel_extents, 3, 0, 0, H_pango_layout_get_pixel_extents);
-  XG_DEFINE_PROCEDURE(pango_layout_get_size, gxg_pango_layout_get_size, 3, 0, 0, H_pango_layout_get_size);
-  XG_DEFINE_PROCEDURE(pango_layout_get_pixel_size, gxg_pango_layout_get_pixel_size, 3, 0, 0, H_pango_layout_get_pixel_size);
+  XG_DEFINE_PROCEDURE(pango_layout_get_size, gxg_pango_layout_get_size, 1, 2, 0, H_pango_layout_get_size);
+  XG_DEFINE_PROCEDURE(pango_layout_get_pixel_size, gxg_pango_layout_get_pixel_size, 1, 2, 0, H_pango_layout_get_pixel_size);
   XG_DEFINE_PROCEDURE(pango_layout_get_line_count, gxg_pango_layout_get_line_count, 1, 0, 0, H_pango_layout_get_line_count);
   XG_DEFINE_PROCEDURE(pango_layout_get_line, gxg_pango_layout_get_line, 2, 0, 0, H_pango_layout_get_line);
   XG_DEFINE_PROCEDURE(pango_layout_get_lines, gxg_pango_layout_get_lines, 1, 0, 0, H_pango_layout_get_lines);
@@ -23304,7 +23307,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(pango_layout_iter_get_cluster_extents, gxg_pango_layout_iter_get_cluster_extents, 3, 0, 0, H_pango_layout_iter_get_cluster_extents);
   XG_DEFINE_PROCEDURE(pango_layout_iter_get_run_extents, gxg_pango_layout_iter_get_run_extents, 3, 0, 0, H_pango_layout_iter_get_run_extents);
   XG_DEFINE_PROCEDURE(pango_layout_iter_get_line_extents, gxg_pango_layout_iter_get_line_extents, 3, 0, 0, H_pango_layout_iter_get_line_extents);
-  XG_DEFINE_PROCEDURE(pango_layout_iter_get_line_yrange, gxg_pango_layout_iter_get_line_yrange, 3, 0, 0, H_pango_layout_iter_get_line_yrange);
+  XG_DEFINE_PROCEDURE(pango_layout_iter_get_line_yrange, gxg_pango_layout_iter_get_line_yrange, 1, 2, 0, H_pango_layout_iter_get_line_yrange);
   XG_DEFINE_PROCEDURE(pango_layout_iter_get_layout_extents, gxg_pango_layout_iter_get_layout_extents, 3, 0, 0, H_pango_layout_iter_get_layout_extents);
   XG_DEFINE_PROCEDURE(pango_layout_iter_get_baseline, gxg_pango_layout_iter_get_baseline, 1, 0, 0, H_pango_layout_iter_get_baseline);
   XG_DEFINE_PROCEDURE(pango_language_get_type, gxg_pango_language_get_type, 0, 0, 0, H_pango_language_get_type);
@@ -28171,6 +28174,23 @@ static XEN gxg_mnemonic_modifier(XEN ptr)
   XEN_ASSERT_TYPE(XEN_GtkWindow__P(ptr), ptr, XEN_ONLY_ARG, "mnemonic_modifier", "GtkWindow");
   return(C_TO_XEN_GdkModifierType((GdkModifierType)((XEN_TO_C_GtkWindow_(ptr))->mnemonic_modifier)));
 }
+static XEN gxg_make_GdkColor(XEN arglist)
+{
+  GdkColor* result;
+  int i, len;
+  result = (GdkColor*)CALLOC(1, sizeof(GdkColor));
+  len = XEN_LIST_LENGTH(arglist);
+  for (i = 0; i < len; i++)
+    switch (i)
+      {
+      case 0: result->pixel = XEN_TO_C_guint32(XEN_LIST_REF(arglist, 0));
+      case 1: result->red = XEN_TO_C_guint16(XEN_LIST_REF(arglist, 1));
+      case 2: result->green = XEN_TO_C_guint16(XEN_LIST_REF(arglist, 2));
+      case 3: result->blue = XEN_TO_C_guint16(XEN_LIST_REF(arglist, 3));
+      }
+  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkColor_"), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));
+}
+
 static XEN gxg_make_GdkCursor(XEN arglist)
 {
   GdkCursor* result;
@@ -28276,7 +28296,6 @@ static XEN gxg_make_GtkTextChildAnchor(void)
 static void define_structs(void)
 {
 
-  #define XGS_DEFINE_PROCEDURE(Name, Value, A1, A2, A3, Help) XEN_DEFINE_PROCEDURE(XG_FIELD_PRE #Name XG_POST, Value, A1, A2, A3, Help)
   XGS_DEFINE_PROCEDURE(mnemonic_modifier, gxg_mnemonic_modifier, 1, 0, 0, NULL);
   XGS_DEFINE_PROCEDURE(keys_changed_handler, gxg_keys_changed_handler, 1, 0, 0, NULL);
   XGS_DEFINE_PROCEDURE(frame_bottom, gxg_frame_bottom, 1, 0, 0, NULL);
@@ -28908,14 +28927,15 @@ static void define_structs(void)
   XGS_DEFINE_PROCEDURE(green, gxg_green, 1, 0, 0, NULL);
   XGS_DEFINE_PROCEDURE(red, gxg_red, 1, 0, 0, NULL);
   XGS_DEFINE_PROCEDURE(pixel, gxg_pixel, 1, 0, 0, NULL);
-  XGS_DEFINE_PROCEDURE(GdkCursor, gxg_make_GdkCursor, 0, 0, 1, NULL);
-  XGS_DEFINE_PROCEDURE(GdkPoint, gxg_make_GdkPoint, 0, 0, 1, NULL);
-  XGS_DEFINE_PROCEDURE(GdkRectangle, gxg_make_GdkRectangle, 0, 0, 1, NULL);
-  XGS_DEFINE_PROCEDURE(GdkSegment, gxg_make_GdkSegment, 0, 0, 1, NULL);
-  XGS_DEFINE_PROCEDURE(GdkSpan, gxg_make_GdkSpan, 0, 0, 1, NULL);
-  XGS_DEFINE_PROCEDURE(GtkTextIter, gxg_make_GtkTextIter, 0, 0, 0, NULL);
-  XGS_DEFINE_PROCEDURE(GtkTextMark, gxg_make_GtkTextMark, 0, 0, 0, NULL);
-  XGS_DEFINE_PROCEDURE(GtkTextChildAnchor, gxg_make_GtkTextChildAnchor, 0, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GdkColor, gxg_make_GdkColor, 0, 0, 1, NULL);
+  XG_DEFINE_PROCEDURE(GdkCursor, gxg_make_GdkCursor, 0, 0, 1, NULL);
+  XG_DEFINE_PROCEDURE(GdkPoint, gxg_make_GdkPoint, 0, 0, 1, NULL);
+  XG_DEFINE_PROCEDURE(GdkRectangle, gxg_make_GdkRectangle, 0, 0, 1, NULL);
+  XG_DEFINE_PROCEDURE(GdkSegment, gxg_make_GdkSegment, 0, 0, 1, NULL);
+  XG_DEFINE_PROCEDURE(GdkSpan, gxg_make_GdkSpan, 0, 0, 1, NULL);
+  XG_DEFINE_PROCEDURE(GtkTextIter, gxg_make_GtkTextIter, 0, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GtkTextMark, gxg_make_GtkTextMark, 0, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GtkTextChildAnchor, gxg_make_GtkTextChildAnchor, 0, 0, 0, NULL);
 }
 
 #else
@@ -30417,7 +30437,7 @@ static int xg_already_inited = 0;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"31-Oct-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"01-Nov-02\")");
 #endif
       xg_already_inited = 1;
     }

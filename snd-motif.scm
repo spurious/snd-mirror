@@ -2261,8 +2261,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 
 
 (define (show-font-name font)
-  "(show-font-name font) shows the Snd-related name and the X-related name of each font \
-in a widget's font list"
+  "(show-font-name font) shows the Snd-related name and the X-related name of each font in a widget's font list"
   (define (show-next-font context)
     (let ((next-font (XmFontListGetNextFont context)))
       (if (car next-font)

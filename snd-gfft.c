@@ -498,14 +498,14 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
 	      transform_names[i] = TRANSFORM_TYPES[i];
 	    else transform_names[i] = added_transform_name(i);
 	  }
-	transform_list = sg_make_list("type", outer_table, 3, (gpointer)ss, num_transform_types, transform_names, 
+	transform_list = sg_make_list("type", outer_table, TABLE_ATTACH, (gpointer)ss, num_transform_types, transform_names, 
 				      GTK_SIGNAL_FUNC(transform_browse_callback), 0, 1, 0, 1);
 	gtk_widget_show(transform_list);
 	FREE(transform_names);
       }
 
       /* SIZE */
-      size_list = sg_make_list("size", outer_table, 3, (gpointer)ss, NUM_TRANSFORM_SIZES, TRANSFORM_SIZES, 
+      size_list = sg_make_list("size", outer_table, TABLE_ATTACH, (gpointer)ss, NUM_TRANSFORM_SIZES, TRANSFORM_SIZES, 
 			       GTK_SIGNAL_FUNC(size_browse_callback), 1, 2, 0, 1);
       gtk_widget_show(size_list);
 
@@ -607,14 +607,14 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
       gtk_widget_show(display_frame);
 
       /* WAVELET */
-      wavelet_list = sg_make_list("wavelet", outer_table, 3, (gpointer)ss, NUM_WAVELETS, WAVELETS, 
+      wavelet_list = sg_make_list("wavelet", outer_table, TABLE_ATTACH, (gpointer)ss, NUM_WAVELETS, WAVELETS, 
 				  GTK_SIGNAL_FUNC(wavelet_browse_callback), 0, 1, 1, 2);
       gtk_widget_show(wavelet_list);
 
       /* WINDOW */
       window_box = gtk_table_new(2, 2, FALSE);
       gtk_table_attach_defaults(GTK_TABLE(outer_table), window_box, 1, 2, 1, 2);
-      window_list = sg_make_list("window", window_box, 3, (gpointer)ss, GUI_NUM_FFT_WINDOWS, FFT_WINDOWS, 
+      window_list = sg_make_list("window", window_box, TABLE_ATTACH, (gpointer)ss, GUI_NUM_FFT_WINDOWS, FFT_WINDOWS, 
 				 GTK_SIGNAL_FUNC(window_browse_callback), 0, 1, 0, 1);
 
       beta_adj = gtk_adjustment_new(0.0, 0.0, 1.01, 0.001, 0.01, .01);

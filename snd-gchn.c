@@ -649,7 +649,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  set_backgrounds(cw[W_main_window], (ss->sgx)->sash_color);
 	  gtk_container_set_border_width(GTK_CONTAINER(cw[W_main_window]), 2);
 	  gtk_box_pack_start(GTK_BOX(w_snd_pane_box(sp)), cw[W_main_window], TRUE, TRUE, 0);
-	  cw[W_edhist] = sg_make_list("Edits", cw[W_main_window], 1, (gpointer)cp, 0, NULL, 
+	  cw[W_edhist] = sg_make_list("Edits", cw[W_main_window], PANED_ADD, (gpointer)cp, 0, NULL,
 				      GTK_SIGNAL_FUNC(history_select_callback), 0, 0, 0, 0);
 	  gtk_widget_show(cw[W_edhist]);
 	  g_signal_connect_closure_by_id(GTK_OBJECT(cw[W_edhist]),

@@ -752,14 +752,14 @@ GtkWidget *sg_make_list(const char *title, GtkWidget *parent, int paned, gpointe
 
   switch (paned)
     {
-    case 1: gtk_paned_add1(GTK_PANED(parent), scrolled_win); break;
-    case 2: gtk_box_pack_start(GTK_BOX(parent), scrolled_win, TRUE, TRUE, 0); break;
-    case 3: gtk_table_attach(GTK_TABLE(parent), scrolled_win, t1, t2, t3, t4,
+    case PANED_ADD: gtk_paned_add1(GTK_PANED(parent), scrolled_win); break;
+    case BOX_PACK: gtk_box_pack_start(GTK_BOX(parent), scrolled_win, TRUE, TRUE, 0); break;
+    case TABLE_ATTACH: gtk_table_attach(GTK_TABLE(parent), scrolled_win, t1, t2, t3, t4,
 			     (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
 			     (GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
 			     0, 0);
       break;
-    default: gtk_container_add(GTK_CONTAINER(parent), scrolled_win); break;
+    case CONTAINER_ADD: gtk_container_add(GTK_CONTAINER(parent), scrolled_win); break;
     }
   gtk_widget_show(list);
   gtk_widget_show(scrolled_win);

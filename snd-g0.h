@@ -176,6 +176,7 @@ typedef struct {
 
 /* #define GUI_CURRENT_TIME(ss) GDK_CURRENT_TIME */
 
+enum {CONTAINER_ADD, PANED_ADD, BOX_PACK, TABLE_ATTACH};
 
 /* now pull in the key names (gdk/gdkkeysyms.h) */
 #define snd_K_Shift_L GDK_Shift_L	 

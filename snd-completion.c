@@ -74,6 +74,7 @@ static XEN snd_rb_methods(void)
   XEN argv[1];
   argv[0] = XEN_TRUE;
   return(rb_class_private_instance_methods(1, argv, rb_mKernel));
+  /* rb_ary_new here -- should we free? */
 }
 
 static int completions(char *text)

@@ -334,7 +334,10 @@ static BACKGROUND_TYPE startup_funcs(gpointer context)
       {
 	GIOChannel *channel;
 	channel = g_io_channel_unix_new(fileno(stdin));
-	stdin_id = g_io_add_watch_full(channel, G_PRIORITY_DEFAULT, (GIOCondition)(G_IO_IN | G_IO_HUP | G_IO_ERR), io_invoke, NULL, NULL);
+	stdin_id = g_io_add_watch_full(channel, 
+				       G_PRIORITY_DEFAULT, 
+				       (GIOCondition)(G_IO_IN | G_IO_HUP | G_IO_ERR), 
+				       io_invoke, NULL, NULL);
 	g_io_channel_unref (channel);
       }
 #endif

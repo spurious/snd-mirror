@@ -739,7 +739,7 @@ void view_color_callback(GtkWidget *w, gpointer context)
 		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
 		       10, 4);
 
-      ccd->list = sg_make_list(S_colormap, colormap_box, 2, (gpointer)ss, NUM_COLORMAPS, colormap_names(),
+      ccd->list = sg_make_list(S_colormap, colormap_box, BOX_PACK, (gpointer)ss, NUM_COLORMAPS, colormap_names(),
 			       GTK_SIGNAL_FUNC(list_color_callback), 0, 0, 0, 0);
       gtk_widget_show(ccd->list);
       gtk_widget_show(colormap_box);

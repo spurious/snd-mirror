@@ -101,7 +101,7 @@ static void start_completion_dialog(int num_items, char **items)
       first_time = TRUE;
       completion_list = sg_make_list("Completions", 
 				     GTK_DIALOG(completion_dialog)->vbox,
-				     0, /* use container_add */
+				     CONTAINER_ADD,
 				     (gpointer)ss,
 				     num_items, items,
 				     GTK_SIGNAL_FUNC(list_completions_callback),
@@ -176,6 +176,7 @@ static void listener_completion(snd_state *ss)
 	matches = get_completion_matches();
       sg_text_delete(listener_text, beg, end);
       append_listener_text(0, new_text);
+      goto_window(listener_text);
       /*
       fprintf(stderr,"old: %s (%d %d), new: %s, delete from %d %d\n",
 	      old_text,

@@ -1637,10 +1637,12 @@
 (hey "static XEN c_array_to_xen_list(XEN val, XEN clen);~%")
 (hey "static XEN xen_list_to_c_array(XEN val, XEN type);~%~%")
 
+(hey "  #define XG_DEFINE_PROCEDURE(Name, Value, A1, A2, A3, Help) XEN_DEFINE_PROCEDURE(XG_PRE #Name XG_POST, Value, A1, A2, A3, Help)~%")
+(hey "  #define XGS_DEFINE_PROCEDURE(Name, Value, A1, A2, A3, Help) XEN_DEFINE_PROCEDURE(XG_FIELD_PRE #Name XG_POST, Value, A1, A2, A3, Help)~%~%")
+
 (hey "#if HAVE_GUILE~%")
 (say-hey "static void define_functions(void)~%")
 (say-hey "{~%")
-(say-hey "  #define XG_DEFINE_PROCEDURE(Name, Value, A1, A2, A3, Help) XEN_DEFINE_PROCEDURE(XG_PRE #Name XG_POST, Value, A1, A2, A3, Help)~%")
 
 (say-hey "  xm_gc_table = XEN_MAKE_VECTOR(1, XEN_FALSE);~%")
 (say-hey "  XEN_PROTECT_FROM_GC(xm_gc_table);~%")
@@ -1854,7 +1856,6 @@
 (hey "#if HAVE_GUILE~%")
 (say-hey "static void define_structs(void)~%")
 (say-hey "{~%~%")
-(say-hey "  #define XGS_DEFINE_PROCEDURE(Name, Value, A1, A2, A3, Help) XEN_DEFINE_PROCEDURE(XG_FIELD_PRE #Name XG_POST, Value, A1, A2, A3, Help)~%")
 
 (for-each 
  (lambda (field)
@@ -1865,9 +1866,9 @@
 (for-each 
  (lambda (struct)
    (let* ((s (find-struct struct)))
-
-     (hey "  XGS_DEFINE_PROCEDURE(~A, gxg_make_~A, 0, 0, ~D, NULL);~%" struct struct (if (> (length (cadr s)) 0) 1 0))
-     (say "  XGS_DEFINE_PROCEDURE(~A, gxg_make_~A_w, 0, 0, ~D, NULL);~%" struct struct (if (> (length (cadr s)) 0) 1 0))))
+     ;; XG here, not XGS -- don't want "." prepended
+     (hey "  XG_DEFINE_PROCEDURE(~A, gxg_make_~A, 0, 0, ~D, NULL);~%" struct struct (if (> (length (cadr s)) 0) 1 0))
+     (say "  XG_DEFINE_PROCEDURE(~A, gxg_make_~A_w, 0, 0, ~D, NULL);~%" struct struct (if (> (length (cadr s)) 0) 1 0))))
  (reverse make-structs))
 
 (say-hey "}~%~%")

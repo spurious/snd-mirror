@@ -1098,7 +1098,7 @@ GtkWidget *create_envelope_editor (snd_state *ss)
 				     0);
       gtk_widget_show(mixB);
 
-      env_list = sg_make_list("envs:", leftbox, 2, (gpointer)ss, 0, NULL, GTK_SIGNAL_FUNC(env_browse_callback),0,0,0,0);
+      env_list = sg_make_list("envs:", leftbox, BOX_PACK, (gpointer)ss, 0, NULL, GTK_SIGNAL_FUNC(env_browse_callback),0,0,0,0);
       if (enved_all_envs_top() > 0) make_scrolled_env_list(ss);
       gtk_widget_show(env_list);
 

@@ -2248,8 +2248,8 @@ XEN_NARGIFY_7(gxg_pango_layout_move_cursor_visually_w, gxg_pango_layout_move_cur
 XEN_NARGIFY_5(gxg_pango_layout_xy_to_index_w, gxg_pango_layout_xy_to_index)
 XEN_NARGIFY_3(gxg_pango_layout_get_extents_w, gxg_pango_layout_get_extents)
 XEN_NARGIFY_3(gxg_pango_layout_get_pixel_extents_w, gxg_pango_layout_get_pixel_extents)
-XEN_NARGIFY_3(gxg_pango_layout_get_size_w, gxg_pango_layout_get_size)
-XEN_NARGIFY_3(gxg_pango_layout_get_pixel_size_w, gxg_pango_layout_get_pixel_size)
+XEN_ARGIFY_3(gxg_pango_layout_get_size_w, gxg_pango_layout_get_size)
+XEN_ARGIFY_3(gxg_pango_layout_get_pixel_size_w, gxg_pango_layout_get_pixel_size)
 XEN_NARGIFY_1(gxg_pango_layout_get_line_count_w, gxg_pango_layout_get_line_count)
 XEN_NARGIFY_2(gxg_pango_layout_get_line_w, gxg_pango_layout_get_line)
 XEN_NARGIFY_1(gxg_pango_layout_get_lines_w, gxg_pango_layout_get_lines)
@@ -2274,7 +2274,7 @@ XEN_NARGIFY_2(gxg_pango_layout_iter_get_char_extents_w, gxg_pango_layout_iter_ge
 XEN_NARGIFY_3(gxg_pango_layout_iter_get_cluster_extents_w, gxg_pango_layout_iter_get_cluster_extents)
 XEN_NARGIFY_3(gxg_pango_layout_iter_get_run_extents_w, gxg_pango_layout_iter_get_run_extents)
 XEN_NARGIFY_3(gxg_pango_layout_iter_get_line_extents_w, gxg_pango_layout_iter_get_line_extents)
-XEN_NARGIFY_3(gxg_pango_layout_iter_get_line_yrange_w, gxg_pango_layout_iter_get_line_yrange)
+XEN_ARGIFY_3(gxg_pango_layout_iter_get_line_yrange_w, gxg_pango_layout_iter_get_line_yrange)
 XEN_NARGIFY_3(gxg_pango_layout_iter_get_layout_extents_w, gxg_pango_layout_iter_get_layout_extents)
 XEN_NARGIFY_1(gxg_pango_layout_iter_get_baseline_w, gxg_pango_layout_iter_get_baseline)
 XEN_NARGIFY_0(gxg_pango_language_get_type_w, gxg_pango_language_get_type)
@@ -3289,6 +3289,7 @@ XEN_NARGIFY_1(gxg_blue_w, gxg_blue)
 XEN_NARGIFY_1(gxg_green_w, gxg_green)
 XEN_NARGIFY_1(gxg_red_w, gxg_red)
 XEN_NARGIFY_1(gxg_pixel_w, gxg_pixel)
+XEN_VARGIFY(gxg_make_GdkColor_w, gxg_make_GdkColor)
 XEN_VARGIFY(gxg_make_GdkCursor_w, gxg_make_GdkCursor)
 XEN_VARGIFY(gxg_make_GdkPoint_w, gxg_make_GdkPoint)
 XEN_VARGIFY(gxg_make_GdkRectangle_w, gxg_make_GdkRectangle)
@@ -3300,7 +3301,6 @@ XEN_NARGIFY_0(gxg_make_GtkTextChildAnchor_w, gxg_make_GtkTextChildAnchor)
 
 static void define_functions(void)
 {
-  #define XG_DEFINE_PROCEDURE(Name, Value, A1, A2, A3, Help) XEN_DEFINE_PROCEDURE(XG_PRE #Name XG_POST, Value, A1, A2, A3, Help)
   xm_gc_table = XEN_MAKE_VECTOR(1, XEN_FALSE);
   XEN_PROTECT_FROM_GC(xm_gc_table);
   xm_protected_size = 512;
@@ -5549,8 +5549,8 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(pango_layout_xy_to_index, gxg_pango_layout_xy_to_index_w, 5, 0, 0, H_pango_layout_xy_to_index);
   XG_DEFINE_PROCEDURE(pango_layout_get_extents, gxg_pango_layout_get_extents_w, 3, 0, 0, H_pango_layout_get_extents);
   XG_DEFINE_PROCEDURE(pango_layout_get_pixel_extents, gxg_pango_layout_get_pixel_extents_w, 3, 0, 0, H_pango_layout_get_pixel_extents);
-  XG_DEFINE_PROCEDURE(pango_layout_get_size, gxg_pango_layout_get_size_w, 3, 0, 0, H_pango_layout_get_size);
-  XG_DEFINE_PROCEDURE(pango_layout_get_pixel_size, gxg_pango_layout_get_pixel_size_w, 3, 0, 0, H_pango_layout_get_pixel_size);
+  XG_DEFINE_PROCEDURE(pango_layout_get_size, gxg_pango_layout_get_size_w, 1, 2, 0, H_pango_layout_get_size);
+  XG_DEFINE_PROCEDURE(pango_layout_get_pixel_size, gxg_pango_layout_get_pixel_size_w, 1, 2, 0, H_pango_layout_get_pixel_size);
   XG_DEFINE_PROCEDURE(pango_layout_get_line_count, gxg_pango_layout_get_line_count_w, 1, 0, 0, H_pango_layout_get_line_count);
   XG_DEFINE_PROCEDURE(pango_layout_get_line, gxg_pango_layout_get_line_w, 2, 0, 0, H_pango_layout_get_line);
   XG_DEFINE_PROCEDURE(pango_layout_get_lines, gxg_pango_layout_get_lines_w, 1, 0, 0, H_pango_layout_get_lines);
@@ -5575,7 +5575,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(pango_layout_iter_get_cluster_extents, gxg_pango_layout_iter_get_cluster_extents_w, 3, 0, 0, H_pango_layout_iter_get_cluster_extents);
   XG_DEFINE_PROCEDURE(pango_layout_iter_get_run_extents, gxg_pango_layout_iter_get_run_extents_w, 3, 0, 0, H_pango_layout_iter_get_run_extents);
   XG_DEFINE_PROCEDURE(pango_layout_iter_get_line_extents, gxg_pango_layout_iter_get_line_extents_w, 3, 0, 0, H_pango_layout_iter_get_line_extents);
-  XG_DEFINE_PROCEDURE(pango_layout_iter_get_line_yrange, gxg_pango_layout_iter_get_line_yrange_w, 3, 0, 0, H_pango_layout_iter_get_line_yrange);
+  XG_DEFINE_PROCEDURE(pango_layout_iter_get_line_yrange, gxg_pango_layout_iter_get_line_yrange_w, 1, 2, 0, H_pango_layout_iter_get_line_yrange);
   XG_DEFINE_PROCEDURE(pango_layout_iter_get_layout_extents, gxg_pango_layout_iter_get_layout_extents_w, 3, 0, 0, H_pango_layout_iter_get_layout_extents);
   XG_DEFINE_PROCEDURE(pango_layout_iter_get_baseline, gxg_pango_layout_iter_get_baseline_w, 1, 0, 0, H_pango_layout_iter_get_baseline);
   XG_DEFINE_PROCEDURE(pango_language_get_type, gxg_pango_language_get_type_w, 0, 0, 0, H_pango_language_get_type);
@@ -5964,7 +5964,6 @@ static void define_functions(void)
 static void define_structs(void)
 {
 
-  #define XGS_DEFINE_PROCEDURE(Name, Value, A1, A2, A3, Help) XEN_DEFINE_PROCEDURE(XG_FIELD_PRE #Name XG_POST, Value, A1, A2, A3, Help)
   XGS_DEFINE_PROCEDURE(mnemonic_modifier, gxg_mnemonic_modifier_w, 1, 0, 0, NULL);
   XGS_DEFINE_PROCEDURE(keys_changed_handler, gxg_keys_changed_handler_w, 1, 0, 0, NULL);
   XGS_DEFINE_PROCEDURE(frame_bottom, gxg_frame_bottom_w, 1, 0, 0, NULL);
@@ -6596,13 +6595,14 @@ static void define_structs(void)
   XGS_DEFINE_PROCEDURE(green, gxg_green_w, 1, 0, 0, NULL);
   XGS_DEFINE_PROCEDURE(red, gxg_red_w, 1, 0, 0, NULL);
   XGS_DEFINE_PROCEDURE(pixel, gxg_pixel_w, 1, 0, 0, NULL);
-  XGS_DEFINE_PROCEDURE(GdkCursor, gxg_make_GdkCursor_w, 0, 0, 1, NULL);
-  XGS_DEFINE_PROCEDURE(GdkPoint, gxg_make_GdkPoint_w, 0, 0, 1, NULL);
-  XGS_DEFINE_PROCEDURE(GdkRectangle, gxg_make_GdkRectangle_w, 0, 0, 1, NULL);
-  XGS_DEFINE_PROCEDURE(GdkSegment, gxg_make_GdkSegment_w, 0, 0, 1, NULL);
-  XGS_DEFINE_PROCEDURE(GdkSpan, gxg_make_GdkSpan_w, 0, 0, 1, NULL);
-  XGS_DEFINE_PROCEDURE(GtkTextIter, gxg_make_GtkTextIter_w, 0, 0, 0, NULL);
-  XGS_DEFINE_PROCEDURE(GtkTextMark, gxg_make_GtkTextMark_w, 0, 0, 0, NULL);
-  XGS_DEFINE_PROCEDURE(GtkTextChildAnchor, gxg_make_GtkTextChildAnchor_w, 0, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GdkColor, gxg_make_GdkColor_w, 0, 0, 1, NULL);
+  XG_DEFINE_PROCEDURE(GdkCursor, gxg_make_GdkCursor_w, 0, 0, 1, NULL);
+  XG_DEFINE_PROCEDURE(GdkPoint, gxg_make_GdkPoint_w, 0, 0, 1, NULL);
+  XG_DEFINE_PROCEDURE(GdkRectangle, gxg_make_GdkRectangle_w, 0, 0, 1, NULL);
+  XG_DEFINE_PROCEDURE(GdkSegment, gxg_make_GdkSegment_w, 0, 0, 1, NULL);
+  XG_DEFINE_PROCEDURE(GdkSpan, gxg_make_GdkSpan_w, 0, 0, 1, NULL);
+  XG_DEFINE_PROCEDURE(GtkTextIter, gxg_make_GtkTextIter_w, 0, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GtkTextMark, gxg_make_GtkTextMark_w, 0, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(GtkTextChildAnchor, gxg_make_GtkTextChildAnchor_w, 0, 0, 0, NULL);
 }
 
