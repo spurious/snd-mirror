@@ -1,5 +1,6 @@
 snd change log
 
+  14-Aug:    snd 4.5.
   10-Aug:    extsnd.html re-organized.
              wavo,wavo-hop,wavo-trace,line-size,max-fft-peaks,show-fft-peaks,zero-pad,fft-style,fft-window,
                verbose-cursor,fft-log-frequency,fft-log-magnitude,min-dB,wavelet-type,fft-size,fft-beta,transform-type,

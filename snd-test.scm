@@ -7,7 +7,7 @@
 
 (define tests 1)
 (set! full-test #t)
-;(set! snd-test 16)
+;(set! snd-test 15)
 ;;; to run a specific test: ./snd -e "(set! snd-test 4) (set! full-test #f)" -l snd-test.scm
 (define include-clm #f)
 (define original-prompt (listener-prompt))
@@ -3905,6 +3905,12 @@
 		 (inexact? nv))
 	    (not (fneq nv new-value))
 	    (equal? nv new-value))))
+    (define chan-equal? 
+      (lambda (vals new-value)
+	(cond ((null? vals) #t)
+	      ((list? vals) (and (chan-equal? (car vals) new-value)
+				 (chan-equal? (cdr vals) new-value)))
+	      (else (test-equal vals new-value)))))
     (if (not (equal? (func #t #t) (next-snd-case 0)))
 	(snd-print (format #f "test-history-channel ~A[0]: ~A ~A?" name (func #t #t) (next-snd-case 0))))
     (let ((old-value (func))
@@ -3926,7 +3932,7 @@
 	(if (not (test-equal nv new-value))
 	    (snd-print (format #f "test-history-channel set-~A[4]: ~A ~A?" name new-value (func snd2 1)))))
       (set-func new-value)
-      (if (not (equal? (func #t #t) (next-snd-case 0)))
+      (if (not (chan-equal? (func #t #t) new-value))
 	  (snd-print (format #f "test-history-channel ~A[5]: ~A ~A?" name (func #t #t) (next-snd-case 0))))
       )))
       
@@ -4268,7 +4274,7 @@
       (if (not (= hiho 32)) (snd-print (format #f "setf hiho 32: ~A" hiho)))
       ))
 
-;;; these are just the right size to hit an bug in 4.4's amp-env subsampling
+;;; these are just the right size to hit a bug in 4.4's amp-env subsampling
 ; (with-sound (:channels 4 :output "/zap/sounds/big4.snd" :play nil) 
 ;  (loop for i from 0 to 10 do (fm-violin (* i 12) 1 440 .5 :degrees 0)) 
 ;  (loop for i from 0 to 10 do (fm-violin (+ 120 (* i 12)) 1 440 .25 :degrees 90)) 

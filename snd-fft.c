@@ -727,11 +727,13 @@ int find_and_sort_peaks(Float *buf, fft_peak *found, int num_peaks, int size)
   return(pks);
 }
 
+#define MIN_CHECK 0.000001
+
 int find_and_sort_fft_peaks(Float *buf, fft_peak *found, int num_peaks, int fftsize2, int srate, Float samps_per_pixel, Float fft_scale)
 {
   /* we want to reflect the graph as displayed, so each "bin" is samps_per_pixel wide */
   int i,j,k,pks,minpk,hop,pkj,oldpkj;
-  Float minval,la,ra,ca,logca,logra,logla,offset,fscl,ascl;
+  Float minval,la,ra,ca,logca,logra,logla,offset,fscl,ascl,bscl;
   Float *peaks;
   int *inds;
   peaks = (Float *)CALLOC(num_peaks,sizeof(Float));
@@ -743,7 +745,7 @@ int find_and_sort_fft_peaks(Float *buf, fft_peak *found, int num_peaks, int ffts
   la = 0.0;
   ca = 0.0;
   ra = 0.0;
-  minval = (Float)fftsize2/100000.0;
+  minval = 0.0; /* (Float)fftsize2/100000.0; */
   ascl = 0.0;
   pkj = 0;
   for (i=0;i<fftsize2-hop;i+=hop)
@@ -786,31 +788,33 @@ int find_and_sort_fft_peaks(Float *buf, fft_peak *found, int num_peaks, int ffts
 	}
     }
   /* now we have the peaks; turn these into interpolated peaks/amps, and sort */
-  if (fft_scale > 0.0) ascl = fft_scale; else {if (ascl > 0.0) ascl = 1.0/ascl; else ascl = 1.0;}
+  if (ascl > 0.0) ascl = 1.0/ascl; else ascl = 1.0;
+  if (fft_scale > 0.0) bscl = fft_scale / ascl; else bscl = 1.0;
   for (i=0,k=0;i<pks;i++)
     {
       j = inds[i];
       ca = buf[j]*ascl;
       if (j>0) la = buf[j-1]*ascl; else la = ca;
       ra = buf[j+1]*ascl; 
-      if (la<.00001) la=.00001;
-      if (ra<.00001) ra=.00001;
-      logla = log10(la);
-      logca = log10(ca);
-      logra = log10(ra);
-      offset = (0.5*(logla-logra))/(logla+logra-2*logca); /* this assumes amps<1.0 (from XJS sms code) */
-      found[k].amp = pow(10.0,logca-0.25*offset*(logla-logra));
-      found[k].freq = fscl*(j+offset);
-#ifdef DEBUGGING
-      if ((isnan(found[k].amp)) || (isnan(found[k].freq)))
+      if ((la < MIN_CHECK) || (ra < MIN_CHECK))
 	{
-	  snd_error("%s[%d] %s: peak[%d] NaN: %f %f\n",__FILE__,__LINE__,__FUNCTION__,i,found[k].amp,found[k].freq);
-	  abort();
+	  found[k].amp = bscl * ca;
+	  found[k].freq = fscl * j;
 	}
-#endif
+      else
+	{
+	  logla = log10(la);
+	  logca = log10(ca);
+	  logra = log10(ra);
+	  offset = (0.5*(logla-logra))/(logla+logra-2*logca); /* this assumes amps<1.0 (from XJS sms code) */
+	  found[k].amp = bscl * pow(10.0,logca-0.25*offset*(logla-logra));
+	  if ((found[k].amp > 1.0) && (fft_scale > 0.0)) found[k].amp = 1.0;
+	  found[k].freq = fscl*(j+offset);
+	}
       if (found[k].freq < 0.0) found[k].freq = 0.0;
-      if (found[k].amp > .0005) k++; /* this is normalized to 1.0 via ascl above */
+      if (found[k].amp > 0.0) k++;
     }
+  for (i=k;i<num_peaks;i++) found[i].freq = 1.0; /* move blank case to end of sorted list */
   qsort((void *)found,pks,sizeof(fft_peak),compare_peaks);
   FREE(peaks);
   FREE(inds);
@@ -1383,10 +1387,10 @@ static int display_snd_fft(fft_state *fs)
 	}
       else 
 	{
-	  if ((cp->normalize_fft == DONT_NORMALIZE) && (fap) && ((fap->ymin > cp->min_dB) || (fap->ymax <= 1.0)))
+	  if ((cp->normalize_fft == DONT_NORMALIZE) && (fap) && (fap->ymax <= 1.0))
 	    {
 	      max_val = fap->ymax; 
-	      min_val = fap->ymin;
+	      if (cp->transform_type == FOURIER) min_val = 0.0; else min_val = fap->ymin;
 	    }
 	  else
 	    {

@@ -192,6 +192,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+14-Aug:  snd 4.5.\n\
 10-Aug:  extsnd.html re-organized.\n\
          wavo,wavo-hop,wavo-trace,line-size,max-fft-peaks,fft-size,show-fft-peaks,zero-pad,fft-window,\n\
            verbose-cursor,fft-log-frequency,fft-log-magnitude,min-dB,fft-beta,wavelet-type,fft-style,transform-type,\n\
@@ -216,14 +217,6 @@ void news_help(snd_state *ss)
 18-Jul:  play-selection and added end arg to play etc.\n\
          C-u 0 C-x p -> play region 0, C-x p -> play selection.\n\
 17-Jul:  optargs keyword bug was caused by string-length which existed for guile 1.3.0 (fixed).\n\
-14-Jul:  Snd appears to work in FreeBSD (thanks to Heiko Recktenwald).\n\
-         pvoc.scm, loop.scm, fmv.scm.\n\
-         -l no longer necessary -- if file has .scm extension, it is assumed to be Scheme.\n\
-10-Jul:  added sounds (list of currently active sounds).\n\
-         region-id and id-region, regions now returns a list of active region ids.\n\
-         mixes now returns a list similar to marks.\n\
-         removed active-sounds.\n\
-6-Jul:   snd 4.4.\n\
 ",
 NULL);
   FREE(info);

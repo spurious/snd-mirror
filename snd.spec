@@ -5,7 +5,7 @@
 Summary:	A sound editor
 Name:		snd
 Version:	4
-Release:	4
+Release:	5
 Copyright:	LGPL
 Group:		Applications/Sound
 Source:		ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-4.tar.gz

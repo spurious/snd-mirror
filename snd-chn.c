@@ -102,6 +102,7 @@ static void set_spectro_start(snd_state *ss, Float val)
 {
   in_set_spectro_start(ss,val);
   map_chans_field(ss,FCP_START,val);
+  if (!(ss->graph_hook_active)) map_over_chans(ss,update_graph,NULL);
 }
 
 static char expr_str[256];
@@ -1177,7 +1178,7 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
   Float *data,*tdata;
   chan_info *ncp;
   Float incr,x,scale;
-  int i,j,xi,samps,losamp=0,di;
+  int i,j,xi,hisamp,losamp=0,di,lo,hi;
   Float samples_per_pixel,xf,ina,ymax,scaler,data_max;
   short logx,logy;
   Float pslogx,pslogy;
@@ -1188,18 +1189,27 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
   data = fp->data;
   if (cp->transform_type == FOURIER)
     {
-      samps = (int)(fp->current_size*cp->spectro_cutoff/2);
+      hisamp = (int)(fp->current_size*cp->spectro_cutoff/2);
       losamp = (int)(fp->current_size*cp->spectro_start/2);
       incr = (Float)SND_SRATE(sp)/(Float)(fp->current_size);
     }
   else
     {
-      /* samps here is in terms of transform values, not original sampled data values */
-      samps = (int)(fp->current_size * cp->spectro_cutoff);
+      /* hisamp here is in terms of transform values, not original sampled data values */
+      hisamp = (int)(fp->current_size * cp->spectro_cutoff);
       losamp = (int)(fp->current_size * cp->spectro_start);
       incr = 1.0;
     }
-
+  if (cp->normalize_fft == DONT_NORMALIZE)
+    {
+      lo = 0;
+      hi = (int)(fp->current_size/2);
+    }
+  else
+    {
+      lo = losamp;
+      hi = hisamp;
+    }
   data_max = 0.0;
   if ((cp->normalize_fft == NORMALIZE_BY_SOUND) ||
       ((cp->normalize_fft == DONT_NORMALIZE) && (sp->nchans > 1) && (sp->combining == CHANNELS_SUPERIMPOSED)))
@@ -1209,18 +1219,18 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	  ncp = sp->chans[j];
 	  nfp = ncp->fft;
 	  tdata = nfp->data;
-	  for (i=losamp;i<samps;i++) if (tdata[i]>data_max) data_max=tdata[i];
+	  for (i=lo;i<hi;i++) if (tdata[i]>data_max) data_max=tdata[i];
 	}
     }
   else
     {
       if (cp->transform_type == FOURIER)
 	{
-	  for (i=losamp;i<samps;i++) if (data[i]>data_max) data_max=data[i];
+	  for (i=lo;i<hi;i++) if (data[i]>data_max) data_max=data[i];
 	}
       else
 	{
-	  for (i=losamp;i<samps;i++)
+	  for (i=lo;i<hi;i++)
 	    {
 	      if (data[i]>data_max) 
 		data_max=data[i];
@@ -1237,7 +1247,7 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
     {
       if (cp->transform_type == FOURIER)
 	{
-	  scale = 1.0/(Float)samps;
+	  scale = 1.0/(Float)hi;
 	  di = (int)(10*data_max*scale + 1);
 	  if (di == 1)
 	    {
@@ -1263,7 +1273,7 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
   fp->scale = scale;
   allocate_grf_points();
   if (cp->printing) ps_allocate_grf_points();
-  samples_per_pixel = (Float)(samps - losamp)/(Float)(fap->x_axis_x1-fap->x_axis_x0);
+  samples_per_pixel = (Float)(hisamp - losamp)/(Float)(fap->x_axis_x1-fap->x_axis_x0);
   if (sp->combining == CHANNELS_SUPERIMPOSED) 
     {
       ax = combined_context(cp); 
@@ -1276,7 +1286,7 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	{
 	  if (losamp == 0)
 	    {
-	      for (i=0,x=0.0;i<samps;i++,x+=incr)
+	      for (i=0,x=0.0;i<hisamp;i++,x+=incr)
 		{
 		  set_grf_point(grf_x(x,fap),i,grf_y(data[i]*scale,fap));
 		  if (cp->printing) ps_set_grf_point(x,i,data[i]*scale);
@@ -1284,7 +1294,7 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	    }
 	  else
 	    {
-	      for (i=losamp,x=fap->x0;i<samps;i++,x+=incr)
+	      for (i=losamp,x=fap->x0;i<hisamp;i++,x+=incr)
 		{
 		  set_grf_point(grf_x(x,fap),i-losamp,grf_y(data[i]*scale,fap));
 		  if (cp->printing) ps_set_grf_point(x,i-losamp,data[i]*scale);
@@ -1296,11 +1306,11 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	  if (cp->fft_log_frequency) 
 	    {
 	      ymax = LOG_FACTOR;
-	      incr = ymax/(Float)(samps - losamp);
+	      incr = ymax/(Float)(hisamp - losamp);
 	      scaler = 1.0/log(ymax+1.0);
 	    }
 	  else scaler = 0.0;
-	  for (i=losamp,x=fap->x0;i<samps;i++,x+=incr)
+	  for (i=losamp,x=fap->x0;i<hisamp;i++,x+=incr)
 	    {
 	      if (cp->fft_log_frequency) logx = grf_x(log(x+1.0)*scaler,fap); else logx = grf_x(x,fap);
 	      if (cp->fft_log_magnitude) logy = grf_y(cp_dB(cp,data[i]*scale),fap); else logy = grf_y(data[i]*scale,fap);
@@ -1327,14 +1337,14 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
       if (cp->fft_log_frequency) 
 	{
 	  ymax = LOG_FACTOR;
-	  incr = ymax/(Float)(samps - losamp);
+	  incr = ymax/(Float)(hisamp - losamp);
 	  scaler = 1.0/log(ymax+1.0);
 	}
       else scaler = 0.0;
       ymax=-1.0;
       if ((!(cp->fft_log_magnitude)) && (!(cp->fft_log_frequency)))
 	{
-	  while (i<samps)
+	  while (i<hisamp)
 	    {
 	      ina = data[i];
 	      if (ina > ymax) ymax = ina;
@@ -1353,7 +1363,7 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	}
       else
 	{
-	  while (i<samps)
+	  while (i<hisamp)
 	    {
 	      ina = data[i];
 	      if (ina > ymax) ymax = ina;
@@ -1388,8 +1398,8 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
   if (cp->show_fft_peaks) 
     {
       if (cp->transform_type == FOURIER)
-	display_peaks(cp,fap,data,(int)(SND_SRATE(sp)*cp->spectro_cutoff/2),samps,samples_per_pixel,1,scale);
-      else display_peaks(cp,fap,data,(int)(fp->current_size*cp->spectro_cutoff),samps,samples_per_pixel,1,0.0);
+	display_peaks(cp,fap,data,(int)(SND_SRATE(sp)*cp->spectro_cutoff/2),hisamp,samples_per_pixel,1,scale);
+      else display_peaks(cp,fap,data,(int)(fp->current_size*cp->spectro_cutoff),hisamp,samples_per_pixel,1,0.0);
     }
   if (cp->selection_transform_size != 0) display_selection_fft_size(cp,fap);
   if (cp->hookable) after_fft(ss,cp,scale);
@@ -6350,7 +6360,7 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
   if (x < ap->x_axis_x0) x = ap->x_axis_x0; else if (x > ap->x_axis_x1) x = ap->x_axis_x1;
   xf = ap->x0 + (ap->x1 - ap->x0) * (Float)(x - ap->x_axis_x0)/(Float)(ap->x_axis_x1 - ap->x_axis_x0);
   if (cp->fft_log_frequency)
-    xf = ((exp(xf*log(LOG_FACTOR+1.0)) - 1.0)/LOG_FACTOR) * SND_SRATE(cp->sound) * 0.5 * cp->spectro_cutoff;
+    xf = ((exp(xf*log(LOG_FACTOR+1.0)) - 1.0)/LOG_FACTOR) * SND_SRATE(cp->sound) * 0.5 * cp->spectro_cutoff; /* map axis x1 = 1.0 to srate/2 */
   if (cp->fft_style == NORMAL_FFT)        /* fp->data[bins] */
     {
       if (cp->transform_type == FOURIER)

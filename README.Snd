@@ -74,10 +74,8 @@ If you're using guile-1.3, and not going through the configure process
 -DHAVE_GUILE_1_3.  (The default is now Guile 1.4).
 
 
-Snd builds in Mac OS-X (you need to use /usr/libexec/config.sub
-and /usr/libexec.config.guess -- the versions I have from
-Gnu don't work).  This version of Snd is not very useful yet,
-since there's no GUI (but Guile works), but it's a start.
+Snd builds in Mac OS-X, but is not very useful yet,
+since there's no GUI (but Guile works) -- it's a start.
 
 
 
@@ -127,8 +125,8 @@ define WITH_BIG_COLORMAP (see snd.h).
 There are precompiled binaries available at the ccrma-ftp site
 mentioned above: linux-snd (or linux-snd.gz) and xlinux-snd for Linux
 on a PC; sun-snd for the Sun; also RPM (Redhat package management)
-files that contain the Linux/PC version, (snd-4-4.i386.rpm), the
-sources (snd-4-4.src.rpm), and the LinuxPPC version (snd-4-4.ppc.rpm).
+files that contain the Linux/PC version, (snd-4-5.i386.rpm), the
+sources (snd-4-5.src.rpm), and the LinuxPPC version (snd-4-5.ppc.rpm).
 These pre-built images require Guile 1.4; if you are running 1.3,
 you'll need to build from sources.  The linuxppc version requires
 libXm.so.2.1 available from openmotif.
