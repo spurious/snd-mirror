@@ -339,7 +339,7 @@ static BACKGROUND_TYPE startup_funcs(gpointer context)
 	  if (ss->init_window_y != DEFAULT_INIT_WINDOW_Y) set_widget_y(MAIN_SHELL(ss), ss->init_window_y);
 	}
 #endif
-      gtk_timeout_add((guint32)(auto_update_interval(ss)*1000), auto_update_check, (gpointer)ss);
+      gtk_timeout_add((guint32)(auto_update_interval(ss) * 1000), auto_update_check, (gpointer)ss);
       break;
     case 4: 
 #if TRAP_SEGFAULT

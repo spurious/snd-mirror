@@ -451,7 +451,7 @@ dnl
   fi
 
   if test x"$no_gtk" = x ; then
-    AC_MSG_RESULT(yes (version $gtk_config_major_version.$gtk_config_minor_version.$gtk_config_micro_version))
+    AC_MSG_RESULT(yes)
     ifelse([$2], , :, [$2])     
     GTK_CFLAGS=`$PKG_CONFIG $pkg_config_args --cflags`
     GTK_LIBS=`$PKG_CONFIG $pkg_config_args --libs`
