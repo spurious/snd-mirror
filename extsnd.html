@@ -886,7 +886,7 @@ when you save a sound via the "save" dialog.</p>
 <!-- --><tr><td valign=top><code><em class=def><a name="defaultoutputformat">default-output-format</a></em></code></td>
 <!-- --><td valign=top><code>1</code></td>
 <!-- --><td>The default data format when a new or temporary file is created, 
-<!-- -->or a save dialog is opened. (1 = mus-bshort).
+<!-- -->or a save dialog is opened. (1 = mus-bshort).  Use mus-out-format for fastest IO.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
@@ -2503,7 +2503,7 @@ The most important Sndlib functions for Snd are:</p>
 <!-- -->
 <!-- mus-data-format-name -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="soundformatname">mus-data-format-name</a></em> (format)</code></span></td>
-<!-- --><td>e.g. "16-bit big endian linear", <i>format</i> an integer, some of which have names:</td></tr>
+<!-- --><td>e.g. "16-bit big endian linear", <i>format</i> an integer, some of which have names (mus-out-format is the fastest):</td></tr>
 <!-- --><tr><td colspan=2><pre>
 <!-- -->  mus-bshort   mus-lshort   mus-mulaw   mus-alaw   mus-byte  
 <!-- -->  mus-lfloat   mus-bint     mus-lint    mus-b24int mus-l24int
@@ -6927,6 +6927,8 @@ variable %load-verbosely to #t.
   <A NAME="localdataformats">mus-bshort</a>  mus-lshort mus-mulaw  mus-alaw   mus-byte   mus-ubyte   mus-bfloat
   mus-lfloat  mus-bint   mus-lint   mus-b24int mus-l24int mus-bdouble mus-ldouble
   mus-ubshort mus-ulshort
+
+  <a name="musoutformat">mus-out-format</a>
 </pre>
 <br>
 <p><b>FFT style</b> (the Transform Options Display choice):</p>

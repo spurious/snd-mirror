@@ -1119,7 +1119,7 @@ SCM make_graph_data(chan_info *cp, int edit_pos, int losamp, int hisamp)
        (samps < POINT_BUFFER_SIZE)))
     {
       data_size = samps;
-      data = (Float *)CALLOC(data_size, sizeof(Float));
+      data = (Float *)MALLOC(data_size * sizeof(Float));
       sf = init_sample_read_any(losamp, cp, READ_FORWARD, edit_pos);
       for (i = 0; i < data_size; i++)
 	data[i] = next_sample_to_float(sf);
@@ -1387,7 +1387,7 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
   axis_context *ax;
   Float *data;
   Float incr, x, scale;
-  int i, j, xi, hisamp, losamp = 0;
+  int i, j, hisamp, losamp = 0;
   Float samples_per_pixel, xf, ina, ymax, scaler;
   short logx, logy;
   Float pslogx, pslogy;
@@ -1481,13 +1481,11 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
     }
   else
     {
-      /* take max -- min not interesting here */
       j = 0;      /* graph point counter */
       i = losamp;
       if (losamp == 0) 
 	x = 0.0; 
       else x = fap->x0;
-      xi = local_grf_x(x, fap);
       xf = 0.0;     /* samples per pixel counter */
       if (cp->fft_log_frequency) 
 	{
@@ -1508,13 +1506,10 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	      i++;
 	      if (xf > samples_per_pixel)
 		{
-		  set_grf_point(xi, j, local_grf_y(ymax * scale, fap));
+		  set_grf_point(local_grf_x(x, fap), j, local_grf_y(ymax * scale, fap));
+		  x += (incr * samples_per_pixel); 
 		  if (cp->printing) 
-		    {
-		      x += (incr * samples_per_pixel); 
-		      ps_set_grf_point(x, j, ymax * scale);
-		    }
-		  xi++;
+		    ps_set_grf_point(x, j, ymax * scale);
 		  j++;
 		  xf -= samples_per_pixel;
 		  ymax = -1.0;
@@ -1736,8 +1731,8 @@ static void make_sonogram(chan_info *cp, snd_info *sp, snd_state *ss)
       recth = (int)(ceil(frecth));
       if (rectw == 0) rectw = 1;
       if (recth == 0) recth = 1;
-      hfdata = (Float *)CALLOC(bins + 1, sizeof(Float));
-      hidata = (int *)CALLOC(bins + 1, sizeof(int));
+      hfdata = (Float *)MALLOC((bins + 1) * sizeof(Float));
+      hidata = (int *)MALLOC((bins + 1) * sizeof(int));
       if (cp->transform_type == FOURIER)
 	{
 	  if (cp->fft_log_frequency)

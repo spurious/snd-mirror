@@ -674,7 +674,11 @@ data-location should be retrieved from a previous call to mus-sound-data-locatio
 static SCM g_close_sound_input(SCM fd)
 {
   #define H_mus_sound_close_input "(" S_mus_sound_close_input " fd) closes file number fd"
+  int nfd;
   SCM_ASSERT(INTEGER_P(fd), fd, SCM_ARG1, S_mus_sound_close_input);
+  nfd = TO_C_INT(fd);
+  if ((nfd < 0) || (nfd == fileno(stdin)) || (nfd == fileno(stdout)) || (nfd == fileno(stderr)))
+    mus_misc_error(S_mus_sound_close_input, "invalid file", fd);
   return(TO_SCM_INT(mus_sound_close_input(TO_C_INT(fd))));
 }
 
@@ -683,8 +687,12 @@ static SCM g_close_sound_output(SCM fd, SCM bytes)
   #define H_mus_sound_close_output "(" S_mus_sound_close_output " fd bytes) closes file number fd \
 after updating its header (if any) to reflect bytes, the new file data size"
 
+  int nfd;
   SCM_ASSERT(INTEGER_P(fd), fd, SCM_ARG1, S_mus_sound_close_output);
   SCM_ASSERT(NUMBER_P(bytes), bytes, SCM_ARG2, S_mus_sound_close_output);
+  nfd = TO_C_INT(fd);
+  if ((nfd < 0) || (nfd == fileno(stdin)) || (nfd == fileno(stdout)) || (nfd == fileno(stderr)))
+    mus_misc_error(S_mus_sound_close_output, "invalid file", fd);
   return(TO_SCM_INT(mus_sound_close_output(TO_C_INT(fd),
 					   TO_C_INT_OR_ELSE(bytes, 0))));
 }
@@ -993,6 +1001,8 @@ void mus_sndlib2scm_initialize(void)
 #if HAVE_APPLICABLE_SMOB
   scm_set_smob_apply(sound_data_tag, SCM_FNC sound_data_apply, 2, 0, 0);
 #endif
+
+  DEFINE_VAR(S_mus_out_format, MUS_OUT_FORMAT, "sample format for fastest IO");
 
   DEFINE_VAR(S_mus_next,  MUS_NEXT,  "NeXT (Sun) sound header id");
   DEFINE_VAR(S_mus_aifc,  MUS_AIFC,  "AIFC sound header id");

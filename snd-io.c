@@ -163,8 +163,8 @@ int *make_file_state(int fd, file_info *hdr, int chan, int suggested_bufsize)
   datai[SND_IO_END] = bufsize - 1;
   datai[SND_IO_BUFSIZ] = bufsize;
   datai[SND_IO_HDR_END] = hdr->data_location; 
-  datai[SND_IO_DATS+SND_AREF_BLOCK] = SND_IO_DATS + SND_AREF_HEADER_SIZE;
-  datai[SND_IO_DATS+SND_AREF_SIZE] = hdr->chans;
+  datai[SND_IO_DATS + SND_AREF_BLOCK] = SND_IO_DATS + SND_AREF_HEADER_SIZE;
+  datai[SND_IO_DATS + SND_AREF_SIZE] = hdr->chans;
   datai[SND_IO_DATS + SND_AREF_HEADER_SIZE + chan] = (int)(MUS_MAKE_SAMPLE_ARRAY(bufsize));
   reposition_file_buffers_1(0, datai, datai); /* get ready to read -- we're assuming mus_file_read_chans here */
   return(datai);
@@ -182,8 +182,8 @@ int *make_zero_file_state(int size)
   datai[SND_IO_END] = ZERO_BUFFER_SIZE - 1;
   datai[SND_IO_BUFSIZ] = ZERO_BUFFER_SIZE;
   datai[SND_IO_HDR_END] = 0;
-  datai[SND_IO_DATS+SND_AREF_BLOCK] = SND_IO_DATS + SND_AREF_HEADER_SIZE;
-  datai[SND_IO_DATS+SND_AREF_SIZE] = 1;
+  datai[SND_IO_DATS + SND_AREF_BLOCK] = SND_IO_DATS + SND_AREF_HEADER_SIZE;
+  datai[SND_IO_DATS + SND_AREF_SIZE] = 1;
   datai[SND_IO_DATS + SND_AREF_HEADER_SIZE] = (int)(MUS_MAKE_SAMPLE_ARRAY(ZERO_BUFFER_SIZE));
   return(datai);
 }

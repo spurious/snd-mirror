@@ -435,6 +435,9 @@ static SCM g_call1_1(void *arg)
       return SCM_SUBRF(code)(obj);
 #endif
     case scm_tcs_closures:
+      /* moving this out of the find loop (for example), and using SCM_SETCDR to set the arg value
+       *   made no speed difference
+       */
       env = SCM_EXTEND_ENV(SCM_CAR(SCM_CODE(code)),
 			   SCM_LIST1(obj),
 			   SCM_ENV(code));
@@ -786,6 +789,8 @@ static SCM g_snd_print(SCM msg)
 	}
       else str = gl_print(msg, S_snd_print);
     }
+  check_for_event(state);
+  /* TODO: print-hook */
   snd_append_command(state, str);
   if (str) free(str);
   return(msg);
@@ -1836,6 +1841,8 @@ static SCM g_close_sound_file(SCM g_fd, SCM g_bytes)
   SCM_ASSERT(INTEGER_P(g_fd), g_fd, SCM_ARG1, S_close_sound_file);
   SCM_ASSERT(NUMBER_P(g_bytes), g_bytes, SCM_ARG2, S_close_sound_file);
   fd = TO_C_INT(g_fd);
+  if ((fd < 0) || (fd == fileno(stdin)) || (fd == fileno(stdout)) || (fd == fileno(stderr)))
+    mus_misc_error(S_close_sound_file, "invalid file", g_fd);
   bytes = TO_C_INT_OR_ELSE(g_bytes, 0);
   hdr = get_temp_header(fd);
   if (hdr == NULL) 
@@ -1950,6 +1957,8 @@ static SCM vct2soundfile(SCM g_fd, SCM obj, SCM g_nums)
   SCM_ASSERT((VCT_P(obj)), obj, SCM_ARG2, S_vct_sound_file);
   SCM_ASSERT(NUMBER_P(g_nums), g_nums, SCM_ARG3, S_vct_sound_file);
   fd = TO_C_INT(g_fd);
+  if ((fd < 0) || (fd == fileno(stdin)) || (fd == fileno(stdout)) || (fd == fileno(stderr)))
+    mus_misc_error(S_vct_sound_file, "invalid file", g_fd);
   nums = TO_C_INT_OR_ELSE(g_nums, 0);
   v = TO_VCT(obj);
   lseek(fd, 0L, SEEK_END);

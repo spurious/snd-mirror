@@ -488,9 +488,9 @@ static SCM vcts_map(SCM args)
   vct **v;
   SCM proc, arg, svi, lst;
   argnum = LIST_LENGTH(args);
-  vnum = argnum-1;
-  if (vnum <= 0)
-    scm_wrong_num_args(TO_SCM_STRING("vcts-map!"));
+  vnum = argnum - 1;
+  if (vnum <= 1)
+    scm_wrong_num_args(TO_SCM_STRING(S_vcts_mapB));
   v = (vct **)CALLOC(vnum, sizeof(vct *));
   for (i = 0; i < vnum; i++)
     {
@@ -520,13 +520,11 @@ static SCM vcts_map(SCM args)
     {
       arg = CALL1(proc, svi, S_vcts_mapB);
       if (LIST_P(arg))
-	{
-	  for (vi = 0, lst = arg; vi < vnum; vi++, lst = SCM_CDR(lst))
-	    v[vi]->data[i] = TO_C_DOUBLE(SCM_CAR(lst));
-	}
+	for (vi = 0, lst = arg; vi < vnum; vi++, lst = SCM_CDR(lst))
+	  v[vi]->data[i] = TO_C_DOUBLE(SCM_CAR(lst));
     }
   FREE(v);
-  return(TO_SMALL_SCM_INT(vnum));
+  return(scm_return_first(TO_SMALL_SCM_INT(vnum), args));
 }
 
 static SCM vcts_do(SCM args)
@@ -537,9 +535,9 @@ static SCM vcts_do(SCM args)
   vct **v;
   SCM proc, arg, svi, lst;
   argnum = LIST_LENGTH(args);
-  vnum = argnum-1;
-  if (vnum <= 0)
-    scm_wrong_num_args(TO_SCM_STRING("vcts-do!"));
+  vnum = argnum - 1;
+  if (vnum <= 1)
+    scm_wrong_num_args(TO_SCM_STRING(S_vcts_doB));
   v = (vct **)CALLOC(vnum, sizeof(vct *));
   for (i = 0; i < vnum; i++)
     {
@@ -558,7 +556,6 @@ static SCM vcts_do(SCM args)
       mus_misc_error(S_vcts_doB,
 		     "last argument must be a function of 2 args",
 		     args);
-      return(TO_SMALL_SCM_INT(0));
     }
   vsize = v[0]->length;
   svi = TO_SMALL_SCM_INT(vnum);
@@ -569,13 +566,11 @@ static SCM vcts_do(SCM args)
     {
       arg = CALL2(proc, svi, TO_SMALL_SCM_INT(i), S_vcts_doB);
       if (LIST_P(arg))
-	{
-	  for (vi = 0, lst = arg; vi < vnum; vi++, lst = SCM_CDR(lst))
-	    v[vi]->data[i] = TO_C_DOUBLE(SCM_CAR(lst));
-	}
+	for (vi = 0, lst = arg; vi < vnum; vi++, lst = SCM_CDR(lst))
+	  v[vi]->data[i] = TO_C_DOUBLE(SCM_CAR(lst));
     }
   FREE(v);
-  return(TO_SMALL_SCM_INT(vnum));
+  return(scm_return_first(TO_SMALL_SCM_INT(vnum), args));
 }
 
 static SCM vct_peak(SCM obj)

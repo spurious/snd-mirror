@@ -366,7 +366,7 @@ void color_sashes(Widget w, void *ptr)
 
 void check_for_event(snd_state *ss)
 {
-  /* this is needed to force label updates and provide interrupts for long computations */
+  /* this is needed to force label updates and provide interrupts from long computations */
   XEvent event;
   XtInputMask msk = 0;
   XtAppContext app;

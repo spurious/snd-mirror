@@ -72,33 +72,26 @@
 
 /* we assume later that we can always find these fonts (if resource file gives bogus entry, we fall back on these) */
 
+#define DEFAULT_BUTTON_FONT "-*-times-medium-r-*-*-14-*-*-*-*-*-iso8859-1"
+#define DEFAULT_BOLD_BUTTON_FONT "-*-times-bold-r-*-*-14-*-*-*-*-*-iso8859-1"
+#define DEFAULT_AXIS_NUMBERS_FONT "-*-courier-medium-r-*-*-14-*-*-*-*-*-iso8859-1"
+#define DEFAULT_HELP_TEXT_FONT "9x15"
+
 #ifdef SGI
-  #define DEFAULT_BUTTON_FONT "-*-times-medium-r-*-*-14-*-*-*-*-*-iso8859-1"
-  #define DEFAULT_BOLD_BUTTON_FONT "-*-times-bold-r-*-*-14-*-*-*-*-*-iso8859-1"
   #define DEFAULT_AXIS_LABEL_FONT "-*-times-medium-r-normal-*-20-*-*-*-*-*-iso8859-1"
-  #define DEFAULT_AXIS_NUMBERS_FONT "-*-courier-medium-r-normal-*-14-*-*-*-*-*-iso8859-1"
-  #define DEFAULT_HELP_TEXT_FONT "9x15"
   #define ICON_TYPE PLAIN_ICON
 #else
-#if defined(LINUX) || defined(SCO5) || defined(UW2) || defined(SOLARIS) || defined(HPUX) || defined(ALPHA)
-  #define DEFAULT_BUTTON_FONT "-*-times-medium-r-*-*-12-*-*-*-*-*-iso8859-1"
-  #define DEFAULT_BOLD_BUTTON_FONT "-*-times-bold-r-*-*-12-*-*-*-*-*-iso8859-1"
-#ifdef CCRMA
-  #define DEFAULT_AXIS_LABEL_FONT "-adobe-times-medium-r-*-*-16-*-*-*-*-*-iso8859-1"
-#else
-  #define DEFAULT_AXIS_LABEL_FONT "-*-times-medium-r-*-*-16-*-*-*-*-*-iso8859-1"
-#endif
-  #define DEFAULT_AXIS_NUMBERS_FONT "-*-courier-medium-r-*-*-12-*-*-*-*-*-iso8859-1"
-  #define DEFAULT_HELP_TEXT_FONT "8x13"
-  #define ICON_TYPE XPM_ICON
-#else
-  #define DEFAULT_BUTTON_FONT "-*-times-medium-r-*-*-14-*-*-*-*-*-iso8859-1"
-  #define DEFAULT_BOLD_BUTTON_FONT "-*-times-bold-r-*-*-14-*-*-*-*-*-iso8859-1"
-  #define DEFAULT_AXIS_LABEL_FONT "-*-times-medium-r-*-*-20-*-*-*-*-*-iso8859-1"
-  #define DEFAULT_AXIS_NUMBERS_FONT "-*-courier-medium-r-*-*-14-*-*-*-*-*-iso8859-1"
-  #define DEFAULT_HELP_TEXT_FONT "9x15"
-  #define ICON_TYPE NO_ICON
-#endif
+  #if defined(LINUX) || defined(SCO5) || defined(UW2) || defined(SOLARIS) || defined(HPUX) || defined(ALPHA)
+    #ifdef CCRMA
+      #define DEFAULT_AXIS_LABEL_FONT "-adobe-times-medium-r-*-*-16-*-*-*-*-*-iso8859-1"
+    #else
+      #define DEFAULT_AXIS_LABEL_FONT "-*-times-medium-r-*-*-16-*-*-*-*-*-iso8859-1"
+    #endif
+    #define ICON_TYPE XPM_ICON
+  #else
+    #define DEFAULT_AXIS_LABEL_FONT "-*-times-medium-r-*-*-20-*-*-*-*-*-iso8859-1"
+    #define ICON_TYPE NO_ICON
+  #endif
 #endif
 
 #define POSITION_SLIDER_WIDTH 13

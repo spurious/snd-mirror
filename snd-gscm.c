@@ -14,6 +14,7 @@ static SCM g_region_dialog(void)
 static gint timed_eval(gpointer in_code)
 {
   CALL0((SCM)in_code, "timed callback func");
+  snd_unprotect((SCM)in_code);
   return(0);
 }
 
@@ -22,7 +23,10 @@ static SCM g_in(SCM ms, SCM code)
   #define H_in "(" S_in " msecs thunk) invokes thunk in msecs milliseconds"
   SCM_ASSERT(NUMBER_P(ms), ms, SCM_ARG1, S_in);
   if (procedure_fits(code, 0))
-    gtk_timeout_add((guint32)TO_C_UNSIGNED_LONG(ms), timed_eval, (gpointer)code);
+    {
+      gtk_timeout_add((guint32)TO_C_UNSIGNED_LONG(ms), timed_eval, (gpointer)code);
+      snd_protect(code);
+    }
   else mus_misc_error(S_in, "2nd argument should be a procedure of no args", code);
   return(ms);
 }

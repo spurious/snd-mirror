@@ -20,17 +20,21 @@ static SCM g_region_dialog(void)
 static void timed_eval(XtPointer in_code, XtIntervalId *id)
 {
   CALL0((SCM)in_code, "timed callback func");
+  snd_unprotect((SCM)in_code);
 }
 
 static SCM g_in(SCM ms, SCM code)
 {
   #define H_in "(" S_in " msecs thunk) invokes thunk in msecs milliseconds"
-  SCM_ASSERT(NUMBER_P(ms), ms, SCM_ARG1, S_in);
+  SCM_ASSERT(INTEGER_P(ms), ms, SCM_ARG1, S_in);
   if (procedure_fits(code, 0))
-    XtAppAddTimeOut(MAIN_APP(state), 
-		    TO_C_UNSIGNED_LONG(ms), 
-		    (XtTimerCallbackProc)timed_eval, 
-		    (XtPointer)code);
+    {
+      XtAppAddTimeOut(MAIN_APP(state), 
+		      TO_C_UNSIGNED_LONG(ms), 
+		      (XtTimerCallbackProc)timed_eval, 
+		      (XtPointer)code);
+      snd_protect(code);
+    }
   else mus_misc_error(S_in, "2nd argument should be a procedure of no args", code);
   return(ms);
 }

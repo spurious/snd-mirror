@@ -104,13 +104,13 @@ char *global_search(snd_state *ss, int direction)
       while (!(run_global_search(ss, fd)))
 	{
 	  passes++;
-	  if (passes >= 10000)
+	  if (passes >= 100)
 	    {
 	      check_for_event(ss);
-	      if (ss->stopped_explicitly) break;
 	      passes = 0;
 	      fd->n = -1;
 	    }
+	  if (ss->stopped_explicitly) break;
 	}
       if (fd->n == -1)
 	{
@@ -195,13 +195,14 @@ static int cursor_find(snd_info *sp, chan_info *cp, int count, int end_sample)
 	}
       i += inc;
       passes++;
-      if (passes >= 10000)
+      if (passes >= 100)
 	{
 	  check_for_event(ss);
 	  /* if user types C-s during an active search, we risk stomping on our current pointers */
-	  if ((ss->stopped_explicitly) || (!(sp->inuse))) break;
+	  if (!(sp->inuse)) break;
 	  passes = 0;
 	}
+      if (ss->stopped_explicitly) break;
     }
   ss->stopped_explicitly = 0;
   free_snd_fd(sf);

@@ -234,7 +234,7 @@ static void sound_file_search(Widget FSB_w, XmFileSelectionBoxCallbackStruct *in
 	  if (last_dir) {FREE(last_dir); last_dir = NULL;}
 	  last_dir = copy_string(our_dir);
 	  strcpy(fullpathname, our_dir);
-	  save_dir = (char *)(fullpathname+snd_strlen(our_dir));
+	  save_dir = (char *)(fullpathname + snd_strlen(our_dir));
 	  sound_files = find_sound_files_in_dir(our_dir);
 	  need_update = 1;
 	}
@@ -276,7 +276,7 @@ static void sound_file_search(Widget FSB_w, XmFileSelectionBoxCallbackStruct *in
 
 	  for (i = 0; i < cdp->len; i++) 
 	    {
-	      for (sp = save_dir, sn = cdp->files[i]; ((*sp) =(*sn)) != '\0'; sp++, sn++);
+	      for (sp = save_dir, sn = cdp->files[i]; ((*sp) = (*sn)) != '\0'; sp++, sn++);
 	      /* save_dir is a pointer into fullpathname after the directory portion */
 	      names[i] = XmStringCreate(fullpathname, XmFONTLIST_DEFAULT_TAG);
 	    }

@@ -235,17 +235,16 @@ void eval_expression(chan_info *cp, snd_info *sp, int count, int regexpr)
 			  return;
 			}
 		    }
+		  if ((ss->stopped_explicitly) || (!(sp->inuse)))
+		    {
+		      ss->stopped_explicitly = 0;
+		      report_in_minibuffer(sp, "stopped");
+		      break;
+		    }
 		  j++;
 		  if (j == MAX_BUFFER_SIZE)
 		    {
 		      progress_report(sp, "C-x C-x", chan, si->chans, (Float)k / ((Float)chan_dur), FALSE);
-		      check_for_event(ss);
-		      if ((ss->stopped_explicitly) || (!(sp->inuse)))
-			{
-			  ss->stopped_explicitly = 0;
-			  report_in_minibuffer(sp, "stopped");
-			  break;
-			}
 		      j = 0;
 		    }
 		}
@@ -364,23 +363,23 @@ static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, 
 		    {
 		      progress_report(sp, origin, ip + 1, si->chans, (Float)kp / (Float)num, NOT_FROM_ENVED);
 		      rpt = 0;
-		      if (ss->stopped_explicitly)
-			{
-			  ss->stopped_explicitly = 0;
-			  if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
-			  if (si->chans == 1)
-			    report_in_minibuffer(sp, "C-G stopped %s at sample %d", 
-						 origin, kp + beg);
-			  else report_in_minibuffer(sp, "C-G stopped %s in %s chan %d at sample %d",
-						    origin, sp->shortname, cp->chan + 1, kp + beg);
-			  for (j = ip; j < si->chans; j++) 
-			    free_snd_fd(sfs[j]);
-			  free_sync_state(sc); 
-			  if (counting)
-			    return(TO_SCM_INT(counts));
-			  return(SCM_BOOL_F);
-			}
 		    }
+		}
+	      if (ss->stopped_explicitly)
+		{
+		  ss->stopped_explicitly = 0;
+		  if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
+		  if (si->chans == 1)
+		    report_in_minibuffer(sp, "C-G stopped %s at sample %d", 
+					 origin, kp + beg);
+		  else report_in_minibuffer(sp, "C-G stopped %s in %s chan %d at sample %d",
+					    origin, sp->shortname, cp->chan + 1, kp + beg);
+		  for (j = ip; j < si->chans; j++) 
+		    free_snd_fd(sfs[j]);
+		  free_sync_state(sc); 
+		  if (counting)
+		    return(TO_SCM_INT(counts));
+		  return(SCM_BOOL_F);
 		}
 	    }
 	  if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
@@ -470,10 +469,9 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
 		{
 		  progress_report(sp, origin, 1, 1, (Float)kp / (Float)num, NOT_FROM_ENVED);
 		  rpt = 0;
-		  check_for_event(ss);
- 		  if ((ss->stopped_explicitly) || (!(cp->sound))) break;
 		}
 	    }
+	  if ((ss->stopped_explicitly) || (!(cp->sound))) break;
 	}
     }
   else
@@ -496,9 +494,9 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
 		{
 		  progress_report(sp, origin, 1, 1, (Float)kp / (Float)num, NOT_FROM_ENVED);
 		  rpt = 0;
- 		  if (ss->stopped_explicitly) break;
 		}
 	    }
+	  if (ss->stopped_explicitly) break;
 	}
     }
   if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
@@ -721,17 +719,17 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
 		    {
 		      progress_report(sp, origin, ip + 1, si->chans, (Float)kp / (Float)num, NOT_FROM_ENVED);
 		      rpt = 0;
-		      if (ss->stopped_explicitly) 
-			{
-			  os = end_output(os, beg, cp, origin);
-			  for (j = ip; j < si->chans; j++) 
-			    free_snd_fd(sfs[j]);    
-			  free_sync_state(sc); 
-			  if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
-			  ss->stopped_explicitly = 0;
-			  return(SCM_BOOL_F);
-			}
 		    }
+		}
+	      if (ss->stopped_explicitly) 
+		{
+		  os = end_output(os, beg, cp, origin);
+		  for (j = ip; j < si->chans; j++) 
+		    free_snd_fd(sfs[j]);    
+		  free_sync_state(sc); 
+		  if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
+		  ss->stopped_explicitly = 0;
+		  return(SCM_BOOL_F);
 		}
 	    }
 	  if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
@@ -848,9 +846,9 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
 	    {
 	      progress_report(sp, origin, ip + 1, si->chans, (Float)kp / (Float)num, NOT_FROM_ENVED);
 	      rpt = 0;
-	      if (ss->stopped_explicitly) break;
 	    }
 	}
+      if (ss->stopped_explicitly) break;
     }
   if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
   for (ip = 0; ip < si->chans; ip++) 
@@ -2057,18 +2055,18 @@ static void fht(int powerOfFour, Float *array)
 	    }
 	}
     }		  
-#if DEBUGGING
-  FREE(fht_sines);
-  fht_sines = NULL;
-  FREE(fht_cosines);
-  fht_cosines = NULL;
-  fht_last_length = 0;
-  fht_length = 0;
-#endif
+  if (n > 65536)
+    {
+      FREE(fht_sines);
+      fht_sines = NULL;
+      FREE(fht_cosines);
+      fht_cosines = NULL;
+      fht_last_length = 0;
+      fht_length = 0;
+    }
 }
 
-
-#define USE_MUS_FFT 0
+/* TODO: non-fht(fft) case is centered but straight case is not! */
 
 static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_enved, 
 				   const char *origin, int over_selection, Float *ur_a, mus_any *gen)
@@ -2094,12 +2092,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
   int fsize;
   Float scale;
   Float *sndrdat, *fltdat;
-#if USE_MUS_FFT
-  Float *sndidat;
-  Float spectr;
-#else
   int pow4;
-#endif
 
   if ((!e) && (!ur_a) && (!gen)) 
     return(NULL);
@@ -2130,43 +2123,15 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
 	  cp = si->cps[i];
 	  sp = cp->sound;
 	  if (scdur == 0) 
-	    dur = current_ed_samples(cp); 
+	    dur = current_ed_samples(cp);
 	  else dur = scdur;
 	  if (dur == 0) 
 	    {
 	      if (sfs[i]) {free_snd_fd(sfs[i]); sfs[i] = NULL;}
 	      continue;
 	    }
-#if USE_MUS_FFT
-	  /* this is about 3 times slower then the fht version below */
-	  fsize = (int)(pow(2.0, (int)ceil(log(order + dur) / log(2.0))));
-	  sndrdat = (Float *)CALLOC(fsize, sizeof(Float));
-	  sndidat = (Float *)CALLOC(fsize, sizeof(Float));
-	  fltdat = env2array(fsize, e);
-
-	  sf = sfs[i]; /* init_sample_read(0, cp, READ_FORWARD); */
-	  for (k = 0; k < dur; k++) 
-	    sndrdat[k] = (Float)(next_sample_to_float(sf));
-	  sfs[i] = free_snd_fd(sf);
-
-	  mus_fft(sndrdat, sndidat, fsize, 1);
-	  check_for_event(ss);
-	  if (ss->stopped_explicitly)
-	    {
-	      ss->stopped_explicitly = 0;
-	      report_in_minibuffer(sp, "stopped");
-	      break;
-	    }
-	  scale = 2.0 / (Float)fsize;
-	  for (k = 0; k < fsize; k++)
-	    {
-	      spectr = scale * fltdat[k];
-	      sndrdat[k] *= spectr;
-	      sndidat[k] *= spectr;
-	    }
-	  mus_fft(sndrdat, sndidat, fsize, -1);
-#else
-	  fsize = (int)(pow(4.0, pow4 = (int)ceil(log(order + dur) / log(4.0))));
+	  dur += order;
+	  fsize = (int)(pow(4.0, pow4 = (int)ceil(log(dur) / log(4.0))));
 	  sndrdat = (Float *)CALLOC(fsize, sizeof(Float));
 	  fltdat = env2array(fsize, e);
 
@@ -2181,13 +2146,14 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
 	    {
 	      ss->stopped_explicitly = 0;
 	      report_in_minibuffer(sp, "stopped");
+	      FREE(sndrdat);
+	      FREE(fltdat);
 	      break;
 	    }
 	  scale = 1.0 / (Float)fsize;
 	  for (k = 0; k < fsize; k++)
 	    sndrdat[k] *= (scale * fltdat[k]);         /* fltdat (via env2array) is already reflected around midpoint */
 	  fht(pow4, sndrdat);
-#endif
 
 	  ofile = snd_tempnam(ss);
 	  hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur);
@@ -2208,9 +2174,6 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
 	  if (ofile) {free(ofile); ofile = NULL;}
 	  update_graph(cp, NULL);
 	  FREE(sndrdat);
-#if USE_MUS_FFT
-	  FREE(sndidat);
-#endif
 	  FREE(fltdat);
 	  check_for_event(ss);
 	  if (ss->stopped_explicitly)
@@ -2249,13 +2212,14 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
 	      cp = si->cps[i];
 	      sp = cp->sound;
 	      if (scdur == 0) 
-		dur = current_ed_samples(cp); 
+		dur = current_ed_samples(cp);
 	      else dur = scdur;
 	      if (dur == 0) 
 		{
 		  if (sfs[i]) {free_snd_fd(sfs[i]); sfs[i] = NULL;}
 		  continue;
 		}
+	      dur += order;
 	      reporting = ((sp) && (dur > (MAX_BUFFER_SIZE * 4)));
 	      if (reporting) start_progress_report(sp, from_enved);
 	      if (dur > MAX_BUFFER_SIZE)
@@ -2278,7 +2242,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
 		    {
 		      /* see if there's data to pre-load the filter */
 		      if (si->begs[i] >= order)
-			prebeg = order-1;
+			prebeg = order - 1;
 		      else prebeg = si->begs[i];
 		      if (prebeg > 0)
 			for (m = prebeg; m > 0; m--)
@@ -2294,10 +2258,10 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
 		    {
 		      x = 0.0; 
 		      d[0] = next_sample_to_float(sf);
-		      for (m = order-1; m > 0; m--) 
+		      for (m = order - 1; m > 0; m--) 
 			{
 			  x += d[m] * a[m]; 
-			  d[m] = d[m-1];
+			  d[m] = d[m - 1];
 			} 
 		      x += d[0] * a[0]; 
 		    }
@@ -2512,7 +2476,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
   sync_info *si;
   sync_state *sc;
   snd_fd **sfs;
-  file_info *hdr;
+  file_info *hdr = NULL;
   int i, j, k, ofd = 0, datumb = 0, temp_file, err = 0, scalable = 1;
   MUS_SAMPLE_TYPE **data;
   MUS_SAMPLE_TYPE *idata;
@@ -2544,7 +2508,6 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
   si = NULL;
   sp = cp->sound;
   ss = cp->state;
-  hdr = sp->hdr;
   sc = get_sync_state(ss, sp, cp, beg, regexpr, READ_FORWARD);
   if (sc == NULL) return;
   si = sc->si;
@@ -2566,6 +2529,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
     {
       temp_file = 1; 
       ofile = snd_tempnam(ss); /* see warning below -- don't use tmpnam without deleting free */
+      hdr = make_temp_header(ofile, SND_SRATE(sp), si->chans, dur);
       ofd = open_temp_file(ofile, si->chans, hdr, ss);
       if (ofd == -1)
 	{
@@ -2635,6 +2599,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
     {
       if (j > 0) mus_file_write(ofd, 0, j - 1, si->chans, data);
       close_temp_file(ofd, hdr, dur * si->chans * datumb, sp);
+      free_file_info(hdr);
     }
   if (reporting) finish_progress_report(sp, from_enved);
   if (ss->stopped_explicitly)

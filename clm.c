@@ -2877,7 +2877,10 @@ Float *mus_make_fir_coeffs(int order, Float *env, Float *aa)
 
 void mus_clear_filter_state(mus_any *gen)
 {
-  int i, len;
+#if (!HAVE_MEMSET)
+  int i;
+#endif
+  int len;
   Float *state;
   smpflt *ptr;
   switch (mus_type(gen))
@@ -4898,7 +4901,10 @@ static void flush_buffers(rdout *gen)
 static Float sample_file(void *ptr, int samp, int chan, Float val)
 {
   rdout *gen = (rdout *)ptr;
-  int i, j;
+#if (!HAVE_MEMSET)
+  int i;
+#endif
+  int j;
   if (chan < gen->chans)
     {
       if ((samp > gen->data_end) || 
@@ -5611,10 +5617,9 @@ Float mus_src(mus_any *srptr, Float sr_change, Float (*input)(void *arg, int dir
 {
   sr *srp = (sr *)srptr;
   Float sum, x, zf, srx, factor;
-#if 0
-  Float xx, frac;
-#endif
   int fsx, lim, i, k, loc;
+  int xi, xs, int_ok;
+  Float xsf;
   sum = 0.0;
   fsx = (int)(srp->x);
   lim = 2 * srp->width;
@@ -5634,21 +5639,37 @@ Float mus_src(mus_any *srptr, Float sr_change, Float (*input)(void *arg, int dir
     }
   /* if (srx == 0.0) srx = 0.01; */ /* can't decide about this ... */
   if (srx < 0.0) srx = -srx;
-  if (srx > 1.0) factor = 1.0 / srx; else factor = 1.0;
-  zf = factor * (Float)SRC_SINC_DENSITY;
+  if (srx > 1.0) 
+    {
+      factor = 1.0 / srx;
+      zf = factor * (Float)SRC_SINC_DENSITY; 
+      xi = (int)zf;
+      int_ok = ((zf - xi) < .001);
+    }
+  else 
+    {
+      factor = 1.0;
+      zf = (Float)SRC_SINC_DENSITY;
+      xi = SRC_SINC_DENSITY;
+      int_ok = 1;
+    }
+
+  if (int_ok)
+    {
+      xsf = zf * (1.0 - srp->x - srp->width);
+      xs = (int)xsf;
+      for (i = 0; i < lim; i++, xs += xi)
+	sum += (srp->data[i] * srp->sinc_table[abs(xs)]);
+      srp->x += srx;
+      return(sum * factor);
+    }
+  /* this form twice as slow because of float->int conversions */
   for (i = 0, x = zf * (1.0 - srp->x - srp->width); i < lim; i++, x += zf)
     {
       /* we're moving backwards in the data array, so the sr->x field has to mimic that (hence the '1.0 - srp->x') */
       if (x < 0) k = (int)(-x); else k = (int)x;
       sum += (srp->data[i] * srp->sinc_table[k]);
       /* rather than do a bounds check here, we just padded the sinc_table above with 2 extra 0's */
-#if 0      
-      /* this (non-interpolating) form requires a very large sinc table, here's the interpolating form: */
-      if (x < 0.0) xx = -x; else xx = x;
-      k = (int)xx;
-      frac = xx - k;
-      sum += (srp->data[i] * (srp->sinc_table[k] + (frac * (srp->sinc_table[k + 1] - srp->sinc_table[k]))));
-#endif
     }
   srp->x += srx;
   return(sum * factor);

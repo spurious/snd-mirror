@@ -586,7 +586,7 @@ void mem_report(void)
 
   for (i = 0; i < 512; i++)
     if (mus_file_fd_name(i))
-      fprintf(Fp, "[%d]: %s\n\n", i, mus_file_fd_name(i));
+      fprintf(Fp, "[%d]: %s\n", i, mus_file_fd_name(i));
 #if DEBUGGING && (!USE_NO_GUI)
   fprintf(Fp, stats_window_state());
 #endif
@@ -681,10 +681,15 @@ static int compare_time(const void *a, const void *b)
     {
       if (t2.out_calls > 0)
 	{
+#if 1
 	  if (((Float)(t1.total) / (Float)(t1.out_calls)) == ((Float)(t2.total) / (Float)(t2.out_calls)))
 	    return(0);
 	  if (((Float)(t1.total) / (Float)(t1.out_calls)) > ((Float)(t2.total) / (Float)(t2.out_calls)))
 	    return(-1);
+#else
+	  if (t1.total == t2.total) return(0);
+	  if (t1.total > t2.total) return(-1);
+#endif
 	  return(1);
 	}
       else return(-1);

@@ -266,6 +266,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+16-Apr:  mus-out-format.\n\
 9-Apr:   noguile.h, sl.h (moving toward librep support).\n\
 29-Mar:  drop-hook.\n\
 23-Mar:  removed syncing (use sync), and abort? (use c-g?).\n\
@@ -285,28 +286,6 @@ void news_help(snd_state *ss)
            envelope arg is changed to be consistent with the envelope editor src function.\n\
            '(0 1 1 1) now returns no change (src ratio of 1 throughout -- the value is used\n\
            directly, rather than being an offset from 1.0.\n\
-14-Mar:  dac reverb segfault in ALSA with Midiman delta bugfix (thanks to Oded Ben-Tal).\n\
-         peak-env-info.\n\
-13-Mar:  removed initial-x0, initial-x1, initial-y0, initial-y1, and replaced with\n\
-           initial-graph-hook -- this is a non-backwards compatible change!\n\
-         added add-idler, remove-idler (background process)\n\
-         removed (long obsolete) showing-controls (replaced by show-controls)\n\
-12-Mar:  musglyphs.scm.\n\
-9-Mar:   removed *.txt\n\
-         mouse-enter|leave-graph|listener-hook.\n\
-         show-widget, hide-widget, focus-widget.\n\
-7-Mar:   mouse-enter|leave-label-hook, listener-text-color, axis-info.\n\
-         nb.scm\n\
-5-Mar:   removed all the guile-gtk-specific procedures (this is being rewritten)\n\
-         added cursor-size, cursor-style can be a procedure, cursor-position.\n\
-               time-graph, fft-graph, lisp-graph, cursor-context, copy-context.\n\
-               position->x, position->y, x->position, y->position.\n\
-               foreground-color, load-font, current-font, widget-position, widget-size.\n\
-               draw-dot, draw-line, draw-dots, draw-lines, draw-string\n\
-               fill-rectangle, erase-rectangle, fill-polygon\n\
-               main-widgets, menu-widgets, sound-widgets, channel-widgets, dialog-widgets.\n\
-               lisp-graph-hook, recolor-widget, show-backtrace.\n\
-               make-graph-data, graph-data, property-changed-hook.\n\
 ",
 NULL);
   FREE(info);

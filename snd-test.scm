@@ -25,8 +25,8 @@
 
 (use-modules (ice-9 format) (ice-9 debug))
 
-(define tests 1)
-(define snd-test -1)
+(define tests 3)
+(define snd-test 20)
 (define full-test (< snd-test 0))
 
 (if (and (not (file-exists? "4.aiff"))
@@ -87,13 +87,15 @@
 ;;; preliminaries -- check constants, default variable values (assumes -noinit), sndlib and clm stuff
 
 (snd-display (format #f ";;~A" (snd-version)))
-(define tracing #t)
+(define trace-hook (lambda (n)
+		     (snd-display (format #f ";test ~D~%" n))
+		     ;(snd-display (gc-stats))
+		     ))
 
 (define overall-start-time (get-internal-real-time))
 (snd-display (format #f "~%~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time)))))
 
 (define (log-mem tst) (if (and (> tests 50) (= (modulo tst 10) 0))  (mem-report)))
-
 
 ;;; ---------------- test 0: constants ----------------
 (if (or full-test (= snd-test 0))
@@ -105,7 +107,7 @@
 			  (snd-display (format #f ";~A /= ~A (~A)~%"
 					     (car lst) (cadr lst) (caddr lst))))
 		      (test-constants (cdddr lst)))))))
-      (if tracing (snd-display "test 0"))
+      (if (procedure? trace-hook) (trace-hook 0))
       (test-constants
        (list
 	'amplitude-env amplitude-env 0 
@@ -204,7 +206,7 @@
 				  (snd-display (format #f ";~A /= ~A (~A)~%" (car lst) (caddr lst) (cadr lst))))
 			      (snd-display (format #f ";~A /= ~A (~A)~%" (car lst) (caddr lst) (cadr lst)))))
 		      (test-defaults (cdddr lst)))))))
-      (if tracing (snd-display "test 1"))
+      (if (procedure? trace-hook) (trace-hook 1))
       (test-defaults
        (list
 	'amp (without-errors (amp)) 'no-such-sound
@@ -409,7 +411,7 @@
 					    (snd-display (format #f ";~A thinks it has loop info: ~A" file lst))))))
 				(snd-display (format #f ";~A missing?" file)))
 			    (test-headers (cdr base-files))))))))
-	  (if tracing (snd-display "test 2"))
+	  (if (procedure? trace-hook) (trace-hook 2))
 	  (test-headers
 	   (list
 	    (list "8svx-8.snd" 1 22050 1.88766443729401 "SVX8" "signed byte (8 bits)")
@@ -599,7 +601,7 @@
 ;;; ---------------- test 3: can variables be set/reset ----------------
 (if (or full-test (= snd-test 3))
     (begin
-      (if tracing (snd-display "test 3"))
+      (if (procedure? trace-hook) (trace-hook 3))
       (open-sound "oboe.snd")
       (if (file-exists? "funcs.cl") (load "funcs.cl"))
       (let ((td (temp-dir)))
@@ -930,7 +932,7 @@
 	  (ma (mus-sound-max-amp "oboe.snd"))
 	  (bytes (mus-data-format-bytes-per-sample (mus-sound-data-format "oboe.snd")))
 	  (sys (mus-audio-systems)))
-      (if tracing (snd-display "test 4"))
+      (if (procedure? trace-hook) (trace-hook 4))
       (if (< (string-length (mus-audio-report)) 10)
 	  (snd-display (format #f ";mus-audio-report: ~A" (mus-audio-report))))
       (if (and (not (= sys 1)) (not (= sys 2))) (snd-display (format #f ";mus-audio-systems: ~A?" sys)))
@@ -1180,8 +1182,55 @@
 	(mus-sound-read fd 0 10 1 sdata)
 	(if (fneq (sound-data-ref sdata 0 0) .2) (snd-display (format #f ";mus-sound-seek: ~A?" (sound-data-ref sdata 0 0))))
 	(mus-sound-seek fd 20 0)
-	(mus-sound-close-input fd)))
-    )
+	(mus-sound-close-input fd))
+
+      (for-each 
+       (lambda (chans)
+	 (for-each 
+	  (lambda (df-ht)
+	    (let ((samps (if (= chans 1) 100000
+			     (if (= chans 2) 50000
+				 1000))))
+	      (if (file-exists? "fmv5.snd") (delete-file "fmv5.snd"))
+	      (let ((fd (mus-sound-open-output "fmv5.snd" 22050 chans (car df-ht) (cadr df-ht) "no comment"))
+		    (sdata (make-sound-data chans samps))
+		    (ndata (make-sound-data chans samps)))
+		(do ((k 0 (1+ k)))
+		    ((= k chans))
+		  (do ((i 0 (1+ i)))
+		      ((= i samps))
+		    (sound-data-set! sdata k i (- (random 2.0) 1.0))))
+		(mus-sound-write fd 0 (- samps 1) chans sdata)
+		(mus-sound-close-output fd (* samps chans (mus-data-format-bytes-per-sample (car df-ht))))
+		(set! fd (mus-sound-open-input "fmv5.snd"))
+		(mus-sound-read fd 0 (- samps 1) chans ndata)
+		(mus-sound-close-input fd)
+		(catch #t
+		       (lambda ()
+			 (do ((k 0 (1+ k)))
+			     ((= k chans))
+			   (do ((i 0 (1+ i)))
+			       ((= i samps))
+			     (if (fneq (sound-data-ref sdata k i) (sound-data-ref ndata k i))
+				 (throw 'read-write-error
+					(car df-ht) (mus-data-format-name (car df-ht))
+					(cadr df-ht) (mus-header-type-name (cadr df-ht))
+					i k
+					(sound-data-ref sdata k i) (sound-data-ref ndata k i))))))
+		       (lambda args (begin (snd-display args) (car args)))))))
+	  (list (list mus-bshort mus-next)
+		(list mus-bfloat mus-aifc)
+		(list mus-lfloat mus-riff)
+		(list mus-lshort mus-nist)
+		(list mus-bint mus-aiff)
+		(list mus-lint mus-next)
+		(list mus-b24int mus-aifc)
+		(list mus-l24int mus-riff)
+		(list mus-bfloat mus-ircam)
+		(list mus-bdouble mus-next))))
+       (list 1 2 4 8))
+
+      ))
 
 (define a-ctr 0)
 
@@ -1194,7 +1243,7 @@
 	   (yp (y-position-slider))
 	   (xz (x-zoom-slider))
 	   (yz (y-zoom-slider)))
-      (if tracing (snd-display "test 5"))
+      (if (procedure? trace-hook) (trace-hook 5))
       (play-and-wait "oboe.snd")
       (play-and-wait "oboe.snd" 12000)
       (play-and-wait "oboe.snd" 12000 15000)
@@ -1880,7 +1929,7 @@
     (let ((v0 (make-vct 10))
 	  (v1 (make-vct 10))
 	  (vlst (make-vct 3)))
-      (if tracing (snd-display "test 6"))
+      (if (procedure? trace-hook) (trace-hook 6))
       (if (not (vct? v0)) (snd-display "v0 isn't a vct?!?"))
       (if (not (= (vct-length v0) 10)) (snd-display (format #f ";v0 length = ~D?" (vct-length v0))))
       (vct-fill! v0 1.0)
@@ -2030,7 +2079,7 @@
 			  (snd-display (format #f ";set-~A /= beige (~A)?~%" name (getfnc))))
 		      (setfnc initval)
 		      (test-color (cdr lst)))))))
-      (if tracing (snd-display "test 7"))
+      (if (procedure? trace-hook) (trace-hook 7))
       (let* ((c1 (make-color 0 0 1))
 	     (c2 c1))
 	(if (not (equal? c1 c2)) (snd-display (format #f ";color=? ~A ~A?" c1 c2)))
@@ -2097,7 +2146,7 @@
 
 (if (or full-test (= snd-test 8))
     (do ((clmtest 0 (1+ clmtest))) ((= clmtest tests))
-      (if tracing (snd-display "test 8"))
+      (if (procedure? trace-hook) (trace-hook 8))
       (log-mem clmtest)
       (if (> tests 1) (snd-display (format #f ";clm test ~D " clmtest)))
       (set! (mus-srate) 22050)
@@ -2257,7 +2306,6 @@
 	(do ((i 1 (1+ i)))
 	    ((= i 8))
 	  (if (fneq (vct-ref rdat i) 0.0) (snd-display (format #f ";autocorrelate[~D]: ~A?" i (vct-ref rdat i))))))
-      (if (rs .5) (gc))
 
       (let ((v0 (make-vct 3)))
 	(vct-set! v0 0 1.0)
@@ -2296,7 +2344,6 @@
 			 "dly line[3,3 at 0,0 (external)]: [0.000 0.000 0.000], xscl: 0.000000, yscl: 0.000000")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
-	  (if (rs .1) (gc))
 	  (vct-set! v0 i (delay gen i)))
 	(if (not (delay? gen)) (snd-display (format #f ";~A not delay?" gen)))
 	(if (not (= (mus-length gen) 3)) (snd-display (format #f ";delay length: ~D?" (mus-length gen))))
@@ -2317,7 +2364,6 @@
 			 "dly line[3,3 at 0,0 (external)]: [0.000 0.000 0.000], xscl: 0.600000, yscl: 0.400000")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
-	  (if (rs .1) (gc))
 	  (vct-set! v0 i (all-pass gen 1.0)))
 	(if (not (all-pass? gen)) (snd-display (format #f ";~A not all-pass?" gen)))
 	(if (not (= (mus-length gen) 3)) (snd-display (format #f ";all-pass length: ~D?" (mus-length gen))))
@@ -2337,7 +2383,6 @@
 			 "dly line[3,3 at 0,0 (external)]: [0.000 0.000 0.000], xscl: 0.400000, yscl: 0.000000")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
-	  (if (rs .1) (gc))
 	  (vct-set! v0 i (comb gen 1.0)))
 	(if (not (comb? gen)) (snd-display (format #f ";~A not comb?" gen)))
 	(if (not (= (mus-length gen) 3)) (snd-display (format #f ";comb length: ~D?" (mus-length gen))))
@@ -2354,7 +2399,6 @@
 			 "dly line[3,3 at 0,0 (external)]: [0.000 0.000 0.000], xscl: 0.400000, yscl: 0.000000")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
-	  (if (rs .1) (gc))
 	  (vct-set! v0 i (notch gen 1.0)))
 	(if (not (notch? gen)) (snd-display (format #f ";~A not notch?" gen)))
 	(if (not (= (mus-length gen) 3)) (snd-display (format #f ";notch length: ~D?" (mus-length gen))))
@@ -2371,7 +2415,6 @@
 			 "smpflt a0: 0.400000, a1: 0.000000, a2: 0.000000, b1: 0.700000, b2: 0.000000, x1: 0.000000, x2: 0.000000, y1: 0.000000, y2: 0.000000")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
-	  (if (rs .1) (gc))
 	  (vct-set! v0 i (one-pole gen 1.0)))
 	(if (not (one-pole? gen)) (snd-display (format #f ";~A not one-pole?" gen)))
 	(if (not (= (mus-order gen) 1)) (snd-display (format #f ";one-pole order: ~D?" (mus-order gen))))
@@ -2388,7 +2431,6 @@
 			 "smpflt a0: 0.400000, a1: 0.700000, a2: 0.000000, b1: 0.000000, b2: 0.000000, x1: 0.000000, x2: 0.000000, y1: 0.000000, y2: 0.000000")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
-	  (if (rs .1) (gc))
 	  (vct-set! v0 i (one-zero gen 1.0)))
 	(if (not (one-zero? gen)) (snd-display (format #f ";~A not one-zero?" gen)))
 	(if (not (= (mus-order gen) 1)) (snd-display (format #f ";one-zero order: ~D?" (mus-order gen))))
@@ -2550,7 +2592,6 @@
 			 "cosp freq: 0.125379, phase: 0.000000, cosines: 10, scaler: 0.047619")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
-	  (if (rs .1) (gc))
 	  (vct-set! v0 i (sum-of-cosines gen 0.0)))
 	(if (not (sum-of-cosines? gen)) (snd-display (format #f ";~A not sum-of-cosines?" gen)))
 	(if (fneq (mus-phase gen) 1.253787) (snd-display (format #f ";sum-of-cosines phase: ~F?" (mus-phase gen))))
@@ -2598,7 +2639,6 @@
 	(vct-set! v0 0 (fir-filter gen 1.0))
 	(do ((i 1 (1+ i)))
 	    ((= i 10))
-	  (if (rs .1) (gc))
 	  (vct-set! v0 i (fir-filter gen 0.0)))
 	(if (not (fir-filter? gen)) (snd-display (format #f ";~A not fir-filter?" gen)))
 	(if (not (= (mus-length gen) 3)) (snd-display (format #f ";fir-filter length: ~D?" (mus-length gen))))
@@ -2637,7 +2677,6 @@
 	(vct-set! v0 0 (iir-filter gen 1.0))
 	(do ((i 1 (1+ i)))
 	    ((= i 10))
-	  (if (rs .1) (gc))
 	  (vct-set! v0 i (iir-filter gen 0.0)))
 	(if (not (iir-filter? gen)) (snd-display (format #f ";~A not iir-filter?" gen)))
 	(if (not (= (mus-length gen) 3)) (snd-display (format #f ";iir-filter length: ~D?" (mus-length gen))))
@@ -3277,7 +3316,6 @@
 			 "sr x: 0.000000, incr: 2.000000, width: 10, len: 10000, data[21]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...]")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
-	  (if (rs .1) (gc))
 	  (vct-set! v0 i (src gen 0.0 (lambda (dir) (readin rd)))))
 	(if (not (src? gen)) (snd-display (format #f ";~A not scr?" gen)))
 	(if (or (fneq (vct-ref v0 1) .001) (fneq (vct-ref v0 7) .021)) (snd-display (format #f ";src output: ~A" v0)))
@@ -3292,7 +3330,6 @@
 			 "grn_info s20: 1102, s50: 441, rmp: 1323, amp: 0.600000, len: 3308, cur_out: 0, cur_in: 0, input_hop: 551, ctr: 0, output_hop: 1102, in_data_start: 5513, in_data[5513]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...], data[4410]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...]")
 	(do ((i 0 (1+ i)))
 	    ((= i 1000))
-	  (if (rs .1) (gc))
 	  (vct-set! v0 i (granulate gen (lambda (dir) (readin rd)))))
 	(if (= (vct-peak v0) 0.0) (snd-display (format #f ";granulate output peak: ~F?" (vct-peak v0))))
 	(if (not (granulate? gen)) (snd-display (format #f ";~A not granulate?" gen)))
@@ -3583,7 +3620,7 @@
     (do ((test-ctr 0 (1+ test-ctr)))
 	((= test-ctr tests))
       (let ((new-index (new-sound "hiho.wave" mus-next mus-bshort 22050 1)))
-	(if tracing (snd-display "test 9"))
+	(if (procedure? trace-hook) (trace-hook 9))
 	(log-mem test-ctr)
 	(select-sound new-index)
 	(let ((mix-id (mix "pistol.snd" 100)))
@@ -3844,7 +3881,7 @@
 	    (ind1 (view-sound "pistol.snd"))
 	    (v0 (make-vct 100))
 	    (vc (make-vector 10)))
-	(if tracing (snd-display "test 10"))
+	(if (procedure? trace-hook) (trace-hook 10))
 	(log-mem test-ctr)
 	(vct-fill! v0 .1)
 	(vector-set! vc 0 (mix-vct v0 0 ind0))
@@ -4051,7 +4088,7 @@
 (define env1 '(0 0 1 1))
 (if (or full-test (= snd-test 11))
     (begin
-      (if tracing (snd-display "test 11"))
+      (if (procedure? trace-hook) (trace-hook 11))
      (without-errors (peaks))
      (mus-audio-describe) 
      (define-envelope "env1" '(0 1 1 0)) 
@@ -4172,7 +4209,7 @@
     (if sf-dir-files
 	(let ((open-files '())
 	      (open-ctr 0))
-	  (if tracing (snd-display "test 12"))
+	  (if (procedure? trace-hook) (trace-hook 12))
 	  (add-sound-file-extension "wave")
 	  (do ()
 	      ((= open-ctr 32))
@@ -4256,7 +4293,9 @@
 
 (define loop-through-files
   (lambda (description make-cmd select)
-    (let* ((data (if select (selection-to-temps) (sound-to-temps)))
+    (let* ((data (if select 
+		     (selection-to-temps mus-next mus-out-format) 
+		     (sound-to-temps mus-next mus-out-format)))
            (input-names (temp-filenames data))
            (files (vector-length input-names))
            (output-names (make-vector files ""))
@@ -4268,14 +4307,6 @@
       (if select 
 	  (temps-to-sound data output-names description)
 	  (temps-to-selection data output-names description)))))
-
-(define sox-1
-  (lambda (select)
-    (loop-through-files
-     "(sox copy)"
-     (lambda (in out)
-       (string-append "sox -t .au \""   in "\" -t .au \"" out "\" copy"))
-     select)))
 
 (define copyfile-1
   (lambda (select)
@@ -4427,7 +4458,7 @@
 (if (or full-test (= snd-test 13))
     (let ((fd (view-sound "oboe.snd"))
 	  (mb (add-to-main-menu "clm")))
-      (if tracing (snd-display "test 13"))
+      (if (procedure? trace-hook) (trace-hook 13))
       (set! (cursor fd) 2000)
       (set! (fft-style) normal-fft)
       (set! (ffting #t)fd)
@@ -4849,7 +4880,7 @@
 	   (open-files '())
 	   (s8-snd (if (file-exists? "s8.snd") "s8.snd" "oboe.snd"))
 	   (open-ctr 0))
-      (if tracing (snd-display "test 14"))
+      (if (procedure? trace-hook) (trace-hook 14))
       (do ((i 0 (1+ i)))
 	  ((= i cur-dir-len))
 	(let* ((name (vector-ref cur-dir-files i))
@@ -5460,7 +5491,7 @@
 		    (list 'default-output-chans #f 1 set-default-output-chans 8)
 		    (list 'default-output-format #f 1 set-default-output-format 12)
 		    (list 'default-output-srate #f 22050 set-default-output-srate 44100)
-		    (list 'default-output-type #f 0 set-default-output-type 4)
+		    (list 'default-output-type #f 0 set-default-output-type 2)
 		    (list 'dot-size #f 1 set-dot-size 10)
 		    (list 'enved-base #f 0.01  set-enved-base 100.0)
 		    (list 'enved-clipping #f #f set-enved-clipping #t)
@@ -5709,7 +5740,7 @@
 		(add-player player)))
 	    (start-playing chans (srate sound) #f))))
 
-      (if tracing (snd-display "test 15"))
+      (if (procedure? trace-hook) (trace-hook 15))
       (set! (show-usage-stats) #t)
       (if (not (equal? (all-chans) (list (list obi) (list 0)))) (snd-display (format #f ";all-chans: ~A?" (all-chans))))
       (let ((s2i (open-sound (car (match-sound-files-1 (lambda (file) (= (mus-sound-chans file) 2)))))))
@@ -6302,7 +6333,7 @@
     (let ((hi 32)
 	  (ho 0))
       (load "loop.scm")
-      (if tracing (snd-display "test 16"))
+      (if (procedure? trace-hook) (trace-hook 16))
       (set! hi (progn (dotimes (k 3) (set! ho (1+ ho))) ho))
       (if (not (= hi 3)) (snd-display (format #f ";dotimes: ~A ~A?" ho hi)))
       (loop for k from 0 to 12 do (set! ho (+ ho 1)))
@@ -6315,7 +6346,7 @@
 
 (if (or full-test (= snd-test 17))
     (begin
-      (if tracing (snd-display "test 17"))
+      (if (procedure? trace-hook) (trace-hook 17))
       (if (and (provided? 'snd-gtk)
 	       (provided? 'snd-guile-gtk))
 	  (begin
@@ -6350,7 +6381,7 @@
 (load "enved.scm")
 (if (or full-test (= snd-test 18))
     (begin
-      (if tracing (snd-display "test 18"))
+      (if (procedure? trace-hook) (trace-hook 18))
       (start-enveloping)
       (let ((nind (open-sound "oboe.snd")))
 	(if (not (equal? (channel-envelope nind 0) (list 0.0 1.0 1.0 1.0)))
@@ -6366,7 +6397,7 @@
 
 (if (or full-test (= snd-test 19))
     (let ((nind (open-sound "oboe.snd")))
-      (if tracing (snd-display "test 19"))
+      (if (procedure? trace-hook) (trace-hook 19))
       (add-mark 123)
       (delete-sample 12)
       (set! (x-bounds) (list .2 .4))
@@ -6405,7 +6436,6 @@
 	    (if (not (= err 12345)) (snd-display (format #f ";save-listener err: ~A?" err))))
 
 	  ))))
-
 
 ;;; ---------------- test 20: errors ----------------
 
@@ -6521,7 +6551,9 @@
 
 (if (or full-test (= snd-test 20))
     (begin
-      (if tracing (snd-display ";test 20"))
+      (if (procedure? trace-hook)  (trace-hook 20))
+
+(if #f (begin
       (for-each (lambda (n)
 		  (let ((tag
 			 (catch #t
@@ -6609,8 +6641,9 @@
 							(lambda ()
 							  (n arg1 arg2))
 							(lambda args (car args)))))
-					    (if (not (eq? tag 'wrong-type-arg))
-						(snd-display (format #f ";vct 1 wrong-type-arg ~A: ~A ~A ~A" n tag arg1 arg2)))))
+					    (if (not (or (eq? tag 'wrong-type-arg)
+							 (eq? tag 'wrong-number-of-args)))
+						(snd-display (format #f ";vct 1 wrong-whatever ~A: ~A ~A ~A" n tag arg1 arg2)))))
 					(list vct-add! vct-subtract! vct-multiply! vct-ref vct-scale! vct-fill! vct-do! vcts-do! vct-map! vcts-map!)))
 			    (list (current-module) "hiho" (sqrt -1.0) 1.5 (list 1 0) #(0 1))))
 		  (list (current-module) "hiho" (sqrt -1.0) 1.5 (list 1 0) #(0 1)))
@@ -7210,7 +7243,7 @@
 	(check-error-tag 'no-such-region (lambda () (make-region-sample-reader 0 1234567)))
 
 	;; now try everything! (all we care about here is that Snd keeps running)
-	
+
 	;; ---------------- 0 Args
 	(for-each 
 	 (lambda (n)
@@ -7309,6 +7342,8 @@
 	 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color 1 0 0) #(0 1) 3/4 
 	       (sqrt -1.0) (make-delay 32) :frequency -1 0 #f #t '() 12345678901234567890))
 	(gc)
+))
+(if #t (begin
 
 	(if (> tests 1)
 	    ;; these can take awhile...
@@ -7330,10 +7365,11 @@
 				   (lambda args (car args))))
 			  procs))
 		       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :start -1 0)))
-		    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :phase -1 0))))
+		    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :phase -1 0))
+		   ))
 	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :channels -1 0))
 	      (gc)
-	      
+(if #t (begin	      
 	      ;; ---------------- 4 Args
 	      (for-each 
 	       (lambda (arg1)
@@ -7384,8 +7420,9 @@
 	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :order -1 0 1))
 	    (gc)
 	    ))
+))
+))
       ))
-
 
 
 ;;; a horrible kludge to force the transforms to be testable...
@@ -7462,9 +7499,9 @@
 					    ))))))))))))
 
 (define (all-done)
-  (update-usage-stats)
   (save-listener "test.output")
   (set! (listener-prompt) original-prompt)
+  (update-usage-stats)
   (snd-display (format #f ";all done!~%~A" original-prompt))
   (snd-display (format #f "timings:~%  ~A: total~%  GC: ~A~%~{    ~A~%~})~%" 
 		       (/ (- (get-internal-real-time) overall-start-time) 100) 
@@ -7499,7 +7536,7 @@
 
 (if #f ;(or full-test (= snd-test 21))
     (begin
-      (if tracing (snd-display ";test 21"))
+      (if (procedure? trace-hook)  (trace-hook 21))
       (open-sound "oboe.snd")
       (set! (zero-pad) 0)
       (set! (fft-size) 256)

@@ -1327,7 +1327,7 @@ void add_or_edit_symbol(char *name, env *val)
 env *get_env(SCM e, SCM base, char *origin) /* list or vector in e */
 {
   Float *buf = NULL;
-  int i, len;
+  int i, len = 0;
   env *newenv = NULL;
   SCM *vdata;
   SCM lst;

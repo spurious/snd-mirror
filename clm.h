@@ -2,8 +2,8 @@
 #define MUS_H
 
 #define MUS_VERSION 1
-#define MUS_REVISION 44
-#define MUS_DATE "1-Apr-01"
+#define MUS_REVISION 45
+#define MUS_DATE "16-Apr-01"
 
 /* 
  * 1-Apr:      mus_make_file2sample_with_comment and mus_length for file->sample/sample->file.

@@ -2050,7 +2050,7 @@ static SCM g_set_sound_loop_info(SCM snd, SCM vals)
   snd_info *sp;
   char *tmp_file;
   file_info *hdr;
-  int type, len;
+  int type, len = 0;
   SCM start0 = SCM_UNDEFINED, end0 = SCM_UNDEFINED, start1 = SCM_UNDEFINED, end1 = SCM_UNDEFINED;
   SND_ASSERT_SND("set-" S_sound_loop_info, snd, 1);
   SCM_ASSERT(NOT_BOUND_P(vals) || LIST_P_WITH_LENGTH(vals, len), vals, SCM_ARG2, "set-" S_sound_loop_info);

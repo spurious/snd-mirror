@@ -296,11 +296,11 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 				       mus_sound_header_type(sf->filename));
 	      samples = mus_sound_samples(sf->filename);
 	      mus_file_seek(ifd, idataloc, SEEK_SET);
-	      ibufs = (MUS_SAMPLE_TYPE **)CALLOC(1, sizeof(MUS_SAMPLE_TYPE *));
+	      ibufs = (MUS_SAMPLE_TYPE **)MALLOC(sizeof(MUS_SAMPLE_TYPE *));
 	      ibufs[0] = (MUS_SAMPLE_TYPE *)CALLOC(FILE_BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE));
 	      bufnum = (FILE_BUFFER_SIZE);
 	      sample = 0;
-	      for (n = 0; n < samples; n+=bufnum)
+	      for (n = 0; n < samples; n += bufnum)
 		{
 		  if ((n + bufnum) < samples) cursamples = bufnum; else cursamples = (samples - n);
 		  mus_file_read(ifd, 0, cursamples - 1, 1, ibufs);
@@ -408,7 +408,7 @@ static void copy_ed_blocks(int *new_list, int *old_list, int new_beg, int old_be
   if (num_lists > 0)
     {
       end = (old_beg + num_lists) * ED_SIZE;
-      for (k = new_beg*ED_SIZE, i = old_beg*ED_SIZE; i < end; i++, k++) 
+      for (k = new_beg * ED_SIZE, i = old_beg * ED_SIZE; i < end; i++, k++) 
 	new_list[k] = old_list[i];
     }
 }
@@ -572,7 +572,7 @@ void set_initial_ed_list(chan_info *cp, int len)
 static int find_split_loc(int samp, ed_list *current_state)
 {
   int i, k;
-  for (i = 0, k = 0; i < current_state->size; i++, k+=ED_SIZE)
+  for (i = 0, k = 0; i < current_state->size; i++, k += ED_SIZE)
     if (FRAGMENT_GLOBAL_POSITION_OFFSET(current_state, k) >= samp) 
       return(i);
   return(0); /* make sgi compiler happy */
@@ -587,8 +587,8 @@ static ed_list *selected_ed_list(int beg, int end, ed_list *current_state)
   if (beg < 0) beg = 0;
   if (end < 0) end = 0;
   len = FRAGMENT_GLOBAL_POSITION(current_state, current_state->size - 1);
-  if (beg >= len) beg = len-1;
-  if (end >= len) end = len-1;
+  if (beg >= len) beg = len - 1;
+  if (end >= len) end = len - 1;
   bk = find_split_loc(beg, current_state);
   if (FRAGMENT_GLOBAL_POSITION(current_state, bk) > beg) bk--;
   ek = find_split_loc(end + 1, current_state) - 1; /* was end 11-Nov-00 */
@@ -631,7 +631,7 @@ static ed_list *selected_ed_list(int beg, int end, ed_list *current_state)
       FRAGMENT_GLOBAL_POSITION(new_ed, k) = end + 1; /* 1? */
       k++;
     }
-  for (oldk = ek+1; (oldk <= current_state->size) && (k < new_size); oldk++, k++)
+  for (oldk = ek + 1; (oldk <= current_state->size) && (k < new_size); oldk++, k++)
     {
       for (i = 0; i < ED_SIZE; i++)
 	new_ed->fragments[k * ED_SIZE + i] = current_state->fragments[oldk * ED_SIZE + i];
@@ -670,7 +670,7 @@ void remember_temp(char *filename, int chans)
       if (i >= tempfiles_size)
 	{
 	  tempfiles = (tempfile_ctr **)REALLOC(tempfiles, tempfiles_size * sizeof(tempfile_ctr *));
-	  for (i = tempfiles_size; i<(tempfiles_size+8); i++) tempfiles[i] = NULL;
+	  for (i = tempfiles_size; i<(tempfiles_size + 8); i++) tempfiles[i] = NULL;
 	  i = tempfiles_size;
 	  tempfiles_size += 8;
 	}
@@ -828,7 +828,7 @@ snd_data *make_snd_data_buffer(MUS_SAMPLE_TYPE *data, int len, int ctr)
   int i;
   sf = (snd_data *)CALLOC(1, sizeof(snd_data));
   sf->type = SND_DATA_BUFFER;
-  sf->buffered_data = (MUS_SAMPLE_TYPE *)CALLOC(len + 1, sizeof(MUS_SAMPLE_TYPE));
+  sf->buffered_data = (MUS_SAMPLE_TYPE *)MALLOC((len + 1) * sizeof(MUS_SAMPLE_TYPE));
   /* sigh... using len+1 rather than len to protect against access to inserted buffer at end mixups (final fragment uses end+1) */
   /*   the real problem here is that I never decided whether insert starts at the cursor or just past it */
   /*   when the cursor is on the final sample, this causes cross-fragment ambiguity as to the length of a trailing insertion */
@@ -2042,8 +2042,9 @@ int open_temp_file(char *ofile, int chans, file_info *hdr, snd_state *ss)
 	hdr->format = default_output_format(ss);
       else
 	{
-	  hdr->type = DEFAULT_OUTPUT_TYPE;
-	  hdr->format = DEFAULT_OUTPUT_FORMAT;
+	  /* was default_output_* here, but that's for the user's output not ours */
+	  hdr->type = MUS_NEXT;
+	  hdr->format = MUS_OUT_FORMAT;
 	}
     }
   err = snd_write_header(ss, ofile, hdr->type, hdr->srate, chans, 0, 0, hdr->format, hdr->comment, len, hdr->loops);
@@ -2090,7 +2091,7 @@ int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, int leng
   ofd = open_temp_file(ofile, chans, hdr, ss);
   if (ofd == -1) return(MUS_CANT_OPEN_TEMP_FILE);
   datumb = mus_data_format_to_bytes_per_sample(hdr->format);
-  obufs = (MUS_SAMPLE_TYPE **)CALLOC(chans, sizeof(MUS_SAMPLE_TYPE *));
+  obufs = (MUS_SAMPLE_TYPE **)MALLOC(chans * sizeof(MUS_SAMPLE_TYPE *));
   ss->stopped_explicitly = 0;
   for (i = 0; i < chans; i++)
     obufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(FILE_BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE));
@@ -2176,7 +2177,7 @@ static int only_save_edits(snd_info *sp, file_info *nhdr, char *ofile)
   int i, err;
   snd_fd **sf;
   ss = sp->state;
-  sf = (snd_fd **)CALLOC(sp->nchans, sizeof(snd_fd *));
+  sf = (snd_fd **)MALLOC(sp->nchans * sizeof(snd_fd *));
   for (i = 0; i < sp->nchans; i++) 
     sf[i] = init_sample_read(0, sp->chans[i], READ_FORWARD);
   err = snd_make_file(ofile, sp->nchans, nhdr, sf, current_ed_samples(sp->chans[0]), ss);
@@ -2211,7 +2212,7 @@ static int save_edits_1(snd_info *sp)
   err = MUS_NO_ERROR;
   ofile = snd_tempnam(ss); 
   /* this will use user's TMPDIR if temp_dir(ss) is not set, else stdio.h's P_tmpdir else /tmp */
-  axis_data = (Float *)CALLOC(4*sp->nchans, sizeof(Float));
+  axis_data = (Float *)CALLOC(4 * sp->nchans, sizeof(Float));
   ffts = (int *)CALLOC(sp->nchans, sizeof(int));
   waves = (int *)CALLOC(sp->nchans, sizeof(int));
   for (i = 0; i < sp->nchans; i++)
@@ -2360,7 +2361,7 @@ int chan_save_edits(chan_info *cp, char *ofile)
 	}
       /* here we're overwriting the current (possibly multi-channel) file with one of its channels */
       nfile = snd_tempnam(ss); 
-      sf = (snd_fd **)CALLOC(1, sizeof(snd_fd *));
+      sf = (snd_fd **)MALLOC(sizeof(snd_fd *));
       sf[0] = init_sample_read(0, cp, READ_FORWARD);
       err = snd_make_file(nfile, 1, sp->hdr, sf, current_ed_samples(cp), cp->state);
       free_snd_fd(sf[0]);
@@ -2374,7 +2375,7 @@ int chan_save_edits(chan_info *cp, char *ofile)
     }
   else
     {
-      sf = (snd_fd **)CALLOC(1, sizeof(snd_fd *));
+      sf = (snd_fd **)MALLOC(sizeof(snd_fd *));
       sf[0] = init_sample_read(0, cp, READ_FORWARD);
       err = snd_make_file(ofile, 1, sp->hdr, sf, current_ed_samples(cp), cp->state);
       free_snd_fd(sf[0]);
@@ -2854,8 +2855,8 @@ static SCM g_loop_samples(SCM reader, SCM proc, SCM calls, SCM origin, SCM envir
 replacing current data with the function results; origin is the edit-history name for this operation"
 
   /* proc here is a pointer to a float procedure that takes a float arg */
-  g_plug func;
-  g_plug_env func_env;
+  g_plug func = NULL;
+  g_plug_env func_env = NULL;
   chan_info *cp;
   snd_info *sp;
   char *ofile;
@@ -2890,7 +2891,7 @@ replacing current data with the function results; origin is the edit-history nam
   hdr = make_temp_header(ofile, SND_SRATE(sp), 1, num);
   ofd = open_temp_file(ofile, 1, hdr, ss);
   datumb = mus_data_format_to_bytes_per_sample(hdr->format);
-  data = (MUS_SAMPLE_TYPE **)CALLOC(1, sizeof(MUS_SAMPLE_TYPE *));
+  data = (MUS_SAMPLE_TYPE **)MALLOC(sizeof(MUS_SAMPLE_TYPE *));
   data[0] = (MUS_SAMPLE_TYPE *)CALLOC(MAX_BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE)); 
   idata = data[0];
   if (envp)
@@ -3092,7 +3093,7 @@ MUS_SAMPLE_TYPE *g_floats_to_samples(SCM obj, int *size, const char *caller, int
   if (LIST_P_WITH_LENGTH(obj, num))
     {
       if ((*size) != 0) num = (*size);
-      vals = (MUS_SAMPLE_TYPE *)CALLOC(num, sizeof(MUS_SAMPLE_TYPE));
+      vals = (MUS_SAMPLE_TYPE *)MALLOC(num * sizeof(MUS_SAMPLE_TYPE));
       for (i = 0, lst = obj; i < num; i++, lst = SCM_CDR(lst)) 
 	vals[i] = MUS_FLOAT_TO_SAMPLE(TO_C_DOUBLE(SCM_CAR(lst)));
     }
@@ -3103,7 +3104,7 @@ MUS_SAMPLE_TYPE *g_floats_to_samples(SCM obj, int *size, const char *caller, int
 	  if ((*size) == 0)
 	    num = VECTOR_LENGTH(obj); 
 	  else num = (*size);
-	  vals = (MUS_SAMPLE_TYPE *)CALLOC(num, sizeof(MUS_SAMPLE_TYPE));
+	  vals = (MUS_SAMPLE_TYPE *)MALLOC(num * sizeof(MUS_SAMPLE_TYPE));
 	  vdata = SCM_VELTS(obj);
 	  for (i = 0; i < num; i++) 
 	    vals[i] = MUS_FLOAT_TO_SAMPLE(TO_C_DOUBLE(vdata[i]));
@@ -3116,7 +3117,7 @@ MUS_SAMPLE_TYPE *g_floats_to_samples(SCM obj, int *size, const char *caller, int
 	      if ((*size) == 0) 
 		num = v->length; 
 	      else num = (*size);
-	      vals = (MUS_SAMPLE_TYPE *)CALLOC(num, sizeof(MUS_SAMPLE_TYPE));
+	      vals = (MUS_SAMPLE_TYPE *)MALLOC(num * sizeof(MUS_SAMPLE_TYPE));
 	      for (i = 0; i < num; i++) 
 		vals[i] = MUS_FLOAT_TO_SAMPLE(v->data[i]);
 	    }
@@ -3271,7 +3272,7 @@ static SCM g_change_samples_with_origin(SCM samp_0, SCM samps, SCM origin, SCM v
   len = TO_C_INT_OR_ELSE(samps, 0);
   if (VECTOR_P(vect))
     {
-      ivals = (MUS_SAMPLE_TYPE *)CALLOC(len, sizeof(MUS_SAMPLE_TYPE));
+      ivals = (MUS_SAMPLE_TYPE *)MALLOC(len * sizeof(MUS_SAMPLE_TYPE));
       vdata = SCM_VELTS(vect);
 #if SNDLIB_USE_FLOATS
       for (i = 0; i < len; i++) ivals[i] = TO_C_DOUBLE(vdata[i]);
@@ -3467,12 +3468,12 @@ static SCM g_insert_samples_with_origin(SCM samp, SCM samps, SCM origin, SCM vec
   len = TO_C_INT_OR_ELSE(samps, 0);
   if (VECTOR_P(vect))
     {
-      ivals = (MUS_SAMPLE_TYPE *)CALLOC(len, sizeof(MUS_SAMPLE_TYPE));
+      ivals = (MUS_SAMPLE_TYPE *)MALLOC(len * sizeof(MUS_SAMPLE_TYPE));
       vdata = SCM_VELTS(vect);
 #if SNDLIB_USE_FLOATS
       for (i = 0; i < len; i++) ivals[i] = TO_C_DOUBLE(vdata[i]);
 #else
-      for (i = 0; i < len; i++) ivals[i] = TO_C_INT_OR_ELSE(vdata[i], 0);
+      for (i = 0; i < len; i++) ivals[i] = TO_C_INT_OR_ELSE(vdata[i], MUS_SAMPLE_0);
 #endif
       insert_samples(beg, len, ivals, cp, TO_C_STRING(origin));
       FREE(ivals);

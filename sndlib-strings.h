@@ -10,6 +10,8 @@
 #define S_sound_data2vct                "sound-data->vct"
 #define S_vct2sound_data                "vct->sound-data"
 
+#define S_mus_out_format                "mus-out-format"
+
 #define S_mus_next                      "mus-next"
 #define S_mus_aifc                      "mus-aifc"
 #define S_mus_riff                      "mus-riff"

@@ -318,6 +318,7 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
 #if DEBUGGING
   void report_header_stats(int *vals);
   void report_sound_stats(int *vals);
+  void report_io_stats(int *vals);
 #endif
 
 void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form)
@@ -431,14 +432,18 @@ void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form)
     char *str;
     int vals[6];
     int sfs[3];
+    int ios[16];
     str = (char *)CALLOC(2048,sizeof(char));
     report_header_stats(vals);
     report_sound_stats(sfs);
+    report_io_stats(ios);
     mus_snprintf(str, 2048,
-		 "\n\nHeader:\n  reads: %d, writes: %d, updates: %d\n  seeks: %d, size-seeks: %d, empty chunks: %d\n  sf-seeks: %d, table-seeks: %d\n",
+		 "\n\nHeader:\n  reads: %d, writes: %d, updates: %d\n  seeks: %d, size-seeks: %d, empty chunks: %d\n  sf-seeks: %d, table-seeks: %d\n  direct reads: %d of %d, direct writes: %d of %d (%d zero) [%d %d %d %d %d]\n",
 		 vals[1], vals[0], vals[2],
 		 vals[3], vals[4], vals[5],
-		 sfs[0], sfs[1]);
+		 sfs[0], sfs[1],
+		 ios[0], ios[2], ios[1], ios[3], ios[4],
+		 ios[5], ios[6], ios[7], ios[8], ios[9]);
     pos = GUI_TEXT_END(stats_form);
     GUI_STATS_TEXT_INSERT(stats_form, pos, str);
     FREE(str);

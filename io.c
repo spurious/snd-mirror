@@ -345,20 +345,10 @@ void mus_ldouble_to_char(unsigned char *j, double x)
 #endif
 }
 
-#if USE_BYTESWAP
-  #include <byteswap.h>
-  /* in fully optimized code, the byteswap macros are about 15% faster than the calls used here */
-#endif
-
 #if MUS_LITTLE_ENDIAN
 
-#if USE_BYTESWAP
-  #define m_big_endian_short(n)                   ((short)(bswap_16((*((unsigned short *)n)))))
-  #define m_big_endian_int(n)                     ((int)(bswap_32((*((unsigned int *)n)))))
-#else
   #define m_big_endian_short(n)                   (mus_char_to_bshort(n))
   #define m_big_endian_int(n)                     (mus_char_to_bint(n))
-#endif
   #define m_big_endian_float(n)                   (mus_char_to_bfloat(n))
   #define m_big_endian_double(n)                  (mus_char_to_bdouble(n))
   #define m_big_endian_unsigned_short(n)          (mus_char_to_ubshort(n))
@@ -409,13 +399,8 @@ void mus_ldouble_to_char(unsigned char *j, double x)
     #define m_set_big_endian_unsigned_short(n, x)    mus_ubshort_to_char(n, x)
   #endif
 
-#if USE_BYTESWAP
-  #define m_little_endian_short(n)                  ((short)(bswap_16((*((unsigned short *)n)))))
-  #define m_little_endian_int(n)                    ((int)(bswap_32((*((unsigned int *)n)))))
-#else
   #define m_little_endian_short(n)                  (mus_char_to_lshort(n))
   #define m_little_endian_int(n)                    (mus_char_to_lint(n))
-#endif
   #define m_little_endian_float(n)                  (mus_char_to_lfloat(n))
   #define m_little_endian_double(n)                 (mus_char_to_ldouble(n))
   #define m_little_endian_unsigned_short(n)         (mus_char_to_ulshort(n))
@@ -995,12 +980,22 @@ static int checked_write(int tfd, char *buf, int chars)
   return(MUS_NO_ERROR);
 }
 
-
-
 /* ---------------- read ---------------- */
+
+#if DEBUGGING
+static int direct_reads = 0, total_reads = 0, direct_writes = 0, total_writes = 0, zero_writes = 0;
+static int beg_indirect = 0, chan_indirect = 0, format_indirect = 0, clipping_indirect = 0, prescaler_indirect = 0;
+void report_io_stats(int *vals);
+void report_io_stats(int *vals) 
+{
+  vals[0] = direct_reads; vals[1] = direct_writes; vals[2] = total_reads; vals[3] = total_writes; vals[4] = zero_writes;
+  vals[5] = beg_indirect; vals[6] = chan_indirect; vals[7] = format_indirect; vals[8] = clipping_indirect; vals[9] = prescaler_indirect; 
+}
+#endif
 
 static int mus_read_any_1(int tfd, int beg, int chans, int nints, MUS_SAMPLE_TYPE **bufs, MUS_SAMPLE_TYPE *cm, char *inbuf)
 {
+  int loclim;
   io_fd *fd;
   int bytes, j, lim, siz, total, leftover, total_read, k, loc, oldloc, siz_chans, buflim, format;
   unsigned char *jchar;
@@ -1012,6 +1007,9 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, MUS_SAMPLE_TYP
   if (inbuf) from_buffer = 1;
   if (!from_buffer)
     {
+#if DEBUGGING
+      total_reads++;
+#endif
       if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL))
 	{
 	  mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED,
@@ -1027,6 +1025,49 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, MUS_SAMPLE_TYP
 		    fd->name, __FILE__, __LINE__, __FUNCTION__); 
 	  return(MUS_ERROR);
 	}
+      format = fd->data_format;
+      siz = fd->bytes_per_sample;
+
+      if ((chans == 1) && (format == MUS_OUT_FORMAT) && (beg == 0)
+#if SNDLIB_USE_FLOATS 
+	  && (fd->prescaler == 1.0)
+#endif
+	  )
+	{
+#if DEBUGGING
+	  direct_reads++;
+#endif
+	  bytes = nints * siz;
+	  total = read(tfd, (char *)(bufs[0]), bytes);
+	  if (total != bytes)
+	    {
+#if HAVE_MEMSET
+	      if (total <= 0)
+		memset((void *)(bufs[0]), 0, bytes);
+	      else
+#endif
+		{
+		  int i, last;
+		  last = beg + nints;
+		  for (i = total / siz; i < last; i++)
+		    bufs[0][i] = MUS_SAMPLE_0;
+		}
+	    }
+	  return(total / siz);
+	}
+#if DEBUGGING
+      else
+	{
+	  if (beg != 0) beg_indirect++;
+	  if (chans != 1) chan_indirect++;
+	  if (format != MUS_OUT_FORMAT) format_indirect++;
+	  if (fd->prescaler != 1.0) prescaler_indirect++;
+	}
+#endif
+
+      prescaling = (float)(fd->prescaler * MUS_FLOAT_TO_SAMPLE(1.0));
+      /* not MUS_FLOAT_TO_SAMPLE(fd->prescaler) here because there's a possible cast to int which can overflow */
+
       charbuf = (char *)CALLOC(BUFLIM, sizeof(char)); 
       if (charbuf == NULL) 
 	{
@@ -1035,12 +1076,6 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, MUS_SAMPLE_TYP
 		    __FILE__, __LINE__, __FUNCTION__); 
 	  return(MUS_ERROR);
 	}
-      siz = fd->bytes_per_sample;
-      prescaling = (float)(fd->prescaler * MUS_FLOAT_TO_SAMPLE(1.0));
-
-      /* not MUS_FLOAT_TO_SAMPLE(fd->prescaler) here because there's a possible cast to int which can overflow */
-
-      format = fd->data_format;
     }
   else
     {
@@ -1077,8 +1112,15 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, MUS_SAMPLE_TYP
 	      if (loc < lim)
 		for (k = 0; k < chans; k++)
 		  if ((cm == NULL) || (cm[k]))
-		    for (j = loc; j < lim; j++) 
-		      bufs[k][j] = MUS_SAMPLE_0;
+		    {
+#if HAVE_MEMSET
+		      if (loc == 0)
+			memset((void *)(bufs[k]), 0, lim * sizeof(MUS_SAMPLE_TYPE));
+		      else
+#endif
+			for (j = loc; j < lim; j++) 
+			  bufs[k][j] = MUS_SAMPLE_0;
+		    }
 	      FREE(charbuf);
 	      return(total_read);
 	    }
@@ -1100,82 +1142,83 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, MUS_SAMPLE_TYP
 	      if (buffer)
 		{
 		  loc = oldloc;
+		  loclim = loc + lim;
 		  jchar = (unsigned char *)charbuf;
 		  jchar += (k * siz);
 		  switch (format)
 		    {
 		    case MUS_BSHORT:               
-		      for (j = 0; j < lim; j++, loc++, jchar += siz_chans) 
+		      for (; loc < loclim; loc++, jchar += siz_chans) 
 			buffer[loc] = MUS_SHORT_TO_SAMPLE(m_big_endian_short(jchar)); 
 		      break;
 		    case MUS_LSHORT: 
-		      for (j = 0; j < lim; j++, loc++, jchar += siz_chans) 
+		      for (; loc < loclim; loc++, jchar += siz_chans) 
 			buffer[loc] = MUS_SHORT_TO_SAMPLE(m_little_endian_short(jchar)); 
 		      break;
 		    case MUS_BINT:              
-		      for (j = 0; j < lim; j++, loc++, jchar += siz_chans) 
+		      for (; loc < loclim; loc++, jchar += siz_chans) 
 			buffer[loc] = MUS_INT_TO_SAMPLE(m_big_endian_int(jchar)); 
 		      break;
 		    case MUS_LINT: 
-		      for (j = 0; j < lim; j++, loc++, jchar += siz_chans) 
+		      for (; loc < loclim; loc++, jchar += siz_chans) 
 			buffer[loc] = MUS_INT_TO_SAMPLE(m_little_endian_int(jchar)); 
 		      break;
 		    case MUS_BINTN:              
-		      for (j = 0; j < lim; j++, loc++, jchar += siz_chans) 
+		      for (; loc < loclim; loc++, jchar += siz_chans) 
 			buffer[loc] = MUS_INT_TO_SAMPLE((m_big_endian_int(jchar) >> (32 - MUS_SAMPLE_BITS)));
 		      break;
 		    case MUS_LINTN: 
-		      for (j = 0; j < lim; j++, loc++, jchar += siz_chans) 
+		      for (; loc < loclim; loc++, jchar += siz_chans) 
 			buffer[loc] = MUS_INT_TO_SAMPLE((m_little_endian_int(jchar) >> (32 - MUS_SAMPLE_BITS)));
 		      break;
 		    case MUS_MULAW:  	              
-		      for (j = 0; j < lim; j++, loc++, jchar += siz_chans) 
+		      for (; loc < loclim; loc++, jchar += siz_chans) 
 			buffer[loc] = MUS_SHORT_TO_SAMPLE(mulaw[*jchar]); 
 		      break;
 		    case MUS_ALAW:                  
-		      for (j = 0; j < lim; j++, loc++, jchar += siz_chans) 
+		      for (; loc < loclim; loc++, jchar += siz_chans) 
 			buffer[loc] = MUS_SHORT_TO_SAMPLE(alaw[*jchar]); 
 		      break;
 		    case MUS_BYTE:                
-		      for (j = 0; j < lim; j++, loc++, jchar += siz_chans)
+		      for (; loc < loclim; loc++, jchar += siz_chans)
 			buffer[loc] = MUS_BYTE_TO_SAMPLE((signed char)(*jchar));
 		      break;
 		    case MUS_UBYTE:     	      
-		      for (j = 0; j < lim; j++, loc++, jchar += siz_chans) 
+		      for (; loc < loclim; loc++, jchar += siz_chans) 
 			buffer[loc] = MUS_BYTE_TO_SAMPLE((int)(*jchar) - 128);
 		      break;
 		    case MUS_BFLOAT:
-		      for (j = 0; j < lim; j++, loc++, jchar += siz_chans) 
+		      for (; loc < loclim; loc++, jchar += siz_chans) 
 			buffer[loc] = (MUS_SAMPLE_TYPE) (prescaling * (m_big_endian_float(jchar)));
 		      break;
 		    case MUS_BDOUBLE:   
-		      for (j = 0; j < lim; j++, loc++, jchar += siz_chans)
+		      for (; loc < loclim; loc++, jchar += siz_chans)
 			buffer[loc] = (MUS_SAMPLE_TYPE) (prescaling * (m_big_endian_double(jchar)));
 		      break;
 		    case MUS_LFLOAT:    
-		      for (j = 0; j < lim; j++, loc++, jchar += siz_chans) 
+		      for (; loc < loclim; loc++, jchar += siz_chans) 
 			buffer[loc] = (MUS_SAMPLE_TYPE) (prescaling * (m_little_endian_float(jchar)));
 		      break;
 		    case MUS_LDOUBLE:   
-		      for (j = 0; j < lim; j++, loc++, jchar += siz_chans) 
+		      for (; loc < loclim; loc++, jchar += siz_chans) 
 			buffer[loc] = (MUS_SAMPLE_TYPE) (prescaling * (m_little_endian_double(jchar)));
 		      break;
 		    case MUS_UBSHORT:   
-		      for (j = 0; j < lim; j++, loc++, jchar += siz_chans) 
+		      for (; loc < loclim; loc++, jchar += siz_chans) 
 			buffer[loc] = MUS_SHORT_TO_SAMPLE((int)(m_big_endian_unsigned_short(jchar)) - 32768);
 		      break;
 		    case MUS_ULSHORT:   
-		      for (j = 0; j < lim; j++, loc++, jchar += siz_chans) 
+		      for (; loc < loclim; loc++, jchar += siz_chans) 
 			buffer[loc] = MUS_SHORT_TO_SAMPLE((int)(m_little_endian_unsigned_short(jchar)) - 32768);
 		      break;
 		    case MUS_B24INT:
-		      for (j = 0; j < lim; j++, loc++, jchar += siz_chans) 
+		      for (; loc < loclim; loc++, jchar += siz_chans) 
 			buffer[loc] = MUS_INT24_TO_SAMPLE((int)(((jchar[0] << 24) + 
 								 (jchar[1] << 16) + 
 								 (jchar[2] << 8)) >> 8));
 		      break;
 		    case MUS_L24INT:   
-		      for (j = 0; j < lim; j++, loc++, jchar += siz_chans) 
+		      for (; loc < loclim; loc++, jchar += siz_chans) 
 			buffer[loc] = MUS_INT24_TO_SAMPLE((int)(((jchar[2] << 24) + 
 								 (jchar[1] << 16) + 
 								 (jchar[0] << 8)) >> 8));
@@ -1295,6 +1338,7 @@ int mus_file_write_zeros(int tfd, int num)
 
 static int mus_write_1(int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **bufs, char *inbuf, int clipped)
 {
+  int loclim, c3;
   int err;
   io_fd *fd;
   int bytes, j, k, lim, siz, leftover, loc, bk, val, oldloc, buflim, siz_chans, cliploc, data_format, clipping = 0;
@@ -1305,6 +1349,9 @@ static int mus_write_1(int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **b
   if (inbuf) to_buffer = 1;
   if (!to_buffer)
     {
+#if DEBUGGING
+      total_writes++;
+#endif
       if (tfd == MUS_DAC_REVERB) return(0);
       if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL))
 	{
@@ -1321,6 +1368,28 @@ static int mus_write_1(int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **b
 		    fd->name, __FILE__, __LINE__, __FUNCTION__); 
 	  return(MUS_ERROR);
 	}
+
+      siz = fd->bytes_per_sample;
+      data_format = fd->data_format;
+      clipping = fd->data_clipped;
+
+      if ((chans == 1) && (data_format == MUS_OUT_FORMAT) && (clipping == 0) && (beg == 0))
+	{
+#if DEBUGGING
+	  direct_writes++;
+#endif
+	  bytes = (end + 1) * siz;
+	  return(checked_write(tfd, (char *)(bufs[0]), bytes));
+	}
+#if DEBUGGING
+      else
+	{
+	  if (beg != 0) beg_indirect++;
+	  if (chans != 1) chan_indirect++;
+	  if (data_format != MUS_OUT_FORMAT) format_indirect++;
+	  if (clipping) clipping_indirect++;
+	}
+#endif
       charbuf = (char *)CALLOC(BUFLIM, sizeof(char)); 
       if (charbuf == NULL) 
 	{
@@ -1329,9 +1398,6 @@ static int mus_write_1(int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **b
 		    __FILE__, __LINE__, __FUNCTION__);
 	  return(MUS_ERROR);
 	}
-      siz = fd->bytes_per_sample;
-      data_format = fd->data_format;
-      clipping = fd->data_clipped;
     }
   else
     {
@@ -1374,77 +1440,79 @@ static int mus_write_1(int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **b
 		  if (buffer[cliploc] < MUS_SAMPLE_MIN)
 		    buffer[cliploc] = MUS_SAMPLE_MIN;
 	    }
+	  loclim = loc + lim;
 	  jchar = (unsigned char *)charbuf; /* if to_buffer we should add the loop offset here, or never loop */
 	  jchar += (k * siz); 
 	  switch (data_format)
 	    {
 	    case MUS_BSHORT: 
-	      for (j = 0; j < lim; j++, loc++, jchar += siz_chans) 
+	      for (; loc < loclim; loc++, jchar += siz_chans) 
 		m_set_big_endian_short(jchar, MUS_SAMPLE_TO_SHORT(buffer[loc]));
 	      break;
 	    case MUS_LSHORT:   
-	      for (j = 0; j < lim; j++, loc++, jchar += siz_chans) 
+	      for (; loc < loclim; loc++, jchar += siz_chans) 
 		m_set_little_endian_short(jchar, MUS_SAMPLE_TO_SHORT(buffer[loc]));
 	      break;
 	    case MUS_BINT:   
-	      for (j = 0; j < lim; j++, loc++, jchar += siz_chans) 
+	      for (; loc < loclim; loc++, jchar += siz_chans) 
 		m_set_big_endian_int(jchar, MUS_SAMPLE_TO_INT(buffer[loc]));
 	      break;
 	    case MUS_LINT:   
-	      for (j = 0; j < lim; j++, loc++, jchar += siz_chans) 
+	      for (; loc < loclim; loc++, jchar += siz_chans) 
 		m_set_little_endian_int(jchar, MUS_SAMPLE_TO_INT(buffer[loc]));
 	      break;
 	    case MUS_BINTN:   
-	      for (j = 0; j < lim; j++, loc++, jchar += siz_chans) 
+	      for (; loc < loclim; loc++, jchar += siz_chans) 
 		m_set_big_endian_int(jchar, MUS_SAMPLE_TO_INT(buffer[loc]) << (32 - MUS_SAMPLE_BITS));
 	      break;
 	    case MUS_LINTN:   
-	      for (j = 0; j < lim; j++, loc++, jchar += siz_chans) 
+	      for (; loc < loclim; loc++, jchar += siz_chans) 
 		m_set_little_endian_int(jchar, MUS_SAMPLE_TO_INT(buffer[loc]) << (32 - MUS_SAMPLE_BITS));
 	      break;
 	    case MUS_MULAW:     
-	      for (j = 0; j < lim; j++, loc++, jchar += siz_chans) 
+	      for (; loc < loclim; loc++, jchar += siz_chans) 
 		(*jchar) = to_mulaw(MUS_SAMPLE_TO_SHORT(buffer[loc]));
 	      break;
 	    case MUS_ALAW:      
-	      for (j = 0; j < lim; j++, loc++, jchar += siz_chans) 
+	      for (; loc < loclim; loc++, jchar += siz_chans) 
 		(*jchar) = to_alaw(MUS_SAMPLE_TO_SHORT(buffer[loc]));
 	      break;
 	    case MUS_BYTE:    
-	      for (j = 0; j < lim; j++, loc++, jchar += siz_chans) 
+	      for (; loc < loclim; loc++, jchar += siz_chans) 
 		(*((signed char *)jchar)) = MUS_SAMPLE_TO_BYTE(buffer[loc]);
 	      break;
 	    case MUS_UBYTE:  
-	      for (j = 0; j < lim; j++, loc++, jchar += siz_chans) 
+	      for (; loc < loclim; loc++, jchar += siz_chans) 
 		(*jchar) = MUS_SAMPLE_TO_BYTE(buffer[loc]) + 128;
 	      break;
 	    case MUS_BFLOAT:    
-	      for (j = 0; j < lim; j++, loc++, jchar += siz_chans) 
+	      for (; loc < loclim; loc++, jchar += siz_chans) 
 		m_set_big_endian_float(jchar, MUS_SAMPLE_TO_FLOAT(buffer[loc]));
 	      break;
 	    case MUS_LFLOAT:    
-	      for (j = 0; j < lim; j++, loc++, jchar += siz_chans) 
+	      for (; loc < loclim; loc++, jchar += siz_chans) 
 		m_set_little_endian_float(jchar, MUS_SAMPLE_TO_FLOAT(buffer[loc]));
 	      break;
 	    case MUS_BDOUBLE:
-	      for (j = 0; j < lim; j++, loc++, jchar += siz_chans) 
+	      for (; loc < loclim; loc++, jchar += siz_chans) 
 		m_set_big_endian_double(jchar, MUS_SAMPLE_TO_DOUBLE(buffer[loc]));
 	      break;
 	    case MUS_LDOUBLE:   
-	      for (j = 0; j < lim; j++, loc++, jchar += siz_chans) 
+	      for (; loc < loclim; loc++, jchar += siz_chans) 
 		m_set_little_endian_double(jchar, MUS_SAMPLE_TO_DOUBLE(buffer[loc]));
 	      break;
 	    case MUS_UBSHORT: 
-	      for (j = 0; j < lim; j++, loc++, jchar += siz_chans) 
+	      for (; loc < loclim; loc++, jchar += siz_chans) 
 		m_set_big_endian_unsigned_short(jchar, (short)(MUS_SAMPLE_TO_SHORT(buffer[loc]) + 32768));
 	      break;
 	    case MUS_ULSHORT: 
-	      for (j = 0; j < lim; j++, loc++, jchar += siz_chans) 
+	      for (; loc < loclim; loc++, jchar += siz_chans) 
 		m_set_little_endian_unsigned_short(jchar, (short)(MUS_SAMPLE_TO_SHORT(buffer[loc]) + 32768));
 	      break;
 	    case MUS_B24INT:   
-	      bk=(k*3);
-	      for (j = 0; j < lim; j++, loc++, bk += (chans * 3)) 
+	      bk = (k * 3);
+	      c3 = chans * 3;
+	      for (; loc < loclim; loc++, bk += c3) 
 		{
 		  val = MUS_SAMPLE_TO_INT24(buffer[loc]);
 		  charbuf[bk] = (val >> 16); 
@@ -1453,8 +1521,9 @@ static int mus_write_1(int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **b
 		}
 	      break;
 	    case MUS_L24INT:   
-	      bk=(k*3);
-	      for (j = 0; j < lim; j++, loc++, bk += (chans * 3))
+	      bk = (k * 3);
+	      c3 = chans * 3;
+	      for (; loc < loclim; loc++, bk += c3)
 		{
 		  val = MUS_SAMPLE_TO_INT24(buffer[loc]);
 		  charbuf[bk+2] = (val >> 16); 
@@ -1475,7 +1544,7 @@ static int mus_write_1(int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **b
 	}
     }
   if (!to_buffer) FREE(charbuf);
-  return(0);
+  return(MUS_NO_ERROR);
 }
 
 int mus_file_write(int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **bufs)

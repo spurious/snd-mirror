@@ -62,13 +62,7 @@
 
 #define TO_C_DOUBLE(a) scm_num2dbl(a, __FUNCTION__)
 #define TO_C_DOUBLE_WITH_ORIGIN(a, b) scm_num2dbl(a, b)
-
-#if (!defined(HAVE_CONFIG_H)) || HAVE_SCM_NUM2LONG_WITH_CHAR_ARG2
-  #define TO_C_INT(a) ((int)gh_scm2int(a))
-#else
-  #define TO_C_INT(a) ((int)scm_num2long(a, 1, __FUNCTION__))
-#endif
-
+#define TO_C_INT(a) ((int)gh_scm2int(a))
 #define TO_C_INT_OR_ELSE(a, b) to_c_int_or_else(a, b, __FUNCTION__)
 
 #ifndef SCM_STRING_CHARS

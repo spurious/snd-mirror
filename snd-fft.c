@@ -542,7 +542,7 @@ static void autocorrelation(Float *data, int n)
       im[i] = 0.0;
     }
   mus_fft(rl, im, n, -1);
-  for (i = 0; i < n/2; i++) data[i] = fscl * rl[i];
+  for (i = 0; i <= n/2; i++) data[i] = fscl * rl[i];
   FREE(rl);
   FREE(im);
 }
@@ -2080,23 +2080,23 @@ void c_convolve (char *fname, Float amp, int filec, int filehdr, int filterc, in
 	  pbuf = pbuffer[0];
 
 	  /* read in the "impulse response" */
-	  mus_file_read_any(filterc, 0, filter_chans, filtersize-1, fbuffer, fcm);
+	  mus_file_read_any(filterc, 0, filter_chans, filtersize - 1, fbuffer, fcm);
 	  for (i = 0; i < filtersize; i++) 
 	    rl1[i] = MUS_SAMPLE_TO_FLOAT(fbuffer[filter_chan][i]);
 	  progress_report(gsp, "convolve", ip+1, total_chans, .1, from_enved);
 	  mus_header_write_next_header(tempfile, 22050, 1, 28, data_size * 4, MUS_BINT, NULL, 0);
 	  mus_file_open_descriptors(tempfile, fname, MUS_BINT, 4, 28, 1, MUS_NEXT);
 	  /* get the convolution data */
-	  mus_file_read_any(filec, 0, 1, data_size-1, pbuffer, cm);
+	  mus_file_read_any(filec, 0, 1, data_size - 1, pbuffer, cm);
 	  for (i = 0; i < data_size; i++) rl0[i] = MUS_SAMPLE_TO_FLOAT(pbuf[i]);
 
-	  progress_report(gsp, "convolve", ip+1, total_chans, .3, from_enved);
+	  progress_report(gsp, "convolve", ip + 1, total_chans, .3, from_enved);
 	  mus_fft(rl0, rl1, fftsize, 1);
-	  progress_report(gsp, "convolve", ip+1, total_chans, .5, from_enved);
+	  progress_report(gsp, "convolve", ip + 1, total_chans, .5, from_enved);
 	  spectral_multiply(rl0, rl1, fftsize);
-	  progress_report(gsp, "convolve", ip+1, total_chans, .6, from_enved);
+	  progress_report(gsp, "convolve", ip + 1, total_chans, .6, from_enved);
 	  mus_fft(rl0, rl1, fftsize, -1);
-	  progress_report(gsp, "convolve", ip+1, total_chans, .8, from_enved);
+	  progress_report(gsp, "convolve", ip + 1, total_chans, .8, from_enved);
 
 	  if (amp != 0.0)
 	    {
@@ -2111,9 +2111,9 @@ void c_convolve (char *fname, Float amp, int filec, int filehdr, int filterc, in
 	      for (i = 0; i < data_size; i++) 
 		pbuf[i] = MUS_FLOAT_TO_SAMPLE(scl * rl0[i]);
 	    }
-	  progress_report(gsp, "convolve", ip+1, total_chans, .9, from_enved);
+	  progress_report(gsp, "convolve", ip + 1, total_chans, .9, from_enved);
 	  /* and save as temp file */
-	  mus_file_write(tempfile, 0, data_size-1, 1, &(pbuf));
+	  mus_file_write(tempfile, 0, data_size - 1, 1, &(pbuf));
 	  if (mus_file_close(tempfile) != 0)
 	    snd_error("can't close %d (%s)! [%s[%d] %s]", 
 		      tempfile, fname, 
@@ -2410,8 +2410,7 @@ of a moving mark:\n\
   DEFINE_PROC(S_transform_samples,     g_transform_samples, 0, 2, 0,   H_transform_samples);
   DEFINE_PROC(S_transform_sample,      g_transform_sample, 0, 4, 0,    H_transform_sample);
   DEFINE_PROC(S_transform_samples_vct, transform_samples2vct, 0, 3, 0, H_transform_samples2vct);
-
-  DEFINE_PROC(S_autocorrelate, g_autocorrelate, 1, 0, 0, H_autocorrelate);
-  DEFINE_PROC(S_add_transform, g_add_transform, 5, 0, 0, H_add_transform);
+  DEFINE_PROC(S_autocorrelate,         g_autocorrelate, 1, 0, 0,       H_autocorrelate);
+  DEFINE_PROC(S_add_transform,         g_add_transform, 5, 0, 0,       H_add_transform);
 }
 

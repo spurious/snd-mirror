@@ -1,5 +1,6 @@
 snd change log
 
+  16-Apr:    mus-out-format.
   9-Apr:     noguile.h, sl.h (moving toward Librep support, and maybe Ruby).  
   29-Mar:    drop-hook.
   23-Mar:    removed syncing (use sync), and abort? (use c-g?).
