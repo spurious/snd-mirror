@@ -121,8 +121,8 @@ switch).
 
 
 There are RPM packages of Snd available at the ccrma-ftp site
-mentioned above: snd-6-10.i386.rpm (for Linux), snd-6-10.src.rpm
-(sources), and snd-6-10.ppc.rpm (linuxPPC).  These RPM files have been
+mentioned above: snd-6-11.i386.rpm (for Linux), snd-6-11.src.rpm
+(sources), and snd-6-11.ppc.rpm (linuxPPC).  These RPM files have been
 superseded by Fernando Lopez-Lezcano's set available at
 http://www-ccrma.stanford.edu/planetccrma/software/
 
@@ -673,6 +673,7 @@ Guile/Scheme:
   http://www.ccs.neu.edu/home/dorai/t-y-scheme/t-y-scheme.html
   http://www.cs.utexas.edu/users/wilson/schintro/schintro_toc.html
   http://www.swiss.ai.mit.edu/~jaffer/SLIB.html
+  http://mitpress.mit.edu/sicp/full-text/book/book.html
 
 Motif:
   http://www.opengroup.org/openmotif/

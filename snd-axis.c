@@ -1038,6 +1038,17 @@ x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1 y_offset label)"
 
 /* this is intended for use with the xm package */
 
+#if USE_MOTIF
+#define XEN_GC_P(Value) (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
+                        (strcmp("GC", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
+#else
+#define XEN_GC_P(Value) (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
+                        (strcmp("GtkGC_", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
+#endif
+
+#define AXIS_STYLE_OK(Id) (((Id) >= X_AXIS_IN_SECONDS) && ((Id) <= X_AXIS_IN_BEATS))
+#define SHOW_AXES_OK(Id) (((Id) >= SHOW_NO_AXES) && ((Id) <= SHOW_X_AXIS))
+
 #if (!USE_NO_GUI)
 static XEN g_draw_axes(XEN args)
 {
@@ -1046,15 +1057,17 @@ draws axes in the widget 'wid', using the graphics context 'gc', with the x-axis
 going from x0 to x1 (floats) along the x axis, y0 to y1 along the y axis, with x-axis-style \
 'style' (" S_x_axis_in_seconds " etc); the axes are actually displayed if 'axes' is " S_show_all_axes ".\
 Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
-  XEN val;
+  XEN val, xwid, xgc, xx0, xx1, xy0, xy1, xstyle, xaxes;
 #if USE_MOTIF
-  Widget w; GC gc; 
+  Widget w; 
+  GC gc; 
 #else
-  GtkWidget *w; GdkGC *gc;
+  GtkWidget *w; 
+  GdkGC *gc;
 #endif
   char *xlabel; 
-  double x0 = 0.0; double x1 = 1.0; 
-  Float y0 = -1.0; Float y1 = 1.0; 
+  double x0 = 0.0, x1 = 1.0; 
+  Float y0 = -1.0, y1 = 1.0; 
   x_axis_style_t x_style = X_AXIS_IN_SECONDS;
   show_axes_t axes = SHOW_ALL_AXES;
   axis_context *ax;
@@ -1062,20 +1075,57 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
   int len;
   len = XEN_LIST_LENGTH(args);
   XEN_ASSERT_TYPE((len >= 3) && (len < 10), args, XEN_ONLY_ARG, S_draw_axes, "3 required and 6 optional args");
+
+  xwid = XEN_LIST_REF(args, 0);
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(xwid), xwid, XEN_ARG_1, S_draw_axes, "widget");
+  xgc = XEN_LIST_REF(args, 1);
+  XEN_ASSERT_TYPE(XEN_GC_P(xgc), xgc, XEN_ARG_2, S_draw_axes, "gc");
 #if USE_MOTIF
-  w = (Widget)(XEN_UNWRAP_WIDGET(XEN_LIST_REF(args, 0)));
-  gc = (GC)(XEN_UNWRAP_GC(XEN_LIST_REF(args, 1)));
+  w = (Widget)(XEN_UNWRAP_WIDGET(xwid));
+  gc = (GC)(XEN_UNWRAP_GC(xgc));
 #else
-  w = (GtkWidget *)(XEN_UNWRAP_WIDGET(XEN_LIST_REF(args, 0)));
-  gc = (GdkGC *)(XEN_UNWRAP_GC(XEN_LIST_REF(args, 1)));
+  w = (GtkWidget *)(XEN_UNWRAP_WIDGET(xwid));
+  gc = (GdkGC *)(XEN_UNWRAP_GC(xgc));
 #endif
   xlabel = XEN_TO_C_STRING(XEN_LIST_REF(args, 2));
-  if (len > 3) x0 = XEN_TO_C_DOUBLE(XEN_LIST_REF(args, 3));
-  if (len > 4) x1 = XEN_TO_C_DOUBLE(XEN_LIST_REF(args, 4));
-  if (len > 5) y0 = XEN_TO_C_DOUBLE(XEN_LIST_REF(args, 5));
-  if (len > 6) y1 = XEN_TO_C_DOUBLE(XEN_LIST_REF(args, 6));
-  if (len > 7) x_style = (x_axis_style_t)XEN_TO_C_INT(XEN_LIST_REF(args, 7));
-  if (len > 8) axes = (show_axes_t)XEN_TO_C_INT(XEN_LIST_REF(args, 8)); /* TODO: test the draw-axes x-style and axes args */
+  if (len > 3) 
+    {
+      xx0 = XEN_LIST_REF(args, 3);
+      XEN_ASSERT_TYPE(XEN_NUMBER_P(xx0), xx0, XEN_ARG_3, S_draw_axes, "a number");
+      x0 = XEN_TO_C_DOUBLE(xx0);
+      if (len > 4) 
+	{
+	  xx1 = XEN_LIST_REF(args, 4);
+	  XEN_ASSERT_TYPE(XEN_NUMBER_P(xx1), xx1, XEN_ARG_4, S_draw_axes, "a number");
+	  x1 = XEN_TO_C_DOUBLE(xx1);
+	  if (len > 5) 
+	    {
+	      xy0 = XEN_LIST_REF(args, 5);
+	      XEN_ASSERT_TYPE(XEN_NUMBER_P(xy0), xy0, XEN_ARG_5, S_draw_axes, "a number");
+	      y0 = XEN_TO_C_DOUBLE(xy0);
+	      if (len > 6) 
+		{
+		  xy1 = XEN_LIST_REF(args, 6);
+		  XEN_ASSERT_TYPE(XEN_NUMBER_P(xy1), xy1, XEN_ARG_6, S_draw_axes, "a number");
+		  y1 = XEN_TO_C_DOUBLE(xy1);
+		  if (len > 7) 
+		    {
+		      int tmp;
+		      xstyle = XEN_LIST_REF(args, 7);
+		      XEN_ASSERT_TYPE(XEN_INTEGER_P(xstyle), xstyle, XEN_ARG_7, S_draw_axes, "axis style");
+		      tmp = XEN_TO_C_INT(xstyle);
+		      if (!(AXIS_STYLE_OK(tmp)))
+			XEN_OUT_OF_RANGE_ERROR(S_draw_axes, 7, xstyle, "axis style");
+		      x_style = (x_axis_style_t)tmp;
+		      if (len > 8) 
+			{
+			  xaxes = XEN_LIST_REF(args, 8);
+			  XEN_ASSERT_TYPE(XEN_INTEGER_P(xaxes), xaxes, XEN_ARG_8, S_draw_axes, "show-axes choice");
+			  tmp = XEN_TO_C_INT(xaxes);
+			  if (!(SHOW_AXES_OK(tmp)))
+			    XEN_OUT_OF_RANGE_ERROR(S_draw_axes, 8, xaxes, "show-axes choice");
+			  axes = (show_axes_t)XEN_TO_C_INT(xaxes);
+			}}}}}}
   ap = (axis_info *)CALLOC(1, sizeof(axis_info));
   ax = (axis_context *)CALLOC(1, sizeof(axis_context));
   ap->ax = ax;

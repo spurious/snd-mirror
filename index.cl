@@ -217,20 +217,16 @@
 	EM.red {color:red; font-style:normal}
         EM.typing {color:maroon; font-style: normal}
         EM.listener {color:darkblue; font-style: normal}
-        EM.tab {font-style: normal; font-size: small; font-family: fixed}
+        EM.tab {font-size: small; font-style: normal}
 	EM.def {font-weight: bold; font-style: normal}
 	H1 {text-align: center}
 	UL {list-style-type: none}
-	SPAN.box {background: beige; width: 100%; font-style: normal; text-align: center; border-width: thin; border-style: ridge}
-	SPAN.bbox {background: lightsteelblue; width: 100%; font-style: normal; border-width: thin; border-style: ridge}
-	SPAN.cbox {background: lightgreen; width: 100%; font-style: normal; border-width: thin; border-style: ridge}
-	SPAN.htmlbox {background: tan; font-style: normal; font-size: small; border-width: thin; border-style: ridge}
 -->
 </style>
 </head>
 <body bgcolor=white>
 
-<span class=box><h2><A NAME=\"extsndindex\">Index</a></h2></span>
+<table width=\"100%\" border=1><tr><td bgcolor=\"beige\" align=\"center\" valign=\"middle\"><h1><A NAME=\"extsndindex\">Index</h1></td></tr></table>
 <br>
 <!-- created ~A -->~%"
 		    #+clm (clm::c-strftime "%a %d-%b-%y %H:%M %Z") #-clm "whenever")
@@ -683,4 +679,4 @@
 (defun make-index ()
   (check-all)
   (index '("snd.html" "extsnd.html" "grfsnd.html" "sndscm.html" "sndlib.html" "clm.html" "fm.html")
-	 nil "test.html" 5 '("XmHTML" "AIFF" "NeXT" "Sun" "RIFF" "IRCAM" "FIR" "IIR" "Hilbert" "AIFC") t t))
+	 nil "test.html" 4 '("XmHTML" "AIFF" "NeXT" "Sun" "RIFF" "IRCAM" "FIR" "IIR" "Hilbert" "AIFC") t t))

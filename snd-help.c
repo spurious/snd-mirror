@@ -297,6 +297,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+15-Aug:  snd 6.11.\n\
 11-Aug:  start-playing-selection-hook (suggested by Kjetil S. Matheussen).\n\
          removed dlp/dp-new-effects.scm and plugins-menu.scm.\n\
          int -> bool changes (ISO C99).\n\
