@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 28
-#define MUS_DATE "25-Apr-03"
+#define MUS_REVISION 29
+#define MUS_DATE "27-May-03"
 
 /* 
+ * 27-May:     bugfix: interpolating all-pass ("zall-pass") had an extra delay.
  * 25-Apr:     mus_spectrum and mus_convolution now return Float*.
  * 9-Apr:      removed MUS_HANNING_WINDOW (use MUS_HANN_WINDOW).
  * 3-Mar:      mus_delay_line_p for tap error checking.

@@ -190,12 +190,14 @@ end
 
 <p>These are instruments from the CLM tarball translated for use in Snd.
 </p>
+<!-- remember to add corresponding entry to grfsnd instrument table -->
 <pre>
   <em class=def>attract</em> beg dur amp c
   <em class=def>bes-fm</em> beg dur freq amp ratio index
   <em class=def>canter</em> beg dur freq amp (etc)
   <em class=def>cellon</em> beg dur freq amp (etc)
   <em class=def>drone</em> beg dur freq amp (etc)
+  <em class=def>exp-snd</em> file beg dur amp (etc)
   <em class=def>fm-bell</em> beg dur frequency amplitude amp-env index-env index
   <em class=def>fm-drum</em> beg dur freq amp ind (etc)
   <em class=def>fm-insect</em> beg dur freq amp (etc)
@@ -223,6 +225,9 @@ end
   <em class=def>two-tab</em> beg dur freq amp (etc)
   <em class=def>vox</em> beg dur freq amp ampfun freqfun freqscl voxfun index vibscl
   <em class=def>wurley</em> beg dur freq amp
+  <em class=def>zc</em> time dur freq amp length1 length2 feedback
+  <em class=def>zn</em> time dur freq amp length1 length2 feedforward
+  <em class=def>za</em> time dur freq amp length1 length2 feedback feedforward
 </pre>
 <p>
 <i>fofins</i> is an implementation of FOF synthesis, taken originally from
@@ -281,6 +286,12 @@ a list of turn times (see also <a href="#exenvsoundinterp">env-sound-interp</a>)
 </p>
 <p><i>pins</i> is a simple implementation of thje spectral modeling sysnthesis
 of Xavier Serra and Julius Smith.  It is similar to the phase vocoder.
+</p>
+<p>The "z" instruments demonstrate "zdelay" effects -- interpolating
+comb, notch, and all-pass filters.
+</p>
+<p><i>exp-snd</i> is a granular synthesis instrument with envelopes on
+nearly every variable.
 </p>
 
 <A NAME="dlocsigdoc"></a><span class=box><h2>dlocsig.rb</h2></span>
@@ -604,6 +615,7 @@ envelope functions that are often useful:
   <em class=def>multiply-envelopes</em> env1 env2
   <em class=def>add-envelopes</em> env1 env2
   <em class=def><a name="maxenvelope">max-envelope</a></em> env
+  <em class=def><a name="minenvelope">min-envelope</a></em> env
   <em class=def><a name="integrateenvelope">integrate-envelope</a></em> env
   <em class=def><a name="stretchenvelope">stretch-envelope</a></em> env old-attack new-attack <i>old-decay new-decay</i>
   <em class=def>envelope-last-x</em> env
@@ -667,6 +679,7 @@ returns the maximum X value:
 :<em class=typing>(max-envelope '(0 0 1 1 2 3 4 0))</em>
 <em class=listener>3.0</em>
 </pre>
+<p>Similarly, <i>min-envelope returns the minimum y value.</p>
 <p><i>integrate-envelope</i> returns the area under the envelope; this is
 useful when you need to know in advance the overall effect of an envelope
 controlling the sampling rate.

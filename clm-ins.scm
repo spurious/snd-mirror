@@ -2227,3 +2227,138 @@ is a physical model of a flute:\n\
 		       (vct-set! freqs k (+ (vct-ref freqs k) (vct-ref sweeps k))))))
 	       (outa i (* amp sum) *output*))))))))
 
+
+(definstrument (zc time dur freq amp-1 length1 length2 feedback)
+  (let* ((beg (inexact->exact (floor (* (mus-srate) time))))
+	 (end (+ beg (inexact->exact (floor (* (mus-srate) dur)))))
+	 (amp amp-1)
+	 (s (make-pulse-train :frequency freq))
+	 (d0 (make-comb :size length1 :max-size (1+ (max length1 length2)) :scaler feedback))
+	 (zenv (make-env :envelope '(0 0 1 1) :scaler (- length2 length1) :duration dur)))
+    (run
+     (lambda ()
+       (do ((i beg (1+ i)))
+	   ((= i end))
+	 (outa i (comb d0 (* amp (pulse-train s)) (env zenv)) *output*))))))
+
+;;(with-sound () (zc 0 3 100 .1 20 100 .95) (zc 3.5 3 100 .1 100 20 .95))
+
+
+(definstrument (zn time dur freq amp-1 length1 length2 feedforward)
+  ;; notches are spaced at srate/len, feedforward sets depth thereof
+  ;; so sweep of len from 20 to 100 sweeps the notches down from 1000 Hz to ca 200 Hz 
+  ;; so we hear our downward glissando beneath the pulses.
+  (let* ((beg (inexact->exact (floor (* (mus-srate) time))))
+	 (end (+ beg (inexact->exact (floor (* (mus-srate) dur)))))
+	 (amp amp-1)
+	 (s (make-pulse-train :frequency freq))
+	 (d0 (make-notch :size length1 :max-size (1+ (max length1 length2)) :scaler feedforward))
+	 (zenv (make-env :envelope '(0 0 1 1) :scaler (- length2 length1) :duration dur)))
+    (run
+     (lambda ()
+       (do ((i beg (1+ i)))
+	   ((= i end))
+	 (outa i (notch d0 (* amp (pulse-train s)) (env zenv)) *output*))))))
+
+;;(with-sound () (zn 0 1 100 .1 20 100 .995) (zn 1.5 1 100 .1 100 20 .995))
+
+
+(definstrument (za time dur freq amp-1 length1 length2 feedback feedforward)
+  (let* ((beg (inexact->exact (floor (* (mus-srate) time))))
+	 (end (+ beg (inexact->exact (floor (* (mus-srate) dur)))))
+	 (amp amp-1)
+	 (s (make-pulse-train :frequency freq))
+	 (d0 (make-all-pass feedback feedforward :size length1 :max-size (1+ (max length1 length2))))
+	 (zenv (make-env :envelope '(0 0 1 1) :scaler (- length2 length1) :duration dur)))
+    (run
+     (lambda ()
+       (do ((i beg (1+ i)))
+	   ((= i end))
+	 (outa i (all-pass d0 (* amp (pulse-train s)) (env zenv)) *output*))))))
+
+;;(with-sound () (za 0 1 100 .1 20 100 .95 .95) (za 1.5 1 100 .1 100 20 .95 .95))
+
+
+(definstrument (exp-snd file beg dur amp #:optional (exp-amt 1.0) (ramp .4) (seglen .15) (sr 1.0) (hop .05) ampenv)
+  ;; granulate with envelopes on the expansion amount, segment envelope shape,
+  ;; segment length, hop length, and input file resampling rate
+  (let* ((st (inexact->exact (floor (* beg (mus-srate)))))
+	 (nd (+ st (inexact->exact (floor (* dur (mus-srate))))))
+	 (f0 (make-readin file 0))
+	 (expenv (make-env :envelope (if (list? exp-amt) 
+					 (or exp-amt (list 0 1 1 1)) 
+					 (list 0 exp-amt 1 exp-amt))
+			   :duration dur))
+	 (lenenv (make-env :envelope (if (list? seglen) 
+					 (or seglen (list 0 .15 1 .15)) 
+					 (list 0 seglen 1 seglen))
+			   :duration dur))
+	 (max-seg-len (if seglen (if (list? seglen) (max-envelope seglen) seglen) .15))
+	 (initial-seg-len (if seglen (if (list? seglen) (cadr seglen) seglen) .15))
+	 (scaler-amp (if (> max-seg-len .15) (/ (* 0.6 .15) max-seg-len) 0.6))
+	 (srenv  (make-env :envelope (if (list? sr) 
+					 (or sr (list 0 1 1 1)) 
+					 (list 0 sr 1 sr))
+			   :duration dur))
+	 (rampdata (if (list? ramp) 
+		       (or ramp (list 0 .4 1 .4))
+		       (list 0 ramp 1 ramp)))
+	 (rampenv (make-env :envelope rampdata :duration dur))
+	 (initial-ramp-time (if ramp (if (list? ramp) (cadr ramp) ramp) .4))
+	 (hopenv (make-env :envelope (if (list? hop) 
+					 (or hop (list 0 .05 1 .05)) 
+					 (list 0 hop 1 hop))
+			   :duration dur))
+	 (max-out-hop (if hop (if (list? hop) (max-envelope hop) hop) .05))
+	 (initial-out-hop (if hop (if (list? hop) (cadr hop) hop) .05))
+	 (min-exp-amt (if exp-amt (if (list? exp-amt) (min-envelope exp-amt) exp-amt) 1.0))
+	 (initial-exp-amt (if exp-amt (if (list? exp-amt) (cadr exp-amt) exp-amt) 1.0))
+	 (max-in-hop (/ max-out-hop min-exp-amt))
+	 (max-len (inexact->exact (ceiling (* (mus-srate) (+ (max max-out-hop max-in-hop) max-seg-len)))))
+	 (ampe (make-env :envelope (or ampenv (list 0 0 .5 1 1 0)) :scaler amp :duration dur))
+	 (exA (make-granulate :expansion initial-exp-amt
+			      :max-size max-len
+			      :ramp initial-ramp-time 
+			      :hop initial-out-hop
+			      :length initial-seg-len 
+			      :scaler scaler-amp))
+	 (ex-samp 0.0)
+	 (next-samp 0.0)
+	 (vol (env ampe))
+	 (valA0 (* vol (granulate exA (lambda (dir) (readin f0)))))
+	 (valA1 (* vol (granulate exA (lambda (dir) (readin f0))))))
+    (if (or (<= (min-envelope rampdata) 0.0)
+	    (>= (max-envelope rampdata) 0.5))
+	(snd-warning (format #f "ramp argument to expsnd must always be between 0.0 and 0.5: ~A" ramp))
+	(run
+	 (lambda ()
+	   (do ((i st (1+ i)))
+	       ((= i nd))
+	     (if (c-g?) (set! i (1- nd)))
+	     (let* ((expa (env expenv)) ;current expansion amount
+		    (segl (env lenenv)) ;current segment length
+		    (resa (env srenv)) ;current resampling increment
+		    (rmpl (env rampenv)) ;current ramp length (0 to .5)
+		    (hp (env hopenv)) ;current hop size
+		    ;; now we set the granulate generator internal state to reflect all these envelopes
+		    (sl (inexact->exact (floor (* segl (mus-srate)))))
+		    (rl (inexact->exact (floor (* rmpl sl)))))
+	       (set! vol (env ampe))
+	       (set! (mus-length exA) sl)
+	       (set! (mus-ramp exA) rl)
+	       (set! (mus-frequency exA) hp)
+	       (set! (mus-increment exA) expa)
+	       (set! next-samp (+ next-samp resa))
+	       (if (> next-samp (1+ ex-samp))
+		   (let ((samps (inexact->exact (floor (- next-samp ex-samp)))))
+		     (do ((k 0 (1+ k)))
+			 ((= k samps))
+		       (set! valA0 valA1)
+		       (set! valA1 (* vol (granulate exA (lambda (dir) (readin f0)))))
+		       (set! ex-samp (1+ ex-samp)))))
+	       (if (= next-samp ex-samp)
+		   (outa i valA0 *output*)
+		   (outa i (+ valA0 (* (- next-samp ex-samp) (- valA1 valA0))) *output*)))))))))
+
+;;; (with-sound () (exp-snd "fyow.snd" 0 3 1 '(0 1 1 3) 0.4 .15 '(0 2 1 .5) 0.05))
+;;; (with-sound () (exp-snd "oboe.snd" 0 3 1 '(0 1 1 3) 0.4 .15 '(0 2 1 .5) 0.2))

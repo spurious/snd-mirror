@@ -73,6 +73,7 @@
  *       (define hi 3.0)
  *       (let ((hi 0.0)) (every-sample? (lambda (y) (> hi 1.0))))
  *       -> probably when func-as-arg is expanded, we should search its env (closure) -- is this accessible?
+ * TODO: if clm gen is #f (mono/stereo etc), mus-* should still be optimizable [parsable]
  *
  * LIMITATIONS: <insert anxious lucubration here about DSP context and so on>
  *      variables can have only one type, the type has to be ascertainable somehow (similarly for vector elements)

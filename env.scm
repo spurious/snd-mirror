@@ -5,7 +5,7 @@
 ;;; map-envelopes (func env1 env2) maps func over the breakpoints in env1 and env2 returning a new envelope
 ;;;   multiply-envelopes (env1 env2) multiplies break-points of env1 and env2 returning a new envelope
 ;;;   add-envelopes (env1 env2) adds break-points of env1 and env2 returning a new envelope
-;;; max-envelope (env) -> max y value in env
+;;; max-envelope (env) -> max y value in env, min-envelope
 ;;; integrate-envelope (env) -> area under env
 ;;; envelope-last-x (env) -> max x axis break point position
 ;;; stretch-envelope env old-attack new-attack #:optional old-decay new-decay -> divseg-like envelope mangler
@@ -139,8 +139,19 @@ envelope: (multiply-envelopes '(0 0 2 .5) '(0 0 1 2 2 1)) -> '(0 0 0.5 0.5 1.0 0
   (define (max-envelope-1 e mx)
     (if (null? e)
 	mx
-	(max-envelope-1 (cddr e) (max mx (abs (cadr e))))))
-  (max-envelope-1 env 0.0))
+	(max-envelope-1 (cddr e) (max mx (cadr e)))))
+  (max-envelope-1 (cddr env) (cadr env)))
+
+
+;;; -------- min-envelope
+
+(define (min-envelope env)
+  "(min-envelope env) -> min y value in env"
+  (define (min-envelope-1 e mx)
+    (if (null? e)
+	mx
+	(min-envelope-1 (cddr e) (min mx (cadr e)))))
+  (min-envelope-1 (cddr env) (cadr env)))
 
 
 ;;; -------- integrate-envelope

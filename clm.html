@@ -500,7 +500,7 @@ discussion of fm.</p>
 <table border>
 <tr><td colspan=2><center>env methods</center></td></tr>
 <tr><td><em class=gen>mus-location</em></td><td>call counter value (number of calls so far on <i>env</i>)</td></tr>
-<tr><td><em class=gen>mus-increment</em></td><td>base value</td></tr>
+<tr><td><em class=gen>mus-increment</em></td><td>base value (no setf)</td></tr>
 <tr><td><em class=gen>mus-data</em></td><td>original breakpoint list</td></tr>
 <tr><td><em class=gen>mus-scaler</em></td><td>original scaler</td></tr>
 <tr><td><em class=gen>mus-offset</em></td><td>original offset</td></tr>
@@ -1336,7 +1336,10 @@ delay line. </p>
 <p><b>Comb</b> is a delay line with a scaler on the feedback term.  <b>Notch</b>
 is a delay line with a scaler on the feedforward term.
 <i>Size</i> is the length
-in samples of the delay line. </p>
+in samples of the delay line. 
+If <i>max-size</i> is different from <i>size</i>, you get an interpolating delay line; otherwise
+the <i>pm</i> argument to the generator is ignored in some cases (in Scheme and Ruby, not in Common Lisp).
+</p>
 
 <table border align=left hspace=20>
 <tr><td colspan=2><center>comb and notch methods</center></td></tr>

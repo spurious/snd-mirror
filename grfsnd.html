@@ -1186,6 +1186,7 @@ See test 23 in snd-test.scm for example calls.
 <tr><td>clarinet</td><td>prc95.scm</td><td>clarinet pysical model</td></tr>
 <tr><td>drone, canter</td><td>clm-ins.scm</td><td>Peter Common's bagpipe</td></tr>
 <tr><td>flute</td><td>prc95.scm</td><td>flute pysical model</td></tr>
+<tr><td>exp-snd</td><td>clm-ins.scm</td><td>granular synthesis to the max</td></tr>
 <tr><td>fm-bell</td><td>clm-ins.scm, examp.rb</td><td>Mike McNabb's FM bell</td></tr>
 <tr><td>fm-drum</td><td>clm-ins.scm</td><td>Jan Mattox's FM dum</td></tr>
 <tr><td>fm-insect</td><td>clm-ins.scm</td><td>FM insect (katydid)</td></tr>
@@ -1203,6 +1204,7 @@ See test 23 in snd-test.scm for example calls.
 <tr><td>metal</td><td>clm-ins.scm</td><td>more FM by Perry</td></tr>
 <tr><td>nrev</td><td>clm-ins.scm</td><td>Mike McNabb's reverb</td></tr>
 <tr><td>p</td><td>piano.scm, piano.rb</td><td>Scott van Duyne's piano physical model</td></tr>
+<tr><td>pins</td><td>clm-ins.scm</td><td>Xavier Serra SMS-style spectral modeling</td></tr>
 <tr><td>pluck</td><td>clm-ins.scm</td><td>David Jaffe's Karplus-Strong (physical model) plucked string</td></tr>
 <tr><td>plucky</td><td>prc95.scm</td><td>plucked string pysical model</td></tr>
 <tr><td>pqw-vox</td><td>clm-ins.scm</td><td>vocal sounds from phase-quadrature waveshaping</td></tr>
@@ -1210,6 +1212,7 @@ See test 23 in snd-test.scm for example calls.
 <tr><td>resflt</td><td>clm-ins.scm</td><td>two-poles for resonances (Xavier Serra)</td></tr>
 <tr><td>reson</td><td>clm-ins.scm</td><td>parallel FM creating resonances</td></tr>
 <tr><td>rhodey, wurley, hammondoid</td><td>clm-ins.scm</td><td>FM stuff from Perry Cook</td></tr>
+<tr><td>scratch</td><td>clm-ins.scm</td><td>move around in sound via list of turn points and src</td></tr>
 <tr><td>scm-simp</td><td>clm.html</td><td>simple sine wave example instrument</td></tr>
 <tr><td>singer</td><td>singer.scm</td><td>Perry Cook's vocal tract physical model</td></tr>
 <tr><td>spectra</td><td>clm-ins.scm</td><td>simple additive synthesis</td></tr>
@@ -1218,6 +1221,7 @@ See test 23 in snd-test.scm for example calls.
 <tr><td>tubebell</td><td>clm-ins.scm</td><td>Perry Cook's FM tubular bell</td></tr>
 <tr><td>two-tab</td><td>clm-ins.scm</td><td>interpolate between two spectra</td></tr>
 <tr><td>vox</td><td>clm-ins.scm</td><td>voice using "leapfrog" FM-generated formants</td></tr>
+<tr><td>zc, zn, za</td><td>clm-ins.scm</td><td>interpolating delay effects</td></tr>
 </table>
 <br><br>
 
@@ -1237,17 +1241,13 @@ is limited to functions that aren't already built into Snd/CLM.
      brighten-slightly chorus flanger chordalize zero-phase(etc) vibro/ringmod fp sum-of-cos exs
 
 add:
-scratch
-zd.ins:definstrument zc 
-zd.ins:definstrument zn 
 zipper
 cross
 expfil.ins:definstrument expfil 
 expins.ins:definstrument expins 
 expsrc.ins:definstrument expsrc1
 expsrc.ins:definstrument interleave-files 
-
-pins/grani
+grani
 -->
 </table>
 

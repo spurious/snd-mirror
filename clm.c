@@ -657,8 +657,8 @@ Float mus_array_interp(Float *wave, Float phase, int size)
       if (phase < 0.0) phase += size;
     }
   int_part = (int)floor(phase);
-  if (int_part == size) int_part = 0; /* this can actually happen! */
   frac_part = phase - int_part;
+  if (int_part == size) int_part = 0; /* this can actually happen! */
   if (frac_part == 0.0) 
     return(wave[int_part]);
   else
@@ -874,7 +874,7 @@ static mus_any_class SUM_OF_COSINES_CLASS = {
   &sum_of_cosines_equalp,
   0, 0, /* data */
   &sum_of_cosines_cosines,
-  0,
+  &set_sum_of_cosines_cosines,
   &sum_of_cosines_freq,
   &set_sum_of_cosines_freq,
   &sum_of_cosines_phase,
@@ -1112,6 +1112,7 @@ static int delay_equalp(mus_any *p1, mus_any *p2)
 }
 
 static int delay_length(mus_any *ptr) {return(((dly *)ptr)->size);}
+static int set_delay_length(mus_any *ptr, int val) {((dly *)ptr)->size = val; return(val);}
 static Float *delay_data(mus_any *ptr) {return(((dly *)ptr)->line);}
 static Float delay_scaler(mus_any *ptr) {return(((dly *)ptr)->xscl);}
 static Float set_delay_scaler(mus_any *ptr, Float val) {((dly *)ptr)->xscl = val; return(val);}
@@ -1141,7 +1142,7 @@ static mus_any_class DELAY_CLASS = {
   &delay_data,
   &delay_set_data,
   &delay_length,
-  0,
+  &set_delay_length,
   0, 0, 0, 0, 0, 0, /* freq phase scaler */
   0, 0,
   &mus_delay,
@@ -1182,7 +1183,14 @@ Float mus_comb(mus_any *ptr, Float input, Float pm)
 {
   dly *gen = (dly *)ptr;
   if (gen->zdly)
-    return(mus_delay(ptr, input + (gen->yscl * mus_tap(ptr, pm)), pm));
+    return(mus_delay(ptr, input + (gen->yscl * mus_tap(ptr, pm)), pm)); 
+  /* mus.lisp has 0 in place of the final pm -- the question is whether the delay
+     should interpolate as well as the tap.  There is a subtle difference in
+     output (the pm case is low-passed by the interpolation ("average"),
+     but I don't know if there's a standard here, or what people expect.
+     We're doing the outer-level interpolation in notch and all-pass.
+     Should mus.lisp be changed?
+  */
   else return(mus_delay(ptr, input + (gen->line[gen->loc] * gen->yscl), 0.0));
 }
 
@@ -1202,7 +1210,7 @@ static mus_any_class COMB_CLASS = {
   &delay_data,
   &delay_set_data,
   &delay_length,
-  0,
+  &set_delay_length,
   0, 0, 0, 0, /* freq phase */
   &delay_scaler,
   &set_delay_scaler,
@@ -1240,7 +1248,7 @@ static mus_any_class NOTCH_CLASS = {
   &delay_data,
   &delay_set_data,
   &delay_length,
-  0,
+  &set_delay_length,
   0, 0, 0, 0, /* freq phase */
   &delay_scaler,
   &set_delay_scaler,
@@ -1283,7 +1291,7 @@ Float mus_all_pass(mus_any *ptr, Float input, Float pm)
   Float din;
   dly *gen = (dly *)ptr;
   if (gen->zdly)
-    din = mus_delay(ptr, input + (gen->yscl * mus_tap(ptr, pm)), pm);
+    din = input + (gen->yscl * mus_tap(ptr, pm));
   else din = input + (gen->yscl * gen->line[gen->loc]);
   return(mus_delay(ptr, din, pm) + (gen->xscl * din));
 }
@@ -1308,7 +1316,7 @@ static mus_any_class ALL_PASS_CLASS = {
   &delay_data,
   &delay_set_data,
   &delay_length,
-  0,
+  &set_delay_length,
   0, 0, 0, 0, /* freq phase */
   &delay_scaler,
   &set_delay_scaler,
@@ -2787,6 +2795,8 @@ int mus_filter_p (mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_FILTE
 int mus_fir_filter_p (mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_FIR_FILTER));}
 int mus_iir_filter_p (mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_IIR_FILTER));}
 static Float *filter_data(mus_any *ptr) {return(((flt *)ptr)->state);}
+static int filter_length(mus_any *ptr) {return(((flt *)ptr)->order);}
+static int set_filter_length(mus_any *ptr, int val) {((flt *)ptr)->order = val; return(val);}
 
 static int free_filter(mus_any *ptr)
 {
@@ -2798,8 +2808,6 @@ static int free_filter(mus_any *ptr)
     }
   return(0);
 }
-
-static int filter_length(mus_any *ptr) {return(((flt *)ptr)->order);}
 
 static int filter_equalp(mus_any *p1, mus_any *p2) 
 {
@@ -2840,7 +2848,7 @@ static mus_any_class FILTER_CLASS = {
   &filter_equalp,
   &filter_data, 0,
   &filter_length,
-  0,
+  &set_filter_length,
   0, 0, 0, 0,
   0, 0,
   0, 0,
@@ -2860,7 +2868,7 @@ static mus_any_class FIR_FILTER_CLASS = {
   &filter_equalp,
   &filter_data, 0,
   &filter_length,
-  0,
+  &set_filter_length,
   0, 0, 0, 0,
   0, 0,
   0, 0,
@@ -2880,7 +2888,7 @@ static mus_any_class IIR_FILTER_CLASS = {
   &filter_equalp,
   &filter_data, 0,
   &filter_length,
-  0,
+  &set_filter_length,
   0, 0, 0, 0,
   0, 0,
   0, 0,
@@ -6070,8 +6078,8 @@ static int grn_set_length(mus_any *ptr, int val)
 }
 static Float grn_scaler(mus_any *ptr) {return(((grn_info *)ptr)->amp);}
 static Float grn_set_scaler(mus_any *ptr, Float val) {((grn_info *)ptr)->amp = val; return(val);}
-static Float grn_frequency(mus_any *ptr) {return((Float)sampling_rate / ((Float)((grn_info *)ptr)->output_hop));}
-static Float grn_set_frequency(mus_any *ptr, Float val) {((grn_info *)ptr)->output_hop = (int)((Float)sampling_rate / val); return(val);}
+static Float grn_frequency(mus_any *ptr) {return(((Float)((grn_info *)ptr)->output_hop) / (Float)sampling_rate);}
+static Float grn_set_frequency(mus_any *ptr, Float val) {((grn_info *)ptr)->output_hop = (int)((Float)sampling_rate * val); return(val);}
 static void *grn_environ(mus_any *rd) {return(((grn_info *)rd)->environ);}
 static Float grn_increment(mus_any *rd) {return(((Float)(((grn_info *)rd)->output_hop)) / ((Float)((grn_info *)rd)->input_hop));}
 static Float grn_set_increment(mus_any *rd, Float val) {((grn_info *)rd)->input_hop = (int)(((grn_info *)rd)->output_hop / val); return(val);}
