@@ -1,0 +1,81 @@
+CC = cc
+DEFS = -DHAVE_CONFIG_H
+CFLAGS = -g -O2
+LDFLAGS = 
+LIBS = 
+
+GUILE_LIBS = -L/usr/local/lib -lguile -lm -ldl
+XM_LIBS = -L/usr/local/lib -lguile -lm
+GUILE_CFLAGS = -I/usr/local/include
+GTK_CFLAGS = 
+GTK_LIBS = 
+MOTIF_LIBS =  -L/usr/X11R6/lib  -lSM -lICE /usr/X11R6/lib/libXm.a /usr/X11R6/lib/libXp.a /usr/X11R6/lib/libXt.a -lXext -lXpm -lX11
+MOTIF_FLAGS =  -I/usr/X11R6/include
+AUDIO_LIB = -framework CoreAudio -framework CoreFoundation -framework CoreMIDI
+XMHTML_LIB = 
+GTKHTML_LIB = 
+GTKHTML_FLAGS = 
+GSL_LIBS = -L/usr/local/lib -lgsl -lgslcblas -lm
+GSL_FLAGS = -I/usr/local/include
+GTKEXTRA_LIBS = 
+GTKEXTRA_FLAGS = 
+
+GX_HEADERS = $(SND_X_HEADERS)
+GX_FILES = $(X_O_FILES)
+
+LDSO_FLAGS = 
+SO_INSTALL = install
+SO_LD = ld
+A_LD = ld
+A_LD_FLAGS = 
+
+SHELL = /bin/sh
+top_srcdir = .
+DESTDIR =
+
+# this can't work in general -- any of the guile, gsl, motif, and gtk flags might be
+#   general (i.e. /usr/local/include) or specific (i.e. /usr/local/include/gtk-2.0)
+#   with older versions on the general area (gtk does this...).  We need a way to
+#   put the most specific first.
+
+.c.o:
+	$(CC) -c $(DEFS) $(GTK_CFLAGS) $(CFLAGS) $(GUILE_CFLAGS) $(MOTIF_FLAGS) $(GSL_FLAGS) $(GTKEXTRA_FLAGS) $(GTKHTML_FLAGS) $<
+
+include makesnd.files
+
+INSTALL = /usr/bin/install -c
+mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
+prefix = /usr/local
+exec_prefix = ${prefix}
+bindir = ${exec_prefix}/bin
+srcdir = .
+mandir = ${prefix}/man
+
+
+main_target: snd
+
+snd: $(SNDLIB_HEADERS) $(SND_HEADERS) $(GX_HEADERS) $(SNDLIB_O_FILES) $(O_FILES) $(GX_FILES)
+	$(CC) $(LDFLAGS) $(CFLAGS) $(SNDLIB_O_FILES) $(O_FILES) $(GX_FILES) -o snd $(GUILE_LIBS) $(GTK_LIBS) $(MOTIF_LIBS) $(AUDIO_LIB) $(GSL_LIBS) $(GTKEXTRA_LIBS) $(XMHTML_LIB) $(GTKHTML_LIB) $(LIBS)
+
+xm: 	$(GM_FILES) xen.h
+	$(SO_LD) $(GM_FILES) -o $(GM_SO_FILE) $(LDSO_FLAGS) $(XM_LIBS) $(MOTIF_LIBS) $(LIBS)
+
+xg: 	$(GG_FILES) xen.h
+	$(SO_LD) $(GG_FILES) -o $(GG_SO_FILE) $(LDSO_FLAGS) $(GTK_LIBS) $(LIBS)
+
+widget: snd_widget.o
+
+snd_widget.o: $(SNDLIB_HEADERS) $(SND_HEADERS) $(GX_HEADERS) $(SNDLIB_O_FILES) $(O_FILES) $(GX_FILES)
+	$(LD) -r $(LDFLAGS) $(CFLAGS) $(SNDLIB_O_FILES) $(O_FILES) $(GX_FILES) -o snd_widget.o
+
+include makesnd.back
+
+Makefile: Makefile.in config.status
+	./config.status
+
+config.status: configure
+	./config.status --recheck
+
+configure: configure.in
+	cd $(srcdir); autoconf
+
