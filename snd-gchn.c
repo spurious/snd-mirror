@@ -567,7 +567,7 @@ static const gint config_attributes[] = {
 };
 #endif
 
-int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, GtkWidget *main, int button_style, bool with_events)
+int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, GtkWidget *main, fw_button_t button_style, bool with_events)
 {
   GtkWidget **cw;
   GtkObject **adjs;

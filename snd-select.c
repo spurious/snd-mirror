@@ -628,8 +628,8 @@ int save_selection(char *ofile, int type, int format, int srate, const char *com
 	   * copy len*data-size bytes
 	   * get max from amp envs
 	   */
-	  off_t bytes;
-	  int fdi, iloc;
+	  off_t bytes, iloc;
+	  int fdi;
 	  char *buffer;
 	  lseek(ofd, oloc, SEEK_SET);
 	  fdi = mus_file_open_read(sp->filename);

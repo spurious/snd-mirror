@@ -719,7 +719,7 @@ void reflect_edit_counter_change(chan_info *cp)
 
 static void cp_graph_key_press(Widget w, XtPointer context, XEvent *event, Boolean *cont);
 
-int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Widget main, int button_style, bool with_events)
+int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Widget main, fw_button_t button_style, bool with_events)
 {
   Widget *cw;
   XtCallbackList n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14;

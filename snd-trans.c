@@ -77,7 +77,7 @@ static int be_snd_checked_write(int fd, unsigned char *buf, int bytes, const cha
       write_error_buffer[0] = '\0'; \
       return(MUS_ERROR); \
     } \
-  while (0)
+  while (false)
 
 #define RETURN_MUS_ALLOC_ERROR(OldName, Bytes, VariableName) \
   return(mus_error(MUS_MEMORY_ALLOCATION_FAILED, "translate %s: can't allocate %d bytes for %s", OldName, Bytes, VariableName))
@@ -89,7 +89,7 @@ static int be_snd_checked_write(int fd, unsigned char *buf, int bytes, const cha
       if (fd != -1) CLOSE(fd); \
       if (buf) FREE(buf); \
      } \
-  while (0)
+  while (false)
 
 #define STARTUP(OldName, NewName, BufSize, BufType) \
   do { \
@@ -108,7 +108,7 @@ static int be_snd_checked_write(int fd, unsigned char *buf, int bytes, const cha
         RETURN_MUS_ALLOC_ERROR(OldName, BufSize, "buf"); \
       } \
     } \
-  while (0)
+  while (false)
 
 
 

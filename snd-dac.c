@@ -378,7 +378,7 @@ static dac_info *make_dac_info(chan_info *cp, snd_fd *fd)
 	{
 	  sp->filter_control_changed = false;
 	  if (!(sp->filter_control_env)) 
-	    dp->filtering = 0;
+	    dp->filtering = false;
 	  else
 	    {
 	      data = sample_linear_env(sp->filter_control_env, sp->filter_control_order);

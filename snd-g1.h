@@ -281,7 +281,7 @@ bool fixup_cp_cgx_ax_wn(chan_info *cp);
 void reflect_edit_history_change(chan_info *cp);
 void reflect_edit_counter_change(chan_info *cp);
 gboolean graph_key_press(GtkWidget *w, GdkEventKey *event, gpointer data);
-int add_channel_window(snd_info *sound, int channel, int chan_y, int insertion, GtkWidget *main, int arrows, bool with_events);
+int add_channel_window(snd_info *sound, int channel, int chan_y, int insertion, GtkWidget *main, fw_button_t arrows, bool with_events);
 void set_peak_numbers_font(chan_info *cp);
 void set_bold_peak_numbers_font(chan_info *cp);
 void set_tiny_numbers_font(chan_info *cp);

@@ -138,6 +138,7 @@
 /* if nl_langinfo is available, its decimal point will override this */
 
 #define XOR(a, b) ((a) ^ (b))
+/* can't get used to this operator -- in the good old days, ^ meant exponentiation */
 
 #define UNPACK_SOUND(a) (a >> 16)
 #define UNPACK_CHANNEL(a) (a & 0xff)
@@ -161,8 +162,7 @@
 
 #define AMP_ENV_CUTOFF 50000
 
-#define FILE_SAVE_AS 1
-#define EDIT_SAVE_AS 2
+typedef enum {FILE_SAVE_AS, EDIT_SAVE_AS} save_dialog_t;
 
 #define DEFAULT_OUTPUT_CHANS 1
 #define DEFAULT_OUTPUT_SRATE 22050
@@ -180,11 +180,8 @@
 #define NOT_IN_BACKGROUND false
 #define IN_BACKGROUND true
 
-#define WITHOUT_VIRTUAL_CHANNELS 0
-#define WITH_VIRTUAL_CHANNELS 1
-
-#define WITH_ARROWS 1
-#define WITH_FW_BUTTONS 0
+typedef enum {WITHOUT_VIRTUAL_CHANNELS, WITH_VIRTUAL_CHANNELS} virtual_channels_t;
+typedef enum {WITH_FW_BUTTONS, WITH_ARROWS} fw_button_t;
 
 #ifndef POPUP_BUTTON
   #define POPUP_BUTTON 3
@@ -293,7 +290,7 @@ typedef enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_U
 #define DEFAULT_EXPAND_CONTROL_RAMP 0.4
 #define DEFAULT_FILTER_CONTROL_P false
 #define DEFAULT_FILTER_CONTROL_ORDER 20
-#define DEFAULT_FILTER_CONTROL_IN_DB 0
+#define DEFAULT_FILTER_CONTROL_IN_DB false
 #define DEFAULT_REVERB_CONTROL_P false
 #define DEFAULT_REVERB_CONTROL_FEEDBACK 1.09
 #define DEFAULT_REVERB_CONTROL_LENGTH 1.0
@@ -613,7 +610,7 @@ typedef enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_U
 
 #define show_selection_transform(ss) ss->Show_Selection_Transform
 #define in_set_show_selection_transform(a) ss->Show_Selection_Transform = a
-#define DEFAULT_SHOW_SELECTION_TRANSFORM 0
+#define DEFAULT_SHOW_SELECTION_TRANSFORM false
 
 #define with_mix_tags(ss) ss->With_Mix_Tags
 #define set_with_mix_tags(a) ss->With_Mix_Tags = a

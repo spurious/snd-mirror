@@ -336,8 +336,8 @@ void init_recorder(void)
   rp->mixer_gains = (Float *)CALLOC(MAX_MIXER_GAINS, sizeof(Float));
   rp->in_amps = (Float **)CALLOC(MAX_IN_CHANS, sizeof(Float *));
   for (i = 0; i < MAX_IN_CHANS; i++) rp->in_amps[i] = (Float *)CALLOC(MAX_OUT_CHANS, sizeof(Float));
-  rp->chan_in_active = (int *)CALLOC(MAX_IN_CHANS, sizeof(int));
-  rp->chan_out_active = (int *)CALLOC(MAX_OUT_CHANS, sizeof(int));
+  rp->chan_in_active = (bool *)CALLOC(MAX_IN_CHANS, sizeof(bool));
+  rp->chan_out_active = (bool *)CALLOC(MAX_OUT_CHANS, sizeof(bool));
 }
 
 bool record_in_progress(void)

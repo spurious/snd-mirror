@@ -95,8 +95,6 @@ void free_env_state(chan_info *cp)
     }
 }
 
-/* TODO: check this with large file and large region insertion -- does it hang? */
-
 static env_state *make_env_state(chan_info *cp, off_t samples)
 {
   int val, pos, i, j, start_bin, end_bin, old_end_bin;
@@ -161,7 +159,7 @@ static env_state *make_env_state(chan_info *cp, off_t samples)
 			  if (ep->data_max[i] > ep->fmax) ep->fmax = ep->data_max[i];
 			}
 		      ep->bin = start_bin;
-		      if (end != 0) /* TODO: why does this happen? */
+		      if (end != 0)
 			{
 			  old_end_bin = (int)(end / old_ep->samps_per_bin);
 			  end += (samples - old_samples);
@@ -1305,7 +1303,7 @@ void restore_controls(snd_info *sp)
       cs = (ctrl_state *)(sp->saved_controls);
       cs->amp = DEFAULT_AMP_CONTROL;
       cs->srate = DEFAULT_SPEED_CONTROL;
-      cs->direction = 0; /* 0 = forward, 1 = backward (this is the button's view) */
+      cs->direction = false; /* false = forward, true = backward (this is the button's view) */
       cs->expand = DEFAULT_EXPAND_CONTROL;
       cs->expand_on = DEFAULT_EXPAND_CONTROL_P;
       cs->revscl = DEFAULT_REVERB_CONTROL_SCALE;

@@ -338,12 +338,10 @@ static void file_open_dialog_delete(GtkWidget *w, GdkEvent *event, gpointer cont
 void make_open_file_dialog(bool read_only, bool managed)
 {
   if (!open_dialog)
-    {
-      open_dialog = make_file_dialog(read_only, _("File"), FILE_OPEN_DIALOG,
-				     (GtkSignalFunc)file_open_dialog_ok,				     
-				     (GtkSignalFunc)file_open_dialog_delete,
-				     (GtkSignalFunc)file_open_dialog_dismiss);
-    }
+    open_dialog = make_file_dialog(read_only, _("File"), FILE_OPEN_DIALOG,
+				   (GtkSignalFunc)file_open_dialog_ok,				     
+				   (GtkSignalFunc)file_open_dialog_delete,
+				   (GtkSignalFunc)file_open_dialog_dismiss);
   if (managed) gtk_widget_show(open_dialog->dialog);
 }
 
@@ -372,14 +370,12 @@ static void file_mix_ok_callback(GtkWidget *w, gpointer context)
 }
 
 void make_mix_file_dialog(bool managed)
-  {
+{
   if (mix_dialog == NULL)
-    {
-      mix_dialog = make_file_dialog(false, _("mix file:"), FILE_MIX_DIALOG,
-				    (GtkSignalFunc)file_mix_ok_callback,
-				    (GtkSignalFunc)file_mix_delete_callback,
-				    (GtkSignalFunc)file_mix_cancel_callback);
-    }
+    mix_dialog = make_file_dialog(false, _("mix file:"), FILE_MIX_DIALOG,
+				  (GtkSignalFunc)file_mix_ok_callback,
+				  (GtkSignalFunc)file_mix_delete_callback,
+				  (GtkSignalFunc)file_mix_cancel_callback);
   if (managed) gtk_widget_show(mix_dialog->dialog);
 }
 
@@ -535,7 +531,7 @@ file_data *make_file_data_panel(GtkWidget *parent, char *name,
 
 static file_data *save_as_file_data = NULL;
 static GtkWidget *save_as_dialog = NULL;
-static int save_as_dialog_type = FILE_SAVE_AS;
+static save_dialog_t save_as_dialog_type = FILE_SAVE_AS;
 static char *last_save_as_filename = NULL;
 
 static void save_as_ok_callback(GtkWidget *w, gpointer data)
@@ -582,7 +578,7 @@ static void save_as_delete_callback(GtkWidget *w, GdkEvent *event, gpointer cont
   gtk_widget_hide(save_as_dialog);
 }
 
-static void make_save_as_dialog(char *sound_name, int save_type, int header_type, int format_type)
+static void make_save_as_dialog(char *sound_name, int header_type, int format_type)
 {
   /* save old as new, close old, open new */
   GtkWidget *fbox;
@@ -625,9 +621,7 @@ void make_file_save_as_dialog(void)
   save_as_dialog_type = FILE_SAVE_AS;
   sp = any_selected_sound();
   if (sp) hdr = sp->hdr;
-  make_save_as_dialog(
-		      (char *)((sp) ? sp->short_filename : ""),
-		      FILE_SAVE_AS,
+  make_save_as_dialog((char *)((sp) ? sp->short_filename : ""),
 		      default_output_type(ss),
 		      default_output_format(ss));
   load_header_and_data_lists(save_as_file_data,
@@ -642,7 +636,7 @@ void make_file_save_as_dialog(void)
 void make_edit_save_as_dialog(void)
 {
   save_as_dialog_type = EDIT_SAVE_AS;
-  make_save_as_dialog(_("current selection"), EDIT_SAVE_AS, -1, -1);
+  make_save_as_dialog(_("current selection"), -1, -1);
   load_header_and_data_lists(save_as_file_data,
 			     save_as_file_data->current_type,
 			     save_as_file_data->current_format,

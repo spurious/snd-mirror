@@ -382,7 +382,7 @@ static bool move_mark_1(chan_info *cp, mark *mp, int x)
       if (watching_mouse) 
 	{
 	  cancel_mark_watch(cp); 
-	  redraw = 0;
+	  redraw = false;
 	}
     }
   mp->samp = (off_t)(ungrf_x(ap, nx) * SND_SRATE(cp->sound));

@@ -28,7 +28,7 @@
 #define AUDVAL_SIZE 64
 #define MAX_AUDIO_FIELD (MUS_AUDIO_DIRECTION + 1)
 
-#define DEFAULT_RECORDER_AUTOLOAD 0
+#define DEFAULT_RECORDER_AUTOLOAD false
 #define DEFAULT_RECORDER_FILE NULL
 #define DEFAULT_RECORDER_TRIGGER 0.0
 #define DEFAULT_RECORDER_MAX_DURATION 1000000.0
@@ -85,8 +85,8 @@ typedef struct {
   mus_sample_t *all_systems_input_buf;
   mus_sample_t *one_system_input_buf;
   int system_input_buffer_size;
-  int *chan_in_active;             /* overall_in_chans */
-  int *chan_out_active;            /* (file)_out_chans */
+  bool *chan_in_active;            /* overall_in_chans */
+  bool *chan_out_active;           /* (file)_out_chans */
   Float max_duration, trigger;
   int srate, in_format, output_data_format, out_chans, buffer_size, in_device;
   bool triggered, triggering, autoload;

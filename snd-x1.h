@@ -352,7 +352,7 @@ bool channel_unlock_pane(chan_info *cp, void *ptr);
 bool channel_lock_pane(chan_info *cp, void *ptr);
 void reflect_edit_history_change(chan_info *cp);
 void reflect_edit_counter_change(chan_info *cp);
-int add_channel_window(snd_info *sound, int channel, int chan_y, int insertion, Widget main, int arrows, bool with_events);
+int add_channel_window(snd_info *sound, int channel, int chan_y, int insertion, Widget main, fw_button_t arrows, bool with_events);
 void set_peak_numbers_font(chan_info *cp);
 void set_bold_peak_numbers_font(chan_info *cp);
 void set_tiny_numbers_font(chan_info *cp);

@@ -313,7 +313,7 @@ static void end_sgi_print(void)
     else MUS_STANDARD_ERROR(Error_Type, mus_error_to_string(Error_Type)); \
     end_sgi_print(); \
     return(MUS_ERROR); \
-  } while (0)
+  } while (false)
 
 
 #ifdef AL_RESOURCE
@@ -1487,7 +1487,7 @@ void mus_audio_restore (void)
                       mus_error_to_string(Message_Type), \
                       __FILE__, __LINE__, c__FUNCTION__); \
        return(MUS_ERROR); \
-     } while (0)
+     } while (false)
 
 static int FRAGMENTS = 4;
 static int FRAGMENT_SIZE = 12;
@@ -4842,7 +4842,7 @@ void mus_audio_sun_outputs(int speakers, int headphones, int line_out)
       {MUS_STANDARD_ERROR(Error_Type, Error_Message); FREE(Error_Message);} \
     else MUS_STANDARD_ERROR(Error_Type, mus_error_to_string(Error_Type)); \
     return(MUS_ERROR); \
-  } while (0)
+  } while (false)
 
 char *mus_audio_moniker(void) 
 {
@@ -6217,7 +6217,7 @@ static pascal void nextbuffer(SndChannelPtr cp, SndDoubleBufferPtr db)
       {MUS_STANDARD_ERROR(Error_Type, Error_Message); FREE(Error_Message);} \
     else MUS_STANDARD_ERROR(Error_Type, mus_error_to_string(Error_Type)); \
     return(MUS_ERROR); \
-  } while (0)
+  } while (false)
 
 int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size) 
 {
@@ -6679,7 +6679,7 @@ int mus_audio_initialize(void)
       {MUS_STANDARD_ERROR(Error_Type, Error_Message); FREE(Error_Message);} \
     else MUS_STANDARD_ERROR(Error_Type, mus_error_to_string(Error_Type)); \
     return(MUS_ERROR); \
-  } while (0)
+  } while (false)
 
 char *mus_audio_moniker(void) {return("HPUX audio");}
 
@@ -7134,7 +7134,7 @@ static void end_win_print(void)
     else MUS_STANDARD_ERROR(Error_Type, mus_error_to_string(Error_Type)); \
     end_win_print(); \
     return(MUS_ERROR); \
-  } while (0)
+  } while (false)
 
 int mus_audio_systems(void) 
 {
@@ -8854,7 +8854,7 @@ int mus_audio_api(void) {return(0);}
       {MUS_STANDARD_ERROR(Error_Type, Error_Message); FREE(Error_Message);} \
     else MUS_STANDARD_ERROR(Error_Type, mus_error_to_string(Error_Type)); \
     return(MUS_ERROR); \
-  } while (0)
+  } while (false)
 
 /* No we're laughing.  snd think's its talking to a real piece of hardware
    so it'll only try to open it once.  We can just use the socket numbers */

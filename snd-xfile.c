@@ -663,7 +663,7 @@ void alert_new_file(void)
 
 static file_data *save_as_file_data = NULL;
 static Widget save_as_dialog = NULL, file_save_as_file_name;
-static int save_as_dialog_type = FILE_SAVE_AS;
+static save_dialog_t save_as_dialog_type = FILE_SAVE_AS;
 
 static void save_as_ok_callback(Widget w, XtPointer context, XtPointer info)
 { 

@@ -674,7 +674,7 @@ void for_each_sound_chan(snd_info *sp, void (*func)(chan_info *));
 void for_each_sound(void (*func)(snd_info *, void *), void *userptr);
 bool map_over_separate_chans(bool (*func)(chan_info *, void *), void *userptr);
 bool snd_ok (snd_info *sp);
-int active_channels (int count_virtual_channels);
+int active_channels (virtual_channels_t count_virtual_channels);
 int find_free_sound_slot (int desired_chans);
 int find_free_sound_slot_for_channel_display (void);
 snd_info *selected_sound(void);
@@ -994,7 +994,7 @@ void dac_set_reverb_lowpass(snd_info *sp, Float newval);
 
 /* -------- snd-chn.c -------- */
 
-snd_info *make_simple_channel_display(int srate, int initial_length, int with_arrows, 
+snd_info *make_simple_channel_display(int srate, int initial_length, fw_button_t with_arrows, 
 				      graph_style_t grf_style, widget_t container, bool with_events);
 axis_info *lisp_info_axis(chan_info *cp);
 void *free_lisp_info(chan_info *cp);
@@ -1189,7 +1189,7 @@ void init_prevfiles(int size);
 void add_directory_to_prevlist(const char *dirname);
 void make_prevfiles_list_1(void);
 char **set_header_and_data_positions(file_data *fdat, int type, int format);
-int check_for_filename_collisions_and_save(snd_info *sp, char *str, int save_type, int srate, int type, int format, char *comment);
+int check_for_filename_collisions_and_save(snd_info *sp, char *str, save_dialog_t save_type, int srate, int type, int format, char *comment);
 void edit_header_callback(snd_info *sp, file_data *edit_header_data);
 void reflect_file_change_in_title(void);
 

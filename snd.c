@@ -67,14 +67,12 @@ static void mus_print2snd(char *msg)
   if (!(ignore_mus_error(MUS_NO_ERROR, msg)))
     if (msg)
       {
+	int i, len;
 	listener_append(";");
-	{
-	  int i, len;
-	  len = strlen(msg);
-	  for (i = 1; i < len - 1; i++)
-	    if ((msg[i] == '\n') && (msg[i + 1] == ' '))
-	      msg[i + 1] = ';';
-	}
+	len = strlen(msg);
+	for (i = 1; i < len - 1; i++)
+	  if ((msg[i] == '\n') && (msg[i + 1] == ' '))
+	    msg[i + 1] = ';';
 	if (msg[0] == '\n')
 	  listener_append((char *)(msg + 1));
 	else listener_append(msg);
@@ -289,7 +287,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->print_choice = PRINT_SND;
   ss->graph_hook_active = false;
   ss->lisp_graph_hook_active = false;
-  ss->just_time = 0;
+  ss->just_time = false;
   ss->error_lock = false;
   ss->deferred_regions = 0;
   init_recorder();

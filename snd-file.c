@@ -2051,7 +2051,7 @@ static bool check_for_same_name(snd_info *sp1, void *ur_info)
   return(false);
 }
 
-int check_for_filename_collisions_and_save(snd_info *sp, char *str, int save_type, int srate, int type, int format, char *comment)
+int check_for_filename_collisions_and_save(snd_info *sp, char *str, save_dialog_t save_type, int srate, int type, int format, char *comment)
 {
   /* only from save-as dialog where type/format are known to be writable */
   /* returns 0 if new file not opened, 1 if opened (same name as old), -1 if cancelled or error of some sort */

@@ -1088,7 +1088,8 @@ off_t mus_file_write_zeros(int tfd, off_t num)
 {
 #if (!USE_SND)
   off_t lim;
-  int err, curnum;
+  int err;
+  off_t curnum;
   io_fd *fd;
   char *charbuf = NULL;
   if (tfd == MUS_DAC_REVERB) return(0);

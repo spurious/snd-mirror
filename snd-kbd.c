@@ -252,7 +252,7 @@ static void set_keymap_entry(int key, int state, int args, XEN func, bool cx_ext
 		  user_keymap[i].key = 0; 
 		  user_keymap[i].state = 0; 
 		  user_keymap[i].func = XEN_UNDEFINED;
-		  user_keymap[i].cx_extended = 0;
+		  user_keymap[i].cx_extended = false;
 		  user_keymap[i].origin = NULL;
 		}
 	    }

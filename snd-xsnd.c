@@ -2521,7 +2521,6 @@ snd_info *add_sound_window(char *filename, bool read_only)
   if (!(ss->using_schemes)) map_over_children(SOUND_PANE(ss), color_sashes, NULL);
   if (!(auto_resize(ss))) equalize_all_panes(); 
 
-  /* TODO: if -horizontal, if no height setting, first sound gets no space, added sounds get no width */
   if (first_window)
     {
       /* try to get the pane height that shows everything except the filter graph (hidden for my amusement) */
@@ -2542,6 +2541,8 @@ snd_info *add_sound_window(char *filename, bool read_only)
 		      XmNpaneMaximum, LOTSA_PIXELS,
 		      NULL); /* locked above to force correct initial setup */
       reset_controls(sp);
+      if ((sound_style(ss) == SOUNDS_HORIZONTAL) && (ss->active_sounds > 0)) /* active_sounds off-by-one here */
+	equalize_all_panes();
     }
   else 
     {

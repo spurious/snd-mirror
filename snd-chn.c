@@ -1004,7 +1004,7 @@ static void display_selection_transform_size (chan_info *cp, axis_info *fap)
 }
 
 snd_info *make_simple_channel_display(int srate, int initial_length, 
-				      int with_arrows, graph_style_t grf_style, widget_t container, bool with_events)
+				      fw_button_t with_arrows, graph_style_t grf_style, widget_t container, bool with_events)
 {
   snd_info *sp;
   chan_info *cp;

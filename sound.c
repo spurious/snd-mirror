@@ -951,7 +951,7 @@ bool mus_sound_maxamp_exists(const char *ifile)
 off_t mus_sound_maxamps(const char *ifile, int chans, mus_sample_t *vals, off_t *times)
 {
   int ifd, ichans, chn, j;
-  unsigned int i, bufnum;
+  int i, bufnum;
   off_t n, frames, curframes;
   mus_sample_t abs_samp;
   mus_sample_t *buffer, *samp;

@@ -444,6 +444,8 @@ static Cessate startup_funcs(XtPointer context)
 	      (sp->selected_channel == NO_SELECTION)) /* don't clobber possible select-channel in loaded startup files */
 	    select_channel(sp, 0);
 	}
+      if ((ss->init_window_height == 0) && (sound_style(ss) == SOUNDS_HORIZONTAL))
+	set_widget_height(MAIN_SHELL(ss), 200); /* otherwise it's just a title bar! */
       if ((ss->active_sounds > 1) &&
 	  ((sound_style(ss) == SOUNDS_VERTICAL) || (sound_style(ss) == SOUNDS_HORIZONTAL)))
 	equalize_all_panes();
