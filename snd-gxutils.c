@@ -443,6 +443,22 @@ static XEN g_select_item(XEN wid, XEN pos)
   return(pos);
 }
 
+static XEN g_move_scale(XEN scale, XEN val)
+{
+#if USE_MOTIF
+  /* weird that Motif does not have a notify arg (or any equivalent anywhere) for XmScaleSetValue */
+  Widget scl;
+  XmScaleCallbackStruct *cbs;
+  cbs = CALLOC(1, sizeof(XmScaleCallbackStruct));
+  cbs->value = XEN_TO_C_INT(val);
+  cbs->event = CALLOC(1, sizeof(XEvent)); /* needed else freed mem troubles -- who is freeing these pointers? */
+  scl = (Widget)(XEN_UNWRAP_C_POINTER(scale));
+  XmScaleSetValue(scl, cbs->value);
+  XtCallCallbacks(scl, XmNvalueChangedCallback, (XtPointer)cbs);
+#endif
+  return(scale);
+}
+
 #endif
 
 
@@ -461,6 +477,7 @@ XEN_NARGIFY_1(g_x_synchronize_w, g_x_synchronize)
 XEN_NARGIFY_1(g_click_button_w, g_click_button)
 XEN_NARGIFY_2(g_resize_pane_w, g_resize_pane)
 XEN_NARGIFY_2(g_select_item_w, g_select_item)
+XEN_NARGIFY_2(g_move_scale_w, g_move_scale)
 #endif
 #else
 #define send_netscape_w send_netscape
@@ -477,6 +494,7 @@ XEN_NARGIFY_2(g_select_item_w, g_select_item)
 #define g_click_button_w g_click_button
 #define g_resize_pane_w g_resize_pane
 #define g_select_item_w g_select_item
+#define g_move_scale_w g_move_scale
 #endif
 #endif
 
@@ -496,6 +514,7 @@ void g_init_gxutils(void)
   XEN_DEFINE_PROCEDURE("click-button", g_click_button_w, 1, 0, 0, "");
   XEN_DEFINE_PROCEDURE("resize-pane", g_resize_pane_w, 2, 0, 0, "");
   XEN_DEFINE_PROCEDURE("select-item", g_select_item_w, 2, 0, 0, "");
+  XEN_DEFINE_PROCEDURE("move-scale", g_move_scale_w, 2, 0, 0, "");
 #if USE_MOTIF
   /* gtk version needs to sort out windows/click-events etc */
   XEN_YES_WE_HAVE("snd-events");

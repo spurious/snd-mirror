@@ -919,7 +919,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       XtSetArg(args[n], XmNvalue, 100 * fft_window_beta(ss)); n++;
       XtSetArg(args[n], XmNdragCallback, n1 = make_callback_list(beta_callback, (XtPointer)ss)); n++;
       XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(beta_callback, (XtPointer)ss)); n++;
-      window_beta_scale = XtCreateManagedWidget("scale", xmScaleWidgetClass, window_form, args, n);
+      window_beta_scale = XtCreateManagedWidget("beta-scale", xmScaleWidgetClass, window_form, args, n);
       XtAddCallback(window_beta_scale, XmNhelpCallback, beta_help_callback, ss);
 
       n = 0;

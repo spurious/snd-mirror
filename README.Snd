@@ -110,9 +110,6 @@ icons.  If the relevant makefile does not include -DXPM and you have
 the library, add -DXPM to CFLAGS and -lXpm to LIBS.  (This is built
 into Gtk+).  If you're using gtk, try to get version 1.2.7 or later.
 
-If you want bigger colormaps and have the requisite video memory,
-define WITH_BIG_COLORMAP (see snd.h).
-
 There are precompiled binaries available at the ccrma-ftp site
 mentioned above: linux-snd (or linux-snd.gz) for Linux
 on a PC; sun-snd for the Sun; also RPM (Redhat package management)

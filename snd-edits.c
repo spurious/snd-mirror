@@ -1,6 +1,5 @@
 #include "snd.h"
 
-
 /* from snd-io.c */
 MUS_SAMPLE_TYPE *file_state_channel_array(int *io, int chan);
 int file_state_buffer_size(int *io);
@@ -2986,7 +2985,7 @@ replacing current data with the function results; origin is the edit-history nam
   sf = TO_SAMPLE_READER(reader);
   cp = sf->cp;
   ss = cp->state;
-  if (XEN_BOUND_P(environ))
+  if ((XEN_BOUND_P(environ)) && (!(XEN_FALSE_P(environ))))
     {
       XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(environ), environ, XEN_ARG_5, S_loop_samples, "a wrapped object");
       envp = (void *)XEN_UNWRAP_C_POINTER(environ);
@@ -3042,7 +3041,7 @@ replacing current data with the function results; origin is the edit-history nam
   close_temp_file(ofd, hdr, num * datumb, sp);
   hdr = free_file_info(hdr);
   file_change_samples(sf->initial_samp, num, ofile, cp, 0, DELETE_ME, LOCK_MIXES, XEN_TO_C_STRING(origin), cp->edit_ctr);
-  update_graph(cp, NULL); /* is this needed? */
+  update_graph(cp, NULL);
   if (ofile) FREE(ofile);
   FREE(data[0]);
   FREE(data);

@@ -4004,6 +4004,7 @@ The following substitutions can be made:
 <a href="#sndinsertsilence">insert-silence</a> beg dur s c                      <a href="#padchannel">pad-channel</a> beg dur s c e
 <a href="#sndsrc">src-sound</a> num base s c e                        <a href="#srcchannel">src-channel</a> ratio-or-env-gen beg dur s c e
 <a href="#sndconvolvewith">convolve-with</a> file amp s c e                    <a href="#clmchannel">clm-channel</a> convolve-gen beg dur s c e
+<a href="#loopsamples">loop-samples</a> reader c-func dur origin ptr       <a href="#cchannel">c-channel</a> c-func beg dur s c e ptr
 </pre>
 </small>
 <p><small>An equivalent Scheme wrapper might be:</small></p>
@@ -4797,8 +4798,15 @@ The following substitutions can be made:
 <!-- -->the number of times to call that function, and a name for the editing 
 <!-- -->operation for the edit history list.  If <i>environ</i> is included, it
 <!-- -->is passed as the second (void *) argument to the function.  See grfsnd.html
-<!-- -->for examples of both forms.
+<!-- -->for examples of both forms.  The "regularized" version of this is:
 <!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(define* (<a name="cchannel">c-channel</a> func #:optional (beg 0) dur snd chn edpos call-data)
+  (let ((reader (make-sample-reader beg snd chn edpos))
+        (samps (or dur (frames snd chn edpos))))
+    (loop-samples reader func samps "c-channel" call-data)))
+<!-- --></pre></td></tr></table>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
@@ -6125,7 +6133,8 @@ The following substitutions can be made:
 <!-- --><span class=defbox><code><em class=def><a name="sndupdate">update-sound</a></em> (snd)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->update <i>snd</i> (re-reads data from disk, flushing any pending edits).
+<!-- -->update <i>snd</i> (re-reads data from disk, flushing any pending edits).  In some cases (primarily involving
+<!-- -->a change in the number of channels), update-sound can change the index of the sound referred to by 'snd'.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->

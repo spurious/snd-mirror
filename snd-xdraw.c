@@ -1390,4 +1390,3 @@ Widget start_orientation_dialog(snd_state *ss, int width, int height)
 		  NULL);
   return(oid->dialog);
 }
-

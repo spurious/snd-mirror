@@ -2445,6 +2445,7 @@ static int read_bicsf_header (int chan)
     {
     case 2: data_format = MUS_BSHORT; break;
     case 4: data_format = MUS_BFLOAT; break;
+    case 8: data_format = MUS_BDOUBLE; break;
     default: break;
     }
 
@@ -2554,6 +2555,11 @@ static int read_ircam_header (int chan)
     {
       if (little) data_format = MUS_L24INT;
       else data_format = MUS_B24INT;
+    }
+  else if (original_data_format == 8)
+    {
+      if (little) data_format = MUS_LDOUBLE;
+      else data_format = MUS_BDOUBLE;
     }
   srate = (int)big_or_little_endian_float((unsigned char *)(hdrbuf + 4), little);
   chans = big_or_little_endian_int((unsigned char *)(hdrbuf + 8), little);

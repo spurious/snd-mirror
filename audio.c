@@ -15,7 +15,7 @@
  *    HPUX
  *    W95/98
  *    AIX, NEC EWS, SONY NEWS, OS2, AF, NetBSD etc -- untested and incomplete
- *    Mac OS-X
+ *    Mac OSX
  *    ESD
  *    audio describers
  */
@@ -10144,16 +10144,104 @@ char *mus_audio_moniker(void) {return("OS2 audio");}
 
 /* and DEC using MMSYSTEM?? #include <mme/mmsystem.h> -- see xanim */
 
+
+
 /* ------------------------------- MAC_OSX ----------------------------------------- */
+
+/* this code under development (under protest...)
+ *    based on coreaudio.pdf, HAL/Daisy examples, portaudio pa_mac_core.c
+ */
 
 #ifdef MAC_OSX
 #define AUDIO_OK 1
 
-static void describe_audio_state_1(void) {pprint("audio stubbed out");}
-int mus_audio_open_output(int dev, int srate, int chans, int format, int size) {return(MUS_ERROR);}
+#include <CoreServices/CoreServices.h>
+#include <CoreAudio/CoreAudio.h>
+
+static void describe_audio_state_1(void) 
+{
+  OSStatus err = noErr;
+  UInt32 num_devices = 0, size = 0;
+  AudioDeviceID *devices = NULL;
+  err = AudioHardwareGetPropertyInfo(kAudioHardwarePropertyDevices, &size, NULL);	
+  if (err != noErr) return;
+  num_devices = size / sizeof(AudioDeviceID);
+  if (num_devices <= 0) return;
+  devices = MALLOC(size);
+  err = AudioHardwareGetProperty(kAudioHardwarePropertyDevices, &size, (void *)devices);	
+  if (err != noErr)
+    {
+      FREE(devices);
+      return;
+    }
+  
+}
+
+static AudioDeviceID device = kAudioDeviceUnknown;
+static AudioStreamBasicDescription format;
+static unsigned int bufsize;
+static int writing = 0;
+
+static OSStatus writer(AudioDeviceID inDevice, const AudioTimeStamp *inNow, 
+		       const void *InputData, const AudioTimeStamp *InputTime, 
+		       AudioBufferList *OutputData, 
+		       const AudioTimeStamp *OutputTime, void *appGlobals)
+{
+  /* from HAL example code */
+  /*  set bufsize samples in outOutputData->mBuffers[0].mData */
+  return(noErr);
+}
+
+int mus_audio_open_output(int dev, int srate, int chans, int format, int size) 
+{
+  OSStatus err = noErr;
+  UInt32 sizeof_device, sizeof_int, sizeof_format;
+  sizeof_device = sizeof(device);
+  err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultOutputDevice, &sizeof_device, (void *)(&device));
+  if (err != noErr) return(MUS_ERROR);
+  sizeof_int = sizeof(bufsize);
+  err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyBufferSize, &sizeof_int, &bufsize);
+  if (err != noErr) return(MUS_ERROR);
+  sizeof_format = sizeof(format);
+  err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyStreamFormat, &sizeof_format, &format);
+  if (err != noErr) return(MUS_ERROR);
+  return(MUS_NO_ERROR);
+}
+
+int mus_audio_write(int line, char *buf, int bytes) 
+{
+  OSStatus err = noErr;
+  if (writing == 0)
+    {
+      err = AudioDeviceAddIOProc(device, (AudioDeviceIOProc)writer, NULL);
+      if (err == noErr)
+	err = AudioDeviceStart(device, (AudioDeviceIOProc)writer);
+    }
+  if (err == noErr)
+    {
+      writing = 1;
+      return(MUS_NO_ERROR);
+    }
+  return(MUS_ERROR);
+}
+
+int mus_audio_close(int line) 
+{
+  OSStatus err = noErr;
+  if (writing)
+    {
+      err = AudioDeviceStop(device, (AudioDeviceIOProc)writer);
+      if (err == noErr) 
+	err = AudioDeviceRemoveIOProc(device, (AudioDeviceIOProc)writer);
+      writing = 0;
+    }
+  device = kAudioDeviceUnknown;
+  if (err == noErr)
+    return(MUS_NO_ERROR);
+  return(MUS_ERROR);
+}
+
 int mus_audio_open_input(int dev, int srate, int chans, int format, int size) {return(MUS_ERROR);}
-int mus_audio_write(int line, char *buf, int bytes) {return(MUS_ERROR);}
-int mus_audio_close(int line) {return(MUS_ERROR);}
 int mus_audio_read(int line, char *buf, int bytes) {return(MUS_ERROR);}
 int mus_audio_mixer_read(int dev, int field, int chan, float *val) {return(MUS_ERROR);}
 int mus_audio_mixer_write(int dev, int field, int chan, float *val) {return(MUS_ERROR);}
@@ -10163,6 +10251,7 @@ int mus_audio_initialize(void) {return(MUS_ERROR);}
 int mus_audio_systems(void) {return(0);}
 char *mus_audio_system_name(int system) {return("unknown");}
 void mus_audio_set_oss_buffers(int num, int size) {}
+
 char *mus_audio_moniker(void) {return("Mac OS-X audio");}
 #endif
 

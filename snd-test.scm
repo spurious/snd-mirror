@@ -12100,10 +12100,18 @@ EDITS: 3
 
 		;; ---------------- color dialog ----------------
 		(let* ((colord (|Widget (list-ref (dialog-widgets) 0)))
-		       (inv (find-child colord "invert")))
+		       (inv (find-child colord "invert"))
+		       (cut (find-child colord "cutoff"))
+		       (scl (find-child colord "ccdscl")))
 		  (|XtManageChild colord)
 		  (if (and inv (|Widget? inv))
 		      (begin
+			(move-scale (cadr cut) 32)
+			(if (fneq (color-cutoff) .032)
+			    (snd-display ";moved color-cutoff: ~A ~A" (color-cutoff) (|XmScaleGetValue cut)))
+			(move-scale (cadr scl) 32)
+			(if (fneq (color-scale) .647)
+			    (snd-display ";moved color-scale: ~A ~A" (color-scale) (|XmScaleGetValue scl)))
 			(|XmToggleButtonSetState inv #f #t)
 			(if (color-inverted)
 			    (snd-display ";toggle invert off"))
@@ -12121,8 +12129,43 @@ EDITS: 3
 
                 ;; ---------------- orientation dialog ----------------
 		(orientation-dialog)
-                (let* ((orientd (|Widget (list-ref (dialog-widgets) 1))))
+                (let* ((orientd (|Widget (list-ref (dialog-widgets) 1)))
+		       (cut (or (find-child orientd "cut") (snd-display ";can't find cut")))
+		       (ax (or (find-child orientd "ax") (snd-display ";can't find x angle")))
+		       (ay (or (find-child orientd "ay") (snd-display ";can't find y angle")))
+		       (az (or (find-child orientd "az") (snd-display ";can't find z angle")))
+		       (sx (or (find-child orientd "xs") (snd-display ";can't find x scale")))
+		       (sy (or (find-child orientd "ys") (snd-display ";can't find y scale")))
+		       (sz (or (find-child orientd "zs") (snd-display ";can't find z scale")))
+		       (hop (or (find-child orientd "hop") (snd-display ";can't find hop"))))
 		  (set! (spectro-x-scale) 2.0)
+		  (click-button (cadr (|XmMessageBoxGetChild orientd |XmDIALOG_OK_BUTTON))) (force-event)
+		  (if (fneq (spectro-x-scale) 1.0)
+		      (snd-display ";orientation reset: ~A" (spectro-x-scale)))
+		  (move-scale (cadr cut) 32)
+		  (if (fneq (spectro-cutoff) .32)
+		      (snd-display ";moved spectro-cutoff: ~A ~A" (spectro-cutoff) (|XmScaleGetValue cut)))
+		  (move-scale (cadr ax) 32)
+		  (if (fneq (spectro-x-angle) 32)
+		      (snd-display ";moved spectro-x-angle: ~A ~A" (spectro-x-angle) (|XmScaleGetValue ax)))
+		  (move-scale (cadr ay) 32)
+		  (if (fneq (spectro-y-angle) 32)
+		      (snd-display ";moved spectro-y-angle: ~A ~A" (spectro-y-angle) (|XmScaleGetValue ay)))
+		  (move-scale (cadr az) 32)
+		  (if (fneq (spectro-z-angle) 32)
+		      (snd-display ";moved spectro-z-angle: ~A ~A" (spectro-z-angle) (|XmScaleGetValue az)))
+		  (move-scale (cadr sx) 32)
+		  (if (fneq (spectro-x-scale) .32)
+		      (snd-display ";moved spectro-x-scale: ~A ~A" (spectro-x-scale) (|XmScaleGetValue sx)))
+		  (move-scale (cadr sy) 32)
+		  (if (fneq (spectro-y-scale) .32)
+		      (snd-display ";moved spectro-y-scale: ~A ~A" (spectro-y-scale) (|XmScaleGetValue sy)))
+		  (move-scale (cadr sz) 32)
+		  (if (fneq (spectro-z-scale) .32)
+		      (snd-display ";moved spectro-z-scale: ~A ~A" (spectro-z-scale) (|XmScaleGetValue sz)))
+		  (move-scale (cadr hop) 12)
+		  (if (fneq (spectro-hop) 12)
+		      (snd-display ";moved spectro-hop: ~A ~A" (spectro-hop) (|XmScaleGetValue hop)))
 		  (click-button (cadr (|XmMessageBoxGetChild orientd |XmDIALOG_OK_BUTTON))) (force-event)
 		  (if (fneq (spectro-x-scale) 1.0)
 		      (snd-display ";orientation reset: ~A" (spectro-x-scale)))
@@ -12184,7 +12227,8 @@ EDITS: 3
 		  (set! (with-background-processes) old-val))
 
 		;; ---------------- transform dialog ----------------
-		(let* ((transd (|Widget (list-ref (dialog-widgets) 5))))
+		(let* ((transd (|Widget (list-ref (dialog-widgets) 5)))
+		       (beta (find-child transd "beta-scale")))
 		  ;; push all the buttons
 		  (for-each (lambda (name check off2)
 			      (let ((button (find-child transd name)))
@@ -12212,6 +12256,9 @@ EDITS: 3
 				  show-selection-transform)
 			    (list #f #f #f #f #t #t
 				  #t #t #t))
+		  (move-scale (cadr beta) 32)
+		  (if (fneq (fft-window-beta) .32)
+		      (snd-display ";moved fft-beta: ~A ~A" (fft-window-beta) (|XmScaleGetValue beta)))
 		  ;; click all the lists
 		  (for-each (lambda (name check)
 			      (let ((lst (find-child transd name)))
@@ -12243,7 +12290,10 @@ EDITS: 3
 					(snd-display ";fft-window bartlett: ~A ~A" (fft-window) bartlett-window))
 				    (|XmListSelectPos w (+ kaiser-window 1) #t)
 				    (if (not (= (fft-window) kaiser-window))
-					(snd-display ";fft-window kaiser: ~A ~A" (fft-window) kaiser-window))))))
+					(snd-display ";fft-window kaiser: ~A ~A" (fft-window) kaiser-window)))))
+		  (click-button (cadr (|XmMessageBoxGetChild transd |XmDIALOG_OK_BUTTON))) (force-event)
+		  (if (|XtIsManaged transd)
+		      (snd-display ";why is transform dialog active?")))
 
 		;; ---------------- file:open dialog ----------------
                 (open-file-dialog)
@@ -12472,6 +12522,15 @@ EDITS: 3
 			(let ((rd (|Widget (list-ref (dialog-widgets) 9))))
 			  (click-button (cadr (|XmMessageBoxGetChild rd |XmDIALOG_CANCEL_BUTTON))) (force-event))))
 		  (set! (with-background-processes) old-val))
+
+		;; ---------------- file:new dialog ----------------
+		(let ((old-val (with-background-processes)))
+		  (set! (with-background-processes) 1234)
+		  (let ((newind (new-file-dialog)))
+		    (if (not (sound? newind)) 
+			(snd-display ";new file dialog: ~A" newind)
+			(close-sound newind)))
+		  (set (with-background-processes) old-val))
 
 		;; ---------------- file:mix dialog ----------------
                 (if (list-ref (dialog-widgets) 11)

@@ -2259,7 +2259,11 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
 
   load_header_and_data_lists(new_dialog_data, header_type, data_format, srate, chans, -1, comment);
   if (!(XtIsManaged(new_dialog))) XtManageChild(new_dialog);
-  while (XtIsManaged(new_dialog)) check_for_event(ss);
+  if (with_background_processes(ss) != 1234)
+    {
+      while (XtIsManaged(new_dialog)) check_for_event(ss);
+    }
+  else XtUnmanageChild(new_dialog);
   if (new_file_cancelled)
     return(NULL);
   else
@@ -2410,6 +2414,17 @@ XEN_ARGIFY_1(g_set_just_sounds_w, g_set_just_sounds)
 #define g_set_just_sounds_w g_set_just_sounds
 #endif
 
+#if DEBUGGING
+static XEN g_new_file_dialog(void)
+{
+  snd_info *sp;
+  sp = make_new_file_dialog(get_global_state(), "test.snd", MUS_NEXT, MUS_BSHORT, 22050, 1, " no comment");
+  if (sp)
+    return(C_TO_XEN_INT(sp->index));
+  return(XEN_FALSE);
+}
+#endif
+
 void g_initialize_xgfile(void)
 {
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_just_sounds, g_just_sounds_w, H_just_sounds,
@@ -2429,5 +2444,9 @@ See also nb.scm."
 
   XEN_DEFINE_HOOK(mouse_enter_label_hook, S_mouse_enter_label_hook, 3, H_mouse_enter_label_hook);
   XEN_DEFINE_HOOK(mouse_leave_label_hook, S_mouse_leave_label_hook, 3, H_mouse_leave_label_hook);
+
+#if DEBUGGING
+  XEN_DEFINE_PROCEDURE("new-file-dialog", g_new_file_dialog, 0, 0, 0, "internal testing function");
+#endif
 }
 
