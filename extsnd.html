@@ -139,7 +139,7 @@ various examples of and extensions to Snd can be found in:
 <tr><td><a href="sndscm.html#pvocdoc">pvoc.scm</a></td><td>phase-vocoder examples</td></tr>
 <tr><td><a href="sndscm.html#rgbdoc">rgb.scm</a></td><td>color definitions</td></tr>
 <tr><td><a href="sndscm.html#rubberdoc">rubber.scm</a></td><td>rubber-sound</td></tr>
-<tr><td><a href="sndscm.html#snd-gtkdoc">snd-gtk.scm</a></td><td>various Guile-Gtk examples</td></tr>
+<tr><td><a href="sndscm.html#sndgtkdoc">snd-gtk.scm</a></td><td>various Guile-Gtk examples</td></tr>
 <tr><td><a href="sndscm.html#vdoc">v.scm</a></td><td>fm-violin (from CLM)</td></tr>
 <tr><td><a href="sndscm.html#wsdoc">ws.scm</a></td><td>with-sound implementation</td></tr>
 <tr><td><a href="sndscm.html#zipdoc">zip.scm</a></td><td>the zipper (a cross-fader, sort of) (from CLM)</td></tr>
@@ -1782,7 +1782,7 @@ sets its value to val.
 
                                     (play-with-amps 0 1.0 0.5) ;plays channel 2 of stereo sound at half amplitude
 </small>
-                                  See also make-amp-controls in <a href="sndscm.html#snd-gtkdoc">sndgtk.scm</a>, and play-syncd-marks in <a href="sndscm.html#marksdoc">marks.scm</a>.
+                                  See also make-amp-controls in <a href="sndscm.html#sndgtkdoc">sndgtk.scm</a>, and play-syncd-marks in <a href="sndscm.html#marksdoc">marks.scm</a>.
 
   <b><a name="mapacrossallchans">map-across-all-chans</a></b> (func <i>start end edname</i>) 
                                   apply func to all open channels in parallel (see <a href="#scanning">Scanning Data</a>).
@@ -2842,7 +2842,7 @@ Error:
 
   <b><a name="menusensitive">menu-sensitive</a></b>        (top-menu label)
 </pre>
-<p>In addition, the hook <b><a name="mennuhook">menu-hook</a></b> is checked each time a menu item is selected;
+<p>In addition, the hook <b><a name="menuhook">menu-hook</a></b> is checked each time a menu item is selected;
 its entries should be functions of two arguments, the top menu name and the option
 selected (both as strings), and should return #f if it wants to override the default
 menu action.</p>

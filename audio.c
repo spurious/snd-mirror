@@ -8707,7 +8707,7 @@ static void describe_audio_state_1(void)
                               linecontrols.cbStruct = sizeof(MIXERLINECONTROLS);
                               linecontrols.dwLineID = mixline.dwLineID;
                               linecontrols.dwControlID = MIXER_GETLINECONTROLSF_ONEBYID;
-                              if (linecontrols.cControls > MAX_DESCRIBE_CONTROLS)
+                              if (mixline.cControls > MAX_DESCRIBE_CONTROLS)
                                 linecontrols.cControls = MAX_DESCRIBE_CONTROLS;
                               else linecontrols.cControls = mixline.cControls;
                               linecontrols.pamxctrl = mc;
