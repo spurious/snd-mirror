@@ -195,6 +195,7 @@ static void mus_print2snd(char *msg)
   ss->Eps_File = snd_strdup(DEFAULT_EPS_FILE);
   ss->Eps_Bottom_Margin = DEFAULT_EPS_BOTTOM_MARGIN;
   ss->Eps_Left_Margin = DEFAULT_EPS_LEFT_MARGIN;
+  ss->Eps_Size = DEFAULT_EPS_SIZE;
   ss->Listener_Prompt = snd_strdup(DEFAULT_LISTENER_PROMPT);
   ss->Audio_State_File = snd_strdup(AUDIO_STATE_FILE);
   ss->Show_Transform_Peaks = DEFAULT_SHOW_TRANSFORM_PEAKS;

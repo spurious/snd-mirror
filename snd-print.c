@@ -7,7 +7,7 @@
 /* create Postscript version of graph */
 
 static char *pbuf = NULL;
-static int bbx, bby, bx0, by0;
+static int bbx = 0, bby = 0, bx0 = 0, by0 = 0;
 static int ps_fd;
 
 static char *nbuf = NULL;
@@ -68,12 +68,9 @@ static int start_ps_graph(char *output, char *title)
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, "/LT {lineto} bind def\n/RF {rectfill} bind def\n/RG {setrgbcolor} bind def\n/NAF {newpath arc fill} bind def\n\n");
   ps_write(ps_fd, pbuf);
   ss = get_global_state();
-  if ((eps_left_margin(ss) != 0) || (eps_bottom_margin(ss) != 0))
-    {
-      mus_snprintf(pbuf, PRINT_BUFFER_SIZE, "gsave [1.00 0.00 0.00 1.00 %.3f %.3f] concat\n\n",
-		   eps_left_margin(ss), eps_bottom_margin(ss));
-      ps_write(ps_fd, pbuf);
-    }
+  mus_snprintf(pbuf, PRINT_BUFFER_SIZE, "gsave [%.3f 0.0 0.0 %.3f %.3f %.3f] concat\n\n",
+	       eps_size(ss), eps_size(ss), eps_left_margin(ss), eps_bottom_margin(ss));
+  ps_write(ps_fd, pbuf);
   return(0);
 }
 
@@ -310,7 +307,8 @@ void ps_draw_sono_rectangle(axis_info *ap, int color, Float x, Float y, Float wi
       mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " %.2f %.2f %.2f RG\n", (float)r / 65535.0, (float)g / 65535.0, (float)b / 65535.0);
       ps_write(ps_fd, pbuf);
     }
-  mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " %.1f %.1f %.2f %.2f RF\n", ps_grf_x(ap, x), ps_grf_y(ap, y), width, height);
+  if ((width > 0.0) && (height > 0.0))
+    mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " %.1f %.1f %.2f %.2f RF\n", ps_grf_x(ap, x) + 2, ps_grf_y(ap, y), width, height);
   ps_write(ps_fd, pbuf);
 }
 

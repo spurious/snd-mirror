@@ -1775,8 +1775,8 @@ static void make_sonogram(chan_info *cp, snd_info *sp, snd_state *ss)
 		  if (cp->printing)
 		    {
 		      if (cp->fft_log_frequency) 
-			ps_draw_sono_rectangle(fap, j, fap->x0 + xscl * slice, hfdata[i + 1], frectw, hfdata[i] - hfdata[i + 1]);
-		      else ps_draw_sono_rectangle(fap, j, fap->x0 + xscl * slice, hfdata[i + 1], frectw, frecth);
+			ps_draw_sono_rectangle(fap, j, fap->x0 + xscl * slice, hfdata[i + 1], frectw, hidata[i] - hidata[i + 1]);
+		      else ps_draw_sono_rectangle(fap, j, fap->x0 + xscl * slice, hfdata[i + 1], frectw, -frecth);
 		    }
 		  js[j]++;
 		}

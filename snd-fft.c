@@ -1120,10 +1120,10 @@ static int snd_fft_to_spectrum (fft_state *fs)
     {
       for (j = 0; j < fs->size; j += 2)
 	{
-	  if (fft_data[j]>val) 
+	  if (fft_data[j] > val) 
 	    val = fft_data[j];
 	  else
-	    if ((-fft_data[j] ) > val)
+	    if ((-fft_data[j]) > val)
 	      val = (-fft_data[j]);
 	}
       for (i = 0, j = 0; i < fs->size; j++, i += 2)
@@ -1482,10 +1482,10 @@ static int apply_fft_window(fft_state *fs)
 	{
 	  fht(p, fft_data);
 	  scaler = 1.0 / sqrt(2.0);
-	  fft_data[0] *= scaler;
-	  fft_data[fs->size / 2] *= scaler;
+	  fft_data[0] = scaler * fabs(fft_data[0]);
+	  fft_data[fs->size / 2] = scaler * fabs(fft_data[fs->size / 2]);
 	  for (i = 1, j = fs->size - 1; i < fs->size / 2; i++, j--) 
-	    fft_data[i] = scaler * sqrt((fft_data[i] * fft_data[i]) + (fft_data[j] * fft_data[j]));
+	    fft_data[i] = scaler * hypot(fft_data[i], fft_data[j]);
 	  result = 5;
 	}
       break;

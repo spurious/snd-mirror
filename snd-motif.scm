@@ -21,6 +21,8 @@
 ;;; (add-amp-controls) adds amp sliders to the control panel for multi-channel sounds
 ;;; (add-very-useful-icons) adds some very useful icons
 ;;; (remove-main-menu menu) removes a top-level menu
+;;; add delete and rename options to the file menu (add-delete-option) (add-rename-option)
+
 
 (use-modules (ice-9 common-list))
 
@@ -1896,6 +1898,110 @@ Reverb-feedback sets the scaler on the feedback.\n\
     (|XtUnmanageChild cascade)
     (|XtUnmanageChild top)))
 
+
+;;; -------- add delete and rename options to the file menu
+
+(define (add-delete-option)
+  (add-to-menu 0 "Delete" ; add Delete option to File menu
+	       (lambda ()
+		 ;; close current sound and delete it (after requesting confirmation)
+		 (if (>= (selected-sound) 0)
+		     (let ((filename (file-name)))
+		       (close-sound)
+		       (if (yes-or-no? (format #f "delete ~S?" filename))
+			   (delete-file filename)))))
+	       8)) ; place after File:New
+
+(define (add-rename-option)
+  (let ((rename-dialog #f)
+	(rename-text #f))
+    (add-to-menu 0 "Rename" 
+      (lambda ()
+	;; open dialog to get new name, save-as that name, open
+	(if (not rename-dialog)
+	    ;; make a standard dialog
+	    (let* ((xdismiss (|XmStringCreate "Dismiss" |XmFONTLIST_DEFAULT_TAG))
+		   (xhelp (|XmStringCreate "Help" |XmFONTLIST_DEFAULT_TAG))
+		   (xok (|XmStringCreate "DoIt" |XmFONTLIST_DEFAULT_TAG))
+		   (titlestr (|XmStringCreate "Rename" |XmFONTLIST_DEFAULT_TAG))
+		   (new-dialog (|XmCreateTemplateDialog
+				 (|Widget (cadr (main-widgets))) "Rename"
+				 (list |XmNcancelLabelString   xdismiss
+				       |XmNhelpLabelString     xhelp
+				       |XmNokLabelString       xok
+				       |XmNautoUnmanage        #f
+				       |XmNdialogTitle         titlestr
+				       |XmNresizePolicy        |XmRESIZE_GROW
+				       |XmNnoResize            #f
+				       |XmNbackground          (|Pixel (snd-pixel (basic-color)))
+				       |XmNtransient           #f))))
+	      (for-each
+	       (lambda (button)
+		 (|XtVaSetValues
+		   (|XmMessageBoxGetChild new-dialog button)
+		   (list |XmNarmColor   (|Pixel (snd-pixel (pushed-button-color)))
+			 |XmNbackground (|Pixel (snd-pixel (basic-color))))))
+	       (list |XmDIALOG_HELP_BUTTON |XmDIALOG_CANCEL_BUTTON |XmDIALOG_OK_BUTTON))
+    
+	      (|XtAddCallback new-dialog |XmNcancelCallback 
+			      (lambda (w c i) (|XtUnmanageChild w)))
+	      
+	      (|XtAddCallback new-dialog |XmNhelpCallback 
+			      (lambda (w c i)
+				(help-dialog "Rename" "give a new file name to rename the currently selected sound")))
+
+	      (|XtAddCallback new-dialog |XmNokCallback 
+			      (lambda (w c i)
+				(let ((new-name (|XmTextFieldGetString rename-text)))
+				  (if (and (string? new-name)
+					   (> (string-length new-name) 0)
+					   (>= (selected-sound) 0))
+				      (let ((current-name (file-name)))
+					(save-sound-as new-name)
+					(close-sound)
+					(rename-file current-name new-name)
+					(open-sound new-name)
+					(|XtUnmanageChild w))))))
+
+	      (|XmStringFree xhelp)
+	      (|XmStringFree xok)
+	      (|XmStringFree xdismiss)
+	      (|XmStringFree titlestr)
+	      (set! rename-dialog new-dialog)
+
+	      (let* ((mainform (|XtCreateManagedWidget "formd" |xmRowColumnWidgetClass rename-dialog
+				     (list |XmNleftAttachment      |XmATTACH_FORM
+					   |XmNrightAttachment     |XmATTACH_FORM
+					   |XmNtopAttachment       |XmATTACH_FORM
+					   |XmNbottomAttachment    |XmATTACH_WIDGET
+					   |XmNbottomWidget        (|XmMessageBoxGetChild rename-dialog |XmDIALOG_SEPARATOR)
+					   |XmNorientation         |XmVERTICAL
+					   |XmNbackground          (|Pixel (snd-pixel (basic-color))))))
+		     (label (|XtCreateManagedWidget "new name:" |xmLabelWidgetClass mainform
+				     (list |XmNleftAttachment      |XmATTACH_FORM
+					   |XmNrightAttachment     |XmATTACH_NONE
+					   |XmNtopAttachment       |XmATTACH_FORM
+					   |XmNbottomAttachment    |XmATTACH_FORM
+					   |XmNbackground          (|Pixel (snd-pixel (basic-color)))))))
+		(set! rename-text 
+		      (|XtCreateManagedWidget "newname" |xmTextFieldWidgetClass mainform
+				     (list |XmNleftAttachment      |XmATTACH_WIDGET
+					   |XmNleftWidget          label
+					   |XmNrightAttachment     |XmATTACH_FORM
+					   |XmNtopAttachment       |XmATTACH_FORM
+					   |XmNbottomAttachment    |XmATTACH_FORM
+					   |XmNbackground          (|Pixel (snd-pixel (basic-color))))))
+		(|XtAddEventHandler rename-text |EnterWindowMask #f
+				    (lambda (w context ev flag)
+				      (|XmProcessTraversal w |XmTRAVERSE_CURRENT)
+				      (|XtSetValues w (list |XmNbackground (white-pixel)))))
+		(|XtAddEventHandler rename-text |LeaveWindowMask #f
+				    (lambda (w context ev flag)
+				      (|XtSetValues w (list |XmNbackground (|Pixel (snd-pixel (basic-color))))))))))
+	(if (not (|XtIsManaged rename-dialog))
+	    (|XtManageChild rename-dialog)
+	    (raise-dialog rename-dialog)))
+      8)))
 
 
 ;;; drawnbutton+workproc sound-button example

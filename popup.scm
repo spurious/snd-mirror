@@ -264,6 +264,31 @@
 			(if (= (header-type snd) mus-soundfont)
 			    (format #f "  sounds: ~:{~%     ~S start: ~A, loop: ~A ~A~}" (soundfont-info))
 			    ""))))))
+      (list "Add mark"           |xmPushButtonWidgetClass every-menu 
+	    (lambda (w c i)
+	      (add-mark (cursor graph-popup-snd graph-popup-chn) graph-popup-snd graph-popup-chn)))
+      (list "Delete mark"        |xmPushButtonWidgetClass every-menu 
+	    (lambda (w c i)
+	      ;; find mark closest to cursor and delete it
+	      (let* ((ms (marks graph-popup-snd graph-popup-chn))
+		     (id (if (null? ms)
+			     #f
+			     (if (= (length ms) 1)
+				 (car ms)
+				 (let ((loc (cursor)))
+				   (define (find-closest-mark lst cur-min cur-id)
+				     (if (null? lst)
+					 cur-id
+					 (let* ((this-id (car lst))
+						(this-min (abs (- loc (mark-sample this-id)))))
+					   (if (< this-min cur-min)
+					       (find-closest-mark (cdr lst) this-min this-id)
+					       (find-closest-mark (cdr lst) cur-min cur-id)))))
+				   (find-closest-mark (cdr ms) 
+						      (abs (- loc (mark-sample (car ms)))) 
+						      (car ms)))))))
+		(if id
+		    (delete-mark id)))))
       (list "sep"                |xmSeparatorWidgetClass  every-menu)
       (list "Exit"               |xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
@@ -300,7 +325,9 @@
 				 (if (string=? name "Play from cursor")
 				     ((if (> (cursor snd chn) 0) |XtManageChild |XtUnmanageChild) w)
 				     (if (string=? name "Play original")
-					 ((if (> (car eds) 1) |XtManageChild |XtUnmanageChild) w))))))))))))))
+					 ((if (> (car eds) 1) |XtManageChild |XtUnmanageChild) w)
+					 (if (string=? name "Delete mark")
+					     ((if (null? (marks snd chn)) |XtUnmanageChild |XtManageChild) w)))))))))))))))
 
 
 ;;; -------- fft popup (easier to access than Options:Transform)
@@ -319,6 +346,18 @@
 	  (|XtAddCallback top-cascade |XmNcascadingCallback 
             (lambda (w c i)
               (cascade-func children))))))
+
+(define (edit-fft-popup-menu snd chn)
+  (for-each-child
+   fft-popup-menu
+   (lambda (w)
+     (let ((name (|XtName w)))
+       (if (string=? name "Peaks")
+	   (change-label w (if (show-transform-peaks snd chn) "No peaks" "Peaks"))
+	   (if (string=? name "dB")
+	       (change-label w (if (fft-log-magnitude snd chn) "Linear" "dB"))
+	       (if (string=? name "Log freq")
+		   (change-label w (if (fft-log-frequency snd chn) "Linear freq" "Log freq")))))))))
 
 (define fft-popup-menu 
   ;; used within graph if pointer is in the fft graph
@@ -487,7 +526,9 @@
 				(>= xe (list-ref fax 10))
 				(<= xe (list-ref fax 12)))
 			   ;; in fft
-			   (set! (|menuToPost info) fft-popup-menu)
+			   (begin
+			     (edit-fft-popup-menu snd chn)
+			     (set! (|menuToPost info) fft-popup-menu))
 			   
 			   (if (and lax
 				    (>= xe (list-ref lax 10))

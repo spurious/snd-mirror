@@ -426,6 +426,9 @@
       (set! (eps-left-margin) (eps-left-margin))
       (if (fneq (eps-left-margin)  0.0)
 	  (snd-display ";eps-left-margin set def: ~A" (eps-left-margin)))
+      (set! (eps-size) (eps-size))
+      (if (fneq (eps-size)  1.0)
+	  (snd-display ";eps-size set def: ~A" (eps-size)))
       (set! (fft-window-beta) (fft-window-beta))
       (if (fneq (fft-window-beta)  0.0 )
 	  (snd-display ";fft-window-beta set def: ~A" (fft-window-beta)))
@@ -701,6 +704,7 @@
 	'eps-file (eps-file) "snd.eps" 
 	'eps-bottom-margin (eps-bottom-margin) 0.0
 	'eps-left-margin (eps-left-margin) 0.0
+	'eps-size (eps-size) 1.0
 	'expand-control (without-errors (expand-control)) 'no-such-sound
 	'expand-control-hop (without-errors (expand-control-hop)) 'no-such-sound
 	'expand-control-length (without-errors (expand-control-length)) 'no-such-sound
@@ -1206,6 +1210,7 @@
 	  (list 'enved-wave? enved-wave? #f set-enved-wave? #t)
 	  (list 'eps-file eps-file "snd.eps" set-eps-file "snd-1.eps")
 	  (list 'eps-left-margin eps-left-margin 0.0 set-eps-left-margin 72.0)
+	  (list 'eps-size eps-size 1.0 set-eps-size 2.0)
 	  (list 'eps-bottom-margin eps-bottom-margin 0.0 set-eps-bottom-margin 36.0)
 	  (list 'expand-control expand-control 1.0 set-expand-control 2.0)
 	  (list 'expand-control-hop expand-control-hop 0.05 set-expand-control-hop 0.1)
@@ -2066,7 +2071,8 @@
 		  (set! line (read-line p))
 		  (set! line (read-line p))
 		  (if (or (not (string? line))
-			  (not (string=? "  86.132812  1.00000" line)))
+			  (and (not (string=? "  86.132812  1.00000" line))
+			       (not (string=? "  0.000000  1.00000" line)))) ; fht/fft disagreement about 0/1 (groan)
 		      (snd-display ";peaks 3: ~A?" line))
 		  (close-port p)
 		  (delete-file "tmp.peaks")))))
@@ -10395,7 +10401,7 @@ EDITS: 3
 	       delete-mark delete-marks forget-region delete-sample delete-samples delete-samples-with-origin delete-selection dialog-widgets
 	       dismiss-all-dialogs display-edits dot-size draw-dot draw-dots draw-line draw-lines draw-string edit-header-dialog edit-fragment edit-position
 	       edit-tree edits env-selection env-sound enved-active-env enved-base enved-clip? enved-in-dB enved-dialog enved-exp? enved-power
-	       enved-selected-env enved-target enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin expand-control
+	       enved-selected-env enved-target enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin eps-size expand-control
 	       expand-control-hop expand-control-length expand-control-ramp expand-control? fft fft-window-beta fft-log-frequency 
 	       fft-log-magnitude transform-size transform-graph-type fft-window graph-transform?
 	       fht file-dialog file-name fill-polygon fill-rectangle filter-sound filter-control-in-dB 
@@ -10476,7 +10482,7 @@ EDITS: 3
 		   cursor-size cursor-style dac-combines-channels dac-size data-clipped data-color 
 		   default-output-chans default-output-format default-output-srate
 		   default-output-type dot-size enved-active-env enved-base enved-clip? enved-in-dB enved-exp? enved-power enved-selected-env
-		   enved-target enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin 
+		   enved-target enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin eps-size
 		   expand-control expand-control-hop expand-control-length
 		   expand-control-ramp expand-control? fft-window-beta fft-log-frequency fft-log-magnitude 
 		   transform-size transform-graph-type fft-window graph-transform? filter-control-in-dB filter-control-env
@@ -11077,7 +11083,7 @@ EDITS: 3
 			  axis-label-font axis-numbers-font basic-color bind-key bold-button-font button-font channel-style color-cutoff color-dialog 
 			  color-inverted color-scale cursor-color dac-combines-channels dac-size data-clipped data-color default-output-chans default-output-format 
 			  default-output-srate default-output-type enved-active-env enved-base enved-clip? enved-in-dB enved-dialog enved-exp? 
-			  enved-power enved-selected-env enved-target enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin 
+			  enved-power enved-selected-env enved-target enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin eps-size
 			  foreground-color graph-color graph-cursor help-text-font highlight-color just-sounds key-binding listener-color 
 			  listener-font listener-prompt listener-text-color max-regions max-sounds minibuffer-history-length mix-waveform-height 
 			  region-graph-style movies position-color previous-files-sort print-length pushed-button-color recorder-in-device

@@ -330,7 +330,7 @@ typedef struct snd__state {
   char *Listener_Font, *Help_Text_Font, *Axis_Label_Font, *Axis_Numbers_Font, *Bold_Button_Font, *Button_Font, *Tiny_Font;
   int Verbose_Cursor, Show_Usage_Stats, Trap_Segfault;
   int Enved_Filter_Order, Filter_Env_In_Hz;  /* for spectral envelopes from the envelope editor */
-  Float Vu_Size, Vu_Font_Size, Eps_Left_Margin, Eps_Bottom_Margin;
+  Float Vu_Size, Vu_Font_Size, Eps_Left_Margin, Eps_Bottom_Margin, Eps_Size;
   char *Vu_Font;
   Float Spectro_X_Scale, Spectro_Y_Scale, Spectro_Z_Scale, Spectro_Z_Angle, Spectro_X_Angle, Spectro_Y_Angle, Spectro_Cutoff, Spectro_Start;
   int Default_Output_Type, Default_Output_Format, Default_Output_Chans, Default_Output_Srate;

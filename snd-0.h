@@ -461,6 +461,10 @@ enum {COLOR_POSITION, COLOR_ZOOM};
 #define set_eps_bottom_margin(ss, a) ss->Eps_Bottom_Margin = a
 #define DEFAULT_EPS_BOTTOM_MARGIN 0.0
 
+#define eps_size(ss) ss->Eps_Size
+#define set_eps_size(ss, a) ss->Eps_Size = a
+#define DEFAULT_EPS_SIZE 1.0
+
 #define help_text_font(ss) ss->Help_Text_Font
 #define in_set_help_text_font(ss, a) ss->Help_Text_Font = a
 

@@ -146,10 +146,8 @@ static void size_help_Callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_help_with_wrap((snd_state *)context,
 		     "FFT Size",
-"Any size FFT can be accommodated here, as long \
-as it will fit in memory somehow.  The larger \
-the FFT, the longer it takes to compute. \
-The size must be a power of 2.");
+"Any size FFT can be accommodated here, as long as it will fit in memory somehow.  The larger \
+the FFT, the longer it takes to compute. The size must be a power of 2.");
 }
 
 static void get_fft_window_data(snd_state *ss)
@@ -161,7 +159,7 @@ static void get_fft_window_data(snd_state *ss)
   memcpy((void *)current_graph_fftr, (void *)current_graph_data, GRAPH_SIZE * sizeof(Float));
   mus_spectrum(current_graph_fftr, current_graph_ffti, NULL, GRAPH_SIZE * 2, 0);
   for (i = 0; i < GRAPH_SIZE; i++)
-    current_graph_fftr[i] = (current_graph_fftr[i] + 80.0)/80.0;
+    current_graph_fftr[i] = (current_graph_fftr[i] + 80.0) / 80.0;
 }
 
 static int map_chans_transform_size(chan_info *cp, void *ptr) 
@@ -240,10 +238,8 @@ static void window_help_Callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_help_with_wrap((snd_state *)context,
 		     "FFT Window",
-"The FFT window names are taken from the article \
-of Harris that discusses most FFT windows \
-at great length.  The default window \
-is a second order Blackman window.");
+"The FFT window names are taken from the article of Harris that discusses most FFT windows \
+at great length.  The default window is a second order Blackman window.");
 }
 
 
@@ -395,10 +391,8 @@ static void beta_help_Callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_help_with_wrap((snd_state *)context,
 		     "FFT Window Parameter",
-"This scale sets the FFT window parameter \
-sometimes known as alpha or beta.  The \
-scale tries to provide access to 'normal' \
-values, given the current FFT window.");
+"This scale sets the FFT window parameter ometimes known as alpha or beta.  The \
+scale tries to provide access to 'normal' values, given the current FFT window.");
 } 
 
 static void beta_Callback(Widget w, XtPointer context, XtPointer info)
@@ -1064,7 +1058,7 @@ void set_fft_window_beta(snd_state *ss, Float val)
   map_chans_field(ss, FCP_BETA, val);
   if (transform_dialog) 
     {
-      XmScaleSetValue(window_beta_scale, (int)(100*val));
+      XmScaleSetValue(window_beta_scale, (int)(100 * val));
       get_fft_window_data(ss);
       graph_redisplay(ss);
     }

@@ -255,6 +255,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+4-Sep:   eps-size.\n\
 3-Sep:   mix-file-dialog.\n\
          optional position arg to add-to-menu.\n\
 1-Sep:   zero-phase, rotate-phase in dsp.scm (Scott McNab).\n\
@@ -955,6 +956,7 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_eps_bottom_margin "     0\n\
   " S_eps_file "              \"snd.eps\"\n\
   " S_eps_left_margin "       0\n\
+  " S_eps_size "              1\n\
   " S_fft_window_beta "       0.0 (snd #t) (chn #t)\n\
   " S_fft_log_frequency "     #f (snd #t) (chn #t)\n\
   " S_fft_log_magnitude "     #f (snd #t) (chn #t)\n\

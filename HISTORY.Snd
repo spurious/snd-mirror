@@ -1,5 +1,6 @@
 snd change log
 
+  4-Sep:     eps-size.
   3-Sep:     mix-file-dialog.
              optional position arg to add-to-menu.
   1-Sep:     zero-phase, rotate-phase in dsp.scm (Scott McNab).

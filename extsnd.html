@@ -1045,6 +1045,13 @@ when you save a sound via the "save" dialog.</p>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
+<!-- eps-size -->
+<!-- --><tr><td valign=top><code><em class=def><a name="epssize">eps-size</a></em></code></td>
+<!-- --><td valign=top><code>1.0</code></td>
+<!-- --><td>scaler used in snd.eps (Print command) for overall picture size.  
+<!-- --></td></tr>
+<!-- --><tr><td colspan=3></td></tr>
+<!-- -->
 <!-- filter-env-in-hz -->
 <!-- --><tr><td><code><em class=def><a name="filterenvinhz">filter-env-in-hz</a></em></code></td>
 <!-- --><td><code>#f</code></td>
@@ -7260,18 +7267,30 @@ And an example that lets us see the result of filtering the waveform:
 <!-- -->add menu <i>menu-label</i> to top-level menu whose index is 
 <!-- --><i>top-menu</i> with the callback function <i>callback</i>.  The built-in
 <!-- -->Snd menus are numbered from 0 ('File') to 5 ('Popup') ('Help' is 4).  If label and callback are #f, a separator is added to the menu.
-<!-- --><i>position</i> sets the position of the new menu option; it defaults to the end of the menu.
+<!-- --><i>position</i> sets the position of the new menu option; it defaults to the end of the menu.  See effects.scm for many examples.
 <!-- -->[<em class=error>no-such-menu</em>]
 <!-- --><br><br><pre>
-<!-- -->  (<em class=red>add-to-menu</em> 5 "Denoise" 
-<!-- -->    (lambda () (report-in-minibuffer "denoise")))
-<!-- -->
 <!-- -->  (<em class=red>add-to-menu</em> 1 "Stop Playing" 
 <!-- -->    (lambda () (stop-playing)))
-<!-- -->
+<!-- --><br>
 <!-- -->  (<em class=red>add-to-menu</em> 5 "Reduce height" 
 <!-- -->    (lambda () (set! (window-height) (/ (window-height) 2))))
 <!-- --></pre></td></tr>
+<!-- --><tr><td colspan=2>
+<!-- -->As a slightly more elaborate example, the following adds a Delete option to the File menu:
+<!-- --></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(<em class=red>add-to-menu</em> 0 "Delete" ; add Delete option to File menu
+	     (lambda ()
+	       ;; close current sound and delete it (after requesting confirmation)
+	       (if (>= (selected-sound) 0)
+		   (let ((filename (file-name)))
+		     (close-sound)
+		     (if (yes-or-no? (format #f "delete ~S?" filename))
+			 (delete-file filename)))))
+	     8) ; place after File:New
+<!-- --></pre></td></tr></table></td></tr>
 <!-- -->
 <!-- change-menu-label -->
 <!-- -->
@@ -7298,7 +7317,7 @@ selected (both as strings), and should return #f if it wants to override the def
 menu action.</p>
 
 <table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
-  (add-hook! menu-hook
+  (add-hook! <em class=red>menu-hook</em>
     (lambda (name option)
       (if (and (string=? name "File")
                (string=? option "Exit"))

@@ -1002,6 +1002,15 @@ static XEN g_set_eps_bottom_margin(XEN val)
   return(C_TO_XEN_DOUBLE(eps_bottom_margin(state)));
 }
 
+static XEN g_eps_size(void) {return(C_TO_XEN_DOUBLE(eps_size(state)));}
+static XEN g_set_eps_size(XEN val) 
+{
+  #define H_eps_size "(" S_eps_size ") -> current eps ('Print' command) overall picture size scaler (1.0)"
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set-" S_eps_size, "a number"); 
+  set_eps_size(state, XEN_TO_C_DOUBLE(val));
+  return(C_TO_XEN_DOUBLE(eps_size(state)));
+}
+
 static XEN g_listener_prompt(void) {return(C_TO_XEN_STRING(listener_prompt(state)));}
 static XEN g_set_listener_prompt(XEN val) 
 {
@@ -2818,6 +2827,8 @@ XEN_NARGIFY_0(g_eps_file_w, g_eps_file)
 XEN_NARGIFY_1(g_set_eps_file_w, g_set_eps_file)
 XEN_NARGIFY_0(g_eps_left_margin_w, g_eps_left_margin)
 XEN_ARGIFY_1(g_set_eps_left_margin_w, g_set_eps_left_margin)
+XEN_NARGIFY_0(g_eps_size_w, g_eps_size)
+XEN_ARGIFY_1(g_set_eps_size_w, g_set_eps_size)
 XEN_NARGIFY_0(g_eps_bottom_margin_w, g_eps_bottom_margin)
 XEN_ARGIFY_1(g_set_eps_bottom_margin_w, g_set_eps_bottom_margin)
 XEN_NARGIFY_0(g_listener_prompt_w, g_listener_prompt)
@@ -3021,6 +3032,8 @@ XEN_NARGIFY_0(g_gc_on_w, g_gc_on)
 #define g_set_eps_file_w g_set_eps_file
 #define g_eps_left_margin_w g_eps_left_margin
 #define g_set_eps_left_margin_w g_set_eps_left_margin
+#define g_eps_size_w g_eps_size
+#define g_set_eps_size_w g_set_eps_size
 #define g_eps_bottom_margin_w g_eps_bottom_margin
 #define g_set_eps_bottom_margin_w g_set_eps_bottom_margin
 #define g_listener_prompt_w g_listener_prompt
@@ -3345,6 +3358,9 @@ void g_initialize_gh(snd_state *ss)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_eps_bottom_margin, g_eps_bottom_margin_w, H_eps_bottom_margin,
 			       "set-" S_eps_bottom_margin, g_set_eps_bottom_margin_w,  0, 0, 0, 1);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_eps_size, g_eps_size_w, H_eps_size,
+			       "set-" S_eps_size, g_set_eps_size_w,  0, 0, 0, 1);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_listener_prompt, g_listener_prompt_w, H_listener_prompt,
 			       "set-" S_listener_prompt, g_set_listener_prompt_w,  0, 0, 0, 1);
