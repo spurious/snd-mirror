@@ -564,7 +564,7 @@ static char *save_state_or_error (snd_state *ss, char *save_state_name)
        *   procedure_environment etc); many types print in this case in ways that are not readable.
        *   The functions may depend on globals that are not in loaded files, or that were changed since
        *   loading, and trying to map over the current module's obarray, saving each such variable in
-       *   its current form, is a major undertaking (although this can be done for simple vars; additionally, 
+       *   its current form, is a major undertaking (although this can be done for simple vars); additionally, 
        *   what if the user has changed these
        *   before restoring -- should the old forms be restored?  Perhaps the new files associated
        *   with dumping (libguile/dump.c) will address this issue.  And, things like search functions
@@ -729,9 +729,8 @@ int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_f
 			      else 
 				{
 #if HAVE_RUBY
-				  extern VALUE rb_load_path;
-				  rb_ary_shift(rb_load_path);  /* prepend -I as they appear (kinda unintuitive) */
-				  rb_ary_store(rb_load_path, 0, rb_str_new2(auto_open_file_names[auto_open_ctr]));
+				  extern VALUE rb_load_path; /* prepend -I as they appear (kinda unintuitive) */
+				  rb_ary_unshift(rb_load_path, rb_str_new2(auto_open_file_names[auto_open_ctr]));
 #else
   #if HAVE_GUILE
 				  char buf[256];

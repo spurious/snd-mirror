@@ -509,10 +509,6 @@ static void SetupIcon(Widget shell)
 
 static void muffle_warning(char *name, char *type, char *klass, char *defaultp, char **params, unsigned int *num_params)
 {
-  /* these warnings are occurring when they should not, and they are of no interest to anyone, so shove a sock in Xt
-   *   the main ones involve scrollbar settings that are claimed to be out-of-range, but that are generated
-   *   by Motif itself while unmanaging the widget!
-   */
 #if 0
   int i;
   fprintf(stderr, "warning: %s: %s", name, defaultp);

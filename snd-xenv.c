@@ -1077,7 +1077,7 @@ static void reflect_changed_base(snd_state *ss, Float val)
 	  else ival = (int)(BASE_MID + ((BASE_MID * (pow(val, (1.0 / (enved_power(ss)))) - 1)) / 10.0));
 	}
     }
-  XtVaSetValues(baseScale, XmNvalue, ival, NULL);
+  XtVaSetValues(baseScale, XmNvalue, mus_iclamp(0, ival, (int)(BASE_MAX * .9)), NULL);
   make_base_label(ss, val);
 }
 

@@ -602,8 +602,8 @@ static void reflect_color_scale(Float val)
   else
     {
       if (val <= 1.0) 
-	XmScaleSetValue(ccd->scale, (int)(val * 51.0 - 1));
-      else XmScaleSetValue(ccd->scale, 50 + (int)sqrt((val - 1.0) * 12.5));
+	XmScaleSetValue(ccd->scale, mus_iclamp(0, (int)(val * 51.0 - 1), 100));
+      else XmScaleSetValue(ccd->scale, mus_iclamp(0, 50 + (int)sqrt((val - 1.0) * 12.5), 100));
     }
 }
 
@@ -886,6 +886,8 @@ typedef struct {
   snd_state *state;
 } orientation_info;
 
+#define HOP_MAX 20
+
 static orientation_info *oid = NULL;
 
 static void ax_orientation_callback(Widget w, XtPointer context, XtPointer info) 
@@ -990,7 +992,7 @@ static void sx_orientation_callback(Widget w, XtPointer context, XtPointer info)
 void set_spectro_x_scale(snd_state *ss, Float val)
 {
   in_set_spectro_x_scale(ss, val);
-  if (oid) XmScaleSetValue(oid->sx, (int)(val * 100));
+  if (oid) XmScaleSetValue(oid->sx, mus_iclamp(0, (int)(val * 100), 100));
   chans_field(ss, FCP_X_SCALE, val);
   if (!(ss->graph_hook_active)) 
     for_each_chan(ss, update_graph);
@@ -1018,7 +1020,7 @@ static void sy_orientation_callback(Widget w, XtPointer context, XtPointer info)
 void set_spectro_y_scale(snd_state *ss, Float val)
 {
   in_set_spectro_y_scale(ss, val);
-  if (oid) XmScaleSetValue(oid->sy, (int)(val * 100));
+  if (oid) XmScaleSetValue(oid->sy, mus_iclamp(0, (int)(val * 100), 100));
   chans_field(ss, FCP_Y_SCALE, val);
   if (!(ss->graph_hook_active)) 
     for_each_chan(ss, update_graph);
@@ -1046,7 +1048,7 @@ static void sz_orientation_callback(Widget w, XtPointer context, XtPointer info)
 void set_spectro_z_scale(snd_state *ss, Float val)
 {
   in_set_spectro_z_scale(ss, val);
-  if (oid) XmScaleSetValue(oid->sz, (int)(val * 100));
+  if (oid) XmScaleSetValue(oid->sz, mus_iclamp(0, (int)(val * 100), 100));
   chans_field(ss, FCP_Z_SCALE, val);
   if (!(ss->graph_hook_active)) 
     for_each_chan(ss, update_graph);
@@ -1069,7 +1071,7 @@ static void hop_orientation_callback(Widget w, XtPointer context, XtPointer info
   orientation_info *od = (orientation_info *)context;
   ASSERT_WIDGET_TYPE(XmIsScale(w), w);
   ss = od->state;
-  val = mus_iclamp(1, cbs->value, 20);
+  val = mus_iclamp(1, cbs->value, HOP_MAX);
   in_set_spectro_hop(ss, val);
   for_each_chan_1(ss, chans_spectro_hop, (void *)(&val));
   for_each_chan(ss, update_graph);
@@ -1080,7 +1082,7 @@ void set_spectro_hop(snd_state *ss, int val)
   if (val > 0)
     {
       in_set_spectro_hop(ss, val);
-      if (oid) XmScaleSetValue(oid->hop, val);
+      if (oid) XmScaleSetValue(oid->hop, mus_iclamp(1, val, HOP_MAX));
       for_each_chan_1(ss, chans_spectro_hop, (void *)(&val));
       if (!(ss->graph_hook_active)) 
 	for_each_chan(ss, update_graph);
@@ -1148,11 +1150,11 @@ void reflect_spectro(snd_state *ss)
       XtVaSetValues(oid->ax, XmNvalue, fixup_angle(spectro_x_angle(ss)), NULL);
       XtVaSetValues(oid->ay, XmNvalue, fixup_angle(spectro_y_angle(ss)), NULL);
       XtVaSetValues(oid->az, XmNvalue, fixup_angle(spectro_z_angle(ss)), NULL);
-      XtVaSetValues(oid->sx, XmNvalue, (int)(spectro_x_scale(ss) * 100), NULL);
-      XtVaSetValues(oid->sy, XmNvalue, (int)(spectro_y_scale(ss) * 100), NULL);
-      XtVaSetValues(oid->sz, XmNvalue, (int)(spectro_z_scale(ss) * 100), NULL);
-      XtVaSetValues(oid->hop, XmNvalue, (spectro_hop(ss) > 100) ? 100 : (spectro_hop(ss)), NULL);
-      XtVaSetValues(oid->cut, XmNvalue, (int)(spectro_cutoff(ss) * 100), NULL);
+      XtVaSetValues(oid->sx, XmNvalue, mus_iclamp(0, (int)(spectro_x_scale(ss) * 100), 100), NULL);
+      XtVaSetValues(oid->sy, XmNvalue, mus_iclamp(0, (int)(spectro_y_scale(ss) * 100), 100), NULL);
+      XtVaSetValues(oid->sz, XmNvalue, mus_iclamp(0, (int)(spectro_z_scale(ss) * 100), 100), NULL);
+      XtVaSetValues(oid->hop, XmNvalue, mus_iclamp(1, spectro_hop(ss), HOP_MAX));
+      XtVaSetValues(oid->cut, XmNvalue, mus_iclamp(0, (int)(spectro_cutoff(ss) * 100), 100), NULL);
     }
 }
 
@@ -1338,8 +1340,8 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNshowValue, TRUE); n++;
-      XtSetArg(args[n], XmNvalue, (spectro_hop(ss) > 20) ? 20 : (spectro_hop(ss))); n++;
-      XtSetArg(args[n], XmNmaximum, 20); n++;
+      XtSetArg(args[n], XmNvalue, mus_iclamp(1, spectro_hop(ss), HOP_MAX)); n++;
+      XtSetArg(args[n], XmNmaximum, HOP_MAX); n++;
       XtSetArg(args[n], XmNtitleString, xstr); n++;
       oid->hop = XtCreateManagedWidget("hop", xmScaleWidgetClass, leftbox, args, n);
       XtAddCallback(oid->hop, XmNvalueChangedCallback, hop_orientation_callback, oid);
@@ -1354,7 +1356,7 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNshowValue, TRUE); n++;
       XtSetArg(args[n], XmNmaximum, (int)(100 * SPECTRO_X_SCALE_MAX)); n++;
-      XtSetArg(args[n], XmNvalue, (int)(spectro_x_scale(ss) * 100)); n++;
+      XtSetArg(args[n], XmNvalue, mus_iclamp(0, (int)(spectro_x_scale(ss) * 100), 100)); n++;
       XtSetArg(args[n], XmNtitleString, xstr); n++;
       XtSetArg(args[n], XmNdecimalPoints, 2); n++;
       oid->sx = XtCreateManagedWidget("xs", xmScaleWidgetClass, rightbox, args, n);
@@ -1368,7 +1370,7 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNshowValue, TRUE); n++;
-      XtSetArg(args[n], XmNmaximum, (int)(100 * SPECTRO_Y_SCALE_MAX)); n++;
+      XtSetArg(args[n], XmNmaximum, mus_iclamp(0, (int)(100 * SPECTRO_Y_SCALE_MAX), 100)); n++;
       XtSetArg(args[n], XmNvalue, (int)(spectro_y_scale(ss) * 100)); n++;
       XtSetArg(args[n], XmNtitleString, xstr); n++;
       XtSetArg(args[n], XmNdecimalPoints, 2); n++;
@@ -1385,7 +1387,7 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNshowValue, TRUE); n++;
       XtSetArg(args[n], XmNdecimalPoints, 2); n++;
       XtSetArg(args[n], XmNmaximum, (int)(100 * SPECTRO_Z_SCALE_MAX)); n++;
-      XtSetArg(args[n], XmNvalue, (int)(spectro_z_scale(ss) * 100)); n++;
+      XtSetArg(args[n], XmNvalue, mus_iclamp(0, (int)(spectro_z_scale(ss) * 100), 100)); n++;
       XtSetArg(args[n], XmNtitleString, xstr); n++;
       oid->sz = XtCreateManagedWidget("zs", xmScaleWidgetClass, rightbox, args, n);
       XtAddCallback(oid->sz, XmNvalueChangedCallback, sz_orientation_callback, oid);

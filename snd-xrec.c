@@ -937,7 +937,7 @@ static int amp_to_slider(Float val)
     {
       if (val <= RECORD_SCROLLBAR_CHANGEOVER_VALUE)
 	return((int)(val / RECORD_SCROLLBAR_LINEAR_MULT));
-      else return((int)(RECORD_SCROLLBAR_MID + ((RECORD_SCROLLBAR_MAX * .2) * log(val))));
+      else return(mus_iclamp(0, (int)(RECORD_SCROLLBAR_MID + ((RECORD_SCROLLBAR_MAX * .2) * log(val))), 100));
     }
 }
 
@@ -2680,7 +2680,7 @@ static Widget make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE 
       XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
       XtSetArg(args[n], XmNwidth, 15); n++;
 
-      XtSetArg(args[n], XmNvalue, (int)(vol*100)); n++;
+      XtSetArg(args[n], XmNvalue, (int)(vol * 100)); n++;
       XtSetArg(args[n], XmNshowValue, FALSE); n++;
       wd->wg = XtCreateManagedWidget("mon", xmScaleWidgetClass, p->pane, args, n);
       last_slider = wd->wg;
@@ -3485,7 +3485,7 @@ void reflect_recorder_mixer_gain(int ind, Float val)
   if (recorder)
     {
       wd = gain_sliders[ind];
-      XtVaSetValues(wd->wg, XmNvalue, (int)(val * 100), NULL);
+      XtVaSetValues(wd->wg, XmNvalue, mus_iclamp(0, (int)(val * 100), 100), NULL);
       set_mixer_gain(wd->system, wd->device, wd->chan, wd->gain, wd->field, val);
     }
 }

@@ -6,8 +6,6 @@
 
 #include "snd.h"
 
-/* SOMEDAY: put Snd names in its own module */
-
 static snd_state *ss;
 #if DEBUGGING
   static snd_state *initial_ss = NULL;
