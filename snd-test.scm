@@ -3809,7 +3809,7 @@ EDITS: 5
 	(xramp-channel 0.0 1.0 0.0)
 	(if (not (string-=? (display-edits ind 0 2) "
  (scale 0 10) ; scale-channel 0.000 0 10 [2:2]:
-   (at 0, cp->sounds[1][0:9, 0.000]) [buf: 10] 
+   (at 0, cp->sounds[0][0:9, 0.000]) [file: /home/bil/cl/test.snd[0]]
    (at 10, end_mark)
 "))
 	    (snd-display ";xramp 3: ~A" (display-edits ind 0 2)))
@@ -4589,7 +4589,7 @@ EDITS: 5
 	    (snd-display ";ptree2-zero 1: ~A" (channel->vct)))
 	(if (not (string-=? (display-edits ind 0 4) "
  (ptree[1] 0 11) ; ptree 1 0 11 [4:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, loc2: 1, pos2: 0, scl2: 1.000, loc: 0, pos: 0, scl: 0.000, code: (lambda (y) (+ y 0.5))]) [buf: 11] 
+   (at 0, cp->sounds[0][0:10, 1.000, loc2: 1, pos2: 0, scl2: 1.000, loc: 0, pos: 0, scl: 0.000, code: (lambda (y) (+ y 0.5))]) [file: /home/bil/cl/test.snd[0]]
    (at 11, end_mark)
 "))
 	    (snd-display ";ptree2-zero 2: ~A" (display-edits ind 0 4)))
@@ -4838,7 +4838,7 @@ EDITS: 5
 	   (ramp-channel 0 1)
 	   (if (not (string-=? (display-edits ind 0 4 #f) "
  (ramp 0 11) ; ramp-channel 0.000 1.000 0 11 [4:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, loc: 0, pos: 0, scl: 0.000]) [buf: 11] 
+   (at 0, cp->sounds[0][0:10, 1.000, [1]-0.000 -> 1.000, loc: 0, pos: 0, scl: 0.000]) [file: /home/bil/cl/test.snd[0]]
    (at 11, end_mark)
 "))
 	       (snd-display ";~A-zero 1: ~A" name (display-edits ind 0 4 #f)))
@@ -4847,7 +4847,7 @@ EDITS: 5
 	   (ramp-channel 0 1)
 	   (if (not (string-=? (display-edits ind 0 5 #f) "
  (ramp 0 11) ; ramp-channel 0.000 1.000 0 11 [5:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000, loc: 0, pos: 0, scl: 0.000]) [buf: 11] 
+   (at 0, cp->sounds[0][0:10, 1.000, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000, loc: 0, pos: 0, scl: 0.000]) [file: /home/bil/cl/test.snd[0]]
    (at 11, end_mark)
 "))
 	       (snd-display ";~A-zero 2: ~A" name (display-edits ind 0 5 #f)))
@@ -4856,7 +4856,7 @@ EDITS: 5
 	   (ramp-channel 0 1)
 	   (if (not (string-=? (display-edits ind 0 6 #f) "
  (ramp 0 11) ; ramp-channel 0.000 1.000 0 11 [6:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000, [3]-0.000 -> 1.000, loc: 0, pos: 0, scl: 0.000]) [buf: 11] 
+   (at 0, cp->sounds[0][0:10, 1.000, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000, [3]-0.000 -> 1.000, loc: 0, pos: 0, scl: 0.000]) [file: /home/bil/cl/test.snd[0]]
    (at 11, end_mark)
 "))
 	       (snd-display ";~A-zero 3: ~A" name (display-edits ind 0 6 #f)))
@@ -6133,7 +6133,7 @@ EDITS: 5
 	(ramp-channel 0 1)
 	(if (not (string=? (display-edits ind 0 4 #f) "
  (ptree[1] 0 11) ; ptree 1 0 11 [4:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, loc2: 1, pos2: 0, scl2: 1.000, loc: 0, pos: 0, scl: 0.000]) [buf: 11] 
+   (at 0, cp->sounds[0][0:10, 1.000, loc2: 1, pos2: 0, scl2: 1.000, loc: 0, pos: 0, scl: 0.000]) [file: /home/bil/cl/test.snd[0]]
    (at 11, end_mark)
 "))
 	    (snd-display ";ramp ptree2 zero: ~A" (display-edits ind 0 4 #f)))
@@ -6142,7 +6142,7 @@ EDITS: 5
 	(ramp-channel 0 1)
 	(if (not (string-=? (display-edits ind 0 5 #f) "
  (ramp 0 11) ; ramp-channel 0.000 1.000 0 11 [5:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, loc2: 1, pos2: 0, scl2: 1.000, loc: 0, pos: 0, scl: 0.000]) [buf: 11] 
+   (at 0, cp->sounds[0][0:10, 1.000, [1]-0.000 -> 1.000, loc2: 1, pos2: 0, scl2: 1.000, loc: 0, pos: 0, scl: 0.000]) [file: /home/bil/cl/test.snd[0]]
    (at 11, end_mark)
 "))
 	    (snd-display ";ramp2 ptree2 zero: ~A" (display-edits ind 0 5 #f)))
@@ -6152,7 +6152,7 @@ EDITS: 5
 	(xramp-channel 0 1 32)
 	(if (not (string=? (display-edits ind 0 4 #f) "
  (ptree[1] 0 11) ; ptree 1 0 11 [4:2]:
-   (at 0, cp->sounds[1][0:10, 1.000, loc2: 1, pos2: 0, scl2: 1.000, loc: 0, pos: 0, scl: 0.000]) [buf: 11] 
+   (at 0, cp->sounds[0][0:10, 1.000, loc2: 1, pos2: 0, scl2: 1.000, loc: 0, pos: 0, scl: 0.000]) [file: /home/bil/cl/test.snd[0]]
    (at 11, end_mark)
 "))
 	    (snd-display ";xramp ptree2 zero: ~A" (display-edits ind 0 4 #f)))
@@ -10428,6 +10428,10 @@ EDITS: 5
 		   (let ((col (foreground-color ind)))
 		     (if (not (equal? col black))
 			 (snd-display ";set foreground-color with ind: ~A ~A" col black))))
+		 (set! (selected-graph-color) (make-color 0.96 0.96 0.86))
+		 (set! (data-color) black)
+		 (set! (selected-data-color) blue)
+		 (set! (graph-color) white)
 		 (close-sound ind)))
 	     (lambda args args))
       (run-hook after-test-hook 7)
@@ -19180,6 +19184,7 @@ EDITS: 5
 					  "Save options"
 					  "Mixes" "clm" "fm-violin"))))
 		  (XtCallCallbacks menu XmNactivateCallback (snd-global-state)))))))))
+  (map close-sound (sounds))
   (dismiss-all-dialogs))
 
 (define (mdt-test id x time drg) #f)
@@ -19434,8 +19439,8 @@ EDITS: 5
 		       (set! added (+ added 1))))
 	  (if (provided? 'snd-motif)
 	      (without-errors
-	       (test-menus))) ; built-in self-test function
-	  
+	       (test-menus))) ; built-in self-test function -- now closes all sounds due to unpredictable changes elsewhere
+	  (set! fd (open-sound "obtest.snd"))	  
 	  (set! (with-background-processes) #f)
 	  (if (= added 0)
 	      (snd-display ";no widgets added?"))
@@ -21677,10 +21682,12 @@ EDITS: 5
 			 (snd-display ";  ~A[~A] at ~A" (short-file-name snd) i (selection-position snd i)))))
 		 (sounds))))
 	  (if (not (= (selection-srate) (srate s2i))) (snd-display ";selection-srate: ~A ~A?" (selection-srate) (srate s2i)))
-	  (swap-selection-channels)
-	  (if (or (fneq s1 (sample 1000 s2i 1))
-		  (fneq s2 (sample 1000 s2i 0)))
-	      (snd-display ";swap-selection-channels: ~A?" (list s1 s2 (sample 1000 s2i 0) (sample 1000 s2i 1)))))
+	  (if (= (selection-chans) 2)
+	      (begin
+		(swap-selection-channels)
+		(if (or (fneq s1 (sample 1000 s2i 1))
+			(fneq s2 (sample 1000 s2i 0)))
+		    (snd-display ";swap-selection-channels: ~A?" (list s1 s2 (sample 1000 s2i 0) (sample 1000 s2i 1)))))))
 	(revert-sound s2i)
 	(close-sound s2i)
 	
@@ -25169,7 +25176,7 @@ EDITS: 3
 			   vals "clobber silence end")
 	  (scale-channel 0.0 0 100)
 	  (vct-fill! vals 0.0)
-	  (check-edit-tree '((0 10 0 24 0.0 0.0 0.0 0) (25 -1 25 49 0.0 0.0 0.0 0) (50 9 0 0 0.0 0.0 0.0 0) (51 -1 51 74 0.0 0.0 0.0 0) (75 11 0 24 0.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
+	  (check-edit-tree '((0 0 0 99 0.0 0.0 0.0 1) (100 -2 0 0 0.0 0.0 0.0 0))
 			   vals "scale all to 0.0")
 	  (let ((e (make-env '(0 0 1 1) :end 100))
 		(e1 (make-env '(0 0 1 1) :end 100)))
@@ -35573,14 +35580,15 @@ EDITS: 2
 					;(click-button (cadr (find-child sctrls "expand-label")))
 					;(if (fneq (expand-control ind) 1.0) (snd-display ";click expand: ~A" (expand-control)))
 					;need click event here, not just pushbutton callback
-		    (close-sound ind))
+		    (if (sound? ind)
+			(close-sound ind)))
 		  
 		  (if (not (car (dialog-widgets))) 
 		      (begin 
 			(set! (with-background-processes) #t)
 			(let ((ind (open-sound "obtest.snd")))
 			  (without-errors (test-menus)) 
-			  (close-sound ind))
+			  (if (sound? ind) (close-sound ind)))
 			(dismiss-all-dialogs)
 			(set! (with-background-processes) #f)))
 		  
@@ -42924,6 +42932,7 @@ EDITS: 2
   "test.xpm"
   "test.output"
   "test.data"
+  "obtest.snd.stereo"
   "envs.save"))
 
 (if with-exit (exit))

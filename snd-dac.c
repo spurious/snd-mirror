@@ -307,6 +307,12 @@ static Float contrast (dac_info *dp, Float amp, Float index, Float inval)
   return(amp * mus_contrast_enhancement(dp->contrast_amp * inval, index));
 }
 
+static mus_error_handler_t *old_error_handler;
+static void local_mus_error(int type, char *msg)
+{
+  snd_error(msg);
+}
+
 Float *sample_linear_env(env *e, int order)
 {
   /* used only for filter coeffs (env here is the frequency response curve) */
@@ -320,7 +326,9 @@ Float *sample_linear_env(env *e, int order)
   step = 2 * last_x / ((Float)order - 1);
   ordp = e->pts; 
   if (ordp < order) ordp = order;
+  old_error_handler = mus_error_set_handler(local_mus_error);
   ge = mus_make_env(e->data, e->pts, 1.0, 0.0, e->base, 0.0, 0, 1000 * ordp, NULL);
+  mus_error_set_handler(old_error_handler);
   for (i = 0, x = 0.0; i < order / 2; i++, x += step) 
     data[i] = mus_env_interp(x, ge);
   for (j = order / 2 - 1, i = order / 2; (i < order) && (j >= 0); i++, j--) 
@@ -537,7 +545,7 @@ static void stop_playing_with_toggle(dac_info *dp, dac_toggle_t toggle, with_hoo
       if (sp->playing > 0) sp->playing--;
       if (sp->playing == 0) sp_stopping = true;
       if ((sp->inuse == SOUND_NORMAL) && (sp->cursor_follows_play != DONT_FOLLOW))
-	cursor_moveto_without_verbosity(cp, cp->original_cursor);
+	cursor_moveto_with_window(cp, cp->original_cursor, cp->original_left_sample, cp->original_window_size);
       if ((sp_stopping) && (sp->cursor_follows_play == FOLLOW_ONCE)) 
 	sp->cursor_follows_play = DONT_FOLLOW;
       /* if ctrl-click play, c-t, c-q -> this flag is still set from aborted previous play, so clear at c-t (or c-g) */
@@ -889,6 +897,11 @@ static dac_info *add_channel_to_play_list(chan_info *cp, off_t start, off_t end,
 	  if (sp->cursor_follows_play != DONT_FOLLOW)
 	    {
 	      cp->original_cursor = CURSOR(cp);
+	      if (cp->axis)
+		{
+		  cp->original_left_sample = cp->axis->losamp;
+		  cp->original_window_size = cp->axis->hisamp - cp->axis->losamp;
+		}
 	      cp->cursor_on = true;
 	      cursor_moveto_without_verbosity(cp, start);
 	    }

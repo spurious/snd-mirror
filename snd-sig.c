@@ -468,22 +468,23 @@ Float get_maxamp(snd_info *sp, chan_info *cp, int edpos)
   return(val);
 }
 
-void scale_to(snd_info *sp, chan_info *cp, Float *ur_scalers, int len, bool selection)
+bool scale_to(snd_info *sp, chan_info *cp, Float *ur_scalers, int len, bool selection)
 {
   /* essentially the same as scale-by, but first take into account current maxamps */
   /* here it matters if more than one arg is given -- if one, get overall maxamp */
   /*   if more than one, get successive maxamps */
+  bool scaled = false;
   int i, chans, nlen, datum_size;
   off_t beg, frames;
   sync_info *si = NULL;
   chan_info *ncp;
-  Float maxamp, val;
+  Float maxamp = -1.0, val;
   Float *scalers;
-  if ((!selection) && (cp == NULL)) return;
+  if ((!selection) && (cp == NULL)) return(false);
   if (selection) 
     {
       if (!(selection_is_active())) 
-	return;
+	return(false);
       si = selection_sync();
       sp = si->cps[0]->sound;
     }
@@ -504,7 +505,6 @@ void scale_to(snd_info *sp, chan_info *cp, Float *ur_scalers, int len, bool sele
     {
       if (scalers[0] != 0.0)
 	{
-	  maxamp = 0.0;
 	  for (i = 0; i < chans; i++)
 	    {
 	      ncp = si->cps[i];
@@ -515,7 +515,7 @@ void scale_to(snd_info *sp, chan_info *cp, Float *ur_scalers, int len, bool sele
 	    }
 	  if ((!(data_clipped(ss))) && 
 	      (scalers[0] == 1.0) && 
-	      (datum_size < 4))
+	      (datum_size == 2)) /* TODO: data_size might be 1 -- protect scale? */
 	    scalers[0] = 32767.0 / 32768.0;
 	  /* 1.0 = -1.0 in these cases, so we'll get a click  -- added 13-Dec-99 */
 	  if (maxamp != 0.0)
@@ -536,35 +536,42 @@ void scale_to(snd_info *sp, chan_info *cp, Float *ur_scalers, int len, bool sele
 	      if (selection)
 		val = selection_maxamp(ncp);
 	      else val = get_maxamp(ncp->sound, ncp, AT_CURRENT_EDIT_POSITION);
+	      if (val > maxamp) maxamp = val;
 	      if (val != 0.0)
 		{
 		  if ((!(data_clipped(ss))) && 
 		      (scalers[i] == 1.0) && 
-		      (datum_size < 4))
+		      (datum_size == 2))
 		    scalers[i] = 32767.0 / 32768.0;
 		  scalers[i] /= val;
 		}
 	      else scalers[i] = 0.0;
 	    }
+	  else maxamp = 1.0; /* turn off the maxamp check */
 	}
     }
-  for (i = 0; i < si->chans; i++)
+  if (maxamp != 0.0)
     {
-      ncp = si->cps[i];
-      if (selection)
+      for (i = 0; i < si->chans; i++)
 	{
-	  beg = selection_beg(ncp);
-	  frames = selection_end(ncp) - beg + 1;
+	  ncp = si->cps[i];
+	  if (selection)
+	    {
+	      beg = selection_beg(ncp);
+	      frames = selection_end(ncp) - beg + 1;
+	    }
+	  else
+	    {
+	      beg = 0;
+	      frames = CURRENT_SAMPLES(ncp);
+	    }
+	  scale_channel(ncp, scalers[i], beg, frames, ncp->edit_ctr, false);
 	}
-      else
-	{
-	  beg = 0;
-	  frames = CURRENT_SAMPLES(ncp);
-	}
-      scale_channel(ncp, scalers[i], beg, frames, ncp->edit_ctr, false);
+      scaled = true;
     }
   FREE(scalers);
   free_sync_info(si);
+  return(scaled);
 }
 
 static void swap_channels(chan_info *cp0, chan_info *cp1, off_t beg, off_t dur, int pos0, int pos1)
@@ -1044,7 +1051,7 @@ static Float *get_filter_coeffs(int order, env *e)
   FREE(fdata);
   return(a);
 }
-
+/* TODO: fft for freq resp? */
 static Float frequency_response(Float *coeffs, int order, Float frq)
 {
   Float at = 0.0, am;
@@ -1195,6 +1202,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int 
 }
 
 #define MAX_SINGLE_FFT_SIZE 1048576
+/* TODO: can't max filter fft size be dependent on available memory? */
 
 static Float convolve_next_sample(void *ptr, int dir)
 {
@@ -3369,14 +3377,17 @@ normalize snd to norms (following sync); norms can be a float or a vct/vector/li
 
   /* chn_n irrelevant if sync */
   chan_info *cp;
+  bool happy;
   int len[1];
   Float *scls;
   ASSERT_CHANNEL(S_scale_to, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_scale_to);
   scls = load_Floats(scalers, len, S_scale_to);
-  scale_to(cp->sound, cp, scls, len[0], false); /* last arg for selection */
+  happy = scale_to(cp->sound, cp, scls, len[0], false); /* last arg for selection */
   FREE(scls);
-  return(scalers);
+  if (happy)
+    return(scalers);
+  return(XEN_FALSE);
 }
 
 static XEN g_scale_by(XEN scalers, XEN snd_n, XEN chn_n)
@@ -3400,13 +3411,16 @@ static XEN g_scale_selection_to(XEN scalers)
 {
   #define H_scale_selection_to "(" S_scale_selection_to " norms): normalize selected portion to norms"
   int len[1];
+  bool happy;
   Float *scls;
   if (selection_is_active())
     {
       scls = load_Floats(scalers, len, S_scale_selection_to);
-      scale_to(NULL, NULL, scls, len[0], true);
+      happy = scale_to(NULL, NULL, scls, len[0], true);
       FREE(scls);
-      return(scalers);
+      if (happy)
+	return(scalers);
+      return(XEN_FALSE);
     }
   return(snd_no_active_selection_error(S_scale_selection_to));
 }

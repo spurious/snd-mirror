@@ -4687,13 +4687,7 @@ static ed_list *make_ed_list(int size)
 #if defined(__SUNPRO_C)
   ed->fragments = (void *)CALLOC(size, sizeof(ed_fragment *));
 #else
-#if SPLINT
-  /* this form required by splint */
-  ed->fragments = (ed_fragment **)CALLOC(size, sizeof(ed_fragment *));
-#else
-  /* this is the correct form */
   FRAGMENTS(ed) = (ed_fragment **)CALLOC(size, sizeof(ed_fragment *));
-#endif
 #endif
 #endif
   for (i = 0; i < size; i++)
@@ -5685,17 +5679,26 @@ bool scale_channel(chan_info *cp, Float scl, off_t beg, off_t num, int pos, bool
   if ((beg == 0) && 
       (num >= cp->samples[pos]))
     {
-      num = len;
-      new_ed = make_ed_list(cp->edits[pos]->size);
-      new_ed->beg = beg;
-      new_ed->len = num;
-      cp->edits[cp->edit_ctr] = new_ed;
-      for (i = 0; i < new_ed->size; i++) 
+      if (scl == 0.0)
 	{
-	  copy_ed_fragment(FRAGMENT(new_ed, i), FRAGMENT(old_ed, i));
-	  FRAGMENT_SCALER(new_ed, i) *= scl;
-	  if (scl == 0.0) FRAGMENT_TYPE(new_ed, i) = ED_ZERO;
+	  new_ed = initial_ed_list(0, num - 1);
+	  FRAGMENT_SCALER(new_ed, 0) = 0.0;
+	  FRAGMENT_TYPE(new_ed, 0) = ED_ZERO;
+	  new_ed->maxamp = 0.0;
 	}
+      else
+	{
+	  num = len;
+	  new_ed = make_ed_list(cp->edits[pos]->size);
+	  new_ed->beg = beg;
+	  new_ed->len = num;
+	  for (i = 0; i < new_ed->size; i++) 
+	    {
+	      copy_ed_fragment(FRAGMENT(new_ed, i), FRAGMENT(old_ed, i));
+	      FRAGMENT_SCALER(new_ed, i) *= scl;
+	    }
+	}
+      cp->edits[cp->edit_ctr] = new_ed;
       amp_env_scale_by(cp, scl, pos); 
     }
   else 
@@ -8988,4 +8991,6 @@ append the rest?
       SOMEDAY: change over to an array of functions: ramp_start_number, xramp+scale, ptree(zero), etc
         the basic accessor sequence can be (*(arr[1]))(sf, ((*(arr[0]))(sf, sf->data[loc...]))) --
         means changing function type slightly, and ptree_zero case is sticky, and scalers are tricky 
+
+      SOMEDAY: coalesce neighboring ED_ZERO fragments, ED_SIMPLE if scl=scl?
 */

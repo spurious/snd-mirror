@@ -1,10 +1,7 @@
 #include "snd.h"
 #include "sndlib-strings.h"
 
-/* TODO: filter control edit of close dots hits high first?
- * TODO: is large filter always via convolution?
- * TODO: draggable (focusable) freq axis in filter control
- */
+/* TODO: draggable (focusable) freq axis in filter control */
 
 snd_info *snd_new_file(char *newname, int header_type, int data_format, int srate, int chans, char *new_comment, off_t samples)
 {

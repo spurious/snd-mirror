@@ -5076,6 +5076,7 @@ To get the data currently displayed in the time domain window:
 <tr><td></td><td>
 See also <a href="#moveonepixel">move-one-pixel</a>.
 
+<!-- TODO: add fft window moving etc -->
 <!-- INDEX movingwindows:Window size and position -->
 <A NAME="movingwindows"></a>
 <br><br>
@@ -6454,6 +6455,7 @@ normalizes the samples in the given channel between beg and beg + num to norm.  
 <tr><td></td><td>
 (see scale-by) -- <a href="snd.html#scaling">normalize</a> <i>snd</i> to <i>scalers</i> (following sync as in scale-by).
 <code>(scale-to 0.5)</code> scales the current channel so that it's maxamp is 0.5.
+If all the samples are 0.0, scale-to returns #f and does not perform any edit.
 </td></tr>
 <tr><td colspan=2></td></tr>
 

@@ -3,8 +3,6 @@
 
 /* SOMEDAY: if superimposed and 2chn cursor set, 1chan is xor'd, subsequent click sets both (and chan1 cursor takes precedence?) */
 /*    cursor redraw can check for this, but it gloms up code */
-/* TODO: in stereo file, if c-g during cursor-follows-play, unselected chan may not sync up */
-/* TODO: if cursor-follows-play with fft and moving window via mouse and c-g, fft may not ever be fixed for that window */
 /* TODO: auto-to-mix in ws (with-mix -> to-mix?) */
 
 typedef enum {NOGRAPH, WAVE, FFT_AXIS, LISP, FFT_MAIN} click_loc_t;    /* for marks, regions, mouse click detection */
@@ -3434,6 +3432,33 @@ void cursor_moveto_without_verbosity(chan_info *cp, off_t samp)
   cp->sound->sync = old_sync;
 }
 
+void cursor_moveto_with_window(chan_info *cp, off_t samp, off_t left_samp, off_t window_size)
+{
+  /* restore old window and cursor as much as possible */
+  double gx;
+  snd_info *sp;
+  off_t current_window_size;
+  axis_info *ap;
+  axis_context *ax;
+  sp = cp->sound;
+  ap = cp->axis;
+  if (cp->cursor_visible)
+    {
+      ax = cursor_context(cp);
+      draw_line(ax, cp->cx, cp->cy - cp->cursor_size, cp->cx, cp->cy + cp->cursor_size);
+      draw_line(ax, cp->cx - cp->cursor_size, cp->cy, cp->cx + cp->cursor_size, cp->cy);
+      cp->cursor_visible = false; /* don't redraw at old location */
+    }
+  CURSOR(cp) = samp;
+  current_window_size = ap->hisamp - ap->losamp;
+  if (snd_abs_off_t(current_window_size - window_size) < (off_t)(0.1 * (double)window_size))
+    gx = (double)(left_samp) / (double)SND_SRATE(sp);
+  else gx = (double)(samp) / (double)SND_SRATE(sp) - ap->zx * 0.5 * ap->x_ambit; 
+  if (gx < 0.0) gx = 0.0;
+  if (ap->x_ambit != 0.0)
+    reset_x_display(cp, (gx - ap->xmin) / ap->x_ambit, ap->zx);
+}
+
 void show_cursor_info(chan_info *cp)
 {
   char *expr_str;
@@ -4837,8 +4862,8 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, char *calle
       newamp[0] = XEN_TO_C_DOUBLE(on);
       if (curamp != newamp[0])
 	{
-	  scale_to(cp->sound, cp, newamp, 1, false);
-	  update_graph(cp);
+	  if (scale_to(cp->sound, cp, newamp, 1, false))
+	    update_graph(cp);
 	}
       break;
     case CP_BEATS_PER_MINUTE:

@@ -239,7 +239,7 @@ typedef struct chan_info {
   Float gsy, gzy;
   void *mix_dragging;
   int height, mixes;
-  off_t original_cursor;   /* for cursor reset after cursor-moving play */
+  off_t original_cursor, original_left_sample, original_window_size;   /* for cursor reset after cursor-moving play */
   with_hook_t hookable;
   int selection_transform_size;
   bool squelch_update, previous_squelch_update, waiting_to_make_graph, in_as_one_edit;
@@ -1052,6 +1052,7 @@ void reset_x_display(chan_info *cp, double sx, double zx);
 void set_x_axis_x0x1 (chan_info *cp, double x0, double x1);
 void cursor_move (chan_info *cp, off_t samps);
 void cursor_moveto_without_verbosity(chan_info *cp, off_t samp);
+void cursor_moveto_with_window(chan_info *cp, off_t samp, off_t left_samp, off_t window_size);
 void set_wavo_trace(int uval);
 void set_dot_size(int val);
 chan_info *virtual_selected_channel(chan_info *cp);
@@ -1467,7 +1468,7 @@ void g_init_kbd(void);
 /* -------- snd-sig.c -------- */
 
 void scale_by(chan_info *cp, Float *scalers, int len, bool selection);
-void scale_to(snd_info *sp, chan_info *cp, Float *scalers, int len, bool selection);
+bool scale_to(snd_info *sp, chan_info *cp, Float *scalers, int len, bool selection);
 Float get_maxamp(snd_info *sp, chan_info *cp, int edpos);
 src_state *make_src(Float srate, snd_fd *sf, Float initial_srate);
 Float src_input_as_needed(void *arg, int dir);

@@ -376,26 +376,51 @@ static void delete_point(env *e, int pos)
   e->pts--;
 }
 
-static int place_point(int *cxs, int points, int x)
+static int place_point(int *cxs, int points, int x, env *e, Float bx)
 {
   int i;
   for (i = 0; i < points; i++)
-    if (x < cxs[i]) 
-      return(i - 1);
+    {
+      if (x == cxs[i])
+	{
+	  /* use true values to disambiguate */
+	  if (e->data[i * 2] > bx)
+	    return(i - 1);
+	  else return(i);
+	}
+      else
+	{
+	  if (x < cxs[i]) 
+	    return(i - 1);
+	}
+    }
   return(points);
 }
 
 static int hit_point(int *cxs, int *cys, int points, int x, int y)
 {
-  int i;
-  for (i = 0; i < points; i++)
-    if ((x == cxs[i]) ||
-	(((x > (cxs[i] - ENVED_DOT_SIZE)) && 
-	  (x < (cxs[i] + ENVED_DOT_SIZE))) &&
-	 ((y > (cys[i] - ENVED_DOT_SIZE)) && 
-	  (y < (cys[i] + ENVED_DOT_SIZE)))))
-      return(i);
-  return(-1);
+  /* enved dot size (10) is big enough that we need to search for the closest dot
+   *   but I think we can assume that the x's are in order
+   */
+  int i, cur_i = -1, cur_min_x = 1000, cur_min_y = 1000, lim_x;
+  lim_x = x + ENVED_DOT_SIZE;
+  for (i = 0; (i < points) && (cxs[i] <= lim_x); i++)
+    if (((x > (cxs[i] - ENVED_DOT_SIZE)) && 
+	 (x < (cxs[i] + ENVED_DOT_SIZE))) &&
+	((y > (cys[i] - ENVED_DOT_SIZE)) && 
+	 (y < (cys[i] + ENVED_DOT_SIZE))))
+      {
+	if (abs(x - cxs[i]) <= cur_min_x)
+	  {
+	    if (abs(y - cys[i]) < cur_min_y)
+	      {
+		cur_i = i;
+		cur_min_x = abs(x - cxs[i]);
+		cur_min_y = abs(y - cys[i]);
+	      }
+	  }
+      }
+  return(cur_i);
 }
 
 env *default_env(Float x1, Float y)
@@ -466,6 +491,12 @@ double env_editor_ungrf_y_dB(env_editor *edp, int y)
 typedef enum {ENVED_ADD_POINT,ENVED_DELETE_POINT,ENVED_MOVE_POINT} enved_point_t;
 static bool check_enved_hook(env *e, int pos, Float x, Float y, enved_point_t reason);
 
+/* enved display can call mus_make_env which can throw 'mus-error, so we need local protection */
+static mus_error_handler_t *old_error_handler;
+static void local_mus_error(int type, char *msg)
+{
+  snd_error(msg);
+}
 
 void env_editor_display_env(env_editor *edp, env *e, axis_context *ax, const char *name, 
 			    int x0, int y0, int width, int height, bool printing)
@@ -625,7 +656,9 @@ void env_editor_display_env(env_editor *edp, env *e, axis_context *ax, const cha
 
 	      /* exponential case */
 	      dur = width / EXP_SEGLEN;
+	      old_error_handler = mus_error_set_handler(local_mus_error);
 	      ce = mus_make_env(e->data, e->pts, 1.0, 0.0, e->base, 0.0, 0, dur - 1, NULL);
+	      mus_error_set_handler(old_error_handler);
 	      if (ce == NULL) return;
 	      if (dur < e->pts) dur = e->pts;
 	      env_val = mus_env(ce);
@@ -734,7 +767,7 @@ bool env_editor_button_press(env_editor *edp, int evx, int evy, Tempus time, env
   /* if not -1, then user clicked existing point -- wait for drag/release to decide what to do */
   if (pos == -1) 
     {
-      pos = place_point(edp->current_xs, e->pts, evx);
+      pos = place_point(edp->current_xs, e->pts, evx, e, x);
       /* place returns left point index of current segment or pts if off left end */
       /* in this case, user clicked in middle of segment, so add point there */
       if ((edp != ss->enved) || (check_enved_hook(e, pos, x, y, ENVED_ADD_POINT) == 0))
