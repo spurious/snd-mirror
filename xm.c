@@ -67,6 +67,7 @@
  *                XmSetMenuCursor, XmStringByteCompare, XmStringCreateLtoR, XmSTRING_COMPONENT_CHARSET, XmSTRING_COMPONENT_FONTLIST_ELEMENT_TAG,
  *                XmStringCreateSimple, XmStringGetLtoR, XmStringGetNextComponent, XmStringGetNextSegment, XmStringLength, XmStringNConcat
  *                XmStringNCopy, XmStringPeekNextComponent, XmStringSegmentCreate, XmTrackingLocate, XmRemoveFrom|AddTo|PostFromList
+ *                XGet|SetStandardColormap
  *              added XmWidgetGetDisplayRect inadvertently omitted earlier.
  *   14-Feb:    XUniqueContext added, XExtentsOfFontSet and XGetErrorDatabaseText deleted.
  *              X save-set and X host-address stuff deleted.
@@ -7897,6 +7898,7 @@ static XEN gxm_XShrinkRegion(XEN arg1, XEN arg2, XEN arg3)
   return(C_TO_XEN_INT(XShrinkRegion(XEN_TO_C_Region(arg1), XEN_TO_C_INT(arg2), XEN_TO_C_INT(arg3))));
 }
 
+#if (!XM_DISABLE_DEPRECATED)
 static XEN gxm_XSetStandardColormap(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XSetStandardColormap "XSetStandardColormap(dpy, window, colormap, atom) sets the standard colormap property"
@@ -7907,6 +7909,7 @@ static XEN gxm_XSetStandardColormap(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   XSetStandardColormap(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), XEN_TO_C_XStandardColormap(arg3), XEN_TO_C_Atom(arg4));
   return(XEN_FALSE);
 }
+#endif
 
 static XEN gxm_XSetRegion(XEN arg1, XEN arg2, XEN arg3)
 {
@@ -8108,6 +8111,7 @@ structures that have attributes equal to the attributes specified by vinfo_templ
   return(lst);
 }
 
+#if (!XM_DISABLE_DEPRECATED)
 static XEN gxm_XGetStandardColormap(XEN arg1, XEN arg2, XEN arg3)
 {
   #define H_XGetStandardColormap "XGetStandardColormap(dpy, window, atom) gets the standard colormap property"
@@ -8125,6 +8129,7 @@ static XEN gxm_XGetStandardColormap(XEN arg1, XEN arg2, XEN arg3)
   FREE(c);
   return(XEN_FALSE);
 }
+#endif
 
 static XEN gxm_XGetRGBColormaps(XEN arg1, XEN arg2, XEN arg3)
 {
@@ -18200,7 +18205,9 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XFindContext, gxm_XFindContext, 3, 0, 0, H_XFindContext);
   XM_DEFINE_PROCEDURE(XGetIconSizes, gxm_XGetIconSizes, 2, 0, 0, H_XGetIconSizes);
   XM_DEFINE_PROCEDURE(XGetRGBColormaps, gxm_XGetRGBColormaps, 3, 0, 0, H_XGetRGBColormaps);
+#if (!XM_DISABLE_DEPRECATED)
   XM_DEFINE_PROCEDURE(XGetStandardColormap, gxm_XGetStandardColormap, 3, 0, 0, H_XGetStandardColormap);
+#endif
   XM_DEFINE_PROCEDURE(XGetVisualInfo, gxm_XGetVisualInfo, 3, 0, 0, H_XGetVisualInfo);
   XM_DEFINE_PROCEDURE(XGetWMHints, gxm_XGetWMHints, 2, 0, 0, H_XGetWMHints);
   XM_DEFINE_PROCEDURE(XIntersectRegion, gxm_XIntersectRegion, 3, 0, 0, H_XIntersectRegion);
@@ -18216,7 +18223,9 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XSetRGBColormaps, gxm_XSetRGBColormaps, 5, 0, 0, H_XSetRGBColormaps);
   XM_DEFINE_PROCEDURE(XSetWMHints, gxm_XSetWMHints, 3, 0, 0, H_XSetWMHints);
   XM_DEFINE_PROCEDURE(XSetRegion, gxm_XSetRegion, 3, 0, 0, H_XSetRegion);
+#if (!XM_DISABLE_DEPRECATED)
   XM_DEFINE_PROCEDURE(XSetStandardColormap, gxm_XSetStandardColormap, 4, 0, 0, H_XSetStandardColormap);
+#endif
   XM_DEFINE_PROCEDURE(XShrinkRegion, gxm_XShrinkRegion, 3, 0, 0, H_XShrinkRegion);
   XM_DEFINE_PROCEDURE(XSubtractRegion, gxm_XSubtractRegion, 3, 0, 0, H_XSubtractRegion);
   XM_DEFINE_PROCEDURE(XUnionRectWithRegion, gxm_XUnionRectWithRegion, 3, 0, 0, H_XUnionRectWithRegion);

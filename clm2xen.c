@@ -4580,7 +4580,7 @@ generator."
       else osamps = mus_length(inf);
       if (osamps < 0)
 	XEN_ERROR(BAD_HEADER,
-		  XEN_LIST_3(C_TO_XEN_STRING(S_file2array),
+		  XEN_LIST_3(C_TO_XEN_STRING(S_mus_mix),
 			     in,
 			     C_TO_XEN_STRING("input frames < 0")));
     }

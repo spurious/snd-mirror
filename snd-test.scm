@@ -2277,6 +2277,8 @@
 			    "/home/bil/sf1/bad_chans.riff"
 			    "/home/bil/sf1/bad_srate.riff"
 			    "/home/bil/sf1/bad_chans.nist"
+			    "/home/bil/sf1/bad_location.nist"
+			    "/home/bil/sf1/bad_field.nist"
 			    "/home/bil/sf1/bad_srate.nist"
 			    "/home/bil/sf1/bad_length.nist"))
 	    (close-sound ind))
@@ -2349,6 +2351,7 @@
 		      mus-audio-spdif-in mus-audio-spdif-out)))
 	     (list mus-audio-amp mus-audio-srate mus-audio-channel mus-audio-format mus-audio-port mus-audio-imix
 		   mus-audio-igain mus-audio-reclev mus-audio-pcm mus-audio-pcm2 mus-audio-ogain mus-audio-line
+		   mus-audio-line1 mus-audio-line2 mus-audio-line3 mus-audio-cd
 		   mus-audio-synth mus-audio-bass mus-audio-treble mus-audio-direction mus-audio-samples-per-channel))
 	    )
 	  
@@ -13404,22 +13407,26 @@ EDITS: 5
 	  ); end do loop
 	); end let
 	
-	(let* ((ind (open-sound "oboe.snd"))
-	       (pi2 (* 2.0 pi))
-	       (pv (make-phase-vocoder #f
-				       512 4 128 1.0
-				       #f ;no change to analysis
-				       #f ;no change to edits
-				       #f ;no change to synthesis
-				       ))
-	       (reader (make-sample-reader 0)))
-	  (if (not (phase-vocoder? pv)) (snd-display ";~A not phase-vocoder?" pv))
-	  (print-and-check pv 
-			   "phase_vocoder"
-			   "phase_vocoder: outctr: 128, interp: 128, filptr: 0, N: 512, D: 128, in_data: nil"
-			   "pv_info outctr: 128, interp: 128, filptr: 0, N: 512, D: 128, in_data: nil, amps: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...], freqs: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...]")
-	  (select-sound ind)
-	  (map-chan (lambda (val)
+      (let* ((gen (make-phase-vocoder #f 512 4 256 1.0 #f #f #f))
+	     (val (phase-vocoder gen)))
+	(if (fneq val 0.0) (snd-display ";simple no-in pv call: ~A" val)))
+
+      (let* ((ind (open-sound "oboe.snd"))
+	     (pi2 (* 2.0 pi))
+	     (pv (make-phase-vocoder #f
+				     512 4 128 1.0
+				     #f ;no change to analysis
+				     #f ;no change to edits
+				     #f ;no change to synthesis
+				     ))
+	     (reader (make-sample-reader 0)))
+	(if (not (phase-vocoder? pv)) (snd-display ";~A not phase-vocoder?" pv))
+	(print-and-check pv 
+			 "phase_vocoder"
+			 "phase_vocoder: outctr: 128, interp: 128, filptr: 0, N: 512, D: 128, in_data: nil"
+			 "pv_info outctr: 128, interp: 128, filptr: 0, N: 512, D: 128, in_data: nil, amps: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...], freqs: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...]")
+	(select-sound ind)
+	(map-chan (lambda (val)
  		    (phase-vocoder pv (lambda (dir) 
 					(next-sample reader)))))
 	(vct-set! (pv-amp-increments pv) 0 .1)
@@ -37793,6 +37800,9 @@ EDITS: 2
 	    (check-error-tag 'no-such-channel (lambda () (make-sample-reader 0 "oboe.snd" -1)))
 	    (check-error-tag 'bad-arity (lambda () (bind-key (char->integer #\p) 0 (lambda (a b) (play-often (max 1 a))))))
 	    (check-error-tag 'bad-type (lambda () (mus-mix "oboe.snd" "pistol.snd" 0 12 0 (make-mixer 1 1.0) (make-vector 0))))
+	    (check-error-tag 'bad-header (lambda () (mus-mix "test.snd" (string-append sf-dir "bad_chans.aifc"))))
+	    (check-error-tag 'bad-header (lambda () (mus-mix "test.snd" (string-append sf-dir "bad_length.aifc"))))
+	    (check-error-tag 'bad-header (lambda () (mus-mix (string-append sf-dir "bad_chans.aifc") "oboe.snd")))
 	    (check-error-tag 'no-such-sound (lambda () (set! (sound-loop-info 123) '(0 0 1 1))))
 	    (check-error-tag 'mus-error (lambda () (new-sound "fmv.snd" mus-nist mus-bfloat 22050 2 "this is a comment")))
 	    (check-error-tag 'no-such-player (lambda () (player-home 123)))
@@ -37805,6 +37815,10 @@ EDITS: 2
 	    (check-error-tag 'bad-header (lambda () (set! (mus-sound-maxamp (string-append sf-dir "bad_chans.snd")) '(0.0 0.0))))
 	    (check-error-tag 'no-such-sound (lambda () (restore-marks 123 123 123 '())))
 	    (check-error-tag 'mus-error (lambda () (play (string-append sf-dir "midi60.mid"))))
+	    (check-error-tag 'wrong-type-arg (lambda () (make-iir-filter :order 32 :ycoeffs (make-vct 4))))
+	    (check-error-tag 'out-of-range (lambda () (make-table-lookup :size 123456789)))
+	    (check-error-tag 'mus-error (lambda () (mus-sound-chans (string-append sf-dir "bad_location.nist"))))
+	    (check-error-tag 'mus-error (lambda () (mus-sound-chans (string-append sf-dir "bad_field.nist"))))
 	    (if (provided? 'snd-motif)
 		(begin
 		  (check-error-tag 'no-such-widget (lambda () (widget-position (list 'Widget 0)))) ; dubious -- not sure these should be supported
@@ -37838,7 +37852,7 @@ EDITS: 2
 	    (check-error-tag 'cannot-print (lambda () (graph->ps)))
 	    (let ((ind (open-sound "oboe.snd"))) 
 	      (select-all)
-	      (check-error-tag 'mus-error (lambda () (filter-sound (make-frame 4))))
+;	      (check-error-tag 'mus-error (lambda () (filter-sound (make-frame 4))))
 	      (check-error-tag 'wrong-type-arg (lambda () (smooth-sound 0 -10)))
 	      (check-error-tag 'out-of-range (lambda () (let ((hi (make-sound-data 1 10))) (samples->sound-data 0 8 #f #f hi #f 2))))
 	      (check-error-tag 'cannot-save (lambda () (write-peak-env-info-file ind 0 "/baddy/hi")))

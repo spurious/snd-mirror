@@ -586,7 +586,9 @@
   XEN_NARGIFY_3(gxm_XFindContext_w, gxm_XFindContext)
   XEN_NARGIFY_2(gxm_XGetIconSizes_w, gxm_XGetIconSizes)
   XEN_NARGIFY_3(gxm_XGetRGBColormaps_w, gxm_XGetRGBColormaps)
+#if (!XM_DISABLE_DEPRECATED)
   XEN_NARGIFY_3(gxm_XGetStandardColormap_w, gxm_XGetStandardColormap)
+#endif
   XEN_NARGIFY_3(gxm_XGetVisualInfo_w, gxm_XGetVisualInfo)
   XEN_NARGIFY_2(gxm_XGetWMHints_w, gxm_XGetWMHints)
   XEN_NARGIFY_3(gxm_XIntersectRegion_w, gxm_XIntersectRegion)
@@ -602,7 +604,9 @@
   XEN_NARGIFY_5(gxm_XSetRGBColormaps_w, gxm_XSetRGBColormaps)
   XEN_NARGIFY_3(gxm_XSetWMHints_w, gxm_XSetWMHints)
   XEN_NARGIFY_3(gxm_XSetRegion_w, gxm_XSetRegion)
+#if (!XM_DISABLE_DEPRECATED)
   XEN_NARGIFY_4(gxm_XSetStandardColormap_w, gxm_XSetStandardColormap)
+#endif
   XEN_NARGIFY_3(gxm_XShrinkRegion_w, gxm_XShrinkRegion)
   XEN_NARGIFY_3(gxm_XSubtractRegion_w, gxm_XSubtractRegion)
   XEN_NARGIFY_3(gxm_XUnionRectWithRegion_w, gxm_XUnionRectWithRegion)
@@ -1869,7 +1873,9 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XFindContext, gxm_XFindContext_w, 3, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XGetIconSizes, gxm_XGetIconSizes_w, 2, 0, 0, H_XGetIconSizes);
   XM_DEFINE_PROCEDURE(XGetRGBColormaps, gxm_XGetRGBColormaps_w, 3, 0, 0, H_XGetRGBColormaps);
+#if (!XM_DISABLE_DEPRECATED)
   XM_DEFINE_PROCEDURE(XGetStandardColormap, gxm_XGetStandardColormap_w, 3, 0, 0, NULL);
+#endif
   XM_DEFINE_PROCEDURE(XGetVisualInfo, gxm_XGetVisualInfo_w, 3, 0, 0, H_XGetVisualInfo);
   XM_DEFINE_PROCEDURE(XGetWMHints, gxm_XGetWMHints_w, 2, 0, 0, H_XGetWMHints);
   XM_DEFINE_PROCEDURE(XIntersectRegion, gxm_XIntersectRegion_w, 3, 0, 0, H_XIntersectRegion);
@@ -1884,7 +1890,9 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XSetRGBColormaps, gxm_XSetRGBColormaps_w, 5, 0, 0, H_XSetRGBColormaps);
   XM_DEFINE_PROCEDURE(XSetWMHints, gxm_XSetWMHints_w, 3, 0, 0, H_XSetWMHints);
   XM_DEFINE_PROCEDURE(XSetRegion, gxm_XSetRegion_w, 3, 0, 0, H_XSetRegion);
+#if (!XM_DISABLE_DEPRECATED)
   XM_DEFINE_PROCEDURE(XSetStandardColormap, gxm_XSetStandardColormap_w, 4, 0, 0, NULL);
+#endif
   XM_DEFINE_PROCEDURE(XShrinkRegion, gxm_XShrinkRegion_w, 3, 0, 0, H_XShrinkRegion);
   XM_DEFINE_PROCEDURE(XSubtractRegion, gxm_XSubtractRegion_w, 3, 0, 0, H_XSubtractRegion);
   XM_DEFINE_PROCEDURE(XUnionRectWithRegion, gxm_XUnionRectWithRegion_w, 3, 0, 0, H_XUnionRectWithRegion);

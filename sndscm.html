@@ -1759,7 +1759,7 @@ an ordinary editing function:
 ;;; (clm-reverb-sound .1 (lambda (dur) (jc-reverb #f 1.0 #f dur)))
 </pre>
 <p>Another approach to this problem would be to make the reverberator slightly
-smarter about where it gets its input; if *reverb* is undefined of #f, it
+smarter about where it gets its input; if *reverb* is undefined or #f, it
 could instead read Snd's currently selected sound, etc.  This option isn't built into
 jc-reverb and other such instruments because it might cause trouble for
 those using the CLM instruments outside Snd (currently sndlib is all that is
