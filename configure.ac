@@ -75,20 +75,6 @@ fi
 XMHTML_LIB=""
 GTKHTML_LIB=""
 GTKHTML_FLAGS=""
-if test "$with_html" = yes ; then
-  AC_DEFINE(HAVE_HTML)
-  XMHTML_LIB="-lXmHTML -ljpeg -lpng"
-  AC_PATH_PROG(MOZILLA_CONFIG, mozilla-config, no)
-  if test "$MOZILLA_CONFIG" = no ; then
-    GTKHTML_LIB="-Xlinker -rpath -Xlinker /usr/lib/mozilla -L/usr/lib/mozilla -lgtkembedmoz"
-    GTKHTML_FLAGS="-I/usr/include/mozilla"
-# TODO: this is mozilla-1.0.1/... in redhat 8.0 -- need also to find the library
-  else
-    GTKHTML_LIB=`$MOZILLA_CONFIG --libs`
-    GTKHTML_FLAGS=`$MOZILLA_CONFIG --cflags`
-    fi
-dnl which we actually use is decided later
-fi
 
 if test "$with_motif" = yes ; then
   AC_DEFINE(USE_MOTIF)
@@ -426,6 +412,10 @@ else
 	  AC_DEFINE(HAVE_MOTIF) # for xm
 	  AC_SUBST(XLIBS)
 	  AC_SUBST(XFLAGS)
+	  if test "$with_html" = yes ; then
+  	    AC_DEFINE(HAVE_HTML)
+  	    XMHTML_LIB="-lXmHTML -ljpeg -lpng"
+	  fi
  	  AC_SUBST(XMHTML_LIB)
  	  GTKHTML_LIB=""
  	  GTKHTML_FLAGS=""
@@ -494,6 +484,44 @@ else
       	AC_SUBST(GTK_LIBS)
       	AC_SUBST(GTK_CFLAGS)
       	AC_DEFINE(USE_GTK)
+
+	if test "$with_html" = yes ; then
+	  AC_PATH_PROG(MOZILLA_CONFIG, mozilla-config, no)
+	  if test "$MOZILLA_CONFIG" = no ; then
+	    OLD_CFLAGS="$CFLAGS"
+	    CFLAGS="$CFLAGS $GTK_CFLAGS -I/usr/include/mozilla"
+	    AC_MSG_CHECKING([for /usr/include/mozilla/gtkembedmoz/gtkmozembed.h])
+    	    AC_TRY_COMPILE([#include <gtkembedmoz/gtkmozembed.h>],
+		[int g; g = (int)gtk_moz_embed_get_type()],
+		[
+		AC_MSG_RESULT(yes)
+  	        AC_DEFINE(HAVE_HTML)
+		GTKHTML_LIB="-Xlinker -rpath -Xlinker /usr/lib/mozilla -L/usr/lib/mozilla -lgtkembedmoz"
+		GTKHTML_FLAGS="-I/usr/include/mozilla"
+		],
+		[
+		AC_MSG_RESULT(no)
+		AC_MSG_CHECKING([for /usr/include/mozilla-1.0.1/gtkembedmoz/gtkmozembed.h])
+    		CFLAGS="$OLD_CFLAGS $GTK_CFLAGS -I/usr/include/mozilla-1.0.1"
+		AC_TRY_COMPILE([#include <gtkembedmoz/gtkmozembed.h>],
+		[int g; g = (int)gtk_moz_embed_get_type()],
+		[
+		AC_MSG_RESULT(yes)
+  	        AC_DEFINE(HAVE_HTML)
+		GTKHTML_LIB="-lgtkembedmoz"
+		GTKHTML_FLAGS="-I/usr/include/mozilla-1.0.1"
+		],
+		[AC_MSG_RESULT(no)])
+		]
+		)
+            CFLAGS="$OLD_CFLAGS"
+	  else
+  	    AC_DEFINE(HAVE_HTML)
+	    GTKHTML_LIB=`$MOZILLA_CONFIG --libs`
+	    GTKHTML_FLAGS=`$MOZILLA_CONFIG --cflags`
+	  fi
+	fi
+
       	AC_SUBST(GTKHTML_LIB)
       	AC_SUBST(GTKHTML_FLAGS)
 	XLIBS=""

@@ -75,6 +75,7 @@
 #if MOTIF_2
   XEN_NARGIFY_2(gxm_XtIsSubclass_w, gxm_XtIsSubclass)
 #endif
+  XEN_NARGIFY_2(gxm_XtAppSetFallbackResources_w, gxm_XtAppSetFallbackResources)
   XEN_NARGIFY_1(gxm_XtIsObject_w, gxm_XtIsObject)
   XEN_NARGIFY_1(gxm_XtIsManaged_w, gxm_XtIsManaged)
   XEN_NARGIFY_1(gxm_XtIsRealized_w, gxm_XtIsRealized)
@@ -174,9 +175,9 @@
   XEN_NARGIFY_3(gxm_XtSetLanguageProc_w, gxm_XtSetLanguageProc)
   XEN_NARGIFY_6(gxm_XtDisplayInitialize_w, gxm_XtDisplayInitialize)
   XEN_ARGIFY_6(gxm_XtOpenApplication_w, gxm_XtOpenApplication)
-  XEN_NARGIFY_5(gxm_XtVaOpenApplication_w, gxm_XtVaOpenApplication)
+  XEN_ARGIFY_6(gxm_XtVaOpenApplication_w, gxm_XtVaOpenApplication)
   XEN_ARGIFY_5(gxm_XtAppInitialize_w, gxm_XtAppInitialize)
-  XEN_NARGIFY_4(gxm_XtVaAppInitialize_w, gxm_XtVaAppInitialize)
+  XEN_ARGIFY_5(gxm_XtVaAppInitialize_w, gxm_XtVaAppInitialize)
   XEN_NARGIFY_6(gxm_XtOpenDisplay_w, gxm_XtOpenDisplay)
   XEN_NARGIFY_0(gxm_XtCreateApplicationContext_w, gxm_XtCreateApplicationContext)
   XEN_NARGIFY_1(gxm_XtDestroyApplicationContext_w, gxm_XtDestroyApplicationContext)
@@ -1408,12 +1409,13 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XtSetLanguageProc, gxm_XtSetLanguageProc_w, 3, 0, 0, H_XtSetLanguageProc);
   XM_DEFINE_PROCEDURE(XtDisplayInitialize, gxm_XtDisplayInitialize_w, 6, 0, 0, H_XtDisplayInitialize);
   XM_DEFINE_PROCEDURE(XtOpenApplication, gxm_XtOpenApplication_w, 5, 1, 0, H_XtOpenApplication);
-  XM_DEFINE_PROCEDURE(XtVaOpenApplication, gxm_XtVaOpenApplication_w, 5, 0, 0, H_XtVaOpenApplication);
+  XM_DEFINE_PROCEDURE(XtVaOpenApplication, gxm_XtVaOpenApplication_w, 5, 1, 0, H_XtVaOpenApplication);
   XM_DEFINE_PROCEDURE(XtAppInitialize, gxm_XtAppInitialize_w, 4, 1, 0, H_XtAppInitialize);
-  XM_DEFINE_PROCEDURE(XtVaAppInitialize, gxm_XtVaAppInitialize_w, 4, 0, 0, H_XtVaAppInitialize);
+  XM_DEFINE_PROCEDURE(XtVaAppInitialize, gxm_XtVaAppInitialize_w, 4, 1, 0, H_XtVaAppInitialize);
   XM_DEFINE_PROCEDURE(XtOpenDisplay, gxm_XtOpenDisplay_w, 6, 0, 0, H_XtOpenDisplay);
   XM_DEFINE_PROCEDURE(XtCreateApplicationContext, gxm_XtCreateApplicationContext_w, 0, 0, 0, H_XtCreateApplicationContext);
   XM_DEFINE_PROCEDURE(XtDestroyApplicationContext, gxm_XtDestroyApplicationContext_w, 1, 0, 0, H_XtDestroyApplicationContext);
+  XM_DEFINE_PROCEDURE(XtAppSetFallbackResources, gxm_XtAppSetFallbackResources_w, 2, 0, 0, H_XtAppSetFallbackResources);
   XM_DEFINE_PROCEDURE(XtInitializeWidgetClass, gxm_XtInitializeWidgetClass_w, 1, 0, 0, H_XtInitializeWidgetClass);
   XM_DEFINE_PROCEDURE(XtWidgetToApplicationContext, gxm_XtWidgetToApplicationContext_w, 1, 0, 0, H_XtWidgetToApplicationContext);
   XM_DEFINE_PROCEDURE(XtDisplayToApplicationContext, gxm_XtDisplayToApplicationContext_w, 1, 0, 0, H_XtDisplayToApplicationContext);

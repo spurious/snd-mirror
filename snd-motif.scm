@@ -29,6 +29,7 @@
 ;;; show-font-name shows the Snd-related name and the X-related name of a font
 ;;; show-minibuffer-font shows what font is associated with the minibuffer
 ;;; add-find-to-listener enables C-s and C-r in the listener
+;;; add a function to be called when the window manager sends us a "save yourself" message
 
 (use-modules (ice-9 common-list) (ice-9 format))
 
@@ -2376,3 +2377,25 @@ in a widget's font list"
 						        Ctrl <Key>r: search-backward()\n")))))
   
   
+;;; -------- add a function to be called when the window manager sends us a "save yourself" or "take focus" message
+
+(define (upon-save-yourself thunk)
+  ;; cause thunk to be called if a "save yourself" message is received
+  (XmAddWMProtocolCallback 
+   (cadr (main-widgets))
+   (XmInternAtom (XtDisplay (cadr (main-widgets))) "WM_SAVE_YOURSELF" #f)
+   (lambda (w c i)
+     (thunk))
+   #f))
+
+;;; similarly for "take focus"
+
+(define (upon-take-focus thunk)
+  ;; cause thunk to be called if a "take focus" message is received
+  (XmAddWMProtocolCallback 
+   (cadr (main-widgets))
+   (XmInternAtom (XtDisplay (cadr (main-widgets))) "WM_TAKE_FOCUS" #f)
+   (lambda (w c i)
+     (thunk))
+   #f))
+

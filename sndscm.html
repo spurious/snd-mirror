@@ -2193,6 +2193,7 @@ and some slightly inconsistent old function names.
   <em class=def><A NAME="showfontname">show-font-name</a></em> font
   <em class=def><A NAME="showminibufferfont">show-minibuffer-font</a></em>
   <em class=def><A NAME="addfindtolistener">add-find-to-listener</a></em>
+  <em class=def><A NAME="uponsaveyourself">upon-save-yourself, upon-take-focus</a></em>
 </pre>
 
 <p>snd-motif.scm has procedures that rely on the Motif module (xm.c).
@@ -2271,6 +2272,9 @@ channel number.
 for the XA_FULL_NAME associated with an XFontStruct).
 <b>show-minibuffer-font</b> uses that function to show what fonts are associated with the minibuffer.
 <b>add-find-to-listener</b> activates C-s and C-r in the listener via a separate dialog.
+<b>upon-save-yourself</b> causes a thunk (a function of no args) to be called if the window
+manager sends a SAVE_YOURSELF message; similarly upon-take-focus causes a thunk to be called
+whenever Snd receives focus from the window manager.
 </p>
 
 <A NAME="sndtestdoc"></a><span class=box><h2>snd-test.scm and event.scm</h2></span>
@@ -2783,6 +2787,164 @@ in C/CLM is:
                      mus_env(indf3) * mus_oscil(fmosc3, (fuzz + fm3_rat * vib), 0.0);
       mus_locsig(loc, i, mus_env(ampf) *
                          mus_oscil(carrier, vib + indfuzz * modulation, 0.0));
+</pre>
+
+<p>And here is the Ruby version, written by Michael Scholz (see contrib/examp.rb):</p>
+<pre>
+#
+# fm_violin([start=0.0[, dur=1.0[, freq=440.0[, amp=0.3[, *args]]]]])
+#
+
+def fm_violin(start = 0.0, dur = 1.0, freq = 440.0, amp = 0.3, *args)
+  include Math;			# PI
+
+  usage = "fm_violin([start=0.0[, dur=1.0[, freq=440.0[, amp=0.3[, *args]]]]])
+
+	[:fm_index, 1.0]
+	[:amp_env, [0, 0, 25, 1, 75, 1, 100, 0]]
+	[:periodic_vibrato_rate, 5.0]
+	[:random_vibrato_rate, 16.0]
+	[:periodic_vibrato_amp, 0.0025]
+	[:random_vibrato_amp, 0.005]
+	[:noise_amount, 0.0]
+	[:noise_freq, 1000.0]
+	[:ind_noise_freq, 10.0]
+	[:ind_noise_amount, 0.0]
+	[:amp_noise_freq, 20.0]
+	[:amp_noise_amount, 0.0]
+	[:gliss_env, [0, 0,  100, 0]]
+	[:gliss_amount, 0.0]
+	[:fm1_env, [0, 1, 25, 0.4, 75, 0.6, 100, 0]]
+	[:fm2_env, [0, 1, 25, 0.4, 75, 0.6, 100, 0]]
+	[:fm3_env, [0, 1, 25, 0.4, 75, 0.6, 100, 0]]
+	[:fm1_rat, 1.0]
+	[:fm2_rat, 3.0]
+	[:fm3_rat, 4.0]
+	[:fm1_index, false]
+	[:fm2_index, false]
+	[:fm3_index, false]
+	[:base, 1.0]
+	[:reverb_amount, 0.01]
+	[:index_type, :violin]
+	[:degree, false]
+	[:distance, 1.0]
+	[:degrees, false]
+
+  Ruby: fm_violin(0, 1, 440, .1, [[:fm_index, 2.0]])
+ Guile: (fm-violin 0 1 440 .1 :fm-index 2.0)\n\n";
+
+  fm_index = (args.assoc(:fm_index)[1] rescue 1.0);
+  amp_env = (args.assoc(:amp_env)[1] rescue [0, 0, 25, 1, 75, 1, 100, 0]);
+  periodic_vibrato_rate = (args.assoc(:periodic_vibrato_rate)[1] rescue 5.0);
+  random_vibrato_rate = (args.assoc(:random_vibrato_rate)[1] rescue 16.0);
+  periodic_vibrato_amp = (args.assoc(:periodic_vibrato_amp)[1] rescue 0.0025);
+  random_vibrato_amp = (args.assoc(:random_vibrato_amp)[1] rescue 0.005);
+  noise_amount = (args.assoc(:noise_amount)[1] rescue 0.0);
+  noise_freq = (args.assoc(:noise_freq)[1] rescue 1000.0);
+  ind_noise_freq = (args.assoc(:ind_noise_freq)[1] rescue 10.0);
+  ind_noise_amount = (args.assoc(:ind_noise_amount)[1] rescue 0.0);
+  amp_noise_freq = (args.assoc(:amp_noise_freq)[1] rescue 20.0);
+  amp_noise_amount = (args.assoc(:amp_noise_amount)[1] rescue 0.0);
+  gliss_env = (args.assoc(:gliss_env)[1] rescue [0, 0,  100, 0]);
+  gliss_amount = (args.assoc(:gliss_amount)[1] rescue 0.0);
+  fm1_env = (args.assoc(:fm1_env)[1] rescue [0, 1, 25, 0.4, 75, 0.6, 100, 0]);
+  fm2_env = (args.assoc(:fm2_env)[1] rescue [0, 1, 25, 0.4, 75, 0.6, 100, 0]);
+  fm3_env = (args.assoc(:fm3_env)[1] rescue [0, 1, 25, 0.4, 75, 0.6, 100, 0]);
+  fm1_rat = (args.assoc(:fm1_rat)[1] rescue 1.0);
+  fm2_rat = (args.assoc(:fm2_rat)[1] rescue 3.0);
+  fm3_rat = (args.assoc(:fm3_rat)[1] rescue 4.0);
+  fm1_index = (args.assoc(:fm1_index)[1] rescue false);
+  fm2_index = (args.assoc(:fm2_index)[1] rescue false);
+  fm3_index = (args.assoc(:fm3_index)[1] rescue false);
+  base = (args.assoc(:base)[1] rescue 1.0);
+  reverb_amount = (args.assoc(:reverb_amount)[1] rescue 0.01);
+  index_type = (args.assoc(:index_type)[1] rescue :violin);
+  degree = (args.assoc(:degree)[1] rescue false);
+  distance = (args.assoc(:distance)[1] rescue 1.0);
+  degrees = (args.assoc(:degrees)[1] rescue false);
+
+  srate = (srate() rescue $rbm_srate);
+  chans = (channels() rescue $rbm_channels);
+  beg = (srate * start).round;
+  len = (srate * dur).round;
+  frq_scl = hz2radians(freq);
+  modulate = fm_index.nonzero?;
+  maxdev = frq_scl * fm_index;
+  vln = (not (index_type == :cello))
+  logfreq = log(freq);
+  sqrtfreq = sqrt(freq);
+  index1 = (fm1_index or [PI, maxdev * (vln ? 5.0 : 7.5) / logfreq].min);
+  index2 = (fm2_index or [PI, maxdev * 3.0 * 
+	      (vln ? ((8.5 - logfreq) / (3.0 + freq * 0.001)) : (15.0 / sqrtfreq))].min);
+  index3 = (fm3_index or [PI, maxdev * (vln ? 4.0 : 8.0) / sqrtfreq].min);
+  easy_case = (noise_amount.zero? and
+	       (fm1_env == fm2_env) and 
+	       (fm1_env == fm3_env) and 
+	       (fm1_rat - fm1_rat.floor).zero? and 
+	       (fm2_rat - fm2_rat.floor).zero? and 
+	       (fm3_rat - fm3_rat.floor).zero?);
+  coeffs = (easy_case and modulate and 
+	    partials2polynomial([fm1_rat, index1, 
+				  (fm2_rat / fm1_rat).floor, index2,
+				  (fm3_rat / fm1_rat).floor, index3]));
+  norm = ((easy_case and modulate and 1.0) or index1);
+  carrier = make_oscil(freq);
+  fmosc1 = (modulate and make_oscil(fm1_rat * freq));
+  fmosc2 = (modulate and (easy_case or make_oscil(fm2_rat * freq)));
+  fmosc3 = (modulate and (easy_case or make_oscil(fm3_rat * freq)));
+  ampf = make_env(amp_env, amp, dur, 0.0, base);
+  indf1 = (modulate and make_env(fm1_env, norm, dur));
+  indf2 = (modulate and (easy_case or make_env(fm2_env, index2, dur)));
+  indf3 = (modulate and (easy_case or make_env(fm3_env, index3, dur)));
+  frqf = make_env(gliss_env, gliss_amount * frq_scl, dur);
+  pervib = make_triangle_wave(periodic_vibrato_rate, periodic_vibrato_amp *  frq_scl);
+  ranvib = make_rand_interp(random_vibrato_rate, random_vibrato_amp * frq_scl);
+  fm_noi = (noise_amount.nonzero? and make_rand(noise_freq, PI * noise_amount));
+  ind_noi = ((ind_noise_amount.nonzero? and ind_noise_freq.nonzero?) and 
+	     make_rand_interp(ind_noise_freq, ind_noise_amount));
+  amp_noi = ((amp_noise_amount.nonzero? and amp_noise_freq.nonzero?) and
+	     make_rand_interp(amp_noise_freq, amp_noise_amount));
+  vib = 0.0;
+  modulation = 0.0;
+  # make_locsig(degree=0.0, distance=1.0, reverb=0.0, output, revout, chans=1, type=Mus_linear)
+  # Ruby's rand() is shadowed by CLM's rand(), that's why mus_random().abs.
+  loc = make_locsig((degree or degrees or mus_random(90.0).abs), 
+		    distance, reverb_amount, false, false, chans);
+  fuzz = 0.0;
+  ind_fuzz = 1.0;
+  amp_fuzz = 1.0;
+  out_data = make_vct(len);
+
+  vct_map!(out_data,
+	   lambda { | |
+	     fuzz = rand(fm_noi) if noise_amount.nonzero?;
+	     vib = env(frqf) + triangle_wave(pervib) + rand_interp(ranvib);
+	     ind_fuzz = 1.0 + rand_interp(ind_noi) if ind_noi;
+	     amp_fuzz = 1.0 + rand_interp(amp_noi) if amp_noi;
+
+	     if(modulate)
+	       if(easy_case)
+		 modulation = env(indf1) * polynomial(coeffs, oscil(fmosc1, vib));
+	       else
+		 modulation = env(indf1) * oscil(fmosc1, fm1_rat * vib + fuzz) +
+		   env(indf2) * oscil(fmosc2, fm2_rat * vib + fuzz) +
+		   env(indf3) * oscil(fmosc3, fm3_rat * vib + fuzz);
+	       end
+	     end
+
+	     env(ampf) * amp_fuzz * oscil(carrier, vib + ind_fuzz * modulation);
+	   });
+
+  if(chans == 2)
+    mix_vct(vct_scale!(vct_copy(out_data), locsig_ref(loc, 1)), beg, $rbm_snd, 1, false);
+    mix_vct(vct_scale!(out_data, locsig_ref(loc, 0)), beg, $rbm_snd, 0, false);
+  else
+    mix_vct(out_data, beg, $rbm_snd, 0, false);
+  end
+rescue
+  die(usage + "fm_violin()");
+end
+
 </pre>
 <br>
 

@@ -24373,6 +24373,11 @@ EDITS: 2
 	      (XtVaCreatePopupShell "hiho" vendorShellWidgetClass (cadr (main-widgets)) '())
 	      (XtResolvePathname (XtDisplay (Widget (cadr (main-widgets)))) "app-defaults" #f #f #f #f 0 #f)
 	      (XtFindFile ".snd" #f 0 #f)
+	      (let ((val (XtFindFile "/lib/%N:/usr/lib/%N:/usr/local/lib/%N" (list (list #\N "libxm.so")) 1 file-exists?)))
+		(if (or (not (string? val))
+			(not (string=? val "/usr/local/lib/libxm.so")))
+		    (snd-display ";can't find libxm? ~A" val)))
+
 	      (XtAppLock (car (main-widgets)))
 	      (XtAppUnlock (car (main-widgets)))
 	      (let ((acts (XtGetActionList xmLabelWidgetClass)))

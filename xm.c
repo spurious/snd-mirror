@@ -6,6 +6,7 @@
 /* TODO: some way to access XtGetApplicationResources */
 
 /* HISTORY: 
+ *   17-Oct:    XtAppSetFallbackResources and fallbacks added to XtAppInitialize etc.
  *   15-Oct:    XtGetResourceList.
  *   11-Oct:    xm-ruby XM_DEFINE* cleaned up (thanks to Michael Scholz).
  *              removed all (ignored) XrmOptionDesc args (XtAppInitialize etc).
@@ -387,7 +388,6 @@ XM_TYPE_PTR_OBJ(XWindowChanges, XWindowChanges *)
 XM_TYPE_PTR(XStandardColormap, XStandardColormap *)
 XM_TYPE(KeyCode, KeyCode)
 XM_TYPE(XContext, XContext)
-XM_TYPE(Substitution, Substitution)
 XM_TYPE_PTR(XIconSize, XIconSize *)
 
 #if HAVE_XM_XP
@@ -13506,7 +13506,7 @@ lose ownership of the selection."
 
 /*-------- file predicate -------- */
 
-/* (449) XtResolvePathname/XtFindFile local to proc?? */
+/* a "Substitution" is a list '(char substitute), so pass a list of such lists below where a substitution array is required */
 
 static XEN xm_filepredicate_proc;
 
@@ -13517,6 +13517,25 @@ static Boolean gxm_XtFilePredicate(String filename)
 				     __FUNCTION__)));
 }
 
+static SubstitutionRec *gxm_make_subs(XEN lst)
+{
+  int i, len;
+  SubstitutionRec *subs = NULL;
+  len = XEN_LIST_LENGTH(lst);
+  if (len > 0)
+    {
+      subs = (SubstitutionRec *)CALLOC(len, sizeof(SubstitutionRec));
+      for (i = 0; i < len; i++, lst = XEN_CDR(lst))
+	{
+	  subs[i].match = XEN_TO_C_CHAR(XEN_CAR(XEN_CAR(lst)));
+	  subs[i].substitution = XEN_TO_C_STRING(XEN_CADR(XEN_CAR(lst)));
+	}
+    }
+  return(subs);
+}
+
+/* (XtFindFile "/lib/%N:/usr/lib/%N:/usr/local/lib/%N" (list (list #\N "libxm.so")) 1 file-exists?) */
+
 static XEN gxm_XtResolvePathname(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
 {
   #define H_XtResolvePathname "String XtResolvePathname(display, type, filename, suffix, path, substitutions, num_substitutions, predicate)"
@@ -13524,16 +13543,18 @@ static XEN gxm_XtResolvePathname(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg
    *       (XtResolvePathname (XtDisplay (cadr (main-widgets))) "app-defaults" #f #f #f #f 0 #f)
    */
   char *str;
+  SubstitutionRec *subs = NULL;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XtResolvePathname", "Display*");
   XEN_ASSERT_TYPE(XEN_FALSE_P(arg2) || XEN_STRING_P(arg2), arg2, 2, "XtResolvePathname", "char*");
   XEN_ASSERT_TYPE(XEN_FALSE_P(arg3) || XEN_STRING_P(arg3), arg3, 3, "XtResolvePathname", "char*");
   XEN_ASSERT_TYPE(XEN_FALSE_P(arg4) || XEN_STRING_P(arg4), arg4, 4, "XtResolvePathname", "char*");
   XEN_ASSERT_TYPE(XEN_FALSE_P(arg5) || XEN_STRING_P(arg5), arg5, 5, "XtResolvePathname", "char*");
-  XEN_ASSERT_TYPE(XEN_FALSE_P(arg6) || XEN_Substitution_P(arg6), arg6, 6, "XtResolvePathname", "Substitution");
+  XEN_ASSERT_TYPE(XEN_FALSE_P(arg6) || XEN_LIST_P(arg6), arg6, 6, "XtResolvePathname", "Substitution list");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg7), arg7, 7, "XtResolvePathname", "int");
   XEN_ASSERT_TYPE(XEN_FALSE_P(arg8) || 
 		  (XEN_PROCEDURE_P(arg8) && (XEN_REQUIRED_ARGS(arg8) == 1)), 
 		  arg8, 8, "XtResolvePathname", "XtFilePredicate (takes 1 arg)");
+  if (XEN_LIST_P(arg6)) subs = gxm_make_subs(XEN_COPY_ARG(arg6));
   if (XEN_PROCEDURE_P(arg8))
     {
       xm_protect(arg8);
@@ -13544,10 +13565,11 @@ static XEN gxm_XtResolvePathname(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg
 			  (XEN_FALSE_P(arg3)) ? NULL : XEN_TO_C_STRING(arg3), 
 			  (XEN_FALSE_P(arg4)) ? NULL : XEN_TO_C_STRING(arg4), 
 			  (XEN_FALSE_P(arg5)) ? NULL : XEN_TO_C_STRING(arg5), 
-			  (XEN_FALSE_P(arg6)) ? NULL : XEN_TO_C_Substitution(arg6), 
+			  subs,
 			  XEN_TO_C_INT(arg7), 
 			  (XEN_FALSE_P(arg8)) ? NULL : gxm_XtFilePredicate);
   if (XEN_PROCEDURE_P(arg8)) xm_unprotect(arg8);
+  if (subs) FREE(subs);
   return(C_TO_XEN_STRING(str));
 }
 
@@ -13556,8 +13578,9 @@ static XEN gxm_XtFindFile(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   #define H_XtFindFile "String XtFindFile(path, substitutions, num_substitutions, predicate) \
 searches for a file using substitutions in the path list"
   char *str;
+  SubstitutionRec *subs = NULL;
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XtFindFile", "char*");
-  XEN_ASSERT_TYPE(XEN_FALSE_P(arg2) || XEN_Substitution_P(arg2), arg2, 2, "XtFindFile", "Substitution");
+  XEN_ASSERT_TYPE(XEN_FALSE_P(arg2) || XEN_LIST_P(arg2), arg2, 2, "XtFindFile", "Substitution list");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XtFindFile", "int");
   XEN_ASSERT_TYPE(XEN_FALSE_P(arg4) || 
 		  (XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS(arg4) == 1)), 
@@ -13567,11 +13590,13 @@ searches for a file using substitutions in the path list"
       xm_protect(arg4);
       xm_filepredicate_proc = arg4;
     }
+  if (XEN_LIST_P(arg2)) subs = gxm_make_subs(XEN_COPY_ARG(arg2));
   str = XtFindFile(XEN_TO_C_STRING(arg1), 
-		   (XEN_FALSE_P(arg2)) ? NULL : XEN_TO_C_Substitution(arg2), 
+		   subs,
 		   XEN_TO_C_INT(arg3),
 		   (XEN_FALSE_P(arg4) ? NULL : gxm_XtFilePredicate));
   if (XEN_PROCEDURE_P(arg4)) xm_unprotect(arg4);
+  if (subs) FREE(subs);
   return(C_TO_XEN_STRING(str));
 }
 
@@ -14235,10 +14260,30 @@ widget_class applicationShellWidgetClass , and the specified args and num_args a
 }
 #endif
 
-static XEN gxm_XtVaAppInitialize(XEN arg2, XEN arg5, XEN arg6, XEN arg8)
+static XEN gxm_XtAppSetFallbackResources(XEN app, XEN specs)
 {
-  #define H_XtVaAppInitialize "Widget XtVaAppInitialize(application_class, argc_in_out, argv_in_out, args)"
-  /* DIFF: XtVaAppInitialize [app] class {options numopts} {argc} argv resources -> (list widget app (new argv)), argc is int not int* fallback/options/num ignored
+  #define H_XtAppSetFallbackResources "XtAppSetFallbackResources(app, list-of-strings) sets the app's default resource values \
+from the list of strings"
+  char **fallbacks;
+  int i, len;
+  XEN lst;
+  XEN_ASSERT_TYPE(XEN_XtAppContext_P(app), app, 1, "XtAppSetFallbackResources", "XtAppContext");
+  XEN_ASSERT_TYPE(XEN_LIST_P(specs), specs, 2, "XtAppSetFallbackResources", "list of char*");
+  len = XEN_LIST_LENGTH(specs);
+  lst = XEN_COPY_ARG(specs);
+  fallbacks = (char **)CALLOC(len + 1, sizeof(char *)); /* +1 for null termination */
+  for (i = 0; i < len; i++, lst = XEN_CDR(lst)) 
+    fallbacks[i] = XEN_TO_C_STRING(XEN_CAR(lst));
+  XtAppSetFallbackResources(XEN_TO_C_XtAppContext(app), fallbacks);
+  FREE(fallbacks);
+  return(app);
+}
+
+static XEN gxm_XtVaAppInitialize(XEN arg2, XEN arg5, XEN arg6, XEN arg8, XEN specs)
+{
+  #define H_XtVaAppInitialize "Widget XtVaAppInitialize(application_class, argc_in_out, argv_in_out, args, fallbacks) -- the order \
+of the arguments is slightly different from the C Xt call.  The final arg is an (optional) list of strings."
+  /* DIFF: XtVaAppInitialize [app] class {options numopts} {argc} argv resources -> (list widget app (new argv)), argc is int not int* options/num ignored
      Arg *args;
      app is returned not passed (list widget app) 
   */
@@ -14247,10 +14292,22 @@ static XEN gxm_XtVaAppInitialize(XEN arg2, XEN arg5, XEN arg6, XEN arg8)
   Widget res;
   int argc, arglen;
   char **argv;
+  char **fallbacks = NULL;
+  int i, len;
+  XEN lst;
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 1, "XtVaAppInitialize", "char*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 2, "XtVaAppInitialize", "int");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg6), arg6, 3, "XtVaAppInitialize", "list of String");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg8), arg8, 4, "XtVaAppInitialize", "arg list");
+  XEN_ASSERT_TYPE(XEN_LIST_P(specs) || XEN_NOT_BOUND_P(specs), specs, 5, "XtVaAppInitialize", "list of char*");
+  if (XEN_LIST_P(specs))
+    {
+      len = XEN_LIST_LENGTH(specs);
+      lst = XEN_COPY_ARG(specs);
+      fallbacks = (char **)CALLOC(len + 1, sizeof(char *)); /* +1 for null termination */
+      for (i = 0; i < len; i++, lst = XEN_CDR(lst)) 
+	fallbacks[i] = XEN_TO_C_STRING(XEN_CAR(lst));
+    }
   argc = XEN_TO_C_INT(arg5);
   argv = XEN_TO_C_Strings(arg6, argc);
   args = XEN_TO_C_Args(arg8);
@@ -14260,7 +14317,7 @@ static XEN gxm_XtVaAppInitialize(XEN arg2, XEN arg5, XEN arg6, XEN arg8)
 			0,
 			&argc, 
 			argv,
-			NULL,
+			fallbacks,
 			args,
 			arglen = XEN_LIST_LENGTH(arg8) / 2);
   if (args)
@@ -14268,6 +14325,7 @@ static XEN gxm_XtVaAppInitialize(XEN arg2, XEN arg5, XEN arg6, XEN arg8)
       fixup_args(res, args, arglen);
       FREE(args);
     }
+  if (fallbacks) FREE(fallbacks);
   return(XEN_LIST_3(C_TO_XEN_Widget(res), 
 		    C_TO_XEN_XtAppContext(app),
 		    gxm_argv_to_list(XEN_EMPTY_LIST, argc, argv)));
@@ -14279,8 +14337,8 @@ static XEN gxm_XtAppInitialize(XEN arg2, XEN arg5, XEN arg6, XEN arg8, XEN arg9)
   #define H_XtAppInitialize "Widget XtAppInitialize(application_class, argc_in_out, argv_in_out, \
 args, num_args) calls XtToolkitInitialize followed by XtCreateApplicationContext ,then calls XtOpenDisplay with \
 display_string NULL and application_name NULL, and finally calls XtAppCreateShell with appcation_name NULL, widget_class applicationShellWidgetClass , \
-and the specified args and num_args and returns the created shell. "
-  /* DIFF: XtAppInitialize [app] class {options numopts} {argc} argv resources args numargs -> (list widget app), argc is int not int* fallback/options/num ignored
+and the specified args and num_args and returns the created shell.  The num_args argument can be list of strings = fallback resources"
+  /* DIFF: XtAppInitialize [app] class {options numopts} {argc} argv resources args numargs -> (list widget app), argc is int not int* options/num ignored
      Arg *args;
      app is returned not passed (list widget app) 
   */
@@ -14289,22 +14347,33 @@ and the specified args and num_args and returns the created shell. "
   Widget res;
   int argc, arglen;
   char **argv;
+  char **fallbacks = NULL;
+  int i, len;
+  XEN lst;
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 1, "XtAppInitialize", "char*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 2, "XtAppInitialize", "int");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg6), arg6, 3, "XtAppInitialize", "list of String*");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg8), arg8, 4, "XtAppInitialize", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg9), arg9, 5, "XtAppInitialize", "int"); /* num_args */
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg9) || XEN_LIST_P(arg9) || XEN_NOT_BOUND_P(arg9), arg9, 5, "XtAppInitialize", "int or list of strings"); /* num_args */
   argc = XEN_TO_C_INT(arg5);
   argv = XEN_TO_C_Strings(arg6, argc);
   args = XEN_TO_C_Args(arg8);
   if (XEN_INTEGER_P(arg9)) arglen = XEN_TO_C_INT(arg9); else arglen = XEN_LIST_LENGTH(arg8) / 2;
+  if (XEN_LIST_P(arg9))
+    {
+      len = XEN_LIST_LENGTH(arg9);
+      lst = XEN_COPY_ARG(arg9);
+      fallbacks = (char **)CALLOC(len + 1, sizeof(char *)); /* +1 for null termination */
+      for (i = 0; i < len; i++, lst = XEN_CDR(lst)) 
+	fallbacks[i] = XEN_TO_C_STRING(XEN_CAR(lst));
+    }
   res = XtAppInitialize(&app,
 			XEN_TO_C_STRING(arg2), 
 			NULL,
 			0,
 			&argc,
 			argv,
-			NULL,
+			fallbacks,
 			args,
 			arglen);
   if (args)
@@ -14312,14 +14381,15 @@ and the specified args and num_args and returns the created shell. "
       fixup_args(res, args, arglen);
       FREE(args);
     }
+  if (fallbacks) FREE(fallbacks);
   return(XEN_LIST_3(C_TO_XEN_Widget(res), 
 		    C_TO_XEN_XtAppContext(app),
 		    gxm_argv_to_list(XEN_EMPTY_LIST, argc, argv)));
 }
 
-static XEN gxm_XtVaOpenApplication(XEN arg1, XEN arg4, XEN arg5, XEN arg7, XEN arg8)
+static XEN gxm_XtVaOpenApplication(XEN arg1, XEN arg4, XEN arg5, XEN arg7, XEN arg8, XEN specs)
 {
-  #define H_XtVaOpenApplication "Widget XtVaOpenApplication(application_class, argc_in_out, argv_in_out, widget_class, ...)"
+  #define H_XtVaOpenApplication "Widget XtVaOpenApplication(application_class, argc_in_out, argv_in_out, widget_class, args, fallbacks)"
   /* DIFF: XtVaOpenApplication [app] name {options numopts} {argc} argv resources class args -> (list widget app), argc is int not int* options/num ignored
      Arg *args;
      app is returned not passed (list widget app) 
@@ -14329,11 +14399,23 @@ static XEN gxm_XtVaOpenApplication(XEN arg1, XEN arg4, XEN arg5, XEN arg7, XEN a
   Widget res;
   int argc, arglen;
   char **argv = NULL;
+  char **fallbacks = NULL;
+  int i, len;
+  XEN lst;
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XtVaOpenApplication", "char*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 2, "XtVaOpenApplication", "int"); /* was arg3 by mistake, 11-Oct-02 */
   XEN_ASSERT_TYPE(XEN_LIST_P(arg5), arg5, 3, "XtVaOpenApplication", "list of String");
   XEN_ASSERT_TYPE(XEN_WidgetClass_P(arg7), arg7, 4, "XtVaOpenApplication", "WidgetClass");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg8), arg8, 5, "XtVaOpenApplication", "arg list");
+  XEN_ASSERT_TYPE(XEN_LIST_P(specs) || XEN_NOT_BOUND_P(specs), specs, 5, "XtVaOpenApplication", "list of char*");
+  if (XEN_LIST_P(specs))
+    {
+      len = XEN_LIST_LENGTH(specs);
+      lst = XEN_COPY_ARG(specs);
+      fallbacks = (char **)CALLOC(len + 1, sizeof(char *)); /* +1 for null termination */
+      for (i = 0; i < len; i++, lst = XEN_CDR(lst)) 
+	fallbacks[i] = XEN_TO_C_STRING(XEN_CAR(lst));
+    }
   argc = XEN_TO_C_INT(arg4);
   if (argc > 0) argv = XEN_TO_C_Strings(arg5, argc);
   args = XEN_TO_C_Args(arg8);
@@ -14343,7 +14425,7 @@ static XEN gxm_XtVaOpenApplication(XEN arg1, XEN arg4, XEN arg5, XEN arg7, XEN a
 			  0,
 			  &argc,
 			  argv,
-			  NULL,
+			  fallbacks,
 			  XEN_TO_C_WidgetClass(arg7), 
 			  args, 
 			  arglen = XEN_LIST_LENGTH(arg8) / 2);
@@ -14352,6 +14434,7 @@ static XEN gxm_XtVaOpenApplication(XEN arg1, XEN arg4, XEN arg5, XEN arg7, XEN a
       fixup_args(res, args, arglen);
       FREE(args);
     }
+  if (fallbacks) FREE(fallbacks);
   return(XEN_LIST_3(C_TO_XEN_Widget(res), 
 		    C_TO_XEN_XtAppContext(app),
 		    gxm_argv_to_list(XEN_EMPTY_LIST, argc, argv)));
@@ -14362,7 +14445,8 @@ static XEN gxm_XtOpenApplication(XEN arg1, XEN arg4, XEN arg5, XEN arg7, XEN arg
   #define H_XtOpenApplication "Widget XtOpenApplication(application_class, argc_in_out, argv_in_out, \
 widget_class, args, num_args) calls XtToolkitInitialize followed by XtCreateApplicationContext , then calls XtOpenDisplay \
 with display_string NULL and application_name NULL, and finally calls XtAppCreateShell with appcation_name NULL, widget_class \
-applicationShellWidgetClass ,and the specified args and num_args and returns the created shell."
+applicationShellWidgetClass ,and the specified args and num_args and returns the created shell.  num_args can also be a list \
+of fallback resources."
   /* DIFF: XtOpenApplication [app] name {options numopts} {argc} argv resources class args argnum -> (list widget app), argc is int not int* options/num ignored
   */
   XtAppContext app;
@@ -14370,25 +14454,37 @@ applicationShellWidgetClass ,and the specified args and num_args and returns the
   Widget res;
   int argc, arglen;
   char **argv;
+  char **fallbacks = NULL;
+  int i, len;
+  XEN lst;
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XtOpenApplication", "char*");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XtOpenApplication", "int");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg5), arg5, 5, "XtOpenApplication", "list of String*");
-  XEN_ASSERT_TYPE(XEN_WidgetClass_P(arg7), arg7, 7, "XtOpenApplication", "WidgetClass");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 2, "XtOpenApplication", "int");
+  XEN_ASSERT_TYPE(XEN_LIST_P(arg5), arg5, 3, "XtOpenApplication", "list of String*");
+  XEN_ASSERT_TYPE(XEN_WidgetClass_P(arg7), arg7, 4, "XtOpenApplication", "WidgetClass");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg8), arg8, 8, "XtOpenApplication", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg9), arg9, 9, "XtOpenApplication", "int");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg9) || XEN_LIST_P(arg9) || XEN_NOT_BOUND_P(arg9), arg9, 5, "XtOpenApplication", "int or list of strings"); /* num_args */
   argc = XEN_TO_C_INT(arg4);
   argv = XEN_TO_C_Strings(arg5, argc);
   args = XEN_TO_C_Args(arg8);
   if (XEN_INTEGER_P(arg9)) arglen = XEN_TO_C_INT(arg9); else arglen = XEN_LIST_LENGTH(arg8) / 2;
+  if (XEN_LIST_P(arg9))
+    {
+      len = XEN_LIST_LENGTH(arg9);
+      lst = XEN_COPY_ARG(arg9);
+      fallbacks = (char **)CALLOC(len + 1, sizeof(char *)); /* +1 for null termination */
+      for (i = 0; i < len; i++, lst = XEN_CDR(lst)) 
+	fallbacks[i] = XEN_TO_C_STRING(XEN_CAR(lst));
+    }
   res = XtOpenApplication(&app, XEN_TO_C_STRING(arg1), 
 			  NULL, 0, &argc,
-			  argv, NULL, XEN_TO_C_WidgetClass(arg7), 
+			  argv, fallbacks, XEN_TO_C_WidgetClass(arg7), 
 			  args, arglen);
   if (args)
     {
       fixup_args(res, args, arglen);
       FREE(args);
     }
+  if (fallbacks) FREE(fallbacks);
   return(XEN_LIST_3(C_TO_XEN_Widget(res), 
 		    C_TO_XEN_XtAppContext(app),
 		    gxm_argv_to_list(XEN_EMPTY_LIST, argc, argv)));
@@ -15789,7 +15885,7 @@ static XEN gxm_XtGetResourceList(XEN widget_class)
 				  C_TO_XEN_STRING(resources[i].default_type),
 				  C_TO_XEN_ULONG(resources[i].default_addr)),
 		       lst);
-      XtFree((void *)resources);
+      XtFree((char *)resources);
     }
   return(lst);
 }
@@ -17423,13 +17519,14 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XtSetLanguageProc, gxm_XtSetLanguageProc, 3, 0, 0, H_XtSetLanguageProc);
   XM_DEFINE_PROCEDURE(XtDisplayInitialize, gxm_XtDisplayInitialize, 6, 0, 0, H_XtDisplayInitialize);
   XM_DEFINE_PROCEDURE(XtOpenApplication, gxm_XtOpenApplication, 5, 1, 0, H_XtOpenApplication);
-  XM_DEFINE_PROCEDURE(XtVaOpenApplication, gxm_XtVaOpenApplication, 5, 0, 0, H_XtVaOpenApplication);
+  XM_DEFINE_PROCEDURE(XtVaOpenApplication, gxm_XtVaOpenApplication, 5, 1, 0, H_XtVaOpenApplication);
   XM_DEFINE_PROCEDURE(XtAppInitialize, gxm_XtAppInitialize, 4, 1, 0, H_XtAppInitialize);
-  XM_DEFINE_PROCEDURE(XtVaAppInitialize, gxm_XtVaAppInitialize, 4, 0, 0, H_XtVaAppInitialize);
+  XM_DEFINE_PROCEDURE(XtVaAppInitialize, gxm_XtVaAppInitialize, 4, 1, 0, H_XtVaAppInitialize);
   XM_DEFINE_PROCEDURE(XtOpenDisplay, gxm_XtOpenDisplay, 6, 0, 0, H_XtOpenDisplay);
   XM_DEFINE_PROCEDURE(XtCreateApplicationContext, gxm_XtCreateApplicationContext, 0, 0, 0, H_XtCreateApplicationContext);
   XM_DEFINE_PROCEDURE(XtDestroyApplicationContext, gxm_XtDestroyApplicationContext, 1, 0, 0, H_XtDestroyApplicationContext);
   XM_DEFINE_PROCEDURE(XtInitializeWidgetClass, gxm_XtInitializeWidgetClass, 1, 0, 0, H_XtInitializeWidgetClass);
+  XM_DEFINE_PROCEDURE(XtAppSetFallbackResources, gxm_XtAppSetFallbackResources, 2, 0, 0, H_XtAppSetFallbackResources);
   XM_DEFINE_PROCEDURE(XtWidgetToApplicationContext, gxm_XtWidgetToApplicationContext, 1, 0, 0, H_XtWidgetToApplicationContext);
   XM_DEFINE_PROCEDURE(XtDisplayToApplicationContext, gxm_XtDisplayToApplicationContext, 1, 0, 0, H_XtDisplayToApplicationContext);
   XM_DEFINE_PROCEDURE(XtCloseDisplay, gxm_XtCloseDisplay, 1, 0, 0, H_XtCloseDisplay);
@@ -18479,7 +18576,7 @@ static void define_procedures(void)
   /*  ADD: XtAppContext? XtRequestId? XtWorkProcId? XtInputId? XtIntervalId? Screen? XEvent? XRectangle? XArc?
       ADD: XPoint? XSegment? XColor? XmTab? Atom? Colormap? Depth? Display? Drawable? Font? GC? KeySym? Pixel? Pixmap? Region?
       ADD: Time? Visual? Window? XFontProp? XFontStruct? XGCValues? XImage? XVisualInfo? XWMHints? XWindowAttributes? XWindowChanges?
-      ADD: KeyCode? XContext? Substitution? XmString? XmToggleButton? XmDrawingArea?
+      ADD: KeyCode? XContext? XmString? XmToggleButton? XmDrawingArea?
       ADD: XmPushButton? XmTextField? XmFileSelectionBox? XmText? XmFrame? XmLabel? XmList? XmArrowButton? XmScrollBar? XmCommand?
       ADD: XmScale? XmRowColumn? XmNotebook? XmPrintShell? XmComboBox? XmContainer? XmIconHeader? XmGrabShell? XmPanedWindow? XmScrolledWindow?
       ADD: XmCascadeButton? XmForm? XmBulletinBoard? XmScreen? XmDialogShell? XmDisplay? XmSelectionBox? XmDragContext? XmDragIconObjectClass?
@@ -18532,7 +18629,6 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XCharStruct?, XEN_XCharStruct_p, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XTextItem?, XEN_XTextItem_p, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XStandardColormap?, XEN_XStandardColormap_p, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(Substitution?, XEN_Substitution_p, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(Cursor?, XEN_Cursor_p, 1, 0, 0, NULL);
 #if HAVE_XM_XP
   XM_DEFINE_PROCEDURE(XPContext?, XEN_XPContext_p, 1, 0, 0, NULL);

@@ -2656,60 +2656,6 @@ fi
 XMHTML_LIB=""
 GTKHTML_LIB=""
 GTKHTML_FLAGS=""
-if test "$with_html" = yes ; then
-  cat >>confdefs.h <<\_ACEOF
-#define HAVE_HTML 1
-_ACEOF
-
-  XMHTML_LIB="-lXmHTML -ljpeg -lpng"
-  # Extract the first word of "mozilla-config", so it can be a program name with args.
-set dummy mozilla-config; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_path_MOZILLA_CONFIG+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  case $MOZILLA_CONFIG in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_MOZILLA_CONFIG="$MOZILLA_CONFIG" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_MOZILLA_CONFIG="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-  test -z "$ac_cv_path_MOZILLA_CONFIG" && ac_cv_path_MOZILLA_CONFIG="no"
-  ;;
-esac
-fi
-MOZILLA_CONFIG=$ac_cv_path_MOZILLA_CONFIG
-
-if test -n "$MOZILLA_CONFIG"; then
-  echo "$as_me:$LINENO: result: $MOZILLA_CONFIG" >&5
-echo "${ECHO_T}$MOZILLA_CONFIG" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-  if test "$MOZILLA_CONFIG" = no ; then
-    GTKHTML_LIB="-Xlinker -rpath -Xlinker /usr/lib/mozilla -L/usr/lib/mozilla -lgtkembedmoz"
-    GTKHTML_FLAGS="-I/usr/include/mozilla"
-  else
-    GTKHTML_LIB=`$MOZILLA_CONFIG --libs`
-    GTKHTML_FLAGS=`$MOZILLA_CONFIG --cflags`
-    fi
-fi
 
 if test "$with_motif" = yes ; then
   cat >>confdefs.h <<\_ACEOF
@@ -10963,6 +10909,13 @@ _ACEOF
  # for xm
 
 
+	  if test "$with_html" = yes ; then
+  	    cat >>confdefs.h <<\_ACEOF
+#define HAVE_HTML 1
+_ACEOF
+
+  	    XMHTML_LIB="-lXmHTML -ljpeg -lpng"
+	  fi
 
  	  GTKHTML_LIB=""
  	  GTKHTML_FLAGS=""
@@ -11462,6 +11415,164 @@ echo "$as_me: WARNING: trouble with gtk -- will try to make Snd without any GUI"
       	cat >>confdefs.h <<\_ACEOF
 #define USE_GTK 1
 _ACEOF
+
+
+	if test "$with_html" = yes ; then
+	  # Extract the first word of "mozilla-config", so it can be a program name with args.
+set dummy mozilla-config; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_MOZILLA_CONFIG+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $MOZILLA_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_MOZILLA_CONFIG="$MOZILLA_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_MOZILLA_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_path_MOZILLA_CONFIG" && ac_cv_path_MOZILLA_CONFIG="no"
+  ;;
+esac
+fi
+MOZILLA_CONFIG=$ac_cv_path_MOZILLA_CONFIG
+
+if test -n "$MOZILLA_CONFIG"; then
+  echo "$as_me:$LINENO: result: $MOZILLA_CONFIG" >&5
+echo "${ECHO_T}$MOZILLA_CONFIG" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+	  if test "$MOZILLA_CONFIG" = no ; then
+	    OLD_CFLAGS="$CFLAGS"
+	    CFLAGS="$CFLAGS $GTK_CFLAGS -I/usr/include/mozilla"
+	    echo "$as_me:$LINENO: checking for /usr/include/mozilla/gtkembedmoz/gtkmozembed.h" >&5
+echo $ECHO_N "checking for /usr/include/mozilla/gtkembedmoz/gtkmozembed.h... $ECHO_C" >&6
+    	    cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+#include <gtkembedmoz/gtkmozembed.h>
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+int g; g = (int)gtk_moz_embed_get_type()
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+
+		echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+  	        cat >>confdefs.h <<\_ACEOF
+#define HAVE_HTML 1
+_ACEOF
+
+		GTKHTML_LIB="-Xlinker -rpath -Xlinker /usr/lib/mozilla -L/usr/lib/mozilla -lgtkembedmoz"
+		GTKHTML_FLAGS="-I/usr/include/mozilla"
+
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+
+		echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+		echo "$as_me:$LINENO: checking for /usr/include/mozilla-1.0.1/gtkembedmoz/gtkmozembed.h" >&5
+echo $ECHO_N "checking for /usr/include/mozilla-1.0.1/gtkembedmoz/gtkmozembed.h... $ECHO_C" >&6
+    		CFLAGS="$OLD_CFLAGS $GTK_CFLAGS -I/usr/include/mozilla-1.0.1"
+		cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+#include <gtkembedmoz/gtkmozembed.h>
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+int g; g = (int)gtk_moz_embed_get_type()
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+
+		echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+  	        cat >>confdefs.h <<\_ACEOF
+#define HAVE_HTML 1
+_ACEOF
+
+		GTKHTML_LIB="-lgtkembedmoz"
+		GTKHTML_FLAGS="-I/usr/include/mozilla-1.0.1"
+
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+
+
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+            CFLAGS="$OLD_CFLAGS"
+	  else
+  	    cat >>confdefs.h <<\_ACEOF
+#define HAVE_HTML 1
+_ACEOF
+
+	    GTKHTML_LIB=`$MOZILLA_CONFIG --libs`
+	    GTKHTML_FLAGS=`$MOZILLA_CONFIG --cflags`
+	  fi
+	fi
 
 
 
@@ -14699,7 +14810,6 @@ s,@CPP@,$CPP,;t t
 s,@INSTALL_PROGRAM@,$INSTALL_PROGRAM,;t t
 s,@INSTALL_SCRIPT@,$INSTALL_SCRIPT,;t t
 s,@INSTALL_DATA@,$INSTALL_DATA,;t t
-s,@MOZILLA_CONFIG@,$MOZILLA_CONFIG,;t t
 s,@GUILE_LIBS@,$GUILE_LIBS,;t t
 s,@GUILE_CFLAGS@,$GUILE_CFLAGS,;t t
 s,@GSL_CONFIG@,$GSL_CONFIG,;t t
@@ -14718,6 +14828,7 @@ s,@XMHTML_LIB@,$XMHTML_LIB,;t t
 s,@PKG_CONFIG@,$PKG_CONFIG,;t t
 s,@GTK_CFLAGS@,$GTK_CFLAGS,;t t
 s,@GTK_LIBS@,$GTK_LIBS,;t t
+s,@MOZILLA_CONFIG@,$MOZILLA_CONFIG,;t t
 s,@GX_FILES@,$GX_FILES,;t t
 s,@GX_HEADERS@,$GX_HEADERS,;t t
 s,@GL_LIBS@,$GL_LIBS,;t t

@@ -275,24 +275,6 @@ void news_help(snd_state *ss)
 12-Sep:  removed \"set-\" names -- use -DWITH_SET_NAME=1 to restore them.\n\
 11-Sep:  save-state-hook.\n\
 10-Sep:  new edit123.scm thanks to Tom Roth.\n\
-9-Sep:   bess.scm.\n\
-         set-oss-buffers -> mus-audio-set-oss-buffers\n\
-4-Sep:   --with-modules for modularized sndlib.\n\
-2-Sep:   removed gtk-1 and gtkextra support.\n\
-1-Sep:   bugfix: if no extension language, edit position could get confused (fixed).\n\
-26-Aug:  added filter-control-coeffs.\n\
-         graph-lisp|time|transform? inverted to be lisp|time|transform-graph?\n\
-         graph-time-once -> graph-once\n\
-         graph-transform-once -> graph-once\n\
-         graph-time-as-wavogram -> graph-as-wavogram\n\
-         graph-transform-as-sonogram -> graph-as-sonogram\n\
-         graph-transform-as-spectrogram -> graph-as-spectrogram.\n\
-         dont-normalize-transform -> dont-normalize\n\
-         normalize-transform-by-channel -> normalize-by-channel\n\
-         normalize-transform-by-sound -> normalize-by-sound\n\
-         normalize-transform-globally -> normalize-globally\n\
-         snd6.scm.\n\
-         ccrma-ftp: old-cmdist.html.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",
