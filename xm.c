@@ -5,10 +5,11 @@
 
 #include <config.h>
 
-#define XM_DATE "23-Nov-04"
+#define XM_DATE "30-Dec-04"
 
 /* HISTORY: 
  *
+ *   30-Dec:    plug various memory leaks.
  *   23-Nov:    resource type lookup indexing bugfix.
  *   22-Sep:    various minor cleanups.
  *   23-Aug:    more changes for new Guile.
@@ -5624,8 +5625,8 @@ static XEN gxm_XmDataFieldSetSelection(XEN arg, XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XmDataFieldGetSelectionPosition(XEN arg)
 {
-  XmTextPosition pos1, pos2;
-  Boolean val;
+  XmTextPosition pos1 = 0, pos2 = 0;
+  Boolean val = False;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmDataFieldGetSelectionPosition", "Widget");
   val = XmDataFieldGetSelectionPosition(XEN_TO_C_Widget(arg), &pos1, &pos2);
   return(XEN_LIST_3(C_TO_XEN_BOOLEAN(val),
@@ -10450,8 +10451,8 @@ static XEN gxm_XParseGeometry(XEN arg1)
 indicates which of the four values (width, height, xoffset, and yoffset) were actually found in the string and whether the x and y values are negative. "
   /* DIFF: XParseGeometry str [x y w h] -> (list bit x y w h)
    */
-  int x, y, val;
-  unsigned int w, h;
+  int x = 0, y = 0, val = 0;
+  unsigned int w = 0, h = 0;
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XParseGeometry", "char*");
   val = XParseGeometry(XEN_TO_C_STRING(arg1), &x, &y, &w, &h);
   return(XEN_LIST_5(C_TO_XEN_INT(val),
@@ -10993,8 +10994,8 @@ static XEN gxm_XGetFontProperty(XEN arg1, XEN arg2)
   #define H_XGetFontProperty "Bool XGetFontProperty(font_struct, atom) returns the value of the specified font property. "
   /* DIFF: XGetFontProperty omits and rtns last arg
    */
-  Bool val;
-  unsigned long prop;
+  Bool val = False;
+  unsigned long prop = 0;
   XEN_ASSERT_TYPE(XEN_XFontStruct_P(arg1), arg1, 1, "XGetFontProperty", "XFontStruct*");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg2), arg2, 2, "XGetFontProperty", "Atom");
   val = XGetFontProperty(XEN_TO_C_XFontStruct(arg1), XEN_TO_C_Atom(arg2), &prop);
@@ -13064,7 +13065,8 @@ font names that match the specified pattern and their associated font informatio
     lst = XEN_CONS(XEN_LIST_2(C_TO_XEN_STRING(val[i]), 
 			      C_TO_XEN_XFontStruct(&(info[i]))),
 		   lst);
-  XFreeFontNames(val);
+  XFreeFontInfo(val, info, count);
+  /* XFreeFontNames(val); */
   xm_unprotect_at(loc);
   return(lst);
 }
@@ -19847,6 +19849,7 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmCvtXmStringToByteStream, gxm_XmCvtXmStringToByteStream, 1, 0, 0, H_XmCvtXmStringToByteStream);
   XM_DEFINE_PROCEDURE(XmCvtByteStreamToXmString, gxm_XmCvtByteStreamToXmString, 1, 0, 0, H_XmCvtByteStreamToXmString);
   XM_DEFINE_PROCEDURE(XmStringByteStreamLength, gxm_XmStringByteStreamLength, 1, 0, 0, H_XmStringByteStreamLength);
+
   XM_DEFINE_PROCEDURE(XmIsNotebook, gxm_XmIsNotebook, 1, 0, 0, NULL);
 #if HAVE_XM_XP
   XM_DEFINE_PROCEDURE(XmIsPrintShell, gxm_XmIsPrintShell, 1, 0, 0, NULL);

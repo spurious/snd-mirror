@@ -105,10 +105,23 @@ static void vct_free(vct *v)
 {
   if (v)
     {
+#if DEBUGGING
+      if ((v->length == -999) ||
+	  (v->data == (void *)0x99999999))
+	{
+	  fprintf(stderr, "this vct %p has already been freed!", v);
+	  abort();
+	}
+#endif
       if ((!(v->dont_free)) && 
 	  (v->data)) 
 	FREE(v->data);
       v->data = NULL;
+#if DEBUGGING
+      v->length = -999;
+      v->data = (void *)0x99999999;
+      v->dont_free = true;
+#endif
       FREE(v);
     }
 }

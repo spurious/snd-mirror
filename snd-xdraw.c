@@ -32,6 +32,7 @@ void gtk_style_draw_string (axis_context *ax, int x0, int y0, char *str, int len
   /* now gv.font is the default font */
   fs = XQueryFont(MAIN_DISPLAY(ss), gv.font);
   XDrawString(ax->dp, ax->wn, ax->gc, x0, y0 + fs->ascent, str, len);
+  /* don't XFreeFont fs here! and XFreeFontInfo with null 1st arg appears to be a no-op */
 }
 
 void fill_polygon(axis_context *ax, int points, ...)

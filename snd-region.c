@@ -1527,7 +1527,12 @@ write region's samples starting at beg for samps in channel chan to vct v; retur
 	  data = v1->data;
 	  if (len > v1->length) len = v1->length;
 	}
-      else data = (Float *)CALLOC(len, sizeof(Float));
+      else 
+	{
+	  if ((beg + len) > region_len(reg))
+	    len = region_len(reg) - beg;
+	  data = (Float *)CALLOC(len, sizeof(Float));
+	}
       region_samples(reg, chn, beg, len, data);
       if (v1)
 	return(v);

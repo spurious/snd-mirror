@@ -544,6 +544,7 @@ void env_editor_display_env(env_editor *edp, env *e, axis_context *ax, const cha
     }
   if (edp == ss->enved)
     {
+      /* don't free edp->axis! */
       ap = enved_make_axis(name, ax, x0, y0, width, height, ex0, ex1, ey0, ey1, printing); /* ax used only for GC here */
       edp->axis = ap;
     }

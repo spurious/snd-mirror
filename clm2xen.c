@@ -1574,8 +1574,6 @@ return a new " S_sum_of_cosines " generator, producing a band-limited pulse trai
 	XEN_OUT_OF_RANGE_ERROR(S_make_sum_of_cosines, orig_arg[1], keys[1], "freq ~A > srate/2?");
       phase = mus_optkey_to_float(keys[2], S_make_sum_of_cosines, orig_arg[2], phase);
     }
-  if (cosines <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_make_sum_of_cosines, orig_arg[0], keys[0], "cosines ~A <= 0?");
   ge = mus_make_sum_of_cosines(cosines, freq, phase);
   if (ge) return(mus_xen_to_object((mus_xen *)_mus_wrap_no_vcts(ge)));
   return(XEN_FALSE);
@@ -1630,8 +1628,6 @@ return a new " S_sum_of_sines " generator."
 	XEN_OUT_OF_RANGE_ERROR(S_make_sum_of_sines, orig_arg[1], keys[1], "freq ~A > srate/2?");
       phase = mus_optkey_to_float(keys[2], S_make_sum_of_sines, orig_arg[2], phase);
     }
-  if (sines <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_make_sum_of_sines, orig_arg[0], keys[0], "sines ~A <= 0?");
   ge = mus_make_sum_of_sines(sines, freq, phase);
   if (ge) return(mus_xen_to_object((mus_xen *)_mus_wrap_no_vcts(ge)));
   return(XEN_FALSE);
@@ -3529,14 +3525,17 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
     XEN_ERROR(NO_DATA,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_make_env), 
 			 C_TO_XEN_STRING("no envelope?")));
-  /* odata = vct->data in this context [vcts[0]] */
   if (dur > 0)
     {
       if ((end > 0) && ((end - start + 1) != dur))
-	XEN_ERROR(MUS_MISC_ERROR,
-		  XEN_LIST_3(C_TO_XEN_STRING(S_make_env), 
-			     C_TO_XEN_STRING("end (~A) and dur (~A) specified, but dur != end-start+1"),
-			     XEN_LIST_2(keys[5], keys[7])));
+	{
+	  if (brkpts) FREE(brkpts);
+	  if (odata) FREE(odata);
+	  XEN_ERROR(MUS_MISC_ERROR,
+		    XEN_LIST_3(C_TO_XEN_STRING(S_make_env), 
+			       C_TO_XEN_STRING("end (~A) and dur (~A) specified, but dur != end-start+1"),
+			       XEN_LIST_2(keys[5], keys[7])));
+	}
       start = 0;
       end = dur - 1;
     }
@@ -3983,11 +3982,11 @@ return a new readin (file input) generator reading the sound file 'file' startin
     {
       file = mus_optkey_to_string(keys[0], S_make_readin, orig_arg[0], NULL); /* not copied */
       channel = mus_optkey_to_int(keys[1], S_make_readin, orig_arg[1], channel);
+      if (channel < 0)
+	XEN_OUT_OF_RANGE_ERROR(S_make_readin, orig_arg[1], keys[1], "channel ~A < 0?");
       start = mus_optkey_to_off_t(keys[2], S_make_readin, orig_arg[2], start);
       direction = mus_optkey_to_int(keys[3], S_make_readin, orig_arg[3], direction);
     }
-  if (channel < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_make_readin, orig_arg[1], keys[1], "channel ~A < 0?");
   if (file == NULL)
     XEN_OUT_OF_RANGE_ERROR(S_make_readin, orig_arg[0], keys[0], "no file name given");
   if (!(mus_file_probe(file)))
@@ -4327,11 +4326,11 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
     {
       in_obj = mus_optkey_to_procedure(keys[0], S_make_src, orig_arg[0], XEN_UNDEFINED, 1, "src input procedure takes 1 arg");
       srate = mus_optkey_to_float(keys[1], S_make_src, orig_arg[1], srate);
+      if (srate < 0) XEN_OUT_OF_RANGE_ERROR(S_make_src, orig_arg[1], keys[1], "srate ~A < 0.0?");
       wid = mus_optkey_to_int(keys[2], S_make_src, orig_arg[2], wid);
+      if (wid < 0) XEN_OUT_OF_RANGE_ERROR(S_make_src, orig_arg[2], keys[2], "width ~A < 0?");
+      if (wid > 2000) XEN_OUT_OF_RANGE_ERROR(S_make_src, orig_arg[2], keys[2], "width ~A?");
     }
-  if (srate < 0) XEN_OUT_OF_RANGE_ERROR(S_make_src, orig_arg[1], keys[1], "srate ~A < 0.0?");
-  if (wid < 0) XEN_OUT_OF_RANGE_ERROR(S_make_src, orig_arg[2], keys[2], "width ~A < 0?");
-  if (wid > 2000) XEN_OUT_OF_RANGE_ERROR(S_make_src, orig_arg[2], keys[2], "width ~A?");
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
   /* mus_make_src assumes it can invoke the input function! */
   gn->nvcts = MAX_VCTS;
@@ -4456,10 +4455,18 @@ The edit function, if any, should return the length in samples of the grain, or 
     {
       in_obj = mus_optkey_to_procedure(keys[0], S_make_granulate, orig_arg[0], XEN_UNDEFINED, 1, "granulate input procedure takes 1 arg");
       expansion = mus_optkey_to_float(keys[1], S_make_granulate, orig_arg[1], expansion);
+      if (expansion <= 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, orig_arg[1], keys[1], "expansion ~A <= 0.0?");
       segment_length = mus_optkey_to_float(keys[2], S_make_granulate, orig_arg[2], segment_length);
+      if (segment_length <= 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, orig_arg[2], keys[2], "segment-length ~A <= 0.0?");
       segment_scaler = mus_optkey_to_float(keys[3], S_make_granulate, orig_arg[3], segment_scaler);
+      if (segment_scaler == 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, orig_arg[3], keys[3], "segment-scaler: ~A?");
       output_hop = mus_optkey_to_float(keys[4], S_make_granulate, orig_arg[4], output_hop);
+      if (output_hop <= 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, orig_arg[4], keys[4], "hop ~A <= 0?");
+      if (output_hop > 3600.0) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, orig_arg[4], keys[4], "hop ~A?");
+      if ((segment_length + output_hop) > 60.0) /* multiplied by srate in mus_make_granulate in array allocation */
+	XEN_OUT_OF_RANGE_ERROR(S_make_granulate, orig_arg[2], XEN_LIST_2(keys[2], keys[4]), "segment_length + output_hop = ~A: too large!");
       ramp_time = mus_optkey_to_float(keys[5], S_make_granulate, orig_arg[5], ramp_time);
+      if ((ramp_time < 0.0) || (ramp_time > 0.5)) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, orig_arg[5], keys[5], "ramp ~A must be between 0.0 and 0.5");
       jitter = mus_optkey_to_float(keys[6], S_make_granulate, orig_arg[6], jitter);
       XEN_ASSERT_TYPE((jitter >= 0.0) && (jitter < 100.0), keys[6], orig_arg[6], S_make_granulate, "0.0 .. 100.0");
       maxsize = mus_optkey_to_int(keys[7], S_make_granulate, orig_arg[7], maxsize);
@@ -4469,14 +4476,6 @@ The edit function, if any, should return the length in samples of the grain, or 
 	XEN_OUT_OF_RANGE_ERROR(S_make_granulate, orig_arg[7], keys[7], "max-size ~A?");
       edit_obj = mus_optkey_to_procedure(keys[8], S_make_granulate, orig_arg[8], XEN_UNDEFINED, 1, "granulate edit procedure takes 1 arg");
     }
-  if (expansion <= 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, orig_arg[1], keys[1], "expansion ~A <= 0.0?");
-  if (segment_length <= 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, orig_arg[2], keys[2], "segment-length ~A <= 0.0?");
-  if (segment_scaler == 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, orig_arg[3], keys[3], "segment-scaler: ~A?");
-  if (output_hop <= 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, orig_arg[4], keys[4], "hop ~A <= 0?");
-  if (output_hop > 3600.0) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, orig_arg[4], keys[4], "hop ~A?");
-  if ((ramp_time < 0.0) || (ramp_time > 0.5)) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, orig_arg[5], keys[5], "ramp ~A must be between 0.0 and 0.5");
-  if ((segment_length + output_hop) > 60.0) /* multiplied by srate in mus_make_granulate in array allocation */
-    XEN_OUT_OF_RANGE_ERROR(S_make_granulate, orig_arg[2], XEN_LIST_2(keys[2], keys[4]), "segment_length + output_hop = ~A: too large!");
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
   old_error_handler = mus_error_set_handler(local_mus_error);
   ge = mus_make_granulate(funcall1, 
@@ -5066,11 +5065,11 @@ return a new " S_ssb_am " generator."
       if (freq > (0.5 * mus_srate()))
 	XEN_OUT_OF_RANGE_ERROR(S_make_ssb_am, orig_arg[0], keys[0], "freq ~A > srate/2?");
       order = mus_optkey_to_int(keys[1], S_make_ssb_am, orig_arg[1], order);
+      if (order <= 0)
+	XEN_OUT_OF_RANGE_ERROR(S_make_ssb_am, orig_arg[1], keys[1], "order ~A <= 0?");
+      if (order > MUS_MAX_SSB_ORDER)
+	XEN_OUT_OF_RANGE_ERROR(S_make_ssb_am, orig_arg[1], keys[1], "order ~A too large?");
     }
-  if (order <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_make_ssb_am, orig_arg[1], keys[1], "order ~A <= 0?");
-  if (order > MUS_MAX_SSB_ORDER)
-    XEN_OUT_OF_RANGE_ERROR(S_make_ssb_am, orig_arg[1], keys[1], "order ~A too large?");
   ge = mus_make_ssb_am(freq, order);
   if (ge) return(mus_xen_to_object((mus_xen *)_mus_wrap_no_vcts(ge)));
   return(XEN_FALSE);

@@ -1022,6 +1022,11 @@ save the current selection in file using the indicated file attributes.  If chan
 			 C_TO_XEN_STRING(_("can't write this combination of header type and data format:")),
 			 C_TO_XEN_STRING(mus_header_type_name(type)),
 			 C_TO_XEN_STRING(mus_data_format_name(format))));
+  if (sr <= 0)
+    XEN_ERROR(CANNOT_SAVE,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_save_selection),
+			 C_TO_XEN_STRING(_("srate can't be <= 0")),
+			 C_TO_XEN_INT(sr)));
   fname = mus_expand_filename(file);
   ss->catch_message = NULL;
   err = save_selection(fname, type, format, sr, com, chn);

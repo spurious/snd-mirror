@@ -3476,6 +3476,7 @@ static XEN g_swap_channels(XEN snd0, XEN chn0, XEN snd1, XEN chn1, XEN beg, XEN 
 swap the indicated channels"
   chan_info *cp0 = NULL, *cp1 = NULL;
   snd_info *sp = NULL;
+  /* TODO: are sound wrappers sneaking through here? */
   ASSERT_CHANNEL(S_swap_channels, snd0, chn0, 1);
   cp0 = get_cp(snd0, chn0, S_swap_channels);
   if (XEN_INTEGER_P(chn1))
@@ -4249,6 +4250,7 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
 	  e = get_env(ratio_or_env, S_src_channel);
 	  egen = mus_make_env(e->data, e->pts, 1.0, 0.0, e->base, 0.0, 0, dur - 1, NULL);
 	  need_free = true;
+	  free_env(e);
 	}
       check_src_envelope(mus_env_breakpoints(egen), mus_data(egen), S_src_channel);
     }

@@ -1,5 +1,6 @@
 Snd change log
 
+  29-Dec:    eval-c.scm (Kjetil Matheussen).
   7-Dec:     after-save-as-hook, replacing emacs-style-save-as.
   3-Dec:     mark-tag-width|height.
   29-Nov:    quick.html

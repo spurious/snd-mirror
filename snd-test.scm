@@ -41,7 +41,7 @@
 ;(setlocale LC_ALL "de_DE")
 
 (define tests 1)
-(define keep-going #f)
+(define keep-going #t)
 (define all-args #f) ; huge arg testing
 (define with-big-file #t)
 
@@ -18079,7 +18079,7 @@ EDITS: 5
 	      generic-procs generic-names)))
 	 make-procs run-procs ques-procs gen-args func-names)
 
-	(if all-args
+	(if (and all-args (= clmtest 0))
 	    (begin
 	      (for-each
 	       (lambda (make runp)
@@ -33442,7 +33442,7 @@ EDITS: 2
 
 (if (provided? 'snd-nogui)
     (define (load-font name) #f))
-(define new-font (load-font "-*-helvetica-bold-r-*-*-14-*-*-*-*-*-*-*"))
+(define new-font (load-font "-*-helvetica-*-r-*-*-14-*-*-*-*-*-*-*"))
 (define apropos-cs "(guile-user): close-sound	#<primitive-procedure close-sound>
 (guile-user): close-sound-file	#<primitive-procedure close-sound-file>
 ")
@@ -33459,7 +33459,7 @@ EDITS: 2
 	    (set! (foreground-color) (make-color .75 .75 .75))
             (fill-rectangle pos 10 50 20)
 	    (set! (foreground-color) (make-color 1 0 0))
-	    (if new-font (set! (current-font) new-font))
+;	    (if new-font (set! (current-font) new-font))
             (draw-string "hiho" (+ pos 5) 24)
 	    (set! (foreground-color) old-color))))))
 
@@ -33978,7 +33978,7 @@ EDITS: 2
 	    (copy-file (string-append (getcwd) "/2a.snd") (string-append (getcwd) "/test.snd"))
 	    (let ((ind (open-sound "test.snd"))
 		  (last-time (+ (real-time) 300))
-		  (tests 250000))
+		  (tests 2500))
 	      (do ((i 0 (1+ i)))
 		  ((or (> (real-time) last-time)
 		       (= i tests)))
@@ -40434,7 +40434,7 @@ EDITS: 2
 	    ;; select-item list pos
 	    ;;   these functions send either Xevents or directly invoke the Motif button callbacks
 	    ;; resize-pane pane size 
-	    
+
 	    (reset-almost-all-hooks)
 	    (add-hook! bad-header-hook (lambda (n) #t))
 	    (for-each all-help (cdr (main-widgets)))
@@ -41580,7 +41580,7 @@ EDITS: 2
 		(key-event cwid (char->integer #\g) 4) (force-event)	
 		(close-sound (car (sounds)))
 		))
-	    
+
 	    (let* ((ind (open-sound "4.aiff"))
 		   (wbutton (list-ref (channel-widgets ind 0) 1))
 		   (fbutton (list-ref (channel-widgets ind 0) 2))
@@ -41998,7 +41998,7 @@ EDITS: 2
 							   (drag-event w 1 0 0 0 50 10)
 							   (force-event))))))
 			  (click-button dismiss-button))))))
-	    
+
 	    ;; -------- edit find dialog
 	    
 	    (let ((wid (find-dialog)))
@@ -47542,11 +47542,12 @@ EDITS: 2
 		     XtHasCallbacks XtCreatePopupShell XtVaCreatePopupShell XtPopup XtPopupSpringLoaded
 		     XtCallbackNone XtCallbackNonexclusive XtCallbackExclusive XtPopdown XtCallbackPopdown
 		     XtCreateWidget XtCreateManagedWidget XtVaCreateWidget XtVaCreateManagedWidget
-		     XtCreateApplicationShell XtAppCreateShell XtVaAppCreateShell XtToolkitInitialize
-		     XtSetLanguageProc XtDisplayInitialize XtOpenApplication XtVaOpenApplication XtAppInitialize
-		     XtVaAppInitialize XtInitialize XtOpenDisplay XtCreateApplicationContext
-		     XtDestroyApplicationContext XtInitializeWidgetClass XtWidgetToApplicationContext
-		     XtDisplayToApplicationContext XtCloseDisplay 
+		     XtCreateApplicationShell XtAppCreateShell XtVaAppCreateShell 
+;		     XtToolkitInitialize XtCloseDisplay 
+;		     XtSetLanguageProc XtDisplayInitialize XtOpenApplication XtVaOpenApplication XtAppInitialize
+;		     XtVaAppInitialize XtInitialize XtOpenDisplay XtCreateApplicationContext
+;		     XtDestroyApplicationContext XtInitializeWidgetClass XtWidgetToApplicationContext
+		     XtDisplayToApplicationContext 
 		     XtSetValues XtVaSetValues XtGetValues XtVaGetValues
 		     XtAppSetErrorMsgHandler XtSetErrorMsgHandler XtAppSetWarningMsgHandler XtSetWarningMsgHandler
 		     XtAppErrorMsg XtErrorMsg XtAppWarningMsg XtWarningMsg XtAppSetErrorHandler XtSetErrorHandler
@@ -47832,30 +47833,6 @@ EDITS: 2
 				 :start -1 0 #f #t '() (make-vector 0) 12345678901234567890)))
 			(list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) (sqrt -1.0) (make-delay 32) 
 			      :phase -1 0 #f #t '() (make-vector 0) 12345678901234567890)))
-		     (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) (sqrt -1.0) (make-delay 32) 
-			   :channels -1 0 #f #t '() (make-vector 0) 12345678901234567890))
-		    
-		    ;; ---------------- 4 Args
-		    (for-each 
-		     (lambda (arg1)
-		       (for-each 
-			(lambda (arg2)
-			  (for-each 
-			   (lambda (arg3)
-			     (for-each 
-			      (lambda (arg4)
-				(for-each 
-				 (lambda (n)
-				   (catch #t
-					  (lambda () (n arg1 arg2 arg3 arg4))
-					  (lambda args (car args))))
-				 xm-procs4))
-			      (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) (sqrt -1.0) (make-delay 32) 
-				    :start -1 0 #f #t '() (make-vector 0) 12345678901234567890)))
-			   (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) (sqrt -1.0) (make-delay 32) 
-				 :phase -1 0 #f #t '() (make-vector 0) 12345678901234567890)))
-			(list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) (sqrt -1.0) (make-delay 32) 
-			      :channels -1 0 #f #t '() (make-vector 0) 12345678901234567890)))
 		     (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) (sqrt -1.0) (make-delay 32) 
 			   :channels -1 0 #f #t '() (make-vector 0) 12345678901234567890))
 		    ))
@@ -52779,7 +52756,8 @@ EDITS: 2
 			(let ((tag
 			       (catch #t
 				      (lambda ()
-					(n (make-oscil) vct-5))
+					(n (make-oscil) vct-5)
+					)
 				      (lambda args (car args)))))
 			  (if (not (or (eq? tag 'wrong-type-arg)
 				       (eq? tag 'bad-arity)
@@ -53955,39 +53933,6 @@ EDITS: 2
 			    (list 1.5 "/hiho" -1234 vct-3 #f #t)))
 			 (list 1.5 "/hiho" 1234 vct-3 -1 #f #t)))
 		      (list 1.5 vct-3 vct-5 -1 0 #f #t vct-5)))
-		   (list 1.5 "/hiho" 1234 #f #t vct-5))
-		  (gc)(gc)
-
-		  (snd-display "7 args")		  
-		  ;; ---------------- 7 Args
-		  (for-each 
-		   (lambda (arg1)
-		     (for-each 
-		      (lambda (arg2)
-			(for-each 
-			 (lambda (arg3)
-			   (for-each 
-			    (lambda (arg4)
-			      (for-each
-			       (lambda (arg5)
-				 (for-each 
-				  (lambda (arg6)
-				    (for-each 
-				     (lambda (arg7)
-				       (for-each
-					(lambda (n)
-					  (let ((err (catch #t
-							    (lambda () (n arg1 arg2 arg3 arg4 arg5 arg6 arg7))
-							    (lambda args (car args)))))
-					    (if (eq? err 'wrong-number-of-args)
-						(snd-display ";procs7: ~A ~A" err (procedure-property n 'documentation)))))
-					procs7))
-				     (list 1.5 "/hiho" -1234 -1 0 #f #t '() (log 0))))
-				  (list 1.5 "/hiho" -1234 vct-5 0 #f #t)))
-			       (list 1.5 "/hiho" -1234 0 vct-5 #f #t)))
-			    (list 1.5 "/hiho" -1234 vct-3 #f #t)))
-			 (list 1.5 "/hiho" 1234 vct-3 -1 #f #t)))
-		      (list 1.5 vct-3 vct-5 -1 0 vct-3 #f #t)))
 		   (list 1.5 "/hiho" 1234 #f #t vct-5))
 		  (gc)(gc)
 

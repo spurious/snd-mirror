@@ -2032,6 +2032,7 @@ static int oss_mus_audio_open_output(int ur_dev, int srate, int chans, int forma
 static int oss_mus_audio_write(int line, char *buf, int bytes)
 {
   int err;
+  if (line < 0) return(-1);
   errno = 0;
   err = write(line, buf, bytes);
   if (err != bytes)
@@ -2053,6 +2054,7 @@ static int oss_mus_audio_close(int line)
 static int oss_mus_audio_read(int line, char *buf, int bytes)
 {
   int err;
+  if (line < 0) return(-1);
   errno = 0;
   err = read(line, buf, bytes);
   if (err != bytes) 

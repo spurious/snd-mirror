@@ -1110,6 +1110,7 @@
   XEN_NARGIFY_1(gxm_XmIsArrowButtonGadget_w, gxm_XmIsArrowButtonGadget)
   XEN_NARGIFY_1(gxm_XmIsArrowButton_w, gxm_XmIsArrowButton)
 #if MOTIF_2
+
   XEN_NARGIFY_1(gxm_XmCvtXmStringToByteStream_w, gxm_XmCvtXmStringToByteStream)
   XEN_NARGIFY_1(gxm_XmCvtByteStreamToXmString_w, gxm_XmCvtByteStreamToXmString)
   XEN_NARGIFY_1(gxm_XmStringByteStreamLength_w, gxm_XmStringByteStreamLength)
@@ -2405,9 +2406,11 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmStringFreeContext, gxm_XmStringFreeContext_w, 1, 0, 0, H_XmStringFreeContext);
 
 #if MOTIF_2
+
   XM_DEFINE_PROCEDURE(XmCvtXmStringToByteStream, gxm_XmCvtXmStringToByteStream_w, 1, 0, 0, H_XmCvtXmStringToByteStream);
   XM_DEFINE_PROCEDURE(XmCvtByteStreamToXmString, gxm_XmCvtByteStreamToXmString_w, 1, 0, 0, H_XmCvtByteStreamToXmString);
   XM_DEFINE_PROCEDURE(XmStringByteStreamLength, gxm_XmStringByteStreamLength_w, 1, 0, 0, H_XmStringByteStreamLength);
+
   XM_DEFINE_PROCEDURE(XmStringConcatAndFree, gxm_XmStringConcatAndFree_w, 2, 0, 0, H_XmStringConcatAndFree);
   XM_DEFINE_PROCEDURE(XmStringIsVoid, gxm_XmStringIsVoid_w, 1, 0, 0, H_XmStringIsVoid);
   XM_DEFINE_PROCEDURE(XmStringPeekNextTriple, gxm_XmStringPeekNextTriple_w, 1, 0, 0, H_XmStringPeekNextTriple);

@@ -308,7 +308,9 @@
     (if (Window? window)
 	(begin
 	  (XChangeProperty dpy window (XInternAtom dpy name #f) XA_STRING 8 PropModeReplace command)
-	  (XFlush dpy)))))
+	  (XFlush dpy)
+	  command)
+	#f)))
 
 (define beep-state
   (make-procedure-with-setter

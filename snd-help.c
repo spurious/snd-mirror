@@ -369,15 +369,11 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+29-Dec:  eval-c.scm (Kjetil Matheussen).\n\
 7-Dec:   after-save-as-hook, replacing emacs-style-save-as (see snd7.scm).\n\
 3-Dec:   mark-tag-width|height.\n\
 17-Nov:  snd 7.9\n\
 16-Nov:  moved the 'Apply' button and friends from the Controls pane to a popup menu.\n\
-5-Nov:   recorder-in-chans.\n\
-1-Nov:   edit history pane popup menu (popup.scm).\n\
-28-Oct:  rms-envelope in env.scm.\n\
-         removed edpos arg to play-selection.\n\
-18-Oct:  oscope.scm\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

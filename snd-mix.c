@@ -5048,9 +5048,12 @@ static env *gather_track_amp_env(mix_state *cs)
 	    e = window_env(active_track_amp_env(id), mix_beg, mix_dur, track_beg, track_dur, SAMPLE_ENVS_INCR);
 	  else 
 	    {
-	      e = multiply_envs(e, 
+	      env *tmpe;
+	      tmpe = e;
+	      e = multiply_envs(tmpe, 
 				temp = window_env(active_track_amp_env(id), mix_beg, mix_dur, track_beg, track_dur, SAMPLE_ENVS_INCR),
 				SAMPLE_ENVS_INCR);
+	      if (tmpe) free_env(tmpe);
 	      temp = free_env(temp);
 	    }
 	}

@@ -3342,6 +3342,11 @@ Omitted arguments take their value from the sound being saved.\n\
       ht = mus_optkey_to_int(keys[2], S_save_sound_as, orig_arg[2], ht);
       df = mus_optkey_to_int(keys[3], S_save_sound_as, orig_arg[3], df);
       sr = mus_optkey_to_int(keys[4], S_save_sound_as, orig_arg[4], sr);
+      if ((sr <= 0) && (!XEN_KEYWORD_P(keys[4])))
+	XEN_ERROR(CANNOT_SAVE,
+		  XEN_LIST_3(C_TO_XEN_STRING(S_save_sound_as),
+			     C_TO_XEN_STRING(_("srate can't be <= 0")),
+			     C_TO_XEN_INT(sr)));
       chan = mus_optkey_to_int(keys[5], S_save_sound_as, orig_arg[5], chan);
       if (!(XEN_KEYWORD_P(keys[6]))) edpos = keys[6];
     }

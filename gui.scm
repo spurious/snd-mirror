@@ -22,6 +22,18 @@
 
 
 
+(define-macro (c-load-from-path filename)
+  `(if (not (provided? (symbol-append 'snd- ',filename '.scm)))
+       (load-from-path (symbol->string (symbol-append ',filename '.scm)))))
+
+
+
+
+;;##############################################################
+;; Load various files
+;;##############################################################
+
+(c-load-from-path eval-c)
 
 
 
@@ -53,11 +65,6 @@
 	      (dlinit hxm "init_xm")))))
     
 
-
-
-(define-macro (c-load-from-path filename)
-  `(if (not (provided? (symbol-append 'snd- ',filename '.scm)))
-       (load-from-path (symbol->string (symbol-append ',filename '.scm)))))
 
 
 (define (c-atleast1.7?)
@@ -258,7 +265,8 @@
   (take (drop l start) (- end start)))
 
 ;;(sublist '(0 1 2 3 4 5 6 7 8 9) 2 5)
-
+(define (c-butlast l)
+  (reverse (cdr (reverse l))))
 
 (define (c-display . args)
   (c-for-each (lambda (n arg)
@@ -269,155 +277,20 @@
   (newline))
 
 
-;; Eval c-code on the fly. Code must have a void()-function called "das_init".
-(define* (c-eval-c #:key (compile-options "") . codestrings)
-  (let* ((evalstring "")
-	(sourcefile (string-append (tmpnam) ".c"))
-	(libfile (string-append sourcefile ".so"))
-	(fd (open-file sourcefile "w"))
-	(guile-config (string-append (cdr (assoc 'bindir %guile-build-info)) "/guile-config")))
-    (if (not (access? guile-config X_OK))
-	(begin
-	  (c-display "Error. " guile-config " not found, or is not an executable.")
-	  (c-display "        Perhaps you need the guile-devel pacage?")
-	  (newline)
-	  (exit)))
-    (for-each (lambda (s)
-		(write-line s fd))
-	      (if (eq? (car codestrings) '#:compile-options)
-		  (cddr codestrings)
-		  codestrings))
-    (close fd)
-    ;;(c-display sourcefile)
-    (system (string-append "gcc -Wall -O2 -shared -o " libfile " " sourcefile " "
-			   (if (getenv "CFLAGS") (getenv "CFLAGS") "") " " (if (getenv "LDFLAGS") (getenv "LDFLAGS") "") " "
-			   (string #\`) guile-config " compile" (string #\`) " "
-			   compile-options))
-    (dynamic-call "das_init" (dynamic-link libfile))
-    (system (string-append "rm " libfile " " sourcefile))
-    ))
+(eval-c ""
+	(run-now
+	 (scm_c_define_gsubr (string "define-toplevel") 2 0 0 scm_define)))
 
 
-(define (c-eval-c2 compile-options top . codestrings)
-  (c-eval-c #:compile-options compile-options
-	    (let ((n 0)
-		  (funcs '())
-		  (<-> string-append))
-	      (apply <-> (map (lambda (x) (<-> x (string #\newline)))
-			      (append (list "#include <stdio.h>"
-					    "#include <libguile.h>"
-					    top
-					    "#define MAKE_STRING(a) scm_mem2string(a,strlen(a))"
-					    "#define RETURN_STRING(a) {char *ret=(a); return ret?MAKE_STRING(ret):SCM_BOOL_F;}"
-					    "#define GET_STRING(a) ((char*)SCM_STRING_CHARS(a))"
-					    "#define GET_POINTER3(a) (void *)scm_num2ulong(a,0,\"GET_POINTER3()\")"
-					    "#define GET_POINTER(a) GET_POINTER3(SCM_CAR(SCM_CDR(a)))"
-					    "#define GET_POINTER2(a) GET_POINTER(a)"
-					    "#define MAKE_POINTER(a) scm_cons(MAKE_STRING(\"A_POINTER\"),scm_cons(scm_ulong2num((unsigned long)a),SCM_EOL))"
-					    "#define RETURN_POINTER(a) {unsigned long ret=(unsigned long)(a); return ret?MAKE_POINTER(ret):SCM_BOOL_F;}"
-					    "#define RETURN_UNSPECIFIED(a) {(a);return SCM_UNSPECIFIED;}"
-					    (<-> "#define GET_INTEGER(a) SCM_INUM(scm_inexact_to_exact(" (if (c-atleast1.7?) "scm_floor(a)" "a") "))")
-					    "#define MAKE_INTEGER SCM_MAKINUM"
-					    "#define GET_DOUBLE(a) scm_num2dbl(a,\"GET_DOUBLE\")"
-					    "#define MAKE_DOUBLE(a) scm_make_real((double)a)")
-				      (map (lambda (x)
-					     (let ((name (caar x))
-						   (args (cadar x))
-						   (code (cdr x))
-						   (funcname (format #f "func~A" n)))
-					       (set! n (1+ n))
-					       (set! funcs (cons (list name (length args) funcname) funcs))
-					       (<-> "static SCM " funcname "("
-						    (apply <-> (map (lambda (arg)
-								      (<-> "SCM " (symbol->string arg)
-									   (if (not (eq? arg (car (reverse args))))
-									       ","
-									       "")))
-								    args))
-						    "){" (apply <-> (map (lambda (x) (<-> x " ")) code)) "}")))
-					   (map (lambda (funcdef)
-						  (if (list? funcdef)
-						      funcdef
-						      (let* ((temp (apply <array> (map string-trim-both (string-split funcdef #\())))
-							     (retname (string-split (temp 0) #\space))
-							     (rettype (string-trim-both (apply <-> (map (lambda (x) (<-> x " ")) (reverse (cdr (reverse retname)))))))
-							     (name (car (reverse retname)))
-							     (args (let ((temp2 (string-trim-both (car (string-split (temp 1) #\))))))
-								     (if (= (string-length temp2) 0)
-									 '()
-									 (map (lambda (x)
-										(let ((dassplit (map string-trim-both (string-split x #\space))))
-										  (list (string-trim-both (apply <-> (map (lambda (x)
-															    (<-> x " "))
-															  (reverse (cdr (reverse dassplit))))))
-											(string-trim-both (car (reverse dassplit))))))
-									      (string-split temp2 #\,)))))
-							     (to-scm (lambda (type)
-								       (cond ((string=? type "void") "UNSPECIFIED")
-									     ((member type (list "char *" "const char*" "const char *" "char*" "const gchar*") string=?) "STRING")
-									     ((member type (list "int" "unsigned int" "long" "unsigned long" "short" "unsigned short"
-												 "char" "unsigned char" "gint") string=?) "INTEGER")
-									     ((member type (list "float" "double") string=?) "DOUBLE")
-									     (else "POINTER"))))
-							     )
-							(if (char=? #\* (car (string->list name)))
-							    (begin
-							      (set! name (list->string (cdr (string->list name))))
-							      (set! rettype (<-> rettype "*"))))
-							(list  (list (string->symbol name) (map (lambda (x) (string->symbol (if (char=? #\* (car (string->list (cadr x))))
-																(list->string (cdr (string->list (cadr x))))
-																(cadr x))))
-												args))
-							       (apply <->
-								      (append (list (let ((ret-scm (to-scm rettype)))
-										      (cond((string=? "UNSPECIFIED" ret-scm) "RETURN_UNSPECIFIED(")
-											   ((string=? "POINTER" ret-scm) "RETURN_POINTER(")
-											   ((string=? "STRING" ret-scm) "RETURN_STRING(")
-											   (else
-											    (<-> "return MAKE_" ret-scm "(")))))
-									      (list name "(")
-									      (map (lambda (x)
-										     (let* ((type (car x))
-											    (name (cadr x)))
-										       (if (char=? #\* (car (string->list name)))
-											   (begin
-											     (set! name (list->string (cdr (string->list name))))
-											     (set! type (<-> type "*"))))
-										       (<-> "GET_" (to-scm type) "(" name ")"
-											    (if (not (eq? x (car (reverse args)))) "," ""))))
-										   args)
-									      (list "));")))))))
-						
-						codestrings))
-				      (cons "void das_init(){"
-					    (map (lambda (x)
-						   (let ((name (car x))
-							 (numargs (cadr x))
-							 (funcname (caddr x)))
-						     (<-> "scm_c_define_gsubr(\"" (symbol->string name) "\"," (format #f "~A" numargs) ",0,0," funcname ");")))
-						 funcs))
-				      (list "}")))))))
-
-
-
-
-;; define-toplevel is like define, but at the toplevel.
-(c-eval-c
-"
-#include <libguile.h>
-void das_init(){
-  scm_c_define_gsubr(\"define-toplevel\",2,0,0,scm_define);
-}
-")
-
-
-(c-eval-c2 ""
-	   ""
-	   '((c-scale (x x1 x2 y1 y2))
-	     "  double x1_=GET_DOUBLE(x1);"
-	     "  double y1_=GET_DOUBLE(y1);"
-	     "  return MAKE_DOUBLE(y1_ + ( ( (GET_DOUBLE(x)-x1_) * (GET_DOUBLE(y2)-y1_)) / (GET_DOUBLE(x2)-x1_)));"))
-	     
+(define-c <float> (c-scale ((<float> x)
+			    (<float> x1)
+			    (<float> x2)
+			    (<float> y1)
+			    (<float> y2))
+			   (return (+ y1
+				      (/ (* (- x x1)
+					    (- y2 y1))
+					 (- x2 x1))))))
 
 
 ;; A desperate way to minimize consing. (Guile is definitely not a realtime friendly language...)
@@ -900,26 +773,25 @@ void das_init(){
 
 (if (not use-gtk)
     (c-display "c-remove-handler not implemented for motif")
-    (c-eval-c2 (string-append (string #\`) "pkg-config --cflags gtk+-2.0" (string #\`))
-	       "#include <gtk/gtk.h>"
-
-	       '((c-remove-handler (w handlername))
-		 " gpointer g=(gpointer)GET_POINTER2(w);"
-		 " g_signal_handler_disconnect(g,g_signal_handler_find(g,"
-		 "						      G_SIGNAL_MATCH_ID,"
-		 "						      g_signal_lookup(GET_STRING(handlername),G_OBJECT_TYPE(g)),"
-		 "						      0,0,0,0));"
-		 "  return SCM_UNSPECIFIED;")
-
-	       ;; Wrapper for gdk_draw_string
-	       `((c-draw-string (s_widget s_gc s_x s_y s_text))
-		 "  GtkWidget *widget=(GtkWidget*)GET_POINTER2(s_widget);"
-		 "  GdkGC *gc=(GdkGC*)GET_POINTER2(s_gc);"
-		 "  GdkFont *font=gtk_style_get_font(widget->style);"
-		 "  gdk_draw_string(widget->window,font,gc,GET_INTEGER(s_x),GET_INTEGER(s_y),GET_STRING(s_text));"
-		 "  return SCM_UNSPECIFIED;")
-	       ))
-
+    (eval-c (<-> (string #\`) "pkg-config --cflags gtk+-2.0" (string #\`))
+	    "#include <gtk/gtk.h>"
+	    
+	    (public
+	     (<void> c-remove-handler (lambda ((<gpointer> g)
+					       (<char*> handlername))
+					(g_signal_handler_disconnect g (g_signal_handler_find g
+											      G_SIGNAL_MATCH_ID
+											      (g_signal_lookup handlername (G_OBJECT_TYPE g))
+											      0 0 0 0))))
+	     (<void> c-draw-string (lambda ((<GtkWidget*> widget)
+					    (<GdkGC*> gc)
+					    (<int> x)
+					    (<int> y)
+					    (<char*> text))
+				     (gdk_draw_string widget->window
+						      (gtk_style_get_font widget->style)
+						      gc x y text))))))
+						   
 
 ;; Remove all gtk mousehandlers for a widget.
 (define (c-remove-mousehandlers w)
