@@ -25,6 +25,10 @@ int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos
   XEN errstr;
   char *errmsg = NULL;
   /* need to allow #f here for optargs */
+  /* also remember that there might be no extension language */
+#if (!HAVE_EXTENSION_LANGUAGE)
+  return(cp->edit_ctr);
+#endif
   XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(edpos) || XEN_INTEGER_P(edpos) || XEN_PROCEDURE_P(edpos) || XEN_BOOLEAN_P(edpos), 
 		  edpos, arg_pos, caller, "an integer or a procedure");
   if (XEN_PROCEDURE_P(edpos))
@@ -2163,6 +2167,7 @@ void cursor_delete(chan_info *cp, off_t count, const char *origin)
     {
       delete_samples(beg, count, cp, origin, cp->edit_ctr);
       cp->cursor = beg;
+      update_graph(cp);
     }
 }
 

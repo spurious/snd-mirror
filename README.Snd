@@ -22,7 +22,6 @@ The configure program has several Snd-related arguments:
      --with-static-motif same, but load Motif statically (for RPM)
      --with-motif-prefix set Motif location (will append lib and include)
    --with-gtk            use Gtk+ (this port still needs a lot of work)
-     --with-gtk-extra    use the file selection widget from libgtkextra
    --with-no-gui         make Snd without any graphics support
 
    --with-alsa           use ALSA if possible (default is OSS in Linux)
@@ -302,6 +301,9 @@ There's also a discussion of RME cards in the cmdist archives.
 
 
 ---- Gtk+: ----
+
+Only Gtk-2 or later is supported.
+
 Gtk+ is not as sophisticated as Motif, and the port is still somewhat new, so
 there are a number of differences and rough-edges in that version of Snd.
 The primary differences are 1) Gtk+ paned-window widget only accepts two
@@ -504,7 +506,6 @@ automatically searched directories, you'll have to fix up the makefile
 by hand.  For example, I built GtkGLext --prefix=/home/bil/test, so
 I added the two /home/bil/test directories to the makefile:
 
-  GTKEXTRA_FLAGS = -I/home/bil/test/include/gtkglext-0.x
   GL_LIBS = -lGLU -lGL -L/home/bil/test/lib -lgdkglext-x11-0.x -lgtkglext-x11-0.x
 
 Don't run the Motif/GL and the Gtk/GL versions of Snd at the same time.
@@ -515,7 +516,7 @@ This can kill the X server!
 
 Currently you need to install Guile 1.4 (at least, I haven't managed
 to compile 1.5), GSL 0.9 (using --disable-shared), and the prebuilt
-Glib/Gtk 1.2.8 or Motif 2.1 tarballs that contain the headers (the
+Glib/Gtk or Motif 2.1 tarballs that contain the headers (the
 package at osxgnu is just the libraries -- I think I got my version
 from gnu-darwin or motifzone or some such address).  The Snd configure
 process is confused by the lack of gtk-config (in the Gtk case), and
@@ -566,7 +567,7 @@ You'll need to uninstall Lesstif and install OpenMotif.
 
 So to sum up: 
   GSL 0.8 or later
-  if Gtk, then Gtk+ 1.2.8 or later
+  if Gtk, then Gtk+ 2.0.0 or later
   Motif 2.n but not Lesstif (I no longer have any way to test Motif 1)
   in Linux, ALSA 0.9beta8 or later (or any version of OSS)
   Guile 1.3.4 or later but Snd's Scheme files need 1.5.0 or later
@@ -640,7 +641,6 @@ Gtk+:
   http://www.gtk.org
   ftp://ftp.gtk.org/pub/gtk/
   http://sourceforge.net/projects/gtkglext/
-  http://gtkextra.sourceforge.net/
 
 gmeteor:
   http://gmeteor.sourceforge.net

@@ -1215,7 +1215,7 @@ spring, summer, colorcube, flag, and lines.  -1 means black and white."
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set-" S_colormap, "an integer"); 
   set_color_map(ss, mus_iclamp(
-#if HAVE_GTK
+#if USE_GTK
 				  0,
 #else
 				  -1,

@@ -6,7 +6,7 @@ int set_help_text_font(snd_state *ss, char *font)
   state_context *sgx;
   if (ss->using_schemes) return(FALSE);
   sgx = ss->sgx;
-  fs = SG_FONT_LOAD(font);
+  fs = pango_font_description_from_string(font);
   if (fs)
     {
       if (help_text_font(ss)) FREE(help_text_font(ss));
@@ -23,7 +23,7 @@ int set_tiny_font(snd_state *ss, char *font)
   state_context *sgx;
   if (ss->using_schemes) return(FALSE);
   sgx = ss->sgx;
-  fs = SG_FONT_LOAD(font);
+  fs = pango_font_description_from_string(font);
   if (fs)
     {
       if (tiny_font(ss)) FREE(tiny_font(ss));
@@ -38,7 +38,7 @@ int set_listener_font(snd_state *ss, char *font)
 {
   SG_FONT *fs = NULL;
   if (ss->using_schemes) return(FALSE);
-  fs = SG_FONT_LOAD(font);
+  fs = pango_font_description_from_string(font);
   if (fs)
     {
       if (listener_font(ss)) FREE(listener_font(ss));
@@ -53,7 +53,7 @@ int set_button_font(snd_state *ss, char *font)
 {
   SG_FONT *fs = NULL;
   if (ss->using_schemes) return(FALSE);
-  fs = SG_FONT_LOAD(font);
+  fs = pango_font_description_from_string(font);
   if (fs)
     {
       if (button_font(ss)) FREE(button_font(ss));
@@ -68,7 +68,7 @@ int set_bold_button_font(snd_state *ss, char *font)
 {
   SG_FONT *fs = NULL;
   if (ss->using_schemes) return(FALSE);
-  fs = SG_FONT_LOAD(font);
+  fs = pango_font_description_from_string(font);
   if (fs)
     {
       if (bold_button_font(ss)) FREE(bold_button_font(ss));
@@ -83,7 +83,7 @@ int set_axis_label_font(snd_state *ss, char *font)
 {
   SG_FONT *fs = NULL;
   if (ss->using_schemes) return(FALSE);
-  fs = SG_FONT_LOAD(font);
+  fs = pango_font_description_from_string(font);
   if (fs)
     {
       if (axis_label_font(ss)) FREE(axis_label_font(ss));
@@ -101,7 +101,7 @@ int set_axis_numbers_font(snd_state *ss, char *font)
 {
   SG_FONT *fs = NULL;
   if (ss->using_schemes) return(FALSE);
-  fs = SG_FONT_LOAD(font);
+  fs = pango_font_description_from_string(font);
   if (fs)
     {
       if (axis_numbers_font(ss)) FREE(axis_numbers_font(ss));
@@ -118,23 +118,22 @@ int set_axis_numbers_font(snd_state *ss, char *font)
 
 void activate_numbers_font(axis_context *ax, snd_state *ss)
 {
-  SG_SET_FONT(ax, AXIS_NUMBERS_FONT(ss));
+  gtk_widget_modify_font(ax->w, AXIS_NUMBERS_FONT(ss));
   ax->current_font = AXIS_NUMBERS_FONT(ss);
 }
    
 void activate_button_font(axis_context *ax, snd_state *ss)
 {
-  SG_SET_FONT(ax, (ss->sgx)->button_fnt);
+  gtk_widget_modify_font(ax->w, (ss->sgx)->button_fnt);
   ax->current_font = (ss->sgx)->button_fnt;
 }
 
 void activate_label_font(axis_context *ax, snd_state *ss)
 {
-  SG_SET_FONT(ax, AXIS_LABEL_FONT(ss));
+  gtk_widget_modify_font(ax->w, AXIS_LABEL_FONT(ss));
   ax->current_font = AXIS_LABEL_FONT(ss);
 }
 
-#if HAVE_GTK2
 static int sg_text_width(char *txt, PangoFontDescription *font)
 {
   PangoLayout *layout = NULL;
@@ -149,9 +148,6 @@ static int sg_text_width(char *txt, PangoFontDescription *font)
     }
   return(wid);
 }
-#else
-  #define sg_text_width(Txt, Font) gdk_text_width(Font, (gchar *)Txt, (gint)strlen(Txt))
-#endif
 
 int label_width(snd_state *ss, char *txt)
 {
@@ -175,7 +171,6 @@ int number_width(snd_state *ss, char *num)
   return(0);
 }
 
-#if HAVE_GTK2
 static int sg_font2width(SG_FONT *font)
 {
   PangoLayout *layout = NULL;
@@ -237,28 +232,15 @@ void sg_pixmap_set(GtkWidget *w, GdkPixmap *map, GdkBitmap *mask)
   g_free(child);
   gtk_fixed_put(fixed, pixmap, 0, 0);
 }
-#endif
 
 int number_height(snd_state *ss)
 {
-#if HAVE_GTK2
   return(sg_font2height(AXIS_NUMBERS_FONT(ss)));
-#else
-  gint lb, rb, asc, des, wid;
-  gdk_text_extents(AXIS_NUMBERS_FONT(ss), "1", 1, &lb, &rb, &wid, &asc, &des);
-  return(asc + des);
-#endif
 }
 
 int label_height(snd_state *ss)
 {
-#if HAVE_GTK2
   return(sg_font2width(AXIS_LABEL_FONT(ss)));
-#else
-  gint lb, rb, asc, des, wid;
-  gdk_text_extents(AXIS_LABEL_FONT(ss), "1", 1, &lb, &rb, &wid, &asc, &des);
-  return(asc + des);
-#endif
 }
 
 void clear_window(axis_context *ax)
@@ -382,11 +364,7 @@ void set_button_label_bold(GtkWidget *button, const char *str)
   ss = get_global_state();
   if (ss->using_schemes) return;
   style = gtk_style_copy(gtk_widget_get_style(button));
-#if HAVE_GTK2
   gtk_widget_modify_font(button, (ss->sgx)->bold_button_fnt);
-#else
-  style->font = (ss->sgx)->bold_button_fnt;
-#endif
   gtk_widget_set_style(button, style);
   gtk_label_set_text(GTK_LABEL(GTK_BIN(button)->child), str);
 }
@@ -542,7 +520,7 @@ void recolor_graph(chan_info *cp, int selected)
 
 void reflect_resize(snd_state *ss)
 {
-  SG_SET_RESIZABLE(GTK_WINDOW(MAIN_SHELL(ss)), auto_resize(ss));
+  gtk_window_set_resizable(GTK_WINDOW(MAIN_SHELL(ss)), auto_resize(ss));
 }
 
 void set_sensitive(GtkWidget *wid, int val) {if (wid) gtk_widget_set_sensitive(wid, val);}
@@ -550,33 +528,33 @@ int is_sensitive(GtkWidget *wid) {if (wid) return(GTK_WIDGET_IS_SENSITIVE(wid));
 
 void set_toggle_button(GtkWidget *wid, int val, int passed, void *data) 
 {
-  if (!passed) SG_SIGNAL_HANDLER_BLOCK_BY_DATA(GTK_OBJECT(wid), (gpointer)data);
-  SG_TOGGLE_BUTTON_SET_STATE(wid, val);
-  if (!passed) SG_SIGNAL_HANDLER_UNBLOCK_BY_DATA(GTK_OBJECT(wid), (gpointer)data);
+  if (!passed) g_signal_handlers_block_matched(GTK_OBJECT(wid), G_SIGNAL_MATCH_DATA, 0, 0, NULL, 0, (gpointer)data);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(wid), val);
+  if (!passed) g_signal_handlers_unblock_matched(GTK_OBJECT(wid), G_SIGNAL_MATCH_DATA, 0, 0, NULL, 0, (gpointer)data);
 }
 
 guint16 widget_height(GtkWidget *w)
 {
   gint x, y;
-  SG_WINDOW_SIZE(w->window, &x, &y);
+  gdk_drawable_get_size(w->window, &x, &y);
   return(y);
 }
 
 guint16 widget_width(GtkWidget *w)
 {
   gint x, y;
-  SG_WINDOW_SIZE(w->window, &x, &y);
+  gdk_drawable_get_size(w->window, &x, &y);
   return(x);
 }
 
 void set_widget_height(GtkWidget *w, guint16 height)
 {
-  SG_SET_SIZE(w, widget_width(w), height);
+  gtk_window_resize(GTK_WINDOW(w), widget_width(w), height);
 }
 
 void set_widget_width(GtkWidget *w, guint16 width)
 {
-  SG_SET_SIZE(w, width, widget_height(w));
+  gtk_window_resize(GTK_WINDOW(w), width, widget_height(w));
 }
 
 gint16 widget_x(GtkWidget *w)
@@ -595,22 +573,22 @@ gint16 widget_y(GtkWidget *w)
 
 void set_widget_x(GtkWidget *w, gint16 x)
 {
-  SG_SET_POSITION(w, x, widget_y(w));
+  gtk_window_move(GTK_WINDOW(w), x, widget_y(w));
 }
 
 void set_widget_y(GtkWidget *w, gint16 y)
 {
-  SG_SET_POSITION(w, widget_x(w), y);
+  gtk_window_move(GTK_WINDOW(w), widget_x(w), y);
 }
 
 void set_widget_size(GtkWidget *w, guint16 width, guint16 height)
 {
-  SG_SET_SIZE(w, width, height);
+  gtk_window_resize(GTK_WINDOW(w), width, height);
 }
 
 void set_widget_position(GtkWidget *w, gint16 x, gint16 y)
 {
-  SG_SET_POSITION(w, x, y);
+  gtk_window_move(GTK_WINDOW(w), x, y);
 }
 
 void fixup_axis_context(axis_context *ax, GtkWidget *w, GdkGC *gc)
@@ -695,10 +673,6 @@ int get_user_int_data(GtkObject *obj)
   return(0);
 }
 
-/* many changes between gtk 1.2 and 1.3, some of which are handled here, others in snd-g0.h */
-
-#if HAVE_GTK2
-
 char *sg_get_text(GtkWidget *w, int start, int end)
 {
   GtkTextIter s, e;
@@ -729,7 +703,7 @@ void sg_text_insert(GtkWidget *w, char *text)
       gtk_text_buffer_get_end_iter(buf, &pos);
       gtk_text_buffer_insert(buf, &pos, text, strlen(text));
     }
-  else SG_TEXT_CLEAR(w);
+  else gtk_text_buffer_set_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(w)), "", 0);
 }
 
 void sg_set_cursor(GtkWidget *w, int position)
@@ -780,28 +754,9 @@ void sg_unselect_text(GtkWidget *w)
   gtk_text_buffer_move_mark_by_name(buf, "selection_bound", &start);
 }
 
-#else
-
-char *sg_label_text(GtkLabel *w) {char *text; gtk_label_get(w, &text); return(text);}
-
-void sg_text_delete(GtkWidget *w, int start, int end)
-{
-  int res, len;
-  gtk_text_set_point(GTK_TEXT(w), start);
-  len = gtk_text_get_length(GTK_TEXT(w));
-  if (end > len) end = len;
-  res = gtk_text_forward_delete(GTK_TEXT(w), end - start);
-#if DEBUGGING
-  if (!res) fprintf(stderr,"goddam gtk did not delete!");
-#endif
-}
-
-#endif
-
 GtkWidget *make_scrolled_text(snd_state *ss, GtkWidget *parent, int editable, GtkWidget *boxer, GtkWidget *paner)
 {
   /* returns new text widget */
-#if HAVE_GTK2
   GtkWidget *sw, *new_text;
   GtkTextBuffer *buf;
   sw = gtk_scrolled_window_new(NULL, NULL);
@@ -823,40 +778,6 @@ GtkWidget *make_scrolled_text(snd_state *ss, GtkWidget *parent, int editable, Gt
   if (paner)
     gtk_paned_add2(GTK_PANED(paner), sw);
   gtk_widget_show(sw);
-#else
-  GtkWidget *table, *hscrollbar, *vscrollbar, *new_text;
-  table = gtk_table_new(2, 2, FALSE);
-  if (boxer)
-    gtk_box_pack_start(GTK_BOX(boxer), table, TRUE, TRUE, 4);
-  new_text = gtk_text_new(NULL, NULL);
-  gtk_table_attach(GTK_TABLE (table), new_text, 0, 1, 0, 1, 
-		   (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
-		   (GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
-		   0, 0);
-  gtk_text_set_editable(GTK_TEXT(new_text), editable);
-  gtk_text_set_word_wrap(GTK_TEXT(new_text), FALSE);
-  gtk_text_set_line_wrap(GTK_TEXT(new_text), FALSE); /* apparently horizontal scrolling is not yet implemented (gtktext.c version 1.2.8) */
-  gtk_widget_show(new_text);
-  hscrollbar = gtk_hscrollbar_new(GTK_TEXT(new_text)->hadj);
-  set_background(hscrollbar, (ss->sgx)->position_color);
-  gtk_table_attach(GTK_TABLE (table), hscrollbar, 0, 1, 1, 2, 
-		   (GtkAttachOptions)(GTK_EXPAND | GTK_FILL),
-		   (GtkAttachOptions)(GTK_FILL), 
-		   0, 0);
-  gtk_widget_show(hscrollbar);
-  vscrollbar = gtk_vscrollbar_new(GTK_TEXT(new_text)->vadj);
-  set_background(vscrollbar, (ss->sgx)->position_color);
-  gtk_table_attach(GTK_TABLE (table), vscrollbar, 1, 2, 0, 1, 
-		   (GtkAttachOptions)(GTK_FILL), 
-		   (GtkAttachOptions)(GTK_EXPAND | GTK_FILL | GTK_SHRINK), 
-		   0, 0);
-  gtk_widget_show(vscrollbar);
-  if (parent)
-    gtk_container_add(GTK_CONTAINER(parent), table);
-  if (paner)
-    gtk_paned_add2(GTK_PANED(paner), table);
-  gtk_widget_show(table);
-#endif
   return(new_text);
 }
 
@@ -864,7 +785,6 @@ GtkWidget *sg_make_list(gpointer gp, int num_items, char **items, GtkSignalFunc 
 {
   GtkWidget *list;
   int i;
-#if HAVE_GTK2
   GtkTreeStore *model;
   GtkTreeSelection *selection;
   GtkTreeIter iter;
@@ -894,23 +814,9 @@ GtkWidget *sg_make_list(gpointer gp, int num_items, char **items, GtkSignalFunc 
     }
   gtk_tree_view_expand_all(GTK_TREE_VIEW(list));
   /* gtk_widget_hide(gtk_tree_view_column_get_widget(column)); */
-#else
-  char *str;
-  list = gtk_clist_new(1);
-  gtk_clist_set_selection_mode(GTK_CLIST(list), GTK_SELECTION_SINGLE);
-  gtk_clist_set_shadow_type(GTK_CLIST(list), GTK_SHADOW_ETCHED_IN);
-  gtk_clist_column_titles_passive(GTK_CLIST(list));
-  for (i = 0; i < num_items; i++) 
-    {
-      str = items[i];
-      gtk_clist_append(GTK_CLIST(list), &str);
-    }
-  SG_SIGNAL_CONNECT(GTK_OBJECT(list), "select_row", callback, gp);
-#endif
   return(list);
 }
 
-#if HAVE_GTK2
 void sg_list_append(GtkWidget *lst, char *val)
 {
   GtkTreeIter iter;
@@ -962,4 +868,12 @@ void sg_list_moveto(GtkWidget *lst, int row)
   gtk_tree_path_free(path);
 }
 
-#endif
+void sg_make_resizable(GtkWidget *w)
+{
+  if (GTK_IS_DIALOG(w))
+    {
+      gtk_window_set_default_size(GTK_WINDOW(w), -1, -1);
+      gtk_window_set_resizable(GTK_WINDOW(w), TRUE);
+    }
+}
+

@@ -60,7 +60,7 @@ static int run_global_search (snd_state *ss, gfd *g)
 			}
 		    }
 		}
-	      if (read_sample_eof(sf))
+	      if (sf->at_eof)
 		{
 		  free_snd_fd(sf);
 		  g->fds[i] = NULL;

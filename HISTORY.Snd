@@ -1,5 +1,7 @@
 Snd change log
 
+  2-Sep:     removed gtk-1 and gtkextra support.
+  1-Sep:     if no extension language, edit position can get confused.
   26-Aug:    added filter-control-coeffs.
              graph-lisp|time|transform? inverted to be lisp|time|transform-graph?
              graph-time-once -> graph-once, graph-transform-once -> graph-once

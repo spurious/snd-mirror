@@ -14,12 +14,6 @@
 #include <GL/glu.h>
 #endif
 
-#ifndef HAVE_GTK2
-  #if (GTK_MAJOR_VERSION != 1) || (GTK_MINOR_VERSION > 2)
-    #define HAVE_GTK2 1
-  #endif
-#endif
-
 #define HAVE_XPM 1
 #define LOTSA_PIXELS 10000
 #define POINT_BUFFER_SIZE 4096
@@ -57,16 +51,9 @@
 
 #define Locus gint16
 #define Latus guint16
-
-#if HAVE_GTK2
-  #define SG_FONT PangoFontDescription
-  #define SG_PIXMAP GdkPixmap
-  #define SG_BITMAP GdkBitmap
-#else
-  #define SG_FONT GdkFont
-  #define SG_PIXMAP GdkPixmap
-  #define SG_BITMAP GdkBitmap
-#endif
+#define SG_FONT PangoFontDescription
+#define SG_PIXMAP GdkPixmap
+#define SG_BITMAP GdkBitmap
 
 typedef struct {
   GdkGC *gc;
@@ -301,116 +288,6 @@ typedef struct {
 #define snd_keypad_7 GDK_KP_7
 #define snd_keypad_8 GDK_KP_8
 #define snd_keypad_9 GDK_KP_9
-
-#if HAVE_GTK2
-  #define SG_WHITE_COLOR(Col)                gdk_color_parse("white", &Col)
-  #define SG_BLACK_COLOR(Col)                gdk_color_parse("black", &Col)
-  #define SG_MAKE_RESIZABLE(Widget)          if (GTK_IS_DIALOG(Widget)) {\
-                                               gtk_window_set_default_size(GTK_WINDOW(Widget), -1, -1); \
-                                               gtk_window_set_resizable(GTK_WINDOW(Widget), TRUE); }
-  #define SG_SET_RESIZABLE(Window, Val)      gtk_window_set_resizable(Window, Val)
-  #define SG_SET_SIZE(Widget, Width, Height) gtk_window_resize(GTK_WINDOW(Widget), Width, Height)
-  #define SG_BUTTON_SET_SIZE(Widget, Width, Height) gtk_widget_set_size_request(Widget, Width, Height)
-  #define SG_SET_POSITION(Widget, X, Y)      gtk_window_move(GTK_WINDOW(Widget), X, Y)
-  #define SG_LABEL_TEXT(Widget)              (char *)gtk_label_get_text(Widget)
-  #define SG_SET_GUTTER_SIZE(Widget, Size)
-  #define SG_SET_HANDLE_SIZE(Widget, Size)
-  #define SG_SET_DRAWING_AREA_SIZE(Widget, Width, Height)
-  #define SG_WINDOW_SIZE                     gdk_drawable_get_size
-  #define SG_DRAW_PIXMAP                     gdk_draw_drawable
-  #define SG_MENU_APPEND(Menu, Child)        gtk_menu_shell_append(GTK_MENU_SHELL(Menu), Child)
-  #define SG_MENU_INSERT(Menu, Child, Pos)   gtk_menu_shell_insert(GTK_MENU_SHELL(Menu), Child, Pos)
-  #define SG_MENU_BAR_APPEND(Menu, Child)    gtk_menu_shell_append(GTK_MENU_SHELL(Menu), Child)
-  #define SG_MENU_ITEM_RIGHT_JUSTIFY(Item)   gtk_menu_item_set_right_justified(GTK_MENU_ITEM(Item), TRUE)
-  #define SG_RADIO_BUTTON_GROUP(Button)      gtk_radio_button_get_group(GTK_RADIO_BUTTON(Button))
-  #define SG_TOGGLE_BUTTON_SET_STATE(Button, State) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(Button), State)
-  #define SG_TEXT_LENGTH(Widget)              gtk_text_buffer_get_char_count(gtk_text_view_get_buffer(GTK_TEXT_VIEW(Widget)))
-  #define SG_TEXT_CHARS(Widget, Start, End)   sg_get_text(Widget, Start, End)
-  #define SG_TEXT_CLEAR(Widget)               gtk_text_buffer_set_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(Widget)), "", 0)
-  /*  or  gtk_text_buffer_get_bounds (buffer, &start, &end);  gtk_text_buffer_delete (buffer, &start, &end); */
-  #define SG_TEXT_FREEZE(Widget)
-  #define SG_TEXT_THAW(Widget)
-  #define SG_TEXT_DELETE(Widget, Start, End) sg_text_delete(Widget, Start, End)
-  #define SG_TEXT_SET_POINT(Widget, Point)   sg_set_cursor(Widget, Point + 1)
-  #define SG_TEXT_GET_POINT(Widget)          sg_cursor_position(Widget)
-  #define SG_TEXT_UNSELECT(Widget)           sg_unselect_text(Widget)
-  #define SG_TEXT_SELECT(Widget, Start, End) sg_select_text(Widget, Start, End)
-  #define SG_TEXT_INSERT(Widget, Font, FG, BG, Text, Length) sg_text_insert(Widget, Text)
-  #define SG_TEXT_BACKWARD_DELETE(Wid, Num)  sg_text_delete(Wid, SG_TEXT_GET_POINT(Wid) - Num, Num)
-  #define SG_SET_FONT(Ax, Font)              gtk_widget_modify_font(Ax->w, Font)
-  #define SG_LIST_SELECT_ROW(Widget, Row)    sg_list_select(Widget, Row)
-  #define SG_LIST_MOVETO(Widget, Row)        sg_list_moveto(Widget, Row)
-  #define SG_LIST_CLEAR(Widget)              gtk_tree_store_clear(GTK_TREE_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(Widget))))
-  #define SG_LIST_APPEND(Widget, Str)        sg_list_append(Widget, Str)
-  #define SG_LIST_INSERT(Widget, Pos, Str)   sg_list_insert(Widget, Pos, Str)
-  #define SG_LIST_SET_TEXT(Widget, Row, Str) sg_list_set_text(Widget, Row, Str)
-  #define SG_COLOR_ALLOC(CMap, Color)        gdk_rgb_find_color(CMap, Color)
-  #define SG_PIXMAP_NEW(Map, Mask)           sg_pixmap_new(Map, Mask)
-  #define SG_PIXMAP_NEW_XYD(Window, Width, Height, Depth) gdk_pixmap_new(Window, Width, Height, Depth)
-  #define SG_XPM_TO_PIXMAP(Window, Bits, Mask) gdk_pixmap_create_from_xpm_d(Window, &Mask, NULL, Bits)
-  #define SG_PIXMAP_SET(Holder, Map, Mask)   sg_pixmap_set(Holder, Map, Mask)
-  #define SG_FONT_LOAD(Font)                 pango_font_description_from_string(Font)
-  #define SG_SIGNAL_CONNECT(Object, Name, Func, Func_Data) \
-	    g_signal_connect_closure_by_id(Object, g_signal_lookup(Name, G_OBJECT_TYPE(Object)), 0, g_cclosure_new(Func, Func_Data, 0), 0)
-  #define SG_SIGNAL_CONNECT_OBJECT(Object, Name, Func, Func_Data) \
-            g_signal_connect_closure_by_id(Object, g_signal_lookup(Name, G_OBJECT_TYPE(Object)), 0, g_cclosure_new_swap(Func, Func_Data, 0), 0)
-  #define SG_SIGNAL_CONNECT_AFTER(Object, Name, Func, Func_Data) \
-	    g_signal_connect_closure_by_id(Object, g_signal_lookup(Name, G_OBJECT_TYPE(Object)), 0, g_cclosure_new(Func, Func_Data, 0), 1)
-  #define SG_SIGNAL_HANDLER_BLOCK_BY_DATA(object,data) g_signal_handlers_block_matched(object, G_SIGNAL_MATCH_DATA, 0, 0, NULL, 0, data)
-  #define SG_SIGNAL_HANDLER_UNBLOCK_BY_DATA(object,data) g_signal_handlers_unblock_matched(object, G_SIGNAL_MATCH_DATA, 0, 0, NULL, 0, data)
-  #define SG_SIGNAL_EMIT_STOP_BY_NAME(object, name) g_signal_stop_emission(object, g_signal_lookup(name, G_OBJECT_TYPE(object)), 0)
-#else
-  #define SG_WHITE_COLOR(Col) 	             gdk_color_white(gdk_colormap_get_system(), &Col)
-  #define SG_BLACK_COLOR(Col) 	             gdk_color_black(gdk_colormap_get_system(), &Col)
-  #define SG_WINDOW_SIZE                     gdk_window_get_size
-  #define SG_DRAW_PIXMAP                     gdk_draw_pixmap
-  #define SG_MENU_APPEND(Menu, Child)        gtk_menu_append(GTK_MENU(Menu), Child)
-  #define SG_MENU_INSERT(Menu, Child, Pos)   gtk_menu_insert(GTK_MENU(Menu), Child, Pos)
-  #define SG_MENU_BAR_APPEND(Menu, Child)    gtk_menu_bar_append(GTK_MENU_BAR(Menu), Child)
-  #define SG_MENU_ITEM_RIGHT_JUSTIFY(Item)   gtk_menu_item_right_justify(GTK_MENU_ITEM(Item))
-  #define SG_RADIO_BUTTON_GROUP(Button)      gtk_radio_button_group(GTK_RADIO_BUTTON(Button))
-  #define SG_TOGGLE_BUTTON_SET_STATE(Button, State) gtk_toggle_button_set_state(GTK_TOGGLE_BUTTON(Button), State)
-  #define SG_MAKE_RESIZABLE(Widget)          gtk_window_set_policy(GTK_WINDOW(Widget), TRUE, TRUE, FALSE)
-  #define SG_SET_RESIZABLE(Window, Val)      gtk_window_set_policy(Window, TRUE, TRUE, Val)
-  #define SG_SET_SIZE(Widget, Width, Height) gtk_widget_set_usize(Widget, Width, Height)
-  #define SG_BUTTON_SET_SIZE(Widget, Width, Height) gtk_widget_set_usize(Widget, Width, Height)
-  #define SG_SET_POSITION(Widget, X, Y)      gtk_widget_set_uposition(Widget, X, Y)
-  #define SG_LABEL_TEXT(Widget)              sg_label_text(Widget)
-  #define SG_SET_GUTTER_SIZE(Widget, Size)   gtk_paned_set_gutter_size(Widget,Size)
-  #define SG_SET_HANDLE_SIZE(Widget, Size)   gtk_paned_set_handle_size(Widget,Size)
-  #define SG_SET_DRAWING_AREA_SIZE(Widget, Width, Height) gtk_drawing_area_size(Widget, Width, Height)
-  #define SG_TEXT_LENGTH(Widget)             gtk_text_get_length(GTK_TEXT(Widget))
-  #define SG_TEXT_CHARS(Widget, Start, End)  gtk_editable_get_chars(GTK_EDITABLE(Widget), Start, End)
-  #define SG_TEXT_CLEAR(Widget)              if (SG_TEXT_LENGTH(Widget) > 0) gtk_editable_delete_text(GTK_EDITABLE(Widget), 0, -1)
-  #define SG_TEXT_FREEZE(Widget)             gtk_text_freeze(GTK_TEXT(Widget))
-  #define SG_TEXT_THAW(Widget)               gtk_text_freeze(GTK_TEXT(Widget))
-  #define SG_TEXT_SET_POINT(Widget, Point)   gtk_text_set_point(GTK_TEXT(Widget), Point); gtk_editable_set_position(GTK_EDITABLE(Widget), Point)
-  #define SG_TEXT_GET_POINT(Widget)          gtk_editable_get_position(GTK_EDITABLE(Widget))
-  #define SG_TEXT_UNSELECT(Widget)           gtk_editable_select_region(GTK_EDITABLE(Widget), 0, 0)
-  #define SG_TEXT_SELECT(Widget, Start, End) gtk_editable_select_region(GTK_EDITABLE(Widget), Start, End)
-  #define SG_TEXT_INSERT(Widget, Font, FG, BG, Text, Length) gtk_text_insert(GTK_TEXT(Widget), Font, FG, BG, Text, Length)
-  #define SG_TEXT_BACKWARD_DELETE(Wid, Num)  gtk_text_backward_delete(GTK_TEXT(Wid), Num)
-  #define SG_TEXT_DELETE(Widget, Start, End) sg_text_delete(Widget, Start, End)
-  #define SG_LIST_SELECT_ROW(Widget, Row)    gtk_clist_select_row(GTK_CLIST(Widget), Row, 0)
-  #define SG_LIST_MOVETO(Widget, Row)        gtk_clist_moveto(GTK_CLIST(Widget), Row, 0, 0.5, 0.5);
-  #define SG_LIST_CLEAR(Widget)              gtk_clist_clear(GTK_CLIST(Widget))
-  #define SG_LIST_APPEND(Widget, Str)        gtk_clist_append(GTK_CLIST(Widget), &Str)
-  #define SG_LIST_INSERT(Widget, Pos, Str)   gtk_clist_insert(GTK_CLIST(Widget), Pos, &Str)
-  #define SG_LIST_SET_TEXT(Widget, Row, Str) gtk_clist_set_text(GTK_CLIST(Widget), Row, 0, Str)
-  #define SG_PIXMAP_NEW(Map, Mask)           gtk_pixmap_new(Map, Mask)
-  #define SG_PIXMAP_NEW_XYD(Window, Width, Height, Depth) gdk_pixmap_new(Window, Width, Height, Depth)
-  #define SG_PIXMAP_SET(Holder, Map, Mask)   gtk_pixmap_set(GTK_PIXMAP(Holder), Map, Mask)
-  #define SG_XPM_TO_PIXMAP(Window, Bits, Mask) gdk_pixmap_create_from_xpm_d(Window, &Mask, NULL, Bits)
-  #define SG_COLOR_ALLOC(CMap, Color)        gdk_color_alloc(CMap, Color)
-  #define SG_FONT_LOAD(Font)                 gdk_font_load(Font)
-  #define SG_SET_FONT(Ax, Font)              gdk_gc_set_font(Ax->gc, Font)
-  #define SG_SIGNAL_CONNECT(Object, Name, Func, Func_Data) gtk_signal_connect(Object, Name, Func, Func_Data)
-  #define SG_SIGNAL_CONNECT_AFTER(Object, Name, Func, Func_Data) gtk_signal_connect_after(Object, Name, Func, Func_Data)
-  #define SG_SIGNAL_CONNECT_OBJECT(Object, Name, Func, Func_Data) gtk_signal_connect_object(Object, Name, Func, Func_Data)
-  #define SG_SIGNAL_HANDLER_BLOCK_BY_DATA(object,data) gtk_signal_handler_block_by_data(object,data) 
-  #define SG_SIGNAL_HANDLER_UNBLOCK_BY_DATA(object,data) gtk_signal_handler_unblock_by_data(object,data)
-  #define SG_SIGNAL_EMIT_STOP_BY_NAME(object, name) gtk_signal_emit_stop_by_name(object, name)
-#endif
 
 #endif
   

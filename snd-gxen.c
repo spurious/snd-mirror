@@ -52,7 +52,7 @@ static XEN g_make_snd_color(XEN r, XEN g, XEN b)
   gcolor.green = (unsigned short)(65535 * gf);
   gcolor.blue = (unsigned short)(65535 * bf);
   ccolor = gdk_color_copy(&gcolor);
-  SG_COLOR_ALLOC(gdk_colormap_get_system(), ccolor);
+  gdk_rgb_find_color(gdk_colormap_get_system(), ccolor);
   return(XEN_WRAP_PIXEL(ccolor));
 }
 

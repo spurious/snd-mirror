@@ -40,21 +40,12 @@
 #define ENVED_POINT_SIZE 10
 #define NOTEBOOK_BINDING_WIDTH 20
 
-#if HAVE_GTK2
-  #define TINY_FONT "Monospace 8"
-  #define DEFAULT_BUTTON_FONT "Serif 14"
-  #define DEFAULT_BOLD_BUTTON_FONT "Serif Bold 14"
-  #define DEFAULT_AXIS_NUMBERS_FONT "Monospace 10"
-  #define DEFAULT_AXIS_LABEL_FONT "Serif 14"
-  #define DEFAULT_HELP_TEXT_FONT "Monospace 14"
-#else
-  #define TINY_FONT "6x12"
-  #define DEFAULT_BUTTON_FONT "-*-times-medium-r-*-*-14-*-*-*-*-*-iso8859-1"
-  #define DEFAULT_BOLD_BUTTON_FONT "-*-times-bold-r-*-*-14-*-*-*-*-*-iso8859-1"
-  #define DEFAULT_AXIS_NUMBERS_FONT "-*-courier-medium-r-*-*-14-*-*-*-*-*-iso8859-1"
-  #define DEFAULT_AXIS_LABEL_FONT "-*-times-medium-r-*-*-14-*-*-*-*-*-iso8859-1"
-  #define DEFAULT_HELP_TEXT_FONT "9x15"
-#endif
+#define TINY_FONT "Monospace 8"
+#define DEFAULT_BUTTON_FONT "Serif 14"
+#define DEFAULT_BOLD_BUTTON_FONT "Serif Bold 14"
+#define DEFAULT_AXIS_NUMBERS_FONT "Monospace 10"
+#define DEFAULT_AXIS_LABEL_FONT "Serif 14"
+#define DEFAULT_HELP_TEXT_FONT "Monospace 14"
 
 #define POSITION_SLIDER_WIDTH 13
 #define ZOOM_SLIDER_WIDTH 10
@@ -149,11 +140,7 @@ static int noglob = 0, noinit = 0, batch = 0;
 #if HAVE_EXTENSION_LANGUAGE
 static gint stdin_id = 0;
 
-#if HAVE_GTK2
 static void get_stdin_string(gpointer context, gint fd, int condition)
-#else
-static void get_stdin_string(gpointer context, gint fd, GdkInputCondition condition)
-#endif
 {
   int bytes, size;
   char *buf;
@@ -264,13 +251,11 @@ static void setup_gcs (snd_state *ss)
 }
 
 #if HAVE_EXTENSION_LANGUAGE
-#if HAVE_GTK2
 static gboolean io_invoke(GIOChannel *source, GIOCondition condition, gpointer data)
 {
   get_stdin_string((gpointer)get_global_state(), g_io_channel_unix_get_fd(source), 0);
   return(TRUE);
 }
-#endif
 #endif
 
 typedef struct {int slice; snd_state *ss; GtkWidget *shell;} startup_state;
@@ -304,10 +289,18 @@ static BACKGROUND_TYPE startup_funcs(gpointer context)
 			  strlen(SND_VERSION) + 1);
 #if HAVE_EXTENSION_LANGUAGE
       gtk_widget_add_events (tm->shell, gtk_widget_get_events (tm->shell) | GDK_PROPERTY_CHANGE_MASK);
-      SG_SIGNAL_CONNECT(GTK_OBJECT(tm->shell), "property_notify_event", GTK_SIGNAL_FUNC(who_called), (gpointer)ss);
+      g_signal_connect_closure_by_id(GTK_OBJECT(tm->shell),
+				     g_signal_lookup("property_notify_event", G_OBJECT_TYPE(GTK_OBJECT(tm->shell))),
+				     0,
+				     g_cclosure_new(GTK_SIGNAL_FUNC(who_called), (gpointer)ss, 0),
+				     0);
 #endif
       /* trap outer-level Close for cleanup check */
-      SG_SIGNAL_CONNECT(GTK_OBJECT(tm->shell), "delete_event", GTK_SIGNAL_FUNC(window_close), (gpointer)ss);
+      g_signal_connect_closure_by_id(GTK_OBJECT(tm->shell),
+				     g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(tm->shell))),
+				     0,
+				     g_cclosure_new(GTK_SIGNAL_FUNC(window_close), (gpointer)ss, 0),
+				     0);
 #endif
 
       (ss->sgx)->graph_cursor = gdk_cursor_new((GdkCursorType)in_graph_cursor(ss));
@@ -325,16 +318,13 @@ static BACKGROUND_TYPE startup_funcs(gpointer context)
        * but try to read stdin (needed to support the emacs subjob connection).  If
        * we don't do this, the background job is suspended when the shell sends SIGTTIN.
        */
-#if HAVE_GTK2
+
       {
 	GIOChannel *channel;
 	channel = g_io_channel_unix_new(fileno(stdin));
 	stdin_id = g_io_add_watch_full(channel, G_PRIORITY_DEFAULT, (GIOCondition)(G_IO_IN | G_IO_HUP | G_IO_ERR), io_invoke, NULL, NULL);
 	g_io_channel_unref (channel);
       }
-#else
-      stdin_id = gdk_input_add(fileno(stdin), GDK_INPUT_READ, get_stdin_string, (gpointer)ss);
-#endif
 #endif
       break;
     case 2: 
@@ -391,7 +381,7 @@ static void SetupIcon(GtkWidget *shell)
   SG_BITMAP *mask;
   snd_state *ss;
   ss = get_global_state();
-  pix = SG_XPM_TO_PIXMAP(MAIN_WINDOW(ss), snd_icon_bits(), mask);
+  pix = gdk_pixmap_create_from_xpm_d(MAIN_WINDOW(ss), &mask, NULL, snd_icon_bits());
   gdk_window_set_icon(MAIN_WINDOW(ss), NULL, pix, mask);
 }
 #endif
@@ -409,16 +399,16 @@ static GdkColor *get_color(char *defined_color, char *fallback_color, char *seco
 	{
 	  /* snd_error here can cause trouble (no error dialog or something) */
 	  fprintf(stderr, "can't get %s -- will use white\n", defined_color);
-	  SG_WHITE_COLOR(tmp_color);
+	  gdk_color_parse("white", &tmp_color);
 	}
       else
 	{
 	  fprintf(stderr, "can't get %s -- will use black\n", defined_color);
-	  SG_BLACK_COLOR(tmp_color);
+	  gdk_color_parse("black", &tmp_color);
 	}
     }
   new_color = gdk_color_copy(&tmp_color);
-  SG_COLOR_ALLOC(gdk_colormap_get_system(), new_color);
+  gdk_rgb_find_color(gdk_colormap_get_system(), new_color);
   return(new_color);
 }
 
@@ -457,7 +447,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 
 #ifndef SND_AS_WIDGET
   shell = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-  SG_MAKE_RESIZABLE(shell);
+  sg_make_resizable(shell);
 #endif
 
   auto_open_files = argc-1;
@@ -587,14 +577,15 @@ void snd_doit(snd_state *ss, int argc, char **argv)
     {
       sx->soundpane = gtk_vpaned_new();
       set_backgrounds(sx->soundpane, (ss->sgx)->sash_color);
-      SG_SET_HANDLE_SIZE(GTK_PANED(SOUND_PANE(ss)), ss->sash_size);
-      SG_SET_GUTTER_SIZE(GTK_PANED(SOUND_PANE(ss)), 8);
       gtk_container_set_border_width(GTK_CONTAINER(SOUND_PANE(ss)), 0);
-      /* we need gtk 1.2.7 or later here */
       gtk_container_add(GTK_CONTAINER(MAIN_PANE(ss)), SOUND_PANE(ss));
       /* set_background(SOUND_PANE(ss), (ss->sgx)->basic_color); */
       
-      /* SG_SIGNAL_CONNECT(GTK_OBJECT(MAIN_SHELL(ss)), "key_press_event", GTK_SIGNAL_FUNC(shell_key_press), (gpointer)ss); */
+      /* g_signal_connect_closure_by_id(GTK_OBJECT(MAIN_SHELL(ss)),
+	 g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(MAIN_SHELL(ss)))),
+	 0,
+	 g_cclosure_new(GTK_SIGNAL_FUNC(shell_key_press), (gpointer)ss, 0),
+      0);*/
 
       if (sound_style(ss) == SOUNDS_IN_NOTEBOOK)
 	{

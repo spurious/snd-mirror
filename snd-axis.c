@@ -329,7 +329,6 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
 	ap->y_scale = 0.0;
       else ap->y_scale = (ap->y_axis_y1 - ap->y_axis_y0) / (ap->y1 - ap->y0);
       ap->y_base = (Float)(ap->y_axis_y0 - ap->y0 * ap->y_scale);
-
       return;
     }
 
@@ -526,7 +525,7 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
       tdx->min_tick_len = minor_tick_length;
     }
 
-#if HAVE_GTK2
+#if USE_GTK
   cury -= 12;
 #endif
 
@@ -659,7 +658,7 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
 #endif
       draw_string(ax,
 		  ap->y_axis_x0 - tdy->maj_tick_len - tdy->min_label_width - inner_border_width,
-#if HAVE_GTK2
+#if USE_GTK
 		  (int)(grf_y(tdy->mlo, ap) - .5 * x_number_height),
 #else
 		  (int)(grf_y(tdy->mlo, ap) + .25 * x_number_height),
@@ -668,7 +667,7 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
 		  strlen(tdy->min_label));
       draw_string(ax,
 		  ap->y_axis_x0 - tdy->maj_tick_len - tdy->max_label_width - inner_border_width,
-#if HAVE_GTK2
+#if USE_GTK
 		  (int)(grf_y(tdy->mhi, ap) - .5 * x_number_height),
 #else
 		  (int)(grf_y(tdy->mhi, ap) + .5 * x_number_height),

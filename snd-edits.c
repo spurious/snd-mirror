@@ -2383,12 +2383,6 @@ mus_sample_t next_sound (snd_fd *sf)
   return(read_sample(sf));
 }
 
-int read_sample_eof (snd_fd *sf)
-{
-  return(sf->at_eof);
-}
-
-
 static int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, off_t length, snd_state *ss)
 {
   /* create ofile, fill it by following sfs, use hdr for srate/type/format decisions */
@@ -3050,8 +3044,10 @@ XEN_MAKE_OBJECT_FREE_PROCEDURE(snd_fd, free_sf, sf_free)
 static XEN g_sample_reader_at_end(XEN obj) 
 {
   #define H_sample_reader_at_end "(" S_sample_reader_at_end_p " obj) -> #t if sample-reader has reached the end of its data"
+  snd_fd *sf;
   XEN_ASSERT_TYPE(SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_sample_reader_at_end_p, "a sample-reader");
-  return(C_TO_XEN_BOOLEAN(read_sample_eof(TO_SAMPLE_READER(obj))));
+  sf = TO_SAMPLE_READER(obj);
+  return(C_TO_XEN_BOOLEAN(sf->at_eof));
 }
 
 static XEN g_sample_reader_position(XEN obj) 

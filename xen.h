@@ -887,11 +887,11 @@ XEN xen_rb_copy_list(XEN val); /* Ruby arrays (lists) are passed by reference */
 #define XEN_DOUBLE_P(Arg) 0
 
 #define XEN_TO_C_DOUBLE(a) 0.0
-#define XEN_TO_C_DOUBLE_OR_ELSE(a, b) 0.0
+#define XEN_TO_C_DOUBLE_OR_ELSE(a, b) b
 #define XEN_TO_C_DOUBLE_WITH_CALLER(a, b) 0.0
 #define XEN_TO_C_INT(a) 0
-#define XEN_TO_C_INT_OR_ELSE(a, b) 0
-#define XEN_TO_C_INT_OR_ELSE_WITH_CALLER(a, b, c) 0
+#define XEN_TO_C_INT_OR_ELSE(a, b) b
+#define XEN_TO_C_INT_OR_ELSE_WITH_CALLER(a, b, c) b
 #define XEN_TO_C_STRING(STR) NULL
 #define C_TO_XEN_DOUBLE(a) 0
 #define C_TO_XEN_INT(a) a

@@ -146,18 +146,18 @@ char *listener_prompt_with_cr(snd_state *ss)
  
 #if (!USE_NO_GUI)
 #if USE_GTK
-#define GUI_TEXT_END(w) SG_TEXT_LENGTH(w)
+#define GUI_TEXT_END(w) gtk_text_buffer_get_char_count(gtk_text_view_get_buffer(GTK_TEXT_VIEW(w)))
 #define GUI_TEXT_POSITION_TYPE gint
-#define GUI_TEXT(w) SG_TEXT_CHARS(w, 0, -1)
-#define GUI_SET_TEXT(w, text) SG_TEXT_INSERT(w, (ss->sgx)->help_text_fnt, (ss->sgx)->black, (ss->sgx)->white, text, -1)
-#define GUI_TEXT_INSERTION_POSITION(w) SG_TEXT_GET_POINT(w)
-#define GUI_TEXT_SET_INSERTION_POSITION(w, pos) SG_TEXT_SET_POINT(w, pos - 1)
+#define GUI_TEXT(w) sg_get_text(w, 0, -1)
+#define GUI_SET_TEXT(w, text) sg_text_insert(w, text)
+#define GUI_TEXT_INSERTION_POSITION(w) sg_cursor_position(w)
+#define GUI_TEXT_SET_INSERTION_POSITION(w, pos) sg_set_cursor(w, pos)
 #define GUI_LISTENER_TEXT_INSERT(w, pos, text) append_listener_text(0, text)
 #define GUI_FREE(w) g_free(w)
 #define GUI_SET_CURSOR(w, cursor) gdk_window_set_cursor(w->window, cursor)
 #define GUI_UNSET_CURSOR(w, cursor) gdk_window_set_cursor(w->window, cursor)
 #define GUI_UPDATE(w) 
-#define GUI_TEXT_GOTO(w, pos) SG_TEXT_SET_POINT(w, pos)
+#define GUI_TEXT_GOTO(w, pos) sg_set_cursor(w, pos + 1)
 #else
 #define GUI_TEXT_END(w) XmTextGetLastPosition(w)
 #define GUI_TEXT_POSITION_TYPE XmTextPosition

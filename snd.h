@@ -56,10 +56,6 @@
  *                 (for the Kaiser window), the Hankel transform, the complex trig support
  *                 (for the Dolph-Chebyshev window), etc.
  *
- *   HAVE_GTKEXTRA If USE_GTK is set, and you want the Gtk+extra version of the file
- *                 selection widget, set this flag (it requires libgtkextra).
- *                 I don't think gtkextra works with gtk2 yet.
- *
  *  Many others are set by configure -- see config.h.in.
  */
 
@@ -143,7 +139,7 @@
 
 #include "snd-strings.h"
 
-#define SND_VERSION "30-Aug-02"
+#define SND_VERSION "3-Sep-02"
 #define SND_RPM_VERSION "6.1"
 #define SND_MAJOR_VERSION 6
 #define SND_MINOR_VERSION 1

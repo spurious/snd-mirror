@@ -18,7 +18,6 @@ MAKE_TARGET="snd"
 #   --with-motif          use Motif (the default)
 #   --with-static-motif   use Motif statically loaded (for RPM generation)
 #   --with-gtk            use Gtk+	
-#   --with-gtk-extra      use Gtk+extra file selection widget
 #   --with-alsa           use ALSA if possible
 #   --with-static-alsa    use ALSA statically loaded (for RPM generation)
 #   --with-html           include the XmHTML or mozilla browser library
@@ -215,36 +214,6 @@ AC_SUBST(GSL_LIBS)
 AC_SUBST(GSL_CFLAGS)
 
 
-# -------- GTKEXTRA --------
-GTKEXTRA_LIBS=""
-GTKEXTRA_FLAGS=""
-
-AC_ARG_WITH(gtkextra-prefix,[  --with-gtkextra-prefix=PFX   Prefix where GTKEXTRA is installed (optional)],
-            gtkextra_config_prefix="$withval", gtkextra_config_prefix="")
-
-AC_ARG_WITH(gtk-extra,
-	[  --with-gtk-extra	  use Gtk+extra's file selection box (requires libgtkextra)],
-	[if test "$with_gtk_extra" = yes ; then
-          GTKEXTRA_CONFIG=gtkextra-config
-          if test x$gtkextra_config_prefix != x ; then
-            GTKEXTRA_CONFIG=$gtkextra_config_prefix/bin/gtkextra-config
-          fi
-	  AC_PATH_PROG(GTKEXTRA_CONFIG,gtkextra-config,no)
-          if test "$GTKEXTRA_CONFIG" != "no" ; then
-	    AC_DEFINE(HAVE_GTKEXTRA)
-            GTKEXTRA_LIBS="`$GTKEXTRA_CONFIG --libs`"
-            GTKEXTRA_FLAGS="`$GTKEXTRA_CONFIG --cflags`"
-            gtkextra_version="`$GTKEXTRA_CONFIG --version`"
-            AC_DEFINE_UNQUOTED(GTKEXTRA_VERSION,"${gtkextra_version}")
-            AC_CHECK_LIB(gtkextra, gtk_icon_file_selection_show_tree, [AC_DEFINE(HAVE_GTK_ICON_FILE_SELECTION_SHOW_TREE)], , $GTKEXTRA_LIBS)
-          else
-	    AC_MSG_WARN([can't find libgtkextra!])
-	  fi
-	fi])
-AC_SUBST(GTKEXTRA_LIBS)
-AC_SUBST(GTKEXTRA_FLAGS)
-
-
 AC_ARG_WITH(snd-as-widget,
 	[  --with-snd-as-widget	  make Snd a loadable widget, not a standalone program],
   	if test "$with_snd_as_widget" = yes ; then
@@ -365,7 +334,6 @@ AC_FUNC_VPRINTF
 #--------------------------------------------------------------------------------
 
 AC_PATH_XTRA
-have_gtk_2=no
 
 if test "$no_x" = yes || test "$with_no_gui" = yes ; then
 
@@ -490,28 +458,13 @@ else
 
   if test "$with_gtk" = yes ; then
 
-# first look for gtk2
-    AM_PATH_GTK_2_0(1.3.13,
+    AM_PATH_GTK_2_0(2.0.0,
       [
-	AC_DEFINE(HAVE_GTK2)
-	have_gtk_2=yes
 	with_gtk=yes
-	AC_CHECK_LIB(m, gtk_file_selection_get_selections, [AC_DEFINE(HAVE_GTK_FILE_SELECTION_GET_SELECTIONS)], , $GTK_LIBS)
-	AC_CHECK_LIB(m, gtk_icon_set_get_type, [AC_DEFINE(HAVE_GTK_ICON_SET_GET_TYPE)], , $GTK_LIBS)
-# using -lm above since -lgtk is not safe (might find older version than the pkg-config version)
-#   our version of AM_PATH_GTK_2_0 in aclocal.m4 sets GTK_LIBS before executing this branch
-#   These five functions were all new in 1.3.15, so one can stand for all
       ],
       [
-	AM_PATH_GTK(1.2.8,
-      	[
-	  AC_DEFINE(HAVE_GTK_1)
-	  with_gtk=yes
-	],
-        [
-      	  AC_MSG_WARN([trouble with gtk -- will try to make Snd without any GUI])
-      	  with_gtk=no
-      	])
+    	AC_MSG_WARN([trouble with gtk -- will try to make Snd without any GUI])
+      	with_gtk=no
       ])
     if test "$with_gtk" = yes ; then
      	GX_FILES="G_O_FILES"
@@ -562,7 +515,7 @@ GL_FILES=""
 GL_FLAGS=""
 have_gl=no
 if test "$with_gl" = yes || test "$with_just_gl" = yes ; then
-  if test "$with_motif" = yes || test "$have_gtk_2" = yes ; then
+  if test "$with_motif" = yes || test "$with_gtk" = yes ; then
     AC_CHECK_HEADER(GL/gl.h,
 	  [have_gl=yes],
 	  [AC_CHECK_HEADER(/usr/X11R6/include/GL/gh.h,

@@ -715,7 +715,6 @@ int ramp_or_ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos)
 Float protected_next_sample_to_float(snd_fd *sf);
 Float protected_previous_sample_to_float(snd_fd *sf);
 Float local_maxamp(chan_info *cp, off_t beg, off_t num, int edpos);
-int read_sample_eof (snd_fd *sf);
 void undo_edit_with_sync(chan_info *cp, int count);
 void redo_edit_with_sync(chan_info *cp, int count);
 void undo_edit(chan_info *cp, int count);

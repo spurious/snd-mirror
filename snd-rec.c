@@ -27,7 +27,7 @@ FONT_TYPE *get_vu_font(snd_state *ss, Float size)
 	  else vu_font_name = "times";
 	}
     }
-#if HAVE_GTK2
+#if USE_GTK
   label_font = LOAD_FONT(font_name);
 #else
   mus_snprintf(font_name, LABEL_BUFFER_SIZE, "-*-%s-%s-r-*-*-%d-*-*-*-*-*-*",

@@ -104,12 +104,16 @@ void file_print_callback(GtkWidget *w, gpointer context)
   if (!file_print_dialog)
     {
       file_print_dialog = gtk_dialog_new();
-      SG_SIGNAL_CONNECT(GTK_OBJECT(file_print_dialog), "delete_event", GTK_SIGNAL_FUNC(file_print_delete_callback), (gpointer)ss);
+      g_signal_connect_closure_by_id(GTK_OBJECT(file_print_dialog),
+				     g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(file_print_dialog))),
+				     0,
+				     g_cclosure_new(GTK_SIGNAL_FUNC(file_print_delete_callback), (gpointer)ss, 0),
+				     0);
       gtk_window_set_title(GTK_WINDOW(file_print_dialog), STR_Print);
-      SG_MAKE_RESIZABLE(file_print_dialog);
+      sg_make_resizable(file_print_dialog);
       set_background(file_print_dialog, (ss->sgx)->basic_color);
       gtk_container_set_border_width (GTK_CONTAINER(file_print_dialog), 10);
-      SG_SET_SIZE(GTK_WIDGET(file_print_dialog), 220, 160);
+      gtk_window_resize(GTK_WINDOW(file_print_dialog), 220, 160);
       gtk_widget_realize(file_print_dialog);
 
       help_button = gtk_button_new_with_label(STR_Help);
@@ -118,9 +122,21 @@ void file_print_callback(GtkWidget *w, gpointer context)
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(file_print_dialog)->action_area), print_button, TRUE, TRUE, 4);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(file_print_dialog)->action_area), dismiss_button, TRUE, TRUE, 4);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(file_print_dialog)->action_area), help_button, TRUE, TRUE, 4);
-      SG_SIGNAL_CONNECT(GTK_OBJECT(dismiss_button), "clicked", GTK_SIGNAL_FUNC(file_print_cancel_callback), (gpointer)ss);
-      SG_SIGNAL_CONNECT(GTK_OBJECT(help_button), "clicked", GTK_SIGNAL_FUNC(file_print_help_callback), (gpointer)ss);
-      SG_SIGNAL_CONNECT(GTK_OBJECT(print_button), "clicked", GTK_SIGNAL_FUNC(file_print_ok_callback), (gpointer)ss);
+      g_signal_connect_closure_by_id(GTK_OBJECT(dismiss_button),
+				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(dismiss_button))),
+				     0,
+				     g_cclosure_new(GTK_SIGNAL_FUNC(file_print_cancel_callback), (gpointer)ss, 0),
+				     0);
+      g_signal_connect_closure_by_id(GTK_OBJECT(help_button),
+				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(help_button))),
+				     0,
+				     g_cclosure_new(GTK_SIGNAL_FUNC(file_print_help_callback), (gpointer)ss, 0),
+				     0);
+      g_signal_connect_closure_by_id(GTK_OBJECT(print_button),
+				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(print_button))),
+				     0,
+				     g_cclosure_new(GTK_SIGNAL_FUNC(file_print_ok_callback), (gpointer)ss, 0),
+				     0);
       set_pushed_button_colors(help_button, ss);
       set_pushed_button_colors(dismiss_button, ss);
       set_pushed_button_colors(print_button, ss);

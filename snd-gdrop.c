@@ -33,7 +33,11 @@ void add_drop(snd_state *ss, GtkWidget *w)
 {
   /* called via startup func */
   gtk_drag_dest_set(w, GTK_DEST_DEFAULT_DROP, target_table, 3, GDK_ACTION_COPY);
-  SG_SIGNAL_CONNECT(GTK_OBJECT(w), "drag_data_received", GTK_SIGNAL_FUNC(drag_data_received), NULL);
+  g_signal_connect_closure_by_id(GTK_OBJECT(w),
+				 g_signal_lookup("drag_data_received", G_OBJECT_TYPE(GTK_OBJECT(w))),
+				 0,
+				 g_cclosure_new(GTK_SIGNAL_FUNC(drag_data_received), NULL, 0),
+				 0);
 }
 
 

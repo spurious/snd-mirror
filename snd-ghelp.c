@@ -24,9 +24,7 @@ static GtkWidget *help_text = NULL;
 
 static void add_help_text (snd_state *ss, GtkWidget *text, char *message)
 {
-  SG_TEXT_FREEZE(text);
-  SG_TEXT_INSERT(text, (ss->sgx)->help_text_fnt, (ss->sgx)->black, (ss->sgx)->white, message, -1);
-  SG_TEXT_THAW(text);
+  sg_text_insert(text, message);
 }
 
 static void create_help_monolog(snd_state *ss)
@@ -34,20 +32,32 @@ static void create_help_monolog(snd_state *ss)
   /* create scrollable but not editable text window */
   GtkWidget *help_button, *ok_button;
   help_dialog = gtk_dialog_new();
-  SG_SIGNAL_CONNECT(GTK_OBJECT(help_dialog), "delete_event", GTK_SIGNAL_FUNC(delete_help), (gpointer)ss);
+  g_signal_connect_closure_by_id(GTK_OBJECT(help_dialog),
+				 g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(help_dialog))),
+				 0,
+				 g_cclosure_new(GTK_SIGNAL_FUNC(delete_help), (gpointer)ss, 0),
+				 0);
   gtk_window_set_title(GTK_WINDOW(help_dialog), STR_Help);
-  SG_MAKE_RESIZABLE(help_dialog);
+  sg_make_resizable(help_dialog);
   set_background(help_dialog, (ss->sgx)->basic_color);
   gtk_container_set_border_width (GTK_CONTAINER(help_dialog), 10);
-  SG_SET_SIZE (GTK_WIDGET(help_dialog), HELP_COLUMNS * 9, HELP_ROWS * 20);
+  gtk_window_resize(GTK_WINDOW(help_dialog), HELP_COLUMNS * 9, HELP_ROWS * 20);
   gtk_widget_realize(help_dialog);
 
   help_button = gtk_button_new_with_label(STR_Help);
   ok_button = gtk_button_new_with_label(STR_Ok);
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(help_dialog)->action_area), ok_button, FALSE, TRUE, 20);
   gtk_box_pack_end(GTK_BOX(GTK_DIALOG(help_dialog)->action_area), help_button, FALSE, TRUE, 20);
-  SG_SIGNAL_CONNECT(GTK_OBJECT(ok_button), "clicked", GTK_SIGNAL_FUNC(dismiss_help), (gpointer)ss);
-  SG_SIGNAL_CONNECT(GTK_OBJECT(help_button), "clicked", GTK_SIGNAL_FUNC(help_help_callback), (gpointer)ss);
+  g_signal_connect_closure_by_id(GTK_OBJECT(ok_button),
+				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(ok_button))),
+				 0,
+				 g_cclosure_new(GTK_SIGNAL_FUNC(dismiss_help), (gpointer)ss, 0),
+				 0);
+  g_signal_connect_closure_by_id(GTK_OBJECT(help_button),
+				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(help_button))),
+				 0,
+				 g_cclosure_new(GTK_SIGNAL_FUNC(help_help_callback), (gpointer)ss, 0),
+				 0);
   set_pushed_button_colors(help_button, ss);
   set_pushed_button_colors(ok_button, ss);
   gtk_widget_show(ok_button);
@@ -65,7 +75,7 @@ static GtkWidget *snd_help_1(snd_state *ss, char *subject, char *helpstr, int wi
   if (!(help_dialog)) create_help_monolog(ss); else raise_dialog(help_dialog);
   mus_snprintf(help_window_label, LABEL_BUFFER_SIZE, "%s help", subject);
   gtk_window_set_title(GTK_WINDOW(help_dialog), help_window_label);
-  SG_TEXT_CLEAR(help_text);
+  gtk_text_buffer_set_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(help_text)), "", 0);
   if (with_wrap)
     {
       char *new_help = NULL;
@@ -94,12 +104,16 @@ static void create_help_monolog(snd_state *ss)
   /* create scrollable but not editable text window */
   GtkWidget *help_button, *ok_button, *back_button, *forward_button;
   help_dialog = gtk_dialog_new();
-  SG_SIGNAL_CONNECT(GTK_OBJECT(help_dialog), "delete_event", GTK_SIGNAL_FUNC(delete_help), (gpointer)ss);
+  g_signal_connect_closure_by_id(GTK_OBJECT(help_dialog),
+				 g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(help_dialog))),
+				 0,
+				 g_cclosure_new(GTK_SIGNAL_FUNC(delete_help), (gpointer)ss, 0),
+				 0);
   gtk_window_set_title(GTK_WINDOW(help_dialog), STR_Help);
-  SG_MAKE_RESIZABLE(help_dialog);
+  sg_make_resizable(help_dialog);
   set_background(help_dialog, (ss->sgx)->basic_color);
   gtk_container_set_border_width (GTK_CONTAINER(help_dialog), 10);
-  SG_SET_SIZE (GTK_WIDGET(help_dialog), 500, 500);
+  gtk_window_resize(GTK_WINDOW(help_dialog), 500, 500);
   gtk_widget_realize(help_dialog);
 
   help_button = gtk_button_new_with_label(STR_Help);
@@ -110,10 +124,26 @@ static void create_help_monolog(snd_state *ss)
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(help_dialog)->action_area), back_button, FALSE, TRUE, 20);
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(help_dialog)->action_area), forward_button, FALSE, TRUE, 20);
   gtk_box_pack_end(GTK_BOX(GTK_DIALOG(help_dialog)->action_area), help_button, FALSE, TRUE, 20);
-  SG_SIGNAL_CONNECT(GTK_OBJECT(ok_button), "clicked", GTK_SIGNAL_FUNC(dismiss_help), (gpointer)ss);
-  SG_SIGNAL_CONNECT(GTK_OBJECT(back_button), "clicked", GTK_SIGNAL_FUNC(go_back), (gpointer)ss);
-  SG_SIGNAL_CONNECT(GTK_OBJECT(forward_button), "clicked", GTK_SIGNAL_FUNC(go_forward), (gpointer)ss);
-  SG_SIGNAL_CONNECT(GTK_OBJECT(help_button), "clicked", GTK_SIGNAL_FUNC(help_help_callback), (gpointer)ss);
+  g_signal_connect_closure_by_id(GTK_OBJECT(ok_button),
+				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(ok_button))),
+				 0,
+				 g_cclosure_new(GTK_SIGNAL_FUNC(dismiss_help), (gpointer)ss, 0),
+				 0);
+  g_signal_connect_closure_by_id(GTK_OBJECT(back_button),
+				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(back_button))),
+				 0,
+				 g_cclosure_new(GTK_SIGNAL_FUNC(go_back), (gpointer)ss, 0),
+				 0);
+  g_signal_connect_closure_by_id(GTK_OBJECT(forward_button),
+				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(forward_button))),
+				 0,
+				 g_cclosure_new(GTK_SIGNAL_FUNC(go_forward), (gpointer)ss, 0),
+				 0);
+  g_signal_connect_closure_by_id(GTK_OBJECT(help_button),
+				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(help_button))),
+				 0,
+				 g_cclosure_new(GTK_SIGNAL_FUNC(help_help_callback), (gpointer)ss, 0),
+				 0);
   set_pushed_button_colors(help_button, ss);
   set_pushed_button_colors(ok_button, ss);
   set_pushed_button_colors(back_button, ss);

@@ -2009,7 +2009,7 @@ static void make_axes(chan_info *cp, axis_info *ap, int x_style, int erase_first
 #define DONT_CLEAR_GRAPH FALSE
 #define CLEAR_GRAPH TRUE
 
-#if HAVE_GL && HAVE_GTK2
+#if HAVE_GL && USE_GTK
 #if HAVE_GTK_WIDGET_GL_MAKE_CURRENT
   #define GL_MAKE_CURRENT(Cp) gtk_widget_gl_make_current(channel_graph(Cp))
   #define GL_SWAP_BUFFERS(Cp) if (gtk_widget_gl_is_double_buffer(channel_graph(Cp))) \

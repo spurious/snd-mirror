@@ -1,12 +1,8 @@
 /* DIFFS: no "just-sounds" button since the search proc is apparently a simple string
- *          depending on built-in filename completion routine -- is this fixed in gtkextra?
  *        no forced re-read of directory when file is written (update button?)
  */
 
 #include "snd.h"
-#if HAVE_GTKEXTRA
-  #include <gtkextra/gtkextra.h>
-#endif
 
 /* most of these dialogs present a view of the various file header possibilities */
 
@@ -47,7 +43,7 @@ char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type,
     }
   if (fdat->comment_text) 
     {
-      comment = SG_TEXT_CHARS(fdat->comment_text, 0, -1);
+      comment = sg_get_text(fdat->comment_text, 0, -1);
     }
   if (fdat->header_list)
     {
@@ -85,18 +81,18 @@ static void load_header_and_data_lists(file_data *fdat, int type, int format, in
   fdat->current_type = type;
   fdat->current_format = format;
   fl = set_header_and_data_positions(fdat, type, format); 
-  SG_SIGNAL_HANDLER_BLOCK_BY_DATA(GTK_OBJECT(fdat->header_list), (gpointer)fdat);
-  SG_LIST_SELECT_ROW(fdat->header_list, fdat->header_pos);
-  SG_SIGNAL_HANDLER_UNBLOCK_BY_DATA(GTK_OBJECT(fdat->header_list), (gpointer)fdat);
-  SG_LIST_CLEAR(fdat->format_list);
+  g_signal_handlers_block_matched(GTK_OBJECT(fdat->header_list), G_SIGNAL_MATCH_DATA, 0, 0, NULL, 0, (gpointer)fdat);
+  sg_list_select(fdat->header_list, fdat->header_pos);
+  g_signal_handlers_unblock_matched(GTK_OBJECT(fdat->header_list), G_SIGNAL_MATCH_DATA, 0, 0, NULL, 0, (gpointer)fdat);
+  gtk_tree_store_clear(GTK_TREE_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(fdat->format_list))));
   for (i = 0; i < fdat->formats; i++) 
     {
       str = fl[i];
-      SG_LIST_INSERT(fdat->format_list, i, str);
+      sg_list_insert(fdat->format_list, i, str);
     }
-  SG_SIGNAL_HANDLER_BLOCK_BY_DATA(GTK_OBJECT(fdat->format_list), (gpointer)fdat);
-  SG_LIST_SELECT_ROW(fdat->format_list, fdat->format_pos);
-  SG_SIGNAL_HANDLER_UNBLOCK_BY_DATA(GTK_OBJECT(fdat->format_list), (gpointer)fdat);
+  g_signal_handlers_block_matched(GTK_OBJECT(fdat->format_list), G_SIGNAL_MATCH_DATA, 0, 0, NULL, 0, (gpointer)fdat);
+  sg_list_select(fdat->format_list, fdat->format_pos);
+  g_signal_handlers_unblock_matched(GTK_OBJECT(fdat->format_list), G_SIGNAL_MATCH_DATA, 0, 0, NULL, 0, (gpointer)fdat);
   if ((srate > 0) && (fdat->srate_text))
     {
       str = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
@@ -113,11 +109,8 @@ static void load_header_and_data_lists(file_data *fdat, int type, int format, in
     }
   if (fdat->comment_text) 
     {
-      SG_TEXT_CLEAR(fdat->comment_text);
-      SG_TEXT_INSERT(fdat->comment_text, 
-		     (ss->sgx)->help_text_fnt, 
-		     (ss->sgx)->black, (ss->sgx)->white, 
-		     comment, -1);
+      gtk_text_buffer_set_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(fdat->comment_text)), "", 0);
+      sg_text_insert(fdat->comment_text, comment);
     }
   if ((location >= 0) && (fdat->location_text))
     {
@@ -129,60 +122,38 @@ static void load_header_and_data_lists(file_data *fdat, int type, int format, in
 }
 
 
-/* some utilities to make gtkextra's file selector look more like gtk's */
-
 static char *last_filename = NULL;
 
 static char *snd_gtk_get_filename(GtkWidget *dialog)
 {
-#if HAVE_GTKEXTRA
-  gchar *path;
-  gchar *file;
-  path = gtk_file_list_get_path(GTK_FILE_LIST(GTK_ICON_FILESEL(dialog)->file_list));
-  /* file = gtk_file_list_get_filename(GTK_FILE_LIST(GTK_ICON_FILESEL(dialog)->file_list)); */
-  /* can't use this form because it ignores possible user-typing in file text widget */
-  file = (char *)gtk_entry_get_text(GTK_ENTRY(GTK_ICON_FILESEL(dialog)->file_entry));
-
-  if (file == NULL) return(NULL);
-  if (last_filename == NULL) last_filename = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-  mus_snprintf(last_filename, PRINT_BUFFER_SIZE, "%s%s", path, file);
-#else
   last_filename = (char *)gtk_file_selection_get_filename(GTK_FILE_SELECTION(dialog));
-#endif
   return(last_filename);
 }
 
 static GtkWidget *snd_gtk_file_selection_new(snd_state *ss, char *title, GtkSignalFunc gdelete, GtkSignalFunc ok, GtkSignalFunc cancel)
 {
   GtkWidget *new_dialog;
-#if HAVE_GTKEXTRA
-  new_dialog = (GtkWidget *)gtk_icon_file_selection_new(title);
-  set_background(new_dialog, (ss->sgx)->basic_color);
-  SG_SIGNAL_CONNECT(GTK_OBJECT(new_dialog), "delete_event", gdelete, (gpointer)ss);
-  SG_SIGNAL_CONNECT(GTK_OBJECT(GTK_ICON_FILESEL(new_dialog)->ok_button), "clicked", ok, (gpointer)ss);
-  SG_SIGNAL_CONNECT_OBJECT(GTK_OBJECT(GTK_ICON_FILESEL(new_dialog)->cancel_button), "clicked", cancel, (GtkObject *)ss);
-  set_pushed_button_colors(GTK_ICON_FILESEL(new_dialog)->ok_button, ss);
-  set_pushed_button_colors(GTK_ICON_FILESEL(new_dialog)->cancel_button, ss);
-  #if HAVE_GETCWD
-    if (last_filename == NULL) last_filename = (char *)CALLOC(256, sizeof(char));
-    getcwd(last_filename, 256);
-    gtk_icon_file_selection_open_dir(GTK_ICON_FILESEL(new_dialog), last_filename);
-  #endif
-  #if HAVE_GTK_ICON_FILE_SELECTION_SHOW_TREE
-    /* gtk+extra 0.99.15 */
-    gtk_icon_file_selection_show_tree(GTK_ICON_FILESEL(new_dialog), TRUE); 
-  #endif
-#else
   new_dialog = gtk_file_selection_new(title);
   set_background(new_dialog, (ss->sgx)->basic_color);
-  SG_SIGNAL_CONNECT(GTK_OBJECT(new_dialog), "delete_event", gdelete, (gpointer)ss);
-  SG_SIGNAL_CONNECT(GTK_OBJECT(GTK_FILE_SELECTION(new_dialog)->ok_button), "clicked", ok, (gpointer)ss);
-  SG_SIGNAL_CONNECT_OBJECT(GTK_OBJECT(GTK_FILE_SELECTION(new_dialog)->cancel_button), "clicked", cancel, (GtkObject *)ss);
+  g_signal_connect_closure_by_id(GTK_OBJECT(new_dialog),
+				 g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(new_dialog))),
+				 0,
+				 g_cclosure_new(gdelete, (gpointer)ss, 0),
+				 0);
+  g_signal_connect_closure_by_id(GTK_OBJECT(GTK_FILE_SELECTION(new_dialog)->ok_button),
+				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(GTK_FILE_SELECTION(new_dialog)->ok_button))),
+				 0,
+				 g_cclosure_new(ok, (gpointer)ss, 0),
+				 0);
+  g_signal_connect_closure_by_id(GTK_OBJECT(GTK_FILE_SELECTION(new_dialog)->cancel_button), 
+				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(GTK_FILE_SELECTION(new_dialog)->cancel_button))),
+				 0,
+				 g_cclosure_new_swap(cancel, (GtkObject *)ss, 0),
+				 0);
   if (last_filename) gtk_file_selection_set_filename(GTK_FILE_SELECTION(new_dialog), last_filename);
   gtk_file_selection_hide_fileop_buttons(GTK_FILE_SELECTION(new_dialog));
   set_pushed_button_colors(GTK_FILE_SELECTION(new_dialog)->ok_button, ss);
   set_pushed_button_colors(GTK_FILE_SELECTION(new_dialog)->cancel_button, ss);
-#endif
   return(new_dialog);
 }
 
@@ -207,15 +178,7 @@ static void file_dialog_stop_playing(file_dialog_info *fd)
 
 void alert_new_file(void) {}
 
-#if HAVE_GTKEXTRA
-  static gboolean dialog_select_callback(GtkIconList *iconlist, GtkIconListItem *icon, GdkEvent *event, gpointer context)
-#else
-#if HAVE_GTK2
-  static void dialog_select_callback(GtkTreeSelection *selection, gpointer context)
-#else
-  static void dialog_select_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
-#endif
-#endif
+static void dialog_select_callback(GtkTreeSelection *selection, gpointer context)
 {
   char *filename;
   char *buf;
@@ -259,9 +222,6 @@ void alert_new_file(void) {}
       gtk_widget_hide(fd->dialog_info2);
       gtk_widget_hide(fd->playb);
     }
-#if HAVE_GTKEXTRA
-  return(TRUE); /* ??? */
-#endif
 }
 
 static void play_selected_callback(GtkWidget *w, gpointer data)
@@ -297,11 +257,7 @@ static file_dialog_info *make_file_dialog(snd_state *ss, int read_only, char *ti
 					  file_ok_proc,
 					  file_dismiss_proc);
   fd->dialog_frame = gtk_frame_new(NULL);
-#if HAVE_GTKEXTRA
-  gtk_box_pack_start(GTK_BOX(GTK_WIDGET(GTK_ICON_FILESEL(fd->dialog)->action_area)->parent), fd->dialog_frame, TRUE, TRUE, 0);
-#else
   gtk_box_pack_start(GTK_BOX(GTK_FILE_SELECTION(fd->dialog)->main_vbox), fd->dialog_frame, TRUE, TRUE, 0);
-#endif
   /* gtk+extra/gtkiconfilesel.h says action_area as gtk table here? */
   gtk_frame_set_shadow_type(GTK_FRAME(fd->dialog_frame), GTK_SHADOW_ETCHED_IN);
   
@@ -313,27 +269,17 @@ static file_dialog_info *make_file_dialog(snd_state *ss, int read_only, char *ti
 	
   fd->dialog_info2 = gtk_label_new(NULL);
   gtk_box_pack_start(GTK_BOX(fd->dialog_vbox), fd->dialog_info2, TRUE, TRUE, 2);
-#if HAVE_GTKEXTRA
-  SG_SIGNAL_CONNECT(GTK_OBJECT(GTK_ICON_FILESEL(fd->dialog)->file_list), 
-		     "select_icon",
-		     GTK_SIGNAL_FUNC(dialog_select_callback), 
-		     (gpointer)fd);
-#else
-#if HAVE_GTK2
   g_signal_connect(gtk_tree_view_get_selection(GTK_TREE_VIEW(GTK_FILE_SELECTION(fd->dialog)->file_list)), "changed",
 		   G_CALLBACK (dialog_select_callback), fd);
-#else
-  SG_SIGNAL_CONNECT(GTK_OBJECT(GTK_FILE_SELECTION(fd->dialog)->file_list), 
-		     "select_row",
-		     GTK_SIGNAL_FUNC(dialog_select_callback), 
-		     (gpointer)fd);
-#endif
-#endif
 
   fd->playb = gtk_check_button_new_with_label("play selected sound");
   gtk_box_pack_start(GTK_BOX(fd->dialog_vbox), fd->playb, TRUE, TRUE, 2);
   set_pushed_button_colors(fd->playb, ss);
-  SG_SIGNAL_CONNECT(GTK_OBJECT(fd->playb), "toggled", GTK_SIGNAL_FUNC(play_selected_callback), (gpointer)fd);
+  g_signal_connect_closure_by_id(GTK_OBJECT(fd->playb),
+				 g_signal_lookup("toggled", G_OBJECT_TYPE(GTK_OBJECT(fd->playb))),
+				 0,
+				 g_cclosure_new(GTK_SIGNAL_FUNC(play_selected_callback), (gpointer)fd, 0),
+				 0);
 
   set_dialog_widget(ss, which_dialog, fd->dialog);
   return(fd);
@@ -450,7 +396,6 @@ static void gfile_header_type(file_data *fd, int row)
     }
 }
 
-#if HAVE_GTK2
 static void save_as_header_type_callback(GtkTreeSelection *selection, gpointer *gp)
 {
   GtkTreeIter iter;
@@ -466,14 +411,7 @@ static void save_as_header_type_callback(GtkTreeSelection *selection, gpointer *
 	return;
       }
 }
-#else
-static void save_as_header_type_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
-{
-  gfile_header_type((file_data *)context, row);
-}
-#endif
 
-#if HAVE_GTK2
 static void save_as_data_format_callback(GtkTreeSelection *selection, gpointer *gp)
 {
   GtkTreeIter iter;
@@ -494,14 +432,6 @@ static void save_as_data_format_callback(GtkTreeSelection *selection, gpointer *
 	fd->current_format = data_format_from_position(fd->header_pos, i);
       }
 }
-#else
-static void save_as_data_format_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
-{
-  file_data *fd = (file_data *)context;
-  fd->format_pos = row;
-  fd->current_format = data_format_from_position(fd->header_pos, row);
-}
-#endif
 
 file_data *make_file_data_panel(snd_state *ss, GtkWidget *parent, char *name, 
 				int with_chan, int header_type, int data_format, int with_loc, int comment_as_entry)
@@ -542,8 +472,8 @@ file_data *make_file_data_panel(snd_state *ss, GtkWidget *parent, char *name,
   gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(dscroll), fdat->format_list);
   gtk_container_add(GTK_CONTAINER(dlab), dscroll);
 
-  SG_LIST_SELECT_ROW(fdat->header_list, fdat->header_pos);
-  SG_LIST_SELECT_ROW(fdat->format_list, fdat->format_pos);
+  sg_list_select(fdat->header_list, fdat->header_pos);
+  sg_list_select(fdat->format_list, fdat->format_pos);
 
   gtk_widget_show(hlab);
   gtk_widget_show(fdat->header_list);
@@ -619,7 +549,7 @@ static void save_as_ok_callback(GtkWidget *w, gpointer data)
   str = (char *)gtk_entry_get_text(GTK_ENTRY(save_as_file_data->srate_text));
   srate = string2int(str);
   str = NULL;
-  comment = SG_TEXT_CHARS(save_as_file_data->comment_text, 0, -1);
+  comment = sg_get_text(save_as_file_data->comment_text, 0, -1);
   type = save_as_file_data->current_type;
   format = save_as_file_data->current_format;
   last_save_as_filename = (char *)gtk_file_selection_get_filename(GTK_FILE_SELECTION(save_as_dialog));
@@ -659,24 +589,27 @@ static void make_save_as_dialog(snd_state *ss, char *sound_name, int save_type, 
   GtkWidget *fbox;
   if (!save_as_dialog)
     {
-
-      /* can't use the gtkextra file selector here because they've hidden "main_vbox" so there's
-       *   no way to add our own widgets to the dialog
-       */
       save_as_dialog = gtk_file_selection_new(STR_save_as_p);
       set_background(save_as_dialog, (ss->sgx)->basic_color);
-      SG_SIGNAL_CONNECT(GTK_OBJECT(save_as_dialog), "delete_event", (GtkSignalFunc)save_as_delete_callback, NULL);
-      SG_SIGNAL_CONNECT(GTK_OBJECT(GTK_FILE_SELECTION(save_as_dialog)->ok_button), 
-			 "clicked", 
+      g_signal_connect_closure_by_id(GTK_OBJECT(save_as_dialog),
+				     g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(save_as_dialog))),
+				     0,
+				     g_cclosure_new((GtkSignalFunc)save_as_delete_callback, NULL, 0),
+				     0);
+      g_signal_connect_closure_by_id(GTK_OBJECT(GTK_FILE_SELECTION(save_as_dialog)->ok_button),
+				     g_signal_lookup(
+						     "clicked", G_OBJECT_TYPE(GTK_OBJECT(GTK_FILE_SELECTION(save_as_dialog)->ok_button))),
+				     0,
+				     g_cclosure_new(
 			 (GtkSignalFunc)save_as_ok_callback, 
-			 (GtkObject *)ss);
-      SG_SIGNAL_CONNECT_OBJECT(GTK_OBJECT(GTK_FILE_SELECTION(save_as_dialog)->cancel_button), 
-				"clicked", 
-				(GtkSignalFunc)save_as_cancel_callback, 
-				(GtkObject *)ss);
-#if (!HAVE_GTKEXTRA)
+			 (GtkObject *)ss, 0),
+				     0);
+      g_signal_connect_closure_by_id(GTK_OBJECT(GTK_FILE_SELECTION(save_as_dialog)->cancel_button), 
+				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(GTK_FILE_SELECTION(save_as_dialog)->cancel_button))),
+				     0,
+				     g_cclosure_new_swap((GtkSignalFunc)save_as_cancel_callback, (GtkObject *)ss, 0),
+				     0);
       if (last_filename) gtk_file_selection_set_filename(GTK_FILE_SELECTION(open_dialog), last_filename);
-#endif
       gtk_file_selection_hide_fileop_buttons(GTK_FILE_SELECTION(save_as_dialog));
       set_pushed_button_colors(GTK_FILE_SELECTION(save_as_dialog)->ok_button, ss);
       set_pushed_button_colors(GTK_FILE_SELECTION(save_as_dialog)->cancel_button, ss);
@@ -686,7 +619,7 @@ static void make_save_as_dialog(snd_state *ss, char *sound_name, int save_type, 
       gtk_widget_show(fbox);
 
       save_as_file_data = make_file_data_panel(ss, fbox, "data-form", FALSE, header_type, format_type, FALSE, FALSE);
-      SG_SET_SIZE(save_as_file_data->comment_text, 100, 20);
+      gtk_window_resize(GTK_WINDOW(save_as_file_data->comment_text), 100, 20);
       set_dialog_widget(ss, FILE_SAVE_AS_DIALOG, save_as_dialog);
     }
 }
@@ -809,11 +742,11 @@ ww_info *make_title_row(snd_state *ss, GtkWidget *formw, char *first_str, char *
       wwi->byproc = gtk_menu_item_new_with_label("proc");
       set_background(wwi->byproc, (ss->sgx)->basic_color);
 
-      SG_MENU_APPEND(smenu, wwi->byname);
-      SG_MENU_APPEND(smenu, wwi->bydate);
-      SG_MENU_APPEND(smenu, wwi->bysize);
-      SG_MENU_APPEND(smenu, wwi->byentry);
-      SG_MENU_APPEND(smenu, wwi->byproc);
+      gtk_menu_shell_append(GTK_MENU_SHELL(smenu), wwi->byname);
+      gtk_menu_shell_append(GTK_MENU_SHELL(smenu), wwi->bydate);
+      gtk_menu_shell_append(GTK_MENU_SHELL(smenu), wwi->bysize);
+      gtk_menu_shell_append(GTK_MENU_SHELL(smenu), wwi->byentry);
+      gtk_menu_shell_append(GTK_MENU_SHELL(smenu), wwi->byproc);
 
       gtk_widget_show(wwi->byname);
       gtk_widget_show(wwi->bydate);
@@ -826,7 +759,7 @@ ww_info *make_title_row(snd_state *ss, GtkWidget *formw, char *first_str, char *
       set_background(sitem, (ss->sgx)->basic_color);
       gtk_widget_show(sitem);
       gtk_menu_item_set_submenu(GTK_MENU_ITEM(sitem), smenu);
-      SG_MENU_BAR_APPEND(sbar, sitem);
+      gtk_menu_shell_append(GTK_MENU_SHELL(sbar), sitem);
     }
 
   wwi->list = gtk_vbox_new(FALSE, 0);
@@ -863,7 +796,7 @@ static gint mouse_name(XEN hook, GtkWidget *w, const char *caller)
 	      if (r->parent == PREVIOUS_FILE_VIEWER)
 		label = get_prevfullname(r->pos);
 	      else
-		label = SG_LABEL_TEXT(GTK_LABEL(GTK_BIN(w)->child));
+		label = (char *)gtk_label_get_text(GTK_LABEL(GTK_BIN(w)->child));
 	    }
 	  if (label)
 	    run_hook(hook,
@@ -903,21 +836,41 @@ regrow *make_regrow(snd_state *ss, GtkWidget *ww,
   r->sv = gtk_check_button_new();
   set_backgrounds(r->rw, (ss->sgx)->highlight_color);
   gtk_box_pack_start(GTK_BOX(r->rw), r->sv, FALSE, FALSE, 2);
-  SG_SIGNAL_CONNECT(GTK_OBJECT(r->sv), "toggled", GTK_SIGNAL_FUNC(first_callback), (gpointer)r);
+  g_signal_connect_closure_by_id(GTK_OBJECT(r->sv),
+				 g_signal_lookup("toggled", G_OBJECT_TYPE(GTK_OBJECT(r->sv))),
+				 0,
+				 g_cclosure_new(GTK_SIGNAL_FUNC(first_callback), (gpointer)r, 0),
+				 0);
   gtk_widget_show(r->sv);
 
   r->pl = gtk_check_button_new();
   set_backgrounds(r->pl, (ss->sgx)->highlight_color);
   gtk_box_pack_start(GTK_BOX(r->rw), r->pl, FALSE, FALSE, 2);
-  SG_SIGNAL_CONNECT(GTK_OBJECT(r->pl), "toggled", GTK_SIGNAL_FUNC(second_callback), (gpointer)r);
+  g_signal_connect_closure_by_id(GTK_OBJECT(r->pl),
+				 g_signal_lookup("toggled", G_OBJECT_TYPE(GTK_OBJECT(r->pl))),
+				 0,
+				 g_cclosure_new(GTK_SIGNAL_FUNC(second_callback), (gpointer)r, 0),
+				 0);
   gtk_widget_show(r->pl);
 
   r->nm = gtk_button_new_with_label("");
   set_backgrounds(r->nm, (ss->sgx)->highlight_color);
   gtk_box_pack_start(GTK_BOX(r->rw), r->nm, TRUE, TRUE, 2);
-  SG_SIGNAL_CONNECT(GTK_OBJECT(r->nm), "clicked", GTK_SIGNAL_FUNC(third_callback), (gpointer)r);
-  SG_SIGNAL_CONNECT(GTK_OBJECT(r->nm), "enter_notify_event", GTK_SIGNAL_FUNC(label_enter_callback), (gpointer)r);
-  SG_SIGNAL_CONNECT(GTK_OBJECT(r->nm), "leave_notify_event", GTK_SIGNAL_FUNC(label_leave_callback), (gpointer)r);
+  g_signal_connect_closure_by_id(GTK_OBJECT(r->nm),
+				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(r->nm))),
+				 0,
+				 g_cclosure_new(GTK_SIGNAL_FUNC(third_callback), (gpointer)r, 0),
+				 0);
+  g_signal_connect_closure_by_id(GTK_OBJECT(r->nm),
+				 g_signal_lookup("enter_notify_event", G_OBJECT_TYPE(GTK_OBJECT(r->nm))),
+				 0,
+				 g_cclosure_new(GTK_SIGNAL_FUNC(label_enter_callback), (gpointer)r, 0),
+				 0);
+  g_signal_connect_closure_by_id(GTK_OBJECT(r->nm),
+				 g_signal_lookup("leave_notify_event", G_OBJECT_TYPE(GTK_OBJECT(r->nm))),
+				 0,
+				 g_cclosure_new(GTK_SIGNAL_FUNC(label_leave_callback), (gpointer)r, 0),
+				 0);
   set_user_data(GTK_OBJECT(r->nm), (gpointer)r);
   gtk_widget_show(r->nm);
 
@@ -1231,12 +1184,16 @@ void view_files_callback(GtkWidget *w, gpointer context)
       vf_selected_file = -1;
 
       view_files_dialog = gtk_dialog_new();
-      SG_SIGNAL_CONNECT(GTK_OBJECT(view_files_dialog), "delete_event", GTK_SIGNAL_FUNC(view_files_delete_callback), (gpointer)ss);
+      g_signal_connect_closure_by_id(GTK_OBJECT(view_files_dialog),
+				     g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(view_files_dialog))),
+				     0,
+				     g_cclosure_new(GTK_SIGNAL_FUNC(view_files_delete_callback), (gpointer)ss, 0),
+				     0);
       gtk_window_set_title(GTK_WINDOW(view_files_dialog), STR_Files);
-      SG_MAKE_RESIZABLE(view_files_dialog);
+      sg_make_resizable(view_files_dialog);
       set_backgrounds(view_files_dialog, (ss->sgx)->basic_color);
       gtk_container_set_border_width (GTK_CONTAINER(view_files_dialog), 10);
-      SG_SET_SIZE(GTK_WIDGET(view_files_dialog), 400, 200);
+      gtk_window_resize(GTK_WINDOW(view_files_dialog), 400, 200);
       gtk_widget_realize(view_files_dialog);
 
       helpB = gtk_button_new_with_label(STR_Help);
@@ -1247,10 +1204,26 @@ void view_files_callback(GtkWidget *w, gpointer context)
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(view_files_dialog)->action_area), updateB, TRUE, TRUE, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(view_files_dialog)->action_area), clearB, TRUE, TRUE, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(view_files_dialog)->action_area), helpB, TRUE, TRUE, 10);
-      SG_SIGNAL_CONNECT(GTK_OBJECT(dismissB), "clicked", GTK_SIGNAL_FUNC(view_files_dismiss_callback), (gpointer)ss);
-      SG_SIGNAL_CONNECT(GTK_OBJECT(helpB), "clicked", GTK_SIGNAL_FUNC(view_files_help_callback), (gpointer)ss);
-      SG_SIGNAL_CONNECT(GTK_OBJECT(updateB), "clicked", GTK_SIGNAL_FUNC(view_files_update_callback), (gpointer)ss);
-      SG_SIGNAL_CONNECT(GTK_OBJECT(clearB), "clicked", GTK_SIGNAL_FUNC(view_files_clear_callback), (gpointer)ss);
+      g_signal_connect_closure_by_id(GTK_OBJECT(dismissB),
+				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(dismissB))),
+				     0,
+				     g_cclosure_new(GTK_SIGNAL_FUNC(view_files_dismiss_callback), (gpointer)ss, 0),
+				     0);
+      g_signal_connect_closure_by_id(GTK_OBJECT(helpB),
+				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(helpB))),
+				     0,
+				     g_cclosure_new(GTK_SIGNAL_FUNC(view_files_help_callback), (gpointer)ss, 0),
+				     0);
+      g_signal_connect_closure_by_id(GTK_OBJECT(updateB),
+				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(updateB))),
+				     0,
+				     g_cclosure_new(GTK_SIGNAL_FUNC(view_files_update_callback), (gpointer)ss, 0),
+				     0);
+      g_signal_connect_closure_by_id(GTK_OBJECT(clearB),
+				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(clearB))),
+				     0,
+				     g_cclosure_new(GTK_SIGNAL_FUNC(view_files_clear_callback), (gpointer)ss, 0),
+				     0);
       set_pushed_button_colors(helpB, ss);
       set_pushed_button_colors(dismissB, ss);
       set_pushed_button_colors(updateB, ss);
@@ -1288,24 +1261,43 @@ void view_files_callback(GtkWidget *w, gpointer context)
       wwl = make_title_row(ss, prevform, STR_unlist, STR_play, STR_previous_files, PAD_TITLE_ON_LEFT, WITH_SORT_BUTTON, WITHOUT_PANED_WINDOW);
       fs3 = wwl->tophbox;
 
-      SG_SIGNAL_CONNECT_OBJECT(GTK_OBJECT(wwl->byname), "activate", GTK_SIGNAL_FUNC(sort_prevfiles_by_name), NULL);
-      SG_SIGNAL_CONNECT_OBJECT(GTK_OBJECT(wwl->bydate), "activate", GTK_SIGNAL_FUNC(sort_prevfiles_by_date), NULL);
-      SG_SIGNAL_CONNECT_OBJECT(GTK_OBJECT(wwl->bysize), "activate", GTK_SIGNAL_FUNC(sort_prevfiles_by_size), NULL);
-      SG_SIGNAL_CONNECT_OBJECT(GTK_OBJECT(wwl->byentry), "activate", GTK_SIGNAL_FUNC(sort_prevfiles_by_entry), NULL);
-      SG_SIGNAL_CONNECT_OBJECT(GTK_OBJECT(wwl->byproc), "activate", GTK_SIGNAL_FUNC(sort_prevfiles_by_user_procedure), NULL);
+      g_signal_connect_closure_by_id(GTK_OBJECT(wwl->byname), 
+				     g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(wwl->byname))), 
+				     0,
+				     g_cclosure_new_swap(GTK_SIGNAL_FUNC(sort_prevfiles_by_name), NULL, 0),
+				     0);
+      g_signal_connect_closure_by_id(GTK_OBJECT(wwl->bydate), 
+				     g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(wwl->bydate))), 
+				     0,
+				     g_cclosure_new_swap(GTK_SIGNAL_FUNC(sort_prevfiles_by_date), NULL, 0),
+				     0);
+      g_signal_connect_closure_by_id(GTK_OBJECT(wwl->bysize), 
+				     g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(wwl->bysize))),
+				     0,
+				     g_cclosure_new_swap(GTK_SIGNAL_FUNC(sort_prevfiles_by_size), NULL, 0),
+				     0);
+      g_signal_connect_closure_by_id(GTK_OBJECT(wwl->byentry), 
+				     g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(wwl->byentry))), 
+				     0,
+				     g_cclosure_new_swap(GTK_SIGNAL_FUNC(sort_prevfiles_by_entry), NULL, 0),
+				     0);
+      g_signal_connect_closure_by_id(GTK_OBJECT(wwl->byproc), 
+				     g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(wwl->byproc))), 
+				     0,
+				     g_cclosure_new_swap(GTK_SIGNAL_FUNC(sort_prevfiles_by_user_procedure), NULL, 0),
+				     0);
 
       vf_prevww = wwl->list;
       vf_prevlst = wwl->list;
       FREE(wwl); 
       wwl = NULL;
       set_dialog_widget(ss, VIEW_FILES_DIALOG, view_files_dialog);
+      /* set_widget_height(fs1, widget_height(fs3)); */
     }
   gtk_widget_show(view_files_dialog);
   make_curfiles_list(ss);
   make_prevfiles_list(ss);
   highlight_selected_sound(ss);
-
-  set_widget_height(fs1, widget_height(fs3));
 }
 
 GtkWidget *start_file_dialog(snd_state *ss, int width, int height)
@@ -1354,7 +1346,6 @@ static char **data_format_names(void)
 /* must parallel sndlib.h definitions */
 
 
-#if HAVE_GTK2
 static void raw_data_browse_callback(GtkTreeSelection *selection, gpointer *gp)
 {
   GtkTreeIter iter;
@@ -1375,15 +1366,6 @@ static void raw_data_browse_callback(GtkTreeSelection *selection, gpointer *gp)
 	return;
       }
 }
-#else
-static void raw_data_browse_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
-{
-  int sr, oc, fr;
-  mus_header_raw_defaults(&sr, &oc, &fr);
-  fr = row + 1;
-  mus_header_set_raw_defaults(sr, oc, fr);
-}
-#endif
 
 static void raw_data_help_callback(GtkWidget *w, gpointer context) 
 {
@@ -1400,12 +1382,16 @@ static void make_raw_data_dialog(snd_state *ss)
   mus_header_raw_defaults(&sr, &oc, &fr);
 
   raw_data_dialog = gtk_dialog_new();
-  SG_SIGNAL_CONNECT(GTK_OBJECT(raw_data_dialog), "delete_event", GTK_SIGNAL_FUNC(raw_data_delete_callback), (gpointer)ss);
+  g_signal_connect_closure_by_id(GTK_OBJECT(raw_data_dialog),
+				 g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(raw_data_dialog))),
+				 0,
+				 g_cclosure_new(GTK_SIGNAL_FUNC(raw_data_delete_callback), (gpointer)ss, 0),
+				 0);
   gtk_window_set_title(GTK_WINDOW(raw_data_dialog), STR_No_Header_on_File);
-  SG_MAKE_RESIZABLE(raw_data_dialog);
+  sg_make_resizable(raw_data_dialog);
   set_background(raw_data_dialog, (ss->sgx)->basic_color);
   gtk_container_set_border_width(GTK_CONTAINER(raw_data_dialog), 10);
-  SG_SET_SIZE(GTK_WIDGET(raw_data_dialog), 350, 260);
+  gtk_window_resize(GTK_WINDOW(raw_data_dialog), 350, 260);
   gtk_widget_realize(raw_data_dialog);
 
   helpB = gtk_button_new_with_label(STR_Help);
@@ -1416,10 +1402,26 @@ static void make_raw_data_dialog(snd_state *ss)
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(raw_data_dialog)->action_area), defaultB, TRUE, TRUE, 10);
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(raw_data_dialog)->action_area), cancelB, TRUE, TRUE, 10);
   gtk_box_pack_end(GTK_BOX(GTK_DIALOG(raw_data_dialog)->action_area), helpB, TRUE, TRUE, 10);
-  SG_SIGNAL_CONNECT(GTK_OBJECT(okB), "clicked", GTK_SIGNAL_FUNC(raw_data_ok_callback), (gpointer)ss);
-  SG_SIGNAL_CONNECT(GTK_OBJECT(helpB), "clicked", GTK_SIGNAL_FUNC(raw_data_help_callback), (gpointer)ss);
-  SG_SIGNAL_CONNECT(GTK_OBJECT(defaultB), "clicked", GTK_SIGNAL_FUNC(raw_data_default_callback), (gpointer)ss);
-  SG_SIGNAL_CONNECT(GTK_OBJECT(cancelB), "clicked", GTK_SIGNAL_FUNC(raw_data_cancel_callback), (gpointer)ss);
+  g_signal_connect_closure_by_id(GTK_OBJECT(okB),
+				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(okB))),
+				 0,
+				 g_cclosure_new(GTK_SIGNAL_FUNC(raw_data_ok_callback), (gpointer)ss, 0),
+				 0);
+  g_signal_connect_closure_by_id(GTK_OBJECT(helpB),
+				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(helpB))),
+				 0,
+				 g_cclosure_new(GTK_SIGNAL_FUNC(raw_data_help_callback), (gpointer)ss, 0),
+				 0);
+  g_signal_connect_closure_by_id(GTK_OBJECT(defaultB),
+				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(defaultB))),
+				 0,
+				 g_cclosure_new(GTK_SIGNAL_FUNC(raw_data_default_callback), (gpointer)ss, 0),
+				 0);
+  g_signal_connect_closure_by_id(GTK_OBJECT(cancelB),
+				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(cancelB))),
+				 0,
+				 g_cclosure_new(GTK_SIGNAL_FUNC(raw_data_cancel_callback), (gpointer)ss, 0),
+				 0);
   set_pushed_button_colors(helpB, ss);
   set_pushed_button_colors(okB, ss);
   set_pushed_button_colors(defaultB, ss);
@@ -1560,12 +1562,16 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
   if (!new_dialog)
     {
       new_dialog = gtk_dialog_new();
-      SG_SIGNAL_CONNECT(GTK_OBJECT(new_dialog), "delete_event", GTK_SIGNAL_FUNC(new_file_delete_callback), (gpointer)ss);
+      g_signal_connect_closure_by_id(GTK_OBJECT(new_dialog),
+				     g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(new_dialog))),
+				     0,
+				     g_cclosure_new(GTK_SIGNAL_FUNC(new_file_delete_callback), (gpointer)ss, 0),
+				     0);
       gtk_window_set_title(GTK_WINDOW(new_dialog), title);
-      SG_MAKE_RESIZABLE(new_dialog);
+      sg_make_resizable(new_dialog);
       set_background(new_dialog, (ss->sgx)->basic_color);
       gtk_container_set_border_width (GTK_CONTAINER(new_dialog), 10);
-      SG_SET_SIZE(GTK_WIDGET(new_dialog), 400, 250);
+      gtk_window_resize(GTK_WINDOW(new_dialog), 400, 250);
       gtk_widget_realize(new_dialog);
 
       help_button = gtk_button_new_with_label(STR_Help);
@@ -1574,9 +1580,21 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(new_dialog)->action_area), ok_button, TRUE, TRUE, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(new_dialog)->action_area), cancel_button, TRUE, TRUE, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(new_dialog)->action_area), help_button, TRUE, TRUE, 10);
-      SG_SIGNAL_CONNECT(GTK_OBJECT(cancel_button), "clicked", GTK_SIGNAL_FUNC(new_file_cancel_callback), (gpointer)ss);
-      SG_SIGNAL_CONNECT(GTK_OBJECT(help_button), "clicked", GTK_SIGNAL_FUNC(new_file_help_callback), (gpointer)ss);
-      SG_SIGNAL_CONNECT(GTK_OBJECT(ok_button), "clicked", GTK_SIGNAL_FUNC(new_file_ok_callback), (gpointer)ss);
+      g_signal_connect_closure_by_id(GTK_OBJECT(cancel_button),
+				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(cancel_button))),
+				     0,
+				     g_cclosure_new(GTK_SIGNAL_FUNC(new_file_cancel_callback), (gpointer)ss, 0),
+				     0);
+      g_signal_connect_closure_by_id(GTK_OBJECT(help_button),
+				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(help_button))),
+				     0,
+				     g_cclosure_new(GTK_SIGNAL_FUNC(new_file_help_callback), (gpointer)ss, 0),
+				     0);
+      g_signal_connect_closure_by_id(GTK_OBJECT(ok_button),
+				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(ok_button))),
+				     0,
+				     g_cclosure_new(GTK_SIGNAL_FUNC(new_file_ok_callback), (gpointer)ss, 0),
+				     0);
       set_pushed_button_colors(help_button, ss);
       set_pushed_button_colors(cancel_button, ss);
       set_pushed_button_colors(ok_button, ss);
@@ -1673,12 +1691,16 @@ GtkWidget *edit_header(snd_info *sp)
   if (!edit_header_dialog)
     {
       edit_header_dialog = gtk_dialog_new();
-      SG_SIGNAL_CONNECT(GTK_OBJECT(edit_header_dialog), "delete_event", GTK_SIGNAL_FUNC(edit_header_delete_callback), (gpointer)ss);
+      g_signal_connect_closure_by_id(GTK_OBJECT(edit_header_dialog),
+				     g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(edit_header_dialog))),
+				     0,
+				     g_cclosure_new(GTK_SIGNAL_FUNC(edit_header_delete_callback), (gpointer)ss, 0),
+				     0);
       /* gtk_window_set_title(GTK_WINDOW(edit_header_dialog), STR_Edit_Header); */
-      SG_MAKE_RESIZABLE(edit_header_dialog);
+      sg_make_resizable(edit_header_dialog);
       set_background(edit_header_dialog, (ss->sgx)->basic_color);
       gtk_container_set_border_width (GTK_CONTAINER(edit_header_dialog), 10);
-      SG_SET_SIZE(GTK_WIDGET(edit_header_dialog), 360, 250);
+      gtk_window_resize(GTK_WINDOW(edit_header_dialog), 360, 250);
       gtk_widget_realize(edit_header_dialog);
 
       help_button = gtk_button_new_with_label(STR_Help);
@@ -1687,9 +1709,21 @@ GtkWidget *edit_header(snd_info *sp)
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(edit_header_dialog)->action_area), cancel_button, TRUE, TRUE, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(edit_header_dialog)->action_area), save_button, TRUE, TRUE, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(edit_header_dialog)->action_area), help_button, TRUE, TRUE, 10);
-      SG_SIGNAL_CONNECT(GTK_OBJECT(cancel_button), "clicked", GTK_SIGNAL_FUNC(edit_header_cancel_callback), (gpointer)ss);
-      SG_SIGNAL_CONNECT(GTK_OBJECT(help_button), "clicked", GTK_SIGNAL_FUNC(edit_header_help_callback), (gpointer)ss);
-      SG_SIGNAL_CONNECT(GTK_OBJECT(save_button), "clicked", GTK_SIGNAL_FUNC(edit_header_ok_callback), (gpointer)ss);
+      g_signal_connect_closure_by_id(GTK_OBJECT(cancel_button),
+				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(cancel_button))),
+				     0,
+				     g_cclosure_new(GTK_SIGNAL_FUNC(edit_header_cancel_callback), (gpointer)ss, 0),
+				     0);
+      g_signal_connect_closure_by_id(GTK_OBJECT(help_button),
+				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(help_button))),
+				     0,
+				     g_cclosure_new(GTK_SIGNAL_FUNC(edit_header_help_callback), (gpointer)ss, 0),
+				     0);
+      g_signal_connect_closure_by_id(GTK_OBJECT(save_button),
+				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(save_button))),
+				     0,
+				     g_cclosure_new(GTK_SIGNAL_FUNC(edit_header_ok_callback), (gpointer)ss, 0),
+				     0);
       set_pushed_button_colors(help_button, ss);
       set_pushed_button_colors(cancel_button, ss);
       set_pushed_button_colors(save_button, ss);

@@ -1130,7 +1130,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 	      if ((sp) && 
 		  (cursor_change) && 
 		  (sp->cursor_follows_play != DONT_FOLLOW) &&
-		  (!(read_sample_eof(dp->chn_fd))) &&
+		  (dp->chn_fd->at_eof == 0) &&
 		  (dp->chn_fd->cb))
 		{
 		  off_t loc;
@@ -1283,7 +1283,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		    stop_playing(dp);
 		  else
 		    {
-		      if (read_sample_eof(dp->chn_fd))
+		      if (dp->chn_fd->at_eof)
 			{
 			  if (!(dp->expanding))
 			    stop_playing(dp);

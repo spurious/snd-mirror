@@ -328,7 +328,7 @@ static XEN g_load_font(XEN font)
   #define H_load_font "(" S_load_font " <name>) -> font-id"
   SG_FONT *fs = NULL;
   XEN_ASSERT_TYPE(XEN_STRING_P(font), font, XEN_ONLY_ARG, S_load_font, "a string");
-  fs = SG_FONT_LOAD(XEN_TO_C_STRING(font));
+  fs = pango_font_description_from_string(XEN_TO_C_STRING(font));
   if (fs) return(XEN_WRAP_C_POINTER(fs));
   return(XEN_FALSE);
 }
@@ -340,7 +340,7 @@ static XEN g_set_current_font(XEN id, XEN snd, XEN chn, XEN ax_id)
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, XEN_ARG_4, "set-" S_current_font, "an integer");
   ax = TO_C_AXIS_CONTEXT(snd, chn, ax_id, "set-" S_current_font);
   XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(id), id, XEN_ARG_1, "set-" S_current_font, "a wrapped object");
-  SG_SET_FONT(ax, (SG_FONT *)XEN_UNWRAP_C_POINTER(id));
+  gtk_widget_modify_font(ax->w, (SG_FONT *)XEN_UNWRAP_C_POINTER(id));
   ax->current_font = (SG_FONT *)XEN_UNWRAP_C_POINTER(id);
   return(id);
 }
@@ -597,7 +597,7 @@ static XEN g_widget_text(XEN wid)
       else
 	{
 	  if ((GTK_IS_BIN(w)) && (GTK_IS_LABEL(GTK_BIN(w)->child)))
-	    return(C_TO_XEN_STRING(SG_LABEL_TEXT(GTK_LABEL(GTK_BIN(w)->child))));
+	    return(C_TO_XEN_STRING((char *)gtk_label_get_text(GTK_LABEL(GTK_BIN(w)->child))));
 	}
 #endif
     }

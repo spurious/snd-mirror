@@ -181,33 +181,19 @@ char *version_info(void)
 #if HAVE_GUILE
 	  xm_version(),
 #endif
-#if HAVE_GTKEXTRA
-	  "\n    gtkextra",
-  #ifdef GTKEXTRA_VERSION
-          ": ", GTKEXTRA_VERSION,
-  #else
-    #ifdef GTKEXTRA_MAJOR_VERSION
-	  ": ", snd_itoa(GTKEXTRA_MAJOR_VERSION), ".",
-	        snd_itoa(GTKEXTRA_MINOR_VERSION), ".",
-	        snd_itoa(GTKEXTRA_MICRO_VERSION),
-    #endif
-  #endif
-#endif
 #if HAVE_GL
 	  "\n    OpenGL", glx_version(),
-  #if HAVE_GTK2
 	  ", gtkglext ",
-    #if HAVE_GTK_GL_EXT_0_1
+  #if HAVE_GTK_GL_EXT_0_1
 	  "0.1",
-    #else
-      #if HAVE_GDK_GL_FONT_USE_GDK_FONT
+  #else
+    #if HAVE_GDK_GL_FONT_USE_GDK_FONT
 	  "0.2",
-      #else
-        #if HAVE_GDK_GL_CONTEXT_COPY
+    #else
+      #if HAVE_GDK_GL_CONTEXT_COPY
 	  "0.4 or later",
-        #else
+      #else
 	  "0.3",
-        #endif
       #endif
     #endif
   #endif
@@ -271,6 +257,8 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+2-Sep:   removed gtk-1 and gtkextra support.\n\
+1-Sep:   if no extension language, edit position can get confused.\n\
 26-Aug:  added filter-control-coeffs.\n\
          graph-lisp|time|transform? inverted to be lisp|time|transform-graph?\n\
          graph-time-once -> graph-once\n\

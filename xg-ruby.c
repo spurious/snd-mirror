@@ -754,39 +754,17 @@ XEN_NARGIFY_1(gxg_gtk_file_selection_get_filename_w, gxg_gtk_file_selection_get_
 XEN_NARGIFY_2(gxg_gtk_file_selection_complete_w, gxg_gtk_file_selection_complete)
 XEN_NARGIFY_1(gxg_gtk_file_selection_show_fileop_buttons_w, gxg_gtk_file_selection_show_fileop_buttons)
 XEN_NARGIFY_1(gxg_gtk_file_selection_hide_fileop_buttons_w, gxg_gtk_file_selection_hide_fileop_buttons)
-#if HAVE_GTK_FILE_SELECTION_GET_SELECTIONS
 XEN_NARGIFY_1(gxg_gtk_file_selection_get_selections_w, gxg_gtk_file_selection_get_selections)
-#endif
-#if HAVE_GTK_FILE_SELECTION_GET_SELECTIONS
 XEN_NARGIFY_2(gxg_gtk_file_selection_set_select_multiple_w, gxg_gtk_file_selection_set_select_multiple)
-#endif
-#if HAVE_GTK_FILE_SELECTION_GET_SELECTIONS
 XEN_NARGIFY_1(gxg_gtk_file_selection_get_select_multiple_w, gxg_gtk_file_selection_get_select_multiple)
-#endif
-#if HAVE_GTK_ICON_SET_GET_TYPE
 XEN_NARGIFY_0(gxg_gtk_icon_set_get_type_w, gxg_gtk_icon_set_get_type)
-#endif
-#if HAVE_GTK_ICON_SET_GET_TYPE
 XEN_NARGIFY_0(gxg_gtk_icon_source_get_type_w, gxg_gtk_icon_source_get_type)
-#endif
-#if HAVE_GTK_ICON_SET_GET_TYPE
 XEN_NARGIFY_0(gxg_gtk_selection_data_get_type_w, gxg_gtk_selection_data_get_type)
-#endif
-#if HAVE_GTK_ICON_SET_GET_TYPE
 XEN_NARGIFY_0(gxg_gtk_border_get_type_w, gxg_gtk_border_get_type)
-#endif
-#if HAVE_GTK_ICON_SET_GET_TYPE
 XEN_NARGIFY_0(gxg_gtk_tree_path_get_type_w, gxg_gtk_tree_path_get_type)
-#endif
-#if HAVE_GTK_ICON_SET_GET_TYPE
 XEN_NARGIFY_0(gxg_gtk_tree_iter_get_type_w, gxg_gtk_tree_iter_get_type)
-#endif
-#if HAVE_GTK_ICON_SET_GET_TYPE
 XEN_NARGIFY_0(gxg_gtk_identifier_get_type_w, gxg_gtk_identifier_get_type)
-#endif
-#if HAVE_GTK_ICON_SET_GET_TYPE
 XEN_NARGIFY_0(gxg_gtk_requisition_get_type_w, gxg_gtk_requisition_get_type)
-#endif
 XEN_NARGIFY_0(gxg_gtk_fixed_get_type_w, gxg_gtk_fixed_get_type)
 XEN_NARGIFY_0(gxg_gtk_fixed_new_w, gxg_gtk_fixed_new)
 XEN_NARGIFY_4(gxg_gtk_fixed_put_w, gxg_gtk_fixed_put)
@@ -1664,9 +1642,7 @@ XEN_NARGIFY_0(gxg_gtk_tree_path_new_w, gxg_gtk_tree_path_new)
 XEN_NARGIFY_1(gxg_gtk_tree_path_new_from_string_w, gxg_gtk_tree_path_new_from_string)
 XEN_NARGIFY_1(gxg_gtk_tree_path_to_string_w, gxg_gtk_tree_path_to_string)
 XEN_NARGIFY_0(gxg_gtk_tree_path_new_root_w, gxg_gtk_tree_path_new_root)
-#if HAVE_GTK_FILE_SELECTION_GET_SELECTIONS
 XEN_NARGIFY_0(gxg_gtk_tree_path_new_first_w, gxg_gtk_tree_path_new_first)
-#endif
 XEN_NARGIFY_2(gxg_gtk_tree_path_append_index_w, gxg_gtk_tree_path_append_index)
 XEN_NARGIFY_2(gxg_gtk_tree_path_prepend_index_w, gxg_gtk_tree_path_prepend_index)
 XEN_NARGIFY_1(gxg_gtk_tree_path_get_depth_w, gxg_gtk_tree_path_get_depth)
@@ -1697,9 +1673,7 @@ XEN_NARGIFY_2(gxg_gtk_tree_model_get_column_type_w, gxg_gtk_tree_model_get_colum
 XEN_NARGIFY_3(gxg_gtk_tree_model_get_iter_w, gxg_gtk_tree_model_get_iter)
 XEN_NARGIFY_3(gxg_gtk_tree_model_get_iter_from_string_w, gxg_gtk_tree_model_get_iter_from_string)
 XEN_NARGIFY_2(gxg_gtk_tree_model_get_iter_root_w, gxg_gtk_tree_model_get_iter_root)
-#if HAVE_GTK_FILE_SELECTION_GET_SELECTIONS
 XEN_NARGIFY_2(gxg_gtk_tree_model_get_iter_first_w, gxg_gtk_tree_model_get_iter_first)
-#endif
 XEN_NARGIFY_2(gxg_gtk_tree_model_get_path_w, gxg_gtk_tree_model_get_path)
 XEN_NARGIFY_4(gxg_gtk_tree_model_get_value_w, gxg_gtk_tree_model_get_value)
 XEN_NARGIFY_2(gxg_gtk_tree_model_iter_next_w, gxg_gtk_tree_model_iter_next)
@@ -4004,39 +3978,17 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_file_selection_complete, gxg_gtk_file_selection_complete_w, 2, 0, 0, H_gtk_file_selection_complete);
   XG_DEFINE_PROCEDURE(gtk_file_selection_show_fileop_buttons, gxg_gtk_file_selection_show_fileop_buttons_w, 1, 0, 0, H_gtk_file_selection_show_fileop_buttons);
   XG_DEFINE_PROCEDURE(gtk_file_selection_hide_fileop_buttons, gxg_gtk_file_selection_hide_fileop_buttons_w, 1, 0, 0, H_gtk_file_selection_hide_fileop_buttons);
-#if HAVE_GTK_FILE_SELECTION_GET_SELECTIONS
   XG_DEFINE_PROCEDURE(gtk_file_selection_get_selections, gxg_gtk_file_selection_get_selections_w, 1, 0, 0, H_gtk_file_selection_get_selections);
-#endif
-#if HAVE_GTK_FILE_SELECTION_GET_SELECTIONS
   XG_DEFINE_PROCEDURE(gtk_file_selection_set_select_multiple, gxg_gtk_file_selection_set_select_multiple_w, 2, 0, 0, H_gtk_file_selection_set_select_multiple);
-#endif
-#if HAVE_GTK_FILE_SELECTION_GET_SELECTIONS
   XG_DEFINE_PROCEDURE(gtk_file_selection_get_select_multiple, gxg_gtk_file_selection_get_select_multiple_w, 1, 0, 0, H_gtk_file_selection_get_select_multiple);
-#endif
-#if HAVE_GTK_ICON_SET_GET_TYPE
   XG_DEFINE_PROCEDURE(gtk_icon_set_get_type, gxg_gtk_icon_set_get_type_w, 0, 0, 0, H_gtk_icon_set_get_type);
-#endif
-#if HAVE_GTK_ICON_SET_GET_TYPE
   XG_DEFINE_PROCEDURE(gtk_icon_source_get_type, gxg_gtk_icon_source_get_type_w, 0, 0, 0, H_gtk_icon_source_get_type);
-#endif
-#if HAVE_GTK_ICON_SET_GET_TYPE
   XG_DEFINE_PROCEDURE(gtk_selection_data_get_type, gxg_gtk_selection_data_get_type_w, 0, 0, 0, H_gtk_selection_data_get_type);
-#endif
-#if HAVE_GTK_ICON_SET_GET_TYPE
   XG_DEFINE_PROCEDURE(gtk_border_get_type, gxg_gtk_border_get_type_w, 0, 0, 0, H_gtk_border_get_type);
-#endif
-#if HAVE_GTK_ICON_SET_GET_TYPE
   XG_DEFINE_PROCEDURE(gtk_tree_path_get_type, gxg_gtk_tree_path_get_type_w, 0, 0, 0, H_gtk_tree_path_get_type);
-#endif
-#if HAVE_GTK_ICON_SET_GET_TYPE
   XG_DEFINE_PROCEDURE(gtk_tree_iter_get_type, gxg_gtk_tree_iter_get_type_w, 0, 0, 0, H_gtk_tree_iter_get_type);
-#endif
-#if HAVE_GTK_ICON_SET_GET_TYPE
   XG_DEFINE_PROCEDURE(gtk_identifier_get_type, gxg_gtk_identifier_get_type_w, 0, 0, 0, H_gtk_identifier_get_type);
-#endif
-#if HAVE_GTK_ICON_SET_GET_TYPE
   XG_DEFINE_PROCEDURE(gtk_requisition_get_type, gxg_gtk_requisition_get_type_w, 0, 0, 0, H_gtk_requisition_get_type);
-#endif
   XG_DEFINE_PROCEDURE(gtk_fixed_get_type, gxg_gtk_fixed_get_type_w, 0, 0, 0, H_gtk_fixed_get_type);
   XG_DEFINE_PROCEDURE(gtk_fixed_new, gxg_gtk_fixed_new_w, 0, 0, 0, H_gtk_fixed_new);
   XG_DEFINE_PROCEDURE(gtk_fixed_put, gxg_gtk_fixed_put_w, 4, 0, 0, H_gtk_fixed_put);
@@ -4914,9 +4866,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_tree_path_new_from_string, gxg_gtk_tree_path_new_from_string_w, 1, 0, 0, H_gtk_tree_path_new_from_string);
   XG_DEFINE_PROCEDURE(gtk_tree_path_to_string, gxg_gtk_tree_path_to_string_w, 1, 0, 0, H_gtk_tree_path_to_string);
   XG_DEFINE_PROCEDURE(gtk_tree_path_new_root, gxg_gtk_tree_path_new_root_w, 0, 0, 0, H_gtk_tree_path_new_root);
-#if HAVE_GTK_FILE_SELECTION_GET_SELECTIONS
   XG_DEFINE_PROCEDURE(gtk_tree_path_new_first, gxg_gtk_tree_path_new_first_w, 0, 0, 0, H_gtk_tree_path_new_first);
-#endif
   XG_DEFINE_PROCEDURE(gtk_tree_path_append_index, gxg_gtk_tree_path_append_index_w, 2, 0, 0, H_gtk_tree_path_append_index);
   XG_DEFINE_PROCEDURE(gtk_tree_path_prepend_index, gxg_gtk_tree_path_prepend_index_w, 2, 0, 0, H_gtk_tree_path_prepend_index);
   XG_DEFINE_PROCEDURE(gtk_tree_path_get_depth, gxg_gtk_tree_path_get_depth_w, 1, 0, 0, H_gtk_tree_path_get_depth);
@@ -4947,9 +4897,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_tree_model_get_iter, gxg_gtk_tree_model_get_iter_w, 3, 0, 0, H_gtk_tree_model_get_iter);
   XG_DEFINE_PROCEDURE(gtk_tree_model_get_iter_from_string, gxg_gtk_tree_model_get_iter_from_string_w, 3, 0, 0, H_gtk_tree_model_get_iter_from_string);
   XG_DEFINE_PROCEDURE(gtk_tree_model_get_iter_root, gxg_gtk_tree_model_get_iter_root_w, 2, 0, 0, H_gtk_tree_model_get_iter_root);
-#if HAVE_GTK_FILE_SELECTION_GET_SELECTIONS
   XG_DEFINE_PROCEDURE(gtk_tree_model_get_iter_first, gxg_gtk_tree_model_get_iter_first_w, 2, 0, 0, H_gtk_tree_model_get_iter_first);
-#endif
   XG_DEFINE_PROCEDURE(gtk_tree_model_get_path, gxg_gtk_tree_model_get_path_w, 2, 0, 0, H_gtk_tree_model_get_path);
   XG_DEFINE_PROCEDURE(gtk_tree_model_get_value, gxg_gtk_tree_model_get_value_w, 4, 0, 0, H_gtk_tree_model_get_value);
   XG_DEFINE_PROCEDURE(gtk_tree_model_iter_next, gxg_gtk_tree_model_iter_next_w, 2, 0, 0, H_gtk_tree_model_iter_next);

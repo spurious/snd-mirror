@@ -375,26 +375,26 @@ void set_user_data(GtkObject *obj, gpointer data);
 void set_user_int_data(GtkObject *obj, int data);
 gpointer get_user_data(GtkObject *obj);
 int get_user_int_data(GtkObject *obj);
-#if HAVE_GTK2
-  char *sg_get_text(GtkWidget *w, int start, int end);
-  void sg_set_cursor(GtkWidget *w, int position);
-  void sg_text_insert(GtkWidget *w, char *text);
-  int sg_cursor_position(GtkWidget *w);
-  void sg_select_text(GtkWidget *w, int s0, int s1);
-  void sg_unselect_text(GtkWidget *w);
-  void sg_list_append(GtkWidget *w, char *val);
-  void sg_list_insert(GtkWidget *w, int row, char *val);
-  void sg_list_set_text(GtkWidget *w, int row, char *val);
-  GtkWidget *sg_pixmap_new(GdkPixmap *map, GdkBitmap *mask);
-  void sg_pixmap_set(GtkWidget *w, GdkPixmap *map, GdkBitmap *mask);
-  void sg_list_select(GtkWidget *lst, int row);
-  void sg_list_moveto(GtkWidget *lst, int row);
-#else
-  char *sg_label_text(GtkLabel *w);
-#endif
+
+char *sg_get_text(GtkWidget *w, int start, int end);
+void sg_set_cursor(GtkWidget *w, int position);
+void sg_text_insert(GtkWidget *w, char *text);
+int sg_cursor_position(GtkWidget *w);
+void sg_select_text(GtkWidget *w, int s0, int s1);
+void sg_unselect_text(GtkWidget *w);
+void sg_list_append(GtkWidget *w, char *val);
+void sg_list_insert(GtkWidget *w, int row, char *val);
+void sg_list_set_text(GtkWidget *w, int row, char *val);
+GtkWidget *sg_pixmap_new(GdkPixmap *map, GdkBitmap *mask);
+void sg_pixmap_set(GtkWidget *w, GdkPixmap *map, GdkBitmap *mask);
+void sg_list_select(GtkWidget *lst, int row);
+void sg_list_moveto(GtkWidget *lst, int row);
+
 GtkWidget *make_scrolled_text(snd_state *ss, GtkWidget *parent, int editable, GtkWidget *boxer, GtkWidget *paner);
 GtkWidget *sg_make_list(gpointer gp, int num_items, char **items, GtkSignalFunc callback);
 void sg_text_delete(GtkWidget *w, int start, int end);
+void sg_make_resizable(GtkWidget *w);
+
 
 
 /* -------- snd-gsnd.c -------- */

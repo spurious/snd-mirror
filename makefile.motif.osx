@@ -17,8 +17,6 @@ GTKHTML_LIB =
 GTKHTML_FLAGS = 
 GSL_LIBS = -L/usr/local/lib -lgsl -lgslcblas -lm
 GSL_FLAGS = -I/usr/local/include
-GTKEXTRA_LIBS = 
-GTKEXTRA_FLAGS = 
 
 GX_HEADERS = $(SND_X_HEADERS)
 GX_FILES = $(X_O_FILES)
@@ -39,7 +37,7 @@ DESTDIR =
 #   put the most specific first.
 
 .c.o:
-	$(CC) -c $(DEFS) $(GTK_CFLAGS) $(CFLAGS) $(GUILE_CFLAGS) $(MOTIF_FLAGS) $(GSL_FLAGS) $(GTKEXTRA_FLAGS) $(GTKHTML_FLAGS) $<
+	$(CC) -c $(DEFS) $(GTK_CFLAGS) $(CFLAGS) $(GUILE_CFLAGS) $(MOTIF_FLAGS) $(GSL_FLAGS) $(GTKHTML_FLAGS) $<
 
 include makesnd.files
 
@@ -55,7 +53,7 @@ mandir = ${prefix}/man
 main_target: snd
 
 snd: $(SNDLIB_HEADERS) $(SND_HEADERS) $(GX_HEADERS) $(SNDLIB_O_FILES) $(O_FILES) $(GX_FILES)
-	$(CC) $(LDFLAGS) $(CFLAGS) $(SNDLIB_O_FILES) $(O_FILES) $(GX_FILES) -o snd $(GUILE_LIBS) $(GTK_LIBS) $(MOTIF_LIBS) $(AUDIO_LIB) $(GSL_LIBS) $(GTKEXTRA_LIBS) $(XMHTML_LIB) $(GTKHTML_LIB) $(LIBS)
+	$(CC) $(LDFLAGS) $(CFLAGS) $(SNDLIB_O_FILES) $(O_FILES) $(GX_FILES) -o snd $(GUILE_LIBS) $(GTK_LIBS) $(MOTIF_LIBS) $(AUDIO_LIB) $(GSL_LIBS) $(XMHTML_LIB) $(GTKHTML_LIB) $(LIBS)
 
 xm: 	$(GM_FILES) xen.h
 	$(SO_LD) $(GM_FILES) -o $(GM_SO_FILE) $(LDSO_FLAGS) $(XM_LIBS) $(MOTIF_LIBS) $(LIBS)
