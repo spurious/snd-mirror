@@ -10541,6 +10541,8 @@
 	  (snd-display ";envelope-interp .013 -> ~A?" (envelope-interp .1 '(0 0 1 1) 32.0)))
       (if (fneq (envelope-interp .1 '(0 0 1 1) .012) 0.36177473) 
 	  (snd-display ";envelope-interp .361 -> ~A?" (envelope-interp .1 '(0 0 1 1) .012))) 
+      (if (fneq (envelope-interp .3 '(0 0 .5 1 1 0)) .6)
+	  (snd-display ";envelope-interp .3 '(0 0 .5 1 1 0)) -> ~A" (envelope-interp .3 '(0 0 .5 1 1 0))))
       (if (not (feql (window-envelope 1.0 3.0 '(0.0 0.0 5.0 1.0)) (list 1.0 0.2 3.0 0.6))) 
 	  (snd-display ";window-envelope: ~A?" (window-envelope 1.0 3.0 '(0.0 0.0 5.0 1.0))))
       (if (not (feql (multiply-envelopes '(0 0 1 1) '(0 0 1 1 2 0)) (list 0 0 0.5 0.5 1 0))) 

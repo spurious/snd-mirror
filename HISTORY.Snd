@@ -1,5 +1,6 @@
 snd change log
 
+  28-Jan:    Alpha bugfix thanks to Stefan Schwandter.
   23-Jan:    color-samples (draw.scm).
   21-Jan:    bird.rb.
              channel-properties, sound-properties (accessors in extensions.scm).

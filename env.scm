@@ -16,7 +16,7 @@
 
 (use-modules (ice-9 format) (ice-9 optargs))
 
-;;; -------- envelope-interp (named envelope-interp in clm's env.lisp)
+;;; -------- envelope-interp
 
 (define envelope-interp                      ;env is list of x y breakpoint pairs, interpolate at x returning y
   (lambda args                          ;  (x env &optional (base 1.0)

@@ -116,10 +116,10 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
     /* this appears to be useful in getting rid of idiotic NaN's */
   if (need_ieee_setup) {__setfpucw(_FPU_IEEE);}
   #else
-    #ifndef __alpha__
+    #ifdef _FPU_IEEE
       /* 22 in low bits = mask denormalized + mask underflow, both are on in _FPU_IEEE, so this looks right */
       if (need_ieee_setup) {int __fpu_ieee = _FPU_IEEE; _FPU_SETCW(__fpu_ieee);}
-      /* this bugfix thanks to Paul Barton-Davis */
+      /* this bugfix thanks to Paul Barton-Davis and Stefan Schwandter */
     #endif
   #endif
 #endif
