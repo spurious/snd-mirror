@@ -1,5 +1,7 @@
 #include "snd.h"
 
+/* TODO: specialized readers (can embed amp as scaler, etc) */
+
 /* this was sound-oriented; changed to be channel-oriented 31-Aug-00 */
 /* removed reverb-control-procedures (with freeverb and fcomb) and contrast-control-procedure 13-Dec-01 */
 
@@ -1129,7 +1131,8 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		  amp = dp->cur_amp;
 		  incr = (AMP_CONTROL(sp, dp) - amp) / (Float)(frames);
 		  for (j = 0; j < frames; j++, amp += incr) 
-		    buf[j] += MUS_FLOAT_TO_SAMPLE(read_sample_to_float(dp->chn_fd) * amp);
+		    buf[j] += (MUS_SAMPLE_TYPE)(read_sample(dp->chn_fd) * amp);
+		    /* buf[j] += MUS_FLOAT_TO_SAMPLE(read_sample_to_float(dp->chn_fd) * amp); */
 		  dp->cur_amp = amp;
 		  break;
 

@@ -1,5 +1,7 @@
 #include "snd.h"
 
+/* TODO: specialized mix_read? */
+
 typedef struct {         /* save one mix console state */
   int chans;             /* size of arrays in this struct */
   int edit_ctr;          /* cp edit_ctr at time of creation of this struct */
@@ -1070,7 +1072,7 @@ static int mix_array(int beg, int num, MUS_SAMPLE_TYPE **data, chan_info **out_c
   /* always write to tempfile */
   char *newname;
   int id = -1;
-  /* this seems excessive -- why not just change_samples? */
+  /* TODO: mix_array this seems excessive -- why not just change_samples? */
   newname = save_as_temp_file(data, in_chans, num, nominal_srate);
   if (newname) 
     {
@@ -1201,7 +1203,7 @@ void backup_mix_list(chan_info *cp, int edit_ctr)
 static void remix_file(mix_info *md, const char *origin)
 {
   int beg, end, i, j, ofd = 0, size, num, no_space, use_temp_file;
-  Float val, maxy, miny;
+  Float val = 0.0, maxy, miny;
   snd_info *cursp;
   mix_fd *add, *sub;
   snd_fd *cur, *sfb, *afb;
@@ -1209,6 +1211,7 @@ static void remix_file(mix_info *md, const char *origin)
   char *ofile = NULL;
   MUS_SAMPLE_TYPE **data;
   MUS_SAMPLE_TYPE *chandata;
+  MUS_SAMPLE_TYPE mval, mmax, mmin;
   file_info *ohdr = NULL;
   axis_info *ap;
   chan_info *cp;
@@ -1298,6 +1301,8 @@ static void remix_file(mix_info *md, const char *origin)
   /* these max/min values are only used to reset y-axis limits if overflow occurred */
   maxy = ap->ymax;
   miny = ap->ymin;
+  mmax = MUS_SAMPLE_MIN;
+  mmin = MUS_SAMPLE_MAX;
 
   /* split out special simple cases */
   if ((add->calc == C_ZERO) && (sub->calc == C_ZERO))
@@ -1327,14 +1332,14 @@ static void remix_file(mix_info *md, const char *origin)
 		  j = 0;
 		  if (err == -1) break;
 		}
-	      val = read_sample_to_float(cur);
+	      mval = read_sample(cur);
 	      if ((i >= old_beg) && (i <= old_end))
-		val -= read_sample_to_float(sfb);
+		mval -= read_sample(sfb);
 	      if ((i >= new_beg) && (i <= new_end))
-		val += read_sample_to_float(afb);
-	      if (val > maxy) maxy = val;
-	      else if (val < miny) miny = val;
-	      chandata[j++] = MUS_FLOAT_TO_SAMPLE(val);
+		mval += read_sample(afb);
+	      if (mval > mmax) mmax = mval;
+	      else if (mval < mmin) mmin = mval;
+	      chandata[j++] = mval;
 	    }
 	}
       else
@@ -1386,6 +1391,10 @@ static void remix_file(mix_info *md, const char *origin)
   make_current_console(md);
 
   /* fix up graph if we overflowed during mix */
+  val = MUS_SAMPLE_TO_FLOAT(mmax);
+  if (val > maxy) maxy = val;
+  val = MUS_SAMPLE_TO_FLOAT(mmin);
+  if (val < miny) miny = val;
   if ((maxy > ap->ymax) || (miny < ap->ymin)) 
     {
       if (maxy < -miny) maxy = -miny; 
@@ -1670,6 +1679,7 @@ static void make_temporary_graph(chan_info *cp, mix_info *md, console_state *cs)
   mix_fd *add = NULL, *sub = NULL;
   int x_start, x_end;
   double start_time, cur_srate;
+  MUS_SAMPLE_TYPE mina, mymax, mymin;
   ss = cp->state;
   /* if fft is being displayed, this does not update it as we drag the mix because the fft-data reader
    * (apply_fft_window in snd-fft.c) reads the current to-be-fft'd data using init_sample_read, and
@@ -1757,21 +1767,25 @@ static void make_temporary_graph(chan_info *cp, mix_info *md, console_state *cs)
 
 	  if ((add->calc == C_ZERO) && (sub->calc == C_ZERO))
 	    {
+	      mymax = MUS_SAMPLE_MIN;
+	      mymin = MUS_SAMPLE_MAX;
 	      while (i <= hi)
 		{
-		  ina = read_sample_to_float(sf);
-		  if (ina > ymax) ymax = ina;
-		  if (ina < ymin) ymin = ina;
+		  mina = read_sample(sf);
+		  if (mina > mymax) mymax = mina;
+		  if (mina < mymin) mymin = mina;
 		  xf += 1.0;
 		  i++;
 		  if (xf > samples_per_pixel)
 		    {
-		      set_grf_points(xi, j, local_grf_y(ymin, ap), local_grf_y(ymax, ap));
+		      set_grf_points(xi, j, 
+					 local_grf_y(MUS_SAMPLE_TO_FLOAT(mymin), ap), 
+					 local_grf_y(MUS_SAMPLE_TO_FLOAT(mymax), ap));
 		      xi++;
 		      j++;
 		      xf -= samples_per_pixel;
-		      ymin = 100.0;
-		      ymax = -100.0;
+		      mymax = MUS_SAMPLE_MIN;
+		      mymin = MUS_SAMPLE_MAX;
 		    }
 		}
 	    }
@@ -1779,25 +1793,29 @@ static void make_temporary_graph(chan_info *cp, mix_info *md, console_state *cs)
 	    {
 	      if ((add->calc == C_STRAIGHT) && (sub->calc == C_STRAIGHT))
 		{
+		  mymax = MUS_SAMPLE_MIN;
+		  mymin = MUS_SAMPLE_MAX;
 		  sfb = sub->sfs[sub->base];
 		  afb = add->sfs[add->base];
 		  while (i <= hi)
 		    {
-		      ina = read_sample_to_float(sf);
-		      if ((i >= oldbeg) && (i <= oldend)) ina -= read_sample_to_float(sfb);
-		      if ((i >= newbeg) && (i <= newend)) ina += read_sample_to_float(afb);
-		      if (ina > ymax) ymax = ina;
-		      if (ina < ymin) ymin = ina;
+		      mina = read_sample(sf);
+		      if ((i >= oldbeg) && (i <= oldend)) mina -= read_sample(sfb);
+		      if ((i >= newbeg) && (i <= newend)) mina += read_sample(afb);
+		      if (mina > mymax) mymax = mina;
+		      if (mina < mymin) mymin = mina;
 		      xf += 1.0;
 		      i++;
 		      if (xf > samples_per_pixel)
 			{
-			  set_grf_points(xi, j, local_grf_y(ymin, ap), local_grf_y(ymax, ap));
+			  set_grf_points(xi, j, 
+					 local_grf_y(MUS_SAMPLE_TO_FLOAT(mymin), ap), 
+					 local_grf_y(MUS_SAMPLE_TO_FLOAT(mymax), ap));
 			  xi++;
 			  j++;
 			  xf -= samples_per_pixel;
-			  ymin = 100.0;
-			  ymax = -100.0;
+			  mymax = MUS_SAMPLE_MIN;
+			  mymin = MUS_SAMPLE_MAX;
 			}
 		    }
 		}
@@ -4089,6 +4107,13 @@ static XEN g_next_mix_sample(XEN obj)
   return(C_TO_XEN_DOUBLE(next_mix_sample(TO_MIX_SAMPLE_READER(obj))));
 }
 
+static XEN g_read_mix_sample(XEN obj)
+{
+  #define H_read_mix_sample "(" S_read_mix_sample " reader) -> read sample from mix reader"
+  XEN_ASSERT_TYPE(MIX_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_read_mix_sample, "a mix-sample-reader");
+  return(C_TO_XEN_DOUBLE(next_mix_sample(TO_MIX_SAMPLE_READER(obj))));
+}
+
 static XEN g_free_mix_sample_reader(XEN obj)
 {
   #define H_free_mix_sample_reader "(" S_free_mix_sample_reader " reader) frees mix sample reader 'reader'"
@@ -4193,6 +4218,13 @@ static XEN g_next_track_sample(XEN obj)
 {
   #define H_next_track_sample "(" S_next_track_sample " reader) -> next sample from track reader"
   XEN_ASSERT_TYPE(TRACK_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_next_track_sample, "a track-sample-reader");
+  return(C_TO_XEN_DOUBLE(next_track_sample(TO_TRACK_SAMPLE_READER(obj))));
+}
+
+static XEN g_read_track_sample(XEN obj)
+{
+  #define H_read_track_sample "(" S_read_track_sample " reader) -> read sample from track reader"
+  XEN_ASSERT_TYPE(TRACK_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_read_track_sample, "a track-sample-reader");
   return(C_TO_XEN_DOUBLE(next_track_sample(TO_TRACK_SAMPLE_READER(obj))));
 }
 
@@ -4308,32 +4340,29 @@ mixes data (a vct object) into snd's channel chn starting at beg; returns the ne
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(beg), beg, XEN_ARG_2, S_mix_vct, "an integer");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(with_tag), with_tag, XEN_ARG_5, S_mix_vct, "a boolean");
   v = TO_VCT(obj);
-  if (v)
+  len = v->length;
+  cp[0] = get_cp(snd, chn, S_mix_vct);
+  bg = XEN_TO_C_INT_OR_ELSE(beg, 0);
+  if (bg < 0)
+    mus_misc_error(S_mix_vct, "beg < 0?", beg);
+  else
     {
-      len = v->length;
-      cp[0] = get_cp(snd, chn, S_mix_vct);
-      bg = XEN_TO_C_INT_OR_ELSE(beg, 0);
-      if (bg < 0)
-	mus_misc_error(S_mix_vct, "beg < 0?", beg);
-      else
-	{
-	  if (XEN_NOT_BOUND_P(with_tag))
-	    with_mixers = with_mix_tags(cp[0]->state);
-	  else with_mixers = XEN_TO_C_BOOLEAN_OR_TRUE(with_tag);
-	  data = (MUS_SAMPLE_TYPE **)CALLOC(1, sizeof(MUS_SAMPLE_TYPE *));
-	  data[0] = (MUS_SAMPLE_TYPE *)CALLOC(len, sizeof(MUS_SAMPLE_TYPE));
-	  for (i = 0; i < len; i++)
-	    data[0][i] = MUS_FLOAT_TO_SAMPLE(v->data[i]);
-	  if (XEN_STRING_P(origin))
-	    edname = XEN_TO_C_STRING(origin);
-	  mix_id = mix_array(bg, len, data, cp, 1, 1,
-			     SND_SRATE(cp[0]->sound),
-			     (char *)((edname == NULL) ? S_mix_vct : edname),
-			     with_mixers);
-	  update_graph(cp[0], NULL);
-	  FREE(data[0]);
-	  FREE(data);
-	}
+      if (XEN_NOT_BOUND_P(with_tag))
+	with_mixers = with_mix_tags(cp[0]->state);
+      else with_mixers = XEN_TO_C_BOOLEAN_OR_TRUE(with_tag);
+      data = (MUS_SAMPLE_TYPE **)CALLOC(1, sizeof(MUS_SAMPLE_TYPE *));
+      data[0] = (MUS_SAMPLE_TYPE *)CALLOC(len, sizeof(MUS_SAMPLE_TYPE));
+      for (i = 0; i < len; i++)
+	data[0][i] = MUS_FLOAT_TO_SAMPLE(v->data[i]);
+      if (XEN_STRING_P(origin))
+	edname = XEN_TO_C_STRING(origin);
+      mix_id = mix_array(bg, len, data, cp, 1, 1,
+			 SND_SRATE(cp[0]->sound),
+			 (char *)((edname == NULL) ? S_mix_vct : edname),
+			 with_mixers);
+      update_graph(cp[0], NULL);
+      FREE(data[0]);
+      FREE(data);
     }
   return(xen_return_first(C_TO_SMALL_XEN_INT(mix_id), obj));
 }
@@ -4356,11 +4385,13 @@ finds the mix in snd's channel chn at samp, returning the mix id; returns #f if 
 
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_1(g_make_mix_sample_reader_w, g_make_mix_sample_reader)
+XEN_NARGIFY_1(g_read_mix_sample_w, g_read_mix_sample)
 XEN_NARGIFY_1(g_next_mix_sample_w, g_next_mix_sample)
 XEN_NARGIFY_1(g_free_mix_sample_reader_w, g_free_mix_sample_reader)
 XEN_NARGIFY_1(g_mf_p_w, g_mf_p)
 XEN_ARGIFY_4(g_make_track_sample_reader_w, g_make_track_sample_reader)
 XEN_NARGIFY_1(g_next_track_sample_w, g_next_track_sample)
+XEN_NARGIFY_1(g_read_track_sample_w, g_read_track_sample)
 XEN_NARGIFY_1(g_free_track_sample_reader_w, g_free_track_sample_reader)
 XEN_NARGIFY_1(g_tf_p_w, g_tf_p)
 XEN_ARGIFY_1(g_play_mix_w, g_play_mix)
@@ -4407,10 +4438,12 @@ XEN_ARGIFY_6(mix_vct_w, mix_vct)
 #else
 #define g_make_mix_sample_reader_w g_make_mix_sample_reader
 #define g_next_mix_sample_w g_next_mix_sample
+#define g_read_mix_sample_w g_read_mix_sample
 #define g_free_mix_sample_reader_w g_free_mix_sample_reader
 #define g_mf_p_w g_mf_p
 #define g_make_track_sample_reader_w g_make_track_sample_reader
 #define g_next_track_sample_w g_next_track_sample
+#define g_read_track_sample_w g_read_track_sample
 #define g_free_track_sample_reader_w g_free_track_sample_reader
 #define g_tf_p_w g_tf_p
 #define g_play_mix_w g_play_mix
@@ -4465,7 +4498,7 @@ void g_init_mix(void)
   scm_set_smob_print(mf_tag, print_mf);
   scm_set_smob_free(mf_tag, free_mf);
 #if HAVE_APPLICABLE_SMOB
-  scm_set_smob_apply(mf_tag, XEN_PROCEDURE_CAST g_next_mix_sample, 0, 0, 0);
+  scm_set_smob_apply(mf_tag, XEN_PROCEDURE_CAST g_read_mix_sample, 0, 0, 0);
 #endif
 #endif
 #if HAVE_RUBY
@@ -4475,6 +4508,7 @@ void g_init_mix(void)
 
   XEN_DEFINE_PROCEDURE(S_make_mix_sample_reader, g_make_mix_sample_reader_w, 1, 0, 0, H_make_mix_sample_reader);
   XEN_DEFINE_PROCEDURE(S_next_mix_sample,        g_next_mix_sample_w, 1, 0, 0,        H_next_mix_sample);
+  XEN_DEFINE_PROCEDURE(S_read_mix_sample,        g_read_mix_sample_w, 1, 0, 0,        H_read_mix_sample);
   XEN_DEFINE_PROCEDURE(S_free_mix_sample_reader, g_free_mix_sample_reader_w, 1, 0, 0, H_free_mix_sample_reader);
   XEN_DEFINE_PROCEDURE(S_mix_sample_reader_p,    g_mf_p_w, 1, 0, 0,                   H_mf_p);
 
@@ -4482,12 +4516,13 @@ void g_init_mix(void)
   scm_set_smob_print(tf_tag, print_tf);
   scm_set_smob_free(tf_tag, free_tf);
 #if HAVE_APPLICABLE_SMOB
-  scm_set_smob_apply(tf_tag, XEN_PROCEDURE_CAST g_next_track_sample, 0, 0, 0);
+  scm_set_smob_apply(tf_tag, XEN_PROCEDURE_CAST g_read_track_sample, 0, 0, 0);
 #endif
 #endif
 
   XEN_DEFINE_PROCEDURE(S_make_track_sample_reader, g_make_track_sample_reader_w, 1, 3, 0, H_make_track_sample_reader);
   XEN_DEFINE_PROCEDURE(S_next_track_sample,        g_next_track_sample_w, 1, 0, 0,        H_next_track_sample);
+  XEN_DEFINE_PROCEDURE(S_read_track_sample,        g_read_track_sample_w, 1, 0, 0,        H_read_track_sample);
   XEN_DEFINE_PROCEDURE(S_free_track_sample_reader, g_free_track_sample_reader_w, 1, 0, 0, H_free_track_sample_reader);
   XEN_DEFINE_PROCEDURE(S_track_sample_reader_p,    g_tf_p_w, 1, 0, 0,                     H_tf_p);
   XEN_DEFINE_PROCEDURE(S_play_mix,                 g_play_mix_w, 0, 1, 0,                 H_play_mix);

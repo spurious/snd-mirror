@@ -956,7 +956,8 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
    * be tiny, so we're pushing the arithmetic into dangerous realms.  This stuff has been tested
    * on some extreme cases (hour-long 44KHz stereo), but there's always another special case...
    */
-  Float samp, ymin, ymax;
+  MUS_SAMPLE_TYPE samp, ymin, ymax;
+  Float fsamp;
   int pixels, grfpts;
   snd_fd *sf = NULL;
   int x_start, x_end;
@@ -1012,9 +1013,9 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	{
 	  for (j = 0, x = ((double)(ap->losamp) / cur_srate); j < grfpts; j++, x += incr)
 	    {
-	      samp = read_sample_to_float(sf);
-	      set_grf_point(local_grf_x(x, ap), j, local_grf_y(samp, ap));
-	      ps_set_grf_point(x, j, samp);
+	      fsamp = read_sample_to_float(sf);
+	      set_grf_point(local_grf_x(x, ap), j, local_grf_y(fsamp, ap));
+	      ps_set_grf_point(x, j, fsamp);
 	    }
 	}
       else
@@ -1055,30 +1056,30 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	  x = ap->x0;
 	  xi = local_grf_x(x, ap);
 	  xf = 0.0;     /* samples per pixel counter */
-	  ymin = 100.0;
-	  ymax = -100.0;
+	  ymin = MUS_SAMPLE_MAX;
+	  ymax = MUS_SAMPLE_MIN;
 	  if (cp->printing) pinc = samples_per_pixel/cur_srate;
 	  for (i = ap->losamp, xf = 0.0; i <= ap->hisamp; i++)
 	    {
-	      samp = read_sample_to_float(sf);
+	      samp = read_sample(sf);
 	      if (samp > ymax) ymax = samp;
 	      if (samp < ymin) ymin = samp;
 	      xf += 1.0;
 	      if (xf > samples_per_pixel)
 		{
 		  set_grf_points(xi, j, 
-				 local_grf_y(ymin, ap), 
-				 local_grf_y(ymax, ap));
+				 local_grf_y(MUS_SAMPLE_TO_FLOAT(ymin), ap), 
+				 local_grf_y(MUS_SAMPLE_TO_FLOAT(ymax), ap));
 		  if (cp->printing) 
 		    {
 		      x += pinc; 
-		      ps_set_grf_points(x, j, ymin, ymax);
+		      ps_set_grf_points(x, j, MUS_SAMPLE_TO_FLOAT(ymin), MUS_SAMPLE_TO_FLOAT(ymax));
 		    }
 		  xi++;
 		  j++;
 		  xf -= samples_per_pixel;
-		  ymin = 100.0;
-		  ymax = -100.0;
+		  ymin = MUS_SAMPLE_MAX;
+		  ymax = MUS_SAMPLE_MIN;
 		}
 	    }
 	}

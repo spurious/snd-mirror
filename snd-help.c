@@ -204,6 +204,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+3-Apr:   read-sample, read-mix-sample, read-track-sample, selection-maxamp.\n\
 1-Apr:   insert-samples and set-samples no longer delete file passed as 'data'.\n\
 29-Mar:  Mac-OSX with Motif (thanks to Charles Nichols).\n\
 28-Mar:  removed movies function.\n\
@@ -1237,7 +1238,10 @@ all refer to the same thing.\n\
   " S_previous_sample "   (rd)\n\
   " S_prompt_in_minibuffer "(prompt callback snd)\n\
   " S_protect_region "    (reg protect)\n\
+  " S_read_mix_sample "   (rd)\n\
   " S_read_only "         (snd)\n\
+  " S_read_sample "       (rd)\n\
+  " S_read_track_sample " (rd)\n\
   " S_recorder_dialog "   ()\n\
   " S_recorder_gain "     (gain)\n\
   " S_recorder_in_amp "   (in out)\n\

@@ -1969,7 +1969,7 @@ For example:
 	  (reader (make-sample-reader 0)))
       (map-chan (lambda (val)
 		  (phase-vocoder pv (lambda (dir) 
-				      (next-sample reader)))))
+				      (reader)))))
       (free-sample-reader reader))))
 </pre>
 <p>sets up a phase-vocoder generator whose edit function is squelching soft partials.

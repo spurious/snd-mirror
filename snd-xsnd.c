@@ -1,5 +1,7 @@
 #include "snd.h"
 
+/* TODO: make multi-chan hour-glass work right */
+
 #if HAVE_XPM
   #include <X11/xpm.h>
 #endif

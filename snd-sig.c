@@ -430,18 +430,6 @@ Float get_maxamp(snd_info *sp, chan_info *cp, int edpos)
   return(val);
 }
 
-static Float get_selection_maxamp(chan_info *cp)
-{
-  Float val;
-  int len;
-  val = ed_selection_maxamp(cp);
-  if (val >= 0.0) return(val);
-  len = selection_end(cp) - selection_beg(cp) + 1;
-  val = local_maxamp(cp, selection_beg(cp), len, cp->edit_ctr);
-  set_ed_selection_maxamp(cp, val);
-  return(val);
-}
-
 void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int len, int selection)
 {
   /* essentially the same as scale-by, but first take into account current maxamps */
@@ -480,7 +468,7 @@ void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int
 	    {
 	      ncp = si->cps[i];
 	      if (selection)
-		val = get_selection_maxamp(ncp);
+		val = selection_maxamp(ncp);
 	      else val = get_maxamp(ncp->sound, ncp, AT_CURRENT_EDIT_POSITION);
 	      if (val > maxamp) maxamp = val;
 	    }
@@ -505,7 +493,7 @@ void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int
 	  if (scalers[i] != 0.0)
 	    {
 	      if (selection)
-		val = get_selection_maxamp(ncp);
+		val = selection_maxamp(ncp);
 	      else val = get_maxamp(ncp->sound, ncp, AT_CURRENT_EDIT_POSITION);
 	      if (val != 0.0)
 		{
@@ -1913,7 +1901,8 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 	{
 	  egen_val = mus_env(egen);
 	  for (k = 0; k < si->chans; k++)
-	    data[k][j] = MUS_FLOAT_TO_SAMPLE(read_sample_to_float(sfs[k]) * egen_val);
+	    data[k][j] = (MUS_SAMPLE_TYPE)(read_sample(sfs[k]) * egen_val);
+	    /* data[k][j] = MUS_FLOAT_TO_SAMPLE(read_sample_to_float(sfs[k]) * egen_val); */
 	  j++;
 	  if ((temp_file) && (j == FILE_BUFFER_SIZE))
 	    {
@@ -1932,7 +1921,8 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
       idata = data[0];
       for (i = 0; i < dur; i++)
 	{
-	  idata[j] = MUS_FLOAT_TO_SAMPLE(read_sample_to_float(sf) * mus_env(egen));
+	  idata[j] = (MUS_SAMPLE_TYPE)(read_sample(sf) * mus_env(egen));
+	  /* idata[j] = MUS_FLOAT_TO_SAMPLE(read_sample_to_float(sf) * mus_env(egen)); */
 	  j++;
 	  if ((temp_file) && (j == FILE_BUFFER_SIZE))
 	    {

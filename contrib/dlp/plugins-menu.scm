@@ -31,6 +31,9 @@
 		 (all-chans))
 	  (map-chan (func) #f #f origin)))))
 
+
+
+
 ;;; redefine the main menu
 
 (define plug-menu (|Widget (main-menu plugins-menu)))
@@ -185,6 +188,122 @@
         (|XtAddCallback child |XmNactivateCallback
                         (lambda (w c i)
                           (post-delay5s-dialog))))
+
+
+;;; Delayorama
+;;;
+
+(define delayorama-random-seed 100)
+(define delayorama-input-gain 0)
+(define delayorama-feedback 0)
+(define delayorama-taps 2)
+(define delayorama-first-delay 0.1)
+(define delayorama-delay-range 0.1)
+(define delayorama-delay-change 1.0)
+(define delayorama-delay-random 10)
+(define delayorama-amp-change 1.0)
+(define delayorama-amp-random 10)
+(define delayorama-mix 0.5)
+(define delayorama-dialog #f)
+(define delayorama-label "Delayorama")
+
+(define (cp-delayorama)
+   (apply-ladspa (make-sample-reader (cursor))
+      (list "delayorama_1402" "delayorama" delayorama-random-seed delayorama-input-gain delayorama-feedback delayorama-taps delayorama-first-delay delayorama-delay-range delayorama-delay-change delayorama-delay-random delayorama-amp-change delayorama-amp-random delayorama-mix)
+         (- (frames) (cursor))
+         "delayorama"))
+
+(if (and (provided? 'snd-ladspa)
+         (provided? 'xm))
+  (begin
+
+    (define (post-delayorama-dialog)
+       (if (not (|Widget? delayorama-dialog))
+           (let ((sliders '()))
+             (set! delayorama-dialog
+                   (make-effect-dialog "delayorama ladspa plugin"
+                                       (lambda (w context info) (cp-delayorama))
+                                       (lambda (w context info) (|XtUnmanageChild delayorama-dialog))
+                                       (lambda (w context info)
+                                         (help-dialog "Delayorama"
+                                                      "Random seed: Controls the random numbers that will be used to stagger the delays and amplitudes if random is turned up on them. Changing this forces the random values to be recalulated.\n\ Input gain (dB): Controls the gain of the input signal in decibels.\n\ Feedback (%): Controls the amount of output signal fed back into the input.\n\ Number of taps: Controls the number of taps in the delay.\n\ First delay (s): The time (in seconds) of the first delay.\n\ Delay range (s): The time difference (in seconds) between the first and last delay.\n\ Delay change: The scaling factor between one delay and the next.\n\ Delay random (%): The random factor applied to the delay.\n\ Amplitude change: The scaling factor between one amplitude and the next.\n\ Amplitude random (%): The random factor applied to the amplitude.\n\ Dry/wet mix: The level of delayed sound mixed into the output."))
+                                       (lambda (w c i)
+                                         (set! delayorama-random-seed 100)
+                                         (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* delayorama-random-seed 1))))
+                                         (set! delayorama-input-gain 0)
+                                         (|XtSetValues (list-ref sliders 1) (list |XmNvalue (inexact->exact (* delayorama-input-gain 1))))
+                                         (set! delayorama-feedback 0)
+                                         (|XtSetValues (list-ref sliders 2) (list |XmNvalue (inexact->exact (* delayorama-feedback 1))))
+                                         (set! delayorama-taps 2)
+                                         (|XtSetValues (list-ref sliders 3) (list |XmNvalue (inexact->exact (* delayorama-taps 1))))
+                                         (set! delayorama-first-delay 0.1)
+                                         (|XtSetValues (list-ref sliders 4) (list |XmNvalue (inexact->exact (* delayorama-first-delay 100))))
+                                         (set! delayorama-delay-range 0.1)
+                                         (|XtSetValues (list-ref sliders 5) (list |XmNvalue (inexact->exact (* delayorama-delay-range 100))))
+                                         (set! delayorama-delay-change 1.0)
+                                         (|XtSetValues (list-ref sliders 6) (list |XmNvalue (inexact->exact (* delayorama-delay-change 100))))
+                                         (set! delayorama-delay-random 10)
+                                         (|XtSetValues (list-ref sliders 7) (list |XmNvalue (inexact->exact (* delayorama-delay-random 1))))
+                                         (set! delayorama-amp-change 1.0)
+                                         (|XtSetValues (list-ref sliders 8) (list |XmNvalue (inexact->exact (* delayorama-amp-change 100))))
+                                         (set! delayorama-amp-random 0)
+                                         (|XtSetValues (list-ref sliders 9) (list |XmNvalue (inexact->exact (* delayorama-amp-random 1))))
+                                         (set! delayorama-mix 0.5)
+                                         (|XtSetValues (list-ref sliders 10) (list |XmNvalue (inexact->exact (* delayorama-mix 100)))))))
+             (set! sliders
+                   (add-sliders delayorama-dialog
+                                (list (list "random seed" 0 100 1000
+                                            (lambda (w context info)
+                                              (set! delayorama-random-seed (/ (|value info) 1)))
+                                            1)
+                                      (list "input gain (dB)" -96 0 24
+                                            (lambda (w context info)
+                                              (set! delayorama-input-gain (/ (|value info) 1)))
+                                            1)
+                                      (list "feedback (%)" 0 0 100
+                                            (lambda (w context info)
+                                              (set! delayorama-feedback (/ (|value info) 1)))
+                                            1)
+                                      (list "number of taps" 2 2 128
+                                           (lambda (w context info)
+                                              (set! delayorama-taps (/ (|value info) 1)))
+                                            1)
+                                      (list "first delay (s)" 0.0 0.1 5.0
+                                            (lambda (w context info)
+                                              (set! delayorama-first-delay (/ (|value info) 100)))
+                                            100)
+                                      (list "delay range (s)" 0.0001 1.0 6.0
+                                            (lambda (w context info)
+                                              (set! delayorama-delay-range (/ (|value info) 100)))
+                                            100)
+                                      (list "delay change" 0.2 1.0 5.0
+                                            (lambda (w context info)
+                                              (set! delayorama-delay-change (/ (|value info) 100)))
+                                            100)
+                                      (list "delay random (%)" 0 10 100
+                                            (lambda (w context info)
+                                              (set! delayorama-delay-random (/ (|value info) 1)))
+                                            1)
+                                      (list "amplitude change" 0.2 1.0 5.0
+                                            (lambda (w context info)
+                                              (set! delayorama-amp-change (/ (|value info) 100)))
+                                            100)
+                                      (list "amplitude random (%)" 0 10 100
+                                            (lambda (w context info)
+                                              (set! delayorama-amp-random (/ (|value info) 1)))
+                                            1)
+                                     (list "dry/wet mix" 0.0 0.5 1.0
+                                            (lambda (w context info)
+                                              (set! delayorama-amp-random (/ (|value info) 100)))
+                                            100))))))
+       (activate-dialog delayorama-dialog))))
+
+      (let ((child (|XtCreateManagedWidget "Delayorama" |xmPushButtonWidgetClass ladspa-delay-menu
+                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+        (|XtAddCallback child |XmNactivateCallback
+                        (lambda (w c i)
+                          (post-delayorama-dialog))))
+
 
 
 ;;; Feedback delay
@@ -1230,8 +1349,8 @@
                                        (lambda (w context info) (cp-vcf-303))
                                        (lambda (w context info) (|XtUnmanageChild vcf-303-dialog))
                                        (lambda (w context info)
-                                         (help-dialog "VCF-303 Help"
-                                                      "Move the sliders to set the filter parameters."))
+                                         (help-dialog "VCF-303"
+                                                      "Emulates the voltage controlled resonant filter of the bass synthesizer of Roland's TB-303.\n\ Move the sliders to set the filter parameters."))
                                        (lambda (w c i)
                                          (set! vcf-303-cutoff .5)
                                          (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* vcf-303-cutoff 100))))
@@ -1565,6 +1684,77 @@
         (|XtAddCallback child |XmNactivateCallback
                         (lambda (w c i)
                           (post-compress-rms-dialog))))
+
+
+;;; Dyson compressor 
+;;;
+
+(define dyson-compress-peak-limit 0)
+(define dyson-compress-release-time 1.0)
+(define dyson-compress-fast-compression-ratio 0.0)
+(define dyson-compress-compression-ratio 0.0)
+(define dyson-compress-dialog #f)
+(define dyson-compress-label "Dyson compressor")
+
+(define (cp-dyson-compress)
+ (apply-ladspa (make-sample-reader (cursor))
+   (list "dyson_compress_1403" "dysonCompress" dyson-compress-peak-limit dyson-compress-release-time dyson-compress-fast-compression-ratio dyson-compress-compression-ratio)
+     (- (frames) (cursor))
+     "dyson compressor"))
+
+(if (and (provided? 'snd-ladspa)
+         (provided? 'xm))
+  (begin
+
+      (define (post-dyson-compress-dialog)
+       (if (not (|Widget? dyson-compress-dialog))
+           (let ((sliders '()))
+             (set! dyson-compress-dialog
+                   (make-effect-dialog "dyson compressor ladspa plugin"
+                                       (lambda (w context info) (cp-dyson-compress))
+                                       (lambda (w context info) (|XtUnmanageChild dyson-compress-dialog))
+                                       (lambda (w context info)
+                                         (help-dialog "Dyson compressor"
+                                                      "Peak limit (dB) controls the desired limit of the output signal in decibels.\n\ Release time (s) controls the time in seconds taken for the compressor to relax its gain control over the input signal.\n\ (No information is available regarding the significance of the fast and normal compression ratio settings)."))
+                                       (lambda (w c i)
+                                         (set! dyson-compress-peak-limit 0)
+                                         (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* dyson-compress-peak-limit 1))))
+                                         (set! dyson-compress-release-time 1.0)
+                                         (|XtSetValues (list-ref sliders 1) (list |XmNvalue (inexact->exact (* dyson-compress-release-time 100))))
+                                         (set! dyson-compress-fast-compression-ratio 0.0)
+                                         (|XtSetValues (list-ref sliders 2) (list |XmNvalue (inexact->exact (* dyson-compress-fast-compression-ratio 100))))
+                                         (set! dyson-compress-compression-ratio 0.0)
+                                         (|XtSetValues (list-ref sliders 3) (list |XmNvalue (inexact->exact (* dyson-compress-compression-ratio 100)))))))
+             (set! sliders
+                   (add-sliders dyson-compress-dialog
+                                (list
+                                      (list "peak limit (dB)" -30 0 0
+                                            (lambda (w context info)
+                                              (set! dyson-compress-peak-limit (/ (|value info) 1)))
+                                            1)
+                                      (list "release time (s)" 0.0 1.0 1.0
+                                            (lambda (w context info)
+                                              (set! dyson-compress-release-time (/ (|value info) 100)))
+                                            100)
+                                      (list "fast compression ratio" 0.0 0.0 1.0
+                                            (lambda (w context info)
+                                              (set! dyson-compress-fast-compression-ratio (/ (|value info) 100)))
+                                            100)
+                                      (list "compression ratio" 0.0 0.0 1.0
+                                            (lambda (w context info)
+                                              (set! dyson-compress-compression-ratio (/ (|value info) 100)))
+                                            100))))))
+       (activate-dialog dyson-compress-dialog))))
+
+      (let ((child (|XtCreateManagedWidget "Dyson compressor" |xmPushButtonWidgetClass ladspa-amp-menu
+                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+        (|XtAddCallback child |XmNactivateCallback
+                        (lambda (w c i)
+                          (post-dyson-compress-dialog))))
+
+
+
+
 
 
 ;;; Expander (peak tracking)
@@ -1971,15 +2161,15 @@
                                          (help-dialog "Pitch scaler"
                                                       "A pitch shifter implementation that scales the harmonics appropriately with the base frequencies.\n\ It is an implementation of Stephen M. Sprengler's pitch scaler design. It gives reasonable, general purpose results for small changes, but won't give Antares or Eventide anything to worry about.\n\ The FFT block size and oversampling has been kept at reasonable levels to keep the CPU usage low.\n\ Pitch coefficient: The pitch scaling factor, a value of 2.0 will increase the pitch by one octave, etc."))
                                        (lambda (w c i)
-                                         (set! pitch-coefficient 1.0)
+                                         (set! pitch-coefficient .5)
                                          (|XtSetValues (car sliders)
-                                            (list |XmNvalue semi-range)))))
+                                            (list |XmNvalue (inexact->exact (* pitch-coefficient 100)))))))
              (set! sliders
                    (add-sliders pitch-scale-dialog
-                                (list (list "pitch coefficient" 0.25 1.0 4.0
+                                (list (list "pitch coefficient" 0.5 1.0 2.0
                                             (lambda (w context info)
-                                              (set! pitch-coefficient (semitones->ratio (- (|value info) semi-range))))
-                                            100 'semi))))))
+                                              (set! pitch-coefficient (/ (|value info) 100.0)))
+                                            100))))))
        (activate-dialog pitch-scale-dialog))))
 
       (let ((child (|XtCreateManagedWidget "Pitch scaler" |xmPushButtonWidgetClass ladspa-freq-menu
@@ -1988,7 +2178,53 @@
                         (lambda (w c i)
                           (post-pitch-scale-dialog))))
 
-;;; Modulation effects
+;;; Pitch scaler
+;;; by semitones
+
+;(define pitch-coefficient 1.0)
+;(define pitch-scale-dialog #f)
+;(define pitch-scale-label "Pitch scaler")
+;
+;(define (cp-pitch-scale)
+;  (apply-ladspa (make-sample-reader (cursor))
+;                (list "pitch_scale_1194" "pitchScaleHQ" pitch-coefficient)
+;                (- (frames) (cursor))
+;                "pitch-scale"))
+;
+;(if (and (provided? 'snd-ladspa)
+;         (provided? 'xm))
+;  (begin
+;
+;     (define (post-pitch-scale-dialog)
+;       (if (not (|Widget? pitch-scale-dialog))
+;           ;; if pitch-scale-dialog doesn't exist, create it
+;           (let ((sliders '()))
+;             (set! pitch-scale-dialog
+;                   (make-effect-dialog "pitch-scale (high-quality) ladspa plugin"
+;                                       (lambda (w context info) (cp-pitch-scale))
+;                                       (lambda (w context info) (|XtUnmanageChild pitch-scale-dialog))
+;                                       (lambda (w context info)
+;                                         (help-dialog "Pitch scaler"
+;                                                      "A pitch shifter implementation that scales the harmonics appropriately with the base frequencies.\n\ It is an implementation of Stephen M. Sprengler's pitch scaler design. It gives reasonable, general purpose results for small changes, but won't give Antares or Eventide anything to worry about.\n\ The FFT block size and oversampling has been kept at reasonable levels to keep the CPU usage low.\n\ Pitch coefficient: The pitch scaling factor, a value of 2.0 will increase the pitch by one octave, etc."))
+;                                       (lambda (w c i)
+;                                         (set! pitch-coefficient 1.0)
+;                                         (|XtSetValues (car sliders)
+;                                            (list |XmNvalue semi-range)))))
+;             (set! sliders
+;                   (add-sliders pitch-scale-dialog
+;                                (list (list "pitch coefficient" 0.25 1.0 4.0
+;                                            (lambda (w context info)
+;                                              (set! pitch-coefficient (semitones->ratio (- (|value info) semi-range))))
+;                                            100 'semi))))))
+;       (activate-dialog pitch-scale-dialog))))
+;
+;      (let ((child (|XtCreateManagedWidget "Pitch scaler" |xmPushButtonWidgetClass ladspa-freq-menu
+;                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+;        (|XtAddCallback child |XmNactivateCallback
+;                        (lambda (w c i)
+;                          (post-pitch-scale-dialog))))
+
+;;; MODULATION EFFECTS
 ;;;
 
 (define ladspa-mod-menu (|XmCreatePulldownMenu plug-menu "Modulation Effects"
@@ -2392,7 +2628,7 @@
                                        (lambda (w context info) (|XtUnmanageChild freeverb-dialog))
                                        (lambda (w context info)
                                          (help-dialog "Freeverb3 Help"
-                                                      "Jezar's famous reverb. Move the sliders to set the reverb parameters.\n\ This effect works only with stereo soundfiles!"))
+                                                      "Jezar's famous reverb. Move the sliders to set the reverb parameters.\n\ This effect works only with stereo soundfiles!\n\ See the Freeverb Web page at http://www.jw015a0732.pwp.blueyonder.co.uk/freeverb.htm for more information."))
                                        (lambda (w c i)
                                          (set! freeverb-room-size .5)
                                          (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* freeverb-room-size 100))))
@@ -2406,7 +2642,9 @@
                                          (|XtSetValues (list-ref sliders 4) (list |XmNvalue (inexact->exact (* freeverb-width 100)))))))
              (set! sliders
                    (add-sliders freeverb-dialog
-                                (list (list "room size" 0 .5 1
+                                (list 
+
+				      (list "room size" 0 .5 1
                                             (lambda (w context info)
                                               (set! freeverb-room-size (/ (|value info) 100)))
                                             100)
@@ -2428,7 +2666,9 @@
                                             100))))
              (let* ((s1 (|XmStringCreateLocalized "Freeze mode"))
                      (toggle
+
                       (|XtCreateManagedWidget "Freeze mode" |xmToggleButtonWidgetClass (|XtParent (car sliders))
+
                         (list |XmNselectColor  (|Pixel (snd-pixel (pushed-button-color)))
                               |XmNbackground   (|Pixel (snd-pixel (basic-color)))
                               |XmNvalue        freeverb-freeze-mode
@@ -2532,5 +2772,90 @@
         (|XtAddCallback child |XmNactivateCallback
                         (lambda (w c i)
                           (post-gverb-dialog))))
+
+
+
+;;; Impulse convolver
+;;;
+
+(define impulse-convolver-id 1)
+(define impulse-convolver-high-latency-mode 0)
+(define impulse-convolver-gain 0)
+(define impulse-convolver-dialog #f)
+(define impulse-convolver-label "Impulse convolver")
+
+(define (cp-impulse-convolver)
+   (apply-ladspa (make-sample-reader (cursor))
+      (list "imp_1199" "imp" impulse-convolver-id impulse-convolver-high-latency-mode impulse-convolver-gain)
+         (- (frames) (cursor))
+         "impulse convolver"))
+
+(if (and (provided? 'snd-ladspa)
+         (provided? 'xm))
+  (begin
+
+    (define (post-impulse-convolver-dialog)
+       (if (not (|Widget? impulse-convolver-dialog))
+           (let ((sliders '()))
+             (set! impulse-convolver-dialog
+                   (make-effect-dialog "impulse convolver ladspa plugin"
+                                       (lambda (w context info) (cp-impulse-convolver))
+                                       (lambda (w context info) (|XtUnmanageChild impulse-convolver-dialog))
+                                       (lambda (w context info)
+                                         (help-dialog "Impulse convolver"
+                                                      "This is a convolver for a set of fairly short impulses. The set of impulses has to be compiled in; currently they are:\n\
+ID   Impulse source\n\
+\n\
+1 Unit impulse (identity)\n\
+2 My flat (light natural reverb)\n\
+3 Yamaha Marshall stack simulator\n\
+4 Fender 68 Vibrolux (SM57 on axis)\n\
+5 Fender 68 Vibrolux (SM57 off axis)\n\
+6 Fender 68 Vibrolux (Audio-technica AT4050)\n\
+7 Fender 68 Vibrolux (Neumann U87)\n\
+8 Fender Bassman (SM57 on axis)\n\
+9 Fender Bassman (SM57 off axis)\n\
+10 Fender Bassman (Audio-technica AT4050)\n\
+11 Fender Bassman (Neumann U87)\n\
+12 Fender Superchamp (SM57 on axis)\n\
+13 Fender Superchamp (SM57 off axis)\n\
+14 Fender Superchamp (Audio-technica AT4050)\n\
+15 Fender Superchamp (Neumann U87)\n\
+16 Marshall JCM2000 (SM57 on axis)\n\
+17 Marshall JCM2000 (SM57 off axis)\n\
+18 Marshall Plexi (SM57 on axis)\n\
+19 Marshall Plexi (SM57 off axis)\n\
+20 Matchless Chieftain (SM57 on axis)\n\
+21 Matchless Chieftain (SM57 off axis)\n\
+\n\
+The impulse ID selects the impulse to convolve with.\n\ High latency mode: If you are running with blocks that are not whole powers of two long, or you are hearing distortion, try changing this to 1.\n\ Gain (dB): Controls the gain of the output signal in decibels."))
+                                       (lambda (w c i)
+                                         (set! impulse-convolver-id 1)
+                                         (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* impulse-convolver-id 1))))
+                                         (set! impulse-convolver-high-latency-mode 0)
+                                         (|XtSetValues (list-ref sliders 1) (list |XmNvalue (inexact->exact (* impulse-convolver-high-latency-mode 1))))
+                                         (set! impulse-convolver-gain 0)
+                                         (|XtSetValues (list-ref sliders 2) (list |XmNvalue (inexact->exact (* impulse-convolver-gain 1)))))))
+             (set! sliders
+                   (add-sliders impulse-convolver-dialog
+                                (list (list "impulse ID" 1 1 21
+                                            (lambda (w context info)
+                                              (set! impulse-convolver-id (/ (|value info) 1)))
+                                            1)
+                                      (list "high latency mode" 0 0 1
+                                            (lambda (w context info)
+                                              (set! impulse-convolver-high-latency-mode (/ (|value info) 1)))
+                                            1)
+                                      (list "gain" -90 0 24
+                                            (lambda (w context info)
+                                              (set! impulse-convolver-gain (/ (|value info) 1)))
+                                            1))))))
+       (activate-dialog impulse-convolver-dialog))))
+
+      (let ((child (|XtCreateManagedWidget "Impulse convolver" |xmPushButtonWidgetClass ladspa-reverb-menu
+                                           (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+        (|XtAddCallback child |XmNactivateCallback
+                        (lambda (w c i)
+                          (post-impulse-convolver-dialog))))
 
 

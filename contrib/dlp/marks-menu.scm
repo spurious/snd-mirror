@@ -138,7 +138,7 @@
 
 
 (define (cp-loop-between-marks)
-  (loop-between-marks loop-between-marks-m1 loop-between-marks-m2 loop-between-marks-buffer-size))
+  (loopit loop-between-marks-m1 loop-between-marks-m2 loop-between-marks-buffer-size))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin

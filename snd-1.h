@@ -779,6 +779,7 @@ int selection_end(chan_info *cp);
 int selection_len(void);
 int selection_chans(void);
 int selection_srate(void);
+Float selection_maxamp(chan_info *cp);
 void deactivate_selection(void);
 void reactivate_selection(chan_info *cp, int beg, int end);
 void ripple_selection(ed_list *new_ed, int beg, int num);

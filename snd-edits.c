@@ -1884,6 +1884,13 @@ snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_po
   sf->scaler = MUS_SAMPLE_TO_FLOAT(1.0);
   no_scalers = no_ed_scalers(cp, edit_position);
   /* fprintf(stderr,"dir: %d, no_scalers: %d, scaler=1.0: %d\n",direction, no_scalers, sf->scaler==1.0); */
+  /* TODO: make run(f) choice fragment-specific rather than global
+   * TODO: add ramp fragment reader and virtual envelopes
+   * TODO: if int scaler (or power of 2), use int*int or int>>int for run
+   * TODO: add constant return (0 currently)?
+   * TODO: fragment change func (with possibility of callback fragment-hook)
+   *       could embed extra scalers (as in ap->y_scale of graphs)
+   */
   if (direction == READ_FORWARD)
     {
       if (no_scalers)
@@ -2917,6 +2924,13 @@ static XEN g_next_sample(XEN obj)
   return(C_TO_XEN_DOUBLE(next_sample_to_float(TO_SAMPLE_READER(obj))));
 }
 
+static XEN g_read_sample(XEN obj)
+{
+  #define H_read_sample "(" S_read_sample " reader) -> read sample from reader"
+  XEN_ASSERT_TYPE(SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_read_sample, "a sample-reader");
+  return(C_TO_XEN_DOUBLE(read_sample_to_float(TO_SAMPLE_READER(obj))));
+}
+
 static XEN g_previous_sample(XEN obj)
 {
   #define H_previous_sample "(" S_previous_sample " reader) -> previous sample from reader"
@@ -3914,6 +3928,7 @@ static XEN g_insert_samples_with_origin(XEN samp, XEN samps, XEN origin, XEN vec
 XEN_ARGIFY_5(g_make_sample_reader_w, g_make_sample_reader)
 XEN_ARGIFY_4(g_make_region_sample_reader_w, g_make_region_sample_reader)
 XEN_NARGIFY_1(g_next_sample_w, g_next_sample)
+XEN_NARGIFY_1(g_read_sample_w, g_read_sample)
 XEN_NARGIFY_1(g_previous_sample_w, g_previous_sample)
 XEN_NARGIFY_1(g_free_sample_reader_w, g_free_sample_reader)
 XEN_NARGIFY_1(g_sample_reader_home_w, g_sample_reader_home)
@@ -3950,6 +3965,7 @@ XEN_ARGIFY_9(g_set_samples_w, g_set_samples)
 #define g_make_sample_reader_w g_make_sample_reader
 #define g_make_region_sample_reader_w g_make_region_sample_reader
 #define g_next_sample_w g_next_sample
+#define g_read_sample_w g_read_sample
 #define g_previous_sample_w g_previous_sample
 #define g_free_sample_reader_w g_free_sample_reader
 #define g_sample_reader_home_w g_sample_reader_home
@@ -3997,7 +4013,7 @@ void g_init_edits(void)
   scm_set_smob_print(sf_tag, print_sf);
   scm_set_smob_free(sf_tag, free_sf);
 #if HAVE_APPLICABLE_SMOB
-  scm_set_smob_apply(sf_tag, XEN_PROCEDURE_CAST g_next_sample, 0, 0, 0);
+  scm_set_smob_apply(sf_tag, XEN_PROCEDURE_CAST g_read_sample, 0, 0, 0);
 #endif
 #endif
 #if HAVE_RUBY
@@ -4008,6 +4024,7 @@ void g_init_edits(void)
 
   XEN_DEFINE_PROCEDURE(S_make_sample_reader,        g_make_sample_reader_w, 0, 5, 0,        H_make_sample_reader);
   XEN_DEFINE_PROCEDURE(S_make_region_sample_reader, g_make_region_sample_reader_w, 0, 4, 0, H_make_region_sample_reader);
+  XEN_DEFINE_PROCEDURE(S_read_sample,               g_read_sample_w, 1, 0, 0,               H_read_sample);
   XEN_DEFINE_PROCEDURE(S_next_sample,               g_next_sample_w, 1, 0, 0,               H_next_sample);
   XEN_DEFINE_PROCEDURE(S_previous_sample,           g_previous_sample_w, 1, 0, 0,           H_previous_sample);
   XEN_DEFINE_PROCEDURE(S_free_sample_reader,        g_free_sample_reader_w, 1, 0, 0,        H_free_sample_reader);

@@ -149,6 +149,22 @@ int selection_srate(void)
   return(0);
 }
 
+Float selection_maxamp(chan_info *cp)
+{
+  Float val = 0.0;
+  if (selection_is_active_in_channel(cp))
+    {
+      val = ed_selection_maxamp(cp);
+      if (val >= 0.0) return(val);
+      val = local_maxamp(cp, 
+			 selection_beg(cp), 
+			 selection_end(cp) - selection_beg(cp) + 1,
+			 cp->edit_ctr);
+      set_ed_selection_maxamp(cp, val);
+    }
+  return(val);
+}
+
 static int cp_delete_selection(chan_info *cp, void *origin)
 {
   ed_list *ed;
@@ -961,6 +977,15 @@ static XEN g_selection_srate(void)
   return(C_TO_XEN_INT(selection_srate()));
 }
 
+static XEN g_selection_maxamp(XEN snd, XEN chn)
+{
+  #define H_selection_maxamp "(" S_selection_maxamp " &optional snd chn) -> selection maxamp in given channel"
+  chan_info *cp;
+  ASSERT_CHANNEL(S_selection_maxamp, snd, chn, 1);
+  cp = get_cp(snd, chn, S_selection_maxamp);
+  return(C_TO_XEN_DOUBLE(selection_maxamp(cp)));
+}
+
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_2(g_selection_position_w, g_selection_position)
 XEN_ARGIFY_3(g_set_selection_position_w, g_set_selection_position)
@@ -971,6 +996,7 @@ XEN_ARGIFY_3(g_set_selection_member_w, g_set_selection_member)
 XEN_NARGIFY_0(g_selection_p_w, g_selection_p)
 XEN_NARGIFY_0(g_selection_chans_w, g_selection_chans)
 XEN_NARGIFY_0(g_selection_srate_w, g_selection_srate)
+XEN_ARGIFY_2(g_selection_maxamp_w, g_selection_maxamp)
 XEN_NARGIFY_0(g_delete_selection_w, g_delete_selection)
 XEN_ARGIFY_3(g_insert_selection_w, g_insert_selection)
 XEN_ARGIFY_3(g_mix_selection_w, g_mix_selection)
@@ -986,6 +1012,7 @@ XEN_ARGIFY_6(g_save_selection_w, g_save_selection)
 #define g_selection_p_w g_selection_p
 #define g_selection_chans_w g_selection_chans
 #define g_selection_srate_w g_selection_srate
+#define g_selection_maxamp_w g_selection_maxamp
 #define g_delete_selection_w g_delete_selection
 #define g_insert_selection_w g_insert_selection
 #define g_mix_selection_w g_mix_selection
@@ -1010,6 +1037,7 @@ void g_init_selection(void)
   XEN_DEFINE_PROCEDURE(S_selection_p,      g_selection_p_w, 0, 0, 0,      H_selection_p);
   XEN_DEFINE_PROCEDURE(S_selection_chans,  g_selection_chans_w, 0, 0, 0,  H_selection_chans);
   XEN_DEFINE_PROCEDURE(S_selection_srate,  g_selection_srate_w, 0, 0, 0,  H_selection_srate);
+  XEN_DEFINE_PROCEDURE(S_selection_maxamp, g_selection_maxamp_w, 0, 2, 0, H_selection_maxamp);
   XEN_DEFINE_PROCEDURE(S_delete_selection, g_delete_selection_w, 0, 0, 0, H_delete_selection);
   XEN_DEFINE_PROCEDURE(S_insert_selection, g_insert_selection_w, 0, 3, 0, H_insert_selection);
   XEN_DEFINE_PROCEDURE(S_mix_selection,    g_mix_selection_w, 0, 3, 0,    H_mix_selection);

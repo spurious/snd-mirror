@@ -1,43 +1,23 @@
 
-Explicit load path settings are no longer required for any of these files. However, you must place the following lines in your ~/.snd file:
+SETTING THE MODULE LOAD PATH
 
-	(set! %load-path (cons "/your/path/to/snd-5" %load-path))
-	(set! %load-path (cons "/your/path/to/snd-5/contrib/dlp" %load-path))
-	(set! snd-remember-paths #t)
-
-(The second line is not strictly required.)
-
-The load-path settings can include any number of specified paths. For example, my .snd begins with thse lines:
+Snd will load Scheme files according to the path settings in your $HOME/.snd file. The entry in my own .snd file looks like this:
 
 	(set! %load-path (cons "/home/dlphilp/my_scm" %load-path))
 	(set! %load-path (cons "/home/dlphilp/snd-5" %load-path))
 	(set! snd-remember-paths #t)
 
-(The path to my_scm is where I keep the originals for the snd/contrib/dlp directory.)
+	(load-from-path "misc.scm")
 
-To enable these modules you can either start Snd with this command sequence (adding the path to your Scheme modules of course) :
+Scheme modules located in those load paths are then available for use.
 
-	snd -l misc.scm
+ABOUT THE LADSPA PLUGINS
 
-or you can load the file while Snd is running with this sequence in the Listener:
+I have used the LADSPA plugins as standalone effects processing modules, i.e., there is no mechanism in Snd yet to dynamically load and unload plugins of any type.
 
-	(load "misc.scm")
-
-I usually start up Snd with this line:
-
-	snd -l ~/my_scm/misc.scm -geometry 1280x700
-
-for a big view on a 19" monitor. Adjust to taste... 
-
-Also be aware that you must compile Snd for Motif and LADSPA support. I build Snd with the following options:
-
-	./configure --with-motif --with-ladspa --with-static-xm --with-alsa --with-temp-dir=/usr/local/dump/snd-stuff --with-save-dir=/usr/local/dump/snd-stuff
-
-Please corrections, emendations, suggestions, and so forth to dlphilp@bright.net.
-
-Enjoy !
+The Help texts for the LADSPA effects are courtesy Steve Harris, with edits and emendations from yours truly.
 
 == dlp
 
-10 December 2001
+1 April 2002
 

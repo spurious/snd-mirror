@@ -2623,7 +2623,7 @@ Scheme function to get the values to assign into the vct(s).  For example</p>
 <pre>
   (vct-map! out-data (lambda () 
                        (convolve cnv (lambda (dir) 
-                                       (next-sample sf)))))
+                                       (read-sample sf)))))
 </pre>
 <p>in the cnvtest function in <a href="sndscm.html#exampdoc">examp.scm</a> is calling the convolve generator and
 assigning the result to each successive member of the out-data vct.  <i>vct-do!</i>
@@ -2652,8 +2652,8 @@ function to take stereo sounds:
 	  (<em class=red>vcts-map!</em> out-data10 out-data11 
 		     (lambda (num)
 		       (list
-			(convolve cnv10 (lambda (dir) (next-sample sf10)))
-			(convolve cnv11 (lambda (dir) (next-sample sf11))))))
+			(convolve cnv10 (lambda (dir) (read-sample sf10)))
+			(convolve cnv11 (lambda (dir) (read-sample sf11))))))
 	  (free-sample-reader sf10)
 	  (free-sample-reader sf11)
 	  (vct-scale! out-data10 amp0)
@@ -3030,8 +3030,9 @@ it generally as a stream of samples, read in order.  The <a href="grfsnd.html#ex
 function below shows how to use <i>samples-&gt;vct</i>; there are numerous
 examples of <i>sample-readers</i> in <a href="sndscm.html#exampdoc">examp.scm</a>.  The basic idea is that
 you create a reader (via <i>make-sample-reader</i> or <i>make-region-sample-reader</i>) giving it the start position, the sound and channel
-to read, and the initial read direction, then get data via <i>next-sample</i> and
-<i>previous-sample</i>, finally closing the reader with <i>free-sample-reader</i>.
+to read, and the initial read direction, then get data via <i>read-sample</i> (which remembers the
+read direction passed to make-sample-reader), or <i>next-sample</i> (read forward) and
+<i>previous-sample</i> (read backward), finally closing the reader with <i>free-sample-reader</i>.
 It is not strictly necessary to call <i>free-sample-reader</i> yourself; the
 garbage collector will take care of it if you forget to.
 A standard way to add something to the current
@@ -3040,7 +3041,7 @@ data is:</p>
    ...
    (sf (make-sample-reader start))
    ...
-   (vct-map! out-data (lambda () (+ (next-sample sf) &lt;new stuff&gt;))
+   (vct-map! out-data (lambda () (+ (read-sample sf) &lt;new stuff&gt;))
    (free-sample-reader sf)
    (vct-&gt;samples start len out-data)
 </pre>
@@ -3120,7 +3121,7 @@ edited) sound can be accessed by a normal sample-reader.
            (edit-pos (edit-position index))
            (previous-edit (<em class=red>make-sample-reader</em> 0 0 index 1 (1- edit-pos))))
       (lambda (x)
-        (- x (next-sample previous-edit)) #f))))
+        (- x (read-sample previous-edit)) #f))))
 
 (map-chan (snd-diff))
 <!-- --></pre></td></tr></table></td></tr>
@@ -3144,7 +3145,7 @@ edited) sound can be accessed by a normal sample-reader.
 <!-- -->
 <!-- next-sample -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="nextsample">next-sample</a></em>       (obj)</code></span></td>
-<!-- --><td>return next sample read by <a href="#samplereaders">sample-reader</a> <i>obj</i>.</td></tr>
+<!-- --><td>return next sample (reading forward) read by <a href="#samplereaders">sample-reader</a> <i>obj</i>.</td></tr>
 <!-- -->
 <!-- next-track-sample -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="nexttracksample">next-track-sample</a></em> (obj)</code></span></td>
@@ -3153,6 +3154,18 @@ edited) sound can be accessed by a normal sample-reader.
 <!-- previous-sample -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="previoussample">previous-sample</a></em>   (obj)</code></span></td>
 <!-- --><td>return previous sample in stream read by <a href="#samplereaders">sample-reader</a> <i>obj</i>.</td></tr>
+<!-- -->
+<!-- read-sample -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="readsample">read-sample</a></em>       (obj)</code></span></td>
+<!-- --><td>return next sample (reading in the direction set by make-sample-reader) from <a href="#samplereaders">sample-reader</a> <i>obj</i>.</td></tr>
+<!-- -->
+<!-- read-mix-sample -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="readmixsample">read-mix-sample</a></em>   (obj)</code></span></td>
+<!-- --><td>return next sample read by <a href="#samplereaders">mix-sample-reader</a> <i>obj</i>.</td></tr>
+<!-- -->
+<!-- read-track-sample -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="readtracksample">read-track-sample</a></em> (obj)</code></span></td>
+<!-- --><td>return next sample read by <a href="#samplereaders">track-sample-reader</a> <i>obj</i>.</td></tr>
 <!-- -->
 <!-- sample-reader-at-end? -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="samplereaderatendQ">sample-reader-at-end?</a></em> (obj)</code></span></td>
@@ -3172,7 +3185,7 @@ edited) sound can be accessed by a normal sample-reader.
 <!-- -->
 <!-- --></table>
 
-<p>The <i>next-sample</i> functions can be omitted: <code>(reader)</code> is the same as <code>(next-sample reader)</code>.
+<p>The <i>read-sample</i> functions can be omitted: <code>(reader)</code> is the same as <code>(read-sample reader)</code>.
 </p>
 
 <br>
@@ -3933,6 +3946,13 @@ Most of the region number arguments default to the current region (the first in 
 <!-- -->selection frames. See make-selection in extensions.scm.
 <!-- --></td></tr>
 <!-- -->
+<!-- selection-maxamp -->
+<!-- -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="sndselectionmaxamp">selection-maxamp</a></em> (<i>snd chn</i>)</code></span></td>
+<!-- --><td>
+<!-- -->maximum amplitude of selection in the given channel.
+<!-- --></td></tr>
+<!-- -->
 <!-- selection-member? -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="selectionmember">selection-member?</a></em> (<i>snd chn</i>)</code></span></td>
@@ -4264,7 +4284,7 @@ the direction argument between the channel and edit-position.
 	 (reader (make-sample-reader beg snd chn 1 edpos))
 	 (cgen (make-convolve :filter kernel 
                               :input (lambda (dir)
-				       (next-sample reader)))))
+				       (read-sample reader)))))
     (<em class=red>clm-channel</em> cgen beg dur snd chn edpos)
     (free-sample-reader reader)))
 
@@ -5592,7 +5612,7 @@ the direction argument between the channel and edit-position.
 	(sf (make-sample-reader 0)))
     (map-channel
      (lambda (val)
-       (convolve cnv (lambda (dir) (next-sample sf)))))
+       (convolve cnv (lambda (dir) (read-sample sf)))))
     (free-sample-reader sf)))
 <!-- --></pre></td></tr></table>
 <!-- --></td></tr>
@@ -5682,7 +5702,7 @@ the direction argument between the channel and edit-position.
 			#f)))
 	   (free-sample-reader reader)
 	   val))
-      (set! result (func (next-sample reader))))))
+      (set! result (func (read-sample reader))))))
 <!-- --></pre></td></tr></table>
 <!-- --><br>snd4.scm has Snd-4 style scanning functions.  For example:<br><br>
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
@@ -7119,7 +7139,7 @@ Here's an example that displays a histogram of the current values in 16 bins:
           (step (/ 1.0 len)))
       (do ((i 0 (1+ i))) 
           ((= i len) v)
-        (let* ((val (next-sample fd))
+        (let* ((val (read-sample fd))
                (bin (inexact-&gt;exact (* (abs val) 16.0))))
           (do ((j 0 (1+ j))) 
               ((= j steps))
@@ -7143,7 +7163,7 @@ And an example that lets us see the result of filtering the waveform:
                                            v1))))
      (do ((i 0 (1+ i))) 
          ((= i len) v)
-      (vct-set! v i (fir-filter flt (next-sample fd)))))))
+      (vct-set! v i (fir-filter flt (read-sample fd)))))))
 </pre></td></tr></table></td></tr>
 
 <!-- autocorrelate -->
@@ -8212,11 +8232,11 @@ run
 	 (twice #f)
 	 (dir (if forwards 1 -1))
 	 (reader (make-sample-reader loc #f #f dir))
-	 (val (if forwards (next-sample reader) (previous-sample reader))))
+	 (val (read-sample)))
     (while (not (or (c-g?)
 		    (and forwards (sample-reader-at-end? reader))
 		    (and (not forwards) (= loc 0))))
-      (let ((newval (if forwards (next-sample reader) (previous-sample reader))))
+      (let ((newval (read-sample reader)))
 	(set! loc (+ loc dir))
 	(if (or (and (&gt;= val 0.0) (&lt; newval 0.0))
 		(and (&lt; val 0.0) (&gt;= newval 0.0)))
