@@ -443,7 +443,7 @@ static SCM g_save_listener(SCM filename)
 {
   #define H_save_listener "(" S_save_listener " filename) saves the current listener text in filename"
   FILE *fp = NULL;
-  SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_save_listener);
+  SCM_ASSERT(STRING_P(filename), filename, SCM_ARG1, S_save_listener);
   fp = fopen(TO_C_STRING(filename), "w");
   if (fp) save_listener_text(fp);
   if ((!fp) || (fclose(fp) != 0))
@@ -456,7 +456,7 @@ static SCM g_save_listener(SCM filename)
 
 void g_init_listener(SCM local_doc)
 {
-  DEFINE_PROC(gh_new_procedure(S_save_listener, SCM_FNC g_save_listener, 1, 0, 0), H_save_listener);
+  DEFINE_PROC(S_save_listener, g_save_listener, 1, 0, 0, H_save_listener);
 }
 
 #endif

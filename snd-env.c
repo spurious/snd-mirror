@@ -1251,7 +1251,7 @@ env *name_to_env(char *str)
 static SCM g_define_envelope(SCM a, SCM b)
 {
   #define H_define_envelope "(" S_define_envelope " name data) defines 'name' to be the envelope 'data', a list of breakpoints"
-  SCM_ASSERT(gh_string_p(a), a, SCM_ARG1, S_define_envelope);
+  SCM_ASSERT(STRING_P(a), a, SCM_ARG1, S_define_envelope);
   if (gh_list_p(b)) 
     alert_envelope_editor(get_global_state(), 
 			  TO_C_STRING(a), 
@@ -1264,8 +1264,8 @@ static SCM g_env_base(SCM name)
   #define H_env_base "(" S_env_base " 'env) is the base of the envelope env"
   int i;
   char *urn = NULL;
-  SCM_ASSERT(SYMBOL_P(name) || gh_string_p(name), name, SCM_ARG1, S_env_base);
-  if (gh_string_p(name))
+  SCM_ASSERT(SYMBOL_P(name) || STRING_P(name), name, SCM_ARG1, S_env_base);
+  if (STRING_P(name))
     urn = TO_NEW_C_STRING(name);
   else urn = TO_NEW_C_STRING(scm_symbol_to_string(name));
   i = find_env(urn);
@@ -1282,9 +1282,9 @@ static SCM g_set_env_base(SCM name, SCM val)
 {
   int i;
   char *urn = NULL;
-  SCM_ASSERT(SYMBOL_P(name) || gh_string_p(name), name, SCM_ARG1, "set-" S_env_base);
+  SCM_ASSERT(SYMBOL_P(name) || STRING_P(name), name, SCM_ARG1, "set-" S_env_base);
   SCM_ASSERT(NUMBER_P(val), val, SCM_ARG2, "set-" S_env_base);
-  if (gh_string_p(name))
+  if (STRING_P(name))
     urn = TO_NEW_C_STRING(name);
   else urn = TO_NEW_C_STRING(scm_symbol_to_string(name));
   i = find_env(urn);
@@ -1339,8 +1339,8 @@ env *get_env(SCM e, SCM base, char *origin) /* list or vector in e */
   env *newenv = NULL;
   SCM *vdata;
   SCM lst;
-  SCM_ASSERT(((gh_vector_p(e)) || (gh_list_p(e))), e, SCM_ARG1, origin);
-  if (gh_vector_p(e))
+  SCM_ASSERT(((VECTOR_P(e)) || (gh_list_p(e))), e, SCM_ARG1, origin);
+  if (VECTOR_P(e))
     {
       len = gh_vector_length(e);
       if (len == 0)
@@ -1374,8 +1374,8 @@ static SCM g_save_envelopes(SCM filename)
   #define H_save_envelopes "(" S_save_envelopes " filename) saves the envelopes known to the envelope editor in filename"
   char *name = NULL;
   FILE *fd;
-  SCM_ASSERT((gh_string_p(filename) || (SCM_FALSEP(filename)) || (SCM_UNBNDP(filename))), filename, SCM_ARG1, S_save_envelopes);
-  if (gh_string_p(filename)) 
+  SCM_ASSERT((STRING_P(filename) || (SCM_FALSEP(filename)) || (SCM_UNBNDP(filename))), filename, SCM_ARG1, S_save_envelopes);
+  if (STRING_P(filename)) 
     name = mus_expand_filename(TO_C_STRING(filename));
   else name = copy_string("envs.save");
   fd = fopen(name, "w");
@@ -1442,8 +1442,8 @@ int check_enved_hook(env *e, int pos, Float x, Float y, int reason)
 
 void g_init_env(SCM local_doc)
 {
-  DEFINE_PROC(gh_new_procedure0_1(S_save_envelopes,  g_save_envelopes),   H_save_envelopes);
-  DEFINE_PROC(gh_new_procedure2_0(S_define_envelope, g_define_envelope),  H_define_envelope);
+  DEFINE_PROC(S_save_envelopes,  g_save_envelopes, 0, 1, 0,   H_save_envelopes);
+  DEFINE_PROC(S_define_envelope, g_define_envelope, 2, 0, 0,  H_define_envelope);
   define_procedure_with_setter(S_env_base, SCM_FNC g_env_base, H_env_base,
 			       "set-" S_env_base, SCM_FNC g_set_env_base, local_doc, 1, 0, 2, 0);
 

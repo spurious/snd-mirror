@@ -1386,7 +1386,7 @@ static SCM g_find_sound(SCM filename)
   #define H_find_sound "(" S_find_sound " name) returns the id of the sound associated with file 'name'"
   snd_state *ss;
   snd_info *sp;
-  SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_find_sound);
+  SCM_ASSERT(STRING_P(filename), filename, SCM_ARG1, S_find_sound);
   ss = get_global_state();
   sp = find_sound(ss, TO_C_STRING(filename));
   if (sp) return(TO_SCM_INT(sp->index));
@@ -1959,7 +1959,7 @@ static SCM g_open_sound(SCM filename)
   char *fname = NULL;
   snd_state *ss;
   snd_info *sp;
-  SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_open_sound);
+  SCM_ASSERT(STRING_P(filename), filename, SCM_ARG1, S_open_sound);
   ss = get_global_state();
   fname = mus_expand_filename(TO_C_STRING(filename));
   if (!(mus_file_probe(fname)))
@@ -1982,7 +1982,7 @@ opens filename assuming the data matches the attributes indicated unless the fil
   snd_state *ss;
   snd_info *sp;
   int os, oc, ofr, ou, ofit;
-  SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_open_raw_sound);
+  SCM_ASSERT(STRING_P(filename), filename, SCM_ARG1, S_open_raw_sound);
   SCM_ASSERT(NUMBER_P(srate), srate, SCM_ARG2, S_open_raw_sound);
   SCM_ASSERT(INTEGER_P(chans), chans, SCM_ARG3, S_open_raw_sound);
   SCM_ASSERT(INTEGER_P(format), format, SCM_ARG4, S_open_raw_sound);
@@ -2026,7 +2026,7 @@ static SCM g_open_alternate_sound(SCM filename)
   char *fname = NULL;
   snd_state *ss;
   snd_info *sp;
-  SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_open_alternate_sound);
+  SCM_ASSERT(STRING_P(filename), filename, SCM_ARG1, S_open_alternate_sound);
   ss = get_global_state();
   sp = any_selected_sound(ss);
   if (sp) snd_close_file(sp, ss); /* should we ask about saving edits here? */
@@ -2048,7 +2048,7 @@ static SCM g_view_sound(SCM filename)
   char *fname = NULL;
   snd_info *sp = NULL;
   snd_state *ss;
-  SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_view_sound);
+  SCM_ASSERT(STRING_P(filename), filename, SCM_ARG1, S_view_sound);
   ss = get_global_state();
   fname = mus_expand_filename(TO_C_STRING(filename));
   if (!(mus_file_probe(fname)))
@@ -2086,7 +2086,7 @@ saves snd in filename using the indicated attributes.  If channel is specified, 
   file_info *hdr;
   int ht, df, sr, chan;
   char *fname = NULL;
-  SCM_ASSERT(gh_string_p(newfile), newfile, SCM_ARG1, S_save_sound_as);
+  SCM_ASSERT(STRING_P(newfile), newfile, SCM_ARG1, S_save_sound_as);
   SND_ASSERT_SND(S_save_sound_as, index, 2);
   sp = get_sp(index);
   if (sp == NULL) 
@@ -2148,7 +2148,7 @@ creates a new sound file with the indicated attributes; if any are omitted, the 
   int chan, size;
   unsigned char* buf;
   char *str = NULL, *com = NULL;
-  SCM_ASSERT(gh_string_p(name), name, SCM_ARG1, S_new_sound);
+  SCM_ASSERT(STRING_P(name), name, SCM_ARG1, S_new_sound);
   ss = get_global_state();
   str = mus_expand_filename(TO_C_STRING(name));
   if (snd_overwrite_ok(ss, str))
@@ -2169,7 +2169,7 @@ creates a new sound file with the indicated attributes; if any are omitted, the 
 		      if (str) FREE(str);
 		      mus_misc_error(S_new_sound, "chans <= 0?", chans);
 		    }
-		  if (gh_string_p(comment))
+		  if (STRING_P(comment))
 		    com = TO_NEW_C_STRING(comment);
 		  toss_this = str;
 		  scm_this = name;
@@ -2695,7 +2695,7 @@ static SCM g_write_peak_env_info_file(SCM snd, SCM chn, SCM name)
   MUS_SAMPLE_TYPE mbuf[2];
   SND_ASSERT_CHAN(S_write_peak_env_info_file, snd, chn, 1);
   cp = get_cp(snd, chn, S_write_peak_env_info_file);
-  SCM_ASSERT(gh_string_p(name), name, SCM_ARG2, S_write_peak_env_info_file);
+  SCM_ASSERT(STRING_P(name), name, SCM_ARG2, S_write_peak_env_info_file);
   if ((cp->amp_envs) && (cp->amp_envs[0]))
     {
       fullname = mus_expand_filename(TO_C_STRING(name));
@@ -2776,12 +2776,12 @@ If it returns #t, the usual informative minibuffer babbling is squelched."
   name_click_hook = MAKE_HOOK(S_name_click_hook, 1, H_name_click_hook);       /* args = snd-index */
 
 #if (!USE_NO_GUI)
-  DEFINE_PROC(gh_new_procedure(S_sound_widgets, SCM_FNC g_sound_widgets, 0, 1, 0), "returns sound widgets");
+  DEFINE_PROC(S_sound_widgets, g_sound_widgets, 0, 1, 0, "returns sound widgets");
 #endif
 
-  DEFINE_PROC(gh_new_procedure(S_soundQ, SCM_FNC g_soundQ, 0, 1, 0), H_soundQ);
-  DEFINE_PROC(gh_new_procedure(S_bomb, SCM_FNC g_bomb, 0, 2, 0), H_bomb);
-  DEFINE_PROC(gh_new_procedure(S_find_sound, SCM_FNC g_find_sound, 1, 0, 0), H_find_sound);
+  DEFINE_PROC(S_soundQ, g_soundQ, 0, 1, 0, H_soundQ);
+  DEFINE_PROC(S_bomb, g_bomb, 0, 2, 0, H_bomb);
+  DEFINE_PROC(S_find_sound, g_find_sound, 1, 0, 0, H_find_sound);
 
   define_procedure_with_setter(S_channels, SCM_FNC g_channels, H_channels,
 			       "set-" S_channels, SCM_FNC g_set_channels, local_doc, 0, 1, 0, 2);
@@ -2804,11 +2804,11 @@ If it returns #t, the usual informative minibuffer babbling is squelched."
   define_procedure_with_setter(S_comment, SCM_FNC g_comment, H_comment,
 			       "set-" S_comment, SCM_FNC g_set_comment, local_doc, 0, 1, 0, 2);
 
-  DEFINE_PROC(gh_new_procedure(S_file_name,             SCM_FNC g_file_name, 0, 1, 0),             H_file_name);
-  DEFINE_PROC(gh_new_procedure(S_short_file_name,       SCM_FNC g_short_file_name, 0, 1, 0),       H_short_file_name);
-  DEFINE_PROC(gh_new_procedure(S_save_control_panel,    SCM_FNC g_save_control_panel, 0, 1, 0),    H_save_control_panel);
-  DEFINE_PROC(gh_new_procedure(S_restore_control_panel, SCM_FNC g_restore_control_panel, 0, 1, 0), H_restore_control_panel);
-  DEFINE_PROC(gh_new_procedure(S_reset_control_panel,   SCM_FNC g_reset_control_panel, 0, 1, 0),   H_reset_control_panel);
+  DEFINE_PROC(S_file_name,             g_file_name, 0, 1, 0,             H_file_name);
+  DEFINE_PROC(S_short_file_name,       g_short_file_name, 0, 1, 0,       H_short_file_name);
+  DEFINE_PROC(S_save_control_panel,    g_save_control_panel, 0, 1, 0,    H_save_control_panel);
+  DEFINE_PROC(S_restore_control_panel, g_restore_control_panel, 0, 1, 0, H_restore_control_panel);
+  DEFINE_PROC(S_reset_control_panel,   g_reset_control_panel, 0, 1, 0,   H_reset_control_panel);
 
   define_procedure_with_setter(S_selected_sound, SCM_FNC g_selected_sound, H_selected_sound,
 			       "set-" S_selected_sound, SCM_FNC g_select_sound, local_doc, 0, 0, 0, 1);
@@ -2816,20 +2816,20 @@ If it returns #t, the usual informative minibuffer babbling is squelched."
   define_procedure_with_setter(S_selected_channel, SCM_FNC g_selected_channel, H_selected_channel,
 			       "set-" S_selected_channel, SCM_FNC g_set_selected_channel, local_doc, 0, 1, 0, 2);
 
-  DEFINE_PROC(gh_new_procedure(S_select_sound, SCM_FNC g_select_sound, 0, 1, 0), H_select_sound);
-  DEFINE_PROC(gh_new_procedure(S_select_channel, SCM_FNC g_select_channel, 0, 1, 0), H_select_channel);
+  DEFINE_PROC(S_select_sound, g_select_sound, 0, 1, 0, H_select_sound);
+  DEFINE_PROC(S_select_channel, g_select_channel, 0, 1, 0, H_select_channel);
 
-  DEFINE_PROC(gh_new_procedure(S_close_sound,          SCM_FNC g_close_sound, 0, 1, 0),          H_close_sound);
-  DEFINE_PROC(gh_new_procedure(S_update_sound,         SCM_FNC g_update_sound, 0, 1, 0),         H_update_sound);
-  DEFINE_PROC(gh_new_procedure(S_save_sound,           SCM_FNC g_save_sound, 0, 1, 0),           H_save_sound);
-  DEFINE_PROC(gh_new_procedure(S_open_sound,           SCM_FNC g_open_sound, 1, 0, 0),           H_open_sound);
-  DEFINE_PROC(gh_new_procedure(S_open_raw_sound,       SCM_FNC g_open_raw_sound, 4, 0, 0),       H_open_raw_sound);
-  DEFINE_PROC(gh_new_procedure(S_open_alternate_sound, SCM_FNC g_open_alternate_sound, 1, 0, 0), H_open_alternate_sound);
-  DEFINE_PROC(gh_new_procedure(S_view_sound,           SCM_FNC g_view_sound, 1, 0, 0),           H_view_sound);
-  DEFINE_PROC(gh_new_procedure(S_new_sound,            SCM_FNC g_new_sound, 1, 5, 0),            H_new_sound);
-  DEFINE_PROC(gh_new_procedure(S_revert_sound,         SCM_FNC g_revert_sound, 0, 1, 0),         H_revert_sound);
-  DEFINE_PROC(gh_new_procedure(S_save_sound_as,        SCM_FNC g_save_sound_as, 1, 5, 0),        H_save_sound_as);
-  DEFINE_PROC(gh_new_procedure(S_call_apply,           SCM_FNC g_call_apply, 0, 2, 0),           H_call_apply);
+  DEFINE_PROC(S_close_sound,          g_close_sound, 0, 1, 0,          H_close_sound);
+  DEFINE_PROC(S_update_sound,         g_update_sound, 0, 1, 0,         H_update_sound);
+  DEFINE_PROC(S_save_sound,           g_save_sound, 0, 1, 0,           H_save_sound);
+  DEFINE_PROC(S_open_sound,           g_open_sound, 1, 0, 0,           H_open_sound);
+  DEFINE_PROC(S_open_raw_sound,       g_open_raw_sound, 4, 0, 0,       H_open_raw_sound);
+  DEFINE_PROC(S_open_alternate_sound, g_open_alternate_sound, 1, 0, 0, H_open_alternate_sound);
+  DEFINE_PROC(S_view_sound,           g_view_sound, 1, 0, 0,           H_view_sound);
+  DEFINE_PROC(S_new_sound,            g_new_sound, 1, 5, 0,            H_new_sound);
+  DEFINE_PROC(S_revert_sound,         g_revert_sound, 0, 1, 0,         H_revert_sound);
+  DEFINE_PROC(S_save_sound_as,        g_save_sound_as, 1, 5, 0,        H_save_sound_as);
+  DEFINE_PROC(S_call_apply,           g_call_apply, 0, 2, 0,           H_call_apply);
 
 
   define_procedure_with_reversed_setter(S_filter_env, SCM_FNC g_filter_env, H_filter_env,
@@ -2941,11 +2941,11 @@ If it returns #t, the usual informative minibuffer babbling is squelched."
 					"set-" S_speed_tones, SCM_FNC g_set_speed_tones, SCM_FNC g_set_speed_tones_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  DEFINE_PROC(gh_new_procedure(S_peak_env_info, SCM_FNC g_peak_env_info, 0, 3, 0), H_peak_env_info);
+  DEFINE_PROC(S_peak_env_info, g_peak_env_info, 0, 3, 0, H_peak_env_info);
 
 
-  DEFINE_PROC(gh_new_procedure(S_write_peak_env_info_file, SCM_FNC g_write_peak_env_info_file, 3, 0, 0), "(" S_write_peak_env_info_file " snd chn filename)");
-  DEFINE_PROC(gh_new_procedure(S_read_peak_env_info_file,  SCM_FNC g_read_peak_env_info_file,  3, 0, 0), "(" S_read_peak_env_info_file " snd chn filename)");
+  DEFINE_PROC(S_write_peak_env_info_file, g_write_peak_env_info_file, 3, 0, 0, "(" S_write_peak_env_info_file " snd chn filename)");
+  DEFINE_PROC(S_read_peak_env_info_file,  g_read_peak_env_info_file,  3, 0, 0, "(" S_read_peak_env_info_file " snd chn filename)");
 
 }
 

@@ -1116,7 +1116,7 @@ static void mouse_name_leave(Widget w, XtPointer context, XEvent *event, Boolean
 #endif
 
 regrow *make_regrow(snd_state *ss, Widget ww, Widget last_row, 
-			   XtCallbackProc first_callback, XtCallbackProc second_callback, XtCallbackProc third_callback)
+		    XtCallbackProc first_callback, XtCallbackProc second_callback, XtCallbackProc third_callback)
 {
   int n;
   Arg args[32];
@@ -1188,7 +1188,6 @@ regrow *make_regrow(snd_state *ss, Widget ww, Widget last_row,
   FREE(n1);
   FREE(n2);
   FREE(n3);
-
   return(r);
 }
 

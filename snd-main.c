@@ -675,7 +675,7 @@ static SCM g_save_state(SCM filename)
 
   char *error;
   SCM result;
-  SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_save_state);
+  SCM_ASSERT(STRING_P(filename), filename, SCM_ARG1, S_save_state);
   error = save_state_or_error(get_global_state(), 
 			      TO_C_STRING(filename));
   if (error)
@@ -695,7 +695,7 @@ static SCM g_save_options(SCM filename)
   #define H_save_options "(" S_save_options " filename) saves Snd options in filename"
   char *name = NULL;
   FILE *fd;
-  SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_save_options);
+  SCM_ASSERT(STRING_P(filename), filename, SCM_ARG1, S_save_options);
   name = mus_expand_filename(TO_C_STRING(filename));
   fd = fopen(name, "w");
   if (name) FREE(name);
@@ -731,11 +731,11 @@ static SCM g_mem_report(void)
 
 void g_init_main(SCM local_doc)
 {
-  DEFINE_PROC(gh_new_procedure(S_save_options, SCM_FNC g_save_options, 1, 0, 0), H_save_options);
-  DEFINE_PROC(gh_new_procedure(S_save_state,   SCM_FNC g_save_state, 1, 0, 0),   H_save_state);
-  DEFINE_PROC(gh_new_procedure(S_exit,         SCM_FNC g_exit, 0, 1, 0),         H_exit);
+  DEFINE_PROC(S_save_options, g_save_options, 1, 0, 0, H_save_options);
+  DEFINE_PROC(S_save_state,   g_save_state, 1, 0, 0,   H_save_state);
+  DEFINE_PROC(S_exit,         g_exit, 0, 1, 0,         H_exit);
 
-  DEFINE_PROC(gh_new_procedure("mem-report",   SCM_FNC g_mem_report, 0, 0, 0), "(mem-report) writes memory usage stats to memlog");
+  DEFINE_PROC("mem-report",   g_mem_report, 0, 0, 0, "(mem-report) writes memory usage stats to memlog");
 
   #define H_start_hook S_start_hook " (filename) is called upon start-up. If it returns #t, snd exits immediately."
   start_hook =          MAKE_HOOK(S_start_hook, 1, H_start_hook);                   /* arg = argv filename if any */

@@ -1967,7 +1967,7 @@ static SCM g_prompt_in_minibuffer(SCM msg, SCM callback, SCM snd_n)
 then when the user eventually responds, invokes the function callback with the response and snd (the index)"
 
   snd_info *sp;
-  SCM_ASSERT(gh_string_p(msg), msg, SCM_ARG1, S_prompt_in_minibuffer);
+  SCM_ASSERT(STRING_P(msg), msg, SCM_ARG1, S_prompt_in_minibuffer);
   SCM_ASSERT((SCM_UNBNDP(callback)) || (BOOLEAN_P(callback)) || gh_procedure_p(callback), callback, SCM_ARG2, S_prompt_in_minibuffer);
   SND_ASSERT_SND(S_prompt_in_minibuffer, snd_n, 3);
   sp = get_sp(snd_n);
@@ -1994,7 +1994,7 @@ static SCM g_report_in_minibuffer(SCM msg, SCM snd_n)
 {
   #define H_report_in_minibuffer "(" S_report_in_minibuffer " msg &optional snd) displays msg in snd's minibuffer"
   snd_info *sp;
-  SCM_ASSERT(gh_string_p(msg), msg, SCM_ARG1, S_report_in_minibuffer);
+  SCM_ASSERT(STRING_P(msg), msg, SCM_ARG1, S_report_in_minibuffer);
   SND_ASSERT_SND(S_report_in_minibuffer, snd_n, 2);
   sp = get_sp(snd_n);
   if (sp == NULL) 
@@ -2008,7 +2008,7 @@ static SCM g_append_to_minibuffer(SCM msg, SCM snd_n)
   #define H_append_to_minibuffer "(" S_append_to_minibuffer " msg &optional snd) appends msg to snd's minibuffer"
   snd_info *sp;
   char *str1 = NULL, *expr_str;
-  SCM_ASSERT(gh_string_p(msg), msg, SCM_ARG1, S_append_to_minibuffer);
+  SCM_ASSERT(STRING_P(msg), msg, SCM_ARG1, S_append_to_minibuffer);
   SND_ASSERT_SND(S_append_to_minibuffer, snd_n, 2);
   sp = get_sp(snd_n);
   if (sp == NULL) 
@@ -2051,17 +2051,17 @@ static SCM g_backward_graph(SCM count, SCM snd, SCM chn)
 
 void g_init_kbd(SCM local_doc)
 {
-  DEFINE_PROC(gh_new_procedure(S_forward_graph,           SCM_FNC g_forward_graph, 0, 3, 0),           H_forward_graph);
-  DEFINE_PROC(gh_new_procedure(S_backward_graph,          SCM_FNC g_backward_graph, 0, 3, 0),          H_backward_graph);
+  DEFINE_PROC(S_forward_graph,           g_forward_graph, 0, 3, 0,           H_forward_graph);
+  DEFINE_PROC(S_backward_graph,          g_backward_graph, 0, 3, 0,          H_backward_graph);
 
-  DEFINE_PROC(gh_new_procedure(S_key_binding,             SCM_FNC g_key_binding, 2, 0, 0),             H_key_binding);
-  DEFINE_PROC(gh_new_procedure(S_bind_key,                SCM_FNC g_bind_key, 3, 1, 0),                H_bind_key);
-  DEFINE_PROC(gh_new_procedure(S_key,                     SCM_FNC g_key, 2, 2, 0),                     H_key);
-  DEFINE_PROC(gh_new_procedure(S_save_macros,             SCM_FNC g_save_macros, 0, 0, 0),             H_save_macros);
+  DEFINE_PROC(S_key_binding,             g_key_binding, 2, 0, 0,             H_key_binding);
+  DEFINE_PROC(S_bind_key,                g_bind_key, 3, 1, 0,                H_bind_key);
+  DEFINE_PROC(S_key,                     g_key, 2, 2, 0,                     H_key);
+  DEFINE_PROC(S_save_macros,             g_save_macros, 0, 0, 0,             H_save_macros);
 
-  DEFINE_PROC(gh_new_procedure(S_report_in_minibuffer,    SCM_FNC g_report_in_minibuffer, 1, 1, 0),    H_report_in_minibuffer);
-  DEFINE_PROC(gh_new_procedure(S_prompt_in_minibuffer,    SCM_FNC g_prompt_in_minibuffer, 1, 2, 0),    H_prompt_in_minibuffer);
-  DEFINE_PROC(gh_new_procedure(S_append_to_minibuffer,    SCM_FNC g_append_to_minibuffer, 1, 1, 0),    H_append_to_minibuffer);
+  DEFINE_PROC(S_report_in_minibuffer,    g_report_in_minibuffer, 1, 1, 0,    H_report_in_minibuffer);
+  DEFINE_PROC(S_prompt_in_minibuffer,    g_prompt_in_minibuffer, 1, 2, 0,    H_prompt_in_minibuffer);
+  DEFINE_PROC(S_append_to_minibuffer,    g_append_to_minibuffer, 1, 1, 0,    H_append_to_minibuffer);
 }
 
 #endif

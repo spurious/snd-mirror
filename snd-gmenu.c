@@ -1557,7 +1557,7 @@ wants to override the default menu action:\n\
   menu_hook = MAKE_HOOK(S_menu_hook, 2, H_menu_hook);
   gh_new_procedure("test-menus", SCM_FNC g_test_menus, 0, 0, 0);
   
-  DEFINE_PROC(gh_new_procedure(S_menu_widgets, SCM_FNC g_menu_widgets, 0, 0, 0), "returns top level menu widgets");
+  DEFINE_PROC(S_menu_widgets, g_menu_widgets, 0, 0, 0, "returns top level menu widgets");
 
 #if HAVE_GUILE_GTK
   gh_new_procedure0_0("sg-options-menu-widget", sg_options_menu_widget);

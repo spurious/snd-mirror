@@ -184,7 +184,7 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
 	      else
 		{
 		  stmp = gh_cadr(throw_args);
-		  if ((gh_string_p(stmp)) && (gh_length(throw_args) > 2))
+		  if ((STRING_P(stmp)) && (gh_length(throw_args) > 2))
 		    scm_display_error_message(stmp, gh_caddr(throw_args), port);
 		  else scm_display(tag, port);
 		  if (show_backtrace(state))
@@ -478,7 +478,7 @@ static char *gh_print(SCM result)
   char *newbuf = NULL, *str = NULL;
   int i, ilen, savelen, savectr, slen;
   /* specialize vectors which can be enormous in this context */
-  if ((!(gh_vector_p(result))) || 
+  if ((!(VECTOR_P(result))) || 
       ((int)(gh_vector_length(result)) <= print_length(state)))
     return(gh_print_1(result, __FUNCTION__));
   ilen = print_length(state); 
@@ -663,7 +663,7 @@ static SCM g_snd_print(SCM msg)
   #define H_snd_print "(" S_snd_print " str) displays str in the lisp listener window"
   char *str = NULL;
   state->result_printout = MESSAGE_WITHOUT_CARET;
-  if (gh_string_p(msg))
+  if (STRING_P(msg))
     str = TO_NEW_C_STRING(msg);
   else
     {
@@ -818,8 +818,12 @@ static SCM g_set_color_scale(SCM val)
 static SCM g_corruption_time(void) {return(TO_SCM_DOUBLE(corruption_time(state)));}
 static SCM g_set_corruption_time(SCM val) 
 {
+  Float ctime;
   #define H_corruption_time "(" S_corruption_time ") -> time (seconds) between background checks for changed file on disk (60)"
   SCM_ASSERT(NUMBER_P(val), val, SCM_ARG1, "set-" S_corruption_time); 
+  ctime = TO_C_DOUBLE(val);
+  if ((ctime < 0.0) || (ctime > (24 * 3600)))
+    mus_misc_error("set-" S_corruption_time, "invalid time:", val);
   set_corruption_time(state, TO_C_DOUBLE(val)); 
   return(TO_SCM_DOUBLE(corruption_time(state)));
 }
@@ -952,7 +956,7 @@ static SCM g_eps_file(void) {return(TO_SCM_STRING(eps_file(state)));}
 static SCM g_set_eps_file(SCM val) 
 {
   #define H_eps_file "(" S_eps_file ") -> current eps ('Print' command) file name (snd.eps)"
-  SCM_ASSERT(gh_string_p(val), val, SCM_ARG1, "set-" S_eps_file); 
+  SCM_ASSERT(STRING_P(val), val, SCM_ARG1, "set-" S_eps_file); 
   if (eps_file(state)) free(eps_file(state));
   set_eps_file(state, TO_NEW_C_STRING(val)); 
   return(TO_SCM_STRING(eps_file(state)));
@@ -980,7 +984,7 @@ static SCM g_listener_prompt(void) {return(TO_SCM_STRING(listener_prompt(state))
 static SCM g_set_listener_prompt(SCM val) 
 {
   #define H_listener_prompt "(" S_listener_prompt ") -> the current lisp listener prompt character ('>') "
-  SCM_ASSERT(gh_string_p(val), val, SCM_ARG1, "set-" S_listener_prompt); 
+  SCM_ASSERT(STRING_P(val), val, SCM_ARG1, "set-" S_listener_prompt); 
   if (listener_prompt(state)) free(listener_prompt(state));
   set_listener_prompt(state, TO_NEW_C_STRING(val));
 #if USE_NO_GUI
@@ -999,7 +1003,7 @@ static SCM g_audio_state_file(void) {return(TO_SCM_STRING(audio_state_file(state
 static SCM g_set_audio_state_file(SCM val) 
 {
   #define H_audio_state_file "(" S_audio_state_file ") -> filename for the mus-audio-save-state function (.snd-mixer)"
-  SCM_ASSERT(gh_string_p(val), val, SCM_ARG1, "set-" S_audio_state_file); 
+  SCM_ASSERT(STRING_P(val), val, SCM_ARG1, "set-" S_audio_state_file); 
   if (audio_state_file(state)) free(audio_state_file(state));
   set_audio_state_file(state, TO_NEW_C_STRING(val));
   return(TO_SCM_STRING(audio_state_file(state)));
@@ -1187,7 +1191,7 @@ static SCM g_temp_dir(void) {return(TO_SCM_STRING(temp_dir(state)));}
 static SCM g_set_temp_dir(SCM val) 
 {
   #define H_temp_dir "(" S_temp_dir ") -> name of directory for temp files"
-  SCM_ASSERT(gh_string_p(val), val, SCM_ARG1, "set-" S_temp_dir); 
+  SCM_ASSERT(STRING_P(val), val, SCM_ARG1, "set-" S_temp_dir); 
   if (temp_dir(state)) free(temp_dir(state));
   set_temp_dir(state, TO_NEW_C_STRING(val));
   return(TO_SCM_STRING(temp_dir(state)));
@@ -1203,7 +1207,7 @@ static SCM g_save_dir(void) {return(TO_SCM_STRING(save_dir(state)));}
 static SCM g_set_save_dir(SCM val) 
 {
   #define H_save_dir "(" S_save_dir ") -> name of directory for saved state data"
-  SCM_ASSERT(gh_string_p(val), val, SCM_ARG1, "set-" S_save_dir); 
+  SCM_ASSERT(STRING_P(val), val, SCM_ARG1, "set-" S_save_dir); 
   if (save_dir(state)) free(save_dir(state));
   set_save_dir(state, TO_NEW_C_STRING(val));
   return(TO_SCM_STRING(save_dir(state)));
@@ -1273,7 +1277,7 @@ static SCM g_vu_font(void) {return(TO_SCM_STRING(vu_font(state)));}
 static SCM g_set_vu_font(SCM val) 
 {
   #define H_vu_font "(" S_vu_font ") -> name of font used to make VU meter labels (courier)"
-  SCM_ASSERT(gh_string_p(val), val, SCM_ARG1, "set-" S_vu_font); 
+  SCM_ASSERT(STRING_P(val), val, SCM_ARG1, "set-" S_vu_font); 
   if (vu_font(state)) free(vu_font(state));
   set_vu_font(state, TO_NEW_C_STRING(val));
   return(TO_SCM_STRING(vu_font(state)));
@@ -1384,7 +1388,7 @@ static SCM g_help_text_font(void) {return(TO_SCM_STRING(help_text_font(state)));
 static SCM g_set_help_text_font(SCM val) 
 {
   #define H_help_text_font "(" S_help_text_font ") -> font used in the Help dialog"
-  SCM_ASSERT(gh_string_p(val), val, SCM_ARG1, "set-" S_help_text_font); 
+  SCM_ASSERT(STRING_P(val), val, SCM_ARG1, "set-" S_help_text_font); 
   set_help_text_font(state, TO_NEW_C_STRING(val)); 
   return(val);
 }
@@ -1393,7 +1397,7 @@ static SCM g_tiny_font(void) {return(TO_SCM_STRING(tiny_font(state)));}
 static SCM g_set_tiny_font(SCM val) 
 {
   #define H_tiny_font "(" S_tiny_font ") -> font use for some info in the graphs"
-  SCM_ASSERT(gh_string_p(val), val, SCM_ARG1, "set-" S_tiny_font); 
+  SCM_ASSERT(STRING_P(val), val, SCM_ARG1, "set-" S_tiny_font); 
   set_tiny_font(state, TO_NEW_C_STRING(val)); 
   return(val);
 }
@@ -1402,7 +1406,7 @@ static SCM g_axis_label_font(void) {return(TO_SCM_STRING(axis_label_font(state))
 static SCM g_set_axis_label_font(SCM val) 
 {
   #define H_axis_label_font "(" S_axis_label_font ") -> font used for axis labels"
-  SCM_ASSERT(gh_string_p(val), val, SCM_ARG1, "set-" S_axis_label_font); 
+  SCM_ASSERT(STRING_P(val), val, SCM_ARG1, "set-" S_axis_label_font); 
   set_axis_label_font(state, TO_NEW_C_STRING(val)); 
   return(val);
 }
@@ -1411,7 +1415,7 @@ static SCM g_axis_numbers_font(void) {return(TO_SCM_STRING(axis_numbers_font(sta
 static SCM g_set_axis_numbers_font(SCM val) 
 {
   #define H_axis_numbers_font "(" S_axis_numbers_font ") -> font used for axis numbers"
-  SCM_ASSERT(gh_string_p(val), val, SCM_ARG1, "set-" S_axis_numbers_font); 
+  SCM_ASSERT(STRING_P(val), val, SCM_ARG1, "set-" S_axis_numbers_font); 
   set_axis_numbers_font(state, TO_NEW_C_STRING(val)); 
   return(val);
 }
@@ -1420,7 +1424,7 @@ static SCM g_listener_font(void) {return(TO_SCM_STRING(listener_font(state)));}
 static SCM g_set_listener_font(SCM val) 
 {
   #define H_listener_font "(" S_listener_font ") -> font used by the lisp listener"
-  SCM_ASSERT(gh_string_p(val), val, SCM_ARG1, "set-" S_listener_font);
+  SCM_ASSERT(STRING_P(val), val, SCM_ARG1, "set-" S_listener_font);
   set_listener_font(state, TO_NEW_C_STRING(val)); 
   return(val);
 }
@@ -1429,7 +1433,7 @@ static SCM g_bold_button_font(void) {return(TO_SCM_STRING(bold_button_font(state
 static SCM g_set_bold_button_font(SCM val) 
 {
   #define H_bold_button_font "(" S_bold_button_font ") -> font used by some buttons"
-  SCM_ASSERT(gh_string_p(val), val, SCM_ARG1, "set-" S_bold_button_font); 
+  SCM_ASSERT(STRING_P(val), val, SCM_ARG1, "set-" S_bold_button_font); 
   set_bold_button_font(state, TO_NEW_C_STRING(val)); 
   return(val);
 }
@@ -1438,7 +1442,7 @@ static SCM g_button_font(void) {return(TO_SCM_STRING(button_font(state)));}
 static SCM g_set_button_font(SCM val) 
 {
   #define H_button_font "(" S_button_font ") -> font used by some buttons"
-  SCM_ASSERT(gh_string_p(val), val, SCM_ARG1, "set-" S_button_font); 
+  SCM_ASSERT(STRING_P(val), val, SCM_ARG1, "set-" S_button_font); 
   set_button_font(state, TO_NEW_C_STRING(val)); 
   return(val);
 }
@@ -1663,7 +1667,7 @@ subsequent " S_close_sound_file ". data can be written with " S_vct_sound_file
   int type = MUS_NEXT;
   int format = MUS_BFLOAT;
 #endif
-  if (gh_string_p(g_name)) 
+  if (STRING_P(g_name)) 
     name = TO_NEW_C_STRING(g_name); 
   else 
     if (!(SCM_UNBNDP(g_name))) 
@@ -1678,7 +1682,7 @@ subsequent " S_close_sound_file ". data can be written with " S_vct_sound_file
   else
     if (!(SCM_UNBNDP(g_srate))) 
       scm_wrong_type_arg(S_open_sound_file, 3, g_srate);
-  if (gh_string_p(g_comment)) 
+  if (STRING_P(g_comment)) 
     comment = TO_NEW_C_STRING(g_comment);
   else 
     if (BOUND_P(g_comment)) 
@@ -1877,7 +1881,7 @@ char *string2string(char *str)
 {
   SCM res;
   res = snd_catch_any(eval_str_wrapper, str, "string->string");
-  if (gh_string_p(res))
+  if (STRING_P(res))
     return(TO_NEW_C_STRING(res));
   else snd_error("%s is not a string", str);
   return(str);
@@ -1917,8 +1921,8 @@ static SCM g_update_lisp_graph(SCM snd, SCM chn)
 static SCM g_help_dialog(SCM subject, SCM msg)
 {
   #define H_help_dialog "(" S_help_dialog " subject message) fires up the Help window with subject and message"
-  SCM_ASSERT(gh_string_p(subject), subject, SCM_ARG1, S_help_dialog);
-  SCM_ASSERT(gh_string_p(msg), msg, SCM_ARG2, S_help_dialog);
+  SCM_ASSERT(STRING_P(subject), subject, SCM_ARG1, S_help_dialog);
+  SCM_ASSERT(STRING_P(msg), msg, SCM_ARG2, S_help_dialog);
   snd_help(state, TO_C_STRING(subject), TO_C_STRING(msg));
   return(SCM_BOOL_F);
 }
@@ -1979,7 +1983,7 @@ static SCM g_edit_header_dialog(SCM snd_n)
 static SCM g_yes_or_no_p(SCM msg) 
 {
   #define H_yes_or_no_p "(" S_yes_or_no_p " message) displays message and waits for 'y' or 'n'; returns #t if 'y'"
-  SCM_ASSERT(gh_string_p(msg), msg, SCM_ARG1, S_yes_or_no_p);
+  SCM_ASSERT(STRING_P(msg), msg, SCM_ARG1, S_yes_or_no_p);
   return(TO_SCM_BOOLEAN(snd_yes_or_no_p(state, TO_C_STRING(msg))));
 }
 
@@ -2001,7 +2005,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
   int h = 0, w = 0, o = 0, gx0 = 0, ww = 0;
   axis_info *uap = NULL;
   /* ldata can be a vct object, a vector, or a list of either */
-  SCM_ASSERT(((vct_p(ldata)) || (gh_vector_p(ldata)) || (gh_list_p(ldata))), ldata, SCM_ARG1, S_graph);
+  SCM_ASSERT(((vct_p(ldata)) || (VECTOR_P(ldata)) || (gh_list_p(ldata))), ldata, SCM_ARG1, S_graph);
   SND_ASSERT_CHAN(S_graph, snd_n, chn_n, 7);
   cp = get_cp(snd_n, chn_n, S_graph);
   ymin = 32768.0;
@@ -2011,7 +2015,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
       (cp->sounds[cp->sound_ctr] == NULL) ||
       (cp->axis == NULL))
     return(SCM_BOOL_F);
-  if (gh_string_p(xlabel)) label = TO_NEW_C_STRING(xlabel); 
+  if (STRING_P(xlabel)) label = TO_NEW_C_STRING(xlabel); 
   if (NUMBER_P(x0)) nominal_x0 = TO_C_DOUBLE(x0); else nominal_x0 = 0.0;
   if (NUMBER_P(x1)) nominal_x1 = TO_C_DOUBLE(x1); else nominal_x1 = 1.0;
   if (NUMBER_P(y0)) ymin = TO_C_DOUBLE(y0);
@@ -2200,7 +2204,7 @@ updates an on-going 'progress report' (e. g. an animated hour-glass icon) in snd
   sp = get_sp(snd);
   if (sp) 
     progress_report(sp,
-		    (gh_string_p(name)) ? TO_C_STRING(name) : "something useful",
+		    (STRING_P(name)) ? TO_C_STRING(name) : "something useful",
 		    TO_C_INT_OR_ELSE(cur_chan, 0),
 		    TO_C_INT_OR_ELSE(chans, sp->nchans),
 		    TO_C_DOUBLE(pct),
@@ -2221,7 +2225,7 @@ static SCM g_html_dir(void)
 
 static SCM g_set_html_dir(SCM val) 
 {
-  SCM_ASSERT(gh_string_p(val), val, SCM_ARG1, "set-" S_html_dir);
+  SCM_ASSERT(STRING_P(val), val, SCM_ARG1, "set-" S_html_dir);
   set_html_dir(state, TO_NEW_C_STRING(val)); 
   return(val);
 }
@@ -3197,47 +3201,47 @@ void g_initialize_gh(snd_state *ss)
 
   /* ---------------- FUNCTIONS ---------------- */
 
-  DEFINE_PROC(gh_new_procedure(S_snd_tempnam,         SCM_FNC g_snd_tempnam, 0, 0, 0),         H_snd_tempnam);
-  DEFINE_PROC(gh_new_procedure("set-" S_oss_buffers,  SCM_FNC g_set_oss_buffers, 2, 0, 0),     H_set_oss_buffers);
-  DEFINE_PROC(gh_new_procedure(S_update_usage_stats,  SCM_FNC g_update_usage_stats, 0, 0, 0),  H_update_usage_stats);
+  DEFINE_PROC(S_snd_tempnam,         g_snd_tempnam, 0, 0, 0,         H_snd_tempnam);
+  DEFINE_PROC("set-" S_oss_buffers,  g_set_oss_buffers, 2, 0, 0,     H_set_oss_buffers);
+  DEFINE_PROC(S_update_usage_stats,  g_update_usage_stats, 0, 0, 0,  H_update_usage_stats);
 #if HAVE_OSS
-  DEFINE_PROC(gh_new_procedure(S_clear_audio_inputs,  SCM_FNC g_clear_audio_inputs, 0, 0, 0),  H_clear_audio_inputs);
+  DEFINE_PROC(S_clear_audio_inputs,  g_clear_audio_inputs, 0, 0, 0,  H_clear_audio_inputs);
 #endif
-  DEFINE_PROC(gh_new_procedure(S_enved_dialog,        SCM_FNC g_enved_dialog, 0, 0, 0),        H_enved_dialog);
-  DEFINE_PROC(gh_new_procedure(S_color_dialog,        SCM_FNC g_color_dialog, 0, 0, 0),        H_color_dialog);
-  DEFINE_PROC(gh_new_procedure(S_orientation_dialog,  SCM_FNC g_orientation_dialog, 0, 0, 0),  H_orientation_dialog);
-  DEFINE_PROC(gh_new_procedure(S_transform_dialog,    SCM_FNC g_transform_dialog, 0, 0, 0),    H_transform_dialog);
-  DEFINE_PROC(gh_new_procedure(S_file_dialog,         SCM_FNC g_file_dialog, 0, 0, 0),         H_file_dialog);
-  DEFINE_PROC(gh_new_procedure(S_edit_header_dialog,  SCM_FNC g_edit_header_dialog, 0, 1, 0),  H_edit_header_dialog);
-  DEFINE_PROC(gh_new_procedure(S_help_dialog,         SCM_FNC g_help_dialog, 2, 0, 0),         H_help_dialog);
-  DEFINE_PROC(gh_new_procedure(S_mix_panel,           SCM_FNC g_mix_panel, 0, 0, 0),           H_mix_panel);
+  DEFINE_PROC(S_enved_dialog,        g_enved_dialog, 0, 0, 0,        H_enved_dialog);
+  DEFINE_PROC(S_color_dialog,        g_color_dialog, 0, 0, 0,        H_color_dialog);
+  DEFINE_PROC(S_orientation_dialog,  g_orientation_dialog, 0, 0, 0,  H_orientation_dialog);
+  DEFINE_PROC(S_transform_dialog,    g_transform_dialog, 0, 0, 0,    H_transform_dialog);
+  DEFINE_PROC(S_file_dialog,         g_file_dialog, 0, 0, 0,         H_file_dialog);
+  DEFINE_PROC(S_edit_header_dialog,  g_edit_header_dialog, 0, 1, 0,  H_edit_header_dialog);
+  DEFINE_PROC(S_help_dialog,         g_help_dialog, 2, 0, 0,         H_help_dialog);
+  DEFINE_PROC(S_mix_panel,           g_mix_panel, 0, 0, 0,           H_mix_panel);
 
-  DEFINE_PROC(gh_new_procedure(S_max_sounds,          SCM_FNC g_max_sounds, 0, 0, 0),          H_max_sounds);
-  DEFINE_PROC(gh_new_procedure(S_sounds,              SCM_FNC g_sounds, 0, 0, 0),              H_sounds);
-  DEFINE_PROC(gh_new_procedure(S_yes_or_no_p,         SCM_FNC g_yes_or_no_p, 1, 0, 0),         H_yes_or_no_p);
-  DEFINE_PROC(gh_new_procedure(S_update_graph,        SCM_FNC g_update_graph, 0, 2, 0),        H_update_graph);
-  DEFINE_PROC(gh_new_procedure(S_update_lisp_graph,   SCM_FNC g_update_lisp_graph, 0, 2, 0),   H_update_lisp_graph);
-  DEFINE_PROC(gh_new_procedure(S_update_fft,          SCM_FNC g_update_fft, 0, 2, 0),          H_update_fft);
-  DEFINE_PROC(gh_new_procedure(S_abort,               SCM_FNC g_abort, 0, 0, 0),               H_abort);
-  DEFINE_PROC(gh_new_procedure(S_dismiss_all_dialogs, SCM_FNC g_dismiss_all_dialogs, 0, 0, 0), H_dismiss_all_dialogs);
-  DEFINE_PROC(gh_new_procedure(S_c_g,                 SCM_FNC g_abortq, 0, 0, 0),              H_abortQ);
-  DEFINE_PROC(gh_new_procedure(S_snd_version,         SCM_FNC g_snd_version, 0, 0, 0),         H_snd_version);
-  DEFINE_PROC(gh_new_procedure(S_show_listener,       SCM_FNC g_show_listener, 0, 0, 0),       H_show_listener);
-  DEFINE_PROC(gh_new_procedure(S_hide_listener,       SCM_FNC g_hide_listener, 0, 0, 0),       H_hide_listener);
-  DEFINE_PROC(gh_new_procedure(S_activate_listener,   SCM_FNC g_activate_listener, 0, 0, 0),   H_activate_listener);
-  DEFINE_PROC(gh_new_procedure(S_normalize_view,      SCM_FNC g_normalize_view, 0, 0, 0),      H_normalize_view);
-  DEFINE_PROC(gh_new_procedure(S_open_sound_file,     SCM_FNC g_open_sound_file, 0, 4, 0),     H_open_sound_file);
-  DEFINE_PROC(gh_new_procedure(S_close_sound_file,    SCM_FNC g_close_sound_file, 2, 0, 0),    H_close_sound_file);
-  DEFINE_PROC(gh_new_procedure(S_vct_sound_file,      SCM_FNC vct2soundfile, 3, 0, 0),         H_vct_sound_file);
-  DEFINE_PROC(gh_new_procedure(S_graph,               SCM_FNC g_graph, 1, 8, 0),               H_graph);
-  DEFINE_PROC(gh_new_procedure(S_samples_vct,         SCM_FNC samples2vct, 0, 6, 0),           H_samples2vct);
-  DEFINE_PROC(gh_new_procedure(S_samples2sound_data,  SCM_FNC samples2sound_data, 0, 7, 0),    H_samples2sound_data);
-  DEFINE_PROC(gh_new_procedure(S_start_progress_report, SCM_FNC g_start_progress_report, 0, 1, 0), H_start_progress_report);
-  DEFINE_PROC(gh_new_procedure(S_finish_progress_report, SCM_FNC g_finish_progress_report, 0, 1, 0), H_finish_progress_report);
-  DEFINE_PROC(gh_new_procedure(S_progress_report,     SCM_FNC g_progress_report, 1, 4, 0),     H_progress_report);
-  DEFINE_PROC(gh_new_procedure(S_snd_print,           SCM_FNC g_snd_print, 1, 0, 0),           H_snd_print);
-  DEFINE_PROC(gh_new_procedure(S_describe_audio,      SCM_FNC g_describe_audio, 0, 0, 0),      H_describe_audio);
-  DEFINE_PROC(gh_new_procedure("mus-audio-describe",  SCM_FNC g_describe_audio, 0, 0, 0),      H_describe_audio);
+  DEFINE_PROC(S_max_sounds,          g_max_sounds, 0, 0, 0,          H_max_sounds);
+  DEFINE_PROC(S_sounds,              g_sounds, 0, 0, 0,              H_sounds);
+  DEFINE_PROC(S_yes_or_no_p,         g_yes_or_no_p, 1, 0, 0,         H_yes_or_no_p);
+  DEFINE_PROC(S_update_graph,        g_update_graph, 0, 2, 0,        H_update_graph);
+  DEFINE_PROC(S_update_lisp_graph,   g_update_lisp_graph, 0, 2, 0,   H_update_lisp_graph);
+  DEFINE_PROC(S_update_fft,          g_update_fft, 0, 2, 0,          H_update_fft);
+  DEFINE_PROC(S_abort,               g_abort, 0, 0, 0,               H_abort);
+  DEFINE_PROC(S_dismiss_all_dialogs, g_dismiss_all_dialogs, 0, 0, 0, H_dismiss_all_dialogs);
+  DEFINE_PROC(S_c_g,                 g_abortq, 0, 0, 0,              H_abortQ);
+  DEFINE_PROC(S_snd_version,         g_snd_version, 0, 0, 0,         H_snd_version);
+  DEFINE_PROC(S_show_listener,       g_show_listener, 0, 0, 0,       H_show_listener);
+  DEFINE_PROC(S_hide_listener,       g_hide_listener, 0, 0, 0,       H_hide_listener);
+  DEFINE_PROC(S_activate_listener,   g_activate_listener, 0, 0, 0,   H_activate_listener);
+  DEFINE_PROC(S_normalize_view,      g_normalize_view, 0, 0, 0,      H_normalize_view);
+  DEFINE_PROC(S_open_sound_file,     g_open_sound_file, 0, 4, 0,     H_open_sound_file);
+  DEFINE_PROC(S_close_sound_file,    g_close_sound_file, 2, 0, 0,    H_close_sound_file);
+  DEFINE_PROC(S_vct_sound_file,      vct2soundfile, 3, 0, 0,         H_vct_sound_file);
+  DEFINE_PROC(S_graph,               g_graph, 1, 8, 0,               H_graph);
+  DEFINE_PROC(S_samples_vct,         samples2vct, 0, 6, 0,           H_samples2vct);
+  DEFINE_PROC(S_samples2sound_data,  samples2sound_data, 0, 7, 0,    H_samples2sound_data);
+  DEFINE_PROC(S_start_progress_report, g_start_progress_report, 0, 1, 0, H_start_progress_report);
+  DEFINE_PROC(S_finish_progress_report, g_finish_progress_report, 0, 1, 0, H_finish_progress_report);
+  DEFINE_PROC(S_progress_report,     g_progress_report, 1, 4, 0,     H_progress_report);
+  DEFINE_PROC(S_snd_print,           g_snd_print, 1, 0, 0,           H_snd_print);
+  DEFINE_PROC(S_describe_audio,      g_describe_audio, 0, 0, 0,      H_describe_audio);
+  DEFINE_PROC("mus-audio-describe",  g_describe_audio, 0, 0, 0,      H_describe_audio);
 
 
   #define H_during_open_hook S_during_open_hook " (fd name reason) is called after file is opened, but before data has been read."

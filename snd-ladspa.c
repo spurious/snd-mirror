@@ -350,11 +350,11 @@ LADSPA plugins are supported by Snd at this time."
   if (!g_bLADSPAInitialised)
     loadLADSPA();
 
-  SCM_ASSERT(gh_string_p(ladspa_plugin_filename),
+  SCM_ASSERT(STRING_P(ladspa_plugin_filename),
 	     ladspa_plugin_filename,
 	     SCM_ARG1,
 	     S_analyse_ladspa);
-  SCM_ASSERT(gh_string_p(ladspa_plugin_label),
+  SCM_ASSERT(STRING_P(ladspa_plugin_label),
 	     ladspa_plugin_label,
 	     SCM_ARG2,
 	     S_analyse_ladspa);
@@ -479,12 +479,12 @@ by any arguments. (Information about about parameters can be acquired using anal
 	     SCM_ARG2,
 	     S_apply_ladspa);
   //FIXME: uninformative error.
-  SCM_ASSERT(gh_string_p(gh_car(ladspa_plugin_configuration)),
+  SCM_ASSERT(STRING_P(gh_car(ladspa_plugin_configuration)),
 	     ladspa_plugin_configuration,
 	     SCM_ARG2,
 	     S_apply_ladspa);
   //FIXME: uninformative error.
-  SCM_ASSERT(gh_string_p(gh_car(gh_cdr(ladspa_plugin_configuration))),
+  SCM_ASSERT(STRING_P(gh_car(gh_cdr(ladspa_plugin_configuration))),
 	     ladspa_plugin_configuration,
 	     SCM_ARG2,
 	     S_apply_ladspa);
@@ -495,7 +495,7 @@ by any arguments. (Information about about parameters can be acquired using anal
 	     SCM_ARG3,
 	     S_apply_ladspa);
   /* The fourth parameter is a tag to identify the edit. */
-  SCM_ASSERT(gh_string_p(origin),
+  SCM_ASSERT(STRING_P(origin),
 	     origin,
 	     SCM_ARG4,
 	     S_apply_ladspa);
@@ -696,10 +696,10 @@ by any arguments. (Information about about parameters can be acquired using anal
 void g_ladspa_to_snd(SCM local_doc);
 void g_ladspa_to_snd(SCM local_doc)
 {
-  DEFINE_PROC(gh_new_procedure2_0(S_analyse_ladspa, g_analyse_ladspa), H_analyse_ladspa);
-  DEFINE_PROC(gh_new_procedure4_0(S_apply_ladspa, g_apply_ladspa), H_apply_ladspa);
-  DEFINE_PROC(gh_new_procedure0_0(S_init_ladspa, g_init_ladspa), H_init_ladspa);
-  DEFINE_PROC(gh_new_procedure0_0(S_list_ladspa, g_list_ladspa), H_list_ladspa);
+  DEFINE_PROC(S_analyse_ladspa, g_analyse_ladspa, 2, 0, 0, H_analyse_ladspa);
+  DEFINE_PROC(S_apply_ladspa, g_apply_ladspa, 4, 0, 0, H_apply_ladspa);
+  DEFINE_PROC(S_init_ladspa, g_init_ladspa, 0, 0, 0, H_init_ladspa);
+  DEFINE_PROC(S_list_ladspa, g_list_ladspa, 0, 0, 0, H_list_ladspa);
   scm_add_feature("snd-ladspa");
 }
 

@@ -501,7 +501,7 @@ program code is available as noted below.</p>
 <pre>
 int main(int argc, char *argv[])
 {
-  int fd,chans,srate,samples;
+  int fd, chans, srate, samples;
   float length;
   time_t date;
   char *comment;
@@ -517,16 +517,16 @@ int main(int argc, char *argv[])
       samples = mus_sound_samples(argv[1]);
       comment = mus_sound_comment(argv[1]); 
       length = (float)samples / (float)(chans * srate);
-      strftime(timestr,64,"%a %d-%b-%y %H:%M %Z",localtime(&amp;date));
-      fprintf(stdout,"%s:\n  srate: %d\n  chans: %d\n  length: %f\n",
-	      argv[1],srate,chans,length);
-      fprintf(stdout,"  type: %s\n  format: %s\n  written: %s\n  comment: %s\n",
-	      mus_header_type_name(mus_sound_header_type(argv[1])),
-	      mus_data_format_name(mus_sound_data_format(argv[1])),
-	      timestr,comment);
+      strftime(timestr, 64, "%a %d-%b-%y %H:%M %Z", localtime(&amp;date));
+      fprintf(stdout, "%s:\n  srate: %d\n  chans: %d\n  length: %f\n", 
+	      argv[1], srate, chans, length);
+      fprintf(stdout, "  type: %s\n  format: %s\n  written: %s\n  comment: %s\n", 
+	      mus_header_type_name(mus_sound_header_type(argv[1])), 
+	      mus_data_format_name(mus_sound_data_format(argv[1])), 
+	      timestr, comment);
     }
   else
-    fprintf(stderr,"%s: %s\n",argv[1],strerror(errno));
+    fprintf(stderr, "%s: %s\n", argv[1], strerror(errno));
   return(0);
 }
 </pre>
@@ -539,7 +539,7 @@ int main(int argc, char *argv[])
 
 int main(int argc, char *argv[])
 {
-  int fd,afd,i,j,n,k,chans,srate,frames,outbytes;
+  int fd, afd, i, j, n, k, chans, srate, frames, outbytes;
   MUS_SAMPLE_TYPE **bufs;
   short *obuf;
   mus_sound_initialize();	
@@ -550,25 +550,25 @@ int main(int argc, char *argv[])
       srate = mus_sound_srate(argv[1]);
       frames = mus_sound_frames(argv[1]);
       outbytes = BUFFER_SIZE * chans * 2;
-      bufs = (MUS_SAMPLE_TYPE **)calloc(chans,sizeof(MUS_SAMPLE_TYPE *));
+      bufs = (MUS_SAMPLE_TYPE **)calloc(chans, sizeof(MUS_SAMPLE_TYPE *));
       for (i=0;i&lt;chans;i++) 
-        bufs[i] = (MUS_SAMPLE_TYPE *)calloc(BUFFER_SIZE,sizeof(MUS_SAMPLE_TYPE));
-      obuf = (short *)calloc(BUFFER_SIZE * chans,sizeof(short));
-      afd = mus_audio_open_output(MUS_AUDIO_DEFAULT,srate,chans,MUS_COMPATIBLE_FORMAT,outbytes);
+        bufs[i] = (MUS_SAMPLE_TYPE *)calloc(BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE));
+      obuf = (short *)calloc(BUFFER_SIZE * chans, sizeof(short));
+      afd = mus_audio_open_output(MUS_AUDIO_DEFAULT, srate, chans, MUS_COMPATIBLE_FORMAT, outbytes);
       if (afd != -1)
 	{
-	  for (i=0;i&lt;frames;i+=BUFFER_SIZE)
+	  for (i = 0; i &lt; frames; i += BUFFER_SIZE)
 	    {
-	      mus_sound_read(fd,0,BUFFER_SIZE-1,chans,bufs);
-	      for (k=0,j=0;k&lt;BUFFER_SIZE;k++,j+=chans)
-		for (n=0;n&lt;chans;n++) 
-                  obuf[j+n] = MUS_SAMPLE_TO_SHORT(bufs[n][k]);
-	      mus_audio_write(afd,(char *)obuf,outbytes);
+	      mus_sound_read(fd, 0, BUFFER_SIZE - 1, chans, bufs);
+	      for (k = 0, j = 0; k &lt; BUFFER_SIZE; k++, j += chans)
+		for (n = 0; n &lt; chans; n++) 
+                  obuf[j + n] = MUS_SAMPLE_TO_SHORT(bufs[n][k]);
+	      mus_audio_write(afd, (char *)obuf, outbytes);
 	    }
 	  mus_audio_close(afd);
 	}
       mus_sound_close_input(fd);
-      for (i=0;i&lt;chans;i++) free(bufs[i]);
+      for (i = 0; i &lt; chans; i++) free(bufs[i]);
       free(bufs);
       free(obuf);
     }
@@ -589,29 +589,29 @@ some whizzy user interface to turn the thing off. (sndrecord.c)</p>
 <pre>
 int main(int argc, char *argv[])
 {
-  int fd,afd,i,err;
+  int fd, afd, i, err;
   short *ibuf;
 #if MACOS
   argc = ccommand(&amp;argv);
 #endif
   afd = -1;
   mus_sound_initialize();	
-  fd = mus_sound_open_output(argv[1],22050,1,MUS_BSHORT,MUS_NEXT,"created by sndrecord");
+  fd = mus_sound_open_output(argv[1], 22050, 1, MUS_BSHORT, MUS_NEXT, "created by sndrecord");
   if (fd != -1)
     {
-      ibuf = (short *)calloc(BUFFER_SIZE,sizeof(short));
-      afd = mus_audio_open_input(MUS_AUDIO_MICROPHONE,22050,1,MUS_BSHORT,BUFFER_SIZE);
+      ibuf = (short *)calloc(BUFFER_SIZE, sizeof(short));
+      afd = mus_audio_open_input(MUS_AUDIO_MICROPHONE, 22050, 1, MUS_BSHORT, BUFFER_SIZE);
       if (afd != -1)
 	{
-	  for (i=0;i&lt;10;i++) /* grab 10 buffers of input */
+	  for (i = 0; i &lt; 10; i++) /* grab 10 buffers of input */
 	    {
-	      err = mus_audio_read(afd,(char *)ibuf,BUFFER_SIZE*2);
+	      err = mus_audio_read(afd, (char *)ibuf, BUFFER_SIZE * 2);
 	      if (err != MUS_NO_ERROR) break;
-	      write(fd,ibuf,BUFFER_SIZE*2);
+	      write(fd, ibuf, BUFFER_SIZE * 2);
 	    }
 	  mus_audio_close(afd);
 	}
-      mus_sound_close_output(fd,BUFFER_SIZE*10*2);
+      mus_sound_close_output(fd, BUFFER_SIZE * 10 * 2);
       free(ibuf);
     }
   return(0);
@@ -641,31 +641,31 @@ containing a sine wave at 440 Hz.</p>
 <pre>
 int main(int argc, char *argv[])
 {
-  int fd,i,k,frames;
-  float phase,incr;
+  int fd, i, k, frames;
+  float phase, incr;
   MUS_SAMPLE_TYPE *obuf[1];
   mus_sound_initialize();	
-  fd = mus_sound_open_output(argv[1],22050,1,MUS_BSHORT,MUS_NEXT,"created by sndsine");
+  fd = mus_sound_open_output(argv[1], 22050, 1, MUS_BSHORT, MUS_NEXT, "created by sndsine");
   if (fd != -1)
     {
       frames = 22050;
       phase = 0.0;
-      incr = 2*PI*440.0/22050.0;
-      obuf[0] = (MUS_SAMPLE_TYPE *)calloc(BUFFER_SIZE,sizeof(MUS_SAMPLE_TYPE));
-      k=0;
-      for (i=0;i&lt;frames;i++)
+      incr = 2 * M_PI * 440.0 / 22050.0;
+      obuf[0] = (MUS_SAMPLE_TYPE *)calloc(BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE));
+      k = 0;
+      for (i = 0; i &lt; frames; i++)
 	{
 	  obuf[0][k] = MUS_FLOAT_TO_SAMPLE(0.1 * sin(phase)); /* amp = .1 */
 	  phase += incr;
 	  k++;
 	  if (k == BUFFER_SIZE)
 	    {
-	      mus_sound_write(fd,0,BUFFER_SIZE-1,1,obuf);
+	      mus_sound_write(fd, 0, BUFFER_SIZE-1, 1, obuf);
 	      k=0;
 	    }
 	}
-      if (k&gt;0) mus_sound_write(fd,0,k-1,1,obuf);
-      mus_sound_close_output(fd,22050*mus_data_format_to_bytes_per_sample(MUS_BSHORT));
+      if (k &gt; 0) mus_sound_write(fd, 0, k - 1, 1, obuf);
+      mus_sound_close_output(fd, 22050 * mus_data_format_to_bytes_per_sample(MUS_BSHORT));
       free(obuf[0]);
     }
   return(0);
@@ -681,12 +681,14 @@ as we wrote in SndSine.<p>
 int main(int argc, char *argv[])
 {
   int i;
-  mus_any *osc,*op;
+  mus_any *osc, *op;
   mus_sound_initialize();	
   init_mus_module();
-  osc = mus_make_oscil(440.0,0.0);
-  op = mus_make_sample2file("test.snd",1,MUS_BSHORT,MUS_NEXT);
-  if (op) for (i=0;i&lt;22050;i++) mus_sample2file(op,i,0,.1 * mus_oscil(osc,0.0,0.0));
+  osc = mus_make_oscil(440.0, 0.0);
+  op = mus_make_sample2file("test.snd", 1, MUS_BSHORT, MUS_NEXT);
+  if (op) 
+    for (i = 0; i &lt; 22050; i++) 
+      mus_sample2file(op, i, 0, .1 * mus_oscil(osc, 0.0, 0.0));
   mus_free(osc);
   if (op) mus_free(op);
   return(0);
@@ -714,20 +716,20 @@ void fm_violin(float start, float dur, float frequency, float amplitude, float f
   float fm_env[] = {0.0, 1.0, 25.0, 0.4, 75.0, 0.6, 100.0, 0.0};
   float amp_env[] = {0.0, 0.0,  25.0, 1.0, 75.0, 1.0, 100.0, 0.0};
   float frq_env[] = {0.0, -1.0, 15.0, 1.0, 25.0, 0.0, 100.0, 0.0};
-  int beg = 0,end,easy_case = 0,npartials,i;
-  float *coeffs,*partials;
-  float frq_scl,maxdev,logfrq,sqrtfrq,index1,index2,index3,norm;
-  float vib = 0.0,modulation = 0.0,fuzz = 0.0,indfuzz = 1.0,ampfuzz = 1.0;
-  mus_any *carrier,*fmosc1,*fmosc2,*fmosc3,*ampf;
-  mus_any *indf1,*indf2,*indf3,*fmnoi = NULL,*pervib,*ranvib,*frqf = NULL,*loc;
+  int beg = 0, end, easy_case = 0, npartials, i;
+  float *coeffs, *partials;
+  float frq_scl, maxdev, logfrq, sqrtfrq, index1, index2, index3, norm;
+  float vib = 0.0, modulation = 0.0, fuzz = 0.0, indfuzz = 1.0, ampfuzz = 1.0;
+  mus_any *carrier, *fmosc1, *fmosc2, *fmosc3, *ampf;
+  mus_any *indf1, *indf2, *indf3, *fmnoi = NULL, *pervib, *ranvib, *frqf = NULL, *loc;
   beg = start * mus_srate();
   end = beg + dur * mus_srate();
   frq_scl = mus_hz2radians(frequency);
   maxdev = frq_scl * fm_index;
   if ((noise_amount == 0.0) &amp;&amp; 
-      (feq(fm1_rat,floor(fm1_rat))) &amp;&amp; 
-      (feq(fm2_rat,floor(fm2_rat))) &amp;&amp; 
-      (feq(fm3_rat,floor(fm3_rat)))) 
+      (feq(fm1_rat, floor(fm1_rat))) &amp;&amp; 
+      (feq(fm2_rat, floor(fm2_rat))) &amp;&amp; 
+      (feq(fm3_rat, floor(fm3_rat)))) 
     easy_case = 1;
   logfrq = log(frequency);
   sqrtfrq = sqrt(frequency);
@@ -743,48 +745,48 @@ void fm_violin(float start, float dur, float frequency, float amplitude, float f
       if ((floor(fm2_rat)) &gt; npartials) npartials = floor(fm2_rat);
       if ((floor(fm3_rat)) &gt; npartials) npartials = floor(fm3_rat);
       npartials++;
-      partials = (float *)CALLOC(npartials,sizeof(float));
+      partials = (float *)CALLOC(npartials, sizeof(float));
       partials[(int)(fm1_rat)] = index1;
       partials[(int)(fm2_rat)] = index2;
       partials[(int)(fm3_rat)] = index3;
-      coeffs = mus_partials2polynomial(npartials,partials,1);
+      coeffs = mus_partials2polynomial(npartials, partials, 1);
       norm = 1.0;
     }
   else norm = index1;
-  carrier = mus_make_oscil(frequency,0.0);
+  carrier = mus_make_oscil(frequency, 0.0);
   if (easy_case == 0)
     {
-      fmosc1 = mus_make_oscil(frequency * fm1_rat,0.0);
-      fmosc2 = mus_make_oscil(frequency * fm2_rat,0.0);
-      fmosc3 = mus_make_oscil(frequency * fm3_rat,0.0);
+      fmosc1 = mus_make_oscil(frequency * fm1_rat, 0.0);
+      fmosc2 = mus_make_oscil(frequency * fm2_rat, 0.0);
+      fmosc3 = mus_make_oscil(frequency * fm3_rat, 0.0);
     }
-  else fmosc1 = mus_make_oscil(frequency,0.0);
-  ampf = mus_make_env(amp_env,4,amplitude,0.0,1.0,dur,0,0,NULL);
-  indf1 = mus_make_env(fm_env,4,norm,0.0,1.0,dur,0,0,NULL);
+  else fmosc1 = mus_make_oscil(frequency, 0.0);
+  ampf = mus_make_env(amp_env, 4, amplitude, 0.0, 1.0, dur, 0, 0, NULL);
+  indf1 = mus_make_env(fm_env, 4, norm, 0.0, 1.0, dur, 0, 0, NULL);
   if (gliss_amp != 0.0) 
-    frqf = mus_make_env(frq_env,4,gliss_amp * frq_scl,0.0,1.0,dur,0,0,NULL);
+    frqf = mus_make_env(frq_env, 4, gliss_amp * frq_scl, 0.0, 1.0, dur, 0, 0, NULL);
   if (easy_case == 0)
     {
-      indf2 = mus_make_env(fm_env,4,index2,0.0,1.0,dur,0,0,NULL);
-      indf3 = mus_make_env(fm_env,4,index3,0.0,1.0,dur,0,0,NULL);
+      indf2 = mus_make_env(fm_env, 4, index2, 0.0, 1.0, dur, 0, 0, NULL);
+      indf3 = mus_make_env(fm_env, 4, index3, 0.0, 1.0, dur, 0, 0, NULL);
     }
-  pervib = mus_make_triangle_wave(pervibfrq,frq_scl * pervibamp,0.0);
-  ranvib = mus_make_rand_interp(ranvibfrq,frq_scl * ranvibamp);
-  if (noise_amount != 0.0) fmnoi = mus_make_rand(noise_frq,noise_amount * M_PI);
-  loc = mus_make_locsig(degree,distance,reverb_amount,1,(mus_output *)op,NULL);
-  for (i=beg;i&lt;end;i++)
+  pervib = mus_make_triangle_wave(pervibfrq, frq_scl * pervibamp, 0.0);
+  ranvib = mus_make_rand_interp(ranvibfrq, frq_scl * ranvibamp);
+  if (noise_amount != 0.0) fmnoi = mus_make_rand(noise_frq, noise_amount * M_PI);
+  loc = mus_make_locsig(degree, distance, reverb_amount, 1, (mus_output *)op, NULL);
+  for (i = beg; i &lt; end; i++)
     {
-      if (noise_amount != 0.0) fuzz = mus_rand(fmnoi,0.0);
+      if (noise_amount != 0.0) fuzz = mus_rand(fmnoi, 0.0);
       if (frqf) vib = mus_env(frqf); else vib = 0.0;
-      vib += mus_triangle_wave(pervib,0.0) + mus_rand_interp(ranvib,0.0);
+      vib += mus_triangle_wave(pervib, 0.0) + mus_rand_interp(ranvib, 0.0);
       if (easy_case)
 	modulation = mus_env(indf1) * 
-                     mus_polynomial(coeffs,mus_oscil(fmosc1,vib,0.0),npartials);
+                     mus_polynomial(coeffs, mus_oscil(fmosc1, vib, 0.0), npartials);
       else
-	modulation = mus_env(indf1) * mus_oscil(fmosc1,(fuzz + fm1_rat * vib),0.0) + 
-	             mus_env(indf2) * mus_oscil(fmosc2,(fuzz + fm2_rat * vib),0.0) + 
-	             mus_env(indf3) * mus_oscil(fmosc3,(fuzz + fm3_rat * vib),0.0);
-      mus_locsig(loc,i,mus_env(ampf) * mus_oscil(carrier,vib + indfuzz * modulation,0.0));
+	modulation = mus_env(indf1) * mus_oscil(fmosc1, (fuzz + fm1_rat * vib), 0.0) + 
+	             mus_env(indf2) * mus_oscil(fmosc2, (fuzz + fm2_rat * vib), 0.0) + 
+	             mus_env(indf3) * mus_oscil(fmosc3, (fuzz + fm3_rat * vib), 0.0);
+      mus_locsig(loc, i, mus_env(ampf) * mus_oscil(carrier, vib + indfuzz * modulation, 0.0));
     }
   mus_free(pervib);
   mus_free(ranvib);
@@ -794,7 +796,7 @@ void fm_violin(float start, float dur, float frequency, float amplitude, float f
   mus_free(indf1);
   if (fmnoi) mus_free(fmnoi);
   if (frqf) mus_free(frqf);
-  if (easy_case == 0)
+  if (!(easy_case))
     {
       mus_free(indf2);
       mus_free(indf3);
@@ -808,13 +810,13 @@ void fm_violin(float start, float dur, float frequency, float amplitude, float f
 
 int main(int argc, char *argv[])
 {
-  mus_any *osc = NULL,*op = NULL;
+  mus_any *osc = NULL, *op = NULL;
   mus_sound_initialize();	
   init_mus_module();
-  op = mus_make_sample2file("test.snd",1,MUS_BSHORT,MUS_NEXT);
+  op = mus_make_sample2file("test.snd", 1, MUS_BSHORT, MUS_NEXT);
   if (op)
     {
-      fm_violin(0.0,20.0,440.0,.3,1.0,op);
+      fm_violin(0.0, 20.0, 440.0, .3, 1.0, op);
       mus_free(op);
     }
   return(0);
@@ -835,8 +837,8 @@ static SCM call_phase-vocoder(void)
 {
   mus_any *pv;
   int sf; /* file channel or whatever */
-  pv = mus_make_phase_vocoder(NULL,512,4,128,0.5,NULL,NULL,NULL,(void *)sf);
-  mus_phase_vocoder(pv,&amp;input_as_needed);
+  pv = mus_make_phase_vocoder(NULL, 512, 4, 128, 0.5, NULL, NULL, NULL, (void *)sf);
+  mus_phase_vocoder(pv, &amp;input_as_needed);
   /* etc */
 }
 </pre>
@@ -1241,6 +1243,26 @@ constants and functions described above into Scheme.
 	(mus-sound-close-input sound-fd)
 	(mus-audio-close audio-fd)))))
 </pre>
+<p>You can load sndlib into the standard Guile interpreter:
+</p>
+<pre>
+guile&gt; (define lib (<em class=red>dynamic-link</em> "/home/bil/sndlib/sndlib.so"))
+guile&gt; (<em class=red>dynamic-call</em> "mus_sndlib2scm_initialize" lib)
+guile&gt; (mus-sound-srate "/home/bil/cl/oboe.snd")
+22050
+guile&gt; (<em class=red>dynamic-call</em> "init_mus2scm_module" lib)
+guile&gt; (define osc (make-oscil 440))
+guile&gt; (oscil osc)
+0.0
+</pre>
+<p>The first dynamic-call (mus_sndlib2scm_initialize) ties sndlib2scm.c into
+Guile, and the second (init_mus2scm_module) ties clm2scm.c into Guile.
+I've included sndlib.i in the sndlib tarfile, intended for use with
+swig.  I was able to create a python wrapper, but don't know enough
+(i.e. anything at all) about python.  Presumably, we could 
+use this to import sndlib into a number of environments.
+</p>
+
 <br>
 <span class=box><h2><A NAME="sndlibcl">Sndlib and Common Lisp</a></h2></span>
 

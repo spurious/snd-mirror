@@ -803,7 +803,7 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
 	    {
 	      if (SYMBOL_P(res)) break;
 	                                              /* assume res here is a vector */
-	      if (gh_vector_p(res))
+	      if (VECTOR_P(res))
 		{
 		  res_size = gh_vector_length(res);
 		  vdata = SCM_VELTS(res);
@@ -2971,8 +2971,8 @@ static SCM g_temp_to_sound(SCM data, SCM new_name, SCM origin)
 using data returned by the latter and origin as the edit history entry for the edit"
 
   snd_exf *program_data;
-  SCM_ASSERT(gh_string_p(new_name), new_name, SCM_ARG2, S_temp_to_sound);
-  SCM_ASSERT(gh_string_p(origin), origin, SCM_ARG3, S_temp_to_sound);
+  SCM_ASSERT(STRING_P(new_name), new_name, SCM_ARG2, S_temp_to_sound);
+  SCM_ASSERT(STRING_P(origin), origin, SCM_ARG3, S_temp_to_sound);
   SCM_ASSERT(SND_WRAPPED(data), data, SCM_ARG1, S_temp_to_sound);
   program_data = (snd_exf *)(SND_UNWRAP(data));
   program_data->new_filenames[0] = TO_NEW_C_STRING(new_name);
@@ -2989,8 +2989,8 @@ using data returned by the latter and origin as the edit history entry for the e
   int i, len;
   SCM *vdata;
   SCM_ASSERT(SND_WRAPPED(data), data, SCM_ARG1, S_temps_to_sound);
-  SCM_ASSERT((gh_vector_p(new_names)), new_names, SCM_ARG2, S_temps_to_sound);
-  SCM_ASSERT(gh_string_p(origin), origin, SCM_ARG3, S_temps_to_sound);
+  SCM_ASSERT((VECTOR_P(new_names)), new_names, SCM_ARG2, S_temps_to_sound);
+  SCM_ASSERT(STRING_P(origin), origin, SCM_ARG3, S_temps_to_sound);
   program_data = (snd_exf *)(SND_UNWRAP(data));
   len = (int)gh_vector_length(new_names);
   vdata = SCM_VELTS(new_names);
@@ -3096,7 +3096,7 @@ static SCM g_map_chan(SCM proc, SCM beg, SCM end, SCM org, SCM snd, SCM chn)
 apply func to samples in current channel, edname is the edit history name for this editing operation"
 
   char *caller;
-  if (gh_string_p(org)) 
+  if (STRING_P(org)) 
     caller = TO_C_STRING(org);
   else caller = S_map_chan;
   SND_ASSERT_CHAN(S_map_chan, snd, chn, 5); 
@@ -3109,7 +3109,7 @@ static SCM g_map_chans(SCM proc, SCM beg, SCM end, SCM org)
 apply func to currently sync'd channels, edname is the edit history name for this editing operation"
 
   char *caller;
-  if (gh_string_p(org)) 
+  if (STRING_P(org)) 
     caller = TO_C_STRING(org);
   else caller = S_map_chans;
   return(g_sp_scan(proc, SCAN_SYNCD_CHANS, beg, end, TRUE, FALSE, SCM_BOOL_F, SCM_BOOL_F, caller, "func", 1));
@@ -3121,7 +3121,7 @@ static SCM g_map_all_chans(SCM proc, SCM beg, SCM end, SCM org)
 apply func to all channels, edname is the edit history name for this editing operation"
 
   char *caller;
-  if (gh_string_p(org)) 
+  if (STRING_P(org)) 
     caller = TO_C_STRING(org);
   else caller = S_map_all_chans;
   return(g_sp_scan(proc, SCAN_ALL_CHANS, beg, end, TRUE, FALSE, SCM_BOOL_F, SCM_BOOL_F, caller, "func", 1));
@@ -3133,7 +3133,7 @@ static SCM g_map_sound_chans(SCM proc, SCM beg, SCM end, SCM org, SCM snd)
 apply func to sound snd's channels, edname is the edit history name for this editing operation"
 
   char *caller;
-  if (gh_string_p(org)) 
+  if (STRING_P(org)) 
     caller = TO_C_STRING(org);
   else caller = S_map_sound_chans;
   SND_ASSERT_SND(S_map_sound_chans, snd, 5); 
@@ -3146,7 +3146,7 @@ static SCM g_map_across_chans(SCM proc, SCM beg, SCM end, SCM org)
 apply func to currently sync'd channels in parallel, edname is the edit history name for this editing operation"
 
   char *caller;
-  if (gh_string_p(org)) 
+  if (STRING_P(org)) 
     caller = TO_C_STRING(org);
   else caller = S_map_across_chans;
   return(g_sp_scan(proc, SCAN_SYNCD_CHANS, beg, end, FALSE, FALSE, SCM_BOOL_F, SCM_BOOL_F, caller, "func", 1));
@@ -3158,7 +3158,7 @@ static SCM g_map_across_all_chans(SCM proc, SCM beg, SCM end, SCM org)
 apply func to all channels in parallel, edname is the edit history name for this editing operation"
 
   char *caller;
-  if (gh_string_p(org)) 
+  if (STRING_P(org)) 
     caller = TO_C_STRING(org);
   else caller = S_map_across_all_chans;
   return(g_sp_scan(proc, SCAN_ALL_CHANS, beg, end, FALSE, FALSE, SCM_BOOL_F, SCM_BOOL_F, caller, "func", 1));
@@ -3170,7 +3170,7 @@ static SCM g_map_across_sound_chans(SCM proc, SCM beg, SCM end, SCM org, SCM snd
 apply func to sound snd's channels in parallel, edname is the edit history name for this editing operation"
 
   char *caller;
-  if (gh_string_p(org)) 
+  if (STRING_P(org)) 
     caller = TO_C_STRING(org);
   else caller = S_map_across_sound_chans;
   SND_ASSERT_SND(S_map_across_sound_chans, snd, 5); 
@@ -3381,7 +3381,7 @@ static Float *load_Floats(SCM scalers, int *result_len)
   Float *scls;
   SCM lst;
   SCM *vdata;
-  if (gh_vector_p(scalers))
+  if (VECTOR_P(scalers))
     len = gh_vector_length(scalers);
   else
     if (gh_list_p(scalers))
@@ -3389,7 +3389,7 @@ static Float *load_Floats(SCM scalers, int *result_len)
     else len = 1;
   if (len <= 0) len = 1;
   scls = (Float *)CALLOC(len, sizeof(Float));
-  if (gh_vector_p(scalers))
+  if (VECTOR_P(scalers))
     {
       vdata = SCM_VELTS(scalers);
       for (i = 0; i < len; i++) 
@@ -3564,8 +3564,8 @@ static SCM g_fft_1(SCM reals, SCM imag, SCM sign, int use_fft)
   int ipow, n, n2, i, isign = 1;
   Float *rl, *im;
   SCM *rvdata, *ivdata;
-  SCM_ASSERT(((vct_p(reals)) || (gh_vector_p(reals))), reals, SCM_ARG1, ((use_fft) ? S_fft : S_convolve_arrays));
-  SCM_ASSERT(((vct_p(imag)) || (gh_vector_p(imag))), imag, SCM_ARG2, ((use_fft) ? S_fft : S_convolve_arrays));
+  SCM_ASSERT(((vct_p(reals)) || (VECTOR_P(reals))), reals, SCM_ARG1, ((use_fft) ? S_fft : S_convolve_arrays));
+  SCM_ASSERT(((vct_p(imag)) || (VECTOR_P(imag))), imag, SCM_ARG2, ((use_fft) ? S_fft : S_convolve_arrays));
   if ((vct_p(reals)) && (vct_p(imag)))
     {
       v1 = (vct *)SND_VALUE_OF(reals);
@@ -3675,7 +3675,7 @@ convolves file with snd's channel chn (or the currently sync'd channels), amp is
   Float amp;
   SCM errstr;
   char *fname = NULL, *error = NULL;
-  SCM_ASSERT(gh_string_p(file), file, SCM_ARG1, S_convolve_with);
+  SCM_ASSERT(STRING_P(file), file, SCM_ARG1, S_convolve_with);
   SND_ASSERT_CHAN(S_convolve_with, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_convolve_with);
   if (NUMBER_P(new_amp)) 
@@ -3774,7 +3774,7 @@ convolves the current selection with file; amp is the resultant peak amp"
   Float amp;
   SCM errstr;
   char *fname = NULL, *error;
-  SCM_ASSERT(gh_string_p(file), file, SCM_ARG1, S_convolve_selection_with);
+  SCM_ASSERT(STRING_P(file), file, SCM_ARG1, S_convolve_selection_with);
   if (selection_is_active() == 0) 
     snd_no_active_selection_error(S_convolve_selection_with);
   if (NUMBER_P(new_amp)) 
@@ -3810,7 +3810,7 @@ static SCM g_convolve(SCM reals, SCM imag)
 {
   #define H_convolve "(" S_convolve_arrays " rl1 rl2) convolves vectors or vcts rl1 and rl2, result in rl1 (which needs to be big enough)"
   /* if reals is a string = filename and imag is a Float (or nada), assume user missppelledd convolve-with */
-  if (gh_string_p(reals))
+  if (STRING_P(reals))
     return(g_convolve_with(reals, imag, SCM_BOOL_F, SCM_BOOL_F));
   /* result in reals (which needs to be big enough and zero padded) */
   else return(g_fft_1(reals, imag, TO_SMALL_SCM_INT(1), FALSE));
@@ -3968,7 +3968,7 @@ applies FIR filter to snd's channel chn. 'filter' is either the frequency respon
 	}
       else 
 	{
-	  if (gh_vector_p(e) || (gh_list_p(e)))
+	  if (VECTOR_P(e) || (gh_list_p(e)))
 	    {
 	      apply_filter(cp, len,
 			   ne = get_env(e, TO_SCM_DOUBLE(1.0), S_filter_sound),
@@ -4021,7 +4021,7 @@ static SCM g_filter_selection(SCM e, SCM order)
 	}
       else 
 	{
-	  if (gh_vector_p(e) || (gh_list_p(e)))
+	  if (VECTOR_P(e) || (gh_list_p(e)))
 	    {
 	      apply_filter(cp, len,
 			   ne = get_env(e, TO_SCM_DOUBLE(1.0), S_filter_selection),
@@ -4037,55 +4037,55 @@ static SCM g_filter_selection(SCM e, SCM order)
 
 void g_init_sig(SCM local_doc)
 {
-  DEFINE_PROC(gh_new_procedure(S_temp_filenames,          SCM_FNC g_temp_filenames, 1, 0, 0),          H_temp_filenames);
-  DEFINE_PROC(gh_new_procedure(S_sound_to_temp,           SCM_FNC g_sound_to_temp, 0, 2, 0),           H_sound_to_temp);
-  DEFINE_PROC(gh_new_procedure(S_sound_to_temps,          SCM_FNC g_sound_to_temps, 0, 2, 0),          H_sound_to_temps);
-  DEFINE_PROC(gh_new_procedure(S_selection_to_temp,       SCM_FNC g_selection_to_temp, 0, 2, 0),       H_selection_to_temp);
-  DEFINE_PROC(gh_new_procedure(S_selection_to_temps,      SCM_FNC g_selection_to_temps, 0, 2, 0),      H_selection_to_temps);
-  DEFINE_PROC(gh_new_procedure(S_temp_to_sound,           SCM_FNC g_temp_to_sound, 3, 0, 0),           H_temp_to_sound);
-  DEFINE_PROC(gh_new_procedure(S_temps_to_sound,          SCM_FNC g_temps_to_sound, 3, 0, 0),          H_temps_to_sound);
-  DEFINE_PROC(gh_new_procedure(S_temp_to_selection,       SCM_FNC g_temp_to_sound, 3, 0, 0),           H_temp_to_sound);
-  DEFINE_PROC(gh_new_procedure(S_temps_to_selection,      SCM_FNC g_temps_to_sound, 3, 0, 0),          H_temps_to_sound);
-  DEFINE_PROC(gh_new_procedure(S_scan_chan,               SCM_FNC g_scan_chan, 1, 4, 0),               H_scan_chan);
-  DEFINE_PROC(gh_new_procedure(S_scan_chans,              SCM_FNC g_scan_chans, 1, 2, 0),              H_scan_chans);
-  DEFINE_PROC(gh_new_procedure(S_scan_all_chans,          SCM_FNC g_scan_all_chans, 1, 2, 0),          H_scan_all_chans);
-  DEFINE_PROC(gh_new_procedure(S_scan_sound_chans,        SCM_FNC g_scan_sound_chans, 1, 3, 0),        H_scan_sound_chans);
-  DEFINE_PROC(gh_new_procedure(S_scan_across_chans,       SCM_FNC g_scan_across_chans, 1, 2, 0),       H_scan_across_chans);
-  DEFINE_PROC(gh_new_procedure(S_scan_across_all_chans,   SCM_FNC g_scan_across_all_chans, 1, 2, 0),   H_scan_across_all_chans);
-  DEFINE_PROC(gh_new_procedure(S_scan_across_sound_chans, SCM_FNC g_scan_across_sound_chans, 1, 3, 0), H_scan_across_sound_chans);
-  DEFINE_PROC(gh_new_procedure(S_map_chan,                SCM_FNC g_map_chan, 1, 5, 0),                H_map_chan);
-  DEFINE_PROC(gh_new_procedure(S_map_chans,               SCM_FNC g_map_chans, 1, 3, 0),               H_map_chans);
-  DEFINE_PROC(gh_new_procedure(S_map_all_chans,           SCM_FNC g_map_all_chans, 1, 3, 0),           H_map_all_chans);
-  DEFINE_PROC(gh_new_procedure(S_map_sound_chans,         SCM_FNC g_map_sound_chans, 1, 4, 0),         H_map_sound_chans);
-  DEFINE_PROC(gh_new_procedure(S_map_across_chans,        SCM_FNC g_map_across_chans, 1, 3, 0),        H_map_across_chans);
-  DEFINE_PROC(gh_new_procedure(S_map_across_all_chans,    SCM_FNC g_map_across_all_chans, 1, 3, 0),    H_map_across_all_chans);
-  DEFINE_PROC(gh_new_procedure(S_map_across_sound_chans,  SCM_FNC g_map_across_sound_chans, 1, 4, 0),  H_map_across_sound_chans);
-  DEFINE_PROC(gh_new_procedure(S_find,                    SCM_FNC g_find, 1, 3, 0),                    H_find);
-  DEFINE_PROC(gh_new_procedure(S_count_matches,           SCM_FNC g_count_matches, 1, 3, 0),           H_count_matches);
+  DEFINE_PROC(S_temp_filenames,          g_temp_filenames, 1, 0, 0,          H_temp_filenames);
+  DEFINE_PROC(S_sound_to_temp,           g_sound_to_temp, 0, 2, 0,           H_sound_to_temp);
+  DEFINE_PROC(S_sound_to_temps,          g_sound_to_temps, 0, 2, 0,          H_sound_to_temps);
+  DEFINE_PROC(S_selection_to_temp,       g_selection_to_temp, 0, 2, 0,       H_selection_to_temp);
+  DEFINE_PROC(S_selection_to_temps,      g_selection_to_temps, 0, 2, 0,      H_selection_to_temps);
+  DEFINE_PROC(S_temp_to_sound,           g_temp_to_sound, 3, 0, 0,           H_temp_to_sound);
+  DEFINE_PROC(S_temps_to_sound,          g_temps_to_sound, 3, 0, 0,          H_temps_to_sound);
+  DEFINE_PROC(S_temp_to_selection,       g_temp_to_sound, 3, 0, 0,           H_temp_to_sound);
+  DEFINE_PROC(S_temps_to_selection,      g_temps_to_sound, 3, 0, 0,          H_temps_to_sound);
+  DEFINE_PROC(S_scan_chan,               g_scan_chan, 1, 4, 0,               H_scan_chan);
+  DEFINE_PROC(S_scan_chans,              g_scan_chans, 1, 2, 0,              H_scan_chans);
+  DEFINE_PROC(S_scan_all_chans,          g_scan_all_chans, 1, 2, 0,          H_scan_all_chans);
+  DEFINE_PROC(S_scan_sound_chans,        g_scan_sound_chans, 1, 3, 0,        H_scan_sound_chans);
+  DEFINE_PROC(S_scan_across_chans,       g_scan_across_chans, 1, 2, 0,       H_scan_across_chans);
+  DEFINE_PROC(S_scan_across_all_chans,   g_scan_across_all_chans, 1, 2, 0,   H_scan_across_all_chans);
+  DEFINE_PROC(S_scan_across_sound_chans, g_scan_across_sound_chans, 1, 3, 0, H_scan_across_sound_chans);
+  DEFINE_PROC(S_map_chan,                g_map_chan, 1, 5, 0,                H_map_chan);
+  DEFINE_PROC(S_map_chans,               g_map_chans, 1, 3, 0,               H_map_chans);
+  DEFINE_PROC(S_map_all_chans,           g_map_all_chans, 1, 3, 0,           H_map_all_chans);
+  DEFINE_PROC(S_map_sound_chans,         g_map_sound_chans, 1, 4, 0,         H_map_sound_chans);
+  DEFINE_PROC(S_map_across_chans,        g_map_across_chans, 1, 3, 0,        H_map_across_chans);
+  DEFINE_PROC(S_map_across_all_chans,    g_map_across_all_chans, 1, 3, 0,    H_map_across_all_chans);
+  DEFINE_PROC(S_map_across_sound_chans,  g_map_across_sound_chans, 1, 4, 0,  H_map_across_sound_chans);
+  DEFINE_PROC(S_find,                    g_find, 1, 3, 0,                    H_find);
+  DEFINE_PROC(S_count_matches,           g_count_matches, 1, 3, 0,           H_count_matches);
 
-  DEFINE_PROC(gh_new_procedure(S_smooth,                  SCM_FNC g_smooth, 2, 2, 0),                  H_smooth);
-  DEFINE_PROC(gh_new_procedure(S_smooth_selection,        SCM_FNC g_smooth_selection, 0, 0, 0),        H_smooth_selection);
-  DEFINE_PROC(gh_new_procedure(S_reverse_sound,           SCM_FNC g_reverse_sound, 0, 2, 0),           H_reverse_sound);
-  DEFINE_PROC(gh_new_procedure(S_reverse_selection,       SCM_FNC g_reverse_selection, 0, 0, 0),       H_reverse_selection);
-  DEFINE_PROC(gh_new_procedure(S_swap_channels,           SCM_FNC g_swap_channels, 0, 6, 0),           H_swap_channels);
-  DEFINE_PROC(gh_new_procedure(S_insert_silence,          SCM_FNC g_insert_silence, 2, 2, 0),          H_insert_silence);
-  DEFINE_PROC(gh_new_procedure(S_fht,                     SCM_FNC g_fht, 1, 0, 0),                     H_fht);
+  DEFINE_PROC(S_smooth,                  g_smooth, 2, 2, 0,                  H_smooth);
+  DEFINE_PROC(S_smooth_selection,        g_smooth_selection, 0, 0, 0,        H_smooth_selection);
+  DEFINE_PROC(S_reverse_sound,           g_reverse_sound, 0, 2, 0,           H_reverse_sound);
+  DEFINE_PROC(S_reverse_selection,       g_reverse_selection, 0, 0, 0,       H_reverse_selection);
+  DEFINE_PROC(S_swap_channels,           g_swap_channels, 0, 6, 0,           H_swap_channels);
+  DEFINE_PROC(S_insert_silence,          g_insert_silence, 2, 2, 0,          H_insert_silence);
+  DEFINE_PROC(S_fht,                     g_fht, 1, 0, 0,                     H_fht);
 
-  DEFINE_PROC(gh_new_procedure(S_scale_selection_to,      SCM_FNC g_scale_selection_to, 0, 1, 0),      H_scale_selection_to);
-  DEFINE_PROC(gh_new_procedure(S_scale_selection_by,      SCM_FNC g_scale_selection_by, 0, 1, 0),      H_scale_selection_by);
-  DEFINE_PROC(gh_new_procedure(S_scale_to,                SCM_FNC g_scale_to, 0, 3, 0),                H_scale_to);
-  DEFINE_PROC(gh_new_procedure(S_scale_by,                SCM_FNC g_scale_by, 0, 3, 0),                H_scale_by);
-  DEFINE_PROC(gh_new_procedure(S_env_selection,           SCM_FNC g_env_selection, 1, 3, 0),           H_env_selection);
-  DEFINE_PROC(gh_new_procedure(S_env_sound,               SCM_FNC g_env_sound, 1, 5, 0),               H_env_sound);
-  DEFINE_PROC(gh_new_procedure(S_fft,                     SCM_FNC g_fft, 2, 1, 0),                     H_fft);
-  DEFINE_PROC(gh_new_procedure(S_snd_spectrum,            SCM_FNC g_snd_spectrum, 3, 1, 0),            H_snd_spectrum);
-  DEFINE_PROC(gh_new_procedure(S_convolve_arrays,         SCM_FNC g_convolve, 1, 1, 0),                H_convolve);
-  DEFINE_PROC(gh_new_procedure(S_convolve_with,           SCM_FNC g_convolve_with, 1, 3, 0),           H_convolve_with);
-  DEFINE_PROC(gh_new_procedure(S_convolve_selection_with, SCM_FNC g_convolve_selection_with, 1, 1, 0), H_convolve_selection_with);
-  DEFINE_PROC(gh_new_procedure(S_src_sound,               SCM_FNC g_src_sound, 1, 3, 0),               H_src_sound);
-  DEFINE_PROC(gh_new_procedure(S_src_selection,           SCM_FNC g_src_selection, 1, 1, 0),           H_src_selection);
-  DEFINE_PROC(gh_new_procedure(S_filter_sound,            SCM_FNC g_filter_sound, 1, 3, 0),            H_filter_sound);
-  DEFINE_PROC(gh_new_procedure(S_filter_selection,        SCM_FNC g_filter_selection, 1, 1, 0),        H_filter_selection);
+  DEFINE_PROC(S_scale_selection_to,      g_scale_selection_to, 0, 1, 0,      H_scale_selection_to);
+  DEFINE_PROC(S_scale_selection_by,      g_scale_selection_by, 0, 1, 0,      H_scale_selection_by);
+  DEFINE_PROC(S_scale_to,                g_scale_to, 0, 3, 0,                H_scale_to);
+  DEFINE_PROC(S_scale_by,                g_scale_by, 0, 3, 0,                H_scale_by);
+  DEFINE_PROC(S_env_selection,           g_env_selection, 1, 3, 0,           H_env_selection);
+  DEFINE_PROC(S_env_sound,               g_env_sound, 1, 5, 0,               H_env_sound);
+  DEFINE_PROC(S_fft,                     g_fft, 2, 1, 0,                     H_fft);
+  DEFINE_PROC(S_snd_spectrum,            g_snd_spectrum, 3, 1, 0,            H_snd_spectrum);
+  DEFINE_PROC(S_convolve_arrays,         g_convolve, 1, 1, 0,                H_convolve);
+  DEFINE_PROC(S_convolve_with,           g_convolve_with, 1, 3, 0,           H_convolve_with);
+  DEFINE_PROC(S_convolve_selection_with, g_convolve_selection_with, 1, 1, 0, H_convolve_selection_with);
+  DEFINE_PROC(S_src_sound,               g_src_sound, 1, 3, 0,               H_src_sound);
+  DEFINE_PROC(S_src_selection,           g_src_selection, 1, 1, 0,           H_src_selection);
+  DEFINE_PROC(S_filter_sound,            g_filter_sound, 1, 3, 0,            H_filter_sound);
+  DEFINE_PROC(S_filter_selection,        g_filter_selection, 1, 1, 0,        H_filter_selection);
 
 }
 

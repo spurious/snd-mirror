@@ -2171,7 +2171,7 @@ static SCM g_autocorrelate(SCM reals)
   int n, i;
   SCM *vdata;
   Float *rl;
-  SCM_ASSERT(((vct_p(reals)) || (gh_vector_p(reals))), reals, SCM_ARG1, S_autocorrelate);
+  SCM_ASSERT(((vct_p(reals)) || (VECTOR_P(reals))), reals, SCM_ARG1, S_autocorrelate);
   if (vct_p(reals))
     {
       v1 = (vct *)SND_VALUE_OF(reals);
@@ -2212,8 +2212,8 @@ to be displayed goes from low to high (normally 0.0 to 1.0)"
       FREE(errmsg);
       snd_bad_arity_error(S_add_transform, errstr, proc);
     }
-  SCM_ASSERT(gh_string_p(name), name, SCM_ARG1, S_add_transform);
-  SCM_ASSERT(gh_string_p(xlabel), xlabel, SCM_ARG2, S_add_transform);
+  SCM_ASSERT(STRING_P(name), name, SCM_ARG1, S_add_transform);
+  SCM_ASSERT(STRING_P(xlabel), xlabel, SCM_ARG2, S_add_transform);
   SCM_ASSERT(NUMBER_P(lo), lo, SCM_ARG3, S_add_transform);
   SCM_ASSERT(NUMBER_P(hi), hi, SCM_ARG4, S_add_transform);
   SCM_ASSERT(gh_procedure_p(proc), proc, SCM_ARG5, S_add_transform);
@@ -2432,13 +2432,13 @@ of a moving mark:\n\
   DEFINE_VAR(S_sonogram,            TO_SMALL_SCM_INT(SONOGRAM),        H_sonogram);
   DEFINE_VAR(S_spectrogram,         TO_SMALL_SCM_INT(SPECTROGRAM),     H_spectrogram);
 
-  DEFINE_PROC(gh_new_procedure(S_transform_size,        SCM_FNC g_transform_size, 0, 2, 0),      H_transform_size);
-  DEFINE_PROC(gh_new_procedure(S_transform_samples,     SCM_FNC g_transform_samples, 0, 2, 0),   H_transform_samples);
-  DEFINE_PROC(gh_new_procedure(S_transform_sample,      SCM_FNC g_transform_sample, 0, 4, 0),    H_transform_sample);
-  DEFINE_PROC(gh_new_procedure(S_transform_samples_vct, SCM_FNC transform_samples2vct, 0, 3, 0), H_transform_samples2vct);
+  DEFINE_PROC(S_transform_size,        g_transform_size, 0, 2, 0,      H_transform_size);
+  DEFINE_PROC(S_transform_samples,     g_transform_samples, 0, 2, 0,   H_transform_samples);
+  DEFINE_PROC(S_transform_sample,      g_transform_sample, 0, 4, 0,    H_transform_sample);
+  DEFINE_PROC(S_transform_samples_vct, transform_samples2vct, 0, 3, 0, H_transform_samples2vct);
 
-  DEFINE_PROC(gh_new_procedure1_0(S_autocorrelate, g_autocorrelate), H_autocorrelate);
-  DEFINE_PROC(gh_new_procedure5_0(S_add_transform, g_add_transform), H_add_transform);
+  DEFINE_PROC(S_autocorrelate, g_autocorrelate, 1, 0, 0, H_autocorrelate);
+  DEFINE_PROC(S_add_transform, g_add_transform, 5, 0, 0, H_add_transform);
 }
 
 #endif

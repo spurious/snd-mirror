@@ -205,7 +205,7 @@ static void hit_help(Widget w, XtPointer context, XtPointer info)
 	SCM help_text;
 	help_text = g_help(TO_SCM_STRING(selection),
 			   widget_width(w));
-	if (gh_string_p(help_text))
+	if (STRING_P(help_text))
 	  snd_help(get_global_state(),
 		   selection,
 		   TO_C_STRING(help_text));

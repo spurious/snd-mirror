@@ -2767,7 +2767,7 @@ snd can be a filename, a sound index number, or a list with a mix id number."
   SCM_ASSERT(NUMBER_IF_BOUND_P(samp_n), samp_n, SCM_ARG1, S_make_sample_reader);
   SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(dir1), dir1, SCM_ARG4, S_make_sample_reader);
   ss = get_global_state();
-  if (gh_string_p(snd))
+  if (STRING_P(snd))
     {
       if (!(INTEGER_OR_BOOLEAN_IF_BOUND_P(chn))) scm_wrong_type_arg(S_make_sample_reader, 3, chn);
       filename = TO_C_STRING(snd);
@@ -2890,7 +2890,7 @@ replacing current data with the function results; origin is the edit-history nam
   SCM_ASSERT(sf_p(reader), reader, SCM_ARG1, S_loop_samples);
   SCM_ASSERT(SND_WRAPPED(proc), proc, SCM_ARG2, S_loop_samples);
   SCM_ASSERT(INTEGER_P(calls), calls, SCM_ARG3, S_loop_samples);
-  SCM_ASSERT(gh_string_p(origin), origin, SCM_ARG4, S_loop_samples);
+  SCM_ASSERT(STRING_P(origin), origin, SCM_ARG4, S_loop_samples);
   num = TO_C_INT(calls);
   sf = get_sf(reader);
   cp = sf->cp;
@@ -2963,7 +2963,7 @@ static SCM g_save_edit_history(SCM filename, SCM snd, SCM chn)
   chan_info *cp;
   char *mcf = NULL;
   snd_state *ss;
-  SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_save_edit_history);
+  SCM_ASSERT(STRING_P(filename), filename, SCM_ARG1, S_save_edit_history);
   SND_ASSERT_CHAN(S_save_edit_history, snd, chn, 2);
   mcf = mus_expand_filename(TO_C_STRING(filename));
   fd = fopen(mcf, "w");
@@ -3076,7 +3076,7 @@ static SCM g_as_one_edit(SCM proc, SCM origin)
   chans = active_channels(ss, WITH_VIRTUAL_CHANNELS);
   if (chans > 0)
     {
-      if (gh_string_p(origin))
+      if (STRING_P(origin))
 	as_one_edit_origin = TO_C_STRING(origin);
       else as_one_edit_origin = NULL;
       cur_edits = (int *)CALLOC(chans, sizeof(int));
@@ -3121,7 +3121,7 @@ MUS_SAMPLE_TYPE *g_floats_to_samples(SCM obj, int *size, const char *caller, int
     }
   else
     {
-      if (gh_vector_p(obj))
+      if (VECTOR_P(obj))
 	{
 	  if ((*size) == 0)
 	    num = gh_vector_length(obj); 
@@ -3242,7 +3242,7 @@ the new data's end"
   beg = TO_C_INT_OR_ELSE(samp_0, 0);
   len = TO_C_INT_OR_ELSE(samps, 0);
   override = SCM_TRUE_P(truncate);
-  if (gh_string_p(vect))
+  if (STRING_P(vect))
     {
       curlen = current_ed_samples(cp);
       fname = TO_NEW_C_STRING(vect);
@@ -3288,13 +3288,13 @@ static SCM g_change_samples_with_origin(SCM samp_0, SCM samps, SCM origin, SCM v
   SCM *vdata;
   SCM_ASSERT(INTEGER_P(samp_0), samp_0, SCM_ARG1, S_change_samples_with_origin);
   SCM_ASSERT(INTEGER_P(samps), samps, SCM_ARG2, S_change_samples_with_origin);
-  SCM_ASSERT(gh_string_p(origin), origin, SCM_ARG3, S_change_samples_with_origin);
-  SCM_ASSERT((gh_vector_p(vect)) || (gh_string_p(vect)), vect, SCM_ARG4, S_change_samples_with_origin);
+  SCM_ASSERT(STRING_P(origin), origin, SCM_ARG3, S_change_samples_with_origin);
+  SCM_ASSERT((VECTOR_P(vect)) || (STRING_P(vect)), vect, SCM_ARG4, S_change_samples_with_origin);
   SND_ASSERT_CHAN(S_change_samples_with_origin, snd_n, chn_n, 5);
   cp = get_cp(snd_n, chn_n, S_change_samples_with_origin);
   beg = TO_C_INT_OR_ELSE(samp_0, 0);
   len = TO_C_INT_OR_ELSE(samps, 0);
-  if (gh_vector_p(vect))
+  if (VECTOR_P(vect))
     {
       ivals = (MUS_SAMPLE_TYPE *)CALLOC(len, sizeof(MUS_SAMPLE_TYPE));
       vdata = SCM_VELTS(vect);
@@ -3327,7 +3327,7 @@ inserts channel 'file-chan' of 'file' (or all chans file-chan not given) into sn
   snd_info *sp;
   char *filename = NULL;
   int nc, len, fchn, beg = 0, i;
-  SCM_ASSERT(gh_string_p(file), file, SCM_ARG1, S_insert_sound);
+  SCM_ASSERT(STRING_P(file), file, SCM_ARG1, S_insert_sound);
   SCM_ASSERT(NUMBER_IF_BOUND_P(ubeg), ubeg, SCM_ARG2, S_insert_sound);
   SCM_ASSERT(INTEGER_IF_BOUND_P(file_chn), file_chn, SCM_ARG3, S_insert_sound);
   SND_ASSERT_CHAN(S_insert_sound, snd_n, chn_n, 4);
@@ -3421,7 +3421,7 @@ deletes 'samps' samples from snd's channel chn starting at 'start-samp'"
 static SCM g_delete_samples_with_origin(SCM samp_n, SCM samps, SCM origin, SCM snd_n, SCM chn_n)
 {
   SCM res;
-  SCM_ASSERT(gh_string_p(origin), origin, SCM_ARG3, S_delete_samples_with_origin);
+  SCM_ASSERT(STRING_P(origin), origin, SCM_ARG3, S_delete_samples_with_origin);
   res = g_delete_samples_1(samp_n, samps, snd_n, chn_n, TO_C_STRING(origin));
   return(scm_return_first(res, origin));
 }
@@ -3462,7 +3462,7 @@ inserts data (either a vector, vct, or list of samples, or a filename) into snd'
   cp = get_cp(snd_n, chn_n, S_insert_samples);
   beg = TO_C_INT_OR_ELSE(samp, 0);
   len = TO_C_INT_OR_ELSE(samps, 0);
-  if (gh_string_p(vect))
+  if (STRING_P(vect))
     {
       file_insert_samples(beg, len, TO_C_STRING(vect), cp, 0, DELETE_ME, S_insert_samples);
     }
@@ -3484,13 +3484,13 @@ static SCM g_insert_samples_with_origin(SCM samp, SCM samps, SCM origin, SCM vec
   SCM *vdata;
   SCM_ASSERT(INTEGER_P(samp), samp, SCM_ARG1, S_insert_samples_with_origin);
   SCM_ASSERT(INTEGER_P(samps), samps, SCM_ARG2, S_insert_samples_with_origin);
-  SCM_ASSERT(gh_string_p(origin), origin, SCM_ARG3, S_insert_samples_with_origin);
-  SCM_ASSERT((gh_vector_p(vect)) || (gh_string_p(vect)) || SCM_FALSEP(vect), vect, SCM_ARG4, S_insert_samples_with_origin);
+  SCM_ASSERT(STRING_P(origin), origin, SCM_ARG3, S_insert_samples_with_origin);
+  SCM_ASSERT((VECTOR_P(vect)) || (STRING_P(vect)) || SCM_FALSEP(vect), vect, SCM_ARG4, S_insert_samples_with_origin);
   SND_ASSERT_CHAN(S_insert_samples_with_origin, snd_n, chn_n, 5);
   cp = get_cp(snd_n, chn_n, S_insert_samples_with_origin);
   beg = TO_C_INT_OR_ELSE(samp, 0);
   len = TO_C_INT_OR_ELSE(samps, 0);
-  if (gh_vector_p(vect))
+  if (VECTOR_P(vect))
     {
       ivals = (MUS_SAMPLE_TYPE *)CALLOC(len, sizeof(MUS_SAMPLE_TYPE));
       vdata = SCM_VELTS(vect);
@@ -3504,7 +3504,7 @@ static SCM g_insert_samples_with_origin(SCM samp, SCM samps, SCM origin, SCM vec
     }
   else
     {
-      if (gh_string_p(vect))
+      if (STRING_P(vect))
 	file_insert_samples(beg, len,
 			    TO_C_STRING(vect),
 			    cp, 0, 0,
@@ -3547,32 +3547,32 @@ void g_init_edits(SCM local_doc)
   scm_set_smob_apply(sf_tag, SCM_FNC g_next_sample, 0, 0, 0);
 #endif
 
-  DEFINE_PROC(gh_new_procedure(S_make_sample_reader,        SCM_FNC g_make_sample_reader, 0, 5, 0),        H_make_sample_reader);
-  DEFINE_PROC(gh_new_procedure(S_make_region_sample_reader, SCM_FNC g_make_region_sample_reader, 0, 4, 0), H_make_region_sample_reader);
-  DEFINE_PROC(gh_new_procedure(S_next_sample,               SCM_FNC g_next_sample, 1, 0, 0),               H_next_sample);
-  DEFINE_PROC(gh_new_procedure(S_previous_sample,           SCM_FNC g_previous_sample, 1, 0, 0),           H_previous_sample);
-  DEFINE_PROC(gh_new_procedure(S_free_sample_reader,        SCM_FNC g_free_sample_reader, 1, 0, 0),        H_free_sample_reader);
-  DEFINE_PROC(gh_new_procedure(S_sample_readerQ,            SCM_FNC g_sf_p, 1, 0, 0),                      H_sf_p);
-  DEFINE_PROC(gh_new_procedure(S_sample_reader_at_endQ,     SCM_FNC g_sample_reader_at_end, 1, 0, 0),      H_sample_reader_at_end);
-  DEFINE_PROC(gh_new_procedure(S_loop_samples,              SCM_FNC g_loop_samples, 4, 1, 0),              H_loop_samples);
+  DEFINE_PROC(S_make_sample_reader,        g_make_sample_reader, 0, 5, 0,        H_make_sample_reader);
+  DEFINE_PROC(S_make_region_sample_reader, g_make_region_sample_reader, 0, 4, 0, H_make_region_sample_reader);
+  DEFINE_PROC(S_next_sample,               g_next_sample, 1, 0, 0,               H_next_sample);
+  DEFINE_PROC(S_previous_sample,           g_previous_sample, 1, 0, 0,           H_previous_sample);
+  DEFINE_PROC(S_free_sample_reader,        g_free_sample_reader, 1, 0, 0,        H_free_sample_reader);
+  DEFINE_PROC(S_sample_readerQ,            g_sf_p, 1, 0, 0,                      H_sf_p);
+  DEFINE_PROC(S_sample_reader_at_endQ,     g_sample_reader_at_end, 1, 0, 0,      H_sample_reader_at_end);
+  DEFINE_PROC(S_loop_samples,              g_loop_samples, 4, 1, 0,              H_loop_samples);
 
-  DEFINE_PROC(gh_new_procedure(S_save_edit_history,         SCM_FNC g_save_edit_history, 1, 2, 0),         H_save_edit_history);
-  DEFINE_PROC(gh_new_procedure(S_edit_fragment,             SCM_FNC g_edit_fragment, 0, 3, 0),             H_edit_fragment);
-  DEFINE_PROC(gh_new_procedure(S_undo,                      SCM_FNC g_undo, 0, 3, 0),                      H_undo);
-  DEFINE_PROC(gh_new_procedure(S_redo,                      SCM_FNC g_redo, 0, 3, 0),                      H_redo);
-  DEFINE_PROC(gh_new_procedure(S_as_one_edit,               SCM_FNC g_as_one_edit, 1, 1, 0),               H_as_one_edit);
-  DEFINE_PROC(gh_new_procedure(S_display_edits,             SCM_FNC g_display_edits, 0, 2, 0),             H_display_edits);
-  DEFINE_PROC(gh_new_procedure(S_edit_tree,                 SCM_FNC g_edit_tree, 0, 3, 0),                 H_edit_tree);
+  DEFINE_PROC(S_save_edit_history,         g_save_edit_history, 1, 2, 0,         H_save_edit_history);
+  DEFINE_PROC(S_edit_fragment,             g_edit_fragment, 0, 3, 0,             H_edit_fragment);
+  DEFINE_PROC(S_undo,                      g_undo, 0, 3, 0,                      H_undo);
+  DEFINE_PROC(S_redo,                      g_redo, 0, 3, 0,                      H_redo);
+  DEFINE_PROC(S_as_one_edit,               g_as_one_edit, 1, 1, 0,               H_as_one_edit);
+  DEFINE_PROC(S_display_edits,             g_display_edits, 0, 2, 0,             H_display_edits);
+  DEFINE_PROC(S_edit_tree,                 g_edit_tree, 0, 3, 0,                 H_edit_tree);
 
-  DEFINE_PROC(gh_new_procedure(S_delete_sample,             SCM_FNC g_delete_sample, 1, 2, 0),             H_delete_sample);
-  DEFINE_PROC(gh_new_procedure(S_delete_samples,            SCM_FNC g_delete_samples, 2, 2, 0),            H_delete_samples);
-  DEFINE_PROC(gh_new_procedure(S_insert_sample,             SCM_FNC g_insert_sample, 2, 2, 0),             H_insert_sample);
-  DEFINE_PROC(gh_new_procedure(S_insert_samples,            SCM_FNC g_insert_samples, 3, 2, 0),            H_insert_samples);
-  DEFINE_PROC(gh_new_procedure(S_vct_samples,               SCM_FNC g_set_samples, 3, 3, 0),               H_set_samples);
-  DEFINE_PROC(gh_new_procedure(S_insert_sound,              SCM_FNC g_insert_sound, 1, 4, 0),              H_insert_sound);
+  DEFINE_PROC(S_delete_sample,             g_delete_sample, 1, 2, 0,             H_delete_sample);
+  DEFINE_PROC(S_delete_samples,            g_delete_samples, 2, 2, 0,            H_delete_samples);
+  DEFINE_PROC(S_insert_sample,             g_insert_sample, 2, 2, 0,             H_insert_sample);
+  DEFINE_PROC(S_insert_samples,            g_insert_samples, 3, 2, 0,            H_insert_samples);
+  DEFINE_PROC(S_vct_samples,               g_set_samples, 3, 3, 0,               H_set_samples);
+  DEFINE_PROC(S_insert_sound,              g_insert_sound, 1, 4, 0,              H_insert_sound);
 
   /* semi-internal functions (restore-state) */
-  DEFINE_PROC(gh_new_procedure("section-scale-by",          SCM_FNC g_section_scale_by, 5, 0, 0),          "internal scaling function");
+  DEFINE_PROC("section-scale-by",          g_section_scale_by, 5, 0, 0,          "internal scaling function");
   gh_new_procedure(S_change_samples_with_origin,            SCM_FNC g_change_samples_with_origin, 4, 2, 0);
   gh_new_procedure(S_delete_samples_with_origin,            SCM_FNC g_delete_samples_with_origin, 3, 2, 0);
   gh_new_procedure(S_insert_samples_with_origin,            SCM_FNC g_insert_samples_with_origin, 4, 2, 0);

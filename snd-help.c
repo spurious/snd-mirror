@@ -2696,9 +2696,9 @@ the functions html and ? can be used in place of help to go to the HTML descript
     help_text = TO_SCM_STRING(H_snd_help);
   else
     {
-      if ((gh_string_p(text)) || (SYMBOL_P(text)))            /* arg can be name (string), symbol, or the value */
+      if ((STRING_P(text)) || (SYMBOL_P(text)))            /* arg can be name (string), symbol, or the value */
 	{
-	  if (gh_string_p(text))
+	  if (STRING_P(text))
 	    str = TO_NEW_C_STRING(text);
 	  else str = gh_symbol2newstr(text, NULL);
 	  value = SND_LOOKUP(str);
@@ -2732,7 +2732,7 @@ the functions html and ? can be used in place of help to go to the HTML descript
   /* help strings are always processed through the word-wrapper to fit whichever widget they are posted to */
   /*   this means all the H_doc strings in Snd need to omit line-feeds except where necessary (i.e. code) */
 
-  if (gh_string_p(help_text))
+  if (STRING_P(help_text))
     {
       str = word_wrap(TO_C_STRING(help_text), widget_wid);
       help_text = TO_SCM_STRING(str);
@@ -2748,6 +2748,6 @@ static SCM g_listener_help(SCM arg)
 
 void g_init_help(SCM local_doc)
 {
-  DEFINE_PROC(gh_new_procedure(S_snd_help, SCM_FNC g_listener_help, 0, 1, 0), H_snd_help);
+  DEFINE_PROC(S_snd_help, g_listener_help, 0, 1, 0, H_snd_help);
 }
 #endif

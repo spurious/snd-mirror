@@ -4,9 +4,11 @@
 
 static GtkWidget *region_dialog = NULL, *region_list, *region_grf;
 static regrow **region_rows = NULL;
+static int region_rows_size = 0;
 static snd_info *reg_sp = NULL;
 static int current_region = -1;
 static GtkWidget *select_button, *srate_text, *length_text, *chans_text, *maxamp_text;
+static regrow *region_row(int n);
 
 static void region_update_graph(chan_info *cp)
 {
@@ -18,7 +20,7 @@ static void region_update_graph(chan_info *cp)
 static void make_region_element(region_state *rs, int i)
 {
   regrow *r;
-  r = region_rows[i];
+  r = region_row(i);
   set_button_label_bold(r->nm, rs->name[i]);
   set_toggle_button(r->sv, rs->save[i], FALSE, (void *)r);
   set_toggle_button(r->pl, FALSE, FALSE, (void *)r);
@@ -30,7 +32,7 @@ static void unhighlight_region(snd_state *ss)
   regrow *oldr;
   if (current_region != -1)
     {
-      oldr = region_rows[current_region];
+      oldr = region_row(current_region);
       set_backgrounds(oldr->rw, (ss->sgx)->highlight_color);
       set_backgrounds(oldr->nm, (ss->sgx)->highlight_color);
     }
@@ -49,7 +51,7 @@ static void highlight_region(snd_state *ss)
   regrow *oldr;
   if (current_region != -1)
     {
-      oldr = region_rows[current_region];
+      oldr = region_row(current_region);
       set_backgrounds(oldr->rw, (ss->sgx)->zoom_color);
       set_backgrounds(oldr->nm, (ss->sgx)->zoom_color);
     }
@@ -79,7 +81,9 @@ void update_region_browser(snd_state *ss, int grf_too)
   rs = region_report();
   len = rs->len;
   for (i = 0; i < len; i++) make_region_element(rs, i);
-  for (i = len; i < max_regions(ss); i++) gtk_widget_hide(region_rows[i]->rw);
+  for (i = len; i < max_regions(ss); i++) 
+    if (region_rows[i])
+      gtk_widget_hide(region_rows[i]->rw);
   free_region_state(rs);
   if (len == 0) return;
   gtk_widget_show(region_list);
@@ -240,7 +244,7 @@ void reflect_play_region_stop(int n)
   regrow *rg;
   if (region_rows)
     {
-      rg = region_rows[n];
+      rg = region_row(n);
       if (rg) set_toggle_button(rg->pl, FALSE, FALSE, (void *)rg);
     }
 }
@@ -265,7 +269,7 @@ void set_region_protect(int reg, int protect)
   protect_region(reg, protect);
   if (region_rows)
     {
-      r = region_rows[reg];
+      r = region_row(reg);
       if ((r) && (r->sv)) set_toggle_button(r->sv, protect, FALSE, (void *)r);
     }
 }
@@ -344,6 +348,7 @@ static void make_region_dialog(snd_state *ss)
   gtk_widget_show(infobox);
   
   region_rows = (regrow **)CALLOC(max_regions(ss), sizeof(regrow *));
+  region_rows_size = max_regions(ss);
   for (i = 0; i < max_regions(ss); i++)
     {
       r = make_regrow(ss, region_list, 
@@ -482,21 +487,38 @@ int region_dialog_is_active(void)
 
 void allocate_region_rows(snd_state *ss, int n)
 {
-  regrow *r = NULL;
   int i;
-  if ((region_dialog) && (n > max_regions(ss)))
+  if ((region_dialog) && (n > region_rows_size))
     {
       region_rows = (regrow **)REALLOC(region_rows, n * sizeof(regrow *));
-      for (i = max_regions(ss); i < n; i++)
+      for (i = region_rows_size; i < n; i++) region_rows[i] = NULL;
+      region_rows_size = n;
+    }
+}
+
+static regrow *region_row(int n)
+{
+  regrow *r;
+  snd_state *ss;
+  if (n < region_rows_size)
+    {
+      if (region_rows[n] == NULL)
 	{
+	  ss = get_global_state();
 	  r = make_regrow(ss, region_list, 
 			  (void (*)())region_save_Callback, 
 			  (void (*)())region_play_Callback, 
 			  (void (*)())region_focus_Callback);
-	  region_rows[i] = r;
-	  r->pos = i;
+	  region_rows[n] = r;
+	  r->pos = n;
 	  r->ss = ss;
 	  r->parent = REGION_VIEWER;
 	}
+      return(region_rows[n]);
     }
+#if DEBUGGING
+  fprintf(stderr,"access region_rows[%d] size=%d\n", n, region_rows_size);
+  abort();
+#endif
+  return(NULL);
 }

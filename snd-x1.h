@@ -454,7 +454,7 @@ void make_edit_save_as_dialog(snd_state *ss);
 snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *comment);
 ww_info *make_title_row(snd_state *ss, Widget formw, char *first_str, char *second_str, char *main_str, int pad, int with_sort, int with_pane);
 regrow *make_regrow(snd_state *ss, Widget ww, Widget last_row, 
-			   XtCallbackProc first_callback, XtCallbackProc second_callback, XtCallbackProc third_callback);
+		    XtCallbackProc first_callback, XtCallbackProc second_callback, XtCallbackProc third_callback);
 void make_prevfiles_list (snd_state *ss);
 void make_curfiles_list (snd_state *ss);
 void curfile_highlight(snd_state *ss, int i);

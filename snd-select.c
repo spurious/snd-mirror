@@ -903,7 +903,7 @@ saves the current selection in filename using the indicated file attributes"
   snd_state *ss;
   int type, format, sr, err;
   char *com = NULL, *fname = NULL;
-  SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_save_selection);
+  SCM_ASSERT(STRING_P(filename), filename, SCM_ARG1, S_save_selection);
   SCM_ASSERT(INTEGER_IF_BOUND_P(header_type), header_type, SCM_ARG2, S_save_selection);
   SCM_ASSERT(INTEGER_IF_BOUND_P(data_format), data_format, SCM_ARG3, S_save_selection);
   SCM_ASSERT(NUMBER_IF_BOUND_P(srate), srate, SCM_ARG4, S_save_selection);
@@ -919,7 +919,7 @@ saves the current selection in filename using the indicated file attributes"
 #endif
   format = TO_C_INT_OR_ELSE(data_format, MUS_OUT_FORMAT);
   sr = TO_C_INT_OR_ELSE(srate, region_srate(0));
-  if (gh_string_p(comment)) 
+  if (STRING_P(comment)) 
     com = TO_NEW_C_STRING(comment); 
   else com = NULL;
   fname = mus_expand_filename(TO_C_STRING(filename));
@@ -946,13 +946,13 @@ void g_init_selection(SCM local_doc)
 					"set-" S_selection_member, SCM_FNC g_set_selection_member, SCM_FNC g_set_selection_member_reversed,
 					local_doc, 0, 2, 1, 2);
 
-  DEFINE_PROC(gh_new_procedure(S_selectionQ,       SCM_FNC g_selectionQ, 0, 0, 0),       H_selectionQ);
-  DEFINE_PROC(gh_new_procedure(S_cut,              SCM_FNC g_cut, 0, 0, 0),              H_cut);
-  DEFINE_PROC(gh_new_procedure(S_delete_selection, SCM_FNC g_cut, 0, 0, 0),              H_delete_selection);
-  DEFINE_PROC(gh_new_procedure(S_insert_selection, SCM_FNC g_insert_selection, 0, 3, 0), H_insert_selection);
-  DEFINE_PROC(gh_new_procedure(S_mix_selection,    SCM_FNC g_mix_selection, 0, 3, 0),    H_mix_selection);
-  DEFINE_PROC(gh_new_procedure(S_select_all,       SCM_FNC g_select_all, 0, 2, 0),       H_select_all);
-  DEFINE_PROC(gh_new_procedure(S_save_selection,   SCM_FNC g_save_selection, 1, 4, 0),   H_save_selection);
+  DEFINE_PROC(S_selectionQ,       g_selectionQ, 0, 0, 0,       H_selectionQ);
+  DEFINE_PROC(S_cut,              g_cut, 0, 0, 0,              H_cut);
+  DEFINE_PROC(S_delete_selection, g_cut, 0, 0, 0,              H_delete_selection);
+  DEFINE_PROC(S_insert_selection, g_insert_selection, 0, 3, 0, H_insert_selection);
+  DEFINE_PROC(S_mix_selection,    g_mix_selection, 0, 3, 0,    H_mix_selection);
+  DEFINE_PROC(S_select_all,       g_select_all, 0, 2, 0,       H_select_all);
+  DEFINE_PROC(S_save_selection,   g_save_selection, 1, 4, 0,   H_save_selection);
 }
 
 #endif

@@ -1644,7 +1644,7 @@ static SCM g_mark_name(SCM mark_n)
 static SCM g_set_mark_name(SCM mark_n, SCM name) 
 {
   SCM_ASSERT(INTEGER_IF_BOUND_P(mark_n), mark_n, SCM_ARG1, "set-" S_mark_name);
-  SCM_ASSERT(gh_string_p(name), name, SCM_ARG2, "set-" S_mark_name);
+  SCM_ASSERT(STRING_P(name), name, SCM_ARG2, "set-" S_mark_name);
   return(iwrite_mark(mark_n, name, MARK_NAME, "set-" S_mark_name));
 }
 
@@ -1670,7 +1670,7 @@ finds the mark in snd's channel chn at samp (if a number) or with the given name
   int i, samp = 0;
   char *name = NULL;
   chan_info *cp = NULL;
-  SCM_ASSERT((NUMBER_P(samp_n) || gh_string_p(samp_n) || (SCM_UNBNDP(samp_n)) || (SCM_FALSEP(samp_n))), samp_n, SCM_ARG1, S_find_mark);
+  SCM_ASSERT((NUMBER_P(samp_n) || STRING_P(samp_n) || (SCM_UNBNDP(samp_n)) || (SCM_FALSEP(samp_n))), samp_n, SCM_ARG1, S_find_mark);
   SND_ASSERT_CHAN(S_find_mark, snd_n, chn_n, 2); 
   cp = get_cp(snd_n, chn_n, S_find_mark);
   if (cp->marks == NULL) 
@@ -1678,7 +1678,7 @@ finds the mark in snd's channel chn at samp (if a number) or with the given name
   mps = cp->marks[cp->edit_ctr];
   if (mps)
     {
-      if (gh_string_p(samp_n))
+      if (STRING_P(samp_n))
 	name = TO_C_STRING(samp_n);
       else samp = TO_C_INT_OR_ELSE(samp_n, 0);
       if (name)
@@ -1966,19 +1966,19 @@ void g_init_marks(SCM local_doc)
 			       "set-" S_mark_name, SCM_FNC g_set_mark_name,
 			       local_doc, 0, 1, 1, 1);
 
-  gh_new_procedure(S_restore_marks,             SCM_FNC g_restore_marks, 4, 0, 0);
-  DEFINE_PROC(gh_new_procedure(S_mark_sync_max, SCM_FNC g_mark_sync_max, 0, 0, 0), H_mark_sync_max);
-  DEFINE_PROC(gh_new_procedure(S_mark_to_sound, SCM_FNC g_mark_to_sound, 0, 1, 0), H_mark_to_sound);
-  DEFINE_PROC(gh_new_procedure(S_marks,         SCM_FNC g_marks, 0, 3, 0),         H_marks);
-  DEFINE_PROC(gh_new_procedure(S_add_mark,      SCM_FNC g_add_mark, 0, 3, 0),      H_add_mark);
-  DEFINE_PROC(gh_new_procedure(S_delete_mark,   SCM_FNC g_delete_mark, 0, 1, 0),   H_delete_mark);
-  DEFINE_PROC(gh_new_procedure(S_delete_marks,  SCM_FNC g_delete_marks, 0, 2, 0),  H_delete_marks);
-  DEFINE_PROC(gh_new_procedure(S_syncd_marks,   SCM_FNC g_syncd_marks, 1, 0, 0),   H_syncd_marks);
-  DEFINE_PROC(gh_new_procedure(S_find_mark,     SCM_FNC g_find_mark, 1, 2, 0),     H_find_mark);
-  DEFINE_PROC(gh_new_procedure(S_forward_mark,  SCM_FNC g_forward_mark, 0, 3, 0),  H_forward_mark);
-  DEFINE_PROC(gh_new_procedure(S_backward_mark, SCM_FNC g_backward_mark, 0, 3, 0), H_backward_mark);
-  DEFINE_PROC(gh_new_procedure(S_save_marks,    SCM_FNC g_save_marks, 0, 1, 0),    H_save_marks);
-  DEFINE_PROC(gh_new_procedure(S_markQ,         SCM_FNC g_markQ, 1, 0, 0),         H_markQ);
+  DEFINE_PROC(S_restore_marks, g_restore_marks, 4, 0, 0, "internal func");
+  DEFINE_PROC(S_mark_sync_max, g_mark_sync_max, 0, 0, 0, H_mark_sync_max);
+  DEFINE_PROC(S_mark_to_sound, g_mark_to_sound, 0, 1, 0, H_mark_to_sound);
+  DEFINE_PROC(S_marks,         g_marks, 0, 3, 0,         H_marks);
+  DEFINE_PROC(S_add_mark,      g_add_mark, 0, 3, 0,      H_add_mark);
+  DEFINE_PROC(S_delete_mark,   g_delete_mark, 0, 1, 0,   H_delete_mark);
+  DEFINE_PROC(S_delete_marks,  g_delete_marks, 0, 2, 0,  H_delete_marks);
+  DEFINE_PROC(S_syncd_marks,   g_syncd_marks, 1, 0, 0,   H_syncd_marks);
+  DEFINE_PROC(S_find_mark,     g_find_mark, 1, 2, 0,     H_find_mark);
+  DEFINE_PROC(S_forward_mark,  g_forward_mark, 0, 3, 0,  H_forward_mark);
+  DEFINE_PROC(S_backward_mark, g_backward_mark, 0, 3, 0, H_backward_mark);
+  DEFINE_PROC(S_save_marks,    g_save_marks, 0, 1, 0,    H_save_marks);
+  DEFINE_PROC(S_markQ,         g_markQ, 1, 0, 0,         H_markQ);
 }
 
 #endif

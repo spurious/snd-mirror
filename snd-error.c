@@ -119,7 +119,7 @@ void snd_error(char *format, ...)
 static SCM g_snd_error(SCM msg)
 {
   #define H_snd_error "(" S_snd_error " str) reports error message str"
-  SCM_ASSERT(gh_string_p(msg), msg, SCM_ARG1, S_snd_error);
+  SCM_ASSERT(STRING_P(msg), msg, SCM_ARG1, S_snd_error);
   snd_error(TO_C_STRING(msg));
   return(msg);
 }
@@ -127,7 +127,7 @@ static SCM g_snd_error(SCM msg)
 static SCM g_snd_warning(SCM msg)
 {
   #define H_snd_warning "(" S_snd_warning " str) reports warning message str"
-  SCM_ASSERT(gh_string_p(msg), msg, SCM_ARG1, S_snd_warning);
+  SCM_ASSERT(STRING_P(msg), msg, SCM_ARG1, S_snd_warning);
   snd_warning(TO_C_STRING(msg));
   return(msg);
 }
@@ -145,8 +145,8 @@ int ignore_mus_error(int type, char *msg)
 
 void g_init_errors(SCM local_doc)
 {
-  DEFINE_PROC(gh_new_procedure1_0(S_snd_error, g_snd_error), H_snd_error);
-  DEFINE_PROC(gh_new_procedure1_0(S_snd_warning, g_snd_warning), H_snd_warning);
+  DEFINE_PROC(S_snd_error, g_snd_error, 1, 0, 0, H_snd_error);
+  DEFINE_PROC(S_snd_warning, g_snd_warning, 1, 0, 0, H_snd_warning);
 
   #define H_mus_error_hook S_mus_error_hook " (error-type error-message) is called upon mus_error. \
 If it returns #t, Snd ignores the error (it assumes you've handled it via the hook)."

@@ -201,7 +201,7 @@ static SCM g_load_colormap(SCM colors)
   GdkColor **xcs;
   snd_color *v;
   SCM *vdata;
-  SCM_ASSERT(gh_vector_p(colors), colors, SCM_ARG1, S_load_colormap);
+  SCM_ASSERT(VECTOR_P(colors), colors, SCM_ARG1, S_load_colormap);
   len = gh_vector_length(colors);
   xcs = (GdkColor **)CALLOC(len, sizeof(GdkColor *));
   vdata = SCM_VELTS(colors);
@@ -256,12 +256,12 @@ void g_initialize_xgh(snd_state *ss, SCM local_doc)
   scm_set_smob_apply(snd_color_tag, SCM_FNC g_color2list, 0, 0, 0);
 #endif
 
-  DEFINE_PROC(gh_new_procedure0_0(S_region_dialog, g_region_dialog),  H_region_dialog);
-  DEFINE_PROC(gh_new_procedure2_0(S_in,            g_in),             H_in);
-  DEFINE_PROC(gh_new_procedure3_0(S_make_color,    g_make_snd_color), H_make_color);
-  DEFINE_PROC(gh_new_procedure1_0(S_colorQ,        g_color_p),        H_color_p);
-  DEFINE_PROC(gh_new_procedure1_0(S_color2list,    g_color2list),     H_color2list);
-  DEFINE_PROC(gh_new_procedure1_0(S_load_colormap, g_load_colormap),  H_load_colormap);
+  DEFINE_PROC(S_region_dialog, g_region_dialog, 0, 0, 0,  H_region_dialog);
+  DEFINE_PROC(S_in,            g_in, 2, 0, 0,             H_in);
+  DEFINE_PROC(S_make_color,    g_make_snd_color, 3, 0, 0, H_make_color);
+  DEFINE_PROC(S_colorQ,        g_color_p, 1, 0, 0,        H_color_p);
+  DEFINE_PROC(S_color2list,    g_color2list, 1, 0, 0,     H_color2list);
+  DEFINE_PROC(S_load_colormap, g_load_colormap, 1, 0, 0,  H_load_colormap);
 
   define_procedure_with_setter(S_graph_cursor, SCM_FNC g_graph_cursor, H_graph_cursor,
 			       "set-" S_graph_cursor, SCM_FNC g_set_graph_cursor, local_doc, 0, 0, 1, 0);

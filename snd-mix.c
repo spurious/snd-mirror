@@ -3526,7 +3526,7 @@ static SCM g_set_mix_name(SCM n, SCM val)
 {
   mix_info *md;
   SCM_ASSERT(NUMBER_P(n), n, SCM_ARG1, "set-" S_mix_name);
-  SCM_ASSERT(gh_string_p(val), val, SCM_ARG2, "set-" S_mix_name);
+  SCM_ASSERT(STRING_P(val), val, SCM_ARG2, "set-" S_mix_name);
   md = md_from_id(TO_C_INT_OR_ELSE(n, 0));
   if (md)
     {
@@ -3623,7 +3623,7 @@ static SCM g_mix_sound(SCM file, SCM start_samp)
   snd_state *ss;
   snd_info *sp;
   int beg, err = 0;
-  SCM_ASSERT(gh_string_p(file), file, SCM_ARG1, S_mix_sound);
+  SCM_ASSERT(STRING_P(file), file, SCM_ARG1, S_mix_sound);
   SCM_ASSERT(NUMBER_P(start_samp), start_samp, SCM_ARG1, S_mix_sound);
   filename = mus_expand_filename(TO_C_STRING(file));
   beg = TO_C_INT_OR_ELSE(start_samp, 0);
@@ -3754,7 +3754,7 @@ If chn is omitted, file's channels are mixed until snd runs out of channels"
   int with_mixer = 1;
   snd_state *ss;
   mix_info *md;
-  SCM_ASSERT(gh_string_p(file), file, SCM_ARG1, S_mix);
+  SCM_ASSERT(STRING_P(file), file, SCM_ARG1, S_mix);
   SCM_ASSERT(INTEGER_IF_BOUND_P(chn_samp_n), chn_samp_n, SCM_ARG2, S_mix);
   SCM_ASSERT(INTEGER_IF_BOUND_P(file_chn), file_chn, SCM_ARG3, S_mix);
   SND_ASSERT_CHAN(S_mix, snd_n, chn_n, 4);
@@ -4110,7 +4110,7 @@ mixes data (a vct object) into snd's channel chn starting at beg; returns the ne
 	  data[0] = (MUS_SAMPLE_TYPE *)CALLOC(len, sizeof(MUS_SAMPLE_TYPE));
 	  for (i = 0; i < len; i++)
 	    data[0][i] = MUS_FLOAT_TO_SAMPLE(v->data[i]);
-	  if (gh_string_p(origin))
+	  if (STRING_P(origin))
 	    edname = TO_NEW_C_STRING(origin);
 	  mix_id = mix_array(bg, len, data, cp, 1, 1,
 			     SND_SRATE(cp[0]->sound),
@@ -4138,10 +4138,10 @@ void g_init_mix(SCM local_doc)
   scm_set_smob_apply(mf_tag, SCM_FNC g_next_mix_sample, 0, 0, 0);
 #endif
 
-  DEFINE_PROC(gh_new_procedure1_0(S_make_mix_sample_reader, g_make_mix_sample_reader), H_make_mix_sample_reader);
-  DEFINE_PROC(gh_new_procedure1_0(S_next_mix_sample,        g_next_mix_sample),        H_next_mix_sample);
-  DEFINE_PROC(gh_new_procedure1_0(S_free_mix_sample_reader, g_free_mix_sample_reader), H_free_mix_sample_reader);
-  DEFINE_PROC(gh_new_procedure1_0(S_mix_sample_readerQ,     g_mf_p),                   H_mf_p);
+  DEFINE_PROC(S_make_mix_sample_reader, g_make_mix_sample_reader, 1, 0, 0, H_make_mix_sample_reader);
+  DEFINE_PROC(S_next_mix_sample,        g_next_mix_sample, 1, 0, 0,        H_next_mix_sample);
+  DEFINE_PROC(S_free_mix_sample_reader, g_free_mix_sample_reader, 1, 0, 0, H_free_mix_sample_reader);
+  DEFINE_PROC(S_mix_sample_readerQ,     g_mf_p, 1, 0, 0,                   H_mf_p);
 
   tf_tag = scm_make_smob_type("tf", sizeof(SCM));
   scm_set_smob_mark(tf_tag, mark_tf);
@@ -4152,12 +4152,12 @@ void g_init_mix(SCM local_doc)
   scm_set_smob_apply(tf_tag, SCM_FNC g_next_track_sample, 0, 0, 0);
 #endif
 
-  DEFINE_PROC(gh_new_procedure(S_make_track_sample_reader, SCM_FNC g_make_track_sample_reader, 1, 3, 0), H_make_track_sample_reader);
-  DEFINE_PROC(gh_new_procedure1_0(S_next_track_sample,             g_next_track_sample),                 H_next_track_sample);
-  DEFINE_PROC(gh_new_procedure1_0(S_free_track_sample_reader,      g_free_track_sample_reader),          H_free_track_sample_reader);
-  DEFINE_PROC(gh_new_procedure1_0(S_track_sample_readerQ,          g_tf_p),                              H_tf_p);
-  DEFINE_PROC(gh_new_procedure0_1(S_play_mix,                      g_play_mix),                          H_play_mix);
-  DEFINE_PROC(gh_new_procedure1_2(S_play_track,                    g_play_track),                        H_play_track);
+  DEFINE_PROC(S_make_track_sample_reader, g_make_track_sample_reader, 1, 3, 0, H_make_track_sample_reader);
+  DEFINE_PROC(S_next_track_sample,             g_next_track_sample, 1, 0, 0,                 H_next_track_sample);
+  DEFINE_PROC(S_free_track_sample_reader,      g_free_track_sample_reader, 1, 0, 0,          H_free_track_sample_reader);
+  DEFINE_PROC(S_track_sample_readerQ,          g_tf_p, 1, 0, 0,                              H_tf_p);
+  DEFINE_PROC(S_play_mix,                      g_play_mix, 0, 1, 0,                          H_play_mix);
+  DEFINE_PROC(S_play_track,                    g_play_track, 1, 2, 0,                        H_play_track);
 
   define_procedure_with_setter(S_mix_position, SCM_FNC g_mix_position, H_mix_position,
 			       "set-" S_mix_position, SCM_FNC g_set_mix_position,
@@ -4216,23 +4216,22 @@ void g_init_mix(SCM local_doc)
 			       local_doc, 0, 2, 3, 0);
 
 
-  DEFINE_PROC(gh_new_procedure0_1(S_mix_chans,         g_mix_chans),         H_mix_chans);
-  DEFINE_PROC(gh_new_procedure0_1(S_mixQ,              g_mixQ),              H_mixQ);
-  DEFINE_PROC(gh_new_procedure0_1(S_mix_sound_channel, g_mix_sound_channel), H_mix_sound_channel);
-  DEFINE_PROC(gh_new_procedure0_1(S_mix_sound_index,   g_mix_sound_index),   H_mix_sound_index);
-  DEFINE_PROC(gh_new_procedure0_2(S_mixes,             g_mixes),             H_mixes);
-  DEFINE_PROC(gh_new_procedure2_0(S_mix_sound,         g_mix_sound),         H_mix_sound);
-  DEFINE_PROC(gh_new_procedure1_0(S_select_mix,        g_select_mix),        H_select_mix);
+  DEFINE_PROC(S_mix_chans,         g_mix_chans, 0, 1, 0,         H_mix_chans);
+  DEFINE_PROC(S_mixQ,              g_mixQ, 0, 1, 0,              H_mixQ);
+  DEFINE_PROC(S_mix_sound_channel, g_mix_sound_channel, 0, 1, 0, H_mix_sound_channel);
+  DEFINE_PROC(S_mix_sound_index,   g_mix_sound_index, 0, 1, 0,   H_mix_sound_index);
+  DEFINE_PROC(S_mixes,             g_mixes, 0, 2, 0,             H_mixes);
+  DEFINE_PROC(S_mix_sound,         g_mix_sound, 2, 0, 0,         H_mix_sound);
+  DEFINE_PROC(S_select_mix,        g_select_mix, 1, 0, 0,        H_select_mix);
 
-  /* DEFINE_PROC(gh_new_procedure0_0(S_selected_mix, g_selected_mix), H_selected_mix); */
   define_procedure_with_setter(S_selected_mix, SCM_FNC g_selected_mix, H_selected_mix,
 			       "set-" S_selected_mix, SCM_FNC g_select_mix,
 			       local_doc, 0, 0, 1, 0);
 
-  DEFINE_PROC(gh_new_procedure(S_forward_mix,  SCM_FNC g_forward_mix, 0, 3, 0),  H_forward_mix);
-  DEFINE_PROC(gh_new_procedure(S_backward_mix, SCM_FNC g_backward_mix, 0, 3, 0), H_backward_mix);
-  DEFINE_PROC(gh_new_procedure(S_mix,          SCM_FNC g_mix, 1, 5, 0),          H_mix);
-  DEFINE_PROC(gh_new_procedure(S_mix_vct,      SCM_FNC mix_vct, 1, 5, 0),        H_mix_vct);
+  DEFINE_PROC(S_forward_mix,  g_forward_mix, 0, 3, 0,  H_forward_mix);
+  DEFINE_PROC(S_backward_mix, g_backward_mix, 0, 3, 0, H_backward_mix);
+  DEFINE_PROC(S_mix,          g_mix, 1, 5, 0,          H_mix);
+  DEFINE_PROC(S_mix_vct,      mix_vct, 1, 5, 0,        H_mix_vct);
 
   #define H_multichannel_mix_hook S_multichannel_mix_hook "(ids) is called when a multichannel mix happens in a sync'd sound. \
 'ids' is a list of mix id numbers."

@@ -2,6 +2,13 @@
 #define SG_H
 /* macros useful in all the files using guile */
 
+/* I'm slowly moving every gh_*, scm_* and SCM_* entity into this file,
+ *   hoping eventually to be able to make a parallel header file that
+ *   allows us to use librep as the extension language without any
+ *   (or not many) internal code changes.  Perhaps other Scheme extension
+ *   systems could also work.
+ */
+
 #define MAKE_HOOK(Name, Args, Help) snd_set_object_property(scm_create_hook(Name, Args), local_doc, TO_SCM_STRING(Help))
 #define SND_RETURN_NEWSMOB(Tag, Val) SCM_RETURN_NEWSMOB(Tag, (SCM)Val)
 #define SND_VALUE_OF(a) SCM_SMOB_DATA(a)
@@ -70,6 +77,7 @@
 #define TO_SCM_BOOLEAN(a) ((a) ? SCM_BOOL_T : SCM_BOOL_F)
 #define TO_SCM_SYMBOL(a) gh_symbol2scm(a)
 #define TO_C_BOOLEAN_OR_T(a) ((SCM_FALSEP(a) || ((SCM_INUMP(a)) && (SCM_INUM(a) == 0))) ? 0 : 1)
+#define TO_C_BOOLEAN(a) ((SCM_FALSEP(a)) ? 0 : 1)
 
 
 #define SND_WRAP(a) ((SCM)(gh_ulong2scm((unsigned long)a)))
@@ -80,15 +88,16 @@
 
 #define HOOKED(a) (!(SCM_NULLP(SCM_HOOK_PROCEDURES(a))))
 
-#define DEFINE_PROC(a, b) scm_set_procedure_property_x(a, local_doc, gh_str02scm(b))
+#define DEFINE_PROC(Name, Func, ReqArg, OptArg, RstArg, Doc) \
+  scm_set_procedure_property_x(gh_new_procedure(Name, SCM_FNC Func, ReqArg, OptArg, RstArg), local_doc, gh_str02scm(Doc))
+
 #define DEFINE_VAR(a, b, c) \
   { \
     gh_define(a, b); \
     scm_set_object_property_x(TO_SCM_SYMBOL(a), local_doc, TO_SCM_STRING(c)); \
   }
 
-/* DEFINE_PROC(proc, doc) sets the documentation property of procedure proc to the text doc
- *   the assumption is that it will be used with gh_new_procedure and scm_string_to_symbol
+/* DEFINE_PROC sets the documentation property of procedure Func to Doc
  * DEFINE_VAR sets the symbol's documentation property (gh_define returns the value) 
  */
 
@@ -137,6 +146,16 @@ static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
     if (!((SCM_NFALSEP(scm_integer_p(Chn))) || (SCM_FALSEP(Chn)) || (SCM_UNBNDP(Chn)))) \
       scm_wrong_type_arg(Origin, Offset + 1, Chn);
 
+#ifndef SCM_BOOLP
+  #define SCM_BOOLP(Arg) gh_boolean_p(Arg)
+#endif
+#ifndef SCM_STRINGP
+  #define SCM_STRINGP(Arg) gh_string_p(Arg)
+#endif
+#ifndef SCM_VECTORP
+  #define SCM_VECTOR_P(Arg) gh_vector_p(Arg)
+#endif
+
 #define BOOLEAN_IF_BOUND_P(Arg) ((SCM_BOOLP(Arg)) || (SCM_UNBNDP(Arg)))
 #define INTEGER_IF_BOUND_P(Arg) ((SCM_UNBNDP(Arg)) || (SCM_NFALSEP(scm_integer_p(Arg))))
 #define NUMBER_IF_BOUND_P(Arg) ((SCM_UNBNDP(Arg)) || (SCM_NFALSEP(scm_real_p(Arg))))
@@ -149,5 +168,7 @@ static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
 #define BOOLEAN_P(Arg) (SCM_BOOLP(Arg))
 #define BOUND_P(Arg) (!(SCM_UNBNDP(Arg)))
 #define SYMBOL_P(Arg) (SCM_SYMBOLP(Arg))
+#define STRING_P(Arg) (SCM_STRINGP(Arg))
+#define VECTOR_P(Arg) (SCM_VECTORP(Arg))
 
 #endif

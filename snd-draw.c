@@ -118,7 +118,7 @@ static SCM g_erase_rectangle(SCM x0, SCM y0, SCM width, SCM height, SCM snd, SCM
 static SCM g_draw_string(SCM text, SCM x0, SCM y0, SCM snd, SCM chn, SCM ax)
 {
   SND_ASSERT_CHAN(S_draw_string, snd, chn, 4);
-  SCM_ASSERT(gh_string_p(text), text, SCM_ARG1, S_draw_string);
+  SCM_ASSERT(STRING_P(text), text, SCM_ARG1, S_draw_string);
   SCM_ASSERT(NUMBER_P(x0), x0, SCM_ARG2, S_draw_string);
   SCM_ASSERT(NUMBER_P(y0), y0, SCM_ARG3, S_draw_string);
   draw_string(TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_string),
@@ -140,7 +140,7 @@ static POINT *TO_C_POINTS(SCM pts, const char *caller)
   int i, j, len;
   POINT *pack_pts;
   SCM *data;
-  SCM_ASSERT(gh_vector_p(pts), pts, SCM_ARG1, caller);
+  SCM_ASSERT(VECTOR_P(pts), pts, SCM_ARG1, caller);
   len = gh_vector_length(pts) / 2;
   if (len <= 0) 
     {
@@ -351,7 +351,7 @@ static SCM g_load_font(SCM font)
 {
   XFontStruct *fs = NULL;
   snd_state *ss;
-  SCM_ASSERT(gh_string_p(font), font, SCM_ARG1, S_load_font);
+  SCM_ASSERT(STRING_P(font), font, SCM_ARG1, S_load_font);
   ss = get_global_state();
   fs = XLoadQueryFont(MAIN_DISPLAY(ss), 
 		      TO_C_STRING(font));
@@ -404,7 +404,7 @@ static void handle_input(gpointer context, gint fd, GdkInputCondition condition)
 static SCM g_load_font(SCM font)
 {
   GdkFont *fs = NULL;
-  SCM_ASSERT(gh_string_p(font), font, SCM_ARG1, S_load_font);
+  SCM_ASSERT(STRING_P(font), font, SCM_ARG1, S_load_font);
   fs = gdk_font_load(TO_C_STRING(font));
   if (fs) return(SND_WRAP(fs));
   return(SCM_BOOL_F);
@@ -580,14 +580,14 @@ static SCM dialog_widgets = SCM_UNDEFINED;
 
 static SCM g_dialog_widgets(void)
 {
-  if (!(gh_vector_p(dialog_widgets)))
+  if (!(VECTOR_P(dialog_widgets)))
     dialog_widgets = scm_permanent_object(gh_make_vector(TO_SMALL_SCM_INT(NUM_DIALOGS), SCM_BOOL_F));
   return(scm_vector_to_list(dialog_widgets));
 }
 
 void set_dialog_widget(int which, GUI_WIDGET wid)
 {
-  if (!(gh_vector_p(dialog_widgets)))
+  if (!(VECTOR_P(dialog_widgets)))
     dialog_widgets = scm_permanent_object(gh_make_vector(TO_SMALL_SCM_INT(NUM_DIALOGS), SCM_BOOL_F));
   gh_vector_set_x(dialog_widgets, 
 		  TO_SMALL_SCM_INT(which), 
@@ -703,27 +703,27 @@ void g_init_draw(SCM local_doc)
   DEFINE_VAR(S_copy_context,         TO_SMALL_SCM_INT(CHAN_GC),        "graphics context to draw a line");
   DEFINE_VAR(S_cursor_context,       TO_SMALL_SCM_INT(CHAN_CGC),       "graphics context for the cursor");
 
-  DEFINE_PROC(gh_new_procedure(S_draw_line,        SCM_FNC g_draw_line, 4, 3, 0),       "(" S_draw_line " x0 y0 x1 y1 snd chn ax)");
-  DEFINE_PROC(gh_new_procedure(S_draw_dot,         SCM_FNC g_draw_dot, 2, 4, 0),        "(" S_draw_dot " x0 y0 size snd chn ax)");
-  DEFINE_PROC(gh_new_procedure(S_draw_lines,       SCM_FNC g_draw_lines, 1, 3, 0),      "(" S_draw_lines " lines snd chn ax)");
-  DEFINE_PROC(gh_new_procedure(S_draw_dots,        SCM_FNC g_draw_dots, 1, 4, 0),       "(" S_draw_dots " positions dot-size snd chn ax)");
-  DEFINE_PROC(gh_new_procedure(S_draw_string,      SCM_FNC g_draw_string, 3, 3, 0),     "(" S_draw_string " text x0 y0 snd chn ax)");
-  DEFINE_PROC(gh_new_procedure(S_fill_rectangle,   SCM_FNC g_fill_rectangle, 4, 3, 0),  "(" S_fill_rectangle " x0 y0 width height snd chn ax)");
-  DEFINE_PROC(gh_new_procedure(S_fill_polygon,     SCM_FNC g_fill_polygon, 1, 3, 0),    "(" S_fill_polygon " points snd chn ax)");
-  DEFINE_PROC(gh_new_procedure(S_erase_rectangle,  SCM_FNC g_erase_rectangle, 4, 3, 0), "(" S_erase_rectangle " x0 y0 width height snd chn ax)");
+  DEFINE_PROC(S_draw_line,        g_draw_line, 4, 3, 0,       "(" S_draw_line " x0 y0 x1 y1 snd chn ax)");
+  DEFINE_PROC(S_draw_dot,         g_draw_dot, 2, 4, 0,        "(" S_draw_dot " x0 y0 size snd chn ax)");
+  DEFINE_PROC(S_draw_lines,       g_draw_lines, 1, 3, 0,      "(" S_draw_lines " lines snd chn ax)");
+  DEFINE_PROC(S_draw_dots,        g_draw_dots, 1, 4, 0,       "(" S_draw_dots " positions dot-size snd chn ax)");
+  DEFINE_PROC(S_draw_string,      g_draw_string, 3, 3, 0,     "(" S_draw_string " text x0 y0 snd chn ax)");
+  DEFINE_PROC(S_fill_rectangle,   g_fill_rectangle, 4, 3, 0,  "(" S_fill_rectangle " x0 y0 width height snd chn ax)");
+  DEFINE_PROC(S_fill_polygon,     g_fill_polygon, 1, 3, 0,    "(" S_fill_polygon " points snd chn ax)");
+  DEFINE_PROC(S_erase_rectangle,  g_erase_rectangle, 4, 3, 0, "(" S_erase_rectangle " x0 y0 width height snd chn ax)");
 
   define_procedure_with_reversed_setter(S_foreground_color, SCM_FNC g_foreground_color, "(" S_foreground_color " snd chn ax) -> current drawing color",
 					"set-" S_foreground_color, SCM_FNC g_set_foreground_color, SCM_FNC g_set_foreground_color_reversed,
 					local_doc, 0, 3, 1, 3);
 
-  DEFINE_PROC(gh_new_procedure(S_load_font,        SCM_FNC g_load_font, 1, 0, 0),        "(" S_load_font " <name>) -> font-id");
+  DEFINE_PROC(S_load_font,        g_load_font, 1, 0, 0,        "(" S_load_font " <name>) -> font-id");
 
   define_procedure_with_reversed_setter(S_current_font, SCM_FNC g_current_font, "(" S_current_font " snd chn ax) -> current font id",
 					"set-" S_current_font, SCM_FNC g_set_current_font, SCM_FNC g_set_current_font_reversed,
 					local_doc, 0, 3, 1, 3);
 
-  DEFINE_PROC(gh_new_procedure(S_main_widgets,     SCM_FNC g_main_widgets, 0, 0, 0),    "returns top level widgets");
-  DEFINE_PROC(gh_new_procedure(S_dialog_widgets,   SCM_FNC g_dialog_widgets, 0, 0, 0),  "returns a list of dialog widgets");
+  DEFINE_PROC(S_main_widgets,     g_main_widgets, 0, 0, 0,    "returns top level widgets");
+  DEFINE_PROC(S_dialog_widgets,   g_dialog_widgets, 0, 0, 0,  "returns a list of dialog widgets");
 
   define_procedure_with_setter(S_widget_size, SCM_FNC g_widget_size, "(" S_widget_size " wid) -> '(width height)",
 					"set-" S_widget_size, SCM_FNC g_set_widget_size, local_doc, 1, 0, 2, 0);
@@ -731,20 +731,20 @@ void g_init_draw(SCM local_doc)
   define_procedure_with_setter(S_widget_position, SCM_FNC g_widget_position, "(" S_widget_position " wid) -> '(x y)",
 					"set-" S_widget_position, SCM_FNC g_set_widget_position, local_doc, 1, 0, 2, 0);
 
-  DEFINE_PROC(gh_new_procedure(S_recolor_widget,  SCM_FNC g_recolor_widget, 2, 0, 0),  "(" S_recolor_widget " wid color)");
-  DEFINE_PROC(gh_new_procedure(S_hide_widget,     SCM_FNC g_hide_widget, 1, 0, 0),     "(" S_hide_widget " widget)");
-  DEFINE_PROC(gh_new_procedure(S_show_widget,     SCM_FNC g_show_widget, 1, 0, 0),     "(" S_show_widget " widget)");
-  DEFINE_PROC(gh_new_procedure(S_focus_widget,    SCM_FNC g_focus_widget, 1, 0, 0),    "(" S_focus_widget " widget) causes widget to receive input ('focus')");
+  DEFINE_PROC(S_recolor_widget,  g_recolor_widget, 2, 0, 0,  "(" S_recolor_widget " wid color)");
+  DEFINE_PROC(S_hide_widget,     g_hide_widget, 1, 0, 0,     "(" S_hide_widget " widget)");
+  DEFINE_PROC(S_show_widget,     g_show_widget, 1, 0, 0,     "(" S_show_widget " widget)");
+  DEFINE_PROC(S_focus_widget,    g_focus_widget, 1, 0, 0,    "(" S_focus_widget " widget) causes widget to receive input ('focus')");
 
-  DEFINE_PROC(gh_new_procedure(S_add_idler,       SCM_FNC g_add_idler, 1, 0, 0),       "(" S_add_idler " code) -> id");
-  DEFINE_PROC(gh_new_procedure(S_remove_idler,    SCM_FNC g_remove_idler, 1, 0, 0),    "(" S_remove_idler " id)");
+  DEFINE_PROC(S_add_idler,       g_add_idler, 1, 0, 0,       "(" S_add_idler " code) -> id");
+  DEFINE_PROC(S_remove_idler,    g_remove_idler, 1, 0, 0,    "(" S_remove_idler " id)");
 
 
 
   /* ---------------- unstable ---------------- */
 
-  DEFINE_PROC(gh_new_procedure(S_make_graph_data, SCM_FNC g_make_graph_data, 0, 5, 0), H_make_graph_data);
-  DEFINE_PROC(gh_new_procedure(S_graph_data, SCM_FNC g_graph_data, 1, 6, 0), H_graph_data);
+  DEFINE_PROC(S_make_graph_data, g_make_graph_data, 0, 5, 0, H_make_graph_data);
+  DEFINE_PROC(S_graph_data, g_graph_data, 1, 6, 0, H_graph_data);
 
   DEFINE_VAR("erase-context",        TO_SMALL_SCM_INT(CHAN_IGC),       "graphics context to erase a line");
   DEFINE_VAR("selection-context",    TO_SMALL_SCM_INT(CHAN_SELGC),     "graphics context to draw a line in a selection");
@@ -753,18 +753,18 @@ void g_init_draw(SCM local_doc)
   DEFINE_VAR("selected-mix-context", TO_SMALL_SCM_INT(CHAN_SELMXGC),   "graphics context for selected mix waveforms");
   DEFINE_VAR("combined-context",     TO_SMALL_SCM_INT(CHAN_TMPGC),     "graphics context for superimposed graphics");
 
-  DEFINE_PROC(gh_new_procedure("channel-info",    SCM_FNC g_channel_info, 0, 2, 0),    "(channel-info snd chn)");
+  DEFINE_PROC("channel-info",    g_channel_info, 0, 2, 0,    "(channel-info snd chn)");
 
-  DEFINE_PROC(gh_new_procedure(S_add_input,       SCM_FNC g_add_input, 2, 0, 0),       "(" S_add_input " file callback) -> id");
-  DEFINE_PROC(gh_new_procedure(S_remove_input,    SCM_FNC g_remove_input, 1, 0, 0),    "(" S_remove_input " id)");
+  DEFINE_PROC(S_add_input,       g_add_input, 2, 0, 0,       "(" S_add_input " file callback) -> id");
+  DEFINE_PROC(S_remove_input,    g_remove_input, 1, 0, 0,    "(" S_remove_input " id)");
 
-  DEFINE_PROC(gh_new_procedure("set-widget-foreground", SCM_FNC g_set_widget_foreground, 2, 0, 0), "(set-widget-foreground widget color)");
-  DEFINE_PROC(gh_new_procedure(S_make_bezier,     SCM_FNC g_make_bezier, 0, 0, 1),     "(" S_make_bezier " x0 y0 x1 y1 x2 y2 x3 y3 n) -> vector of points");
+  DEFINE_PROC("set-widget-foreground", g_set_widget_foreground, 2, 0, 0, "(set-widget-foreground widget color)");
+  DEFINE_PROC(S_make_bezier,     g_make_bezier, 0, 0, 1,     "(" S_make_bezier " x0 y0 x1 y1 x2 y2 x3 y3 n) -> vector of points");
 
 
   /* ---------------- backwards compatibility ---------------- */
 #if USE_MOTIF
-  DEFINE_PROC(gh_new_procedure0_0("snd-main-shell", SCM_FNC g_main_shell), "snd-main-shell tries to return Snd's topmost widget");
+  DEFINE_PROC("snd-main-shell", g_main_shell, 0, 0, 0, "snd-main-shell tries to return Snd's topmost widget");
 #endif
 }
 #endif

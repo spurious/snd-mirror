@@ -26,7 +26,7 @@
 (use-modules (ice-9 format) (ice-9 debug))
 
 (define tests 1)
-(define snd-test -1)
+(define snd-test -2)
 (define full-test (< snd-test 0))
 
 (if (and (not (file-exists? "4.aiff"))
@@ -823,7 +823,10 @@
 			    (initval (list-ref (car lst) 2))
 			    (newvals (list-ref (car lst) 4)))
 			(map (lambda (n)
-			       (setfnc n)
+			       (catch #t 
+				      (lambda ()
+					(setfnc n))
+				      (lambda args (car args)))
 			       (let ((nowval (getfnc)))
 				 (if (equal? n nowval)
 				     (snd-display (format #f ";~A = ~A (~A)~%" name n initval)))

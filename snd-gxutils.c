@@ -58,7 +58,7 @@ static SCM send_netscape(SCM cmd)
   snd_state *ss;
   Display *dpy;
   char *command, *tmp = NULL;
-  SCM_ASSERT(gh_string_p(cmd), cmd, SCM_ARG1, "send-netscape");
+  SCM_ASSERT(STRING_P(cmd), cmd, SCM_ARG1, "send-netscape");
   ss = get_global_state();
   dpy = MAIN_DISPLAY(ss);
   command = (char *)CALLOC(256, sizeof(char));
@@ -111,9 +111,9 @@ static SCM g_change_property(SCM winat, SCM name, SCM command)
 {
   char *c;
   /* winat arg needed as well as command arg because we need an atom that is guaranteed to have a value */
-  SCM_ASSERT(gh_string_p(winat), name, SCM_ARG1, S_change_property);
-  SCM_ASSERT(gh_string_p(name), name, SCM_ARG2, S_change_property);
-  if (gh_string_p(command))
+  SCM_ASSERT(STRING_P(winat), name, SCM_ARG1, S_change_property);
+  SCM_ASSERT(STRING_P(name), name, SCM_ARG2, S_change_property);
+  if (STRING_P(command))
     c = TO_NEW_C_STRING(command);
   else
     {

@@ -473,9 +473,9 @@ static mus_any *mus_make_fcomb (Float scaler, int size, Float a0, Float a1)
         {
           SCM local_doc;
           local_doc = scm_permanent_object(scm_string_to_symbol(TO_SCM_STRING("documentation")));
-          DEFINE_PROC(gh_new_procedure(S_fcomb_p, SCM_FNC g_fcomb_p, 1, 0, 0), H_fcomb_p);
-          DEFINE_PROC(gh_new_procedure(S_make_fcomb, SCM_FNC g_make_fcomb, 4, 0, 0), H_make_fcomb);
-          DEFINE_PROC(gh_new_procedure(S_fcomb, SCM_FNC g_fcomb, 2, 0, 0), H_fcomb);
+          DEFINE_PROC(S_fcomb_p, g_fcomb_p, 1, 0, 0, H_fcomb_p);
+          DEFINE_PROC(S_make_fcomb, g_make_fcomb, 4, 0, 0, H_make_fcomb);
+          DEFINE_PROC(S_fcomb, g_fcomb, 2, 0, 0, H_fcomb);
         }
 #endif
 
@@ -840,13 +840,13 @@ static SCM g_mus_contrast(SCM inval, SCM index)
 
 static void init_rev_funcs(SCM local_doc)
 {
-  DEFINE_PROC(gh_new_procedure("make-snd-nrev",     SCM_FNC g_make_nrev, 2, 0, 0),     "make-snd-nrev is the default reverb make function");
-  DEFINE_PROC(gh_new_procedure("snd-nrev",          SCM_FNC g_nrev, 3, 0, 0),          "snd-nrev is the default reverb");
-  DEFINE_PROC(gh_new_procedure("free-snd-nrev",     SCM_FNC g_free_rev, 1, 0, 0),      "free-snd-nrev is the default reverb free function");
-  DEFINE_PROC(gh_new_procedure("snd-contrast",      SCM_FNC g_mus_contrast, 2, 0, 0),  "snd-contrast is the default contrast function");
-  DEFINE_PROC(gh_new_procedure("make-snd-freeverb", SCM_FNC g_make_freeverb, 2, 0, 0), "make-snd-freeverb is the freeverb reverb make function");
-  DEFINE_PROC(gh_new_procedure("snd-freeverb",      SCM_FNC g_freeverb, 3, 0, 0),      "snd-freeverb is the freeverb reverb");
-  DEFINE_PROC(gh_new_procedure("free-snd-freeverb", SCM_FNC g_free_rev, 1, 0, 0),      "free-snd-freeverb is the freeverb reverb free function");
+  DEFINE_PROC("make-snd-nrev",     g_make_nrev, 2, 0, 0,     "make-snd-nrev is the default reverb make function");
+  DEFINE_PROC("snd-nrev",          g_nrev, 3, 0, 0,          "snd-nrev is the default reverb");
+  DEFINE_PROC("free-snd-nrev",     g_free_rev, 1, 0, 0,      "free-snd-nrev is the default reverb free function");
+  DEFINE_PROC("snd-contrast",      g_mus_contrast, 2, 0, 0,  "snd-contrast is the default contrast function");
+  DEFINE_PROC("make-snd-freeverb", g_make_freeverb, 2, 0, 0, "make-snd-freeverb is the freeverb reverb make function");
+  DEFINE_PROC("snd-freeverb",      g_freeverb, 3, 0, 0,      "snd-freeverb is the freeverb reverb");
+  DEFINE_PROC("free-snd-freeverb", g_free_rev, 1, 0, 0,      "free-snd-freeverb is the freeverb reverb free function");
 }
 #endif
 
@@ -2544,7 +2544,7 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
 
   /* if even samp_n is SCM_UNDEFINED, start_dac? */
 
-  if (gh_string_p(samp_n))
+  if (STRING_P(samp_n))
     {
       /* filename beg end background syncd ignored */
       name = mus_expand_filename(TO_C_STRING(samp_n));
@@ -2819,23 +2819,23 @@ static SCM g_player_p(SCM snd_chn)
 
 void g_init_dac(SCM local_doc)
 {
-  DEFINE_PROC(gh_new_procedure(S_reverb_funcs, SCM_FNC g_reverb_funcs, 0, 0, 0), H_reverb_funcs);
-  DEFINE_PROC(gh_new_procedure("set-" S_reverb_funcs, SCM_FNC g_set_reverb_funcs, 3, 0, 0), H_set_reverb_funcs);
+  DEFINE_PROC(S_reverb_funcs, g_reverb_funcs, 0, 0, 0, H_reverb_funcs);
+  DEFINE_PROC("set-" S_reverb_funcs, g_set_reverb_funcs, 3, 0, 0, H_set_reverb_funcs);
   /* can't use generalized set here because it's confused by the 3 args -- perhaps a list would be ok */
 
   define_procedure_with_setter(S_contrast_func, SCM_FNC g_contrast_func, H_contrast_func,
 			       "set-" S_contrast_func, SCM_FNC g_set_contrast_func, local_doc, 0, 0, 1, 0);
 
-  DEFINE_PROC(gh_new_procedure(S_play,           SCM_FNC g_play, 0, 5, 0),           H_play);
-  DEFINE_PROC(gh_new_procedure(S_play_selection, SCM_FNC g_play_selection, 0, 1, 0), H_play_selection);
-  DEFINE_PROC(gh_new_procedure(S_play_and_wait,  SCM_FNC g_play_and_wait, 0, 5, 0),  H_play_and_wait);
-  DEFINE_PROC(gh_new_procedure(S_stop_playing,   SCM_FNC g_stop_playing, 0, 1, 0),   H_stop_playing);
+  DEFINE_PROC(S_play,           g_play, 0, 5, 0,           H_play);
+  DEFINE_PROC(S_play_selection, g_play_selection, 0, 1, 0, H_play_selection);
+  DEFINE_PROC(S_play_and_wait,  g_play_and_wait, 0, 5, 0,  H_play_and_wait);
+  DEFINE_PROC(S_stop_playing,   g_stop_playing, 0, 1, 0,   H_stop_playing);
 
-  DEFINE_PROC(gh_new_procedure(S_make_player,    SCM_FNC g_make_player, 0, 2, 0),    H_make_player);
-  DEFINE_PROC(gh_new_procedure(S_add_player,     SCM_FNC g_add_player, 1, 2, 0),     H_add_player);
-  DEFINE_PROC(gh_new_procedure(S_start_playing,  SCM_FNC g_start_playing, 0, 3, 0),  H_start_playing);
-  DEFINE_PROC(gh_new_procedure(S_stop_player,    SCM_FNC g_stop_player, 1, 0, 0),    H_stop_player);
-  DEFINE_PROC(gh_new_procedure(S_playerQ,        SCM_FNC g_player_p, 1, 0, 0),       H_playerQ);
+  DEFINE_PROC(S_make_player,    g_make_player, 0, 2, 0,    H_make_player);
+  DEFINE_PROC(S_add_player,     g_add_player, 1, 2, 0,     H_add_player);
+  DEFINE_PROC(S_start_playing,  g_start_playing, 0, 3, 0,  H_start_playing);
+  DEFINE_PROC(S_stop_player,    g_stop_player, 1, 0, 0,    H_stop_player);
+  DEFINE_PROC(S_playerQ,        g_player_p, 1, 0, 0,       H_playerQ);
 
   #define H_stop_playing_hook S_stop_playing_hook " (snd) is called when a sound finishes playing."
   #define H_stop_playing_channel_hook S_stop_playing_channel_hook " (snd chn) is called when a channel finishes playing."

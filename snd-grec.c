@@ -2207,7 +2207,8 @@ void snd_record_file(snd_state *ss)
 void set_recorder_autoload(recorder_info *rp, int val)
 {
   rp->autoload = val;
-  if (recorder) set_toggle_button(device_buttons[rp->autoload_button], val, FALSE, (void *)(all_panes[rp->autoload_button])); 
+  if (recorder) 
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(device_buttons[rp->autoload_button]), val);
 }
 
 void reflect_recorder_in_amp(int in, int out, Float val)

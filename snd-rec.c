@@ -1495,17 +1495,21 @@ static SCM g_set_recorder_autoload(SCM val)
 static SCM g_recorder_buffer_size(void) {return(TO_SCM_INT(rp->buffer_size));}
 static SCM g_set_recorder_buffer_size(SCM val) 
 {
+  int size;
   #define H_recorder_buffer_size "(" S_recorder_buffer_size ") -> ADC buffer size (4096)"
   SCM_ASSERT(INTEGER_P(val), val, SCM_ARG1, "set-" S_recorder_buffer_size); 
-  rp->buffer_size = TO_C_INT(val);
-  return(TO_SCM_INT(rp->buffer_size));
+  size = TO_C_INT(val);
+  if (size <= 0)
+    mus_misc_error("set-" S_recorder_buffer_size, "can't set buffer size <= 0", val);
+  rp->buffer_size = size;
+  return(val);
 }
 
 static SCM g_recorder_file(void) {return(TO_SCM_STRING(rp->output_file));}
 static SCM g_set_recorder_file(SCM val) 
 {
   #define H_recorder_file "(" S_recorder_file ") -> default recorder file name"
-  SCM_ASSERT(gh_string_p(val), val, SCM_ARG1, "set-" S_recorder_file); 
+  SCM_ASSERT(STRING_P(val), val, SCM_ARG1, "set-" S_recorder_file); 
   rp->output_file = TO_NEW_C_STRING(val);
   return(TO_SCM_STRING(rp->output_file));
 }
@@ -1697,7 +1701,7 @@ void g_init_recorder(SCM local_doc)
   define_procedure_with_setter(S_recorder_out_amp, SCM_FNC g_recorder_out_amp, H_recorder_out_amp,
 			       "set-" S_recorder_out_amp, SCM_FNC g_set_recorder_out_amp, local_doc, 1, 0, 2, 0);
 
-  DEFINE_PROC(gh_new_procedure0_0(S_recorder_dialog, g_recorder_dialog), H_recorder_dialog);
+  DEFINE_PROC(S_recorder_dialog, g_recorder_dialog, 0, 0, 0, H_recorder_dialog);
 }
 
 #endif

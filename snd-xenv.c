@@ -1845,9 +1845,9 @@ static SCM g_enved_active_env(void)
 
 static SCM g_set_enved_active_env(SCM e)
 {
-  SCM_ASSERT(gh_list_p(e) || gh_string_p(e), e, SCM_ARG1, "set-" S_enved_active_env);
+  SCM_ASSERT(gh_list_p(e) || STRING_P(e), e, SCM_ARG1, "set-" S_enved_active_env);
   if (active_env) active_env = free_env(active_env);
-  if (gh_string_p(e))
+  if (STRING_P(e))
     active_env = copy_env(find_named_env(e));
   else active_env = scm2env(e);
   if (enved_dialog) 
@@ -1863,7 +1863,7 @@ static SCM g_enved_selected_env(void)
 
 static SCM g_set_enved_selected_env(SCM name)
 {
-  SCM_ASSERT(gh_string_p(name), name, SCM_ARG1, "set-" S_enved_selected_env);
+  SCM_ASSERT(STRING_P(name), name, SCM_ARG1, "set-" S_enved_selected_env);
   selected_env = find_named_env(name);
   return(name);
 }

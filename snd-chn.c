@@ -5165,15 +5165,15 @@ to the help dialog if filename is omitted"
   chan_info *cp;
   char *name = NULL;
   int err;
-  SCM_ASSERT((gh_string_p(filename) || (SCM_FALSEP(filename)) || (SCM_UNBNDP(filename))), filename, SCM_ARG1, S_peaks);
+  SCM_ASSERT((STRING_P(filename) || (SCM_FALSEP(filename)) || (SCM_UNBNDP(filename))), filename, SCM_ARG1, S_peaks);
   SND_ASSERT_CHAN(S_peaks, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_peaks);
-  if (gh_string_p(filename))
+  if (STRING_P(filename))
     name = mus_expand_filename(TO_C_STRING(filename));
   else name = NULL;
   err = display_fft_peaks(cp, name);
   if (name) FREE(name);
-  if ((gh_string_p(filename)) && (err == 0)) 
+  if ((STRING_P(filename)) && (err == 0)) 
     return(filename);
   return(SCM_BOOL_F);
 }
@@ -5374,13 +5374,13 @@ static SCM g_channel_widgets(SCM snd, SCM chn)
 void g_init_chn(SCM local_doc)
 {
 #if (!USE_NO_GUI)
-  DEFINE_PROC(gh_new_procedure(S_channel_widgets,         SCM_FNC g_channel_widgets, 0, 2, 0),         "returns channel widgets");
+  DEFINE_PROC(S_channel_widgets,         g_channel_widgets, 0, 2, 0,         "returns channel widgets");
 #endif
 
-  DEFINE_PROC(gh_new_procedure(S_edits,                   SCM_FNC g_edits, 0, 2, 0),                   H_edits);
-  DEFINE_PROC(gh_new_procedure(S_peaks,                   SCM_FNC g_peaks, 0, 3, 0),                   H_peaks);
-  DEFINE_PROC(gh_new_procedure(S_edit_hook,               SCM_FNC g_edit_hook, 0, 2, 0),               H_edit_hook);
-  DEFINE_PROC(gh_new_procedure(S_undo_hook,               SCM_FNC g_undo_hook, 0, 2, 0),               H_undo_hook);
+  DEFINE_PROC(S_edits,                   g_edits, 0, 2, 0,                   H_edits);
+  DEFINE_PROC(S_peaks,                   g_peaks, 0, 3, 0,                   H_peaks);
+  DEFINE_PROC(S_edit_hook,               g_edit_hook, 0, 2, 0,               H_edit_hook);
+  DEFINE_PROC(S_undo_hook,               g_undo_hook, 0, 2, 0,               H_undo_hook);
 
   define_procedure_with_reversed_setter(S_x_position_slider, SCM_FNC g_ap_sx, H_x_position_slider,
 					"set-" S_x_position_slider, SCM_FNC g_set_ap_sx, SCM_FNC g_set_ap_sx_reversed,
@@ -5406,9 +5406,9 @@ void g_init_chn(SCM local_doc)
 					"set-" S_maxamp, SCM_FNC g_set_maxamp, SCM_FNC g_set_maxamp_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  DEFINE_PROC(gh_new_procedure(S_forward_sample,    SCM_FNC g_forward_sample, 0, 3, 0),    H_forward_sample);
-  DEFINE_PROC(gh_new_procedure(S_backward_sample,   SCM_FNC g_backward_sample, 0, 3, 0),   H_backward_sample);
-  DEFINE_PROC(gh_new_procedure(S_cursor_position,   SCM_FNC g_cursor_position, 0, 2, 0),   H_cursor_position);
+  DEFINE_PROC(S_forward_sample,    g_forward_sample, 0, 3, 0,    H_forward_sample);
+  DEFINE_PROC(S_backward_sample,   g_backward_sample, 0, 3, 0,   H_backward_sample);
+  DEFINE_PROC(S_cursor_position,   g_cursor_position, 0, 2, 0,   H_cursor_position);
 
   define_procedure_with_reversed_setter(S_edit_position, SCM_FNC g_edit_position, H_edit_position,
 					"set-" S_edit_position, SCM_FNC g_set_edit_position, SCM_FNC g_set_edit_position_reversed,

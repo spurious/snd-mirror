@@ -236,9 +236,12 @@ char *get_minibuffer_string(snd_info *sp)
   return(gtk_editable_get_chars(GTK_EDITABLE(w_snd_minibuffer(sp)), 0, -1));
 } 
 
+static char stupid[1] ={'\0'};
 void set_minibuffer_string(snd_info *sp, char *str) 
 {
-  gtk_entry_set_text(GTK_ENTRY(w_snd_minibuffer(sp)), str);
+  if (str)
+    gtk_entry_set_text(GTK_ENTRY(w_snd_minibuffer(sp)), str);
+  else gtk_entry_set_text(GTK_ENTRY(w_snd_minibuffer(sp)), stupid);
 }
 
 void make_minibuffer_label(snd_info *sp, char *str)
@@ -1041,7 +1044,11 @@ static void filter_drawer_button_release(GtkWidget *w, GdkEventButton *ev, gpoin
 void set_filter_text(snd_info *sp, char *str)
 {
   if (!(IS_PLAYER(sp)))
-    gtk_entry_set_text(GTK_ENTRY(w_snd_filter(sp)), str);
+    {
+      if (str)
+	gtk_entry_set_text(GTK_ENTRY(w_snd_filter(sp)), str);
+      else gtk_entry_set_text(GTK_ENTRY(w_snd_filter(sp)), stupid);
+    }
 }
 
 static void filter_drawer_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
@@ -1135,8 +1142,12 @@ void filter_env_changed(snd_info *sp, env *e)
   if (!(IS_PLAYER(sp)))
     {
       tmpstr = env_to_string(e);
-      gtk_entry_set_text(GTK_ENTRY(w_snd_filter(sp)), tmpstr);
-      if (tmpstr) FREE(tmpstr);
+      if (tmpstr)
+	{
+	  gtk_entry_set_text(GTK_ENTRY(w_snd_filter(sp)), tmpstr);
+	  FREE(tmpstr);
+	}
+      else gtk_entry_set_text(GTK_ENTRY(w_snd_filter(sp)), stupid);
       report_filter_edit(sp);
       sp_display_env(sp);
       /* this is called also from snd-scm.c */

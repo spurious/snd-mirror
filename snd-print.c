@@ -506,7 +506,7 @@ static SCM g_graph2ps(SCM filename)
   SCM result;
   snd_state *ss;
   ss = get_global_state();
-  if (gh_string_p(filename))
+  if (STRING_P(filename))
     file = TO_C_STRING(filename);
   else file = eps_file(ss);
   error = snd_print_or_error(ss, file);
@@ -524,6 +524,6 @@ static SCM g_graph2ps(SCM filename)
 
 void g_init_print(SCM local_doc)
 {
-  DEFINE_PROC(gh_new_procedure(S_graph_ps,            SCM_FNC g_graph2ps, 0, 1, 0),            H_graph2ps);
+  DEFINE_PROC(S_graph_ps, g_graph2ps, 0, 1, 0, H_graph2ps);
 }
 #endif

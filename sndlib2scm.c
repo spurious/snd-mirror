@@ -57,7 +57,7 @@ static SCM g_sound_loop_info(SCM filename)
   int *res;
   char *tmpstr;
   SCM sres = SCM_EOL;
-  SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_mus_sound_loop_info); 
+  SCM_ASSERT(STRING_P(filename), filename, SCM_ARG1, S_mus_sound_loop_info); 
   tmpstr = mus_expand_filename(TO_C_STRING(filename));
   res = mus_sound_loop_info(tmpstr);
   if (tmpstr) FREE(tmpstr);
@@ -75,7 +75,7 @@ static SCM g_sound_samples(SCM filename)
   #define H_mus_sound_samples "(" S_mus_sound_samples " filename) -> samples (frames*channels) in sound"
   char *tmpstr = NULL;
   int res;
-  SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_mus_sound_samples); 
+  SCM_ASSERT(STRING_P(filename), filename, SCM_ARG1, S_mus_sound_samples); 
   res = mus_sound_samples(tmpstr = mus_expand_filename(TO_C_STRING(filename)));
   if (tmpstr) FREE(tmpstr);
   return(TO_SCM_INT(res));
@@ -86,7 +86,7 @@ static SCM g_sound_frames(SCM filename)
   #define H_mus_sound_frames "(" S_mus_sound_frames " filename) -> frames (samples/channel) in sound"
   char *tmpstr = NULL;
   int res;
-  SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_mus_sound_frames); 
+  SCM_ASSERT(STRING_P(filename), filename, SCM_ARG1, S_mus_sound_frames); 
   res = mus_sound_frames(tmpstr = mus_expand_filename(TO_C_STRING(filename)));
   if (tmpstr) FREE(tmpstr);
   return(TO_SCM_INT(res));
@@ -97,7 +97,7 @@ static SCM g_sound_datum_size(SCM filename)
   #define H_mus_sound_datum_size "(" S_mus_sound_datum_size " filename) -> bytes per sample of data in sound"
   char *tmpstr = NULL;
   int res;
-  SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_mus_sound_datum_size); 
+  SCM_ASSERT(STRING_P(filename), filename, SCM_ARG1, S_mus_sound_datum_size); 
   res = mus_sound_datum_size(tmpstr = mus_expand_filename(TO_C_STRING(filename)));
   if (tmpstr) FREE(tmpstr);
   return(TO_SCM_INT(res));
@@ -108,7 +108,7 @@ static SCM g_sound_data_location(SCM filename)
   #define H_mus_sound_data_location "(" S_mus_sound_data_location " filename) -> location (bytes) of first sample of sound data"
   char *tmpstr = NULL;
   int res;
-  SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_mus_sound_data_location); 
+  SCM_ASSERT(STRING_P(filename), filename, SCM_ARG1, S_mus_sound_data_location); 
   res = mus_sound_data_location(tmpstr = mus_expand_filename(TO_C_STRING(filename)));
   if (tmpstr) FREE(tmpstr);
   return(TO_SCM_INT(res));
@@ -119,7 +119,7 @@ static SCM g_sound_chans(SCM filename)
   #define H_mus_sound_chans "(" S_mus_sound_chans " filename) -> channels of sound"
   char *tmpstr = NULL;
   int res;
-  SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_mus_sound_chans); 
+  SCM_ASSERT(STRING_P(filename), filename, SCM_ARG1, S_mus_sound_chans); 
   res = mus_sound_chans(tmpstr = mus_expand_filename(TO_C_STRING(filename)));
   if (tmpstr) FREE(tmpstr);
   return(TO_SCM_INT(res));
@@ -130,7 +130,7 @@ static SCM g_sound_srate(SCM filename)
   #define H_mus_sound_srate "(" S_mus_sound_srate " filename) -> sampling rate of sound"
   char *tmpstr = NULL;
   int res;
-  SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_mus_sound_srate); 
+  SCM_ASSERT(STRING_P(filename), filename, SCM_ARG1, S_mus_sound_srate); 
   res = mus_sound_srate(tmpstr = mus_expand_filename(TO_C_STRING(filename)));
   if (tmpstr) FREE(tmpstr);
   return(TO_SCM_INT(res));
@@ -141,7 +141,7 @@ static SCM g_sound_header_type(SCM filename)
   #define H_mus_sound_header_type "(" S_mus_sound_header_type " filename) -> header type (e.g. AIFF) of sound"
   char *tmpstr = NULL;
   int res;
-  SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_mus_sound_header_type); 
+  SCM_ASSERT(STRING_P(filename), filename, SCM_ARG1, S_mus_sound_header_type); 
   res = mus_sound_header_type(tmpstr = mus_expand_filename(TO_C_STRING(filename)));
   if (tmpstr) FREE(tmpstr);
   return(TO_SCM_INT(res));
@@ -152,7 +152,7 @@ static SCM g_sound_data_format(SCM filename)
   #define H_mus_sound_data_format "(" S_mus_sound_data_format " filename) -> data format (e.g. big endian short) of sound"
   char *tmpstr = NULL;
   int res;
-  SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_mus_sound_data_format); 
+  SCM_ASSERT(STRING_P(filename), filename, SCM_ARG1, S_mus_sound_data_format); 
   res = mus_sound_data_format(tmpstr = mus_expand_filename(TO_C_STRING(filename)));
   if (tmpstr) FREE(tmpstr);
   return(TO_SCM_INT(res));
@@ -163,7 +163,7 @@ static SCM g_sound_length(SCM filename)
   #define H_mus_sound_length "(" S_mus_sound_length " filename) -> file length in bytes"
   char *tmpstr = NULL;
   int res;
-  SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_mus_sound_length); 
+  SCM_ASSERT(STRING_P(filename), filename, SCM_ARG1, S_mus_sound_length); 
   res = mus_sound_length(tmpstr = mus_expand_filename(TO_C_STRING(filename)));
   if (tmpstr) FREE(tmpstr);
   return(TO_SCM_INT(res));
@@ -174,7 +174,7 @@ static SCM g_sound_type_specifier(SCM filename)
   #define H_mus_sound_type_specifier "(" S_mus_sound_type_specifier " filename) -> original file type identifier (e.g. 0x2e736e64)"
   char *tmpstr = NULL;
   int res;
-  SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_mus_sound_type_specifier); 
+  SCM_ASSERT(STRING_P(filename), filename, SCM_ARG1, S_mus_sound_type_specifier); 
   res = mus_sound_type_specifier(tmpstr = mus_expand_filename(TO_C_STRING(filename)));
   if (tmpstr) FREE(tmpstr);
   return(TO_SCM_INT(res));
@@ -185,7 +185,7 @@ static SCM g_sound_comment(SCM filename)
   #define H_mus_sound_comment "(" S_mus_sound_comment " filename) -> comment (string) found in sound's header"
   char *tmpstr = NULL, *res = NULL; 
   SCM newstr;
-  SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_mus_sound_comment); 
+  SCM_ASSERT(STRING_P(filename), filename, SCM_ARG1, S_mus_sound_comment); 
   res = mus_sound_comment(tmpstr = mus_expand_filename(TO_C_STRING(filename)));
   if (tmpstr) FREE(tmpstr);
   newstr = TO_SCM_STRING(res);
@@ -198,7 +198,7 @@ static SCM g_sound_write_date(SCM filename)
   #define H_mus_sound_write_date "(" S_mus_sound_write_date " filename) -> write_date of sound"
   char *tmpstr = NULL;
   int date;
-  SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_mus_sound_write_date); 
+  SCM_ASSERT(STRING_P(filename), filename, SCM_ARG1, S_mus_sound_write_date); 
   date = mus_sound_write_date(tmpstr = mus_expand_filename(TO_C_STRING(filename)));
   if (tmpstr) FREE(tmpstr);
   return(TO_SCM_INT(date));
@@ -236,7 +236,7 @@ static SCM g_sound_duration(SCM filename)
   #define H_mus_sound_duration "(" S_mus_sound_duration " filename) -> duration (seconds) of sound"
   char *tmpstr = NULL;
   float res;
-  SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_mus_sound_duration); 
+  SCM_ASSERT(STRING_P(filename), filename, SCM_ARG1, S_mus_sound_duration); 
   res = mus_sound_duration(tmpstr = mus_expand_filename(TO_C_STRING(filename)));
   if (tmpstr) FREE(tmpstr);
   return(TO_SCM_DOUBLE(res));
@@ -262,7 +262,7 @@ static SCM g_sound_max_amp_exists(SCM file)
   #define H_mus_sound_max_amp_exists "(" S_mus_sound_max_amp_exists " filename) -> max amps available for sound"
   int val;
   char *filename;
-  SCM_ASSERT(gh_string_p(file), file, SCM_ARG1, S_mus_sound_max_amp);
+  SCM_ASSERT(STRING_P(file), file, SCM_ARG1, S_mus_sound_max_amp);
   filename = mus_expand_filename(TO_C_STRING(file));
   val = mus_sound_max_amp_exists(filename);
   if (filename) FREE(filename);
@@ -277,7 +277,7 @@ static SCM g_sound_max_amp(SCM file)
   char *filename;
   SCM *vdata;
   SCM vect = SCM_BOOL_F;
-  SCM_ASSERT(gh_string_p(file), file, SCM_ARG1, S_mus_sound_max_amp);
+  SCM_ASSERT(STRING_P(file), file, SCM_ARG1, S_mus_sound_max_amp);
   filename = mus_expand_filename(TO_C_STRING(file));
   chans = mus_sound_chans(filename);
   if (chans > 0)
@@ -307,8 +307,8 @@ static SCM g_sound_set_max_amp(SCM file, SCM vals)
   MUS_SAMPLE_TYPE *mvals;
   char *filename;
   SCM *vdata;
-  SCM_ASSERT(gh_string_p(file), file, SCM_ARG1, S_mus_sound_set_max_amp);
-  SCM_ASSERT(gh_vector_p(vals), vals, SCM_ARG2, S_mus_sound_set_max_amp);
+  SCM_ASSERT(STRING_P(file), file, SCM_ARG1, S_mus_sound_set_max_amp);
+  SCM_ASSERT(VECTOR_P(vals), vals, SCM_ARG2, S_mus_sound_set_max_amp);
   filename = mus_expand_filename(TO_C_STRING(file));
   chans = mus_sound_chans(filename);
   if (chans > 0)
@@ -573,7 +573,7 @@ static SCM g_open_sound_input(SCM file)
   #define H_mus_sound_open_input "(" S_mus_sound_open_input " filename) -> fd (int), opens filename for sound input"
   int fd;
   char *tmpstr = NULL;
-  SCM_ASSERT(gh_string_p(file), file, SCM_ARG1, S_mus_sound_open_input);
+  SCM_ASSERT(STRING_P(file), file, SCM_ARG1, S_mus_sound_open_input);
   fd = mus_sound_open_input(tmpstr = mus_expand_filename(TO_C_STRING(file)));
   if (tmpstr) FREE(tmpstr);
   return(TO_SCM_INT(fd));
@@ -591,12 +591,12 @@ header-type is a sndlib type indicator such as mus-aiff, sndlib currently only w
   int fd = -1, df, ht, chns;
   char *com = NULL;
   char *tmpstr = NULL;
-  SCM_ASSERT(gh_string_p(file), file, SCM_ARG1, S_mus_sound_open_output);
+  SCM_ASSERT(STRING_P(file), file, SCM_ARG1, S_mus_sound_open_output);
   SCM_ASSERT(NUMBER_OR_BOOLEAN_P(srate), srate, SCM_ARG2, S_mus_sound_open_output);
   SCM_ASSERT(INTEGER_OR_BOOLEAN_P(chans), chans, SCM_ARG3, S_mus_sound_open_output);
   SCM_ASSERT(INTEGER_OR_BOOLEAN_P(data_format), data_format, SCM_ARG4, S_mus_sound_open_output);
   SCM_ASSERT(INTEGER_OR_BOOLEAN_P(header_type), header_type, SCM_ARG5, S_mus_sound_open_output);
-  SCM_ASSERT((gh_string_p(comment) || (SCM_UNBNDP(comment))), comment, SCM_ARG6, S_mus_sound_open_output);
+  SCM_ASSERT((STRING_P(comment) || (SCM_UNBNDP(comment))), comment, SCM_ARG6, S_mus_sound_open_output);
   df = TO_C_INT_OR_ELSE(data_format, MUS_OUT_FORMAT);
   if (MUS_DATA_FORMAT_OK(df))
     {
@@ -607,7 +607,7 @@ header-type is a sndlib type indicator such as mus-aiff, sndlib currently only w
 	  if (chns > 0)
 	    {
 	      tmpstr = mus_expand_filename(TO_C_STRING(file));
-	      if (gh_string_p(comment)) com = TO_NEW_C_STRING(comment);
+	      if (STRING_P(comment)) com = TO_NEW_C_STRING(comment);
 	      fd = mus_sound_open_output(tmpstr = mus_expand_filename(TO_C_STRING(file)),
 					 TO_C_INT_OR_ELSE(srate, 0),
 					 chns,
@@ -635,7 +635,7 @@ data-location should be retrieved from a previous call to mus-sound-data-locatio
 
   int fd = -1, df, ht, chns;
   char *tmpstr = NULL;
-  SCM_ASSERT(gh_string_p(file), file, SCM_ARG1, S_mus_sound_reopen_output);
+  SCM_ASSERT(STRING_P(file), file, SCM_ARG1, S_mus_sound_reopen_output);
   SCM_ASSERT(INTEGER_OR_BOOLEAN_P(chans), chans, SCM_ARG2, S_mus_sound_reopen_output);
   SCM_ASSERT(INTEGER_OR_BOOLEAN_P(data_format), data_format, SCM_ARG3, S_mus_sound_reopen_output);
   SCM_ASSERT(INTEGER_OR_BOOLEAN_P(header_type), header_type, SCM_ARG4, S_mus_sound_reopen_output);
@@ -884,7 +884,7 @@ static SCM g_read_audio_state(SCM dev, SCM field, SCM chan, SCM vals)
   SCM_ASSERT(INTEGER_P(dev), dev, SCM_ARG1, S_mus_audio_mixer_read);
   SCM_ASSERT(INTEGER_P(field), field, SCM_ARG2, S_mus_audio_mixer_read);
   SCM_ASSERT(INTEGER_P(chan), chan, SCM_ARG3, S_mus_audio_mixer_read);
-  SCM_ASSERT(gh_vector_p(vals), vals, SCM_ARG4, S_mus_audio_mixer_read);
+  SCM_ASSERT(VECTOR_P(vals), vals, SCM_ARG4, S_mus_audio_mixer_read);
   len = gh_vector_length(vals);
   if (len == 0)
     fvals = (float *)CALLOC(1, sizeof(float));
@@ -909,7 +909,7 @@ static SCM g_write_audio_state(SCM dev, SCM field, SCM chan, SCM vals)
   SCM_ASSERT(INTEGER_P(dev), dev, SCM_ARG1, S_mus_audio_mixer_write);
   SCM_ASSERT(INTEGER_P(field), field, SCM_ARG2, S_mus_audio_mixer_write);
   SCM_ASSERT(INTEGER_P(chan), chan, SCM_ARG3, S_mus_audio_mixer_write);
-  SCM_ASSERT(gh_vector_p(vals), vals, SCM_ARG4, S_mus_audio_mixer_write);
+  SCM_ASSERT(VECTOR_P(vals), vals, SCM_ARG4, S_mus_audio_mixer_write);
   len = gh_vector_length(vals);
   if (len == 0)
     fvals = (float *)CALLOC(1, sizeof(float));
@@ -958,7 +958,7 @@ static SCM g_mus_expand_filename(SCM file)
   #define H_mus_expand_filename "(" S_mus_expand_filename " name) returns a 'canonical' or 'absolute' filename"
   SCM result;
   char *tmpstr;
-  SCM_ASSERT(gh_string_p(file), file, SCM_ARG1, S_mus_expand_filename);
+  SCM_ASSERT(STRING_P(file), file, SCM_ARG1, S_mus_expand_filename);
   tmpstr = mus_expand_filename(TO_C_STRING(file));
   result = TO_SCM_STRING(tmpstr);
   if (tmpstr) FREE(tmpstr);
@@ -971,12 +971,6 @@ static SCM g_sound_print_cache(void)
   mus_sound_print_cache();
   return(SCM_BOOL_F);
 }
-#endif
-
-#ifdef __cplusplus
-  static SCM gh_new_procedure5_1 (char *proc_name, SCM (*fn)(SCM, SCM, SCM, SCM, SCM, SCM)) {return(gh_new_procedure(proc_name, SCM_FNC fn, 5, 1, 0));}
-#else
-  static SCM gh_new_procedure5_1 (char *proc_name, SCM (*fn)()) {return(gh_new_procedure(proc_name, fn, 5, 1, 0));}
 #endif
 
 void mus_sndlib2scm_initialize(void)
@@ -1063,59 +1057,59 @@ void mus_sndlib2scm_initialize(void)
   DEFINE_VAR(S_mus_audio_bass,    TO_SMALL_SCM_INT(MUS_AUDIO_BASS),    "mixer 'bass' field id");
   DEFINE_VAR(S_mus_audio_treble,  TO_SMALL_SCM_INT(MUS_AUDIO_TREBLE),  "mixer 'treble' field id");
 
-  DEFINE_PROC(gh_new_procedure1_0(S_sound_data_length,        sound_data_length),       H_sound_data_length);
-  DEFINE_PROC(gh_new_procedure1_0(S_sound_data_chans,         sound_data_chans),        H_sound_data_chans);
-  DEFINE_PROC(gh_new_procedure3_0(S_sound_data_ref,           sound_data_ref),          H_sound_data_ref);
-  DEFINE_PROC(gh_new_procedure4_0(S_sound_data_setB,          sound_data_set),          H_sound_data_setB);
-  DEFINE_PROC(gh_new_procedure2_0(S_make_sound_data,          g_make_sound_data),       H_make_sound_data);
-  DEFINE_PROC(gh_new_procedure1_0(S_sound_data_p,             g_sound_data_p),          H_sound_data_p);
-  DEFINE_PROC(gh_new_procedure3_0(S_sound_data2vct,           sound_data2vct),          H_sound_data2vct);
-  DEFINE_PROC(gh_new_procedure3_0(S_vct2sound_data,           vct2sound_data),          H_vct2sound_data);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_samples,        g_sound_samples),         H_mus_sound_samples);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_frames,         g_sound_frames),          H_mus_sound_frames);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_duration,       g_sound_duration),        H_mus_sound_duration);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_datum_size,     g_sound_datum_size),      H_mus_sound_datum_size);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_data_location,  g_sound_data_location),   H_mus_sound_data_location);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_chans,          g_sound_chans),           H_mus_sound_chans);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_srate,          g_sound_srate),           H_mus_sound_srate);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_header_type,    g_sound_header_type),     H_mus_sound_header_type);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_data_format,    g_sound_data_format),     H_mus_sound_data_format);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_length,         g_sound_length),          H_mus_sound_length	);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_type_specifier, g_sound_type_specifier),  H_mus_sound_type_specifier);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_header_type_name,     g_sound_type_name),       H_mus_header_type_name);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_data_format_name,     g_sound_format_name),     H_mus_data_format_name);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_comment,        g_sound_comment),         H_mus_sound_comment);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_write_date,     g_sound_write_date),      H_mus_sound_write_date);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_data_format_bytes_per_sample, g_sound_bytes_per_sample), H_mus_data_format_bytes_per_sample);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_loop_info,      g_sound_loop_info),       H_mus_sound_loop_info);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_max_amp,        g_sound_max_amp),         H_mus_sound_max_amp);
-  DEFINE_PROC(gh_new_procedure2_0(S_mus_sound_set_max_amp,    g_sound_set_max_amp),     H_mus_sound_set_max_amp);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_max_amp_exists, g_sound_max_amp_exists),  H_mus_sound_max_amp_exists);
-  DEFINE_PROC(gh_new_procedure0_0(S_mus_audio_report,         g_report_audio_state),    H_mus_audio_report);
-  DEFINE_PROC(gh_new_procedure3_0(S_mus_audio_sun_outputs,    g_audio_outputs),         H_mus_audio_sun_outputs);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_open_input,     g_open_sound_input),      H_mus_sound_open_input);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_sound_close_input,    g_close_sound_input),     H_mus_sound_close_input);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_audio_close,          g_close_audio),           H_mus_audio_close);
-  DEFINE_PROC(gh_new_procedure0_0(S_mus_audio_save,           g_save_audio_state),      H_mus_audio_save);
-  DEFINE_PROC(gh_new_procedure0_0(S_mus_audio_restore,        g_restore_audio_state),   H_mus_audio_restore);
-  DEFINE_PROC(gh_new_procedure0_0(S_mus_audio_systems,        g_audio_systems),         H_mus_audio_systems);
-  DEFINE_PROC(gh_new_procedure4_0(S_mus_audio_mixer_read,     g_read_audio_state),      H_mus_audio_mixer_read);
-  DEFINE_PROC(gh_new_procedure4_0(S_mus_audio_mixer_write,    g_write_audio_state),     H_mus_audio_mixer_write);
-  DEFINE_PROC(gh_new_procedure2_0(S_mus_file_set_data_clipped, g_mus_set_data_clipped), H_mus_file_set_data_clipped);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_file_prescaler,       g_mus_prescaler),         H_mus_file_prescaler);
-  DEFINE_PROC(gh_new_procedure2_0(S_mus_file_set_prescaler,   g_mus_set_prescaler),     H_mus_file_set_prescaler);
-  DEFINE_PROC(gh_new_procedure1_0(S_mus_expand_filename,      g_mus_expand_filename),   H_mus_expand_filename);
-  DEFINE_PROC(gh_new_procedure3_0(S_mus_audio_write,          g_write_audio),           H_mus_audio_write);
-  DEFINE_PROC(gh_new_procedure3_0(S_mus_audio_read,           g_read_audio),            H_mus_audio_read);
-  DEFINE_PROC(gh_new_procedure5_1(S_mus_sound_open_output,    g_open_sound_output),     H_mus_sound_open_output);
-  DEFINE_PROC(gh_new_procedure5_0(S_mus_sound_reopen_output,  g_reopen_sound_output),   H_mus_sound_reopen_output);
-  DEFINE_PROC(gh_new_procedure2_0(S_mus_sound_close_output,   g_close_sound_output),    H_mus_sound_close_output);
-  DEFINE_PROC(gh_new_procedure5_0(S_mus_sound_read,           g_read_sound),            H_mus_sound_read);
-  DEFINE_PROC(gh_new_procedure5_0(S_mus_sound_write,          g_write_sound),           H_mus_sound_write);
-  DEFINE_PROC(gh_new_procedure3_0(S_mus_sound_seek,           g_seek_sound),            H_mus_sound_seek);
-  DEFINE_PROC(gh_new_procedure2_0(S_mus_sound_seek_frame,     g_seek_sound_frame),      H_mus_sound_seek_frame);
-  DEFINE_PROC(gh_new_procedure5_0(S_mus_audio_open_output,    g_open_audio_output),     H_mus_audio_open_output);
-  DEFINE_PROC(gh_new_procedure5_0(S_mus_audio_open_input,     g_open_audio_input),      H_mus_audio_open_input);
+  DEFINE_PROC(S_sound_data_length,        sound_data_length, 1, 0, 0,       H_sound_data_length);
+  DEFINE_PROC(S_sound_data_chans,         sound_data_chans, 1, 0, 0,        H_sound_data_chans);
+  DEFINE_PROC(S_sound_data_ref,           sound_data_ref, 3, 0, 0,          H_sound_data_ref);
+  DEFINE_PROC(S_sound_data_setB,          sound_data_set, 4, 0, 0,          H_sound_data_setB);
+  DEFINE_PROC(S_make_sound_data,          g_make_sound_data, 2, 0, 0,       H_make_sound_data);
+  DEFINE_PROC(S_sound_data_p,             g_sound_data_p, 1, 0, 0,          H_sound_data_p);
+  DEFINE_PROC(S_sound_data2vct,           sound_data2vct, 3, 0, 0,          H_sound_data2vct);
+  DEFINE_PROC(S_vct2sound_data,           vct2sound_data, 3, 0, 0,          H_vct2sound_data);
+  DEFINE_PROC(S_mus_sound_samples,        g_sound_samples, 1, 0, 0,         H_mus_sound_samples);
+  DEFINE_PROC(S_mus_sound_frames,         g_sound_frames, 1, 0, 0,          H_mus_sound_frames);
+  DEFINE_PROC(S_mus_sound_duration,       g_sound_duration, 1, 0, 0,        H_mus_sound_duration);
+  DEFINE_PROC(S_mus_sound_datum_size,     g_sound_datum_size, 1, 0, 0,      H_mus_sound_datum_size);
+  DEFINE_PROC(S_mus_sound_data_location,  g_sound_data_location, 1, 0, 0,   H_mus_sound_data_location);
+  DEFINE_PROC(S_mus_sound_chans,          g_sound_chans, 1, 0, 0,           H_mus_sound_chans);
+  DEFINE_PROC(S_mus_sound_srate,          g_sound_srate, 1, 0, 0,           H_mus_sound_srate);
+  DEFINE_PROC(S_mus_sound_header_type,    g_sound_header_type, 1, 0, 0,     H_mus_sound_header_type);
+  DEFINE_PROC(S_mus_sound_data_format,    g_sound_data_format, 1, 0, 0,     H_mus_sound_data_format);
+  DEFINE_PROC(S_mus_sound_length,         g_sound_length, 1, 0, 0,          H_mus_sound_length	);
+  DEFINE_PROC(S_mus_sound_type_specifier, g_sound_type_specifier, 1, 0, 0,  H_mus_sound_type_specifier);
+  DEFINE_PROC(S_mus_header_type_name,     g_sound_type_name, 1, 0, 0,       H_mus_header_type_name);
+  DEFINE_PROC(S_mus_data_format_name,     g_sound_format_name, 1, 0, 0,     H_mus_data_format_name);
+  DEFINE_PROC(S_mus_sound_comment,        g_sound_comment, 1, 0, 0,         H_mus_sound_comment);
+  DEFINE_PROC(S_mus_sound_write_date,     g_sound_write_date, 1, 0, 0,      H_mus_sound_write_date);
+  DEFINE_PROC(S_mus_data_format_bytes_per_sample, g_sound_bytes_per_sample, 1, 0, 0, H_mus_data_format_bytes_per_sample);
+  DEFINE_PROC(S_mus_sound_loop_info,      g_sound_loop_info, 1, 0, 0,       H_mus_sound_loop_info);
+  DEFINE_PROC(S_mus_sound_max_amp,        g_sound_max_amp, 1, 0, 0,         H_mus_sound_max_amp);
+  DEFINE_PROC(S_mus_sound_set_max_amp,    g_sound_set_max_amp, 2, 0, 0,     H_mus_sound_set_max_amp);
+  DEFINE_PROC(S_mus_sound_max_amp_exists, g_sound_max_amp_exists, 1, 0, 0,  H_mus_sound_max_amp_exists);
+  DEFINE_PROC(S_mus_audio_report,         g_report_audio_state, 0, 0, 0,    H_mus_audio_report);
+  DEFINE_PROC(S_mus_audio_sun_outputs,    g_audio_outputs, 3, 0, 0,         H_mus_audio_sun_outputs);
+  DEFINE_PROC(S_mus_sound_open_input,     g_open_sound_input, 1, 0, 0,      H_mus_sound_open_input);
+  DEFINE_PROC(S_mus_sound_close_input,    g_close_sound_input, 1, 0, 0,     H_mus_sound_close_input);
+  DEFINE_PROC(S_mus_audio_close,          g_close_audio, 1, 0, 0,           H_mus_audio_close);
+  DEFINE_PROC(S_mus_audio_save,           g_save_audio_state, 0, 0, 0,      H_mus_audio_save);
+  DEFINE_PROC(S_mus_audio_restore,        g_restore_audio_state, 0, 0, 0,   H_mus_audio_restore);
+  DEFINE_PROC(S_mus_audio_systems,        g_audio_systems, 0, 0, 0,         H_mus_audio_systems);
+  DEFINE_PROC(S_mus_audio_mixer_read,     g_read_audio_state, 4, 0, 0,      H_mus_audio_mixer_read);
+  DEFINE_PROC(S_mus_audio_mixer_write,    g_write_audio_state, 4, 0, 0,     H_mus_audio_mixer_write);
+  DEFINE_PROC(S_mus_file_set_data_clipped, g_mus_set_data_clipped, 2, 0, 0, H_mus_file_set_data_clipped);
+  DEFINE_PROC(S_mus_file_prescaler,       g_mus_prescaler, 1, 0, 0,         H_mus_file_prescaler);
+  DEFINE_PROC(S_mus_file_set_prescaler,   g_mus_set_prescaler, 2, 0, 0,     H_mus_file_set_prescaler);
+  DEFINE_PROC(S_mus_expand_filename,      g_mus_expand_filename, 1, 0, 0,   H_mus_expand_filename);
+  DEFINE_PROC(S_mus_audio_write,          g_write_audio, 3, 0, 0,           H_mus_audio_write);
+  DEFINE_PROC(S_mus_audio_read,           g_read_audio, 3, 0, 0,            H_mus_audio_read);
+  DEFINE_PROC(S_mus_sound_open_output,    g_open_sound_output, 5, 1, 0,     H_mus_sound_open_output);
+  DEFINE_PROC(S_mus_sound_reopen_output,  g_reopen_sound_output, 5, 0, 0,   H_mus_sound_reopen_output);
+  DEFINE_PROC(S_mus_sound_close_output,   g_close_sound_output, 2, 0, 0,    H_mus_sound_close_output);
+  DEFINE_PROC(S_mus_sound_read,           g_read_sound, 5, 0, 0,            H_mus_sound_read);
+  DEFINE_PROC(S_mus_sound_write,          g_write_sound, 5, 0, 0,           H_mus_sound_write);
+  DEFINE_PROC(S_mus_sound_seek,           g_seek_sound, 3, 0, 0,            H_mus_sound_seek);
+  DEFINE_PROC(S_mus_sound_seek_frame,     g_seek_sound_frame, 2, 0, 0,      H_mus_sound_seek_frame);
+  DEFINE_PROC(S_mus_audio_open_output,    g_open_audio_output, 5, 0, 0,     H_mus_audio_open_output);
+  DEFINE_PROC(S_mus_audio_open_input,     g_open_audio_input, 5, 0, 0,      H_mus_audio_open_input);
 #if USE_SND
   define_procedure_with_setter(S_sound_data_ref, SCM_FNC sound_data_ref, H_sound_data_ref,
 			       "set-" S_sound_data_ref, SCM_FNC sound_data_set, local_doc, 3, 0, 4, 0);

@@ -935,7 +935,7 @@ static SCM g_restore_region(SCM n, SCM chans, SCM len, SCM srate, SCM maxamp, SC
   r->name = copy_string(TO_C_STRING(name));
   r->start = copy_string(TO_C_STRING(start));
   r->end = copy_string(TO_C_STRING(end));
-  if (gh_string_p(data))
+  if (STRING_P(data))
     {
       r->use_temp_file = REGION_FILE;
       r->filename = copy_string(TO_C_STRING(data));
@@ -995,9 +995,13 @@ static SCM g_max_regions(void)
 static SCM g_set_max_regions(SCM n) 
 {
   snd_state *ss;
+  int regs;
   SCM_ASSERT(INTEGER_P(n), n, SCM_ARG1, "set-" S_max_regions); 
+  regs = TO_C_INT(n);
+  if (regs < 0)
+    mus_misc_error("set-" S_max_regions, "max_regions can't be < 0", n);
   ss = get_global_state();
-  set_max_regions(ss, TO_C_INT_OR_ELSE(n, 0));
+  set_max_regions(ss, regs);
   return(TO_SCM_INT(max_regions(ss)));
 }
 
@@ -1191,7 +1195,7 @@ static SCM g_save_region (SCM n, SCM filename, SCM format)
   char *name = NULL;
   int res = MUS_NO_ERROR, rg;
   SCM_ASSERT(INTEGER_P(n), n, SCM_ARG1, S_save_region);
-  SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG2, S_save_region);
+  SCM_ASSERT(STRING_P(filename), filename, SCM_ARG2, S_save_region);
   SCM_ASSERT(INTEGER_IF_BOUND_P(format), format, SCM_ARG3, S_save_region);
   rg = TO_C_INT_OR_ELSE(n, 0);
   if (region_ok(rg))
@@ -1331,26 +1335,26 @@ writes region's samples starting at beg for samps in channel chan to vct obj, re
 
 void g_init_regions(SCM local_doc)
 {
-  DEFINE_PROC(gh_new_procedure(S_restore_region,     SCM_FNC g_restore_region, 9, 0, 0),     "restores a region");
-  DEFINE_PROC(gh_new_procedure(S_insert_region,      SCM_FNC g_insert_region, 0, 4, 0),      H_insert_region);
-  DEFINE_PROC(gh_new_procedure(S_regions,            SCM_FNC g_regions, 0, 0, 0),            H_regions);
-  DEFINE_PROC(gh_new_procedure(S_region_length,      SCM_FNC g_region_length, 0, 1, 0),      H_region_length);
-  DEFINE_PROC(gh_new_procedure(S_region_srate,       SCM_FNC g_region_srate, 0, 1, 0),       H_region_srate);
-  DEFINE_PROC(gh_new_procedure(S_region_chans,       SCM_FNC g_region_chans, 0, 1, 0),       H_region_chans);
-  DEFINE_PROC(gh_new_procedure(S_region_id,          SCM_FNC g_region_id, 0, 1, 0),          H_region_id);
-  DEFINE_PROC(gh_new_procedure(S_id_region,          SCM_FNC g_id_region, 0, 1, 0),          H_id_region);
-  DEFINE_PROC(gh_new_procedure(S_region_maxamp,      SCM_FNC g_region_maxamp, 0, 1, 0),      H_region_maxamp);
-  DEFINE_PROC(gh_new_procedure(S_save_region,        SCM_FNC g_save_region, 2, 1, 0),        H_save_region);
-  DEFINE_PROC(gh_new_procedure(S_select_region,      SCM_FNC g_select_region, 0, 1, 0),      H_select_region);
-  DEFINE_PROC(gh_new_procedure(S_delete_region,      SCM_FNC g_delete_region, 0, 1, 0),      H_delete_region);
-  DEFINE_PROC(gh_new_procedure(S_protect_region,     SCM_FNC g_protect_region, 2, 0, 0),     H_protect_region);
-  DEFINE_PROC(gh_new_procedure(S_play_region,        SCM_FNC g_play_region, 0, 2, 0),        H_play_region);
-  DEFINE_PROC(gh_new_procedure(S_make_region,        SCM_FNC g_make_region, 0, 4, 0),        H_make_region);
-  DEFINE_PROC(gh_new_procedure(S_mix_region,         SCM_FNC g_mix_region, 0, 4, 0),         H_mix_region);
-  DEFINE_PROC(gh_new_procedure(S_region_sample,      SCM_FNC g_region_sample, 0, 3, 0),      H_region_sample);
-  DEFINE_PROC(gh_new_procedure(S_region_samples,     SCM_FNC g_region_samples, 0, 4, 0),     H_region_samples);
-  DEFINE_PROC(gh_new_procedure(S_region_samples_vct, SCM_FNC g_region_samples2vct, 0, 5, 0), H_region_samples2vct);
-  DEFINE_PROC(gh_new_procedure(S_regionQ,            SCM_FNC g_regionQ, 1, 0, 0),            H_regionQ);
+  DEFINE_PROC(S_restore_region,     g_restore_region, 9, 0, 0,     "restores a region");
+  DEFINE_PROC(S_insert_region,      g_insert_region, 0, 4, 0,      H_insert_region);
+  DEFINE_PROC(S_regions,            g_regions, 0, 0, 0,            H_regions);
+  DEFINE_PROC(S_region_length,      g_region_length, 0, 1, 0,      H_region_length);
+  DEFINE_PROC(S_region_srate,       g_region_srate, 0, 1, 0,       H_region_srate);
+  DEFINE_PROC(S_region_chans,       g_region_chans, 0, 1, 0,       H_region_chans);
+  DEFINE_PROC(S_region_id,          g_region_id, 0, 1, 0,          H_region_id);
+  DEFINE_PROC(S_id_region,          g_id_region, 0, 1, 0,          H_id_region);
+  DEFINE_PROC(S_region_maxamp,      g_region_maxamp, 0, 1, 0,      H_region_maxamp);
+  DEFINE_PROC(S_save_region,        g_save_region, 2, 1, 0,        H_save_region);
+  DEFINE_PROC(S_select_region,      g_select_region, 0, 1, 0,      H_select_region);
+  DEFINE_PROC(S_delete_region,      g_delete_region, 0, 1, 0,      H_delete_region);
+  DEFINE_PROC(S_protect_region,     g_protect_region, 2, 0, 0,     H_protect_region);
+  DEFINE_PROC(S_play_region,        g_play_region, 0, 2, 0,        H_play_region);
+  DEFINE_PROC(S_make_region,        g_make_region, 0, 4, 0,        H_make_region);
+  DEFINE_PROC(S_mix_region,         g_mix_region, 0, 4, 0,         H_mix_region);
+  DEFINE_PROC(S_region_sample,      g_region_sample, 0, 3, 0,      H_region_sample);
+  DEFINE_PROC(S_region_samples,     g_region_samples, 0, 4, 0,     H_region_samples);
+  DEFINE_PROC(S_region_samples_vct, g_region_samples2vct, 0, 5, 0, H_region_samples2vct);
+  DEFINE_PROC(S_regionQ,            g_regionQ, 1, 0, 0,            H_regionQ);
 
   define_procedure_with_setter(S_max_regions, SCM_FNC g_max_regions, H_max_regions,
 			       "set-" S_max_regions, SCM_FNC g_set_max_regions,
