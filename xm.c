@@ -3,10 +3,6 @@
  *   for tests and examples see snd-motif.scm and snd-test.scm
  */
 
-
-            /* "A man may be very industrious, and yet not spend his time well" -- H D Thoreau... */
-
-
 /* TODO: selection-oriented Xt callbacks
  * TODO: more regression tests (snd-test.scm test 22)
  * TODO: XEvent fields should be settable
@@ -10439,8 +10435,7 @@ between each pair of points (point[i], point[i+1]) in the array of XPoint struct
 
 static XEN gxm_XDrawLinesDirect(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
 {
-  /* ADD: XDrawLinesDirect same as XDrawLines but takes (opaque) ptr to XPoint array
-   */
+  #define H_XDrawLinesDirect "XDrawLinesDirect is the same as XDrawLines but takes an (opaque) pointer to an XPoint array"
   XPoint *pt;
   int len;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XDrawLinesDirect", "Display*");
@@ -10462,8 +10457,7 @@ static XEN gxm_XDrawLinesDirect(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5
 
 static XEN gxm_Vector2XPoints(XEN arg1)
 {
-  /* ADD: vector->XPoints vect packages point data in vector as (opaque) array of XPoints
-   */
+  #define H_vector2XPoints "(vector->XPoints vect) packages point data in vect as (opaque) array of XPoints"
   int i, j, len;
   XEN *velts;
   /* vector assumed to be sequence of x y pairs (not XPoints from local view)
@@ -10484,8 +10478,7 @@ static XEN gxm_Vector2XPoints(XEN arg1)
 
 static XEN gxm_FreeXPoints(XEN arg1)
 {
-  /* ADD: freeXPoints to free (opaque) XPoint array created by vector->Xpoints
-   */
+  #define H_freeXPoints "(freeXPoints vect) frees an (opaque) XPoint array created by vector->Xpoints"
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, XEN_ONLY_ARG, "freeXPoints", "opaque XPoint array");
   FREE((void *)(XEN_TO_C_ULONG(arg1)));
   return(XEN_FALSE);
@@ -10494,8 +10487,7 @@ static XEN gxm_FreeXPoints(XEN arg1)
 
 static XEN gxm_MoveXPoints(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
-  /* ADD: moveXPoints to move XPoint array created by vector->Xpoints
-   */
+  #define H_moveXPoints "(moveXPoints vect len dx dy) moves an XPoint array created by vector->Xpoints"
   XPoint *pt;
   int i, len, x, y;
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, XEN_ARG_1, "moveXPoints", "opaque XPoint array");
@@ -17432,10 +17424,10 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XDrawImageString" XM_POSTFIX, gxm_XDrawImageString, 7, 0, 0, H_XDrawImageString);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XDrawLine" XM_POSTFIX, gxm_XDrawLine, 7, 0, 0, H_XDrawLine);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XDrawLines" XM_POSTFIX, gxm_XDrawLines, 6, 0, 0, H_XDrawLines);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XDrawLinesDirect" XM_POSTFIX, gxm_XDrawLinesDirect, 6, 0, 0, "xm optimization of XDrawLines");
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "freeXPoints" XM_POSTFIX, gxm_FreeXPoints, 1, 0, 0, "free points used by XDrawLinesDirect");
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "moveXPoints" XM_POSTFIX, gxm_MoveXPoints, 4, 0, 0, "move points used by XDrawLinesDirect");
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "vector->XPoints" XM_POSTFIX, gxm_Vector2XPoints, 1, 0, 0, "make XPoints array from vector");
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XDrawLinesDirect" XM_POSTFIX, gxm_XDrawLinesDirect, 6, 0, 0, H_XDrawLinesDirect);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "freeXPoints" XM_POSTFIX, gxm_FreeXPoints, 1, 0, 0, H_freeXPoints);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "moveXPoints" XM_POSTFIX, gxm_MoveXPoints, 4, 0, 0, H_moveXPoints);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "vector->XPoints" XM_POSTFIX, gxm_Vector2XPoints, 1, 0, 0, H_vector2XPoints);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XDrawPoint" XM_POSTFIX, gxm_XDrawPoint, 5, 0, 0, H_XDrawPoint);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XDrawPoints" XM_POSTFIX, gxm_XDrawPoints, 6, 0, 0, H_XDrawPoints);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XDrawRectangle" XM_POSTFIX, gxm_XDrawRectangle, 7, 0, 0, H_XDrawRectangle);

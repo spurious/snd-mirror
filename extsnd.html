@@ -187,6 +187,7 @@ various examples of and extensions to Snd can be found in the contrib directory,
 <tr><td><a href="sndscm.html#musglyphs">musglyphs.scm</a></td><td>Music notation symbols (from CMN)</td></tr>
 <tr><td><a href="sndscm.html#nbdoc">nb.scm</a></td>          <td>Popup File info etc</td></tr>
 <tr><td><a href="sndscm.html#peakenvdoc">peak-env.scm</a></td><td>peak envelope support</td></tr>
+<tr><td><a href="sndscm.html#playdoc">play.scm</a></td><td>play-related functions</td></tr>
 <tr><td><a href="sndscm.html#popupdoc">popup.scm</a></td>    <td>Popup menu specializations</td></tr>
 <tr><td><a href="sndscm.html#pqwvoxdoc">pqwvox.scm</a></td>  <td>phase-quadrature waveshaping (from CLM)</td></tr>
 <tr><td><a href="sndscm.html#prc95doc">prc95.scm</a></td>    <td>Perry Cook's physical model examples (from CLM)</td></tr>
@@ -2805,7 +2806,7 @@ an oscil or a sawtooth-wave:
 
 <p>In fact, all of the underlying sound library (<a href="sndlib.html">Sndlib</a>)
 functions are available, as well as all of (<a href="grfsnd.html#clmfuncs">CLM</a>).
-The most important Sndlib functions for Snd are:</p>
+See play.scm and rtio.scm for example code. The most important Sndlib functions for Snd are:</p>
 
 <!-- -------------------------------- SNDLIB TABLE -------------------------------- -->
 <!-- -->
@@ -4469,7 +4470,8 @@ The following substitutions can be made:
 <!-- --><span class=defbox><code><em class=def><a name="snddatalocation">data-location</a></em> (<em class=targ>snd</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- --><i>snd</i>'s data location (bytes).
+<!-- -->The location of the sound samples (an offset in bytes) in the file represented by <i>snd</i>.  In a raw (headerless) file,
+<!-- -->this is 0, but normally the data comes after some portion of the header.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4805,7 +4807,7 @@ The following substitutions can be made:
 <!-- --><span class=defbox><code><em class=def><a name="sndheadertype">header-type</a></em> (<em class=targ>snd</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- --><i>snd</i>'s header type (e.g. mus-aiff).
+<!-- -->The header type (e.g. mus-aiff) of the file represented by <i>snd</i>.  Snd can read about 60 header types, and write about 10.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->

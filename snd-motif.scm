@@ -2104,13 +2104,13 @@ Reverb-feedback sets the scaler on the feedback.\n\
 
 (define (mark-sync-color new-color)
   (define get-color
-    (lambda (color)
+    (lambda (color-name)
       (let* ((col (|XColor))
 	     (dpy (|XtDisplay (|Widget (cadr (main-widgets)))))
 	     (scr (|DefaultScreen dpy))
 	     (cmap (|DefaultColormap dpy scr)))
-	(if (= (|XAllocNamedColor dpy cmap color col col) 0)
-	    (snd-error "can't allocate ~S" color)
+	(if (= (|XAllocNamedColor dpy cmap color-name col col) 0)
+	    (snd-error "can't allocate ~S" color-name)
 	    (|pixel col)))))
 
   (let* ((mark-gc (|GC (list-ref (snd-gcs) 9)))

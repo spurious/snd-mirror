@@ -1741,7 +1741,7 @@ static char *data_formats[NUM_DATA_FORMATS] = {
   "16 bit little-endian unsigned int",
   "24 bit little-endian int",
   "32 bit big-endian normalized int",
-  "32 bit little-endian normalized int"
+  "32 bit little-endian normalized int",
   "32 bit big-endian unscaled float",
   "32 bit little-endian unscaled float",
   "32 bit big-endian unscaled double",

@@ -55,6 +55,7 @@
   <li><a href="#musglyphs">musglyphs.scm: Music notation symbols (from CMN)</a>
   <li><a href="#nbdoc">nb.scm: Popup File info etc</a>
   <li><a href="#peakenvdoc">peak-env.scm: peak envelope support</a>
+  <li><a href="#playdoc">play.scm: play-related functions</a>
   <li><a href="#popupdoc">popup.scm: Popup menu specializations</a>
   <li><a href="#pqwvoxdoc">pqwvox.scm: phase-quadrature waveshaping</a>
   <li><a href="#prc95doc">prc95.scm: Perry Cook's physical model examples</a>
@@ -588,17 +589,6 @@ I'm slowly dividing out related groups of procedures to separate files.
 </p>
 
 <ul>
-<li><a href="#ssplay">play</a>
-<small>
-  <ul>
-    <li>play sound n times or until C-g
-    <li>play region over and over until C-g typed
-    <li>play samples created on-the-fly
-    <li>play while looping continuously between two movable marks
-    <li>hold DAC open and play sounds via keyboard
-    <li>"vector synthesis"
-  </ul>
-</small>
 <li><a href="#ssfilters">filters</a>
 <small>
   <ul>
@@ -699,55 +689,6 @@ I'm slowly dividing out related groups of procedures to separate files.
   </ul>
 </small>
 </ul>
-
-<!-- -------------------------------- PLAY -------------------------------- -->
-<span class=bbox><h3><A NAME="ssplay">play</a></h3></span>
-
-<p>These examples relate to playing sounds. To set up the keyboard
-as a kind of extended piano, we could map keys to sounds:
-</p>
-<pre>
-(bind-key (char-&gt;integer #\o) 0 (lambda () (play "oboe.snd")))
-(bind-key (char-&gt;integer #\p) 0 (lambda () (play "pistol.snd")))
-</pre>
-<p>The various play hooks can be used to play sounds over and over. 
-</p>
-<pre>
-  <em class=def><A NAME="expl">play-often</a></em> times
-  <em class=def><A NAME="expluntil">play-until-c-g</a></em>
-  <em class=def><a name="explayregionforever">play-region-forever</a></em> region
-
-(bind-key (char-&gt;integer #\p) 0 (lambda (n) (play-often (max 1 n))))
-(bind-key (char-&gt;integer #\r) 0 (lambda (n) (play-region-forever (max 0 n))))
-</pre>
-<p>Now C-u 31 p plays the current sound 31 times; C-u 3 r plays region 3 until we type C-g.
-<i>play-often</i> uses stop-playing-hook, and <i>play-region-forever</i> uses stop-playing-region-hook.
-With a sufficiently fast computer, it's possible to create the samples to be played 
-in "real-time".  <i>play-fun</i> starts and stops the DAC, <i>ampit</i> and <i>amprt</i>
-fill up the audio buffer with data.
-</p>
-<pre>
-(play-fun (ampit (frames) 2.0) 256)
-</pre>
-<p>scales sound 0's samples by 2 and sends them to the DAC. 
-More useful is:</p>
-<pre>
-  <em class=def><A NAME="exloopit">loop-it</a></em> mark1 mark2 buffer-size
-</pre>
-<p>which loops continuously between the two specified marks.
-The marks can be moved as the sound is played; C-g stops loopit.
-If you want the DAC to be held open in the background,
-</p>
-<pre>
-  <em class=def><A NAME="exstartdac">start-dac</a></em>
-  <em class=def><A NAME="exstopdac">stop-dac</a></em>
-</pre>
-<p>The "vector-synthesis" 
-idea (and weird name) came from a linux-audio-development mailing list.
-Apparently some commercial synths (or software?) provide this.
-It reads any number of sound files, using a function to
-decide which one to send to the DAC.
-</p>
 
 
 
@@ -1830,6 +1771,63 @@ determines whether these envelopes are being saved.  The procedure
 case, it looks for the directory ~/peaks, but obviously this
 could be changed to suit your situation.
 </p>
+
+
+<A NAME="playdoc"></a><span class=box><h2>play.scm</h2></span>
+
+<p>These functions play sounds in various ways.</p>
+<pre>
+  <em class=def><A NAME="playsound">playsound</a></em> <i>func</i>
+</pre>
+</p><i>play-sound</i> plays the current sound, calling (func data) on each buffer if func is passed.
+It is also an example of calling the low level mus-audio functions, rather than calling
+play-channel and friends. The latter are easier to use, in most cases.  For example,
+to set up the keyboard
+as a kind of extended piano, we could map keys to sounds:
+</p>
+<pre>
+(bind-key (char-&gt;integer #\o) 0 (lambda () (play "oboe.snd")))
+(bind-key (char-&gt;integer #\p) 0 (lambda () (play "pistol.snd")))
+</pre>
+<p>The various play hooks can be used to play sounds over and over. 
+</p>
+<pre>
+  <em class=def><A NAME="expl">play-often</a></em> times
+  <em class=def><A NAME="expluntil">play-until-c-g</a></em>
+  <em class=def><a name="explayregionforever">play-region-forever</a></em> region
+
+(bind-key (char-&gt;integer #\p) 0 (lambda (n) (play-often (max 1 n))))
+(bind-key (char-&gt;integer #\r) 0 (lambda (n) (play-region-forever (max 0 n))))
+</pre>
+<p>Now C-u 31 p plays the current sound 31 times; C-u 3 r plays region 3 until we type C-g.
+<i>play-often</i> uses stop-playing-hook, and <i>play-region-forever</i> uses stop-playing-region-hook.
+With a sufficiently fast computer, it's possible to create the samples to be played 
+in "real-time".  <i>play-fun</i> starts and stops the DAC, <i>ampit</i> and <i>amprt</i>
+fill up the audio buffer with data.
+</p>
+<pre>
+(play-fun (ampit (frames) 2.0) 256)
+</pre>
+<p>scales sound 0's samples by 2 and sends them to the DAC. 
+More useful is:</p>
+<pre>
+  <em class=def><A NAME="exloopit">loop-it</a></em> mark1 mark2 buffer-size
+</pre>
+<p>which loops continuously between the two specified marks.
+The marks can be moved as the sound is played; C-g stops loopit.
+If you want the DAC to be held open in the background,
+</p>
+<pre>
+  <em class=def><A NAME="exstartdac">start-dac</a></em>
+  <em class=def><A NAME="exstopdac">stop-dac</a></em>
+</pre>
+<p>The "vector-synthesis" 
+idea (and weird name) came from a linux-audio-development mailing list.
+Apparently some commercial synths (or software?) provide this.
+It reads any number of sound files, using a function to
+decide which one to send to the DAC.
+</p>
+
 
 
 <A NAME="popupdoc"></a><span class=box><h2>popup.scm</h2></span>
