@@ -196,10 +196,10 @@ per second), then dividing by the sampling rate (samples per
 second) to give us radians per sample (i.e. radians/second
 divided by samples/second gives radians/sample); we then multiply
 by "j" to step forward on each sample.  All this is far more
-detailed and explicit than would be the case in a normal clm
-instrument.  For example, we would normally use the clm macro
+detailed and explicit than would be the case in any real
+instrument.  We normally use the clm macro
 <i>hz-&gt;radians</i> to replace the multiply by (/ (* 2.0 pi) sampling-rate);
-and we would use <i>oscil</i> to deal with the phase increments.
+and <i>oscil</i> to deal with the phase increments.
 Finally, the line:</p>
 <pre>
 (with-sound () (simp 0 0.25 440.0 0.2))
@@ -407,8 +407,8 @@ Take the make-oscil call, defined as:</p>
 </pre>
 <p>When make-oscil is called, it scans its arguments; if a keyword is seen, that
 argument and all following arguments are passed unchanged, but if a value is
-seen, the corresponding keyword is prepended in the argument list.  So, for
-example,</p>
+seen, the corresponding keyword is prepended in the argument list:
+</p>
 <pre>
   (make-oscil :frequency 440.0)
   (make-oscil :frequency 440.0 :initial-phase 0.0)
@@ -532,11 +532,11 @@ The corresponding make-env call would be</p>
 default), you get straight line segments.  <i>Base</i> = 0.0 gives a step
 function (the envelope changes its value suddenly to the new one without any
 interpolation).  Any other positive value becomes the exponent of the exponential curve
-connecting the points (for an explicit example see env.lisp).  <i>Base</i> &lt; 1.0 gives convex curves (i.e. bowed
+connecting the points (see env.lisp).  <i>Base</i> &lt; 1.0 gives convex curves (i.e. bowed
 out), and <i>Base</i> &gt; 1.0 gives concave curves (i.e. sagging).
 To get arbitrary connecting curves between the break points, treat
 the output of env as input to the connecting function.  Here's an
-example that maps the line segments into sin x^3:
+instrument that maps the line segments into sin x^3:
 </p>
 <pre><small>
 (definstrument mapenv (beg dur frq amp en)
@@ -552,8 +552,8 @@ example that maps the line segments into sin x^3:
 
 (with-sound () (mapenv 0 1 440 .4 '(0 0 50 1 75 0 86 .5 100 0)))
 </small></pre>
-<p>Or create your own generator that traces out the curve you want.  For
-example, J.C.Risset's bell curve could be:</p>
+<p>Or create your own generator that traces out the curve you want.
+J.C.Risset's bell curve could be:</p>
 <pre><small>
 (defmacro <A NAME="bellcurve">bell-curve</a> (x)
   ;; x from 0.0 to 1.0 creates bell curve between .64e-4 and nearly 1.0
@@ -597,14 +597,14 @@ Say we want 40% .5, and 60% 1.0,
 
 <p>Other related functions are:</p>
 <pre>
-  <a name="envelope-reverse"><em class=def>envelope-reverse</em></a> <i>e</i>                         reverse an envelope
-  <a name="envelope-repeat"><em class=def>envelope-repeat</em></a> <i>e num</i> &amp;optional <i>refl xnorm</i> repeat an envelope
-  <a name="envelope-concatenate"><em class=def>envelope-concatenate</em></a> &amp;rest <i>es</i>              concatenate any number of envelopes
-  <a name="envelope+"><em class=def>envelope+</em></a> <i>es</i>                               add together any number of envelopes
-  <a name="envelope*"><em class=def>envelope*</em></a> <i>es</i>                               same but multiply
-  <a name="envelope-simplify"><em class=def>envelope-simplify</em></a> <i>e</i> &amp;optional <i>yg xg</i>        simplify an evelope
-  <a name="meld-envelopes"><em class=def>meld-envelopes</em></a> <i>e0 e1</i>                       meld two envelopes together
-  <a name="map-across-envelopes"><em class=def>map-across-envelopes</em></a> <i>func es</i>               map a function across any number of envelopes
+  <A NAME="envelope-reverse"><em class=def>envelope-reverse</em></a> <i>e</i>                         reverse an envelope
+  <A NAME="envelope-repeat"><em class=def>envelope-repeat</em></a> <i>e num</i> &amp;optional <i>refl xnorm</i> repeat an envelope
+  <A NAME="envelope-concatenate"><em class=def>envelope-concatenate</em></a> &amp;rest <i>es</i>              concatenate any number of envelopes
+  <A NAME="envelope+"><em class=def>envelope+</em></a> <i>es</i>                               add together any number of envelopes
+  <A NAME="envelope*"><em class=def>envelope*</em></a> <i>es</i>                               same but multiply
+  <A NAME="envelope-simplify"><em class=def>envelope-simplify</em></a> <i>e</i> &amp;optional <i>yg xg</i>        simplify an evelope
+  <A NAME="meld-envelopes"><em class=def>meld-envelopes</em></a> <i>e0 e1</i>                       meld two envelopes together
+  <A NAME="map-across-envelopes"><em class=def>map-across-envelopes</em></a> <i>func es</i>               map a function across any number of envelopes
   <a name="envelope-exp"><em class=def>envelope-exp</em></a>  <i>e</i> &amp;optional <i>pow xg</i>           create exponential segments of envelopes
   <a name="window-envelope"><em class=def>window-envelope</em></a> <i>beg end e</i>                  return portion of e between two x values
   <a name="stretch-envelope"><em class=def>stretch-envelope</em></a> <i>e a0 a1</i> &amp;optional <i>d0 d1</i>   attack and decay portions
@@ -723,7 +723,7 @@ several standard orchestral instruments, courtesy of James A. Moorer.
     (run (loop for i from 0 to 1000 do (outa i (<em class=red>waveshape</em> wav))))))
 </small></pre>
 <p>See <a href="#bigbird">bigbird</a> below for an example of partials-&gt;polynomial, and
-<a href="pqw.ins">pqw.ins</a> for an example of phase quadrature waveshaping.
+<a href="pqw.ins">pqw.ins</a> for phase quadrature waveshaping.
 Partials-&gt;polynomial takes a list of harmonic amplitudes and
 returns a list of Chebyshev polynomial coefficients.  The argument <i>kind</i>
 determines which kind of Chebyshev polynomial we are interested in.</p>
@@ -890,7 +890,7 @@ use this for VOSIM and other related techniques.</p>
   <a name="make-rand-interp"><em class=def>make-rand-interp</em></a> <a href="#optional-key">&amp;optional-key</a> (<i>frequency</i> 440.0) (<i>amplitude</i> 1.0)
   <a name="rand-interp"><em class=def>rand-interp</em></a> <i>r</i> &amp;optional (<i>sweep</i> 0.0)
   <a name="rand-interp?"><em class=def>rand-interp?</em></a> <i>r</i>
-  <a name="centered-random"><em class=def>centered-random</em></a> <i>amp</i> 
+  <A NAME="centered-random"><em class=def>centered-random</em></a> <i>amp</i> 
   <a name="clm-random"><em class=def>clm-random</em></a> <i>amp</i>
   <a name="mus-random"><em class=def>mus-random</em></a> <i>amp</i> ;same as centered-random (for C-side compatibility)
   <a name="mus-set-rand-seed"><em class=def>mus-set-rand-seed</em></a> <i>seed</i>
@@ -952,7 +952,7 @@ than the preceding:
      (/ val len)))
 </small></pre>
 <p>See also <a href="green.cl">green.cl</a> (bounded brownian noise that can mimic 1/f noise in some cases).
-And we can't talk about noise without an example of fractals:</p>
+And we can't talk about noise without mentioning fractals:</p>
 <pre><small>
 (definstrument fractal (start duration m x amp)
   ;; use formula of M J Feigenbaum
@@ -1475,7 +1475,7 @@ open-input.
 If you're using the run macro (the normal case), only
 file input is supported at the make-src level; otherwise, you should pass
 in the function in the src call inside the body of run (this is a temporary
-situation, hopefully; see expsrc.ins for an example).</p>
+situation, hopefully; see expsrc.ins).</p>
 <br>
 
 <!-- TOPIC convolve -->
@@ -1581,7 +1581,7 @@ close to the original speed.
        (outa i (<em class=red>granulate</em> exA))))
     (close-input f)))
 </small></pre>
-<p>See expsrc.ins.  Here's a short example of using the <i>input-function</i>
+<p>See expsrc.ins.  Here's an instrument that uses the <i>input-function</i>
 argument to granulate.  It cause the granulation to run backwards through the file:
 </p>
 <pre><small>
@@ -1839,7 +1839,7 @@ the envelope to apply over the entire input file:</p>
 </pre>
 
 <p>If you write your own generators, and want them to respond to any of the
-generic functions, you need to use <a name="add-clm-method">add-clm-method</a>.
+generic functions, you need to use <A NAME="add-clm-method">add-clm-method</a>.
 It takes 4 arguments, the name of the generic function to which you're adding
 a method, the type identifier for the generator this method applies to,
 and two functions that produce the code to access the data or set it to
@@ -1881,7 +1881,7 @@ input/output ports (files, audio ports, etc) to handle all the underlying
 data.
 </p>
 <pre>
-  <a name="make-empty-frame"><em class=def>make-empty-frame</em></a> <i>chans</i>         ;create frame of 0's
+  <A NAME="make-empty-frame"><em class=def>make-empty-frame</em></a> <i>chans</i>         ;create frame of 0's
   <a name="make-frame"><em class=def>make-frame</em></a> <i>chans</i> &amp;rest <i>args</i>    ;create frame and load it with args
   <a name="frame?"><em class=def>frame?</em></a> <i>obj</i>                     ;is <i>obj</i> a frame
   <a name="frame+"><em class=def>frame+</em></a> <i>f1 f2</i> &amp;optional <i>outf</i>    ;add <i>f1</i> and <i>f2</i> element-wise, return new frame (or <i>outf</i>)
@@ -1889,7 +1889,7 @@ data.
   <a name="frame-ref"><em class=def>frame-ref</em></a> <i>f1 chan</i>              ;return <i>f1</i>[<i>chan</i>]
   <a name="frame-set!"><em class=def>frame-set!</em></a> <i>f1 chan val</i>         ;<i>f1</i>[<i>chan</i>] = <i>val</i> (also setf with frame-ref)
 
-  <a name="make-empty-mixer"><em class=def>make-empty-mixer</em></a> <i>chans</i>         ;create a mixer of 0's
+  <A NAME="make-empty-mixer"><em class=def>make-empty-mixer</em></a> <i>chans</i>         ;create a mixer of 0's
   <a name="make-identity-mixer"><em class=def>make-identity-mixer</em></a> <i>chans</i>      ;create a mixer of 1's on the diagonals
   <a name="make-mixer"><em class=def>make-mixer</em></a> <i>chans</i> &amp;rest <i>args</i>    ;create a mixer and load it with args
   <a name="mixer?"><em class=def>mixer?</em></a> <i>obj</i>                     ;is <i>obj a mixer</i>
@@ -1981,8 +1981,7 @@ run-time memory management).
 <p><b>Outa</b> and friends add <i>data</i> into <i>o-stream</i> at sample
 position <i>loc</i>.  <i>O-stream</i> defaults to the current output
 file (it is an IO instance, not a file name).  The reverb stream, if any,
-is named *reverb*; the direct output is *output*.  See the <a href="#envsound">env-sound</a>
-instrument for an example of *reverb*.
+is named *reverb*; the direct output is *output*.
 You can output anywhere at any time, but because of the way data is buffered internally, your
 instrument will run much faster if it does sequential output.
 <a href="#locsig">Locsig</a> is the other output function.</p>
@@ -1998,7 +1997,7 @@ instrument will run much faster if it does sequential output.
 <p><b>Ina</b> and friends get the sample at position <i>loc</i> in
 <i>i-stream</i> as a float.  The data is normally between -1.0 and 1.0.
 <i>I-stream</i> defaults to the current input file (it is an IO struct, not a file name).
-See the digital zipper instrument <a href="zipper.ins">zipper.ins</a> for an example.
+See the digital zipper instrument <a href="zipper.ins">zipper.ins</a>.
 </p>
 <br>
 
@@ -2133,7 +2132,7 @@ loop to pan between speakers (but see move-locsig below):</p>
         (close-input f)))))
 </small></pre>
 <p>See also
-<a name="make-roomsig"><em class=def>make-roomsig</em></a> in <a href="roomsig.cl">roomsig.cl</a>.
+<A NAME="make-roomsig"><em class=def>make-roomsig</em></a> in <a href="roomsig.cl">roomsig.cl</a>.
 For a moving sound
 source, see either move-locsig, or Fernando Lopez Lezcano's <a name="dlocsig"><em class=def>dlocsig</em></a>, documented in
 <a href="dlocsig/index.html">dlocsig/index.html</a>.
@@ -2171,7 +2170,7 @@ a few that look for all the world like generators.</p>
   <a name="seconds-&gt;samples"><em class=def>seconds-&gt;samples</em></a> <i>secs</i>          convert <i>secs</i> to samples
   <a name="degrees-&gt;radians"><em class=def>degrees-&gt;radians</em></a> <i>degs</i>          convert <i>degs</i> to radians
   <a name="radians-&gt;degrees"><em class=def>radians-&gt;degrees</em></a> <i>rads</i>          convert <i>rads</i> to degrees
-  <a name="clear-array"><em class=def>clear-array</em></a> <i>arr</i>                set all values in <i>arr</i> to 0.0
+  <A NAME="clear-array"><em class=def>clear-array</em></a> <i>arr</i>                set all values in <i>arr</i> to 0.0
   <a name="sound-samples"><em class=def>sound-samples</em></a> filename         samples of sound according to header (can be incorrect)
   <a name="sound-frames"><em class=def>sound-frames</em></a> filename          samples per channel
   <a name="sound-datum-size"><em class=def>sound-datum-size</em></a> filename      bytes per sample
@@ -2195,7 +2194,7 @@ a few that look for all the world like generators.</p>
 
 <b>hz-&gt;radians</b>
 converts its argument to radians/sample (for any situation where a
-frequency is used as an amplitude, glissando or FM, for example).  It
+frequency is used as an amplitude, glissando or FM.  It
 can be used within run. hz-&gt;radians is equivalent to 
 <pre>
   Freq-in-hz * 2 * pi / *srate*.  
@@ -2221,7 +2220,7 @@ for some info.
 </p>
 
 <p><b>sound-maxamps</b> is used to print the maxamp stats in with-sound.
-It's a bit of a kludge, but here's an example of using it directly:
+It's a bit of a kludge:
 </p>
 <pre>
 (defvar maxes (make-integer-array (* 2 chans)))
@@ -2472,8 +2471,8 @@ of the spectrum, a distortion that can be effective with speech sounds.</p>
 </pre>
 <p>See the <a href="#cross-synthesis">cross-synthesis</a> instrument above, 
 <a href="ugex.ins">ugex.ins</a>, <a href="san.ins">san.ins</a>,
-and <a href="anoi.ins">anoi.ins</a>
-for more examples.</p>
+and <a href="anoi.ins">anoi.ins</a>.
+</p>
 <pre><small>
 (definstrument spectr (infile outfile &amp;optional (fftsize 128))
   (let* ((fdi (make-double-float-array fftsize))
@@ -2517,7 +2516,7 @@ the struct field names for the run macro.</p>
         (loop for i from 0 to 10 do
           (outa i (env (aref (hi-ho ha) 0)))))))
 </small></pre>
-<p>See prc-toolkit95.lisp for many examples.</p>
+<p>See prc-toolkit95.lisp.</p>
 <br>
 
 
@@ -2637,7 +2636,7 @@ directory (see also <a href="ins">ins</a>):</p>
 <tr><td>test ins</td><td><a href="ug.ins">ug.ins</a>,<a href="ug1.ins">ug1.ins</a></td><td></td></tr>
 <tr><td>fm-violin</td><td><a href="v.ins">v.ins</a></td><td>fm violin (<a href="fmviolin.clm">fmviolin.clm</a>, <a href="popi.clm">popi.clm</a>)</td></tr>
 <tr><td>vox</td><td><a href="vox.ins">vox.ins</a></td><td>fm voice (<a href="cream.clm">cream.clm</a>)</td></tr>
-<tr><td>zc, zn</td><td><a href="zd.ins">zd.ins</a></td><td>examples of interpolating delays</td></tr>
+<tr><td>zc, zn</td><td><a href="zd.ins">zd.ins</a></td><td>interpolating delays</td></tr>
 <tr><td>zipper</td><td><a href="zipper.ins">zipper.ins</a></td><td>The 'digital zipper' effect.</td></tr>
 </table>
 
@@ -2691,8 +2690,8 @@ any of the run-oriented functions in with-sound:</p>
 <span class=bbox><h3><A NAME="guileetc">CLM in Guile, Ruby, C</a></h3></span>
 
 <p>Although this document is aimed at Common Lisp, CLM instruments can also be written
-in Scheme (via Guile), Ruby, or C.  Examples can be found in the Snd tarball, but a short
-example might not be out of place.  The CL bird instrument is</p>
+in Scheme (via Guile), Ruby, or C.  Most the standard CLM instruments are in the Snd tarball (clm-ins.scm primarily).
+To provide a quick overview, the CL bird instrument is</p>
 <pre><small>
 (definstrument bird (startime dur frequency freq-skew amplitude freq-envelope amp-envelope 
 	             &amp;optional (lpfilt 1.0) (degree 0) (reverb-amount 0))
@@ -2798,14 +2797,14 @@ do this is with with-sound or clm-load.
    <i>scaled-to</i>                 ; if a number, scale results to have that max amp
    <i>scaled-by</i>                 ; scale output by some number
    (<i>clipped</i> *clm-clipped*)   ; if t, clip output rather than allowing data to wrap-around (has no effect in no-ffi versions)
-   (<i>verbose</i> <a name="*clm-verbose*">*clm-verbose*</a>)
+   (<i>verbose</i> <A NAME="*clm-verbose*">*clm-verbose*</a>)
    (<i>force-recomputation</i> nil) ; if t, force with-mix calls to recompute
    (<i>explode</i> *clm-explode*)   ; if t, produce "exploded" output -- each instrument call becomes a separately mixed file in Snd
 </pre>
 <p><b>With-sound</b> is a macro that performs all the various services needed to
 produce and play a sound file; it also wraps an unwind-protect around its body to
 make sure that everything is cleaned up properly if you happen to interrupt
-computation, then returns the output file name.  Here are some examples showing how to use the various options:</p>
+computation, then returns the output file name.</p>
 <pre>
   (with-sound (:output "new.snd") (simp 0 1 440 .1))
   (with-sound (:srate 44100 :channels 2) ...)
@@ -2814,7 +2813,7 @@ computation, then returns the output file name.  Here are some examples showing 
   (with-sound (:reverb jc-reverb) ...)
   (with-sound (:reverb nrev :reverb-data (:reverb-factor 1.2 :lp-coeff .95))...)
 </pre>
-<p>With-sound can be called within itself, so, for example, you can make an output sound file
+<p>With-sound can be called within itself, so you can make an output sound file
 for each section of a piece as well as the whole thing, all in one run.  Since it is the basis of <a href="#mix-and-with-mix">with-mix</a> and
 <a href="#sound-let">sound-let</a>, all of these can be nested indefinitely:</p>
 <pre>
@@ -2909,7 +2908,7 @@ Normally the reverb output is not deleted by with-sound; you can set
 </p>
 
 <p>There is also the parallel macro <em class=def>scaled-to</em>.
-These are built on the macro <a name="with-current-sound"><em class=def>with-current-sound</em></a>
+These are built on the macro <A NAME="with-current-sound"><em class=def>with-current-sound</em></a>
 which sets up an embedded with-sound call with all the current with-sound arguments in place
 except output, comment, scaled-to, and scaled-by.</p>
 
@@ -3068,18 +3067,18 @@ across instruments can be implemented with control.
 Several complete examples can be found in the bess*.cl files.
 The available control-related functions are:</p>
 <pre>
-  <a name="control"><em class=def>control</em></a> <i>n</i>
-  <a name="open-controls"><em class=def>open-controls</em></a> <i>size</i>
-  <a name="close-controls"><em class=def>close-controls</em></a>
-  <a name="control-allocate"><em class=def>control-allocate</em></a> (&amp;optional (<i>size</i> 1))
-  <a name="control-free"><em class=def>control-free</em></a> (<i>var</i>)
-  <a name="make-controller"><em class=def>make-controller</em></a> <i>program</i> &amp;rest <i>args</i>
-  <a name="fcontrol"><em class=def>fcontrol</em></a> <i>fc</i>
-  <a name="make-fcontrol"><em class=def>make-fcontrol</em></a> <i>n</i> &amp;optional (<i>mult</i> 0.005)
-  <a name="graph"><em class=def>graph</em></a> <i>sc val</i>
-  <a name="make-graph"><em class=def>make-graph</em></a> <i>arr</i> <i>len</i> &amp;optional (<i>trigger</i> 0)
-  <a name="fft-graph"><em class=def>fft-graph</em></a> <i>sc val win rl im</i>
-  <a name="make-fft-graph"><em class=def>make-fft-graph</em></a> <i>arr len</i> &amp;optional (<i>trigger</i> 0) (<i>type</i> 0)
+  <A NAME="control"><em class=def>control</em></a> <i>n</i>
+  <A NAME="open-controls"><em class=def>open-controls</em></a> <i>size</i>
+  <A NAME="close-controls"><em class=def>close-controls</em></a>
+  <A NAME="control-allocate"><em class=def>control-allocate</em></a> (&amp;optional (<i>size</i> 1))
+  <A NAME="control-free"><em class=def>control-free</em></a> (<i>var</i>)
+  <A NAME="make-controller"><em class=def>make-controller</em></a> <i>program</i> &amp;rest <i>args</i>
+  <A NAME="fcontrol"><em class=def>fcontrol</em></a> <i>fc</i>
+  <em class=def>make-fcontrol</em> <i>n</i> &amp;optional (<i>mult</i> 0.005)
+  <A NAME="graph"><em class=def>graph</em></a> <i>sc val</i>
+  <A NAME="make-graph"><em class=def>make-graph</em></a> <i>arr</i> <i>len</i> &amp;optional (<i>trigger</i> 0)
+  <A NAME="fft-graph"><em class=def>fft-graph</em></a> <i>sc val win rl im</i>
+  <A NAME="make-fft-graph"><em class=def>make-fft-graph</em></a> <i>arr len</i> &amp;optional (<i>trigger</i> 0) (<i>type</i> 0)
 </pre>
 <p>The functions <b>control-allocate</b> and <b>control-free</b> allocate
 and release portions of shared memory.  If you don't call open-controls
@@ -3111,7 +3110,7 @@ widget and can be one of:</p>
 <p>If you want to watch a particular variable as an instrument
 runs, set a control location to its value, and request a
 label widget in the user-interface.  The files bess.cl
-through bess6.cl give examples of these functions.
+through bess6.cl use these functions.
 This portion of CLM currently works only on the SGI or
 under Linux (though there's no reason it couldn't also
 work on the Sun).</p>
@@ -3129,7 +3128,6 @@ midi handler themselves.  I'm not too interested in trying
 to unravel all of midi's wierd cases.
 Currently the midi support is limited to the SGI Irix 6.2
 or later.
-The examples are:
 </p>
 <pre>
   bess.cl   simple realtime controls on FM
@@ -3406,7 +3404,7 @@ instruments, everything that happens within the run loop is normally hidden
 from the lisp interpreter; if you set a global variable's value, for example,
 only the run-specific version of that variable is affected.  You need <b>run*</b>
 to return such values back to Lisp.
-Here's an example:</p>
+</p>
 <pre><small>
 (definstrument p (beg dur frq amp)
   (let* ((s (make-oscil frq))
@@ -3419,11 +3417,11 @@ Here's an example:</p>
 	(outa i (* amp (oscil s)))))
     (print (format nil "~A ~A" hi amp))))
 </small></pre>
-<p>A more useful example is Michael Edwards' <a href="rmsp.ins">rmsp.ins</a>; see also
+<p>A more useful instrument is Michael Edwards' <a href="rmsp.ins">rmsp.ins</a>; see also
 the sr3 instrument in ug.ins.
 Run* doesn't work in no-ffi versions of
 CLM, but you can get the same effect (on the SGI or in Linux) by using the <a href="#control">control</a> function instead.
-Here's another example that implements legato between notes by using the previous note's phases:
+Here's another instrument that implements legato between notes by using the previous note's phases:
 </p>
 <pre><small>
 (defstruct fmins carrier modulator)
@@ -3497,7 +3495,7 @@ all the usual with-sound closing options such as reverb, statistics, and
 scaling.
 </p>
 
-<p>If you hit a C error (segfault, for example), start gdb with lisp ('gdb /usr/local/lisp/acl'),
+<p>If you hit a C error (segfault, etc), start gdb with lisp ('gdb /usr/local/lisp/acl'),
 'run', load clm, run your instrument, then when the error drops you into the gdb debugger, 'where'.  This
 should give you some idea where the problem is.  In the worst case, trace clm::run-in-shell and compile/load
 the instrument to find out what the C compilation sequence is on your machine; next, make whatever changes
@@ -3832,7 +3830,7 @@ this (leaving some room for slop, of course).  For example, if the reverb max
 amp is .01, you're throwing away about 7 bits of amplitude resolution in the
 reverb input.  So, in this case, multiply all the locsig reverb by (say) 50,
 then in the reverberator, divide the reverb output by 50 before sending it out.
-See <a href="jcrev.ins">jcrev.ins</a> for an example (the
+See <a href="jcrev.ins">jcrev.ins</a> (the
 volume argument).  Similarly, if your notes are soft, send them directly out
 channel 0 or 1; the spatial effects are going to add less to your piece
 than the noise will detract in this case.  And if you're making repeated
@@ -3969,7 +3967,7 @@ customizations that can be included, here is my clm-init.lisp:</p>
 <!-- INDEX user-defined-ugs:User-defined generators  -->
 
 <p>Most special-case generators can be expressed as macros and defined
-in lisp; see <a href="zd.ins">zd.ins</a> or <a href="prc-toolkit95.lisp">prc-toolkit95.lisp</a> for extensive examples.
+in lisp; see <a href="zd.ins">zd.ins</a> or <a href="prc-toolkit95.lisp">prc-toolkit95.lisp</a>.
 There's rarely a real need to drop into C!
 If you want to call your own C code within the run loop, you have to
 tell the run macro how to make the call.  The run macro looks up identifiers
@@ -3990,7 +3988,7 @@ C output needs to be deferred until the entire tree has been examined, so in thi
 in an instrument's run section, the macro "c-average" is queued up with its arguments in an internal form;
 The macro <i>c-average</i>
 sends out the associated c code (to the global file identifier *c-file*) when that point is reached in the translation.
-See <a href="cmus.lisp">cmus.lisp</a> for more examples.
+See <a href="cmus.lisp">cmus.lisp</a>.
 Once this code is loaded into CLM,</p>
 <pre><small>
 (definstrument average-stuff (beg dur freq amp)
@@ -4078,7 +4076,7 @@ notice that it is being called in that way:</p>
 <p>Now (auto) is the same as (with-sound () (auto))</p>
 
 <p>An instrument need not perform sound output.
-See <a href="rmsp.ins">rmsp.ins</a> for an example.</p>
+See <a href="rmsp.ins">rmsp.ins</a>.</p>
 <br>
 
 

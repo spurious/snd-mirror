@@ -100,7 +100,7 @@ the file already loaded, <code>snd -l v.scm</code>, or put the load statement in
 
 <pre>
   <em class=def><a name="exautosave">auto-save</a></em>
-  <em class=def><a name="excancelautosave">cancel-auto-save</a></em>
+  <em class=def>cancel-auto-save</em>
 </pre>
 <!-- I(auto save):L(auto-save)(exautosave) -->
 <!-- I(auto save):A(exautosave) -->
@@ -136,7 +136,7 @@ Michael Scholz, based on CLM's bess5.cl and rt.lisp.
 <A NAME="birddoc"></a><span class=box><h2>bird.scm</h2></span>
 <pre>
   <em class=def>bird</em> start dur frequency freqskew amplitude freq-envelope amp-envelope
-  <em class=def>bigbird</em> start dur frequency freqskew amplitude freq-envelope amp-envelope partials
+  <em class=def><a name="bigbird">bigbird</a></em> start dur frequency freqskew amplitude freq-envelope amp-envelope partials
   <em class=def>one-bird</em> beg maxdur func birdname
   <em class=def>make-birds</em> #:optional (output-file "test.snd")
 </pre>
@@ -353,7 +353,7 @@ backtrace, call break-backtrace with an argument of #t.
 <i>break-quit!</i> exits all break levels, returning you to the true top-level.
 <p><i>break-go</i> continues from the point of the breakpoint.
 The 'returned-value' is the value to return from the original call on snd-break.
-For example, here is a brief session in Snd's listener:
+Here is a brief session in Snd's listener:
 </p>
 <pre>
 <em class=listener>:</em><em class=typing>(define (test-break a) (let ((b (+ a (snd-break "hiho")))) b))</em>
@@ -488,13 +488,13 @@ the listener?
   <tr><td><em class=def>freqdiv</em> n</td><td>"frequency division" effect</td></tr>
   <tr><td><em class=def>adsat</em> size</td><td>"adaptive saturation" effect</td></tr>
   <tr><td><em class=def>spike</em></td><td>spikey sound effect</td></tr>
-  <tr><td><em class=def><a name="excomputeuniformcircularstring">compute-uniform-circular-string</a></em> size ...</td><td>scanned synthesis</td></tr>
+  <tr><td><em class=def><A NAME="excomputeuniformcircularstring">compute-uniform-circular-string</a></em> size ...</td><td>scanned synthesis</td></tr>
   <tr><td><em class=def>compute-string</em> size ...</td><td></td></tr>
   <tr><td><em class=def>spot-freq</em></td><td>easily-fooled autocorrelation-based pitch tracker</td></tr>
   <tr><td><em class=def><A NAME="zerophase">zero-phase, rotate-phase</a></em></td><td>phase-based effects</td></tr>
   <tr><td><em class=def>both forms of asymmetric-fm</em></td><td></td></tr>
-  <tr><td><em class=def><a name="cosinesummation">cosine-summation</a></em></td><td>sum-of-cosines stuff</td></tr>
-  <tr><td><em class=def><a name="legendresummation">legendre-summation</a></em></td><td></td></tr>
+  <tr><td><em class=def>cosine-summation</em></td><td>sum-of-cosines stuff</td></tr>
+  <tr><td><em class=def>legendre-summation</em></td><td></td></tr>
   <tr><td><em class=def>brighten-slightly</em> amount</td><td>add harmonics</td></tr>
   <tr><td><em class=def><a name="makehilberttransform">make-hilbert-transform</a></em> length</td><td>Hilbert transform</td></tr>
   <tr><td><em class=def><a name="makelowpass">make-lowpass</a></em> fc length</td><td>FIR lowpass</td></tr>
@@ -502,7 +502,7 @@ the listener?
   <tr><td><em class=def><a name="makebandpass">make-bandpass</a></em> flo fhi length</td><td>FIR bandpass</td></tr>
   <tr><td><em class=def><a name="makebandstop">make-bandstop</a></em> flo fhi length</td><td>FIR bandstop</td></tr>
   <tr><td><em class=def><a name="makedifferentiator">make-differentiator</a></em> length</td><td>FIR differentiator</td></tr>
-  <tr><td><em class=def>make-biquad</em> a0 a1 a2 b1 b2</td><td>IIR cascade section</td></tr>
+  <tr><td><em class=def><a name="makebiquad">make-biquad</a></em> a0 a1 a2 b1 b2</td><td>IIR cascade section</td></tr>
   <tr><td><em class=def>make-iir-low-pass-1</em> fc</td><td>IIR 1st order lowpass</td></tr>
   <tr><td><em class=def>make-iir-high-pass-1</em> fc</td><td>IIR 1st order highpass</td></tr>
   <tr><td><em class=def>make-iir-low-pass-2</em> fc d</td><td>IIR 2nd order lowpass</td></tr>
@@ -717,21 +717,21 @@ envelope functions that are often useful:
 <pre>
   <em class=def>envelope-interp</em> x env <i>base</i>
   <em class=def><a name="windowenvelope">window-envelope</a></em> beg end env
-  <em class=def><a name="mapenvelopes">map-envelopes</a></em> func env1 env2
+  <em class=def>map-envelopes</em> func env1 env2
   <em class=def>multiply-envelopes</em> env1 env2
   <em class=def>add-envelopes</em> env1 env2
   <em class=def><a name="maxenvelope">max-envelope</a></em> env
-  <em class=def><a name="minenvelope">min-envelope</a></em> env
-  <em class=def><a name="integrateenvelope">integrate-envelope</a></em> env
+  <em class=def>min-envelope</em> env
+  <em class=def>integrate-envelope</em> env
   <em class=def><a name="stretchenvelope">stretch-envelope</a></em> env old-attack new-attack <i>old-decay new-decay</i>
   <em class=def>envelope-last-x</em> env
   <em class=def><a name="scaleenvelope">scale-envelope</a></em> env scl <i>(offset 0.0)</i>
   <em class=def><a name="reverseenvelope">reverse-envelope</a></em> env
   <em class=def><a name="concatenateenvelopes">concatenate-envelopes</a></em> #:rest envs
-  <em class=def><a name="repeatenvelope">repeat-envelope</a></em> env repeats #:optional (reflected #f) (normalized #f)
+  <em class=def>repeat-envelope</em> env repeats #:optional (reflected #f) (normalized #f)
   <em class=def><a name="powerenv">power-env</a></em> e
-  <em class=def><a name="makepowerenv">make-power-env</a></em> e #:key (scaler 1.0) (offset 0.0) duration
-  <em class=def><a name="powerenvchannel">power-env-channel</a></em> pe #:optional (beg 0) dur snd chn edpos (edname "power-env-channel")
+  <em class=def>make-power-env</em> e #:key (scaler 1.0) (offset 0.0) duration
+  <em class=def>power-env-channel</em> pe #:optional (beg 0) dur snd chn edpos (edname "power-env-channel")
   <em class=def>envelope-exp</em> e #:optional (power 1.0) (xgrid 100)
 </pre>
 <p>These are translated from CLM's env.lisp.
@@ -1064,11 +1064,11 @@ is at 1.0, no filtering takes place.
   <em class=def><A NAME="excorrelate">correlate</a></em> snd chn y0 y1
   <em class=def><a name="exsuperimposeffts">superimpose-ffts</a></em> snd chn y0 y1
   <em class=def><a name="exfftedit">fft-edit</a></em> low-freq high-freq
-  <em class=def><a name="exfftenvedit">fft-env-edit</a></em> env
+  <em class=def><A NAME="exfftenvedit">fft-env-edit</a></em> env
   <em class=def><A NAME="exfftenvinterp">fft-env-interp</a></em> env1 env2 interp
   <em class=def><a name="exfftsquelch">fft-squelch</a></em> squelch
   <em class=def><A NAME="exfftcancel">fft-cancel</a></em> lo-freq hi-freq
-  <em class=def><a name="exsquelchvowels">squelch-vowels</a></em>
+  <em class=def>squelch-vowels</em>
   <em class=def><A NAME="exfftsmoother">fft-smoother</a></em> cutoff start samps snd chn
 </pre>
 <p><i>correlate</i> graphs the correlation of <i>snd</i>'s 2 channels.
@@ -1170,7 +1170,7 @@ The following makes the graph dot size dependent on the
 number of samples in the graph:
 </p>
 <pre>
-  <em class=def><a name="exautodot">auto-dot</a></em> snd chn y0 y1
+  <em class=def>auto-dot</em> snd chn y0 y1
 
 (add-hook! graph-hook auto-dot)
 </pre>
@@ -1178,7 +1178,7 @@ number of samples in the graph:
 Finally there are several somewhat frivolous examples:
 </p>
 <pre>
-  <em class=def><a name="extitlewithdate">title-with-date</a></em>
+  <em class=def><A NAME="titlewithdate">title-with-date</a></em>
   <em class=def>flash-selected-data</em> time-interval
 </pre>
 <p><code>(title-with-date)</code> adds a clock to the Snd window's title bar.
@@ -1227,7 +1227,7 @@ by filename) in the current directory.
 The two in examp.scm are:
 </p>
 <pre>
-  <em class=def><a name="exfirstmarkinwindowatleft">first-mark-in-window-at-left</a></em>
+  <em class=def>first-mark-in-window-at-left</em>
   <em class=def><a name="exmarkloops">mark-loops</a></em>
 
 (bind-key (char-&gt;integer #\l) 0 
@@ -1246,11 +1246,11 @@ a sound as a key is held down).
 <span class=bbox><h3><A NAME="ssselections">selections</a></h3></span>
 
 <pre>
-  <em class=def><a name="exallchans">all-chans</a></em>
+  <em class=def>all-chans</em>
   <em class=def><a name="exswapselectionchannels">swap-selection-channels</a></em>
   <em class=def>selection-rms-1</em>
-  <em class=def><a name="exselectionrms">selection-rms</a></em>
-  <em class=def><a name="exregionrms">region-rms</a></em> <i>region</i>
+  <em class=def><A NAME="exselectionrms">selection-rms</a></em>
+  <em class=def><A NAME="exregionrms">region-rms</a></em> <i>region</i>
   <em class=def><A NAME="exreplacewithselection">replace-with-selection</a></em>
   <em class=def><a name="exexplodesf2">explode-sf2</a></em>
 </pre>
@@ -1316,7 +1316,7 @@ Cross fade in frequency domain: <a href="#fadedoc">fade.scm</a>
   <em class=def>am</em> freq                        ; amplitude modulation
   <em class=def><A NAME="exhellodentist">hello-dentist</a></em> frq amp          ; randomized sampling rate changes
   <em class=def><A NAME="exfp">fp</a></em> sr osamp osfrq              ; osc-driven src ("Forbidden Planet")
-  <em class=def><a name="excompand">compand</a></em>
+  <em class=def>compand</em>
   <em class=def><a name="excompandchannel">compand-channel</a></em> beg dur snd chn edpos
   <em class=def><A NAME="exexpsrc">expsrc</a></em> rate snd chn
   <em class=def><A NAME="exexpsnd">expsnd</a></em> rate-envelope
@@ -1389,15 +1389,15 @@ Several of the functions in this section are slight robustifications of the
 corresponding code in extsnd.html.  These include:
 </p>
 <pre>
-  <em class=def><a name="exdochans">do-chans</a></em> func origin
-  <em class=def><a name="exdoallchans">do-all-chans</a></em> func origin
-  <em class=def><a name="exdosoundchans">do-sound-chans</a></em> func origin
-  <em class=def><a name="exupdategraphs">update-graphs</a></em>
+  <em class=def>do-chans</em> func origin
+  <em class=def>do-all-chans</em> func origin
+  <em class=def>do-sound-chans</em> func origin
+  <em class=def>update-graphs</em>
   <em class=def><a name="exeverysample">every-sample?</a></em> func
-  <em class=def><a name="exsortsamples">sort-samples</a></em> bins
+  <em class=def>sort-samples</em> bins
   <em class=def><a name="exwindowsamples">window-samples</a></em> <i>snd chn</i>
-  <em class=def><a name="exdisplayenergy">display-energy</a></em> snd chn y0 y1
-  <em class=def><a name="exwindowrms">window-rms</a></em>
+  <em class=def>display-energy</em> snd chn y0 y1
+  <em class=def>window-rms</em>
   <em class=def>fft-peak</em> snd chn scale
 </pre>
 <p>
@@ -1422,7 +1422,7 @@ displayed in the current window for <i>snd</i>'s channel <i>chn</i>.
 and moves the cursor to that sample. It can be interrupted by C-g.
 </p>
 <pre>
-  <em class=def><a name="exmakesoundinterp">make-sound-interp</a></em> start #:optional snd chn
+  <em class=def>make-sound-interp</em> start #:optional snd chn
   <em class=def><a name="exsoundinterp">sound-interp</a></em> reader loc
   <em class=def><a name="exenvsoundinterp">env-sound-interp</a></em> envelope #:optional (time-scale 1.0) snd chn
 </pre>
@@ -1495,8 +1495,8 @@ convenient if they were in one file.
 
   <em class=def><a name="mixchannel">mix-channel</a></em> filedat beg dur snd chn edpos
   <em class=def><a name="insertchannel">insert-channel</a></em> filedat beg dur snd chn edpos
-  <em class=def>redo-channel</em> edits snd chn
-  <em class=def>undo-channel</em> edits snd chn
+  <em class=def><a name="redochannel">redo-channel</a></em> edits snd chn
+  <em class=def><a name="undochannel">undo-channel</a></em> edits snd chn
 </pre>
 
 <p><i>channel-property</i> returns the value associated with <i>key</i> in the given channel's
@@ -1696,11 +1696,12 @@ Fabio Furlanete's rmsgain.scm uses goops.
 
 <A NAME="hooksdoc"></a><span class=box><h2>hooks.scm</h2></span>
 <pre>
-  <em class=def><a name="exdescribehook">describe-hook</a></em> hook
+  <em class=def>describe-hook</em> hook
   <em class=def>remove-local-hook!</em> hook func
   <em class=def><a name="withlocalhook">with-local-hook</a></em> hook local-hook-procs thunk
   <em class=def><a name="resetallhooks">reset-all-hooks</a></em>
-  <em class=def><a name="sndhooks1">snd-hooks</a></em>
+  <em class=def>snd-hooks</em>
+  <em class=def>hook-member</em> func hook
 </pre>
 <p>hooks.scm has various hook-related functions.
 <i>describe-hook</i> tries to decipher the functions on the hook list.
@@ -1709,6 +1710,7 @@ it makes it possible to remove a locally-defined function from a hook.
 <i>with-local-hook</i> is a kind of "let" for hooks.  <i>snd-hooks</i> returns
 a list of all Snd-specific hooks; this is used by <i>reset-all-hooks</i> which
 returns all hooks to the empty state. 
+<i>hook-member</i> returns #t if <i>func</i> is already on the hook list.
 </p>
 
 <A NAME="indexdoc"></a><span class=box><h2>index.scm, index.rb</h2></span>
@@ -1739,12 +1741,12 @@ The function that actually passes the url to the reader is <a href="extsnd.html#
   <em class=def><a name="markname2id">mark-name-&gt;id</a></em> name
   <em class=def><a name="describemark">describe-mark</a></em> id
   <em class=def><A NAME="syncup">syncup</a></em> ids
-  <em class=def><a name="fitselectionbetweenmarks">fit-selection-between-marks</a></em> m1 m2
+  <em class=def><A NAME="fitselectionbetweenmarks">fit-selection-between-marks</a></em> m1 m2
   <em class=def><a name="padmarks">pad-marks</a></em> ids secs
-  <em class=def><a name="movesyncdmarks">move-syncd-marks</a></em> sync samples-to-move
+  <em class=def><A NAME="movesyncdmarks">move-syncd-marks</a></em> sync samples-to-move
   <em class=def><a name="playsyncdmarks">play-syncd-marks</a></em> sync
   <em class=def><a name="exevalbetweenmarks">eval-between-marks</a></em> func snd
-  <em class=def><a name="exsnapmarks">snap-marks</a></em>
+  <em class=def><A NAME="exsnapmarks">snap-marks</a></em>
   <em class=def><a name="exdefineselectionviamarks">define-selection-via-marks</a></em> m1 m2
   <em class=def><a name="exsnapmarktobeat">snap-mark-to-beat</a></em>
   <em class=def><a name="exmarkexplode">mark-explode</a></em>
@@ -1822,10 +1824,10 @@ which I assume are groups of related mixes.
   <em class=def><a name="panmix">pan-mix</a></em> file frame env
   <em class=def><a name="snapmixtobeat">snap-mix-to-beat</a></em>
   <em class=def><a name="deletemix">delete-mix</a></em> id
-  <em class=def><a name="deleteallmixes">delete-all-mixes</a></em>
+  <em class=def><A NAME="deleteallmixes">delete-all-mixes</a></em>
   <em class=def><a name="deletetrack">delete-track</a></em> id
-  <em class=def><a name="deletealltracks">delete-all-tracks</a></em>
-  <em class=def><a name="setalltracks">set-all-tracks</a></em> new-id
+  <em class=def>delete-all-tracks</em>
+  <em class=def>set-all-tracks</em> new-id
 </pre>
 <p>These are the mix utilities in mix.scm (unrelated to tracks). <i>mix-name-&gt;id</i>
 returns the id of a given (named) mix. <i>mix-&gt;vct</i> returns the current samples
@@ -1847,22 +1849,20 @@ pre-zero value.
   <em class=def><a name="track2vct">track-&gt;vct</a></em> track
   <em class=def><a name="savetrack">save-track</a></em> track filename
 
-  <em class=def><a name="trackcolor">track-color</a></em> track
-  <em class=def><a name="settrackcolor">set-track-color</a></em> track color
-  <em class=def><a name="settrackamp">set-track-amp</a></em> track amp
+  <em class=def><a name="trackcolor">track-color</a></em> track [settable]
+  <em class=def><a name="trackamp">track-amp</a></em> track [settable]
   <em class=def>incf-track-amp</em> track amp-increment
-  <em class=def><a name="settrackspeed">set-track-speed</a></em> track speed
+  <em class=def><a name="trackspeed">track-speed</a></em> track [settable]
   <em class=def><a name="transposetrack">transpose-track</a></em> track semitones
-  <em class=def><a name="trackposition">track-position</a></em> track
-  <em class=def><a name="settrackposition">set-track-position</a></em> track position
-  <em class=def><a name="trackend">track-end</a></em> track
+  <em class=def><a name="trackposition">track-position</a></em> track [settable]
+  <em class=def>track-end</em> track
   <em class=def><a name="tracklength">track-length</a></em> track
-  <em class=def><a name="settracktempo">set-track-tempo</a></em> track tempo
-  <em class=def><a name="settrackampenv">set-track-amp-env</a></em> track chan env
+  <em class=def><a name="retempotrack">retempo-track</a></em> track tempo
+  <em class=def><a name="envtrack">env-track</a></em> track chan env
   <em class=def><a name="reversetrack">reverse-track</a></em> track
   <em class=def><a name="filtertrack">filter-track</a></em> track coeffs
 
-  <em class=def><A NAME="mixpanelappliestotrack">mix-panel-applies-to-track</a></em>
+  <em class=def><a name="syncmultichannelmixes">sync-multichannel-mixes</a></em>
 </pre>
 <p>A track is a list of mixes, each member mix having its track set to the track id.  The <i>make-track</i>
 function takes the track id and the list of member mixes, returning the list of mixes.  Thereafter, the
@@ -1872,7 +1872,7 @@ in the track into a vct.  Similarly, <i>save-track</i> places the track's sample
 </p>
 <p>
 The track-color refers to the color of the mix waveform (the thing displayed to the right
-of the red tag).  <i>set-track-color</i> sets this color using Snd <a href="extsnd.html#colors">colors</a>.
+of the red tag).  <i>set! (track-color trk)</i> sets this color using Snd <a href="extsnd.html#colors">colors</a>.
 </p>
 <pre>  
 :<em class=typing>(define hi (make-track 1 (list 0 1)))</em>
@@ -1881,11 +1881,11 @@ of the red tag).  <i>set-track-color</i> sets this color using Snd <a href="exts
 <em class=listener>(0 1)</em>
 :<em class=typing>(mix-track 0)</em>
 <em class=listener>1</em>
-:<em class=typing>(set-track-color (track 1) (make-color 0 0 1))</em>
+:<em class=typing>(set! (track-color (track 1)) (make-color 0 0 1))</em>
 <em class=listener>(#&lt;color: (0.00 0.00 1.00)&gt; #&lt;color: (0.00 0.00 1.00)&gt;)</em>
 </pre>
 <p>The track-position is the position (begin sample) of the first mix in the track.
-<i>set-track-position</i> moves all the mixes in the track so that its first sample
+<i>set! (track-position trk)</i> moves all the mixes in the track so that its first sample
 is <i>position</i>:
 </p>
 <pre>
@@ -1895,7 +1895,7 @@ is <i>position</i>:
 <em class=listener>10748</em>
 :<em class=typing>(mix-position 1)</em>
 <em class=listener>23287</em>
-:<em class=typing>(set-track-position (track 1) 1500)</em>
+:<em class=typing>(set! (track-position (track 1)) 1500)</em>
 <em class=listener>(1500 14039)</em>
 :<em class=typing>(mix-position 0)</em>
 <em class=listener>1500</em>
@@ -1903,9 +1903,9 @@ is <i>position</i>:
 <em class=listener>14039</em>
 </pre>
 <p>The track-amp reflects the mix amps (unless you set them individually, but I guess that
-quibble is true of all these settings). <i>set-track-amp</i> sets each mix channel's <i>chan</i>
+quibble is true of all these settings). <i>set! (track-amp trk)</i> sets each mix channel's <i>chan</i>
 amplitude to <i>amp</i>.  Similarly, <i>incf-track-amp</i> increments each amplitude by
-<i>amp-increment</i>.  The track-speed refers to its mix's speeds: <i>set-track-speed</i>
+<i>amp-increment</i>.  The track-speed refers to its mix's speeds: <i>set! (track-speed trk)</i>
 sets all of them to <i>speed</i>, and <i>transpose-track</i> moves them all by <i>semitones</i>.
 <i>track-length</i> returns the total duration (samples) of the track, <i>track-end</i> returns
 the last sample:
@@ -1920,11 +1920,11 @@ the last sample:
 :<em class=typing>(max (+ (mix-position 0) (mix-frames 0)) (+ (mix-position 1) (mix-frames 1)))</em>
 <em class=listener>17846</em>
 </pre>
-<p><i>set-track-tempo</i> affects the time between the successive mix begin points (tempo &gt; 1.0 makes the
+<p><i>retempo-track</i> affects the time between the successive mix begin points (tempo &gt; 1.0 makes the
 mixes happen more quickly):
 </p>
 <pre>
-:<em class=typing>(set-track-tempo (track 1) 2.0)</em>
+:<em class=typing>(retempo-track (track 1) 2.0)</em>
 <em class=listener>(1500 7770)</em>
 :<em class=typing>(mix-position 0)</em>
 <em class=listener>1500</em>
@@ -1933,28 +1933,27 @@ mixes happen more quickly):
 :<em class=typing>(+ 1500 (* .5 (- 14039 1500))) ; 14039 is the former mix 1 begin time (see above)</em>
 <em class=listener>7769.5</em>
 </pre>
-<p><i>set-track-amp-env</i> applies an amplitude envelope over the entire track, setting
+<p><i>env-track</i> applies an amplitude envelope over the entire track, setting
 each mix's amp env(s) to match the portion of that envelope that happens to fall over them
 (multiplying envelopes if the mix aready has one).
 <i>filter-track</i> applies a filter to each mix sound at the pre-mix point (that is, the
 mixed in sound is being edited, then the mix takes place); any kind of edit can follow the
 same sequence.  <i>reverse-track</i> reverses the order in which a track's members occur.
 </p>
-<p>Finally, the various mix hooks can be tied into these functions so that the
-entire track moves when you drag one mix in it, or all the amplitudes change at once.
-<i>mix-panel-applies-to-track</i>
-causes multichannel mixes to be placed in a separate track,
-and subsequent srate or position changes affect all channels in parallel (this makes
-it easier to mix multichannel files into other multichannel files and keep the mixed
-channels in sync).
+<p>
 Most of the "set-" functions also exist in the generalized set! form:
 <code>(set! (track-position trk) 0)</code>.
+</p>
+<p>Finally, the various mix hooks can be tied into these functions so that the
+entire track moves when you drag one mix in it, or all the amplitudes change at once.
+<i>sync-multichannel-mixes</i> is the <a href="extsnd.html#multichannelmixhook">multichannel-mix-hook</a>
+entry that syncs together multichannel mixes. 
 </p>
 
 <A NAME="moogdoc"></a><span class=box><h2>moog.scm</h2></span>
 <pre>
   <em class=def>make-moog-filter</em> frequency Q
-  <em class=def>moog-filter</em> gen input
+  <em class=def><a name="moogfilter">moog-filter</a></em> gen input
 </pre>
 <p>moog.scm is a translation of CLM's moog.lisp (written by Fernando Lopez-Lezcano --
 http://www-ccrma.stanford.edu/~nando/clm/moog),
@@ -2077,7 +2076,7 @@ as a kind of extended piano, we could map keys to sounds:
 <pre>
   <em class=def><A NAME="explayoften">play-often</A></em> times
   <em class=def><A NAME="explayuntilcg">play-until-c-g</A></em>
-  <em class=def><a name="explayregionforever">play-region-forever</a></em> region
+  <em class=def><A NAME="explayregionforever">play-region-forever</a></em> region
 
 (bind-key (char-&gt;integer #\p) 0 (lambda (n) (play-often (max 1 n))))
 (bind-key (char-&gt;integer #\r) 0 (lambda (n) (play-region-forever (max 0 n))))
@@ -2414,22 +2413,22 @@ waterfall spectrum display of the incoming audio data.  <b>stop-waterfall</b> tu
 <A NAME="sndmotifdoc"></a><span class=box><h2>snd-motif.scm</h2></span>
 
 <pre>
-  <em class=def><a name="installsearcher">install-searcher</a></em> proc
-  <em class=def><a name="zync">zync</a></em> 
+  <em class=def>install-searcher</em> proc
+  <em class=def>zync</em> 
   <em class=def><a name="foreachchild">for-each-child</a></em> w func
-  <em class=def><a name="makehiddencontrols-dialog">make-hidden-controls-dialog</a></em> 
-  <em class=def><a name="createfmvdialog">create-fmv-dialog</a></em> 
-  <em class=def><a name="makepixmap">make-pixmap</a></em> strs
-  <em class=def><a name="displayscannedsynthesis">display-scanned-synthesis</a></em> 
-  <em class=def><a name="disablecontrolpanel">disable-control-panel</a></em> 
+  <em class=def>make-hidden-controls-dialog</em> 
+  <em class=def>create-fmv-dialog</em> 
+  <em class=def>make-pixmap</em> strs
+  <em class=def>display-scanned-synthesis</em> 
+  <em class=def>disable-control-panel</em> 
   <em class=def><a name="addmarkpane">add-mark-pane</a></em> 
-  <em class=def><a name="selectfile">select-file</a></em> func <i>title dir filter help</i>
-  <em class=def><a name="sndclockicon">snd-clock-icon</a></em> snd hour
+  <em class=def>select-file</em> func <i>title dir filter help</i>
+  <em class=def>snd-clock-icon</em> snd hour
   <em class=def><a name="makesoundbox">make-sound-box</a></em> name parent select-func peak-func sounds args
   <em class=def>show-sounds-in-directory</em> (dir ".")
   <em class=def><a name="showsmptelabel">show-smpte-label</a></em> on-or-off
-  <em class=def><a name="makelevelmeter">make-level-meter</a></em> parent width height
-  <em class=def><a name="showdiskspace">show-disk-space</a></em>
+  <em class=def>make-level-meter</em> parent width height
+  <em class=def>show-disk-space</em>
   <em class=def>keep-file-dialog-open-upon-ok</em>
   <em class=def>add-amp-controls</em>
   <em class=def>add-very-useful-icons</em>
@@ -2547,7 +2546,7 @@ It returns the widget; you can write to it via XmTextFieldSetString.
 is updated via <b>variable-display</b>.  The latter returns its argument, so it acts as a sort of
 probe, picking out any arbitrary point in an instrument and displaying it as the
 instrument is running.  Display points can be organized as pages in a notebook
-widget.  Here's a simple example:
+widget:
 </p>
 <pre>
 (define wid (make-variable-display "do-loop" "i*2" 'text))
@@ -3480,7 +3479,7 @@ resource argument list is <i>args</i>.  The editor's current envelope is accessi
 
 <A NAME="zipdoc"></a><span class=box><h2>zip.scm</h2></span>
 <pre>
-  <em class=def><a name="makezipper">make-zipper</a></em> ramp-env <i>frame-size frame-env</i>
+  <em class=def>make-zipper</em> ramp-env <i>frame-size frame-env</i>
   <em class=def><a name="zipper">zipper</a></em> gen in1 in2
   <em class=def><a name="zipsound">zip-sound</a></em> beg dur file1 file2 <i>ramp size</i>
 </pre>
@@ -3492,7 +3491,7 @@ argument is the maximum length of each twosome in seconds (for initial array all
 argument determines the current such length as new frames are needed, and the
 <i>ramp-env</i> argument determines which of the files gets more space
 in the frame (0: all first, 1: all second).
-For example, the following function sets up two sounds,
+The following function sets up two sounds,
 an upward ramp and a downward ramp, then zips them together:
 </p>
 <pre>
@@ -3813,8 +3812,7 @@ int main(int argc, char **argv)
 it with sinc); in this case, the "srate" argument is 0.5, so src will
 pick up a new input sample (calling src_input_as_needed) on every other
 output sample.  In the Scheme CLM (and Snd), the "as-needed" input
-function is a Scheme function passed in as Scheme code.  A highly
-simplified example is:
+function is a Scheme function passed in as Scheme code:
 </p>
 <pre>
 #include &lt;stdio.h&gt;
@@ -3993,7 +3991,7 @@ classes and methods in Scheme:
 </pre>
 <p>
 But our real interest here is how to do the same thing in CLM-in-C (clm.c).
-The following example implements a comb filter with a one-zero filter on the feedback.
+The following code implements a comb filter with a one-zero filter on the feedback.
 </p>
 <pre>
 #include "sndlib.h"
@@ -4165,8 +4163,8 @@ static void init_fcomb(void)
 <span class=box><h2><A NAME="continuations">About Continuations</a></h2></span>
 
 <p>A continuation is a kind of GOTO, a jump to the end of the 
-defining call-with-current-continuation form. 
-Here are a few simple examples:</p>
+defining call-with-current-continuation form:
+</p>
 <pre>
 
 (define (con-return)
@@ -4207,7 +4205,7 @@ Here are a few simple examples:</p>
 ;;; (con-go-on)
 ;;;   prints "012345got a real error"
 
-;;; here's an example that is not just a simple exit:
+;;; here's one that is not just a simple exit:
 
 (let ((a 1)
       (b 1))

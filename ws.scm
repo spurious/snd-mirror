@@ -122,7 +122,7 @@ returning you to the true top-level."
 	   (do ((i 3 (1+ i)))
 	       ((= i len))
 	     (let ((fr (stack-ref *ws-stack* i)))
-	       (if (frame-procedure? fr) ; TODO: even better here would be (procedure-property 'definstrument) or some such test
+	       (if (frame-procedure? fr) ; perhaps better here would be (procedure-property 'definstrument) or some such test
 		   (let ((source (frame-source fr)))
 		     (if (memoized? source)
 			 (ok (unmemoize source))

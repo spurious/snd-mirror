@@ -2,6 +2,7 @@
 
 /* 
  * TODO: add a sync button to affect all of track?  Also need a way to display all related mixes at once (panning etc)
+ *       this matters in syncd multichannel cases -- if beg reset, only current is moved etc
  */
 
 static Widget mix_panel = NULL;
@@ -358,7 +359,7 @@ static void beg_activated(snd_state *ss)
     {
       mix_id = current_mix_id(ss);
       cp = mix_channel_from_id(mix_id);
-      set_mix_position_from_id(mix_id, (off_t)(string2Float(val) * SND_SRATE(cp->sound)));
+      set_mix_position(mix_id, (off_t)(string2Float(val) * SND_SRATE(cp->sound)));
       update_mix_panel(mix_id);
       XtFree(val);
     }

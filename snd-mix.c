@@ -1,15 +1,6 @@
 #include "snd.h"
 
-/* TODO: decide how to handle multichannel mixes:
-   In snd at the moment, if the "unite"-button is set, no mix-tags
-   or mix-waveforms show up in any channel pane.  Un-checking the
-   "unite"-button shows the default tags+waveforms.
-   Mixing in multichannel (2) regions or files in multi-channel (2)
-   files, doesnt leave the mixes in any synced state.
-*/
-
-/* TODO: mix stereo->stereo[syncd+united] -- mix tag of 2nd chan is at 0? */
-/* TODO: where are the mix tags if united chans? */
+/* TODO: in gtk mix tag chan2 combined can be in chan0 graph */
 
 #define NO_SUCH_TRACK XEN_ERROR_TYPE("no-such-track")
 
@@ -49,10 +40,10 @@ static mix_info *md_from_id(int n);
 static void draw_mix_waveform(mix_info *md);
 static void erase_mix_waveform(mix_info *md);
 
-static int call_mix_speed_changed_hook(mix_info *md);
-static int call_mix_amp_changed_hook(mix_info *md);
-static int call_mix_position_changed_hook(mix_info *md, off_t samps);
-static void call_multichannel_mix_hook(int *ids, int n);
+static XEN multichannel_mix_hook;
+static XEN mix_speed_changed_hook;
+static XEN mix_amp_changed_hook;
+static XEN mix_dragged_hook;
 
 chan_info *mix_channel_from_id(int mix_id)
 {
@@ -1094,7 +1085,20 @@ int mix(off_t beg, off_t num, int chans, chan_info **cps, char *mixinfile, int t
 	  if ((sp) && (sp->sync)) ids[j++] = md->id;
 	}
     }
-  if (j > 1) call_multichannel_mix_hook(ids, j);
+  if (j > 1) 
+    {
+      XEN lst = XEN_EMPTY_LIST;
+      int i;
+      /* create list from ids, pass to hook, if any */
+      if (XEN_HOOKED(multichannel_mix_hook))
+	{
+	  for (i = j - 1; i >= 0; i--)
+	    lst = XEN_CONS(C_TO_XEN_INT(ids[i]), lst);
+	  run_hook(multichannel_mix_hook,
+		   XEN_LIST_1(lst),
+		   S_multichannel_mix_hook);
+	}
+    }
   FREE(ids);
   return(id);
 }
@@ -2137,6 +2141,17 @@ void clear_mix_tags(chan_info *cp)
   map_over_channel_mixes(cp, clear_mix_tags_1, NULL);
 }
 
+static int clear_mix_y_1(mix_info *md, void *ignore)
+{
+  md->y = 0;
+  return(0);
+}
+
+void clear_mix_y(chan_info *cp)
+{
+  map_over_channel_mixes(cp, clear_mix_y_1, NULL);
+}
+
 static void move_mix(mix_info *md);
 
 void move_mix_tag(int mix_tag, int x)
@@ -2153,7 +2168,7 @@ void finish_moving_mix_tag(int mix_tag, int x)
   mix_info *md;
   console_state *cs;
   mix_context *ms;
-  off_t samps_moved = 0;
+  XEN res = XEN_FALSE;
   md = md_from_id(mix_tag);
   md->x = x;
   cs = md->current_cs;
@@ -2166,8 +2181,12 @@ void finish_moving_mix_tag(int mix_tag, int x)
   ms = md->wg;
   ms->lastpj = 0;
   if (cs->beg == cs->orig) return;
-  samps_moved = cs->beg - cs->orig;
-  if (!(call_mix_position_changed_hook(md, samps_moved)))
+  if (XEN_HOOKED(mix_dragged_hook))
+    res = run_progn_hook(mix_dragged_hook,
+			 XEN_LIST_2(C_TO_XEN_INT(md->id),
+				    C_TO_XEN_OFF_T(cs->beg - cs->orig)),
+			 S_mix_dragged_hook);
+  if (!(XEN_TRUE_P(res)))
     remix_file(md, "Mix: drag");
 }
 
@@ -2411,7 +2430,7 @@ void display_channel_mixes(chan_info *cp)
   axis_info *ap;
   off_t lo, hi, spot;
   int i, xspot, turnover, y, combined, hgt;
-  combined = (((snd_info *)(cp->sound))->channel_style != CHANNELS_SEPARATE);
+  combined = (((snd_info *)(cp->sound))->channel_style == CHANNELS_SUPERIMPOSED);
   ap = cp->axis;
   ss = cp->state;
   lo = ap->losamp;
@@ -3168,7 +3187,12 @@ static int set_mix_amp(int mix_id, int chan, Float val, int from_gui, int remix)
 		{
 		  if (remix)
 		    {
-		      if (!(call_mix_amp_changed_hook(md)))
+		      XEN res = XEN_FALSE;
+		      if (XEN_HOOKED(mix_amp_changed_hook))
+			res = run_progn_hook(mix_amp_changed_hook,
+					     XEN_LIST_1(C_TO_XEN_INT(md->id)),
+					     S_mix_amp_changed_hook);
+		      if (!(XEN_TRUE_P(res)))
 			remix_file(md, S_setB S_mix_amp);
 		    }
 		  else make_temporary_graph(md->cp, md, cs);
@@ -3226,7 +3250,12 @@ static int set_mix_speed(int mix_id, Float val, int from_gui, int remix)
 	    {
 	      if (remix)
 		{
-		  if (!(call_mix_speed_changed_hook(md)))
+		  XEN res = XEN_FALSE;
+		  if (XEN_HOOKED(mix_speed_changed_hook))
+		    res = run_progn_hook(mix_speed_changed_hook,
+					 XEN_LIST_1(C_TO_XEN_INT(md->id)),
+					 S_mix_speed_changed_hook);
+		  if (!(XEN_TRUE_P(res)))
 		    remix_file(md, S_setB S_mix_speed);
 		}
 	      else make_temporary_graph(md->cp, md, cs);
@@ -3280,7 +3309,7 @@ void set_mix_name_from_id(int mix_id, char *name)
   if (md) md->name = copy_string(name);
 }
 
-static int set_mix_position(int mix_id, off_t val, int from_gui)
+int set_mix_position(int mix_id, off_t val)
 {
   mix_info *md;
   console_state *cs = NULL;
@@ -3294,20 +3323,11 @@ static int set_mix_position(int mix_id, off_t val, int from_gui)
 	    cs->beg = val; 
 	  else cs->beg = 0;
 	  reflect_mix_in_mix_panel(mix_id);
-	  if (!from_gui)
-	    remix_file(md, S_setB S_mix_position); 
-	  else
-	    if (!(call_mix_position_changed_hook(md, cs->beg - cs->orig)))
-	      remix_file(md, S_setB S_mix_position); 
+	  remix_file(md, S_setB S_mix_position); 
 	}
       return(mix_id);
     }
   return(INVALID_MIX_ID);
-}
-
-void set_mix_position_from_id(int mix_id, off_t beg)
-{
-  set_mix_position(mix_id, beg, FALSE);
 }
 
 off_t mix_position_from_id(int mix_id)
@@ -3651,8 +3671,7 @@ static XEN g_set_mix_position(XEN n, XEN uval)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(n), n, XEN_ARG_1, S_setB S_mix_position, "a number");
   XEN_ASSERT_TYPE(XEN_OFF_T_P(uval), uval, XEN_ARG_2, S_setB S_mix_position, "an integer");
   if (set_mix_position(XEN_TO_C_INT_OR_ELSE(n, 0), 
-		       beg_to_sample(uval, S_setB S_mix_position),
-		       FALSE) == INVALID_MIX_ID)
+		       beg_to_sample(uval, S_setB S_mix_position)) == INVALID_MIX_ID)
     return(snd_no_such_mix_error(S_setB S_mix_position, n));
   return(uval);
 }
@@ -4443,60 +4462,6 @@ static XEN g_play_mix(XEN num)
   return(num);
 }
 
-static XEN multichannel_mix_hook;
-static XEN mix_speed_changed_hook;
-static XEN mix_amp_changed_hook;
-static XEN mix_position_changed_hook;
-
-static void call_multichannel_mix_hook(int *ids, int n)
-{
-  XEN lst = XEN_EMPTY_LIST;
-  int i;
-  /* create list from ids, pass to hook, if any */
-  if (XEN_HOOKED(multichannel_mix_hook))
-    {
-      for (i = n - 1; i >= 0; i--)
-	lst = XEN_CONS(C_TO_XEN_INT(ids[i]), lst);
-      run_hook(multichannel_mix_hook,
-	       XEN_LIST_1(lst),
-	       S_multichannel_mix_hook);
-    }
-}
-
-static int call_mix_speed_changed_hook(mix_info *md)
-{  
-  XEN res = XEN_FALSE;
-  if ((md) && 
-      (XEN_HOOKED(mix_speed_changed_hook)))
-    res = run_progn_hook(mix_speed_changed_hook,
-			 XEN_LIST_1(C_TO_XEN_INT(md->id)),
-			 S_mix_speed_changed_hook);
-  return(XEN_TRUE_P(res));
-}
-
-static int call_mix_amp_changed_hook(mix_info *md)
-{  
-  XEN res = XEN_FALSE;
-  if ((md) && 
-      (XEN_HOOKED(mix_amp_changed_hook)))
-    res = run_progn_hook(mix_amp_changed_hook,
-			 XEN_LIST_1(C_TO_XEN_INT(md->id)),
-			 S_mix_amp_changed_hook);
-  return(XEN_TRUE_P(res));
-}
-
-static int call_mix_position_changed_hook(mix_info *md, off_t samps)
-{  
-  XEN res = XEN_FALSE;
-  if ((md) && 
-      (XEN_HOOKED(mix_position_changed_hook)))
-    res = run_progn_hook(mix_position_changed_hook,
-			 XEN_LIST_2(C_TO_XEN_INT(md->id),
-				    C_TO_XEN_OFF_T(samps)),
-			 S_mix_position_changed_hook);
-  return(XEN_TRUE_P(res));
-}
-
 static XEN mix_vct(XEN obj, XEN beg, XEN snd, XEN chn, XEN with_tag, XEN origin)
 {
   #define H_mix_vct "(" S_mix_vct " data (beg 0) (snd #f) (chn #f) (with-tag " S_with_mix_tags ") (origin #f)): \
@@ -4835,13 +4800,13 @@ If it returns #t, the actual remix is the hook's responsibility."
   #define H_mix_amp_changed_hook S_mix_amp_changed_hook " (mix-id): called when a mix amp changes via the mouse. \
 If it returns #t, the actual remix is the hook's responsibility."
 
-  #define H_mix_position_changed_hook S_mix_position_changed_hook " (mix-id samps): called when a mix position changes via the mouse. \
-'samps' = samples moved. If it returns #t, the actual remix is the hook's responsibility."
+  #define H_mix_dragged_hook S_mix_dragged_hook " (mix-id samps): called after the mouse has dragged a mix to some new position. \
+'samps' = samples moved in the course of the drag. If it returns #t, the actual remix is the hook's responsibility."
 
   XEN_DEFINE_HOOK(multichannel_mix_hook, S_multichannel_mix_hook, 1, H_multichannel_mix_hook);
   XEN_DEFINE_HOOK(mix_speed_changed_hook, S_mix_speed_changed_hook, 1, H_mix_speed_changed_hook);
   XEN_DEFINE_HOOK(mix_amp_changed_hook, S_mix_amp_changed_hook, 1, H_mix_amp_changed_hook);
-  XEN_DEFINE_HOOK(mix_position_changed_hook, S_mix_position_changed_hook, 2, H_mix_position_changed_hook);
+  XEN_DEFINE_HOOK(mix_dragged_hook, S_mix_dragged_hook, 2, H_mix_dragged_hook);
 
   #define H_select_mix_hook S_select_mix_hook " (id): called when a mix is selected. \
 The hook function argument 'id' is the newly selected mix's id."

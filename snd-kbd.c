@@ -998,17 +998,21 @@ void control_g(snd_state *ss, snd_info *sp)
   ss->error_lock = FALSE;
 }
 
-void keyboard_command (chan_info *cp, int keysym, int state)
+#ifndef SND_KEYMASK
+  #define SND_KEYMASK (snd_ShiftMask | snd_ControlMask | snd_MetaMask)
+#endif
+
+void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 {
   /* we can't use the meta bit in some cases because this is trapped at a higher level for the Menu mnemonics */
-  /* state here is the kbd bucky-bit state */
+  /* state here is the kbd bucky-bit state -- it might have bogus junk like NumLock */
   /* keysym has Shift taken into account already (see snd-xchn.c XKeycodeToKeysym, and same snd-xsnd.c) */
   static int u_count = FALSE;
   static char number_buffer[NUMBER_BUFFER_SIZE];
   static off_t count = 1;
   static int got_count = FALSE;
   static int m = 0;
-  int searching = FALSE, cursor_searching = FALSE, hashloc, sync_num, i, clear_search = TRUE;
+  int searching = FALSE, cursor_searching = FALSE, hashloc, sync_num, i, clear_search = TRUE, state;
   off_t loc;
   static off_t ext_count = NO_CX_ARG_SPECIFIED;
   snd_info *sp;
@@ -1023,6 +1027,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
   ap = cp->axis;
   if (keysym >= snd_K_Shift_L) return;
   /* this happens when the user presses Control or Shift etc prior to hitting the actual (modified) key */
+  state = unmasked_state & SND_KEYMASK; /* mask off stuff we don't care about */
   if (defining_macro) continue_macro(keysym, state);
   if (!m) count = 1; else m = 0;
   

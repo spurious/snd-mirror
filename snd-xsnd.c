@@ -3021,6 +3021,7 @@ void progress_report(snd_info *sp, const char *funcname, int curchan, int chans,
 
 void finish_progress_report(snd_info *sp, int from_enved)
 {
+  snd_state *ss;
   if (sp->inuse != SOUND_NORMAL) return;
 #if HAVE_XPM
   if (from_enved)
@@ -3028,7 +3029,6 @@ void finish_progress_report(snd_info *sp, int from_enved)
   else snd_file_glasses_icon(sp, FALSE, 0);
   clear_minibuffer_prompt(sp);
 #else
-  snd_state *ss;
   ss = get_global_state();
   if (from_enved)
     display_enved_progress((ss->stopped_explicitly) ? _("stopped") : "", 0);

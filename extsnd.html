@@ -624,7 +624,6 @@ Mono sounds and the listener are not affected (perhaps they should be?).
 <tr><td></td><td colspan=2>This determines what a zoom action focuses (centers) on. The choices are 
 <i>zoom-focus-left</i>, <i>zoom-focus-right</i>, <i>zoom-focus-active</i>, and <i>zoom-focus-middle</i>.
 See <a href="snd.html#zoomoption">Zoom options</a>.</td></tr>
-
 </table>
 <br>
 
@@ -1072,22 +1071,22 @@ hook function is used in with-marked-sound in ws.scm to display arbitrary info a
   (lambda (n) 
     (if (not (defined? 'mark-properties)) (load "marks.scm"))
     (help-dialog "Mark Help"
-                 (format #f "Mark ~D~A:~%  sample: ~D = ~,3F secs~A~A"
-			 n 
-			 (let ((name (mark-name n)))
-			   (if (&gt; (string-length name) 0)
-			       (format #f " (~S)" name)
-			       ""))
-			 (mark-sample n)
-			 (/ (mark-sample n) (srate (car (mark-home n))))
-			 (if (not (= (mark-sync n) 0))
-			     (format #f "~%  sync: ~A" (mark-sync n))
-			     "")
-			 (let ((props (mark-properties n)))
-			   (if (and (list? props)
-				    (not (null? props)))
-			       (format #f "~%  properties: '~A" props)
-			       ""))))
+      (format #f "Mark ~D~A:~%  sample: ~D = ~,3F secs~A~A"
+	      n 
+	      (let ((name (mark-name n)))
+   	        (if (&gt; (string-length name) 0)
+		    (format #f " (~S)" name)
+		    ""))
+	      (mark-sample n)
+	      (/ (mark-sample n) (srate (car (mark-home n))))
+	      (if (not (= (mark-sync n) 0))
+	        (format #f "~%  sync: ~A" (mark-sync n))
+	        "")
+	      (let ((props (mark-properties n)))
+	        (if (and (list? props)
+		         (not (null? props)))
+	          (format #f "~%  properties: '~A" props)
+	          ""))))
     #t))
 </pre></td></tr></table></td></tr>
 <tr><td colspan=3></td></tr>
@@ -1116,6 +1115,31 @@ called when a mark is dragged.
 </pre></td></tr></table></td></tr>
 <tr><td colspan=3></td></tr>
 
+
+<!-- mark-drag-triangle-hook -->
+<tr><td colspan=2>
+<span class=defbox><code><em class=def><a name="markdragtrianglehook">mark-drag-triangle-hook</a></em> (id x time dragged-before)</code></span></td><td align=right><b>progn</b>
+</td></tr>
+<tr><td></td><td colspan=2>
+called when a mark play triangle is dragged.
+<i>dragged-before</i> is #f when the drag starts and #t thereafter.  <i>x</i> is the mouse x location in the current
+graph. <i>time</i> is the uninterpreted time at which the drag event was reported. <i>id</i> is the mark id. If the hook returns #t,
+Snd takes no further action.  To set up to play, then interpret the motion yourself, return #f on the first call,
+and #t thereafter:
+</td></tr>
+<tr><td></td><td colspan=2>
+<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+(let ((first-x 0))
+  (add-hook! <em class=red>mark-drag-triangle-hook</em>
+    (lambda (id x time dragged-before)
+      (if (not dragged-before)
+	  (set! first-x x)
+	  (set! (speed-control) (/ (- x first-x) 16.0)))
+      dragged-before)))
+</pre></td></tr></table></td></tr>
+<tr><td colspan=3></td></tr>
+
+
 <!-- mark-hook -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="markhook">mark-hook</a></em> (id snd chn reason)</code></span></td><td>
@@ -1132,18 +1156,18 @@ and if the mark-sync is active, the hook is called on each syncd mark.
   ;; when a mark is dragged, its end position is always on a beat
   (let ((mark-release 4))
     (add-hook! <em class=red>mark-hook</em>
-	       (lambda (mrk snd chn reason)
-		 (if (= reason mark-release)
-		     (let* ((samp (mark-sample mrk))
-			    (bps (/ (beats-per-minute snd chn) 60.0))
-			    (sr (srate snd))
-			    (beat (floor (/ (* samp bps) sr)))
-			    (lower (inexact-&gt;exact (/ (* beat sr) bps)))
-			    (higher (inexact-&gt;exact (/ (* (1+ beat) sr) bps))))
-		       (set! (mark-sample mrk)
-			     (if (&lt; (- samp lower) (- higher samp))
-				 lower
-				 higher))))))))
+      (lambda (mrk snd chn reason)
+        (if (= reason mark-release)
+            (let* ((samp (mark-sample mrk))
+	           (bps (/ (beats-per-minute snd chn) 60.0))
+		   (sr (srate snd))
+		   (beat (floor (/ (* samp bps) sr)))
+		   (lower (inexact-&gt;exact (/ (* beat sr) bps)))
+		   (higher (inexact-&gt;exact (/ (* (1+ beat) sr) bps))))
+	      (set! (mark-sample mrk)
+	      (if (&lt; (- samp lower) (- higher samp))
+		  lower
+ 		  higher))))))))
 </pre></td></tr></table></td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -1183,7 +1207,7 @@ in mix.scm for a fancier version):
 <span class=defbox><code><em class=def><a name="mixdraghook">mix-drag-hook</a></em> (id)</code></span></td><td>
 </td></tr>
 <tr><td></td><td colspan=2>
-called when a mix-is dragged.
+called when a mix is dragged.
 </td></tr>
 <tr><td></td><td colspan=2>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
@@ -1194,14 +1218,14 @@ called when a mix-is dragged.
 </pre></td></tr></table></td></tr>
 <tr><td colspan=3></td></tr>
 
-<!-- mix-position-changed-hook -->
+<!-- mix-dragged-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="mixpositionchangedhook">mix-position-changed-hook</a></em> (id samps)</code></span></td><td align=right><b>progn</b>
+<span class=defbox><code><em class=def><a name="mixdraggedhook">mix-dragged-hook</a></em> (id samps)</code></span></td><td align=right><b>progn</b>
 </td></tr>
 <tr><td></td><td colspan=2>
-called after a mix moves via the mouse (id = mix id, 
-samps = samps moved).  If it returns #t, the actual remix is the 
-hook's responsibility (see <i>reposition-track</i> in mix.scm).
+called after a mix has been dragged by the mouse to a new position (id = mix id, 
+samps = total samples moved during the drag).  If it returns #t, the actual remix is the 
+hook's responsibility.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -1386,7 +1410,8 @@ called upon a mouse button release within the lisp graph (see enved.scm).
 </td></tr>
 <tr><td></td><td colspan=2>
 called when a multichannel sound is mixed into a sync'd sound.
-<i>ids</i> is a list of mix id numbers.  See <a href="sndscm.html#mixpanelappliestotrack">mix-panel-applies-to-track</a> in mix.scm for an example.
+<i>ids</i> is a list of mix id numbers.  <a href="sndscm.html#syncmultichannelmixes">sync-multichannel-mixes</a> in mix.scm uses
+this hook to sync together the members of a multichannel mix. 
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -1423,7 +1448,8 @@ If it returns #t, the usual informative minibuffer babbling is squelched.
 <span class=defbox><code><em class=def><a name="newsoundhook">new-sound-hook</a></em> (filename)</code></span></td><td>
 </td></tr>
 <tr><td></td><td colspan=2>
-called whenever a new sound file is being created.  See sound-let in ws.scm for an example.
+called whenever a new sound file is being created.  <a href="clm.html#sound-let">sound-let</a> in ws.scm uses
+this hook to keep track of newly created temporary sounds so that it can delete them once they are no longer needed.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -1912,7 +1938,8 @@ the edit is cancelled. So,
 halts any attempt to edit the data; this is even more restrictive than setting the read-only
 flag because the latter only refuses to overwrite the current data.  undo-hook is called
 just after any undo, redo, or revert that affects the channel.  after-edit-hook is called
-after an edit, but before after-graph-hook (there's an example in snd-motif.scm that updates a mark list after each edit
+after an edit, but before after-graph-hook (<a href="sndscm.html#addmarkpane">add-mark-pane</a> in snd-motif.scm 
+uses this hook to update a mark list after each edit
 so that the displayed mark positions are correct).
 You can use edit-hook to set
 up protected portions of the edit history:
@@ -2488,7 +2515,8 @@ A similar low-level sndlib function is <em class=def>mus-file-data-clipped</em>.
 
 <!-- mus-sound-loop-info -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="soundloopinfo">mus-sound-loop-info</a></em> (filename)</code></span></td></tr>
-<tr><td></td><td>loop info (for an example, see <a href="sndscm.html#exampdoc">examp.scm</a> mark-loops)</td></tr>
+<tr><td></td><td>loop info.  <a href="sndscm.html#exmarkloops">mark-loops</a> in examp.scm uses this to place a mark at each loop point.
+</td></tr>
 
 <!-- mus-sound-maxamp -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="mussoundmaxamp">mus-sound-maxamp</a></em> (filename)</code></span></td></tr>
@@ -3792,7 +3820,8 @@ This procedure returns two vcts of length 'size' containing y vals (min and max)
 If 'file' is a sound index (an integer), pts is an edit-position, and the current amp envs (if any) are returned.
 peak-file-func's args are the file and the channel.  If it returns a string, that is treated as the filename
 to read to get the peak info.  work-proc-func's args are the filename, the channel and the current peak.
-See <b>make-sound-icon</b> in snd-motif.scm for an example.
+<b>make-sound-icon</b> in <a href="sndscm.html#makesoundbox">make-sound-box</a> in snd-motif.scm uses
+this function to draw the little thumbnail graph for each sound icon.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -4267,7 +4296,7 @@ Peak env files: <a href="sndscm.html#peakenvdoc">peak-env.scm</a><br>
 The envelope editor: <a href="snd.html#editenvelope">Edit or View and Envelope</a><br>
 Panning: place-sound in examp.scm, <a href="snd.html#mixpanel">Mix Dialog</a>, play-panned in enved.scm, <a href="sndscm.html#panmix">pan-mix</a><br>
 Envelope over mix: <a href="sndscm.html#exenvelopedmix">enveloped-mix</a><br>
-Envelope over track (a set of mixes): <a href="sndscm.html#settrackampenv">set-track-amp-env</a><br>
+Envelope over track (a set of mixes): <a href="sndscm.html#envtrack">env-track</a><br>
 Local envelope editor: <a href="sndscm.html#enveddoc">enved.scm</a>, xm-enved.scm<br>
 Read sound indexed through envelope: <a href="sndscm.html#exenvsoundinterp">env-sound-interp</a><br>
 Cosine as envelope: <a href="#cosinechannel">cosine-channel</a>, <a href="#cosinechannelviaptree">cosine-channel-via-ptree</a>, <a href="clm.html#bellcurve">bell-curve</a><br>
@@ -5332,6 +5361,7 @@ more like Emacs (which prompts for confirmation first):
 <tr><td colspan=2></td></tr>
 
 
+<!-- INDEX ptreechannel:Virtual Edits -->
 <!-- ptree-channel -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="ptreechannel">ptree-channel</a></em> (proc <i>beg dur snd chn edpos env-too init-func (map-fallback #t)</i>)</code></span>
@@ -8027,7 +8057,8 @@ click its button.
 add a new top-level menu named <i>menu-label</i> and return its menu index.  This index
 identifies the menu for add-to-menu and others.
 <i>update-callback</i> is a procedure of no arguments that is
-called each time the menu is displayed. See <a href="sndscm.html#effectsdoc">new-effects.scm</a> for an example.
+called each time the menu is displayed. <a href="sndscm.html#effectsdoc">new-effects.scm</a> calls this function
+to add a new "Effects" menu to the top level menubar.
 <br><br><pre>
   &gt;<em class=typing>(add-to-main-menu "Tools")</em>
   <em class=listener>5</em>
@@ -8308,7 +8339,8 @@ in the following manner (this assumes you're using Motif and have the xm module 
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="changeproperty">change-window-property</a></em> (known-atom property value)</code></span></td></tr>
 <tr><td width=150></td><td>
-<i>change-window-property</i> changes an X-window's property; there's an example in examp.scm. 
+<i>change-window-property</i> changes an X-window's property; <a href="sndscm.html#titlewithdate">title-with-date</a> in examp.scm uses this function
+to put the date and time in the Snd title bar.
 </td></tr>
 
 <!-- clear-listener -->
@@ -9426,7 +9458,8 @@ We can goof around with colors and fonts:
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="glspectrogram">glSpectrogram</a></em> (data gl-list cutoff use-dB min-dB scale br bg bb)</code></span></td></tr>
 <tr><td></td><td>
-<i>glSpectrogram</i> takes spectrogram data and passes it to openGL.  See snd-gl.scm for an example.</td></tr>
+<i>glSpectrogram</i> takes spectrogram data and passes it to openGL.  
+The <a href="sndscm.html#startwaterfall">waterfall</a> function in snd-gl.scm uses this function.</td></tr>
 <tr><td colspan=2></td></tr>
 
 <!-- graph-data -->

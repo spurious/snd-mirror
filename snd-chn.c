@@ -7,7 +7,6 @@
 /* TODO: if superimposed, selected portion is wrong color */
 /* TODO: if superimposed and 2chn cursor set, 1chan is xor'd, subsequent click sets both */
 /* TODO: if superimposed and 2chn has mark, no way to drag/click it */
-/* TODO: if superimposed where are mixes? */
 /* TODO: if superimposed and selections differ, no way to see that */
 
 enum {NOGRAPH, WAVE, FFT_AXIS, LISP, FFT_MAIN};    /* for marks, regions, mouse click detection */
@@ -3133,6 +3132,7 @@ static void display_channel_data_1 (chan_info *cp, snd_info *sp, snd_state *ss, 
 	display_channel_data_with_size(cp, sp, ss, width, height, 0, just_fft, just_lisp, just_time);
       else
 	{
+	  /* CHANNELS_COMBINED case */
 	  val = gsy_value(sp->chans[0]);
 	  size = gsy_size(sp->chans[0]);
 	  full_height = (int)((Float)height / size);
@@ -3677,7 +3677,7 @@ int key_press_callback(chan_info *ncp, int x, int y, int key_state, int keysym)
 			XEN_LIST_4(C_TO_SMALL_XEN_INT(sp->index),
 				   C_TO_SMALL_XEN_INT(cp->chan),
 				   C_TO_XEN_INT(keysym),
-				   C_TO_XEN_INT(key_state)),
+				   C_TO_XEN_INT(key_state)), /* this can have NumLock etc -- will be masked off in keyboard_command */
 			S_key_press_hook);
       if (XEN_TRUE_P(res))
 	return(FALSE);
@@ -3995,6 +3995,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 
 static Tempus first_time = 0;
 static off_t mouse_cursor = 0;
+static XEN mark_drag_triangle_hook;
 
 void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time, Tempus click_time)
 {
@@ -4030,23 +4031,37 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time, Temp
     {
       if (play_mark)
 	{
+	  XEN drag_res = XEN_FALSE;
+	  if (XEN_HOOKED(mark_drag_triangle_hook))
+	    drag_res = run_progn_hook(mark_drag_triangle_hook,
+				      XEN_LIST_4(C_TO_XEN_INT(mark_id(play_mark)),
+						 C_TO_XEN_INT(x),
+						 C_TO_XEN_INT((int)time),
+						 C_TO_XEN_BOOLEAN(dragged)),
+				      S_mark_drag_triangle_hook);
 	  if (!dragged)
 	    {
 	      first_time = mouse_time;
 	      dragged = TRUE;
-	      sp->speed_control = 0.0;
 	      mouse_cursor = CURSOR(cp);
-	      play_channel(cp, play_mark->samp, NO_END_SPECIFIED, TRUE, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "drag playing mark", 0);
+	      if (!(XEN_TRUE_P(drag_res)))
+		{
+		  sp->speed_control = 0.0;
+		  play_channel(cp, play_mark->samp, NO_END_SPECIFIED, TRUE, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "drag playing mark", 0);
+		}
 	    }
 	  else
 	    {
 	      time_interval = mouse_time - first_time;
 	      first_time = mouse_time;
 	      samps = move_play_mark(cp, &mouse_cursor, (Locus)x);
-	      if (time_interval != 0)
-		sp->speed_control = (Float)((double)(samps * 1000) / (double)(time_interval * SND_SRATE(sp)));
-	      else sp->speed_control = 0.0;
-	      /* TODO: smooth the speed-drag amount! */
+	      if (!(XEN_TRUE_P(drag_res)))
+		{
+		  if (time_interval != 0)
+		    sp->speed_control = (Float)((double)(samps * 1000) / (double)(time_interval * SND_SRATE(sp)));
+		  else sp->speed_control = 0.0;
+		  /* TODO: smooth the speed-drag amount! */
+		}
 	    }
 	}
       else
@@ -7080,7 +7095,11 @@ If it returns a function (of no arguments), that function is called rather than 
   #define H_key_press_hook S_key_press_hook " (snd chn key state): called upon a key press if the mouse is in the lisp graph. \
 If it returns #t, the key press is not passed to the main handler. 'state' refers to the control, meta, and shift keys."
   #define H_initial_graph_hook S_initial_graph_hook " (snd chn dur): called when a sound is displayed for the first time"
-
+  #define H_mark_drag_triangle_hook S_mark_drag_triangle_hook " (id x time dragged-before): called when a mark play triangle \
+is dragged.  'dragged-before' is #f when the drag starts and #t thereafter.  'x' is the mouse x location in the current \
+graph. 'time' is the uninterpreted time at which the drag event was reported. 'id' is the mark id. If the hook returns #t, \
+Snd takes no further action.  To set up to play, then interpret the motion yourself, return #f on the first call, \
+and #t thereafter."
   
   XEN_DEFINE_HOOK(transform_hook,     S_transform_hook, 3,     H_transform_hook);     /* args = sound channel scaler */
   XEN_DEFINE_HOOK(graph_hook,         S_graph_hook, 4,         H_graph_hook);         /* args = sound channel y0 y1 */
@@ -7094,6 +7113,7 @@ If it returns #t, the key press is not passed to the main handler. 'state' refer
   XEN_DEFINE_HOOK(mark_click_hook,    S_mark_click_hook, 1,    H_mark_click_hook);    /* arg = id */
   XEN_DEFINE_HOOK(mix_click_hook,     S_mix_click_hook, 1,     H_mix_click_hook);     /* arg = id */
   XEN_DEFINE_HOOK(initial_graph_hook, S_initial_graph_hook, 3, H_initial_graph_hook); /* args = sound channel duration */
+  XEN_DEFINE_HOOK(mark_drag_triangle_hook, S_mark_drag_triangle_hook, 4, H_mark_drag_triangle_hook); /* args = id x time dragged-before */
 }
 
 

@@ -6,7 +6,7 @@
 
 (define (snd-hooks)
   "(snd-hooks) -> list of all global (not channel-specific) hooks"
-  (list after-graph-hook lisp-graph-hook before-transform-hook mix-position-changed-hook stop-playing-channel-hook save-hook mus-error-hook
+  (list after-graph-hook lisp-graph-hook before-transform-hook mix-dragged-hook stop-playing-channel-hook save-hook mus-error-hook
 	mouse-enter-graph-hook mouse-leave-graph-hook open-raw-sound-hook select-channel-hook after-open-hook close-hook drop-hook update-hook
 	just-sounds-hook mark-click-hook mark-drag-hook menu-hook mix-amp-changed-hook mix-speed-changed-hook name-click-hook open-hook help-hook
 	output-comment-hook multichannel-mix-hook play-hook snd-error-hook snd-warning-hook start-hook start-playing-hook stop-playing-hook
@@ -15,7 +15,7 @@
 	graph-hook key-press-hook mouse-drag-hook mouse-press-hook mouse-release-hook enved-hook read-hook mouse-click-hook new-widget-hook
 	mark-hook previous-files-select-hook dac-hook stop-dac-hook stop-playing-selection-hook after-apply-hook before-apply-hook draw-mark-hook
 	bad-header-hook save-state-hook new-sound-hook color-hook orientation-hook listener-click-hook mix-click-hook after-save-state-hook
-	mouse-enter-text-hook mouse-leave-text-hook optimization-hook mix-drag-hook))
+	mouse-enter-text-hook mouse-leave-text-hook optimization-hook mix-drag-hook mark-drag-triangle-hook))
 
 (define (reset-all-hooks)
   "(reset-all-hooks) removes all Snd hook functions"
@@ -91,3 +91,8 @@
       (list->hook hook old-hook-procs)
       result)))
 
+
+;;; -------- hook-member --------
+
+(define (hook-member value hook) 
+  (member value (hook->list hook)))

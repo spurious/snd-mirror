@@ -134,4 +134,25 @@
 		     fallback)
 		   #t))))
 
+(if (defined? 'sync-multichannel-mixes)
+    (define mix-panel-applies-to-track sync-multichannel-mixes))
+(if (defined? 'track-position)
+    (define (set-track-position track pos) (set! (track-position track) pos)))
+(if (defined? 'track-amp)
+    (define (set-track-amp track new-amp) (set! (track-amp track) new-amp)))
+(if (defined? 'track-speed)
+    (define (set-track-speed track new-speed) (set! (track-speed track) new-speed)))
+(if (defined? 'track-color)
+    (define (set-track-color track new-color) (set! (track-color track) new-color)))
+(if (defined? 'retempo-track)
+    (define set-track-tempo retempo-track))
+(if (defined? 'env-track)
+    (define set-track-amp-env env-track))
+
+
+
+
+
+
+
 

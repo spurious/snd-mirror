@@ -20,7 +20,7 @@
 ;;; (delete-all-tracks) removes all mixes that have an associated track (sets all amps to 0)
 ;;; (set-all-tracks new-id) places all mixes in track new-id
 ;;;
-;;; settable:     track-amp, track-speed, track-position, track-tempo, track-color
+;;; settable:     track-amp, track-speed, track-position, track-color
 ;;; not settable: track-length, track-end
 ;;; 
 ;;; mix-panel hooks: mix-panel-applies-to-track
@@ -36,12 +36,11 @@
 ;;;   (set! (track-position track) new-beg) moves all mixes in track so that the track starts at new-beg
 ;;;   (track-end track) returns endpoint (maximum frame in mixes) of track
 ;;;   (track-length track) returns number of samples between track start and end
-;;; the mix-position-changed-hook can be set to reposition-track to have the entire track follow as we drag a mix
 ;;; 
-;;; (set! (track-tempo track) tempo) changes the inter-mix begin times of mixes in track by tempo (> 1.0 is faster)
+;;; (retempo-track track tempo) changes the inter-mix begin times of mixes in track by tempo (> 1.0 is faster)
 ;;; (set! (track-color track) color) changes the associated mix colors to color
 ;;; (track-color track) returns track color
-;;; (set! (track-amp-env track chan) env) set overall track amp env
+;;; (env-track track chan) env) set overall track amp env
 ;;;
 ;;; (mix-panel-applies-to-track) causes multichannel mixes to be placed in a separate track,
 ;;;   and subsequent srate or position changes affect all channels in parallel (this makes
@@ -51,7 +50,7 @@
 ;;; mix-property associates a property list with a mix
 ;;; mix-click-sets-amp sets up hook functions so that mix click zeros amps, then subsequent click resets to the before-zero value
 
-(load-from-path "env.scm") ; multiply-envelope and window-envelope for track-amp-env
+(load-from-path "env.scm") ; multiply-envelope and window-envelope for env-track
 
 (define (tree-for-each func tree)
   "(tree-for-each func tree) applies func to every leaf of 'tree'"
@@ -137,8 +136,8 @@ starting at start (a frame number) using envelope to pan (0: all chan 0, 1: all 
 	  
 
 (define (snap-mix-to-beat)
-  "(snap-mix-to-beat) forces a dragged mix to end up on a beat (see beats-per-minute).  reset mix-position-changed-hook to cancel"
-  (add-hook! mix-position-changed-hook
+  "(snap-mix-to-beat) forces a dragged mix to end up on a beat (see beats-per-minute).  reset mix-dragged-hook to cancel"
+  (add-hook! mix-dragged-hook
 	     (lambda (id samps-moved)
 	       (let* ((samp (+ samps-moved (mix-position id)))
 		      (snd (car (mix-home id)))
@@ -271,29 +270,20 @@ the filter to the underlying mixes: (filter-track (track 1) '(.1 .2 .3 .3 .2 .1)
 			  (set! (mix-position a) (+ change (mix-position a)))))
 		    track)))))))
 
-(define (set-track-position track pos) (set! (track-position track) pos)) ; backwards compatibility
-
 (define (reverse-track track)
   "(reverse-track) reverses the order of its mixes (it changes various mix begin times)"
   (if (some mix? track)
-      (let ((old-position-hook (hook->list mix-position-changed-hook)))
-	(reset-hook! mix-position-changed-hook)
-	(let* ((ids-in-order (sort track
-				   (lambda (a b)
-				     (> (mix-position a)
-					(mix-position b))))))
-	  (as-one-edit
-	   (lambda ()
-	     (for-each (lambda (id pos)
-			 (set! (mix-position id) pos))
-		       ids-in-order
-		       (reverse (map mix-position ids-in-order)))))
-	  (for-each
-	   (lambda (hook-func)
-	     (add-hook! mix-position-changed-hook hook-func))
-	   old-position-hook)))
+      (let* ((ids-in-order (sort track
+				 (lambda (a b)
+				   (> (mix-position a)
+				      (mix-position b))))))
+	(as-one-edit
+	 (lambda ()
+	   (for-each (lambda (id pos)
+		       (set! (mix-position id) pos))
+		     ids-in-order
+		     (reverse (map mix-position ids-in-order))))))
       (throw 'no-such-track (list "reverse-track" track))))
-
 
 (define (track-end track)
   "(track-end track) returns endpoint (maximum frame in mixes) of track"
@@ -362,8 +352,6 @@ the filter to the underlying mixes: (filter-track (track 1) '(.1 .2 .3 .3 .2 .1)
 		      track)))
 	 (throw 'no-such-track (list "set! track-amp" track new-amp))))))
 
-(define (set-track-amp track new-amp) (set! (track-amp track) new-amp)) ; backwards compatibility
-
 (define (incf-track-amp track change)
   "(incf-track-amp track change) increments the amp of each mix in track by change"
   (if (not (= change 0.0))
@@ -405,8 +393,6 @@ the filter to the underlying mixes: (filter-track (track 1) '(.1 .2 .3 .3 .2 .1)
 			  track)))
 	     (throw 'no-such-track (list "set! track-speed" track new-speed)))))))
 
-(define (set-track-speed track new-speed) (set! (track-speed track) new-speed)) ; backwards...
-
 (define (transpose-track track semitones)
   "(transpose-track track semitones) transposes each mix in track  by semitones"
   (let ((mult (expt 2.0 (/ semitones 12.0))))
@@ -418,10 +404,8 @@ the filter to the underlying mixes: (filter-track (track 1) '(.1 .2 .3 .3 .2 .1)
 		 track)))))
 
 
-;;; track tempo -- what is track-tempo?
-
-(define (set-track-tempo track tempo)
-  "(set-track-tempo track tempo) changes the inter-mix begin times of mixes in track by tempo (> 1.0 is faster)"
+(define (retempo-track track tempo)
+  "(retempo-track track tempo) changes the inter-mix begin times of mixes in track by tempo (> 1.0 is faster)"
   (if (and (not (= tempo 1.0)) (not (= tempo 0.0)))
       (if (some mix? track)
 	  (let ((track-beg (track-position track))
@@ -435,9 +419,9 @@ the filter to the underlying mixes: (filter-track (track 1) '(.1 .2 .3 .3 .2 .1)
 							     (inexact->exact (* new-tempo 
 										(- (mix-position a) track-beg)))))))
 			     track)))))
-	  (throw 'no-such-track (list "set-track-tempo" track tempo)))))
+	  (throw 'no-such-track (list "retempo-track" track tempo)))))
 
-;;; (set-track-tempo '(0 1) 2.0)
+;;; (retempo-track '(0 1) 2.0)
 
 
 ;;; track color 
@@ -458,17 +442,12 @@ the filter to the underlying mixes: (filter-track (track 1) '(.1 .2 .3 .3 .2 .1)
 		   track)
 	 (throw 'no-such-track (list "set! track-color" track new-color))))))
 
-(define (set-track-color track new-color) (set! (track-color track) new-color))
-
-;;; (set-track-color '(0 1) (make-color 0 0 1))
 
 
+;;; env-track applies an envelope to a track by enveloping the underlying mix input sounds
 
-
-;;; track-env applies an envelope to a track by enveloping the underlying mix input sounds
-
-(define (set-track-amp-env track chan env)
-  "(set-track-amp-env track chan env) sets overall track amplitude envelope"
+(define (env-track track chan env)
+  "(env-track track chan env) sets overall track amplitude envelope"
   (let ((beg (track-position track))
 	(len (track-length track)))
     (as-one-edit
@@ -484,45 +463,72 @@ the filter to the underlying mixes: (filter-track (track 1) '(.1 .2 .3 .3 .2 .1)
 		     (mix-amp-env a chan)))))
 	track)))))
 
-; (set-track-amp-env (track 1) 0 '(0 0 1 1))
+; (env-track (track 1) 0 '(0 0 1 1))
+
+(if (not (defined? 'hook-member))
+    (define (hook-member value hook) 
+      (member value (hook->list hook))))
+
+;;; TODO: also some way to automix mono->all chans syncd
+
+(define (multichannel-mix-to-track mix-ids)
+  (let ((new-track (unused-track)))
+    (for-each 
+     (lambda (n) 
+       (set! (mix-track n) new-track)) 
+     mix-ids)))
+
+(define (multichannel-mix-moved id samps-moved)
+  ;; id = mix that moved (via mouse), move all other mixes in its track by the same amount
+  (let ((trk (mix-track id)))
+    (if (> trk 0)
+	(let ((track-mixes (track trk)))
+	  (as-one-edit
+	   (lambda ()
+	     (for-each (lambda (a) 
+			 (if (and (mix? a)
+				  (not (= a id)))
+			     (set! (mix-position a) (+ samps-moved (mix-position a)))))
+		       track-mixes)))))
+    #f))
+
+;;; TODO: sync multichan mixes should change together in graph
+;;; TODO: there is confusion here between GUI changes that are track-relative and underlying changes
+;;;       how to tie two mixes together so that moving one always moves the other? or global amp/amp env etc
+
+(define (multichannel-mix-resampled id)
+  (let ((trk (mix-track id)))
+    (if (> trk 0)
+	(let ((track-mixes (track trk))
+	      (new-speed (mix-speed id)))
+	  (set! (track-speed track-mixes) new-speed)
+	  #t)
+	#f)))
+
+(define sync-multichannel-mixes
+  (make-procedure-with-setter
+   (lambda ()
+     (if (not (hook-member multichannel-mix-to-track multichannel-mix-hook))
+	 (add-hook! multichannel-mix-hook multichannel-mix-to-track))
+     (if (not (hook-member multichannel-mix-moved mix-dragged-hook))
+	 (add-hook! mix-dragged-hook multichannel-mix-moved))
+     (if (not (hook-member multichannel-mix-resampled mix-speed-changed-hook))
+	 (add-hook! mix-speed-changed-hook multichannel-mix-resampled)))
+   (lambda (on)
+     (if (and on 
+	      (not (hook-member multichannel-mix-to-track multichannel-mix-hook)))
+	 (add-hook! multichannel-mix-hook multichannel-mix-to-track)
+	 (remove-hook! multichannel-mix-hook multichannel-mix-to-track))
+     (if (and on
+	      (not (hook-member multichannel-mix-moved mix-dragged-hook)))	      
+	 (add-hook! mix-dragged-hook multichannel-mix-moved)
+	 (remove-hook! mix-dragged-hook multichannel-mix-moved))
+     (if (and on
+	      (not (hook-member multichannel-mix-resampled mix-speed-changed-hook)))
+	 (add-hook! mix-speed-changed-hook multichannel-mix-resampled)
+	 (remove-hook! mix-speed-changed-hook multichannel-mix-resampled)))))
 
 
-						  
-(define (mix-panel-applies-to-track)
-  ;; these functions use the mix related hooks to affect the entire associated track
-
-  (add-hook! mix-position-changed-hook 
-	     (lambda (id samps-moved)
-	       ;; id = mix that moved (via mouse), move all other mixes in its track by the same amount
-	       (let ((trk (mix-track id)))
-		 (if (> trk 0)
-		     (let ((track-mixes (track trk)))
-		       (as-one-edit
-			(lambda ()
-			  (for-each (lambda (a) 
-				      (if (mix? a)
-					  (set! (mix-position a) (+ samps-moved (mix-position a)))))
-				    track-mixes)))
-		       #t)
-		     #f))))
-
-  (add-hook! mix-speed-changed-hook
-	     (lambda (id)
-	       (let ((trk (mix-track id)))
-		 (if (> trk 0)
-		     (let ((track-mixes (track trk))
-			   (new-speed (mix-speed id)))
-		       (set-track-speed track-mixes new-speed)
-		       #t)
-		     #f))))
-
-  (add-hook! multichannel-mix-hook
-	     (lambda (mix-ids)
-	       (let ((new-track (unused-track)))
-		 (for-each 
-		  (lambda (n) 
-		    (set! (mix-track n) new-track)) 
-		  mix-ids)))))
 
 
 ;;; --------------------------------------------------------------------------------

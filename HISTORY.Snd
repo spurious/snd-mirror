@@ -1,5 +1,7 @@
 Snd change log
 
+  16-Jun:    mark-drag-triangle-hook.
+             renamed mix-position-changed-hook to mix-dragged-hook.
   12-Jun:    bess1.scm and bess1.rb from Michael Scholz.
   10-Jun:    added initial-length arg to new-sound.
   2-June:    debug.scm and with-sound debugger in ws.scm.

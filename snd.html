@@ -1594,6 +1594,13 @@ The current mix amp env is not actually changed until you click 'Apply Env'.
 The editor envelope is drawn in black with dots whereas the current
 mix amp env (if any) is drawn in blue.
 </p>
+<p>
+By default, each mixed-in sound is considered separately from all the others,
+but you often would rather have both portions of a stereo mix be treated as
+one thing, or have a "track" of a group of mixes.  mix.scm has a bunch of
+track-related functions, including <a href="sndscm.html#syncmultichannelmixes">sync-multichannel-mixes</a>
+which applies all the sliders and envelopes to groups of mixes.
+</p>
 
 <A NAME="gotomix"></a>
 <p>To move the cursor from one mix to the next, in the same
@@ -1602,9 +1609,6 @@ manner as C-j moves through marks, use <A NAME="cxcj">C-x C-j</a>.
         <!-- I(move to mix):K(C-x C-j)(cxcj) -->
         <!-- I(move to mix):A(gotomix) -->
 
-<p>It is often handy to collect several mixes into a "track"; 
-<a href="sndscm.html#mixdoc">mix.scm</a> implements a variety of track-related operations.
-</p>
 
 
 <h4><A NAME="kbdmacros">Keyboard macros</a></h4>

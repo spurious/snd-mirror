@@ -1170,7 +1170,7 @@ You can load Rick Taube's CM into Snd as Scheme code:
 <p>It's hard to decide what's an "instrument" in this context, but I think I'll treat
 it as something that can be called as a note in a notelist (say in with-sound) and
 generate its own sound.
-See test 23 in snd-test.scm for example calls.
+Test 23 in snd-test.scm has a with-sound that includes most of these instruments.
 </p>
 <table border=1 cellpadding=3>
 <tr><th>Instrument</th><th>Sources</th><th>Description</th></tr>
@@ -1496,7 +1496,7 @@ hiho
 for scripts is that Snd uses the -l switch where guile would use -s.
 As noted above, you can use the -e switch to use Snd as a pure
 command-line program, and, of course, (exit) to drop back to the shell.
-Here's an example script that doubles every sample in "oboe.snd" and
+Here's a script that doubles every sample in "oboe.snd" and
 writes the result as "test.snd":
 </p>
 <pre>

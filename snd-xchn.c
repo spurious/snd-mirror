@@ -1211,11 +1211,17 @@ void change_channel_style(snd_info *sp, int new_style)
 	{
 	  sp->channel_style = new_style;
 	  if (old_style == CHANNELS_COMBINED)
-	    hide_gz_scrollbars(sp);
+	    {
+	      hide_gz_scrollbars(sp);
+	      for (i = 1; i < sp->nchans; i++) clear_mix_y(sp->chans[i]);
+	    }
 	  else 
 	    {
 	      if (new_style == CHANNELS_COMBINED)
-		show_gz_scrollbars(sp);
+		{
+		  show_gz_scrollbars(sp);
+		  for (i = 1; i < sp->nchans; i++) clear_mix_y(sp->chans[i]);
+		}
 	    }
 	  if (old_style == CHANNELS_SUPERIMPOSED)
 	    {
