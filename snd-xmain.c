@@ -677,7 +677,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 		    mus_snprintf(tmpstr, PRINT_BUFFER_SIZE, "/usr/local/share/doc/snd-%d", SND_MAJOR_VERSION);
 		  else 
 		    {
-		      add_to_error_history(ss, _("can't find Snd doc directory"), FALSE);
+		      /* add_to_error_history(ss, _("can't find Snd doc directory"), FALSE); */
 		      mus_snprintf(tmpstr, PRINT_BUFFER_SIZE, DEFAULT_HTML_DIR);
 		    }
 		}
