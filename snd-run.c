@@ -1448,7 +1448,6 @@ static xen_var *initialize_globals(ptree *pt)
 	      if (pt->ints[v->addr]) FREE((char *)(pt->ints[v->addr]));
 	      pt->ints[v->addr] = (int)(copy_string(XEN_TO_C_STRING(val)));     
 	      break;
-	      /* TODO: vector vals initialization? */
 	    }
 	}
     }
@@ -1953,7 +1952,7 @@ static xen_value *lambda_form(ptree *prog, XEN form, int separate)
       new_tree->code = XEN_FALSE;
       outer_locals = prog->var_ctr;
       declare_args(new_tree, form, R_INT, separate); /* assuming clm here */
-      new_tree->result = walk_sequence(new_tree, XEN_CDDR(form), TRUE, "lambda");
+      new_tree->result = walk_then_undefine(new_tree, XEN_CDDR(form), TRUE, "lambda", prog->var_ctr);
       if (new_tree->result)
 	{
 	  xen_value *v;
@@ -3640,7 +3639,7 @@ FL_OP(mus_degrees2radians)
 FL_OP(mus_radians2degrees)
 FL_OP(mus_db2linear)
 FL_OP(mus_linear2db)
-
+FL_OP(mus_random)
 
 static void atan1_f(int *args, int *ints, Float *dbls) {FLOAT_RESULT = atan(FLOAT_ARG_1);}
 static char *descr_atan1_f(int *args, int *ints, Float *dbls) {return(mus_format("d%d(%.4f) = atan(d%d(%.4f))", args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1));}
@@ -4339,6 +4338,30 @@ static xen_value *string_ref_1(ptree *pt, xen_value **args)
 }
 
 
+static char *int_vct_to_string(int_vct *v)
+{
+  int len, i;
+  char *buf;
+  char flt[16];
+  if (v == NULL) return(copy_string("#<int_vct: null>"));
+  len = 8;
+  if (len > v->length) len = v->length;
+  buf = (char *)CALLOC(64 + len * 8, sizeof(char));
+  sprintf(buf, "#<int_vct[len=%d]:", v->length);
+  if (len > 0)
+    {
+      for (i = 0; i < len; i++)
+	{
+	  mus_snprintf(flt, 16, " %d", v->data[i]);
+	  strcat(buf, flt);
+	}
+      if (v->length > 8)
+	strcat(buf, " ...");
+    }
+  strcat(buf, ">");
+  return(buf);
+}
+
 static void display_str(int *args, int *ints, Float *dbls) {fprintf(stderr, "\"%s\"", STRING_ARG_1);}
 static char *descr_display_str(int *args, int *ints, Float *dbls) {return(mus_format("display(i%d(\"%s\"))", args[1], STRING_ARG_1));}
 static void display_int(int *args, int *ints, Float *dbls) {fprintf(stderr, "%d", INT_ARG_1);}
@@ -4349,6 +4372,8 @@ static void display_clm(int *args, int *ints, Float *dbls) {fprintf(stderr, "%s"
 static char *descr_display_clm(int *args, int *ints, Float *dbls) {return(mus_format("display(i%d(%p))", args[1], ((mus_any *)(INT_ARG_1))));}
 static void display_vct(int *args, int *ints, Float *dbls) {fprintf(stderr, "%s", vct_to_string((vct *)(INT_ARG_1)));}
 static char *descr_display_vct(int *args, int *ints, Float *dbls) {return(mus_format("display(i%d(%p))", args[1], ((vct *)(INT_ARG_1))));}
+static void display_int_vct(int *args, int *ints, Float *dbls) {fprintf(stderr, "%s", int_vct_to_string((int_vct *)(INT_ARG_1)));}
+static char *descr_display_int_vct(int *args, int *ints, Float *dbls) {return(mus_format("display(i%d(%p))", args[1], ((int_vct *)(INT_ARG_1))));}
 static void display_rd(int *args, int *ints, Float *dbls) {fprintf(stderr, "%s", sf_to_string((snd_fd *)(INT_ARG_1)));}
 static char *descr_display_rd(int *args, int *ints, Float *dbls) {return(mus_format("display(i%d(%p))", args[1], ((snd_fd *)(INT_ARG_1))));}
 static void display_chr(int *args, int *ints, Float *dbls) {fprintf(stderr, "#\\%c", (char)(INT_ARG_1));}
@@ -4363,17 +4388,20 @@ static xen_value *display_1(ptree *pt, xen_value **args, int num_args)
 {
   switch (args[1]->type)
     {
-    case R_STRING: return(package(pt, R_BOOL, display_str, descr_display_str, args, 1)); break;
-    case R_INT: return(package(pt, R_BOOL, display_int, descr_display_int, args, 1)); break;
-    case R_FLOAT: return(package(pt, R_BOOL, display_flt, descr_display_flt, args, 1)); break;
-    case R_CLM: return(package(pt, R_BOOL, display_clm, descr_display_clm, args, 1)); break;
-    case R_READER: return(package(pt, R_BOOL, display_rd, descr_display_rd, args, 1)); break;
-    case R_VCT: return(package(pt, R_BOOL, display_vct, descr_display_vct, args, 1)); break;
-    case R_BOOL: return(package(pt, R_BOOL, display_bool, descr_display_bool, args, 1)); break;
-    case R_CHAR: return(package(pt, R_BOOL, display_chr, descr_display_chr, args, 1)); break;
-    case R_GOTO: return(package(pt, R_BOOL, display_con, descr_display_con, args, 1)); break;
-    case R_FUNCTION: return(package(pt, R_BOOL, display_func, descr_display_func, args, 1)); break;
-      /* TODO: display vectors */
+    case R_STRING:     return(package(pt, R_BOOL, display_str, descr_display_str, args, 1));   break;
+    case R_INT:        return(package(pt, R_BOOL, display_int, descr_display_int, args, 1));   break;
+    case R_FLOAT:      return(package(pt, R_BOOL, display_flt, descr_display_flt, args, 1));   break;
+    case R_CLM:        return(package(pt, R_BOOL, display_clm, descr_display_clm, args, 1));   break;
+    case R_READER:     return(package(pt, R_BOOL, display_rd, descr_display_rd, args, 1));     break;
+    case R_FLOAT_VECTOR:
+    case R_VCT:        return(package(pt, R_BOOL, display_vct, descr_display_vct, args, 1));   break;
+    case R_BOOL:       return(package(pt, R_BOOL, display_bool, descr_display_bool, args, 1)); break;
+    case R_CHAR:       return(package(pt, R_BOOL, display_chr, descr_display_chr, args, 1));   break;
+    case R_GOTO:       return(package(pt, R_BOOL, display_con, descr_display_con, args, 1));   break;
+    case R_FUNCTION:   return(package(pt, R_BOOL, display_func, descr_display_func, args, 1)); break;
+    case R_CLM_VECTOR:
+    case R_VCT_VECTOR:
+    case R_INT_VECTOR: return(package(pt, R_BOOL, display_int_vct, descr_display_int_vct, args, 1));   break;
     }
   return(NULL);
 }
@@ -4950,11 +4978,22 @@ static xen_value *vector_set_1(ptree *prog, xen_value **args, int num_args)
   if (args[2]->type != R_INT) return(run_warn("vector-set bad index type"));
   switch (args[1]->type)
     {
-      /* TODO: check arg3 type */
-    case R_FLOAT_VECTOR: return(package(prog, R_FLOAT, vector_set_f, descr_vector_set_f, args, 3)); break;
-    case R_INT_VECTOR: return(package(prog, R_INT, vector_set_i, descr_vector_set_i, args, 3)); break;
-    case R_VCT_VECTOR: return(package(prog, R_VCT, vector_set_v, descr_vector_set_v, args, 3)); break;
-    case R_CLM_VECTOR: return(package(prog, R_CLM, vector_set_c, descr_vector_set_c, args, 3)); break;
+    case R_FLOAT_VECTOR: 
+      if (args[3]->type != R_FLOAT) return(run_warn("wrong new val type for float vector set"));
+      return(package(prog, R_FLOAT, vector_set_f, descr_vector_set_f, args, 3)); 
+      break;
+    case R_INT_VECTOR: 
+      if (args[3]->type != R_INT) return(run_warn("wrong new val type for int vector set"));
+      return(package(prog, R_INT, vector_set_i, descr_vector_set_i, args, 3)); 
+      break;
+    case R_VCT_VECTOR: 
+      if (args[3]->type != R_VCT) return(run_warn("wrong new val type for vct vector set"));
+      return(package(prog, R_VCT, vector_set_v, descr_vector_set_v, args, 3)); 
+      break;
+    case R_CLM_VECTOR: 
+      if (args[3]->type != R_CLM) return(run_warn("wrong new val type for clm vector set"));
+      return(package(prog, R_CLM, vector_set_c, descr_vector_set_c, args, 3)); 
+      break;
     }
   return(NULL);
 }
@@ -4999,11 +5038,22 @@ static xen_value *vector_fill_1(ptree *prog, xen_value **args, int num_args)
   if ((args[1] = fixup_if_pending(prog, args[1], R_FLOAT_VECTOR)) == NULL) return(run_warn("vector-fill! bad arg"));
   switch (args[1]->type)
     {
-      /* TODO: check arg2 type */
-    case R_FLOAT_VECTOR: return(package(prog, R_BOOL, vector_fill_f, descr_vector_fill_f, args, 2)); break;
-    case R_INT_VECTOR: return(package(prog, R_BOOL, vector_fill_i, descr_vector_fill_i, args, 2)); break;
-    case R_VCT_VECTOR: return(package(prog, R_BOOL, vector_fill_v, descr_vector_fill_v, args, 2)); break;
-    case R_CLM_VECTOR: return(package(prog, R_BOOL, vector_fill_c, descr_vector_fill_c, args, 2)); break;
+    case R_FLOAT_VECTOR: 
+      if (args[2]->type != R_FLOAT) return(run_warn("wrong new val type for float vector fill"));
+      return(package(prog, R_BOOL, vector_fill_f, descr_vector_fill_f, args, 2)); 
+      break;
+    case R_INT_VECTOR: 
+      if (args[2]->type != R_INT) return(run_warn("wrong new val type for int vector fill"));
+      return(package(prog, R_BOOL, vector_fill_i, descr_vector_fill_i, args, 2)); 
+      break;
+    case R_VCT_VECTOR:
+      if (args[2]->type != R_VCT) return(run_warn("wrong new val type for vct vector fill"));
+      return(package(prog, R_BOOL, vector_fill_v, descr_vector_fill_v, args, 2)); 
+      break;
+    case R_CLM_VECTOR: 
+      if (args[2]->type != R_CLM) return(run_warn("wrong new val type for clm vector fill"));
+      return(package(prog, R_BOOL, vector_fill_c, descr_vector_fill_c, args, 2)); 
+      break;
     }
   return(NULL);
 }
@@ -5614,6 +5664,43 @@ static xen_value *env_interp_1(ptree *prog, xen_value **args, int num_args)
   if (num_args == 2) return(package(prog, R_FLOAT, env_interp_2, descr_env_interp_2, args, 2));
   return(run_warn("env-interp: wrong number of args"));
 }
+
+
+/* ---------------- frame+ etc ---------------- */
+
+#define FRAME_OP(CName, SName, OutType, Type1, Type2, Type3) \
+static char *descr_ ## CName ## _2(int *args, int *ints, Float *dbls) \
+{ \
+  return(mus_format("i%d(%p) = " #SName "(i%d(%p), i%d(%p))", \
+		    args[0], (OutType *)(INT_RESULT), args[1], (Type1 *)(INT_ARG_1), args[2], (Type2 *)(INT_ARG_2))); \
+} \
+static char *descr_ ## CName ## _3(int *args, int *ints, Float *dbls) \
+{ \
+  return(mus_format("i%d(%p) = " #SName "(i%d(%p), i%d(%p), i%d(%p))", \
+		    args[0], (OutType *)(INT_RESULT), args[1], (Type1 *)(INT_ARG_1), args[2], (Type2 *)(INT_ARG_2), args[3], (Type3 *)(INT_ARG_3))); \
+} \
+static void CName ## _2(int *args, int *ints, Float *dbls) \
+{ \
+  if (INT_RESULT) mus_free((mus_any *)(INT_RESULT)); \
+  INT_RESULT = (int)CName((Type1 *)(INT_ARG_1), (Type2 *)(INT_ARG_2), NULL); \
+} \
+static void CName ## _3(int *args, int *ints, Float *dbls) \
+{ \
+  INT_RESULT = (int)CName((Type1 *)(INT_ARG_1), (Type2 *)(INT_ARG_2), (Type3 *)(INT_ARG_3)); \
+} \
+static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) \
+{ \
+  if ((args[1] = fixup_if_pending(prog, args[1], R_CLM)) == NULL) return(run_warn(#SName ": bad arg1")); \
+  if ((args[2] = fixup_if_pending(prog, args[2], R_CLM)) == NULL) return(run_warn(#SName ": bad arg2")); \
+  if (num_args == 2) return(package(prog, R_CLM, CName ## _2, descr_ ## CName ## _2, args, 2)); \
+  if (num_args == 3) return(package(prog, R_CLM, CName ## _3, descr_ ## CName ## _3, args, 3)); \
+  return(run_warn(#SName ": wrong number of args")); \
+}
+
+FRAME_OP(mus_frame_add, frame+, mus_frame, mus_frame, mus_frame, mus_frame)
+FRAME_OP(mus_frame_multiply, frame*, mus_frame, mus_frame, mus_frame, mus_frame)
+FRAME_OP(mus_frame2frame, frame->frame, mus_frame, mus_mixer, mus_frame, mus_frame)
+FRAME_OP(mus_mixer_multiply, mixer*, mus_mixer, mus_mixer, mus_mixer, mus_mixer)
 
 
 /* ---------------- frame->sample ---------------- */
@@ -6490,6 +6577,10 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
       if (strcmp(funcname, "sum-of-sines") == 0) return(clean_up(sum_of_sines_1(prog, args, num_args), args, num_args));
       if (strcmp(funcname, "dot-product") == 0) return(clean_up(dot_product_1(prog, args, num_args), args, num_args));
       if (strcmp(funcname, "formant-bank") == 0) return(clean_up(formant_bank_1(prog, args, num_args), args, num_args));
+      if (strcmp(funcname, "frame+") == 0) return(clean_up(mus_frame_add_1(prog, args, num_args), args, num_args));
+      if (strcmp(funcname, "frame*") == 0) return(clean_up(mus_frame_multiply_1(prog, args, num_args), args, num_args));
+      if (strcmp(funcname, "frame->frame") == 0) return(clean_up(mus_frame2frame_1(prog, args, num_args), args, num_args));
+      if (strcmp(funcname, "mixer*") == 0) return(clean_up(mus_mixer_multiply_1(prog, args, num_args), args, num_args));
 
       if ((clms == 1) || (pendings == 1) || (booleans == 1))
 	/* boolean for gen that is null in the current context */
@@ -6734,6 +6825,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 		  if (strcmp(funcname, "radians->degrees") == 0) return(clean_up(mus_radians2degrees_1(prog, args, constants), args, num_args));
 		  if (strcmp(funcname, "db->linear") == 0) return(clean_up(mus_db2linear_1(prog, args, constants), args, num_args));
 		  if (strcmp(funcname, "linear->db") == 0) return(clean_up(mus_linear2db_1(prog, args, constants), args, num_args));
+		  if (strcmp(funcname, "mus-random") == 0) return(clean_up(mus_random_1(prog, args, constants), args, num_args));
 
 		  if (current_optimization > 1)
 		    {
@@ -7171,9 +7263,6 @@ Float *mus_make_fft_window      PROTO((int type, int size, Float beta));
 
 mus_any *mus_buffer2frame       PROTO((mus_any *rb, mus_any *fr));
 
-mus_frame *mus_frame_add        PROTO((mus_frame *f1, mus_frame *f2, mus_frame *res));
-mus_frame *mus_frame_multiply   PROTO((mus_frame *f1, mus_frame *f2, mus_frame *res));
-
 Float mus_frame_set             PROTO((mus_frame *f, int chan, Float val));
 Float mus_locsig_set            PROTO((mus_any *ptr, int chan, Float val));
 Float mus_locsig_reverb_set     PROTO((mus_any *ptr, int chan, Float val));
@@ -7181,73 +7270,15 @@ Float mus_locsig_reverb_set     PROTO((mus_any *ptr, int chan, Float val));
 Float mus_mixer_ref             PROTO((mus_mixer *f, int in, int out));
 Float mus_mixer_set             PROTO((mus_mixer *f, int in, int out, Float val));
 
-mus_frame *mus_frame2frame      PROTO((mus_mixer *f, mus_frame *in, mus_frame *out));
 mus_frame *mus_sample2frame     PROTO((mus_any *f, Float in, mus_frame *out));
-mus_mixer *mus_mixer_multiply   PROTO((mus_mixer *f1, mus_mixer *f2, mus_mixer *res));
 
 Float *mus_set_data             PROTO((mus_any *gen, Float *data));
 Float mus_set_formant_radius    PROTO((mus_any *ptr, Float val));
 void mus_set_formant_radius_and_frequency PROTO((mus_any *ptr, Float radius, Float frequency));
 void mus_mix                    PROTO((const char *outfile, const char *infile, int out_start, int out_samps, int in_start, mus_mixer *mx, mus_any ***envs));
-mus_random
 int mus_file2fltarray           PROTO((const char *filename, int chan, int start, int samples, Float *array));
 int mus_fltarray2file           PROTO((const char *filename, Float *ddata, int len, int srate, int channels));
 
   void mus_convolve_files         PROTO((const char *file1, const char *file2, Float maxamp, const char *output_file));
-  Float mus_oscil_bank            PROTO((Float *amps, mus_any **oscils, Float *inputs, int size));
-  mus_any *mus_make_oscil         PROTO((Float freq, Float phase));
-  mus_any *mus_make_sum_of_cosines PROTO((int cosines, Float freq, Float phase));
-  mus_any *mus_make_delay         PROTO((int size, Float *line, int line_size));
-  mus_any *mus_make_comb          PROTO((Float scaler, int size, Float *line, int line_size));
-  mus_any *mus_make_notch         PROTO((Float scaler, int size, Float *line, int line_size));
-  mus_any *mus_make_all_pass      PROTO((Float backward, Float forward, int size, Float *line, int line_size));
-  mus_any *mus_make_table_lookup  PROTO((Float freq, Float phase, Float *wave, int wave_size));
-  Float *mus_partials2wave        PROTO((Float *partial_data, int partials, Float *table, int table_size, int normalize));
-  Float *mus_phasepartials2wave   PROTO((Float *partial_data, int partials, Float *table, int table_size, int normalize));
-  mus_any *mus_make_sawtooth_wave PROTO((Float freq, Float amp, Float phase));
-  mus_any *mus_make_square_wave   PROTO((Float freq, Float amp, Float phase));
-  mus_any *mus_make_triangle_wave PROTO((Float freq, Float amp, Float phase));
-  mus_any *mus_make_pulse_train   PROTO((Float freq, Float amp, Float phase));
-  void mus_set_rand_seed          PROTO((unsigned long seed));
-  unsigned long mus_rand_seed     PROTO((void));
-  mus_any *mus_make_rand          PROTO((Float freq, Float base));
-  mus_any *mus_make_rand_interp   PROTO((Float freq, Float base));
-  mus_any *mus_make_asymmetric_fm PROTO((Float freq, Float phase, Float r, Float ratio));
-  mus_any *mus_make_one_zero      PROTO((Float a0, Float a1));
-  mus_any *mus_make_one_pole      PROTO((Float a0, Float b1));
-  mus_any *mus_make_two_zero      PROTO((Float a0, Float a1, Float a2));
-  mus_any *mus_make_zpolar        PROTO((Float radius, Float frequency));
-  mus_any *mus_make_two_pole      PROTO((Float a0, Float b1, Float b2));
-  mus_any *mus_make_ppolar        PROTO((Float radius, Float frequency));
-  mus_any *mus_make_formant       PROTO((Float radius, Float frequency, Float gain));
-  mus_any *mus_make_sine_summation PROTO((Float frequency, Float phase, int n, Float a, Float b_ratio));
-  mus_any *mus_make_filter        PROTO((int order, Float *xcoeffs, Float *ycoeffs, Float *state));
-  mus_any *mus_make_fir_filter    PROTO((int order, Float *xcoeffs, Float *state));
-  mus_any *mus_make_iir_filter    PROTO((int order, Float *ycoeffs, Float *state));
-  Float *mus_make_fir_coeffs      PROTO((int order, Float *env, Float *aa));
-  mus_any *mus_make_wave_train    PROTO((Float freq, Float phase, Float *wave, int wsize));
-  mus_any *mus_make_buffer        PROTO((Float *preloaded_buffer, int size, Float current_file_time));
-  mus_any *mus_make_waveshape     PROTO((Float frequency, Float phase, Float *table, int size));
-  Float *mus_partials2waveshape   PROTO((int npartials, Float *partials, int size, Float *table));
-  Float *mus_partials2polynomial  PROTO((int npartials, Float *partials, int kind));
-  mus_any *mus_make_env           PROTO((Float *brkpts, int pts, Float scaler, Float offset, Float base, Float duration, int start, int end, Float *odata));
-  mus_frame *mus_make_empty_frame PROTO((int chans));
-  mus_frame *mus_make_frame       PROTO((int chans, ...));
-  mus_mixer *mus_make_empty_mixer PROTO((int chans));
-  mus_mixer *mus_make_identity_mixer PROTO((int chans));
-  mus_mixer *mus_make_mixer       PROTO((int chans, ...));
-  Float **mus_mixer_data          PROTO((mus_mixer *f));
-  mus_any *mus_make_file2sample   PROTO((const char *filename));
-  mus_any *mus_make_readin        PROTO((const char *filename, int chan, int start, int direction));
-  mus_any *mus_make_file2frame    PROTO((const char *filename));
-  mus_any *mus_make_sample2file   PROTO((const char *filename, int chans, int out_format, int out_type));
-  mus_any *mus_make_sample2file_with_comment PROTO((const char *filename, int out_chans, int out_format, int out_type, const char *comment));
-  mus_any *mus_make_frame2file    PROTO((const char *filename, int chans, int out_format, int out_type));
-  mus_any *mus_make_locsig        PROTO((Float degree, Float distance, Float reverb, int chans, mus_output *output, mus_output *revput, int type));
-  mus_any *mus_make_src           PROTO((Float (*input)(void *arg, int direction), Float srate, int width, void *environ));
-  mus_any *mus_make_convolve      PROTO((Float (*input)(void *arg, int direction), Float *filter, int fftsize, int filtersize, void *environ));
-  mus_any *mus_make_granulate     PROTO((Float (*input)(void *arg, int direction), 
-  Float mus_bank                  PROTO((mus_any **gens, Float *scalers, Float *arg1, Float *arg2, int size));
-  mus_any *mus_make_phase_vocoder PROTO((Float (*input)(void *arg, int direction), 
 */
 #endif

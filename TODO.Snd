@@ -14,8 +14,6 @@ A better pitch tracker than spot-freq in examp.scm.
 dB display in VU meters (in the record dialog -- the dB value is ready
 to go, but the VU labels need different numbers).  A nicer VU meter background.
 
-Translate more CLM instruments to Scheme: piano maraca
-
 dlocsig from CLM + a path envelope editor dialog
 
 Add Gnome tie-ins.  (The main useful one, I think, is the "save-yourself"

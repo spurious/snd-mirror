@@ -2530,11 +2530,13 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	    up = (lisp_grf *)(cp->lisp_info);
 	  if (uap != up->axis)
 	    uap = up->axis;
-	  /* if these were changed in the hook function, the old fields should have been saved across the change (g_graph in snd-xen.c) */
-	  make_axes(cp, uap, /* this file l 2229 */
+	  /* if these were changed in the hook function, the old fields should have been saved across the change (g_graph below) */
+	  make_axes(cp, uap, /* defined in this file l 2293 */
 		    X_AXIS_IN_LENGTH,
 		    ((cp->chan == 0) || (sp->channel_style != CHANNELS_SUPERIMPOSED)));
-	  make_lisp_graph(cp, sp, ss, pixel_list);
+	  if (XEN_PROCEDURE_P(pixel_list))
+	    XEN_CALL_0(pixel_list, "lisp-graph");
+	  else make_lisp_graph(cp, sp, ss, pixel_list);
 	}
 
       if (!just_lisp)

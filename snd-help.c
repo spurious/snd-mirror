@@ -204,7 +204,8 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
-30-Apr:  vct-map in extensions.scm\n\
+1-May:   maraca.scm, piano.scm.\n\
+30-Apr:  vct-map\n\
 29-Apr:  snd5.scm, singer.scm, fade.scm.\n\
 15-Apr:  snd 5.9.\n\
 12-Apr:  optimization variable, --with-run configure switch, snd-run.c.\n\
