@@ -318,27 +318,29 @@ Here's a more extended example:
 
 <pre>
 (use-modules (ice-9 debug) (ice-9 format))
+(debug-set! stack 0)                ;turn off Guile's stack-size check
+(set! snd-remember-paths #t)        ;remember paths making "load" smarter
 
-(set! (window-width) 800)
+(set! (window-width) 800)           ;these set the initial window size
 (set! (window-height) 500)
 
-(if (not (provided? 'snd-gtk))
+(if (provided? 'snd-motif)          ;if using Motif, set some fonts
     (begin
       (set! (button-font) "-adobe-times-medium-r-*-*-14-*-*-*-*-*-*-*")
       (set! (bold-button-font) "-adobe-times-bold-r-*-*-14-*-*-*-*-*-*-*")
       (set! (axis-label-font) "-adobe-times-medium-r-normal-*-18-*-*-*-*-*-*-*")
       (set! (axis-numbers-font) "9x15")))
 
-(set! (listener-prompt) ":")
-(show-listener)
-(set! (show-indices) #t)
+(set! (listener-prompt) ":")        ;default prompt is ">"
+(show-listener)                     ;include the listener window initially
+(set! (show-indices) #t)            ;include sound index values with the sound name
 
 (define beige (make-color 0.96 0.96 0.86))
 (define blue (make-color 0 0 1))
-(set! (selected-graph-color) beige)
-(set! (selected-data-color) blue)
+(set! (selected-graph-color) beige) ;selected graph background is beige
+(set! (selected-data-color) blue)   ;selected graph data is blue
 
-(add-hook! mouse-enter-graph-hook 
+(add-hook! mouse-enter-graph-hook   ;automatically focus on (activate) the widget under the mouse
   (lambda (snd chn) 
     (focus-widget (car (channel-widgets snd chn)))))
 (add-hook! mouse-enter-listener-hook 
@@ -347,6 +349,31 @@ Here's a more extended example:
 (add-hook! mouse-enter-text-hook
   (lambda (w)
     (focus-widget w)))
+
+(set! (save-dir) "/zap/snd")        ;save-state files are placed in /zap/snd
+(set! (temp-dir) "/zap/tmp")        ;temp files are placed in /zap/tmp
+(load "peak-env.scm")               ;large file peak env data is saved for faster 
+				    ;  subsequent reads -- this makes the first
+				    ;  view of a large file much snappier --
+				    ;  its default directory for the data is ~/peaks.
+
+(load "draw.scm")                   ;load some useful extensions
+(load "hooks.scm")
+(load "extensions.scm")
+
+(make-current-window-display)       ;display an overview of the current window in the upper right
+(if (provided? 'snd-motif)          
+    (load "popup.scm")              ;context-sensitive popup menus
+    (if (provided? 'snd-gtk)
+        (load "/home/bil/cl/gtk-popup.scm")))
+
+(add-hook! after-open-hook          ;if sound has many chans, use just one pane for all
+  (lambda (snd)
+    (if (> (chans snd) 4)
+        (set! (channel-style snd) channels-combined))))
+
+(set! (optimization) 6)             ;turn on full optimization
+(set! (selection-creates-region) #f) ;turn off automatic region creation
 </pre>
 <p>
 If you loaded Snd with GSL, and have set the GSL_IEEE_MODE environment variable,

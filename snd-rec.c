@@ -525,7 +525,7 @@ void set_record_size (int new_size)
   unlock_recording_audio();
 }
 
-static void oss_get_input_channels(int i)
+static void get_input_channels(int i)
 {
   rp->input_channels[i] = device_channels(MUS_AUDIO_PACK_SYSTEM(i) | rp->in_device);
   if (rp->input_channels[i] == 0)
@@ -544,7 +544,7 @@ static void oss_get_input_channels(int i)
     }
 }
 
-static void oss_get_input_devices(void)
+static void get_input_devices(void)
 {
   int i;
   for (i = 0; i < rp->systems; i++)
@@ -753,7 +753,7 @@ void fire_up_recorder(snd_state *ss)
 	  rp->input_buffer_sizes[i] = rp->buffer_size / rp->out_chans;
 	}
       for (i = 0; i < rp->systems; i++)
-	oss_get_input_channels(i);
+	get_input_channels(i);
       err = 1;
       for (i = 0; i < rp->systems; i++) 
 	if (rp->input_channels[i] > 0) 
@@ -767,7 +767,7 @@ void fire_up_recorder(snd_state *ss)
 	  return;
 	}
       /* if adat, aes etc, make choices about default on/off state, open monitor separately (and write) */
-      oss_get_input_devices();
+      get_input_devices();
       if (rp->input_ports[0] == -1)
 	{
 	  recorder_error(_("open device: "));
@@ -815,11 +815,7 @@ void fire_up_recorder(snd_state *ss)
       rp->all_systems_input_buf = (mus_sample_t *)CALLOC(rp->system_input_buffer_size, sizeof(mus_sample_t));
     }
   for (i = 0; i < rp->systems; i++) rp->input_ports[i] = -1;
-#if HAVE_OSS
-  if (rp->mixer_settings_saved) mus_audio_restore(); else mus_audio_save();
-#else
   mus_audio_save();
-#endif
 
   /* the recorder srate sometimes depends purely on external devices */
   
@@ -908,7 +904,7 @@ void fire_up_recorder(snd_state *ss)
   #ifdef SUN
 	  rp->input_channels[i] = device_channels(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_MICROPHONE);
   #else
-	  oss_get_input_channels(i);
+	  get_input_channels(i);
   #endif
 #endif
 	}
@@ -922,7 +918,7 @@ void fire_up_recorder(snd_state *ss)
       return;
     }
 
-#if NEW_SGI_AL
+#if NEW_SGI_AL || MAC_OSX
   rp->input_ports[0] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_MICROPHONE,
 					    rp->srate,
 					    rp->input_channels[0],
@@ -945,7 +941,7 @@ void fire_up_recorder(snd_state *ss)
     #else
     /* if adat, aes etc, make choices about default on/off state, open monitor separately (and write) */
 
-    oss_get_input_devices();
+    get_input_devices();
     #endif
   #endif
 #endif
@@ -955,7 +951,7 @@ void fire_up_recorder(snd_state *ss)
       return;
     }
   rp->taking_input = TRUE;
-#if HAVE_OSS || SUN
+#if HAVE_OSS || SUN || MAC_OSX
   /* rp->monitor_port = 0; */
 
   /*
@@ -1216,6 +1212,7 @@ static Cessate read_adc(snd_state *ss)
 }
 
 #else
+/* not ALSA or OSS */
 
 static Cessate read_adc(snd_state *ss)
 {

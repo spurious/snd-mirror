@@ -3,8 +3,6 @@
  *   for tests and examples see snd-motif.scm, bess.scm, bess.rb, and snd-test.scm
  */
 
-/* SOMEDAY: some way to access XtGetApplicationResources */
-
 #if defined(HAVE_CONFIG_H)
   #include <config.h>
 #endif

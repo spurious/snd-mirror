@@ -22,7 +22,7 @@ The configure program has several Snd-related arguments:
    --with-motif          use Motif (the default)
      --with-static-motif same, but load Motif statically (for RPM)
      --with-motif-prefix set Motif location (will append lib and include)
-   --with-gtk            use Gtk+ (this port still needs a lot of work)
+   --with-gtk            use Gtk+ (this port still needs work)
    --with-no-gui         make Snd without any graphics support
 
    --with-alsa           use ALSA if possible (default is OSS in Linux)
@@ -701,6 +701,10 @@ Gtk+:
   http://www.gtk.org
   ftp://ftp.gtk.org/pub/gtk/
   http://sourceforge.net/projects/gtkglext/
+
+OpenGL:
+  http://www.mesa3d.org/
+  http://www.opengl.org/
 
 gmeteor:
   http://gmeteor.sourceforge.net

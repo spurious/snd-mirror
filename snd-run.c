@@ -70,7 +70,7 @@
  * TODO: left|right-sample? mark-name? mark? mark-sample mark-sync find-mark
  * TODO: mix/track/region sample readers? region info? selection info? mix info?
  * TODO: samples->vct? access to sound|channel-properties? sound?[g_sound_p in snd-snd.c]
- * TODO: non-constant lists passed as xenable args (for make-env)
+ * TODO: def-clm-struct make-funcs?
  * SOMEDAY: save ptree somehow (local runs make this problematic) -- perhaps definstrument here
  *
  * LIMITATIONS: <insert anxious lucubration here about DSP context and so on>
@@ -7549,8 +7549,10 @@ static int xenable(xen_value *v)
     {
     case R_FLOAT: case R_INT: case R_CHAR: case R_STRING: case R_BOOL:
     case R_LIST: case R_PAIR: case R_FLOAT_VECTOR: case R_VCT: case R_KEYWORD: case R_SYMBOL:
-      /* TODO: are clm types xenable? */
       return(TRUE);
+      break;
+    default:
+      return(v->type > R_ANY);
       break;
     }
   return(FALSE);
@@ -8222,16 +8224,33 @@ static xen_value *clean_up(xen_value *result, xen_value **args, int args_size)
   return(result);
 }
 
+static int isvowel(char b)
+{
+  return((b == 'a') || (b == 'e') || (b == 'i') || (b == 'o') || (b == 'u'));
+}
+
 static xen_value *arg_warn(ptree *prog, char *funcname, int arg_num, xen_value **args, char *correct_type)
 {
-  char *xb;
+  char *xb, *tb;
   xb = describe_xen_value(args[arg_num], prog->ints, prog->dbls);
+  tb = type_name(args[arg_num]->type);
   if (xb)
     {
-      run_warn("%s argument %d (%s) is a %s, not a %s?", funcname, arg_num, xb, type_name(args[arg_num]->type), correct_type);
+      run_warn("%s argument %d (%s) is a%s %s, not a%s %s?", 
+	       funcname, arg_num, xb, 
+	       (isvowel(tb[0])) ? "n" : "",
+		tb,
+	       (isvowel(correct_type[0])) ? "n" : "",
+	       correct_type);
       FREE(xb);
     }
-  else run_warn("%s argument %d is a %s, not a %s?", funcname, arg_num, type_name(args[arg_num]->type), correct_type);
+  else 
+    run_warn("%s argument %d is a%s %s, not a%s %s?", 
+	     funcname, arg_num, 
+	     (isvowel(tb[0])) ? "n" : "",
+	     type_name(args[arg_num]->type),
+	     (isvowel(correct_type[0])) ? "n" : "", 
+	     correct_type);
   return(NULL);
 }
 
@@ -8854,7 +8873,10 @@ static XEN eval_ptree_to_xen(ptree *pt)
       }
       break;
     case R_CLM:     run_warn("can't wrap gen?"); break;
-      /* TODO: ptree->clm struct? */
+    default:
+      if (pt->result->type > R_ANY)
+	result = (XEN)(pt->ints[pt->result->addr]); 
+      break;
     }
   return(result);
 }

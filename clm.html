@@ -323,8 +323,11 @@ this regard).
 <p><small>
 <i>Declare</i> can be used to set the safety and debugging options, as
 well as set variable types (this can result in tighter code in many cases).
-The recognized types are integer and float;
+In Common Lisp, the recognized types are integer and float;
 in the resultant C code these become either integers or doubles.
+In Scheme (in the Snd run macro), the declarable types are:
+int, float, boolean, char, string, vct, reader, clm, number, vector, integer, real, 
+and any def-clm-struct name.
 </small></p>
 <br>
 

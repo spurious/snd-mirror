@@ -2,6 +2,8 @@
 #include "sndlib-strings.h"
 #include "clm-strings.h"
 
+/* TODO: all the snd-help strings should be rubyified -- probably should use help-hook */
+
 /* ---------------- help 'news' menu item ---------------- */
 
 static char *snd_itoa(int n)
@@ -302,6 +304,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+17-Mar:  Mac OSX Record implemented.\n\
 13-Mar:  removed use-sinc-interp.\n\
 12-Mar:  select-mix, clear-audio-inputs and append-to-minibuffer moved to snd6.scm.\n\
 10-Mar:  Ruby-related bugfixes thanks to Michael Scholz.\n\
@@ -941,7 +944,7 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_dac_combines_channels " #t\n\
   " S_dac_size "              256\n\
   " S_data_color "            black\n\
-  " S_dot_size "              1 (snd #t) (chn #t)\n\
+  " S_dot_size "              1 snd chn\n\
   " S_emacs_style_save_as "   #f\n\
   " S_enved_active_env "      '()\n\
   " S_enved_base "            1.0\n\
@@ -959,16 +962,16 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_eps_file "              \"snd.eps\"\n\
   " S_eps_left_margin "       0\n\
   " S_eps_size "              1\n\
-  " S_fft_window_beta "       0.0 (snd #t) (chn #t)\n\
-  " S_fft_log_frequency "     #f (snd #t) (chn #t)\n\
-  " S_fft_log_magnitude "     #f (snd #t) (chn #t)\n\
-  " S_fft_window "            " S_blackman2_window " (snd #t) (chn #t)\n\
+  " S_fft_window_beta "       0.0 snd chn\n\
+  " S_fft_log_frequency "     #f snd chn\n\
+  " S_fft_log_magnitude "     #f snd chn\n\
+  " S_fft_window "            " S_blackman2_window " snd chn\n\
   " S_filter_env_in_hz "      #f\n\
   " S_filter_waveform_color " blue\n\
   " S_graph_color "           white\n\
   " S_graph_cursor "          XC_crosshair (34)\n\
-  " S_graph_style "           " S_graph_lines " (snd #t) (chn #t)\n\
-  " S_graphs_horizontal "     #t (snd #t) (chn #t)\n\
+  " S_graph_style "           " S_graph_lines " snd chn\n\
+  " S_graphs_horizontal "     #t snd chn\n\
   " S_help_text_font "        varies\n\
   " S_highlight_color "       ivory1\n\
   " S_just_sounds "           #f\n\
@@ -978,15 +981,15 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_listener_prompt "       \">\"\n\
   " S_listener_text_color "   black\n\
   " S_mark_color "            red\n\
-  " S_max_transform_peaks "   100 (snd #t) (chn #t)\n\
-  " S_min_dB "               -60.0 (snd #t) (chn #t)\n\
+  " S_max_transform_peaks "   100 snd chn\n\
+  " S_min_dB "               -60.0 snd chn\n\
   " S_minibuffer_history_length " 8\n\
   " S_mix_color "             lightgreen\n\
   " S_mix_tag_width "         6\n\
   " S_mix_tag_height "        14\n\
   " S_mix_tag_y "             0\n\
   " S_mix_waveform_height "   20\n\
-  " S_transform_normalization " " S_normalize_by_channel " (snd #t) (chn #t)\n\
+  " S_transform_normalization " " S_normalize_by_channel " snd chn\n\
   " S_position_color "        ivory3\n\
   " S_print_length "          12\n\
   " S_pushed_button_color "   lightsteelblue1\n\
@@ -1008,39 +1011,39 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_selected_mix_color "    green2\n\
   " S_selection_color "       lightsteelblue1\n\
   " S_selection_creates_region " #t\n\
-  " S_show_axes "             show-all-axes (snd #t) (chn #t)\n\
+  " S_show_axes "             show-all-axes snd chn\n\
   " S_show_backtrace "        #f\n\
   " S_show_indices "          #f\n\
-  " S_show_marks "            #t (snd #t) (chn #t)\n\
-  " S_show_mix_waveforms "    #f (snd #t) (chn #t)\n\
+  " S_show_marks "            #t snd chn\n\
+  " S_show_mix_waveforms "    #f snd chn\n\
   " S_show_selection_transform " #f\n\
-  " S_show_transform_peaks "  #f (snd #t) (chn #t)\n\
-  " S_show_y_zero "           #f (snd #t) (chn #t)\n\
+  " S_show_transform_peaks "  #f snd chn\n\
+  " S_show_y_zero "           #f snd chn\n\
   " S_sinc_width "            10\n\
-  " S_spectro_cutoff "        1.0 (snd #t) (chn #t)\n\
-  " S_spectro_hop "           4 (snd #t) (chn #t)\n\
-  " S_spectro_start "         0.0 (snd #t) (chn #t)\n\
-  " S_spectro_x_angle "       90.0 (snd #t) (chn #t)\n\
-  " S_spectro_x_scale "       1.0 (snd #t) (chn #t)\n\
-  " S_spectro_y_angle "       0.0 (snd #t) (chn #t)\n\
-  " S_spectro_y_scale "       1.0 (snd #t) (chn #t)\n\
-  " S_spectro_z_angle "      -2.0 (snd #t) (chn #t)\n\
-  " S_spectro_z_scale "       0.1 (snd #t) (chn #t)\n\
+  " S_spectro_cutoff "        1.0 snd chn\n\
+  " S_spectro_hop "           4 snd chn\n\
+  " S_spectro_start "         0.0 snd chn\n\
+  " S_spectro_x_angle "       90.0 snd chn\n\
+  " S_spectro_x_scale "       1.0 snd chn\n\
+  " S_spectro_y_angle "       0.0 snd chn\n\
+  " S_spectro_y_scale "       1.0 snd chn\n\
+  " S_spectro_z_angle "      -2.0 snd chn\n\
+  " S_spectro_z_scale "       0.1 snd chn\n\
   " S_speed_control_style "   " S_speed_control_as_float " (snd #t)\n\
   " S_speed_control_tones "   12 (snd #t)\n\
   " S_temp_dir "              nil\n\
   " S_text_focus_color "      white\n\
-  " S_transform_size "        256 (snd #t) (chn #t)\n\
-  " S_transform_graph_type "  " S_graph_once " (snd #t) (chn #t)\n\
-  " S_transform_type "        " S_fourier_transform " (snd #t) (chn #t)\n\
+  " S_transform_size "        256 snd chn\n\
+  " S_transform_graph_type "  " S_graph_once " snd chn\n\
+  " S_transform_type "        " S_fourier_transform " snd chn\n\
   " S_trap_segfault "         #t\n\
-  " S_verbose_cursor "        #f (snd #t) (chn #t)\n\
+  " S_verbose_cursor "        #f snd chn\n\
   " S_vu_font "               nil\n\
   " S_vu_font_size "          1.0\n\
   " S_vu_size "               1.0\n\
-  " S_wavelet_type "          0 (snd #t) (chn #t)\n\
-  " S_wavo_hop "              3 (snd #t) (chn #t)\n\
-  " S_wavo_trace "            64 (snd #t) (chn #t)\n\
+  " S_wavelet_type "          0 snd chn\n\
+  " S_wavo_hop "              3 snd chn\n\
+  " S_wavo_trace "            64 snd chn\n\
   " S_window_height "         0\n\
   " S_window_width "          0\n\
   " S_window_x "             -1\n\
@@ -1049,7 +1052,7 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_with_mix_tags "         #t\n\
   " S_with_relative_panes "   #t\n\
   " S_x_axis_style "          " S_x_axis_in_seconds "\n\
-  " S_zero_pad "              0 (snd #t) (chn #t)\n\
+  " S_zero_pad "              0 snd chn\n\
   " S_zoom_color "            ivory4\n\
   " S_zoom_focus_style "      " S_zoom_focus_active "\n\
 \n\
@@ -2220,11 +2223,12 @@ and its value is returned."
 #endif
 #if HAVE_RUBY
   if (XEN_STRING_P(text))
-     str = xen_help(XEN_TO_C_STRING(text));
+    subject = XEN_TO_C_STRING(text);
   else 
     if (XEN_SYMBOL_P(text))
-       str = xen_help(XEN_SYMBOL_TO_C_STRING(text));
-    else str = H_snd_help;
+      subject = XEN_SYMBOL_TO_C_STRING(text);
+    else subject = H_snd_help;
+  str = xen_help(subject);
 #endif
   if (str)
     {

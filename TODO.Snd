@@ -52,7 +52,6 @@ audio file examples for testing sndlib.  Examples I'd love
 to get:  
   aifc using "sowt" (little endian) data
   aifc using "fl64" (big endian double) data
-  riff using unsigned byte data
   riff (rifx) using big endian data of any kind
   bicsf with header extensions like "COMM"
   voc using mulaw or alaw data

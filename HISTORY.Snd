@@ -1,5 +1,6 @@
 Snd change log
 
+  17-Mar:    Mac OSX Record implemented.
   13-Mar:    removed use-sinc-interp.
   12-Mar:    select-mix, clear-audio-inputs and append-to-minibuffer moved to snd6.scm.
   10-Mar:    Ruby-related bugfixes thanks to Michael Scholz.

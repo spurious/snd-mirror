@@ -8157,16 +8157,14 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
 
 /* this code based on coreaudio.pdf, HAL/Daisy examples, portaudio pa_mac_core.c */
 
-/* TODO: mac osx: bring srate/channel limitation down to this level
- * TODO: mac osx: audio input
- * TODO: mac osx: mixer-read/write with non-built-in device
- */
+/* TODO: mac osx: support for non-built-in device */
 
 #ifdef MAC_OSX
 #define AUDIO_OK 1
 
 #include <CoreServices/CoreServices.h>
 #include <CoreAudio/CoreAudio.h>
+/* ./System/Library/Frameworks/CoreAudio.framework/Versions/A/Headers/CoreAudio.h */
 
 static char* osx_error(OSStatus err) 
 {
@@ -8179,6 +8177,7 @@ static char* osx_error(OSStatus err)
     case kAudioHardwareBadPropertySizeError:  return("bad property");
     case kAudioHardwareIllegalOperationError: return("illegal operation");
     }
+  if (err == noErr) return("no error");
   return("unknown error");
 }
 
@@ -8191,12 +8190,12 @@ char *device_name(AudioDeviceID deviceID)
   if (err == noErr) err =  AudioDeviceGetPropertyInfo(deviceID, 0, false, kAudioDevicePropertyDeviceManufacturer, &msize, NULL);
   if (err == noErr)
     {
-      name = (char *)MALLOC(size + 1);
+      name = (char *)MALLOC(size + 2);
       err = AudioDeviceGetProperty(deviceID, 0, false, kAudioDevicePropertyDeviceName, &size, name);
-      mfg = (char *)MALLOC(msize + 1);
+      mfg = (char *)MALLOC(msize + 2);
       err = AudioDeviceGetProperty(deviceID, 0, false, kAudioDevicePropertyDeviceManufacturer, &msize, mfg);
-      full_name = (char *)MALLOC(size + msize + 3);
-      mus_snprintf(full_name, size + msize + 3, "\n  %s: %s", mfg, name);
+      full_name = (char *)MALLOC(size + msize + 4);
+      mus_snprintf(full_name, size + msize + 4, "\n  %s: %s", mfg, name);
       FREE(name);
       FREE(mfg);
     }
@@ -8240,7 +8239,7 @@ static void describe_audio_state_1(void)
       device = devices[i];
       pprint(device_name(device));
       if (device == default_output) pprint("\n    (output default)");
-      if (device == default_input) pprint("\n    (input default)");
+      else if (device == default_input) pprint("\n    (input default)");
       size = sizeof(buffer_size);
       err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyBufferSize, &size, &buffer_size);
       if (err != noErr) 
@@ -8313,14 +8312,16 @@ static void describe_audio_state_1(void)
 
 /* list of supported formats via kAudioDevicePropertyStreamFormats */
 
+#define AUDIO_BUF_SIZE 4096
 #define MAX_BUFS 12
 static char **bufs = NULL;
 static int in_buf = 0, out_buf = 0;
 
-static OSStatus writer(AudioDeviceID inDevice, const AudioTimeStamp *inNow, 
-		       const void *InputData, const AudioTimeStamp *InputTime, 
-		       AudioBufferList *OutputData, 
-		       const AudioTimeStamp *OutputTime, void *appGlobals)
+static OSStatus writer(AudioDeviceID inDevice, 
+		       const AudioTimeStamp *inNow, 
+		       const AudioBufferList *InputData, const AudioTimeStamp *InputTime, 
+		       AudioBufferList *OutputData, const AudioTimeStamp *OutputTime, 
+		       void *appGlobals)
 {
   AudioBuffer abuf;
   char *aplbuf, *sndbuf;
@@ -8333,74 +8334,201 @@ static OSStatus writer(AudioDeviceID inDevice, const AudioTimeStamp *inNow,
   return(noErr);
 }
 
+static OSStatus reader(AudioDeviceID inDevice, 
+		       const AudioTimeStamp *inNow, 
+		       const AudioBufferList *InputData, const AudioTimeStamp *InputTime, 
+		       AudioBufferList *OutputData, const AudioTimeStamp *OutputTime, 
+		       void *appGlobals)
+{
+  AudioBuffer abuf;
+  char *aplbuf, *sndbuf;
+  abuf = InputData->mBuffers[0];
+  aplbuf = (char *)(abuf.mData);
+  sndbuf = bufs[out_buf];
+  memmove((void *)sndbuf, (void *)aplbuf, abuf.mDataByteSize);
+  out_buf++;
+  if (out_buf >= MAX_BUFS) out_buf = 0;
+  return(noErr);
+}
+
 
 static AudioDeviceID device = kAudioDeviceUnknown;
 static AudioStreamBasicDescription format;
 static unsigned int bufsize;
-static int writing = 0;
+static int writing = FALSE, open_for_input = FALSE;
 static int fill_point = 0;
+static int incoming_out_chans = 1, incoming_out_srate = 44100;
+/* rather than try to understand AudioConverters, I'll convert by hand right here */
+
+int mus_audio_close(int line) 
+{
+  OSStatus err = noErr;
+  UInt32 sizeof_running;
+  UInt32 running;
+  int bp;
+  if (open_for_input)
+    {
+      in_buf = 0;
+      err = AudioDeviceStop(device, (AudioDeviceIOProc)reader);
+      if (err == noErr) 
+	err = AudioDeviceRemoveIOProc(device, (AudioDeviceIOProc)reader);
+    }
+  else
+    {
+      if ((in_buf > 0) && (writing == FALSE))
+	{
+	  /* short enough sound that we never got started? */
+	  err = AudioDeviceAddIOProc(device, (AudioDeviceIOProc)writer, NULL);
+	  if (err == noErr)
+	    err = AudioDeviceStart(device, (AudioDeviceIOProc)writer); /* writer will be called right away */
+	  if (err == noErr)
+	    writing = TRUE;
+	}
+      if (writing)
+	{
+	  /* send out waiting buffers */
+	  sizeof_running = sizeof(UInt32);
+	  while (in_buf == out_buf)
+	    {
+	      err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyDeviceIsRunning, &sizeof_running, &running);
+	    }
+	  while (in_buf != out_buf)
+	    {
+	      err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyDeviceIsRunning, &sizeof_running, &running);
+	    }
+	  in_buf = 0;
+	  err = AudioDeviceStop(device, (AudioDeviceIOProc)writer);
+	  if (err == noErr) 
+	    err = AudioDeviceRemoveIOProc(device, (AudioDeviceIOProc)writer);
+	  writing = FALSE;
+	}
+    }
+  device = kAudioDeviceUnknown;
+  if (err == noErr)
+    return(MUS_NO_ERROR);
+  return(MUS_ERROR);
+}
+
 
 int mus_audio_open_output(int dev, int srate, int chans, int format, int size) 
 {
   OSStatus err = noErr;
-  UInt32 sizeof_device, sizeof_int, sizeof_format, sizeof_bufsize;
+  UInt32 sizeof_device, sizeof_format, sizeof_bufsize;
   sizeof_device = sizeof(device);
-  err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultOutputDevice, &sizeof_device, (void *)(&device));
-  if (err != noErr) 
-    {
-      fprintf(stderr,"open audio err: %d %s\n", err, osx_error(err));
-      return(MUS_ERROR);
-    }
-  sizeof_format = sizeof(format);
-  err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyStreamFormat, &sizeof_format, &format);
-  /* if (err != noErr) return(MUS_ERROR); */
-
-  sizeof_int = sizeof(bufsize);
-  err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyBufferSize, &sizeof_int, &bufsize);
-  if (err != noErr) 
-    {
-      fprintf(stderr,"open audio err: %d %s\n", err, osx_error(err));
-      return(MUS_ERROR);
-    }
   sizeof_bufsize = sizeof(bufsize);
-  err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyBufferSize, &sizeof_bufsize, &bufsize);
+  err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultOutputDevice, &sizeof_device, (void *)(&device));
+  if (err == noErr) 
+    err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyBufferSize, &sizeof_bufsize, &bufsize);
   if (err != noErr) 
     {
-      fprintf(stderr,"open audio err: %d %s\n", err, osx_error(err));
+      fprintf(stderr,"open audio output err: %d %s\n", err, osx_error(err));
       return(MUS_ERROR);
     }
-
+  open_for_input = FALSE;
   if (bufs == NULL)
     {
       int i;
       bufs = (char **)CALLOC(MAX_BUFS, sizeof(char *));
       for (i = 0; i < MAX_BUFS; i++)
-	bufs[i] = (char *)CALLOC(4096, sizeof(char));
+	bufs[i] = (char *)CALLOC(AUDIO_BUF_SIZE, sizeof(char));
     }
-
   in_buf = 0;
   out_buf = 0;
   fill_point = 0;
+  incoming_out_srate = srate;
+  incoming_out_chans = chans;
   return(MUS_NO_ERROR);
+}
+
+static void convert_incoming(char *to_buf, int fill_point, int lim, char *buf)
+{
+  int i, j, k;
+  if (incoming_out_chans == 2)
+    {
+      if (incoming_out_srate == 44100)
+	{
+	  for (i = 0; i < lim; i++)
+	    to_buf[i + fill_point] = buf[i];
+	}
+      else
+	{
+	  for (i = 0, j = fill_point; i < lim; i += 8, j += 16)
+	    {
+	      for (k = 0; k < 8; k++)
+		{
+		  to_buf[j + k] = buf[i + k];
+		  to_buf[j + k + 8] = buf[i + k];
+		}
+	    }
+	}
+    }
+  else
+    {
+      if (incoming_out_srate == 44100)
+	{
+	  for (i = 0, j = fill_point; i < lim; i += 4, j += 8)
+	    {
+	      for (k = 0; k < 4; k++)
+		{
+		  to_buf[j + k] = buf[i + k];
+		  to_buf[j + k + 4] = 0;
+		}
+	    }
+	}
+      else
+	{
+	  for (i = 0, j = fill_point; i < lim; i += 4, j += 16)
+	    {
+	      for (k = 0; k < 4; k++)
+		{
+		  to_buf[j + k] = buf[i + k];
+		  to_buf[j + k + 4] = 0;
+		  to_buf[j + k + 8] = buf[i + k];
+		  to_buf[j + k + 12] = 0;
+		}
+	    }
+	}
+    }
 }
 
 int mus_audio_write(int line, char *buf, int bytes) 
 {
   OSStatus err = noErr;
-  int i, lim, bp;
+  int i, lim, bp, out_bytes;
   UInt32 sizeof_running;
   UInt32 running;
   char *to_buf;
-
-  if (writing == 0)
+  to_buf = bufs[in_buf];
+  if (incoming_out_chans == 2)
     {
-      to_buf = bufs[in_buf];
-      lim = bytes;
-      if ((fill_point + lim) > bufsize)
-	lim = bufsize - fill_point;
-      for (i = 0; i < lim; i++)
-	to_buf[i + fill_point] = buf[i];
-      fill_point += bytes;
+      if (incoming_out_srate == 44100)
+	out_bytes = bytes;
+      else out_bytes = 2 * bytes;
+    }
+  else
+    {
+      if (incoming_out_srate == 44100)
+	out_bytes = 2 * bytes;
+      else out_bytes = 4 * bytes;
+    }
+  if ((fill_point + out_bytes) > bufsize)
+    out_bytes = bufsize - fill_point;
+  if (incoming_out_chans == 2)
+    {
+      if (incoming_out_srate == 44100)
+	lim = out_bytes;
+      else lim = out_bytes / 2;
+    }
+  else
+    {
+      if (incoming_out_srate == 44100)
+	lim = out_bytes / 2;
+      else lim = out_bytes /4;
+    }
+  if (writing == FALSE)
+    {
+      convert_incoming(to_buf, fill_point, lim, buf);
+      fill_point += out_bytes;
       if (fill_point >= bufsize)
 	{
 	  in_buf++;
@@ -8413,7 +8541,7 @@ int mus_audio_write(int line, char *buf, int bytes)
 		err = AudioDeviceStart(device, (AudioDeviceIOProc)writer); /* writer will be called right away */
 	      if (err == noErr)
 		{
-		  writing = 1;
+		  writing = TRUE;
 		  return(MUS_NO_ERROR);
 		}
 	      else return(MUS_ERROR);
@@ -8433,13 +8561,9 @@ int mus_audio_write(int line, char *buf, int bytes)
 	}
     }
   to_buf = bufs[in_buf];
-  if (fill_point == 0) memset((void *)to_buf, 0, 4096);
-  lim = bytes;
-  if ((fill_point + lim) > bufsize)
-    lim = bufsize - fill_point;
-  for (i = 0; i < lim; i++)
-    to_buf[i + fill_point] = buf[i];
-  fill_point += bytes;
+  if (fill_point == 0) memset((void *)to_buf, 0, AUDIO_BUF_SIZE);
+  convert_incoming(to_buf, fill_point, lim, buf);
+  fill_point += out_bytes;
   if (fill_point >= bufsize)
     {
       in_buf++;
@@ -8449,41 +8573,76 @@ int mus_audio_write(int line, char *buf, int bytes)
   return(MUS_NO_ERROR);
 }
 
-int mus_audio_close(int line) 
+int mus_audio_open_input(int dev, int srate, int chans, int format, int size) 
 {
   OSStatus err = noErr;
+  UInt32 sizeof_device;
+  UInt32 sizeof_format, sizeof_bufsize;
+  sizeof_device = sizeof(device);
+  sizeof_bufsize = sizeof(bufsize);
+  err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultInputDevice, &sizeof_device, (void *)(&device));
+  if (err == noErr) 
+    err = AudioDeviceGetProperty(device, 0, true, kAudioDevicePropertyBufferSize, &sizeof_bufsize, &bufsize);
+  if (err != noErr) 
+    {
+      fprintf(stderr,"open audio input err: %d %s\n", err, osx_error(err));
+      return(MUS_ERROR);
+    }
+  open_for_input = TRUE;
+  if (bufs == NULL)
+    {
+      int i;
+      bufs = (char **)CALLOC(MAX_BUFS, sizeof(char *));
+      for (i = 0; i < MAX_BUFS; i++)
+	bufs[i] = (char *)CALLOC(AUDIO_BUF_SIZE, sizeof(char));
+    }
+  in_buf = 0;
+  out_buf = 0;
+  fill_point = 0;
+  incoming_out_srate = srate;
+  incoming_out_chans = chans;
+  err = AudioDeviceAddIOProc(device, (AudioDeviceIOProc)reader, NULL);
+  if (err == noErr)
+    err = AudioDeviceStart(device, (AudioDeviceIOProc)reader);
+  if (err != noErr) 
+    {
+      fprintf(stderr,"add open audio input err: %d %s\n", err, osx_error(err));
+      return(MUS_ERROR);
+    }
+  return(MUS_NO_ERROR);
+}
+
+int mus_audio_read(int line, char *buf, int bytes) 
+{
+  OSStatus err = noErr;
+  int i, lim, bp, out_bytes;
   UInt32 sizeof_running;
   UInt32 running;
-  int bp;
-  if ((in_buf > 0) && (writing == 0))
+  char *to_buf;
+#if DEBUGGING
+  if (bytes != 4096) 
     {
-      err = AudioDeviceAddIOProc(device, (AudioDeviceIOProc)writer, NULL);
-      if (err == noErr)
-	err = AudioDeviceStart(device, (AudioDeviceIOProc)writer); /* writer will be called right away */
-      if (err == noErr)
-	writing = 1;
+      fprintf(stderr,"bytes: %d\n", bytes);
+      abort();
     }
-  if (writing)
+#endif
+  if (in_buf == out_buf)
     {
-      sizeof_running = sizeof(UInt32);
-      while (in_buf == out_buf)
+      bp = out_buf;
+      sizeof_running = sizeof(running);
+      while (bp == out_buf)
 	{
-	  err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyDeviceIsRunning, &sizeof_running, &running);
+	  err = AudioDeviceGetProperty(device, 0, true, kAudioDevicePropertyDeviceIsRunning, &sizeof_running, &running);
+	  if (err != noErr) 
+	    fprintf(stderr,"wait err: %s ", osx_error(err));
 	}
-      while (in_buf != out_buf)
-	{
-	  err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyDeviceIsRunning, &sizeof_running, &running);
-	}
-
-      in_buf = 0;
-      err = AudioDeviceStop(device, (AudioDeviceIOProc)writer);
-      if (err == noErr) 
-	err = AudioDeviceRemoveIOProc(device, (AudioDeviceIOProc)writer);
-      writing = 0;
     }
-  device = kAudioDeviceUnknown;
-  if (err == noErr)
-    return(MUS_NO_ERROR);
+  to_buf = bufs[in_buf];
+  if (bytes <= AUDIO_BUF_SIZE)
+    memmove((void *)buf, (void *)to_buf, bytes);
+  else memmove((void *)buf, (void *)to_buf, AUDIO_BUF_SIZE);
+  in_buf++;
+  if (in_buf >= MAX_BUFS) in_buf = 0;
   return(MUS_ERROR);
 }
 
@@ -8493,6 +8652,7 @@ int mus_audio_mixer_read(int dev1, int field, int chan, float *val)
   OSStatus err = noErr;
   UInt32 size;
   Float32 amp;
+  int i;
   switch (field) 
     {
     case MUS_AUDIO_AMP:   
@@ -8513,6 +8673,12 @@ int mus_audio_mixer_read(int dev1, int field, int chan, float *val)
     case MUS_AUDIO_FORMAT:
       val[0] = 1.0;
       val[1] = MUS_BFLOAT;
+      break;
+    case MUS_AUDIO_PORT:
+      i = 0;
+      if (1 < chan) val[1] = MUS_AUDIO_MICROPHONE;
+      if (2 < chan) val[2] = MUS_AUDIO_DAC_OUT;
+      val[0] = 2;
       break;
     default: 
       return(MUS_ERROR);
@@ -8545,8 +8711,6 @@ int mus_audio_mixer_write(int dev1, int field, int chan, float *val)
   return(MUS_NO_ERROR);
 }
 
-int mus_audio_open_input(int dev, int srate, int chans, int format, int size) {return(MUS_ERROR);}
-int mus_audio_read(int line, char *buf, int bytes) {return(MUS_ERROR);}
 void mus_audio_save(void) {}
 void mus_audio_restore(void) {}
 int mus_audio_initialize(void) {return(MUS_NO_ERROR);}

@@ -2814,23 +2814,26 @@ static Float next_track_sample(track_fd *fd)
   return(sum);
 }
 
+#if MAC_OSX
+  #define OutSample float
+  #define MUS_CONVERT(samp) samp
+#else
+  #define OutSample short
+  #define MUS_CONVERT(samp) MUS_SAMPLE_TO_SHORT(MUS_FLOAT_TO_SAMPLE(samp))
+#endif
+
 static void play_track(snd_state *ss, chan_info **ucps, int chans, int track_num)
 {
   track_fd **fds;
   chan_info **cps;
   chan_info *locp;
   int playfd, i, j, k, n, samps, chan = 0, happy = FALSE, need_free = FALSE, format, datum_bytes, outchans, frames;
-#if MAC_OSX
-  /* TODO: fix OSX play-track/mix to handle mono/22050 correctly */
-  float *buf;
+#if HAVE_ALSA
+  mus_sample_t **buf;
+  char *outbuf;
+  float val[4]; /* not Float */
 #else
-  #if HAVE_ALSA
-    mus_sample_t **buf;
-    char *outbuf;
-    float val[4]; /* not Float */
-  #else
-    short *buf;
-  #endif
+  OutSample *buf;
 #endif
   if (ucps == NULL)
     {
@@ -2866,26 +2869,20 @@ static void play_track(snd_state *ss, chan_info **ucps, int chans, int track_num
   format = mus_audio_compatible_format(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss));
   datum_bytes = mus_bytes_per_sample(format);
   frames = 256;
-#if MAC_OSX
-  fds = (track_fd **)CALLOC(2, sizeof(track_fd *));
-  buf = (float *)CALLOC(2 * frames, sizeof(float));
-#else
   fds = (track_fd **)CALLOC(chans, sizeof(track_fd *));
 
-  #if HAVE_ALSA
-    /* in ALSA we have no way to tell what the possible output format is, or min chans, so... */
-    mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss), MUS_AUDIO_CHANNEL, 2, val);
-    if (chans < (int)(val[1])) outchans = (int)(val[1]);
-    mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss), MUS_AUDIO_SAMPLES_PER_CHANNEL, 2, val);
-    frames = (int)(val[0]);
-    set_dac_size(ss, outchans * frames * mus_bytes_per_sample(format));
-    buf = (mus_sample_t **)CALLOC(outchans, sizeof(mus_sample_t *));
-    for (i = 0; i < chans; i++) buf[i] = (mus_sample_t *)CALLOC(frames, sizeof(mus_sample_t));
-    outbuf = (char *)CALLOC(frames * datum_bytes * outchans, sizeof(char));
-
-  #else
-    buf = (short *)CALLOC(chans * frames, sizeof(short));
-  #endif
+#if HAVE_ALSA
+  /* in ALSA we have no way to tell what the possible output format is, or min chans, so... */
+  mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss), MUS_AUDIO_CHANNEL, 2, val);
+  if (chans < (int)(val[1])) outchans = (int)(val[1]);
+  mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss), MUS_AUDIO_SAMPLES_PER_CHANNEL, 2, val);
+  frames = (int)(val[0]);
+  set_dac_size(ss, outchans * frames * mus_bytes_per_sample(format));
+  buf = (mus_sample_t **)CALLOC(outchans, sizeof(mus_sample_t *));
+  for (i = 0; i < chans; i++) buf[i] = (mus_sample_t *)CALLOC(frames, sizeof(mus_sample_t));
+  outbuf = (char *)CALLOC(frames * datum_bytes * outchans, sizeof(char));
+#else
+  buf = (OutSample *)CALLOC(chans * frames, sizeof(OutSample));
 #endif
   for (i = 0; i < chans; i++)
     {
@@ -2909,27 +2906,19 @@ static void play_track(snd_state *ss, chan_info **ucps, int chans, int track_num
 	  ss->stopped_explicitly = FALSE;
 	  for (i = 0; i < samps; i += frames)
 	    {
-#if MAC_OSX
-	      for (k = 0; k < chans; k++)
-		if (fds[k])
-		  for (j = k; j < frames * 2; j += 2)
-		    buf[j] = next_track_sample(fds[k]);
-	      mus_audio_write(playfd, (char *)buf, frames * datum_bytes * 2);
-#else
-  #if HAVE_ALSA
+#if HAVE_ALSA
 	      for (k = 0; k < chans; k++)
 		if (fds[k])
 		  for (j = 0; j < frames; j++)
 		    buf[k][j] = MUS_FLOAT_TO_SAMPLE(next_track_sample(fds[k]));
 	      mus_file_write_buffer(format, 0, frames - 1, outchans, buf, outbuf, TRUE);
 	      mus_audio_write(playfd, outbuf, frames * datum_bytes * outchans);
-  #else
+#else
 	      for (k = 0; k < chans; k++)
 		if (fds[k])
 		  for (j = k; j < frames * chans; j += chans)
-		    buf[j] = MUS_SAMPLE_TO_SHORT(MUS_FLOAT_TO_SAMPLE(next_track_sample(fds[k])));
+		    buf[j] = MUS_CONVERT(next_track_sample(fds[k]));
 	      mus_audio_write(playfd, (char *)buf, frames * datum_bytes * chans);
-  #endif
 #endif
 	      check_for_event(ss);
 	      if (ss->stopped_explicitly)
@@ -2969,16 +2958,12 @@ static void play_mix(snd_state *ss, mix_info *md)
   chan_info *cp;
   mix_fd *mf;
   console_state *cs;
-#if MAC_OSX
-  float *buf;
+#if HAVE_ALSA
+  mus_sample_t **buf;
+  char *outbuf;
+  float val[4];
 #else
-  #if HAVE_ALSA
-    mus_sample_t **buf;
-    char *outbuf;
-    float val[4];
-  #else
-    short *buf;
-  #endif
+  OutSample *buf;
 #endif
   int play_fd, j, format, datum_bytes, outchans, frames;
   off_t i, samps;
@@ -2991,21 +2976,17 @@ static void play_mix(snd_state *ss, mix_info *md)
   outchans = 1;
   frames = 256;
 
-#if MAC_OSX
-  buf = (float *)CALLOC(2 * 256, sizeof(float));
+#if HAVE_ALSA
+  mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss), MUS_AUDIO_CHANNEL, 2, val);
+  if (outchans < (int)(val[1])) outchans = (int)(val[1]);
+  mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss), MUS_AUDIO_SAMPLES_PER_CHANNEL, 2, val);
+  frames = (int)(val[0]);
+  set_dac_size(ss, outchans * frames * mus_bytes_per_sample(format));
+  buf = (mus_sample_t **)CALLOC(outchans, sizeof(mus_sample_t *));
+  buf[0] = (mus_sample_t *)CALLOC(frames, sizeof(mus_sample_t));
+  outbuf = (char *)CALLOC(frames * datum_bytes * outchans, sizeof(char));
 #else
-  #if HAVE_ALSA
-    mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss), MUS_AUDIO_CHANNEL, 2, val);
-    if (outchans < (int)(val[1])) outchans = (int)(val[1]);
-    mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss), MUS_AUDIO_SAMPLES_PER_CHANNEL, 2, val);
-    frames = (int)(val[0]);
-    set_dac_size(ss, outchans * frames * mus_bytes_per_sample(format));
-    buf = (mus_sample_t **)CALLOC(outchans, sizeof(mus_sample_t *));
-    buf[0] = (mus_sample_t *)CALLOC(frames, sizeof(mus_sample_t));
-    outbuf = (char *)CALLOC(frames * datum_bytes * outchans, sizeof(char));
-  #else
-    buf = (short *)CALLOC(frames, sizeof(short));
-  #endif
+  buf = (OutSample *)CALLOC(frames, sizeof(OutSample));
 #endif
 
   play_fd = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss),
@@ -3021,21 +3002,15 @@ static void play_mix(snd_state *ss, mix_info *md)
 	  ss->stopped_explicitly = FALSE;
 	  for (i = 0; i < samps; i += frames)
 	    {
-#if MAC_OSX
-	      for (j = 0; j < 512; j += 2) 
-		buf[j] = next_mix_sample(mf);
-	      mus_audio_write(play_fd, (char *)buf, 2048);
-#else
-  #if HAVE_ALSA
+#if HAVE_ALSA
 	      for (j = 0; j < frames; j++)
 		buf[0][j] = MUS_FLOAT_TO_SAMPLE(next_mix_sample(mf));
 	      mus_file_write_buffer(format, 0, frames - 1, outchans, buf, outbuf, TRUE);
 	      mus_audio_write(play_fd, outbuf, frames * datum_bytes * outchans);
-  #else
+#else
 	      for (j = 0; j < frames; j++) 
-		buf[j] = MUS_SAMPLE_TO_SHORT(MUS_FLOAT_TO_SAMPLE(next_mix_sample(mf)));
+		buf[j] = MUS_CONVERT(next_mix_sample(mf));
 	      mus_audio_write(play_fd, (char *)buf, frames * datum_bytes);
-  #endif
 #endif
 	      check_for_event(ss);
 	      if ((ss->stopped_explicitly) || (mix_play_stopped()))

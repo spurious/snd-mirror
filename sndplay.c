@@ -24,21 +24,22 @@
 #endif
 
 #if MAC_OSX
-  #define BUFFER_SIZE 512
+  #define BUFFER_SIZE 256
 #else
-  #if WIN32
-    /* this setting from Scott Middleton (actually used 8096) */
-    #define BUFFER_SIZE 8192
-  #else
-    #define BUFFER_SIZE 4096
-  #endif
+#if WIN32
+  /* this setting from Scott Middleton (actually used 8096) */
+  #define BUFFER_SIZE 8192
+#else
+  #define BUFFER_SIZE 4096
 #endif
-
+#endif
 
 #if MAC_OSX
   #define OutSample float
+  #define MUS_CONVERT(samp) MUS_SAMPLE_TO_FLOAT(samp)
 #else
   #define OutSample short
+  #define MUS_CONVERT(samp) MUS_SAMPLE_TO_SHORT(samp)
 #endif
 
 #if (HAVE_OSS || HAVE_ALSA)
@@ -78,12 +79,12 @@ char *copy_string(const char *str) {return(strdup(str));}
 int main(int argc, char *argv[])
 {
   int fd, afd, i, j, n, k, chans, srate;
-  off_t frames, outbytes, m;
+  off_t frames, m;
   mus_sample_t **bufs;
   OutSample *obuf;
   float val[1];
   int use_multi_card_code = 0;
-  int afd0, afd1, buffer_size, curframes, sample_size, out_chans;
+  int afd0, afd1, buffer_size, curframes, sample_size, out_chans, outbytes;
   mus_sample_t **qbufs;
   short *obuf0, *obuf1;
   char *name = NULL;
@@ -164,27 +165,17 @@ int main(int argc, char *argv[])
 		}
 	    }
 	}
-#if MAC_OSX
-      /* Mac OSX built-in device has only one "format": 44100 stereo bfloat 4096 bytes */
-      out_chans = 2;
-#else
       out_chans = chans;
-#endif
       srate = mus_sound_srate(name);
       frames = mus_sound_frames(name);
       sample_size = mus_bytes_per_sample(MUS_COMPATIBLE_FORMAT);
       if (!use_multi_card_code)
 	{
-	  outbytes = BUFFER_SIZE * out_chans * sample_size;
 	  bufs = (mus_sample_t **)CALLOC(chans, sizeof(mus_sample_t *));
 	  for (i = 0; i < chans; i++) bufs[i] = (mus_sample_t *)CALLOC(BUFFER_SIZE, sizeof(mus_sample_t));
 	  obuf = (OutSample *)CALLOC(BUFFER_SIZE * out_chans, sizeof(OutSample));
-#if MAC_OSX
-	  buffer_size = 512;
-	  if (srate == 22050) buffer_size = 256;
-#else
+	  outbytes = BUFFER_SIZE * out_chans * sample_size;
 	  buffer_size = BUFFER_SIZE;
-#endif
 	  for (m = 0; m < frames; m += buffer_size)
 	    {
 	      if ((m + buffer_size) <= frames)
@@ -193,58 +184,10 @@ int main(int argc, char *argv[])
 	      mus_sound_read(fd, 0, curframes - 1, chans, bufs); 
 	      /* some systems are happier if we read the file before opening the dac */
 	      /* at this point the data is in separate arrays of ints */
-#if MAC_OSX
-	      if (chans == 1)
-		{
-		  if (srate == 44100)
-		    {
-		      for (k = 0, n = 0; k < curframes; k++, n += 2) 
-			{
-			  obuf[n] = MUS_SAMPLE_TO_FLOAT(bufs[0][k]);
-			  obuf[n + 1] = 0.0;
-			}
-		    }
-		  else
-		    {
-		      for (k = 0, n = 0; k < curframes; k++, n += 4) 
-			{
-			  obuf[n] = MUS_SAMPLE_TO_FLOAT(bufs[0][k]);
-			  obuf[n + 1] = 0.0;
-			  obuf[n + 2] = obuf[n];
-			  obuf[n + 3] = 0.0;
-			}
-		    }
-		}
-	      else
-		{
-		  if (chans == 2)
-		    {
-		      if (srate == 44100)
-			{
-			  for (k = 0, n = 0; k < curframes; k++, n += 2) 
-			    {
-			      obuf[n] = MUS_SAMPLE_TO_FLOAT(bufs[0][k]); 
-			      obuf[n + 1] = MUS_SAMPLE_TO_FLOAT(bufs[1][k]);
-			    }
-			}
-		      else
-			{
-			  for (k = 0, n = 0; k < curframes; k++, n += 4) 
-			    {
-			      obuf[n] = MUS_SAMPLE_TO_FLOAT(bufs[0][k]); 
-			      obuf[n + 1] = MUS_SAMPLE_TO_FLOAT(bufs[1][k]);
-			      obuf[n + 2] = obuf[n];
-			      obuf[n + 3] = obuf[n + 1];
-			    }
-			}
-		    }
-		}
-#else
-	      /* not OSX */
 	      if (chans == 1)
 		{
 		  for (k = 0; k < curframes; k++) 
-		    obuf[k] = MUS_SAMPLE_TO_SHORT(bufs[0][k]);
+		    obuf[k] = MUS_CONVERT(bufs[0][k]);
 		}
 	      else
 		{
@@ -252,8 +195,8 @@ int main(int argc, char *argv[])
 		    {
 		      for (k = 0, n = 0; k < curframes; k++, n += 2) 
 			{
-			  obuf[n] = MUS_SAMPLE_TO_SHORT(bufs[0][k]); 
-			  obuf[n + 1] = MUS_SAMPLE_TO_SHORT(bufs[1][k]);
+			  obuf[n] = MUS_CONVERT(bufs[0][k]); 
+			  obuf[n + 1] = MUS_CONVERT(bufs[1][k]);
 			}
 		    }
 		  else
@@ -261,11 +204,10 @@ int main(int argc, char *argv[])
 		      for (k = 0, j = 0; k < curframes; k++, j += chans)
 			{
 			  for (n = 0; n < chans; n++) 
-			    obuf[j + n] = MUS_SAMPLE_TO_SHORT(bufs[n][k]);
+			    obuf[j + n] = MUS_CONVERT(bufs[n][k]);
 			}
 		    }
 		}
-#endif
 	      if (afd == -1)
 		{
 #if defined(LINUX) && defined(PPC)
@@ -275,11 +217,7 @@ int main(int argc, char *argv[])
 #endif
 		  if (afd == -1) break;
 		}
-#if MAC_OSX
-	      outbytes = 4096;
-#else
 	      outbytes = curframes * out_chans * sample_size;
-#endif
 	      mus_audio_write(afd, (char *)obuf, outbytes);
 	    }
 	  if (afd != -1) mus_audio_close(afd);
