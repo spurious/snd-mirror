@@ -64,6 +64,8 @@
  *
  *
  * TODO: procedure property 'ptree -> saved ptree
+ * TODO: set of global var to continuation is not flagged as trouble (should it be?)
+ * TODO: mus_file_name tested
  *
  *
  * LIMITATIONS: <insert anxious lucubration here about DSP context and so on>
@@ -2470,15 +2472,18 @@ static xen_value *generalized_set_form(ptree *prog, XEN form, int need_result)
       in_settee = XEN_CAR(settee);
       mus_snprintf(accessor, 256, "%s", XEN_SYMBOL_TO_C_STRING(in_settee));
       v = walk(prog, setval, TRUE);
-      if (v == NULL) 
+      if (v == NULL)
 	return(run_warn("set!: can't handle: %s", XEN_AS_STRING(setval)));
       if (XEN_NOT_NULL_P(XEN_CDR(settee)))
 	{
 	  in_v = walk(prog, XEN_CADR(settee), TRUE);
-	  if (in_v == NULL)
+	  if ((in_v == NULL) ||
+	      (in_v->type = R_UNSPECIFIED) ||
+	      (in_v->constant))
 	    {
 	      FREE(v);
-	      return(run_warn("set!: can't handle: %s", XEN_AS_STRING(XEN_CADR(settee))));
+	      if (in_v) FREE(in_v);
+	      return(run_warn("set!: can't handle setter: %s", XEN_AS_STRING(settee)));
 	    }
 	}
       return(lookup_generalized_set(prog, copy_string(accessor), in_v, v));
@@ -5574,6 +5579,7 @@ static char *descr_str_gen0(int *args, int *ints, Float *dbls, char *which)
 STR_GEN0(name)
 STR_GEN0(describe)
 STR_GEN0(inspect)
+STR_GEN0(file_name)
 
 
 static char *descr_ref_gen0(int *args, int *ints, Float *dbls, char *which)
@@ -6963,6 +6969,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	      if (strcmp(funcname, "mus-cosines") == 0) return(clean_up(mus_cosines_0(prog, args), args, num_args));
 	      
 	      if (strcmp(funcname, "mus-name") == 0) return(clean_up(mus_name_0(prog, args), args, num_args));
+	      if (strcmp(funcname, "mus-file-name") == 0) return(clean_up(mus_file_name_0(prog, args), args, num_args));
 	      if (strcmp(funcname, "mus-describe") == 0) return(clean_up(mus_describe_0(prog, args), args, num_args));
 	      if (strcmp(funcname, "mus-inspect") == 0) return(clean_up(mus_inspect_0(prog, args), args, num_args));
 
@@ -7446,6 +7453,7 @@ in multi-channel situations where you want the optimization that vct-map! provid
 
   for (i = 0; i < min_len; i++) 
     {
+      /* TODO: dynwind around vct-map (has local vs array) */
       obj = XEN_CALL_0_NO_CATCH(code, S_vct_map);
       if (mus_xen_p(obj))
 	{

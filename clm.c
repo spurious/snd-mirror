@@ -4691,8 +4691,9 @@ static int free_sample2file(void *p)
   return(0);
 }
 
-static int sample2file_length(void *ptr) {return((int)(((rdout *)ptr)->out_end));}
 static int sample2file_channels(void *ptr) {return((int)(((rdout *)ptr)->chans));}
+static int bufferlen(void *ptr) {return(clm_file_buffer_size);}
+static int set_bufferlen(void *ptr, int len) {clm_file_buffer_size = len; return(len);}
 
 static mus_any_class SAMPLE2FILE_CLASS = {
   MUS_SAMPLE2FILE,
@@ -4702,7 +4703,7 @@ static mus_any_class SAMPLE2FILE_CLASS = {
   &inspect_rdout,
   &sample2file_equalp,
   0, 0, 
-  &sample2file_length, 0,
+  &bufferlen, &set_bufferlen, /* does this have any effect on the current gen? */
   0, 0, 0, 0,
   0, 0,
   0, 0,
@@ -4711,9 +4712,6 @@ static mus_any_class SAMPLE2FILE_CLASS = {
   NULL,
   &sample2file_channels,
 };
-
-static int bufferlen(void *ptr) {return(clm_file_buffer_size);}
-static int set_bufferlen(void *ptr, int len) {clm_file_buffer_size = len; return(len);}
 
 static void flush_buffers(rdout *gen)
 {
@@ -4846,8 +4844,6 @@ mus_any *mus_make_sample2file_with_comment(const char *filename, int out_chans, 
 	  strcpy(gen->file_name, filename);
 	  (gen->base)->sample = &sample_file;
 	  (gen->base)->end = &sample2file_end;
-	  (gen->core)->length = &bufferlen;
-	  (gen->core)->set_length = &set_bufferlen;
 	  gen->data_start = 0;
 	  gen->data_end = clm_file_buffer_size - 1;
 	  gen->out_end = 0;
@@ -4921,7 +4917,8 @@ static mus_any_class FRAME2FILE_CLASS = {
   &describe_frame2file,
   &inspect_rdout,
   &sample2file_equalp,
-  0, 0, 0, 0,
+  0, 0,
+  &bufferlen, &set_bufferlen,
   0, 0, 0, 0,
   0, 0,
   0, 0,
@@ -6993,6 +6990,19 @@ Float mus_phase_vocoder(mus_any *ptr, Float (*input)(void *arg, int direction))
 	}
       return(mus_sum_of_sines(pv->amps, pv->phases, N2));
     }
+}
+
+const char *mus_file_name(mus_any *ptr)
+{
+  if (check_gen(ptr, "mus-file-name"))
+    {
+      if ((ptr->core)->type == MUS_SAMPLE2FILE) return(((rdout *)ptr)->file_name);
+      if ((ptr->core)->type == MUS_FRAME2FILE) return(((rdout *)ptr)->file_name);
+      if ((ptr->core)->type == MUS_FILE2SAMPLE) return(((rdin *)ptr)->file_name);
+      if ((ptr->core)->type == MUS_FILE2FRAME) return(((rdin *)ptr)->file_name);
+      if ((ptr->core)->type == MUS_READIN) return(((rdin *)ptr)->file_name);
+    }
+  return(NULL);
 }
 
 void init_mus_module(void)

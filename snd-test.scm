@@ -30,6 +30,7 @@
 
 ;;; TODO: GL tests, gtk (xg) tests
 ;;; TODO: mix panel env editor (apply button (|XmMessageBoxGetChild mix_panel |XmDIALOG_CANCEL_BUTTON)
+;;; TODO: mus-length of readin etc (and set) mus-file-name of readin/file->sample etc
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs) (ice-9 syncase))
 
@@ -4673,7 +4674,39 @@
 					#f))))))
 	      (set! (edit-position ind 0) edpos)))
 	  (close-sound ind))
-
+	(let ((reader #f)
+	      (last-proc #f))
+	  (define (scan-again)
+	    (if (sample-reader-at-end? reader)
+		#f
+		(let ((val (last-proc (reader))))
+		  (if val 
+		      (list val (1- (sample-reader-position reader)))
+		      (scan-again)))))
+	  (define* (my-scan-chan #:optional proc)
+	    (if proc 
+		(begin
+		  (set! last-proc proc)
+		  (set! reader (make-sample-reader 0))))
+	    (scan-again))
+	  (let ((ind (open-sound "oboe.snd"))
+		(val #f))
+	    (set! val (my-scan-chan (lambda (y) (> y .1))))
+	    (if (not (equal? val (list #t 4423)))
+		(snd-display ";my-scan-chan: ~A" val))
+	    (set! val (scan-again))
+	    (if (not (equal? val (list #t 4463)))
+		(snd-display ";scan-again: ~A" val))
+	    (let ((val (find (lambda (y)
+			       (let ((val (find (lambda (y) (> y .1)))))
+				 val)))))
+	      (if (not (equal? val (list (list #t 4423) 0)))
+		  (snd-display ";find twice: ~A" val)))
+	    (let ((val (find (lambda (y)
+			       (count-matches (lambda (y) (> y .1)))))))
+	      (if (not (equal? val (list 2851 0)))
+		  (snd-display ";find+count: ~A" val)))
+	    (close-sound ind)))
         )))
 
 
@@ -4866,6 +4899,14 @@
 	(play-and-wait 0 nind)
 	(close-sound nind)
 	(delete-file "tmp.snd"))
+      (let ((v1 (make-vct 32)))
+	(vct-map! v1
+		  (lambda ()
+		    (let ((v2 (make-vct 3)))
+		      (vct-map! v2 (lambda () .1))
+		      (vct-ref v2 0))))
+	(if (fneq (vct-ref v1 12) .1) (snd-display ";vct-map! twice: ~A" (vct-ref v1 12))))
+
       ))
     ))
 
@@ -11085,7 +11126,7 @@
 	  (undo)
 	  (as-one-edit (lambda () (set! (sample 20) .2) (set! (sample 30) .3)))
 	  (undo 1)
-	  (as-one-edit (lambda () (set! (sample 2) .2) (set! (sample 3) .3)))
+	  (as-one-edit (lambda () (set! (sample 2) .2) (as-one-edit (lambda () (set! (sample 3) .3)))))
 	  (undo 2)
 	  (reset-hook! (undo-hook))
 	  (reset-hook! (edit-hook))
@@ -17929,6 +17970,8 @@ EDITS: 5
 	  (if (or (fneq (vct-ref v 0) .0662) (fneq (vct-ref v 1) .0551)) (snd-display "read-sample ftst: ~A" v))
 	  ;(vct-map! v (lambda () (r)))
 	  ;(if (or (fneq (vct-ref v 0) .039) (fneq (vct-ref v 1) .024)) (snd-display "read-sample apply ftst: ~A" v))
+
+	  (etst '(set! (sample 100) 0.0))
 	  )
 	(close-sound ind))
 

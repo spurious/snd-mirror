@@ -731,6 +731,7 @@ XEN mus_xen_to_object_with_vct(mus_xen *gn, XEN v) /* global for user-defined ge
 #define S_mus_set_data       "mus-set-data"
 #define S_mus_scaler         "mus-scaler"
 #define S_mus_set_scaler     "mus-set-scaler"
+#define S_mus_file_name      "mus-file-name"
 #define S_mus_inspect        "mus-inspect"
 #define S_mus_describe       "mus-describe"
 #define S_mus_name           "mus-name"
@@ -852,6 +853,13 @@ static XEN g_set_data(XEN gen, XEN val)
       return(val);
     }
   return(xen_return_first(XEN_FALSE, gen, val));
+}
+
+static XEN g_file_name(XEN gen) 
+{
+  #define H_mus_file_name "(" S_mus_file_name " gen) -> file associated with gen, if any"
+  XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ONLY_ARG, S_mus_file_name, "a generator");
+  return(C_TO_XEN_STRING(mus_file_name(MUS_XEN_TO_CLM(gen))));
 }
 
 static Float *copy_vct_data(vct *v)
@@ -4649,6 +4657,7 @@ XEN_NARGIFY_2(g_set_scaler_w, g_set_scaler)
 XEN_NARGIFY_1(g_frequency_w, g_frequency)
 XEN_NARGIFY_2(g_set_frequency_w, g_set_frequency)
 XEN_NARGIFY_1(g_length_w, g_length)
+XEN_NARGIFY_1(g_file_name_w, g_file_name)
 XEN_NARGIFY_2(g_set_length_w, g_set_length)
 XEN_NARGIFY_1(g_data_w, g_data)
 XEN_NARGIFY_2(g_set_data_w, g_set_data)
@@ -4900,6 +4909,7 @@ XEN_ARGIFY_7(g_mus_mix_w, g_mus_mix)
 #define g_frequency_w g_frequency
 #define g_set_frequency_w g_set_frequency
 #define g_length_w g_length
+#define g_file_name_w g_file_name
 #define g_set_length_w g_set_length
 #define g_data_w g_data
 #define g_set_data_w g_set_data
@@ -5239,6 +5249,7 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_frequency, g_frequency_w, H_mus_frequency, S_mus_set_frequency, g_set_frequency_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_length, g_length_w, H_mus_length, S_mus_set_length, g_set_length_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_data, g_data_w, H_mus_data, S_mus_set_data, g_set_data_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE(S_mus_file_name, g_file_name_w, 1, 0, 0, H_mus_file_name);
 
   XEN_DEFINE_PROCEDURE(S_oscil_p,    g_oscil_p_w, 1, 0, 0,    H_oscil_p);
   XEN_DEFINE_PROCEDURE(S_make_oscil, g_make_oscil_w, 0, 4, 0, H_make_oscil);

@@ -24,6 +24,7 @@
 				  (continue-old-file #f)
 				  (statistics #f)
 				  (scaled-to #f)
+				  (play #f)
 				  (scaled-by #f))
   (let ((old-srate (mus-srate))
 	(old-tags (with-mix-tags)))

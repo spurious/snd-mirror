@@ -2947,6 +2947,7 @@ a particular mix object:</p>
 <!-- --></td></tr>
 <!-- -->
 <!-- mix-length -->
+<!-- SOMEDAY: shouldn't mix-length be mix-frames? -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="sndmixlength">mix-length</a></em> (<i>mix</i>)</code></span></td>
 <!-- --><td>length in samples of <i>mix</i>.
@@ -3133,8 +3134,8 @@ Most of the region number arguments default to the current region (the first in 
 <!-- -->
 <!-- --><tr><td valign=top><span class=defbox><code><em class=def><a name="snddeleteregion">forget-region</a></em> (<i>reg</i>)</code></span></td>
 <!-- --><td>
-<!-- -->"forget" region number <i>reg</i>, removing it 
-<!-- -->from the region stack.  Once forgotten, the region's data no longer exists.
+<!-- -->"forget" region <i>reg</i>, removing it 
+<!-- -->from the region stack.  Once forgotten, the region's data no longer exists (as a separate entity accessible via region-samples and so on).
 <!-- --></td></tr>
 <!-- -->
 <!-- insert-region -->
@@ -3190,6 +3191,7 @@ Most of the region number arguments default to the current region (the first in 
 <!-- --></td></tr>
 <!-- -->
 <!-- region-length -->
+<!-- SOMEDAY: shouldn't region-length be region-frames? should it have a chn arg? -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="sndregionlength">region-length</a></em> (<i>reg</i>)</code></span></td>
 <!-- --><td>
@@ -3284,7 +3286,7 @@ Most of the region number arguments default to the current region (the first in 
 <!-- -->
 <!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="sndconvolveselectionwith">convolve-selection-with</a></em> (file <i>amp</i>)     </code></span></td>
 <!-- --></tr><tr><td></td><td>
-<!-- -->convolve the current selection with <i>file</i> 
+<!-- -->convolve the current selection with <i>file</i>.
 <!-- --></td></tr>
 <!-- -->
 <!-- delete-selection -->
@@ -3338,7 +3340,7 @@ Most of the region number arguments default to the current region (the first in 
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="sndreverseselection">reverse-selection</a></em> ()</code></span></td>
 <!-- --><td>
-<!-- -->reverse data delineated by current selection 
+<!-- -->reverse data delineated by current selection.
 <!-- --></td></tr>
 <!-- -->
 <!-- save-selection -->
@@ -3366,18 +3368,21 @@ Most of the region number arguments default to the current region (the first in 
 <!-- -->
 <!-- scale-selection-by -->
 <!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="sndscaleselectionby">scale-selection-by</a></em> (<i>scalers</i>)</code></span></td>
+<!-- --><tr><td valign=top><span class=defbox><code><em class=def><a name="sndscaleselectionby">scale-selection-by</a></em> (<i>scalers</i>)</code></span></td>
 <!-- --><td>
 <!-- --><a href="snd.html#scaling">scale</a> the current selection by <i>scalers</i> which can be either a float, 
-<!-- -->or a vector of floats 
+<!-- -->a list of floats, or a vector of floats.  In a multi-channel selection, each member of the vector or list
+<!-- -->is applied to the next channel in the selection.  <code>(scale-selection-by '(0.0 2.0))</code> scales
+<!-- -->the first channel by 0.0, the second (if any) by 2.0.  <code>(scale-selection-by 2.0)</code> scales
+<!-- -->all channels by 2.0.  Normally the order of channels follows the order of the enclosing sound indices.
 <!-- --></td></tr>
 <!-- -->
 <!-- scale-selection-to -->
 <!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="sndscaleselectionto">scale-selection-to</a></em> (<i>scalers</i>)</code></span></td>
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="sndscaleselectionto">scale-selection-to</a></em> (<i>norms</i>)</code></span></td>
 <!-- --><td>
-<!-- --><a href="snd.html#scaling">normalize</a> the current selection to <i>scalers</i> which can be either a float, 
-<!-- -->or a vector of floats 
+<!-- --><a href="snd.html#scaling">normalize</a> the current selection to <i>norms</i> which can be either a float, 
+<!-- -->a list of floats, or a vector of floats.
 <!-- --></td></tr>
 <!-- -->
 <!-- select-all -->
@@ -3392,10 +3397,11 @@ Most of the region number arguments default to the current region (the first in 
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="selectionchans">selection-chans</a></em> ()</code></span></td>
 <!-- --><td>
-<!-- -->selection channels
+<!-- -->selection channels.
 <!-- --></td></tr>
 <!-- -->
 <!-- selection-length -->
+<!-- SOMEDAY: shouldn't selection-length be selection-frames? -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="selectionlength">selection-length</a></em> (<i>snd chn</i>)</code></span></td>
 <!-- --><td>
@@ -3416,6 +3422,7 @@ Most of the region number arguments default to the current region (the first in 
 <!-- -->#t if snd's chn is member of active selection. (This is settable).  See make-selection in extensions.scm.
 <!-- -->If <i>snd</i> is #t and the new value is #f, the entire current selection is deactivated.
 <!-- --></td></tr>
+<!-- SOMEDAY: selection-member? could be replaced by adding snd chn args to selection? -->
 <!-- -->
 <!-- selection-position -->
 <!-- -->
@@ -3428,7 +3435,7 @@ Most of the region number arguments default to the current region (the first in 
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="selectionsrate">selection-srate</a></em> ()</code></span></td>
 <!-- --><td>
-<!-- -->selection srate
+<!-- -->selection srate.  There's some arbitrariness in this if the sounds that make up the selection have different sampling rates.
 <!-- --></td></tr>
 <!-- -->
 <!-- selection? -->
@@ -3593,7 +3600,7 @@ the direction argument between the channel and edit-position:
 <!-- --><span class=defbox><code><em class=def><a name="sndbackwardgraph">backward-graph</a></em> (<i>count snd chn</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->move back (up or left) <i>count</i> graphs (C-x C-o), returning a list of the new sound index and channel number.
+<!-- -->move the selected channel back (up or left) <i>count</i> graphs (C-x C-o), returning a list of the new sound index and channel number.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4128,6 +4135,7 @@ the direction argument between the channel and edit-position:
 <!-- -->
 <!-- -->
 <!-- file-name -->
+<!-- SOMEDAY: inconsistent names: mus-expand-filename -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="sndfilename">file-name</a></em> (<em class=targ>snd</em>)</code></span>
 <!-- --></td></tr>
@@ -4207,7 +4215,8 @@ the direction argument between the channel and edit-position:
 <!-- --><span class=defbox><code><em class=def><a name="finishprogressreport">finish-progress-report</a></em> (<i>snd</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->End an on-going "progress report" (a visual indication of how far along some time-consuming process is). See <a href="#progressreport">progress-report</a>.
+<!-- -->End an on-going "progress report" (a visual indication of how far along some time-consuming process is). 
+<!-- -->See <a href="#progressreport">progress-report</a>.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4217,7 +4226,7 @@ the direction argument between the channel and edit-position:
 <!-- --><span class=defbox><code><em class=def><a name="sndforwardgraph">forward-graph</a></em> (<i>count snd chn</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->move forward (down or right) <i>count</i> graphs (C-x C-o), returning a list of the new sound index and channel number.
+<!-- -->move the selected channel forward (down or right) <i>count</i> graphs (C-x C-o), returning a list of the new sound index and channel number.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4588,6 +4597,23 @@ the direction argument between the channel and edit-position:
                   val)))))
 <!-- --></pre></td></tr></table>
 <!-- --><br>
+<!-- -->It is also possible to stop, then continue map-chan:<br><br>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+(define go-on #f)
+(map-chan (lambda (y) 
+            (call-with-current-continuation 
+              (lambda (stop) 
+                (if (&gt; y 1.0)
+                    (begin 
+                      (set! go-on stop) 
+                      (throw 'oops))))) 
+            .2))
+<!-- --></pre></td></tr></table>
+<!-- --><br>
+<!-- -->If this hits a sample &gt; 1.0, it will print 'oops and put the continuation in the variable <i>go-on</i>.
+<!-- --><code>(go-on)</code> will continue where you left off.  (I'm not sure how far this can be pushed, or
+<!-- -->whether it's a good idea -- you may end up with unclosed files and so on).
+<!-- --><br><br>
 <!-- -->If the editing action is not mapping something over the current sound, it is
 <!-- -->safest to write a temp file with the new data, then pass that to set-samples
 <!-- -->with the trunc argument set to #t.  This way you don't assume the new sound
@@ -4608,14 +4634,18 @@ the direction argument between the channel and edit-position:
 	 (lambda (snd chn)
 	   (<em class=red>map-chan</em> proc beg end edname snd chn edpos))
 	 (all-chans)))
-<!-- --></pre></td></tr></table>
-<!-- 
-hmmm -- this explanation can only cause confusion
-
-<br>map-chan sets up the sample reader before calling the procedure, so if that procedure edits
-the sound itself (independent of map-chan), the result will be all such edits after the current edit, then the map-chan result
-applied to the original (not the newly edited) data.
--->
+<!-- --></pre></td></tr></table><br>
+<!-- -->An esoteric aside: map-chan sets up the sample reader before calling the procedure, so if that procedure edits
+<!-- -->the sound itself (independent of map-chan), the result will be all such edits after the current edit, then the map-chan result
+<!-- -->applied to the original (not the newly edited) data.  That is,<br><br><pre>
+(let ((first #t)) 
+  (map-chan (lambda (y) 
+              (if first (set! (sample 0) 1.0)) 
+              (set! first #f) 
+              (* y 2))))
+<!-- --></pre>
+<!-- -->will return with two edits registered in the edit history list; the map-chan result will be the original data doubled;
+<!-- -->the preceding edit in the list will be the <code>(set! (sample 0) 1.0)</code> which the map-chan ignores.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5007,6 +5037,8 @@ applied to the original (not the newly edited) data.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
+<!-- -->
+<!-- redo -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a href="#sndredo">redo</a></em> (<i>edits snd chn</i>)</code></span>
 <!-- --></td></tr>
@@ -5320,7 +5352,7 @@ applied to the original (not the newly edited) data.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- --><b>scan-channel</b> is the <a href="#regularizedargs">regularized</a> version of <a href="#scanchan">scan-chan</a>.
-<!-- -->As with most of the other functions that take a function as an argument (map-channel and so on), an attempt to jump back
+<!-- -->In scan-chan, scan-channel, find, and count-matches (all actually the same underlying procedure), an attempt to jump back
 <!-- -->into a previous call will not work.  That is,<br><br>
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (let ((not-a-good-idea #f))
@@ -5331,54 +5363,25 @@ applied to the original (not the newly edited) data.
 		  (&gt; y .001)))
   (not-a-good-idea))
 <!-- --></pre></td></tr></table>
-<!-- --><br>will die with a segfault.  If you want to use continuations in this manner, go down a level, using sample-readers
-<!-- -->and so on directly:
+<!-- --><br>will die with a segfault (this is fixable, with much effort and grumbling).  If you want a continuable search, use a sample-reader:
 <!-- --><br><br>
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(define scan-again #f)
+(define reader #f)
+(define last-proc #f)
+(define (scan-again)
+  (if (sample-reader-at-end? reader)
+      #f
+      (let ((val (last-proc (reader))))
+	(if val 
+	    (list val (1- (sample-reader-position reader)))
+	    (scan-again)))))
 (define (my-scan-chan proc)
-  (let ((reader (make-sample-reader 0))
-	(last-pos (frames))
-	(pos -1))
-    (call-with-current-continuation
-     (lambda (return)
-       (call-with-current-continuation
-	(lambda (top)
-	  (set! scan-again top)))
-       (let ((val (proc (reader))))
-	 (set! pos (1+ pos))
-	 (if val 
-	     (return (list val pos scan-again))
-	     (if (&gt;= pos last-pos) 
-		 (begin 
-		   (set! scan-again #f) 
-		   (return #f))))
-	 (scan-again))))))
+  (set! last-proc proc)
+  (set! reader (make-sample-reader 0))
+  (scan-again))
 <!-- --></pre></td></tr></table>
-<!-- --><br>Now <code>(my-scan-chan (lambda (y) (> y .1)))</code> starts scanning, returning the first
-<!-- -->such value.  We can call <code>(scan-again)</code> to return subsequent values (picking up the
-<!-- -->scan where the last one stopped).  Since the sample-reader remembers where it is, this entire
-<!-- -->thing could be handled more easily by passing the reader to the scanner, but we wanted to
-<!-- -->use continuations...
-<!-- --><br><br>
-<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre><small>
-(define scan-again #f)
-(define (my-scan-chan proc)
-  (let ((reader (make-sample-reader 0)))
-    (call-with-current-continuation
-     (lambda (return)
-        (define (next-scan) 
-	  (let ((val (proc (reader))))
-	    (if val 
-		(return (list val (1- (sample-reader-position reader))))
-		(if (sample-reader-at-end? reader)
-		    (begin 
-		      (set! scan-again #f) 
-		      (return #f))
-		    (next-scan)))))
-	(set! scan-again next-scan)
-	(next-scan)))))
-</small><!-- --></pre></td></tr></table>
+<!-- --><br>Now <code>(my-scan-chan (lambda (y) (> y .1)))</code> finds the first such sample, and
+<!-- -->subsequent <code>(scan-again)</code> calls continue the search where the last call left off.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->

@@ -2681,7 +2681,7 @@ char *g_c_run_concat_hook(XEN hook, const char *caller, char *initial_string, ch
 {
   char *newstr = NULL, *tmpstr = NULL;
   if (initial_string) 
-    newstr = copy_string(initial_string);
+    newstr = copy_string(initial_string); /* will be accumulating stuff in loop through hook */
   if (XEN_HOOKED(hook))
     {
       XEN result;
@@ -2690,6 +2690,7 @@ char *g_c_run_concat_hook(XEN hook, const char *caller, char *initial_string, ch
 #if HAVE_GUILE
       while (XEN_NOT_NULL_P(procs))
 	{
+	  /* TODO: dynwind around concat hook (newstr) */
 	  if (subject)
 	    result = XEN_CALL_2(XEN_CAR(procs),
 				C_TO_XEN_STRING(subject),

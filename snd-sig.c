@@ -2383,8 +2383,6 @@ static char *run_channel(chan_info *cp, void *upt, off_t beg, off_t dur, int edp
   return(NULL);
 }
 
-/* TODO: protect map-chan with dynamic-wind */
-
 static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN chn, XEN edpos, XEN s_dur, char *fallback_caller) 
 { 
   snd_state *ss;
@@ -2640,7 +2638,8 @@ static scan_context *make_scan_context(XEN p, off_t b, off_t n, snd_fd *f, snd_i
 
 static void before_scan(void *ignore)
 {
-  /* we could possibly catch call/cc into previous scan here */
+  /* we could possibly catch call/cc into previous scan here, but that requires an smob for the context */
+  /*   put init_sample_read here, update sc->beg in scan body, don't free context explicitly */
 }
 
 static SCM scan_body(void *context)

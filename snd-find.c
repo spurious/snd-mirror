@@ -41,7 +41,7 @@ static int run_global_search (snd_state *ss, gfd *g)
 		}
 	      else
 		{
-
+		  /* TODO: dynwind around search procs */
 		  res = XEN_CALL_1(ss->search_proc,
 				   C_TO_XEN_DOUBLE((double)(samp)), 
 				   "global search func");

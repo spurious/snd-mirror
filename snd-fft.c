@@ -1087,6 +1087,7 @@ static void apply_fft(fft_state *fs)
 	int len;
 	sfd = g_c_make_sample_reader(sf);
 	snd_protect(sfd);
+	/* TODO: dynwind around user transform */
 	res = XEN_CALL_2(added_transform_proc(cp->transform_type), 
 			 C_TO_XEN_INT(data_len), 
 			 sfd,

@@ -1205,6 +1205,7 @@ static snd_info *snd_update_1(snd_state *ss, snd_info *sp, char *ur_filename)
 	update_graph(nsp->chans[i]);
     }
 
+  /* TODO: dynwind (for mark_info list ms, filename) around update-hook */
   if (XEN_PROCEDURE_P(update_hook_result))
     {
       XEN_CALL_1(update_hook_result,
@@ -1762,6 +1763,7 @@ void make_prevfiles_list_1(snd_state *ss)
 	      file_list = XEN_EMPTY_LIST;
 	      for (i = prevfile_end; i >= 0; i--) 
 		file_list = XEN_CONS(C_TO_XEN_STRING(prevfullnames[i]), file_list);
+	      /* TODO: dynwind around user previous file sort */
 	      file_list = XEN_CALL_1(ss->file_sort_proc, file_list, "previous files sort");
 	      if (XEN_LIST_P(file_list))
 		{

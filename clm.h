@@ -2,10 +2,11 @@
 #define MUS_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 10
-#define MUS_DATE "7-June-02"
+#define MUS_REVISION 11
+#define MUS_DATE "10-July-02"
 
 /* 
+ * 10-July:    added mus_file_name.
  * 7-Jun:      fftw support added (mus_fftw).
  * 31-May:     changed mus_any_class.
  * 3-May:      many int->off_t changes for large files.
@@ -266,6 +267,7 @@ char *mus_name                  PROTO((mus_any *ptr));
 int mus_type                    PROTO((mus_any *ptr));
 Float mus_scaler                PROTO((mus_any *gen));
 Float mus_set_scaler            PROTO((mus_any *gen, Float val));
+const char *mus_file_name       PROTO((mus_any *ptr));
 
 Float mus_oscil                 PROTO((mus_any *o, Float fm, Float pm));
 Float mus_oscil_1               PROTO((mus_any *ptr, Float fm));
