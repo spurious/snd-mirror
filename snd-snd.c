@@ -1433,9 +1433,9 @@ static void remember_string(snd_info *sp, char *str, mini_history_t which)
   int i, top;
   switch (which)
     {
-    case MINIBUFFER: mh = (mini_history *)(sp->minibuffer_history); break;
-    case FILTER_TEXT: mh = (mini_history *)(sp->filter_history); break;
-    case LISTENER_TEXT: mh = listener_history; break;
+    case MINIBUFFER:    mh = (mini_history *)(sp->minibuffer_history); break;
+    case FILTER_TEXT:   mh = (mini_history *)(sp->filter_history);     break;
+    case LISTENER_TEXT: mh = listener_history;                         break;
     default: return; break;
     }
   if (mh == NULL)
@@ -1468,9 +1468,9 @@ static void restore_string(snd_info *sp, bool back, mini_history_t which)
   mini_history *mh = NULL;
   switch (which)
     {
-    case MINIBUFFER: mh = (mini_history *)(sp->minibuffer_history); break;
-    case FILTER_TEXT: mh = (mini_history *)(sp->filter_history); break;
-    case LISTENER_TEXT: mh = listener_history; break;
+    case MINIBUFFER:    mh = (mini_history *)(sp->minibuffer_history); break;
+    case FILTER_TEXT:   mh = (mini_history *)(sp->filter_history);     break;
+    case LISTENER_TEXT: mh = listener_history;                         break;
     }
   if (mh)
     {
@@ -1489,9 +1489,9 @@ static void restore_string(snd_info *sp, bool back, mini_history_t which)
 	{
 	  switch (which)
 	    {
-	    case MINIBUFFER: set_minibuffer_string(sp, str, true); break;
-	    case FILTER_TEXT: set_filter_text(sp, str); break;
-	    case LISTENER_TEXT: append_listener_text(-1, str); break;
+	    case MINIBUFFER:    set_minibuffer_string(sp, str, true); break;
+	    case FILTER_TEXT:   set_filter_text(sp, str);             break;
+	    case LISTENER_TEXT: append_listener_text(-1, str);        break;
 	    }
 	}
     }
@@ -1507,18 +1507,18 @@ static void clear_strings(snd_info *sp, mini_history_t which)
   mini_history *mh = NULL;
   switch (which)
     {
-    case MINIBUFFER: mh = (mini_history *)(sp->minibuffer_history); break;
-    case FILTER_TEXT: mh = (mini_history *)(sp->filter_history); break;
-    case LISTENER_TEXT: mh = listener_history; break;
+    case MINIBUFFER:    mh = (mini_history *)(sp->minibuffer_history); break;
+    case FILTER_TEXT:   mh = (mini_history *)(sp->filter_history);     break;
+    case LISTENER_TEXT: mh = listener_history;                         break;
     }
   if (mh)
     {
       int i;
       switch (which)
 	{
-	case MINIBUFFER: sp->minibuffer_history = NULL; break;
-	case FILTER_TEXT: sp->filter_history = NULL; break;
-	case LISTENER_TEXT: listener_history = NULL; break;
+	case MINIBUFFER:    sp->minibuffer_history = NULL; break;
+	case FILTER_TEXT:   sp->filter_history = NULL;     break;
+	case LISTENER_TEXT: listener_history = NULL;       break;
 	}
       for (i = 0; i < mh->strings_size; i++) 
 	if (mh->strings[i])

@@ -361,7 +361,11 @@ void command_return(widget_t w, int last_prompt)
 			       XEN_LIST_1(C_TO_XEN_STRING(str)),
 			       S_read_hook);
 	  FREE(str);
-	  if (XEN_TRUE_P(result)) return;
+	  if (XEN_TRUE_P(result)) 
+	    {
+	      if (full_str) GUI_FREE(full_str);
+	      return;
+	    }
 	}
     }
   prompt = listener_prompt(ss);
@@ -486,6 +490,7 @@ void command_return(widget_t w, int last_prompt)
 		  if (end_of_text < 0)
 		    GUI_LISTENER_TEXT_INSERT(w, new_eot, listener_prompt_with_cr());
 		  else GUI_LISTENER_TEXT_INSERT(w, new_eot, "\n");
+		  if (full_str) GUI_FREE(full_str);
 		  return;
 		}
 	    }

@@ -4721,16 +4721,16 @@ static xen_value *eq_p(ptree *prog, xen_value **args, int num_args)
     }
   switch (args[1]->type)
     {
-    case R_VCT: return(package(prog, R_BOOL, vct_eq_b, descr_vct_eq_b, args, 2));
-    case R_SOUND_DATA: return(package(prog, R_BOOL, sd_eq_b, descr_sd_eq_b, args, 2));
-    case R_CLM: return(package(prog, R_BOOL, clm_eq_b, descr_clm_eq_b, args, 2));
-    case R_READER: return(package(prog, R_BOOL, reader_eq_b, descr_reader_eq_b, args, 2));
-    case R_MIX_READER: return(package(prog, R_BOOL, mix_reader_eq_b, descr_mix_reader_eq_b, args, 2));
+    case R_VCT:          return(package(prog, R_BOOL, vct_eq_b, descr_vct_eq_b, args, 2));
+    case R_SOUND_DATA:   return(package(prog, R_BOOL, sd_eq_b, descr_sd_eq_b, args, 2));
+    case R_CLM:          return(package(prog, R_BOOL, clm_eq_b, descr_clm_eq_b, args, 2));
+    case R_READER:       return(package(prog, R_BOOL, reader_eq_b, descr_reader_eq_b, args, 2));
+    case R_MIX_READER:   return(package(prog, R_BOOL, mix_reader_eq_b, descr_mix_reader_eq_b, args, 2));
     case R_TRACK_READER: return(package(prog, R_BOOL, track_reader_eq_b, descr_track_reader_eq_b, args, 2));
     case R_KEYWORD:
     case R_LIST:
     case R_PAIR:
-    case R_SYMBOL: return(package(prog, R_BOOL, xen_eq_b, descr_xen_eq_b, args, 2));
+    case R_SYMBOL:       return(package(prog, R_BOOL, xen_eq_b, descr_xen_eq_b, args, 2));
       /* R_FLOAT and R_FUNCTION -> false above */
     }
   return(package(prog, R_BOOL, eq_b, descr_eq_b, args, 2));
@@ -4780,17 +4780,17 @@ static xen_value *eqv_p(ptree *prog, xen_value **args, int num_args)
     }
   switch (args[1]->type)
     {
-    case R_FLOAT: return(package(prog, R_BOOL, eqv_fb, descr_eqv_fb, args, 2)); 
-    case R_CLM:   return(package(prog, R_BOOL, eqv_clm, descr_eqv_clm, args, 2)); 
-    case R_READER: return(package(prog, R_BOOL, reader_eq_b, descr_reader_eq_b, args, 2));
-    case R_MIX_READER: return(package(prog, R_BOOL, mix_reader_eq_b, descr_mix_reader_eq_b, args, 2));
+    case R_FLOAT:        return(package(prog, R_BOOL, eqv_fb, descr_eqv_fb, args, 2)); 
+    case R_CLM:          return(package(prog, R_BOOL, eqv_clm, descr_eqv_clm, args, 2)); 
+    case R_READER:       return(package(prog, R_BOOL, reader_eq_b, descr_reader_eq_b, args, 2));
+    case R_MIX_READER:   return(package(prog, R_BOOL, mix_reader_eq_b, descr_mix_reader_eq_b, args, 2));
     case R_TRACK_READER: return(package(prog, R_BOOL, track_reader_eq_b, descr_track_reader_eq_b, args, 2));
-    case R_VCT: return(package(prog, R_BOOL, vct_eqv_b, descr_vct_eqv_b, args, 2));
-    case R_SOUND_DATA: return(package(prog, R_BOOL, sd_eqv_b, descr_sd_eqv_b, args, 2));
+    case R_VCT:          return(package(prog, R_BOOL, vct_eqv_b, descr_vct_eqv_b, args, 2));
+    case R_SOUND_DATA:   return(package(prog, R_BOOL, sd_eqv_b, descr_sd_eqv_b, args, 2));
     case R_KEYWORD:
     case R_LIST:
     case R_PAIR:
-    case R_SYMBOL: return(package(prog, R_BOOL, xen_eqv_b, descr_xen_eqv_b, args, 2));
+    case R_SYMBOL:       return(package(prog, R_BOOL, xen_eqv_b, descr_xen_eqv_b, args, 2));
     }
   return(package(prog, R_BOOL, eq_b, descr_eq_b, args, 2));
 }

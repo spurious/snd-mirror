@@ -2180,7 +2180,6 @@ static Widget make_vu_meters(pane_t *p, int vu_meters, Widget *frames, Widget in
 {
   int i, n, columns, row;
   Widget first_frame = NULL, frame, meter, last_frame, left_frame;
-  Wdesc *wd;
   vu_t *vu;
   Arg args[32];
 
@@ -2248,12 +2247,6 @@ static Widget make_vu_meters(pane_t *p, int vu_meters, Widget *frames, Widget in
       else rec_out_VU[i] = vu;
       XtAddCallback(meter, XmNexposeCallback, meter_display_callback, vu);
       XtAddCallback(meter, XmNresizeCallback, meter_display_callback, vu);
-      wd = (Wdesc *)CALLOC(1, sizeof(Wdesc));
-      wd->chan = i;
-      wd->p = p;
-      wd->field = MUS_AUDIO_AMP;
-      wd->device = p->device;
-      wd->system = p->system;
       last_frame = frame;
       if ((i == (columns*(row + 1) - 1)) && 
 	  (vu_meters > (i + 1))) 
@@ -2645,12 +2638,14 @@ static Widget make_button_box(recorder_info *rp, pane_t *p, Float meter_size,
 	  XtSetArg(args[n], XM_FONT_RESOURCE, small_fontlist); n++;
 	}
       max_label = XtCreateManagedWidget("0.000", xmLabelWidgetClass, last_max, args, n);
+      /*
       wd = (Wdesc *)CALLOC(1, sizeof(Wdesc));
       wd->chan = i;
       wd->p = p;
       wd->device = p->device;
       wd->system = p->system;
       wd->field = MUS_AUDIO_AMP;
+      */
       vu = p->meters[i];
       vu->max_button = max_label;
       vu->max_val = 0.0;

@@ -1,5 +1,6 @@
 Snd change log
 
+  14-Jan:    moved makesnd.* into makefile.in.
   10-Jan:    colormap?
              moved sndsine.c to documentation
   5-Jan:     snd 7.9.

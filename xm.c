@@ -617,40 +617,40 @@ static XEN type_to_event_symbol(int utype)
   type = "XErrorEvent"; /* -1 for an error event? */
   switch (utype)
     {
-    case 0:                type = "XAnyEvent"; break;
+    case 0:                type = "XAnyEvent";              break;
     case KeyPress:
-    case KeyRelease:       type = "XKeyEvent"; break;
+    case KeyRelease:       type = "XKeyEvent";              break;
     case ButtonPress:
-    case ButtonRelease:    type = "XButtonEvent"; break;
-    case MotionNotify:     type = "XMotionEvent"; break;
+    case ButtonRelease:    type = "XButtonEvent";           break;
+    case MotionNotify:     type = "XMotionEvent";           break;
     case EnterNotify:
-    case LeaveNotify:      type = "XCrossingEvent"; break;
+    case LeaveNotify:      type = "XCrossingEvent";         break;
     case FocusIn:
-    case FocusOut:         type = "XFocusChangeEvent"; break;
-    case KeymapNotify:     type = "XKeymapEvent"; break;
-    case Expose:           type = "XExposeEvent"; break;
-    case GraphicsExpose:   type = "XGraphicsExposeEvent"; break;
-    case NoExpose:         type = "XNoExposeEvent"; break;
-    case VisibilityNotify: type = "XVisibilityEvent"; break;
-    case CreateNotify:     type = "XCreateWindowEvent"; break;
-    case DestroyNotify:    type = "XDestroyWindowEvent"; break;
-    case UnmapNotify:      type = "XUnmapEvent"; break;
-    case MapNotify:        type = "XMapEvent"; break;
-    case MapRequest:       type = "XMapRequestEvent"; break;
-    case ReparentNotify:   type = "XReparentEvent"; break;
-    case ConfigureNotify:  type = "XConfigureEvent"; break;
+    case FocusOut:         type = "XFocusChangeEvent";      break;
+    case KeymapNotify:     type = "XKeymapEvent";           break;
+    case Expose:           type = "XExposeEvent";           break;
+    case GraphicsExpose:   type = "XGraphicsExposeEvent";   break;
+    case NoExpose:         type = "XNoExposeEvent";         break;
+    case VisibilityNotify: type = "XVisibilityEvent";       break;
+    case CreateNotify:     type = "XCreateWindowEvent";     break;
+    case DestroyNotify:    type = "XDestroyWindowEvent";    break;
+    case UnmapNotify:      type = "XUnmapEvent";            break;
+    case MapNotify:        type = "XMapEvent";              break;
+    case MapRequest:       type = "XMapRequestEvent";       break;
+    case ReparentNotify:   type = "XReparentEvent";         break;
+    case ConfigureNotify:  type = "XConfigureEvent";        break;
     case ConfigureRequest: type = "XConfigureRequestEvent"; break;
-    case GravityNotify:    type = "XGravityEvent"; break;
-    case ResizeRequest:    type = "XResizeRequestEvent"; break;
-    case CirculateNotify:  type = "XCirculateEvent"; break;
+    case GravityNotify:    type = "XGravityEvent";          break;
+    case ResizeRequest:    type = "XResizeRequestEvent";    break;
+    case CirculateNotify:  type = "XCirculateEvent";        break;
     case CirculateRequest: type = "XCirculateRequestEvent"; break;
-    case PropertyNotify:   type = "XPropertyEvent"; break;
-    case SelectionClear:   type = "XSelectionClearEvent"; break;
+    case PropertyNotify:   type = "XPropertyEvent";         break;
+    case SelectionClear:   type = "XSelectionClearEvent";   break;
     case SelectionRequest: type = "XSelectionRequestEvent"; break;
-    case SelectionNotify:  type = "XSelectionEvent"; break;
-    case ColormapNotify:   type = "XColormapEvent"; break;
-    case ClientMessage:    type = "XClientMessageEvent"; break;
-    case MappingNotify:    type = "XMappingEvent"; break;
+    case SelectionNotify:  type = "XSelectionEvent";        break;
+    case ColormapNotify:   type = "XColormapEvent";         break;
+    case ClientMessage:    type = "XClientMessageEvent";    break;
+    case MappingNotify:    type = "XMappingEvent";          break;
     }
   return(C_STRING_TO_XEN_SYMBOL(type));
 }
@@ -16207,55 +16207,55 @@ static XEN wrap_callback_struct(int type, XtPointer info)
 {
   switch (type)
     {
-    case GXM_Any: return(C_TO_XEN_XmAnyCallbackStruct((XmAnyCallbackStruct *)info));
-    case GXM_Arrow: return(C_TO_XEN_XmArrowButtonCallbackStruct((XmArrowButtonCallbackStruct *)info));
-    case GXM_Command: return(C_TO_XEN_XmCommandCallbackStruct((XmCommandCallbackStruct *)info));
-    case GXM_Drag_Drop: return(C_TO_XEN_XmDragDropFinishCallbackStruct((XmDragDropFinishCallbackStruct *)info));
-    case GXM_Drag_Motion: return(C_TO_XEN_XmDragMotionCallbackStruct((XmDragMotionCallbackStruct *)info));
-    case GXM_Drag_Proc: return(C_TO_XEN_XmDragProcCallbackStruct((XmDragProcCallbackStruct *)info));
-    case GXM_Drawing: return(C_TO_XEN_XmDrawingAreaCallbackStruct((XmDrawingAreaCallbackStruct *)info));
-    case GXM_Drawn: return(C_TO_XEN_XmDrawnButtonCallbackStruct((XmDrawnButtonCallbackStruct *)info));
-    case GXM_Drop_Finish: return(C_TO_XEN_XmDropFinishCallbackStruct((XmDropFinishCallbackStruct *)info));
-    case GXM_Drop_Proc: return(C_TO_XEN_XmDropProcCallbackStruct((XmDropProcCallbackStruct *)info));
-    case GXM_DropSite_Enter: return(C_TO_XEN_XmDropSiteEnterCallbackStruct((XmDropSiteEnterCallbackStruct *)info));
-    case GXM_DropSite_Leave: return(C_TO_XEN_XmDropSiteLeaveCallbackStruct((XmDropSiteLeaveCallbackStruct *)info));
-    case GXM_Drop_Start: return(C_TO_XEN_XmDropStartCallbackStruct((XmDropStartCallbackStruct *)info));
-    case GXM_File: return(C_TO_XEN_XmFileSelectionBoxCallbackStruct((XmFileSelectionBoxCallbackStruct *)info));
-    case GXM_List: return(C_TO_XEN_XmListCallbackStruct((XmListCallbackStruct *)info));
-    case GXM_PushButton: return(C_TO_XEN_XmPushButtonCallbackStruct((XmPushButtonCallbackStruct *)info));
-    case GXM_RowColumn: return(C_TO_XEN_XmRowColumnCallbackStruct((XmRowColumnCallbackStruct *)info));
-    case GXM_Scale: return(C_TO_XEN_XmScaleCallbackStruct((XmScaleCallbackStruct *)info));
-    case GXM_ScrollBar: return(C_TO_XEN_XmScrollBarCallbackStruct((XmScrollBarCallbackStruct *)info));
-    case GXM_Selection: return(C_TO_XEN_XmSelectionBoxCallbackStruct((XmSelectionBoxCallbackStruct *)info));
-    case GXM_ToggleButton: return(C_TO_XEN_XmToggleButtonCallbackStruct((XmToggleButtonCallbackStruct *)info));
-    case GXM_Verify: return(C_TO_XEN_XmTextVerifyCallbackStruct((XmTextVerifyCallbackStruct *)info));
+    case GXM_Any:               return(C_TO_XEN_XmAnyCallbackStruct((XmAnyCallbackStruct *)info));
+    case GXM_Arrow:             return(C_TO_XEN_XmArrowButtonCallbackStruct((XmArrowButtonCallbackStruct *)info));
+    case GXM_Command:           return(C_TO_XEN_XmCommandCallbackStruct((XmCommandCallbackStruct *)info));
+    case GXM_Drag_Drop:         return(C_TO_XEN_XmDragDropFinishCallbackStruct((XmDragDropFinishCallbackStruct *)info));
+    case GXM_Drag_Motion:       return(C_TO_XEN_XmDragMotionCallbackStruct((XmDragMotionCallbackStruct *)info));
+    case GXM_Drag_Proc:         return(C_TO_XEN_XmDragProcCallbackStruct((XmDragProcCallbackStruct *)info));
+    case GXM_Drawing:           return(C_TO_XEN_XmDrawingAreaCallbackStruct((XmDrawingAreaCallbackStruct *)info));
+    case GXM_Drawn:             return(C_TO_XEN_XmDrawnButtonCallbackStruct((XmDrawnButtonCallbackStruct *)info));
+    case GXM_Drop_Finish:       return(C_TO_XEN_XmDropFinishCallbackStruct((XmDropFinishCallbackStruct *)info));
+    case GXM_Drop_Proc:         return(C_TO_XEN_XmDropProcCallbackStruct((XmDropProcCallbackStruct *)info));
+    case GXM_DropSite_Enter:    return(C_TO_XEN_XmDropSiteEnterCallbackStruct((XmDropSiteEnterCallbackStruct *)info));
+    case GXM_DropSite_Leave:    return(C_TO_XEN_XmDropSiteLeaveCallbackStruct((XmDropSiteLeaveCallbackStruct *)info));
+    case GXM_Drop_Start:        return(C_TO_XEN_XmDropStartCallbackStruct((XmDropStartCallbackStruct *)info));
+    case GXM_File:              return(C_TO_XEN_XmFileSelectionBoxCallbackStruct((XmFileSelectionBoxCallbackStruct *)info));
+    case GXM_List:              return(C_TO_XEN_XmListCallbackStruct((XmListCallbackStruct *)info));
+    case GXM_PushButton:        return(C_TO_XEN_XmPushButtonCallbackStruct((XmPushButtonCallbackStruct *)info));
+    case GXM_RowColumn:         return(C_TO_XEN_XmRowColumnCallbackStruct((XmRowColumnCallbackStruct *)info));
+    case GXM_Scale:             return(C_TO_XEN_XmScaleCallbackStruct((XmScaleCallbackStruct *)info));
+    case GXM_ScrollBar:         return(C_TO_XEN_XmScrollBarCallbackStruct((XmScrollBarCallbackStruct *)info));
+    case GXM_Selection:         return(C_TO_XEN_XmSelectionBoxCallbackStruct((XmSelectionBoxCallbackStruct *)info));
+    case GXM_ToggleButton:      return(C_TO_XEN_XmToggleButtonCallbackStruct((XmToggleButtonCallbackStruct *)info));
+    case GXM_Verify:            return(C_TO_XEN_XmTextVerifyCallbackStruct((XmTextVerifyCallbackStruct *)info));
 #if MOTIF_2
-    case GXM_Popup: return(C_TO_XEN_XmPopupHandlerCallbackStruct((XmPopupHandlerCallbackStruct *)info));
-    case GXM_Drag_Start: return(C_TO_XEN_XmDragStartCallbackStruct((XmDragStartCallbackStruct *)info));
-    case GXM_Convert: return(C_TO_XEN_XmConvertCallbackStruct((XmConvertCallbackStruct *)info));
+    case GXM_Popup:             return(C_TO_XEN_XmPopupHandlerCallbackStruct((XmPopupHandlerCallbackStruct *)info));
+    case GXM_Drag_Start:        return(C_TO_XEN_XmDragStartCallbackStruct((XmDragStartCallbackStruct *)info));
+    case GXM_Convert:           return(C_TO_XEN_XmConvertCallbackStruct((XmConvertCallbackStruct *)info));
     case GXM_Container_Outline: return(C_TO_XEN_XmContainerOutlineCallbackStruct((XmContainerOutlineCallbackStruct *)info));
-    case GXM_Container_Select: return(C_TO_XEN_XmContainerSelectCallbackStruct((XmContainerSelectCallbackStruct *)info));
-    case GXM_Destination: return(C_TO_XEN_XmDestinationCallbackStruct((XmDestinationCallbackStruct *)info));
-    case GXM_Display: return(C_TO_XEN_XmDisplayCallbackStruct((XmDisplayCallbackStruct *)info));
-    case GXM_Combo: return(C_TO_XEN_XmComboBoxCallbackStruct((XmComboBoxCallbackStruct *)info));
-    case GXM_Notebook: return(C_TO_XEN_XmNotebookCallbackStruct((XmNotebookCallbackStruct *)info));
-    case GXM_Operation: return(C_TO_XEN_XmOperationChangedCallbackStruct((XmOperationChangedCallbackStruct *)info));
-    case GXM_SpinBox: return(C_TO_XEN_XmSpinBoxCallbackStruct((XmSpinBoxCallbackStruct *)info));
+    case GXM_Container_Select:  return(C_TO_XEN_XmContainerSelectCallbackStruct((XmContainerSelectCallbackStruct *)info));
+    case GXM_Destination:       return(C_TO_XEN_XmDestinationCallbackStruct((XmDestinationCallbackStruct *)info));
+    case GXM_Display:           return(C_TO_XEN_XmDisplayCallbackStruct((XmDisplayCallbackStruct *)info));
+    case GXM_Combo:             return(C_TO_XEN_XmComboBoxCallbackStruct((XmComboBoxCallbackStruct *)info));
+    case GXM_Notebook:          return(C_TO_XEN_XmNotebookCallbackStruct((XmNotebookCallbackStruct *)info));
+    case GXM_Operation:         return(C_TO_XEN_XmOperationChangedCallbackStruct((XmOperationChangedCallbackStruct *)info));
+    case GXM_SpinBox:           return(C_TO_XEN_XmSpinBoxCallbackStruct((XmSpinBoxCallbackStruct *)info));
 #if HAVE_XM_XP
-    case GXM_Print: return(C_TO_XEN_XmPrintShellCallbackStruct((XmPrintShellCallbackStruct *)info));
+    case GXM_Print:             return(C_TO_XEN_XmPrintShellCallbackStruct((XmPrintShellCallbackStruct *)info));
 #endif
-    case GXM_TopLevel_Enter: return(C_TO_XEN_XmTopLevelEnterCallbackStruct((XmTopLevelEnterCallbackStruct *)info));
-    case GXM_TopLevel_Leave: return(C_TO_XEN_XmTopLevelLeaveCallbackStruct((XmTopLevelLeaveCallbackStruct *)info));
-    case GXM_Traverse: return(C_TO_XEN_XmTraverseObscuredCallbackStruct((XmTraverseObscuredCallbackStruct *)info));
+    case GXM_TopLevel_Enter:    return(C_TO_XEN_XmTopLevelEnterCallbackStruct((XmTopLevelEnterCallbackStruct *)info));
+    case GXM_TopLevel_Leave:    return(C_TO_XEN_XmTopLevelLeaveCallbackStruct((XmTopLevelLeaveCallbackStruct *)info));
+    case GXM_Traverse:          return(C_TO_XEN_XmTraverseObscuredCallbackStruct((XmTraverseObscuredCallbackStruct *)info));
 #endif
 #if HAVE_XmCreateDataField
-    case GXM_DataField: return(C_TO_XEN_XmDataFieldCallbackStruct((XmDataFieldCallbackStruct *)info));
+    case GXM_DataField:         return(C_TO_XEN_XmDataFieldCallbackStruct((XmDataFieldCallbackStruct *)info));
 #endif
 #if HAVE_XmCreateMultiList
-    case GXM_MultiList: return(C_TO_XEN_XmMultiListCallbackStruct((XmMultiListCallbackStruct *)info));
+    case GXM_MultiList:         return(C_TO_XEN_XmMultiListCallbackStruct((XmMultiListCallbackStruct *)info));
 #endif
 #if HAVE_XmCreateTabStack
-    case GXM_TabStack: return(C_TO_XEN_XmTabStackCallbackStruct((XmTabStackCallbackStruct *)info));
+    case GXM_TabStack:          return(C_TO_XEN_XmTabStackCallbackStruct((XmTabStackCallbackStruct *)info));
 #endif
     }
   return(XEN_FALSE);

@@ -3451,9 +3451,9 @@ static XEN g_swap_channels(XEN snd0, XEN chn0, XEN snd1, XEN chn1, XEN beg, XEN 
 swap the indicated channels"
   chan_info *cp0 = NULL, *cp1 = NULL;
   snd_info *sp = NULL;
-  /* TODO: are sound wrappers sneaking through here? */
   ASSERT_CHANNEL(S_swap_channels, snd0, chn0, 1);
   cp0 = get_cp(snd0, chn0, S_swap_channels);
+  if (!(cp0->editable)) return(XEN_FALSE);
   if (XEN_INTEGER_P(chn1))
     {
       ASSERT_CHANNEL(S_swap_channels, snd1, chn1, 3);
@@ -3475,6 +3475,7 @@ swap the indicated channels"
       else cp1 = sp->chans[0];
     }
   if (cp0 == cp1) return(XEN_FALSE);
+  if (!(cp1->editable)) return(XEN_FALSE);
   if ((cp0) && (cp1))
     {
       int pos0, pos1;

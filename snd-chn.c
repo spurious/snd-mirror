@@ -255,8 +255,8 @@ void set_sound_channel_style(snd_info *sp, channel_style_t val)
 {
   switch (val)
     {
-    case CHANNELS_SEPARATE: separate_sound(sp); break; /* snd-xchn.c -> change_channel_style */
-    case CHANNELS_COMBINED: combine_sound(sp); break;
+    case CHANNELS_SEPARATE:     separate_sound(sp);    break; /* snd-xchn.c -> change_channel_style */
+    case CHANNELS_COMBINED:     combine_sound(sp);     break;
     case CHANNELS_SUPERIMPOSED: superimpose_sound(sp); break;
     }
 }

@@ -52,20 +52,6 @@ int main (int argc, char **argv )
   XtAppMainLoop(app);
 }
 
-/* here's a sample makefile:
-
-CC = gcc
-CFLAGS = -g -DLINUX -DUSR_LIB_OSS = 1 -I/usr/X11R6/include -DSND_AS_WIDGET -DUSE_SND
-
-LIBS = /usr/X11R6/lib/libMrm.a /usr/X11R6/lib/libXm.a /usr/X11R6/lib/libXp.a /usr/X11R6/lib/libXpm.a /usr/X11R6/lib/libXext.a /usr/X11R6/lib/libXt.a /usr/X11R6/lib/libSM.a /usr/X11R6/lib/libICE.a /usr/X11R6/lib/libFS.a /usr/X11R6/lib/libX11.a -lm
-
-include makesnd.files
-
-saw: $(SNDLIB_HEADERS) $(SND_HEADERS) $(SND_X_HEADERS) $(SNDLIB_O_FILES) $(O_FILES) $(X_O_FILES) saw.o
-	$(CC) $(SNDLIB_O_FILES) $(O_FILES) $(X_O_FILES) saw.o -o saw $(LIBS)
-
-include makesnd.back
-*/
 /* 
    if anyone uses this feature, and Snd doesn't do what you want, or you
    need more hooks into Snd, send me (bil@ccrma.stanford.edu) a description

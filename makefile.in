@@ -53,7 +53,34 @@ mandir = @mandir@
 VPATH = @srcdir@
 
 mkinstalldirs = $(SHELL) $(srcdir)/mkinstalldirs
-include $(srcdir)/makesnd.files
+
+SNDLIB_HEADERS = config.h sndlib.h sndlib-strings.h clm.h vct.h sndlib2xen.h clm2xen.h xen.h clm-strings.h
+SND_HEADERS = config.h sndlib.h clm.h snd.h snd-0.h snd-1.h snd-strings.h snd-rec.h xen.h
+SND_X_HEADERS = snd-x0.h snd-x1.h
+SND_G_HEADERS = snd-g0.h snd-g1.h
+SNDLIB_O_FILES = headers.o audio.o io.o sound.o clm.o xen.o vct.o sndlib2xen.o clm2xen.o
+MIDI_O_FILES = midi.o
+
+NO_GUI_HEADERS = snd-nogui0.h snd-nogui1.h
+
+O_FILES = snd-io.o snd-utils.o snd-listener.o snd-error.o snd-completion.o snd-menu.o snd-axis.o snd-data.o snd-fft.o snd-marks.o snd-file.o snd-edits.o snd-chn.o snd-dac.o snd-region.o snd-select.o snd-find.o snd-snd.o snd-help.o snd-main.o snd-print.o snd-trans.o snd-mix.o snd.o snd-env.o snd-xen.o snd-ladspa.o snd-rec.o snd-kbd.o snd-sig.o snd-draw.o snd-run.o
+
+X_O_FILES = snd-xutils.o snd-xerror.o snd-xhelp.o snd-xfind.o snd-xmenu.o snd-xdraw.o snd-xlistener.o snd-xchn.o snd-xsnd.o snd-xregion.o snd-xdrop.o snd-xmain.o snd-xmix.o snd-xrec.o snd-xenv.o snd-gxutils.o snd-gxbitmaps.o snd-gxcolormaps.o snd-xfft.o snd-xprint.o snd-xfile.o snd-xxen.o
+
+XM_O_FILES = snd-xutils.o snd-xerror.o snd-xhelp.o snd-xfind.o snd-xmenu.o snd-xdraw.o snd-xlistener.o snd-xchn.o snd-xsnd.o snd-xregion.o snd-xdrop.o snd-xmain.o snd-xmix.o snd-xrec.o snd-xenv.o snd-gxutils.o snd-gxbitmaps.o snd-gxcolormaps.o snd-xfft.o snd-xprint.o snd-xfile.o snd-xxen.o xm.o
+
+G_O_FILES = snd-gutils.o snd-gerror.o snd-ghelp.o snd-gfind.o snd-gmenu.o snd-gdraw.o snd-glistener.o snd-gchn.o snd-gsnd.o snd-gregion.o snd-gdrop.o snd-gmain.o snd-gmix.o snd-grec.o snd-genv.o snd-gxutils.o snd-gxbitmaps.o snd-gxcolormaps.o snd-gfft.o snd-gprint.o snd-gfile.o snd-gxen.o
+
+XG_O_FILES = snd-gutils.o snd-gerror.o snd-ghelp.o snd-gfind.o snd-gmenu.o snd-gdraw.o snd-glistener.o snd-gchn.o snd-gsnd.o snd-gregion.o snd-gdrop.o snd-gmain.o snd-gmix.o snd-grec.o snd-genv.o snd-gxutils.o snd-gxbitmaps.o snd-gxcolormaps.o snd-gfft.o snd-gprint.o snd-gfile.o snd-gxen.o xg.o
+
+XMG_O_FILES = snd-gutils.o snd-gerror.o snd-ghelp.o snd-gfind.o snd-gmenu.o snd-gdraw.o snd-glistener.o snd-gchn.o snd-gsnd.o snd-gregion.o snd-gdrop.o snd-gmain.o snd-gmix.o snd-grec.o snd-genv.o snd-gxutils.o snd-gxbitmaps.o snd-gxcolormaps.o snd-gfft.o snd-gprint.o snd-gfile.o snd-gxen.o xm.o xg.o
+
+NO_GUI_O_FILES = snd-nogui.o
+GM_FILES = xm.o
+GM_SO_FILE = xm.so
+GG_FILES = xg.o
+GG_SO_FILE = xg.so
+NO_FILES =
 
 main_target: @MAKE_TARGET@
 
@@ -74,7 +101,72 @@ widget: snd_widget.o
 snd_widget.o: $(SNDLIB_HEADERS) $(SND_HEADERS) $(GX_HEADERS) $(SNDLIB_FILES) $(MIDI_FILES) $(O_FILES) $(GX_FILES) $(GL_FILES)
 	$(LD) -r $(LDFLAGS) $(SNDLIB_FILES) $(MIDI_FILES) $(O_FILES) $(GX_FILES) $(GL_FILES) -o snd_widget.o
 
-include $(srcdir)/makesnd.back
+$(SNDLIB_O_FILES): $(SNDLIB_HEADERS)
+$(MIDI_O_FILES): $(SNDLIB_HEADERS)
+$(O_FILES): $(SNDLIB_HEADERS) $(SND_HEADERS) $(SND_X_HEADERS)
+$(X_O_FILES): $(SNDLIB_HEADERS) $(SND_HEADERS) $(SND_X_HEADERS)
+$(G_O_FILES): $(SNDLIB_HEADERS) $(SND_HEADERS) $(SND_G_HEADERS)
+
+clean:
+	rm -f $(SNDLIB_O_FILES)
+	rm -f $(MIDI_O_FILES)
+	rm -f $(O_FILES)
+	rm -f $(X_O_FILES)
+	rm -f $(G_O_FILES)
+	rm -f $(NO_GUI_O_FILES)
+	rm -f $(GM_FILES)
+	rm -f $(GM_SO_FILE)
+	rm -f $(GG_FILES)
+	rm -f $(GG_SO_FILE)
+	rm -f $(GL_FILES)
+	rm -f sndplay.o audinfo.o sndrecord.o sndinfo.o
+	rm -f snd sndplay audinfo sndrecord sndinfo
+
+distclean: clean
+	rm -f config.h config.log config.status makefile
+
+clmclean:
+	rm io.o headers.o audio.o sound.o clm.o
+
+allclean:
+	rm -f *.o
+	rm -f *.so
+	rm -f *.a
+	rm -f snd sndplay audinfo sndrecord sndinfo
+
+sndplay: $(SNDLIB_HEADERS) headers.o io.o audio.o sound.o sndplay.o
+	$(CC) $(LDFLAGS) $(CFLAGS) headers.o io.o audio.o sound.o sndplay.o -o sndplay $(AUDIO_LIB) $(LIBS)
+
+sndrecord: $(SNDLIB_HEADERS) headers.o io.o audio.o sound.o sndrecord.o
+	$(CC) $(LDFLAGS) $(CFLAGS) headers.o io.o audio.o sound.o sndrecord.o -o sndrecord $(AUDIO_LIB) $(LIBS)
+
+sndinfo: $(SNDLIB_HEADERS) headers.o io.o audio.o sound.o sndinfo.o
+	$(CC) $(LDFLAGS) $(CFLAGS) headers.o io.o audio.o sound.o sndinfo.o -o sndinfo $(AUDIO_LIB) $(LIBS)
+
+audinfo: $(SNDLIB_HEADERS) headers.o io.o audio.o sound.o audinfo.o
+	$(CC) $(LDFLAGS) $(CFLAGS) headers.o io.o audio.o sound.o audinfo.o -o audinfo $(AUDIO_LIB) $(LIBS)
+
+install: snd
+	$(mkinstalldirs) $(DESTDIR)$(bindir)
+	$(mkinstalldirs) $(DESTDIR)$(mandir)
+	$(mkinstalldirs) $(DESTDIR)$(mandir)/man1
+	(cd po && $(MAKE) install)
+	$(INSTALL) snd $(bindir)/snd
+	$(INSTALL) $(srcdir)/snd.1 $(mandir)/man1
+
+uninstall:
+	rm -f $(bindir)/snd
+
+install-strip: snd
+	$(mkinstalldirs) $(DESTDIR)$(bindir)
+	$(mkinstalldirs) $(DESTDIR)$(mandir)
+	$(mkinstalldirs) $(DESTDIR)$(mandir)/man1
+	(cd po && $(MAKE) install)
+	$(INSTALL) -s snd $(bindir)/snd
+	$(INSTALL) $(srcdir)/snd.1 $(mandir)/man1
+
+check:
+	./snd -noinit -l snd-test.scm
 
 Makefile: Makefile.in config.status
 	./config.status

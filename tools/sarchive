@@ -10,7 +10,7 @@ date > $curdir/hi
 echo ' ' >> $curdir/hi
 
 chdir snddir
-foreach file (*.h *.c *.cl *.el *.html makefile.* make.* *.gtkrc *.in *.scm makesnd.* *.lisp snd.spec old-snd.spec *.Snd Snd.ad snd.1 configure.ac *.rb *.m4 config.guess config.sub NEWS)
+foreach file (*.h *.c *.cl *.el *.html makefile.* make.* *.gtkrc *.in *.scm *.lisp snd.spec old-snd.spec *.Snd Snd.ad snd.1 configure.ac *.rb *.m4 config.guess config.sub NEWS)
   if (-e $curdir/$file) then
     diff -bcw $curdir/$file $snddir/$file >> $curdir/hi
     find $curdir/$file -newer $snddir/$file -exec echo ' updating ' $file \;
@@ -19,7 +19,7 @@ foreach file (*.h *.c *.cl *.el *.html makefile.* make.* *.gtkrc *.in *.scm make
 end
 
 chdir snddlp
-foreach file (*.h *.c *.cl *.el *.html makefile.* make.* *.gtkrc *.in *.scm makesnd.* *.lisp snd.spec old-snd.spec *.Snd Snd.ad snd.1 configure.ac *.rb *.m4 config.guess config.sub)
+foreach file (*.h *.c *.cl *.el *.html makefile.* make.* *.gtkrc *.in *.scm *.lisp snd.spec old-snd.spec *.Snd Snd.ad snd.1 configure.ac *.rb *.m4 config.guess config.sub)
   if (-e $curdir/dlp/$file) then
     diff -bcw $curdir/dlp/$file $snddlp/$file >> $curdir/hi
     find $curdir/dlp/$file -newer $snddlp/$file -exec echo ' updating ' dlp/$file \;
