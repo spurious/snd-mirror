@@ -1528,7 +1528,6 @@ bool extend_with_zeros(chan_info *cp, off_t beg, off_t num, const char *origin, 
   return(true);
 }
 
-#if 0
 bool extend_edit_list(chan_info *cp, const char *origin, int edpos)
 {
   int i;
@@ -1556,7 +1555,6 @@ bool extend_edit_list(chan_info *cp, const char *origin, int edpos)
   after_edit(cp);
   return(true);
 }
-#endif
 
 bool file_insert_samples(off_t beg, off_t num, char *inserted_file, chan_info *cp, int chan, file_delete_t auto_delete, const char *origin, int edpos)
 {

@@ -1932,6 +1932,17 @@ mixes <i>file</i> into the current sound starting at <i>frame</i> using the enve
 to pan the mixed samples (0: all chan 1, 1: all chan 0).
 The resultant mixes (if more than one) are placed in their own track, and the
 track amp env is interpreted as a panning envelope.
+To tie this into C-x C-q, in place of the default "mix" function,
+</p>
+<pre>
+(bind-key (char-&gt;integer #\q) 4 ; C-q
+	  (lambda ()
+	    (prompt-in-minibuffer "mix:" (lambda (str) ; use pan-mix at cursor
+					   (<em class=red>pan-mix</em> str (or (cursor) 0)) #f #t)))
+	  #t  ; an extended (C-x) command
+          "C-x C-q")
+</pre>
+<p>
 <b>snap-mix-to-beat</b> forces a dragged mix to end up on a beat.
 If <i>at-anchor</i> is #t, the anchor point, rather than the mix beginning falls on the beat.
 <b>mix-property</b> associates a property list with each mix.

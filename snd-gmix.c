@@ -403,7 +403,7 @@ static void apply_mix_dialog(GtkWidget *w, gpointer context)
   envs = mix_dialog_envs(mix_dialog_id);
   for (i = 0; i < chans; i++)
     if (i != last_clicked_env_chan)
-      set_mix_amp_env_without_edit(mix_dialog_id, i, envs[i]);
+      mix_dialog_set_mix_amp_env_without_edit(mix_dialog_id, i, envs[i]);
   set_mix_amp_env(mix_dialog_id, last_clicked_env_chan, envs[last_clicked_env_chan]);
   mix_amp_env_resize(w_env);
 }

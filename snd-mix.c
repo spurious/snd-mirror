@@ -30,15 +30,13 @@ typedef struct {
   int mix_state_size;          /* current size of mix_state list */
   mix_state **states;          /* list of mixer states */
   mix_state *active_mix_state;
-  off_t orig_beg;
+  off_t orig_beg, orig_tag_position;
   int current_state;
   file_delete_t temporary;     /* in-filename was written by us and needs to be deleted when mix state is deleted */
   snd_info *add_snd;           /* readable snd_info struct for mix input */
-  int id, x, nx, y, tagx, tagy, height, orig_chan; 
+  int id, x, nx, y, tagx, tagy, height, orig_chan, orig_edit_ctr; 
   env **dialog_envs;            /* mix dialog version of current amp envs */
-
   bool save_needed;
-
 } mix_info;
 
 typedef enum {C_STRAIGHT_SOUND, C_AMP_SOUND, C_SPEED_SOUND, C_ZERO_SOUND, C_AMP_ENV_SOUND, C_SPEED_AMP_SOUND, C_SPEED_ENV_SOUND,
@@ -1453,13 +1451,13 @@ void backup_mix_list(chan_info *cp, int edit_ctr)
 static void remix_file(mix_info *md, const char *origin, bool redisplay)
 {
   off_t beg, end, i, num;
-  int j, ofd = 0, size;
+  int j = 0, ofd = 0, size;
   bool use_temp_file;
   disk_space_t no_space;
   Float val = 0.0, maxy, miny;
   snd_info *cursp;
-  mix_fd *add, *sub;
-  snd_fd *cur, *sfb, *afb;
+  mix_fd *add = NULL, *sub = NULL;
+  snd_fd *cur = NULL, *sfb = NULL, *afb = NULL;
   char *ofile = NULL;
   mus_sample_t **data;
   mus_sample_t *chandata;
@@ -1467,7 +1465,7 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
   file_info *ohdr = NULL;
   axis_info *ap;
   chan_info *cp;
-  off_t old_beg, old_end, new_beg, new_end;
+  off_t old_beg, old_end, new_beg, new_end, true_old_beg, true_old_end, true_new_beg, true_new_end;
   int err = 0;
   mix_state *cs;
   mix_track_state *ms;
@@ -1481,10 +1479,25 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
   old_end = cs->end;
   new_beg = cs->beg;
   new_end = cs->beg + cs->len - 1;
+  /* save these for special 0-scaler cases below */
+  true_old_beg = old_beg;
+  true_old_end = old_end;
+  true_new_beg = new_beg;
+  true_new_end = new_end;
   cursp = cp->sound;
   beg = (old_beg < new_beg) ? old_beg : new_beg;
   end = (old_end > new_end) ? old_end : new_end;
-  num = end - beg + 1;
+  num = end - beg + 1; /* this is the max size we might need -- for the common 0 scaler case, less will be written */
+  old_beg -= beg;
+  old_end -= beg;
+  new_beg -= beg;
+  new_end -= beg;
+
+  maxy = ap->ymax;
+  miny = ap->ymin;
+  mmax = MUS_SAMPLE_MIN;
+  mmin = MUS_SAMPLE_MAX;
+
   /*
   fprintf(stderr,"remix %d: beg: " OFF_TD ", end: " OFF_TD ", old: " OFF_TD " to " OFF_TD ", new: " OFF_TD " to " OFF_TD "\n",
 	  md->id, beg, end, old_beg, old_end, new_beg, new_end);
@@ -1494,61 +1507,30 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
     {
       ofile = snd_tempnam();
 #if DEBUGGING
-  {
-    char *info;
-    info = mus_format("%s: (remix_file " OFF_TD ", " OFF_TD ", %s, id %d, delete: %d, track: %d)",
-		      origin, beg, num, md->in_filename, md->id, (int)(md->temporary), cs->track);
-    ohdr = make_temp_header(ofile, SND_SRATE(cursp), 1, 0, info);
-    FREE(info);
-  }
+      {
+	char *info;
+	info = mus_format("%s: (remix_file " OFF_TD ", " OFF_TD ", %s, id %d, delete: %d, track: %d)",
+			  origin, beg, num, md->in_filename, md->id, (int)(md->temporary), cs->track);
+	ohdr = make_temp_header(ofile, SND_SRATE(cursp), 1, 0, info);
+	FREE(info);
+      }
 #else
       ohdr = make_temp_header(ofile, SND_SRATE(cursp), 1, 0, (char *)origin);
 #endif
       ofd = open_temp_file(ofile, 1, ohdr);
       if (ofd == -1)
 	{
+	  free_file_info(ohdr);
+	  FREE(ofile);
 	  cp->edit_hook_checked = false;
 	  snd_error(_("can't write mix temp file %s: %s\n"), ofile, strerror(errno));
 	  return;
 	}
-    }
-  add = init_mix_read(md, CURRENT_MIX, 0);
-  if (!add)
-    {
-      cp->edit_hook_checked = false;
-      close_temp_file(ofd, ohdr, 0, cursp);
-      return;
-    }
-  sub = init_mix_read(md, PREVIOUS_MIX, 0);
-  if (!sub) 
-    {
-      free_mix_fd(add);
-      cp->edit_hook_checked = false;
-      close_temp_file(ofd, ohdr, 0, cursp);
-      return;
-    }
-  /*
-  fprintf(stderr,"add: %s, sub: %s\n", mix_calc_names[add->calc], mix_calc_names[sub->calc]);
-  */
-  cur = init_sample_read(beg, cp, READ_FORWARD);
-  if (cur == NULL) 
-    {
-      free_mix_fd(add);
-      free_mix_fd(sub);
-      cp->edit_hook_checked = false;
-      close_temp_file(ofd, ohdr, 0, cursp);
-      return;
-    }
-  if (use_temp_file)
-    {
       no_space = disk_space_p(cursp, num * 4, num * 2, ofile);
       switch (no_space)
 	{
 	case GIVE_UP:
 	  close_temp_file(ofd, ohdr, 0, cursp);
-	  free_snd_fd(cur);
-	  free_mix_fd(add);
-	  free_mix_fd(sub);
 	  free_file_info(ohdr);
 	  snd_remove(ofile, REMOVE_FROM_CACHE);
 	  FREE(ofile);
@@ -1572,29 +1554,70 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
 	    }
 	  ofd = open_temp_file(ofile, 1, ohdr);
 	  break;
-	case NO_PROBLEM: case BLIND_LEAP: break;
+	case NO_PROBLEM: 
+	case BLIND_LEAP: 
+	  break;
 	}
+      lseek(ofd, ohdr->data_location, SEEK_SET);
+    }
+  add = init_mix_read(md, CURRENT_MIX, 0);
+  if (add) sub = init_mix_read(md, PREVIOUS_MIX, 0);
+  if ((add) && (sub))
+    {
+      if (add->calc == C_ZERO_SOUND)
+	{
+	  if (sub->calc == C_ZERO_SOUND)
+	    {
+	      /* not actually a no-op unless true_old_beg == true_new_beg */
+	      if (use_temp_file) close_temp_file(ofd, ohdr, 0, cursp);
+	      if (add) free_mix_fd(add);
+	      if (sub) free_mix_fd(sub);
+	      cp->edit_hook_checked = false;
+	      if (true_new_beg != true_old_beg)
+		{
+		  /* conjure up a fake edit op to hold the position change */
+		  extend_edit_list(cp, "drag mix", cp->edit_ctr);
+		  use_temp_file = false;
+		  goto REMIX_END;
+		}
+	      return;
+	    }
+	  else
+	    {
+	      beg = true_old_beg;
+	      num = true_old_end - true_old_beg + 1;
+	    }
+	}
+      else
+	{
+	  if (sub->calc == C_ZERO_SOUND)
+	    {
+	      beg = true_new_beg;
+	      num = true_new_end - new_beg + 1;
+	    }
+	}
+      /* now "beg" reflects actual changed portion */
+      cur = init_sample_read(beg, cp, READ_FORWARD);
+    }
+  if (!cur)
+    {
+      cp->edit_hook_checked = false;
+      if (use_temp_file) close_temp_file(ofd, ohdr, 0, cursp);
+      if (add) free_mix_fd(add);
+      if (sub) free_mix_fd(sub);
+      return;
     }
   if (num < MAX_BUFFER_SIZE) size = (int)num; else size = MAX_BUFFER_SIZE;
   data = (mus_sample_t **)CALLOC(1, sizeof(mus_sample_t *));
   data[0] = (mus_sample_t *)CALLOC(size, sizeof(mus_sample_t));
   chandata = data[0];
-  if (use_temp_file) lseek(ofd, ohdr->data_location, SEEK_SET);
-
-  old_beg -= beg;
-  old_end -= beg;
-  new_beg -= beg;
-  new_end -= beg;
 
   /* these max/min values are only used to reset y-axis limits if overflow occurred */
-  maxy = ap->ymax;
-  miny = ap->ymin;
-  mmax = MUS_SAMPLE_MIN;
-  mmin = MUS_SAMPLE_MAX;
-
   /* split out special simple cases */
-  if ((add->calc == C_ZERO_SOUND) && (sub->calc == C_ZERO_SOUND))
+  if (add->calc == C_ZERO_SOUND)
     {
+      /* no add, need sub (current scalers are 0, previous were not) */
+      if (sub->calc == C_STRAIGHT_SOUND) sfb = sub->sfs[sub->base];
       for (i = 0, j = 0; i < num; i++)
 	{
 	  if (j == size)
@@ -1603,15 +1626,20 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
 	      j = 0;
 	      if (err == -1) break;
 	    }
-	  chandata[j++] = read_sample(cur);
+	  if (sub->calc == C_STRAIGHT_SOUND) 
+	    mval = read_sample(cur) - read_sample(sfb);
+	  else mval = MUS_FLOAT_TO_SAMPLE((read_sample_to_float(cur) - next_mix_sample(sub)));
+	  if (mval > mmax) mmax = mval;
+	  else if (mval < mmin) mmin = mval;
+	  chandata[j++] = mval;
 	}
     }
   else
     {
-      if ((add->calc == C_STRAIGHT_SOUND) && (sub->calc == C_STRAIGHT_SOUND))
+      if (sub->calc == C_ZERO_SOUND)
 	{
-	  sfb = sub->sfs[sub->base];
-	  afb = add->sfs[add->base];
+	  /* no sub, need add (current scalers are not zero, previous were) */
+	  if (add->calc == C_STRAIGHT_SOUND) afb = add->sfs[add->base];
 	  for (i = 0, j = 0; i < num; i++)
 	    {
 	      if (j == size)
@@ -1620,11 +1648,9 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
 		  j = 0;
 		  if (err == -1) break;
 		}
-	      mval = read_sample(cur);
-	      if ((i >= old_beg) && (i <= old_end))
-		mval -= read_sample(sfb);
-	      if ((i >= new_beg) && (i <= new_end))
-		mval += read_sample(afb);
+	      if (add->calc == C_STRAIGHT_SOUND)
+		mval = read_sample(cur) + read_sample(afb);
+	      else mval = MUS_FLOAT_TO_SAMPLE((read_sample_to_float(cur) + next_mix_sample(add)));
 	      if (mval > mmax) mmax = mval;
 	      else if (mval < mmin) mmin = mval;
 	      chandata[j++] = mval;
@@ -1632,67 +1658,97 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
 	}
       else
 	{
-	  for (i = 0, j = 0; i < num; i++)
+	  if ((add->calc == C_STRAIGHT_SOUND) && (sub->calc == C_STRAIGHT_SOUND))
 	    {
-	      if (j == size)
+	      /* can use direct mix underlying data read here since mix is not applying any change */
+	      sfb = sub->sfs[sub->base];
+	      afb = add->sfs[add->base];
+	      for (i = 0, j = 0; i < num; i++)
 		{
-		  if (use_temp_file) err = mus_file_write(ofd, 0, size - 1, 1, &chandata);
-		  j = 0;
-		  if (err == -1) break;
+		  if (j == size)
+		    {
+		      if (use_temp_file) err = mus_file_write(ofd, 0, size - 1, 1, &chandata);
+		      j = 0;
+		      if (err == -1) break;
+		    }
+		  mval = read_sample(cur);
+		  if ((i >= old_beg) && (i <= old_end))
+		    mval -= read_sample(sfb);
+		  if ((i >= new_beg) && (i <= new_end))
+		    mval += read_sample(afb);
+		  if (mval > mmax) mmax = mval;
+		  else if (mval < mmin) mmin = mval;
+		  chandata[j++] = mval;
 		}
-	      val = read_sample_to_float(cur);
-	      if ((i >= old_beg) && (i <= old_end))
-		val -= next_mix_sample(sub);
-	      if ((i >= new_beg) && (i <= new_end))
-		val += next_mix_sample(add);
-	      if (val > maxy) maxy = val;
-	      else if (val < miny) miny = val;
-	      chandata[j++] = MUS_FLOAT_TO_SAMPLE(val);
+	    }
+	  else
+	    {
+	      /* mix changes are in effect and neither is 0'd */
+	      for (i = 0, j = 0; i < num; i++)
+		{
+		  if (j == size)
+		    {
+		      if (use_temp_file) err = mus_file_write(ofd, 0, size - 1, 1, &chandata);
+		      j = 0;
+		      if (err == -1) break;
+		    }
+		  val = read_sample_to_float(cur);
+		  if ((i >= old_beg) && (i <= old_end))
+		    val -= next_mix_sample(sub);
+		  if ((i >= new_beg) && (i <= new_end))
+		    val += next_mix_sample(add);
+		  if (val > maxy) maxy = val;
+		  else if (val < miny) miny = val;
+		  chandata[j++] = MUS_FLOAT_TO_SAMPLE(val);
+		}
 	    }
 	}
     }
+
+  free_snd_fd(cur);
+  free_mix_fd(add);
+  free_mix_fd(sub);
 
   if (use_temp_file)
     {
       if (j > 0) mus_file_write(ofd, 0, j - 1, 1, &chandata);
       close_temp_file(ofd, ohdr, num * mus_bytes_per_sample(ohdr->format), cursp);
       free_file_info(ohdr);
+      file_change_samples(beg, num, ofile, cp, 0, DELETE_ME, DONT_LOCK_MIXES, origin, cp->edit_ctr);
     }
-  free_snd_fd(cur);
-  free_mix_fd(add);
-  free_mix_fd(sub);
-
-  if (use_temp_file)
-    file_change_samples(beg, num, ofile, cp, 0, DELETE_ME, DONT_LOCK_MIXES, origin, cp->edit_ctr);
   else change_samples(beg, num, data[0], cp, DONT_LOCK_MIXES, origin, cp->edit_ctr);
   FREE(data[0]);
   FREE(data);
   cp->edit_hook_checked = false;
- 
+
+ REMIX_END:
   extend_mix_state_list(md);
   cs = copy_mix_state(cs);
   cs->edit_ctr = cp->edit_ctr;
-  cs->orig = new_beg + beg;
+  cs->orig = true_new_beg;
   cs->beg = cs->orig;
   cs->end = cs->beg + cs->len - 1;
   md->states[md->current_state] = cs;
   make_current_mix_state(md);
 
   /* fix up graph if we overflowed during mix */
-  val = MUS_SAMPLE_TO_FLOAT(mmax);
-  if (val > maxy) maxy = val;
-  val = MUS_SAMPLE_TO_FLOAT(mmin);
-  if (val < miny) miny = val;
-  if ((maxy > ap->ymax) || (miny < ap->ymin)) 
+  if (redisplay)
     {
-      if (maxy < -miny) maxy = -miny; 
-      ap->y0 = -maxy;
-      ap->y1 = maxy;
-      ap->ymin = -maxy;
-      ap->ymax = maxy;
-      ap->y_ambit = (ap->ymax - ap->ymin);
+      val = MUS_SAMPLE_TO_FLOAT(mmax);
+      if (val > maxy) maxy = val;
+      val = MUS_SAMPLE_TO_FLOAT(mmin);
+      if (val < miny) miny = val;
+      if ((maxy > ap->ymax) || (miny < ap->ymin)) 
+	{
+	  if (maxy < -miny) maxy = -miny; 
+	  ap->y0 = -maxy;
+	  ap->y1 = maxy;
+	  ap->ymin = -maxy;
+	  ap->ymax = maxy;
+	  ap->y_ambit = (ap->ymax - ap->ymin);
+	}
+      update_graph(cp);
     }
-  if (redisplay) update_graph(cp);
 }
 
 
@@ -2334,7 +2390,7 @@ static int display_mix_waveform(chan_info *cp, mix_info *md, mix_state *cs, bool
 
 typedef struct {int *xs; int orig, x; off_t *origs; int *edpos;} track_graph_t;
 static track_graph_t *track_drag_data;
-static track_graph_t *track_save_graph(mix_info *orig_md);
+static track_graph_t *track_save_graph(mix_info *orig_md, int track_id);
 static void finish_dragging_track(int track_id, track_graph_t *data, bool remix);
 static void move_mix(mix_info *md);
 static void move_track(int track_id, track_graph_t *data);
@@ -2368,11 +2424,12 @@ static void wrap_mix_save_graph(mix_info *md, const char *origin)
 {
   mix_state *cs, *old_cs;
   int k;
+  md->orig_edit_ctr = md->cp->edit_ctr;
   cs = md->active_mix_state;
   old_cs = copy_mix_state(cs);
   for (k = 0; k < md->in_chans; k++) 
     cs->scalers[k] = 0.0;
-  remix_file(md, origin, true);
+  remix_file(md, origin, true); /* may be no-op */
   mix_save_graph(md->wg, make_graph(md->cp));
   free_mix_state(md->active_mix_state);
   md->active_mix_state = old_cs;
@@ -2400,7 +2457,7 @@ void move_mix_tag(int mix_tag, int x)
       /* track drag */
       if ((md->save_needed) && (track_drag_data == NULL))
 	{
-	  track_drag_data = track_save_graph(md); /* calls mix_save_graph */
+	  track_drag_data = track_save_graph(md, md->active_mix_state->track); /* calls mix_save_graph */
 	  md->save_needed = false;
 	}
       track_drag_data->x = x;
@@ -2437,9 +2494,12 @@ void finish_moving_mix_tag(int mix_tag, int x)
       reflect_mix_or_track_change(md->id, ANY_TRACK_ID, false);
       if (!(XEN_TRUE_P(res)))
 	{
-	  remix_file(md, "Mix: drag", false);
-	  backup_edit_list(md->cp);
-	  backup_mix_list(md->cp, md->cp->edit_ctr);
+	  remix_file(md, "Mix: drag", false); /* may be no-op */
+	  if (md->orig_edit_ctr < (md->cp->edit_ctr - 1))
+	    {
+	      backup_edit_list(md->cp);
+	      backup_mix_list(md->cp, md->cp->edit_ctr);
+	    }
 	  update_graph(md->cp);
 	}
     }
@@ -2553,17 +2613,13 @@ static void move_mix(mix_info *md)
       if (show_mix_waveforms(ss)) erase_mix_waveform(md);
       md->nx = nx;
       samp = (off_t)(ungrf_x(ap, nx) * SND_SRATE(cp->sound));
-      if (samp < 0) samp = 0;
+      if (samp < cs->tag_position) samp = cs->tag_position;
       samps = CURRENT_SAMPLES(cp);
       if (samp > samps) samp = samps;
       /* now redraw the mix and reset its notion of begin time */
       /* actually should make a new state if cp->edit_ctr has changed ?? */
       cs->beg = samp - cs->tag_position;
-      if (cs->beg < 0) 
-	{
-	  cs->beg = 0; 
-	  cs->tag_position = samp;
-	}
+      if (cs->beg < 0) cs->beg = 0; 
       reflect_mix_or_track_change(md->id, ANY_TRACK_ID, false);
       if (show_mix_waveforms(ss)) draw_mix_waveform(md);
       /* can't easily use work proc here because the erasure gets complicated */
@@ -3215,8 +3271,11 @@ int mix_dialog_set_mix_amp(int mix_id, int chan, Float val, bool dragging)
     {
       if (mix_slider_dragged)
 	{
-	  backup_edit_list(md->cp);
-	  backup_mix_list(md->cp, md->cp->edit_ctr);
+	  if (md->orig_edit_ctr < (md->cp->edit_ctr - 1))
+	    {
+	      backup_edit_list(md->cp);
+	      backup_mix_list(md->cp, md->cp->edit_ctr);
+	    }
 	  mix_slider_dragged = false;
 	}
       update_graph(md->cp);
@@ -3310,7 +3369,12 @@ static int set_mix_speed(int mix_id, Float val, bool from_gui, bool remix)
 		  cs->len = (off_t)(ceil(md->in_samps / new_final_speed));
 		  if (remix)
 		    remix_file(md, S_setB S_mix_speed, (!from_gui));
-		  else make_temporary_graph(md->cp, md, cs);
+		  else 
+		    {
+		      cs->as_built->speed = new_final_speed;
+		      cs->as_built->len = cs->len;
+		      make_temporary_graph(md->cp, md, cs);
+		    }
 		}
 	    }
 	  else
@@ -3322,6 +3386,7 @@ static int set_mix_speed(int mix_id, Float val, bool from_gui, bool remix)
 	      else 
 		{
 		  cs->as_built->speed = new_final_speed;
+		  cs->as_built->len = cs->len;
 		  make_temporary_graph(md->cp, md, cs);
 		}
 	    }
@@ -3350,8 +3415,11 @@ int mix_dialog_set_mix_speed(int mix_id, Float val, bool dragging)
     {
       if (mix_slider_dragged)
 	{
-	  backup_edit_list(md->cp);
-	  backup_mix_list(md->cp, md->cp->edit_ctr);
+	  if (md->orig_edit_ctr < (md->cp->edit_ctr - 1))
+	    {
+	      backup_edit_list(md->cp);
+	      backup_mix_list(md->cp, md->cp->edit_ctr);
+	    }
 	  mix_slider_dragged = false;
 	}
       update_graph(md->cp);
@@ -3583,7 +3651,7 @@ static int set_mix_amp_env_1(int n, int chan, env *val, bool remix)
 }
 
 int set_mix_amp_env(int n, int chan, env *val) {return(set_mix_amp_env_1(n, chan, val, true));}
-int set_mix_amp_env_without_edit(int n, int chan, env *val) {return(set_mix_amp_env_1(n, chan, val, false));}
+int mix_dialog_set_mix_amp_env_without_edit(int n, int chan, env *val) {return(set_mix_amp_env_1(n, chan, val, false));}
 
 void mix_at_x_y(int data, char *filename, int x, int y)
 {
@@ -5324,7 +5392,9 @@ static void remix_track_with_preset_times(int id, off_t new_position, off_t new_
    *  for the window-env operation. But the mixes can be moved in any order,
    *  and the in-between state is bound to show the wrong length.  (This
    *  affects the entire track chain as well).  We can't set all the mix
-   *  positions first, then remix (can't remember why this didn't work...)
+   *  positions first, then remix (can't remember why this didn't work --
+   *  I think because the erase doesn't work after the first mix because the
+   *  mix state stack no longer reflects the original state).
    */
   tr = (track_reset_position_t *)CALLOC(1, sizeof(track_reset_position_t));
   tr->id = id;
@@ -5821,19 +5891,20 @@ void release_pending_track_states(void)
 
 /* ---------------- drag track ---------------- */
 
-static track_graph_t *track_save_graph(mix_info *orig_md)
+static track_graph_t *track_save_graph(mix_info *orig_md, int track_id)
 {
   track_graph_t *tg = NULL;
   track_mix_list_t *trk;
   mix_info *md;
   mix_state *cs;
   chan_info *cp = NULL;
-  int i, k, pts = 0, track_id;
-  track_id = orig_md->active_mix_state->track;
+  int i, k, pts = 0;
+  off_t track_orig;
   trk = track_mixes(track_id);
   if (trk->lst_ctr > 0)
     {
       mix_state **old_cs;
+      track_orig = track_position(track_id, -1);
       old_cs = (mix_state **)CALLOC(trk->lst_ctr, sizeof(mix_state *));
       tg = (track_graph_t *)CALLOC(1, sizeof(track_graph_t));
       tg->xs = (int *)CALLOC(trk->lst_ctr, sizeof(int));
@@ -5853,10 +5924,19 @@ static track_graph_t *track_save_graph(mix_info *orig_md)
       for (i = 0; i < trk->lst_ctr; i++)
 	{
 	  md = md_from_id(trk->lst[i]);
+	  if (orig_md == NULL) orig_md = md;
 	  cs = md->active_mix_state;
 	  tg->origs[i] = cs->orig;
 	  tg->xs[i] = md->x;
-	  if (md == orig_md) tg->orig = i;
+	  if (md == orig_md) 
+	    {
+	      tg->orig = i;
+	      md->orig_tag_position = cs->tag_position;
+	      /* 
+		 cs->tag_position += (cs->orig - track_orig);
+		 fprintf(stderr,"set %p to " OFF_TD "\n", cs, cs->tag_position);
+	      */
+	    }
 	  if (cp != md->cp)
 	    {
 	      cp = md->cp;
@@ -5910,6 +5990,10 @@ static void finish_dragging_track(int track_id, track_graph_t *data, bool remix)
   md->x = data->x;
   move_mix(md);          /* update to last beg */
   cs = md->active_mix_state; 
+  /*
+    cs->tag_position = md->orig_tag_position;
+    fprintf(stderr,"reset %p to " OFF_TD "\n", cs, cs->tag_position);
+  */
   change = cs->beg - cs->orig;
 
   for (i = 0; i < trk->lst_ctr; i++)
@@ -6025,54 +6109,44 @@ int track_dialog_track_track(int id) {return(active_track_track(id));}
 bool track_dialog_track_color_set(int id) {return(active_track_color_set(id));}
 color_t track_dialog_track_color(int id) {return(active_track_color(id));}
 
-static void track_prepare_drag(int track_id)
+static void track_finish_drag(int track_id, Float amp, bool is_amp)
 {
   track_mix_list_t *trk;
-  mix_info *md;
   int i, k;
-  int *pts;
-  trk = track_mixes(track_id);
-  if (trk->cps_ctr > 0)
-    {
-      pts = (int *)CALLOC(trk->cps_ctr, sizeof(int));
-      for (i = 0; i < trk->lst_ctr; i++)
-	{
-	  md = md_from_id(trk->lst[i]);
-	  for (k = 0; k < trk->cps_ctr; k++)
-	    if (md->cp == trk->cps[k])
-	      {
-		if (pts[k] == 0)
-		  pts[k] = make_graph(md->cp);
-		mix_save_graph(md->wg, pts[k]);
-		break;
-	      }
-	}
-      FREE(pts);
-    }
-  free_track_mix_list(trk);
-}
-
-static void track_finish_drag(int track_id)
-{
-  /* not sure I need this */
-  int i;
-  track_mix_list_t *trk;
   mix_info *md;
+  mix_state *cs;
+  chan_info *cp;
   trk = track_mixes(track_id);
+  if(is_amp)
+    set_active_track_amp(track_id, amp);
+  else set_active_track_speed(track_id, amp);
   for (i = 0; i < trk->lst_ctr; i++)
     {
       md = md_from_id(trk->lst[i]);
-      md->wg->lastpj = 0;
+      cs = md->states[md->current_state];
+      for (k = 0; k < md->in_chans; k++) 
+	cs->as_built->scalers[k] = 0.0;
+      remix_file(md, "drag track", false);
     }
+  for (i = 0; i < trk->cps_ctr; i++)      /* drag is one edit */
+    {
+      cp = trk->cps[i];
+      while (cp->edit_ctr > track_drag_data->edpos[i]) backup_edit_list(cp);
+      backup_mix_list(cp, track_drag_data->edpos[i]);
+    }
+  for (i = 0; i < trk->cps_ctr; i++)
+    update_graph(trk->cps[i]);
   free_track_mix_list(trk);
+  reflect_mix_or_track_change(ANY_MIX_ID, track_id, false);
+  track_drag_data = free_track_graph(track_drag_data);
 }
 
 static bool track_slider_drag_in_progress = false;
 
-void track_dialog_start_slider_drag(int id) 
+void track_dialog_start_slider_drag(int track_id) 
 {
   track_slider_drag_in_progress = true;
-  track_prepare_drag(id);
+  track_drag_data = track_save_graph(NULL, track_id);
 }
 
 static void temporary_track_speed(mix_info *md, void *ptr)
@@ -6083,6 +6157,7 @@ static void temporary_track_speed(mix_info *md, void *ptr)
   ms = cs->as_built;
   ms->speed = cs->speed * gather_track_speed(cs->track);
   cs->len = (off_t)(ceil(md->in_samps / ms->speed));
+  ms->len = cs->len;
   make_temporary_graph(md->cp, md, cs);
 }
 
@@ -6091,8 +6166,8 @@ void track_dialog_set_speed(int track_id, Float val, bool dragging)
   if (!dragging)
     {
       if (track_slider_drag_in_progress)
-	track_finish_drag(track_id);
-      set_track_speed(track_id, val);
+	track_finish_drag(track_id, val, false);
+      else set_track_speed(track_id, val);
     }
   else
     {
@@ -6121,8 +6196,8 @@ void track_dialog_set_amp(int track_id, Float val, bool dragging)
   if (!dragging)
     {
       if (track_slider_drag_in_progress)
-	track_finish_drag(track_id);
-      set_track_amp(track_id, val);
+	track_finish_drag(track_id, val, true);
+      else set_track_amp(track_id, val);
     }
   else
     {
@@ -7547,20 +7622,17 @@ void g_init_track(void)
    SOMEDAY: timing grid
    TODO: if mix-waveform-height 50 top of mix waveform can be pushed off top of graph
    TODO: first and last samples of mix-peak-amp-waveform don't cancel
-   PERHAPS: change mix process to use amp=0 as "previous", then just one reader elsewhere (can this work?)
-   TODO: finish drag still broken if drag past end and start drag doesn't erase original (need 0 edit)
    TODO: mix waveform not fixed up alongside waveform if track dragging (and lags in mix dialog)
    TODO: some way to squelch mix-tag/wave in 2nd chan (less clutter in track etc)
    TODO: in gmix, display is confused until update
    SOMEDAY: describe-* [mix|mark|selection|sound|channel|track|cursor|region, gen|(mix,track)reader|
                        player|(sound)file|key|plugin|hook|dialog(i.e. recorder)|audio]
-   SOMEDAY: copy-*?
-   TODO: c-x c-q with pan-mix example
+            [have mus-(audio|midi)-)describe, mark|instrument|hook]
+   SOMEDAY: copy-*? [have mix|track, vct-copy]
 
-   if mix speed and amp env, speed drag needs to remake env
-   track amp/speed drag not erased correctly yet
-   if drag mix-at-end backwards, stop when first hits 0
-   axis movement stops if track drag motion stops when outside axis?
-   initial dpy leaves end points unerased?
-   if sub/add 0, omit that portion of remix (reader/change samps)
+   TODO: if drag mix-at-end backwards, stop when first hits 0 [set md->orig_tag_position=tp, tp=beg-trackbeg+tp drag, reset to orig]
+             and subsequent remix_file gets -num = abort in snd-utils
+   TODO: axis movement stops if track drag motion stops when outside axis?
+   TODO: initial dpy leaves start|end points unerased?
+   TODO: track tempo slider? Could keep original spacing, use current as diff from 1.0
 */

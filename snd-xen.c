@@ -2590,7 +2590,6 @@ void after_open(int index)
 }
 
 /* this needs to be in Snd (rather than sndlib2xen.c) because it calls post_it */
-#define S_mus_audio_describe            "mus-audio-describe"
 static XEN g_mus_audio_describe(void) 
 {
   #define H_mus_audio_describe "("  S_mus_audio_describe "): post a description of the audio hardware state in the Help dialog"
