@@ -1570,19 +1570,22 @@ static SCM sp_fwrite(SCM snd_n, SCM val, int fld)
   fval = gh_scm2double(val);
   switch (fld)
     {
-    case AMPF: set_snd_amp(sp,fval); break;
+    case AMPF: if (fval >= 0.0) set_snd_amp(sp,fval); break;
     case CONTRASTF: set_snd_contrast(sp,fval); break;
     case CONTRASTAMPF: sp->contrast_amp = fval; break;
-    case EXPANDF: set_snd_expand(sp,fval); break;
-    case EXPANDLENGTHF: sp->local_explen = fval; break;
-    case EXPANDRAMPF: sp->local_exprmp = fval; break;
-    case EXPANDHOPF: sp->local_exphop = fval; break;
+    case EXPANDF: if (fval > 0.0) set_snd_expand(sp,fval); break;
+    case EXPANDLENGTHF: if (fval > 0.0) sp->local_explen = fval; break;
+    case EXPANDRAMPF: if ((fval >= 0.0) && (fval < 0.5)) sp->local_exprmp = fval; break;
+    case EXPANDHOPF: if (fval > 0.0) sp->local_exphop = fval; break;
     case SPEEDF: 
-      if (fval > 0.0) dir=1; else dir=-1;
-      set_snd_srate(sp,dir*fval); 
-      toggle_direction_arrow(sp,(dir == -1));
+      if (fval != 0.0)
+	{
+	  if (fval > 0.0) dir=1; else dir=-1;
+	  set_snd_srate(sp,dir*fval); 
+	  toggle_direction_arrow(sp,(dir == -1));
+	}
       break;
-    case REVERBLENGTHF: set_snd_revlen(sp,fval); break;
+    case REVERBLENGTHF: if (fval >= 0.0) set_snd_revlen(sp,fval); break;
     case REVERBFEEDBACKF: sp->local_revfb = fval; break;
     case REVERBSCALEF: set_snd_revscl(sp,fval); break;
     case REVERBLOWPASSF: sp->local_revlp = fval; break;

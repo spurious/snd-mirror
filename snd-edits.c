@@ -2424,12 +2424,12 @@ static SCM g_edit_fragment(SCM uctr, SCM snd, SCM chn)
   ed_list *ed;
   int ctr;
   ERRCP(S_edit_fragment,snd,chn,2);
-  ERRN1(uctr,S_edit_fragment);
+  ERRB1(uctr,S_edit_fragment);
   cp = get_cp(snd,chn);
   if (cp) 
     {
-      ctr = g_scm2int(uctr);
-      if (ctr < cp->edit_size)
+      ctr = g_scm2intdef(uctr,cp->edit_ctr);
+      if ((ctr < cp->edit_size) && (ctr >= 0))
 	{
 	  ed = cp->edits[ctr];
 	  if (ed) 
@@ -2438,7 +2438,7 @@ static SCM g_edit_fragment(SCM uctr, SCM snd, SCM chn)
 			     gh_int2scm(ed->beg),
 			     gh_int2scm(ed->len)));
 	}
-      return(SCM_EOL);
+      return(NO_SUCH_EDIT);
     }
   return(NO_SUCH_CHANNEL);
 }

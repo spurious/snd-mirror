@@ -914,7 +914,6 @@ void stop_playing_region(int n);
 BACKGROUND_TYPE feed_dac(dac_manager *tm);
 void start_playing(void *ptr, int start);
 void play_to_end(void *ptr, int start);
-void start_playing_syncd(snd_info *sp, int start, int background);
 void start_playing_chan_syncd(chan_info *cp, int start, int background, int pause);
 void toggle_dac_pausing(snd_state *ss); /* snd-dac.c */
 int play_in_progress(void);

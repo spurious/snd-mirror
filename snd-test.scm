@@ -7,10 +7,11 @@
 (read-set! keywords 'prefix)
 
 (define tests 1)
-(set! full-test #t)
-;(set! snd-test 15)
+(set! full-test #f)
+(set! snd-test 13)
 ;;; to run a specific test: ./snd -e "(set! snd-test 4) (set! full-test #f)" -l snd-test.scm
 (define include-clm #f)
+(define original-prompt (listener-prompt))
 (show-listener)
 
 (define fneq (lambda (a b) (> (abs (- a b)) .001)))
@@ -684,16 +685,72 @@
 	  (list 'zero-pad zero-pad 0 set-zero-pad 1)
 	  (list 'zoom-focus-style zoom-focus-style 2 set-zoom-focus-style 1))))
     
-    (set-window-width 300)
-    (set-window-height 300)
-    (if (not (equal? (window-width) 300))
-	(snd-print (format #f ";window width: ~A /= 300?" (window-width))))
-    (if (not (equal? (window-height) 300))
-	(snd-print (format #f ";window height: ~A /= 300?" (window-height))))
+      (letrec ((test-bad-args
+		(lambda (lst)
+		  (if (not (null? lst))
+		      (let ((name (list-ref (car lst) 0))
+			    (getfnc (list-ref (car lst) 1))
+			    (setfnc (list-ref (car lst) 3))
+			    (initval (list-ref (car lst) 2))
+			    (newvals (list-ref (car lst) 4)))
+			(map (lambda (n)
+			       (setfnc n)
+			       (let ((nowval (getfnc)))
+				 (if (equal? n nowval)
+				     (snd-print (format #f ";~A = ~A (~A)~%" name n initval)))
+				 (setfnc initval)))
+			     newvals)
+			(test-bad-args (cdr lst)))))))
+	(test-bad-args
+	 (list
+	  (list 'amp amp 1.0 set-amp '(-1.0 123.123))
+	  (list 'channel-style channel-style 0 set-channel-style '(32 -1 1.0))
+	  (list 'colormap colormap 2 set-colormap '(1.3 321 -123))
+	  (list 'color-cutoff color-cutoff 0.003 set-color-cutoff '(-1.0 123.123))
+	  (list 'color-scale color-scale 1.0 set-color-scale '(-32.0 32.0))
+	  (list 'contrast contrast 0.0 set-contrast '(-123.123 123.123))
+	  (list 'dac-size dac-size 256 set-dac-size '(-1 0 -123))
+	  (list 'dot-size dot-size 1 set-dot-size '(0 -1 -123))
+	  (list 'enved-target enved-target 0 set-enved-target '(123 -321))
+	  (list 'expand expand 1.0 set-expand '(-1.0 0.0))
+	  (list 'expand-hop expand-hop 0.05 set-expand-hop '(-1.0))
+	  (list 'expand-length expand-length 0.15 set-expand-length '(-1.0 0.0))
+	  (list 'expand-ramp expand-ramp 0.4 set-expand-ramp '(-1.0 1.0 123.123))
+	  (list 'fft-beta fft-beta 0.0  set-fft-beta '(-1.0 123.123))
+	  (list 'fft-size fft-size 256 set-fft-size '(-1 0))
+	  (list 'fft-style fft-style 0 set-fft-style '(-1 123))
+	  (list 'fft-window fft-window 6 set-fft-window '(-1 123))
+	  (list 'filter-env-order filter-env-order 40 set-filter-env-order '(-1 0))
+	  (list 'filter-order filter-order 20 set-filter-order '(-10 -1 0))
+	  (list 'graph-style graph-style 0 set-graph-style '(-1 123))
+	  (list 'max-fft-peaks max-fft-peaks 100 set-max-fft-peaks '(-1))
+	  (list 'max-regions max-regions 16 set-max-regions '(-1 -123))
+	  (list 'previous-files-sort previous-files-sort 0 set-previous-files-sort '(-1 123))
+	  (list 'reverb-length reverb-length 1.0 set-reverb-length '(-1.0))
+	  (list 'show-axes show-axes 1 set-show-axes '(-1 123))
+	  (list 'sinc-width sinc-width 10 set-sinc-width '(-10))
+	  (list 'spectro-cutoff spectro-cutoff 1.0 set-spectro-cutoff '(-1.0))
+	  (list 'spectro-hop spectro-hop 4 set-spectro-hop '(-10 -1 0))
+	  (list 'spectro-start spectro-start 0.0 set-spectro-start '(-1.0))
+	  (list 'speed speed 1.0 set-speed '(0.0))
+	  (list 'speed-style speed-style 0 set-speed-style '(-1 10))
+	  (list 'transform-type transform-type 0 set-transform-type '(-1 123))
+	  (list 'wavelet-type wavelet-type 0 set-wavelet-type '(-1 123))
+	  (list 'x-axis-style x-axis-style 0 set-x-axis-style '(-1 123))
+	  (list 'xmax xmax 0.0 set-xmax '(-1.0))
+	  (list 'xmin xmin 0.0 set-xmin '(-1.0))
+	  (list 'zoom-focus-style zoom-focus-style 2 set-zoom-focus-style '(-1 123)))))
+
+      (set-window-width 300)
+      (set-window-height 300)
+      (if (not (equal? (window-width) 300))
+	  (snd-print (format #f ";window width: ~A /= 300?" (window-width))))
+      (if (not (equal? (window-height) 300))
+	  (snd-print (format #f ";window height: ~A /= 300?" (window-height))))
     
-    (close-sound 0) (w)
-    (dismiss-all-dialogs)
-    ))
+      (close-sound 0) (w)
+      (dismiss-all-dialogs)
+      ))
 
 (define play-sound
   (lambda (file)
@@ -2873,8 +2930,8 @@
       (close-pipe fil))))
 
 (define loop-through-files
-  (lambda (description make-cmd)
-    (let* ((data (sound-to-temps))
+  (lambda (description make-cmd select)
+    (let* ((data (if select (selection-to-temps) (sound-to-temps)))
            (input-names (temp-filenames data))
            (files (vector-length input-names))
            (output-names (make-vector files ""))
@@ -2883,7 +2940,25 @@
           ((or stopped (= i files)))
         (vector-set! output-names i (string-append (tmpnam) ".snd"))
         (set! stopped (execute-and-wait (make-cmd (vector-ref input-names i) (vector-ref output-names i)))))
-      (temps-to-sound data output-names description))))
+      (if select 
+	  (temps-to-sound data output-names description)
+	  (temps-to-selection data output-names description)))))
+
+(define sox-1
+  (lambda (select)
+    (loop-through-files
+     "(sox copy)"
+     (lambda (in out)
+       (string-append "sox -t .au \""   in "\" -t .au \"" out "\" copy"))
+     select)))
+
+(define copyfile-1
+  (lambda (select)
+    (loop-through-files
+      "(cp)"
+      (lambda (in out)
+        (string-append "cp " in " " out))
+      select)))
 
 (define clm-fm-violin
   (lambda (dur frq amp)
@@ -2902,7 +2977,8 @@
         "      (with-sound (:play nil :output \"" out "\") "
         "        (mix \"" in "\") "
                  fmv-call
-        "        ) (exit))'"))))))
+        "        ) (exit))'"))
+       #f))))
 
 (define histogram
   (add-transform "histogram" "bins" 0.0 1.0 
@@ -2935,8 +3011,15 @@
 	  (begin
 	    (clm-fm-violin .1 660 .1)
 	    (play-and-wait)))
-      (preload-file "oboe.snd")
-      (preload-directory ".")
+      (copyfile-1 #f)
+      (if (not (equal? (edit-fragment) '("(cp)" "set" 0 50828))) (snd-print (format #f "copyfile-1: ~A?" (edit-fragment))))
+      (let ((eds (edits)))
+	(preload-file "oboe.snd")
+	(preload-directory ".")
+	(select-all)
+	(copyfile-1 #t)
+	(if (not (equal? (edit-fragment) '("(cp)" "set" 0 50829))) (snd-print (format #f "copyfile-1 (select): ~A?" (edit-fragment))))
+	(if (not (equal? (edits) (list (+ (car eds) 1) (cadr eds)))) (snd-print (format #f "copyfile-1 (select eds): ~A ~A?" eds (edits)))))
       (if (not full-test)
 	  ;; these are causing the test process to hang for some reason
 	  (let ((v0 (transform-samples->vct fd))
@@ -3723,6 +3806,23 @@
 	(revert-sound s2i)
 	(close-sound s2i)
 
+	(set! obi (open-sound "oboe.snd"))
+	(let ((id (select-all)))
+	  (if (not (= (id-region (region-id 0)) 0)) (snd-print (format #f "region-id: ~A ~A?" (region-id 0) (id-region (region-id 0)))))
+	  (if (not (= id (region-id 0))) (snd-print (format #f "region-id(0): ~A ~A?" (region-id 0) id))))
+	(do ((i (1- (max-regions)) (1- i)))
+	    ((< i 0))
+	  (if (region? i)
+	      (delete-region i)))
+	(if (not (equal? (regions) '())) (snd-print (format #f "no regions? ~A" (regions))))
+	(let ((id (make-region 100 200 obi 0)))
+	  (if (not (equal? (regions) (list id))) (snd-print (format #f "make-region regions: ~A?" (regions)))))
+
+	;; need tests for mixes 
+	;; and all the temp|sound -to- sound|temp calls
+
+
+	(close-sound obi)
 	)))
 
 
@@ -3733,5 +3833,8 @@
 (set-max-regions 2)
 (if (file-exists? "saved-snd.scm") (delete-file "saved-snd.scm"))
 (reset-hook! exit-hook)
-(snd-print ";all done!")
+(reset-hook! graph-hook)
+(gc)
+(set-listener-prompt original-prompt)
+(snd-print (format #f ";all done!~%~A" original-prompt))
 (if (= snd-test -2) (exit))

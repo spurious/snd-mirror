@@ -186,6 +186,7 @@ int transform_dialog_is_active(void);
 #if HAVE_GUILE
 char *transform_type_name(snd_state *ss);
 int add_transform_to_list(char *name);
+int max_transform_type(void);
 #endif
 void set_show_fft_peaks(snd_state *ss, int val);
 void set_fft_log_magnitude(snd_state *ss, int val);

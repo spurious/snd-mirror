@@ -154,9 +154,12 @@ void allocate_regions(snd_state *ss,int numreg)
 
 static void set_max_regions(snd_state *ss, int n)
 {
-  allocate_regions(ss,n);
-  allocate_region_rows(ss,n);
-  in_set_max_regions(ss,n);
+  if (n >= 0)
+    {
+      allocate_regions(ss,n);
+      allocate_region_rows(ss,n);
+      in_set_max_regions(ss,n);
+    }
 }
 
 int region_ok(int n) {return((n<regions_size) && (regions[n]));}
@@ -1489,9 +1492,10 @@ void save_region_backpointer(snd_info *sp)
 static SCM g_restore_region(SCM n, SCM chans, SCM len, SCM srate, SCM maxamp, SCM name, SCM start, SCM end, SCM data)
 {
   region *r;
-  int i,j,k;
+  int i,j,k,regn;
   r = (region *)CALLOC(1,sizeof(region));
-  regions[gh_scm2int(n)] = r;
+  regn = gh_scm2int(n);
+  regions[regn] = r;
   r->id = region_id_ctr++;
   r->maxamp = gh_scm2double(maxamp);
   r->chans = gh_scm2int(chans);
@@ -1527,7 +1531,7 @@ static SCM g_restore_region(SCM n, SCM chans, SCM len, SCM srate, SCM maxamp, SC
 	}
     }
   reflect_regions_in_menu();
-  return(SCM_BOOL_F);
+  RTNINT(region_id(regn));
 }
 
 static SCM g_insert_region(SCM samp_n, SCM reg_n, SCM snd_n, SCM chn_n) /* opt reg_n */
@@ -1548,7 +1552,7 @@ static SCM g_insert_region(SCM samp_n, SCM reg_n, SCM snd_n, SCM chn_n) /* opt r
   samp = g_scm2intdef(samp_n,0);
   paste_region_1(rg,cp,FALSE,samp,1.0,S_insert_region);
   update_graph(cp,NULL);
-  return(SCM_BOOL_T);
+  RTNINT(region_id(rg));
 }
 
 static SCM g_max_regions(void) 
@@ -1704,7 +1708,7 @@ static SCM g_make_region (SCM beg, SCM end, SCM snd_n, SCM chn_n)
   cp = get_cp(snd_n,chn_n);
   if (cp == NULL) return(NO_SUCH_CHANNEL);
   define_region(cp,g_scm2int(beg),g_scm2int(end),FALSE);
-  return(SCM_BOOL_T);
+  RTNINT(region_id(0));
 }
 
 static SCM g_selectionQ(void)
@@ -1749,7 +1753,7 @@ static SCM g_select_all (SCM snd_n, SCM chn_n)
   if (cp == NULL) return(NO_SUCH_CHANNEL);
   define_region(cp,0,current_ed_samples(cp),FALSE);
   update_graph(cp,NULL);
-  return(SCM_BOOL_T);
+  RTNINT(region_id(0));
 }
 
 static SCM g_save_region (SCM n, SCM filename, SCM format) 

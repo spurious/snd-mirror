@@ -292,6 +292,8 @@ static int snd_amp_to_int(Float amp)
       if (val > SCROLLBAR_LINEAR_MAX)
 	{
 	  val = round((log(amp)*((Float)SCROLLBAR_MAX*.2)) + SCROLLBAR_MID);
+	  if (val > SCROLLBAR_MAX) val = SCROLLBAR_MAX;
+	  /* in this and all similar cases, we should probably limit it to 90% of max (taking slider size into account) */
 	}
     }
   return(val);
@@ -349,13 +351,20 @@ static void W_amp_ValueChanged_Callback(Widget w,XtPointer clientData,XtPointer 
 }
 
 
+#define SPEED_SCROLLBAR_MAX 1000
 
 static char srate_number_buffer[5]={'1',STR_decimal,'0','0','\0'};
 
 static int snd_srate_to_int(Float val)
 {
+  int ival;
   if (val > 0.0)
-    return(round(450.0 + 150.0 * log(val)));
+    {
+      ival = round(450.0 + 150.0 * log(val));
+      if (ival < SPEED_SCROLLBAR_MAX)
+	return(ival);
+      else return(SPEED_SCROLLBAR_MAX);
+    }
   else return(0);
 }
 
@@ -412,6 +421,7 @@ void toggle_direction_arrow(snd_info *sp, int state)
 }
 
 
+#define EXPAND_SCROLLBAR_MAX 1000
 
 static char expand_number_buffer[5]={'1',STR_decimal,'0','0','\0'};
 
@@ -420,7 +430,9 @@ static int snd_expand_to_int(Float ep)
   int val;
   val = (int)(ep/.0009697);
   if (val>100) val = (int)(round(450+150*log(ep)));
-  return(val);
+  if (val < EXPAND_SCROLLBAR_MAX)
+    return(val);
+  return(EXPAND_SCROLLBAR_MAX);
 }
 
 static int snd_expand_changed(snd_info *sp, int val)
@@ -491,7 +503,9 @@ static char contrast_number_buffer[5]={'0',STR_decimal,'0','0','\0'};
 
 static int snd_contrast_to_int(Float val)
 {
-  return(round(val*10));
+  if (val < 10.0)
+    return(round(val*10));
+  else return(100);
 }
 
 static int snd_contrast_changed(snd_info *sp, int val)
@@ -1522,14 +1536,23 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
 	  attributes.numsymbols = 1;
 	  attributes.valuemask = XpmColorSymbols | XpmDepth | XpmColormap | XpmVisual;
 	  pixerr = XpmCreatePixmapFromData(dp,wn,mini_lock_bits(),&mini_lock,&shape1,&attributes);
-	  if (pixerr != XpmSuccess) snd_error("lock pixmap woe: %d (%s)\n",pixerr,XpmGetErrorString(pixerr));
-	  pixerr = XpmCreatePixmapFromData(dp,wn,blank_bits(),&blank_pixmap,&shape1,&attributes);
-	  if (pixerr != XpmSuccess) snd_error("blank pixmap woe: %d (%s)\n",pixerr,XpmGetErrorString(pixerr));
-
-	  for (k=0;k<15;k++)
+	  if (pixerr != XpmSuccess) 
+	    snd_error("lock pixmap woe: %d (%s)\n",pixerr,XpmGetErrorString(pixerr));
+	  else
 	    {
-	      XpmCreatePixmapFromData(dp,wn,mini_bomb_bits(k),&(mini_bombs[k]),&shape2,&attributes);
-	      XpmCreatePixmapFromData(dp,wn,mini_glass_bits(k),&(mini_glasses[k]),&shape3,&attributes);
+	      pixerr = XpmCreatePixmapFromData(dp,wn,blank_bits(),&blank_pixmap,&shape1,&attributes);
+	      if (pixerr != XpmSuccess) 
+		snd_error("blank pixmap woe: %d (%s)\n",pixerr,XpmGetErrorString(pixerr));
+	      else
+		{
+		  for (k=0;k<15;k++)
+		    {
+		      pixerr = XpmCreatePixmapFromData(dp,wn,mini_bomb_bits(k),&(mini_bombs[k]),&shape2,&attributes);
+		      if (pixerr != XpmSuccess) {snd_error("bomb pixmap woe: %d (%s)\n",pixerr,XpmGetErrorString(pixerr)); break;}
+		      pixerr = XpmCreatePixmapFromData(dp,wn,mini_glass_bits(k),&(mini_glasses[k]),&shape3,&attributes);
+		      if (pixerr != XpmSuccess) {snd_error("glass pixmap woe: %d (%s)\n",pixerr,XpmGetErrorString(pixerr)); break;}
+		    }
+		}
 	    }
 	  mini_lock_allocated = 1;
       }
@@ -1818,7 +1841,7 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
       XtSetArg(args[n],XmNrightAttachment,XmATTACH_WIDGET); n++;
       XtSetArg(args[n],XmNrightWidget,sw[W_srate_arrow]); n++;
       XtSetArg(args[n],XmNorientation,XmHORIZONTAL); n++;
-      XtSetArg(args[n],XmNmaximum,1000); n++;
+      XtSetArg(args[n],XmNmaximum,SPEED_SCROLLBAR_MAX); n++;
       XtSetArg(args[n],XmNvalue,450); n++;
       XtSetArg(args[n],XmNheight,16); n++;
       XtSetArg(args[n],XmNdragCallback,make_callback_list(W_srate_Drag_Callback,(XtPointer)sp)); n++;
@@ -1898,7 +1921,7 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
       XtSetArg(args[n],XmNrightAttachment,XmATTACH_WIDGET); n++;
       XtSetArg(args[n],XmNrightWidget,sw[W_expand_button]); n++;
       XtSetArg(args[n],XmNorientation,XmHORIZONTAL); n++;
-      XtSetArg(args[n],XmNmaximum,1000); n++;
+      XtSetArg(args[n],XmNmaximum,EXPAND_SCROLLBAR_MAX); n++;
       XtSetArg(args[n],XmNvalue,450); n++;
       XtSetArg(args[n],XmNheight,16); n++;
       XtSetArg(args[n],XmNmarginHeight,CONTROLS_MARGIN); n++;

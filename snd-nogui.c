@@ -333,7 +333,7 @@ void get_current_color(int colormap, int j, int *r, int *g, int *b) {}
 char *transform_type_name(snd_state *ss) {return(NULL);}
 int add_transform_to_list(char *name) {return(0);}
 void set_filter_text(snd_info *sp, char *str) {}
-
+int max_transform_type(void) {return(19);}
 
 void set_fft_beta(snd_state *ss, Float val) {in_set_fft_beta(ss,val);}
 void set_fft_size(snd_state *ss, int val) {in_set_fft_size(ss,val);}

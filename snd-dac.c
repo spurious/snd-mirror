@@ -1085,7 +1085,7 @@ void start_playing(void *ptr, int start) {start_playing_1(ptr,start,TRUE,FALSE);
 void play_to_end(void *ptr, int start) {start_playing_1(ptr,start,FALSE,FALSE);}
 
 /* TODO: check stop_playing -- perhaps need a sync indication for it? */
-void start_playing_syncd(snd_info *sp, int start, int background)
+static void start_playing_syncd(snd_info *sp, int start, int background)
 {
   int i;
   snd_state *ss;

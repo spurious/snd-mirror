@@ -606,7 +606,8 @@ would refer to the original form.  I may extend this to accept a list of (more t
   <a name="dismissalldialogs">dismiss-all-dialogs</a> ()          deactivate all dialogs.
   <a name="sndeditfragment">edit-fragment</a>     (<i>num snd chn</i>) return a list similar to that displayed in the edit history window giving 
                                   the origin of the specified edit, its type (delete, insert, etc), its begin sample 
-                                  (given the current edit tree), and the number of samples affected.
+                                  (given the current edit tree), and the number of samples affected.  If num is omitted,
+                                  return the last (currently active) edit.
   <a name="sndeditheaderdialog">edit-header-dialog</a>()            fire up Edit Header dialog.
   <a name="sndeditposition">edit-position</a>     (<i>snd chn</i>)     return a current position in edit history list.
   <a name="sndedits">edits</a>             (<i>snd chn</i>)     return a list with number of undo-able edits and redo-able edits.
@@ -721,6 +722,7 @@ would refer to the original form.  I may extend this to accept a list of (more t
   <a name="makemixsamplereader">make-mix-sample-reader</a>(mix)     create a <a href="#samplereaders">mix-sample-reader</a> object reading <i>mix</i>
   <a name="sndmakeregion">make-region</a>       (beg end <i>snd chn</i>)
                                   create a new region spanning samples <i>beg</i> to <i>end</i> in <i>snd</i>'s channel <i>chn</i>.
+                                  returns region's id.
   <a name="makeregionsamplereader">make-region-sample-reader</a>(<i>start reg chn dir</i>) 
                                   create a <a href="#samplereaders">sample-reader</a> object reading region <i>reg</i>'s channel <i>chn</i>
   <a name="makesamplereader">make-sample-reader</a>(<i>start snd chn dir pos</i>) 
@@ -958,6 +960,7 @@ would refer to the original form.  I may extend this to accept a list of (more t
   <a name="scanchans">scan-chans</a>        (func <i>start end</i>) apply func to currently syncd channels
   <a name="scansoundchan">scan-sound-chans</a>  (func <i>start end snd</i>) apply func to current sound's channels
   <a name="sndselectall">select-all</a>        (<i>snd chn</i>)     create a new region spanning all samples in <i>snd</i>'s channel <i>chn</i>.
+                                  returns region's id.
   <a name="sndselectchannel">select-channel</a>    (<i>chn</i>)         select channel <i>chn</i>.
   <a name="sndselectmix">select-mix</a>        (<i>id</i>)          select mix <i>id</i>.
   <a name="sndselectregion">select-region</a>     (<i>reg</i>)         select region <i>reg</i> (i.e make it region 0).

@@ -640,8 +640,11 @@ static SCM g_set_dac_size(SCM val)
 {
   #define H_dac_size "(dac-size) is the current DAC buffer size (256)"
   #define H_set_dac_size "(" S_set_dac_size " val) sets the DAC buffer size"
-  ERRN1(val,S_set_dac_size); 
-  set_dac_size(state,g_scm2int(val)); 
+  int len;
+  ERRN1(val,S_set_dac_size);
+  len = g_scm2int(val);
+  if (len > 0)
+    set_dac_size(state,len);
   RTNINT(dac_size(state));
 }
 
@@ -901,7 +904,7 @@ static SCM g_set_fft_beta(SCM val)
   #define H_fft_beta "(" S_fft_beta ") -> 'beta' fft data window parameter value (0.0)"
   #define H_set_fft_beta "(" S_set_fft_beta " val) sets " S_fft_beta
   ERRN1(val,S_set_fft_beta); 
-  set_fft_beta(state,gh_scm2double(val));
+  set_fft_beta(state,fclamp(0.0,gh_scm2double(val),1.0));
   RTNFLT(fft_beta(state));
 }
 
@@ -930,8 +933,11 @@ static SCM g_set_fft_size(SCM val)
 {
   #define H_fft_size "(" S_fft_size ") -> current fft size (256)"
   #define H_set_fft_size "(" S_set_fft_size " val) sets " S_fft_size
+  int len;
   ERRN1(val,S_set_fft_size); 
-  set_fft_size(state,(int)pow(2,(ceil(log((double)(g_scm2int(val)))/log(2.0)))));
+  len = g_scm2int(val);
+  if (len > 0)
+    set_fft_size(state,(int)pow(2,(ceil(log((double)(len))/log(2.0)))));
   RTNINT(fft_size(state));
 }
 
@@ -951,7 +957,7 @@ static SCM g_set_fft_window(SCM val)
   #define H_fft_window "(" S_fft_window ") -> current fft data window choice (e.g. blackman2-window)"
   #define H_set_fft_window "(" S_set_fft_window " val) sets " S_fft_window
   ERRN1(val,S_set_fft_window); 
-  set_fft_window(state,g_scm2int(val));
+  set_fft_window(state,iclamp(0,g_scm2int(val),NUM_FFT_WINDOWS-1));
   RTNINT(fft_window(state));
 }
 
@@ -1112,7 +1118,7 @@ static SCM g_set_previous_files_sort(SCM val)
   #define H_previous_files_sort "(" S_previous_files_sort ") -> sort choice in view files (0=unsorted, 1=by name, etc)"
   #define H_set_previous_files_sort "(" S_set_previous_files_sort " val) sets " S_previous_files_sort
   ERRN1(val,S_set_previous_files_sort); 
-  set_previous_files_sort(state,g_scm2int(val)); 
+  set_previous_files_sort(state,iclamp(0,g_scm2int(val),4));
   update_prevfiles(state);
   RTNINT(previous_files_sort(state));
 }
@@ -1340,7 +1346,7 @@ static SCM g_set_show_axes(SCM on)
   #define H_show_axes "(" S_show_axes ") -> show-all-axes if Snd should display axes"
   #define H_set_show_axes "(" S_set_show_axes " &optional (val show-all-axes)) sets " S_show_axes
   ERRB1(on,S_set_show_axes); 
-  set_show_axes(state,g_scm2intdef(on,SHOW_ALL_AXES));
+  set_show_axes(state,iclamp(SHOW_NO_AXES,g_scm2intdef(on,SHOW_ALL_AXES),SHOW_X_AXIS));
   map_over_chans(state,update_graph,NULL);
   RTNINT(show_axes(state));
 }
@@ -1354,8 +1360,11 @@ static SCM g_set_sinc_width(SCM val)
    frequency whistles leaking through."
 
   #define H_set_sinc_width "(" S_set_sinc_width " val) sets " S_sinc_width
+  int len;
   ERRN1(val,S_set_sinc_width); 
-  set_sinc_width(state,g_scm2int(val));
+  len = g_scm2int(val);
+  if (len >= 0)
+    set_sinc_width(state,len);
   RTNINT(sinc_width(state));
 }
 
@@ -1369,7 +1378,7 @@ static SCM g_set_color_map(SCM val)
 
   #define H_set_colormap "(" S_set_colormap " val) sets " S_colormap
   ERRN1(val,S_set_colormap); 
-  set_color_map(state,g_scm2int(val));
+  set_color_map(state,iclamp(0,g_scm2int(val),NUM_COLORMAPS-1));
   RTNINT(color_map(state));
 }
 
@@ -1509,7 +1518,7 @@ static SCM g_set_transform_type(SCM val)
   #define H_transform_type "(" S_transform_type ") -> transform type, e.g. fourier-transform"
   #define H_set_transform_type "(" S_set_transform_type " val) sets " S_transform_type
   ERRN1(val,S_set_transform_type); 
-  set_transform_type(state,g_scm2int(val));
+  set_transform_type(state,iclamp(0,g_scm2int(val),max_transform_type()));
   RTNINT(transform_type(state));
 }
 
@@ -1625,7 +1634,7 @@ static SCM g_set_wavelet_type(SCM val)
   #define H_wavelet_type "(" S_wavelet_type ") -> wavelet used in wavelet-transform (0)"
   #define H_set_wavelet_type "(" S_set_wavelet_type " val) sets " S_wavelet_type
   ERRN1(val,S_set_wavelet_type); 
-  set_wavelet_type(state,g_scm2int(val));
+  set_wavelet_type(state,iclamp(0,g_scm2int(val),NUM_WAVELETS-1));
   RTNINT(wavelet_type(state));
 }
 
@@ -1686,8 +1695,11 @@ static SCM g_set_xmax(SCM val)
 {
   #define H_xmax "(" S_xmax ") -> x axis max (truncates sound if necessary)"
   #define H_set_xmax "(" S_set_xmax " val) sets " S_xmax
+  Float fval;
   ERRN1(val,S_set_xmax); 
-  set_xmax(state,gh_scm2double(val));
+  fval = gh_scm2double(val);
+  if (fval >= 0.0) /* sigh... 0.0 is the "no xmax" flag */
+    set_xmax(state,fval);
   RTNFLT(xmax(state));
 }
 
@@ -1696,8 +1708,11 @@ static SCM g_set_xmin(SCM val)
 {
   #define H_xmin "(" S_xmin ") -> x axis min"
   #define H_set_xmin "(" S_set_xmin " val) sets " S_xmin
+  Float fval;
   ERRN1(val,S_set_xmin); 
-  set_xmin(state,gh_scm2double(val));
+  fval = gh_scm2double(val);
+  if (fval >= 0.0)
+    set_xmin(state,fval);
   RTNFLT(xmin(state));
 }
 
@@ -1850,8 +1865,11 @@ static SCM g_max_fft_peaks(void)
 static SCM g_set_max_fft_peaks(SCM n) 
 {
   #define H_set_max_fft_peaks "(" S_set_max_fft_peaks " val) sets " S_max_fft_peaks
+  int lim;
   ERRN1(n,S_set_max_fft_peaks); 
-  set_max_fft_peaks(state,g_scm2int(n));
+  lim = g_scm2int(n);
+  if (lim >= 0)
+    set_max_fft_peaks(state,lim);
   RTNINT(max_fft_peaks(state));
 }
 

@@ -21,12 +21,10 @@ static Float current_graph_ffti[GRAPH_SIZE*2];
 static char *FFT_SIZES[NUM_FFT_SIZES] = {"16","32","64","128","256","512","1024","2048","4096","8192","16384","65536","262144","1048576    "};
 static int fft_sizes[NUM_FFT_SIZES] = {16,32,64,128,256,512,1024,2048,4096,8192,16384,65536,262144,1048576};
 
-#define NUM_FFT_WINDOWS 16
 static char *FFT_WINDOWS[NUM_FFT_WINDOWS] = 
      {"rectangular","hanning","welch","parzen","bartlett","hamming","blackman2","blackman3","blackman4",
       "exponential","riemann","kaiser","cauchy","poisson","gaussian","tukey"};
 
-#define NUM_WAVELETS 20
 static char *WAVELETS[NUM_WAVELETS]={
   "daub4","daub6","daub8","daub10","daub12","daub14","daub16","daub18","daub20",
   "battle_lemarie","burt_adelson","beylkin","coif2","coif4","coif6",
@@ -47,6 +45,8 @@ char *transform_type_name(snd_state *ss)
     return(TRANSFORM_TYPE_CONSTANTS[transform_type(ss)]);
   else return(added_transform_name(transform_type(ss)));
 }
+
+int max_transform_type(void) {return(num_transform_types - 1);}
 #endif
 
 static int set_ffts_size (chan_info *cp, void *p_size)

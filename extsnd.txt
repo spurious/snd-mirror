@@ -403,7 +403,6 @@ Snd is currently in flux.
   abort?            ()            check for C-g to interrupt on-going computation (and let other UI
                                   events through).
   activate-listener ()            make listener active, even if not open.
-  active-sounds     ()            number of currently active (displayed) sounds.
   add-mark          (sample snd chn) add mark at sample, returning mark id.
   add-sound-file-extension (ext)  add ext to the list of sound file extensions.
   add-to-main-menu  (menu-label)  add new top-level menu named menu-label, return menu index.
@@ -561,7 +560,8 @@ Snd is currently in flux.
   dismiss-all-dialogs ()          deactivate all dialogs.
   edit-fragment     (num snd chn) return a list similar to that displayed in the edit history window giving
                                   the origin of the specified edit, its type (delete, insert, etc), its begin sample
-                                  (given the current edit tree), and the number of samples affected.
+                                  (given the current edit tree), and the number of samples affected.  If num is omitted,
+                                  return the last (currently active) edit.
   edit-header-dialog()            fire up Edit Header dialog.
   edit-position     (snd chn)     return a current position in edit history list.
   edits             (snd chn)     return a list with number of undo-able edits and redo-able edits.
@@ -676,6 +676,7 @@ Snd is currently in flux.
   make-mix-sample-reader(mix)     create a mix-sample-reader object reading mix
   make-region       (beg end snd chn)
                                   create a new region spanning samples beg to end in snd's channel chn.
+                                  returns region's id.
   make-region-sample-reader(start reg chn dir)
                                   create a sample-reader object reading region reg's channel chn
   make-sample-reader(start snd chn dir pos)
@@ -731,7 +732,7 @@ Snd is currently in flux.
                                   increment this number). id of -1 means some error occurred.
                                   If with-mix-consoles is #f (default is #t), the data is simply
                                   mixed without creating any mix consoles.
-  mixes             (snd chn pos) list of currently active mixes in snd's channel chn at history pos.
+  mixes             (snd chn)     list of currently active mixes in snd's channel chn at history pos.
                                   Omitted args are handled as in marks.
   mix-amp           (mix chan)    amplitude of mix's channel chan.
   mix-amp-env       (mix chan)    amplitude envelope of mix's channel chan.
@@ -913,6 +914,7 @@ Snd is currently in flux.
   scan-chans        (func start end) apply func to currently syncd channels
   scan-sound-chans  (func start end snd) apply func to current sound's channels
   select-all        (snd chn)     create a new region spanning all samples in snd's channel chn.
+                                  returns region's id.
   select-channel    (chn)         select channel chn.
   select-mix        (id)          select mix id.
   select-region     (reg)         select region reg (i.e make it region 0).

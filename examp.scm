@@ -2013,6 +2013,11 @@
   (lambda* (#&key
 	   (fftsize 512) (overlap 4) (time 1.0)
 	   (pitch 1.0) (gate 0.0) (hoffset 0.0))
+    "(pvoc &key fftsize overlap time pitch gate hoffset) applies the phase vocoder
+  algorithm to the current sound (i.e. fft analysis, oscil bank resynthesis). 'pitch'
+  specifies the pitch transposition ratio, 'time' - specifies the time dilation ratio,
+  'gate' specifies a resynthesis gate in dB (partials with amplitudes lower than
+  the gate value will not be synthesized), 'hoffset is a pitch offset in Hz."
     (let* ((len (frames))
 	   (filptr 0)           ; index into the file
 	   (pi2 (* 2 pi))       ; handy constant
@@ -2140,6 +2145,7 @@
 
 (define enveloped-mix
   (lambda (filename beg env)
+    "(enveloped-mix filename beg env) mixes filename starting at beg with amplitude envelope env"
     (let ((len (mus-sound-frames filename))
 	  (tmpfil (mus-sound-open-output "/tmp/tmp.snd" 22050 1 mus-bshort mus-next ""))
 	  (mx (make-mixer 1 1.0))
@@ -2196,6 +2202,7 @@
 
 (define spectrum->coeffs 
   (lambda (order spectr)
+    "(spectrum->coeffs order spectr) returns FIR filter coefficients given the filter order and desired spectral envelope"
     (let* ((coeffs (make-vct order))
 	   (n order)
 	   (m (inexact->exact (floor (/ (+ n 1) 2))))
@@ -2214,6 +2221,7 @@
 
 (define fltit-1
   (lambda (order spectr) 
+    "(fltit order spectrum) creates an FIR filter from spectrum and order and returns a closure that calls it"
     (let* ((coeffs (spectrum->coeffs order spectr))
 	   (flt (make-fir-filter order coeffs)))
       (lambda (x)
@@ -2297,6 +2305,7 @@
 ;;; -------- move sound down 8ve using fft
 
 (define (down-oct)
+  "(down-oct) tries to move a sound down an octave"
   (let* ((len (frames))
 	 (pow2 (ceiling (/ (log len) (log 2))))
 	 (fftlen (inexact->exact (expt 2 pow2)))
@@ -2324,6 +2333,7 @@
 
 (define swap-selection-channels 
   (lambda ()
+    "(swap-selection-channels) swaps the currently selected data's channels"
     (define find-selection-sound 
       (lambda (not-this)
 	(call-with-current-continuation

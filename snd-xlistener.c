@@ -717,7 +717,7 @@ static void Command_Return_Callback(Widget w,XtPointer clientData,XtPointer call
     }
   if (start_of_text > 0)
     {
-      for (i=current_position;i>=0;i--)
+      for (i=end_of_text;i>=0;i--)
 	if ((full_str[i] == prompt[0]) && ((i == 0) || (full_str[i-1] == '\n')))
 	  {
 	    start_of_text = i+1;
