@@ -1502,7 +1502,7 @@ Moog style four pole lowpass filter clm unit generator
 original C instrument by Tim Stilson
 translation into clm and tuning by 
   Fernando Lopez-Lezcano, nando@ccrma.stanford.edu
-  http://www-ccrma.stanford.edu/~nando/clm/moog
+  http://ccrma.stanford.edu/~nando/clm/moog
 
 translated to Snd scheme function by Bill
 (and translated to Snd ruby function by M. Scholz)\n"

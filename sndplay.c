@@ -74,6 +74,7 @@ char *copy_string(const char *str) {return(strdup(str));}
 #endif
 
 /* 22-Nov-00: moved alsa support to separate block */
+/* 8-Apr-04:  added start/end (seconds-based) args */
 
 static int main_not_alsa(int argc, char *argv[])
 {
@@ -87,6 +88,8 @@ static int main_not_alsa(int argc, char *argv[])
   mus_sample_t **qbufs;
   short *obuf0, *obuf1;
   char *name = NULL;
+  off_t start = 0, end = 0;
+  double begin_time = 0.0, end_time = 0.0;
 
   for (i = 1; i < argc; i++)
     {
@@ -109,10 +112,22 @@ static int main_not_alsa(int argc, char *argv[])
 		  buffer_size = atoi(argv[i + 1]);
 		  i++;
 		}
-	      else name = argv[i];
-	    }
-	}
-    }
+	      else
+		{
+		  if (strcmp(argv[i], "-start") == 0) 
+		    {
+		      begin_time = atof(argv[i + 1]);
+		      i++;
+		    }
+		  else
+		    {
+		      if (strcmp(argv[i], "-end") == 0) 
+			{
+			  end_time = atof(argv[i + 1]);
+			  i++;
+			}
+		      else name = argv[i];
+		    }}}}}
   if (name == NULL) 
     {
       printf("usage: sndplay file\n"); 
@@ -161,6 +176,14 @@ static int main_not_alsa(int argc, char *argv[])
       srate = mus_sound_srate(name);
       frames = mus_sound_frames(name);
       sample_size = mus_bytes_per_sample(MUS_COMPATIBLE_FORMAT);
+      start = (off_t)(begin_time * srate);
+      if (start > 0)
+	mus_sound_seek_frame(fd, start);
+      if (end_time > 0.0)
+	end = (off_t)(end_time * srate);
+      else end = frames;
+      if ((end - start) < frames)
+	frames = end - start;
       if (!use_multi_card_code)
 	{
 	  bufs = (mus_sample_t **)CALLOC(chans, sizeof(mus_sample_t *));
@@ -308,12 +331,14 @@ static int main_alsa(int argc, char *argv[])
   int min_chans[MAX_SLOTS];
   int max_chans[MAX_SLOTS];
   int alloc_chans;
+  off_t start = 0, end = 0;
+  double begin_time = 0.0, end_time = 0.0;
 
   /* for clisp-based clm use, we need a couple added switches
    * -describe => call mus_audio_describe and exit
    * -buffers axb => set OSS fragment numbers 
    */
-  for (i = 1; i < argc; )
+  for (i = 1; i < argc; i++)
     {
       if (strcmp(argv[i], "-describe") == 0)
 	{
@@ -321,15 +346,28 @@ static int main_alsa(int argc, char *argv[])
 	  exit(0);
 	}
       else 
-	if (strcmp(argv[i], "-buffers") == 0) 
-	  {
-	    set_buffers(argv[i+1]); 
-	    i++;
-	  }
-      else name = argv[i];
-      i++;
-    }
-
+	{
+	  if (strcmp(argv[i], "-buffers") == 0) 
+	    {
+	      set_buffers(argv[i+1]); 
+	      i++;
+	    }
+	  else
+	    {
+	      if (strcmp(argv[i], "-start") == 0) 
+		{
+		  begin_time = atof(argv[i + 1]);
+		  i++;
+		}
+	      else
+		{
+		  if (strcmp(argv[i], "-end") == 0) 
+		    {
+		      end_time = atof(argv[i + 1]);
+		      i++;
+		    }
+		  else name = argv[i];
+		}}}}
   afd0 = -1;
   afd1 = -1;
   if (!(MUS_HEADER_TYPE_OK(mus_sound_header_type(name))))
@@ -464,6 +502,14 @@ static int main_alsa(int argc, char *argv[])
       srate = mus_sound_srate(name);
       frames = mus_sound_frames(name);
       base = 0;
+      start = (off_t)(begin_time * srate);
+      if (start > 0)
+	mus_sound_seek_frame(fd, start);
+      if (end_time > 0.0)
+	end = (off_t)(end_time * srate);
+      else end = frames;
+      if ((end - start) < frames)
+	frames = end - start;
       /* allocate the list of read buffers, each buffer will hold one channel
 	 of the input soundfile, each sample is going to be mus_sample_t
       */

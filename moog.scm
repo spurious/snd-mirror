@@ -5,7 +5,7 @@
 ;;; original C instrument by Tim Stilson
 ;;; translation into clm and tuning by 
 ;;;   Fernando Lopez-Lezcano, nando@ccrma.stanford.edu
-;;;   http://www-ccrma.stanford.edu/~nando/clm/moog
+;;;   http://ccrma.stanford.edu/~nando/clm/moog
 ;;;
 ;;; translated to Snd scheme function by Bill
 

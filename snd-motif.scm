@@ -2454,42 +2454,6 @@ Reverb-feedback sets the scaler on the feedback.
       (cdr (menu-widgets)))
      (throw 'no-such-menu (list "menu-option" name)))))
 
-#!
-(let ((dpy (XtDisplay (cadr (main-widgets)))))
-  (if (not (member "XpExtension" (XListExtensions dpy)))
-      (snd-display ";XListExtensions does not include Xp: ~A" (XListExtensions dpy))
-      (if (not (car (XpQueryExtension dpy)))
-	  (snd-display "Xp unhappy?")
-	  (let ((printer (XmPrintSetup (cadr (main-widgets))
-				       (DefaultScreenOfDisplay (XtDisplay (cadr (main-widgets))))
-				       "Print"
-				       '())))
-	    (if (Widget? printer)
-		(begin
-		  (XtAddCallback printer XmNendJobCallback (lambda (w c i)
-							     (snd-display "end print")))
-		  (XtAddCallback printer XmNstartJobCallback (lambda (w c i)
-							       (snd-display "start print")))
-		  (XtAddCallback printer XmNpageSetupCallback (lambda (w c i)
-								(snd-display "page setup: ~A" (.last_page i))))
-		  (XtAddCallback printer XmNpdmNotificationCallback (lambda (w c i)
-								      (snd-display "notification: ~A, ~A" (.reason i) (.detail i))))
-					;(XmPrintPopupPDM printer (cadr (main-widgets)))
-		  (XmPrintToFile (XtDisplay (cadr (main-widgets))) 
-				 "test.data" 
-				 (lambda (dpy context status data)
-				   (snd-display "print finished"))
-				 #f)
-		  ; these are called through the XmPrint mechanism, I think
-		  ;(XpStartJob dpy XPSpool)
-		  ;(XpStartPage dpy (XtWindow (cadr (main-widgets))))
-		  ;(XmRedisplayWidget (cadr (main-widgets)))
-		  ;(XpEndPage dpy)
-		  ;(XpEndJob dpy)
-		  )
-		(snd-display "can't get print shell")))))
-!#
-
 (define (show-all-atoms)
   "(show-all-atoms) displays all current X atom names"
   (let ((i 1)

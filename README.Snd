@@ -129,7 +129,7 @@ switch.
 There are RPM packages of Snd available at the ccrma-ftp site
 mentioned above: snd-7-3.i386.rpm and snd-7-3.src.rpm.  These RPM
 files have been superseded by Fernando Lopez-Lezcano's set available
-at http://www-ccrma.stanford.edu/planetccrma/software/
+at http://ccrma.stanford.edu/planetccrma/software/
 
 
 ----------------------------------------------------------------
@@ -624,16 +624,16 @@ where
 URLS:
 
 CCRMA:
-  http://www-ccrma.stanford.edu/
-  http://www-ccrma.stanford.edu/~jos/
-  http://www-ccrma.stanford.edu/planetccrma/software/
-  http://www-ccrma.stanford.edu/planetccrma/software/soundapps.html#snd
+  http://ccrma.stanford.edu/
+  http://ccrma.stanford.edu/~jos/
+  http://ccrma.stanford.edu/planetccrma/software/
+  http://ccrma.stanford.edu/planetccrma/software/soundapps.html#snd
   http://ccrma-mail.stanford.edu/pipermail/cmdist/
   http://ccrma-mail.stanford.edu/mailman/listinfo/planetccrma
 
 Snd:
   ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-7.tar.gz
-  http://www-ccrma.stanford.edu/software/snd/
+  http://ccrma.stanford.edu/software/snd/
   http://sourceforge.net/projects/snd/
 
   http://linux.oreillynet.com/pub/a/linux/2001/10/05/snd_partone.html

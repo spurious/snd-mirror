@@ -12,7 +12,7 @@
 # ;;
 # ;; Translated into clm-2 by Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>
 # ;; Version 1.0 for clm-2 released in January 2001
-# ;; http://www-ccrma.stanford.edu/~nando/clm/freeverb/
+# ;; http://ccrma.stanford.edu/~nando/clm/freeverb/
 # ;;
 # ;; Changes to the original code by Jezar (by Fernando Lopez-Lezcano):
 # ;; - the clm version can now work with a mono input or an n-channel input

@@ -153,7 +153,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
       else
 	if (strcmp(argv[i], "--help") == 0)
 	  {
-	    fprintf(stdout, _("Snd is a sound editor; see http://www-ccrma.stanford.edu/software/snd/."));
+	    fprintf(stdout, _("Snd is a sound editor; see http://ccrma.stanford.edu/software/snd/."));
 	    fprintf(stdout, version_info());
 	    snd_exit(0);
 	  }
