@@ -673,13 +673,6 @@ and type determines how the spectral data is scaled:\n\
   if (XEN_INTEGER_P(utype)) type = XEN_TO_C_INT(utype); else type = 1; /* linear normalized */
   if ((type < 0) || (type > 2))
     XEN_OUT_OF_RANGE_ERROR(S_spectrum, 4, utype, "type must be 0..2");
-#if DEBUGGING
-  if ((n > v1->length) || (n > v2->length))
-    {
-      fprintf(stderr,"spectrum %d > %d %d\n", n, v1->length, v2->length);
-      abort();
-    }
-#endif  
   mus_spectrum(v1->data, v2->data, (v3) ? (v3->data) : NULL, n, type);
   return(xen_return_first(url, uim, uwin));
 }
@@ -714,13 +707,6 @@ of (vcts) v1 with v2, using fft of size len (a power of 2), result in v1"
       np = (int)nf;
       n = (int)pow(2.0, np);
     }
-#if DEBUGGING
-  if ((n > v1->length) || (n > v2->length))
-    {
-      fprintf(stderr,"convolution %d > %d %d\n", n, v1->length, v2->length);
-      abort();
-    }
-#endif  
   mus_convolution(v1->data, v2->data, n);
   return(xen_return_first(url1, url2));
 }
@@ -1356,10 +1342,6 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 	XEN_OUT_OF_RANGE_ERROR(caller, 0, C_TO_XEN_INT(size), "size = 0 for the " S_average " generator is kinda loony?");
       else XEN_OUT_OF_RANGE_ERROR(caller, 0, C_TO_XEN_INT(max_size), "max_size is irrelevant to the " S_average " generator");
     }
-#if DEBUGGING
-  if (max_size <= 0) {fprintf(stderr, "delay max size: %d\n", max_size); abort();}
-  if (size < 0) {fprintf(stderr, "delay size: %d\n", size); abort();}
-#endif
   /* line itself is always allocated locally */
   line = (Float *)CALLOC(max_size, sizeof(Float));
   if (line == NULL)
@@ -1367,13 +1349,6 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
   if (initial_contents)
     {
       int i;
-#if DEBUGGING
-      if (initial_contents->length > max_size) 
-	{
-	  fprintf(stderr, "initial-contents: %d, but max-size: %d (%d)\n", initial_contents->length, max_size, size);
-	  abort();
-	}
-#endif
       for (i = 0; i < initial_contents->length; i++)
 	line[i] = initial_contents->data[i];
     }

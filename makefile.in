@@ -165,9 +165,6 @@ install-strip: snd
 	$(INSTALL) -s snd $(bindir)/snd
 	$(INSTALL) $(srcdir)/snd.1 $(mandir)/man1
 
-check:
-	./snd -noinit -l snd-test.scm
-
 Makefile: Makefile.in config.status
 	./config.status
 

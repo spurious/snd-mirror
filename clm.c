@@ -1140,13 +1140,6 @@ typedef struct {
 Float mus_delay_tick(mus_any *ptr, Float input)
 {
   dly *gen = (dly *)ptr;
-#if DEBUGGING
-  if (gen->loc >= gen->zsize)
-    {
-      fprintf(stderr, "delay tick at %d, but size=%d (%d %d %p)\n", gen->loc, gen->size, gen->zdly, gen->zsize, gen->line);
-      abort();
-    }
-#endif
   gen->line[gen->loc] = input;
   gen->loc++;
   if (gen->zdly)
@@ -1223,13 +1216,6 @@ Float mus_tap(mus_any *ptr, Float loc)
   else
     {
       if (gen->size == 0) return(gen->line[0]);
-#if DEBUGGING
-      if (gen->loc >= gen->zsize)
-	{
-	  fprintf(stderr, "tap at %f (%d), but size=%d (%d %d %p)\n", loc, gen->loc, gen->size, gen->zdly, gen->zsize, gen->line);
-	  abort();
-	}
-#endif
       if ((int)loc == 0) return(gen->line[gen->loc]);
       taploc = (int)(gen->loc - (int)loc) % gen->size;
       if (taploc < 0) taploc += gen->size;
@@ -1784,10 +1770,6 @@ static Float table_lookup_interp(mus_interp_t type, Float x, Float *table, int t
       return(mus_array_interp(table, x, table_size));
       break;
     default:
-#if DEBUGGING
-      fprintf(stderr, "unknown interp type: %d\n", type);
-      abort();
-#endif
       return(mus_array_interp(table, x, table_size));
       break;
     }
