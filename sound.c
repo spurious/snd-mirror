@@ -257,6 +257,7 @@ typedef struct {
   int comment_start, comment_end, header_distributed, type_specifier, bits_per_sample, fact_samples, block_align;
   time_t write_date;
   mus_sample_t *maxamps;
+  off_t *maxtimes;
 } sound_file;
 
 static int sound_table_size = 0;
@@ -278,6 +279,7 @@ static void free_sound_file(sound_file *sf)
       if (sf->marker_ids) FREE(sf->marker_ids);
       if (sf->marker_positions) FREE(sf->marker_positions);
       if (sf->maxamps) FREE(sf->maxamps);
+      if (sf->maxtimes) FREE(sf->maxtimes);
       FREE(sf);
     }
 }
@@ -465,8 +467,8 @@ static void display_sound_file_entry(FILE *fp, const char *name, sound_file *sf)
 	    {
 	      if (i > 1) fprintf(fp, ", ");
 	      fprintf(fp, " %.3f at %.3f ",
-		      MUS_SAMPLE_TO_FLOAT(sf->maxamps[i + 1]),
-		      (float)(sf->maxamps[i]) / (float)(sf->srate));
+		      MUS_SAMPLE_TO_FLOAT(sf->maxamps[i]),
+		      (float)((double)(sf->maxtimes[i]) / (double)(sf->srate)));
 	    }
 	}
     }
@@ -928,8 +930,7 @@ int mus_sound_maxamp_exists(const char *ifile)
   return(val);
 }
 
-/* TODO: maxamp samples ("times") should be off_t not mus_sample_t */
-off_t mus_sound_maxamp(const char *ifile, mus_sample_t *vals)
+off_t mus_sound_maxamps(const char *ifile, int chans, mus_sample_t *vals, off_t *times)
 {
   int ifd, ichans, chn, j;
   unsigned int i, bufnum, curframes;
@@ -942,17 +943,17 @@ off_t mus_sound_maxamp(const char *ifile, mus_sample_t *vals)
   sf = getsf(ifile); 
   if ((sf) && (sf->maxamps))
     {
-      for (chn = 0; chn < sf->chans; chn++)
+      if (chans > sf->chans) ichans = sf->chans; else ichans = chans;
+      for (chn = 0; chn < ichans; chn++)
 	{
-	  vals[chn * 2] = sf->maxamps[chn * 2];
-	  vals[chn * 2 + 1] = sf->maxamps[chn * 2 + 1];
+	  times[chn] = sf->maxtimes[chn];
+	  vals[chn] = sf->maxamps[chn];
 	}
       frames = sf->samples / sf->chans;
       return(frames);
     }
   ifd = mus_sound_open_input(ifile);
   if (ifd == MUS_ERROR) return(MUS_ERROR);
-  /* sf = getsf(ifile); */
   ichans = mus_sound_chans(ifile);
   frames = mus_sound_frames(ifile);
   if (frames == 0) 
@@ -989,12 +990,13 @@ off_t mus_sound_maxamp(const char *ifile, mus_sample_t *vals)
 	}
     }
   mus_sound_close_input(ifd);
-  for (chn = 0, i = 0; chn < ichans; chn++, i += 2)
+  mus_sound_set_maxamps(ifile, ichans, samp, time); /* save the complete set */
+  if (ichans > chans) ichans = chans;
+  for (chn = 0; chn < ichans; chn++)
     {
-      vals[i] = (mus_sample_t)time[chn];
-      vals[i + 1] = samp[chn];
+      times[chn] = time[chn];
+      vals[chn] = samp[chn];
     }
-  mus_sound_set_maxamp(ifile, vals);
   FREE(time);
   FREE(samp);
   for (j = 0; j < ichans; j++) FREE(ibufs[j]);
@@ -1002,27 +1004,82 @@ off_t mus_sound_maxamp(const char *ifile, mus_sample_t *vals)
   return(frames);
 }
 
-int mus_sound_set_maxamp(const char *ifile, mus_sample_t *vals)
+int mus_sound_set_maxamps(const char *ifile, int chans, mus_sample_t *vals, off_t *times)
 {
   int i, ichans = 0;
   sound_file *sf; 
   sf = getsf(ifile); 
   if ((sf) && (sf->maxamps))
     {
-      for (i = 0; i < (2 * sf->chans); i++)
-	sf->maxamps[i] = vals[i];
+      if (chans > sf->chans) ichans = sf->chans; else ichans = chans;
+      for (i = 0; i < ichans; i++)
+	{
+	  sf->maxtimes[i] = times[i];
+	  sf->maxamps[i] = vals[i];
+	}
     }
   else
     {
       ichans = mus_sound_chans(ifile);
+      if (sf == NULL)
+	{
+	  sf = getsf(ifile);
+	  if (sf == NULL) return(MUS_ERROR);
+	}
       if (sf->maxamps == NULL) 
-	sf->maxamps = (mus_sample_t *)CALLOC(ichans * 2, sizeof(mus_sample_t));
-      for (i = 0; i < (2 * ichans); i++)
-	sf->maxamps[i] = vals[i];
+	{
+	  sf->maxamps = (mus_sample_t *)CALLOC(ichans, sizeof(mus_sample_t));
+	  sf->maxtimes = (off_t *)CALLOC(ichans, sizeof(off_t));
+	}
+      if (ichans > chans) ichans = chans;
+      for (i = 0; i < ichans; i++)
+	{
+	  sf->maxtimes[i] = times[i];
+	  sf->maxamps[i] = vals[i];
+	}
     }
-  return(0);
+  return(MUS_NO_ERROR);
 }
 
+/* these two for backwards compatibility */
+off_t mus_sound_maxamp(const char *ifile, mus_sample_t *vals)
+{
+  mus_sample_t *mvals;
+  off_t *mtimes;
+  int chans, i, j;
+  off_t frames;
+  chans = mus_sound_chans(ifile);
+  mvals = (mus_sample_t *)CALLOC(chans, sizeof(mus_sample_t));
+  mtimes = (off_t *)CALLOC(chans, sizeof(off_t));
+  frames = mus_sound_maxamps(ifile, chans, mvals, mtimes);
+  for (i = 0, j = 0; i < chans; i++, j += 2)
+    {
+      vals[j] = (mus_sample_t)(mtimes[i]);
+      vals[j + 1] = mvals[i];
+    }
+  FREE(mvals);
+  FREE(mtimes);
+  return(frames);
+}
+
+int mus_sound_set_maxamp(const char *ifile, mus_sample_t *vals)
+{
+  mus_sample_t *mvals;
+  off_t *mtimes;
+  int chans, i, j;
+  chans = mus_sound_chans(ifile);
+  mvals = (mus_sample_t *)CALLOC(chans, sizeof(mus_sample_t));
+  mtimes = (off_t *)CALLOC(chans, sizeof(off_t));
+  for (i = 0, j = 0; i < chans; i++, j += 2)
+    {
+      mtimes[i] = (off_t)(vals[j]);
+      mvals[i] = vals[j + 1];
+    }
+  mus_sound_set_maxamps(ifile, chans, mvals, mtimes);
+  FREE(mvals);
+  FREE(mtimes);
+  return(MUS_NO_ERROR);
+}
 
 int mus_file_to_array(const char *filename, int chan, int start, int samples, mus_sample_t *array)
 {

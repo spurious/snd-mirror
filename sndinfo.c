@@ -39,16 +39,19 @@ static char *display_maxamps(const char *filename, int chans)
   char fstr[16];
   int i;
   mus_sample_t *vals;
+  off_t *times;
   ampstr = (char *)CALLOC(chans * 32, sizeof(char));
-  vals = (mus_sample_t *)CALLOC(chans * 2, sizeof(mus_sample_t));
+  vals = (mus_sample_t *)CALLOC(chans, sizeof(mus_sample_t));
+  times = (off_t *)CALLOC(chans, sizeof(off_t));
   sprintf(ampstr, "\n  max amp%s: ", (chans > 1) ? "s" : "");
-  mus_sound_maxamp(filename, vals);
+  mus_sound_maxamps(filename, chans, vals, times);
   for (i = 0; i < chans; i++)
     {
-      sprintf(fstr, "%.3f ", MUS_SAMPLE_TO_FLOAT(vals[2 * i + 1]));
+      sprintf(fstr, "%.3f ", MUS_SAMPLE_TO_FLOAT(vals[i]));
       strcat(ampstr, fstr);
     }
   FREE(vals);
+  FREE(times);
   return(ampstr);
 }
 

@@ -9,7 +9,7 @@
  *                 In the sources, snd-x* refers to Motif specific code, snd-g* is Gtk+ specific.
  *                   snd-gx* is used by both, but is X-specific.  If neither is defined,
  *                   you get a version of snd with no graphical user-interface (it is
- *                   driven by input from stdin). This version needs the flag USE_NO_GUI.
+ *                   driven by input from stdin -- use the flag USE_NO_GUI for this).
  *
  *   HAVE_GUILE    define if the guile library is available (adds lisp extension/customization language)
  *                 see http://www.gnu.org/software/guile. If you have Guile 1.3.4, include -DHAVE_GUILE_1_3,
@@ -151,7 +151,7 @@
 
 #include "snd-strings.h"
 
-#define SND_VERSION "15-May-02"
+#define SND_VERSION "16-May-02"
 #define SND_RPM_VERSION "5.11"
 #define SND_MAJOR_VERSION 5
 #define SND_MINOR_VERSION 11

@@ -299,6 +299,7 @@ static XEN g_sound_maxamp(XEN file)
   int chans, i;
   off_t rtn;
   mus_sample_t *vals;
+  off_t *times;
   char *filename;
   XEN res = XEN_EMPTY_LIST;
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ONLY_ARG, S_mus_sound_maxamp, "a string");
@@ -306,13 +307,15 @@ static XEN g_sound_maxamp(XEN file)
   chans = mus_sound_chans(filename);
   if (chans > 0)
     {
-      vals = (mus_sample_t *)CALLOC(chans * 2, sizeof(mus_sample_t));
-      rtn = mus_sound_maxamp(filename, vals);
-      if (rtn > 0)
-	for (i = (chans * 2) - 2; i >= 0; i -= 2)
-	  res = XEN_CONS(C_TO_XEN_INT((int)(vals[i])),
-		  XEN_CONS(C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_FLOAT(vals[i + 1])), res));
+      vals = (mus_sample_t *)CALLOC(chans, sizeof(mus_sample_t));
+      times = (off_t *)CALLOC(chans, sizeof(off_t));
+      rtn = mus_sound_maxamps(filename, chans, vals, times);
+      if (rtn != MUS_ERROR)
+	for (i = chans - 1; i >= 0; i--)
+	  res = XEN_CONS(C_TO_XEN_OFF_T(times[i]),
+		  XEN_CONS(C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_FLOAT(vals[i])), res));
       FREE(vals);
+      FREE(times);
     }
   if (filename) FREE(filename);
   return(res);
@@ -321,8 +324,9 @@ static XEN g_sound_maxamp(XEN file)
 static XEN g_sound_set_maxamp(XEN file, XEN vals)
 {
   #define H_mus_sound_set_maxamp "(" S_mus_sound_set_maxamp " filename vals) -> set max amps for sound (vals is a list of amps and locations)"
-  int i, chans, len;
+  int i, j, chans, len;
   mus_sample_t *mvals;
+  off_t *times;
   char *filename;
   XEN lst;
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, S_mus_sound_set_maxamp, "a string");
@@ -335,14 +339,16 @@ static XEN g_sound_set_maxamp(XEN file, XEN vals)
       if (len < (chans * 2))
 	mus_misc_error(S_mus_sound_set_maxamp, "max amp list wrong length", vals);
       if (len > chans * 2) len = chans * 2;
-      mvals = (mus_sample_t *)CALLOC(chans * 2, sizeof(mus_sample_t));
-      for (i = 0, lst = XEN_COPY_ARG(vals); i < len; i += 2, lst = XEN_CDDR(lst))
+      mvals = (mus_sample_t *)CALLOC(chans, sizeof(mus_sample_t));
+      times = (off_t *)CALLOC(chans, sizeof(off_t));
+      for (i = 0, j = 0, lst = XEN_COPY_ARG(vals); i < len; i += 2, j++, lst = XEN_CDDR(lst))
 	{
-	  mvals[i] = (mus_sample_t)(XEN_TO_C_INT_OR_ELSE(XEN_CAR(lst), 0));
-	  mvals[i + 1] = MUS_DOUBLE_TO_SAMPLE(XEN_TO_C_DOUBLE(XEN_CADR(lst)));
+	  times[j] = XEN_TO_C_OFF_T_OR_ELSE(XEN_CAR(lst), 0);
+	  mvals[j] = MUS_DOUBLE_TO_SAMPLE(XEN_TO_C_DOUBLE(XEN_CADR(lst)));
 	}
-      mus_sound_set_maxamp(filename, mvals);
+      mus_sound_set_maxamps(filename, chans, mvals, times);
       FREE(mvals);
+      FREE(times);
     }
   FREE(filename);
   return(vals);

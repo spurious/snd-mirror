@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 16
-#define SNDLIB_REVISION 2
-#define SNDLIB_DATE "13-May-02"
+#define SNDLIB_REVISION 3
+#define SNDLIB_DATE "16-May-02"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 
@@ -440,6 +440,8 @@ off_t mus_sound_seek          PROTO((int tfd, off_t offset, int origin));
 off_t mus_sound_seek_frame    PROTO((int tfd, off_t frame));
 off_t mus_sound_maxamp        PROTO((const char *ifile, mus_sample_t *vals));
 int mus_sound_set_maxamp      PROTO((const char *ifile, mus_sample_t *vals));
+off_t mus_sound_maxamps       PROTO((const char *ifile, int chans, mus_sample_t *vals, off_t *times));
+int mus_sound_set_maxamps     PROTO((const char *ifile, int chans, mus_sample_t *vals, off_t *times));
 int mus_sound_maxamp_exists   PROTO((const char *ifile));
 int mus_file_to_array         PROTO((const char *filename, int chan, int start, int samples, mus_sample_t *array));
 int mus_array_to_file         PROTO((const char *filename, mus_sample_t *ddata, int len, int srate, int channels));
