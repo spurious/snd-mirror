@@ -20,7 +20,7 @@ snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_f
 	    {
 	      chan = snd_reopen_write(ss, newname);
 	      lseek(chan, mus_header_data_location(), SEEK_SET);
-	      size = chans * mus_samples_to_bytes(data_format, 1); /* was 2 samples? 22-Mar-02 */
+	      size = chans * mus_samples_to_bytes(data_format, 1);
 	      buf = (unsigned char *)CALLOC(size, sizeof(unsigned char));
 	      write(chan, buf, size);
 	      snd_close(chan, newname);

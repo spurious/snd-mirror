@@ -64,11 +64,13 @@ The configure program has several Snd-related arguments:
 
    --with-ruby           try to use Ruby as the extension language
      --with-ruby-prefix  set location of Ruby
-   --with-guile          use Guile, not Ruby (the default)
+   --with-guile          use Guile, not Ruby (the default); the path to guile-config
+                           can be set via GUILE_CONFIG_path (see examples below).
 
    --with-temp-dir       directory to use for temp files
    --with-save-dir       directory to use for saved-state files
-   --with-shared-sndlib  try to use libsndlib.so (default = no)
+   --with-shared-sndlib  try to use libsndlib.so (default = no).  The path to
+                           sndlib-config can be specified via SNDLIB_CONFIG_path
    --disable-nls         the gettext (internationalization) support is on
                            by default; this turns it off.
 

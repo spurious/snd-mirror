@@ -8095,34 +8095,41 @@ static void clm_struct_ref_r(int *args, int *ints, Float *dbls)
   lst = (XEN)(ints[args[1]]);
   if ((lst != 0) && (XEN_LIST_P(lst)))
     {
-      /*
-      fprintf(stderr,"ref...%d %d %d %d, %d %d %d %d",
-	      args[0], args[1], args[2], args[3],
-	      args[0], ints[args[1]], ints[args[2]], ints[args[3]]);
-      */
-    xen_to_addr(PTREE, 
-		XEN_LIST_REF(lst, 
-			     ints[args[2]]), /* struct field offset into list */
-		ints[args[3]],               /* result type */
-		args[0]);                    /* result address */
-    /* fprintf(stderr,"done\n"); */
+      xen_to_addr(PTREE, 
+		  XEN_LIST_REF(lst, 
+			       ints[args[2]]), /* struct field offset into list */
+		  ints[args[3]],               /* result type */
+		  args[0]);                    /* result address */
     }
 }
 
-/* TODO: run-time set of non-constant list clm-def-struct field */
+static char *descr_clm_struct_set_r(int *args, int *ints, Float *dbls)
+{
+  return(mus_format("%s(%s) = %s",
+		    clm_struct_names[ints[args[4]]],
+		    (ints[args[1]] == 0) ? "null" : XEN_AS_STRING((XEN)(ints[args[1]])),
+		    describe_xen_value_1(ints[args[3]], ints[args[5]], ints, dbls)));
+}
 
-static xen_value *clm_struct_ref(ptree *prog, xen_value *v, int struct_loc)
+static void clm_struct_set_r(int *args, int *ints, Float *dbls)
+{
+  XEN lst;
+  xen_value *v;
+  lst = (XEN)(ints[args[1]]);
+  if ((lst != 0) && (XEN_LIST_P(lst)))
+    {
+      v = make_xen_value(ints[args[3]], ints[args[5]], FALSE);
+      XEN_LIST_SET(lst, ints[args[2]], xen_value_to_xen(PTREE, v));
+      FREE(v);
+    }
+}
+
+static xen_value *clm_struct_ref(ptree *prog, xen_value *v, int struct_loc, xen_value *set_v)
 {
   /* types can't change within run */
   int run_type, addr, offset;
   XEN lst, lst_ref;
-  /*
-  fprintf(stderr,"struct ref %s ",clm_struct_names[struct_loc]);
-  */
   if (v == NULL) return(run_warn("clm-struct-ref confused"));
-  /*
-    fprintf(stderr, "arg 1 %p: addr: %d type: %s\n", v, v->addr, type_name(v->type));
-  */
   offset = clm_struct_offsets[struct_loc];
   lst = (XEN)(prog->ints[v->addr]);
   if ((lst == 0) || (!(XEN_LIST_P(lst))))
@@ -8131,24 +8138,24 @@ static xen_value *clm_struct_ref(ptree *prog, xen_value *v, int struct_loc)
       run_type = clm_struct_types[struct_loc];
       if (run_type != R_UNSPECIFIED)
 	{
-	  /* it is up to the caller to stick to the declared type -- no attempt here to check (TODO: why not arg type check in clm_struct_ref?) */
 	  xen_value **new_args;
 	  xen_value *rtn;
 	  int i;
-	  new_args = (xen_value **)CALLOC(5, sizeof(xen_value *));
+	  new_args = (xen_value **)CALLOC((set_v) ? 6 : 5, sizeof(xen_value *));
 	  rtn = add_empty_var_to_ptree(prog, run_type);
 	  new_args[0] = rtn;
 	  new_args[1] = v;
 	  new_args[2] = make_xen_value(R_INT, add_int_to_ptree(prog, offset), R_CONSTANT);
 	  new_args[3] = make_xen_value(R_INT, add_int_to_ptree(prog, run_type), R_CONSTANT);
 	  new_args[4] = make_xen_value(R_INT, add_int_to_ptree(prog, struct_loc), R_CONSTANT);
-	  add_triple_to_ptree(prog, make_triple(clm_struct_ref_r, descr_clm_struct_ref_r, new_args, 5));
-	  /*
-	  fprintf(stderr,"result is %s, arg is %s\n", 
-		  describe_xen_value(new_args[0], prog->ints, prog->dbls),
-		  describe_xen_value(new_args[1], prog->ints, prog->dbls));
-	  */
+	  if (set_v)
+	    {
+	      new_args[5] = make_xen_value(R_INT, add_int_to_ptree(prog, set_v->addr), R_CONSTANT);
+	      add_triple_to_ptree(prog, make_triple(clm_struct_set_r, descr_clm_struct_set_r, new_args, 6));
+	    }
+	  else add_triple_to_ptree(prog, make_triple(clm_struct_ref_r, descr_clm_struct_ref_r, new_args, 5));
 	  for (i = 2; i <= 4; i++) FREE(new_args[i]);
+	  if (set_v) FREE(new_args[5]);
 	  FREE(new_args);
 	  return(rtn);
 	}
@@ -8530,7 +8537,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
       */
       for (k = 0; k < clm_struct_top; k++)
 	if (strcmp(funcname, clm_struct_names[k]) == 0)
-	  return(clean_up(clm_struct_ref(prog, args[1], k), args, num_args));
+	  return(clean_up(clm_struct_ref(prog, args[1], k, NULL), args, num_args));
       for (k = 0; k < clm_types_top; k++)
 	if (strcmp(funcname, clm_qtypes[k]) == 0)
 	  return(clean_up(make_xen_value(R_BOOL, 
@@ -8652,7 +8659,7 @@ static xen_value *lookup_generalized_set(ptree *prog, XEN acc_form, xen_value *i
       for (k = 0; k < clm_struct_top; k++)
 	if (strcmp(accessor, clm_struct_names[k]) == 0)
 	  {
-	    sv = clm_struct_ref(prog, in_v, k);
+	    sv = clm_struct_ref(prog, in_v, k, v);
 	    if (sv)
 	      {
 		if (v->type == sv->type)

@@ -111,12 +111,12 @@
        val)))
 
 ;;; second stab at def-clm-struct
-;;; TODO: doc/test type indicator
 
 (defmacro* def-clm-struct (name #:rest fields)
   ;; (def-clm-struct fd loc (chan 1))
   ;; (def-clm-struct hiho i x (s "hiho") (ii 3 :type int) (xx 0.0 :type float))
   ;; we need the :type indication if Snd's run macro is to have any hope of handling these structs as function args
+  ;; should this code enforce the type indication?
   (let* ((sname (if (string? name) name (symbol->string name)))
 	 (field-names (map (lambda (n)
 			     (symbol->string (if (list? n) (car n) n)))
@@ -155,37 +155,6 @@
 		    (set! ctr (1+ ctr))
 		    val)))
 	      field-names field-types))))
-
-#!
-;; old form
-(defmacro* def-clm-struct (name #:rest fields)
-  ;; (def-clm-struct fd loc (chan 1))
-  (let* ((sname (if (string? name) name (symbol->string name)))
-	 (field-names (map (lambda (n)
-			     (symbol->string (if (list? n) (car n) n)))
-			   fields)))
-    `(begin
-       (define ,(string->symbol (string-append sname "?"))
-	 (lambda (obj)
-	   (and (list? obj)
-		(eq? (car obj) ',(string->symbol sname)))))
-       (define* (,(string->symbol (string-append "make-" sname)) #:key ,@fields)
-	 (list ',(string->symbol sname)
-	       ,@(map string->symbol field-names)))
-       (add-clm-type ,sname)
-       ,@(map (let ((ctr 1))
-		(lambda (n)
-		  (let ((val `(define ,(string->symbol (string-append sname "-" n))
-				(make-procedure-with-setter
-				 (lambda (arg)
-				   (list-ref arg ,ctr))
-				 (lambda (arg val)
-				   (list-set! arg ,ctr val))))))
-		    (add-clm-field (string-append sname "-" n) ctr)
-		    (set! ctr (1+ ctr))
-		    val)))
-	      field-names))))
-!#
 
 ;;; sound-let
 ;;;

@@ -343,10 +343,10 @@ and any def-clm-struct name.
   <tr><td><small><a href="#delay">delay</a></small></td><td><small>delay line</small></td><td><small><a href="#sawtooth-wave">sawtooth-wave</a></small></td><td><small>sawtooth</small></td></tr>
   <tr><td><small><a href="#env">env</a></small></td><td><small>line segment envelope</small></td><td><small><a href="#sine-summation">sine-summation</a></small></td><td><small>sine summation synthesis</small></td></tr>
   <tr><td><small><a href="#filter">filter</a></small></td><td><small>direct form FIR/IIR filter</small></td><td><small><a href="#square-wave">square-wave</a></small></td><td><small>square wave</small></td></tr>
-  <tr><td><small><a href="#fir-filter">FIR-filter</a></small></td><td><small>FIR filter</small></td><td><small><a href="#src">src</a></small></td><td><small>sampling rate conversion</small></td></tr>
+  <tr><td><small><a href="#fir-filter">fir-filter</a></small></td><td><small>FIR filter</small></td><td><small><a href="#src">src</a></small></td><td><small>sampling rate conversion</small></td></tr>
   <tr><td><small><a href="#formant">formant</a></small></td><td><small>resonance</small></td><td><small><a href="#sum-of-cosines">sum-of-cosines</a></small></td><td><small>band-limited pulse train</small></td></tr>
   <tr><td><small><a href="#granulate">granulate</a></small></td><td><small>granular synthesis</small></td><td><small><a href="#table-lookup">table-lookup</a></small></td><td><small>interpolated table lookup</small></td></tr>
-  <tr><td><small><a href="#iir-filter">IIR-filter</a></small></td><td><small>IIR filter</small></td><td><small><a href="#tap">tap</a></small></td><td><small>delay line tap</small></td></tr>
+  <tr><td><small><a href="#iir-filter">iir-filter</a></small></td><td><small>IIR filter</small></td><td><small><a href="#tap">tap</a></small></td><td><small>delay line tap</small></td></tr>
   <tr><td><small><a href="#in-any">in-any</a></small></td><td><small>sound file input</small></td><td><small><a href="#triangle-wave">triangle-wave</a></small></td><td><small>triangle wave</small></td></tr>
   <tr><td><small><a href="#locsig">locsig</a></small></td><td><small>static sound placement</small></td><td><small><a href="#two-pole">two-pole</a></small></td><td><small>two pole filter</small></td></tr>
   <tr><td><small><a href="#notch">notch</a></small></td><td><small>notch filter</small></td><td><small><a href="#two-zero">two-zero</a></small></td><td><small>two zero filter</small></td></tr>
@@ -1039,7 +1039,7 @@ two-zero  y(n) = a0 x(n) + a1 x(n-1) + a2 x(n-2)
 <p>
 This nomenclature is taken from Julius Smith's "An Introduction to Digital
 Filter Theory" in Strawn "Digital Audio Signal Processing", and is different
-from that used in the more general filters such as <a href="#fir-filter">FIR-filter</a>.
+from that used in the more general filters such as <a href="#fir-filter">fir-filter</a>.
 </p><br clear=left>
 <br>
 <p>In <b>make-ppolar</b> ("poles polar") you can specify the radius and angle of a
@@ -1186,12 +1186,12 @@ See also the noi-attempt, filter-white-noise, and testR instruments in <a href="
    <a name="filter?"><em class=def>filter?</em></a> <i>fl</i>
 
    <a name="make-fir-filter"><em class=def>make-fir-filter</em></a> <a href="#optional-key">&amp;optional-key</a> <i>order xcoeffs</i>
-   <a name="fir-filter"><em class=def>FIR-filter</em></a> <i>fl</i> <i>inp</i> 
-   <a name="fir-filter?"><em class=def>FIR-filter?</em></a> <i>fl</i>
+   <a name="fir-filter"><em class=def>fir-filter</em></a> <i>fl</i> <i>inp</i> 
+   <a name="fir-filter?"><em class=def>fir-filter?</em></a> <i>fl</i>
 
    <a name="make-iir-filter"><em class=def>make-iir-filter</em></a> <a href="#optional-key">&amp;optional-key</a> <i>order ycoeffs</i>
-   <a name="iir-filter"><em class=def>IIR-filter</em></a> <i>fl</i> <i>inp</i> 
-   <a name="iir-filter?"><em class=def>IIR-filter?</em></a> <i>fl</i>
+   <a name="iir-filter"><em class=def>iir-filter</em></a> <i>fl</i> <i>inp</i> 
+   <a name="iir-filter?"><em class=def>iir-filter?</em></a> <i>fl</i>
 
    <a name="envelope-&gt;coeffs"><em class=def>envelope-&gt;coeffs</em></a> &amp;key <i>order envelope dc</i>
 </pre>
@@ -1238,7 +1238,7 @@ Say we want to put a spectral envelope on a noise source.</p>
 The <i>order</i> of the filter determines how close you
 get to the envelope.</p>
 
-<p>The <A NAME="hilbert">Hilbert transform</a> can be implemented with FIR-filter:</p>
+<p>The <A NAME="hilbert">Hilbert transform</a> can be implemented with fir-filter:</p>
 <pre><small>
 (defun make-hilbert (&amp;optional (len 30))
   ;; create the coefficients of the Hilbert transformer of length <i>len</i>
@@ -1254,7 +1254,7 @@ get to the envelope.</p>
 	    (setf (aref arr k) (/ num denom)))))
     (<em class=red>make-fir-filter</em> arrlen (loop for i from 0 below arrlen collect (aref arr i)))))
 
-(defmacro hilbert (f in) `(<em class=red>FIR-filter</em> ,f ,in))
+(defmacro hilbert (f in) `(<em class=red>fir-filter</em> ,f ,in))
 </small></pre>
 <br>
 
@@ -4161,8 +4161,8 @@ replace the current intermediate C file.
   <tr><td><em class=tab><a href="clm.html#*clm-data-format*">*clm-data-format*</a></em></td><td><em class=tab><a href="clm.html#filter">filter</a></em></td><td><em class=tab><a href="clm.html#make-pulse-train">make-pulse-train</a></em></td><td><em class=tab><a href="clm.html#one-zero?">one-zero?</a></em></td><td><em class=tab><a href="clm.html#make-locsig"><b>Sound placement</b></a></em></td></tr>
   <tr><td><em class=tab><a href="clm.html#*clm-date*">*clm-date*</a></em></td><td><em class=tab><a href="clm.html#filter?">filter?</a></em></td><td><em class=tab><a href="clm.html#make-rand">make-rand</a></em></td><td><em class=tab><a href="clm.html#open-controls">open-controls</a></em></td><td><em class=tab><a href="clm.html#sound-chans">sound-chans</a></em></td></tr>
   <tr><td><em class=tab><a href="clm.html#*clm-delete-reverb*">*clm-delete-reverb*</a></em></td><td><em class=tab><a href="clm.html#filters"><b>Filters</b></a></em></td><td><em class=tab><a href="clm.html#make-rand-interp">make-rand-interp</a></em></td><td><em class=tab><a href="clm.html#open-input">open-input</a></em></td><td><em class=tab><a href="clm.html#sound-data-format">sound-data-format</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#clmenv">clm-envelope</a></em></td><td><em class=tab><a href="clm.html#fir-filter">FIR-filter</a></em></td><td><em class=tab><a href="clm.html#make-readin">make-readin</a></em></td><td><em class=tab><a href="clm.html#open-input*">open-input*</a></em></td><td><em class=tab><a href="clm.html#sound-data-location">sound-data-location</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#*clm-file-buffer-size*">*clm-file-buffer-size*</a></em></td><td><em class=tab><a href="clm.html#fir-filter?">FIR-filter?</a></em></td><td><em class=tab><a href="clm.html#make-roomsig">make-roomsig</a></em></td><td><em class=tab><a href="clm.html#*open-input-pathname*">*open-input-pathname*</a></em></td><td><em class=tab><a href="clm.html#sound-datum-size">sound-datum-size</a></em></td></tr>
+  <tr><td><em class=tab><a href="clm.html#clmenv">clm-envelope</a></em></td><td><em class=tab><a href="clm.html#fir-filter">fir-filter</a></em></td><td><em class=tab><a href="clm.html#make-readin">make-readin</a></em></td><td><em class=tab><a href="clm.html#open-input*">open-input*</a></em></td><td><em class=tab><a href="clm.html#sound-data-location">sound-data-location</a></em></td></tr>
+  <tr><td><em class=tab><a href="clm.html#*clm-file-buffer-size*">*clm-file-buffer-size*</a></em></td><td><em class=tab><a href="clm.html#fir-filter?">fir-filter?</a></em></td><td><em class=tab><a href="clm.html#make-roomsig">make-roomsig</a></em></td><td><em class=tab><a href="clm.html#*open-input-pathname*">*open-input-pathname*</a></em></td><td><em class=tab><a href="clm.html#sound-datum-size">sound-datum-size</a></em></td></tr>
   <tr><td><em class=tab><a href="clm.html#*clm-file-name*">*clm-file-name*</a></em></td><td><em class=tab><a href="clm.html#formant">formant</a></em></td><td><em class=tab><a href="clm.html#make-sample-&gt;file">make-sample-&gt;file</a></em></td><td><em class=tab><a href="clm.html#*open-input-truename*">*open-input-truename*</a></em></td><td><em class=tab><a href="clm.html#sound-duration">sound-duration</a></em></td></tr>
   <tr><td><em class=tab><a href="clm.html#*clm-header-type*">*clm-header-type*</a></em></td><td><em class=tab><a href="clm.html#formant?">formant?</a></em></td><td><em class=tab><a href="clm.html#make-sawtooth-wave">make-sawtooth-wave</a></em></td><td><em class=tab><a href="clm.html#*open-input-verbose*">*open-input-verbose*</a></em></td><td><em class=tab><a href="clm.html#sound-format-name">sound-format-name</a></em></td></tr>
   <tr><td><em class=tab><a href="clm.html#clm-help">clm-help</a></em></td><td><em class=tab><a href="clm.html#fft"><b>Fourier transforms </b></a></em></td><td><em class=tab><a href="clm.html#make-sine-summation">make-sine-summation</a></em></td><td><em class=tab><a href="clm.html#open-output">open-output</a></em></td><td><em class=tab><a href="clm.html#sound-frames">sound-frames</a></em></td></tr>
@@ -4185,8 +4185,8 @@ replace the current intermediate C file.
   <tr><td><em class=tab><a href="clm.html#*clm-verbose*">*clm-verbose*</a></em></td><td><em class=tab><a href="clm.html#header-types"><b>Headers </b></a></em></td><td><em class=tab><a href="clm.html#mixer?">mixer?</a></em></td><td><em class=tab><a href="clm.html#polar-&gt;rectangular">polar-&gt;rectangular</a></em></td><td><em class=tab><a href="clm.html#stretch-envelope">stretch-envelope</a></em></td></tr>
   <tr><td><em class=tab><a href="clm.html#*clm-version*">*clm-version*</a></em></td><td><em class=tab><a href="clm.html#clm-help"><b>Help </b></a></em></td><td><em class=tab><a href="clm.html#move-locsig">move-locsig</a></em></td><td><em class=tab><a href="clm.html#polynomial">polynomial</a></em></td><td><em class=tab><a href="clm.html#sum-of-cosines">sum-of-cosines</a></em></td></tr>
   <tr><td><em class=tab><a href="clm.html#close-controls">close-controls</a></em></td><td><em class=tab><a href="clm.html#hz-&gt;radians">hz-&gt;radians</a></em></td><td><em class=tab><a href="clm.html#multiply-arrays">multiply-arrays</a></em></td><td><em class=tab><a href="clm.html#pulse-train">pulse-train</a></em></td><td><em class=tab><a href="clm.html#sum-of-cosines?">sum-of-cosines?</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#close-input">close-input</a></em></td><td><em class=tab><a href="clm.html#iir-filter">IIR-filter</a></em></td><td><em class=tab><a href="clm.html#mus-a0">mus-a0</a></em></td><td><em class=tab><a href="clm.html#pulse-train?">pulse-train?</a></em></td><td><em class=tab><a href="clm.html#sum-of-sines">sum-of-sines</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#close-output">close-output</a></em></td><td><em class=tab><a href="clm.html#iir-filter?">IIR-filter?</a></em></td><td><em class=tab><a href="clm.html#mus-a1">mus-a1</a></em></td><td><em class=tab><a href="clm.html#radians-&gt;degrees">radians-&gt;degrees</a></em></td><td><em class=tab><a href="clm.html#table-lookup">table-lookup</a></em></td></tr>
+  <tr><td><em class=tab><a href="clm.html#close-input">close-input</a></em></td><td><em class=tab><a href="clm.html#iir-filter">iir-filter</a></em></td><td><em class=tab><a href="clm.html#mus-a0">mus-a0</a></em></td><td><em class=tab><a href="clm.html#pulse-train?">pulse-train?</a></em></td><td><em class=tab><a href="clm.html#sum-of-sines">sum-of-sines</a></em></td></tr>
+  <tr><td><em class=tab><a href="clm.html#close-output">close-output</a></em></td><td><em class=tab><a href="clm.html#iir-filter?">iir-filter?</a></em></td><td><em class=tab><a href="clm.html#mus-a1">mus-a1</a></em></td><td><em class=tab><a href="clm.html#radians-&gt;degrees">radians-&gt;degrees</a></em></td><td><em class=tab><a href="clm.html#table-lookup">table-lookup</a></em></td></tr>
   <tr><td><em class=tab><a href="clm.html#comb">comb</a></em></td><td><em class=tab><a href="clm.html#in-any">in-any</a></em></td><td><em class=tab><a href="clm.html#mus-a2">mus-a2</a></em></td><td><em class=tab><a href="clm.html#radians-&gt;hz">radians-&gt;hz</a></em></td><td><em class=tab><a href="clm.html#table-lookup?">table-lookup?</a></em></td></tr>
   <tr><td><em class=tab><a href="clm.html#comb?">comb?</a></em></td><td><em class=tab><a href="clm.html#ina">ina</a></em></td><td><em class=tab><a href="clm.html#mus-aifc">mus-aifc</a></em></td><td><em class=tab><a href="clm.html#rand">rand</a></em></td><td><em class=tab><a href="clm.html#tap">tap</a></em></td></tr>
   <tr><td><em class=tab><a href="clm.html#continue-sample-&gt;file">continue-sample-&gt;file</a></em></td><td><em class=tab><a href="clm.html#inb">inb</a></em></td><td><em class=tab><a href="clm.html#mus-aiff">mus-aiff</a></em></td><td><em class=tab><a href="clm.html#rand-interp">rand-interp</a></em></td><td><em class=tab><a href="clm.html#times-&gt;samples">times-&gt;samples</a></em></td></tr>

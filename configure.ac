@@ -1,7 +1,7 @@
 dnl Configuration script for Snd
 dnl Process this file with autoconf 2.57 to produce a configure script.
 
-AC_INIT(snd, 6.7, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-6.tar.gz)
+AC_INIT(snd, 6.8, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-6.tar.gz)
 AC_CONFIG_SRCDIR(snd.c)
 AC_CANONICAL_HOST
 AC_CONFIG_HEADER(config.h)
@@ -14,7 +14,7 @@ audio_system="unknown"
 MAKE_TARGET="snd"
 
 PACKAGE=snd
-VERSION=6.7
+VERSION=6.8
 AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE")
 AC_DEFINE_UNQUOTED(VERSION, "$VERSION")
 AC_SUBST(PACKAGE)
@@ -49,6 +49,8 @@ AC_SUBST(VERSION)
 #   --with-modules        accommodate sndlib that was built with modules
 #   --with-editres 	  include EditRes in xm
 #   --with-shared-sndlib  load sndlib.so if possible
+#   GUILE_CONFIG_path     where to look for guile-config
+#   SNDLIB_CONFIG_path    where to look for sndlib-config
 #--------------------------------------------------------------------------------
 
 AC_ARG_WITH(esd,        [  --with-esd		  use ESD])
@@ -1035,14 +1037,22 @@ fi
 # check against needed version (17.2 for now -- need c_vct_copy in vct.c)
 # set SNDLIB_FILES and SNDLIB_LIB
 
-# TODO: make SNDLIB_CONFIG settable by caller (or add SNDLIB_CONFIG_path as in guile case above)
-
 SNDLIB_FILES="SNDLIB_O_FILES"
 SNDLIB_LIB=""
 SNDLIB_PREFIX=""
 AC_ARG_WITH(shared-sndlib,[  --with-shared-sndlib	  try to load libsndlib.so])
 if test "$with_shared_sndlib" = yes; then
-  AC_PATH_PROG(SNDLIB_CONFIG, sndlib-config, no)
+  if test "$SNDLIB_CONFIG_path" != "" ; then
+    if ! test -x "${SNDLIB_CONFIG_path}sndlib-config" ; then
+      # try adding the "/" to the path    
+      SNDLIB_CONFIG_path="${SNDLIB_CONFIG_path}/"
+    fi
+  fi
+  if ! test -x "${SNDLIB_CONFIG_path}sndlib-config" ; then
+    AC_PATH_PROG(SNDLIB_CONFIG, sndlib-config, no)
+  else
+    SNDLIB_CONFIG="${SNDLIB_CONFIG_path}sndlib-config"
+  fi
   if test "$SNDLIB_CONFIG" = "no" ; then
     AC_MSG_RESULT(no)
   else
