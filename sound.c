@@ -725,7 +725,7 @@ int mus_sound_open_input (const char *arg)
   if (sf) 
     {
       mus_file_open_descriptors(fd, arg, sf->data_format, sf->datum_size, sf->data_location, sf->chans, sf->header_type);
-      mus_file_seek(fd, sf->data_location, SEEK_SET);
+      lseek(fd, sf->data_location, SEEK_SET);
     }
   else mus_error(MUS_CANT_OPEN_FILE, "can't open %s: %s\n  [%s[%d] %s]",
 		 arg, strerror(errno),

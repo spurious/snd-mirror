@@ -392,7 +392,7 @@ int snd_open_read(snd_state *ss, const char *arg);
 int snd_reopen_write(snd_state *ss, const char *arg);
 int snd_write_header(snd_state *ss, const char *name, int type, int srate, int chans, int loc, int size, int format, const char *comment, int len, int *loops);
 int snd_overwrite_ok(snd_state *ss, const char *ofile);
-int file_state_channel_offset(int chan);
+MUS_SAMPLE_TYPE *file_state_channel_array(int *io, int chan);
 int *make_file_state(int fd, file_info *hdr, int chan, int suggested_bufsize);
 int *free_file_state(int *datai);
 void set_file_state_fd(int *datai, int fd);

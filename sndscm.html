@@ -1544,6 +1544,7 @@ Any additions are welcome!
 <A NAME="marksdoc"></a><span class=box><h2>marks.scm</h2></span>
 
 <p>marks.scm is a collection of mark-related functions.</p>
+
 <pre>
   <em class=def><a name="markname2id">mark-name-&gt;id</a></em> name
   <em class=def><a name="describemark">describe-mark</a></em> id
@@ -1555,7 +1556,9 @@ Any additions are welcome!
   <em class=def><a name="exevalbetweenmarks">eval-between-marks</a></em> func snd
   <em class=def><a name="exsnapmarks">snap-marks</a></em>
   <em class=def><a name="exdefineselectionviamarks">define-selection-via-marks</a></em> m1 m2
+  <em class=def><a name="exsnapmarktobeat">snap-mark-to-beat</a></em>
 </pre>
+
 <p><i>mark-name-&gt;id</i> is like <a href="extsnd.html#sndfindmark">find-mark</a> but searches all currently accessible channels.
 <i>describe-mark</i> returns a description of the movements of mark id over the channel's edit history:
 </p>
@@ -1589,6 +1592,7 @@ between the leftmost marks in <i>snd</i>.
 </pre>
 <p><i>snap-marks</i> places marks at the start and end of the current selection.
 <i>define-selection-via-marks</i> selects the portion between the given marks.
+<i>snap-mark-to-beat</i> forces a dragged mark to end up on a beat.
 </p>
 
 
@@ -1608,12 +1612,14 @@ to find out what all the fuss is about).
   <em class=def><a name="mixname2id">mix-name-&gt;id</a></em> name
   <em class=def><a name="mix2vct">mix-&gt;vct</a></em> id
   <em class=def><a name="panmix">pan-mix</a></em> file frame env
+  <em class=def><a name="snapmixtobeat">snap-mix-to-beat</a></em>
 </pre>
 <p>These are the mix utilities in mix.scm (unrelated to tracks). <i>mix-name-&gt;id</i>
 returns the id of a given (named) mix. <i>mix-&gt;vct</i> returns the current samples
 of mix <i>id</i> (taking into account its current amplitude an so on). <i>pan-mix</i>
 mixes <i>file</i> into the current (stereo) sound starting at <i>frame</i> using the envelope <i>env</i>
 to pan the mixed samples (0: all chan 0, 1: all chan 1).
+<i>snap-mix-to-beat</i> forces a dragged mix to end up on a beat.
 </p>
 <center><img src="pan.png" alt="picture of panning"></center>
 <pre>

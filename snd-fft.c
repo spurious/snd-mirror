@@ -2271,8 +2271,8 @@ void c_convolve (char *fname, Float amp, int filec, int filehdr, int filterc, in
   if (tempfile != -1)
     {
       /* get to start point in the two sound files */
-      mus_file_seek(filec, filehdr, SEEK_SET);
-      mus_file_seek(filterc, filterhdr, SEEK_SET);
+      lseek(filec, filehdr, SEEK_SET);
+      lseek(filterc, filterhdr, SEEK_SET);
 
       rl0 = (Float *)CALLOC(fftsize, sizeof(Float));
       if (rl0) rl1 = (Float *)CALLOC(fftsize, sizeof(Float));

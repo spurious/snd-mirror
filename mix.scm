@@ -4,6 +4,7 @@
 ;;; (mix-name->id name) given name of mix return id
 ;;; (pan-mix file frame envelope) mixes file into current (stereo) sound starting at frame using envelope to pan (0: all chan 0, 1: all chan 1)
 ;;; (mix->vct id) return current state of mix in vct
+;;; (snap-mix-to-beat) forces dragged mix to end up on a beat
 ;;;
 ;;; tracks:
 ;;; (make-track id mix-list) puts each mix (referenced by its id number) in mix-list into track id
@@ -95,7 +96,26 @@
 	#f)))  ;throw 'no-such-mix?
 	  
 
+(define (snap-mix-to-beat)
+  ;; when a mix is dragged, its end position is always on a beat
+  (add-hook! mix-position-changed-hook
+	     (lambda (id samps-moved)
+	       (let* ((samp (+ samps-moved (mix-position id)))
+		      (snd (car (mix-home id)))
+		      (chn (cadr (mix-home id)))
+		      (bps (/ (beats-per-minute snd chn) 60.0))
+		      (sr (srate snd))
+		      (beat (floor (/ (* samp bps) sr)))
+		      (lower (inexact->exact (/ (* beat sr) bps)))
+		      (higher (inexact->exact (/ (* (1+ beat) sr) bps))))
+		 (set! (mix-position id)
+		       (if (< (- samp lower) (- higher samp))
+			   lower
+			   higher))
+		 #t))))
 
+
+;;; --------------------------------------------------------------------------------
 ;;; a track is a list of mix ids
 (define make-track 
   (lambda (id mixes)

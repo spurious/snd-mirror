@@ -435,7 +435,7 @@ void start_amp_env(chan_info *cp)
 void add_channel_data(char *filename, chan_info *cp, file_info *hdr, snd_state *ss, int graphed)
 {
   int fd, chn = 0;
-  int *datai;
+  int *io;
   snd_info *sp;
   file_info *chdr;
   sp = cp->sound;
@@ -455,9 +455,9 @@ void add_channel_data(char *filename, chan_info *cp, file_info *hdr, snd_state *
 				    chdr->chans,
 				    chdr->type);
 	  during_open(fd, filename, SND_OPEN_CHANNEL);
-	  datai = make_file_state(fd, chdr, chn, FILE_BUFFER_SIZE);
-	  cp->sounds[0] = make_snd_data_file(filename, datai,
-					     MUS_SAMPLE_ARRAY(datai[file_state_channel_offset(chn)]),
+	  io = make_file_state(fd, chdr, chn, FILE_BUFFER_SIZE);
+	  cp->sounds[0] = make_snd_data_file(filename, io,
+					     file_state_channel_array(io, chn),
 					     chdr, DONT_DELETE_ME, cp->edit_ctr, chn);
 	  if (show_usage_stats(ss)) gather_usage_stats(cp);
 	}

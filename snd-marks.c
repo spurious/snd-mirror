@@ -1314,6 +1314,9 @@ void finish_moving_mark(chan_info *cp, mark *m) /* button release called from sn
   if (watching_mouse) cancel_mark_watch(cp);
   if ((m->sync != 0) && (mark_sd))
     {
+      if (XEN_HOOKED(mark_hook))
+	for (i = 0; i < mark_sd->mark_ctr; i++)
+	  run_mark_hook(mark_sd->chans[i], mark_id(mark_sd->marks[i]), MARK_RELEASE);
       if (mark_control_clicked)
 	{
 	  for (i = mark_sd->mark_ctr - 1; i >= 0; i--)
@@ -1337,6 +1340,7 @@ void finish_moving_mark(chan_info *cp, mark *m) /* button release called from sn
     }
   else 
     {
+      run_mark_hook(cp, mark_id(m), MARK_RELEASE);
       if (mark_control_clicked) 
 	{
 	  edit_dragged_mark(cp, m, mark_initial_sample);
@@ -1345,7 +1349,6 @@ void finish_moving_mark(chan_info *cp, mark *m) /* button release called from sn
       sort_marks(cp);
     }
   if (mark_sd) mark_sd = free_syncdata(mark_sd);
-  run_mark_hook(cp, mark_id(m), MARK_RELEASE);
 }
 
 void play_syncd_mark(chan_info *cp, mark *m)

@@ -731,7 +731,7 @@ long mus_file_seek(int tfd, long offset, int origin)
     }
   siz = fd->bytes_per_sample;
   if ((siz == 2) || 
-      (origin != 0))
+      (origin != SEEK_SET))
     return(lseek(tfd, offset, origin));
   else
     {

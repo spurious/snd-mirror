@@ -1733,9 +1733,11 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	   (lambda (w c i) ; to mid-window 
 	     (set! (cursor) (inexact->exact (/ (+ (left-sample) (right-sample)) 2))))
 	   (lambda (w c i) ; move ahead a window
-	     (set! (left-sample) (right-sample)))
+	     (if (< (right-sample) (frames))
+		 (set! (left-sample) (right-sample))))
 	   (lambda (w c i) ; move back a window
-	     (set! (left-sample) (max 0 (- (* 2 (left-sample)) (right-sample)))))
+	     (if (> (left-sample) 0)
+		 (set! (left-sample) (max 0 (- (* 2 (left-sample)) (right-sample))))))
 	   (lambda (w c i)
 	     (snd-print "chess"))
 	   (lambda (w c i)

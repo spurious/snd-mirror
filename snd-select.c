@@ -627,7 +627,7 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
 				    mus_data_format_to_bytes_per_sample(format), 
 				    oloc, chans, type);
 	  mus_file_set_data_clipped(ofd, data_clipped(ss));
-	  mus_file_seek(ofd, oloc, SEEK_SET);
+	  lseek(ofd, oloc, SEEK_SET);
 	  data = (MUS_SAMPLE_TYPE **)CALLOC(chans, sizeof(MUS_SAMPLE_TYPE *));
 	  for (i = 0; i < chans; i++) 
 	    data[i] = (MUS_SAMPLE_TYPE *)CALLOC(FILE_BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE)); 

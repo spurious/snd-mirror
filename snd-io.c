@@ -2,100 +2,79 @@
 
 /* file buffers (i.e. a sliding window on a given file's data) */
 
-#define SND_AREF_BLOCK 0
-#define SND_AREF_SIZE 1
-#define SND_AREF_HEADER_SIZE 2
+#define SND_IO_FD 0
+#define SND_IO_CHANS 1
+#define SND_IO_FRAMES 2
+#define SND_IO_BEG 3
+#define SND_IO_END 4
+#define SND_IO_BUFSIZE 5
+#define SND_IO_SAMPLE_ARRAYS 6
 
-#define SND_IO_FD 1
-#define SND_IO_CHANS 2
-#define SND_IO_SIZE 3
-#define SND_IO_BEG 4
-#define SND_IO_END 5
-#define SND_IO_BUFSIZ 6
-#define SND_IO_HDR_END 7
-#define SND_IO_DATS 8
-
-static void c_io_bufclr (int *io, int *datai, int beg)
+static void c_io_bufclr (int *io, int beg)
 {
   int i, k, end;
   MUS_SAMPLE_TYPE *j;
-  if (io[SND_IO_DATS + SND_AREF_BLOCK] == 0)
-    snd_error("attempt to clear deallocated IO buffer");
-  else
+  end = io[SND_IO_BUFSIZE];
+  for (k = 0; k < io[SND_IO_CHANS]; k++)
     {
-      end = io[SND_IO_BUFSIZ];
-      for (k = 0; k < io[SND_IO_CHANS]; k++)
+      j = MUS_SAMPLE_ARRAY(io[SND_IO_SAMPLE_ARRAYS + k]);
+      if (j)
 	{
-	  j = MUS_SAMPLE_ARRAY(datai[io[SND_IO_DATS + SND_AREF_BLOCK] + k]);
-	  if (j)
-	    {
-	      if (beg == 0)
-		memset((void *)j, 0, end * sizeof(MUS_SAMPLE_TYPE));
-	      else
-		for (i = beg; i < end; i++) 
-		  j[i] = MUS_SAMPLE_0;
-	    }
+	  if (beg == 0)
+	    memset((void *)j, 0, end * sizeof(MUS_SAMPLE_TYPE));
+	  else
+	    for (i = beg; i < end; i++) 
+	      j[i] = MUS_SAMPLE_0;
 	}
     }
 }
 
-static void reposition_file_buffers_1(int loc, int *io, int *datai)
+static void reposition_file_buffers_1(int loc, int *io)
 {
   /* called when loc is outside the current in-core frame for the file pointed to by io */
-  int file_end, bytes;
-  int bufend, filbytes;
+  int frames;
 #if LONG_INT_P
   int i;
   MUS_SAMPLE_TYPE **bufs;
 #endif
   if ((loc < io[SND_IO_BEG]) && 
-      ((loc + (int)(.9 * io[SND_IO_BUFSIZ])) > io[SND_IO_BEG]))
+      ((loc + (int)(.9 * io[SND_IO_BUFSIZE])) > io[SND_IO_BEG]))
     {
-      if ((loc + 10) > io[SND_IO_BEG]) loc -= (int)(.75 * io[SND_IO_BUFSIZ]);
+      if ((loc + 10) > io[SND_IO_BEG]) loc -= (int)(.75 * io[SND_IO_BUFSIZE]);
       if (loc < 0) loc = 0;
-      if (io[SND_IO_CHANS] == 1) loc = (2 * (int)(loc / 2));
+      if (io[SND_IO_CHANS] == 1) loc = (2 * (int)(loc / 2)); /* does this matter? */
     }
-  file_end = io[SND_IO_SIZE];
-  bytes = file_end - loc;
-  if (bytes > io[SND_IO_BUFSIZ]) 
-    bytes = io[SND_IO_BUFSIZ];
-  if (bytes < 0)                   /* tried to access beyond current end of file */
+  frames = io[SND_IO_FRAMES] - loc;
+  if (frames > io[SND_IO_BUFSIZE]) frames = io[SND_IO_BUFSIZE];
+  if (frames <= 0)                   /* tried to access beyond current end of file */
     {
       io[SND_IO_BEG] = loc; 
-      c_io_bufclr(io, datai, 0);
+      c_io_bufclr(io, 0);
     }
-  else /* bytes is positive or 0 */
+  else /* frames is positive or 0 */
     {
-      mus_file_seek(io[SND_IO_FD],
-		    io[SND_IO_HDR_END] + (2 * io[SND_IO_CHANS] * loc),
-		    SEEK_SET);
+      mus_file_seek_frame(io[SND_IO_FD], loc);
       io[SND_IO_BEG] = loc;
-      if (bytes > 0) 
-	{
 #if LONG_INT_P
-	  bufs = (MUS_SAMPLE_TYPE **)MALLOC(io[SND_IO_CHANS] * sizeof(MUS_SAMPLE_TYPE *));
-	  for (i = 0; i < io[SND_IO_CHANS]; i++) 
-	    bufs[i] = MUS_SAMPLE_ARRAY(datai[io[SND_IO_DATS + SND_AREF_BLOCK] + i]);
-	  mus_file_read_chans(io[SND_IO_FD],
-			      0, bytes - 1,
-			      io[SND_IO_CHANS],
-			      bufs,
-			      (MUS_SAMPLE_TYPE *)bufs);
-	  FREE(bufs);
+      bufs = (MUS_SAMPLE_TYPE **)MALLOC(io[SND_IO_CHANS] * sizeof(MUS_SAMPLE_TYPE *));
+      for (i = 0; i < io[SND_IO_CHANS]; i++) 
+	bufs[i] = MUS_SAMPLE_ARRAY(io[SND_IO_SAMPLE_ARRAYS + i]);
+      mus_file_read_chans(io[SND_IO_FD],
+			  0, frames - 1,
+			  io[SND_IO_CHANS],
+			  bufs,
+			  (MUS_SAMPLE_TYPE *)bufs);
+      FREE(bufs);
 #else
-	  mus_file_read_chans(io[SND_IO_FD],
-			      0, bytes - 1,
-			      io[SND_IO_CHANS],
-			      (MUS_SAMPLE_TYPE **)(datai + io[SND_IO_DATS + SND_AREF_BLOCK]),
-			      (MUS_SAMPLE_TYPE *)(datai + io[SND_IO_DATS + SND_AREF_BLOCK]));
+      mus_file_read_chans(io[SND_IO_FD],
+			  0, frames - 1,
+			  io[SND_IO_CHANS],
+			  (MUS_SAMPLE_TYPE **)(io + SND_IO_SAMPLE_ARRAYS),
+			  (MUS_SAMPLE_TYPE *)(io + SND_IO_SAMPLE_ARRAYS));
 #endif
-	}
-      if (bytes < io[SND_IO_BUFSIZ]) c_io_bufclr(io, datai, bytes);
-      bufend = io[SND_IO_BUFSIZ] - 1;
-      filbytes = file_end-io[SND_IO_BEG] - 1;
-      if (filbytes < bufend) bufend = filbytes;
+      if (frames < io[SND_IO_BUFSIZE]) c_io_bufclr(io, frames);
     }
-  io[SND_IO_END] = io[SND_IO_BEG]+io[SND_IO_BUFSIZ] - 1;
+  io[SND_IO_END] = io[SND_IO_BEG] + io[SND_IO_BUFSIZE] - 1;
 }
 
 static void reposition_file_buffers(snd_data *sd, int index)
@@ -107,7 +86,7 @@ static void reposition_file_buffers(snd_data *sd, int index)
   if (sd->just_zeros)
     {
       sd->io[SND_IO_BEG] = index;
-      sd->io[SND_IO_END] = sd->io[SND_IO_BEG] + sd->io[SND_IO_BUFSIZ] - 1;
+      sd->io[SND_IO_END] = sd->io[SND_IO_BEG] + sd->io[SND_IO_BUFSIZE] - 1;
       return;
     }
   if (sd->open == FD_CLOSED)
@@ -121,7 +100,7 @@ static void reposition_file_buffers(snd_data *sd, int index)
 	  return;
 	}
       hdr = sd->hdr;
-      /* these need to flush active data before hidden close and fixup the datai indices */
+      /* these need to flush active data before hidden close and fixup the io indices */
       mus_file_open_descriptors(fd,
 				sd->filename,
 				hdr->format,
@@ -135,7 +114,7 @@ static void reposition_file_buffers(snd_data *sd, int index)
       sd->open = FD_OPEN;
       reclose = 1;
     }
-  reposition_file_buffers_1(index, sd->io, sd->io);
+  reposition_file_buffers_1(index, sd->io);
   if (reclose)
     {
       mus_file_close(fd); 
@@ -146,65 +125,63 @@ static void reposition_file_buffers(snd_data *sd, int index)
 
 int *make_file_state(int fd, file_info *hdr, int chan, int suggested_bufsize)
 {
-  int *datai;
+  int *io;
   int bufsize, chansize;
   bufsize = suggested_bufsize;
   chansize = (hdr->samples / hdr->chans); /* this can be bogus if the header is messed up */
   if ((chansize > 0) && 
       (bufsize > chansize)) 
     bufsize = chansize + 1;
-  datai = (int *)CALLOC(SND_IO_DATS + SND_AREF_HEADER_SIZE + hdr->chans + 2, sizeof(int)); /* why the +2?? */
-  datai[SND_IO_FD] = fd;
-  datai[SND_IO_CHANS] = hdr->chans;
-  datai[SND_IO_SIZE] = chansize;
-  datai[SND_IO_BEG] = 0;
-  datai[SND_IO_END] = bufsize - 1;
-  datai[SND_IO_BUFSIZ] = bufsize;
-  datai[SND_IO_HDR_END] = hdr->data_location; 
-  datai[SND_IO_DATS + SND_AREF_BLOCK] = SND_IO_DATS + SND_AREF_HEADER_SIZE;
-  datai[SND_IO_DATS + SND_AREF_SIZE] = hdr->chans;
-  datai[SND_IO_DATS + SND_AREF_HEADER_SIZE + chan] = (int)(MUS_MAKE_SAMPLE_ARRAY(bufsize));
-  reposition_file_buffers_1(0, datai, datai); /* get ready to read -- we're assuming mus_file_read_chans here */
-  return(datai);
+  io = (int *)CALLOC(SND_IO_SAMPLE_ARRAYS + hdr->chans, sizeof(int));
+  io[SND_IO_FD] = fd;
+  io[SND_IO_CHANS] = hdr->chans;
+  io[SND_IO_FRAMES] = chansize;
+  io[SND_IO_BEG] = 0;
+  io[SND_IO_END] = bufsize - 1;
+  io[SND_IO_BUFSIZE] = bufsize;
+  io[SND_IO_SAMPLE_ARRAYS + chan] = (int)(MUS_MAKE_SAMPLE_ARRAY(bufsize));
+  reposition_file_buffers_1(0, io); /* get ready to read -- we're assuming mus_file_read_chans here */
+  return(io);
 }
 
 #define ZERO_BUFFER_SIZE 1024
 int *make_zero_file_state(int size)
 {
-  int *datai;
-  datai = (int *)CALLOC(SND_IO_DATS + SND_AREF_HEADER_SIZE + 1 + 2, sizeof(int));
-  datai[SND_IO_FD] = -1;
-  datai[SND_IO_CHANS] = 1;
-  datai[SND_IO_SIZE] = size;
-  datai[SND_IO_BEG] = 0;
-  datai[SND_IO_END] = ZERO_BUFFER_SIZE - 1;
-  datai[SND_IO_BUFSIZ] = ZERO_BUFFER_SIZE;
-  datai[SND_IO_HDR_END] = 0;
-  datai[SND_IO_DATS + SND_AREF_BLOCK] = SND_IO_DATS + SND_AREF_HEADER_SIZE;
-  datai[SND_IO_DATS + SND_AREF_SIZE] = 1;
-  datai[SND_IO_DATS + SND_AREF_HEADER_SIZE] = (int)(MUS_MAKE_SAMPLE_ARRAY(ZERO_BUFFER_SIZE));
-  return(datai);
+  int *io;
+  io = (int *)CALLOC(SND_IO_SAMPLE_ARRAYS + 1, sizeof(int));
+  io[SND_IO_FD] = -1;
+  io[SND_IO_CHANS] = 1;
+  io[SND_IO_FRAMES] = size;
+  io[SND_IO_BEG] = 0;
+  io[SND_IO_END] = ZERO_BUFFER_SIZE - 1;
+  io[SND_IO_BUFSIZE] = ZERO_BUFFER_SIZE;
+  io[SND_IO_SAMPLE_ARRAYS] = (int)(MUS_MAKE_SAMPLE_ARRAY(ZERO_BUFFER_SIZE));
+  return(io);
 }
 
-int *free_file_state(int *datai)
+int *free_file_state(int *io)
 {
   /* gotta free the IO buffers as well as the descriptor buffer */
   int i, chans;
-  if (datai)
+  if (io)
     {
-      chans = datai[SND_IO_CHANS];
+      chans = io[SND_IO_CHANS];
       for (i = 0; i < chans; i++)
-	if (datai[SND_IO_DATS + SND_AREF_HEADER_SIZE + i]) 
-	  MUS_FREE_SAMPLE_ARRAY(datai[SND_IO_DATS + SND_AREF_HEADER_SIZE + i]);
-      FREE(datai);
+	if (io[SND_IO_SAMPLE_ARRAYS + i]) 
+	  MUS_FREE_SAMPLE_ARRAY(io[SND_IO_SAMPLE_ARRAYS + i]);
+      FREE(io);
     }
   return(NULL);
 }
 
-int file_state_channel_offset(int chan) {return(SND_IO_DATS + SND_AREF_HEADER_SIZE + chan);}
-void set_file_state_fd(int *datai, int fd) {datai[SND_IO_FD] = fd;}
-void close_file_state_fd(int *datai) {mus_file_close(datai[SND_IO_FD]);}
-int file_state_buffer_size(int *datai) {return(datai[SND_IO_BUFSIZ]);}
+MUS_SAMPLE_TYPE *file_state_channel_array(int *io, int chan) 
+{
+  return(MUS_SAMPLE_ARRAY(io[SND_IO_SAMPLE_ARRAYS + chan]));
+}
+
+void set_file_state_fd(int *io, int fd) {io[SND_IO_FD] = fd;}
+void close_file_state_fd(int *io) {mus_file_close(io[SND_IO_FD]);}
+int file_state_buffer_size(int *io) {return(io[SND_IO_BUFSIZE]);}
 
 void file_buffers_forward(int ind0, int ind1, int indx, snd_fd *sf, snd_data *cur_snd)
 {
@@ -224,7 +201,7 @@ void file_buffers_forward(int ind0, int ind1, int indx, snd_fd *sf, snd_data *cu
     }
   else 
     {
-      sf->last = (MUS_SAMPLE_TYPE *)(cur_snd->buffered_data + cur_snd->io[SND_IO_BUFSIZ] - 1);
+      sf->last = (MUS_SAMPLE_TYPE *)(cur_snd->buffered_data + cur_snd->io[SND_IO_BUFSIZE] - 1);
       sf->eof = 0;
     }
   sf->beg = cur_snd->io[SND_IO_BEG];
@@ -235,11 +212,11 @@ void file_buffers_back(int ind0, int ind1, int indx, snd_fd *sf, snd_data *cur_s
 {
   if ((indx > cur_snd->io[SND_IO_END]) || 
       (indx < cur_snd->io[SND_IO_BEG])) 
-    reposition_file_buffers(cur_snd, indx - cur_snd->io[SND_IO_BUFSIZ] + 1);
+    reposition_file_buffers(cur_snd, indx - cur_snd->io[SND_IO_BUFSIZE] + 1);
   sf->view_buffered_data = (MUS_SAMPLE_TYPE *)(cur_snd->buffered_data + indx - cur_snd->io[SND_IO_BEG]);
   if (ind1 <= cur_snd->io[SND_IO_END])
     sf->last = (MUS_SAMPLE_TYPE *)(cur_snd->buffered_data + ind1 - cur_snd->io[SND_IO_BEG]);
-  else sf->last = (MUS_SAMPLE_TYPE *)(cur_snd->buffered_data + cur_snd->io[SND_IO_BUFSIZ] - 1);
+  else sf->last = (MUS_SAMPLE_TYPE *)(cur_snd->buffered_data + cur_snd->io[SND_IO_BUFSIZE] - 1);
   if (ind0 >= cur_snd->io[SND_IO_BEG]) 
     {
       sf->first = (MUS_SAMPLE_TYPE *)(cur_snd->buffered_data + ind0 - cur_snd->io[SND_IO_BEG]);

@@ -993,8 +993,8 @@ static mix_info *file_mix_samples(int beg, int num, char *tempfile, chan_info *c
   data = (MUS_SAMPLE_TYPE **)CALLOC(in_chans, sizeof(MUS_SAMPLE_TYPE *));
   data[base] = (MUS_SAMPLE_TYPE *)CALLOC(size, sizeof(MUS_SAMPLE_TYPE));
   chandata = data[base];
-  mus_file_seek(ofd, ohdr->data_location, SEEK_SET);
-  mus_file_seek(ifd, ihdr->data_location, SEEK_SET);
+  lseek(ofd, ohdr->data_location, SEEK_SET);
+  lseek(ifd, ihdr->data_location, SEEK_SET);
   if (scaler == 0.0)
     {
       for (i = 0; i < num; i += MAX_BUFFER_SIZE)
@@ -1289,7 +1289,7 @@ static void remix_file(mix_info *md, const char *origin)
   data = (MUS_SAMPLE_TYPE **)CALLOC(1, sizeof(MUS_SAMPLE_TYPE *));
   data[0] = (MUS_SAMPLE_TYPE *)CALLOC(size, sizeof(MUS_SAMPLE_TYPE));
   chandata = data[0];
-  if (use_temp_file) mus_file_seek(ofd, ohdr->data_location, SEEK_SET);
+  if (use_temp_file) lseek(ofd, ohdr->data_location, SEEK_SET);
 
   old_beg -= beg;
   old_end -= beg;

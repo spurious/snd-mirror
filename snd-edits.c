@@ -276,7 +276,7 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 					mus_sound_chans(sd->filename),
 					mus_sound_header_type(sd->filename));
 	      samples = mus_sound_samples(sd->filename);
-	      mus_file_seek(ifd, idataloc, SEEK_SET);
+	      lseek(ifd, idataloc, SEEK_SET);
 	      ibufs = (MUS_SAMPLE_TYPE **)MALLOC(sizeof(MUS_SAMPLE_TYPE *));
 	      ibufs[0] = (MUS_SAMPLE_TYPE *)CALLOC(FILE_BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE));
 	      bufnum = (FILE_BUFFER_SIZE);
@@ -793,15 +793,15 @@ static snd_data *make_snd_data_zero_file(int size, int *io, MUS_SAMPLE_TYPE *dat
 snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize)
 {
   snd_data *sf;
-  int *datai;
+  int *io;
   int fd;
   file_info *hdr;
   if (sd->just_zeros)
     {
-      datai = make_zero_file_state(sd->len);
+      io = make_zero_file_state(sd->len);
       sf = make_snd_data_zero_file(sd->len,
-				   datai,
-				   MUS_SAMPLE_ARRAY(datai[file_state_channel_offset(0)]),
+				   io,
+				   file_state_channel_array(io, 0),
 				   sd->edit_ctr);
       sf->copy = 1;
       return(sf);
@@ -823,11 +823,11 @@ snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize)
 			   hdr->chans,
 			   hdr->type);
   during_open(fd, sd->filename, SND_COPY_READER);
-  datai = make_file_state(fd, hdr, sd->chan, bufsize);
+  io = make_file_state(fd, hdr, sd->chan, bufsize);
   sf = (snd_data *)CALLOC(1, sizeof(snd_data));
   sf->type = sd->type;
-  sf->buffered_data = MUS_SAMPLE_ARRAY(datai[file_state_channel_offset(sd->chan)]);
-  sf->io = datai;
+  sf->buffered_data = file_state_channel_array(io, sd->chan);
+  sf->io = io;
   sf->filename = copy_string(sd->filename);
   sf->hdr = hdr;
   sf->temporary = DONT_DELETE_ME;
@@ -1049,12 +1049,12 @@ static int add_sound_file_to_edit_list(chan_info *cp, char *name, int *io, MUS_S
 
 static int add_zero_file_to_edit_list(chan_info *cp, int size)
 {
-  int *datai;
+  int *io;
   prepare_sound_list(cp);
-  datai = make_zero_file_state(size);
+  io = make_zero_file_state(size);
   cp->sounds[cp->sound_ctr] = make_snd_data_zero_file(size,
-						      datai,
-						      MUS_SAMPLE_ARRAY(datai[file_state_channel_offset(0)]),
+						      io,
+						      file_state_channel_array(io, 0),
 						      cp->edit_ctr);
   return(cp->sound_ctr);
 }
@@ -1308,7 +1308,7 @@ void file_insert_samples(int beg, int num, char *inserted_file, chan_info *cp, i
   int k, len;
   int *cb;
   int fd;
-  int *datai;
+  int *io;
   ed_list *ed;
   file_info *hdr;
   snd_state *ss;
@@ -1343,9 +1343,9 @@ void file_insert_samples(int beg, int num, char *inserted_file, chan_info *cp, i
 				hdr->chans,
 				hdr->type);
       during_open(fd, inserted_file, SND_INSERT_FILE);
-      datai = make_file_state(fd, hdr, chan, FILE_BUFFER_SIZE);
-      cb[ED_SND] = add_sound_file_to_edit_list(cp, inserted_file, datai,
-					       MUS_SAMPLE_ARRAY(datai[file_state_channel_offset(chan)]),
+      io = make_file_state(fd, hdr, chan, FILE_BUFFER_SIZE);
+      cb[ED_SND] = add_sound_file_to_edit_list(cp, inserted_file, io,
+					       file_state_channel_array(io, chan),
 					       hdr, auto_delete, chan);
       ed = cp->edits[cp->edit_ctr];
       ed->sfnum = PACK_EDIT(INSERTION_EDIT, cb[ED_SND]);
@@ -1590,7 +1590,7 @@ void file_change_samples(int beg, int num, char *tempfile,
   int k, prev_len, new_len;
   int *cb;
   int fd;
-  int *datai;
+  int *io;
   ed_list *ed;
   file_info *hdr;
   snd_state *ss;
@@ -1628,9 +1628,9 @@ void file_change_samples(int beg, int num, char *tempfile,
 				hdr->chans,
 				hdr->type);
       during_open(fd, tempfile, SND_CHANGE_FILE);
-      datai = make_file_state(fd, hdr, chan, FILE_BUFFER_SIZE);
-      cb[ED_SND] = add_sound_file_to_edit_list(cp, tempfile, datai,
-					       MUS_SAMPLE_ARRAY(datai[file_state_channel_offset(chan)]),
+      io = make_file_state(fd, hdr, chan, FILE_BUFFER_SIZE);
+      cb[ED_SND] = add_sound_file_to_edit_list(cp, tempfile, io,
+					       file_state_channel_array(io, chan),
 					       hdr, auto_delete, chan);
       ed = cp->edits[cp->edit_ctr];
       ed->sfnum = PACK_EDIT(CHANGE_EDIT, cb[ED_SND]);
@@ -1651,7 +1651,7 @@ void file_override_samples(int num, char *tempfile,
 {
   int fd;
   ed_list *e;
-  int *datai;
+  int *io;
   file_info *hdr;
   snd_state *ss;
   if (num == 0) 
@@ -1677,13 +1677,13 @@ void file_override_samples(int num, char *tempfile,
 				hdr->chans,
 				hdr->type);
       during_open(fd, tempfile, SND_OVERRIDE_FILE);
-      datai = make_file_state(fd, hdr, chan, FILE_BUFFER_SIZE);
+      io = make_file_state(fd, hdr, chan, FILE_BUFFER_SIZE);
       e = initial_ed_list(0, num - 1);
       if (origin) e->origin = copy_string(origin);
       cp->edits[cp->edit_ctr] = e;
       if (lock == LOCK_MIXES) lock_affected_mixes(cp, 0, num);
-      e->fragments[0 + ED_SND] = add_sound_file_to_edit_list(cp, tempfile, datai,
-							     MUS_SAMPLE_ARRAY(datai[file_state_channel_offset(chan)]),
+      e->fragments[0 + ED_SND] = add_sound_file_to_edit_list(cp, tempfile, io,
+							     file_state_channel_array(io, chan),
 							     hdr, auto_delete, chan);
       e->sfnum = PACK_EDIT(CHANGE_EDIT, FRAGMENT_SOUND(e, 0));
       reflect_edit_history_change(cp);
@@ -2138,7 +2138,7 @@ int open_temp_file(char *ofile, int chans, file_info *hdr, snd_state *ss)
 			    chans,
 			    hdr->type);
   mus_file_set_data_clipped(ofd, data_clipped(ss));
-  mus_file_seek(ofd, hdr->data_location, SEEK_SET);
+  lseek(ofd, hdr->data_location, SEEK_SET);
   return(ofd);
 }
 

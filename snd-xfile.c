@@ -474,7 +474,7 @@ static file_dialog_info *make_file_dialog(snd_state *ss, int read_only, char *ti
   file_dialog_info *fd;
   Arg args[20];
   int n;
-  XmString s1;
+  XmString s1, s2;
   Widget wtmp = NULL, rc, rc1, rc2;
   fd = (file_dialog_info *)CALLOC(1, sizeof(file_dialog_info));
   fd->file_dialog_read_only = read_only;
@@ -483,11 +483,14 @@ static file_dialog_info *make_file_dialog(snd_state *ss, int read_only, char *ti
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
   s1 = XmStringCreate(select_title, XmFONTLIST_DEFAULT_TAG);
+  s2 = XmStringCreate(title, XmFONTLIST_DEFAULT_TAG);
   XtSetArg(args[n], XmNselectionLabelString, s1); n++;
   XtSetArg(args[n], XmNuserData, which_dialog); n++;
+  XtSetArg(args[n], XmNdialogTitle, s2); n++;
   fd->dialog = XmCreateFileSelectionDialog(w, title, args, n);
   set_dialog_widget(ss, which_dialog, fd->dialog);
   XmStringFree(s1);
+  XmStringFree(s2);
 
   rc1 = XtVaCreateManagedWidget("filebuttons", 
 				xmRowColumnWidgetClass, fd->dialog,
@@ -572,7 +575,7 @@ void make_open_file_dialog(snd_state *ss, int read_only, int managed)
 {
   if (open_dialog == NULL)
     {
-      open_dialog = make_file_dialog(ss, read_only, STR_File, "open:", FILE_OPEN_DIALOG, file_open_ok_callback);
+      open_dialog = make_file_dialog(ss, read_only, STR_Open, "open:", FILE_OPEN_DIALOG, file_open_ok_callback);
       if (just_sounds_state) XtVaSetValues(open_dialog->dialog, XmNfileSearchProc, sound_file_search, NULL);
     }
   if (open_dialog->new_file_written) 
@@ -611,7 +614,7 @@ void make_mix_file_dialog(snd_state *ss, int managed)
   /* called from the menu */
   if (mix_dialog == NULL)
     {
-      mix_dialog = make_file_dialog(ss, TRUE, STR_mix_file_p, "mix in:", FILE_MIX_DIALOG, file_mix_ok_callback);
+      mix_dialog = make_file_dialog(ss, TRUE, STR_Mix, "mix in:", FILE_MIX_DIALOG, file_mix_ok_callback);
       if (just_sounds_state) XtVaSetValues(mix_dialog->dialog, XmNfileSearchProc, sound_file_search, NULL);
     }
   if ((managed) && (!XtIsManaged(mix_dialog->dialog)))

@@ -586,7 +586,7 @@ static int read_next_header (int chan)
   switch (original_data_format) 
     {
     case 1:  data_format = MUS_MULAW;       break;
-    case 2:  data_format = MUS_BYTE;        break;
+    case 2:  data_format = MUS_BYTE;        break; /* some sound files assume MUS_UBYTE here! (NAS from 1994 X11R6 contrib) */
     case 3:  data_format = MUS_BSHORT;      break;
     case 4:  data_format = MUS_B24INT;      break;
     case 5:  data_format = MUS_BINT;        break;
@@ -5155,87 +5155,87 @@ int mus_header_writable(int type, int format) /* -2 to ignore format for this ca
   switch (type)
     {
     case MUS_NEXT:
-      if (format == -2) return(1);
+      if (format == -2) return(TRUE);
       switch (format)
 	{
 	case MUS_MULAW: case MUS_BYTE: case MUS_BSHORT: case MUS_B24INT:
 	case MUS_BINT: case MUS_BFLOAT: case MUS_BDOUBLE: case MUS_ALAW: 
 	case MUS_LINT: case MUS_LFLOAT: case MUS_BINTN: case MUS_LINTN:
 	case MUS_LDOUBLE:
-	  return(1); break;
+	  return(TRUE); break;
 	default: 
-	  return(MUS_NO_ERROR); break;
+	  return(FALSE); break;
 	}
       break;
     case MUS_NIST:
-      if (format == -2) return(1);
+      if (format == -2) return(TRUE);
       switch (format)
 	{
 	case MUS_BYTE: case MUS_BSHORT: case MUS_B24INT: case MUS_BINT: 
 	case MUS_LSHORT: case MUS_L24INT: case MUS_LINT: 
-	  return(1); break;
+	  return(TRUE); break;
 	default: 
-	  return(MUS_NO_ERROR); break;
+	  return(FALSE); break;
 	}
       break;
     case MUS_AIFC: 
-      if (format == -2) return(1);
+      if (format == -2) return(TRUE);
       switch (format)
 	{
 	case MUS_BSHORT: case MUS_B24INT: case MUS_BINT:
 	case MUS_BYTE: case MUS_MULAW: case MUS_ALAW:
 	case MUS_BFLOAT: case MUS_BDOUBLE: case MUS_UBYTE: case MUS_UBSHORT:
 	case MUS_LSHORT: case MUS_L24INT: case MUS_LINT:
-	  return(1);
+	  return(TRUE);
 	  break;
 	default:
-	  return(MUS_NO_ERROR);
+	  return(FALSE);
 	  break;
 	}
       break;
     case MUS_AIFF:
-      if (format == -2) return(1);
+      if (format == -2) return(TRUE);
       switch (format)
 	{
 	case MUS_BSHORT: case MUS_B24INT: case MUS_BINT: case MUS_BYTE: 
-	  return(1);
+	  return(TRUE);
 	  break;
 	default: 
-	  return(MUS_NO_ERROR);
+	  return(FALSE);
 	  break;
 	}
       break;
     case MUS_RIFF:
-      if (format == -2) return(1);
+      if (format == -2) return(TRUE);
       switch (format)
 	{
 	case MUS_MULAW: case MUS_ALAW: case MUS_UBYTE: case MUS_LFLOAT:
 	case MUS_LSHORT: case MUS_L24INT: case MUS_LINT:
-	  return(1);
+	  return(TRUE);
 	  break;
 	default: 
-	  return(MUS_NO_ERROR);
+	  return(FALSE);
 	  break;
 	}
       break;
     case MUS_IRCAM:
-      if (format == -2) return(1);
+      if (format == -2) return(TRUE);
       switch (format)
 	{
 	case MUS_MULAW: case MUS_ALAW: case MUS_BSHORT: case MUS_BINT: case MUS_BFLOAT:
-	  return(1);
+	  return(TRUE);
 	  break;
 	default:
-	  return(MUS_NO_ERROR);
+	  return(FALSE);
 	  break;
 	}
       break;
     case MUS_RAW:
-      return(1);
+      return(TRUE);
       break;
-    default: return(MUS_NO_ERROR); break;
+    default: return(FALSE); break;
     }
-  return(MUS_NO_ERROR);
+  return(FALSE);
 }
 
 
@@ -5503,7 +5503,7 @@ here's a simple example:
 251  00 00 00 01                 1                 dimension
 255  00 00 00 00                 0                 length of units
 
-so we might 'read' these guys by getting the header length from the preamble,
+so we might read these guys by getting the header length from the preamble,
 and the data type by searching blindly for "samples" followed by the type
 indication, then just guess at a sampling rate.
 */
@@ -5653,3 +5653,4 @@ const char *mus_header_original_format_name(int format, int type)
 
 /* ogg vorbis file may start with OggS
  */
+/* I've also seen sounds that start with @!sound then (probably) signed byte data */

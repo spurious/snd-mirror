@@ -814,7 +814,7 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
   chan_info *cp;
   file_info *hdr = NULL;
   snd_data *sd;
-  int *datai;
+  int *io;
   int i, fd, len;
   /* we've already checked that filename exists */
   hdr = make_file_info_1(filename);
@@ -869,10 +869,10 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
 				   hdr->data_location,
 				   hdr->chans,
 				   hdr->type);
-	  datai = make_file_state(fd, hdr, i, 
-				  (post_close) ? MAX_BUFFER_SIZE : MIX_FILE_BUFFER_SIZE);
-	  cp->sounds[0] = make_snd_data_file(filename, datai,
-					     MUS_SAMPLE_ARRAY(datai[file_state_channel_offset(i)]),
+	  io = make_file_state(fd, hdr, i, 
+			       (post_close) ? MAX_BUFFER_SIZE : MIX_FILE_BUFFER_SIZE);
+	  cp->sounds[0] = make_snd_data_file(filename, io,
+					     file_state_channel_array(io, i),
 					     copy_header(hdr->name, hdr),
 					     DONT_DELETE_ME, cp->edit_ctr, i);
 	  if (post_close) 
@@ -883,7 +883,7 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
 			  __FILE__, __LINE__, __FUNCTION__);
 	      sd = cp->sounds[0]; 
 	      sd->open = FD_CLOSED; 
-	      set_file_state_fd(datai, -1);
+	      set_file_state_fd(io, -1);
 	    }
 	  /* this is not as crazy as it looks -- we've read in the first 64K (or whatever) samples,
 	   * and may need this file channel for other opens, so this file can be closed until reposition_file_state_buffers

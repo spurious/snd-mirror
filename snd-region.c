@@ -304,7 +304,7 @@ static void make_region_readable(region *r)
   snd_info *regsp;
   chan_info *cp;
   file_info *hdr;
-  int *datai;
+  int *io;
   int i, fd;
   snd_state *ss;
 
@@ -348,9 +348,9 @@ static void make_region_readable(region *r)
 				    hdr->data_location,
 				    hdr->chans,
 				    hdr->type);
-	  datai = make_file_state(fd, hdr, i, FILE_BUFFER_SIZE);
-	  cp->sounds[0] = make_snd_data_file(r->filename, datai,
-					     MUS_SAMPLE_ARRAY(datai[file_state_channel_offset(i)]),
+	  io = make_file_state(fd, hdr, i, FILE_BUFFER_SIZE);
+	  cp->sounds[0] = make_snd_data_file(r->filename, io,
+					     file_state_channel_array(io, i),
 					     hdr, DONT_DELETE_ME, cp->edit_ctr, i); /* don't auto-delete! */
 	}
       else
@@ -520,7 +520,7 @@ static int save_region_1(snd_state *ss, char *ofile, int type, int format, int s
 				mus_data_format_to_bytes_per_sample(format), 
 				oloc, r->chans, type);
       mus_file_set_data_clipped(ofd, data_clipped(ss));
-      mus_file_seek(ofd, oloc, SEEK_SET);
+      lseek(ofd, oloc, SEEK_SET);
 
       /* copy r->filename with possible header/data format changes */
       if ((ifd = snd_open_read(ss, r->filename)) == -1) 
@@ -540,7 +540,7 @@ static int save_region_1(snd_state *ss, char *ofile, int type, int format, int s
 				iloc,
 				chans,
 				mus_sound_header_type(r->filename));
-      mus_file_seek(ifd, iloc, SEEK_SET);
+      lseek(ifd, iloc, SEEK_SET);
       bufs = (MUS_SAMPLE_TYPE **)CALLOC(chans, sizeof(MUS_SAMPLE_TYPE *));
       for (i = 0; i < chans; i++) bufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(FILE_BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE));
       
@@ -1002,7 +1002,7 @@ void save_regions(snd_state *ss, FILE *fd)
 					iloc,
 					r->chans,
 					mus_sound_header_type(r->filename));
-	      mus_file_seek(ifd, iloc, SEEK_SET);
+	      lseek(ifd, iloc, SEEK_SET);
 	      ibufs = (MUS_SAMPLE_TYPE **)CALLOC(r->chans, sizeof(MUS_SAMPLE_TYPE *));
 	      for (j = 0; j < r->chans; j++)
 		ibufs[j] = (MUS_SAMPLE_TYPE *)CALLOC(r->frames, sizeof(MUS_SAMPLE_TYPE));

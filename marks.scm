@@ -13,6 +13,7 @@
 ;;;     eval-between-marks evaluates func between two marks
 ;;;     snap-marks places marks at current selection boundaries
 ;;;     define-selection-via-marks selects the portion between two marks
+;;;     snap-mark-to-beat forces dragged mark to end up on a beat
 
 
 ;;; -------- mark-name->id is a global version of find-mark
@@ -288,3 +289,22 @@
 	  (set! (selection-position snd chn) beg)
 	  (set! (selection-length snd chn) (1+ (- end beg)))))))
 
+
+;;; -------- snap-mark-to-beat
+
+(define (snap-mark-to-beat)
+  ;; when a mark is dragged, its end position is always on a beat
+  (let ((mark-release 4))
+    (add-hook! mark-hook 
+	       (lambda (mrk snd chn reason)
+		 (if (= reason mark-release)
+		     (let* ((samp (mark-sample mrk))
+			    (bps (/ (beats-per-minute snd chn) 60.0))
+			    (sr (srate snd))
+			    (beat (floor (/ (* samp bps) sr)))
+			    (lower (inexact->exact (/ (* beat sr) bps)))
+			    (higher (inexact->exact (/ (* (1+ beat) sr) bps))))
+		       (set! (mark-sample mrk)
+			     (if (< (- samp lower) (- higher samp))
+				 lower
+				 higher))))))))

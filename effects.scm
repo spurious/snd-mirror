@@ -1044,7 +1044,9 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 
       (add-to-menu effects-menu "Chowning reverb" (lambda () (post-jc-reverb-dialog))))
 
-    (add-to-menu effects-menu jc-reverb-label cp-jc-reverb))
+    (add-to-menu effects-menu jc-reverb-label
+		 (lambda()
+		   (map-chan-over-target jc-reverb-1 jc-reverb-target (and (not jc-reverb-truncate) jc-reverb-decay)))))
 
 (set! effects-list (cons (lambda ()
                            (let ((new-label (format #f "Chowning reverb (~1,2F ~1,2F)"
@@ -1206,7 +1208,15 @@ Move the sliders to set the numbers of the soundfiles to be convolved and the am
                    (lambda ()
                      (post-echo-dialog))))
 
-    (add-to-menu effects-menu echo-label cp-echo))
+    (add-to-menu effects-menu echo-label
+		 (lambda ()
+		   (map-chan-over-target-with-sync 
+		    (lambda (input-samps) 
+		      (cp-echo input-samps))
+		    echo-target "echo"
+		    (and (not echo-truncate) 
+			 (* 4 delay-time))))))
+
 
 (set! effects-list (cons (lambda ()
                            (let ((new-label (format #f "Echo (~1,2F ~1,2F)" delay-time echo-amount)))
@@ -1457,7 +1467,10 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 
       (add-to-menu effects-menu "Flange" (lambda () (post-flange-dialog))))
 
-    (add-to-menu effects-menu flange-label cp-flange))
+    (add-to-menu effects-menu flange-label
+		 (lambda ()
+		   (map-chan-over-target-with-sync (lambda (ignored) (cp-flange)) flange-target "flange" #f))))
+
 
 (set! effects-list (cons (lambda ()
                            (let ((new-label (format #f "Flange (~1,2F ~1,2F ~1,3F)" flange-speed flange-amount flange-time)))
@@ -1878,7 +1891,9 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 	(activate-dialog comb-dialog))
       (add-to-menu effects-menu "Comb filter" (lambda () (post-comb-dialog))))
 
-    (add-to-menu effects-menu comb-label (lambda () (comb-filter comb-scaler comb-size))))
+    (add-to-menu effects-menu comb-label 
+		 (lambda () 
+		   (map-chan-over-target (lambda (ignored) (comb-filter comb-scaler comb-size)) comb-target #f))))
 
 (set! effects-list (cons (lambda ()
                            (let ((new-label (format #f "Comb filter (~1,2F ~1D)" comb-scaler comb-size)))
