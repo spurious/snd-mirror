@@ -523,12 +523,12 @@ static void channel_expose_callback(Widget w, XtPointer context, XtPointer info)
   ASSERT_WIDGET_TYPE(XmIsDrawingArea(w), w);
   if ((cp == NULL) || (cp->active != 1) || (cp->sound == NULL)) return;
   ev = (XExposeEvent *)(cb->event);
+  if (ev->count > 0) return;
   curtime = GUI_CURRENT_TIME(cp->state);
   if ((ev->width < 15) && 
       (last_expose_event_time == curtime)) 
     return; /* bogus events but count = 0? */
   last_expose_event_time = curtime;
-  if ((ev->count > 0) || (mix_dragging())) return;
   sp = cp->sound;
   if (sp->channel_style != CHANNELS_SEPARATE)
     map_over_sound_chans(sp, update_graph, NULL);
@@ -581,7 +581,8 @@ static void graph_mouse_leave(Widget w, XtPointer context, XEvent *event, Boolea
 static void graph_button_press(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
   XButtonEvent *ev = (XButtonEvent *)event;
-  if ((ev->button == 3) && (sound_style(get_global_state()) == SOUNDS_IN_SEPARATE_WINDOWS))
+  if ((ev->button == 3) && 
+      (sound_style(get_global_state()) == SOUNDS_IN_SEPARATE_WINDOWS))
     post_popup(ev);
   else graph_button_press_callback((chan_info *)context, ev->x, ev->y, ev->state, ev->button, ev->time);
 }

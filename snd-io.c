@@ -51,7 +51,7 @@ static void reposition_file_buffers_1(int loc, int *io)
       io[SND_IO_BEG] = loc; 
       c_io_bufclr(io, 0);
     }
-  else /* frames is positive or 0 */
+  else
     {
       mus_file_seek_frame(io[SND_IO_FD], loc);
       io[SND_IO_BEG] = loc;
@@ -174,14 +174,29 @@ int *free_file_state(int *io)
   return(NULL);
 }
 
+MUS_SAMPLE_TYPE *file_state_channel_array(int *io, int chan);
 MUS_SAMPLE_TYPE *file_state_channel_array(int *io, int chan) 
 {
   return(MUS_SAMPLE_ARRAY(io[SND_IO_SAMPLE_ARRAYS + chan]));
 }
 
-void set_file_state_fd(int *io, int fd) {io[SND_IO_FD] = fd;}
-void close_file_state_fd(int *io) {mus_file_close(io[SND_IO_FD]);}
-int file_state_buffer_size(int *io) {return(io[SND_IO_BUFSIZE]);}
+void set_file_state_fd(int *io, int fd);
+void set_file_state_fd(int *io, int fd) 
+{
+  io[SND_IO_FD] = fd;
+}
+
+void close_file_state_fd(int *io);
+void close_file_state_fd(int *io) 
+{
+  mus_file_close(io[SND_IO_FD]);
+}
+
+int file_state_buffer_size(int *io);
+int file_state_buffer_size(int *io) 
+{
+  return(io[SND_IO_BUFSIZE] * sizeof(MUS_SAMPLE_TYPE));
+}
 
 void file_buffers_forward(int ind0, int ind1, int indx, snd_fd *sf, snd_data *cur_snd)
 {

@@ -349,9 +349,7 @@ static void make_region_readable(region *r)
 				    hdr->chans,
 				    hdr->type);
 	  io = make_file_state(fd, hdr, i, FILE_BUFFER_SIZE);
-	  cp->sounds[0] = make_snd_data_file(r->filename, io,
-					     file_state_channel_array(io, i),
-					     hdr, DONT_DELETE_ME, cp->edit_ctr, i); /* don't auto-delete! */
+	  cp->sounds[0] = make_snd_data_file(r->filename, io, hdr, DONT_DELETE_ME, cp->edit_ctr, i); /* don't auto-delete! */
 	}
       else
 	{

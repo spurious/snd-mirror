@@ -2,8 +2,6 @@
 
 enum {NOGRAPH, WAVE, FFT_AXIS, LISP, FFT_MAIN};    /* for marks, regions, mouse click detection */
 
-static void after_fft(snd_state *ss, chan_info *cp, Float scaler);
-
 static XEN lisp_graph_hook;
 static XEN mouse_press_hook; 
 static XEN mark_click_hook; 
@@ -14,6 +12,22 @@ static XEN key_press_hook;
 static XEN transform_hook;
 static XEN graph_hook;
 static XEN after_graph_hook;
+
+static void after_fft(snd_state *ss, chan_info *cp, Float scaler)
+{
+  if ((!(ss->transform_hook_active)) &&
+      (XEN_HOOKED(transform_hook)))
+    {
+      ss->transform_hook_active = 1;
+      g_c_run_progn_hook(transform_hook,
+			 XEN_LIST_3(C_TO_SMALL_XEN_INT((cp->sound)->index),
+				    C_TO_SMALL_XEN_INT(cp->chan),
+				    C_TO_XEN_DOUBLE(scaler)),
+			 S_transform_hook);
+      ss->transform_hook_active = 0;
+    }
+}
+
 
 static void set_y_bounds(axis_info *ap);
 static int map_chans_time_graph_type(chan_info *cp, void *ptr) 
@@ -456,9 +470,7 @@ void add_channel_data(char *filename, chan_info *cp, file_info *hdr, snd_state *
 				    chdr->type);
 	  during_open(fd, filename, SND_OPEN_CHANNEL);
 	  io = make_file_state(fd, chdr, chn, FILE_BUFFER_SIZE);
-	  cp->sounds[0] = make_snd_data_file(filename, io,
-					     file_state_channel_array(io, chn),
-					     chdr, DONT_DELETE_ME, cp->edit_ctr, chn);
+	  cp->sounds[0] = make_snd_data_file(filename, io, chdr, DONT_DELETE_ME, cp->edit_ctr, chn);
 	  if (show_usage_stats(ss)) gather_usage_stats(cp);
 	}
     }
@@ -5453,21 +5465,6 @@ static XEN g_backward_sample(XEN count, XEN snd, XEN chn)
   cp = get_cp(snd, chn, S_backward_sample);
   handle_cursor(cp, cursor_move(cp, -(XEN_TO_C_INT_OR_ELSE(count, 1)))); 
   return(C_TO_XEN_INT(cp->cursor));
-}
-
-static void after_fft(snd_state *ss, chan_info *cp, Float scaler)
-{
-  if ((!(ss->transform_hook_active)) &&
-      (XEN_HOOKED(transform_hook)))
-    {
-      ss->transform_hook_active = 1;
-      g_c_run_progn_hook(transform_hook,
-			 XEN_LIST_3(C_TO_SMALL_XEN_INT((cp->sound)->index),
-				    C_TO_SMALL_XEN_INT(cp->chan),
-				    C_TO_XEN_DOUBLE(scaler)),
-			 S_transform_hook);
-      ss->transform_hook_active = 0;
-    }
 }
 
 #if (!USE_NO_GUI)

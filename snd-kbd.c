@@ -844,14 +844,9 @@ static int stop_fft_in_progress(chan_info *cp, void *ptr)
   return(0);
 }
 
-static int cursor_moveto_beginning(chan_info *cp) 
-{
-  return(cursor_moveto(cp, 0)); /* is ap->xmin ever going to be non-zero? */
-}
-
 static int cursor_moveto_end(chan_info *cp)
 {
-  return(cursor_moveto(cp, current_ed_samples(cp)-1));
+  return(cursor_moveto(cp, current_ed_samples(cp) - 1));
 }
 
 static int set_window_bounds(chan_info *cp, int count) 
@@ -1277,7 +1272,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      break;
 	    case snd_K_less: 
 	      cp->cursor_on = 1; 
-	      redisplay = cursor_moveto_beginning(cp); 
+	      redisplay = cursor_moveto(cp ,0); 
 	      break;
 	    case snd_K_minus: 
 	      counting = 1; 
@@ -1481,7 +1476,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      break;
 	    case snd_K_less: 
 	      cp->cursor_on = 1; 
-	      redisplay = cursor_moveto_beginning(cp); 
+	      redisplay = cursor_moveto(cp, 0); 
 	      break;
 	    case snd_K_minus: 
 	      counting = 1; 
@@ -1795,7 +1790,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      break;
 	    case snd_K_less:
 	      cp->cursor_on = 1; 
-	      redisplay = cursor_moveto_beginning(cp); 
+	      redisplay = cursor_moveto(cp, 0); 
 	      break;
 	    case snd_K_greater: 
 	      cp->cursor_on = 1; 

@@ -392,15 +392,11 @@ int snd_open_read(snd_state *ss, const char *arg);
 int snd_reopen_write(snd_state *ss, const char *arg);
 int snd_write_header(snd_state *ss, const char *name, int type, int srate, int chans, int loc, int size, int format, const char *comment, int len, int *loops);
 int snd_overwrite_ok(snd_state *ss, const char *ofile);
-MUS_SAMPLE_TYPE *file_state_channel_array(int *io, int chan);
 int *make_file_state(int fd, file_info *hdr, int chan, int suggested_bufsize);
 int *free_file_state(int *datai);
-void set_file_state_fd(int *datai, int fd);
-void close_file_state_fd(int *datai);
 void file_buffers_forward(int ind0, int ind1, int indx, snd_fd *sf, snd_data *cur_snd);
 void file_buffers_back(int ind0, int ind1, int indx, snd_fd *sf, snd_data *cur_snd);
 MUS_SAMPLE_TYPE snd_file_read_sample(snd_data *ur_sd, int index, chan_info *cp);
-int file_state_buffer_size(int *datai);
 int *make_zero_file_state(int size);
 char *snd_remove_with_error(const char *name);
 int snd_remove(const char *name);
@@ -671,7 +667,7 @@ void free_edit_list(chan_info *cp);
 void backup_edit_list(chan_info *cp);
 void remember_temp(char *filename, int chans);
 void forget_temps(void);
-snd_data *make_snd_data_file(char *name, int *io, MUS_SAMPLE_TYPE *data, file_info *hdr, int temp, int ctr, int temp_chan);
+snd_data *make_snd_data_file(char *name, int *io, file_info *hdr, int temp, int ctr, int temp_chan);
 snd_data *make_snd_data_buffer(MUS_SAMPLE_TYPE *data, int len, int ctr);
 void free_sound_list (chan_info *cp);
 void gather_usage_stats(chan_info *cp);
@@ -1236,8 +1232,6 @@ void display_mix_amp_envs(snd_state *ss, chan_info *axis_cp, axis_context *ax, i
 void reflect_mix_edit(chan_info *input_cp, const char *origin);
 
 void g_init_mix(void);
-
-int mix_dragging(void);
 
 void color_one_mix_from_id(int mix_id, COLOR_TYPE color);
 COLOR_TYPE mix_to_color_from_id(int ix_id);

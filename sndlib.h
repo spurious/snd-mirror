@@ -80,12 +80,13 @@
   #include <MacMemory.h>
   #include <TextUtils.h>
   #include <Gestalt.h>
-  #ifndef TRUE
-    #define TRUE 1
-  #endif
-  #ifndef FALSE
-    #define FALSE 0
-  #endif
+#endif
+
+#ifndef TRUE
+  #define TRUE 1
+#endif
+#ifndef FALSE
+  #define FALSE 0
 #endif
 
 #if defined(__APPLE__)

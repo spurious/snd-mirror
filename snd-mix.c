@@ -2208,8 +2208,6 @@ void start_mix_drag(int mix_id)
 
 /* for axis movement (as in mark drag off screen) */
 
-int mix_dragging(void) {return(mix_dragged);}          /* for snd-xchn.c */
-
 static BACKGROUND_TYPE watch_mix(GUI_POINTER m)
 {
   if (watch_mix_proc)

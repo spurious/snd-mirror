@@ -311,7 +311,6 @@ static void channel_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpointer d
   if ((cp == NULL) || (cp->active != 1) || (cp->sound == NULL)) return;
   ss = cp->state;
 
-  if ((cp->mixes) && (mix_dragging())) return;
   if ((ev->area.height < MIN_REGRAPH_Y) || 
       (ev->area.width < MIN_REGRAPH_X)) 
     return;

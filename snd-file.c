@@ -807,6 +807,9 @@ int move_file(char *oldfile, char *newfile)
 #define TEMP_SOUND_INDEX 123456
 /* just a marker for debugging */
 
+/* from snd-io.c */
+void set_file_state_fd(int *io, int fd);
+
 snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
 {
   /* conjure up just enough Snd structure to make this sound readable by the edit-tree readers */
@@ -872,7 +875,6 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
 	  io = make_file_state(fd, hdr, i, 
 			       (post_close) ? MAX_BUFFER_SIZE : MIX_FILE_BUFFER_SIZE);
 	  cp->sounds[0] = make_snd_data_file(filename, io,
-					     file_state_channel_array(io, i),
 					     copy_header(hdr->name, hdr),
 					     DONT_DELETE_ME, cp->edit_ctr, i);
 	  if (post_close) 

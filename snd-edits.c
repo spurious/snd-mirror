@@ -1,6 +1,43 @@
 #include "snd.h"
 
-/* -------------------------------- EDIT LISTS --------------------------------
+
+/* from snd-io.c */
+MUS_SAMPLE_TYPE *file_state_channel_array(int *io, int chan);
+int file_state_buffer_size(int *io);
+void close_file_state_fd(int *io);
+
+
+/* -------- EDIT HOOKS -------- */
+
+static int dont_edit(chan_info *cp) 
+{
+  XEN res = XEN_FALSE;
+  if (XEN_HOOKED(cp->edit_hook))
+    res = g_c_run_or_hook(cp->edit_hook, XEN_EMPTY_LIST, S_edit_hook);
+  return(XEN_TRUE_P(res));
+}
+
+static XEN save_hook;
+static int dont_save(snd_info *sp, char *newname)
+{
+  XEN res = XEN_FALSE;
+  if (XEN_HOOKED(save_hook))
+    res = g_c_run_or_hook(save_hook,
+			  XEN_LIST_2(C_TO_SMALL_XEN_INT(sp->index),
+				     (newname) ? C_TO_XEN_STRING(newname) : XEN_FALSE),
+			  S_save_hook);
+  return(XEN_TRUE_P(res));
+}
+
+static void after_edit(chan_info *cp)
+{
+  if (XEN_HOOKED(cp->after_edit_hook))
+    g_c_run_progn_hook(cp->after_edit_hook, XEN_EMPTY_LIST, S_after_edit_hook);
+}
+
+
+
+/* -------- EDIT LISTS --------
  *
  * each channel has a list of lists containing the current edit history and the associated sound temp files or buffers
  * undo: back up current list position
@@ -11,10 +48,6 @@
  */
 
 /* ed_list fields accessed only in this file */
-
-static int dont_edit(chan_info *cp);
-static int dont_save(snd_info *sp, char *newname);
-static void after_edit(chan_info *cp);
 
 /* each block in an edit-list list describes one fragment of the current sound */
 #define ED_OUT 0
@@ -749,12 +782,12 @@ void forget_temps(void)
     }
 }
 
-snd_data *make_snd_data_file(char *name, int *io, MUS_SAMPLE_TYPE *data, file_info *hdr, int temp, int ctr, int temp_chan)
+snd_data *make_snd_data_file(char *name, int *io, file_info *hdr, int temp, int ctr, int temp_chan)
 {
   snd_data *sd;
   sd = (snd_data *)CALLOC(1, sizeof(snd_data));
   sd->type = SND_DATA_FILE;
-  sd->buffered_data = data;
+  sd->buffered_data = file_state_channel_array(io, temp_chan);
   sd->io = io;
   sd->filename = copy_string(name);
   sd->hdr = hdr;
@@ -770,12 +803,12 @@ snd_data *make_snd_data_file(char *name, int *io, MUS_SAMPLE_TYPE *data, file_in
   return(sd);
 }
 
-static snd_data *make_snd_data_zero_file(int size, int *io, MUS_SAMPLE_TYPE *data, int ctr)
+static snd_data *make_snd_data_zero_file(int size, int *io, int ctr)
 {
   snd_data *sd;
   sd = (snd_data *)CALLOC(1, sizeof(snd_data));
   sd->type = SND_DATA_FILE;
-  sd->buffered_data = data;
+  sd->buffered_data = file_state_channel_array(io, 0);
   sd->io = io;
   sd->filename = NULL;
   sd->hdr = NULL;
@@ -799,10 +832,7 @@ snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize)
   if (sd->just_zeros)
     {
       io = make_zero_file_state(sd->len);
-      sf = make_snd_data_zero_file(sd->len,
-				   io,
-				   file_state_channel_array(io, 0),
-				   sd->edit_ctr);
+      sf = make_snd_data_zero_file(sd->len, io, sd->edit_ctr);
       sf->copy = 1;
       return(sf);
     }
@@ -958,7 +988,7 @@ static int gather_usage_stats_1(chan_info *cp, void *ptr)
 		{
 		  if (sf->io)
 		    {
-		      cp->stats[ARRAY_USAGE] += (file_state_buffer_size(sf->io) * 4);
+		      cp->stats[ARRAY_USAGE] += (file_state_buffer_size(sf->io));
 		      cp->stats[ARRAYS_ACTIVE]++;
 		    }
 		  if (sf->temporary == DELETE_ME)
@@ -1039,10 +1069,10 @@ static int add_sound_buffer_to_edit_list(chan_info *cp, MUS_SAMPLE_TYPE *data, i
   return(cp->sound_ctr);
 }
 
-static int add_sound_file_to_edit_list(chan_info *cp, char *name, int *io, MUS_SAMPLE_TYPE *data, file_info *hdr, int temp, int chan)
+static int add_sound_file_to_edit_list(chan_info *cp, char *name, int *io, file_info *hdr, int temp, int chan)
 {
   prepare_sound_list(cp);
-  cp->sounds[cp->sound_ctr] = make_snd_data_file(name, io, data, hdr, temp, cp->edit_ctr, chan);
+  cp->sounds[cp->sound_ctr] = make_snd_data_file(name, io, hdr, temp, cp->edit_ctr, chan);
   if (show_usage_stats(cp->state)) gather_usage_stats(cp);
   return(cp->sound_ctr);
 }
@@ -1052,10 +1082,7 @@ static int add_zero_file_to_edit_list(chan_info *cp, int size)
   int *io;
   prepare_sound_list(cp);
   io = make_zero_file_state(size);
-  cp->sounds[cp->sound_ctr] = make_snd_data_zero_file(size,
-						      io,
-						      file_state_channel_array(io, 0),
-						      cp->edit_ctr);
+  cp->sounds[cp->sound_ctr] = make_snd_data_zero_file(size, io, cp->edit_ctr);
   return(cp->sound_ctr);
 }
 
@@ -1344,9 +1371,7 @@ void file_insert_samples(int beg, int num, char *inserted_file, chan_info *cp, i
 				hdr->type);
       during_open(fd, inserted_file, SND_INSERT_FILE);
       io = make_file_state(fd, hdr, chan, FILE_BUFFER_SIZE);
-      cb[ED_SND] = add_sound_file_to_edit_list(cp, inserted_file, io,
-					       file_state_channel_array(io, chan),
-					       hdr, auto_delete, chan);
+      cb[ED_SND] = add_sound_file_to_edit_list(cp, inserted_file, io, hdr, auto_delete, chan);
       ed = cp->edits[cp->edit_ctr];
       ed->sfnum = PACK_EDIT(INSERTION_EDIT, cb[ED_SND]);
       lock_affected_mixes(cp, beg, beg + num);
@@ -1629,9 +1654,7 @@ void file_change_samples(int beg, int num, char *tempfile,
 				hdr->type);
       during_open(fd, tempfile, SND_CHANGE_FILE);
       io = make_file_state(fd, hdr, chan, FILE_BUFFER_SIZE);
-      cb[ED_SND] = add_sound_file_to_edit_list(cp, tempfile, io,
-					       file_state_channel_array(io, chan),
-					       hdr, auto_delete, chan);
+      cb[ED_SND] = add_sound_file_to_edit_list(cp, tempfile, io, hdr, auto_delete, chan);
       ed = cp->edits[cp->edit_ctr];
       ed->sfnum = PACK_EDIT(CHANGE_EDIT, cb[ED_SND]);
       if (cp->mix_md) reflect_mix_edit(cp, origin);
@@ -1682,9 +1705,7 @@ void file_override_samples(int num, char *tempfile,
       if (origin) e->origin = copy_string(origin);
       cp->edits[cp->edit_ctr] = e;
       if (lock == LOCK_MIXES) lock_affected_mixes(cp, 0, num);
-      e->fragments[0 + ED_SND] = add_sound_file_to_edit_list(cp, tempfile, io,
-							     file_state_channel_array(io, chan),
-							     hdr, auto_delete, chan);
+      e->fragments[0 + ED_SND] = add_sound_file_to_edit_list(cp, tempfile, io, hdr, auto_delete, chan);
       e->sfnum = PACK_EDIT(CHANGE_EDIT, FRAGMENT_SOUND(e, 0));
       reflect_edit_history_change(cp);
       reflect_sample_change_in_axis(cp);
@@ -1725,14 +1746,13 @@ void change_samples(int beg, int num, MUS_SAMPLE_TYPE *vals, chan_info *cp, int 
   after_edit(cp);
 }
 
-static void parse_tree_scale_by(chan_info *cp, Float scl)
+static void parse_tree_scale_by(chan_info *cp, Float scl, int pos)
 {
   /* copy current ed-list and reset scalers */
-  int len, pos, i;
+  int len, i;
   float ed_scl;
   ed_list *new_ed, *old_ed;
   len = current_ed_samples(cp);
-  pos = cp->edit_ctr;
   old_ed = cp->edits[pos];
   prepare_edit_list(cp, len);
   new_ed = make_ed_list(cp->edits[pos]->size);
@@ -1786,7 +1806,7 @@ static void parse_tree_selection_scale_by(chan_info *cp, Float scl, int beg, int
   new_ed->selection_end = old_ed->selection_end;
   ripple_marks(cp, 0, 0);
   check_for_first_edit(cp);
-  lock_affected_mixes(cp, beg, beg+num);
+  lock_affected_mixes(cp, beg, beg + num);
   reflect_edit_history_change(cp);
 }
 
@@ -3175,7 +3195,7 @@ void scale_channel(chan_info *cp, Float scaler, int beg, int num)
   if ((beg == 0) && 
       (num >= current_ed_samples(cp)))
     {
-      parse_tree_scale_by(cp, scaler);
+      parse_tree_scale_by(cp, scaler, cp->edit_ctr);
       amp_env_scale_by(cp, scaler);
     }
   else 
@@ -3753,33 +3773,6 @@ static XEN g_insert_samples_with_origin(XEN samp, XEN samps, XEN origin, XEN vec
     }
   update_graph(cp, NULL);
   return(C_TO_XEN_INT(len));
-}
-
-
-static int dont_edit(chan_info *cp) 
-{
-  XEN res = XEN_FALSE;
-  if (XEN_HOOKED(cp->edit_hook))
-    res = g_c_run_or_hook(cp->edit_hook, XEN_EMPTY_LIST, S_edit_hook);
-  return(XEN_TRUE_P(res));
-}
-
-static XEN save_hook;
-static int dont_save(snd_info *sp, char *newname)
-{
-  XEN res = XEN_FALSE;
-  if (XEN_HOOKED(save_hook))
-    res = g_c_run_or_hook(save_hook,
-			  XEN_LIST_2(C_TO_SMALL_XEN_INT(sp->index),
-				     (newname) ? C_TO_XEN_STRING(newname) : XEN_FALSE),
-			  S_save_hook);
-  return(XEN_TRUE_P(res));
-}
-
-static void after_edit(chan_info *cp)
-{
-  if (XEN_HOOKED(cp->after_edit_hook))
-    g_c_run_progn_hook(cp->after_edit_hook, XEN_EMPTY_LIST, S_after_edit_hook);
 }
 
 

@@ -3107,3 +3107,16 @@ void g_init_sig(void)
 }
 
 
+/* TODO: there's a lot of inconsistency in the *-sound|selection arguments:
+ *          convolve-with file amp s c e
+ *          env-sound env beg dur s c e
+ *          filter-sound env order s c e
+ *          map|scan-chan func beg end origin s c e
+ *          play beg s c sync end e
+ *          reverse-sound s c e
+ *          scale-sound-to|by scl beg dur s c
+ *          set-samples beg dur data s c trunc fchan
+ *          smooth-sound beg dur s c
+ *          src-sound num base s c e
+ *          swap-channels s1 c1 s2 c2 beg dur
+ */
