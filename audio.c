@@ -3842,9 +3842,10 @@ static snd_pcm_hw_params_t * alsa_get_hardware_params(char *name, snd_pcm_stream
     int err;
     snd_pcm_t *handle;
     if ((err = snd_pcm_open(&handle, name, stream, mode | SND_PCM_NONBLOCK))!=0) {
-	alsa_mus_error(MUS_AUDIO_CANT_OPEN, 
-		       mus_format("%s: open pcm %s for stream %d: %s",
-				  c__FUNCTION__, name, stream, snd_strerror(err)));
+      alsa_mus_error(MUS_AUDIO_CANT_OPEN, 
+		     mus_format("%s: open pcm %s for stream %d: %s",
+				c__FUNCTION__, name, stream, snd_strerror(err)));
+      return(NULL);
     } else {
 	snd_pcm_hw_params_t *params;
 	params = (snd_pcm_hw_params_t *)calloc(1, snd_pcm_hw_params_sizeof());
@@ -4057,6 +4058,11 @@ static int alsa_mus_audio_initialize(void)
 	    alsa_allocate_software_params();
 	sound_cards = 1;
     }
+
+    if ((alsa_hw_params[SND_PCM_STREAM_CAPTURE] == NULL) ||
+	(alsa_hw_params[SND_PCM_STREAM_PLAYBACK] == NULL))
+      return(MUS_ERROR);
+
     /* check validity of default periods and buffer size, adjust if necessary 
      *
      * this might not always work because periods and buffer size are checked
@@ -4174,6 +4180,11 @@ static int alsa_audio_open(int ur_dev, int srate, int chans, int format, int siz
     snd_pcm_t *handle;
     snd_pcm_hw_params_t *hw_params = NULL;
     snd_pcm_sw_params_t *sw_params = NULL;
+
+    if ((!audio_initialized) && (mus_audio_initialize() != MUS_NO_ERROR))
+      return(MUS_ERROR);
+    if (chans <= 0) return(MUS_ERROR);
+
     if (alsa_trace) mus_print("%s: %x rate=%d, chans=%d, format=%d:%s, size=%d", 
 			       c__FUNCTION__, ur_dev, srate, chans, format, 
 			      mus_audio_format_name(format), size);
@@ -4417,6 +4428,9 @@ static int alsa_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val
     int alsa_device;
     snd_pcm_stream_t alsa_stream;
     int f, err;
+
+    if ((!audio_initialized) && (mus_audio_initialize() != MUS_NO_ERROR))
+      return(MUS_ERROR);
 
     card = MUS_AUDIO_SYSTEM(ur_dev);
     device = MUS_AUDIO_DEVICE(ur_dev);
