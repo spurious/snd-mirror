@@ -1075,14 +1075,12 @@ dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
               [with_jack=no
 	       AC_MSG_WARN(can't find the samplerate library. JACK will not be used.)])
             if test $with_jack = yes ; then
-	       if test $audio_system = OSS ; then
-	           AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
-	           if test x$PKG_CONFIG != xno ; then
-                      jack_version="`$PKG_CONFIG jack --modversion`"
-                      AC_DEFINE_UNQUOTED(JACK_VERSION,"${jack_version}")
-                   fi
-                 audio_system=JACK
+	       AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
+	       if test x$PKG_CONFIG != xno ; then
+                 jack_version="`$PKG_CONFIG jack --modversion`"
+                 AC_DEFINE_UNQUOTED(JACK_VERSION,"${jack_version}")
                fi
+               audio_system=JACK
             fi
         fi
 

@@ -650,9 +650,12 @@ static void list_color_callback(Widget w, XtPointer context, XtPointer info)
 {
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
   ASSERT_WIDGET_TYPE(XmIsList(w), w);
-  in_set_color_map((cbs->item_position - 1));
-  check_color_hook();
-  for_each_chan(update_graph_setting_fft_changed);
+  if (is_colormap(cbs->item_position - 1))
+    {
+      in_set_color_map(cbs->item_position - 1);
+      check_color_hook();
+      for_each_chan(update_graph_setting_fft_changed);
+    }
 }
 
 void set_color_map(int val)
@@ -696,14 +699,36 @@ static void help_color_callback(Widget w, XtPointer context, XtPointer info)
   color_dialog_help();
 }
 
+void reflect_color_list(bool setup_time)
+{
+  int i, size;
+  XmString *cmaps;
+  if ((ccd) && (ccd->list))
+    {
+      size = num_colormaps();
+      cmaps = (XmString *)CALLOC(size, sizeof(XmString));
+      for (i = 0; i < size; i++)
+	cmaps[i] = XmStringCreate(colormap_name(i), XmFONTLIST_DEFAULT_TAG);
+      XtVaSetValues(ccd->list, 
+		    XmNitems, cmaps, 
+		    XmNitemCount, size,
+		    NULL);
+      if (setup_time)
+	XtVaSetValues(ccd->list, 
+		      XmNvisibleItemCount, 6,
+		      NULL);
+      for (i = 0; i < size; i++) XmStringFree(cmaps[i]);
+      FREE(cmaps);
+    }
+}
+
 /* I tried a scrolled window with each colormap name in an appropriate color, but it looked kinda dumb */
 
 static void start_view_color_dialog(bool managed)
 {
   Arg args[32];
-  int n, i;
+  int n;
   XmString xhelp, xdismiss, xcutoff, xinvert, titlestr;
-  XmString *cmaps;
   Widget mainform, list_label, light_label, sep, sep1;
   if (!ccd)
     {
@@ -756,14 +781,6 @@ static void start_view_color_dialog(bool managed)
       list_label = XtCreateManagedWidget(S_colormap, xmLabelWidgetClass, mainform, args, n);
       
       n = 0;
-      /* TODO: realloc all size */
-      {
-	int size;
-	size = num_colormaps();
-	cmaps = (XmString *)CALLOC(size, sizeof(XmString));
-	for (i = 0; i < size; i++)
-	  cmaps[i] = XmStringCreate(colormap_name(i), XmFONTLIST_DEFAULT_TAG);
-      }
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
@@ -777,21 +794,10 @@ static void start_view_color_dialog(bool managed)
 		      XmNbackground, (ss->sgx)->white, 
 		      XmNforeground, (ss->sgx)->black, 
 		      NULL);
-      XtVaSetValues(ccd->list, 
-		    XmNitems, cmaps, 
-		    XmNitemCount, num_colormaps(),
-		    XmNvisibleItemCount, 6, 
-		    NULL);
+      reflect_color_list(true);
       XtAddCallback(ccd->list, XmNbrowseSelectionCallback, list_color_callback, NULL);
-      
-      {
-	int size;
-	size = num_colormaps();
-	for (i = 0; i < size; i++) XmStringFree(cmaps[i]);
-	FREE(cmaps);
-      }
       XtManageChild(ccd->list);
-      if (color_map(ss) >= 0) XmListSelectPos(ccd->list, color_map(ss) + 1, false);
+      XmListSelectPos(ccd->list, color_map(ss) + 1, false);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}

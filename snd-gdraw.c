@@ -421,6 +421,10 @@ void initialize_colormap(void)
   colormap_GC = gdk_gc_new(MAIN_WINDOW(ss));
   gdk_gc_set_background(sx->basic_gc, sx->graph_color);
   gdk_gc_set_foreground(sx->basic_gc, sx->data_color);
+  sono_data_size = color_map_size(ss);
+  sono_data = (GdkRectangle **)CALLOC(sono_data_size, sizeof(GdkRectangle *));
+  grays_size = color_map_size(ss);
+  grays = (GdkColor **)CALLOC(grays_size, sizeof(GdkColor *));
 }
 
 void draw_sono_rectangles(axis_context *ax, int color, int jmax)
@@ -577,17 +581,21 @@ static void list_color_callback(GtkTreeSelection *selection, gpointer *gp)
   if (!(gtk_tree_selection_get_selected(selection, &model, &iter))) return;
   gtk_tree_model_get(model, &iter, 0, &value, -1);
 
-  size = num_colormaps();
-  for (i = 0; i < size; i++)
-    if (strcmp(value, colormap_name(i)) == 0)
-      {
-	in_set_color_map(i);
-	for_each_chan(update_graph_setting_fft_changed);
-	g_free(value);
-	return;
-      }
-  if (value) g_free(value);
-  check_color_hook();
+  if (value)
+    {
+      size = num_colormaps();
+      for (i = 0; i < size; i++)
+	if ((colormap_name(i)) &&
+	    (strcmp(value, colormap_name(i)) == 0))
+	  {
+	    in_set_color_map(i);
+	    for_each_chan(update_graph_setting_fft_changed);
+	    g_free(value);
+	    return;
+	  }
+      g_free(value);
+      check_color_hook();
+    }
 }
 
 void set_color_map(int val)
@@ -627,6 +635,24 @@ static void help_color_callback(GtkWidget *w, gpointer context)
 static void delete_color_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   gtk_widget_hide(ccd->dialog);
+}
+
+void reflect_color_list(bool setup_time)
+{
+  int i, size;
+  GtkTreeIter iter;
+  GtkListStore *model;
+  if ((ccd) && (ccd->list))
+    {
+      size = num_colormaps();
+      model = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(ccd->list)));
+      gtk_list_store_clear(model);
+      for (i = 0; i < size; i++) 
+	{
+	  gtk_list_store_append(model, &iter);
+	  gtk_list_store_set(model, &iter, 0, colormap_name(i), -1);
+	}
+    }
 }
 
 static void start_view_color_dialog(bool managed)

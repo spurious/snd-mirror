@@ -11336,7 +11336,67 @@ EDITS: 5
 	    (snd-display ";colormap-ref 2.0: ~A" tag)))
       
       (set! (colormap-size) old-colormap-size)
-
+      (if (not (= (colormap-size) old-colormap-size))
+	  (snd-display ";set colormap-size: ~A ~A" (colormap-size) old-colormap-size))
+      
+      (if (not (string=? (colormap-name black-and-white-colormap) "black-and-white"))
+	  (snd-display ";black-and-white: ~A" (colormap-name black-and-white-colormap)))
+      (if (not (string=? (colormap-name gray-colormap) "gray"))
+	  (snd-display ";gray: ~A" (colormap-name gray-colormap)))
+      (if (not (string=? (colormap-name rainbow-colormap) "rainbow"))
+	  (snd-display ";rainbow: ~A" (colormap-name rainbow-colormap)))
+      
+      (add-colormap "purple" 
+		    (lambda (size) 
+		      (let ((r (make-vct size))
+			    (g (make-vct size))
+			    (b (make-vct size))
+			    (incr (exact->inexact (/ 256.0 size)))
+			    (er (list 0 60 60 116 128 252 192 252 256 60))
+			    (eg (list 0 0  64 0   128 252 192 252 256 0))
+			    (eb (list 0 80        128 252 192 0   256 80)))
+			(do ((i 0 (1+ i))
+			     (x 0.0 (+ x incr)))
+			    ((= i size))
+			  (vct-set! r i (exact->inexact (/ (envelope-interp x er) 256.0)))
+			  (vct-set! g i (exact->inexact (/ (envelope-interp x eg) 256.0)))
+			  (vct-set! b i (exact->inexact (/ (envelope-interp x eb) 256.0))))
+			(list r g b))))
+      
+      (add-colormap "sin" 
+		    (lambda (size) 
+		      (let ((r (make-vct size))
+			    (g (make-vct size))
+			    (b (make-vct size))
+			    (incr (exact->inexact (/ (* 2 3.14159) size))))
+			(do ((i 0 (1+ i))
+			     (x 0.0 (+ x incr)))
+			    ((= i size))
+			  (vct-set! r i (abs (sin (* 1.5 x))))
+			  (vct-set! g i (abs (sin (* 3.5 x))))
+			  (vct-set! b i (abs (sin (* 2.5 x)))))
+			(list r g b))))
+      
+      (add-colormap "another-sin" 
+		    (lambda (size) 
+		      (let ((r (make-vct size))
+			    (g (make-vct size))
+			    (b (make-vct size))
+			    (incr (exact->inexact (/ (* 2 3.14159) size))))
+			(do ((i 0 (1+ i))
+			     (x 0.0 (+ x incr)))
+			    ((= i size))
+			  (vct-set! r i (abs (sin (* 2.5 x))))
+			  (vct-set! g i (abs (sin (* 3.5 x))))
+			  (vct-set! b i (abs (sin (* 4.5 x)))))
+			(list r g b))))
+      
+      (delete-colormap pink-colormap)
+      (let ((tag (catch #t (lambda () (set! (colormap) pink-colormap)) (lambda args args))))
+	(if (or (not (eq? (car tag) 'no-such-colormap))
+		(= (colormap) pink-colormap))
+	    (snd-display ";delete pink colormap: ~A ~A ~A" tag pink-colormap (colormap))))
+      
       (run-hook after-test-hook 7)
       ))
 

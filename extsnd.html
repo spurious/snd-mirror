@@ -10410,6 +10410,43 @@ called whenever the new colormap's values are needed or the colormap size change
 so that the colormap needs to be recomputed.  It should return a list of
 three vcts, each vct containing <i>size</i> values representing respectively
 the red, green, and blue values (each a number between 0.0 and 1.0).
+In the following code, the fields are set from envelopes (this is a loose translation
+of FractInt's royal colormap):
+</td></tr>
+<tr><td></td><td>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+(add-colormap "purple" 
+  (lambda (size) 
+    (let ((r (make-vct size))
+	  (g (make-vct size))
+	  (b (make-vct size))
+	  (incr (exact-&gt;inexact (/ 256.0 size)))
+	  (er (list 0 60 60 116 128 252 192 252 256 60))
+	  (eg (list 0 0  64 0   128 252 192 252 256 0))
+	  (eb (list 0 80        128 252 192 0   256 80)))
+      (do ((i 0 (1+ i))
+	   (x 0.0 (+ x incr)))
+	  ((= i size))
+        (vct-set! r i (exact-&gt;inexact (/ (envelope-interp x er) 256.0)))
+        (vct-set! g i (exact-&gt;inexact (/ (envelope-interp x eg) 256.0)))
+        (vct-set! b i (exact-&gt;inexact (/ (envelope-interp x eb) 256.0))))
+      (list r g b))))
+
+;;; another amusing colormap from FractInt:
+(add-colormap "cos" 
+  (lambda (size) 
+    (let ((r (make-vct size))
+	  (g (make-vct size))
+	  (b (make-vct size))
+	  (incr (exact-&gt;inexact (/ (* 2 3.14159) size))))
+      (do ((i 0 (1+ i))
+	   (x 0.0 (+ x incr)))
+	  ((= i size))
+	(vct-set! r i (abs (sin (* 1.5 x))))
+	(vct-set! g i (abs (sin (* 3.5 x))))
+	(vct-set! b i (abs (sin (* 2.5 x)))))
+      (list r g b))))
+</pre></td></tr></table>
 </td></tr><tr><td colspan=2></td></tr>
 
 <!-- colormap-name -->

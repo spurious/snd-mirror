@@ -76,6 +76,7 @@ void draw_sono_rectangles(axis_context *ax, int color, int jmax);
 void draw_spectro_line(axis_context *ax, int color, int x0, int y0, int x1, int y1);
 void allocate_color_map(int colormap);
 void initialize_colormap(void);
+void reflect_color_list(bool setup_time);
 bool set_with_gl(bool val);
 void g_init_gxdraw(void);
 
@@ -259,6 +260,7 @@ void make_icons_transparent(char *basic_color);
 /* -------- snd-gxcolormaps.c -------- */
 
 char *colormap_name(int n);
+bool is_colormap(int n);
 int num_colormaps(void);
 void get_current_color(int colormap, int n, unsigned short *r, unsigned short *g, unsigned short *b);
 int skew_color(Float x);

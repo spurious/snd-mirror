@@ -18664,8 +18664,7 @@ echo "$as_me: WARNING: can't find the samplerate library. JACK will not be used.
 fi
 
             if test $with_jack = yes ; then
-	       if test $audio_system = OSS ; then
-	           # Extract the first word of "pkg-config", so it can be a program name with args.
+	       # Extract the first word of "pkg-config", so it can be a program name with args.
 set dummy pkg-config; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
 echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
@@ -18705,15 +18704,14 @@ else
 echo "${ECHO_T}no" >&6
 fi
 
-	           if test x$PKG_CONFIG != xno ; then
-                      jack_version="`$PKG_CONFIG jack --modversion`"
-                      cat >>confdefs.h <<_ACEOF
+	       if test x$PKG_CONFIG != xno ; then
+                 jack_version="`$PKG_CONFIG jack --modversion`"
+                 cat >>confdefs.h <<_ACEOF
 #define JACK_VERSION "${jack_version}"
 _ACEOF
 
-                   fi
-                 audio_system=JACK
                fi
+               audio_system=JACK
             fi
         fi
 

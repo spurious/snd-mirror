@@ -12,11 +12,17 @@ typedef struct {
 static cmap **cmaps = NULL;
 static int cmaps_size = 0;
 
+bool is_colormap(int n)
+{
+  return((n >= 0) &&
+	 (n < cmaps_size) && 
+	 (cmaps[n]));
+}
+
 static cmap *delete_cmap(int index)
 {
   cmap *c;
-  if ((index < cmaps_size) &&
-      (cmaps[index]))
+  if (is_colormap(index))
     {
       c = cmaps[index];
       if (c->r) FREE(c->r);
@@ -33,9 +39,7 @@ static cmap *delete_cmap(int index)
 
 char *colormap_name(int n) 
 {
-  if ((n >= 0) &&
-      (n < cmaps_size) && 
-      (cmaps[n])) 
+  if (is_colormap(n))
     return(cmaps[n]->name); 
   return(NULL);
 }
@@ -45,7 +49,7 @@ int num_colormaps(void)
   int i;
   for (i = cmaps_size - 1; i >= 0; i--)
     if (cmaps[i])
-      return(i);
+      return(i + 1);
   return(0);
 }
 
@@ -62,8 +66,7 @@ static unsigned short *Floats_to_ushorts(int size, Float *data)
 void get_current_color(int index, int n, unsigned short *r, unsigned short *g, unsigned short *b)
 {
   cmap *c;
-  if ((index < cmaps_size) &&
-      (cmaps[index]))
+  if (is_colormap(index))
     {
       c = cmaps[index];
       if (color_map_size(ss) != c->size)
@@ -499,9 +502,7 @@ index (the value of " S_colormap " for example).  Pos is between 0.0 and 1.0."
   XEN_ASSERT_TYPE(XEN_INTEGER_P(map), map, XEN_ARG_1, S_colormap_ref, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(pos), pos, XEN_ARG_2, S_colormap_ref, "a number between 0.0 and 1.0");
   index = XEN_TO_C_INT(map);
-  if ((index < 0) ||
-      (index >= cmaps_size) ||
-      (!cmaps[index]))
+  if (!(is_colormap(index)))
     XEN_ERROR(NO_SUCH_COLORMAP,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_colormap_ref),
 			 map));
@@ -526,13 +527,11 @@ black-and-white, gray, hot, cool, bone, copper, pink, jet, prism, autumn, winter
 spring, summer, rainbow, and flag.  These names are defined in rgb.scm."
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_colormap, "an integer"); 
   index = XEN_TO_C_INT(val);
-  if ((index < 0) ||
-      (index >= cmaps_size) ||
-      (!cmaps[index]))
+  if (!(is_colormap(index)))
     XEN_ERROR(NO_SUCH_COLORMAP,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_colormap),
 			 val));
-  in_set_color_map(index);
+  set_color_map(index); /* this redisplays and so on */
   return(C_TO_XEN_INT(color_map(ss)));
 }
 
@@ -551,9 +550,7 @@ static XEN g_colormap_name(XEN index)
   #define H_colormap_name "(" S_colormap_name " index) returns the colormap's name."
   XEN_ASSERT_TYPE(XEN_INTEGER_P(index), index, XEN_ONLY_ARG, S_colormap_name, "an integer"); 
   map = XEN_TO_C_INT(index);
-  if ((map < 0) ||
-      (map >= cmaps_size) ||
-      (!cmaps[map]))
+  if (!(is_colormap(map)))
     XEN_ERROR(NO_SUCH_COLORMAP,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_colormap_name),
 			 index));
@@ -566,18 +563,19 @@ static XEN g_delete_colormap(XEN index)
   #define H_delete_colormap "(" S_delete_colormap " index) removes the specified colormap."
   XEN_ASSERT_TYPE(XEN_INTEGER_P(index), index, XEN_ONLY_ARG, S_delete_colormap, "an integer"); 
   map = XEN_TO_C_INT(index);
-  if ((map < 0) ||
-      (map >= cmaps_size) ||
-      (!cmaps[map]))
+  if (!(is_colormap(map)))
     XEN_ERROR(NO_SUCH_COLORMAP,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_delete_colormap),
 			 index));
   delete_cmap(map);
+  reflect_color_list(false);
+  if (color_map(ss) == map) set_color_map(DEFAULT_COLOR_MAP);
   return(index);
 }
 
 static XEN g_add_colormap(XEN name, XEN func)
 {
+  int index;
   #define H_add_colormap "(" S_add_colormap " name func) adds the colormap created by func to the colormap table, \
 returning the new index."
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_add_colormap, "a string"); 
@@ -586,7 +584,9 @@ returning the new index."
     return(snd_bad_arity_error(S_add_colormap, 
 			       C_TO_XEN_STRING("func should take 1 arg"), 
 			       func));
-  return(C_TO_XEN_INT(add_colormap(XEN_TO_C_STRING(name), func)));
+  index = add_colormap(XEN_TO_C_STRING(name), func);
+  reflect_color_list(false);
+  return(C_TO_XEN_INT(index));
 }
 
 
