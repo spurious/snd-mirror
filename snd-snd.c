@@ -856,7 +856,9 @@ char *shortname_indexed(snd_info *sp)
 {
   if (show_indices(sp->state))
     {
-      mus_snprintf(sname, PRINT_BUFFER_SIZE, "%d: %s", sp->index, shortname(sp));
+      if (is_link(sp->filename))
+	mus_snprintf(sname, PRINT_BUFFER_SIZE, "%d: (%s)", sp->index, sp->short_filename); /* don;t try to share sname */
+      else mus_snprintf(sname, PRINT_BUFFER_SIZE, "%d: %s", sp->index, sp->short_filename);
       return(sname);
     }
   else return(shortname(sp));

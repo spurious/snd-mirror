@@ -1,5 +1,8 @@
 #include "snd.h"
 
+/* TODO: mix-properties list? [region-properties mark-properties]
+ */
+
 typedef struct {         /* save one mix console state */
   int chans;             /* size of arrays in this struct */
   int edit_ctr;          /* cp edit_ctr at time of creation of this struct */

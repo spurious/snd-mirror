@@ -418,6 +418,15 @@ you will get segfaults when the hooks are accessed (and probably
 elsewhere).  If you can run Snd at all, try snd --version -- this will
 try to catch and report consistency problems.
 
+If you want to keep several Guile versions around, but use a
+particular one for Snd, use the configure variable GUILE_CONFIG_path:
+
+./configure GUILE_CONFIG_path=/home/bil/test/bin/
+
+In this case, the configure script looks for /home/bil/test/bin/guile-config
+and uses the paths it returns to build Snd.  See also the PATH business below.
+
+
 If you're running linux-snd, you'll need guile 1.4 (it will appear
 as libguile.so.8 in ldd).
 

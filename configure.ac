@@ -14,6 +14,13 @@ dnl Process this file with autoconf 2.53 to produce a configure script.
 #       Mac OS-X (Darwin 1.1, 1.3)
 #       Alpha Linux
 #       FreeBSD 4.2
+#
+# config.guess:
+#   m68k-next-nextstep3 mips-sgi-irix6.2 i386-next-nextstep3 i586-pc-beos
+#   i686-pc-linux-gnu powerpc-unknown-linux-gnu sparc-sun-solaris2.7
+#   powerpc-apple-darwin1.1 i386-pc-cygwin32 sparc64-unknown-linux-gnu
+#   alphaev67-unknown-linux-gnu i386-unknown-freebsd4.2 powerpc-apple-darwin1.3.7
+#
 #--------------------------------------------------------------------------------
 #
 # SOMEDAY: sndlib configuration
@@ -356,14 +363,12 @@ AC_CHECK_SIZEOF(float)
 AC_CHECK_SIZEOF(void *)
 AC_CHECK_SIZEOF(off_t)
 
-# -------- long long
 dnl this taken from Guile's configure.in
 AC_CACHE_CHECK([for long longs], snd_cv_long_longs, AC_TRY_COMPILE(,[long long a], snd_cv_long_longs=yes, snd_cv_long_longs=no))
 if test "$snd_cv_long_longs" = yes; then
   AC_DEFINE(HAVE_LLONGS)
 fi
 
-#-------- isnan
 dnl from gsl's configure.in
 AC_CHECK_FUNCS(isnan, ,[
     AC_MSG_CHECKING([for isnan with <math.h>])
@@ -373,7 +378,6 @@ AC_CHECK_FUNCS(isnan, ,[
          	 AC_DEFINE(HAVE_ISNAN)],
          	[AC_MSG_RESULT(no)])])
 
-# -------- FFTW
 SAVELIBS=$LIBS
 FFTW_LIBS=""
 LIBS="$LIBS -lrfftw -lfftw -lm"
@@ -618,7 +622,8 @@ if test "$with_ruby" != yes ; then
 
 GUILE_LIBS=""
 GUILE_CFLAGS=""
-GUILE_CONFIG_path=""
+# GUILE_CONFIG_path=""
+# allow user to specify this in invocation line
 GUILE_LIB_path=""
 XM_LIBS=""
 

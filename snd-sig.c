@@ -1773,9 +1773,10 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
   if ((!e) && (!gen)) return;
   if (regexpr) 
     {
+      /* both beg and dur are meaningless here -- use selection bounds (per chan) */
       if (selection_is_active())
 	dur = selection_len();
-      else dur = 0;
+      else snd_no_active_selection_error(S_env_selection);
     }
   if (dur == 0) return;
 
@@ -1811,7 +1812,23 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
       if (sc == NULL) return;
       si = sc->si;
       for (i = 0; i < si->chans; i++) 
-	scale_channel(si->cps[i], val[0], beg, dur, to_c_edit_position(si->cps[i], edpos, origin, arg_pos));
+	{
+#if DEBUGGING
+	  if (beg != si->begs[i])
+	    fprintf(stderr,"using scale %lld for %lld\n", si->begs[i], beg);
+	  if ((regexpr) &&
+	      (dur != selection_end(si->cps[i]) - si->begs[i] + 1))
+	    fprintf(stderr,"using scale dur %lld for %lld\n", selection_end(si->cps[i]) - si->begs[i] + 1, dur);
+#endif
+	  if (regexpr)
+	    scale_channel(si->cps[i], 
+			  val[0], 
+			  si->begs[i], 
+			  selection_end(si->cps[i]) - si->begs[i] + 1, 
+			  to_c_edit_position(si->cps[i], edpos, origin, arg_pos));
+	  else scale_channel(si->cps[i], val[0], si->begs[i], dur, 
+			     to_c_edit_position(si->cps[i], edpos, origin, arg_pos));
+	}
       free_sync_state(sc);
       return;
     }
@@ -1836,12 +1853,17 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
 			 */
       /* base == 0 originally, so it's a step env */
       sc = get_sync_state_without_snd_fds(ss, sp, cp, beg, regexpr);
+      /* TODO: if selection, begs/durs can be different so we need a new env on each */
       if (sc == NULL) return;
       si = sc->si;
       for (i = 0; i < si->chans; i++) 
 	{
-	  segbeg = beg;
-	  segend = beg + dur;
+#if DEBUGGING
+	  if (beg != si->begs[i])
+	    fprintf(stderr,"using beg %lld for %lld\n", si->begs[i], beg);
+#endif
+	  segbeg = si->begs[i];
+	  segend = si->begs[i] + dur;
 	  segnum = passes[0] + 1;
 	  local_edpos = si->cps[i]->edit_ctr; /* for as_one_edit backup */
 	  old_squelch = si->cps[i]->squelch_update;
@@ -1869,7 +1891,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
 	  new_origin = mus_format("env-channel (make-env %s :base 0 :end " OFF_TD ") " OFF_TD " " OFF_TD,
 				  env_to_string(newe), 
 				  (len > 1) ? (passes[len - 2] - 1) : dur,
-				  beg, dur);
+				  si->begs[i], dur);
 	  free_env(newe);
 	  as_one_edit(si->cps[i], local_edpos + 1, new_origin);
 	  FREE(new_origin);
@@ -1883,16 +1905,22 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
     {
       if (sp->sync)
 	si = snd_sync(ss, sp->sync);
-      else si = make_simple_sync(cp, 0);
+      else si = make_simple_sync(cp, beg);
       for (i = 0; i < si->chans; i++)
-	if (ramped_fragments_in_use(si->cps[i], 
-				    beg,
-				    dur,
-				    to_c_edit_position(si->cps[i], edpos, origin, arg_pos)))
-	  {
-	    rampable = FALSE;
-	    break;
-	  }
+	{
+#if DEBUGGING
+	  if (beg != si->begs[i])
+	    fprintf(stderr,"using ramp %lld for %lld\n", si->begs[i], beg);
+#endif
+	  if (ramped_fragments_in_use(si->cps[i], 
+				      si->begs[i],
+				      dur,
+				      to_c_edit_position(si->cps[i], edpos, origin, arg_pos)))
+	    {
+	      rampable = FALSE;
+	      break;
+	    }
+	}
     }
   else rampable = FALSE;
 
@@ -2037,8 +2065,12 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
       si = sc->si;
       for (i = 0; i < si->chans; i++) 
 	{
-	  segbeg = beg;
-	  segend = beg + dur;
+#if DEBUGGING
+	  if (beg != si->begs[i])
+	    fprintf(stderr,"using seg %lld for %lld\n", si->begs[i], beg);
+#endif
+	  segbeg = si->begs[i];
+	  segend = si->begs[i] + dur;
 	  segnum = passes[0] + 1;
 	  local_edpos = si->cps[i]->edit_ctr; /* for as_one_edit backup */
 	  old_squelch = si->cps[i]->squelch_update;
@@ -2083,7 +2115,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
 	  new_origin = mus_format("env-channel (make-env %s :base 1 :end " OFF_TD ") " OFF_TD " " OFF_TD,
 				  env_to_string(newe), 
 				  (len > 1) ? (passes[len - 2] - 1) : dur,
-				  beg, dur);
+				  si->begs[i], dur);
 	  free_env(newe);
 	  as_one_edit(si->cps[i], local_edpos + 1, new_origin);
 	  FREE(new_origin);

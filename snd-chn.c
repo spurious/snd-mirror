@@ -5887,6 +5887,7 @@ static XEN g_y_bounds(XEN snd_n, XEN chn_n)
 		    C_TO_XEN_DOUBLE(ap->y1)));
 }
 
+/* TODO: can't back|foreward-sample be moved to lisp? */
 static XEN g_forward_sample(XEN count, XEN snd, XEN chn) 
 {
   #define H_forward_sample "(" S_forward_sample " &optional (count 1) snd chn) moves the cursor forward count samples"

@@ -32,6 +32,14 @@
 ;;; TODO: GL tests
 ;;; TODO: load-font current-font send-netscape apply-ladspa set-enved-selected-env
 ;;; TODO: mix panel env editor (apply button)
+;;; TODO: loop-samples of large section, scale-to with chn but 0..dur, fcomb, transform-hook? output-name-hook?
+;;; TODO: make-graph of 1 samp, 
+;;; TODO: lisp-graph-hook with forward proc, colormap-ref with no pos arg, linear src moving backwards
+;;; TODO: insert|mix-selection w/o chn
+;;; TODO: srate control change while using semitones
+;;; TODO: control-panel apply to channel
+;;; TODO: raw|new data dialog help, delete enved env? ...
+
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs) (ice-9 syncase))
 
@@ -586,6 +594,9 @@
       (set! (max-transform-peaks) (max-transform-peaks))
       (IF (not (equal? (max-transform-peaks)  100)) 
 	  (snd-display ";max-transform-peaks set def: ~A" (max-transform-peaks)))
+      (set! (max-transform-peaks) -123)
+      (IF (not (equal? (max-transform-peaks) 100)) 
+	  (snd-display ";max-transform-peaks set -123: ~A" (max-transform-peaks)))
       (set! (max-regions) (max-regions))
       (IF (not (equal? (max-regions)  16 )) 
 	  (snd-display ";max-regions set def: ~A" (max-regions)))
@@ -745,6 +756,9 @@
       (set! (zero-pad) (zero-pad))
       (IF (not (equal? (zero-pad)  0)) 
 	  (snd-display ";zero-pad set def: ~A" (zero-pad)))
+      (set! (zero-pad) -123)
+      (IF (not (equal? (zero-pad)  0)) 
+	  (snd-display ";zero-pad set -123: ~A" (zero-pad)))
       (set! (zoom-focus-style) (zoom-focus-style))
       (IF (not (equal? (zoom-focus-style)  2 )) 
 	  (snd-display ";zoom-focus-style set def: ~A" (zoom-focus-style)))
@@ -8896,6 +8910,9 @@
 	  (IF (not (mark? m1)) (snd-display ";snap-marks start: ~A" (map mark-sample (marks ind 0))))
 	  (set! m2 (find-mark (+ 2000 1234)))
 	  (IF (not (mark? m2)) (snd-display ";snap-marks end: ~A" (map mark-sample (marks ind 0))))
+	  (set! (selection-position ind 0) (+ (frames ind 0) 1123))
+	  (IF (not (= (selection-position ind 0) (1- (frames ind ))))
+	      (snd-display ";selection position past eof: ~A ~A" (selection-position ind 0) (1- (frames ind ))))
 	  (close-sound ind)
 	  )
 
@@ -9109,6 +9126,7 @@
 	       (not (string-equal-ignoring-white-space str1 "A raised cosine")))
 	   (snd-display ";snd-help hamming-window: ~A ~A" str1 str2)))
 
+     (set! (show-indices) #t)
      (let ((ind (open-sound "oboe.snd")))
        (IF (< (length (sound-widgets ind)) 4)
 	   (snd-display ";sound-widgets: ~A?" (sound-widgets ind)))
@@ -9120,8 +9138,24 @@
 	 (set! str (widget-text (list-ref (sound-widgets ind) 3)))
 	 (IF (not (string=? str "hi thereaway!"))
 	     (snd-display ";report-in-minibuffer 1: ~A?" str)))
-       (IF (widget-text (cadr (main-widgets))) (snd-display ";widget text should be #f: ~A" (widget-text (cadr (main-widgets)))))
+       (IF (widget-text (cadr (main-widgets))) 
+	   (snd-display ";widget text should be #f: ~A" (widget-text (cadr (main-widgets)))))
+       (let ((str (format #f "~D: ~A" ind (short-file-name ind))))
+	 (IF (not (string=? str (widget-text (cadr (sound-widgets ind)))))
+	     (snd-display ";name text: ~A ~A" str (widget-text (cadr (sound-widgets ind))))))
        (close-sound ind))
+     (let* ((ind (open-sound "link-oboe.snd"))
+	    (linked-str (format #f "~D: (~A)" ind (short-file-name ind))))
+       (IF (not (string=? linked-str (widget-text (cadr (sound-widgets ind)))))
+	   (snd-display ";linked name text: ~A ~A" linked-str (widget-text (cadr (sound-widgets ind)))))
+       (close-sound ind))
+     (set! (show-indices) #f)
+     (let* ((ind (open-sound "link-oboe.snd"))
+	    (linked-str (format #f "(~A)" (short-file-name ind))))
+       (IF (not (string=? linked-str (widget-text (cadr (sound-widgets ind)))))
+	   (snd-display ";linked name text (no index): ~A ~A" linked-str (widget-text (cadr (sound-widgets ind)))))
+       (close-sound ind))
+
      ))
 
 (define sf-dir-files (if (string? sf-dir) (sound-files-in-directory sf-dir) #f))
@@ -23918,8 +23952,12 @@ EDITS: 5
 	(check-error-tag 'no-such-widget (lambda () (widget-text (list 'Widget 0))))
 	(check-error-tag 'no-such-widget (lambda () (set! (widget-position (list 'Widget 0)) (list 0 0))))
 	(check-error-tag 'no-such-widget (lambda () (set! (widget-size (list 'Widget 0)) (list 10 10))))
+	(check-error-tag 'no-such-menu (lambda () (main-menu -1)))
+	(check-error-tag 'no-such-menu (lambda () (main-menu 111)))
 	(let ((ind (open-sound "oboe.snd"))) 
 	  (select-all)
+	  (check-error-tag 'no-such-channel (lambda () (mix-selection 0 ind 123)))
+	  (check-error-tag 'no-such-channel (lambda () (insert-selection 0 ind 123)))
 	  (check-error-tag 'cannot-save (lambda () (save-sound-as "hiho.snd" ind -1)))
 	  (check-error-tag 'cannot-save (lambda () (save-sound-as "hiho.snd" ind mus-next -1)))
 	  (check-error-tag 'mus-error (lambda () (draw-lines '#())))

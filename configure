@@ -8888,7 +8888,6 @@ _ACEOF
 
 
 
-# -------- long long
 echo "$as_me:$LINENO: checking for long longs" >&5
 echo $ECHO_N "checking for long longs... $ECHO_C" >&6
 if test "${snd_cv_long_longs+set}" = set; then
@@ -8941,7 +8940,6 @@ _ACEOF
 
 fi
 
-#-------- isnan
 
 for ac_func in isnan
 do
@@ -9066,7 +9064,6 @@ fi
 done
 
 
-# -------- FFTW
 SAVELIBS=$LIBS
 FFTW_LIBS=""
 LIBS="$LIBS -lrfftw -lfftw -lm"
@@ -12194,7 +12191,8 @@ if test "$with_ruby" != yes ; then
 
 GUILE_LIBS=""
 GUILE_CFLAGS=""
-GUILE_CONFIG_path=""
+# GUILE_CONFIG_path=""
+# allow user to specify this in invocation line
 GUILE_LIB_path=""
 XM_LIBS=""
 
