@@ -39,6 +39,7 @@
   XEN_NARGIFY_6(gxm_XpPutDocumentData_w, gxm_XpPutDocumentData)
   XEN_NARGIFY_5(gxm_XpGetDocumentData_w, gxm_XpGetDocumentData)
 #endif
+#if HAVE_MOTIF
 #if (!XM_DISABLE_DEPRECATED)
   XEN_NARGIFY_1(gxm_XtWarning_w, gxm_XtWarning)
   XEN_NARGIFY_2(gxm_XtAppWarning_w, gxm_XtAppWarning)
@@ -63,7 +64,6 @@
   XEN_NARGIFY_0(gxm_XtNextEvent_w, gxm_XtNextEvent)
   XEN_NARGIFY_0(gxm_XtPeekEvent_w, gxm_XtPeekEvent)
 #endif
-#if HAVE_MOTIF
   XEN_NARGIFY_3(gxm_XtSetArg_w, gxm_XtSetArg)
   XEN_NARGIFY_2(gxm_XtManageChildren_w, gxm_XtManageChildren)
   XEN_NARGIFY_1(gxm_XtManageChild_w, gxm_XtManageChild)
@@ -1207,8 +1207,10 @@
   XEN_NARGIFY_1(XEN_Time_p_w, XEN_Time_p)
   XEN_NARGIFY_1(XEN_Visual_p_w, XEN_Visual_p)
   XEN_NARGIFY_1(XEN_Window_p_w, XEN_Window_p)
+#if HAVE_MOTIF
   XEN_NARGIFY_1(XEN_Widget_p_w, XEN_Widget_p)
   XEN_NARGIFY_1(XEN_XmStringContext_p_w, XEN_XmStringContext_p)
+#endif
   XEN_NARGIFY_1(XEN_XFontProp_p_w, XEN_XFontProp_p)
   XEN_NARGIFY_1(XEN_XFontSet_p_w, XEN_XFontSet_p)
   XEN_NARGIFY_1(XEN_XFontStruct_p_w, XEN_XFontStruct_p)
@@ -2349,6 +2351,7 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmListGetSelectedPos, gxm_XmListGetSelectedPos_w, 1, 0, 0, H_XmListGetSelectedPos);
 #endif
 
+#if HAVE_MOTIF
 #if (!XM_DISABLE_DEPRECATED)
   XM_DEFINE_PROCEDURE(XtWarning, gxm_XtWarning_w, 1, 0, 0, H_XtWarning);
   XM_DEFINE_PROCEDURE(XtAppWarning, gxm_XtAppWarning_w, 2, 0, 0, H_XtAppWarning);
@@ -2414,6 +2417,7 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmMainWindowSep2, gxm_XmMainWindowSep2_w, 1, 0, 0, H_XmMainWindowSep2);
   XM_DEFINE_PROCEDURE(XmMainWindowSep3, gxm_XmMainWindowSep3_w, 1, 0, 0, H_XmMainWindowSep3);
 #endif
+#endif
 
 #if HAVE_XPM
   XM_DEFINE_PROCEDURE(XpmCreatePixmapFromData, gxm_XpmCreatePixmapFromData_w, 4, 0, 0, NULL);
@@ -2464,8 +2468,10 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(Time?, XEN_Time_p_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(Visual?, XEN_Visual_p_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(Window?, XEN_Window_p_w, 1, 0, 0, NULL);
+#if HAVE_MOTIF
   XM_DEFINE_PROCEDURE(Widget?, XEN_Widget_p_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmStringContext?, XEN_XmStringContext_p_w, 1, 0, 0, NULL);
+#endif
   XM_DEFINE_PROCEDURE(XFontProp?, XEN_XFontProp_p_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XFontSet?, XEN_XFontSet_p_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XFontStruct?, XEN_XFontStruct_p_w, 1, 0, 0, NULL);

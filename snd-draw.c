@@ -7,10 +7,12 @@ static axis_context *get_ax(chan_info *cp, int ax_id, const char *caller)
   if ((cp) && (AXIS_CONTEXT_ID_OK(ax_id)))
     return(set_context(cp, ax_id));
   XEN_ERROR(NO_SUCH_AXIS_CONTEXT,
-	    XEN_LIST_4(C_TO_XEN_STRING(caller),
-		       C_TO_SMALL_XEN_INT(cp->sound->index),
-		       C_TO_SMALL_XEN_INT(cp->chan),
-		       C_TO_SMALL_XEN_INT(ax_id)));
+	    XEN_LIST_3(C_TO_XEN_STRING(caller),
+		       C_TO_XEN_STRING("axis: ~A, sound index: ~A (~A), chan: ~A"),
+		       XEN_LIST_4(C_TO_SMALL_XEN_INT(ax_id),
+				  C_TO_SMALL_XEN_INT(cp->sound->index),
+				  C_TO_XEN_STRING(cp->sound->short_filename),
+				  C_TO_SMALL_XEN_INT(cp->chan))));
   return(NULL);
 }
 
@@ -29,10 +31,12 @@ axis_info *get_ap(chan_info *cp, int ap_id, const char *caller)
       case LISP_AXIS_INFO:      if (cp->lisp_info) return(cp->lisp_info->axis); break;
       }
   XEN_ERROR(NO_SUCH_AXIS_INFO,
-	    XEN_LIST_4(C_TO_XEN_STRING(caller),
-		       C_TO_SMALL_XEN_INT(cp->sound->index),
-		       C_TO_SMALL_XEN_INT(cp->chan),
-		       C_TO_SMALL_XEN_INT(ap_id)));
+	    XEN_LIST_3(C_TO_XEN_STRING(caller),
+		       C_TO_XEN_STRING("axis: ~A, sound index: ~A (~A), chan: ~A (axis should be one of " S_time_graph ", " S_lisp_graph ", or " S_transform_graph ")"),
+		       XEN_LIST_4(C_TO_SMALL_XEN_INT(ap_id),
+				  C_TO_SMALL_XEN_INT(cp->sound->index),
+				  C_TO_XEN_STRING(cp->sound->short_filename),
+				  C_TO_SMALL_XEN_INT(cp->chan))));
   return(NULL);
 }
 

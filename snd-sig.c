@@ -56,11 +56,14 @@ int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos
       (pos >= cp->edit_size) ||
       (cp->edits[pos] == NULL))
     XEN_ERROR(NO_SUCH_EDIT,
-	      XEN_LIST_5(C_TO_XEN_STRING(caller),
-			 C_TO_XEN_INT(cp->sound->index),
-			 C_TO_XEN_INT(cp->chan),
-			 C_TO_XEN_INT(pos),
-			 edpos));
+	      XEN_LIST_3(C_TO_XEN_STRING(caller),
+			 C_TO_XEN_STRING("edpos: ~A (from ~A), sound index: ~A (~A), chan: ~A, current edit: ~A"),
+			 XEN_LIST_6(C_TO_XEN_INT(pos),
+				    edpos,
+				    C_TO_XEN_INT(cp->sound->index),
+				    C_TO_XEN_STRING(cp->sound->short_filename),
+				    C_TO_XEN_INT(cp->chan),
+				    C_TO_XEN_INT(cp->edit_ctr))));
   return(pos);
 }
 
@@ -2584,7 +2587,8 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 				  snd_remove(filename, TRUE);
 				  FREE(filename);
 				  XEN_ERROR(BAD_TYPE,
-					    XEN_LIST_2(C_TO_XEN_STRING(caller),
+					    XEN_LIST_3(C_TO_XEN_STRING(caller),
+						       C_TO_XEN_STRING("result of procedure must be a number, boolean, vct, list, or vector:"),
 						       res));
 				}
 			    }
@@ -3486,7 +3490,7 @@ static XEN g_env_1(XEN edata, off_t beg, off_t dur, XEN base, chan_info *cp, XEN
 	{
 	  fbase = XEN_TO_C_DOUBLE_OR_ELSE(base, 1.0);
 	  if (fbase < 0.0)
-	    XEN_OUT_OF_RANGE_ERROR(caller, 4, base, "base < 0.0?");
+	    XEN_OUT_OF_RANGE_ERROR(caller, 4, base, "base ~A < 0.0?");
 	  apply_env(cp, e, beg, dur, selection, NOT_FROM_ENVED, caller, NULL, edpos, 7, fbase);
 	  free_env(e);
 	  return(edata);
@@ -3637,7 +3641,7 @@ scale samples in the given sound/channel between beg and beg + num by an exponen
   samps = dur_to_samples(num, samp, cp, pos, 4, S_xramp_channel);
   ebase = XEN_TO_C_DOUBLE(base);
   if (ebase < 0.0) 
-    XEN_OUT_OF_RANGE_ERROR(S_xramp_channel, 3, base, "base < 0.0?");
+    XEN_OUT_OF_RANGE_ERROR(S_xramp_channel, 3, base, "base ~A < 0.0?");
   if (ramp_or_ptree_fragments_in_use(cp, samp, samps, pos, ebase))
     {
       snd_info *sp;
@@ -3853,14 +3857,14 @@ magnitude spectrum of data (a vct), in data if in-place, using fft-window win an
   rdat = v->data;
   n = XEN_TO_C_INT_OR_ELSE(len, v->length);
   if (n <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_snd_spectrum, 3, len, "length <= 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_snd_spectrum, 3, len, "length ~A <= 0?");
   if (n > v->length) n = v->length;
   if (XEN_NOT_FALSE_P(linear_or_dB)) linear = TRUE;
   if (XEN_TRUE_P(in_place)) in_data = TRUE;
   if (XEN_FALSE_P(normalized)) normed = FALSE;
   wtype = XEN_TO_C_INT_OR_ELSE(win, MUS_RECTANGULAR_WINDOW);
   if (!(MUS_FFT_WINDOW_OK(wtype)))
-    XEN_OUT_OF_RANGE_ERROR(S_snd_spectrum, 2, win, "unknown fft window");
+    XEN_OUT_OF_RANGE_ERROR(S_snd_spectrum, 2, win, "~A: unknown fft window");
   if (XEN_NUMBER_P(beta)) b = XEN_TO_C_DOUBLE(beta);
   if (b < 0.0) b = 0.0; else if (b > 1.0) b = 1.0;
   idat = (Float *)CALLOC(n, sizeof(Float));
@@ -4002,20 +4006,20 @@ static Float check_src_envelope(int pts, Float *data, const char *caller)
   Float res = 0.0;
   for (i = 0; i < (2 * pts); i += 2)
     if (data[i + 1] == 0.0)
-      XEN_OUT_OF_RANGE_ERROR(caller, 1, mus_array_to_list(data, 0, pts * 2), "envelope hits 0.0");
+      XEN_OUT_OF_RANGE_ERROR(caller, 1, mus_array_to_list(data, 0, pts * 2), "~A: envelope hits 0.0");
     else
       {
 	if (data[i + 1] < 0.0)
 	  {
 	    if (res <= 0.0)
 	      res = -1.0;
-	    else XEN_OUT_OF_RANGE_ERROR(caller, 1, mus_array_to_list(data, 0, pts * 2), "envelope passes through 0.0");
+	    else XEN_OUT_OF_RANGE_ERROR(caller, 1, mus_array_to_list(data, 0, pts * 2), "~A: envelope passes through 0.0");
 	  }
 	else
 	  {
 	    if (res >= 0)
 	      res = 1.0;
-	    else XEN_OUT_OF_RANGE_ERROR(caller, 1, mus_array_to_list(data, 0, pts * 2), "envelope passes through 0.0");
+	    else XEN_OUT_OF_RANGE_ERROR(caller, 1, mus_array_to_list(data, 0, pts * 2), "~A: envelope passes through 0.0");
 	  }
       }
   return(res);
@@ -4152,12 +4156,12 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos, const c
     {
       len = XEN_TO_C_INT_OR_ELSE(order, 0);
       if (len <= 0) 
-	XEN_OUT_OF_RANGE_ERROR(caller, 2, order, "order <= 0?");
+	XEN_OUT_OF_RANGE_ERROR(caller, 2, order, "order ~A <= 0?");
       if (VCT_P(e)) /* the filter coefficients direct */
 	{
 	  v = TO_VCT(e);
 	  if (len > v->length) 
-	    XEN_OUT_OF_RANGE_ERROR(caller, 2, order, "order > length coeffs?");
+	    XEN_OUT_OF_RANGE_ERROR(caller, 2, order, "order ~A > length coeffs?");
 	  apply_filter(cp, len, NULL, NOT_FROM_ENVED, caller, selection, v->data, NULL, edpos, 5);
 	}
       else 

@@ -1805,20 +1805,25 @@ return the current transform sample at bin and slice in snd channel chn (assumin
 		      (fslice < si->active_slices))
 		    return(C_TO_XEN_DOUBLE(si->data[fslice][fbin]));
 		  else XEN_ERROR(NO_SUCH_SAMPLE,
-				 XEN_LIST_8(C_TO_XEN_STRING(S_transform_sample),
-					    bin, slice,
-					    snd_n, chn_n,
-					    C_TO_XEN_STRING("max bin, max slice:"),
-					    C_TO_XEN_INT((si) ? si->target_bins : 0),
-					    C_TO_XEN_INT((si) ? si->active_slices : 0)));
+				 XEN_LIST_3(C_TO_XEN_STRING(S_transform_sample),
+					    C_TO_XEN_STRING("bin: ~A, max bin: ~A, slice: ~A, max slice: ~A, sound index: ~A (~A), chan: ~A"),
+					    XEN_LIST_7(bin,
+						       C_TO_XEN_INT((si) ? si->target_bins : 0),
+						       slice,
+						       C_TO_XEN_INT((si) ? si->active_slices : 0),
+						       snd_n, 
+						       C_TO_XEN_STRING(cp->sound->short_filename),
+						       chn_n)));
 		}
 	    }
 	  else XEN_ERROR(NO_SUCH_SAMPLE,
-			 XEN_LIST_6(C_TO_XEN_STRING(S_transform_sample),
-				    bin,
-				    snd_n, chn_n,
-				    C_TO_XEN_STRING("max bin:"),
-				    C_TO_XEN_INT(fp->current_size)));
+			 XEN_LIST_3(C_TO_XEN_STRING(S_transform_sample),
+				    C_TO_XEN_STRING("bin: ~A, max bin: ~A, sound index: ~A (~A), chan: ~A"),
+				    XEN_LIST_5(bin,
+					       C_TO_XEN_INT(fp->current_size),
+					       snd_n,
+					       C_TO_XEN_STRING(cp->sound->short_filename),
+					       chn_n)));
 	}
     }
   return(XEN_FALSE);
@@ -1883,7 +1888,7 @@ static XEN g_snd_transform(XEN type, XEN data, XEN hint)
   XEN_ASSERT_TYPE(VCT_P(data), data, XEN_ARG_2, "snd-transform", "a vct");
   trf = XEN_TO_SMALL_C_INT(type);
   if ((trf < 0) || (trf > HAAR))
-    XEN_OUT_OF_RANGE_ERROR("snd-transform", 1, type, "invalid transform choice");
+    XEN_OUT_OF_RANGE_ERROR("snd-transform", 1, type, "~A: invalid transform choice");
   v = TO_VCT(data);
   switch (trf)
     {

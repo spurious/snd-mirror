@@ -212,7 +212,7 @@ static XEN g_make_vct(XEN len, XEN filler)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(len), len, XEN_ONLY_ARG, S_make_vct, "an integer");
   size = XEN_TO_C_INT(len);
   if (size <= 0) 
-    XEN_OUT_OF_RANGE_ERROR(S_make_vct, 1, len, "len <= 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_make_vct, 1, len, "len ~A <= 0?");
   if (XEN_NUMBER_P(filler))
     return(vct_fill(make_vct(size, (Float *)CALLOC(size, sizeof(Float))), filler));
   return(make_vct(size, (Float *)CALLOC(size, sizeof(Float))));
@@ -249,18 +249,18 @@ v[new--] = v[old--] if backwards is #t"
       (XEN_NOT_FALSE_P(backwards)))
     {
       if (ni >= v->length) 
-	XEN_OUT_OF_RANGE_ERROR(S_vct_moveB, 2, newi, "new-index too high");
+	XEN_OUT_OF_RANGE_ERROR(S_vct_moveB, 2, newi, "new-index ~A too high");
       if (nj >= v->length)
-	XEN_OUT_OF_RANGE_ERROR(S_vct_moveB, 3, oldi, "old-index too high");
+	XEN_OUT_OF_RANGE_ERROR(S_vct_moveB, 3, oldi, "old-index ~A too high");
       for (i = ni, j = nj; (j >= 0) && (i >= 0); i--, j--) 
 	v->data[i] = v->data[j];
     }
   else
     {
       if (ni < 0)
-	XEN_OUT_OF_RANGE_ERROR(S_vct_moveB, 2, newi, "new-index < 0?");
+	XEN_OUT_OF_RANGE_ERROR(S_vct_moveB, 2, newi, "new-index ~A < 0?");
       if (nj < 0)
-	XEN_OUT_OF_RANGE_ERROR(S_vct_moveB, 3, oldi, "old-index < 0?");
+	XEN_OUT_OF_RANGE_ERROR(S_vct_moveB, 3, oldi, "old-index ~A < 0?");
       for (i = ni, j = nj; (j < v->length) && (i < v->length); i++, j++) 
 	v->data[i] = v->data[j];
     }
@@ -289,9 +289,9 @@ static XEN vct_ref(XEN obj, XEN pos)
   v = TO_VCT(obj);
   loc = XEN_TO_C_INT(pos);
   if (loc < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, pos, "index < 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, pos, "index ~A < 0?");
   if (loc >= v->length)
-    XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, pos, "index too high?");
+    XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, pos, "index ~A too high?");
   return(C_TO_XEN_DOUBLE(v->data[loc]));
 }
 
@@ -306,9 +306,9 @@ static XEN vct_set(XEN obj, XEN pos, XEN val)
   v = TO_VCT(obj);
   loc = XEN_TO_C_INT(pos);
   if (loc < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, pos, "index < 0?"); 
+    XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, pos, "index ~A < 0?"); 
   if (loc >= v->length)
-    XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, pos, "index >= vct-length?");
+    XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, pos, "index ~A >= vct-length?");
   v->data[loc] = XEN_TO_C_DOUBLE(val);
   return(xen_return_first(val, obj, pos));
 }

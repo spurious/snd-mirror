@@ -507,9 +507,9 @@ static XEN g_make_sound_data(XEN chans, XEN frames)
   chns = XEN_TO_C_INT(chans);
   frms = XEN_TO_C_INT(frames);
   if (chns <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_make_sound_data, 1, chans, "chans <= 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_make_sound_data, 1, chans, "chans ~A <= 0?");
   if (frms <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_make_sound_data, 2, frames, "frames <= 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_make_sound_data, 2, frames, "frames ~A <= 0?");
   return(make_sound_data(chns, frms));
 			 
 }
@@ -525,10 +525,10 @@ static XEN sound_data_ref(XEN obj, XEN chan, XEN frame_num)
   v = (sound_data *)XEN_OBJECT_REF(obj);
   chn = XEN_TO_C_INT(chan);
   if ((chn < 0) || (chn >= v->chans))
-    XEN_OUT_OF_RANGE_ERROR(S_sound_data_ref, 2, chan, "invalid channel");
+    XEN_OUT_OF_RANGE_ERROR(S_sound_data_ref, 2, chan, "~A: invalid channel");
   loc = XEN_TO_C_INT(frame_num);
   if ((loc < 0) || (loc >= v->length))
-    XEN_OUT_OF_RANGE_ERROR(S_sound_data_ref, 3, frame_num, "invalid frame number");
+    XEN_OUT_OF_RANGE_ERROR(S_sound_data_ref, 3, frame_num, "~A: invalid frame number");
   return(C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_DOUBLE(v->data[chn][loc])));
 }
 
@@ -581,10 +581,10 @@ static XEN sound_data_set(XEN obj, XEN chan, XEN frame_num, XEN val)
   v = (sound_data *)XEN_OBJECT_REF(obj);
   chn = XEN_TO_C_INT(chan);
   if ((chn < 0) || (chn >= v->chans))
-    XEN_OUT_OF_RANGE_ERROR(S_sound_data_setB, 2, chan, "invalid channel");
+    XEN_OUT_OF_RANGE_ERROR(S_sound_data_setB, 2, chan, "~A: invalid channel");
   loc = XEN_TO_C_INT(frame_num);
   if ((loc < 0) || (loc >= v->length))
-    XEN_OUT_OF_RANGE_ERROR(S_sound_data_setB, 3, frame_num, "invalid frame number");
+    XEN_OUT_OF_RANGE_ERROR(S_sound_data_setB, 3, frame_num, "~A: invalid frame number");
   v->data[chn][loc] = MUS_DOUBLE_TO_SAMPLE(XEN_TO_C_DOUBLE(val));
   return(val);
 }
@@ -601,7 +601,7 @@ static XEN sound_data2vct(XEN sdobj, XEN chan, XEN vobj)
   sd = (sound_data *)XEN_OBJECT_REF(sdobj);
   chn = XEN_TO_C_INT_OR_ELSE(chan, 0);
   if ((chn >= sd->chans) || (chn < 0))
-    XEN_OUT_OF_RANGE_ERROR(S_sound_data2vct, 2, chan, "invalid channel");
+    XEN_OUT_OF_RANGE_ERROR(S_sound_data2vct, 2, chan, "~A: invalid channel");
   if (!(VCT_P(vobj))) vobj = make_vct(sd->length, (Float *)CALLOC(sd->length, sizeof(Float)));
   v = TO_VCT(vobj);
   if (sd->length < v->length) 
@@ -626,7 +626,7 @@ static XEN vct2sound_data(XEN vobj, XEN sdobj, XEN chan)
   sd = (sound_data *)XEN_OBJECT_REF(sdobj);
   chn = XEN_TO_C_INT_OR_ELSE(chan, 0);
   if ((chn >= sd->chans) || (chn < 0))
-    XEN_OUT_OF_RANGE_ERROR(S_vct2sound_data, 3, chan, "invalid channel");
+    XEN_OUT_OF_RANGE_ERROR(S_vct2sound_data, 3, chan, "~A: invalid channel");
   if (sd->length < v->length) 
     len = sd->length; 
   else len = v->length;
@@ -685,11 +685,11 @@ header-type is a sndlib type indicator such as " S_mus_aiff "; sndlib currently 
 					 ht,
 					 com);
 	    }
-	  else XEN_OUT_OF_RANGE_ERROR(S_mus_sound_open_output, 3, chans, "chans <= 0?");
+	  else XEN_OUT_OF_RANGE_ERROR(S_mus_sound_open_output, 3, chans, "chans ~A <= 0?");
 	}
-      else XEN_OUT_OF_RANGE_ERROR(S_mus_sound_open_output, 5, header_type, "invalid header type");
+      else XEN_OUT_OF_RANGE_ERROR(S_mus_sound_open_output, 5, header_type, "~A: invalid header type");
     }
-  else XEN_OUT_OF_RANGE_ERROR(S_mus_sound_open_output, 4, data_format, "invalid data format");
+  else XEN_OUT_OF_RANGE_ERROR(S_mus_sound_open_output, 4, data_format, "~A: invalid data format");
   return(C_TO_XEN_INT(fd));
 }
 
@@ -726,9 +726,9 @@ data-location should be retrieved from a previous call to " S_mus_sound_data_loc
 	    }
 	  else XEN_OUT_OF_RANGE_ERROR(S_mus_sound_reopen_output, 2, chans, "chans <= 0?");
 	}
-      else XEN_OUT_OF_RANGE_ERROR(S_mus_sound_reopen_output, 4, header_type, "invalid header type");
+      else XEN_OUT_OF_RANGE_ERROR(S_mus_sound_reopen_output, 4, header_type, "~A: invalid header type");
     }
-  else XEN_OUT_OF_RANGE_ERROR(S_mus_sound_reopen_output, 3, data_format, "invalid data format");
+  else XEN_OUT_OF_RANGE_ERROR(S_mus_sound_reopen_output, 3, data_format, "~A: invalid data format");
   return(C_TO_XEN_INT(fd));
 }
 
@@ -740,7 +740,7 @@ by " S_mus_sound_open_input "."
   XEN_ASSERT_TYPE(XEN_INTEGER_P(fd), fd, XEN_ONLY_ARG, S_mus_sound_close_input, "an integer");
   nfd = XEN_TO_C_INT(fd);
   if ((nfd < 0) || (nfd == fileno(stdin)) || (nfd == fileno(stdout)) || (nfd == fileno(stderr)))
-    XEN_OUT_OF_RANGE_ERROR(S_mus_sound_close_input, 1, fd, "invalid file");
+    XEN_OUT_OF_RANGE_ERROR(S_mus_sound_close_input, 1, fd, "~A: invalid file number");
   return(C_TO_XEN_INT(mus_sound_close_input(XEN_TO_C_INT(fd))));
 }
 
@@ -754,7 +754,7 @@ that was opened by " S_mus_sound_open_output " after updating its header (if any
   XEN_ASSERT_TYPE(XEN_NUMBER_P(bytes), bytes, XEN_ARG_2, S_mus_sound_close_output, "a number");
   nfd = XEN_TO_C_INT(fd);
   if ((nfd < 0) || (nfd == fileno(stdin)) || (nfd == fileno(stdout)) || (nfd == fileno(stderr)))
-    XEN_OUT_OF_RANGE_ERROR(S_mus_sound_close_output, 1, fd, "invalid file");
+    XEN_OUT_OF_RANGE_ERROR(S_mus_sound_close_output, 1, fd, "~A: invalid file number");
   return(C_TO_XEN_INT(mus_sound_close_output(XEN_TO_C_INT(fd),
 					     XEN_TO_C_OFF_T_OR_ELSE(bytes, 0))));
 }
@@ -893,15 +893,15 @@ return the audio line number:\n\
   ifmt = XEN_TO_C_INT(format);
   isize = XEN_TO_C_INT_OR_ELSE(size, 0);
   if (!(MUS_AUDIO_DEVICE_OK(idev)))
-    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_output, 1, dev, "invalid device");
+    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_output, 1, dev, "~A: invalid device");
   if (!(MUS_DATA_FORMAT_OK(ifmt)))
-    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_output, 4, format, "invalid data format");
+    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_output, 4, format, "~A: invalid data format");
   if (isize < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_output, 5, size, "size < 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_output, 5, size, "size ~A < 0?");
   if (israte <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_output, 2, srate, "srate <= 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_output, 2, srate, "srate ~A <= 0?");
   if ((ichans <= 0) || (ichans > 256))
-    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_output, 3, chans, "chans <= 0 or > 256?");
+    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_output, 3, chans, "chans ~A <= 0 or > 256?");
   line = mus_audio_open_output(idev, israte, ichans, ifmt, isize);
   audio_io_set_write_format(line, ifmt);
   return(C_TO_XEN_INT(line));
@@ -924,15 +924,15 @@ open the audio device ready for input with the indicated attributes; return the 
   ifmt = XEN_TO_C_INT(format);
   isize = XEN_TO_C_INT_OR_ELSE(size, 0);
   if (!(MUS_AUDIO_DEVICE_OK(idev)))
-    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_input, 1, dev, "invalid device");
+    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_input, 1, dev, "~A: invalid device");
   if (!(MUS_DATA_FORMAT_OK(ifmt)))
-    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_input, 4, format, "invalid data format");
+    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_input, 4, format, "~A: invalid data format");
   if (isize < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_input, 5, size, "size < 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_input, 5, size, "size ~A < 0?");
   if (israte <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_input, 2, srate, "srate <= 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_input, 2, srate, "srate ~A <= 0?");
   if (ichans <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_input, 3, chans, "chans <= 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_input, 3, chans, "chans ~A <= 0?");
   line = mus_audio_open_input(idev, israte, ichans, ifmt, isize);
   audio_io_set_read_format(line, ifmt);
   return(C_TO_XEN_INT(line));
@@ -983,7 +983,7 @@ to the audio line from sound-data sdata."
   sd = (sound_data *)XEN_OBJECT_REF(sdata);
   frms = XEN_TO_C_INT(frames);
   if (frms > sd->length)
-    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_write, 3, frames, "frames > sound-data buffer length");
+    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_write, 3, frames, "frames ~A > sound-data buffer length");
   fd = XEN_TO_C_INT(line);
   fmt = audio_io_write_format(fd);
   outbytes = frms * sd->chans * mus_bytes_per_sample(fmt);
@@ -1028,9 +1028,9 @@ static XEN g_mus_audio_mixer_read(XEN dev, XEN field, XEN chan, XEN vals)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_3, S_mus_audio_mixer_read, "an integer");
   XEN_ASSERT_TYPE(XEN_VECTOR_P(vals), vals, XEN_ARG_4, S_mus_audio_mixer_read, "a vector");
   if (!(MUS_AUDIO_DEVICE_OK(XEN_TO_C_INT(dev)))) 
-    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_mixer_read, 1, dev, "invalid device");
+    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_mixer_read, 1, dev, "~A: invalid device");
   if (!(MUS_AUDIO_DEVICE_OK(XEN_TO_C_INT(field))))
-    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_mixer_read, 2, field, "invalid field");
+    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_mixer_read, 2, field, "~A: invalid field");
   len = XEN_VECTOR_LENGTH(vals);
   if (len == 0)
     fvals = (float *)CALLOC(1, sizeof(float));
@@ -1057,9 +1057,9 @@ static XEN g_mus_audio_mixer_write(XEN dev, XEN field, XEN chan, XEN vals)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_3, S_mus_audio_mixer_write, "an integer");
   XEN_ASSERT_TYPE(XEN_VECTOR_P(vals), vals, XEN_ARG_4, S_mus_audio_mixer_write, "a vector");
   if (!(MUS_AUDIO_DEVICE_OK(XEN_TO_C_INT(dev)))) 
-    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_mixer_write, 1, dev, "invalid device");
+    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_mixer_write, 1, dev, "~A: invalid device");
   if (!(MUS_AUDIO_DEVICE_OK(XEN_TO_C_INT(field))))
-    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_mixer_write, 2, field, "invalid field");
+    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_mixer_write, 2, field, "~A: invalid field");
   len = XEN_VECTOR_LENGTH(vals);
   if (len == 0)
     fvals = (float *)CALLOC(1, sizeof(float));

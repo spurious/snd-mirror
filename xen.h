@@ -409,7 +409,7 @@
   XEN_ERROR(XEN_ERROR_TYPE("out-of-range"), \
             XEN_LIST_3(C_TO_XEN_STRING(Caller), \
                        C_TO_XEN_STRING(Descr), \
-                       Arg))
+                       XEN_LIST_1(Arg)))
 
 #if USE_SND
   /* take advantage of Snd's elaborate error handling */

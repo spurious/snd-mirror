@@ -195,8 +195,12 @@ static void prepare_edit_list(chan_info *cp, off_t len, int pos, const char *cal
   snd_info *sp;
   if (pos > cp->edit_ctr)
     XEN_ERROR(NO_SUCH_EDIT,
-	      XEN_LIST_2(C_TO_XEN_STRING(caller),
-			 C_TO_XEN_INT(pos)));
+	      XEN_LIST_3(C_TO_XEN_STRING(caller),
+			 C_TO_XEN_STRING("edpos: ~A, ~A chan ~A has ~A edits"),
+			 XEN_LIST_4(C_TO_XEN_INT(pos),
+				    C_TO_XEN_STRING(cp->sound->short_filename),
+				    C_TO_XEN_INT(cp->chan),
+				    C_TO_XEN_INT(cp->edit_ctr))));
   sp = cp->sound;
   stop_amp_env(cp);
   if ((sp) && (sp->playing)) stop_playing_sound(sp);
@@ -8991,7 +8995,7 @@ static XEN samples2vct_1(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN v, XEN
   beg = beg_to_sample(samp_0, caller);
   len = XEN_TO_C_OFF_T_OR_ELSE(samps, cp->samples[pos] - beg);
   if ((beg == 0) && (len == 0)) return(XEN_FALSE); /* empty file (channel) possibility */
-  if (len <= 0) XEN_OUT_OF_RANGE_ERROR(caller, 2, samps, "len < 0?");
+  if (len <= 0) XEN_OUT_OF_RANGE_ERROR(caller, 2, samps, "samples ~A < 0?");
   if (v1)
     {
       fvals = v1->data;

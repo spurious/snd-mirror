@@ -86,11 +86,13 @@ static void mus_print2snd(char *msg)
 static void snd_gsl_error(const char *reason, const char *file, int line, int gsl_errno)
 {
   XEN_ERROR(SND_GSL_ERROR,
-	    XEN_LIST_5(C_TO_XEN_STRING(reason),
-		       C_TO_XEN_STRING(file),
-		       C_TO_XEN_INT(line),
-		       C_TO_XEN_INT(gsl_errno),
-		       C_TO_XEN_STRING(gsl_strerror(gsl_errno))));
+	    XEN_LIST_3(C_TO_XEN_STRING("GSL"),
+		       C_TO_XEN_STRING("~A, ~A in ~A line ~A, gsl err: ~A"),
+		       XEN_LIST_5(C_TO_XEN_STRING(gsl_strerror(gsl_errno)),
+				  C_TO_XEN_STRING(reason),
+				  C_TO_XEN_STRING(file),
+				  C_TO_XEN_INT(line),
+				  C_TO_XEN_INT(gsl_errno))));
 }
 #endif
 

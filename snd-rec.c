@@ -1477,7 +1477,7 @@ static XEN g_set_recorder_buffer_size(XEN val)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_recorder_buffer_size, "an integer"); 
   size = XEN_TO_C_INT(val);
   if (size <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_recorder_buffer_size, 1, val, "size <= 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_recorder_buffer_size, 1, val, "size ~A <= 0?");
   rp->buffer_size = size;
   return(val);
 }

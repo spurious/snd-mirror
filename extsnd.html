@@ -2339,6 +2339,10 @@ See play.scm and rtio.scm for example code. The most important Sndlib functions 
 (vector-ref vals 0)
 (vector-set! vals 0 .5)
 (<em class=red>mus-audio-mixer-write</em> mus-audio-microphone mus-audio-amp 0 vals)
+;;; now set the 2 "igain" fields to 1
+(vector-set! vals 0 1.0)
+(vector-set! vals 1 1.0)
+(<em class=red>mus-audio-mixer-write</em> mus-audio-mixer mus-audio-igain 2 vals)
 </pre></td></tr></table></td></tr>
 <br>
 

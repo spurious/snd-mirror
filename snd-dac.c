@@ -2328,10 +2328,10 @@ If a play-list is waiting, start it."
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(In_Background), In_Background, XEN_ARG_3, S_start_playing, "a boolean");
   chans = XEN_TO_C_INT_OR_ELSE(Chans, 1);
   if ((chans <= 0) || (chans > 256))
-    XEN_OUT_OF_RANGE_ERROR(S_start_playing, 1, Chans, "chans <= 0 or > 256?");
+    XEN_OUT_OF_RANGE_ERROR(S_start_playing, 1, Chans, "chans ~A <= 0 or > 256?");
   srate = XEN_TO_C_INT_OR_ELSE(Srate, 44100);
   if (srate <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_start_playing, 2, Srate, "srate <= 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_start_playing, 2, Srate, "srate ~A <= 0?");
   start_dac(get_global_state(), srate, chans, XEN_TO_C_BOOLEAN_OR_TRUE(In_Background));
   return(XEN_FALSE);
 }

@@ -130,7 +130,7 @@ static XEN g_set_graph_cursor(XEN curs)
       ss->Graph_Cursor = val;
       (ss->sgx)->graph_cursor = gdk_cursor_new((GdkCursorType)in_graph_cursor(ss));
     }
-  else XEN_OUT_OF_RANGE_ERROR(S_setB S_graph_cursor, 1, curs, "invalid cursor");
+  else XEN_OUT_OF_RANGE_ERROR(S_setB S_graph_cursor, 1, curs, "~A: invalid cursor");
   return(curs);
 }
 

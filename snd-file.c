@@ -2545,7 +2545,7 @@ static XEN g_set_previous_files_sort(XEN val)
   update_prevlist();
   choice = XEN_TO_C_INT(val);
   if ((choice < 0) || (choice > 5))
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_previous_files_sort, 1, val, "must be 0..5");
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_previous_files_sort, 1, val, "~A, but must be between 0.0 and 0..5");
   set_previous_files_sort(ss, choice);
   if (file_dialog_is_active()) 
     make_prevfiles_list(ss);

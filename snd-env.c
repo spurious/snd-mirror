@@ -1417,7 +1417,7 @@ choices are " S_enved_amplitude ", " S_enved_srate ", and " S_enved_spectrum
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_enved_target, "an integer"); 
   n = XEN_TO_C_INT(val);
   if ((n < ENVED_AMPLITUDE) || (n > ENVED_SRATE))
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_enved_target, 1, val, "must be " S_enved_amplitude ", " S_enved_srate ", or " S_enved_spectrum);
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_enved_target, 1, val, "~A, but must be " S_enved_amplitude ", " S_enved_srate ", or " S_enved_spectrum);
   ss = get_global_state();
   set_enved_target(ss, n); 
   return(C_TO_XEN_INT(enved_target(ss)));

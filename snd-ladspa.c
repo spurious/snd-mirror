@@ -383,8 +383,9 @@ a user interface edit the parameter in a useful way."
   if (!psDescriptor) {
     XEN_ERROR(NO_SUCH_PLUGIN,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_analyse_ladspa),
-                         ladspa_plugin_filename,
-                         ladspa_plugin_label));
+			 C_TO_XEN_STRING("plugin file: ~A, plugin label: ~A"),
+                         XEN_LIST_2(ladspa_plugin_filename,
+				    ladspa_plugin_label)));
     return(XEN_FALSE);
   }
 

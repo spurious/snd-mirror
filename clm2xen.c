@@ -458,7 +458,7 @@ the real and imaginary parts of the data, len should be a power of 2, dir = 1 fo
     {
       n = XEN_TO_C_INT(len); 
       if (n <= 0)
-	XEN_OUT_OF_RANGE_ERROR(S_mus_fft, 3, len, "size <= 0?");
+	XEN_OUT_OF_RANGE_ERROR(S_mus_fft, 3, len, "size ~A <= 0?");
       if (n > v1->length)
 	n = v1->length;
     }
@@ -487,11 +487,11 @@ is the window parameter, if any:\n\
   if (XEN_NUMBER_P(ubeta)) beta = XEN_TO_C_DOUBLE(ubeta);
   n = XEN_TO_C_INT(size);
   if (n <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_make_fft_window, 2, size, "size <= 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_make_fft_window, 2, size, "size ~A <= 0?");
   t = XEN_TO_C_INT(type);
   if (MUS_FFT_WINDOW_OK(t))
     return(make_vct(n, mus_make_fft_window(t, n, beta)));
-  XEN_OUT_OF_RANGE_ERROR(S_make_fft_window, 1, type, "unknown fft window");
+  XEN_OUT_OF_RANGE_ERROR(S_make_fft_window, 1, type, "~A: unknown fft window");
   return(XEN_FALSE);
 }
 
@@ -518,7 +518,7 @@ and type determines how the spectral data is scaled:\n\
     {
       n = XEN_TO_C_INT(un); 
       if (n <= 0)
-	XEN_OUT_OF_RANGE_ERROR(S_spectrum, 4, un, "size <= 0?");
+	XEN_OUT_OF_RANGE_ERROR(S_spectrum, 4, un, "size ~A <= 0?");
       if (n > v1->length)
 	n = v1->length;
     }
@@ -550,7 +550,7 @@ of (vcts) v1 with v2, using fft of size len (a power of 2), result in v1"
     {
       n = XEN_TO_C_INT(un); 
       if (n <= 0)
-	XEN_OUT_OF_RANGE_ERROR(S_convolution, 3, un, "size <= 0?");
+	XEN_OUT_OF_RANGE_ERROR(S_convolution, 3, un, "size ~A <= 0?");
       if (n > v1->length)
 	n = v1->length;
       if (n > v2->length)
@@ -602,7 +602,7 @@ taking into account wrap-around (size is size of data), with linear interpolatio
     {
       len = XEN_TO_C_INT(size); 
       if (len <= 0)
-	XEN_OUT_OF_RANGE_ERROR(S_array_interp, 3, size, "size <= 0?");
+	XEN_OUT_OF_RANGE_ERROR(S_array_interp, 3, size, "size ~A <= 0?");
       if (len > v->length) len = v->length;
     }
   else len = v->length;
@@ -1091,9 +1091,9 @@ static XEN g_make_delay_1(int choice, XEN arglist)
 	}
       size = ikeyarg(keys[keyn], caller, orig_arg[keyn] + 1, size);
       if (size < 0)
-	XEN_OUT_OF_RANGE_ERROR(caller, size_key + 1, keys[size_key], "size < 0?");
+	XEN_OUT_OF_RANGE_ERROR(caller, size_key + 1, keys[size_key], "size ~A < 0?");
       if (size > MAX_TABLE_SIZE)
-	XEN_OUT_OF_RANGE_ERROR(caller, size_key + 1, keys[size_key], "size too large");
+	XEN_OUT_OF_RANGE_ERROR(caller, size_key + 1, keys[size_key], "size ~A too large");
       size_key = keyn;
       keyn++;
       if (!(XEN_KEYWORD_P(keys[keyn])))
@@ -1143,7 +1143,7 @@ static XEN g_make_delay_1(int choice, XEN arglist)
 	      if (max_size > MAX_TABLE_SIZE)
 		{
 		  if (line) FREE(line);
-		  XEN_OUT_OF_RANGE_ERROR(caller, keyn + 1, keys[keyn], "max-size too large");
+		  XEN_OUT_OF_RANGE_ERROR(caller, keyn + 1, keys[keyn], "max-size ~A too large");
 		}
 	    }
 	  else
@@ -1157,7 +1157,7 @@ static XEN g_make_delay_1(int choice, XEN arglist)
   if ((max_size <= 0) || (max_size < size))
     {
       if (line) FREE(line);
-      XEN_OUT_OF_RANGE_ERROR(caller, 0, C_TO_XEN_INT(max_size), "invalid delay length");
+      XEN_OUT_OF_RANGE_ERROR(caller, 0, C_TO_XEN_INT(max_size), "~A: invalid delay length");
     }
   if (line == NULL)
     {
@@ -1344,7 +1344,7 @@ return a new " S_sum_of_cosines " generator, producing a band-limited pulse trai
       phase = fkeyarg(keys[2], S_make_sum_of_cosines, orig_arg[2] + 1, phase);
     }
   if (cosines <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_make_sum_of_cosines, 1, keys[0], "cosines <= 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_make_sum_of_cosines, 1, keys[0], "cosines ~A <= 0?");
   ge = mus_make_sum_of_cosines(cosines, freq, phase);
   if (ge)
     {
@@ -2224,7 +2224,7 @@ with chans samples, each sample set from the trailing arguments (defaulting to 0
   if (len > (size + 1)) 
     mus_misc_error(S_make_frame, "extra trailing args?", arglist);
   if (size <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_make_frame, 1, C_TO_XEN_INT(size), "size <= 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_make_frame, 1, C_TO_XEN_INT(size), "size ~A <= 0?");
   ge = (mus_any *)mus_make_empty_frame(size);
   if (ge)
     {
@@ -2461,8 +2461,8 @@ giving | (a*.5 + b*.125) (a*.25 + b*1.0) |"
   if (!(XEN_NUMBER_P(cararg)))
     XEN_WRONG_TYPE_ARG_ERROR(S_make_mixer, 1, cararg, "integer = number of chans");
   size = XEN_TO_C_INT_OR_ELSE(cararg, 0);
-  if (size <= 0) XEN_OUT_OF_RANGE_ERROR(S_make_mixer, 1, cararg, "chans <= 0?");
-  if (size > 256) XEN_OUT_OF_RANGE_ERROR(S_make_mixer, 1, cararg, "chans > 256?");
+  if (size <= 0) XEN_OUT_OF_RANGE_ERROR(S_make_mixer, 1, cararg, "chans ~A <= 0?");
+  if (size > 256) XEN_OUT_OF_RANGE_ERROR(S_make_mixer, 1, cararg, "chans ~A > 256?");
   if (len > (size * size + 1)) 
     mus_misc_error(S_make_mixer, "extra trailing args?", arglist);
   ge = (mus_any *)mus_make_empty_mixer(size);
@@ -2778,7 +2778,7 @@ is the same in effect as make-oscil"
   if (wsize <= 0)
     {
       if (partials_allocated) {FREE(partials); partials = NULL;}
-      XEN_OUT_OF_RANGE_ERROR(S_make_waveshape, 3, keys[2], "size <= 0?");
+      XEN_OUT_OF_RANGE_ERROR(S_make_waveshape, 3, keys[2], "size ~A <= 0?");
     }
   if (wave == NULL) 
     {
@@ -2836,7 +2836,7 @@ that will produce the harmonic spectrum given by the partials argument"
     size = XEN_TO_C_INT(s_size);
   else size = DEFAULT_TABLE_SIZE;
   if ((size <= 0) || (size > MAX_TABLE_SIZE))
-    XEN_OUT_OF_RANGE_ERROR(S_partials2waveshape, 2, s_size, "bad size?");
+    XEN_OUT_OF_RANGE_ERROR(S_partials2waveshape, 2, s_size, "~A: bad size?");
   if (len == 0)
     XEN_ERROR(NO_DATA,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_partials2waveshape), 
@@ -3025,7 +3025,7 @@ static XEN g_make_filter_1(int choice, XEN arg1, XEN arg2, XEN arg3, XEN arg4, X
 	}
     }
   if (order < 0)
-    XEN_OUT_OF_RANGE_ERROR(caller, 1, keys[0], "order < 0?");
+    XEN_OUT_OF_RANGE_ERROR(caller, 1, keys[0], "order ~A < 0?");
   if (choice == G_FILTER)
     {
       if (y == NULL)
@@ -3218,10 +3218,10 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
     {
       if (brkpts) FREE(brkpts);
       if (odata) FREE(odata);
-      if (end < 0) XEN_OUT_OF_RANGE_ERROR(S_make_env, 6, keys[5], "end < 0?");
-      if (base < 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_env, 5, keys[4], "base < 0.0?");
-      if (duration < 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_env, 3, keys[2], "duration < 0.0?");
-      if (start < 0) XEN_OUT_OF_RANGE_ERROR(S_make_env, 7, keys[6], "start < 0?");
+      if (end < 0) XEN_OUT_OF_RANGE_ERROR(S_make_env, 6, keys[5], "end ~A < 0?");
+      if (base < 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_env, 5, keys[4], "base ~A < 0.0?");
+      if (duration < 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_env, 3, keys[2], "duration ~A < 0.0?");
+      if (start < 0) XEN_OUT_OF_RANGE_ERROR(S_make_env, 7, keys[6], "start ~A < 0?");
     }
   /* odata = vct->data in this context [vcts[0]] */
   old_error_handler = mus_error_set_handler(local_mus_error);
@@ -3439,11 +3439,11 @@ should be sndlib identifiers:\n\
 		  return(xen_return_first(mus_xen_to_object(gn), name));
 		}
 	    }
-	  else XEN_OUT_OF_RANGE_ERROR(S_make_sample2file, 2, chans, "chans <= 0?");
+	  else XEN_OUT_OF_RANGE_ERROR(S_make_sample2file, 2, chans, "chans ~A <= 0?");
 	}
-      else XEN_OUT_OF_RANGE_ERROR(S_make_sample2file, 4, out_type, "invalid header type");
+      else XEN_OUT_OF_RANGE_ERROR(S_make_sample2file, 4, out_type, "~A: invalid header type");
     }
-  else XEN_OUT_OF_RANGE_ERROR(S_make_sample2file, 3, out_format, "invalid data format");
+  else XEN_OUT_OF_RANGE_ERROR(S_make_sample2file, 3, out_format, "~A: invalid data format");
   return(XEN_FALSE);
 }
 
@@ -3576,7 +3576,7 @@ srate and channels.  'len' samples are written."
   v = TO_VCT(data);
   samps = XEN_TO_C_INT_OR_ELSE(len, 1);
   if (samps <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_array2file, 3, len, "samples <= 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_array2file, 3, len, "samples ~A <= 0?");
   if (samps > v->length)
     samps = v->length;
   olen = mus_fltarray2file(XEN_TO_C_STRING(filename),
@@ -3610,13 +3610,15 @@ at frame 'start' and reading 'samples' samples altogether."
   v = TO_VCT(data);
   samps = XEN_TO_C_INT_OR_ELSE(samples, 1);
   if (samps <= 0) 
-    XEN_OUT_OF_RANGE_ERROR(S_file2array, 4, samples, "samples <= 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_file2array, 4, samples, "samples ~A <= 0?");
   chn = XEN_TO_C_INT(chan);
   if ((chn < 0) || (chn > mus_sound_chans(name)))
     XEN_ERROR(NO_SUCH_CHANNEL,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_file2array),
-			 C_TO_XEN_STRING("invalid chan"),
-			 chan));
+			 C_TO_XEN_STRING("invalid chan: ~A, ~A has ~A chans"),
+			 XEN_LIST_3(chan,
+				    filename,
+				    C_TO_XEN_INT(mus_sound_chans(name)))));
   if (mus_sound_chans(name) <= 0)
     XEN_ERROR(BAD_HEADER,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_file2array),
@@ -3695,7 +3697,7 @@ return a new readin (file input) generator reading the sound file 'file' startin
       direction = ikeyarg(keys[3], S_make_readin, orig_arg[3] + 1, direction);
     }
   if (channel < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_make_readin, 2, keys[1], "channel < 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_make_readin, 2, keys[1], "channel ~A < 0?");
   if (!(mus_file_probe(file)))
     XEN_ERROR(NO_SUCH_FILE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_make_readin),
@@ -3707,7 +3709,7 @@ return a new readin (file input) generator reading the sound file 'file' startin
 			 C_TO_XEN_STRING(file),
 			 C_TO_XEN_STRING("chans <= 0")));
   if (channel >= mus_sound_chans(file))
-    XEN_OUT_OF_RANGE_ERROR(S_make_readin, 2, keys[1], "channel > available chans?");
+    XEN_OUT_OF_RANGE_ERROR(S_make_readin, 2, keys[1], "channel ~A > available chans?");
   ge = mus_make_readin(file, channel, start, direction);
   if (ge)
     {
@@ -4021,9 +4023,9 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
       srate = fkeyarg(keys[1], S_make_src, orig_arg[1] + 1, srate);
       wid = ikeyarg(keys[2], S_make_src, orig_arg[2] + 1, wid);
     }
-  if (srate <= 0) XEN_OUT_OF_RANGE_ERROR(S_make_src, 2, keys[1], "srate <= 0.0?");
-  if (wid < 0) XEN_OUT_OF_RANGE_ERROR(S_make_src, 3, keys[2], "width < 0?");
-  if (wid > 2000) XEN_OUT_OF_RANGE_ERROR(S_make_src, 3, keys[2], "width > 2000?");
+  if (srate <= 0) XEN_OUT_OF_RANGE_ERROR(S_make_src, 2, keys[1], "srate ~A <= 0.0?");
+  if (wid < 0) XEN_OUT_OF_RANGE_ERROR(S_make_src, 3, keys[2], "width ~A < 0?");
+  if (wid > 2000) XEN_OUT_OF_RANGE_ERROR(S_make_src, 3, keys[2], "width ~A > 2000?");
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
   /* mus_make_src assumes it can invoke the input function! */
   gn->vcts = make_vcts(1);
@@ -4127,12 +4129,12 @@ jitter controls the randomness in that spacing, input can be a file pointer."
       XEN_ASSERT_TYPE((jitter >= 0.0) && (jitter < 100.0), keys[6], orig_arg[6] + 1, S_make_granulate, "0.0 .. 100.0");
       maxsize = ikeyarg(keys[7], S_make_granulate, orig_arg[7] + 1, maxsize);
     }
-  if (expansion <= 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, 2, keys[1], "expansion <= 0.0?");
-  if (segment_length <= 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, 3, keys[2], "segment-length <= 0.0?");
-  if (segment_scaler == 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, 4, keys[3], "segment-scaler: 0.0?");
-  if (output_hop < 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, 5, keys[4], "hop < 0?");
+  if (expansion <= 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, 2, keys[1], "expansion ~A <= 0.0?");
+  if (segment_length <= 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, 3, keys[2], "segment-length ~A <= 0.0?");
+  if (segment_scaler == 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, 4, keys[3], "segment-scaler: ~A?");
+  if (output_hop < 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, 5, keys[4], "hop ~A < 0?");
   if ((segment_length + output_hop) > 60.0) /* multiplied by srate in mus_make_granulate in array allocation */
-    XEN_OUT_OF_RANGE_ERROR(S_make_granulate, 3, XEN_LIST_2(keys[2], keys[4]), "segment_length + output_hop too large!");
+    XEN_OUT_OF_RANGE_ERROR(S_make_granulate, 3, XEN_LIST_2(keys[2], keys[4]), "segment_length + output_hop = ~A: too large!");
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
   old_error_handler = mus_error_set_handler(local_mus_error);
   ge = mus_make_granulate(funcall1, expansion, segment_length, segment_scaler, output_hop, ramp_time, jitter, maxsize, gn);
@@ -4374,13 +4376,13 @@ is run.  'synthesize' is a function of 1 arg, the generator; it is called to get
 	}
       fft_size = ikeyarg(keys[1], S_make_phase_vocoder, orig_arg[1] + 1, fft_size);
       if (fft_size <= 1) 
-	XEN_OUT_OF_RANGE_ERROR(S_make_phase_vocoder, 2, keys[1], "fft size <= 1?");
+	XEN_OUT_OF_RANGE_ERROR(S_make_phase_vocoder, 2, keys[1], "fft size ~A <= 1?");
       overlap = ikeyarg(keys[2], S_make_phase_vocoder, orig_arg[2] + 1, overlap);
       if (overlap <= 0)
-	XEN_OUT_OF_RANGE_ERROR(S_make_phase_vocoder, 3, keys[2], "overlap <= 0?");
+	XEN_OUT_OF_RANGE_ERROR(S_make_phase_vocoder, 3, keys[2], "overlap ~A <= 0?");
       interp = ikeyarg(keys[3], S_make_phase_vocoder, orig_arg[3] + 1, interp);
       if (interp <= 0)
-	XEN_OUT_OF_RANGE_ERROR(S_make_phase_vocoder, 4, keys[3], "interp <= 0?");
+	XEN_OUT_OF_RANGE_ERROR(S_make_phase_vocoder, 4, keys[3], "interp ~A <= 0?");
       pitch = fkeyarg(keys[4], S_make_phase_vocoder, orig_arg[4] + 1, pitch);
       if (XEN_PROCEDURE_P(keys[5]))
 	{

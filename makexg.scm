@@ -16,6 +16,7 @@
 
 (define xg-file (open-output-file "xg.c"))
 (define xg-ruby-file (open-output-file "xg-ruby.c"))
+(define xg-x11-file (open-output-file "xg-x11.h"))
 
 (define (hey . args)
   (display (apply format #f args) xg-file))
@@ -29,6 +30,9 @@
 (define (say-hey . args)
   (apply hey args)
   (apply say args))
+
+(define (hey-x11 . args)
+  (display (apply format #f args) xg-x11-file))
 
 (define names '())
 (define types '())
@@ -946,6 +950,7 @@
 (hey " * ~A: test suite (snd-test 24)~%" (string-append "T" "ODO"))
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     7-Apr:     GTK_RC_STYLE has two incompatible definitions in gtk! (gtkwidget.h, gtkrc.h) -- will use int case.~%")
 (hey " *     1-Apr:     gdk_property_get uses scm_mem2string in some cases now.~%")
 (hey " *     31-Mar:    gchar* -> xen string bugfix (thanks to Friedrich Delgado Friedrichs).~%")
 (hey " *     10-Mar:    Ruby Xm_Version.~%")
@@ -1210,6 +1215,18 @@
 (hey "}~%~%")
 
 (hey "~%~%/* ---------------------------------------- callback handlers ---------------------------------------- */~%~%")
+
+(hey "#if WITH_GTK_AND_X11~%")
+(hey "  #include \"xg-x11.h\"~%")
+(hey "  #define gxg_static~%")
+(hey "#else~%")
+(hey "  #define gxg_static static~%")
+(hey "#endif~%~%")
+
+(hey-x11 "#ifndef XG_X11_H~%")
+(hey-x11 "#define XG_X11_H~%~%")
+(hey-x11 "/* functions shared by xg.c and xm.c if WITH_GTK_AND_X11 */~%")
+(hey-x11 "/* created automatically by makexg.scm */~%")
 
 (let ((funcs-done '()))
   (for-each
@@ -1544,7 +1561,7 @@
 #if HAVE_GUILE && HAVE_SCM_MEM2STRING~%\
       if (ref_actual_property_type == GDK_TARGET_STRING)~%\
 	data_val = C_TO_XEN_STRING((char *)ref_data);~%\
-      else if (ref_actual_length > 0) data_val = scm_mem2string((char *)ref_data, ref_actual_length * ref_actual_format);~%\
+      else if (ref_actual_length > 0) data_val = scm_mem2string((char *)ref_data, ref_actual_length * ref_actual_format / 8);~%\
 #else~%\
       data_val = C_TO_XEN_STRING((char *)ref_data);~%\
 #endif~%\
@@ -1721,9 +1738,59 @@
 (say "XEN_NARGIFY_1(gxg_freeGdkPoints_w, gxg_freeGdkPoints)~%")
 (say "XEN_NARGIFY_1(gxg_vector2GdkPoints_w, gxg_vector2GdkPoints)~%")
 
-(for-each (lambda (field) (say "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" field field)) struct-fields)
-(for-each (lambda (field) (say "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" field field)) settable-struct-fields)
-(for-each (lambda (field) (say "XEN_NARGIFY_2(gxg_set_~A_w, gxg_set_~A)~%" field field)) settable-struct-fields)
+(let ((in-x11 #f))
+  (for-each 
+   (lambda (field) 
+     (if (or (member field with-x11-accessors)
+	     (member field with-x11-readers))
+	 (if (not in-x11)
+	     (begin
+	       (say "#if (!WITH_GTK_AND_X11)~%")
+	       (set! in-x11 #t)))
+	 (if in-x11
+	     (begin
+	       (say "#endif~%")
+	       (set! in-x11 #f))))
+     (say "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" field field))
+   struct-fields)
+  (if in-x11
+      (say "#endif~%")))
+
+(let ((in-x11 #f))
+  (for-each 
+   (lambda (field) 
+     (if (or (member field with-x11-accessors)
+	     (member field with-x11-readers))
+	 (if (not in-x11)
+	     (begin
+	       (say "#if (!WITH_GTK_AND_X11)~%")
+	       (set! in-x11 #t)))
+	 (if in-x11
+	     (begin
+	       (say "#endif~%")
+	       (set! in-x11 #f))))
+     (say "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" field field)) 
+   settable-struct-fields)
+  (if in-x11
+      (say "#endif~%")))
+
+(let ((in-x11 #f))
+  (for-each 
+   (lambda (field) 
+     (if (or (member field with-x11-accessors)
+	     (member field with-x11-readers))
+	 (if (not in-x11)
+	     (begin
+	       (say "#if (!WITH_GTK_AND_X11)~%")
+	       (set! in-x11 #t)))
+	 (if in-x11
+	     (begin
+	       (say "#endif~%")
+	       (set! in-x11 #f))))
+     (say "XEN_NARGIFY_2(gxg_set_~A_w, gxg_set_~A)~%" field field)) 
+   settable-struct-fields)
+  (if in-x11
+      (say "#endif~%")))
 
 (for-each (lambda (struct) 
 	    (let* ((s (find-struct struct)))
@@ -1875,7 +1942,12 @@
   ;; if 1 or 2 assert type, if and return,
   ;;   else if on each, assert 0 at end and xen false
   (hey "~%")
-  (hey "static XEN gxg_~A(XEN ptr)~%" field)
+  (if (or (member field with-x11-accessors)
+	  (member field with-x11-readers))
+      (begin
+	(hey "gxg_static XEN gxg_~A(XEN ptr)~%" field)
+	(hey-x11 "XEN gxg_~A(XEN ptr);~%" field))
+      (hey "static XEN gxg_~A(XEN ptr)~%" field))
   (hey "{~%")
   (let ((vals '()))
     (for-each
@@ -1920,7 +1992,11 @@
 
 (define (make-writer field)
   (hey "~%")
-  (hey "static XEN gxg_set_~A(XEN ptr, XEN val)~%" field)
+  (if (member field with-x11-accessors)
+      (begin
+	(hey "gxg_static XEN gxg_set_~A(XEN ptr, XEN val)~%" field)
+	(hey-x11 "XEN gxg_set_~A(XEN ptr, XEN val);~%" field))
+      (hey "static XEN gxg_set_~A(XEN ptr, XEN val)~%" field))
   (hey "{~%")
   (let ((vals '()))
     (for-each
@@ -2009,17 +2085,43 @@
 (say-hey "static void define_structs(void)~%")
 (say-hey "{~%~%")
 
-(for-each 
- (lambda (field)
-   (hey "  XG_DEFINE_READER(~A, gxg_~A, 1, 0, 0, NULL);~%" field field)
-   (say "  XG_DEFINE_READER(~A, gxg_~A_w, 1, 0, 0, NULL);~%" field field))
- struct-fields)
+(let ((in-x11 #f))
+  (for-each 
+   (lambda (field)
+     (if (or (member field with-x11-accessors)
+	     (member field with-x11-readers))
+	 (if (not in-x11)
+	     (begin
+	       (say-hey "#if (!WITH_GTK_AND_X11)~%")
+	       (set! in-x11 #t)))
+	 (if in-x11
+	     (begin
+	       (say-hey "#endif~%")
+	       (set! in-x11 #f))))
+     (hey "  XG_DEFINE_READER(~A, gxg_~A, 1, 0, 0, NULL);~%" field field)
+     (say "  XG_DEFINE_READER(~A, gxg_~A_w, 1, 0, 0, NULL);~%" field field))
+   struct-fields)
+  (if in-x11
+      (say-hey "#endif~%")))
 
-(for-each 
- (lambda (field)
-   (hey "  XG_DEFINE_ACCESSOR(~A, gxg_~A, set_~A, gxg_set_~A, 1, 0, 2, 0);~%" field field field field)
-   (say "  XG_DEFINE_ACCESSOR(~A, gxg_~A_w, set_~A, gxg_set_~A_w, 1, 0, 2, 0);~%" field field field field))
- settable-struct-fields)
+(let ((in-x11 #f))
+  (for-each 
+   (lambda (field)
+     (if (or (member field with-x11-accessors)
+	     (member field with-x11-readers))
+	 (if (not in-x11)
+	     (begin
+	       (say-hey "#if (!WITH_GTK_AND_X11)~%")
+	       (set! in-x11 #t)))
+	 (if in-x11
+	     (begin
+	       (say-hey "#endif~%")
+	       (set! in-x11 #f))))
+     (hey "  XG_DEFINE_ACCESSOR(~A, gxg_~A, set_~A, gxg_set_~A, 1, 0, 2, 0);~%" field field field field)
+     (say "  XG_DEFINE_ACCESSOR(~A, gxg_~A_w, set_~A, gxg_set_~A_w, 1, 0, 2, 0);~%" field field field field))
+   settable-struct-fields)
+  (if in-x11
+      (say-hey "#endif~%")))
 
 (for-each 
  (lambda (struct)
@@ -2166,7 +2268,6 @@
 (hey "      define_doubles();~%")
 (hey "      define_functions();~%")
 (hey "      define_structs();~%")
-(hey "      define_structs();~%")
 (hey "      define_atoms();~%")
 (hey "      define_strings();~%")
 (hey "      XEN_YES_WE_HAVE(\"xg\");~%")
@@ -2187,5 +2288,9 @@
 (hey "    }~%")
 (hey "}~%")
 
+(hey-x11 "#endif~%")
+
 (close-output-port xg-file)
 (close-output-port xg-ruby-file)
+(close-output-port xg-x11-file)
+

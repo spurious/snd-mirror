@@ -143,6 +143,88 @@ static void string_to_stdout(snd_state *ss, char *msg)
   #include <libguile/fluids.h>
 #endif
 
+#if HAVE_GUILE
+static char *gl_print(XEN result);
+
+static XEN snd_format_if_needed(XEN args)
+{
+  /* if car has formatting info, use next arg as arg list for it */
+  #define ERR_SIZE 2048
+  XEN format_args = XEN_EMPTY_LIST, cur_arg, result;
+  int i, start = 0, num_args, format_info_len, got_tilde = FALSE, was_formatted = FALSE;
+  char *format_info, *errmsg = NULL;
+  num_args = XEN_LIST_LENGTH(args);
+  if (num_args == 1) return(XEN_CAR(args));
+  format_info = XEN_TO_C_STRING(XEN_CAR(args));
+  format_info_len = snd_strlen(format_info);
+  format_args = XEN_CADR(args);
+  errmsg = (char *)CALLOC(ERR_SIZE, sizeof(char));
+  for (i = 0; i < format_info_len; i++)
+    {
+      if (format_info[i] == '~')
+	{
+	  strncat(errmsg, (char *)(format_info + start), i - start);
+	  start = i + 2;
+	  got_tilde = TRUE;
+	}
+      else
+	{
+	  if (got_tilde)
+	    {
+	      was_formatted = TRUE;
+	      got_tilde = FALSE;
+	      switch (format_info[i])
+		{
+		case '~': strcat(errmsg, "~"); break;
+		case '%': strcat(errmsg, "\n"); break;
+		case 'S': 
+		case 'A':
+		  if (XEN_NOT_NULL_P(format_args))
+		    {
+		      cur_arg = XEN_CAR(format_args);
+		      format_args = XEN_CDR(format_args);
+		      if (XEN_VECTOR_P(cur_arg))
+			{
+			  char *vstr;
+			  vstr = gl_print(cur_arg);
+			  if (vstr)
+			    {
+			      strcat(errmsg, vstr);
+			      FREE(vstr);
+			    }
+			}
+		      else strcat(errmsg, XEN_AS_STRING(cur_arg));
+		    }
+		  /* else ignore it */
+		  break;
+		default: start = i - 1; break;
+		}
+	    }
+	}
+    }
+  if (i > start)
+    strncat(errmsg, (char *)(format_info + start), i - start);
+  if (!was_formatted)
+    {
+      strcat(errmsg, " ");
+      strcat(errmsg, XEN_AS_STRING(XEN_CADR(args)));
+    }
+  if (num_args > 2)
+    {
+      if ((!was_formatted) || (!(XEN_FALSE_P(XEN_CADDR(args))))) start = 2; else start = 3;
+      for (i = start; i < num_args; i++)
+	{
+	  strcat(errmsg, " ");
+	  strcat(errmsg, XEN_AS_STRING(XEN_LIST_REF(args, i)));
+	}
+    }
+  result = C_TO_XEN_STRING(errmsg);
+  FREE(errmsg);
+  return(result);
+}
+#endif
+
+
 static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error handler */
 {
 #if HAVE_GUILE
@@ -151,6 +233,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
   XEN port;
   XEN stack;
   char *name_buf = NULL;
+  int need_comma = FALSE;
   snd_state *ss;
   ss = get_global_state();
 #ifdef SCM_MAKE_CHAR
@@ -187,50 +270,55 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
       fprintf(stderr, XEN_TO_C_STRING(XEN_PORT_TO_STRING(lport)));
     }
 
+  /* Guile's error messages sometimes have formatting directives in the first of the throw_args,
+   *   but it's simple_format (called by Guile's error handlers) can itself die with an error
+   *   in some cases, causing the main program to exit, so we replace the whole thing with our own.
+   */
   if ((XEN_LIST_P(throw_args)) && 
       (XEN_LIST_LENGTH(throw_args) > 0))
     {
+      /* normally car is string name of calling func */
       if (XEN_NOT_FALSE_P(XEN_CAR(throw_args)))
 	{
 	  XEN_DISPLAY(XEN_CAR(throw_args), port);
 	  XEN_PUTS(": ", port);
+	  XEN_DISPLAY(tag, port); /* redundant in many cases */
+	  need_comma = TRUE;
 	}
+      /* else it's something like unbound variable which passes #f as car */
       if (XEN_LIST_LENGTH(throw_args) > 1)
 	{
-	  if (XEN_EQ_P(tag, NO_SUCH_FILE))
-	    {
-	      XEN_DISPLAY(tag, port);
-	      XEN_PUTS(" \"", port);
-	      XEN_DISPLAY(XEN_CADR(throw_args), port);
-	      XEN_PUTS("\" ", port);
-	      if (XEN_LIST_LENGTH(throw_args) > 2)
-		XEN_DISPLAY(XEN_CDDR(throw_args), port);
-	    }
-	  else
-	    {
-	      XEN_DISPLAY(tag, port);
-	      XEN_PUTS(" ", port);
-	      XEN_DISPLAY(throw_args, port);
-	      if (show_backtrace(ss))
-		{
-		  /* this should probably use lazy catch to get the stack at the point of the error */
-#if HAVE_SCM_C_DEFINE
-		  stack = scm_fluid_ref(XEN_VARIABLE_REF(scm_the_last_stack_fluid_var));
-#else
-		  stack = scm_fluid_ref(XEN_CDR(scm_the_last_stack_fluid));
-#endif
-		  if (XEN_NOT_FALSE_P(stack)) 
-		    scm_display_backtrace(stack, port, XEN_UNDEFINED, XEN_UNDEFINED);
-		}
-	    }
+	  /* here XEN_CADR can contain formatting info and XEN_CADDR is a list of args to fit in */
+	  /* or it may be a list of info vars etc */
+	  if (need_comma) XEN_PUTS(": ", port);
+	  if (XEN_STRING_P(XEN_CADR(throw_args)))
+	    XEN_DISPLAY(snd_format_if_needed(XEN_CDR(throw_args)), port);
+	  else XEN_DISPLAY(XEN_CDR(throw_args), port);
 	}
-      else XEN_DISPLAY(tag, port);
     }
   else 
     {
+      /* this probably doesn't happen? */
+#if DEBUGGING
+      fprintf(stderr,"hit unlikely error case!");
+#endif
       XEN_DISPLAY(tag, port);
       XEN_PUTS(": ", port);
       XEN_DISPLAY(throw_args, port);
+    }
+  if (show_backtrace(ss))
+    {
+      /* this should probably use lazy catch to get the stack at the point of the error */
+#if HAVE_SCM_C_DEFINE
+      stack = scm_fluid_ref(XEN_VARIABLE_REF(scm_the_last_stack_fluid_var));
+#else
+      stack = scm_fluid_ref(XEN_CDR(scm_the_last_stack_fluid));
+#endif
+      if (XEN_NOT_FALSE_P(stack)) 
+	{
+	  XEN_PUTS("\n", port);
+	  scm_display_backtrace(stack, port, XEN_UNDEFINED, XEN_UNDEFINED);
+	}
     }
   possible_code = (char *)data;
   if ((possible_code) && 
@@ -419,6 +507,25 @@ XEN snd_no_such_file_error(const char *caller, XEN filename)
 
 XEN snd_no_such_channel_error(const char *caller, XEN snd, XEN chn)
 {
+  int index = -1;
+  snd_info *sp;
+  snd_state *ss;
+  ss = get_global_state();
+  if (XEN_INTEGER_P(snd))
+    index = XEN_TO_C_INT(snd);
+  if ((index >= 0) &&
+      (index < ss->max_sounds) && 
+      (snd_ok(ss->sounds[index]))) /* good grief... */
+    {
+      sp = ss->sounds[index];
+      XEN_ERROR(NO_SUCH_CHANNEL,
+		XEN_LIST_3(C_TO_XEN_STRING(caller),
+			   C_TO_XEN_STRING("chan: ~A, sound index: ~A (~A, chans: ~A)"),
+			   XEN_LIST_4(chn, 
+				      snd, 
+				      C_TO_XEN_STRING(sp->short_filename), 
+				      C_TO_XEN_INT(sp->nchans))));
+    }
   XEN_ERROR(NO_SUCH_CHANNEL,
 	    XEN_LIST_3(C_TO_XEN_STRING(caller),
 		       snd,
@@ -1118,7 +1225,7 @@ This value only matters if " S_auto_update " is #t"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_auto_update_interval, "a number"); 
   ctime = XEN_TO_C_DOUBLE(val);
   if ((ctime < 0.0) || (ctime > (24 * 3600)))
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_auto_update_interval, 1, val, "invalid time");
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_auto_update_interval, 1, val, "~A: invalid time");
   set_auto_update_interval(ss, XEN_TO_C_DOUBLE(val)); 
   return(C_TO_XEN_DOUBLE(auto_update_interval(ss)));
 }
@@ -1426,7 +1533,7 @@ static XEN g_set_zoom_focus_style(XEN focus)
   if ((choice < ZOOM_FOCUS_LEFT) || (choice > ZOOM_FOCUS_MIDDLE))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_zoom_focus_style, 
 			   1, focus, 
-			   "must be " S_zoom_focus_left ", " S_zoom_focus_right ", " S_zoom_focus_middle ", or " S_zoom_focus_active);
+			   "~A, but must be " S_zoom_focus_left ", " S_zoom_focus_right ", " S_zoom_focus_middle ", or " S_zoom_focus_active);
   activate_focus_menu(ss, choice);
   return(C_TO_XEN_INT(zoom_focus_style(ss)));
 }
@@ -1913,7 +2020,7 @@ static XEN g_close_sound_file(XEN g_fd, XEN g_bytes)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(g_bytes), g_bytes, XEN_ARG_2, S_close_sound_file, "a number");
   fd = XEN_TO_C_INT(g_fd);
   if ((fd < 0) || (fd == fileno(stdin)) || (fd == fileno(stdout)) || (fd == fileno(stderr)))
-    XEN_OUT_OF_RANGE_ERROR(S_close_sound_file, 1, g_fd, "invalid file");
+    XEN_OUT_OF_RANGE_ERROR(S_close_sound_file, 1, g_fd, "~A: invalid file number");
   bytes = XEN_TO_C_OFF_T_OR_ELSE(g_bytes, 0);
   hdr = get_temp_header(fd);
   if (hdr == NULL) 
@@ -1953,7 +2060,7 @@ reading edit version edpos"
     {
       chn = XEN_TO_C_INT_OR_ELSE(sdchan, 0);
       if (chn < 0)
-	XEN_OUT_OF_RANGE_ERROR(S_samples2sound_data, 7, sdchan, "sound-data channel < 0?");
+	XEN_OUT_OF_RANGE_ERROR(S_samples2sound_data, 7, sdchan, "sound-data channel ~A < 0?");
       if (sound_data_p(sdobj))
 	sd = (sound_data *)XEN_OBJECT_REF(sdobj);
       else
@@ -1974,7 +2081,7 @@ reading edit version edpos"
 	      free_snd_fd(sf);
 	    }
 	}
-      else XEN_OUT_OF_RANGE_ERROR(S_samples2sound_data, 7, sdchan, "sound-data channel > available chans");
+      else XEN_OUT_OF_RANGE_ERROR(S_samples2sound_data, 7, sdchan, "sound-data channel ~A > available chans");
     }
   if (XEN_NOT_FALSE_P(newsd))
     return(newsd);
@@ -1993,7 +2100,7 @@ static XEN vct2soundfile(XEN g_fd, XEN obj, XEN g_nums)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(g_nums), g_nums, XEN_ARG_3, S_vct2sound_file, "a number");
   fd = XEN_TO_C_INT(g_fd);
   if ((fd < 0) || (fd == fileno(stdin)) || (fd == fileno(stdout)) || (fd == fileno(stderr)))
-    XEN_OUT_OF_RANGE_ERROR(S_vct2sound_file, 1, g_fd, "invalid file");
+    XEN_OUT_OF_RANGE_ERROR(S_vct2sound_file, 1, g_fd, "~A: invalid file number");
   nums = XEN_TO_C_INT_OR_ELSE(g_nums, 0);
   if (nums == 0) return(XEN_FALSE);
   v = TO_VCT(obj);
@@ -2003,7 +2110,7 @@ static XEN vct2soundfile(XEN g_fd, XEN obj, XEN g_nums)
 			 C_TO_XEN_STRING("no data?"), 
 			 obj));
   if ((nums < 0) || (nums > v->length))
-    XEN_OUT_OF_RANGE_ERROR(S_vct2sound_file, 3, g_nums, "len < 0 or > vct length");
+    XEN_OUT_OF_RANGE_ERROR(S_vct2sound_file, 3, g_nums, "len ~A < 0 or > vct length");
   err = lseek(fd, 0L, SEEK_END);
   if (err == -1)
     mus_misc_error(S_vct2sound_file, "IO error", C_TO_XEN_STRING(strerror(errno)));
@@ -2163,10 +2270,7 @@ Float check_color_range(const char *caller, XEN val)
   Float rf;
   rf = XEN_TO_C_DOUBLE(val);
   if ((rf > 1.0) || (rf < 0.0))
-    XEN_ERROR(C_STRING_TO_XEN_SYMBOL("out-of-range"), 
-	      XEN_LIST_3(C_TO_XEN_STRING(caller),
-			 C_TO_XEN_STRING("value must be between 0.0 and 1.0: ~S"),
-			 XEN_LIST_1(C_TO_XEN_DOUBLE(rf))));
+    XEN_OUT_OF_RANGE_ERROR(caller, 1, val, "value ~A must be between 0.0 and 1.0");
   return(rf);
 }
 

@@ -219,8 +219,9 @@ static XEN g_key_binding(XEN key, XEN state, XEN extended)
       (s < MIN_KEY_STATE) || (s > MAX_KEY_STATE))
     XEN_ERROR(NO_SUCH_KEY,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_key_binding),
-			 key,
-			 state));
+			 C_TO_XEN_STRING("key: ~A, state: ~A"),
+			 XEN_LIST_2(key,
+				    state)));
   i = in_user_keymap(k, s, (XEN_TRUE_P(extended)) ? TRUE : FALSE);
   if (i >= 0) 
     return(user_keymap[i].func);
@@ -1766,8 +1767,9 @@ the name reported if an error occurs."
       (s < MIN_KEY_STATE) || (s > MAX_KEY_STATE))
     XEN_ERROR(NO_SUCH_KEY,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_bind_key),
-			 key,
-			 state));
+			 C_TO_XEN_STRING("key: ~A, state: ~A"),
+			 XEN_LIST_2(key,
+				    state)));
   if (XEN_FALSE_P(code))
     set_keymap_entry(k, s, 0, XEN_UNDEFINED, e, NULL);
   else 
@@ -1806,8 +1808,9 @@ static XEN g_key(XEN kbd, XEN buckybits, XEN snd, XEN chn)
       (s < MIN_KEY_STATE) || (s > MAX_KEY_STATE))
     XEN_ERROR(NO_SUCH_KEY,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_key),
-			 kbd,
-			 buckybits));
+			 C_TO_XEN_STRING("key: ~A, state: ~A"),
+			 XEN_LIST_2(kbd,
+				    buckybits)));
   keyboard_command(cp, k, s);
   return(kbd);
 }

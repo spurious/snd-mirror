@@ -3374,7 +3374,7 @@ static XEN snd_no_such_mix_error(const char *caller, XEN n)
 {
   XEN_ERROR(NO_SUCH_MIX,
 	XEN_LIST_2(C_TO_XEN_STRING(caller),
-		  n));
+		   n));
   return(XEN_FALSE);
 }
 
@@ -3968,8 +3968,10 @@ If file_chn is omitted, file's channels are mixed until snd runs out of channels
       if (file_channel >= chans)
 	XEN_ERROR(NO_SUCH_CHANNEL,
 		  XEN_LIST_3(C_TO_XEN_STRING(S_mix),
-			     file,
-			     file_chn));
+			     C_TO_XEN_STRING("chan: ~A, ~A chans: ~A"),
+			     XEN_LIST_3(file_chn,
+					file,
+					C_TO_XEN_INT(chans))));
       if (chans > 0)
 	{
 	  ss->catch_message = NULL;
@@ -4302,7 +4304,7 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id"
   cp = get_cp(snd, chn, S_mix_vct);
   bg = XEN_TO_C_OFF_T_OR_ELSE(beg, 0);
   if (bg < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_mix_vct, 2, beg, "beg < 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_mix_vct, 2, beg, "beg ~A < 0?");
   else
     {
       if (XEN_NOT_BOUND_P(with_tag))

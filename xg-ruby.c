@@ -2455,7 +2455,6 @@ XEN_NARGIFY_1(gxg_GTK_PROGRESS_BAR_w, gxg_GTK_PROGRESS_BAR)
 XEN_NARGIFY_1(gxg_GTK_RADIO_BUTTON_w, gxg_GTK_RADIO_BUTTON)
 XEN_NARGIFY_1(gxg_GTK_RADIO_MENU_ITEM_w, gxg_GTK_RADIO_MENU_ITEM)
 XEN_NARGIFY_1(gxg_GTK_RANGE_w, gxg_GTK_RANGE)
-XEN_NARGIFY_1(gxg_GTK_RC_STYLE_w, gxg_GTK_RC_STYLE)
 XEN_NARGIFY_1(gxg_GTK_RULER_w, gxg_GTK_RULER)
 XEN_NARGIFY_1(gxg_GTK_SCALE_w, gxg_GTK_SCALE)
 XEN_NARGIFY_1(gxg_GTK_SCROLLBAR_w, gxg_GTK_SCROLLBAR)
@@ -2830,8 +2829,10 @@ XEN_NARGIFY_1(gxg_rc_context_w, gxg_rc_context)
 XEN_NARGIFY_1(gxg_property_values_w, gxg_property_values)
 XEN_NARGIFY_1(gxg_queued_settings_w, gxg_queued_settings)
 XEN_NARGIFY_1(gxg_info_w, gxg_info)
+#if (!WITH_GTK_AND_X11)
 XEN_NARGIFY_1(gxg_data_w, gxg_data)
 XEN_NARGIFY_1(gxg_format_w, gxg_format)
+#endif
 XEN_NARGIFY_1(gxg_window_placement_w, gxg_window_placement)
 XEN_NARGIFY_1(gxg_vscrollbar_visible_w, gxg_vscrollbar_visible)
 XEN_NARGIFY_1(gxg_hscrollbar_visible_w, gxg_hscrollbar_visible)
@@ -2848,7 +2849,9 @@ XEN_NARGIFY_1(gxg_ysrc_w, gxg_ysrc)
 XEN_NARGIFY_1(gxg_xsrc_w, gxg_xsrc)
 XEN_NARGIFY_1(gxg_metric_w, gxg_metric)
 XEN_NARGIFY_1(gxg_non_gr_exp_gc_w, gxg_non_gr_exp_gc)
+#if (!WITH_GTK_AND_X11)
 XEN_NARGIFY_1(gxg_backing_store_w, gxg_backing_store)
+#endif
 XEN_NARGIFY_1(gxg_subdivide_w, gxg_subdivide)
 XEN_NARGIFY_1(gxg_ruler_scale_w, gxg_ruler_scale)
 XEN_NARGIFY_1(gxg_pixels_per_unit_w, gxg_pixels_per_unit)
@@ -2891,7 +2894,9 @@ XEN_NARGIFY_1(gxg_handle_w, gxg_handle)
 XEN_NARGIFY_1(gxg_child2_w, gxg_child2)
 XEN_NARGIFY_1(gxg_child1_w, gxg_child1)
 XEN_NARGIFY_1(gxg_menu_item_w, gxg_menu_item)
+#if (!WITH_GTK_AND_X11)
 XEN_NARGIFY_1(gxg_flags_w, gxg_flags)
+#endif
 XEN_NARGIFY_1(gxg_child_has_focus_w, gxg_child_has_focus)
 XEN_NARGIFY_1(gxg_need_timer_w, gxg_need_timer)
 XEN_NARGIFY_1(gxg_click_child_w, gxg_click_child)
@@ -2955,7 +2960,9 @@ XEN_NARGIFY_1(gxg_sort_column_id_w, gxg_sort_column_id)
 XEN_NARGIFY_1(gxg_n_columns_w, gxg_n_columns)
 XEN_NARGIFY_1(gxg_sort_list_w, gxg_sort_list)
 XEN_NARGIFY_1(gxg_tail_w, gxg_tail)
+#if (!WITH_GTK_AND_X11)
 XEN_NARGIFY_1(gxg_root_w, gxg_root)
+#endif
 XEN_NARGIFY_1(gxg_stamp_w, gxg_stamp)
 XEN_NARGIFY_1(gxg_freeze_count_w, gxg_freeze_count)
 XEN_NARGIFY_1(gxg_scroll_y_w, gxg_scroll_y)
@@ -3051,8 +3058,10 @@ XEN_NARGIFY_1(gxg_preedit_cursor_w, gxg_preedit_cursor)
 XEN_NARGIFY_1(gxg_preedit_length_w, gxg_preedit_length)
 XEN_NARGIFY_1(gxg_n_bytes_w, gxg_n_bytes)
 XEN_NARGIFY_1(gxg_text_size_w, gxg_text_size)
+#if (!WITH_GTK_AND_X11)
 XEN_NARGIFY_1(gxg_descent_w, gxg_descent)
 XEN_NARGIFY_1(gxg_ascent_w, gxg_ascent)
+#endif
 XEN_NARGIFY_1(gxg_scroll_offset_w, gxg_scroll_offset)
 XEN_NARGIFY_1(gxg_recompute_idle_w, gxg_recompute_idle)
 XEN_NARGIFY_1(gxg_blink_timeout_w, gxg_blink_timeout)
@@ -3094,7 +3103,9 @@ XEN_NARGIFY_1(gxg_cursor_type_w, gxg_cursor_type)
 XEN_NARGIFY_1(gxg_reallocate_redraws_w, gxg_reallocate_redraws)
 XEN_NARGIFY_1(gxg_resize_mode_w, gxg_resize_mode)
 XEN_NARGIFY_1(gxg_need_resize_w, gxg_need_resize)
+#if (!WITH_GTK_AND_X11)
 XEN_NARGIFY_1(gxg_border_width_w, gxg_border_width)
+#endif
 XEN_NARGIFY_1(gxg_focus_child_w, gxg_focus_child)
 XEN_NARGIFY_1(gxg_activate_id_w, gxg_activate_id)
 XEN_NARGIFY_1(gxg_current_button_w, gxg_current_button)
@@ -3133,7 +3144,9 @@ XEN_NARGIFY_1(gxg_rise_w, gxg_rise)
 XEN_NARGIFY_1(gxg_underline_style_w, gxg_underline_style)
 XEN_NARGIFY_1(gxg_extra_attrs_w, gxg_extra_attrs)
 XEN_NARGIFY_1(gxg_font_scale_w, gxg_font_scale)
+#if (!WITH_GTK_AND_X11)
 XEN_NARGIFY_1(gxg_font_w, gxg_font)
+#endif
 XEN_NARGIFY_1(gxg_text_w, gxg_text)
 XEN_NARGIFY_1(gxg_is_expander_w, gxg_is_expander)
 XEN_NARGIFY_1(gxg_visible_w, gxg_visible)
@@ -3186,34 +3199,51 @@ XEN_NARGIFY_1(gxg_children_w, gxg_children)
 XEN_NARGIFY_1(gxg_filters_w, gxg_filters)
 XEN_NARGIFY_1(gxg_extension_events_w, gxg_extension_events)
 XEN_NARGIFY_1(gxg_user_data_w, gxg_user_data)
+#if (!WITH_GTK_AND_X11)
 XEN_NARGIFY_1(gxg_parent_w, gxg_parent)
+#endif
 XEN_NARGIFY_1(gxg_impl_w, gxg_impl)
+#if (!WITH_GTK_AND_X11)
 XEN_NARGIFY_1(gxg_win_gravity_w, gxg_win_gravity)
+#endif
 XEN_NARGIFY_1(gxg_max_aspect_w, gxg_max_aspect)
 XEN_NARGIFY_1(gxg_min_aspect_w, gxg_min_aspect)
+#if (!WITH_GTK_AND_X11)
 XEN_NARGIFY_1(gxg_height_inc_w, gxg_height_inc)
 XEN_NARGIFY_1(gxg_width_inc_w, gxg_width_inc)
+#endif
 XEN_NARGIFY_1(gxg_base_height_w, gxg_base_height)
 XEN_NARGIFY_1(gxg_base_width_w, gxg_base_width)
+#if (!WITH_GTK_AND_X11)
 XEN_NARGIFY_1(gxg_max_height_w, gxg_max_height)
 XEN_NARGIFY_1(gxg_max_width_w, gxg_max_width)
 XEN_NARGIFY_1(gxg_min_height_w, gxg_min_height)
 XEN_NARGIFY_1(gxg_min_width_w, gxg_min_width)
 XEN_NARGIFY_1(gxg_override_redirect_w, gxg_override_redirect)
+#endif
 XEN_NARGIFY_1(gxg_wmclass_class_w, gxg_wmclass_class)
 XEN_NARGIFY_1(gxg_wmclass_name_w, gxg_wmclass_name)
+#if (!WITH_GTK_AND_X11)
 XEN_NARGIFY_1(gxg_cursor_w, gxg_cursor)
+#endif
 XEN_NARGIFY_1(gxg_window_type_w, gxg_window_type)
+#if (!WITH_GTK_AND_X11)
 XEN_NARGIFY_1(gxg_event_mask_w, gxg_event_mask)
+#endif
 XEN_NARGIFY_1(gxg_title_w, gxg_title)
 XEN_NARGIFY_1(gxg_blue_prec_w, gxg_blue_prec)
 XEN_NARGIFY_1(gxg_blue_shift_w, gxg_blue_shift)
+#if (!WITH_GTK_AND_X11)
 XEN_NARGIFY_1(gxg_blue_mask_w, gxg_blue_mask)
+#endif
 XEN_NARGIFY_1(gxg_green_prec_w, gxg_green_prec)
 XEN_NARGIFY_1(gxg_green_shift_w, gxg_green_shift)
+#if (!WITH_GTK_AND_X11)
 XEN_NARGIFY_1(gxg_green_mask_w, gxg_green_mask)
+#endif
 XEN_NARGIFY_1(gxg_red_prec_w, gxg_red_prec)
 XEN_NARGIFY_1(gxg_red_shift_w, gxg_red_shift)
+#if (!WITH_GTK_AND_X11)
 XEN_NARGIFY_1(gxg_red_mask_w, gxg_red_mask)
 XEN_NARGIFY_1(gxg_bits_per_rgb_w, gxg_bits_per_rgb)
 XEN_NARGIFY_1(gxg_colormap_size_w, gxg_colormap_size)
@@ -3221,19 +3251,25 @@ XEN_NARGIFY_1(gxg_y2_w, gxg_y2)
 XEN_NARGIFY_1(gxg_x2_w, gxg_x2)
 XEN_NARGIFY_1(gxg_y1_w, gxg_y1)
 XEN_NARGIFY_1(gxg_x1_w, gxg_x1)
+#endif
 XEN_NARGIFY_1(gxg_info_list_w, gxg_info_list)
 XEN_NARGIFY_1(gxg_n_colors_w, gxg_n_colors)
 XEN_NARGIFY_1(gxg_level_w, gxg_level)
+#if (!WITH_GTK_AND_X11)
 XEN_NARGIFY_1(gxg_keycode_w, gxg_keycode)
+#endif
 XEN_NARGIFY_1(gxg_keys_w, gxg_keys)
 XEN_NARGIFY_1(gxg_num_keys_w, gxg_num_keys)
 XEN_NARGIFY_1(gxg_num_axes_w, gxg_num_axes)
 XEN_NARGIFY_1(gxg_has_cursor_w, gxg_has_cursor)
 XEN_NARGIFY_1(gxg_source_w, gxg_source)
 XEN_NARGIFY_1(gxg_mem_w, gxg_mem)
+#if (!WITH_GTK_AND_X11)
 XEN_NARGIFY_1(gxg_bits_per_pixel_w, gxg_bits_per_pixel)
+#endif
 XEN_NARGIFY_1(gxg_bpl_w, gxg_bpl)
 XEN_NARGIFY_1(gxg_bpp_w, gxg_bpp)
+#if (!WITH_GTK_AND_X11)
 XEN_NARGIFY_1(gxg_depth_w, gxg_depth)
 XEN_NARGIFY_1(gxg_byte_order_w, gxg_byte_order)
 XEN_NARGIFY_1(gxg_colormap_w, gxg_colormap)
@@ -3250,11 +3286,15 @@ XEN_NARGIFY_1(gxg_subwindow_mode_w, gxg_subwindow_mode)
 XEN_NARGIFY_1(gxg_clip_mask_w, gxg_clip_mask)
 XEN_NARGIFY_1(gxg_stipple_w, gxg_stipple)
 XEN_NARGIFY_1(gxg_tile_w, gxg_tile)
+#endif
 XEN_NARGIFY_1(gxg_fill_w, gxg_fill)
+#if (!WITH_GTK_AND_X11)
 XEN_NARGIFY_1(gxg_function_w, gxg_function)
+#endif
 XEN_NARGIFY_1(gxg_context_w, gxg_context)
 XEN_NARGIFY_1(gxg_new_window_state_w, gxg_new_window_state)
 XEN_NARGIFY_1(gxg_changed_mask_w, gxg_changed_mask)
+#if (!WITH_GTK_AND_X11)
 XEN_NARGIFY_1(gxg_name_w, gxg_name)
 XEN_NARGIFY_1(gxg_requestor_w, gxg_requestor)
 XEN_NARGIFY_1(gxg_property_w, gxg_property)
@@ -3263,31 +3303,42 @@ XEN_NARGIFY_1(gxg_selection_w, gxg_selection)
 XEN_NARGIFY_1(gxg_atom_w, gxg_atom)
 XEN_NARGIFY_1(gxg_height_w, gxg_height)
 XEN_NARGIFY_1(gxg_width_w, gxg_width)
+#endif
 XEN_NARGIFY_1(gxg_in_w, gxg_in)
+#if (!WITH_GTK_AND_X11)
 XEN_NARGIFY_1(gxg_focus_w, gxg_focus)
 XEN_NARGIFY_1(gxg_detail_w, gxg_detail)
 XEN_NARGIFY_1(gxg_mode_w, gxg_mode)
 XEN_NARGIFY_1(gxg_subwindow_w, gxg_subwindow)
+#endif
 XEN_NARGIFY_1(gxg_group_w, gxg_group)
 XEN_NARGIFY_1(gxg_hardware_keycode_w, gxg_hardware_keycode)
 XEN_NARGIFY_1(gxg_string_w, gxg_string)
 XEN_NARGIFY_1(gxg_length_w, gxg_length)
 XEN_NARGIFY_1(gxg_keyval_w, gxg_keyval)
 XEN_NARGIFY_1(gxg_direction_w, gxg_direction)
+#if (!WITH_GTK_AND_X11)
 XEN_NARGIFY_1(gxg_button_w, gxg_button)
 XEN_NARGIFY_1(gxg_y_root_w, gxg_y_root)
 XEN_NARGIFY_1(gxg_x_root_w, gxg_x_root)
+#endif
 XEN_NARGIFY_1(gxg_device_w, gxg_device)
+#if (!WITH_GTK_AND_X11)
 XEN_NARGIFY_1(gxg_is_hint_w, gxg_is_hint)
+#endif
 XEN_NARGIFY_1(gxg_axes_w, gxg_axes)
+#if (!WITH_GTK_AND_X11)
 XEN_NARGIFY_1(gxg_y_w, gxg_y)
 XEN_NARGIFY_1(gxg_x_w, gxg_x)
 XEN_NARGIFY_1(gxg_time_w, gxg_time)
 XEN_NARGIFY_1(gxg_state_w, gxg_state)
 XEN_NARGIFY_1(gxg_count_w, gxg_count)
+#endif
 XEN_NARGIFY_1(gxg_region_w, gxg_region)
+#if (!WITH_GTK_AND_X11)
 XEN_NARGIFY_1(gxg_send_event_w, gxg_send_event)
 XEN_NARGIFY_1(gxg_window_w, gxg_window)
+#endif
 XEN_NARGIFY_1(gxg_start_time_w, gxg_start_time)
 XEN_NARGIFY_1(gxg_action_w, gxg_action)
 XEN_NARGIFY_1(gxg_suggested_action_w, gxg_suggested_action)
@@ -3298,21 +3349,29 @@ XEN_NARGIFY_1(gxg_source_window_w, gxg_source_window)
 XEN_NARGIFY_1(gxg_is_source_w, gxg_is_source)
 XEN_NARGIFY_1(gxg_protocol_w, gxg_protocol)
 XEN_NARGIFY_1(gxg_ref_count_w, gxg_ref_count)
+#if (!WITH_GTK_AND_X11)
 XEN_NARGIFY_1(gxg_type_w, gxg_type)
+#endif
 XEN_NARGIFY_1(gxg_windowing_data_w, gxg_windowing_data)
+#if (!WITH_GTK_AND_X11)
 XEN_NARGIFY_1(gxg_visual_w, gxg_visual)
+#endif
 XEN_NARGIFY_1(gxg_colors_w, gxg_colors)
 XEN_NARGIFY_1(gxg_size_w, gxg_size)
 XEN_NARGIFY_1(gxg_value_w, gxg_value)
+#if (!WITH_GTK_AND_X11)
 XEN_NARGIFY_1(gxg_blue_w, gxg_blue)
 XEN_NARGIFY_1(gxg_green_w, gxg_green)
 XEN_NARGIFY_1(gxg_red_w, gxg_red)
 XEN_NARGIFY_1(gxg_pixel_w, gxg_pixel)
+#endif
 XEN_NARGIFY_2(gxg_set_value_w, gxg_set_value)
+#if (!WITH_GTK_AND_X11)
 XEN_NARGIFY_2(gxg_set_blue_w, gxg_set_blue)
 XEN_NARGIFY_2(gxg_set_green_w, gxg_set_green)
 XEN_NARGIFY_2(gxg_set_red_w, gxg_set_red)
 XEN_NARGIFY_2(gxg_set_pixel_w, gxg_set_pixel)
+#endif
 XEN_VARGIFY(gxg_make_GdkColor_w, gxg_make_GdkColor)
 XEN_VARGIFY(gxg_make_GdkCursor_w, gxg_make_GdkCursor)
 XEN_VARGIFY(gxg_make_GdkPoint_w, gxg_make_GdkPoint)
@@ -5786,7 +5845,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_RADIO_BUTTON, gxg_GTK_RADIO_BUTTON_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GTK_RADIO_MENU_ITEM, gxg_GTK_RADIO_MENU_ITEM_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GTK_RANGE, gxg_GTK_RANGE_w, 1, 0, 0, NULL);
-  XG_DEFINE_PROCEDURE(GTK_RC_STYLE, gxg_GTK_RC_STYLE_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GTK_RULER, gxg_GTK_RULER_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GTK_SCALE, gxg_GTK_SCALE_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GTK_SCROLLBAR, gxg_GTK_SCROLLBAR_w, 1, 0, 0, NULL);
@@ -6166,8 +6224,10 @@ static void define_structs(void)
   XG_DEFINE_READER(property_values, gxg_property_values_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(queued_settings, gxg_queued_settings_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(info, gxg_info_w, 1, 0, 0, NULL);
+#if (!WITH_GTK_AND_X11)
   XG_DEFINE_READER(data, gxg_data_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(format, gxg_format_w, 1, 0, 0, NULL);
+#endif
   XG_DEFINE_READER(window_placement, gxg_window_placement_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(vscrollbar_visible, gxg_vscrollbar_visible_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(hscrollbar_visible, gxg_hscrollbar_visible_w, 1, 0, 0, NULL);
@@ -6184,7 +6244,9 @@ static void define_structs(void)
   XG_DEFINE_READER(xsrc, gxg_xsrc_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(metric, gxg_metric_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(non_gr_exp_gc, gxg_non_gr_exp_gc_w, 1, 0, 0, NULL);
+#if (!WITH_GTK_AND_X11)
   XG_DEFINE_READER(backing_store, gxg_backing_store_w, 1, 0, 0, NULL);
+#endif
   XG_DEFINE_READER(subdivide, gxg_subdivide_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(ruler_scale, gxg_ruler_scale_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(pixels_per_unit, gxg_pixels_per_unit_w, 1, 0, 0, NULL);
@@ -6227,7 +6289,9 @@ static void define_structs(void)
   XG_DEFINE_READER(child2, gxg_child2_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(child1, gxg_child1_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(menu_item, gxg_menu_item_w, 1, 0, 0, NULL);
+#if (!WITH_GTK_AND_X11)
   XG_DEFINE_READER(flags, gxg_flags_w, 1, 0, 0, NULL);
+#endif
   XG_DEFINE_READER(child_has_focus, gxg_child_has_focus_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(need_timer, gxg_need_timer_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(click_child, gxg_click_child_w, 1, 0, 0, NULL);
@@ -6291,7 +6355,9 @@ static void define_structs(void)
   XG_DEFINE_READER(n_columns, gxg_n_columns_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(sort_list, gxg_sort_list_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(tail, gxg_tail_w, 1, 0, 0, NULL);
+#if (!WITH_GTK_AND_X11)
   XG_DEFINE_READER(root, gxg_root_w, 1, 0, 0, NULL);
+#endif
   XG_DEFINE_READER(stamp, gxg_stamp_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(freeze_count, gxg_freeze_count_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(scroll_y, gxg_scroll_y_w, 1, 0, 0, NULL);
@@ -6387,8 +6453,10 @@ static void define_structs(void)
   XG_DEFINE_READER(preedit_length, gxg_preedit_length_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(n_bytes, gxg_n_bytes_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(text_size, gxg_text_size_w, 1, 0, 0, NULL);
+#if (!WITH_GTK_AND_X11)
   XG_DEFINE_READER(descent, gxg_descent_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(ascent, gxg_ascent_w, 1, 0, 0, NULL);
+#endif
   XG_DEFINE_READER(scroll_offset, gxg_scroll_offset_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(recompute_idle, gxg_recompute_idle_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(blink_timeout, gxg_blink_timeout_w, 1, 0, 0, NULL);
@@ -6430,7 +6498,9 @@ static void define_structs(void)
   XG_DEFINE_READER(reallocate_redraws, gxg_reallocate_redraws_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(resize_mode, gxg_resize_mode_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(need_resize, gxg_need_resize_w, 1, 0, 0, NULL);
+#if (!WITH_GTK_AND_X11)
   XG_DEFINE_READER(border_width, gxg_border_width_w, 1, 0, 0, NULL);
+#endif
   XG_DEFINE_READER(focus_child, gxg_focus_child_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(activate_id, gxg_activate_id_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(current_button, gxg_current_button_w, 1, 0, 0, NULL);
@@ -6469,7 +6539,9 @@ static void define_structs(void)
   XG_DEFINE_READER(underline_style, gxg_underline_style_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(extra_attrs, gxg_extra_attrs_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(font_scale, gxg_font_scale_w, 1, 0, 0, NULL);
+#if (!WITH_GTK_AND_X11)
   XG_DEFINE_READER(font, gxg_font_w, 1, 0, 0, NULL);
+#endif
   XG_DEFINE_READER(text, gxg_text_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(is_expander, gxg_is_expander_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(visible, gxg_visible_w, 1, 0, 0, NULL);
@@ -6522,34 +6594,51 @@ static void define_structs(void)
   XG_DEFINE_READER(filters, gxg_filters_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(extension_events, gxg_extension_events_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(user_data, gxg_user_data_w, 1, 0, 0, NULL);
+#if (!WITH_GTK_AND_X11)
   XG_DEFINE_READER(parent, gxg_parent_w, 1, 0, 0, NULL);
+#endif
   XG_DEFINE_READER(impl, gxg_impl_w, 1, 0, 0, NULL);
+#if (!WITH_GTK_AND_X11)
   XG_DEFINE_READER(win_gravity, gxg_win_gravity_w, 1, 0, 0, NULL);
+#endif
   XG_DEFINE_READER(max_aspect, gxg_max_aspect_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(min_aspect, gxg_min_aspect_w, 1, 0, 0, NULL);
+#if (!WITH_GTK_AND_X11)
   XG_DEFINE_READER(height_inc, gxg_height_inc_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(width_inc, gxg_width_inc_w, 1, 0, 0, NULL);
+#endif
   XG_DEFINE_READER(base_height, gxg_base_height_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(base_width, gxg_base_width_w, 1, 0, 0, NULL);
+#if (!WITH_GTK_AND_X11)
   XG_DEFINE_READER(max_height, gxg_max_height_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(max_width, gxg_max_width_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(min_height, gxg_min_height_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(min_width, gxg_min_width_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(override_redirect, gxg_override_redirect_w, 1, 0, 0, NULL);
+#endif
   XG_DEFINE_READER(wmclass_class, gxg_wmclass_class_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(wmclass_name, gxg_wmclass_name_w, 1, 0, 0, NULL);
+#if (!WITH_GTK_AND_X11)
   XG_DEFINE_READER(cursor, gxg_cursor_w, 1, 0, 0, NULL);
+#endif
   XG_DEFINE_READER(window_type, gxg_window_type_w, 1, 0, 0, NULL);
+#if (!WITH_GTK_AND_X11)
   XG_DEFINE_READER(event_mask, gxg_event_mask_w, 1, 0, 0, NULL);
+#endif
   XG_DEFINE_READER(title, gxg_title_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(blue_prec, gxg_blue_prec_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(blue_shift, gxg_blue_shift_w, 1, 0, 0, NULL);
+#if (!WITH_GTK_AND_X11)
   XG_DEFINE_READER(blue_mask, gxg_blue_mask_w, 1, 0, 0, NULL);
+#endif
   XG_DEFINE_READER(green_prec, gxg_green_prec_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(green_shift, gxg_green_shift_w, 1, 0, 0, NULL);
+#if (!WITH_GTK_AND_X11)
   XG_DEFINE_READER(green_mask, gxg_green_mask_w, 1, 0, 0, NULL);
+#endif
   XG_DEFINE_READER(red_prec, gxg_red_prec_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(red_shift, gxg_red_shift_w, 1, 0, 0, NULL);
+#if (!WITH_GTK_AND_X11)
   XG_DEFINE_READER(red_mask, gxg_red_mask_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(bits_per_rgb, gxg_bits_per_rgb_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(colormap_size, gxg_colormap_size_w, 1, 0, 0, NULL);
@@ -6557,19 +6646,25 @@ static void define_structs(void)
   XG_DEFINE_READER(x2, gxg_x2_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(y1, gxg_y1_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(x1, gxg_x1_w, 1, 0, 0, NULL);
+#endif
   XG_DEFINE_READER(info_list, gxg_info_list_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(n_colors, gxg_n_colors_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(level, gxg_level_w, 1, 0, 0, NULL);
+#if (!WITH_GTK_AND_X11)
   XG_DEFINE_READER(keycode, gxg_keycode_w, 1, 0, 0, NULL);
+#endif
   XG_DEFINE_READER(keys, gxg_keys_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(num_keys, gxg_num_keys_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(num_axes, gxg_num_axes_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(has_cursor, gxg_has_cursor_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(source, gxg_source_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(mem, gxg_mem_w, 1, 0, 0, NULL);
+#if (!WITH_GTK_AND_X11)
   XG_DEFINE_READER(bits_per_pixel, gxg_bits_per_pixel_w, 1, 0, 0, NULL);
+#endif
   XG_DEFINE_READER(bpl, gxg_bpl_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(bpp, gxg_bpp_w, 1, 0, 0, NULL);
+#if (!WITH_GTK_AND_X11)
   XG_DEFINE_READER(depth, gxg_depth_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(byte_order, gxg_byte_order_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(colormap, gxg_colormap_w, 1, 0, 0, NULL);
@@ -6586,11 +6681,15 @@ static void define_structs(void)
   XG_DEFINE_READER(clip_mask, gxg_clip_mask_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(stipple, gxg_stipple_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(tile, gxg_tile_w, 1, 0, 0, NULL);
+#endif
   XG_DEFINE_READER(fill, gxg_fill_w, 1, 0, 0, NULL);
+#if (!WITH_GTK_AND_X11)
   XG_DEFINE_READER(function, gxg_function_w, 1, 0, 0, NULL);
+#endif
   XG_DEFINE_READER(context, gxg_context_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(new_window_state, gxg_new_window_state_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(changed_mask, gxg_changed_mask_w, 1, 0, 0, NULL);
+#if (!WITH_GTK_AND_X11)
   XG_DEFINE_READER(name, gxg_name_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(requestor, gxg_requestor_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(property, gxg_property_w, 1, 0, 0, NULL);
@@ -6599,31 +6698,42 @@ static void define_structs(void)
   XG_DEFINE_READER(atom, gxg_atom_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(height, gxg_height_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(width, gxg_width_w, 1, 0, 0, NULL);
+#endif
   XG_DEFINE_READER(in, gxg_in_w, 1, 0, 0, NULL);
+#if (!WITH_GTK_AND_X11)
   XG_DEFINE_READER(focus, gxg_focus_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(detail, gxg_detail_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(mode, gxg_mode_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(subwindow, gxg_subwindow_w, 1, 0, 0, NULL);
+#endif
   XG_DEFINE_READER(group, gxg_group_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(hardware_keycode, gxg_hardware_keycode_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(string, gxg_string_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(length, gxg_length_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(keyval, gxg_keyval_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(direction, gxg_direction_w, 1, 0, 0, NULL);
+#if (!WITH_GTK_AND_X11)
   XG_DEFINE_READER(button, gxg_button_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(y_root, gxg_y_root_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(x_root, gxg_x_root_w, 1, 0, 0, NULL);
+#endif
   XG_DEFINE_READER(device, gxg_device_w, 1, 0, 0, NULL);
+#if (!WITH_GTK_AND_X11)
   XG_DEFINE_READER(is_hint, gxg_is_hint_w, 1, 0, 0, NULL);
+#endif
   XG_DEFINE_READER(axes, gxg_axes_w, 1, 0, 0, NULL);
+#if (!WITH_GTK_AND_X11)
   XG_DEFINE_READER(y, gxg_y_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(x, gxg_x_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(time, gxg_time_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(state, gxg_state_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(count, gxg_count_w, 1, 0, 0, NULL);
+#endif
   XG_DEFINE_READER(region, gxg_region_w, 1, 0, 0, NULL);
+#if (!WITH_GTK_AND_X11)
   XG_DEFINE_READER(send_event, gxg_send_event_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(window, gxg_window_w, 1, 0, 0, NULL);
+#endif
   XG_DEFINE_READER(start_time, gxg_start_time_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(action, gxg_action_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(suggested_action, gxg_suggested_action_w, 1, 0, 0, NULL);
@@ -6634,16 +6744,22 @@ static void define_structs(void)
   XG_DEFINE_READER(is_source, gxg_is_source_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(protocol, gxg_protocol_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(ref_count, gxg_ref_count_w, 1, 0, 0, NULL);
+#if (!WITH_GTK_AND_X11)
   XG_DEFINE_READER(type, gxg_type_w, 1, 0, 0, NULL);
+#endif
   XG_DEFINE_READER(windowing_data, gxg_windowing_data_w, 1, 0, 0, NULL);
+#if (!WITH_GTK_AND_X11)
   XG_DEFINE_READER(visual, gxg_visual_w, 1, 0, 0, NULL);
+#endif
   XG_DEFINE_READER(colors, gxg_colors_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(size, gxg_size_w, 1, 0, 0, NULL);
   XG_DEFINE_ACCESSOR(value, gxg_value_w, set_value, gxg_set_value_w, 1, 0, 2, 0);
+#if (!WITH_GTK_AND_X11)
   XG_DEFINE_ACCESSOR(blue, gxg_blue_w, set_blue, gxg_set_blue_w, 1, 0, 2, 0);
   XG_DEFINE_ACCESSOR(green, gxg_green_w, set_green, gxg_set_green_w, 1, 0, 2, 0);
   XG_DEFINE_ACCESSOR(red, gxg_red_w, set_red, gxg_set_red_w, 1, 0, 2, 0);
   XG_DEFINE_ACCESSOR(pixel, gxg_pixel_w, set_pixel, gxg_set_pixel_w, 1, 0, 2, 0);
+#endif
   XG_DEFINE_PROCEDURE(GdkColor, gxg_make_GdkColor_w, 0, 0, 1, NULL);
   XG_DEFINE_PROCEDURE(GdkCursor, gxg_make_GdkCursor_w, 0, 0, 1, NULL);
   XG_DEFINE_PROCEDURE(GdkPoint, gxg_make_GdkPoint_w, 0, 0, 1, NULL);

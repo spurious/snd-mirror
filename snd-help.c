@@ -214,6 +214,9 @@ char *version_info(void)
                          snd_itoa(GLIB_MICRO_VERSION),
 #endif
 	  xm_version(),
+#if WITH_GTK_AND_X11
+	  " (with x11)",
+#endif
 #if HAVE_GL
 	  gl_version(),
 	  "\n    OpenGL", glx_version(),
