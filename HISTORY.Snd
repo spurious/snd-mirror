@@ -1,5 +1,7 @@
 snd change log
 
+  18-Jan:    zip-channel (zip.scm).
+             removed old-sndlib.h and old-sndlib2scm.scm.
   14-Jan:    gsl-error.
              snd.rb (Ruby code and tests).
   11-Jan:    snd 5.6. flute.scm.

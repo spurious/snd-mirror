@@ -2668,7 +2668,7 @@ static Float *load_Floats(XEN scalers, int *result_len)
   else
     if (XEN_LIST_P(scalers))
       {
-	for (i = 0, lst = scalers; i < len; i++, lst = XEN_CDR(lst)) 
+	for (i = 0, lst = XEN_COPY_ARG(scalers); i < len; i++, lst = XEN_CDR(lst)) 
 	  scls[i] = (Float)XEN_TO_C_DOUBLE(XEN_CAR(lst));
       }
     else

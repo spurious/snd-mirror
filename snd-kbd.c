@@ -171,11 +171,7 @@ static void execute_named_macro(chan_info *cp, char *name, int count)
       one_edit = cp->edit_ctr + 1;
       form = C_STRING_TO_XEN_FORM(name);
       for (i = 0; i < count; i++)
-#if (SCM_DEBUG_TYPING_STRICTNESS == 2)
-	return;
-#else
 	result = snd_catch_any(eval_form_wrapper, (void *)form, name);
-#endif
       snd_report_result(cp->state, result, name);
       if (cp->edit_ctr > one_edit)
 	{

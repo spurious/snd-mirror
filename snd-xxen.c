@@ -3,32 +3,24 @@
 
 static void timed_eval(XtPointer in_code, XtIntervalId *id)
 {
-#if (SCM_DEBUG_TYPING_STRICTNESS != 2)
   XEN_CALL_0((XEN)in_code, "timed callback func");
   snd_unprotect((XEN)in_code);
-#endif
 }
 
 static XEN g_in(XEN ms, XEN code)
 {
-  unsigned long time;
   #define H_in "(" S_in " msecs thunk) invokes thunk in msecs milliseconds"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(ms), ms, XEN_ARG_1, S_in, "a number");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code), code, XEN_ARG_2, S_in, "a procedure");
-#if (SCM_DEBUG_TYPING_STRICTNESS != 2)
-  if (XEN_INTEGER_P(ms))
-    time = XEN_TO_C_ULONG(ms);
-  else time = (unsigned long)snd_round(XEN_TO_C_DOUBLE(ms));
   if (XEN_REQUIRED_ARGS(code) == 0)
     {
       XtAppAddTimeOut(MAIN_APP(get_global_state()), 
-		      time,
+		      (unsigned long)XEN_TO_C_INT(ms),
 		      (XtTimerCallbackProc)timed_eval, 
 		      (XtPointer)code);
       snd_protect(code);
     }
   else mus_misc_error(S_in, "2nd argument should be a procedure of no args", code);
-#endif
   return(ms);
 }
 

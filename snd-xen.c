@@ -382,11 +382,7 @@ XEN eval_str_wrapper(void *data)
 
 XEN eval_form_wrapper(void *data)
 {
-#if (SCM_DEBUG_TYPING_STRICTNESS == 2)
-  return(XEN_FALSE);
-#else
   return(XEN_EVAL_FORM((XEN)data));
-#endif
 }
 
 static XEN eval_file_wrapper(void *data)
@@ -400,22 +396,14 @@ static XEN eval_file_wrapper(void *data)
 #if HAVE_GUILE
 static XEN g_call0_1(void *arg)
 {
-#if (SCM_DEBUG_TYPING_STRICTNESS == 2)
-  return(XEN_FALSE);
-#else
   return(scm_apply((XEN)arg, XEN_EMPTY_LIST, XEN_EMPTY_LIST));
-#endif
 }
 #endif
 
 XEN g_call0(XEN proc, const char *caller) /* replacement for gh_call0 -- protect ourselves from premature exit(!$#%@$) */
 {
 #if HAVE_GUILE
-#if (SCM_DEBUG_TYPING_STRICTNESS == 2)
-  return(XEN_FALSE);
-#else
   return(snd_catch_any(g_call0_1, (void *)proc, caller));
-#endif
 #else
   return(proc);
 #endif
@@ -2111,7 +2099,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
 	  lg->data[0] = (Float *)CALLOC(len, sizeof(Float));
 	  lg->len[0] = len;
 	}
-      for (i = 0, lst = ldata; i < len; i++, lst = XEN_CDR(lst))
+      for (i = 0, lst = XEN_COPY_ARG(ldata); i < len; i++, lst = XEN_CDR(lst))
 	lg->data[0][i] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
       if ((!XEN_NUMBER_P(y0)) || 
 	  (!XEN_NUMBER_P(y1)))

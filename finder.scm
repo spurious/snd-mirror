@@ -1,6 +1,8 @@
 #!/usr/local/bin/guile -s
 !#
 
+;;; this is used by index.cl to create index.scm 
+
 (use-modules (ice-9 popen) (ice-9 format))
 
 (define (shell cmd)

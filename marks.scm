@@ -1,5 +1,7 @@
 ;;; examples of mark-related functions
 
+(use-modules (ice-9 format))
+
 ;;; Contents:
 ;;;     mark-name->id is a global version of find-mark
 ;;;     move-syncd-marks moves all syncd marks together
@@ -18,18 +20,17 @@
 
 ;;; -------- mark-name->id is a global version of find-mark
 
-(define mark-name->id
-  (lambda (name)
-    "(mark-name->id name) is like find-mark but searches all currently accessible channels"
-    (call-with-current-continuation
-     (lambda (return-early)
-       (do ((i 0 (1+ i)))
-	   ((= i (max-sounds)) 'no-such-mark)
-	 (if (sound? i)
-	     (do ((j 0 (1+ j)))
-		 ((= j (channels i)))
-	       (let ((mark (find-mark name i j)))
-		 (if (mark? mark) (return-early mark))))))))))
+(define (mark-name->id name)
+  "(mark-name->id name) is like find-mark but searches all currently accessible channels"
+  (call-with-current-continuation
+   (lambda (return-early)
+     (do ((i 0 (1+ i)))
+	 ((= i (max-sounds)) 'no-such-mark)
+       (if (sound? i)
+	   (do ((j 0 (1+ j)))
+	       ((= j (channels i)))
+	     (let ((mark (find-mark name i j)))
+	       (if (mark? mark) (return-early mark)))))))))
 
 
 ;;; -------- move-syncd-marks moves all syncd marks together
@@ -104,53 +105,51 @@
 
 ;;; -------- fit selection between marks, expanding via granulate (this needs some tweaking...)
 
-(define fit-selection-between-marks
-  (lambda (m1 m2)
-    "(fit-selection-between-marks m1 m2) fits (and mixes) the current selection (via granulate) between the given marks"
-    (let* ((m1-samp (mark-sample m1))
-	   (m2-samp (mark-sample m2))
-	   (m1-home (mark-home m1))
-	   (m2-home (mark-home m2)))
-      (if (not (equal? m1-home m2-home))
-	  (snd-print (format #f "mark ~A is in ~A[~A] but mark ~A is in ~A[~A]?" 
-			     m1 (car m1-home) (cadr m1-home)
-			     m2 (car m2-home) (cadr m2-home)))
-	  (let* ((mark-samps (- m2-samp m1-samp))
-		 (selection-samps (selection-length))
-		 (reg-data (region-samples->vct))
-		 (reader (make-sample-reader m1-samp))
-		 (new-data (make-vct mark-samps))
-		 (gr (make-granulate :expansion (/ mark-samps selection-samps)))
-		 (inctr 0))
-	    (do ((i 0 (1+ i)))
-		((= i mark-samps))
-	      (vct-set! new-data i 
-			(+ (next-sample reader)
-			   (granulate gr
-				      (lambda (dir)
-					(if (>= inctr selection-samps)
-					    0.0
-					    (let ((val (vct-ref reg-data inctr)))
-					      (set! inctr (+ inctr dir))
-					      val)))))))
-	    (free-sample-reader reader)
-	    (vct->samples m1-samp mark-samps new-data (car m1-home) (cadr m1-home)))))))
+(define (fit-selection-between-marks m1 m2)
+  "(fit-selection-between-marks m1 m2) fits (and mixes) the current selection (via granulate) between the given marks"
+  (let* ((m1-samp (mark-sample m1))
+	 (m2-samp (mark-sample m2))
+	 (m1-home (mark-home m1))
+	 (m2-home (mark-home m2)))
+    (if (not (equal? m1-home m2-home))
+	(snd-print (format #f "mark ~A is in ~A[~A] but mark ~A is in ~A[~A]?" 
+			   m1 (car m1-home) (cadr m1-home)
+			   m2 (car m2-home) (cadr m2-home)))
+	(let* ((mark-samps (- m2-samp m1-samp))
+	       (selection-samps (selection-length))
+	       (reg-data (region-samples->vct))
+	       (reader (make-sample-reader m1-samp))
+	       (new-data (make-vct mark-samps))
+	       (gr (make-granulate :expansion (/ mark-samps selection-samps)))
+	       (inctr 0))
+	  (do ((i 0 (1+ i)))
+	      ((= i mark-samps))
+	    (vct-set! new-data i 
+		      (+ (next-sample reader)
+			 (granulate gr
+				    (lambda (dir)
+				      (if (>= inctr selection-samps)
+					  0.0
+					  (let ((val (vct-ref reg-data inctr)))
+					    (set! inctr (+ inctr dir))
+					    val)))))))
+	  (free-sample-reader reader)
+	  (vct->samples m1-samp mark-samps new-data (car m1-home) (cadr m1-home))))))
 
 
 ;;; -------- pad-marks inserts silence before each in a list of marks
 
-(define pad-marks 
-  (lambda (ids secs)
-    "(pad-marks ids secs) inserts secs seconds of silence before each mark in ids"
-    (let* ((silence-length (inexact->exact (* secs (srate))))
-	   (silence-samps (make-vct silence-length)))
-      (as-one-edit
-       (lambda ()
-	 (map (lambda (n)
-		(let ((samp (max 0 (- (mark-sample n) 1)))
-		      (home (mark-home n)))
-		  (insert-samples samp silence-length silence-samps (car home) (cadr home))))
-	      ids))))))
+(define (pad-marks ids secs)
+  "(pad-marks ids secs) inserts secs seconds of silence before each mark in ids"
+  (let* ((silence-length (inexact->exact (* secs (srate))))
+	 (silence-samps (make-vct silence-length)))
+    (as-one-edit
+     (lambda ()
+       (map (lambda (n)
+	      (let ((samp (max 0 (- (mark-sample n) 1)))
+		    (home (mark-home n)))
+		(insert-samples samp silence-length silence-samps (car home) (cadr home))))
+	    ids)))))
 
 
 ;;; -------- play-syncd-marks
@@ -171,6 +170,7 @@
 
 (define play-between-marks
   (lambda args
+    "(play-between-marks ...) plays the portion between the marks (searching for plausible default marks)"
     (let* ((snd (selected-sound))
 	   (chn (selected-channel))
 	   (m1 (if (> (length args) 0)
@@ -206,6 +206,7 @@
 ;;; -------- report-mark-names causes mark names to be posted in the minibuffer as a sound is played
 
 (define (report-mark-names)
+  "(report-mark-names) causes mark names to be printed as they are passed while playing"
   (add-hook! start-playing-hook 
 	     (lambda (snd)
 	       (let* ((marklist (marks snd 0))
@@ -230,31 +231,30 @@
 
 ;;; -------- eval-between-marks
 
-(define eval-between-marks
-  (lambda (func)
-    "(eval-between-marks func) evaluates func between the leftmost marks"
-    (define (find-if pred l) ; this is from guile/ice-9/common-list.scm but returns l not car l
-      (cond ((null? l) #f)
-	    ((pred (car l)) l)
-	    (else (find-if pred (cdr l)))))
-    (if (procedure? func)
-	;; find leftmost two marks in selected chn
-	(let ((chan (selected-channel))
-	      (snd (selected-sound)))
-	  (if (< chan 0) (set! chan 0)) ;perhaps not current sound, so no selected channel in it
-	  (let ((mlist (marks snd chan)))
-	    (if (< (length mlist) 2)
-		(report-in-minibuffer "need 2 marks")
-		(let* ((left-samp (left-sample snd chan))
-		       (winl (find-if (lambda (n) (> (mark-sample n) left-samp)) mlist)))
-		  (if (and winl (> (length winl) 1))
-		      (let* ((beg (mark-sample (car winl)))
-			     (len (- (mark-sample (cadr winl)) beg))
-			     (new-data (make-vct len))
-			     (old-data (samples->vct beg len snd chan)))
-			(do ((k 0 (1+ k)))
-			    ((= k len) (vct->channel new-data beg len snd chan))
-			  (vct-set! new-data k (func (vct-ref old-data k)))))))))))))
+(define (eval-between-marks func)
+  "(eval-between-marks func) evaluates func between the leftmost marks; func takes one arg, the original sample"
+  (define (find-if pred l) ; this is from guile/ice-9/common-list.scm but returns l not car l
+    (cond ((null? l) #f)
+	  ((pred (car l)) l)
+	  (else (find-if pred (cdr l)))))
+  (if (procedure? func)
+      ;; find leftmost two marks in selected chn
+      (let ((chan (selected-channel))
+	    (snd (selected-sound)))
+	(if (< chan 0) (set! chan 0)) ;perhaps not current sound, so no selected channel in it
+	(let ((mlist (marks snd chan)))
+	  (if (< (length mlist) 2)
+	      (report-in-minibuffer "need 2 marks")
+	      (let* ((left-samp (left-sample snd chan))
+		     (winl (find-if (lambda (n) (> (mark-sample n) left-samp)) mlist)))
+		(if (and winl (> (length winl) 1))
+		    (let* ((beg (mark-sample (car winl)))
+			   (len (- (mark-sample (cadr winl)) beg))
+			   (new-data (make-vct len))
+			   (old-data (samples->vct beg len snd chan)))
+		      (do ((k 0 (1+ k)))
+			  ((= k len) (vct->channel new-data beg len snd chan))
+			(vct-set! new-data k (func (vct-ref old-data k))))))))))))
 
 ;(bind-key (char->integer #\m) 0 (lambda () (prompt-in-minibuffer "mark eval:" eval-between-marks)))
 
@@ -272,9 +272,11 @@
 	   (apply add-mark (+ pos len) select)))
        (selection-members))))
 
+
 ;;; -------- define-selection-via-marks
 
 (define (define-selection-via-marks m1 m2)
+  "(define-selection-via-marks m1 m2) defines the current selection to lie between the marks given"
   (let ((m1sc (mark-home m1))
 	(m2sc (mark-home m2)))
     (if (not (equal? m1sc m2sc))
@@ -293,7 +295,7 @@
 ;;; -------- snap-mark-to-beat
 
 (define (snap-mark-to-beat)
-  ;; when a mark is dragged, its end position is always on a beat
+  "(snap-mark-to-beat) ensures that when a mark is dragged, its released position is always on a beat"
   (let ((mark-release 4))
     (add-hook! mark-hook 
 	       (lambda (mrk snd chn reason)

@@ -514,6 +514,17 @@ XEN xen_rb_funcall_0(XEN func)
   return(val);
 }
 
+XEN xen_rb_copy_list(XEN val)
+{
+  long len, i;
+  VALUE collect;
+  len = RARRAY(val)->len;
+  collect = rb_ary_new2(len);
+  for (i = 0; i < len; i++) 
+    RARRAY(collect)->ptr[i] = RARRAY(val)->ptr[i];
+  return(collect);
+}
+
 #endif
 
 

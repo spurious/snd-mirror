@@ -268,6 +268,8 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+18-Jan:  zip-channel (zip.scm).\n\
+         removed old-sndlib.h and old-sndlib2scm.scm.\n\
 14-Jan:  gsl-error.\n\
          snd.rb (Ruby code and tests).\n\
 11-Jan:  snd 5.6. flute.scm.\n\

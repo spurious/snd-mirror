@@ -1135,90 +1135,88 @@
 
 (define *html-reader* "netscape")
 
-(define html
-  (lambda (obj)
-  "(html arg) where arg can be a string, symbol, or procedure looks for a corresponding url\n\
-   and if one is found, and the Snd documentation can be found, calls *html-reader* with that url"
-    (letrec ((find-close-paren
-	      (lambda (str)
-		(let loop ((pos 0)) ;from slib/strsrch.scm
-		  (cond
-		   ((>= pos (string-length str)) #f)
-		   ((char=? #\) (string-ref str pos)) pos)
-		   ((char=? #\space (string-ref str pos)) pos)
-		   (else (loop (+ 1 pos)))))))
-
-	     (find-url 
-	      (lambda (n)
-		(letrec ((find-url-1   
-			  (lambda (n lst)
-			    (if lst
-				(if (string=? n (car (car lst)))
-				    (cadr (car lst))
-				    (find-url-1 n (cdr lst)))))))
-		  (find-url-1 n snd-names-and-urls))))
-
-	     (goto-html
-	      (lambda (n)
-		;; look for doc on current dir, then html dir, then global dir
-		;; snd.html is what we'll search for
-		(let ((dir (if (file-exists? "snd.html") 
-			       (getcwd)
-			       (if (file-exists? "/usr/doc/snd-5/snd.html")
-				   "/usr/doc/snd-5"
-				   (if (file-exists? "/usr/doc/snd-4/snd.html")
-				       "/usr/doc/snd-4"
-				       (if (and (defined? 'html-dir) 
-						(string? (html-dir))
-						(file-exists? (string-append (html-dir) "/snd.html")))
-					   (html-dir)
-					   #f))))))
-		  (if dir
-		      (if (string=? *html-reader* "netscape")
-			  (send-netscape (string-append dir "/" n)) ; definition in snd-gxutils.c
-			  (system (string-append *html-reader* " file:" dir "/" n))))))))
-
-      (let ((name (if (string? obj) 
-		      obj
-		      (if (symbol? obj) 
-			  (symbol->string obj)
-			  (let ((doc (if (procedure? obj)
-					 (or (procedure-property obj 'documentation)
-					     (procedure-documentation obj)
-					     (object-property obj 'documentation))
-					 (object-property obj 'documentation))))
-			    (if (and (string? doc)
-				     (char=? (string-ref doc 0) #\())
-				(let ((pos (find-close-paren doc)))
-				  (if pos
-				      (substring doc 1 pos)
-				      #f))))))))
-	(if (and name (string? name))
-	    (let ((url (find-url name)))
-	      (if url 
-		  (goto-html url)
-		  (snd-print (format #f "no url for ~A?" name))))
-	    (snd-print (format #f "no doc for ~A?" name)))))))
-
-
-(define ?
-  (lambda (obj)
-    "(? obj) prints out any help it can find for obj, and tries to find obj in the docs via netscape"
-    (let ((hlp (snd-help obj)))
-      (if (string? hlp)
-	  (snd-print hlp))
-      (html obj))))
-
-(define c?
-  (lambda (obj)
-    (let ((name (if (string? obj)
+(define (html obj)
+  "(html arg) where arg can be a string, symbol, or procedure looks for a corresponding url \
+and if one is found, and the Snd documentation can be found, calls *html-reader* with that url"
+  (letrec ((find-close-paren
+	    (lambda (str)
+	      (let loop ((pos 0)) ;from slib/strsrch.scm
+		(cond
+		 ((>= pos (string-length str)) #f)
+		 ((char=? #\) (string-ref str pos)) pos)
+		 ((char=? #\space (string-ref str pos)) pos)
+		 (else (loop (+ 1 pos)))))))
+	   
+	   (find-url 
+	    (lambda (n)
+	      (letrec ((find-url-1   
+			(lambda (n lst)
+			  (if lst
+			      (if (string=? n (car (car lst)))
+				  (cadr (car lst))
+				  (find-url-1 n (cdr lst)))))))
+		(find-url-1 n snd-names-and-urls))))
+	   
+	   (goto-html
+	    (lambda (n)
+	      ;; look for doc on current dir, then html dir, then global dir
+	      ;; snd.html is what we'll search for
+	      (let ((dir (if (file-exists? "snd.html") 
+			     (getcwd)
+			     (if (file-exists? "/usr/doc/snd-5/snd.html")
+				 "/usr/doc/snd-5"
+				 (if (file-exists? "/usr/doc/snd-4/snd.html")
+				     "/usr/doc/snd-4"
+				     (if (and (defined? 'html-dir) 
+					      (string? (html-dir))
+					      (file-exists? (string-append (html-dir) "/snd.html")))
+					 (html-dir)
+					 #f))))))
+		(if dir
+		    (if (string=? *html-reader* "netscape")
+			(send-netscape (string-append dir "/" n)) ; definition in snd-gxutils.c
+			(system (string-append *html-reader* " file:" dir "/" n))))))))
+    
+    (let ((name (if (string? obj) 
 		    obj
-		    (symbol->string obj))))
-      (letrec ((find-loc
-		(lambda (n lst)
-		  (if (not (null? lst))
-		      (if (string=? n (car (car lst)))
-			  (cddr (car lst))
-			  (find-loc n (cdr lst)))))))
-	(find-loc name snd-names-and-urls)))))
+		    (if (symbol? obj) 
+			(symbol->string obj)
+			(let ((doc (if (procedure? obj)
+				       (or (procedure-property obj 'documentation)
+					   (procedure-documentation obj)
+					   (object-property obj 'documentation))
+				       (object-property obj 'documentation))))
+			  (if (and (string? doc)
+				   (char=? (string-ref doc 0) #\())
+			      (let ((pos (find-close-paren doc)))
+				(if pos
+				    (substring doc 1 pos)
+				    #f))))))))
+      (if (and name (string? name))
+	  (let ((url (find-url name)))
+	    (if url 
+		(goto-html url)
+		(snd-print (format #f "no url for ~A?" name))))
+	  (snd-print (format #f "no doc for ~A?" name))))))
+
+
+(define (? obj)
+  "(? obj) prints out any help it can find for obj, and tries to find obj in the docs via netscape"
+  (let ((hlp (snd-help obj)))
+    (if (string? hlp)
+	(snd-print hlp))
+    (html obj)))
+
+(define (c? obj)
+  "(c? obj) returns the location of the C code (if any) associated with 'obj'"
+  (let ((name (if (string? obj)
+		  obj
+		  (symbol->string obj))))
+    (letrec ((find-loc
+	      (lambda (n lst)
+		(if (not (null? lst))
+		    (if (string=? n (car (car lst)))
+			(cddr (car lst))
+			(find-loc n (cdr lst)))))))
+      (find-loc name snd-names-and-urls))))
 

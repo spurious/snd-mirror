@@ -1222,7 +1222,7 @@ env *xen_to_env(XEN res)
       if (len > 0)
 	{
 	  data = (Float *)CALLOC(len, sizeof(Float));
-	  for (i = 0, lst = res; i < len; i++, lst = XEN_CDR(lst))
+	  for (i = 0, lst = XEN_COPY_ARG(res); i < len; i++, lst = XEN_CDR(lst))
 	    {
 	      el = XEN_CAR(lst);
 	      if (XEN_NUMBER_P(el))
@@ -1244,7 +1244,7 @@ static int x_increases(XEN res)
   Float x, nx;
   len = XEN_LIST_LENGTH(res);
   x = XEN_TO_C_DOUBLE(XEN_CAR(res));
-  for (i = 2, lst = XEN_CDDR(res); i < len; i += 2, lst = XEN_CDDR(lst))
+  for (i = 2, lst = XEN_CDDR(XEN_COPY_ARG(res)); i < len; i += 2, lst = XEN_CDDR(lst))
     {
       nx = XEN_TO_C_DOUBLE(XEN_CAR(lst));
       if (x >= nx) return(0);
@@ -1394,7 +1394,7 @@ env *get_env(XEN e, char *origin) /* list or vector in e */
       if (len == 0)
 	mus_misc_error(origin, "null env", e);
       buf = (Float *)CALLOC(len, sizeof(Float));
-      for (i = 0, lst = e; i < len; i++, lst = XEN_CDR(lst)) 
+      for (i = 0, lst = XEN_COPY_ARG(e); i < len; i++, lst = XEN_CDR(lst)) 
 	buf[i] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
     }
   newenv = make_envelope(buf, len);

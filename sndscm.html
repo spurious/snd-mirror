@@ -1691,9 +1691,9 @@ faster.
 </p>
 <pre>
   (define (moog freq Q)
-    (let ((gen (make-moog-filter freq Q)))
+    (let ((gen (<em class=red>make-moog-filter</em> freq Q)))
       (lambda (inval)
-        (moog-filter gen inval))))
+        (<em class=red>moog-filter</em> gen inval))))
 
   (map-chan (moog 1200.0 .7))
 </pre>
@@ -2749,8 +2749,9 @@ resource argument list is <i>args</i>.  The editor's current envelope is accessi
 
 <A NAME="zipdoc"></a><span class=box><h2>zip.scm</h2></span>
 <pre>
-  <em class=def><a name="makezipper">make-zipper</a></em> ramp-env frame-size frame-env
+  <em class=def><a name="makezipper">make-zipper</a></em> ramp-env <i>frame-size frame-env</i>
   <em class=def><a name="zipper">zipper</a></em> gen in1 in2
+  <em class=def><a name="zipsound">zip-sound</a></em> beg dur file1 file2 <i>ramp size</i>
 </pre>
 <p>The zipper generator performs a kind of cross fade, but not one that
 tries to be smooth!  It marches through the two sounds taking equal short
@@ -2761,8 +2762,7 @@ argument determines the current such length as new "frames" are needed, and the
 <i>ramp-env</i> argument determines which of the files gets more space
 in the frame (0: all first, 1: all second).
 For example, the following function sets up two sounds,
-an upward ramp and a downward ramp, then zips them together using
-<i>test-zip</i> in zip.scm:
+an upward ramp and a downward ramp, then zips them together:
 </p>
 <pre>
 (define (ramp-test)
@@ -2775,7 +2775,12 @@ an upward ramp and a downward ramp, then zips them together using
     (do ((i 0 (1+ i))) ((= i 10000)) 
       (vct-set! data i (- 1.0 (* i .0001))))
     (vct-&gt;samples 0 10000 data 1)
-    (test-zip)))
+    (let* ((dur (frames))
+	   (zp (<em class=red>make-zipper</em> (let ((e (make-env '(0 0 1 1) :end dur)))
+			      (lambda () (env e)))))
+	  (reader0 (make-sample-reader 0 0 0))
+	  (reader1 (make-sample-reader 0 1 0)))
+      (map-chan (lambda (val) (<em class=red>zipper</em> zp reader0 reader1))))))
 </pre>
 <center><img src="zramp.png" alt="zipper ramp output"></center>
 <p>Needless to say, this is not intended to be a suave, romantic gesture!

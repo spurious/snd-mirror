@@ -6849,7 +6849,7 @@ static char *inspect_pv_info(void *ptr)
 	       "pv_info outctr: %d, interp: %d, filptr: %d, N: %d, D: %d, in_data: %s, amps: %s, freqs: %s",
 	       gen->outctr, gen->interp, gen->filptr, gen->N, gen->D,
 	       arr1 = print_array(gen->in_data, gen->N, 0),
-	       arr2 = print_array(gen->amps, gen->N/2, 0),
+	       arr2 = print_array(gen->amps, gen->N / 2, 0),
 	       arr3 = print_array(gen->freqs, gen->N, 0));
   if (arr1) FREE(arr1);
   if (arr2) FREE(arr2);

@@ -1104,7 +1104,7 @@ static XEN g_make_delay_1(int choice, XEN arglist)
 		  if (len == 0) 
 		    mus_misc_error(caller, "initial-contents empty?", initial_contents);
 		  line = (Float *)CALLOC(len, sizeof(Float));
-		  for (i = 0, lst = initial_contents; (i < len) && (XEN_NOT_NULL_P(lst)); i++, lst = XEN_CDR(lst)) 
+		  for (i = 0, lst = XEN_COPY_ARG(initial_contents); (i < len) && (XEN_NOT_NULL_P(lst)); i++, lst = XEN_CDR(lst)) 
 		    line[i] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
 		}
 	    }
@@ -1531,7 +1531,7 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
   else table = utable;
   f = TO_VCT(table);
   partial_data = (Float *)CALLOC(len, sizeof(Float));
-  for (i = 0, lst = partials; i < len; i++, lst = XEN_CDR(lst)) 
+  for (i = 0, lst = XEN_COPY_ARG(partials); i < len; i++, lst = XEN_CDR(lst)) 
     partial_data[i] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
   mus_partials2wave(partial_data, len / 2, f->data, f->length, (XEN_TRUE_P(normalize)));
   FREE(partial_data);
@@ -1564,7 +1564,7 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
   else table = utable;
   f = TO_VCT(table);
   partial_data = (Float *)CALLOC(len, sizeof(Float));
-  for (i = 0, lst = partials; i < len; i++, lst = XEN_CDR(lst)) 
+  for (i = 0, lst = XEN_COPY_ARG(partials); i < len; i++, lst = XEN_CDR(lst)) 
     partial_data[i] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
   mus_phasepartials2wave(partial_data, len / 3, f->data, f->length, (XEN_TRUE_P(normalize)));
   FREE(partial_data);
@@ -2235,7 +2235,7 @@ with chans samples, each sample set from the trailing arguments (defaulting to 0
   if (len > 1)
     {
       fr = (mus_frame *)(gn->gen);
-      for (i = 1, lst = XEN_CDR(arglist); i < len; i++, lst = XEN_CDR(lst))
+      for (i = 1, lst = XEN_CDR(XEN_COPY_ARG(arglist)); i < len; i++, lst = XEN_CDR(lst))
 	if (XEN_NUMBER_P(XEN_CAR(lst)))
 	  fr->vals[i - 1] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
 	else
@@ -2478,7 +2478,7 @@ giving | (a*.5 + b*.125) (a*.25 + b*1.0) |"
       fr = (mus_mixer *)(gn->gen);
       j = 0;
       k = 0;
-      for (i = 1, lst = XEN_CDR(arglist); (i < len) && (XEN_NOT_NULL_P(lst)); i++, lst = XEN_CDR(lst))
+      for (i = 1, lst = XEN_CDR(XEN_COPY_ARG(arglist)); (i < len) && (XEN_NOT_NULL_P(lst)); i++, lst = XEN_CDR(lst))
 	{
 	  if (XEN_NUMBER_P(XEN_CAR(lst)))
 	    fr->vals[j][k] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
@@ -2689,7 +2689,7 @@ static Float *list2partials(XEN harms, int *npartials)
   if (listlen == 0) return(NULL);
   /* the list is '(partial-number partial-amp ... ) */
   maxpartial = XEN_TO_C_INT_OR_ELSE(XEN_CAR(harms), 0);
-  for (i = 2, lst = XEN_CDDR(harms); i < listlen; i += 2, lst = XEN_CDDR(lst))
+  for (i = 2, lst = XEN_CDDR(XEN_COPY_ARG(harms)); i < listlen; i += 2, lst = XEN_CDDR(lst))
     {
       curpartial = XEN_TO_C_INT_OR_ELSE(XEN_CAR(lst), 0);
       if (curpartial > maxpartial) maxpartial = curpartial;
@@ -2697,7 +2697,7 @@ static Float *list2partials(XEN harms, int *npartials)
   if (maxpartial < 0) return(NULL);
   partials = (Float *)CALLOC(maxpartial + 1, sizeof(Float));
   (*npartials) = maxpartial + 1;
-  for (i = 0, lst = harms; i < listlen; i += 2, lst = XEN_CDDR(lst))
+  for (i = 0, lst = XEN_COPY_ARG(harms); i < listlen; i += 2, lst = XEN_CDDR(lst))
     {
       curpartial = XEN_TO_C_INT_OR_ELSE(XEN_CAR(lst), 0);
       partials[curpartial] = XEN_TO_C_DOUBLE(XEN_CADR(lst));
@@ -3164,10 +3164,10 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 	  XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(keys[0], len), keys[0], orig_arg[0] + 1, S_make_env, "a list");
 	  if (len == 0)
 	    mus_misc_error(S_make_env, "null env?", keys[0]);
-	  npts = len/2;
+	  npts = len / 2;
 	  brkpts = (Float *)CALLOC(len, sizeof(Float));
 	  odata = (Float *)CALLOC(len, sizeof(Float));
-	  for (i = 0, lst = keys[0]; (i < len) && (XEN_NOT_NULL_P(lst)); i++, lst = XEN_CDR(lst))
+	  for (i = 0, lst = XEN_COPY_ARG(keys[0]); (i < len) && (XEN_NOT_NULL_P(lst)); i++, lst = XEN_CDR(lst))
 	    {
 	      brkpts[i] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
 	      odata[i] = brkpts[i];

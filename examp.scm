@@ -81,6 +81,8 @@
 
 (if (not (defined? 'all-chans))
     (define (all-chans)
+      "(all-chans) -> two parallel lists, the first snd indices, the second channel numbers.  If we have \
+two sounds open (indices 0 and 1 for example), and the second has two channels, (all-chans) returns '((0 1 1) (0 0 1))"
       (let ((sndlist '())
 	    (chnlist '()))
 	(for-each (lambda (snd)

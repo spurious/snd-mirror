@@ -1,3 +1,5 @@
+;;; X11 color names converted to Snd colors
+
 ;; tan -> tawny 24-Aug-01
 
 (define snow (make-color 1.00 0.98 0.98))

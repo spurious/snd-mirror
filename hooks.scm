@@ -3,7 +3,7 @@
 ;;; -------- snd-hooks
 
 (define (snd-hooks)
-  "list of all global (not channel-specific) hooks"
+  "(snd-hooks) -> list of all global (not channel-specific) hooks"
   (list after-graph-hook lisp-graph-hook before-transform-hook mix-position-changed-hook stop-playing-channel-hook save-hook mus-error-hook
 	mouse-enter-graph-hook mouse-leave-graph-hook open-raw-sound-hook select-channel-hook after-open-hook close-hook drop-hook
 	just-sounds-hook mark-click-hook mark-drag-hook mix-amp-changed-hook mix-speed-changed-hook name-click-hook open-hook
@@ -14,7 +14,7 @@
 	mark-hook previous-files-select-hook dac-hook stop-dac-hook stop-playing-selection-hook after-apply-hook before-apply-hook draw-mark-hook))
 
 (define (reset-all-hooks)
-  "remove all hook functions"
+  "(reset-all-hooks) removes all Snd hook functions"
   (for-each 
    (lambda (n)
      (reset-hook! n))
@@ -33,6 +33,7 @@
 ;;; -------- describe-hook
 
 (define (describe-hook hook)
+  "(describe-hook hook) -> description of functions on 'hook'"
   (for-each 
     (lambda (n) 
       (snd-print (format #f "~A~%" n)))
@@ -42,7 +43,7 @@
 ;;; -------- local hook
 
 (define (with-local-hook hook local-hook-procs thunk)
-  "evaluate thunk with hook set to local-hook-procs (a list), then restore hook to previous state"
+  "(with-local-hook hook local-hook-procs thunk) evaluates thunk with hook set to local-hook-procs (a list), then restores hook to its previous state"
   (define (list->hook hook lst)
     (define (list->hook-1 hook l)
       (if (not (null? l))

@@ -60,9 +60,6 @@ translation in-progress).
 
 The configure script should be able to use libsndlib if it exists.
 
-Many of the Scheme functions in *.scm need help strings so that
-snd-help can actually provide help.
-
 Known bugs can be listed by searching the sources for "TODO".
 Long-term stuff is marked with "SOMEDAY".
 

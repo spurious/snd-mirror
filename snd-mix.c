@@ -4310,6 +4310,7 @@ mixes data (a vct object) into snd's channel chn starting at beg; returns the ne
 			     SND_SRATE(cp[0]->sound),
 			     (char *)((edname == NULL) ? S_mix_vct : edname),
 			     with_mixers);
+	  update_graph(cp[0], NULL);
 	  FREE(data[0]);
 	  FREE(data);
 	}

@@ -3,59 +3,59 @@
 
 ;;; translated (semi-automatically) from a Sambox note list to bird.clm, then bird.scm
 
+(use-modules (ice-9 optargs) (ice-9 format))
+
 (define out-file #f)
 (define out-data #f)
 (define with-editable-mixes #f)
 
-(define bigbird
-  (lambda (start dur frequency freqskew amplitude freq-envelope amp-envelope partials)
-    (define sum-partials
-      (lambda (lst sum)
-	(if (null? lst)
-	    sum
-	    (sum-partials (cddr lst) (+ sum (cadr lst))))))
-    
-    (define scale-partials
-      (lambda (lst scl newlst)
-	(if (null? lst)
-	    newlst
-	    (scale-partials (cddr lst) scl (append newlst (list (car lst) (* scl (cadr lst))))))))
-    
-    (define normalize-partials
-      (lambda (lst)
-	(scale-partials lst (/ 1.0 (sum-partials lst 0.0)) '())))
-    
-    (let* ((gls-env (make-env freq-envelope (hz->radians freqskew) dur))
-	   (os (make-oscil :frequency frequency))
-	   (coeffs (partials->polynomial (normalize-partials partials)))
-	   (amp-env (make-env amp-envelope amplitude dur))
-	   (beg (inexact->exact (round (* (srate) start))))
-	   (len (inexact->exact (round (* (srate) dur))))
-	   (local-data (make-vct len)))
-      (vct-map! local-data
-		(lambda ()
-		  (* (env amp-env)
-		     (polynomial coeffs
-				 (oscil os (env gls-env))))))
-      (if (>= (+ beg len) (vct-length out-data))
-	  (snd-print (format #f "bigbird overrun: ~D > ~D at ~F " (+ beg len) (vct-length out-data) start))
-	  (vct-add! out-data local-data beg)))))
+(define (bigbird start dur frequency freqskew amplitude freq-envelope amp-envelope partials)
+  "(bigbird start dur frequency freqskew amplitude freq-envelope amp-envelope partials)"
 
-(define bird
-  (lambda (start dur frequency freqskew amplitude freq-envelope amp-envelope)
-    (let* ((gls-env (make-env freq-envelope (hz->radians freqskew) dur))
-	   (os (make-oscil :frequency frequency))
-	   (amp-env (make-env amp-envelope amplitude dur))
-	   (len (inexact->exact (round (* (srate) dur))))
-	   (beg (inexact->exact (round (* (srate) start))))
-	   (local-data (make-vct len)))
-      (vct-map! local-data
-		(lambda ()
-		  (* (env amp-env)
-		     (oscil os (env gls-env)))))
-      (if (>= (+ beg len) (vct-length out-data))
-	  (snd-print (format #f "bird overrun: ~D > ~D at ~F " (+ beg len) (vct-length out-data) start))
-	  (vct-add! out-data local-data beg)))))
+  (define (sum-partials lst sum)
+    (if (null? lst)
+	sum
+	(sum-partials (cddr lst) (+ sum (cadr lst)))))
+    
+  (define (scale-partials lst scl newlst)
+    (if (null? lst)
+	newlst
+	(scale-partials (cddr lst) scl (append newlst (list (car lst) (* scl (cadr lst)))))))
+    
+  (define (normalize-partials lst)
+    (scale-partials lst (/ 1.0 (sum-partials lst 0.0)) '()))
+    
+  (let* ((gls-env (make-env freq-envelope (hz->radians freqskew) dur))
+	 (os (make-oscil :frequency frequency))
+	 (coeffs (partials->polynomial (normalize-partials partials)))
+	 (amp-env (make-env amp-envelope amplitude dur))
+	 (beg (inexact->exact (round (* (srate) start))))
+	 (len (inexact->exact (round (* (srate) dur))))
+	 (local-data (make-vct len)))
+    (vct-map! local-data
+	      (lambda ()
+		(* (env amp-env)
+		   (polynomial coeffs
+			       (oscil os (env gls-env))))))
+    (if (>= (+ beg len) (vct-length out-data))
+	(snd-print (format #f "bigbird overrun: ~D > ~D at ~F " (+ beg len) (vct-length out-data) start))
+	(vct-add! out-data local-data beg))))
+
+(define (bird start dur frequency freqskew amplitude freq-envelope amp-envelope)
+  "(bird start dur frequency freqskew amplitude freq-envelope amp-envelope)"
+  (let* ((gls-env (make-env freq-envelope (hz->radians freqskew) dur))
+	 (os (make-oscil :frequency frequency))
+	 (amp-env (make-env amp-envelope amplitude dur))
+	 (len (inexact->exact (round (* (srate) dur))))
+	 (beg (inexact->exact (round (* (srate) start))))
+	 (local-data (make-vct len)))
+    (vct-map! local-data
+	      (lambda ()
+		(* (env amp-env)
+		   (oscil os (env gls-env)))))
+    (if (>= (+ beg len) (vct-length out-data))
+	(snd-print (format #f "bird overrun: ~D > ~D at ~F " (+ beg len) (vct-length out-data) start))
+	(vct-add! out-data local-data beg))))
   
 
 (define (one-bird beg maxdur func birdname)
@@ -1197,13 +1197,11 @@
      )))
 
 
-(define (make-birds . output-file) ; output-file defaults to "test.snd"
-  (let ((filename (if (not (null? output-file))
-		      (car output-file)
-		      "test.snd")))
-    (if (find-sound filename) (close-sound (find-sound filename)))
-    (if (file-exists? filename) (delete-file filename))
-    (set! out-file (new-sound filename))
+(define* (make-birds #:optional (filename "test.snd"))
+  "(make-birds &optional (file \"test.snd\")) calls all the birds in bird.scm"
+  (if (find-sound filename) (close-sound (find-sound filename)))
+  (if (file-exists? filename) (delete-file filename))
+  (let ((out-file (new-sound filename)))
     (set! (squelch-update out-file 0) #t)
     (orchard-oriole 0)
     (cassins-kingbird 3)

@@ -118,6 +118,7 @@
 #define XEN_CADDDR(a)                SCM_CADDDR(a)
 #define XEN_CDR(a)                   SCM_CDR(a)
 #define XEN_CDDR(a)                  SCM_CDDR(a)
+#define XEN_COPY_ARG(Lst)            Lst
 #define XEN_EQ_P(a, b)               SCM_EQ_P(a, b)
 
 #define XEN_ONLY_ARG SCM_ARGn
@@ -587,6 +588,7 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #define XEN_CADDDR(a)                   rb_ary_entry(a, 3)
 #define XEN_CDR(a)                      xen_rb_cdr(a)
 #define XEN_CDDR(a)                     XEN_CDR(XEN_CDR(a))
+#define XEN_COPY_ARG(Lst)               xen_rb_copy_list(Lst)
 #define XEN_CONS(Arg1, Arg2)            xen_rb_cons(Arg1, Arg2)
 #define XEN_CONS_2(Arg1, Arg2, Arg3)    xen_rb_cons2(Arg1, Arg2, Arg3)
 #define XEN_LIST_REF(Lst, Num)          rb_ary_entry(Lst, Num)
@@ -763,6 +765,7 @@ XEN xen_rb_ary_new_with_initial_element(long num, XEN element);
 XEN xen_rb_apply(XEN func, XEN args);
 XEN xen_rb_funcall_0(XEN func);
 int xen_rb_required_args(XEN val);
+XEN xen_rb_copy_list(XEN val); /* Ruby arrays (lists) are passed by reference */
 
 #endif
 /* end RUBY */
@@ -801,6 +804,7 @@ int xen_rb_required_args(XEN val);
 #define XEN_CADDDR(a) 0
 #define XEN_CDR(a) 0
 #define XEN_CDDR(a) 0
+#define XEN_COPY_ARG(Lst) Lst
 #define XEN_VECTOR_ELEMENTS(a) ((XEN *)a)
 #define XEN_MARK_OBJECT_TYPE         XEN
 #define XEN_MAKE_OBJECT(a, b, c, ig1, ig2)

@@ -729,7 +729,7 @@ static XEN g_mus_midi_write(XEN line, XEN buffer)
   XEN_ASSERT_TYPE(XEN_LIST_P(buffer), buffer, XEN_ARG_2, S_mus_midi_write, "a list");
   len = XEN_LIST_LENGTH(buffer);
   buf = (unsigned char *)CALLOC(len, sizeof(unsigned char));
-  for (i = 0, lst = buffer; i < len; i++, lst = XEN_CDR(lst))
+  for (i = 0, lst = XEN_COPY_ARG(buffer); i < len; i++, lst = XEN_CDR(lst))
     buf[i] = (unsigned char)(XEN_TO_C_INT(XEN_CAR(lst)));
   err = mus_midi_write(XEN_TO_C_INT(line), buf, len);
   FREE(buf);

@@ -23,11 +23,15 @@
 (define time-graph-style
   (make-procedure-with-setter
    (lambda (snd chn)
+     ;; apparently we can't put a string here and thereby set the (procedure time-graph-style) documentation property
      (logand (graph-style snd chn) #xff))
    (lambda (snd chn val)
      (set! (graph-style snd chn)
 	   (logior (logand (graph-style snd chn) #xffff00)
 		   val)))))
+
+(set-object-property! time-graph-style 'documentation
+		      "(time-graph-style snd chn) -> channel specific time-domain graph-style. (set! (time-graph-style 0 0) graph-dots).")
 
 (define transform-graph-style
   (make-procedure-with-setter
@@ -42,6 +46,9 @@
 	   (logior (logand (graph-style snd chn) #xff00ff)
 		   (ash (+ val 1) 8))))))
 
+(set-object-property! transform-graph-style 'documentation
+		      "(transform-graph-style snd chn) -> channel specific frequency-domain graph-style. (set! (transform-graph-style 0 0) graph-dots).")
+
 (define lisp-graph-style
   (make-procedure-with-setter
    (lambda (snd chn)
@@ -55,70 +62,77 @@
 	   (logior (logand (graph-style snd chn) #xffff)
 		   (ash (+ val 1) 16))))))
 
+(set-object-property! lisp-graph-style 'documentation
+		      "(lisp-graph-style snd chn) -> channel specific lisp-generated graph-style. (set! (lisp-graph-style 0 0) graph-dots).")
 
-(define (all-chans)
-  (let ((sndlist '())
-	(chnlist '()))
-    (for-each (lambda (snd)
-		(do ((i (1- (channels snd)) (1- i)))
-		    ((< i 0))
-		  (set! sndlist (cons snd sndlist))
-		  (set! chnlist (cons i chnlist))))
-	      (sounds))
-    (list sndlist chnlist)))
+
+(if (not (defined? 'all-chans))
+    (define (all-chans)
+      "(all-chans) -> two parallel lists, the first snd indices, the second channel numbers.  If we have \
+two sounds open (indices 0 and 1 for example), and the second has two channels, (all-chans) returns '((0 1 1) (0 0 1))"
+      (let ((sndlist '())
+	    (chnlist '()))
+	(for-each (lambda (snd)
+		    (do ((i (1- (channels snd)) (1- i)))
+			((< i 0))
+		      (set! sndlist (cons snd sndlist))
+		      (set! chnlist (cons i chnlist))))
+		  (sounds))
+	(list sndlist chnlist))))
 
 
 
 ;;; -------- mix with result at original peak amp
 
-(define normalized-mix 
-  (lambda (filename beg in-chan snd chn)
-    "(normalized-mix filename beg in-chan snd chn) is like mix but mix result has same peak amp as unmixed snd/chn (returns scaler)"
-    (let ((original-maxamp (maxamp snd chn)))
-      (mix filename beg in-chan snd chn)
-      (let ((new-maxamp (maxamp snd chn)))
-	(if (not (= original-maxamp new-maxamp))
-	    (let ((scaler (/ original-maxamp new-maxamp))
-		  (old-sync (sync snd)))
-	      (set! (sync snd) 0)
-	      (scale-by scaler snd chn)
-	      (set! (sync snd) old-sync)
-	      scaler)
-	    1.0)))))
+(define (normalized-mix filename beg in-chan snd chn)
+  "(normalized-mix filename beg in-chan snd chn) is like mix but the mix result has same peak amp as unmixed snd/chn (returns scaler)"
+  (let ((original-maxamp (maxamp snd chn)))
+    (mix filename beg in-chan snd chn)
+    (let ((new-maxamp (maxamp snd chn)))
+      (if (not (= original-maxamp new-maxamp))
+	  (let ((scaler (/ original-maxamp new-maxamp))
+		(old-sync (sync snd)))
+	    (set! (sync snd) 0)
+	    (scale-by scaler snd chn)
+	    (set! (sync snd) old-sync)
+	    scaler)
+	  1.0))))
 
 
 ;;;-------- mix with envelope on mixed-in file
 ;;;
 ;;; there are lots of ways to do this; this version uses functions from Snd, CLM, and Sndlib.
 
-(define enveloped-mix
-  (lambda (filename beg env)
-    "(enveloped-mix filename beg env) mixes filename starting at beg with amplitude envelope env"
-    (let ((len (mus-sound-frames filename))
-	  (tmpfil (mus-sound-open-output "/tmp/tmp.snd" 22050 1 mus-bshort mus-next ""))
-	  (mx (make-mixer 1 1.0))
-	  (envs (make-vector 1))
-	  (inenvs (make-vector 1)))
-      (mus-sound-close-output tmpfil 0)
-      (vector-set! inenvs 0 (make-env env :end len))
-      (vector-set! envs 0 inenvs)
-      (mus-mix "/tmp/tmp.snd" filename 0 len 0 mx envs)
-      (mix "/tmp/tmp.snd" beg)
-      (delete-file "/tmp/tmp.snd"))))
-
-;(enveloped-mix "pistol.snd" 0 '(0 0 1 1 2 0))
+(define (enveloped-mix filename beg env)
+  "(enveloped-mix filename beg env) mixes filename starting at beg with amplitude envelope env. (enveloped-mix \"pistol.snd\" 0 '(0 0 1 1 2 0))"
+  (let* ((len (mus-sound-frames filename))
+	 (tmp-name (string-append (if (and (string? (temp-dir))
+					   (> (string-length (temp-dir)) 0))
+				      (string-append (temp-dir) "/")
+				      "")
+				  "tmp.snd"))
+	 (tmpfil (mus-sound-open-output tmp-name 22050 1 mus-bshort mus-next ""))
+	 (mx (make-mixer 1 1.0))
+	 (envs (make-vector 1))
+	 (inenvs (make-vector 1)))
+    (mus-sound-close-output tmpfil 0)
+    (vector-set! inenvs 0 (make-env env :end len))
+    (vector-set! envs 0 inenvs)
+    (mus-mix tmp-name filename 0 len 0 mx envs)
+    (mix tmp-name beg)
+    (delete-file tmp-name)))
 
 ;;; another way:
-
-(define enveloped-mix-1
-  (lambda (filename beg env)
-    (as-one-edit
-     (lambda ()
-       (let* ((mix-id (mix filename beg))
-	      (inchans (mix-chans mix-id)))
-	 (do ((i 0 (1+ i)))
-	     ((= i inchans))
-	   (set! (mix-amp-env mix-id i) env)))))))
+; 
+; (define (enveloped-mix-1 filename beg env)
+;   "(enveloped-mix-1 filename beg env) mixes filename starting at beg with amplitude envelope env. (enveloped-mix-1 \"pistol.snd\" 0 '(0 0 1 1 2 0))"
+;   (as-one-edit
+;    (lambda ()
+;      (let* ((mix-id (mix filename beg))
+; 	    (inchans (mix-chans mix-id)))
+;        (do ((i 0 (1+ i)))
+; 	   ((= i inchans))
+; 	 (set! (mix-amp-env mix-id i) env))))))
 
 
 ;;; -------- map-sound-files, match-sound-files
@@ -167,7 +181,7 @@
 #!
 (let ((reg (make-regexp "\\.(wav|snd)$")))
   (match-sound-files (lambda (file) (regexp-exec reg file))))
-!#
+
 ;;; this argument to make-regexp is looking for *.wav and *.snd
 ;;; a prettier version might use a function written by Dirk Herrmann:
 
@@ -217,28 +231,34 @@
 	 (format #f "\\.(~{~A~^|~})$" sound-file-extensions)
 	 (directory->list dir))
 	string<?))
+!#
 
     
 ;;; -------- selection-members
 ;;;
 ;;; returns a list of lists of (snd chn): channels in current selection
 
-(define selection-members
-  (lambda ()
-    (let ((sndlist '()))
-      (if (selection?)
-	  (map (lambda (snd)
-		 (do ((i (1- (channels snd)) (1- i)))
-		     ((< i 0))
-		   (if (selection-member? snd i)
-		       (set! sndlist (cons (list snd i) sndlist)))))
-	       (sounds)))
-      sndlist)))
+(define (selection-members)
+  "(selection-members) -> list of lists of (snd chn) indicating the channels participating in the current selection."
+  (let ((sndlist '()))
+    (if (selection?)
+	(map (lambda (snd)
+	       (do ((i (1- (channels snd)) (1- i)))
+		   ((< i 0))
+		 (if (selection-member? snd i)
+		     (set! sndlist (cons (list snd i) sndlist)))))
+	     (sounds)))
+    sndlist))
 
 
 ;;; -------- make-selection
 
+;;; the regularized form of this would use dur not end
+
 (define* (make-selection #:optional beg end snd chn)
+  "(make-selection &optional beg end snd chn) makes a selection like make-region but without creating a region. \
+make-selection follows snd's sync field, and applies to all snd's channels if chn is not specified. end defaults
+to end of channel, beg defaults to 0, snd defaults to the currently selected sound."
   (let ((current-sound (or (and (number? snd) snd) (selected-sound))))
     (define (add-chan-to-selection s0 s1 s c)
       (set! (selection-member? s c) #t)
@@ -272,18 +292,17 @@
 
 ;;; -------- delete selected portion and smooth the splice
 
-(define delete-selection-and-smooth
-  (lambda ()
-    "(delete-selection-and-smooth) deletes the current selection and smooths the splice"
-    (if (selection?)
-	(let ((beg (selection-position))
-	      (len (selection-length)))
-	  (apply map (lambda (snd chn)
-		       (if (selection-member? snd chn)
-			   (let ((smooth-beg (max 0 (- beg 16))))
-			     (delete-samples beg len snd chn)
-			     (smooth-sound smooth-beg 32 snd chn))))
-		 (all-chans))))))
+(define (delete-selection-and-smooth)
+  "(delete-selection-and-smooth) deletes the current selection and smooths the splice"
+  (if (selection?)
+      (let ((beg (selection-position))
+	    (len (selection-length)))
+	(apply map (lambda (snd chn)
+		     (if (selection-member? snd chn)
+			 (let ((smooth-beg (max 0 (- beg 16))))
+			   (delete-samples beg len snd chn)
+			   (smooth-sound smooth-beg 32 snd chn))))
+	       (all-chans)))))
 
 
 ;;; -------- eval over selection, replacing current samples, mapped to "C-x x" key using prompt-in-minibuffer
@@ -328,6 +347,7 @@
 (use-modules (ice-9 debugger))
 
 (define (snd-debug)
+  "(snd-debug) is a replacement for Guile's debug function which redirects the Guile debugger input/output to the Snd listener."
   (let* ((debugger-input "")
 	 (debugger-char 0)
 	 (debugger-strlen 0)
@@ -376,6 +396,7 @@
 ;;; -------- read-listener-line
 
 (define (read-listener-line prompt)
+  "(read-listener-line prompt) prompts for input and returns it in Snd's listener"
   (let ((res #f))
     (define (reader str) (set! res str) #t)
     (add-hook! read-hook reader)
@@ -392,6 +413,7 @@
 ;;; this activates tracing and redirects its output to the Snd listener
 
 (defmacro snd-trace (body)
+  "(snd-trace body) activates tracing and redirects its output to the Snd listener"
   `(let* ((stderr (current-error-port))
 	  (snd-err (make-soft-port
 		    (vector
@@ -416,54 +438,52 @@
 
 ;;; -------- check-for-unsaved-edits
 ;;;
-;;; (check-for-unsaved-edits on): if 'on', add a function to the close-hook and exit-hook
+;;; (check-for-unsaved-edits &optional on): if 'on', add a function to the close-hook and exit-hook
 ;;;    that asks the user for confirmation before closing a sound if there are unsaved
 ;;;    edits on that sound.  if 'on' is #f, remove those hooks.
 
+(define* (check-for-unsaved-edits #:optional check)
+  "(check-for-unsaved-edits &optional check) -> sets up hooks to check for and ask about unsaved edits when a sound is closed. \
+If 'check' is #f, the hooks are removed."
+  (define (unsaved-edits-at-close? ind)
+    (letrec ((unsaved-edits-in-chan? 
+	      (lambda (chan)
+		(if (>= chan (channels ind))
+		    #f
+		    (let ((eds (edits ind chan)))
+		      (if (> (car eds) 0)
+			  (not (yes-or-no? ;that is, "yes" => exit
+				(format #f "~A has ~D unsaved edit~P in channel ~D, exit anyway? " 
+					(short-file-name ind) 
+					(car eds)
+					(car eds)
+					chan)))
+			  (unsaved-edits-in-chan? (1+ chan))))))))
+      (unsaved-edits-in-chan? 0)))
 
-(define (unsaved-edits-at-close? ind)
-  "(unsaved-edits? ind) -> #t if there are any unsaved edits in sound ind"
-  (letrec ((unsaved-edits-in-chan? 
-	    (lambda (chan)
-	      (if (>= chan (channels ind))
-		  #f
-		  (let ((eds (edits ind chan)))
-		    (if (> (car eds) 0)
-			(not (yes-or-no? ;that is, "yes" => exit
-			      (format #f "~A has ~D unsaved edit~P in channel ~D, exit anyway? " 
-				      (short-file-name ind) 
-				      (car eds)
-				      (car eds)
-				      chan)))
-			(unsaved-edits-in-chan? (1+ chan))))))))
-    (unsaved-edits-in-chan? 0)))
+  (define (unsaved-edits-at-exit?)
+    (letrec ((unsaved-edits-at-exit-1?
+	      (lambda (snds)
+		(and (not (null? snds))
+		     (or (unsaved-edits-at-close? (car snds))
+			 (unsaved-edits-at-exit-1? (cdr snds)))))))
+      (unsaved-edits-at-exit-1? (sounds))))
 
-(define (unsaved-edits-at-exit?)
-  (letrec ((unsaved-edits-at-exit-1?
-	    (lambda (snds)
-	      (and (not (null? snds))
-		   (or (unsaved-edits-at-close? (car snds))
-		       (unsaved-edits-at-exit-1? (cdr snds)))))))
-    (unsaved-edits-at-exit-1? (sounds))))
-
-(define check-for-unsaved-edits
-  (lambda arg
-    (if (or (null? arg)
-	    (car arg))
-	(begin
-	  (if (not (member unsaved-edits-at-exit? (hook->list exit-hook)))
-	      (add-hook! exit-hook unsaved-edits-at-exit?))
-	  (if (not (member unsaved-edits-at-close? (hook->list close-hook)))
-	      (add-hook! close-hook unsaved-edits-at-close?)))
-	(begin
-	  (remove-hook! exit-hook unsaved-edits-at-exit?)
-	  (remove-hook! close-hook unsaved-edits-at-close?)))))
+  (if check
+      (begin
+	(if (not (member unsaved-edits-at-exit? (hook->list exit-hook)))
+	    (add-hook! exit-hook unsaved-edits-at-exit?))
+	(if (not (member unsaved-edits-at-close? (hook->list close-hook)))
+	    (add-hook! close-hook unsaved-edits-at-close?)))
+      (begin
+	(remove-hook! exit-hook unsaved-edits-at-exit?)
+	(remove-hook! close-hook unsaved-edits-at-close?))))
 
 
 ;;; -------- remember-sound-state
 
 (define (remember-sound-state)
-  ;; remember the state of a sound when it is closed, and if it is subsquently re-opened, restore that state
+  "(remember-sound-state) remembers the state of a sound when it is closed, and if it is subsquently re-opened, restores that state"
   (let ((states '())
 	(sound-funcs (list sync cursor-follows-play))
 	(channel-funcs (list graph-time? graph-transform? graph-lisp? x-bounds y-bounds cursor cursor-size
@@ -530,6 +550,7 @@
 
 (define* (mix-channel file-data #:optional beg dur snd chn edpos)
   "(mix-channel file &optional beg dur snd chn edpos) mixes in file. file can be the file name or a list (file-name [beg [channel]])"
+  ;; should this create and return a mix instead?
   (let* ((file-name (if (string? file-data) file-data (car file-data)))
 	 (file-beg (if (or (string? file-data) 
 			   (< (length file-data) 2)) 

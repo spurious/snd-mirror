@@ -3350,7 +3350,7 @@ static MUS_SAMPLE_TYPE *g_floats_to_samples(XEN obj, int *size, const char *call
       if (((*size) > 0) && (num > (*size))) 
 	num = (*size);
       vals = (MUS_SAMPLE_TYPE *)MALLOC(num * sizeof(MUS_SAMPLE_TYPE));
-      for (i = 0, lst = obj; i < num; i++, lst = XEN_CDR(lst)) 
+      for (i = 0, lst = XEN_COPY_ARG(obj); i < num; i++, lst = XEN_CDR(lst)) 
 	vals[i] = MUS_FLOAT_TO_SAMPLE(XEN_TO_C_DOUBLE(XEN_CAR(lst)));
     }
   else
