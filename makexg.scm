@@ -420,9 +420,9 @@
 	(cons "gfloat" "DOUBLE")
 	(cons "char" "CHAR")
 	(cons "gchar" "CHAR")
-	(cons "char*" "STRING")
-	(cons "gchar*" "STRING")
-	(cons "guchar*" "STRING") ; added 30-Jul-02 then removed then put back...
+	(cons "char*" "String")
+	(cons "gchar*" "String")
+	(cons "guchar*" "String") ; added 30-Jul-02 then removed then put back...
 	(cons "guint" "ULONG")
 	(cons "guint16" "INT")
 	(cons "gint" "INT")
@@ -1050,6 +1050,10 @@
 (hey "#define C_TO_XEN_GtkMenuPositionFunc(Arg) WRAP_FOR_XEN(\"GtkMenuPositionFunc\", Arg)~%")
 (hey "#define C_TO_XEN_GtkDestroyNotify(Arg) WRAP_FOR_XEN(\"GtkDestroyNotify\", Arg)~%")
 (hey "#define XEN_TO_C_GdkFilterReturn(Arg) (GdkFilterReturn)XEN_TO_C_INT(Arg)~%")
+
+(hey "#define XEN_TO_C_String(Arg) ((XEN_STRING_P(Arg)) ? XEN_TO_C_STRING(Arg) : NULL)~%")
+(hey "#define C_TO_XEN_String(Arg) ((Arg == NULL) ? C_TO_XEN_STRING(Arg) : XEN_FALSE)~%")
+(hey "#define XEN_String_P(Arg) ((XEN_FALSE_P(Arg)) || (XEN_STRING_P(Arg)))~%")
 
 
 (hey "~%~%/* ---------------------------------------- types ---------------------------------------- */~%~%")

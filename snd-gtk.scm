@@ -13,7 +13,9 @@
 ;;; add "tooltip" to a widget
 ;;; bring possibly-obscured dialog to top
 ;;; select-file
-
+;;; with-level-meters
+;;; add delete and rename options to the file menu
+;;; make-pixmap
 
 (use-modules (ice-9 format))
 
@@ -33,6 +35,27 @@
     (and (car val)
 	 (substring (list-ref val 4) 0 (list-ref val 3)))))
 
+
+(define red-pixel
+  (let ((tmp (GdkColor)))
+    (gdk_color_parse "red" tmp)
+    (let ((col (gdk_color_copy tmp)))
+      (gdk_rgb_find_color (gdk_colormap_get_system) col)
+      col)))
+
+(define white-pixel
+  (let ((tmp (GdkColor)))
+    (gdk_color_parse "white" tmp)
+    (let ((col (gdk_color_copy tmp)))
+      (gdk_rgb_find_color (gdk_colormap_get_system) col)
+      col)))
+
+(define black-pixel
+  (let ((tmp (GdkColor)))
+    (gdk_color_parse "black" tmp)
+    (let ((col (gdk_color_copy tmp)))
+      (gdk_rgb_find_color (gdk_colormap_get_system) col)
+      col)))
 
 
 ;;; -------- display-scanned-synthesis --------
@@ -133,7 +156,7 @@
       (if (and (> ax1 ax0)
 	       (> ay1 ay0))
 	  (let ((diff (* 0.05 (- ay1 ay0))) ; assuming -10 to 10 
-		(wn (list 'GdkDrawable_ (cadr (.window scan-pane))))
+		(wn (GDK_DRAWABLE (.window scan-pane)))
 		(xincr (/ (- ax1 ax0) size)))
 	    (if pts1
 		(gdk_draw_lines wn egc (list 'GdkPoint_ pts1) size)
@@ -654,17 +677,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
   (let* ((shell (cadr (main-widgets)))
 	 (win (car (main-widgets)))
 	 (clock-pixmaps (make-vector 12))
-	 (dgc (car (snd-gcs)))
-	 (white (let ((tmp (GdkColor)))
-		  (gdk_color_parse "white" tmp)
-		  (let ((col (gdk_color_copy tmp)))
-		    (gdk_rgb_find_color (gdk_colormap_get_system) col)
-		    col)))
-	 (black (let ((tmp (GdkColor)))
-		  (gdk_color_parse "black" tmp)
-		  (let ((col (gdk_color_copy tmp)))
-		    (gdk_rgb_find_color (gdk_colormap_get_system) col)
-		    col))))
+	 (dgc (car (snd-gcs))))
     (do ((i 0 (1+ i)))
 	((= i 12))
       (let* ((pix (gdk_pixmap_new win 16 16 -1))
@@ -672,9 +685,9 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	(vector-set! clock-pixmaps i pix)
 	(gdk_gc_set_foreground dgc (basic-color))
 	(gdk_draw_rectangle pixwin dgc #t 0 0 16 16)
-	(gdk_gc_set_foreground dgc white)
+	(gdk_gc_set_foreground dgc white-pixel)
 	(gdk_draw_arc pixwin dgc #t 1 1 14 14 0 (* 64 360))
-	(gdk_gc_set_foreground dgc black)
+	(gdk_gc_set_foreground dgc black-pixel)
 	(gdk_draw_arc pixwin dgc #f 1 1 14 14 0 (* 64 360))
 	(gdk_draw_line pixwin dgc 8 8 
 		       (+ 8 (inexact->exact (* 7 (sin (* i (/ 3.1416 6.0))))))
@@ -772,9 +785,185 @@ Reverb-feedback sets the scaler on the feedback.\n\
 ; (select-file (lambda (n) (snd-print n)))
 
 
-;;; to add a new aribtray widget to the overall Snd window (in the sound pane)
-;;; gtk_box_pack_start|end (GTK_BOX (list-ref (main-widgets) 5)) widget
+;;; -------- with-level-meters, make-level-meter, display-level
+
+(define (make-level-meter parent width height)
+  (let ((frame (gtk_frame_new #f)))
+    (gtk_widget_set_size_request frame width height)
+    (gtk_box_pack_start (GTK_BOX parent) frame #t #t 4)
+    (gtk_widget_show frame)
+    (let ((meter (gtk_drawing_area_new)))
+      (gtk_widget_set_events meter (logior GDK_EXPOSURE_MASK GDK_STRUCTURE_MASK))
+      (gtk_container_add (GTK_CONTAINER frame) meter)
+      (gtk_widget_show meter)
+      (let ((context (list meter 0.0 1.0 0.0 0.0 width height)))
+	(g_signal_connect_closure_by_id 
+	 (list 'gpointer (cadr meter))
+	 (g_signal_lookup "expose_event" (G_OBJECT_TYPE (GTK_OBJECT meter))) 0
+	 (g_cclosure_new (lambda (w e d) 
+			   (display-level d)) 
+			 context #f) #f)
+	(g_signal_connect_closure_by_id 
+	 (list 'gpointer (cadr meter))
+	 (g_signal_lookup "configure_event" (G_OBJECT_TYPE (GTK_OBJECT meter))) 0
+	 (g_cclosure_new (lambda (w e d)
+			   (let ((xy (gdk_drawable_get_size (GDK_DRAWABLE (.window w)))))
+			     (list-set! d 5 (car xy))
+			     (list-set! d 6 (cadr xy))
+			     (display-level d)))
+			 context #f) #f)
+	context))))
+
+(define (display-level meter-data)
+  (let* ((meter (car meter-data))
+	 (level (list-ref meter-data 1))
+	 (last-level (list-ref meter-data 3))
+	 (red-deg (list-ref meter-data 4))
+	 (width (list-ref meter-data 5))
+	 (height (list-ref meter-data 6))
+	 (size (list-ref meter-data 2))
+	 (win (GDK_DRAWABLE (.window meter)))
+	 (major-tick (inexact->exact (/ width 24)))
+	 (minor-tick (inexact->exact (* major-tick .6)))
+	 (ang0 (* 45 64))
+	 (ang1 (* 90 64))
+	 (wid2 (inexact->exact (/ width 2)))
+	 (gc (car (snd-gcs)))
+	 (top (inexact->exact (/ height 3.2)))) ; distance of label from top of meter
+    (gdk_gc_set_foreground gc white-pixel)
+    (gdk_draw_rectangle win gc #t 0 0 width height)
+    (gdk_gc_set_foreground gc black-pixel)
+    (gdk_draw_arc win gc #f 0 top width width ang0 ang1)
+    (gdk_draw_arc win gc #f 0 (1- top) width width ang0 ang1)
+    (if (> width 100)
+	(gdk_draw_arc win gc #f 0 (- top 2) width width ang0 ang1))
+    (gdk_draw_arc win gc #f 4 (+ top 4) (- width 8) (- width 8) ang0 ang1)
+    (do ((i 0 (1+ i)))
+	((= i 5))
+      (let* ((rdeg (degrees->radians (- 45 (* i 22.5))))
+	     (sinr (sin rdeg))
+	     (cosr (cos rdeg))
+	     (x0 (inexact->exact (+ wid2 (* wid2 sinr))))
+	     (y0 (inexact->exact (- (+ wid2 top) (* wid2 cosr))))
+	     (x1 (inexact->exact (+ wid2 (* (+ wid2 major-tick) sinr))))
+	     (y1 (inexact->exact (- (+ wid2 top) (* (+ wid2 major-tick) cosr)))))
+	(gdk_draw_line win gc x0 y0 x1 y1)
+	(gdk_draw_line win gc (+ x0 1) y0 (+ x1 1) y1)
+	(if (< i 4)
+	    (do ((j 1 (1+ j)))
+		((= j 6))
+	      (let* ((rdeg (degrees->radians (- 45 (* i 22.5) (* j (/ 90.0 20.0)))))
+		     (sinr (sin rdeg))
+		     (cosr (cos rdeg))
+		     (x0 (inexact->exact (* wid2 (+ 1.0 sinr))))
+		     (y0 (inexact->exact (- (+ wid2 top) (* wid2 cosr))))
+		     (x1 (inexact->exact (+ wid2 (* (+ wid2 minor-tick) sinr))))
+		     (y1 (inexact->exact (- (+ wid2 top) (* (+ wid2 minor-tick) cosr)))))
+		(gdk_draw_line win gc x0 y0 x1 y1))))))
+    (let* ((needle-speed 0.25)
+	   (bubble-speed 0.025)
+	   (bubble-size (* 15 64))
+	   (val (+ (* level needle-speed) (* last-level (- 1.0 needle-speed))))
+	   (deg (- (* val 90.0) 45.0))
+	   (rdeg (degrees->radians deg))
+	   (nx1 (inexact->exact (+ wid2 (* (+ wid2 major-tick) (sin rdeg)))))
+	   (ny1 (inexact->exact (- (+ wid2 top) (* (+ wid2 major-tick) (cos rdeg))))))
+      (gdk_draw_line win gc wid2 (+ top wid2) nx1 ny1)
+      (list-set! meter-data 3 val)
+      (if (> val red-deg)
+	  (list-set! meter-data 4 val)
+	  (list-set! meter-data 4 (+ (* val bubble-speed) (* red-deg (- 1.0 bubble-speed)))))
+      (if (> (list-ref meter-data 4) .01)
+	  (begin
+	    (gdk_gc_set_foreground gc red-pixel)
+	    (let* ((redx (inexact->exact (* (list-ref meter-data 4) 90 64)))
+		   (redy (min redx bubble-size)))
+	      (do ((i 0 (1+ i)))
+		  ((= i 4))
+		(gdk_draw_arc win gc #f i (+ top i) (- width (* i 2)) (- width (* i 2)) (- (* 135 64) redx) redy)))
+	    (gdk_gc_set_foreground gc black-pixel)))
+      )))
+
+(define (with-level-meters n)
+  ;; add n level meters to a pane at the top of the Snd window
+  (let* ((parent (list-ref (main-widgets) 5))
+	 (height (if (> n 2) 70 85))
+	 (parent-width (cadr (gdk_drawable_get_size (GDK_DRAWABLE (.window parent)))))
+	 (width (inexact->exact (/ parent-width n)))
+	 (meters (gtk_hbox_new #t 4))
+	 (meter-list '()))
+    (gtk_box_pack_start (GTK_BOX parent) meters #f #f 4)
+    (gtk_widget_set_size_request meters width height)
+    (gtk_widget_show meters)
+    (do ((i 0 (1+ i)))
+	((= i n))
+      (set! meter-list (cons (make-level-meter meters width height) meter-list)))
+    (add-hook! dac-hook 
+	       (lambda (sdobj)
+		 (let* ((maxes (sound-data-maxamp sdobj)))
+		   (for-each
+		    (lambda (meter)
+		      (if (null? maxes)
+			  (list-set! meter 1 0.0)
+			  (begin
+			    (list-set! meter 1 (car maxes))
+			    (display-level meter)
+			    (set! maxes (cdr maxes)))))
+		    (reverse meter-list)))))
+    (add-hook! stop-dac-hook
+	       (lambda () ; drain away the bubble
+		 (gtk_idle_add 
+		  (let ((ctr 0))
+		    (lambda (ignored)
+		      (for-each 
+		       (lambda (meter)
+			 (list-set! meter 1 0.0)
+			 (display-level meter))
+		       meter-list)
+		      (set! ctr (+ ctr 1))
+		      (< ctr 200)))
+		  #f)))
+    meter-list))
 
 
+;;; -------- add delete and rename options to the file menu
 
+(define (add-delete-and-rename-options)
+  (if (not (list-ref (dialog-widgets) 6))
+      (open-file-dialog #f))
+  (gtk_file_selection_show_fileop_buttons 
+   (GTK_FILE_SELECTION (list-ref (dialog-widgets) 6)))
+  (if (not (list-ref (dialog-widgets) 11))
+      (mix-file-dialog #f))
+  (gtk_file_selection_show_fileop_buttons 
+   (GTK_FILE_SELECTION (list-ref (dialog-widgets) 11))))
+
+  
+
+;;; -------- make-pixmap --------
+
+(define arrow-strs (list
+"16 12 6 1"
+" 	c None s None"
+".	c gray50"
+"X	c black"
+"o	c white"
+"O	c yellow"
+"-      c ivory2 s basiccolor"
+"--------X---------"
+"---------X--------"
+"----------X-------"
+"-----------X------"
+"------------X-----"
+"XXXXXXXXXXXXXX----"
+"------------X-----"
+"-----------X------"
+"----------X-------"
+"---------X--------"
+"--------X---------"
+"-------X----------"))
+
+(define (make-pixmap strs) ; strs is list of strings as in arrow-strs above
+  (let ((win (car (main-widgets))))
+    (gdk_pixmap_create_from_xpm_d win #f (basic-color) (list->c-array strs "gchar**"))))
 

@@ -209,6 +209,9 @@ static void define_xm_obj(void)
 #define C_TO_XEN_GtkMenuPositionFunc(Arg) WRAP_FOR_XEN("GtkMenuPositionFunc", Arg)
 #define C_TO_XEN_GtkDestroyNotify(Arg) WRAP_FOR_XEN("GtkDestroyNotify", Arg)
 #define XEN_TO_C_GdkFilterReturn(Arg) (GdkFilterReturn)XEN_TO_C_INT(Arg)
+#define XEN_TO_C_String(Arg) ((XEN_STRING_P(Arg)) ? XEN_TO_C_STRING(Arg) : NULL)
+#define C_TO_XEN_String(Arg) ((Arg == NULL) ? C_TO_XEN_STRING(Arg) : XEN_FALSE)
+#define XEN_String_P(Arg) ((XEN_FALSE_P(Arg)) || (XEN_STRING_P(Arg)))
 
 
 /* ---------------------------------------- types ---------------------------------------- */
@@ -227,9 +230,9 @@ XM_TYPE_PTR(GdkXEvent_, GdkXEvent*)
 XM_TYPE_PTR(GdkEvent_, GdkEvent*)
 XM_TYPE_PTR(GdkSpan_, GdkSpan*)
 XM_TYPE_PTR(GdkEventKey_, GdkEventKey*)
-#define C_TO_XEN_gchar_(Arg) C_TO_XEN_STRING(Arg)
-#define XEN_TO_C_gchar_(Arg) (gchar*)(XEN_TO_C_STRING(Arg))
-#define XEN_gchar__P(Arg) XEN_STRING_P(Arg)
+#define C_TO_XEN_gchar_(Arg) C_TO_XEN_String(Arg)
+#define XEN_TO_C_gchar_(Arg) (gchar*)(XEN_TO_C_String(Arg))
+#define XEN_gchar__P(Arg) XEN_String_P(Arg)
 XM_TYPE_PTR(GtkMenu_, GtkMenu*)
 XM_TYPE_PTR(gint_, gint*)
 XM_TYPE_PTR(gboolean_, gboolean*)
@@ -343,9 +346,9 @@ XM_TYPE_PTR(GdkRectangle_, GdkRectangle*)
 #define XEN_GdkJoinStyle_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR(gint8_, gint8*)
 XM_TYPE_PTR(gchar__, gchar**)
-#define C_TO_XEN_char_(Arg) C_TO_XEN_STRING(Arg)
-#define XEN_TO_C_char_(Arg) (char*)(XEN_TO_C_STRING(Arg))
-#define XEN_char__P(Arg) XEN_STRING_P(Arg)
+#define C_TO_XEN_char_(Arg) C_TO_XEN_String(Arg)
+#define XEN_TO_C_char_(Arg) (char*)(XEN_TO_C_String(Arg))
+#define XEN_char__P(Arg) XEN_String_P(Arg)
 #define C_TO_XEN_GdkGrabStatus(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkGrabStatus(Arg) (GdkGrabStatus)(XEN_TO_C_INT(Arg))
 #define XEN_GdkGrabStatus_P(Arg) XEN_INTEGER_P(Arg)
@@ -391,9 +394,9 @@ XM_TYPE_PTR(GdkBitmap__, GdkBitmap**)
 #define C_TO_XEN_GdkNativeWindow(Arg) C_TO_XEN_ULONG(Arg)
 #define XEN_TO_C_GdkNativeWindow(Arg) (GdkNativeWindow)(XEN_TO_C_ULONG(Arg))
 #define XEN_GdkNativeWindow_P(Arg) XEN_ULONG_P(Arg)
-#define C_TO_XEN_guchar_(Arg) C_TO_XEN_STRING(Arg)
-#define XEN_TO_C_guchar_(Arg) (guchar*)(XEN_TO_C_STRING(Arg))
-#define XEN_guchar__P(Arg) XEN_STRING_P(Arg)
+#define C_TO_XEN_guchar_(Arg) C_TO_XEN_String(Arg)
+#define XEN_TO_C_guchar_(Arg) (guchar*)(XEN_TO_C_String(Arg))
+#define XEN_guchar__P(Arg) XEN_String_P(Arg)
 #define C_TO_XEN_GdkPropMode(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkPropMode(Arg) (GdkPropMode)(XEN_TO_C_INT(Arg))
 #define XEN_GdkPropMode_P(Arg) XEN_INTEGER_P(Arg)
@@ -30510,7 +30513,7 @@ static int xg_already_inited = 0;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"03-Nov-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"05-Nov-02\")");
 #endif
       xg_already_inited = 1;
     }
