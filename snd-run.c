@@ -8303,6 +8303,21 @@ int evaluate_ptree_1f2b(void *upt, Float arg)
   return(pt->ints[pt->result->addr]);
 }
 
+Float evaluate_ptreec(void *upt, Float arg, vct *v, int dir);
+Float evaluate_ptreec(void *upt, Float arg, vct *v, int dir)
+{
+  ptree *pt = (ptree *)upt;
+  pt->dbls[pt->args[0]] = arg;
+  if (pt->arity > 1)
+    {
+      pt->ints[pt->args[1]] = (int)v;
+      pt->ints[pt->args[2]] = dir;
+    }
+  eval_ptree(pt);
+  return(pt->dbls[pt->result->addr]);
+}
+
+
 /* ---------------- internal testing stuff ---------------- */
 
 static XEN g_run_eval(XEN code, XEN arg)

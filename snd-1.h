@@ -95,7 +95,7 @@ typedef struct snd__fd {
   off_t frag_pos;
   double incr, curval;
   void *ptree, *ptree1;
-  XEN closure;
+  XEN closure, closure1;
   double incr2, curval2, incr3, curval3;
   mus_sample_t (*rev_run)(struct snd__fd *sf);
   Float (*rev_runf)(struct snd__fd *sf);

@@ -4157,7 +4157,7 @@ EDITS: 5
 	    (snd-display ";ptree2 1: ~A" (channel->vct)))
 	(if (not (string=? (display-edits ind 0 3) "
  (ptree[1] 0 11) ; ptree 1 0 11 [3:2]:
-   (at 0, cp->sounds[1][0:10, 1.000000, loc2: 1, scl2: 1.000000, loc: 0, pos: 0, scl: 1.000000, code: (lambda (y) (* y 0.5))]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000000, loc2: 1, pos2: 0, scl2: 1.000000, loc: 0, pos: 0, scl: 1.000000, code: (lambda (y) (* y 0.5))]) [buf: 11] 
    (at 11, end_mark)
 "))
 	    (snd-display ";ptree2 4: ~A" (display-edits ind 0 3)))
@@ -4176,7 +4176,7 @@ EDITS: 5
 	    (snd-display ";ptree2 7: ~A" (channel->vct)))
 	(if (not (string=? (display-edits ind 0 4) "
  (ptree[1] 0 11) ; ptree 1 0 11 [4:2]:
-   (at 0, cp->sounds[1][0:10, 1.000000, loc2: 1, scl2: 1.500000, loc: 0, pos: 0, scl: 1.000000, code: (lambda (y) (* y 0.5))]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000000, loc2: 1, pos2: 0, scl2: 1.500000, loc: 0, pos: 0, scl: 1.000000, code: (lambda (y) (* y 0.5))]) [buf: 11] 
    (at 11, end_mark)
 "))
 	    (snd-display ";ptree2 8: ~A" (display-edits ind 0 4)))
@@ -4190,7 +4190,7 @@ EDITS: 5
 	    (snd-display ";ptree2 9: ~A" (channel->vct)))
 	(if (not (string=? (display-edits ind 0 6) "
  (scale 0 11) ; scale-channel 3.0000 0 11 [6:2]:
-   (at 0, cp->sounds[1][0:10, 3.000000, loc2: 1, scl2: 2.000000, loc: 0, pos: 0, scl: 0.500000, code: (lambda (y) (* y 1.5))]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 3.000000, loc2: 1, pos2: 0, scl2: 2.000000, loc: 0, pos: 0, scl: 0.500000, code: (lambda (y) (* y 1.5))]) [buf: 11] 
    (at 11, end_mark)
 "))
 	    (snd-display ";ptree2 10: ~A" (display-edits ind 0 6)))
@@ -4202,7 +4202,7 @@ EDITS: 5
 	(if (not (string=? (display-edits ind 0 6) "
  (scale 0 11) ; scale-channel 3.0000 0 11 [6:4]:
    (at 0, cp->sounds[1][0:1, 6.000000, loc: 0, pos: 0, scl: 0.500000, code: (lambda (y) (* y 1.5))]) [buf: 11] 
-   (at 2, cp->sounds[1][2:5, 3.000000, loc2: 1, scl2: 2.000000, loc: 0, pos: 0, scl: 0.500000, code: (lambda (y) (* y 1.5))]) [buf: 11] 
+   (at 2, cp->sounds[1][2:5, 3.000000, loc2: 1, pos2: 0, scl2: 2.000000, loc: 0, pos: 2, scl: 0.500000, code: (lambda (y) (* y 1.5))]) [buf: 11] 
    (at 6, cp->sounds[1][6:10, 6.000000, loc: 0, pos: 6, scl: 0.500000, code: (lambda (y) (* y 1.5))]) [buf: 11] 
    (at 11, end_mark)
 "))
@@ -4223,7 +4223,7 @@ EDITS: 5
 	    (snd-display ";ptree2-zero 1: ~A" (channel->vct)))
 	(if (not (string=? (display-edits ind 0 4) "
  (ptree[1] 0 11) ; ptree 1 0 11 [4:2]:
-   (at 0, cp->sounds[1][0:10, 1.000000, loc2: 1, scl2: 1.000000, loc: 0, pos: 0, scl: 0.000000, code: (lambda (y) (+ y 0.5))]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000000, loc2: 1, pos2: 0, scl2: 1.000000, loc: 0, pos: 0, scl: 0.000000, code: (lambda (y) (+ y 0.5))]) [buf: 11] 
    (at 11, end_mark)
 "))
 	    (snd-display ";ptree2-zero 2: ~A" (display-edits ind 0 4)))
@@ -4244,7 +4244,7 @@ EDITS: 5
 	    (snd-display ";ptree2-ramp 1: ~A" (channel->vct)))
 	(if (not (string=? (display-edits ind 0 4) "
  (ptree[1] 0 11) ; ptree 1 0 11 [4:2]:
-   (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.000000, loc2: 1, scl2: 1.000000, loc: 0, pos: 0, scl: 1.000000, code: (lambda (y) (* y 0.5))]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.000000, loc2: 1, pos2: 0, scl2: 1.000000, loc: 0, pos: 0, scl: 1.000000, code: (lambda (y) (* y 0.5))]) [buf: 11] 
    (at 11, end_mark)
 "))
 	    (snd-display ";ptree2-ramp 2: ~A" (display-edits ind 0 4)))
@@ -4253,7 +4253,7 @@ EDITS: 5
 	    (snd-display ";ptree2-ramp 3: ~A" (channel->vct)))
 	(if (not (string=? (display-edits ind 0 5) "
  (scale 0 11) ; scale-channel 0.5000 0 11 [5:2]:
-   (at 0, cp->sounds[1][0:10, 0.500000, -0.000000 -> 1.000000, loc2: 1, scl2: 1.000000, loc: 0, pos: 0, scl: 1.000000, code: (lambda (y) (* y 0.5))]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 0.500000, -0.000000 -> 1.000000, loc2: 1, pos2: 0, scl2: 1.000000, loc: 0, pos: 0, scl: 1.000000, code: (lambda (y) (* y 0.5))]) [buf: 11] 
    (at 11, end_mark)
 "))
 	    (snd-display ";ptree2-ramp 4: ~A" (display-edits ind 0 5)))
@@ -5695,25 +5695,25 @@ EDITS: 5
 	    (snd-display ";ptree+ramp: ~A" (display-edits ind 0 3)))
 	(undo 2)
 
-	;; ramp+xramp+ptree
+	;; ramp+xramp+ptree (now optimized)
 	(ramp-channel 0.0 1.0)
 	(xramp-channel 0.0 1.0 32.0)
 	(ptree-channel (lambda (y) y))
 	(if (not (string=? (display-edits ind 0 4) "
- (set 0 11) ; map-channel [4:2]:
-   (at 0, cp->sounds[2][0:10, 1.000000]) [buf: 11] 
+ (ptree[0] 0 11) ; ptree 0 0 11 [4:2]:
+   (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.000000, 0.000000 -> 3.465736, off2: -0.032258, scl2: 0.032258, loc: 0, pos: 0, scl: 1.000000, code: (lambda (y) y)]) [buf: 11] 
    (at 11, end_mark)
 "))
 	    (snd-display ";ramp+xramp+ptree: ~A" (display-edits ind 0 4)))
 	(undo 3)
 
-	;; xramp+ramp+ptree
+	;; xramp+ramp+ptree (now optimized)
 	(xramp-channel 0.0 1.0 32.0)
 	(ramp-channel 0.0 1.0)
 	(ptree-channel (lambda (y) y))
 	(if (not (string=? (display-edits ind 0 4) "
- (set 0 11) ; map-channel [4:2]:
-   (at 0, cp->sounds[2][0:10, 1.000000]) [buf: 11] 
+ (ptree[0] 0 11) ; ptree 0 0 11 [4:2]:
+   (at 0, cp->sounds[1][0:10, 1.000000, 0.000000 -> 3.465736, -0.000000 -> 1.000000, off: -0.032258, scl: 0.032258, loc: 0, pos: 0, scl: 1.000000, code: (lambda (y) y)]) [buf: 11] 
    (at 11, end_mark)
 "))
 	    (snd-display ";xramp+ramp+ptree: ~A" (display-edits ind 0 4)))
@@ -5737,7 +5737,7 @@ EDITS: 5
 	(ptree-channel (lambda (y) y))
 	(if (not (string=? (display-edits ind 0 3) "
  (ptree[1] 0 11) ; ptree 1 0 11 [3:2]:
-   (at 0, cp->sounds[1][0:10, 1.000000, loc2: 1, scl2: 1.000000, loc: 0, pos: 0, scl: 1.000000, code: (lambda (y) y)]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000000, loc2: 1, pos2: 0, scl2: 1.000000, loc: 0, pos: 0, scl: 1.000000, code: (lambda (y) y)]) [buf: 11] 
    (at 11, end_mark)
 "))
 	    (snd-display ";ptree+ptree: ~A" (display-edits ind 0 3)))
@@ -5753,7 +5753,7 @@ EDITS: 5
 	(ramp-channel 0 1)
 	(if (not (string=? (display-edits ind 0 4 #f) "
  (ramp 0 11) ; ramp-channel 0.0000 1.0000 0.0000 0.0000 0 11 [4:2]:
-   (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.000000, loc2: 1, scl2: 1.000000, loc: 0, pos: 0, scl: 1.000000]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.000000, loc2: 1, pos2: 0, scl2: 1.000000, loc: 0, pos: 0, scl: 1.000000]) [buf: 11] 
    (at 11, end_mark)
 "))
 	    (snd-display ";ramp ptree2: ~A" (display-edits ind 0 4 #f)))
@@ -5762,7 +5762,7 @@ EDITS: 5
 	(ramp-channel 0 1)
 	(if (not (string=? (display-edits ind 0 5 #f) "
  (ramp 0 11) ; ramp-channel 0.0000 1.0000 0.0000 0.0000 0 11 [5:2]:
-   (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.000000, -0.000000 -> 1.000000, loc2: 1, scl2: 1.000000, loc: 0, pos: 0, scl: 1.000000]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.000000, -0.000000 -> 1.000000, loc2: 1, pos2: 0, scl2: 1.000000, loc: 0, pos: 0, scl: 1.000000]) [buf: 11] 
    (at 11, end_mark)
 "))
 	    (snd-display ";ramp2 ptree2: ~A" (display-edits ind 0 5 #f)))
@@ -5772,7 +5772,7 @@ EDITS: 5
 	(xramp-channel 0 1 32)
 	(if (not (string=? (display-edits ind 0 4 #f) "
  (ramp 0 11) ; xramp-channel 0.0000 3.4657 0.0323 -0.0323 0 11 [4:2]:
-   (at 0, cp->sounds[1][0:10, 1.000000, 0.000000 -> 3.465736, off: -0.032258, scl: 0.032258, loc2: 1, scl2: 1.000000, loc: 0, pos: 0, scl: 1.000000]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000000, 0.000000 -> 3.465736, off: -0.032258, scl: 0.032258, loc2: 1, pos2: 0, scl2: 1.000000, loc: 0, pos: 0, scl: 1.000000]) [buf: 11] 
    (at 11, end_mark)
 "))
 	    (snd-display ";xramp ptree2: ~A" (display-edits ind 0 4 #f)))
@@ -5787,7 +5787,7 @@ EDITS: 5
 	(ramp-channel 0 1)
 	(if (not (string=? (display-edits ind 0 4 #f) "
  (ptree[1] 0 11) ; ptree 1 0 11 [4:2]:
-   (at 0, cp->sounds[1][0:10, 1.000000, loc2: 1, scl2: 1.000000, loc: 0, pos: 0, scl: 0.000000]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000000, loc2: 1, pos2: 0, scl2: 1.000000, loc: 0, pos: 0, scl: 0.000000]) [buf: 11] 
    (at 11, end_mark)
 "))
 	    (snd-display ";ramp ptree2 zero: ~A" (display-edits ind 0 4 #f)))
@@ -5796,7 +5796,7 @@ EDITS: 5
 	(ramp-channel 0 1)
 	(if (not (string=? (display-edits ind 0 5 #f) "
  (ramp 0 11) ; ramp-channel 0.0000 1.0000 0.0000 0.0000 0 11 [5:2]:
-   (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.000000, loc2: 1, scl2: 1.000000, loc: 0, pos: 0, scl: 0.000000]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000000, -0.000000 -> 1.000000, loc2: 1, pos2: 0, scl2: 1.000000, loc: 0, pos: 0, scl: 0.000000]) [buf: 11] 
    (at 11, end_mark)
 "))
 	    (snd-display ";ramp2 ptree2 zero: ~A" (display-edits ind 0 5 #f)))
@@ -5806,7 +5806,7 @@ EDITS: 5
 	(xramp-channel 0 1 32)
 	(if (not (string=? (display-edits ind 0 4 #f) "
  (ptree[1] 0 11) ; ptree 1 0 11 [4:2]:
-   (at 0, cp->sounds[1][0:10, 1.000000, loc2: 1, scl2: 1.000000, loc: 0, pos: 0, scl: 0.000000]) [buf: 11] 
+   (at 0, cp->sounds[1][0:10, 1.000000, loc2: 1, pos2: 0, scl2: 1.000000, loc: 0, pos: 0, scl: 0.000000]) [buf: 11] 
    (at 11, end_mark)
 "))
 	    (snd-display ";xramp ptree2 zero: ~A" (display-edits ind 0 4 #f)))
@@ -18508,6 +18508,157 @@ EDITS: 5
 		       (vct pos .1 .2 .3 .4 .5 .6 .7 .8 .9 1.0 1.1 1.2 1.3 1.4)))
 	(zigzag-check "xen+ramp2" ind 0)
 	(undo 3)
+	(revert-sound ind)
+	(map-chan (lambda (y) (random 1.0)) 0 10)
+	(ramp-channel 0.0 1.0)
+	(xen-channel (lambda (y data forward)
+		       (let ((val (vct-ref data (1+ (vct-ref data 0)))))
+			 (if forward
+			     (vct-set! data 0 (1+ (vct-ref data 0)))
+			     (vct-set! data 0 (1- (vct-ref data 0))))
+			 val))
+		     0 (frames) ind 0 #f #f
+		     (lambda (pos dur)
+		       (vct pos .1 .2 .3 .4 .5 .6 .7 .8 .9 1.0 1.1 1.2 1.3 1.4)))
+	(ramp-channel 0.0 1.0)
+	(zigzag-check "ramp+xen+ramp" ind 0)
+	(ramp-channel 0.0 1.0)
+	(zigzag-check "ramp+xen+ramp2" ind 0)
+	(undo 3)
+	(ramp-channel 0.0 1.0)
+	(xen-channel (lambda (y data forward)
+		       (let ((val (vct-ref data (1+ (vct-ref data 0)))))
+			 (if forward
+			     (vct-set! data 0 (1+ (vct-ref data 0)))
+			     (vct-set! data 0 (1- (vct-ref data 0))))
+			 val))
+		     0 (frames) ind 0 #f #f
+		     (lambda (pos dur)
+		       (vct pos .1 .2 .3 .4 .5 .6 .7 .8 .9 1.0 1.1 1.2 1.3 1.4)))
+	(ramp-channel 0.0 1.0)
+	(zigzag-check "ramp2+xen+ramp" ind 0)
+	(undo 4)
+	(ptree-channel (lambda (y) (* y 0.5)))
+	(ramp-channel 0.0 1.0)
+	(ptree-channel (lambda (y) (* y 0.25)))
+	(zigzag-check "ptree+ramp+ptree" ind 0)
+	(ramp-channel 0.0 1.0)
+	(zigzag-check "ptree+ramp+ptree+ramp" ind 0)
+	(ramp-channel 0.0 1.0)
+	(zigzag-check "ptree+ramp+ptree+ramp2" ind 0)
+	(undo 3)
+	(ramp-channel 0.0 1.0)
+	(ptree-channel (lambda (y) (* y 0.25)))
+	(zigzag-check "ptree+ramp2+ptree" ind 0)
+	(ramp-channel 0.0 1.0)
+	(zigzag-check "ptree+ramp2+ptree+ramp" ind 0)
+	(undo 2)
+	(ramp-channel 0.0 1.0)
+	(ptree-channel (lambda (y) (* y 0.25)))
+	(zigzag-check "ptree+ramp3+ptree" ind 0)
+	(undo 5)
+	(ramp-channel 0.0 1.0)
+	(ramp-channel 0.0 1.0)
+	(ptree-channel (lambda (y) (* y 0.25)))
+	(ptree-channel (lambda (y) (* y 0.5)))
+	(zigzag-check "ptree2+ramp2" ind 0)
+	(undo 4)
+	(xramp-channel 0.0 1.0 32)
+	(ptree-channel (lambda (y) (* y 0.25)))
+	(ptree-channel (lambda (y) (* y 0.5)))
+	(zigzag-check "ptree2+xramp" ind 0)
+	(undo)
+	(ramp-channel 0.0 1.0)
+	(ramp-channel 0.0 1.0)
+	(zigzag-check "ramp2+ptree+xramp" ind 0)
+	(undo 4)
+	(xramp-channel 0.0 1.0 32)
+	(ramp-channel 0.0 1.0)
+	(ptree-channel (lambda (y) (* y 0.25)))
+	(zigzag-check "prx" ind 0)
+	(undo 3)
+	(scale-channel 0.0)
+	(ptree-channel (lambda (y) (* y 0.25)))
+	(xramp-channel 0.0 1.0 32)
+	(ramp-channel 0.0 1.0)
+	(zigzag-check "rxpz" ind 0)
+	(ramp-channel 0.0 1.0)
+	(zigzag-check "r2xpz" ind 0)
+	(undo 3)
+	(ramp-channel 0.0 1.0)
+	(xramp-channel 0.0 1.0 32)
+	(zigzag-check "xrpz" ind 0)
+	(ramp-channel 0.0 1.0)
+	(zigzag-check "rxrpz" ind 0)
+	(undo 5)
+	(ptree-channel (lambda (y) (* y 0.25)))
+	(ramp-channel 0.0 1.0)
+	(xramp-channel 0.0 1.0 32)
+	(ramp-channel 0.0 1.0)
+	(zigzag-check "rxrp" ind 0)
+	(undo 4)
+	(ptree-channel (lambda (y) (* y 0.25)))
+	(xramp-channel 0.0 1.0 32)
+	(ramp-channel 0.0 1.0)
+	(ramp-channel 0.0 1.0)
+	(zigzag-check "r2xp" ind 0)
+	(undo 4)
+	(scale-channel 0.0)
+	(ptree-channel (lambda (y) (* y 0.25)))
+	(xramp-channel 0.0 1.0 32)
+	(ptree-channel (lambda (y) (* y 0.5)))
+	(zigzag-check "pxpz" ind 0)
+	(undo 2)
+	(ramp-channel 0.0 1.0)
+	(ptree-channel (lambda (y) (* y 0.5)))
+	(zigzag-check "prpz" ind 0)
+	(undo)
+	(ramp-channel 0.0 1.0)
+	(ptree-channel (lambda (y) (* y 0.5)))
+	(zigzag-check "pr2pz" ind 0)
+	(undo)
+	(ramp-channel 0.0 1.0)
+	(ptree-channel (lambda (y) (* y 0.5)))
+	(zigzag-check "pr3pz" ind 0)
+	(undo 6)
+	(ramp-channel 0.0 1.0)
+	(ramp-channel 0.0 1.0)
+	(ramp-channel 0.0 1.0)
+	(ptree-channel (lambda (y) (* y 0.5)))
+	(ptree-channel (lambda (y) (* y 0.5)))
+	(zigzag-check "p2r3" ind 0)
+	(undo 4)
+	(ptree-channel (lambda (y) (* y 0.5)))
+	(ramp-channel 0.0 1.0)
+	(ptree-channel (lambda (y) (* y 0.5)))
+	(zigzag-check "prpr" ind 0)
+	(ramp-channel 0.0 1.0)
+	(zigzag-check "rprpr" ind 0)
+	(undo 2)
+	(ramp-channel 0.0 1.0)
+	(ptree-channel (lambda (y) (* y 0.5)))
+	(zigzag-check "pr2pr" ind 0)
+	(undo 4)
+	(ramp-channel 0.0 1.0)
+	(ptree-channel (lambda (y) (* y 0.5)))
+	(ramp-channel 0.0 1.0)
+	(ptree-channel (lambda (y) (* y 0.5)))
+	(zigzag-check "prpr2" ind 0)
+	(undo 5)
+	(ramp-channel 0.0 1.0)
+	(ptree-channel (lambda (y) (* y 0.5)))
+	(ramp-channel 0.0 1.0)
+	(ptree-channel (lambda (y) (* y 0.5)))
+	(zigzag-check "prpr" ind 0)
+	(ramp-channel 0.0 1.0)
+	(zigzag-check "rprpr" ind 0)
+	(undo 5)
+	(xramp-channel 0.0 1.0 32)
+	(ramp-channel 0.0 1.0)
+	(ramp-channel 0.0 1.0)
+	(ptree-channel (lambda (y) (* y 0.5)))
+	(zigzag-check "pr2x" ind 0)
+	(undo 4)
 
 	;; ramp[n]-ptree[c][zero] or xen checks
 	(revert-sound ind)
@@ -20018,7 +20169,7 @@ EDITS: 2
    (at 50828, end_mark)
 
  (ptree[1] 0 50828) ; ptree 1 0 50828 [2:2]:
-   (at 0, cp->sounds[0][0:50827, 1.000000, loc2: 1, scl2: 1.000000, loc: 0, pos: 0, scl: 1.000000, code: (lambda (y) (* 2.0 (sin y)))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 0, cp->sounds[0][0:50827, 1.000000, loc2: 1, pos2: 0, scl2: 1.000000, loc: 0, pos: 0, scl: 1.000000, code: (lambda (y) (* 2.0 (sin y)))]) [file: /home/bil/cl/oboe.snd[0]]
    (at 50828, end_mark)
 "))))
 	      (snd-display ";ptree display: ~A" (display-edits ind-ptree)))
@@ -20147,9 +20298,9 @@ EDITS: 6
 
  (ptree[3] 0 3200) ; ptree 3 0 3200 [6:12]:
    (at 0, cp->sounds[0][0:99, 1.000000, loc: 3, pos: 0, scl: 2.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 100, cp->sounds[0][100:199, 1.000000, loc2: 3, scl2: 2.000000, loc: 0, pos: 100, scl: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 100, cp->sounds[0][100:199, 1.000000, loc2: 3, pos2: 100, scl2: 2.000000, loc: 0, pos: 0, scl: 1.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
    (at 200, cp->sounds[0][200:999, 1.000000, loc: 3, pos: 200, scl: 2.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
-   (at 1000, cp->sounds[0][1000:1099, 1.000000, loc2: 3, scl2: 1.000000, loc: 1, pos: 1000, scl: 2.000000, code: (lambda (y) (+ y 0.2))]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 1000, cp->sounds[0][1000:1099, 1.000000, loc2: 3, pos2: 1000, scl2: 1.000000, loc: 1, pos: 0, scl: 2.000000, code: (lambda (y) (+ y 0.2))]) [file: /home/bil/cl/oboe.snd[0]]
    (at 1100, cp->sounds[0][1100:1999, 1.000000, loc: 3, pos: 1100, scl: 2.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
    (at 2000, cp->sounds[0][2000:2500, 1.000000, -0.000000 -> 1.000000, loc: 3, pos: 2000, scl: 2.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
    (at 2501, cp->sounds[0][2501:2999, 1.000000, 0.997996 -> 0.000000, loc: 3, pos: 2501, scl: 2.000000, code: (lambda (y) (+ y 0.1))]) [file: /home/bil/cl/oboe.snd[0]]
