@@ -4419,20 +4419,6 @@ static int channel_to_file(chan_info *cp, const char *ofile, int edpos)
 #define S_override_samples_with_origin  "override-samples-with-origin"
 
 
-#if HAVE_RUBY
-  #define TO_PROC_NAME(Str) xen_scheme_procedure_to_ruby(Str)
-  #define PROC_OPEN "("
-  #define PROC_SEP ", "
-  #define VECTOR_OPEN "["
-  #define VECTOR_CLOSE "]"
-#else
-  #define TO_PROC_NAME(Str) Str
-  #define PROC_OPEN " "
-  #define PROC_SEP " "
-  #define VECTOR_OPEN "'#("
-  #define VECTOR_CLOSE ")"
-#endif
-
 #define BUFFER_NOT_FILE_LIMIT 64
 
 static char *edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
@@ -7761,7 +7747,7 @@ static XEN g_undo(XEN ed_n, XEN snd_n, XEN chn_n) /* opt ed_n */
   if (XEN_INTEGER_P(ed_n))
     {
       num = XEN_TO_C_INT(ed_n);
-      if (num != 0)
+      if ((num != 0) && (num < 1000000000) && (num > -1000000000))
 	undo_edit_with_sync(cp, num);
       return(C_TO_XEN_INT(num));
     }
@@ -7780,7 +7766,7 @@ static XEN g_redo(XEN ed_n, XEN snd_n, XEN chn_n) /* opt ed_n */
   if (XEN_INTEGER_P(ed_n))
     {
       num = XEN_TO_C_INT(ed_n);
-      if (num != 0)
+      if ((num != 0) && (num < 1000000000) && (num > -1000000000))
 	redo_edit_with_sync(cp, num);
       return(C_TO_XEN_INT(num));
     }

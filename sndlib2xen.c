@@ -1038,7 +1038,7 @@ from the audio line into sound-data sdata."
   inbytes = frms * sd->chans * mus_bytes_per_sample(fmt);
   inbuf = (char *)CALLOC(inbytes, sizeof(char));
   val = mus_audio_read(fd, inbuf, inbytes);
-  mus_file_read_buffer(fmt, 0, sd->chans, frms - 1, sd->data, inbuf);
+  mus_file_read_buffer(fmt, 0, sd->chans, frms, sd->data, inbuf); /* frms here because this is "nints" not "end"! */
   FREE(inbuf);
   return(xen_return_first(C_TO_XEN_INT(val), sdata));
 }

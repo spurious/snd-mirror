@@ -2759,8 +2759,6 @@ Reverb-feedback sets the scaler on the feedback.
   (variable-display (* k .02) wid2))
 !#
 
-;;; TODO: bess examples via vardpy
-
 (define with-minmax-button
   (let ((maxed-snds '()))
     (lambda (snd)

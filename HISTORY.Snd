@@ -1,5 +1,6 @@
 Snd change log
 
+  18-Oct:    oscope.scm.
   15-Oct:    normalize-channel.
   11-Oct:    vct->string
              moved scale-sound-by and scale-sound-to to snd7.scm.

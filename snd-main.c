@@ -5,14 +5,6 @@
  *         in Guile: files = XEN_AS_STRING(XEN_EVAL_C_STRING("snd-loaded-files"))
  */
 
-#if HAVE_RUBY
-  #define TO_VAR_NAME(Str) xen_scheme_constant_to_ruby(Str)
-  #define TO_PROC_NAME(Str) xen_scheme_procedure_to_ruby(Str)
-#else
-  #define TO_VAR_NAME(Str) Str
-  #define TO_PROC_NAME(Str) Str
-#endif
-
 static void remove_temp_files(chan_info *cp)
 {
   free_sound_list(cp);
@@ -780,13 +772,6 @@ static XEN after_save_state_hook;
 
 static char *save_state_or_error (char *save_state_name)
 {
-#if HAVE_RUBY
-  #define BPAREN ""
-  #define EPAREN ""
-#else
-  #define BPAREN "("
-  #define EPAREN ")"
-#endif
   FILE *save_fd;
   char *locale = NULL;
   save_fd = open_restart_file(save_state_name, false);

@@ -1184,9 +1184,11 @@ static void one_fft(fft_state *fs)
 
 void single_fft(chan_info *cp, bool update_display, bool force_recalc)
 {
+  fft_state *fs;
   if (cp->transform_size < 2) return;
-  cp->fft_data = make_fft_state(cp, force_recalc);
-  one_fft(cp->fft_data);
+  fs = make_fft_state(cp, force_recalc);
+  cp->fft_data = (void *)fs; /* make g++ happy */
+  one_fft(fs);
   if (update_display) display_channel_fft_data(cp);
 }
 
@@ -1596,14 +1598,14 @@ void c_convolve(char *fname, Float amp, int filec, off_t filehdr, int filterc, o
 	  pbuf = pbuffer[0];
 
 	  /* read in the "impulse response" */
-	  mus_file_read_any(filterc, 0, filter_chans, filtersize - 1, fbuffer, fcm);
+	  mus_file_read_any(filterc, 0, filter_chans, filtersize, fbuffer, fcm);
 	  for (i = 0; i < filtersize; i++) 
 	    rl1[i] = MUS_SAMPLE_TO_FLOAT(fbuffer[filter_chan][i]);
 	  progress_report(gsp, "convolve", ip + 1, total_chans, .1, from_enved);
 	  mus_header_write_next_header(tempfile, 22050, 1, 28, data_size * 4, MUS_BINT, NULL, 0);
 	  mus_file_open_descriptors(tempfile, fname, MUS_BINT, 4, 28, 1, MUS_NEXT);
 	  /* get the convolution data */
-	  mus_file_read_any(filec, 0, 1, data_size - 1, pbuffer, cm);
+	  mus_file_read_any(filec, 0, 1, data_size, pbuffer, cm);
 	  for (i = 0; i < data_size; i++) rl0[i] = MUS_SAMPLE_TO_FLOAT(pbuf[i]);
 
 	  progress_report(gsp, "convolve", ip + 1, total_chans, .3, from_enved);

@@ -383,10 +383,6 @@ static char *b2s(bool val) {if (val) return("#t"); else return("#f");}
 
 static bool fneq(Float a, Float b) {return(fabs(a - b) > .00001);}
 
-#if HAVE_RUBY
-  #define TO_PROC_NAME(Str) xen_scheme_procedure_to_ruby(Str)
-#endif
-
 void save_recorder_state(FILE *fd)
 {
   if (!rp) return;

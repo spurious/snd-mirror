@@ -70,6 +70,7 @@
   <li><a href="#musglyphs">musglyphs.scm</a>: Music notation symbols (from CMN)
   <li><a href="#nbdoc">nb.scm, nb.rb</a>: Popup File info etc
   <li><a href="#noisedoc">noise.scm</a>: noise.ins from CLM translated to Scheme/Ruby by Michael Scholz
+  <li><a href="#oscopedoc">oscope.scm</a>: an oscilloscope/spectrum analysis dialog
   <li><a href="#peakenvdoc">peak-env.scm</a>: peak envelope support
   <li><a href="#pianodoc">piano.scm, piano.rb</a>: piano physical model
   <li><a href="#playdoc">play.scm</a>: play-related functions
@@ -2292,6 +2293,12 @@ guile-gdbm, set the variable <b>use-gdbm</b> to #t).
 <p>The noise files are translations (thanks to Michael Scholz) of CLM's noise.ins.
 noise.ins has a very long pedigree; I think it dates back to about 1978.  It can produce
 those all-important whooshing sounds.
+</p>
+
+<A NAME="oscopedoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>oscope.scm</h2></td></tr></table>
+
+<p>oscope.scm sets up a dialog with a standard Snd channel window (time domain, fft etc) that
+displays the data read from the microphone in "real time".
 </p>
 
 

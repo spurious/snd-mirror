@@ -819,7 +819,3 @@ returning you to the true top-level."
 							     (set! pa (cdr pa))
 							     (set! na (cdr na))))))))))
 				   (apply ,key-name allargs)))))))))))))
-    
-
-;;; TODO: ws in delay? [slib?]
-;;; TODO: cont+ws? grn proc? as-needed? hook?

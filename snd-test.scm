@@ -34,6 +34,7 @@
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
 ;;; need some way to check that graphs are actually drawn (region dialog etc)
+;;; TODO: set-sample with edpos test, oscope.scm somehow
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 

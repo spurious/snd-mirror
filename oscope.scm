@@ -7,7 +7,30 @@
 	  (snd-error (format #f "snd-motif.scm needs the xm module: ~A" hxm))
 	  (dlinit hxm "init_xm"))))
 
+(if (not (defined? 'red-pixel))
+    (define red-pixel
+      (let ((pix #f))
+	(lambda ()
+	  (if (not pix)
+	      (let* ((shell (cadr (main-widgets)))
+		     (dpy (XtDisplay shell))
+		     (scr (DefaultScreen dpy))
+		     (cmap (DefaultColormap dpy scr))
+		     (col (XColor)))
+		(if (= (XAllocNamedColor dpy cmap "red" col col) 0)
+		    (snd-error "can't allocate red!")
+		    (set! pix (.pixel col)))))
+	  pix))))
+
+
 (define oscope-dialog #f)
+(define in-data (make-sound-data 1 256))
+(define cycle-length 1024)
+(define cycle-start 0)
+(define power #f)
+(define frozen #f)
+(define audio-srate 22050)
+
 
 (define (make-oscope)
   (let ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
@@ -32,36 +55,106 @@
     (XmStringFree titlestr)
     (XtManageChild oscope-dialog)
     ;; TODO: protect here against no-window display
-    (let* ((mainform (XtCreateManagedWidget "oscope-form" xmFormWidgetClass oscope-dialog
+    (let* ((toppane (XtCreateManagedWidget "oscope-pane" xmFormWidgetClass oscope-dialog
 					    (list XmNleftAttachment      XmATTACH_FORM
 						  XmNrightAttachment     XmATTACH_FORM
 						  XmNtopAttachment       XmATTACH_FORM
 						  XmNbottomAttachment    XmATTACH_WIDGET
 						  XmNbottomWidget        (XmMessageBoxGetChild oscope-dialog XmDIALOG_SEPARATOR)
-						  XmNbackground          (basic-color))))
-    	   (graph (make-variable-graph mainform "input" 8192 (mus-srate))))
-      (list graph (channel-data graph 0)))))
+						  )))
+	   (bottom-row (XtCreateManagedWidget "oscope-row" xmRowColumnWidgetClass toppane
+					    (list XmNleftAttachment      XmATTACH_FORM
+						  XmNrightAttachment     XmATTACH_FORM
+						  XmNtopAttachment       XmATTACH_NONE
+						  XmNbottomAttachment    XmATTACH_FORM
+						  XmNorientation         XmVERTICAL
+						  )))
+	   (prow (XtCreateManagedWidget "oscope-row" xmRowColumnWidgetClass bottom-row
+					    (list XmNleftAttachment      XmATTACH_FORM
+						  XmNrightAttachment     XmATTACH_FORM
+						  XmNtopAttachment       XmATTACH_FORM
+						  XmNbottomAttachment    XmATTACH_NONE
+						  XmNorientation         XmHORIZONTAL
+						  XmNbackground          (basic-color)
+						  )))
+	   (power-button (XtCreateManagedWidget "power" xmToggleButtonWidgetClass prow 
+						(list    XmNbackground          (basic-color)
+							 XmNselectColor         (red-pixel)
+							 )))
+	   (freeze-button (XtCreateManagedWidget "freeze" xmToggleButtonWidgetClass prow
+						 (list    XmNbackground          (basic-color)
+							  XmNselectColor         (red-pixel)
+							  )))
+	   (srate-button (XtCreateManagedWidget "44100" xmToggleButtonWidgetClass prow
+						(list    XmNbackground          (basic-color)
+							 )))
+	   (cycle-title (XmStringCreate "cycle length" XmFONTLIST_DEFAULT_TAG))
+	   (cycle (XtCreateManagedWidget "oscope-cycle" xmScaleWidgetClass bottom-row 
+					 (list XmNorientation   XmHORIZONTAL
+					       XmNshowValue     #t
+					       XmNminimum       32
+					       XmNmaximum       8192
+					       XmNvalue         cycle-length
+					       XmNdecimalPoints 0
+					       XmNtitleString   cycle-title
+					       XmNbackground    (basic-color)
+					       )))
+	   (mainform (XtCreateManagedWidget "oscope-form" xmFormWidgetClass toppane
+					    (list XmNleftAttachment      XmATTACH_FORM
+						  XmNrightAttachment     XmATTACH_FORM
+						  XmNtopAttachment       XmATTACH_FORM
+						  XmNbottomAttachment    XmATTACH_WIDGET
+						  XmNbottomWidget        bottom-row
+						  XmNbackground          (basic-color)
+						  )))
+    	   (graph (make-variable-graph mainform "input" 8192 (mus-srate)))
+	   (data (channel-data graph 0)))
+
+      (set! (max-transform-peaks graph 0) 10)
+      (XtAddCallback cycle XmNvalueChangedCallback (lambda (w context info) (set! cycle-length (.value info))))
+      (XtAddCallback cycle XmNdragCallback (lambda (w context info) 
+					     (let ((old-length cycle-length))
+					       (set! cycle-length (.value info))
+					       (if (< cycle-length old-length)
+						   (do ((i cycle-length (1+ i)))
+						       ((= i old-length))
+						     (sound-data-set! data 0 i 0.0))))))
+      (XtAddCallback freeze-button XmNvalueChangedCallback 
+		     (lambda (w context info) 
+		       (set! frozen (not frozen))
+		       (if frozen
+			   (begin
+			     (if (time-graph? graph 0) (update-time-graph graph 0))
+			     (if (transform-graph? graph 0) (update-transform-graph graph 0))))))
+      (XtAddCallback srate-button XmNvalueChangedCallback (lambda (w context info) (set! audio-srate (if (= audio-srate 22050) 44100 22050))))
+      (XtAddCallback power-button XmNvalueChangedCallback 
+		     (lambda (w context info) 
+		       (set! power (not power))
+		       (if power
+			   (let ((in-port (mus-audio-open-input mus-audio-microphone audio-srate 1 mus-lshort 512)))
+			     (do ()
+				 ((or (not power) (c-g?)))
+			       (mus-audio-read in-port in-data 256)
+			       (if (not frozen)
+				   (begin
+				     (set! cycle-start (sound-data->sound-data in-data data cycle-start 256 cycle-length))
+				     (if (< cycle-start 256)
+					 (begin
+					   (if (time-graph? graph 0) (update-time-graph graph 0))
+					   (if (transform-graph? graph 0) (update-transform-graph graph 0)))))))
+			     (if power ; C-g?
+				 (begin
+				   (XmToggleButtonSetValue power-button 0 #f)
+				   (set! power #f)))
+			     (mus-audio-close in-port)))))
+
+      (list graph data))))
 
 (define oscope (make-oscope))
-(define in-data (make-sound-data 1 256))
-(define cycle-length 256)
-(define cycle-start 0)
 
-;;; TODO: longer buffer, on button, cycle length setter, freeze/unfreeze, cursor if long window?
-;;; TODO: sine tone out, fewer peaks default, off/on button to start stop input
-;;; TODO: refresh rate
-
-
-  (let* ((in-port (mus-audio-open-input mus-audio-microphone 22050 1 mus-lshort 512))
-	 (snd (car oscope))
-	 (data (cadr oscope)))
-    (do ()
-	((c-g?)) ; run until C-g stops us
-      (mus-audio-read in-port in-data 256)
-      (set! cycle-start (sound-data->sound-data in-data data cycle-start 256 cycle-length))
-      (if (time-graph? snd 0) (update-time-graph snd 0))
-      (if (transform-graph? snd 0) (update-transform-graph snd 0)))
-    (mus-audio-close in-port))
+;;; TODO: sine tone out
+;;; TODO: srate setting=restart
+;;; TODO: draggable freq axis
 
 #!
 (define* (open-play-output #:optional out-chans out-srate out-format out-bufsize)

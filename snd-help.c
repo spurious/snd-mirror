@@ -369,6 +369,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+18-Oct:  oscope.scm\n\
 15-Oct:  normalize-channel.\n\
 11-Oct:  vct->string\n\
          moved scale-sound-by and scale-sound-to to snd7.scm.\n\
