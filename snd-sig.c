@@ -1520,12 +1520,15 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t b
       if (precalculated_coeffs)
 	{
 	  vct *v;
+	  char *vstr = NULL;
 	  v = (vct *)CALLOC(1, sizeof(vct));
 	  v->length = order;
 	  v->data = precalculated_coeffs;
+	  vstr = vct_to_readable_string(v);
 	  if (dur == (order + CURRENT_SAMPLES(cp)))
-	    new_origin = mus_format("%s %s %d " OFF_TD " #f", S_filter_channel, vct_to_readable_string(v), order, beg);
-	  else new_origin = mus_format("%s %s %d " OFF_TD " " OFF_TD, S_filter_channel, vct_to_readable_string(v), order, beg, dur);
+	    new_origin = mus_format("%s %s %d " OFF_TD " #f", S_filter_channel, vstr, order, beg);
+	  else new_origin = mus_format("%s %s %d " OFF_TD " " OFF_TD, S_filter_channel, vstr, order, beg, dur);
+	  if (vstr) FREE(vstr);
 	}
       else
 	{

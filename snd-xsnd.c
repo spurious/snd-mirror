@@ -82,11 +82,13 @@ void set_minibuffer_string(snd_info *sp, char *str, bool update)
 
 void set_minibuffer_cursor_position(snd_info *sp, int pos)
 {
+  if ((sp->inuse != SOUND_NORMAL) || (!(sp->sgx))) return;
   XmTextSetCursorPosition(MINIBUFFER_TEXT(sp), pos);
 }
 
 char *get_minibuffer_string(snd_info *sp) 
 {
+  if ((sp->inuse != SOUND_NORMAL) || (!(sp->sgx))) return(NULL);
   return(XmTextGetString(MINIBUFFER_TEXT(sp)));
 }
 

@@ -161,9 +161,14 @@ char *vct_to_readable_string(vct *v)
 #if HAVE_GUILE
 static XEN g_vct_to_readable_string(XEN obj)
 {
+  char *vstr;
+  XEN result;
   #define H_vct_to_string "(" S_vct_to_string " v) -> scheme readable description of v"
   XEN_ASSERT_TYPE(VCT_P(obj), obj, XEN_ONLY_ARG, S_vct_to_string, "a vct");
-  return(C_TO_XEN_STRING(vct_to_readable_string(TO_VCT(obj))));
+  vstr = vct_to_readable_string(TO_VCT(obj));
+  result = C_TO_XEN_STRING(vstr);
+  FREE(vstr);
+  return(result);
 }
 #endif
 

@@ -1687,6 +1687,7 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
       losamp = (int)(fp->current_size * cp->spectro_start);
       incr = 1.0;
     }
+  if ((losamp < 0) || (losamp >= hisamp)) return;
   /* no scaling etc here!! see snd_display_fft in snd-fft.c */
   scale = fp->scale;
   if (cp->printing) ps_allocate_grf_points();
@@ -4699,6 +4700,8 @@ static void reset_y_display(chan_info *cp, double sy, double zy)
 
 static bool call_update_graph = true;
 #define MAX_SPECTRO_SCALE 1000.0
+#define MAX_SPECTRO_ANGLE 360.0
+#define MIN_SPECTRO_ANGLE -360.0
 
 static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, char *caller)
 {
@@ -5035,9 +5038,9 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, char *calle
 	}
       else XEN_OUT_OF_RANGE_ERROR(caller, 1, on, S_min_dB " (~A) must be < 0.0");
       break;
-    case CP_SPECTRO_X_ANGLE: cp->spectro_x_angle = XEN_TO_C_DOUBLE(on); calculate_fft(cp); break;
-    case CP_SPECTRO_Y_ANGLE: cp->spectro_y_angle = XEN_TO_C_DOUBLE(on); calculate_fft(cp); break;
-    case CP_SPECTRO_Z_ANGLE: cp->spectro_z_angle = XEN_TO_C_DOUBLE(on); calculate_fft(cp); break;
+    case CP_SPECTRO_X_ANGLE: cp->spectro_x_angle = mus_fclamp(MIN_SPECTRO_ANGLE, XEN_TO_C_DOUBLE(on), MAX_SPECTRO_ANGLE); calculate_fft(cp); break;
+    case CP_SPECTRO_Y_ANGLE: cp->spectro_y_angle = mus_fclamp(MIN_SPECTRO_ANGLE, XEN_TO_C_DOUBLE(on), MAX_SPECTRO_ANGLE); calculate_fft(cp); break;
+    case CP_SPECTRO_Z_ANGLE: cp->spectro_z_angle = mus_fclamp(MIN_SPECTRO_ANGLE, XEN_TO_C_DOUBLE(on), MAX_SPECTRO_ANGLE); calculate_fft(cp); break;
     case CP_SPECTRO_X_SCALE: cp->spectro_x_scale = mus_fclamp(0.0, XEN_TO_C_DOUBLE(on), MAX_SPECTRO_SCALE); calculate_fft(cp); break;
     case CP_SPECTRO_Y_SCALE: cp->spectro_y_scale = mus_fclamp(0.0, XEN_TO_C_DOUBLE(on), MAX_SPECTRO_SCALE); calculate_fft(cp); break;
     case CP_SPECTRO_Z_SCALE: cp->spectro_z_scale = mus_fclamp(0.0, XEN_TO_C_DOUBLE(on), MAX_SPECTRO_SCALE); calculate_fft(cp); break;
@@ -5698,7 +5701,7 @@ static XEN g_set_spectro_x_angle(XEN val, XEN snd, XEN chn)
     return(channel_set(snd, chn, val, CP_SPECTRO_X_ANGLE, S_setB S_spectro_x_angle));
   else
     {
-      set_spectro_x_angle(XEN_TO_C_DOUBLE(val));
+      set_spectro_x_angle(mus_fclamp(MIN_SPECTRO_ANGLE, XEN_TO_C_DOUBLE(val), MAX_SPECTRO_ANGLE));
       return(C_TO_XEN_DOUBLE(spectro_x_angle(ss)));
     }
 }
@@ -5720,7 +5723,7 @@ static XEN g_set_spectro_x_scale(XEN val, XEN snd, XEN chn)
     return(channel_set(snd, chn, val, CP_SPECTRO_X_SCALE, S_setB S_spectro_x_scale));
   else
     {
-      set_spectro_x_scale(XEN_TO_C_DOUBLE(val));
+      set_spectro_x_scale(mus_fclamp(0.0, XEN_TO_C_DOUBLE(val), MAX_SPECTRO_SCALE));
       return(C_TO_XEN_DOUBLE(spectro_x_scale(ss)));
     }
 }
@@ -5742,7 +5745,7 @@ static XEN g_set_spectro_y_angle(XEN val, XEN snd, XEN chn)
     return(channel_set(snd, chn, val, CP_SPECTRO_Y_ANGLE, S_setB S_spectro_y_angle));
   else
     {
-      set_spectro_y_angle(XEN_TO_C_DOUBLE(val));
+      set_spectro_y_angle(mus_fclamp(MIN_SPECTRO_ANGLE, XEN_TO_C_DOUBLE(val), MAX_SPECTRO_ANGLE));
       return(C_TO_XEN_DOUBLE(spectro_y_angle(ss)));
     }
 }
@@ -5764,7 +5767,7 @@ static XEN g_set_spectro_y_scale(XEN val, XEN snd, XEN chn)
     return(channel_set(snd, chn, val, CP_SPECTRO_Y_SCALE, S_setB S_spectro_y_scale));
   else
     {
-      set_spectro_y_scale(XEN_TO_C_DOUBLE(val));
+      set_spectro_y_scale(mus_fclamp(0.0, XEN_TO_C_DOUBLE(val), MAX_SPECTRO_SCALE));
       return(C_TO_XEN_DOUBLE(spectro_y_scale(ss)));
     }
 }
@@ -5786,7 +5789,7 @@ static XEN g_set_spectro_z_angle(XEN val, XEN snd, XEN chn)
     return(channel_set(snd, chn, val, CP_SPECTRO_Z_ANGLE, S_setB S_spectro_z_angle));
   else
     {
-      set_spectro_z_angle(XEN_TO_C_DOUBLE(val));
+      set_spectro_z_angle(mus_fclamp(MIN_SPECTRO_ANGLE, XEN_TO_C_DOUBLE(val), MAX_SPECTRO_ANGLE));
       return(C_TO_XEN_DOUBLE(spectro_z_angle(ss)));
     }
 }
@@ -5808,7 +5811,7 @@ static XEN g_set_spectro_z_scale(XEN val, XEN snd, XEN chn)
     return(channel_set(snd, chn, val, CP_SPECTRO_Z_SCALE, S_setB S_spectro_z_scale));
   else
     {
-      set_spectro_z_scale(XEN_TO_C_DOUBLE(val));
+      set_spectro_z_scale(mus_fclamp(0.0, XEN_TO_C_DOUBLE(val), MAX_SPECTRO_SCALE));
       return(C_TO_XEN_DOUBLE(spectro_z_scale(ss)));
     }
 }

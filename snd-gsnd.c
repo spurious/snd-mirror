@@ -198,11 +198,13 @@ void goto_minibuffer(snd_info *sp)
 
 void set_minibuffer_cursor_position(snd_info *sp, int pos)
 {
+  if ((sp->inuse != SOUND_NORMAL) || (!(sp->sgx))) return;
   gtk_editable_set_position(GTK_EDITABLE(MINIBUFFER_TEXT(sp)), pos);
 }
 
 char *get_minibuffer_string(snd_info *sp) 
 {
+  if ((sp->inuse != SOUND_NORMAL) || (!(sp->sgx))) return(NULL);
   return(copy_string((char *)gtk_entry_get_text(GTK_ENTRY(MINIBUFFER_TEXT(sp)))));
 } 
 

@@ -485,7 +485,7 @@ void report_in_minibuffer(snd_info *sp, const char *format, ...)
 {
   char *buf;
   va_list ap;
-  if ((!sp) || (!(sp->active)) || (!(sp->sgx))) return;
+  if ((!sp) || (!(sp->active)) || (!(sp->sgx)) || (sp->inuse != SOUND_NORMAL)) return;
   va_start(ap, format);
   buf = vstr(format, ap);
   va_end(ap);
@@ -732,7 +732,6 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
       /* if not nil, replace previous */
       if (!s_or_r)
 	{
-	  /* str = get_minibuffer_string(sp); */
 	  if ((str) && (*str))
 	    {
 	      XEN proc;
@@ -761,7 +760,6 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
     }
 #endif
   
-  /* str = get_minibuffer_string(sp); */
   if ((sp->marking) || (sp->finding_mark))
     {
       if (sp->marking) 
@@ -1191,6 +1189,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
   /* fprintf(stderr, "(%s %d%s) ", KEY_TO_NAME(keysym), unmasked_state, (extended_mode) ? " (c-x)" : ""); */
   if ((!cp) || (!(cp->sound)) || (!(cp->active))) return;
   sp = cp->sound;
+  if ((!sp) || (sp->inuse != SOUND_NORMAL)) return;
   ap = cp->axis;
   if (keysym >= snd_K_Shift_L) return;
   /* this happens when the user presses Control or Shift etc prior to hitting the actual (modified) key */

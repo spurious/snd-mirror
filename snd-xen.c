@@ -1523,6 +1523,8 @@ static XEN g_set_log_freq_start(XEN val)
   base = XEN_TO_C_DOUBLE(val);
   if (base < 0.0)
     XEN_OUT_OF_RANGE_ERROR(S_log_freq_start, XEN_ONLY_ARG, val, "a number >= 0.0");
+  if (base > 100000.0)
+    XEN_OUT_OF_RANGE_ERROR(S_log_freq_start, XEN_ONLY_ARG, val, "a number < srate/2");
   set_log_freq_start(base);
   reflect_log_freq_start_in_transform_dialog();
   return(C_TO_XEN_DOUBLE(log_freq_start(ss)));
