@@ -3,7 +3,7 @@
 
 typedef struct {
   GtkWidget *rw, *nm, *pl, *sv;
-  int pos;
+  int pos, parent;
   snd_state *ss;
 } regrow;
 
@@ -104,6 +104,10 @@ void snd_doit(snd_state *state, int argc, char **argv);
 #ifdef SND_AS_WIDGET
   GtkWidget *snd_as_widget(int argc, char **argv, GtkWidget *parent, void (*error_func)(const char *));
 #endif
+#if HAVE_HOOKS
+  void g_init_gxmain(SCM local_doc);
+#endif
+
 
 
 /* -------- snd-gmenu.c -------- */

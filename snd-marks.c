@@ -1505,7 +1505,7 @@ static SCM g_restore_marks(SCM size, SCM snd, SCM chn, SCM marklist)
 		    {
 		      nm = SCM_CAR(el);
 		      if (SCM_NFALSEP(nm))
-			str = SCM_STRING_CHARS(nm);
+			str = TO_C_STRING(nm);
 		      else str = NULL;
 		      id = TO_C_INT(SCM_CADDR(el));
 		      if (gh_length(el) > 3)
@@ -1583,7 +1583,7 @@ static SCM iwrite_mark(SCM mark_n, SCM val, int fld, char *caller)
       break;
     case MARK_NAME:
       if (m->name) FREE(m->name);
-      m->name = copy_string(SCM_STRING_CHARS(val));
+      m->name = copy_string(TO_C_STRING(val));
       update_graph(cp[0], NULL);
       break;
     }
@@ -1674,7 +1674,7 @@ finds the mark in snd's channel chn at samp (if a number) or with the given name
   if (mps)
     {
       if (gh_string_p(samp_n))
-	name = SCM_STRING_CHARS(samp_n);
+	name = TO_C_STRING(samp_n);
       else samp = TO_C_INT_OR_ELSE(samp_n, 0);
       if (name)
 	{

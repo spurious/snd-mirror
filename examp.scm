@@ -87,17 +87,16 @@
 (debug-enable 'debug 'backtrace)
 (read-enable 'positions)
 
-(define all-chans
-  (lambda ()
-    (let ((sndlist '())
-	  (chnlist '()))
-      (map (lambda (snd)
-	     (do ((i (1- (channels snd)) (1- i)))
-		 ((< i 0))
-	       (set! sndlist (cons snd sndlist))
-	       (set! chnlist (cons i chnlist))))
-	   (sounds))
-      (list sndlist chnlist))))
+(define (all-chans)
+  (let ((sndlist '())
+	(chnlist '()))
+    (for-each (lambda (snd)
+		(do ((i (1- (channels snd)) (1- i)))
+		    ((< i 0))
+		  (set! sndlist (cons snd sndlist))
+		  (set! chnlist (cons i chnlist))))
+	      (sounds))
+    (list sndlist chnlist)))
 
 
 ;;; -------- (ext)snd.html examples made harder to break --------

@@ -1919,7 +1919,7 @@ static SCM g_add_sound_file_extension(SCM ext)
 {
   #define H_add_sound_file_extension "(" S_add_sound_file_extension " ext)  adds the file extension ext to the list of sound file extensions"
   SCM_ASSERT(gh_string_p(ext), ext, SCM_ARG1, S_add_sound_file_extension);
-  add_sound_file_extension(SCM_STRING_CHARS(ext));
+  add_sound_file_extension(TO_C_STRING(ext));
   return(ext);
 }
 
@@ -1929,7 +1929,7 @@ static SCM g_file_write_date(SCM file)
   #define H_file_write_date "(" S_file_write_date " file) -> write date"
   time_t date;
   SCM_ASSERT(gh_string_p(file), file, SCM_ARG1, S_file_write_date);
-  date = file_write_date(SCM_STRING_CHARS(file));
+  date = file_write_date(TO_C_STRING(file));
   return(scm_return_first(TO_SCM_INT(date), file));
 }
 
@@ -2013,7 +2013,7 @@ static SCM g_preload_directory(SCM directory)
   #define H_preload_directory "(" S_preload_directory " dir) preloads (into the View:Files dialog) any sounds in dir"
   SCM_ASSERT(gh_string_p(directory), directory, SCM_ARG1, S_preload_directory);
   add_directory_to_prevlist(get_global_state(), 
-			    SCM_STRING_CHARS(directory));
+			    TO_C_STRING(directory));
   return(directory);
 }
 

@@ -208,7 +208,7 @@ static void hit_help(Widget w, XtPointer context, XtPointer info)
 	if (gh_string_p(help_text))
 	  snd_help(get_global_state(),
 		   selection,
-		   SCM_STRING_CHARS(help_text));
+		   TO_C_STRING(help_text));
       }
 #endif
       XtFree(selection);
@@ -242,6 +242,9 @@ static void create_help_monolog(snd_state *ss)
   XtSetArg(args[n], XmNnoResize, FALSE); n++;
   XtSetArg(args[n], XmNtransient, FALSE); n++;
   help_dialog = XmCreateMessageDialog(MAIN_PANE(ss), "snd-help", args, n);
+#if HAVE_GUILE
+  set_dialog_widget(HELP_DIALOG, help_dialog);
+#endif
   add_dialog(ss, help_dialog);
 #if OVERRIDE_TOGGLE
   override_form_translation(help_dialog);

@@ -1331,7 +1331,6 @@ static SCM g_test_menus(void)
 	(i != f_exit_menu) && (i != f_save_menu) && (i != f_close_menu) &&
 	(i != f_new_menu) && (i != h_click_for_help_menu) && (i != v_mix_panel_menu))
       XtCallCallbacks(mw[i], XmNactivateCallback, (void *)ss);
-  /* test_all_dialogs(ss); */
 #endif
   for (i = 0; i < added_options_pos; i++)
     if ((added_options[i]) && (XmIsPushButton(mw[i])) && (XtIsSensitive(mw[i])))

@@ -311,6 +311,9 @@ static void make_region_dialog(snd_state *ss)
   XtSetArg(args[n], XmNnoResize, FALSE); n++;
   XtSetArg(args[n], XmNtransient, FALSE); n++;
   region_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Regions, args, n);
+#if HAVE_GUILE
+  set_dialog_widget(REGION_DIALOG, region_dialog);
+#endif
   add_dialog(ss, region_dialog);
 #if OVERRIDE_TOGGLE
   override_form_translation(region_dialog);
@@ -360,6 +363,7 @@ static void make_region_dialog(snd_state *ss)
       region_rows[i] = r;
       r->pos = i;
       r->ss = ss;
+      r->parent = REGION_VIEWER;
       last_row = r->rw;
     }
 
@@ -556,6 +560,7 @@ void allocate_region_rows(snd_state *ss, int n)
 	  region_rows[i] = r;
 	  r->pos = i;
 	  r->ss = ss;
+	  r->parent = REGION_VIEWER;
 	  last_row = r->rw;
 	}
     }

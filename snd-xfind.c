@@ -94,6 +94,9 @@ static void make_edit_find_dialog(snd_state *ss)
   XtSetArg(args[n], XmNnoResize, FALSE); n++;
   XtSetArg(args[n], XmNtransient, FALSE); n++;
   edit_find_dialog = XmCreateMessageDialog(MAIN_SHELL(ss), "find", args, n);
+#if HAVE_GUILE
+  set_dialog_widget(FIND_DIALOG, edit_find_dialog);
+#endif
   add_dialog(ss, edit_find_dialog);
 #if OVERRIDE_TOGGLE
   override_form_translation(edit_find_dialog);

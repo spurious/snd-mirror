@@ -3544,7 +3544,7 @@ static SCM g_set_mix_name(SCM n, SCM val)
   if (md)
     {
       if (md->name) FREE(md->name);
-      md->name = copy_string(SCM_STRING_CHARS(val));
+      md->name = copy_string(TO_C_STRING(val));
       reflect_mix_in_mix_panel(md->id);
       return(val);
     }

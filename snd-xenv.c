@@ -1162,6 +1162,9 @@ void create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       XtSetArg(args[n], XmNtransient, FALSE); n++;
       enved_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), "envelope editor", args, n);
+#if HAVE_GUILE
+      set_dialog_widget(ENVED_DIALOG, enved_dialog);
+#endif
       add_dialog(ss, enved_dialog);
 #if OVERRIDE_TOGGLE
       override_form_translation(enved_dialog);

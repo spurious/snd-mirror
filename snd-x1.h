@@ -3,7 +3,7 @@
 
 typedef struct {
   Widget rw, nm, pl, sv;
-  int pos;
+  int pos, parent;
   snd_state *ss;
 } regrow;
 
@@ -189,6 +189,9 @@ void dismiss_all_dialogs(snd_state *ss);
 void snd_doit(snd_state *state, int argc, char **argv);
 #ifdef SND_AS_WIDGET
   void snd_as_widget(int argc, char **argv, XtAppContext app, Widget parent, Arg *caller_args, int caller_argn);
+#endif
+#if HAVE_HOOKS
+  void g_init_gxmain(SCM local_doc);
 #endif
 
 

@@ -279,6 +279,7 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   if (corruption_time(ss) != DEFAULT_CORRUPTION_TIME) pss_sf(fd, S_corruption_time, corruption_time(ss));
   if (verbose_cursor(ss) != DEFAULT_VERBOSE_CURSOR) pss_ss(fd, S_verbose_cursor, b2s(verbose_cursor(ss)));
   if (show_indices(ss) != DEFAULT_SHOW_INDICES) pss_ss(fd, S_show_indices, b2s(show_indices(ss)));
+  if (show_backtrace(ss) != DEFAULT_SHOW_BACKTRACE) pss_ss(fd, S_show_backtrace, b2s(show_backtrace(ss)));
   if (show_fft_peaks(ss) != DEFAULT_SHOW_FFT_PEAKS) pss_ss(fd, S_show_fft_peaks, b2s(show_fft_peaks(ss)));
   if (show_y_zero(ss) != DEFAULT_SHOW_Y_ZERO) pss_ss(fd, S_show_y_zero, b2s(show_y_zero(ss)));
   if (show_axes(ss) != DEFAULT_SHOW_AXES) pss_ss(fd, S_show_axes, show_axes2string(show_axes(ss)));
@@ -742,7 +743,8 @@ static SCM g_save_state(SCM filename)
   char *error;
   SCM result;
   SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_save_state);
-  error = save_state_or_error(get_global_state(), SCM_STRING_CHARS(filename));
+  error = save_state_or_error(get_global_state(), 
+			      TO_C_STRING(filename));
   if (error)
     {
       result = TO_SCM_STRING(error);

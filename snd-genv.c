@@ -749,6 +749,9 @@ void create_envelope_editor (snd_state *ss)
   if (!enved_dialog)
     {
       enved_dialog = gtk_dialog_new();
+#if HAVE_GUILE
+      set_dialog_widget(ENVED_DIALOG, enved_dialog);
+#endif
       gtk_signal_connect(GTK_OBJECT(enved_dialog), "delete_event", GTK_SIGNAL_FUNC(delete_enved_dialog), (gpointer)ss);
       gtk_window_set_title(GTK_WINDOW(enved_dialog), STR_Edit_Envelope);
       gtk_window_set_policy(GTK_WINDOW(enved_dialog), TRUE, TRUE, FALSE); /* allow shrink or grow */

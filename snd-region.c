@@ -874,7 +874,7 @@ void save_region_backpointer(snd_info *sp)
 
 static char *g_scm2newstr(SCM str)
 {
-  return(copy_string(SCM_STRING_CHARS(str)));
+  return(copy_string(TO_C_STRING(str)));
 }
 
 static SCM g_restore_region(SCM n, SCM chans, SCM len, SCM srate, SCM maxamp, SCM name, SCM start, SCM end, SCM data)

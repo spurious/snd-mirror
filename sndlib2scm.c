@@ -39,7 +39,7 @@ static int to_c_int_or_else(SCM obj, int fallback, char *origin)
 
 static char *full_filename(SCM file)
 {
-  return(mus_file_full_name(SCM_STRING_CHARS(file)));
+  return(mus_file_full_name(TO_C_STRING(file)));
 }
 #endif
 

@@ -22,6 +22,9 @@ static void create_snd_error_dialog(snd_state *ss, int popup)
   GtkWidget *vscrollbar;
 
   snd_error_dialog = gtk_dialog_new();
+#if HAVE_GUILE
+  set_dialog_widget(ERROR_DIALOG, snd_error_dialog);
+#endif
   gtk_signal_connect(GTK_OBJECT(snd_error_dialog), "delete_event", GTK_SIGNAL_FUNC(delete_snd_error), (gpointer)ss);
   gtk_window_set_title(GTK_WINDOW(snd_error_dialog), STR_Error);
   gtk_window_set_policy(GTK_WINDOW(snd_error_dialog), TRUE, TRUE, FALSE); /* allow shrink or grow */
@@ -141,6 +144,9 @@ int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
   if (!yes_or_no_dialog)
     {
       yes_or_no_dialog = gtk_dialog_new();
+#if HAVE_GUILE
+      set_dialog_widget(YES_OR_NO_DIALOG, yes_or_no_dialog);
+#endif
       gtk_signal_connect(GTK_OBJECT(yes_or_no_dialog), "delete_event", GTK_SIGNAL_FUNC(delete_yes_or_no_dialog), (gpointer)ss);
       gtk_window_set_title(GTK_WINDOW(yes_or_no_dialog), STR_Big_Trouble);
       gtk_window_set_policy(GTK_WINDOW(yes_or_no_dialog), TRUE, TRUE, FALSE); /* allow shrink or grow */

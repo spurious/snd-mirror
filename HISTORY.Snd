@@ -8,8 +8,9 @@ snd change log
                foreground-color, load-font, current-font, widget-position, widget-size.
                draw-dot, draw-line, draw-dots, draw-lines, draw-string.
                fill-rectangle, erase-rectangle, fill-polygon.
-               main-widgets, menu-widgets, sound-widgets, channel-widgets.
-               lisp-graph-hook, recolor-widget.
+               main-widgets, menu-widgets, sound-widgets, channel-widgets, dialog-widgets.
+               lisp-graph-hook, recolor-widget, show-backtrace.
+               make-graph-data, graph-data, property-changed-hook.
   28-Feb:    added enved-hook with enved-add-point, enved-delete-point, and enved-move-point.
   27-Feb:    removed cursor-claim-selection (was identical to cursor-update-display).
   26-Feb:    Tab-completion is much smarter in Guile 1.4.1.

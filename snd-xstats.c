@@ -52,6 +52,9 @@ void update_stats_display(snd_state *ss, int all)
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       XtSetArg(args[n], XmNtransient, FALSE); n++;
       stats_window = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Disk_and_Memory_Usage, args, n);
+#if HAVE_GUILE
+      set_dialog_widget(STATS_DIALOG, stats_window);
+#endif
       add_dialog(ss, stats_window);
 #if OVERRIDE_TOGGLE
       override_form_translation(stats_window);

@@ -307,27 +307,6 @@ void dismiss_all_dialogs(snd_state *ss)
 	  XtUnmanageChild(sx->dialogs[i]);
 }
 
-#if 0
-static void push_buttons(Widget w, void *ignore)
-{
-  if ((w) && (XmIsPushButton(w)) && (XtIsSensitive(w)))
-    XtCallCallbacks(w, XmNactivateCallback, (void *)get_global_state()); 
-}
-
-void test_all_dialogs(snd_state *ss);
-void test_all_dialogs(snd_state *ss)
-{
-  state_context *sx;
-  int i;
-  sx = ss->sgx;
-  if (sx->dialog_list_size > 0)
-    for (i = 0; i < sx->ndialogs; i++)
-      if (sx->dialogs[i])
-	if (XtIsManaged(sx->dialogs[i]))
-	  map_over_children(sx->dialogs[i], push_buttons, NULL);
-}
-#endif
-
 static void minify_maxify_window(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
   XMapEvent *ev = (XMapEvent *)event;
@@ -343,6 +322,9 @@ static void minify_maxify_window(Widget w, XtPointer context, XEvent *event, Boo
 }
 
 static Atom snd_v, snd_c;
+#if HAVE_HOOKS
+  static SCM property_changed_hook;
+#endif
 
 static void who_called(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
@@ -361,6 +343,11 @@ static void who_called(Widget w, XtPointer context, XEvent *event, Boolean *cont
 	  (type != None))
 	if (version[0])
 	  {
+#if HAVE_HOOKS
+	    if ((!(HOOKED(property_changed_hook))) ||
+		(!(g_c_run_or_hook(property_changed_hook,
+				   TO_SCM_STRING((char *)(version[0]))))))
+#endif
 	    snd_eval_listener_str(ss, (char *)(version[0]));
 	    free(version[0]);
 	  }
@@ -993,5 +980,15 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 #ifndef SND_AS_WIDGET
   XtAppMainLoop(app);
 #endif
-
+  
 }
+
+ 
+#if HAVE_HOOKS
+ 
+void g_init_gxmain(SCM local_doc)
+{
+  property_changed_hook = MAKE_HOOK(S_property_changed_hook, 1, "called upon receipt of a SND_COMMAND");
+}
+
+#endif

@@ -414,7 +414,7 @@ static SCM g_save_listener(SCM filename)
   #define H_save_listener "(" S_save_listener " filename) saves the current listener text in filename"
   FILE *fp = NULL;
   SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_save_listener);
-  fp = fopen(SCM_STRING_CHARS(filename), "w");
+  fp = fopen(TO_C_STRING(filename), "w");
   if (fp) save_listener_text(fp);
   if ((!fp) || (fclose(fp) != 0))
     scm_throw(CANNOT_SAVE,

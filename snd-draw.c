@@ -1,5 +1,24 @@
 #include "snd.h"
 
+/* TODO:   hide-widget show-widget widget-label set-widget-label
+ *                in the label case, w-name is set-button-label in motif, set-label in gtk
+ *                and getting the label as a string is tedious -- see snd-xfile.c: 1101
+ *    dont_graph can cancel main (but then axis isn't set up for us?)
+ * TODO  exs: annotation boxes elaborated a la channel-envelope
+ * TODO       popup info in file viewer -- see mouse-enter-label-hook in snd-xfile -- needs completion
+ * TODO       own fft peaks info
+ * TODO    in -separate mode (and elsewhere?) need to save description (sizes) of window/channels etc 
+ * TODO: similar split for make_fft_graph [needs sonogram etc??]
+ * TODO: how to label axes?
+ * TODO: need tests for all of these as well, and cursor-position etc [snd-help listing docs]
+ * TODO: decide about the "info" functions
+ * TODO: retest all the snd-gtk functions
+ * TODO: fft-info? sync_info + accessors?
+ * TODO: mouse-enter|leave-graph-hook? enter|leave-listener? error-hook (in snd-scm)? iconify-hook?
+ *
+ * main-widgets should include listener pane (/text?)
+ */
+
 #if HAVE_GUILE && (!USE_NO_GUI)
 
 #include "vct.h"
@@ -90,8 +109,8 @@ static SCM g_draw_string(SCM text, SCM x0, SCM y0, SCM snd, SCM chn, SCM ax)
   draw_string(TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_string),
 	      TO_C_INT(x0),
 	      TO_C_INT(y0),
-	      SCM_STRING_CHARS(text),
-	      snd_strlen(SCM_STRING_CHARS(text)));
+	      TO_C_STRING(text),
+	      snd_strlen(TO_C_STRING(text)));
   return(SCM_BOOL_F);
 }
 
@@ -248,8 +267,6 @@ static SCM g_peak_env_info(SCM snd, SCM chn, SCM pos)
   return(SCM_LIST0);
 }
 
-/* fft-info ? */
-
 #if USE_MOTIF
   #define INPUT_TYPE XtInputId
 #else
@@ -305,7 +322,7 @@ static SCM g_load_font(SCM font)
   SCM_ASSERT(gh_string_p(font), font, SCM_ARG1, S_load_font);
   ss = get_global_state();
   fs = XLoadQueryFont(MAIN_DISPLAY(ss), 
-		      SCM_STRING_CHARS(font));
+		      TO_C_STRING(font));
   if (fs) return(TO_SCM_INT(fs->fid));
   return(SCM_BOOL_F);
 }
@@ -351,7 +368,7 @@ static SCM g_load_font(SCM font)
 {
   GdkFont *fs = NULL;
   SCM_ASSERT(gh_string_p(font), font, SCM_ARG1, S_load_font);
-  fs = gdk_font_load(SCM_STRING_CHARS(font));
+  fs = gdk_font_load(TO_C_STRING(font));
   if (fs) return(SCM_WRAP(fs));
   return(SCM_BOOL_F);
 }
@@ -413,18 +430,6 @@ static SCM g_remove_input(SCM id)
   return(id);
 }
 
-/* TODO:   hide-widget show-widget widget-label set-widget-label
- *                in the label case, w-name is set-button-label in motif, set-label in gtk
- *    dont_graph can cancel main (but then axis isn't set up for us?)
- * TODO  exs: annotation boxes
- * TODO       popup info in file viewer
- * TODO       own fft peaks info
- * TODO    in -separate mode (and elsewhere?) need to save description (sizes) of window/channels etc 
- *
- * TODO: similar split for make_fft_graph [needs sonogram etc??]
- * TODO: how to label axes?
- */
-
 static SCM g_make_graph_data(SCM snd, SCM chn, SCM pos, SCM lo, SCM hi)
 {
   chan_info *cp;
@@ -475,6 +480,30 @@ static SCM g_main_widgets(void)
                      SCM_EOL)))));
 }
 
+#define NUM_DIALOGS 21
+static SCM dialog_widgets = SCM_UNDEFINED;
+
+static SCM g_dialog_widgets(void)
+{
+  if (!(gh_vector_p(dialog_widgets)))
+    dialog_widgets = gh_make_vector(TO_SMALL_SCM_INT(NUM_DIALOGS), SCM_BOOL_F);
+#if HAVE_GUILE_1_3_0
+  /* guile-1.3/libguile/gh.h:#define gh_vector_to_list(v) scm_vector_to_list(ls) -- ls is undefined! */
+  return(scm_vector_to_list(dialog_widgets));
+#else
+  return(gh_vector_to_list(dialog_widgets));
+#endif
+}
+
+void set_dialog_widget(int which, GUI_WIDGET wid)
+{
+  if (!(gh_vector_p(dialog_widgets)))
+    dialog_widgets = gh_make_vector(TO_SMALL_SCM_INT(NUM_DIALOGS), SCM_BOOL_F);
+  gh_vector_set_x(dialog_widgets, 
+		  TO_SMALL_SCM_INT(which), 
+		  SCM_WRAP(wid));
+}
+
 static SCM g_widget_position(SCM wid)
 {
   return(SCM_LIST2(TO_SCM_INT(widget_x((GUI_WIDGET)(SCM_UNWRAP(wid)))),
@@ -514,6 +543,24 @@ static SCM g_recolor_widget(SCM wid, SCM color)
   return(color);
 }
 
+#if 0
+static SCM g_hide_widget(SCM wid)
+{
+#if USE_MOTIF
+  XtUnmanageChild((GUI_WIDGET)(SCM_UNWRAP(wid)));
+#else
+  gtk_widget_hide((GUI_WIDGET)(SCM_UNWRAP(wid)));
+#endif
+}
+static SCM g_show_widget(SCM wid)
+{
+#if USE_MOTIF
+  XtManageChild((GUI_WIDGET)(SCM_UNWRAP(wid)));
+#else
+  gtk_widget_show((GUI_WIDGET)(SCM_UNWRAP(wid)));
+#endif
+}
+#endif
 
 
 #if USE_MOTIF
@@ -558,6 +605,7 @@ void g_init_draw(SCM local_doc)
 					local_doc, 0, 3, 1, 3);
 
   DEFINE_PROC(gh_new_procedure(S_main_widgets,     SCM_FNC g_main_widgets, 0, 0, 0),    "returns top level widgets");
+  DEFINE_PROC(gh_new_procedure(S_dialog_widgets,   SCM_FNC g_dialog_widgets, 0, 0, 0),  "returns a list of dialog widgets");
 
   define_procedure_with_setter(S_widget_size, SCM_FNC g_widget_size, "(widget-size wid) -> '(width height)",
 					"set-" S_widget_size, SCM_FNC g_set_widget_size, local_doc, 1, 0, 2, 0);
@@ -571,8 +619,8 @@ void g_init_draw(SCM local_doc)
 
   /* ---------------- unstable ---------------- */
 
-  DEFINE_PROC(gh_new_procedure("make-graph-data", SCM_FNC g_make_graph_data, 0, 5, 0), "hiho");
-  DEFINE_PROC(gh_new_procedure("graph-data", SCM_FNC g_graph_data, 1, 6, 0), "hiho");
+  DEFINE_PROC(gh_new_procedure(S_make_graph_data, SCM_FNC g_make_graph_data, 0, 5, 0), "TODO: HELP");
+  DEFINE_PROC(gh_new_procedure(S_graph_data, SCM_FNC g_graph_data, 1, 6, 0), "TODO: HELP");
 
   DEFINE_VAR("erase-context",        TO_SMALL_SCM_INT(CHAN_IGC),       "graphics context to erase a line");
   DEFINE_VAR("selection-context",    TO_SMALL_SCM_INT(CHAN_SELGC),     "graphics context to draw a line in a selection");
@@ -596,17 +644,4 @@ void g_init_draw(SCM local_doc)
   DEFINE_PROC(gh_new_procedure0_0("snd-main-shell", SCM_FNC g_main_shell), "snd-main-shell tries to return Snd's topmost widget");
 #endif
 }
-#endif
-
-
-#if 0
-/*
-<b><a name="addinput">add-input</a></b> (file callback)
-<b><a name="removeinput">remove-input</a></b> (id)
-
-
-
-need tests for all of these as well, and cursor-position etc [snd-help listing docs]
-*/
-
 #endif

@@ -504,6 +504,9 @@ void fire_up_transform_dialog(snd_state *ss)
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       XtSetArg(args[n], XmNtransient, FALSE); n++;
       transform_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Transform_Options, args, n);
+#if HAVE_GUILE
+      set_dialog_widget(TRANSFORM_DIALOG, transform_dialog);
+#endif
       add_dialog(ss, transform_dialog);
 #if OVERRIDE_TOGGLE
       override_form_translation(transform_dialog);

@@ -306,7 +306,7 @@ typedef struct snd__state {
   int Speed_Tones, Sinc_Width, X_Axis_Style, Zoom_Focus_Style, Save_State_On_Exit, Graph_Style;
   int Normalize_On_Open, Auto_Resize, Auto_Update, Max_Regions, Max_Fft_Peaks;
   Float Initial_X0, Initial_X1, Initial_Y0, Initial_Y1, Reverb_Decay;
-  int Raw_Srate, Raw_Chans, Raw_Format, Use_Raw_Defaults, Audio_Output_Device, Audio_Input_Device;
+  int Raw_Srate, Raw_Chans, Raw_Format, Use_Raw_Defaults, Audio_Output_Device, Audio_Input_Device, Show_Backtrace;
   int Print_Length, Dac_Size, Dac_Folding, Previous_Files_Sort, Show_Selection_Transform, With_Mix_Tags, Selection_Creates_Region;
   char *Save_State_File, *Listener_Prompt;
   Float Enved_Base, Enved_Power, Corruption_Time;
@@ -1327,6 +1327,7 @@ int cursor_insert(chan_info *cp, int beg, int count, const char *origin);
   axis_context *get_ax(chan_info *cp, int ax_id, const char *caller);
   axis_info *get_ap(chan_info *cp, int ap_id, const char *caller);
   void g_init_draw(SCM local_doc);
+  void set_dialog_widget(int which, GUI_WIDGET wid);
 #endif
 
 #endif

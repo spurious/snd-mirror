@@ -300,6 +300,7 @@
 	'show-axes (show-axes) 1
 	'show-fft-peaks (show-fft-peaks) #f 
 	'show-indices (show-indices) #f
+	'show-backtrace (show-backtrace) #f
 	'show-marks (show-marks) #t 
 	'show-mix-waveforms (show-mix-waveforms) #t
 	'show-selection-transform (show-selection-transform) #f 
@@ -789,6 +790,7 @@
 	  (list 'show-axes show-axes 1 set-show-axes 0)
 	  (list 'show-fft-peaks show-fft-peaks #f set-show-fft-peaks #t)
 	  (list 'show-indices show-indices #f set-show-indices #t)
+	  (list 'show-backtrace show-backtrace #f set-show-backtrace #t)
 	  (list 'show-marks show-marks #t set-show-marks #f)
 	  (list 'show-mix-waveforms show-mix-waveforms #t set-show-mix-waveforms #f)
 	  (list 'show-selection-transform show-selection-transform #f set-show-selection-transform #t)
@@ -4976,6 +4978,7 @@
 		    (list 'show-axes #f 0 set-show-axes 2)
 		    (list 'show-fft-peaks #f #f set-show-fft-peaks #t)
 		    (list 'show-indices #f #f set-show-indices #t)
+		    (list 'show-backtrace #f #f set-show-backtrace #t)
 		    (list 'show-marks #f #f set-show-marks #t)
 		    (list 'show-mix-waveforms #t #f set-show-mix-waveforms #t)
 		    (list 'show-selection-transform #f #f set-show-selection-transform #t)

@@ -104,6 +104,9 @@ void File_Print_Callback(GtkWidget *w, gpointer context)
   if (!file_print_dialog)
     {
       file_print_dialog = gtk_dialog_new();
+#if HAVE_GUILE
+      set_dialog_widget(PRINT_DIALOG, file_print_dialog);
+#endif
       gtk_signal_connect(GTK_OBJECT(file_print_dialog), "delete_event", GTK_SIGNAL_FUNC(file_print_delete_callback), (gpointer)ss);
       gtk_window_set_title(GTK_WINDOW(file_print_dialog), STR_Print);
       gtk_window_set_policy(GTK_WINDOW(file_print_dialog), TRUE, TRUE, FALSE); /* allow shrink or grow */

@@ -54,6 +54,9 @@ static void create_completion_help_dialog(snd_state *ss, char *title)
   XtSetArg(args[n], XmNnoResize, FALSE); n++;
   /* XtSetArg(args[n], XmNtransient, FALSE); n++; */
   completion_help_dialog = XmCreateMessageDialog(MAIN_PANE(ss), "snd-completion-help", args, n);
+#if HAVE_GUILE
+  set_dialog_widget(COMPLETION_DIALOG, completion_help_dialog);
+#endif
   add_dialog(ss, completion_help_dialog);
 #if OVERRIDE_TOGGLE
   override_form_translation(completion_help_dialog);

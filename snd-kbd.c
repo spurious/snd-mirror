@@ -1969,7 +1969,7 @@ then when the user eventually responds, invokes the function callback with the r
       snd_protect(sp->prompt_callback);
     }
   else sp->prompt_callback = SCM_BOOL_F;
-  make_minibuffer_label(sp, SCM_STRING_CHARS(msg));
+  make_minibuffer_label(sp, TO_C_STRING(msg));
   sp->minibuffer_on = 1;
   sp->minibuffer_temp = 0;
   sp->prompting = 1;
@@ -1987,7 +1987,7 @@ static SCM g_report_in_minibuffer(SCM msg, SCM snd_n)
   if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,
 				   SCM_LIST2(TO_SCM_STRING(S_report_in_minibuffer),
 					     snd_n)));
-  report_in_minibuffer(sp, SCM_STRING_CHARS(msg));
+  report_in_minibuffer(sp, TO_C_STRING(msg));
   return(msg);
 }
 
@@ -2003,7 +2003,7 @@ static SCM g_append_to_minibuffer(SCM msg, SCM snd_n)
     return(scm_throw(NO_SUCH_SOUND,
 		     SCM_LIST2(TO_SCM_STRING(S_append_to_minibuffer),
 			       snd_n)));
-  sprintf(expr_str, "%s%s", str1 = get_minibuffer_string(sp), SCM_STRING_CHARS(msg));
+  sprintf(expr_str, "%s%s", str1 = get_minibuffer_string(sp), TO_C_STRING(msg));
   set_minibuffer_string(sp, expr_str);
   sp->minibuffer_temp = 1;
   if (str1) free(str1);

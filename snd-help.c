@@ -279,8 +279,9 @@ void news_help(snd_state *ss)
                foreground-color, load-font, current-font, widget-position, widget-size.\n\
                draw-dot, draw-line, draw-dots, draw-lines, draw-string\n\
                fill-rectangle, erase-rectangle, fill-polygon\n\
-               main-widgets, menu-widgets, sound-widgets, channel-widgets\n\
-               lisp-graph-hook, recolor-widget.\n\
+               main-widgets, menu-widgets, sound-widgets, channel-widgets, dialog-widgets.\n\
+               lisp-graph-hook, recolor-widget, show-backtrace.\n\
+               make-graph-data, graph-data, property-changed-hook.\n\
 28-Feb:  added enved-hook with enved-add-point, enved-delete-point, and enved-move-point.\n\
 26-Feb:  Tab-completion is much smarter in Guile 1.4.1.\n\
 23-Feb:  --with-gsl is the default in configure.\n\
@@ -1026,6 +1027,7 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_selection_color "       lightsteelblue1\n\
   " S_selection_creates_region " #t\n\
   " S_show_axes "             show-all-axes (snd #t) (chn #t)\n\
+  " S_show_backtrace "        #f\n\
   " S_show_fft_peaks "        #f (snd #t) (chn #t)\n\
   " S_show_indices "          #f\n\
   " S_show_marks "            #t (snd #t) (chn #t)\n\
@@ -1100,6 +1102,7 @@ user-interface manipulations.\n\
   " S_mix_position_changed_hook "\n\
   " S_multichannel_mix_hook "\n\
   " S_mus_error_hook "\n\
+  " S_property_changed_hook "\n\
   " S_snd_error_hook "\n\
   " S_snd_warning_hook "\n\
   " S_edit_hook "(snd chn)\n\
@@ -2708,7 +2711,7 @@ the functions html and ? can be used in place of help to go to the HTML descript
 
   if (gh_string_p(help_text))
     {
-      str = word_wrap(SCM_STRING_CHARS(help_text), widget_wid);
+      str = word_wrap(TO_C_STRING(help_text), widget_wid);
       help_text = TO_SCM_STRING(str);
  if (str) FREE(str);
     }

@@ -1346,7 +1346,7 @@ static SCM g_find_sound(SCM filename)
   snd_info *sp;
   SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_find_sound);
   ss = get_global_state();
-  sp = find_sound(ss, SCM_STRING_CHARS(filename));
+  sp = find_sound(ss, TO_C_STRING(filename));
   if (sp) return(TO_SCM_INT(sp->index));
   return(scm_return_first(SCM_BOOL_F, filename));
 }

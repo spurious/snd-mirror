@@ -507,7 +507,7 @@ static SCM g_graph2ps(SCM filename)
   snd_state *ss;
   ss = get_global_state();
   if (gh_string_p(filename))
-    file = SCM_STRING_CHARS(filename);
+    file = TO_C_STRING(filename);
   else file = eps_file(ss);
   error = snd_print_or_error(ss, file);
   if (error)

@@ -56,10 +56,6 @@
   #define SCM_TRUE_P(a) SCM_EQ_P(a, SCM_BOOL_T)
 #endif
 
-#ifndef SCM_STRING_CHARS
-  #define SCM_STRING_CHARS(STR) SCM_CHARS(STR)
-#endif
-
 #ifdef __cplusplus
 /* #define SCM_FNC (SCM (*)(...)) */
   #define SCM_FNC (SCM (*)())
@@ -78,6 +74,13 @@
   #define TO_C_DOUBLE_WITH_ORIGIN(a, b) gh_scm2double(a)
   #define TO_C_INT(a) gh_scm2int(a)
   #define TO_C_INT_OR_ELSE(a, b) to_c_int_or_else(a, b, "to_c_int_or_else")
+#endif
+
+#ifndef SCM_STRING_CHARS
+  #define TO_C_STRING(STR) SCM_CHARS(STR)
+#else
+  #define TO_C_STRING(STR) SCM_STRING_CHARS(STR)
+  /* this assumes its argument is an SCM string and does not allocate new space */
 #endif
 
 #if HAVE_SCM_MAKE_REAL

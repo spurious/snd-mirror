@@ -1252,7 +1252,7 @@ static SCM g_define_envelope(SCM a, SCM b)
   SCM_ASSERT(gh_string_p(a), a, SCM_ARG1, S_define_envelope);
   if (gh_list_p(b)) 
     alert_envelope_editor(get_global_state(), 
-			  SCM_STRING_CHARS(a), 
+			  TO_C_STRING(a), 
 			  scm2env(b));
   return(SCM_BOOL_F);
 }

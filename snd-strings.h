@@ -364,6 +364,7 @@
 #define S_delete_samples_with_origin    "delete-samples-with-origin"
 #define S_delete_selection              "delete-selection"
 #define S_describe_audio                "describe-audio"
+#define S_dialog_widgets                "dialog-widgets"
 #define S_dismiss_all_dialogs           "dismiss-all-dialogs"
 #define S_display_edits                 "display-edits"
 #define S_dont_normalize                "dont-normalize"
@@ -455,6 +456,7 @@
 #define S_graph                         "graph"
 #define S_graph_color                   "graph-col" STR_OR
 #define S_graph_cursor                  "graph-cursor"
+#define S_graph_data                    "graph-data"
 #define S_graph_dots                    "graph-dots"
 #define S_graph_dots_and_lines          "graph-dots-and-lines"
 #define S_graph_filled                  "graph-filled"
@@ -504,6 +506,7 @@
 #define S_loop_samples                  "loop-samples"
 #define S_main_widgets                  "main-widgets"
 #define S_make_color                    "make-col" STR_OR
+#define S_make_graph_data               "make-graph-data"
 #define S_make_mix_sample_reader        "make-mix-sample-reader"
 #define S_make_player                   "make-player"
 #define S_make_region                   "make-region"
@@ -613,6 +616,7 @@
 #define S_print_length                  "print-length"
 #define S_progress_report               "progress-report"
 #define S_prompt_in_minibuffer          "prompt-in-minibuffer"
+#define S_property_changed_hook         "property-changed-hook"
 #define S_protect_region                "protect-region"
 #define S_pushed_button_color           "pushed-button-col" STR_OR
 #define S_raw_chans                     "raw-chans"
@@ -719,6 +723,7 @@
 #define S_short_file_name               "short-file-name"
 #define S_show_all_axes                 "show-all-axes"
 #define S_show_axes                     "show-axes"
+#define S_show_backtrace                "show-backtrace"
 #define S_show_fft_peaks                "show-fft-peaks"
 #define S_show_indices                  "show-indices"
 #define S_show_listener                 "show-listener"

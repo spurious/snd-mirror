@@ -312,33 +312,6 @@ static void just_sounds_Callback(Widget w, XtPointer context, XtPointer info)
 static Widget just_sounds_button = NULL;
 static int just_sounds_state = FALSE;
 
-#if HAVE_GUILE
-
-static SCM g_just_sounds(void)
-{
-  #define H_just_sounds "(" S_just_sounds ") reflects the 'just sounds' button in the file chooser dialog"
-  return(TO_SCM_BOOLEAN(just_sounds_state));
-}
-
-static SCM g_set_just_sounds(SCM on) 
-{
-  int n;
-  SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_just_sounds);
-  n = bool_int_or_one(on);
-  if (just_sounds_button)
-    XmToggleButtonSetState(just_sounds_button, n, TRUE);
-  just_sounds_state = n;
-  return(TO_SCM_BOOLEAN(n));
-}
-
-void g_initialize_xgfile(SCM local_doc)
-{
-  define_procedure_with_setter(S_just_sounds, SCM_FNC g_just_sounds, H_just_sounds,
-			       "set-" S_just_sounds, SCM_FNC g_set_just_sounds, local_doc, 0, 0, 0, 1);
-}
-
-#endif
-
 void CreateOpenDialog(Widget w, XtPointer context)
 {
   /* file selection dialog box with added "Just Sound Files" toggle button */
@@ -358,6 +331,9 @@ void CreateOpenDialog(Widget w, XtPointer context)
       s1 = XmStringCreate("open:", XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n], XmNselectionLabelString, s1); n++;
       open_dialog = XmCreateFileSelectionDialog(w, STR_File, args, n);
+#if HAVE_GUILE
+      set_dialog_widget(FILE_OPEN_DIALOG, open_dialog);
+#endif
       XmStringFree(s1);
 #if OVERRIDE_TOGGLE
       override_form_translation(open_dialog);
@@ -794,6 +770,9 @@ static void make_save_as_dialog(snd_state *ss, char *sound_name, int header_type
       XtSetArg(args[n], XmNchildPlacement, XmPLACE_ABOVE_SELECTION); n++;
       XtSetArg(args[n], XmNallowOverlap, FALSE); n++;
       save_as_dialog = XmCreateFileSelectionDialog(MAIN_SHELL(ss), "save-as", args, n);
+#if HAVE_GUILE
+      set_dialog_widget(FILE_SAVE_AS_DIALOG, save_as_dialog);
+#endif
 #if OVERRIDE_TOGGLE
       override_form_translation(save_as_dialog);
 #endif
@@ -1086,6 +1065,45 @@ ww_info *make_title_row(snd_state *ss, Widget formw, char *first_str, char *seco
   return(wwi);
 }
 
+#if HAVE_HOOKS
+static SCM mouse_name_enter_hook, mouse_name_leave_hook;
+
+static void mouse_name_leave_or_enter(regrow *r, SCM hook)
+{
+  XmString s1;
+  char *label = NULL;
+
+  if ((r) &&
+      (HOOKED(hook)))
+    {
+      /* it's a bit tedious to get the current button label... */
+      XtVaGetValues(r->nm, XmNlabelString, &s1, NULL);
+      XmStringGetLtoR(s1, XmFONTLIST_DEFAULT_TAG, &label);
+      if (label == NULL)
+	{
+	  XmStringGetLtoR(s1, "button_font", &label);
+	  if (label == NULL)
+	    XmStringGetLtoR(s1, "bold_button_font", &label);
+	}
+      if (label)
+	g_c_run_progn_hook(hook,
+			   SCM_LIST3(TO_SMALL_SCM_INT(r->parent),
+				     TO_SMALL_SCM_INT(r->pos),
+				     TO_SCM_STRING(label)));
+    }
+}
+
+static void mouse_name_enter(Widget w, XtPointer context, XEvent *event, Boolean *flag)
+{
+  mouse_name_leave_or_enter((regrow *)context, mouse_name_enter_hook);
+}
+
+static void mouse_name_leave(Widget w, XtPointer context, XEvent *event, Boolean *flag)
+{
+  mouse_name_leave_or_enter((regrow *)context, mouse_name_leave_hook);
+}
+#endif
+
 regrow *make_regrow(snd_state *ss, Widget ww, Widget last_row, 
 			   XtCallbackProc first_callback, XtCallbackProc second_callback, XtCallbackProc third_callback)
 {
@@ -1150,6 +1168,11 @@ regrow *make_regrow(snd_state *ss, Widget ww, Widget last_row,
   XtSetArg(args[n], XmNactivateCallback, n3 = make_callback_list(third_callback, (XtPointer)r)); n++;
   r->nm = XtCreateManagedWidget("nm", xmPushButtonWidgetClass, r->rw, args, n);
   XmStringFree(s1);
+
+#if HAVE_HOOKS
+  XtAddEventHandler(r->nm, EnterWindowMask, FALSE, mouse_name_enter, (XtPointer)r);
+  XtAddEventHandler(r->nm, LeaveWindowMask, FALSE, mouse_name_leave, (XtPointer)r);
+#endif
 
   FREE(n1);
   FREE(n2);
@@ -1344,6 +1367,7 @@ void make_curfiles_list (snd_state *ss)
 	  cur_name_row[i] = r;
 	  r->pos = i;
 	  r->ss = ss;
+	  r->parent = CURRENT_FILE_VIEWER;
 	}
       XtUnmanageChild(r->rw);
       str = view_curfiles_name(r->pos);
@@ -1411,6 +1435,7 @@ void make_prevfiles_list (snd_state *ss)
 	      prev_name_row[i] = r;
 	      r->pos = i;
 	      r->ss = ss;
+	      r->parent = PREVIOUS_FILE_VIEWER;
 	    }
 	  XtUnmanageChild(r->rw);
 	  set_button_label_bold(r->nm, get_prevnames(r->pos));
@@ -1470,6 +1495,9 @@ void View_Files_Callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       XtSetArg(args[n], XmNtransient, FALSE); n++;
       view_files_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_File_Browser, args, n);
+#if HAVE_GUILE
+      set_dialog_widget(VIEW_FILES_DIALOG, view_files_dialog);
+#endif
       add_dialog(ss, view_files_dialog);
 #if OVERRIDE_TOGGLE
       override_form_translation(view_files_dialog);
@@ -1555,6 +1583,7 @@ void View_Files_Callback(Widget w, XtPointer context, XtPointer info)
 	  cur_name_row[0] = r;
 	  r->pos = 0;
 	  r->ss = ss;
+	  r->parent = CURRENT_FILE_VIEWER;
 	}
 
       /* previous files section: unlist play previous files | files */
@@ -1579,6 +1608,7 @@ void View_Files_Callback(Widget w, XtPointer context, XtPointer info)
 	  prev_name_row[0] = r;
 	  r->pos = 0;
 	  r->ss = ss;
+	  r->parent = PREVIOUS_FILE_VIEWER;
 	}
     }
   else raise_dialog(view_files_dialog);
@@ -1664,6 +1694,9 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
   XtSetArg(args[n], XmNnoResize, FALSE); n++;
   /* not transient -- we want this window to remain visible if possible */
   raw_data_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), "raw data", args, n);
+#if HAVE_GUILE
+  set_dialog_widget(RAW_DATA_DIALOG, raw_data_dialog);
+#endif
 #if OVERRIDE_TOGGLE
   override_form_translation(raw_data_dialog);
 #endif
@@ -1923,6 +1956,9 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
       XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       new_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), "new", args, n);
+#if HAVE_GUILE
+      set_dialog_widget(NEW_FILE_DIALOG, new_dialog);
+#endif
 #if OVERRIDE_TOGGLE
       override_form_translation(new_dialog);
 #endif
@@ -2051,6 +2087,9 @@ void File_Mix_Callback(Widget w, XtPointer context, XtPointer info)
       s1 = XmStringCreate("mix in:", XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n], XmNselectionLabelString, s1); n++;
       file_mix_dialog = XmCreateFileSelectionDialog(w, STR_mix_file_p, args, n);
+#if HAVE_GUILE
+      set_dialog_widget(FILE_MIX_DIALOG, file_mix_dialog);
+#endif
 #if OVERRIDE_TOGGLE
       override_form_translation(file_mix_dialog);
 #endif
@@ -2142,6 +2181,9 @@ void edit_header(snd_info *sp)
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       XtSetArg(args[n], XmNtransient, FALSE); n++;
       edit_header_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Edit_Header, args, n);
+#if HAVE_GUILE
+      set_dialog_widget(EDIT_HEADER_DIALOG, edit_header_dialog);
+#endif
       add_dialog(ss, edit_header_dialog);
 #if OVERRIDE_TOGGLE
       override_form_translation(edit_header_dialog);
@@ -2181,4 +2223,44 @@ void edit_header(snd_info *sp)
   if (!(XtIsManaged(edit_header_dialog))) XtManageChild(edit_header_dialog);
 }
 
+
+#if HAVE_GUILE
+
+static SCM g_just_sounds(void)
+{
+  #define H_just_sounds "(" S_just_sounds ") reflects the 'just sounds' button in the file chooser dialog"
+  return(TO_SCM_BOOLEAN(just_sounds_state));
+}
+
+static SCM g_set_just_sounds(SCM on) 
+{
+  int n;
+  SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_just_sounds);
+  n = bool_int_or_one(on);
+  if (just_sounds_button)
+    XmToggleButtonSetState(just_sounds_button, n, TRUE);
+  just_sounds_state = n;
+  return(TO_SCM_BOOLEAN(n));
+}
+
+void g_initialize_xgfile(SCM local_doc)
+{
+  define_procedure_with_setter(S_just_sounds, SCM_FNC g_just_sounds, H_just_sounds,
+			       "set-" S_just_sounds, SCM_FNC g_set_just_sounds, local_doc, 0, 0, 0, 1);
+
+#if HAVE_HOOKS
+  mouse_name_enter_hook = MAKE_HOOK("mouse-enter-label-hook", 3, "(lambda (type position label-string)");
+  mouse_name_leave_hook = MAKE_HOOK("mouse-leave-label-hook", 3, "(lambda (type position label-string)");
+#endif
+}
+
+#endif
+
+/* TODO: decide on these label-hook names, implement in gtk as well
+ *       export to scheme the label types ("current-file-viewer" etc)
+ * (add-hook! mouse-enter-label-hook (lambda (typ pos arg) (help-dialog arg "this is helpful")))
+ *
+ * TODO: positioning and size of help-dialog (and dismissal)
+ * TODO: write a nice example of mouse label hooks (and so on)
+ */
 

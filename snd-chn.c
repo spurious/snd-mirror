@@ -5170,7 +5170,7 @@ to the help dialog if filename is omitted"
   SND_ASSERT_CHAN(S_peaks, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_peaks);
   if (gh_string_p(filename))
-    name = mus_file_full_name(SCM_STRING_CHARS(filename));
+    name = mus_file_full_name(TO_C_STRING(filename));
   else name = NULL;
   err = display_fft_peaks(cp, name);
   if (name) FREE(name);

@@ -638,7 +638,7 @@ static SCM g_add_to_main_menu(SCM label, SCM callback)
       add_callback(slot, callback);
     }
   val = gh_add_to_main_menu(get_global_state(), 
-			    SCM_STRING_CHARS(label), 
+			    TO_C_STRING(label), 
 			    slot);
   return(TO_SCM_INT(val));
 }
@@ -654,7 +654,7 @@ menu is the index returned by add-to-main-menu, func should be a function of no 
   slot = make_callback_slot();
   err = gh_add_to_menu(get_global_state(), 
 		       TO_C_INT_OR_ELSE(menu, 0),
-		       SCM_STRING_CHARS(label),
+		       TO_C_STRING(label),
 		       slot);
   if (err == -1) 
     return(scm_throw(NO_SUCH_MENU,
@@ -677,7 +677,7 @@ static SCM g_remove_from_menu(SCM menu, SCM label)
   SCM_ASSERT(gh_string_p(label), label, SCM_ARG2, S_remove_from_menu);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(menu)), menu, SCM_ARG1, S_remove_from_menu);
   val = gh_remove_from_menu(TO_C_INT_OR_ELSE(menu, 0), 
-			    SCM_STRING_CHARS(label));
+			    TO_C_STRING(label));
   return(TO_SCM_INT(val));
 }
 
@@ -689,8 +689,8 @@ static SCM g_change_menu_label(SCM menu, SCM old_label, SCM new_label)
   SCM_ASSERT(gh_string_p(new_label), new_label, SCM_ARG3, S_change_menu_label);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(menu)), menu, SCM_ARG1, S_change_menu_label);
   val = gh_change_menu_label(TO_C_INT_OR_ELSE(menu, 0), 
-			     SCM_STRING_CHARS(old_label), 
-			     SCM_STRING_CHARS(new_label));
+			     TO_C_STRING(old_label), 
+			     TO_C_STRING(new_label));
   return(TO_SCM_INT(val));
 }
 
@@ -701,7 +701,7 @@ static SCM g_menu_sensitive(SCM menu, SCM label)
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(menu)), menu, SCM_ARG1, "set-" S_menu_sensitive);
   SCM_ASSERT(gh_string_p(label), label, SCM_ARG2, "set-" S_menu_sensitive);
   val = gh_menu_is_sensitive(TO_C_INT_OR_ELSE(menu, 0), 
-			     SCM_STRING_CHARS(label));
+			     TO_C_STRING(label));
   return(TO_SCM_BOOLEAN(val));
 }
 
@@ -712,11 +712,10 @@ static SCM g_set_menu_sensitive(SCM menu, SCM label, SCM on)
   SCM_ASSERT(gh_string_p(label), label, SCM_ARG2, "set-" S_menu_sensitive);
   SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG3, "set-" S_menu_sensitive);
   val = gh_set_menu_sensitive(TO_C_INT_OR_ELSE(menu, 0), 
-			      SCM_STRING_CHARS(label), 
+			      TO_C_STRING(label), 
 			      bool_int_or_one(on));
   return(TO_SCM_BOOLEAN(val));
 }
-
 
 void g_init_menu(SCM local_doc)
 {

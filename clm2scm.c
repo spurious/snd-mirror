@@ -3705,7 +3705,7 @@ static SCM g_make_file2sample(SCM name)
   mus_scm *gn;
   SCM_ASSERT((gh_string_p(name)), name, SCM_ARG1, S_make_file2sample);
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
-  gn->gen = mus_make_file2sample(SCM_STRING_CHARS(name));
+  gn->gen = mus_make_file2sample(TO_C_STRING(name));
   gn->nvcts = 0;
   return(scm_return_first(mus_scm_to_smob(gn), name));
 }
@@ -3740,7 +3740,7 @@ should be sndlib identifiers:\n\
   SCM_ASSERT((SCM_NFALSEP(scm_real_p(out_format))), out_format, SCM_ARG3, S_make_sample2file);
   SCM_ASSERT((SCM_NFALSEP(scm_real_p(out_type))), out_type, SCM_ARG4, S_make_sample2file);
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
-  gn->gen = mus_make_sample2file(SCM_STRING_CHARS(name),
+  gn->gen = mus_make_sample2file(TO_C_STRING(name),
 				 TO_C_INT_OR_ELSE(chans, 0),
 				 TO_C_INT_OR_ELSE(out_format, 0),
 				 TO_C_INT_OR_ELSE(out_type, 0));
@@ -3769,7 +3769,7 @@ static SCM g_make_file2frame(SCM name)
   mus_scm *gn;
   SCM_ASSERT((gh_string_p(name)), name, SCM_ARG1, S_make_file2frame);
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
-  gn->gen = mus_make_file2frame(SCM_STRING_CHARS(name));
+  gn->gen = mus_make_file2frame(TO_C_STRING(name));
   gn->nvcts = 0;
   return(scm_return_first(mus_scm_to_smob(gn), name));
 }
@@ -3803,7 +3803,7 @@ should be sndlib identifiers:\n\
   SCM_ASSERT((SCM_NFALSEP(scm_real_p(out_format))), out_format, SCM_ARG3, S_make_frame2file);
   SCM_ASSERT((SCM_NFALSEP(scm_real_p(out_type))), out_type, SCM_ARG4, S_make_frame2file);
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
-  gn->gen = mus_make_frame2file(SCM_STRING_CHARS(name),
+  gn->gen = mus_make_frame2file(TO_C_STRING(name),
 				TO_C_INT_OR_ELSE(chans, 0),
 				TO_C_INT_OR_ELSE(out_format, 0),
 				TO_C_INT_OR_ELSE(out_type, 0));
@@ -3839,7 +3839,7 @@ srate and channels.  'len' samples are written."
   SCM_ASSERT((SCM_NFALSEP(scm_real_p(srate))), srate, SCM_ARG4, S_array2file);
   SCM_ASSERT((SCM_NFALSEP(scm_real_p(channels))), channels, SCM_ARG5, S_array2file);
   v = get_vct(data);
-  olen = mus_fltarray2file(SCM_STRING_CHARS(filename),
+  olen = mus_fltarray2file(TO_C_STRING(filename),
 			   v->data,
 			   TO_C_INT_OR_ELSE(len, 0),
 			   TO_C_INT_OR_ELSE(srate, 0),
@@ -3861,7 +3861,7 @@ at frame 'start' and reading 'samples' samples altogether."
   SCM_ASSERT((SCM_NFALSEP(scm_real_p(samples))), samples, SCM_ARG4, S_file2array);
   SCM_ASSERT((vct_p(data)), data, SCM_ARG5, S_file2array);
   v = get_vct(data);
-  err = mus_file2fltarray(SCM_STRING_CHARS(filename),
+  err = mus_file2fltarray(TO_C_STRING(filename),
 			  TO_C_INT_OR_ELSE(chan, 0),
 			  TO_C_INT_OR_ELSE(start, 0),
 			  TO_C_INT_OR_ELSE(samples, 0),

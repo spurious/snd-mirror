@@ -45,6 +45,9 @@ void update_stats_display(snd_state *ss, int all)
   if (!stats_window)
     {
       stats_window = gtk_dialog_new();
+#if HAVE_GUILE
+      set_dialog_widget(STATS_DIALOG, stats_window);
+#endif
       gtk_signal_connect(GTK_OBJECT(stats_window), "delete_event", GTK_SIGNAL_FUNC(stats_delete), (gpointer)ss);
       gtk_window_set_title(GTK_WINDOW(stats_window), STR_Disk_and_Memory_Usage);
       gtk_window_set_policy(GTK_WINDOW(stats_window), TRUE, TRUE, FALSE); /* allow shrink or grow */

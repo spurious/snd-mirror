@@ -75,6 +75,9 @@ void Edit_Find_Callback(GtkWidget *w, gpointer context)
   if (!edit_find_dialog)
     {
       edit_find_dialog = gtk_dialog_new();
+#if HAVE_GUILE
+      set_dialog_widget(FIND_DIALOG, edit_find_dialog);
+#endif
       gtk_signal_connect(GTK_OBJECT(edit_find_dialog), "delete_event", GTK_SIGNAL_FUNC(edit_find_delete), (gpointer)ss);
       gtk_window_set_title(GTK_WINDOW(edit_find_dialog), STR_Find);
       gtk_window_set_policy(GTK_WINDOW(edit_find_dialog), TRUE, TRUE, FALSE); /* allow shrink or grow */

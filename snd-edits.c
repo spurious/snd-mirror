@@ -2770,7 +2770,7 @@ snd can be a filename, a sound index number, or a list with a mix id number."
   if (gh_string_p(snd))
     {
       if (!((gh_number_p(chn)) || (SCM_FALSEP(chn)) || (SCM_UNBNDP(chn)))) scm_wrong_type_arg(S_make_sample_reader, 3, chn);
-      loc_sp = make_sound_readable(ss, SCM_STRING_CHARS(snd), FALSE);
+      loc_sp = make_sound_readable(ss, TO_C_STRING(snd), FALSE);
       if (loc_sp == NULL) 
 	return(scm_throw(NO_SUCH_SOUND,
 			 SCM_LIST2(TO_SCM_STRING(S_make_sample_reader),
@@ -2935,7 +2935,7 @@ replacing current data with the function results; origin is the edit-history nam
   if (j > 0) mus_file_write(ofd, 0, j - 1, 1, data);
   close_temp_file(ofd, hdr, num*datumb, sp);
   hdr = free_file_info(hdr);
-  file_change_samples(sf->initial_samp, num, ofile, cp, 0, DELETE_ME, LOCK_MIXES, SCM_STRING_CHARS(origin));
+  file_change_samples(sf->initial_samp, num, ofile, cp, 0, DELETE_ME, LOCK_MIXES, TO_C_STRING(origin));
   update_graph(cp, NULL); /* is this needed? */
   if (ofile) free(ofile);
   FREE(data[0]);
@@ -3067,7 +3067,7 @@ static SCM g_as_one_edit(SCM proc, SCM origin)
   if (chans > 0)
     {
       if (gh_string_p(origin))
-	as_one_edit_origin = SCM_STRING_CHARS(origin);
+	as_one_edit_origin = TO_C_STRING(origin);
       else as_one_edit_origin = NULL;
       cur_edits = (int *)CALLOC(chans, sizeof(int));
       chan_ctr = 0;
@@ -3293,16 +3293,16 @@ static SCM g_change_samples_with_origin(SCM samp_0, SCM samps, SCM origin, SCM v
 #else
       for (i = 0; i < len; i++) ivals[i] = TO_C_INT_OR_ELSE(vdata[i], 0);
 #endif
-      change_samples(beg, len, ivals, cp, LOCK_MIXES, SCM_STRING_CHARS(origin));
+      change_samples(beg, len, ivals, cp, LOCK_MIXES, TO_C_STRING(origin));
       FREE(ivals);
     }
   else
     {
       /* string = filename here */
       file_change_samples(beg, len,
-			  SCM_STRING_CHARS(vect),
+			  TO_C_STRING(vect),
 			  cp, 0, 0, 1,
-			  SCM_STRING_CHARS(origin));
+			  TO_C_STRING(origin));
     }
   update_graph(cp, NULL);
   return(scm_return_first(vect, origin));
@@ -3415,7 +3415,7 @@ static SCM g_delete_samples_with_origin(SCM samp_n, SCM samps, SCM origin, SCM s
 {
   SCM res;
   SCM_ASSERT(gh_string_p(origin), origin, SCM_ARG3, S_delete_samples_with_origin);
-  res = g_delete_samples_1(samp_n, samps, snd_n, chn_n, SCM_STRING_CHARS(origin));
+  res = g_delete_samples_1(samp_n, samps, snd_n, chn_n, TO_C_STRING(origin));
   return(scm_return_first(res, origin));
 }
 
@@ -3457,7 +3457,7 @@ inserts data (either a vector, vct, or list of samples, or a filename) into snd'
   len = TO_C_INT_OR_ELSE(samps, 0);
   if (gh_string_p(vect))
     {
-      file_insert_samples(beg, len, SCM_STRING_CHARS(vect), cp, 0, DELETE_ME, S_insert_samples);
+      file_insert_samples(beg, len, TO_C_STRING(vect), cp, 0, DELETE_ME, S_insert_samples);
     }
   else
     {
@@ -3492,17 +3492,17 @@ static SCM g_insert_samples_with_origin(SCM samp, SCM samps, SCM origin, SCM vec
 #else
       for (i = 0; i < len; i++) ivals[i] = TO_C_INT_OR_ELSE(vdata[i], 0);
 #endif
-      insert_samples(beg, len, ivals, cp, SCM_STRING_CHARS(origin));
+      insert_samples(beg, len, ivals, cp, TO_C_STRING(origin));
       FREE(ivals);
     }
   else
     {
       if (gh_string_p(vect))
 	file_insert_samples(beg, len,
-			    SCM_STRING_CHARS(vect),
+			    TO_C_STRING(vect),
 			    cp, 0, 0,
-			    SCM_STRING_CHARS(origin));
-      else extend_with_zeros(cp, beg, len, SCM_STRING_CHARS(origin));
+			    TO_C_STRING(origin));
+      else extend_with_zeros(cp, beg, len, TO_C_STRING(origin));
     }
   update_graph(cp, NULL);
   return(TO_SCM_INT(len));

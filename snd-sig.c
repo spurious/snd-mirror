@@ -2939,7 +2939,7 @@ using data returned by the latter and origin as the edit history entry for the e
   SCM_ASSERT(gh_string_p(origin), origin, SCM_ARG3, S_temp_to_sound);
   program_data = (snd_exf *)(SCM_UNWRAP(data));
   program_data->new_filenames[0] = TO_NEW_C_STRING(new_name);
-  temp_to_snd(program_data, SCM_STRING_CHARS(origin));
+  temp_to_snd(program_data, TO_C_STRING(origin));
   return(SCM_BOOL_T);
 }
 
@@ -2958,7 +2958,7 @@ using data returned by the latter and origin as the edit history entry for the e
   vdata = SCM_VELTS(new_names);
   for (i = 0; i < len; i++)
     program_data->new_filenames[i] = TO_NEW_C_STRING(vdata[i]);
-  temp_to_snd(program_data, SCM_STRING_CHARS(origin));
+  temp_to_snd(program_data, TO_C_STRING(origin));
   return(SCM_BOOL_T);
 }
 

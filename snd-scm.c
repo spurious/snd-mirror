@@ -219,12 +219,14 @@ SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error handler */
 		      if (gh_string_p(stmp)) 
 			scm_display_error_message(stmp, gh_caddr(throw_args), port);
 		      else scm_display(tag, port);
-#if 0 /* (!HAVE_GUILE_1_3) */
-		      /* this was buggy in 1.3.4 */
-		      stack = scm_fluid_ref(SCM_CDR(scm_the_last_stack_fluid));
-		      if (SCM_NFALSEP(stack)) 
-			scm_display_backtrace(stack, port, SCM_UNDEFINED, SCM_UNDEFINED);
-#endif
+		      if (show_backtrace(state))
+			{
+			  /* this was buggy in 1.3.4 */
+			  /* and it still is -- #@$%!#@ */
+			  stack = scm_fluid_ref(SCM_CDR(scm_the_last_stack_fluid));
+			  if (SCM_NFALSEP(stack)) 
+			    scm_display_backtrace(stack, port, SCM_UNDEFINED, SCM_UNDEFINED);
+			}
 		    }
 		}
 	    }
@@ -250,7 +252,7 @@ SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error handler */
   ans = scm_strport_to_string(port);
 #else
   SCM_DEFER_INTS;
-  ans = scm_makfromstr (SCM_STRING_CHARS (SCM_CDR (SCM_STREAM (port))), SCM_INUM (SCM_CAR (SCM_STREAM (port))), 0);
+  ans = scm_makfromstr (TO_C_STRING (SCM_CDR (SCM_STREAM (port))), SCM_INUM (SCM_CAR (SCM_STREAM (port))), 0);
   SCM_ALLOW_INTS;
 #endif
 
@@ -405,7 +407,7 @@ int bool_int_or_one(SCM n)
 
 char *full_filename(SCM file)
 {
-  return(mus_file_full_name(SCM_STRING_CHARS(file)));
+  return(mus_file_full_name(TO_C_STRING(file)));
 }
 
 char *gh_print_1(SCM obj, const char *caller)
@@ -1154,6 +1156,15 @@ static SCM g_set_show_indices(SCM val)
   SCM_ASSERT(bool_or_arg_p(val), val, SCM_ARG1, "set-" S_show_indices);
   set_show_indices(state, bool_int_or_one(val));
   return(TO_SCM_BOOLEAN(show_indices(state)));
+}
+
+static SCM g_show_backtrace(void) {return(TO_SCM_BOOLEAN(show_backtrace(state)));}
+static SCM g_set_show_backtrace(SCM val) 
+{
+  #define H_show_backtrace "(" S_show_backtrace ") -> #t to show backtrace automatically upon error"
+  SCM_ASSERT(bool_or_arg_p(val), val, SCM_ARG1, "set-" S_show_backtrace);
+  set_show_backtrace(state, bool_int_or_one(val));
+  return(TO_SCM_BOOLEAN(show_backtrace(state)));
 }
 
 static SCM g_show_usage_stats(void) {return(TO_SCM_BOOLEAN(show_usage_stats(state)));}
@@ -2004,7 +2015,7 @@ static SCM g_help_dialog(SCM subject, SCM msg)
   #define H_help_dialog "(" S_help_dialog " subject message) fires up the Help window with subject and message"
   SCM_ASSERT(gh_string_p(subject), subject, SCM_ARG1, S_help_dialog);
   SCM_ASSERT(gh_string_p(msg), msg, SCM_ARG2, S_help_dialog);
-  snd_help(state, SCM_STRING_CHARS(subject), SCM_STRING_CHARS(msg));
+  snd_help(state, TO_C_STRING(subject), TO_C_STRING(msg));
   return(SCM_BOOL_F);
 }
 
@@ -2067,7 +2078,7 @@ static SCM g_yes_or_no_p(SCM msg)
 {
   #define H_yes_or_no_p "(" S_yes_or_no_p " message) displays message and waits for 'y' or 'n'; returns #t if 'y'"
   SCM_ASSERT(gh_string_p(msg), msg, SCM_ARG1, S_yes_or_no_p);
-  return(TO_SCM_BOOLEAN(snd_yes_or_no_p(state, SCM_STRING_CHARS(msg))));
+  return(TO_SCM_BOOLEAN(snd_yes_or_no_p(state, TO_C_STRING(msg))));
 }
 
 static SCM g_graph(SCM ldata, SCM xlabel, SCM x0, SCM x1, SCM y0, SCM y1, SCM snd_n, SCM chn_n, SCM force_display)
@@ -2271,7 +2282,7 @@ updates an on-going 'progress report' (e. g. an animated hour-glass icon) in snd
   sp = get_sp(snd);
   if (sp) 
     progress_report(sp,
-		    (gh_string_p(name)) ? SCM_STRING_CHARS(name) : "something useful",
+		    (gh_string_p(name)) ? TO_C_STRING(name) : "something useful",
 		    TO_C_INT_OR_ELSE(cur_chan, 0),
 		    TO_C_INT_OR_ELSE(chans, sp->nchans),
 		    TO_C_DOUBLE(pct),
@@ -2651,6 +2662,9 @@ void g_initialize_gh(snd_state *ss)
   define_procedure_with_setter(S_show_indices, SCM_FNC g_show_indices, H_show_indices,
 			       "set-" S_show_indices, SCM_FNC g_set_show_indices, local_doc, 0, 0, 0, 1);
 
+  define_procedure_with_setter(S_show_backtrace, SCM_FNC g_show_backtrace, H_show_backtrace,
+			       "set-" S_show_backtrace, SCM_FNC g_set_show_backtrace, local_doc, 0, 0, 0, 1);
+
   define_procedure_with_setter(S_show_usage_stats, SCM_FNC g_show_usage_stats, H_show_usage_stats,
 			       "set-" S_show_usage_stats, SCM_FNC g_set_show_usage_stats, local_doc, 0, 0, 0, 1);
 
@@ -2831,6 +2845,9 @@ If more than one hook function, results are concatenated. If none, the current c
   g_init_gxenv(local_doc);
 #if HAVE_HOOKS
   g_init_gxmenu(local_doc);
+  #if (!USE_NO_GUI)
+    g_init_gxmain(local_doc);
+  #endif
 #endif
 #if DEBUGGING && (!USE_NO_GUI)
   g_init_draw(local_doc);
