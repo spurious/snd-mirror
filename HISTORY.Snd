@@ -1,5 +1,6 @@
 Snd change log
 
+  2-Sep:     vct|channel|spectral-polynomial in dsp.scm.
   23-Aug:    snd 7.6.
   16-Aug:    removed built-in Hadamard transform
              out-chan argument to add-player so that channel data can be sent to any audio channel

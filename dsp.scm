@@ -1668,3 +1668,57 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 		     (set! x (+ x xi))
 		     (* scl val))))))
 !#
+
+
+;;; TODO: doc/test vct|channel|spectral-polynomial
+
+;;; channel-polynomial
+
+(define (vct-polynomial v coeffs)
+  ;; Horner's rule applied to entire vct
+  (let* ((v-len (vct-length v))
+	 (num-coeffs (vct-length coeffs))
+	 (new-v (make-vct v-len (vct-ref coeffs (1- num-coeffs)))))
+    (do ((i (- num-coeffs 2) (1- i)))
+	((< i 0))
+      (vct-offset! (vct-multiply! new-v v) (vct-ref coeffs i)))
+    new-v))
+
+(define* (channel-polynomial coeffs #:optional snd chn)
+  (let ((len (frames snd chn)))
+    (vct->channel (vct-polynomial (channel->vct 0 len snd chn) coeffs) 0 len snd chn)))
+
+;;; (channel-polynomial (vct 0.0 .5)) = x*.5
+;;; (channel-polynomial (vct 0.0 1.0 1.0 1.0)) = x*x*x + x*x + x
+
+;;; convolution -> * in freq
+
+(define* (spectral-polynomial coeffs #:optional snd chn)
+  (let* ((len (frames snd chn))
+	 (sound (channel->vct 0 len snd chn))
+	 (num-coeffs (vct-length coeffs))
+	 (fft-len (max 1 (inexact->exact (expt 2 (ceiling (/ (log (* (1- num-coeffs) len)) (log 2)))))))
+	 (rl1 (make-vct fft-len 0.0))
+	 (rl2 (make-vct fft-len 0.0))
+	 (new-sound (make-vct fft-len)))
+    (if (> (vct-ref coeffs 0) 0.0)
+	(let ((dither (vct-ref coeffs 0))
+	      (two-pi (* 2 3.141592653589793)))
+	  (do ((i 0 (1+ i)))
+	      ((= i fft-len))
+	    ;; treat coeff 0 as dithering amount
+	    (vct-set! new-sound i dither)     ; noise magnitude
+	    (vct-set! rl1 i (random two-pi))) ; random phase
+	  (polar->rectangular new-sound rl1)))
+    (if (> num-coeffs 1)
+	(begin
+	  (vct-add! new-sound (vct-scale! (vct-copy sound) (vct-ref coeffs 1)))
+	  (if (> num-coeffs 2)
+	      (let ((peak (maxamp snd chn)))
+		(vct-add! (vct-scale! rl1 0.0) sound)
+		(do ((i 2 (1+ i)))
+		    ((= i num-coeffs))
+		  (convolution rl1 (vct-add! (vct-scale! rl2 0.0) sound) fft-len)
+		  (let ((pk (vct-peak rl1)))
+		    (vct-add! new-sound (vct-scale! (vct-copy rl1) (/ (* (vct-ref coeffs i) peak) pk)))))))))
+    (vct->channel new-sound 0 (max len (* len (1- num-coeffs))) snd chn)))

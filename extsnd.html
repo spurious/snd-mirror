@@ -2232,6 +2232,29 @@ there are also several functions that create and fill vcts with data:</p>
   <a href="#vector_to_vct">vector-&gt;vct</a>
   <a href="#selection2vct">selection-&gt;vct</a>
 </pre>
+
+<p>We could combine some of these vct functions to implement Horner's rule
+(the <a href="clm.html#polynomial">polynomial</a> generator) over an entire
+channel:
+</p>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+(define (vct-polynomial v coeffs)
+  (let* ((v-len (<em class=red>vct-length</em> v))
+	 (num-coeffs (<em class=red>vct-length</em> coeffs))
+	 (new-v (<em class=red>make-vct</em> v-len (<em class=red>vct-ref</em> coeffs (1- num-coeffs)))))
+    (do ((i (- num-coeffs 2) (1- i)))
+	((&lt; i 0))
+      (<em class=red>vct-offset!</em> (<em class=red>vct-multiply!</em> new-v v) (<em class=red>vct-ref</em> coeffs i)))
+    new-v))
+
+(define* (channel-polynomial coeffs #:optional snd chn)
+  (let ((len (frames snd chn)))
+    (<em class=red>vct-&gt;channel</em> (vct-polynomial (<em class=red>channel-&gt;vct</em> 0 len snd chn) coeffs) 0 len snd chn)))
+
+;;; (channel-polynomial (<em class=red>vct</em> 0.0 .5)) = x*.5
+;;; (channel-polynomial (<em class=red>vct</em> 0.0 1.0 1.0 1.0)) = x*x*x + x*x + x
+</pre></td></tr></table>
+
 <p>There is one slightly
 unusual function in this family: <i>vct-map!</i>.
 This is a do-loop (or for-each) over a vct, calling some 

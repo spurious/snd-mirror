@@ -368,6 +368,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+2-Sep:   vct|channel|spectral-polynomial in dsp.scm\n\
 23-Aug:  snd 7.6\n\
 16-Aug:  removed built-in Hadamard transform\n\
          out-chan argument to add-player so that channel data can be sent to any audio channel\n\
@@ -379,8 +380,6 @@ void about_snd_help(void)
          --with-midi configuration switch\n\
 27-Jul:  --with-hobbit and --with-builtin-gtkrc configure switches\n\
          clm23.scm.\n\
-30-Jun:  snd-hobbit.scm thanks to Kjetil\n\
-         snd 7.5.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

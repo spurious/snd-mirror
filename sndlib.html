@@ -1228,7 +1228,6 @@ to make it independent of Snd:
 (dynamic-call "mus_sndlib_xen_initialize" lib)
 (dynamic-call "mus_xen_init" lib)
 
-
 (define* (open-play-output #:optional out-chans out-srate out-format out-bufsize)
   ;; returns (list audio-fd chans frames)
   (let* ((outchans (or out-chans 1))
