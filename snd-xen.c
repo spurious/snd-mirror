@@ -2446,7 +2446,7 @@ static XEN g_mus_audio_describe(void)
 
 static XEN g_just_sounds(void)
 {
-  #define H_just_sounds "(" S_just_sounds "): the 'just sounds' button in the file chooser dialog"
+  #define H_just_sounds "(" S_just_sounds "): the 'just sounds' choice in the file chooser dialog"
   return(C_TO_XEN_BOOLEAN(ss->just_sounds_state));
 }
 

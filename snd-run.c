@@ -7262,7 +7262,7 @@ static char *descr_vct_set_f(int *args, ptree *pt)
 {
   return(mus_format("vct_set!(" VCT_PT ", " INT_PT ", " FLT_PT ")", args[1], DESC_VCT_ARG_1, args[2], INT_ARG_2, args[3], FLOAT_ARG_3));
 }
-static void vct_set_i(int *args, ptree *pt) {VCT_ARG_1->data[INT_ARG_2] = (Float)INT_ARG_3; FLOAT_RESULT = (Float)INT_ARG_3;}
+static void vct_set_i(int *args, ptree *pt) {VCT_ARG_1->data[INT_ARG_2] = (Float)INT_ARG_3; FLOAT_RESULT = (Double)INT_ARG_3;}
 static char *descr_vct_set_i(int *args, ptree *pt) 
 {
   return(mus_format("vct_set!(" VCT_PT ", " INT_PT ", " INT_PT ")", args[1], DESC_VCT_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3));
@@ -7488,7 +7488,7 @@ static xen_value *sound_data_chans_1(ptree *prog, xen_value **args, int num_args
   return(package(prog, R_INT, sound_data_chans_i, descr_sound_data_chans_i, args, 1));
 }
 
-static void sound_data_ref_f(int *args, ptree *pt) {FLOAT_RESULT = (Float)MUS_SAMPLE_TO_DOUBLE(SOUND_DATA_ARG_1->data[INT_ARG_2][INT_ARG_3]);}
+static void sound_data_ref_f(int *args, ptree *pt) {FLOAT_RESULT = (Double)MUS_SAMPLE_TO_DOUBLE(SOUND_DATA_ARG_1->data[INT_ARG_2][INT_ARG_3]);}
 static char *descr_sound_data_ref_f(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = sound_data_ref(" SD_PT ", " INT_PT ", " INT_PT ")", 
@@ -7507,7 +7507,7 @@ static void sound_data_set_f(int *args, ptree *pt)
 static void sound_data_set_i(int *args, ptree *pt) 
 {
   SOUND_DATA_ARG_1->data[INT_ARG_2][INT_ARG_3] = MUS_DOUBLE_TO_SAMPLE((Float)INT_ARG_4);
-  FLOAT_RESULT = (Float)INT_ARG_4;
+  FLOAT_RESULT = (Double)INT_ARG_4;
 }
 
 static char *descr_sound_data_set_i(int *args, ptree *pt) 

@@ -7763,7 +7763,7 @@ If no <i>snd</i> argument is given, this also affects the Mix, Track, and Record
 The  'apply' button.
 <i>target</i> can be 0=sound, 1=channel, 2=selection.
 <i>beg</i> sets where in samples the apply starts: <code>(apply-controls 0 0 (<a class=quiet href="#marksample">mark-sample</a> m))</code> starts from the given mark.
-<i>dur</i>, if given, sets how many samples to run through the apply process.
+<i>dur</i>, if given, sets how many samples to run through the apply process (the input duration).
 apply-controls can be used in conjunction with the various control panel variables:
 </td></tr>
 <tr><td></td><td>
@@ -10410,7 +10410,7 @@ them to Scheme/Ruby.  But, for now, here are some of them:
 <tr><td valign=top><code><em class=emdef>widget-size</em> (widget)</code></td>
 <td>return a list giving the widget width and height.  The corresponding set! forms also take a list:<br>
 <code>(set! (<a class=quiet href="#widgetposition">widget-position</a> (cadr (<a class=quiet href="#mainwidgets">main-widgets</a>))) (list 300 100))</code></td></tr>
-<tr><td><code><em class=emdef>widget-text</em> (widget)</code></td><td>return or set the contents of text widget</td></tr>
+<tr><td><code><a class=def name="widgettext">widget-text</a> (widget)</code></td><td>return or set the contents of text widget</td></tr>
 <tr><td><code><a class=def name="showwidget">show-widget</a> (widget)</code></td><td>show (manage) widget</td></tr>
 <tr><td><code><a class=def name="hidewidget">hide-widget</a> (widget)</code></td><td>hide (unmanage) widget</td></tr>
 <tr><td><code><a class=def name="focuswidget">focus-widget</a> (widget)</code></td><td>give widget keyboard focus</td></tr>

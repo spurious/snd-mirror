@@ -16,7 +16,6 @@
 #include <math.h>
 #include "xen.h"
 
-
 XEN xen_return_first(XEN a, ...)
 {
   return(a);
@@ -167,6 +166,7 @@ void xen_guile_define_procedure_with_setter(char *get_name, XEN (*get_func)(), c
   XEN str = XEN_FALSE;
 #if XEN_DEBUGGING
   if (XEN_DEFINED_P(get_name)) fprintf(stderr, "%s is defined\n", get_name);
+  /* if (!(snd_url(get_name))) fprintf(stderr, "%s not documented\n", get_name); */
 #endif
   if (get_help) str = C_TO_XEN_STRING(get_help);
   scm_permanent_object(
@@ -201,6 +201,7 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
   XEN str = XEN_FALSE;
 #if XEN_DEBUGGING
   if (XEN_DEFINED_P(get_name)) fprintf(stderr, "%s is defined\n", get_name);
+  /* if (!(snd_url(get_name))) fprintf(stderr, "%s not documented\n", get_name); */
 #endif
   if (get_help) str = C_TO_XEN_STRING(get_help);
   scm_permanent_object(
@@ -238,6 +239,7 @@ XEN xen_guile_create_hook(const char *name, int args, const char *help, XEN loca
 #if HAVE_SCM_C_DEFINE
 #if XEN_DEBUGGING
       if (XEN_DEFINED_P(name)) fprintf(stderr, "%s is defined\n", name);
+      /* if (!(snd_url(name))) fprintf(stderr, "%s not documented\n", name); */
 #endif
       scm_c_define(name, hook);
 #else
@@ -257,6 +259,7 @@ XEN xen_guile_create_hook(const char *name, int args, const char *help, XEN loca
 XEN xen_guile_dbg_new_procedure(const char *name, XEN (*func)(), int req, int opt, int rst)
 {
   if ((name) && (strlen(name) > 0) && XEN_DEFINED_P(name)) fprintf(stderr, "%s is defined\n", name);
+  /* if ((name) && (strlen(name) > 0) && (!(snd_url(name)))) fprintf(stderr, "%s not documented\n", name); */
   return(scm_c_define_gsubr(name, req, opt, rst, func));
 }
 #endif
@@ -270,23 +273,14 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str)
 {
   char *result;
   if (!xen_temp_strings)
-    xen_temp_strings = (char **)CALLOC(XEN_TEMP_STRINGS_SIZE, sizeof(char *));
+    xen_temp_strings = (char **)calloc(XEN_TEMP_STRINGS_SIZE, sizeof(char *));
   else
     {
-      if (xen_temp_strings[xen_temp_strings_ctr]) FREE(xen_temp_strings[xen_temp_strings_ctr]);
+      if (xen_temp_strings[xen_temp_strings_ctr]) 
+	free(xen_temp_strings[xen_temp_strings_ctr]);
     }
-  result = XEN_TO_C_STRING(str);
-#if (DEBUGGING && USE_SND)
-  {
-    char *temp;
-    temp = copy_string(result);
-    free(result);
-    xen_temp_strings[xen_temp_strings_ctr] = temp;
-  }
-#else
-  xen_temp_strings[xen_temp_strings_ctr] = result;
-#endif
-  xen_temp_strings_ctr++;
+  result = scm_to_locale_string(str); /* not XEN_TO_C_STRING here -- infinite recursion */
+  xen_temp_strings[xen_temp_strings_ctr++] = result;
   if (xen_temp_strings_ctr >= XEN_TEMP_STRINGS_SIZE) xen_temp_strings_ctr = 0;
   return(result);
 }
