@@ -162,7 +162,7 @@ void initialize_scrollbars(chan_info *cp)
   if (ap->x_ambit < X_RANGE_CHANGEOVER)
     set_scrollbar(zx_adj(cp), sqrt(ap->zx), .1);  /* assume size is 10% of scrollbar length */
   else set_scrollbar(zx_adj(cp), pow(ap->zx, .333), .1);
-  set_scrollbar(zy_adj(cp), 1.0 - ap->zy, .1);          /* assume 1.0 here so sqrt/cube decision, if any, is not needed */
+  set_scrollbar(zy_adj(cp), 1.0 - sqrt(ap->zy), .1);
   if ((sp->nchans > 1) && (cp->chan == 0) && (gsy_adj(cp)))
     {
       set_scrollbar(gsy_adj(cp), 1.0 - cp->gsy, cp->gzy);

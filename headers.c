@@ -3026,9 +3026,11 @@ static int read_esps_header (int chan)
 {
   char str[80];
   int happy = 1;
-  int k, hend, curbase, j, n, chars, floats, shorts, doubles, little;
-  data_location = mus_char_to_bint((unsigned char *)(hdrbuf + 8));
+  int k, hend, curbase, j, n, chars, floats, shorts, doubles, little, bytes;
   little = (hdrbuf[18] == 0);
+  if (little)
+    data_location = mus_char_to_lint((unsigned char *)(hdrbuf + 8));
+  else data_location = mus_char_to_bint((unsigned char *)(hdrbuf + 8));
   true_file_length = SEEK_FILE_LENGTH(chan);
   data_size = true_file_length - data_location;
   srate = 8000;
@@ -3058,14 +3060,14 @@ static int read_esps_header (int chan)
     {
       if (doubles != 0)
 	{
-	  data_format = ((little) ? MUS_LDOUBLE : MUS_BDOUBLE);
+	  data_format = ((little) ? MUS_LDOUBLE_UNSCALED : MUS_BDOUBLE_UNSCALED);
 	  chans = doubles;
 	}
       else
 	{
 	  if (floats != 0)
 	    {
-	      data_format = ((little) ? MUS_LFLOAT : MUS_BFLOAT);
+	      data_format = ((little) ? MUS_LFLOAT_UNSCALED : MUS_BFLOAT_UNSCALED);
 	      chans = floats;
 	    }
 	  else
@@ -3090,7 +3092,7 @@ static int read_esps_header (int chan)
     {
       str[k] = hdrbuf[n];
       if ((str[k] == 'q') || (str[k] == 3) || ((curbase + n + 1) >= data_location) || (k == 78))
-	{ /* 3 = C-C marks end of record */
+	{ /* 3 = C-C marks end of record (?) */
 	  str[k + 1] = 0;
 	  if (strcmp(str, "record_freq") == 0) 
 	    {
@@ -3112,7 +3114,8 @@ static int read_esps_header (int chan)
 	{
 	  curbase += hend;
 	  n = 0;
-	  read(chan, hdrbuf, HDRBUFSIZ);
+	  bytes = read(chan, hdrbuf, HDRBUFSIZ);
+	  if (bytes != HDRBUFSIZ) break;
 	  hend = HDRBUFSIZ;
 	}
     }
@@ -5780,6 +5783,9 @@ void mus_header_set_aiff_loop_info (int *data)
   /* backwards compatibility */
   int bloop[8];
   int i;
+#if DEBUGGING && USE_SND
+  fprintf(stderr, "you've used the wrong damned loop writer again!");
+#endif
   if (data)
     {
       for (i = 0; i < 6; i++) bloop[i] = data[i];
@@ -5788,4 +5794,3 @@ void mus_header_set_aiff_loop_info (int *data)
     }
   else mus_header_set_full_aiff_loop_info(NULL);
 }
-

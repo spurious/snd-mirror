@@ -2372,6 +2372,7 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
 			    }}}}}}}
   if (hdr->loops == NULL)
     hdr->loops = (int *)CALLOC(MUS_LOOP_INFO_SIZE, sizeof(int));
+  else memset((void *)(hdr->loops), 0, MUS_LOOP_INFO_SIZE * sizeof(int));
   hdr->loops[0] = XEN_TO_C_INT_OR_ELSE(start0, 0);
   hdr->loops[1] = XEN_TO_C_INT_OR_ELSE(end0, 0);
   hdr->loops[2] = XEN_TO_C_INT_OR_ELSE(start1, 0);

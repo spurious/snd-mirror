@@ -674,19 +674,29 @@ void mus_sound_set_full_loop_info(const char *arg, int *loop)
 	  sf->loop_starts = (int *)CALLOC(2, sizeof(int));
 	  sf->loop_ends = (int *)CALLOC(2, sizeof(int));
 	}
+      sf->loop_modes[0] = loop[6]; 
       if (loop[6] != 0)
 	{
-	  sf->loop_modes[0] = loop[6]; 
 	  sf->loop_starts[0] = loop[0];
 	  sf->loop_ends[0] = loop[1];
 	}
+      else
+	{
+	  sf->loop_starts[0] = 0;
+	  sf->loop_ends[0] = 0;
+	}
+      sf->loop_modes[1] = loop[7];
       if (loop[7] != 0)
 	{
-	  sf->loop_modes[1] = loop[7];
 	  sf->loop_starts[1] = loop[2];
 	  sf->loop_ends[1] = loop[3];
 	}
-      if (loop[4] != 0) sf->base_note = loop[4];
+      else
+	{
+	  sf->loop_starts[1] = 0;
+	  sf->loop_ends[1] = 0;
+	}
+      sf->base_note = loop[4];
       sf->base_detune = loop[5];
     }
 }

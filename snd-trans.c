@@ -1690,12 +1690,22 @@ int snd_translate(char *oldname, char *newname, int type)
     }
   FREE(hdr);
   if (err == MUS_CANT_TRANSLATE) /* i.e a case we don't even try to handle */
-    return(mus_error(MUS_CANT_TRANSLATE,
-		     "can't translate %s\n  (%s header: %s (0x%x) data format)\n",
+    {
+      snd_state *ss;
+      ss = get_global_state();
+      if (ss->catch_exists)
+	return(mus_error(MUS_CANT_TRANSLATE,
+			 "can't translate %s\n  (%s header: %s (0x%x) data format)\n",
+			 oldname,
+			 mus_header_type_name(type),
+			 any_format_name(oldname),
+			 mus_sound_original_format(oldname)));
+      else snd_error("can't translate %s\n  (%s header: %s (0x%x) data format)\n",
 		     oldname,
 		     mus_header_type_name(type),
 		     any_format_name(oldname),
-		     mus_sound_original_format(oldname)));
+		     mus_sound_original_format(oldname));
+    }
   return(err);
 }
 

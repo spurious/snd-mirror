@@ -365,7 +365,13 @@ void cursor_search(chan_info *cp, int count)
 	  else samp = cursor_find_backward(sp, cp, -count);
 	  if (samp == -1) 
 	    { 
-	      report_in_minibuffer(sp, "%s: not found%s", sp->search_expr, (cp->last_search_result == SEARCH_FAILED) ? " (wrapped)" : "");
+	      report_in_minibuffer(sp, "%s%snot found%s", 
+				   (sp->search_expr) ? sp->search_expr : "", 
+				   /* SOMEDAY: if not ptree get string from Guile */
+				   /* SOMEDAY:   also in global seach, pre-load text window with current global searhc proc is any */
+				   /* SOMEDAY:   also if user types proc in text window, it should be the new global seach proc */
+				   (sp->search_expr) ? ": " : "",
+				   (cp->last_search_result == SEARCH_FAILED) ? " (wrapped)" : "");
 	      cp->last_search_result = SEARCH_FAILED;
 	    }
 	  else

@@ -255,7 +255,7 @@ int snd_write_header(snd_state *ss, const char *name, int type, int srate, int c
 {
   int fd;
   mus_sound_forget(name);
-  mus_header_set_aiff_loop_info(loops);
+  mus_header_set_full_aiff_loop_info(loops);
   fd = mus_header_write(name, type, srate, chans, loc, samples, format, comment, len);
   if (fd == -1)
     {
@@ -268,7 +268,7 @@ int snd_write_header(snd_state *ss, const char *name, int type, int srate, int c
       if (fd == -1) 
 	mus_error(MUS_CANT_OPEN_FILE, "%s", name);
     }
-  mus_header_set_aiff_loop_info(NULL);
+  mus_header_set_full_aiff_loop_info(NULL);
   return(fd);
 }
 

@@ -208,7 +208,7 @@ void initialize_scrollbars(chan_info *cp)
   if (ap->x_ambit < X_RANGE_CHANGEOVER)
     set_scrollbar(channel_zx(cp), sqrt(ap->zx), .1, SCROLLBAR_MAX);  /* assume size is 10% of scrollbar length */
   else set_scrollbar(channel_zx(cp), pow(ap->zx, .333), .1, SCROLLBAR_MAX);
-  set_scrollbar(channel_zy(cp), ap->zy, .1, SCROLLBAR_MAX);          /* assume 1.0 here so sqrt/cube decision, if any, is not needed */
+  set_scrollbar(channel_zy(cp), sqrt(ap->zy), .1, SCROLLBAR_MAX);
   if ((sp->nchans > 1) && (cp->chan == 0) && (channel_gsy(cp)))
     {
       set_scrollbar(channel_gsy(cp), cp->gsy, cp->gzy, SCROLLBAR_MAX);
