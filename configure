@@ -10841,6 +10841,59 @@ _ACEOF
 			 XLIBS="$XLIBS -lXmu"
 fi
 
+    else
+# need to check for -lXmu required by (buggy) libXm.a (openmotif 2.2.2)
+	echo "$as_me:$LINENO: checking whether libXm requires libXmu" >&5
+echo $ECHO_N "checking whether libXm requires libXmu... $ECHO_C" >&6
+	cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char XmCreateForm ();
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+XmCreateForm ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+
+		  echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+		  XLIBS="$XLIBS -lXmu"
+
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
     fi
 
     echo "$as_me:$LINENO: checking for XmCreateForm in -lXm" >&5
@@ -11181,8 +11234,8 @@ _ACEOF
 
 fi
 
-	  echo "$as_me:$LINENO: checking sash support for relative panes" >&5
-echo $ECHO_N "checking sash support for relative panes... $ECHO_C" >&6
+	  echo "$as_me:$LINENO: checking whether sashes support relative panes" >&5
+echo $ECHO_N "checking whether sashes support relative panes... $ECHO_C" >&6
 	  cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
@@ -11230,8 +11283,8 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
-	  echo "$as_me:$LINENO: checking XmPrint support" >&5
-echo $ECHO_N "checking XmPrint support... $ECHO_C" >&6
+	  echo "$as_me:$LINENO: checking for XmPrint support" >&5
+echo $ECHO_N "checking for XmPrint support... $ECHO_C" >&6
 	  cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"

@@ -552,7 +552,7 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
 void make_mix_file_dialog(snd_state *ss, int managed);
 GtkWidget *edit_header(snd_info *sp);
 void set_open_file_play_button(int val);
-void g_initialize_xgfile(void);
+void g_initialize_gxfile(void);
 
 
 

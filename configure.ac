@@ -405,6 +405,16 @@ else
 	AC_CHECK_LIB(Xmu, _XEditResCheckMessages, 
 			[AC_DEFINE(WITH_EDITRES)
 			 XLIBS="$XLIBS -lXmu"])
+    else
+# need to check for -lXmu required by (buggy) libXm.a (openmotif 2.2.2)
+	AC_MSG_CHECKING([whether libXm requires libXmu])
+	AC_TRY_LINK_FUNC(XmCreateForm,
+		AC_MSG_RESULT(no),
+		[
+		  AC_MSG_RESULT(yes)
+		  XLIBS="$XLIBS -lXmu"
+		],
+		$TEST_LIBS)
     fi
 
     AC_CHECK_LIB(Xm, XmCreateForm, 
@@ -435,7 +445,7 @@ else
 	    AC_DEFINE(HAVE_STATIC_XM)
           fi
    	  AC_CHECK_LIB(Xm, XmToolTipGetLabel, [AC_DEFINE(HAVE_XmToolTipGetLabel)], , $TEST_LIBS)
-	  AC_MSG_CHECKING([sash support for relative panes])
+	  AC_MSG_CHECKING([whether sashes support relative panes])
 	  AC_TRY_COMPILE([#include <Xm/SashP.h>],
 			 [ Widget w; SashCallData call_data;
                            if ((XtIsSubclass(w, xmSashWidgetClass)) && (strcmp(call_data->params[0], "Start") == 0)) return;
@@ -445,7 +455,7 @@ else
 			  AC_MSG_RESULT(yes)
 			 ],
 			 [AC_MSG_RESULT(no)])
-	  AC_MSG_CHECKING([XmPrint support])
+	  AC_MSG_CHECKING([for XmPrint support])
 	  AC_TRY_COMPILE([#include <Xm/Print.h>],
 			 [ Widget w; 
                            XmPrintShellCallbackStruct xmp;

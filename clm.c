@@ -5795,7 +5795,7 @@ static int grn_set_length(void *ptr, int val)
 }
 static Float grn_scaler(void *ptr) {return(((grn_info *)ptr)->amp);}
 static Float grn_set_scaler(void *ptr, Float val) {((grn_info *)ptr)->amp = val; return(val);}
-static Float grn_frequency(void *ptr) {return(((Float)((grn_info *)ptr)->output_hop) / (Float)sampling_rate);}
+static Float grn_frequency(void *ptr) {return((Float)sampling_rate / ((Float)((grn_info *)ptr)->output_hop));}
 static Float grn_set_frequency(void *ptr, Float val) {((grn_info *)ptr)->output_hop = (int)((Float)sampling_rate / val); return(val);}
 static void *grn_environ(mus_any *rd) {return(((grn_info *)rd)->environ);}
 static Float grn_increment(void *rd) {return(((Float)(((grn_info *)rd)->output_hop)) / ((Float)((grn_info *)rd)->input_hop));}
