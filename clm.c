@@ -2562,6 +2562,7 @@ static Float asyfm_freq(mus_any *ptr) {return(mus_radians_to_hz(((asyfm *)ptr)->
 static Float set_asyfm_freq(mus_any *ptr, Float val) {((asyfm *)ptr)->freq = mus_hz_to_radians(val); return(val);}
 static Float asyfm_phase(mus_any *ptr) {return(fmod(((asyfm *)ptr)->phase, TWO_PI));}
 static Float set_asyfm_phase(mus_any *ptr, Float val) {((asyfm *)ptr)->phase = val; return(val);}
+static Float asyfm_ratio(mus_any *ptr) {return(((asyfm *)ptr)->ratio);}
 static Float asyfm_r(mus_any *ptr) {return(((asyfm *)ptr)->r);}
 static Float set_asyfm_r(mus_any *ptr, Float val) 
 {
@@ -2634,7 +2635,7 @@ static mus_any_class ASYMMETRIC_FM_CLASS = {
   &set_asyfm_phase,
   &asyfm_r,
   &set_asyfm_r,
-  0, 0,
+  &asyfm_ratio, 0,
   &mus_asymmetric_fm,
   MUS_NOT_SPECIAL, 
   NULL, 0,
@@ -2688,6 +2689,8 @@ static Float sss_freq(mus_any *ptr) {return(mus_radians_to_hz(((sss *)ptr)->freq
 static Float set_sss_freq(mus_any *ptr, Float val) {((sss *)ptr)->freq = mus_hz_to_radians(val); return(val);}
 static Float sss_phase(mus_any *ptr) {return(fmod(((sss *)ptr)->phase, TWO_PI));}
 static Float set_sss_phase(mus_any *ptr, Float val) {((sss *)ptr)->phase = val; return(val);}
+static off_t sss_n(mus_any *ptr) {return((off_t)(((sss *)ptr)->n));}
+static Float sss_b(mus_any *ptr) {return(((sss *)ptr)->b);}
 static Float sss_a(mus_any *ptr) {return(((sss *)ptr)->a);}
 static Float set_sss_a(mus_any *ptr, Float val) 
 {
@@ -2765,11 +2768,13 @@ static mus_any_class SINE_SUMMATION_CLASS = {
   &set_sss_phase,
   &sss_a,
   &set_sss_a,
-  0, 0,
+  &sss_b, 0,
   &run_sine_summation,
   MUS_NOT_SPECIAL, 
   NULL, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 
+  &sss_n, /* mus-cosines */
+  0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0,
   &_mus_wrap_no_vcts
@@ -3149,6 +3154,16 @@ static Float set_formant_frequency(mus_any *ptr, Float val)
 
 static Float f_radius(mus_any *ptr) {return(((smpflt *)ptr)->radius);}
 static Float f_set_radius(mus_any *ptr, Float val) {mus_set_formant_radius_and_frequency(ptr, val, ((smpflt *)ptr)->frequency); return(val);}
+static Float f_gain(mus_any *ptr) {return(((smpflt *)ptr)->gain);}
+static Float f_set_gain(mus_any *ptr, Float val)
+{
+  smpflt *gen = (smpflt *)ptr;
+  if (gen->gain != 0.0)
+    gen->xs[0] *= (val / gen->gain);
+  else gen->xs[0] = val * sin(mus_hz_to_radians(gen->frequency)) * (1.0 - gen->ys[2]);
+  gen->gain = val;
+  return(val);
+}
 
 static mus_any_class FORMANT_CLASS = {
   MUS_FORMANT,
@@ -3163,7 +3178,8 @@ static mus_any_class FORMANT_CLASS = {
   &set_formant_frequency,
   &f_radius,
   &f_set_radius,
-  0, 0, 0, 0,
+  &f_gain, &f_set_gain,
+  0, 0,
   &run_formant,
   MUS_SIMPLE_FILTER, 
   NULL, 0,

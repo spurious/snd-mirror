@@ -1209,6 +1209,7 @@ in conjunction with make-ppolar.</p>
 <tr><td><em class=gen>mus-formant-radius</em></td><td>formant radius</td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>formant center frequency</td></tr>
 <tr><td><em class=gen>mus-order</em></td><td>2 (no setf)</td></tr>
+<tr><td><em class=gen>mus-scaler</em></td><td>gain</td></tr>
 </table>
 
 <pre><small>
@@ -1874,6 +1875,8 @@ t when a new block of data is needed; mus-increment sets the next block-trigger 
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
 <tr><td><em class=gen>mus-scaler</em></td><td>"a" parameter; sideband scaler</td></tr>
+<tr><td><em class=gen>mus-cosines</em></td><td>"n" parameter</td></tr>
+<tr><td><em class=gen>mus-increment</em></td><td>"ratio" parameter</td></tr>
 </table>
 
 <p><b>sine-summation</b> provides a kind of additive synthesis.
@@ -1916,6 +1919,7 @@ don't set <i>a</i> to 1.0!).
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
 <tr><td><em class=gen>mus-scaler</em></td><td>"r" parameter; sideband scaler</td></tr>
+<tr><td><em class=gen>mus-increment</em></td><td>"ratio" parameter</td></tr>
 </table>
 
 <p><b>asymmetric-fm</b> provides a way around the symmetric spectra normally produced by FM.

@@ -13375,7 +13375,9 @@ EDITS: 5
 	(if (or (fneq (vct-ref v0 1) 0.249) (fneq (vct-ref v0 8) 1.296)) (snd-display ";sine-summation output: ~A" v0))
 	(if (fneq (mus-scaler gen) 0.5) (snd-display ";mus-scaler (a) sine-summation: ~A" (mus-scaler gen)))
 	(set! (mus-scaler gen) 0.75)
-	(if (fneq (mus-scaler gen) 0.75) (snd-display ";mus-scaler (set a) sine-summation: ~A" (mus-scaler gen))))
+	(if (fneq (mus-scaler gen) 0.75) (snd-display ";mus-scaler (set a) sine-summation: ~A" (mus-scaler gen)))
+	(if (not (= (mus-cosines gen) 1)) (snd-display ";mus-cosines sine-summation: ~A" (mus-cosines gen)))
+	(if (fneq (mus-increment gen) 1.0) (snd-display ";mus-increment sine-summation: ~A" (mus-increment gen))))
       
       (test-gen-equal (make-sine-summation 440.0) (make-sine-summation 440.0) (make-sine-summation 100.0))
       (test-gen-equal (make-sine-summation 440.0) (make-sine-summation 440.0) (make-sine-summation 440.0 1.0))
@@ -13386,7 +13388,14 @@ EDITS: 5
 	    (gen3 (make-sine-summation 1000 0 1 0.5 2))
 	    (gen4 (make-oscil 1000))
 	    (gen5 (make-oscil 3000))
+	    (gen6 (make-sine-summation 500.0 3.0 10 .1 .4))
 	    (v0 (make-vct 10)))
+
+	(if (fneq (mus-phase gen6) 3.0) (snd-display ";sine-summation phase (3): ~F?" (mus-phase gen6)))
+	(if (fneq (mus-frequency gen6) 500.0) (snd-display ";sine-summation frequency (500): ~F?" (mus-frequency gen6)))
+	(if (fneq (mus-scaler gen6) 0.1) (snd-display ";mus-scaler (a) sine-summation (.1): ~A" (mus-scaler gen6)))
+	(if (not (= (mus-cosines gen6) 10)) (snd-display ";mus-cosines sine-summation (10): ~A" (mus-cosines gen6)))
+	(if (fneq (mus-increment gen6) 0.4) (snd-display ";mus-increment sine-summation (0.4): ~A" (mus-increment gen6)))
 	
 	(call-with-current-continuation
 	 (lambda (give-up)
@@ -13461,7 +13470,8 @@ EDITS: 5
 	(if (or (fneq (vct-ref v0 2) 0.248) (fneq (vct-ref v0 8) .843)) (snd-display ";asymmetric-fm output: ~A" v0))
 	(if (fneq (mus-scaler gen) 1.0) (snd-display ";mus-scaler (r) asymmetric-fm: ~A" (mus-scaler gen)))
 	(set! (mus-scaler gen) 0.5)
-	(if (fneq (mus-scaler gen) 0.5) (snd-display ";mus-scaler (set r) asymmetric-fm: ~A" (mus-scaler gen))))
+	(if (fneq (mus-scaler gen) 0.5) (snd-display ";mus-scaler (set r) asymmetric-fm: ~A" (mus-scaler gen)))
+	(if (fneq (mus-increment gen) 1.0) (snd-display ";mus-increment asymmetric-fm: ~A" (mus-increment gen))))
       
       (test-gen-equal (make-asymmetric-fm 440.0) (make-asymmetric-fm 440.0) (make-asymmetric-fm 100.0))
       (test-gen-equal (make-asymmetric-fm 440.0) (make-asymmetric-fm 440.0) (make-asymmetric-fm 440.0 1.0))
@@ -14254,6 +14264,7 @@ EDITS: 5
 	(if (fneq (mus-formant-radius gen) .9) (snd-display ";formant radius: ~F?" (mus-formant-radius gen)))
 	(if (fneq (mus-frequency gen) 1200.0) (snd-display ";formant frequency: ~F?" (mus-frequency gen)))
 	(if (or (fneq (vct-ref v0 0) .064) (fneq (vct-ref v0 1) .108)) (snd-display ";formant output: ~A" v0))
+	(if (fneq (mus-scaler gen) 1.0) (snd-display ";formant gain: ~F?" (mus-scaler gen)))
 
 	(if (fneq (mus-ycoeff gen 2) .81) (snd-display ";frm ycoeff 2 .81: ~A" (mus-ycoeff gen 2)))
 	(set! (mus-ycoeff gen 2) .1)
@@ -14268,8 +14279,9 @@ EDITS: 5
 	(set! (mus-b1 gen) .5) (if (fneq (mus-b1 gen) 0.5) (snd-display ";formant set-b1: ~F?" (mus-b1 gen)))
 	(set! (mus-b2 gen) .5) (if (fneq (mus-b2 gen) 0.5) (snd-display ";formant set-b2: ~F?" (mus-b2 gen)))
 	(set! (mus-formant-radius gen) .01) 
-	(if (fneq (mus-formant-radius gen) 0.01) (snd-display ";formant set-radius: ~F?" (mus-formant-radius gen))))
-
+	(if (fneq (mus-formant-radius gen) 0.01) (snd-display ";formant set-radius: ~F?" (mus-formant-radius gen)))
+	(set! (mus-scaler gen) 2.0)
+	(if (fneq (mus-scaler gen) 2.0) (snd-display ";formant set gain: ~F?" (mus-scaler gen))))
       
       (test-gen-equal (let ((f1 (make-formant .9 1200.0 1.0))) (formant f1 1.0) f1)
 		      (let ((f2 (make-formant .9 1200.0 1.0))) (formant f2 1.0) f2)
