@@ -2,6 +2,7 @@ dnl Configuration script for Snd
 dnl Process this file with autoconf 2.50 to produce a configure script.
 
 #--------------------------------------------------------------------------------
+#
 # this configure/make process tested so far in 
 #       linux (rh 5.2, 6.0, 6.1, 6.2, 7.0, 7.1, 7.2), Mandrake 7.0, Suse Linux 6.4, Debian 2.2
 #       sgi (irix 5.3, 6.2, 6.3, 6.5), 
@@ -19,6 +20,15 @@ dnl Process this file with autoconf 2.50 to produce a configure script.
 #   i686-pc-linux-gnu powerpc-unknown-linux-gnu sparc-sun-solaris2.7
 #   powerpc-apple-darwin1.1 i386-pc-cygwin32 sparc64-unknown-linux-gnu
 #   alphaev67-unknown-linux-gnu i386-unknown-freebsd4.2 powerpc-apple-darwin1.3.7
+#
+#--------------------------------------------------------------------------------
+#
+# still TODO: sndlib configuration
+#             Mac OSX Guile/Gtk searches (Ruby?)
+#             Sgi compiler optimations automated somehow
+#             Gtk 2.0 choice
+#             Lesstif detection and warning
+#
 #--------------------------------------------------------------------------------
 
 AC_INIT(snd, 5.3, bil@ccrma.stanford.edu)
@@ -596,7 +606,15 @@ else
 if test $GUILE_CONFIG_works = yes; then
   GUILE_CFLAGS="`${GUILE_CONFIG_path}guile-config compile`"
   if test "$GUILE_LIB_path" != "" ; then
-    GUILE_LIBS="-Xlinker -rpath -Xlinker $GUILE_LIB_path `${GUILE_CONFIG_path}guile-config link`"
+    # MacOSX linker doesn't know the -rpath stuff, but user may have placed Guile in /usr/lib/snd/bin
+    case "$host" in
+      *-apple-*)
+        GUILE_LIBS="`${GUILE_CONFIG_path}guile-config link`"
+        ;;
+      *)
+        GUILE_LIBS="-Xlinker -rpath -Xlinker $GUILE_LIB_path `${GUILE_CONFIG_path}guile-config link`"
+	;;
+    esac
   else
     GUILE_LIBS="`${GUILE_CONFIG_path}guile-config link`"
   fi
@@ -705,7 +723,7 @@ dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
 	    	  AUDIO_LIB="-lasound"
 		fi
 	    	AC_SUBST(AUDIO_LIB)
-# snd_config_get_id argnum changed in Nov-01
+                # snd_config_get_id argnum changed in Nov-01
                 snd_config_get_id_args=1
                 AC_MSG_CHECKING([snd_config_get_id args])
                 AC_TRY_COMPILE(

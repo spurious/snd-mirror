@@ -110,8 +110,8 @@ static void who_called(GtkWidget *w, GdkEvent *event, gpointer context)
 	    {
 	    if ((!(XEN_HOOKED(property_changed_hook))) ||
 		(!(XEN_TRUE_P(g_c_run_or_hook(property_changed_hook,
-					  XEN_LIST_1(C_TO_XEN_STRING((char *)(version[0]))),
-					  S_property_changed_hook)))))
+					      XEN_LIST_1(C_TO_XEN_STRING((char *)(version[0]))),
+					      S_property_changed_hook)))))
 	      snd_eval_property_str(ss, (char *)(version[0]));
 	      free(version[0]);
 	    }

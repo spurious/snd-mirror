@@ -836,10 +836,10 @@ void g_init_draw(void)
 {
   dialog_widgets = XEN_UNDEFINED;
 
-  XEN_DEFINE_CONSTANT(S_copy_context,         CHAN_GC,        "graphics context to draw a line");
-  XEN_DEFINE_CONSTANT(S_cursor_context,       CHAN_CGC,       "graphics context for the cursor");
-  XEN_DEFINE_CONSTANT(S_selection_context,    CHAN_SELGC,     "graphics context to draw in the selection color");
-  XEN_DEFINE_CONSTANT(S_mark_context,         CHAN_MGC,       "graphics context for a mark");
+  XEN_DEFINE_CONSTANT(S_copy_context,      CHAN_GC,    "graphics context to draw a line");
+  XEN_DEFINE_CONSTANT(S_cursor_context,    CHAN_CGC,   "graphics context for the cursor");
+  XEN_DEFINE_CONSTANT(S_selection_context, CHAN_SELGC, "graphics context to draw in the selection color");
+  XEN_DEFINE_CONSTANT(S_mark_context,      CHAN_MGC,   "graphics context for a mark");
 
   XEN_DEFINE_PROCEDURE(S_draw_line,        g_draw_line_w, 4, 3, 0,       H_draw_line);
   XEN_DEFINE_PROCEDURE(S_draw_dot,         g_draw_dot_w, 2, 4, 0,        H_draw_dot);
@@ -850,14 +850,12 @@ void g_init_draw(void)
   XEN_DEFINE_PROCEDURE(S_fill_polygon,     g_fill_polygon_w, 1, 3, 0,    H_fill_polygon);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_foreground_color, g_foreground_color_w, H_foreground_color,
-					    "set-" S_foreground_color, g_set_foreground_color_w, g_set_foreground_color_reversed,
-					    0, 3, 1, 3);
+					    "set-" S_foreground_color, g_set_foreground_color_w, g_set_foreground_color_reversed, 0, 3, 1, 3);
 
   XEN_DEFINE_PROCEDURE(S_load_font,        g_load_font_w, 1, 0, 0,       H_load_font);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_current_font, g_current_font_w, H_current_font,
-					    "set-" S_current_font, g_set_current_font_w, g_set_current_font_reversed,
-					    0, 3, 1, 3);
+					    "set-" S_current_font, g_set_current_font_w, g_set_current_font_reversed, 0, 3, 1, 3);
 
   XEN_DEFINE_PROCEDURE(S_main_widgets,     g_main_widgets_w, 0, 0, 0,    H_main_widgets);
   XEN_DEFINE_PROCEDURE(S_dialog_widgets,   g_dialog_widgets_w, 0, 0, 0,  H_dialog_widgets);

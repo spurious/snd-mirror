@@ -275,10 +275,6 @@ void news_help(snd_state *ss)
 28-Nov:  add-tooltip in snd-motif.scm.\n\
 23-Nov:  draw-mark-hook.\n\
 20-Nov:  xm-enved.scm.\n\
-19-Nov:  reopen menu example in examp.scm.\n\
-13-Nov:  edit123.scm by Tom Roth added to contrib directory.\n\
-         emacs-style-save-as\n\
-10-Nov:  new-widget-hook.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'",

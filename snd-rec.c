@@ -203,7 +203,7 @@ char *recorder_field_abbreviation(int fld)
     case MUS_AUDIO_SYNTH:  return("syn"); break;
     case MUS_AUDIO_BASS:   return("ton"); break;
     case MUS_AUDIO_TREBLE: return("ton"); break;
-    case MUS_AUDIO_CD:     return("cd"); break;
+    case MUS_AUDIO_CD:     return("cd");  break;
     }
   return("oops");
 }
@@ -380,7 +380,7 @@ void init_recorder(void)
   rp->srate = DEFAULT_RECORDER_SRATE;
   rp->trigger = DEFAULT_RECORDER_TRIGGER;
   rp->max_duration = DEFAULT_RECORDER_MAX_DURATION;
-  if (DEFAULT_RECORDER_FILE) rp->output_file = copy_string(DEFAULT_RECORDER_FILE); else rp->output_file = NULL;
+  if (DEFAULT_RECORDER_FILE != (char *)NULL) rp->output_file = copy_string(DEFAULT_RECORDER_FILE); else rp->output_file = NULL;
   rp->in_device = MUS_AUDIO_DEFAULT;
   rp->triggering = 0;
   rp->triggered = 1;
@@ -413,14 +413,18 @@ int record_in_progress(void)
 int in_chans_active(void)
 {
   int val = 0, i;
-  for (i = 0; i < MAX_IN_CHANS; i++) if (rp->chan_in_active[i]) val++;
+  for (i = 0; i < MAX_IN_CHANS; i++) 
+    if (rp->chan_in_active[i]) 
+      val++;
   return(val);
 }
 
 int out_chans_active(void)
 {
   int val = 0, i;
-  for (i = 0; i < MAX_OUT_CHANS; i++) if (rp->chan_out_active[i]) val++;
+  for (i = 0; i < MAX_OUT_CHANS; i++) 
+    if (rp->chan_out_active[i]) 
+      val++;
   return(val);
 }
 
@@ -551,9 +555,7 @@ void set_line_source(snd_state *ss, int in_digital)
 			      ((in_digital) ? MUS_AUDIO_DIGITAL_IN : MUS_AUDIO_MICROPHONE), 
 			      NULL);
   if (err == -1) 
-    {
-      recorder_error("set input source: ");
-    }
+    recorder_error("set input source: ");
   rp->input_channel_active[0] = (!in_digital); 
   rp->input_channel_active[1] = (!in_digital);
   rp->input_channel_active[2] = (!in_digital); 
@@ -578,24 +580,18 @@ void set_record_size (int new_size)
 	  rp->one_system_input_buf = (MUS_SAMPLE_TYPE *)CALLOC(new_size, sizeof(MUS_SAMPLE_TYPE));
 	}
       if (rp->output_bufs)
-	{
-	  for (i = 0; i < rp->out_chans; i++) 
+	for (i = 0; i < rp->out_chans; i++) 
+	  if (rp->output_bufs[i]) 
 	    {
-	      if (rp->output_bufs[i]) 
-		{
-		  FREE(rp->output_bufs[i]);
-		  rp->output_bufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(new_size, sizeof(MUS_SAMPLE_TYPE));
-		}
+	      FREE(rp->output_bufs[i]);
+	      rp->output_bufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(new_size, sizeof(MUS_SAMPLE_TYPE));
 	    }
-	}
       for (i = 0; i < rp->systems; i++)
-	{
-	  if (rp->raw_input_bufs[i]) 
-	    {
-	      FREE(rp->raw_input_bufs[i]);
-	      rp->raw_input_bufs[i] = (char *)CALLOC(new_size, sizeof(int));
-	    }
-	}
+	if (rp->raw_input_bufs[i]) 
+	  {
+	    FREE(rp->raw_input_bufs[i]);
+	    rp->raw_input_bufs[i] = (char *)CALLOC(new_size, sizeof(int));
+	  }
       if (rp->all_systems_input_buf) 
 	{
 	  FREE(rp->all_systems_input_buf);
@@ -1258,10 +1254,8 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
 	}
     }
   for (in_chan = 0; in_chan < rp->possible_input_chans; in_chan++)
-    {
-      if (rp->input_channel_active[in_chan])
-	recorder_set_vu_in_val(in_chan, rp->input_vu_maxes[in_chan]);
-    }
+    if (rp->input_channel_active[in_chan])
+      recorder_set_vu_in_val(in_chan, rp->input_vu_maxes[in_chan]);
   for (out_chan = 0; out_chan < ochns; out_chan++)
     {
       recorder_set_vu_out_val(out_chan, rp->output_vu_maxes[out_chan]);
@@ -1438,12 +1432,12 @@ int recorder_start_output_file(snd_state *ss, char *comment)
   rp->output_file_descriptor = snd_reopen_write(ss, rp->output_file);
   mus_header_read_with_fd(rp->output_file_descriptor);
   mus_file_open_descriptors(rp->output_file_descriptor, 
-			   rp->output_file,
-			   rp->out_format, 
-			   mus_data_format_to_bytes_per_sample(rp->out_format), 
-			   mus_header_data_location(),
-			   rp->out_chans, 
-			   rp->output_header_type);
+			    rp->output_file,
+			    rp->out_format, 
+			    mus_data_format_to_bytes_per_sample(rp->out_format), 
+			    mus_header_data_location(),
+			    rp->out_chans, 
+			    rp->output_header_type);
   mus_file_set_data_clipped(rp->output_file_descriptor, data_clipped(ss));
   rp->total_output_frames = 0;
   rp->duration_label_update_frames = rp->srate / 4;
@@ -1568,7 +1562,7 @@ static XEN g_set_recorder_file(XEN val)
   XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, XEN_ONLY_ARG, "set-" S_recorder_file, "a string"); 
   if (XEN_FALSE_P(val))
     {
-      if (DEFAULT_RECORDER_FILE)
+      if (DEFAULT_RECORDER_FILE != (char *)NULL)
 	rp->output_file = copy_string(DEFAULT_RECORDER_FILE);
       else rp->output_file = NULL;
     }
@@ -1795,43 +1789,43 @@ XEN_NARGIFY_0(g_recorder_dialog_w, g_recorder_dialog)
 void g_init_recorder(void)
 {
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_autoload, g_recorder_autoload_w, H_recorder_autoload,
-			       "set-" S_recorder_autoload, g_set_recorder_autoload_w,  0, 0, 0, 1);
+				   "set-" S_recorder_autoload, g_set_recorder_autoload_w,  0, 0, 0, 1);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_buffer_size, g_recorder_buffer_size_w, H_recorder_buffer_size,
-			       "set-" S_recorder_buffer_size, g_set_recorder_buffer_size_w,  0, 0, 1, 0);
+				   "set-" S_recorder_buffer_size, g_set_recorder_buffer_size_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_file, g_recorder_file_w, H_recorder_file,
-			       "set-" S_recorder_file, g_set_recorder_file_w,  0, 0, 1, 0);
+				   "set-" S_recorder_file, g_set_recorder_file_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_in_format, g_recorder_in_format_w, H_recorder_in_format,
-			       "set-" S_recorder_in_format, g_set_recorder_in_format_w,  0, 0, 1, 0);
+				   "set-" S_recorder_in_format, g_set_recorder_in_format_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_in_device, g_recorder_in_device_w, H_recorder_in_device,
-			       "set-" S_recorder_in_device, g_set_recorder_in_device_w,  0, 0, 1, 0);
+				   "set-" S_recorder_in_device, g_set_recorder_in_device_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_out_chans, g_recorder_out_chans_w, H_recorder_out_chans,
-			       "set-" S_recorder_out_chans, g_set_recorder_out_chans_w,  0, 0, 1, 0);
+				   "set-" S_recorder_out_chans, g_set_recorder_out_chans_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_out_format, g_recorder_out_format_w, H_recorder_out_format,
-			       "set-" S_recorder_out_format, g_set_recorder_out_format_w,  0, 0, 1, 0);
+				   "set-" S_recorder_out_format, g_set_recorder_out_format_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_srate, g_recorder_srate_w, H_recorder_srate,
-			       "set-" S_recorder_srate, g_set_recorder_srate_w,  0, 0, 1, 0);
+				   "set-" S_recorder_srate, g_set_recorder_srate_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_trigger, g_recorder_trigger_w, H_recorder_trigger,
-			       "set-" S_recorder_trigger, g_set_recorder_trigger_w,  0, 0, 1, 0);
+				   "set-" S_recorder_trigger, g_set_recorder_trigger_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_max_duration, g_recorder_max_duration_w, H_recorder_max_duration,
-			       "set-" S_recorder_max_duration, g_set_recorder_max_duration_w,  0, 0, 1, 0);
+				   "set-" S_recorder_max_duration, g_set_recorder_max_duration_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_gain, g_recorder_gain_w, H_recorder_gain,
-			       "set-" S_recorder_gain, g_set_recorder_gain_w,  0, 1, 2, 0);
+				   "set-" S_recorder_gain, g_set_recorder_gain_w,  0, 1, 2, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_in_amp, g_recorder_in_amp_w, H_recorder_in_amp,
-			       "set-" S_recorder_in_amp, g_set_recorder_in_amp_w,  2, 0, 3, 0);
+				   "set-" S_recorder_in_amp, g_set_recorder_in_amp_w,  2, 0, 3, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_out_amp, g_recorder_out_amp_w, H_recorder_out_amp,
-			       "set-" S_recorder_out_amp, g_set_recorder_out_amp_w,  1, 0, 2, 0);
+				   "set-" S_recorder_out_amp, g_set_recorder_out_amp_w,  1, 0, 2, 0);
 
   XEN_DEFINE_PROCEDURE(S_recorder_dialog, g_recorder_dialog_w, 0, 0, 0, H_recorder_dialog);
 }

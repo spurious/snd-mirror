@@ -222,15 +222,11 @@
 
 /*   if (SCM_EQ_P(scm_definedp(C_STRING_TO_XEN_SYMBOL(Name), XEN_UNDEFINED), XEN_TRUE)) fprintf(stderr,"%s is defined\n", Name); */
 
-#ifdef __cplusplus
 #define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
-  XEN_NEW_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg)
-#else
-#define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
-  if (Doc != NULL) \
+  if (Doc != (char *)NULL) \
     scm_set_procedure_property_x(XEN_NEW_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(Doc)); \
   else XEN_NEW_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg)
-#endif
+
 #else
 #if (TIMING)
 /* add timing calls */
@@ -585,7 +581,7 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
   { \
     Var = Qnil; \
     rb_define_variable(xen_scheme_global_variable_to_ruby(Name), (VALUE *)(&Var)); \
-    if (Help) xen_add_help(xen_scheme_global_variable_to_ruby(Name), Help); \
+    if (Help != NULL) xen_add_help(xen_scheme_global_variable_to_ruby(Name), Help); \
   }
 
 #define XEN_DEFINE_SIMPLE_HOOK(Var, Arity) \

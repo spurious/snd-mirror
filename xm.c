@@ -1361,16 +1361,32 @@ static void gxm_XtSelectionCallbackProc(Widget w, XtPointer x, Atom* a1, Atom* a
 }
 
 static XEN xm_XtConvertSelectionIncr_Descr = XEN_FALSE;
-static void gxm_XtConvertSelectionIncrProc(Widget w, Atom* a1, Atom* a2, Atom* a3, XtPointer* x, 
-					   unsigned long* l, int* i, unsigned long* l1, XtPointer x1, XtRequestId* id)
+static Boolean gxm_XtConvertSelectionIncrProc(Widget w, Atom* selection, Atom* target, 
+					   Atom* type_return, XtPointer *value_return, 
+					   unsigned long *length_return, int *format_return, 
+					   unsigned long *max_length, XtPointer client_data, 
+					   XtRequestId *request_id)
 {
-#if 0
-  /* TODO: need to handle returned values (a3 etc) */
-  XEN_APPLY(xm_XtConvertSelectionIncr_Descr,
-	    XEN_LIST_10(C_TO_XEN_Widget(w),
-		       C_TO_XEN_Atom(*a1),
-		       C_TO_XEN_Atom(*a2),
-#endif
+  /* DIFF: user callback here takes 6 args (w selection target max_length client_data request_id)
+   *       should return (list ...) if ok, #f if not
+   *       the list should be (type value length format)
+   */
+  XEN result;
+  result = XEN_APPLY(xm_XtConvertSelectionIncr_Descr,
+		     XEN_LIST_6(C_TO_XEN_Widget(w),
+				C_TO_XEN_Atom(*selection),
+				C_TO_XEN_Atom(*target),
+				C_TO_XEN_INT(*max_length),
+				C_TO_XEN_ULONG(client_data),
+				C_TO_XEN_INT((int)(*request_id))),
+		     __FUNCTION__);
+  if (XEN_FALSE_P(result))
+    return(False);
+  (*type_return) = XEN_TO_C_Atom(XEN_LIST_REF(result, 0));
+  (*value_return) = (XtPointer)XEN_TO_C_ULONG(XEN_LIST_REF(result, 1));
+  (*length_return) = (unsigned long)XEN_TO_C_INT(XEN_LIST_REF(result, 2));
+  (*format_return) = XEN_TO_C_INT(XEN_LIST_REF(result, 3));
+  return(True);
 }
 
 static Arg *XEN_TO_C_Args(XEN inarg)
@@ -7808,7 +7824,7 @@ definitions stored in the specified property on the named window."
   int len, i, loc;
   Status val;
   XEN lst = XEN_EMPTY_LIST;
-  XStandardColormap **cs; /* do I allocate this?? */
+  XStandardColormap **cs = NULL; /* do I allocate this?? */
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XGetRGBColormaps", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XGetRGBColormaps", "Window");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg3), arg3, 3, "XGetRGBColormaps", "Atom");
@@ -8935,10 +8951,10 @@ static XEN gxm_XReadBitmapFileData(XEN arg1)
 file containing a bitmap, in the same manner as XReadBitmapFile, but returns the data directly rather than creating a pixmap in the server."
   /* DIFF: XReadBitmapFileData omits last 5 args, returns as list
    */
-  unsigned int w, h;
+  unsigned int w, h, i, j;
   int x, y;
   unsigned char **str = NULL; /* apparently allocated by X */
-  int val, i, j, loc;
+  int val, loc;
   XEN bits = XEN_EMPTY_LIST;
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XReadBitmapFileData", "char*");
   val = XReadBitmapFileData(XEN_TO_C_STRING(arg1), &w, &h, str, &x, &y);
@@ -8965,7 +8981,7 @@ in a file containing a bitmap."
   unsigned int w, h;
   int x, y;
   int val;
-  Pixmap *p; /* apparently allocated by X */
+  Pixmap *p = NULL; /* apparently allocated by X */
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XReadBitmapFile", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XReadBitmapFile", "Drawable");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg3), arg3, 3, "XReadBitmapFile", "char*");
@@ -15923,7 +15939,6 @@ static XEN gxm_XtMakeResizeRequest(XEN arg1, XEN arg2, XEN arg3)
 		    C_TO_XEN_Dimension(h)));
 }
 
-/* TODO: tie in the procs */
 static XEN gxm_XtOwnSelectionIncremental(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
 {
   #define H_XtOwnSelectionIncremental "Boolean XtOwnSelectionIncremental(w, selection, time, convert_callback, lose_callback, \
@@ -16782,9 +16797,9 @@ static XEN gxm_XpmCreateBufferFromPixmap(XEN arg1, XEN arg3, XEN arg4, XEN arg5)
 {
   /* DIFF: XpmCreateBufferFromPixmap omits arg2
    */
-  char **buf;
+  char **buf = NULL;
   int val, i;
-  XpmAttributes *attr;
+  XpmAttributes *attr = NULL;
   XEN lst = XEN_EMPTY_LIST;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpmCreateBufferFromPixmap", "Display*");
   XEN_ASSERT_TYPE(XEN_Pixmap_P(arg3), arg3, 3, "XpmCreateBufferFromPixmap", "Pixmap");
@@ -16807,7 +16822,7 @@ static XEN gxm_XpmCreateBufferFromImage(XEN arg1, XEN arg3, XEN arg4, XEN arg5)
 {
   /* DIFF: XpmCreateBufferFromImage omits arg2
    */
-  char **buf;
+  char **buf = NULL;
   int val;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpmCreateBufferFromImage", "Display*");
   XEN_ASSERT_TYPE(XEN_XImage_P(arg3), arg3, 3, "XpmCreateBufferFromImage", "XImage*");
@@ -16838,7 +16853,7 @@ static XEN gxm_XpmCreateDataFromPixmap(XEN arg1, XEN arg3, XEN arg4, XEN arg5)
 {
   /* DIFF: XpmCreateDataFromPixmap arg2 omitted and rtn'd
    */
-  char **buf;
+  char **buf = NULL;
   int val;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpmCreateDataFromPixmap", "Display*");
   XEN_ASSERT_TYPE(XEN_Pixmap_P(arg3), arg3, 3, "XpmCreateDataFromPixmap", "Pixmap");
@@ -21752,24 +21767,23 @@ static void define_strings(void)
     hash_resource(Value, Type)
 
   DEFINE_STRING(XM_PREFIX "XmSTRING_DEFAULT_CHARSET" XM_POSTFIX, XmSTRING_DEFAULT_CHARSET);
-  DEFINE_STRING(XM_PREFIX "XmSTRING_ISO8859_1" XM_POSTFIX, XmSTRING_ISO8859_1);
-  DEFINE_STRING(XM_PREFIX "XmFONTLIST_DEFAULT_TAG" XM_POSTFIX, XmFONTLIST_DEFAULT_TAG);
-  DEFINE_STRING(XM_PREFIX "XmFONTLIST_DEFAULT_TAG_STRING" XM_POSTFIX, XmFONTLIST_DEFAULT_TAG_STRING);
-
+  DEFINE_STRING(XM_PREFIX "XmSTRING_ISO8859_1" XM_POSTFIX,       XmSTRING_ISO8859_1);
+  DEFINE_STRING(XM_PREFIX "XmFONTLIST_DEFAULT_TAG" XM_POSTFIX,   XmFONTLIST_DEFAULT_TAG);
+  DEFINE_STRING(XM_PREFIX "XmFONTLIST_DEFAULT_TAG_STRING"        XM_POSTFIX, XmFONTLIST_DEFAULT_TAG_STRING);
 
   /* these define special XmVaCreateSimple... arg possibilities */
-  DEFINE_STRING(XM_PREFIX "XmVaCASCADEBUTTON" XM_POSTFIX, XmVaCASCADEBUTTON);
-  DEFINE_STRING(XM_PREFIX "XmVaCHECKBUTTON" XM_POSTFIX, XmVaCHECKBUTTON);
-  DEFINE_STRING(XM_PREFIX "XmVaDOUBLE_SEPARATOR" XM_POSTFIX, XmVaDOUBLE_SEPARATOR);
-  DEFINE_STRING(XM_PREFIX "XmVaPUSHBUTTON" XM_POSTFIX, XmVaPUSHBUTTON);
-  DEFINE_STRING(XM_PREFIX "XmVaRADIOBUTTON" XM_POSTFIX, XmVaRADIOBUTTON);
-  DEFINE_STRING(XM_PREFIX "XmVaSEPARATOR" XM_POSTFIX, XmVaSEPARATOR);
-  DEFINE_STRING(XM_PREFIX "XmVaSINGLE_SEPARATOR" XM_POSTFIX, XmVaSINGLE_SEPARATOR);
-  DEFINE_STRING(XM_PREFIX "XmVaTOGGLEBUTTON" XM_POSTFIX, XmVaTOGGLEBUTTON);
-  DEFINE_STRING(XM_PREFIX "XmVaTITLE" XM_POSTFIX, XmVaTITLE);
+  DEFINE_STRING(XM_PREFIX "XmVaCASCADEBUTTON" XM_POSTFIX,        XmVaCASCADEBUTTON);
+  DEFINE_STRING(XM_PREFIX "XmVaCHECKBUTTON" XM_POSTFIX,          XmVaCHECKBUTTON);
+  DEFINE_STRING(XM_PREFIX "XmVaDOUBLE_SEPARATOR" XM_POSTFIX,     XmVaDOUBLE_SEPARATOR);
+  DEFINE_STRING(XM_PREFIX "XmVaPUSHBUTTON" XM_POSTFIX,           XmVaPUSHBUTTON);
+  DEFINE_STRING(XM_PREFIX "XmVaRADIOBUTTON" XM_POSTFIX,          XmVaRADIOBUTTON);
+  DEFINE_STRING(XM_PREFIX "XmVaSEPARATOR" XM_POSTFIX,            XmVaSEPARATOR);
+  DEFINE_STRING(XM_PREFIX "XmVaSINGLE_SEPARATOR" XM_POSTFIX,     XmVaSINGLE_SEPARATOR);
+  DEFINE_STRING(XM_PREFIX "XmVaTOGGLEBUTTON" XM_POSTFIX,         XmVaTOGGLEBUTTON);
+  DEFINE_STRING(XM_PREFIX "XmVaTITLE" XM_POSTFIX,                XmVaTITLE);
 #if 0
-  DEFINE_STRING(XM_PREFIX "XtVaNestedList" XM_POSTFIX, XtVaNestedList);
-  DEFINE_STRING(XM_PREFIX "XtVaTypedArg" XM_POSTFIX, XtVaTypedArg);
+  DEFINE_STRING(XM_PREFIX "XtVaNestedList" XM_POSTFIX,           XtVaNestedList);
+  DEFINE_STRING(XM_PREFIX "XtVaTypedArg" XM_POSTFIX,             XtVaTypedArg);
 #endif
 
   /* XM_CALLBACK is used where the resource type is XtCallbackList */
@@ -24424,7 +24438,7 @@ static int xm_already_inited = 0;
       define_structs();
       XEN_YES_WE_HAVE("xm");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"12-Nov-01\")");
+      XEN_EVAL_C_STRING("(define xm-version \"24-Dec-01\")");
 #endif
       xm_already_inited = 1;
     }

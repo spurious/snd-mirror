@@ -14,12 +14,10 @@
 
 /* CHANGES:
  *
+ * bil  14-Dec-01 various C++ cleanups.
  * bil: 28-Nov-01 input chans need not equal output chans now.
- * bil: 15-Oct-01 added some error returns (rather than snd_error).
- *       multichannel plugin support.
- * bil: 20-Sep-01 changed location of pfInputBuffer to avoid glomming up the
- *       stack with a huge array.  Also added c++ code (previous code
- *       was illegal in c++).
+ * bil: 15-Oct-01 added some error returns (rather than snd_error).   multichannel plugin support.
+ * bil: 20-Sep-01 changed location of pfInputBuffer to avoid glomming up the stack with a huge array.
  */
 
 
@@ -53,7 +51,7 @@ long g_lLADSPARepositoryCount;
 static int lInputCount, lOutputCount;
 
 static void isLADSPAPluginSupported(const LADSPA_Descriptor * psDescriptor) {
-  int lIndex;
+  unsigned int lIndex;
   LADSPA_PortDescriptor iPortDescriptor;
 
   lInputCount = lOutputCount = 0;
@@ -118,8 +116,8 @@ static char * packLADSPAFilename(const char * pcFilename) {
 static void unloadLADSPA() {
 
   long lIndex;
-  LADSPAPluginInfo *pvPluginHandle;
-  LADSPAPluginInfo * psInfo;
+  LADSPAPluginInfo *pvPluginHandle = NULL;
+  LADSPAPluginInfo *psInfo = NULL;
   if (g_lLADSPARepositoryCount > 0)
     pvPluginHandle = (LADSPAPluginInfo *)(g_psLADSPARepository[0]->m_pvPluginHandle);
   pvPluginHandle++;
@@ -533,7 +531,7 @@ Information about about parameters can be acquired using analyse-ladspa."
     if (LADSPA_IS_PORT_CONTROL(psDescriptor->PortDescriptors[lPortIndex])
 	&& LADSPA_IS_PORT_INPUT(psDescriptor->PortDescriptors[lPortIndex]))
       lParameterCount++;
-  XEN_ASSERT_TYPE(XEN_LIST_LENGTH(ladspa_plugin_configuration) == 2 + lParameterCount,
+  XEN_ASSERT_TYPE(XEN_LIST_LENGTH(ladspa_plugin_configuration) == (int)(2 + lParameterCount),
 		  ladspa_plugin_configuration,
 		  XEN_ARG_2,
 		  S_apply_ladspa, mus_format("a list of 2 strings + %d parameters", (int)lParameterCount));
@@ -644,7 +642,7 @@ Information about about parameters can be acquired using analyse-ladspa."
     psDescriptor->activate(psHandle);
 
   lAt = 0;
-  while (lAt < num) {
+  while ((int)lAt < num) {
 
     /* Decide how much audio to process this frame. */
     lBlockSize = num - lAt;
