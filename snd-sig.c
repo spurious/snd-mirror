@@ -3873,8 +3873,6 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope gener
   return(ratio_or_env_gen);
 }
 
-/* TODO: why does src on section cause inset graph to show 0's? */
-
 static XEN g_src_1(XEN ratio_or_env, XEN base, XEN snd_n, XEN chn_n, XEN edpos, const char *caller, bool selection)
 {
   chan_info *cp;
@@ -3896,7 +3894,7 @@ static XEN g_src_1(XEN ratio_or_env, XEN base, XEN snd_n, XEN chn_n, XEN edpos, 
 	  src_env_or_num(cp,
 			 e, e_ratio,
 			 false, NOT_FROM_ENVED, caller, 
-			 selection, NULL, edpos, 5, 
+			 selection, NULL, edpos, 5,
 			 XEN_TO_C_DOUBLE_OR_ELSE(base, 1.0));
 	  if (e) free_env(e);
 	}

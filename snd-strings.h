@@ -598,6 +598,7 @@
 #define S_track_p                       "track?"
 #define S_track_amp                     "track-amp"
 #define S_track_amp_env                 "track-amp-env"
+#define S_track_chans                   "track-chans"
 #define S_track_color                   "track-color"
 #define S_track_frames                  "track-frames"
 #define S_track_position                "track-position"

@@ -344,7 +344,7 @@ static XEN mouse_leave_graph_hook;
 
 static gboolean graph_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
 {
-  /* how many args does this thing take?  does it return an int?  what does the int mean? */
+  /* how many args does this thing take?  does it return an int?  what does the return value mean? */
   int pdata;
   pdata = get_user_int_data(G_OBJECT(w));
   if (XEN_HOOKED(mouse_enter_graph_hook))

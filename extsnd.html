@@ -2701,7 +2701,7 @@ can read external sounds without going to the trouble of loading them into Snd.
 <tr><td colspan=2></td></tr>
 
 <!-- make-track-sample-reader -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="maketracksamplereader">make-track-sample-reader</a></em> (track snd chn beg)</code></span></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="maketracksamplereader">make-track-sample-reader</a></em> (track chn beg)</code></span></td></tr>
 <tr><td></td>
 <td>create a track-sample-reader reading <i>track</i>.  <i>beg</i> is the starting point of the reader within the track.
 </td></tr> 
@@ -3207,12 +3207,13 @@ mix (add) selection starting at beg in snd's channel chn.  Return new mix id.
 A "track" is a list of associated mixes (see below).
 </td></tr>
 
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixvct">mix-vct</a></em> (vct <i>beg snd chn with-mix-tags</i> origin)</code></span></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixvct">mix-vct</a></em> (vct <i>beg snd chn with-mix-tags</i> origin track)</code></span></td></tr>
 <tr><td></td><td>
 mix the contents of <i>vct</i> into <i>snd</i>'s channel <i>chn</i> starting at frame <i>beg</i>.
 Return the id of the new mix, or -1 if some error occurred.
 If <i>with-mix-tags</i> is #f (default is #t), the data is simply
 mixed without creating any mix tags, and without returning a mix id.
+If <i>track</i> is the id of an existing track, the subsequent mix is placed in that track.
 </td></tr>
 
 <!-- mix-waveform-height -->
@@ -3309,13 +3310,13 @@ to preserve its overall amp-env despite some subsequent editing that changes the
 </td></tr>
 
 <!-- play-track -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndplaytrack">play-track</a></em> (<i>track-id snd chn beg</i>)</code></span></td></tr>
-<tr><td></td><td>play track <i>track</i>. If snd is #t, play all associated mixes, even if in different sounds.
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndplaytrack">play-track</a></em> (<i>track-id chn beg</i>)</code></span></td></tr>
+<tr><td></td><td>play track <i>track</i>. If chn is #t, play all associated mixes, even if in different sounds.
 'beg' is where to start playing within the track.
 </td></tr>
 
 <!-- track -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="track">track</a></em> (track-id)</code></span></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="track">track</a></em> (track-id <i>chn</i>)</code></span></td></tr>
 <tr><td width=50><br></td><td>Return a list of the mixes currently in track <i>track-id</i>.
 </td></tr>
 
@@ -3343,6 +3344,12 @@ each mix's resultant amp env is the result of multiplying its env (if any) by
 the portion of the track env that happens to fall over it.  Use #f to reset it to the default (null) envelope.
 </td></tr>
 
+<!-- track-chans -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="trackchans">track-chans</a></em> (track-id)</code></span></td></tr>
+<tr><td width=50><br></td><td>chans associated with track <i>track-id</i>. Each such channel
+has at least one active mix that is a member of the given track.
+</td></tr>
+
 <!-- track-color -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="trackcolor">track-color</a></em> (track-id)</code></span></td></tr>
 <tr><td width=50><br></td><td>
@@ -3357,12 +3364,12 @@ of the tag).
 </td></tr>
 
 <!-- track-frames -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="trackframes">track-frames</a></em> (track-id)</code></span></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="trackframes">track-frames</a></em> (track-id <i>chn</i>)</code></span></td></tr>
 <tr><td width=50><br></td><td>Track frames (length in samples).
 </td></tr>
 
 <!-- track-position -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="trackposition">track-position</a></em> (track-id)</code></span></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="trackposition">track-position</a></em> (track-id <i>chn</i>)</code></span></td></tr>
 <tr><td width=50><br></td><td>Track position (minimum member mix position).  If you set track-position, all
 the member mixes are moved by the same amount to make the minimum mix position coincide with the new track-position.
 <br>
@@ -3725,7 +3732,7 @@ See also:<br>
 <a href="sndscm.html#exswapselectionchannels">swap-selection-channels</a>: swap chans in selected portion<br>
 <a href="sndscm.html#exreplacewithselection">replace-with-selection</a>: replace portion with selection<br>
 <a href="sndscm.html#exmakeselection">make-selection</a>: select portion via function<br>
-<a href="sndscm.html#exevaloverselection">eval-over-selection</a>: evaluate thunk on each sample of selection<br>
+<a href="sndscm.html#exevaloverselection">eval-over-selection</a> (map-selection in effect): evaluate func on each sample of selection<br>
 <a href="sndscm.html#exselectionmembers">selection-members</a>: list of lists of sound index and channel if selection is active there<br>
 <a href="sndscm.html#exselectionrms">selection-rms</a>: rms of selection data<br>
 <a href="sndscm.html#exdeleteselectionandsmooth">delete-selection-and-smooth</a>: delete selection and smooth the splice<br>

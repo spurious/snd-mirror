@@ -254,7 +254,7 @@ typedef struct chan_info {
   Locus old_x0, old_x1;
   Float *amp_control; /* local amp controls in snd-dac; should it be extended to other controls? */
   search_result_t last_search_result;
-  bool just_zero;
+  bool just_zero, new_peaks;
   track_info **tracks;
 #if HAVE_GL
   int gl_fft_list;

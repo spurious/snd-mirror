@@ -1341,11 +1341,9 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
 	  mus_sample_t ymin, ymax;
 	  int k, kk;
 	  env_info *ep;
-
 	  data_size = pixels + 1;
 	  data = (Float *)CALLOC(data_size, sizeof(Float));
 	  data1 = (Float *)CALLOC(data_size, sizeof(Float));
-
 	  ep = cp->amp_envs[edit_pos];
 	  step = samples_per_pixel / (Float)(ep->samps_per_bin);
 	  xf = (double)(losamp) / (double)(ep->samps_per_bin);
@@ -4020,7 +4018,6 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 	    {
 	      if (mix_tag != NO_MIX_TAG)
 		{
-		  /* TODO: mix-dragged-hook moved to here to handle track */
 		  finish_moving_mix_tag(mix_tag, x);
 		  dragged = false;
 		  mix_tag = NO_MIX_TAG;
@@ -4122,9 +4119,6 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time, Temp
 	    case WAVE:
 	      if (mix_tag != NO_MIX_TAG)
 		{
-		  /* TODO: move-track mix-drag-hook? */
-		  /* if not dragged...? could save here as well as inform mix-drag-hook */
-		  /* the mix->track business also applies to the mix panel controls */
 		  move_mix_tag(mix_tag, x);
 		  dragged = true;
 		  return;

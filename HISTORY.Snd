@@ -1,5 +1,6 @@
 Snd change log
 
+  31-Oct:    removed 'snd' arg to make-track-sample-reader.
   30-Oct:    added Kjetil S. Matheussen's snd_conffile.scm.
   27-Oct:    removed notion of a selected mix (selected-mix, selected-mix-color, select-mix, select-mix-hook).
              moved find-mix to mix.scm, changed mix-locked to mix-locked?
@@ -9,7 +10,7 @@ Snd change log
   21-Oct:    track-property in mix.scm.
              added (or moved from mix.scm into C): track, tracks, track?, make-track, track-amp,
                track-position, track-frames, track-speed, track-amp-env, track-track, delete-track, 
-               delete-mix, track-color, lock-track.
+               delete-mix, track-color, lock-track, track-chans.
              env-track is now track-amp-env, unused-track and new-track are now make-track.
              mix-frames is no longer settable.
   13-Oct:    recorder-file-hook to set or modify recorder output file name, recorder-out-type.

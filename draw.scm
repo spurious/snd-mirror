@@ -185,16 +185,15 @@ the y-zoom-slider controls the graph amp"
 	       (chan-offset (- (list-ref axinf 13) 10))
 	       (y-offset (+ chan-offset (inexact->exact (round (/ height 2)))))
 	       (grf-chn (if (= (channel-style snd) channels-separate) chn 0))
+	       (new-peaks (list-ref axinf 18))
 	       (data0 #f)
 	       (data1 #f))
-	  
 	  (if (and (> width 10)
 		   (> height 10)
 		   (> (frames snd chn) 0)
 		   (or (= chn 0)
 		       (not (= (channel-style snd) channels-superimposed))))
 	      (begin
-		
 		;; draw axes around the inset graph
 		(fill-rectangle x-offset (+ chan-offset height) width 2 snd grf-chn)
 		(fill-rectangle x-offset chan-offset 2 height snd grf-chn)
@@ -205,6 +204,7 @@ the y-zoom-slider controls the graph amp"
 		  (fill-rectangle (+ x-offset lx) chan-offset (max 1 (- rx lx)) height snd grf-chn selection-context))
 		(let ((old-env (channel-property 'inset-envelope snd chn)))
 		  (if (and old-env
+			   (not new-peaks)
 			   (= width (car old-env))
 			   (= height (cadr old-env))
 			   (= y-offset (list-ref old-env 5))

@@ -173,6 +173,7 @@
 	       (x1 (cadr axis-bounds)) ; too confusing! -- change internally below
 	       (y0 (caddr axis-bounds))
 	       (y1 (cadddr axis-bounds))
+	       (arrow-cursor (XCreateFontCursor (XtDisplay (cadr (main-widgets))) XC_crosshair))
 	       (editor (list (list x0 y0 x1 y0) ; needs to be in user-coordinates (graph size can change)
 			     drawer 
 			     #f  ; axis pixel locs filled in when drawn
@@ -196,6 +197,13 @@
 	  (XtAddEventHandler drawer ButtonReleaseMask #f 
 			     (lambda (w context ev flag)
 			       (xe-mouse-release editor (.x ev) (.y ev))))
+	  ;;; TODO: gtk side of crosshair cursor
+	  (XtAddEventHandler drawer EnterWindowMask #f
+			     (lambda (w context ev flag)
+			       (XDefineCursor (XtDisplay w) (XtWindow w) arrow-cursor)))
+	  (XtAddEventHandler drawer LeaveWindowMask #f
+			     (lambda (w context ev flag)
+			       (XUndefineCursor (XtDisplay w) (XtWindow w))))
 	  editor))
       (let* ((drawer (gtk_drawing_area_new))
 	     (gc (car (snd-gcs)))

@@ -1008,7 +1008,7 @@ static XEN g_ungrf_y(XEN val, XEN snd, XEN chn, XEN ap)
 static XEN g_axis_info(XEN snd, XEN chn, XEN ap_id)
 {
   #define H_axis_info "(" S_axis_info " (snd #f) (chn #f) (grf #f)): info about axis: (list losamp hisamp \
-x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1 y_offset xscale yscale label)"
+x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1 y_offset xscale yscale label new-peaks)"
   axis_info *ap;
   ASSERT_CHANNEL(S_axis_info, snd, chn, 1);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ap_id), ap_id, XEN_ARG_3, S_axis_info, "an integer");
@@ -1032,7 +1032,8 @@ x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1 y_offset xscale ysca
 			XEN_CONS(C_TO_XEN_DOUBLE(ap->x_scale),
 			 XEN_CONS(C_TO_XEN_DOUBLE(ap->y_scale),
 			  XEN_CONS(C_TO_XEN_STRING(ap->xlabel),
-		           XEN_EMPTY_LIST)))))))))))))))))));
+			   XEN_CONS((ap->cp) ? C_TO_XEN_BOOLEAN(ap->cp->new_peaks) : XEN_FALSE,
+		            XEN_EMPTY_LIST))))))))))))))))))));
 }
 
 /* this is intended for use with the xm package */

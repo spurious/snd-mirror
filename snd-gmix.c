@@ -1,7 +1,5 @@
 #include "snd.h"
 
-/* TODO: remix as drag is broken */
-
 static GtkWidget *mix_panel = NULL;
 static bool dragging = false;
 static void update_mix_panel(int mix_id);

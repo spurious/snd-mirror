@@ -1,5 +1,7 @@
 (use-modules (ice-9 format) (ice-9 common-list))
 
+;;; TODO: if no selection, unsensitize selection button, similarly for marks
+
 (if (not (provided? 'xm))
     (let ((hxm (dlopen "xm.so")))
       (if (string? hxm)

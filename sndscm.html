@@ -1533,7 +1533,9 @@ It is very similar to <b>all-chans</b> which returns a list of lists of all (snd
 <b>delete-selection-and-smooth</b> deletes the current selection and smooths the splice.
 </p>
 
-<p><b>eval-over-selection</b> evaluates <i>func</i> on each sample in the current selection. The code:
+<p><b>eval-over-selection</b> evaluates <i>func</i> on each sample in the current selection. A better
+name might be map-selection.
+The code:
 </p>
 <pre>
 (bind-key (char-&gt;integer #\x) 4

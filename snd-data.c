@@ -98,6 +98,7 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
   cp->graph_transform_p = false;
   cp->printing = false;
   cp->waiting_to_make_graph = false;
+  cp->new_peaks = false;
   cp->amp_envs = NULL;
   cp->sonogram_data = NULL;
   cp->lisp_info = NULL;

@@ -351,6 +351,24 @@ in the other channel. 'chn' is the start channel for all this (logical channel 0
 ;;; (retempo-track '(0 1) 2.0)
 
   
+;;; TODO: test filter-track
+(define (filter-track track-id fir-filter-coeffs)
+  "(filter-track track coeffs) filters track data using FIR filter coeffs: (filter-track track-id '(.1 .2 .3 .3 .2 .1))"
+  (if (track? track-id)
+      (let ((order (length fir-filter-coeffs))
+	    (chans (track-chans track-id)))
+	(do ((chan 0 (1+ chan)))
+	    ((= chan chans))
+	  (let ((beg (track-position track-id chan))
+		(dur (track-frames track-id chan))
+		(flt (make-fir-filter order (list->vct fir-filter-coeffs)))
+		(reader (make-track-sample-reader track-id chan 0)))
+	    (map-channel (lambda (y)
+			   (let ((val (next-sample reader)))
+			     (+ y (- (fir-filter flt val) val))))))))
+      (throw 'no-such-track (list "filter-track" track-id))))
+
+
 ;;; --------------------------------------------------------------------------------
 
 (define all-track-properties '())

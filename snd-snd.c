@@ -314,7 +314,9 @@ Cessate get_amp_env(Indicium ptr)
       if (cp->waiting_to_make_graph) 
 	{
 	  cp->waiting_to_make_graph = false;
+	  cp->new_peaks = true;
 	  update_graph(cp);
+	  cp->new_peaks = false;
 	}
       return(BACKGROUND_QUIT);
     }
