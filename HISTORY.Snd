@@ -1,5 +1,6 @@
 snd change log
 
+  24-Apr:    added mouse-enter|leave-text-hook.
   23-Apr:    snd 4.13.
   19-Apr:    use GSL_IEEE_MODE if it exists.
   17-Apr:    Haar transform.

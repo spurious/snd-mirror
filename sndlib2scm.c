@@ -990,7 +990,7 @@ void mus_sndlib2scm_initialize(void)
 {
   SCM local_doc;
   mus_sound_initialize();
-  local_doc = scm_permanent_object(scm_string_to_symbol(TO_SCM_STRING("documentation")));
+  local_doc = scm_permanent_object(DOCUMENTATION);
 
   sound_data_tag = scm_make_smob_type("sound-data", sizeof(sound_data));
   scm_set_smob_mark(sound_data_tag, mark_sound_data);
@@ -1133,7 +1133,7 @@ void mus_sndlib2scm_initialize(void)
   DEFINE_PROC("mus-sound-print-cache", g_sound_print_cache, 0, 0, 0, "");
 #endif
 
-  scm_add_feature("sndlib");
+  YES_WE_HAVE("sndlib");
 }
 
 /*

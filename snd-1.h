@@ -627,10 +627,6 @@ void g_init_data(SCM local_doc);
 
 /* -------- snd-edits.c -------- */
 
-#ifndef inline
-  #define inline
-#endif
-
 void allocate_ed_list(chan_info *cp);
 void set_initial_ed_list(chan_info *cp, int len);
 int edit_changes_begin_at(chan_info *cp);
@@ -672,8 +668,8 @@ snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_po
     (MUS_SAMPLE_TO_FLOAT(previous_sound(SF))) : \
     ((*SF->view_buffered_data--) * SF->scaler))
 
-inline MUS_SAMPLE_TYPE next_sample(snd_fd *sf);
-inline MUS_SAMPLE_TYPE previous_sample(snd_fd *sf);
+MUS_SAMPLE_TYPE next_sample(snd_fd *sf);
+MUS_SAMPLE_TYPE previous_sample(snd_fd *sf);
 int read_sample_eof (snd_fd *sf);
 void undo_edit_with_sync(chan_info *cp, int count);
 void redo_edit_with_sync(chan_info *cp, int count);
@@ -1006,8 +1002,8 @@ int calculate_fft(chan_info *cp, void *ptr);
 /* -------- snd-axis.c -------- */
 
 axis_info *free_axis_info(axis_info *ap);
-inline short grf_x(double val, axis_info *ap);
-inline short grf_y(Float val, axis_info *ap);
+short grf_x(double val, axis_info *ap);
+short grf_y(Float val, axis_info *ap);
 void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate);
 
 #define ungrf_x(AP, X) (((X) - (AP)->x_base) / (AP)->x_scale)

@@ -697,7 +697,7 @@ void g_ladspa_to_snd(SCM local_doc)
   DEFINE_PROC(S_apply_ladspa, g_apply_ladspa, 4, 0, 0, H_apply_ladspa);
   DEFINE_PROC(S_init_ladspa, g_init_ladspa, 0, 0, 0, H_init_ladspa);
   DEFINE_PROC(S_list_ladspa, g_list_ladspa, 0, 0, 0, H_list_ladspa);
-  scm_add_feature("snd-ladspa");
+  YES_WE_HAVE("snd-ladspa");
 }
 
 /*****************************************************************************/

@@ -2015,14 +2015,14 @@ MUS_SAMPLE_TYPE next_sound (snd_fd *sf)
   return((MUS_SAMPLE_TYPE)(UNWRAP_SAMPLE(*sf->view_buffered_data++, sf->cb[ED_SCL])));
 }
 
-inline MUS_SAMPLE_TYPE next_sample(snd_fd *sf)
+MUS_SAMPLE_TYPE next_sample(snd_fd *sf)
 {
   if (sf->view_buffered_data > sf->last)
     return(next_sound(sf));
   else return((MUS_SAMPLE_TYPE)(UNWRAP_SAMPLE(*sf->view_buffered_data++, sf->cb[ED_SCL])));
 }
 
-inline MUS_SAMPLE_TYPE previous_sample(snd_fd *sf)
+MUS_SAMPLE_TYPE previous_sample(snd_fd *sf)
 {
   if (sf->view_buffered_data < sf->first)
     return(previous_sound(sf));
@@ -2587,15 +2587,15 @@ void redo_edit_with_sync(chan_info *cp, int count)
 
 static SCM g_display_edits(SCM snd, SCM chn)
 {
-  #define H_display_edits "(" S_display_edits " &optional snd chn) prints current edit tree state"
+  #define H_display_edits "(" S_display_edits " &optional snd chn) returns the current edit tree state"
   FILE *tmp = NULL;
   char *buf, *name;
   int len, fd;
   snd_state *ss;
+  SCM res;
   SND_ASSERT_CHAN(S_display_edits, snd, chn, 1);
   ss = get_global_state();
   name = snd_tempnam(ss);
-  display_edits(get_cp(snd, chn, S_display_edits), stderr);
   tmp = fopen(name, "w");
   if (tmp) display_edits(get_cp(snd, chn, S_display_edits), tmp);
   if ((!tmp) || (fclose(tmp) != 0))
@@ -2612,9 +2612,9 @@ static SCM g_display_edits(SCM snd, SCM chn)
   if (remove(name) == -1)
     snd_error("can't remove %s: %s", name, strerror(errno));
   if (name) free(name);
-  snd_append_command(ss, buf);
+  res = TO_SCM_STRING(buf);
   FREE(buf);
-  return(SCM_BOOL_T);
+  return(res);
 }
 
 static SCM g_edit_fragment(SCM uctr, SCM snd, SCM chn)

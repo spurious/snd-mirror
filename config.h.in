@@ -10,7 +10,6 @@
 #undef mode_t
 #undef pid_t
 #undef size_t
-#undef inline
 
 #undef WORDS_BIGENDIAN
 #undef HAVE_LONG_LONGS

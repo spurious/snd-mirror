@@ -108,14 +108,14 @@ static Float fp_dB(snd_state *ss, Float py)
   return((py <= ss->lin_dB) ? 0.0 : (1.0 - ((20.0 * (log10(py))) / ss->min_dB)));
 }
 
-static inline short local_grf_x(double val, axis_info *ap)
+static short local_grf_x(double val, axis_info *ap)
 {
   if (val >= ap->x1) return(ap->x_axis_x1);
   if (val <= ap->x0) return(ap->x_axis_x0);
   return((short)(ap->x_base + val * ap->x_scale));
 }
 
-static inline short local_grf_y(Float val, axis_info *ap)
+static short local_grf_y(Float val, axis_info *ap)
 {
   if (val >= ap->y1) return(ap->y_axis_y1);
   if (val <= ap->y0) return(ap->y_axis_y0);

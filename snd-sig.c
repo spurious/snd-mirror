@@ -2389,7 +2389,7 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved,
     }
 }
 
-static inline MUS_SAMPLE_TYPE previous_sample_unscaled(snd_fd *sf)
+static MUS_SAMPLE_TYPE previous_sample_unscaled(snd_fd *sf)
 {
   if (sf->view_buffered_data < sf->first)
     return(previous_sound(sf));

@@ -386,7 +386,7 @@ int amp_env_usable(chan_info *cp, Float samples_per_pixel, int hisamp, int start
   return(FALSE);
 }
 
-static inline short local_grf_y(Float val, axis_info *ap)
+static short local_grf_y(Float val, axis_info *ap)
 {
   if (val >= ap->y1) return(ap->y_axis_y1);
   if (val <= ap->y0) return(ap->y_axis_y0);

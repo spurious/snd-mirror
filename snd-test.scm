@@ -966,6 +966,13 @@
       (if (not (mus-sound-max-amp-exists? "oboe.snd")) 
 	  (snd-display (format #f ";oboe: mus-sound-max-amp-exists after max-amp: ~A" (mus-sound-max-amp-exists? "oboe.snd"))))
 
+      (let ((str (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "oboe.snd")))))
+	(if (not (string=? str "18-Oct 06:56 PDT"))
+	    (snd-display (format #f ";mus-sound-write-date oboe.snd: ~A?" str))))
+      (let ((str (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "pistol.snd")))))
+	(if (not (string=? str "05-Jan 15:43 PST"))
+	    (snd-display (format #f ";mus-sound-write-date pistol.snd: ~A?" str))))
+
       (if com (snd-display (format #f ";oboe: mus-sound-comment ~A?" com)))
       (set! com (mus-sound-comment (string-append sf-dir "nasahal8.wav")))
       (if (or (not (string? com)) (not (string=? com "ICRD: 1997-02-22\nIENG: Paul R. Roger\nISFT: Sound Forge 4.0\n")))
@@ -1834,6 +1841,36 @@
 	    (if (not (= total (+ ups1 ups2 ups3)))
 		(snd-display (format #f ";scan-across-all-chans: ~A ~A?" total (+ ups1 ups2 ups3))))))
 	
+	(select-sound ind1)
+	(forward-graph)
+	(if (or (not (= (selected-sound) ind2))
+		(not (= (selected-channel) 0)))
+	    (snd-display (format #f ";forward from ~A 0 to ~A ~A?" ind1 (selected-sound) (selected-channel))))
+	(forward-graph)
+	(if (or (not (= (selected-sound) ind2))
+		(not (= (selected-channel) 1)))
+	    (snd-display (format #f ";forward from ~A 0 to ~A ~A?" ind2 (selected-sound) (selected-channel))))
+	(forward-graph 1)
+	(if (or (not (= (selected-sound) ind1))
+		(not (= (selected-channel) 0)))
+	    (snd-display (format #f ";forward from ~A 1 to ~A ~A?" ind2 (selected-sound) (selected-channel))))
+	(forward-graph 2)
+	(if (or (not (= (selected-sound) ind2))
+		(not (= (selected-channel) 1)))
+	    (snd-display (format #f ";forward from ~A 0 to ~A ~A?" ind1 (selected-sound) (selected-channel))))
+	(forward-graph 0)
+	(if (or (not (= (selected-sound) ind2))
+		(not (= (selected-channel) 1)))
+	    (snd-display (format #f ";forward 0 from ~A 1 to ~A ~A?" ind2 (selected-sound) (selected-channel))))
+	(backward-graph 2)
+	(if (or (not (= (selected-sound) ind1))
+		(not (= (selected-channel) 0)))
+	    (snd-display (format #f ";backward 2 from ~A 1 to ~A ~A?" ind2 (selected-sound) (selected-channel))))
+	(backward-graph)
+	(if (or (not (= (selected-sound) ind2))
+		(not (= (selected-channel) 1)))
+	    (snd-display (format #f ";backward 2 from ~A 0 to ~A ~A?" ind1 (selected-sound) (selected-channel))))
+
 	(close-sound ind1)
 	(close-sound ind2))
 
@@ -2874,6 +2911,20 @@
 	      (snd-display (format #f ";fr+*: ~A ~A" fr3 fr4)))
 	  (if (fneq (frame-ref fr5 0) .5) 
 	      (snd-display (format #f ";sample->frame: ~A?" (frame-ref fr5 0)))))
+	(let ((fr3 (make-frame 2))
+	      (fr4 (make-frame 4)))
+	  (frame-set! fr3 0 1.0)
+	  (frame-set! fr4 0 0.5)
+	  (frame-set! fr4 2 1.0)
+	  (if (not (feql (frame->list (frame+ fr3 fr4)) (list 1.5 0.0)))
+	      (snd-display (format #f ";frame+ unequal chans: ~A?" (frame+ fr3 fr4)))))
+	(let ((fr3 (make-frame 2))
+	      (fr4 (make-frame 4)))
+	  (frame-set! fr3 0 1.0)
+	  (frame-set! fr4 0 0.5)
+	  (frame-set! fr4 2 1.0)
+	  (if (not (feql (frame->list (frame* fr3 fr4)) (list 0.5 0.0)))
+	      (snd-display (format #f ";frame* unequal chans: ~A?" (frame* fr3 fr4)))))
 	(let* ((mx1 (make-mixer 2 1.0 0.0 0.0 1.0))
 	       (mx2 (mixer* gen mx1))
 	       (fr4 (make-frame 2 1.0 1.0))
@@ -4153,6 +4204,20 @@
      (if (not (equal? env1 (list 0.0 1.0 1.0 0.0))) (snd-display (format #f ";save-envelopes: ~A?" env1)))
      (delete-file "hiho.env")
      (dismiss-all-dialogs)
+     (let ((ind (open-sound "oboe.snd")))
+       (edit-header-dialog ind)
+       (dismiss-all-dialogs)
+       (close-sound ind))
+     (let ((str1 (snd-help open-sound))
+	   (str2 (snd-help 'open-sound))
+	   (str3 (snd-help "open-sound")))
+       (if (or (not (string=? str1 str2))
+	       (not (string=? str1 str3)))
+	   (snd-display (format #f ";snd-help open-sound: ~A ~A ~A" str1 str2 str3))))
+     (let ((str1 (snd-help 'hamming-window))
+	   (str2 (snd-help "hamming-window")))
+       (if (not (string=? str1 str2))
+	   (snd-display (format #f ";snd-help hamming-window: ~A ~A" str1 str2))))
      ))
 
 (define map-silence
@@ -6413,6 +6478,8 @@
 
 ;;; ---------------- test 19: save and restore ----------------
 
+(define sfile 0)
+
 (if (or full-test (= snd-test 19))
     (let ((nind (open-sound "oboe.snd")))
       (if (procedure? trace-hook) (trace-hook 19))
@@ -6452,8 +6519,53 @@
 		     (save-listener "/bad/bad.save"))
 		   (lambda args 12345))))
 	    (if (not (= err 12345)) (snd-display (format #f ";save-listener err: ~A?" err))))
+	  ))
+      (set! nind (open-sound "oboe.snd"))
+      (set! (sample 1) .5)
+      (delete-sample 100)
+      (insert-sample 10 .5)
+      (save-edit-history "hiho.scm")
+      (revert-sound nind)
+      (set! sfile nind)
+      (load "hiho.scm")
+      (if (not (equal? (edit-fragment 1) '("set-sample" "set" 1 1))) (snd-display (format #f ";save-edit-history 1: ~A?" (edit-fragment 1))))
+      (if (not (equal? (edit-fragment 2) '("delete-sample" "delete" 100 1))) (snd-display (format #f ";save-edit-history 2: ~A?" (edit-fragment 2))))
+      (if (not (equal? (edit-fragment 3) '("insert-sample" "insert" 10 1))) (snd-display (format #f ";save-edit-history 3: ~A?" (edit-fragment 3))))
+      (let ((str (display-edits)))
+	(if (not (string=? str "
+EDITS: 3
 
-	  ))))
+ (begin) [0:2]:
+   (at 0, cp->sounds[0][0:50827, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 50828, cp->sounds[-2][0:0, 0.000000])
+
+ (set 1 1) ; set-sample [1:4]:
+   (at 0, cp->sounds[0][0:0, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 1, cp->sounds[1][0:0, 1.000000]) [buf: 1] 
+   (at 2, cp->sounds[0][2:50827, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 50828, cp->sounds[-2][0:0, 0.000000])
+
+ (delete 100 1) ; delete-sample [2:5]:
+   (at 0, cp->sounds[0][0:0, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 1, cp->sounds[1][0:0, 1.000000]) [buf: 1] 
+   (at 2, cp->sounds[0][2:99, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 100, cp->sounds[0][101:50827, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 50827, cp->sounds[-2][0:0, 0.000000])
+
+ (insert 10 1) ; insert-sample [3:7]:
+   (at 0, cp->sounds[0][0:0, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 1, cp->sounds[1][0:0, 1.000000]) [buf: 1] 
+   (at 2, cp->sounds[0][2:9, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 10, cp->sounds[2][0:0, 1.000000]) [buf: 1] 
+   (at 11, cp->sounds[0][10:99, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 101, cp->sounds[0][101:50827, 1.000000]) [file: /home/bil/cl/oboe.snd[0]]
+   (at 50828, cp->sounds[-2][0:0, 0.000000])
+"))
+	    (snd-display (format #f ";display-edits: ~A?" str))))
+      (revert-sound nind)
+      (close-sound nind)
+      
+      ))
 
 ;;; ---------------- test 20: errors ----------------
 
@@ -6542,7 +6654,7 @@
 	       sawtooth-wave? sine-summation sine-summation? spectrum square-wave square-wave? src src? sum-of-cosines sum-of-cosines? table-lookup
 	       table-lookup? tap triangle-wave triangle-wave? two-pole two-pole? two-zero two-zero? wave-train wave-train? waveshape waveshape?
 	       make-vct vct-add! vct-subtract! vct-copy vct-length vct-multiply! vct-offset! vct-ref vct-scale! vct-fill! vct-set!
-	       vct-peak vct? list->vct vct->list vector->vct vct-move! vct-subseq vct))
+	       vct-peak vct? list->vct vct->list vector->vct vct-move! vct-subseq vct little-endian?))
 
 (define set-procs (list 
 		   amp ask-before-overwrite audio-input-device audio-output-device audio-state-file auto-resize auto-update
@@ -8061,3 +8173,28 @@
       (snd-display (format #f "  [~D: ~A]" i (/ (vector-ref timings i) 100)))))
 
 (if (= snd-test -1) (exit))
+
+
+;;; TODO: these aren't tested at all yet (except as bare error checks in a few cases):
+;;;   mus-sound-set-max-amp mus-audio-read mus-audio-open-input mus-sound-print-cache
+;;;   gc-off gc-on play play-selection stop-player make-snd-nrev snd-nrev free-snd-nrev
+;;;   make-snd-freeverb snd-freeverb free-snd-freeverb pv-ampinc pv-ampinc-1 set-pv-ampinc pv-amps pv-amps-1 set-pv-amps pv-freqs-1
+;;;   pv-phases pv-phases-1 set-pv-phases pv-phaseinc pv-phaseinc-1 set-pv-phaseinc pv-lastphase-1 send-netscape channel-widgets
+;;;   sound-to-temp selection-to-temp temp-to-sound temp-to-selection scan-all-chans map-all-chans map-across-sound-chans
+;;;   transform-samples transform-sample transform-samples->vct loop-samples save-listener
+;;;   draw-dots fill-polygon hide-widget show-widget focus-widget add-idler remove-idler graph-data channel-info
+;;;   add-input remove-input dlopen dlclose dlerror dlinit
+;;;
+;;;  these are only called (successfully) once:
+;;;   convolve-files map-across-all-chans map-chans scan-across-chans describe-audio map-sound-chans scan-sound-chans scan-chans
+;;;   play-mix selection-to-temps samples->sound-data forward-mix smooth-selection convolve-selection-with save-state open-alternate-sound
+;;;   recorder-dialog sound-data->vct vct->sound-data mus-sound-datum-size mus-sound-length mus-sound-type-specifier mus-sound-reopen-output
+;;;   mus-sound-seek mus-sound-seek-frame update-lisp-graph update-fft close-sound-file vct->sound-file start-progress-report finish-progress-report
+;;;   save-marks id-region save-region delete-selection insert-selection mix-selection save-selection reverb-funcs vct-do! vcts-map!
+;;;   mus-set-rand-seed buffer->frame frame->buffer mixer* mixer-set! frame->frame restart-env locsig-set! locsig-reverb-set!
+;;;   ina inb outc outd mus-channel load-colormap make-track-sample-reader free-track-sample-reader mix-sound-channel mix-sound-index
+;;;   backward-mix peaks forward-sample backward-sample cursor-position save-macros prompt-in-minibuffer
+;;;   append-to-minibuffer scan-across-sound-chans change-menu-label update-sound write-peak-env-info-file
+;;;   soundfont-info menu-widgets x->position y->position position->y axis-info listener-selection draw-line draw-string fill-rectangle
+;;;   erase-rectangle load-font main-widgets dialog-widgets
+

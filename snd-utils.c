@@ -372,9 +372,9 @@ static int find_mem_location(const char *ur_func, const char *file, int line)
 	}
       else
 	{
-	  functions = (char **)realloc(functions, (mem_locations+1024)*sizeof(char *));
-	  files = (char **)realloc(files, (mem_locations+1024)*sizeof(char *));
-	  lines = (int *)realloc(lines, (mem_location+1024)*sizeof(int));
+	  functions = (char **)realloc(functions, (mem_locations + 1024)*sizeof(char *));
+	  files = (char **)realloc(files, (mem_locations + 1024)*sizeof(char *));
+	  lines = (int *)realloc(lines, (mem_location + 1024)*sizeof(int));
 	  for (i = 0; i < 1024; i++) 
 	    {
 	      functions[i+mem_locations] = NULL;
@@ -385,23 +385,33 @@ static int find_mem_location(const char *ur_func, const char *file, int line)
 	}
     }
   /* NOT copy_string HERE!! */
-  functions[mem_location] = (char *)calloc(strlen(func)+1, sizeof(char));
+  functions[mem_location] = (char *)calloc(strlen(func) + 1, sizeof(char));
   strcpy(functions[mem_location], func);
-  files[mem_location] = (char *)calloc(strlen(file)+1, sizeof(char));
+  files[mem_location] = (char *)calloc(strlen(file) + 1, sizeof(char));
   strcpy(files[mem_location], file);
   lines[mem_location] = line;
   return(mem_location);
 }
 
 void mem_report(void);
+static int last_forgotten = -1;
+static int last_remembered = -1, last_remembered_ptr = -1;
 static void forget_pointer(void *ptr, const char *func, const char *file, int line)
 {
   int i;
   if (ptr == NULL) {fprintf(stderr, "attempt to free NULL"); mem_report(); abort();}
+  if (last_remembered_ptr == (int)ptr)
+    {
+      pointers[last_remembered] = 0;
+      last_forgotten = last_remembered;
+      last_remembered_ptr = -1;
+      return;
+    }
   for (i = 0; i < mem_size; i++)
     if (pointers[i] == (int)ptr)
       {
 	pointers[i] = 0;
+	last_forgotten = i;
 	return;
       }
   fprintf(stderr, "forget %p ", ptr); mem_report(); abort();
@@ -409,44 +419,54 @@ static void forget_pointer(void *ptr, const char *func, const char *file, int li
 
 static void remember_pointer(void *ptr, size_t len, const char *func, const char *file, int line)
 {
-  int i, least = 10000, least_loc=-1;
-  if (mem_size == 0)
+  int i, least = 10000, least_loc = -1;
+  if (last_forgotten == -1)
     {
-      mem_size = 4096;
-      pointers = (int *)calloc(mem_size, sizeof(int));
-      sizes = (int *)calloc(mem_size, sizeof(int));
-      locations = (int *)calloc(mem_size, sizeof(int));
+      if (mem_size == 0)
+	{
+	  mem_size = 4096;
+	  pointers = (int *)calloc(mem_size, sizeof(int));
+	  sizes = (int *)calloc(mem_size, sizeof(int));
+	  locations = (int *)calloc(mem_size, sizeof(int));
+	}
+      for (i = 0; i < mem_size; i++)
+	{
+	  if (pointers[i] == 0) 
+	    {
+	      least_loc = i;
+	      break;
+	    }
+	  if (sizes[i] < least)
+	    {
+	      least = sizes[i];
+	      least_loc = i;
+	    }
+	}
+      if (pointers[least_loc] != 0)
+	{
+	  least_loc = mem_size;
+	  mem_size += 4096;
+	  pointers = (int *)realloc(pointers, mem_size * sizeof(int));
+	  sizes = (int *)realloc(sizes, mem_size * sizeof(int));
+	  locations = (int *)realloc(locations, mem_size * sizeof(int));
+	  for (i = least_loc; i < mem_size; i++)
+	    {
+	      pointers[i] = 0;
+	      sizes[i] = 0;
+	      locations[i] = 0;
+	    }
+	}
     }
-  for (i = 0; i < mem_size; i++)
+  else
     {
-      if (pointers[i] == 0) 
-	{
-	  least_loc = i;
-	  break;
-	}
-      if (sizes[i] < least)
-	{
-	  least = sizes[i];
-	  least_loc = i;
-	}
-    }
-  if (pointers[least_loc] != 0)
-    {
-      least_loc = mem_size;
-      mem_size += 4096;
-      pointers = (int *)realloc(pointers, mem_size * sizeof(int));
-      sizes = (int *)realloc(sizes, mem_size * sizeof(int));
-      locations = (int *)realloc(locations, mem_size * sizeof(int));
-      for (i = least_loc; i < mem_size; i++)
-	{
-	  pointers[i] = 0;
-	  sizes[i] = 0;
-	  locations[i] = 0;
-	}
+      least_loc = last_forgotten;
+      last_forgotten = -1;
     }
   pointers[least_loc] = (int)ptr;
   sizes[least_loc] = (int)len;
   locations[least_loc] = find_mem_location(func, file, line);
+  last_remembered = least_loc;
+  last_remembered_ptr = (int)ptr;
 }
 
 #define MAX_MALLOC (1 << 24)
@@ -548,8 +568,8 @@ void mem_report(void)
   time_t ts;
   char time_buf[TIME_STR_SIZE];
 
-  sums = (int *)calloc(mem_location+1, sizeof(int));
-  ptrs = (int *)calloc(mem_location+1, sizeof(int));
+  sums = (int *)calloc(mem_location + 1, sizeof(int));
+  ptrs = (int *)calloc(mem_location + 1, sizeof(int));
   for (loc = 0; loc <= mem_location; loc++)
     {
       sum = 0;

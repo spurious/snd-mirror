@@ -375,7 +375,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   int i;
   SCM local_doc;
   ss->sgx = (state_context *)CALLOC(1, sizeof(state_context));
-  local_doc = scm_permanent_object(scm_string_to_symbol(TO_SCM_STRING("documentation")));
+  local_doc = scm_permanent_object(DOCUMENTATION);
 
   ss->init_file = getenv(SND_INIT_FILE_ENVIRONMENT_NAME);
   if (ss->init_file == NULL)
@@ -426,6 +426,8 @@ void snd_doit(snd_state *ss, int argc, char **argv)
                (define " S_mouse_leave_label_hook " (make-hook 3))\
                (define " S_mouse_enter_listener_hook " (make-hook 1))\
                (define " S_mouse_leave_listener_hook " (make-hook 1))\
+               (define " S_mouse_enter_text_hook " (make-hook 1))\
+               (define " S_mouse_leave_text_hook " (make-hook 1))\
                (define " S_property_changed_hook " (make-hook 1))");
 
   EVAL_STRING("(define " S_enved_active_env " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\

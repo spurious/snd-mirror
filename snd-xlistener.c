@@ -2,6 +2,10 @@
 
 /* TODO:   add minihistory support in listener
  * TODO    bubble args help if tab at end of name? (or click name?)
+ * TODO:   extend mouse-enter-text-hook to gtk:
+ *  gtk_signal_connect(GTK_OBJECT(r->nm), "enter_notify_event", GTK_SIGNAL_FUNC(label_enter_callback), (gpointer)r);
+ *  gtk_signal_connect(GTK_OBJECT(r->nm), "leave_notify_event", GTK_SIGNAL_FUNC(label_leave_callback), (gpointer)r);
+ *  static gint label_enter_callback(GtkWidget *w, GdkEventCrossing *ev)
  */
 
 static Widget listener_text = NULL;
@@ -692,6 +696,24 @@ static XtTranslations transTable4 = NULL;
 
 /* -------- text related widgets -------- */
 
+static SCM mouse_enter_text_hook, mouse_leave_text_hook;
+
+static void mouse_enter_text_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag)
+{
+  if (HOOKED(mouse_enter_text_hook))
+    g_c_run_progn_hook(mouse_enter_text_hook,
+		       SCM_LIST1(SND_WRAP(w)),
+		       S_mouse_enter_text_hook);
+}
+
+static void mouse_leave_text_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag)
+{
+  if (HOOKED(mouse_leave_text_hook))
+    g_c_run_progn_hook(mouse_leave_text_hook,
+		       SCM_LIST1(SND_WRAP(w)),
+		       S_mouse_leave_text_hook);
+}
+
 static void remember_event(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss = (snd_state *)context;
@@ -715,6 +737,10 @@ Widget sndCreateTextFieldWidget(snd_state *ss, char *name, Widget parent, Arg *a
   df = XtCreateManagedWidget(name, xmTextFieldWidgetClass, parent, args, n);
   XtAddCallback(df, XmNfocusCallback, textfield_focus_Callback, ss);
   XtAddCallback(df, XmNlosingFocusCallback, textfield_unfocus_Callback, ss);
+
+  XtAddEventHandler(df, EnterWindowMask, FALSE, mouse_enter_text_callback, NULL);
+  XtAddEventHandler(df, LeaveWindowMask, FALSE, mouse_leave_text_callback, NULL);
+
   if (activatable == ACTIVATABLE)
     {
       if (!transTable2) 
@@ -1190,17 +1216,27 @@ static SCM g_listener_selected_text(void)
 
 void g_init_gxlistener(SCM local_doc)
 {
-  #define H_mouse_enter_listener_hook S_mouse_enter_listener_hook " (snd chn) is called when the mouse \
+  #define H_mouse_enter_listener_hook S_mouse_enter_listener_hook " (listener) is called when the mouse \
 enters the lisp listener pane:\n\
   (add-hook! mouse-enter-listener-hook\n\
     (lambda (widget)\n\
       (focus-widget widget)))"
 
-  #define H_mouse_leave_listener_hook S_mouse_leave_listener_hook " (snd chn) is called when the mouse \
+  #define H_mouse_leave_listener_hook S_mouse_leave_listener_hook " (listener) is called when the mouse \
 leaves the lisp listener pane"
 
   mouse_enter_listener_hook = MAKE_HOOK(S_mouse_enter_listener_hook, 1, H_mouse_enter_listener_hook);    /* arg = listener_text widget */
   mouse_leave_listener_hook = MAKE_HOOK(S_mouse_leave_listener_hook, 1, H_mouse_leave_listener_hook);    /* arg = listener_text widget */
+
+  #define H_mouse_enter_text_hook S_mouse_enter_text_hook " (widget) is called when the mouse enters a text widget:\n\
+(add-hook! mouse-enter-text-hook\n\
+  (lambda (w)\n\
+    (focus-widget w)))"
+
+  #define H_mouse_leave_text_hook S_mouse_leave_text_hook " (widget) is called when the mouse leaves a text widget"
+
+  mouse_enter_text_hook = MAKE_HOOK(S_mouse_enter_text_hook, 1, H_mouse_enter_text_hook);    /* arg = text widget */
+  mouse_leave_text_hook = MAKE_HOOK(S_mouse_leave_text_hook, 1, H_mouse_leave_text_hook);    /* arg = text widget */
 
   DEFINE_PROC(S_listener_selection, g_listener_selected_text, 0, 0, 0, "returns current selection in listener or #f");
 }

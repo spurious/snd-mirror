@@ -532,13 +532,13 @@ static SCM g_listener_selected_text(void)
 
 void g_init_gxlistener(SCM local_doc)
 {
-  #define H_mouse_enter_listener_hook S_mouse_enter_listener_hook " (snd chn) is called when the mouse \
+  #define H_mouse_enter_listener_hook S_mouse_enter_listener_hook " (listener) is called when the mouse \
 enters the lisp listener pane:\n\
   (add-hook! mouse-enter-listener-hook\n\
     (lambda (widget)\n\
       (focus-widget widget)))"
 
-  #define H_mouse_leave_listener_hook S_mouse_leave_listener_hook " (snd chn) is called when the mouse \
+  #define H_mouse_leave_listener_hook S_mouse_leave_listener_hook " (listener) is called when the mouse \
 leaves the lisp listener pane"
 
   mouse_enter_listener_hook = MAKE_HOOK(S_mouse_enter_listener_hook, 1, H_mouse_enter_listener_hook);    /* arg = listener_text widget */

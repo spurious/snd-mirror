@@ -13,6 +13,7 @@
  */
 
 #define MAKE_HOOK(Name, Args, Help) snd_set_object_property(scm_create_hook(Name, Args), local_doc, TO_SCM_STRING(Help))
+#define CLEAR_HOOK(Arg) scm_reset_hook_x(Arg)
 #define SND_RETURN_NEWSMOB(Tag, Val) SCM_RETURN_NEWSMOB(Tag, (SCM)Val)
 #define SND_VALUE_OF(a) SCM_SMOB_DATA(a)
 /* remember to check the smob type agreement before calling SND_VALUE_OF! */
@@ -228,7 +229,8 @@ static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
 #define ARITY(Func) scm_i_procedure_arity(Func)
 #define KEYWORD_P(Obj) (SCM_KEYWORDP(Obj))
 #define MAKE_KEYWORD(Arg) scm_c_make_keyword(Arg)
-
+#define YES_WE_HAVE(Feature) scm_add_feature(Feature)
+#define DOCUMENTATION scm_string_to_symbol(TO_SCM_STRING("documentation"))
 
 #define SND_ASSERT_SND(Origin, Snd, Offset) \
   if (!((INTEGER_P(Snd)) || (FALSE_P(Snd)) || (NOT_BOUND_P(Snd)) || (LIST_P(Snd)))) \

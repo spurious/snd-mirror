@@ -758,7 +758,7 @@ void init_vct(void)
   scm_set_smob_apply(vct_tag, SCM_FNC vct_ref, 1, 0, 0);
 #endif
 
-  local_doc = scm_permanent_object(scm_string_to_symbol(TO_SCM_STRING("documentation")));
+  local_doc = scm_permanent_object(DOCUMENTATION);
 
   DEFINE_PROC(S_make_vct,      g_make_vct, 1, 0, 0,    H_make_vct);
   DEFINE_PROC(S_vct_copy,      copy_vct, 1, 0, 0,      H_vct_copy);

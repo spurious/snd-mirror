@@ -1339,7 +1339,7 @@ void play_syncd_mark(chan_info *cp, mark *m)
   if (sd) free_syncdata(sd);
 }
 
-static inline void move_to_next_sample(snd_fd *sf)
+static void move_to_next_sample(snd_fd *sf)
 {
   if (sf->view_buffered_data > sf->last)
     next_sound(sf);

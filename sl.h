@@ -31,12 +31,8 @@
 #define scm_set_smob_free(a, b)
 #define scm_set_smob_equalp(a, b) 
 #define scm_permanent_object(a) a
-#define scm_string_to_symbol(a) Qnil
 #define scm_throw(a, b) Fthrow(a, b)
 #define scm_set_object_property_x(a, b, c) Fput(a, b, c)
-#define scm_add_feature(a) Fprovide(TO_SCM_SYMBOL(a))
-#define scm_c_make_keyword(a) Fmake_keyword(a)
-#define scm_reset_hook_x(a)
 #define scm_apply(a, b, c) rep_apply(a, b)
 #define scm_internal_stack_catch(a, b, c, d, e) Qnil
 #define scm_vector_set_x(a, b, c) Faset(a, b, c)
@@ -192,5 +188,8 @@
 #define ARITY(Func) Qnil
 #define KEYWORD_P(Obj) ((Obj) && (rep_KEYWORDP(Obj)))
 #define MAKE_KEYWORD(Arg) Fmake_keyword(TO_SCM_SYMBOL(Arg))
+#define CLEAR_HOOK(a)
+#define YES_WE_HAVE(a) Fprovide(TO_SCM_SYMBOL(a))
+#define DOCUMENTATION
 
 #endif

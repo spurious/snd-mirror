@@ -1919,7 +1919,7 @@ reading edit version edit-position (defaulting to the current version)"
   else return(make_vct(len, fvals));
 }
 
-static inline MUS_SAMPLE_TYPE local_next_sample_unscaled(snd_fd *sf)
+static MUS_SAMPLE_TYPE local_next_sample_unscaled(snd_fd *sf)
 {
   if (sf->view_buffered_data > sf->last)
     return(next_sound(sf));
@@ -2989,7 +2989,7 @@ void g_initialize_gh(snd_state *ss)
   SCM local_doc;
   state = ss;
 
-  local_doc = scm_permanent_object(scm_string_to_symbol(TO_SCM_STRING("documentation")));
+  local_doc = scm_permanent_object(DOCUMENTATION);
 #if TIMING
   g_init_timing(local_doc);
 #endif
@@ -3309,7 +3309,7 @@ void g_initialize_gh(snd_state *ss)
 
 #if (!USE_NO_GUI)
   #if HAVE_HTML
-  scm_add_feature("snd-html");
+  YES_WE_HAVE("snd-html");
   define_procedure_with_setter(S_html_dir, SCM_FNC g_html_dir, H_html_dir,
 			       "set-" S_html_dir, SCM_FNC g_set_html_dir, local_doc, 0, 0, 1, 0);
   #endif
@@ -3511,19 +3511,19 @@ If more than one hook function, results are concatenated. If none, the current c
 #endif
 
 #if USE_MOTIF
-  scm_add_feature("snd-motif");
+  YES_WE_HAVE("snd-motif");
 #endif
 #if USE_GTK
-  scm_add_feature("snd-gtk");
+  YES_WE_HAVE("snd-gtk");
 #endif
 #if USE_NO_GUI
-  scm_add_feature("snd-nogui");
+  YES_WE_HAVE("snd-nogui");
 #endif
 #if HAVE_APPLICABLE_SMOB
-  scm_add_feature("snd-new-smob"); /* needed for backwards compatibility in the test suite */
+  YES_WE_HAVE("snd-new-smob"); /* needed for backwards compatibility in the test suite */
 #endif
 
-  scm_add_feature("snd");
+  YES_WE_HAVE("snd");
 }
 
 #ifndef __GNUC__

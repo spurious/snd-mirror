@@ -325,7 +325,8 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
 void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form)
 {
 #if (!USE_NO_GUI)
-  int i, j, regs, used_bytes = 0;
+  int i, j, regs;
+  int used_bytes = 0;
   GUI_TEXT_POSITION_TYPE pos;
   int vals[2];
   snd_info *sp;

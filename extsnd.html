@@ -1707,6 +1707,15 @@ the hook.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
+<!-- mouse-enter-text-hook -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="mouseentertexthook">mouse-enter-text-hook</a></em> (widget) </code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->called when the mouse enters a text widget (Motif version only currently).
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
 <!-- mouse-leave-graph-hook -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="mouseleavegraphhook">mouse-leave-graph-hook</a></em> (snd chn) </code></span>
@@ -1731,6 +1740,15 @@ the hook.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->called when the mouse leaves the lisp listener pane.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- mouse-leave-text-hook -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="mousleavetexthook">mouse-leave-text-hook</a></em> (widget) </code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->called when the mouse leaves a text widget (Motif version only currently).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -3640,7 +3658,6 @@ sets its value to val.
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- bomb -->
-<!-- -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="bomb">bomb</a></em> (<i>snd on</i>)</code></span>
 <!-- --></td></tr>
@@ -5980,7 +5997,7 @@ one, and are exposed in many functions described above as the <i>pos</i> argumen
 <!-- --><tr><td width=150></td><td>
 <!-- -->apply <i>func</i> (a function of no arguments), treating it as
 <!-- -->one edit (in all channels) in the edit history mechanism.
-<!-- --></td></tr>bomb
+<!-- --></td></tr>
 <!-- -->
 <!-- --><tr><td colspan=2 align=center>
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
@@ -5997,7 +6014,7 @@ one, and are exposed in many functions described above as the <i>pos</i> argumen
 <!-- --><span class=defbox><code><em class=def><a name="snddisplayedits">display-edits</a></em> (<i>snd chn</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->print out the current edit list contents.
+<!-- -->returns the current edit list contents (as a string).
 <!-- --></td></tr>
 <!-- --><tr><td></td><td></td></tr>
 <!-- -->

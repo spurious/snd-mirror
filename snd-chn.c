@@ -821,14 +821,14 @@ void set_axes(chan_info *cp, Float x0, Float x1, Float y0, Float y1)
 
 
 /* these are copies from snd-axis.c; didn't want to use macros here */
-static inline short local_grf_x(double val, axis_info *ap)
+static short local_grf_x(double val, axis_info *ap)
 {
   if (val >= ap->x1) return(ap->x_axis_x1);
   if (val <= ap->x0) return(ap->x_axis_x0);
   return((short)(ap->x_base + val * ap->x_scale));
 }
 
-static inline short local_grf_y(Float val, axis_info *ap)
+static short local_grf_y(Float val, axis_info *ap)
 {
   if (val >= ap->y1) return(ap->y_axis_y1);
   if (val <= ap->y0) return(ap->y_axis_y0);
@@ -1268,7 +1268,7 @@ static char ampstr[AMPSTR_SIZE];
 #define LOG_FACTOR 25.0
 /* determines how we view the log -- the higher the factor, the more we emphasize the lower octaves (not sure this is a good idea) */
 
-static inline Float cp_dB(chan_info *cp, Float py)
+static Float cp_dB(chan_info *cp, Float py)
 {
   return((py <= cp->lin_dB) ? cp->min_dB : (20.0 * (log10(py))));
 }

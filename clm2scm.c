@@ -4997,7 +4997,7 @@ it in conjunction with mixer to scale/envelope all the various ins and outs."
 
 void init_mus2scm_module(void)
 {
-  local_doc = scm_permanent_object(scm_string_to_symbol(TO_SCM_STRING("documentation")));
+  local_doc = scm_permanent_object(DOCUMENTATION);
 
   init_mus_module();
   init_mus_scm();
@@ -5031,7 +5031,7 @@ void init_mus2scm_module(void)
 
   DEFINE_PROC(S_mus_mix, g_mus_mix, 2, 5, 0, H_mus_mix);
 
-  scm_add_feature("clm");
+  YES_WE_HAVE("clm");
 }
 
 /*

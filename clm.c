@@ -1576,10 +1576,10 @@ Float mus_triangle_wave(mus_any *ptr, Float fm)
   gen->phase += (gen->freq + fm);
   while (gen->phase >= TWO_PI) gen->phase -= TWO_PI;
   while (gen->phase < 0.0) gen->phase += TWO_PI;
-  if (gen->phase < (M_PI/2.0)) 
+  if (gen->phase < (M_PI / 2.0)) 
     gen->current_value = gen->base * gen->phase;
   else
-    if (gen->phase < (M_PI*1.5)) 
+    if (gen->phase < (M_PI * 1.5)) 
       gen->current_value = gen->base * (M_PI - gen->phase);
     else gen->current_value = gen->base * (gen->phase - TWO_PI);
   return(result);
@@ -1589,7 +1589,7 @@ int mus_triangle_wave_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS
 
 static Float run_triangle_wave(mus_any *ptr, Float fm, Float unused) {return(mus_triangle_wave(ptr, fm));}
 static Float triangle_wave_scaler(void *ptr) {return(((sw *)ptr)->base * M_PI_2);}
-static Float set_triangle_wave_scaler(void *ptr, Float val) {((sw *)ptr)->base = (val * 2.0/M_PI); return(val);}
+static Float set_triangle_wave_scaler(void *ptr, Float val) {((sw *)ptr)->base = (val * 2.0 / M_PI); return(val);}
 
 static char *describe_triangle_wave(void *ptr)
 {
@@ -6021,13 +6021,7 @@ static Float mus_bessi0(Float x)
 }
 #endif
 
-#ifndef NEXT
-  #ifndef inline
-    #define inline
-  #endif
-#endif
-
-static inline Float sqr(Float x) {return(x*x);}
+static Float sqr(Float x) {return(x*x);}
 
 Float *mus_make_fft_window_with_window(int type, int size, Float beta, Float *window)
 {

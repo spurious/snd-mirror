@@ -582,7 +582,7 @@ static int snd_revscl_to_int(Float val)
   return(snd_round(pow(val, 0.333) * 60.0));
 }
 
-static inline Float cube (Float a) {return(a*a*a);}
+static Float cube (Float a) {return(a*a*a);}
 
 static int snd_revscl_changed(snd_info *sp, int val)
 {

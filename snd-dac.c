@@ -473,7 +473,7 @@ static mus_any *mus_make_fcomb (Float scaler, int size, Float a0, Float a1)
         static void init_fcomb(void)
         {
           SCM local_doc;
-          local_doc = scm_permanent_object(scm_string_to_symbol(TO_SCM_STRING("documentation")));
+          local_doc = scm_permanent_object(DOCUMENTATION);
           DEFINE_PROC(S_fcomb_p, g_fcomb_p, 1, 0, 0, H_fcomb_p);
           DEFINE_PROC(S_make_fcomb, g_make_fcomb, 4, 0, 0, H_make_fcomb);
           DEFINE_PROC(S_fcomb, g_fcomb, 2, 0, 0, H_fcomb);
@@ -1561,7 +1561,7 @@ static void clear_dac_buffers(dac_state *dacp)
 #endif  
 }
 
-static inline MUS_SAMPLE_TYPE local_next_sample_unscaled(snd_fd *sf)
+static MUS_SAMPLE_TYPE local_next_sample_unscaled(snd_fd *sf)
 {
   if (sf->view_buffered_data > sf->last)
     return(next_sound(sf));

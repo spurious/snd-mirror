@@ -119,14 +119,14 @@ axis_info *free_axis_info(axis_info *ap)
   return(NULL);
 }
 
-inline short grf_x(double val, axis_info *ap)
+short grf_x(double val, axis_info *ap)
 {
   if (val >= ap->x1) return(ap->x_axis_x1);
   if (val <= ap->x0) return(ap->x_axis_x0);
   return((short)(ap->x_base + val * ap->x_scale));
 }
 
-inline short grf_y(Float val, axis_info *ap)
+short grf_y(Float val, axis_info *ap)
 {
   if (val >= ap->y1) return(ap->y_axis_y1);
   if (val <= ap->y0) return(ap->y_axis_y0);

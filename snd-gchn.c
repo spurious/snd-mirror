@@ -40,8 +40,8 @@ static GtkObject *sx_adj(chan_info *cp)            {if ((cp) && (cp->cgx)) retur
 static GtkObject *zy_adj(chan_info *cp)            {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_adjs[W_zy_adj]);         else return(NULL);}
 static GtkObject *zx_adj(chan_info *cp)            {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_adjs[W_zx_adj]);         else return(NULL);}
 
-static inline Float sqr(Float a) {return(a*a);}
-static inline Float cube (Float a) {return(a*a*a);}
+static Float sqr(Float a) {return(a*a);}
+static Float cube (Float a) {return(a*a*a);}
 
 int channel_open_pane(chan_info *cp, void *ptr)
 {

@@ -266,6 +266,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+24-Apr:  added mouse-enter|leave-text-hook.\n\
 23-Apr:  snd 4.13.\n\
 19-Apr:  use GSL_IEEE_MODE if it exists.\n\
 17-Apr:  Haar transform.\n\
@@ -1091,9 +1092,11 @@ user-interface manipulations.\n\
   " S_mouse_enter_graph_hook " (snd chn)\n\
   " S_mouse_enter_label_hook " (type position name)\n\
   " S_mouse_enter_listener_hook " (widget)\n\
+  " S_mouse_enter_text_hook " (widget)\n\
   " S_mouse_leave_graph_hook " (snd chn)\n\
   " S_mouse_leave_label_hook " (type position name)\n\
   " S_mouse_leave_listener_hook " (widget)\n\
+  " S_mouse_leave_text_hook " (widget)\n\
   " S_mouse_press_hook " (snd chn button state x y)\n\
   " S_mouse_release_hook " (snd chn button state x y)\n\
   " S_multichannel_mix_hook " (ids)\n\

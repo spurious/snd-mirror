@@ -196,8 +196,8 @@ static chan_info *free_chan_info(chan_info *cp)
     }
   cp->lisp_graphing = 0;
   cp->selection_transform_size = 0;
-  scm_reset_hook_x(cp->edit_hook);
-  scm_reset_hook_x(cp->undo_hook);
+  CLEAR_HOOK(cp->edit_hook);
+  CLEAR_HOOK(cp->undo_hook);
   return(cp);  /* pointer is left for possible future re-use */
 }
 

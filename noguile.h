@@ -42,12 +42,8 @@
 #define scm_set_smob_free(a, b)
 #define scm_set_smob_equalp(a, b)
 #define scm_permanent_object(a) 0
-#define scm_string_to_symbol(a) 0
 #define scm_throw(a, b) exit(a)
 #define scm_set_object_property_x(a, b, c)
-#define scm_add_feature(a) 
-#define scm_c_make_keyword(a) 0
-#define scm_reset_hook_x(a)
 #define scm_apply(a, b, c) 0
 #define scm_internal_stack_catch(a, b, c, d, e) 0
 #define scm_vector_set_x(a, b, c)
@@ -96,6 +92,7 @@
 /* this is the sg.h replacement */
 
 #define MAKE_HOOK(Name, Args, Help) 0
+#define CLEAR_HOOK(Arg)
 #define SND_RETURN_NEWSMOB(Tag, Val) 0
 #define SND_VALUE_OF(a) 0
 #define SND_SET_VALUE_OF(a, b) 
@@ -201,5 +198,7 @@
 #define ARITY(Func) 0
 #define KEYWORD_P(Obj) 0
 #define MAKE_KEYWORD(Arg) 0
+#define YES_WE_HAVE(Feature)
+#define DOCUMENTATION 0
 
 #endif
