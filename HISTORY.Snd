@@ -1,5 +1,6 @@
 Snd change log
 
+  29-Jan:    removed X resources epsfile (use eps-file) and overwriteCheck (use ask-before-overwrite)
   26-Jan:    changed filter-control-env to filter-control-envelope, filter-waveform-color to filter-control-waveform-color,
                also filter-env-in-hz to filter-control-in-hz as a sound-local variable
   13-Jan:    Motif version of draw-string now adds in the font height to y0 (to mimic Gtk version).

@@ -571,7 +571,7 @@ static gboolean speed_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer 
 
 static void speed_changed_callback(GtkAdjustment *adj, gpointer data)
 {
-  Float scrollval, val;
+  Float val;
   snd_info *sp = (snd_info *)data;
   if (ignore_callback) return;
   val = speed_changed(exp((GTK_ADJUSTMENT(adj)->value - .45) / .15), speed_number_buffer, sp->speed_control_style, sp->speed_control_tones, 6);

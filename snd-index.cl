@@ -41,11 +41,13 @@
 	  (let* ((line (read-line sndf nil :EOF)))
 	    (setf happy (not (eq line :EOF)))
 	    (when happy
-	      (let ((pos (or (search "<a name=" line)
-			     (search "<A NAME=" line))))
+	      (let* ((simple-pos (or (search "<a name=" line) (search "<A NAME=" line)))
+		     (fancy-pos (or (search "<a class=def name=" line) (search "<A class=def NAME=" line)))
+		     (pos (or simple-pos fancy-pos))
+		     (pos-len (if simple-pos 9 19)))
 		(if pos
 		    (let* ((epos (search ">" (subseq line pos)))
-			   (name (subseq line (+ pos 9) (+ pos epos -1))))
+			   (name (subseq line (+ pos pos-len) (+ pos epos -1))))
 		      (if (find name snd-all-names :test #'string=)
 			  (print (format nil "multiple definitions of ~A?" name))
 			(progn
@@ -60,11 +62,13 @@
 	  (let* ((line (read-line sndf nil :EOF)))
 	    (setf happy (not (eq line :EOF)))
 	    (when happy
-	      (let ((pos (or (search "<a name=" line)
-			     (search "<A NAME=" line))))
+	      (let* ((simple-pos (or (search "<a name=" line) (search "<A NAME=" line)))
+		     (fancy-pos (or (search "<a class=def name=" line) (search "<A class=def NAME=" line)))
+		     (pos (or simple-pos fancy-pos))
+		     (pos-len (if simple-pos 9 19)))
 		(if pos
 		    (let* ((epos (search ">" (subseq line pos)))
-			   (name (subseq line (+ pos 9) (+ pos epos -1))))
+			   (name (subseq line (+ pos pos-len) (+ pos epos -1))))
 		      (if (find name ext-all-names :test #'string=)
 			  (print (format nil "multiple definitions of ~A?" name))
 			(if (find name snd-all-names :test #'string=)
@@ -80,11 +84,13 @@
 	  (let* ((line (read-line sndf nil :EOF)))
 	    (setf happy (not (eq line :EOF)))
 	    (when happy
-	      (let ((pos (or (search "<a name=" line)
-			     (search "<A NAME=" line))))
+	      (let* ((simple-pos (or (search "<a name=" line) (search "<A NAME=" line)))
+		     (fancy-pos (or (search "<a class=def name=" line) (search "<A class=def NAME=" line)))
+		     (pos (or simple-pos fancy-pos))
+		     (pos-len (if simple-pos 9 19)))
 		(if pos
 		    (let* ((epos (search ">" (subseq line pos)))
-			   (name (subseq line (+ pos 9) (+ pos epos -1))))
+			   (name (subseq line (+ pos pos-len) (+ pos epos -1))))
 		      (if (find name grf-all-names :test #'string=)
 			  (print (format nil "multiple definitions of ~A?" name))
 			(if (find name ext-all-names :test #'string=)
@@ -103,11 +109,13 @@
 	  (let* ((line (read-line sndf nil :EOF)))
 	    (setf happy (not (eq line :EOF)))
 	    (when happy
-	      (let ((pos (or (search "<a name=" line)
-			     (search "<A NAME=" line))))
+	      (let* ((simple-pos (or (search "<a name=" line) (search "<A NAME=" line)))
+		     (fancy-pos (or (search "<a class=def name=" line) (search "<A class=def NAME=" line)))
+		     (pos (or simple-pos fancy-pos))
+		     (pos-len (if simple-pos 9 19)))
 		(if pos
 		    (let* ((epos (search ">" (subseq line pos)))
-			   (name (subseq line (+ pos 9) (+ pos epos -1))))
+			   (name (subseq line (+ pos pos-len) (+ pos epos -1))))
 		      (if (find name scm-all-names :test #'string=)
 			  (print (format nil "multiple definitions of ~A?" name))
 			(if (find name ext-all-names :test #'string=)

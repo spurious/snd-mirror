@@ -74,8 +74,6 @@ a built-in default value, so you can ignore any that are already acceptable:</p>
 
 <table cellspacing=0 cellpadding=0>
 <tr><td width=200>initFile</td>               <td>"~/.snd"</td></tr>
-<tr><td><A NAME="epsresource">epsFile</a></td><td>"snd.eps"</td></tr>
-<tr><td>overwriteCheck</td>                   <td>0</td></tr>
 <tr><td>autoResize</td>                       <td>1</td></tr>
 <tr><td>horizontalPanes</td>                  <td>0</td></tr>
 <tr><td><br></td><td><br></td></tr>
@@ -118,7 +116,6 @@ using the -xrm switch:</p>
 <pre>
   snd -xrm '*Highlightcolor: Red' oboe.snd
   snd -xrm '*AxisNumbersFont: 6x10' oboe.snd
-  snd -xrm '*overwriteCheck: 1' oboe.snd
   snd -xrm '*useSchemes: all' -xrm '*scheme: Pacific'
   snd -xrm '*fontList: 9x15' oboe.snd
   snd -xrm '*listenerFont: 6x10' oboe.snd
@@ -172,7 +169,6 @@ causes Snd to expand or contract the main window's size to accommodate
 the sounds; many people find this distracting.  If <i>autoResize</i> is 0, the outer window size remains the
 same, and the sounds try to fit as best they can (to some extent the window manager controls this stuff).  See also
 the variable <a href="extsnd.html#autoresize">auto-resize</a>.
-If <i>overwriteCheck</i> is 1, Snd asks before overwriting existing files.
 The <A class=def NAME="horizontalpanes">horizontalPanes resource</a>
 is equivalent to the -h flag; if 1, sounds are layed out
 horizontally rather than vertically;  if 2, you get a notebook
@@ -227,8 +223,6 @@ blackcolor (recorder VU meter text), redcolor (buttons, VU clipping, etc),
 greencolor (a few buttons),
 yellowcolor (a few envelope editor buttons), lightbluecolor (the recorder), and lighterbluecolor (the fft option panel).
 </p>
-
-        <!-- I(print file):O(epsFile resource)(epsresource) -->
 
 <br>
 <!-- INDEX sndswitches:Invocation flags -->

@@ -513,7 +513,6 @@ typedef enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_U
 #define DEFAULT_VERBOSE_CURSOR false
 
 #define selection_creates_region(ss) ss->Selection_Creates_Region
-
 #define set_selection_creates_region(a) ss->Selection_Creates_Region = a
 #define DEFAULT_SELECTION_CREATES_REGION true
 

@@ -2348,7 +2348,7 @@ int prepare_mix_id_waveform(int mix_id, axis_info *ap, bool *two_sided)
   ap->y0 = -1.0;
   ap->y1 = 1.0;
   init_axis_scales(ap);
-  pts = prepare_mix_waveform(md, cs, ap, scl * .5, scl * .5, cur_srate, true, two_sided);
+  pts = prepare_mix_waveform(md, cs, ap, scl * .5, (int)(scl * .5), cur_srate, true, two_sided);
   ap->x0 = x0;
   ap->x1 = x1;
   ap->y0 = y0;
@@ -6319,7 +6319,7 @@ void display_track_waveform(int track_id, axis_info *ap)
 	  int pts;
 	  bool two_sided;
 	  md = md_from_id(trk->lst[i]);
-	  pts = prepare_mix_waveform(md, md->active_mix_state, ap, scl * .5, scl * .5, cur_srate, true, &two_sided);
+	  pts = prepare_mix_waveform(md, md->active_mix_state, ap, scl * .5, (int)(scl * .5), cur_srate, true, &two_sided);
 	  if (pts > 0)
 	    show_track_background_wave(pts, two_sided);
 	}

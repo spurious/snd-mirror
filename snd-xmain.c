@@ -117,9 +117,7 @@ typedef struct {
   char *axis_label_font;
   char *axis_numbers_font;
   char *init_file_name;
-  char *eps_file_name;
   int spectrogram_color;
-  int overwrite_check;
   int auto_resize;
   int horizontal_panes;
   int zoom_slider_width;
@@ -171,9 +169,7 @@ static XtResource resources[] = {
   {"axisLabelFont", "AxisLabelFont", XmRString, sizeof(char *), XtOffset(sndres *, axis_label_font), XmRString, (XtPointer)DEFAULT_AXIS_LABEL_FONT},
   {"axisNumbersFont", "AxisNumbersFont", XmRString, sizeof(char *), XtOffset(sndres *, axis_numbers_font), XmRString, (XtPointer)DEFAULT_AXIS_NUMBERS_FONT},
   {"initFile", "InitFile", XmRString, sizeof(char *), XtOffset(sndres *, init_file_name), XmRString, (XtPointer)INIT_FILE_NAME},
-  {"epsFile", "EpsFile", XmRString, sizeof(char *), XtOffset(sndres *, eps_file_name), XmRString, (XtPointer)DEFAULT_EPS_FILE},
   {"spectrogramColor", "SpectrogramColor", XmRInt, sizeof(int), XtOffset(sndres *, spectrogram_color), XmRImmediate, (XtPointer)DEFAULT_COLOR_MAP},
-  {"overwriteCheck", "OverwriteCheck", XmRInt, sizeof(int), XtOffset(sndres *, overwrite_check), XmRImmediate, (XtPointer)0},
   {"autoResize", "AutoResize", XmRInt, sizeof(int), XtOffset(sndres *, auto_resize), XmRImmediate, (XtPointer)AUTO_RESIZE_DEFAULT},
   {"horizontalPanes", "HorizontalPanes", XmRInt, sizeof(int), XtOffset(sndres *, horizontal_panes), XmRImmediate, (XtPointer)SOUNDS_VERTICAL},
   {"zoomSliderWidth", "ZoomSliderWidth", XmRInt, sizeof(int), XtOffset(sndres *, zoom_slider_width), XmRImmediate, (XtPointer)ZOOM_SLIDER_WIDTH},
@@ -799,10 +795,7 @@ void snd_doit(int argc, char **argv)
 #if DEBUGGING && HAVE_RUBY
   ss->init_file = copy_string("~/.sndrb"); /* save me some time... */
 #endif
-  if (eps_file(ss)) FREE(eps_file(ss));
-  set_eps_file(copy_string(snd_rs.eps_file_name));
   set_color_map(snd_rs.spectrogram_color);
-  set_ask_before_overwrite(snd_rs.overwrite_check);
 
 #ifndef SND_AS_WIDGET
   n = 0;

@@ -44,9 +44,7 @@
 *axisLabelFont:        -*-times-medium-r-*-*-14-*-*-*-*-*-iso8859-1
 *axisNumbersFont:      -*-courier-medium-r-*-*-14-*-*-*-*-*-iso8859-1
 *initFile:             ~/.snd
-*epsFile:              snd.eps
 *spectrogramColor:     -1
-*overwriteCheck:       0
 *autoResize:           1
 *horizontalPanes:      0
 *zoomSliderWidth:      10

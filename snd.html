@@ -447,7 +447,7 @@ falling asleep, but I don't know how to fix it -- the grumpy programmer in me is
 </center>
         <!-- I(open file):M(File: Open)(openfile) --><!-- I(close file):M(File: Close)(closefile) -->
         <!-- I(save file):M(File: Save)(savefile) --><!-- I(save file):O(Popup: Save) -->
-        <!-- I(save file as):M(File: Save as)(savefileas) --><!-- I(save file as):O(see also overwriteCheck)(overwrite) -->
+        <!-- I(save file as):M(File: Save as)(savefileas) -->
         <!-- I(revert file):M(File: Revert)(revertfile) --><!-- I(open file read-only):M(File: View)(viewfile) -->
         <!-- I(create new file):M(File: New)(newfile) --><!-- I(create new file):A(newfile) -->
         <!-- I(print file):M(File: Print)(printfile) --><!-- I(exit Snd):M(File: Exit)(exitfile) -->
@@ -516,7 +516,7 @@ next to the file name.  <A NAME="updatefile"></a>Similarly, if Snd notices that
 the file on the disk no longer matches the original,
 a bomb appears.  This can happen if some other program
 writes a sound while you are editing an earlier version
-of it; see also <a href="#overwrite">ask-before-overwrite</a> and <a href="extsnd.html#corruptiontime">auto-update-interval</a>.
+of it.
 If the variable <a href="extsnd.html#autoupdate">auto-update</a> is #t (the default is #f), Snd
 automatically updates any such file. 
 </p>
@@ -644,9 +644,7 @@ overwritten.  If you try to overwrite a file, and
 that file has active edits in a different Snd window, you'll be asked
 for confirmation.
 If you want Snd to ask before overwriting
-a file in any case, set the resource <A class=def NAME="overwrite">overwriteCheck</a> to 1,
-or include the expression (set! (<a href="extsnd.html#askbeforeoverwrite">ask-before-overwrite</a>) #t) in your Snd initialization file.
-        <!-- I(overwrite check):L(ask-before-overwrite)(overwrite) -->
+a file, set the variable <a href="extsnd.html#askbeforeoverwrite">ask-before-overwrite</a> to #t.
 If you edit a write-protected file and try to save the edits, Snd will
 try to save the edits in a temporary file and will post a warning
 that the current file can not be overwritten.
@@ -665,8 +663,7 @@ edit.
 dialog.  You can send the currently active graph directly to
 a printer, or save it as an encapsulated Postscript
 file.  The default name
-of this file is "snd.eps"; the resource that overrides
-this default is named 'epsFile'.
+of this file is "snd.eps"; it can be set via <a href="extsnd.html#epsfile">eps-file</a>.
 </p>
 
 <p>To mix files, see <a href="#mixingfiles">"Mix Files"</a>.
@@ -679,8 +676,8 @@ flushed (but see the function check-for-unsaved-edits in <a href="sndscm.html#ex
         <!-- I(close file):K(C-x k)(cxk) --><!-- I(close file):A(closefile) --><!-- I(save file):A(savefile) --><!-- I(exit Snd):A(exitfile) -->
         <!-- I(save file):K(C-x C-s)(cxcs) --><!-- I(save selection):K(C-x w)(cxw) --><!-- I(save channel):K(C-x C-w)(cxcw) -->
 	<!-- I(extract channel):K(C-x C-w)(cxcw) --><!-- I(extract channel):A(cxcw) -->
-        <!-- I(save channel):A(cxcw) --><!-- I(overwrite check):O(overwriteCheck)(overwrite) -->
-        <!-- I(overwrite check):A(overwrite) --><!-- I(revert file):A(revertfile) --><!-- I(print file):A(printfile) -->
+        <!-- I(save channel):A(cxcw) -->
+        <!-- I(revert file):A(revertfile) --><!-- I(print file):A(printfile) -->
 <br>
 
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="viewing">The Display</a></h3></td></tr></table>
@@ -2240,7 +2237,6 @@ inverse of that is a good first guess for
 contrast-control-amp. Contrast is on only if the contrast
 button is set.
         <!-- I(brighten file):O(see 'contrast' control)(contrast) --><!-- I(brighten file):A(contrast) -->
-	<!-- I(brighten file):L(brighten-slightly)(brightenslightly) -->	
 </p>
 
 <p>The <A NAME="filtercontrol"></a>filter is an arbitrary (even) order FIR filter
@@ -2258,7 +2254,7 @@ returning in this case a list of breakpoints; you can
 define a function that returns the list you want, then call that function
 in the text field.
 The filter is on only if the filter button is set.
-        <!-- I(filter):O(see filter controls)(filter) --><!-- I(filter):A(filter) -->
+        <!-- I(filter):O(see filter controls)(filtercontrol) --><!-- I(filter):A(filtercontrol) -->
 </p>
 <p>There are many variables that reflect or control
 the panel's various sliders; each also has a default
@@ -2367,7 +2363,7 @@ panel are:</p>
   <tr><td><a href="#editcut">insert selection</a></td><td><small>Edit: <a href="#editcut">Paste</a></small></td><td><a href="#cxi"><small>Cy or Cx i</small></a></td><td><a href="extsnd.html#sndinsertselection"><small>insert-selection</small></a></td><td><a href="extsnd.html#sndinsertregion"><small>insert-region</small></a></td></tr>
   <tr><td><a href="#co">insert zeros</a></td><td><small>Effects: <a href="sndscm.html#effectsdoc">Add Silence</a></small></td><td><a href="#cz"><small>Co, Cz</small></a></td><td><a href="extsnd.html#sndinsertsilence"><small>insert-silence</small></a></td><td><a href="extsnd.html#padchannel"><small>pad-channel</small></a></td></tr>
   <tr><td><a href="#kgc">interrupt Snd</a></td><td><br></td><td><a href="#kgc"><small>Cg</small></a></td><td><a href="extsnd.html#sndstop"><small>stop-playing</small></a></td><td><a href="extsnd.html#sndoops"><small>c-g!</small></a></td></tr>
-  <tr><td><a href="#kbdmacros">keyboard macros</a></td><td><br></td><td><a href="#kce"><small>C(, Cx e</small></a><!-- ) --></td><td><a href="extsnd.html#sndkey"><small>key</small></a></td><td><br></td></tr>
+  <tr><td><a href="#kbdmacros">keyboard macros</a></td><td><br></td><td><a href="#kce"><small>C(, Cx e</small></a></td><td><a href="extsnd.html#sndkey"><small>key</small></a></td><td><br></td></tr>
   <tr><td><a href="extsnd.html#sndmaxamp">max amp</a></td><td><br></td><td><br></td><td><a href="extsnd.html#sndmaxamp"><small>maxamp</small></a></td><td><br></td></tr>
   <tr><td><a href="#mixingfiles">mix file</a></td><td><small>File: <a href="#mixingfiles">Mix</a></small></td><td><a href="#cxcq"><small>Cx Cq</small></a></td><td><a href="extsnd.html#sndmix"><small>mix</small></a></td><td><small>see mix.scm for tracks</small></td></tr>
   <tr><td><a href="#editcut">mix selection</a></td><td><small>Edit: <a href="#editcut">Mix</a></small></td><td><a href="#cxq"><small>Cx q</small></a></td><td><a href="extsnd.html#sndmixselection"><small>mix-selection</small></a></td><td><a href="extsnd.html#sndmixregion"><small>mix-region</small></a></td></tr>
@@ -2386,7 +2382,7 @@ panel are:</p>
   <tr><td><a href="#viewfile">open file read-only</a></td><td><small>File: <a href="#viewfile">View</a></small></td><td><br></td><td><a href="extsnd.html#sndview"><small>view-sound</small></a></td><td><br></td></tr>
   <tr><td><a href="#colorbrowser">orientation</a></td><td><small>View: <a href="#orientationbrowser">Orientation</a></small></td><td><br></td><td><a href="extsnd.html#sndorientationdialog"><small>orientation-dialog</small></a></td><td><a href="extsnd.html#spectroxangle"><small>spectro-x-angle etc</small></a></td></tr>
   <tr><td><a href="extsnd.html#graphdata">overlay sounds</a></td><td><br></td><td><br></td><td><a href="extsnd.html#graphdata"><small>graph-data</small></a></td><td><br></td></tr>
-  <tr><td><a href="#overwrite">overwrite check</a></td><td><br></td><td><br></td><td><a href="#overwrite"><small>ask-before-overwrite</small></a></td><td><a href="#overwrite"><small>overwriteCheck</small></a></td></tr>
+  <tr><td><a href="#overwrite">overwrite check</a></td><td><br></td><td><br></td><td><a href="#overwrite"><small>ask-before-overwrite</small></a></td><td></td></tr>
   <tr><td><a href="#cq">play channel</a></td><td><br></td><td><a href="#cq"><small>Cq, Ct</small></a></td><td><a href="extsnd.html#playchannel"><small>play-channel</small></a></td><td><a href="extsnd.html#sndplay"><small>play</small></a></td></tr>
   <tr><td><a href="#play">play file</a></td><td><small>Popup: Play</small></td><td><br></td><td><a href="extsnd.html#sndplay"><small>play, stop</small></a></td><td><small>File or main window: 'play'</small></td></tr>
   <tr><td><a href="#cxp">play selection</a></td><td><small>Edit: <a href="#cxp">Play</a></small></td><td><a href="#cxp"><small>Cx p</small></a></td><td><a href="extsnd.html#sndplayselection"><small>play-selection</small></a></td><td><a href="extsnd.html#sndplayregion"><small>play-region</small></a></td></tr>
@@ -2401,7 +2397,7 @@ panel are:</p>
   <tr><td><a href="#cxcw">save channel</a></td><td><br></td><td><a href="#cxcw"><small>Cx Cw</small></a></td><td><a href="extsnd.html#sndsaveas"><small>save-sound-as</small></a></td><td><br></td></tr>
   <tr><td><a href="#savcontrols">save control panel</a></td><td><br></td><td><br></td><td><a href="extsnd.html#sndcontrolsave"><small>save-controls</small></a></td><td><a href="#savcontrols"><small>'Remember' button</small></a></td></tr>
   <tr><td><a href="#savefile">save file</a></td><td><small>File: <a href="#savefile">Save</a></small></td><td><a href="#cxcs"><small>Cx Cs</small></a></td><td><a href="extsnd.html#sndsave"><small>save-sound</small></a></td><td><small>Popup: Save</small></td></tr>
-  <tr><td><a href="#changeformat">save file as</a></td><td><small>File: <a href="#savefileas">Save as</a></small></td><td><br></td><td><a href="extsnd.html#sndsaveas"><small>save-sound-as</small></a></td><td><a href="#overwrite"><small>see also overwriteCheck</small></a></td></tr>
+  <tr><td><a href="#changeformat">save file as</a></td><td><small>File: <a href="#savefileas">Save as</a></small></td><td><br></td><td><a href="extsnd.html#sndsaveas"><small>save-sound-as</small></a></td><td></td></tr>
   <tr><td><a href="#kbdmacros">save macros</a></td><td><br></td><td><br></td><td><a href="extsnd.html#sndsavemacros"><small>save-macros</small></a></td><td><br></td></tr>
   <tr><td><a href="#savemarks">save marks</a></td><td><br></td><td><br></td><td><a href="extsnd.html#sndsavemarks"><small>save-marks</small></a></td><td><br></td></tr>
   <tr><td><a href="#saveoptions">save options</a></td><td><small>Options: <a href="#saveoptions">Save options</a></small></td><td><br></td><td><a href="extsnd.html#sndsaveoptions"><small>save-options</small></a></td><td><br></td></tr>
