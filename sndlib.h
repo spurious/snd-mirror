@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 17
-#define SNDLIB_REVISION 2
-#define SNDLIB_DATE "11-Dec-02"
+#define SNDLIB_REVISION 3
+#define SNDLIB_DATE "18-Dec-02"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 
@@ -461,6 +461,10 @@ int mus_audio_open_input          PROTO((int dev, int srate, int chans, int form
 int mus_audio_write               PROTO((int line, char *buf, int bytes));
 int mus_audio_close               PROTO((int line));
 int mus_audio_read                PROTO((int line, char *buf, int bytes));
+
+int mus_audio_write_buffers       PROTO((int line, int frames, int chans, mus_sample_t **bufs, int output_format, int clipped));
+int mus_audio_read_buffers        PROTO((int line, int frames, int chans, mus_sample_t **bufs, int input_format));
+
 int mus_audio_mixer_read          PROTO((int dev, int field, int chan, float *val));
 int mus_audio_mixer_write         PROTO((int dev, int field, int chan, float *val));
 void mus_audio_save               PROTO((void));

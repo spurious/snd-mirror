@@ -6095,7 +6095,7 @@ This can be
 <!-- -->
 <!-- swap-channels -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="swapchannels">swap-channels</a></em> (<i>snd1 chn1 snd2 chn2 beg dur</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="swapchannels">swap-channels</a></em> (<i>snd1 chn1 snd2 chn2 beg dur edpos0 edpos1</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->Swap the indicated channels, between beg and beg+dur.
@@ -6442,6 +6442,18 @@ This can be
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->value of x axis zoom slider.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- xramp-channel -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="xrampchannel">xramp-channel</a></em> (rmp0 rmp1 base <i>beg dur snd chn edpos</i>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- --><b>xramp-channel</b> is a slight extension of scale-channel. It scales samples in the given sound/channel
+<!-- -->between beg and beg + dur by an exponential ramp going from rmp0 to rmp1 with the connecting segment curvature
+<!-- -->set by base. (<b>xramp-channel</b> underlies the virtual exponential envelope operations).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->

@@ -7028,7 +7028,7 @@
 	(print-and-check gen 
 			 "env"
 			 "env: linear, pass: 0 (dur: 11), index: 0, data: [0.000 0.000 1.000 1.000 2.000 0.000]"
-			 "seg rate: 0.100000, current_value: 0.000000, base: 0.000000, offset: 0.000000, scaler: 0.500000, power: 0.000000, init_y: 0.000000, init_power: 0.000000, b1: 0.000000, pass: 0, end: 10, style: 0, index: 0, size: 3, original_data[6]: [0.000 0.000 1.000 1.000 2.000 0.000], rates[3]: [0.100 -0.100 0.000], passes[3]: [5 10 100000000]")
+			 "seg rate: 0.100000, current_value: 0.000000, base: 1.000000, offset: 0.000000, scaler: 0.500000, power: 0.000000, init_y: 0.000000, init_power: 0.000000, pass: 0, end: 10, style: 0, index: 0, size: 3, original_data[6]: [0.000 0.000 1.000 1.000 2.000 0.000], rates[3]: [0.100 -0.100 0.000], passes[3]: [5 10 100000000]")
 	(IF (not (env? gen)) (snd-display ";~A not env?" gen))
 	(IF (fneq (mus-scaler gen) 0.5) (snd-display ";env scaler ~F?" (mus-scaler gen)))
 	(IF (fneq (mus-increment gen) 1.0) (snd-display ";env base (1.0): ~A?" (mus-increment gen)))
@@ -7106,6 +7106,30 @@
 	  (IF (fneq (env-interp 0.0 e) 0.0) (snd-display ";env-interp 0011 2 at 0: ~A" (env-interp 0.0 e)))
 	  (IF (fneq (env-interp 0.45 e) 0.6441) (snd-display ";env-interp 0011 2 at .45: ~A" (env-interp 0.45 e))))
 
+	(let ((e1 (make-env '(0 0 1 1) :base 32.0 :end 10))
+	      (v (vct 0.000 0.013 0.032 0.059 0.097 0.150 0.226 0.333 0.484 0.698 1.00)))
+	  (do ((i 0 (1+ i)))
+	      ((> i 10))
+	    (let ((val (env e1)))
+	      (if (fneq val (vct-ref v i))
+		  (snd-display "exp env direct (32.0): ~A ~A" val (vct-ref v i))))))
+	  
+	(let ((e1 (make-env '(0 1 1 2) :base 32.0 :end 10))
+	      (v (vct 1.000 1.013 1.032 1.059 1.097 1.150 1.226 1.333 1.484 1.698 2.00)))
+	  (do ((i 0 (1+ i)))
+	      ((> i 10))
+	    (let ((val (env e1)))
+	      (if (fneq val (vct-ref v i))
+		  (snd-display "exp env direct (32.0) offset: ~A ~A" val (vct-ref v i))))))
+	  
+	(let ((e1 (make-env '(0 0 1 1) :base 0.032 :end 10))
+	      (v (vct 0.000 0.301 0.514 0.665 0.772 0.848 0.902 0.940 0.967 0.986 1.0)))
+	  (do ((i 0 (1+ i)))
+	      ((> i 10))
+	    (let ((val (env e1)))
+	      (if (fneq val (vct-ref v i))
+		  (snd-display "exp env direct (.032): ~A ~A" val (vct-ref v i))))))
+	  
 	(let ((e1 (make-env '(0 0 1 1) :base .03125 :end 10))
 	      (e2 (make-env '(0 0 1 1 2 0) :base 32.0 :end 10))
 	      (e3 (make-env '(0 0 .1 1 2 0) :base 1.1 :end 100)))
@@ -13691,7 +13715,7 @@
   
 
 (define (rampx-channel r0 r1)
-  (env-sound (list 0 r0 1 r1) 0 (frames) 3.0))
+  (xramp-channel r0 r1 3.0 0 (frames)))
 
 (define (check-both-chans ind name f0 f1)
   (let ((c0 (scan-channel f0 0 (frames) ind 0))

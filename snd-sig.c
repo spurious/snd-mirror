@@ -704,7 +704,7 @@ void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int
   free_sync_info(si);
 }
 
-static void swap_channels(chan_info *cp0, chan_info *cp1, off_t beg, off_t dur)
+static void swap_channels(chan_info *cp0, chan_info *cp1, off_t beg, off_t dur, int pos0, int pos1)
 {
   snd_state *ss;
   snd_fd *c0, *c1;
@@ -754,8 +754,8 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, off_t beg, off_t dur)
   data1[0] = (mus_sample_t *)CALLOC(MAX_BUFFER_SIZE, sizeof(mus_sample_t)); 
   idata0 = data0[0];
   idata1 = data1[0];
-  c0 = init_sample_read(beg, cp0, READ_FORWARD);
-  c1 = init_sample_read(beg, cp1, READ_FORWARD);
+  c0 = init_sample_read_any(beg, cp0, READ_FORWARD, pos0);
+  c1 = init_sample_read_any(beg, cp1, READ_FORWARD, pos1);
   if (temp_file)
     {
       j = 0;
@@ -1769,6 +1769,8 @@ static void reverse_sound(chan_info *ncp, int over_selection, XEN edpos, int arg
     }
   free_sync_state(sc);
 }
+
+/* TODO: apply_env: tie in xramp-channel */
 
 void amp_env_env_selection_by(chan_info *cp, mus_any *e, off_t beg, off_t num, int pos);
 
@@ -3192,12 +3194,12 @@ static XEN g_pad_channel(XEN beg, XEN num, XEN snd, XEN chn, XEN edpos)
   return(beg);
 }
 
-static XEN g_swap_channels(XEN snd0, XEN chn0, XEN snd1, XEN chn1, XEN beg, XEN dur)
+static XEN g_swap_channels(XEN snd0, XEN chn0, XEN snd1, XEN chn1, XEN beg, XEN dur, XEN edpos0, XEN edpos1)
 {
-  #define H_swap_channels "(" S_swap_channels " &optional snd0 chn0 snd1 chn1 beg dur) swaps the indicated channels"
+  #define H_swap_channels "(" S_swap_channels " &optional snd0 chn0 snd1 chn1 beg dur edpos0 edpos1) swaps the indicated channels"
   chan_info *cp0 = NULL, *cp1 = NULL;
   off_t dur0 = 0, dur1 = 0, beg0 = 0, num;
-  int old_squelch0, old_squelch1;
+  int old_squelch0, old_squelch1, pos0, pos1;
   snd_info *sp = NULL;
   env_info *e0, *e1;
   ASSERT_CHANNEL(S_swap_channels, snd0, chn0, 1);
@@ -3236,14 +3238,15 @@ static XEN g_swap_channels(XEN snd0, XEN chn0, XEN snd1, XEN chn1, XEN beg, XEN 
 	    num = dur0; 
 	  else num = dur1; /* was min here 13-Dec-02 */
 	}
-      /* TODO: edpos for swap-channels? */
+      pos0 = to_c_edit_position(cp0, edpos0, S_swap_channels, 7);
+      pos1 = to_c_edit_position(cp1, edpos1, S_swap_channels, 8);
       if ((beg0 != 0) ||
 	  ((num != dur0) && (num != dur1))) /* if just a section being swapped, use readers */
-	swap_channels(cp0, cp1, beg0, num);
+	swap_channels(cp0, cp1, beg0, num, pos0, pos1);
       else
 	{
-	  if ((cp0->edit_ctr == 0) && 
-	      (cp1->edit_ctr == 0))         /* no edits, so we can safely swap underlying file ref */
+	  if ((pos0 == 0) &&
+	      (pos1 == 0))
 	    {
 	      /* common special case -- just setup a new ed-list entry with the channels/sounds swapped */
 	      old_squelch0 = cp0->squelch_update;
@@ -3268,11 +3271,11 @@ static XEN g_swap_channels(XEN snd0, XEN chn0, XEN snd1, XEN chn1, XEN beg, XEN 
 	  else
 	    {
 	      /* look for simple cases where copying the current edit tree entry is not too hard */
-	      if ((ptree_or_sound_fragments_in_use(cp0, cp0->edit_ctr)) ||
-		  (ptree_or_sound_fragments_in_use(cp1, cp1->edit_ctr)) ||
+	      if ((ptree_or_sound_fragments_in_use(cp0, pos0)) ||
+		  (ptree_or_sound_fragments_in_use(cp1, pos1)) ||
 		  (num < FILE_BUFFER_SIZE))
-		swap_channels(cp0, cp1, beg0, num);
-	      else copy_then_swap_channels(cp0, cp1, beg0, num); /* snd-edits.c */
+		swap_channels(cp0, cp1, beg0, num, pos0, pos1);
+	      else copy_then_swap_channels(cp0, cp1, beg0, num, pos0, pos1); /* snd-edits.c */
 	    }
 	}
     }
@@ -3531,6 +3534,69 @@ between beg and beg + num by a ramp going from rmp0 to rmp1."
 	       samp, 
 	       dur_to_samples(num, samp, cp, pos, 4, S_ramp_channel), 
 	       pos, FALSE);
+  return(rmp0);
+}			  
+
+static XEN g_xramp_channel(XEN rmp0, XEN rmp1, XEN base, XEN beg, XEN num, XEN snd, XEN chn, XEN edpos)
+{
+  #define H_xramp_channel "(" S_xramp_channel " rmp0 rmp1 base beg dur snd chn edpos) scales samples in the given sound/channel \
+between beg and beg + num by an exponential ramp going from rmp0 to rmp1 with curvature set by base."
+
+  chan_info *cp;
+  off_t samp, samps;
+  int pos;
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(rmp0), rmp0, XEN_ARG_1, S_xramp_channel, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(rmp1), rmp1, XEN_ARG_2, S_xramp_channel, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(base), base, XEN_ARG_3, S_xramp_channel, "a number");
+  ASSERT_SAMPLE_TYPE(S_xramp_channel, beg, XEN_ARG_4);
+  ASSERT_SAMPLE_TYPE(S_xramp_channel, num, XEN_ARG_5);
+  ASSERT_SOUND(S_xramp_channel, snd, 6);
+  samp = beg_to_sample(beg, S_xramp_channel);
+  cp = get_cp(snd, chn, S_xramp_channel);
+  pos = to_c_edit_position(cp, edpos, S_xramp_channel, 8);
+  samps = dur_to_samples(num, samp, cp, pos, 4, S_xramp_channel);
+  if (ramp_or_ptree_fragments_in_use(cp, samp, samps, pos))
+    {
+      snd_info *sp;
+      int old_sync;
+      XEN val;
+      sp = cp->sound;
+      old_sync = sp->sync;
+      sp->sync = 0;
+      val = g_env_1(XEN_LIST_4(C_TO_XEN_DOUBLE(0.0), 
+			       rmp0,
+			       C_TO_XEN_DOUBLE(1.0), 
+			       rmp1),
+		    samp, samps, base, cp, edpos, S_ramp_channel, FALSE);
+      sp->sync = old_sync;
+      return(val);
+    }
+  else
+    {
+      Float *data;
+      double *rates;
+      off_t *passes;
+      mus_any *e;
+      Float r0, r1;
+      data = (Float *)CALLOC(4, sizeof(Float));
+      data[0] = 0.0;
+      data[1] = XEN_TO_C_DOUBLE(rmp0);
+      data[2] = 1.0;
+      data[3] = XEN_TO_C_DOUBLE(rmp1);
+      e = mus_make_env(data, 2, 1.0, 0.0, XEN_TO_C_DOUBLE(base), 0.0, samp, samp + samps - 1, NULL);
+      /* fprintf(stderr,"e: %s\n", mus_inspect(e)); */
+      r0 = mus_env_initial_power(e);
+      rates = mus_env_rates(e);
+      passes = mus_env_passes(e);
+      r1 = r0 + passes[0] * rates[0];
+      xramp_channel(cp, 
+		    r0, r1, mus_scaler(e), mus_env_offset(e),
+		    samp, 
+		    samps,
+		    pos, FALSE);
+      FREE(data);
+      free(e);
+    }
   return(rmp0);
 }			  
 
@@ -4030,7 +4096,7 @@ XEN_NARGIFY_0(g_smooth_selection_w, g_smooth_selection)
 XEN_ARGIFY_3(g_reverse_sound_w, g_reverse_sound)
 XEN_ARGIFY_5(g_reverse_channel_w, g_reverse_channel)
 XEN_NARGIFY_0(g_reverse_selection_w, g_reverse_selection)
-XEN_ARGIFY_6(g_swap_channels_w, g_swap_channels)
+XEN_ARGIFY_8(g_swap_channels_w, g_swap_channels)
 XEN_ARGIFY_4(g_insert_silence_w, g_insert_silence)
 XEN_ARGIFY_1(g_scale_selection_to_w, g_scale_selection_to)
 XEN_ARGIFY_1(g_scale_selection_by_w, g_scale_selection_by)
@@ -4040,6 +4106,7 @@ XEN_ARGIFY_2(g_env_selection_w, g_env_selection)
 XEN_ARGIFY_7(g_env_sound_w, g_env_sound)
 XEN_ARGIFY_6(g_env_channel_w, g_env_channel)
 XEN_ARGIFY_7(g_ramp_channel_w, g_ramp_channel)
+XEN_ARGIFY_8(g_xramp_channel_w, g_xramp_channel)
 XEN_ARGIFY_3(g_fft_w, g_fft)
 XEN_ARGIFY_5(g_snd_spectrum_w, g_snd_spectrum)
 XEN_ARGIFY_2(g_convolve_w, g_convolve)
@@ -4077,6 +4144,7 @@ XEN_ARGIFY_1(g_set_sinc_width_w, g_set_sinc_width)
 #define g_env_sound_w g_env_sound
 #define g_env_channel_w g_env_channel
 #define g_ramp_channel_w g_ramp_channel
+#define g_xramp_channel_w g_xramp_channel
 #define g_fft_w g_fft
 #define g_snd_spectrum_w g_snd_spectrum
 #define g_convolve_w g_convolve
@@ -4133,7 +4201,7 @@ void g_init_sig(void)
   XEN_DEFINE_PROCEDURE(S_smooth_selection,        g_smooth_selection_w, 0, 0, 0,        H_smooth_selection);
   XEN_DEFINE_PROCEDURE(S_reverse_sound,           g_reverse_sound_w, 0, 3, 0,           H_reverse_sound);
   XEN_DEFINE_PROCEDURE(S_reverse_selection,       g_reverse_selection_w, 0, 0, 0,       H_reverse_selection);
-  XEN_DEFINE_PROCEDURE(S_swap_channels,           g_swap_channels_w, 0, 6, 0,           H_swap_channels);
+  XEN_DEFINE_PROCEDURE(S_swap_channels,           g_swap_channels_w, 0, 8, 0,           H_swap_channels);
   XEN_DEFINE_PROCEDURE(S_insert_silence,          g_insert_silence_w, 2, 2, 0,          H_insert_silence);
 
   XEN_DEFINE_PROCEDURE(S_scale_selection_to,      g_scale_selection_to_w, 0, 1, 0,      H_scale_selection_to);
@@ -4156,6 +4224,7 @@ void g_init_sig(void)
   XEN_DEFINE_PROCEDURE(S_clm_channel,             g_clm_channel_w, 1, 6, 0,             H_clm_channel);
   XEN_DEFINE_PROCEDURE(S_env_channel,             g_env_channel_w, 1, 5, 0,             H_env_channel);
   XEN_DEFINE_PROCEDURE(S_ramp_channel,            g_ramp_channel_w, 2, 5, 0,            H_ramp_channel);
+  XEN_DEFINE_PROCEDURE(S_xramp_channel,           g_xramp_channel_w, 2, 6, 0,           H_xramp_channel);
   XEN_DEFINE_PROCEDURE(S_smooth_channel,          g_smooth_channel_w, 0, 5, 0,          H_smooth_channel);
   XEN_DEFINE_PROCEDURE(S_src_channel,             g_src_channel_w, 1, 5, 0,             H_src_channel);
   XEN_DEFINE_PROCEDURE(S_pad_channel,             g_pad_channel_w, 2, 3, 0,             H_pad_channel);

@@ -2,11 +2,12 @@
 #define MUS_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 18
-#define MUS_DATE "13-Sep-02"
+#define MUS_REVISION 19
+#define MUS_DATE "18-Dec-02"
 
 /* 
- * 13-Sep:     added mus_frandom and mus_irandom (for Snd optimizer).
+ * 17-Dec:     mus_env_offset|initial_power for Snd exp env optimizations.
+ * 13-Sep:     mus_frandom and mus_irandom (for Snd optimizer).
  * 19-Aug:     changed internal phase-vocoder array accessor names
  * 13-Aug:     added set! (*-ref) for frame, locsig, mixer, locsig-reverb.
  * 29-Jul:     added various *_1 cases for the optimizer.
@@ -441,7 +442,9 @@ int mus_env_p                   PROTO((mus_any *ptr));
 void mus_restart_env            PROTO((mus_any *ptr));
 Float mus_env_interp            PROTO((Float x, mus_any *env));
 off_t *mus_env_passes           PROTO((mus_any *gen)); /* for Snd */
-double *mus_env_rates           PROTO((mus_any *gen)); /* ditto */
+double *mus_env_rates           PROTO((mus_any *gen)); /* for Snd */
+double mus_env_offset           PROTO((mus_any *gen)); /* for Snd */
+double mus_env_initial_power    PROTO((mus_any *gen)); /* for Snd */
 #define mus_position(Gen) mus_channels(Gen)
 
 int mus_frame_p                 PROTO((mus_any *ptr));

@@ -634,6 +634,7 @@
 #define S_x_axis_style                  "x-axis-style"
 #define S_x_bounds                      "x-bounds"
 #define S_x_position_slider             "x-position-slider"
+#define S_xramp_channel                 "xramp-channel"
 #define S_x_zoom_slider                 "x-zoom-slider"
 #define S_y2position                    "y->position"
 #define S_y_bounds                      "y-bounds"

@@ -3132,7 +3132,7 @@ Float *mus_partials2polynomial(int npartials, Float *partials, int kind)
 
 typedef struct {
   mus_any_class *core;
-  double rate, current_value, base, offset, scaler, power, init_y, init_power, b1;
+  double rate, current_value, base, offset, scaler, power, init_y, init_power;
   off_t pass, end;
   int style, index, size, data_allocated;
   Float *original_data;
@@ -3147,9 +3147,9 @@ static char *inspect_seg(void *ptr)
   seg *gen = (seg *)ptr;
   char *arr = NULL, *str1 = NULL, *str2 = NULL;
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE,
-	       "seg rate: %f, current_value: %f, base: %f, offset: %f, scaler: %f, power: %f, init_y: %f, init_power: %f, b1: %f, \
+	       "seg rate: %f, current_value: %f, base: %f, offset: %f, scaler: %f, power: %f, init_y: %f, init_power: %f, \
 pass: " OFF_TD ", end: " OFF_TD ", style: %d, index: %d, size: %d, original_data[%d]: %s, rates[%d]: %s, passes[%d]: %s",
-	       gen->rate, gen->current_value, gen->base, gen->offset, gen->scaler, gen->power, gen->init_y, gen->init_power, gen->b1,
+	       gen->rate, gen->current_value, gen->base, gen->offset, gen->scaler, gen->power, gen->init_y, gen->init_power,
 	       gen->pass, gen->end, gen->style, gen->index, gen->size,
 	       gen->size * 2,
 	       arr = print_array(gen->original_data, gen->size * 2, 0),
@@ -3185,7 +3185,7 @@ Float mus_env (mus_any *ptr)
       if (gen->rate != 0.0)
 	{
 	  gen->power += gen->rate;
-	  gen->current_value = gen->offset + (gen->scaler * (exp(gen->base * gen->power) - 1.0));
+	  gen->current_value = gen->offset + (gen->scaler * (exp(gen->power) - 1.0));
 	}
       break;
     }
@@ -3244,14 +3244,14 @@ static void dmagify_env(seg *e, Float *data, int pts, off_t dur, Float scaler)
 
 static Float *fixup_exp_env(seg *e, Float *data, int pts, Float offset, Float scaler, Float base)
 {
-  Float min_y, max_y, val = 0.0, tmp = 0.0, b;
+  Float min_y, max_y, val = 0.0, tmp = 0.0, b, b1;
   int flat, len, i;
   Float *result = NULL;
   if ((base <= 0.0) || (base == 1.0)) return(NULL);
   min_y = offset + scaler * data[1];
   max_y = min_y;
   b = 1.0 / log(base);
-  e->b1 = base - 1.0;
+  b1 = base - 1.0;
   len = pts * 2;
   result = (Float *)clm_calloc(len, sizeof(Float), "env data");
   result[0] = data[0];
@@ -3271,9 +3271,9 @@ static Float *fixup_exp_env(seg *e, Float *data, int pts, Float offset, Float sc
       if (flat) 
 	tmp = 1.0;
       else tmp = val * (result[i] - min_y);
-      result[i] = log(1.0 + (tmp * e->b1)) * b;
+      result[i] = log(1.0 + (tmp * b1));
     }
-  e->scaler = (max_y - min_y) / e->b1;
+  e->scaler = (max_y - min_y) / b1;
   e->offset = min_y;
   return(result);
 }
@@ -3295,7 +3295,6 @@ static int env_equalp(void *p1, void *p2)
       (e1->rate == e2->rate) &&
       (e1->base == e2->base) &&
       (e1->power == e2->power) &&
-      (e1->b1 == e2->b1) &&
       (e1->current_value == e2->current_value) &&
       (e1->scaler == e2->scaler) &&
       (e1->offset == e2->offset) &&
@@ -3345,12 +3344,14 @@ static Float env_current_value(void *ptr) {return(((seg *)ptr)->current_value);}
 off_t *mus_env_passes(mus_any *gen) {return(((seg *)gen)->passes);}
 double *mus_env_rates(mus_any *gen) {return(((seg *)gen)->rates);}
 static int env_position(void *ptr) {return(((seg *)ptr)->index);}
+double mus_env_offset(mus_any *gen) {return(((seg *)gen)->offset);}
+double mus_env_initial_power(mus_any *gen) {return(((seg *)gen)->init_power);}
 
 static Float env_increment(void *rd)
 {
   if (((seg *)rd)->style == ENV_STEP)
     return(0.0);
-  return(exp(((seg *)rd)->base));
+  return(((seg *)rd)->base);
 }
 
 static mus_any_class ENV_CLASS = {
@@ -3397,7 +3398,7 @@ mus_any *mus_make_env(Float *brkpts, int npts, Float scaler, Float offset, Float
   e->rate = 0.0;
   e->offset = offset;
   e->scaler = scaler;
-  if (base > 0.0) e->base = log(base); /* used expt in lisp, fixup here for c's exp */
+  e->base = base;
   e->end = (dur_in_samples - 1);
   e->pass = 0;
   e->index = 0; /* ? */
@@ -3473,7 +3474,7 @@ static void set_env_location(mus_any *ptr, off_t val)
 	  break;
 	case ENV_EXP: 
 	  gen->power += (passes * gen->rate); 
-	  gen->current_value = gen->offset + (gen->scaler * (exp(gen->base * gen->power) - 1.0));
+	  gen->current_value = gen->offset + (gen->scaler * (exp(gen->power) - 1.0));
 	  break;
 	}
       ctr += passes;
@@ -3486,11 +3487,11 @@ static void set_env_location(mus_any *ptr, off_t val)
     }
 }
 
-static Float mus_env_interp_1(Float x, mus_any *ptr)
+Float mus_env_interp(Float x, mus_any *ptr)
 {
   seg *gen = (seg *)ptr;
   Float *data;
-  Float intrp;
+  Float intrp, val = 0.0;
   int i;
   if (gen)
     {
@@ -3504,34 +3505,31 @@ static Float mus_env_interp_1(Float x, mus_any *ptr)
 		  switch (gen->style)
 		    {
 		    case ENV_STEP: 
-		      return(data[i + 1]); 
+		      val = data[i + 1]; 
 		      break;
 		    case ENV_SEG:
 		      if ((x <= data[i]) || 
 			  (data[i + 1] == data[i + 3])) 
-			return(data[i + 1]);
-		      return(data[i + 1] + ((x - data[i]) / (data[i + 2] - data[i])) * (data[i + 3] - data[i + 1]));
+			val = data[i + 1];
+		      else val = data[i + 1] + ((x - data[i]) / (data[i + 2] - data[i])) * (data[i + 3] - data[i + 1]);
 		      break;
 		    case ENV_EXP:
 		      intrp = data[i + 1] + ((x - data[i]) / (data[i + 2] - data[i])) * (data[i + 3] - data[i + 1]);
-		      return(exp(gen->base * intrp) - 1.0);
+		      val = exp(intrp * log(gen->base)) - 1.0;
 		      break;
 		    }
+		  return(gen->offset + (gen->scaler * val));
 		}
 	    }
 	  if (gen->style == ENV_EXP)
-	    return(exp(gen->base * data[gen->size * 2 - 1]) - 1.0);
-	  else return(data[gen->size * 2 - 1]);
+	    val = exp(data[gen->size * 2 - 1] * log(gen->base)) - 1.0;
+	  else val = data[gen->size * 2 - 1];
+	  return(gen->offset + (gen->scaler * val));
 	}
     }
-  return(0.0);
+  return(gen->offset);
 }
 
-Float mus_env_interp(Float x, mus_any *ptr)
-{
-  seg *gen = (seg *)ptr;
-  return(gen->offset + (gen->scaler * mus_env_interp_1(x, ptr)));
-}
 
 
 

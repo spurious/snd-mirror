@@ -9076,3 +9076,39 @@ int mus_audio_compatible_format(int dev)
   return(MUS_COMPATIBLE_FORMAT);
 #endif
 }
+
+
+/* next two added 17-Dec-02 for non-interleaved audio IO */
+static char *output_buffer = NULL;
+static int output_buffer_size = 0;
+
+int mus_audio_write_buffers(int port, int frames, int chans, mus_sample_t **bufs, int output_format, int clipped)
+{
+  int bytes;
+  bytes = chans * frames * mus_bytes_per_sample(output_format);
+  if (output_buffer_size < bytes)
+    {
+      if (output_buffer) free(output_buffer);
+      output_buffer = (char *)malloc(bytes);
+      output_buffer_size = bytes;
+    }
+  mus_file_write_buffer(output_format, 0, frames - 1, chans, bufs, output_buffer, clipped);
+  return(mus_audio_write(port, output_buffer, bytes));
+}
+
+static char *input_buffer = NULL;
+static int input_buffer_size = 0;
+
+int mus_audio_read_buffers(int port, int frames, int chans, mus_sample_t **bufs, int input_format)
+{
+  int bytes;
+  bytes = chans * frames * mus_bytes_per_sample(input_format);
+  if (input_buffer_size < bytes)
+    {
+      if (input_buffer) free(input_buffer);
+      input_buffer = (char *)malloc(bytes);
+      input_buffer_size = bytes;
+    }
+  mus_audio_read(port, input_buffer, bytes);
+  return(mus_file_read_buffer(input_format, 0, chans, frames, bufs, input_buffer));
+}

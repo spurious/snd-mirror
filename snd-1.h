@@ -704,6 +704,7 @@ mus_sample_t previous_sound (snd_fd *sf);
 mus_sample_t next_sound (snd_fd *sf);
 void scale_channel(chan_info *cp, Float scaler, off_t beg, off_t num, int pos, int in_as_one_edit);
 void ramp_channel(chan_info *cp, Float rmp0, Float rmp1, off_t beg, off_t num, int pos, int in_as_one_edit);
+void xramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler, Float offset, off_t beg, off_t num, int pos, int in_as_one_edit);
 void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, void *env_pt, XEN init_func);
 void move_to_next_sample(snd_fd *sf);
 snd_fd *init_sample_read(off_t samp, chan_info *cp, int direction);
@@ -731,7 +732,7 @@ void set_ed_maxamp(chan_info *cp, int edpos, Float val);
 Float ed_maxamp(chan_info *cp, int edpos);
 void set_ed_selection_maxamp(chan_info *cp, Float val);
 Float ed_selection_maxamp(chan_info *cp);
-void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, off_t beg0, off_t num);
+void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, off_t beg0, off_t num, int pos0, int pos1);
 
 
 /* -------- snd-fft.c -------- */

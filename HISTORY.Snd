@@ -1,5 +1,7 @@
 Snd change log
 
+  18-Dec:    xramp-channel for virtual exp envs.
+             edpos args for swap-channels.
   16-Dec:    snd 6.4.
   11-Dec:    --with-shared-sndlib configure switch.
   10-Dec:    contrib/inf-snd.el from Michael Scholz.
