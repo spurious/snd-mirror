@@ -1,3 +1,8 @@
+;;; rubber.scm: rubber-sound stretches or contracts a sound (in time)
+;;;   (rubber-sound 1.5) makes it 50% longer
+;;;   rubber-sound looks for stable portions and either inserts or deletes periods 
+;;;     period length is determined via autocorrelation
+
 (use-modules (ice-9 debug))
 (use-modules (ice-9 format))
 (use-modules (ice-9 optargs))
@@ -9,11 +14,10 @@
 
 ;;; remove anything below 16Hz
 ;;; extend (src by 1/extension)
-;;; collect upward zero-crossings (+ subsequent max?)
+;;; collect upward zero-crossings
 ;;;   collect weights for each across next zeros-checked crossings
-;;;   divide into regions (if possible)
-;;;   sort by least weight within region
-;;;   ramp (out or in) and check if done, go to next region (possibly choose at random)
+;;;   sort by least weight
+;;;   ramp (out or in) and check if done
 
 (define derumble-sound
   ;; remove rumbles and DC etc (since we're using zero crossings to find period starts)

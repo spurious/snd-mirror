@@ -138,9 +138,7 @@ int gh_remove_from_menu(int which_menu, char *label);
 #if HAVE_GUILE
 void g_initialize_xgh(snd_state *ss, SCM local_doc);
 void g_init_gxutils(void);
-#if HAVE_HOOKS
 void g_init_gxmenu(void);
-#endif
 #endif
 
 

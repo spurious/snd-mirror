@@ -28,6 +28,9 @@
 (if (and (not (file-exists? "4.aiff"))
 	 (not (string=? (getcwd) "/home/bil/cl")))
     (copy-file "/home/bil/cl/4.aiff" (string-append (getcwd) "/4.aiff")))
+(if (and (not (file-exists? "2.snd"))
+	 (not (string=? (getcwd) "/home/bil/cl")))
+    (copy-file "/home/bil/cl/2.snd" (string-append (getcwd) "/2.snd")))
 
 (define tests 1)
 (define snd-test -1)

@@ -174,7 +174,7 @@ int gh_add_to_menu(snd_state *ss, int which_menu, char *label, int callb);
 int gh_remove_from_menu(int which_menu, char *label);
 int gh_menu_is_sensitive(int which_menu,char *old_label);
 
-#if HAVE_HOOKS
+#if HAVE_GUILE
   void g_init_gxmenu(void);
 #endif
 

@@ -200,10 +200,14 @@ file_info *make_file_info(char *fullname, snd_state *ss)
 	return(get_raw_file_info(fullname,ss));
       else
 	{
-	  format = mus_sound_data_format(fullname);
-	  if (MUS_DATA_FORMAT_OK(format))
-	    hdr = make_file_info_1(fullname,ss);
-	  else hdr = translate_file(fullname,ss,type);
+	  if (MUS_HEADER_TYPE_OK(type))
+	    {
+	      format = mus_sound_data_format(fullname);
+	      if (MUS_DATA_FORMAT_OK(format))
+		hdr = make_file_info_1(fullname,ss);
+	      else hdr = translate_file(fullname,ss,type);
+	    }
+	  else snd_error("%s does not seem to be a sound file?",fullname);
 	}
     }
   else

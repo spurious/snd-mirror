@@ -18,7 +18,6 @@
 ;;;      (length vct) -> vct-length (frames, string-length)
 ;;;      (map func chn) -> map-chan?
 ;;;      but these all fall under name reduction
-;;;    in clm, could finally use set! for (set! (mus-frequency osc) 440)
 
 
 ;;; -------- marks --------

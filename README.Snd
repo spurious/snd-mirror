@@ -84,7 +84,7 @@ distributions:
 
 ftp://ftp.gnu.org/pub/gnu/guile/guile-1.4.tar.gz
 
-To include guile in Snd, either use thr configure script (which should
+To include guile in Snd, either use the configure script (which should
 be able to find the guile library automatically), or go to the
 relevant makefile, set the CFLAGS variable to include 'guile-config
 compile', and set the LIBS variable to include 'guile-config link'.
