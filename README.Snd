@@ -158,9 +158,9 @@ The Solaris port is thanks to Volker Kuhlmann and Seppo Ingalsuo.
 The HPUX port is thanks to Seppo Ingalsuo.
 The DEC Alpha port is due to the persistence of Juan Reyes.
 The Linux Alpha port is thanks to Guenter Geiger.
-The original ALSA port was thanks to Paul Barton-Davis.
-The current ALSA port is thanks to Fernando Lopez-Lezcano and Paul Barton-Davis.
-The Sam 9407 port is thanks to Gerd Rausch.
+The original ALSA support was thanks to Paul Barton-Davis.
+The current ALSA support is thanks to Fernando Lopez-Lezcano and Paul Barton-Davis.
+The Sam 9407 support is thanks to Gerd Rausch.
 The LADSPA support is thanks to Richard W.E. Furse.
 
 
@@ -229,30 +229,13 @@ If you get the error:
  snd-x0.h:9 Xm/XmAll: No such file or directory
 
 This probably means you don't have Motif installed -- to build Snd
-from the sources, you need the Motif library and header files.  Motif
-has recently been released as open source software: see the url
-mentioned below.  Another freeware version is called Lesstif.  The
-linux binary rpm file and the linux-snd image at ccrma-ftp has Motif
-statically loaded.  If you have installed it in some weird place, use
-the -I compiler flag to provide that information to the compiler.
+from the sources, you need either Motif or Gtk+.  Motif has recently
+been released as open source software: see the url mentioned below.
+Another freeware version is called Lesstif.  The linux binary rpm file
+and the linux-snd image at ccrma-ftp has Motif statically loaded.  If
+you have installed it in some weird place, use the -I compiler flag to
+provide that information to the compiler.
 
-
-Lesstif: Snd mostly works with Lesstif, a free version of Motif
-available at http://www.lesstif.org (get version 0.88 or later).  If
-lesstif is used with Metrolink's mwm, you are logged out each time Snd
-runs (use LessTif's mwm).  Embedded scales are apparently gadgets,
-which means their color has to be set at initialization time.  (There
-are still a number of glitches in Lesstif, but they are making rapid
-progress).  To get the listener activatable in lesstif, comment out
-the first block (line 826 in version 0.89, 874 in 0.90) of
-lib/Xm/TextIn.c:
-
-#if 0
-    if (Text_EditMode(tw) != XmSINGLE_LINE_EDIT)
-    {
-	return;
-    }
-#endif
 
 If you're using Lesstif and get this error:
 
@@ -293,6 +276,13 @@ If you try to use the snd/guile-gtk interface and get:
   Segmentation fault (core dumped)
 
 you probably forgot to (use-modules (gtk gtk) (gtk gdk))
+
+If you're using guile 1.4 and gtk and guile-gtk, and get some
+compiler error (I forgot to write it down), it's probably that
+your version of guile-gtk is not in sync with guile -- for
+Guile version 1.4, you need guile-gtk version 0.19 (there's
+currently a pre-0.19 version that works at: http://erin.netpedia.net/guile-gtk --
+look for something like ftp://erin.netpedia.net/download/guile-gtk-0.19pre.tar.gz)
 
 
 RPM:
@@ -336,9 +326,8 @@ it means you're running a version of Snd that has Guile loaded, but
 Guile isn't installed locally.  You need to install Guile.  If Guile
 is installed, try running 'guile-config info' to find out where it
 thinks its boot files are.  If you're using a prebuilt image from
-ccrma-ftp, the relevant files should be in /usr/local/share/guile/1.3.n
-where 'n' is something like 2 or 4 (or absent altogether).  It's not
-impossible that running snd under strace would show you what the
+ccrma-ftp, the relevant files should be in /usr/local/share/guile/1.4.
+It's not impossible that running snd under strace would show you what the
 actual desired path is.  In the copious strace output, you should
 be able to find lines like: 
     stat("/usr/local/share/guile/1.4/ice-9/boot-9.scm"...)

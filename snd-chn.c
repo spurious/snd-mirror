@@ -985,7 +985,7 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 static fft_peak *peak_freqs = NULL;
 static fft_peak *peak_amps = NULL;
 
-void set_max_fft_peaks(snd_state *ss, int n)
+static void set_max_fft_peaks(snd_state *ss, int n)
 {
   if ((peak_freqs != NULL) && (max_fft_peaks(ss) < n))
     {
@@ -7685,6 +7685,25 @@ static SCM g_set_dot_size(SCM size)
   RTNINT(dot_size(ss));
 }
 
+static SCM g_max_fft_peaks(void) 
+{
+  #define H_max_fft_peaks "(" S_max_fft_peaks ") -> max number of fft peaks reported in fft display"
+  RTNINT(max_fft_peaks(get_global_state()));
+}
+
+static SCM g_set_max_fft_peaks(SCM n) 
+{
+  #define H_set_max_fft_peaks "(" S_set_max_fft_peaks " val) sets " S_max_fft_peaks
+  int lim;
+  snd_state *ss;
+  ERRN1(n,S_set_max_fft_peaks); 
+  lim = g_scm2int(n);
+  ss = get_global_state();
+  if (lim >= 0)
+    set_max_fft_peaks(ss,lim);
+  RTNINT(max_fft_peaks(ss));
+}
+
 static SCM g_forward_sample(SCM count, SCM snd, SCM chn) 
 {
   #define H_forward_sample "(" S_forward_sample " &optional (count 1) snd chn) moves the cursor forward count samples"
@@ -7987,6 +8006,8 @@ void g_init_chn(SCM local_doc)
   DEFINE_PROC(gh_new_procedure(S_smooth_selection,SCM_FNC g_smooth_selection,0,0,0),H_smooth_selection);
   DEFINE_PROC(gh_new_procedure(S_reverse_sound,SCM_FNC g_reverse_sound,0,2,0),H_reverse_sound);
   DEFINE_PROC(gh_new_procedure(S_reverse_selection,SCM_FNC g_reverse_selection,0,0,0),H_reverse_selection);
+  DEFINE_PROC(gh_new_procedure0_0(S_max_fft_peaks,g_max_fft_peaks),H_max_fft_peaks);
+  DEFINE_PROC(gh_new_procedure1_0(S_set_max_fft_peaks,g_set_max_fft_peaks),H_set_max_fft_peaks);
 
   DEFINE_PROC(gh_new_procedure("swap-channels",SCM_FNC g_swap_channels,0,6,0),H_swap_channels);
 

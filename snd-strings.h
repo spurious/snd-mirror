@@ -905,6 +905,7 @@
 #define S_set_selection_color           "set-selection-col" STR_OR
 #define S_set_show_axes                 "set-show-axes"
 #define S_set_show_fft_peaks            "set-show-fft-peaks"
+#define S_set_show_indices              "set-show-indices"
 #define S_set_show_marks                "set-show-marks"
 #define S_set_show_mix_consoles         "set-show-mix-consoles"
 #define S_set_show_mix_waveforms        "set-show-mix-waveforms"
@@ -965,6 +966,7 @@
 #define S_show_all_axes                 "show-all-axes"
 #define S_show_axes                     "show-axes"
 #define S_show_fft_peaks                "show-fft-peaks"
+#define S_show_indices                  "show-indices"
 #define S_show_listener                 "show-listener"
 #define S_show_marks                    "show-marks"
 #define S_show_mix_consoles             "show-mix-consoles"

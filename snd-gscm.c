@@ -42,6 +42,21 @@ static SCM g_region_dialog(void)
   return(SCM_BOOL_F);
 }
 
+static SCM gtk_catch_scm_error(void *data, SCM tag, SCM throw_args)
+{
+  return(SND_EVAL_ERROR);
+}
+
+static SCM eval_str_wrapper(void *data)
+{
+  return(gh_eval_str((char *)data));
+}
+
+static SCM eval_str(char *buf)
+{
+  return(scm_internal_stack_catch(SCM_BOOL_T,eval_str_wrapper,buf,gtk_catch_scm_error,buf));
+}
+
 static gint timed_eval(gpointer in_code)
 {
   char *scode = NULL;
@@ -52,7 +67,7 @@ static gint timed_eval(gpointer in_code)
       if (gh_string_p(code))
 	{
 	  scode = gh_scm2newstr(code,NULL);
-	  gh_eval_str(scode);
+	  eval_str(scode);
 	  free(scode);
 	}
       else
@@ -675,7 +690,20 @@ static SCM g_set_graph_cursor(SCM curs)
 }
 
 #if HAVE_GUILE_GTK
-  static void init_guile_gtk(SCM local_doc);
+static void init_guile_gtk(SCM local_doc);
+
+char *guile_gtk_version(void);
+char *guile_gtk_version(void)
+{
+  SCM res;
+  eval_str("(use-modules (gtk config))");
+  res = eval_str("gtkconf-guile-gtk-version");
+  if (gh_string_p(res))
+    return(gh_scm2newstr(res,NULL));
+  return(NULL);
+  /* there must be a prettier way to do this! */
+}
+
 #endif
 
 void g_initialize_xgh(snd_state *ss, SCM local_doc)

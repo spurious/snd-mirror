@@ -195,11 +195,13 @@ prints "3" and exits. The "-title" argument works in both versions of Snd.
 The initialization file
 
 When Snd starts up, it looks for an "initialization file", normally named
-"~/.snd". This optional file is supposed to be just like emacs' .emacs file,
-containing any customizations or extensions that you want loaded whenever
-Snd starts up. For example, say we want the Snd window to start out 800x500,
-want to predefine an envelope named "env1", and want the file selection box
-to default to showing just sound files. We make ~/.snd and put in it:
+"~/.snd" (it can be set via the X resource mechanism, or through the
+environment variable SND_INIT_FILE). This optional file is supposed to be
+just like emacs' .emacs file, containing any customizations or extensions
+that you want loaded whenever Snd starts up. For example, say we want the
+Snd window to start out 800x500, want to predefine an envelope named "env1",
+and want the file selection box to default to showing just sound files. We
+make ~/.snd and put in it:
 
 (set-window-width 800)
 (set-window-height 500)
@@ -1715,3 +1717,5 @@ frame*                     mus-reopen-write           set-graphing              
 frame+                     mus-riff                   set-just-sounds
 frame->buffer              mus-scaler                 set-left-sample
 frame->file                mus-set-rand-seed          set-mark-name
+
+                  snd.html extsnd.html clm.html sndlib.html

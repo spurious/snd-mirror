@@ -358,7 +358,7 @@ int amp_env_graph(chan_info *cp, axis_info *ap, Float samples_per_pixel, int sra
 
 
 
-static char sname[128];
+static char sname[256];
 char *shortname(snd_info *sp)
 {
   if (is_link(sp->fullname))
@@ -367,6 +367,16 @@ char *shortname(snd_info *sp)
       return(sname);
     }
   else return(sp->shortname);
+}
+
+char *shortname_indexed(snd_info *sp)
+{
+  if (show_indices(sp->state))
+    {
+      sprintf(sname,"%d: %s",sp->index,shortname(sp));
+      return(sname);
+    }
+  else return(shortname(sp));
 }
 
 void add_sound_data(char *filename, snd_info *sp, snd_state *ss)

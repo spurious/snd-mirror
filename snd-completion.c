@@ -15,7 +15,7 @@
 #endif
       
 
-#define NUM_COMMANDS 750
+#define NUM_COMMANDS 752
 
 static char *snd_commands[NUM_COMMANDS]={
   S_abort,S_abortQ,S_activate_listener,S_add_mark,S_add_sound_file_extension,S_add_to_main_menu,S_add_to_menu,S_add_transform,
@@ -148,7 +148,7 @@ static char *snd_commands[NUM_COMMANDS]={
   S_set_right_sample,S_set_sample,S_set_samples,
   S_set_save_dir,S_set_save_state_file,S_set_save_state_on_exit,
   S_set_selected_data_color,S_set_selected_graph_color,S_set_selection_color,S_set_show_axes,
-  S_set_show_fft_peaks,S_set_show_marks,S_set_show_mix_consoles,S_set_show_mix_waveforms,
+  S_set_show_fft_peaks,S_set_show_indices,S_set_show_marks,S_set_show_mix_consoles,S_set_show_mix_waveforms,
   S_set_show_selection_transform,S_set_show_usage_stats,S_set_show_y_zero,S_set_showing_controls,S_set_sinc_width,S_set_sound_loop_info,
   S_set_spectro_cutoff,S_set_spectro_hop,S_set_spectro_start,S_set_spectro_x_angle,S_set_spectro_x_scale,S_set_spectro_y_angle,
   S_set_spectro_y_scale,S_set_spectro_z_angle,S_set_spectro_z_scale,S_set_speed,S_set_speed_style,S_set_speed_tones,S_set_squelch_update,
@@ -160,7 +160,7 @@ static char *snd_commands[NUM_COMMANDS]={
   S_set_x_axis_style,S_set_x_bounds,S_set_xmax,S_set_xmin,S_set_y_bounds,
   S_set_ymax,S_set_ymin,S_set_zero_pad,S_set_zoom_color,S_set_zoom_focus_style,
 
-  S_short_file_name,S_short_file_names,S_show_all_axes,S_show_axes,S_show_fft_peaks,S_show_listener,S_show_marks,
+  S_short_file_name,S_short_file_names,S_show_all_axes,S_show_axes,S_show_fft_peaks,S_show_indices,S_show_listener,S_show_marks,
   S_show_mix_consoles,S_show_mix_waveforms,S_show_no_axes,S_show_selection_transform,S_show_usage_stats,S_show_x_axis,S_show_y_zero,
   S_showing_controls,S_sinc_width,S_smooth,S_smooth_selection,
   S_snd_apropos,S_snd_error,S_snd_error_hook,S_snd_help,S_snd_spectrum,S_snd_tempnam,S_snd_version,S_snd_warning,S_snd_warning_hook,

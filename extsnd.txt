@@ -52,9 +52,10 @@ are available only if Guile is loaded. Channels are numbered from 0. If a
 channel argument is omitted, the currently active channel is used, if any;
 otherwise channel 0. Each sound has an associated "index" used to refer to
 it in all the functions. This somewhat arbitrary number is more or less
-related to the sound's position in the display of sounds. If the index is
-omitted, the currently active sound is used; if none, the top sound (or
-leftmost if you're using the horizontal panes).
+related to the sound's position in the display of sounds (set the variable
+show-indices to cause it to be displayed in front of the sound's name). If
+the index is omitted, the currently active sound is used; if none, the top
+sound (or leftmost if you're using the horizontal panes).
 
   ------------------------------------------------------------------------
 
@@ -287,6 +288,7 @@ Lisp-like setf, see setf.scm; if it is loaded you can say (setf
                                 displayed, reducing screen clutter. The other choice is show-no-axes.
   show-fft-peaks        #f      If #t, fft peak information is included in the fft display.
                                 (This is the 'peaks' button in the Transform options dialog).
+  show-indices          #f      If #t, each sound's name is preceded by its index.
   show-marks            #t      If #t, marks are displayed.  This is the 'Show marks' View menu option.
   show-mix-consoles     #t      If #t, mix consoles are displayed.  This is the 'Show consoles'
                                 View menu option.

@@ -873,7 +873,9 @@ void snd_doit(snd_state *ss,int argc, char **argv)
     fprintf(stderr,STR_cant_find_font,snd_rs.listener_font);
 
   if (!(ss->using_schemes)) XtVaSetValues(shell,XmNbackground,sx->basic_color,NULL);
-  ss->init_file = snd_rs.init_file_name; /* doesn't make any sense to pass this out to the user -- what can he do? */
+  ss->init_file = getenv(SND_INIT_FILE_ENVIRONMENT_NAME);
+  if (ss->init_file == NULL)
+    ss->init_file = snd_rs.init_file_name; /* doesn't make any sense to pass this out to the user -- what can he do? */
   set_eps_file(ss,snd_rs.eps_file_name);
   set_color_map(ss,snd_rs.spectrogram_color);
   set_ask_before_overwrite(ss,snd_rs.overwrite_check);

@@ -1281,6 +1281,16 @@ static SCM g_set_show_fft_peaks(SCM val)
   RTNBOOL(show_fft_peaks(state));
 }
 
+static SCM g_show_indices(void) {RTNBOOL(show_indices(state));}
+static SCM g_set_show_indices(SCM val) 
+{
+  #define H_show_indices "(" S_show_indices ") -> #t if sound name should be preceded by its index"
+  #define H_set_show_indices "(" S_set_show_indices " &optional (val #t)) sets " S_show_indices
+  ERRB1(val,S_set_show_indices); 
+  set_show_indices(state,bool_int_or_one(val));
+  RTNBOOL(show_indices(state));
+}
+
 static SCM g_show_marks(void) {RTNBOOL(show_marks(state));}
 static SCM g_set_show_marks(SCM on) 
 {
@@ -1868,23 +1878,6 @@ static SCM g_sounds(void)
 	result = gh_cons(gh_int2scm(i),result);
     }
   return(result);
-}
-
-static SCM g_max_fft_peaks(void) 
-{
-  #define H_max_fft_peaks "(" S_max_fft_peaks ") -> max number of fft peaks reported in fft display"
-  RTNINT(max_fft_peaks(state));
-}
-
-static SCM g_set_max_fft_peaks(SCM n) 
-{
-  #define H_set_max_fft_peaks "(" S_set_max_fft_peaks " val) sets " S_max_fft_peaks
-  int lim;
-  ERRN1(n,S_set_max_fft_peaks); 
-  lim = g_scm2int(n);
-  if (lim >= 0)
-    set_max_fft_peaks(state,lim);
-  RTNINT(max_fft_peaks(state));
 }
 
 static SCM g_normalize_view(void) 
@@ -4091,6 +4084,8 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure0_1(S_set_save_state_on_exit,g_set_save_state_on_exit),H_set_save_state_on_exit);
   DEFINE_PROC(gh_new_procedure0_0(S_show_fft_peaks,g_show_fft_peaks),H_show_fft_peaks);
   DEFINE_PROC(gh_new_procedure0_1(S_set_show_fft_peaks,g_set_show_fft_peaks),H_set_show_fft_peaks);
+  DEFINE_PROC(gh_new_procedure0_0(S_show_indices,g_show_indices),H_show_indices);
+  DEFINE_PROC(gh_new_procedure0_1(S_set_show_indices,g_set_show_indices),H_set_show_indices);
   DEFINE_PROC(gh_new_procedure0_0(S_show_marks,g_show_marks),H_show_marks);
   DEFINE_PROC(gh_new_procedure0_1(S_set_show_marks,g_set_show_marks),H_set_show_marks);
   DEFINE_PROC(gh_new_procedure0_0(S_show_usage_stats,g_show_usage_stats),H_show_usage_stats);
@@ -4235,8 +4230,6 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure3_2(S_insert_samples,g_insert_samples),H_insert_samples);
   DEFINE_PROC(gh_new_procedure0_0(S_max_sounds,g_max_sounds),H_max_sounds);
   DEFINE_PROC(gh_new_procedure0_0(S_sounds,g_sounds),H_sounds);
-  DEFINE_PROC(gh_new_procedure0_0(S_max_fft_peaks,g_max_fft_peaks),H_max_fft_peaks);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_max_fft_peaks,g_set_max_fft_peaks),H_set_max_fft_peaks);
   DEFINE_PROC(gh_new_procedure0_0(S_cut,g_cut),H_cut);
   DEFINE_PROC(gh_new_procedure1_3(S_insert_sound,g_insert_sound),H_insert_sound);
   DEFINE_PROC(gh_new_procedure1_0(S_yes_or_no_p,g_yes_or_no_p),H_yes_or_no_p);

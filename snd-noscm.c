@@ -429,7 +429,6 @@ static int handle_set(snd_state *ss, char *tok, char **str)
   if (strcmp(tok,S_set_initial_y1) == 0) {set_initial_y1(ss,fstr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_just_sounds) == 0) {toggle_just_sounds(istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_line_size) == 0) {set_line_size(ss,istr(str[1])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_max_fft_peaks) == 0) {set_max_fft_peaks(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_movies) == 0) {set_movies(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_normalize_fft) == 0) {set_normalize_fft(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_normalize_on_open) == 0) {set_normalize_on_open(ss,istr(str[1])); isym(ss,0); return(0);}

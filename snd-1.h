@@ -289,6 +289,19 @@ typedef struct snd__state {
   int stopped_explicitly,checking_explicitly,eval_error;
   int result_printout,listening,init_window_width,init_window_height,init_window_x,init_window_y;
   int open_hook_active,close_hook_active,fft_hook_active,graph_hook_active,exit_hook_active,start_hook_active,save_hook_active;
+
+  /* user-visible global variables
+   *   all of these are accessed through macros in snd-0.h 
+   *   each has a default defined in snd-0.h,
+   *              name defined in snd-strings.h
+   *              initialized in snd.c
+   *              saved in snd-main.c
+   *              included in snd-help.c's variable list
+   *              documented in extsnd.html
+   *              several styles of tests in snd-test.scm
+   *              completed via the table in snd-completion.c
+   *              brought out to user in snd-scm.c (and possibly snd-noscm.c)
+   */
   int Show_Fft_Peaks,Show_Y_Zero,Erase_Zeros,Show_Marks,Fft_Log_Frequency,Fft_Log_Magnitude,Channel_Style,Sound_Style,Show_Wave_In_Enved,Show_Axes;
   char *Eps_File,*Temp_Dir,*Audio_State_File,*Save_Dir;
   char *Listener_Font,*Help_Text_Font,*Axis_Label_Font,*Axis_Numbers_Font,*Bold_Button_Font,*Button_Font,*Tiny_Font;
@@ -312,7 +325,7 @@ typedef struct snd__state {
   Float Enved_Base,Enved_Power,Recorder_Trigger,Recorder_Max_Duration,Corruption_Time;
   int Recorder_Autoload,Recorder_Buffer_Size,Recorder_In_Format,Recorder_Out_Format,Recorder_Out_Chans,Recorder_Srate;
   int Enved_Clipping,Enved_Exping,Enved_Target,Enved_Waving,Enved_dBing,Prefix_Arg,Graphs_Horizontal;
-  int Graph_Cursor,Use_Sinc_Interp,Data_Clipped;
+  int Graph_Cursor,Use_Sinc_Interp,Data_Clipped,Show_Indices;
   Float min_dB,lin_dB;
 #if HAVE_XmHTML
   int HTML_Width,HTML_Height;
@@ -948,7 +961,6 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
 void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, int button);
 void graph_button_motion_callback(chan_info *cp,int x, int y, TIME_TYPE time, TIME_TYPE click_time);
 int make_graph(chan_info *cp, snd_info *sp, snd_state *ss);
-void set_max_fft_peaks(snd_state *ss, int n);
 void reset_spectro(snd_state *state);
 int cursor_moveto (chan_info *cp,int samp);
 int keyboard_command (chan_info *cp, int keysym, int state);
@@ -1003,6 +1015,7 @@ Float amp_env_maxamp(chan_info *cp);
 int amp_env_usable(chan_info *cp,Float samples_per_pixel, int hisamp);
 int amp_env_graph(chan_info *cp, axis_info *ap, Float samples_per_pixel, int srate);
 char *shortname(snd_info *sp);
+char *shortname_indexed(snd_info *sp);
 void add_sound_data(char *filename, snd_info *sp, snd_state *ss);
 Float srate_changed(Float ival, char *srcbuf, int style, int tones);
 void sp_name_click(snd_info *sp);

@@ -531,6 +531,15 @@ static SCM list2vct(SCM lst)
   return(scm_return_first(scv,lst));
 }
 
+#if (!USE_SND)
+static SCM array_to_list(Float *arr, int i, int len)
+{
+  if (i < (len-1))
+    return(gh_cons(gh_double2scm(arr[i]),array_to_list(arr,i+1,len)));
+  else return(gh_cons(gh_double2scm(arr[i]),SCM_EOL));
+}
+#endif
+
 static SCM vct2list(SCM vobj)
 {
   #define H_vct2list "(" S_vct2list " v) -> a new list with elements of vct v"

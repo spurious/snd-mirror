@@ -543,24 +543,21 @@ static char title_buffer[4*(MUS_MAX_FILE_NAME)];
 static void reflect_file_change_in_title(snd_state *ss)
 {
   active_sound_list *alist;
-  int i,j,k;
-  char *s1 = NULL,*s2;
+  int i,j;
   alist = (active_sound_list *)CALLOC(1,sizeof(active_sound_list));
   alist->sounds = (int *)CALLOC(ss->max_sounds,sizeof(int));
   alist->names = (char **)CALLOC(ss->max_sounds,sizeof(char *));
   map_over_sounds(ss,add_sound_to_active_list,alist);
   sprintf(title_buffer,"%s%s",ss->startup_title,((alist->active_sounds > 0) ? ": " : ""));
-  k = strlen(title_buffer);
   if (alist->active_sounds > 0)
     {
       if (alist->active_sounds < 4) j=alist->active_sounds; else j=4;
-      s1 = (char *)(title_buffer+k);
       for (i=0;i<j;i++)
 	{
-	  for (s2 = filename_without_home_directory(alist->names[i]);(*s1 = *s2) != '\0';++s1,++s2);
-	  if (i<j-1) {*s1 = ','; s1++;  *s1 = ' '; s1++;}
+	  strcat(title_buffer,filename_without_home_directory(alist->names[i]));
+	  if (i<j-1) strcat(title_buffer,", ");
 	}
-      if (alist->active_sounds>4) {for (i=0;i<3;i++) {*s1='.'; s1++;}}
+      if (alist->active_sounds>4) strcat(title_buffer,"...");
     }
   set_title(ss,title_buffer);
   FREE(alist->sounds);

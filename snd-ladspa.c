@@ -445,11 +445,10 @@ by any arguments. (Information about about parameters can be acquired using anal
 
   LADSPA_Data * pfControls;
   LADSPA_Data pfInputBuffer[MAX_BUFFER_SIZE];
-
-#if SNDLIB_USE_FLOATS
-#else
-  LADSPA_Data pfBuffer2[MAX_BUFFER_SIZE];
   LADSPA_Data * pfOutputBuffer;
+
+#if (!SNDLIB_USE_FLOATS)
+  LADSPA_Data pfBuffer2[MAX_BUFFER_SIZE];
 #endif
 
   chan_info *cp;
@@ -461,8 +460,7 @@ by any arguments. (Information about about parameters can be acquired using anal
   snd_state *state;
   MUS_SAMPLE_TYPE **data;
   MUS_SAMPLE_TYPE *idata;
-#if SNDLIB_USE_FLOATS
-#else
+#if (!SNDLIB_USE_FLOATS)
   MUS_SAMPLE_TYPE val;
 #endif
 

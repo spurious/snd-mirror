@@ -125,7 +125,7 @@ void reflect_file_revert_in_label (snd_info *sp)
       editing = map_over_sound_chans(sp,find_any_edits,NULL);
       if (!editing)
 	{
-	  set_sound_pane_file_label(sp,shortname(sp));
+	  set_sound_pane_file_label(sp,shortname_indexed(sp));
 	  make_a_big_star_outa_me(sp->shortname,0);
 	}
     }

@@ -227,7 +227,8 @@ snd -e "(set-data-color (make-color 1 0 0))" oboe.snd
 
 <h3><a name="sndinitfile">The initialization file</a></h3>
 <p>
-When Snd starts up, it looks for an "initialization file", normally named "~/.snd".  This optional file is
+When Snd starts up, it looks for an "initialization file", normally named "~/.snd" (its name can be set
+via the X resource mechanism, or through the environment variable SND_INIT_FILE).  This optional file is
 supposed to be just like emacs' .emacs file, containing any customizations or
 extensions that you want loaded whenever Snd starts up.  For example, say we
 want the Snd window to start out 800x500, want to predefine an envelope named

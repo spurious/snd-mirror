@@ -1361,7 +1361,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss)
       set_background(sw[W_name_event],(ss->sgx)->highlight_color);
       gtk_signal_connect(GTK_OBJECT(sw[W_name_event]),"button_press_event",GTK_SIGNAL_FUNC(name_click_callback),(gpointer)sp);
       
-      sw[W_name] = gtk_label_new(sp->shortname);
+      sw[W_name] = gtk_label_new(shortname_indexed(sp));
       gtk_container_add(GTK_CONTAINER(sw[W_name_event]),sw[W_name]);
       gtk_widget_show(sw[W_name]);
       
@@ -1733,7 +1733,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss)
     { /* re-manage currently inactive chan */
       gtk_widget_show(w_snd_pane(sp));
       for (k=0;k<nchans;k++) add_channel_window(sp,k,ss,chan_min_y,0,NULL,WITH_FW_BUTTONS);
-      gtk_label_set_text(GTK_LABEL(sw[W_name]),shortname(sp));
+      gtk_label_set_text(GTK_LABEL(sw[W_name]),shortname_indexed(sp));
 
       reset_control_panel(sp);
       if (sound_style(ss) == SOUNDS_IN_NOTEBOOK) 

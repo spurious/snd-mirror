@@ -221,6 +221,7 @@
 	'save-state-on-exit (save-state-on-exit) #f
 	'show-axes (show-axes) 1
 	'show-fft-peaks (show-fft-peaks) #f 
+	'show-indices (show-indices) #f
 	'show-marks (show-marks) #t 
 	'show-mix-consoles (show-mix-consoles) #t
 	'show-mix-waveforms (show-mix-waveforms) #f 
@@ -543,6 +544,8 @@
 	  (snd-print (format #f ";snd-error-hook: ~A?" snd-error-hook)))
       (if (or (not (hook? snd-warning-hook)) (not (hook-empty? snd-warning-hook)))
 	  (snd-print (format #f ";snd-warning-hook: ~A?" snd-warning-hook)))
+      (if (or (not (hook? name-click-hook)) (not (hook-empty? name-click-hook)))
+	  (snd-print (format #f ";name-click-hook: ~A?" name-click-hook)))
 
       (set-showing-controls #t)
       (enved-dialog) (w)
@@ -648,6 +651,7 @@
 	  (list 'save-state-on-exit save-state-on-exit #f set-save-state-on-exit #t)
 	  (list 'show-axes show-axes 1 set-show-axes 0)
 	  (list 'show-fft-peaks show-fft-peaks #f set-show-fft-peaks #t)
+	  (list 'show-indices show-indices #f set-show-indices #t)
 	  (list 'show-marks show-marks #t set-show-marks #f)
 	  (list 'show-mix-consoles show-mix-consoles #t set-show-mix-consoles #f)
 	  (list 'show-mix-waveforms show-mix-waveforms #f set-show-mix-waveforms #t)
@@ -3581,7 +3585,11 @@
 	  (snd-warning "hiho")
 	  (reset-hook! snd-error-hook)
 	  (reset-hook! snd-warning-hook)
+	  (add-hook! name-click-hook 
+		     (lambda (n) 
+		       #t))
 	  (redo 1)
+	  (reset-hook! name-click-hook)
 	  (set-ffting #t)
 	  (set-transform-type histogram)
 	  (set-x-bounds .1 .2)
@@ -3718,6 +3726,7 @@
 		    (list 'save-state-on-exit #f #f set-save-state-on-exit #t)
 		    (list 'show-axes #f 0 set-show-axes 2)
 		    (list 'show-fft-peaks #f #f set-show-fft-peaks #t)
+		    (list 'show-indices #f #f set-show-indices #t)
 		    (list 'show-marks #f #f set-show-marks #t)
 		    (list 'show-mix-consoles #f #f set-show-mix-consoles #t)
 		    (list 'show-mix-waveforms #f #f set-show-mix-waveforms #t)
@@ -4076,6 +4085,7 @@
 (if (file-exists? "saved-snd.scm") (delete-file "saved-snd.scm"))
 (reset-hook! exit-hook)
 (reset-hook! graph-hook)
+(reset-hook! name-click-hook)
 (gc)
 (set-listener-prompt original-prompt)
 (snd-print (format #f ";all done!~%~A" original-prompt))

@@ -41,6 +41,9 @@ static char *guile_version(void)
 { 
   return(gh_scm2newstr(scm_version(),NULL));
 }
+#if HAVE_GUILE_GTK
+  char *guile_gtk_version(void);
+#endif
 #endif
 
 static char *sndlib_consistency_check(void)
@@ -129,7 +132,7 @@ char *version_info(void)
 	  "\n    Gtk+ ",itoa[9]=snd_itoa(GTK_MAJOR_VERSION),".",itoa[10]=snd_itoa(GTK_MINOR_VERSION),".",itoa[11]=snd_itoa(GTK_MICRO_VERSION),", Glib ",itoa[12]=snd_itoa(GLIB_MAJOR_VERSION),".",itoa[13]=snd_itoa(GLIB_MINOR_VERSION),".",itoa[14]=snd_itoa(GLIB_MICRO_VERSION),
 #endif
 #if HAVE_GUILE_GTK
-	  ", with guile-gtk",
+	  ", Guile-gtk ",guile_gtk_version(),
 #endif
 #if (!(defined(USE_MOTIF))) && (!(defined(USE_GTK)))
 	  "\n    without any graphics system",
@@ -189,8 +192,9 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
-25-Jul:  Snd now uses clm for all control-panel functions (play/apply).\n\
-         added name-click-hook.\n\
+26-Jul:  Snd now uses clm for all control-panel functions (play/apply).\n\
+         added name-click-hook, show-indices.\n\
+         ladspa-related bugfix thanks to Jorn Nettingsmeier.\n\
 24-Jul:  snd-tempnam, sound-interp gen in examp.scm and env-sound-interp.\n\
 20-Jul:  added sum-of-sines, phase-vocoder.\n\
 18-Jul:  play-selection and added end arg to play etc.\n\
@@ -933,6 +937,7 @@ new value via (" S_set_auto_resize " #t). \n\
   " S_selection_color "       lightsteelblue1\n\
   " S_show_axes "             show-all-axes\n\
   " S_show_fft_peaks "        #f\n\
+  " S_show_indices "          #f\n\
   " S_show_marks "            #t\n\
   " S_show_mix_consoles "     #t\n\
   " S_show_mix_waveforms "    #f\n\

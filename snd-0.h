@@ -74,6 +74,8 @@
   #define SND_CONF "/etc/snd.conf"
 #endif
 
+#define SND_INIT_FILE_ENVIRONMENT_NAME "SND_INIT_FILE"
+
 #define XOR(a,b) ((~((a) & (b))) & ((a) | (b)))
 
 #define SND_IO_FD 1
@@ -234,9 +236,20 @@ enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
 
 #define dac_size(ss) ss->Dac_Size
 #define set_dac_size(ss,a) ss->Dac_Size = a
+#if (HAVE_OSS || HAVE_ALSA)
+  #ifdef PPC
+     /* actually linuxppc */
+     #define DEFAULT_DAC_SIZE 0
+  #else
+     #define DEFAULT_DAC_SIZE 256
+  #endif
+#else
+  #define DEFAULT_DAC_SIZE 1024
+#endif
 
 #define dac_folding(ss) ss->Dac_Folding
 #define set_dac_folding(ss,a) ss->Dac_Folding = a
+#define DEFAULT_DAC_FOLDING TRUE
 
 #define max_regions(ss) ss->Max_Regions
 #define in_set_max_regions(ss,a) ss->Max_Regions = a
@@ -366,9 +379,11 @@ enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
 
 #define speed_style(ss) ss->Speed_Style
 #define in_set_speed_style(ss,a) ss->Speed_Style = a
+#define DEFAULT_SPEED_STYLE SPEED_AS_FLOAT
 
 #define graph_style(ss) ss->Graph_Style
 #define in_set_graph_style(ss,a) ss->Graph_Style = a
+#define DEFAULT_GRAPH_STYLE GRAPH_LINES
 
 #define sinc_width(ss) ss->Sinc_Width
 #define set_sinc_width(ss,a) ss->Sinc_Width = a
@@ -395,6 +410,7 @@ enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
 
 #define zoom_focus_style(ss) ss->Zoom_Focus_Style
 #define set_zoom_focus_style(ss,a) ss->Zoom_Focus_Style = a
+#define DEFAULT_ZOOM_FOCUS_STYLE FOCUS_ACTIVE
 
 #define fit_data_on_open(ss) ss->Fit_Data_On_Open
 #define set_fit_data_on_open(ss,a) ss->Fit_Data_On_Open = a
@@ -402,6 +418,7 @@ enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
 
 #define eps_file(ss) ss->Eps_File
 #define set_eps_file(ss,a) ss->Eps_File = a
+#define DEFAULT_EPS_FILE NULL
 
 #define help_text_font(ss) ss->Help_Text_Font
 #define in_set_help_text_font(ss,a) ss->Help_Text_Font = a
@@ -429,15 +446,19 @@ enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
 
 #define save_state_file(ss) ss->Save_State_File
 #define in_set_save_state_file(ss,a) ss->Save_State_File = a
+#define DEFAULT_SAVE_STATE_FILE "saved-snd.scm"
 
 #define temp_dir(ss) ss->Temp_Dir
 #define set_temp_dir(ss,a) ss->Temp_Dir = a
+#define DEFAULT_TEMP_DIR NULL
 
 #define save_dir(ss) ss->Save_Dir
 #define set_save_dir(ss,a) ss->Save_Dir = a
+#define DEFAULT_SAVE_DIR NULL
 
 #define vu_font(ss) ss->Vu_Font
 #define set_vu_font(ss,a) ss->Vu_Font = a
+#define DEFAULT_VU_FONT NULL
 
 #define vu_font_size(ss) ss->Vu_Font_Size
 #define set_vu_font_size(ss,a) ss->Vu_Font_Size = a
@@ -453,6 +474,7 @@ enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
 
 #define transform_type(ss) ss->Transform_Type
 #define in_set_transform_type(ss,a) ss->Transform_Type = a
+#define DEFAULT_TRANSFORM_TYPE FOURIER
 
 #define show_selection_transform(ss) ss->Show_Selection_Transform
 #define in_set_show_selection_transform(ss,a) ss->Show_Selection_Transform = a
@@ -476,6 +498,7 @@ enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
 
 #define x_axis_style(ss) ss->X_Axis_Style
 #define in_set_x_axis_style(ss,a) ss->X_Axis_Style = a
+#define DEFAULT_AXIS_STYLE X_IN_SECONDS
 
 #define xmax(ss) ss->Xmax
 #define set_xmax(ss,a) ss->Xmax = a
@@ -500,6 +523,10 @@ enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
 #define show_fft_peaks(ss) ss->Show_Fft_Peaks
 #define in_set_show_fft_peaks(ss,a) ss->Show_Fft_Peaks = a
 #define DEFAULT_SHOW_FFT_PEAKS 0
+
+#define show_indices(ss) ss->Show_Indices
+#define set_show_indices(ss,a) ss->Show_Indices = a
+#define DEFAULT_SHOW_INDICES 0
 
 #define show_y_zero(ss) ss->Show_Y_Zero
 #define in_set_show_y_zero(ss,a) ss->Show_Y_Zero = a
@@ -543,12 +570,15 @@ enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
 
 #define channel_style(ss) ss->Channel_Style
 #define in_set_channel_style(ss,a) ss->Channel_Style = a
+#define DEFAULT_CHANNEL_STYLE CHANNELS_SEPARATE
 
 #define sound_style(ss) ss->Sound_Style
 #define set_sound_style(ss,a) ss->Sound_Style = a
+#define DEFAULT_SOUND_STYLE SOUNDS_VERTICAL
 
 #define listener_prompt(ss) ss->Listener_Prompt
 #define set_listener_prompt(ss,a) ss->Listener_Prompt = a
+#define DEFAULT_LISTENER_PROMPT ">"
 
 #define raw_srate(ss) ss->Raw_Srate
 #define set_raw_srate(ss,a) ss->Raw_Srate = a
@@ -591,6 +621,7 @@ enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
 
 #define enved_target(ss) ss->Enved_Target
 #define in_set_enved_target(ss,a) ss->Enved_Target = a
+#define DEFAULT_ENVED_TARGET AMPLITUDE_ENV
 
 #define enved_base(ss) ss->Enved_Base
 #define in_set_enved_base(ss,a) ss->Enved_Base = a
@@ -610,6 +641,7 @@ enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
 
 #define recorder_file(ss) ss->Recorder_File
 #define in_set_recorder_file(ss,a) ss->Recorder_File = a
+#define DEFAULT_RECORDER_FILE NULL
 
 #define recorder_buffer_size(ss) ss->Recorder_Buffer_Size
 #define in_set_recorder_buffer_size(ss,a) ss->Recorder_Buffer_Size = a
@@ -617,9 +649,19 @@ enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
 
 #define recorder_in_format(ss) ss->Recorder_In_Format
 #define in_set_recorder_in_format(ss,a) ss->Recorder_In_Format = a
+#ifdef SUN
+#define DEFAULT_RECORDER_IN_FORMAT MUS_MULAW
+#else
+#define DEFAULT_RECORDER_IN_FORMAT MUS_COMPATIBLE_FORMAT
+#endif
 
 #define recorder_srate(ss) ss->Recorder_Srate
 #define in_set_recorder_srate(ss,a) ss->Recorder_Srate = a
+#ifdef SUN
+#define DEFAULT_RECORDER_SRATE 8000
+#else
+#define DEFAULT_RECORDER_SRATE 22050
+#endif
 
 #define recorder_trigger(ss) ss->Recorder_Trigger
 #define in_set_recorder_trigger(ss,a) ss->Recorder_Trigger = a
@@ -631,6 +673,7 @@ enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
 
 #define recorder_out_format(ss) ss->Recorder_Out_Format
 #define in_set_recorder_out_format(ss,a) ss->Recorder_Out_Format = a
+#define DEFAULT_RECORDER_OUT_FORMAT MUS_COMPATIBLE_FORMAT
 
 #define recorder_out_chans(ss) ss->Recorder_Out_Chans
 #define in_set_recorder_out_chans(ss,a) ss->Recorder_Out_Chans = a
@@ -638,6 +681,7 @@ enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
 
 #define audio_output_device(ss) ss->Audio_Output_Device
 #define set_audio_output_device(ss,a) ss->Audio_Output_Device = a
+#define DEFAULT_AUDIO_OUTPUT_DEVICE MUS_AUDIO_DEFAULT
 
 #define in_graph_cursor(ss) ss->Graph_Cursor
 

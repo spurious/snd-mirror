@@ -88,7 +88,8 @@ if any; otherwise channel 0.  Each sound has an
 associated "index" used to refer to it in all the
 functions.  This somewhat arbitrary number is more
 or less related to the sound's position in the
-display of sounds.  If the index is omitted, the
+display of sounds (set the variable <a href="#showindices">show-indices</a>
+to cause it to be displayed in front of the sound's name).  If the index is omitted, the
 currently active sound is used; if none, the
 top sound (or leftmost if you're using the
 horizontal panes).
@@ -333,6 +334,7 @@ you can say (setf (auto-resize) #f) instead of
                                 displayed, reducing screen clutter. The other choice is show-no-axes.
   <a name="showfftpeaks">show-fft-peaks</a>        #f      If #t, fft peak information is included in the fft display.
                                 (This is the 'peaks' button in the <a href="snd.html#viewfft">Transform</a> options dialog).
+  <a name="showindices">show-indices</a>          #f      If #t, each sound's name is preceded by its index.
   <a name="setshowmarks"></a><a name="showmarks">show-marks</a>            #t      If #t, marks are displayed.  This is the '<a href="snd.html#marks">Show marks</a>' View menu option.
   <a name="showmixconsoles">show-mix-consoles</a>     #t      If #t, mix consoles are displayed.  This is the '<a href="snd.html#consoles">Show consoles</a>'
                                 View menu option.

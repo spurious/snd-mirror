@@ -1498,7 +1498,7 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
       XtAddEventHandler(sw[W_name_form],KeyPressMask,FALSE,graph_key_press,(XtPointer)sp);
 
       n=0;      
-      s1=XmStringCreate(shortname(sp),XmFONTLIST_DEFAULT_TAG);
+      s1=XmStringCreate(shortname_indexed(sp),XmFONTLIST_DEFAULT_TAG);
       if (need_colors) {XtSetArg(args[n],XmNbackground,(ss->sgx)->highlight_color); n++;}
       XtSetArg(args[n],XmNalignment,XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n],XmNtopAttachment,XmATTACH_FORM); n++;
@@ -2435,7 +2435,7 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
 	  XtManageChild(sw[i]);
       for (k=0;k<nchans;k++) 
 	add_channel_window(sp,k,ss,chan_min_y,0,NULL,WITH_FW_BUTTONS);
-      set_button_label(sw[W_name],shortname(sp));
+      set_button_label(sw[W_name],shortname_indexed(sp));
       if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
 	XtVaSetValues(sw[W_ctrls],XmNpaneMinimum,1,XmNpaneMaximum,LOTSA_PIXELS,NULL);
 #if (XmVERSION > 1)

@@ -930,18 +930,12 @@ static void reflect_file_change_in_label (chan_info *cp)
   if (cp->edit_ctr == 0) return;
   sp = cp->sound;
   if (sp->sgx == NULL) return;
-  len = strlen(shortname(sp)) + 2;
-  if (sp->read_only) len+=2;
+  len = strlen(shortname(sp)) + 16;
   starred_name = (char *)CALLOC(len,sizeof(char));
-  strcpy(starred_name,shortname(sp));
-  if (sp->read_only)
-    {
-      starred_name[len-4]='(';
-      starred_name[len-3]='*';
-      starred_name[len-2]=')';
-    }
-  else starred_name[len-2]='*';
-  starred_name[len-1]='\0';
+  strcpy(starred_name,shortname_indexed(sp));
+  if (sp->read_only) 
+    strcat(starred_name,"(*)");
+  else strcat(starred_name,"*");
   set_sound_pane_file_label(sp,starred_name);
   make_a_big_star_outa_me(sp->shortname,1);
   FREE(starred_name);

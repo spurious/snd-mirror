@@ -116,7 +116,7 @@ static void mus_error2snd(int type, char *msg)
   ss->Zero_Pad = DEFAULT_ZERO_PAD;
   ss->Line_Size = DEFAULT_LINE_SIZE;
   ss->Ask_Before_Overwrite = DEFAULT_ASK_BEFORE_OVERWRITE;
-  ss->X_Axis_Style = X_IN_SECONDS;
+  ss->X_Axis_Style = DEFAULT_AXIS_STYLE;
   ss->Wavo = DEFAULT_WAVO;
   ss->Wavo_Hop = DEFAULT_WAVO_HOP;
   ss->Wavo_Trace = DEFAULT_WAVO_TRACE;
@@ -131,39 +131,40 @@ static void mus_error2snd(int type, char *msg)
   ss->Spectro_Cutoff = DEFAULT_SPECTRO_CUTOFF;
   ss->Spectro_Start = DEFAULT_SPECTRO_START;
   ss->Wavelet_Type = DEFAULT_WAVELET_TYPE;
-  ss->Transform_Type = FOURIER;
+  ss->Transform_Type = DEFAULT_TRANSFORM_TYPE;
   ss->Show_Selection_Transform = DEFAULT_SHOW_SELECTION_TRANSFORM;
   ss->With_Mix_Consoles = DEFAULT_WITH_MIX_CONSOLES;
   ss->Dot_Size = DEFAULT_DOT_SIZE;
   ss->Vu_Size = DEFAULT_VU_SIZE;
   ss->Vu_Font_Size = DEFAULT_VU_FONT_SIZE;
-  ss->Vu_Font = NULL;
-  ss->Speed_Style = SPEED_AS_FLOAT;
+  ss->Vu_Font = DEFAULT_VU_FONT;
+  ss->Speed_Style = DEFAULT_SPEED_STYLE;
   ss->Movies = DEFAULT_MOVIES;
   ss->Normalize_Fft = DEFAULT_NORMALIZE_FFT;
   ss->Fit_Data_On_Open = DEFAULT_FIT_DATA_ON_OPEN;
-  ss->Zoom_Focus_Style = FOCUS_ACTIVE;
+  ss->Zoom_Focus_Style = DEFAULT_ZOOM_FOCUS_STYLE;
   ss->Save_State_On_Exit = DEFAULT_SAVE_STATE_ON_EXIT;
-  ss->Graph_Style = GRAPH_LINES;
+  ss->Graph_Style = DEFAULT_GRAPH_STYLE;
   ss->Use_Sinc_Interp = DEFAULT_USE_SINC_INTERP;
   ss->Filter_Env_Order = DEFAULT_FILTER_ENV_ORDER;
   ss->Verbose_Cursor = DEFAULT_VERBOSE_CURSOR;
-  ss->Temp_Dir = NULL;
-  ss->Save_Dir = NULL;
-  ss->Eps_File = NULL;
-  ss->Listener_Prompt = ">";
+  ss->Temp_Dir = DEFAULT_TEMP_DIR;
+  ss->Save_Dir = DEFAULT_SAVE_DIR;
+  ss->Eps_File = DEFAULT_EPS_FILE;
+  ss->Listener_Prompt = DEFAULT_LISTENER_PROMPT;
   ss->Audio_State_File = AUDIO_STATE_FILE;
   ss->Show_Fft_Peaks = DEFAULT_SHOW_FFT_PEAKS;
   ss->Show_Y_Zero = DEFAULT_SHOW_Y_ZERO;
   ss->Erase_Zeros = DEFAULT_ERASE_ZEROS;
   ss->Show_Axes = DEFAULT_SHOW_AXES;
   ss->Show_Marks = DEFAULT_SHOW_MARKS;
+  ss->Show_Indices = DEFAULT_SHOW_INDICES;
   ss->Data_Clipped = DEFAULT_DATA_CLIPPED;
   ss->Fft_Log_Magnitude = DEFAULT_FFT_LOG_MAGNITUDE;
   ss->Fft_Log_Frequency = DEFAULT_FFT_LOG_FREQUENCY;
-  ss->Channel_Style = CHANNELS_SEPARATE;
-  ss->Sound_Style = SOUNDS_VERTICAL;
-  ss->Audio_Output_Device = MUS_AUDIO_DEFAULT;
+  ss->Channel_Style = DEFAULT_CHANNEL_STYLE;
+  ss->Sound_Style = DEFAULT_SOUND_STYLE;
+  ss->Audio_Output_Device = DEFAULT_AUDIO_OUTPUT_DEVICE;
 #if DEBUGGING
   ss->Trap_Segfault = 0;
 #else
@@ -182,38 +183,24 @@ static void mus_error2snd(int type, char *msg)
   ss->Recorder_Autoload = DEFAULT_RECORDER_AUTOLOAD;
   ss->Recorder_Buffer_Size = DEFAULT_RECORDER_BUFFER_SIZE;
   ss->Recorder_Out_Chans = DEFAULT_RECORDER_OUT_CHANS;
-  ss->Recorder_Out_Format = MUS_COMPATIBLE_FORMAT;
+  ss->Recorder_Out_Format = DEFAULT_RECORDER_OUT_FORMAT;
   ss->Reverb_Decay = DEFAULT_REVERB_DECAY;
-#ifdef SUN
-  ss->Recorder_In_Format = MUS_MULAW;
-  ss->Recorder_Srate = 8000;
-#else
-  ss->Recorder_In_Format = MUS_COMPATIBLE_FORMAT;
-  ss->Recorder_Srate = 22050;
-#endif
+  ss->Recorder_In_Format = DEFAULT_RECORDER_IN_FORMAT;
+  ss->Recorder_Srate = DEFAULT_RECORDER_SRATE;
   ss->Recorder_Trigger = DEFAULT_RECORDER_TRIGGER;
   ss->Recorder_Max_Duration = DEFAULT_RECORDER_MAX_DURATION;
-  ss->Recorder_File = NULL;
-  ss->Save_State_File = "saved-snd.scm";
+  ss->Recorder_File = DEFAULT_RECORDER_FILE;
+  ss->Save_State_File = DEFAULT_SAVE_STATE_FILE;
   ss->Enved_Base = DEFAULT_ENVED_BASE;
   ss->Enved_Power = DEFAULT_ENVED_POWER;
   ss->Enved_Waving = DEFAULT_ENVED_WAVING;
   ss->Enved_dBing = DEFAULT_ENVED_DBING;
   ss->Enved_Clipping = DEFAULT_ENVED_CLIPPING;
   ss->Enved_Exping = DEFAULT_ENVED_EXPING;
-  ss->Enved_Target = AMPLITUDE_ENV;
+  ss->Enved_Target = DEFAULT_ENVED_TARGET;
   ss->Prefix_Arg = 0;
-#if (HAVE_OSS || HAVE_ALSA)
-  #ifdef PPC
-     /* actually linuxppc */
-     ss->Dac_Size = 0;	
-  #else
-     ss->Dac_Size = 256;
-  #endif
-#else
-  ss->Dac_Size = 1024;
-#endif
-  ss->Dac_Folding = TRUE;
+  ss->Dac_Size = DEFAULT_DAC_SIZE;
+  ss->Dac_Folding = DEFAULT_DAC_FOLDING;
   ss->Corruption_Time = DEFAULT_CORRUPTION_TIME;
   ss->Max_Regions = DEFAULT_MAX_REGIONS;
   ss->Max_Fft_Peaks = DEFAULT_MAX_FFT_PEAKS;
