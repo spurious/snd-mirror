@@ -650,7 +650,7 @@ static void stop_playing_with_toggle(dac_info *dp, dac_toggle_t toggle, with_hoo
   free_dac_info(dp, reason); /* this will call the stop-function, if any */
   if ((sp) && (sp_stopping) && (sp->delete_me)) 
     {
-      if (sp->delete_me != (void *)1) clear_deleted_snd_info(sp->delete_me); /* for various file dialog play buttons */
+      if (sp->delete_me != (struct file_dialog_info *)1) clear_deleted_snd_info(sp->delete_me); /* for various file dialog play buttons */
       completely_free_snd_info(sp); /* dummy snd_info struct for (play "filename") in snd-xen.c */
     }
 }
@@ -2216,7 +2216,7 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, bool back, bool syncd, XEN
       sp = make_sound_readable(play_name, false);
       sp->short_filename = filename_without_home_directory(play_name);
       sp->filename = NULL;
-      sp->delete_me = (void *)1;
+      sp->delete_me = (struct file_dialog_info *)1;
       if (XEN_OFF_T_P(chn_n)) end = XEN_TO_C_OFF_T(chn_n);
       play_sound_1(sp, samp, end, background, 0, stop_proc);
     }

@@ -189,7 +189,11 @@ static chan_info *free_chan_info(chan_info *cp)
       FREE(cp->last_sonogram); 
       cp->last_sonogram = NULL;
     }
-  if (cp->lisp_info) cp->lisp_info = free_lisp_info(cp);
+  if (cp->lisp_info) 
+    {
+      free_lisp_info(cp);
+      cp->lisp_info = NULL;
+    }
   cp->graph_lisp_p = false;
   cp->selection_transform_size = 0;
   cp->edit_hook_checked = false;
@@ -362,7 +366,7 @@ void free_snd_info(snd_info *sp)
   if (sp->sgx)
     {
       env_editor *edp;
-      edp = (env_editor *)(sp->sgx->flt);
+      edp = sp->sgx->flt;
       if (edp)
 	{
 	  edp->edited = false;

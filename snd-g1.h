@@ -552,7 +552,7 @@ widget_t make_mix_file_dialog(bool managed);
 GtkWidget *edit_header(snd_info *sp);
 void set_open_file_play_button(bool val);
 void g_init_gxfile(void);
-void clear_deleted_snd_info(void *fd);
+void clear_deleted_snd_info(struct file_dialog_info *fd);
 widget_t post_it(const char *subject, const char *str);
 void reflect_just_sounds_state(void);
 

@@ -103,8 +103,11 @@ void free_ptree_list(chan_info *cp)
       int i;
       for (i = 0; i < cp->ptree_size; i++)
  	{
-	  if (cp->ptrees[i]) 
-	    cp->ptrees[i] = free_ptree(cp->ptrees[i]);
+	  if (cp->ptrees[i])
+	    {
+	      free_ptree(cp->ptrees[i]);
+	      cp->ptrees[i] = NULL;
+	    }
 	  if (XEN_PROCEDURE_P(cp->ptree_inits[i]))
 	    snd_unprotect_at(cp->init_locs[i]);
 	}
@@ -132,7 +135,7 @@ static int add_ptree(chan_info *cp)
       cp->ptree_size += EDIT_ALLOC_SIZE;
       if (cp->ptrees)
 	{
-	  cp->ptrees = (void **)REALLOC(cp->ptrees, cp->ptree_size * sizeof(void *));
+	  cp->ptrees = (struct ptree **)REALLOC(cp->ptrees, cp->ptree_size * sizeof(struct ptree *));
 	  for (i = cp->ptree_ctr; i < cp->ptree_size; i++) cp->ptrees[i] = NULL;
  	  cp->ptree_inits = (XEN *)REALLOC(cp->ptree_inits, cp->ptree_size * sizeof(XEN));
  	  for (i = cp->ptree_ctr; i < cp->ptree_size; i++) cp->ptree_inits[i] = XEN_FALSE;
@@ -141,7 +144,7 @@ static int add_ptree(chan_info *cp)
  	}
        else 
  	{
- 	  cp->ptrees = (void **)CALLOC(cp->ptree_size, sizeof(void *));
+ 	  cp->ptrees = (struct ptree **)CALLOC(cp->ptree_size, sizeof(struct ptree *));
  	  cp->ptree_inits = (XEN *)CALLOC(cp->ptree_size, sizeof(XEN));
  	  for (i = 0; i < cp->ptree_size; i++) cp->ptree_inits[i] = XEN_FALSE;
  	  cp->init_locs = (int *)CALLOC(cp->ptree_size, sizeof(int));
@@ -383,7 +386,7 @@ char *run_save_state_hook(char *file)
  *    cosine       304  0.007
  */
 
-typedef struct {
+typedef struct ed_fragment {
   off_t out,                               /* running segment location within current overall edited data */
         beg,                               /* index into the associated data => start point of data used in current segment */
         end;                               /* index into the associated data => end point of data used in current segment */
@@ -534,24 +537,24 @@ typedef struct {
 static Float next_ramp_to_float(snd_fd *sf)
 {
   Float val;
-  val = sf->curval;
-  sf->curval += sf->incr;
+  val = sf->curval1;
+  sf->curval1 += sf->incr1;
   return(val);
 }
 
 static Float previous_ramp_to_float(snd_fd *sf)
 {
   Float val;
-  val = sf->curval;
-  sf->curval -= sf->incr;
+  val = sf->curval1;
+  sf->curval1 -= sf->incr1;
   return(val);
 }
 
 static Float next_ramp2_to_float(snd_fd *sf)
 {
   Float val;
-  val = sf->curval * sf->curval2;
-  sf->curval += sf->incr;
+  val = sf->curval1 * sf->curval2;
+  sf->curval1 += sf->incr1;
   sf->curval2 += sf->incr2;
   return(val);
 }
@@ -559,8 +562,8 @@ static Float next_ramp2_to_float(snd_fd *sf)
 static Float previous_ramp2_to_float(snd_fd *sf)
 {
   Float val;
-  val = sf->curval * sf->curval2;
-  sf->curval -= sf->incr;
+  val = sf->curval1 * sf->curval2;
+  sf->curval1 -= sf->incr1;
   sf->curval2 -= sf->incr2;
   return(val);
 }
@@ -652,8 +655,8 @@ static Float previous_ramp1_3_to_float(snd_fd *sf)
 static Float next_ramp3_to_float(snd_fd *sf)
 {
   Float val;
-  val = sf->curval * sf->curval2 * sf->curval3;
-  sf->curval += sf->incr;
+  val = sf->curval1 * sf->curval2 * sf->curval3;
+  sf->curval1 += sf->incr1;
   sf->curval2 += sf->incr2;
   sf->curval3 += sf->incr3;
   return(val);
@@ -662,8 +665,8 @@ static Float next_ramp3_to_float(snd_fd *sf)
 static Float previous_ramp3_to_float(snd_fd *sf)
 {
   Float val;
-  val = sf->curval * sf->curval2 * sf->curval3;
-  sf->curval -= sf->incr;
+  val = sf->curval1 * sf->curval2 * sf->curval3;
+  sf->curval1 -= sf->incr1;
   sf->curval2 -= sf->incr2;
   sf->curval3 -= sf->incr3;
   return(val);
@@ -692,8 +695,8 @@ static Float previous_ramp3_2_to_float(snd_fd *sf)
 static Float next_ramp4_to_float(snd_fd *sf)
 {
   Float val;
-  val = sf->curval * sf->curval2 * sf->curval3 * sf->curval4;
-  sf->curval += sf->incr;
+  val = sf->curval1 * sf->curval2 * sf->curval3 * sf->curval4;
+  sf->curval1 += sf->incr1;
   sf->curval2 += sf->incr2;
   sf->curval3 += sf->incr3;
   sf->curval4 += sf->incr4;
@@ -703,8 +706,8 @@ static Float next_ramp4_to_float(snd_fd *sf)
 static Float previous_ramp4_to_float(snd_fd *sf)
 {
   Float val;
-  val = sf->curval * sf->curval2 * sf->curval3 * sf->curval4;
-  sf->curval -= sf->incr;
+  val = sf->curval1 * sf->curval2 * sf->curval3 * sf->curval4;
+  sf->curval1 -= sf->incr1;
   sf->curval2 -= sf->incr2;
   sf->curval3 -= sf->incr3;
   sf->curval4 -= sf->incr4;
@@ -746,8 +749,8 @@ static Float previous_xramp1_2_to_float(snd_fd *sf)
 static Float next_xramp_ramp_to_float(snd_fd *sf)
 {
   Float val;
-  val = sf->curval * (READER_XRAMP_OFFSET(sf) + (READER_XRAMP_SCALER(sf) * exp(sf->curval4)));
-  sf->curval += sf->incr;
+  val = sf->curval1 * (READER_XRAMP_OFFSET(sf) + (READER_XRAMP_SCALER(sf) * exp(sf->curval4)));
+  sf->curval1 += sf->incr1;
   sf->curval4 += sf->incr4;
   return(val);
 }
@@ -755,8 +758,8 @@ static Float next_xramp_ramp_to_float(snd_fd *sf)
 static Float previous_xramp_ramp_to_float(snd_fd *sf)
 {
   Float val;
-  val = sf->curval * (READER_XRAMP_OFFSET(sf) + (READER_XRAMP_SCALER(sf) * exp(sf->curval4)));
-  sf->curval -= sf->incr;
+  val = sf->curval1 * (READER_XRAMP_OFFSET(sf) + (READER_XRAMP_SCALER(sf) * exp(sf->curval4)));
+  sf->curval1 -= sf->incr1;
   sf->curval4 -= sf->incr4;
   return(val);
 }
@@ -876,8 +879,8 @@ static mus_sample_t next_sample_with_ramp(snd_fd *sf)
   else
     {
       mus_sample_t val;
-      val = (mus_sample_t)(sf->data[sf->loc++] * sf->curval);
-      sf->curval += sf->incr;
+      val = (mus_sample_t)(sf->data[sf->loc++] * sf->curval1);
+      sf->curval1 += sf->incr1;
       return(val);
     }
 }
@@ -889,8 +892,8 @@ static mus_sample_t previous_sample_with_ramp(snd_fd *sf)
   else 
     {
       mus_sample_t val;
-      val = (mus_sample_t)(sf->data[sf->loc--] * sf->curval);
-      sf->curval -= sf->incr;
+      val = (mus_sample_t)(sf->data[sf->loc--] * sf->curval1);
+      sf->curval1 -= sf->incr1;
       return(val);
     }
 }
@@ -902,8 +905,8 @@ static Float next_ramp(snd_fd *sf)
   else 
     {
       Float val;
-      val = sf->data[sf->loc++] * sf->curval * MUS_FIX_TO_FLOAT;
-      sf->curval += sf->incr;
+      val = sf->data[sf->loc++] * sf->curval1 * MUS_FIX_TO_FLOAT;
+      sf->curval1 += sf->incr1;
       return(val);
     }
 }
@@ -915,8 +918,8 @@ static Float previous_ramp(snd_fd *sf)
   else
     {
       Float val;
-      val = sf->data[sf->loc--] * sf->curval * MUS_FIX_TO_FLOAT;
-      sf->curval -= sf->incr;
+      val = sf->data[sf->loc--] * sf->curval1 * MUS_FIX_TO_FLOAT;
+      sf->curval1 -= sf->incr1;
       return(val);
     }
 }
@@ -1057,7 +1060,7 @@ static Float next_ptree_to_float(snd_fd *sf)
   if (!(sf->zero))
     val1 = READER_PTREE_SCALER(sf) * sf->data[sf->loc];
   sf->loc++;
-  val1 = evaluate_ptreec(sf->ptree, val1, (vct *)XEN_OBJECT_REF(sf->closure), true);
+  val1 = evaluate_ptreec(sf->ptree1, val1, (vct *)XEN_OBJECT_REF(sf->closure1), true);
   if (sf->ptree2)
     {
       val1 = evaluate_ptreec(sf->ptree2, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure2), true);
@@ -1073,7 +1076,7 @@ static Float previous_ptree_to_float(snd_fd *sf)
   if (!(sf->zero))
     val1 = READER_PTREE_SCALER(sf) * sf->data[sf->loc];
   sf->loc--;
-  val1 = evaluate_ptreec(sf->ptree, val1, (vct *)XEN_OBJECT_REF(sf->closure), false);
+  val1 = evaluate_ptreec(sf->ptree1, val1, (vct *)XEN_OBJECT_REF(sf->closure1), false);
   if (sf->ptree2)
     {
       val1 = evaluate_ptreec(sf->ptree2, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure2), false);
@@ -1096,7 +1099,7 @@ static Float previous_ptree(snd_fd *sf)
 static Float next_ptree_rampn_to_float(snd_fd *sf)
 {
   Float val1;
-  val1 = evaluate_ptreec(sf->ptree, (*(sf->rampf))(sf) * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure), true);
+  val1 = evaluate_ptreec(sf->ptree1, (*(sf->rampf))(sf) * sf->data[sf->loc++], (vct *)XEN_OBJECT_REF(sf->closure1), true);
   if (sf->ptree2)
     {
       val1 = evaluate_ptreec(sf->ptree2, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure2), true);
@@ -1114,7 +1117,7 @@ static Float next_ptree_rampn(snd_fd *sf)
 static Float previous_ptree_rampn_to_float(snd_fd *sf)
 {
   Float val1;
-  val1 = evaluate_ptreec(sf->ptree, (*(sf->rev_rampf))(sf) * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure), false);
+  val1 = evaluate_ptreec(sf->ptree1, (*(sf->rev_rampf))(sf) * sf->data[sf->loc--], (vct *)XEN_OBJECT_REF(sf->closure1), false);
   if (sf->ptree2)
     {
       val1 = evaluate_ptreec(sf->ptree2, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure2), false);
@@ -1132,7 +1135,7 @@ static Float previous_ptree_rampn(snd_fd *sf)
 static Float next_ptree_xramp_to_float(snd_fd *sf)
 {
   Float val1;
-  val1 = evaluate_ptreec(sf->ptree, sf->data[sf->loc++] * READER_PTREE_SCALER(sf) * next_xramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), true);
+  val1 = evaluate_ptreec(sf->ptree1, sf->data[sf->loc++] * READER_PTREE_SCALER(sf) * next_xramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure1), true);
   if (sf->ptree2)
     {
       val1 = evaluate_ptreec(sf->ptree2, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure2), true);
@@ -1145,7 +1148,7 @@ static Float next_ptree_xramp_to_float(snd_fd *sf)
 static Float next_ptree_pxramp_to_float(snd_fd *sf)
 {
   Float val1;
-  val1 = evaluate_ptreec(sf->ptree, sf->data[sf->loc++] * READER_PTREE_SCALER(sf) * next_pxramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), true);
+  val1 = evaluate_ptreec(sf->ptree1, sf->data[sf->loc++] * READER_PTREE_SCALER(sf) * next_pxramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure1), true);
   if (sf->ptree2)
     {
       val1 = evaluate_ptreec(sf->ptree2, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure2), true);
@@ -1163,7 +1166,7 @@ static Float next_ptree_xramp(snd_fd *sf)
 static Float previous_ptree_xramp_to_float(snd_fd *sf)
 {
   Float val1;
-  val1 = evaluate_ptreec(sf->ptree, sf->data[sf->loc--] * READER_PTREE_SCALER(sf) * previous_xramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), false);
+  val1 = evaluate_ptreec(sf->ptree1, sf->data[sf->loc--] * READER_PTREE_SCALER(sf) * previous_xramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure1), false);
   if (sf->ptree2)
     {
       val1 = evaluate_ptreec(sf->ptree2, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure2), false);
@@ -1176,7 +1179,7 @@ static Float previous_ptree_xramp_to_float(snd_fd *sf)
 static Float previous_ptree_pxramp_to_float(snd_fd *sf)
 {
   Float val1;
-  val1 = evaluate_ptreec(sf->ptree, sf->data[sf->loc--] * READER_PTREE_SCALER(sf) * previous_pxramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), false);
+  val1 = evaluate_ptreec(sf->ptree1, sf->data[sf->loc--] * READER_PTREE_SCALER(sf) * previous_pxramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure1), false);
   if (sf->ptree2)
     {
       val1 = evaluate_ptreec(sf->ptree2, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure2), false);
@@ -1370,7 +1373,7 @@ static Float previous_xramp_rampn_ptree_xramp(snd_fd *sf)
 static Float next_ptree_xrampn_rampn_to_float(snd_fd *sf)
 {
   Float val1;
-  val1 = evaluate_ptreec(sf->ptree, sf->data[sf->loc++] * (*(sf->rampf))(sf), (vct *)XEN_OBJECT_REF(sf->closure), true);
+  val1 = evaluate_ptreec(sf->ptree1, sf->data[sf->loc++] * (*(sf->rampf))(sf), (vct *)XEN_OBJECT_REF(sf->closure1), true);
   if (sf->ptree2)
     {
       val1 = evaluate_ptreec(sf->ptree2, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure2), true);
@@ -1383,7 +1386,7 @@ static Float next_ptree_xrampn_rampn_to_float(snd_fd *sf)
 static Float previous_ptree_xrampn_rampn_to_float(snd_fd *sf)
 {
   Float val1;
-  val1 = evaluate_ptreec(sf->ptree, sf->data[sf->loc--] * (*(sf->rev_rampf))(sf), (vct *)XEN_OBJECT_REF(sf->closure), false);
+  val1 = evaluate_ptreec(sf->ptree1, sf->data[sf->loc--] * (*(sf->rev_rampf))(sf), (vct *)XEN_OBJECT_REF(sf->closure1), false);
   if (sf->ptree2)
     {
       val1 = evaluate_ptreec(sf->ptree2, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure2), false);
@@ -1396,7 +1399,7 @@ static Float previous_ptree_xrampn_rampn_to_float(snd_fd *sf)
 static Float next_ptree_pxramp_ramp_to_float(snd_fd *sf)
 {
   Float val1;
-  val1 = evaluate_ptreec(sf->ptree, sf->data[sf->loc++] * next_pxramp_to_float(sf) * next_ramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), true);
+  val1 = evaluate_ptreec(sf->ptree1, sf->data[sf->loc++] * next_pxramp_to_float(sf) * next_ramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure1), true);
   if (sf->ptree2)
     {
       val1 = evaluate_ptreec(sf->ptree2, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure2), true);
@@ -1409,7 +1412,7 @@ static Float next_ptree_pxramp_ramp_to_float(snd_fd *sf)
 static Float previous_ptree_pxramp_ramp_to_float(snd_fd *sf)
 {
   Float val1;
-  val1 = evaluate_ptreec(sf->ptree, sf->data[sf->loc--] * previous_pxramp_to_float(sf) * previous_ramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure), false);
+  val1 = evaluate_ptreec(sf->ptree1, sf->data[sf->loc--] * previous_pxramp_to_float(sf) * previous_ramp_to_float(sf), (vct *)XEN_OBJECT_REF(sf->closure1), false);
   if (sf->ptree2)
     {
       val1 = evaluate_ptreec(sf->ptree2, READER_PTREE2_SCALER(sf) * val1, (vct *)XEN_OBJECT_REF(sf->closure2), false);
@@ -1517,7 +1520,7 @@ static Float previous_xramp_ramp_ptree_xramp_ramp(snd_fd *sf)
 static Float next_split_ptree2_to_float(snd_fd *sf, Float val1, Float val2)
 {
   return(evaluate_ptreec(sf->ptree2, 
-			 val1 * evaluate_ptreec(sf->ptree, val2, (vct *)XEN_OBJECT_REF(sf->closure), true), 
+			 val1 * evaluate_ptreec(sf->ptree1, val2, (vct *)XEN_OBJECT_REF(sf->closure1), true), 
 			 (vct *)XEN_OBJECT_REF(sf->closure2), true));
 }
 
@@ -1542,7 +1545,7 @@ static Float previous_split_ptree_arg(snd_fd *sf)
 static Float previous_split_ptree2_to_float(snd_fd *sf, Float val1, Float val2)
 {
   return(evaluate_ptreec(sf->ptree2, 
-			 val1 * evaluate_ptreec(sf->ptree, val2, (vct *)XEN_OBJECT_REF(sf->closure), false), 
+			 val1 * evaluate_ptreec(sf->ptree1, val2, (vct *)XEN_OBJECT_REF(sf->closure1), false), 
 			 (vct *)XEN_OBJECT_REF(sf->closure2), false));
 }
 
@@ -3531,21 +3534,21 @@ static void get_sf_closure(snd_fd *sf)
 {
   XEN proc;
   proc = sf->cp->ptree_inits[READER_PTREE_INDEX(sf)];
-  /* if ((XEN_BOUND_P(sf->closure)) && (!(XEN_EQ_P(sf->closure, empty_closure)))) */
-  if (sf->protect >= 0)
+  /* if ((XEN_BOUND_P(sf->closure1)) && (!(XEN_EQ_P(sf->closure1, empty_closure)))) */
+  if (sf->protect1 >= 0)
     {
-      snd_unprotect_at(sf->protect);
-      sf->protect = -1;
+      snd_unprotect_at(sf->protect1);
+      sf->protect1 = -1;
     }
-  sf->closure = empty_closure;
+  sf->closure1 = empty_closure;
   if (XEN_PROCEDURE_P(proc))
     {
-      sf->closure = XEN_CALL_2(proc,
+      sf->closure1 = XEN_CALL_2(proc,
 			       C_TO_XEN_OFF_T(sf->frag_pos + READER_PTREE_POSITION(sf)),
 			       C_TO_XEN_OFF_T(READER_PTREE_DUR(sf)),
 			       "ptree-channel init func");
-      if (XEN_BOUND_P(sf->closure))
-	sf->protect = snd_protect(sf->closure);
+      if (XEN_BOUND_P(sf->closure1))
+	sf->protect1 = snd_protect(sf->closure1);
     }
 }
 
@@ -3596,9 +3599,9 @@ static void get_sf_closure3(snd_fd *sf)
 static void setup_ramp(snd_fd *sf, double rmp0, double rmp1)
 {
   if (READER_LOCAL_END(sf) == READER_LOCAL_POSITION(sf))
-    sf->incr = 0.0;
-  else sf->incr = (double)(rmp1 - rmp0) / (double)(READER_LOCAL_END(sf) - READER_LOCAL_POSITION(sf));
-  sf->curval = rmp0 + sf->incr * sf->frag_pos;
+    sf->incr1 = 0.0;
+  else sf->incr1 = (double)(rmp1 - rmp0) / (double)(READER_LOCAL_END(sf) - READER_LOCAL_POSITION(sf));
+  sf->curval1 = rmp0 + sf->incr1 * sf->frag_pos;
 }
 
 static void setup_ramp2(snd_fd *sf, double rmp0, double rmp1)
@@ -3636,7 +3639,7 @@ static void choose_accessor(snd_fd *sf)
   typ = READER_TYPE(sf);
   if (PTREE123_OP(typ))
     {
-      sf->ptree = sf->cp->ptrees[READER_PTREE_INDEX(sf)];
+      sf->ptree1 = sf->cp->ptrees[READER_PTREE_INDEX(sf)];
       get_sf_closure(sf);
       if (PTREE23_OP(typ))
 	{
@@ -4917,13 +4920,7 @@ static ed_list *make_ed_list(int size)
   ed = (ed_list *)CALLOC(1, sizeof(ed_list));
   ed->size = size;
   ed->allocated_size = size;
-  /* SOMEDAY: make a configure.ac check for this */
-#if defined(__GNUC__) && defined(__cplusplus)
-  ed->fragments = (void **)MALLOC(size * sizeof(ed_fragment *));
-#else
-  /* this form required by the several compilers */
-  ed->fragments = (void *)MALLOC(size * sizeof(ed_fragment *));
-#endif
+  ed->fragments = (ed_fragment **)MALLOC(size * sizeof(ed_fragment *));
   for (i = 0; i < size; i++)
     FRAGMENT(ed, i) = (ed_fragment *)calloc(1, sizeof(ed_fragment)); /* remove this from the memory tracker -- it's glomming up everything */
   ed->origin = NULL;
@@ -4981,8 +4978,11 @@ static ed_list *free_ed_list(ed_list *ed, chan_info *cp)
 	{
 	  int loc;
 	  loc = ed->ptree_location;
-	  if (cp->ptrees[loc]) 
-	    cp->ptrees[loc] = free_ptree(cp->ptrees[loc]);
+	  if (cp->ptrees[loc])
+	    {
+	      free_ptree(cp->ptrees[loc]);
+	      cp->ptrees[loc] = NULL;
+	    }
 	  if (XEN_PROCEDURE_P(cp->ptree_inits[loc]))
 	    {
 	      snd_unprotect_at(cp->init_locs[loc]);
@@ -6291,7 +6291,7 @@ static void make_ptree_fragment(ed_list *new_ed, int i, int ptree_loc, off_t beg
   FRAGMENT_SCALER(new_ed, i) = 1.0;
 }
 
-void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, bool env_it, XEN init_func, const char *origin)
+void ptree_channel(chan_info *cp, struct ptree *tree, off_t beg, off_t num, int pos, bool env_it, XEN init_func, const char *origin)
 {
   off_t len;
   int i, ptree_loc = 0;
@@ -6299,21 +6299,26 @@ void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, bo
   if ((beg < 0) || 
       (num <= 0) ||
       (beg >= cp->samples[pos]) ||
-      (ptree == NULL))
+      (tree == NULL))
     {
-      if (ptree) ptree = free_ptree(ptree);
+      if (tree) 
+	{
+	  free_ptree(tree);
+	  tree = NULL;
+	}
       return; 
     }
   len = cp->samples[pos];
   if (pos > cp->edit_ctr)
     {
       /* prepare_edit_list will throw 'no-such-edit, but we need to clean up the ptree first */
-      ptree = free_ptree(ptree);
+      free_ptree(tree);
+      tree = NULL;
     }
   if (!(prepare_edit_list(cp, len, pos, S_ptree_channel))) return;
   old_ed = cp->edits[pos];
   ptree_loc = add_ptree(cp);
-  cp->ptrees[ptree_loc] = ptree;
+  cp->ptrees[ptree_loc] = tree;
   if (XEN_PROCEDURE_P(init_func))
     {
       cp->init_locs[ptree_loc] = snd_protect(init_func);
@@ -6336,7 +6341,7 @@ void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, bo
 	  make_ptree_fragment(new_ed, i, ptree_loc, beg, num);
 	}
       if (env_it)
-	amp_env_ptree(cp, ptree, pos, init_func);
+	amp_env_ptree(cp, tree, pos, init_func);
     }
   else 
     {
@@ -6352,7 +6357,7 @@ void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, bo
 	    make_ptree_fragment(new_ed, i, ptree_loc, beg, num);
 	}
       if (env_it)
-	amp_env_ptree_selection(cp, ptree, beg, num, pos, init_func);
+	amp_env_ptree_selection(cp, tree, beg, num, pos, init_func);
     }
   new_ed->edit_type = PTREE_EDIT;
   new_ed->sound_location = 0;
@@ -6377,12 +6382,12 @@ snd_fd *free_snd_fd_almost(snd_fd *sf)
   if (sf) 
     {
       snd_data *sd;
-      /* if ((XEN_BOUND_P(sf->closure)) && (!(XEN_EQ_P(sf->closure, empty_closure)))) */
-      if (sf->protect >= 0)
+      /* if ((XEN_BOUND_P(sf->closure1)) && (!(XEN_EQ_P(sf->closure1, empty_closure)))) */
+      if (sf->protect1 >= 0)
  	{
- 	  snd_unprotect_at(sf->protect);
- 	  sf->closure = XEN_UNDEFINED;
-	  sf->protect = -1;
+ 	  snd_unprotect_at(sf->protect1);
+ 	  sf->closure1 = XEN_UNDEFINED;
+	  sf->protect1 = -1;
  	}
       /* if ((XEN_BOUND_P(sf->closure2)) && (!(XEN_EQ_P(sf->closure2, empty_closure)))) */
       if (sf->protect2 >= 0)
@@ -6454,10 +6459,10 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
   curlen = cp->samples[edit_position];
   /* snd_fd allocated only here */
   sf = (snd_fd *)CALLOC(1, sizeof(snd_fd)); /* only creation point */
-  sf->closure = XEN_UNDEFINED;
+  sf->closure1 = XEN_UNDEFINED;
   sf->closure2 = XEN_UNDEFINED;
   sf->closure3 = XEN_UNDEFINED;
-  sf->protect = -1;
+  sf->protect1 = -1;
   sf->protect2 = -1;
   sf->protect3 = -1;
   sf->region = INVALID_REGION;
@@ -9004,13 +9009,13 @@ static XEN g_xen_to_sample(XEN os, XEN frame, XEN chan)
   return(C_TO_XEN_DOUBLE(xen_to_sample_read((mus_any *)XEN_TO_MUS_ANY(os), XEN_TO_C_OFF_T(frame), XEN_TO_C_INT_OR_ELSE(chan, 0))));
 }
 
-static void *wrap_no_vcts(mus_any *ge)
+static struct mus_xen *wrap_no_vcts(mus_any *ge)
 {
   mus_xen *gn;
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
   gn->gen = ge;
   gn->nvcts = 0;
-  return((void *)gn);
+  return(gn);
 }
 
 static XEN g_make_snd_to_sample(XEN snd, XEN edp)
@@ -9028,7 +9033,7 @@ static XEN g_make_snd_to_sample(XEN snd, XEN edp)
   if (ge)
     {
       ge->core->wrapper = &wrap_no_vcts;
-      return(mus_xen_to_object((mus_xen *)wrap_no_vcts(ge)));
+      return(mus_xen_to_object(wrap_no_vcts(ge)));
     }
   return(XEN_FALSE);
 }
@@ -9051,7 +9056,7 @@ be a function of 2 args: the sample to read (a long int), and the channel."
   if (ge)
     {
       ge->core->wrapper = &wrap_no_vcts;
-      return(mus_xen_to_object((mus_xen *)wrap_no_vcts(ge)));
+      return(mus_xen_to_object(wrap_no_vcts(ge)));
     }
   return(XEN_FALSE);
 }

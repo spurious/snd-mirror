@@ -421,7 +421,10 @@ void cursor_search(chan_info *cp, int count)
 		  sp->search_proc = XEN_UNDEFINED;
 		}
 	      if (sp->search_tree)
-		sp->search_tree = free_ptree(sp->search_tree);
+		{
+		  free_ptree(sp->search_tree);
+		  sp->search_tree = NULL;
+		}
 	      if (optimization(ss) > 0)
 		sp->search_tree = form_to_ptree_1_b_without_env(C_STRING_TO_XEN_FORM(sp->search_expr));
 	      if (sp->search_tree == NULL)
@@ -501,7 +504,10 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
 	      if (sp->search_expr) FREE(sp->search_expr);
 	      sp->search_expr = NULL;
 	      if (sp->search_tree)
-		sp->search_tree = free_ptree(sp->search_tree);
+		{
+		  free_ptree(sp->search_tree);
+		  sp->search_tree = NULL;
+		}
 	      if (XEN_PROCEDURE_P(proc))
 		{
 #if HAVE_GUILE
@@ -537,7 +543,11 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
 	  ss->search_proc = XEN_UNDEFINED;
 	  if (ss->search_expr) FREE(ss->search_expr);
 	  ss->search_expr = NULL;
-	  if (ss->search_tree) ss->search_tree = free_ptree(ss->search_tree);
+	  if (ss->search_tree) 
+	    {
+	      free_ptree(ss->search_tree);
+	      ss->search_tree = NULL;
+	    }
 	  if (XEN_PROCEDURE_P(snd))
 	    {
 #if HAVE_GUILE

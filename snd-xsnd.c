@@ -619,7 +619,7 @@ void display_filter_env(snd_info *sp)
   int height, width;
   Widget drawer;
   env_editor *edp;
-  edp = (env_editor *)(sp->sgx->flt);
+  edp = sp->sgx->flt;
   drawer = filter_graph(sp);
   height = widget_height(drawer);
   if (height < MIN_FILTER_GRAPH_HEIGHT) return;
@@ -665,7 +665,7 @@ static void filter_drawer_button_motion(Widget w, XtPointer context, XEvent *eve
 #ifdef MAC_OSX
   if ((press_x == ev->x) && (press_y == ev->y)) return;
 #endif
-  edp = (env_editor *)(sp->sgx->flt);
+  edp = sp->sgx->flt;
   edp->in_dB = sp->filter_control_in_dB;
   env_editor_button_motion(edp, ev->x, ev->y, ev->time, sp->filter_control_envelope);
   display_filter_env(sp);
@@ -681,7 +681,7 @@ static void filter_drawer_button_press(Widget w, XtPointer context, XEvent *even
   press_x = ev->x;
   press_y = ev->y;
 #endif
-  edp = (env_editor *)(sp->sgx->flt);
+  edp = sp->sgx->flt;
   edp->in_dB = sp->filter_control_in_dB;
   if (env_editor_button_press(edp, ev->x, ev->y, ev->time, sp->filter_control_envelope))
     display_filter_env(sp);
@@ -2405,7 +2405,7 @@ snd_info *add_sound_window(char *filename, bool read_only)
       XtAddCallback(sw[W_filter_env], XmNresizeCallback, filter_drawer_resize, (XtPointer)sp);
       XtAddCallback(sw[W_filter_env], XmNexposeCallback, filter_drawer_resize, (XtPointer)sp);
 
-      sp->sgx->flt = (void *)new_env_editor();
+      sp->sgx->flt = new_env_editor();
 
       XtAddEventHandler(sw[W_filter_env], ButtonPressMask, false, filter_drawer_button_press, sp);
       XtAddEventHandler(sw[W_filter_env], ButtonMotionMask, false, filter_drawer_button_motion, sp);

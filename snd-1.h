@@ -74,7 +74,7 @@ typedef struct {
 
 typedef struct {
   int size, allocated_size;
-  void **fragments; /* ed_fragment** */
+  struct ed_fragment **fragments; /* defined in snd-edits.c */
   off_t beg, len;
   char *origin;
   int edit_type, sound_location, ptree_location;
@@ -88,7 +88,7 @@ typedef struct snd_fd {
   mus_sample_t (*run)(struct snd_fd *sf);
   Float (*runf)(struct snd_fd *sf);
   ed_list *current_state;
-  void *cb; /* ed_fragment* */
+  struct ed_fragment *cb;
   off_t loc, first, last;
   int cbi;
   read_direction_t direction;
@@ -103,10 +103,10 @@ typedef struct snd_fd {
   int iscaler;
 #endif
   off_t frag_pos;
-  void *ptree, *ptree2, *ptree3;
-  XEN closure, closure2, closure3;
-  int protect, protect2, protect3;
-  double incr, curval, incr2, curval2, incr3, curval3, incr4, curval4;
+  struct ptree *ptree1, *ptree2, *ptree3;
+  XEN closure1, closure2, closure3;
+  int protect1, protect2, protect3;
+  double incr1, curval1, incr2, curval2, incr3, curval3, incr4, curval4;
   bool zero, xramp2;
   int edit_ctr, dangling_loc, region;
   mus_sample_t (*rev_run)(struct snd_fd *sf);
@@ -129,7 +129,7 @@ typedef struct {
   bool graph_active;
   off_t losamp, hisamp;                 /* displayed x-axis bounds in terms of sound sample numbers */
   Locus graph_x0;                       /* x axis offset relative to window (for double graphs) */
-  void *x_ticks, *y_ticks;              /* actual type is tick_descriptor local to snd-axis.c */
+  struct tick_descriptor *x_ticks, *y_ticks; 
   axis_context *ax;
   Latus width, height;
   struct chan_info *cp;
@@ -155,7 +155,7 @@ typedef struct {
   Float base;
 } env;
 
-typedef struct {
+typedef struct env_editor {
   int *current_xs;
   int *current_ys;
   int current_size;
@@ -203,7 +203,7 @@ typedef struct chan_info {
   bool graph_transform_p;  /* f button state */
   bool graph_time_p;       /* w button state */
   bool graph_lisp_p;       /* is lisp graph active */
-  void *lisp_info;
+  struct lisp_grf *lisp_info; /* defined in snd-chn.c */
   bool cursor_on;          /* channel's cursor */
   bool cursor_visible, fft_cursor_visible;     /* for XOR decisions */
   off_t *cursors;          /* sample number (follows edit history) */
@@ -218,10 +218,10 @@ typedef struct chan_info {
   snd_data **sounds;       /* the associated temp buffer/file/struct list */
   int ptree_size;          /* ditto for ptrees */
   int ptree_ctr;
-  void **ptrees;
+  struct ptree **ptrees;
   XEN *ptree_inits;
   int *init_locs;
-  void *enved_spectra;
+  struct enved_ffts *enved_spectra;
   fft_info *fft;           /* possibly null fft data */
   struct snd_info *sound;  /* containing sound */
   axis_info *axis;         /* time domain axis */
@@ -232,10 +232,10 @@ typedef struct chan_info {
   chan_context *cgx;       /* graphics/window context */
   chan_context *tcgx;      /* when combining chans, all should use chan[0]'s context */
   env_info **amp_envs;
-  void *sonogram_data;
-  void *last_sonogram, *temp_sonogram;
+  sono_info *sonogram_data;
+  struct sonogram_state *last_sonogram, *temp_sonogram; /* defined in snd-fft.c */
   bool show_sonogram_cursor;
-  void *fft_data;          /* parallels sonogram -- try to avoid repeating large ffts needlessly */
+  struct fft_state *fft_data;          /* parallels sonogram -- try to avoid repeating large ffts needlessly */
   printing_t printing;
   fft_change_t fft_changed;
   Float gsy, gzy;
@@ -314,7 +314,7 @@ typedef struct snd_info {
   char *filename;
   char *short_filename;
   int nchans;
-  void *search_tree;
+  struct ptree *search_tree;
   XEN search_proc;
   XEN prompt_callback;
   XEN properties;
@@ -338,13 +338,13 @@ typedef struct snd_info {
   channel_style_t channel_style;
   int allocated_chans;        /* snd_info widget tree is never pruned -- can only grow */
   tracking_cursor_t cursor_follows_play;
-  void *edited_region;
-  void *delete_me;
+  struct region *edited_region;
+  struct file_dialog_info *delete_me;
   chan_info *lacp;
-  void *saved_controls;
+  struct ctrl_state *saved_controls;
   bool apply_ok, applying;
   /* moved from global to channel-local 4-Aug-00 */
-  void *minibuffer_history, *filter_history;
+  struct mini_history *minibuffer_history, *filter_history;
   bool active;
   char *name_string;
 } snd_info;
@@ -357,7 +357,7 @@ typedef struct snd_state {
   Latus channel_min_height;
   snd_info **sounds;
   char *search_expr, *startup_title;
-  void *search_tree;
+  struct ptree *search_tree;
   XEN search_proc;
   XEN file_sort_proc;
   int catch_exists, file_sort_proc_loc, search_proc_loc;
@@ -795,7 +795,7 @@ bool scale_channel_with_origin(chan_info *cp, Float scl, off_t beg, off_t num, i
 bool ramp_channel(chan_info *cp, Float rmp0, Float rmp1, off_t beg, off_t num, int pos, bool in_as_one_edit);
 bool xramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler, Float offset, 
 		   off_t beg, off_t num, int pos, bool in_as_one_edit, mus_any *e, int e_pos);
-void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, bool env_it, XEN init_func, const char *origin);
+void ptree_channel(chan_info *cp, struct ptree *tree, off_t beg, off_t num, int pos, bool env_it, XEN init_func, const char *origin);
 snd_fd *init_sample_read(off_t samp, chan_info *cp, read_direction_t direction);
 snd_fd *init_sample_read_any(off_t samp, chan_info *cp, read_direction_t direction, int edit_position);
 void read_sample_change_direction(snd_fd *sf, read_direction_t dir);
@@ -1081,7 +1081,7 @@ void dac_set_reverb_lowpass(snd_info *sp, Float newval);
 snd_info *make_simple_channel_display(int srate, int initial_length, fw_button_t with_arrows, 
 				      graph_style_t grf_style, widget_t container, bool with_events);
 axis_info *lisp_info_axis(chan_info *cp);
-void *free_lisp_info(chan_info *cp);
+void free_lisp_info(chan_info *cp);
 void zx_incremented(chan_info *cp, double amount);
 kbd_cursor_t cursor_decision(chan_info *cp);
 void reset_x_display(chan_info *cp, double sx, double zx);
@@ -1206,8 +1206,8 @@ void menu_reset_controls(snd_info *sp);
 env_info *env_on_env(env *e, chan_info *cp);
 void amp_env_env(chan_info *cp, Float *brkpts, int npts, int pos, Float base, Float scaler, Float offset);
 void amp_env_env_selection_by(chan_info *cp, mus_any *e, off_t beg, off_t num, int pos);
-void amp_env_ptree(chan_info *cp, void *pt, int pos, XEN init_func);
-void amp_env_ptree_selection(chan_info *cp, void *pt, off_t beg, off_t num, int pos, XEN init_func);
+void amp_env_ptree(chan_info *cp, struct ptree *pt, int pos, XEN init_func);
+void amp_env_ptree_selection(chan_info *cp, struct ptree *pt, off_t beg, off_t num, int pos, XEN init_func);
 void amp_env_insert_zeros(chan_info *cp, off_t beg, off_t num, int pos);
 snd_info *snd_new_file(char *newname, int header_type, int data_format, int srate, int chans, char *new_comment, off_t samples);
 #if (HAVE_SCM_MAKE_RATIO || HAVE_SCM_C_MAKE_RECTANGULAR)
@@ -1431,20 +1431,22 @@ char *track_dialog_track_info(int id);
 void release_pending_track_states(void);
 void display_track_waveform(int track_id, axis_info *ap);
 
-Float mix_read_sample_to_float(void *ptr);
+struct mix_fd;
+struct track_fd;
+Float mix_read_sample_to_float(struct mix_fd *ptr);
 bool mf_p(XEN obj);
-void *get_mf(XEN obj);
-char *run_mix_reader_to_string(void *ptr);
-void run_free_mix_fd(void *ptr);
-void *run_make_mix_sample_reader(int id, off_t beg);
-bool mix_sample_reader_at_end_p(void *md);
-Float track_read_sample_to_float(void *ptr);
+struct mix_fd *get_mf(XEN obj);
+char *run_mix_reader_to_string(struct mix_fd *mf);
+void run_free_mix_fd(struct mix_fd *ptr);
+struct mix_fd *run_make_mix_sample_reader(int id, off_t beg);
+bool mix_sample_reader_at_end_p(struct mix_fd *mf);
+Float track_read_sample_to_float(struct track_fd *ptr);
 bool tf_p(XEN obj);
-void *get_tf(XEN obj);
-char *run_track_reader_to_string(void *ptr);
-void run_free_track_fd(void *ptr);
-void *run_make_track_sample_reader(int id, int chan, off_t beg);
-bool track_sample_reader_at_end_p(void *rd);
+struct track_fd *get_tf(XEN obj);
+char *run_track_reader_to_string(struct track_fd *ptr);
+void run_free_track_fd(struct track_fd *ptr);
+struct track_fd *run_make_track_sample_reader(int id, int chan, off_t beg);
+bool track_sample_reader_at_end_p(struct track_fd *tf);
 bool mix_dialog_mix_inverted(int id);
 void mix_dialog_set_mix_inverted(int id, bool on);
 
@@ -1547,19 +1549,19 @@ off_t dur_to_samples(XEN dur, off_t beg, chan_info *cp, int edpos, int argn, con
 
 /* -------- snd-run.c -------- */
 
-void *form_to_ptree_1_b(XEN code);
-void *form_to_ptree_1_b_without_env(XEN code);
-void *form_to_ptree_1_f(XEN code);
-Float evaluate_ptree_0f2f(void *upt);
-void *form_to_ptree_0_f(XEN code);
-Float evaluate_ptree_1f2f(void *upt, Float arg);
-int evaluate_ptree_1f2b(void *upt, Float arg);
-void *free_ptree(void *upt);
+struct ptree *form_to_ptree_1_b(XEN code);
+struct ptree *form_to_ptree_1_b_without_env(XEN code);
+struct ptree *form_to_ptree_1_f(XEN code);
+Float evaluate_ptree_0f2f(struct ptree *pt);
+struct ptree *form_to_ptree_0_f(XEN code);
+Float evaluate_ptree_1f2f(struct ptree *pt, Float arg);
+int evaluate_ptree_1f2b(struct ptree *pt, Float arg);
+void free_ptree(struct ptree *pt);
 void g_init_run(void);
-XEN ptree_code(void *p);
-Float evaluate_ptree_1f1v1b2f(void *upt, Float arg, vct *v, bool dir);
-void *form_to_ptree_3_f(XEN code);
-Float evaluate_ptreec(void *upt, Float arg, vct *v, bool dir);
+XEN ptree_code(struct ptree *pt);
+Float evaluate_ptree_1f1v1b2f(struct ptree *pt, Float arg, vct *v, bool dir);
+struct ptree *form_to_ptree_3_f(XEN code);
+Float evaluate_ptreec(struct ptree *pt, Float arg, vct *v, bool dir);
 
 
 /* -------- snd-draw.c -------- */

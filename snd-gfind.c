@@ -37,7 +37,10 @@ static void edit_find_find(read_direction_t direction, GtkWidget *w, gpointer co
 	}
       ss->search_proc = XEN_UNDEFINED;
       if (ss->search_tree)
-	ss->search_tree = free_ptree(ss->search_tree);
+	{
+	  free_ptree(ss->search_tree);
+	  ss->search_tree = NULL;
+	}
       proc = snd_catch_any(eval_str_wrapper, str, str);
       if ((XEN_PROCEDURE_P(proc)) && (procedure_arity_ok(proc, 1)))
 	{

@@ -767,12 +767,12 @@ static void make_sonogram_axes(chan_info *cp)
     }
 }
 
-typedef struct {
+typedef struct fft_state {
   int size;
   mus_fft_window_t wintype;
   graph_type_t graph_type;
   bool done;
-  void *chan;
+  chan_info *cp;
   Float *window;
   Float *data;
   Float beta;
@@ -833,7 +833,7 @@ static void apply_fft(fft_state *fs)
   int data_len;
   snd_fd *sf;
   chan_info *cp;
-  cp = (chan_info *)(fs->chan);
+  cp = fs->cp;
   fft_data = fs->data;
   data_len = cp->transform_size;
   if (data_len > fs->size) data_len = fs->size;
@@ -938,7 +938,7 @@ static void display_fft(fft_state *fs)
   chan_info *ncp;
   snd_info *sp;
   int i, j, lo, hi;
-  cp = (chan_info *)(fs->chan);
+  cp = fs->cp;
   if ((cp == NULL) || (!(cp->active))) return;
   fp = cp->fft;
   if (fp == NULL) return; /* can happen if selection transform set, but no selection */
@@ -1104,7 +1104,7 @@ static fft_state *free_fft_state(fft_state *fs)
 void cp_free_fft_state(chan_info *cp)
 {
   if (cp->fft_data)
-    cp->fft_data = free_fft_state((fft_state *)(cp->fft_data));
+    cp->fft_data = (fft_state *)free_fft_state(cp->fft_data);
 }
 
 bool fft_window_beta_in_use(mus_fft_window_t win) {return(win >= MUS_KAISER_WINDOW);}
@@ -1144,7 +1144,7 @@ static fft_state *make_fft_state(chan_info *cp, bool force_recalc)
     }
   if ((!force_recalc) && (cp->fft_data) && (cp->selection_transform_size == 0))
     {
-      fs = (fft_state *)(cp->fft_data);
+      fs = cp->fft_data;
       if ((fs->losamp == ap->losamp) && 
 	  (!(XEN_HOOKED(before_transform_hook))) &&
 	  (fs->size == fftsize) &&
@@ -1164,7 +1164,7 @@ static fft_state *make_fft_state(chan_info *cp, bool force_recalc)
     {
       cp_free_fft_state(cp);
       fs = (fft_state *)CALLOC(1, sizeof(fft_state));
-      fs->chan = cp;
+      fs->cp = cp;
       fs->cutoff = cp->spectro_cutoff;
       fs->size = fftsize;
       fs->pad_zero = cp->zero_pad;
@@ -1232,7 +1232,7 @@ static void one_fft(fft_state *fs)
       /* allocate arrays if needed */
       fft_info *fp;
       chan_info *cp;
-      cp = (chan_info *)(fs->chan);
+      cp = fs->cp;
       fp = cp->fft;
       if (!fp)                              /* associated channel hasn't done any ffts yet, so there's no struct */
 	{
@@ -1281,7 +1281,7 @@ void single_fft(chan_info *cp, bool update_display, bool force_recalc)
   fft_state *fs;
   if (cp->transform_size < 2) return;
   fs = make_fft_state(cp, force_recalc);
-  cp->fft_data = (void *)fs; /* make g++ happy */
+  cp->fft_data = fs;
   one_fft(fs);
   if (update_display) display_channel_fft_data(cp);
 }
@@ -1304,7 +1304,7 @@ void single_fft(chan_info *cp, bool update_display, bool force_recalc)
 
 typedef enum {SONO_INIT, SONO_RUN, SONO_QUIT, SONO_DONE} sono_slice_t;
 
-typedef struct {
+typedef struct sonogram_state {
   sono_slice_t slice;
   int outlim, outer;
   fft_state *fs;
@@ -1330,7 +1330,7 @@ void clear_transform_edit_ctrs(chan_info *cp)
   if (cp->fft_data)
     {
       fft_state *fs;
-      fs = (fft_state *)(cp->fft_data);
+      fs = cp->fft_data;
       fs->edit_ctr = -1;
     }
   if (cp->last_sonogram)
@@ -1379,7 +1379,7 @@ void free_sonogram_fft_state(void *ptr)
 void free_sono_info(chan_info *cp)
 {
   sono_info *si;
-  si = (sono_info *)(cp->sonogram_data);
+  si = cp->sonogram_data;
   if (si)
     {
       if (si->begs) FREE(si->begs);
@@ -1431,7 +1431,7 @@ static sono_slice_t set_up_sonogram(sonogram_state *sg)
   else sg->spectrum_size = cp->transform_size;
   if (sg->spectrum_size <= 0) return(SONO_QUIT);
   sg->edit_ctr = cp->edit_ctr;
-  si = (sono_info *)(cp->sonogram_data);
+  si = cp->sonogram_data;
   if (!si)
     {
       si = (sono_info *)CALLOC(1, sizeof(sono_info));
@@ -1510,7 +1510,7 @@ static sono_slice_t run_all_ffts(sonogram_state *sg)
   one_fft((fft_state *)(sg->fs));
   fs = sg->fs;
   cp = sg->cp;
-  si = (sono_info *)(cp->sonogram_data);
+  si = cp->sonogram_data;
   if (si->active_slices < si->total_slices) 
     si->begs[si->active_slices] = sg->beg + fs->beg;
   sg->msg_ctr--;
@@ -1813,7 +1813,7 @@ and otherwise return a list (total-size active-bins active-slices)"
     return(XEN_ZERO);
   if (cp->transform_graph_type == GRAPH_ONCE)
     return(C_TO_XEN_INT(cp->transform_size));
-  si = (sono_info *)(cp->sonogram_data);
+  si = cp->sonogram_data;
   if (si) return(XEN_LIST_3(C_TO_XEN_DOUBLE(cp->spectro_cutoff),
 			    C_TO_XEN_INT(si->active_slices),
 			    C_TO_XEN_INT(si->target_bins)));
@@ -1847,7 +1847,7 @@ return the current transform sample at bin and slice in snd channel chn (assumin
 		  int fslice;
 		  sono_info *si;
 		  fslice = XEN_TO_C_INT_OR_ELSE(slice, 0);
-		  si = (sono_info *)(cp->sonogram_data);
+		  si = cp->sonogram_data;
 		  if ((si) && 
 		      (fbin < si->target_bins) && 
 		      (fslice < si->active_slices))
@@ -1906,7 +1906,7 @@ return a vct (obj if it's passed), with the current transform data from snd's ch
       else
 	{
 	  sono_info *si;
-	  si = (sono_info *)(cp->sonogram_data);
+	  si = cp->sonogram_data;
 	  if (si)
 	    {
 	      int i, j, k, bins, slices;

@@ -199,8 +199,6 @@ int main(int argc, char **argv)
   add_header("xen.h");
   add_header("config.h.in");
   add_header("libclm.def");
-  
-  /* add_header("fake.h"); */ /* has out-of-date (non-void) entries */
 
   add_file("xen.h");
   add_file("snd.h");

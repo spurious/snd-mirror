@@ -26,7 +26,10 @@ static void edit_find_ok_callback(read_direction_t direction, Widget w, XtPointe
 	}
       ss->search_proc = XEN_UNDEFINED;
       if (ss->search_tree)
-	ss->search_tree = free_ptree(ss->search_tree);
+	{
+	  free_ptree(ss->search_tree);
+	  ss->search_tree = NULL;
+	}
       proc = snd_catch_any(eval_str_wrapper, str, str);
       if ((XEN_PROCEDURE_P(proc)) && (procedure_arity_ok(proc, 1)))
 	{

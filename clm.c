@@ -337,7 +337,7 @@ void *mus_environ(mus_any *gen)
   return(NULL);
 }
 
-void *mus_wrapper(mus_any *gen)
+struct mus_xen *mus_wrapper(mus_any *gen)
 {
   if ((gen->core)->wrapper)
     return((*(gen->core->wrapper))(gen));
@@ -519,14 +519,14 @@ static XEN *make_vcts(int size)
 /* internal stuff */
 enum {G_FILTER_STATE, G_FILTER_XCOEFFS, G_FILTER_YCOEFFS};
 
-void *_mus_wrap_no_vcts(mus_any *ge)
+struct mus_xen *_mus_wrap_no_vcts(mus_any *ge)
 {
   mus_xen *gn;
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
   gn->gen = ge;
   gn->nvcts = 0;
   gn->vcts = NULL;
-  return((void *)gn);
+  return(gn);
 }
 
 static int data_length(mus_any *ge)
@@ -536,7 +536,7 @@ static int data_length(mus_any *ge)
   return((int)mus_length(ge));
 }
 
-void *_mus_wrap_one_vct(mus_any *ge)
+struct mus_xen *_mus_wrap_one_vct(mus_any *ge)
 {
   mus_xen *gn;
   Float *data;
@@ -549,23 +549,16 @@ void *_mus_wrap_one_vct(mus_any *ge)
       gn->nvcts = 1;
       gn->vcts = make_vcts(gn->nvcts);
       gn->vcts[MUS_DATA_WRAPPER] = make_vct(data_length(ge), data);
-#if DEBUGGING
-      if (XEN_FALSE_P(gn->vcts[MUS_DATA_WRAPPER]))
-	{
-	  fprintf(stderr,"no vct? %d %p\n", data_length(ge), data);
-	  abort();
-	}
-#endif
     }
   else
     {
       gn->nvcts = 0;
       gn->vcts = NULL;
     }
-  return((void *)gn);
+  return(gn);
 }
 
-void *_mus_wrap_one_vct_wrapped(mus_any *ge)
+struct mus_xen *_mus_wrap_one_vct_wrapped(mus_any *ge)
 {
   mus_xen *gn;
   Float *data;
@@ -583,9 +576,9 @@ void *_mus_wrap_one_vct_wrapped(mus_any *ge)
       gn->nvcts = 0;
       gn->vcts = NULL;
     }
-  return((void *)gn);
+  return(gn);
 }
-static void *wrap_filter(mus_any *gen)
+static struct mus_xen *wrap_filter(mus_any *gen)
 {
   mus_xen *gn;
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
@@ -597,23 +590,23 @@ static void *wrap_filter(mus_any *gen)
     gn->vcts[G_FILTER_XCOEFFS] = make_vct_wrapper(mus_order(gen), mus_xcoeffs(gen));
   if (!mus_fir_filter_p(gen))
     gn->vcts[G_FILTER_YCOEFFS] = make_vct_wrapper(mus_order(gen), mus_ycoeffs(gen));
-  return((void *)gn);
+  return(gn);
 }
-static void *wrap_max_vcts(mus_any *ge)
+static struct mus_xen *wrap_max_vcts(mus_any *ge)
 {
   mus_xen *gn;
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
   gn->nvcts = MAX_VCTS;
   gn->vcts = make_vcts(gn->nvcts);
   gn->gen = ge;
-  return((void *)gn);
+  return(gn);
 }
 #else
-void *_mus_wrap_no_vcts(mus_any *ge) {return(NULL);}
-void *_mus_wrap_one_vct(mus_any *ge) {return(NULL);}
-void *_mus_wrap_one_vct_wrapped(mus_any *ge) {return(NULL);}
-static void *wrap_filter(mus_any *gen) {return(NULL);}
-static void *wrap_max_vcts(mus_any *ge) {return(NULL);}
+struct mus_xen *_mus_wrap_no_vcts(mus_any *ge) {return(NULL);}
+struct mus_xen *_mus_wrap_one_vct(mus_any *ge) {return(NULL);}
+struct mus_xen *_mus_wrap_one_vct_wrapped(mus_any *ge) {return(NULL);}
+static struct mus_xen *wrap_filter(mus_any *gen) {return(NULL);}
+static struct mus_xen *wrap_max_vcts(mus_any *ge) {return(NULL);}
 #endif
 
 

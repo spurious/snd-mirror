@@ -34,7 +34,7 @@ typedef struct {
 } axis_context;
 
 typedef struct {
-  void *amp_env_state;
+  struct env_state *amp_env_state;
   int amp_env_in_progress;
   axis_context *ax;
   int selected;
@@ -42,7 +42,7 @@ typedef struct {
 } chan_context;
 
 typedef struct {
-  void *flt;
+  struct env_editor *flt;
 } snd_context;
 
 typedef struct {

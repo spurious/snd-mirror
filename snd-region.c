@@ -33,7 +33,7 @@ static deferred_region *free_deferred_region(deferred_region *dr)
   return(NULL);
 }
 
-typedef struct {
+typedef struct region {
   int chans;
   off_t frames;
   int srate;                /* for file save (i.e. region->file) */
@@ -1051,7 +1051,7 @@ void clear_region_backpointer(snd_info *sp)
   if (sp->edited_region)
     {
       region *r;
-      r = (region *)(sp->edited_region);
+      r = sp->edited_region;
       if (r)
 	{
 	  snd_remove(r->editor_name, REMOVE_FROM_CACHE);
@@ -1068,7 +1068,7 @@ void save_region_backpointer(snd_info *sp)
   /* region being edited, user chose 'save' */
   region *r;
   int i, err;
-  r = (region *)(sp->edited_region);
+  r = sp->edited_region;
   /* update r's data in file, deleting old, redisplay if browser active etc */
   if (r == regions[0]) deactivate_selection();
   free_region(r, CLEAR_REGION_DATA);

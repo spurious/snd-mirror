@@ -23,9 +23,10 @@
 #define DEFAULT_RECORDER_OUT_CHANS 2
 #define DEFAULT_RECORDER_IN_CHANS 0
 
+struct Wdesc;
 int recorder_columns(int vu_meters);
-int recorder_sort_mixer_device(void *wd, int i, int chan, bool input, int device, int *mixflds);
-void recorder_fill_wd(void *wd, int chan, int field, int device);
+int recorder_sort_mixer_device(struct Wdesc *wd, int i, int chan, bool input, int device, int *mixflds);
+void recorder_fill_wd(struct Wdesc *wd, int chan, int field, int device);
 int recorder_check_device(int system, int device, int *mixer_gains_posted, int *tone_controls_posted, int *mixflds, int *gains, bool *inp);
 void recorder_set_audio_srate(int device, int srate, int system, bool aud);
 char *recorder_device_name(int dev);

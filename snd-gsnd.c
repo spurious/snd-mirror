@@ -927,7 +927,7 @@ void display_filter_env(snd_info *sp)
   GtkWidget *drawer;
   env_editor *edp;
   if (IS_PLAYER(sp)) return;
-  edp = (env_editor *)(sp->sgx->flt);
+  edp = sp->sgx->flt;
   drawer = filter_graph(sp);
   height = widget_height(drawer);
   if (height < MIN_FILTER_GRAPH_HEIGHT) return;
@@ -967,7 +967,7 @@ static gboolean filter_drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gp
 	  evx = (int)(ev->x);
 	  evy = (int)(ev->y);
 	}
-      edp = (env_editor *)(sp->sgx->flt);
+      edp = sp->sgx->flt;
       edp->in_dB = sp->filter_control_in_dB;
       env_editor_button_motion(edp, evx, evy, ev->time, sp->filter_control_envelope);
       display_filter_env(sp);
@@ -980,7 +980,7 @@ static gboolean filter_drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpo
 {
   snd_info *sp = (snd_info *)data;
   env_editor *edp;
-  edp = (env_editor *)(sp->sgx->flt);
+  edp = sp->sgx->flt;
   edp->in_dB = sp->filter_control_in_dB;
   if (env_editor_button_press(edp, (int)(ev->x), (int)(ev->y), ev->time, sp->filter_control_envelope))
     display_filter_env(sp);
@@ -1629,7 +1629,7 @@ snd_info *add_sound_window(char *filename, bool read_only)
       SG_SIGNAL_CONNECT(sw[W_filter_env], "motion_notify_event", filter_drawer_button_motion, sp);
 
       gtk_widget_show(sw[W_filter_frame]);
-      sp->sgx->flt = (void *)new_env_editor();
+      sp->sgx->flt = new_env_editor();
       
       /* end if control-panel */
       gtk_widget_show(sw[W_control_panel]);

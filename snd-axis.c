@@ -6,7 +6,7 @@ axis_context *free_axis_context(axis_context *ax)
   return(NULL);
 }
 
-typedef struct {
+typedef struct tick_descriptor {
   double hi, lo; 
   int max_ticks;
   double flo, fhi, mlo, mhi, step, tenstep;
@@ -129,8 +129,8 @@ static tick_descriptor *describe_ticks(tick_descriptor *gd_td, double lo, double
 
 axis_info *free_axis_info(axis_info *ap)
 {
-  if (ap->x_ticks) ap->x_ticks = (void *)free_tick_descriptor((tick_descriptor *)(ap->x_ticks));
-  if (ap->y_ticks) ap->y_ticks = (void *)free_tick_descriptor((tick_descriptor *)(ap->y_ticks));
+  if (ap->x_ticks) ap->x_ticks = free_tick_descriptor(ap->x_ticks);
+  if (ap->y_ticks) ap->y_ticks = free_tick_descriptor(ap->y_ticks);
   if (ap->ax) ap->ax = free_axis_context(ap->ax);
   if (ap->xlabel) 
     {
@@ -514,7 +514,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 		  y_range = 1.0;
 		}
 	    }
-	  tdy = describe_ticks((tick_descriptor *)(ap->y_ticks), ap->y0, ap->y1, num_ticks, grid_scale);
+	  tdy = describe_ticks(ap->y_ticks, ap->y0, ap->y1, num_ticks, grid_scale);
 	  ap->y_ticks = tdy;
 	  if (include_y_tick_labels)
 	    {
@@ -583,21 +583,21 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
       switch (x_style)
 	{
 	case X_AXIS_IN_SECONDS: 
-	  tdx = describe_ticks((tick_descriptor *)(ap->x_ticks), ap->x0, ap->x1, num_ticks, grid_scale); 
+	  tdx = describe_ticks(ap->x_ticks, ap->x0, ap->x1, num_ticks, grid_scale); 
 	  break;
 	case X_AXIS_IN_SAMPLES: 
-	  tdx = describe_ticks((tick_descriptor *)(ap->x_ticks), ap->x0 * srate, ap->x1 * srate, num_ticks, grid_scale); 
+	  tdx = describe_ticks(ap->x_ticks, ap->x0 * srate, ap->x1 * srate, num_ticks, grid_scale); 
 	  break;
 	case X_AXIS_IN_BEATS: 
 	  if (ap->cp)
-	    tdx = describe_ticks((tick_descriptor *)(ap->x_ticks), 
+	    tdx = describe_ticks(ap->x_ticks, 
 				 (ap->x0 * ap->cp->beats_per_minute / 60.0), 
 				 (ap->x1 * ap->cp->beats_per_minute / 60.0), 
 				 num_ticks, grid_scale); 
-	  else tdx = describe_ticks((tick_descriptor *)(ap->x_ticks), ap->x0, ap->x1, num_ticks, grid_scale); 
+	  else tdx = describe_ticks(ap->x_ticks, ap->x0, ap->x1, num_ticks, grid_scale); 
 	  break;
 	case X_AXIS_AS_PERCENTAGE: 
-	  tdx = describe_ticks((tick_descriptor *)(ap->x_ticks), ap->x0 / ap->xmax, ap->x1 / ap->xmax, num_ticks, grid_scale); 
+	  tdx = describe_ticks(ap->x_ticks, ap->x0 / ap->xmax, ap->x1 / ap->xmax, num_ticks, grid_scale); 
 	  break;
 	}
       ap->x_ticks = tdx;

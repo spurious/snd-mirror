@@ -1,6 +1,6 @@
 /* snd-xrec and snd-grec shared code */
 
-/* TODO: split out the Jack cases */
+/* TODO: split out the Jack cases -- jack+recorder=bus error? */
 /* TODO: recorder-in-chans as a list of hardware chans -> displayed input chans, also recorder-out-chans */
 /* (Motif) troubles: on buttons in upper right are crushed
  */
@@ -242,7 +242,7 @@ char *recorder_field_abbreviation(int fld)
 }
 #endif
 
-int recorder_sort_mixer_device(void *wd, int i, int chan, bool input, int device, int *mixflds)
+int recorder_sort_mixer_device(struct Wdesc *wd, int i, int chan, bool input, int device, int *mixflds)
 {
 #if (HAVE_OSS || HAVE_ALSA)
   /* we're moving right to left here, chan is counting down, we need to fill out MIXER|MUS_AUDIO_DAC_FILTER fields and channels */
@@ -2071,5 +2071,5 @@ void g_init_recorder(void)
   void recorder_set_vu_out_val(int chan, mus_sample_t val) {}
   void finish_recording(recorder_info *rp) {}
   void sensitize_control_buttons(void) {}
-  void recorder_fill_wd(void *uwd, int chan, int field, int device) {}
+  void recorder_fill_wd(struct Wdesc *wd, int chan, int field, int device) {}
 #endif

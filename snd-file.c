@@ -1242,7 +1242,7 @@ static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
   char *filename;
   void *ms;
   snd_info *saved_sp;
-  void *saved_controls;
+  struct ctrl_state *saved_controls;
   off_t *old_cursors;
   XEN update_hook_result = XEN_FALSE;
 

@@ -83,7 +83,7 @@ typedef struct {
   Widget *chan_widgets;
   Cessator fft_in_progress;
   Cessator amp_env_in_progress;
-  void *amp_env_state;
+  struct env_state *amp_env_state;
   axis_context *ax;
   bool selected;
 } chan_context;
@@ -92,7 +92,7 @@ typedef struct {
   Pixmap file_pix;
   Widget *snd_widgets;
   Widget tab;
-  void *flt;
+  struct env_editor *flt;
   Widget dialog;
 } snd_context;
 

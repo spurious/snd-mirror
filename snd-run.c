@@ -22,17 +22,17 @@
  *
  *
  * exported:
- *      (static void *form_to_ptree(XEN code) parse code, returning pointer to tree (a list) or null if code has something we can't handle)
- *   void *form_to_ptree_1_f(XEN code) -- (1 arg) adds type check that result is Float
- *   void *form_to_ptree_0_f(XEN code) -- (no args) adds type check that result is Float
- *   void *form_to_ptree_1_b(XEN code) -- (1 arg) adds type check that result is boolean
- *   Float evaluate_ptree_1f2f(void *tree, Float arg)
+ *      (static struct ptree *form_to_ptree(XEN code) parse code, returning pointer to tree (a list) or null if code has something we can't handle)
+ *   struct ptree *form_to_ptree_1_f(XEN code) -- (1 arg) adds type check that result is Float
+ *   struct ptree *form_to_ptree_0_f(XEN code) -- (no args) adds type check that result is Float
+ *   struct ptree *form_to_ptree_1_b(XEN code) -- (1 arg) adds type check that result is boolean
+ *   Float evaluate_ptree_1f2f(struct ptree *tree, Float arg)
  *     evaluate ptree passing it the single Float arg, returning a Float result
- *   Float evaluate_ptree_0f2f(void *tree, Float arg)
+ *   Float evaluate_ptree_0f2f(struct ptree *tree, Float arg)
  *     evaluate ptree (no args), returning a Float result
- *   Float evaluate_ptree_1f2b(void *tree, Float arg)
+ *   Float evaluate_ptree_1f2b(struct ptree *tree, Float arg)
  *     evaluate ptree passing it the single Float arg, returning a boolean result
- *   void *free_ptree(void *pt)
+ *   void free_ptree(struct ptree *pt)
  *     release resources allocated to ptree
  *
  *
@@ -113,6 +113,7 @@ static int run_safety = RUN_UNSAFE;
 #define GLOBAL_OK 3
 #define GLOBAL_SET_OK 5
 #define SOURCE_OK 6
+/* OMIT_COMPLEX not used */
 
 #define XEN_CDDDR(a)                        SCM_CDDDR(a)
 #define XEN_CAAR(a)                         XEN_CAR(XEN_CAR(a))
@@ -357,71 +358,6 @@ typedef struct {
 } vect;
 
 
-#ifdef __cplusplus
-/* need struct with forward reference fields... */
-struct ptree;
-struct triple;
-
-struct ptree {
-  triple **program;
-  Int *ints; 
-  Double *dbls;
-  int program_size, ints_size, dbls_size, triple_ctr, int_ctr, dbl_ctr;
-  xen_var **vars;
-  int vars_size, var_ctr;
-  xen_var **global_vars;
-  int global_vars_size, global_var_ctr;
-  xen_value *result;
-  int *args; 
-  int *arg_types;
-  int arity;
-  continuation **gotos;
-  int goto_ctr, gotos_size;
-  xen_value **gcs;
-  int gc_ctr, gcs_size;
-  int *gc_protected;
-  int gc_protected_ctr, gc_protected_size;
-  int initial_pc;
-  XEN code, form;
-  int form_loc;
-  int str_ctr, strs_size;
-  char **strs;
-  int vct_ctr, vcts_size;
-  vct **vcts;
-  int sd_ctr, sds_size;
-  sound_data **sds;
-  int clm_ctr, clms_size;
-  mus_any **clms;
-  int vect_ctr, vects_size;
-  vect **vects;
-  int reader_ctr, readers_size;
-  snd_fd **readers;
-  int mix_reader_ctr, mix_readers_size;
-  void **mix_readers;
-  int track_reader_ctr, track_readers_size;
-  void **track_readers;
-  int fnc_ctr, fncs_size;
-  struct ptree **fncs;
-  int xen_ctr, xens_size;
-  XEN *xens;
-  int xen_vars_size, xen_var_ctr;
-  xen_value ***xen_vars;
-  ptree *outer_tree;
-  /* next needed by tree builders (temps) */
-  int constants;
-  bool float_result;
-  walk_result_t walk_result;
-};
-
-struct triple {
-  void (*function)(int *arg_addrs, ptree *pt);
-  int *args;
-  char *(*descr)(int *arg_addrs, ptree *pt); /* for debugging */
-  bool no_opt;
-};
-
-#else
-
 typedef struct ptree {
   struct triple **program;
   Int *ints; 
@@ -457,9 +393,9 @@ typedef struct ptree {
   int reader_ctr, readers_size;
   snd_fd **readers;
   int mix_reader_ctr, mix_readers_size;
-  void **mix_readers;
+  struct mix_fd **mix_readers;
   int track_reader_ctr, track_readers_size;
-  void **track_readers;
+  struct track_fd **track_readers;
   int fnc_ctr, fncs_size;
   struct ptree **fncs;
   int xen_ctr, xens_size;
@@ -473,14 +409,12 @@ typedef struct ptree {
   walk_result_t walk_result;
 } ptree;
 
-typedef struct {
+typedef struct triple {
   void (*function)(int *arg_addrs, ptree *pt);
   int *args;
   char *(*descr)(int *arg_addrs, ptree *pt); /* for debugging */
   bool no_opt;
 } triple;
-
-#endif
 
 static int allocate_xen_vars(ptree *pt, int size)
 {
@@ -714,9 +648,9 @@ static char *str_append(char *oldstr, int *oldsize, char *newstr)
   return(oldstr);
 }
 
-XEN ptree_code(void *pt)
+XEN ptree_code(struct ptree *pt)
 {
-  return(((ptree *)pt)->form);
+  return(pt->form);
 }
 
 static char *describe_ptree(ptree *pt)
@@ -732,8 +666,8 @@ static char *describe_ptree(ptree *pt)
   mus_any **inner_clms;
   vect **inner_vects;
   snd_fd **inner_readers;
-  void **inner_mix_readers;
-  void **inner_track_readers;
+  struct mix_fd **inner_mix_readers;
+  struct track_fd **inner_track_readers;
   ptree **inner_fncs;
   XEN *inner_xens;
   xen_value ***inner_xen_vars;
@@ -754,19 +688,19 @@ static char *describe_ptree(ptree *pt)
   inner_track_readers = pt->track_readers;
   if (pt->outer_tree)
     {
-      pt->ints = ((ptree *)(pt->outer_tree))->ints;
-      pt->dbls = ((ptree *)(pt->outer_tree))->dbls;
-      pt->strs = ((ptree *)(pt->outer_tree))->strs;
-      pt->vcts = ((ptree *)(pt->outer_tree))->vcts;
-      pt->sds = ((ptree *)(pt->outer_tree))->sds;
-      pt->clms = ((ptree *)(pt->outer_tree))->clms;
-      pt->vects = ((ptree *)(pt->outer_tree))->vects;
-      pt->fncs = ((ptree *)(pt->outer_tree))->fncs;
-      pt->xens = ((ptree *)(pt->outer_tree))->xens;
-      pt->readers = ((ptree *)(pt->outer_tree))->readers;
-      pt->mix_readers = ((ptree *)(pt->outer_tree))->mix_readers;
-      pt->track_readers = ((ptree *)(pt->outer_tree))->track_readers;
-      pt->xen_vars = ((ptree *)(pt->outer_tree))->xen_vars;
+      pt->ints = pt->outer_tree->ints;
+      pt->dbls = pt->outer_tree->dbls;
+      pt->strs = pt->outer_tree->strs;
+      pt->vcts = pt->outer_tree->vcts;
+      pt->sds = pt->outer_tree->sds;
+      pt->clms = pt->outer_tree->clms;
+      pt->vects = pt->outer_tree->vects;
+      pt->fncs = pt->outer_tree->fncs;
+      pt->xens = pt->outer_tree->xens;
+      pt->readers = pt->outer_tree->readers;
+      pt->mix_readers = pt->outer_tree->mix_readers;
+      pt->track_readers = pt->outer_tree->track_readers;
+      pt->xen_vars = pt->outer_tree->xen_vars;
     }
   buf = str_append(buf, &size, mus_format("ints: %d, dbls: %d, triples: %d, vars: %d\n  [",
 					  pt->int_ctr, pt->dbl_ctr, pt->triple_ctr, pt->var_ctr));
@@ -1241,9 +1175,8 @@ static ptree *free_embedded_ptree(ptree *pt)
   return(NULL);
 }
 
-void *free_ptree(void *upt)
+void free_ptree(struct ptree *pt)
 {
-  ptree *pt = (ptree *)upt;
   if (pt)
     {
       int i;
@@ -1482,7 +1415,6 @@ void *free_ptree(void *upt)
       if (pt->dbls) FREE(pt->dbls);
       FREE(pt);
     }
-  return(NULL);
 }
 
 static triple *add_triple_to_ptree(ptree *pt, triple *trp)
@@ -1491,11 +1423,7 @@ static triple *add_triple_to_ptree(ptree *pt, triple *trp)
     {
       if (pt->program_size == 0)
 	{
-#ifdef __cplusplus
 	  pt->program = (triple **)CALLOC(8, sizeof(triple *));
-#else
-	  pt->program = (struct triple **)CALLOC(8, sizeof(triple *));
-#endif
 	  pt->program_size = 8;
 	}
       else
@@ -1503,19 +1431,11 @@ static triple *add_triple_to_ptree(ptree *pt, triple *trp)
 	  int i, old_size;
 	  old_size = pt->program_size;
 	  pt->program_size += 8;
-#ifdef __cplusplus
 	  pt->program = (triple **)REALLOC(pt->program, pt->program_size * sizeof(triple *));
-#else
-	  pt->program = (struct triple **)REALLOC(pt->program, pt->program_size * sizeof(triple *));
-#endif
 	  for (i = old_size; i < pt->program_size; i++) pt->program[i] = NULL;
 	}
     }
-#ifdef __cplusplus
   pt->program[pt->triple_ctr++] = trp;
-#else
-  ((triple **)(pt->program))[pt->triple_ctr++] = trp;
-#endif
   return(trp);
 }
 
@@ -1676,7 +1596,7 @@ static int add_reader_to_ptree(ptree *pt, snd_fd *value)
   return(cur);
 }
 
-static int add_mix_reader_to_ptree(ptree *pt, void *value)
+static int add_mix_reader_to_ptree(ptree *pt, struct mix_fd *value)
 {
   int cur;
   cur = pt->mix_reader_ctr++;
@@ -1686,16 +1606,16 @@ static int add_mix_reader_to_ptree(ptree *pt, void *value)
       if (pt->mix_readers)
 	{
 	  int i;
-	  pt->mix_readers = (void **)REALLOC(pt->mix_readers, pt->mix_readers_size * sizeof(void *));
+	  pt->mix_readers = (struct mix_fd **)REALLOC(pt->mix_readers, pt->mix_readers_size * sizeof(struct mix_fd *));
 	  for (i = cur; i < pt->mix_readers_size; i++) pt->mix_readers[i] = NULL;
 	}
-      else pt->mix_readers = (void **)CALLOC(pt->mix_readers_size, sizeof(void *));
+      else pt->mix_readers = (struct mix_fd **)CALLOC(pt->mix_readers_size, sizeof(struct mix_fd *));
     }
   pt->mix_readers[cur] = value;
   return(cur);
 }
 
-static int add_track_reader_to_ptree(ptree *pt, void *value)
+static int add_track_reader_to_ptree(ptree *pt, struct track_fd *value)
 {
   int cur;
   cur = pt->track_reader_ctr++;
@@ -1705,10 +1625,10 @@ static int add_track_reader_to_ptree(ptree *pt, void *value)
       if (pt->track_readers)
 	{
 	  int i;
-	  pt->track_readers = (void **)REALLOC(pt->track_readers, pt->track_readers_size * sizeof(void *));
+	  pt->track_readers = (struct track_fd **)REALLOC(pt->track_readers, pt->track_readers_size * sizeof(struct track_fd *));
 	  for (i = cur; i < pt->track_readers_size; i++) pt->track_readers[i] = NULL;
 	}
-      else pt->track_readers = (void **)CALLOC(pt->track_readers_size, sizeof(void *));
+      else pt->track_readers = (struct track_fd **)CALLOC(pt->track_readers_size, sizeof(struct track_fd *));
     }
   pt->track_readers[cur] = value;
   return(cur);
@@ -2076,7 +1996,7 @@ static xen_value *add_global_var_to_ptree(ptree *prog, XEN form, XEN *rtn)
       upper = prog;
       while ((XEN_NOT_BOUND_P(val)) && (upper->outer_tree))
 	{
-	  upper = (ptree *)(upper->outer_tree);
+	  upper = upper->outer_tree;
 	  val = symbol_to_value(upper->code, form, &local_var);
 	}
       if (XEN_NOT_BOUND_P(val))	
@@ -2308,8 +2228,6 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 
 #define BOOL_RESULT pt->ints[args[0]]
 #define BOOL_ARG_1 ((bool)(pt->ints[args[1]]))
-#define BOOL_ARG_2 ((bool)(pt->ints[args[2]]))
-#define BOOL_ARG_3 ((bool)(pt->ints[args[3]]))
 
 #define INT_RESULT pt->ints[args[0]]
 #define INT_ARG_1 pt->ints[args[1]]
@@ -2317,7 +2235,6 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define INT_ARG_3 pt->ints[args[3]]
 #define INT_ARG_4 pt->ints[args[4]]
 #define INT_ARG_5 pt->ints[args[5]]
-#define INT_ARG_6 pt->ints[args[6]]
 
 #define FLOAT_RESULT pt->dbls[args[0]]
 #define FLOAT_ARG_1 pt->dbls[args[1]]
@@ -2330,13 +2247,9 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define VCT_ARG_1 pt->vcts[args[1]]
 #define VCT_ARG_2 pt->vcts[args[2]]
 #define VCT_ARG_3 pt->vcts[args[3]]
-#define VCT_ARG_4 pt->vcts[args[4]]
-#define VCT_ARG_5 pt->vcts[args[5]]
 #define DESC_VCT_ARG_1 ((args[1] < pt->vct_ctr) ? pt->vcts[args[1]] : NULL)
 #define DESC_VCT_ARG_2 ((args[2] < pt->vct_ctr) ? pt->vcts[args[2]] : NULL)
 #define DESC_VCT_ARG_3 ((args[3] < pt->vct_ctr) ? pt->vcts[args[3]] : NULL)
-#define DESC_VCT_ARG_4 ((args[4] < pt->vct_ctr) ? pt->vcts[args[4]] : NULL)
-#define DESC_VCT_ARG_5 ((args[5] < pt->vct_ctr) ? pt->vcts[args[5]] : NULL)
 
 #define SOUND_DATA_RESULT pt->sds[args[0]]
 #define DESC_SOUND_DATA_RESULT ((args[0] < pt->sd_ctr) ? pt->sds[args[0]] : NULL)
@@ -2347,7 +2260,6 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 
 #define STRING_RESULT pt->strs[args[0]]
 #define STRING_ARG_1 pt->strs[args[1]]
-#define STRING_ARG_2 pt->strs[args[2]]
 
 #define CHAR_RESULT pt->ints[args[0]]
 #define CHAR_ARG_1 ((char)(pt->ints[args[1]]))
@@ -2386,7 +2298,6 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define DESC_TRACK_READER_ARG_2 ((args[2] < pt->track_reader_ctr) ? pt->track_readers[args[2]] : NULL)
 
 #define FNC_RESULT ((ptree **)(pt->fncs))[args[0]]
-#define DESC_FNC_RESULT ((args[0] < pt->fnc_ctr) ? pt->fncs[args[0]] : NULL)
 #define FNC_ARG_1 ((ptree **)(pt->fncs))[args[1]]
 #define FNC_ARG_2 ((ptree **)(pt->fncs))[args[2]]
 #define FNC_ARG_3 ((ptree **)(pt->fncs))[args[3]]
@@ -2408,12 +2319,10 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define DESC_RXEN_ARG_2 ((args[2] < pt->xen_ctr) ? pt->xens[args[2]] : NULL)
 
 #define VECT_RESULT pt->vects[args[0]]
-#define DESC_VECT_RESULT ((args[0] < pt->vect_ctr) ? pt->vects[args[0]] : NULL)
 #define VECT_ARG_1 pt->vects[args[1]]
 #define VECT_ARG_2 pt->vects[args[2]]
 #define DESC_VECT_ARG_1 ((args[1] < pt->vect_ctr) ? pt->vects[args[1]] : NULL)
 #define DESC_VECT_ARG_2 ((args[2] < pt->vect_ctr) ? pt->vects[args[2]] : NULL)
-
 
 static void quit(int *args, ptree *pt) {ALL_DONE = (Int)true;}
 static char *descr_quit(int *args, ptree *pt) {return(copy_string("quit"));}
@@ -8613,8 +8522,8 @@ static Float src_input(void *arg, int direction)
 {
   mus_xen *gn = (mus_xen *)arg;
   ptree *pt, *outer;
-  pt = (ptree *)(gn->input_ptree);
-  outer = (ptree *)(pt->outer_tree);
+  pt = gn->input_ptree;
+  outer = pt->outer_tree;
   outer->ints[pt->args[0]] = direction;
   eval_embedded_ptree(pt, outer);
   return(outer->dbls[pt->result->addr]);
@@ -8626,7 +8535,7 @@ static char *descr_src_2f(int *args, ptree *pt)
 }
 static void src_2f(int *args, ptree *pt) 
 {
-  ((mus_xen *)mus_environ(CLM_ARG_1))->input_ptree = (void *)(FNC_ARG_3);
+  ((mus_xen *)mus_environ(CLM_ARG_1))->input_ptree = FNC_ARG_3;
   FLOAT_RESULT = mus_src(CLM_ARG_1, FLOAT_ARG_2, src_input);
 }
 static char *descr_src_1f(int *args, ptree *pt) 
@@ -8671,7 +8580,7 @@ static char *descr_convolve_1f(int *args, ptree *pt)
 }
 static void convolve_1f(int *args, ptree *pt)
 {
-  ((mus_xen *)mus_environ(CLM_ARG_1))->input_ptree = (void *)(FNC_ARG_2);
+  ((mus_xen *)mus_environ(CLM_ARG_1))->input_ptree = FNC_ARG_2;
   FLOAT_RESULT = mus_convolve(CLM_ARG_1, src_input);
 }
 static char *descr_convolve_0f(int *args, ptree *pt)
@@ -8704,8 +8613,8 @@ static int grn_edit(void *arg)
 {
   mus_xen *gn = (mus_xen *)arg;
   ptree *pt, *outer;
-  pt = (ptree *)(gn->edit_ptree);
-  outer = (ptree *)(pt->outer_tree);
+  pt = gn->edit_ptree;
+  outer = pt->outer_tree;
 #if DEBUGGING
   if (outer->clms_size <= pt->args[0])
     {
@@ -8726,8 +8635,8 @@ static char *descr_granulate_2f(int *args, ptree *pt)
 static void granulate_2f(int *args, ptree *pt)
 {
   mus_xen *gn = (mus_xen *)mus_environ(CLM_ARG_1);
-  gn->input_ptree = (void *)(FNC_ARG_2);
-  gn->edit_ptree = (void *)(FNC_ARG_3);
+  gn->input_ptree = FNC_ARG_2;
+  gn->edit_ptree = FNC_ARG_3;
   FLOAT_RESULT = mus_granulate_with_editor(CLM_ARG_1, src_input, grn_edit);
 }
 static char *descr_granulate_2f_split(int *args, ptree *pt)
@@ -8737,7 +8646,7 @@ static char *descr_granulate_2f_split(int *args, ptree *pt)
 static void granulate_2f_split(int *args, ptree *pt)
 {
   mus_xen *gn = (mus_xen *)mus_environ(CLM_ARG_1);
-  gn->edit_ptree = (void *)(FNC_ARG_3);
+  gn->edit_ptree = FNC_ARG_3;
   FLOAT_RESULT = mus_granulate_with_editor(CLM_ARG_1, NULL, grn_edit);
 }
 static char *descr_granulate_1f(int *args, ptree *pt)
@@ -8746,7 +8655,7 @@ static char *descr_granulate_1f(int *args, ptree *pt)
 }
 static void granulate_1f(int *args, ptree *pt)
 {
-  ((mus_xen *)mus_environ(CLM_ARG_1))->input_ptree = (void *)(FNC_ARG_2);
+  ((mus_xen *)mus_environ(CLM_ARG_1))->input_ptree = FNC_ARG_2;
   FLOAT_RESULT = mus_granulate(CLM_ARG_1, src_input);
 }
 static char *descr_granulate_0f(int *args, ptree *pt)
@@ -8800,8 +8709,8 @@ static bool pv_analyze(void *arg, Float (*input)(void *arg1, int direction))
 {
   mus_xen *gn = (mus_xen *)arg;
   ptree *pt, *outer;
-  pt = (ptree *)(gn->analyze_ptree);
-  outer = (ptree *)(pt->outer_tree);
+  pt = gn->analyze_ptree;
+  outer = pt->outer_tree;
 #if DEBUGGING
   if (outer->clms_size <= pt->args[0])
     {
@@ -8819,8 +8728,8 @@ static Float pv_synthesize(void *arg)
 {
   mus_xen *gn = (mus_xen *)arg;
   ptree *pt, *outer;
-  pt = (ptree *)(gn->synthesize_ptree);
-  outer = (ptree *)(pt->outer_tree);
+  pt = gn->synthesize_ptree;
+  outer = pt->outer_tree;
 #if DEBUGGING
   if (outer->clms_size <= pt->args[0])
     {
@@ -8850,10 +8759,10 @@ static void phase_vocoder_5f(int *args, ptree *pt)
   /*
   fprintf(stderr,"funcs: %lld\n", INT_ARG_1);
   */
-  if (INT_ARG_1 & 1) gn->input_ptree = (void *)(FNC_ARG_3);
-  if (INT_ARG_1 & 2) gn->analyze_ptree = (void *)(FNC_ARG_4);
-  if (INT_ARG_1 & 4) gn->edit_ptree = (void *)(FNC_ARG_5);
-  if (INT_ARG_1 & 8) gn->synthesize_ptree = (void *)(FNC_ARG_6);
+  if (INT_ARG_1 & 1) gn->input_ptree = FNC_ARG_3;
+  if (INT_ARG_1 & 2) gn->analyze_ptree = FNC_ARG_4;
+  if (INT_ARG_1 & 4) gn->edit_ptree = FNC_ARG_5;
+  if (INT_ARG_1 & 8) gn->synthesize_ptree = FNC_ARG_6;
   FLOAT_RESULT = mus_phase_vocoder_with_editors(CLM_ARG_2, 
 						(INT_ARG_1 & 1) ? src_input : NULL, 
 						(INT_ARG_1 & 2) ? pv_analyze : NULL, 
@@ -8866,7 +8775,7 @@ static char *descr_phase_vocoder_1f(int *args, ptree *pt)
 }
 static void phase_vocoder_1f(int *args, ptree *pt)
 {
-  ((mus_xen *)mus_environ(CLM_ARG_1))->input_ptree = (void *)(FNC_ARG_2);
+  ((mus_xen *)mus_environ(CLM_ARG_1))->input_ptree = FNC_ARG_2;
   FLOAT_RESULT = mus_phase_vocoder(CLM_ARG_1, src_input);
 }
 static char *descr_phase_vocoder_0f(int *args, ptree *pt)
@@ -10648,7 +10557,7 @@ static XEN g_show_ptree(XEN on)
   return(on);
 }
 
-static void *form_to_ptree(XEN code)
+static struct ptree *form_to_ptree(XEN code)
 {
   ptree *prog;
   XEN form;
@@ -10662,7 +10571,10 @@ static void *form_to_ptree(XEN code)
     prog->code = XEN_CADR(code);                  /* need env before starting to walk the code */
   else prog->code = XEN_FALSE;                    /* many confusing cases here -- we'll just give up */
   if (XEN_SYMBOL_P(form))
-    return(free_ptree((void *)prog));
+    {
+      free_ptree(prog);
+      return(NULL);
+    }
   prog->result = walk(prog, form, NEED_ANY_RESULT);
   if (prog->result)
     {
@@ -10679,9 +10591,9 @@ static void *form_to_ptree(XEN code)
 #endif
       prog->form = form;
       prog->form_loc = snd_protect(prog->form);
-      return((void *)prog);
+      return(prog);
     }
-  free_ptree((void *)prog);
+  free_ptree(prog);
   if (!run_warned)
     run_warn("can't optimize: %s\n", XEN_AS_STRING(form));
   return(NULL);
@@ -10689,10 +10601,10 @@ static void *form_to_ptree(XEN code)
 
 /* ---------------- various tree-building wrappers ---------------- */
 
-void *form_to_ptree_1_f(XEN code)
+struct ptree *form_to_ptree_1_f(XEN code)
 {
   ptree *pt;
-  pt = (ptree *)form_to_ptree(code);
+  pt = form_to_ptree(code);
   if (pt)
     {
       if ((pt->result->type == R_FLOAT) && (pt->arity == 1))
@@ -10702,10 +10614,10 @@ void *form_to_ptree_1_f(XEN code)
   return(NULL);
 }
 
-void *form_to_ptree_3_f(XEN code)
+struct ptree *form_to_ptree_3_f(XEN code)
 {
   ptree *pt;
-  pt = (ptree *)form_to_ptree(code);
+  pt = form_to_ptree(code);
   if (pt)
     {
       if ((pt->result->type == R_FLOAT) && (pt->arity == 3))
@@ -10715,10 +10627,10 @@ void *form_to_ptree_3_f(XEN code)
   return(NULL);
 }
 
-void *form_to_ptree_0_f(XEN code)
+struct ptree *form_to_ptree_0_f(XEN code)
 {
   ptree *pt;
-  pt = (ptree *)form_to_ptree(code);
+  pt = form_to_ptree(code);
   if (pt)
     {
       if ((pt->result->type == R_FLOAT) && (pt->arity == 0))
@@ -10728,10 +10640,10 @@ void *form_to_ptree_0_f(XEN code)
   return(NULL);
 }
 
-void *form_to_ptree_1_b(XEN code)
+struct ptree *form_to_ptree_1_b(XEN code)
 {
   ptree *pt;
-  pt = (ptree *)form_to_ptree(code);
+  pt = form_to_ptree(code);
   if (pt)
     {
       if ((pt->result->type == R_BOOL) && (pt->arity == 1))
@@ -10741,7 +10653,7 @@ void *form_to_ptree_1_b(XEN code)
   return(NULL);
 }
 
-void *form_to_ptree_1_b_without_env(XEN code)
+struct ptree *form_to_ptree_1_b_without_env(XEN code)
 {
   return(form_to_ptree_1_b(XEN_LIST_2(code, XEN_FALSE)));
 }
@@ -10749,17 +10661,15 @@ void *form_to_ptree_1_b_without_env(XEN code)
 
 /* ---------------- various evaluator wrappers ---------------- */
 
-Float evaluate_ptree_1f2f(void *upt, Float arg)
+Float evaluate_ptree_1f2f(struct ptree *pt, Float arg)
 {
-  ptree *pt = (ptree *)upt;
   pt->dbls[pt->args[0]] = arg;
   eval_ptree(pt);
   return(pt->dbls[pt->result->addr]);
 }
 
-Float evaluate_ptree_1f1v1b2f(void *upt, Float arg, vct *v, bool dir)
+Float evaluate_ptree_1f1v1b2f(struct ptree *pt, Float arg, vct *v, bool dir)
 {
-  ptree *pt = (ptree *)upt;
   pt->dbls[pt->args[0]] = arg;
   pt->vcts[pt->args[1]] = v;
   pt->ints[pt->args[2]] = (Int)dir;
@@ -10767,24 +10677,21 @@ Float evaluate_ptree_1f1v1b2f(void *upt, Float arg, vct *v, bool dir)
   return(pt->dbls[pt->result->addr]);
 }
 
-Float evaluate_ptree_0f2f(void *upt)
+Float evaluate_ptree_0f2f(struct ptree *pt)
 {
-  ptree *pt = (ptree *)upt;
   eval_ptree(pt);
   return(pt->dbls[pt->result->addr]);
 }
 
-int evaluate_ptree_1f2b(void *upt, Float arg)
+int evaluate_ptree_1f2b(struct ptree *pt, Float arg)
 {
-  ptree *pt = (ptree *)upt;
   pt->dbls[pt->args[0]] = arg;
   eval_ptree(pt);
   return(pt->ints[pt->result->addr]);
 }
 
-Float evaluate_ptreec(void *upt, Float arg, vct *v, bool dir)
+Float evaluate_ptreec(struct ptree *pt, Float arg, vct *v, bool dir)
 {
-  ptree *pt = (ptree *)upt;
   pt->dbls[pt->args[0]] = arg;
   if (pt->arity > 1)
     {
@@ -11389,17 +11296,17 @@ static XEN g_run_eval(XEN code, XEN arg, XEN arg1, XEN arg2)
 	    }
 	  if (arity_err) 
 	    {
-	      free_ptree((void *)pt); 
+	      free_ptree(pt); 
 	      XEN_ERROR(XEN_ERROR_TYPE("wrong-number-of-args"), code); 
 	      return(XEN_FALSE);
 	    }
 	}
       eval_ptree(pt);
       result = eval_ptree_to_xen(pt);
-      free_ptree((void *)pt);
+      free_ptree(pt);
       return(result);
     }
-  if (pt) free_ptree((void *)pt);
+  if (pt) free_ptree(pt);
   XEN_ERROR(CANNOT_PARSE,
 	    code);
   return(XEN_FALSE);
@@ -11415,7 +11322,7 @@ to Guile and is equivalent to (thunk)."
   ptree *pt = NULL;
   code = XEN_CADR(proc_and_code);
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code) && (XEN_REQUIRED_ARGS_OK(code, 0)), code, XEN_ONLY_ARG, S_run, "a thunk");
-  pt = (ptree *)form_to_ptree(proc_and_code);
+  pt = form_to_ptree(proc_and_code);
   if (pt)
     {
       eval_ptree(pt);
@@ -11427,18 +11334,18 @@ to Guile and is equivalent to (thunk)."
 }
 
 #else
-void *form_to_ptree_1_b(XEN code) {return(NULL);}
-void *form_to_ptree_3_f(XEN code) {return(NULL);}
-void *form_to_ptree_1_b_without_env(XEN code) {return(NULL);}
-void *form_to_ptree_1_f(XEN code) {return(NULL);}
-Float evaluate_ptree_1f1v1b2f(void *upt, Float arg, vct *v, bool dir) {return(0.0);}
-Float evaluate_ptree_0f2f(void *upt) {return(0.0);}
-void *form_to_ptree_0_f(XEN code) {return(NULL);}
-Float evaluate_ptree_1f2f(void *upt, Float arg) {return(0.0);}
-int evaluate_ptree_1f2b(void *upt, Float arg) {return(0);}
-void *free_ptree(void *upt) {return(NULL);}
-XEN ptree_code(void *p) {return(XEN_FALSE);}
-Float evaluate_ptreec(void *upt, Float arg, vct *v, bool dir) {return(0.0);}
+struct ptree *form_to_ptree_1_b(XEN code) {return(NULL);}
+struct ptree *form_to_ptree_3_f(XEN code) {return(NULL);}
+struct ptree *form_to_ptree_1_b_without_env(XEN code) {return(NULL);}
+struct ptree *form_to_ptree_1_f(XEN code) {return(NULL);}
+Float evaluate_ptree_1f1v1b2f(struct ptree *pt, Float arg, vct *v, bool dir) {return(0.0);}
+Float evaluate_ptree_0f2f(struct ptree *pt) {return(0.0);}
+struct ptree *form_to_ptree_0_f(XEN code) {return(NULL);}
+Float evaluate_ptree_1f2f(struct ptree *pt, Float arg) {return(0.0);}
+int evaluate_ptree_1f2b(struct ptree *pt, Float arg) {return(0);}
+void free_ptree(struct ptree *pt) {}
+XEN ptree_code(struct ptree *pt) {return(XEN_FALSE);}
+Float evaluate_ptreec(struct ptree *pt, Float arg, vct *v, bool dir) {return(0.0);}
 #endif
 /* endif WITH_RUN */
 
@@ -11490,7 +11397,7 @@ in multi-channel situations where you want the optimization that vct-map! provid
   if (optimization(ss) != DONT_OPTIMIZE)
     {
       ptree *pt = NULL;
-      pt = (ptree *)form_to_ptree(proc_and_code);
+      pt = form_to_ptree(proc_and_code);
       if (pt)
 	{
 	  for (i = 0; i < min_len; i++) 

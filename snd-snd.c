@@ -48,7 +48,7 @@ snd_info *snd_new_file(char *newname, int header_type, int data_format, int srat
 
 /* ---------------- peak amp envs ---------------- */
 
-typedef struct {
+typedef struct env_state {
   int slice, edpos;
   off_t samples, m;  
   env_info *ep; 
@@ -94,7 +94,7 @@ void free_env_state(chan_info *cp)
       if (cgx)
 	{
 	  env_state *es;
-	  es = (env_state *)(cgx->amp_env_state);
+	  es = cgx->amp_env_state;
 	  if (es)
 	    {
 	      if (es->sf) 
@@ -319,7 +319,7 @@ Cessate get_amp_env(Indicium ptr)
     }
   if (!(cgx->amp_env_state)) 
     cgx->amp_env_state = make_env_state(cp, CURRENT_SAMPLES(cp));
-  es = (env_state *)(cgx->amp_env_state);
+  es = cgx->amp_env_state;
   if (es)
     {
       if (tick_amp_env(cp, es))
@@ -383,7 +383,7 @@ bool amp_env_usable(chan_info *cp, Float samples_per_pixel, off_t hisamp, bool s
   if ((finish_env) && (cgx->amp_env_in_progress) && (cgx->amp_env_state))
     {
       /* caller wants data, but a read is in progress -- finish it as quickly as possible */
-      while (!(tick_amp_env(cp, (env_state *)(cgx->amp_env_state))));
+      while (!(tick_amp_env(cp, cgx->amp_env_state)));
       free_env_state(cp);
       reflect_amp_env_completion(cp->sound);
       if (cp->waiting_to_make_graph) 
@@ -813,7 +813,7 @@ void amp_env_env_selection_by(chan_info *cp, mus_any *e, off_t beg, off_t num, i
     }
 }
 
-void amp_env_ptree(chan_info *cp, void *pt, int pos, XEN init_func)
+void amp_env_ptree(chan_info *cp, struct ptree *pt, int pos, XEN init_func)
 {
   env_info *old_ep;
   old_ep = cp->amp_envs[pos];
@@ -882,7 +882,7 @@ void amp_env_ptree(chan_info *cp, void *pt, int pos, XEN init_func)
     }
 }
 
-void amp_env_ptree_selection(chan_info *cp, void *pt, off_t beg, off_t num, int pos, XEN init_func)
+void amp_env_ptree_selection(chan_info *cp, struct ptree *pt, off_t beg, off_t num, int pos, XEN init_func)
 {
   env_info *old_ep;
   old_ep = cp->amp_envs[pos];
@@ -1231,7 +1231,7 @@ void sp_name_click(snd_info *sp)
 
 /* ---------------- save and restore control panel buttons ----------------*/
 
-typedef struct {
+typedef struct ctrl_state {
   Float amp, speed, contrast, expand, revscl, revlen;
   env *filter_env;
   bool expand_on, contrast_on, reverb_on, filter_on, reversed;
@@ -1256,7 +1256,7 @@ static ctrl_state *free_control_settings(ctrl_state *cs)
 
 void free_controls(snd_info *sp)
 {
-  sp->saved_controls = free_control_settings((ctrl_state *)(sp->saved_controls));
+  sp->saved_controls = free_control_settings(sp->saved_controls);
 }
 
 static ctrl_state *current_control_settings(snd_info *sp, ctrl_state *cs)
@@ -1295,7 +1295,7 @@ static ctrl_state *current_control_settings(snd_info *sp, ctrl_state *cs)
 
 void save_controls(snd_info *sp) 
 {
-  sp->saved_controls = current_control_settings(sp, (ctrl_state *)(sp->saved_controls));
+  sp->saved_controls = current_control_settings(sp, sp->saved_controls);
 }
 
 static ctrl_state *restore_control_settings(snd_info *sp, ctrl_state *cs)
@@ -1338,11 +1338,11 @@ void restore_controls(snd_info *sp)
 {
   ctrl_state *cs;
   char *tmpstr;
-  cs = (ctrl_state *)(sp->saved_controls);
+  cs = sp->saved_controls;
   if (!cs) 
     {
       sp->saved_controls = (ctrl_state *)CALLOC(1, sizeof(ctrl_state));
-      cs = (ctrl_state *)(sp->saved_controls);
+      cs = sp->saved_controls;
       cs->amp = DEFAULT_AMP_CONTROL;
       cs->speed = DEFAULT_SPEED_CONTROL;
       cs->reversed = false; /* (this is the button's view) */
@@ -1417,7 +1417,7 @@ static void apply_unset_controls(snd_info *sp)
 
 /* ---------------- minibuffer/filter text history ---------------- */
 
-typedef struct {
+typedef struct mini_history {
   char **strings;
   int strings_size, strings_pos;
   bool first_time;
@@ -1433,9 +1433,9 @@ static void remember_string(snd_info *sp, char *str, mini_history_t which)
   int i, top;
   switch (which)
     {
-    case MINIBUFFER:    mh = (mini_history *)(sp->minibuffer_history); break;
-    case FILTER_TEXT:   mh = (mini_history *)(sp->filter_history);     break;
-    case LISTENER_TEXT: mh = listener_history;                         break;
+    case MINIBUFFER:    mh = sp->minibuffer_history; break;
+    case FILTER_TEXT:   mh = sp->filter_history;     break;
+    case LISTENER_TEXT: mh = listener_history;       break;
     default: return; break;
     }
   if (mh == NULL)
@@ -1445,9 +1445,9 @@ static void remember_string(snd_info *sp, char *str, mini_history_t which)
       mh->strings = (char **)CALLOC(mh->strings_size, sizeof(char *));
       switch (which)
 	{
-	case MINIBUFFER: sp->minibuffer_history = (void *)mh; break;
-	case FILTER_TEXT: sp->filter_history = (void *)mh; break;
-	case LISTENER_TEXT: listener_history = mh; break;
+	case MINIBUFFER:    sp->minibuffer_history = mh; break;
+	case FILTER_TEXT:   sp->filter_history = mh;     break;
+	case LISTENER_TEXT: listener_history = mh;       break;
 	}
     }
   top = mh->strings_size - 1;
@@ -1468,9 +1468,9 @@ static void restore_string(snd_info *sp, bool back, mini_history_t which)
   mini_history *mh = NULL;
   switch (which)
     {
-    case MINIBUFFER:    mh = (mini_history *)(sp->minibuffer_history); break;
-    case FILTER_TEXT:   mh = (mini_history *)(sp->filter_history);     break;
-    case LISTENER_TEXT: mh = listener_history;                         break;
+    case MINIBUFFER:    mh = sp->minibuffer_history; break;
+    case FILTER_TEXT:   mh = sp->filter_history;     break;
+    case LISTENER_TEXT: mh = listener_history;       break;
     }
   if (mh)
     {
@@ -1507,9 +1507,9 @@ static void clear_strings(snd_info *sp, mini_history_t which)
   mini_history *mh = NULL;
   switch (which)
     {
-    case MINIBUFFER:    mh = (mini_history *)(sp->minibuffer_history); break;
-    case FILTER_TEXT:   mh = (mini_history *)(sp->filter_history);     break;
-    case LISTENER_TEXT: mh = listener_history;                         break;
+    case MINIBUFFER:    mh = sp->minibuffer_history; break;
+    case FILTER_TEXT:   mh = sp->filter_history;     break;
+    case LISTENER_TEXT: mh = listener_history;       break;
     }
   if (mh)
     {

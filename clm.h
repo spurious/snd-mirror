@@ -212,7 +212,7 @@ typedef struct mus_any_class {
   Float (*set_ycoeff)(mus_any *ptr, int index, Float val);
   Float* (*xcoeffs)(mus_any *ptr);
   Float* (*ycoeffs)(mus_any *ptr);
-  void* (*wrapper)(mus_any *gen);
+  struct mus_xen* (*wrapper)(mus_any *gen);
 } mus_any_class;
 
 typedef enum {MUS_INTERP_NONE, MUS_INTERP_LINEAR, MUS_INTERP_SINUSOIDAL, MUS_INTERP_ALL_PASS, 
@@ -615,16 +615,16 @@ Float mus_ssb_am(mus_any *ptr, Float insig, Float fm);
 
 void mus_clear_sinc_tables(void);
 void *mus_environ(mus_any *gen);
-void *mus_wrapper(mus_any *gen);
+struct mus_xen *mus_wrapper(mus_any *gen);
 
 /* for internal use */
-void *_mus_wrap_no_vcts(mus_any *ge);
-void *_mus_wrap_one_vct(mus_any *ge);
-void *_mus_wrap_one_vct_wrapped(mus_any *ge);
+struct mus_xen *_mus_wrap_no_vcts(mus_any *ge);
+struct mus_xen *_mus_wrap_one_vct(mus_any *ge);
+struct mus_xen *_mus_wrap_one_vct_wrapped(mus_any *ge);
 /* end internal stuff */
 
-#ifndef CLM_DISABLE_DEPRECATED
-/* backwards compatibility */
+#if 0
+/* these are the old names */
 #define mus_radians2hz(Radians) mus_radians_to_hz(Radians)
 #define mus_hz2radians(Hz) mus_hz_to_radians(Hz)
 #define mus_degrees2radians(Degrees) mus_degrees_to_radians(Degrees)

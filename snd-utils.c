@@ -774,7 +774,10 @@ void mem_report(void)
   time_t ts;
   char time_buf[TIME_STR_SIZE];
   if (ss->search_tree)
-    ss->search_tree = free_ptree(ss->search_tree);
+    {
+      free_ptree(ss->search_tree);
+      ss->search_tree = NULL;
+    }
   for (i = 0; i < mem_size; i++)
     if (stacks[i])
       {

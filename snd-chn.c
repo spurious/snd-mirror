@@ -2001,7 +2001,7 @@ static void make_sonogram(chan_info *cp)
   static int *sono_js = NULL;
   static int sono_js_size = 0;
   if (chan_fft_in_progress(cp)) return;
-  si = (sono_info *)(cp->sonogram_data);
+  si = cp->sonogram_data;
   if ((si) && (si->scale > 0.0))
     {
       int i, slice, fwidth, fheight, j, bins;
@@ -2325,7 +2325,7 @@ static bool make_spectrogram(chan_info *cp)
 {
   sono_info *si;
   if (chan_fft_in_progress(cp)) return(false);
-  si = (sono_info *)(cp->sonogram_data);
+  si = cp->sonogram_data;
   if ((si) && (si->scale > 0.0))
     {
       fft_info *fp;
@@ -2787,7 +2787,7 @@ static void make_wavogram(chan_info *cp)
   free_snd_fd(sf);
 }
 
-typedef struct {
+typedef struct lisp_grf {
   int *len;
   Float **data;
   int graphs;
@@ -2795,14 +2795,14 @@ typedef struct {
   int env_data;
 } lisp_grf;
 
-axis_info *lisp_info_axis(chan_info *cp) {return(((lisp_grf *)(cp->lisp_info))->axis);}
+axis_info *lisp_info_axis(chan_info *cp) {return((cp->lisp_info)->axis);}
 
-void *free_lisp_info(chan_info *cp)
+void free_lisp_info(chan_info *cp)
 {
   if (cp)
     {
       lisp_grf *lg;
-      lg = (lisp_grf *)(cp->lisp_info);
+      lg = cp->lisp_info;
       if (lg)
 	{
 	  if (lg->axis) 
@@ -2820,7 +2820,6 @@ void *free_lisp_info(chan_info *cp)
 	  FREE(lg);
 	}
     }
-  return(NULL);
 }
 
 static void make_lisp_graph(chan_info *cp, XEN pixel_list)
@@ -2832,7 +2831,7 @@ static void make_lisp_graph(chan_info *cp, XEN pixel_list)
   int i;
   axis_context *ax;
   sp = cp->sound;
-  up = (lisp_grf *)(cp->lisp_info);
+  up = cp->lisp_info;
   if (up) uap = up->axis; else return;
   if ((!uap) || (!uap->graph_active) || (up->len == NULL) || (up->len[0] <= 0)) return;
   if (cp->printing) ps_allocate_grf_points();
@@ -3035,12 +3034,12 @@ static void display_channel_data_with_size (chan_info *cp,
   if (grflsp)
     {
       displays++;
-      up = (lisp_grf *)(cp->lisp_info);
+      up = cp->lisp_info;
       if (up == NULL)
 	{
 	  /* this should only happen the first time such a graph is needed */
 	  cp->lisp_info = (lisp_grf *)CALLOC(1, sizeof(lisp_grf));
-	  up = (lisp_grf *)(cp->lisp_info);
+	  up = cp->lisp_info;
 	  up->axis = make_axis_info(cp, 0.0, 1.0, -1.0, 1.0, "dummy axis", 0.0, 1.0, -1.0, 1.0, NULL);
 	}
       if (up)
@@ -3225,8 +3224,8 @@ static void display_channel_data_with_size (chan_info *cp,
 	  ss->lisp_graph_hook_active = false;
 	  if (!(XEN_FALSE_P(pixel_list))) pixel_loc = snd_protect(pixel_list);
 	}
-      if (up != (lisp_grf *)(cp->lisp_info))
-	up = (lisp_grf *)(cp->lisp_info);
+      if (up != cp->lisp_info)
+	up = cp->lisp_info;
       if (uap != up->axis)
 	uap = up->axis;
       /* if these were changed in the hook function, the old fields should have been saved across the change (g_graph below) */
@@ -3726,7 +3725,7 @@ static click_loc_t within_graph(chan_info *cp, int x, int y)
     }
   if (((cp->graph_lisp_p) || (XEN_HOOKED(lisp_graph_hook))) && (cp->lisp_info))
     {
-      ap = ((lisp_grf *)(cp->lisp_info))->axis;
+      ap = (cp->lisp_info)->axis;
       if (((x0 <= ap->x_axis_x1) && (x1 >= ap->x_axis_x0)) && 
 	  ((y0 <= ap->y_axis_y0) && (y1 >= ap->y_axis_y1)))
 	return(CLICK_LISP);
@@ -3779,7 +3778,7 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
 	  if (y < ap->y_axis_y1) y = ap->y_axis_y1; else if (y > ap->y_axis_y0) y = ap->y_axis_y0;
 	  if (ap->y_axis_y1 == ap->y_axis_y0) return(copy_string("?"));
 	  yf = ap->y0 + (ap->y1 - ap->y0) * (Float)(y - ap->y_axis_y0) / (Float)(ap->y_axis_y1 - ap->y_axis_y0);
-	  si = (sono_info *)(cp->sonogram_data);
+	  si = cp->sonogram_data;
 	  if (cp->transform_type == FOURIER)
 	    {
 	      if (cp->fft_log_frequency)
@@ -4024,8 +4023,8 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
 			    C_TO_XEN_INT(cp->chan),
 			    C_TO_XEN_INT(button),
 			    C_TO_XEN_INT(key_state),
-			    C_TO_XEN_DOUBLE(ungrf_x(((lisp_grf *)(cp->lisp_info))->axis, x)),
-			    C_TO_XEN_DOUBLE(ungrf_y(((lisp_grf *)(cp->lisp_info))->axis, y))),
+			    C_TO_XEN_DOUBLE(ungrf_x((cp->lisp_info)->axis, x)),
+			    C_TO_XEN_DOUBLE(ungrf_y((cp->lisp_info)->axis, y))),
 		 S_mouse_press_hook);
       break;
     case CLICK_WAVE:
@@ -4363,8 +4362,8 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time)
 				    C_TO_XEN_INT(cp->chan),
 				    C_TO_XEN_INT(-1),
 				    C_TO_XEN_INT(-1),
-				    C_TO_XEN_DOUBLE(ungrf_x(((lisp_grf *)(cp->lisp_info))->axis, x)),
-				    C_TO_XEN_DOUBLE(ungrf_y(((lisp_grf *)(cp->lisp_info))->axis, y))),
+				    C_TO_XEN_DOUBLE(ungrf_x((cp->lisp_info)->axis, x)),
+				    C_TO_XEN_DOUBLE(ungrf_y((cp->lisp_info)->axis, y))),
 			 S_mouse_drag_hook);
 	      break;
 	    case CLICK_FFT_MAIN:
@@ -4610,7 +4609,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, char *caller)
 	    case CP_EDPOS_FRAMES:            return(C_TO_XEN_OFF_T(to_c_edit_samples(cp, cp_edpos, caller, 3))); break;
 	    case CP_UPDATE_TIME:             
 #if USE_GTK
-	      if (!(((cp->cgx)->ax)->wn)) fixup_cp_cgx_ax_wn(cp);
+	      if (!(cp->cgx->ax->wn)) fixup_cp_cgx_ax_wn(cp);
 #endif
 	      display_channel_time_data(cp);
 	      break;
@@ -4661,7 +4660,6 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, char *caller)
 	    case CP_MAXAMP:           return(C_TO_XEN_DOUBLE(channel_maxamp(cp, AT_CURRENT_EDIT_POSITION))); break;
 	    case CP_EDPOS_MAXAMP:     return(C_TO_XEN_DOUBLE(channel_maxamp(cp, to_c_edit_position(cp, cp_edpos, S_maxamp, 3)))); break;
 	    case CP_BEATS_PER_MINUTE: return(C_TO_XEN_DOUBLE(cp->beats_per_minute));             break;
-
 	    }
 	}
     }
@@ -6731,10 +6729,10 @@ If 'data' is a list of numbers, it is treated as an envelope."
     graphs = 1; 
   else graphs = XEN_LIST_LENGTH(ldata);
   if (graphs == 0) return(XEN_FALSE);
-  lg = (lisp_grf *)(cp->lisp_info);
+  lg = cp->lisp_info;
   if ((lg) && (graphs != lg->graphs)) 
     {
-      old_lp = (lisp_grf *)(cp->lisp_info);
+      old_lp = cp->lisp_info;
       uap = old_lp->axis;
       if (uap)
 	{
@@ -6744,12 +6742,13 @@ If 'data' is a list of numbers, it is treated as an envelope."
 	  o = uap->y_offset;
 	  gx0 = uap->graph_x0;
 	}
-      cp->lisp_info = free_lisp_info(cp);
+      free_lisp_info(cp);
+      cp->lisp_info = NULL;
     }
   if (!(cp->lisp_info))
     {
       lg = (lisp_grf *)CALLOC(graphs, sizeof(lisp_grf));
-      cp->lisp_info = (void *)lg;
+      cp->lisp_info = lg;
       lg->len = (int *)CALLOC(graphs, sizeof(int));
       lg->graphs = graphs;
       lg->data = (Float **)CALLOC(graphs, sizeof(Float *));
@@ -6758,7 +6757,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
   if ((XEN_LIST_P_WITH_LENGTH(ldata, len)) &&
       (XEN_NUMBER_P(XEN_CAR(ldata))))
     {
-      lg = (lisp_grf *)(cp->lisp_info);
+      lg = cp->lisp_info;
       lg->env_data = 1;
       if (lg->len[0] != len)
 	{
@@ -6783,7 +6782,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
     }
   else
     {
-      lg = (lisp_grf *)(cp->lisp_info);
+      lg = cp->lisp_info;
       lg->env_data = 0;
       for (graph = 0; graph < graphs; graph++)
 	{

@@ -188,7 +188,7 @@ static void color_file_selection_box(Widget w)
 
 /* -------- File Open/Mix Dialogs -------- */
 
-typedef struct {
+typedef struct file_dialog_info {
   bool file_dialog_read_only, need_update, new_file_written;
   Widget dialog, play_selected_button, just_sounds_button, dialog_frame, dialog_info1, dialog_info2;
   XmSearchProc default_search_proc;
@@ -229,9 +229,8 @@ static int string_compare(const void *ss1, const void *ss2)
   return(strcmp((*((char **)ss1)), (*((char **)ss2))));
 }
 
-void clear_deleted_snd_info(void *data)
+void clear_deleted_snd_info(struct file_dialog_info *fd)
 {
-  file_dialog_info *fd = (file_dialog_info *)data;
   fd->file_play_sp = NULL;
 }
 
@@ -255,7 +254,7 @@ static void play_selected_callback(Widget w, XtPointer context, XtPointer info)
 	  if (mus_file_probe(filename))
 	    {
 	      fd->file_play_sp = make_sound_readable(filename, false);
-	      fd->file_play_sp->delete_me = (void *)fd;
+	      fd->file_play_sp->delete_me = fd;
 	      if (fd->file_play_sp)
 		play_sound(fd->file_play_sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, AT_CURRENT_EDIT_POSITION);
 	    }

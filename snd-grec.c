@@ -38,7 +38,6 @@ typedef struct {
   GtkObject *adj;
   int last_amp, type, in, out;
   int device_in_chan;
-  void *wd;
 } amp_t;
 
 typedef struct {
@@ -59,7 +58,7 @@ typedef struct {
   GtkWidget *slider_box;
 } pane_t;
 
-typedef struct {
+typedef struct Wdesc {
   int chan, field, device, system;
   int gain;
   pane_t *p;
@@ -1210,9 +1209,8 @@ static void make_vertical_gain_sliders(recorder_info *rp, pane_t *p,
 static void make_vu_meters(pane_t *p, int vu_meters,
 			   int overall_input_ctr, Float meter_size, bool input, GtkWidget *vuh);
 
-void recorder_fill_wd(void *uwd, int chan, int field, int device)
+void recorder_fill_wd(struct Wdesc *wd, int chan, int field, int device)
 {
-  Wdesc *wd = (Wdesc *)uwd;
   wd->chan = chan;
   wd->field = field;
   wd->device = device;
@@ -1402,7 +1400,7 @@ static void make_vertical_gain_sliders(recorder_info *rp, pane_t *p,
       Wdesc *wd;
       wd = (Wdesc *)CALLOC(1, sizeof(Wdesc));
       wd->system = p->system;
-      this_device = recorder_sort_mixer_device((void *)wd, i, chan, input, p->device, mixflds);
+      this_device = recorder_sort_mixer_device(wd, i, chan, input, p->device, mixflds);
       wd->p = p;
       wd->gain = gain_ctr + chan;
       if (wd->gain > rp->num_mixer_gains) 
@@ -1616,8 +1614,6 @@ static int make_amp_sliders(recorder_info *rp, pane_t *p, bool input, int overal
 	  rp->out_amps[i] = 1.0;
 	  AMP_rec_outs[i] = a;
 	}
-
-      a->wd = wd;
       if ((!input) || (p->active_sliders[in_chan][out_chan]))
 	make_recorder_slider(p, a, input);
       else

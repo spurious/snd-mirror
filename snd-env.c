@@ -1060,7 +1060,7 @@ typedef struct {
   Float scale;
 } enved_fft;
 
-typedef struct {
+typedef struct enved_ffts {
   int size;
   enved_fft **ffts;
 } enved_ffts;
@@ -1082,7 +1082,7 @@ void free_enved_spectra(chan_info *cp)
     {
       enved_ffts *efs;
       int i;
-      efs = (enved_ffts *)(cp->enved_spectra);
+      efs = cp->enved_spectra;
       for (i = 0; i < efs->size; i++)
 	efs->ffts[i] = free_enved_fft(efs->ffts[i]);
       FREE(efs->ffts);
@@ -1097,7 +1097,7 @@ void release_dangling_enved_spectra(chan_info *cp, int edpt)
     {
       enved_ffts *efs;
       int i;
-      efs = (enved_ffts *)(cp->enved_spectra);
+      efs = cp->enved_spectra;
       if (edpt < efs->size)
 	for (i = edpt; i < efs->size; i++)
 	  efs->ffts[i] = free_enved_fft(efs->ffts[i]);
@@ -1116,8 +1116,8 @@ static enved_fft *new_enved_fft(chan_info *cp)
 {
   enved_ffts *efs;
   if (cp->enved_spectra == NULL)
-    cp->enved_spectra = (void *)CALLOC(1, sizeof(enved_ffts));
-  efs = (enved_ffts *)(cp->enved_spectra);
+    cp->enved_spectra = (enved_ffts *)CALLOC(1, sizeof(enved_ffts));
+  efs = cp->enved_spectra;
   if (efs->size <= cp->edit_ctr)
     {
       if (efs->ffts)

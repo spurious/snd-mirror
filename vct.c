@@ -453,7 +453,7 @@ v. (" S_vct_mapB " v (lambda () 3.0)) is the same as (" S_vct_fillB " v 3.0)"
   v = TO_VCT(obj);
 #if WITH_RUN && USE_SND
   {
-    void *pt = NULL;
+    struct ptree *pt = NULL;
     if ((optimization(ss)) > 0)
       {
 	pt = form_to_ptree_0_f(proc);

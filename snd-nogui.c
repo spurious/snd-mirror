@@ -192,7 +192,7 @@ void set_foreground_color(axis_context *ax, int color) {}
 void change_channel_style(snd_info *sp, channel_style_t new_style) {}
 void reflect_amp_env_in_progress(snd_info *sp) {}
 void cleanup_cw(chan_info *cp) {}
-void clear_deleted_snd_info(void *fd) {}
+void clear_deleted_snd_info(struct file_dialog_info *fd) {}
 bool fixup_cp_cgx_ax_wn(chan_info *cp) {return(false);}
 int w_snd_name(snd_info *sp) {return(0);}
 int filter_graph(snd_info *sp) {return(0);}

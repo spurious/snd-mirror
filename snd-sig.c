@@ -2562,7 +2562,7 @@ void cos_smooth(chan_info *cp, off_t beg, off_t num, bool over_selection)
   free_sync_state(sc);
 }
 
-static char *run_channel(chan_info *cp, void *upt, off_t beg, off_t dur, int edpos, const char *origin, const char *caller)
+static char *run_channel(chan_info *cp, struct ptree *pt, off_t beg, off_t dur, int edpos, const char *origin, const char *caller)
 {
   snd_info *sp;
   file_info *hdr = NULL;
@@ -2605,7 +2605,7 @@ static char *run_channel(chan_info *cp, void *upt, off_t beg, off_t dur, int edp
       j = 0;
       for (k = 0; k < dur; k++)
 	{
-	  idata[j++] = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(upt, read_sample_to_float(sf)));
+	  idata[j++] = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(pt, read_sample_to_float(sf)));
 	  if (j == MAX_BUFFER_SIZE)
 	    {
 	      err = mus_file_write(ofd, 0, j - 1, 1, data);
@@ -2629,7 +2629,7 @@ static char *run_channel(chan_info *cp, void *upt, off_t beg, off_t dur, int edp
       if (dur > 0) 
 	{
 	  for (k = 0; k < dur; k++)
-	    idata[k] = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(upt, read_sample_to_float(sf)));
+	    idata[k] = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(pt, read_sample_to_float(sf)));
 	  change_samples(beg, dur, idata, cp, LOCK_MIXES, origin, cp->edit_ctr);
 	}
     }
@@ -2704,7 +2704,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 
       if (optimization(ss) > 0)
 	{
-	  void *pt = NULL;
+	  struct ptree *pt = NULL;
 	  pt = form_to_ptree_1_f(proc_and_list);
 	  if (pt)
 	    {
@@ -2934,7 +2934,7 @@ the current sample, the vct returned by 'init-func', and the current read direct
   int pos;
 #if (!HAVE_RUBY)
   bool ptrees_present = false;
-  void *pt = NULL;
+  struct ptree *pt = NULL;
 #endif
   XEN proc = XEN_FALSE;
   /* (ptree-channel (lambda (y) (* y 2))) -> ((lambda (y) (* y 2)) #<procedure #f ((y) (* y 2))>) as "proc_and_list" */
@@ -3007,7 +3007,8 @@ the current sample, the vct returned by 'init-func', and the current read direct
       if (ptrees_present)
 	{
 	  run_channel(cp, pt, beg, dur, pos, caller, S_ptree_channel);
-	  pt = free_ptree(pt);
+	  free_ptree(pt);
+	  pt = NULL;
 	}
       else ptree_channel(cp, pt, beg, dur, pos, XEN_TRUE_P(env_too), init_func, caller);
     }
@@ -3119,7 +3120,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
   int counts = 0, pos;
   char *errmsg;
   XEN proc = XEN_FALSE;
-  void *pt = NULL;
+  struct ptree *pt = NULL;
   if (XEN_LIST_P(proc_and_list))
     proc = XEN_CADR(proc_and_list);
   else proc = proc_and_list;

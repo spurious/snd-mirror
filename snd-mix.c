@@ -43,7 +43,7 @@ typedef struct {
 typedef enum {C_STRAIGHT_SOUND, C_AMP_SOUND, C_SPEED_SOUND, C_ZERO_SOUND, C_AMP_ENV_SOUND, C_SPEED_AMP_SOUND, C_SPEED_ENV_SOUND,
 	      C_STRAIGHT_PEAK, C_AMP_PEAK, C_SPEED_PEAK, C_ZERO_PEAK, C_AMP_ENV_PEAK, C_SPEED_AMP_PEAK, C_SPEED_ENV_PEAK} mix_calc_t;
 
-typedef struct {
+typedef struct mix_fd {
   int type;
   mix_info *md;
   snd_fd **sfs;
@@ -641,7 +641,7 @@ static Float next_mix_sample(mix_fd *mf)
   return(sum);
 }
 
-Float mix_read_sample_to_float(void *ptr) {return(next_mix_sample((mix_fd *)ptr));}
+Float mix_read_sample_to_float(struct mix_fd *ptr) {return(next_mix_sample(ptr));}
 
 #define PREVIOUS_MIX true
 #define CURRENT_MIX false
@@ -760,7 +760,6 @@ static mix_fd *init_mix_read_any(mix_info *md, bool old, int type, off_t beg)
 	    mf->sfs[i] = init_sample_read(beg, add_sp->chans[i], READ_FORWARD);
 	}
     }
-#ifdef __cplusplus
   else
     {
       switch (mf->calc)
@@ -775,9 +774,6 @@ static mix_fd *init_mix_read_any(mix_info *md, bool old, int type, off_t beg)
 	default: break;
 	}
     }
-#else
-  else mf->calc += C_STRAIGHT_PEAK;
-#endif
   if (mf->sr != 1.0)
     {
       if (type == MIX_INPUT_SOUND)
@@ -925,7 +921,7 @@ static mix_fd *free_mix_fd(mix_fd *mf)
 
 /* ---------------- MIXING ---------------- */
 
-static int remove_temporary_mix_file(mix_info *md, void *ptr)
+static int remove_temporary_mix_file(mix_info *md, void *ignore)
 {
   if (md->temporary == DELETE_ME) 
     snd_remove(md->in_filename, REMOVE_FROM_CACHE);
@@ -4381,7 +4377,7 @@ static XEN_OBJECT_TYPE mf_tag;
 bool mf_p(XEN obj) {return(XEN_OBJECT_TYPE_P(obj, mf_tag));}
 #define TO_MIX_SAMPLE_READER(obj) ((mix_fd *)XEN_OBJECT_REF(obj))
 #define MIX_SAMPLE_READER_P(Obj) XEN_OBJECT_TYPE_P(Obj, mf_tag)
-void *get_mf(XEN obj) {if (MIX_SAMPLE_READER_P(obj)) return((void *)XEN_OBJECT_REF(obj)); else return(NULL);}
+struct mix_fd *get_mf(XEN obj) {if (MIX_SAMPLE_READER_P(obj)) return(TO_MIX_SAMPLE_READER(obj)); else return(NULL);}
 
 static XEN g_mf_p(XEN obj) 
 {
@@ -4413,7 +4409,7 @@ static char *mf_to_string(mix_fd *fd)
   return(desc);
 }
 
-char *run_mix_reader_to_string(void *ptr) {return(mf_to_string((mix_fd *)ptr));}
+char *run_mix_reader_to_string(struct mix_fd *ptr) {return(mf_to_string(ptr));}
 
 
 XEN_MAKE_OBJECT_PRINT_PROCEDURE(mix_fd, print_mf, mf_to_string)
@@ -4470,7 +4466,7 @@ static void mf_free(mix_fd *fd)
     }
 }
 
-void run_free_mix_fd(void *ptr) {mf_free((mix_fd *)ptr);}
+void run_free_mix_fd(struct mix_fd *ptr) {mf_free(ptr);}
 
 XEN_MAKE_OBJECT_FREE_PROCEDURE(mix_fd, free_mf, mf_free)
 
@@ -4513,9 +4509,9 @@ static XEN g_make_mix_sample_reader(XEN mix_id, XEN ubeg)
   return(XEN_FALSE);
 }
 
-void *run_make_mix_sample_reader(int id, off_t beg)
+struct mix_fd *run_make_mix_sample_reader(int id, off_t beg)
 {
-  return((void *)init_mix_read(md_from_id(id), CURRENT_MIX, beg));
+  return(init_mix_read(md_from_id(id), CURRENT_MIX, beg));
 }
 
 static XEN g_read_mix_sample(XEN obj)
@@ -4542,9 +4538,8 @@ XEN g_mix_sample_reader_home(XEN obj)
   return(C_TO_XEN_INT(mf->md->id));
 }
 
-bool mix_sample_reader_at_end_p(void *md)
+bool mix_sample_reader_at_end_p(struct mix_fd *mf)
 {
-  mix_fd *mf = (mix_fd *)md;
   return(mf->sfs[mf->base]->at_eof);
 }
 
@@ -7411,7 +7406,7 @@ the copy at 'beg' which defaults to the copied track's position."
 /* ---------------- track-reader, play-track ---------------- */
 
 /* track reader: an array of mix readers with state: active, waiting, null (done) */
-typedef struct {
+typedef struct track_fd {
   int mixes, track, initial_chan;
   off_t loc;
   off_t *state;
@@ -7545,7 +7540,7 @@ static Float next_track_sample(track_fd *fd)
   return(sum);
 }
 
-Float track_read_sample_to_float(void *ptr) {return(next_track_sample((track_fd *)ptr));}
+Float track_read_sample_to_float(struct track_fd *ptr) {return(next_track_sample(ptr));}
 
 static void play_track(int track_num, int chan, off_t beg, bool from_gui)
 {
@@ -7698,7 +7693,7 @@ static XEN_OBJECT_TYPE tf_tag;
 bool tf_p(XEN obj) {return(XEN_OBJECT_TYPE_P(obj, tf_tag));}
 #define TO_TRACK_SAMPLE_READER(obj) ((track_fd *)XEN_OBJECT_REF(obj))
 #define TRACK_SAMPLE_READER_P(Obj) XEN_OBJECT_TYPE_P(Obj, tf_tag)
-void *get_tf(XEN obj) {if (TRACK_SAMPLE_READER_P(obj)) return((void *)XEN_OBJECT_REF(obj)); else return(NULL);}
+struct track_fd *get_tf(XEN obj) {if (TRACK_SAMPLE_READER_P(obj)) return(TO_TRACK_SAMPLE_READER(obj)); else return(NULL);}
 
 static XEN g_tf_p(XEN obj) 
 {
@@ -7752,7 +7747,7 @@ static char *tf_to_string(track_fd *fd)
   return(desc);
 }
 
-char *run_track_reader_to_string(void *ptr) {return(tf_to_string((track_fd *)ptr));}
+char *run_track_reader_to_string(struct track_fd *ptr) {return(tf_to_string(ptr));}
 
 
 XEN_MAKE_OBJECT_PRINT_PROCEDURE(track_fd, print_tf, tf_to_string)
@@ -7772,7 +7767,7 @@ static void tf_free(track_fd *fd)
     }
 }
 
-void run_free_track_fd(void *ptr) {tf_free((track_fd *)ptr);}
+void run_free_track_fd(struct track_fd *ptr) {tf_free(ptr);}
 
 XEN_MAKE_OBJECT_FREE_PROCEDURE(track_fd, free_tf, tf_free)
 
@@ -7805,9 +7800,9 @@ return a reader ready to access track's data associated with track's channel chn
   XEN_MAKE_AND_RETURN_OBJECT(tf_tag, tf, 0, free_tf);
 }
 
-void *run_make_track_sample_reader(int id, int chan, off_t beg)
+struct track_fd *run_make_track_sample_reader(int id, int chan, off_t beg)
 {
-  return((void *)init_track_reader(id, chan, beg, false));
+  return(init_track_reader(id, chan, beg, false));
 }
 
 static XEN g_read_track_sample(XEN obj)
@@ -7855,9 +7850,8 @@ XEN g_track_sample_reader_home(XEN obj)
 		    C_TO_XEN_INT(tf->initial_chan)));
 }
 
-bool track_sample_reader_at_end_p(void *rd)
+bool track_sample_reader_at_end_p(struct track_fd *tf)
 {
-  track_fd *tf = (track_fd *)rd;
   return(tf->loc == -1);
 }
 
