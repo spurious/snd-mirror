@@ -3176,7 +3176,7 @@ to create (via waveshaping) the harmonic spectrum described by the partials argu
      (" S_polynomial " v0 (" S_oscil " os)))"
 
   int npartials, len = 0;
-  mus_chebyshev_t kind = MUS_CHEBYSHEV_FIRST_KIND;
+  mus_polynomial_t kind = MUS_CHEBYSHEV_FIRST_KIND;
   Float *partials, *wave;
   XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(amps, len), amps, XEN_ARG_1, S_partials_to_polynomial, "a list");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ukind), ukind, XEN_ARG_2, S_partials_to_polynomial, "either " S_mus_chebyshev_first_kind " or " S_mus_chebyshev_second_kind);
@@ -3185,7 +3185,7 @@ to create (via waveshaping) the harmonic spectrum described by the partials argu
       int ck;
       ck = XEN_TO_C_INT(ukind);
       if ((ck >= MUS_CHEBYSHEV_OBSOLETE_KIND) && (ck <= MUS_CHEBYSHEV_SECOND_KIND))
-	kind = (mus_chebyshev_t)ck;
+	kind = (mus_polynomial_t)ck;
       else XEN_OUT_OF_RANGE_ERROR(S_partials_to_polynomial, 2, ukind, "~A: unknown Chebyshev polynomial kind");
     }
   if (len == 0)
@@ -3235,7 +3235,7 @@ is the same in effect as make-oscil"
   vct *v = NULL;
   Float freq = 440.0, phase = 0.0;
   Float *coeffs = NULL, *partials = NULL;
-  mus_chebyshev_t kind = MUS_CHEBYSHEV_FIRST_KIND;
+  mus_polynomial_t kind = MUS_CHEBYSHEV_FIRST_KIND;
   keys[0] = kw_frequency;
   keys[1] = kw_initial_phase;
   keys[2] = kw_coeffs;
@@ -3258,7 +3258,7 @@ is the same in effect as make-oscil"
       phase = mus_optkey_to_float(keys[1], S_make_polyshape, orig_arg[2], phase);
       ck = mus_optkey_to_int(keys[4], S_make_polyshape, orig_arg[4], (int)kind);
       if ((ck >= MUS_CHEBYSHEV_OBSOLETE_KIND) && (ck <= MUS_CHEBYSHEV_SECOND_KIND))
-	kind = (mus_chebyshev_t)ck;
+	kind = (mus_polynomial_t)ck;
       else XEN_OUT_OF_RANGE_ERROR(S_make_polyshape, orig_arg[4], keys[4], "~A: unknown Chebyshev polynomial kind");
       v = mus_optkey_to_vct(keys[2], S_make_polyshape, orig_arg[2], NULL);
       if (v)
@@ -3793,18 +3793,27 @@ static XEN g_mus_close(XEN ptr)
   return(C_TO_XEN_INT(mus_close_file((mus_any *)XEN_TO_MUS_ANY(ptr))));
 }
 
-static XEN g_make_file_to_sample(XEN name)
+static XEN g_make_file_to_sample(XEN name, XEN buffer_size)
 {
-  #define H_make_file_to_sample "(" S_make_file_to_sample " filename): return an input generator reading 'filename' (a sound file)"
+  #define H_make_file_to_sample "(" S_make_file_to_sample " filename buffer-size): return an input generator reading 'filename' (a sound file)"
 
   mus_any *ge;
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, S_make_file_to_sample, "a string");
+  int size;
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_make_file_to_sample, "a string");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(buffer_size), buffer_size, XEN_ARG_2, S_make_file_to_sample, "an integer");
   if (!(mus_file_probe(XEN_TO_C_STRING(name))))
     XEN_ERROR(NO_SUCH_FILE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_make_file_to_sample),
 			 name,
 			 C_TO_XEN_STRING(strerror(errno))));
-  ge = mus_make_file_to_sample(XEN_TO_C_STRING(name));
+  if (XEN_INTEGER_P(buffer_size))
+    {
+      size = XEN_TO_C_INT(buffer_size);
+      if (size <= 0)
+	XEN_OUT_OF_RANGE_ERROR(S_make_file_to_sample, XEN_ARG_2, buffer_size, "must be > 0");
+    }
+  else size = mus_file_buffer_size();
+  ge = mus_make_file_to_sample_with_buffer_size(XEN_TO_C_STRING(name), size);
   if (ge) return(xen_return_first(mus_xen_to_object(_mus_wrap_no_vcts(ge)), name));
   return(XEN_FALSE);
 }
@@ -3892,18 +3901,30 @@ handled by the output generator 'obj', in channel 'chan' at frame 'samp'"
 					    XEN_TO_C_DOUBLE(val))));
 }
 
-static XEN g_make_file_to_frame(XEN name)
+/* TODO: CL side of readin buffer size, make-readin arg in clm2xen, test all 3, snd-run [run.lisp+link]
+ */
+
+static XEN g_make_file_to_frame(XEN name, XEN buffer_size)
 {
-  #define H_make_file_to_frame "(" S_make_file_to_frame " filename): return an input generator reading 'filename' (a sound file)"
+  #define H_make_file_to_frame "(" S_make_file_to_frame " filename buffer-size): return an input generator reading 'filename' (a sound file)"
 
   mus_any *ge;
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, S_make_file_to_frame, "a string");
+  int size;
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_make_file_to_frame, "a string");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(buffer_size), buffer_size, XEN_ARG_2, S_make_file_to_frame, "an integer");
   if (!(mus_file_probe(XEN_TO_C_STRING(name))))
     XEN_ERROR(NO_SUCH_FILE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_make_file_to_frame),
 			 name,
 			 C_TO_XEN_STRING(strerror(errno))));
-  ge = mus_make_file_to_frame(XEN_TO_C_STRING(name));
+  if (XEN_INTEGER_P(buffer_size))
+    {
+      size = XEN_TO_C_INT(buffer_size);
+      if (size <= 0)
+	XEN_OUT_OF_RANGE_ERROR(S_make_file_to_frame, XEN_ARG_2, buffer_size, "must be > 0");
+    }
+  else size = mus_file_buffer_size();
+  ge = mus_make_file_to_frame_with_buffer_size(XEN_TO_C_STRING(name), size);
   if (ge) return(xen_return_first(mus_xen_to_object(_mus_wrap_no_vcts(ge)), name));
   return(XEN_FALSE);
 }
@@ -5349,10 +5370,10 @@ XEN_NARGIFY_1(g_env_w, g_env)
 XEN_VARGIFY(g_make_env_w, g_make_env)
 XEN_NARGIFY_2(g_env_interp_w, g_env_interp)
 XEN_NARGIFY_1(g_file_to_sample_p_w, g_file_to_sample_p)
-XEN_NARGIFY_1(g_make_file_to_sample_w, g_make_file_to_sample)
+XEN_ARGIFY_2(g_make_file_to_sample_w, g_make_file_to_sample)
 XEN_ARGIFY_3(g_file_to_sample_w, g_file_to_sample)
 XEN_NARGIFY_1(g_file_to_frame_p_w, g_file_to_frame_p)
-XEN_NARGIFY_1(g_make_file_to_frame_w, g_make_file_to_frame)
+XEN_ARGIFY_2(g_make_file_to_frame_w, g_make_file_to_frame)
 XEN_ARGIFY_3(g_file_to_frame_w, g_file_to_frame)
 XEN_NARGIFY_1(g_sample_to_file_p_w, g_sample_to_file_p)
 XEN_ARGIFY_5(g_make_sample_to_file_w, g_make_sample_to_file)
@@ -6071,10 +6092,10 @@ the closer the radius is to 1.0, the narrower the resonance."
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_locsig_type, g_locsig_type_w, H_locsig_type, S_setB S_locsig_type, g_set_locsig_type_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE(S_file_to_sample_p,        g_file_to_sample_p_w,        1, 0, 0, H_file_to_sample_p);
-  XEN_DEFINE_PROCEDURE(S_make_file_to_sample,     g_make_file_to_sample_w,     1, 0, 0, H_make_file_to_sample);
+  XEN_DEFINE_PROCEDURE(S_make_file_to_sample,     g_make_file_to_sample_w,     1, 1, 0, H_make_file_to_sample);
   XEN_DEFINE_PROCEDURE(S_file_to_sample,          g_file_to_sample_w,          2, 1, 0, H_file_to_sample);
   XEN_DEFINE_PROCEDURE(S_file_to_frame_p,         g_file_to_frame_p_w,         1, 0, 0, H_file_to_frame_p);
-  XEN_DEFINE_PROCEDURE(S_make_file_to_frame,      g_make_file_to_frame_w,      1, 0, 0, H_make_file_to_frame);
+  XEN_DEFINE_PROCEDURE(S_make_file_to_frame,      g_make_file_to_frame_w,      1, 1, 0, H_make_file_to_frame);
   XEN_DEFINE_PROCEDURE(S_file_to_frame,           g_file_to_frame_w,           2, 1, 0, H_file_to_frame);
   XEN_DEFINE_PROCEDURE(S_sample_to_file_p,        g_sample_to_file_p_w,        1, 0, 0, H_sample_to_file_p);
   XEN_DEFINE_PROCEDURE(S_make_sample_to_file,     g_make_sample_to_file_w,     4, 1, 0, H_make_sample_to_file);

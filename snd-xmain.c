@@ -830,12 +830,8 @@ void snd_doit(int argc, char **argv)
     fprintf(stderr, _("can't find font %s"), snd_rs.listener_font);
 
   if (!(ss->using_schemes)) XtVaSetValues(shell, XmNbackground, sx->basic_color, NULL);
-  ss->init_file = copy_string(getenv(SND_INIT_FILE_ENVIRONMENT_NAME));
-  if (ss->init_file == NULL)
-    ss->init_file = snd_rs.init_file_name; /* doesn't make any sense to pass this out to the user -- what can he do? */
-#if DEBUGGING && HAVE_RUBY
-  ss->init_file = copy_string("~/.sndrb"); /* save me some time... */
-#endif
+  
+  set_init_filename(snd_rs.init_file_name);
   set_color_map(snd_rs.spectrogram_color);
 
 #ifndef SND_AS_WIDGET

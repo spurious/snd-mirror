@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 13
-#define MUS_DATE "16-Mar-05"
+#define MUS_REVISION 14
+#define MUS_DATE "21-Mar-05"
 
 /*
+ * 21-Mar:     mus_make_readin|file_to_sample|file_to_frame_with_buffer_size.
  * 16-Mar:     polyshape generator (waveshaper as polynomial + oscil)
  *             mus_chebyshev_first|second_kind.
  *             mus_partials_to_waveshape no longer normalizes the partials.
@@ -231,7 +232,7 @@ typedef enum {MUS_RECTANGULAR_WINDOW, MUS_HANN_WINDOW, MUS_WELCH_WINDOW, MUS_PAR
 	      MUS_GAUSSIAN_WINDOW, MUS_TUKEY_WINDOW, MUS_DOLPH_CHEBYSHEV_WINDOW, MUS_HANN_POISSON_WINDOW, MUS_CONNES_WINDOW
 } mus_fft_window_t;
 
-typedef enum {MUS_CHEBYSHEV_OBSOLETE_KIND, MUS_CHEBYSHEV_FIRST_KIND, MUS_CHEBYSHEV_SECOND_KIND} mus_chebyshev_t;
+typedef enum {MUS_CHEBYSHEV_OBSOLETE_KIND, MUS_CHEBYSHEV_FIRST_KIND, MUS_CHEBYSHEV_SECOND_KIND} mus_polynomial_t;
 
 #define MUS_INTERP_TYPE_OK(Interp) ((Interp) <= MUS_INTERP_HERMITE)
 #define MUS_FFT_WINDOW_OK(Window) ((Window) <= MUS_CONNES_WINDOW)
@@ -464,7 +465,7 @@ Float mus_waveshape_1(mus_any *ptr, Float index);
 Float mus_waveshape_0(mus_any *ptr);
 bool mus_waveshape_p(mus_any *ptr);
 Float *mus_partials_to_waveshape(int npartials, Float *partials, int size, Float *table);
-Float *mus_partials_to_polynomial(int npartials, Float *partials, mus_chebyshev_t kind);
+Float *mus_partials_to_polynomial(int npartials, Float *partials, mus_polynomial_t kind);
 mus_any *mus_make_polyshape(Float frequency, Float phase, Float *coeffs, int size);
 Float mus_polyshape(mus_any *ptr, Float index, Float fm);
 Float mus_polyshape_2(mus_any *ptr, Float fm);
@@ -512,10 +513,12 @@ mus_any *mus_make_scalar_mixer(int chans, Float scalar);
 
 bool mus_file_to_sample_p(mus_any *ptr);
 mus_any *mus_make_file_to_sample(const char *filename);
+mus_any *mus_make_file_to_sample_with_buffer_size(const char *filename, int buffer_size);
 Float mus_file_to_sample(mus_any *ptr, off_t samp, int chan);
 
 Float mus_readin(mus_any *rd);
 mus_any *mus_make_readin(const char *filename, int chan, off_t start, int direction);
+mus_any *mus_make_readin_with_buffer_size(const char *filename, int chan, off_t start, int direction, int buffer_size);
 bool mus_readin_p(mus_any *ptr);
 Float mus_increment(mus_any *rd);
 Float mus_set_increment(mus_any *rd, Float dir);
@@ -530,6 +533,7 @@ Float mus_in_any(off_t frame, int chan, mus_any *IO);
 mus_any *mus_make_file_to_frame(const char *filename);
 bool mus_file_to_frame_p(mus_any *ptr);
 mus_any *mus_file_to_frame(mus_any *ptr, off_t samp, mus_any *f);
+mus_any *mus_make_file_to_frame_with_buffer_size(const char *filename, int buffer_size);
 
 bool mus_sample_to_file_p(mus_any *ptr);
 mus_any *mus_make_sample_to_file(const char *filename, int chans, int out_format, int out_type);

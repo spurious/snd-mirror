@@ -828,21 +828,6 @@ int mus_sound_close_output(int fd, off_t bytes_of_data)
   return(MUS_ERROR);
 }
 
-int mus_sound_read(int fd, int beg, int end, int chans, mus_sample_t **bufs) 
-{
-  return(mus_file_read(fd, beg, end, chans, bufs));
-}
-
-int mus_sound_write (int tfd, int beg, int end, int chans, mus_sample_t **bufs) 
-{
-  return(mus_file_write(tfd, beg, end, chans, bufs));
-}
-
-off_t mus_sound_seek_frame(int tfd, off_t frame)
-{
-  return(mus_file_seek_frame(tfd, frame));
-}
-
 typedef enum {SF_CHANS, SF_SRATE, SF_TYPE, SF_FORMAT, SF_LOCATION, SF_SIZE} sf_field_t;
 
 static int mus_sound_set_field(const char *arg, sf_field_t field, int val)
@@ -951,7 +936,7 @@ off_t mus_sound_maxamps(const char *ifile, int chans, mus_sample_t *vals, off_t 
       mus_sound_close_input(ifd);
       return(0);
     }
-  mus_sound_seek_frame(ifd, 0);
+  mus_file_seek_frame(ifd, 0);
   ibufs = (mus_sample_t **)CALLOC(ichans, sizeof(mus_sample_t *));
   bufnum = 8192;
   for (j = 0; j < ichans; j++) 
@@ -963,7 +948,7 @@ off_t mus_sound_maxamps(const char *ifile, int chans, mus_sample_t *vals, off_t 
       if ((n + bufnum) < frames) 
 	curframes = bufnum; 
       else curframes = (frames - n);
-      mus_sound_read(ifd, 0, curframes - 1, ichans, ibufs);
+      mus_file_read(ifd, 0, curframes - 1, ichans, ibufs);
       for (chn = 0; chn < ichans; chn++)
 	{
 	  buffer = (mus_sample_t *)(ibufs[chn]);
@@ -1043,7 +1028,7 @@ int mus_file_to_array(const char *filename, int chan, int start, int samples, mu
     }
   bufs = (mus_sample_t **)CALLOC(chans, sizeof(mus_sample_t *));
   bufs[chan] = array;
-  mus_sound_seek_frame(ifd, start);
+  mus_file_seek_frame(ifd, start);
   total_read = mus_file_read_any(ifd, 0, chans, samples, bufs, (mus_sample_t *)bufs);
   mus_sound_close_input(ifd);
   FREE(bufs);

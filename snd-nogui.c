@@ -375,10 +375,7 @@ void snd_doit(int argc, char **argv)
   static int auto_open_ctr = 0;
   int i;
   ss->sgx = (state_context *)CALLOC(1, sizeof(state_context));
-
-  ss->init_file = copy_string(getenv(SND_INIT_FILE_ENVIRONMENT_NAME));
-  if (ss->init_file == NULL)
-    ss->init_file = INIT_FILE_NAME;
+  set_init_filename(INIT_FILE_NAME);
 
 #if HAVE_GUILE
   XEN_EVAL_C_STRING("(set! scm-repl-prompt \"snd> \")");

@@ -938,6 +938,15 @@ static char *file_extension(char *arg)
   return(dot);
 }
 
+void set_init_filename(const char *filename)
+{
+  char *temp;
+  temp = getenv(SND_INIT_FILE_ENVIRONMENT_NAME);
+  if (temp)
+    ss->init_file = copy_string(temp);
+  else ss->init_file = copy_string(filename);
+}
+
 static XEN start_hook;
 
 static bool dont_start(char *filename)

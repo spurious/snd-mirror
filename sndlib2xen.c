@@ -811,11 +811,11 @@ filling sound-data sdata's buffers starting at beg (buffer location), going to e
   XEN_ASSERT_TYPE(XEN_NUMBER_P(end), end, XEN_ARG_3, S_mus_sound_read, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chans), chans, XEN_ARG_4, S_mus_sound_read, "an integer");
   XEN_ASSERT_TYPE(SOUND_DATA_P(sv), sv, XEN_ARG_5, S_mus_sound_read, "a sound-data object");
-  return(C_TO_XEN_INT(mus_sound_read(XEN_TO_C_INT(fd),
-				     XEN_TO_C_INT_OR_ELSE(beg, 0),
-				     XEN_TO_C_INT_OR_ELSE(end, 0),
-				     XEN_TO_C_INT(chans),
-				     get_sound_data(sv))));
+  return(C_TO_XEN_INT(mus_file_read(XEN_TO_C_INT(fd),
+				    XEN_TO_C_INT_OR_ELSE(beg, 0),
+				    XEN_TO_C_INT_OR_ELSE(end, 0),
+				    XEN_TO_C_INT(chans),
+				    get_sound_data(sv))));
 }
 
 static XEN g_mus_sound_write(XEN fd, XEN beg, XEN end, XEN chans, XEN sv)
@@ -828,11 +828,11 @@ starting at beg (buffer location), going to end"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(end), end, XEN_ARG_3, S_mus_sound_write, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chans), chans, XEN_ARG_4, S_mus_sound_write, "an integer");
   XEN_ASSERT_TYPE(SOUND_DATA_P(sv), sv, XEN_ARG_5, S_mus_sound_write, "a sound-data object");
-  return(C_TO_XEN_INT(mus_sound_write(XEN_TO_C_INT(fd),
-				      XEN_TO_C_INT_OR_ELSE(beg, 0),
-				      XEN_TO_C_INT_OR_ELSE(end, 0),
-				      XEN_TO_C_INT(chans),
-				      get_sound_data(sv))));
+  return(C_TO_XEN_INT(mus_file_write(XEN_TO_C_INT(fd),
+				     XEN_TO_C_INT_OR_ELSE(beg, 0),
+				     XEN_TO_C_INT_OR_ELSE(end, 0),
+				     XEN_TO_C_INT(chans),
+				     get_sound_data(sv))));
 }
 
 static XEN g_mus_sound_seek_frame(XEN fd, XEN offset)
@@ -842,8 +842,8 @@ to the frame offset"
 
   XEN_ASSERT_TYPE(XEN_INTEGER_P(fd), fd, XEN_ARG_1, S_mus_sound_seek_frame, "an integer");
   XEN_ASSERT_TYPE(XEN_OFF_T_P(offset), offset, XEN_ARG_2, S_mus_sound_seek_frame, "an integer");
-  return(C_TO_XEN_OFF_T(mus_sound_seek_frame(XEN_TO_C_INT(fd),
-					     XEN_TO_C_OFF_T(offset))));
+  return(C_TO_XEN_OFF_T(mus_file_seek_frame(XEN_TO_C_INT(fd),
+					    XEN_TO_C_OFF_T(offset))));
 }
 
 /* since mus-audio-read|write assume sound-data vectors communicating with Scheme,

@@ -607,6 +607,7 @@ void close_save_sound_block(FILE *fd);
 int snd_exit_cleanly(bool force_exit);
 void sound_not_current(snd_info *sp, void *dat);
 int save_options (void);
+void set_init_filename(const char *filename);
 FILE *open_snd_init_file (void);
 int save_state (char *save_state_name);
 void global_control_panel_state(void);

@@ -309,7 +309,7 @@ if you need something new!
     minusp oddp evenp max min abs mod rem identity
     floor ceiling round truncate signum sqrt random float
     ash log expt exp sin cos tan asin acos atan cosh sinh tanh asinh acosh atanh
-    erf erfc lgamma bes-j0 bes-j1 bes-jn bes-y0 bes-y1 bes-yn
+    erf erfc lgamma bes-j0 bes-j1 bes-jn bes-y0 bes-y1 bes-yn bes-i0
     or and not null if unless when cond progn prog1 prog2 case tagbody go 
     error warn print princ terpri probe-file
     block return return-from let let* loop do do* dotimes declare
@@ -2538,10 +2538,10 @@ you can use <b>mus-close</b>, but it's also called automatically during garbage 
   <a class=def name="frame-&gt;file?">frame-&gt;file?</a> <i>obj</i>                      ;t if <i>obj</i> writes a frame to a sound file
   <a class=def name="file-&gt;frame?">file-&gt;frame?</a> <i>obj</i>                      ;t if <i>obj</i> reads a sound file returning a frame
    
-  <a class=def name="make-file-&gt;sample">make-file-&gt;sample</a> <i>name</i>                ;return gen that reads samples from sound file <i>name</i>
+  <a class=def name="make-file-&gt;sample">make-file-&gt;sample</a> <i>name buffer-size</i>     ;return gen that reads samples from sound file <i>name</i>
   <a class=def name="make-sample-&gt;file">make-sample-&gt;file</a> <i>name chans</i> &amp;optional <i>format type comment</i>
                                         ;return gen that writes samples to sound file <i>name</i>
-  <a class=def name="make-file-&gt;frame">make-file-&gt;frame</a> <i>name</i>                 ;return gen that reads frames from sound file <i>name</i>
+  <a class=def name="make-file-&gt;frame">make-file-&gt;frame</a> <i>name buffer-size</i>      ;return gen that reads frames from sound file <i>name</i>
   <a class=def name="make-frame-&gt;file">make-frame-&gt;file</a> <i>name chans</i> &amp;optional <i>format type comment</i>
                                         ;return gen that writes frames to sound file <i>name</i>
 

@@ -175,7 +175,7 @@ static int main_not_alsa(int argc, char *argv[])
       sample_size = mus_bytes_per_sample(MUS_COMPATIBLE_FORMAT);
       start = (off_t)(begin_time * srate);
       if (start > 0)
-	mus_sound_seek_frame(fd, start);
+	mus_file_seek_frame(fd, start);
       if (end_time > 0.0)
 	end = (off_t)(end_time * srate);
       else end = frames;
@@ -192,7 +192,7 @@ static int main_not_alsa(int argc, char *argv[])
 	      if ((m + buffer_size) <= frames)
 		curframes = buffer_size;
 	      else curframes = frames - m;
-	      mus_sound_read(fd, 0, curframes - 1, chans, bufs); 
+	      mus_file_read(fd, 0, curframes - 1, chans, bufs); 
 	      /* some systems are happier if we read the file before opening the dac */
 	      /* at this point the data is in separate arrays of ints */
 	      if (chans == 1)
@@ -264,7 +264,7 @@ static int main_not_alsa(int argc, char *argv[])
 	      if ((m + buffer_size) <= frames)
 		curframes = buffer_size;
 	      else curframes = frames - m;
-	      mus_sound_read(fd, 0, curframes - 1, chans, qbufs); 
+	      mus_file_read(fd, 0, curframes - 1, chans, qbufs); 
 	      val[0] = 1.0;
 	      for (k = 0, n = 0; k < buffer_size; k++, n += 2) 
 		{
@@ -500,7 +500,7 @@ static int main_alsa(int argc, char *argv[])
       base = 0;
       start = (off_t)(begin_time * srate);
       if (start > 0)
-	mus_sound_seek_frame(fd, start);
+	mus_file_seek_frame(fd, start);
       if (end_time > 0.0)
 	end = (off_t)(end_time * srate);
       else end = frames;
@@ -538,7 +538,7 @@ static int main_alsa(int argc, char *argv[])
 		  out_bytes[dev] = curframes * out_chans[d] * mus_bytes_per_sample(out_format[dev]);
 		}
 	    }
-	  mus_sound_read(fd, 0, curframes - 1, chans, read_bufs); 
+	  mus_file_read(fd, 0, curframes - 1, chans, read_bufs); 
 	  /* some systems are happier if we read the file before opening the dac */
 	  /* at this point the data is in separate arrays of mus_sample_t */
 	  for (d = 0; d < allocated; d++)

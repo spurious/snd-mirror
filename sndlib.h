@@ -2,8 +2,8 @@
 #define SNDLIB_H
 
 #define SNDLIB_VERSION 19
-#define SNDLIB_REVISION 10
-#define SNDLIB_DATE "9-Mar-05"
+#define SNDLIB_REVISION 11
+#define SNDLIB_DATE "21-Mar-05"
 
 #include <config.h>
 
@@ -374,9 +374,10 @@ int mus_sound_open_output(const char *arg, int srate, int chans, int data_format
 int mus_sound_reopen_output(const char *arg, int chans, int format, int type, off_t data_loc);
 int mus_sound_close_input(int fd);
 int mus_sound_close_output(int fd, off_t bytes_of_data);
-int mus_sound_read(int fd, int beg, int end, int chans, mus_sample_t **bufs);
-int mus_sound_write(int tfd, int beg, int end, int chans, mus_sample_t **bufs);
-off_t mus_sound_seek_frame(int tfd, off_t frame);
+#define mus_sound_seek_frame(Ifd, Frm) mus_file_seek_frame(Ifd, Frm)
+#define mus_sound_read(Fd, Beg, End, Chans, Bufs) mus_file_read(Fd, Beg, End, Chans, Bufs)
+#define mus_sound_write(Fd, Beg, End, Chans, Bufs) mus_file_write(Fd, Beg, End, Chans, Bufs)
+
 off_t mus_sound_maxamps(const char *ifile, int chans, mus_sample_t *vals, off_t *times);
 int mus_sound_set_maxamps(const char *ifile, int chans, mus_sample_t *vals, off_t *times);
 bool mus_sound_maxamp_exists(const char *ifile);
