@@ -1,6 +1,7 @@
 #include "snd.h"
 
 /* SOMEDAY: save mix/track stuff in edit-history saved-state stuff, so they remain as they were upon reload */
+/* TODO: is there some confusion if mix is used in as-one-edit? */
 
 typedef struct {
   int chans;

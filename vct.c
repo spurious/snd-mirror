@@ -35,6 +35,7 @@
  *   (vct-move! v new old)            v[new++] = v[old++] -> v
  *   (vct-subseq v start end vnew)    vnew = v[start..end]
  *   (vct-reverse v (len #f))         reverse contents (using len as end point if given)
+ *   (vct->string v)                  scheme-readable description of vct
  *
  * The intended use is a sort of latter-day array-processing system that handles huge
  * one-dimensional vectors -- fft's, etc.  Some of these functions can be found in
@@ -119,7 +120,7 @@ char *vct_to_string(vct *v)
   int len;
   char *buf;
   char flt[16];
-  if (v == NULL) return(NULL); /* not copy_string! -- it's not a sndlib function */
+  if (v == NULL) return(NULL);
   len = vct_print_length;
   if (len > v->length) len = v->length;
   buf = (char *)CALLOC(64 + len * 8, sizeof(char));
@@ -138,6 +139,33 @@ char *vct_to_string(vct *v)
   strcat(buf, ">");
   return(buf);
 }
+
+char *vct_to_readable_string(vct *v)
+{
+  int i, len;
+  char *buf;
+  char flt[16];
+  if (v == NULL) return(NULL);
+  len = v->length;
+  buf = (char *)CALLOC(64 + len * 8, sizeof(char));
+  sprintf(buf, "(vct");
+  for (i = 0; i < len; i++)
+    {
+      mus_snprintf(flt, 16, " %.3f", v->data[i]);
+      strcat(buf, flt);
+    }
+  strcat(buf, ")");
+  return(buf);
+}
+
+#if HAVE_GUILE
+static XEN g_vct_to_readable_string(XEN obj)
+{
+  #define H_vct_to_string "(" S_vct_to_string " v) -> scheme readable description of v"
+  XEN_ASSERT_TYPE(VCT_P(obj), obj, XEN_ONLY_ARG, S_vct_to_string, "a vct");
+  return(C_TO_XEN_STRING(vct_to_readable_string(TO_VCT(obj))));
+}
+#endif
 
 bool vct_equalp(vct *v1, vct *v2)
 {
@@ -745,6 +773,7 @@ void vct_init(void)
 
 #if HAVE_GUILE
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_vct_ref, vct_ref_w, H_vct_ref, "set-" S_vct_ref, vct_set_w,  2, 0, 3, 0);
+  XEN_DEFINE_PROCEDURE(S_vct_to_string, g_vct_to_readable_string, 1, 0, 0, H_vct_to_string);
 #else
   XEN_DEFINE_PROCEDURE(S_vct_ref,       vct_ref_w,      2, 0, 0, H_vct_ref);
 #endif
@@ -773,6 +802,7 @@ void vct_init(void)
 	       S_vct_ref,
 	       S_vct_setB,
 	       S_vct_reverse,
+	       S_vct_to_string,
 #if WITH_RUN && USE_SND
 	       "vct-map-1",
 #endif

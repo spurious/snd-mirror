@@ -787,7 +787,7 @@ bool scale_channel(chan_info *cp, Float scaler, off_t beg, off_t num, int pos, b
 bool ramp_channel(chan_info *cp, Float rmp0, Float rmp1, off_t beg, off_t num, int pos, bool in_as_one_edit);
 bool xramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler, Float offset, 
 		   off_t beg, off_t num, int pos, bool in_as_one_edit, mus_any *e, int e_pos);
-bool ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, bool env_it, XEN init_func, bool is_xen, XEN code);
+bool ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, bool env_it, XEN init_func, bool is_xen, XEN code, const char *origin);
 snd_fd *init_sample_read(off_t samp, chan_info *cp, read_direction_t direction);
 snd_fd *init_sample_read_any(off_t samp, chan_info *cp, read_direction_t direction, int edit_position);
 void read_sample_change_direction(snd_fd *sf, read_direction_t dir);

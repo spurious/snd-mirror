@@ -134,7 +134,7 @@ a thunk (normally a ramp from 0 to 1) which sets where we are in the zipping pro
 			    (lambda () (* (safe-srate) 0.05))))
 	  (reader0 (make-sample-reader 0 0 0))
 	  (reader1 (make-sample-reader 0 1 0)))
-      (map-chan (lambda (val)
-		  (zipper zp reader0 reader1))))))
+      (map-channel (lambda (val)
+		     (zipper zp reader0 reader1))))))
 !#
 

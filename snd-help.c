@@ -369,6 +369,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+11-Oct:  vct->string\n\
 5-Oct:   snd 7.7.\n\
 4-Oct:   moved vct->samples and samples->vct to snd7.scm.\n\
          added edit-list->function\n\

@@ -1148,7 +1148,7 @@ void display_frequency_response(env *e, axis_info *ap, axis_context *gax, int or
   FREE(coeffs);
 }
 
-static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int edpos, off_t overlap)
+static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int edpos, off_t overlap, const char *origin)
 {
   /* calls gen over cp[beg for dur] data, replacing. */
   snd_info *sp;
@@ -1225,7 +1225,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int 
       if (j > 0) mus_file_write(ofd, 0, j - 1, 1, data);
       close_temp_file(ofile, ofd, hdr->type, dur * datumb, sp);
       hdr = free_file_info(hdr);
-      file_change_samples(beg, dur, ofile, cp, 0, DELETE_ME, LOCK_MIXES, S_clm_channel, cp->edit_ctr);
+      file_change_samples(beg, dur, ofile, cp, 0, DELETE_ME, LOCK_MIXES, origin, cp->edit_ctr);
       if (ofile) 
 	{
 	  FREE(ofile); 
@@ -1235,7 +1235,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int 
   else 
     {
       if (dur > 0) 
-	change_samples(beg, dur, idata, cp, LOCK_MIXES, S_clm_channel, cp->edit_ctr);
+	change_samples(beg, dur, idata, cp, LOCK_MIXES, origin, cp->edit_ctr);
     }
   update_graph(cp); 
   free_snd_fd(sf);
@@ -1503,22 +1503,30 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t b
       free_snd_fd(sfold);
     }
   if (reporting) finish_progress_report(sp, from_enved);
-  if (precalculated_coeffs)
-    {
-      /* TODO: new_origin = filter-channel + vct -- what about CLM gen case from filter-sound? */
-      /* char *vctstr; */
-      /* if order > 100 or thereabouts, need a way to refer to a stored vct (similarly for insert|set-samples) */
-      new_origin = copy_string(S_filter_channel); /* a stop-gap */
-    }
+  if (origin)
+    new_origin = copy_string(origin);
   else
     {
-      /* new_origin = filter-channel + envelope */
-      char *envstr;
-      envstr = env_to_string(e);
-      if (dur == (order + CURRENT_SAMPLES(cp)))
-	new_origin = mus_format("%s %s %d " OFF_TD " #f", S_filter_channel, envstr, order, beg);
-      else new_origin = mus_format("%s %s %d " OFF_TD " " OFF_TD, S_filter_channel, envstr, order, beg, dur);
-      if (envstr) FREE(envstr);
+      if (precalculated_coeffs)
+	{
+	  vct *v;
+	  v = (vct *)CALLOC(1, sizeof(vct));
+	  v->length = order;
+	  v->data = precalculated_coeffs;
+	  if (dur == (order + CURRENT_SAMPLES(cp)))
+	    new_origin = mus_format("%s %s %d " OFF_TD " #f", S_filter_channel, vct_to_readable_string(v), order, beg);
+	  else new_origin = mus_format("%s %s %d " OFF_TD " " OFF_TD, S_filter_channel, vct_to_readable_string(v), order, beg, dur);
+	}
+      else
+	{
+	  /* new_origin = filter-channel + envelope */
+	  char *envstr;
+	  envstr = env_to_string(e);
+	  if (dur == (order + CURRENT_SAMPLES(cp)))
+	    new_origin = mus_format("%s %s %d " OFF_TD " #f", S_filter_channel, envstr, order, beg);
+	  else new_origin = mus_format("%s %s %d " OFF_TD " " OFF_TD, S_filter_channel, envstr, order, beg, dur);
+	  if (envstr) FREE(envstr);
+	}
     }
   if (temp_file)
     {
@@ -2821,9 +2829,9 @@ static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, off
 }
 
 static XEN g_ptree_channel(XEN proc_and_list, XEN s_beg, XEN s_dur, XEN snd, XEN chn, 
-			   XEN edpos, XEN env_too, XEN init_func, XEN use_map_channel_fallback)
+			   XEN edpos, XEN env_too, XEN init_func, XEN use_map_channel_fallback, XEN origin)
 {
-  #define H_ptree_channel "(" S_ptree_channel " proc (beg 0) (dur len) (snd #f) (chn #f) (edpos #f) (peak-env-also #f) (init-func #f) (use-map-channel-fallback #t)): \
+  #define H_ptree_channel "(" S_ptree_channel " proc (beg 0) (dur len) (snd #f) (chn #f) (edpos #f) (peak-env-also #f) (init-func #f) (use-map-channel-fallback #t) origin): \
 apply 'proc' as a 'virtual edit'; that is, the effect of 'proc' (a function of one argument, the \
 current sample, if init-func is not specified), comes about as an implicit change in the way the data is read.  \
 This is similar to scaling and some envelope operations in that no data actually changes.  If 'peak-env-also' is #t, \
@@ -2837,6 +2845,7 @@ be anything legal in Snd, and the actual forms are evaluated as virtual ops \
 at run-time.  See extsnd.html for the gory details."
 
   chan_info *cp;
+  char *caller = NULL;
   off_t beg = 0, dur = 0;
   int pos;
 #if (!HAVE_RUBY)
@@ -2854,6 +2863,7 @@ at run-time.  See extsnd.html for the gory details."
 #endif
   XEN_ASSERT_TYPE((XEN_PROCEDURE_P(proc)) && ((XEN_REQUIRED_ARGS_OK(proc, 1)) || (XEN_REQUIRED_ARGS_OK(proc, 3))),
 		  proc, XEN_ARG_1, S_ptree_channel, "a procedure of one or three args");
+  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, 10, S_ptree_channel, "a string");
   ASSERT_SAMPLE_TYPE(S_ptree_channel, s_beg, XEN_ARG_2);
   ASSERT_SAMPLE_TYPE(S_ptree_channel, s_dur, XEN_ARG_3);
   ASSERT_CHANNEL(S_ptree_channel, snd, chn, 4); 
@@ -2881,6 +2891,7 @@ at run-time.  See extsnd.html for the gory details."
   g_map_chan_ptree_fallback(proc, init_func, cp, beg, dur, pos);
 #else
   ptrees_present = ptree_fragments_in_use(cp, beg, dur, pos, XEN_FALSE_P(use_map_channel_fallback));
+  if (XEN_STRING_P(origin)) caller = copy_string(XEN_TO_C_STRING(origin)); else caller = copy_string(S_ptree_channel);
   if (XEN_PROCEDURE_P(init_func))
     {
       if (!(XEN_REQUIRED_ARGS_OK(init_func, 2)))
@@ -2892,18 +2903,21 @@ at run-time.  See extsnd.html for the gory details."
 	  pt = form_to_ptree_3_f(proc_and_list);
 	  if (pt)
 	    {
-	      ptree_channel(cp, pt, beg, dur, pos, XEN_TRUE_P(env_too), init_func, false, XEN_FALSE);
+	      ptree_channel(cp, pt, beg, dur, pos, XEN_TRUE_P(env_too), init_func, false, XEN_FALSE, caller);
+	      if (caller) FREE(caller);
 	      return(proc_and_list);
 	    }
 	  /* ptree not ok -- use map chan? */
 	  if (XEN_FALSE_P(use_map_channel_fallback))
 	    {
-	      ptree_channel(cp, NULL, beg, dur, pos, XEN_TRUE_P(env_too), init_func, true, proc);
+	      ptree_channel(cp, NULL, beg, dur, pos, XEN_TRUE_P(env_too), init_func, true, proc, caller);
+	      if (caller) FREE(caller);
 	      return(proc_and_list);
 	    }
 	}
       /* fallback on map chan */
       g_map_chan_ptree_fallback(proc, init_func, cp, beg, dur, pos);
+      if (caller) FREE(caller);
       return(proc_and_list);
     }
   if (XEN_REQUIRED_ARGS_OK(proc, 1))
@@ -2912,10 +2926,10 @@ at run-time.  See extsnd.html for the gory details."
     {
       if (ptrees_present)
 	{
-	  run_channel(cp, pt, beg, dur, pos, S_ptree_channel);
+	  run_channel(cp, pt, beg, dur, pos, caller);
 	  pt = free_ptree(pt);
 	}
-      else ptree_channel(cp, pt, beg, dur, pos, XEN_TRUE_P(env_too), init_func, false, XEN_FALSE);
+      else ptree_channel(cp, pt, beg, dur, pos, XEN_TRUE_P(env_too), init_func, false, XEN_FALSE, caller);
     }
   else
     {
@@ -2926,11 +2940,12 @@ at run-time.  See extsnd.html for the gory details."
 	      if (!(XEN_REQUIRED_ARGS_OK(proc, 3)))
 		XEN_BAD_ARITY_ERROR(S_ptree_channel, 1, proc, "main func must take 3 args if it can't be optimized");
 	    }
-	  ptree_channel(cp, NULL, beg, dur, pos, XEN_TRUE_P(env_too), init_func, true, proc);
+	  ptree_channel(cp, NULL, beg, dur, pos, XEN_TRUE_P(env_too), init_func, true, proc, caller);
 	}
       else g_map_chan_ptree_fallback(proc, init_func, cp, beg, dur, pos);
     }
 #endif
+  if (caller) FREE(caller);
   return(proc_and_list);
 }
 
@@ -3568,19 +3583,20 @@ static XEN g_scale_selection_by(XEN scalers)
   return(snd_no_active_selection_error(S_scale_selection_by));
 }
 
-static XEN g_clm_channel(XEN gen, XEN samp_n, XEN samps, XEN snd_n, XEN chn_n, XEN edpos, XEN overlap)
+static XEN g_clm_channel(XEN gen, XEN samp_n, XEN samps, XEN snd_n, XEN chn_n, XEN edpos, XEN overlap, XEN origin)
 {
-  #define H_clm_channel "(" S_clm_channel " gen (beg 0) (dur len) (snd #f) (chn #f) (edpos #f) (overlap 0)): \
+  #define H_clm_channel "(" S_clm_channel " gen (beg 0) (dur len) (snd #f) (chn #f) (edpos #f) (overlap 0) origin): \
 apply gen to snd's channel chn starting at beg for dur samples. overlap is the 'ring' time, if any."
 
   chan_info *cp;
   off_t beg = 0, dur = 0;
   int pos;
   mus_any *egen;
-  char *errmsg = NULL;
+  char *errmsg = NULL, *caller = NULL;
   ASSERT_SAMPLE_TYPE(S_clm_channel, samp_n, XEN_ARG_2);
   ASSERT_SAMPLE_TYPE(S_clm_channel, samps, XEN_ARG_3);
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(overlap), overlap, XEN_ARG_7, S_clm_channel, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_OR_BOOLEAN_IF_BOUND_P(overlap), overlap, XEN_ARG_7, S_clm_channel, "a number or #f");
+  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, XEN_ARG_8, S_clm_channel, "a string");
   ASSERT_CHANNEL(S_clm_channel, snd_n, chn_n, 4);
   cp = get_cp(snd_n, chn_n, S_clm_channel);
   pos = to_c_edit_position(cp, edpos, S_clm_channel, XEN_ARG_6);
@@ -3589,7 +3605,9 @@ apply gen to snd's channel chn starting at beg for dur samples. overlap is the '
   if (dur == 0) return(XEN_FALSE);
   XEN_ASSERT_TYPE(mus_xen_p(gen), gen, XEN_ARG_1, S_clm_channel, "a clm generator");
   egen = XEN_TO_MUS_ANY(gen);
-  errmsg = clm_channel(cp, egen, beg, dur, pos, XEN_TO_C_OFF_T_OR_ELSE(overlap, 0));
+  if (XEN_STRING_P(origin)) caller = copy_string(XEN_TO_C_STRING(origin)); else caller = copy_string(S_clm_channel);
+  errmsg = clm_channel(cp, egen, beg, dur, pos, XEN_TO_C_OFF_T_OR_ELSE(overlap, 0), caller);
+  FREE(caller);
   if (errmsg)
     {
       XEN str;
@@ -4218,13 +4236,13 @@ sampling-rate convert the currently selected data by ratio (which can be an enve
   return(g_src_1(ratio_or_env, base, XEN_FALSE, XEN_FALSE, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), S_src_selection, OVER_SELECTION));
 }
 
-static XEN g_filter_channel(XEN e, XEN order, XEN beg, XEN dur, XEN snd_n, XEN chn_n, XEN edpos, XEN truncate)
+static XEN g_filter_channel(XEN e, XEN order, XEN beg, XEN dur, XEN snd_n, XEN chn_n, XEN edpos, XEN truncate, XEN origin)
 {
-  #define H_filter_channel "(" S_filter_channel " env order beg dur snd chn edpos (truncate #t)): \
+  #define H_filter_channel "(" S_filter_channel " env order beg dur snd chn edpos (truncate #t) origin): \
 applies an FIR filter to snd's channel chn. 'env' is the frequency response envelope, or a vct with the coefficients."
 
   chan_info *cp;
-  char *errstr = NULL;
+  char *errstr = NULL, *caller = NULL;
   bool truncate_1 = true;
   int order_1 = 0, edpos_1 = -1;
   off_t beg_1 = 0, dur_1 = 0;
@@ -4233,6 +4251,7 @@ applies an FIR filter to snd's channel chn. 'env' is the frequency response enve
   Float *coeffs = NULL;
   XEN_ASSERT_TYPE(XEN_LIST_P(e) || VCT_P(e), e, XEN_ARG_1, S_filter_channel, "an envelope or a vct");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(order), order, XEN_ARG_2, S_filter_channel, "an integer");
+  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, XEN_ARG_9, S_filter_channel, "a string");
   order_1 = XEN_TO_C_INT_OR_ELSE(order, 0);
   ASSERT_CHANNEL(S_filter_channel, snd_n, chn_n, 5);
   cp = get_cp(snd_n, chn_n, S_filter_channel);
@@ -4253,7 +4272,9 @@ applies an FIR filter to snd's channel chn. 'env' is the frequency response enve
       v = TO_VCT(e);
       coeffs = v->data;
     }
-  errstr = filter_channel(cp, order_1, e_1, beg_1, dur_1, edpos_1, S_filter_channel, truncate_1, coeffs);
+  if (XEN_STRING_P(origin))
+    caller = XEN_TO_C_STRING(origin);
+  errstr = filter_channel(cp, order_1, e_1, beg_1, dur_1, edpos_1, caller, truncate_1, coeffs);
   if (e_1) free_env(e_1);
   if (errstr)
     XEN_ERROR(MUS_MISC_ERROR,
@@ -4378,13 +4399,13 @@ XEN_ARGIFY_5(g_src_sound_w, g_src_sound)
 XEN_ARGIFY_2(g_src_selection_w, g_src_selection)
 XEN_ARGIFY_6(g_src_channel_w, g_src_channel)
 XEN_ARGIFY_5(g_pad_channel_w, g_pad_channel)
-XEN_ARGIFY_8(g_filter_channel_w, g_filter_channel)
+XEN_ARGIFY_9(g_filter_channel_w, g_filter_channel)
 XEN_ARGIFY_5(g_filter_sound_w, g_filter_sound)
 XEN_ARGIFY_3(g_filter_selection_w, g_filter_selection)
-XEN_ARGIFY_7(g_clm_channel_w, g_clm_channel)
+XEN_ARGIFY_8(g_clm_channel_w, g_clm_channel)
 XEN_NARGIFY_0(g_sinc_width_w, g_sinc_width)
 XEN_NARGIFY_1(g_set_sinc_width_w, g_set_sinc_width)
-XEN_ARGIFY_9(g_ptree_channel_w, g_ptree_channel)
+XEN_ARGIFY_10(g_ptree_channel_w, g_ptree_channel)
 #else
 #define g_scan_chan_w g_scan_chan
 #define g_map_chan_w g_map_chan
@@ -4437,7 +4458,7 @@ void g_init_sig(void)
   XEN_DEFINE_PROCEDURE(S_count_matches "-1",      g_count_matches_w, 1, 4, 0, H_count_matches);
   XEN_DEFINE_PROCEDURE(S_map_chan "-1",           g_map_chan_w,      1, 6, 0, H_map_chan);
   XEN_DEFINE_PROCEDURE(S_map_channel "-1",        g_map_channel_w,   1, 6, 0, H_map_channel);
-  XEN_DEFINE_PROCEDURE(S_ptree_channel "-1",      g_ptree_channel_w, 1, 8, 0, H_ptree_channel);
+  XEN_DEFINE_PROCEDURE(S_ptree_channel "-1",      g_ptree_channel_w, 1, 9, 0, H_ptree_channel);
 
   XEN_EVAL_C_STRING("(defmacro* scan-channel (form #:rest args) `(apply scan-channel-1 (list (list ',form ,form) ,@args)))");
   XEN_SET_DOCUMENTATION(S_scan_channel, H_scan_channel);
@@ -4460,7 +4481,7 @@ void g_init_sig(void)
   XEN_DEFINE_PROCEDURE(S_count_matches,           g_count_matches_w,           1, 4, 0, H_count_matches);
   XEN_DEFINE_PROCEDURE(S_map_chan,                g_map_chan_w,                1, 6, 0, H_map_chan);
   XEN_DEFINE_PROCEDURE(S_map_channel,             g_map_channel_w,             1, 6, 0, H_map_channel);
-  XEN_DEFINE_PROCEDURE(S_ptree_channel,           g_ptree_channel_w,           1, 8, 0, H_ptree_channel);
+  XEN_DEFINE_PROCEDURE(S_ptree_channel,           g_ptree_channel_w,           1, 9, 0, H_ptree_channel);
 #endif
 
   XEN_DEFINE_PROCEDURE(S_smooth_sound,            g_smooth_sound_w,            0, 4, 0, H_smooth_sound);
@@ -4482,12 +4503,12 @@ void g_init_sig(void)
   XEN_DEFINE_PROCEDURE(S_convolve_selection_with, g_convolve_selection_with_w, 1, 1, 0, H_convolve_selection_with);
   XEN_DEFINE_PROCEDURE(S_src_sound,               g_src_sound_w,               1, 4, 0, H_src_sound);
   XEN_DEFINE_PROCEDURE(S_src_selection,           g_src_selection_w,           1, 1, 0, H_src_selection);
-  XEN_DEFINE_PROCEDURE(S_filter_channel,          g_filter_channel_w,          1, 7, 0, H_filter_channel);
+  XEN_DEFINE_PROCEDURE(S_filter_channel,          g_filter_channel_w,          1, 8, 0, H_filter_channel);
   XEN_DEFINE_PROCEDURE(S_filter_sound,            g_filter_sound_w,            1, 4, 0, H_filter_sound);
   XEN_DEFINE_PROCEDURE(S_filter_selection,        g_filter_selection_w,        1, 2, 0, H_filter_selection);
 
   XEN_DEFINE_PROCEDURE(S_reverse_channel,         g_reverse_channel_w,         0, 5, 0, H_reverse_channel);
-  XEN_DEFINE_PROCEDURE(S_clm_channel,             g_clm_channel_w,             1, 6, 0, H_clm_channel);
+  XEN_DEFINE_PROCEDURE(S_clm_channel,             g_clm_channel_w,             1, 7, 0, H_clm_channel);
   XEN_DEFINE_PROCEDURE(S_env_channel,             g_env_channel_w,             1, 5, 0, H_env_channel);
   XEN_DEFINE_PROCEDURE(S_env_channel_with_base,   g_env_channel_with_base_w,   1, 6, 0, H_env_channel);
   XEN_DEFINE_PROCEDURE(S_ramp_channel,            g_ramp_channel_w,            2, 5, 0, H_ramp_channel);

@@ -4667,24 +4667,32 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 			  cp->chan);
 		  break;
 		case XEN_EDIT:
-		  fprintf(fd, "%s" PROC_OPEN "%s" PROC_SEP OFF_TD PROC_SEP  OFF_TD PROC_SEP "sfile" PROC_SEP "%d",
-			  TO_PROC_NAME("xen-channel"),
+		  if ((ed->origin) && (strcmp(ed->origin, S_ptree_channel) != 0))
+		    fprintf(fd, "%s" PROC_SEP "sfile" PROC_SEP "%d",
+			    ed->origin,
+			    cp->chan);
+		  else fprintf(fd, "%s" PROC_OPEN "%s" PROC_SEP OFF_TD PROC_SEP  OFF_TD PROC_SEP "sfile" PROC_SEP "%d",
+			       TO_PROC_NAME("xen-channel"),
 #if HAVE_GUILE
-			  XEN_AS_STRING(XEN_PROCEDURE_SOURCE(cp->xens[ed->ptree_location])),
+			       XEN_AS_STRING(XEN_PROCEDURE_SOURCE(cp->xens[ed->ptree_location])),
 #else
-			  XEN_AS_STRING(cp->xens[ed->ptree_location]),
+			       XEN_AS_STRING(cp->xens[ed->ptree_location]),
 #endif
-			  ed->beg,
-			  ed->len,
-			  cp->chan);
+			       ed->beg,
+			       ed->len,
+			       cp->chan);
 		  break;
 		case PTREE_EDIT:
-		  fprintf(fd, "%s" PROC_OPEN "%s" PROC_SEP OFF_TD PROC_SEP  OFF_TD PROC_SEP "sfile" PROC_SEP "%d",
-			  TO_PROC_NAME(S_ptree_channel),
-			  XEN_AS_STRING(ptree_code(cp->ptrees[ed->ptree_location])),
-			  ed->beg,
-			  ed->len,
-			  cp->chan);
+		  if ((ed->origin) && (strcmp(ed->origin, S_ptree_channel) != 0))
+		    fprintf(fd, "%s" PROC_SEP "sfile" PROC_SEP "%d",
+			    ed->origin,
+			    cp->chan);
+		  else fprintf(fd, "%s" PROC_OPEN "%s" PROC_SEP OFF_TD PROC_SEP  OFF_TD PROC_SEP "sfile" PROC_SEP "%d",
+			       TO_PROC_NAME(S_ptree_channel),
+			       XEN_AS_STRING(ptree_code(cp->ptrees[ed->ptree_location])),
+			       ed->beg,
+			       ed->len,
+			       cp->chan);
 		  break;
 		default:
 		  snd_error("unknown edit branch: %s: %d %d",
@@ -4773,9 +4781,10 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
       if (ed)
 	{
 	  old_function = function;
+	  /* most of these depend on the caller to supply a usable re-call string (origin). */
+	  /*   In insert/change/ptree/xen cases, there's basically no choice */
 	  if (ed->backed_up)
 	    {
-	      /* as-one-edit -- this includes envelopes!? */
 	      function = mus_format("%s (%s snd chn)", function, ed->origin);
 	    }
 	  else
@@ -4783,13 +4792,9 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 	      switch (ed->edit_type)
 		{
 		case INSERTION_EDIT: 
-		  /* insert-samples problem: where did the data come from? (channel->vct for example data may have changed)
-		   */
 		  function = mus_format("%s (%s snd chn)", function, ed->origin);
-		  /* this assumes snd chn as trailing op args -- ok for insert-sample|sound|region|selection */
 		  break;
 		case CHANGE_EDIT:
-		  /* similar to insertion, but worse -- src etc */
 		  function = mus_format("%s (%s snd chn)", function, ed->origin);
 		  break;
 		case DELETION_EDIT:
@@ -4802,17 +4807,15 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 		  /* mix drag case */
 		  break;
 		case PTREE_EDIT:
-		  function = mus_format("%s (%s %s " OFF_TD " " OFF_TD " snd chn)",
-					function, S_ptree_channel,
-					XEN_AS_STRING(ptree_code(cp->ptrees[ed->ptree_location])),
-					ed->beg, ed->len);
+		  if ((ed->origin) && (strcmp(ed->origin, S_ptree_channel) != 0))
+		    function = mus_format("%s (%s snd chn)", function, ed->origin);
+		  else function = mus_format("%s (%s %s " OFF_TD " " OFF_TD " snd chn)",
+					     function, S_ptree_channel,
+					     XEN_AS_STRING(ptree_code(cp->ptrees[ed->ptree_location])),
+					     ed->beg, ed->len);
 		  break;
 		case XEN_EDIT:
-		  /* can't be used in secondary call yet -- "wrong number of args to ptree fallback?" */
-		  function = mus_format("%s (xen-channel %s " OFF_TD " " OFF_TD " snd chn)",
-					function,
-					XEN_AS_STRING(XEN_PROCEDURE_SOURCE(cp->xens[ed->ptree_location])),
-					ed->beg, ed->len);
+		  function = mus_format("%s (%s snd chn)", function, ed->origin); /* no way we can conjure up a working string here */
 		  break;
 		case RAMP_EDIT:
 		  function = mus_format("%s (%s snd chn)", function, ed->origin);
@@ -6169,7 +6172,7 @@ static void make_ptree_fragment(ed_list *new_ed, int i, int ptree_loc, off_t beg
   FRAGMENT_SCALER(new_ed, i) = 1.0;
 }
 
-bool ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, bool env_it, XEN init_func, bool is_xen, XEN code)
+bool ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, bool env_it, XEN init_func, bool is_xen, XEN code, const char *origin)
 {
   off_t len;
   int i, ptree_loc = 0;
@@ -6238,22 +6241,7 @@ bool ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, bo
   new_ed->edit_type = (is_xen) ? XEN_EDIT : PTREE_EDIT;
   new_ed->sound_location = 0;
   new_ed->ptree_location = ptree_loc;
-  if (num == len)
-    {
-#if HAVE_RUBY
-      new_ed->origin = mus_format("%s(%d, " OFF_TD ", false", (is_xen) ? "xen" : "ptree", ptree_loc, beg);
-#else
-      new_ed->origin = mus_format("%s %d " OFF_TD " #f", (is_xen) ? "xen" : "ptree", ptree_loc, beg);
-#endif
-    }
-  else
-    {
-#if HAVE_RUBY
-      new_ed->origin = mus_format("%s(%d, " OFF_TD ", " OFF_TD, (is_xen) ? "xen" : "ptree", ptree_loc, beg, num);
-#else
-      new_ed->origin = mus_format("%s %d " OFF_TD " " OFF_TD, (is_xen) ? "xen" : "ptree", ptree_loc, beg, num);
-#endif
-    }
+  new_ed->origin = copy_string(origin);
   new_ed->edpos = pos;
   new_ed->ptree_env_too = env_it;
   new_ed->selection_beg = old_ed->selection_beg;
@@ -7841,7 +7829,7 @@ void as_one_edit(chan_info *cp, int one_edit, const char *one_edit_origin) /* or
 }
 
 static int chan_ctr = 0;
-static char *as_one_edit_origin;
+static char *as_one_edit_origin = NULL;
 
 static void init_as_one_edit(chan_info *cp, void *ptr) 
 {
@@ -7919,7 +7907,7 @@ static XEN g_as_one_edit(XEN proc, XEN origin)
       int *cur_edits;
 #endif
       if (XEN_STRING_P(origin))
-	as_one_edit_origin = XEN_TO_C_STRING(origin);
+	as_one_edit_origin = copy_string(XEN_TO_C_STRING(origin));
       else as_one_edit_origin = NULL;
 #if HAVE_GUILE_DYNAMIC_WIND
       {
@@ -7943,6 +7931,7 @@ static XEN g_as_one_edit(XEN proc, XEN origin)
       chan_ctr = 0;
       for_each_chan_1(finish_as_one_edit, (void *)cur_edits);
       FREE(cur_edits);
+      if (as_one_edit_origin) {FREE(as_one_edit_origin); as_one_edit_origin = NULL;}
 #endif
     }
   return(xen_return_first(result, proc, origin));
@@ -8287,7 +8276,7 @@ static XEN g_set_samples(XEN samp_0, XEN samps, XEN vect, XEN snd_n, XEN chn_n, 
 {
   XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(edname) || XEN_STRING_P(edname) || XEN_BOOLEAN_P(edname), edname, XEN_ARG_7, "set-samples", "a string");
   return(g_set_samples_with_origin(samp_0, samps, vect, snd_n, chn_n, truncate,
-				   (XEN_STRING_P(edname)) ? XEN_TO_C_STRING(edname) : "set-samples",
+				   (char *)((XEN_STRING_P(edname)) ? XEN_TO_C_STRING(edname) : "set-samples"),
 				   infile_chan, edpos, auto_delete));
 }
 
@@ -8659,19 +8648,20 @@ static XEN g_insert_sample(XEN samp_n, XEN val, XEN snd_n, XEN chn_n, XEN edpos)
   return(val);
 }
 
-static XEN g_insert_samples(XEN samp, XEN samps, XEN vect, XEN snd_n, XEN chn_n, XEN edpos, XEN auto_delete)
+static XEN g_insert_samples(XEN samp, XEN samps, XEN vect, XEN snd_n, XEN chn_n, XEN edpos, XEN auto_delete, XEN caller)
 {
-  #define H_insert_samples "(" S_insert_samples " start-samp samps data (snd #f) (chn #f) (edpos #f) (auto-delete #f)): \
+  #define H_insert_samples "(" S_insert_samples " start-samp samps data (snd #f) (chn #f) (edpos #f) (auto-delete #f) (origin #f)): \
 insert data (either a vct, a list of samples, or a filename) into snd's channel chn starting at 'start-samp' for 'samps' samples"
 
   chan_info *cp;
   int pos;
-  char *origin;
+  char *origin = NULL;
   bool delete_file = false;
   off_t beg, len = 0;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(samp), samp, XEN_ARG_1, S_insert_samples, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(samps), samps, XEN_ARG_2, S_insert_samples, "a number");
   ASSERT_CHANNEL(S_insert_samples, snd_n, chn_n, 4);
+  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(caller), caller, XEN_ARG_8, S_insert_samples, "a string");
   cp = get_cp(snd_n, chn_n, S_insert_samples);
   beg = beg_to_sample(samp, S_insert_samples);
   len = XEN_TO_C_OFF_T_OR_ELSE(samps, 0);
@@ -8679,13 +8669,14 @@ insert data (either a vct, a list of samples, or a filename) into snd's channel 
   pos = to_c_edit_position(cp, edpos, S_insert_samples, 6);
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(auto_delete), auto_delete, XEN_ARG_7, S_insert_samples, "a boolean");
   if (XEN_BOOLEAN_P(auto_delete)) delete_file = XEN_TO_C_BOOLEAN(auto_delete);
+  if (XEN_STRING_P(caller))
+    origin = copy_string(XEN_TO_C_STRING(caller));
   if (XEN_STRING_P(vect))
     {
       char *filename;
       filename = mus_expand_filename(XEN_TO_C_STRING(vect));
-      origin = mus_format("%s " OFF_TD " " OFF_TD " \"%s\"", S_insert_samples, beg, len, filename);
+      if (!origin) origin = mus_format("%s " OFF_TD " " OFF_TD " \"%s\"", S_insert_samples, beg, len, filename);
       file_insert_samples(beg, len, filename, cp, 0, (delete_file) ? DELETE_ME : DONT_DELETE_ME, origin, pos);
-      FREE(origin);
       if (filename) FREE(filename);
     }
   else
@@ -8696,10 +8687,12 @@ insert data (either a vct, a list of samples, or a filename) into snd's channel 
       ivals = g_floats_to_samples(vect, &ilen, S_insert_samples, 3);
       if (ivals)
 	{
-	  insert_samples(beg, (off_t)ilen, ivals, cp, S_insert_samples, pos);
+	  if (!origin) origin = copy_string(S_insert_samples);
+	  insert_samples(beg, (off_t)ilen, ivals, cp, origin, pos);
 	  FREE(ivals);
 	}
     }
+  if (origin) FREE(origin);
   update_graph(cp);
   return(C_TO_XEN_OFF_T(len));
 }
@@ -9129,7 +9122,7 @@ XEN_ARGIFY_3(g_edit_tree_w, g_edit_tree)
 XEN_ARGIFY_4(g_delete_sample_w, g_delete_sample)
 XEN_ARGIFY_5(g_delete_samples_w, g_delete_samples)
 XEN_ARGIFY_5(g_insert_sample_w, g_insert_sample)
-XEN_ARGIFY_7(g_insert_samples_w, g_insert_samples)
+XEN_ARGIFY_8(g_insert_samples_w, g_insert_samples)
 XEN_ARGIFY_7(g_vct_to_channel_w, g_vct_to_channel)
 XEN_ARGIFY_5(g_channel_to_vct_w, g_channel_to_vct)
 XEN_ARGIFY_7(g_insert_sound_w, g_insert_sound)
@@ -9246,7 +9239,7 @@ void g_init_edits(void)
   XEN_DEFINE_PROCEDURE(S_delete_sample,             g_delete_sample_w,             1, 3, 0, H_delete_sample);
   XEN_DEFINE_PROCEDURE(S_delete_samples,            g_delete_samples_w,            2, 3, 0, H_delete_samples);
   XEN_DEFINE_PROCEDURE(S_insert_sample,             g_insert_sample_w,             2, 3, 0, H_insert_sample);
-  XEN_DEFINE_PROCEDURE(S_insert_samples,            g_insert_samples_w,            3, 4, 0, H_insert_samples);
+  XEN_DEFINE_PROCEDURE(S_insert_samples,            g_insert_samples_w,            3, 5, 0, H_insert_samples);
   XEN_DEFINE_PROCEDURE(S_vct_to_channel,            g_vct_to_channel_w,            1, 6, 0, H_vct_to_channel);
   XEN_DEFINE_PROCEDURE(S_channel_to_vct,            g_channel_to_vct_w,            0, 5, 0, H_channel_to_vct);
   XEN_DEFINE_PROCEDURE(S_insert_sound,              g_insert_sound_w,              1, 6, 0, H_insert_sound);

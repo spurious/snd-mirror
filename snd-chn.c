@@ -13,9 +13,6 @@
  * TODO: bark scale as axis or color as above (fft as well?)
  */
 
-/* TODO: apparently the make-graph-data stuff (extensions.scm, thumbnail grf) has a memleak if interrupted?
- */
-
 typedef enum {CLICK_NOGRAPH, CLICK_WAVE, CLICK_FFT_AXIS, CLICK_LISP, CLICK_FFT_MAIN} click_loc_t;    /* for marks, regions, mouse click detection */
 
 static XEN lisp_graph_hook;

@@ -2220,6 +2220,13 @@ set the samples from <i>beg</i> to <i>beg+dur</i> from the values in <i>v</i>.
 <tr><td></td>
 <td>write <i>vals</i> floats from <i>v</i> to <i>fd</i>.  This is intended for use with <a href="#opensoundfile">open-sound-file</a></td></tr>
 
+<!-- vct->string -->
+<tr><td colspan=2><code><a class=def name="vct2string">vct-&gt;string</a> (v)</code></td></tr>
+<tr><td></td>
+<td>return a Scheme-readable string describing <i>v</i>.  The standard way of displaying a vct
+uses "#&lt;vct...&gt;" which is not useful if you want to read the string later as a piece of Scheme code.
+</td></tr>
+
 <!-- vct-&gt;vector -->
 <tr><td colspan=2><code><a class=def name="vct_to_vector">vct-&gt;vector</a> (v)</code></td></tr>
 <tr><td></td><td>return vector with elements of <i>v</i></td></tr>
@@ -4303,7 +4310,7 @@ number of channels in <i>snd</i>.
 
 <!-- clm-channel -->
 <tr><td colspan=2>
-<code><a class=def name="clmchannel">clm-channel</a> (clm-gen <i>beg dur snd chn edpos overlap</i>)</code>
+<code><a class=def name="clmchannel">clm-channel</a> (clm-gen <i>beg dur snd chn edpos overlap origin</i>)</code>
 </td></tr>
 <tr><td></td><td>
 apply <i>clm-gen</i> to <i>snd</i>'s channel <i>chn</i> starting
@@ -4854,7 +4861,7 @@ if you don't want all the directory junk).  See examp.scm for many examples.
 
 <!-- filter-channel -->
 <tr><td colspan=2>
-<code><a class=def name="filterchannel">filter-channel</a> (env <i>order beg dur snd chn edpos trunc</i>)</code>
+<code><a class=def name="filterchannel">filter-channel</a> (env <i>order beg dur snd chn edpos trunc origin</i>)</code>
 </td></tr>
 <tr><td></td><td>
 The regularized version of filter-sound.  If the end of the filtered portion is not the end of the sound,
@@ -5162,7 +5169,7 @@ append a sound and silence: <a href="#appendsound">append-sound</a><br>
 
 <!-- insert-samples -->
 <tr><td colspan=2>
-<code><a class=def name="insertsamples">insert-samples</a> (samp samps data <i>snd chn edpos auto-delete</i>)</code>
+<code><a class=def name="insertsamples">insert-samples</a> (samp samps data <i>snd chn edpos auto-delete origin</i>)</code>
 </td></tr>
 <tr><td></td><td>
 insert <i>samps</i> samples of <i>data</i> (normally a vct) starting at sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
@@ -5336,13 +5343,23 @@ sound/channel pair that displays a graph of spectrum of the arbitrary data acces
 </td></tr>
 <tr><td></td><td>
 <b>map-chan</b> applies <i>func</i> to samples in the specified channel.
-As opposed to scan-chan, map-chan can change the data.
-An optional subsequence of the data can be requested via
-'start' and 'end' points.  If beg is #f, it defaults to 0; if end is #f,
-it defaults to the end of the channel.
-The fourth argument <i>edname</i> is the
-name of the editing operation that will be reported by the
-edit history mechanism. 
+It is the old ("irregular") version of <a href="#mapchannel">map-channel</a>.
+</td></tr>
+<tr><td colspan=2></td></tr>
+
+
+<!-- map-channel -->
+<tr><td colspan=2>
+<code><a class=def name="mapchannel">map-channel</a> (func <i>beg dur snd chn edpos origin</i>)</code>
+</td></tr>
+<tr><td></td><td>
+<b>map-channel</b> is one of the standard ways to change a sound.  It applies <i>func</i> to each sample
+replacing the current value with whatever <i>func</i> returns.  
+As usual, <i>beg</i> defaults to 0, <i>dur</i> defaults to the full length of the sound,
+<i>snd</i> and <i>chn</i> default to the currently selected sound, and <i>edpos</i> to the
+current edit history list position. <i>origin</i> is the edit history name of the current
+operation.
+<br><br>
 <i>func</i>, a procedure of one argument (the current sample),
 can return #f, which means that the data passed in is
 deleted (replaced by nothing), or a number which replaces the
@@ -5351,23 +5368,34 @@ or #t which halts the mapping operation, leaving trailing samples
 unaffected, or a vct
 the contents of which are spliced into the edited version, effectively
 replacing the current sample with any number of samples. This sounds
-more complicated than it is!  Basically, a map-chan function receives
+more complicated than it is!  Basically, a map-channel function receives
 each sample and returns either #f (no corresponding output), a number
 (the new output), or a bunch of numbers.
 If every value returned for a given channel is #f, the data is not edited.
 <br>
 <pre>
-&gt;<em class=typing>(map-chan (lambda (y) (+ y .2)))</em>
+&gt;<em class=typing>(map-channel (lambda (y) (+ y .2)))</em>
 <em class=listener>#f</em>
 
-&gt;<em class=typing>(map-chan (lambda (y) (cos y)) #f #f "(cos y)")</em>
-<em class=listener>#f</em>
-
-&gt;<em class=typing>(map-chan (lambda (y) (if (&gt; y .1) (list .1 .2 .3) y))) </em>
+&gt;<em class=typing>(map-channel (lambda (y) (if (&gt; y .1) (list .1 .2 .3) y))) </em>
 <em class=listener>#f</em>
 </pre>
+
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+(define* (<A NAME="cosinechannel">cosine-channel</a> #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+  (<em class=red>map-channel</em>
+   (let* ((samps (or dur (<a class=quiet href="#frames">frames</a> snd chn)))
+	  (incr (/ pi samps))
+	  (angle (* -0.5 pi)))
+     (lambda (y)
+       (let ((val (* y (cos angle))))
+	 (set! angle (+ angle incr))
+	 val)))
+   beg dur snd chn edpos))
+</pre></td></tr></table>
+<br>
 Here's a slightly more involved example;
-we define a function that finds silences and replaces them with
+we define a function that finds silent portions and replaces them with
 something:<br><br>
 
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
@@ -5378,16 +5406,16 @@ something:<br><br>
       (let ((sum-of-squares (<a class=quiet href="clm.html#average">average</a> buffer (* y y))))
         (if (&gt; sum-of-squares silence) y replacement)))))
 
-(<em class=red>map-chan</em> (map-silence .01 0.0))  ; squelch background noise
-(<em class=red>map-chan</em> (map-silence .001 #f))   ; remove silences altogether
+(<em class=red>map-channel</em> (map-silence .01 0.0))  ; squelch background noise
+(<em class=red>map-channel</em> (map-silence .001 #f))  ; remove silences altogether
 </pre></td></tr></table>
 <br>
-Here we're using <i>buffer</i>, a CLM average generator, to track the
-average of the sum of the squares of the last 128 input samples.
-When that average falls below
+Here we're using <i>buffer</i>, a CLM <a href="clm.html#average">average</a> generator, to track the
+RMS value of the last 128 input samples.
+When that falls below
 the argument <i>silence</i>, we replace the current sample with <i>replacement</i>.
-(It may be easier in complex cases to use with-sound and set-samples, rather than map-chan. 
-See <a href="#setsamples">step-src</a> for example.)
+It may be easier in complex cases to use with-sound rather than map-channel. 
+See <a href="#setsamples">step-src</a> for example.
 <br><br>
 It is possible to break out of a map, flushing any edits, via call-with-current-continuation:
 <br><br>
@@ -5395,24 +5423,24 @@ It is possible to break out of a map, flushing any edits, via call-with-current-
 (define ctr 0)
 (call-with-current-continuation 
   (lambda (return)
-    (<em class=red>map-chan</em> (lambda (val)
-                (set! ctr (1+ ctr)) 
-                (if (&gt; ctr 100) 
-                  (return "quitting!") 
-                  val)))))
+    (<em class=red>map-channel</em> (lambda (val)
+                   (set! ctr (1+ ctr)) 
+                   (if (&gt; ctr 100) 
+                     (return "quitting!") 
+                     val)))))
 </pre></td></tr></table>
 <br>
-It is also possible to stop, then continue map-chan:<br><br>
+It is also possible to stop, then continue map-channel:<br><br>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define go-on #f)
-(<em class=red>map-chan</em> (lambda (y) 
-            (call-with-current-continuation 
-              (lambda (stop) 
-                (if (&gt; y 1.0)
-                    (begin 
-                      (set! go-on stop) 
-                      (throw 'oops))))) 
-            .2))
+(<em class=red>map-channel</em> (lambda (y) 
+               (call-with-current-continuation 
+                 (lambda (stop) 
+                   (if (&gt; y 1.0)
+                       (begin 
+                         (set! go-on stop) 
+                         (throw 'oops))))) 
+               .2))
 </pre></td></tr></table>
 <br>
 If this hits a sample &gt; 1.0, it will print 'oops and put the continuation in the variable <i>go-on</i>.
@@ -5428,51 +5456,28 @@ temp-dir setting (if any).  The env-sound-interp function in <a href="sndscm.htm
 is an example of this. 
 <br><br>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-(define* (map-sound-chans proc #:optional (beg 0) end edname snd edpos)
+(define* (map-sound-chans proc #:optional (beg 0) dur snd edpos origin)
   (do ((i 0 (1+ i)))
       ((= i (<a class=quiet href="#chans">chans</a> snd)))
-    (<em class=red>map-chan</em> proc beg end edname snd i edpos)))
+    (<em class=red>map-channel</em> proc beg dur snd i edpos origin)))
 
-(define* (map-all-chans proc #:optional (beg 0) end edname edpos)
+(define* (map-all-chans proc #:optional (beg 0) dur origin)
   (apply for-each 
 	 (lambda (snd chn)
-	   (<em class=red>map-chan</em> proc beg end edname snd chn edpos))
+	   (<em class=red>map-channel</em> proc beg dur snd chn #f origin))
 	 (all-chans)))
 </pre></td></tr></table><br>
-An esoteric aside: map-chan sets up the sample reader before calling the procedure, so if that procedure edits
-the sound itself (independent of map-chan), the result will be all such edits after the current edit, then the map-chan result
+An esoteric aside: map-channel sets up the sample reader before calling the procedure, so if that procedure edits
+the sound itself (independent of map-channel), the result will be all such edits after the current edit, then the map-channel result
 applied to the original (not the newly edited) data.  That is,<br><pre>
 (let ((first #t)) 
-  (<em class=red>map-chan</em> (lambda (y) 
-              (if first (set! (<a class=quiet href="#sample">sample</a> 0) 1.0)) 
-              (set! first #f) 
-              (* y 2))))
+  (<em class=red>map-channel</em> (lambda (y) 
+                 (if first (set! (<a class=quiet href="#sample">sample</a> 0) 1.0)) 
+                 (set! first #f) 
+                 (* y 2))))
 </pre>
-will return with two edits registered in the edit history list; the map-chan result will be the original data doubled;
-the preceding edit in the list will be the <code>(set! (<a class=quiet href="#sample">sample</a> 0) 1.0)</code> which the map-chan ignores.
-</td></tr>
-<tr><td colspan=2></td></tr>
-
-
-<!-- map-channel -->
-<tr><td colspan=2>
-<code><a class=def name="mapchannel">map-channel</a> (func <i>beg dur snd chn edpos edname</i>)</code>
-</td></tr>
-<tr><td></td><td>
-<b>map-channel</b> is the <a class=quiet href="#regularizedargs">regularized</a> version of <a href="#mapchan">map-chan</a>.
-<br><br>
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-(define* (<A NAME="cosinechannel">cosine-channel</a> #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
-  (<em class=red>map-channel</em>
-   (let* ((samps (or dur (<a class=quiet href="#frames">frames</a> snd chn)))
-	  (incr (/ pi samps))
-	  (angle (* -0.5 pi)))
-     (lambda (y)
-       (let ((val (* y (cos angle))))
-	 (set! angle (+ angle incr))
-	 val)))
-   beg dur snd chn edpos))
-</pre></td></tr></table>
+will return with two edits registered in the edit history list; the map-channel result will be the original data doubled;
+the preceding edit in the list will be the <code>(set! (<a class=quiet href="#sample">sample</a> 0) 1.0)</code> which the map-channel ignores.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -5921,7 +5926,7 @@ more like Emacs (which prompts for confirmation first):
 <!-- INDEX ptreechannel:Virtual Edits -->
 <!-- ptree-channel -->
 <tr><td colspan=2>
-<code><a class=def name="ptreechannel">ptree-channel</a> (proc <i>beg dur snd chn edpos env-too init-func (map-fallback #t)</i>)</code>
+<code><a class=def name="ptreechannel">ptree-channel</a> (proc <i>beg dur snd chn edpos env-too init-func (map-fallback #t) origin</i>)</code>
 </td></tr>
 <tr><td></td><td>
 <b>ptree-channel</b>
@@ -6125,8 +6130,8 @@ could in this case be:
 		     (<a class=quiet href="#vct">vct</a> (if (= pos 0) 0.0
 			      (<a class=quiet href="#sample">sample</a> (1- pos) ind 0 edpos))))))
 </pre>
-The last (highly experimental) argument to ptree-channel, 'map-fallback', can be set
-to #f if you want to try out a more general virtual operator: in this case, 'proc' and 'init-func' can
+The (highly experimental) <i>map-fallback</i> argument can be set
+to #f if you want to try a more general virtual operator: in this case, 'proc' and 'init-func' can
 be anything legal in Snd, and the actual forms will be evaluated as virtual ops
 at run-time. This should also work in Ruby, whereas the optimized cases (those that
 depend on the run macro) will work only in Guile.  We could define xen-channel:

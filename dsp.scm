@@ -69,16 +69,16 @@
 
 ;;; -------- move sound down by n (a power of 2)
 
-(define (down-oct n)
+(define* (down-oct n #:optional snd chn)
   "(down-n n) moves a sound down by power of 2 n"
   ;; I think this is "stretch" in DSP jargon -- to interpolate in the time domain we're squeezing the frequency domain
   ;;  the power-of-2 limitation is based on the underlying fft function's insistence on power-of-2 data sizes
   ;;  see stretch-sound-via-dft below for a general version
-  (let* ((len (frames))
+  (let* ((len (frames snd chn))
 	 (pow2 (ceiling (/ (log len) (log 2))))
 	 (fftlen (inexact->exact (expt 2 pow2)))
 	 (fftscale (/ 1.0 fftlen))
-	 (rl1 (channel->vct 0 fftlen))
+	 (rl1 (channel->vct 0 fftlen snd chn))
 	 (im1 (make-vct fftlen)))
     (fft rl1 im1 1)
     (vct-scale! rl1 fftscale)
@@ -94,14 +94,14 @@
 	(vct-set! im2 i (vct-ref im1 i))
 	(vct-set! im2 j (vct-ref im1 k)))
       (fft rl2 im2 -1)
-      (vct->channel rl2 0 (* n len)))))
+      (vct->channel rl2 0 (* n len) snd chn #f (format #f "down-oct ~A" n)))))
 
-(define (stretch-sound-via-dft factor)
+(define* (stretch-sound-via-dft factor #:optional snd chn)
   ;; this is very slow! factor>1.0
-  (let* ((n (frames))
+  (let* ((n (frames snd chn))
 	 (n2 (inexact->exact (floor (/ n 2.0))))
 	 (out-n (inexact->exact (round (* n factor))))
-	 (in-data (channel->vct))
+	 (in-data (channel->vct 0 n snd chn))
 	 (out-data (make-vct out-n))
 	 (fr (make-vector out-n 0.0))
 	 (freq (/ (* 2 pi) n)))
@@ -116,7 +116,7 @@
 	((or (c-g?) (= i out-n)))
       ;; inverse DFT
       (vct-set! out-data i (real-part (/ (edot-product (* freq 0.0+1.0i i) fr) n))))
-    (vct->channel out-data)))
+    (vct->channel out-data 0 out-n snd chn #f (format #f "stretch-sound-via-dft ~A" factor))))
 
 
 
@@ -235,66 +235,69 @@
 
 ;;; -------- "frequency division" -- an effect from sed_sed@my-dejanews.com
 
-(define (freqdiv n)
+(define* (freqdiv n #:optional snd chn)
   "(freqdiv n) repeats each nth sample n times (clobbering the intermediate samples): (freqdiv 8)"
   (let ((div 0)
 	(curval 0.0))
-    (map-chan (lambda (val)
-		(if (= div 0)
-		    (set! curval val))
-		(set! div (1+ div))
-		(if (= div n) (set! div 0))
-		curval))))
+    (map-channel (lambda (val)
+		   (if (= div 0)
+		       (set! curval val))
+		   (set! div (1+ div))
+		   (if (= div n) (set! div 0))
+		   curval)
+		 0 #f snd chn #f (format #f "freqdiv ~A" n))))
 
 
 
 ;;; -------- "adaptive saturation" -- an effect from sed_sed@my-dejanews.com
 ;;;
 ;;; a more extreme effect is "saturation":
-;;;   (map-chan (lambda (val) (if (< (abs val) .1) val (if (>= val 0.0) 0.25 -0.25))))
+;;;   (map-channel (lambda (val) (if (< (abs val) .1) val (if (>= val 0.0) 0.25 -0.25))))
 
-(define (adsat size)
+(define* (adsat size #:optional snd chn)
   "(adsat size) is an 'adaptive saturation' sound effect"
   (let ((mn 0.0)
 	(mx 0.0)
 	(n 0)
 	(vals (make-vct size)))
-    (map-chan (lambda (val)
-		(if (= n size)
-		    (begin
-		      (do ((i 0 (1+ i)))
-			  ((= i size))
-			(if (>= (vct-ref vals i) 0.0)
-			    (vct-set! vals i mx)
-			    (vct-set! vals i mn)))
-		      (set! n 0)
-		      (set! mx 0.0)
-		      (set! mn 0.0)
-		      vals)
-		    (begin
-		      (vct-set! vals n val)
-		      (if (> val mx) (set! mx val))
-		      (if (< val mn) (set! mn val))
-		      (set! n (1+ n))
-		      #f))))))
+    (map-channel (lambda (val)
+		   (if (= n size)
+		       (begin
+			 (do ((i 0 (1+ i)))
+			     ((= i size))
+			   (if (>= (vct-ref vals i) 0.0)
+			       (vct-set! vals i mx)
+			       (vct-set! vals i mn)))
+			 (set! n 0)
+			 (set! mx 0.0)
+			 (set! mn 0.0)
+			 vals)
+		       (begin
+			 (vct-set! vals n val)
+			 (if (> val mx) (set! mx val))
+			 (if (< val mn) (set! mn val))
+			 (set! n (1+ n))
+			 #f)))
+		 0 #f snd chn #f (format #f "adsat ~A" size))))
 
 
 ;;; -------- spike
 ;;;
 ;;; makes sound more spikey -- sometimes a nice effect
 
-(define (spike)
+(define* (spike #:optional snd chn)
   "(spike) multiplies successive samples together to make a sound more spikey"
-  (map-chan (let ((x1 0.0) 
-		  (x2 0.0) 
-		  (amp (maxamp))) ; keep resultant peak at maxamp
-	      (lambda (x0) 
-		(let ((res (* (/ x0 (* amp amp)) 
-			      (abs x2) 
-			      (abs x1)))) 
-		  (set! x2 x1) 
-		  (set! x1 x0) 
-		  res)))))
+  (map-channel (let ((x1 0.0) 
+		     (x2 0.0) 
+		     (amp (maxamp snd chn))) ; keep resultant peak at maxamp
+		 (lambda (x0) 
+		   (let ((res (* (/ x0 (* amp amp)) 
+				 (abs x2) 
+				 (abs x1)))) 
+		     (set! x2 x1) 
+		     (set! x1 x0) 
+		     res)))
+	       0 #f snd chn #f "spike"))
 
 ;;; the more successive samples we include in the product, the more we
 ;;;   limit the output to pulses placed at (just after) wave peaks
@@ -382,13 +385,13 @@
 ;;; -------- zero-phase, rotate-phase
 ;;; fft games (from the "phazor" package of Scott McNab)
 
-(define (zero-phase)
+(define* (zero-phase #:optional snd chn)
   "(zero-phase) calls fft, sets all phases to 0, and un-ffts"
-  (let* ((len (frames))
+  (let* ((len (frames snd chn))
 	 (pow2 (ceiling (/ (log len) (log 2))))
 	 (fftlen (inexact->exact (expt 2 pow2)))
 	 (fftscale (/ 1.0 fftlen))
-	 (rl (channel->vct 0 fftlen))
+	 (rl (channel->vct 0 fftlen snd chn))
 	 (old-pk (vct-peak rl))
 	 (im (make-vct fftlen)))
     (fft rl im 1)
@@ -397,16 +400,16 @@
     (vct-scale! im 0.0)
     (fft rl im -1)
     (let ((pk (vct-peak rl)))
-      (vct->channel (vct-scale! rl (/ old-pk pk)) 0 len))))
+      (vct->channel (vct-scale! rl (/ old-pk pk)) 0 len snd chn #f "zero-phase"))))
 
-(define (rotate-phase func)
+(define* (rotate-phase func #:optional snd chn)
   "(rotate-phase func) calls fft, applies func to each phase, then un-ffts"
-  (let* ((len (frames))
+  (let* ((len (frames snd chn))
 	 (pow2 (ceiling (/ (log len) (log 2))))
 	 (fftlen (inexact->exact (expt 2 pow2)))
 	 (fftlen2 (inexact->exact (floor (/ fftlen 2))))
 	 (fftscale (/ 1.0 fftlen))
-	 (rl (channel->vct 0 fftlen))
+	 (rl (channel->vct 0 fftlen snd chn))
 	 (old-pk (vct-peak rl))
 	 (im (make-vct fftlen)))
     (fft rl im 1)
@@ -422,7 +425,8 @@
     (polar->rectangular rl im)
     (fft rl im -1)
     (let ((pk (vct-peak rl)))
-      (vct->channel (vct-scale! rl (/ old-pk pk)) 0 len))))
+      (vct->channel (vct-scale! rl (/ old-pk pk)) 0 len snd chn #f 
+		    (format #f "rotate-phase ~A" (procedure-source func))))))
 
 ;(rotate-phase (lambda (x) 0.0)) is the same as (zero-phase)
 ;(rotate-phase (lambda (x) (random 3.1415))) randomizes phases
@@ -609,12 +613,13 @@
 
 ;;; -------- brighten-slightly
 
-(define (brighten-slightly amount)
+(define* (brighten-slightly amount #:optional snd chn)
   "(brighten-slightly amount) is a form of contrast-enhancement ('amount' between ca .1 and 1)"
   (let* ((mx (maxamp))
 	 (brt (/ (* 2 pi amount) mx)))
     (map-channel (lambda (y)
-		   (* mx (sin (* y brt)))))))
+		   (* mx (sin (* y brt))))
+		 0 #f snd chn #f (format #f "brighten-slightly ~A" amount))))
 
 
 ;;; -------- FIR filters
@@ -641,17 +646,17 @@
 
 (define (fltit-1 order spectr)
   "(fltit-1 order spectrum) creates an FIR filter from spectrum and order and returns a closure that calls it: 
-(map-chan (fltit-1 10 (vct 0 1.0 0 0 0 0 0 0 1.0 0)))"
+(map-channel (fltit-1 10 (vct 0 1.0 0 0 0 0 0 0 1.0 0)))"
   (let* ((flt (make-fir-filter order (spectrum->coeffs order spectr))))
     (lambda (x)
       (fir-filter flt x))))
 
-;(map-chan (fltit-1 10 (vct 0 1.0 0 0 0 0 0 0 1.0 0)))
+;(map-channel (fltit-1 10 (vct 0 1.0 0 0 0 0 0 0 1.0 0)))
 ;
 ;(let ((notched-spectr (make-vct 40)))
 ;  (vct-set! notched-spectr 2 1.0)  
 ;  (vct-set! notched-spectr 37 1.0)
-;  (map-chan (fltit-1 40 notched-spectr)))
+;  (map-channel (fltit-1 40 notched-spectr)))
 ;
 
 ;;; -------- Hilbert transform
@@ -684,22 +689,23 @@
 		   (hilbert-transform h y))))
 
 ;;; this comes from R Lyons:
-(define (sound->amp-env)
+(define* (sound->amp-env #:optional snd chn)
   (let ((hlb (make-hilbert-transform 40))
 	(d (make-delay 40)))
     (map-channel
      (lambda (y)
        (let ((hy (hilbert-transform hlb y))
 	     (dy (delay d y)))
-	 (sqrt (+ (* hy hy) (* dy dy))))))))
+	 (sqrt (+ (* hy hy) (* dy dy)))))
+     0 #f snd chn #f "sound->amp-env")))
 
-(define (hilbert-transform-via-fft)
+(define* (hilbert-transform-via-fft #:optional snd chn)
   ;; same as FIR version but use FFT and change phases by hand
-  (let* ((size (frames))
+  (let* ((size (frames snd chn))
 	 (len (inexact->exact (expt 2 (ceiling (/ (log size) (log 2.0))))))
 	 (rl (make-vct len))
 	 (im (make-vct len))
-	 (rd (make-sample-reader 0)))
+	 (rd (make-sample-reader 0 snd chn)))
     (do ((i 0 (1+ i)))
 	((= i size))
       (vct-set! rl i (rd)))
@@ -717,7 +723,7 @@
 	(vct-set! im i (imag-part c))))
     (mus-fft rl im len -1)
     (vct-scale! rl (/ 1.0 len))
-    (vct->channel rl)))
+    (vct->channel rl 0 len snd chn #f "hilbert-transform-via-fft")))
 !#
 
 ;;; -------- highpass filter 
@@ -1214,7 +1220,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
   "(notch-channel freqs #:optional (filter-order #f) beg dur (snd #f) (chn #f) edpos (truncate #t) (notch-width 2)) -> notch filter removing freqs"
   (filter-channel (make-notch-frequency-response (exact->inexact (srate snd)) freqs notch-width)
 		  (or filter-order (inexact->exact (expt 2 (ceiling (/ (log (/ (srate snd) notch-width)) (log 2.0))))))
-		  beg dur snd chn edpos truncate))
+		  beg dur snd chn edpos truncate
+		  (format #f "notch-channel '~A ~A ~A ~A" freqs filter-order beg dur)))
 
 (define* (notch-sound freqs #:optional (filter-order #f) (snd #f) (chn #f) (notch-width 2))
   "(notch-sound freqs #:optional (filter-order #f) (snd #f) (chn #f) (notch-width 2)) -> notch filter removing freqs"
@@ -1373,10 +1380,10 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
       (set! e (cons (* scl (/ a (expt y (+ a 1.0)))) e)))
     (reverse e)))
 
-;(map-chan (lambda (y) (any-random 1.0 '(0 1 1 1)))) ; uniform distribution
-;(map-chan (lambda (y) (any-random 1.0 '(0 0 0.95 0.1 1 1)))) ; mostly toward 1.0
-;(let ((g (gaussian-distribution 1.0))) (map-chan (lambda (y) (any-random 1.0 g))))
-;(let ((g (pareto-distribution 1.0))) (map-chan (lambda (y) (any-random 1.0 g))))
+;(map-channel (lambda (y) (any-random 1.0 '(0 1 1 1)))) ; uniform distribution
+;(map-channel (lambda (y) (any-random 1.0 '(0 0 0.95 0.1 1 1)))) ; mostly toward 1.0
+;(let ((g (gaussian-distribution 1.0))) (map-channel (lambda (y) (any-random 1.0 g))))
+;(let ((g (pareto-distribution 1.0))) (map-channel (lambda (y) (any-random 1.0 g))))
 
 ;;; this is the inverse integration function used by CLM to turn a distribution function into a weighting function
 
@@ -1529,7 +1536,10 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 (define* (shift-channel-pitch freq #:optional (order 40) (beg 0) dur snd chn edpos)
   ;; higher order = better cancellation
   (let* ((gen (make-ssb-am freq order)))
-    (map-channel (lambda (y) (ssb-am gen y)) beg dur snd chn edpos "channel-shift-pitch")))
+    (map-channel (lambda (y) 
+		   (ssb-am gen y)) 
+		 beg dur snd chn edpos 
+		 (format #f "shift-channel-pitch ~A ~A ~A ~A" freq order beg dur))))
 
 (define (hz->2pi freq) (/ (* 2 pi freq) (srate))) ; hz->radians follows mus-srate unfortunately
 
@@ -1686,7 +1696,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 (define* (channel-polynomial coeffs #:optional snd chn)
   (let ((len (frames snd chn)))
-    (vct->channel (vct-polynomial (channel->vct 0 len snd chn) coeffs) 0 len snd chn)))
+    (vct->channel (vct-polynomial (channel->vct 0 len snd chn) coeffs) 0 len snd chn #f (format #f "channel-polynomial ~A" (vct->string coeffs)))))
 
 ;;; (channel-polynomial (vct 0.0 .5)) = x*.5
 ;;; (channel-polynomial (vct 0.0 1.0 1.0 1.0)) = x*x*x + x*x + x
@@ -1721,4 +1731,4 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 		    (vct-add! new-sound (vct-scale! (vct-copy rl1) (/ (* (vct-ref coeffs i) peak) pk)))))
 		(let ((pk (vct-peak new-sound)))
 		  (vct-scale! new-sound (/ peak pk)))))))
-    (vct->channel new-sound 0 (max len (* len (1- num-coeffs))) snd chn)))
+    (vct->channel new-sound 0 (max len (* len (1- num-coeffs))) snd chn #f (format #f "spectral-polynomial ~A" (vct->string coeffs)))))

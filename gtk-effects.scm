@@ -96,10 +96,7 @@
 				  (+ (selection-position) (selection-frames))
 				  (cadr ms)))))
 		 (if (= (sync snd) snc)
-		     (map-chan (func (- end beg))
-			       beg 
-			       (+ end overlap)
-			       origin snd chn))))
+		     (map-channel (func (- end beg)) beg (+ end overlap 1) snd chn #f origin))))
 	     (if (> snc 0) 
 		 (all-chans) 
 		 (list (list (selected-sound)) 
@@ -2138,7 +2135,7 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 	(cross-synth-target 'sound))
 
     (define (cross-synthesis cross-snd amp fftsize r)
-      ;; cross-snd is the index of the other sound (as opposed to the map-chan sound)
+      ;; cross-snd is the index of the other sound (as opposed to the map-channel sound)
       (let* ((freq-inc (/ fftsize 2))
 	     (fdr (make-vct fftsize))
 	     (fdi (make-vct fftsize))
@@ -2621,7 +2618,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 					     (set! lastx inval)
 					     lasty)))))
 (add-to-menu effects-menu "Spiker" spike)
-(add-to-menu effects-menu "Compand" (lambda () (map-chan 
+(add-to-menu effects-menu "Compand" (lambda () (map-channel 
 						(let* ((tbl (vct -1.000 -0.960 -0.900 -0.820 -0.720 -0.600 -0.450 -0.250
 								 0.000 0.250 0.450 0.600 0.720 0.820 0.900 0.960 1.000)))
 						  (lambda (inval)

@@ -169,9 +169,9 @@
 				  #f ;no change to synthesis
 				  ))
 	  (reader (make-sample-reader 0)))
-      (map-chan (lambda (val)
-		  (phase-vocoder pv (lambda (dir) 
-				      (next-sample reader)))))
+      (map-channel (lambda (val)
+		     (phase-vocoder pv (lambda (dir) 
+					 (next-sample reader)))))
       (free-sample-reader reader))))
 
 (define test-pv-2
@@ -183,9 +183,9 @@
 				  #f ; no change to synthesis
 				  ))
 	  (reader (make-sample-reader 0)))
-      (map-chan (lambda (val)
-		  (phase-vocoder pv (lambda (dir) 
-				      (next-sample reader)))))
+      (map-channel (lambda (val)
+		     (phase-vocoder pv (lambda (dir) 
+					 (next-sample reader)))))
       (free-sample-reader reader))))
 
 (define test-pv-3
@@ -222,9 +222,9 @@
 				  ))
 	  (reader (make-sample-reader 0))
 	  )
-      (map-chan (lambda (val)
-		  (phase-vocoder pv (lambda (dir) 
-				      (next-sample reader)))))
+      (map-channel (lambda (val)
+		     (phase-vocoder pv (lambda (dir) 
+					 (next-sample reader)))))
       (free-sample-reader reader))))
 !#
 
