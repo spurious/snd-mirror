@@ -468,7 +468,7 @@ enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
 #define DEFAULT_WAVO_HOP 3
 
 #define wavo(ss) ss->Wavo
-#define in_set_wavo(ss,a) ss->Wavo = a
+#define set_wavo(ss,a) ss->Wavo = a
 #define DEFAULT_WAVO 0
 
 #define wavo_trace(ss) ss->Wavo_Trace

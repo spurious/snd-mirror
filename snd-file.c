@@ -341,7 +341,7 @@ static char **sound_file_extensions = NULL;
 static int sound_file_extensions_size = 0;
 static int sound_file_extensions_end = 0;
 
-void add_sound_file_extension(char *ext)
+static void add_sound_file_extension(char *ext)
 {
   if (sound_file_extensions_end == sound_file_extensions_size)
     {
@@ -589,6 +589,44 @@ static void read_memo_file(snd_info *sp)
   FREE(newname);
 }
 
+#if HAVE_GUILE
+#include "sg.h"
+
+static SCM memo_sound,open_hook,close_hook;
+
+static int dont_open(snd_state *ss, char *file)
+{
+  char *mcf = NULL;
+  SCM res = SCM_BOOL_F;
+  if (!(ss->open_hook_active))
+    {
+      if (HOOKED(open_hook))
+	{
+	  ss->open_hook_active = 1;
+	  res = g_c_run_or_hook(open_hook,SCM_LIST1(gh_str02scm(mcf = mus_file_full_name(file))));
+	  if (mcf) FREE(mcf);
+	  ss->open_hook_active = 0;
+	}
+    }
+  return(SCM_TRUE_P(res));
+}
+
+static int dont_close(snd_state *ss, snd_info *sp)
+{
+  SCM res = SCM_BOOL_F;
+  if (!(ss->close_hook_active))
+    {
+      if (HOOKED(close_hook))
+	{
+	  ss->close_hook_active = 1;
+	  res = g_c_run_or_hook(close_hook,SCM_LIST1(gh_int2scm(sp->index)));
+	  ss->close_hook_active = 0;
+	}
+    }
+  return(SCM_TRUE_P(res));
+}
+
+#endif
 
 static snd_info *snd_open_file_1 (char *filename, snd_state *ss, int select)
 {
@@ -601,7 +639,7 @@ static snd_info *snd_open_file_1 (char *filename, snd_state *ss, int select)
   if (sp)
     {
 #if HAVE_GUILE
-      set_memo_sound(sp);
+      SCM_SETCDR(memo_sound,gh_int2scm(sp->index));
 #endif
       sp->write_date = file_write_date(sp->fullname);
       sp->need_update = 0;
@@ -1808,3 +1846,34 @@ snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_f
     return(make_new_file_dialog(ss,newname,header_type,data_format,srate,chans,comment));
   else return(finish_new_file(ss,newname,header_type,data_format,srate,chans,comment));
 }
+
+
+#if HAVE_GUILE
+#include "sg.h"
+
+static SCM g_add_sound_file_extension(SCM ext)
+{
+  #define H_add_sound_file_extension "(" S_add_sound_file_extension " ext)  adds the file extension ext to the list of sound file extensions"
+  char *name;
+  ERRS1(ext,S_add_sound_file_extension);
+  name = gh_scm2newstr(ext,NULL);
+  add_sound_file_extension(name);
+  free(name);
+  return(ext);
+}
+
+void g_init_file(SCM local_doc)
+{
+  DEFINE_PROC(gh_new_procedure1_0(S_add_sound_file_extension,g_add_sound_file_extension),H_add_sound_file_extension);
+
+  memo_sound = gh_define(S_memo_sound,SCM_BOOL_F);
+
+#if (!HAVE_GUILE_1_3_0)
+  open_hook = scm_create_hook(S_open_hook,1);                     /* arg = filename */
+  close_hook = scm_create_hook(S_close_hook,1);                   /* arg = sound index */
+#else
+  open_hook = gh_define(S_open_hook,SCM_BOOL_F);
+  close_hook = gh_define(S_close_hook,SCM_BOOL_F);
+#endif
+}
+#endif

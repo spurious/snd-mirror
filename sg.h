@@ -4,7 +4,6 @@
 
 #define GH_LOOKUP(a) scm_symbol_value0(a)
 #define GH_TYPE_OF(a) (SCM_TYP16(a))
-#define GH_INT_SET(name,val) SCM_SETCDR(name,gh_int2scm(val))
 
 #if (!HAVE_GUILE_1_3_0)
   #define GH_VALUE_OF(a) SCM_SMOB_DATA(a)

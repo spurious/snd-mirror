@@ -54,6 +54,7 @@
 ;;; map-sound-files, match-sound-files
 ;;; move sound down 8ve using fft
 ;;; vct func like list
+;;; swap selection chans
 
 
 (use-modules (ice-9 debug))
@@ -2121,7 +2122,7 @@
 ;  (vct-set! notched-spectr 37 1.0)
 ;  (map-chan (fltit-1 40 notched-spectr)))
 ;
-;;; but for something this simple, we can use a two-zero filter:
+;;; for something this simple (like a notch filter), we can use a two-zero filter:
 ;
 ;(define flt (make-zpolar .99 550.0))
 ;
@@ -2223,3 +2224,32 @@
 ;;;  -> #<vct 1.000 2.000 3.000>
 
 (define vct (lambda args (list->vct args)))
+
+
+;;; -------- swap selection chans
+
+(define swap-selection-channels
+  (lambda ()
+    (if (= (region-chans 0) 2)
+	(let* ((beg (selection-beg))
+	       (len (selection-length))
+	       (snd
+		(call-with-current-continuation
+		 (lambda (return)
+		   (do ((i 0 (1+ i)))
+		       ((= i (max-sounds)) #f)
+		     (if (ok? i)
+			 (do ((j 0 (1+ j)))
+			     ((= j (channels i)) #f)
+			   (if (selection-member i j)
+			       (return i))))))))
+	       (chan0 (region-samples->vct 0 len 0 0))
+	       (chan1 (region-samples->vct 0 len 0 1)))
+	  (if (= (channels snd) 2)
+	      (as-one-edit
+	       (lambda ()
+		 (vct->samples beg len chan1 snd 0)
+		 (vct->samples beg len chan0 snd 1)))
+	      (report-in-minubuffer "swap-selection-channels needs a stereo sound")))
+	(report-in-minibuffer "swap-selection-channels needs a stereo selection"))))
+

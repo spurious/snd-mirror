@@ -2769,6 +2769,34 @@ static SCM g_save_edit_history(SCM filename, SCM snd, SCM chn)
   return(CANNOT_SAVE);
 }
 
+static SCM g_undo(SCM ed_n, SCM snd_n, SCM chn_n) /* opt ed_n */
+{
+  #define H_undo "("  S_undo " &optional (count 1) snd chn) undoes count edits in snd's channel chn"
+  chan_info *cp;
+  ERRCP(S_undo,snd_n,chn_n,2);
+  cp = get_cp(snd_n,chn_n);
+  if (cp == NULL) return(NO_SUCH_CHANNEL);
+  if (gh_number_p(ed_n))
+    undo_EDIT(cp,g_scm2int(ed_n));
+  else undo_EDIT(cp,1);
+  update_graph(cp,NULL);
+  return(SCM_BOOL_T);
+}
+
+static SCM g_redo(SCM ed_n, SCM snd_n, SCM chn_n) /* opt ed_n */
+{
+  #define H_redo "("  S_redo " &optional (count 1) snd chn) redoes count edits in snd's channel chn"
+  chan_info *cp;
+  ERRCP(S_redo,snd_n,chn_n,2);
+  cp = get_cp(snd_n,chn_n);
+  if (cp == NULL) return(NO_SUCH_CHANNEL);
+  if (gh_number_p(ed_n))
+    redo_EDIT(cp,g_scm2int(ed_n));
+  else redo_EDIT(cp,1);
+  update_graph(cp,NULL);
+  return(SCM_BOOL_T);
+}
+
 #if (!HAVE_GUILE_1_3_0)
 static int dont_edit(chan_info *cp) 
 {
@@ -2808,6 +2836,9 @@ void g_init_edits(SCM local_doc)
 
   DEFINE_PROC(gh_new_procedure(S_save_edit_history,SCM_FNC g_save_edit_history,1,2,0),H_save_edit_history);
   DEFINE_PROC(gh_new_procedure(S_edit_fragment,SCM_FNC g_edit_fragment,0,3,0),H_edit_fragment);
+  DEFINE_PROC(gh_new_procedure(S_undo,g_undo,0,3,0),H_undo);
+  DEFINE_PROC(gh_new_procedure(S_redo,g_redo,0,3,0),H_redo);
+
 #if DEBUGGING
   DEFINE_PROC(gh_new_procedure("display-edits",SCM_FNC g_display_edits,0,2,0),H_display_edits);
 #endif

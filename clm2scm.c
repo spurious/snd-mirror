@@ -4698,7 +4698,6 @@ void init_mus2scm_module(void)
  *
  *  (with-sound (...) ...) -> current chans, create if none?
  *  sampling_rate from :srate
- *  how to handle user's keywords in definstrument?
  *  with-sound would need fluid-let as outer
  *
  * here is something close to with-sound body handling:

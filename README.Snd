@@ -141,9 +141,8 @@ or
   
   make -f makefile.sgi sndplay
 
-or whatever.
 
-
+----------------------------------------------------------------
 The documentation is in snd.html, extsnd.html, grfsnd.html,
 sndlib.html, and clm.html.  There's also a fancier wrapper for the
 documentation: snd1.html.  A brief change log is in HISTORY.Snd.
@@ -163,7 +162,7 @@ The HPUX port is thanks to Seppo Ingalsuo.
 The DEC Alpha port is due to the persistence of Juan Reyes.
 The Linux Alpha port is thanks to Guenter Geiger.
 The original ALSA port was thanks to Paul Barton-Davis.
-The current ALSA port is thanks to Fernando Lopez-Lezcano.
+The current ALSA port is thanks to Fernando Lopez-Lezcano and Paul Barton-Davis.
 The Sam 9407 port is thanks to Gerd Rausch.
 The LADSPA support is thanks to Richard W.E. Furse.
 
@@ -445,7 +444,7 @@ gmeteor:
   ftp://ftp.prosa.it/pub/gmeteor/gmeteor-0.9.tar.gz
 
 Linux audio:
-  http://sound.condorow.net/ (Linux Audio)
+  http://sound.condorow.net/
 
 GSL:
   ftp://sourceware.cygnus.com/pub/gsl/

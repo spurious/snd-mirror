@@ -527,7 +527,6 @@ static int handle_set(snd_state *ss, char *tok, char **str)
   if (strcmp(tok,S_set_vu_size) == 0) {set_vu_size(ss,fstr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_wavelet_type) == 0) {set_wavelet_type(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_waving) == 0) {cp = get_cp(ss,str[2],str[3]); if (cp) waveb(cp,istr(str[1])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_wavo) == 0) {set_wavo(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_wavo_hop) == 0) {set_wavo_hop(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_wavo_trace) == 0) {set_wavo_trace(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_window_height) == 0) 
@@ -667,7 +666,6 @@ static int symit(snd_state *ss,char **str)
 	}
       if (strcmp(tok,S_abort) == 0) abort();
       if (strcmp(tok,S_add_mark) == 0) {cp = get_cp(ss,str[2],str[3]); if (cp) isym(ss,mark_id(add_mark(istr(str[1]),NULL,cp))); return(0);}
-      if (strcmp(tok,S_add_sound_file_extension) == 0) {add_sound_file_extension(sstr(str[1])); isym(ss,0); return(0);}
       if (strcmp(tok,S_amp) == 0) {sp = get_sp(ss,str[1]); if (sp) fsym(ss,sp->amp); else isym(ss,0); return(0);}
       if (strcmp(tok,S_ask_before_overwrite) == 0) {isym(ss,ask_before_overwrite(ss)); return(0);}
       if (strcmp(tok,S_audio_output_device) == 0) {isym(ss,audio_output_device(ss)); return(0);}
@@ -676,7 +674,6 @@ static int symit(snd_state *ss,char **str)
       if (strcmp(tok,S_auto_update) == 0) {isym(ss,auto_update(ss)); return(0);}
       break;
     case 'c':
-      if (strcmp(tok,S_call_apply) == 0) {sp = get_sp(ss,str[1]); if (sp) run_apply_to_completion(sp); isym(ss,0); return(0);}
 #if HAVE_OSS
       if (strcmp(tok,S_clear_audio_inputs) == 0) {mus_audio_clear_soundcard_inputs(); isym(ss,0); return(0);}
 #endif
@@ -1422,8 +1419,6 @@ int snd_load_file(char *filename)
   return(0);
 }
 
-int dont_open(snd_state *ss, char *file) {return(0);}
-int dont_close(snd_state *ss, snd_info *sp) {return(0);}
 int dont_exit(snd_state *ss) {return(0);}
 int dont_start(snd_state *ss, char *filename) {return(0);}
 void call_stop_playing_hook(snd_info *sp) {}

@@ -2703,7 +2703,7 @@
      (if (and (not (member 'gtk *features*))
 	      (not (member 'snd-guile-gtk *features*)))
 	 (begin
-	   (recorder-dialog) (w)
+	   ;(recorder-dialog) (w)
 	   (set-recorder-file "hiho.snd")
 	   (if (not (string=? (recorder-file) "hiho.snd")) (snd-print (format #f ";set-recorder-file: ~A?" (recorder-file))))
 	   (set-recorder-in-format mus-mulaw)

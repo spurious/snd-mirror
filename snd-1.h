@@ -764,7 +764,6 @@ char *added_transform_name(int type);
   int ignore_mus_error(int type, char *msg);
   void g_initialize_gh(snd_state *ss);
   MUS_SAMPLE_TYPE *g_floats_to_samples(SCM obj, int *size, char *caller, int position);
-  void set_memo_sound(snd_info *sp);
   void ERRCP(char *origin, SCM snd, SCM chn, int off);
   void ERRSP(char *origin, SCM snd, int off);
   chan_info *get_cp(SCM scm_snd_n, SCM scm_chn_n);
@@ -793,8 +792,6 @@ env *string2env(char *str);
 /* Float string2Float(char *str); */
 int string2int(char *str);
 /* char *string2string(char *str); */
-int dont_close(snd_state *ss, snd_info *sp);
-int dont_open(snd_state *ss, char *file);
 int dont_exit(snd_state *ss);
 int dont_start(snd_state *ss, char *file);
 void call_stop_playing_hook(snd_info *sp);
@@ -1023,7 +1020,6 @@ char *shortname(snd_info *sp);
 void add_sound_data(char *filename, snd_info *sp, snd_state *ss);
 Float srate_changed(Float ival, char *srcbuf, int style, int tones);
 void sp_name_click(snd_info *sp);
-void set_wavo(snd_state *ss, int on);
 #if ((USE_MOTIF) && (XmVERSION == 1))
   void edit_history(snd_state *ss, int on);
 #endif
@@ -1034,7 +1030,6 @@ void reset_control_panel(snd_info *sp);
 void stop_applying(snd_info *sp);
 void *make_apply_state(void *xp);
 BACKGROUND_TYPE apply_controls(void *xp);
-void run_apply_to_completion(snd_info *sp);
 #if FILE_PER_CHAN
 typedef struct {
   file_info *hdr;
@@ -1043,6 +1038,10 @@ typedef struct {
 } multifile_info;
 multifile_info *sort_multifile_channels(snd_state *ss, char *filename);
 #endif
+#if HAVE_GUILE
+  void g_init_snd(SCM local_doc);
+#endif
+
 
 /* -------- snd-file -------- */
 
@@ -1058,7 +1057,6 @@ file_info *make_temp_header(snd_state *ss, char *fullname, file_info *old_hdr, i
 dir *free_dir (dir *dp);
 int *make_file_state(int fd, file_info *hdr, int direction, int chan, int suggested_bufsize);
 int *free_file_state(int *datai);
-void add_sound_file_extension(char *ext);
 void init_sound_file_extensions(void);
 dir *find_sound_files_in_dir (char *name);
 #if FILE_PER_CHAN
@@ -1117,6 +1115,11 @@ int header_type_from_position(int pos);
 int data_format_from_position(int header, int pos);
 void set_header_type_and_format_from_position(file_data *fdat, int pos);
 char **set_header_positions_from_type(file_data *fdat, int header_type, int data_format);
+
+#if HAVE_GUILE
+  void g_init_file(SCM local_doc);
+#endif
+
 
 
 /* -------- snd-utils -------- */
