@@ -1005,7 +1005,7 @@ static char *save_as_temp_file(mus_sample_t **raw_data, int chans, int len, int 
   return(newname);
 }
 
-#define MULTIPLY_ENVS_INCR .1
+#define SAMPLE_ENVS_INCR .1
 #define OFFSET_FROM_TOP 0
 /* axis top border width is 10 (snd-axis.c) */
 
@@ -1039,7 +1039,7 @@ static mix_track_state *gather_as_built(mix_info *md, mix_state *cs)
 	    if ((cs->amp_envs) && (cs->amp_envs[i]))
 	      {
 		if (track_env)
-		  ms->amp_envs[i] = multiply_envs(cs->amp_envs[i], track_env, MULTIPLY_ENVS_INCR);
+		  ms->amp_envs[i] = multiply_envs(cs->amp_envs[i], track_env, SAMPLE_ENVS_INCR);
 		else ms->amp_envs[i] = copy_env(cs->amp_envs[i]);
 	      }
 	    else 
@@ -4998,12 +4998,12 @@ static env *gather_track_amp_env(mix_state *cs)
 	{
 	  /* track amps can be left until later (gather track amp) */
 	  if (!e) 
-	    e = window_env(active_track_amp_env(id), mix_beg, mix_dur, track_beg, track_dur);
+	    e = window_env(active_track_amp_env(id), mix_beg, mix_dur, track_beg, track_dur, SAMPLE_ENVS_INCR);
 	  else 
 	    {
 	      e = multiply_envs(e, 
-				temp = window_env(active_track_amp_env(id), mix_beg, mix_dur, track_beg, track_dur),
-				MULTIPLY_ENVS_INCR);
+				temp = window_env(active_track_amp_env(id), mix_beg, mix_dur, track_beg, track_dur, SAMPLE_ENVS_INCR),
+				SAMPLE_ENVS_INCR);
 	      temp = free_env(temp);
 	    }
 	}

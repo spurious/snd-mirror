@@ -124,11 +124,7 @@ typedef struct {
   Float y_scale, y_base, y_ambit;
   double x_scale, x_base, x_ambit;
   char *xlabel;
-  Locus y_axis_x0, x_axis_x0,
-        y_axis_y0, x_axis_y0,
-        x_axis_x1,
-        y_axis_y1,
-        x_label_x, x_label_y;
+  Locus y_axis_x0, x_axis_x0, y_axis_y0, x_axis_y0, x_axis_x1, y_axis_y1, x_label_x, x_label_y;
   bool graph_active;
   off_t losamp, hisamp;                 /* displayed x-axis bounds in terms of sound sample numbers */
   Locus graph_x0;                       /* x axis offset relative to window (for double graphs) */
@@ -157,7 +153,6 @@ typedef struct {
   int pts, data_size; /* data_size is independent of actual number of points of data (can be much larger) */
   env_type_t type;
   Float base;
-  void *proc;
 } env;
 
 typedef struct {
@@ -959,10 +954,7 @@ env *make_envelope(Float *env_buffer, int len);
 XEN envelope_base(XEN obj);
 XEN envelope_type(XEN obj);
 XEN envelope_procedure(XEN obj);
-XEN set_envelope_base(XEN obj, XEN base);
-XEN set_envelope_type(XEN obj, XEN type);
-XEN set_envelope_procedure(XEN obj, XEN func);
-env *window_env(env *e, off_t local_beg, off_t local_dur, off_t e_beg, off_t e_dur);
+env *window_env(env *e, off_t local_beg, off_t local_dur, off_t e_beg, off_t e_dur, Float maxx);
 env *multiply_envs(env *e1, env *e2, Float maxx);
 env *invert_env(env *e);
 env *default_env(Float x1, Float y);
@@ -993,6 +985,7 @@ env *enved_next_env(void);
 env *string2env(char *str);
 void add_or_edit_symbol(char *name, env *val);
 env* name_to_env(const char *str);
+env *position_to_env(int pos);
 void delete_envelope(char *name);
 
 XEN env_to_xen (env *e);

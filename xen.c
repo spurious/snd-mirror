@@ -732,7 +732,7 @@ static VALUE xen_rb_hook_is_empty_p(VALUE hook)
 
 static VALUE xen_rb_hook_length(VALUE hook)
 {
-  return LONG2NUM(RARRAY(rb_iv_get(hook, "@procs"))->len);
+  return C_TO_XEN_INT(RARRAY(rb_iv_get(hook, "@procs"))->len);
 }
 
 static VALUE xen_rb_hook_name(VALUE hook)
@@ -752,20 +752,15 @@ static VALUE xen_rb_hook_describe(VALUE hook)
 
 static VALUE xen_rb_hook_inspect(VALUE hook)
 {
-#if HAVE_RB_STR_BUF_APPEND
-  VALUE str = rb_str_buf_new2("#<Hook name: ");
-  rb_str_buf_append(str, rb_inspect(rb_iv_get(hook, "@name")));
-  rb_str_buf_cat2(str, ", arity: ");
-  rb_str_buf_append(str, rb_inspect(rb_iv_get(hook, "@arity")));
-  rb_str_buf_cat2(str, ", procs[");
-  rb_str_buf_append(str, rb_inspect(xen_rb_hook_length(hook)));
-  rb_str_buf_cat2(str, "]: ");
-  rb_str_buf_append(str, rb_inspect(xen_rb_hook_names(hook)));
-  rb_str_buf_cat2(str, ">");
-  return str;
-#else
-  return(XEN_FALSE);
-#endif
+  VALUE str = rb_str_new2("#<Hook name: ");
+  rb_str_append(str, rb_inspect(rb_iv_get(hook, "@name")));
+  rb_str_cat2(str, ", arity: ");
+  rb_str_append(str, rb_inspect(rb_iv_get(hook, "@arity")));
+  rb_str_cat2(str, ", procs[");
+  rb_str_append(str, rb_inspect(xen_rb_hook_length(hook)));
+  rb_str_cat2(str, "]: ");
+  rb_str_append(str, rb_inspect(xen_rb_hook_names(hook)));
+  rb_str_cat2(str, ">");
 }    
 
 /*
@@ -828,21 +823,30 @@ static VALUE xen_rb_hook_p(VALUE klass, VALUE obj)
  * $my_hook.inspect   --> #<Hook name: "$my_hook", arity: 2, procs[0]: nil>
  */
 
+#if (!HAVE_RB_DEFINE_ALLOC_FUNC)
+static VALUE xen_rb_new(int argc, VALUE *argv, VALUE klass)
+{
+  VALUE hook = hook_alloc(klass);
+  rb_obj_call_init(hook, argc, argv);
+  return hook;
+}
+#endif
 
-/* TODO: ruby 1.6.8:
-/home/bil/snd-7/xen.c:831: undefined reference to `rb_define_alloc_func'
-*/
+static bool hook_inited = false;
 
 void Init_Hook(void)
 {
+  if (hook_inited) return;
+  hook_inited = true;
+ 
   xen_rb_cHook = rb_define_class("Hook", rb_cObject);
   rb_include_module(xen_rb_cHook, rb_mEnumerable);
 #if HAVE_RB_DEFINE_ALLOC_FUNC
   rb_define_alloc_func(xen_rb_cHook, hook_alloc);
 #else
-  /* is an allocate method needed? or "new"? */
+  rb_define_singleton_method(xen_rb_cHook, "new", xen_rb_new, -1);
 #endif
-  
+    
   rb_define_method(xen_rb_cHook, "initialize", xen_rb_hook_initialize, -1);
   rb_define_method(xen_rb_cHook, "add_hook!", xen_rb_hook_add_hook, -1);
   rb_define_method(xen_rb_cHook, "remove_hook!", xen_rb_hook_remove_hook, 1);

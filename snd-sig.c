@@ -2651,9 +2651,11 @@ at run-time.  See extsnd.html for the gory details."
   chan_info *cp;
   off_t beg = 0, dur = 0;
   int pos;
+#if HAVE_GUILE
   bool ptrees_present = false;
-  XEN proc = XEN_FALSE;
   void *pt = NULL;
+#endif
+  XEN proc = XEN_FALSE;
   /* (ptree-channel (lambda (y) (* y 2))) -> ((lambda (y) (* y 2)) #<procedure #f ((y) (* y 2))>) as "proc_and_list" */
   /*   the cadr proc gives access to the environment, run walks the car */
 #if HAVE_RUBY

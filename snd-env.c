@@ -8,18 +8,25 @@
    with-relative-panes, with-gl, mus-file-data-clipped -- too many!
  */
 
-/* TODO: offset for xramp in windowed env, or stretch via offset/incr change (fragment handlers do this already) */
-/* TODO: perhaps use snd-edit fragment readers here, rather than sampled envs */
 
 /* TODO: tie sine-env (et al) into the envelope editors (enved, mix, xm-enved)
            enved: need enved-ramp(int)-procedure, application of it to underlying portion, spin-button (or whatever) to set
 	   new_env_type?  then list of available env types
+           add list of user-defined seg-funcs to enved
+           use enved-proc if ENVELOPE_LAMBDA in display and everywhere else
 */
+/* TODO: add env name field to mix/track enveds */
+/* TODO: xm-enved packaged enved access (widgets and callbacks) */
+/* TODO: clip/dB buttons in mix/track dialogs */
+/* TODO: incorporate env props throughout Snd (env.scm?) */
+
 
 #if HAVE_GUILE
   XEN envelope_base_sym, envelope_type_sym, envelope_procedure_sym;
-  #define XEN_OBJECT_PROPERTY(Obj, Prop)          scm_object_property(Obj, Prop)
-  #define XEN_SET_OBJECT_PROPERTY(Obj, Prop, Val) scm_set_object_property_x(XEN_VARIABLE_REF(Obj), Prop, Val)
+  #define XEN_VARIABLE_PROPERTY(Obj, Prop)          scm_object_property(Obj, Prop)
+  #define XEN_SET_VARIABLE_PROPERTY(Obj, Prop, Val) scm_set_object_property_x(XEN_VARIABLE_REF(Obj), Prop, Val)
+  #define XEN_OBJECT_PROPERTY(Obj, Prop)            scm_object_property(Obj, Prop)
+  #define XEN_SET_OBJECT_PROPERTY(Obj, Prop, Val)   scm_set_object_property_x(Obj, Prop, Val)
 #endif
 
 
@@ -45,7 +52,6 @@ env *copy_env(env *e)
       memcpy((void *)(ne->data), (void *)(e->data), ne->data_size * sizeof(Float));
       ne->base = e->base;
       ne->type = e->type;
-      ne->proc = e->proc; /* is this correct? */
       return(ne);
     }
   return(NULL);
@@ -110,13 +116,6 @@ char *env_to_string(env *e)
   return(news);
 }
 
-static Float env_last_x(env *e)
-{
-  /* since data_size has no necessary relation to the number of points (besides being large enough),
-   *   we need some direct way to get the last x value */
-  return(e->data[e->pts * 2 - 2]);
-}
-
 env *make_envelope(Float *env_buffer, int len)
 {
   env *e;
@@ -144,7 +143,7 @@ static env *normalize_x_axis(env *e)
   int i, j;
   if (!e) return(NULL);
   x0 = e->data[0];
-  x1 = env_last_x(e);
+  x1 = e->data[e->pts * 2 - 2];
   if ((x0 == 0.0) && (x1 == 1.0))
     return(e);
   if ((e->pts == 1) || (x0 == x1))
@@ -158,27 +157,41 @@ static env *normalize_x_axis(env *e)
   return(e);
 }
 
-env *window_env(env *e, off_t local_beg, off_t local_dur, off_t e_beg, off_t e_dur)
+static int add_breakpoint(env *e, int pos, Float x, Float y)
+{
+  if (pos >= e->data_size)
+    {
+      e->data_size += 16;
+      e->data = (Float *)REALLOC(e->data, e->data_size * sizeof(Float));
+    }
+  e->data[pos] = x;
+  e->data[pos + 1] = y;
+  return(pos + 2);
+}
+
+env *window_env(env *e, off_t local_beg, off_t local_dur, off_t e_beg, off_t e_dur, Float maxx)
 {
   env *local_e = NULL;
   int i, j = 0, k;
   mus_any *me;
-  Float x0, x1, e_x_range, e_x0, e_x1, local_x0, local_x1;
+  Float x0, x1, e_x_range, e_x0, e_x1, local_x0, local_x1, lx0;
   /* return env representing e from local beg for local dur */
-  if ((local_beg == e_beg) && (local_dur == e_dur))
+  if ((local_beg < e_beg) || 
+      (local_dur > e_dur) ||
+      ((local_beg == e_beg) && (local_dur == e_dur)))
     return(normalize_x_axis(copy_env(e))); /* fixup 0..1? */
   /* only need to interpolate start and end breaks, copy in between */
   x0 = (double)(local_beg - e_beg) / (double)e_dur;
   x1 = (double)(local_beg + local_dur - e_beg) / (double)e_dur;
   e_x0 = e->data[0];
-  e_x1 = env_last_x(e);
+  e_x1 = e->data[e->pts * 2 - 2];
   e_x_range = e_x1 - e_x0;
   local_x0 = e_x0 + x0 * e_x_range;
   local_x1 = e_x0 + x1 * e_x_range;
   local_e = (env *)CALLOC(1, sizeof(env));
   local_e->data = (Float *)CALLOC(e->pts * 2, sizeof(Float));
   local_e->data_size = e->pts * 2;
-  /* this may leave wasted space, but worst case the two envs are the same size */
+  lx0 = local_x0 + maxx;
   me = mus_make_env(e->data, e->pts, 1.0, 0.0, e->base, 0.0, 0, 1000 * e->pts, NULL);
   for (k = 0, i = 0; k < e->pts; k++, i += 2)
     {
@@ -187,30 +200,35 @@ env *window_env(env *e, off_t local_beg, off_t local_dur, off_t e_beg, off_t e_d
 	  if (j == 0)
 	    {
 	      if (e->data[i] == local_x0)
-		{
-		  local_e->data[0] = local_x0;
-		  local_e->data[1] = e->data[i + 1];
-		}
-	      else
-		{
-		  local_e->data[0] = local_x0;
-		  local_e->data[1] = mus_env_interp(local_x0, me);
-		}
-	      j = 2;
+		j = add_breakpoint(local_e, 0, local_x0, e->data[i + 1]);
+	      else j = add_breakpoint(local_e, 0, local_x0, mus_env_interp(local_x0, me));
 	    }
 	  if ((e->data[i] < local_x1) && (e->data[i] != local_x0))
 	    {
-	      local_e->data[j] = e->data[i];
-	      local_e->data[j + 1] = e->data[i + 1];
+	      if ((e->type != ENVELOPE_LINEAR) || (e->base != 1.0))
+		{
+		  while ((lx0 + .001) < e->data[i])
+		    {
+		      j = add_breakpoint(local_e, j, lx0, mus_env_interp(lx0, me));
+		      lx0 += maxx;
+		    }
+		  lx0 = e->data[i] + maxx;
+		}
+	      j = add_breakpoint(local_e, j, e->data[i], e->data[i + 1]);
 	      if (e->data[i] == local_x1) break; /* hit end point */
-	      j += 2;
 	    }
 	}
       if (e->data[i] >= local_x1)
 	{
-	  local_e->data[j] = local_x1;
-	  local_e->data[j + 1] = mus_env_interp(local_x1, me);
-	  j += 2;
+	  if ((e->type != ENVELOPE_LINEAR) || (e->base != 1.0))
+	    {
+	      while ((lx0 + .001) < local_x1)
+		{
+		  j = add_breakpoint(local_e, j, lx0, mus_env_interp(lx0, me));
+		  lx0 += maxx;
+		}
+	    }
+	  j = add_breakpoint(local_e, j, local_x1, mus_env_interp(local_x1, me));
 	  break;
 	}
     }
@@ -224,7 +242,7 @@ env *window_env(env *e, off_t local_beg, off_t local_dur, off_t e_beg, off_t e_d
 }
 
 #if DEBUGGING && HAVE_GUILE
-static XEN g_window_env(XEN e, XEN b1, XEN d1, XEN b2, XEN d2)
+static XEN g_window_env(XEN e, XEN b1, XEN d1, XEN b2, XEN d2, XEN maxx)
 {
   XEN res;
   env *temp1 = NULL, *temp2 = NULL;
@@ -233,7 +251,8 @@ static XEN g_window_env(XEN e, XEN b1, XEN d1, XEN b2, XEN d2)
 		     XEN_TO_C_OFF_T(b1),
 		     XEN_TO_C_OFF_T(d1),
 		     XEN_TO_C_OFF_T(b2),
-		     XEN_TO_C_OFF_T(d2));
+		     XEN_TO_C_OFF_T(d2),
+		     (XEN_NUMBER_P(maxx)) ? XEN_TO_C_DOUBLE(maxx) : 1.0);
   res = env_to_xen(temp2);
   temp1 = free_env(temp1);
   temp2 = free_env(temp2);
@@ -260,11 +279,6 @@ env *multiply_envs(env *e1, env *e2, Float maxx)
       x += maxx;
       if (x >= e1->data[i]) x = e1->data[i];
       if (x >= e2->data[j]) x = e2->data[j];
-      if (k >= e->data_size)
-	{
-	  e->data_size += 16;
-	  e->data = (Float *)REALLOC(e->data, e->data_size * sizeof(Float));
-	}
       if (x == e1->data[i])
 	{
 	  y0 = e1->data[i + 1];
@@ -277,9 +291,7 @@ env *multiply_envs(env *e1, env *e2, Float maxx)
 	  if (j < ((e2->pts * 2) - 1)) j += 2;
 	}
       else y1 = mus_env_interp(x, me2);
-      e->data[k] = x;
-      e->data[k + 1] = y0 * y1;
-      k += 2;
+      k = add_breakpoint(e, k, x, y0 * y1);
       if ((x + (maxx * .01)) >= 1.0) break;
     }
   if (k == 0)
@@ -333,7 +345,7 @@ static XEN g_invert_env(XEN e)
       Float base;
       base = XEN_TO_C_DOUBLE(envelope_base(e));
       if ((base > 0.0) && (base != 1.0))
-	scm_set_object_property_x(res, envelope_base_sym, C_TO_XEN_DOUBLE(1.0 / base));
+	XEN_SET_OBJECT_PROPERTY(res, envelope_base_sym, C_TO_XEN_DOUBLE(1.0 / base));
     }
   free_env(temp1);
   free_env(temp2);
@@ -428,8 +440,6 @@ env_editor *new_env_editor(void)
   edp->click_to_delete = false;
   edp->edited = false;
   edp->clip_p = true;
-  /* TODO: clip/dB buttons in mix/track dialogs */
-  /* TODO: add list of user-defined ramp funcs to enved */
   return(edp);
 }
 
@@ -533,8 +543,7 @@ void env_editor_display_env(env_editor *edp, env *e, axis_context *ax, const cha
 	  env_editor_set_current_point(edp, 0, ix1, iy1);
 	  draw_arc(ax, ix1, iy1, size);
 	}
-      /* TODO: use enved-proc if ENVELOPE_LAMBDA here and everywhere else */
-      if (e->base == 1.0) /* TODO: env type here? (if proc, base is not relevant) */
+      if ((e->type == ENVELOPE_LINEAR) && (e->base == 1.0))
 	{
 	  if (edp->in_dB)
 	    {
@@ -685,7 +694,7 @@ void env_editor_button_motion(env_editor *edp, int evx, int evy, Tempus motion_t
   else x0 = e->data[0];
   if (edp->env_pos < (e->pts - 1))
     x1 = e->data[edp->env_pos * 2 + 2]; /* looking for next point on right to avoid crossing it */
-  else x1 = env_last_x(e);
+  else x1 = e->data[e->pts * 2 - 2];
   if (x < x0) x = x0;
   if (x > x1) x = x1;
   if (edp->env_pos == 0) x = e->data[0];
@@ -1269,10 +1278,25 @@ env *string2env(char *str)
 #endif
 }
 
+env *position_to_env(int pos)
+{
+  env *e;
+  if (pos < 0) return(NULL);
+#if HAVE_GUILE
+  e = xen_to_env(XEN_NAME_AS_C_STRING_TO_VALUE(all_names[pos]));
+#else
+  e = xen_to_env(XEN_EVAL_C_STRING(all_names[pos]));
+#endif
+  if ((e) && (!(envs_equal(e, all_envs[pos]))))
+    {
+      free_env(all_envs[pos]);
+      all_envs[pos] = copy_env(e);
+    }
+  return(e);
+}
+
 env *name_to_env(const char *str)
 {
-  /* TODO: add env name field to mix/track enveds */
-  /* TODO: xm-enved packaged enved access (widgets and callbacks) */
   env *e;
   int pos;
   pos = find_env(str);
@@ -1281,7 +1305,7 @@ env *name_to_env(const char *str)
 #else
   e = xen_to_env(XEN_EVAL_C_STRING((char *)str));
 #endif
-  if ((pos >= 0) && (!(envs_equal(e, all_envs[pos]))))
+  if ((pos >= 0) && (e) && (!(envs_equal(e, all_envs[pos]))))
     {
       free_env(all_envs[pos]);
       all_envs[pos] = copy_env(e);
@@ -1313,30 +1337,27 @@ and 'base' into the envelope editor."
   XEN_DEFINE_VARIABLE(XEN_TO_C_STRING(name), temp, data); /* already gc protected */
 #if HAVE_GUILE
   /* add properties */
-  /* TODO: how does Ruby handle properties? */
-  XEN_SET_OBJECT_PROPERTY(temp, envelope_base_sym, C_TO_XEN_DOUBLE(e->base));
-  XEN_SET_OBJECT_PROPERTY(temp, envelope_type_sym, C_TO_XEN_INT(e->type));
-  XEN_SET_OBJECT_PROPERTY(temp, envelope_procedure_sym, XEN_FALSE); /* for env_proc */
+  XEN_SET_VARIABLE_PROPERTY(temp, envelope_base_sym, C_TO_XEN_DOUBLE(e->base));
+  XEN_SET_VARIABLE_PROPERTY(temp, envelope_type_sym, C_TO_XEN_INT(e->type));
+  XEN_SET_VARIABLE_PROPERTY(temp, envelope_procedure_sym, XEN_FALSE); /* for env_proc */
 #endif
   return(temp);
 }
 
-/* TODO: incorporate env props throughout Snd (env.scm?) */
-
 #if HAVE_GUILE
-XEN envelope_base(XEN obj) {return(XEN_OBJECT_PROPERTY(obj, envelope_base_sym));}
-XEN envelope_type(XEN obj) {return(XEN_OBJECT_PROPERTY(obj, envelope_type_sym));}
-XEN envelope_procedure(XEN obj) {return(XEN_OBJECT_PROPERTY(obj, envelope_procedure_sym));}
-XEN set_envelope_base(XEN obj, XEN base) {XEN_SET_OBJECT_PROPERTY(obj, envelope_base_sym, base); return(base);}
-XEN set_envelope_type(XEN obj, XEN type) {XEN_SET_OBJECT_PROPERTY(obj, envelope_type_sym, type); return(type);}
-XEN set_envelope_procedure(XEN obj, XEN func) {XEN_SET_OBJECT_PROPERTY(obj, envelope_procedure_sym, func); return(func);}
+XEN envelope_base(XEN obj) {return(XEN_VARIABLE_PROPERTY(obj, envelope_base_sym));}
+XEN envelope_type(XEN obj) {return(XEN_VARIABLE_PROPERTY(obj, envelope_type_sym));}
+XEN envelope_procedure(XEN obj) {return(XEN_VARIABLE_PROPERTY(obj, envelope_procedure_sym));}
+static XEN set_envelope_base(XEN obj, XEN base) {XEN_SET_VARIABLE_PROPERTY(obj, envelope_base_sym, base); return(base);}
+static XEN set_envelope_type(XEN obj, XEN type) {XEN_SET_VARIABLE_PROPERTY(obj, envelope_type_sym, type); return(type);}
+static XEN set_envelope_procedure(XEN obj, XEN func) {XEN_SET_VARIABLE_PROPERTY(obj, envelope_procedure_sym, func); return(func);}
 #else
 XEN envelope_base(XEN obj) {return(XEN_FALSE);}
 XEN envelope_type(XEN obj) {return(XEN_FALSE);}
 XEN envelope_procedure(XEN obj) {return(XEN_FALSE);}
-XEN set_envelope_base(XEN obj, XEN base) {return(XEN_FALSE);}
-XEN set_envelope_type(XEN obj, XEN type) {return(XEN_FALSE);}
-XEN set_envelope_procedure(XEN obj, XEN func) {return(XEN_FALSE);}
+static XEN set_envelope_base(XEN obj, XEN base) {return(XEN_FALSE);}
+static XEN set_envelope_type(XEN obj, XEN type) {return(XEN_FALSE);}
+static XEN set_envelope_procedure(XEN obj, XEN func) {return(XEN_FALSE);}
 #endif
 
 XEN env_to_xen(env *e)
@@ -1356,6 +1377,7 @@ void add_or_edit_symbol(char *name, env *val)
    */
   char *buf, *tmpstr = NULL;
   int len;
+  if (!val) return;
   tmpstr = env_to_string(val);
   len = snd_strlen(tmpstr) + snd_strlen(name) + 32;
   buf = (char *)CALLOC(len, sizeof(char));
@@ -1365,6 +1387,7 @@ void add_or_edit_symbol(char *name, env *val)
   FREE(buf);
 #else
   XEN e;
+  if (!val) return;
 #if HAVE_SCM_C_DEFINE
 #if HAVE_SCM_DEFINED_P
   if (XEN_TRUE_P(scm_defined_p(C_STRING_TO_XEN_SYMBOL(name), XEN_UNDEFINED)))
@@ -1504,7 +1527,6 @@ static XEN g_enved_style(void)
   return(C_TO_XEN_INT(enved_style(ss)));
 }
 
-/* TODO: enved-style as proc not list of procs? */
 static XEN g_set_enved_style(XEN val) 
 {
   #define H_enved_style "(" S_enved_style "): envelope editor breakpoint connection choice: can \
@@ -1551,6 +1573,7 @@ be " S_envelope_linear ", " S_envelope_exponential ", or a list of 2 procedures.
 	  reflect_enved_style();
 	  /* to get ptree: form_to_ptree_3_f(XEN_LIST_2(scm_procedure_source(XEN_CAR(val)), XEN_CAR(val)));
 	   * init can be saved as is (XEN_CADR(val))
+	   * but in enved, seems simplest to use XEN form (go to ptree only if applied to sound and guile)
 	   */
 	}
       else XEN_WRONG_TYPE_ARG_ERROR(S_enved_style, XEN_ONLY_ARG, val, "must be list of 2 procedures");
@@ -1726,7 +1749,7 @@ stretch-envelope from env.scm: \n\
   ss->enved->clip_p = DEFAULT_ENVED_CLIP_P;
 
 #if DEBUGGING && HAVE_GUILE
-  XEN_DEFINE_PROCEDURE("window-env", g_window_env, 5, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE("window-env", g_window_env, 5, 1, 0, NULL);
   XEN_DEFINE_PROCEDURE("multiply-envs", g_multiply_envs, 3, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE("invert-env", g_invert_env, 1, 0, 0, NULL);
 #endif
