@@ -2,10 +2,11 @@
 #define MUS_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 13
-#define MUS_DATE "17-July-02"
+#define MUS_REVISION 14
+#define MUS_DATE "29-July-02"
 
 /* 
+ * 29-Jul:     added various *_1 cases for the optimizer.
  * 15-Jul:     mus_continue_sample2file.
  * 10-Jul:     mus_file_name.
  * 7-Jun:      fftw support added (mus_fftw).
@@ -271,6 +272,7 @@ Float mus_set_scaler            PROTO((mus_any *gen, Float val));
 const char *mus_file_name       PROTO((mus_any *ptr));
 
 Float mus_oscil                 PROTO((mus_any *o, Float fm, Float pm));
+Float mus_oscil_0               PROTO((mus_any *ptr));
 Float mus_oscil_1               PROTO((mus_any *ptr, Float fm));
 Float mus_oscil_bank            PROTO((Float *amps, mus_any **oscils, Float *inputs, int size));
 int mus_oscil_p                 PROTO((mus_any *ptr));
@@ -282,19 +284,24 @@ mus_any *mus_make_sum_of_cosines PROTO((int cosines, Float freq, Float phase));
 #define mus_cosines(Gen) mus_channels(Gen)
 
 Float mus_delay                 PROTO((mus_any *gen, Float input, Float pm));
+Float mus_delay_1               PROTO((mus_any *ptr, Float input));
 Float mus_tap                   PROTO((mus_any *gen, Float loc));
+Float mus_tap_1                 PROTO((mus_any *gen));
 mus_any *mus_make_delay         PROTO((int size, Float *line, int line_size));
 int mus_delay_p                 PROTO((mus_any *ptr));
 
 Float mus_comb                  PROTO((mus_any *gen, Float input, Float pm));
+Float mus_comb_1                PROTO((mus_any *gen, Float input));
 mus_any *mus_make_comb          PROTO((Float scaler, int size, Float *line, int line_size));
 int mus_comb_p                  PROTO((mus_any *ptr));
 
 Float mus_notch                 PROTO((mus_any *gen, Float input, Float pm));
+Float mus_notch_1               PROTO((mus_any *gen, Float input));
 mus_any *mus_make_notch         PROTO((Float scaler, int size, Float *line, int line_size));
 int mus_notch_p                 PROTO((mus_any *ptr));
 
 Float mus_all_pass              PROTO((mus_any *gen, Float input, Float pm));
+Float mus_all_pass_1            PROTO((mus_any *gen, Float input));
 mus_any *mus_make_all_pass      PROTO((Float backward, Float forward, int size, Float *line, int line_size));
 int mus_all_pass_p              PROTO((mus_any *ptr));
 
@@ -338,6 +345,7 @@ mus_any *mus_make_rand_interp   PROTO((Float freq, Float base));
 int mus_rand_interp_p           PROTO((mus_any *ptr));
 
 Float mus_asymmetric_fm         PROTO((mus_any *gen, Float index, Float fm));
+Float mus_asymmetric_fm_1       PROTO((mus_any *gen, Float index));
 mus_any *mus_make_asymmetric_fm PROTO((Float freq, Float phase, Float r, Float ratio));
 int mus_asymmetric_fm_p         PROTO((mus_any *ptr));
 
@@ -415,6 +423,7 @@ mus_any *mus_frame2buffer       PROTO((mus_any *rb, mus_any *fr));
 
 mus_any *mus_make_waveshape     PROTO((Float frequency, Float phase, Float *table, int size));
 Float mus_waveshape             PROTO((mus_any *ptr, Float index, Float fm));
+Float mus_waveshape_1           PROTO((mus_any *ptr, Float index));
 int mus_waveshape_p             PROTO((mus_any *ptr));
 Float *mus_partials2waveshape   PROTO((int npartials, Float *partials, int size, Float *table));
 Float *mus_partials2polynomial  PROTO((int npartials, Float *partials, int kind));

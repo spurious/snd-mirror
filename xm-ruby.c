@@ -249,7 +249,6 @@ static XEN gxm_to_s(XEN obj)
   XEN_NARGIFY_1(gxm_XtIsSessionShell_w, gxm_XtIsSessionShell)
   XEN_NARGIFY_1(gxm_XtMapWidget_w, gxm_XtMapWidget)
   XEN_NARGIFY_1(gxm_XtUnmapWidget_w, gxm_XtUnmapWidget)
-  XEN_NARGIFY_1(gxm_XtAppContext_w, gxm_XtAppContext)
 #endif
   XEN_NARGIFY_2(gxm_XLoadQueryFont_w, gxm_XLoadQueryFont)
   XEN_NARGIFY_2(gxm_XQueryFont_w, gxm_XQueryFont)
@@ -1187,9 +1186,6 @@ static XEN gxm_to_s(XEN obj)
   XEN_NARGIFY_2(gxm_XAddPixel_w, gxm_XAddPixel)
 
 #if HAVE_MOTIF
-  XEN_NARGIFY_1(gxm_Pixel_w, gxm_Pixel)
-  XEN_NARGIFY_1(gxm_GC_w, gxm_GC)
-  XEN_NARGIFY_1(gxm_Widget_w, gxm_Widget)
   XEN_NARGIFY_1(XEN_XtAppContext_p_w, XEN_XtAppContext_p)
   XEN_NARGIFY_1(XEN_XtRequestId_p_w, XEN_XtRequestId_p)
   XEN_NARGIFY_1(XEN_XtWorkProcId_p_w, XEN_XtWorkProcId_p)
@@ -1483,7 +1479,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtIsSessionShell" XM_POSTFIX, gxm_XtIsSessionShell_w, 1, 0, 0, H_XtIsSessionShell);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtMapWidget" XM_POSTFIX, gxm_XtMapWidget_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtUnmapWidget" XM_POSTFIX, gxm_XtUnmapWidget_w, 1, 0, 0, H_XtUnmapWidget);
-   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppContext" XM_POSTFIX, gxm_XtAppContext_w, 1, 0, 0, NULL);
 #endif
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XUniqueContext" XM_POSTFIX, gxm_XUniqueContext_w, 0, 0, 0, H_XUniqueContext);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XLoadQueryFont" XM_POSTFIX, gxm_XLoadQueryFont_w, 2, 0, 0, H_XLoadQueryFont);
@@ -2443,9 +2438,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XAddPixel" XM_POSTFIX, gxm_XAddPixel_w, 2, 0, 0, NULL);
 
 #if HAVE_MOTIF
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "Pixel" XM_POSTFIX, gxm_Pixel_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "GC" XM_POSTFIX, gxm_GC_w, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "Widget" XM_POSTFIX, gxm_Widget_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppContext?" XM_POSTFIX, XEN_XtAppContext_p_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtRequestId?" XM_POSTFIX, XEN_XtRequestId_p_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtWorkProcId?" XM_POSTFIX, XEN_XtWorkProcId_p_w, 1, 0, 0, NULL);

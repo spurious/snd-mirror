@@ -5757,6 +5757,9 @@ from_base64(char* cs, int *buf)
  * 128: data starts (or 256 in v3, I think) -- byte 512 in any case.
  */
 
+/* Fast Tracker: starts with "Extended Instrument" 16 bit data embedded see xi2raw.c of Ben Collver */
+/* Impulse Tracker: starts with "IMPS" 12 bit(?) see its2raw.c of Ben Collver */
+
 /* for MIDI and Synth-related formats by the dozen see http://www.wotsit.org/music.htm */
 
 /*

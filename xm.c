@@ -23378,12 +23378,14 @@ static void define_integers(void)
   DEFINE_INTEGER(XpmColorKey);
   DEFINE_INTEGER(XpmColorTable);
   DEFINE_INTEGER(XpmReturnColorTable);
+#ifdef XpmReturnAllocPixels
   DEFINE_INTEGER(XpmReturnAllocPixels);
   DEFINE_INTEGER(XpmAllocCloseColors);
   DEFINE_INTEGER(XpmBitmapFormat);
   DEFINE_INTEGER(XpmAllocColor);
   DEFINE_INTEGER(XpmFreeColors);
   DEFINE_INTEGER(XpmColorClosure);
+#endif
   DEFINE_INTEGER(XpmComments);
   DEFINE_INTEGER(XpmReturnComments);
   DEFINE_INTEGER(XpmUndefPixel);

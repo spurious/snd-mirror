@@ -1945,8 +1945,8 @@ voice: (vox 0 2 110 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 '(0 UH 2
 				   (* amp1 (oscil of1 (+ frq1 (* .2 car))))))
 			  (* .15 (+ (* amp2 (oscil of2 (+ frq2 (* .5 car))))
 				    (* amp3 (oscil of3 (+ frq3 (* .5 car))))))
-			  (* .05 (+ (* amp4 (oscil of4 (+ frq4 (* 1.0 car))))
-				    (* amp5 (oscil of5 (+ frq5 (* 1.0 car))))))))))
+			  (* .05 (+ (* amp4 (oscil of4 (+ frq4 car)))
+				    (* amp5 (oscil of5 (+ frq5 car)))))))))
 	(mix-vct out-data beg #f 0 #f)
 	(update-time-graph)))))
   

@@ -618,6 +618,17 @@ Float mus_oscil(mus_any *ptr, Float fm, Float pm)
   return(result);
 }
 
+/* some optimization experiments */
+Float mus_oscil_0(mus_any *ptr)
+{
+  Float result;
+  osc *gen = (osc *)ptr;
+  result = mus_sin(gen->phase);
+  gen->phase += gen->freq;
+  if ((gen->phase > 1000.0) || (gen->phase < -1000.0)) gen->phase = fmod(gen->phase, TWO_PI);
+  return(result);
+}
+
 Float mus_oscil_1(mus_any *ptr, Float fm)
 {
   Float result;
@@ -835,6 +846,17 @@ Float mus_delay(mus_any *ptr, Float input, Float pm)
   return(result);
 }
 
+Float mus_delay_1(mus_any *ptr, Float input)
+{
+  dly *gen = (dly *)ptr;
+  Float result;
+  result = gen->line[gen->loc];
+  gen->line[gen->loc] = input;
+  gen->loc++;
+  if (gen->loc >= gen->size) gen->loc = 0;
+  return(result);
+}
+
 Float mus_tap(mus_any *ptr, Float loc)
 {
   dly *gen = (dly *)ptr;
@@ -856,6 +878,12 @@ Float mus_tap(mus_any *ptr, Float loc)
 	  return(gen->line[taploc]);
 	}
     }
+}
+
+Float mus_tap_1(mus_any *ptr)
+{
+  dly *gen = (dly *)ptr;
+  return(gen->line[gen->loc]);
 }
 
 static int free_delay(void *gen) 
@@ -1051,12 +1079,18 @@ mus_any *mus_make_delay(int size, Float *preloaded_line, int line_size)
 
 int mus_delay_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_DELAY));}
 
-Float mus_comb (mus_any *ptr, Float input, Float pm) 
+Float mus_comb(mus_any *ptr, Float input, Float pm) 
 {
   dly *gen = (dly *)ptr;
   if (gen->zdly)
     return(mus_delay(ptr, input + (gen->yscl * mus_tap(ptr, pm)), pm));
   else return(mus_delay(ptr, input + (gen->line[gen->loc] * gen->yscl), 0.0));
+}
+
+Float mus_comb_1(mus_any *ptr, Float input) 
+{
+  dly *gen = (dly *)ptr;
+  return(mus_delay_1(ptr, input + (gen->line[gen->loc] * gen->yscl)));
 }
 
 static mus_any_class COMB_CLASS = {
@@ -1113,10 +1147,15 @@ static mus_any_class NOTCH_CLASS = {
   0, NULL, 0
 };
 
-Float mus_notch (mus_any *ptr, Float input, Float pm) 
+Float mus_notch(mus_any *ptr, Float input, Float pm) 
 {
   dly *gen = (dly *)ptr;
   return((input * gen->xscl) + mus_delay(ptr, input, pm));
+}
+
+Float mus_notch_1(mus_any *ptr, Float input) 
+{
+  return((input * ((dly *)ptr)->xscl) + mus_delay_1(ptr, input));
 }
 
 int mus_notch_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_NOTCH));}
@@ -1142,6 +1181,14 @@ Float mus_all_pass(mus_any *ptr, Float input, Float pm)
     din = mus_delay(ptr, input + (gen->yscl * mus_tap(ptr, pm)), pm);
   else din = input + (gen->yscl * gen->line[gen->loc]);
   return(mus_delay(ptr, din, pm) + (gen->xscl * din));
+}
+
+Float mus_all_pass_1(mus_any *ptr, Float input)
+{
+  Float din;
+  dly *gen = (dly *)ptr;
+  din = input + (gen->yscl * gen->line[gen->loc]);
+  return(mus_delay_1(ptr, din) + (gen->xscl * din));
 }
 
 int mus_all_pass_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_ALL_PASS));}
@@ -1910,6 +1957,18 @@ Float mus_asymmetric_fm(mus_any *ptr, Float index, Float fm)
   result = exp(index * gen->cosr * cos(mth)) * mus_sin(gen->phase + index * gen->sinr * mus_sin(mth));
   /* second index factor added 4-Mar-02 */
   gen->phase += (gen->freq + fm);
+  if ((gen->phase > 100.0) || (gen->phase < -100.0)) gen->phase = fmod(gen->phase, TWO_PI);
+  return(result);
+}
+
+Float mus_asymmetric_fm_1(mus_any *ptr, Float index) /* mostly for internal optimizer consistency */
+{
+  asyfm *gen = (asyfm *)ptr;
+  Float result, mth;
+  mth = gen->ratio * gen->phase;
+  result = exp(index * gen->cosr * cos(mth)) * mus_sin(gen->phase + index * gen->sinr * mus_sin(mth));
+  /* second index factor added 4-Mar-02 */
+  gen->phase += gen->freq;
   if ((gen->phase > 100.0) || (gen->phase < -100.0)) gen->phase = fmod(gen->phase, TWO_PI);
   return(result);
 }
@@ -2942,6 +3001,16 @@ Float mus_waveshape(mus_any *ptr, Float index, Float fm)
   Float oscval;
   oscval = mus_sin(gen->phase);
   gen->phase += (gen->freq + fm);
+  if ((gen->phase > 100.0) || (gen->phase < -100.0)) gen->phase = fmod(gen->phase, TWO_PI);
+  return(mus_array_interp(gen->table, gen->offset * (1.0 + (oscval * index)), gen->table_size));
+}
+
+Float mus_waveshape_1(mus_any *ptr, Float index)
+{
+  ws *gen = (ws *)ptr;
+  Float oscval;
+  oscval = mus_sin(gen->phase);
+  gen->phase += gen->freq;
   if ((gen->phase > 100.0) || (gen->phase < -100.0)) gen->phase = fmod(gen->phase, TWO_PI);
   return(mus_array_interp(gen->table, gen->offset * (1.0 + (oscval * index)), gen->table_size));
 }
