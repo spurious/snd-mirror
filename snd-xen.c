@@ -1828,13 +1828,14 @@ static XEN g_close_sound_file(XEN g_fd, XEN g_bytes)
 {
   #define H_close_sound_file "(" S_close_sound_file " fd bytes) closes file pointed to by fd, updating its header to report 'bytes' bytes of data"
   file_info *hdr;
-  int result, fd, bytes;
+  int result, fd;
+  off_t bytes;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(g_fd), g_fd, XEN_ARG_1, S_close_sound_file, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(g_bytes), g_bytes, XEN_ARG_2, S_close_sound_file, "a number");
   fd = XEN_TO_C_INT(g_fd);
   if ((fd < 0) || (fd == fileno(stdin)) || (fd == fileno(stdout)) || (fd == fileno(stderr)))
     mus_misc_error(S_close_sound_file, "invalid file", g_fd);
-  bytes = XEN_TO_C_INT_OR_ELSE(g_bytes, 0);
+  bytes = XEN_TO_C_OFF_T_OR_ELSE(g_bytes, 0);
   hdr = get_temp_header(fd);
   if (hdr == NULL) 
     {
@@ -1857,15 +1858,16 @@ reading edit version edit-position (defaulting to the current version)"
   snd_fd *sf;
   sound_data *sd;
   XEN newsd = XEN_FALSE;
-  int i, len, beg, chn = 0, pos;
+  int i, len, chn = 0, pos;
+  off_t beg;
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_0), samp_0, XEN_ARG_1, S_samples2sound_data, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samps), samps, XEN_ARG_2, S_samples2sound_data, "a number");
   ASSERT_CHANNEL(S_samples2sound_data, snd_n, chn_n, 3);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(sdchan), sdchan, XEN_ARG_7, S_samples2sound_data, "an integer");
   cp = get_cp(snd_n, chn_n, S_samples2sound_data);
   pos = to_c_edit_position(cp, edpos, S_samples2sound_data, 6);
-  beg = XEN_TO_C_INT_OR_ELSE(samp_0, 0);
-  len = XEN_TO_C_INT_OR_ELSE(samps, cp->samples[pos] - beg);
+  beg = XEN_TO_C_OFF_T_OR_ELSE(samp_0, 0);
+  len = XEN_TO_C_INT_OR_ELSE(samps, (int)(cp->samples[pos] - beg));
   if (len > 0)
     {
       chn = XEN_TO_C_INT_OR_ELSE(sdchan, 0);
@@ -1950,6 +1952,22 @@ int string2int(char *str)
 #else
   int res = 0;
   if (str) sscanf(str, "%d", &res);
+  return(res);
+#endif
+}
+
+off_t string2off_t(char *str) 
+{
+#if HAVE_EXTENSION_LANGUAGE
+  XEN res;
+  res = snd_catch_any(eval_str_wrapper, (void *)str, "string->off_t");
+  if (XEN_NUMBER_P(res))
+    return(XEN_TO_C_OFF_T_OR_ELSE(res, 0));
+  else snd_error("%s is not a number", str);
+  return(0);
+#else
+  off_t res = 0;
+  if (str) sscanf(str, OFF_TD , &res);
   return(res);
 #endif
 }

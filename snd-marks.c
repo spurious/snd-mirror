@@ -59,7 +59,7 @@ static mark *map_over_marks(chan_info *cp, mark_map_func *func, void *m, int dir
   return(NULL);
 }
 
-static mark *make_mark_1(int samp, char *name, int id, unsigned int sc)
+static mark *make_mark_1(off_t samp, char *name, int id, unsigned int sc)
 {
   mark *mp;
   mp = (mark *)CALLOC(1, sizeof(mark));
@@ -72,7 +72,7 @@ static mark *make_mark_1(int samp, char *name, int id, unsigned int sc)
 
 static int mark_id_counter = 0;
 
-static mark *make_mark(int samp, char *name) {return(make_mark_1(samp, name, mark_id_counter++, 0));}
+static mark *make_mark(off_t samp, char *name) {return(make_mark_1(samp, name, mark_id_counter++, 0));}
 
 static mark *copy_mark(mark *m) {return(make_mark_1(m->samp, m->name, mark_id(m), m->sync));}
 
@@ -354,7 +354,8 @@ static void cancel_mark_watch(chan_info *cp)
 static int move_mark_1(chan_info *cp, mark *mp, int x)
 {
   axis_info *ap;
-  int nx, samps;
+  int nx;
+  off_t samps;
   int redraw;
   ap = cp->axis;
   redraw = (!watching_mouse);
@@ -379,7 +380,7 @@ static int move_mark_1(chan_info *cp, mark *mp, int x)
 	  redraw = 0;
 	}
     }
-  mp->samp = (int)(ungrf_x(ap, nx) * SND_SRATE(cp->sound));
+  mp->samp = (off_t)(ungrf_x(ap, nx) * SND_SRATE(cp->sound));
   if (mp->samp < 0) mp->samp = 0;
   samps = current_ed_samples(cp);
   if (mp->samp > samps) mp->samp = samps;
@@ -412,17 +413,17 @@ static void sort_marks(chan_info *cp)
 
 static Locus prev_cx = -1;
 
-int move_play_mark(chan_info *cp, int *mc, Locus cx)
+off_t move_play_mark(chan_info *cp, off_t *mc, Locus cx)
 {
   /* mc = mouse loc sampwise return samps updating mc */
-  int cur_mc;
+  off_t cur_mc;
   axis_info *ap;
   ap = cp->axis;
   if (prev_cx > 0) draw_play_triangle(cp, prev_cx);
   prev_cx = cx;
   draw_play_triangle(cp, cx);
   cur_mc = (*mc);
-  (*mc) = (int)(ungrf_x(ap, cx) * SND_SRATE(cp->sound));
+  (*mc) = (off_t)(ungrf_x(ap, cx) * SND_SRATE(cp->sound));
   return((*mc) - cur_mc);
 }
 
@@ -458,7 +459,7 @@ static void allocate_marks(chan_info *cp, int edit_ctr)
   for (i = 0; i < cp->marks_size; i++) cp->mark_ctr[i] = -1;
 }
 
-mark *add_mark(int samp, char *name, chan_info *cp)
+mark *add_mark(off_t samp, char *name, chan_info *cp)
 {
   int i, j, ed, med;
   mark **mps;
@@ -510,7 +511,7 @@ mark *add_mark(int samp, char *name, chan_info *cp)
     }
 }
 
-void delete_mark_samp(int samp, chan_info *cp)
+void delete_mark_samp(off_t samp, chan_info *cp)
 {
   int i, j, ed, edm, id = -1;
   mark *mp;
@@ -545,7 +546,7 @@ void delete_mark_samp(int samp, chan_info *cp)
 	    }
 	}
     }
-  report_in_minibuffer(cp->sound, "no mark at sample %d", samp);
+  report_in_minibuffer(cp->sound, "no mark at sample " OFF_TD, samp);
 }
 
 static void delete_mark_id(int id, chan_info *cp)
@@ -729,7 +730,7 @@ mark *active_mark(chan_info *cp)
   return(map_over_marks(cp, active_mark_1, NULL, READ_FORWARD));
 }
 
-int mark_beg(chan_info *cp)
+off_t mark_beg(chan_info *cp)
 {
   /* called only in snd-chn.c for active zoom */
   mark *mp;
@@ -783,12 +784,13 @@ void release_pending_marks(chan_info *cp, int edit_ctr)
     }
 }
 
-void ripple_marks(chan_info *cp, int beg, int change)
+void ripple_marks(chan_info *cp, off_t beg, off_t change)
 {
   /* if change = 0, just set ptr, else copy and fixup with deletions */
   /* this is called after the tree has been pushed forward, so edit_ctr is ahead of us */
   /* but we don't do anything if no marks */
-  int old_m, new_m, end, i, old_size; 
+  int old_m, new_m, i, old_size;
+  off_t end;
   mark **mps, **mpo;
   mark *mp;
   if ((cp) && (cp->marks))
@@ -867,10 +869,11 @@ void ripple_marks(chan_info *cp, int beg, int change)
 
 void mark_define_region(chan_info *cp, int count)
 {
-  int beg, end, i;
+  off_t beg, end;
+  int i;
   mark *mp;
   sync_info *si;
-  int ends[1];
+  off_t ends[1];
   if (cp)
     {
       if (cp->marks)
@@ -931,8 +934,8 @@ void save_mark_list(FILE *fd, chan_info *cp)
 		  if (m)
 		    {
 		      if (m->name)
-			fprintf(fd, "(\"%s\" %d %d %d) ", m->name, m->samp, mark_id(m), mark_sync(m));
-		      else fprintf(fd, "(#f %d %d %d) ", m->samp, mark_id(m), mark_sync(m));
+			fprintf(fd, "(\"%s\" " OFF_TD " %d %d) ", m->name, m->samp, mark_id(m), mark_sync(m));
+		      else fprintf(fd, "(#f " OFF_TD " %d %d) ", m->samp, mark_id(m), mark_sync(m));
 		    }
 		  else fprintf(fd, "(#f #f #f #f) ");
 		}
@@ -950,11 +953,12 @@ static mark *reverse_mark_1(chan_info *cp, mark *mp, void *um)
   return(NULL);
 }
 
-void reverse_marks(chan_info *cp, int beg, int dur) /* beg -1 for full sound */
+void reverse_marks(chan_info *cp, off_t beg, off_t dur) /* beg -1 for full sound */
 {
   mark *m;
   mark **mps;
-  int ed, end, marks, i;
+  int ed, marks, i;
+  off_t end;
   ed = cp->edit_ctr;
   mps = cp->marks[ed];
   if (beg == -1)
@@ -978,9 +982,10 @@ void reverse_marks(chan_info *cp, int beg, int dur) /* beg -1 for full sound */
     qsort((void *)mps, cp->mark_ctr[ed] + 1, sizeof(mark *), compare_mark_samps);
 }
 
-void src_marks(chan_info *cp, Float ratio, int old_samps, int new_samps, int beg, int over_selection)
+void src_marks(chan_info *cp, Float ratio, off_t old_samps, off_t new_samps, off_t beg, int over_selection)
 {
-  int i, marks, pos, end;
+  int i, marks, pos;
+  off_t end;
   mark *m;
   mark **mps;
   if (cp->marks)
@@ -1024,7 +1029,7 @@ void src_marks(chan_info *cp, Float ratio, int old_samps, int new_samps, int beg
     }
 }
 
-void reset_marks(chan_info *cp, int num, int *samps, int end, int extension, int over_selection)
+void reset_marks(chan_info *cp, int cur_marks, off_t *samps, off_t end, off_t extension, int over_selection)
 {
   int i, marks, pos;
   mark *m;
@@ -1042,7 +1047,7 @@ void reset_marks(chan_info *cp, int num, int *samps, int end, int extension, int
 		m = mps[i];
 		if (m->samp > end) m->samp += extension;
 	      }
-	  for (i = 0; (i <= marks) && (i < num); i++) 
+	  for (i = 0; (i <= marks) && (i < cur_marks); i++) 
 	    {
 	      m = mps[i];
 	      if (samps[i] >= 0) m->samp = samps[i];
@@ -1052,7 +1057,7 @@ void reset_marks(chan_info *cp, int num, int *samps, int end, int extension, int
     }
 }
 
-void ripple_trailing_marks(chan_info *cp, int beg, int old_len, int new_len)
+void ripple_trailing_marks(chan_info *cp, off_t beg, off_t old_len, off_t new_len)
 {
   int i, marks, pos;
   mark *m;
@@ -1118,7 +1123,7 @@ typedef struct {
   int marks_size;
   int mark_ctr;
   int sync;
-  int *initial_samples;
+  off_t *initial_samples;
 } syncdata;
 
 static syncdata *make_syncdata(int sync)
@@ -1130,7 +1135,7 @@ static syncdata *make_syncdata(int sync)
   sd->marks_size = 8;
   sd->marks = (mark **)CALLOC(sd->marks_size, sizeof(mark *));
   sd->chans = (chan_info **)CALLOC(sd->marks_size, sizeof(chan_info *));
-  sd->initial_samples = (int *)CALLOC(sd->marks_size, sizeof(int));
+  sd->initial_samples = (off_t *)CALLOC(sd->marks_size, sizeof(off_t));
   return(sd);
 }
 
@@ -1144,6 +1149,8 @@ static void add_syncd_mark(syncdata *sd, mark *mp, chan_info *cp)
     {
       sd->marks = (mark **)REALLOC(sd->marks, sd->marks_size * 2 * sizeof(mark *));
       sd->chans = (chan_info **)REALLOC(sd->chans, sd->marks_size * 2 * sizeof(chan_info *));
+      /* why was initial_samples missing? 2-May-02 */
+      sd->initial_samples = (off_t *)REALLOC(sd->initial_samples, sd->marks_size * 2 * sizeof(off_t));
       for (i = sd->marks_size; i < sd->marks_size * 2; i++) {sd->marks[i] = NULL; sd->chans[i] = NULL;}
       sd->marks_size *= 2;
     }
@@ -1184,7 +1191,7 @@ static syncdata *free_syncdata(syncdata *sd)
 }
 
 static int mark_control_clicked = 0; /* C-click of mark -> drag data as mark is dragged */
-static int mark_initial_sample = 0;
+static off_t mark_initial_sample = 0;
 static syncdata *mark_sd = NULL;
 static mix_context **mark_movers = NULL;
 
@@ -1273,11 +1280,12 @@ mark *hit_mark(chan_info *cp, int x, int y, int key_state)
   return(mp);
 }
 
-static void make_mark_graph(chan_info *cp, snd_info *sp, int initial_sample, int current_sample, int which);
+static void make_mark_graph(chan_info *cp, snd_info *sp, off_t initial_sample, off_t current_sample, int which);
 
 static int move_syncd_mark(chan_info *cp, mark *m, int x)
 {
-  int old_samp, diff, i, samps, redraw;
+  off_t old_samp, diff, samps;
+  int i, redraw;
   mark *mp;
   axis_info *ap;
   chan_info *ncp;
@@ -1338,10 +1346,11 @@ void move_mark(chan_info *cp, mark *mp, int x) /* from mouse drag callback in sn
   if (redraw) draw_mark(cp, cp->axis, mp);
 }
 
-static void edit_dragged_mark(chan_info *cp, mark *m, int initial_sample)
+static void edit_dragged_mark(chan_info *cp, mark *m, off_t initial_sample)
 {
   /* edit -- initial_sample is where we were when the drag started, ended at m->samp */
-  int num, mark_final_sample, id;
+  off_t num, mark_final_sample;
+  int id;
   mark *new_m;
   mark_final_sample = m->samp;
   num = mark_final_sample - initial_sample;
@@ -1421,24 +1430,25 @@ void play_syncd_mark(chan_info *cp, mark *m)
   if (sd) free_syncdata(sd);
 }
 
-static void make_mark_graph(chan_info *cp, snd_info *sp, int initial_sample, int current_sample, int which)
+static void make_mark_graph(chan_info *cp, snd_info *sp, off_t initial_sample, off_t current_sample, int which)
 {
-  int i, j = 0, samps, k;
+  int i, j = 0, k;
+  off_t samps;
   Locus xi;
   axis_info *ap;
   double samples_per_pixel, xf, samp, x, incr;  
-  MUS_SAMPLE_TYPE ymin, ymax, msamp;
+  mus_sample_t ymin, ymax, msamp;
   int pixels;
   snd_fd *sf = NULL;
   int x_start, x_end;
   double start_time = 0.0, cur_srate = 1.0;
   ap = cp->axis;
   cur_srate = (double)SND_SRATE(sp);
-  ap->losamp = (int)(ap->x0 * cur_srate);
+  ap->losamp = (off_t)(ap->x0 * cur_srate);
   if (ap->losamp < 0) ap->losamp = 0;
   if (ap->x0 != (ap->losamp / cur_srate)) ap->losamp++;
   start_time = (double)(ap->losamp) / cur_srate;
-  ap->hisamp = (int)(ap->x1 * cur_srate);
+  ap->hisamp = (off_t)(ap->x1 * cur_srate);
   if ((ap->losamp == 0) && (ap->hisamp == 0)) return;
   x_start = ap->x_axis_x0;
   x_end = ap->x_axis_x1;
@@ -1672,7 +1682,7 @@ static XEN g_restore_marks(XEN size, XEN snd, XEN chn, XEN marklist)
 			  if (XEN_LIST_LENGTH(el) > 3)
 			    sync = XEN_TO_C_INT(XEN_CADDDR(el));
 			  else sync = 0;
-			  cp->marks[i][j] = make_mark_1(XEN_TO_C_INT(sm), str, id, sync);
+			  cp->marks[i][j] = make_mark_1(XEN_TO_C_OFF_T(sm), str, id, sync);
 			  if (id > mark_id_counter) mark_id_counter = id;
 			}
 		    }
@@ -1703,7 +1713,7 @@ static XEN mark_get(XEN n, int fld, XEN pos_n, char *caller)
   switch (fld)
     {
     case MARK_SAMPLE: 
-      return(C_TO_XEN_INT(m->samp)); 
+      return(C_TO_XEN_OFF_T(m->samp)); 
       break;
     case MARK_SYNC:   
       return(C_TO_XEN_INT(mark_sync(m))); 
@@ -1732,8 +1742,8 @@ static XEN mark_set(XEN mark_n, XEN val, int fld, char *caller)
   switch (fld)
     {
     case MARK_SAMPLE: 
-      m->samp = mus_iclamp(0, 
-			   XEN_TO_C_INT_OR_ELSE_WITH_CALLER(val, 0, caller),
+      m->samp = mus_oclamp(0, 
+			   XEN_TO_C_OFF_T_OR_ELSE(val, 0),
 			   current_ed_samples(cp[0]));
       sort_marks(cp[0]); /* update and re-sort current mark list */
       run_mark_hook(cp[0], mark_id(m), MARK_MOVE);
@@ -1771,7 +1781,7 @@ static XEN g_mark_sample(XEN mark_n, XEN pos_n)
 static XEN g_set_mark_sample(XEN mark_n, XEN samp_n) 
 {
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(mark_n), mark_n, XEN_ARG_1, "set-" S_mark_sample, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_2, "set-" S_mark_sample, "an integer");
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_2, "set-" S_mark_sample, "an integer");
   return(mark_set(mark_n, samp_n, MARK_SAMPLE, "set-" S_mark_sample));
 }
 
@@ -1822,7 +1832,8 @@ static XEN g_find_mark(XEN samp_n, XEN snd_n, XEN chn_n)
 finds the mark in snd's channel chn at samp (if a number) or with the given name (if a string), returning the mark id; returns #f if no mark found."
 
   mark **mps;
-  int i, samp = 0;
+  int i;
+  off_t samp = 0;
   char *name = NULL;
   chan_info *cp = NULL;
   XEN_ASSERT_TYPE((XEN_NUMBER_P(samp_n) || XEN_STRING_P(samp_n) || (XEN_NOT_BOUND_P(samp_n)) || (XEN_FALSE_P(samp_n))), 
@@ -1836,7 +1847,7 @@ finds the mark in snd's channel chn at samp (if a number) or with the given name
     {
       if (XEN_STRING_P(samp_n))
 	name = XEN_TO_C_STRING(samp_n);
-      else samp = XEN_TO_C_INT_OR_ELSE(samp_n, 0);
+      else samp = XEN_TO_C_OFF_T_OR_ELSE(samp_n, 0);
       if (name)
 	{
 	  for (i = 0; i <= cp->mark_ctr[cp->edit_ctr]; i++) 
@@ -1861,11 +1872,11 @@ static XEN g_add_mark(XEN samp_n, XEN snd_n, XEN chn_n)
   #define H_add_mark "(" S_add_mark ") samp &optional snd chn) adds a mark at sample samp returning the mark id."
   mark *m = NULL;
   chan_info *cp;
-  int loc;
+  off_t loc;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_add_mark, "an integer");
   ASSERT_CHANNEL(S_add_mark, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_add_mark);
-  loc = XEN_TO_C_INT_OR_ELSE(samp_n, 0);
+  loc = XEN_TO_C_OFF_T_OR_ELSE(samp_n, 0);
   if ((loc >= 0) && (loc < current_ed_samples(cp)))
     {
       m = add_mark(loc, NULL, cp);

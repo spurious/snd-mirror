@@ -176,6 +176,9 @@ char *version_info(void)
 #if SND_AS_WIDGET
 	  "\n    (compiled as a widget)",
 #endif
+#if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
+	  "\n    with large file support",
+#endif
 #ifdef __DATE__
 	  "\n    Compiled ", __DATE__, " ", __TIME__,
 #endif
@@ -204,6 +207,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+6-May:   support for files larger than 2^31 bytes.\n\
 1-May:   maraca.scm, piano.scm.\n\
 30-Apr:  vct-map\n\
 29-Apr:  snd5.scm, singer.scm, fade.scm.\n\
@@ -212,9 +216,6 @@ void news_help(snd_state *ss)
 9-Apr:   ramp-channel.\n\
 8-Apr:   virtualized envelopes.\n\
 4-Apr:   improvements in contrib/dlp, thanks to Dave Phillips.\n\
-3-Apr:   read-sample, read-mix-sample, read-track-sample, selection-maxamp.\n\
-1-Apr:   insert-samples and set-samples no longer delete file passed as 'data'.\n\
-29-Mar:  Mac-OSX with Motif (thanks to Charles Nichols).\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

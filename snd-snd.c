@@ -47,10 +47,10 @@ static void check_env(chan_info *cp, env_info *new_ep);
 
 typedef struct {
   int slice; 
-  int samples;  
+  off_t samples, m;  
   env_info *ep; 
   snd_fd *sf;
-  int m, amp_buffer_size;
+  int amp_buffer_size;
 } env_state;
 
 #define MULTIPLIER 100
@@ -104,9 +104,10 @@ void free_env_state(chan_info *cp)
     }
 }
 
-static env_state *make_env_state(chan_info *cp, int samples)
+static env_state *make_env_state(chan_info *cp, off_t samples)
 {
-  int val, pos, i, j, start, start_bin, end, end_bin, old_end_bin, old_samples, happy = 0;
+  int val, pos, i, j, start_bin, end_bin, old_end_bin, happy = 0;
+  off_t start, end, old_samples;
   env_info *ep, *old_ep = NULL;
   env_state *es;
   if (samples <= 0) return(NULL);
@@ -149,8 +150,8 @@ static env_state *make_env_state(chan_info *cp, int samples)
 		      old_ep = cp->amp_envs[cp->edit_ctr - 1];
 		      ep->samps_per_bin = old_ep->samps_per_bin;
 		      ep->amp_env_size = (int)(ceil((Float)(es->samples) / (Float)(ep->samps_per_bin)));
-		      ep->data_max = (MUS_SAMPLE_TYPE *)CALLOC(ep->amp_env_size, sizeof(MUS_SAMPLE_TYPE));
-		      ep->data_min = (MUS_SAMPLE_TYPE *)CALLOC(ep->amp_env_size, sizeof(MUS_SAMPLE_TYPE));
+		      ep->data_max = (mus_sample_t *)CALLOC(ep->amp_env_size, sizeof(mus_sample_t));
+		      ep->data_min = (mus_sample_t *)CALLOC(ep->amp_env_size, sizeof(mus_sample_t));
 		      start_bin = (int)(start / ep->samps_per_bin);
 		      ep->fmin = MUS_SAMPLE_0;
 		      ep->fmax = MUS_SAMPLE_0;
@@ -187,10 +188,11 @@ static env_state *make_env_state(chan_info *cp, int samples)
 	  /* we want samps_per_bin to be useful over a wide range of file sizes */
 	  /* 160e6 = about a hour at 44KHz */
 	  val = (int)(log((double)(es->samples)));
+	  if (val > 20) val = 20;
 	  ep->amp_env_size = snd_ipow2(val);
 	  ep->samps_per_bin = (int)(ceil((Float)(es->samples) / (Float)(ep->amp_env_size)));
-	  ep->data_max = (MUS_SAMPLE_TYPE *)CALLOC(ep->amp_env_size, sizeof(MUS_SAMPLE_TYPE));
-	  ep->data_min = (MUS_SAMPLE_TYPE *)CALLOC(ep->amp_env_size, sizeof(MUS_SAMPLE_TYPE));
+	  ep->data_max = (mus_sample_t *)CALLOC(ep->amp_env_size, sizeof(mus_sample_t));
+	  ep->data_min = (mus_sample_t *)CALLOC(ep->amp_env_size, sizeof(mus_sample_t));
 	  ep->bin = 0;
 	  ep->top_bin = 0;
 	  ep->fmin = MUS_SAMPLE_0;
@@ -220,7 +222,7 @@ static int tick_amp_env(chan_info *cp, env_state *es)
 {
   env_info *ep;
   int i, n, sb, lm;
-  MUS_SAMPLE_TYPE ymin, ymax, val;
+  mus_sample_t ymin, ymax, val;
   snd_fd *sfd;
   ep = es->ep;
   if (es->slice == 0)
@@ -277,14 +279,14 @@ static int tick_amp_env(chan_info *cp, env_state *es)
 
 	  int fd, subsamp, bin_size, nc, m;
 	  snd_info *sp;
-	  MUS_SAMPLE_TYPE **bufs;
+	  mus_sample_t **bufs;
 	  sp = cp->sound;
 	  subsamp = ep->samps_per_bin / AMP_ENV_SUBSAMPLE;
 	  bin_size = ep->samps_per_bin / subsamp;
 	  nc = cp->chan;
-	  bufs = (MUS_SAMPLE_TYPE **)CALLOC(sp->nchans * subsamp, sizeof(MUS_SAMPLE_TYPE *));
+	  bufs = (mus_sample_t **)CALLOC(sp->nchans * subsamp, sizeof(mus_sample_t *));
 	  /* we're claiming the file has sp->nchans * subsamp channels to get mus_file_read to subsample by subsamp */
-	  bufs[nc] = (MUS_SAMPLE_TYPE *)CALLOC(lm * (bin_size + 2), sizeof(MUS_SAMPLE_TYPE));
+	  bufs[nc] = (mus_sample_t *)CALLOC(lm * (bin_size + 2), sizeof(mus_sample_t));
 	  /* and we only read the current channel (bufs[nc]).
 	   * (bin_size+1) should be ok (it can't be bin_size due to annoying round-off problems that
 	   *   accumulate over 100 bins, and I'm paranoid)
@@ -302,7 +304,7 @@ static int tick_amp_env(chan_info *cp, env_state *es)
 			    sp->nchans * subsamp,
 			    lm * (bin_size + 2),
 			    bufs,
-			    (MUS_SAMPLE_TYPE *)bufs);
+			    (mus_sample_t *)bufs);
 
 	  for (m = 0, n = 0; n < lm; n++, sb++)
 	    {
@@ -389,7 +391,7 @@ int amp_env_maxamp_ok(chan_info *cp, int edpos)
 Float amp_env_maxamp(chan_info *cp, int edpos)
 {
   env_info *ep;
-  MUS_SAMPLE_TYPE ymax = MUS_SAMPLE_0;
+  mus_sample_t ymax = MUS_SAMPLE_0;
   ep = cp->amp_envs[edpos];
   ymax = -ep->fmin;
   if (ymax < ep->fmax) 
@@ -397,7 +399,7 @@ Float amp_env_maxamp(chan_info *cp, int edpos)
   return(MUS_SAMPLE_TO_FLOAT(ymax));
 }
 
-int amp_env_usable(chan_info *cp, Float samples_per_pixel, int hisamp, int start_new, int edit_pos) 
+int amp_env_usable(chan_info *cp, Float samples_per_pixel, off_t hisamp, int start_new, int edit_pos) 
 {
   env_info *ep;
   int bin;
@@ -409,10 +411,10 @@ int amp_env_usable(chan_info *cp, Float samples_per_pixel, int hisamp, int start
   ep = cp->amp_envs[edit_pos];
   if (ep)
     {
-      bin = (int)hisamp / ep->samps_per_bin; 
-      if ((ep) && ((ep->completed) || 
-		   (bin < ep->bin) || 
-		   ((ep->top_bin != 0) && (bin > ep->top_bin))))
+      bin = (int)(hisamp / ep->samps_per_bin); 
+      if ((ep->completed) || 
+	  (bin < ep->bin) || 
+	  ((ep->top_bin != 0) && (bin > ep->top_bin)))
 	return(samples_per_pixel >= (Float)(ep->samps_per_bin));
     }
   if ((start_new) &&
@@ -431,9 +433,11 @@ static short local_grf_y(Float val, axis_info *ap)
 
 int amp_env_graph(chan_info *cp, axis_info *ap, Float samples_per_pixel, int srate) 
 {
-  Float step, x, xf, xk, pinc = 0.0;
-  MUS_SAMPLE_TYPE ymin, ymax;
-  int i, j, xi, k, kk;
+  Float step, x, xf, pinc = 0.0;
+  double xk;
+  mus_sample_t ymin, ymax;
+  int j, xi, k, kk;
+  off_t i;
   env_info *ep;
   ep = cp->amp_envs[cp->edit_ctr];
   step = samples_per_pixel / (Float)(ep->samps_per_bin);
@@ -442,7 +446,7 @@ int amp_env_graph(chan_info *cp, axis_info *ap, Float samples_per_pixel, int sra
   x = ap->x0;
   xi = grf_x(x, ap);
   i = ap->losamp;
-  xk = i;
+  xk = (double)i;
   if (cp->printing) pinc = (Float)samples_per_pixel / (Float)srate;
   ymin = ep->fmax;
   ymax = ep->fmin;
@@ -459,7 +463,7 @@ int amp_env_graph(chan_info *cp, axis_info *ap, Float samples_per_pixel, int sra
 	  if (ep->data_max[k] > ymax) ymax = ep->data_max[k];
 	}
       xk += samples_per_pixel;
-      i = (int)xk;
+      i = (off_t)xk;
       set_grf_points(xi, j,
 		     local_grf_y(MUS_SAMPLE_TO_FLOAT(ymin), ap),
 		     local_grf_y(MUS_SAMPLE_TO_FLOAT(ymax), ap));
@@ -492,29 +496,29 @@ void amp_env_scale_by(chan_info *cp, Float scl, int pos)
       if (new_ep == NULL)
 	{
 	  new_ep = (env_info *)CALLOC(1, sizeof(env_info));
-	  new_ep->data_max = (MUS_SAMPLE_TYPE *)MALLOC(old_ep->amp_env_size * sizeof(MUS_SAMPLE_TYPE));
-	  new_ep->data_min = (MUS_SAMPLE_TYPE *)MALLOC(old_ep->amp_env_size * sizeof(MUS_SAMPLE_TYPE));
+	  new_ep->data_max = (mus_sample_t *)MALLOC(old_ep->amp_env_size * sizeof(mus_sample_t));
+	  new_ep->data_min = (mus_sample_t *)MALLOC(old_ep->amp_env_size * sizeof(mus_sample_t));
 	}
       new_ep->amp_env_size = old_ep->amp_env_size;
       new_ep->samps_per_bin = old_ep->samps_per_bin;
       if (scl >= 0.0)
 	{
-	  new_ep->fmin = (MUS_SAMPLE_TYPE)(old_ep->fmin * scl);
-	  new_ep->fmax = (MUS_SAMPLE_TYPE)(old_ep->fmax * scl);
+	  new_ep->fmin = (mus_sample_t)(old_ep->fmin * scl);
+	  new_ep->fmax = (mus_sample_t)(old_ep->fmax * scl);
 	  for (i = 0; i < new_ep->amp_env_size; i++) 
 	    {
-	      new_ep->data_min[i] = (MUS_SAMPLE_TYPE)(old_ep->data_min[i] * scl);
-	      new_ep->data_max[i] = (MUS_SAMPLE_TYPE)(old_ep->data_max[i] * scl);
+	      new_ep->data_min[i] = (mus_sample_t)(old_ep->data_min[i] * scl);
+	      new_ep->data_max[i] = (mus_sample_t)(old_ep->data_max[i] * scl);
 	    }
 	}
       else
 	{
-	  new_ep->fmax = (MUS_SAMPLE_TYPE)(old_ep->fmin * scl);
-	  new_ep->fmin = (MUS_SAMPLE_TYPE)(old_ep->fmax * scl);
+	  new_ep->fmax = (mus_sample_t)(old_ep->fmin * scl);
+	  new_ep->fmin = (mus_sample_t)(old_ep->fmax * scl);
 	  for (i = 0; i < new_ep->amp_env_size; i++) 
 	    {
-	      new_ep->data_max[i] = (MUS_SAMPLE_TYPE)(old_ep->data_min[i] * scl);
-	      new_ep->data_min[i] = (MUS_SAMPLE_TYPE)(old_ep->data_max[i] * scl);
+	      new_ep->data_max[i] = (mus_sample_t)(old_ep->data_min[i] * scl);
+	      new_ep->data_min[i] = (mus_sample_t)(old_ep->data_max[i] * scl);
 	    }
 	}
       new_ep->completed = 1;
@@ -524,11 +528,11 @@ void amp_env_scale_by(chan_info *cp, Float scl, int pos)
     }
 }
 
-void pick_one_bin(env_info *ep, int bin, int cursamp, chan_info *cp, int edpos)
+void pick_one_bin(env_info *ep, int bin, off_t cursamp, chan_info *cp, int edpos)
 {
   snd_fd *sf;
   int n;
-  MUS_SAMPLE_TYPE val, ymin = MUS_SAMPLE_0, ymax = MUS_SAMPLE_0;
+  mus_sample_t val, ymin = MUS_SAMPLE_0, ymax = MUS_SAMPLE_0;
   /* here we have to read the current bin using the current fragments */
   sf = init_sample_read_any(cursamp, cp, READ_FORWARD, edpos);
   if (sf == NULL) return;
@@ -542,11 +546,12 @@ void pick_one_bin(env_info *ep, int bin, int cursamp, chan_info *cp, int edpos)
   free_snd_fd(sf);
 }
 
-void amp_env_scale_selection_by(chan_info *cp, Float scl, int beg, int num, int pos)
+void amp_env_scale_selection_by(chan_info *cp, Float scl, off_t beg, off_t num, int pos)
 {
   env_info *old_ep, *new_ep;
-  MUS_SAMPLE_TYPE fmax = MUS_SAMPLE_0, fmin = MUS_SAMPLE_0;
-  int i, cursamp, start, end;
+  mus_sample_t fmax = MUS_SAMPLE_0, fmin = MUS_SAMPLE_0;
+  off_t cursamp, start, end;
+  int i;
   old_ep = cp->amp_envs[pos];
   if ((old_ep) && (old_ep->completed))
     {
@@ -557,8 +562,8 @@ void amp_env_scale_selection_by(chan_info *cp, Float scl, int beg, int num, int 
       if (new_ep == NULL)
 	{
 	  new_ep = (env_info *)CALLOC(1, sizeof(env_info));
-	  new_ep->data_max = (MUS_SAMPLE_TYPE *)MALLOC(old_ep->amp_env_size * sizeof(MUS_SAMPLE_TYPE));
-	  new_ep->data_min = (MUS_SAMPLE_TYPE *)MALLOC(old_ep->amp_env_size * sizeof(MUS_SAMPLE_TYPE));
+	  new_ep->data_max = (mus_sample_t *)MALLOC(old_ep->amp_env_size * sizeof(mus_sample_t));
+	  new_ep->data_min = (mus_sample_t *)MALLOC(old_ep->amp_env_size * sizeof(mus_sample_t));
 	}
       new_ep->amp_env_size = old_ep->amp_env_size;
       new_ep->samps_per_bin = old_ep->samps_per_bin;
@@ -578,13 +583,13 @@ void amp_env_scale_selection_by(chan_info *cp, Float scl, int beg, int num, int 
 		{
 		  if (scl >= 0.0)
 		    {
-		      new_ep->data_max[i] = (MUS_SAMPLE_TYPE)(old_ep->data_max[i] * scl);
-		      new_ep->data_min[i] = (MUS_SAMPLE_TYPE)(old_ep->data_min[i] * scl);
+		      new_ep->data_max[i] = (mus_sample_t)(old_ep->data_max[i] * scl);
+		      new_ep->data_min[i] = (mus_sample_t)(old_ep->data_min[i] * scl);
 		    }
 		  else
 		    {
-		      new_ep->data_max[i] = (MUS_SAMPLE_TYPE)(old_ep->data_min[i] * scl);
-		      new_ep->data_min[i] = (MUS_SAMPLE_TYPE)(old_ep->data_max[i] * scl);
+		      new_ep->data_max[i] = (mus_sample_t)(old_ep->data_min[i] * scl);
+		      new_ep->data_min[i] = (mus_sample_t)(old_ep->data_max[i] * scl);
 		    }
 		}
 	      else pick_one_bin(new_ep, i, cursamp, cp, cp->edit_ctr);
@@ -601,17 +606,18 @@ void amp_env_scale_selection_by(chan_info *cp, Float scl, int beg, int num, int 
     }
 }
 
-env_info *amp_env_section(chan_info *cp, int beg, int num, int edpos)
+env_info *amp_env_section(chan_info *cp, off_t beg, off_t num, int edpos)
 {
   /* used in snd-region.c to create the region amp env */
   env_info *old_ep, *new_ep = NULL;
-  MUS_SAMPLE_TYPE fmax = MUS_SAMPLE_0, fmin = MUS_SAMPLE_0;
-  int i, j, cursamp, start, end;
+  mus_sample_t fmax = MUS_SAMPLE_0, fmin = MUS_SAMPLE_0;
+  int i, j;
+  off_t cursamp, start, end;
   old_ep = cp->amp_envs[edpos];
   if (old_ep == NULL) return(NULL);
   new_ep = (env_info *)CALLOC(1, sizeof(env_info));
-  new_ep->data_max = (MUS_SAMPLE_TYPE *)MALLOC(old_ep->amp_env_size * sizeof(MUS_SAMPLE_TYPE));
-  new_ep->data_min = (MUS_SAMPLE_TYPE *)MALLOC(old_ep->amp_env_size * sizeof(MUS_SAMPLE_TYPE));
+  new_ep->data_max = (mus_sample_t *)MALLOC(old_ep->amp_env_size * sizeof(mus_sample_t));
+  new_ep->data_min = (mus_sample_t *)MALLOC(old_ep->amp_env_size * sizeof(mus_sample_t));
   new_ep->amp_env_size = old_ep->amp_env_size;
   new_ep->samps_per_bin = old_ep->samps_per_bin;
   end = beg + num - 1;
@@ -648,8 +654,8 @@ env_info *amp_env_copy(chan_info *cp, int reversed, int edpos)
   if ((old_ep) && (old_ep->completed))
     {
       new_ep = (env_info *)CALLOC(1, sizeof(env_info));
-      new_ep->data_max = (MUS_SAMPLE_TYPE *)MALLOC(old_ep->amp_env_size * sizeof(MUS_SAMPLE_TYPE));
-      new_ep->data_min = (MUS_SAMPLE_TYPE *)MALLOC(old_ep->amp_env_size * sizeof(MUS_SAMPLE_TYPE));
+      new_ep->data_max = (mus_sample_t *)MALLOC(old_ep->amp_env_size * sizeof(mus_sample_t));
+      new_ep->data_min = (mus_sample_t *)MALLOC(old_ep->amp_env_size * sizeof(mus_sample_t));
       new_ep->amp_env_size = old_ep->amp_env_size;
       new_ep->samps_per_bin = old_ep->samps_per_bin;
       new_ep->fmin = old_ep->fmin;
@@ -684,7 +690,7 @@ void amp_env_env(chan_info *cp, Float *brkpts, int npts, int pos)
   int i;
   mus_any *e;
   Float val;
-  MUS_SAMPLE_TYPE fmin, fmax;
+  mus_sample_t fmin, fmax;
   old_ep = cp->amp_envs[pos];
   if ((old_ep) && (old_ep->completed))
     {
@@ -695,8 +701,8 @@ void amp_env_env(chan_info *cp, Float *brkpts, int npts, int pos)
       if (new_ep == NULL)
 	{
 	  new_ep = (env_info *)CALLOC(1, sizeof(env_info));
-	  new_ep->data_max = (MUS_SAMPLE_TYPE *)MALLOC(old_ep->amp_env_size * sizeof(MUS_SAMPLE_TYPE));
-	  new_ep->data_min = (MUS_SAMPLE_TYPE *)MALLOC(old_ep->amp_env_size * sizeof(MUS_SAMPLE_TYPE));
+	  new_ep->data_max = (mus_sample_t *)MALLOC(old_ep->amp_env_size * sizeof(mus_sample_t));
+	  new_ep->data_min = (mus_sample_t *)MALLOC(old_ep->amp_env_size * sizeof(mus_sample_t));
 	}
       new_ep->amp_env_size = old_ep->amp_env_size;
       new_ep->samps_per_bin = old_ep->samps_per_bin;
@@ -708,13 +714,13 @@ void amp_env_env(chan_info *cp, Float *brkpts, int npts, int pos)
 	  val = mus_env(e);
 	  if (val >= 0.0)
 	    {
-	      new_ep->data_min[i] = (MUS_SAMPLE_TYPE)(old_ep->data_min[i] * val);
-	      new_ep->data_max[i] = (MUS_SAMPLE_TYPE)(old_ep->data_max[i] * val);
+	      new_ep->data_min[i] = (mus_sample_t)(old_ep->data_min[i] * val);
+	      new_ep->data_max[i] = (mus_sample_t)(old_ep->data_max[i] * val);
 	    }
 	  else
 	    {
-	      new_ep->data_min[i] = (MUS_SAMPLE_TYPE)(old_ep->data_max[i] * val);
-	      new_ep->data_max[i] = (MUS_SAMPLE_TYPE)(old_ep->data_min[i] * val);
+	      new_ep->data_min[i] = (mus_sample_t)(old_ep->data_max[i] * val);
+	      new_ep->data_max[i] = (mus_sample_t)(old_ep->data_min[i] * val);
 	    }
 	  if (new_ep->data_min[i] < fmin) fmin = new_ep->data_min[i];
 	  if (new_ep->data_max[i] > fmax) fmax = new_ep->data_max[i];
@@ -729,13 +735,14 @@ void amp_env_env(chan_info *cp, Float *brkpts, int npts, int pos)
     }
 }
 
-void amp_env_env_selection_by(chan_info *cp, mus_any *e, int beg, int num, int pos)
+void amp_env_env_selection_by(chan_info *cp, mus_any *e, off_t beg, off_t num, int pos)
 {
   env_info *old_ep, *new_ep = NULL;
   Float val, xmax = 1.0;
   Float *data;
-  MUS_SAMPLE_TYPE fmax = MUS_SAMPLE_0, fmin = MUS_SAMPLE_0;
-  int i, cursamp, start, end;
+  mus_sample_t fmax = MUS_SAMPLE_0, fmin = MUS_SAMPLE_0;
+  int i;
+  off_t cursamp, start, end;
   old_ep = cp->amp_envs[pos];
   if ((old_ep) && (old_ep->completed))
     {
@@ -746,8 +753,8 @@ void amp_env_env_selection_by(chan_info *cp, mus_any *e, int beg, int num, int p
       if (new_ep == NULL)
 	{
 	  new_ep = (env_info *)CALLOC(1, sizeof(env_info));
-	  new_ep->data_max = (MUS_SAMPLE_TYPE *)MALLOC(old_ep->amp_env_size * sizeof(MUS_SAMPLE_TYPE));
-	  new_ep->data_min = (MUS_SAMPLE_TYPE *)MALLOC(old_ep->amp_env_size * sizeof(MUS_SAMPLE_TYPE));
+	  new_ep->data_max = (mus_sample_t *)MALLOC(old_ep->amp_env_size * sizeof(mus_sample_t));
+	  new_ep->data_min = (mus_sample_t *)MALLOC(old_ep->amp_env_size * sizeof(mus_sample_t));
 	}
       new_ep->amp_env_size = old_ep->amp_env_size;
       new_ep->samps_per_bin = old_ep->samps_per_bin;
@@ -770,13 +777,13 @@ void amp_env_env_selection_by(chan_info *cp, mus_any *e, int beg, int num, int p
 		  val = mus_env_interp((Float)(cursamp - beg) * xmax / (Float)num, e);
 		  if (val >= 0.0)
 		    {
-		      new_ep->data_max[i] = (MUS_SAMPLE_TYPE)(old_ep->data_max[i] * val);
-		      new_ep->data_min[i] = (MUS_SAMPLE_TYPE)(old_ep->data_min[i] * val);
+		      new_ep->data_max[i] = (mus_sample_t)(old_ep->data_max[i] * val);
+		      new_ep->data_min[i] = (mus_sample_t)(old_ep->data_min[i] * val);
 		    }
 		  else
 		    {
-		      new_ep->data_max[i] = (MUS_SAMPLE_TYPE)(old_ep->data_min[i] * val);
-		      new_ep->data_min[i] = (MUS_SAMPLE_TYPE)(old_ep->data_max[i] * val);
+		      new_ep->data_max[i] = (mus_sample_t)(old_ep->data_min[i] * val);
+		      new_ep->data_min[i] = (mus_sample_t)(old_ep->data_max[i] * val);
 		    }
 
 		}
@@ -798,8 +805,9 @@ void amp_env_env_selection_by(chan_info *cp, mus_any *e, int beg, int num, int p
 static void check_env(chan_info *cp, env_info *new_ep)
 {
   snd_fd *sf;
-  int bin, j, samps, loc = -1, i;
-  MUS_SAMPLE_TYPE samp, maxdiff = 0, diff, fmin, fmax;
+  int bin, j, loc = -1;
+  off_t i, samps;
+  mus_sample_t samp, maxdiff = 0, diff, fmin, fmax;
   samps = cp->samples[cp->edit_ctr];
   sf = init_sample_read(0, cp, READ_FORWARD);
   bin = 0;
@@ -1274,7 +1282,8 @@ static int max_sync(snd_info *sp, void *val)
   return(0);
 }
 
-static int apply_dur = 0, apply_tick = 0, apply_reporting = 0, orig_dur, apply_beg = 0;
+static int apply_tick = 0, apply_reporting = 0;
+static off_t apply_dur = 0, orig_dur, apply_beg = 0;
 
 void *make_apply_state_with_implied_beg_and_dur(void *xp)
 {
@@ -1730,7 +1739,7 @@ static XEN sound_get(XEN snd_n, int fld, char *caller)
     case SP_SRATE:               return(C_TO_XEN_INT((sp->hdr)->srate));               break;
     case SP_DATA_FORMAT:         return(C_TO_XEN_INT((sp->hdr)->format));              break;
     case SP_HEADER_TYPE:         return(C_TO_XEN_INT((sp->hdr)->type));                break;
-    case SP_DATA_LOCATION:       return(C_TO_XEN_INT((sp->hdr)->data_location));       break;
+    case SP_DATA_LOCATION:       return(C_TO_XEN_OFF_T((sp->hdr)->data_location));     break;
     case SP_SAVE_CONTROLS:       save_controls(sp);                                    break;
     case SP_RESTORE_CONTROLS:    restore_controls(sp);                                 break;
     case SP_RESET_CONTROLS:      reset_controls(sp);                                   break;
@@ -1882,7 +1891,7 @@ static XEN sound_set(XEN snd_n, XEN val, int fld, char *caller)
       else mus_misc_error("set-" S_header_type, "unknown header type", val);
       break;
     case SP_DATA_LOCATION:  
-      mus_sound_set_data_location(sp->filename, XEN_TO_C_INT(val));
+      mus_sound_set_data_location(sp->filename, XEN_TO_C_OFF_T(val));
       snd_update(ss, sp); 
       break;
     case SP_COMMENT:      
@@ -2988,7 +2997,7 @@ static XEN g_peak_env_info(XEN snd, XEN chn, XEN pos)
 
 static int pack_mus_sample_type(void)
 {
-  /* put MUS_SAMPLE_TYPE decription in peak-env info file (in case user opens it on from incompatible machine) */
+  /* put mus_sample_t decription in peak-env info file (in case user opens it on from incompatible machine) */
   int val = MUS_SAMPLE_BITS;
 #if MUS_LITTLE_ENDIAN
   val |= (1 << 8);
@@ -2996,7 +3005,7 @@ static int pack_mus_sample_type(void)
 #if SNDLIB_USE_FLOATS
   val |= (1 << 9);
 #endif
-  val |= (sizeof(MUS_SAMPLE_TYPE) << 10);
+  val |= (sizeof(mus_sample_t) << 10);
   return(val);
 }
 
@@ -3015,7 +3024,7 @@ static XEN g_write_peak_env_info_file(XEN snd, XEN chn, XEN name)
   int fd;
   XEN errstr;
   int ibuf[5];
-  MUS_SAMPLE_TYPE mbuf[2];
+  mus_sample_t mbuf[2];
   ASSERT_CHANNEL(S_write_peak_env_info_file, snd, chn, 1);
   cp = get_cp(snd, chn, S_write_peak_env_info_file);
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_2, S_write_peak_env_info_file, "a string");
@@ -3042,9 +3051,9 @@ static XEN g_write_peak_env_info_file(XEN snd, XEN chn, XEN name)
       mbuf[0] = ep->fmin;
       mbuf[1] = ep->fmax;
       write(fd, (char *)ibuf, (5 * sizeof(int)));
-      write(fd, (char *)mbuf, (2 * sizeof(MUS_SAMPLE_TYPE)));
-      write(fd, (char *)(ep->data_min), (ep->amp_env_size * sizeof(MUS_SAMPLE_TYPE)));
-      write(fd, (char *)(ep->data_max), (ep->amp_env_size * sizeof(MUS_SAMPLE_TYPE)));
+      write(fd, (char *)mbuf, (2 * sizeof(mus_sample_t)));
+      write(fd, (char *)(ep->data_min), (ep->amp_env_size * sizeof(mus_sample_t)));
+      write(fd, (char *)(ep->data_max), (ep->amp_env_size * sizeof(mus_sample_t)));
       close(fd);
       return(name);
     }
@@ -3063,7 +3072,7 @@ static env_info *get_peak_env_info(char *fullname, int *error)
   env_info *ep;
   int fd, bytes, hdr = 0;
   int ibuf[5];
-  MUS_SAMPLE_TYPE mbuf[2];
+  mus_sample_t mbuf[2];
   fd = mus_file_open_read(fullname);
   if (fd == -1) 
     {
@@ -3103,13 +3112,13 @@ static env_info *get_peak_env_info(char *fullname, int *error)
   ep->samps_per_bin = ibuf[2];
   ep->bin = ibuf[3];
   ep->top_bin = ibuf[4];
-  read(fd, (char *)mbuf, (2 * sizeof(MUS_SAMPLE_TYPE)));
+  read(fd, (char *)mbuf, (2 * sizeof(mus_sample_t)));
   ep->fmin = mbuf[0];
   ep->fmax = mbuf[1];
-  ep->data_min = (MUS_SAMPLE_TYPE *)MALLOC(ep->amp_env_size * sizeof(MUS_SAMPLE_TYPE));
-  ep->data_max = (MUS_SAMPLE_TYPE *)MALLOC(ep->amp_env_size * sizeof(MUS_SAMPLE_TYPE));
-  read(fd, (char *)(ep->data_min), (ep->amp_env_size * sizeof(MUS_SAMPLE_TYPE)));
-  read(fd, (char *)(ep->data_max), (ep->amp_env_size * sizeof(MUS_SAMPLE_TYPE)));
+  ep->data_min = (mus_sample_t *)MALLOC(ep->amp_env_size * sizeof(mus_sample_t));
+  ep->data_max = (mus_sample_t *)MALLOC(ep->amp_env_size * sizeof(mus_sample_t));
+  read(fd, (char *)(ep->data_min), (ep->amp_env_size * sizeof(mus_sample_t)));
+  read(fd, (char *)(ep->data_max), (ep->amp_env_size * sizeof(mus_sample_t)));
   close(fd);
   return(ep);
 }
@@ -3138,7 +3147,7 @@ static XEN g_env_info_to_vectors(env_info *ep, int len)
   XEN *velts_max, *velts_min;
   int i, j, lim;
   Float incr, x;
-  MUS_SAMPLE_TYPE cmax, cmin;
+  mus_sample_t cmax, cmin;
   if (ep->amp_env_size < len) lim = ep->amp_env_size; else lim = len;
   res = XEN_LIST_2(XEN_MAKE_VECTOR(lim, XEN_ZERO),
 		   XEN_MAKE_VECTOR(lim, XEN_ZERO));

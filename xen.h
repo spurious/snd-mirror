@@ -159,6 +159,13 @@
 #define C_TO_XEN_ULONG(a)             scm_ulong2num((unsigned long)a)
 #define XEN_ULONG_P(Arg1)             (XEN_NOT_FALSE_P(scm_number_p(Arg1)))
 #define XEN_EXACT_P(Arg)              XEN_TRUE_P(scm_exact_p(Arg))
+#if HAVE_SCM_NUM2LONG_LONG
+  #define C_TO_XEN_LONG_LONG(a)       scm_long_long2num(a)
+  #define XEN_TO_C_LONG_LONG(a)       scm_num2long_long(a, 0, __FUNCTION__)
+#else
+  #define C_TO_XEN_LONG_LONG(a)       scm_long2num(a)
+  #define XEN_TO_C_LONG_LONG(a)       scm_num2long(a, 0, __FUNCTION__)
+#endif    
 
 #ifndef SCM_STRING_CHARS
   #define XEN_TO_C_STRING(STR)        SCM_CHARS(STR)
@@ -286,6 +293,7 @@
 #define XEN_BOOLEAN_P(Arg)            (SCM_BOOLP(Arg))
 #define XEN_NUMBER_P(Arg)             (XEN_NOT_FALSE_P(scm_real_p(Arg)))
 #define XEN_DOUBLE_P(Arg)             (XEN_NOT_FALSE_P(scm_real_p(Arg)))
+#define XEN_OFF_T_P(Arg)              (scm_integer_p(Arg))
 
 #define XEN_SYMBOL_P(Arg)             (SCM_SYMBOLP(Arg))
 #define XEN_PROCEDURE_P(Arg)          (XEN_NOT_FALSE_P(scm_procedure_p(Arg)))
@@ -524,6 +532,8 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #define XEN_TO_SMALL_C_INT(a)             FIX2INT(a)
 #define XEN_TO_C_ULONG(a)                 NUM2ULONG(a)
 #define C_TO_XEN_ULONG(a)                 UINT2NUM((unsigned long)a)
+#define C_TO_XEN_LONG_LONG(a)             C_TO_XEN_ULONG(a)
+#define XEN_TO_C_LONG_LONG(a)             XEN_TO_C_ULONG(a)
 
 #define C_TO_XEN_STRING(a)                rb_str_new2((a) ? a : "")
 #define XEN_TO_C_STRING(Str)              RSTRING(Str)->ptr
@@ -600,6 +610,7 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #define XEN_PROCEDURE_P(Arg)             (XEN_BOUND_P(Arg) && (rb_obj_is_kind_of(Arg, rb_cProc)))
 #define XEN_ULONG_P(Arg1)                XEN_INTEGER_P(Arg1)
 #define XEN_EXACT_P(Arg1)                XEN_INTEGER_P(Arg1)
+#define XEN_OFF_T_P(Arg)                 XEN_INTEGER_P(Arg)
 
 #define XEN_LIST_P(Arg)                  (TYPE(Arg) == T_ARRAY)
 #define XEN_LIST_P_WITH_LENGTH(Arg, Len) ((XEN_LIST_P(Arg)) ? (Len = RARRAY(Arg)->len) : 0)
@@ -877,6 +888,8 @@ XEN xen_rb_copy_list(XEN val); /* Ruby arrays (lists) are passed by reference */
 #define C_TO_XEN_INT(a) a
 #define C_TO_SMALL_XEN_INT(a) a
 #define XEN_TO_SMALL_C_INT(a) a
+#define C_TO_XEN_LONG_LONG(a) a
+#define XEN_TO_C_LONG_LONG(a) a
 #define C_TO_XEN_STRING(a) 0
 #define C_TO_XEN_BOOLEAN(a) 0
 #define C_STRING_TO_XEN_SYMBOL(a) 0
@@ -897,6 +910,7 @@ XEN xen_rb_copy_list(XEN val); /* Ruby arrays (lists) are passed by reference */
 #define XEN_BOOLEAN_P(Arg) 0
 #define XEN_NUMBER_P(Arg) 0
 #define XEN_INTEGER_P(Arg) 0
+#define XEN_OFF_T_P(Arg) 0
 #define XEN_SYMBOL_P(Arg) 0
 #define XEN_STRING_P(Arg) 0
 #define XEN_VECTOR_P(Arg) 0
@@ -988,9 +1002,15 @@ XEN xen_rb_copy_list(XEN val); /* Ruby arrays (lists) are passed by reference */
 #define XEN_INTEGER_OR_BOOLEAN_P(Arg)          ((XEN_BOOLEAN_P(Arg))   || (XEN_INTEGER_P(Arg)))
 #define XEN_ULONG_IF_BOUND_P(Arg)              ((XEN_NOT_BOUND_P(Arg)) || (XEN_ULONG_P(Arg)))
 
+#define XEN_TO_C_OFF_T_OR_ELSE(a, b)  xen_to_c_off_t_or_else(a, b, __FUNCTION__)
+#define C_TO_XEN_OFF_T(a)             c_to_xen_off_t(a)
+#define XEN_TO_C_OFF_T(a)             xen_to_c_off_t(a)
 
 XEN xen_return_first(XEN a, ...);
 int xen_to_c_int_or_else(XEN obj, int fallback, const char *origin);
+off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback, const char *origin);
+off_t xen_to_c_off_t(XEN obj);
+XEN c_to_xen_off_t(off_t val);
 char *xen_version(void);
 void xen_repl(int argc, char **argv);
 void xen_initialize(void);

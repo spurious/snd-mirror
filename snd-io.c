@@ -2,69 +2,61 @@
 
 /* file buffers (i.e. a sliding window on a given file's data) */
 
-#define SND_IO_FD 0
-#define SND_IO_CHANS 1
-#define SND_IO_FRAMES 2
-#define SND_IO_BEG 3
-#define SND_IO_END 4
-#define SND_IO_BUFSIZE 5
-#define SND_IO_SAMPLE_ARRAYS 6
-
-static void c_io_bufclr (int *io, int beg)
+static void c_io_bufclr (snd_io *io, int beg)
 {
   int k, end;
-  MUS_SAMPLE_TYPE *j;
-  end = io[SND_IO_BUFSIZE];
-  for (k = 0; k < io[SND_IO_CHANS]; k++)
+  mus_sample_t *j;
+  end = io->bufsize;
+  for (k = 0; k < io->chans; k++)
     {
-      j = MUS_SAMPLE_ARRAY(io[SND_IO_SAMPLE_ARRAYS + k]);
+      j = MUS_SAMPLE_ARRAY(io->arrays[k]);
       if (j)
-	memset((void *)(j + beg), 0, (end - beg) * sizeof(MUS_SAMPLE_TYPE));
+	memset((void *)(j + beg), 0, (end - beg) * sizeof(mus_sample_t));
     }
 }
 
-static void reposition_file_buffers_1(int loc, int *io)
+static void reposition_file_buffers_1(off_t loc, snd_io *io)
 {
   /* called when loc is outside the current in-core frame for the file pointed to by io */
-  int frames;
+  off_t frames;
 #if LONG_INT_P
   int i;
-  MUS_SAMPLE_TYPE **bufs;
+  mus_sample_t **bufs;
 #endif
-  frames = io[SND_IO_FRAMES] - loc;
-  if (frames > io[SND_IO_BUFSIZE]) frames = io[SND_IO_BUFSIZE];
+  frames = io->frames - loc;
+  if (frames > io->bufsize) frames = io->bufsize;
   if (frames <= 0)                   /* tried to access beyond current end of file */
     {
-      io[SND_IO_BEG] = loc; 
+      io->beg = loc; 
       c_io_bufclr(io, 0);
     }
   else
     {
-      mus_file_seek_frame(io[SND_IO_FD], loc);
-      io[SND_IO_BEG] = loc;
+      mus_file_seek_frame(io->fd, loc);
+      io->beg = loc;
 #if LONG_INT_P
-      bufs = (MUS_SAMPLE_TYPE **)MALLOC(io[SND_IO_CHANS] * sizeof(MUS_SAMPLE_TYPE *));
-      for (i = 0; i < io[SND_IO_CHANS]; i++) 
-	bufs[i] = MUS_SAMPLE_ARRAY(io[SND_IO_SAMPLE_ARRAYS + i]);
-      mus_file_read_chans(io[SND_IO_FD],
+      bufs = (mus_sample_t **)MALLOC(io->chans * sizeof(mus_sample_t *));
+      for (i = 0; i < io->chans; i++) 
+	bufs[i] = MUS_SAMPLE_ARRAY(io->arrays[i]);
+      mus_file_read_chans(io->fd,
 			  0, frames - 1,
-			  io[SND_IO_CHANS],
+			  io->chans,
 			  bufs,
-			  (MUS_SAMPLE_TYPE *)bufs);
+			  (mus_sample_t *)bufs);
       FREE(bufs);
 #else
-      mus_file_read_chans(io[SND_IO_FD],
+      mus_file_read_chans(io->fd,
 			  0, frames - 1,
-			  io[SND_IO_CHANS],
-			  (MUS_SAMPLE_TYPE **)(io + SND_IO_SAMPLE_ARRAYS),
-			  (MUS_SAMPLE_TYPE *)(io + SND_IO_SAMPLE_ARRAYS));
+			  io->chans,
+			  (mus_sample_t **)(io->arrays),
+			  (mus_sample_t *)(io->arrays));
 #endif
-      if (frames < io[SND_IO_BUFSIZE]) c_io_bufclr(io, frames);
+      if (frames < io->bufsize) c_io_bufclr(io, frames);
     }
-  io[SND_IO_END] = io[SND_IO_BEG] + io[SND_IO_BUFSIZE] - 1;
+  io->end = io->beg + io->bufsize - 1;
 }
 
-static void reposition_file_buffers(snd_data *sd, int index)
+static void reposition_file_buffers(snd_data *sd, off_t index)
 {
   int fd = 0;
   int reclose = 0;
@@ -90,8 +82,8 @@ static void reposition_file_buffers(snd_data *sd, int index)
 				hdr->chans,
 				hdr->type);
       during_open(fd, sd->filename, SND_REOPEN_CLOSED_FILE);
-      /* fix up io[SND_IO_FD] and whatever else is clobbered by mus_file_close */
-      sd->io[SND_IO_FD] = fd;
+      /* fix up io->fd and whatever else is clobbered by mus_file_close */
+      sd->io->fd = fd;
       sd->open = FD_OPEN;
       reclose = 1;
     }
@@ -100,113 +92,97 @@ static void reposition_file_buffers(snd_data *sd, int index)
     {
       mus_file_close(fd); 
       sd->open = FD_CLOSED; 
-      sd->io[SND_IO_FD] = -1;
+      sd->io->fd = -1;
     }
 }
 
-int *make_file_state(int fd, file_info *hdr, int chan, int suggested_bufsize)
+snd_io *make_file_state(int fd, file_info *hdr, int chan, int suggested_bufsize)
 {
-  int *io;
-  int bufsize, chansize;
+  snd_io *io;
+  int bufsize;
+  off_t chansize;
   bufsize = suggested_bufsize;
   chansize = (hdr->samples / hdr->chans); /* this can be bogus if the header is messed up */
   if ((chansize > 0) && 
       (bufsize > chansize)) 
     bufsize = chansize + 1;
-  io = (int *)CALLOC(SND_IO_SAMPLE_ARRAYS + hdr->chans, sizeof(int));
-  io[SND_IO_FD] = fd;
-  io[SND_IO_CHANS] = hdr->chans;
-  io[SND_IO_FRAMES] = chansize;
-  io[SND_IO_BEG] = 0;
-  io[SND_IO_END] = bufsize - 1;
-  io[SND_IO_BUFSIZE] = bufsize;
-  io[SND_IO_SAMPLE_ARRAYS + chan] = (int)(MUS_MAKE_SAMPLE_ARRAY(bufsize));
+  io = (snd_io *)CALLOC(1, sizeof(snd_io));
+  io->arrays = (mus_sample_t **)CALLOC(hdr->chans, sizeof(mus_sample_t *));
+  io->fd = fd;
+  io->chans = hdr->chans;
+  io->frames = chansize;
+  io->beg = 0;
+  io->end = bufsize - 1;
+  io->bufsize = bufsize;
+  io->arrays[chan] = MUS_MAKE_SAMPLE_ARRAY(bufsize);
   reposition_file_buffers_1(0, io); /* get ready to read -- we're assuming mus_file_read_chans here */
   return(io);
 }
 
 #define ZERO_BUFFER_SIZE 1024
-int *make_zero_file_state(int size)
+snd_io *make_zero_file_state(off_t size)
 {
-  int *io;
-  io = (int *)CALLOC(SND_IO_SAMPLE_ARRAYS + 1, sizeof(int));
-  io[SND_IO_FD] = -1;
-  io[SND_IO_CHANS] = 1;
-  io[SND_IO_FRAMES] = size;
-  io[SND_IO_BEG] = 0;
-  io[SND_IO_END] = ZERO_BUFFER_SIZE - 1;
-  io[SND_IO_BUFSIZE] = ZERO_BUFFER_SIZE;
-  io[SND_IO_SAMPLE_ARRAYS] = (int)(MUS_MAKE_SAMPLE_ARRAY(ZERO_BUFFER_SIZE));
+  snd_io *io;
+  io = (snd_io *)CALLOC(1, sizeof(snd_io));
+  io->arrays = (mus_sample_t **)CALLOC(1, sizeof(mus_sample_t *));
+  io->fd = -1;
+  io->chans = 1;
+  io->frames = size;
+  io->beg = 0;
+  io->end = ZERO_BUFFER_SIZE - 1;
+  io->bufsize = ZERO_BUFFER_SIZE;
+  io->arrays[0] = MUS_MAKE_SAMPLE_ARRAY(ZERO_BUFFER_SIZE);
   return(io);
 }
 
-int *free_file_state(int *io)
+snd_io *free_file_state(snd_io *io)
 {
   /* gotta free the IO buffers as well as the descriptor buffer */
   int i, chans;
   if (io)
     {
-      chans = io[SND_IO_CHANS];
+      chans = io->chans;
       for (i = 0; i < chans; i++)
-	if (io[SND_IO_SAMPLE_ARRAYS + i]) 
-	  MUS_FREE_SAMPLE_ARRAY(io[SND_IO_SAMPLE_ARRAYS + i]);
+	if (io->arrays[i]) 
+	  MUS_FREE_SAMPLE_ARRAY(io->arrays[i]);
+      FREE(io->arrays);
       FREE(io);
     }
   return(NULL);
 }
 
-void set_file_state_fd(int *io, int fd);
-void set_file_state_fd(int *io, int fd) 
+static void close_file_state_fd(snd_io *io) 
 {
-  io[SND_IO_FD] = fd;
+  mus_file_close(io->fd);
 }
 
-static void close_file_state_fd(int *io) 
-{
-  mus_file_close(io[SND_IO_FD]);
-}
-
-void file_buffers_forward(int ind0, int ind1, int indx, snd_fd *sf, snd_data *cur_snd)
+void file_buffers_forward(off_t ind0, off_t ind1, off_t indx, snd_fd *sf, snd_data *cur_snd)
 {
   /* need to track in-core buffer and file-relative index */
-  if ((indx < cur_snd->io[SND_IO_BEG]) ||
-      (indx > cur_snd->io[SND_IO_END])) 
+  if ((indx < cur_snd->io->beg) ||
+      (indx > cur_snd->io->end)) 
     reposition_file_buffers(cur_snd, indx);
-  sf->loc = indx - cur_snd->io[SND_IO_BEG];
-  if (ind0 >= cur_snd->io[SND_IO_BEG])
-    sf->first = ind0 - cur_snd->io[SND_IO_BEG];
+  sf->loc = indx - cur_snd->io->beg;
+  if (ind0 >= cur_snd->io->beg)
+    sf->first = ind0 - cur_snd->io->beg;
   else sf->first = 0;
-  if (ind1 <= cur_snd->io[SND_IO_END]) 
-    sf->last = ind1 - cur_snd->io[SND_IO_BEG];
-  else sf->last = cur_snd->io[SND_IO_BUFSIZE] - 1;
+  if (ind1 <= cur_snd->io->end) 
+    sf->last = ind1 - cur_snd->io->beg;
+  else sf->last = cur_snd->io->bufsize - 1;
 }
 
-void file_buffers_back(int ind0, int ind1, int indx, snd_fd *sf, snd_data *cur_snd)
+void file_buffers_back(off_t ind0, off_t ind1, off_t indx, snd_fd *sf, snd_data *cur_snd)
 {
-  if ((indx > cur_snd->io[SND_IO_END]) || 
-      (indx < cur_snd->io[SND_IO_BEG])) 
-    reposition_file_buffers(cur_snd, indx - cur_snd->io[SND_IO_BUFSIZE] + 1);
-  sf->loc = indx - cur_snd->io[SND_IO_BEG];
-  if (ind1 <= cur_snd->io[SND_IO_END])
-    sf->last = ind1 - cur_snd->io[SND_IO_BEG];
-  else sf->last = cur_snd->io[SND_IO_BUFSIZE] - 1;
-  if (ind0 >= cur_snd->io[SND_IO_BEG]) 
-    sf->first = ind0 - cur_snd->io[SND_IO_BEG];
+  if ((indx > cur_snd->io->end) || 
+      (indx < cur_snd->io->beg)) 
+    reposition_file_buffers(cur_snd, indx - cur_snd->io->bufsize + 1);
+  sf->loc = indx - cur_snd->io->beg;
+  if (ind1 <= cur_snd->io->end)
+    sf->last = ind1 - cur_snd->io->beg;
+  else sf->last = cur_snd->io->bufsize - 1;
+  if (ind0 >= cur_snd->io->beg) 
+    sf->first = ind0 - cur_snd->io->beg;
   else sf->first = 0;
-}
-
-int sf_beg(snd_data *sd)
-{
-  if (sd)
-    return(sd->io[SND_IO_BEG]);
-  return(0);
-}
-
-int sf_end(snd_data *sd)
-{
-  if (sd)
-    return(sd->io[SND_IO_END]);
-  return(0);
 }
 
 
@@ -237,9 +213,9 @@ static int close_temp_files(chan_info *cp, void *closed)
 		  (sd->io) && 
 		  (sd->open == FD_OPEN))
 		{
-		  mus_file_close(sd->io[SND_IO_FD]);
+		  mus_file_close(sd->io->fd);
 		  sd->open = FD_CLOSED;
-		  sd->io[SND_IO_FD] = -1;
+		  sd->io->fd = -1;
 		  rtn++;
 		}
 	    }
@@ -316,8 +292,8 @@ int snd_reopen_write(snd_state *ss, const char *arg)
   return(fd);
 }
 
-int snd_write_header(snd_state *ss, const char *name, int type, int srate, int chans, int loc, 
-		     int samples, int format, const char *comment, int len, int *loops)
+int snd_write_header(snd_state *ss, const char *name, int type, int srate, int chans, off_t loc, 
+		     off_t samples, int format, const char *comment, int len, int *loops)
 {
   int fd;
   mus_sound_forget(name);
@@ -460,12 +436,12 @@ void forget_temps(void)
     }
 }
 
-snd_data *make_snd_data_file(char *name, int *io, file_info *hdr, int temp, int ctr, int temp_chan)
+snd_data *make_snd_data_file(char *name, snd_io *io, file_info *hdr, int temp, int ctr, int temp_chan)
 {
   snd_data *sd;
   sd = (snd_data *)CALLOC(1, sizeof(snd_data));
   sd->type = SND_DATA_FILE;
-  sd->buffered_data = MUS_SAMPLE_ARRAY(io[SND_IO_SAMPLE_ARRAYS + temp_chan]);
+  sd->buffered_data = MUS_SAMPLE_ARRAY(io->arrays[temp_chan]);
   sd->io = io;
   sd->filename = copy_string(name);
   sd->hdr = hdr;
@@ -483,7 +459,7 @@ snd_data *make_snd_data_file(char *name, int *io, file_info *hdr, int temp, int 
 snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize)
 {
   snd_data *sf;
-  int *io;
+  snd_io *io;
   int fd;
   file_info *hdr;
   hdr = sd->hdr;
@@ -501,7 +477,7 @@ snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize)
   io = make_file_state(fd, hdr, sd->chan, bufsize);
   sf = (snd_data *)CALLOC(1, sizeof(snd_data));
   sf->type = sd->type;
-  sf->buffered_data = MUS_SAMPLE_ARRAY(io[SND_IO_SAMPLE_ARRAYS + sd->chan]);
+  sf->buffered_data = MUS_SAMPLE_ARRAY(io->arrays[sd->chan]);
   sf->io = io;
   sf->filename = copy_string(sd->filename);
   sf->hdr = hdr;
@@ -513,17 +489,17 @@ snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize)
   return(sf);
 }
 
-snd_data *make_snd_data_buffer(MUS_SAMPLE_TYPE *data, int len, int ctr)
+snd_data *make_snd_data_buffer(mus_sample_t *data, int len, int ctr)
 {
   snd_data *sf;
   sf = (snd_data *)CALLOC(1, sizeof(snd_data));
   sf->type = SND_DATA_BUFFER;
-  sf->buffered_data = (MUS_SAMPLE_TYPE *)MALLOC((len + 1) * sizeof(MUS_SAMPLE_TYPE));
+  sf->buffered_data = (mus_sample_t *)MALLOC((len + 1) * sizeof(mus_sample_t));
   /* sigh... using len + 1 rather than len to protect against access to inserted buffer at end mixups (final fragment uses end + 1) */
   /*   the real problem here is that I never decided whether insert starts at the cursor or just past it */
   /*   when the cursor is on the final sample, this causes cross-fragment ambiguity as to the length of a trailing insertion */
   /*   C > (make-region 1000 2000) (insert-region (cursor)) C-v hits this empty slot and gets confused about the previously final sample value */
-  memcpy((void *)(sf->buffered_data), (void *)data, len * sizeof(MUS_SAMPLE_TYPE));
+  memcpy((void *)(sf->buffered_data), (void *)data, len * sizeof(mus_sample_t));
   sf->edit_ctr = ctr;
   sf->copy = FALSE;
   sf->inuse = FALSE;
@@ -621,9 +597,9 @@ int open_temp_file(char *ofile, int chans, file_info *hdr, snd_state *ss)
   return(ofd);
 }
 
-int close_temp_file(int ofd, file_info *hdr, long bytes, snd_info *sp)
+int close_temp_file(int ofd, file_info *hdr, off_t bytes, snd_info *sp)
 {
-  int kleft, kused;
+  off_t kleft, kused;
   mus_header_update_with_fd(ofd, hdr->type, bytes);
   kleft = disk_kspace(hdr->name);
   if (kleft < 0)
@@ -632,7 +608,7 @@ int close_temp_file(int ofd, file_info *hdr, long bytes, snd_info *sp)
     {
       kused = bytes >> 10;
       if ((kused > kleft) && (sp))
-	report_in_minibuffer_and_save(sp, "disk nearly full: used %d Kbytes in the last operation, leaving %d", kused, kleft);
+	report_in_minibuffer_and_save(sp, "disk nearly full: used " OFF_TD " Kbytes in the last operation, leaving " OFF_TD, kused, kleft);
     }
   return(mus_file_close(ofd));
 }

@@ -69,6 +69,8 @@ Guile 1.4).  If you don't have Guile or Ruby, Snd can still be built, but it's
 severely limited in what it can do (there is a configure switch
 --with-guile=no, and there's the compiler switch HAVE_EXTENSION_LANGUAGE).
 
+One switch that might be of interest is --disable-largefile. This
+turns off the Large File System support (if it is available at all).
 
 
 ----------------------------------------------------------------

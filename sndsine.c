@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
 {
   int fd, i, k, frames;
   float phase, incr;
-  MUS_SAMPLE_TYPE *obuf[1];
+  mus_sample_t *obuf[1];
 #if MACOS
   argc = ccommand(&argv);
 #endif
@@ -49,8 +49,8 @@ int main(int argc, char *argv[])
     {
       frames = 22050;
       phase = 0.0;
-      incr = TWO_PI*440.0/22050.0;
-      obuf[0] = (MUS_SAMPLE_TYPE *)CALLOC(BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE));
+      incr = TWO_PI * 440.0 / 22050.0;
+      obuf[0] = (mus_sample_t *)CALLOC(BUFFER_SIZE, sizeof(mus_sample_t));
       k = 0;
       for (i = 0; i < frames; i++)
 	{
@@ -59,12 +59,12 @@ int main(int argc, char *argv[])
 	  k++;
 	  if (k == BUFFER_SIZE)
 	    {
-	      mus_sound_write(fd, 0, BUFFER_SIZE-1, 1, obuf);
+	      mus_sound_write(fd, 0, BUFFER_SIZE - 1, 1, obuf);
 	      k = 0;
 	    }
 	}
-      if (k > 0) mus_sound_write(fd, 0, k-1, 1, obuf);
-      mus_sound_close_output(fd, 22050*mus_data_format_to_bytes_per_sample(MUS_BSHORT));
+      if (k > 0) mus_sound_write(fd, 0, k - 1, 1, obuf);
+      mus_sound_close_output(fd, 22050 * mus_data_format_to_bytes_per_sample(MUS_BSHORT));
       FREE(obuf[0]);
     }
   return(0);

@@ -2,6 +2,8 @@
 
 #if defined(HAVE_CONFIG_H)
   #include <config.h>
+#else
+  #define _FILE_OFFSET_BITS 64
 #endif
 
 #include <math.h>
@@ -36,9 +38,9 @@ static char *display_maxamps(const char *filename, int chans)
   char *ampstr;
   char fstr[16];
   int i;
-  MUS_SAMPLE_TYPE *vals;
+  mus_sample_t *vals;
   ampstr = (char *)CALLOC(chans * 32, sizeof(char));
-  vals = (MUS_SAMPLE_TYPE *)CALLOC(chans * 2, sizeof(MUS_SAMPLE_TYPE));
+  vals = (mus_sample_t *)CALLOC(chans * 2, sizeof(mus_sample_t));
   sprintf(ampstr, "\n  max amp%s: ", (chans > 1) ? "s" : "");
   mus_sound_maxamp(filename, vals);
   for (i = 0; i < chans; i++)

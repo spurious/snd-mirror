@@ -206,9 +206,10 @@ char *global_search(snd_state *ss, int direction)
   return(search_message);
 }
 
-static int cursor_find_forward(snd_info *sp, chan_info *cp, int count)
+static off_t cursor_find_forward(snd_info *sp, chan_info *cp, int count)
 {
-  int i = 0, end, start, passes = 0;
+  int passes = 0;
+  off_t i = 0, end, start;
   snd_fd *sf = NULL;
   snd_state *ss;
   XEN res = XEN_FALSE;
@@ -281,9 +282,10 @@ static int cursor_find_forward(snd_info *sp, chan_info *cp, int count)
   return(i);
 }
 
-static int cursor_find_backward(snd_info *sp, chan_info *cp, int count)
+static off_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
 {
-  int i = 0, start, passes = 0;
+  off_t i = 0, start;
+  int passes = 0;
   snd_fd *sf = NULL;
   snd_state *ss;
   XEN res = XEN_FALSE;
@@ -369,7 +371,7 @@ static void get_find_expression(snd_info *sp, int count)
 
 void cursor_search(chan_info *cp, int count)
 {
-  int samp;
+  off_t samp;
   snd_state *ss;
   snd_info *sp;
   char *s1, *s2;
@@ -419,7 +421,7 @@ void cursor_search(chan_info *cp, int count)
 	    }
 	  else
 	    {
-	      report_in_minibuffer(sp, "%s%sy = %s at %s (%d)",
+	      report_in_minibuffer(sp, "%s%sy = %s at %s (" OFF_TD ")",
 				   (sp->search_expr) ? sp->search_expr : "",
 				   (sp->search_expr) ? ": " : "",
 				   s1 = prettyf(chn_sample(samp, cp, cp->edit_ctr), 2),

@@ -236,7 +236,7 @@ void start_progress_report(snd_info *sp, int from_enved) {}
 void finish_progress_report(snd_info *sp, int from_enved) {}
 void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, int from_enved) {}
 char *clm2snd_help(void) {return(NULL);}
-char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type, int *format, int *location) {return(NULL);}
+char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location) {return(NULL);}
 void alert_new_file(void) {}
 snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *comment) {return(NULL);}
 void make_cur_name_row(int old_size, int new_size) {}

@@ -12,10 +12,11 @@
 
 #define NUM_VISIBLE_HEADERS 4
 
-char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type, int *format, int *location)
+char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location)
 {
   char *str;
   int res, val;
+  off_t oval;
   char *comment = NULL;
   if (fdat->srate_text) 
     {
@@ -40,8 +41,8 @@ char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type,
       str = (char *)gtk_entry_get_text(GTK_ENTRY(fdat->location_text)); 
       if (str)
 	{
-	  val = string2int(str);
-	  if (val >= 0) (*location) = val;
+	  oval = string2off_t(str);
+	  if (oval >= 0) (*location) = oval;
 	}
     }
   if (fdat->comment_text) 
@@ -1548,7 +1549,7 @@ static void new_file_help_callback(GtkWidget *w, gpointer context)
 
 snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *comment)
 {
-  int loc;
+  off_t loc;
   char *tmpstr, *title, *newer_name = NULL;
   snd_info *sp = NULL;
   GtkWidget *name_label, *hform;

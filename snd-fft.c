@@ -34,8 +34,9 @@ typedef struct {
   Float *hwin;
   Float beta;
   int fw_slot, hwin_size, wavelet_choice, transform_type;
-  int beg, databeg, datalen;
-  int losamp, edit_ctr, dBing, lfreq;
+  off_t beg, databeg, datalen;
+  off_t losamp;
+  int edit_ctr, dBing, lfreq;
   int pad_zero;
   Float cutoff;
   snd_state *ss;
@@ -1415,7 +1416,8 @@ static void make_sonogram_axes(chan_info *cp)
 static int apply_fft_window(fft_state *fs)
 {
   /* apply the window, reading data if necessary, resetting IO blocks to former state */
-  int i, j, ind0, result = 5, p = 0, use_fht = 0;
+  int i, j, result = 5, p = 0, use_fht = 0;
+  off_t ind0;
   Float *window, *fft_data;
   int data_len, pad = 0;
   snd_fd *sf;
@@ -1447,7 +1449,7 @@ static int apply_fft_window(fft_state *fs)
 					      C_TO_SMALL_XEN_INT(cp->chan)),
 				   S_before_transform_hook);
 	  if (XEN_NUMBER_P(res))
-	    ind0 = XEN_TO_C_INT_OR_ELSE(res, 0) + fs->beg;
+	    ind0 = XEN_TO_C_OFF_T_OR_ELSE(res, 0) + fs->beg;
 	  else ind0 = (cp->axis)->losamp + fs->beg;
 	}
       else
@@ -1775,7 +1777,8 @@ void *make_fft_state(chan_info *cp, int simple)
   fft_state *fs = NULL;
   snd_state *ss;
   axis_info *ap;
-  int reuse_old = 0, fftsize, dbeg = 0, dlen = 0;
+  int reuse_old = 0, fftsize;
+  off_t dbeg = 0, dlen = 0;
   ss = cp->state;
   ap = cp->axis;
   if ((show_selection_transform(ss)) && 
@@ -1950,8 +1953,8 @@ typedef struct {
   chan_info *cp;
   int spectrum_size;
   sono_info *scp;
-  int beg, hop, losamp, hisamp;
-  int done;
+  off_t beg, losamp, hisamp;
+  int done, hop;
   int window;
   int msg_ctr;
   int edit_ctr;
@@ -2068,7 +2071,7 @@ static int set_up_sonogram(sonogram_state *sg)
       cp->sonogram_data = si;
       si->total_bins = sg->spectrum_size;
       si->total_slices = snd_2pow2(sg->outlim);
-      si->begs = (int *)CALLOC(si->total_slices, sizeof(int));
+      si->begs = (off_t *)CALLOC(si->total_slices, sizeof(off_t));
       si->data = (Float **)CALLOC(si->total_slices, sizeof(Float *));
       for (i = 0; i < si->total_slices; i++) si->data[i] = (Float *)CALLOC(si->total_bins, sizeof(Float));
     }
@@ -2087,7 +2090,7 @@ static int set_up_sonogram(sonogram_state *sg)
 	  {
 	    FREE(si->data);
 	    si->total_slices = tempsize;
-	    si->begs = (int *)REALLOC(si->begs, si->total_slices * sizeof(int));
+	    si->begs = (off_t *)REALLOC(si->begs, si->total_slices * sizeof(off_t));
 	    si->data = (Float **)CALLOC(si->total_slices, sizeof(Float *));
 	  }
 	if (si->total_bins < sg->spectrum_size) si->total_bins = sg->spectrum_size;
@@ -2294,8 +2297,8 @@ void c_convolve (char *fname, Float amp, int filec, int filehdr, int filterc, in
            int fftsize, int filter_chans, int filter_chan, int data_size, snd_info *gsp, int from_enved, int ip, int total_chans)
 {
   Float *rl0 = NULL, *rl1 = NULL, *rl2 = NULL;
-  MUS_SAMPLE_TYPE **pbuffer = NULL, **fbuffer = NULL;
-  MUS_SAMPLE_TYPE *cm = NULL, *fcm = NULL, *pbuf = NULL;
+  mus_sample_t **pbuffer = NULL, **fbuffer = NULL;
+  mus_sample_t *cm = NULL, *fcm = NULL, *pbuf = NULL;
   int i;
   Float scl;
   int tempfile;
@@ -2310,12 +2313,12 @@ void c_convolve (char *fname, Float amp, int filec, int filehdr, int filterc, in
 
       rl0 = (Float *)CALLOC(fftsize, sizeof(Float));
       if (rl0) rl1 = (Float *)CALLOC(fftsize, sizeof(Float));
-      if (rl1) pbuffer = (MUS_SAMPLE_TYPE **)CALLOC(1, sizeof(MUS_SAMPLE_TYPE *));
-      if (pbuffer) pbuffer[0] = (MUS_SAMPLE_TYPE *)CALLOC(data_size, sizeof(MUS_SAMPLE_TYPE));
-      if (pbuffer[0]) cm = (MUS_SAMPLE_TYPE *)CALLOC(1, sizeof(MUS_SAMPLE_TYPE));
-      fbuffer = (MUS_SAMPLE_TYPE **)CALLOC(filter_chans, sizeof(MUS_SAMPLE_TYPE *));
-      if (fbuffer) fbuffer[filter_chan] = (MUS_SAMPLE_TYPE *)CALLOC(filtersize, sizeof(MUS_SAMPLE_TYPE));
-      if (fbuffer[filter_chan]) fcm = (MUS_SAMPLE_TYPE *)CALLOC(filter_chans, sizeof(MUS_SAMPLE_TYPE));
+      if (rl1) pbuffer = (mus_sample_t **)CALLOC(1, sizeof(mus_sample_t *));
+      if (pbuffer) pbuffer[0] = (mus_sample_t *)CALLOC(data_size, sizeof(mus_sample_t));
+      if (pbuffer[0]) cm = (mus_sample_t *)CALLOC(1, sizeof(mus_sample_t));
+      fbuffer = (mus_sample_t **)CALLOC(filter_chans, sizeof(mus_sample_t *));
+      if (fbuffer) fbuffer[filter_chan] = (mus_sample_t *)CALLOC(filtersize, sizeof(mus_sample_t));
+      if (fbuffer[filter_chan]) fcm = (mus_sample_t *)CALLOC(filter_chans, sizeof(mus_sample_t));
       if ((rl0 == NULL) || (rl1 == NULL) || 
 	  (pbuffer == NULL) || (pbuffer[0] == NULL) || (cm == NULL) ||
 	  (fbuffer == NULL) || (fbuffer[filter_chan] == NULL) || (fcm == NULL))
@@ -2325,8 +2328,8 @@ void c_convolve (char *fname, Float amp, int filec, int filehdr, int filterc, in
 	}
       else
 	{
-	  cm[0] = (MUS_SAMPLE_TYPE)1;
-	  fcm[filter_chan] = (MUS_SAMPLE_TYPE)1;
+	  cm[0] = (mus_sample_t)1;
+	  fcm[filter_chan] = (mus_sample_t)1;
 	  pbuf = pbuffer[0];
 
 	  /* read in the "impulse response" */

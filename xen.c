@@ -2,6 +2,10 @@
 
 #if defined(HAVE_CONFIG_H)
   #include <config.h>
+#else
+  #if defined(USE_SND) && (!(defined(_FILE_OFFSET_BITS)))
+    #define _FILE_OFFSET_BITS 64
+  #endif
 #endif
 
 #include <ctype.h>
@@ -25,6 +29,42 @@ int xen_to_c_int_or_else(XEN obj, int fallback, const char *origin)
     if (XEN_NUMBER_P(obj))
       return((int)XEN_TO_C_DOUBLE_WITH_CALLER(obj, origin));
   return(fallback);
+}
+
+off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback, const char *origin)
+{
+#if HAVE_GUILE
+  if ((XEN_EXACT_P(obj)) || (SCM_BIGP(obj)))
+#else
+  if (XEN_ULONG_P(obj))
+#endif
+#if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
+    return(XEN_TO_C_LONG_LONG(obj));
+#else
+    return(XEN_TO_C_INT(obj));
+#endif
+  else
+    if (XEN_NUMBER_P(obj))
+      return((off_t)XEN_TO_C_DOUBLE_WITH_CALLER(obj, origin));
+  return(fallback);
+}
+
+off_t xen_to_c_off_t(XEN obj)
+{
+#if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
+    return(XEN_TO_C_LONG_LONG(obj));
+#else
+    return(XEN_TO_C_INT(obj));
+#endif
+}
+
+XEN c_to_xen_off_t(off_t val)
+{
+#if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
+    return(C_TO_XEN_LONG_LONG(val));
+#else
+    return(C_TO_XEN_INT(val));
+#endif
 }
 
 static char **xr_help_names = NULL;

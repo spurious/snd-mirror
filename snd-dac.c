@@ -48,7 +48,8 @@ typedef struct dac__info {
   snd_info *sp;        /* needed to see button callback changes etc */
   chan_info *cp;
   snd_state *ss;
-  int end, never_sped, expand_ring_frames;
+  int never_sped, expand_ring_frames;
+  off_t end;
 } dac_info;
 
 #define AMP_CONTROL(sp, dp) ((dp->cp->amp_control) ? (dp->cp->amp_control[0]) : sp->amp_control)
@@ -233,7 +234,7 @@ static void nrev(rev_info *r, Float *rins, Float *routs, int chans)
 static Float *r_ins, *r_outs;
 static int reverb_chans = 0;
 
-static void reverb(rev_info *r, Float **rins, MUS_SAMPLE_TYPE **outs, int ind)
+static void reverb(rev_info *r, Float **rins, mus_sample_t **outs, int ind)
 {
   int i, chans;
   chans = reverb_chans;
@@ -695,7 +696,7 @@ static int find_slot_to_play(void)
   return(old_size);
 }
 
-static dac_info *init_dp(int slot, chan_info *cp, snd_info *sp, snd_fd *fd, int beg, int end, int edpos)
+static dac_info *init_dp(int slot, chan_info *cp, snd_info *sp, snd_fd *fd, off_t beg, off_t end, int edpos)
 {
   dac_info *dp;
   play_list_members++;
@@ -723,14 +724,14 @@ static dac_info *init_dp(int slot, chan_info *cp, snd_info *sp, snd_fd *fd, int 
 }
 
 typedef struct {
-  int srate;               /* output srate */
-  int channels;            /* total output channels currently active */
-  int frames;              /* samples per channel per output block */
-  int devices;             /* output devices active */
-  int *chans_per_device;   /* channels sent to each active device */
-  int out_format;          /* output data format */
-  int slice;               /* background process state (i.e. starting, running, quitting) */
-  int reverb_ring_frames;  /* how long the reverb rings after the end (if reverb, of course) */
+  int srate;                /* output srate */
+  int channels;             /* total output channels currently active */
+  int frames;               /* samples per channel per output block */
+  int devices;              /* output devices active */
+  int *chans_per_device;    /* channels sent to each active device */
+  int out_format;           /* output data format */
+  int slice;                /* background process state (i.e. starting, running, quitting) */
+  off_t reverb_ring_frames; /* how long the reverb rings after the end (if reverb, of course) */
   snd_state *ss;
 } dac_state;
 
@@ -825,10 +826,11 @@ static void start_dac(snd_state *ss, int srate, int channels, int background)
 }
 
 
-static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, int start, int end, XEN edpos, const char *caller, int arg_pos)
+static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, off_t start, off_t end, XEN edpos, const char *caller, int arg_pos)
 {
   /* if not sp, control panel is ignored */
-  int slot, beg = 0, direction = READ_FORWARD, pos;
+  int slot, direction = READ_FORWARD, pos;
+  off_t beg = 0;
   snd_fd *sf;
   pos = to_c_edit_position(cp, edpos, caller, arg_pos);
   if (start >= cp->samples[pos]) return(NULL);
@@ -867,7 +869,7 @@ static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, int start
   return(NULL);
 }
 
-static dac_info *add_region_channel_to_play_list(int region, int chan, int beg, int end)
+static dac_info *add_region_channel_to_play_list(int region, int chan, off_t beg, off_t end)
 {
   int slot;
   snd_fd *fd;
@@ -896,7 +898,7 @@ void play_region(snd_state *ss, int region, int background)
   if (dp) start_dac(ss, region_srate(region), chans, background);
 }
 
-void play_channel(chan_info *cp, int start, int end, int background, XEN edpos, const char *caller, int arg_pos)
+void play_channel(chan_info *cp, off_t start, off_t end, int background, XEN edpos, const char *caller, int arg_pos)
 {
   /* just plays one channel (ignores possible sync) */
   snd_info *sp = NULL;
@@ -908,7 +910,7 @@ void play_channel(chan_info *cp, int start, int end, int background, XEN edpos, 
   if (dp) start_dac(dp->ss, SND_SRATE(sp), 1, background);
 }
 
-void play_sound(snd_info *sp, int start, int end, int background, XEN edpos, const char *caller, int arg_pos)
+void play_sound(snd_info *sp, off_t start, off_t end, int background, XEN edpos, const char *caller, int arg_pos)
 {
   /* just plays one sound (ignores possible sync) */
   int i;
@@ -932,13 +934,13 @@ void play_sound(snd_info *sp, int start, int end, int background, XEN edpos, con
   if (dp) start_dac(sp->state, SND_SRATE(sp), sp->nchans, background);
 }
 
-void play_channels(chan_info **cps, int chans, int *starts, int *ur_ends, int background, XEN edpos, const char *caller, int arg_pos, int selection)
+void play_channels(chan_info **cps, int chans, off_t *starts, off_t *ur_ends, int background, XEN edpos, const char *caller, int arg_pos, int selection)
 {
   /* ends can be NULL */
   int i;
   snd_info *sp = NULL;
   dac_info *dp = NULL;
-  int *ends;
+  off_t *ends;
   if ((background == NOT_IN_BACKGROUND) && 
       (play_list_members > 0)) 
     return;
@@ -947,7 +949,7 @@ void play_channels(chan_info **cps, int chans, int *starts, int *ur_ends, int ba
     ends = ur_ends;
   else
     {
-      ends = (int *)CALLOC(chans, sizeof(int));
+      ends = (off_t *)CALLOC(chans, sizeof(off_t));
       for (i = 0; i < chans; i++) 
 	ends[i] = NO_END_SPECIFIED;
     }
@@ -965,7 +967,7 @@ void play_selection(int background, XEN edpos, const char *caller, int arg_pos)
 {
   /* just plays the current selection */
   int i;
-  int *ends;
+  off_t *ends;
   snd_info *sp;
   sync_info *si = NULL;
   if (selection_is_active())
@@ -973,12 +975,14 @@ void play_selection(int background, XEN edpos, const char *caller, int arg_pos)
       si = selection_sync();
       if (si)
 	{
-	  ends = (int *)CALLOC(si->chans, sizeof(int));
+	  ends = (off_t *)CALLOC(si->chans, sizeof(off_t));
 	  for (i = 0; i < si->chans; i++) 
 	    {
 	      sp = si->cps[i]->sound;
-	      if ((sp) && (sp->speed_control != 1.0) && (sp->speed_control > 0.0))
-		ends[i] = si->begs[i] + (int)(((Float)selection_len() / (Float)(sp->speed_control)));
+	      if ((sp) && 
+		  (sp->speed_control != 1.0) && 
+		  (sp->speed_control > 0.0))
+		ends[i] = si->begs[i] + (off_t)(((Float)selection_len() / (Float)(sp->speed_control)));
 	      /* user might move speed control while playing selection, so ideally we'd watch dp->chn_fd here */
 	      else ends[i] = si->begs[i] + selection_len();
 	    }
@@ -1027,7 +1031,7 @@ static unsigned char **audio_bytes = NULL;
 static int audio_bytes_size = 0;
 static int audio_bytes_devices = 0;
 
-static MUS_SAMPLE_TYPE **dac_buffers = NULL;
+static mus_sample_t **dac_buffers = NULL;
 static int dac_buffer_size = 0;
 static int dac_buffer_chans = 0; /* chans allocated */
 static Float **rev_ins;
@@ -1040,7 +1044,7 @@ static void clear_dac_buffers(dac_state *dacp)
   int i, frames;
   frames = dacp->frames;
   for (i = 0; i < dacp->channels; i++) 
-    memset(dac_buffers[i], 0, frames * sizeof(MUS_SAMPLE_TYPE));
+    memset(dac_buffers[i], 0, frames * sizeof(mus_sample_t));
   if (global_rev)
     for (i = 0; i < dacp->channels; i++) 
       memset(rev_ins[i], 0, frames * sizeof(Float));
@@ -1072,9 +1076,9 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
   snd_info *sp;
   Float *data = NULL;
   snd_state *ss;
-  MUS_SAMPLE_TYPE *buf;
+  mus_sample_t *buf;
 #if (HAVE_OSS || HAVE_ALSA)
-  MUS_SAMPLE_TYPE **dev_bufs;
+  mus_sample_t **dev_bufs;
 #endif
 
   frames = dacp->frames;
@@ -1129,7 +1133,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		  amp = dp->cur_amp;
 		  incr = (AMP_CONTROL(sp, dp) - amp) / (Float)(frames);
 		  for (j = 0; j < frames; j++, amp += incr) 
-		    buf[j] += (MUS_SAMPLE_TYPE)(read_sample(dp->chn_fd) * amp);
+		    buf[j] += (mus_sample_t)(read_sample(dp->chn_fd) * amp);
 		    /* buf[j] += MUS_FLOAT_TO_SAMPLE(read_sample_to_float(dp->chn_fd) * amp); */
 		  dp->cur_amp = amp;
 		  break;
@@ -1410,11 +1414,11 @@ static void make_dac_buffers(dac_state *dacp)
 	  for (i = 0; i < dac_buffer_chans; i++) FREE(rev_ins[i]);
 	  FREE(rev_ins);
 	}
-      dac_buffers = (MUS_SAMPLE_TYPE **)CALLOC(dacp->channels, sizeof(MUS_SAMPLE_TYPE *));
+      dac_buffers = (mus_sample_t **)CALLOC(dacp->channels, sizeof(mus_sample_t *));
       rev_ins = (Float **)CALLOC(dacp->channels, sizeof(Float *));
       for (i = 0; i < dacp->channels; i++) 
 	{
-	  dac_buffers[i] = (MUS_SAMPLE_TYPE *)CALLOC(dacp->frames, sizeof(MUS_SAMPLE_TYPE));
+	  dac_buffers[i] = (mus_sample_t *)CALLOC(dacp->frames, sizeof(mus_sample_t));
 	  rev_ins[i] = (Float *)CALLOC(dacp->frames, sizeof(Float));
 	}
       dac_buffer_chans = dacp->channels;
@@ -1830,7 +1834,7 @@ static int start_audio_output_1 (dac_state *dacp)
 }
 #endif
 
-static int start_audio_output (dac_state *dacp)
+static int start_audio_output(dac_state *dacp)
 {
   /* at this point the desired output srate and chans are set in dacp (via start_dac) */
   dac_info *dp;
@@ -1866,7 +1870,7 @@ static int start_audio_output (dac_state *dacp)
   return(FALSE);
 }
  
-static void stop_audio_output (dac_state *dacp)
+static void stop_audio_output(dac_state *dacp)
 {
    int i;
    for (i = 0; i < MAX_DEVICES; i++)
@@ -1922,7 +1926,7 @@ static BACKGROUND_TYPE dac_in_background(GUI_POINTER ptr)
 
 /* ---------------- support for Apply button (snd-apply.c) ---------------- */
 
-void initialize_apply(snd_info *sp, int chans, int beg, int dur)
+void initialize_apply(snd_info *sp, int chans, off_t beg, off_t dur)
 {
   int curchan = 0;
   snd_state *ss;
@@ -1994,9 +1998,10 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, int background, int syncd,
   chan_info *cp;
   sync_info *si = NULL;
   char *name = NULL;
-  int i, samp = 0;
-  int end = NO_END_SPECIFIED;
-  int *ends = NULL;
+  int i;
+  off_t samp = 0;
+  off_t end = NO_END_SPECIFIED;
+  off_t *ends = NULL;
   if (XEN_INTEGER_P(end_n)) end = XEN_TO_C_INT(end_n);
 #if USE_NO_GUI
   background = 0;
@@ -2007,7 +2012,7 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, int background, int syncd,
   if (XEN_STRING_P(samp_n))
     {
       /* filename beg end background syncd ignored */
-      samp = XEN_TO_C_INT_OR_ELSE(snd_n, 0);
+      samp = XEN_TO_C_OFF_T_OR_ELSE(snd_n, 0);
       if (samp < 0) XEN_ERROR(NO_SUCH_SAMPLE,
 			      XEN_LIST_2(C_TO_XEN_STRING(caller),
 					 snd_n));
@@ -2038,7 +2043,7 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, int background, int syncd,
     {
       XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, caller, "a number");
       ASSERT_CHANNEL(caller, snd_n, chn_n, 2);
-      samp = XEN_TO_C_INT_OR_ELSE(samp_n, 0);
+      samp = XEN_TO_C_OFF_T_OR_ELSE(samp_n, 0);
       if (samp < 0) XEN_ERROR(NO_SUCH_SAMPLE,
 			      XEN_LIST_2(C_TO_XEN_STRING(caller),
 					 samp_n));
@@ -2050,7 +2055,7 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, int background, int syncd,
 	  si = snd_sync(sp->state, sp->sync);
 	  if (end != NO_END_SPECIFIED)
 	    {
-	      ends = (int *)CALLOC(si->chans, sizeof(int));
+	      ends = (off_t *)CALLOC(si->chans, sizeof(off_t));
 	      for (i = 0; i < si->chans; i++) ends[i] = end;
 	    }
 	  play_channels(si->cps, si->chans, si->begs, ends, background, edpos, caller, arg_pos, FALSE);
@@ -2089,12 +2094,12 @@ static XEN g_play_channel(XEN beg, XEN dur, XEN snd_n, XEN chn_n, XEN edpos)
 {
   #define H_play_channel "(" S_play_channel " &optional beg dur snd chn pos) plays snd or snd's channel chn starting at beg for dur samps."
   XEN end = XEN_FALSE;
-  int len;
+  off_t len;
   if (XEN_INTEGER_P(dur))
     {
-      len = XEN_TO_C_INT(dur);
+      len = XEN_TO_C_OFF_T(dur);
       if (len <= 0) return(XEN_FALSE);
-      end = C_TO_XEN_INT(XEN_TO_C_INT_OR_ELSE(beg, 0) + len);
+      end = C_TO_XEN_OFF_T(XEN_TO_C_INT_OR_ELSE(beg, 0) + len);
     }
   return(g_play_1(beg, snd_n, chn_n, TRUE, FALSE, end, edpos, S_play_channel, 5));
 }
@@ -2280,8 +2285,8 @@ static XEN g_add_player(XEN snd_chn, XEN start, XEN end, XEN edpos)
     {
       cp = sp->chans[player_chans[index]];
       dp = add_channel_to_play_list(cp, sp,
-				    XEN_TO_C_INT_OR_ELSE(start, 0),
-				    XEN_TO_C_INT_OR_ELSE(end, NO_END_SPECIFIED),
+				    XEN_TO_C_OFF_T_OR_ELSE(start, 0),
+				    XEN_TO_C_OFF_T_OR_ELSE(end, NO_END_SPECIFIED),
 				    edpos,
 				    S_add_player,
 				    4);

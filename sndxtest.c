@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
   int ofd, ifd, i, j, k, frames, chans, srate, df, ht, curframes;
   #define INFILE argv[1]
   #define OUTFILE argv[2]
-  MUS_SAMPLE_TYPE **obuf;
+  mus_sample_t **obuf;
   mus_sound_initialize();
   chans = mus_sound_chans(INFILE);
   srate = mus_sound_srate(INFILE);
@@ -25,9 +25,9 @@ int main(int argc, char *argv[])
   frames = mus_sound_frames(INFILE);
   ofd = mus_sound_open_output(OUTFILE, srate, chans, df, ht, "created by sndxtest");
   ifd = mus_sound_open_input(INFILE);
-  obuf = (MUS_SAMPLE_TYPE **)CALLOC(chans, sizeof(MUS_SAMPLE_TYPE *));
+  obuf = (mus_sample_t **)CALLOC(chans, sizeof(mus_sample_t *));
   for (i = 0; i < chans; i++)
-    obuf[i] = (MUS_SAMPLE_TYPE *)CALLOC(BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE));
+    obuf[i] = (mus_sample_t *)CALLOC(BUFFER_SIZE, sizeof(mus_sample_t));
   for (i = 0; i < frames; i += BUFFER_SIZE)
     {
       if ((i + BUFFER_SIZE) <= frames)

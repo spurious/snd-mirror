@@ -2,6 +2,8 @@
 
 #if defined(HAVE_CONFIG_H)
   #include <config.h>
+#else
+  #define _FILE_OFFSET_BITS 64
 #endif
 
 #include <math.h>
@@ -72,13 +74,14 @@ void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, in
 #if (!HAVE_ALSA)
 int main(int argc, char *argv[])
 {
-  int fd, afd, i, j, n, k, chans, srate, frames, outbytes;
-  MUS_SAMPLE_TYPE **bufs;
+  int fd, afd, i, j, n, k, chans, srate;
+  off_t frames, outbytes, m;
+  mus_sample_t **bufs;
   OutSample *obuf;
   float val[1];
   int use_multi_card_code = 0;
   int afd0, afd1, buffer_size, curframes, sample_size, out_chans;
-  MUS_SAMPLE_TYPE **qbufs;
+  mus_sample_t **qbufs;
   short *obuf0, *obuf1;
   char *name = NULL;
 #if MACOS
@@ -170,8 +173,8 @@ int main(int argc, char *argv[])
       if (!use_multi_card_code)
 	{
 	  outbytes = BUFFER_SIZE * out_chans * sample_size;
-	  bufs = (MUS_SAMPLE_TYPE **)CALLOC(chans, sizeof(MUS_SAMPLE_TYPE *));
-	  for (i = 0; i < chans; i++) bufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE));
+	  bufs = (mus_sample_t **)CALLOC(chans, sizeof(mus_sample_t *));
+	  for (i = 0; i < chans; i++) bufs[i] = (mus_sample_t *)CALLOC(BUFFER_SIZE, sizeof(mus_sample_t));
 	  obuf = (OutSample *)CALLOC(BUFFER_SIZE * out_chans, sizeof(OutSample));
 #if MAC_OSX
 	  buffer_size = 512;
@@ -179,11 +182,11 @@ int main(int argc, char *argv[])
 #else
 	  buffer_size = BUFFER_SIZE;
 #endif
-	  for (i = 0; i < frames; i += buffer_size)
+	  for (m = 0; m < frames; m += buffer_size)
 	    {
-	      if ((i + buffer_size) <= frames)
+	      if ((m + buffer_size) <= frames)
 		curframes = buffer_size;
-	      else curframes = frames - i;
+	      else curframes = frames - m;
 	      mus_sound_read(fd, 0, curframes - 1, chans, bufs); 
 	      /* some systems are happier if we read the file before opening the dac */
 	      /* at this point the data is in separate arrays of ints */
@@ -300,23 +303,23 @@ int main(int argc, char *argv[])
 	   */
 	  buffer_size = 256;   /* 128 probably better */
 	  outbytes = buffer_size * 2 * 2; 
-	  qbufs = (MUS_SAMPLE_TYPE **)CALLOC(chans, sizeof(MUS_SAMPLE_TYPE *));
-	  for (i = 0; i < chans; i++) qbufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(buffer_size, sizeof(MUS_SAMPLE_TYPE));
+	  qbufs = (mus_sample_t **)CALLOC(chans, sizeof(mus_sample_t *));
+	  for (i = 0; i < chans; i++) qbufs[i] = (mus_sample_t *)CALLOC(buffer_size, sizeof(mus_sample_t));
 	  obuf0 = (short *)CALLOC(buffer_size * 2, sizeof(short));
 	  obuf1 = (short *)CALLOC(buffer_size * 2, sizeof(short));
-	  for (i = 0; i < frames; i += buffer_size)
+	  for (m = 0; m < frames; m += buffer_size)
 	    {
-	      if ((i+buffer_size) <= frames)
+	      if ((m + buffer_size) <= frames)
 		curframes = buffer_size;
-	      else curframes = frames - i;
+	      else curframes = frames - m;
 	      mus_sound_read(fd, 0, curframes - 1, chans, qbufs); 
 	      val[0] = 1.0;
 	      for (k = 0, n = 0; k < buffer_size; k++, n += 2) 
 		{
 		  obuf0[n] = MUS_SAMPLE_TO_SHORT(qbufs[0][k]); 
-		  obuf0[n+1] = MUS_SAMPLE_TO_SHORT(qbufs[1][k]);
+		  obuf0[n + 1] = MUS_SAMPLE_TO_SHORT(qbufs[1][k]);
 		  obuf1[n] = MUS_SAMPLE_TO_SHORT(qbufs[2][k]); 
-		  obuf1[n+1] = MUS_SAMPLE_TO_SHORT(qbufs[3][k]);
+		  obuf1[n + 1] = MUS_SAMPLE_TO_SHORT(qbufs[3][k]);
 		}
 	      if (afd0 == -1)
 		{
@@ -351,8 +354,9 @@ static int use_one_device = 1;
 
 int main(int argc, char *argv[])
 {
-  int fd, i, chans, srate, frames;
-  MUS_SAMPLE_TYPE **read_bufs;
+  int fd, i, chans, srate;
+  off_t frames, ioff;
+  mus_sample_t **read_bufs;
   int afd[MAX_SLOTS];
   short *out_buf[MAX_SLOTS];
   float val[MAX_SLOTS];
@@ -535,40 +539,40 @@ int main(int argc, char *argv[])
       frames = mus_sound_samples(name)/chans;
       base = 0;
       /* allocate the list of read buffers, each buffer will hold one channel
-	 of the input soundfile, each sample is going to be MUS_SAMPLE_TYPE
+	 of the input soundfile, each sample is going to be mus_sample_t
       */
-      read_bufs = (MUS_SAMPLE_TYPE **)CALLOC(alloc_chans, sizeof(MUS_SAMPLE_TYPE *));
+      read_bufs = (mus_sample_t **)CALLOC(alloc_chans, sizeof(mus_sample_t *));
       for (d = 0; d < allocated; d++)
 	{
 	  int dev = out_devs[d];
 	  for (i = 0; i < out_chans[d]; i++) 
-	    read_bufs[base + i] = (MUS_SAMPLE_TYPE *)CALLOC(samples_per_chan, sizeof(MUS_SAMPLE_TYPE));
+	    read_bufs[base + i] = (mus_sample_t *)CALLOC(samples_per_chan, sizeof(mus_sample_t));
 	  base += out_chans[d];
 	  out_bytes[dev] = samples_per_chan * out_chans[d] * mus_data_format_to_bytes_per_sample(out_format[dev]);
 	  out_buf[dev] = (short *)CALLOC(out_bytes[dev], 1);
 	}
-      for (i = 0; i < frames; i += samples_per_chan)
+      for (ioff = 0; ioff < frames; ioff += samples_per_chan)
 	{
-	  MUS_SAMPLE_TYPE **dev_bufs = read_bufs;
-	  if ((i + samples_per_chan) <= frames)
+	  mus_sample_t **dev_bufs = read_bufs;
+	  if ((ioff + samples_per_chan) <= frames)
 	    curframes = samples_per_chan;
 	  else 
 	    {
-	      curframes = frames - i;
+	      curframes = frames - ioff;
 	      for (d = 0; d < allocated; d++)
 		{
 		  int f, dev = out_devs[d];
 #if 1
 		  /* try to kludge around an ALSA bug... */
 		  for (f = 0; f < chans; f++) 
-		    memset(read_bufs[f], 0, samples_per_chan * sizeof(MUS_SAMPLE_TYPE));
+		    memset(read_bufs[f], 0, samples_per_chan * sizeof(mus_sample_t));
 #endif
 		  out_bytes[dev] = curframes * out_chans[d] * mus_data_format_to_bytes_per_sample(out_format[dev]);
 		}
 	    }
 	  mus_sound_read(fd, 0, curframes - 1, chans, read_bufs); 
 	  /* some systems are happier if we read the file before opening the dac */
-	  /* at this point the data is in separate arrays of MUS_SAMPLE_TYPE */
+	  /* at this point the data is in separate arrays of mus_sample_t */
 	  for (d = 0; d < allocated; d++)
 	    {
 	      int dev = out_devs[d];

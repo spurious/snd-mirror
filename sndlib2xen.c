@@ -4,17 +4,18 @@
   #include <config.h>
 #endif
 
-#include <stddef.h>
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-
 #if USE_SND
   #include "snd.h"
 #else
   #define PRINT_BUFFER_SIZE 512
   #define LABEL_BUFFER_SIZE 64
 #endif
+
+#include <stddef.h>
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
 
 #include "sndlib.h"
 #include "sndlib-strings.h"
@@ -80,24 +81,24 @@ static XEN gmus_sound_set(const char *caller, int (*func)(const char *file, int 
 static XEN glmus_sound(const char *caller, off_t (*func)(const char *file), XEN filename)
 {
   char *tmpstr = NULL;
-  int res;
+  off_t res;
   XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ONLY_ARG, caller, "a string"); 
   tmpstr = mus_expand_filename(XEN_TO_C_STRING(filename));
   res = (*func)(tmpstr);
   if (tmpstr) FREE(tmpstr);
-  return(C_TO_XEN_ULONG(res));
+  return(C_TO_XEN_OFF_T(res));
 }
 
-static XEN glmus_sound_set(const char *caller, off_t (*func)(const char *file, off_t newval), XEN filename, XEN val)
+static XEN glmus_sound_set(const char *caller, int (*func)(const char *file, off_t newval), XEN filename, XEN val)
 {
   char *tmpstr = NULL;
   off_t res;
   XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ARG_1, caller, "a string"); 
-  XEN_ASSERT_TYPE(XEN_ULONG_P(val), val, XEN_ARG_2, caller, "a long");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, caller, "a long");
   tmpstr = mus_expand_filename(XEN_TO_C_STRING(filename));
-  res = (*func)(tmpstr, XEN_TO_C_ULONG(val));
+  res = (*func)(tmpstr, XEN_TO_C_OFF_T(val));
   if (tmpstr) FREE(tmpstr);
-  return(C_TO_XEN_ULONG(res));
+  return(C_TO_XEN_INT(res));
 }
 
 static XEN g_sound_samples(XEN filename) 
@@ -296,7 +297,7 @@ static XEN g_sound_maxamp(XEN file)
 {
   #define H_mus_sound_maxamp "(" S_mus_sound_maxamp " filename) -> max amps in sound (a list of amps and locations)"
   int chans, rtn, i;
-  MUS_SAMPLE_TYPE *vals;
+  mus_sample_t *vals;
   char *filename;
   XEN res = XEN_EMPTY_LIST;
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ONLY_ARG, S_mus_sound_maxamp, "a string");
@@ -304,7 +305,7 @@ static XEN g_sound_maxamp(XEN file)
   chans = mus_sound_chans(filename);
   if (chans > 0)
     {
-      vals = (MUS_SAMPLE_TYPE *)CALLOC(chans * 2, sizeof(MUS_SAMPLE_TYPE));
+      vals = (mus_sample_t *)CALLOC(chans * 2, sizeof(mus_sample_t));
       rtn = mus_sound_maxamp(filename, vals);
       if (rtn > 0)
 	for (i = (chans * 2) - 2; i >= 0; i -= 2)
@@ -320,7 +321,7 @@ static XEN g_sound_set_maxamp(XEN file, XEN vals)
 {
   #define H_mus_sound_set_maxamp "(" S_mus_sound_set_maxamp " filename vals) -> set max amps for sound (vals is a list of amps and locations)"
   int i, chans, len;
-  MUS_SAMPLE_TYPE *mvals;
+  mus_sample_t *mvals;
   char *filename;
   XEN lst;
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, S_mus_sound_set_maxamp, "a string");
@@ -333,10 +334,10 @@ static XEN g_sound_set_maxamp(XEN file, XEN vals)
       if (len < (chans * 2))
 	mus_misc_error(S_mus_sound_set_maxamp, "max amp list wrong length", vals);
       if (len > chans * 2) len = chans * 2;
-      mvals = (MUS_SAMPLE_TYPE *)CALLOC(chans * 2, sizeof(MUS_SAMPLE_TYPE));
+      mvals = (mus_sample_t *)CALLOC(chans * 2, sizeof(mus_sample_t));
       for (i = 0, lst = XEN_COPY_ARG(vals); i < len; i += 2, lst = XEN_CDDR(lst))
 	{
-	  mvals[i] = (MUS_SAMPLE_TYPE)(XEN_TO_C_INT_OR_ELSE(XEN_CAR(lst), 0));
+	  mvals[i] = (mus_sample_t)(XEN_TO_C_INT_OR_ELSE(XEN_CAR(lst), 0));
 	  mvals[i + 1] = MUS_DOUBLE_TO_SAMPLE(XEN_TO_C_DOUBLE(XEN_CADR(lst)));
 	}
       mus_sound_set_maxamp(filename, mvals);
@@ -358,7 +359,7 @@ static XEN g_sound_data_p(XEN obj)
   return(C_TO_XEN_BOOLEAN(sound_data_p(obj)));
 }
 
-static MUS_SAMPLE_TYPE **get_sound_data(XEN arg)
+static mus_sample_t **get_sound_data(XEN arg)
 {
   sound_data *sd;
   if (SOUND_DATA_P(arg))
@@ -448,13 +449,13 @@ XEN make_sound_data(int chans, int frames)
   new_sound_data->length = frames;
   new_sound_data->chans = chans;
   new_sound_data->wrapped = 0;
-  new_sound_data->data = (MUS_SAMPLE_TYPE **)CALLOC(chans, sizeof(MUS_SAMPLE_TYPE *));
+  new_sound_data->data = (mus_sample_t **)CALLOC(chans, sizeof(mus_sample_t *));
   for (i = 0; i < chans; i++)
-    new_sound_data->data[i] = (MUS_SAMPLE_TYPE *)CALLOC(frames, sizeof(MUS_SAMPLE_TYPE));
+    new_sound_data->data[i] = (mus_sample_t *)CALLOC(frames, sizeof(mus_sample_t));
   XEN_MAKE_AND_RETURN_OBJECT(sound_data_tag, new_sound_data, 0, free_sound_data);
 }
 
-XEN wrap_sound_data(int chans, int frames, MUS_SAMPLE_TYPE **data)
+XEN wrap_sound_data(int chans, int frames, mus_sample_t **data)
 {
   sound_data *new_sound_data;
   new_sound_data = (sound_data *)MALLOC(sizeof(sound_data));
@@ -503,8 +504,8 @@ static XEN g_sound_data_maxamp(XEN obj)
   #define H_sound_data_maxamp "(" S_sound_data_maxamp " sd) -> list of maxamps of data in sd"
   sound_data *v;
   int i, j, chans, len;
-  MUS_SAMPLE_TYPE mx;
-  MUS_SAMPLE_TYPE *buf;
+  mus_sample_t mx;
+  mus_sample_t *buf;
   XEN lst = XEN_EMPTY_LIST;
   XEN_ASSERT_TYPE(SOUND_DATA_P(obj), obj, XEN_ARG_1, S_sound_data_maxamp, "a sound-data object");
   v = (sound_data *)XEN_OBJECT_REF(obj);
@@ -674,7 +675,7 @@ data-location should be retrieved from a previous call to mus-sound-data-locatio
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(chans), chans, XEN_ARG_2, S_mus_sound_reopen_output, "an integer or #f");
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(data_format), data_format, XEN_ARG_3, S_mus_sound_reopen_output, "an integer (data-format id) or #f");
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(header_type), header_type, XEN_ARG_4, S_mus_sound_reopen_output, "an integer (header-type id) or #f");
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(data_loc), data_loc, XEN_ARG_5, S_mus_sound_reopen_output, "an integer or #f");
+  XEN_ASSERT_TYPE(XEN_NUMBER_OR_BOOLEAN_P(data_loc), data_loc, XEN_ARG_5, S_mus_sound_reopen_output, "an integer or #f");
   df = XEN_TO_C_INT_OR_ELSE(data_format, MUS_OUT_FORMAT);
   if (MUS_DATA_FORMAT_OK(df))
     {
@@ -689,7 +690,7 @@ data-location should be retrieved from a previous call to mus-sound-data-locatio
 					   chns,
 					   df,
 					   ht,
-					   XEN_TO_C_INT_OR_ELSE(data_loc, 0));
+					   XEN_TO_C_OFF_T_OR_ELSE(data_loc, 0));
 	      if (tmpstr) FREE(tmpstr);
 	    }
 	  else mus_misc_error(S_mus_sound_reopen_output, "invalid chans", chans);
@@ -723,7 +724,7 @@ after updating its header (if any) to reflect bytes, the new file data size"
   if ((nfd < 0) || (nfd == fileno(stdin)) || (nfd == fileno(stdout)) || (nfd == fileno(stderr)))
     mus_misc_error(S_mus_sound_close_output, "invalid file", fd);
   return(C_TO_XEN_INT(mus_sound_close_output(XEN_TO_C_INT(fd),
-					     XEN_TO_C_INT_OR_ELSE(bytes, 0))));
+					     XEN_TO_C_OFF_T_OR_ELSE(bytes, 0))));
 }
 
 static XEN g_read_sound(XEN fd, XEN beg, XEN end, XEN chans, XEN sv)
@@ -766,11 +767,11 @@ static XEN g_seek_sound(XEN fd, XEN offset, XEN origin)
 to the short-wise sample offset given origin (both treated as in lseek)"
 
   XEN_ASSERT_TYPE(XEN_INTEGER_P(fd), fd, XEN_ARG_1, S_mus_sound_seek, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(offset), offset, XEN_ARG_2, S_mus_sound_seek, "an integer");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(offset), offset, XEN_ARG_2, S_mus_sound_seek, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(origin), origin, XEN_ARG_3, S_mus_sound_seek, "an integer");
-  return(C_TO_XEN_INT(mus_sound_seek(XEN_TO_C_INT(fd),
-				     XEN_TO_C_INT(offset),
-				     XEN_TO_C_INT(origin))));
+  return(C_TO_XEN_OFF_T(mus_sound_seek(XEN_TO_C_INT(fd),
+				       XEN_TO_C_OFF_T(offset),
+				       XEN_TO_C_INT(origin))));
 }
 
 static XEN g_seek_sound_frame(XEN fd, XEN offset)
@@ -779,15 +780,15 @@ static XEN g_seek_sound_frame(XEN fd, XEN offset)
 to the indicated frame"
 
   XEN_ASSERT_TYPE(XEN_INTEGER_P(fd), fd, XEN_ARG_1, S_mus_sound_seek_frame, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(offset), offset, XEN_ARG_2, S_mus_sound_seek_frame, "an integer");
-  return(C_TO_XEN_INT(mus_sound_seek_frame(XEN_TO_C_INT(fd),
-					   XEN_TO_C_INT(offset))));
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(offset), offset, XEN_ARG_2, S_mus_sound_seek_frame, "an integer");
+  return(C_TO_XEN_OFF_T(mus_sound_seek_frame(XEN_TO_C_INT(fd),
+					     XEN_TO_C_OFF_T(offset))));
 }
 
 /* since mus-audio-read|write assume sound-data vectors communicating with Scheme,
  *   we can't assume that the user has had a chance to deal with type problems.
  *   So, we keep track of each audio line's current read|write format and
- *   translate in mus_audio_read|write if necessary (if MUS_SAMPLE_TYPE isn't
+ *   translate in mus_audio_read|write if necessary (if mus_sample_t isn't
  *   compatible with the desired format).
  */
 
@@ -1286,7 +1287,7 @@ static XEN sound_data_size(XEN obj)
 static XEN sound_data_fill(XEN obj, XEN val)
 {
   sound_data *sd;
-  MUS_SAMPLE_TYPE filler;
+  mus_sample_t filler;
   int i, j, chans, len;
   filler = MUS_DOUBLE_TO_SAMPLE(XEN_TO_C_DOUBLE(val));
   sd = (sound_data *)XEN_OBJECT_REF(obj);

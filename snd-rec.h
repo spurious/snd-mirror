@@ -76,11 +76,11 @@ typedef struct {
   int input_channels[MAX_SOUNDCARDS];
   int input_channel_active[MAX_IN_CHANS]; /* is this input channel receiving input */
   char *raw_input_bufs[MAX_SOUNDCARDS]; /* incoming data has not yet been converted to sndlib representation */
-  MUS_SAMPLE_TYPE unscaled_output_bufs[MAX_OUT_CHANS]; /* per-channel (output) buffer, before final output scaling */
-  MUS_SAMPLE_TYPE input_vu_maxes[MAX_IN_CHANS]; /* VU label values on input chans */
-  MUS_SAMPLE_TYPE output_vu_maxes[MAX_OUT_CHANS]; /* VU label values on output chans */
-  MUS_SAMPLE_TYPE *all_systems_input_buf;
-  MUS_SAMPLE_TYPE *one_system_input_buf;
+  mus_sample_t unscaled_output_bufs[MAX_OUT_CHANS]; /* per-channel (output) buffer, before final output scaling */
+  mus_sample_t input_vu_maxes[MAX_IN_CHANS]; /* VU label values on input chans */
+  mus_sample_t output_vu_maxes[MAX_OUT_CHANS]; /* VU label values on output chans */
+  mus_sample_t *all_systems_input_buf;
+  mus_sample_t *one_system_input_buf;
   int system_input_buffer_size;
 
   int *chan_in_active;             /* overall_in_chans */
@@ -106,7 +106,7 @@ typedef struct {
   char *output_file;
   int output_file_descriptor;     /* mus_file_write to this */
   int output_header_type;
-  MUS_SAMPLE_TYPE **output_bufs;  /* formatted non-interleaved output (for file and monitor outputs) */
+  mus_sample_t **output_bufs;  /* formatted non-interleaved output (for file and monitor outputs) */
 
   int duration_label_update_frames; /* frames between updates of the duration label */
   int total_output_frames;
@@ -147,8 +147,8 @@ void set_read_in_progress (snd_state *ss);
 int in_chans_active(void);
 int out_chans_active(void);
 void recorder_characterize_devices(int devs, int output_devices);
-void recorder_set_vu_in_val(int chan, MUS_SAMPLE_TYPE val);
-void recorder_set_vu_out_val(int chan, MUS_SAMPLE_TYPE val);
+void recorder_set_vu_in_val(int chan, mus_sample_t val);
+void recorder_set_vu_out_val(int chan, mus_sample_t val);
 
 void sensitize_control_buttons(void);
 void unsensitize_control_buttons(void);

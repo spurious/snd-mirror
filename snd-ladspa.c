@@ -14,6 +14,7 @@
 
 /* CHANGES:
  *
+ * bil: 2-May-02  use off_t for sample number.
  * bil: 14-Dec-01 various C++ cleanups.
  * bil: 28-Nov-01 input chans need not equal output chans now.
  * bil: 15-Oct-01 added some error returns (rather than snd_error).   multichannel plugin support.
@@ -447,7 +448,8 @@ Information about about parameters can be acquired using analyse-ladspa."
   const LADSPA_Descriptor * psDescriptor;
   char * pcFilename, * pcLabel, * pcTmp;
   LADSPA_Handle * psHandle;
-  unsigned long lSampleRate, lPortIndex, lAt, lBlockSize, lSampleIndex;
+  unsigned long lSampleRate, lPortIndex, lBlockSize, lSampleIndex;
+  off_t lAt;
   unsigned long lParameterCount;
   XEN xenParameters;
   LADSPA_PortDescriptor iPortDescriptor;
@@ -456,12 +458,13 @@ Information about about parameters can be acquired using analyse-ladspa."
   chan_info *cp, *ncp;
   snd_info *sp;
   char *ofile, *msg;
-  int num, i, j, ofd, datumb, err = 0, inchans = 1, readers = 1, outchans = 1;
+  int i, j, ofd, datumb, err = 0, inchans = 1, readers = 1, outchans = 1;
+  off_t num;
   snd_fd **sf;
   file_info *hdr;
   snd_state *state;
   XEN errmsg;
-  MUS_SAMPLE_TYPE **data;
+  mus_sample_t **data;
   LADSPA_Data **pfInputBuffer = NULL;
   LADSPA_Data **pfOutputBuffer = NULL;
 
@@ -557,7 +560,7 @@ Information about about parameters can be acquired using analyse-ladspa."
   sf = (snd_fd **)CALLOC(readers, sizeof(snd_fd));
 
   /* Get sample count. */
-  num = XEN_TO_C_INT(samples);
+  num = XEN_TO_C_OFF_T(samples);
 
   /* Local version of sound descriptor. */
   if (XEN_LIST_P(reader))
@@ -589,9 +592,9 @@ Information about about parameters can be acquired using analyse-ladspa."
   for (i = 0; i < outchans; i++)
     pfOutputBuffer[i] = (LADSPA_Data *)CALLOC(MAX_BUFFER_SIZE, sizeof(LADSPA_Data));
 
-  data = (MUS_SAMPLE_TYPE **)CALLOC(outchans, sizeof(MUS_SAMPLE_TYPE *));
+  data = (mus_sample_t **)CALLOC(outchans, sizeof(mus_sample_t *));
   for (i = 0; i < outchans; i++)
-    data[i] = (MUS_SAMPLE_TYPE *)CALLOC(MAX_BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE));
+    data[i] = (mus_sample_t *)CALLOC(MAX_BUFFER_SIZE, sizeof(mus_sample_t));
 
   /* Connect input and output control ports. */
   {
@@ -642,7 +645,7 @@ Information about about parameters can be acquired using analyse-ladspa."
     psDescriptor->activate(psHandle);
 
   lAt = 0;
-  while ((int)lAt < num) {
+  while (lAt < num) {
 
     /* Decide how much audio to process this frame. */
     lBlockSize = num - lAt;

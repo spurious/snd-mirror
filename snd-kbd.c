@@ -1239,7 +1239,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      if (count > 0)
 		{
 		  start_selection_creation(cp, cp->cursor);
-		  report_in_minibuffer(sp, "selection starts at %d", cp->cursor);
+		  report_in_minibuffer(sp, "selection starts at " OFF_TD, cp->cursor);
 		  clear_search = FALSE;
 		}
 	      break;

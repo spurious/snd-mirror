@@ -530,7 +530,7 @@ int record_dialog_is_active(void);
 
 /* -------- snd-gfile.c -------- */
 
-char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type, int *format, int *location);
+char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location);
 void alert_new_file(void);
 void make_open_file_dialog(snd_state *ss, int read_only, int managed);
 file_data *make_file_data_panel(snd_state *ss, GtkWidget *parent, char *name, int with_chan, 

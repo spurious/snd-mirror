@@ -345,6 +345,7 @@ AC_TYPE_PID_T
 AC_STRUCT_TM
 AC_C_BIGENDIAN
 AC_SYS_LARGEFILE
+AC_TYPE_OFF_T
 
 AC_CHECK_SIZEOF(int)
 AC_CHECK_SIZEOF(char)
@@ -353,6 +354,7 @@ AC_CHECK_SIZEOF(long)
 AC_CHECK_SIZEOF(int *)
 AC_CHECK_SIZEOF(float)
 AC_CHECK_SIZEOF(void *)
+AC_CHECK_SIZEOF(off_t)
 
 dnl this taken from Guile's configure.in
 AC_CACHE_CHECK([for long longs], snd_cv_long_longs, AC_TRY_COMPILE(,[long long a], snd_cv_long_longs=yes, snd_cv_long_longs=no))

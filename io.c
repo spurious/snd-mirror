@@ -1,16 +1,16 @@
 /* IO handlers */
 /*
  * --------------------------------
- * int mus_file_read(int fd, int beg, int end, int chans, MUS_SAMPLE_TYPE **bufs)
- * int mus_file_write(int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **bufs)
- * long mus_file_seek(int tfd, long offset, int origin)
+ * int mus_file_read(int fd, int beg, int end, int chans, mus_sample_t **bufs)
+ * int mus_file_write(int tfd, int beg, int end, int chans, mus_sample_t **bufs)
+ * off_t mus_file_seek(int tfd, off_t offset, int origin)
  * int mus_file_open_read(const char *arg) 
  * int mus_file_open_write(const char *arg)
  * int mus_file_create(const char *arg)
  * int mus_file_reopen_write(const char *arg)
  * int mus_file_close(int fd)
  * int mus_file_probe(const char *arg)
- * int mus_file_set_descriptors (int tfd, char *name, int df, int ds, int dl, int chns, int typ)
+ * int mus_file_set_descriptors (int tfd, char *name, int df, int ds, off_t dl, int chns, int typ)
  * int mus_file_close_descriptors(int tfd)
  * char *mus_file_full_name(char *tok)
  * char *mus_format(const char *format, ...)
@@ -475,14 +475,15 @@ void set_rt_audio_p (int rt)
 
 typedef struct {
   char *name;
-  int data_format, bytes_per_sample, data_location, true_fd, data_clipped, chans, header_type;
+  int data_format, bytes_per_sample, true_fd, data_clipped, chans, header_type;
+  off_t data_location;
   float prescaler;
 } io_fd;
 
 static int io_fd_size = 0;
 static io_fd **io_fds = NULL;
 
-int mus_file_set_descriptors (int tfd, const char *name, int format, int size, int location, int chans, int type)
+int mus_file_set_descriptors (int tfd, const char *name, int format, int size /* datum size */, off_t location, int chans, int type)
 {
   io_fd *fd;
   int i, lim = -1;
@@ -701,11 +702,11 @@ int mus_file_close(int fd)
 
 /* ---------------- seek ---------------- */
 
-long mus_file_seek(int tfd, long offset, int origin)
+off_t mus_file_seek(int tfd, off_t offset, int origin)
 {
   io_fd *fd;
-  int siz;
-  long loc, true_loc, header_end;
+  int siz; /* datum size */
+  off_t loc, true_loc, header_end;
   if ((tfd == MUS_DAC_CHANNEL) || 
       (tfd == MUS_DAC_REVERB)) 
     return(0);
@@ -715,8 +716,8 @@ long mus_file_seek(int tfd, long offset, int origin)
       (io_fds[tfd] == NULL))
     {
       mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED,
-		"no file descriptor %d %d %d\n  [%s[%d] %s]",
-		tfd, (int)offset, origin,
+		"no file descriptor %d " OFF_TD " %d\n  [%s[%d] %s]",
+		tfd, offset, origin,
 		__FILE__, __LINE__, __FUNCTION__);
       return(MUS_ERROR);
     }
@@ -724,8 +725,8 @@ long mus_file_seek(int tfd, long offset, int origin)
   if (fd->data_format == MUS_UNKNOWN) 
     {
       mus_error(MUS_NOT_A_SOUND_FILE,
-		"invalid stream: %s %d, %d, %d\n  [%s[%d] %s]",
-		fd->name, tfd, (int)offset, origin,
+		"invalid stream: %s %d, " OFF_TD ", %d\n  [%s[%d] %s]",
+		fd->name, tfd, offset, origin,
 		__FILE__, __LINE__, __FUNCTION__);
       return(MUS_ERROR);
     }
@@ -764,7 +765,7 @@ long mus_file_seek(int tfd, long offset, int origin)
   return(MUS_ERROR);
 }
 
-int mus_file_seek_frame(int tfd, int frame)
+off_t mus_file_seek_frame(int tfd, off_t frame)
 {
   io_fd *fd;
   if ((tfd == MUS_DAC_CHANNEL) || (tfd == MUS_DAC_REVERB)) return(0);
@@ -795,7 +796,7 @@ int mus_file_seek_frame(int tfd, int frame)
   if (fd->data_format == MUS_UNKNOWN) 
     {
       mus_error(MUS_NOT_A_SOUND_FILE,
-		"invalid stream: %s %d, %d\n  [%s[%d] %s]",
+		"invalid stream: %s %d, " OFF_TD "\n  [%s[%d] %s]",
 		fd->name, tfd, frame, __FILE__, __LINE__, __FUNCTION__);
       return(MUS_ERROR);
     }
@@ -931,12 +932,12 @@ static int from_mulaw(unsigned char u_val)
 /* ---------------- read/write buffer allocation ---------------- */
 
 #if LONG_INT_P
-static MUS_SAMPLE_TYPE **long_int_p_table = NULL;
+static mus_sample_t **long_int_p_table = NULL;
 static int long_int_p_table_size = 0;
 
-MUS_SAMPLE_TYPE *mus_table2ptr(int arr) {return(long_int_p_table[arr]);}
+mus_sample_t *mus_table2ptr(int arr) {return(long_int_p_table[arr]);}
 
-int mus_ptr2table(MUS_SAMPLE_TYPE *arr) 
+int mus_ptr2table(mus_sample_t *arr) 
 {
   int i, loc;
   loc = -1;
@@ -952,11 +953,11 @@ int mus_ptr2table(MUS_SAMPLE_TYPE *arr)
       long_int_p_table_size += 16;
       if (long_int_p_table)
 	{
-	  long_int_p_table = (MUS_SAMPLE_TYPE **)REALLOC(long_int_p_table, long_int_p_table_size * sizeof(MUS_SAMPLE_TYPE *));
+	  long_int_p_table = (mus_sample_t **)REALLOC(long_int_p_table, long_int_p_table_size * sizeof(mus_sample_t *));
 	  for (i = loc; i < long_int_p_table_size; i++) long_int_p_table[i] = NULL;
 	}
       else
-	long_int_p_table = (MUS_SAMPLE_TYPE **)CALLOC(long_int_p_table_size, sizeof(MUS_SAMPLE_TYPE *));
+	long_int_p_table = (mus_sample_t **)CALLOC(long_int_p_table_size, sizeof(mus_sample_t *));
     }
   long_int_p_table[loc] = arr;
   return(loc);
@@ -964,7 +965,7 @@ int mus_ptr2table(MUS_SAMPLE_TYPE *arr)
 
 void mus_untableptr(int ip_1) 
 {
-  MUS_SAMPLE_TYPE *ip; 
+  mus_sample_t *ip; 
   ip = mus_table2ptr(ip_1);
   if (ip) FREE(ip); 
   long_int_p_table[ip_1] = NULL;
@@ -1001,7 +1002,7 @@ static int checked_write(int tfd, char *buf, int chars)
 	  else
 #ifndef MACOS
 	    mus_error(MUS_WRITE_ERROR,
-		      "IO write error (%s%s%s): %d of %d bytes written for %d (%d %d %d)\n\n  [%s[%d] %s]",
+		      "IO write error (%s%s%s): %d of %d bytes written for %d (%d %d " OFF_TD ")\n\n  [%s[%d] %s]",
 		      fd->name, (errno) ? " " : "", (errno) ? strerror(errno) : "",
 		      bytes, chars, tfd, fd->bytes_per_sample, fd->data_format, fd->data_location,
 		      __FILE__, __LINE__, __FUNCTION__);
@@ -1025,14 +1026,14 @@ static int checked_write(int tfd, char *buf, int chars)
   #define MUS_SAMPLE_UNSCALED(n) ((n) * (1 << (MUS_SAMPLE_BITS - 16)))
 #endif
 
-static int mus_read_any_1(int tfd, int beg, int chans, int nints, MUS_SAMPLE_TYPE **bufs, MUS_SAMPLE_TYPE *cm, char *inbuf)
+static int mus_read_any_1(int tfd, int beg, int chans, int nints, mus_sample_t **bufs, mus_sample_t *cm, char *inbuf)
 {
   int loclim;
   io_fd *fd;
   int bytes, j, lim, siz, total, leftover, total_read, k, loc, oldloc, siz_chans, buflim, format;
   unsigned char *jchar;
   char *charbuf = NULL;
-  MUS_SAMPLE_TYPE *buffer;
+  mus_sample_t *buffer;
   float prescaling;
   int from_buffer = 0;
   if (nints <= 0) return(0);
@@ -1130,7 +1131,7 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, MUS_SAMPLE_TYP
 		  if ((cm == NULL) || (cm[k]))
 		    {
 		      if (loc == 0)
-			memset((void *)(bufs[k]), 0, lim * sizeof(MUS_SAMPLE_TYPE));
+			memset((void *)(bufs[k]), 0, lim * sizeof(mus_sample_t));
 		      else
 			for (j = loc; j < lim; j++) 
 			  bufs[k][j] = MUS_SAMPLE_0;
@@ -1152,7 +1153,7 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, MUS_SAMPLE_TYP
 	{
 	  if ((cm == NULL) || (cm[k]))
 	    {
-	      buffer = (MUS_SAMPLE_TYPE *)(bufs[k]);
+	      buffer = (mus_sample_t *)(bufs[k]);
 	      if (buffer)
 		{
 		  loc = oldloc;
@@ -1205,49 +1206,49 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, MUS_SAMPLE_TYP
 		      if (prescaling == 1.0)
 			{
 			  for (; loc < loclim; loc++, jchar += siz_chans) 
-			    buffer[loc] = (MUS_SAMPLE_TYPE) (m_big_endian_float(jchar));
+			    buffer[loc] = (mus_sample_t) (m_big_endian_float(jchar));
 			}
 		      else
 			{
 			  for (; loc < loclim; loc++, jchar += siz_chans) 
-			    buffer[loc] = (MUS_SAMPLE_TYPE) (prescaling * (m_big_endian_float(jchar)));
+			    buffer[loc] = (mus_sample_t) (prescaling * (m_big_endian_float(jchar)));
 			}
 		      break;
 		    case MUS_BFLOAT_UNSCALED:
 		      for (; loc < loclim; loc++, jchar += siz_chans) 
-			buffer[loc] = (MUS_SAMPLE_TYPE) (MUS_SAMPLE_UNSCALED(m_big_endian_float(jchar)));
+			buffer[loc] = (mus_sample_t) (MUS_SAMPLE_UNSCALED(m_big_endian_float(jchar)));
 		      break;
 		    case MUS_BDOUBLE:   
 		      for (; loc < loclim; loc++, jchar += siz_chans)
-			buffer[loc] = (MUS_SAMPLE_TYPE) (prescaling * (m_big_endian_double(jchar)));
+			buffer[loc] = (mus_sample_t) (prescaling * (m_big_endian_double(jchar)));
 		      break;
 		    case MUS_BDOUBLE_UNSCALED:   
 		      for (; loc < loclim; loc++, jchar += siz_chans)
-			buffer[loc] = (MUS_SAMPLE_TYPE) (MUS_SAMPLE_UNSCALED(m_big_endian_double(jchar)));
+			buffer[loc] = (mus_sample_t) (MUS_SAMPLE_UNSCALED(m_big_endian_double(jchar)));
 		      break;
 		    case MUS_LFLOAT:
 		      if (prescaling == 1.0)
 			{
 			  for (; loc < loclim; loc++, jchar += siz_chans) 
-			    buffer[loc] = (MUS_SAMPLE_TYPE) (m_little_endian_float(jchar));
+			    buffer[loc] = (mus_sample_t) (m_little_endian_float(jchar));
 			}
 		      else
 			{
 			  for (; loc < loclim; loc++, jchar += siz_chans) 
-			    buffer[loc] = (MUS_SAMPLE_TYPE) (prescaling * (m_little_endian_float(jchar)));
+			    buffer[loc] = (mus_sample_t) (prescaling * (m_little_endian_float(jchar)));
 			}
 		      break;
 		    case MUS_LFLOAT_UNSCALED:    
 		      for (; loc < loclim; loc++, jchar += siz_chans) 
-			buffer[loc] = (MUS_SAMPLE_TYPE) (MUS_SAMPLE_UNSCALED(m_little_endian_float(jchar)));
+			buffer[loc] = (mus_sample_t) (MUS_SAMPLE_UNSCALED(m_little_endian_float(jchar)));
 		      break;
 		    case MUS_LDOUBLE:   
 		      for (; loc < loclim; loc++, jchar += siz_chans) 
-			buffer[loc] = (MUS_SAMPLE_TYPE) (prescaling * (m_little_endian_double(jchar)));
+			buffer[loc] = (mus_sample_t) (prescaling * (m_little_endian_double(jchar)));
 		      break;
 		    case MUS_LDOUBLE_UNSCALED:   
 		      for (; loc < loclim; loc++, jchar += siz_chans) 
-			buffer[loc] = (MUS_SAMPLE_TYPE) (MUS_SAMPLE_UNSCALED(m_little_endian_double(jchar)));
+			buffer[loc] = (mus_sample_t) (MUS_SAMPLE_UNSCALED(m_little_endian_double(jchar)));
 		      break;
 		    case MUS_UBSHORT:   
 		      for (; loc < loclim; loc++, jchar += siz_chans) 
@@ -1278,25 +1279,25 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, MUS_SAMPLE_TYP
   return(total_read);
 }
 
-int mus_file_read_any(int tfd, int beg, int chans, int nints, MUS_SAMPLE_TYPE **bufs, MUS_SAMPLE_TYPE *cm)
+int mus_file_read_any(int tfd, int beg, int chans, int nints, mus_sample_t **bufs, mus_sample_t *cm)
 {
   return(mus_read_any_1(tfd, beg, chans, nints, bufs, cm, NULL));
 }
 
-int mus_file_read_file(int tfd, int beg, int chans, int nints, MUS_SAMPLE_TYPE **bufs)
+int mus_file_read_file(int tfd, int beg, int chans, int nints, mus_sample_t **bufs)
 {
   return(mus_read_any_1(tfd, beg, chans, nints, bufs, NULL, NULL));
 }
 
-int mus_file_read_buffer(int charbuf_data_format, int beg, int chans, int nints, MUS_SAMPLE_TYPE **bufs, char *charbuf)
+int mus_file_read_buffer(int charbuf_data_format, int beg, int chans, int nints, mus_sample_t **bufs, char *charbuf)
 {
   return(mus_read_any_1(charbuf_data_format, beg, chans, nints, bufs, NULL, charbuf)); 
 }
 
-int mus_file_read(int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **bufs)
+int mus_file_read(int tfd, int beg, int end, int chans, mus_sample_t **bufs)
 {
   int num, rtn, i, k;
-  MUS_SAMPLE_TYPE *buffer;
+  mus_sample_t *buffer;
   num = (end - beg + 1);
   rtn = mus_read_any_1(tfd, beg, chans, num, bufs, NULL, NULL);
   if (rtn == MUS_ERROR) return(MUS_ERROR);
@@ -1304,18 +1305,18 @@ int mus_file_read(int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **bufs)
     /* this zeroing can be fooled if the file is chunked and has trailing, non-data chunks */
     for (k = 0; k < chans; k++)
       {
-	buffer = (MUS_SAMPLE_TYPE *)(bufs[k]);
+	buffer = (mus_sample_t *)(bufs[k]);
 	for (i = rtn + beg; i <= end; i++)
 	  buffer[i] = MUS_SAMPLE_0;
       }
   return(num);
 }
 
-int mus_file_read_chans(int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **bufs, MUS_SAMPLE_TYPE *cm)
+int mus_file_read_chans(int tfd, int beg, int end, int chans, mus_sample_t **bufs, mus_sample_t *cm)
 {
   /* an optimization of mus_file_read -- just reads the desired channels */
   int num, rtn, i, k;
-  MUS_SAMPLE_TYPE *buffer;
+  mus_sample_t *buffer;
   num = (end - beg + 1);
   rtn = mus_read_any_1(tfd, beg, chans, num, bufs, cm, NULL);
   if (rtn == MUS_ERROR) return(MUS_ERROR);
@@ -1323,7 +1324,7 @@ int mus_file_read_chans(int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **
     for (k = 0; k < chans; k++)
       if ((cm == NULL) || (cm[k]))
 	{
-	  buffer = (MUS_SAMPLE_TYPE *)(bufs[k]);
+	  buffer = (mus_sample_t *)(bufs[k]);
 	  for (i = rtn + beg; i <= end; i++)
 	    buffer[i] = MUS_SAMPLE_0;
 	}
@@ -1382,7 +1383,7 @@ int mus_file_write_zeros(int tfd, int num)
   return(num);
 }
 
-static int mus_write_1(int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **bufs, char *inbuf, int clipped)
+static int mus_write_1(int tfd, int beg, int end, int chans, mus_sample_t **bufs, char *inbuf, int clipped)
 {
   int loclim, c3;
   int err;
@@ -1391,7 +1392,7 @@ static int mus_write_1(int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **b
   unsigned char *jchar;
   char *charbuf = NULL;
   int to_buffer = 0;
-  MUS_SAMPLE_TYPE *buffer;
+  mus_sample_t *buffer;
   if (chans <= 0) return(0);
   if (inbuf) to_buffer = 1;
   if (!to_buffer)
@@ -1462,7 +1463,7 @@ static int mus_write_1(int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **b
 	{
 	  if (bufs[k] == NULL) continue;
 	  loc = oldloc;
-	  buffer = (MUS_SAMPLE_TYPE *)(bufs[k]);
+	  buffer = (mus_sample_t *)(bufs[k]);
 	  if (clipping)
 	    {
 	      cliploc = oldloc;
@@ -1580,17 +1581,17 @@ static int mus_write_1(int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **b
   return(MUS_NO_ERROR);
 }
 
-int mus_file_write(int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **bufs)
+int mus_file_write(int tfd, int beg, int end, int chans, mus_sample_t **bufs)
 {
   return(mus_write_1(tfd, beg, end, chans, bufs, NULL, 0));
 }
 
-int mus_file_write_file(int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **bufs)
+int mus_file_write_file(int tfd, int beg, int end, int chans, mus_sample_t **bufs)
 {
   return(mus_write_1(tfd, beg, end, chans, bufs, NULL, 0));
 }
 
-int mus_file_write_buffer(int charbuf_data_format, int beg, int end, int chans, MUS_SAMPLE_TYPE **bufs, char *charbuf, int clipped)
+int mus_file_write_buffer(int charbuf_data_format, int beg, int end, int chans, mus_sample_t **bufs, char *charbuf, int clipped)
 {
   return(mus_write_1(charbuf_data_format, beg, end, chans, bufs, charbuf, clipped));
 }
@@ -1735,6 +1736,16 @@ Float mus_fclamp(Float lo, Float val, Float hi)
 }
 
 int mus_iclamp(int lo, int val, int hi) 
+{
+  if (val > hi) 
+    return(hi); 
+  else 
+    if (val < lo) 
+      return(lo); 
+    else return(val);
+}
+
+off_t mus_oclamp(off_t lo, off_t val, off_t hi) 
 {
   if (val > hi) 
     return(hi); 

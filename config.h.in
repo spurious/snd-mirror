@@ -10,6 +10,7 @@
 #undef mode_t
 #undef pid_t
 #undef size_t
+#undef off_t
 
 #undef WORDS_BIGENDIAN
 #undef HAVE_LLONGS
@@ -74,6 +75,7 @@
 #undef SIZEOF_INT_P
 #undef SIZEOF_FLOAT
 #undef SIZEOF_VOID_P
+#undef SIZEOF_OFF_T
 
 #undef LINUX
 #undef SGI
@@ -106,6 +108,8 @@
 #undef WITH_BIG_COLORMAP
 #undef SND_AS_WIDGET
 #undef Float
+#undef _FILE_OFFSET_BITS
+#undef _LARGE_FILES
 #undef USE_GTK
 #undef USE_MOTIF
 #undef USE_NO_GUI

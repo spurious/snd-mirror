@@ -2,8 +2,8 @@
  *
  * --------------------------------
  * int mus_header_read (const char *name)
- * int mus_header_write (const char *name, int type, int in_srate, int in_chans, int loc, int size_in_samples, int format, const char *comment, int len)
- * int mus_header_update (const char *name, int type, int size, int srate, int format, int chans, int loc)
+ * int mus_header_write (const char *name, int type, int in_srate, int in_chans, off_t loc, off_t size_in_samples, int format, const char *comment, int len)
+ * int mus_header_update (const char *name, int type, off_t size, int srate, int format, int chans, int loc)
  * int mus_header_initialize (void)
  *
  *   Once mus_header_read has been called, the data in it can be accessed through:
@@ -344,7 +344,7 @@ int mus_data_format_to_bytes_per_sample (int format)
 
 int mus_header_data_format_to_bytes_per_sample (void) {return(mus_data_format_to_bytes_per_sample(data_format));}
 off_t mus_samples_to_bytes (int format, off_t size) {return(size * (mus_data_format_to_bytes_per_sample(format)));}
-off_t mus_bytes_to_samples (int format, off_t size) {return((unsigned int)(size / (mus_data_format_to_bytes_per_sample(format))));}
+off_t mus_bytes_to_samples (int format, off_t size) {return((off_t)(size / (mus_data_format_to_bytes_per_sample(format))));}
 
 void mus_header_snd_set_header (int in_srate, int in_chans, int in_format) 
 {
@@ -583,7 +583,13 @@ static int read_next_header (int chan)
   data_size = mus_char_to_bint((unsigned char *)(hdrbuf + 8));
   /* can be bogus -- fixup if possible */
   true_file_length = SEEK_FILE_LENGTH(chan);
-  if (data_size <= 24) data_size = (true_file_length - data_location);
+  if ((data_size <= 24) || (data_size < 0))
+    data_size = (true_file_length - data_location);
+  else
+    {
+      if (true_file_length > (off_t)(1 << 31))
+	data_size = true_file_length - data_location; /* assume size field overflowed 32 bits */
+    }
   original_data_format = mus_char_to_bint((unsigned char *)(hdrbuf + 12));
   switch (original_data_format) 
     {
@@ -885,8 +891,8 @@ static int read_aiff_header (int chan, int overall_offset)
       if (seek_and_read(chan, (unsigned char *)hdrbuf, offset, 32) <= 0)
 	{
 	  mus_error(MUS_HEADER_READ_FAILED,
-		    "AIFF header chunks confused at %ld\n  [%s[%d] %s]",
-		    (long)offset,
+		    "AIFF header chunks confused at " OFF_TD "\n  [%s[%d] %s]",
+		    offset,
 		    __FILE__, __LINE__, __FUNCTION__);
 	  return(MUS_ERROR);
 	}
@@ -4973,7 +4979,7 @@ int mus_header_read_with_fd(int chan)
 }
 
 static int mus_header_write_with_fd_and_name(int chan, int type, int in_srate, int in_chans, 
-					     int loc, int size_in_samples, int format, const char *comment, 
+					     off_t loc, off_t size_in_samples, int format, const char *comment, 
 					     int len, const char *filename)
 {
   off_t siz;
@@ -5008,12 +5014,12 @@ static int mus_header_write_with_fd_and_name(int chan, int type, int in_srate, i
   return(MUS_NO_ERROR);
 }
 
-int mus_header_write_with_fd(int chan, int type, int in_srate, int in_chans, int loc, int size_in_samples, int format, const char *comment, int len)
+int mus_header_write_with_fd(int chan, int type, int in_srate, int in_chans, off_t loc, off_t size_in_samples, int format, const char *comment, int len)
 {
   return(mus_header_write_with_fd_and_name(chan, type, in_srate, in_chans, loc, size_in_samples, format, comment, len, NULL));
 }
 
-int mus_header_write(const char *name, int type, int in_srate, int in_chans, int loc, int size_in_samples, int format, const char *comment, int len)
+int mus_header_write(const char *name, int type, int in_srate, int in_chans, off_t loc, off_t size_in_samples, int format, const char *comment, int len)
 {
   int chan, err;
   chan = mus_file_create(name);
@@ -5037,17 +5043,17 @@ int mus_header_write(const char *name, int type, int in_srate, int in_chans, int
   return(err);
 }
 
-int mus_header_update_with_fd(int chan, int type, int size)
+int mus_header_update_with_fd(int chan, int type, off_t size)
 {
   /* size here is in bytes! */
   lseek(chan, 0L, SEEK_SET);
   switch (type)
     {
-    case MUS_NEXT: update_next_header(chan, size); break;
-    case MUS_AIFC: case MUS_AIFF: update_aiff_header(chan, size); break;
-    case MUS_RIFF: update_riff_header(chan, size); break;
+    case MUS_NEXT: update_next_header(chan, (int)size); break;
+    case MUS_AIFC: case MUS_AIFF: update_aiff_header(chan, (int)size); break;
+    case MUS_RIFF: update_riff_header(chan, (int)size); break;
     case MUS_IRCAM: update_ircam_header(); break;
-    case MUS_NIST: update_nist_header(chan, size); break;
+    case MUS_NIST: update_nist_header(chan, (int)size); break;
     case MUS_RAW: break;
     default:
       {
@@ -5062,7 +5068,7 @@ int mus_header_update_with_fd(int chan, int type, int size)
   return(MUS_NO_ERROR);
 }
 
-int mus_header_update(const char *name, int type, int size, int wsrate, int format, int wchans, int loc)
+int mus_header_update(const char *name, int type, off_t size, int wsrate, int format, int wchans, off_t loc)
 {
   int chan, err;
   off_t siz;
@@ -5094,7 +5100,7 @@ int mus_header_update(const char *name, int type, int size, int wsrate, int form
       if (loc != 0)
 	{
 	  lseek(chan, 4L, SEEK_SET);
-	  mus_bint_to_char((unsigned char *)hdrbuf, loc);
+	  mus_bint_to_char((unsigned char *)hdrbuf, (int)loc);
 	  write(chan, hdrbuf, 4);
 	}
     }
@@ -5109,9 +5115,10 @@ int mus_header_update(const char *name, int type, int size, int wsrate, int form
   return(err);
 }
 
-int mus_header_change_samples(const char *filename, int new_samples)
+int mus_header_change_samples(const char *filename, off_t new_samples)
 {
-  int bytes, err, fd;
+  off_t bytes;
+  int err, fd;
   err = mus_header_read(filename);
   if (err == MUS_NO_ERROR)
     {
@@ -5237,8 +5244,9 @@ int mus_header_change_type(const char *filename, int new_type, int new_format)
   int err = MUS_NO_ERROR;
   /* open temp, write header, copy data, replace original with temp */
   char *new_file, *comment = NULL;
-  int ofd, ifd, loc, len = 0;
+  int ofd, ifd, len = 0;
   long nbytes;
+  off_t loc;
   char *buf = NULL;
   err = mus_header_read(filename);
   if (err == MUS_NO_ERROR)
@@ -5369,7 +5377,7 @@ int mus_header_change_format(const char *filename, int new_format)
   return(err);
 }
 
-int mus_header_change_location(const char *filename, int new_location)
+int mus_header_change_location(const char *filename, off_t new_location)
 {
   /* only NEXT changeable in this regard */
   int err = MUS_NO_ERROR, fd;

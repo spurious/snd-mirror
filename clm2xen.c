@@ -25,6 +25,13 @@
   #include <config.h>
 #endif
 
+#if USE_SND
+  #include "snd.h"
+#else
+  #define PRINT_BUFFER_SIZE 512
+  #define LABEL_BUFFER_SIZE 64
+#endif
+
 #include <stddef.h>
 #include <math.h>
 #include <stdio.h>
@@ -41,13 +48,6 @@
   #ifndef _MSC_VER
     #include <unistd.h>
   #endif
-#endif
-
-#if USE_SND
-  #include "snd.h"
-#else
-  #define PRINT_BUFFER_SIZE 512
-  #define LABEL_BUFFER_SIZE 64
 #endif
 
 #include "sndlib.h"
@@ -223,7 +223,17 @@ static int ikeyarg (XEN key, char *caller, int n, int def)
   if (!(XEN_KEYWORD_P(key)))
     {
       XEN_ASSERT_TYPE(XEN_NUMBER_P(key), key, n, caller, "a number or keyword");
-      return(XEN_TO_C_INT_OR_ELSE_WITH_CALLER(key, 0, caller));
+      return(XEN_TO_C_INT_OR_ELSE_WITH_CALLER(key, def, caller));
+    }
+  return(def);
+}
+
+static off_t okeyarg (XEN key, char *caller, int n, off_t def)
+{
+  if (!(XEN_KEYWORD_P(key)))
+    {
+      XEN_ASSERT_TYPE(XEN_NUMBER_P(key), key, n, caller, "a number or keyword");
+      return(XEN_TO_C_OFF_T_OR_ELSE(key, def));
     }
   return(def);
 }
@@ -3272,7 +3282,7 @@ static XEN g_in_any_1(char *caller, XEN frame, XEN chan, XEN inp)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(frame), frame, XEN_ARG_1, caller, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_2, caller, "an integer");
   XEN_ASSERT_TYPE((MUS_XEN_P(inp)) && (mus_input_p(MUS_XEN_TO_CLM(inp))), inp, XEN_ARG_3, caller, "an input gen");
-  return(C_TO_XEN_DOUBLE(mus_in_any(XEN_TO_C_INT_OR_ELSE(frame, 0), XEN_TO_C_INT(chan), (mus_input *)MUS_XEN_TO_CLM(inp))));
+  return(C_TO_XEN_DOUBLE(mus_in_any(XEN_TO_C_OFF_T_OR_ELSE(frame, 0), XEN_TO_C_INT(chan), (mus_input *)MUS_XEN_TO_CLM(inp))));
 }
 
 static XEN g_in_any(XEN frame, XEN chan, XEN inp) 
@@ -3299,7 +3309,7 @@ static XEN g_out_any_1(char *caller, XEN frame, XEN chan, XEN val, XEN outp)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_2, caller, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, caller, "a number");
   XEN_ASSERT_TYPE((MUS_XEN_P(outp)) && (mus_output_p(MUS_XEN_TO_CLM(outp))), outp, XEN_ARG_4, caller, "an output gen");
-  return(C_TO_XEN_DOUBLE(mus_out_any(XEN_TO_C_INT_OR_ELSE(frame, 0),
+  return(C_TO_XEN_DOUBLE(mus_out_any(XEN_TO_C_OFF_T_OR_ELSE(frame, 0),
 				     XEN_TO_C_DOUBLE(val),
 				     XEN_TO_C_INT(chan),
 				     (mus_output *)MUS_XEN_TO_CLM(outp))));
@@ -3370,7 +3380,7 @@ static XEN g_file2sample(XEN obj, XEN samp, XEN chan)
       channel = XEN_TO_C_INT(chan);
     }
   return(C_TO_XEN_DOUBLE(mus_file2sample(MUS_XEN_TO_CLM(obj),
-					 XEN_TO_C_INT_OR_ELSE(samp, 0),
+					 XEN_TO_C_OFF_T_OR_ELSE(samp, 0),
 					 channel)));
 }
 
@@ -3426,7 +3436,7 @@ handled by the output generator 'obj', in channel 'chan' at frame 'samp'"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_3, S_sample2file, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_4, S_sample2file, "a number");
   return(C_TO_XEN_DOUBLE(mus_sample2file(MUS_XEN_TO_CLM(obj),
-					 XEN_TO_C_INT_OR_ELSE(samp, 0),
+					 XEN_TO_C_OFF_T_OR_ELSE(samp, 0),
 					 XEN_TO_C_INT(chan),
 					 XEN_TO_C_DOUBLE(val))));
 }
@@ -3457,7 +3467,7 @@ static XEN g_file2frame(XEN obj, XEN samp, XEN outfr)
       (mus_frame_p(MUS_XEN_TO_CLM(outfr)))) 
     res = (mus_frame *)MUS_XEN_TO_CLM(outfr);
   return(g_wrap_frame(mus_file2frame(MUS_XEN_TO_CLM(obj),
-				     XEN_TO_C_INT_OR_ELSE(samp, 0),
+				     XEN_TO_C_OFF_T_OR_ELSE(samp, 0),
 				     res),
 		      (res) ? DONT_FREE_FRAME : FREE_FRAME));
 }
@@ -3495,7 +3505,7 @@ handled by the output generator 'obj' at frame 'samp'"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(samp), samp, XEN_ARG_2, S_frame2file, "a number");
   XEN_ASSERT_TYPE((MUS_XEN_P(val)) && (mus_frame_p(MUS_XEN_TO_CLM(val))), val, XEN_ARG_3, S_frame2file, "a frame");
   return(g_wrap_frame(mus_frame2file(MUS_XEN_TO_CLM(obj),
-				     XEN_TO_C_INT_OR_ELSE(samp, 0),
+				     XEN_TO_C_OFF_T_OR_ELSE(samp, 0),
 				     (mus_frame *)MUS_XEN_TO_CLM(val)),
 		      DONT_FREE_FRAME));
 }
@@ -3561,7 +3571,7 @@ at frame 'start' and reading 'samples' samples altogether."
     samps = v->length;
   err = mus_file2fltarray(name,
 			  chn,
-			  XEN_TO_C_INT_OR_ELSE(start, 0),
+			  XEN_TO_C_OFF_T_OR_ELSE(start, 0),
 			  samps,
 			  v->data);
   return(xen_return_first(C_TO_SMALL_XEN_INT(err), filename));
@@ -3618,7 +3628,8 @@ returns a new readin (file input) generator reading the sound file 'file' starti
   XEN args[8]; XEN keys[4];
   int orig_arg[4] = {0, 0, 0, 0};
   int vals;
-  int channel = 0, start = 0, direction = 1;
+  int channel = 0, direction = 1;
+  off_t start = 0;
   keys[0] = all_keys[C_file];
   keys[1] = all_keys[C_channel];
   keys[2] = all_keys[C_start];
@@ -3628,7 +3639,7 @@ returns a new readin (file input) generator reading the sound file 'file' starti
   if (vals > 0)
     {
       channel = ikeyarg(keys[1], S_make_readin, orig_arg[1] + 1, channel);
-      start = ikeyarg(keys[2], S_make_readin, orig_arg[2] + 1, start);
+      start = okeyarg(keys[2], S_make_readin, orig_arg[2] + 1, start);
       direction = ikeyarg(keys[3], S_make_readin, orig_arg[3] + 1, direction);
       if (!(XEN_KEYWORD_P(keys[0])))
         {
@@ -3668,14 +3679,14 @@ static XEN g_location(XEN obj)
 {
   #define H_mus_location "(" S_mus_location " gen) -> gen's " S_mus_location " field, if any"
   XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ONLY_ARG, S_mus_location, "a generator");
-  return(C_TO_XEN_INT(mus_location(MUS_XEN_TO_CLM(obj))));
+  return(C_TO_XEN_OFF_T(mus_location(MUS_XEN_TO_CLM(obj))));
 }
 
 static XEN g_set_location(XEN obj, XEN val)
 {
   XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ARG_1, S_mus_set_location, "a generator");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_mus_set_location, "a number");
-  return(C_TO_XEN_INT(mus_set_location(MUS_XEN_TO_CLM(obj), XEN_TO_C_INT_OR_ELSE(val, 0))));
+  return(C_TO_XEN_OFF_T(mus_set_location(MUS_XEN_TO_CLM(obj), XEN_TO_C_OFF_T_OR_ELSE(val, 0))));
 }
 
 static XEN g_channel(XEN obj)
@@ -3754,7 +3765,7 @@ static XEN g_locsig(XEN obj, XEN loc, XEN val)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(loc), loc, XEN_ARG_2, S_locsig, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, S_locsig, "a number");
   return(g_wrap_frame(mus_locsig(MUS_XEN_TO_CLM(obj),
-				 XEN_TO_C_INT_OR_ELSE(loc, 0),
+				 XEN_TO_C_OFF_T_OR_ELSE(loc, 0),
 				 XEN_TO_C_DOUBLE(val)),
 		      DONT_FREE_FRAME));
 }
@@ -4613,7 +4624,8 @@ it in conjunction with mixer to scale/envelope all the various ins and outs."
   mus_mixer *mx1 = NULL;
   mus_any ***envs1 = NULL;
   char *outfile = NULL, *infile = NULL;
-  int in_len = 0, out_len, i, j, ostart = 0, istart = 0, osamps = 0;
+  int in_len = 0, out_len, i, j;
+  off_t ostart = 0, istart = 0, osamps = 0;
   int in_chans, out_chans, in_size = 0, out_size;  /* mus_mix in clm.c assumes the envs array is large enough */
   XEN *vdata0; XEN *vdata1;
   XEN_ASSERT_TYPE(XEN_STRING_P(out), out, XEN_ARG_1, S_mus_mix, "a string");
@@ -4623,12 +4635,12 @@ it in conjunction with mixer to scale/envelope all the various ins and outs."
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(ist), ist, XEN_ARG_5, S_mus_mix, "a number");
   XEN_ASSERT_TYPE((XEN_NOT_BOUND_P(mx)) || (XEN_FALSE_P(mx)) || ((MUS_XEN_P(mx)) && (mus_mixer_p(MUS_XEN_TO_CLM(mx)))), mx, XEN_ARG_6, S_mus_mix, "a mixer");
   XEN_ASSERT_TYPE((XEN_NOT_BOUND_P(envs)) || (XEN_VECTOR_P(envs)), envs, XEN_ARG_7, S_mus_mix, "an env gen or vector of envs");
-  if (XEN_BOUND_P(ost)) ostart = XEN_TO_C_INT_OR_ELSE(ost, 0);
-  if (XEN_BOUND_P(ist)) istart = XEN_TO_C_INT_OR_ELSE(ist, 0);
+  if (XEN_BOUND_P(ost)) ostart = XEN_TO_C_OFF_T_OR_ELSE(ost, 0);
+  if (XEN_BOUND_P(ist)) istart = XEN_TO_C_OFF_T_OR_ELSE(ist, 0);
   if ((XEN_BOUND_P(mx)) && (MUS_XEN_P(mx))) mx1 = (mus_mixer *)MUS_XEN_TO_CLM(mx);
   outfile = XEN_TO_C_STRING(out);
   infile = XEN_TO_C_STRING(in);
-  if (XEN_BOUND_P(olen)) osamps = XEN_TO_C_INT_OR_ELSE(olen, 0); else osamps = mus_sound_frames(infile);
+  if (XEN_BOUND_P(olen)) osamps = XEN_TO_C_OFF_T_OR_ELSE(olen, 0); else osamps = mus_sound_frames(infile);
   if (XEN_BOUND_P(envs))
     {
       /* pack into a C-style array of arrays of env pointers */

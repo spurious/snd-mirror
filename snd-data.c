@@ -696,7 +696,7 @@ sync_info *snd_sync(snd_state *ss, int sync)
   if (chans > 0)
     {
       si = (sync_info *)CALLOC(1, sizeof(sync_info));
-      si->begs = (int *)CALLOC(chans, sizeof(int));
+      si->begs = (off_t *)CALLOC(chans, sizeof(off_t));
       si->cps = (chan_info **)CALLOC(chans, sizeof(chan_info *));
       si->chans = chans;
       j = 0;
@@ -712,14 +712,14 @@ sync_info *snd_sync(snd_state *ss, int sync)
   return(NULL);
 }
 
-sync_info *make_simple_sync (chan_info *cp, int beg)
+sync_info *make_simple_sync (chan_info *cp, off_t beg)
 {
   sync_info *si;
   si = (sync_info *)CALLOC(1, sizeof(sync_info));
   si->chans = 1;
   si->cps = (chan_info **)CALLOC(1, sizeof(chan_info *));
   si->cps[0] = cp;
-  si->begs = (int *)CALLOC(1, sizeof(int));
+  si->begs = (off_t *)CALLOC(1, sizeof(off_t));
   si->begs[0] = beg;
   return(si);
 }
@@ -761,9 +761,9 @@ static char *display_maxamps(const char *filename, int chans)
 {
   char *ampstr;
   int i;
-  MUS_SAMPLE_TYPE *vals;
+  mus_sample_t *vals;
   ampstr = (char *)CALLOC(chans * 32, sizeof(char));
-  vals = (MUS_SAMPLE_TYPE *)CALLOC(chans * 2, sizeof(MUS_SAMPLE_TYPE));
+  vals = (mus_sample_t *)CALLOC(chans * 2, sizeof(mus_sample_t));
   mus_snprintf(ampstr,chans * 32, "\nmax amp%s: ",(chans > 1) ? "s" : "");
   mus_sound_maxamp(filename, vals);
   for (i = 0; i < chans; i++)
@@ -802,11 +802,11 @@ void display_info(snd_info *sp)
 	  strftime(timestr, TIME_STR_SIZE, STRFTIME_FORMAT, localtime(&(sp->write_date)));
 #endif
 	  mus_snprintf(buffer, INFO_BUFFER_SIZE, 
-		       "srate: %d\nchans: %d\nlength: %.3f (%ld %s)\ntype: %s\nformat: %s\nwritten: %s%s%s%s\n",
+		       "srate: %d\nchans: %d\nlength: %.3f (" OFF_TD " %s)\ntype: %s\nformat: %s\nwritten: %s%s%s%s\n",
 		       hdr->srate,
 		       hdr->chans,
 		       (Float)(hdr->samples) / (Float)(hdr->chans * hdr->srate),
-		       (long)((hdr->samples) / (hdr->chans)),
+		       (off_t)((hdr->samples) / (hdr->chans)),
 		       (hdr->chans == 1) ? "samples" : "frames",
 		       mus_header_type_name(hdr->type),
 		       mus_data_format_name(hdr->format),

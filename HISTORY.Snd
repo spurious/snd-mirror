@@ -1,5 +1,6 @@
 snd change log
 
+  6-May:     support for files larger than 2^31 bytes.
   1-May:     maraca.scm, piano.scm.
   30-Apr:    vct-map.
   29-Apr:    snd5.scm, singer.scm, fade.scm.

@@ -33,7 +33,7 @@
   int is_link(char *filename) {return(0);}
   int is_directory(char *filename) {return(0);}
   static int is_empty_file(char *filename) {return(0);}
-  long file_bytes(char *filename) {return(0);}
+  off_t file_bytes(char *filename) {return(0);}
 #else
 
 int disk_kspace (char *filename)
@@ -74,7 +74,7 @@ int is_directory(char *filename)
   return(0);
 }
 
-long file_bytes(char *filename) /* using this name to make searches simpler */
+off_t file_bytes(char *filename) /* using this name to make searches simpler */
 {
   struct stat statbuf;
   if (lstat(filename, &statbuf) >= 0) 
@@ -280,7 +280,7 @@ file_info *make_file_info(char *fullname, snd_state *ss)
 	      if (len > 1) srate = XEN_TO_C_INT(XEN_CADR(res));
 	      if (len > 2) data_format = XEN_TO_C_INT(XEN_LIST_REF(res, 2)); 
 	      if (len > 3) data_location = XEN_TO_C_INT(XEN_LIST_REF(res, 3)); else data_location = 0;
-	      if (len > 4) bytes = XEN_TO_C_ULONG(XEN_LIST_REF(res, 4)); else bytes = mus_sound_length(fullname) - data_location;
+	      if (len > 4) bytes = XEN_TO_C_OFF_T(XEN_LIST_REF(res, 4)); else bytes = mus_sound_length(fullname) - data_location;
 	      mus_header_set_raw_defaults(srate, chans, data_format);
 	      mus_sound_override_header(fullname, srate, chans, data_format, 
 					MUS_RAW, data_location,
@@ -334,7 +334,7 @@ file_info *make_file_info(char *fullname, snd_state *ss)
 #include <inttypes.h>
 #endif
 
-file_info *make_temp_header(char *fullname, int srate, int chans, int samples, char *caller)
+file_info *make_temp_header(char *fullname, int srate, int chans, off_t samples, char *caller)
 {
   file_info *hdr;
   hdr = (file_info *)CALLOC(1, sizeof(file_info));
@@ -747,7 +747,7 @@ int copy_file(char *oldname, char *newname)
 {
   /* make newname a copy of oldname */
   int ifd, ofd;
-  long bytes, wb, total;
+  off_t bytes, wb, total;
   char *buf = NULL;
   total = 0;
   ifd = open(oldname, O_RDONLY, 0);
@@ -790,8 +790,8 @@ int copy_file(char *oldname, char *newname)
     snd_error("%s: %s\n", newname, strerror(errno));
   else
     if (total > wb) 
-      snd_error("disk nearly full: used %d Kbytes leaving %d",
-		(int)total, (int)wb);
+      snd_error("disk nearly full: used " OFF_TD " Kbytes leaving " OFF_TD,
+		total, wb);
   FREE(buf);
   if (close(ofd) != 0)
     snd_error("can't close %d (%s): %s [%s[%d] %s]",
@@ -821,9 +821,6 @@ int move_file(char *oldfile, char *newfile)
 #define TEMP_SOUND_INDEX 123456
 /* just a marker for debugging */
 
-/* from snd-io.c */
-void set_file_state_fd(int *io, int fd);
-
 snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
 {
   /* conjure up just enough Snd structure to make this sound readable by the edit-tree readers */
@@ -831,8 +828,9 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
   chan_info *cp;
   file_info *hdr = NULL;
   snd_data *sd;
-  int *io;
-  int i, fd, len, chans;
+  snd_io *io;
+  int i, fd, chans;
+  off_t len;
   /* we've already checked that filename exists */
   hdr = make_file_info_1(filename);
   if (hdr == NULL)
@@ -895,7 +893,7 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
 			  __FILE__, __LINE__, __FUNCTION__);
 	      sd = cp->sounds[0]; 
 	      sd->open = FD_CLOSED; 
-	      set_file_state_fd(io, -1);
+	      io->fd = -1;
 	    }
 	  /* this is not as crazy as it looks -- we've read in the first 64K (or whatever) samples,
 	   * and may need this file channel for other opens, so this file can be closed until reposition_file_state_buffers
@@ -1972,7 +1970,8 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
 void edit_header_callback(snd_state *ss, snd_info *sp, file_data *edit_header_data)
 {
   /* this blindly changes the header info -- it does not actually reformat the data or whatever */
-  int err, chans, srate, loc, type, format;
+  int err, chans, srate, type, format;
+  off_t loc;
   char *comment;
   file_info *hdr;
   if (sp->read_only)
@@ -2070,10 +2069,10 @@ static char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr)
       mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, " (swapped: %d)", ns);
       strcat(reason_str, tmp_str);
     }
-  mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nlength: %.3f (%ld samples, %ld bytes total)",
+  mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nlength: %.3f (" OFF_TD " samples, " OFF_TD " bytes total)",
 	       (float)(hdr->samples) / (float)(hdr->chans * hdr->srate),
-	       (long)(hdr->samples),
-	       (long)mus_sound_length(filename));
+	       hdr->samples,
+	       mus_sound_length(filename));
   strcat(reason_str, tmp_str);
   ns = swap_int(hdr->samples);
   if (ns < mus_sound_length(filename))
@@ -2089,7 +2088,7 @@ static char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr)
 	}
       else strcat(reason_str, ")");
     }
-  mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\ndata location: %ld", (long)(hdr->data_location));
+  mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\ndata location: " OFF_TD, hdr->data_location);
   strcat(reason_str, tmp_str);
   ns = swap_int(hdr->data_location);
   if ((ns > 0) && (ns <= 1024)) 
@@ -2220,8 +2219,8 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
     }
   else
     {
-      if (end0 != 0) hdr->loops[6] = 1;
-      if (end1 != 0) hdr->loops[7] = 1;
+      if (!(XEN_FALSE_P(end0))) hdr->loops[6] = 1;
+      if (!(XEN_FALSE_P(end1))) hdr->loops[7] = 1;
     }
   mus_sound_set_full_loop_info(sp->filename, hdr->loops);
   mus_header_set_full_aiff_loop_info(hdr->loops);

@@ -286,7 +286,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   if (md)
     {
       long long mem;
-      fscanf(md, "        total:    used:    free:  shared: buffers:  cached:\nMem:  %Ld", &mem); /* %lld on SGI? */
+      fscanf(md, "        total:    used:    free:  shared: buffers:  cached:\nMem:  %lld", &mem);
       fclose(md);
       ss->memory_available = mem / 1024;
     }

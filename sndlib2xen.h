@@ -41,7 +41,7 @@
 
 typedef struct {
   int length, chans;
-  MUS_SAMPLE_TYPE **data;
+  mus_sample_t **data;
   int wrapped;
 } sound_data;
 
@@ -49,6 +49,6 @@ int sound_data_p(XEN obj);
 XEN make_sound_data(int chans, int frames);
 void mus_misc_error(const char *caller, char *msg, XEN val);
 void mus_sndlib2xen_initialize (void);
-XEN wrap_sound_data(int chans, int frames, MUS_SAMPLE_TYPE **data);
+XEN wrap_sound_data(int chans, int frames, mus_sample_t **data);
 
 #endif

@@ -878,8 +878,8 @@ static void set_vu_val (VU *vu, Float val)
     }
 }
 
-void recorder_set_vu_in_val(int chan, MUS_SAMPLE_TYPE val) {set_vu_val(rec_in_VU[chan], MUS_SAMPLE_TO_FLOAT(val));}
-void recorder_set_vu_out_val(int chan, MUS_SAMPLE_TYPE val) {set_vu_val(rec_out_VU[chan], MUS_SAMPLE_TO_FLOAT(val));}
+void recorder_set_vu_in_val(int chan, mus_sample_t val) {set_vu_val(rec_in_VU[chan], MUS_SAMPLE_TO_FLOAT(val));}
+void recorder_set_vu_out_val(int chan, mus_sample_t val) {set_vu_val(rec_out_VU[chan], MUS_SAMPLE_TO_FLOAT(val));}
 
 
 /* -------------------------------- AMP SLIDER CALLBACKS -------------------------------- */
@@ -3159,7 +3159,8 @@ static void record_button_callback(Widget w, XtPointer context, XtPointer info)
   snd_state *ss = (snd_state *)context;
   XmString s1 = NULL, s2 = NULL;
   Wdesc *wd;
-  int i, old_srate, ofmt, rs, ochns, oloc;
+  int i, old_srate, ofmt, rs, ochns;
+  off_t oloc;
   static char *comment;
   char *str;
   PANE *p;

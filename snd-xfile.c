@@ -4,11 +4,12 @@
 
 #define NUM_VISIBLE_HEADERS 4
 
-char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type, int *format, int *location)
+char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location)
 {
   char *str;
   int n;
   int res, val;
+  off_t oval;
   int *ns = NULL;
   char *comment = NULL;
   if (fdat->srate_text) 
@@ -36,8 +37,8 @@ char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type,
       str = XmTextGetString(fdat->location_text); 
       if (str) 
 	{
-	  val = string2int(str); 
-	  if (val >= 0) (*location) = val;
+	  oval = string2off_t(str); 
+	  if (oval >= 0) (*location) = oval;
 	  XtFree(str);
 	}
     }
@@ -74,7 +75,7 @@ char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type,
   return(NULL);
 }
 
-static void load_header_and_data_lists(file_data *fdat, int type, int format, int srate, int chans, int location, char *comment)
+static void load_header_and_data_lists(file_data *fdat, int type, int format, int srate, int chans, off_t location, char *comment)
 {
   int i;
   char **fl = NULL;
@@ -117,7 +118,7 @@ static void load_header_and_data_lists(file_data *fdat, int type, int format, in
       (fdat->location_text))
     {
       str = (char *)CALLOC(32, sizeof(char));
-      sprintf(str, "%d", location);
+      sprintf(str, OFF_TD, location);
       XmTextSetString(fdat->location_text, str);
       FREE(str);
     }
@@ -2182,7 +2183,8 @@ static void new_file_help_callback(Widget w, XtPointer context, XtPointer info)
 snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *comment)
 {
   Arg args[20];
-  int n, loc;
+  int n;
+  off_t loc;
   XmString titlestr, xok, xcancel, xhelp;
   char *tmpstr, *title, *newer_name = NULL;
   snd_info *sp = NULL;

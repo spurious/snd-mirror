@@ -2,10 +2,11 @@
 #define MUS_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 5
-#define MUS_DATE "23-Apr-02"
+#define MUS_REVISION 7
+#define MUS_DATE "6-May-02"
 
 /* 
+ * 3-May:      many int->off_t changes for large files.
  * 8-Apr:      off-by-1 env bug (Lisp/C are now identical), env_interp of exp env beyond end bugfix.
  * 1-Apr:      sine-summation n=0 bugfix.
  * 27-Mar:     negative degree locsig bugfix.
@@ -164,9 +165,9 @@ typedef struct {
 
 typedef struct {
   int type;
-  Float (*sample)(void *ptr, int samp, int chan);
-  int (*location)(void *ptr);
-  int (*set_location)(void *ptr, int loc);
+  Float (*sample)(void *ptr, off_t samp, int chan);
+  off_t (*location)(void *ptr);
+  off_t (*set_location)(void *ptr, off_t loc);
   int (*channel)(void *ptr);
   int (*begin)(void *ptr);
   int (*end)(void *ptr);
@@ -179,7 +180,7 @@ typedef struct {
 
 typedef struct {
   int type;
-  Float (*sample)(void *ptr, int samp, int chan, Float data);
+  Float (*sample)(void *ptr, off_t samp, int chan, Float data);
   int (*begin)(void *ptr);
   int (*end)(void *ptr);
 } mus_output_class;
@@ -405,11 +406,11 @@ Float *mus_partials2waveshape   PROTO((int npartials, Float *partials, int size,
 Float *mus_partials2polynomial  PROTO((int npartials, Float *partials, int kind));
 
 Float mus_env                   PROTO((mus_any *ptr));
-mus_any *mus_make_env           PROTO((Float *brkpts, int pts, Float scaler, Float offset, Float base, Float duration, int start, int end, Float *odata));
+mus_any *mus_make_env           PROTO((Float *brkpts, int pts, Float scaler, Float offset, Float base, Float duration, off_t start, off_t end, Float *odata));
 int mus_env_p                   PROTO((mus_any *ptr));
 void mus_restart_env            PROTO((mus_any *ptr));
 Float mus_env_interp            PROTO((Float x, mus_any *env));
-int *mus_env_passes             PROTO((mus_any *gen)); /* for Snd */
+off_t *mus_env_passes           PROTO((mus_any *gen)); /* for Snd */
 double *mus_env_rates           PROTO((mus_any *gen)); /* ditto */
 int mus_position                PROTO((mus_any *ptr));
 
@@ -436,44 +437,44 @@ mus_mixer *mus_mixer_multiply   PROTO((mus_mixer *f1, mus_mixer *f2, mus_mixer *
 
 int mus_file2sample_p           PROTO((mus_any *ptr));
 mus_any *mus_make_file2sample   PROTO((const char *filename));
-Float mus_file2sample           PROTO((mus_any *ptr, int samp, int chan));
+Float mus_file2sample           PROTO((mus_any *ptr, off_t samp, int chan));
 
 Float mus_readin                PROTO((mus_any *rd));
-mus_any *mus_make_readin        PROTO((const char *filename, int chan, int start, int direction));
+mus_any *mus_make_readin        PROTO((const char *filename, int chan, off_t start, int direction));
 int mus_readin_p                PROTO((mus_any *ptr));
 Float mus_increment             PROTO((mus_any *rd));
 Float mus_set_increment         PROTO((mus_any *rd, Float dir));
-int mus_location                PROTO((mus_any *rd));
-int mus_set_location            PROTO((mus_any *rd, int loc));
+off_t mus_location              PROTO((mus_any *rd));
+off_t mus_set_location          PROTO((mus_any *rd, off_t loc));
 int mus_channel                 PROTO((mus_input *rd));
 
 int mus_output_p                PROTO((void *ptr));
 int mus_input_p                 PROTO((void *ptr));
-Float mus_in_any                PROTO((int frame, int chan, mus_input *IO));
-Float mus_ina                   PROTO((int frame, mus_input *inp));
-Float mus_inb                   PROTO((int frame, mus_input *inp));
+Float mus_in_any                PROTO((off_t frame, int chan, mus_input *IO));
+Float mus_ina                   PROTO((off_t frame, mus_input *inp));
+Float mus_inb                   PROTO((off_t frame, mus_input *inp));
 
 mus_any *mus_make_file2frame    PROTO((const char *filename));
 int mus_file2frame_p            PROTO((mus_any *ptr));
-mus_frame *mus_file2frame       PROTO((mus_any *ptr, int samp, mus_frame *f));
+mus_frame *mus_file2frame       PROTO((mus_any *ptr, off_t samp, mus_frame *f));
 
 int mus_sample2file_p           PROTO((mus_any *ptr));
 mus_any *mus_make_sample2file   PROTO((const char *filename, int chans, int out_format, int out_type));
 mus_any *mus_make_sample2file_with_comment PROTO((const char *filename, int out_chans, int out_format, int out_type, const char *comment));
-Float mus_sample2file           PROTO((mus_any *ptr, int samp, int chan, Float val));
+Float mus_sample2file           PROTO((mus_any *ptr, off_t samp, int chan, Float val));
 int mus_close_file              PROTO((mus_any *ptr));
 
-Float mus_out_any               PROTO((int frame, Float val, int chan, mus_output *IO));
-Float mus_outa                  PROTO((int frame, Float val, mus_output *IO));
-Float mus_outb                  PROTO((int frame, Float val, mus_output *IO));
-Float mus_outc                  PROTO((int frame, Float val, mus_output *IO));
-Float mus_outd                  PROTO((int frame, Float val, mus_output *IO));
+Float mus_out_any               PROTO((off_t frame, Float val, int chan, mus_output *IO));
+Float mus_outa                  PROTO((off_t frame, Float val, mus_output *IO));
+Float mus_outb                  PROTO((off_t frame, Float val, mus_output *IO));
+Float mus_outc                  PROTO((off_t frame, Float val, mus_output *IO));
+Float mus_outd                  PROTO((off_t frame, Float val, mus_output *IO));
 
 mus_any *mus_make_frame2file    PROTO((const char *filename, int chans, int out_format, int out_type));
 int mus_frame2file_p            PROTO((mus_any *ptr));
-mus_frame *mus_frame2file       PROTO((mus_any *ptr, int samp, mus_frame *data));
+mus_frame *mus_frame2file       PROTO((mus_any *ptr, off_t samp, mus_frame *data));
 
-mus_frame *mus_locsig           PROTO((mus_any *ptr, int loc, Float val));
+mus_frame *mus_locsig           PROTO((mus_any *ptr, off_t loc, Float val));
 mus_any *mus_make_locsig        PROTO((Float degree, Float distance, Float reverb, int chans, mus_output *output, mus_output *revput, int type));
 int mus_locsig_p                PROTO((mus_any *ptr));
 int mus_channels                PROTO((mus_any *ptr));
@@ -510,8 +511,8 @@ int mus_set_hop                 PROTO((mus_any *ptr, int val));
 int mus_set_file_buffer_size    PROTO((int size));
 int mus_file_buffer_size        PROTO((void));
 
-void mus_mix                    PROTO((const char *outfile, const char *infile, int out_start, int out_samps, int in_start, mus_mixer *mx, mus_any ***envs));
-int mus_file2fltarray           PROTO((const char *filename, int chan, int start, int samples, Float *array));
+void mus_mix                    PROTO((const char *outfile, const char *infile, off_t out_start, off_t out_samps, off_t in_start, mus_mixer *mx, mus_any ***envs));
+int mus_file2fltarray           PROTO((const char *filename, int chan, off_t start, int samples, Float *array));
 int mus_fltarray2file           PROTO((const char *filename, Float *ddata, int len, int srate, int channels));
 
 Float mus_apply                 PROTO((mus_any *gen, ...));

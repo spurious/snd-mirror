@@ -265,6 +265,42 @@ static char *print_int_array(int *arr, int len, int loc)
   return(base);
 }
 
+static char *print_off_t_array(off_t *arr, int len, int loc)
+{
+  char *base, *str;
+  int i, lim, k, size = 128;
+  if (arr == NULL) 
+    {
+      str = (char *)CALLOC(4, sizeof(char));
+      sprintf(str, "nil");
+      return(str);
+    }
+  if ((array_print_length * 16) > size) size = array_print_length * 16;
+  base = (char *)CALLOC(size, sizeof(char));
+  str = (char *)CALLOC(32, sizeof(char));
+  sprintf(base, "[");
+  lim = len;
+  if (lim > array_print_length) lim = array_print_length;
+  k = loc;
+  for (i = 0; i < lim - 1; i++)
+    {
+      sprintf(str, OFF_TD " ", arr[k]);
+      strcat(base, str);
+      if ((int)(strlen(base) + 32) > size)
+	{
+	  base = (char *)REALLOC(base, size * 2 * sizeof(char));
+	  base[size] = 0;
+	  size *= 2;
+	}
+      k++;
+      if (k >= len) k = 0;
+    }
+  sprintf(str, OFF_TD "%s]", arr[k], (len > lim) ? "..." : "");
+  strcat(base, str);
+  FREE(str);
+  return(base);
+}
+
 
 /* ---------------- generic functions ---------------- */
 
@@ -3192,10 +3228,11 @@ Float *mus_partials2polynomial(int npartials, Float *partials, int kind)
 typedef struct {
   mus_any_class *core;
   double rate, current_value, base, offset, scaler, power, init_y, init_power, b1;
-  int pass, end, style, index, size, data_allocated;
+  off_t pass, end;
+  int style, index, size, data_allocated;
   Float *original_data;
   double *rates;
-  int *passes;
+  off_t *passes;
 } seg;
 
 enum {ENV_SEG, ENV_STEP, ENV_EXP};
@@ -3205,7 +3242,8 @@ static char *inspect_seg(void *ptr)
   seg *gen = (seg *)ptr;
   char *arr = NULL, *str1 = NULL, *str2 = NULL;
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE,
-	       "seg rate: %f, current_value: %f, base: %f, offset: %f, scaler: %f, power: %f, init_y: %f, init_power: %f, b1: %f, pass: %d, end: %d, style: %d, index: %d, size: %d, original_data[%d]: %s, rates[%d]: %s, passes[%d]: %s",
+	       "seg rate: %f, current_value: %f, base: %f, offset: %f, scaler: %f, power: %f, init_y: %f, init_power: %f, b1: %f, \
+pass: " OFF_TD ", end: " OFF_TD ", style: %d, index: %d, size: %d, original_data[%d]: %s, rates[%d]: %s, passes[%d]: %s",
 	       gen->rate, gen->current_value, gen->base, gen->offset, gen->scaler, gen->power, gen->init_y, gen->init_power, gen->b1,
 	       gen->pass, gen->end, gen->style, gen->index, gen->size,
 	       gen->size * 2,
@@ -3213,7 +3251,7 @@ static char *inspect_seg(void *ptr)
 	       gen->size,
 	       str1 = print_double_array(gen->rates, gen->size, 0),
 	       gen->size,
-	       str2 = print_int_array(gen->passes, gen->size, 0));
+	       str2 = print_off_t_array(gen->passes, gen->size, 0));
   if (arr) FREE(arr);
   if (str1) FREE(str1);
   if (str2) FREE(str2);
@@ -3257,9 +3295,10 @@ Float mus_env (mus_any *ptr)
 
 static Float run_env (mus_any *ptr, Float unused1, Float unused2) {return(mus_env(ptr));}
 
-static void dmagify_env(seg *e, Float *data, int pts, int dur, Float scaler)
+static void dmagify_env(seg *e, Float *data, int pts, off_t dur, Float scaler)
 { 
-  int i, j, passes;
+  int i, j;
+  off_t passes;
   double curx, curpass = 0.0;
   double x0, y0, x1 = 0.0, y1 = 0.0, xmag = 1.0;
   e->size = pts;
@@ -3271,7 +3310,7 @@ static void dmagify_env(seg *e, Float *data, int pts, int dur, Float scaler)
       y1 = data[1];
     }
   e->rates = (double *)CALLOC(pts, sizeof(double));
-  e->passes = (int *)CALLOC(pts, sizeof(int));
+  e->passes = (off_t *)CALLOC(pts, sizeof(off_t));
   for (j = 0, i = 2; i < pts * 2; i += 2, j++)
     {
       x0 = x1;
@@ -3281,7 +3320,7 @@ static void dmagify_env(seg *e, Float *data, int pts, int dur, Float scaler)
       curx = xmag * (x1 - x0);
       if (curx < 1.0) curx = 1.0;
       curpass += curx;
-      e->passes[j] = (int)curpass;
+      e->passes[j] = (off_t)curpass;
       if (j == 0) 
 	passes = e->passes[0]; 
       else passes = e->passes[j] - e->passes[j - 1];
@@ -3373,7 +3412,7 @@ static char *describe_env(void *ptr)
   seg *e = (seg *)ptr;
   if (mus_env_p((mus_any *)ptr))
     mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE,
-		 "env: %s, pass: %d (dur: %d), index: %d, data: %s",
+		 "env: %s, pass: " OFF_TD " (dur: " OFF_TD "), index: %d, data: %s",
 		 ((e->style == ENV_SEG) ? "linear" : ((e->style == ENV_EXP) ? "exponential" : "step")),
 		 e->pass, e->end + 1, e->index,
 		 str = print_array(e->original_data, e->size * 2, 0));
@@ -3399,7 +3438,7 @@ static Float *env_data(void *ptr) {return(((seg *)ptr)->original_data);}
 static Float env_scaler(void *ptr) {return(((seg *)ptr)->scaler);}
 static int env_size(void *ptr) {return(((seg *)ptr)->size);}
 static Float env_current_value(void *ptr) {return(((seg *)ptr)->current_value);}
-int *mus_env_passes(mus_any *gen) {return(((seg *)gen)->passes);}
+off_t *mus_env_passes(mus_any *gen) {return(((seg *)gen)->passes);}
 double *mus_env_rates(mus_any *gen) {return(((seg *)gen)->rates);}
 
 static mus_any_class ENV_CLASS = {
@@ -3421,9 +3460,10 @@ static mus_any_class ENV_CLASS = {
   0
 };
 
-mus_any *mus_make_env(Float *brkpts, int npts, Float scaler, Float offset, Float base, Float duration, int start, int end, Float *odata)
+mus_any *mus_make_env(Float *brkpts, int npts, Float scaler, Float offset, Float base, Float duration, off_t start, off_t end, Float *odata)
 {
-  int i, dur_in_samples;
+  int i;
+  off_t dur_in_samples;
   Float *edata;
   seg *e = NULL;
   e = (seg *)CALLOC(1, sizeof(seg));
@@ -3433,7 +3473,7 @@ mus_any *mus_make_env(Float *brkpts, int npts, Float scaler, Float offset, Float
     {
       e->core = &ENV_CLASS;
       if (duration != 0.0)
-	dur_in_samples = (int)(duration * sampling_rate);
+	dur_in_samples = (off_t)(duration * sampling_rate);
       else dur_in_samples = (end - start + 1);
       e->init_y = offset + scaler * brkpts[1];
       e->current_value = e->init_y;
@@ -3498,13 +3538,14 @@ void mus_restart_env (mus_any *ptr)
   gen->power = gen->init_power;
 }
 
-static void set_env_location(mus_any *ptr, int val)
+static void set_env_location(mus_any *ptr, off_t val)
 {
   seg *gen = (seg *)ptr;
-  int ctr = 0, passes;
+  off_t passes, ctr = 0;
   mus_restart_env(ptr);
   gen->pass = val;
-  while ((gen->index < gen->size) && (ctr < val))
+  while ((gen->index < gen->size) && 
+	 (ctr < val))
     {
       if (val > gen->passes[gen->index])
 	passes = gen->passes[gen->index] - ctr;
@@ -4352,7 +4393,7 @@ int mus_wave_train_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_WA
 
 /* ---------------- input/output ---------------- */
 
-static Float mus_read_sample(mus_input *fd, int frame, int chan) 
+static Float mus_read_sample(mus_input *fd, off_t frame, int chan) 
 {
   if (fd)
     {
@@ -4366,7 +4407,7 @@ static Float mus_read_sample(mus_input *fd, int frame, int chan)
   return(0.0);
 }
 
-static Float mus_write_sample(mus_output *fd, int frame, int chan, Float samp) 
+static Float mus_write_sample(mus_output *fd, off_t frame, int chan, Float samp) 
 {
   if (fd)
     {
@@ -4403,18 +4444,18 @@ typedef struct {
   mus_input_class *base;
   int chan;
   int dir;
-  int loc;
+  off_t loc;
   char *file_name;
   int chans;
-  MUS_SAMPLE_TYPE **ibufs;
-  int data_start, data_end, file_end;
+  mus_sample_t **ibufs;
+  off_t data_start, data_end, file_end;
 } rdin;
 
 static char *inspect_rdin(void *ptr)
 {
   rdin *gen = (rdin *)ptr;
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE,
-	       "rdin chan: %d, dir: %d, loc: %d, chans: %d, data_start: %d, data_end: %d, file_end: %d, file_name: %s",
+	       "rdin chan: %d, dir: %d, loc: " OFF_TD ", chans: %d, data_start: " OFF_TD ", data_end: " OFF_TD ", file_end: " OFF_TD ", file_name: %s",
 	       gen->chan, gen->dir, gen->loc, gen->chans, gen->data_start, gen->data_end, gen->file_end, gen->file_name);
   return(describe_buffer);
 }
@@ -4457,7 +4498,7 @@ static int free_file2sample(void *p)
   return(0);
 }
 
-static int file2sample_length(void *ptr) {return(((rdin *)ptr)->file_end);}
+static int file2sample_length(void *ptr) {return((int)(((rdin *)ptr)->file_end));}
 
 static mus_any_class FILE2SAMPLE_CLASS = {
   MUS_FILE2SAMPLE,
@@ -4474,14 +4515,15 @@ static mus_any_class FILE2SAMPLE_CLASS = {
   MUS_INPUT
 };
 
-static Float file_sample(void *ptr, int samp, int chan)
+static Float file_sample(void *ptr, off_t samp, int chan)
 {
   /* check in-core buffer bounds,
    * if needed read new buffer (taking into account dir)
    * return Float at samp (frame) 
    */
   rdin *gen = (rdin *)ptr;
-  int fd, newloc, i;
+  int fd, i;
+  off_t newloc;
   if ((samp < 0) || (samp > gen->file_end)) return(0.0);
   if ((samp > gen->data_end) || 
       (samp < gen->data_start))
@@ -4504,12 +4546,12 @@ static Float file_sample(void *ptr, int samp, int chan)
 	{ 
 	  if (gen->ibufs == NULL) 
 	    {
-	      gen->ibufs = (MUS_SAMPLE_TYPE **)CALLOC(gen->chans, sizeof(MUS_SAMPLE_TYPE *));
+	      gen->ibufs = (mus_sample_t **)CALLOC(gen->chans, sizeof(mus_sample_t *));
 	      for (i = 0; i < gen->chans; i++)
-		gen->ibufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(clm_file_buffer_size, sizeof(MUS_SAMPLE_TYPE));
+		gen->ibufs[i] = (mus_sample_t *)CALLOC(clm_file_buffer_size, sizeof(mus_sample_t));
 	    }
 	  mus_sound_seek_frame(fd, gen->data_start);
-	  mus_file_read_chans(fd, 0, clm_file_buffer_size-1, gen->chans, gen->ibufs, (MUS_SAMPLE_TYPE *)(gen->ibufs));
+	  mus_file_read_chans(fd, 0, clm_file_buffer_size - 1, gen->chans, gen->ibufs, (mus_sample_t *)(gen->ibufs));
 	  mus_sound_close_input(fd);
 	  if (gen->data_end > gen->file_end) gen->data_end = gen->file_end;
 	}
@@ -4577,7 +4619,7 @@ mus_any *mus_make_file2sample(const char *filename)
   return(NULL);
 }
 
-Float mus_file2sample(mus_any *ptr, int samp, int chan)
+Float mus_file2sample(mus_any *ptr, off_t samp, int chan)
 {
   return(mus_read_sample((mus_input *)ptr, samp, chan));
 }
@@ -4595,7 +4637,7 @@ static char *describe_readin(void *ptr)
   rdin *gen = (rdin *)ptr;
   if (mus_readin_p((mus_any *)ptr))
     mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-		 "readin: %s[chan %d], loc: %d, dir: %d", 
+		 "readin: %s[chan %d], loc: " OFF_TD ", dir: %d", 
 		 gen->file_name, gen->chan, gen->loc, gen->dir);
   else describe_bad_gen(ptr, "readin", "a");
   return(describe_buffer);
@@ -4631,8 +4673,8 @@ static mus_any_class READIN_CLASS = {
 
 int mus_readin_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_READIN));}
 
-static int rd_location(void *rd) {return(((rdin *)rd)->loc);}
-static int rd_set_location(void *rd, int loc) {((rdin *)rd)->loc = loc; return(loc);}
+static off_t rd_location(void *rd) {return(((rdin *)rd)->loc);}
+static off_t rd_set_location(void *rd, off_t loc) {((rdin *)rd)->loc = loc; return(loc);}
 static int rd_channel(void *rd) {return(((rdin *)rd)->chan);}
 
 static mus_input_class READIN_INPUT_CLASS = {
@@ -4645,7 +4687,7 @@ static mus_input_class READIN_INPUT_CLASS = {
   0  /* end */
 };
 
-mus_any *mus_make_readin(const char *filename, int chan, int start, int direction)
+mus_any *mus_make_readin(const char *filename, int chan, off_t start, int direction)
 {
   rdin *gen;
   gen = (rdin *)mus_make_file2sample(filename);
@@ -4658,8 +4700,8 @@ mus_any *mus_make_readin(const char *filename, int chan, int start, int directio
       gen->loc = start;
       gen->dir = direction;
       gen->chan = chan;
-      gen->ibufs = (MUS_SAMPLE_TYPE **)CALLOC(gen->chans, sizeof(MUS_SAMPLE_TYPE *));
-      gen->ibufs[chan] = (MUS_SAMPLE_TYPE *)CALLOC(clm_file_buffer_size, sizeof(MUS_SAMPLE_TYPE));
+      gen->ibufs = (mus_sample_t **)CALLOC(gen->chans, sizeof(mus_sample_t *));
+      gen->ibufs[chan] = (mus_sample_t *)CALLOC(clm_file_buffer_size, sizeof(mus_sample_t));
       /* i.e. read only the specified channel */
       (gen->base)->sample = &file_sample;
       (gen->base)->end = &file2sample_end;
@@ -4677,7 +4719,7 @@ Float mus_readin(mus_any *ptr)
   return(res);
 }
 
-int mus_location(mus_any *gen)
+off_t mus_location(mus_any *gen)
 {
   mus_input *ingen;
   seg *envgen;
@@ -4686,7 +4728,7 @@ int mus_location(mus_any *gen)
       if (mus_env_p(gen))
 	{
 	  envgen = (seg *)gen;
-	  return(envgen->pass);
+	  return((off_t)(envgen->pass));
 	}
       else
 	{
@@ -4704,14 +4746,14 @@ int mus_location(mus_any *gen)
   return(0);
 }
 
-int mus_set_location(mus_any *gen, int loc)
+off_t mus_set_location(mus_any *gen, off_t loc)
 {
   mus_input *ingen;
   if (gen)
     {
       if (mus_env_p(gen))
 	{
-	  set_env_location(gen, loc);
+	  set_env_location(gen, (int)loc);
 	  return(loc);
 	}
       else
@@ -4749,14 +4791,14 @@ int mus_channel(mus_input *gen)
 
 /* ---------------- in-any ---------------- */
 
-Float mus_in_any(int frame, int chan, mus_input *IO)
+Float mus_in_any(off_t frame, int chan, mus_input *IO)
 {
   if (IO) return(mus_file2sample((mus_any *)IO, frame, chan));
   return(0.0);
 }
 
-Float mus_ina(int frame, mus_input *inp) {return(mus_in_any(frame, 0, inp));}
-Float mus_inb(int frame, mus_input *inp) {return(mus_in_any(frame, 1, inp));}
+Float mus_ina(off_t frame, mus_input *inp) {return(mus_in_any(frame, 0, inp));}
+Float mus_inb(off_t frame, mus_input *inp) {return(mus_in_any(frame, 1, inp));}
 
 
 
@@ -4805,7 +4847,7 @@ mus_any *mus_make_file2frame(const char *filename)
 
 int mus_file2frame_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_FILE2FRAME));}
 
-mus_frame *mus_file2frame(mus_any *ptr, int samp, mus_frame *uf)
+mus_frame *mus_file2frame(mus_any *ptr, off_t samp, mus_frame *uf)
 {
   mus_frame *f;
   rdin *gen = (rdin *)ptr;
@@ -4826,12 +4868,12 @@ typedef struct {
   mus_any_class *core;
   mus_output_class *base;
   int chan;
-  int loc;
+  off_t loc;
   char *file_name;
   int chans;
-  MUS_SAMPLE_TYPE **obufs;
-  int data_start, data_end;
-  int out_end;
+  mus_sample_t **obufs;
+  off_t data_start, data_end;
+  off_t out_end;
   int output_data_format;
   int output_header_type;
 } rdout;
@@ -4840,7 +4882,7 @@ static char *inspect_rdout(void *ptr)
 {
   rdout *gen = (rdout *)ptr;
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE,
-	       "rdout chan: %d, loc: %d, file_name: %s, chans: %d, data_start: %d, data_end: %d, out_end: %d",
+	       "rdout chan: %d, loc: " OFF_TD ", file_name: %s, chans: %d, data_start: " OFF_TD ", data_end: " OFF_TD ", out_end: " OFF_TD,
 	       gen->chan, gen->loc, gen->file_name, gen->chans, gen->data_start, gen->data_end, gen->out_end);
   return(describe_buffer);
 }
@@ -4870,7 +4912,7 @@ static int free_sample2file(void *p)
   return(0);
 }
 
-static int sample2file_length(void *ptr) {return(((rdout *)ptr)->out_end);}
+static int sample2file_length(void *ptr) {return((int)(((rdout *)ptr)->out_end));}
 
 static mus_any_class SAMPLE2FILE_CLASS = {
   MUS_SAMPLE2FILE,
@@ -4892,8 +4934,9 @@ static int set_bufferlen(void *ptr, int len) {clm_file_buffer_size = len; return
 
 static void flush_buffers(rdout *gen)
 {
-  int fd, i, j, last, size, hdrend, hdrfrm, hdrtyp, num;
-  MUS_SAMPLE_TYPE **addbufs;
+  int fd, i, j, last, hdrfrm, hdrtyp, num;
+  off_t size, hdrend;
+  mus_sample_t **addbufs;
   fd = mus_sound_open_input(gen->file_name);
   if (fd == -1)
     {
@@ -4922,9 +4965,9 @@ static void flush_buffers(rdout *gen)
       hdrfrm = mus_sound_data_format(gen->file_name);
       hdrtyp = mus_sound_header_type(gen->file_name);
       size = mus_sound_frames(gen->file_name);
-      addbufs = (MUS_SAMPLE_TYPE **)CALLOC(gen->chans, sizeof(MUS_SAMPLE_TYPE *));
+      addbufs = (mus_sample_t **)CALLOC(gen->chans, sizeof(mus_sample_t *));
       for (i = 0; i < gen->chans; i++) 
-	addbufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(clm_file_buffer_size, sizeof(MUS_SAMPLE_TYPE));
+	addbufs[i] = (mus_sample_t *)CALLOC(clm_file_buffer_size, sizeof(mus_sample_t));
       mus_sound_seek_frame(fd, gen->data_start);
       num = gen->out_end - gen->data_start;
       if (num >= clm_file_buffer_size) 
@@ -4945,7 +4988,7 @@ static void flush_buffers(rdout *gen)
     }
 }
 
-static Float sample_file(void *ptr, int samp, int chan, Float val)
+static Float sample_file(void *ptr, off_t samp, int chan, Float val)
 {
   rdout *gen = (rdout *)ptr;
   int j;
@@ -4956,7 +4999,7 @@ static Float sample_file(void *ptr, int samp, int chan, Float val)
 	{
 	  flush_buffers(gen);
 	  for (j = 0; j < gen->chans; j++)
-	    memset((void *)(gen->obufs[j]), 0, clm_file_buffer_size * sizeof(MUS_SAMPLE_TYPE));
+	    memset((void *)(gen->obufs[j]), 0, clm_file_buffer_size * sizeof(mus_sample_t));
 	  gen->data_start = samp;
 	  gen->data_end = samp + clm_file_buffer_size - 1;
 	  gen->out_end = samp;
@@ -5035,9 +5078,9 @@ mus_any *mus_make_sample2file_with_comment(const char *filename, int out_chans, 
 	      gen->chans = out_chans;
 	      gen->output_data_format = out_format;
 	      gen->output_header_type = out_type;
-	      gen->obufs = (MUS_SAMPLE_TYPE **)CALLOC(gen->chans, sizeof(MUS_SAMPLE_TYPE *));
+	      gen->obufs = (mus_sample_t **)CALLOC(gen->chans, sizeof(mus_sample_t *));
 	      for (i = 0; i < gen->chans; i++) 
-		gen->obufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(clm_file_buffer_size, sizeof(MUS_SAMPLE_TYPE));
+		gen->obufs[i] = (mus_sample_t *)CALLOC(clm_file_buffer_size, sizeof(mus_sample_t));
 	      /* clear previous, if any */
 	      if (mus_file_close(fd) != 0)
 		mus_error(MUS_CANT_CLOSE_FILE, 
@@ -5055,7 +5098,7 @@ mus_any *mus_make_sample2file(const char *filename, int out_chans, int out_forma
   return(mus_make_sample2file_with_comment(filename, out_chans, out_format, out_type, NULL));
 }
 
-Float mus_sample2file(mus_any *ptr, int samp, int chan, Float val)
+Float mus_sample2file(mus_any *ptr, off_t samp, int chan, Float val)
 {
   return(mus_write_sample((mus_output *)ptr, samp, chan, val));
 }
@@ -5070,16 +5113,16 @@ int mus_close_file(mus_any *ptr)
 
 /* ---------------- out-any ---------------- */
 
-Float mus_out_any(int frame, Float val, int chan, mus_output *IO)
+Float mus_out_any(off_t frame, Float val, int chan, mus_output *IO)
 {
   if (IO) return(mus_sample2file((mus_any *)IO, frame, chan, val));
   return(0.0);
 }
 
-Float mus_outa(int frame, Float val, mus_output *IO) {return(mus_out_any(frame, val, 0, IO));}
-Float mus_outb(int frame, Float val, mus_output *IO) {return(mus_out_any(frame, val, 1, IO));}
-Float mus_outc(int frame, Float val, mus_output *IO) {return(mus_out_any(frame, val, 2, IO));}
-Float mus_outd(int frame, Float val, mus_output *IO) {return(mus_out_any(frame, val, 3, IO));}
+Float mus_outa(off_t frame, Float val, mus_output *IO) {return(mus_out_any(frame, val, 0, IO));}
+Float mus_outb(off_t frame, Float val, mus_output *IO) {return(mus_out_any(frame, val, 1, IO));}
+Float mus_outc(off_t frame, Float val, mus_output *IO) {return(mus_out_any(frame, val, 2, IO));}
+Float mus_outd(off_t frame, Float val, mus_output *IO) {return(mus_out_any(frame, val, 3, IO));}
 
 
 
@@ -5126,7 +5169,7 @@ mus_any *mus_make_frame2file(const char *filename, int chans, int out_format, in
 
 int mus_frame2file_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_FRAME2FILE));}
 
-mus_frame *mus_frame2file(mus_any *ptr, int samp, mus_frame *data)
+mus_frame *mus_frame2file(mus_any *ptr, off_t samp, mus_frame *data)
 {
   rdout *gen = (rdout *)ptr;
   int i, chans;
@@ -5434,7 +5477,7 @@ mus_any *mus_make_locsig(Float degree, Float distance, Float reverb, int chans, 
   return(NULL);
 }
 
-mus_frame *mus_locsig(mus_any *ptr, int loc, Float val)
+mus_frame *mus_locsig(mus_any *ptr, off_t loc, Float val)
 {
   locs *gen = (locs *)ptr;
   int i;
@@ -6503,7 +6546,7 @@ void mus_convolve_files(const char *file1, const char *file2, Float maxamp, cons
 {
   int file1_len, file2_len, fftlen, outlen, totallen, file1_chans, file2_chans, output_chans, c1, c2;
   Float *data1, *data2, *outdat;
-  MUS_SAMPLE_TYPE *samps;
+  mus_sample_t *samps;
   char *errmsg = NULL;
   Float maxval = 0.0;
   int i, j, k;
@@ -6521,7 +6564,7 @@ void mus_convolve_files(const char *file1, const char *file2, Float maxamp, cons
   data2 = (Float *)CALLOC(fftlen, sizeof(Float));
   if (output_chans == 1)
     {
-      samps = (MUS_SAMPLE_TYPE *)CALLOC(fftlen, sizeof(MUS_SAMPLE_TYPE));
+      samps = (mus_sample_t *)CALLOC(fftlen, sizeof(mus_sample_t));
       mus_file_to_array(file1, 0, 0, file1_len, samps); 
       for (i = 0; i < file1_len; i++) data1[i] = MUS_SAMPLE_TO_DOUBLE(samps[i]);
       mus_file_to_array(file2, 0, 0, file2_len, samps);
@@ -6541,7 +6584,7 @@ void mus_convolve_files(const char *file1, const char *file2, Float maxamp, cons
     }
   else
     {
-      samps = (MUS_SAMPLE_TYPE *)CALLOC(totallen, sizeof(MUS_SAMPLE_TYPE));
+      samps = (mus_sample_t *)CALLOC(totallen, sizeof(mus_sample_t));
       outdat = (Float *)CALLOC(totallen, sizeof(Float));
       c1 = 0; 
       c2 = 0;
@@ -6593,10 +6636,11 @@ void mus_convolve_files(const char *file1, const char *file2, Float maxamp, cons
 #define ENVELOPED_MONO_MIX 4
 #define ENVELOPED_MIX 5
 
-void mus_mix(const char *outfile, const char *infile, int out_start, int out_frames, int in_start, mus_mixer *mx, mus_any ***envs)
+void mus_mix(const char *outfile, const char *infile, off_t out_start, off_t out_frames, off_t in_start, mus_mixer *mx, mus_any ***envs)
 {
-  int i, j = 0, k, m, ofd, ifd, inc, outc, in_chans, out_chans, mix_chans, min_chans, curoutframes, mixtype;
-  MUS_SAMPLE_TYPE **obufs, **ibufs;
+  int i, j = 0, k, m, ofd, ifd, in_chans, out_chans, mix_chans, min_chans, mixtype;
+  mus_sample_t **obufs, **ibufs;
+  off_t inc, outc, offi, offk, curoutframes;
   mus_frame *frin, *frthru = NULL;
   mus_any *inf, *outf;
   Float scaler;
@@ -6615,7 +6659,7 @@ void mus_mix(const char *outfile, const char *infile, int out_start, int out_fra
       inf = mus_make_file2frame(infile);
       frin = mus_make_empty_frame(mix_chans);
       frthru = mus_make_empty_frame(mix_chans);
-      for (i = 0, inc = in_start, outc = out_start; i < out_frames; i++, inc++, outc++)
+      for (offi = 0, inc = in_start, outc = out_start; offi < out_frames; offi++, inc++, outc++)
 	{
 	  for (j = 0; j < in_chans; j++)
 	    for (k = 0; k < out_chans; k++)
@@ -6671,12 +6715,12 @@ void mus_mix(const char *outfile, const char *infile, int out_start, int out_fra
 	      else mixtype = IDENTITY_MIX;
 	    }
 	}
-      obufs = (MUS_SAMPLE_TYPE **)CALLOC(out_chans, sizeof(MUS_SAMPLE_TYPE *));
+      obufs = (mus_sample_t **)CALLOC(out_chans, sizeof(mus_sample_t *));
       for (i = 0; i < out_chans; i++) 
-	obufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(clm_file_buffer_size, sizeof(MUS_SAMPLE_TYPE));
-      ibufs = (MUS_SAMPLE_TYPE **)CALLOC(in_chans, sizeof(MUS_SAMPLE_TYPE *));
+	obufs[i] = (mus_sample_t *)CALLOC(clm_file_buffer_size, sizeof(mus_sample_t));
+      ibufs = (mus_sample_t **)CALLOC(in_chans, sizeof(mus_sample_t *));
       for (i = 0; i < in_chans; i++) 
-	ibufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(clm_file_buffer_size, sizeof(MUS_SAMPLE_TYPE));
+	ibufs[i] = (mus_sample_t *)CALLOC(clm_file_buffer_size, sizeof(mus_sample_t));
       ifd = mus_sound_open_input(infile);
       mus_sound_seek_frame(ifd, in_start);
       mus_sound_read(ifd, 0, clm_file_buffer_size - 1, in_chans, ibufs);
@@ -6692,30 +6736,30 @@ void mus_mix(const char *outfile, const char *infile, int out_start, int out_fra
       switch (mixtype)
 	{
 	case IDENTITY_MONO_MIX:
-	  for (k = 0, j = 0; k < out_frames; k++, j++)
+	  for (offk = 0, j = 0; offk < out_frames; offk++, j++)
 	    {
 	      if (j == clm_file_buffer_size)
 		{
 		  mus_sound_write(ofd, 0, j - 1, out_chans, obufs);
 		  j = 0;
-		  mus_sound_seek_frame(ofd, out_start + k);
+		  mus_sound_seek_frame(ofd, out_start + offk);
 		  mus_sound_read(ofd, 0, clm_file_buffer_size - 1, out_chans, obufs);
-		  mus_sound_seek_frame(ofd, out_start + k);
+		  mus_sound_seek_frame(ofd, out_start + offk);
 		  mus_sound_read(ifd, 0, clm_file_buffer_size - 1, in_chans, ibufs);
 		}
 	      obufs[0][j] += ibufs[0][j];
 	    }
 	  break;
 	case IDENTITY_MIX:
-	  for (k = 0, j = 0; k < out_frames; k++, j++)
+	  for (offk = 0, j = 0; offk < out_frames; offk++, j++)
 	    {
 	      if (j == clm_file_buffer_size)
 		{
 		  mus_sound_write(ofd, 0, j - 1, out_chans, obufs);
 		  j = 0;
-		  mus_sound_seek_frame(ofd, out_start + k);
+		  mus_sound_seek_frame(ofd, out_start + offk);
 		  mus_sound_read(ofd, 0, clm_file_buffer_size - 1, out_chans, obufs);
-		  mus_sound_seek_frame(ofd, out_start + k);
+		  mus_sound_seek_frame(ofd, out_start + offk);
 		  mus_sound_read(ifd, 0, clm_file_buffer_size - 1, in_chans, ibufs);
 		}
 	      for (i = 0; i < min_chans; i++)
@@ -6724,69 +6768,69 @@ void mus_mix(const char *outfile, const char *infile, int out_start, int out_fra
 	  break;
 	case SCALED_MONO_MIX:
 	  scaler = mx->vals[0][0];
-	  for (k = 0, j = 0; k < out_frames; k++, j++)
+	  for (offk = 0, j = 0; offk < out_frames; offk++, j++)
 	    {
 	      if (j == clm_file_buffer_size)
 		{
 		  mus_sound_write(ofd, 0, j - 1, out_chans, obufs);
 		  j = 0;
-		  mus_sound_seek_frame(ofd, out_start + k);
+		  mus_sound_seek_frame(ofd, out_start + offk);
 		  mus_sound_read(ofd, 0, clm_file_buffer_size - 1, out_chans, obufs);
-		  mus_sound_seek_frame(ofd, out_start + k);
+		  mus_sound_seek_frame(ofd, out_start + offk);
 		  mus_sound_read(ifd, 0, clm_file_buffer_size - 1, in_chans, ibufs);
 		}
-	      obufs[0][j] += (MUS_SAMPLE_TYPE)(scaler * ibufs[0][j]);
+	      obufs[0][j] += (mus_sample_t)(scaler * ibufs[0][j]);
 	    }
 	  break;
 	case SCALED_MIX:
-	  for (k = 0, j = 0; k < out_frames; k++, j++)
+	  for (offk = 0, j = 0; offk < out_frames; offk++, j++)
 	    {
 	      if (j == clm_file_buffer_size)
 		{
 		  mus_sound_write(ofd, 0, j - 1, out_chans, obufs);
 		  j = 0;
-		  mus_sound_seek_frame(ofd, out_start + k);
+		  mus_sound_seek_frame(ofd, out_start + offk);
 		  mus_sound_read(ofd, 0, clm_file_buffer_size- 1 , out_chans, obufs);
-		  mus_sound_seek_frame(ofd, out_start + k);
+		  mus_sound_seek_frame(ofd, out_start + offk);
 		  mus_sound_read(ifd, 0, clm_file_buffer_size - 1, in_chans, ibufs);
 		}
 	      for (i = 0; i < min_chans; i++)
 		for (m = 0; m < in_chans; m++)
-		  obufs[i][j] += (MUS_SAMPLE_TYPE)(ibufs[m][j] * mx->vals[m][i]);
+		  obufs[i][j] += (mus_sample_t)(ibufs[m][j] * mx->vals[m][i]);
 	    }
 	  break;
 	case ENVELOPED_MONO_MIX:
 	  e = envs[0][0];
-	  for (k = 0, j = 0; k < out_frames; k++, j++)
+	  for (offk = 0, j = 0; offk < out_frames; offk++, j++)
 	    {
 	      if (j == clm_file_buffer_size)
 		{
 		  mus_sound_write(ofd, 0, j - 1, out_chans, obufs);
 		  j = 0;
-		  mus_sound_seek_frame(ofd, out_start + k);
+		  mus_sound_seek_frame(ofd, out_start + offk);
 		  mus_sound_read(ofd, 0, clm_file_buffer_size - 1, out_chans, obufs);
-		  mus_sound_seek_frame(ofd, out_start + k);
+		  mus_sound_seek_frame(ofd, out_start + offk);
 		  mus_sound_read(ifd, 0, clm_file_buffer_size - 1, in_chans, ibufs);
 		}
-	      obufs[0][j] += (MUS_SAMPLE_TYPE)(mus_env(e) * ibufs[0][j]);
+	      obufs[0][j] += (mus_sample_t)(mus_env(e) * ibufs[0][j]);
 	    }
 	  break;
 	case ENVELOPED_MIX:
 	  e = envs[0][0];
-	  for (k = 0, j = 0; k < out_frames; k++, j++)
+	  for (offk = 0, j = 0; offk < out_frames; offk++, j++)
 	    {
 	      if (j == clm_file_buffer_size)
 		{
 		  mus_sound_write(ofd, 0, j - 1, out_chans, obufs);
 		  j = 0;
-		  mus_sound_seek_frame(ofd, out_start + k);
+		  mus_sound_seek_frame(ofd, out_start + offk);
 		  mus_sound_read(ofd, 0, clm_file_buffer_size - 1, out_chans, obufs);
-		  mus_sound_seek_frame(ofd, out_start + k);
+		  mus_sound_seek_frame(ofd, out_start + offk);
 		  mus_sound_read(ifd, 0, clm_file_buffer_size - 1, in_chans, ibufs);
 		}
 	      scaler = mus_env(e);
 	      for (i = 0; i < min_chans; i++)
-		obufs[i][j] += (MUS_SAMPLE_TYPE)(scaler * ibufs[i][j]);
+		obufs[i][j] += (mus_sample_t)(scaler * ibufs[i][j]);
 	    }
 	  break;
 
@@ -6805,11 +6849,11 @@ void mus_mix(const char *outfile, const char *infile, int out_start, int out_fra
     }
 }
 
-int mus_file2fltarray(const char *filename, int chan, int start, int samples, Float *array)
+int mus_file2fltarray(const char *filename, int chan, off_t start, int samples, Float *array)
 {
-  MUS_SAMPLE_TYPE *idata;
+  mus_sample_t *idata;
   int i, len;
-  idata = (MUS_SAMPLE_TYPE *)CALLOC(samples, sizeof(MUS_SAMPLE_TYPE));
+  idata = (mus_sample_t *)CALLOC(samples, sizeof(mus_sample_t));
   len = mus_file_to_array(filename, chan, start, samples, idata);
   if (len != -1) 
     for (i = 0; i < samples; i++)
@@ -6820,10 +6864,10 @@ int mus_file2fltarray(const char *filename, int chan, int start, int samples, Fl
 
 int mus_fltarray2file(const char *filename, Float *ddata, int len, int srate, int channels)
 {
-  MUS_SAMPLE_TYPE *idata;
+  mus_sample_t *idata;
   int i;
   char *errmsg;
-  idata = (MUS_SAMPLE_TYPE *)CALLOC(len, sizeof(MUS_SAMPLE_TYPE));
+  idata = (mus_sample_t *)CALLOC(len, sizeof(mus_sample_t));
   for (i = 0; i < len; i++) 
     idata[i] = MUS_FLOAT_TO_SAMPLE(ddata[i]);
   errmsg = mus_array_to_file_with_error(filename, idata, len, srate, channels);
