@@ -31,7 +31,6 @@
 ;;; test 28: errors
 
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
-;;; TODO: tests for snd->sample and xen->sample (ina and out)
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen) (ice-9 syncase) (ice-9 session))
 
@@ -6879,10 +6878,8 @@ EDITS: 5
 	      ;; should this return 'no-such-sample?
 	      (if err (snd-display ";region->vct 12345678: ~A" err)))
 	    (let ((reader-string (format #f "~A" vr)))
-	      (if (not (string=? (substring reader-string 0 18) "#<sample-reader 0x"))
-		  (snd-display ";sample reader actually got: [~S]" (substring reader-string 0 18)))
-	      (if (not (string=? (substring reader-string 25) ": oboe.snd[0: 0] from 0, at 0>"))
-		  (snd-display ";sample reader actually got: [~S]" (substring reader-string 25))))
+	      (if (not (string=? reader-string "#<sample-reader: oboe.snd[0: 0] from 0, at 0>"))
+		  (snd-display ";sample reader actually got: [~S]" reader-string)))
 	    (let ((evr vr))
 	      (if (not (equal? evr vr)) (snd-display ";sample-reader equal? ~A ~A" vr evr)))
 	    (catch 'break
@@ -12714,6 +12711,66 @@ EDITS: 5
 	(set! (mus-increment gen) 1.0)
 	(if (fneq (mus-increment gen) 1.0) (snd-display ";file->sample set increment: ~A" (mus-increment gen))))
       
+      (let* ((ind (open-sound "oboe.snd"))
+	     (gen (make-snd->sample ind))
+	     (v0 (make-vct 10)))
+	(print-and-check gen 
+			 "snd->sample"
+			 "snd->sample: reading oboe.snd (1 chan) at 0:[no readers]"
+			 "snd->sample: reading oboe.snd (1 chan) at 0:[no readers]")
+	(if (not (mus-input? gen)) (snd-display ";snd->sample ~A not input?" gen))
+	(if (not (string=? (mus-file-name gen) (string-append home-dir "/cl/oboe.snd")))
+	    (snd-display ";snd->sample mus-file-name: ~A ~A" (mus-file-name gen) (string-append home-dir "/cl/oboe.snd")))
+	(do ((i 0 (1+ i)))
+	    ((= i 10))
+	  (vct-set! v0 i (snd->sample gen (+ 1490 i))))
+	(if (not (snd->sample? gen)) (snd-display ";~A not snd->sample?" gen))
+	(if (or (fneq (vct-ref v0 1) -0.009) (fneq (vct-ref v0 7) .029)) (snd-display ";snd->sample output: ~A" v0))
+	(if (not (= (mus-channels gen) 1)) (snd-display ";snd->sample channels: ~A" (mus-channels gen)))
+	(if (not (= (mus-location gen) 1499)) (snd-display ";snd->sample location: ~A" (mus-location gen)))
+	(do ((i 0 (1+ i)))
+	    ((= i 10))
+	  (vct-set! v0 i (ina (+ 1490 i) gen)))
+	(if (or (fneq (vct-ref v0 1) -0.009) (fneq (vct-ref v0 7) .029)) (snd-display ";snd->sample ina output: ~A" v0))
+	(close-sound ind))
+      
+      (let* ((ind (open-sound "2.snd"))
+	     (gen (make-snd->sample ind))
+	     (v0 (make-vct 10)))
+	(do ((i 0 (1+ i)))
+	    ((= i 10))
+	  (vct-set! v0 i (snd->sample gen (+ 1490 i) 0))
+	  (vct-set! v0 i (snd->sample gen (+ 1490 i) 1)))
+	(print-and-check gen 
+			 "snd->sample"
+			 "snd->sample: reading 2.snd (2 chans) at 1499:[#<sample-reader: 2.snd[0: 0] from 1490, at 1500>, #<sample-reader: 2.snd[1: 0] from 1490, at 1500>]"
+			 "snd->sample: reading 2.snd (2 chans) at 1499:[#<sample-reader: 2.snd[0: 0] from 1490, at 1500>, #<sample-reader: 2.snd[1: 0] from 1490, at 1500>]")
+	(if (not (mus-input? gen)) (snd-display ";snd->sample ~A not input?" gen))
+	(if (not (string=? (mus-file-name gen) (string-append home-dir "/cl/2.snd")))
+	    (snd-display ";snd->sample mus-file-name: ~A ~A" (mus-file-name gen) (string-append home-dir "/cl/2.snd")))
+	(if (not (snd->sample? gen)) (snd-display ";~A not snd->sample?" gen))
+	(if (not (= (mus-channels gen) 2)) (snd-display ";snd->sample channels (2): ~A" (mus-channels gen)))
+	(if (not (= (mus-location gen) 1499)) (snd-display ";snd->sample location (2): ~A" (mus-location gen)))
+	(close-sound ind))
+      
+      (let* ((fgen (make-file->sample "oboe.snd"))
+	     (gen (make-xen->sample (lambda (samp chan) (* 2.0 (file->sample fgen samp chan)))))
+	     (v0 (make-vct 10)))
+	(print-and-check gen 
+			 "xen->sample"
+			 "xen->sample: #<procedure #f ((samp chan) (* 2.0 (file->sample fgen samp chan)))>"
+			 "xen->sample: #<procedure #f ((samp chan) (* 2.0 (file->sample fgen samp chan)))>")
+	(if (not (mus-input? gen)) (snd-display ";xen->sample ~A not input?" gen))
+	(do ((i 0 (1+ i)))
+	    ((= i 10))
+	  (vct-set! v0 i (xen->sample gen (+ 1490 i) 0)))
+	(if (not (xen->sample? gen)) (snd-display ";~A not xen->sample?" gen))
+	(if (or (fneq (vct-ref v0 1) (* 2 -0.009)) (fneq (vct-ref v0 7) (* 2 .029))) (snd-display ";xen->sample output: ~A" v0))
+	(do ((i 0 (1+ i)))
+	    ((= i 10))
+	  (vct-set! v0 i (ina (+ 1490 i) gen)))
+	(if (or (fneq (vct-ref v0 1) (* 2 -0.009)) (fneq (vct-ref v0 7) (* 2 .029))) (snd-display ";xen->sample ina output: ~A" v0)))
+      
       (let ((gen (make-file->frame "oboe.snd"))
 	    (v0 (make-vct 10)))
 	(print-and-check gen 
@@ -13066,6 +13123,7 @@ EDITS: 5
 			 "locsig"
 			 "locsig: chans 4, outn: [0.083 0.167 0.000 0.000], revn: [0.000 0.100 0.200 0.300]"
 			 "locs outn[4]: [0.083 0.167 0.000 0.000], revn[4]: [0.000 0.100 0.200 0.300]")
+	(if (not (frame->file? (mus-data lc))) (snd-display ";data locsig: ~A" (mus-data lc))) ; in scheme it's the output writer
 	(mus-close gen)
 	(mus-close rev))
       
@@ -13333,6 +13391,7 @@ EDITS: 5
 	(let ((genx gen1))
 	  (if (not (equal? genx gen1))
 	      (snd-display ";granulate equal? ~A ~A ~A" genx gen1 (equal? genx gen1))))
+	(if (equal? gen gen1) (snd-display ";granulate equal? ~A ~A" gen gen1))
 	(if (= (vct-peak v0) 0.0) (snd-display ";granulate output peak: ~F?" (vct-peak v0)))
 	(if (not (granulate? gen)) (snd-display ";~A not granulate?" gen))
 	(if (fneq (mus-increment gen) 2.0) (snd-display ";granulate increment: ~F?" (mus-increment gen)))
@@ -13378,6 +13437,7 @@ EDITS: 5
 	  (if (not (convolve? gen)) (snd-display ";~A not convolve?" gen))
 	  (let ((genx gen1))
 	    (if (not (equal? genx gen1)) (snd-display ";convolve equal?: ~A ~A ~A" genx gen1 (equal? genx gen1))))
+	  (if (equal? gen gen1) (snd-display ";convolve equal? ~A ~A" gen gen1))
 	  (if (not (= (mus-length gen) 64)) (snd-display ";convolve fft len: ~D?" (mus-length gen)))
 	  (do ((i 0 (1+ i)))
 	      ((= i 128))
@@ -13835,22 +13895,24 @@ EDITS: 5
 			  (lambda () (make-phase-vocoder #f 512 4 256 1.0 (lambda (a b) 0.0) (lambda (a) #f) (lambda (a b) 0)))
 			  (lambda args args))))
 	  (if (not (eq? (car tag) 'bad-arity)) (snd-display ";make-phase-vocoder bad synthesize func: ~A" tag)))
-	(make-phase-vocoder (lambda (dir) 0.0))
-	(let ((genx (make-phase-vocoder :input (lambda (dir) 0.0))))
-	  (if (fneq (mus-frequency genx) 1.0) (snd-display ";mus-frequency phase-vocoder: ~A" (mus-frequency genx)))
-	  (set! (mus-frequency genx) 2.0)
-	  (if (fneq (mus-frequency genx) 2.0) (snd-display ";set mus-frequency phase-vocoder: ~A" (mus-frequency genx)))
-	  (if (fneq (mus-increment genx) 128) (snd-display ";mus-increment phase-vocoder: ~A" (mus-increment genx)))
-	  (set! (mus-increment genx) 256)
-	  (if (fneq (mus-increment genx) 256) (snd-display ";set mus-increment phase-vocoder: ~A" (mus-increment genx)))
-	  (if (not (= (mus-hop genx) 128)) (snd-display ";phase vocoder hop: ~A" (mus-hop genx)))
-	  (set! (mus-hop genx) 64)
-	  (if (not (= (mus-hop genx) 64)) (snd-display ";set phase vocoder hop: ~A" (mus-hop genx)))
-	  (if (not (= (mus-length genx) 512)) (snd-display ";phase vocoder length: ~A" (mus-length genx)))
-	  (set! (mus-length genx) 64)
-	  (if (not (= (mus-length genx) 64)) (snd-display ";set phase vocoder length: ~A" (mus-length genx)))
-	  (let ((genxx genx))
-	    (if (not (equal? genx genxx)) (snd-display ";phase-vocoder equal: ~A ~A" genxx genx))))
+	(let ((geno (make-phase-vocoder (lambda (dir) 0.0))))
+	  (let ((genx (make-phase-vocoder :input (lambda (dir) 0.0))))
+	    (if (equal? geno genx) (snd-display ";phase-vocoder equal? ~A ~A" geno genx))
+	    (if (not (procedure? (mus-data genx))) (snd-display ";phase-vocoder data: ~A" (mus-data genx))) ; in scheme it's the input procedure
+	    (if (fneq (mus-frequency genx) 1.0) (snd-display ";mus-frequency phase-vocoder: ~A" (mus-frequency genx)))
+	    (set! (mus-frequency genx) 2.0)
+	    (if (fneq (mus-frequency genx) 2.0) (snd-display ";set mus-frequency phase-vocoder: ~A" (mus-frequency genx)))
+	    (if (fneq (mus-increment genx) 128) (snd-display ";mus-increment phase-vocoder: ~A" (mus-increment genx)))
+	    (set! (mus-increment genx) 256)
+	    (if (fneq (mus-increment genx) 256) (snd-display ";set mus-increment phase-vocoder: ~A" (mus-increment genx)))
+	    (if (not (= (mus-hop genx) 128)) (snd-display ";phase vocoder hop: ~A" (mus-hop genx)))
+	    (set! (mus-hop genx) 64)
+	    (if (not (= (mus-hop genx) 64)) (snd-display ";set phase vocoder hop: ~A" (mus-hop genx)))
+	    (if (not (= (mus-length genx) 512)) (snd-display ";phase vocoder length: ~A" (mus-length genx)))
+	    (set! (mus-length genx) 64)
+	    (if (not (= (mus-length genx) 64)) (snd-display ";set phase vocoder length: ~A" (mus-length genx)))
+	    (let ((genxx genx))
+	      (if (not (equal? genx genxx)) (snd-display ";phase-vocoder equal: ~A ~A" genxx genx)))))
 	(close-sound ind))
       
       (load "moog.scm")
@@ -28315,6 +28377,7 @@ EDITS: 2
 	      (btst '(sample-reader? (make-sample-reader)) #t)
 	      (btst '(let ((a (make-sample-reader))) (and (eq? a a) (eqv? a a) (equal? a a))) #t)
 	      (btst '(let ((a (make-sample-reader)) (b (make-sample-reader))) (or (eq? a b) (eqv? a b) (equal? a b))) #f)
+;	      (btst '(let ((a (make-snd->sample))) (snd->sample? a)) #t)
 	      (close-sound ind))
 	    
 	    (ftst '(let ((v (make-vct 3))) (vct-fill! v 1.0) (vct-ref v 1)) 1.0)
@@ -38622,6 +38685,8 @@ EDITS: 2
 	    (check-error-tag 'no-such-key (lambda () (key-binding 12 17)))
 	    (check-error-tag 'no-such-key (lambda () (key-binding 12 -1)))
 	    (check-error-tag 'wrong-type-arg (lambda () (send-netscape -1)))
+	    (check-error-tag 'bad-header (lambda () (file->array "/home/bil/sf1/bad_chans.snd" 0 0 123 (make-vct 123))))
+	    (check-error-tag 'bad-header (lambda () (make-readin "/home/bil/sf1/bad_chans.snd")))
 	    
 	    (if (provided? 'snd-motif)
 		(for-each

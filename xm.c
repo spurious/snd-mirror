@@ -7,11 +7,11 @@
   #include <config.h>
 #endif
 
-#define XM_DATE "20-Aug-03"
+#define XM_DATE "23-Aug-03"
 
 
 /* HISTORY: 
- *   20-Aug:    XtEventHandler *flag settable.
+ *   20-Aug:    XtEventHandler *flag set to false if handler returns 'done.
  *   11-Aug:    int -> bool.
  *   17-July:   XpmAttributes .colorsymbols is a list.
  *   15-July:   type check cleanups.
@@ -749,19 +749,19 @@ static void xm_unprotect_at(int ind);
  *   name and type:
  */
 
-enum {XM_INT, XM_ULONG, XM_UCHAR, XM_FLOAT, XM_STRING, XM_XMSTRING, XM_STRING_TABLE,
-      XM_INT_TABLE, XM_RENDER_TABLE, XM_TAB_LIST, XM_WIDGET, XM_WIDGET_LIST, 
-      XM_BOOLEAN, XM_CALLBACK, XM_PIXEL, XM_PIXMAP, XM_XFONTSTRUCT, XM_DIMENSION,
-      XM_ATOM, XM_ATOM_LIST, XM_STRING_LIST, XM_CHARSET_TABLE, XM_TEXT_SOURCE,
-      XM_FONTLIST, XM_COLORMAP, XM_KEYSYM, XM_KEYSYM_TABLE, XM_SCREEN, XM_WINDOW,
-      XM_VISUAL, XM_RECTANGLE_LIST, XM_WIDGET_CLASS, XM_STRING_OR_INT,
-      XM_TRANSFER_CALLBACK, XM_CONVERT_CALLBACK, XM_SEARCH_CALLBACK, XM_ORDER_CALLBACK,
-      XM_QUALIFY_CALLBACK, XM_ALLOC_COLOR_CALLBACK, XM_POPUP_CALLBACK, XM_SCREEN_COLOR_CALLBACK,
-      XM_DROP_CALLBACK, XM_TRANSFER_ENTRY_LIST, XM_DRAG_CALLBACK, XM_STRING_OR_XMSTRING, XM_PARSE_CALLBACK,
-      XM_BOOLEAN_OR_INT, XM_POSITION, XM_SHORT
-};
+typedef enum {XM_INT, XM_ULONG, XM_UCHAR, XM_FLOAT, XM_STRING, XM_XMSTRING, XM_STRING_TABLE,
+	      XM_INT_TABLE, XM_RENDER_TABLE, XM_TAB_LIST, XM_WIDGET, XM_WIDGET_LIST, 
+	      XM_BOOLEAN, XM_CALLBACK, XM_PIXEL, XM_PIXMAP, XM_XFONTSTRUCT, XM_DIMENSION,
+	      XM_ATOM, XM_ATOM_LIST, XM_STRING_LIST, XM_CHARSET_TABLE, XM_TEXT_SOURCE,
+	      XM_FONTLIST, XM_COLORMAP, XM_KEYSYM, XM_KEYSYM_TABLE, XM_SCREEN, XM_WINDOW,
+	      XM_VISUAL, XM_RECTANGLE_LIST, XM_WIDGET_CLASS, XM_STRING_OR_INT,
+	      XM_TRANSFER_CALLBACK, XM_CONVERT_CALLBACK, XM_SEARCH_CALLBACK, XM_ORDER_CALLBACK,
+	      XM_QUALIFY_CALLBACK, XM_ALLOC_COLOR_CALLBACK, XM_POPUP_CALLBACK, XM_SCREEN_COLOR_CALLBACK,
+	      XM_DROP_CALLBACK, XM_TRANSFER_ENTRY_LIST, XM_DRAG_CALLBACK, XM_STRING_OR_XMSTRING, XM_PARSE_CALLBACK,
+	      XM_BOOLEAN_OR_INT, XM_POSITION, XM_SHORT
+} xm_resource_t;
 
-static int resource_type(char *resource);
+static xm_resource_t resource_type(char *resource);
 
 static XEN C_TO_XEN_Widgets(Widget *array, int len)
 {
@@ -1551,7 +1551,8 @@ static Arg *XEN_TO_C_Args(XEN inargl)
 {
   /* an Arg array in xm is a list of name value pairs */
   Arg *args = NULL;
-  int i, len, type;
+  int i, len;
+  xm_resource_t type;
   XtCallbackRec *cl = NULL;
   XEN descr, value, xname, inarg;
   char *name;
@@ -2175,6 +2176,10 @@ static XEN C_TO_XEN_ANY(Widget w, Arg arg)
 	  ((XmIsText(w)) || (XmIsTextField(w))))
 	return(C_TO_XEN_STRING((char *)(*((char **)(arg.value)))));
       else return(C_TO_XEN_INT((int)(*((int *)(arg.value)))));
+      break;
+    case XM_TRANSFER_ENTRY_LIST:
+    case XM_PARSE_CALLBACK:
+      break;
     }
   return(C_TO_XEN_ULONG((*((unsigned long *)(arg.value))))); /* fallback */
 }
@@ -22728,7 +22733,7 @@ static void define_structs(void)
 
 typedef struct {
   char *name;
-  int type;
+  xm_resource_t type;
 } hdata;
 
 static int alphabet_compare(const void *a, const void *b)
@@ -22745,7 +22750,7 @@ static hdata **xm_hash = NULL;
 static int hd_ctr = 0;
 static int hd_links[27];
 
-static void hash_resource(char *name, int type)
+static void hash_resource(char *name, xm_resource_t type)
 {
   xm_hash[hd_ctr] = (hdata *)malloc(sizeof(hdata));
   xm_hash[hd_ctr]->name = name;
@@ -22753,7 +22758,7 @@ static void hash_resource(char *name, int type)
   if (hd_ctr >= XM_HASH_SIZE) fprintf(stderr, "overflowed hash table!");
 }
 
-static int resource_type(char *name)
+static xm_resource_t resource_type(char *name)
 {
   int i, start, end, ind;
   ind = (int)(name[0]) - 97;

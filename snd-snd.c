@@ -1343,9 +1343,9 @@ typedef struct {
 } mini_history;
   
 static mini_history *listener_history = NULL;
-enum {MINIBUFFER, FILTER_TEXT, LISTENER_TEXT};
+typedef enum {MINIBUFFER, FILTER_TEXT, LISTENER_TEXT} mini_history_t;
 
-static void remember_string(snd_info *sp, char *str, int which)
+static void remember_string(snd_info *sp, char *str, mini_history_t which)
 {
   /* sp can be NULL */
   mini_history *mh = NULL;
@@ -1381,7 +1381,7 @@ void remember_mini_string(snd_info *sp, char *str) {remember_string(sp, str, MIN
 void remember_filter_string(snd_info *sp, char *str) {remember_string(sp, str, FILTER_TEXT);}
 void remember_listener_string(char *str) {remember_string(NULL, str, LISTENER_TEXT);}
 
-static void restore_string(snd_info *sp, bool back, int which)
+static void restore_string(snd_info *sp, bool back, mini_history_t which)
 {
   /* sp can be NULL */
   mini_history *mh = NULL;
@@ -1420,7 +1420,7 @@ void restore_mini_string(snd_info *sp, bool back) {restore_string(sp, back, MINI
 void restore_filter_string(snd_info *sp, bool back) {restore_string(sp, back, FILTER_TEXT);}
 void restore_listener_string(bool back) {restore_string(NULL, back, LISTENER_TEXT);}
 
-static void clear_strings(snd_info *sp, int which)
+static void clear_strings(snd_info *sp, mini_history_t which)
 {
   /* sp can be NULL */
   mini_history *mh = NULL;

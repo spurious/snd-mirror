@@ -8199,15 +8199,15 @@ char *sf_to_string(snd_fd *fd)
 	}
       if (name == NULL) name = "unknown source";
       if (fd->at_eof)
-	mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<sample-reader %p: %s at eof or freed>",
-		     fd, name);
+	mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<sample-reader: %s at eof or freed>",
+		     name);
       else 
 	{
 	  if (cp)
-	    mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<sample-reader %p: %s[%d: %d] from " OFF_TD ", at " OFF_TD ">",
-			 fd, name, cp->chan, fd->edit_ctr, fd->initial_samp, current_location(fd));
-	  else mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<sample-reader %p: %s from " OFF_TD ", at " OFF_TD ">",
-			    fd, name, fd->initial_samp, current_location(fd));
+	    mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<sample-reader: %s[%d: %d] from " OFF_TD ", at " OFF_TD ">",
+			 name, cp->chan, fd->edit_ctr, fd->initial_samp, current_location(fd));
+	  else mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<sample-reader: %s from " OFF_TD ", at " OFF_TD ">",
+			    name, fd->initial_samp, current_location(fd));
 	}
     }
   return(desc);
@@ -9536,8 +9536,8 @@ typedef struct {
   int gc_loc;
 } xen2sample;
 
-static bool snd2sample_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == SND2SAMPLE));}
-static bool xen2sample_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == XEN2SAMPLE));}
+bool snd2sample_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == SND2SAMPLE));}
+bool xen2sample_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == XEN2SAMPLE));}
 
 static bool snd2sample_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
 static bool xen2sample_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
@@ -9639,7 +9639,7 @@ static char *xen2sample_describe(mus_any *ptr)
   return(snd2sample_buf);
 }
 
-static Float snd2sample_read(mus_any *ptr, off_t frame, int chan) 
+Float snd2sample_read(mus_any *ptr, off_t frame, int chan) 
 {
   snd2sample *spl = (snd2sample *)ptr;
   off_t diff, i;
@@ -9669,7 +9669,7 @@ static Float snd2sample_read(mus_any *ptr, off_t frame, int chan)
   return(next_sample_to_float(spl->sfs[chan])); /* always end up going forward (for simpler code) */
 }
 
-static Float xen2sample_read(mus_any *ptr, off_t frame, int chan)
+Float xen2sample_read(mus_any *ptr, off_t frame, int chan)
 {
   xen2sample *xpl = (xen2sample *)ptr;
   XEN result;
@@ -9708,7 +9708,7 @@ static mus_any_class SND2SAMPLE_CLASS = {
 
 static mus_any_class XEN2SAMPLE_CLASS = {
   -1,
-  "snd->sample",
+  "xen->sample",
   &xen2sample_free,
   &xen2sample_describe,
   &xen2sample_describe,

@@ -665,7 +665,8 @@ static void display_filter_env(snd_info *sp)
 			_("frequency response"),
 			ax, 0, 0, width, height, 
 			sp->filter_control_env, 
-			sp->filter_control_in_dB, true))
+			sp->filter_control_in_dB, 
+			true))
     {
       ax->gc = (ss->sgx)->fltenv_data_gc;
       display_frequency_response(sp->filter_control_env, 

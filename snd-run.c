@@ -65,6 +65,7 @@
  *
  * SOMEDAY: split Scheme from Snd/Clm here and do the latter via an FFI of some sort
  * SOMEDAY: save ptree somehow (local runs make this problematic) -- perhaps definstrument here
+ * PERHAPS: xen2sample and make-snd2sample
  *
  * LIMITATIONS: <insert anxious lucubration here about DSP context and so on>
  *      variables can have only one type, the type has to be ascertainable somehow (similarly for vector elements)
@@ -7383,6 +7384,40 @@ static xen_value *file2sample_1(ptree *prog, xen_value **args, int num_args)
   return(package(prog, R_FLOAT, file2sample_2f, descr_file2sample_2f, args, 3));
 }
 
+/* ---------------- snd->sample ---------------- */
+static char *descr_snd2sample_1f(int *args, ptree *pt) 
+{
+  return(mus_format( FLT_PT " = snd->sample(" CLM_PT ", " INT_PT ")", args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2));
+}
+static char *descr_snd2sample_2f(int *args, ptree *pt) 
+{
+  return(mus_format( FLT_PT " = snd->sample(" CLM_PT ", " INT_PT ", " INT_PT ")", 
+		    args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3));
+}
+static void snd2sample_1f(int *args, ptree *pt) {FLOAT_RESULT = snd2sample_read(CLM_ARG_1, INT_ARG_2, 0);}
+static void snd2sample_2f(int *args, ptree *pt) {FLOAT_RESULT = snd2sample_read(CLM_ARG_1, INT_ARG_2, INT_ARG_3);}
+static xen_value *snd2sample_1(ptree *prog, xen_value **args, int num_args) 
+{
+  if (num_args == 2) return(package(prog, R_FLOAT, snd2sample_1f, descr_snd2sample_1f, args, 2));
+  return(package(prog, R_FLOAT, snd2sample_2f, descr_snd2sample_2f, args, 3));
+}
+
+static char *descr_snd2sample_0p(int *args, ptree *pt)
+{
+  char *buf;
+  buf = (char *)CALLOC(256, sizeof(char));
+  sprintf(buf, BOOL_PT " = snd2sample?(" CLM_PT ")", args[0], B2S(BOOL_RESULT), args[1], DESC_CLM_ARG_1);
+  return(buf);
+}
+ 
+static void snd2sample_0p(int *args, ptree *pt) {BOOL_RESULT = (Int)snd2sample_p(CLM_ARG_1);}
+static xen_value *snd2sample_1p(ptree *prog, xen_value **args, int num_args)
+{
+  return(package(prog, R_BOOL, snd2sample_0p, descr_snd2sample_0p, args, 1));
+}
+
+
+/* ---------------- sample->file ---------------- */
 static char *descr_sample2file_4(int *args, ptree *pt) 
 {
   return(mus_format( FLT_PT " = sample->file(" CLM_PT ", " INT_PT ", " INT_PT ", " FLT_PT ")", 
@@ -10190,6 +10225,7 @@ static void init_walkers(void)
   INIT_WALKER(S_locsig_p, make_walker(locsig_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
   INIT_WALKER(S_mus_input_p, make_walker(input_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
   INIT_WALKER(S_mus_output_p, make_walker(output_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
+  INIT_WALKER(S_snd2sample_p, make_walker(snd2sample_1p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
 
   INIT_WALKER(S_restart_env, make_walker(restart_env_1, NULL, NULL, 1, 1, R_CLM, false, 1, R_CLM));
   INIT_WALKER(S_mus_increment, make_walker(mus_increment_0, NULL, mus_set_increment_1, 1, 1, R_FLOAT, false, 1, R_CLM));
@@ -10264,6 +10300,7 @@ static void init_walkers(void)
   INIT_WALKER(S_filter, make_walker(filter_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
   INIT_WALKER(S_fir_filter, make_walker(fir_filter_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
   INIT_WALKER(S_file2sample, make_walker(file2sample_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_INT));
+  INIT_WALKER(S_snd2sample, make_walker(snd2sample_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_INT));
   INIT_WALKER(S_frame_ref, make_walker(frame_ref_0, NULL, frame_set_1, 2, 2, R_FLOAT, false, 2, R_CLM, R_INT));
   INIT_WALKER(S_frame_set, make_walker(frame_set_2, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_CLM, R_INT, R_NUMBER));
   INIT_WALKER(S_wave_train, make_walker(wave_train_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
