@@ -6,8 +6,7 @@
 
 (use-modules (ice-9 optargs)
 	     (ice-9 format)
-	     (srfi srfi-1)
-	     (srfi srfi-2))
+	     (srfi srfi-1))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -21,26 +20,26 @@
       (define define-class-old define-class)
       (define define-method-old define-method)))
 
+
+
 (define-macro (define-class def . body)
   (if (and #f (symbol? def))
       `(define-class-old ,def ,@body)
       `(define* ,def
-	 (letrec ((methods '())
+	 (letrec ((methods (make-hash-table 256))
 		  (supers '())
 		  (super #f)
 		  (add-method-do (lambda (name func)
-				   (set! methods (alist-cons name func methods))
-				   func)))
+				   (hashq-set! methods name func))))
 	   (var class-name ',(car def))
 	   (define-method (dir)
-	     (cons class-name
-		   (append (unzip1 methods)
-			   (map (lambda (super)
-				  (-> super dir))
-				supers))))
+	     (append (cons class-name
+			   (hash-fold (lambda (key value s) (cons key s)) '() 
+				      methods))
+		     (map (lambda (super) (-> super dir))
+			  supers)))
 	   (define-method (get-method name)
-	     (or (and-let* ((ass (assq name methods))) 
-			   (cdr ass))
+	     (or (hashq-ref methods name)
 		 (any (lambda (super) (-> super get-method name))
 		      supers)))
 	   (define-method (instance? dasclass-name)
@@ -132,6 +131,8 @@
 (-> b deposit 3)
 (-> b withdraw 6)
 (define b->withdraw (<- b withdraw))
+(define b->withdraw (-> b get-method 'withdraw))
+(begin b->withdraw)
 (b->withdraw 7)
 (-> b class-name)
 (-> b initial)
@@ -192,13 +193,10 @@
 
 
 
-(define (my-filter proc list)
-  (if (null? list)
-      '()
-      (if (proc (car list))
-	  (cons (car list) (my-filter proc (cdr list)))
-	  (my-filter proc (cdr list)))))
-
+;; Snd has its own filter-function overriding the guile filter-function.
+(define (filter-org pred list)
+  (remove (lambda (e) (not (pred e)))
+	  list))
 
 (define (insert! list pos element)
   (call-with-values (lambda () (split-at! list pos))
@@ -673,20 +671,21 @@
 
 
 #!
-(let ((d (<dialog> "gakk"  #f
-		   "Close" (lambda () (display "close"))
-		   "Apply" (lambda () (display "apply"))
-		   "Play" (lambda () (display "play"))
-		   "Stop" (lambda () (display "stop"))
-		   "Help" (lambda () (display "help")))))
+(define d (<dialog> "gakk"  #f
+		    "Close" (lambda () (-> d hide))
+		    "Apply" (lambda () (display "apply"))
+		    "Play" (lambda () (display "play"))
+		    "Stop" (lambda () (display "stop"))
+		    "Help" (lambda () (display "help"))))
   
-  (<slider> d "slider1" 0 1 2 (lambda (val) (display val)(newline)) 100)
-  (<slider> d "slider2" 0 0.2 1 (lambda (val) (display val)(newline)) 1000)
-  (<slider> d "slider3" 0 1 20 (lambda (val) (display val)(newline)) 1)
-  (<checkbutton> d "checkbutton1" (lambda (a) (display a)(newline)))
-  (<checkbutton> d "checkbutton2" (lambda (a) (display a)(newline)))
-  (<checkbutton> d "checkbutton3" (lambda (a) (display a)(newline)))
-  (-> d show))
+(<slider> d "slider1" 0 1 2 (lambda (val) (display val)(newline)) 100)
+(<slider> d "slider2" 0 0.2 1 (lambda (val) (display val)(newline)) 1000)
+(<slider> d "slider3" 0 1 20 (lambda (val) (display val)(newline)) 1)
+(<checkbutton> d "checkbutton1" (lambda (a) (display a)(newline)))
+(<checkbutton> d "checkbutton2" (lambda (a) (display a)(newline)))
+(<checkbutton> d "checkbutton3" (lambda (a) (display a)(newline)))
+(-> d show)
+(-> d hide)
 !#
 
 

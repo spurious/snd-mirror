@@ -9,10 +9,7 @@
 
 
 
-
-
-
-;; This is the settings used Notam/Oslo. May not suite your setup.
+;; This is the settings used at Notam/Oslo. May not suite your setup.
 (if (defined? 'notam-settings)
     (begin
       (set! (ladspa-dir) "/usr/lib/ladspa")
@@ -41,6 +38,8 @@
 
 ;; Set various variables. See Snd documentation.
 
+
+
 ;;(set! snd-remember-paths #t)
 
 (set! (just-sounds) #t)
@@ -58,11 +57,9 @@
 ; Regions are created when needed when using the ctrl+y and ctrl+w keybindings.
 (set! (selection-creates-region) #f)
 
-
 ;; Less than 2048 seems to be very unreliable.
 (if (< (dac-size) 2048)
     (set! (dac-size) 2048))
-
 
 
 ;; Documentation for this configuration file.
@@ -185,6 +182,15 @@
 (define (my-selection?)
   (selection-member? (selected-sound)))
 
+
+;; Returns true if file is allready loaded. Necesarry to unscrew up open-hook handling.
+(define (isloaded? filename)
+  (if (member filename (map (lambda (snd) (file-name snd))
+			    (sounds)))
+      #t
+      #f))
+
+
 (load-from-path "rgb.scm")
 
 ;; Set different color on the cursor for playing and not playing.
@@ -206,11 +212,10 @@
 	     ;;(gc)
 	     #f))
 
-(if #f
-    (add-hook! stop-dac-hook
-	       (lambda ()
-		 (gc)
-		 #f)))
+(add-hook! stop-dac-hook
+	   (lambda ()
+	     (gc)
+	     #f))
 
 
 ;; Set different color on the cursor when playing selection.
@@ -468,7 +473,7 @@
 					      
 					
 
-(load-from-path "draw.scm")
+;;(load-from-path "draw.scm")
 
 
 ;; ;;; Set some colors
@@ -592,7 +597,6 @@
 	       #f))
 
   (add-hook! mix-release-hook
-  ;;(add-hook! mix-dragged-hook
 	     (lambda (id samps)
 	       (set! stop-handling #f)
 	       #f))
@@ -607,7 +611,6 @@
 	       (set! selection-starting-point #f)
 	       (set! stop-handling #t)
 	       #f))
-
 
   (add-hook! after-open-hook
 	     (lambda (snd)
@@ -638,7 +641,6 @@
 					   (mouse-release-callback (.x (GDK_EVENT_BUTTON e)) (.state (GDK_EVENT_BUTTON e)))
 					   )))))
 	       #f))))
-
 
 
 
@@ -826,6 +828,13 @@
 
 ;; Show the time in the minibuffer when playing
 
+#!
+(add-hook! play-hook
+	   (lambda (samples)
+	     (show-times (cursor))
+	     #f))
+!#
+
 (add-hook! play-hook
 	   (lambda (samples)
 	     (in 10
@@ -868,6 +877,7 @@
 ;;(display-widget-tree (list-ref (sound-widgets (selected-sound)) 2))
 ;;(find-child (list-ref (sound-widgets (selected-sound)) 2) "snd-name-form")
 
+
 (add-hook! close-hook
 	   (lambda (snd)
 	     (for-each-nameform-button snd "loop" checkbutton-remove)
@@ -875,6 +885,7 @@
 	     #f))
 
 ;;(checkbutton-remove (get-nameform-button (selected-sound) "sync"))
+
 
 (add-hook! after-open-hook
 	   (lambda (snd)
@@ -965,11 +976,13 @@
       ;;(set! (widget-size (car (sound-widgets (car current-buffer)))) (list 1000 1000) )
       
       (define (my-open-buffer filename)
-	"(open-buffer filename) adds a menu item that will select filename (use with open-hook)"
-	(if (member filename (map (lambda (snd) (file-name snd))
-				  (sounds)))
-	    #t
+	"(my-open-buffer filename) adds a menu item that will select filename (use with open-hook)"
+	(if (isloaded? filename)
 	    (begin
+	      (my-switch-to-buf filename)
+	      #t)
+	    (begin
+	      (display filename)(display "-gakk\n")
 	      (add-to-menu buffer-menu 
 			   filename 
 			   (lambda () (my-switch-to-buf filename)))
@@ -997,13 +1010,20 @@
 
 ;;Show the little picture of the whole sound in the upper right corner.
 (load-from-path "draw.scm")
-;;(load "/home/kjetil/snd/draw.scm")
 (make-current-window-display)
 
 ;; The background-process slows things down when the little picture is active and loading large files.
 ;; Better turn off the background-process when loading. -Kjetil.
-(add-hook! open-hook (lambda args (set! (with-background-processes) #f) #f))
-(add-hook! after-open-hook (lambda args (set! (with-background-processes) #t) #f))
+(add-hook! open-hook (lambda (filename) (if (isloaded? filename)
+					    #t
+					    (begin
+					      (my-report (string-append "Please wait, making waveform-data for \"" filename "\"."))
+					      (set! (with-background-processes) #f)
+					      #f))))
+(add-hook! after-open-hook (lambda (filename)
+			     (set! (with-background-processes) #t)
+			     (my-report " ")
+			     #f))
 
 
 
@@ -1064,7 +1084,7 @@
 
 
 ;; All of Dave Phillips nice things.
-;; Uncomment to try. (Most of it is allready present)
+;; Uncomment to try. (Most of it is already present)
 ;;(load-from-path "dlp/misc.scm")
 
 
@@ -1076,11 +1096,13 @@
 ;; Save all filenames when exiting.
 (define (save-all-filenames filename)
   (let ((fd (open-file filename "w")))
-    (for-each (lambda (snd)
-		(write-line (file-name snd) fd))
-	      (reverse (sounds)))
+    (if (selected-sound)
+	(for-each (lambda (filename)
+		    (write-line filename fd))
+		  (reverse (delete-duplicates (map (lambda (snd) (file-name snd))
+						   (cons (selected-sound) (sounds)))))))
     (close fd)))
-
+  
 (add-hook! exit-hook (lambda args
 		       (save-all-filenames (open-sounds-filename))
 		       #f))
@@ -1089,15 +1111,18 @@
 
 ;; Load files from previous session.
 
-
-
 (system (string-append "touch " (open-sounds-filename) " >/dev/null 2>/dev/null"))
 (let ((fd (open-file (open-sounds-filename) "r")))
   (define (myread)
     (let ((line (read-line fd)))
       (if (not (eof-object? line))
 	  (begin
-	    (open-sound line)
+	    (catch #t
+		   (lambda ()
+		     (open-sound line))
+		   (lambda (key . args)
+		     (display (string-append "File \"" line "\" not found.\n"))
+		     #f))
 	    (myread))
 	  (begin
 	    ;;(set! (auto-resize) #f)
@@ -1107,7 +1132,6 @@
 		  (set! (window-height) 600)))))))
   ;;(set! (auto-resize) #t)
   (myread))
-
 
 
 

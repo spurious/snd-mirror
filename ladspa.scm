@@ -100,15 +100,6 @@
 ;;       (lambda (n) (display n)(newline)))
 
 
-(define (my-filter proc list)
-  (if (null? list)
-      '()
-      (if (proc (car list))
-	  (cons (car list) (my-filter proc (cdr list)))
-	  (my-filter proc (cdr list)))))
-
-
-
 
 (define-class (<ladspa> libname plugname)
 
@@ -609,8 +600,8 @@
 					   hi
 					   (lambda (val) (-> ladspa input-control-set! portnum val))
 					   scale)))
-				 (my-filter (lambda (portnum) (not (ishint (car (list-ref (.PortRangeHints descriptor) portnum))  LADSPA_HINT_TOGGLED)))
-					    (-> ladspa input-controls)))
+				 (remove (lambda (portnum) (ishint (car (list-ref (.PortRangeHints descriptor) portnum))  LADSPA_HINT_TOGGLED))
+					 (-> ladspa input-controls)))
 			    ))
 		
 		
@@ -626,8 +617,8 @@
 					     (lambda (on)
 					       (-> ladspa input-control-set! portnum (if on hi lo)))
 					     ison)))
-			  (my-filter (lambda (portnum) (ishint (car (list-ref (.PortRangeHints descriptor) portnum))  LADSPA_HINT_TOGGLED))
-				     (-> ladspa input-controls)))
+			  (filter-org (lambda (portnum) (ishint (car (list-ref (.PortRangeHints descriptor) portnum))  LADSPA_HINT_TOGGLED))
+				      (-> ladspa input-controls)))
 		
 	    
 		;; Add on/off button.
