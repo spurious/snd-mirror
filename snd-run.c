@@ -65,7 +65,6 @@
  *
  * tests in snd-test.scm, test 22
  *
- * TODO: #f should be ok in clm-vector (or elsewhere that clm-gen is possible)
  * SOMEDAY: split Scheme from Snd/Clm here and do the latter via an FFI of some sort
  * SOMEDAY: save ptree somehow (local runs make this problematic) -- perhaps definstrument here
  *

@@ -226,6 +226,7 @@
 					;(snd-display ";warning: ~A" (car args))
 	    (car args))))
 ;(defmacro without-errors (func) `(begin ,func))
+
 (load "hooks.scm")
 (load "ws.scm")
 
@@ -37459,6 +37460,7 @@ EDITS: 2
  (list 
   "test.wav"
   "test.reverb"
+  "with-mix.snd"
   "fmv4.snd"
   "fmv3.snd"
   "hiho.wave"

@@ -2,6 +2,8 @@
 
 (use-modules (ice-9 optargs))
 
+(if (not (defined? 'channel-property)) (load-from-path "extensions.scm"))
+
 (define (display-colored-samples color beg dur snd chn)
   "(display-colored-samples color beg dur snd chn) displays samples from beg for dur in color \
 whenever they're in the current view."
@@ -160,19 +162,6 @@ the y-zoom-slider controls the graph amp"
 (define inset-width .2)
 (define inset-height .25)
 
-(if (not (defined? 'channel-property)) ; extensions.scm
-    (define channel-property
-      (make-procedure-with-setter
-       (lambda (key snd chn)
-	 (let ((data (assoc key (channel-properties snd chn))))
-	   (if data (cdr data) #f)))
-       (lambda (key snd chn new-val)
-	 (let ((old-val (assoc key (channel-properties snd chn))))
-	   (if old-val
-	       (set-cdr! old-val new-val)
-	       (set! (channel-properties snd chn) (cons (cons key new-val) (channel-properties snd chn))))
-	   new-val)))))
-
 (define (make-current-window-display)
 
   (define (update-current-window-location snd)
@@ -318,6 +307,14 @@ the y-zoom-slider controls the graph amp"
 	      #f))
 	#f))
   
+  (add-hook! after-open-hook 
+    (lambda (s)
+      (do ((i 0 (1+ i)))
+	  ((= i (chans s)))
+	(set! (channel-property 'save-state-ignore s i)
+	      (cons 'inset-envelope 
+		    (or (channel-property 'save-state-ignore s i) 
+			(list 'save-state-ignore)))))))
   (add-hook! after-graph-hook display-current-window-location)
   (add-hook! mouse-click-hook click-current-window-location)
   (add-hook! update-hook update-current-window-location))

@@ -165,6 +165,7 @@ returning you to the true top-level."
 (define *clm-channels* (default-output-chans))
 (define *clm-data-format* (default-output-format))
 (define *clm-header-type* (default-output-type))
+(define *clm-verbose* #f)
 (define *to-snd* #t)
 
 (define *reverb* #f) ; these are sample->file (outa) gens
@@ -662,13 +663,13 @@ returning you to the true top-level."
 				  (string=? (car mix-values) option-str)
 				  (string=? (cadr mix-values) call-str))
 			     (begin
-;			     (snd-print (format #f "mix ~S at ~F~%" sndf beg))
+			       (if *clm-verbose* (snd-print (format #f "mix ~S at ~,3F~%" sndf beg)))
 			       (mus-mix *output* sndf beg)
 			       (if revf (mus-mix *reverb* revf beg)))
 			     ;; else recompute
 			     (let ((old-to-snd *to-snd*))
 			       (set! *to-snd* #f)
-;			     (snd-print (format #f "remake ~S at ~F~%" chkpt-file beg))
+			       (if *clm-verbose* (snd-print (format #f "remake ~S at ~,3F~%" chkpt-file beg)))
 			       (let ((new-sound 
 				      (apply with-sound-helper 
 					     (lambda () ,@body) 

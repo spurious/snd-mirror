@@ -3856,10 +3856,26 @@ static int read_impulsetracker_header(int chan)
   return(MUS_NO_ERROR);
 }
 
+#if 0
+/* ------------------------------------ AKAI 3? -------------------------------------
+ */
+static int read_akai3_header(int chan)
+{
+  chans = 1;
+  data_location = 192;
+  true_file_length = SEEK_FILE_LENGTH(chan);
+  data_size = (true_file_length - data_location);
+  if (hdrbuf[1] == 0) srate = 22050; else srate = 44100;
+  data_format = MUS_LSHORT;
+  data_size = mus_bytes_to_samples(data_format, data_size);
+  return(MUS_NO_ERROR);
+}
+#endif
+
 
 /* ------------------------------------ AKAI 4 -------------------------------------
  * 
- * 1, 4, info from Paul Kellet -- lost the url
+ * 1, 4, info from Paul Kellet -- lost the url ("MPC-2000")
  */
 static int read_akai4_header(int chan)
 {
@@ -4782,6 +4798,13 @@ static int mus_header_read_with_fd_and_name(int chan, const char *filename)
       header_type = MUS_AKAI4;
       return(read_akai4_header(chan));
     }
+#if 0
+  if ((hdrbuf[0] == 3) && (hdrbuf[16] == 128))
+    {
+      header_type = MUS_AKAI4;
+      return(read_akai3_header(chan));
+    }
+#endif
   if ((match_four_chars((unsigned char *)hdrbuf, I_asf0)) &&
       (match_four_chars((unsigned char *)(hdrbuf + 4), I_asf1)) &&
       (match_four_chars((unsigned char *)(hdrbuf + 8), I_asf2)) &&

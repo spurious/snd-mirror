@@ -963,7 +963,7 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
   mus_sample_t **data;
   mus_sample_t *chandata;
   int in_chans, err = 0;
-  off_t i, j, cursamps, len, size;
+  off_t i, j, len, size;
   file_info *ihdr, *ohdr;
   ss = cp->state;
   if (num <= 0) return(NULL); /* a no-op -- mixing in an empty file */
@@ -977,6 +977,7 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
   ihdr = make_file_info(mixfile, ss);
   if (!ihdr) return(NULL);
   in_chans = ihdr->chans;
+  /* TODO: here we could automate the mono->stereo panning mix */
   if (chan >= in_chans) 
     {
       free_file_info(ihdr);
@@ -993,7 +994,7 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
     }
   if ((disk_space_p(sp, num * 4, 0, ofile)) != GIVE_UP)
     csf = init_sample_read(beg, cp, READ_FORWARD);
-  if (csf == NULL) 
+  if (csf == NULL) /* i.e. no space for temp, I guess */
     {
       free_file_info(ihdr);
       mus_file_close(ofd);
@@ -1015,35 +1016,20 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
   chandata = data[chan];
   lseek(ofd, ohdr->data_location, SEEK_SET);
   lseek(ifd, ihdr->data_location, SEEK_SET);
-  if (in_chans <= chan)
+  mus_file_read_chans(ifd, 0, size - 1, in_chans, data, (mus_sample_t *)data);
+  for (i = 0, j = 0; i < num; i++)
     {
-      for (i = 0; i < num; i += MAX_BUFFER_SIZE)
+      if (j == size)
 	{
-	  cursamps = num - i;
-	  if (cursamps > MAX_BUFFER_SIZE) cursamps = MAX_BUFFER_SIZE;
-	  for (j = 0; j < cursamps; j++)
-	    chandata[j] = read_sample(csf);
-	  err = mus_file_write(ofd, 0, cursamps - 1, 1, &chandata);
+	  err = mus_file_write(ofd, 0, size - 1, 1, &chandata);
+	  mus_file_read_chans(ifd, 0, size - 1, in_chans, data, (mus_sample_t *)data);
+	  j = 0;
 	  if (err == -1) break;
 	}
+      chandata[j] += read_sample(csf);
+      j++;
     }
-  else
-    {
-      mus_file_read_chans(ifd, 0, size - 1, in_chans, data, (mus_sample_t *)data);
-      for (i = 0, j = 0; i < num; i++)
-	{
-	  if (j == size)
-	    {
-	      err = mus_file_write(ofd, 0, size - 1, 1, &chandata);
-	      mus_file_read_chans(ifd, 0, size - 1, in_chans, data, (mus_sample_t *)data);
-	      j = 0;
-	      if (err == -1) break;
-	    }
-	  chandata[j] += read_sample(csf);
-	  j++;
-	}
-      if (j > 0) mus_file_write(ofd, 0, j - 1, 1, &chandata);
-    }
+  if (j > 0) mus_file_write(ofd, 0, j - 1, 1, &chandata);
   close_temp_file(ofd, ohdr, num * mus_bytes_per_sample(ohdr->format), sp);
   mus_file_close(ifd);
   free_snd_fd(csf);
@@ -1065,6 +1051,8 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
  *                     an array of cps for mixing into
  *                     a notion of initial scalers
  */
+
+/* TODO: if mix func had track arg, we could sync at the mix time (no need for multichannel-mix-hook) */
 
 int mix(off_t beg, off_t num, int chans, chan_info **cps, char *mixinfile, int temp, const char *origin, int with_tag)
 {
@@ -3856,6 +3844,8 @@ static XEN g_set_mix_amp_env(XEN n, XEN chan_1, XEN val_1)
 
 static XEN g_mix_sound(XEN file, XEN start_samp)
 {
+  /* TODO: mix-sound add dur snd chn edpos loc args */
+  /* TODO: mix-channel -> mix with sync/pos choices etc */
   #define H_mix_sound "(" S_mix_sound " file start-samp): mix file (all channels) into the currently selected sound at start-samp."
 
   char *filename;

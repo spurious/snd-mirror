@@ -1571,7 +1571,7 @@ in the other cases, the default is to
 start at the current cursor location.
 The mixed-in sound is displayed as a separate waveform above the main waveform with
 a red tag at the beginning.  You can drag the tag to reposition the
-mix.  The underlying sound begin mixed can be edited by the same
+mix.  The underlying sound being mixed can be edited by the same
 functions used throughout Snd; the mix number is used as the first
 (only) member of a list where the functions take the sound index
 argument.  It is usually handier, however, to adjust the mix
@@ -1605,6 +1605,12 @@ which applies all the sliders and envelopes to groups of mixes.
 <A NAME="gotomix"></a>
 <p>To move the cursor from one mix to the next, in the same
 manner as C-j moves through marks, use <A NAME="cxcj">C-x C-j</a>.
+</p>
+<p>
+The function <a href="sndscm.html#makesoundbox">make-sound-box</a>
+produces a container with each sound represented by an icon;
+you can drag-and-drop the icon to the place where you want it mixed, 
+or drop it on the main menubar to open it.
 </p>
         <!-- I(move to mix):K(C-x C-j)(cxcj) -->
         <!-- I(move to mix):A(gotomix) -->

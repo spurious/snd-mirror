@@ -25,6 +25,7 @@
 	  (snd-error (format #f "snd-gtk.scm needs the xg module: ~A" hxm))
 	  (dlinit hxm "init_xm"))))
 
+(if (not (defined? 'sound-property)) (load-from-path "extensions.scm"))
 
 (define (host-name)
   "(host-name) -> name of current machine"
@@ -468,6 +469,10 @@
 				    0)))))
       
   (set! (sound-property 'dragger snd) #t)
+  (set! (sound-property 'save-state-ignore snd)
+	(cons 'dragger
+	      (or (sound-property 'save-state-ignore snd)
+		  (list 'save-state-ignore))))
   (do ((chn 0 (1+ chn)))
       ((= chn (chans snd)))
     (let* ((zy (list-ref (channel-widgets snd chn) 14)))

@@ -261,20 +261,21 @@ static void erase_mark(chan_info *cp, axis_info *ap, mark *mp)
 
 typedef struct {
   int x, y;
+  mark *all_done;
 } mdata;
 
 static mark *hit_mark_1(chan_info *cp, mark *mp, void *m)
 {
-  /* SOMEDAY? -- we're going left to right, so after passing x, give up */
   int mx;
   mdata *md = (mdata *)m;
   axis_info *ap;
   ap = cp->axis;
-  if ((mp->samp < ap->losamp) || (mp->samp > ap->hisamp)) return(NULL); /* grf_x clips so we can be confused by off-screen marks */
+  if (mp->samp < ap->losamp) return(NULL);
+  if (mp->samp > ap->hisamp) return(md->all_done); /* grf_x clips so we can be confused by off-screen marks */
   mx = grf_x((double)(mp->samp) / (double)SND_SRATE(cp->sound), cp->axis);
-  if (mx > (md->x + MARK_TAB_WIDTH)) return(NULL); /* past it */
-  if (mx < (md->x - MARK_TAB_WIDTH)) return(NULL); /* before it */
-  if (mp->name == NULL)                          /* check y if unnamed */
+  if (mx > (md->x + MARK_TAB_WIDTH)) return(md->all_done); /* past it */
+  if (mx < (md->x - MARK_TAB_WIDTH)) return(NULL);         /* before it */
+  if (mp->name == NULL)                                    /* check y if unnamed */
     {
       if ((md->y >= ap->y_axis_y1) && 
 	  (md->y <= (ap->y_axis_y1 + MARK_TAB_HEIGHT))) 
@@ -292,9 +293,10 @@ static mark *hit_triangle_1(chan_info *cp, mark *mp, void *m)
   mdata *md = (mdata *)m;
   axis_info *ap;
   ap = cp->axis;
-  if ((mp->samp < ap->losamp) || (mp->samp > ap->hisamp)) return(NULL); /* grf_x clips so we can be confused by off-screen marks */
+  if (mp->samp < ap->losamp) return(NULL);
+  if (mp->samp > ap->hisamp) return(md->all_done); /* grf_x clips so we can be confused by off-screen marks */
   mx = grf_x((double)(mp->samp) / (double)SND_SRATE(cp->sound), cp->axis);
-  if (mx > md->x) return(NULL);
+  if (mx > md->x) return(md->all_done);
   if ((mx + PLAY_ARROW_SIZE) < md->x) return(NULL);
   y = md->y - ap->y_axis_y0 - PLAY_ARROW_SIZE;
   if (y < 0) y = -y;
@@ -318,7 +320,9 @@ mark *hit_triangle(chan_info *cp, int x, int y)
 	  md = (mdata *)CALLOC(2, sizeof(mdata));
 	  md->x = x;
 	  md->y = y;
+	  md->all_done = (mark *)1;
 	  mp = map_over_marks(cp, hit_triangle_1, (void *)md, READ_FORWARD);
+	  if (mp == (mark *)1) mp = NULL;
 	  FREE(md);
 	  return(mp);
 	}
@@ -1342,7 +1346,9 @@ mark *hit_mark(chan_info *cp, int x, int y, int key_state)
 	  md = (mdata *)CALLOC(1, sizeof(mdata));
 	  md->x = x;
 	  md->y = y;
+	  md->all_done = (mark *)1;
 	  mp = map_over_marks(cp, hit_mark_1, (void *)md, READ_FORWARD);
+	  if (mp == (mark *)1) mp = NULL;
 	  FREE(md);
 	  if (mp)
 	    {

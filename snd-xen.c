@@ -3494,6 +3494,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 
   /* from ice-9/r4rs.scm but with output to snd listener */
   XEN_EVAL_C_STRING("(define snd-remember-paths #f)");
+  XEN_EVAL_C_STRING("(set! %load-path (cons \".\" %load-path))");
   XEN_EVAL_C_STRING("(set! %load-hook (lambda (filename)\
                                         (if %load-verbosely\
                                             (snd-print (format #f \"~%;;; loading ~S\" filename)))\
@@ -3505,8 +3506,12 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
                                                 (if (char=? (string-ref curfile i) #\\/)\
 	                                            (set! last-slash i)))\
                                               (let ((new-path (substring curfile 0 last-slash)))\
-                                                (if (not (member new-path %load-path))\
+                                                (if (and (not (member new-path %load-path))\
+                                                         (not (string=? (substring curfile (max 0 (- last-slash 5)) last-slash) \"ice-9\")))\
 	                                            (set! %load-path (cons new-path %load-path))))))))");
+  /* the "ice-9" business is to keep us from loading ice-9/debug.scm when we intend our own debug.scm */
+  /* load-from-path can still be fooled, but the user will have to work at it. */
+  /* If you load Guile's debug.scm by mistake (set! %load-verbosely #t to see), Snd's names get clobbered! */
 #endif
 #if HAVE_RUBY
   XEN_EVAL_C_STRING("def clm_print(str, *args)\n\

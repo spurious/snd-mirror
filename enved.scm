@@ -10,23 +10,7 @@
 
 (use-modules (ice-9 format))
 
-(if (not (defined? 'channel-property)) ; in extensions.scm
-    (define channel-property
-      (make-procedure-with-setter
-       
-   (lambda (key snd chn)
-     (let ((data (assoc key (channel-properties snd chn))))
-       (if data
-	   (cdr data)
-	   #f)))
-
-   (lambda (key snd chn new-val)
-     (let ((old-val (assoc key (channel-properties snd chn))))
-       (if old-val
-	   (set-cdr! old-val new-val)
-	   (set! (channel-properties snd chn) (cons (cons key new-val) (channel-properties snd chn))))
-       new-val)))))
-
+(if (not (defined? 'channel-property)) (load-from-path "extensions.scm"))
 
 (define channel-envelope
   (make-procedure-with-setter

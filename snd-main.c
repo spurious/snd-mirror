@@ -406,8 +406,7 @@ int save_options(snd_state *ss)
   return(0);
 }
 
-#if DEBUGGING
-/* TODO: test/doc/add-to-extensions.scm save-state-ignore property */
+#if HAVE_GUILE
 static void save_property_list(FILE *fd, XEN property_list, int chan)
 {
   XEN ignore_list;
@@ -502,7 +501,7 @@ static void save_sound_state (snd_info *sp, void *ptr)
 #if HAVE_RUBY
       fprintf(fd, "%sset_%s([%s], sfile)\n", white_space, TO_PROC_NAME(S_sound_properties), XEN_AS_STRING(XEN_VECTOR_REF(sp->properties, 0)));
 #else
-#if DEBUGGING
+#if HAVE_GUILE
       save_property_list(fd, XEN_VECTOR_REF(sp->properties, 0), -1);
 #else
       fprintf(fd, "%s(set! (%s sfile) \'%s)\n", white_space, S_sound_properties, XEN_AS_STRING(XEN_VECTOR_REF(sp->properties, 0)));
@@ -518,15 +517,6 @@ static void save_sound_state (snd_info *sp, void *ptr)
       if (cp->graph_lisp_p) pcp_ss(fd, S_lisp_graph_p, b2s(cp->graph_lisp_p), chan);
       if (((ap->x0 != 0.0) || (ap->x1 != 0.1)) && (ap->x1 > .0005)) pcp_sl(fd, S_x_bounds, ap->x0, ap->x1, chan);
       if ((ap->y0 != -1.0) || (ap->y1 != 1.0)) pcp_sl(fd, S_y_bounds, ap->y0, ap->y1, chan);
-#if DEBUGGING
-      if ((CURSOR(cp) < 0) ||
-	  (CURSOR(cp) > CURRENT_SAMPLES(cp)))
-	{
-	  fprintf(stderr, "%s[%d] cursor loc is bad: " OFF_TD ", samps: " OFF_TD "\n",
-		  cp->sound->short_filename, cp->chan, CURSOR(cp), CURRENT_SAMPLES(cp));
-	  abort();
-	}
-#endif
       if (CURSOR(cp) != 0) pcp_sod(fd, S_cursor, CURSOR(cp), chan);
       if (cp->cursor_size != DEFAULT_CURSOR_SIZE) pcp_sd(fd, S_cursor_size, cp->cursor_size, chan);
       if (cp->cursor_style != CURSOR_CROSS) pcp_sd(fd, S_cursor_style, cp->cursor_style, chan);
@@ -579,7 +569,7 @@ static void save_sound_state (snd_info *sp, void *ptr)
 		  XEN_AS_STRING(XEN_VECTOR_REF(cp->properties, 0)),
 		  chan);
 #else
-#if DEBUGGING
+#if HAVE_GUILE
 	  save_property_list(fd, XEN_VECTOR_REF(cp->properties, 0), chan);
 #else
 	  fprintf(fd, "%s(set! (%s sfile %d) \'%s)\n", 

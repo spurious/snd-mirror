@@ -2,24 +2,7 @@
 
 (use-modules (ice-9 format))
 
-(if (not (defined? 'sound-property)) ; extensions.scm
-    (define sound-property
-      (make-procedure-with-setter
-       
-       (lambda (key snd)
-	 "(sound-property key snd) returns the value associated with 'key' in the given sound's property list, or #f"
-	 (let ((data (assoc key (sound-properties snd))))
-	   (if data
-	       (cdr data)
-	       #f)))
-
-       (lambda (key snd new-val)
-	 (let ((old-val (assoc key (sound-properties snd))))
-	   (if old-val
-	       (set-cdr! old-val new-val)
-	       (set! (sound-properties snd) (cons (cons key new-val) (sound-properties snd))))
-	   new-val)))))
-
+(if (not (defined? 'sound-property)) (load-from-path "extensions.scm"))
 
 (define auto-save-interval 60.0) ;seconds between auto-save checks
 (define auto-saving #f)

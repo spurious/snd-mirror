@@ -45,6 +45,7 @@
 ;;; apparently the new way within Guile to do this is (load-extension "xm" "init_xm")
 ;;;   but that forces us to use Libtool's very poor dlopen wrapper.
 
+(if (not (defined? 'sound-property)) (load-from-path "extensions.scm"))
 
 (define (current-screen)
   "(current-screen) returns the current X screen number of the current display"
@@ -291,12 +292,18 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
   #f)
 
 (define (add-dragger snd)
+  (set! (sound-property 'save-state-ignore snd)
+	(cons 'dragger
+	      (or (sound-property 'save-state-ignore snd)
+		  (list 'save-state-ignore))))
   (set! (sound-property 'dragger snd)
 	(let ((calls '()))
 	  (do ((chn 0 (1+ chn)))
 	      ((= chn (chans snd)))
 	    (let* ((zy (list-ref (channel-widgets snd chn) 6))
-		   (zy-div (- 100.0 (cadr (XtGetValues zy (list XmNsliderSize 0))))))
+		   (slider-size (cadr (XtGetValues zy (list XmNsliderSize 0)))) ; this is relative to max size
+		   (max-size (cadr (XtGetValues zy (list XmNmaximum 0))))
+		   (zy-div (max 10 (- max-size slider-size))))
 	      (set! calls
 		    (cons (XtAddCallback zy
 					 XmNdragCallback 
@@ -312,7 +319,7 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
 	  (reverse calls))))
 
 (define (zync)
-  "(zync) ties each sound's y-zoom sliders together so that all change in paralle if one changes"
+  "(zync) ties each sound's y-zoom sliders together so that all change in parallel if one changes"
   (add-hook! after-open-hook add-dragger)
   (for-each
    (lambda (n)
@@ -677,7 +684,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 
 ;;; if you have a nice background pixmap, you can map it over all of Snd with:
 #!
-(load-from-path "backgrounds.scm")
+(load-from-path "dlp/new-backgrounds.scm")
 (define wd (make-pixmap (cadr (main-widgets)) wood))
 
 (define (paint-all widget)
@@ -2457,7 +2464,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	#f)))
 	  
 
-;;; -------- state display panel --------
+;;; -------- variable display panel --------
 
 (define variables-dialog #f)
 (define variables-notebook #f)
