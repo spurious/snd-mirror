@@ -2998,7 +2998,6 @@ XEN_NARGIFY_1(gxg_mode_optionmenu_w, gxg_mode_optionmenu)
 XEN_NARGIFY_1(gxg_axis_listbox_w, gxg_axis_listbox)
 XEN_NARGIFY_1(gxg_axis_list_w, gxg_axis_list)
 XEN_NARGIFY_1(gxg_context_id_w, gxg_context_id)
-XEN_NARGIFY_1(gxg_client_window_w, gxg_client_window)
 XEN_NARGIFY_1(gxg_slave_w, gxg_slave)
 XEN_NARGIFY_1(gxg_image_w, gxg_image)
 XEN_NARGIFY_1(gxg_deskoff_y_w, gxg_deskoff_y)
@@ -6393,7 +6392,6 @@ static void define_structs(void)
   XG_DEFINE_READER(axis_listbox, gxg_axis_listbox_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(axis_list, gxg_axis_list_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(context_id, gxg_context_id_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(client_window, gxg_client_window_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(slave, gxg_slave_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(image, gxg_image_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(deskoff_y, gxg_deskoff_y_w, 1, 0, 0, NULL);

@@ -1,14 +1,11 @@
 #include "snd.h"
 
-/* ---------------- HELP MONOLOG ---------------- */
-
 #define HELP_ROWS 12
 #define HELP_COLUMNS 56
-/* these set the initial size of the (non XmHTML) help dialog text area */
+/* these set the initial size of the help dialog text area */
 
 static Widget help_dialog = NULL;
 static Widget help_text = NULL;
-static char help_window_label[LABEL_BUFFER_SIZE];
 
 static char *cr_to_space(char *val)
 {
@@ -112,11 +109,35 @@ static XmString parse_crossref(const char *xref)
 
 static char *help_completer(char *text) {return(NULL);}
 /* TODO: help completion, cref tables, help search mechanism (via help strings I guess) */
-/* TODO: activation of help search -> dialog quits */
 /* TODO: find default font for xref table */
 /* TODO: mozilla if related is not top level, else go to it. */
+
+static void new_help(const char *pattern)
+{
+}
 #endif
 
+static Widget help_search = NULL;
+
+static void ok_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  state_context *sgx;
+  XmAnyCallbackStruct *cb = (XmAnyCallbackStruct *)info;
+  sgx = ss->sgx;
+  /* this is the OK button from Motif's point of view, or text activation (<cr> in the text field) from ours */
+  if (cb->event != sgx->text_activate_event)
+    XtUnmanageChild(help_dialog);
+#if (XmVERSION > 1)
+  else 
+    {
+      if (sgx->text_widget == help_search)
+	new_help(XmTextFieldGetString(help_search));
+#if DEBUGGING
+      else fprintf(stderr," oops help!");
+#endif
+    }
+#endif
+}
 
 static void create_help_monolog(void)
 {
@@ -130,11 +151,13 @@ static void create_help_monolog(void)
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
   XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
   /* this window should be resizable by the user (i.e. have the resize bars), but not resize itself */
+  XtSetArg(args[n], XmNautoUnmanage, false); n++;
   XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
   XtSetArg(args[n], XmNnoResize, false); n++;
   XtSetArg(args[n], XmNtransient, false); n++;
   help_dialog = XmCreateMessageDialog(MAIN_PANE(ss), "snd-help", args, n);
   XtAddEventHandler(help_dialog, ExposureMask, false, help_expose, NULL);
+  XtAddCallback(help_dialog, XmNokCallback, ok_callback, NULL);
 
   XtUnmanageChild(XmMessageBoxGetChild(help_dialog, XmDIALOG_CANCEL_BUTTON));
   XtUnmanageChild(XmMessageBoxGetChild(help_dialog, XmDIALOG_HELP_BUTTON));
@@ -147,7 +170,7 @@ static void create_help_monolog(void)
 #if (XmVERSION > 1)
   holder = XtCreateManagedWidget("holder", xmFormWidgetClass, help_dialog, NULL, 0);
 #else
-  holder = edit_dialog;
+  holder = help_dialog;
 #endif
 
   n = 0;
@@ -177,9 +200,11 @@ static void create_help_monolog(void)
     XmRenderTable rs;
     
     n = 0;
+
     XtSetArg(args[n], XmNfontName, listener_font(ss)); n++;
     XtSetArg(args[n], XmNfontType, XmFONT_IS_FONT); n++; 
     XtSetArg(args[n], XmNloadModel, XmLOAD_IMMEDIATE); n++;
+
     XtSetArg(args[n], XmNrenditionBackground, ss->sgx->white); n++;
     XtSetArg(args[n], XmNrenditionForeground, ss->sgx->quit_button_color); n++;
     /* XtSetArg(args[n], XmNunderlineType, XmSINGLE_LINE); n++; */
@@ -290,8 +315,7 @@ Widget snd_help(const char *subject, const char *helpstr, bool with_wrap)
   if (!(help_dialog)) 
     create_help_monolog(); 
   else raise_dialog(help_dialog);
-  mus_snprintf(help_window_label, LABEL_BUFFER_SIZE, _("%s help"), subject);
-  xstr1 = XmStringCreate(help_window_label, XmFONTLIST_DEFAULT_TAG);
+  xstr1 = XmStringCreate((char *)subject, XmFONTLIST_DEFAULT_TAG);
   XtVaSetValues(help_dialog, XmNmessageString, xstr1, NULL);
   if (with_wrap)
     {

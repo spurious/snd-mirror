@@ -2504,7 +2504,7 @@ snd_info *add_sound_window(char *filename, bool read_only)
       sw[W_filter_frame] = XtCreateManagedWidget("filter-frame", xmFrameWidgetClass, sw[W_amp_form], args, n);
 
       n = 0;
-      if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
+      if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
       n = attach_all_sides(args, n);
       XtSetArg(args[n], XmNallowResize, true); n++;
       sw[W_filter_env] = XtCreateManagedWidget("filter-window", xmDrawingAreaWidgetClass, sw[W_filter_frame], args, n);
@@ -2735,6 +2735,8 @@ void unlock_control_panel(snd_info *sp)
 
 void equalize_sound_panes(snd_info *sp, chan_info *ncp, bool all_panes)
 {
+  /* TODO: this can open (separate) a channel if in united mode from C-x O -- how? */
+
   /* make sp look ok, squeezing others if needed */
   /* if there's already enough (i.e. ss->channel_min_height), just return */
   /* this is used in goto_next_graph and goto_previous_graph (snd-chn.c) to open windows that are currently squeezed shut */

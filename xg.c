@@ -35,6 +35,7 @@
  * TODO: test suite (snd-test 24)
  *
  * HISTORY:
+ *     15-Sep:    removed client_window GtkIMMulticontext struct field (for Gtk 2.2.4).
  *     26-May:    removed nugatory GdkInputFunction stuff and some unused type converters.
  *     7-Apr:     GTK_RC_STYLE has two incompatible definitions in gtk! (gtkwidget.h, gtkrc.h) -- will use int case.
  *     1-Apr:     gdk_property_get uses scm_mem2string in some cases now.
@@ -26254,12 +26255,6 @@ static XEN gxg_slave(XEN ptr)
   return(C_TO_XEN_GtkIMContext_((GtkIMContext*)((XEN_TO_C_GtkIMMulticontext_(ptr))->slave)));
 }
 
-static XEN gxg_client_window(XEN ptr)
-{
-  XEN_ASSERT_TYPE(XEN_GtkIMMulticontext__P(ptr), ptr, XEN_ONLY_ARG, "client_window", "GtkIMMulticontext");
-  return(C_TO_XEN_GdkWindow_((GdkWindow*)((XEN_TO_C_GtkIMMulticontext_(ptr))->client_window)));
-}
-
 static XEN gxg_context_id(XEN ptr)
 {
   XEN_ASSERT_TYPE(XEN_GtkIMMulticontext__P(ptr), ptr, XEN_ONLY_ARG, "context_id", "GtkIMMulticontext");
@@ -28687,7 +28682,6 @@ static void define_structs(void)
   XG_DEFINE_READER(axis_listbox, gxg_axis_listbox, 1, 0, 0, NULL);
   XG_DEFINE_READER(axis_list, gxg_axis_list, 1, 0, 0, NULL);
   XG_DEFINE_READER(context_id, gxg_context_id, 1, 0, 0, NULL);
-  XG_DEFINE_READER(client_window, gxg_client_window, 1, 0, 0, NULL);
   XG_DEFINE_READER(slave, gxg_slave, 1, 0, 0, NULL);
   XG_DEFINE_READER(image, gxg_image, 1, 0, 0, NULL);
   XG_DEFINE_READER(deskoff_y, gxg_deskoff_y, 1, 0, 0, NULL);
@@ -30575,10 +30569,10 @@ static bool xg_already_inited = false;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"11-Aug-03\")");
+      XEN_EVAL_C_STRING("(define xm-version \"14-Sep-03\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("11-Aug-03"));
+      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("14-Sep-03"));
 #endif
       xg_already_inited = true;
 #if WITH_GTK_AND_X11

@@ -1,7 +1,6 @@
 #include "snd.h"
 
 static GtkWidget *help_dialog = NULL;
-static char help_window_label[LABEL_BUFFER_SIZE];
 
 static void dismiss_help(GtkWidget *w, gpointer context) {gtk_widget_hide(help_dialog);}
 static void delete_help(GtkWidget *w, GdkEvent *event, gpointer context) {gtk_widget_hide(help_dialog);}
@@ -125,8 +124,7 @@ GtkWidget *snd_help(const char *subject, const char *helpstr, bool with_wrap)
   /* if window is already active, add this help at the top and reposition */
   outer_with_wrap = ((with_wrap) && (no_cr(helpstr)));
   if (!(help_dialog)) create_help_monolog(); else raise_dialog(help_dialog);
-  mus_snprintf(help_window_label, LABEL_BUFFER_SIZE, _("%s help"), subject);
-  gtk_window_set_title(GTK_WINDOW(help_dialog), help_window_label);
+  gtk_window_set_title(GTK_WINDOW(help_dialog), subject);
   gtk_text_buffer_set_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(help_text)), "", 0);
   if (with_wrap)
     {

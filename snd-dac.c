@@ -2079,6 +2079,7 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, bool back, bool syncd, XEN
 	      ends = (off_t *)CALLOC(si->chans, sizeof(off_t));
 	      for (i = 0; i < si->chans; i++) ends[i] = end;
 	    }
+	  for (i = 0; i < si->chans; i++) si->begs[i] = samp;
 	  play_channels(si->cps, si->chans, si->begs, ends, background, edpos, caller, arg_pos, false);
 	  si = free_sync_info(si);
 	  if (ends) FREE(ends);

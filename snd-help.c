@@ -294,7 +294,7 @@ void news_help(void)
 #if HAVE_RUBY
   features = word_wrap(XEN_AS_STRING(XEN_EVAL_C_STRING("$\".join(' ')")), 600);
 #endif
-  ssnd_help("News",
+  ssnd_help("This version of Snd",
 	    info,
 	    "\nRecent changes include:\n\
 \n\
@@ -662,13 +662,11 @@ Normally, the search applies only to the current channel. To search all current 
 
 void undo_help(void) 
 {
-  snd_help("Undo", 
+  snd_help("Undo and Redo", 
 "Snd supports unlimited undo in the sense that you can back up through all \
 the edits since the last save, and at any point redo those edits.  Certain \
 operations require that temporary files be written, so disk space may eventually \
-become a problem.  Revert is the same as backing up to the last save. \
-\n\n\
-In addition, eight or so of the previous selections are saved on a 'region' stack accessible via C-y.",
+become a problem.  Revert is the same as backing up to the last save.",
 	   true);
 }
 
@@ -902,7 +900,7 @@ axis bounds (the 'clip' button).",
 
 void about_snd_help(void)
 {
-  ssnd_help("Snd",
+  ssnd_help("About Snd",
 about_snd_help_string,
 "The various Help menu items are:\n\
 \n",

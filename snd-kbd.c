@@ -464,8 +464,8 @@ static chan_info *goto_previous_graph (chan_info *cp, int count)
   if (ncp == vcp) return(ncp);
   if (!ncp) snd_error("goto previous graph failed!");
   select_channel(ncp->sound, ncp->chan);
-  equalize_sound_panes(ncp->sound, ncp, false); /* snd-xsnd.c */
-  /* goto_graph(ncp); */
+  if (sp->channel_style == CHANNELS_SEPARATE) /* TODO: what if newly selected sound is obscured? */
+    equalize_sound_panes(ncp->sound, ncp, false);
   return(ncp);
 }
 
@@ -519,8 +519,8 @@ static chan_info *goto_next_graph (chan_info *cp, int count)
   if (ncp == vcp) return(ncp);
   if (!ncp) snd_error("goto next graph failed!");
   select_channel(ncp->sound, ncp->chan);
-  equalize_sound_panes(ncp->sound, ncp, false);
-  /* goto_graph(ncp); */
+  if (sp->channel_style == CHANNELS_SEPARATE)
+    equalize_sound_panes(ncp->sound, ncp, false);
   return(ncp);
 }
 
@@ -1615,6 +1615,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      handle_cursor(cp, CURSOR_IN_MIDDLE);
 	      break;
 	    case snd_K_O: case snd_K_o: 
+	      /* TODO: Cx O is all screwed up (it moves backwards and creates a bogus extra channel sometimes) */
 	      if (ext_count > 0) 
 		goto_next_graph(cp, ext_count); 
 	      else goto_previous_graph(cp, ext_count); 

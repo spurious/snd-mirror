@@ -344,6 +344,7 @@ static void view_cursor_callback(Widget w, XtPointer info, XtPointer context)
 
 static void view_ctrls_callback(Widget w, XtPointer info, XtPointer context)
 {
+  /* TODO: why doesn't this change the menu label? */
   if (call_menu_hook(w)) 
     {
       if (ss->ctrls_height < 100) 

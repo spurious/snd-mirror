@@ -275,7 +275,7 @@ static char *just_directory(const char *uname)
   last_slash = 0;
   name = copy_string(uname);
   len = strlen(name);
-  if (name[len - 1] = '/') 
+  if (name[len - 1] == '/') 
     return(name);
   for (i = len - 2; i > 0; i--)
     if (name[i] == '/') 

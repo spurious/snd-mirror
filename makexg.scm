@@ -994,6 +994,7 @@
 (hey " * ~A: test suite (snd-test 24)~%" (string-append "T" "ODO"))
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     15-Sep:    removed client_window GtkIMMulticontext struct field (for Gtk 2.2.4).~%")
 (hey " *     26-May:    removed nugatory GdkInputFunction stuff and some unused type converters.~%")
 (hey " *     7-Apr:     GTK_RC_STYLE has two incompatible definitions in gtk! (gtkwidget.h, gtkrc.h) -- will use int case.~%")
 (hey " *     1-Apr:     gdk_property_get uses scm_mem2string in some cases now.~%")

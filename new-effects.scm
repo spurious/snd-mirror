@@ -1,4 +1,7 @@
 (use-modules (ice-9 format) (ice-9 common-list))
+
+;;; TODO: mix-position-changed-hook in dlp/mix-menu.scm
+;;; TODO: args to make-effect-dialog same, also set-track-color
  
 (if (not (provided? 'xm))
     (let ((hxm (dlopen "xm.so")))

@@ -4248,7 +4248,8 @@
 (STRUCT "GtkGammaCurve GtkWidget* table GtkWidget* curve GtkWidget** button gfloat gamma GtkWidget* gamma_dialog GtkWidget* gamma_text")
 (STRUCT "GtkHandleBox GdkWindow* bin_window GdkWindow* float_window GtkShadowType shadow_type guint handle_position guint float_window_mapped guint child_detached guint in_drag guint shrink_on_detach gint snap_edge gint deskoff_x gint deskoff_y")
 (STRUCT "GtkImageMenuItem GtkWidget* image")
-(STRUCT "GtkIMMulticontext GtkIMContext* slave GdkWindow* client_window gchar* context_id")
+(STRUCT "GtkIMMulticontext GtkIMContext* slave gchar* context_id")
+;; client_window field removed in version 2.2.4
 (STRUCT "GtkInputDialog GtkWidget* axis_list GtkWidget* axis_listbox GtkWidget* mode_optionmenu GtkWidget* close_button GtkWidget* save_button GtkWidget** axis_items GdkDevice* current_device GtkWidget* keys_list GtkWidget* keys_listbox")
 (STRUCT "GtkInvisible gboolean has_user_ref_count")
 (STRUCT "GtkItemFactoryEntry gchar* path gchar* accelerator GtkItemFactoryCallback callback guint callback_action gchar* item_type gpointer extra_data")
