@@ -36,7 +36,7 @@ static char *WAVELETS[NUM_WAVELETS] ={
   "sym2", "sym3", "sym4", "sym5", "sym6"};
 
 #define NUM_TRANSFORM_TYPES 9
-static char *TRANSFORM_TYPES[NUM_TRANSFORM_TYPES] ={"Fourier", "Wavelet", "Hankel", "Walsh", "Autocorrelate", "Chebychev", "Cepstrum", "Hadamard", "Haar"};
+static char *TRANSFORM_TYPES[NUM_TRANSFORM_TYPES] ={"Fourier", "Wavelet", "Hankel", "Walsh", "Autocorrelate", "Chebyshev", "Cepstrum", "Hadamard", "Haar"};
 static int num_transform_types = NUM_TRANSFORM_TYPES;
 
 static char *TRANSFORM_TYPE_CONSTANTS[NUM_TRANSFORM_TYPES] ={

@@ -2822,7 +2822,7 @@ that will produce the harmonic spectrum given by the partials argument"
 static XEN g_partials2polynomial(XEN amps, XEN ukind)
 {
   #define H_partials2polynomial "(" S_partials2polynomial " partials &optional (kind 1))\n\
-produces a Chebychev polynomial suitable for use with the " S_polynomial " generator \
+produces a Chebyshev polynomial suitable for use with the " S_polynomial " generator \
 to create (via waveshaping) the harmonic spectrum described by the partials argument:\n\
    (let ((v0 (partials->polynomial '(1 1 2 1)))\n\
          (os (make-oscil)))\n\
@@ -3660,7 +3660,7 @@ returns a new readin (file input) generator reading the sound file 'file' starti
 static XEN g_increment(XEN obj)
 {
   #define H_mus_increment "(" S_mus_increment " gen) -> gen's " S_mus_increment " field, if any"
-  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ARG_1, S_mus_increment, "a generator");
+  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ONLY_ARG, S_mus_increment, "a generator");
   return(C_TO_XEN_DOUBLE(mus_increment(MUS_XEN_TO_CLM(obj))));
 }
 
@@ -3674,7 +3674,7 @@ static XEN g_set_increment(XEN obj, XEN val)
 static XEN g_location(XEN obj)
 {
   #define H_mus_location "(" S_mus_location " gen) -> gen's " S_mus_location " field, if any"
-  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ARG_1, S_mus_location, "a generator");
+  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ONLY_ARG, S_mus_location, "a generator");
   return(C_TO_XEN_INT(mus_location(MUS_XEN_TO_CLM(obj))));
 }
 
@@ -3688,7 +3688,7 @@ static XEN g_set_location(XEN obj, XEN val)
 static XEN g_channel(XEN obj)
 {
   #define H_mus_channel "(" S_mus_channel " gen) -> gen's " S_mus_channel " field, if any"
-  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_input_p(MUS_XEN_TO_CLM(obj))), obj, XEN_ARG_1, S_mus_channel, "an input gen");
+  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_input_p(MUS_XEN_TO_CLM(obj))), obj, XEN_ONLY_ARG, S_mus_channel, "an input gen");
   return(C_TO_SMALL_XEN_INT(mus_channel((mus_input *)MUS_XEN_TO_CLM(obj))));
 }
 
@@ -3836,7 +3836,7 @@ returns a new generator for signal placement in up to 4 channels.  Channel 0 cor
 static XEN g_channels(XEN obj)
 {
   #define H_mus_channels "(" S_mus_channels " gen) -> gen's " S_mus_channels " field, if any"
-  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ARG_1, S_mus_channels, "a generator");
+  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ONLY_ARG, S_mus_channels, "a generator");
   return(C_TO_SMALL_XEN_INT(mus_channels(MUS_XEN_TO_CLM(obj))));
 }
 
@@ -3849,7 +3849,7 @@ enum {INPUT_FUNCTION, ANALYZE_FUNCTION, EDIT_FUNCTION, SYNTHESIZE_FUNCTION, SELF
 static Float funcall1 (void *ptr, int direction) /* intended for "as-needed" input funcs */
 {
   /* if this is called, it's a callback from C, where ptr is a mus_xen object whose vcts[0]
-   * field is an XEN procedure to be called, the result being returned back to C.  In the
+   * field is a XEN procedure to be called, the result being returned back to C.  In the
    * Scheme world, it's a procedure of one arg, the current read direction: 
    *
    * funcall1 is input-func for clm.c make args, or the 2nd arg to the gen (mus_src(gen, input))
@@ -3973,7 +3973,7 @@ static XEN g_granulate(XEN obj, XEN func)
 static XEN g_ramp(XEN obj)
 {
   #define H_mus_ramp "(" S_mus_ramp " gen) -> (granulate generator) gen's " S_mus_ramp " field"
-  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_granulate_p(MUS_XEN_TO_CLM(obj))), obj, XEN_ARG_1, S_mus_ramp, "a granulate gen");
+  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_granulate_p(MUS_XEN_TO_CLM(obj))), obj, XEN_ONLY_ARG, S_mus_ramp, "a granulate gen");
   return(C_TO_XEN_INT(mus_ramp(MUS_XEN_TO_CLM(obj))));
 }
 
@@ -4185,9 +4185,9 @@ static Float pvsynthesize (void *ptr)
 static int pvanalyze (void *ptr, Float (*input)(void *arg1, int direction))
 {
   mus_xen *gn = (mus_xen *)ptr;
-  if ((gn) && (gn->vcts) && (XEN_BOUND_P(gn->vcts[SYNTHESIZE_FUNCTION])) && (XEN_PROCEDURE_P(gn->vcts[SYNTHESIZE_FUNCTION])))
+  if ((gn) && (gn->vcts) && (XEN_BOUND_P(gn->vcts[ANALYZE_FUNCTION])) && (XEN_PROCEDURE_P(gn->vcts[ANALYZE_FUNCTION])))
     /* we can only get input func if it's already set up by the outer gen call, so (?) we can use that function here */
-    return(XEN_TO_C_BOOLEAN(XEN_CALL_2(gn->vcts[SYNTHESIZE_FUNCTION], gn->vcts[SELF_WRAPPER], gn->vcts[INPUT_FUNCTION], __FUNCTION__)));
+    return(XEN_TO_C_BOOLEAN(XEN_CALL_2(gn->vcts[ANALYZE_FUNCTION], gn->vcts[SELF_WRAPPER], gn->vcts[INPUT_FUNCTION], __FUNCTION__)));
   return(0);
 }
 
@@ -4245,9 +4245,9 @@ and interp set the fftsize, the amount of overlap between ffts, and the time bet
       overlap = ikeyarg(keys[2], S_make_phase_vocoder, orig_arg[2] + 1, overlap);
       interp = ikeyarg(keys[3], S_make_phase_vocoder, orig_arg[3] + 1, interp);
       pitch = fkeyarg(keys[4], S_make_phase_vocoder, orig_arg[4] + 1, pitch);
-      if ((XEN_PROCEDURE_P(keys[5])) && (XEN_REQUIRED_ARGS(keys[5]) == 1)) analyze_obj = keys[5];
+      if ((XEN_PROCEDURE_P(keys[5])) && (XEN_REQUIRED_ARGS(keys[5]) == 2)) analyze_obj = keys[5];
       if ((XEN_PROCEDURE_P(keys[6])) && (XEN_REQUIRED_ARGS(keys[6]) == 1)) edit_obj = keys[6];
-      if ((XEN_PROCEDURE_P(keys[7])) && (XEN_REQUIRED_ARGS(keys[7]) == 2)) synthesize_obj = keys[7];
+      if ((XEN_PROCEDURE_P(keys[7])) && (XEN_REQUIRED_ARGS(keys[7]) == 1)) synthesize_obj = keys[7];
     }
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
   gn->nvcts = 5;
@@ -4298,7 +4298,7 @@ static XEN g_pv_amps_1(XEN pv)
   Float *amps; 
   int len;
   mus_xen *gn;
-  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ARG_1, __FUNCTION__, "a phase-vocoder gen");
+  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ONLY_ARG, __FUNCTION__, "a phase-vocoder gen");
   gn = CLM_TO_MUS_XEN(pv);
   amps = mus_phase_vocoder_amps((void *)(gn->gen)); 
   len = mus_length((mus_any *)(gn->gen));
@@ -4334,7 +4334,7 @@ static XEN g_pv_freqs_1(XEN pv)
   Float *amps; 
   int len;
   mus_xen *gn;
-  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ARG_1, __FUNCTION__, "a phase-vocoder gen");
+  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ONLY_ARG, __FUNCTION__, "a phase-vocoder gen");
   gn = CLM_TO_MUS_XEN(pv);
   amps = mus_phase_vocoder_freqs((void *)(gn->gen)); 
   len = mus_length((mus_any *)(gn->gen));
@@ -4370,7 +4370,7 @@ static XEN g_pv_phases_1(XEN pv)
   Float *amps; 
   int len;
   mus_xen *gn;
-  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ARG_1, __FUNCTION__, "a phase-vocoder gen");
+  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ONLY_ARG, __FUNCTION__, "a phase-vocoder gen");
   gn = CLM_TO_MUS_XEN(pv);
   amps = mus_phase_vocoder_phases((void *)(gn->gen)); 
   len = mus_length((mus_any *)(gn->gen));
@@ -4407,7 +4407,7 @@ static XEN g_pv_ampinc_1(XEN pv)
   Float *amps; 
   int len;
   mus_xen *gn;
-  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ARG_1, __FUNCTION__, "a phase-vocoder gen");
+  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ONLY_ARG, __FUNCTION__, "a phase-vocoder gen");
   gn = CLM_TO_MUS_XEN(pv);
   amps = mus_phase_vocoder_ampinc((void *)(gn->gen)); 
   len = mus_length((mus_any *)(gn->gen));
@@ -4443,7 +4443,7 @@ static XEN g_pv_phaseinc_1(XEN pv)
   Float *amps; 
   int len;
   mus_xen *gn;
-  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ARG_1, __FUNCTION__, "a phase-vocoder gen");
+  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ONLY_ARG, __FUNCTION__, "a phase-vocoder gen");
   gn = CLM_TO_MUS_XEN(pv);
   amps = mus_phase_vocoder_phaseinc((void *)(gn->gen)); 
   len = mus_length((mus_any *)(gn->gen));
@@ -4479,17 +4479,33 @@ static XEN g_pv_lastphase_1(XEN pv)
   Float *amps; 
   int len;
   mus_xen *gn;
-  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ARG_1, __FUNCTION__, "a phase-vocoder gen");
+  XEN_ASSERT_TYPE((MUS_XEN_P(pv)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(pv))), pv, XEN_ONLY_ARG, __FUNCTION__, "a phase-vocoder gen");
   gn = CLM_TO_MUS_XEN(pv);
   amps = mus_phase_vocoder_lastphase((void *)(gn->gen)); 
   len = mus_length((mus_any *)(gn->gen));
   return(make_vct_wrapper(len / 2, amps));
 }
 
+#define S_pv_outctr "pv-outctr"
+
+static XEN g_pv_outctr(XEN obj)
+{
+  #define H_pv_outctr "(" S_pv_outctr " gen) -> gen's " S_pv_outctr " field"
+  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(obj))), obj, XEN_ONLY_ARG, S_pv_outctr, "a phase-vocoder generator");
+  return(C_TO_XEN_INT(mus_phase_vocoder_outctr(MUS_XEN_TO_CLM(obj))));
+}
+
+static XEN g_pv_set_outctr(XEN obj, XEN val)
+{
+  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(obj))), obj, XEN_ONLY_ARG, "set-" S_pv_outctr, "a phase-vocoder generator");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, "set-" S_pv_outctr, "a number");
+  return(C_TO_XEN_INT(mus_phase_vocoder_set_outctr(MUS_XEN_TO_CLM(obj), XEN_TO_C_INT_OR_ELSE(val, 0))));
+}
+
 static XEN g_hop(XEN obj)
 {
   #define H_mus_hop "(" S_mus_hop " gen) -> gen's " S_mus_hop " field"
-  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ARG_1, S_mus_hop, "a generator");
+  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ONLY_ARG, S_mus_hop, "a generator");
   return(C_TO_SMALL_XEN_INT(mus_hop(MUS_XEN_TO_CLM(obj))));
 }
 
@@ -4803,6 +4819,8 @@ XEN_ARGIFY_4(g_convolve_files_w, g_convolve_files)
 XEN_NARGIFY_1(g_phase_vocoder_p_w, g_phase_vocoder_p)
 XEN_ARGIFY_2(g_phase_vocoder_w, g_phase_vocoder)
 XEN_VARGIFY(g_make_phase_vocoder_w, g_make_phase_vocoder)
+XEN_NARGIFY_1(g_pv_outctr_w, g_pv_outctr)
+XEN_NARGIFY_2(g_pv_set_outctr_w, g_pv_set_outctr)
 XEN_NARGIFY_2(g_pv_ampinc_w, g_pv_ampinc)
 XEN_NARGIFY_1(g_pv_ampinc_1_w, g_pv_ampinc_1)
 XEN_NARGIFY_3(g_set_pv_ampinc_w, g_set_pv_ampinc)
@@ -5061,6 +5079,8 @@ XEN_ARGIFY_7(g_mus_mix_w, g_mus_mix)
 #define g_phase_vocoder_p_w g_phase_vocoder_p
 #define g_phase_vocoder_w g_phase_vocoder
 #define g_make_phase_vocoder_w g_make_phase_vocoder
+#define g_pv_outctr_w g_pv_outctr
+#define g_pv_set_outctr_w g_pv_set_outctr
 #define g_pv_ampinc_w g_pv_ampinc
 #define g_pv_ampinc_1_w g_pv_ampinc_1
 #define g_set_pv_ampinc_w g_set_pv_ampinc
@@ -5157,7 +5177,7 @@ void mus_xen_init(void)
   #define H_poisson_window         "window based on exp(-angle)"
   #define H_gaussian_window        "window based on exp(-sqr(angle))"
   #define H_tukey_window           "window based on truncated cosine"
-  #define H_dolph_chebychev_window "window from inverse fft"
+  #define H_dolph_chebyshev_window "window from inverse fft"
 
   XEN_DEFINE_CONSTANT(S_rectangular_window,     MUS_RECTANGULAR_WINDOW,     H_rectangular_window);
   XEN_DEFINE_CONSTANT(S_hann_window,            MUS_HANN_WINDOW,            H_hann_window);
@@ -5176,7 +5196,7 @@ void mus_xen_init(void)
   XEN_DEFINE_CONSTANT(S_poisson_window,         MUS_POISSON_WINDOW,         H_poisson_window);
   XEN_DEFINE_CONSTANT(S_gaussian_window,        MUS_GAUSSIAN_WINDOW,        H_gaussian_window);
   XEN_DEFINE_CONSTANT(S_tukey_window,           MUS_TUKEY_WINDOW,           H_tukey_window);
-  XEN_DEFINE_CONSTANT(S_dolph_chebyshev_window, MUS_DOLPH_CHEBYSHEV_WINDOW, H_dolph_chebychev_window);
+  XEN_DEFINE_CONSTANT(S_dolph_chebyshev_window, MUS_DOLPH_CHEBYSHEV_WINDOW, H_dolph_chebyshev_window);
 
 
   XEN_DEFINE_PROCEDURE(S_mus_inspect,  g_inspect_w, 1, 0, 0,  H_mus_inspect);
@@ -5455,6 +5475,8 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE("pv-lastphase",     g_pv_lastphase_w, 2, 0, 0, "");
   XEN_DEFINE_PROCEDURE("pv-lastphase-1",   g_pv_lastphase_1_w, 1, 0, 0, "");
   XEN_DEFINE_PROCEDURE("set-pv-lastphase", g_set_pv_lastphase_w, 3, 0, 0, "");
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_pv_outctr, g_pv_outctr_w, H_pv_outctr, "pv-set-outctr", g_pv_set_outctr_w,  1, 0, 2, 0);
+  /* or should the set name be "set-pv-outctr"? */
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_hop, g_hop_w, H_mus_hop, S_mus_set_hop, g_set_hop_w,  1, 0, 2, 0);
 

@@ -668,8 +668,8 @@ several standard orchestral instruments, courtesy of James A. Moorer.
 <p>See <a href="#bigbird">bigbird</a> below for an example of partials-&gt;polynomial, and
 <a href="pqw.ins">pqw.ins</a> for an example of phase quadrature waveshaping.
 Partials-&gt;polynomial takes a list of harmonic amplitudes and
-returns a list of Chebychev polynomial coefficients.  The argument <i>kind</i>
-determines which kind of Chebychev polynomial we are interested in.</p>
+returns a list of Chebyshev polynomial coefficients.  The argument <i>kind</i>
+determines which kind of Chebyshev polynomial we are interested in.</p>
 <br>
 
 
@@ -2190,7 +2190,7 @@ Waveshaping can provide a similar effect:</p>
 </pre>
 <blockquote>
 <p>In this case, it is important to scale the file input to the waveshaper to go from
--1.0 to 1.0 to get the full effect of the Chebychev polynomials.  Unfortunately,
+-1.0 to 1.0 to get the full effect of the Chebyshev polynomials.  Unfortunately,
 if you don't add an overall amplitude envelope to bring the output to 0, you'll
 get clicks if you include even numbered partials.  These partials create a non-zero
 constant term in the polynomial, so when the sound decays to 0, the polynomial

@@ -508,7 +508,7 @@
 	      (list name 
 		    (lambda (w c i)
 		      (set! (transform-type graph-popup-snd (choose-chan)) val))))
-	    (list "Fourier" "Wavelet" "Autocorrelate" "Cepstrum" "Hankel" "Walsh" "Chebychev" "Hadamard" "Haar")
+	    (list "Fourier" "Wavelet" "Autocorrelate" "Cepstrum" "Hankel" "Walsh" "Chebyshev" "Hadamard" "Haar")
 	    types)
        fft-popup 
        (lambda (lst)

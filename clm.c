@@ -6914,6 +6914,8 @@ Float *mus_phase_vocoder_freqs(void *ptr) {return(((pv_info *)ptr)->freqs);}
 Float *mus_phase_vocoder_phases(void *ptr) {return(((pv_info *)ptr)->phases);}
 Float *mus_phase_vocoder_phaseinc(void *ptr) {return(((pv_info *)ptr)->phaseinc);}
 Float *mus_phase_vocoder_lastphase(void *ptr) {return(((pv_info *)ptr)->lastphase);}
+int mus_phase_vocoder_outctr(void *ptr) {return(((pv_info *)ptr)->outctr);}
+int mus_phase_vocoder_set_outctr(void *ptr, int val) {((pv_info *)ptr)->outctr = val; return(val);}
 
 
 int mus_hop(mus_any *ptr) 

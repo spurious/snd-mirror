@@ -42,6 +42,8 @@
 (define original-save-dir (or (save-dir) "/zap/snd"))
 (define original-temp-dir (or (temp-dir) "/zap/tmp"))
 (debug-set! stack 0)
+(debug-enable 'debug 'backtrace)
+(read-enable 'positions)
 
 (if (not (file-exists? (string-append home-dir "/bil/cl/oboe.snd")))
     (begin

@@ -2,10 +2,11 @@
 #define MUS_H
 
 #define MUS_VERSION 1
-#define MUS_REVISION 56
-#define MUS_DATE "8-Nov-01"
+#define MUS_REVISION 57
+#define MUS_DATE "10-Dec-01"
 
 /* 
+ * 10-Dec:     add outctr calls, phase-vocoder bugfixes, thanks to Scott Wilson.
  * 21-Oct:     fill in some set-data methods.
  * 1-Sep:      mus_polar2rectangular.
  * 6-July:     scm -> xen.
@@ -517,6 +518,8 @@ Float *mus_phase_vocoder_freqs  PROTO((void *ptr));
 Float *mus_phase_vocoder_phases PROTO((void *ptr));
 Float *mus_phase_vocoder_phaseinc PROTO((void *ptr));
 Float *mus_phase_vocoder_lastphase PROTO((void *ptr));
+int mus_phase_vocoder_outctr    PROTO((void *ptr));
+int mus_phase_vocoder_set_outctr PROTO((void *ptr, int val));
 
 void mus_clear_sinc_tables      PROTO((void));
 

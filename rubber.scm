@@ -67,7 +67,9 @@
 	  (set! diffsum (+ diffsum (abs (- samp1 samp0))))))
       (free-sample-reader sr0)
       (free-sample-reader sr1)
-      (/ diffsum ampsum))))
+      (if (= diffsum 0.0)
+	  0.0
+	  (/ diffsum ampsum)))))
 
 (define crossings
   ;; return number of upward zero crossings that don't look like silence

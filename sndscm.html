@@ -201,7 +201,7 @@ In <i>bigbird</i> the lines
 				 (oscil os (env gls-env))))))
 </pre>
 <p>setup and run the waveshaping synthesis (in this case it's just a fast
-additive synthesis).  <i>partials-&gt;polynomial</i> calculates the Chebychev
+additive synthesis).  <i>partials-&gt;polynomial</i> calculates the Chebyshev
 polynomial coefficients given the desired spectrum; the spectrum then
 results from driving that polynomial with an oscillator.  Besides the
 bird guides, there are now numerous recordings of birds that could
@@ -281,7 +281,7 @@ the cursor is moved to the clicked point.
   <em class=def><A NAME="zerophase">zero-phase, rotate-phase</a></em>
 </pre>
 
-<p><i>dolph</i> is the Dolph-Chebychev fft data window, taken
+<p><i>dolph</i> is the Dolph-Chebyshev fft data window, taken
 from Richard Lyons, "Understanding DSP".
 <i>dht</i> is the slow form of the Hartley transform, 
 taken from Perry Cook's SignalProcessor.m.
@@ -1779,7 +1779,7 @@ could be changed to suit your situation.
 <pre>
   <em class=def><A NAME="playsound">playsound</a></em> <i>func</i>
 </pre>
-</p><i>play-sound</i> plays the current sound, calling (func data) on each buffer if func is passed.
+<p><i>play-sound</i> plays the current sound, calling (func data) on each buffer if func is passed.
 It is also an example of calling the low level mus-audio functions, rather than calling
 play-channel and friends. The latter are easier to use, in most cases.  For example,
 to set up the keyboard
@@ -3272,7 +3272,6 @@ translation of Wakefield's freeverb.  It implements fcomb and ties it
 into CLM so it can be treated just like oscil or comb or whatever.
 </p>
 <pre>
-#include &lt;guile/gh.h&gt;
 #include "sndlib.h"
 #include "clm.h"
 #include "sg.h"
@@ -3405,36 +3404,36 @@ static mus_any *mus_make_fcomb (Float scaler, int size, Float a0, Float a1)
   return((mus_any *)gen);
 }
 
-/* that is the end of the C side; the rest ties this generator into Guile/Scheme */
+/* that is the end of the C side; the rest ties this generator into Guile/Ruby via the Xen package */
 /*   in Snd's case, it's actually not needed because the generator is only called from C */
 
-static SCM g_fcomb(SCM obj, SCM input)
+static XEN g_fcomb(XEN obj, XEN input)
 {
-  return(TO_SCM_DOUBLE(mus_fcomb(TO_CLM(obj), TO_C_DOUBLE(input), 0.0)));
+  return(C_TO_XEN_DOUBLE(mus_fcomb(MUS_XEN_TO_CLM(obj), XEN_TO_C_DOUBLE(input), 0.0)));
 }
 
-static SCM g_fcomb_p(SCM obj)
+static XEN g_fcomb_p(XEN obj)
 {
-  return(TO_SCM_BOOLEAN((mus_scm_p(obj)) &amp;&amp; (mus_fcomb_p(TO_CLM(obj)))));
+  return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) &amp;&amp; (mus_fcomb_p(MUS_XEN_TO_CLM(obj)))));
 }
 
-static SCM g_make_fcomb(SCM scaler, SCM size, SCM a0, SCM a1)
+static XEN g_make_fcomb(XEN scaler, XEN size, XEN a0, XEN a1)
 {
-  mus_scm *gn;
-  gn = (mus_scm *)CALLOC(1,sizeof(mus_scm));
-  gn-&gt;gen = mus_make_fcomb(TO_C_DOUBLE(scaler),
-                           TO_C_INT(size),
-                           TO_C_DOUBLE(a0),
-                           TO_C_DOUBLE(a1));
+  mus_xen *gn;
+  gn = (mus_xen *)CALLOC(1,sizeof(mus_xen));
+  gn-&gt;gen = mus_make_fcomb(XEN_TO_C_DOUBLE(scaler),
+                           XEN_TO_C_INT(size),
+                           XEN_TO_C_DOUBLE(a0),
+                           XEN_TO_C_DOUBLE(a1));
   gn-&gt;nvcts = 0;
-  return(mus_scm_to_smob(gn));
+  return(mus_xen_to_object(gn));
 }
 
 static void init_fcomb(void)
 {
-  scm_c_define_gsubr("fcomb?", 1, 0, 0, SCM_FNC g_fcomb_p);
-  scm_c_define_gsubr("make-fcomb", 4, 0, 0, SCM_FNC g_make_fcomb);
-  scm_c_define_gsubr("fcomb", 2, 0, 0, SCM_FNC g_fcomb);
+  XEN_DEFINE_PROCEDURE("fcomb?", g_fcomb_p, 1, 0, 0, "(fcomb? gen) -&gt; #t if gen is an fcomb generator");
+  XEN_DEFINE_PROCEDURE("make-fcomb", g_make_fcomb, 4, 0, 0, "(make-fcomb scaler size a0 a1) -&gt; new fcomb gen");
+  XEN_DEFINE_PROCEDURE("fcomb", g_fcomb, 2, 0, 0, "(fcomb gen input) returns result of running fcomb gen");
 }
 </pre>
 

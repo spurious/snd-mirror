@@ -100,7 +100,7 @@ function example()
     <li><a href="#editlists">Edit Lists</a>
     <li><a href="#sndtransforms">Transforms</a>
     <li><a href="#snddialogs">Dialogs and Menus</a>
-    <li><a href="#snderrors">Errors</a>
+    <li><a href="#snderrors">Errors and Debugging</a>
     <li><a href="#sndconstants">Constants</a>
     <li><a href="#sndmisc">Miscellaneous functions</a>
     </ul>
@@ -2218,9 +2218,9 @@ the hook.
 (define without-warnings
   (lambda (thunk)
     (define no-warning (lambda (msg) #t))
-      (add-hook! <em class=red>snd-warning-hook</em> no-warning)
-      (thunk)
-      (remove-hook! <em class=red>snd-warning-hook</em> no-warning)))
+    (add-hook! <em class=red>snd-warning-hook</em> no-warning)
+    (thunk)
+    (remove-hook! <em class=red>snd-warning-hook</em> no-warning)))
 <!-- --></pre></td></tr></table></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
@@ -5545,16 +5545,16 @@ The following substitutions can be made:
 (env-sound '(0 2 1 2))
 (env-channel (make-env '(0 1 1 1) :scaler 2.0) :end (1- (frames)))
 (clm-channel (make-one-zero :a0 2.0 :a1 0.0))
-(vct->samples 0 (frames) (vct-scale! (samples->vct) 2.0))
+(vct-&gt;samples 0 (frames) (vct-scale! (samples-&gt;vct) 2.0))
 (begin (select-all) (mix-selection 0))
 (begin (select-all) (scale-selection-by 2.0))
 (begin (save-sound-as "temp.snd") (mix "temp.snd" 0) (delete-file "temp.snd"))
 
-(let ((sd (samples->sound-data)))
+(let ((sd (samples-&gt;sound-data)))
   (do ((i 0 (1+ i))) 
       ((= i (frames)))
     (sound-data-set! sd 0 i (* 2.0 (sound-data-ref sd 0 i))))
-  (set! (samples 0 (frames)) (sound-data->vct sd)))
+  (set! (samples 0 (frames)) (sound-data-&gt;vct sd)))
 
 (let ((flt (make-vct 8)))
   (vct-set! flt 0 2.0)
@@ -5624,7 +5624,7 @@ The following substitutions can be made:
 <!-- --></pre>
 <!-- -->In this case, we found such a sample at position 4423.<br>
 <!-- --><pre>
-<!-- -->(define every-sample?
+<!-- -->(define <A NAME="everysample">every-sample?</a>
 <!-- -->  (lambda (proc)
 <!-- -->    (let ((baddy (scan-chan (lambda (y) 
 <!-- -->			      (not (proc y))))))
@@ -7764,7 +7764,7 @@ to do!
 </p>
 
 <br>
-<span class=bbox><h3><A NAME="snderrors">Errors</a></h3></span>
+<span class=bbox><h3><A NAME="snderrors">Errors and Debugging</a></h3></span>
 
 <p> When something goes awry, the various functions can "throw" an error (a symbol)
 which is normally "caught" by the default error handler (this is a kind of "goto" 
@@ -7820,14 +7820,170 @@ throws the error 'no-such-file:</p>
     (or (file-exists? file)
 	(throw 'no-such-file (list "look-for-file" file)))))
 </pre>
-<p>There are a variety of debugging aids supplied by Guile, including
-a good backtrace facility.  You can have a backtrace displayed automatically
-in the error handler by setting <a href="#showbacktrace">show-backtrace</a>
-to #t.
-To see what files are being loaded, set the
-variable %load-verbosely to #t.
-</p>
 
+<hr>
+<p>There are a variety of debugging aids supplied by Guile, including
+a backtrace facility.  To be sure all Guile's debugging support
+code is loaded,
+</p>
+<pre>
+  (use-modules (ice-9 debug) (ice-9 session) (ice-9 debugger))
+</pre>
+<p>If I remember right, the "session" module refers to the help facility.
+So, if the error you hit is a complaint about "wrong number of args",
+you can ask about the function via either "help" (the Guile help function --
+it will print its info to stdout which may be invisible), or 
+<a href="#sndhelp">snd-help</a> which tries to send the help string
+to Snd's listener.  I've tried to include help strings for every Snd,
+Clm, and Xm function. 
+To turn on the debugger (i.e. make it possible to call the debug function if something
+goes wrong), 
+</p>
+<pre>
+(debug-enable 'debug 'backtrace)
+(read-enable 'positions)
+</pre>
+<p>
+Now when an error occurs, you can call either (debug) or (snd-debug) 
+and fall into the debugger.  snd-debug makes sure the debugger input and
+output goes through Snd's listener, rather than stdin and stdout (similarly
+snd-trace replaces trace).
+Once in the debugger, you'll get a prompt:
+</p>
+<pre>
+  debug&gt; 
+</pre>
+<p>Type <i>bt</i> for a backtrace, <i>help</i> for a brief overview
+of debugger commands, and so on.
+Here's a real-life example, edited for brevity.  I hit a numerical
+overflow error (actually divide by zero...) in snd-test.scm, a huge
+(15000 line) pile of tests, got a slightly truncated backtrace from
+Snd's default backtrace displayer (not sure why it was truncated, but first things first), so
+</p>
+<pre>
+&gt; <em class=typing>(debug)</em>
+This is the Guile debugger; type "help" for help.
+There are 16 frames on the stack.
+
+Frame 15:   [/ 0.0 0.0]
+</pre>
+<p>Obviously a divide-by-zero error, but where am I?  To find out,
+I ask for a backtrace:
+</p>
+<pre>
+debug&gt; <em class=typing>bt</em>
+In /home/bil/cl/snd-test.scm:
+9479:  0* (if (or full-test (= snd-test 15) ...) (let (#) (letrec # # ...)))
+9480:  1  (let ((obi #)) (letrec (# # #) (if # #) (# #t) ...))
+In unknown file:
+   ?:  2  (letrec (# # #) (if # #) (# #t) ...)
+In /home/bil/cl/snd-test.scm:
+10165:  3* (if (file-exists? "1a.snd") (let (#) (let # # #) (close-sound ind1)))
+10166:  4  (let ((ind1 #)) (let (#) (rubber-sound #) (let # #)) (close-sound ind1))
+10167:  5* (let ((start (get-internal-real-time))) (rubber-sound 1.25) ...)
+10167:  6* [rubber-sound 1.25]
+In /home/bil/cl/rubber.scm:
+ 150:  7  (let* ((stretch #) (snd #) (chn #)) (derumble-sound snd chn) ...)
+ 159:  8  (let* (# # # # ...) (let* # # #) (# snd chn #t) ...)
+ 196:  9* (do ((i 0 (1+ i))) ((or (c-g?) (= i #))) ...)
+ 198: 10* (let* ((start #) (autolen #)) (let* (# # #) (do # # #) (let* # # #)))
+ 201: 11  (let* ((next-start #) (min-i #) (min-samps #)) (do (#) (#) ...) ...)
+ 213: 12  (let* (# #) (set! min-samps #) (let # # #))
+ 214: 13* [amp-weight 21956 27740 0 #f #f]
+  53: 14  (let* ((s0 #) (s1 #) (len #) ...) (do (#) (#) ...) ...)
+  70: 15  [/ 0.0 0.0]
+</pre>
+<p>So I'm at line 10167 of snd-test.scm where there is a call on
+rubber-sound from rubber.scm.  And in rubber.scm I'm at line 70,
+which is actually all I need to know, but just out of curiousity:
+</p>
+<pre>
+debug&gt; <em class=typing>help</em>
+Type "help" followed by a command name for full documentation.
+Available commands are:
+  backtrace
+  down
+  evaluate
+  frame
+  help
+  info
+  position
+  quit
+  up
+debug&gt; <em class=typing>help info</em>
+The "info" command requires a subcommand.
+Available subcommands are:
+  info args
+  info frame
+debug&gt; <em class=typing>info frame</em>
+Stack frame: 15
+This frame is an application.
+The corresponding expression is:
+/home/bil/cl/rubber.scm:70:7:
+  (/ diffsum ampsum)
+The procedure being applied is: /
+The procedure's arguments are: (0.0 0.0)
+</pre>
+<p>Finally useful information!  Both the variables <i>diffsum</i> and <i>ampsum</i> are
+zero for some reason.  I'll add a check for that.
+</p>
+<pre>
+debug&gt; <em class=typing>quit</em>
+<em class=listener>#&lt;unspecified&gt;</em>
+&gt;
+</pre>
+<p>You have to "quit" the debugger to get back to the normal Snd listener prompt.
+Unfortunately, this debugger doesn't have anything like gdb's "info locals",
+so you sometimes have to insert snd-prints where the problem is occurring.
+To trace a procedure (in this example I'm using <a href="#everysample">every-sample?</a> given above):
+</p>
+<pre>
+&gt; <em class=typing>(trace scan-chan)</em>
+<em class=listener>(scan-chan)</em>
+&gt; <em class=typing>(snd-trace (every-sample? (lambda (y) (&gt; y .5))))</em>
+<em class=listener>
+[scan-chan #&lt;procedure #f ((y) (not #))&gt;]
+(#t 0)
+#f
+</em>
+&gt;
+</pre>
+<p>If you're getting a stack overflow, and you're sure it's not a case
+of infinite recursion,
+</p>
+<pre>
+(debug-set! stack 0)
+</pre>
+<p>turns off the (very conservative) stack overflow check.
+</p>
+<hr>
+<p>If you hit a bug in Snd's C code, you'll need to use gdb (or dbx on the SGI)
+to track it down (an easier alternative is to simply mail me the gory details);
+if the error was a segfault, it probably left a file named "core" on the
+current directory.  In this case you can:
+</p>
+<pre>
+gdb snd core
+where
+</pre>
+<p>The "where" command should display the stack at the point of the error.
+"up", and "down" move around in the stack, and "info locals" prints out
+the current frame's variables.  If it's not a segfault, you can
+</p>
+<pre>
+gdb snd
+run
+</pre>
+<p>Then get the error to happen, at which point you should fall into gdb
+where you can type "where" and so on.  If the problem involves X, you
+may need to run -sync.  If Gtk, run --g-fatal-errors.  If Snd gets hung
+and you need to type C-C to get out, 
+</p>
+<pre>
+gdb snd
+break exit
+run
+</pre>
 
 <br>
 <span class=bbox><h3><A NAME="sndconstants">Constants</a></h3></span>
