@@ -40,6 +40,7 @@
   <li><a href="#sndswitches">Snd invocation flags</a>
   <li><a href="#sndinitfile">The initialization file</a>
   <li><a href="#sndresources">Snd resources</a>
+  <li><a href="#sndconfigurationswitches">Configuration choices</a>
   </ul>
 <li><a href="#snddynamic">Runtime modules and external programs</a>
   <ul>
@@ -388,7 +389,63 @@ greencolor (a few buttons),
 yellowcolor (a few envelope editor buttons), lightbluecolor (the recorder), and lighterbluecolor (the fft option panel).
 </p>
 
-<hr>
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndconfigurationswitches">Configuration choices</a></h3></td></tr></table>
+
+<p>The configuration process is controlled by a set of switches, some specific to Snd.  The
+latter are (configure --help):
+</p>
+
+<table>
+<tr><td colspan=2>Audio choices</td><td>(normally this is decided automatically)</td></tr>
+<tr><td width=50></td><td>--with-esd</td><td>use ESD (enlightened sound daemon)</td></tr>
+<tr><td></td><td>--with-alsa</td><td>use ALSA (Linux OSS replacement)</td></tr>
+<tr><td></td><td>--with-static-alsa</td><td>use ALSA statically loaded</td></tr>
+<tr><td></td><td>--with-jack</td><td>use JACK (Linux audio stream sharing support, can be used with ALSA)</td></tr>
+
+<tr><td colspan=2>Graphics choices</td><td></td></tr>
+<tr><td></td><td>--with-gtk</td><td>use Gtk+ to build Snd (Gtk+ version 2.0 or later)</td></tr>
+<tr><td></td><td>--with-motif</td><td>use Motif to build Snd (the default), Lesstif is not supported</td></tr>
+<tr><td></td><td>--with-static-motif</td><td>use libXm.a to build Snd</td></tr>
+<tr><td></td><td>--with-motif-prefix=PFX</td><td>where Motif is installed</td></tr>
+<tr><td></td><td>--with-no-gui</td><td>make Snd without any graphics support</td></tr>
+<tr><td></td><td>--with-static-xm</td><td>include the xm module at build time; this is easier than trying to dynamically load xm.so</td></tr>
+<tr><td></td><td>--with-gl</td><td>include OpenGL support (spectrogram, etc)</td></tr>
+<tr><td></td><td>--with-just-gl</td><td>include OpenGL support, but omit the GL/Guile/Ruby bindings</td></tr>
+<tr><td></td><td>--with-editres</td><td>include editres in xm</td></tr>
+<tr><td></td><td>--with-xpm</td><td>use xpm, default=yes</td></tr>
+<tr><td></td><td>--with-xp</td><td>use xp, default=no; this is the Xprint library which is not tied into Snd at all</td></tr>
+
+<tr><td colspan=2>Language choices</td><td></td></tr>
+<tr><td></td><td>--with-guile</td><td>use Guile (default=yes), GUILE_CONFIG_path sets Guile location; version 1.3.4 or later</td></tr>
+<tr><td></td><td>--with-ruby</td><td>try to use Ruby as the extension language; version 1.6.4 or later</td></tr>
+<tr><td></td><td>--with-ruby-prefix=PFX</td><td>where Ruby is installed</td></tr>
+
+<tr><td colspan=2>Numerical choices</td><td></td></tr>
+<tr><td></td><td>--with-doubles</td><td>use doubles throughout (default=no)</td></tr>
+<tr><td></td><td>--with-float-samples</td><td>use floats as the internal sample representation (default=no)</td></tr>
+<tr><td></td><td>--with-sample-width=N</td><td>if not float samples, use N bits for ints (default=24, must be between 16 and 31)</td></tr>
+
+<tr><td colspan=2>Library choices</td><td></td></tr>
+<tr><td></td><td>--with-gsl</td><td>use GSL (Chebyshev window), default=yes if local C does not support complex trig</td></tr>
+<tr><td></td><td>--with-static-gsl</td><td>use libgsl.a</td></tr>
+<tr><td></td><td>--with-fftw</td><td>use fftw, default=yes; fallback fft is built-in</td></tr>
+<tr><td></td><td>--with-ladspa</td><td>include support for LADSPA plugins (in Linux default=yes)</td></tr>
+<tr><td></td><td>--with-shared-sndlib</td><td>try to load libsndlib.so, rather than building it into Snd</td></tr>
+<tr><td></td><td>--with-modules</td><td>use this switch with --with-shared-sndlib if sndlib.so uses modules</td></tr>
+<tr><td></td><td>--disable-deprecated</td><td>do not include any deprecated stuff from gtk, guile, or sndlib</td></tr>
+
+<tr><td colspan=2>Directory choices</td><td></td></tr>
+<tr><td></td><td>--with-temp-dir</td><td>directory to use for temp files (default: ".")</td></tr>
+<tr><td></td><td>--with-save-dir</td><td>directory to use for saved-state files (default: ".")</td></tr>
+<tr><td></td><td>--with-doc-dir</td><td>directory to search for documentation (html-dir, elaborate set of defaults)</td></tr>
+
+<tr><td colspan=2>Debugging etc</td><td></td></tr>
+<tr><td></td><td>--with-snd-as-widget</td><td>make Snd a loadable widget, not a standalone program</td></tr>
+<tr><td></td><td>--with-profiling</td><td>include profiling machinery, default=no</td></tr>
+<tr><td></td><td>--enable-snd-debug</td><td>include internal Snd debugging functions (default=no)</td></tr>
+<tr><td></td><td>--disable-largefile</td><td>omit support for large (64-bit byte address) files</td></tr>
+<tr><td></td><td>--disable-nls</td><td>do not use Native Language Support</td></tr>
+</table>
 
 <p>Depending on how Snd was configured, any of the following symbols may be
 on the *features* list (in Guile):

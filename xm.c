@@ -1057,6 +1057,9 @@ static XEN c_to_xen_string(XEN str)
 {
   char *tmp;
   tmp = (char *)XEN_TO_C_ULONG(str);
+#if DEBUGGING
+  if ((tmp) && (strlen(tmp) == 0)) fprintf(stderr, "c_to_xen_string: empty string");
+#endif
   if (tmp)
     return(C_TO_XEN_STRING(tmp));
   return(XEN_FALSE);
@@ -2936,12 +2939,18 @@ converts a render table to a string representation -> (val props)"
 
 static XEN gxm_XmRenderTableCvtFromProp(XEN arg1, XEN arg2, XEN arg3)
 {
+  char *str;
+  int len;
   #define H_XmRenderTableCvtFromProp "XmRenderTable XmRenderTableCvtFromProp(Widget widget, char *property, unsigned int length) \
 converts from a string representation to a render table"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmRenderTableCvtFromProp", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmRenderTableCvtFromProp", "char*");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg3), arg3, 3, "XmRenderTableCvtFromProp", "unsigned int");
-  return(C_TO_XEN_XmRenderTable(XmRenderTableCvtFromProp(XEN_TO_C_Widget(arg1), XEN_TO_C_STRING(arg2), XEN_TO_C_ULONG(arg3))));
+  str = XEN_TO_C_STRING(arg2);
+  len = XEN_TO_C_ULONG(arg3);
+  if ((str) || (strlen(str) == len))
+    return(C_TO_XEN_XmRenderTable(XmRenderTableCvtFromProp(XEN_TO_C_Widget(arg1), str, len)));
+  return(XEN_FALSE);
 }
 
 static XEN gxm_XmTabListInsertTabs(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
@@ -12574,6 +12583,10 @@ WM_PROTOCOLS property on the specified window."
   for (i = len - 1; i >= 0; i--)
     lst = XEN_CONS(C_TO_XEN_Atom(ats[i]), lst);
   xm_unprotect_at(loc);
+#if DEBUGGING
+  /* should I free the atom list? */
+  XFree((void *)ats);
+#endif
   return(lst);
 }
 

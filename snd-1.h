@@ -1267,6 +1267,9 @@ int header_type_from_position(int pos);
 int data_format_from_position(int header, int pos);
 void set_header_type_and_format_from_position(file_data *fdat, int pos);
 char **set_header_positions_from_type(file_data *fdat, int header_type, int data_format);
+void set_fallback_srate(int sr);
+void set_fallback_chans(int ch);
+void set_fallback_format(int fr);
 
 void g_init_file(void);
 void initialize_format_lists(void);

@@ -1853,9 +1853,29 @@ char* word_wrap(const char *text, int widget_len)
   return(new_text);
 }
 
+#define DOC_DIRECTORIES 6
+static char *doc_directories[DOC_DIRECTORIES] = {
+  "/usr/share/doc/snd-" SND_VERSION,
+  "/usr/share/doc/snd-" SND_MAJOR_VERSION,
+  "/usr/local/share/doc/snd-" SND_VERSION,
+  "/usr/local/share/doc/snd-" SND_MAJOR_VERSION,
+  "/usr/doc/snd-" SND_MAJOR_VERSION,
+  "/usr/share/docs/snd-" SND_VERSION
+};
+  
+static char *doc_files[DOC_DIRECTORIES] = {
+  "/usr/share/doc/snd-" SND_VERSION "/snd.html",
+  "/usr/share/doc/snd-" SND_MAJOR_VERSION "/snd.html",
+  "/usr/local/share/doc/snd-" SND_VERSION "/snd.html",
+  "/usr/local/share/doc/snd-" SND_MAJOR_VERSION "/snd.html",
+  "/usr/doc/snd-" SND_MAJOR_VERSION "/snd.html",
+  "/usr/share/docs/snd-" SND_VERSION "/snd.html"
+};
+  
 static char *html_directory(void)
 {
   char *hd = NULL;
+  int i;
   if (mus_file_probe("snd.html"))
     {
       char *path;
@@ -1876,18 +1896,8 @@ static char *html_directory(void)
   if (mus_file_probe(DEFAULT_DOC_DIR "/snd.html"))
     return(copy_string(DEFAULT_DOC_DIR "/snd.html"));
 #endif
-  if (mus_file_probe("/usr/share/doc/snd-" SND_VERSION "/snd.html"))
-    return(copy_string("/usr/share/doc/snd-" SND_VERSION));
-  if (mus_file_probe("/usr/share/doc/snd-" SND_MAJOR_VERSION "/snd.html"))
-    return(copy_string("/usr/share/doc/snd-" SND_MAJOR_VERSION));
-  if (mus_file_probe("/usr/local/share/doc/snd-" SND_VERSION "/snd.html"))
-    return(copy_string("/usr/local/share/doc/snd-" SND_VERSION));
-  if (mus_file_probe("/usr/local/share/doc/snd-" SND_MAJOR_VERSION "/snd.html"))
-    return(copy_string("/usr/local/share/doc/snd-" SND_MAJOR_VERSION));
-  if (mus_file_probe("/usr/doc/snd-" SND_MAJOR_VERSION "/snd.html"))
-    return(copy_string("/usr/doc/snd-" SND_MAJOR_VERSION));
-  if (mus_file_probe("/usr/share/docs/snd-" SND_VERSION "/snd.html"))
-    return(copy_string("/usr/share/docs/snd-" SND_VERSION));
+  for (i = 0; i < DOC_DIRECTORIES; i++)
+    if (mus_file_probe(doc_files[i])) return(copy_string(doc_directories[i]));
   return(NULL);
 }
 

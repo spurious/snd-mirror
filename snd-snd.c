@@ -3098,15 +3098,13 @@ static void init_sound_keywords(void)
   kw_comment = XEN_MAKE_KEYWORD("comment");
 }
 
-/* TODO: if next file with bad data format (0), open-raw-sound should still give us access to it.  Also open sound->bad header dialog or something */
-
 static XEN g_open_raw_sound(XEN arglist)
 {
   #define H_open_raw_sound "(" S_open_raw_sound " :file :channels :srate :data-format): \
 open file assuming the data matches the attributes indicated unless the file actually has a header"
   char *fname = NULL, *file = NULL;
   snd_info *sp;
-  int os, oc, ofr;
+  int os = 1, oc = 1, ofr = MUS_BSHORT;
   XEN args[8]; 
   XEN keys[4];
   int orig_arg[4] = {0, 0, 0, 0};
@@ -3124,8 +3122,11 @@ open file assuming the data matches the attributes indicated unless the file act
     {
       file = mus_optkey_to_string(keys[0], S_open_raw_sound, orig_arg[0], NULL);
       oc = mus_optkey_to_int(keys[1], S_open_raw_sound, orig_arg[1], oc);
+      if (!(XEN_KEYWORD_P(keys[1]))) set_fallback_chans(oc);
       os = mus_optkey_to_int(keys[2], S_open_raw_sound, orig_arg[2], os);
+      if (!(XEN_KEYWORD_P(keys[2]))) set_fallback_srate(os);
       ofr = mus_optkey_to_int(keys[3], S_open_raw_sound, orig_arg[3], ofr);
+      if (!(XEN_KEYWORD_P(keys[3]))) set_fallback_format(ofr);
     }
   if (file == NULL) 
     XEN_ERROR(MUS_MISC_ERROR,
@@ -3141,6 +3142,9 @@ open file assuming the data matches the attributes indicated unless the file act
   ss->reloading_updated_file = -1;
   ss->catch_message = NULL;
   sp = snd_open_file(fname, false);
+  set_fallback_chans(0);
+  set_fallback_srate(0);
+  set_fallback_format(MUS_UNKNOWN);
   ss->reloading_updated_file = 0;
   /* snd_open_file -> snd_open_file_1 -> add_sound_window -> make_file_info -> raw_data_dialog_to_file_info */
   /*   so here if hooked, we'd need to save the current hook, make it return the current args, open, then restore */
@@ -4148,7 +4152,7 @@ If 'filename' is a sound index (an integer), 'size' is an edit-position, and the
 		  return(peak);
 		}
 	    }
-	  if (peakname) FREE(peakname);
+	  if (peakname) {FREE(peakname); peakname = NULL;}
 	}
     }
   /* now set up to read direct... */

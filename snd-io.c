@@ -98,6 +98,10 @@ snd_io *make_file_state(int fd, file_info *hdr, int chan, int suggested_bufsize)
   io->beg = 0;
   io->end = bufsize - 1;
   io->bufsize = bufsize;
+#if DEBUGGING
+  if (chan >= hdr->chans) {fprintf(stderr,"make_file_state, chan: %d %d\n", chan, hdr->chans); abort();}
+  if (bufsize <= 0) {fprintf(stderr,"make_file_state, bufsize: %d\n", bufsize); abort();}
+#endif
   io->arrays[chan] = (mus_sample_t *)CALLOC(bufsize, sizeof(mus_sample_t));
   reposition_file_buffers_1(0, io); /* get ready to read -- we're assuming mus_file_read_chans here */
   return(io);
@@ -399,6 +403,9 @@ snd_data *make_snd_data_file(const char *name, snd_io *io, file_info *hdr, file_
   snd_data *sd;
   sd = (snd_data *)CALLOC(1, sizeof(snd_data));
   sd->type = SND_DATA_FILE;
+#if DEBUGGING
+  if (temp_chan >= hdr->chans) {fprintf(stderr,"make_snd_data_file, chans: %d %d\n", temp_chan, hdr->chans); abort();}
+#endif
   sd->buffered_data = io->arrays[temp_chan];
   sd->io = io;
   sd->filename = copy_string(name);

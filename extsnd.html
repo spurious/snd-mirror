@@ -5424,7 +5424,8 @@ To be informed whenever a new sound is created, use <a href="#newsoundhook">new-
 <tr><td></td><td>
 open <i>file</i> as a raw (no header) sound in the layout specified.
 If the file has a header, it is not ignored (use <code>(set! (<a class=quiet href="#dataformat">data-format</a> ...))</code>
-and friends if you want to ignore the header).
+and friends if you want to ignore the header).  If the header is messed up, you can override its settings by
+giving the correct values in the call to open-raw-sound.
 <br><br>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define mpg

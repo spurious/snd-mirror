@@ -20,9 +20,6 @@ dlocsig from CLM to Scheme + a path envelope editor dialog
 
 A "master volume" control in the recorder.
 
-In snd-test.scm, the gtk (xg) section needs to be completed.
-  Similarly for OpenGL and Ruby (snd_test.rb).
-
 Gtk versions of bess.scm and Dave Phillips' extensions
     dlp/fft-menu.scm
     dlp/misc.scm
@@ -40,3 +37,5 @@ A CD building script.
 
 sdif file support (all I need is a routine to translate from
   sdif to aifc or some such format).
+
+portaudio support (rather than audio.c, at least for OSX)

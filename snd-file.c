@@ -113,6 +113,12 @@ time_t file_write_date(const char *filename)
   return((time_t)(statbuf.st_mtime));
 }
 
+static int fallback_srate = 0, fallback_chans = 0, fallback_format = MUS_UNKNOWN;
+
+void set_fallback_srate(int sr) {fallback_srate = sr;}
+void set_fallback_chans(int ch) {fallback_chans = ch;}
+void set_fallback_format(int fr) {fallback_format = fr;}
+
 static file_info *make_file_info_1(const char *fullname)
 {
   file_info *hdr;
@@ -127,8 +133,9 @@ static file_info *make_file_info_1(const char *fullname)
       hdr->chans = mus_sound_chans(fullname);
       hdr->format = mus_sound_data_format(fullname);
     }
-  if ((hdr->srate) <= 0) hdr->srate = 1;
-  if ((hdr->chans) <= 0) hdr->chans = 1;
+  if (!(MUS_DATA_FORMAT_OK(hdr->format))) hdr->format = fallback_format;
+  if (hdr->srate <= 0) {if (fallback_srate > 0) hdr->srate = fallback_srate; else hdr->srate = 1;}
+  if (hdr->chans <= 0) {if (fallback_chans > 0) hdr->chans = fallback_chans; else hdr->chans = 1;}
   hdr->samples = mus_sound_samples(fullname); /* total samples, not per channel */
   hdr->data_location = mus_sound_data_location(fullname);
   hdr->comment = mus_sound_comment(fullname);
@@ -221,7 +228,7 @@ static char *raw_data_explanation(const char *filename, file_info *hdr);
 file_info *make_file_info(const char *fullname)
 {
   file_info *hdr = NULL;
-  int type = MUS_UNSUPPORTED, format = MUS_UNKNOWN;
+  int type = MUS_UNSUPPORTED, format = MUS_UNKNOWN, sr = 0, ch = 0;
   if (mus_file_probe(fullname))
     {
       type = mus_sound_header_type(fullname);
@@ -230,8 +237,13 @@ file_info *make_file_info(const char *fullname)
 #if (!USE_NO_GUI)
       else
 	{
-	  if ((mus_sound_srate(fullname) <= 0) || (mus_sound_srate(fullname) > 100000000) ||
-	      (mus_sound_chans(fullname) >= 256) || (mus_sound_chans(fullname) <= 0))
+	  sr = mus_sound_srate(fullname);
+	  ch = mus_sound_chans(fullname);
+	  if ((fallback_srate > 0) && ((sr <= 0) || (sr > 100000000))) sr = fallback_srate;
+	  if ((fallback_chans > 0) && ((ch >= 256) || (ch <= 0))) ch = fallback_chans;
+	  if ((sr <= 0) || (sr > 100000000) ||
+	      (ch >= 256) || (ch <= 0) ||
+	      (!(MUS_DATA_FORMAT_OK(mus_sound_data_format(fullname)))))
 	    {
 	      if ((XEN_HOOKED(bad_header_hook)) &&
 		  (XEN_TRUE_P(run_or_hook(bad_header_hook,
@@ -343,7 +355,7 @@ file_info *make_file_info(const char *fullname)
 	  if (MUS_HEADER_TYPE_OK(type))
 	    {
 	      format = mus_sound_data_format(fullname);
-	      if (MUS_DATA_FORMAT_OK(format))
+	      if ((MUS_DATA_FORMAT_OK(format)) || (fallback_format != MUS_UNKNOWN))
 		hdr = make_file_info_1(fullname);
 	      else hdr = translate_file(fullname, type);
 	    }
@@ -884,14 +896,12 @@ snd_info *make_sound_readable(const char *filename, bool post_close)
   file_info *hdr = NULL;
   snd_data *sd;
   snd_io *io;
-  int i, fd, chans;
+  int i, fd;
   off_t len;
   /* we've already checked that filename exists */
   hdr = make_file_info_1(filename);
-  chans = mus_sound_chans(filename);
-  if (chans <= 0) chans = 1;
-  sp = make_basic_snd_info(chans);
-  sp->nchans = chans;
+  sp = make_basic_snd_info(hdr->chans);
+  sp->nchans = hdr->chans;
   sp->hdr = hdr;
   sp->inuse = SOUND_READER;
   initialize_control_panel(sp);

@@ -38,7 +38,7 @@ AC_DEFINE_UNQUOTED(CONFIGURE_ARGS, "$INVOKED_ARGS")
 #   --with-doubles        use doubles throughout (default is floats)
 #   --with-float-samples  represent samples internally as floats 
 #   --enable-snd-debug    include Snd internal debugging stuff
-#   --disable-deprecated  do not include any deprecated stuff (in gtk and guile)
+#   --disable-deprecated  do not include any deprecated stuff (in gtk, motif, guile, sndlib, clm, etc)
 #   --with-ladspa         include LADSPA plugin support (Linux)
 #   --with-sample-width=N use N bits of samples (default = 24)
 #   --with-esd            use Enlightened Sound Daemon
