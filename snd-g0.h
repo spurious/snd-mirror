@@ -65,8 +65,8 @@
 
 #if HAVE_GTK2
   #define SG_FONT PangoFontDescription
-  #define SG_PIXMAP GdkPixbuf
-  #define SG_BITMAP GdkPixbuf
+  #define SG_PIXMAP GdkPixmap
+  #define SG_BITMAP GdkBitmap
 #else
   #define SG_FONT GdkFont
   #define SG_PIXMAP GdkPixmap
@@ -320,8 +320,6 @@ typedef struct {
 
 #if HAVE_GTK2
 
-  /* also gtk_object_set|get_data, gtk_pixmap_*, gtk_signal_* */
-
   #define SG_MAKE_RESIZABLE(Widget)          gtk_widget_set_size_request(Widget, 0, 0); gtk_window_set_resizable(GTK_WINDOW(Widget), TRUE)
   #define SG_SET_RESIZABLE(Window, Val)      gtk_window_set_resizable(Window, Val)
   #define SG_SET_SIZE(Widget, Width, Height) gtk_widget_set_size_request(Widget, Width, Height)
@@ -359,10 +357,13 @@ typedef struct {
   #define SG_LIST_APPEND(Widget, Str)        sg_list_append(Widget, Str)
   #define SG_LIST_INSERT(Widget, Pos, Str)   sg_list_insert(Widget, Pos, Str)
   #define SG_LIST_SET_TEXT(Widget, Row, Str) sg_list_set_text(Widget, Row, Str)
-  #define SG_PIXMAP_NEW(Map, Mask)           gdk_pixbuf_new(Map)
-  #define SG_PIXMAP_NEW_XYD(Window, Width, Height, Depth) NULL
-  #define SG_XPM_TO_PIXMAP(Bits, Mask)       gdk_pixbuf_new_from_xpm_data((const char **)Bits)
-  #define SG_PIXMAP_SET(Holder, Map, Mask)   
+
+  /* still using deprecated stuff here */
+  #define SG_PIXMAP_NEW(Map, Mask)           gtk_pixmap_new(Map, Mask)
+  #define SG_PIXMAP_NEW_XYD(Window, Width, Height, Depth) gdk_pixmap_new(Window, Width, Height, Depth)
+  #define SG_XPM_TO_PIXMAP(Window, Bits, Mask) gdk_pixmap_create_from_xpm_d(Window, &Mask, NULL, Bits)
+  #define SG_PIXMAP_SET(Holder, Map, Mask)   gtk_pixmap_set(GTK_PIXMAP(Holder), Map, Mask)
+
   #define SG_FONT_LOAD(Font)                 pango_font_description_from_string(Font)
   #define SG_SET_FONT(Gc, Font)              gdk_gc_set_font(Gc, gdk_font_from_description(Font))
   /* should be gtk_widget_modify_font(Widget, Font) or pango_layout_set_font_description */
@@ -376,6 +377,9 @@ typedef struct {
   #define SG_SIGNAL_CONNECT_AFTER(Object, Name, Func, Func_Data) \
 	    g_signal_connect_closure_by_id(Object, g_signal_lookup(Name, G_OBJECT_TYPE(Object)), 0, g_cclosure_new(Func, Func_Data, 0), 1)
 
+  #define SG_SIGNAL_HANDLER_BLOCK_BY_DATA(object,data) g_signal_handlers_block_matched(object, G_SIGNAL_MATCH_DATA, 0, 0, NULL, 0, data)
+  #define SG_SIGNAL_HANDLER_UNBLOCK_BY_DATA(object,data) g_signal_handlers_unblock_matched(object, G_SIGNAL_MATCH_DATA, 0, 0, NULL, 0, data)
+  #define SG_SIGNAL_EMIT_STOP_BY_NAME(object, name) g_signal_stop_emission(object, g_signal_lookup(name, G_OBJECT_TYPE(object)), 0)
 #else
 
   #define SG_WINDOW_SIZE                     gdk_window_get_size
@@ -415,7 +419,7 @@ typedef struct {
   #define SG_PIXMAP_NEW(Map, Mask)           gtk_pixmap_new(Map, Mask)
   #define SG_PIXMAP_NEW_XYD(Window, Width, Height, Depth) gdk_pixmap_new(Window, Width, Height, Depth)
   #define SG_PIXMAP_SET(Holder, Map, Mask)   gtk_pixmap_set(GTK_PIXMAP(Holder), Map, Mask)
-  #define SG_XPM_TO_PIXMAP(Bits, Mask)       gdk_pixmap_create_from_xpm_d(MAIN_WINDOW(ss), &Mask, NULL, Bits)
+  #define SG_XPM_TO_PIXMAP(Window, Bits, Mask) gdk_pixmap_create_from_xpm_d(Window, &Mask, NULL, Bits)
   #define SG_FONT_LOAD(Font)                 gdk_font_load(Font)
   #define SG_SET_FONT(Gc, Font)              gdk_gc_set_font(Gc, Font)
   #define SG_TEXT_WIDTH(Txt, Font)           gdk_text_width(Font, (gchar *)Txt, (gint)strlen(Txt))
@@ -424,6 +428,10 @@ typedef struct {
   #define SG_SIGNAL_CONNECT(Object, Name, Func, Func_Data) gtk_signal_connect(Object, Name, Func, Func_Data)
   #define SG_SIGNAL_CONNECT_AFTER(Object, Name, Func, Func_Data) gtk_signal_connect_after(Object, Name, Func, Func_Data)
   #define SG_SIGNAL_CONNECT_OBJECT(Object, Name, Func, Func_Data) gtk_signal_connect_object(Object, Name, Func, Func_Data)
+  #define SG_SIGNAL_HANDLER_BLOCK_BY_DATA(object,data) gtk_signal_handler_block_by_data(object,data) 
+  #define SG_SIGNAL_HANDLER_UNBLOCK_BY_DATA(object,data) gtk_signal_handler_unblock_by_data(object,data)
+  #define SG_SIGNAL_EMIT_STOP_BY_NAME(object, name) gtk_signal_emit_stop_by_name(object, name)
 #endif
 
 #endif
+  

@@ -11,7 +11,11 @@ clean:
 	rm -f $(NO_GUI_O_FILES)
 	rm -f $(GM_FILES)
 	rm -f $(GM_SO_FILE)
-	rm -f sndplay.o audinfo.o sndrecord.o sndinfo.o sndsine.o sndxtest.o
+	rm -f sndplay.o audinfo.o sndrecord.o sndinfo.o sndsine.o
+	rm -f snd sndplay audinfo sndrecord sndinfo sndsine
+
+distclean: clean
+	rm -f config.h config.log config.status makefile
 
 clmclean:
 	rm io.o headers.o audio.o sound.o clm.o

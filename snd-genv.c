@@ -1070,7 +1070,7 @@ GtkWidget *create_envelope_editor (snd_state *ss)
       set_background(brkbox, (ss->sgx)->basic_color);
       gtk_widget_show(brkbox);
 
-      blank = SG_XPM_TO_PIXMAP(blank_bits(), blank_mask);
+      blank = SG_XPM_TO_PIXMAP(MAIN_WINDOW(ss), blank_bits(), blank_mask);
       brkpixL = SG_PIXMAP_NEW(blank, blank_mask);
       gtk_container_add(GTK_CONTAINER(brkbox), brkpixL);
       gtk_widget_show(brkpixL);

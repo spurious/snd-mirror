@@ -193,14 +193,14 @@ static void make_pixmaps(snd_state *ss)
   if (!mini_lock_allocated)
     { 
       wn = MAIN_WINDOW(ss);
-      mini_lock = SG_XPM_TO_PIXMAP(mini_lock_bits(), lock_mask);
-      blank = SG_XPM_TO_PIXMAP(blank_bits(), blank_mask);
-      speed_r = SG_XPM_TO_PIXMAP(speed_r_bits(), speed_r_mask);
-      speed_l = SG_XPM_TO_PIXMAP(speed_l_bits(), speed_l_mask);
+      mini_lock = SG_XPM_TO_PIXMAP(wn, mini_lock_bits(), lock_mask);
+      blank = SG_XPM_TO_PIXMAP(wn, blank_bits(), blank_mask);
+      speed_r = SG_XPM_TO_PIXMAP(wn, speed_r_bits(), speed_r_mask);
+      speed_l = SG_XPM_TO_PIXMAP(wn, speed_l_bits(), speed_l_mask);
       for (k = 0; k < NUM_BOMBS; k++) 
-	mini_bombs[k] = SG_XPM_TO_PIXMAP(mini_bomb_bits(k),  bomb_mask);
+	mini_bombs[k] = SG_XPM_TO_PIXMAP(wn, mini_bomb_bits(k),  bomb_mask);
       for (k = 0; k < NUM_GLASSES; k++) 
-	mini_glasses[k] = SG_XPM_TO_PIXMAP(mini_glass_bits(k),  glass_mask);
+	mini_glasses[k] = SG_XPM_TO_PIXMAP(wn, mini_glass_bits(k),  glass_mask);
       mini_lock_allocated = 1;
     }
 }
@@ -280,7 +280,7 @@ static gint minibuffer_key_callback(GtkWidget *w, GdkEventKey *event, gpointer d
     {
       cp = current_channel(ss);
       if (cp) graph_key_press(channel_graph(cp), event, (gpointer)cp); 
-      gtk_signal_emit_stop_by_name(GTK_OBJECT(w), "key_press_event");
+      SG_SIGNAL_EMIT_STOP_BY_NAME(GTK_OBJECT(w), "key_press_event");
       return(TRUE);
     }
   if (((event->keyval == snd_K_g) || (event->keyval == snd_K_G)) && 
@@ -1878,10 +1878,16 @@ void sound_show_ctrls(snd_info *sp)
   if (height > 200)
     gtk_paned_set_position(GTK_PANED(w_snd_pane(sp)), height - 150);
   else gtk_paned_set_position(GTK_PANED(w_snd_pane(sp)), height / 2);
+#if HAVE_GTK2
+  gtk_widget_show_all(CONTROL_PANEL(sp));
+#endif
 }
 
 void sound_hide_ctrls(snd_info *sp)
 {
+#if HAVE_GTK2
+  gtk_widget_hide_all(CONTROL_PANEL(sp));
+#endif
   gtk_paned_set_position(GTK_PANED(w_snd_pane(sp)), widget_height(w_snd_pane(sp)));
 }
 

@@ -474,9 +474,9 @@ int is_sensitive(GtkWidget *wid) {if (wid) return(GTK_WIDGET_IS_SENSITIVE(wid));
 
 void set_toggle_button(GtkWidget *wid, int val, int passed, void *data) 
 {
-  if (!passed) gtk_signal_handler_block_by_data(GTK_OBJECT(wid), (gpointer)data);
+  if (!passed) SG_SIGNAL_HANDLER_BLOCK_BY_DATA(GTK_OBJECT(wid), (gpointer)data);
   SG_TOGGLE_BUTTON_SET_STATE(wid, val);
-  if (!passed) gtk_signal_handler_unblock_by_data(GTK_OBJECT(wid), (gpointer)data);
+  if (!passed) SG_SIGNAL_HANDLER_UNBLOCK_BY_DATA(GTK_OBJECT(wid), (gpointer)data);
 }
 
 guint16 widget_height(GtkWidget *w)
@@ -807,5 +807,18 @@ void sg_list_set_text(GtkWidget *lst, int row, char *val)
   w = gtk_tree_view_get_model(GTK_TREE_VIEW(lst));
   gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(w), &iter, NULL, row);
   gtk_tree_store_set(GTK_TREE_STORE(w), &iter, 0, val, -1);
+}
+
+void sg_pixmap_set(GtkWidget *holder, GdkPixbuf *pix)
+{
+  /* TODO: how to set label pixmap? */
+}
+
+GtkWidget *sg_pixmap_new(GdkPixbuf *pix)
+{
+  GtkWidget *label;
+  label = gtk_label_new("TODO: get rid of this damned label");
+  sg_pixmap_set(label, pix);
+  return(label);
 }
 #endif

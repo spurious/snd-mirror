@@ -152,10 +152,10 @@ static void make_record_icons(GtkWidget *w, snd_state *ss)
   GdkWindow *wn;
   icons_created = 1;
   wn = MAIN_WINDOW(ss);
-  speaker_pix = SG_XPM_TO_PIXMAP(speaker_bits(), speaker_mask);
-  mic_pix = SG_XPM_TO_PIXMAP(mic_bits(), mic_mask);
-  line_in_pix = SG_XPM_TO_PIXMAP(line_in_bits(), line_in_mask);
-  cd_pix = SG_XPM_TO_PIXMAP(cd_bits(), cd_mask);
+  speaker_pix = SG_XPM_TO_PIXMAP(wn, speaker_bits(), speaker_mask);
+  mic_pix = SG_XPM_TO_PIXMAP(wn, mic_bits(), mic_mask);
+  line_in_pix = SG_XPM_TO_PIXMAP(wn, line_in_bits(), line_in_mask);
+  cd_pix = SG_XPM_TO_PIXMAP(wn, cd_bits(), cd_mask);
   /* TODO: digital_in, aes, adat */
 }
 
@@ -212,7 +212,7 @@ static GdkBitmap *device_mask(int device)
 
 static void recorder_noop_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
 {
-  gtk_signal_emit_stop_by_name(GTK_OBJECT(w), "enter_notify_event");
+  SG_SIGNAL_EMIT_STOP_BY_NAME(GTK_OBJECT(w), "enter_notify_event");
 }
 /* SG_SIGNAL_CONNECT(GTK_OBJECT(w), "enter_notify_event", GTK_SIGNAL_FUNC(recorder_noop_mouse_enter), NULL); */
 
@@ -222,14 +222,10 @@ static void recorder_noop_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpoint
 static void allocate_meter_2(GtkWidget *w, vu_label *vu)
 {
   GdkDrawable *wn;
-#if (!HAVE_GTK2)
-  snd_state *ss;
-  ss = get_global_state(); /* used within the SG_XPM_TO_PIXMAP macro */
-#endif
   wn = w->window;
-  vu->off_label = SG_XPM_TO_PIXMAP(offlabel_bits(), (vu->off_label_mask));
-  vu->on_label = SG_XPM_TO_PIXMAP(onlabel_bits(), (vu->on_label_mask));
-  vu->clip_label = SG_XPM_TO_PIXMAP(cliplabel_bits(), (vu->clip_label_mask));
+  vu->off_label = SG_XPM_TO_PIXMAP(wn, offlabel_bits(), (vu->off_label_mask));
+  vu->on_label = SG_XPM_TO_PIXMAP(wn, onlabel_bits(), (vu->on_label_mask));
+  vu->clip_label = SG_XPM_TO_PIXMAP(wn, cliplabel_bits(), (vu->clip_label_mask));
 }
 
 

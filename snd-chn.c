@@ -2960,7 +2960,7 @@ void waveb(chan_info *cp, int on)
   update_graph(cp, NULL);
 }
 
-static void propogate_wf_state(snd_info *sp)
+static void propagate_wf_state(snd_info *sp)
 {
   int i, w, f;
   chan_info *cp;
@@ -2989,7 +2989,7 @@ void f_button_callback(chan_info *cp, int on, int with_control)
   cp->graph_transform_p = on;
   sp = cp->sound;
   if (sp->channel_style != CHANNELS_SEPARATE)
-    propogate_wf_state(sp);
+    propagate_wf_state(sp);
   else
     {
       update_graph(cp, NULL);
@@ -3022,7 +3022,7 @@ void w_button_callback(chan_info *cp, int on, int with_control)
   cp->graph_time_p = on;
   sp = cp->sound;
   if (sp->channel_style != CHANNELS_SEPARATE)
-    propogate_wf_state(sp);
+    propagate_wf_state(sp);
   else
     {
       update_graph(cp, NULL);

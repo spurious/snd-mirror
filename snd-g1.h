@@ -383,6 +383,8 @@ gpointer get_user_data(GtkObject *obj);
   void sg_list_append(GtkWidget *w, char *val);
   void sg_list_insert(GtkWidget *w, int row, char *val);
   void sg_list_set_text(GtkWidget *w, int row, char *val);
+  void sg_pixmap_set(GtkWidget *holder, GdkPixbuf *pix);
+  GtkWidget *sg_pixmap_new(GdkPixbuf *pix);
 #else
   char *sg_label_text(GtkLabel *w);
 #endif

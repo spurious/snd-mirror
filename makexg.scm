@@ -10,7 +10,6 @@
 ;;; TODO: struct (and listable) print
 ;;; TODO: event casts?
 ;;;   GdkColor|GC|GCValues|Event* make?
-;;; TODO: add gdk-pixbuf? (has GDK_PIXBUF_DISABLE_DEPRECATED)
 ;;; TODO: add unicode handlers from glib
 ;;; TODO: unprotect *_remove?
 
@@ -371,6 +370,7 @@
 	(cons "gshort" "INT")
 	(cons "gint16" "INT")
 	(cons "guint8" "INT")
+	(cons "guchar" "INT")
 	(cons "gint8" "INT")
 	(cons "xen" #t)
 
@@ -483,6 +483,7 @@
 	(cons "GdkNotifyType" "INT")
 	(cons "GdkSettingAction" "INT")
 	(cons "GdkByteOrder" "INT")
+	;(cons "GdkWChar" "ULONG")
 	
 	;; deprecated
 	(cons "GtkCellType" "INT")
@@ -493,7 +494,6 @@
 	(cons "GtkProgressBarStyle" "INT")
 	(cons "GtkVisibility" "INT")
 	(cons "GtkSignalRunType" "INT")
-	(cons "GdkWChar" "ULONG")
 
 	;; broken
 	(cons "GtkTreeViewMode" "INT")
@@ -527,7 +527,7 @@
 		 (not (string=? type "GtkSignalFunc")))
 
 	    (hey "XM_TYPE~A(~A, ~A)~%" 
-		 (if (has-stars type) "" "_UNCHECKED")
+		 (if (has-stars type) "_PTR" "")
 		 (no-stars type) 
 		 type)))))
 
@@ -556,7 +556,7 @@
       strs)
      'fnc)))
 
-(define (CFNC data)
+(define* (CFNC data #:optional spec)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
     (if (assoc name names)
@@ -565,19 +565,9 @@
 	  (if (not (member type types))
 	      (set! types (cons type types)))
 	  (let ((strs (parse-args args 'ok)))
-	    (set! funcs (cons (list name type strs args) funcs))
-	    (set! names (cons (cons name (func-type strs)) names)))))))
-
-(define (CFNC-if data)
-  (let ((name (cadr-str data))
-	(args (caddr-str data)))
-    (if (assoc name names)
-	(hey "~A CFNC-if~%" name)
-	(let ((type (car-str data)))
-	  (if (not (member type types))
-	      (set! types (cons type types)))
-	  (let ((strs (parse-args args 'ok)))
-	    (set! funcs (cons (list name type strs args 'if) funcs))
+	    (if spec
+		(set! funcs (cons (list name type strs args spec) funcs))
+		(set! funcs (cons (list name type strs args) funcs)))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
 (define (CFNC-broken data)
@@ -712,27 +702,27 @@
 	(set! names (cons (cons name 'int) names)))))
 
 
-(define (CDEF name type) ; this is the cast (type *)obj essentially but here it's (list type* (cadr obj))
+(define (CCAST name type) ; this is the cast (type *)obj essentially but here it's (list type* (cadr obj))
   (if (assoc name names)
-      (hey "~A CDEF~%" name)
+      (hey "~A CCAST~%" name)
       (begin
 	;;(if (not (member type types))
 	;;    (set! types (cons type types)))
 	(set! casts (cons (list name type) casts))
 	(set! names (cons (cons name 'def) names)))))
 
-(define (CDEF1 name type) ; this is the check = (eq? type (car obj))
+(define (CCHK name type) ; this is the check = (eq? type (car obj))
   (if (assoc name names)
-      (hey "~A CDEF1~%" name)
+      (hey "~A CCHK~%" name)
       (begin
 	(if (not (member type check-types))
 	    (set! check-types (cons type check-types)))
 	(set! checks (cons (list name type) checks))
 	(set! names (cons (cons name 'def) names)))))
 
-(define (CDEF-broken name type)
+(define (CCAST-broken name type)
   (if (assoc name names)
-      (hey "~A CDEF-broken~%" name)
+      (hey "~A CCAST-broken~%" name)
       (begin
 	(if (and (not (member type types))
 		 (not (member type broken-types)))
@@ -740,9 +730,9 @@
 	(set! broken-casts (cons (list name type) broken-casts))
 	(set! names (cons (cons name 'def) names)))))
 
-(define (CDEF1-broken name type)
+(define (CCHK-broken name type)
   (if (assoc name names)
-      (hey "~A CDEF1~%" name)
+      (hey "~A CCHK~%" name)
       (begin
 	(if (and (not (member type types))
 		 (not (member type broken-types)))
@@ -750,9 +740,9 @@
 	(set! broken-checks (cons (list name type) broken-checks))
 	(set! names (cons (cons name 'def) names)))))
 
-(define (CDEF-dep name type)
+(define (CCAST-dep name type)
   (if (assoc name names)
-      (hey "~A CDEF-deprecated~%" name)
+      (hey "~A CCAST-deprecated~%" name)
       (begin
 	(if (and (not (member type types))
 		 (not (member type deprecated-types)))
@@ -760,9 +750,9 @@
 	(set! deprecated-casts (cons (list name type) deprecated-casts))
 	(set! names (cons (cons name 'def) names)))))
 
-(define (CDEF1-dep name type)
+(define (CCHK-dep name type)
   (if (assoc name names)
-      (hey "~A CDEF1~%" name)
+      (hey "~A CCHK~%" name)
       (begin
 	(if (and (not (member type types))
 		 (not (member type deprecated-types)))
@@ -770,9 +760,9 @@
 	(set! deprecated-checks (cons (list name type) deprecated-checks))
 	(set! names (cons (cons name 'def) names)))))
 
-(define (CDEF-extra name type)
+(define (CCAST-extra name type)
   (if (assoc name names)
-      (hey "~A CDEF-extra~%" name)
+      (hey "~A CCAST-extra~%" name)
       (begin
 	(if (and (not (member type types))
 		 (not (member type extra-types)))
@@ -780,9 +770,9 @@
 	(set! extra-casts (cons (list name type) extra-casts))
 	(set! names (cons (cons name 'def) names)))))
 
-(define (CDEF1-extra name type)
+(define (CCHK-extra name type)
   (if (assoc name names)
-      (hey "~A CDEF1~%" name)
+      (hey "~A CCHK~%" name)
       (begin
 	(if (and (not (member type types))
 		 (not (member type extra-types)))
@@ -848,7 +838,7 @@
 (hey " *   generated automatically from makexg.scm and xgdata.scm~%")
 (hey " *   needs xen.h~%")
 (hey " *~%")
-(hey " *   GDK_DISABLE_DEPRECATED and GTK_DISABLE_DEPRECATED are handled together~%")
+(hey " *   GDK_DISABLE_DEPRECATED, GTK_DISABLE_DEPRECATED, and GDK_PIXBUF_DISABLE_DEPRECATED are handled together~%")
 (hey " *   GDK_ENABLE_BROKEN and GTK_ENABLE_BROKEN are handled together~%")
 (hey " *   PANGO_ENABLE_ENGINE and PANGO_ENABLE_BACKEND are handled together, and may be removed later~%")
 (hey " *~%")
@@ -896,13 +886,13 @@
 (hey " *     GdkEvent casts~%")
 (hey " *     struct print, more struct instance creators(?)~%")
 (hey " *     tie into libxm (configure.ac etc), Snd (snd-motif translation)~%")
-(hey " *     add gdk-pixbuf? (has GDK_PIXBUF_DISABLE_DEPRECATED)~%")
 (hey " *     add unicode handlers from glib -- anything else?~%")
 (hey " *     unprotect *_remove, unprotect old upon reset callback~%")
 (hey " *     document/test (libxm|grfsnd.html, snd-test.scm)~%")
 (hey " *     add Ruby linkages~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     21-Feb:    #f=NULL throughout, gdk-pixbuf, GTypes.~%")
 (hey " *     11-Feb-02: initial version.~%")
 (hey " */~%~%")
 
@@ -946,25 +936,23 @@
 (hey "~%")
 
 (hey "#define XG_PRE \"|\"~%#define XG_POST \"\"~%~%")
-(hey "#define WRAP_FOR_XEN_UNCHECKED(Name, Value) \\~%")
-(hey "  XEN_LIST_2(C_STRING_TO_XEN_SYMBOL(Name), C_TO_XEN_ULONG((unsigned long)Value))~%~%")
-(hey "#define WRAP_FOR_XEN(Name, Value) \\~%")
-(hey "  ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL(Name), C_TO_XEN_ULONG((unsigned long)Value)) : XEN_FALSE)~%~%")
-(hey "#define UNWRAP_FOR_C(Value) XEN_TO_C_ULONG(XEN_CADR(Value))~%")
-(hey "#define WRAP_P(Name, Value) (XEN_LIST_P(Value) &&\\~%")
-(hey "                            (XEN_LIST_LENGTH(Value) >= 2) &&\\~%")
-(hey "                            (XEN_SYMBOL_P(XEN_CAR(Value))) &&\\~%")
-(hey "                            (strcmp(Name, XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))~%~%")
+(hey "#define WRAP_FOR_XEN(Name, Value) XEN_LIST_2(C_STRING_TO_XEN_SYMBOL(Name), C_TO_XEN_ULONG((unsigned long)Value))~%")
+(hey "#define WRAP_P(Name, Value) (XEN_LIST_P(Value) && \\~%")
+(hey "                            (XEN_LIST_LENGTH(Value) >= 2) && \\~%")
+(hey "                            (XEN_SYMBOL_P(XEN_CAR(Value))) && \\~%")
+(hey "                            (strcmp(Name, XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))~%")
+(hey "~%")
 (hey "#define XM_TYPE(Name, XType) \\~%")
 (hey "  static XEN C_TO_XEN_ ## Name (XType val) {return(WRAP_FOR_XEN(#Name, val));} \\~%")
-(hey "  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)UNWRAP_FOR_C(val));} \\~%")
-(hey "  static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}~%~%")
-(hey "#define XM_TYPE_UNCHECKED(Name, XType) \\~%")
-(hey "  static XEN C_TO_XEN_ ## Name (XType val) {return(WRAP_FOR_XEN_UNCHECKED(#Name, val));} \\~%")
-(hey "  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)UNWRAP_FOR_C(val));} \\~%")
-(hey "  static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}~%~%")
-
-(hey "~%/* type checks for callback wrappers */~%")
+(hey "  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \\~%")
+(hey "  static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}~%")
+(hey "~%")
+(hey "#define XM_TYPE_PTR(Name, XType) \\~%")
+(hey "  static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(XEN_FALSE);} \\~%")
+(hey "  static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \\~%")
+(hey "  static int XEN_ ## Name ## _P(XEN val) {return(XEN_FALSE_P(val) || (WRAP_P(#Name, val)));}~%")
+(hey "~%")
+(hey "/* type checks for callback wrappers */~%")
 
 (for-each 
  (lambda (func)
@@ -1014,7 +1002,7 @@
 (if (not (null? deprecated-types))
     (begin
       (hey "~%/* -------------------- deprecated types -------------------- */~%")
-      (hey "#if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED)))~%")
+      (hey "#if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED))) && (!(defined(GDK_PIXBUF_DISABLE_DEPRECATED)))~%")
       (for-each type-it (reverse deprecated-types))
       (for-each check-type-it (reverse deprecated-types))
       (hey "#endif~%~%")))
@@ -1347,6 +1335,10 @@
 		    (let ((argname (cadr arg))
 			  (argtype (car arg)))
 		      (if previous-arg (hey-ok ", "))
+		      (if (and (not previous-arg)
+			       (> (length data) 4)
+			       (eq? (list-ref data 4) 'const))
+			(hey "(const ~A)" argtype))
 		      (set! previous-arg #t)
 		      (if (= (length arg) 3)
 			  (hey-on "&~A" (deref-name arg))
@@ -1453,7 +1445,7 @@
 (if (not (null? deprecated-funcs))
     (begin
       (hey "~%/* -------------------- deprecated functions -------------------- */~%")
-      (hey "#if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED)))~%")
+      (hey "#if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED))) && (!(defined(GDK_PIXBUF_DISABLE_DEPRECATED)))~%")
       (for-each handle-func (reverse deprecated-funcs))
       (hey "#endif~%/* -------------------- end deprecated functions -------------------- */~%~%~%")))
 
@@ -1483,7 +1475,7 @@
 (if (not (null? deprecated-casts))
     (begin
       (hey "~%  /* -------------------- deprecated casts -------------------- */~%")
-      (hey "#if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED)))~%")
+      (hey "#if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED))) && (!(defined(GDK_PIXBUF_DISABLE_DEPRECATED)))~%")
       (for-each cast-it (reverse deprecated-casts))
       (hey "#endif~%~%")))
 
@@ -1530,7 +1522,7 @@
 (if (not (null? deprecated-funcs))
     (begin
       (hey "~%  /* -------------------- deprecated functions -------------------- */~%")
-      (hey "#if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED)))~%")
+      (hey "#if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED))) && (!(defined(GDK_PIXBUF_DISABLE_DEPRECATED)))~%")
       (for-each defun (reverse deprecated-funcs))
       (hey "#endif~%~%")))
 
@@ -1557,7 +1549,7 @@
 
 (if (not (null? deprecated-casts))
     (begin
-      (hey "#if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED)))~%")
+      (hey "#if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED))) && (!(defined(GDK_PIXBUF_DISABLE_DEPRECATED)))~%")
       (for-each
        (lambda (func)
 	 (hey "  XEN_DEFINE_PROCEDURE(XG_PRE ~S XG_POST, gxg_~A, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-arg (car func))))
@@ -1589,7 +1581,7 @@
 
 (if (not (null? deprecated-checks))
     (begin
-      (hey "#if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED)))~%")
+      (hey "#if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED))) && (!(defined(GDK_PIXBUF_DISABLE_DEPRECATED)))~%")
       (for-each
        (lambda (func)
 	 (hey "  XEN_DEFINE_PROCEDURE(XG_PRE ~S XG_POST, XEN_~A_p, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-stars (cadr func))))
@@ -1773,7 +1765,7 @@
 (hey "static void define_macros(void)~%")
 (hey "{~%")
 
-(hey "#if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED)))~%")
+(hey "#if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED))) && (!(defined(GDK_PIXBUF_DISABLE_DEPRECATED)))~%")
 (for-each
  (lambda (mac)
    (hey "  XEN_EVAL_C_STRING(\"(define \" XG_PRE \"~A\" XG_POST \" \" XG_PRE \"~A\" XG_POST \")\");~%"
@@ -1824,7 +1816,7 @@
 (if (not (null? deprecated-ints))
     (begin
       (hey "~%  /* -------------------- deprecated ints -------------------- */~%")
-      (hey "#if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED)))~%")
+      (hey "#if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED))) && (!(defined(GDK_PIXBUF_DISABLE_DEPRECATED)))~%")
       (for-each
        (lambda (val)
 	 (hey "  DEFINE_INTEGER(XG_PRE ~S XG_POST,~80,1T~A);~%" val val))
@@ -1941,7 +1933,7 @@
 (hey "      define_strings();~%")
 (hey "      XEN_YES_WE_HAVE(\"xg\");~%")
 (hey "#if HAVE_GUILE~%")
-(hey "      XEN_EVAL_C_STRING(\"(define xm-version \\\"18-Feb-02\\\")\");~%")
+(hey "      XEN_EVAL_C_STRING(\"(define xm-version \\\"21-Feb-02\\\")\");~%")
 (hey "#endif~%")
 (hey "      xg_already_inited = 1;~%")
 (hey "    }~%")
@@ -1951,3 +1943,4 @@
 
 ;/* cc -c xg.c -g3 -DUSE_GTK -DDEBUGGING -DDEBUG_MEMORY -DLINUX -DUSE_SND -DWITH_BIG_COLORMAP -DHAVE_GNU_LIBC_VERSION_H -DHAVE_GSL -DHAVE_DLFCN_H -DHAVE_GUILE -DHAVE_LLONGS -DHAVE_APPLICABLE_SMOB -DHAVE_SCM_REMEMBER_UPTO_HERE -DHAVE_SCM_OBJECT_TO_STRING -DHAVE_SCM_NUM2LONG_LONG -DHAVE_SCM_C_MAKE_VECTOR -DHAVE_SCM_C_DEFINE -DHAVE_SCM_NUM2INT -DHAVE_SCM_C_DEFINE_GSUBR -DHAVE_SCM_LIST_N -DHAVE_SCM_C_EVAL_STRING -DHAVE_SCM_STR2SYMBOL -DHAVE_SCM_MAKE_REAL -DHAVE_SCM_T_CATCH_BODY -DHAVE_EXTENSION_LANGUAGE -DHAVE_STATIC_XM -DHAVE_GTK2 -I/home/bil/test/g3/include -I/home/bil/test/g3/include/glib-2.0 -I/home/bil/test/g3/include/pango-1.0 -I/home/bil/test/g3/include/gtk-2.0 -I/home/bil/test/g3/lib/gtk-2.0/include -I/home/bil/test/g3/include/atk-1.0 -I/home/bil/test/include -DGTK_ENABLE_BROKEN -DPANGO_ENABLE_ENGINE -DPANGO_ENABLE_BACKEND -DGDK_ENABLE_BROKEN */
 
+;-DGDK_DISABLE_DEPRECATED -DGTK_DISABLE_DEPRECATED -DGDK_PIXBUF_DISABLE_DEPRECATED

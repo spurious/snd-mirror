@@ -363,7 +363,7 @@ static void SetupIcon(GtkWidget *shell)
   SG_BITMAP *mask;
   snd_state *ss;
   ss = get_global_state();
-  pix = SG_XPM_TO_PIXMAP(snd_icon_bits(), mask);
+  pix = SG_XPM_TO_PIXMAP(MAIN_WINDOW(ss), snd_icon_bits(), mask);
   gdk_window_set_icon(MAIN_WINDOW(ss), NULL, pix, mask);
 }
 #endif

@@ -3099,7 +3099,8 @@ static XEN g_sound_widgets(XEN snd)
 	       XEN_CONS(XEN_WRAP_WIDGET(unite_button(sp)),
 	        XEN_CONS(XEN_WRAP_WIDGET(MINIBUFFER_LABEL(sp)),
 	         XEN_CONS(XEN_WRAP_WIDGET(NAME_ICON(sp)),
-	          XEN_EMPTY_LIST))))))))));
+	          XEN_CONS(XEN_WRAP_WIDGET(SYNC_BUTTON(sp)),
+	           XEN_EMPTY_LIST)))))))))));
 }
 
 #ifdef XEN_ARGIFY_1

@@ -1603,28 +1603,9 @@ static XEN g_menu_widgets(void)
 	       XEN_EMPTY_LIST)))))));
 }
 
-static XEN g_test_menus(void)
-{
-  guint signal_id;
-  int i;
-  for (i = 0; i < NUM_MENU_WIDGETS; i++)
-    if ((mw[i]) && (is_sensitive(mw[i])) &&
-	(i != f_exit_menu) && (i != f_save_menu) && (i != f_close_menu) && (i != e_header_menu) &&
-	(i != f_new_menu) && (i != f_record_menu) && (i != v_mix_panel_menu))
-      {
-	signal_id = gtk_signal_lookup("activate", GTK_OBJECT_TYPE(mw[i]));
-	if (signal_id >= 1)
-	  gtk_signal_emit_by_name(GTK_OBJECT(mw[i]), "activate");
-      }
-  dismiss_all_dialogs(get_global_state());
-  return(XEN_FALSE);
-}
-
 #ifdef XEN_ARGIFY_1
-XEN_NARGIFY_0(g_test_menus_w, g_test_menus)
 XEN_NARGIFY_0(g_menu_widgets_w, g_menu_widgets)
 #else
-#define g_test_menus_w g_test_menus
 #define g_menu_widgets_w g_menu_widgets
 #endif
 
@@ -1644,7 +1625,6 @@ wants to override the default menu action:\n\
         #t))) ; #t to make sure other menu items remain active"
 
   XEN_DEFINE_HOOK(menu_hook, S_menu_hook, 2, H_menu_hook);
-  XEN_DEFINE_PROCEDURE("test-menus", g_test_menus_w, 0, 0, 0, "");
   XEN_DEFINE_PROCEDURE(S_menu_widgets, g_menu_widgets_w, 0, 0, 0, H_menu_widgets);
 }
 

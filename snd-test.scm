@@ -8753,8 +8753,9 @@
 	  (add-hook! new-widget-hook
 		     (lambda (w)
 		       (set! added (+ added 1))))
-	  (without-errors
-	   (test-menus)) ; built-in self-test function
+	  (if (provided? 'snd-motif)
+	      (without-errors
+	       (test-menus))) ; built-in self-test function
 	  (set! (with-background-processes) #f)
 	  (IF (= added 0)
 	      (snd-display ";no widgets added?"))
@@ -12157,7 +12158,7 @@ EDITS: 4
 		   (lambda (n)
 		     (let ((callable (|XtHasCallbacks n |XmNhelpCallback)))
 		       (if (= callable |XtCallbackHasSome)
-			   (|XtCallCallbacks-raw n |XmNhelpCallback (snd-global-state))))))))
+			   (|XtCallCallbacks n |XmNhelpCallback #f)))))))
 
 	    ;; force-event
 	    ;; key-event widget key state
@@ -12960,9 +12961,24 @@ EDITS: 4
 		   (mx1 (maxamp ind 1))
 		   (swids (sound-widgets))
 		   (cwid (car (channel-widgets ind 1)))
+		   (cw (cadr (channel-widgets ind 1)))
+		   (cf (caddr (channel-widgets ind 1)))
 		   (minibuffer (list-ref swids 3)))
 	      (select-sound ind)
 	      (select-channel 1)
+	      (click-button cf #t) (force-event)
+	      (if (not (graph-transform? ind 1)) (snd-display ";cf click but not fft"))
+	      (click-button cw #f)
+	      (if (graph-time? ind 1) (snd-display ";cw click but still time"))
+	      (click-button cf #f 4) (force-event)
+	      (click-button cw #t) (force-event)
+	      (click-button (list-ref swids 6) #t)
+	      (if (not (= (channel-style) channels-combined)) (snd-display ";click unite: ~A" (channel-style)))
+	      (click-button (list-ref swids 6) #f)
+	      (click-button (list-ref swids 9) #t)
+	      (if (= (sync) 0) (snd-display "click sync?"))
+	      (click-button (list-ref swids 9) #f)
+
 	      (key-event cwid (char->integer #\x) 4) (force-event)
 	      (key-event cwid (char->integer #\i) 4) (force-event)
 	      (widget-string minibuffer "oboe.snd")
@@ -14198,6 +14214,17 @@ EDITS: 4
 	      (IF (not (= (|ImageByteOrder dpy) 0)) (snd-display ";ImageByteOrder: ~A" (|ImageByteOrder dpy)))
 	      (IF (not (= (|DefaultScreen dpy) 0)) (snd-display ";DefaultScreen: ~A" (|DefaultScreen dpy)))
 
+	      (let* ((col (|XColor))
+		     (dpy (|XtDisplay (cadr (main-widgets))))
+		     (scr (|DefaultScreen dpy))
+		     (cmap (|DefaultColormap dpy scr)))
+		(IF (= (|XAllocNamedColor dpy cmap "blue" col col) 0) (snd-display ";XAllocNamedColor blue ~A?" col))
+		(IF (not (= (|red col) 0)) (snd-display ";XAllocNamedColor: ~A" (|red col)))
+		(IF (= (|XAllocColor dpy cmap col) 0) (snd-display ";XAllocColor?"))
+		(IF (not (= (|red col) 0)) (snd-display ";XAllocColor: ~A" (|red col)))
+		(IF (= (|XParseColor dpy cmap "blue" col) 0) (snd-display ";XParseColor?"))
+		(IF (not (= (|red col) 0)) (snd-display ";XParseColor: ~A" (|red col))))
+
 	      (IF (not (equal? (|XDisplayKeycodes dpy) (list 1 8 255)))
 		  (snd-display "XDisplayKeycodes: ~A" (|XDisplayKeycodes dpy)))
 	      (let ((str (|XFetchName dpy win)))
@@ -14248,7 +14275,13 @@ EDITS: 4
 		(IF (not (|map_installed attr)) (snd-display ";XGetWindowAttributes map_installed: ~A" (|map_installed attr)))
 		(IF (not (= (|backing_pixel attr) 0)) (snd-display ";XGetWindowAttributes backing_pixel: ~A" (|backing_pixel attr)))
 		(IF (not (= (|map_state attr) 2)) (snd-display ";XGetWindowAttributes map_state: ~A" (|map_state attr)))
-		(IF (not (|Screen? (|screen attr))) (snd-display ";XGetWindowAttributes screen: ~A" (|screen attr))))
+		(IF (not (|Screen? (|screen attr))) (snd-display ";XGetWindowAttributes screen: ~A" (|screen attr)))
+		(IF (not (= (|do_not_propagate_mask attr) 0)) (snd-display ";XGetWindowAttributes do_not_propagate_mask: ~A" (|do_not_propagate_mask attr)))
+		(IF (|save_under attr) (snd-display ";XGetWindowAttributes save_under ~A" (|save_under attr)))
+		(IF (not (= (|backing_pixel attr) 0)) (snd-display ";XGetWindowAttributes backing_pixel: ~A" (|backing_pixel attr)))
+		(IF (not (= (|backing_planes attr) |AllPlanes)) (snd-display ";XGetWindowAttributes backing_planes: ~A" (|backing_planes attr)))
+		(IF (not (= (|win_gravity attr) 1)) (snd-display ";XGetWindowAttributes win_gravity: ~A" (|win_gravity attr)))
+		(IF (not (= (|bit_gravity attr) 0)) (snd-display ";XGetWindowAttributes bit_gravity: ~A" (|bit_gravity attr))))
 	      (|XResetScreenSaver dpy)
 	      (IF (< (|XPending dpy) 0) (snd-display ";XPending: ~A" (|XPending dpy)))
 	      (|XNoOp dpy)
@@ -14701,7 +14734,11 @@ EDITS: 4
 	      (set! (|green c) 1)
 	      (IF (not (= (|green c) 1)) (snd-display ";Xcolor green: ~A" (|green c)))
 	      (set! (|blue c) 1)
-	      (IF (not (= (|blue c) 1)) (snd-display ";Xcolor blue: ~A" (|blue c))))
+	      (IF (not (= (|blue c) 1)) (snd-display ";Xcolor blue: ~A" (|blue c)))
+	      (set! (|flags c) |DoRed)
+	      (IF (not (= (|flags c) |DoRed)) (snd-display ";Xcolor flags: ~A" (|flags c)))
+	      (set! (|pixel c) (snd-pixel (basic-color)))
+	      (IF (not (equal? (|pixel c) (snd-pixel (basic-color)))) (snd-display ";Xcolor pixel: ~A" (|pixel c))))
 
 	    (let ((obj (|XTextItem "hiho" 4 3 (list 'Font 1))))
 	      (IF (not (|XTextItem? obj)) (snd-display ";XTextItem -> ~A" obj))
@@ -15100,6 +15137,7 @@ EDITS: 4
 		(|XGetPixel before 1 1)
 		(|XPutImage dpy (list 'Window (cadr rotpix)) gc before 0 0 0 0 10 10)
 		(|XAddPixel before 1)
+		(IF (> (|bits_per_pixel before) 123) (snd-display ";bits_per_pixel: ~A" (|bits_per_pixel before)))
 		(let ((i1 (|XGetImage dpy (list 'Window (cadr pix)) 0 0 10 10 |AllPlanes |XYPixmap))
 		      (attr (|XpmAttributes))
 		      (vals (|XtGetValues (cadr (main-widgets)) (list |XmNcolormap 0 |XmNdepth 0)))
@@ -15630,6 +15668,12 @@ EDITS: 4
 						      |XmNrightAttachment     |XmATTACH_FORM
 						      |XmNtopAttachment       |XmATTACH_WIDGET
 						      |XmNtopWidget           cmd
+						      |XmNbottomAttachment    |XmATTACH_NONE)))
+		   (cmb (|XtCreateManagedWidget "cmb" |xmComboBoxWidgetClass frm
+						(list |XmNleftAttachment      |XmATTACH_FORM
+						      |XmNrightAttachment     |XmATTACH_FORM
+						      |XmNtopAttachment       |XmATTACH_WIDGET
+						      |XmNtopWidget           scl
 						      |XmNbottomAttachment    |XmATTACH_FORM)))
 		   (toggled 0))
 	      (|XmMainWindowSetAreas mnw #f box #f #f spn)
@@ -15664,6 +15708,19 @@ EDITS: 4
 		  (snd-display ";XmCommandGetChild: ~A" (|XmCommandGetChild cmd |XmDIALOG_COMMAND_TEXT)))
 	      (|XmCommandSetValue cmd (|XmStringCreateLocalized "hiho"))
 	      
+	      (let ((one (|XmStringCreateLocalized "one"))
+		    (two (|XmStringCreateLocalized "two"))
+		    (three (|XmStringCreateLocalized "three")))
+		(|XmComboBoxAddItem cmb one 0 #f)
+		(|XmComboBoxAddItem cmb two 0 #f)
+		(|XmComboBoxAddItem cmb three 0 #f)
+		(|XmComboBoxDeletePos cmb 1)
+		(|XmComboBoxSelectItem cmb three)
+		(|XmComboBoxSetItem cmb three) ; hunh??
+		(|XmComboBoxUpdate cmb)
+		(let ((vals (cadr (|XtGetValues cmb (list |XmNitems 0)))))
+		  (IF (not (equal? vals (list two three))) (snd-display ";XmComboBox: ~A" vals))))
+
 	      (|XmContainerCut box current-time)
 	      (|XmContainerCopy box current-time)
 	      (|XmContainerPaste box)

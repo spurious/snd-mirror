@@ -6,10 +6,12 @@
 /* TODO: finish selection-oriented Xt callbacks
  * TODO: XmVaCreateSimple* (need special arglist handlers)
  * TODO: Motif 2.2 has a bunch of widgets that seem to be partly ICS-specific? (Xi... rather than Xm...)
+ * TODO: complete #f=NULL
  */
 
 /* HISTORY: 
- *   18-Feb:    removed undocumented functions: XmCvtFromHorizontalPixels, XmCvtFromVerticalPixels, XmCvtToHorizontalPixels, 
+ *   21-Feb:    added various callback struct makers, changed XtCallCallbacks to be compatible with them.
+ *   18-Feb:    removed undocumented functions: XmCvtFromHorizontalPixels, XmCvtFromVerticalPixels, XmCvtToHorizontalPixels, XInitImage
  *                XmCvtToVerticalPixels, XmGetIconFileName, XmStringCreateFontList, XmStringCreateFontList_r, XmStringLtoRCreate
  *              commented out undocumented resources (see HAVE_UNDOCUMENTED_RESOURCES)
  *              added XM_DISABLE_DEPRECATED which affects:
@@ -188,7 +190,6 @@
  *    vector->XPoints vect packages point data in vector as (opaque) array of XPoints 
  *    freeXPoints to free (opaque) XPoint array created by vector->Xpoints
  *    moveXPoints to move XPoint array created by vector->Xpoints
- *    XtCallCallbacks_raw (to pass uninterpreted C pointer as callData)
  *
  *    XtAppContext? XtRequestId? XtWorkProcId? XtInputId? XtIntervalId? Screen? XEvent? XRectangle? XArc?
  *    XPoint? XSegment? XColor? XmTab? Atom? Colormap? Depth? Display? Drawable? Font? GC? KeySym? Pixel? Pixmap? Region?
@@ -312,9 +313,9 @@ static void define_xm_obj(void)
 #define C_TO_XEN_Position(Arg)   (C_TO_XEN_INT((int)Arg))
 #define XEN_Position_P(Arg)      (XEN_INTEGER_P(Arg))
 
-#define XEN_TO_C_char(Arg)       (char)(XEN_TO_C_CHAR(Arg))
+#define XEN_TO_C_char(Arg)       (char)(XEN_TO_C_INT(Arg))
 #define C_TO_XEN_char(Arg)       (C_TO_XEN_INT(Arg))
-#define XEN_char_P(Arg)          (XEN_CHAR_P(Arg))
+#define XEN_char_P(Arg)          (XEN_INTEGER_P(Arg))
 
 #define XEN_TO_C_Modifiers(Arg)  (Modifiers)(XEN_TO_C_ULONG(Arg))
 #define C_TO_XEN_Modifiers(Arg)  (C_TO_XEN_ULONG(Arg))
@@ -569,6 +570,94 @@ static XEN gxm_XGCValues(void)
   e = (XGCValues *)CALLOC(1, sizeof(XGCValues));
   return(WRAP_FOR_XEN_OBJ("XGCValues", e));
 }
+
+#if HAVE_MOTIF
+#define XM_Make(Name) \
+  static XEN gxm_ ## Name (void) {Name *e; e = (Name *)CALLOC(1, sizeof(Name)); return(WRAP_FOR_XEN_OBJ(#Name, e));}
+#define XM_Declare(Name) \
+  XEN_DEFINE_PROCEDURE(XM_PREFIX #Name XM_POSTFIX, gxm_ ## Name, 0, 0, 0, "Make an " #Name " struct")
+
+XM_Make(XmArrowButtonCallbackStruct)
+XM_Make(XmCommandCallbackStruct)
+XM_Make(XmDragDropFinishCallbackStruct)
+XM_Make(XmDragMotionCallbackStruct)
+XM_Make(XmDragProcCallbackStruct)
+XM_Make(XmDrawingAreaCallbackStruct)
+XM_Make(XmDrawnButtonCallbackStruct)
+XM_Make(XmDropFinishCallbackStruct)
+XM_Make(XmDropProcCallbackStruct)
+XM_Make(XmDropSiteEnterCallbackStruct)
+XM_Make(XmDropSiteLeaveCallbackStruct)
+XM_Make(XmDropSiteVisuals)
+XM_Make(XmDropStartCallbackStruct)
+XM_Make(XmFileSelectionBoxCallbackStruct)
+XM_Make(XmListCallbackStruct)
+XM_Make(XmOperationChangedCallbackStruct)
+XM_Make(XmPushButtonCallbackStruct)
+XM_Make(XmRowColumnCallbackStruct)
+XM_Make(XmScaleCallbackStruct)
+XM_Make(XmScrollBarCallbackStruct)
+XM_Make(XmSelectionBoxCallbackStruct)
+XM_Make(XmTextVerifyCallbackStruct)
+XM_Make(XmToggleButtonCallbackStruct)
+#if MOTIF_2
+XM_Make(XmDestinationCallbackStruct)
+XM_Make(XmConvertCallbackStruct)
+XM_Make(XmComboBoxCallbackStruct)
+XM_Make(XmContainerOutlineCallbackStruct)
+XM_Make(XmContainerSelectCallbackStruct)
+XM_Make(XmNotebookCallbackStruct)
+XM_Make(XmSpinBoxCallbackStruct)
+XM_Make(XmTraverseObscuredCallbackStruct)
+XM_Make(XmTopLevelLeaveCallbackStruct)
+XM_Make(XmTopLevelEnterCallbackStruct)
+XM_Make(XmPopupHandlerCallbackStruct)
+XM_Make(XmSelectionCallbackStruct)
+XM_Make(XmTransferDoneCallbackStruct)
+#endif
+
+static void define_makes(void)
+{
+  XM_Declare(XmArrowButtonCallbackStruct);
+  XM_Declare(XmCommandCallbackStruct);
+  XM_Declare(XmDragDropFinishCallbackStruct);
+  XM_Declare(XmDragMotionCallbackStruct);
+  XM_Declare(XmDragProcCallbackStruct);
+  XM_Declare(XmDrawingAreaCallbackStruct);
+  XM_Declare(XmDrawnButtonCallbackStruct);
+  XM_Declare(XmDropFinishCallbackStruct);
+  XM_Declare(XmDropProcCallbackStruct);
+  XM_Declare(XmDropSiteEnterCallbackStruct);
+  XM_Declare(XmDropSiteLeaveCallbackStruct);
+  XM_Declare(XmDropSiteVisuals);
+  XM_Declare(XmDropStartCallbackStruct);
+  XM_Declare(XmFileSelectionBoxCallbackStruct);
+  XM_Declare(XmListCallbackStruct);
+  XM_Declare(XmOperationChangedCallbackStruct);
+  XM_Declare(XmPushButtonCallbackStruct);
+  XM_Declare(XmRowColumnCallbackStruct);
+  XM_Declare(XmScaleCallbackStruct);
+  XM_Declare(XmScrollBarCallbackStruct);
+  XM_Declare(XmSelectionBoxCallbackStruct);
+  XM_Declare(XmTextVerifyCallbackStruct);
+  XM_Declare(XmToggleButtonCallbackStruct);
+#if MOTIF_2
+  XM_Declare(XmDestinationCallbackStruct);
+  XM_Declare(XmConvertCallbackStruct);
+  XM_Declare(XmComboBoxCallbackStruct);
+  XM_Declare(XmContainerOutlineCallbackStruct);
+  XM_Declare(XmContainerSelectCallbackStruct);
+  XM_Declare(XmNotebookCallbackStruct);
+  XM_Declare(XmSpinBoxCallbackStruct);
+  XM_Declare(XmTraverseObscuredCallbackStruct);
+  XM_Declare(XmTopLevelLeaveCallbackStruct);
+  XM_Declare(XmTopLevelEnterCallbackStruct);
+  XM_Declare(XmPopupHandlerCallbackStruct);
+  XM_Declare(XmSelectionCallbackStruct);
+  XM_Declare(XmTransferDoneCallbackStruct);
+#endif
+}
+#endif
 
 static int xm_protect(XEN obj);
 static void xm_unprotect_at(int ind);
@@ -14326,20 +14415,12 @@ passing client data call_data"
 static XEN gxm_XtCallCallbacks(XEN arg1, XEN arg2, XEN arg3)
 {
   #define H_XtCallCallbacks "void XtCallCallbacks(w, callback_name, call_data) calls each procedure that is registered in the \
-specified widget's callback list."
+specified widget's callback list. The call_data arg is assumed to be a callback struct reference"
+  XtPointer val = NULL;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtCallCallbacks", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XtCallCallbacks", "char*");
-  XtCallCallbacks(XEN_TO_C_Widget(arg1), XEN_TO_C_STRING(arg2), (XtPointer)arg3);
-  return(XEN_FALSE);
-}
-
-static XEN gxm_XtCallCallbacks_raw(XEN arg1, XEN arg2, XEN arg3)
-{
-  #define H_XtCallCallbacks_raw "void XtCallCallbacks-raw(w, callback_name, call_data) calls each procedure that is registered in the \
-specified widget's callback list. The call_data arg is assumed to be an uninterpreted C pointer"
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtCallCallbacks-raw", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XtCallCallbacks-raw", "char*");
-  XtCallCallbacks(XEN_TO_C_Widget(arg1), XEN_TO_C_STRING(arg2), (XtPointer)XEN_UNWRAP_C_POINTER(arg3));
+  if (XEN_LIST_P(arg3)) val = (XtPointer)XEN_UNWRAP_C_POINTER(XEN_CADR(arg3));
+  XtCallCallbacks(XEN_TO_C_Widget(arg1), XEN_TO_C_STRING(arg2), val);
   return(XEN_FALSE);
 }
 
@@ -16906,7 +16987,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtRemoveCallbacks" XM_POSTFIX, gxm_XtRemoveCallbacks, 3, 0, 0, H_XtRemoveCallbacks);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtRemoveAllCallbacks" XM_POSTFIX, gxm_XtRemoveAllCallbacks, 2, 0, 0, H_XtRemoveAllCallbacks);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCallCallbacks" XM_POSTFIX, gxm_XtCallCallbacks, 3, 0, 0, H_XtCallCallbacks);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCallCallbacks-raw" XM_POSTFIX, gxm_XtCallCallbacks_raw, 3, 0, 0, H_XtCallCallbacks_raw);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCallCallbackList" XM_POSTFIX, gxm_XtCallCallbackList, 3, 0, 0, H_XtCallCallbackList);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtHasCallbacks" XM_POSTFIX, gxm_XtHasCallbacks, 2, 0, 0, H_XtHasCallbacks);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCreatePopupShell" XM_POSTFIX, gxm_XtCreatePopupShell, 4, 1, 0, H_XtCreatePopupShell);
@@ -19322,17 +19402,59 @@ static XEN gxm_event(XEN ptr)
 
 static XEN gxm_set_event(XEN ptr, XEN val)
 {
-  Window w;
-  XEN_ASSERT_TYPE(XEN_Window_P(val), val, XEN_ONLY_ARG, "set event", "a Window");
-  w = XEN_TO_C_Window(val);
-  if (XEN_XCirculateEvent_P(ptr)) (XEN_TO_C_XCirculateEvent(ptr))->event = w;
-  else if (XEN_XGravityEvent_P(ptr)) (XEN_TO_C_XGravityEvent(ptr))->event = w;
-  else if (XEN_XConfigureEvent_P(ptr)) (XEN_TO_C_XConfigureEvent(ptr))->event = w;
-  else if (XEN_XReparentEvent_P(ptr)) (XEN_TO_C_XReparentEvent(ptr))->event = w;
-  else if (XEN_XMapEvent_P(ptr)) (XEN_TO_C_XMapEvent(ptr))->event = w;
-  else if (XEN_XUnmapEvent_P(ptr)) (XEN_TO_C_XUnmapEvent(ptr))->event = w;
-  else if (XEN_XDestroyWindowEvent_P(ptr)) (XEN_TO_C_XDestroyWindowEvent(ptr))->event = w;
-  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set event", "a struct with an event field");
+  XEN_ASSERT_TYPE(XEN_Window_P(val) || XEN_XEvent_P(val), val, XEN_ONLY_ARG, "set event", "a Window or XEvent");
+#if HAVE_MOTIF
+  if (XEN_XmTextVerifyCallbackStruct_P(ptr)) (XEN_TO_C_XmTextVerifyCallbackStruct(ptr))->event = XEN_TO_C_XEvent(val); else
+  if (XEN_XmScaleCallbackStruct_P(ptr)) (XEN_TO_C_XmScaleCallbackStruct(ptr))->event = XEN_TO_C_XEvent(val); else
+  if (XEN_XmFileSelectionBoxCallbackStruct_P(ptr)) (XEN_TO_C_XmFileSelectionBoxCallbackStruct(ptr))->event = XEN_TO_C_XEvent(val); else
+  if (XEN_XmCommandCallbackStruct_P(ptr)) (XEN_TO_C_XmCommandCallbackStruct(ptr))->event = XEN_TO_C_XEvent(val); else
+  if (XEN_XmSelectionBoxCallbackStruct_P(ptr)) (XEN_TO_C_XmSelectionBoxCallbackStruct(ptr))->event = XEN_TO_C_XEvent(val); else
+  if (XEN_XmListCallbackStruct_P(ptr)) (XEN_TO_C_XmListCallbackStruct(ptr))->event = XEN_TO_C_XEvent(val); else
+  if (XEN_XmToggleButtonCallbackStruct_P(ptr)) (XEN_TO_C_XmToggleButtonCallbackStruct(ptr))->event = XEN_TO_C_XEvent(val); else
+  if (XEN_XmScrollBarCallbackStruct_P(ptr)) (XEN_TO_C_XmScrollBarCallbackStruct(ptr))->event = XEN_TO_C_XEvent(val); else
+  if (XEN_XmRowColumnCallbackStruct_P(ptr)) (XEN_TO_C_XmRowColumnCallbackStruct(ptr))->event = XEN_TO_C_XEvent(val); else
+  if (XEN_XmPushButtonCallbackStruct_P(ptr)) (XEN_TO_C_XmPushButtonCallbackStruct(ptr))->event = XEN_TO_C_XEvent(val); else
+  if (XEN_XmDrawnButtonCallbackStruct_P(ptr)) (XEN_TO_C_XmDrawnButtonCallbackStruct(ptr))->event = XEN_TO_C_XEvent(val); else
+  if (XEN_XmDrawingAreaCallbackStruct_P(ptr)) (XEN_TO_C_XmDrawingAreaCallbackStruct(ptr))->event = XEN_TO_C_XEvent(val); else
+  if (XEN_XmArrowButtonCallbackStruct_P(ptr)) (XEN_TO_C_XmArrowButtonCallbackStruct(ptr))->event = XEN_TO_C_XEvent(val); else
+  if (XEN_XmAnyCallbackStruct_P(ptr)) (XEN_TO_C_XmAnyCallbackStruct(ptr))->event = XEN_TO_C_XEvent(val); else
+  if (XEN_XmDropProcCallbackStruct_P(ptr)) (XEN_TO_C_XmDropProcCallbackStruct(ptr))->event = XEN_TO_C_XEvent(val); else
+  if (XEN_XmDragProcCallbackStruct_P(ptr)) (XEN_TO_C_XmDragProcCallbackStruct(ptr))->event = XEN_TO_C_XEvent(val); else
+  if (XEN_XmDragDropFinishCallbackStruct_P(ptr)) (XEN_TO_C_XmDragDropFinishCallbackStruct(ptr))->event = XEN_TO_C_XEvent(val); else
+  if (XEN_XmDropFinishCallbackStruct_P(ptr)) (XEN_TO_C_XmDropFinishCallbackStruct(ptr))->event = XEN_TO_C_XEvent(val); else
+  if (XEN_XmDropStartCallbackStruct_P(ptr)) (XEN_TO_C_XmDropStartCallbackStruct(ptr))->event = XEN_TO_C_XEvent(val); else
+  if (XEN_XmOperationChangedCallbackStruct_P(ptr)) (XEN_TO_C_XmOperationChangedCallbackStruct(ptr))->event = XEN_TO_C_XEvent(val); else
+  if (XEN_XmDragMotionCallbackStruct_P(ptr)) (XEN_TO_C_XmDragMotionCallbackStruct(ptr))->event = XEN_TO_C_XEvent(val); else
+  if (XEN_XmDropSiteLeaveCallbackStruct_P(ptr)) (XEN_TO_C_XmDropSiteLeaveCallbackStruct(ptr))->event = XEN_TO_C_XEvent(val); else
+  if (XEN_XmDropSiteEnterCallbackStruct_P(ptr)) (XEN_TO_C_XmDropSiteEnterCallbackStruct(ptr))->event = XEN_TO_C_XEvent(val); else
+#if MOTIF_2
+  if (XEN_XmSpinBoxCallbackStruct_P(ptr)) (XEN_TO_C_XmSpinBoxCallbackStruct(ptr))->event = XEN_TO_C_XEvent(val); else
+  if (XEN_XmTopLevelEnterCallbackStruct_P(ptr)) (XEN_TO_C_XmTopLevelEnterCallbackStruct(ptr))->event = XEN_TO_C_XEvent(val); else
+  if (XEN_XmTraverseObscuredCallbackStruct_P(ptr)) (XEN_TO_C_XmTraverseObscuredCallbackStruct(ptr))->event = XEN_TO_C_XEvent(val); else
+  if (XEN_XmTopLevelLeaveCallbackStruct_P(ptr)) (XEN_TO_C_XmTopLevelLeaveCallbackStruct(ptr))->event = XEN_TO_C_XEvent(val); else
+  if (XEN_XmNotebookCallbackStruct_P(ptr)) (XEN_TO_C_XmNotebookCallbackStruct(ptr))->event = XEN_TO_C_XEvent(val); else
+  if (XEN_XmContainerSelectCallbackStruct_P(ptr)) (XEN_TO_C_XmContainerSelectCallbackStruct(ptr))->event = XEN_TO_C_XEvent(val); else
+  if (XEN_XmContainerOutlineCallbackStruct_P(ptr)) (XEN_TO_C_XmContainerOutlineCallbackStruct(ptr))->event = XEN_TO_C_XEvent(val); else
+  if (XEN_XmComboBoxCallbackStruct_P(ptr)) (XEN_TO_C_XmComboBoxCallbackStruct(ptr))->event = XEN_TO_C_XEvent(val); else
+  if (XEN_XmPopupHandlerCallbackStruct_P(ptr)) (XEN_TO_C_XmPopupHandlerCallbackStruct(ptr))->event = XEN_TO_C_XEvent(val); else
+  if (XEN_XmDisplayCallbackStruct_P(ptr)) (XEN_TO_C_XmDisplayCallbackStruct(ptr))->event = XEN_TO_C_XEvent(val); else
+  if (XEN_XmDragStartCallbackStruct_P(ptr)) (XEN_TO_C_XmDragStartCallbackStruct(ptr))->event = XEN_TO_C_XEvent(val); else
+  if (XEN_XmTransferDoneCallbackStruct_P(ptr)) (XEN_TO_C_XmTransferDoneCallbackStruct(ptr))->event = XEN_TO_C_XEvent(val); else
+  if (XEN_XmSelectionCallbackStruct_P(ptr)) (XEN_TO_C_XmSelectionCallbackStruct(ptr))->event = XEN_TO_C_XEvent(val); else
+  if (XEN_XmDestinationCallbackStruct_P(ptr)) (XEN_TO_C_XmDestinationCallbackStruct(ptr))->event = XEN_TO_C_XEvent(val); else
+  if (XEN_XmConvertCallbackStruct_P(ptr)) (XEN_TO_C_XmConvertCallbackStruct(ptr))->event = XEN_TO_C_XEvent(val); else
+#endif
+#else
+  if (0) else /* dummy to keep if thens going */
+#endif
+  if (XEN_XCirculateEvent_P(ptr)) (XEN_TO_C_XCirculateEvent(ptr))->event = XEN_TO_C_Window(val); else
+  if (XEN_XGravityEvent_P(ptr)) (XEN_TO_C_XGravityEvent(ptr))->event = XEN_TO_C_Window(val); else
+  if (XEN_XConfigureEvent_P(ptr)) (XEN_TO_C_XConfigureEvent(ptr))->event = XEN_TO_C_Window(val); else
+  if (XEN_XReparentEvent_P(ptr)) (XEN_TO_C_XReparentEvent(ptr))->event = XEN_TO_C_Window(val); else
+  if (XEN_XMapEvent_P(ptr)) (XEN_TO_C_XMapEvent(ptr))->event = XEN_TO_C_Window(val); else
+  if (XEN_XUnmapEvent_P(ptr)) (XEN_TO_C_XUnmapEvent(ptr))->event = XEN_TO_C_Window(val); else
+  if (XEN_XDestroyWindowEvent_P(ptr)) (XEN_TO_C_XDestroyWindowEvent(ptr))->event = XEN_TO_C_Window(val); else
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set event", "a struct with an event field");
   return(val);
 }
 
@@ -20848,6 +20970,13 @@ static XEN gxm_set(XEN ptr)
   return(C_TO_XEN_BOOLEAN((int)((XEN_TO_C_XmToggleButtonCallbackStruct(ptr))->set)));
 }
 
+static XEN gxm_set_set(XEN ptr, XEN val)
+{
+  XEN_ASSERT_TYPE(XEN_XmToggleButtonCallbackStruct_P(ptr), ptr, XEN_ONLY_ARG, "set set", "XmToggleButtonCallbackStruct");
+  (XEN_TO_C_XmToggleButtonCallbackStruct(ptr))->set = XEN_TO_C_BOOLEAN(val);
+  return(val);
+}
+
 static XEN gxm_callbackstruct(XEN ptr)
 {
   XEN_ASSERT_TYPE(XEN_XmRowColumnCallbackStruct_P(ptr), ptr, XEN_ONLY_ARG, "callbackstruct", "XmRowColumnCallbackStruct");
@@ -20913,6 +21042,18 @@ static XEN gxm_click_count(XEN ptr)
   if (XEN_XmArrowButtonCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmArrowButtonCallbackStruct(ptr))->click_count)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "click_count", "a struct with a click_count field");
   return(XEN_FALSE);
+}
+
+static XEN gxm_set_click_count(XEN ptr, XEN val)
+{
+  int count;
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_2, "set click_count", "int");
+  count = XEN_TO_C_INT(val);
+  if (XEN_XmPushButtonCallbackStruct_P(ptr)) (XEN_TO_C_XmPushButtonCallbackStruct(ptr))->click_count = count;
+  else if (XEN_XmDrawnButtonCallbackStruct_P(ptr)) (XEN_TO_C_XmDrawnButtonCallbackStruct(ptr))->click_count = count;
+  else if (XEN_XmArrowButtonCallbackStruct_P(ptr)) (XEN_TO_C_XmArrowButtonCallbackStruct(ptr))->click_count = count;
+  else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set click_count", "a struct with a click_count field");
+  return(val);
 }
 
 #if MOTIF_2
@@ -21551,6 +21692,10 @@ static void define_structs(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "operations" XM_POSTFIX, gxm_operations, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "dropSiteStatus" XM_POSTFIX, gxm_dropSiteStatus, "",
 				   XM_PREFIX "set_dropSiteStatus" XM_POSTFIX, gxm_set_dropSiteStatus, 1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "set" XM_POSTFIX, gxm_set, "",
+				   XM_PREFIX "set_set" XM_POSTFIX, gxm_set_set, 1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "click_count" XM_POSTFIX, gxm_click_count, "",
+				   XM_PREFIX "set_click_count" XM_POSTFIX, gxm_set_click_count, 1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "dropAction" XM_POSTFIX, gxm_dropAction, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "iccHandle" XM_POSTFIX, gxm_iccHandle, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "completionStatus" XM_POSTFIX, gxm_completionStatus, 1, 0, 0, NULL);
@@ -21566,11 +21711,9 @@ static void define_structs(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "highlightThickness" XM_POSTFIX, gxm_highlightThickness, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "borderWidth" XM_POSTFIX, gxm_borderWidth, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "length" XM_POSTFIX, gxm_length, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "click_count" XM_POSTFIX, gxm_click_count, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "widget" XM_POSTFIX, gxm_widget, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "item_position" XM_POSTFIX, gxm_item_position, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "callbackstruct" XM_POSTFIX, gxm_callbackstruct, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "set" XM_POSTFIX, gxm_set, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "item" XM_POSTFIX, gxm_item, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "item_length" XM_POSTFIX, gxm_item_length, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "selected_items" XM_POSTFIX, gxm_selected_items, 1, 0, 0, NULL);
@@ -24312,6 +24455,7 @@ static int xm_already_inited = 0;
     {
       define_xm_obj();
 #if HAVE_MOTIF  
+      define_makes();
       define_strings();
 #endif
       define_Atoms();
@@ -24321,7 +24465,7 @@ static int xm_already_inited = 0;
       define_structs();
       XEN_YES_WE_HAVE("xm");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"18-Feb-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"21-Feb-02\")");
 #endif
       xm_already_inited = 1;
     }

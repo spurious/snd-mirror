@@ -452,10 +452,10 @@ void reflect_edit_history_change(chan_info *cp)
 		  str = edit_to_string(cp, i);
 		  SG_LIST_APPEND(lst, str);
 		}
-	      gtk_signal_handler_block_by_data(GTK_OBJECT(lst), (gpointer)cp);
+	      SG_SIGNAL_HANDLER_BLOCK_BY_DATA(GTK_OBJECT(lst), (gpointer)cp);
 	      SG_LIST_SELECT_ROW(lst, cp->edit_ctr);
 	      SG_LIST_MOVETO(lst, cp->edit_ctr);
-	      gtk_signal_handler_unblock_by_data(GTK_OBJECT(lst), (gpointer)cp);
+	      SG_SIGNAL_HANDLER_UNBLOCK_BY_DATA(GTK_OBJECT(lst), (gpointer)cp);
 	      goto_graph(cp);
 	    }
 	}
@@ -498,10 +498,10 @@ void reflect_edit_counter_change(chan_info *cp)
       lst = EDIT_HISTORY_LIST(cp);
       if (lst)
 	{
-	  gtk_signal_handler_block_by_data(GTK_OBJECT(lst), (gpointer)cp);
+	  SG_SIGNAL_HANDLER_BLOCK_BY_DATA(GTK_OBJECT(lst), (gpointer)cp);
 	  SG_LIST_SELECT_ROW(lst, cp->edit_ctr);
 	  SG_LIST_MOVETO(lst, cp->edit_ctr);
-	  gtk_signal_handler_unblock_by_data(GTK_OBJECT(lst), (gpointer)cp);
+	  SG_SIGNAL_HANDLER_UNBLOCK_BY_DATA(GTK_OBJECT(lst), (gpointer)cp);
 	  goto_graph(cp);
 	}
     }
@@ -529,7 +529,7 @@ static gint real_graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer data)
 #endif
   theirs = key_press_callback(cp, x, y, ev->state, keysym);
   if (theirs) (ss->sgx)->graph_is_active = FALSE;
-  gtk_signal_emit_stop_by_name(GTK_OBJECT(w), "key_press_event");
+  SG_SIGNAL_EMIT_STOP_BY_NAME(GTK_OBJECT(w), "key_press_event");
   return(TRUE);
 }
 

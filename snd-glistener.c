@@ -310,7 +310,7 @@ static gint listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 	    }
 	}
     }
-  gtk_signal_emit_stop_by_name(GTK_OBJECT(w), "key_press_event");
+  SG_SIGNAL_EMIT_STOP_BY_NAME(GTK_OBJECT(w), "key_press_event");
   return(TRUE);
 }
 

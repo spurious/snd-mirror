@@ -2,7 +2,7 @@
  *   generated automatically from makexg.scm and xgdata.scm
  *   needs xen.h
  *
- *   GDK_DISABLE_DEPRECATED and GTK_DISABLE_DEPRECATED are handled together
+ *   GDK_DISABLE_DEPRECATED, GTK_DISABLE_DEPRECATED, and GDK_PIXBUF_DISABLE_DEPRECATED are handled together
  *   GDK_ENABLE_BROKEN and GTK_ENABLE_BROKEN are handled together
  *   PANGO_ENABLE_ENGINE and PANGO_ENABLE_BACKEND are handled together, and may be removed later
  *
@@ -37,13 +37,13 @@
  *     GdkEvent casts
  *     struct print, more struct instance creators(?)
  *     tie into libxm (configure.ac etc), Snd (snd-motif translation)
- *     add gdk-pixbuf? (has GDK_PIXBUF_DISABLE_DEPRECATED)
  *     add unicode handlers from glib -- anything else?
  *     unprotect *_remove, unprotect old upon reset callback
  *     document/test (libxm|grfsnd.html, snd-test.scm)
  *     add Ruby linkages
  *
  * HISTORY:
+ *     21-Feb:    #f=NULL throughout, gdk-pixbuf, GTypes.
  *     11-Feb-02: initial version.
  */
 
@@ -91,28 +91,21 @@ static void define_xm_obj(void)
 #define XG_PRE "|"
 #define XG_POST ""
 
-#define WRAP_FOR_XEN_UNCHECKED(Name, Value) \
-  XEN_LIST_2(C_STRING_TO_XEN_SYMBOL(Name), C_TO_XEN_ULONG((unsigned long)Value))
-
-#define WRAP_FOR_XEN(Name, Value) \
-  ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL(Name), C_TO_XEN_ULONG((unsigned long)Value)) : XEN_FALSE)
-
-#define UNWRAP_FOR_C(Value) XEN_TO_C_ULONG(XEN_CADR(Value))
-#define WRAP_P(Name, Value) (XEN_LIST_P(Value) &&\
-                            (XEN_LIST_LENGTH(Value) >= 2) &&\
-                            (XEN_SYMBOL_P(XEN_CAR(Value))) &&\
+#define WRAP_FOR_XEN(Name, Value) XEN_LIST_2(C_STRING_TO_XEN_SYMBOL(Name), C_TO_XEN_ULONG((unsigned long)Value))
+#define WRAP_P(Name, Value) (XEN_LIST_P(Value) && \
+                            (XEN_LIST_LENGTH(Value) >= 2) && \
+                            (XEN_SYMBOL_P(XEN_CAR(Value))) && \
                             (strcmp(Name, XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
 
 #define XM_TYPE(Name, XType) \
   static XEN C_TO_XEN_ ## Name (XType val) {return(WRAP_FOR_XEN(#Name, val));} \
-  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)UNWRAP_FOR_C(val));} \
+  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \
   static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}
 
-#define XM_TYPE_UNCHECKED(Name, XType) \
-  static XEN C_TO_XEN_ ## Name (XType val) {return(WRAP_FOR_XEN_UNCHECKED(#Name, val));} \
-  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)UNWRAP_FOR_C(val));} \
-  static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}
-
+#define XM_TYPE_PTR(Name, XType) \
+  static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(XEN_FALSE);} \
+  static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \
+  static int XEN_ ## Name ## _P(XEN val) {return(XEN_FALSE_P(val) || (WRAP_P(#Name, val)));}
 
 /* type checks for callback wrappers */
 #define XEN_lambda2_P(Arg)  XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 2)
@@ -177,35 +170,35 @@ static void define_xm_obj(void)
 
 /* ---------------------------------------- types ---------------------------------------- */
 
-XM_TYPE(GdkWindow_, GdkWindow*)
-XM_TYPE(GtkAccelKey_, GtkAccelKey*)
-XM_TYPE(GClosure_, GClosure*)
+XM_TYPE_PTR(GdkWindow_, GdkWindow*)
+XM_TYPE_PTR(GtkAccelKey_, GtkAccelKey*)
+XM_TYPE_PTR(GClosure_, GClosure*)
 #define C_TO_XEN_gint(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_gint(Arg) XEN_TO_C_INT(Arg)
 #define XEN_gint_P(Arg) XEN_INTEGER_P(Arg)
 #define C_TO_XEN_GdkInputCondition(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkInputCondition(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GdkInputCondition_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GtkWidget_, GtkWidget*)
-XM_TYPE(GdkXEvent_, GdkXEvent*)
-XM_TYPE(GdkEvent_, GdkEvent*)
-XM_TYPE(GdkSpan_, GdkSpan*)
-XM_TYPE(GdkEventKey_, GdkEventKey*)
+XM_TYPE_PTR(GtkWidget_, GtkWidget*)
+XM_TYPE_PTR(GdkXEvent_, GdkXEvent*)
+XM_TYPE_PTR(GdkEvent_, GdkEvent*)
+XM_TYPE_PTR(GdkSpan_, GdkSpan*)
+XM_TYPE_PTR(GdkEventKey_, GdkEventKey*)
 #define C_TO_XEN_gchar_(Arg) C_TO_XEN_STRING(Arg)
 #define XEN_TO_C_gchar_(Arg) XEN_TO_C_STRING(Arg)
 #define XEN_gchar__P(Arg) XEN_STRING_P(Arg)
-XM_TYPE(GtkMenu_, GtkMenu*)
-XM_TYPE(gint_, gint*)
-XM_TYPE(gboolean_, gboolean*)
-XM_TYPE(GtkTreeModel_, GtkTreeModel*)
-XM_TYPE(GtkTreePath_, GtkTreePath*)
-XM_TYPE(GtkTreeIter_, GtkTreeIter*)
-XM_TYPE(GtkClipboard_, GtkClipboard*)
-XM_TYPE(GtkSelectionData_, GtkSelectionData*)
-XM_TYPE(GtkTreeView_, GtkTreeView*)
-XM_TYPE(GtkTreeViewColumn_, GtkTreeViewColumn*)
-XM_TYPE(GtkCellRenderer_, GtkCellRenderer*)
-XM_TYPE(GtkTreeSelection_, GtkTreeSelection*)
+XM_TYPE_PTR(GtkMenu_, GtkMenu*)
+XM_TYPE_PTR(gint_, gint*)
+XM_TYPE_PTR(gboolean_, gboolean*)
+XM_TYPE_PTR(GtkTreeModel_, GtkTreeModel*)
+XM_TYPE_PTR(GtkTreePath_, GtkTreePath*)
+XM_TYPE_PTR(GtkTreeIter_, GtkTreeIter*)
+XM_TYPE_PTR(GtkClipboard_, GtkClipboard*)
+XM_TYPE_PTR(GtkSelectionData_, GtkSelectionData*)
+XM_TYPE_PTR(GtkTreeView_, GtkTreeView*)
+XM_TYPE_PTR(GtkTreeViewColumn_, GtkTreeViewColumn*)
+XM_TYPE_PTR(GtkCellRenderer_, GtkCellRenderer*)
+XM_TYPE_PTR(GtkTreeSelection_, GtkTreeSelection*)
 #define C_TO_XEN_gboolean(Arg) C_TO_XEN_BOOLEAN(Arg)
 #define XEN_TO_C_gboolean(Arg) XEN_TO_C_BOOLEAN(Arg)
 #define XEN_gboolean_P(Arg) XEN_BOOLEAN_P(Arg)
@@ -221,68 +214,68 @@ XM_TYPE(GtkTreeSelection_, GtkTreeSelection*)
 #define C_TO_XEN_GSignalFlags(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GSignalFlags(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GSignalFlags_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE_UNCHECKED(GSignalAccumulator, GSignalAccumulator)
-XM_TYPE_UNCHECKED(gpointer, gpointer)
-XM_TYPE_UNCHECKED(GSignalCMarshaller, GSignalCMarshaller)
-XM_TYPE(GType_, GType*)
-XM_TYPE(GValue_, GValue*)
-XM_TYPE(GSignalQuery_, GSignalQuery*)
-XM_TYPE(guint_, guint*)
-XM_TYPE(GQuark_, GQuark*)
-XM_TYPE(GSignalInvocationHint_, GSignalInvocationHint*)
+XM_TYPE(GSignalAccumulator, GSignalAccumulator)
+XM_TYPE(gpointer, gpointer)
+XM_TYPE(GSignalCMarshaller, GSignalCMarshaller)
+XM_TYPE_PTR(GType_, GType*)
+XM_TYPE_PTR(GValue_, GValue*)
+XM_TYPE_PTR(GSignalQuery_, GSignalQuery*)
+XM_TYPE_PTR(guint_, guint*)
+XM_TYPE_PTR(GQuark_, GQuark*)
+XM_TYPE_PTR(GSignalInvocationHint_, GSignalInvocationHint*)
 #define C_TO_XEN_gulong(Arg) C_TO_XEN_ULONG(Arg)
 #define XEN_TO_C_gulong(Arg) XEN_TO_C_ULONG(Arg)
 #define XEN_gulong_P(Arg) XEN_ULONG_P(Arg)
-XM_TYPE_UNCHECKED(GSignalEmissionHook, GSignalEmissionHook)
-XM_TYPE_UNCHECKED(GDestroyNotify, GDestroyNotify)
-XM_TYPE_UNCHECKED(GCallback, GCallback)
-XM_TYPE_UNCHECKED(GClosureNotify, GClosureNotify)
+XM_TYPE(GSignalEmissionHook, GSignalEmissionHook)
+XM_TYPE(GDestroyNotify, GDestroyNotify)
+XM_TYPE(GCallback, GCallback)
+XM_TYPE(GClosureNotify, GClosureNotify)
 #define C_TO_XEN_GConnectFlags(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GConnectFlags(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GConnectFlags_P(Arg) XEN_INTEGER_P(Arg)
 #define C_TO_XEN_GSignalMatchType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GSignalMatchType(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GSignalMatchType_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GdkColormap_, GdkColormap*)
-XM_TYPE(GdkVisual_, GdkVisual*)
-XM_TYPE(GdkColor_, GdkColor*)
-XM_TYPE(GdkCursor_, GdkCursor*)
+XM_TYPE_PTR(GdkColormap_, GdkColormap*)
+XM_TYPE_PTR(GdkVisual_, GdkVisual*)
+XM_TYPE_PTR(GdkColor_, GdkColor*)
+XM_TYPE_PTR(GdkCursor_, GdkCursor*)
 #define C_TO_XEN_GdkCursorType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkCursorType(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GdkCursorType_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GdkPixmap_, GdkPixmap*)
-XM_TYPE(GdkDragContext_, GdkDragContext*)
+XM_TYPE_PTR(GdkPixmap_, GdkPixmap*)
+XM_TYPE_PTR(GdkDragContext_, GdkDragContext*)
 #define C_TO_XEN_GdkDragAction(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkDragAction(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GdkDragAction_P(Arg) XEN_INTEGER_P(Arg)
 #define C_TO_XEN_guint32(Arg) C_TO_XEN_ULONG(Arg)
 #define XEN_TO_C_guint32(Arg) XEN_TO_C_ULONG(Arg)
 #define XEN_guint32_P(Arg) XEN_ULONG_P(Arg)
-XM_TYPE_UNCHECKED(GdkAtom, GdkAtom)
-XM_TYPE(GList_, GList*)
-XM_TYPE(GdkDragProtocol_, GdkDragProtocol*)
+XM_TYPE(GdkAtom, GdkAtom)
+XM_TYPE_PTR(GList_, GList*)
+XM_TYPE_PTR(GdkDragProtocol_, GdkDragProtocol*)
 #define C_TO_XEN_GdkDragProtocol(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkDragProtocol(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GdkDragProtocol_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GdkDrawable_, GdkDrawable*)
-XM_TYPE(GdkGC_, GdkGC*)
-XM_TYPE(GdkPoint_, GdkPoint*)
-XM_TYPE(GdkImage_, GdkImage*)
-XM_TYPE(GdkSegment_, GdkSegment*)
-XM_TYPE(PangoFont_, PangoFont*)
-XM_TYPE(PangoGlyphString_, PangoGlyphString*)
-XM_TYPE(PangoLayoutLine_, PangoLayoutLine*)
-XM_TYPE(PangoLayout_, PangoLayout*)
-XM_TYPE(GdkRegion_, GdkRegion*)
-XM_TYPE(GdkModifierType_, GdkModifierType*)
+XM_TYPE_PTR(GdkDrawable_, GdkDrawable*)
+XM_TYPE_PTR(GdkGC_, GdkGC*)
+XM_TYPE_PTR(GdkPoint_, GdkPoint*)
+XM_TYPE_PTR(GdkImage_, GdkImage*)
+XM_TYPE_PTR(GdkSegment_, GdkSegment*)
+XM_TYPE_PTR(PangoFont_, PangoFont*)
+XM_TYPE_PTR(PangoGlyphString_, PangoGlyphString*)
+XM_TYPE_PTR(PangoLayoutLine_, PangoLayoutLine*)
+XM_TYPE_PTR(PangoLayout_, PangoLayout*)
+XM_TYPE_PTR(GdkRegion_, GdkRegion*)
+XM_TYPE_PTR(GdkModifierType_, GdkModifierType*)
 #define C_TO_XEN_gdouble(Arg) C_TO_XEN_DOUBLE(Arg)
 #define XEN_TO_C_gdouble(Arg) XEN_TO_C_DOUBLE(Arg)
 #define XEN_gdouble_P(Arg) XEN_NUMBER_P(Arg)
-XM_TYPE(gdouble_, gdouble*)
+XM_TYPE_PTR(gdouble_, gdouble*)
 #define C_TO_XEN_GdkAxisUse(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkAxisUse(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GdkAxisUse_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GdkGCValues_, GdkGCValues*)
+XM_TYPE_PTR(GdkGCValues_, GdkGCValues*)
 #define C_TO_XEN_GdkGCValuesMask(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkGCValuesMask(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GdkGCValuesMask_P(Arg) XEN_INTEGER_P(Arg)
@@ -292,8 +285,8 @@ XM_TYPE(GdkGCValues_, GdkGCValues*)
 #define C_TO_XEN_GdkFill(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkFill(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GdkFill_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GdkBitmap_, GdkBitmap*)
-XM_TYPE(GdkRectangle_, GdkRectangle*)
+XM_TYPE_PTR(GdkBitmap_, GdkBitmap*)
+XM_TYPE_PTR(GdkRectangle_, GdkRectangle*)
 #define C_TO_XEN_GdkSubwindowMode(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkSubwindowMode(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GdkSubwindowMode_P(Arg) XEN_INTEGER_P(Arg)
@@ -306,8 +299,8 @@ XM_TYPE(GdkRectangle_, GdkRectangle*)
 #define C_TO_XEN_GdkJoinStyle(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkJoinStyle(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GdkJoinStyle_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(gint8_, gint8*)
-XM_TYPE(gchar___, gchar***)
+XM_TYPE_PTR(gint8_, gint8*)
+XM_TYPE_PTR(gchar___, gchar***)
 #define C_TO_XEN_char_(Arg) C_TO_XEN_STRING(Arg)
 #define XEN_TO_C_char_(Arg) XEN_TO_C_STRING(Arg)
 #define XEN_char__P(Arg) XEN_STRING_P(Arg)
@@ -317,11 +310,11 @@ XM_TYPE(gchar___, gchar***)
 #define C_TO_XEN_GdkEventMask(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkEventMask(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GdkEventMask_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GdkWChar_, GdkWChar*)
+XM_TYPE_PTR(GdkWChar_, GdkWChar*)
 #define C_TO_XEN_GdkImageType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkImageType(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GdkImageType_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GdkDevice_, GdkDevice*)
+XM_TYPE_PTR(GdkDevice_, GdkDevice*)
 #define C_TO_XEN_GdkInputSource(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkInputSource(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GdkInputSource_P(Arg) XEN_INTEGER_P(Arg)
@@ -331,18 +324,18 @@ XM_TYPE(GdkDevice_, GdkDevice*)
 #define C_TO_XEN_GdkModifierType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkModifierType(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GdkModifierType_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GdkTimeCoord__, GdkTimeCoord**)
+XM_TYPE_PTR(GdkTimeCoord__, GdkTimeCoord**)
 #define C_TO_XEN_GdkExtensionMode(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkExtensionMode(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GdkExtensionMode_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GdkKeymap_, GdkKeymap*)
-XM_TYPE(GdkKeymapKey_, GdkKeymapKey*)
+XM_TYPE_PTR(GdkKeymap_, GdkKeymap*)
+XM_TYPE_PTR(GdkKeymapKey_, GdkKeymapKey*)
 #define C_TO_XEN_PangoDirection(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_PangoDirection(Arg) XEN_TO_C_INT(Arg)
 #define XEN_PangoDirection_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(PangoContext_, PangoContext*)
-XM_TYPE(PangoAttribute_, PangoAttribute*)
-XM_TYPE(GdkPixbuf_, GdkPixbuf*)
+XM_TYPE_PTR(PangoContext_, PangoContext*)
+XM_TYPE_PTR(PangoAttribute_, PangoAttribute*)
+XM_TYPE_PTR(GdkPixbuf_, GdkPixbuf*)
 #define C_TO_XEN_int(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_int(Arg) XEN_TO_C_INT(Arg)
 #define XEN_int_P(Arg) XEN_INTEGER_P(Arg)
@@ -352,29 +345,29 @@ XM_TYPE(GdkPixbuf_, GdkPixbuf*)
 #define C_TO_XEN_GdkPixbufAlphaMode(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkPixbufAlphaMode(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GdkPixbufAlphaMode_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GdkBitmap__, GdkBitmap**)
-XM_TYPE(gchar__, gchar**)
+XM_TYPE_PTR(GdkBitmap__, GdkBitmap**)
+XM_TYPE_PTR(gchar__, gchar**)
 #define C_TO_XEN_GdkNativeWindow(Arg) C_TO_XEN_ULONG(Arg)
 #define XEN_TO_C_GdkNativeWindow(Arg) XEN_TO_C_ULONG(Arg)
 #define XEN_GdkNativeWindow_P(Arg) XEN_ULONG_P(Arg)
-XM_TYPE(guchar_, guchar*)
+XM_TYPE_PTR(guchar_, guchar*)
 #define C_TO_XEN_GdkPropMode(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkPropMode(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GdkPropMode_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GdkAtom_, GdkAtom*)
+XM_TYPE_PTR(GdkAtom_, GdkAtom*)
 #define C_TO_XEN_GdkFillRule(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkFillRule(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GdkFillRule_P(Arg) XEN_INTEGER_P(Arg)
 #define C_TO_XEN_GdkOverlapType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkOverlapType(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GdkOverlapType_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GdkRgbCmap_, GdkRgbCmap*)
-XM_TYPE(guint32_, guint32*)
+XM_TYPE_PTR(GdkRgbCmap_, GdkRgbCmap*)
+XM_TYPE_PTR(guint32_, guint32*)
 #define C_TO_XEN_GdkVisualType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkVisualType(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GdkVisualType_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GdkVisualType_, GdkVisualType*)
-XM_TYPE(GdkWindowAttr_, GdkWindowAttr*)
+XM_TYPE_PTR(GdkVisualType_, GdkVisualType*)
+XM_TYPE_PTR(GdkWindowAttr_, GdkWindowAttr*)
 #define C_TO_XEN_GdkWindowType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkWindowType(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GdkWindowType_P(Arg) XEN_INTEGER_P(Arg)
@@ -384,309 +377,325 @@ XM_TYPE(GdkWindowAttr_, GdkWindowAttr*)
 #define C_TO_XEN_GdkWMDecoration(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkWMDecoration(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GdkWMDecoration_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GdkWMDecoration_, GdkWMDecoration*)
+XM_TYPE_PTR(GdkWMDecoration_, GdkWMDecoration*)
 #define C_TO_XEN_GdkWMFunction(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkWMFunction(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GdkWMFunction_P(Arg) XEN_INTEGER_P(Arg)
 #define C_TO_XEN_GdkWindowEdge(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkWindowEdge(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GdkWindowEdge_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GdkGeometry_, GdkGeometry*)
-XM_TYPE(GdkPointerHooks_, GdkPointerHooks*)
-#define C_TO_XEN_GtkType(Arg) C_TO_XEN_ULONG(Arg)
-#define XEN_TO_C_GtkType(Arg) XEN_TO_C_ULONG(Arg)
-#define XEN_GtkType_P(Arg) XEN_ULONG_P(Arg)
-XM_TYPE(GtkAccelGroup_, GtkAccelGroup*)
-#define C_TO_XEN_GtkAccelFlags(Arg) C_TO_XEN_INT(Arg)
-#define XEN_TO_C_GtkAccelFlags(Arg) XEN_TO_C_INT(Arg)
-#define XEN_GtkAccelFlags_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GObject_, GObject*)
-XM_TYPE(GSList_, GSList*)
-XM_TYPE(GtkAccelGroupEntry_, GtkAccelGroupEntry*)
-XM_TYPE(GtkAccelLabel_, GtkAccelLabel*)
-XM_TYPE_UNCHECKED(GtkAccelMapForeach, GtkAccelMapForeach)
-XM_TYPE(GScanner_, GScanner*)
-XM_TYPE(GtkAccessible_, GtkAccessible*)
-XM_TYPE(GtkObject_, GtkObject*)
-XM_TYPE(GtkAdjustment_, GtkAdjustment*)
+XM_TYPE_PTR(GdkGeometry_, GdkGeometry*)
+XM_TYPE_PTR(GtkWindowGroup_, GtkWindowGroup*)
+XM_TYPE_PTR(GtkWindow_, GtkWindow*)
+#define C_TO_XEN_GdkWindowTypeHint(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_GdkWindowTypeHint(Arg) XEN_TO_C_INT(Arg)
+#define XEN_GdkWindowTypeHint_P(Arg) XEN_INTEGER_P(Arg)
+#define C_TO_XEN_GdkWindowHints(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_GdkWindowHints(Arg) XEN_TO_C_INT(Arg)
+#define XEN_GdkWindowHints_P(Arg) XEN_INTEGER_P(Arg)
+XM_TYPE_PTR(GdkPointerHooks_, GdkPointerHooks*)
+XM_TYPE(GdkColorspace, GdkColorspace)
+XM_TYPE_PTR(GError_, GError*)
+XM_TYPE(GdkPixbufDestroyNotify, GdkPixbufDestroyNotify)
+XM_TYPE_PTR(char__, char**)
+XM_TYPE_PTR(guint8_, guint8*)
+#define C_TO_XEN_guchar(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_guchar(Arg) XEN_TO_C_INT(Arg)
+#define XEN_guchar_P(Arg) XEN_INTEGER_P(Arg)
 #define C_TO_XEN_gfloat(Arg) C_TO_XEN_DOUBLE(Arg)
 #define XEN_TO_C_gfloat(Arg) XEN_TO_C_DOUBLE(Arg)
 #define XEN_gfloat_P(Arg) XEN_NUMBER_P(Arg)
-XM_TYPE(GtkAlignment_, GtkAlignment*)
+#define C_TO_XEN_double(Arg) C_TO_XEN_DOUBLE(Arg)
+#define XEN_TO_C_double(Arg) XEN_TO_C_DOUBLE(Arg)
+#define XEN_double_P(Arg) XEN_NUMBER_P(Arg)
+XM_TYPE(GdkInterpType, GdkInterpType)
+XM_TYPE_PTR(GdkPixbufAnimation_, GdkPixbufAnimation*)
+XM_TYPE_PTR(GdkPixbufAnimationIter_, GdkPixbufAnimationIter*)
+XM_TYPE_PTR(GTimeVal_, GTimeVal*)
+XM_TYPE_PTR(GdkPixbufLoader_, GdkPixbufLoader*)
+XM_TYPE(gsize, gsize)
+#define C_TO_XEN_GtkType(Arg) C_TO_XEN_ULONG(Arg)
+#define XEN_TO_C_GtkType(Arg) XEN_TO_C_ULONG(Arg)
+#define XEN_GtkType_P(Arg) XEN_ULONG_P(Arg)
+XM_TYPE_PTR(GtkAccelGroup_, GtkAccelGroup*)
+#define C_TO_XEN_GtkAccelFlags(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_GtkAccelFlags(Arg) XEN_TO_C_INT(Arg)
+#define XEN_GtkAccelFlags_P(Arg) XEN_INTEGER_P(Arg)
+XM_TYPE_PTR(GObject_, GObject*)
+XM_TYPE_PTR(GSList_, GSList*)
+XM_TYPE_PTR(GtkAccelGroupEntry_, GtkAccelGroupEntry*)
+XM_TYPE_PTR(GtkAccelLabel_, GtkAccelLabel*)
+XM_TYPE(GtkAccelMapForeach, GtkAccelMapForeach)
+XM_TYPE_PTR(GScanner_, GScanner*)
+XM_TYPE_PTR(GtkAccessible_, GtkAccessible*)
+XM_TYPE_PTR(GtkObject_, GtkObject*)
+XM_TYPE_PTR(GtkAdjustment_, GtkAdjustment*)
+XM_TYPE_PTR(GtkAlignment_, GtkAlignment*)
 #define C_TO_XEN_GtkArrowType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkArrowType(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkArrowType_P(Arg) XEN_INTEGER_P(Arg)
 #define C_TO_XEN_GtkShadowType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkShadowType(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkShadowType_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GtkArrow_, GtkArrow*)
-XM_TYPE(GtkAspectFrame_, GtkAspectFrame*)
+XM_TYPE_PTR(GtkArrow_, GtkArrow*)
+XM_TYPE_PTR(GtkAspectFrame_, GtkAspectFrame*)
 #define C_TO_XEN_GtkButtonBoxStyle(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkButtonBoxStyle(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkButtonBoxStyle_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GtkButtonBox_, GtkButtonBox*)
-XM_TYPE(GtkBindingSet_, GtkBindingSet*)
+XM_TYPE_PTR(GtkButtonBox_, GtkButtonBox*)
+XM_TYPE_PTR(GtkBindingSet_, GtkBindingSet*)
 #define C_TO_XEN_GtkPathType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkPathType(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkPathType_P(Arg) XEN_INTEGER_P(Arg)
 #define C_TO_XEN_GtkPathPriorityType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkPathPriorityType(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkPathPriorityType_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GtkBin_, GtkBin*)
-XM_TYPE(GtkBox_, GtkBox*)
-XM_TYPE(GtkPackType_, GtkPackType*)
+XM_TYPE_PTR(GtkBin_, GtkBin*)
+XM_TYPE_PTR(GtkBox_, GtkBox*)
+XM_TYPE_PTR(GtkPackType_, GtkPackType*)
 #define C_TO_XEN_GtkPackType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkPackType(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkPackType_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GtkButton_, GtkButton*)
+XM_TYPE_PTR(GtkButton_, GtkButton*)
 #define C_TO_XEN_GtkReliefStyle(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkReliefStyle(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkReliefStyle_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GtkCalendar_, GtkCalendar*)
+XM_TYPE_PTR(GtkCalendar_, GtkCalendar*)
 #define C_TO_XEN_GtkCalendarDisplayOptions(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkCalendarDisplayOptions(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkCalendarDisplayOptions_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GtkCellEditable_, GtkCellEditable*)
+XM_TYPE_PTR(GtkCellEditable_, GtkCellEditable*)
 #define C_TO_XEN_GtkCellRendererState(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkCellRendererState(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkCellRendererState_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GtkCellRendererText_, GtkCellRendererText*)
-XM_TYPE(GtkCellRendererToggle_, GtkCellRendererToggle*)
-XM_TYPE(GtkCheckMenuItem_, GtkCheckMenuItem*)
-XM_TYPE(GtkTargetEntry_, GtkTargetEntry*)
-XM_TYPE(GtkColorSelection_, GtkColorSelection*)
+XM_TYPE_PTR(GtkCellRendererText_, GtkCellRendererText*)
+XM_TYPE_PTR(GtkCellRendererToggle_, GtkCellRendererToggle*)
+XM_TYPE_PTR(GtkCheckMenuItem_, GtkCheckMenuItem*)
+XM_TYPE_PTR(GtkTargetEntry_, GtkTargetEntry*)
+XM_TYPE_PTR(GtkColorSelection_, GtkColorSelection*)
 #define C_TO_XEN_guint16(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_guint16(Arg) XEN_TO_C_INT(Arg)
 #define XEN_guint16_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE_UNCHECKED(GtkColorSelectionChangePaletteFunc, GtkColorSelectionChangePaletteFunc)
-XM_TYPE(GtkCombo_, GtkCombo*)
-XM_TYPE(GtkItem_, GtkItem*)
-XM_TYPE(GtkContainer_, GtkContainer*)
+XM_TYPE(GtkColorSelectionChangePaletteFunc, GtkColorSelectionChangePaletteFunc)
+XM_TYPE_PTR(GtkCombo_, GtkCombo*)
+XM_TYPE_PTR(GtkItem_, GtkItem*)
+XM_TYPE_PTR(GtkContainer_, GtkContainer*)
 #define C_TO_XEN_GtkResizeMode(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkResizeMode(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkResizeMode_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GtkCurve_, GtkCurve*)
-XM_TYPE(gfloat_, gfloat*)
+XM_TYPE_PTR(GtkCurve_, GtkCurve*)
+XM_TYPE_PTR(gfloat_, gfloat*)
 #define C_TO_XEN_GtkCurveType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkCurveType(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkCurveType_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GtkWindow_, GtkWindow*)
 #define C_TO_XEN_GtkDialogFlags(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkDialogFlags(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkDialogFlags_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GtkDialog_, GtkDialog*)
+XM_TYPE_PTR(GtkDialog_, GtkDialog*)
 #define C_TO_XEN_GtkDestDefaults(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkDestDefaults(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkDestDefaults_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GtkTargetList_, GtkTargetList*)
-XM_TYPE(GtkEditable_, GtkEditable*)
-XM_TYPE(GtkEntry_, GtkEntry*)
+XM_TYPE_PTR(GtkTargetList_, GtkTargetList*)
+XM_TYPE_PTR(GtkEditable_, GtkEditable*)
+XM_TYPE_PTR(GtkEntry_, GtkEntry*)
 #define C_TO_XEN_gunichar(Arg) C_TO_XEN_ULONG(Arg)
 #define XEN_TO_C_gunichar(Arg) XEN_TO_C_ULONG(Arg)
 #define XEN_gunichar_P(Arg) XEN_ULONG_P(Arg)
-XM_TYPE(GtkFileSelection_, GtkFileSelection*)
-XM_TYPE(GtkFixed_, GtkFixed*)
-XM_TYPE(GtkFontSelection_, GtkFontSelection*)
-XM_TYPE(GtkFontSelectionDialog_, GtkFontSelectionDialog*)
-XM_TYPE(GtkFrame_, GtkFrame*)
-XM_TYPE(GtkHandleBox_, GtkHandleBox*)
+XM_TYPE_PTR(GtkFileSelection_, GtkFileSelection*)
+XM_TYPE_PTR(GtkFixed_, GtkFixed*)
+XM_TYPE_PTR(GtkFontSelection_, GtkFontSelection*)
+XM_TYPE_PTR(GtkFontSelectionDialog_, GtkFontSelectionDialog*)
+XM_TYPE_PTR(GtkFrame_, GtkFrame*)
+XM_TYPE_PTR(GtkHandleBox_, GtkHandleBox*)
 #define C_TO_XEN_GtkPositionType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkPositionType(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkPositionType_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GtkIconFactory_, GtkIconFactory*)
-XM_TYPE(GtkIconSet_, GtkIconSet*)
+XM_TYPE_PTR(GtkIconFactory_, GtkIconFactory*)
+XM_TYPE_PTR(GtkIconSet_, GtkIconSet*)
 #define C_TO_XEN_GtkIconSize(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkIconSize(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkIconSize_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GtkStyle_, GtkStyle*)
+XM_TYPE_PTR(GtkStyle_, GtkStyle*)
 #define C_TO_XEN_GtkTextDirection(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkTextDirection(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkTextDirection_P(Arg) XEN_INTEGER_P(Arg)
 #define C_TO_XEN_GtkStateType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkStateType(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkStateType_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GtkIconSource_, GtkIconSource*)
-XM_TYPE(GtkIconSize_, GtkIconSize*)
-XM_TYPE(GdkPixbufAnimation_, GdkPixbufAnimation*)
-XM_TYPE(GtkImage_, GtkImage*)
+XM_TYPE_PTR(GtkIconSource_, GtkIconSource*)
+XM_TYPE_PTR(GtkIconSize_, GtkIconSize*)
+XM_TYPE_PTR(GtkImage_, GtkImage*)
 #define C_TO_XEN_GtkImageType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkImageType(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkImageType_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GtkImageMenuItem_, GtkImageMenuItem*)
-XM_TYPE(GtkIMContext_, GtkIMContext*)
-XM_TYPE(PangoAttrList_, PangoAttrList*)
-XM_TYPE(GtkIMContextSimple_, GtkIMContextSimple*)
-XM_TYPE(guint16_, guint16*)
-XM_TYPE(GtkIMMulticontext_, GtkIMMulticontext*)
-XM_TYPE(GtkMenuShell_, GtkMenuShell*)
-XM_TYPE(GtkItemFactory_, GtkItemFactory*)
-XM_TYPE(GtkItemFactoryEntry_, GtkItemFactoryEntry*)
-XM_TYPE_UNCHECKED(GtkDestroyNotify, GtkDestroyNotify)
-XM_TYPE(GtkLabel_, GtkLabel*)
+XM_TYPE_PTR(GtkImageMenuItem_, GtkImageMenuItem*)
+XM_TYPE_PTR(GtkIMContext_, GtkIMContext*)
+XM_TYPE_PTR(PangoAttrList_, PangoAttrList*)
+XM_TYPE_PTR(GtkIMContextSimple_, GtkIMContextSimple*)
+XM_TYPE_PTR(guint16_, guint16*)
+XM_TYPE_PTR(GtkIMMulticontext_, GtkIMMulticontext*)
+XM_TYPE_PTR(GtkMenuShell_, GtkMenuShell*)
+XM_TYPE_PTR(GtkItemFactory_, GtkItemFactory*)
+XM_TYPE_PTR(GtkItemFactoryEntry_, GtkItemFactoryEntry*)
+XM_TYPE(GtkDestroyNotify, GtkDestroyNotify)
+XM_TYPE_PTR(GtkLabel_, GtkLabel*)
 #define C_TO_XEN_GtkJustification(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkJustification(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkJustification_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GtkLayout_, GtkLayout*)
-XM_TYPE(GtkListStore_, GtkListStore*)
-XM_TYPE(int_, int*)
-XM_TYPE(char___, char***)
-XM_TYPE(PangoLanguage_, PangoLanguage*)
-XM_TYPE_UNCHECKED(GtkCallbackMarshal, GtkCallbackMarshal)
+XM_TYPE_PTR(GtkLayout_, GtkLayout*)
+XM_TYPE_PTR(GtkListStore_, GtkListStore*)
+XM_TYPE_PTR(int_, int*)
+XM_TYPE_PTR(char___, char***)
+XM_TYPE_PTR(PangoLanguage_, PangoLanguage*)
+XM_TYPE(GtkCallbackMarshal, GtkCallbackMarshal)
 #define XEN_xen_P(Arg) 1
 #define XEN_TO_C_xen(Arg) ((gpointer)Arg)
-XM_TYPE_UNCHECKED(GtkMenuDetachFunc, GtkMenuDetachFunc)
-XM_TYPE(GtkMenuItem_, GtkMenuItem*)
+XM_TYPE(GtkMenuDetachFunc, GtkMenuDetachFunc)
+XM_TYPE_PTR(GtkMenuItem_, GtkMenuItem*)
 #define C_TO_XEN_GtkMessageType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkMessageType(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkMessageType_P(Arg) XEN_INTEGER_P(Arg)
 #define C_TO_XEN_GtkButtonsType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkButtonsType(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkButtonsType_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GtkMisc_, GtkMisc*)
-XM_TYPE(GtkNotebook_, GtkNotebook*)
-XM_TYPE(GtkOptionMenu_, GtkOptionMenu*)
-XM_TYPE(GtkPaned_, GtkPaned*)
-XM_TYPE(GtkPlug_, GtkPlug*)
-XM_TYPE(GtkProgressBar_, GtkProgressBar*)
+XM_TYPE_PTR(GtkMisc_, GtkMisc*)
+XM_TYPE_PTR(GtkNotebook_, GtkNotebook*)
+XM_TYPE_PTR(GtkOptionMenu_, GtkOptionMenu*)
+XM_TYPE_PTR(GtkPaned_, GtkPaned*)
+XM_TYPE_PTR(GtkPlug_, GtkPlug*)
+XM_TYPE_PTR(GtkProgressBar_, GtkProgressBar*)
 #define C_TO_XEN_GtkProgressBarOrientation(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkProgressBarOrientation(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkProgressBarOrientation_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GtkRadioButton_, GtkRadioButton*)
-XM_TYPE(GtkRadioMenuItem_, GtkRadioMenuItem*)
-XM_TYPE(GtkRange_, GtkRange*)
+XM_TYPE_PTR(GtkRadioButton_, GtkRadioButton*)
+XM_TYPE_PTR(GtkRadioMenuItem_, GtkRadioMenuItem*)
+XM_TYPE_PTR(GtkRange_, GtkRange*)
 #define C_TO_XEN_GtkUpdateType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkUpdateType(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkUpdateType_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GtkSettings_, GtkSettings*)
-XM_TYPE(GtkRcStyle_, GtkRcStyle*)
-XM_TYPE(GtkStateType_, GtkStateType*)
-XM_TYPE(GtkPathPriorityType_, GtkPathPriorityType*)
-XM_TYPE(GtkRuler_, GtkRuler*)
+XM_TYPE_PTR(GtkSettings_, GtkSettings*)
+XM_TYPE_PTR(GtkRcStyle_, GtkRcStyle*)
+XM_TYPE_PTR(GtkStateType_, GtkStateType*)
+XM_TYPE_PTR(GtkPathPriorityType_, GtkPathPriorityType*)
+XM_TYPE_PTR(GtkRuler_, GtkRuler*)
 #define C_TO_XEN_GtkMetricType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkMetricType(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkMetricType_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GtkScale_, GtkScale*)
-XM_TYPE(GtkScrolledWindow_, GtkScrolledWindow*)
+XM_TYPE_PTR(GtkScale_, GtkScale*)
+XM_TYPE_PTR(GtkScrolledWindow_, GtkScrolledWindow*)
 #define C_TO_XEN_GtkPolicyType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkPolicyType(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkPolicyType_P(Arg) XEN_INTEGER_P(Arg)
 #define C_TO_XEN_GtkCornerType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkCornerType(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkCornerType_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GdkEventSelection_, GdkEventSelection*)
-XM_TYPE(GdkEventProperty_, GdkEventProperty*)
-XM_TYPE(GParamSpec_, GParamSpec*)
-XM_TYPE_UNCHECKED(GtkRcPropertyParser, GtkRcPropertyParser)
-XM_TYPE(GString_, GString*)
-XM_TYPE(GtkSettingsValue_, GtkSettingsValue*)
+XM_TYPE_PTR(GdkEventSelection_, GdkEventSelection*)
+XM_TYPE_PTR(GdkEventProperty_, GdkEventProperty*)
+XM_TYPE_PTR(GParamSpec_, GParamSpec*)
+XM_TYPE(GtkRcPropertyParser, GtkRcPropertyParser)
+XM_TYPE_PTR(GString_, GString*)
+XM_TYPE_PTR(GtkSettingsValue_, GtkSettingsValue*)
 #define C_TO_XEN_glong(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_glong(Arg) XEN_TO_C_INT(Arg)
 #define XEN_glong_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GtkSizeGroup_, GtkSizeGroup*)
+XM_TYPE_PTR(GtkSizeGroup_, GtkSizeGroup*)
 #define C_TO_XEN_GtkSizeGroupMode(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkSizeGroupMode(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkSizeGroupMode_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GtkSocket_, GtkSocket*)
-XM_TYPE(GtkSpinButton_, GtkSpinButton*)
+XM_TYPE_PTR(GtkSocket_, GtkSocket*)
+XM_TYPE_PTR(GtkSpinButton_, GtkSpinButton*)
 #define C_TO_XEN_GtkSpinButtonUpdatePolicy(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkSpinButtonUpdatePolicy(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkSpinButtonUpdatePolicy_P(Arg) XEN_INTEGER_P(Arg)
 #define C_TO_XEN_GtkSpinType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkSpinType(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkSpinType_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GtkStatusbar_, GtkStatusbar*)
-XM_TYPE(GtkStockItem_, GtkStockItem*)
+XM_TYPE_PTR(GtkStatusbar_, GtkStatusbar*)
+XM_TYPE_PTR(GtkStockItem_, GtkStockItem*)
 #define C_TO_XEN_GtkOrientation(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkOrientation(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkOrientation_P(Arg) XEN_INTEGER_P(Arg)
 #define C_TO_XEN_GtkExpanderStyle(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkExpanderStyle(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkExpanderStyle_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GtkBorder_, GtkBorder*)
-XM_TYPE(GtkTable_, GtkTable*)
+XM_TYPE_PTR(GtkBorder_, GtkBorder*)
+XM_TYPE_PTR(GtkTable_, GtkTable*)
 #define C_TO_XEN_GtkAttachOptions(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkAttachOptions(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkAttachOptions_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GtkTextBuffer_, GtkTextBuffer*)
-XM_TYPE(GtkTextTagTable_, GtkTextTagTable*)
-XM_TYPE(GtkTextIter_, GtkTextIter*)
-XM_TYPE(GtkTextTag_, GtkTextTag*)
-XM_TYPE(GtkTextChildAnchor_, GtkTextChildAnchor*)
-XM_TYPE(GtkTextMark_, GtkTextMark*)
-XM_TYPE(GtkTextAttributes_, GtkTextAttributes*)
-XM_TYPE_UNCHECKED(GtkTextCharPredicate, GtkTextCharPredicate)
+XM_TYPE_PTR(GtkTextBuffer_, GtkTextBuffer*)
+XM_TYPE_PTR(GtkTextTagTable_, GtkTextTagTable*)
+XM_TYPE_PTR(GtkTextIter_, GtkTextIter*)
+XM_TYPE_PTR(GtkTextTag_, GtkTextTag*)
+XM_TYPE_PTR(GtkTextChildAnchor_, GtkTextChildAnchor*)
+XM_TYPE_PTR(GtkTextMark_, GtkTextMark*)
+XM_TYPE_PTR(GtkTextAttributes_, GtkTextAttributes*)
+XM_TYPE(GtkTextCharPredicate, GtkTextCharPredicate)
 #define C_TO_XEN_GtkTextSearchFlags(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkTextSearchFlags(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkTextSearchFlags_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE_UNCHECKED(GtkTextTagTableForeach, GtkTextTagTableForeach)
-XM_TYPE(GtkTextView_, GtkTextView*)
+XM_TYPE(GtkTextTagTableForeach, GtkTextTagTableForeach)
+XM_TYPE_PTR(GtkTextView_, GtkTextView*)
 #define C_TO_XEN_GtkTextWindowType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkTextWindowType(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkTextWindowType_P(Arg) XEN_INTEGER_P(Arg)
 #define C_TO_XEN_GtkWrapMode(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkWrapMode(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkWrapMode_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(PangoTabArray_, PangoTabArray*)
-XM_TYPE(GtkToggleButton_, GtkToggleButton*)
-XM_TYPE(GtkToolbar_, GtkToolbar*)
+XM_TYPE_PTR(PangoTabArray_, PangoTabArray*)
+XM_TYPE_PTR(GtkToggleButton_, GtkToggleButton*)
+XM_TYPE_PTR(GtkToolbar_, GtkToolbar*)
 #define C_TO_XEN_GtkToolbarChildType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkToolbarChildType(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkToolbarChildType_P(Arg) XEN_INTEGER_P(Arg)
 #define C_TO_XEN_GtkToolbarStyle(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkToolbarStyle(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkToolbarStyle_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GtkTooltips_, GtkTooltips*)
-XM_TYPE(GtkTooltipsData_, GtkTooltipsData*)
-XM_TYPE(GtkTreeDragSource_, GtkTreeDragSource*)
-XM_TYPE(GtkTreeDragDest_, GtkTreeDragDest*)
-XM_TYPE(GtkTreeRowReference_, GtkTreeRowReference*)
+XM_TYPE_PTR(GtkTooltips_, GtkTooltips*)
+XM_TYPE_PTR(GtkTooltipsData_, GtkTooltipsData*)
+XM_TYPE_PTR(GtkTreeDragSource_, GtkTreeDragSource*)
+XM_TYPE_PTR(GtkTreeDragDest_, GtkTreeDragDest*)
+XM_TYPE_PTR(GtkTreeRowReference_, GtkTreeRowReference*)
 #define C_TO_XEN_GtkTreeModelFlags(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkTreeModelFlags(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkTreeModelFlags_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GtkTreeModelSort_, GtkTreeModelSort*)
+XM_TYPE_PTR(GtkTreeModelSort_, GtkTreeModelSort*)
 #define C_TO_XEN_GtkSelectionMode(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkSelectionMode(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkSelectionMode_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GtkTreeModel__, GtkTreeModel**)
-XM_TYPE(GtkTreeSortable_, GtkTreeSortable*)
-XM_TYPE(GtkSortType_, GtkSortType*)
+XM_TYPE_PTR(GtkTreeModel__, GtkTreeModel**)
+XM_TYPE_PTR(GtkTreeSortable_, GtkTreeSortable*)
+XM_TYPE_PTR(GtkSortType_, GtkSortType*)
 #define C_TO_XEN_GtkSortType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkSortType(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkSortType_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GtkTreeStore_, GtkTreeStore*)
+XM_TYPE_PTR(GtkTreeStore_, GtkTreeStore*)
 #define C_TO_XEN_GtkTreeViewColumnSizing(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkTreeViewColumnSizing(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkTreeViewColumnSizing_P(Arg) XEN_INTEGER_P(Arg)
 #define C_TO_XEN_GtkTreeViewDropPosition(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkTreeViewDropPosition(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkTreeViewDropPosition_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GtkViewport_, GtkViewport*)
-XM_TYPE(GtkWidget__, GtkWidget**)
-XM_TYPE(GtkRequisition_, GtkRequisition*)
-XM_TYPE(GtkAllocation_, GtkAllocation*)
+XM_TYPE_PTR(GtkViewport_, GtkViewport*)
+XM_TYPE_PTR(GtkWidget__, GtkWidget**)
+XM_TYPE_PTR(GtkRequisition_, GtkRequisition*)
+XM_TYPE_PTR(GtkAllocation_, GtkAllocation*)
 #define C_TO_XEN_GtkDirectionType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkDirectionType(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkDirectionType_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(AtkObject_, AtkObject*)
-XM_TYPE(PangoFontDescription_, PangoFontDescription*)
-XM_TYPE(GtkWidgetAuxInfo_, GtkWidgetAuxInfo*)
+XM_TYPE_PTR(AtkObject_, AtkObject*)
+XM_TYPE_PTR(PangoFontDescription_, PangoFontDescription*)
+XM_TYPE_PTR(GtkWidgetAuxInfo_, GtkWidgetAuxInfo*)
 #define C_TO_XEN_GtkWindowType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkWindowType(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkWindowType_P(Arg) XEN_INTEGER_P(Arg)
 #define C_TO_XEN_GtkWindowPosition(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkWindowPosition(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkWindowPosition_P(Arg) XEN_INTEGER_P(Arg)
-#define C_TO_XEN_GdkWindowTypeHint(Arg) C_TO_XEN_INT(Arg)
-#define XEN_TO_C_GdkWindowTypeHint(Arg) XEN_TO_C_INT(Arg)
-#define XEN_GdkWindowTypeHint_P(Arg) XEN_INTEGER_P(Arg)
 #define C_TO_XEN_GdkGravity(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkGravity(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GdkGravity_P(Arg) XEN_INTEGER_P(Arg)
-#define C_TO_XEN_GdkWindowHints(Arg) C_TO_XEN_INT(Arg)
-#define XEN_TO_C_GdkWindowHints(Arg) XEN_TO_C_INT(Arg)
-#define XEN_GdkWindowHints_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GtkWindowGroup_, GtkWindowGroup*)
-XM_TYPE(PangoColor_, PangoColor*)
+XM_TYPE_PTR(PangoColor_, PangoColor*)
 #define C_TO_XEN_PangoAttrType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_PangoAttrType(Arg) XEN_TO_C_INT(Arg)
 #define XEN_PangoAttrType_P(Arg) XEN_INTEGER_P(Arg)
@@ -705,65 +714,60 @@ XM_TYPE(PangoColor_, PangoColor*)
 #define C_TO_XEN_PangoUnderline(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_PangoUnderline(Arg) XEN_TO_C_INT(Arg)
 #define XEN_PangoUnderline_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(PangoRectangle_, PangoRectangle*)
-#define C_TO_XEN_double(Arg) C_TO_XEN_DOUBLE(Arg)
-#define XEN_TO_C_double(Arg) XEN_TO_C_DOUBLE(Arg)
-#define XEN_double_P(Arg) XEN_NUMBER_P(Arg)
-XM_TYPE(PangoAttrIterator_, PangoAttrIterator*)
-XM_TYPE(PangoAttrList__, PangoAttrList**)
-XM_TYPE(char__, char**)
-XM_TYPE(gunichar_, gunichar*)
-XM_TYPE(GError__, GError**)
-XM_TYPE(PangoAnalysis_, PangoAnalysis*)
-XM_TYPE(PangoLogAttr_, PangoLogAttr*)
-XM_TYPE(PangoFontFamily__, PangoFontFamily**)
-XM_TYPE(PangoFontset_, PangoFontset*)
-XM_TYPE(PangoFontMetrics_, PangoFontMetrics*)
-XM_TYPE(PangoCoverage_, PangoCoverage*)
+XM_TYPE_PTR(PangoRectangle_, PangoRectangle*)
+XM_TYPE_PTR(PangoAttrIterator_, PangoAttrIterator*)
+XM_TYPE_PTR(PangoAttrList__, PangoAttrList**)
+XM_TYPE_PTR(gunichar_, gunichar*)
+XM_TYPE_PTR(PangoAnalysis_, PangoAnalysis*)
+XM_TYPE_PTR(PangoLogAttr_, PangoLogAttr*)
+XM_TYPE_PTR(PangoFontFamily__, PangoFontFamily**)
+XM_TYPE_PTR(PangoFontset_, PangoFontset*)
+XM_TYPE_PTR(PangoFontMetrics_, PangoFontMetrics*)
+XM_TYPE_PTR(PangoCoverage_, PangoCoverage*)
 #define C_TO_XEN_PangoCoverageLevel(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_PangoCoverageLevel(Arg) XEN_TO_C_INT(Arg)
 #define XEN_PangoCoverageLevel_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(PangoFontDescription__, PangoFontDescription**)
+XM_TYPE_PTR(PangoFontDescription__, PangoFontDescription**)
 #define C_TO_XEN_PangoFontMask(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_PangoFontMask(Arg) XEN_TO_C_INT(Arg)
 #define XEN_PangoFontMask_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(PangoFontFace_, PangoFontFace*)
-XM_TYPE(PangoEngineShape_, PangoEngineShape*)
+XM_TYPE_PTR(PangoFontFace_, PangoFontFace*)
+XM_TYPE_PTR(PangoEngineShape_, PangoEngineShape*)
 #define C_TO_XEN_PangoGlyph(Arg) C_TO_XEN_ULONG(Arg)
 #define XEN_TO_C_PangoGlyph(Arg) XEN_TO_C_ULONG(Arg)
 #define XEN_PangoGlyph_P(Arg) XEN_ULONG_P(Arg)
-XM_TYPE(PangoFontMap_, PangoFontMap*)
-XM_TYPE(PangoItem_, PangoItem*)
+XM_TYPE_PTR(PangoFontMap_, PangoFontMap*)
+XM_TYPE_PTR(PangoItem_, PangoItem*)
 #define C_TO_XEN_PangoWrapMode(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_PangoWrapMode(Arg) XEN_TO_C_INT(Arg)
 #define XEN_PangoWrapMode_P(Arg) XEN_INTEGER_P(Arg)
 #define C_TO_XEN_PangoAlignment(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_PangoAlignment(Arg) XEN_TO_C_INT(Arg)
 #define XEN_PangoAlignment_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(PangoLayoutIter_, PangoLayoutIter*)
-XM_TYPE(PangoLayoutRun_, PangoLayoutRun*)
+XM_TYPE_PTR(PangoLayoutIter_, PangoLayoutIter*)
+XM_TYPE_PTR(PangoLayoutRun_, PangoLayoutRun*)
 #define C_TO_XEN_GdkEventType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkEventType(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GdkEventType_P(Arg) XEN_INTEGER_P(Arg)
 #define C_TO_XEN_gint8(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_gint8(Arg) XEN_TO_C_INT(Arg)
 #define XEN_gint8_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GdkEventAny_, GdkEventAny*)
-XM_TYPE(GdkEventExpose_, GdkEventExpose*)
-XM_TYPE(GdkEventNoExpose_, GdkEventNoExpose*)
+XM_TYPE_PTR(GdkEventAny_, GdkEventAny*)
+XM_TYPE_PTR(GdkEventExpose_, GdkEventExpose*)
+XM_TYPE_PTR(GdkEventNoExpose_, GdkEventNoExpose*)
 #define C_TO_XEN_GdkVisibilityState(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkVisibilityState(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GdkVisibilityState_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GdkEventVisibility_, GdkEventVisibility*)
+XM_TYPE_PTR(GdkEventVisibility_, GdkEventVisibility*)
 #define C_TO_XEN_gint16(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_gint16(Arg) XEN_TO_C_INT(Arg)
 #define XEN_gint16_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GdkEventMotion_, GdkEventMotion*)
-XM_TYPE(GdkEventButton_, GdkEventButton*)
+XM_TYPE_PTR(GdkEventMotion_, GdkEventMotion*)
+XM_TYPE_PTR(GdkEventButton_, GdkEventButton*)
 #define C_TO_XEN_GdkScrollDirection(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkScrollDirection(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GdkScrollDirection_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GdkEventScroll_, GdkEventScroll*)
+XM_TYPE_PTR(GdkEventScroll_, GdkEventScroll*)
 #define C_TO_XEN_guint8(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_guint8(Arg) XEN_TO_C_INT(Arg)
 #define XEN_guint8_P(Arg) XEN_INTEGER_P(Arg)
@@ -773,47 +777,47 @@ XM_TYPE(GdkEventScroll_, GdkEventScroll*)
 #define C_TO_XEN_GdkNotifyType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkNotifyType(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GdkNotifyType_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GdkEventCrossing_, GdkEventCrossing*)
-XM_TYPE(GdkEventFocus_, GdkEventFocus*)
-XM_TYPE(GdkEventConfigure_, GdkEventConfigure*)
-XM_TYPE(GdkEventProximity_, GdkEventProximity*)
+XM_TYPE_PTR(GdkEventCrossing_, GdkEventCrossing*)
+XM_TYPE_PTR(GdkEventFocus_, GdkEventFocus*)
+XM_TYPE_PTR(GdkEventConfigure_, GdkEventConfigure*)
+XM_TYPE_PTR(GdkEventProximity_, GdkEventProximity*)
 #define C_TO_XEN_GdkSettingAction(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkSettingAction(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GdkSettingAction_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GdkEventSetting_, GdkEventSetting*)
-XM_TYPE(GdkEventWindowState_, GdkEventWindowState*)
+XM_TYPE_PTR(GdkEventSetting_, GdkEventSetting*)
+XM_TYPE_PTR(GdkEventWindowState_, GdkEventWindowState*)
 #define C_TO_XEN_gshort(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_gshort(Arg) XEN_TO_C_INT(Arg)
 #define XEN_gshort_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GdkEventDND_, GdkEventDND*)
+XM_TYPE_PTR(GdkEventDND_, GdkEventDND*)
 #define C_TO_XEN_GdkByteOrder(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkByteOrder(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GdkByteOrder_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GdkDeviceAxis_, GdkDeviceAxis*)
-XM_TYPE(GdkDeviceKey_, GdkDeviceKey*)
-XM_TYPE(GdkWindowObject_, GdkWindowObject*)
-XM_TYPE(GtkCellRendererPixbuf_, GtkCellRendererPixbuf*)
-XM_TYPE(GtkColorSelectionDialog_, GtkColorSelectionDialog*)
-XM_TYPE(GtkDrawingArea_, GtkDrawingArea*)
-XM_TYPE(GtkGammaCurve_, GtkGammaCurve*)
-XM_TYPE(GtkInputDialog_, GtkInputDialog*)
-XM_TYPE(GtkInvisible_, GtkInvisible*)
-XM_TYPE_UNCHECKED(GtkItemFactoryCallback, GtkItemFactoryCallback)
-XM_TYPE(GtkLabelSelectionInfo_, GtkLabelSelectionInfo*)
-XM_TYPE(GtkMessageDialog_, GtkMessageDialog*)
-XM_TYPE(GtkNotebookPage_, GtkNotebookPage*)
-XM_TYPE(GtkRangeLayout_, GtkRangeLayout*)
-XM_TYPE(GtkRangeStepTimer_, GtkRangeStepTimer*)
-XM_TYPE(GtkRulerMetric_, GtkRulerMetric*)
-XM_TYPE(GData_, GData*)
-XM_TYPE(GtkRcContext_, GtkRcContext*)
-XM_TYPE(GHashTable_, GHashTable*)
-XM_TYPE(GdkGC__, GdkGC**)
-XM_TYPE(GdkPixmap__, GdkPixmap**)
-XM_TYPE(GArray_, GArray*)
-XM_TYPE(GtkTableRowCol_, GtkTableRowCol*)
-XM_TYPE(GtkTextBTree_, GtkTextBTree*)
-XM_TYPE(GtkTextLogAttrCache_, GtkTextLogAttrCache*)
+XM_TYPE_PTR(GdkDeviceAxis_, GdkDeviceAxis*)
+XM_TYPE_PTR(GdkDeviceKey_, GdkDeviceKey*)
+XM_TYPE_PTR(GdkWindowObject_, GdkWindowObject*)
+XM_TYPE_PTR(GtkCellRendererPixbuf_, GtkCellRendererPixbuf*)
+XM_TYPE_PTR(GtkColorSelectionDialog_, GtkColorSelectionDialog*)
+XM_TYPE_PTR(GtkDrawingArea_, GtkDrawingArea*)
+XM_TYPE_PTR(GtkGammaCurve_, GtkGammaCurve*)
+XM_TYPE_PTR(GtkInputDialog_, GtkInputDialog*)
+XM_TYPE_PTR(GtkInvisible_, GtkInvisible*)
+XM_TYPE(GtkItemFactoryCallback, GtkItemFactoryCallback)
+XM_TYPE_PTR(GtkLabelSelectionInfo_, GtkLabelSelectionInfo*)
+XM_TYPE_PTR(GtkMessageDialog_, GtkMessageDialog*)
+XM_TYPE_PTR(GtkNotebookPage_, GtkNotebookPage*)
+XM_TYPE_PTR(GtkRangeLayout_, GtkRangeLayout*)
+XM_TYPE_PTR(GtkRangeStepTimer_, GtkRangeStepTimer*)
+XM_TYPE_PTR(GtkRulerMetric_, GtkRulerMetric*)
+XM_TYPE_PTR(GData_, GData*)
+XM_TYPE_PTR(GtkRcContext_, GtkRcContext*)
+XM_TYPE_PTR(GHashTable_, GHashTable*)
+XM_TYPE_PTR(GdkGC__, GdkGC**)
+XM_TYPE_PTR(GdkPixmap__, GdkPixmap**)
+XM_TYPE_PTR(GArray_, GArray*)
+XM_TYPE_PTR(GtkTableRowCol_, GtkTableRowCol*)
+XM_TYPE_PTR(GtkTextBTree_, GtkTextBTree*)
+XM_TYPE_PTR(GtkTextLogAttrCache_, GtkTextLogAttrCache*)
 static XEN XEN_GdkColormap__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GdkColormap_", val)));}
 static XEN XEN_GdkDragContext__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GdkDragContext_", val)));}
 static XEN XEN_GdkDrawable__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GdkDrawable_", val)));}
@@ -824,6 +828,10 @@ static XEN XEN_GdkKeymap__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GdkKeymap_
 static XEN XEN_GdkPixmap__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GdkPixmap_", val)));}
 static XEN XEN_GdkVisual__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GdkVisual_", val)));}
 static XEN XEN_GdkWindow__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GdkWindow_", val)));}
+static XEN XEN_GdkPixbuf__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GdkPixbuf_", val)));}
+static XEN XEN_GdkPixbufAnimation__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GdkPixbufAnimation_", val)));}
+static XEN XEN_GdkPixbufAnimationIter__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GdkPixbufAnimationIter_", val)));}
+static XEN XEN_GdkPixbufLoader__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GdkPixbufLoader_", val)));}
 static XEN XEN_GtkVBox__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkVBox_", val)));}
 static XEN XEN_GtkAccelGroup__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkAccelGroup_", val)));}
 static XEN XEN_GtkAccelLabel__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkAccelLabel_", val)));}
@@ -947,10 +955,10 @@ static XEN XEN_PangoFontMap__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("PangoFo
 static XEN XEN_PangoLayout__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("PangoLayout_", val)));}
 
 #if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND
-XM_TYPE(PangoEngineInfo_, PangoEngineInfo*)
-XM_TYPE(PangoEngine_, PangoEngine*)
-XM_TYPE(PangoFontFamily_, PangoFontFamily*)
-XM_TYPE(PangoFontFace__, PangoFontFace**)
+XM_TYPE_PTR(PangoEngineInfo_, PangoEngineInfo*)
+XM_TYPE_PTR(PangoEngine_, PangoEngine*)
+XM_TYPE_PTR(PangoFontFamily_, PangoFontFamily*)
+XM_TYPE_PTR(PangoFontFace__, PangoFontFace**)
 static XEN XEN_PangoEngineInfo__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("PangoEngineInfo_", val)));}
 static XEN XEN_PangoEngine__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("PangoEngine_", val)));}
 static XEN XEN_PangoFontFamily__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("PangoFontFamily_", val)));}
@@ -959,62 +967,60 @@ static XEN XEN_PangoFontFace___p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("Pango
 
 
 /* -------------------- deprecated types -------------------- */
-#if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED)))
-XM_TYPE(gulong_, gulong*)
-XM_TYPE(GdkFont_, GdkFont*)
+#if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED))) && (!(defined(GDK_PIXBUF_DISABLE_DEPRECATED)))
+XM_TYPE_PTR(gulong_, gulong*)
+XM_TYPE_PTR(GdkFont_, GdkFont*)
 #define C_TO_XEN_gchar(Arg) C_TO_XEN_CHAR(Arg)
 #define XEN_TO_C_gchar(Arg) XEN_TO_C_CHAR(Arg)
 #define XEN_gchar_P(Arg) XEN_CHAR_P(Arg)
-#define C_TO_XEN_GdkWChar(Arg) C_TO_XEN_ULONG(Arg)
-#define XEN_TO_C_GdkWChar(Arg) XEN_TO_C_ULONG(Arg)
-#define XEN_GdkWChar_P(Arg) XEN_ULONG_P(Arg)
-XM_TYPE_UNCHECKED(GdkDestroyNotify, GdkDestroyNotify)
-XM_TYPE(GtkCList_, GtkCList*)
+XM_TYPE(GdkWChar, GdkWChar)
+XM_TYPE(GdkDestroyNotify, GdkDestroyNotify)
+XM_TYPE_PTR(GtkCList_, GtkCList*)
 #define C_TO_XEN_GtkVisibility(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkVisibility(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkVisibility_P(Arg) XEN_INTEGER_P(Arg)
 #define C_TO_XEN_GtkCellType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkCellType(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkCellType_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE_UNCHECKED(GtkCListCompareFunc, GtkCListCompareFunc)
-XM_TYPE(GList__, GList**)
-XM_TYPE(GtkCTree_, GtkCTree*)
-XM_TYPE(GtkCTreeNode_, GtkCTreeNode*)
-XM_TYPE(GNode_, GNode*)
-XM_TYPE_UNCHECKED(GtkCTreeGNodeFunc, GtkCTreeGNodeFunc)
-XM_TYPE_UNCHECKED(GtkCTreeFunc, GtkCTreeFunc)
-XM_TYPE(GtkCTreeRow_, GtkCTreeRow*)
-XM_TYPE_UNCHECKED(GCompareFunc, GCompareFunc)
+XM_TYPE(GtkCListCompareFunc, GtkCListCompareFunc)
+XM_TYPE_PTR(GList__, GList**)
+XM_TYPE_PTR(GtkCTree_, GtkCTree*)
+XM_TYPE_PTR(GtkCTreeNode_, GtkCTreeNode*)
+XM_TYPE_PTR(GNode_, GNode*)
+XM_TYPE(GtkCTreeGNodeFunc, GtkCTreeGNodeFunc)
+XM_TYPE(GtkCTreeFunc, GtkCTreeFunc)
+XM_TYPE_PTR(GtkCTreeRow_, GtkCTreeRow*)
+XM_TYPE(GCompareFunc, GCompareFunc)
 #define C_TO_XEN_GtkCTreeLineStyle(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkCTreeLineStyle(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkCTreeLineStyle_P(Arg) XEN_INTEGER_P(Arg)
 #define C_TO_XEN_GtkCTreeExpanderStyle(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkCTreeExpanderStyle(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkCTreeExpanderStyle_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE_UNCHECKED(GtkCTreeCompareDragFunc, GtkCTreeCompareDragFunc)
-XM_TYPE(GtkMenuEntry_, GtkMenuEntry*)
-XM_TYPE(GtkList_, GtkList*)
+XM_TYPE(GtkCTreeCompareDragFunc, GtkCTreeCompareDragFunc)
+XM_TYPE_PTR(GtkMenuEntry_, GtkMenuEntry*)
+XM_TYPE_PTR(GtkList_, GtkList*)
 #define C_TO_XEN_GtkScrollType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkScrollType(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkScrollType_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GtkListItem_, GtkListItem*)
-XM_TYPE(GtkOldEditable_, GtkOldEditable*)
-XM_TYPE(GtkPixmap_, GtkPixmap*)
-XM_TYPE(GtkPreview_, GtkPreview*)
+XM_TYPE_PTR(GtkListItem_, GtkListItem*)
+XM_TYPE_PTR(GtkOldEditable_, GtkOldEditable*)
+XM_TYPE_PTR(GtkPixmap_, GtkPixmap*)
+XM_TYPE_PTR(GtkPreview_, GtkPreview*)
 #define C_TO_XEN_GtkPreviewType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkPreviewType(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkPreviewType_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GtkPreviewInfo_, GtkPreviewInfo*)
+XM_TYPE_PTR(GtkPreviewInfo_, GtkPreviewInfo*)
 #define C_TO_XEN_GtkProgressBarStyle(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkProgressBarStyle(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkProgressBarStyle_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GtkProgress_, GtkProgress*)
+XM_TYPE_PTR(GtkProgress_, GtkProgress*)
 #define C_TO_XEN_GtkSignalRunType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkSignalRunType(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkSignalRunType_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE_UNCHECKED(GtkSignalMarshaller, GtkSignalMarshaller)
-XM_TYPE(GtkType_, GtkType*)
-XM_TYPE(GtkTipsQuery_, GtkTipsQuery*)
+XM_TYPE(GtkSignalMarshaller, GtkSignalMarshaller)
+XM_TYPE_PTR(GtkType_, GtkType*)
+XM_TYPE_PTR(GtkTipsQuery_, GtkTipsQuery*)
 static XEN XEN_gulong__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("gulong_", val)));}
 static XEN XEN_GdkFont__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GdkFont_", val)));}
 static XEN XEN_gchar_p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("gchar", val)));}
@@ -1056,12 +1062,12 @@ static XEN XEN_GtkTipsQuery__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkTips
 
 /* -------------------- obsolete types -------------------- */
 #if GDK_ENABLE_BROKEN && GTK_ENABLE_BROKEN
-XM_TYPE(GtkText_, GtkText*)
-XM_TYPE(GtkTree_, GtkTree*)
+XM_TYPE_PTR(GtkText_, GtkText*)
+XM_TYPE_PTR(GtkTree_, GtkTree*)
 #define C_TO_XEN_GtkTreeViewMode(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkTreeViewMode(Arg) XEN_TO_C_INT(Arg)
 #define XEN_GtkTreeViewMode_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE(GtkTreeItem_, GtkTreeItem*)
+XM_TYPE_PTR(GtkTreeItem_, GtkTreeItem*)
 static XEN XEN_GtkText__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkText_", val)));}
 static XEN XEN_GtkTree__p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkTree_", val)));}
 static XEN XEN_GtkTreeViewMode_p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P("GtkTreeViewMode", val)));}
@@ -4838,24 +4844,15 @@ static XEN gxg_gdk_window_lookup(XEN anid)
   return(C_TO_XEN_GdkWindow_(gdk_window_lookup(XEN_TO_C_GdkNativeWindow(anid))));
 }
 
-static XEN gxg_gdk_window_get_deskrelative_origin(XEN window, XEN x, XEN y)
-{
-  #define H_gdk_window_get_deskrelative_origin "gboolean gdk_window_get_deskrelative_origin(GdkWindow* window, \
-gint* x, gint* y)"
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_get_deskrelative_origin", "GdkWindow*");
-  XEN_ASSERT_TYPE(XEN_gint__P(x), x, 2, "gdk_window_get_deskrelative_origin", "gint*");
-  XEN_ASSERT_TYPE(XEN_gint__P(y), y, 3, "gdk_window_get_deskrelative_origin", "gint*");
-  return(C_TO_XEN_gboolean(gdk_window_get_deskrelative_origin(XEN_TO_C_GdkWindow_(window), XEN_TO_C_gint_(x), XEN_TO_C_gint_(y))));
-}
-
 static XEN gxg_gdk_window_get_root_origin(XEN window, XEN x, XEN y)
 {
-  #define H_gdk_window_get_root_origin "void gdk_window_get_root_origin(GdkWindow* window, gint* x, gint* y)"
+  #define H_gdk_window_get_root_origin "void gdk_window_get_root_origin(GdkWindow* window, gint* [x], \
+gint* [y])"
+  gint ref_x;
+  gint ref_y;
   XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_get_root_origin", "GdkWindow*");
-  XEN_ASSERT_TYPE(XEN_gint__P(x), x, 2, "gdk_window_get_root_origin", "gint*");
-  XEN_ASSERT_TYPE(XEN_gint__P(y), y, 3, "gdk_window_get_root_origin", "gint*");
-  gdk_window_get_root_origin(XEN_TO_C_GdkWindow_(window), XEN_TO_C_gint_(x), XEN_TO_C_gint_(y));
-  return(XEN_FALSE);
+  gdk_window_get_root_origin(XEN_TO_C_GdkWindow_(window), &ref_x, &ref_y);
+  return(XEN_LIST_2(C_TO_XEN_gint(ref_x), C_TO_XEN_gint(ref_y)));
 }
 
 static XEN gxg_gdk_window_get_frame_extents(XEN window, XEN rect)
@@ -5197,6 +5194,206 @@ GdkDrawable** [real_drawable], gint* [x_offset], gint* [y_offset])"
   return(XEN_LIST_3(C_TO_XEN_GdkDrawable_(ref_real_drawable), C_TO_XEN_gint(ref_x_offset), C_TO_XEN_gint(ref_y_offset)));
 }
 
+static XEN gxg_gtk_window_group_add_window(XEN window_group, XEN window)
+{
+  #define H_gtk_window_group_add_window "void gtk_window_group_add_window(GtkWindowGroup* window_group, \
+GtkWindow* window)"
+  XEN_ASSERT_TYPE(XEN_GtkWindowGroup__P(window_group), window_group, 1, "gtk_window_group_add_window", "GtkWindowGroup*");
+  XEN_ASSERT_TYPE(XEN_GtkWindow__P(window), window, 2, "gtk_window_group_add_window", "GtkWindow*");
+  gtk_window_group_add_window(XEN_TO_C_GtkWindowGroup_(window_group), XEN_TO_C_GtkWindow_(window));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_window_group_remove_window(XEN window_group, XEN window)
+{
+  #define H_gtk_window_group_remove_window "void gtk_window_group_remove_window(GtkWindowGroup* window_group, \
+GtkWindow* window)"
+  XEN_ASSERT_TYPE(XEN_GtkWindowGroup__P(window_group), window_group, 1, "gtk_window_group_remove_window", "GtkWindowGroup*");
+  XEN_ASSERT_TYPE(XEN_GtkWindow__P(window), window, 2, "gtk_window_group_remove_window", "GtkWindow*");
+  gtk_window_group_remove_window(XEN_TO_C_GtkWindowGroup_(window_group), XEN_TO_C_GtkWindow_(window));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_window_remove_embedded_xid(XEN window, XEN xid)
+{
+  #define H_gtk_window_remove_embedded_xid "void gtk_window_remove_embedded_xid(GtkWindow* window, guint xid)"
+  XEN_ASSERT_TYPE(XEN_GtkWindow__P(window), window, 1, "gtk_window_remove_embedded_xid", "GtkWindow*");
+  XEN_ASSERT_TYPE(XEN_guint_P(xid), xid, 2, "gtk_window_remove_embedded_xid", "guint");
+  gtk_window_remove_embedded_xid(XEN_TO_C_GtkWindow_(window), XEN_TO_C_guint(xid));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_window_add_embedded_xid(XEN window, XEN xid)
+{
+  #define H_gtk_window_add_embedded_xid "void gtk_window_add_embedded_xid(GtkWindow* window, guint xid)"
+  XEN_ASSERT_TYPE(XEN_GtkWindow__P(window), window, 1, "gtk_window_add_embedded_xid", "GtkWindow*");
+  XEN_ASSERT_TYPE(XEN_guint_P(xid), xid, 2, "gtk_window_add_embedded_xid", "guint");
+  gtk_window_add_embedded_xid(XEN_TO_C_GtkWindow_(window), XEN_TO_C_guint(xid));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gdk_window_set_type_hint(XEN window, XEN hint)
+{
+  #define H_gdk_window_set_type_hint "void gdk_window_set_type_hint(GdkWindow* window, GdkWindowTypeHint hint)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_set_type_hint", "GdkWindow*");
+  XEN_ASSERT_TYPE(XEN_GdkWindowTypeHint_P(hint), hint, 2, "gdk_window_set_type_hint", "GdkWindowTypeHint");
+  gdk_window_set_type_hint(XEN_TO_C_GdkWindow_(window), XEN_TO_C_GdkWindowTypeHint(hint));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gdk_window_set_modal_hint(XEN window, XEN modal)
+{
+  #define H_gdk_window_set_modal_hint "void gdk_window_set_modal_hint(GdkWindow* window, gboolean modal)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_set_modal_hint", "GdkWindow*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(modal), modal, 2, "gdk_window_set_modal_hint", "gboolean");
+  gdk_window_set_modal_hint(XEN_TO_C_GdkWindow_(window), XEN_TO_C_gboolean(modal));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gdk_window_set_geometry_hints(XEN window, XEN geometry, XEN geom_mask)
+{
+  #define H_gdk_window_set_geometry_hints "void gdk_window_set_geometry_hints(GdkWindow* window, GdkGeometry* geometry, \
+GdkWindowHints geom_mask)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_set_geometry_hints", "GdkWindow*");
+  XEN_ASSERT_TYPE(XEN_GdkGeometry__P(geometry), geometry, 2, "gdk_window_set_geometry_hints", "GdkGeometry*");
+  XEN_ASSERT_TYPE(XEN_GdkWindowHints_P(geom_mask), geom_mask, 3, "gdk_window_set_geometry_hints", "GdkWindowHints");
+  gdk_window_set_geometry_hints(XEN_TO_C_GdkWindow_(window), XEN_TO_C_GdkGeometry_(geometry), XEN_TO_C_GdkWindowHints(geom_mask));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gdk_set_sm_client_id(XEN sm_client_id)
+{
+  #define H_gdk_set_sm_client_id "void gdk_set_sm_client_id(gchar* sm_client_id)"
+  XEN_ASSERT_TYPE(XEN_gchar__P(sm_client_id), sm_client_id, 1, "gdk_set_sm_client_id", "gchar*");
+  gdk_set_sm_client_id(XEN_TO_C_gchar_(sm_client_id));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gdk_window_begin_paint_rect(XEN window, XEN rectangle)
+{
+  #define H_gdk_window_begin_paint_rect "void gdk_window_begin_paint_rect(GdkWindow* window, GdkRectangle* rectangle)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_begin_paint_rect", "GdkWindow*");
+  XEN_ASSERT_TYPE(XEN_GdkRectangle__P(rectangle), rectangle, 2, "gdk_window_begin_paint_rect", "GdkRectangle*");
+  gdk_window_begin_paint_rect(XEN_TO_C_GdkWindow_(window), XEN_TO_C_GdkRectangle_(rectangle));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gdk_window_begin_paint_region(XEN window, XEN region)
+{
+  #define H_gdk_window_begin_paint_region "void gdk_window_begin_paint_region(GdkWindow* window, GdkRegion* region)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_begin_paint_region", "GdkWindow*");
+  XEN_ASSERT_TYPE(XEN_GdkRegion__P(region), region, 2, "gdk_window_begin_paint_region", "GdkRegion*");
+  gdk_window_begin_paint_region(XEN_TO_C_GdkWindow_(window), XEN_TO_C_GdkRegion_(region));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gdk_window_end_paint(XEN window)
+{
+  #define H_gdk_window_end_paint "void gdk_window_end_paint(GdkWindow* window)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_end_paint", "GdkWindow*");
+  gdk_window_end_paint(XEN_TO_C_GdkWindow_(window));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gdk_window_set_title(XEN window, XEN title)
+{
+  #define H_gdk_window_set_title "void gdk_window_set_title(GdkWindow* window, gchar* title)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_set_title", "GdkWindow*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(title), title, 2, "gdk_window_set_title", "gchar*");
+  gdk_window_set_title(XEN_TO_C_GdkWindow_(window), XEN_TO_C_gchar_(title));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gdk_window_set_role(XEN window, XEN role)
+{
+  #define H_gdk_window_set_role "void gdk_window_set_role(GdkWindow* window, gchar* role)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_set_role", "GdkWindow*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(role), role, 2, "gdk_window_set_role", "gchar*");
+  gdk_window_set_role(XEN_TO_C_GdkWindow_(window), XEN_TO_C_gchar_(role));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gdk_window_set_transient_for(XEN window, XEN parent)
+{
+  #define H_gdk_window_set_transient_for "void gdk_window_set_transient_for(GdkWindow* window, GdkWindow* parent)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_set_transient_for", "GdkWindow*");
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(parent), parent, 2, "gdk_window_set_transient_for", "GdkWindow*");
+  gdk_window_set_transient_for(XEN_TO_C_GdkWindow_(window), XEN_TO_C_GdkWindow_(parent));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gdk_window_set_background(XEN window, XEN color)
+{
+  #define H_gdk_window_set_background "void gdk_window_set_background(GdkWindow* window, GdkColor* color)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_set_background", "GdkWindow*");
+  XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 2, "gdk_window_set_background", "GdkColor*");
+  gdk_window_set_background(XEN_TO_C_GdkWindow_(window), XEN_TO_C_GdkColor_(color));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gdk_window_set_back_pixmap(XEN window, XEN pixmap, XEN parent_relative)
+{
+  #define H_gdk_window_set_back_pixmap "void gdk_window_set_back_pixmap(GdkWindow* window, GdkPixmap* pixmap, \
+gboolean parent_relative)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_set_back_pixmap", "GdkWindow*");
+  XEN_ASSERT_TYPE(XEN_GdkPixmap__P(pixmap), pixmap, 2, "gdk_window_set_back_pixmap", "GdkPixmap*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(parent_relative), parent_relative, 3, "gdk_window_set_back_pixmap", "gboolean");
+  gdk_window_set_back_pixmap(XEN_TO_C_GdkWindow_(window), XEN_TO_C_GdkPixmap_(pixmap), XEN_TO_C_gboolean(parent_relative));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gdk_window_set_cursor(XEN window, XEN cursor)
+{
+  #define H_gdk_window_set_cursor "void gdk_window_set_cursor(GdkWindow* window, GdkCursor* cursor)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_set_cursor", "GdkWindow*");
+  XEN_ASSERT_TYPE(XEN_GdkCursor__P(cursor), cursor, 2, "gdk_window_set_cursor", "GdkCursor*");
+  gdk_window_set_cursor(XEN_TO_C_GdkWindow_(window), XEN_TO_C_GdkCursor_(cursor));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gdk_window_get_user_data(XEN window, XEN data)
+{
+  #define H_gdk_window_get_user_data "void gdk_window_get_user_data(GdkWindow* window, gpointer* [data])"
+  gpointer ref_data;
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_get_user_data", "GdkWindow*");
+  gdk_window_get_user_data(XEN_TO_C_GdkWindow_(window), &ref_data);
+  return(XEN_LIST_1(C_TO_XEN_gpointer(ref_data)));
+}
+
+static XEN gxg_gdk_window_get_geometry(XEN window, XEN x, XEN y, XEN width, XEN height, XEN depth)
+{
+  #define H_gdk_window_get_geometry "void gdk_window_get_geometry(GdkWindow* window, gint* x, gint* y, \
+gint* width, gint* height, gint* depth)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_get_geometry", "GdkWindow*");
+  XEN_ASSERT_TYPE(XEN_gint__P(x), x, 2, "gdk_window_get_geometry", "gint*");
+  XEN_ASSERT_TYPE(XEN_gint__P(y), y, 3, "gdk_window_get_geometry", "gint*");
+  XEN_ASSERT_TYPE(XEN_gint__P(width), width, 4, "gdk_window_get_geometry", "gint*");
+  XEN_ASSERT_TYPE(XEN_gint__P(height), height, 5, "gdk_window_get_geometry", "gint*");
+  XEN_ASSERT_TYPE(XEN_gint__P(depth), depth, 6, "gdk_window_get_geometry", "gint*");
+  gdk_window_get_geometry(XEN_TO_C_GdkWindow_(window), XEN_TO_C_gint_(x), XEN_TO_C_gint_(y), XEN_TO_C_gint_(width), XEN_TO_C_gint_(height), 
+                          XEN_TO_C_gint_(depth));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gdk_window_get_position(XEN window, XEN x, XEN y)
+{
+  #define H_gdk_window_get_position "void gdk_window_get_position(GdkWindow* window, gint* [x], gint* [y])"
+  gint ref_x;
+  gint ref_y;
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_get_position", "GdkWindow*");
+  gdk_window_get_position(XEN_TO_C_GdkWindow_(window), &ref_x, &ref_y);
+  return(XEN_LIST_2(C_TO_XEN_gint(ref_x), C_TO_XEN_gint(ref_y)));
+}
+
+static XEN gxg_gdk_window_get_origin(XEN window, XEN x, XEN y)
+{
+  #define H_gdk_window_get_origin "gint gdk_window_get_origin(GdkWindow* window, gint* x, gint* y)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_get_origin", "GdkWindow*");
+  XEN_ASSERT_TYPE(XEN_gint__P(x), x, 2, "gdk_window_get_origin", "gint*");
+  XEN_ASSERT_TYPE(XEN_gint__P(y), y, 3, "gdk_window_get_origin", "gint*");
+  return(C_TO_XEN_gint(gdk_window_get_origin(XEN_TO_C_GdkWindow_(window), XEN_TO_C_gint_(x), XEN_TO_C_gint_(y))));
+}
+
 static XEN gxg_gdk_set_pointer_hooks(XEN new_hooks)
 {
   #define H_gdk_set_pointer_hooks "GdkPointerHooks* gdk_set_pointer_hooks(GdkPointerHooks* new_hooks)"
@@ -5208,6 +5405,586 @@ static XEN gxg_gdk_get_default_root_window(void)
 {
   #define H_gdk_get_default_root_window "GdkWindow* gdk_get_default_root_window( void)"
   return(C_TO_XEN_GdkWindow_(gdk_get_default_root_window()));
+}
+
+static XEN gxg_gdk_pixbuf_error_quark(void)
+{
+  #define H_gdk_pixbuf_error_quark "GQuark gdk_pixbuf_error_quark( void)"
+  return(C_TO_XEN_GQuark(gdk_pixbuf_error_quark()));
+}
+
+static XEN gxg_gdk_pixbuf_get_type(void)
+{
+  #define H_gdk_pixbuf_get_type "GType gdk_pixbuf_get_type( void)"
+  return(C_TO_XEN_GType(gdk_pixbuf_get_type()));
+}
+
+static XEN gxg_gdk_pixbuf_get_colorspace(XEN pixbuf)
+{
+  #define H_gdk_pixbuf_get_colorspace "GdkColorspace gdk_pixbuf_get_colorspace(GdkPixbuf* pixbuf)"
+  XEN_ASSERT_TYPE(XEN_GdkPixbuf__P(pixbuf), pixbuf, 1, "gdk_pixbuf_get_colorspace", "GdkPixbuf*");
+  return(C_TO_XEN_GdkColorspace(gdk_pixbuf_get_colorspace(XEN_TO_C_GdkPixbuf_(pixbuf))));
+}
+
+static XEN gxg_gdk_pixbuf_get_n_channels(XEN pixbuf)
+{
+  #define H_gdk_pixbuf_get_n_channels "int gdk_pixbuf_get_n_channels(GdkPixbuf* pixbuf)"
+  XEN_ASSERT_TYPE(XEN_GdkPixbuf__P(pixbuf), pixbuf, 1, "gdk_pixbuf_get_n_channels", "GdkPixbuf*");
+  return(C_TO_XEN_int(gdk_pixbuf_get_n_channels(XEN_TO_C_GdkPixbuf_(pixbuf))));
+}
+
+static XEN gxg_gdk_pixbuf_get_has_alpha(XEN pixbuf)
+{
+  #define H_gdk_pixbuf_get_has_alpha "gboolean gdk_pixbuf_get_has_alpha(GdkPixbuf* pixbuf)"
+  XEN_ASSERT_TYPE(XEN_GdkPixbuf__P(pixbuf), pixbuf, 1, "gdk_pixbuf_get_has_alpha", "GdkPixbuf*");
+  return(C_TO_XEN_gboolean(gdk_pixbuf_get_has_alpha(XEN_TO_C_GdkPixbuf_(pixbuf))));
+}
+
+static XEN gxg_gdk_pixbuf_get_bits_per_sample(XEN pixbuf)
+{
+  #define H_gdk_pixbuf_get_bits_per_sample "int gdk_pixbuf_get_bits_per_sample(GdkPixbuf* pixbuf)"
+  XEN_ASSERT_TYPE(XEN_GdkPixbuf__P(pixbuf), pixbuf, 1, "gdk_pixbuf_get_bits_per_sample", "GdkPixbuf*");
+  return(C_TO_XEN_int(gdk_pixbuf_get_bits_per_sample(XEN_TO_C_GdkPixbuf_(pixbuf))));
+}
+
+static XEN gxg_gdk_pixbuf_get_pixels(XEN pixbuf)
+{
+  #define H_gdk_pixbuf_get_pixels "guchar* gdk_pixbuf_get_pixels(GdkPixbuf* pixbuf)"
+  XEN_ASSERT_TYPE(XEN_GdkPixbuf__P(pixbuf), pixbuf, 1, "gdk_pixbuf_get_pixels", "GdkPixbuf*");
+  return(C_TO_XEN_guchar_(gdk_pixbuf_get_pixels(XEN_TO_C_GdkPixbuf_(pixbuf))));
+}
+
+static XEN gxg_gdk_pixbuf_get_width(XEN pixbuf)
+{
+  #define H_gdk_pixbuf_get_width "int gdk_pixbuf_get_width(GdkPixbuf* pixbuf)"
+  XEN_ASSERT_TYPE(XEN_GdkPixbuf__P(pixbuf), pixbuf, 1, "gdk_pixbuf_get_width", "GdkPixbuf*");
+  return(C_TO_XEN_int(gdk_pixbuf_get_width(XEN_TO_C_GdkPixbuf_(pixbuf))));
+}
+
+static XEN gxg_gdk_pixbuf_get_height(XEN pixbuf)
+{
+  #define H_gdk_pixbuf_get_height "int gdk_pixbuf_get_height(GdkPixbuf* pixbuf)"
+  XEN_ASSERT_TYPE(XEN_GdkPixbuf__P(pixbuf), pixbuf, 1, "gdk_pixbuf_get_height", "GdkPixbuf*");
+  return(C_TO_XEN_int(gdk_pixbuf_get_height(XEN_TO_C_GdkPixbuf_(pixbuf))));
+}
+
+static XEN gxg_gdk_pixbuf_get_rowstride(XEN pixbuf)
+{
+  #define H_gdk_pixbuf_get_rowstride "int gdk_pixbuf_get_rowstride(GdkPixbuf* pixbuf)"
+  XEN_ASSERT_TYPE(XEN_GdkPixbuf__P(pixbuf), pixbuf, 1, "gdk_pixbuf_get_rowstride", "GdkPixbuf*");
+  return(C_TO_XEN_int(gdk_pixbuf_get_rowstride(XEN_TO_C_GdkPixbuf_(pixbuf))));
+}
+
+static XEN gxg_gdk_pixbuf_new(XEN colorspace, XEN has_alpha, XEN bits_per_sample, XEN width, XEN height)
+{
+  #define H_gdk_pixbuf_new "GdkPixbuf* gdk_pixbuf_new(GdkColorspace colorspace, gboolean has_alpha, int bits_per_sample, \
+int width, int height)"
+  XEN_ASSERT_TYPE(XEN_GdkColorspace_P(colorspace), colorspace, 1, "gdk_pixbuf_new", "GdkColorspace");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(has_alpha), has_alpha, 2, "gdk_pixbuf_new", "gboolean");
+  XEN_ASSERT_TYPE(XEN_int_P(bits_per_sample), bits_per_sample, 3, "gdk_pixbuf_new", "int");
+  XEN_ASSERT_TYPE(XEN_int_P(width), width, 4, "gdk_pixbuf_new", "int");
+  XEN_ASSERT_TYPE(XEN_int_P(height), height, 5, "gdk_pixbuf_new", "int");
+  return(C_TO_XEN_GdkPixbuf_(gdk_pixbuf_new(XEN_TO_C_GdkColorspace(colorspace), XEN_TO_C_gboolean(has_alpha), XEN_TO_C_int(bits_per_sample), 
+                                            XEN_TO_C_int(width), XEN_TO_C_int(height))));
+}
+
+static XEN gxg_gdk_pixbuf_copy(XEN pixbuf)
+{
+  #define H_gdk_pixbuf_copy "GdkPixbuf* gdk_pixbuf_copy(GdkPixbuf* pixbuf)"
+  XEN_ASSERT_TYPE(XEN_GdkPixbuf__P(pixbuf), pixbuf, 1, "gdk_pixbuf_copy", "GdkPixbuf*");
+  return(C_TO_XEN_GdkPixbuf_(gdk_pixbuf_copy(XEN_TO_C_GdkPixbuf_(pixbuf))));
+}
+
+static XEN gxg_gdk_pixbuf_new_subpixbuf(XEN src_pixbuf, XEN src_x, XEN src_y, XEN width, XEN height)
+{
+  #define H_gdk_pixbuf_new_subpixbuf "GdkPixbuf* gdk_pixbuf_new_subpixbuf(GdkPixbuf* src_pixbuf, int src_x, \
+int src_y, int width, int height)"
+  XEN_ASSERT_TYPE(XEN_GdkPixbuf__P(src_pixbuf), src_pixbuf, 1, "gdk_pixbuf_new_subpixbuf", "GdkPixbuf*");
+  XEN_ASSERT_TYPE(XEN_int_P(src_x), src_x, 2, "gdk_pixbuf_new_subpixbuf", "int");
+  XEN_ASSERT_TYPE(XEN_int_P(src_y), src_y, 3, "gdk_pixbuf_new_subpixbuf", "int");
+  XEN_ASSERT_TYPE(XEN_int_P(width), width, 4, "gdk_pixbuf_new_subpixbuf", "int");
+  XEN_ASSERT_TYPE(XEN_int_P(height), height, 5, "gdk_pixbuf_new_subpixbuf", "int");
+  return(C_TO_XEN_GdkPixbuf_(gdk_pixbuf_new_subpixbuf(XEN_TO_C_GdkPixbuf_(src_pixbuf), XEN_TO_C_int(src_x), XEN_TO_C_int(src_y), 
+                                                      XEN_TO_C_int(width), XEN_TO_C_int(height))));
+}
+
+static XEN gxg_gdk_pixbuf_new_from_file(XEN filename, XEN error)
+{
+  #define H_gdk_pixbuf_new_from_file "GdkPixbuf* gdk_pixbuf_new_from_file(char* filename, GError** [error])"
+  GError* ref_error;
+  XEN_ASSERT_TYPE(XEN_char__P(filename), filename, 1, "gdk_pixbuf_new_from_file", "char*");
+  {
+    XEN result = XEN_FALSE;
+    result = C_TO_XEN_GdkPixbuf_(gdk_pixbuf_new_from_file(XEN_TO_C_char_(filename), &ref_error));
+    return(XEN_LIST_2(result, C_TO_XEN_GError_(ref_error)));
+   }
+}
+
+static XEN gxg_gdk_pixbuf_new_from_data(XEN data, XEN colorspace, XEN has_alpha, XEN bits_per_sample, XEN width, XEN height, XEN rowstride, XEN destroy_fn, XEN destroy_fn_data)
+{
+  #define H_gdk_pixbuf_new_from_data "GdkPixbuf* gdk_pixbuf_new_from_data(guchar* data, GdkColorspace colorspace, \
+gboolean has_alpha, int bits_per_sample, int width, int height, int rowstride, GdkPixbufDestroyNotify destroy_fn, \
+gpointer destroy_fn_data)"
+  XEN_ASSERT_TYPE(XEN_guchar__P(data), data, 1, "gdk_pixbuf_new_from_data", "guchar*");
+  XEN_ASSERT_TYPE(XEN_GdkColorspace_P(colorspace), colorspace, 2, "gdk_pixbuf_new_from_data", "GdkColorspace");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(has_alpha), has_alpha, 3, "gdk_pixbuf_new_from_data", "gboolean");
+  XEN_ASSERT_TYPE(XEN_int_P(bits_per_sample), bits_per_sample, 4, "gdk_pixbuf_new_from_data", "int");
+  XEN_ASSERT_TYPE(XEN_int_P(width), width, 5, "gdk_pixbuf_new_from_data", "int");
+  XEN_ASSERT_TYPE(XEN_int_P(height), height, 6, "gdk_pixbuf_new_from_data", "int");
+  XEN_ASSERT_TYPE(XEN_int_P(rowstride), rowstride, 7, "gdk_pixbuf_new_from_data", "int");
+  XEN_ASSERT_TYPE(XEN_GdkPixbufDestroyNotify_P(destroy_fn), destroy_fn, 8, "gdk_pixbuf_new_from_data", "GdkPixbufDestroyNotify");
+  XEN_ASSERT_TYPE(XEN_gpointer_P(destroy_fn_data), destroy_fn_data, 9, "gdk_pixbuf_new_from_data", "gpointer");
+  return(C_TO_XEN_GdkPixbuf_(gdk_pixbuf_new_from_data(XEN_TO_C_guchar_(data), XEN_TO_C_GdkColorspace(colorspace), XEN_TO_C_gboolean(has_alpha), 
+                                                      XEN_TO_C_int(bits_per_sample), XEN_TO_C_int(width), XEN_TO_C_int(height), 
+                                                      XEN_TO_C_int(rowstride), XEN_TO_C_GdkPixbufDestroyNotify(destroy_fn), 
+                                                      XEN_TO_C_gpointer(destroy_fn_data))));
+}
+
+static XEN gxg_gdk_pixbuf_new_from_xpm_data(XEN data)
+{
+  #define H_gdk_pixbuf_new_from_xpm_data "GdkPixbuf* gdk_pixbuf_new_from_xpm_data(char** data)"
+  XEN_ASSERT_TYPE(XEN_char___P(data), data, 1, "gdk_pixbuf_new_from_xpm_data", "char**");
+  return(C_TO_XEN_GdkPixbuf_(gdk_pixbuf_new_from_xpm_data((const char**)XEN_TO_C_char__(data))));
+}
+
+static XEN gxg_gdk_pixbuf_new_from_inline(XEN data_length, XEN data, XEN copy_pixels, XEN error)
+{
+  #define H_gdk_pixbuf_new_from_inline "GdkPixbuf* gdk_pixbuf_new_from_inline(gint data_length, guint8* data, \
+gboolean copy_pixels, GError** [error])"
+  GError* ref_error;
+  XEN_ASSERT_TYPE(XEN_gint_P(data_length), data_length, 1, "gdk_pixbuf_new_from_inline", "gint");
+  XEN_ASSERT_TYPE(XEN_guint8__P(data), data, 2, "gdk_pixbuf_new_from_inline", "guint8*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(copy_pixels), copy_pixels, 3, "gdk_pixbuf_new_from_inline", "gboolean");
+  {
+    XEN result = XEN_FALSE;
+    result = C_TO_XEN_GdkPixbuf_(gdk_pixbuf_new_from_inline(XEN_TO_C_gint(data_length), XEN_TO_C_guint8_(data), XEN_TO_C_gboolean(copy_pixels), 
+                                                            &ref_error));
+    return(XEN_LIST_2(result, C_TO_XEN_GError_(ref_error)));
+   }
+}
+
+static XEN gxg_gdk_pixbuf_fill(XEN pixbuf, XEN pixel)
+{
+  #define H_gdk_pixbuf_fill "void gdk_pixbuf_fill(GdkPixbuf* pixbuf, guint32 pixel)"
+  XEN_ASSERT_TYPE(XEN_GdkPixbuf__P(pixbuf), pixbuf, 1, "gdk_pixbuf_fill", "GdkPixbuf*");
+  XEN_ASSERT_TYPE(XEN_guint32_P(pixel), pixel, 2, "gdk_pixbuf_fill", "guint32");
+  gdk_pixbuf_fill(XEN_TO_C_GdkPixbuf_(pixbuf), XEN_TO_C_guint32(pixel));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gdk_pixbuf_save(XEN pixbuf, XEN filename, XEN type, XEN error)
+{
+  #define H_gdk_pixbuf_save "gboolean gdk_pixbuf_save(GdkPixbuf* pixbuf, char* filename, char* type, \
+GError** [error], ...)"
+  GError* ref_error;
+  XEN_ASSERT_TYPE(XEN_GdkPixbuf__P(pixbuf), pixbuf, 1, "gdk_pixbuf_save", "GdkPixbuf*");
+  XEN_ASSERT_TYPE(XEN_char__P(filename), filename, 2, "gdk_pixbuf_save", "char*");
+  XEN_ASSERT_TYPE(XEN_char__P(type), type, 3, "gdk_pixbuf_save", "char*");
+  {
+    XEN result = XEN_FALSE;
+    result = C_TO_XEN_gboolean(gdk_pixbuf_save(XEN_TO_C_GdkPixbuf_(pixbuf), XEN_TO_C_char_(filename), XEN_TO_C_char_(type), 
+                                               &ref_error));
+    return(XEN_LIST_2(result, C_TO_XEN_GError_(ref_error)));
+   }
+}
+
+static XEN gxg_gdk_pixbuf_savev(XEN pixbuf, XEN filename, XEN type, XEN option_keys, XEN option_values, XEN error)
+{
+  #define H_gdk_pixbuf_savev "gboolean gdk_pixbuf_savev(GdkPixbuf* pixbuf, char* filename, char* type, \
+char** option_keys, char** option_values, GError** [error])"
+  GError* ref_error;
+  XEN_ASSERT_TYPE(XEN_GdkPixbuf__P(pixbuf), pixbuf, 1, "gdk_pixbuf_savev", "GdkPixbuf*");
+  XEN_ASSERT_TYPE(XEN_char__P(filename), filename, 2, "gdk_pixbuf_savev", "char*");
+  XEN_ASSERT_TYPE(XEN_char__P(type), type, 3, "gdk_pixbuf_savev", "char*");
+  XEN_ASSERT_TYPE(XEN_char___P(option_keys), option_keys, 4, "gdk_pixbuf_savev", "char**");
+  XEN_ASSERT_TYPE(XEN_char___P(option_values), option_values, 5, "gdk_pixbuf_savev", "char**");
+  {
+    XEN result = XEN_FALSE;
+    result = C_TO_XEN_gboolean(gdk_pixbuf_savev(XEN_TO_C_GdkPixbuf_(pixbuf), XEN_TO_C_char_(filename), XEN_TO_C_char_(type), 
+                                                XEN_TO_C_char__(option_keys), XEN_TO_C_char__(option_values), &ref_error));
+    return(XEN_LIST_2(result, C_TO_XEN_GError_(ref_error)));
+   }
+}
+
+static XEN gxg_gdk_pixbuf_add_alpha(XEN pixbuf, XEN substitute_color, XEN r, XEN g, XEN b)
+{
+  #define H_gdk_pixbuf_add_alpha "GdkPixbuf* gdk_pixbuf_add_alpha(GdkPixbuf* pixbuf, gboolean substitute_color, \
+guchar r, guchar g, guchar b)"
+  XEN_ASSERT_TYPE(XEN_GdkPixbuf__P(pixbuf), pixbuf, 1, "gdk_pixbuf_add_alpha", "GdkPixbuf*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(substitute_color), substitute_color, 2, "gdk_pixbuf_add_alpha", "gboolean");
+  XEN_ASSERT_TYPE(XEN_guchar_P(r), r, 3, "gdk_pixbuf_add_alpha", "guchar");
+  XEN_ASSERT_TYPE(XEN_guchar_P(g), g, 4, "gdk_pixbuf_add_alpha", "guchar");
+  XEN_ASSERT_TYPE(XEN_guchar_P(b), b, 5, "gdk_pixbuf_add_alpha", "guchar");
+  return(C_TO_XEN_GdkPixbuf_(gdk_pixbuf_add_alpha(XEN_TO_C_GdkPixbuf_(pixbuf), XEN_TO_C_gboolean(substitute_color), XEN_TO_C_guchar(r), 
+                                                  XEN_TO_C_guchar(g), XEN_TO_C_guchar(b))));
+}
+
+static XEN gxg_gdk_pixbuf_copy_area(XEN src_pixbuf, XEN src_x, XEN src_y, XEN width, XEN height, XEN dest_pixbuf, XEN dest_x, XEN dest_y)
+{
+  #define H_gdk_pixbuf_copy_area "void gdk_pixbuf_copy_area(GdkPixbuf* src_pixbuf, int src_x, int src_y, \
+int width, int height, GdkPixbuf* dest_pixbuf, int dest_x, int dest_y)"
+  XEN_ASSERT_TYPE(XEN_GdkPixbuf__P(src_pixbuf), src_pixbuf, 1, "gdk_pixbuf_copy_area", "GdkPixbuf*");
+  XEN_ASSERT_TYPE(XEN_int_P(src_x), src_x, 2, "gdk_pixbuf_copy_area", "int");
+  XEN_ASSERT_TYPE(XEN_int_P(src_y), src_y, 3, "gdk_pixbuf_copy_area", "int");
+  XEN_ASSERT_TYPE(XEN_int_P(width), width, 4, "gdk_pixbuf_copy_area", "int");
+  XEN_ASSERT_TYPE(XEN_int_P(height), height, 5, "gdk_pixbuf_copy_area", "int");
+  XEN_ASSERT_TYPE(XEN_GdkPixbuf__P(dest_pixbuf), dest_pixbuf, 6, "gdk_pixbuf_copy_area", "GdkPixbuf*");
+  XEN_ASSERT_TYPE(XEN_int_P(dest_x), dest_x, 7, "gdk_pixbuf_copy_area", "int");
+  XEN_ASSERT_TYPE(XEN_int_P(dest_y), dest_y, 8, "gdk_pixbuf_copy_area", "int");
+  gdk_pixbuf_copy_area(XEN_TO_C_GdkPixbuf_(src_pixbuf), XEN_TO_C_int(src_x), XEN_TO_C_int(src_y), XEN_TO_C_int(width), XEN_TO_C_int(height), 
+                       XEN_TO_C_GdkPixbuf_(dest_pixbuf), XEN_TO_C_int(dest_x), XEN_TO_C_int(dest_y));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gdk_pixbuf_saturate_and_pixelate(XEN src, XEN dest, XEN saturation, XEN pixelate)
+{
+  #define H_gdk_pixbuf_saturate_and_pixelate "void gdk_pixbuf_saturate_and_pixelate(GdkPixbuf* src, GdkPixbuf* dest, \
+gfloat saturation, gboolean pixelate)"
+  XEN_ASSERT_TYPE(XEN_GdkPixbuf__P(src), src, 1, "gdk_pixbuf_saturate_and_pixelate", "GdkPixbuf*");
+  XEN_ASSERT_TYPE(XEN_GdkPixbuf__P(dest), dest, 2, "gdk_pixbuf_saturate_and_pixelate", "GdkPixbuf*");
+  XEN_ASSERT_TYPE(XEN_gfloat_P(saturation), saturation, 3, "gdk_pixbuf_saturate_and_pixelate", "gfloat");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(pixelate), pixelate, 4, "gdk_pixbuf_saturate_and_pixelate", "gboolean");
+  gdk_pixbuf_saturate_and_pixelate(XEN_TO_C_GdkPixbuf_(src), XEN_TO_C_GdkPixbuf_(dest), XEN_TO_C_gfloat(saturation), XEN_TO_C_gboolean(pixelate));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gdk_pixbuf_scale(XEN arglist)
+{
+  #define H_gdk_pixbuf_scale "void gdk_pixbuf_scale(GdkPixbuf* src, GdkPixbuf* dest, int dest_x, int dest_y, \
+int dest_width, int dest_height, double offset_x, double offset_y, double scale_x, double scale_y, GdkInterpType interp_type)"
+  XEN src, dest, dest_x, dest_y, dest_width, dest_height, offset_x, offset_y, scale_x, scale_y, interp_type;
+  src = XEN_LIST_REF(arglist, 0);
+  dest = XEN_LIST_REF(arglist, 1);
+  dest_x = XEN_LIST_REF(arglist, 2);
+  dest_y = XEN_LIST_REF(arglist, 3);
+  dest_width = XEN_LIST_REF(arglist, 4);
+  dest_height = XEN_LIST_REF(arglist, 5);
+  offset_x = XEN_LIST_REF(arglist, 6);
+  offset_y = XEN_LIST_REF(arglist, 7);
+  scale_x = XEN_LIST_REF(arglist, 8);
+  scale_y = XEN_LIST_REF(arglist, 9);
+  interp_type = XEN_LIST_REF(arglist, 10);
+  XEN_ASSERT_TYPE(XEN_GdkPixbuf__P(src), src, 1, "gdk_pixbuf_scale", "GdkPixbuf*");
+  XEN_ASSERT_TYPE(XEN_GdkPixbuf__P(dest), dest, 2, "gdk_pixbuf_scale", "GdkPixbuf*");
+  XEN_ASSERT_TYPE(XEN_int_P(dest_x), dest_x, 3, "gdk_pixbuf_scale", "int");
+  XEN_ASSERT_TYPE(XEN_int_P(dest_y), dest_y, 4, "gdk_pixbuf_scale", "int");
+  XEN_ASSERT_TYPE(XEN_int_P(dest_width), dest_width, 5, "gdk_pixbuf_scale", "int");
+  XEN_ASSERT_TYPE(XEN_int_P(dest_height), dest_height, 6, "gdk_pixbuf_scale", "int");
+  XEN_ASSERT_TYPE(XEN_double_P(offset_x), offset_x, 7, "gdk_pixbuf_scale", "double");
+  XEN_ASSERT_TYPE(XEN_double_P(offset_y), offset_y, 8, "gdk_pixbuf_scale", "double");
+  XEN_ASSERT_TYPE(XEN_double_P(scale_x), scale_x, 9, "gdk_pixbuf_scale", "double");
+  XEN_ASSERT_TYPE(XEN_double_P(scale_y), scale_y, 10, "gdk_pixbuf_scale", "double");
+  XEN_ASSERT_TYPE(XEN_GdkInterpType_P(interp_type), interp_type, 11, "gdk_pixbuf_scale", "GdkInterpType");
+  gdk_pixbuf_scale(XEN_TO_C_GdkPixbuf_(src), XEN_TO_C_GdkPixbuf_(dest), XEN_TO_C_int(dest_x), XEN_TO_C_int(dest_y), XEN_TO_C_int(dest_width), 
+                   XEN_TO_C_int(dest_height), XEN_TO_C_double(offset_x), XEN_TO_C_double(offset_y), XEN_TO_C_double(scale_x), 
+                   XEN_TO_C_double(scale_y), XEN_TO_C_GdkInterpType(interp_type));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gdk_pixbuf_composite(XEN arglist)
+{
+  #define H_gdk_pixbuf_composite "void gdk_pixbuf_composite(GdkPixbuf* src, GdkPixbuf* dest, int dest_x, \
+int dest_y, int dest_width, int dest_height, double offset_x, double offset_y, double scale_x, double scale_y, \
+GdkInterpType interp_type, int overall_alpha)"
+  XEN src, dest, dest_x, dest_y, dest_width, dest_height, offset_x, offset_y, scale_x, scale_y, interp_type, overall_alpha;
+  src = XEN_LIST_REF(arglist, 0);
+  dest = XEN_LIST_REF(arglist, 1);
+  dest_x = XEN_LIST_REF(arglist, 2);
+  dest_y = XEN_LIST_REF(arglist, 3);
+  dest_width = XEN_LIST_REF(arglist, 4);
+  dest_height = XEN_LIST_REF(arglist, 5);
+  offset_x = XEN_LIST_REF(arglist, 6);
+  offset_y = XEN_LIST_REF(arglist, 7);
+  scale_x = XEN_LIST_REF(arglist, 8);
+  scale_y = XEN_LIST_REF(arglist, 9);
+  interp_type = XEN_LIST_REF(arglist, 10);
+  overall_alpha = XEN_LIST_REF(arglist, 11);
+  XEN_ASSERT_TYPE(XEN_GdkPixbuf__P(src), src, 1, "gdk_pixbuf_composite", "GdkPixbuf*");
+  XEN_ASSERT_TYPE(XEN_GdkPixbuf__P(dest), dest, 2, "gdk_pixbuf_composite", "GdkPixbuf*");
+  XEN_ASSERT_TYPE(XEN_int_P(dest_x), dest_x, 3, "gdk_pixbuf_composite", "int");
+  XEN_ASSERT_TYPE(XEN_int_P(dest_y), dest_y, 4, "gdk_pixbuf_composite", "int");
+  XEN_ASSERT_TYPE(XEN_int_P(dest_width), dest_width, 5, "gdk_pixbuf_composite", "int");
+  XEN_ASSERT_TYPE(XEN_int_P(dest_height), dest_height, 6, "gdk_pixbuf_composite", "int");
+  XEN_ASSERT_TYPE(XEN_double_P(offset_x), offset_x, 7, "gdk_pixbuf_composite", "double");
+  XEN_ASSERT_TYPE(XEN_double_P(offset_y), offset_y, 8, "gdk_pixbuf_composite", "double");
+  XEN_ASSERT_TYPE(XEN_double_P(scale_x), scale_x, 9, "gdk_pixbuf_composite", "double");
+  XEN_ASSERT_TYPE(XEN_double_P(scale_y), scale_y, 10, "gdk_pixbuf_composite", "double");
+  XEN_ASSERT_TYPE(XEN_GdkInterpType_P(interp_type), interp_type, 11, "gdk_pixbuf_composite", "GdkInterpType");
+  XEN_ASSERT_TYPE(XEN_int_P(overall_alpha), overall_alpha, 12, "gdk_pixbuf_composite", "int");
+  gdk_pixbuf_composite(XEN_TO_C_GdkPixbuf_(src), XEN_TO_C_GdkPixbuf_(dest), XEN_TO_C_int(dest_x), XEN_TO_C_int(dest_y), XEN_TO_C_int(dest_width), 
+                       XEN_TO_C_int(dest_height), XEN_TO_C_double(offset_x), XEN_TO_C_double(offset_y), XEN_TO_C_double(scale_x), 
+                       XEN_TO_C_double(scale_y), XEN_TO_C_GdkInterpType(interp_type), XEN_TO_C_int(overall_alpha));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gdk_pixbuf_composite_color(XEN arglist)
+{
+  #define H_gdk_pixbuf_composite_color "void gdk_pixbuf_composite_color(GdkPixbuf* src, GdkPixbuf* dest, \
+int dest_x, int dest_y, int dest_width, int dest_height, double offset_x, double offset_y, double scale_x, \
+double scale_y, GdkInterpType interp_type, int overall_alpha, int check_x, int check_y, int check_size, \
+guint32 color1, guint32 color2)"
+  XEN src, dest, dest_x, dest_y, dest_width, dest_height, offset_x, offset_y, scale_x, scale_y, interp_type, overall_alpha, check_x, check_y, check_size, color1, color2;
+  src = XEN_LIST_REF(arglist, 0);
+  dest = XEN_LIST_REF(arglist, 1);
+  dest_x = XEN_LIST_REF(arglist, 2);
+  dest_y = XEN_LIST_REF(arglist, 3);
+  dest_width = XEN_LIST_REF(arglist, 4);
+  dest_height = XEN_LIST_REF(arglist, 5);
+  offset_x = XEN_LIST_REF(arglist, 6);
+  offset_y = XEN_LIST_REF(arglist, 7);
+  scale_x = XEN_LIST_REF(arglist, 8);
+  scale_y = XEN_LIST_REF(arglist, 9);
+  interp_type = XEN_LIST_REF(arglist, 10);
+  overall_alpha = XEN_LIST_REF(arglist, 11);
+  check_x = XEN_LIST_REF(arglist, 12);
+  check_y = XEN_LIST_REF(arglist, 13);
+  check_size = XEN_LIST_REF(arglist, 14);
+  color1 = XEN_LIST_REF(arglist, 15);
+  color2 = XEN_LIST_REF(arglist, 16);
+  XEN_ASSERT_TYPE(XEN_GdkPixbuf__P(src), src, 1, "gdk_pixbuf_composite_color", "GdkPixbuf*");
+  XEN_ASSERT_TYPE(XEN_GdkPixbuf__P(dest), dest, 2, "gdk_pixbuf_composite_color", "GdkPixbuf*");
+  XEN_ASSERT_TYPE(XEN_int_P(dest_x), dest_x, 3, "gdk_pixbuf_composite_color", "int");
+  XEN_ASSERT_TYPE(XEN_int_P(dest_y), dest_y, 4, "gdk_pixbuf_composite_color", "int");
+  XEN_ASSERT_TYPE(XEN_int_P(dest_width), dest_width, 5, "gdk_pixbuf_composite_color", "int");
+  XEN_ASSERT_TYPE(XEN_int_P(dest_height), dest_height, 6, "gdk_pixbuf_composite_color", "int");
+  XEN_ASSERT_TYPE(XEN_double_P(offset_x), offset_x, 7, "gdk_pixbuf_composite_color", "double");
+  XEN_ASSERT_TYPE(XEN_double_P(offset_y), offset_y, 8, "gdk_pixbuf_composite_color", "double");
+  XEN_ASSERT_TYPE(XEN_double_P(scale_x), scale_x, 9, "gdk_pixbuf_composite_color", "double");
+  XEN_ASSERT_TYPE(XEN_double_P(scale_y), scale_y, 10, "gdk_pixbuf_composite_color", "double");
+  XEN_ASSERT_TYPE(XEN_GdkInterpType_P(interp_type), interp_type, 11, "gdk_pixbuf_composite_color", "GdkInterpType");
+  XEN_ASSERT_TYPE(XEN_int_P(overall_alpha), overall_alpha, 12, "gdk_pixbuf_composite_color", "int");
+  XEN_ASSERT_TYPE(XEN_int_P(check_x), check_x, 13, "gdk_pixbuf_composite_color", "int");
+  XEN_ASSERT_TYPE(XEN_int_P(check_y), check_y, 14, "gdk_pixbuf_composite_color", "int");
+  XEN_ASSERT_TYPE(XEN_int_P(check_size), check_size, 15, "gdk_pixbuf_composite_color", "int");
+  XEN_ASSERT_TYPE(XEN_guint32_P(color1), color1, 16, "gdk_pixbuf_composite_color", "guint32");
+  XEN_ASSERT_TYPE(XEN_guint32_P(color2), color2, 17, "gdk_pixbuf_composite_color", "guint32");
+  gdk_pixbuf_composite_color(XEN_TO_C_GdkPixbuf_(src), XEN_TO_C_GdkPixbuf_(dest), XEN_TO_C_int(dest_x), XEN_TO_C_int(dest_y), 
+                             XEN_TO_C_int(dest_width), XEN_TO_C_int(dest_height), XEN_TO_C_double(offset_x), XEN_TO_C_double(offset_y), 
+                             XEN_TO_C_double(scale_x), XEN_TO_C_double(scale_y), XEN_TO_C_GdkInterpType(interp_type), XEN_TO_C_int(overall_alpha), 
+                             XEN_TO_C_int(check_x), XEN_TO_C_int(check_y), XEN_TO_C_int(check_size), XEN_TO_C_guint32(color1), 
+                             XEN_TO_C_guint32(color2));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gdk_pixbuf_scale_simple(XEN src, XEN dest_width, XEN dest_height, XEN interp_type)
+{
+  #define H_gdk_pixbuf_scale_simple "GdkPixbuf* gdk_pixbuf_scale_simple(GdkPixbuf* src, int dest_width, \
+int dest_height, GdkInterpType interp_type)"
+  XEN_ASSERT_TYPE(XEN_GdkPixbuf__P(src), src, 1, "gdk_pixbuf_scale_simple", "GdkPixbuf*");
+  XEN_ASSERT_TYPE(XEN_int_P(dest_width), dest_width, 2, "gdk_pixbuf_scale_simple", "int");
+  XEN_ASSERT_TYPE(XEN_int_P(dest_height), dest_height, 3, "gdk_pixbuf_scale_simple", "int");
+  XEN_ASSERT_TYPE(XEN_GdkInterpType_P(interp_type), interp_type, 4, "gdk_pixbuf_scale_simple", "GdkInterpType");
+  return(C_TO_XEN_GdkPixbuf_(gdk_pixbuf_scale_simple(XEN_TO_C_GdkPixbuf_(src), XEN_TO_C_int(dest_width), XEN_TO_C_int(dest_height), 
+                                                     XEN_TO_C_GdkInterpType(interp_type))));
+}
+
+static XEN gxg_gdk_pixbuf_composite_color_simple(XEN src, XEN dest_width, XEN dest_height, XEN interp_type, XEN overall_alpha, XEN check_size, XEN color1, XEN color2)
+{
+  #define H_gdk_pixbuf_composite_color_simple "GdkPixbuf* gdk_pixbuf_composite_color_simple(GdkPixbuf* src, \
+int dest_width, int dest_height, GdkInterpType interp_type, int overall_alpha, int check_size, guint32 color1, \
+guint32 color2)"
+  XEN_ASSERT_TYPE(XEN_GdkPixbuf__P(src), src, 1, "gdk_pixbuf_composite_color_simple", "GdkPixbuf*");
+  XEN_ASSERT_TYPE(XEN_int_P(dest_width), dest_width, 2, "gdk_pixbuf_composite_color_simple", "int");
+  XEN_ASSERT_TYPE(XEN_int_P(dest_height), dest_height, 3, "gdk_pixbuf_composite_color_simple", "int");
+  XEN_ASSERT_TYPE(XEN_GdkInterpType_P(interp_type), interp_type, 4, "gdk_pixbuf_composite_color_simple", "GdkInterpType");
+  XEN_ASSERT_TYPE(XEN_int_P(overall_alpha), overall_alpha, 5, "gdk_pixbuf_composite_color_simple", "int");
+  XEN_ASSERT_TYPE(XEN_int_P(check_size), check_size, 6, "gdk_pixbuf_composite_color_simple", "int");
+  XEN_ASSERT_TYPE(XEN_guint32_P(color1), color1, 7, "gdk_pixbuf_composite_color_simple", "guint32");
+  XEN_ASSERT_TYPE(XEN_guint32_P(color2), color2, 8, "gdk_pixbuf_composite_color_simple", "guint32");
+  return(C_TO_XEN_GdkPixbuf_(gdk_pixbuf_composite_color_simple(XEN_TO_C_GdkPixbuf_(src), XEN_TO_C_int(dest_width), XEN_TO_C_int(dest_height), 
+                                                               XEN_TO_C_GdkInterpType(interp_type), XEN_TO_C_int(overall_alpha), 
+                                                               XEN_TO_C_int(check_size), XEN_TO_C_guint32(color1), XEN_TO_C_guint32(color2))));
+}
+
+static XEN gxg_gdk_pixbuf_animation_get_type(void)
+{
+  #define H_gdk_pixbuf_animation_get_type "GType gdk_pixbuf_animation_get_type( void)"
+  return(C_TO_XEN_GType(gdk_pixbuf_animation_get_type()));
+}
+
+static XEN gxg_gdk_pixbuf_animation_new_from_file(XEN filename, XEN error)
+{
+  #define H_gdk_pixbuf_animation_new_from_file "GdkPixbufAnimation* gdk_pixbuf_animation_new_from_file(char* filename, \
+GError** [error])"
+  GError* ref_error;
+  XEN_ASSERT_TYPE(XEN_char__P(filename), filename, 1, "gdk_pixbuf_animation_new_from_file", "char*");
+  {
+    XEN result = XEN_FALSE;
+    result = C_TO_XEN_GdkPixbufAnimation_(gdk_pixbuf_animation_new_from_file(XEN_TO_C_char_(filename), &ref_error));
+    return(XEN_LIST_2(result, C_TO_XEN_GError_(ref_error)));
+   }
+}
+
+static XEN gxg_gdk_pixbuf_animation_get_width(XEN animation)
+{
+  #define H_gdk_pixbuf_animation_get_width "int gdk_pixbuf_animation_get_width(GdkPixbufAnimation* animation)"
+  XEN_ASSERT_TYPE(XEN_GdkPixbufAnimation__P(animation), animation, 1, "gdk_pixbuf_animation_get_width", "GdkPixbufAnimation*");
+  return(C_TO_XEN_int(gdk_pixbuf_animation_get_width(XEN_TO_C_GdkPixbufAnimation_(animation))));
+}
+
+static XEN gxg_gdk_pixbuf_animation_get_height(XEN animation)
+{
+  #define H_gdk_pixbuf_animation_get_height "int gdk_pixbuf_animation_get_height(GdkPixbufAnimation* animation)"
+  XEN_ASSERT_TYPE(XEN_GdkPixbufAnimation__P(animation), animation, 1, "gdk_pixbuf_animation_get_height", "GdkPixbufAnimation*");
+  return(C_TO_XEN_int(gdk_pixbuf_animation_get_height(XEN_TO_C_GdkPixbufAnimation_(animation))));
+}
+
+static XEN gxg_gdk_pixbuf_animation_is_static_image(XEN animation)
+{
+  #define H_gdk_pixbuf_animation_is_static_image "gboolean gdk_pixbuf_animation_is_static_image(GdkPixbufAnimation* animation)"
+  XEN_ASSERT_TYPE(XEN_GdkPixbufAnimation__P(animation), animation, 1, "gdk_pixbuf_animation_is_static_image", "GdkPixbufAnimation*");
+  return(C_TO_XEN_gboolean(gdk_pixbuf_animation_is_static_image(XEN_TO_C_GdkPixbufAnimation_(animation))));
+}
+
+static XEN gxg_gdk_pixbuf_animation_get_static_image(XEN animation)
+{
+  #define H_gdk_pixbuf_animation_get_static_image "GdkPixbuf* gdk_pixbuf_animation_get_static_image(GdkPixbufAnimation* animation)"
+  XEN_ASSERT_TYPE(XEN_GdkPixbufAnimation__P(animation), animation, 1, "gdk_pixbuf_animation_get_static_image", "GdkPixbufAnimation*");
+  return(C_TO_XEN_GdkPixbuf_(gdk_pixbuf_animation_get_static_image(XEN_TO_C_GdkPixbufAnimation_(animation))));
+}
+
+static XEN gxg_gdk_pixbuf_animation_get_iter(XEN animation, XEN start_time)
+{
+  #define H_gdk_pixbuf_animation_get_iter "GdkPixbufAnimationIter* gdk_pixbuf_animation_get_iter(GdkPixbufAnimation* animation, \
+GTimeVal* start_time)"
+  XEN_ASSERT_TYPE(XEN_GdkPixbufAnimation__P(animation), animation, 1, "gdk_pixbuf_animation_get_iter", "GdkPixbufAnimation*");
+  XEN_ASSERT_TYPE(XEN_GTimeVal__P(start_time), start_time, 2, "gdk_pixbuf_animation_get_iter", "GTimeVal*");
+  return(C_TO_XEN_GdkPixbufAnimationIter_(gdk_pixbuf_animation_get_iter(XEN_TO_C_GdkPixbufAnimation_(animation), XEN_TO_C_GTimeVal_(start_time))));
+}
+
+static XEN gxg_gdk_pixbuf_animation_iter_get_type(void)
+{
+  #define H_gdk_pixbuf_animation_iter_get_type "GType gdk_pixbuf_animation_iter_get_type( void)"
+  return(C_TO_XEN_GType(gdk_pixbuf_animation_iter_get_type()));
+}
+
+static XEN gxg_gdk_pixbuf_animation_iter_get_delay_time(XEN iter)
+{
+  #define H_gdk_pixbuf_animation_iter_get_delay_time "int gdk_pixbuf_animation_iter_get_delay_time(GdkPixbufAnimationIter* iter)"
+  XEN_ASSERT_TYPE(XEN_GdkPixbufAnimationIter__P(iter), iter, 1, "gdk_pixbuf_animation_iter_get_delay_time", "GdkPixbufAnimationIter*");
+  return(C_TO_XEN_int(gdk_pixbuf_animation_iter_get_delay_time(XEN_TO_C_GdkPixbufAnimationIter_(iter))));
+}
+
+static XEN gxg_gdk_pixbuf_animation_iter_get_pixbuf(XEN iter)
+{
+  #define H_gdk_pixbuf_animation_iter_get_pixbuf "GdkPixbuf* gdk_pixbuf_animation_iter_get_pixbuf(GdkPixbufAnimationIter* iter)"
+  XEN_ASSERT_TYPE(XEN_GdkPixbufAnimationIter__P(iter), iter, 1, "gdk_pixbuf_animation_iter_get_pixbuf", "GdkPixbufAnimationIter*");
+  return(C_TO_XEN_GdkPixbuf_(gdk_pixbuf_animation_iter_get_pixbuf(XEN_TO_C_GdkPixbufAnimationIter_(iter))));
+}
+
+static XEN gxg_gdk_pixbuf_animation_iter_on_currently_loading_frame(XEN iter)
+{
+  #define H_gdk_pixbuf_animation_iter_on_currently_loading_frame "gboolean gdk_pixbuf_animation_iter_on_currently_loading_frame(GdkPixbufAnimationIter* iter)"
+  XEN_ASSERT_TYPE(XEN_GdkPixbufAnimationIter__P(iter), iter, 1, "gdk_pixbuf_animation_iter_on_currently_loading_frame", "GdkPixbufAnimationIter*");
+  return(C_TO_XEN_gboolean(gdk_pixbuf_animation_iter_on_currently_loading_frame(XEN_TO_C_GdkPixbufAnimationIter_(iter))));
+}
+
+static XEN gxg_gdk_pixbuf_animation_iter_advance(XEN iter, XEN current_time)
+{
+  #define H_gdk_pixbuf_animation_iter_advance "gboolean gdk_pixbuf_animation_iter_advance(GdkPixbufAnimationIter* iter, \
+GTimeVal* current_time)"
+  XEN_ASSERT_TYPE(XEN_GdkPixbufAnimationIter__P(iter), iter, 1, "gdk_pixbuf_animation_iter_advance", "GdkPixbufAnimationIter*");
+  XEN_ASSERT_TYPE(XEN_GTimeVal__P(current_time), current_time, 2, "gdk_pixbuf_animation_iter_advance", "GTimeVal*");
+  return(C_TO_XEN_gboolean(gdk_pixbuf_animation_iter_advance(XEN_TO_C_GdkPixbufAnimationIter_(iter), XEN_TO_C_GTimeVal_(current_time))));
+}
+
+static XEN gxg_gdk_pixbuf_get_option(XEN pixbuf, XEN key)
+{
+  #define H_gdk_pixbuf_get_option "gchar* gdk_pixbuf_get_option(GdkPixbuf* pixbuf, gchar* key)"
+  XEN_ASSERT_TYPE(XEN_GdkPixbuf__P(pixbuf), pixbuf, 1, "gdk_pixbuf_get_option", "GdkPixbuf*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(key), key, 2, "gdk_pixbuf_get_option", "gchar*");
+  return(C_TO_XEN_gchar_(gdk_pixbuf_get_option(XEN_TO_C_GdkPixbuf_(pixbuf), XEN_TO_C_gchar_(key))));
+}
+
+static XEN gxg_gdk_pixbuf_loader_get_type(void)
+{
+  #define H_gdk_pixbuf_loader_get_type "GType gdk_pixbuf_loader_get_type( void)"
+  return(C_TO_XEN_GType(gdk_pixbuf_loader_get_type()));
+}
+
+static XEN gxg_gdk_pixbuf_loader_new(void)
+{
+  #define H_gdk_pixbuf_loader_new "GdkPixbufLoader* gdk_pixbuf_loader_new( void)"
+  return(C_TO_XEN_GdkPixbufLoader_(gdk_pixbuf_loader_new()));
+}
+
+static XEN gxg_gdk_pixbuf_loader_new_with_type(XEN image_type, XEN error)
+{
+  #define H_gdk_pixbuf_loader_new_with_type "GdkPixbufLoader* gdk_pixbuf_loader_new_with_type(char* image_type, \
+GError** [error])"
+  GError* ref_error;
+  XEN_ASSERT_TYPE(XEN_char__P(image_type), image_type, 1, "gdk_pixbuf_loader_new_with_type", "char*");
+  {
+    XEN result = XEN_FALSE;
+    result = C_TO_XEN_GdkPixbufLoader_(gdk_pixbuf_loader_new_with_type(XEN_TO_C_char_(image_type), &ref_error));
+    return(XEN_LIST_2(result, C_TO_XEN_GError_(ref_error)));
+   }
+}
+
+static XEN gxg_gdk_pixbuf_loader_write(XEN loader, XEN buf, XEN count, XEN error)
+{
+  #define H_gdk_pixbuf_loader_write "gboolean gdk_pixbuf_loader_write(GdkPixbufLoader* loader, guchar* buf, \
+gsize count, GError** [error])"
+  GError* ref_error;
+  XEN_ASSERT_TYPE(XEN_GdkPixbufLoader__P(loader), loader, 1, "gdk_pixbuf_loader_write", "GdkPixbufLoader*");
+  XEN_ASSERT_TYPE(XEN_guchar__P(buf), buf, 2, "gdk_pixbuf_loader_write", "guchar*");
+  XEN_ASSERT_TYPE(XEN_gsize_P(count), count, 3, "gdk_pixbuf_loader_write", "gsize");
+  {
+    XEN result = XEN_FALSE;
+    result = C_TO_XEN_gboolean(gdk_pixbuf_loader_write(XEN_TO_C_GdkPixbufLoader_(loader), XEN_TO_C_guchar_(buf), XEN_TO_C_gsize(count), 
+                                                       &ref_error));
+    return(XEN_LIST_2(result, C_TO_XEN_GError_(ref_error)));
+   }
+}
+
+static XEN gxg_gdk_pixbuf_loader_get_pixbuf(XEN loader)
+{
+  #define H_gdk_pixbuf_loader_get_pixbuf "GdkPixbuf* gdk_pixbuf_loader_get_pixbuf(GdkPixbufLoader* loader)"
+  XEN_ASSERT_TYPE(XEN_GdkPixbufLoader__P(loader), loader, 1, "gdk_pixbuf_loader_get_pixbuf", "GdkPixbufLoader*");
+  return(C_TO_XEN_GdkPixbuf_(gdk_pixbuf_loader_get_pixbuf(XEN_TO_C_GdkPixbufLoader_(loader))));
+}
+
+static XEN gxg_gdk_pixbuf_loader_get_animation(XEN loader)
+{
+  #define H_gdk_pixbuf_loader_get_animation "GdkPixbufAnimation* gdk_pixbuf_loader_get_animation(GdkPixbufLoader* loader)"
+  XEN_ASSERT_TYPE(XEN_GdkPixbufLoader__P(loader), loader, 1, "gdk_pixbuf_loader_get_animation", "GdkPixbufLoader*");
+  return(C_TO_XEN_GdkPixbufAnimation_(gdk_pixbuf_loader_get_animation(XEN_TO_C_GdkPixbufLoader_(loader))));
+}
+
+static XEN gxg_gdk_pixbuf_loader_close(XEN loader, XEN error)
+{
+  #define H_gdk_pixbuf_loader_close "gboolean gdk_pixbuf_loader_close(GdkPixbufLoader* loader, GError** [error])"
+  GError* ref_error;
+  XEN_ASSERT_TYPE(XEN_GdkPixbufLoader__P(loader), loader, 1, "gdk_pixbuf_loader_close", "GdkPixbufLoader*");
+  {
+    XEN result = XEN_FALSE;
+    result = C_TO_XEN_gboolean(gdk_pixbuf_loader_close(XEN_TO_C_GdkPixbufLoader_(loader), &ref_error));
+    return(XEN_LIST_2(result, C_TO_XEN_GError_(ref_error)));
+   }
+}
+
+static XEN gxg_gdk_pixbuf_alpha_mode_get_type(void)
+{
+  #define H_gdk_pixbuf_alpha_mode_get_type "GType gdk_pixbuf_alpha_mode_get_type( void)"
+  return(C_TO_XEN_GType(gdk_pixbuf_alpha_mode_get_type()));
+}
+
+static XEN gxg_gdk_colorspace_get_type(void)
+{
+  #define H_gdk_colorspace_get_type "GType gdk_colorspace_get_type( void)"
+  return(C_TO_XEN_GType(gdk_colorspace_get_type()));
+}
+
+static XEN gxg_gdk_pixbuf_error_get_type(void)
+{
+  #define H_gdk_pixbuf_error_get_type "GType gdk_pixbuf_error_get_type( void)"
+  return(C_TO_XEN_GType(gdk_pixbuf_error_get_type()));
+}
+
+static XEN gxg_gdk_interp_type_get_type(void)
+{
+  #define H_gdk_interp_type_get_type "GType gdk_interp_type_get_type( void)"
+  return(C_TO_XEN_GType(gdk_interp_type_get_type()));
 }
 
 static XEN gxg_gtk_vbox_get_type(void)
@@ -19863,44 +20640,6 @@ static XEN gxg_gtk_window_group_new(void)
   return(C_TO_XEN_GtkWindowGroup_(gtk_window_group_new()));
 }
 
-static XEN gxg_gtk_window_group_add_window(XEN window_group, XEN window)
-{
-  #define H_gtk_window_group_add_window "void gtk_window_group_add_window(GtkWindowGroup* window_group, \
-GtkWindow* window)"
-  XEN_ASSERT_TYPE(XEN_GtkWindowGroup__P(window_group), window_group, 1, "gtk_window_group_add_window", "GtkWindowGroup*");
-  XEN_ASSERT_TYPE(XEN_GtkWindow__P(window), window, 2, "gtk_window_group_add_window", "GtkWindow*");
-  gtk_window_group_add_window(XEN_TO_C_GtkWindowGroup_(window_group), XEN_TO_C_GtkWindow_(window));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_window_group_remove_window(XEN window_group, XEN window)
-{
-  #define H_gtk_window_group_remove_window "void gtk_window_group_remove_window(GtkWindowGroup* window_group, \
-GtkWindow* window)"
-  XEN_ASSERT_TYPE(XEN_GtkWindowGroup__P(window_group), window_group, 1, "gtk_window_group_remove_window", "GtkWindowGroup*");
-  XEN_ASSERT_TYPE(XEN_GtkWindow__P(window), window, 2, "gtk_window_group_remove_window", "GtkWindow*");
-  gtk_window_group_remove_window(XEN_TO_C_GtkWindowGroup_(window_group), XEN_TO_C_GtkWindow_(window));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_window_remove_embedded_xid(XEN window, XEN xid)
-{
-  #define H_gtk_window_remove_embedded_xid "void gtk_window_remove_embedded_xid(GtkWindow* window, guint xid)"
-  XEN_ASSERT_TYPE(XEN_GtkWindow__P(window), window, 1, "gtk_window_remove_embedded_xid", "GtkWindow*");
-  XEN_ASSERT_TYPE(XEN_guint_P(xid), xid, 2, "gtk_window_remove_embedded_xid", "guint");
-  gtk_window_remove_embedded_xid(XEN_TO_C_GtkWindow_(window), XEN_TO_C_guint(xid));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_window_add_embedded_xid(XEN window, XEN xid)
-{
-  #define H_gtk_window_add_embedded_xid "void gtk_window_add_embedded_xid(GtkWindow* window, guint xid)"
-  XEN_ASSERT_TYPE(XEN_GtkWindow__P(window), window, 1, "gtk_window_add_embedded_xid", "GtkWindow*");
-  XEN_ASSERT_TYPE(XEN_guint_P(xid), xid, 2, "gtk_window_add_embedded_xid", "guint");
-  gtk_window_add_embedded_xid(XEN_TO_C_GtkWindow_(window), XEN_TO_C_guint(xid));
-  return(XEN_FALSE);
-}
-
 static XEN gxg_pango_color_get_type(void)
 {
   #define H_pango_color_get_type "GType pango_color_get_type( void)"
@@ -20211,17 +20950,21 @@ PangoFontDescription* desc, PangoLanguage** [language], GSList** [extra_attrs])"
 static XEN gxg_pango_parse_markup(XEN markup_text, XEN length, XEN accel_marker, XEN attr_list, XEN text, XEN accel_char, XEN error)
 {
   #define H_pango_parse_markup "gboolean pango_parse_markup(char* markup_text, int length, gunichar accel_marker, \
-PangoAttrList** attr_list, char** text, gunichar* accel_char, GError** error)"
+PangoAttrList** attr_list, char** text, gunichar* accel_char, GError** [error])"
+  GError* ref_error;
   XEN_ASSERT_TYPE(XEN_char__P(markup_text), markup_text, 1, "pango_parse_markup", "char*");
   XEN_ASSERT_TYPE(XEN_int_P(length), length, 2, "pango_parse_markup", "int");
   XEN_ASSERT_TYPE(XEN_gunichar_P(accel_marker), accel_marker, 3, "pango_parse_markup", "gunichar");
   XEN_ASSERT_TYPE(XEN_PangoAttrList___P(attr_list), attr_list, 4, "pango_parse_markup", "PangoAttrList**");
   XEN_ASSERT_TYPE(XEN_char___P(text), text, 5, "pango_parse_markup", "char**");
   XEN_ASSERT_TYPE(XEN_gunichar__P(accel_char), accel_char, 6, "pango_parse_markup", "gunichar*");
-  XEN_ASSERT_TYPE(XEN_GError___P(error), error, 7, "pango_parse_markup", "GError**");
-  return(C_TO_XEN_gboolean(pango_parse_markup(XEN_TO_C_char_(markup_text), XEN_TO_C_int(length), XEN_TO_C_gunichar(accel_marker), 
-                                              XEN_TO_C_PangoAttrList__(attr_list), XEN_TO_C_char__(text), XEN_TO_C_gunichar_(accel_char), 
-                                              XEN_TO_C_GError__(error))));
+  {
+    XEN result = XEN_FALSE;
+    result = C_TO_XEN_gboolean(pango_parse_markup(XEN_TO_C_char_(markup_text), XEN_TO_C_int(length), XEN_TO_C_gunichar(accel_marker), 
+                                                  XEN_TO_C_PangoAttrList__(attr_list), XEN_TO_C_char__(text), XEN_TO_C_gunichar_(accel_char), 
+                                                  &ref_error));
+    return(XEN_LIST_2(result, C_TO_XEN_GError_(ref_error)));
+   }
 }
 
 static XEN gxg_pango_break(XEN text, XEN length, XEN analysis, XEN attrs, XEN attrs_len)
@@ -21773,7 +22516,51 @@ static XEN gxg_pango_context_set_font_map(XEN context, XEN font_map)
 
 
 /* -------------------- deprecated functions -------------------- */
-#if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED)))
+#if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED))) && (!(defined(GDK_PIXBUF_DISABLE_DEPRECATED)))
+static XEN gxg_gdk_window_get_deskrelative_origin(XEN window, XEN x, XEN y)
+{
+  #define H_gdk_window_get_deskrelative_origin "gboolean gdk_window_get_deskrelative_origin(GdkWindow* window, \
+gint* [x], gint* [y])"
+  gint ref_x;
+  gint ref_y;
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_get_deskrelative_origin", "GdkWindow*");
+  {
+    XEN result = XEN_FALSE;
+    result = C_TO_XEN_gboolean(gdk_window_get_deskrelative_origin(XEN_TO_C_GdkWindow_(window), &ref_x, &ref_y));
+    return(XEN_LIST_3(result, C_TO_XEN_gint(ref_x), C_TO_XEN_gint(ref_y)));
+   }
+}
+
+static XEN gxg_gdk_pixbuf_ref(XEN pixbuf)
+{
+  #define H_gdk_pixbuf_ref "GdkPixbuf* gdk_pixbuf_ref(GdkPixbuf* pixbuf)"
+  XEN_ASSERT_TYPE(XEN_GdkPixbuf__P(pixbuf), pixbuf, 1, "gdk_pixbuf_ref", "GdkPixbuf*");
+  return(C_TO_XEN_GdkPixbuf_(gdk_pixbuf_ref(XEN_TO_C_GdkPixbuf_(pixbuf))));
+}
+
+static XEN gxg_gdk_pixbuf_unref(XEN pixbuf)
+{
+  #define H_gdk_pixbuf_unref "void gdk_pixbuf_unref(GdkPixbuf* pixbuf)"
+  XEN_ASSERT_TYPE(XEN_GdkPixbuf__P(pixbuf), pixbuf, 1, "gdk_pixbuf_unref", "GdkPixbuf*");
+  gdk_pixbuf_unref(XEN_TO_C_GdkPixbuf_(pixbuf));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gdk_pixbuf_animation_ref(XEN animation)
+{
+  #define H_gdk_pixbuf_animation_ref "GdkPixbufAnimation* gdk_pixbuf_animation_ref(GdkPixbufAnimation* animation)"
+  XEN_ASSERT_TYPE(XEN_GdkPixbufAnimation__P(animation), animation, 1, "gdk_pixbuf_animation_ref", "GdkPixbufAnimation*");
+  return(C_TO_XEN_GdkPixbufAnimation_(gdk_pixbuf_animation_ref(XEN_TO_C_GdkPixbufAnimation_(animation))));
+}
+
+static XEN gxg_gdk_pixbuf_animation_unref(XEN animation)
+{
+  #define H_gdk_pixbuf_animation_unref "void gdk_pixbuf_animation_unref(GdkPixbufAnimation* animation)"
+  XEN_ASSERT_TYPE(XEN_GdkPixbufAnimation__P(animation), animation, 1, "gdk_pixbuf_animation_unref", "GdkPixbufAnimation*");
+  gdk_pixbuf_animation_unref(XEN_TO_C_GdkPixbufAnimation_(animation));
+  return(XEN_FALSE);
+}
+
 static XEN gxg_gdk_colors_alloc(XEN colormap, XEN contiguous, XEN planes, XEN nplanes, XEN pixels, XEN npixels)
 {
   #define H_gdk_colors_alloc "gint gdk_colors_alloc(GdkColormap* colormap, gboolean contiguous, gulong* planes, \
@@ -22335,168 +23122,6 @@ gint min_height, gint max_width, gint max_height, gint flags)"
   gdk_window_set_hints(XEN_TO_C_GdkWindow_(window), XEN_TO_C_gint(x), XEN_TO_C_gint(y), XEN_TO_C_gint(min_width), XEN_TO_C_gint(min_height), 
                        XEN_TO_C_gint(max_width), XEN_TO_C_gint(max_height), XEN_TO_C_gint(flags));
   return(XEN_FALSE);
-}
-
-static XEN gxg_gdk_window_set_type_hint(XEN window, XEN hint)
-{
-  #define H_gdk_window_set_type_hint "void gdk_window_set_type_hint(GdkWindow* window, GdkWindowTypeHint hint)"
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_set_type_hint", "GdkWindow*");
-  XEN_ASSERT_TYPE(XEN_GdkWindowTypeHint_P(hint), hint, 2, "gdk_window_set_type_hint", "GdkWindowTypeHint");
-  gdk_window_set_type_hint(XEN_TO_C_GdkWindow_(window), XEN_TO_C_GdkWindowTypeHint(hint));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gdk_window_set_modal_hint(XEN window, XEN modal)
-{
-  #define H_gdk_window_set_modal_hint "void gdk_window_set_modal_hint(GdkWindow* window, gboolean modal)"
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_set_modal_hint", "GdkWindow*");
-  XEN_ASSERT_TYPE(XEN_gboolean_P(modal), modal, 2, "gdk_window_set_modal_hint", "gboolean");
-  gdk_window_set_modal_hint(XEN_TO_C_GdkWindow_(window), XEN_TO_C_gboolean(modal));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gdk_window_set_geometry_hints(XEN window, XEN geometry, XEN geom_mask)
-{
-  #define H_gdk_window_set_geometry_hints "void gdk_window_set_geometry_hints(GdkWindow* window, GdkGeometry* geometry, \
-GdkWindowHints geom_mask)"
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_set_geometry_hints", "GdkWindow*");
-  XEN_ASSERT_TYPE(XEN_GdkGeometry__P(geometry), geometry, 2, "gdk_window_set_geometry_hints", "GdkGeometry*");
-  XEN_ASSERT_TYPE(XEN_GdkWindowHints_P(geom_mask), geom_mask, 3, "gdk_window_set_geometry_hints", "GdkWindowHints");
-  gdk_window_set_geometry_hints(XEN_TO_C_GdkWindow_(window), XEN_TO_C_GdkGeometry_(geometry), XEN_TO_C_GdkWindowHints(geom_mask));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gdk_set_sm_client_id(XEN sm_client_id)
-{
-  #define H_gdk_set_sm_client_id "void gdk_set_sm_client_id(gchar* sm_client_id)"
-  XEN_ASSERT_TYPE(XEN_gchar__P(sm_client_id), sm_client_id, 1, "gdk_set_sm_client_id", "gchar*");
-  gdk_set_sm_client_id(XEN_TO_C_gchar_(sm_client_id));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gdk_window_begin_paint_rect(XEN window, XEN rectangle)
-{
-  #define H_gdk_window_begin_paint_rect "void gdk_window_begin_paint_rect(GdkWindow* window, GdkRectangle* rectangle)"
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_begin_paint_rect", "GdkWindow*");
-  XEN_ASSERT_TYPE(XEN_GdkRectangle__P(rectangle), rectangle, 2, "gdk_window_begin_paint_rect", "GdkRectangle*");
-  gdk_window_begin_paint_rect(XEN_TO_C_GdkWindow_(window), XEN_TO_C_GdkRectangle_(rectangle));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gdk_window_begin_paint_region(XEN window, XEN region)
-{
-  #define H_gdk_window_begin_paint_region "void gdk_window_begin_paint_region(GdkWindow* window, GdkRegion* region)"
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_begin_paint_region", "GdkWindow*");
-  XEN_ASSERT_TYPE(XEN_GdkRegion__P(region), region, 2, "gdk_window_begin_paint_region", "GdkRegion*");
-  gdk_window_begin_paint_region(XEN_TO_C_GdkWindow_(window), XEN_TO_C_GdkRegion_(region));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gdk_window_end_paint(XEN window)
-{
-  #define H_gdk_window_end_paint "void gdk_window_end_paint(GdkWindow* window)"
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_end_paint", "GdkWindow*");
-  gdk_window_end_paint(XEN_TO_C_GdkWindow_(window));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gdk_window_set_title(XEN window, XEN title)
-{
-  #define H_gdk_window_set_title "void gdk_window_set_title(GdkWindow* window, gchar* title)"
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_set_title", "GdkWindow*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(title), title, 2, "gdk_window_set_title", "gchar*");
-  gdk_window_set_title(XEN_TO_C_GdkWindow_(window), XEN_TO_C_gchar_(title));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gdk_window_set_role(XEN window, XEN role)
-{
-  #define H_gdk_window_set_role "void gdk_window_set_role(GdkWindow* window, gchar* role)"
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_set_role", "GdkWindow*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(role), role, 2, "gdk_window_set_role", "gchar*");
-  gdk_window_set_role(XEN_TO_C_GdkWindow_(window), XEN_TO_C_gchar_(role));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gdk_window_set_transient_for(XEN window, XEN parent)
-{
-  #define H_gdk_window_set_transient_for "void gdk_window_set_transient_for(GdkWindow* window, GdkWindow* parent)"
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_set_transient_for", "GdkWindow*");
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(parent), parent, 2, "gdk_window_set_transient_for", "GdkWindow*");
-  gdk_window_set_transient_for(XEN_TO_C_GdkWindow_(window), XEN_TO_C_GdkWindow_(parent));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gdk_window_set_background(XEN window, XEN color)
-{
-  #define H_gdk_window_set_background "void gdk_window_set_background(GdkWindow* window, GdkColor* color)"
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_set_background", "GdkWindow*");
-  XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 2, "gdk_window_set_background", "GdkColor*");
-  gdk_window_set_background(XEN_TO_C_GdkWindow_(window), XEN_TO_C_GdkColor_(color));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gdk_window_set_back_pixmap(XEN window, XEN pixmap, XEN parent_relative)
-{
-  #define H_gdk_window_set_back_pixmap "void gdk_window_set_back_pixmap(GdkWindow* window, GdkPixmap* pixmap, \
-gboolean parent_relative)"
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_set_back_pixmap", "GdkWindow*");
-  XEN_ASSERT_TYPE(XEN_GdkPixmap__P(pixmap), pixmap, 2, "gdk_window_set_back_pixmap", "GdkPixmap*");
-  XEN_ASSERT_TYPE(XEN_gboolean_P(parent_relative), parent_relative, 3, "gdk_window_set_back_pixmap", "gboolean");
-  gdk_window_set_back_pixmap(XEN_TO_C_GdkWindow_(window), XEN_TO_C_GdkPixmap_(pixmap), XEN_TO_C_gboolean(parent_relative));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gdk_window_set_cursor(XEN window, XEN cursor)
-{
-  #define H_gdk_window_set_cursor "void gdk_window_set_cursor(GdkWindow* window, GdkCursor* cursor)"
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_set_cursor", "GdkWindow*");
-  XEN_ASSERT_TYPE(XEN_GdkCursor__P(cursor), cursor, 2, "gdk_window_set_cursor", "GdkCursor*");
-  gdk_window_set_cursor(XEN_TO_C_GdkWindow_(window), XEN_TO_C_GdkCursor_(cursor));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gdk_window_get_user_data(XEN window, XEN data)
-{
-  #define H_gdk_window_get_user_data "void gdk_window_get_user_data(GdkWindow* window, gpointer* [data])"
-  gpointer ref_data;
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_get_user_data", "GdkWindow*");
-  gdk_window_get_user_data(XEN_TO_C_GdkWindow_(window), &ref_data);
-  return(XEN_LIST_1(C_TO_XEN_gpointer(ref_data)));
-}
-
-static XEN gxg_gdk_window_get_geometry(XEN window, XEN x, XEN y, XEN width, XEN height, XEN depth)
-{
-  #define H_gdk_window_get_geometry "void gdk_window_get_geometry(GdkWindow* window, gint* x, gint* y, \
-gint* width, gint* height, gint* depth)"
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_get_geometry", "GdkWindow*");
-  XEN_ASSERT_TYPE(XEN_gint__P(x), x, 2, "gdk_window_get_geometry", "gint*");
-  XEN_ASSERT_TYPE(XEN_gint__P(y), y, 3, "gdk_window_get_geometry", "gint*");
-  XEN_ASSERT_TYPE(XEN_gint__P(width), width, 4, "gdk_window_get_geometry", "gint*");
-  XEN_ASSERT_TYPE(XEN_gint__P(height), height, 5, "gdk_window_get_geometry", "gint*");
-  XEN_ASSERT_TYPE(XEN_gint__P(depth), depth, 6, "gdk_window_get_geometry", "gint*");
-  gdk_window_get_geometry(XEN_TO_C_GdkWindow_(window), XEN_TO_C_gint_(x), XEN_TO_C_gint_(y), XEN_TO_C_gint_(width), XEN_TO_C_gint_(height), 
-                          XEN_TO_C_gint_(depth));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gdk_window_get_position(XEN window, XEN x, XEN y)
-{
-  #define H_gdk_window_get_position "void gdk_window_get_position(GdkWindow* window, gint* [x], gint* [y])"
-  gint ref_x;
-  gint ref_y;
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_get_position", "GdkWindow*");
-  gdk_window_get_position(XEN_TO_C_GdkWindow_(window), &ref_x, &ref_y);
-  return(XEN_LIST_2(C_TO_XEN_gint(ref_x), C_TO_XEN_gint(ref_y)));
-}
-
-static XEN gxg_gdk_window_get_origin(XEN window, XEN x, XEN y)
-{
-  #define H_gdk_window_get_origin "gint gdk_window_get_origin(GdkWindow* window, gint* x, gint* y)"
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_get_origin", "GdkWindow*");
-  XEN_ASSERT_TYPE(XEN_gint__P(x), x, 2, "gdk_window_get_origin", "gint*");
-  XEN_ASSERT_TYPE(XEN_gint__P(y), y, 3, "gdk_window_get_origin", "gint*");
-  return(C_TO_XEN_gint(gdk_window_get_origin(XEN_TO_C_GdkWindow_(window), XEN_TO_C_gint_(x), XEN_TO_C_gint_(y))));
 }
 
 static XEN gxg_gtk_button_box_set_child_size(XEN widget, XEN min_width, XEN min_height)
@@ -26712,6 +27337,10 @@ static XEN gxg_GDK_PIXMAP(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("Gd
 static XEN gxg_GDK_VISUAL(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkVisual_"), XEN_CADR(obj)));}
 static XEN gxg_GDK_WINDOW(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkWindow_"), XEN_CADR(obj)));}
 static XEN gxg_GDK_WINDOW_OBJECT(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkWindowObject_"), XEN_CADR(obj)));}
+static XEN gxg_GDK_PIXBUF(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkPixbuf_"), XEN_CADR(obj)));}
+static XEN gxg_GDK_PIXBUF_ANIMATION(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkPixbufAnimation_"), XEN_CADR(obj)));}
+static XEN gxg_GDK_PIXBUF_ANIMATION_ITER(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkPixbufAnimationIter_"), XEN_CADR(obj)));}
+static XEN gxg_GDK_PIXBUF_LOADER(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkPixbufLoader_"), XEN_CADR(obj)));}
 static XEN gxg_GTK_VBOX(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkVBox_"), XEN_CADR(obj)));}
 static XEN gxg_GTK_ACCEL_GROUP(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkAccelGroup_"), XEN_CADR(obj)));}
 static XEN gxg_GTK_ACCEL_LABEL(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkAccelLabel_"), XEN_CADR(obj)));}
@@ -26840,7 +27469,7 @@ static XEN gxg_PANGO_FONT_FAMILY(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYM
 
 
   /* -------------------- deprecated casts -------------------- */
-#if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED)))
+#if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED))) && (!(defined(GDK_PIXBUF_DISABLE_DEPRECATED)))
 static XEN gxg_GTK_CLIST(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkCList_"), XEN_CADR(obj)));}
 static XEN gxg_GTK_CTREE(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkCTree_"), XEN_CADR(obj)));}
 static XEN gxg_GTK_LIST(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkList_"), XEN_CADR(obj)));}
@@ -27226,8 +27855,7 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_set_static_gravities" XG_POST, gxg_gdk_window_set_static_gravities, 2, 0, 0, H_gdk_window_set_static_gravities);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_foreign_new" XG_POST, gxg_gdk_window_foreign_new, 1, 0, 0, H_gdk_window_foreign_new);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_lookup" XG_POST, gxg_gdk_window_lookup, 1, 0, 0, H_gdk_window_lookup);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_get_deskrelative_origin" XG_POST, gxg_gdk_window_get_deskrelative_origin, 3, 0, 0, H_gdk_window_get_deskrelative_origin);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_get_root_origin" XG_POST, gxg_gdk_window_get_root_origin, 3, 0, 0, H_gdk_window_get_root_origin);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_get_root_origin" XG_POST, gxg_gdk_window_get_root_origin, 1, 2, 0, H_gdk_window_get_root_origin);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_get_frame_extents" XG_POST, gxg_gdk_window_get_frame_extents, 2, 0, 0, H_gdk_window_get_frame_extents);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_get_pointer" XG_POST, gxg_gdk_window_get_pointer, 1, 3, 0, H_gdk_window_get_pointer);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_get_parent" XG_POST, gxg_gdk_window_get_parent, 1, 0, 0, H_gdk_window_get_parent);
@@ -27264,8 +27892,81 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_set_debug_updates" XG_POST, gxg_gdk_window_set_debug_updates, 1, 0, 0, H_gdk_window_set_debug_updates);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_constrain_size" XG_POST, gxg_gdk_window_constrain_size, 4, 2, 0, H_gdk_window_constrain_size);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_get_internal_paint_info" XG_POST, gxg_gdk_window_get_internal_paint_info, 1, 3, 0, H_gdk_window_get_internal_paint_info);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_group_add_window" XG_POST, gxg_gtk_window_group_add_window, 2, 0, 0, H_gtk_window_group_add_window);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_group_remove_window" XG_POST, gxg_gtk_window_group_remove_window, 2, 0, 0, H_gtk_window_group_remove_window);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_remove_embedded_xid" XG_POST, gxg_gtk_window_remove_embedded_xid, 2, 0, 0, H_gtk_window_remove_embedded_xid);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_add_embedded_xid" XG_POST, gxg_gtk_window_add_embedded_xid, 2, 0, 0, H_gtk_window_add_embedded_xid);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_set_type_hint" XG_POST, gxg_gdk_window_set_type_hint, 2, 0, 0, H_gdk_window_set_type_hint);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_set_modal_hint" XG_POST, gxg_gdk_window_set_modal_hint, 2, 0, 0, H_gdk_window_set_modal_hint);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_set_geometry_hints" XG_POST, gxg_gdk_window_set_geometry_hints, 3, 0, 0, H_gdk_window_set_geometry_hints);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_set_sm_client_id" XG_POST, gxg_gdk_set_sm_client_id, 1, 0, 0, H_gdk_set_sm_client_id);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_begin_paint_rect" XG_POST, gxg_gdk_window_begin_paint_rect, 2, 0, 0, H_gdk_window_begin_paint_rect);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_begin_paint_region" XG_POST, gxg_gdk_window_begin_paint_region, 2, 0, 0, H_gdk_window_begin_paint_region);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_end_paint" XG_POST, gxg_gdk_window_end_paint, 1, 0, 0, H_gdk_window_end_paint);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_set_title" XG_POST, gxg_gdk_window_set_title, 2, 0, 0, H_gdk_window_set_title);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_set_role" XG_POST, gxg_gdk_window_set_role, 2, 0, 0, H_gdk_window_set_role);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_set_transient_for" XG_POST, gxg_gdk_window_set_transient_for, 2, 0, 0, H_gdk_window_set_transient_for);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_set_background" XG_POST, gxg_gdk_window_set_background, 2, 0, 0, H_gdk_window_set_background);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_set_back_pixmap" XG_POST, gxg_gdk_window_set_back_pixmap, 3, 0, 0, H_gdk_window_set_back_pixmap);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_set_cursor" XG_POST, gxg_gdk_window_set_cursor, 2, 0, 0, H_gdk_window_set_cursor);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_get_user_data" XG_POST, gxg_gdk_window_get_user_data, 1, 1, 0, H_gdk_window_get_user_data);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_get_geometry" XG_POST, gxg_gdk_window_get_geometry, 6, 0, 0, H_gdk_window_get_geometry);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_get_position" XG_POST, gxg_gdk_window_get_position, 1, 2, 0, H_gdk_window_get_position);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_get_origin" XG_POST, gxg_gdk_window_get_origin, 3, 0, 0, H_gdk_window_get_origin);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_set_pointer_hooks" XG_POST, gxg_gdk_set_pointer_hooks, 1, 0, 0, H_gdk_set_pointer_hooks);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_get_default_root_window" XG_POST, gxg_gdk_get_default_root_window, 0, 0, 0, H_gdk_get_default_root_window);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_error_quark" XG_POST, gxg_gdk_pixbuf_error_quark, 0, 0, 0, H_gdk_pixbuf_error_quark);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_get_type" XG_POST, gxg_gdk_pixbuf_get_type, 0, 0, 0, H_gdk_pixbuf_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_get_colorspace" XG_POST, gxg_gdk_pixbuf_get_colorspace, 1, 0, 0, H_gdk_pixbuf_get_colorspace);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_get_n_channels" XG_POST, gxg_gdk_pixbuf_get_n_channels, 1, 0, 0, H_gdk_pixbuf_get_n_channels);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_get_has_alpha" XG_POST, gxg_gdk_pixbuf_get_has_alpha, 1, 0, 0, H_gdk_pixbuf_get_has_alpha);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_get_bits_per_sample" XG_POST, gxg_gdk_pixbuf_get_bits_per_sample, 1, 0, 0, H_gdk_pixbuf_get_bits_per_sample);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_get_pixels" XG_POST, gxg_gdk_pixbuf_get_pixels, 1, 0, 0, H_gdk_pixbuf_get_pixels);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_get_width" XG_POST, gxg_gdk_pixbuf_get_width, 1, 0, 0, H_gdk_pixbuf_get_width);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_get_height" XG_POST, gxg_gdk_pixbuf_get_height, 1, 0, 0, H_gdk_pixbuf_get_height);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_get_rowstride" XG_POST, gxg_gdk_pixbuf_get_rowstride, 1, 0, 0, H_gdk_pixbuf_get_rowstride);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_new" XG_POST, gxg_gdk_pixbuf_new, 5, 0, 0, H_gdk_pixbuf_new);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_copy" XG_POST, gxg_gdk_pixbuf_copy, 1, 0, 0, H_gdk_pixbuf_copy);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_new_subpixbuf" XG_POST, gxg_gdk_pixbuf_new_subpixbuf, 5, 0, 0, H_gdk_pixbuf_new_subpixbuf);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_new_from_file" XG_POST, gxg_gdk_pixbuf_new_from_file, 1, 1, 0, H_gdk_pixbuf_new_from_file);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_new_from_data" XG_POST, gxg_gdk_pixbuf_new_from_data, 9, 0, 0, H_gdk_pixbuf_new_from_data);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_new_from_xpm_data" XG_POST, gxg_gdk_pixbuf_new_from_xpm_data, 1, 0, 0, H_gdk_pixbuf_new_from_xpm_data);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_new_from_inline" XG_POST, gxg_gdk_pixbuf_new_from_inline, 3, 1, 0, H_gdk_pixbuf_new_from_inline);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_fill" XG_POST, gxg_gdk_pixbuf_fill, 2, 0, 0, H_gdk_pixbuf_fill);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_save" XG_POST, gxg_gdk_pixbuf_save, 3, 1, 0, H_gdk_pixbuf_save);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_savev" XG_POST, gxg_gdk_pixbuf_savev, 5, 1, 0, H_gdk_pixbuf_savev);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_add_alpha" XG_POST, gxg_gdk_pixbuf_add_alpha, 5, 0, 0, H_gdk_pixbuf_add_alpha);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_copy_area" XG_POST, gxg_gdk_pixbuf_copy_area, 8, 0, 0, H_gdk_pixbuf_copy_area);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_saturate_and_pixelate" XG_POST, gxg_gdk_pixbuf_saturate_and_pixelate, 4, 0, 0, H_gdk_pixbuf_saturate_and_pixelate);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_scale" XG_POST, gxg_gdk_pixbuf_scale, 0, 0, 1, H_gdk_pixbuf_scale);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_composite" XG_POST, gxg_gdk_pixbuf_composite, 0, 0, 1, H_gdk_pixbuf_composite);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_composite_color" XG_POST, gxg_gdk_pixbuf_composite_color, 0, 0, 1, H_gdk_pixbuf_composite_color);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_scale_simple" XG_POST, gxg_gdk_pixbuf_scale_simple, 4, 0, 0, H_gdk_pixbuf_scale_simple);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_composite_color_simple" XG_POST, gxg_gdk_pixbuf_composite_color_simple, 8, 0, 0, H_gdk_pixbuf_composite_color_simple);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_animation_get_type" XG_POST, gxg_gdk_pixbuf_animation_get_type, 0, 0, 0, H_gdk_pixbuf_animation_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_animation_new_from_file" XG_POST, gxg_gdk_pixbuf_animation_new_from_file, 1, 1, 0, H_gdk_pixbuf_animation_new_from_file);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_animation_get_width" XG_POST, gxg_gdk_pixbuf_animation_get_width, 1, 0, 0, H_gdk_pixbuf_animation_get_width);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_animation_get_height" XG_POST, gxg_gdk_pixbuf_animation_get_height, 1, 0, 0, H_gdk_pixbuf_animation_get_height);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_animation_is_static_image" XG_POST, gxg_gdk_pixbuf_animation_is_static_image, 1, 0, 0, H_gdk_pixbuf_animation_is_static_image);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_animation_get_static_image" XG_POST, gxg_gdk_pixbuf_animation_get_static_image, 1, 0, 0, H_gdk_pixbuf_animation_get_static_image);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_animation_get_iter" XG_POST, gxg_gdk_pixbuf_animation_get_iter, 2, 0, 0, H_gdk_pixbuf_animation_get_iter);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_animation_iter_get_type" XG_POST, gxg_gdk_pixbuf_animation_iter_get_type, 0, 0, 0, H_gdk_pixbuf_animation_iter_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_animation_iter_get_delay_time" XG_POST, gxg_gdk_pixbuf_animation_iter_get_delay_time, 1, 0, 0, H_gdk_pixbuf_animation_iter_get_delay_time);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_animation_iter_get_pixbuf" XG_POST, gxg_gdk_pixbuf_animation_iter_get_pixbuf, 1, 0, 0, H_gdk_pixbuf_animation_iter_get_pixbuf);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_animation_iter_on_currently_loading_frame" XG_POST, gxg_gdk_pixbuf_animation_iter_on_currently_loading_frame, 1, 0, 0, H_gdk_pixbuf_animation_iter_on_currently_loading_frame);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_animation_iter_advance" XG_POST, gxg_gdk_pixbuf_animation_iter_advance, 2, 0, 0, H_gdk_pixbuf_animation_iter_advance);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_get_option" XG_POST, gxg_gdk_pixbuf_get_option, 2, 0, 0, H_gdk_pixbuf_get_option);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_loader_get_type" XG_POST, gxg_gdk_pixbuf_loader_get_type, 0, 0, 0, H_gdk_pixbuf_loader_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_loader_new" XG_POST, gxg_gdk_pixbuf_loader_new, 0, 0, 0, H_gdk_pixbuf_loader_new);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_loader_new_with_type" XG_POST, gxg_gdk_pixbuf_loader_new_with_type, 1, 1, 0, H_gdk_pixbuf_loader_new_with_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_loader_write" XG_POST, gxg_gdk_pixbuf_loader_write, 3, 1, 0, H_gdk_pixbuf_loader_write);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_loader_get_pixbuf" XG_POST, gxg_gdk_pixbuf_loader_get_pixbuf, 1, 0, 0, H_gdk_pixbuf_loader_get_pixbuf);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_loader_get_animation" XG_POST, gxg_gdk_pixbuf_loader_get_animation, 1, 0, 0, H_gdk_pixbuf_loader_get_animation);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_loader_close" XG_POST, gxg_gdk_pixbuf_loader_close, 1, 1, 0, H_gdk_pixbuf_loader_close);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_alpha_mode_get_type" XG_POST, gxg_gdk_pixbuf_alpha_mode_get_type, 0, 0, 0, H_gdk_pixbuf_alpha_mode_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_colorspace_get_type" XG_POST, gxg_gdk_colorspace_get_type, 0, 0, 0, H_gdk_colorspace_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_error_get_type" XG_POST, gxg_gdk_pixbuf_error_get_type, 0, 0, 0, H_gdk_pixbuf_error_get_type);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_interp_type_get_type" XG_POST, gxg_gdk_interp_type_get_type, 0, 0, 0, H_gdk_interp_type_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_vbox_get_type" XG_POST, gxg_gtk_vbox_get_type, 0, 0, 0, H_gtk_vbox_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_vbox_new" XG_POST, gxg_gtk_vbox_new, 2, 0, 0, H_gtk_vbox_new);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_accel_group_get_type" XG_POST, gxg_gtk_accel_group_get_type, 0, 0, 0, H_gtk_accel_group_get_type);
@@ -28856,10 +29557,6 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_reshow_with_initial_size" XG_POST, gxg_gtk_window_reshow_with_initial_size, 1, 0, 0, H_gtk_window_reshow_with_initial_size);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_group_get_type" XG_POST, gxg_gtk_window_group_get_type, 0, 0, 0, H_gtk_window_group_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_group_new" XG_POST, gxg_gtk_window_group_new, 0, 0, 0, H_gtk_window_group_new);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_group_add_window" XG_POST, gxg_gtk_window_group_add_window, 2, 0, 0, H_gtk_window_group_add_window);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_group_remove_window" XG_POST, gxg_gtk_window_group_remove_window, 2, 0, 0, H_gtk_window_group_remove_window);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_remove_embedded_xid" XG_POST, gxg_gtk_window_remove_embedded_xid, 2, 0, 0, H_gtk_window_remove_embedded_xid);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gtk_window_add_embedded_xid" XG_POST, gxg_gtk_window_add_embedded_xid, 2, 0, 0, H_gtk_window_add_embedded_xid);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_color_get_type" XG_POST, gxg_pango_color_get_type, 0, 0, 0, H_pango_color_get_type);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_color_copy" XG_POST, gxg_pango_color_copy, 1, 0, 0, H_pango_color_copy);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_color_free" XG_POST, gxg_pango_color_free, 1, 0, 0, H_pango_color_free);
@@ -28899,7 +29596,7 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_iterator_destroy" XG_POST, gxg_pango_attr_iterator_destroy, 1, 0, 0, H_pango_attr_iterator_destroy);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_iterator_get" XG_POST, gxg_pango_attr_iterator_get, 2, 0, 0, H_pango_attr_iterator_get);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_attr_iterator_get_font" XG_POST, gxg_pango_attr_iterator_get_font, 2, 2, 0, H_pango_attr_iterator_get_font);
-  XEN_DEFINE_PROCEDURE(XG_PRE "pango_parse_markup" XG_POST, gxg_pango_parse_markup, 7, 0, 0, H_pango_parse_markup);
+  XEN_DEFINE_PROCEDURE(XG_PRE "pango_parse_markup" XG_POST, gxg_pango_parse_markup, 6, 1, 0, H_pango_parse_markup);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_break" XG_POST, gxg_pango_break, 5, 0, 0, H_pango_break);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_find_paragraph_boundary" XG_POST, gxg_pango_find_paragraph_boundary, 4, 0, 0, H_pango_find_paragraph_boundary);
   XEN_DEFINE_PROCEDURE(XG_PRE "pango_get_log_attrs" XG_POST, gxg_pango_get_log_attrs, 6, 0, 0, H_pango_get_log_attrs);
@@ -29084,7 +29781,12 @@ static void define_functions(void)
 
 
   /* -------------------- deprecated functions -------------------- */
-#if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED)))
+#if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED))) && (!(defined(GDK_PIXBUF_DISABLE_DEPRECATED)))
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_get_deskrelative_origin" XG_POST, gxg_gdk_window_get_deskrelative_origin, 1, 2, 0, H_gdk_window_get_deskrelative_origin);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_ref" XG_POST, gxg_gdk_pixbuf_ref, 1, 0, 0, H_gdk_pixbuf_ref);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_unref" XG_POST, gxg_gdk_pixbuf_unref, 1, 0, 0, H_gdk_pixbuf_unref);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_animation_ref" XG_POST, gxg_gdk_pixbuf_animation_ref, 1, 0, 0, H_gdk_pixbuf_animation_ref);
+  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_pixbuf_animation_unref" XG_POST, gxg_gdk_pixbuf_animation_unref, 1, 0, 0, H_gdk_pixbuf_animation_unref);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_colors_alloc" XG_POST, gxg_gdk_colors_alloc, 6, 0, 0, H_gdk_colors_alloc);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_colors_free" XG_POST, gxg_gdk_colors_free, 4, 0, 0, H_gdk_colors_free);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_color_white" XG_POST, gxg_gdk_color_white, 2, 0, 0, H_gdk_color_white);
@@ -29143,23 +29845,6 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_rgb_gc_set_foreground" XG_POST, gxg_gdk_rgb_gc_set_foreground, 2, 0, 0, H_gdk_rgb_gc_set_foreground);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_rgb_gc_set_background" XG_POST, gxg_gdk_rgb_gc_set_background, 2, 0, 0, H_gdk_rgb_gc_set_background);
   XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_set_hints" XG_POST, gxg_gdk_window_set_hints, 8, 0, 0, H_gdk_window_set_hints);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_set_type_hint" XG_POST, gxg_gdk_window_set_type_hint, 2, 0, 0, H_gdk_window_set_type_hint);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_set_modal_hint" XG_POST, gxg_gdk_window_set_modal_hint, 2, 0, 0, H_gdk_window_set_modal_hint);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_set_geometry_hints" XG_POST, gxg_gdk_window_set_geometry_hints, 3, 0, 0, H_gdk_window_set_geometry_hints);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_set_sm_client_id" XG_POST, gxg_gdk_set_sm_client_id, 1, 0, 0, H_gdk_set_sm_client_id);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_begin_paint_rect" XG_POST, gxg_gdk_window_begin_paint_rect, 2, 0, 0, H_gdk_window_begin_paint_rect);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_begin_paint_region" XG_POST, gxg_gdk_window_begin_paint_region, 2, 0, 0, H_gdk_window_begin_paint_region);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_end_paint" XG_POST, gxg_gdk_window_end_paint, 1, 0, 0, H_gdk_window_end_paint);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_set_title" XG_POST, gxg_gdk_window_set_title, 2, 0, 0, H_gdk_window_set_title);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_set_role" XG_POST, gxg_gdk_window_set_role, 2, 0, 0, H_gdk_window_set_role);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_set_transient_for" XG_POST, gxg_gdk_window_set_transient_for, 2, 0, 0, H_gdk_window_set_transient_for);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_set_background" XG_POST, gxg_gdk_window_set_background, 2, 0, 0, H_gdk_window_set_background);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_set_back_pixmap" XG_POST, gxg_gdk_window_set_back_pixmap, 3, 0, 0, H_gdk_window_set_back_pixmap);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_set_cursor" XG_POST, gxg_gdk_window_set_cursor, 2, 0, 0, H_gdk_window_set_cursor);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_get_user_data" XG_POST, gxg_gdk_window_get_user_data, 1, 1, 0, H_gdk_window_get_user_data);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_get_geometry" XG_POST, gxg_gdk_window_get_geometry, 6, 0, 0, H_gdk_window_get_geometry);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_get_position" XG_POST, gxg_gdk_window_get_position, 1, 2, 0, H_gdk_window_get_position);
-  XEN_DEFINE_PROCEDURE(XG_PRE "gdk_window_get_origin" XG_POST, gxg_gdk_window_get_origin, 3, 0, 0, H_gdk_window_get_origin);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_button_box_set_child_size" XG_POST, gxg_gtk_button_box_set_child_size, 3, 0, 0, H_gtk_button_box_set_child_size);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_button_box_set_child_ipadding" XG_POST, gxg_gtk_button_box_set_child_ipadding, 3, 0, 0, H_gtk_button_box_set_child_ipadding);
   XEN_DEFINE_PROCEDURE(XG_PRE "gtk_button_box_get_child_size" XG_POST, gxg_gtk_button_box_get_child_size, 3, 0, 0, H_gtk_button_box_get_child_size);
@@ -29583,6 +30268,10 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "GDK_VISUAL" XG_POST, gxg_GDK_VISUAL, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XG_PRE "GDK_WINDOW" XG_POST, gxg_GDK_WINDOW, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XG_PRE "GDK_WINDOW_OBJECT" XG_POST, gxg_GDK_WINDOW_OBJECT, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_PRE "GDK_PIXBUF" XG_POST, gxg_GDK_PIXBUF, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_PRE "GDK_PIXBUF_ANIMATION" XG_POST, gxg_GDK_PIXBUF_ANIMATION, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_PRE "GDK_PIXBUF_ANIMATION_ITER" XG_POST, gxg_GDK_PIXBUF_ANIMATION_ITER, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_PRE "GDK_PIXBUF_LOADER" XG_POST, gxg_GDK_PIXBUF_LOADER, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XG_PRE "GTK_VBOX" XG_POST, gxg_GTK_VBOX, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XG_PRE "GTK_ACCEL_GROUP" XG_POST, gxg_GTK_ACCEL_GROUP, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XG_PRE "GTK_ACCEL_LABEL" XG_POST, gxg_GTK_ACCEL_LABEL, 1, 0, 0, NULL);
@@ -29709,7 +30398,7 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "PANGO_FONT_FAMILY" XG_POST, gxg_PANGO_FONT_FAMILY, 1, 0, 0, NULL);
 #endif
 
-#if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED)))
+#if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED))) && (!(defined(GDK_PIXBUF_DISABLE_DEPRECATED)))
   XEN_DEFINE_PROCEDURE(XG_PRE "GTK_CLIST" XG_POST, gxg_GTK_CLIST, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XG_PRE "GTK_CTREE" XG_POST, gxg_GTK_CTREE, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XG_PRE "GTK_LIST" XG_POST, gxg_GTK_LIST, 1, 0, 0, NULL);
@@ -29737,6 +30426,10 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "GDK_IS_PIXMAP" XG_POST, XEN_GdkPixmap__p, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XG_PRE "GDK_IS_VISUAL" XG_POST, XEN_GdkVisual__p, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XG_PRE "GDK_IS_WINDOW" XG_POST, XEN_GdkWindow__p, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_PRE "GDK_IS_PIXBUF" XG_POST, XEN_GdkPixbuf__p, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_PRE "GDK_IS_PIXBUF_ANIMATION" XG_POST, XEN_GdkPixbufAnimation__p, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_PRE "GDK_IS_PIXBUF_ANIMATION_ITER" XG_POST, XEN_GdkPixbufAnimationIter__p, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XG_PRE "GDK_IS_PIXBUF_LOADER" XG_POST, XEN_GdkPixbufLoader__p, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_VBOX" XG_POST, XEN_GtkVBox__p, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_ACCEL_GROUP" XG_POST, XEN_GtkAccelGroup__p, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_ACCEL_LABEL" XG_POST, XEN_GtkAccelLabel__p, 1, 0, 0, NULL);
@@ -29863,7 +30556,7 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XG_PRE "PANGO_IS_FONT_FAMILY" XG_POST, XEN_PangoFontFamily__p, 1, 0, 0, NULL);
 #endif
 
-#if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED)))
+#if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED))) && (!(defined(GDK_PIXBUF_DISABLE_DEPRECATED)))
   XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_CLIST" XG_POST, XEN_GtkCList__p, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_CTREE" XG_POST, XEN_GtkCTree__p, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XG_PRE "GTK_IS_LIST" XG_POST, XEN_GtkList__p, 1, 0, 0, NULL);
@@ -29938,15 +30631,15 @@ static XEN c_array_to_xen_list(XEN val, XEN clen)
       gint8* arr; arr = (gint8*)XEN_CADR(val); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gint8(arr[i]), result);
     }
-  if (strcmp(ctype, "GdkWChar*") == 0)
-    {
-      GdkWChar* arr; arr = (GdkWChar*)XEN_CADR(val); 
-      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GdkWChar(arr[i]), result);
-    }
   if (strcmp(ctype, "gchar**") == 0)
     {
       gchar** arr; arr = (gchar**)XEN_CADR(val); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gchar_(arr[i]), result);
+    }
+  if (strcmp(ctype, "guchar*") == 0)
+    {
+      guchar* arr; arr = (guchar*)XEN_CADR(val); 
+      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_guchar(arr[i]), result);
     }
   if (strcmp(ctype, "guint32*") == 0)
     {
@@ -29962,6 +30655,16 @@ static XEN c_array_to_xen_list(XEN val, XEN clen)
     {
       GdkWMDecoration* arr; arr = (GdkWMDecoration*)XEN_CADR(val); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GdkWMDecoration(arr[i]), result);
+    }
+  if (strcmp(ctype, "char**") == 0)
+    {
+      char** arr; arr = (char**)XEN_CADR(val); 
+      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_char_(arr[i]), result);
+    }
+  if (strcmp(ctype, "guint8*") == 0)
+    {
+      guint8* arr; arr = (guint8*)XEN_CADR(val); 
+      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_guint8(arr[i]), result);
     }
   if (strcmp(ctype, "GtkPackType*") == 0)
     {
@@ -30003,11 +30706,6 @@ static XEN c_array_to_xen_list(XEN val, XEN clen)
       GtkSortType* arr; arr = (GtkSortType*)XEN_CADR(val); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GtkSortType(arr[i]), result);
     }
-  if (strcmp(ctype, "char**") == 0)
-    {
-      char** arr; arr = (char**)XEN_CADR(val); 
-      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_char_(arr[i]), result);
-    }
   if (strcmp(ctype, "gunichar*") == 0)
     {
       gunichar* arr; arr = (gunichar*)XEN_CADR(val); 
@@ -30028,11 +30726,6 @@ static XEN c_array_to_xen_list(XEN val, XEN clen)
       PangoFontDescription** arr; arr = (PangoFontDescription**)XEN_CADR(val); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_PangoFontDescription_(arr[i]), result);
     }
-  if (strcmp(ctype, "char**") == 0)
-    {
-      char** arr; arr = (char**)XEN_CADR(val); 
-      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_char_(arr[i]), result);
-    }
   if (strcmp(ctype, "PangoAttrList**") == 0)
     {
       PangoAttrList** arr; arr = (PangoAttrList**)XEN_CADR(val); 
@@ -30052,6 +30745,11 @@ static XEN c_array_to_xen_list(XEN val, XEN clen)
     {
       char*** arr; arr = (char***)XEN_CADR(val); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_char__(arr[i]), result);
+    }
+  if (strcmp(ctype, "char**") == 0)
+    {
+      char** arr; arr = (char**)XEN_CADR(val); 
+      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_char_(arr[i]), result);
     }
   if (strcmp(ctype, "gchar**") == 0)
     {
@@ -30131,17 +30829,17 @@ static XEN xen_list_to_c_array(XEN val, XEN type)
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_gint8(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("gint8_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "GdkWChar*") == 0)
-    {
-      GdkWChar* arr; arr = (GdkWChar*)CALLOC(len, sizeof(GdkWChar));
-      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GdkWChar(XEN_CAR(val));
-      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkWChar_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
-    }
   if (strcmp(ctype, "gchar**") == 0)
     {
       gchar** arr; arr = (gchar**)CALLOC(len, sizeof(gchar*));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_gchar_(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("gchar__"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
+    }
+  if (strcmp(ctype, "guchar*") == 0)
+    {
+      guchar* arr; arr = (guchar*)CALLOC(len, sizeof(guchar));
+      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_guchar(XEN_CAR(val));
+      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("guchar_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
   if (strcmp(ctype, "guint32*") == 0)
     {
@@ -30160,6 +30858,18 @@ static XEN xen_list_to_c_array(XEN val, XEN type)
       GdkWMDecoration* arr; arr = (GdkWMDecoration*)CALLOC(len, sizeof(GdkWMDecoration));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GdkWMDecoration(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkWMDecoration_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
+    }
+  if (strcmp(ctype, "char**") == 0)
+    {
+      char** arr; arr = (char**)CALLOC(len, sizeof(char*));
+      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_char_(XEN_CAR(val));
+      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("char__"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
+    }
+  if (strcmp(ctype, "guint8*") == 0)
+    {
+      guint8* arr; arr = (guint8*)CALLOC(len, sizeof(guint8));
+      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_guint8(XEN_CAR(val));
+      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("guint8_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
   if (strcmp(ctype, "GtkPackType*") == 0)
     {
@@ -30209,12 +30919,6 @@ static XEN xen_list_to_c_array(XEN val, XEN type)
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GtkSortType(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GtkSortType_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "char**") == 0)
-    {
-      char** arr; arr = (char**)CALLOC(len, sizeof(char*));
-      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_char_(XEN_CAR(val));
-      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("char__"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
-    }
   if (strcmp(ctype, "gunichar*") == 0)
     {
       gunichar* arr; arr = (gunichar*)CALLOC(len, sizeof(gunichar));
@@ -30239,12 +30943,6 @@ static XEN xen_list_to_c_array(XEN val, XEN type)
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_PangoFontDescription_(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("PangoFontDescription__"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "char**") == 0)
-    {
-      char** arr; arr = (char**)CALLOC(len, sizeof(char*));
-      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_char_(XEN_CAR(val));
-      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("char__"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
-    }
   if (strcmp(ctype, "PangoAttrList**") == 0)
     {
       PangoAttrList** arr; arr = (PangoAttrList**)CALLOC(len, sizeof(PangoAttrList*));
@@ -30268,6 +30966,12 @@ static XEN xen_list_to_c_array(XEN val, XEN type)
       char*** arr; arr = (char***)CALLOC(len, sizeof(char**));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_char__(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("char___"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
+    }
+  if (strcmp(ctype, "char**") == 0)
+    {
+      char** arr; arr = (char**)CALLOC(len, sizeof(char*));
+      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_char_(XEN_CAR(val));
+      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("char__"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
   if (strcmp(ctype, "gchar**") == 0)
     {
@@ -35128,7 +35832,7 @@ static void define_structs(void)
 
 static void define_macros(void)
 {
-#if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED)))
+#if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED))) && (!(defined(GDK_PIXBUF_DISABLE_DEPRECATED)))
   XEN_EVAL_C_STRING("(define " XG_PRE "gdk_cursor_destroy" XG_POST " " XG_PRE "gdk_cursor_unref" XG_POST ")");
   XEN_EVAL_C_STRING("(define " XG_PRE "gdk_draw_pixmap" XG_POST " " XG_PRE "gdk_draw_drawable" XG_POST ")");
   XEN_EVAL_C_STRING("(define " XG_PRE "gdk_draw_bitmap" XG_POST " " XG_PRE "gdk_draw_drawable" XG_POST ")");
@@ -36009,6 +36713,22 @@ static void define_integers(void)
   DEFINE_INTEGER(XG_PRE "GDK_WINDOW_EDGE_SOUTH_WEST" XG_POST,                   GDK_WINDOW_EDGE_SOUTH_WEST);
   DEFINE_INTEGER(XG_PRE "GDK_WINDOW_EDGE_SOUTH" XG_POST,                        GDK_WINDOW_EDGE_SOUTH);
   DEFINE_INTEGER(XG_PRE "GDK_WINDOW_EDGE_SOUTH_EAST " XG_POST,                  GDK_WINDOW_EDGE_SOUTH_EAST );
+  DEFINE_INTEGER(XG_PRE "GDK_PIXBUF_ALPHA_BILEVEL" XG_POST,                     GDK_PIXBUF_ALPHA_BILEVEL);
+  DEFINE_INTEGER(XG_PRE "GDK_PIXBUF_ALPHA_FULL" XG_POST,                        GDK_PIXBUF_ALPHA_FULL);
+  DEFINE_INTEGER(XG_PRE "GDK_COLORSPACE_RGB" XG_POST,                           GDK_COLORSPACE_RGB);
+  DEFINE_INTEGER(XG_PRE "GDK_PIXBUF_ERROR_CORRUPT_IMAGE" XG_POST,               GDK_PIXBUF_ERROR_CORRUPT_IMAGE);
+  DEFINE_INTEGER(XG_PRE "GDK_PIXBUF_ERROR_INSUFFICIENT_MEMORY" XG_POST,         GDK_PIXBUF_ERROR_INSUFFICIENT_MEMORY);
+  DEFINE_INTEGER(XG_PRE "GDK_PIXBUF_ERROR_BAD_OPTION" XG_POST,                  GDK_PIXBUF_ERROR_BAD_OPTION);
+  DEFINE_INTEGER(XG_PRE "GDK_PIXBUF_ERROR_UNKNOWN_TYPE" XG_POST,                GDK_PIXBUF_ERROR_UNKNOWN_TYPE);
+  DEFINE_INTEGER(XG_PRE "GDK_PIXBUF_ERROR_UNSUPPORTED_OPERATION" XG_POST,       GDK_PIXBUF_ERROR_UNSUPPORTED_OPERATION);
+  DEFINE_INTEGER(XG_PRE "GDK_PIXBUF_ERROR_FAILED" XG_POST,                      GDK_PIXBUF_ERROR_FAILED);
+  DEFINE_INTEGER(XG_PRE "GDK_INTERP_NEAREST" XG_POST,                           GDK_INTERP_NEAREST);
+  DEFINE_INTEGER(XG_PRE "GDK_INTERP_TILES" XG_POST,                             GDK_INTERP_TILES);
+  DEFINE_INTEGER(XG_PRE "GDK_INTERP_BILINEAR" XG_POST,                          GDK_INTERP_BILINEAR);
+  DEFINE_INTEGER(XG_PRE "GDK_INTERP_HYPER" XG_POST,                             GDK_INTERP_HYPER);
+  DEFINE_INTEGER(XG_PRE "GDK_PIXBUF_MAJOR" XG_POST,                             GDK_PIXBUF_MAJOR);
+  DEFINE_INTEGER(XG_PRE "GDK_PIXBUF_MINOR" XG_POST,                             GDK_PIXBUF_MINOR);
+  DEFINE_INTEGER(XG_PRE "GDK_PIXBUF_MICRO" XG_POST,                             GDK_PIXBUF_MICRO);
   DEFINE_INTEGER(XG_PRE "GTK_ACCEL_VISIBLE" XG_POST,                            GTK_ACCEL_VISIBLE);
   DEFINE_INTEGER(XG_PRE "GTK_ACCEL_LOCKED" XG_POST,                             GTK_ACCEL_LOCKED);
   DEFINE_INTEGER(XG_PRE "GTK_ACCEL_MASK" XG_POST,                               GTK_ACCEL_MASK);
@@ -36417,6 +37137,15 @@ static void define_integers(void)
   DEFINE_INTEGER(XG_PRE "G_NORMALIZE_NFKD" XG_POST,                             G_NORMALIZE_NFKD);
   DEFINE_INTEGER(XG_PRE "G_NORMALIZE_ALL_COMPOSE" XG_POST,                      G_NORMALIZE_ALL_COMPOSE);
   DEFINE_INTEGER(XG_PRE "G_NORMALIZE_NFKC" XG_POST,                             G_NORMALIZE_NFKC);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_PIXBUF" XG_POST,                                GDK_TYPE_PIXBUF);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_PIXBUF_ANIMATION" XG_POST,                      GDK_TYPE_PIXBUF_ANIMATION);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_PIXBUF_ANIMATION_ITER" XG_POST,                 GDK_TYPE_PIXBUF_ANIMATION_ITER);
+  DEFINE_ULONG(XG_PRE "GDK_PIXBUF_ERROR" XG_POST,                               GDK_PIXBUF_ERROR);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_PIXBUF_LOADER" XG_POST,                         GDK_TYPE_PIXBUF_LOADER);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_PIXBUF_ALPHA_MODE" XG_POST,                     GDK_TYPE_PIXBUF_ALPHA_MODE);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_COLORSPACE" XG_POST,                            GDK_TYPE_COLORSPACE);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_PIXBUF_ERROR" XG_POST,                          GDK_TYPE_PIXBUF_ERROR);
+  DEFINE_ULONG(XG_PRE "GDK_TYPE_INTERP_TYPE" XG_POST,                           GDK_TYPE_INTERP_TYPE);
   DEFINE_ULONG(XG_PRE "GTK_TYPE_ACCEL_GROUP" XG_POST,                           GTK_TYPE_ACCEL_GROUP);
   DEFINE_ULONG(XG_PRE "GTK_TYPE_ACCEL_LABEL" XG_POST,                           GTK_TYPE_ACCEL_LABEL);
   DEFINE_ULONG(XG_PRE "GTK_TYPE_ACCESSIBLE" XG_POST,                            GTK_TYPE_ACCESSIBLE);
@@ -36472,8 +37201,6 @@ static void define_integers(void)
   DEFINE_ULONG(XG_PRE "GTK_TYPE_ITEM" XG_POST,                                  GTK_TYPE_ITEM);
   DEFINE_ULONG(XG_PRE "GTK_TYPE_LABEL" XG_POST,                                 GTK_TYPE_LABEL);
   DEFINE_ULONG(XG_PRE "GTK_TYPE_LAYOUT" XG_POST,                                GTK_TYPE_LAYOUT);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_LIST" XG_POST,                                  GTK_TYPE_LIST);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_LIST_ITEM" XG_POST,                             GTK_TYPE_LIST_ITEM);
   DEFINE_ULONG(XG_PRE "GTK_TYPE_LIST_STORE" XG_POST,                            GTK_TYPE_LIST_STORE);
   DEFINE_ULONG(XG_PRE "GTK_TYPE_MENU_BAR" XG_POST,                              GTK_TYPE_MENU_BAR);
   DEFINE_ULONG(XG_PRE "GTK_TYPE_MENU" XG_POST,                                  GTK_TYPE_MENU);
@@ -36483,14 +37210,10 @@ static void define_integers(void)
   DEFINE_ULONG(XG_PRE "GTK_TYPE_MISC" XG_POST,                                  GTK_TYPE_MISC);
   DEFINE_ULONG(XG_PRE "GTK_TYPE_NOTEBOOK" XG_POST,                              GTK_TYPE_NOTEBOOK);
   DEFINE_ULONG(XG_PRE "GTK_TYPE_OBJECT" XG_POST,                                GTK_TYPE_OBJECT);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_OLD_EDITABLE" XG_POST,                          GTK_TYPE_OLD_EDITABLE);
   DEFINE_ULONG(XG_PRE "GTK_TYPE_OPTION_MENU" XG_POST,                           GTK_TYPE_OPTION_MENU);
   DEFINE_ULONG(XG_PRE "GTK_TYPE_PANED" XG_POST,                                 GTK_TYPE_PANED);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_PIXMAP" XG_POST,                                GTK_TYPE_PIXMAP);
   DEFINE_ULONG(XG_PRE "GTK_TYPE_PLUG" XG_POST,                                  GTK_TYPE_PLUG);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_PREVIEW" XG_POST,                               GTK_TYPE_PREVIEW);
   DEFINE_ULONG(XG_PRE "GTK_TYPE_PROGRESS_BAR" XG_POST,                          GTK_TYPE_PROGRESS_BAR);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_PROGRESS" XG_POST,                              GTK_TYPE_PROGRESS);
   DEFINE_ULONG(XG_PRE "GTK_TYPE_RADIO_BUTTON" XG_POST,                          GTK_TYPE_RADIO_BUTTON);
   DEFINE_ULONG(XG_PRE "GTK_TYPE_RADIO_MENU_ITEM" XG_POST,                       GTK_TYPE_RADIO_MENU_ITEM);
   DEFINE_ULONG(XG_PRE "GTK_TYPE_RANGE" XG_POST,                                 GTK_TYPE_RANGE);
@@ -36515,7 +37238,6 @@ static void define_integers(void)
   DEFINE_ULONG(XG_PRE "GTK_TYPE_TEXT_TAG" XG_POST,                              GTK_TYPE_TEXT_TAG);
   DEFINE_ULONG(XG_PRE "GTK_TYPE_TEXT_TAG_TABLE" XG_POST,                        GTK_TYPE_TEXT_TAG_TABLE);
   DEFINE_ULONG(XG_PRE "GTK_TYPE_TEXT_VIEW" XG_POST,                             GTK_TYPE_TEXT_VIEW);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_TIPS_QUERY" XG_POST,                            GTK_TYPE_TIPS_QUERY);
   DEFINE_ULONG(XG_PRE "GTK_TYPE_TOGGLE_BUTTON" XG_POST,                         GTK_TYPE_TOGGLE_BUTTON);
   DEFINE_ULONG(XG_PRE "GTK_TYPE_TOOLBAR" XG_POST,                               GTK_TYPE_TOOLBAR);
   DEFINE_ULONG(XG_PRE "GTK_TYPE_TOOLTIPS" XG_POST,                              GTK_TYPE_TOOLTIPS);
@@ -36528,22 +37250,6 @@ static void define_integers(void)
   DEFINE_ULONG(XG_PRE "GTK_TYPE_TREE_STORE" XG_POST,                            GTK_TYPE_TREE_STORE);
   DEFINE_ULONG(XG_PRE "GTK_TYPE_TREE_VIEW_COLUMN" XG_POST,                      GTK_TYPE_TREE_VIEW_COLUMN);
   DEFINE_ULONG(XG_PRE "GTK_TYPE_TREE_VIEW" XG_POST,                             GTK_TYPE_TREE_VIEW);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_INVALID" XG_POST,                               GTK_TYPE_INVALID);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_NONE" XG_POST,                                  GTK_TYPE_NONE);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_ENUM" XG_POST,                                  GTK_TYPE_ENUM);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_FLAGS" XG_POST,                                 GTK_TYPE_FLAGS);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_CHAR" XG_POST,                                  GTK_TYPE_CHAR);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_UCHAR" XG_POST,                                 GTK_TYPE_UCHAR);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_BOOL" XG_POST,                                  GTK_TYPE_BOOL);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_INT" XG_POST,                                   GTK_TYPE_INT);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_UINT" XG_POST,                                  GTK_TYPE_UINT);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_LONG" XG_POST,                                  GTK_TYPE_LONG);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_ULONG" XG_POST,                                 GTK_TYPE_ULONG);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_FLOAT" XG_POST,                                 GTK_TYPE_FLOAT);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_DOUBLE" XG_POST,                                GTK_TYPE_DOUBLE);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_STRING" XG_POST,                                GTK_TYPE_STRING);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_BOXED" XG_POST,                                 GTK_TYPE_BOXED);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_POINTER" XG_POST,                               GTK_TYPE_POINTER);
   DEFINE_ULONG(XG_PRE "GTK_TYPE_VBUTTON_BOX" XG_POST,                           GTK_TYPE_VBUTTON_BOX);
   DEFINE_ULONG(XG_PRE "GTK_TYPE_VBOX" XG_POST,                                  GTK_TYPE_VBOX);
   DEFINE_ULONG(XG_PRE "GTK_TYPE_VIEWPORT" XG_POST,                              GTK_TYPE_VIEWPORT);
@@ -36606,7 +37312,6 @@ static void define_integers(void)
   DEFINE_ULONG(XG_PRE "GDK_TYPE_GRAVITY" XG_POST,                               GDK_TYPE_GRAVITY);
   DEFINE_ULONG(XG_PRE "GDK_TYPE_WINDOW_EDGE" XG_POST,                           GDK_TYPE_WINDOW_EDGE);
   DEFINE_ULONG(XG_PRE "GDK_TYPE_EVENT" XG_POST,                                 GDK_TYPE_EVENT);
-  DEFINE_ULONG(XG_PRE "GDK_TYPE_FONT" XG_POST,                                  GDK_TYPE_FONT);
   DEFINE_ULONG(XG_PRE "GDK_TYPE_GC" XG_POST,                                    GDK_TYPE_GC);
   DEFINE_ULONG(XG_PRE "GDK_TYPE_RECTANGLE" XG_POST,                             GDK_TYPE_RECTANGLE);
   DEFINE_ULONG(XG_PRE "GDK_TYPE_IMAGE" XG_POST,                                 GDK_TYPE_IMAGE);
@@ -36698,7 +37403,7 @@ static void define_integers(void)
   DEFINE_ULONG(XG_PRE "G_UNICODE_BREAK_UNKNOWN" XG_POST,                        G_UNICODE_BREAK_UNKNOWN);
 
   /* -------------------- deprecated ints -------------------- */
-#if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED)))
+#if (!(defined(GDK_DISABLE_DEPRECATED))) && (!(defined(GTK_DISABLE_DEPRECATED))) && (!(defined(GDK_PIXBUF_DISABLE_DEPRECATED)))
   DEFINE_INTEGER(XG_PRE "GDK_FONT_FONT" XG_POST,                                GDK_FONT_FONT);
   DEFINE_INTEGER(XG_PRE "GDK_FONT_FONTSET" XG_POST,                             GDK_FONT_FONTSET);
   DEFINE_INTEGER(XG_PRE "GTK_CLIST_DRAG_NONE" XG_POST,                          GTK_CLIST_DRAG_NONE);
@@ -36839,6 +37544,7 @@ static void define_strings(void)
 #else
   #define DEFINE_STRING(Name, Value) rb_define_global_const(Name, C_TO_XEN_STRING(Value))
 #endif
+  DEFINE_STRING(XG_PRE "GDK_PIXBUF_VERSION" XG_POST,                            GDK_PIXBUF_VERSION);
   DEFINE_STRING(XG_PRE "GTK_STOCK_DIALOG_INFO" XG_POST,                         GTK_STOCK_DIALOG_INFO);
   DEFINE_STRING(XG_PRE "GTK_STOCK_DIALOG_WARNING" XG_POST,                      GTK_STOCK_DIALOG_WARNING);
   DEFINE_STRING(XG_PRE "GTK_STOCK_DIALOG_ERROR" XG_POST,                        GTK_STOCK_DIALOG_ERROR);
@@ -36943,7 +37649,7 @@ static int xg_already_inited = 0;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"18-Feb-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"21-Feb-02\")");
 #endif
       xg_already_inited = 1;
     }

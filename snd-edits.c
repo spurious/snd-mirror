@@ -1391,7 +1391,7 @@ static ed_list *delete_samples_1(int beg, int num, ed_list *current_state, chan_
   ripple_selection(new_state, beg, -num);
   reflect_sample_change_in_axis(cp);
   check_for_first_edit(cp);
-  new_state->size = len + len_fixup; /* don't propogate useless trailing blocks */
+  new_state->size = len + len_fixup; /* don't propagate useless trailing blocks */
   
   if (FRAGMENT_SOUND(new_state, (new_state->size - 1)) != EDIT_LIST_END_MARK)
     {
@@ -1520,7 +1520,7 @@ static ed_list *change_samples_1(int beg, int num, MUS_SAMPLE_TYPE *vals,
       ripple_out(new_state->fragments, k + 1, lengthen, len + len_fixup);
       reflect_sample_change_in_axis(cp);
     }
-  new_state->size = len + len_fixup; /* don't propogate useless trailing blocks */
+  new_state->size = len + len_fixup; /* don't propagate useless trailing blocks */
   ripple_marks(cp, 0, 0);
   check_for_first_edit(cp);
   fixup_edlist_endmark(new_state, current_state, len);

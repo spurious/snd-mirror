@@ -349,7 +349,6 @@ static void mix_panel_help(GtkWidget *w, gpointer context)
 GtkWidget *make_mix_panel(snd_state *ss)
 {
   GtkWidget *dismiss_button, *help_button, *rc;
-  GdkWindow *wn;
   char amplab[LABEL_BUFFER_SIZE];
   int mix_id, i, chans;
   mix_id = current_mix_id(ss);
@@ -411,8 +410,7 @@ GtkWidget *make_mix_panel(snd_state *ss)
       SG_SIGNAL_CONNECT(GTK_OBJECT(w_play), "clicked", GTK_SIGNAL_FUNC(play_callback), (gpointer)ss);
       gtk_widget_show(w_play);
       
-      wn = MAIN_WINDOW(ss);
-      speaker_pix = SG_XPM_TO_PIXMAP(speaker_bits(), speaker_mask);
+      speaker_pix = SG_XPM_TO_PIXMAP(MAIN_WINDOW(ss), speaker_bits(), speaker_mask);
       w_play_pix = SG_PIXMAP_NEW(speaker_pix, speaker_mask);
       gtk_container_add(GTK_CONTAINER(w_play), w_play_pix);
       gtk_widget_show(w_play_pix);

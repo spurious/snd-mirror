@@ -309,7 +309,7 @@ static void region_edit_callback(GtkWidget *w, gpointer context)
 
 static void region_labels_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
 {
-  gtk_signal_emit_stop_by_name(GTK_OBJECT(w), "enter_notify_event");
+  SG_SIGNAL_EMIT_STOP_BY_NAME(GTK_OBJECT(w), "enter_notify_event");
 }
 
 static GtkWidget *print_button, *edit_button;
