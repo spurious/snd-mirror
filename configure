@@ -12268,6 +12268,16 @@ _ACEOF
     LIBS="$GUILE_LIBS"
     OLD_CFLAGS="$CFLAGS"
     CFLAGS="$GUILE_CFLAGS"
+
+# special Mac OSX stuff -- need to protect against multiple -lguile's, add -all_load, and add -lguile-ltdl
+    case "$host" in
+      *-apple-*)
+ 	CFLAGS="$CFLAGS -all_load"
+        if test "`${GUILE_CONFIG_path}guile -c '(display (string>=? (version) "1.7"))'`" = "#t"; then
+          LIBS="$OLD_LIBS -lguile-ltdl -ldl -lm"
+        fi
+    esac
+
     echo "$as_me:$LINENO: checking for scm_set_smob_apply in -lguile" >&5
 echo $ECHO_N "checking for scm_set_smob_apply in -lguile... $ECHO_C" >&6
 if test "${ac_cv_lib_guile_scm_set_smob_apply+set}" = set; then
@@ -13008,6 +13018,68 @@ echo "${ECHO_T}$ac_cv_lib_guile_scm_str2symbol" >&6
 if test $ac_cv_lib_guile_scm_str2symbol = yes; then
   cat >>confdefs.h <<\_ACEOF
 #define HAVE_SCM_STR2SYMBOL 1
+_ACEOF
+
+fi
+
+    echo "$as_me:$LINENO: checking for scm_defined_p in -lguile" >&5
+echo $ECHO_N "checking for scm_defined_p in -lguile... $ECHO_C" >&6
+if test "${ac_cv_lib_guile_scm_defined_p+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lguile  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char scm_defined_p ();
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+scm_defined_p ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_guile_scm_defined_p=yes
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+ac_cv_lib_guile_scm_defined_p=no
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_guile_scm_defined_p" >&5
+echo "${ECHO_T}$ac_cv_lib_guile_scm_defined_p" >&6
+if test $ac_cv_lib_guile_scm_defined_p = yes; then
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_SCM_DEFINED_P 1
 _ACEOF
 
 fi

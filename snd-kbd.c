@@ -1736,9 +1736,7 @@ causes 'key' (an integer) \
 when typed with 'modifiers' (1:shift, 4:control, 8:meta) (and C-x if extended) to invoke 'func', a function of \
 zero or one arguments. If the function takes one argument, it is passed the preceding C-u number, if any. \
 The function should return one of the cursor choices (e.g. cursor-no-action).  'origin' is \
-the name reported if an error occurs.\n\
-(bind-key (char->integer #\z) 4 (lambda () (exit)))\n\
-causes Snd to exit if C-z is typed in the graph."
+the name reported if an error occurs."
 
   int args;
   char *errstr;

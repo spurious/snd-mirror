@@ -1635,7 +1635,10 @@ chan_info *get_cp(XEN x_snd_n, XEN x_chn_n, const char *caller)
   int chn_n;
   sp = get_sp(x_snd_n);
   if ((sp == NULL) || (!(sp->active)))
-    snd_no_such_sound_error(caller, x_snd_n); 
+    {
+      snd_no_such_sound_error(caller, x_snd_n); 
+      return(NULL); /* gad -- just in case our catch has been clobbered */
+    }
   if (XEN_INTEGER_P(x_chn_n))
     chn_n = XEN_TO_C_INT(x_chn_n);
   else

@@ -798,6 +798,17 @@
 (CFNC "PangoAttribute* gdk_pango_attr_embossed_new gboolean embossed")
 (CFNC "void gdk_pixbuf_render_threshold_alpha GdkPixbuf* pixbuf GdkBitmap* bitmap int src_x int src_y int dest_x int dest_y int width int height int alpha_threshold")
 (CFNC "void gdk_pixbuf_render_to_drawable GdkPixbuf* pixbuf GdkDrawable* drawable GdkGC* gc int src_x int src_y int dest_x int dest_y int width int height GdkRgbDither dither int x_dither int y_dither")
+
+;;; TODO: named gdk_draw_pixbuf in 2.1.1
+;;;       also GdkDisplay and GdkScreen stuff
+;;; TODO: added in gtk 2.1.0: gtk_tree_model_get_string_from_iter
+;;;       gtk_tree_model_sort_iter_is_valid(), gtk_tree_view_expand_to_path() 
+;;;       gtk_tree_selection_get_selected_rows(),
+;;;       gtk_tree_selection_count_selected_rows() 
+;;;       gtk_tree_path_new_from_indices(),  gtk_{list,tree}_store_{reorder,swap,_move} 
+;;;       gtk_menu_shell_select_first() gtk_notebook_get_n_pages()
+
+
 (CFNC "void gdk_pixbuf_render_to_drawable_alpha GdkPixbuf* pixbuf GdkDrawable* drawable int src_x int src_y int dest_x int dest_y int width int height GdkPixbufAlphaMode alpha_mode int alpha_threshold GdkRgbDither dither int x_dither int y_dither")
 (CFNC "void gdk_pixbuf_render_pixmap_and_mask_for_colormap GdkPixbuf* pixbuf GdkColormap* colormap GdkPixmap** [pixmap_return] GdkBitmap** [mask_return] int alpha_threshold")
 (CFNC "void gdk_pixbuf_render_pixmap_and_mask GdkPixbuf* pixbuf GdkPixmap** [pixmap_return] GdkBitmap** [mask_return] int alpha_threshold")
@@ -1110,7 +1121,7 @@
 (CFNC "void gdk_window_get_geometry GdkWindow* window gint* x gint* y gint* width gint* height gint* depth")
 (CFNC "void gdk_window_get_position GdkWindow* window gint* [x] gint* [y]")
 (CFNC "gint gdk_window_get_origin GdkWindow* window gint* x gint* y")
-(CFNC "GdkPointerHooks* gdk_set_pointer_hooks GdkPointerHooks* @new_hooks") 
+;(CFNC "GdkPointerHooks* gdk_set_pointer_hooks GdkPointerHooks* @new_hooks") 
 (CFNC "GdkWindow* gdk_get_default_root_window void")
 (CNAM "gdk_window_get_size" "gdk_drawable_get_size")
 (CNAM "gdk_window_get_type" "gdk_window_get_window_type")

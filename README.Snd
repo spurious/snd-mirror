@@ -540,9 +540,10 @@ gtk-config (in the Gtk case), and (in the Motif case) by a problem
 with dynamic loading, so you need to run configure, then compare
 config.h and makefile with the versions config.motif.osx (gtk) and
 makefile.motif.osx (gtk).  The main thing that needs to be fixed by
-hand is that libXt.a and libXp.a must be used, not the shared object
-versions of those libraries.  You may also need to add -ldl (if the
-loader complains about things like dlopen).  And see below for libXm.
+hand is that libXt.a and possibly libXp.a must be used, not the shared
+object versions of those libraries.  You may also need to add -ldl (if
+the loader complains about things like dlopen).  In Guile 1.7.0 add
+-lguile-ltdl. And see below for libXm.
 
 If C-f (and others like it) doesn't work, either try toggling
 the "w" button, or add the focus-widget related hooks from grfsnd.html
@@ -590,12 +591,6 @@ from the sources:
   
 from ccrma-ftp:
   libXm.a (omitted from motifzone package, but sometimes needed by Snd)
-
-My impression is that the new Mac OS is no more stable than the
-old -- I could crash it simply by trying to run two programs
-at once (and of course the power buttons are locked out, so
-you pull the power cord...).  If you get a Bus error while
-compiling Snd, just type "make" again.
 
 Loading xm.c (--with-static-xm etc) is problematic on Mac.
 If you use the libXm.dylib from openMotif, you'll probably

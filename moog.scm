@@ -1,5 +1,3 @@
-;;; -*- syntax: common-lisp; package: clm; base: 10; mode:lisp -*-
-;;;
 ;;; Moog style four pole lowpass filter clm unit generator
 ;;;   low pass, 24db/Oct, variable resonance, warm, analog sound ;-)
 ;;;   [all this digital wizardry and we're back where we started!]

@@ -697,6 +697,16 @@ if test $GUILE_CONFIG_works = yes; then
     LIBS="$GUILE_LIBS"
     OLD_CFLAGS="$CFLAGS"
     CFLAGS="$GUILE_CFLAGS"
+
+# special Mac OSX stuff -- need to protect against multiple -lguile's, add -all_load, and add -lguile-ltdl
+    case "$host" in
+      *-apple-*)
+ 	CFLAGS="$CFLAGS -all_load"
+        if test "`${GUILE_CONFIG_path}guile -c '(display (string>=? (version) "1.7"))'`" = "#t"; then
+          LIBS="$OLD_LIBS -lguile-ltdl -ldl -lm"
+        fi
+    esac
+
     AC_CHECK_LIB(guile, scm_set_smob_apply,     [AC_DEFINE(HAVE_APPLICABLE_SMOB)])
     AC_CHECK_LIB(guile, scm_remember_upto_here, [AC_DEFINE(HAVE_SCM_REMEMBER_UPTO_HERE)])
     AC_CHECK_LIB(guile, scm_make_real,          [AC_DEFINE(HAVE_SCM_MAKE_REAL)])
@@ -709,6 +719,7 @@ if test $GUILE_CONFIG_works = yes; then
     AC_CHECK_LIB(guile, scm_c_eval_string,      [AC_DEFINE(HAVE_SCM_C_EVAL_STRING)])
     AC_CHECK_LIB(guile, scm_list_n,             [AC_DEFINE(HAVE_SCM_LIST_N)])
     AC_CHECK_LIB(guile, scm_str2symbol,         [AC_DEFINE(HAVE_SCM_STR2SYMBOL)])
+    AC_CHECK_LIB(guile, scm_defined_p,          [AC_DEFINE(HAVE_SCM_DEFINED_P)])
     AC_CHECK_TYPE(scm_t_catch_body,             [AC_DEFINE(HAVE_SCM_T_CATCH_BODY)], , [#include <guile/gh.h>])
     AC_CHECK_TYPE(scm_t_guard,                  [AC_DEFINE(HAVE_DYNAMIC_WIND)], , [#include <guile/gh.h>])
     LIBS="$OLD_LIBS"
