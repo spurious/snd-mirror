@@ -743,7 +743,11 @@ void g_initialize_xgh(snd_state *ss, SCM local_doc)
   state = ss;
 
 #if (!HAVE_GUILE_1_3_0)
-  snd_color_tag = scm_make_smob_type_mfpe("color",sizeof(snd_color),mark_snd_color,free_snd_color,print_snd_color,equalp_snd_color);
+  snd_color_tag = scm_make_smob_type("color",sizeof(snd_color));
+  scm_set_smob_mark(snd_color_tag,mark_snd_color);
+  scm_set_smob_print(snd_color_tag,print_snd_color);
+  scm_set_smob_free(snd_color_tag,free_snd_color);
+  scm_set_smob_equalp(snd_color_tag,equalp_snd_color);
 #else
   snd_color_tag = scm_newsmob(&snd_color_smobfuns);
 #endif

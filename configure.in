@@ -433,12 +433,15 @@ if test "$use_guile" = y || test "$use_guile" = yes; then
           AC_MSG_CHECKING(for guile-gtk libraries)
           GUILE_GTK_LIBS=`$GUILE_PROG -c "(use-modules (gtk config)) (display gtkconf-guilegtk-lib)"`
           AC_MSG_RESULT($GUILE_GTK_LIBS)
+dnl this test works in cases where it's not needed (sigh)
 dnl	  if test "`guile -c '(use-modules (gtk config)) (display (and (string>? (version) "1.3.4") (string<? gtkconf-guile-gtk-version "0.19")))'`" = "#t"; then
 dnl	    echo Guile 1.4 needs Guile-Gtk 0.19 or later.
 dnl	    dnl should we cancel HAVE_GUILE_GTK here?
 dnl	  fi
           AC_DEFINE(HAVE_GUILE_GTK)
           AC_SUBST(GUILE_GTK_LIBS)
+          guile_gtk_version="`guile -c '(use-modules (gtk config)) (display gtkconf-guile-gtk-version)'`"
+          AC_DEFINE_UNQUOTED(GUILE_GTK_VERSION,"${guile_gtk_version}")
 	fi
       fi
     fi

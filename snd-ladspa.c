@@ -710,6 +710,7 @@ void g_ladspa_to_snd(SCM local_doc)
   DEFINE_PROC(gh_new_procedure4_0(S_apply_ladspa, g_apply_ladspa),H_apply_ladspa);
   DEFINE_PROC(gh_new_procedure0_0(S_init_ladspa, g_init_ladspa),H_init_ladspa);
   DEFINE_PROC(gh_new_procedure0_0(S_list_ladspa, g_list_ladspa),H_list_ladspa);
+  scm_add_feature("snd-ladspa");
 }
 
 /*****************************************************************************/

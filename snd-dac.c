@@ -679,6 +679,10 @@ static void reflect_play_stop (snd_info *sp)
   set_file_browser_play_button(sp->shortname,0);
 }
 
+#if HAVE_GUILE
+/* static int free_player(snd_info *sp); */
+#endif
+
 static void stop_playing_with_toggle(dac_info *dp, int toggle)
 {
   snd_info *sp = NULL;
@@ -717,10 +721,11 @@ static void stop_playing_with_toggle(dac_info *dp, int toggle)
       if (sp_stopping)
 	call_stop_playing_hook(sp);
       call_stop_playing_channel_hook(sp,cp);
+      /* if (sp->index < 0) {free_player(sp); sp = NULL;} */
     }
 #endif
   free_dac_info(dp);
-  if ((sp_stopping) && (sp->delete_me)) 
+  if ((sp) && (sp_stopping) && (sp->delete_me)) 
     completely_free_snd_info(sp); /* dummy snd_info struct for (play "filename") in snd-scm.c */
 }
 
@@ -907,7 +912,7 @@ static void start_dac(snd_state *ss, int srate, int channels, int background)
 static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, int start, int end)
 {
   /* if not sp, control panel is ignored */
-  int slot,beg=0,direction;
+  int slot,beg=0,direction=READ_FORWARD;
   slot = find_slot_to_play();
   if (slot == -1) return(NULL);
   play_list_members++;
@@ -1906,6 +1911,9 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
   int end = NO_END_SPECIFIED;
   int *ends = NULL;
   if (SCM_INUMP(end_n)) end = SCM_INUM(end_n);
+
+  /* if even samp_n is SCM_UNDEFINED, start_dac? */
+
   if (gh_string_p(samp_n))
     {
       urn = gh_scm2newstr(samp_n,NULL);
@@ -1986,13 +1994,134 @@ static SCM g_play_and_wait(SCM samp_n, SCM snd_n, SCM chn_n, SCM syncd, SCM end_
 
 static SCM g_stop_playing(SCM snd_n)
 {
-  #define H_stop_playing "(" S_stop_playing " &optional snd) stops any snd play in progress"
-  snd_info *sp;
-  ERRSP(S_stop_playing,snd_n,1);
-  sp = get_sp(snd_n);
-  if (sp) stop_playing_sound(sp); else return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_stop_playing),snd_n)));
+  #define H_stop_playing "(" S_stop_playing " &optional snd) stops play in progress"
+  snd_info *sp = NULL;
+  if (gh_number_p(snd_n)) sp = get_sp(snd_n);
+  if (sp) stop_playing_sound(sp); else stop_playing_all_sounds();
   return(SCM_BOOL_F);
 }
+
+
+#if 0
+static snd_info **players = NULL;
+static int *player_chans = NULL;
+static int players_size = 0;
+
+static int new_player_index(void)
+{
+  int i,loc=-1,old_size;
+  if (players_size == 0)
+    {
+      players_size = 8;
+      players = (snd_info **)CALLOC(players_size,sizeof(snd_info *));
+      player_chans = (int *)CALLOC(players_size,sizeof(int));
+      return(-1);
+    }
+  for (i=1;i<players_size;i++)
+    if (players[i] == NULL)
+      return(-i);
+  old_size = players_size;
+  players_size += 8;
+  players = (snd_info **)REALLOC(players_size,sizeof(snd_info *));
+  player_chans = (int *)REALLOC(players_size,sizeof(int));
+  for (i=old_size;i<players_size;i++)
+    {
+      players[i] = NULL;
+      player_chans[i] = 0;
+    }
+  return(-old_size);
+}
+
+static int make_player(snd_info *sp, chan_info *cp)
+{
+  /* store sp so we can access it via find_sound (get_sp) later */
+  players[-(sp->index)] = sp;
+  players[-(sp->index)] = cp->chan;
+  return(sp->index)
+}
+
+snd_info *player(int index)
+{
+  if ((-index) < players_size) 
+    return(players[-index]);
+  return(NULL);
+}
+
+static int free_player(snd_info *sp)
+{
+  players[-(sp->index)] = NULL;
+  player_chans[-(sp->index)] = 0;
+  FREE(sp->fullname);
+  FREE(sp->sgx);
+  FREE(sp->chans);
+  FREE(sp);
+}
+
+
+#define S_make_player                      "make-player"
+#define S_add_player                       "add-player"
+#define S_stop_player                      "stop-player"
+#define S_start_playing                    "start-playing"
+
+static SCM g_make_player(SCM snd, SCM chn)
+{
+  #define H_make_player "(" S_make_player " &optional snd chn) prepares snd's channel chn for " S_add_player
+  snd_info *true_sp,*new_sp;
+  chan_info *cp;
+  ERRCP(S_make_player,snd,chn,1);
+  true_sp = get_sp(snd);
+  if (true_sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_make_player),snd)));
+  cp = get_cp(snd,chn,S_make_player);
+  if (cp)
+    {
+      new_sp = make_snd_info(NULL,get_global_state(),"wrapper",true_sp->hdr,new_player_index());
+      new_sp->chans[cp->chan] = cp;
+      return(gh_int2scm(make_player(new_sp,cp)));
+    }
+  else return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST3(gh_str02scm(S_wrap_channel),snd,chn)));
+}
+
+static SCM g_add_player(SCM snd_chn, SCM start, SCM end)
+{
+  #define H_add_player "(" S_add_player " &optional player start end) starts playing snd's channel chn"
+  snd_info *sp;
+  int index;
+  ERRN1(snd_chn,S_add_player);
+  index = -gh_scm2int(snd_chn);
+  sp = players[index];
+  if (sp)
+    {
+      cp = sp->chans[player_chans[index]];
+      add_channel_to_play_list(cp,sp,g_scm2intdef(start,0),g_scm2intdef(end,NO_END_SPECIFIED));
+    }
+  /* else no such player? */
+  return(snd_chn);
+}
+
+static SCM g_start_playing(SCM chans, SCM srate, SCM in_background)
+{
+  #define H_start_playing "(" S_start_playing " &optional chans srate in-background)"
+  start_dac(get_global_state(),g_scm2intdef(srate,44100),g_scm2intdef(chans,1),bool_int_or_one(in_background));
+  return(SCM_BOOL_F);
+}
+
+static SCM g_stop_player(SCM snd_chn)
+{
+  #define H_stop_player "(" S_stop_player " player) stops player"
+  int index;
+  index = -gh_scm2int(snd_chn);
+  sp = players[index];
+  if (sp) stop_playing_sound(sp);
+}
+
+  DEFINE_PROC(gh_new_procedure0_2(S_make_player,SCM_FNC g_make_player),H_make_player);
+  DEFINE_PROC(gh_new_procedure1_2(S_add_player,SCM_FNC g_add_player),H_add_player);
+  DEFINE_PROC(gh_new_procedure0_3(S_start_playing,SCM_FNC g_start_playing),H_start_playing);
+  DEFINE_PROC(gh_new_procedure1_0(S_stop_player,SCM_FNC g_stop_player),H_stop_player);
+/* also the dac filler needs to run on empty buffers in this case? */
+
+#endif
+
 
 static SCM start_playing_hook,stop_playing_hook,stop_playing_region_hook,stop_playing_channel_hook;
 

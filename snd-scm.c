@@ -1570,13 +1570,16 @@ snd_info *get_sp(SCM scm_snd_n)
   if (gh_number_p(scm_snd_n))
     {
       snd_n = g_scm2int(scm_snd_n);
-      if ((snd_n >= 0) && (snd_n < state->max_sounds) && (snd_ok(state->sounds[snd_n])))
-	return(state->sounds[snd_n]);
-      else
+      if (snd_n >= 0)
 	{
-	  /* user asked for specific sound and it's closed or non-existent */
-	  return(NULL);
+	  if ((snd_n < state->max_sounds) && (snd_ok(state->sounds[snd_n])))
+	    return(state->sounds[snd_n]);
+	  else return(NULL);
 	}
+#if HAVE_GUILE
+	/* return(player(snd_n)); */
+#endif
+      return(NULL);
     }
   else
     {

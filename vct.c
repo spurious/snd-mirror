@@ -589,7 +589,11 @@ void init_vct(void)
 {
   SCM local_doc;
 #if (!HAVE_GUILE_1_3_0)
-  vct_tag = scm_make_smob_type_mfpe("vct",sizeof(vct),mark_vct,free_vct,print_vct,equalp_vct);
+  vct_tag = scm_make_smob_type("vct",sizeof(vct));
+  scm_set_smob_mark(vct_tag,mark_vct);
+  scm_set_smob_print(vct_tag,print_vct);
+  scm_set_smob_free(vct_tag,free_vct);
+  scm_set_smob_equalp(vct_tag,equalp_vct);
 #else
   vct_tag = scm_newsmob(&vct_smobfuns);
 #endif

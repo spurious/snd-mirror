@@ -2854,7 +2854,6 @@ static int dont_save(snd_state *ss, snd_info *sp, char *newname)
 void g_init_edits(SCM local_doc)
 {
 #if (!HAVE_GUILE_1_3_0)
-  /* sf_tag = scm_make_smob_type_mfpe("sf",sizeof(SCM),mark_sf,free_sf,print_sf,equalp_sf); */
   sf_tag = scm_make_smob_type("sf",sizeof(SCM));
   scm_set_smob_mark(sf_tag,mark_sf);
   scm_set_smob_print(sf_tag,print_sf);

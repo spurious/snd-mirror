@@ -297,7 +297,7 @@ typedef struct snd__state {
    *              completed via the table in snd-completion.c
    *              brought out to user in snd-scm.c (and possibly snd-noscm.c)
    */
-  int Show_Fft_Peaks,Show_Y_Zero,Show_Marks,Fft_Log_Frequency,Fft_Log_Magnitude,Channel_Style,Sound_Style,Show_Wave_In_Enved,Show_Axes;
+  int Show_Fft_Peaks,Show_Y_Zero,Show_Marks,Fft_Log_Frequency,Fft_Log_Magnitude,Channel_Style,Sound_Style,Show_Axes;
   char *Eps_File,*Temp_Dir,*Audio_State_File,*Save_Dir;
   char *Listener_Font,*Help_Text_Font,*Axis_Label_Font,*Axis_Numbers_Font,*Bold_Button_Font,*Button_Font,*Tiny_Font;
   int Verbose_Cursor,Show_Usage_Stats,Trap_Segfault;

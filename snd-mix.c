@@ -3775,7 +3775,6 @@ static void call_multichannel_mix_hook(int *ids, int n) {}
 void g_init_mix(SCM local_doc)
 {
 #if (!HAVE_GUILE_1_3_0)
-  /* mf_tag = scm_make_smob_type_mfpe("mf",sizeof(SCM),mark_mf,free_mf,print_mf,equalp_mf); */
   mf_tag = scm_make_smob_type("mf",sizeof(SCM));
   scm_set_smob_mark(mf_tag,mark_mf);
   scm_set_smob_print(mf_tag,print_mf);
@@ -3790,7 +3789,6 @@ void g_init_mix(SCM local_doc)
   DEFINE_PROC(gh_new_procedure1_0(S_mix_sample_readerQ,g_mf_p),H_mf_p);
 
 #if (!HAVE_GUILE_1_3_0)
-  /* tf_tag = scm_make_smob_type_mfpe("tf",sizeof(SCM),mark_tf,free_tf,print_tf,equalp_tf); */
   tf_tag = scm_make_smob_type("tf",sizeof(SCM));
   scm_set_smob_mark(tf_tag,mark_tf);
   scm_set_smob_print(tf_tag,print_tf);

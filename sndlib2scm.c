@@ -844,7 +844,6 @@ void mus_sndlib2scm_initialize(void)
   local_doc = scm_permanent_object(scm_string_to_symbol(gh_str02scm("documentation")));
 
 #if (!HAVE_GUILE_1_3_0)
-  /* sound_data_tag = scm_make_smob_type_mfpe("sound-data",sizeof(sound_data),mark_sound_data,free_sound_data,print_sound_data,equalp_sound_data); */
   sound_data_tag = scm_make_smob_type("sound-data",sizeof(sound_data));
   scm_set_smob_mark(sound_data_tag,mark_sound_data);
   scm_set_smob_print(sound_data_tag,print_sound_data);

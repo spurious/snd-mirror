@@ -401,9 +401,6 @@ functions invoked by the hook.
   fft-hook (snd chn scaler)           called just after an FFT (or spectrum) is calculated.
   graph-hook (snd chn y0 y1)          called each time a graph is updated or redisplayed.
                                         If it returns #t, the display is not updated.
-  key-press-hook (snd chn key state)  called upon key press while mouse is in lisp graph. (or)
-                                        If it returns #t, the key press is not passed to the main handler.
-                                        state refers to the control, meta, and shift keys.
   just-sounds-hook (filename)         called on each file (after the sound file extension check) if the
                                         just-sounds button is set. Return #f to filter out filename.
 
@@ -412,6 +409,11 @@ functions invoked by the hook.
                                           (and (not (= (mus-sound-header-type name) mus-raw)) ;any unrecognized file is considered "raw"
                                                (= (mus-sound-chans name) 2))))
 
+                                        This currently only works in Motif; the Gtk file selection dialogs
+                                        don't provide a way to specialize the directory read.
+  key-press-hook (snd chn key state)  called upon key press while mouse is in lisp graph. (or)
+                                        If it returns #t, the key press is not passed to the main handler.
+                                        state refers to the control, meta, and shift keys.
   mark-click-hook (id)                called when a mark is clicked, return #t to squelch message.
 
                                       (add-hook! mark-click-hook

@@ -92,9 +92,6 @@ static char *guile_version(void)
 { 
   return(gh_scm2newstr(scm_version(),NULL));
 }
-#if HAVE_GUILE_GTK
-  char *guile_gtk_version(void);
-#endif
 #endif
 
 static char *sndlib_consistency_check(void)
@@ -185,7 +182,10 @@ char *version_info(void)
 	  "\n    Gtk+ ",itoa[9]=snd_itoa(GTK_MAJOR_VERSION),".",itoa[10]=snd_itoa(GTK_MINOR_VERSION),".",itoa[11]=snd_itoa(GTK_MICRO_VERSION),", Glib ",itoa[12]=snd_itoa(GLIB_MAJOR_VERSION),".",itoa[13]=snd_itoa(GLIB_MINOR_VERSION),".",itoa[14]=snd_itoa(GLIB_MICRO_VERSION),
 #endif
 #if HAVE_GUILE_GTK
-	  ", Guile-gtk ",guile_gtk_version(),
+	  ", Guile-gtk",
+  #ifdef GUILE_GTK_VERSION
+          ": ",GUILE_GTK_VERSION,
+  #endif
 #endif
 #if HAVE_GTKEXTRA
 	  "\n    gtkextra",

@@ -474,6 +474,8 @@ the hook.
                                           (and (not (= (mus-sound-header-type name) mus-raw)) ;any unrecognized file is considered "raw"
                                                (= (mus-sound-chans name) 2))))
 </small>
+                                        This currently only works in Motif; the Gtk file selection dialogs 
+                                        don't provide a way to specialize the directory read.
   <a name="keypresshook">key-press-hook</a> (snd chn key state)  called upon key press while mouse is in lisp graph. (<b>or</b>)
                                         If it returns #t, the key press is not passed to the main handler.
                                         <i>state</i> refers to the control, meta, and shift keys.

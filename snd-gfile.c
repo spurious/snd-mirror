@@ -125,6 +125,11 @@ static GtkWidget *snd_gtk_file_selection_new(snd_state *ss, char *title, GtkSign
   gtk_signal_connect_object(GTK_OBJECT(GTK_ICON_FILESEL(new_dialog)->cancel_button),"clicked",cancel,(gpointer)ss);
   set_pushed_button_colors(GTK_ICON_FILESEL(new_dialog)->ok_button,ss);
   set_pushed_button_colors(GTK_ICON_FILESEL(new_dialog)->cancel_button,ss);
+  #if HAVE_GETCWD
+    if (last_filename == NULL) last_filename = (char *)CALLOC(256,sizeof(char));
+    getcwd(last_filename,256);
+    gtk_icon_file_selection_open_dir(GTK_ICON_FILESEL(new_dialog),last_filename);
+  #endif
 #else
   new_dialog = gtk_file_selection_new(title);
   add_dialog(ss,new_dialog);
@@ -369,11 +374,6 @@ file_data *sndCreateFileDataForm(snd_state *ss, GtkWidget *parent, char *name, i
 
 
 /* -------- save as dialog (file and edit menus) -------- */
-/* 
- * changed 19-June-97 to simply save the current state under the new name and return
- * to the current state/file (different from emacs) -- this keeps mix console intact
- * across backups and so on, and seems more useful to me than switching to the new file.
- */
 
 static file_data *save_as_file_data = NULL;
 static GtkWidget *save_as_dialog = NULL;

@@ -6,7 +6,6 @@
  *        added amp in control panel (chans separate -- requires snd-dac support)
  *        special lisp graph effects
  *        own fft peaks info
- *        own filter in file box (but only Motif supports a user-definable filter)
  */
 
 #include "snd.h"
@@ -693,25 +692,17 @@ static SCM eval_str(char *buf)
   return(scm_internal_stack_catch(SCM_BOOL_T,eval_str_wrapper,buf,gtk_catch_scm_error,buf));
 }
 
-char *guile_gtk_version(void);
-char *guile_gtk_version(void)
-{
-  SCM res;
-  eval_str("(use-modules (gtk config))");
-  res = eval_str("gtkconf-guile-gtk-version");
-  if (gh_string_p(res))
-    return(gh_scm2newstr(res,NULL));
-  return(NULL);
-  /* there must be a prettier way to do this! */
-}
-
 #endif
 
 void g_initialize_xgh(snd_state *ss, SCM local_doc)
 {
   state = ss;
 #if (!HAVE_GUILE_1_3_0)
-  snd_color_tag = scm_make_smob_type_mfpe("color",sizeof(snd_color),mark_snd_color,free_snd_color,print_snd_color,equalp_snd_color);
+  snd_color_tag = scm_make_smob_type("color",sizeof(snd_color));
+  scm_set_smob_mark(snd_color_tag,mark_snd_color);
+  scm_set_smob_print(snd_color_tag,print_snd_color);
+  scm_set_smob_free(snd_color_tag,free_snd_color);
+  scm_set_smob_equalp(snd_color_tag,equalp_snd_color);
 #else
   snd_color_tag = scm_newsmob(&snd_color_smobfuns);
 #endif

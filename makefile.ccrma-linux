@@ -1,8 +1,8 @@
 # make file for snd in Linux at ccrma with Motif 2.1
 
 CC = gcc
-CFLAGS = -g -O3 -DLINUX -DCCRMA -DUSR_LIB_OSS=1 -I/usr/ccrma/include
-LIBS = -L/usr/ccrma/lib -lguile -L/usr/X11R6/lib -lXm -lXp -lXpm -lXext -lXt -lSM -lICE -lX11 -lm -ldl
+CFLAGS = -g -O3 -DLINUX -DCCRMA -DUSR_LIB_OSS=1 -I/usr/lib/snd
+LIBS = -L/usr/lib/snd -lguile -L/usr/X11R6/lib -lXm -lXp -lXpm -lXext -lXt -lSM -lICE -lX11 -lm -ldl
 
 include makesnd.files
 
