@@ -244,17 +244,6 @@
        (do ((i start (1+ i))) ((= i end))
 	 (out-any i (* amp (waveshape w1 1.0)) 0 *output*))))))
 
-(define (simple-buf beg dur freq amp)
-  (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
-	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
-	 (os (make-oscil freq))
-	 (buf (make-buffer 10)))
-    (run
-     (lambda ()
-       (do ((i start (1+ i))) ((= i end))
-	 (sample->buffer buf (* amp (oscil os)))
-	 (out-any i (buffer->sample buf) 0 *output*))))))
-
 (define (simple-dly beg dur freq amp)
   (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))

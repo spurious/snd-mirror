@@ -806,11 +806,6 @@ sampling rate <i>srate</i>, and <i>len</i> samples (not frames).
 <tr><td><a href="clm.html#asymmetric-fm?">asymmetric-fm?</a></td><td>(gen)</td><td>#t if gen is asymmetric-fm generator</td></tr>
 <tr><td><a href="clm.html#average">average</a></td><td>(gen input)</td><td>moving window average</td></tr>
 <tr><td><a href="clm.html#average?">average?</a></td><td>(gen)</td><td>#t if gen is an average generator</td></tr>
-<tr><td><a href="clm.html#buffer-&gt;frame">buffer-&gt;frame</a></td><td>(gen frame)</td><td>buffer generator returning frame</td></tr>
-<tr><td><a href="clm.html#buffer-&gt;sample">buffer-&gt;sample</a></td><td>(gen)</td><td>buffer generator returning sample</td></tr>
-<tr><td><a href="clm.html#buffer-empty?">buffer-empty?</a></td><td>(gen)</td><td>#t if buffer has no data</td></tr>
-<tr><td><a href="clm.html#buffer-full?">buffer-full?</a></td><td>(gen)</td><td>#t if buffer has no room for more data</td></tr>
-<tr><td><a href="clm.html#buffer?">buffer?</a></td><td>(gen)</td><td>#t if gen is buffer generator</td></tr>
 <tr><td><a href="clm.html#clear-array">clear-array</a></td><td>(arr)</td><td>set all elements of arr to 0.0</td></tr>
 <tr><td><a href="clm.html#comb">comb</a></td><td>(gen input <i>pm</i>)</td><td>comb filter</td></tr>
 <tr><td><a href="clm.html#comb?">comb?</a></td><td>(gen)</td><td>#t if gen is comb filter</td></tr>
@@ -855,7 +850,6 @@ It is renamed <b>%filter</b>, if it is noticed in time.
 <tr><td><a href="clm.html#formant?">formant?</a></td><td>(gen)</td><td>#t if gen is formant generator</td></tr>
 <tr><td><a href="clm.html#frame*">frame*</a></td><td>(fr1 fr2 <i>outfr</i>)</td><td>element-wise multiply</td></tr>
 <tr><td><a href="clm.html#frame+">frame+</a></td><td>(fr1 fr2 <i>outfr</i>)</td><td>element-wise add</td></tr>
-<tr><td><a href="clm.html#frame-&gt;buffer">frame-&gt;buffer</a></td><td>(buf frame)</td><td>add frame to buffer</td></tr>
 <tr><td><a href="clm.html#frame-&gt;file">frame-&gt;file</a></td><td>(gen loc frame)</td><td>write (add) frame to file at loc</td></tr>
 <tr><td><a href="clm.html#frame-&gt;file?">frame-&gt;file?</a></td><td>(gen)</td><td>#t if gen is frame-&gt;file generator</td></tr>
 <tr><td><a href="clm.html#frame-&gt;frame">frame-&gt;frame</a></td><td>(mixer frame <i>outfr</i>)</td><td>pass frame through mixer</td></tr>
@@ -890,7 +884,6 @@ In Guile <b>frame?</b> is part of the debugger; it is renamed <b>%frame?</b> her
 <tr><td><a href="clm.html#make-all-pass">make-all-pass</a></td><td colspan=2>(feedback feedforward size initial-contents initial-element max-size type)</td></tr>
 <tr><td><a href="clm.html#make-average">make-average</a></td><td colspan=2>(size initial-contents initial-element)</td></tr>
 <tr><td><a href="clm.html#make-asymmetric-fm">make-asymmetric-fm</a></td><td colspan=2>(frequency initial-phase r ratio)</td></tr>
-<tr><td><a href="clm.html#make-buffer">make-buffer</a></td><td colspan=2>(size fill-time)</td></tr>
 <tr><td><a href="clm.html#make-comb">make-comb</a></td><td colspan=2>(scaler size initial-contents initial-element max-size type)</td></tr>
 <tr><td><a href="clm.html#make-convolve">make-convolve</a></td><td colspan=2>(input filter fft-size filter-size)</td></tr>
 <tr><td><a href="clm.html#make-delay">make-delay</a></td><td colspan=2>(size initial-contents initial-element max-size type)</td></tr>
@@ -1021,7 +1014,6 @@ In Ruby <b>rand</b> is a built-in method; it is aliased to <b>kernel_rand</b> he
 <tr><td><a href="clm.html#rectangular-&gt;polar">rectangular-&gt;polar</a></td><td>(rl im)</td><td>translate from rectangular to polar coordinates</td></tr>
 <tr><td><a href="clm.html#restart-env">restart-env</a></td><td>(env)</td><td>return to start of env</td></tr>
 <tr><td><a href="clm.html#ring-modulate">ring-modulate</a></td><td>(sig1 sig2)</td><td>sig1 * sig2 (element-wise)</td></tr>
-<tr><td><a href="clm.html#sample-&gt;buffer">sample-&gt;buffer</a></td><td>(buf samp)</td><td>store samp in buffer</td></tr>
 <tr><td><a href="clm.html#sample-&gt;file">sample-&gt;file</a></td><td>(gen loc chan val)</td><td>store val in file at loc in channel chan</td></tr>
 <tr><td><a href="clm.html#sample-&gt;file?">sample-&gt;file?</a></td><td>(gen)</td><td>#t if gen is sample-&gt;file generator</td></tr>
 <tr><td><a href="clm.html#sample-&gt;frame">sample-&gt;frame</a></td><td>(frmix samp <i>outfr</i>)</td><td>convert samp to frame</td></tr>

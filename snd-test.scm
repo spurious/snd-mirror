@@ -7,30 +7,30 @@
 ;;;  test 4: sndlib                             [1748]
 ;;;  test 5: simple overall checks              [3539]
 ;;;  test 6: vcts                               [10768]
-;;;  test 7: colors                             [11006]
-;;;  test 8: clm                                [11502]
-;;;  test 9: mix                                [17290]
-;;;  test 10: marks                             [20286]
-;;;  test 11: dialogs                           [20984]
-;;;  test 12: extensions                        [21294]
-;;;  test 13: menus, edit lists, hooks, etc     [21708]
-;;;  test 14: all together now                  [22977]
-;;;  test 15: chan-local vars                   [24025]
-;;;  test 16: regularized funcs                 [25285]
-;;;  test 17: dialogs and graphics              [29667]
-;;;  test 18: enved                             [29741]
-;;;  test 19: save and restore                  [29761]
-;;;  test 20: transforms                        [30357]
-;;;  test 21: new stuff                         [31388]
-;;;  test 22: run                               [32139]
-;;;  test 23: with-sound                        [37263]
-;;;  test 24: user-interface                    [38248]
-;;;  test 25: X/Xt/Xm                           [41422]
-;;;  test 26: Gtk                               [45941]
-;;;  test 27: GL                                [49032]
-;;;  test 28: errors                            [49136]
-;;;  test all done                              [51069]
-
+;;;  test 7: colors                             [11015]
+;;;  test 8: clm                                [11511]
+;;;  test 9: mix                                [17850]
+;;;  test 10: marks                             [20846]
+;;;  test 11: dialogs                           [21544]
+;;;  test 12: extensions                        [21854]
+;;;  test 13: menus, edit lists, hooks, etc     [22268]
+;;;  test 14: all together now                  [23537]
+;;;  test 15: chan-local vars                   [24585]
+;;;  test 16: regularized funcs                 [25845]
+;;;  test 17: dialogs and graphics              [30227]
+;;;  test 18: enved                             [30301]
+;;;  test 19: save and restore                  [30321]
+;;;  test 20: transforms                        [30917]
+;;;  test 21: new stuff                         [32001]
+;;;  test 22: run                               [32754]
+;;;  test 23: with-sound                        [37894]
+;;;  test 24: user-interface                    [38880]
+;;;  test 25: X/Xt/Xm                           [42055]
+;;;  test 26: Gtk                               [46574]
+;;;  test 27: GL                                [49683]
+;;;  test 28: errors                            [49787]
+;;;  test all done                              [51724]
+;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
 
@@ -13196,80 +13196,6 @@ EDITS: 5
 		     (snd-display ";opt'd mus-bank ~A: ~A ~A (~A ~A)" i val (vct-ref v1 i) oscs amps)
 		     (break))))))))
       
-      (let ((gen (make-buffer 3)))
-	(if (not (buffer-empty? gen)) (snd-display ";new buf not buffer-empty: ~A?" gen))
-	(sample->buffer gen 1.0)
-	(sample->buffer gen 0.5)
-	(sample->buffer gen 0.25)
-	
-	(print-and-check gen 
-			 "buffer"
-			 "buffer: length: 3, loc: 0, fill: 3.000")
-	(if (not (buffer-full? gen)) (snd-display ";buffer-full: ~A?" gen))
-	(if (not (buffer? gen)) (snd-display ";~A not buffer?" gen))
-	(if (not (= (mus-length gen) 3)) (snd-display ";buffer length: ~D?" (mus-length gen)))
-	(if (not (= (mus-increment gen) 3)) (snd-display ";buffer fill-time: ~D?" (mus-increment gen)))
-	(if (or (fneq (buffer->sample gen) 1.0) (fneq (buffer->sample gen) 0.5) (fneq (buffer->sample gen) 0.25))
-	    (snd-display (format "buffer output?")))
-	(if (not (buffer-empty? gen)) (snd-display ";emptied buf not buffer-empty: ~A?" gen))
-	(let ((fr0 (make-frame 2 .1 .2))
-	      (fr1 (make-frame 2 0.0 0.0)))
-	  (frame->buffer gen fr0)
-	  (set! fr1 (buffer->frame gen fr1))
-	  (if (not (equal? fr0 fr1)) (snd-display ";frame->buffer: ~A ~A?" fr0 fr1)))
-	(set! (mus-data gen) (make-vct 2))
-	(set! (mus-length gen) 2)
-	(if (not (= (mus-length gen) 2)) (snd-display ";set buffer length: ~D?" (mus-length gen))))
-
-      (let ((val (let ((b (make-buffer 3))) (set! (mus-increment b) 1.5) (mus-increment b))))
-	(if (fneq val 1.5) (snd-display ";set buffer increment: ~A" val)))
-
-      (let ((gen (make-buffer 6))
-	    (fr1 (make-frame 2 .1 .2))
-	    (fr2 (make-frame 2 .3 .4))
-	    (fr3 (make-frame 2 .5 .6))
-	    (fr4 (make-frame 2 .7 .8)))
-	(frame->buffer gen fr1)
-	
-	(print-and-check gen 
-			 "buffer"
-			 "buffer: length: 6, loc: 0, fill: 2.000")
-	(frame->buffer gen fr2)
-	(frame->buffer gen fr3)
-	
-	(print-and-check gen 
-			 "buffer"
-			 "buffer: length: 6, loc: 0, fill: 6.000")
-	(buffer->frame gen fr2)
-	(if (not (equal? fr2 fr1)) (snd-display ";buffer->frame: ~A ~A?" fr1 fr2))
-	
-	(print-and-check gen 
-			 "buffer"
-			 "buffer: length: 6, loc: 2, fill: 6.000")
-	(let ((f (buffer->frame gen)))
-	  (if (not (= (mus-channels f) 1)) (snd-display ";buffer->frame default: ~A?" f))
-	  (if (fneq (frame-ref f 0) .3) (snd-display ";buffer->frame: ~A?" f))
-	  (buffer->frame gen fr1)
-	  (if (not (equal? fr1 (make-frame 2 .4 .5))) (snd-display ";buffer->frame offset: ~A?" fr1))
-	  (frame->buffer gen fr4)
-	  
-	  (print-and-check gen 
-			   "buffer"
-			   "buffer: length: 6, loc: 0, fill: 3.000")))
-      
-      (test-gen-equal (make-buffer 3) (make-buffer 3) (make-buffer 4))
-      (let ((gen (make-buffer 3))
-	    (gen1 (make-buffer 3))
-	    (gen2 (make-buffer 3)))
-	(sample->buffer gen 1.0)
-	(sample->buffer gen 0.5)
-	(sample->buffer gen1 1.0)
-	(sample->buffer gen1 0.5)
-	(sample->buffer gen2 1.0)
-	(sample->buffer gen2 0.5)
-	(sample->buffer gen2 0.25)
-	(test-gen-equal gen gen1 gen2))
-      
       (let ((gen (make-sum-of-cosines 10 440.0))
 	    (v0 (make-vct 10))
 	    (gen1 (make-sum-of-cosines 10 440.0))
@@ -15243,6 +15169,132 @@ EDITS: 5
       (let ((tag (catch #t (lambda () (make-wave-train :size 0)) (lambda args (car args)))))
 	(if (not (eq? tag 'out-of-range)) (snd-display ";wave-train size 0: ~A" tag)))
       
+      (let ((ind (new-sound :size 1000)))
+	(let* ((table (vct 0.0 .1 .2 .3 .4 .5 .6))
+	       (gen (make-wave-train 1000.0 :wave table)))
+	  (map-channel (lambda (y) (wave-train gen)))
+	  (let ((mx (maxamp)))
+	    (if (fneq mx 0.6) (snd-display "wt 0 max: ~A" mx)))
+	  (if (not (vequal (channel->vct 0 30) 
+			   (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 
+				0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.100 0.200 0.300 0.400 0.500 0.600)))
+	      (snd-display ";wt 0 data: ~A" (channel->vct 0 30)))
+	  (if (not (vequal (channel->vct 85 30) 
+			   (vct 0.000 0.000 0.000 0.000 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.000 0.000 0.000 0.000 
+				0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.100 0.200 0.300)))
+	      (snd-display ";wt 0 data 85: ~A" (channel->vct 85 30)))
+	  (undo))
+	
+	(let* ((table (make-vct 10 .1))
+	       (gen (make-wave-train 1000.0 :initial-phase 3.14159 :wave table))) ; initial-phase is confusing in this context!
+	  (map-channel (lambda (y) (wave-train gen)))
+	  (let ((mx (maxamp)))
+	    (if (fneq mx 0.1) (snd-display "wt 1 max: ~A" mx)))
+	  (if (not (vequal (channel->vct 0 30) 
+			   (vct 0.100 0.100 0.100 0.100 0.100 0.100 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 
+				0.000 0.000 0.000 0.000 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.000)))
+	      (snd-display ";wt 1 data: ~A" (channel->vct 0 30)))
+	  (undo))
+	
+	(let* ((table (make-vct 10 .1))
+	       (gen (make-wave-train 2000.0 :wave table)))
+	  (map-channel (lambda (y) (wave-train gen)))
+	  (let ((mx (maxamp)))
+	    (if (fneq mx 0.1) (snd-display "wt 2 max: ~A" mx)))
+	  (if (not (vequal (channel->vct 0 30) 
+			   (vct 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.000 0.000 0.100 0.100 0.100 
+				0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.000 0.100 0.100 0.100 0.100 0.100 0.100 0.100)))
+	      (snd-display ";wt 2 data: ~A" (channel->vct 0 30)))
+	  (if (not (vequal (channel->vct 440 30) 
+			   (vct 0.000 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.000 0.000 0.100 0.100 
+				0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.000 0.100 0.100 0.100 0.100 0.100 0.100)))
+	      (snd-display ";wt 2 data 440: ~A" (channel->vct 440 30)))
+	  (undo))
+	
+	(let* ((table (make-vct 10 .1))
+	       (gen (make-wave-train 3000.0 :wave table)))
+	  (map-channel (lambda (y) (wave-train gen)))
+	  (let ((mx (maxamp)))
+	    (if (fneq mx 0.2) (snd-display "wt 3 max: ~A" mx)))
+	  (if (not (vequal (channel->vct 0 30) 
+			   (vct 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.200 0.200 0.100 0.100 0.100 0.100 0.100 
+				0.200 0.200 0.200 0.100 0.100 0.100 0.100 0.100 0.200 0.200 0.100 0.100 0.100 0.100 0.100)))
+	      (snd-display ";wt 3 data: ~A" (channel->vct 0 30)))
+	  (if (not (vequal (channel->vct 440 30) 
+			   (vct 0.100 0.200 0.200 0.200 0.100 0.100 0.100 0.100 0.100 0.200 0.200 0.100 0.100 0.100 0.100 
+				0.100 0.200 0.200 0.200 0.100 0.100 0.100 0.100 0.100 0.200 0.200 0.100 0.100 0.100 0.100)))
+	      (snd-display ";wt 3 data 440: ~A" (channel->vct 440 30)))
+	  (undo))
+	
+	(let* ((table (make-vct 10 .1))
+	       (gen (make-wave-train 5000.0 :wave table)))
+	  (map-channel (lambda (y) (wave-train gen)))
+	  (let ((mx (maxamp)))
+	    (if (fneq mx 0.3) (snd-display "wt 4 max: ~A" mx)))
+	  (if (not (vequal (channel->vct 0 30) 
+			   (vct 0.100 0.100 0.100 0.100 0.100 0.200 0.200 0.200 0.200 0.300 0.200 0.200 0.200 0.200 0.300 
+				0.200 0.200 0.200 0.300 0.200 0.200 0.200 0.200 0.300 0.200 0.200 0.200 0.300 0.200 0.200)))
+	      (snd-display ";wt 4 data: ~A" (channel->vct 0 30)))
+	  (if (not (vequal (channel->vct 440 30) 
+			   (vct 0.200 0.200 0.300 0.200 0.200 0.200 0.300 0.200 0.200 0.200 0.300 0.300 0.200 0.200 0.200 
+				0.300 0.200 0.200 0.200 0.300 0.200 0.200 0.200 0.200 0.300 0.200 0.200 0.200 0.300 0.200)))
+	      (snd-display ";wt 4 data 440: ~A" (channel->vct 440 30)))
+	  (undo))
+	
+	(let* ((table (make-vct 10 .1))
+	       (gen (make-wave-train 1000.0 :wave table))
+	       (e (make-env '(0 1 1 2) :end 1000))
+	       (base-freq (mus-frequency gen)))
+	  (map-channel 
+	   (lambda (y) 
+	     (let ((result (wave-train gen)))
+	       (set! (mus-frequency gen) (* base-freq (env e)))
+	       result)))
+	  (let ((mx (maxamp)))
+	    (if (fneq mx 0.1) (snd-display "wt 5 max: ~A" mx)))
+	  (if (not (vequal (channel->vct 0 30) 
+			   (vct 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.000 0.000 0.000 0.000 0.000 
+				0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.100 0.100 0.100 0.100 0.100 0.100 0.100)))
+	      (snd-display ";wt 5 data: ~A" (channel->vct 0 30)))
+	  (if (not (vequal (channel->vct 440 30) 
+			   (vct 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.000 0.000 0.000 0.000 0.000 0.000 0.100 
+				0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.000 0.000 0.000 0.000 0.000 0.100)))
+	      (snd-display ";wt 5 data 440: ~A" (channel->vct 440 30)))
+	  (if (not (vequal (channel->vct 900 30) 
+			   (vct 0.100 0.000 0.000 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.000 0.100 
+				0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.000 0.000 0.100 0.100 0.100 0.100)))
+	      (snd-display ";wt 5 data 900: ~A" (channel->vct 900 30)))
+	  (undo))
+	
+	(let* ((table (make-vct 10 .1))
+	       (gen (make-wave-train 500.0 :wave table))
+	       (ctr 0))
+	  (map-channel 
+	   (lambda (y) 
+	     (let ((result (wave-train gen)))
+	       (if (> ctr 22)
+		   (begin
+		     (set! ctr 0)
+		     (vct-scale! (mus-data gen) 1.05))
+		   (set! ctr (1+ ctr)))
+	       result)))
+	  (let ((mx (maxamp)))
+	    (if (fneq mx 0.704) (snd-display "wt 6 max: ~A" mx)))
+	  (if (not (vequal (channel->vct 0 30) 
+			   (vct 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.000 0.000 0.000 0.000 0.000 
+				0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
+	      (snd-display ";wt 6 data: ~A" (channel->vct 0 30)))
+	  (if (not (vequal (channel->vct 440 30) 
+			   (vct 0.000 0.241 0.241 0.241 0.241 0.241 0.241 0.241 0.241 0.241 0.241 0.000 0.000 0.000 0.000
+				0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
+	      (snd-display ";wt 6 data 440: ~A" (channel->vct 440 30)))
+	  (if (not (vequal (channel->vct 900 30) 
+			   (vct 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 
+				0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.639 0.639 0.639)))
+	      (snd-display ";wt 6 data 900: ~A" (channel->vct 900 30)))
+	  (undo))
+	(close-sound ind))
+      
       (let ((gen (make-readin "oboe.snd" 0 1490))
 	    (v0 (make-vct 10))
 	    (gen1 (make-readin "oboe.snd" 0 1490))
@@ -16827,8 +16879,160 @@ EDITS: 5
 	      (snd-display ";gran 14 data 100: ~A" (channel->vct 100 30)))
 	  (undo))
 	
+	(let* ((gen (make-granulate :jitter 0.0 :hop .004 :length .001 :ramp 0.0))
+	       (e (make-env '(0 0 1 .5) :end 1000))
+	       (base-ramp-len (mus-length gen)))
+	  (map-channel 
+	   (lambda (y) 
+	     (let ((result (granulate gen (lambda (dir) .1))))
+	       (set! (mus-ramp gen) (inexact->exact (round (* base-ramp-len (env e)))))
+	       result)))
+	  (let ((mx (maxamp)))
+	    (if (fneq mx 0.06) (snd-display "granf 0 max: ~A" mx)))
+	  (if (> (abs (- (mus-ramp gen) (* .5 (mus-length gen)))) 1)
+	      (snd-display ";granf 0 ramp: ~A ~A" (mus-ramp gen) (mus-length gen)))
+	  (if (not (vequal (channel->vct 0 30) 
+			   (vct 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 
+				0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
+	      (snd-display ";granf 0 data: ~A" (channel->vct 0 30)))
+	  (if (not (vequal (channel->vct 440 30) 
+			   (vct 0.000 0.012 0.024 0.036 0.048 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 
+				0.060 0.060 0.060 0.060 0.060 0.048 0.036 0.024 0.012 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
+	      (snd-display ";granf 0 data 440: ~A" (channel->vct 440 30)))
+	  (if (not (vequal (channel->vct 880 30) 
+			   (vct 0.000 0.006 0.012 0.018 0.024 0.030 0.036 0.042 0.048 0.054 0.060 0.060 0.060 0.060 
+				0.054 0.048 0.042 0.036 0.030 0.024 0.018 0.012 0.006 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
+	      (snd-display ";granf 0 data 880: ~A" (channel->vct 880 30)))
+	  (undo))
+	
+	
+	(let* ((gen (make-granulate :jitter 0.0 :hop .004 :length .001 :ramp 0.0))
+	       (e (make-env '(0 1 1 .25) :end 1000))
+	       (base-hop-len (mus-hop gen)))
+	  (map-channel 
+	   (lambda (y) 
+	     (let ((result (granulate gen (lambda (dir) .1))))
+	       (set! (mus-hop gen) (inexact->exact (round (* base-hop-len (env e)))))
+	       result)))
+	  (let ((mx (maxamp)))
+	    (if (fneq mx 0.06) (snd-display "granf 1 max: ~A" mx)))
+	  (if (> (abs (- (mus-hop gen) (* .001 (srate)))) 1)
+	      (snd-display ";granf 1 hop: ~A" (mus-hop gen)))
+	  (if (not (vequal (channel->vct 0 30) 
+			   (vct 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 
+				0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
+	      (snd-display ";granf 1 data: ~A" (channel->vct 0 30)))
+	  (if (not (vequal (channel->vct 900 30) 
+			   (vct 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.000 0.000 
+				0.000 0.000 0.000 0.000 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060)))
+	      (snd-display ";granf 1 data 900: ~A" (channel->vct 900 30)))
+	  (undo))
+	
+	(let* ((gen (make-granulate :jitter 0.0 :hop .004 :length .001 :ramp 0.0))
+	       (e (make-env '(0 1 1 .25) :end 1000))
+	       (base-freq (mus-frequency gen)))
+	  (map-channel 
+	   (lambda (y) 
+	     (let ((result (granulate gen (lambda (dir) .1))))
+	       (set! (mus-frequency gen) (* base-freq (env e)))
+	       result)))
+	  (let ((mx (maxamp)))
+	    (if (fneq mx 0.06) (snd-display "granf 2 max: ~A" mx)))
+	  (if (> (abs (- (mus-hop gen) (* .001 (srate)))) 1)
+	      (snd-display ";granf 2 hop: ~A" (mus-hop gen)))
+	  (if (not (vequal (channel->vct 0 30) 
+			   (vct 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 
+				0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
+	      (snd-display ";granf 2 data: ~A" (channel->vct 0 30)))
+	  (if (not (vequal (channel->vct 900 30) 
+			   (vct 0.060 0.060 0.060 0.060 0.060 0.000 0.000 0.000 0.000 0.000 0.000 0.060 0.060 0.060 
+				0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060)))
+	      (snd-display ";granf 2 data 900: ~A" (channel->vct 900 30)))
+	  (undo))
+	
+	(let ((gen (make-granulate :jitter 0.0 :hop .002 :length .001 :ramp 0.0 :scaler 1.0)))
+	  (map-channel (lambda (y) (granulate gen (lambda (dir) .1))))
+	  (let ((mx (maxamp)))
+	    (if (fneq mx 0.1) (snd-display "granf 3 max: ~A" mx)))
+	  (if (not (vequal (channel->vct 0 30) 
+			   (vct 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 
+				0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
+	      (snd-display ";gran 3 data: ~A" (channel->vct 0 30)))
+	  (undo))
+	
+	(let* ((gen (make-granulate :jitter 0.0 :hop .004 :length .001 :ramp 0.0 :scaler 1.0))
+	       (e (make-env '(0 1 1 0.0) :end 1000)))
+	  (map-channel 
+	   (lambda (y) 
+	     (let ((result (granulate gen (lambda (dir) .1))))
+	       (set! (mus-scaler gen) (env e))
+	       result)))
+	  (let ((mx (maxamp)))
+	    (if (fneq mx 0.1) (snd-display "granf 4 max: ~A" mx)))
+	  (if (not (vequal (channel->vct 0 30) 
+			   (vct 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 
+				0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
+	      (snd-display ";granf 4 data: ~A" (channel->vct 0 30)))
+	  (if (not (vequal (channel->vct 440 30) 
+			   (vct 0.056 0.056 0.056 0.056 0.056 0.056 0.056 0.056 0.056 0.056 0.056 0.056 0.056 0.056 
+				0.056 0.056 0.056 0.056 0.056 0.056 0.056 0.056 0.056 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
+	      (snd-display ";granf 4 data 440: ~A" (channel->vct 440 30)))
+	  (if (not (vequal (channel->vct 900 30) 
+			   (vct 0.012 0.012 0.012 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 
+				0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
+	      (snd-display ";granf 4 data 900: ~A" (channel->vct 900 30)))
+	  (undo))
+	
+	(let* ((gen (make-granulate :jitter 0.0 :hop .006 :length .001 :ramp 0.0 :max-size .01))
+	       (e (make-env '(0 1 1 5) :end 1000))
+	       (base-len (mus-length gen)))
+	  (map-channel 
+	   (lambda (y) 
+	     (let ((result (granulate gen (lambda (dir) .1))))
+	       (set! (mus-length gen) (inexact->exact (round (* base-len (env e)))))
+	       result)))
+	  (let ((mx (maxamp)))
+	    (if (fneq mx 0.06) (snd-display "granf 5 max: ~A" mx)))
+	  (if (> (abs (- (mus-length gen) (* 5 base-len))) 10)
+	      (snd-display ";granf 5 length: ~A ~A" (mus-length gen) (* 5 base-len)))
+	  (if (not (vequal (channel->vct 0 30) 
+			   (vct 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 
+				0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
+	      (snd-display ";granf 5 data: ~A" (channel->vct 0 30)))
+	  (if (not (vequal (channel->vct 440 30) 
+			   (vct 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 
+				0.060 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
+	      (snd-display ";granf 5 data 440: ~A" (channel->vct 440 30)))
+	  (if (not (vequal (channel->vct 800 30) 
+			   (vct 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 
+				0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060)))
+	      (snd-display ";granf 5 data 800: ~A" (channel->vct 800 30)))
+	  (undo))
+	
+	(let* ((gen (make-granulate :jitter 0.0 :hop .006 :length .005 :ramp 0.0 :max-size .01))
+	       (e (make-env '(0 1 1 .2) :end 1000))
+	       (base-len (mus-length gen)))
+	  (map-channel 
+	   (lambda (y) 
+	     (let ((result (granulate gen (lambda (dir) .1))))
+	       (set! (mus-length gen) (inexact->exact (round (* base-len (env e)))))
+	       result)))
+	  (let ((mx (maxamp)))
+	    (if (fneq mx 0.06) (snd-display "granf 6 max: ~A" mx)))
+	  (if (> (abs (- (mus-length gen) (* .2 base-len))) 4)
+	      (snd-display ";granf 6 length: ~A ~A" (mus-length gen) (* .2 base-len)))
+	  (if (not (vequal (channel->vct 0 30) 
+			   (vct 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 
+				0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060)))
+	      (snd-display ";granf 6 data: ~A" (channel->vct 0 30)))
+	  (if (not (vequal (channel->vct 820 30) 
+			   (vct 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.000 0.000 
+				0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
+	      (snd-display ";granf 6 data 820: ~A" (channel->vct 820 30)))
+	  (undo))
+
 	(close-sound ind))
-      
+
       (let* ((v0 (make-vct 32))
 	     (v1 (make-vct 256))
 	     (v2 (make-vct 256))
@@ -17021,7 +17225,7 @@ EDITS: 5
 	(if (not (= (frames nind) 22050)) (snd-display "; new-sound initial-length: ~A" (frames nind)))
 	(mix "pistol.snd") 
 	(map-chan (expsrc 2.0 nind)) 
-	(play-and-wait 0 nind)
+	;(play-and-wait 0 nind)
 	(undo) 
 	(let ((eds (edits)))
 	  (if (or (not (= (car eds) 1)) (not (= (cadr eds) 1)))
@@ -17033,7 +17237,7 @@ EDITS: 5
 	(map-chan (formants .99 900 .02 1800 .01 2700)) 
 	(map-chan (moving-formant .99 '(0 1200 1 2400))) 
 	(scale-to .3) 
-	(play-and-wait 0)
+	;(play-and-wait 0)
 	(let ((eds (edits)))
 	  (if (or (not (= (car eds) 6)) (not (= (cadr eds) 0)))
 	      (snd-display ";edits(6): ~A?" eds))
@@ -17054,7 +17258,7 @@ EDITS: 5
 	(key (char->integer #\x) 4)
 	(key (char->integer #\c) 0) ; trigger mark-define-region
 	(reverse-sound nind) 
-	(play-and-wait 0 nind)
+	;(play-and-wait 0 nind)
 	(revert-sound nind)
 	(let ((mid (mix-sound "pistol.snd" 0)))
 	  (if (and (mix? mid)
@@ -17062,11 +17266,11 @@ EDITS: 5
 	      (snd-display ";mix-sound mix-home: ~A (~A or ~A 0)" (mix-home mid) (selected-sound) nind)))
 	(hello-dentist 40.0 .1) 
 	(fp 1.0 .3 20) 
-	(play-and-wait 0 nind)
+	;(play-and-wait 0 nind)
 	(revert-sound nind)
 	(enveloped-mix "oboe.snd" 0 '(0 0 1 1 2 0)) 
 	(pvoc :pitch 0.5 :time 1.0 :snd nind) 
-	(play-and-wait 0 nind)
+	;(play-and-wait 0 nind)
 	(revert-sound nind)
 	(close-sound nind))
       
@@ -34829,7 +35033,6 @@ EDITS: 2
 	    (btst '(let ((gen (make-average))) (average? gen)) #t)
 	    (btst '(let ((gen (make-average))) (if gen #t #f)) #t)
 	    (btst '(let ((gen (make-asymmetric-fm))) (asymmetric-fm? gen)) #t)
-	    (btst '(let ((gen (make-buffer))) (buffer? gen)) #t)
 	    (btst '(let ((gen (make-comb))) (comb? gen)) #t)
 	    (btst '(let ((gen (make-convolve :filter v))) (convolve? gen)) #t)
 	    (btst '(let ((gen (make-delay))) (delay? gen)) #t)
@@ -34884,8 +35087,6 @@ EDITS: 2
 	    (ftst '(let ((gen (make-average))) (gen 0) (gen 0 0) (gen 0.0 0) (gen 0 0.0)) 0.0)
 	    (ftst '(let ((gen (make-asymmetric-fm))) (asymmetric-fm gen)) 0.0)
 	    (ftst '(let ((gen (make-asymmetric-fm))) (gen)) 0.0)
-	    (ftst '(let ((gen (make-buffer))) (buffer->sample gen)) 0.0)
-	    (ftst '(let ((gen (make-buffer))) (gen)) 0.0)
 	    (ftst '(let ((gen (make-comb))) (comb gen)) 0.0)
 	    (ftst '(let ((gen (make-comb))) (gen) (gen 0.0) (gen 0.0 0.0)) 0.0)
 	    (ftst '(let ((gen (make-convolve :filter v))) (convolve gen)) 0.0)
@@ -35882,7 +36083,7 @@ EDITS: 2
 				   (lambda args (car args)))))
 		   (if (not (eq? tag 'mus-error))
 		       (snd-display ";~A ~A" n tag))))
-	       (list make-all-pass make-asymmetric-fm make-snd->sample make-average make-buffer make-comb make-delay make-frame make-granulate
+	       (list make-all-pass make-asymmetric-fm make-snd->sample make-average make-comb make-delay make-frame make-granulate
 		     make-locsig make-mixer make-notch make-oscil make-pulse-train make-rand make-rand-interp make-sawtooth-wave
 		     make-sine-summation make-square-wave make-src make-sum-of-cosines make-sum-of-sines make-table-lookup make-triangle-wave
 		     make-wave-train make-waveshape make-phase-vocoder make-ssb-am))
@@ -36183,26 +36384,6 @@ EDITS: 2
 	      (if (fneq (frame-ref fr4 1) .6) (snd-display ";run frame+ 1: ~A" (frame-ref fr4 1)))
 	      (if (fneq (vct-ref v 0) .11) (snd-display ";run frame->sample: ~A" (vct-ref v 0))))
 	    
-	    (let ((gen (make-buffer 3))
-		  (fr (make-frame 1 .1))
-		  (v (make-vct 1))
-		  (gfull #f)
-		  (gempty #f)
-		  (gq #f)
-		  (v3 (make-vct 3)))
-	      (vct-map! v (lambda ()
-			    (set! gq (buffer? gen))
-			    (set! gfull (buffer-full? gen))
-			    (set! gempty (buffer-empty? gen))
-			    (frame->buffer gen fr)
-			    (sample->buffer gen .123)
-			    (do ((i 0 (1+ i))) ((= i 3)) (vct-set! v3 i (buffer->sample gen)))
-			    (buffer->sample gen)))
-	      (if (not gq) (snd-display ";run buffer?"))
-	      (if (not gempty) (snd-display ";run buffer-empty?"))
-	      (if gfull (snd-display ";run buffer-full?"))
-	      (if (not (vequal v3 (vct .1 .123 0.0)))	(snd-display ";run buffer->sample: ~A" v3)))
-	    
 	    (let ((v0 (make-vct 4))
 		  (v1 (make-vct 4))
 		  (v (make-vct 1)))
@@ -36330,19 +36511,6 @@ EDITS: 2
 			    (mixer* mx1 mx1 mx2)
 			    0.0))
 	      (if (fneq (mixer-ref mx2 0 0) .01) (snd-display ";run mixer* res (set): ~A" mx2)))
-	    
-	    (let ((gen (make-buffer 4))
-		  (fr0 (make-frame 2 .1 .2))
-		  (fr1 (make-frame 2))
-		  (v (make-vct 1)))
-	      (vct-map! v (lambda ()
-			    (sample->frame fr0 .5 fr1)
-			    (frame->buffer gen fr1)
-			    (frame->buffer gen fr0)
-			    (let ((val (buffer->sample gen)))
-			      (buffer->frame gen fr0)
-			      val)))
-	      (if (fneq (vct-ref v 0) .05) (snd-display ";run sample->frame: ~A" v)))
 	    
 	    (let ((gen (make-sample->file "fmv.snd" 2 mus-lshort mus-riff))
 		  (v (make-vct 1))
@@ -37050,15 +37218,6 @@ EDITS: 2
       
       (let ((val (run-eval '(frame-ref (sample->frame (make-mixer 1 1.0) .5) 0))))
 	(if (fneq val 0.5) (snd-display ";run sample->frame no frame: ~A" val)))
-      
-      (let ((val (run-eval '(let ((buf (make-buffer)))
-			      (sample->buffer buf 0.5)
-			      (frame-ref (buffer->frame buf) 0)))))
-	(if (fneq val 0.5) (snd-display ";run buffer->frame no frame: ~A" val)))
-      (let ((buf (make-buffer)))
-	(sample->buffer buf 0.5)
-	(let ((val (run (lambda () (frame-ref (buffer->frame buf) 0)))))
-	  (if (fneq val 0.5) (snd-display ";run buffer->frame no frame 1: ~A" val))))
       
       (show-ptree 2)
       (run (lambda () (oscil unique-generator)))
@@ -38431,7 +38590,6 @@ EDITS: 2
 		  (simple-tp 3.5 .2 440.0 .1)
 		  (simple-frm 3.75 .2 440.0 .1)
 		  (simple-wav 4.0 .2 440.0 .1)
-		  (simple-buf 4.5 .2 440.0 .1)
 		  (simple-dly 4.75 .2 440.0 .1)
 		  (simple-cmb 5.0 .2 440.0 .1)
 		  (simple-not 5.25 .2 440.0 .1)
@@ -49699,14 +49857,14 @@ EDITS: 2
 		     mus-sound-seek-frame mus-file-prescaler mus-file-data-clipped average average? make-average
 		     mus-expand-filename make-sound-data sound-data-ref sound-data-set!  sound-data? sound-data-length
 		     sound-data-maxamp sound-data-chans sound-data->vct vct->sound-data all-pass all-pass? amplitude-modulate
-		     array->file array-interp asymmetric-fm asymmetric-fm?  buffer->frame buffer->sample buffer-empty? buffer?
+		     array->file array-interp asymmetric-fm asymmetric-fm? 
 		     clear-array comb comb? contrast-enhancement convolution convolve convolve? db->linear degrees->radians
 		     delay delay? dot-product env env-interp env? file->array file->frame file->frame?  file->sample
 		     file->sample? filter filter? fir-filter fir-filter? formant formant-bank formant? frame* frame+
-		     frame->buffer frame->file frame->file? frame->frame frame->list frame->sample frame-ref frame-set! frame?
+		     frame->file frame->file? frame->frame frame->list frame->sample frame-ref frame-set! frame?
 		     granulate granulate? hz->radians iir-filter iir-filter?  in-any in-hz ina inb linear->db locsig
 		     locsig-ref locsig-reverb-ref locsig-reverb-set! locsig-set!  locsig? make-all-pass make-asymmetric-fm
-		     make-buffer make-comb make-convolve make-delay make-env make-fft-window make-file->frame
+		     make-comb make-convolve make-delay make-env make-fft-window make-file->frame
 		     make-file->sample make-filter make-fir-filter make-formant make-frame make-frame->file make-granulate
 		     make-iir-filter make-locsig move-locsig make-mixer make-notch make-one-pole make-one-zero make-oscil make-ppolar
 		     make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave
@@ -49719,7 +49877,7 @@ EDITS: 2
 		     one-zero one-zero? oscil oscil-bank oscil? out-any outa outb outc outd partials->polynomial
 		     partials->wave partials->waveshape phase-partials->wave polynomial pulse-train pulse-train?
 		     radians->degrees radians->hz rand rand-interp rand-interp?  rand? readin readin?  rectangular->polar
-		     restart-env ring-modulate sample->buffer sample->file sample->file? sample->frame sawtooth-wave
+		     restart-env ring-modulate sample->file sample->file? sample->frame sawtooth-wave
 		     sawtooth-wave? sine-summation sine-summation? spectrum square-wave square-wave? src src? sum-of-cosines sum-of-sines ssb-am
 		     sum-of-cosines? sum-of-sines? ssb-am? table-lookup table-lookup? tap triangle-wave triangle-wave? two-pole two-pole? two-zero
 		     two-zero? wave-train wave-train?  waveshape waveshape?  make-vct vct-add! vct-subtract!  vct-copy
@@ -49730,7 +49888,7 @@ EDITS: 2
 		     cursor-position clear-listener mus-sound-prune mus-sound-forget xramp-channel ptree-channel
 		     snd->sample xen->sample snd->sample? xen->sample? make-snd->sample make-xen->sample make-scalar-mixer
 		     
-		     beats-per-minute buffer-full? channel-amp-envs convolve-files filter-control-coeffs 
+		     beats-per-minute channel-amp-envs convolve-files filter-control-coeffs 
 		     locsig-type make-phase-vocoder mus-audio-mixer-read mus-bank 
 		     mus-describe mus-error-to-string mus-file-buffer-size mus-name mus-offset mus-out-format
 		     mus-rand-seed mus-width phase-vocoder?
@@ -49833,7 +49991,7 @@ EDITS: 2
       
       (define make-procs (list
 			  make-all-pass make-asymmetric-fm make-snd->sample make-xen->sample make-average
-			  make-buffer make-comb make-convolve make-delay make-env make-fft-window make-file->frame
+			  make-comb make-convolve make-delay make-env make-fft-window make-file->frame
 			  make-file->sample make-filter make-fir-filter make-formant make-frame make-frame->file make-granulate
 			  make-iir-filter make-locsig make-mixer make-notch make-one-pole make-one-zero make-oscil make-ppolar
 			  make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave
@@ -50030,7 +50188,7 @@ EDITS: 2
 						  (lambda args (car args)))))
 				      (if tag
 					  (snd-display ";?proc ~A: ~A" n tag))))
-				  (list all-pass? asymmetric-fm? buffer? comb? convolve? delay? env? file->frame? file->sample? snd->sample? xen->sample? 
+				  (list all-pass? asymmetric-fm? comb? convolve? delay? env? file->frame? file->sample? snd->sample? xen->sample? 
 					filter? fir-filter? formant? frame->file? frame? granulate? iir-filter? locsig? mixer? mus-input? 
 					mus-output? notch? one-pole? one-zero? oscil? phase-vocoder? pulse-train? rand-interp? rand? readin? 
 					sample->file? sawtooth-wave? sine-summation? square-wave? src? sum-of-cosines? sum-of-sines? table-lookup? 
@@ -50047,7 +50205,7 @@ EDITS: 2
 				      (lambda args (car args)))))
 			  (if tag
 			      (snd-display ";oscil?proc ~A: ~A" n tag))))
-		      (list all-pass? asymmetric-fm? buffer? comb? convolve? delay? env? file->frame? file->sample? snd->sample? xen->sample?
+		      (list all-pass? asymmetric-fm? comb? convolve? delay? env? file->frame? file->sample? snd->sample? xen->sample?
 			    filter? fir-filter? formant? frame->file? frame? granulate? iir-filter? locsig? mixer? mus-input? 
 			    mus-output? notch? one-pole? one-zero? phase-vocoder? pulse-train? rand-interp? rand? readin? 
 			    sample->file? sawtooth-wave? sine-summation? square-wave? src? sum-of-cosines? sum-of-sines? table-lookup? 
@@ -50107,9 +50265,9 @@ EDITS: 2
 					(if (not (eq? tag 'wrong-type-arg))
 					    (snd-display ";clm ~A: ~A ~A [~A]: ~A" n tag arg ctr (procedure-property n 'documentation)))
 					(set! ctr (1+ ctr))))
-				    (list all-pass asymmetric-fm buffer->sample clear-array comb convolve db->linear average
+				    (list all-pass asymmetric-fm clear-array comb convolve db->linear average
 					  degrees->radians delay env formant frame->list granulate hz->radians in-hz linear->db
-					  make-all-pass make-asymmetric-fm make-buffer make-comb make-convolve make-delay make-env
+					  make-all-pass make-asymmetric-fm make-comb make-convolve make-delay make-env
 					  make-file->frame make-file->sample make-filter make-fir-filter make-formant make-frame
 					  make-granulate make-iir-filter make-locsig make-notch make-one-pole make-one-zero
 					  make-oscil make-ppolar make-pulse-train make-rand make-rand-interp make-readin
@@ -50138,8 +50296,8 @@ EDITS: 2
 			      (snd-display ";clm ~A: ~A" n tag))))
 		      (list all-pass array-interp asymmetric-fm comb contrast-enhancement convolution convolve average
 			    convolve-files delay dot-product env-interp file->frame file->sample snd->sample xen->sample filter fir-filter formant
-			    formant-bank frame* frame+ frame->buffer frame->frame frame-ref frame->sample granulate iir-filter ina
-			    inb locsig-ref locsig-reverb-ref make-all-pass make-asymmetric-fm make-buffer make-comb make-convolve
+			    formant-bank frame* frame+ frame->frame frame-ref frame->sample granulate iir-filter ina
+			    inb locsig-ref locsig-reverb-ref make-all-pass make-asymmetric-fm make-comb make-convolve
 			    make-delay make-env make-fft-window make-filter make-fir-filter make-formant make-frame make-granulate
 			    make-iir-filter make-locsig make-notch make-one-pole make-one-zero make-oscil make-phase-vocoder
 			    make-ppolar make-pulse-train make-rand make-rand-interp make-readin make-sawtooth-wave make-average
@@ -50147,7 +50305,7 @@ EDITS: 2
 			    make-two-pole make-two-zero make-wave-train make-waveshape make-zpolar mixer* mixer+ mixer-scale multiply-arrays mus-bank
 			    notch one-pole one-zero oscil oscil-bank partials->polynomial partials->wave partials->waveshape
 			    phase-partials->wave phase-vocoder polynomial pulse-train rand rand-interp rectangular->polar
-			    ring-modulate sample->buffer sample->frame sawtooth-wave sine-summation square-wave src sum-of-cosines sum-of-sines 
+			    ring-modulate sample->frame sawtooth-wave sine-summation square-wave src sum-of-cosines sum-of-sines 
 			    sine-bank oscil-bank table-lookup tap triangle-wave two-pole two-zero wave-train waveshape ssb-am make-ssb-am))
 	    
 	    (for-each (lambda (n)

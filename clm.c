@@ -4485,7 +4485,6 @@ mus_any *mus_mixer_scale(mus_any *uf1, Float scaler, mus_any *ures)
 }
 
 
-
 /* ---------------- buffer ---------------- */
 
 typedef struct {
@@ -4694,28 +4693,31 @@ mus_any *mus_buffer_to_frame(mus_any *rb, mus_any *fr)
 }
 
 
-
 /* ---------------- wave-train ---------------- */
 
 typedef struct {
   mus_any_class *core;
   Float freq;
   Float phase;
-  Float *wave;
-  int wsize;
-  rblk *b;
-  bool wave_allocated;
+  Float *wave;        /* passed in from caller */
+  int wave_size;
+  Float *out_data;
+  int out_data_size;
   mus_interp_t type;
+  Float next_wave_time;
+  int out_pos;
+  bool first_time;
 } wt;
 
 static Float wt_freq(mus_any *ptr) {return(((wt *)ptr)->freq);}
 static Float set_wt_freq(mus_any *ptr, Float val) {((wt *)ptr)->freq = val; return(val);}
-static Float wt_phase(mus_any *ptr) {return(fmod(((TWO_PI * ((wt *)ptr)->phase) / ((Float)((wt *)ptr)->wsize)), TWO_PI));}
-static Float set_wt_phase(mus_any *ptr, Float val) {((wt *)ptr)->phase = (fmod(val, TWO_PI) * ((wt *)ptr)->wsize) / TWO_PI; return(val);}
-static off_t wt_length(mus_any *ptr) {return(((wt *)ptr)->wsize);}
-static off_t wt_set_length(mus_any *ptr, off_t val) {((wt *)ptr)->wsize = (int)val; return(val);}
+static Float wt_phase(mus_any *ptr) {return(fmod(((TWO_PI * ((wt *)ptr)->phase) / ((Float)((wt *)ptr)->wave_size)), TWO_PI));}
+static Float set_wt_phase(mus_any *ptr, Float val) {((wt *)ptr)->phase = (fmod(val, TWO_PI) * ((wt *)ptr)->wave_size) / TWO_PI; return(val);}
+static off_t wt_length(mus_any *ptr) {return(((wt *)ptr)->wave_size);}
+static off_t wt_set_length(mus_any *ptr, off_t val) {((wt *)ptr)->wave_size = (int)val; return(val);}
 static Float *wt_data(mus_any *ptr) {return(((wt *)ptr)->wave);}
 static int wt_interp_type(mus_any *ptr) {return((int)(((wt *)ptr)->type));}
+static Float *wt_set_data(mus_any *ptr, Float *data) {((wt *)ptr)->wave = data; return(data);}
 
 static bool wt_equalp(mus_any *p1, mus_any *p2)
 {
@@ -4728,22 +4730,19 @@ static bool wt_equalp(mus_any *p1, mus_any *p2)
       (w1->freq == w2->freq) &&
       (w1->phase == w2->phase) &&
       (w1->type == w2->type) &&
-      (w1->wsize == w2->wsize))
+      (w1->wave_size == w2->wave_size) &&
+      (w1->out_data_size == w2->out_data_size) &&
+      (w1->out_pos == w2->out_pos))
     {
-      for (i = 0; i < w1->wsize; i++)
+      for (i = 0; i < w1->wave_size; i++)
 	if (w1->wave[i] != w2->wave[i])
 	  return(false);
-      return(mus_equalp((mus_any *)(w1->b), (mus_any *)(w2->b)));
+      for (i = 0; i < w1->out_data_size; i++)
+	if (w1->out_data[i] != w2->out_data[i])
+	  return(false);
+      return(true);
     }
   return(false);
-}
-
-static Float *wt_set_data(mus_any *ptr, Float *data) 
-{
-  wt *gen = (wt *)ptr;
-  if (gen->wave_allocated) {FREE(gen->wave); gen->wave_allocated = false;}
-  gen->wave = data; 
-  return(data);
 }
 
 static char *describe_wt(mus_any *ptr)
@@ -4756,47 +4755,52 @@ static char *describe_wt(mus_any *ptr)
   return(describe_buffer);
 }
 
-Float mus_wave_train(mus_any *ptr, Float fm) 
+static Float mus_wave_train_any(mus_any *ptr, Float fm) 
 {
   wt *gen = (wt *)ptr;
-  rblk *b;
   int i;
-  b = gen->b;
-  if (b->empty)
+  Float result = 0.0;
+  if (gen->out_pos < gen->out_data_size)
+    result = gen->out_data[gen->out_pos];
+  gen->out_pos++;
+  if (gen->out_pos >= gen->next_wave_time)
     {
-      for (i = 0; i < b->size; i++) 
-	b->buf[i] += table_lookup_interp(gen->type, gen->phase + i, gen->wave, gen->wsize);
-      b->fill_time += ((Float)sampling_rate / (gen->freq + (fm / w_rate)));
-      b->empty = false;
+      if (gen->out_pos < gen->out_data_size)
+	{
+	  int good_samps;
+	  good_samps = gen->out_data_size - gen->out_pos;
+	  memmove((void *)(gen->out_data), (void *)(gen->out_data + gen->out_pos), good_samps * sizeof(Float));
+	  memset((void *)(gen->out_data + good_samps), 0, gen->out_pos * sizeof(Float));
+	}
+      else memset((void *)(gen->out_data), 0, gen->out_data_size * sizeof(Float));
+      for (i = 0; i < gen->wave_size; i++)
+	gen->out_data[i] += table_lookup_interp(gen->type, gen->phase + i, gen->wave, gen->wave_size);
+      if (gen->first_time)
+	{
+	  gen->first_time = false;
+	  gen->out_pos = (int)(gen->phase); /* initial phase, but as an integer in terms of wave table size (gad...) */
+	  result = gen->out_data[gen->out_pos++];
+	  gen->next_wave_time = ((Float)sampling_rate / (gen->freq + fm));
+	}
+      else 
+	{
+	  gen->next_wave_time += (((Float)sampling_rate / (gen->freq + fm)) - gen->out_pos);
+	  gen->out_pos = 0;
+	}
     }
-  return(mus_buffer_to_sample((mus_any *)(gen->b)));
+  return(result);
 }
 
-Float mus_wave_train_1(mus_any *ptr) 
-{
-  wt *gen = (wt *)ptr;
-  rblk *b;
-  int i;
-  b = gen->b;
-  if (b->empty)
-    {
-      for (i = 0; i < b->size; i++) 
-	b->buf[i] += table_lookup_interp(gen->type, gen->phase + i, gen->wave, gen->wsize);
-      b->fill_time += ((Float)sampling_rate / gen->freq);
-      b->empty = false;
-    }
-  return(mus_buffer_to_sample((mus_any *)(gen->b)));
-}
-
-static Float run_wave_train(mus_any *ptr, Float fm, Float unused) {return(mus_wave_train(ptr, fm));}
+Float mus_wave_train(mus_any *ptr, Float fm) {return(mus_wave_train_any(ptr, fm / w_rate));}
+Float mus_wave_train_1(mus_any *ptr) {return(mus_wave_train(ptr, 0.0));}
+static Float run_wave_train(mus_any *ptr, Float fm, Float unused) {return(mus_wave_train_any(ptr, fm / w_rate));}
 
 static int free_wt(mus_any *p) 
 {
   wt *ptr = (wt *)p;
   if (ptr) 
     {
-      if ((ptr->wave) && (ptr->wave_allocated)) FREE(ptr->wave);
-      if (ptr->b) mus_free_buffer((mus_any *)(ptr->b));
+      if (ptr->out_data) {FREE(ptr->out_data); ptr->out_data = NULL;}
       FREE(ptr);
     }
   return(0);
@@ -4828,17 +4832,21 @@ static mus_any_class WAVE_TRAIN_CLASS = {
   &_mus_wrap_one_vct_wrapped
 };
 
-mus_any *mus_make_wave_train(Float freq, Float phase, Float *wave, int wsize, mus_interp_t type)
+mus_any *mus_make_wave_train(Float freq, Float phase, Float *wave, int wave_size, mus_interp_t type)
 {
  wt *gen;
  gen = (wt *)clm_calloc(1, sizeof(wt), S_make_wave_train);
  gen->core = &WAVE_TRAIN_CLASS;
  gen->freq = freq;
- gen->phase = (wsize * phase) / TWO_PI;
+ gen->phase = (wave_size * phase) / TWO_PI;
  gen->wave = wave;
- gen->wsize = wsize;
+ gen->wave_size = wave_size;
  gen->type = type;
- gen->b = (rblk *)mus_make_buffer(NULL, wsize, 0.0);
+ gen->out_data_size = wave_size + 2;
+ gen->out_data = (Float *)clm_calloc(gen->out_data_size, sizeof(Float), "wave train out data");
+ gen->out_pos = gen->out_data_size;
+ gen->next_wave_time = 0.0;
+ gen->first_time = true;
  return((mus_any *)gen);
 }
 
@@ -6550,8 +6558,14 @@ Float mus_granulate_with_editor(mus_any *ptr, Float (*input)(void *arg, int dire
 	  }
 	else
 	  {
-	    /* ramp is 0.0, so just copy the input buffer */
-	    memcpy((void *)(spd->grain), (void *)(spd->in_data + curstart), lim * sizeof(Float));
+	    /* ramp is 0.0, so just scale the input buffer by the current amp */
+	    if (spd->amp == 1.0)
+	      memcpy((void *)(spd->grain), (void *)(spd->in_data + curstart), lim * sizeof(Float));
+	    else
+	      {
+		for (i = 0, j = curstart; i < lim; i++, j++)
+		  spd->grain[i] = (spd->amp * spd->in_data[j]);
+	      }
 	  }
       }
 
@@ -7738,13 +7752,13 @@ Float mus_phase_vocoder_with_editors(mus_any *ptr,
 				     Float (*synthesize)(void *arg))
 {
   pv_info *pv = (pv_info *)ptr;
-  int N2, i, j, buf;
-  Float pscl, kscl, ks, diff, scl;
+  int N2, i;
   Float (*pv_synthesize)(void *arg) = synthesize;
   if (pv_synthesize == NULL) pv_synthesize = pv->synthesize;
   N2 = pv->N / 2;
   if (pv->outctr >= pv->interp)
     {
+      Float scl;
       Float (*pv_input)(void *arg, int direction) = input;
       bool (*pv_analyze)(void *arg, Float (*input)(void *arg1, int direction)) = analyze;
       int (*pv_edit)(void *arg) = edit;
@@ -7755,6 +7769,7 @@ Float mus_phase_vocoder_with_editors(mus_any *ptr,
       pv->outctr = 0;
       if ((pv_analyze == NULL) || ((*pv_analyze)(pv->closure, pv_input)))
 	{
+	  int j, buf;
 	  mus_clear_array(pv->freqs, pv->N);
 	  if (pv->in_data == NULL)
 	    {
@@ -7797,10 +7812,12 @@ Float mus_phase_vocoder_with_editors(mus_any *ptr,
       
       if ((pv_edit == NULL) || ((*pv_edit)(pv->closure)))
 	{
+	  Float pscl, kscl, ks;
 	  pscl = 1.0 / (Float)(pv->D);
 	  kscl = TWO_PI / (Float)(pv->N);
 	  for (i = 0, ks = 0.0; i < N2; i++, ks += kscl)
 	    {
+	      Float diff;
 	      diff = pv->freqs[i] - pv->lastphase[i];
 	      pv->lastphase[i] = pv->freqs[i];
 	      while (diff > M_PI) diff -= TWO_PI;
