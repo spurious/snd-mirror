@@ -7989,7 +7989,7 @@ static XEN g_add_clm_type(XEN name)
 {
   #define H_add_clm_type "def-clm-struct tie-in to run optimizer"
   int loc;
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_add_clm_type, "string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, S_add_clm_type, "string");
   if (clm_types_size == 0)
     {
       clm_types_size = 4;
@@ -9090,7 +9090,7 @@ to Guile and is equivalent to (thunk)."
   XEN code, result = XEN_FALSE;
   ptree *pt = NULL;
   code = XEN_CADR(proc_and_code);
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code) && (XEN_REQUIRED_ARGS(code) == 0), code, XEN_ARG_1, S_run, "a thunk");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code) && (XEN_REQUIRED_ARGS(code) == 0), code, XEN_ONLY_ARG, S_run, "a thunk");
   pt = (ptree *)form_to_ptree(proc_and_code);
   if (pt)
     {

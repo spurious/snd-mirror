@@ -1969,7 +1969,7 @@
 	(reset-hook! output-comment-hook)
 	(add-hook! output-comment-hook
 		   (lambda (str) 
-		     " [written by me]"))
+		     (string-append str " [written by me]")))
 	(save-sound-as "test.snd" ob mus-riff mus-lfloat)
 	(reset-hook! output-comment-hook)
 	(let ((ab (open-sound "test.snd")))
@@ -8534,6 +8534,11 @@ EDITS: 5
 	  (key (char->integer #\c) 0)
 	  (if with-gui
 	      (let ((str (widget-text (list-ref (sound-widgets ind) 3))))
+		(IF (widget-text (cadr (main-widgets))) 
+		    (snd-display ";widget-text of non-text widget: ~A" (widget-text (cadr (main-widget)))))
+		(set! (widget-text (list-ref (channel-widgets ind 0) 2)) "F")
+		(IF (not (string=? (widget-text (list-ref (channel-widgets ind 0) 2)) "F"))
+		    (snd-display ";set button label to F: ~A" (widget-text (list-ref (channel-widgets ind 0) 2)) "F"))
 		(IF (not (string=? str "no marks"))
 		    (snd-display ";C-x c w/o marks: ~A?" str))))
 	  (add-mark 123)
@@ -14517,7 +14522,7 @@ EDITS: 5
 				   (snd-display ";help-hook subject: ~A" a))
 			       (if (not (string=? b "(cursor-position (snd #f) (chn #f)): current cursor position (x y in pixels) in snd's channel chn"))
 				   (snd-display ";help-hook text: ~A" b))
-			       "hiho:"))
+			       (string-append "hiho:" b)))
 	(let ((ho (snd-help 'cursor-position)))
 	  (IF (not (= (string-length ho) (+ 5 (string-length hi))))
 	      (snd-display ";help-hook ~A -> ~A" hi ho))
@@ -22789,6 +22794,10 @@ EDITS: 2
 		   (begin
 		     (snd-display ";add-transform same (~A): ~D ~A ~A" ftype i (vct-ref samps i) (vct-ref orig i))
 		     (break)))))))
+	(set! (dot-size ind 0) 60)
+	(set! (graph-style ind 0) graph-lollipops)
+	(set! (x-bounds) (list 2.579 2.580))
+	(update-time-graph)
 	(close-sound ind))
 
       (let ((ind1 (open-sound "oboe.snd")))
@@ -31008,6 +31017,8 @@ EDITS: 2
 		(XtRemoveInput id)
 		(set! id (XtAddInput 1 XtInputReadMask (lambda (a b c) #f) #f))
 		(XtRemoveInput id))
+	      (let ((id (XtAppAddWorkProc (car (main-widgets)) (lambda (me) #f) #f)))
+		(XtRemoveWorkProc id))
 	      (IF (not (equal? (caddr (main-widgets)) (XtNameToWidget (cadr (main-widgets)) "mainpane")))
 		  (snd-display ";XtNameToWidget: ~A ~A" (caddr (main-widgets)) (XtNameToWidget (cadr (main-widgets)) "mainpane")))
 	      (XtVaCreatePopupShell "hiho" vendorShellWidgetClass (cadr (main-widgets)) '())
@@ -34660,6 +34671,7 @@ EDITS: 2
 	(check-error-tag 'no-such-file (lambda () (set! (save-dir) "/hiho")))
 	(check-error-tag 'out-of-range (lambda () (snd-transform 20 (make-vct 4))))
 	(check-error-tag 'no-such-menu (lambda () (change-menu-label 443 "hi" "ho")))
+	(check-error-tag 'no-such-file (lambda () (close-sound-file 23 3)))
 	(if (provided? 'snd-motif)
 	    (begin
 	      (check-error-tag 'no-such-widget (lambda () (widget-position (list 'Widget 0)))) ; dubious -- not sure these should be supported

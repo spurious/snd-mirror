@@ -92,11 +92,6 @@ string 'cmd'.  cmd should be a URL.  This is used by index.scm."
 
 static void change_window_property(snd_state *ss, char *winat, char *name, char *command)
 {
-  #define H_change_window_property "(" S_change_window_property " version-name command-name command): look for the \
-X atom 'version-name', and if it is found, set the property 'command-name' to the string 'command'.\n\
-(change-property \"SND_VERSION\" \"SND_COMMAND\" \"(snd-print (+ 1 2))\"\n\
-for example"
-
   Window window;
   Display *dpy;
   dpy = MAIN_DISPLAY(ss);
@@ -115,6 +110,11 @@ for example"
 
 static XEN g_change_window_property(XEN winat, XEN name, XEN command)
 {
+  #define H_change_window_property "(" S_change_window_property " version-name command-name command): look for the \
+X atom 'version-name', and if it is found, set the property 'command-name' to the string 'command'.\n\
+(change-property \"SND_VERSION\" \"SND_COMMAND\" \"(snd-print (+ 1 2))\"\n\
+for example"
+
   char *c = NULL;
   /* winat arg needed as well as command arg because we need an atom that is guaranteed to have a value */
   /*   Supposedly WM_STATE is just such an atom */

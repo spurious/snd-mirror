@@ -2,8 +2,6 @@
 #include "sndlib-strings.h"
 #include "clm-strings.h"
 
-/* TODO: all the snd-help strings should be rubyified -- probably should use help-hook */
-
 /* ---------------- help 'news' menu item ---------------- */
 
 static char *snd_itoa(int n)
@@ -2121,62 +2119,47 @@ char* word_wrap(char *text, int widget_len)
 static XEN help_hook = XEN_FALSE;
 static XEN output_comment_hook = XEN_FALSE;
 
-static char *run_concat_hook(XEN hook, const char *caller, char *initial_string, char *subject)
+static char *run_string_hook(XEN hook, const char *caller, char *initial_string, char *subject)
 {
-  char *newstr = NULL, *tmpstr = NULL;
-  if (initial_string) 
-    newstr = copy_string(initial_string); /* will be accumulating stuff in loop through hook */
+  /* no longer concats -- now just passes successive results along */
   if (XEN_HOOKED(hook))
     {
       XEN result;
       XEN procs = XEN_HOOK_PROCEDURES(hook);
-      int size = 0;
 #if HAVE_GUILE
+      result = C_TO_XEN_STRING(initial_string);
       while (XEN_NOT_NULL_P(procs))
 	{
 	  if (subject)
 	    result = XEN_CALL_2(XEN_CAR(procs),
 				C_TO_XEN_STRING(subject),
-				C_TO_XEN_STRING(newstr),
+				result,
 				caller);
 	  else result = XEN_CALL_1(XEN_CAR(procs),
-				   C_TO_XEN_STRING(newstr),
+				   result,
 				   caller);
-#else
-	  if (subject)
-	    result = XEN_CALL_2(procs,
-				C_TO_XEN_STRING(subject),
-				C_TO_XEN_STRING(newstr),
-				caller);
-	  else result = XEN_CALL_1(procs,
-				   C_TO_XEN_STRING(newstr),
-				   caller);
-#endif
-	  if (XEN_STRING_P(result))
-	    tmpstr = XEN_TO_C_STRING(result);
-	  else tmpstr = NULL;
-	  if (tmpstr)
-	    {
-	      if ((snd_strlen(tmpstr) + snd_strlen(newstr)) >= size)
-		size = ((snd_strlen(tmpstr) + snd_strlen(newstr)) * 2);
-	      if (newstr == NULL)
-		newstr = (char *)CALLOC(size, sizeof(char));
-	      else newstr = (char *)REALLOC(newstr, size * sizeof(char));
-	      strcat(newstr, tmpstr);
-	    }
-#if HAVE_GUILE
 	  procs = XEN_CDR(procs);
 	}
+#else
+      if (subject)
+	result = XEN_CALL_2(procs,
+			    C_TO_XEN_STRING(subject),
+			    C_TO_XEN_STRING(initial_string),
+			    caller);
+      else result = XEN_CALL_1(procs,
+			       C_TO_XEN_STRING(initial_string),
+			       caller);
 #endif
+      if (XEN_STRING_P(result))
+	return(copy_string(XEN_TO_C_STRING(result)));
     }
-  return(newstr);
+  return(copy_string(initial_string));
 }
 
 char *output_comment(file_info *hdr)
 {
-  return(run_concat_hook(output_comment_hook, S_output_comment_hook, (hdr) ? hdr->comment : NULL, NULL));
+  return(run_string_hook(output_comment_hook, S_output_comment_hook, (hdr) ? hdr->comment : NULL, NULL));
 }
-
 
 XEN g_snd_help(XEN text, int widget_wid)
 {
@@ -2241,7 +2224,7 @@ and its value is returned."
   if (str)
     {
       if (subject)
-	new_str = run_concat_hook(help_hook, S_help_hook, str, subject);
+	new_str = run_string_hook(help_hook, S_help_hook, str, subject);
       else new_str = copy_string(str);
       if (widget_wid > 0)
 	{
@@ -2311,10 +2294,10 @@ if returns a string, it replaces 'help-string' (the default help)"
   XEN_DEFINE_HOOK(help_hook, S_help_hook, 2, H_help_hook);    /* args = subject help-string */
 
   #define H_output_comment_hook S_output_comment_hook " (str): called in Save-As dialog, passed current sound's comment, if any. \
-If more than one hook function, results are concatenated. If none, the current comment is used.\n\
+If more than one hook function, each function gets the previous function's output as its input.\n\
   (add-hook! output-comment-hook\n\
     (lambda (str)\n\
-      (string-append \"written \"\n\
+      (string-append str \": written \"\n\
         (strftime \"%a %d-%b-%Y %H:%M %Z\"\n\
           (localtime (current-time))))))"
 

@@ -163,7 +163,6 @@
 		    (let ((hpos (search "<hr>" dline)))
 		      (when hpos (setf topic nil)))))))))))
     (let ((tnames (make-array (+ n g) :adjustable t))
-	  (offset (ceiling (+ n g) cols))
 	  (ctr 0))
       (dotimes (i n)
 	(setf (aref tnames ctr)
@@ -226,11 +225,11 @@
 <span class=box><h2><A NAME=\"extsndindex\">Index</a></h2></span>
 <br>
 <!-- created ~A -->~%"
-		    
 		    #+clm (clm::c-strftime "%a %d-%b-%y %H:%M %Z") #-clm "whenever")
 	(format ofil "<table cellspacing=0 cellpadding=1>~%  <tr>")
 	(let ((row 0)
-	      (ctr 0))
+	      (ctr 0)
+	      (offset (ceiling n cols)))
 	  (dotimes (i n)
 	    (let ((x (+ row (* ctr offset))))
 	      (if (< x n)
@@ -242,7 +241,7 @@
 	      (incf row)
 	      (if (< i n) (format ofil "  <tr>"))
 	      (setf ctr 0))))
-	(format ofil "~%</table>~%</body></html>~%"))
+	(format ofil "</tr>~%</table>~%</body></html>~%"))
 
       ;;; fgrep '#define H_open_sound ' *.c --line-number
       (if with-scm
@@ -487,10 +486,11 @@
 					    (if (not scripting)
 						(if (not (member closer commands :test #'string-equal))
 						    (warn "~A without start? ~A from ~A[~D][~D:~D]" closer line file linectr (+ start 2) i)
-						  (if (member closer (list "ul" "tr" "td" "table" "small" "sub" "blockquote" "center" "p"
-									   "a" "i" "b" "title" "pre" "span" "h1" "h2" "h3" "code" "body" "html"
-									   "em" "head" "h4" "sup" "font" "map" "smaller" "th"
-									   ) :test #'string-equal)
+						  (if (member closer
+							      (list "ul" "tr" "td" "table" "small" "sub" "blockquote" "center" "p"
+								    "a" "i" "b" "title" "pre" "span" "h1" "h2" "h3" "code" "body" "html"
+								    "em" "head" "h4" "sup" "font" "map" "smaller" "th")
+							      :test #'string-equal)
 						      (progn
 							(setf commands (remove closer commands :test #'string-equal :count 1))
 							(if (not warned)
@@ -588,15 +588,18 @@
     (loop for h from 0 below href do
       (if (and (not (find (aref hrefs h) names :test #'string=))
 	       (search "#" (aref hrefs h)))
-	  (format t "can't find: ~A (~A: ~A)~%" (aref hrefs h) (aref refs h) (aref lines h))))
+	  (format t "undef'd: ~A (~A: ~A)~%" (aref hrefs h) (aref refs h) (aref lines h))))
+    (loop for h from 0 below name do
+      (if (not (find (aref names h) hrefs :test #'string=))
+	  (format t "unref'd: ~A~%" (aref names h))))
     (list names hrefs)))
 
 (defun check-all ()
   (html-check '("sndlib.html" "snd.html" "clm.html" "extsnd.html" "grfsnd.html"
 		"sndscm.html" "fm.html" "balance.html" "snd-contents.html"
-		"xen.html" "libxm.html" "cmn.html")))
+		"xen.html" "libxm.html" "cmn.html" "index.html")))
 
 (defun make-index ()
   (check-all)
-  (index '("extsnd.html" "grfsnd.html" "sndscm.html" "sndlib.html" "clm.html")
+  (index '("snd.html" "extsnd.html" "grfsnd.html" "sndscm.html" "sndlib.html" "clm.html")
 	 nil "test.html" 5 '("XmHTML" "AIFF" "NeXT" "Sun" "RIFF" "IRCAM" "FIR" "IIR" "Hilbert" "AIFC") t t))

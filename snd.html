@@ -187,7 +187,6 @@ and a CVS <a href="http://snd.sourceforge.net">repository</a>.
 
 <hr>
 <br>
-<A NAME="menus"></a>
 <center>
 <table border=8 bordercolor="lightgreen">
 <tr>
@@ -518,7 +517,7 @@ If the variable <a href="extsnd.html#autoupdate">auto-update</a> is #t (the defa
 automatically updates any such file. 
 </p>
 
-<A NAME="soundsonlybutton"></a><p>In the file selection dialog, there's a button marked
+<p>In the file selection dialog, there's a button marked
 'Sound files only' (<a href="extsnd.html#justsounds">just-sounds</a>).  If it is set, 
 the file dialog lists only those files that appear
 to be sound files.
@@ -581,7 +580,7 @@ and that file is the one the editor sees from then on. To read
 mpeg files, see the mpg function in <a href="sndscm.html#exampdoc">examp.scm</a>.
 </p>
 
-<p><A NAME="panelayout"></a>Each file has its own
+<p>Each file has its own
 'pane', a horizontal section of the overall Snd
 screen space; within that section, each channel
 has a pane, and below the channels is the 'control
@@ -753,7 +752,7 @@ unlist button removes a file from the
 previous files list. 
 Click a current file name, and
 that sound becomes the selected sound in the main
-Snd window.  <A NAME="Oopen">Click</a> a previous file name, and 
+Snd window.  Click a previous file name, and 
 that file is opened in Snd.
 The 'update' button runs through the previous files
 list checking for files that have been deleted or moved behind Snd's back.
@@ -1008,11 +1007,11 @@ To move the cursor from the keyboard, use:</p>
 
   <A NAME="ca">C-a</a>    move cursor to window start
   <A NAME="ce">C-e</a>    move cursor to window end
-  <A NAME="cb">C-b</a>    move cursor back one sample
-  <A NAME="cf">C-f</a>    move cursor ahead one sample
+  C-b    move cursor back one sample
+  C-f    move cursor ahead one sample
 
-  <A NAME="cn">C-n</a>    move cursor ahead one 'line'
-  <A NAME="cp">C-p</a>    move cursor back one 'line'
+  C-n    move cursor ahead one 'line'
+  C-p    move cursor back one 'line'
   <A NAME="cv">C-v</a>    move cursor to mid-window
 
   <A NAME="ci">C-i</a>    display cursor info
@@ -1052,17 +1051,17 @@ point.
 <p>Various keyboard commands provide
 much more precise control of the window bounds and placement:</p>
 <pre>
-  <A NAME="cl">C-l</a>      position window so cursor is in the middle
-  <A NAME="cxb">C-x b</a>    position window so cursor is on left margin
+  C-l      position window so cursor is in the middle
+  C-x b    position window so cursor is on left margin
   <A NAME="cxf">C-x f</a>    position window so cursor is on right margin
   [Down]   zoom out, amount depends on shift, control, and meta
   [Up]     zoom in
   [Left]   move window left
   [Right]  move window right
   <A NAME="cxl">C-x l</a>    position selection in mid-view
-  <A NAME="cxv">C-x v</a>    position window over current selection
+  C-x v    position window over current selection
   <A NAME="cxcb">C-x C-b</a>  set x window bounds (preceded by number of leftmost sample)
-  <A NAME="cxcp">C-x C-p</a>  set window size (preceded by size as numeric argument)
+  C-x C-p  set window size (preceded by size as numeric argument)
 </pre>
 <p>As in most other cases, the sample numbers (or sizes) can be floats;
 if the argument is not an integer, it is multiplied by the sampling
@@ -1186,7 +1185,7 @@ you made.
 
 <p>The keyboard commands that apply to regions are:</p>
 <pre>
-  <A NAME="cy">C-y</a>         paste in current selection at cursor
+  C-y         paste in current selection at cursor
   C-[space]   start keyboard-based selection definition
   C-x a       apply amplitude envelope to selection
   <A NAME="cxc">C-x c</a>       define selection from cursor to nth mark
@@ -1291,8 +1290,8 @@ numeric argument (the region number); the current selection
 by clicking the middle mouse button.  The
 associated keyboard commands are:</p>
 <pre>
-  <A NAME="cd">C-d</a>      delete sample at cursor
-  <A NAME="ch">C-h</a>      delete previous sample
+  C-d      delete sample at cursor
+  C-h      delete previous sample
   <A NAME="ck">C-k</a>      delete a 'line' -- 128 samples
   <A NAME="cw">C-w</a>      delete current selected portion
 
@@ -1375,7 +1374,7 @@ argument, the envelope is applied from the cursor
 for that many samples. Otherwise, the envelope is
 applied to the entire file.</p>
 <pre>
-  <A NAME="cxa">C-x a</a>     apply amplitude envelope to selection
+  C-x a     apply amplitude envelope to selection
   <A NAME="cxca">C-x C-a</a>   apply amplitude envelope to channel
 </pre>
 <p>You can also specify an envelope name to the C-x C-a prompt.
@@ -1427,7 +1426,7 @@ search pattern, which is also cleared by various other
 commands, much as in Emacs.
 The search commands are:</p>
 <pre>
-  <A NAME="cr">C-r</a>   find backwards
+  C-r   find backwards
   <A NAME="cs">C-s</a>   find forwards
 </pre>
 <p>These searching functions can be closures; the following, for example, searches for
@@ -1473,8 +1472,8 @@ list, and each redo moves forward in the list of previously
 un-done edits.  Besides the Edit and Popup menu options, there
 are these keyboard commands:</p>
 <pre>
-  <A NAME="cxr">C-x r</a>     redo last edit
-  <A NAME="cxu">C-x u</a>     undo last edit
+  C-x r     redo last edit
+  C-x u     undo last edit
   <A NAME="cxcr">C-x C-r</a>   redo last edit
   <A NAME="cxcu">C-x C-u</a>   undo last edit
   C-_       undo last edit
@@ -1535,7 +1534,7 @@ My initialization file uses <code>(mus-audio-set-oss-buffers 2 12)</code>.
 <A NAME="cq"></a><p>The keyboard commands for playing are:</p>
 <pre>
   C-q    play current channel starting at the cursor
-  <A NAME="ct">C-t</a>    stop playing
+  C-t    stop playing
   <A NAME="cxp">C-x p</a>  play region (numeric arg selects region)
 </pre>
         <!-- I(play channel):K(C-q, C-t)(cq) --><!-- I(play channel):A(cq) -->
@@ -1914,7 +1913,7 @@ Snd looks for the TMPDIR environment variable; if it
 is not found, or is null, the directory /var/tmp is
 used.</p>
 
-<p><A NAME="cxcc">C-x C-c</a> closes the control panel. 
+<p>C-x C-c closes the control panel. 
 <A NAME="cxco">C-x C-o</a> opens the
 panel.</p>
 
@@ -2256,7 +2255,7 @@ panel are:</p>
 <p>See also <a href="extsnd.html#applycontrols">apply-controls</a>.</p>
 <br>
 
-<h2><A NAME="customization">Customization and Extension</a></h2>
+<h2>Customization and Extension</h2>
 
 <p>See <a href="extsnd.html#extsndcontents">extsnd.html</a>.</p>
 <br>

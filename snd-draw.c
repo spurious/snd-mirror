@@ -567,7 +567,7 @@ static XEN g_widget_text(XEN wid)
   #define H_widget_text "(" S_widget_text " wid): widget's text or label"
   widget_t w;
   XEN res = XEN_FALSE;
-  XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ARG_1, S_widget_text, "a Widget");
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ONLY_ARG, S_widget_text, "a Widget");
   w = (widget_t)(XEN_UNWRAP_WIDGET(wid));
   if (w)
     {

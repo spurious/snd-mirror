@@ -2119,9 +2119,9 @@ and waiting for the play to complete before returning.  'start' can also be a fi
 
 static XEN g_stop_playing(XEN snd_n)
 {
-  #define H_stop_playing "(" S_stop_playing " (snd #f)): stop play in progress"
+  #define H_stop_playing "(" S_stop_playing " (snd #f)): stop play (DAC output) in progress"
   snd_info *sp = NULL;
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(snd_n), snd_n, XEN_ARG_1, S_stop_playing, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(snd_n), snd_n, XEN_ONLY_ARG, S_stop_playing, "an integer");
   if (XEN_INTEGER_P(snd_n)) sp = get_sp(snd_n, PLAYERS_OK);
   if (sp) 
     stop_playing_sound(sp); 
@@ -2261,7 +2261,7 @@ static XEN g_player_home(XEN snd_chn)
   #define H_player_home "(" S_player_home " player): a list of the sound index and channel number associated with player"
   int index;
   chan_info *cp;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(snd_chn), snd_chn, XEN_ARG_1, S_player_home, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(snd_chn), snd_chn, XEN_ONLY_ARG, S_player_home, "an integer");
   index = -XEN_TO_SMALL_C_INT(snd_chn);
   if ((index > 0) && 
       (index < players_size) && 
@@ -2338,10 +2338,10 @@ If a play-list is waiting, start it."
 
 static XEN g_stop_player(XEN snd_chn)
 {
-  #define H_stop_player "(" S_stop_player " player): stop player"
+  #define H_stop_player "(" S_stop_player " player): stop player (remove its associated sound from the current DAC playlist)"
   int index;
   snd_info *sp = NULL;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(snd_chn), snd_chn, XEN_ARG_1, S_stop_player, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(snd_chn), snd_chn, XEN_ONLY_ARG, S_stop_player, "an integer");
   index = -XEN_TO_SMALL_C_INT(snd_chn);
   if ((index > 0) && (index < players_size)) sp = players[index];
   if (sp) 
@@ -2356,7 +2356,7 @@ static XEN g_player_p(XEN snd_chn)
 {
   #define H_player_p "(" S_player_p " obj): is 'obj' an active player"
   int index;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(snd_chn), snd_chn, XEN_ARG_1, S_player_p, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(snd_chn), snd_chn, XEN_ONLY_ARG, S_player_p, "an integer");
   index = -XEN_TO_SMALL_C_INT(snd_chn);
   return(C_TO_XEN_BOOLEAN((index > 0) && 
 			  (index < players_size) && 

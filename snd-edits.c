@@ -8438,7 +8438,7 @@ static XEN g_save_edit_history(XEN filename, XEN snd, XEN chn)
 
 static XEN g_undo(XEN ed_n, XEN snd_n, XEN chn_n) /* opt ed_n */
 {
-  #define H_undo "("  S_undo " (count 1) (snd #f) (chn #f)): undo 'count' edits in snd's channel chn"
+  #define H_undo "(" S_undo " (count 1) (snd #f) (chn #f)): undo 'count' edits in snd's channel chn"
   chan_info *cp;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ed_n), ed_n, XEN_ARG_1, S_undo, "an integer");
   if (XEN_LIST_P(snd_n))
@@ -8460,7 +8460,7 @@ static XEN g_undo(XEN ed_n, XEN snd_n, XEN chn_n) /* opt ed_n */
 
 static XEN g_redo(XEN ed_n, XEN snd_n, XEN chn_n) /* opt ed_n */
 {
-  #define H_redo "("  S_redo " (count 1) (snd #f) (chn #f)): redo 'count' edits in snd's channel chn"
+  #define H_redo "(" S_redo " (count 1) (snd #f) (chn #f)): redo 'count' edits in snd's channel chn"
   chan_info *cp;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ed_n), ed_n, XEN_ARG_1, S_redo, "an integer");
   if (XEN_LIST_P(snd_n))
@@ -9323,7 +9323,7 @@ static XEN g_insert_samples_with_origin(XEN samp, XEN samps, XEN origin, XEN vec
   XEN_ASSERT_TYPE(XEN_INTEGER_P(samp), samp, XEN_ARG_1, S_insert_samples_with_origin, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(samps), samps, XEN_ARG_2, S_insert_samples_with_origin, "an integer");
   XEN_ASSERT_TYPE(XEN_STRING_P(origin), origin, XEN_ARG_3, S_insert_samples_with_origin, "a string");
-  XEN_ASSERT_TYPE((XEN_VECTOR_P(vect)) || (XEN_STRING_P(vect)) || XEN_FALSE_P(vect), vect, XEN_ARG_4, S_insert_samples_with_origin, "a vector or a string");
+  XEN_ASSERT_TYPE((XEN_VECTOR_P(vect)) || (XEN_STRING_P(vect)), vect, XEN_ARG_4, S_insert_samples_with_origin, "a vector or a string");
   ASSERT_CHANNEL(S_insert_samples_with_origin, snd_n, chn_n, 5);
   cp = get_cp(snd_n, chn_n, S_insert_samples_with_origin);
   beg = beg_to_sample(samp, S_insert_samples_with_origin);
@@ -9344,17 +9344,7 @@ static XEN g_insert_samples_with_origin(XEN samp, XEN samps, XEN origin, XEN vec
       insert_samples(beg, len, ivals, cp, XEN_TO_C_STRING(origin), pos);
       FREE(ivals);
     }
-  else
-    {
-      if (XEN_STRING_P(vect))
-	file_insert_samples(beg, len,
-			    XEN_TO_C_STRING(vect),
-			    cp, 0, 
-			    DONT_DELETE_ME,
-			    XEN_TO_C_STRING(origin),
-			    pos);
-      else extend_with_zeros(cp, beg, len, XEN_TO_C_STRING(origin), pos);
-    }
+  else file_insert_samples(beg, len, XEN_TO_C_STRING(vect), cp, 0, DONT_DELETE_ME, XEN_TO_C_STRING(origin), pos);
   update_graph(cp);
   return(C_TO_XEN_OFF_T(len));
 }

@@ -18,7 +18,7 @@ dB display in VU meters (in the record dialog -- the dB value is ready
   to go, but the VU labels need different numbers).  A nicer VU meter 
   background (perhaps from OpenGL?).
 
-dlocsig from CLM + a path envelope editor dialog
+dlocsig from CLM to Scheme + a path envelope editor dialog
 
 A "master volume" control in the recorder.
 

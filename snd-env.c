@@ -1117,8 +1117,9 @@ env *xen_to_env(XEN res)
   int i, len = 0;
   Float *data;
   env *rtn = NULL;
-  if (XEN_LIST_P_WITH_LENGTH(res, len))
+  if (XEN_LIST_P(res))
     {
+      len = XEN_LIST_LENGTH(res);
       if (len > 0)
 	{
 	  data = (Float *)CALLOC(len, sizeof(Float));
@@ -1132,9 +1133,8 @@ env *xen_to_env(XEN res)
 	  rtn = make_envelope(data, len);
 	  FREE(data);
 	}
-      return(rtn);
     }
-  return(NULL);
+  return(rtn);
 }
 
 static int x_increases(XEN res)

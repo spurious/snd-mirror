@@ -43,7 +43,6 @@
 <li><a href="#currentstatus">Current Status</a>
 <li><a href="#lowerlevels">Lower Levels</a>
 <li><a href="#sndlibguile">Sndlib and Guile</a>
-<li><a href="#sndlibcl">Sndlib and Common Lisp</a>
 </ul>
 <br>
 <span class=box><h2><A NAME="introduction">Introduction</a></h2></span>
@@ -1283,15 +1282,6 @@ guile&gt; (oscil osc)
 <p>The first dynamic-call (mus_sndlib2xen_initialize) ties sndlib2xen.c into
 Guile, and the second (mus_xen_init) ties clm2xen.c into Guile.  See bess.scm
 and bess.rb in the Snd tarball for examples.
-</p>
-
-<br>
-<span class=box><h2><A NAME="sndlibcl">Sndlib and Common Lisp</a></h2></span>
-
-<p>
-sndlib2clm.lisp imports most of the sndlib names into acl and cmucl; ffi.lisp in the
-clm package has some support for mcl.  (sndlib2clm.lisp was translated from sndlib.h semi-automatically,
-and has only been spot-checked to date).
 </p>
 
 <center>

@@ -5646,7 +5646,6 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_rand_interp_p,
 	       S_mus_random,
 	       S_mus_rand_seed,
-	       S_mus_set_rand_seed,
 	       S_make_sum_of_cosines,
 	       S_sum_of_cosines,
 	       S_sum_of_cosines_p,

@@ -72,7 +72,8 @@
 <br>
 <span class=bbox><h3><A NAME="sndresources">Snd resources</a></h3></span>
 
-<p>In the Motif version, there are a few X-style resources that Snd looks for (see Snd.ad):</p>
+<p>In the Motif version, there are a few X-style resources that Snd looks for (see Snd.ad); each has
+a built-in default value, so you can ignore any that are already acceptable:</p>
 
 <table cellspacing=0 cellpadding=0>
 <tr><td width=200>initFile</td>               <td>"~/.snd"</td></tr>
@@ -548,7 +549,7 @@ in its own peculiar way that all went well.  M-x (hiho 4) will
 print 5 in the minibuffer.
 </p>
 
-<p><A NAME="sndgsl"></a>
+<p>
 As a slightly more useful example, let's import the Bessel J0 function
 from GSL (Gnu Scientific Library); in this case, we need to build Snd
 with GSL (the easiest way is to include the --with-gsl option to configure).

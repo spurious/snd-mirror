@@ -1045,10 +1045,10 @@ x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1 y_offset)"
 #if (!USE_NO_GUI)
 static XEN g_draw_axes(XEN args)
 {
-  #define H_draw_axes "(draw-axes wid gc label (x0 0.0) (x1 1.0) (y0 -1.0) (y1 1.0) (style x-axis-in-seconds) (axes #t)): draws axes \
+  #define H_draw_axes "(" S_draw_axes " wid gc label (x0 0.0) (x1 1.0) (y0 -1.0) (y1 1.0) (style " S_x_axis_in_seconds ") (axes #t)): draws axes \
 in the widget 'wid', using the graphics context 'gc', with the x-axis label 'label' \
 going from x0 to x1 (floats) along the x axis, y0 to y1 along the y axis, with x-axis-style \
-'style' (x-axis-in-seconds etc); the axes are actually displayed if 'axes' is #t.\
+'style' (" S_x_axis_in_seconds " etc); the axes are actually displayed if 'axes' is #t.\
 Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
   XEN val;
 #if USE_MOTIF

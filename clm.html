@@ -1238,7 +1238,7 @@ Say we want to put a spectral envelope on a noise source.</p>
 The <i>order</i> of the filter determines how close you
 get to the envelope.</p>
 
-<p>The <A NAME="hilbert">Hilbert transform</a> can be implemented with fir-filter:</p>
+<p>The Hilbert transform can be implemented with fir-filter:</p>
 <pre><small>
 (defun make-hilbert (&amp;optional (len 30))
   ;; create the coefficients of the Hilbert transformer of length <i>len</i>
@@ -1780,7 +1780,7 @@ sets osc1's current frequency to (hz-&gt;radians 440.0).
 
 </p>
 <pre><small>
-(definstrument <A NAME="backandforth">backandforth</a> (onset duration file src-ratio)
+(definstrument backandforth (onset duration file src-ratio)
   ;; read file forwards and backwards until dur is used up
   ;; a slightly improved version is 'scratch' in ug1.ins
   (let* ((f (open-input file))
@@ -2386,7 +2386,7 @@ of scaling the various spectral components to filter a sound, it reverses a port
 of the spectrum, a distortion that can be effective with speech sounds.</p>
 <pre>
 <small>
-(definstrument <A NAME="inside-out">inside-out</a> (beg dur file amp lo hi &amp;optional (fftsize 1024))
+(definstrument inside-out (beg dur file amp lo hi &amp;optional (fftsize 1024))
   ;; fft overlap-add (and buffer), but the fft bins between lo and hi are reversed
   (let ((fil (open-input* file)))
     (when fil
@@ -2875,7 +2875,7 @@ be scaled (in amplitude) by its value.</p>
 (with-sound (<em class=red>:scaled-by</em> 2.0) (fm-violin 0 1 440 .1)) 
 </pre>
 <p>produces a note that is .2 in amplitude.
-<A NAME="scaled-by"><em class=def>scaled-by</em></a> scales its body by
+<em class=def>scaled-by</em> scales its body by
 its first argument (much like <a href="#with-offset">with-offset</a>):</p>
 <pre>
   (with-sound () 
@@ -2890,7 +2890,7 @@ Normally the reverb output is not deleted by with-sound; you can set
 *clm-delete-reverb* to t to have it deleted automatically.
 </p>
 
-<p>There is also the parallel macro <A NAME="scaled-to"><em class=def>scaled-to</em></a>.
+<p>There is also the parallel macro <em class=def>scaled-to</em>.
 These are built on the macro <a name="with-current-sound"><em class=def>with-current-sound</em></a>
 which sets up an embedded with-sound call with all the current with-sound arguments in place
 except output, comment, scaled-to, and scaled-by.</p>
@@ -3098,7 +3098,7 @@ This portion of CLM currently works only on the SGI or
 under Linux (though there's no reason it couldn't also
 work on the Sun).</p>
 
-<p>The :<A NAME="midi input">midi</a> input sets the associated control location 
+<p>The :midi input sets the associated control location 
 to the value of the <i>data-byte</i> indicated (byte 1 or 2) if
 something comes along that matches
 the specified <i>channel</i> and <i>status</i>.  The raw data byte
@@ -3455,7 +3455,7 @@ use all of Lisp's debugging features to see what is going wrong.  To run in Lisp
 (definstrument (simp :language :lisp) (args) ...), and then recompile and reload
 the instrument.  </p>
 
-<p>The optimize <A NAME="safety">safety</a> option can be used to check for array index and null
+<p>The optimize safety option can be used to check for array index and null
 generator problems (these will be reported as bus errors and segmentation
 faults).</p>
 

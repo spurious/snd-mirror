@@ -660,7 +660,7 @@ void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int
 	      else val = get_maxamp(ncp->sound, ncp, AT_CURRENT_EDIT_POSITION);
 	      if (val > maxamp) maxamp = val;
 	    }
-	  if ((data_clipped(ss) == 0) && 
+	  if ((data_clipped(ss) == FALSE) && 
 	      (scalers[0] == 1.0) && 
 	      (datum_size < 4)) 
 	    scalers[0] = 32767.0 / 32768.0;
@@ -685,7 +685,7 @@ void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int
 	      else val = get_maxamp(ncp->sound, ncp, AT_CURRENT_EDIT_POSITION);
 	      if (val != 0.0)
 		{
-		  if ((data_clipped(ss) == 0) && 
+		  if ((data_clipped(ss) == FALSE) && 
 		      (scalers[i] == 1.0) && 
 		      (datum_size < 4)) 
 		    scalers[i] = 32767.0 / 32768.0;

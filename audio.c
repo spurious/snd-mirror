@@ -8080,9 +8080,6 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
  *   and to a much lesser extent, coreaudio.pdf and the HAL/Daisy examples.
  */
 
-/* TODO: get emagic 2|6 6-chan output to work
-*/
-
 #ifdef MAC_OSX
 #define AUDIO_OK 1
 

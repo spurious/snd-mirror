@@ -135,6 +135,7 @@ Extensions to Snd can be found in:
 <tr><td><a href="sndscm.html#belldoc">bell.scm</a></td>              <td>the fm-bell from CLM</td></tr>
 <tr><td><a href="sndscm.html#bessdoc">bess.scm, bess.rb</a></td>     <td>FM demo (from bess.cl in CLM)</td></tr>
 <tr><td><a href="sndscm.html#birddoc">bird.scm, bird.rb</a></td>     <td>various North-American birds (from bird.clm)</td></tr>
+<tr><td><a href="sndscm.html#dlocsigdoc">dlocsig.rb</a></td>         <td>CLM's dlocsig in Ruby (Michael Scholz)</td></tr>
 <tr><td><a href="sndscm.html#dlpdoc">dlp directory entries</a></td>  <td>various contributions from Dave Phillips</td></tr>
 <tr><td><a href="sndscm.html#drawdoc">draw.scm</a></td>              <td>graphics additions</td></tr>
 <tr><td><a href="sndscm.html#dspdoc">dsp.scm</a></td>                <td>various DSP-related procedures</td></tr>
@@ -155,7 +156,7 @@ Extensions to Snd can be found in:
 <tr><td><a href="sndscm.html#mixdoc">mix.scm</a></td>                <td>functions related to mixes and tracks</td></tr>
 <tr><td><a href="sndscm.html#moogdoc">moog.scm</a></td>              <td>Moog filter (from CLM)</td></tr>
 <tr><td><a href="sndscm.html#musglyphs">musglyphs.scm</a></td>       <td>Music notation symbols (from CMN)</td></tr>
-<tr><td><a href="sndscm.html#nbdoc">nb.scm</a></td>                  <td>Popup File info etc</td></tr>
+<tr><td><a href="sndscm.html#nbdoc">nb.scm, nb.rb</a></td>           <td>Popup File info etc</td></tr>
 <tr><td><a href="sndscm.html#noisedoc">noise.scm, noise.rb</a></td>  <td>CLM's noise.ins</td></tr>
 <tr><td><a href="sndscm.html#peakenvdoc">peak-env.scm</a></td>       <td>peak envelope support</td></tr>
 <tr><td><a href="sndscm.html#pianodoc">piano.scm, piano.rb</a></td>  <td>piano physical model</td></tr>
@@ -175,7 +176,7 @@ Extensions to Snd can be found in:
 <tr><td><a href="sndscm.html#snd6doc">snd6.scm</a></td>              <td>backwards compatibility for version 6</td></tr>
 <tr><td><a href="sndscm.html#straddoc">strad.scm, strad.rb</a></td>  <td>string physical model (from CLM)</td></tr>
 <tr><td><a href="sndscm.html#vdoc">v.scm, v.rb</a></td>              <td>fm-violin (from CLM)</td></tr>
-<tr><td><a href="sndscm.html#wsdoc">ws.scm</a></td>                  <td>with-sound implementation</td></tr>
+<tr><td><a href="sndscm.html#wsdoc">ws.scm, ws.rb</a></td>           <td>with-sound implementation</td></tr>
 <tr><td><a href="sndscm.html#xmenveddoc">xm-enved.scm, xm-enved.rb</a></td><td>xm-based envelope editor</td></tr>
 <tr><td><a href="sndscm.html#zipdoc">zip.scm</a></td>                <td>the zipper (a cross-fader, sort of) (from CLM)</td></tr>
 </table>
@@ -916,13 +917,13 @@ See examp.scm for many examples.
 
 <!-- help-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="helphook">help-hook</a></em> (subject help-string)</code></span></td><td align=right><b>concat</b>
+<span class=defbox><code><em class=def><a name="helphook">help-hook</a></em> (subject help-string)</code></span></td><td align=right><b>composition</b>
 </td></tr>
 <tr><td width=150></td><td colspan=2>
 called from snd-help with the current help subject and default help-string.  Say we want the index.scm
 procedure 'html' called any time snd-help is called (from C-? for example):<br><br>
 <code>(add-hook! help-hook (lambda (subject help) (html subject) #f))</code><br><br>
-If there is more than one hook function, results are concatenated (return #f to leave the original string unchanged).  
+If there is more than one hook function, each function's result is passed as input to the next function.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -1505,18 +1506,17 @@ called whenever one of the variables associated with the orientation dialog chan
 
 <!-- output-comment-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="outputcommenthook">output-comment-hook</a></em> (str)</code></span></td><td align=right><b>concat</b>
+<span class=defbox><code><em class=def><a name="outputcommenthook">output-comment-hook</a></em> (str)</code></span></td><td align=right><b>composition</b>
 </td></tr>
 <tr><td></td><td colspan=2>
 called in the Save-As dialog. <i>str</i> is the current sound's comment.
-If there is more than one hook function, results are concatenated (return #f to leave the original string unchanged).  
-If the hook is empty, the current comment is used.
+If there is more than one hook function, each function's result is passed as input to the next function in the list.
 </td></tr>
 <tr><td></td><td colspan=2>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (add-hook! <em class=red>output-comment-hook</em>
   (lambda (str) 
-    (string-append "written " 
+    (string-append str ": written " 
       (strftime "%a %d-%b-%Y %H:%M %Z" 
         (localtime (current-time)))))) 
 </pre></td></tr></table></td></tr>
@@ -1895,13 +1895,13 @@ the returned procedure to make sure the mark pane is reactivated right away when
 These are functions that return the hooks in question associated with the specified channel.
 The functions on these hooks are thunks -- they should take no arguments.
 edit-hook is called just before any attempt to edit the channel's data; if it returns #t,
-the edit is aborted. So,
+the edit is cancelled. So,
 </td></tr></table>
 <center><pre>
   (add-hook! (<em class=red>edit-hook</em>) (lambda () #t))
 </pre></center>
 <table border=0><tr><td width=150><br></td><td>
-aborts any attempt to edit the data; this is even more restrictive than setting the read-only
+halts any attempt to edit the data; this is even more restrictive than setting the read-only
 flag because the latter only refuses to overwrite the current data.  undo-hook is called
 just after any undo, redo, or revert that affects the channel.  after-edit-hook is called
 after an edit, but before after-graph-hook (there's an example in snd-motif.scm that updates a mark list after each edit
@@ -2059,122 +2059,123 @@ functions:</p>
 <table border=0 cellspacing=5>
 
 <!-- list->vct -->
-<tr><td><span class=defbox><code><em class=def><a name="sndlist2vct">list-&gt;vct</a></em> (lst)</code></span></td>
-<td>return vct with elements of list <i>lst</i></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndlist2vct">list-&gt;vct</a></em> (lst)</code></span></td></tr>
+<tr><td width=100></td><td>return vct with elements of list <i>lst</i></td></tr>
 
 <!-- make-vct -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="makevct">make-vct</a></em> (len (initial-element 0.0))</code></span></td>
-</tr><tr><td></td><td>create vct of size <i>len</i>.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="makevct">make-vct</a></em> (len (initial-element 0.0))</code></span></td></tr>
+<tr><td></td><td>create vct of size <i>len</i>.</td></tr>
 
 <!-- sound-date->vct -->
-<tr><td colspan=2><span class=defbox><code><em class=def>sound-data-&gt;vct</em> (sdobj (chan 0) (v #f))</code></span></td>
-</tr><tr><td></td><td>place sound-data channel data in vct, returning <i>v</i> or the new vct.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def>sound-data-&gt;vct</em> (sdobj (chan 0) (v #f))</code></span></td></tr>
+<tr><td></td><td>place sound-data channel data in vct, returning <i>v</i> or the new vct.</td></tr>
 
 <!-- vct -->
-<tr><td><span class=defbox><code><em class=def><a name="sndvct">vct</a></em> args...</code></span></td>
-<td>list-&gt;vct with args as the list: <code>(vct 1 2 3)</code> = <code>(list-&gt;vct '(1 2 3))</code></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndvct">vct</a></em> args...</code></span></td></tr>
+<tr><td></td><td>list-&gt;vct with args as the list: <code>(vct 1 2 3)</code> = <code>(list-&gt;vct '(1 2 3))</code></td></tr>
 
 <!-- vct? -->
-<tr><td><span class=defbox><code><em class=def><a name="vctp">vct?</a></em> (v)</code></span></td>
-<td>#t if <i>v</i> is a vct.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="vctp">vct?</a></em> (v)</code></span></td></tr>
+<tr><td></td><td>#t if <i>v</i> is a vct.</td></tr>
 
 <!-- vct-add! -->
-<tr><td><span class=defbox><code><em class=def><a name="vctadd">vct-add!</a></em> (v1 v2 (off 0))</code></span></td>
-<td>element-wise add: <code>v1[i + off] += v2[i]</code>, returns <i>v1</i>.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="vctadd">vct-add!</a></em> (v1 v2 (off 0))</code></span></td></tr>
+<tr><td></td><td>element-wise add: <code>v1[i + off] += v2[i]</code>, returns <i>v1</i>.</td></tr>
 
 <!-- vct-copy -->
-<tr><td><span class=defbox><code><em class=def><a name="vctcopy">vct-copy</a></em> (v)</code></span></td>
-<td>return a copy of <i>v</i>.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="vctcopy">vct-copy</a></em> (v)</code></span></td></tr>
+<tr><td></td><td>return a copy of <i>v</i>.</td></tr>
 
 <!-- vct-fill! -->
-<tr><td><span class=defbox><code><em class=def><a name="vctfill">vct-fill!</a></em> (v val)</code></span></td>
-<td>set each element of <i>v</i> to <i>val</i>, <code>v[i] = val</code>, returns <i>v</i>.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="vctfill">vct-fill!</a></em> (v val)</code></span></td></tr>
+<tr><td></td><td>set each element of <i>v</i> to <i>val</i>, <code>v[i] = val</code>, returns <i>v</i>.</td></tr>
 
 <!-- vct-length -->
-<tr><td><span class=defbox><code><em class=def><a name="vctlength">vct-length</a></em> (v)</code></span></td>
-<td>return length of <i>v</i>.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="vctlength">vct-length</a></em> (v)</code></span></td></tr>
+<tr><td></td><td>return length of <i>v</i>.</td></tr>
 
 <!-- vct-map -->
-<tr><td><span class=defbox><code><em class=def><a name="vctmap1">vct-map</a></em> (thunk v0 vcts...)</code></span></td>
-<td>map 'thunk' (which should return a frame) into the vcts passed as trailing args.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="vctmap1">vct-map</a></em> (thunk v0 vcts...)</code></span></td></tr>
+<tr><td></td><td>map 'thunk' (which should return a frame) into the vcts passed as trailing args.</td></tr>
 
 <!-- vct-map! -->
-<tr><td valign=top><span class=defbox><code><em class=def><a name="vctmap">vct-map!</a></em> (v proc)</code></span></td>
-<td>set each element of <i>v</i> to the value returned by (<i>proc</i>); <code>(vct-map! v (lambda () 3.0))</code>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="vctmap">vct-map!</a></em> (v proc)</code></span></td></tr>
+<tr><td></td><td>set each element of <i>v</i> to the value returned by (<i>proc</i>); <code>(vct-map! v (lambda () 3.0))</code>
 is the same as <code>(vct-fill! v 3.0)</code>.
 </td></tr>
 
 <!-- vct-move! -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="vctmove">vct-move!</a></em> (v new old (backwards #f))</code></span></td>
-</tr><tr><td></td><td><code>v[new++] = v[old++]</code>, returns v (if <i>backwards</i> is #t, <code>v[new--] = v[old--]</code>)</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="vctmove">vct-move!</a></em> (v new old (backwards #f))</code></span></td></tr>
+<tr><td></td></tr><tr><td></td><td><code>v[new++] = v[old++]</code>, returns v (if <i>backwards</i> is #t, <code>v[new--] = v[old--]</code>)</td></tr>
 
 <!-- vct-multiply! -->
-<tr><td><span class=defbox><code><em class=def><a name="vctmultiply">vct-multiply!</a></em> (v1 v2)</code></span></td>
-<td>element-wise multiply: <code>v1[i] *= v2[i]</code>, returns v1.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="vctmultiply">vct-multiply!</a></em> (v1 v2)</code></span></td></tr>
+<tr><td></td><td>element-wise multiply: <code>v1[i] *= v2[i]</code>, returns v1.</td></tr>
 
 <!-- vct-offset! -->
-<tr><td><span class=defbox><code><em class=def><a name="vctoffset">vct-offset!</a></em> (v val)</code></span></td>
-<td>add <i>val</i> to each element of <i>v</i>:  <code>v[i] += val</code>, returns v.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="vctoffset">vct-offset!</a></em> (v val)</code></span></td></tr>
+<tr><td></td><td>add <i>val</i> to each element of <i>v</i>:  <code>v[i] += val</code>, returns v.</td></tr>
 
 <!-- vct-peak -->
-<tr><td><span class=defbox><code><em class=def><a name="vctpeak">vct-peak</a></em> (v)</code></span></td>
-<td>maximum of absolute value of all elements of <i>v</i></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="vctpeak">vct-peak</a></em> (v)</code></span></td></tr>
+<tr><td></td><td>maximum of absolute value of all elements of <i>v</i></td></tr>
 
 <!-- vct-ref -->
-<tr><td><span class=defbox><code><em class=def><a name="vctref">vct-ref</a></em> (v pos)</code></span></td>
-<td>element <i>pos</i> in <i>v</i>: <code>v[pos]</code>.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="vctref">vct-ref</a></em> (v pos)</code></span></td></tr>
+<tr><td></td><td>element <i>pos</i> in <i>v</i>: <code>v[pos]</code>.</td></tr>
 
 <!-- vct-scale! -->
-<tr><td><span class=defbox><code><em class=def><a name="vctscale">vct-scale!</a></em> (v scl)</code></span></td>
-<td>multiply each element of <i>v</i> by <i>scl</i>: <code>v[i] *= scl</code>, returns v.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="vctscale">vct-scale!</a></em> (v scl)</code></span></td></tr>
+<tr><td></td><td>multiply each element of <i>v</i> by <i>scl</i>: <code>v[i] *= scl</code>, returns v.</td></tr>
 
 <!-- vct-set! -->
-<tr><td><span class=defbox><code><em class=def><a name="vctset">vct-set!</a></em> (v pos val)</code></span></td>
-<td>set element <i>pos</i> of <i>v</i> to <i>val</i>: <code>v[pos] = val</code>. same as <code>(set! (vct-ref v pos) val)</code>).</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="vctset">vct-set!</a></em> (v pos val)</code></span></td></tr>
+<tr><td></td><td>set element <i>pos</i> of <i>v</i> to <i>val</i>: <code>v[pos] = val</code>. same as <code>(set! (vct-ref v pos) val)</code>).</td></tr>
 
 <!-- vct-subtract! -->
-<tr><td><span class=defbox><code><em class=def><a name="vctsubtract">vct-subtract!</a></em> (v1 v2)</code></span></td>
-<td>element-wise subtract: <code>v1[i] -= v2[i]</code>, returns v1.</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="vctsubtract">vct-subtract!</a></em> (v1 v2)</code></span></td></tr>
+<tr><td></td><td>element-wise subtract: <code>v1[i] -= v2[i]</code>, returns v1.</td></tr>
 
 <!-- vct-subseq -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="vctsubseq">vct-subseq</a></em> (v start (end len) (nv #f))</code></span></td>
-</tr><tr><td></td><td>return a new vct (or <i>nv</i> if given) with the elements of <i>v</i> between <i>start</i> and <i>end</i> inclusive.  <i>end</i> defaults
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="vctsubseq">vct-subseq</a></em> (v start (end len) (nv #f))</code></span></td></tr>
+<tr><td></td><td>return a new vct (or <i>nv</i> if given) with the elements of <i>v</i> between <i>start</i> and <i>end</i> inclusive.  <i>end</i> defaults
 to the end of <i>v</i>.</td></tr>
 
 <!-- vct->channel -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="vct2channel">vct-&gt;channel</a></em> (v (beg 0) (dur len) (snd #f) (chn #f) (edpos #f))</code></span></td>
-</tr><tr><td></td><td>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="vct2channel">vct-&gt;channel</a></em> (v (beg 0) (dur len) (snd #f) (chn #f) (edpos #f))</code></span></td></tr>
+<tr><td></td><td>
 set the samples from <i>beg</i> to <i>beg+dur</i> from the values in <i>v</i>.
 This is the <a href="#regularizedargs">regularized</a> version of <a href="#vct2samples">vct-&gt;samples</a>.
 </td></tr>
 
 <!-- vct->list -->
-<tr><td><span class=defbox><code><em class=def><a name="vct2list">vct-&gt;list</a></em> (v)</code></span></td>
-<td>return list with elements of <i>v</i></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="vct2list">vct-&gt;list</a></em> (v)</code></span></td></tr>
+<tr><td></td><td>return list with elements of <i>v</i></td></tr>
 
 <!-- vct->samples -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="vct2samples">vct-&gt;samples</a></em> (samp samps data (snd #f) (chn #f))</code></span></td>
-</tr><tr><td></td><td>A synonym for <a href="#sndsetsamples">set-samples</a>, but you can also pass just a vct as the first argument, or a start
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="vct2samples">vct-&gt;samples</a></em> (samp samps data (snd #f) (chn #f))</code></span></td></tr>
+<tr><td></td><td>A synonym for <a href="#sndsetsamples">set-samples</a>, but you can also pass just a vct as the first argument, or a start
 sample and a vct as the second argument.  This is too confusing!  Use <a href="#vct2channel">vct-&gt;channel</a> instead.
 <pre>(define v (samples-&gt;vct))
 (vct-scale! v 2.0)
 (vct-&gt;samples v)</pre></td></tr>
 
 <!-- vct->sound-data -->
-<tr><td colspan=2><span class=defbox><code><em class=def>vct-&gt;sound-data</em> (v sd (chan 0))</code></span></td>
-</tr><tr><td></td><td>place vct <i>v</i> data in sound-data <i>sd</i>, returning sd</td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def>vct-&gt;sound-data</em> (v sd (chan 0))</code></span></td></tr>
+<tr><td></td><td>place vct <i>v</i> data in sound-data <i>sd</i>, returning sd</td></tr>
 
 <!-- vct->sound-file -->
-<tr><td><span class=defbox><code><em class=def><a name="vct2soundfile">vct-&gt;sound-file</a></em> (fd v vals)</code></span></td>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="vct2soundfile">vct-&gt;sound-file</a></em> (fd v vals)</code></span></td></tr>
+<tr><td></td>
 <td>write <i>vals</i> floats from <i>v</i> to <i>fd</i>.  This is intended for use with <a href="#sndopensoundfile">open-sound-file</a></td></tr>
 
 <!-- vct-&gt;vector -->
-<tr><td><span class=defbox><code><em class=def><a name="sndvct2vector">vct-&gt;vector</a></em> (v)</code></span></td>
-<td>return vector with elements of <i>v</i></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndvct2vector">vct-&gt;vector</a></em> (v)</code></span></td></tr>
+<tr><td></td><td>return vector with elements of <i>v</i></td></tr>
 
 <!-- vector-&gt;vct -->
-<tr><td><span class=defbox><code><em class=def><a name="sndvector2vct">vector-&gt;vct</a></em> (vect)</code></span></td>
-<td>return vct with elements of vector <i>vect</i></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndvector2vct">vector-&gt;vct</a></em> (vect)</code></span></td></tr>
+<tr><td></td><td>return vct with elements of vector <i>vect</i></td></tr>
 
 </table>
 
@@ -2384,8 +2385,7 @@ mus_sample_t) by mus-audio-read.</td></tr>
 <tr><td></td><td>save the current audio hardware state (unimplemented in many cases)</td></tr>
 
 <!-- mus-audio-sun-outputs -->
-<tr><td colspan=2><span class=defbox><code><em class=def>
-<a name="musaudiosunoutputs">mus-audio-sun-outputs</a></em> (speakers headphones line-out)</code></span></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def>mus-audio-sun-outputs</em> (speakers headphones line-out)</code></span></td></tr>
 <tr><td></td>
 <td>(Sun only)
 set the current Sun audio outputs.
@@ -2423,7 +2423,7 @@ to be lost, resulting in hiss.  In this case set the prescaler for
 the file to 1000.0 or so to get the data into a more normal
 range.  Since the set of mus-file-prescaler should come just after opening
 the sound file, but before trying to read any data, you need to use it in the context of <a href="#duringopenhook">during-open-hook</a>.
-A similar low-level sndlib function is <em class=def><a name="musfiledataclipped">mus-file-data-clipped</a></em>.
+A similar low-level sndlib function is <em class=def>mus-file-data-clipped</em>.
 </td></tr>
 
 <!-- mus-header-type-name -->
@@ -4614,7 +4614,7 @@ To get the data currently displayed in the time domain window:
 </td></tr>
 <tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(define (<A NAME="windowsamples">window-samples</a>)
+(define (window-samples)
   (let ((wl (<a href="#sndleftsample">left-sample</a>))
 	(wr (<a href="#sndrightsample">right-sample</a>)))
    (<a href="#sndsamples">samples</a> wl (+ 1 (- wr wl)))))
@@ -5177,7 +5177,7 @@ We could also use a continuation here:
 
 <tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(define (<A NAME="extprompt">prompt</a> msg default)
+(define (prompt msg default)
   (call-with-current-continuation
    (lambda (rsvp)
      (<em class=red>prompt-in-minibuffer</em> msg rsvp)
@@ -7335,7 +7335,6 @@ the result is a program that can be edited just like any
 other such text.
 </p>
 <p>
-<A NAME="editexpl"></a>
 Many editing operations within Snd actually only affect the current
 edit lists.  For example, if you delete a portion of a sound, the
 only thing that happens is that the edit list of that sound is
@@ -7468,7 +7467,7 @@ FFT window: <a href="clm.html#make-fft-window">make-fft-window</a>
 Dolph-Chebyshev window in Scheme: <a href="sndscm.html#exdolph">dolph</a>
 Hartley transform in Scheme: <a href="sndscm.html#exdht">dht</a>
 
-fft-based filter: <a href="sndscm.html#exfftedit">fft-edit</a>, <a href="sndscm.html#exfftenvedit">fft-env-edit</a>, <a href="sndscm.html#exfftenvinterp">fft-env-interp</a>, <a href="sndscm.html#exfftsquelch">fft-squelch</a>
+fft-based filter: <a href="sndscm.html#exfftedit">fft-edit</a>, <a href="sndscm.html#exfftenvedit">fft-env-edit</a>, <a href="sndscm.html#exfftenvinterp">fft-env-interp</a>, <a href="sndscm.html#exfftsquelch">fft-squelch</a>, <a href="sndscm.html#exfftcancel">fft-cancel</a>
 phase-vocoder: <a href="clm.html#phase-vocoder">phase-vocoder</a>. <a href="sndscm.html#pvocdoc">pvoc</a>
 transposition via fft: <a href="sndscm.html#exdownoct">down-oct</a>
 phase rotation via fft: <a href="sndscm.html#zerophase">zero-phase, rotate-phase</a>
@@ -7492,7 +7491,7 @@ Simple rt spectrum: <a href="sndscm.html#exshowinputfft">show-input-fft</a>, <a 
 
 <!-- just-sounds -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="justsounds">just-sounds</a></em> ()</code></span></td></tr>
-<tr><td></td><td>reflects the just-sounds button (if any). See also <a href="#justsoundshook">just-sounds-hook</a>.</td></tr>
+<tr><td width=150></td><td>reflects the just-sounds button (if any). See also <a href="#justsoundshook">just-sounds-hook</a>.</td></tr>
 
 <!-- file-dialog -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndfiledialog">file-dialog</a></em> ()</code></span></td></tr>
@@ -8101,7 +8100,7 @@ The corresponding expression is:
 The procedure being applied is: /
 The procedure's arguments are: (0.0 0.0)
 </pre>
-<p>Finally useful information!  Both the variables <i>diffsum</i> and <i>ampsum</i> are
+<p>Finally, useful information!  Both the variables <i>diffsum</i> and <i>ampsum</i> are
 zero for some reason.  I'll add a check for that.
 </p>
 <pre>
@@ -8170,7 +8169,7 @@ run
   <a name="nextsoundfile">mus-next</a> mus-aifc mus-riff mus-nist mus-raw mus-ircam mus-aiff
   mus-bicsf mus-soundfont mus-voc mus-svx
 
-  <A NAME="localdataformats">mus-bshort</a>  mus-lshort mus-mulaw  mus-alaw   mus-byte   mus-ubyte   mus-bfloat
+  mus-bshort  mus-lshort mus-mulaw  mus-alaw   mus-byte   mus-ubyte   mus-bfloat
   mus-lfloat  mus-bint   mus-lint   mus-b24int mus-l24int mus-bdouble mus-ldouble
   mus-ubshort mus-ulshort
 
@@ -8198,7 +8197,7 @@ run
   dont-normalize     normalize-by-channel    normalize-by-sound    normalize-globally
 </pre><br>
 
-<p><b><a name="fftwindowchoices"></a>FFT Window</b> type (<a href="#lfftwindow">fft-window</a>):</p>
+<p><b>FFT Window</b> type (<a href="#lfftwindow">fft-window</a>):</p>
 <pre>
   rectangular-window    hann(ing)-window      welch-window         parzen-window
   bartlett-window       hamming-window        blackman2-window     blackman3-window
@@ -9047,6 +9046,13 @@ If the requested font can't be loaded, the set! statement returns the old (uncha
 <br>
 <span class=cbox><h4><A NAME="sndwidgets">Widgets</a></h4></span>
 
+<p>Snd can be built with Motif, Gtk, or no GUI; other toolkits might be supported in the future.
+Unfortunately, each toolkit has its own way of handling widgets.  I originally started implementing
+a Snd-specific layer of calls that would work in any supported toolkit, but then changed direction
+and decided to implement the libxm connection.  This left the earlier graphics functions dangling;
+they are still useful, but they probably should not be built-in.  I'm currently planning to move
+them to Scheme/Ruby.  But, for now, here are some of them:
+</p>
 <table cellspacing=0>
 <tr><td><code><em class=def>widget-position</em> (widget)</code></td>
 <td>return a list giving the widget x and y positions</td></tr>
@@ -9082,9 +9088,8 @@ The four "-widgets" procedures return lists of possibly useful widgets:
                      13:find_dialog 14:help_dialog 15:completion_dialog 16:mix_panel_dialog
                      17:print_dialog 18:recorder_dialog 19:region_dialog)
 </pre>
-<p>I've only included the ones I needed immediately (for autotesting), but all Snd widgets are potentially (and easily)
-accessible; if you need to get at one that
-isn't included, let me know.  <i>dialog-widgets</i> entries are #f for any dialog that has not
+<p>
+<i>dialog-widgets</i> entries are #f for any dialog that has not
 yet been created.  In gtk, the first element of the main-widgets list is the top level shell's window.
 </p>
 <pre>

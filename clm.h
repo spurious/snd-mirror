@@ -1,5 +1,5 @@
-#ifndef MUS_H
-#define MUS_H
+#ifndef CLM_H
+#define CLM_H
 
 #define MUS_VERSION 2
 #define MUS_REVISION 28
@@ -496,6 +496,7 @@ Float mus_locsig_set(mus_any *ptr, int chan, Float val);
 Float mus_locsig_reverb_ref(mus_any *ptr, int chan);
 Float mus_locsig_reverb_set(mus_any *ptr, int chan, Float val);
 void mus_move_locsig(mus_any *ptr, Float degree, Float distance);
+void mus_fill_locsig(Float *arr, int chans, Float degree, Float scaler, int type);
 
 mus_any *mus_make_src(Float(*input)(void *arg, int direction), Float srate, int width, void *environ);
 Float mus_src(mus_any *srptr, Float sr_change, Float(*input)(void *arg, int direction));
