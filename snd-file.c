@@ -29,17 +29,17 @@
 #endif
 
 #if (!HAVE_STATFS)
-  int disk_kspace (char *filename) {return(1234567);}
+  off_t disk_kspace (char *filename) {return(1234567);}
   int is_link(char *filename) {return(0);}
   int is_directory(char *filename) {return(0);}
   static int is_empty_file(char *filename) {return(0);}
   off_t file_bytes(char *filename) {return(0);}
 #else
 
-int disk_kspace (char *filename)
+off_t disk_kspace (char *filename)
 {
   struct statfs buf;
-  int err = -1;
+  off_t err = -1;
 #if HAVE_STATFS
 #if (STATFS_ARGS == 4)
   /* SGI case */
@@ -53,7 +53,7 @@ int disk_kspace (char *filename)
     {
       if (buf.f_bsize == 1024) return(buf.f_bfree);
       else if (buf.f_bsize == 512) return(buf.f_bfree >> 1);
-      else return((int)(buf.f_bsize * ((double)(buf.f_bfree) / 1024.0)));
+      else return((off_t)(buf.f_bsize * ((double)(buf.f_bfree) / 1024.0)));
     }
   return(err);
 }
@@ -93,7 +93,7 @@ time_t file_write_date(char *filename)
   struct stat statbuf;
   int err;
   err = stat(filename, &statbuf);
-  if (err < 0) return(err);
+  if (err < 0) return((time_t)err);
   return((time_t)(statbuf.st_mtime));
 }
 
@@ -276,7 +276,7 @@ file_info *make_file_info(char *fullname, snd_state *ss)
 	      if (len > 0) chans = XEN_TO_C_INT(XEN_CAR(res));
 	      if (len > 1) srate = XEN_TO_C_INT(XEN_CADR(res));
 	      if (len > 2) data_format = XEN_TO_C_INT(XEN_LIST_REF(res, 2)); 
-	      if (len > 3) data_location = XEN_TO_C_INT(XEN_LIST_REF(res, 3)); else data_location = 0;
+	      if (len > 3) data_location = XEN_TO_C_OFF_T(XEN_LIST_REF(res, 3)); else data_location = 0;
 	      if (len > 4) bytes = XEN_TO_C_OFF_T(XEN_LIST_REF(res, 4)); else bytes = mus_sound_length(fullname) - data_location;
 	      mus_header_set_raw_defaults(srate, chans, data_format);
 	      mus_sound_override_header(fullname, srate, chans, data_format, 
@@ -2521,7 +2521,7 @@ static XEN g_disk_kspace(XEN name)
 {
   #define H_disk_kspace "(" S_disk_kspace " filename) -> kbyes of space available on partition containing 'filename'"
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, S_disk_kspace, "a string");
-  return(C_TO_XEN_INT(disk_kspace(XEN_TO_C_STRING(name))));
+  return(C_TO_XEN_OFF_T(disk_kspace(XEN_TO_C_STRING(name))));
 }
 
 static XEN g_open_file_dialog(XEN managed)

@@ -5,24 +5,18 @@ me as straightforward, but not necessarily easy).
 A more direct connection to gmeteor (perhaps using the control-panel filter
   text widget).  use (filter-sound(make-filter ...)).
 
-A graphic-EQ effect (effects.scm) -- this could use the
-  CLM formant generator.  Ideally these effects would have a
-  C module (effects.c -> effects.so) autoloaded by the effects module.
+A graphic-EQ effect (effects.scm) -- this could use the CLM formant generator. 
 
 A better pitch tracker than spot-freq in examp.scm.
 
 dB display in VU meters (in the record dialog -- the dB value is ready
-to go, but the VU labels need different numbers).  A nicer VU meter background.
+  to go, but the VU labels need different numbers).  A nicer VU meter 
+  background (perhaps from OpenGL?).
 
 dlocsig from CLM + a path envelope editor dialog
 
 Add Gnome tie-ins.  (The main useful one, I think, is the "save-yourself"
   signal (no one can save himself...)).
-#include <gnome.h>
-/* do we need gnome_init("Snd",argc,argv);? */
-GnomeClient *client = gnome_master_client();
-gtk_signal_connect(GTK_OBJECT(client),"save_yourself",GTK_SIGNAL_FUNC(save_snd_state),"snd");
-gtk_signal_connect(GTK_OBJECT(client),"die",GTK_SIGNAL_FUNC(exit_cleanly),NULL);
 
 Gettext support, if there's interest. 
 
@@ -36,7 +30,7 @@ A sndinfo script?
 See the end of snd-motif.scm for other user-interface extension projects.
 
 More Ruby examples, translations, etc. (snd.rb is snd-test.scm 
-translation in-progress).
+  translation in-progress).
 
 The configure script should be able to use libsndlib if it exists.
 
@@ -44,13 +38,16 @@ Known bugs can be listed by searching the sources for "TODO".
 Long-term stuff is marked with "SOMEDAY".
 
 I'd like Snd to work in Windoze -- I think the current CVS guile
-is buildable even in MS C, and there are rumors that gtk works
-in cygwin, so it's not impossible Snd would build and work
-the first time, but I don't have any way to find out.
+  is buildable even in MS C, and there are rumors that gtk works
+  in cygwin, so it's not impossible Snd would build and work
+  the first time, but I don't have any way to find out.
 
 In snd-test.scm, the gtk (xg) section needs to be written.
-Similarly for OpenGL.
+  Similarly for OpenGL.
 
 A jack connection (the Linux Jack library).
 
 Gtk versions of popup.scm and snd-motif.scm.
+
+A nice user-interface to the track mechanism, perhaps as an
+  extension of the current Mix Panel.

@@ -547,20 +547,18 @@ static Float next_mix_sample(mix_fd *mf)
 	  if (mf->segs)
 	    {
 	      for (i = 0; i < mf->chans; i++)
-		{
-		  if (cs->scalers[i] > 0.0)
-		    {
-		      if (mf->segs[i])
-			sum += (mus_env(mf->segs[i]) * run_src(mf->srcs[i], mf->sr));
-		      else sum += (cs->scalers[i] * run_src(mf->srcs[i], mf->sr));
-		    }
-		}
+		if (cs->scalers[i] > 0.0)
+		  {
+		    if (mf->segs[i])
+		      sum += (mus_env(mf->segs[i]) * mus_src(mf->srcs[i]->gen, mf->sr, &src_input_as_needed));
+		    else sum += (cs->scalers[i] * mus_src(mf->srcs[i]->gen, mf->sr, &src_input_as_needed));
+		  }
 	    }
 	  else
 	    {
 	      for (i = 0; i < mf->chans; i++)
 		if (cs->scalers[i] > 0.0)
-		  sum += (cs->scalers[i] * run_src(mf->srcs[i], mf->sr));
+		  sum += (cs->scalers[i] * mus_src(mf->srcs[i]->gen, mf->sr, &src_input_as_needed));
 	    }
 	}
       else
@@ -569,14 +567,12 @@ static Float next_mix_sample(mix_fd *mf)
 	  if (mf->segs)
 	    {
 	      for (i = 0; i < mf->chans; i++)
-		{
-		  if (cs->scalers[i] > 0.0)
-		    {
-		      if (mf->segs[i])
-			sum += (mus_env(mf->segs[i]) * (mf->lst[i] + mf->x * (mf->nxt[i] - mf->lst[i])));
-		      else sum += (cs->scalers[i] * (mf->lst[i] + mf->x * (mf->nxt[i] - mf->lst[i])));
-		    }
-		}
+		if (cs->scalers[i] > 0.0)
+		  {
+		    if (mf->segs[i])
+		      sum += (mus_env(mf->segs[i]) * (mf->lst[i] + mf->x * (mf->nxt[i] - mf->lst[i])));
+		    else sum += (cs->scalers[i] * (mf->lst[i] + mf->x * (mf->nxt[i] - mf->lst[i])));
+		  }
 	    }
 	  else
 	    {
@@ -604,7 +600,7 @@ static Float next_mix_sample(mix_fd *mf)
   return(sum);
 }
 
-static int amp_env_len(mix_info *md, int chan)
+static off_t amp_env_len(mix_info *md, int chan)
 {
   return(current_ed_samples((md->add_snd)->chans[chan]));
 }
@@ -839,8 +835,8 @@ void free_mixes(chan_info *cp)
 
 int disk_space_p(snd_info *sp, off_t bytes, off_t other_bytes, char *filename)
 {
-  int kfree, go_on;
-  off_t kneeded, kother;
+  int go_on;
+  off_t kfree, kneeded, kother;
   kfree = disk_kspace(filename);
   if (kfree < 0) 
     {
@@ -855,11 +851,11 @@ int disk_space_p(snd_info *sp, off_t bytes, off_t other_bytes, char *filename)
 	  kother = other_bytes >> 10;
 	  if (kother > kfree)
 	    {
-	      report_in_minibuffer_and_save(sp, "only %d Kbytes left on disk, changing to 16-bit temp output", kfree);
+	      report_in_minibuffer_and_save(sp, "only " OFF_TD " Kbytes left on disk, changing to 16-bit temp output", kfree);
 	      return(HUNKER_DOWN);
 	    }
 	}
-      go_on = snd_yes_or_no_p(sp->state, "only %d Kbytes left on disk; continue?", kfree);
+      go_on = snd_yes_or_no_p(sp->state, "only " OFF_TD " Kbytes left on disk; continue?", kfree);
       if (!go_on) return(GIVE_UP);
       report_in_minibuffer(sp, "ok -- here we go...");
       return(BLIND_LEAP);
@@ -1428,10 +1424,11 @@ static int make_temporary_amp_env_mixed_graph(chan_info *cp, axis_info *ap, mix_
 					      off_t newbeg, off_t newend, off_t oldbeg, off_t oldend)
 {
   /* temp graph using cp->amp_env and mix (sample-by-sample) data */
-  Float main_start, new_start, old_start;
+  double main_start, new_start, old_start;
   mix_fd *new_fd, *old_fd;
   Float val, new_ymin, new_ymax, old_ymin, old_ymax, main_ymin, main_ymax;
-  Float xi, xf, xfinc;
+  double xi;
+  Float xf, xfinc;
   off_t lo, hi, i;
   int j, lastx, main_loc;
   env_info *ep;
@@ -1445,8 +1442,8 @@ static int make_temporary_amp_env_mixed_graph(chan_info *cp, axis_info *ap, mix_
   if (!old_fd) return(0);
 
   ep = cp->amp_envs[cp->edit_ctr];
-  main_loc = (int)((Float)(ap->losamp) / (Float)(ep->samps_per_bin));
-  main_start = (Float)ap->losamp;
+  main_loc = (int)((double)(ap->losamp) / (double)(ep->samps_per_bin));
+  main_start = (double)ap->losamp;
   
   if ((lo > newbeg) && (lo < newend)) 
     {
@@ -1464,8 +1461,8 @@ static int make_temporary_amp_env_mixed_graph(chan_info *cp, axis_info *ap, mix_
   lastx = ap->x_axis_x0;
   xfinc = samples_per_pixel / (Float)SND_SRATE(cp->sound);
 
-  for (j = 0, xi = (Float)lo, xf = ap->x0; 
-       xi < (Float)hi; 
+  for (j = 0, xi = (double)lo, xf = ap->x0; 
+       xi < (double)hi; 
        xi += samples_per_pixel, lastx++, xf += xfinc, j++)
     {
       main_ymin = 100.0;
@@ -1533,11 +1530,12 @@ static int make_temporary_amp_env_graph(chan_info *cp, axis_info *ap, mix_info *
 					off_t newbeg, off_t newend, off_t oldbeg, off_t oldend)
 {
   /* temp graph using cp->amp_env and mix input amp envs */
-  Float main_start, new_start, old_start, val;
+  double main_start, new_start, old_start;
+  Float val;
   mix_fd *new_min_fd, *new_max_fd, *old_min_fd, *old_max_fd;
   Float new_ymin, new_ymax, old_ymin, old_ymax, main_ymin, main_ymax;
   Float new_high, new_low, old_high, old_low;
-  Float xi, xf, xfinc, x;
+  double xi, xf, xfinc, x;
   off_t lo, hi;
   int lastx, main_loc, j;
   env_info *ep;
@@ -1551,41 +1549,41 @@ static int make_temporary_amp_env_graph(chan_info *cp, axis_info *ap, mix_info *
   old_max_fd = init_mix_input_amp_env_read(md, 1, 1); /* old, hi */
 
   ep = cp->amp_envs[cp->edit_ctr];
-  main_loc = (int)((Float)(ap->losamp) / (Float)(ep->samps_per_bin));
-  main_start = (Float)ap->losamp;
+  main_loc = (int)((double)(ap->losamp) / (double)(ep->samps_per_bin));
+  main_start = (double)(ap->losamp);
 
   if (lo > newbeg) 
     {
-      for (x = (Float)lo; x < (Float)newbeg; x += new_max_fd->samps_per_bin) 
+      for (x = (double)lo; x < (double)newbeg; x += new_max_fd->samps_per_bin) 
 	{
 	  new_low = next_mix_sample(new_min_fd);
 	  new_high = next_mix_sample(new_max_fd);
 	}
       new_ymin = new_low;
       new_ymax = new_high;
-      new_start = (Float)lo;
+      new_start = (double)lo;
     }
   else 
     {
       new_ymin = 0.0;
       new_ymax = 0.0;
-      new_start = (Float)newbeg;
+      new_start = (double)newbeg;
     }
 
   if ((lo > oldbeg) && (oldend > lo))
     {
-      for (x = (Float)lo; x < (Float)oldbeg; x += old_max_fd->samps_per_bin) 
+      for (x = (double)lo; x < (double)oldbeg; x += old_max_fd->samps_per_bin) 
 	{
 	  old_low = next_mix_sample(old_min_fd);
 	  old_high = next_mix_sample(old_max_fd);
 	}
       old_ymin = old_low;
       old_ymax = old_high;
-      old_start = (Float)lo;
+      old_start = (double)lo;
     }
   else 
     {
-      old_start = (Float)oldbeg;
+      old_start = (double)oldbeg;
       old_ymin = 0.0;
       old_ymax = 0.0;
     }
@@ -1593,8 +1591,8 @@ static int make_temporary_amp_env_graph(chan_info *cp, axis_info *ap, mix_info *
   lastx = ap->x_axis_x0;
   xfinc = samples_per_pixel / (Float)SND_SRATE(cp->sound);
 
-  for (j = 0, xi = (Float)lo, xf = ap->x0; 
-       xi < (Float)hi; 
+  for (j = 0, xi = (double)lo, xf = ap->x0; 
+       xi < (double)hi; 
        xi += samples_per_pixel, lastx++, xf += xfinc, j++)
     {
       main_ymin = 100.0;
@@ -2329,7 +2327,7 @@ static mix_info *active_mix(chan_info *cp)
 
 int active_mix_p(chan_info *cp) {return(active_mix(cp) != NULL);}
 
-int mix_beg(chan_info *cp)
+off_t mix_beg(chan_info *cp)
 {
   /* used in snd-chn.c for zoom focus active */
   mix_info *md;
@@ -2757,7 +2755,7 @@ static void erase_mix_waveform(mix_info *md)
 
 typedef struct {
   int mixes;
-  int *state;
+  off_t *state;
   off_t *len;
   mix_fd **fds;
 } track_fd;
@@ -2787,7 +2785,7 @@ static track_fd *init_track_reader(chan_info *cp, int track_num, int global) /* 
     {
       fd = (track_fd *)CALLOC(1, sizeof(track_fd));
       fd->mixes = mixes;
-      fd->state = (int *)CALLOC(mixes, sizeof(int));
+      fd->state = (off_t *)CALLOC(mixes, sizeof(off_t));
       fd->len = (off_t *)CALLOC(mixes, sizeof(off_t));
       fd->fds = (mix_fd **)CALLOC(mixes, sizeof(mix_fd *));
       mix = 0;
@@ -3022,8 +3020,8 @@ static void play_mix(snd_state *ss, mix_info *md)
     short *buf;
   #endif
 #endif
-  int play_fd, i, j, format, datum_bytes, outchans, frames;
-  off_t samps;
+  int play_fd, j, format, datum_bytes, outchans, frames;
+  off_t i, samps;
   if (md == NULL) return;
   cp = md->cp;
   cs = md->current_cs;
@@ -3112,7 +3110,7 @@ static console_state *cs_from_id(int n)
   return(NULL);
 }
 
-static int mix_id_from_channel_position(chan_info *cp, int pos)
+static int mix_id_from_channel_position(chan_info *cp, off_t pos)
 {
   int n;
   mix_info *md;
@@ -3213,7 +3211,7 @@ static int set_mix_speed(int mix_id, Float val, int from_gui, int remix)
 	  ss = md->ss;
 	  cs = md->current_cs;
 	  cs->speed = srate_changed(val, srcbuf, speed_control_style(ss), speed_control_tones(ss)); 
-	  cs->len = (int)(ceil(md->in_samps / cs->speed));
+	  cs->len = (off_t)(ceil(md->in_samps / cs->speed));
 	  if (!from_gui)
 	    {
 	      reflect_mix_in_mix_panel(mix_id);
@@ -4199,7 +4197,7 @@ returns a reader ready to access track's data associated with snd's channel chn 
   cp = get_cp(snd, chn, S_make_track_sample_reader);
   tf = init_track_reader(cp, 
 			 XEN_TO_C_INT(track_id), 
-			 XEN_TO_C_OFF_T_OR_ELSE(samp, 0));
+			 XEN_TO_C_OFF_T_OR_ELSE(samp, 0)); /* TODO: this doesn't make any sense -- is it intended to be track start pos? */
   if (tf)
     {
       XEN_MAKE_AND_RETURN_OBJECT(tf_tag, tf, 0, free_tf);

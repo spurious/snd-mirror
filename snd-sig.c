@@ -50,9 +50,10 @@ int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos
       (pos >= cp->edit_size) ||
       (cp->edits[pos] == NULL))
     XEN_ERROR(NO_SUCH_EDIT,
-	      XEN_LIST_4(C_TO_XEN_STRING(caller),
+	      XEN_LIST_5(C_TO_XEN_STRING(caller),
 			 C_TO_XEN_INT(cp->sound->index),
 			 C_TO_XEN_INT(cp->chan),
+			 C_TO_XEN_INT(pos),
 			 edpos));
   return(pos);
 }
@@ -802,7 +803,7 @@ static void swap_channels(snd_state *ss, off_t beg, off_t dur, snd_fd *c0, snd_f
 
 /* -------- src -------- */
 
-static Float input_as_needed(void *arg, int dir) 
+Float src_input_as_needed(void *arg, int dir) 
 {
   src_state *sr = (src_state *)arg;
   snd_fd *sf;
@@ -822,15 +823,10 @@ src_state *make_src(snd_state *ss, Float srate, snd_fd *sf, Float initial_srate)
   sr = (src_state *)CALLOC(1, sizeof(src_state));
   sr->sf = sf;
   if (initial_srate >= 0.0) sr->dir = 1; else sr->dir = -1;
-  sr->gen = mus_make_src(&input_as_needed, initial_srate, sinc_width(ss), (void *)sr);
+  sr->gen = mus_make_src(&src_input_as_needed, initial_srate, sinc_width(ss), (void *)sr);
   mus_set_increment(sr->gen, srate);
   sr->sample = 0; /* this is how the old form worked */
   return(sr);
-}
-
-Float run_src(src_state *sr, Float sr_change)
-{
-  return(mus_src(sr->gen, sr_change, &input_as_needed));
 }
 
 src_state *free_src(src_state *sr)
@@ -866,10 +862,11 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
   src_state *sr;
   off_t *old_marks = NULL, *new_marks = NULL;
   mark **mps;
-  off_t cur_mark = 0, cur_new_mark = 0, cur_mark_sample = -1;
+  int cur_mark = 0, cur_new_mark = 0;
+  off_t cur_mark_sample = -1;
   int cur_marks = 0, m;
   Float env_val;
-  int next_pass;
+  off_t next_pass;
 
   if ((ratio == 1.0) && (egen == NULL)) return(NULL);
   sp = cp->sound;
@@ -895,7 +892,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
     {
       for (k = 0; sr->sample < dur; k++) /* sr->sample tracks input location -- produce output until input exhausted */
 	{
-	  idata[j] = (MUS_FLOAT_TO_SAMPLE(run_src(sr, 0.0)));
+	  idata[j] = (MUS_FLOAT_TO_SAMPLE(mus_src(sr->gen, 0.0, &src_input_as_needed)));
 	  j++;
 	  if (j == MAX_BUFFER_SIZE)
 	    {
@@ -950,7 +947,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
       next_pass = sr->sample;
       for (k = 0; sr->sample < dur; k++)
 	{
-	  idata[j] = (MUS_FLOAT_TO_SAMPLE(run_src(sr, env_val)));
+	  idata[j] = (MUS_FLOAT_TO_SAMPLE(mus_src(sr->gen, env_val, &src_input_as_needed)));
 	  j++;
 	  if (j == MAX_BUFFER_SIZE)
 	    {
@@ -1275,7 +1272,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int 
     {
       for (k = 0; k < dur; k++)
 	idata[k] = MUS_FLOAT_TO_SAMPLE(MUS_RUN(gen, read_sample_to_float(sf), 0.0));
-      j = dur;
+      j = (int)dur;
     }
   for (k = 0; k < overlap; k++)
     {
@@ -1363,8 +1360,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
       (!gen) && 
       (!over_selection) &&   /* TODO: make fft-filter work with selection */
       ((order == 0) || (order >= 128)) && 
-      /* TODO: and dur < 2^31 */
-      ((int)((to_c_edit_samples(ncp, edpos, origin, arg_pos) + order) / 128) < ss->memory_available))
+      ((int)((to_c_edit_samples(ncp, edpos, origin, arg_pos) + order) / 128) < ss->memory_available)) /* this is in Kbytes */
     {
       /* use convolution if order is large and there's memory available (and not over_selection) */
       /*   probably faster here would be overlap-add */
@@ -2803,7 +2799,8 @@ static XEN g_smooth_channel(XEN beg, XEN dur, XEN snd_n, XEN chn_n, XEN edpos)
 {
   #define H_smooth_channel "(" S_smooth_channel " &optional beg dur snd chn edpos) smooths data from beg for dur in snd's channel chn"
   chan_info *cp;
-  off_t pos, start, num;
+  off_t start, num;
+  int pos;
   ASSERT_SAMPLE_TYPE(S_smooth_channel, beg, XEN_ARG_1);
   ASSERT_SAMPLE_TYPE(S_smooth_channel, dur, XEN_ARG_2);
   ASSERT_CHANNEL(S_smooth_channel, snd_n, chn_n, 3);

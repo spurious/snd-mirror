@@ -4278,7 +4278,7 @@ static int free_file2sample(void *p)
 
 static int file2sample_length(void *ptr) {return((int)(((rdin *)ptr)->file_end));}
 static int file2sample_channels(void *ptr) {return((int)(((rdin *)ptr)->chans));}
-static Float file2sample_increment(void *rd) {return(((rdin *)rd)->dir);}
+static Float file2sample_increment(void *rd) {return((Float)(((rdin *)rd)->dir));}
 static Float file2sample_set_increment(void *rd, Float val) {((rdin *)rd)->dir = (int)val; return(val);}
 
 static mus_any_class FILE2SAMPLE_CLASS = {
@@ -4433,7 +4433,7 @@ static int free_readin(void *p)
 }
 
 static Float run_readin(mus_any *ptr, Float unused1, Float unused2) {return(mus_readin(ptr));}
-static Float rd_increment(void *ptr) {return(((rdin *)ptr)->dir);}
+static Float rd_increment(void *ptr) {return((Float)(((rdin *)ptr)->dir));}
 static Float rd_set_increment(void *ptr, Float val) {((rdin *)ptr)->dir = (int)val; return(val);}
 
 static mus_any_class READIN_CLASS = {
@@ -6819,7 +6819,7 @@ int mus_set_hop(mus_any *ptr, int val)
 
 static Float *phase_vocoder_data(void *ptr) {return(((pv_info *)ptr)->in_data);}
 static Float run_phase_vocoder(mus_any *ptr, Float unused1, Float unused2) {return(mus_phase_vocoder(ptr, NULL));}
-static Float pv_increment(void *rd) {return(((pv_info *)rd)->interp);}
+static Float pv_increment(void *rd) {return((Float)(((pv_info *)rd)->interp));}
 static Float pv_set_increment(void *rd, Float val) {((pv_info *)rd)->interp = (int)val; return(val);}
 
 static mus_any_class PHASE_VOCODER_CLASS = {

@@ -1372,7 +1372,8 @@ static XEN g_enved_dialog_widgets(void)
 				  XEN_CONS(XEN_WRAP_WIDGET(mixB),
 				   XEN_CONS(XEN_WRAP_WIDGET(resetB),
 				    XEN_CONS(XEN_WRAP_WIDGET(env_list),
-				      XEN_EMPTY_LIST)))))))))))))))))))))))))));
+				     XEN_CONS(XEN_WRAP_WIDGET(firB),
+				      XEN_EMPTY_LIST))))))))))))))))))))))))))));
   return(XEN_EMPTY_LIST);
 }
 

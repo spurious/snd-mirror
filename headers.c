@@ -833,7 +833,7 @@ static void double_to_ieee_80(double val, unsigned char *p)
 
 static int update_form_size, update_frames_location, update_ssnd_location;
 
-static int seek_and_read(int chan, unsigned char *buf, int offset, int nbytes)
+static int seek_and_read(int chan, unsigned char *buf, off_t offset, int nbytes)
 {
   if (offset < 0) return(-1);
   lseek(chan, offset, SEEK_SET);

@@ -507,6 +507,7 @@ envelope functions that are often useful:
   <em class=def><a name="scaleenvelope">scale-envelope</a></em> env scl <i>(offset 0.0)</i>
   <em class=def><a name="reverseenvelope">reverse-envelope</a></em> env
   <em class=def><a name="concatenateenvelopes">concatenate-envelopes</a></em> #:rest envs
+  <em class=def><a name="repeatenvelope">repeat-envelope</a></em> env repeats #:optional (reflected #f) (normalized #f)
 </pre>
 <p>These are translated from CLM's env.lisp.
 <code>(envelope-interp x env base)</code> returns value of env at x.
@@ -583,8 +584,18 @@ to an envelope, much like divseg in clm-1.</p>
 <p><i>scale-envelope</i> scales the y values of an envelope by <i>scl</i>,
 <i>add-envelope</i> adds two envelopes together, <i>reverse-envelope</i>
 reverses an envelope.
+<i>repeat-envelope</i> repeats an envelope (concatenates copies of itself).
 </p>
-
+<pre>
+:<em class=typing>(repeat-envelope '(0 0 100 1) 2)</em>
+<em class=listener>(0 0 100 1 101 0 201 1)</em>
+</pre>
+<p>If the final y value is different from the first y value (as above), a quick ramp is
+inserted between repeats. 'normalized' causes the new envelope's x axis
+to have the same extent as the original's. 'reflected' causes every other
+repetition to be in reverse.
+</p>
+<br>
 
 <A NAME="enveddoc"></a><span class=box><h2>enved.scm</h2></span>
 <img src="envs.png" alt="channel enveds" align=right hspace=10 vspace=20>

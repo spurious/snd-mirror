@@ -3102,11 +3102,7 @@ data is:</p>
 <pre>
   (outa (+ start i) &lt;new-stuff&gt;)
 </pre>
-<p>but is applied as an edit to the current state in Snd.  In general, slow
-things in Guile are vector references, floating point operations, and
-any do loop executed on a per-sample basis.  In most cases, these can
-be collected into vct operations or through the use of functions like
-formant-bank.
+<p>but is applied as an edit to the current state in Snd. 
 </p>
 
 <p>There is a similar set of functions giving access to the mix data.
@@ -4523,8 +4519,8 @@ the direction argument between the channel and edit-position.
 (add-hook! after-open-hook 
   (lambda (snd) 
     ;; this could also (alternatively) set the y-bounds as above
-    (if (= (data-format snd) mus-lint)
-        (set! (data-format snd) mus-lintn))))
+    (if (= (<em class=red>data-format</em> snd) mus-lint)
+        (set! (<em class=red>data-format</em> snd) mus-lintn))))
 <!-- --></pre></td></tr></table>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
@@ -4820,7 +4816,7 @@ the direction argument between the channel and edit-position.
 <!-- -->
 <!-- --><tr><td></td><td>
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(set! (graph-style 0 0)
+(set! (<em class=red>graph-style</em> 0 0)
       (+ graph-dots (ash (+ graph-lines 1) 8) 
                     (ash (+ graph-lollipops 1) 16)))
 <!-- --></pre></td></tr></table>

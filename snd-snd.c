@@ -361,15 +361,15 @@ static short local_grf_y(Float val, axis_info *ap)
 
 int amp_env_graph(chan_info *cp, axis_info *ap, Float samples_per_pixel, int srate) 
 {
-  Float step, x, xf, pinc = 0.0;
-  double xk;
+  Float step, x, pinc = 0.0;
+  double xf, xk;
   mus_sample_t ymin, ymax;
   int j, xi, k, kk;
   off_t i;
   env_info *ep;
   ep = cp->amp_envs[cp->edit_ctr];
   step = samples_per_pixel / (Float)(ep->samps_per_bin);
-  xf = (Float)(ap->losamp) / (Float)(ep->samps_per_bin);
+  xf = (double)(ap->losamp) / (double)(ep->samps_per_bin);
   j = 0;
   x = ap->x0;
   xi = grf_x(x, ap);
@@ -849,7 +849,7 @@ char *shortname(snd_info *sp)
       mus_snprintf(sname, PRINT_BUFFER_SIZE, "(%s)", sp->short_filename);
       return(sname);
     }
-  else return(sp->short_filename);
+  return(sp->short_filename);
 }
 
 char *shortname_indexed(snd_info *sp)
@@ -857,11 +857,11 @@ char *shortname_indexed(snd_info *sp)
   if (show_indices(sp->state))
     {
       if (is_link(sp->filename))
-	mus_snprintf(sname, PRINT_BUFFER_SIZE, "%d: (%s)", sp->index, sp->short_filename); /* don;t try to share sname */
+	mus_snprintf(sname, PRINT_BUFFER_SIZE, "%d: (%s)", sp->index, sp->short_filename); /* don't try to share sname */
       else mus_snprintf(sname, PRINT_BUFFER_SIZE, "%d: %s", sp->index, sp->short_filename);
       return(sname);
     }
-  else return(shortname(sp));
+  return(shortname(sp));
 }
 
 void add_sound_data(char *filename, snd_info *sp, snd_state *ss, int graphed)
@@ -1174,7 +1174,7 @@ void stop_applying(snd_info *sp)
 typedef struct {
   int slice;
   snd_info *sp;
-  int i;
+  off_t i;
   int ofd;
   char *ofile;
   ctrl_state *cs;
@@ -1306,7 +1306,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 	      break;
 	    }
 	  orig_dur = apply_dur;
-	  apply_dur = (int)(mult_dur * (apply_dur + added_dur));
+	  apply_dur = (off_t)(mult_dur * (apply_dur + added_dur));
 	  ap->ofd = open_temp_file(ap->ofile, ap->hdr->chans, ap->hdr, ss);
 	  if (ap->ofd == -1)
 	    {
@@ -1350,7 +1350,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 		      if (apply_tick > APPLY_TICKS)
 			{
 			  apply_tick = 0;
-			  progress_report(sp, "apply", 1, 1, (Float)(ap->i) / (Float)apply_dur, NOT_FROM_ENVED);
+			  progress_report(sp, "apply", 1, 1, (double)(ap->i) / (double)apply_dur, NOT_FROM_ENVED);
 			}
 		    }
 		}

@@ -1,7 +1,7 @@
 #include "snd.h"
 
 static int search_in_progress = 0;
-typedef struct {int n; int direction; int chans; int inc; chan_info **cps; snd_fd **fds;} gfd;
+typedef struct {int n; int direction; int chans; off_t inc; chan_info **cps; snd_fd **fds;} gfd;
 
 static int prepare_global_search (chan_info *cp, void *g0)
 {

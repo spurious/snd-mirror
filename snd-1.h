@@ -404,7 +404,8 @@ typedef struct {
 typedef struct {
   mus_any *gen;
   snd_fd *sf;
-  int sample, dir;
+  off_t sample;
+  int dir;
 } src_state;
 
 
@@ -738,7 +739,7 @@ int fft_window_beta_in_use(int win);
 void free_sono_info (chan_info *cp);
 void sono_update(chan_info *cp);
 void set_spectro_cutoff_and_redisplay(snd_state *ss, Float val);
-void c_convolve(char *fname, Float amp, int filec, int filehdr, int filterc, int filterhdr, int filtersize,
+void c_convolve(char *fname, Float amp, int filec, off_t filehdr, int filterc, off_t filterhdr, int filtersize,
 		 int fftsize, int filter_chans, int filter_chan, int data_size, snd_info *gsp, int from_enved, int ip, int total_chans);
 void *make_sonogram_state(chan_info *cp);
 void single_fft(chan_info *cp, int dpy);
@@ -1097,7 +1098,7 @@ void restore_listener_string(int back);
 axes_data *free_axes_data(axes_data *sa);
 axes_data *make_axes_data(snd_info *sp);
 int restore_axes_data(snd_info *sp, axes_data *sa, Float new_duration, int need_edit_history_update);
-int disk_kspace (char *filename);
+off_t disk_kspace (char *filename);
 time_t file_write_date(char *filename);
 int is_link(char *filename);
 int is_directory(char *filename);
@@ -1212,7 +1213,7 @@ int mix_file_and_delete(off_t beg, off_t num, char *file, chan_info **cps, int o
 int copy_file_and_mix(off_t beg, off_t num, char *file, chan_info **cps, int out_chans, const char *origin, int with_tag);
 void backup_mix_list(chan_info *cp, int edit_ctr);
 int active_mix_p(chan_info *cp);
-int mix_beg(chan_info *cp);
+off_t mix_beg(chan_info *cp);
 void reset_mix_graph_parent(chan_info *cp);
 void display_channel_mixes(chan_info *cp);
 void lock_affected_mixes(chan_info *cp, off_t beg, off_t end);
@@ -1318,7 +1319,7 @@ void scale_by(chan_info *cp, Float *scalers, int len, int selection);
 void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *scalers, int len, int selection);
 Float get_maxamp(snd_info *sp, chan_info *cp, int edpos);
 src_state *make_src(snd_state *ss, Float srate, snd_fd *sf, Float initial_srate);
-Float run_src(src_state *sr, Float sr_change);
+Float src_input_as_needed(void *arg, int dir);
 src_state *free_src(src_state *sr);
 void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_num, 
 		    int from_enved, const char *origin, int over_selection, mus_any *gen, XEN edpos, int arg_pos, Float e_base);

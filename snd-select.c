@@ -666,7 +666,7 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
 	    {
 	      for (k = 0; k < chans; k++)
 		{
-		  if (i <= ends[k]) 
+		  if (ioff <= ends[k]) 
 		    data[k][j] = read_sample(sfs[k]);
 		  else data[k][j] = MUS_SAMPLE_0;
 		}

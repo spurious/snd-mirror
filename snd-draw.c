@@ -424,8 +424,8 @@ data in the recipient's graph between points low and high in the drawing mode gr
     }
   else v0 = get_vct(data);
   draw_graph_data(cp, 
-		  XEN_TO_C_INT_OR_ELSE(lo, -1),
-		  XEN_TO_C_INT_OR_ELSE(hi, -1),
+		  XEN_TO_C_OFF_T_OR_ELSE(lo, -1),
+		  XEN_TO_C_OFF_T_OR_ELSE(hi, -1),
 		  v0->length,
 		  v0->data,
 		  (v1) ? (v1->data) : NULL,

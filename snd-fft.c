@@ -1819,7 +1819,7 @@ static void spectral_multiply (Float* rl1, Float* rl2, int n)
     }
 }
 
-void c_convolve(char *fname, Float amp, int filec, int filehdr, int filterc, int filterhdr, int filtersize,
+void c_convolve(char *fname, Float amp, int filec, off_t filehdr, int filterc, off_t filterhdr, int filtersize,
 		int fftsize, int filter_chans, int filter_chan, int data_size, snd_info *gsp, int from_enved, int ip, int total_chans)
 {
   Float *rl0 = NULL, *rl1 = NULL, *rl2 = NULL;

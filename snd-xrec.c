@@ -104,10 +104,9 @@ static void record_report(Widget text, ...)
 {
   /* place time-stamped message in text window */
   time_t ts;
-  XmTextPosition pos;
+  XmTextPosition pos, textpos = 0;
   va_list ap;
   char *nextstr;
-  int textpos = 0;
   if (msgbuf == NULL) msgbuf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
 #if HAVE_STRFTIME
   time(&ts);

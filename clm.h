@@ -87,6 +87,9 @@
  *   if 1, use libgsl for some math functions
  * 
  * Float can be defined to be double or float (default)
+ *
+ * HAVE_FFTW
+ *  if 1, include mus_fftw which calls the fftw real fft
  */
 
 /* taken from libtool's demo/foo.h to try to protect us from C++ and ancient C's */

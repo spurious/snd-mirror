@@ -726,7 +726,7 @@ void apply_x_axis_change(axis_info *ap, chan_info *cp, snd_info *sp)
     }
 }
 
-static int visible_syncd_cursor(chan_info *cp)
+static off_t visible_syncd_cursor(chan_info *cp)
 {
   snd_info *sp;
   snd_state *ss;
@@ -1782,7 +1782,7 @@ static int display_transform_peaks(chan_info *ucp, char *filename)
 		      fprintf(fd, ", fft %d points beginning at sample " OFF_TD " (%.3f secs)\n\n",
 			      fp->current_size, 
 			      ap->losamp, 
-			      (Float)(ap->losamp) / (Float)srate);
+			      (float)((double)(ap->losamp) / (double)srate));
 		      for (i = 0; i < num_peaks; i++)
 			fprintf(fd, "  %.*f  %.5f\n",
 				tens, 

@@ -74,7 +74,7 @@ static Float speed(dac_info *dp, Float sr)
   if (dp->never_sped)
     return(read_sample_to_float(dp->chn_fd));
   if ((use_sinc_interp((dp->ss))) && (dp->src))
-    result = run_src(dp->src, sr);
+    result = mus_src(dp->src->gen, sr, &src_input_as_needed);
   else
     {
       if (sr > 0.0) 
@@ -797,7 +797,7 @@ static void start_dac(snd_state *ss, int srate, int channels, int background)
 #endif
       snd_dacp->frames = 256; /* just a first guess */
       snd_dacp->devices = 1;  /* just a first guess */
-      snd_dacp->reverb_ring_frames = (int)(srate * reverb_control_decay(ss));
+      snd_dacp->reverb_ring_frames = (off_t)(srate * reverb_control_decay(ss));
 #if DEBUGGING
       if (disable_play) 
 	{
@@ -1961,7 +1961,7 @@ void initialize_apply(snd_info *sp, int chans, off_t beg, off_t dur)
   snd_dacp->devices = 1;
   snd_dacp->chans_per_device = (int *)CALLOC(1, sizeof(int));
   snd_dacp->chans_per_device[0] = chans;
-  snd_dacp->reverb_ring_frames = (int)(snd_dacp->srate * reverb_control_decay(ss));
+  snd_dacp->reverb_ring_frames = (off_t)(snd_dacp->srate * reverb_control_decay(ss));
   make_dac_buffers(snd_dacp);
   switch (ss->apply_choice)
     {
@@ -2047,7 +2047,7 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, int background, int syncd,
       sp->short_filename = filename_without_home_directory(name);
       sp->filename = NULL;
       sp->delete_me = 1;
-      if (XEN_INTEGER_P(chn_n)) end = XEN_TO_C_INT(chn_n);
+      if (XEN_OFF_T_P(chn_n)) end = XEN_TO_C_OFF_T(chn_n);
       play_sound(sp, samp, end, background, C_TO_SMALL_XEN_INT(0), caller, arg_pos);
       if (name) FREE(name);
     }

@@ -12,7 +12,7 @@
 ;;; scale-envelope (env scaler &optional offset) scales y axis values by 'scaler' and optionally adds 'offset'
 ;;; reverse-envelope (env) reverses the breakpoints in 'env'
 ;;; concatenate-envelopes (&rest envs) concatenates its arguments into a new envelope
-
+;;; repeat-envelope env repeats &optional (reflected #f) (normalized #f) repeats an envelope
 
 (use-modules (ice-9 format) (ice-9 optargs))
 
@@ -299,4 +299,49 @@ divseg in early versions of CLM and its antecedents in Sambox and Mus10 (linen).
     (reverse ne)))
 
 
-;;; TODO: from env.lisp power env, db env, repeat env
+(define* (repeat-envelope ur-env repeats #:optional (reflected #f) (normalized #f))
+    "(repeat-envelope env repeats &optional reflected normalized) repeats 'env' 'repeats' \
+times.  (repeat-envelope '(0 0 100 1) 2) -> (0 0 100 1 101 0 201 1). \
+If the final y value is different from the first y value, a quick ramp is \
+inserted between repeats. 'normalized' causes the new envelope's x axis \
+to have the same extent as the original's. 'reflected' causes every other \
+repetition to be in reverse."
+  (let* ((times (if reflected (inexact->exact (floor (/ repeats 2))) repeats))
+	 (e (if reflected
+		(let* ((lastx (list-ref ur-env (- (length ur-env) 2)))
+		       (rev-env (cddr (reverse ur-env)))
+		       (new-env (reverse ur-env)))
+		  (while (not (null? rev-env))
+			 (set! new-env (cons (+ lastx (- lastx (cadr rev-env))) new-env))
+			 (set! new-env (cons (car rev-env) new-env))
+			 (set! rev-env (cddr rev-env)))
+		  (reverse new-env))
+		ur-env))
+	 (first-y (cadr e))
+	 (x-max (list-ref e (- (length e) 2)))
+	 (x (car e))
+	 (first-y-is-last-y (= first-y (list-ref e (- (length e) 1))))
+	 (new-env (list first-y x))
+	 (len (length e)))
+    (do ((i 0 (1+ i)))
+	((= i times))
+      (do ((j 2 (+ j 2)))
+	  ((>= j len))
+	(set! x (+ x (- (list-ref e j) (list-ref e (- j 2)))))
+	(set! new-env (cons x new-env))
+	(set! new-env (cons (list-ref e (+ j 1)) new-env)))
+      (if (and (< i (1- times)) (not first-y-is-last-y))
+	  (begin
+	    (set! x (+ x (/ x-max 100.0)))
+	    (set! new-env (cons x new-env))
+	    (set! new-env (cons first-y new-env)))))
+    (set! new-env (reverse new-env))
+    (if normalized
+	(let ((scl (/ x-max x))
+	      (new-len (length new-env)))
+	  (do ((i 0 (+ i 2)))
+	      ((>= i new-len))
+	    (list-set! new-env i (* scl (list-ref new-env i))))))
+    new-env))
+
+;;; TODO: from env.lisp power env, db env

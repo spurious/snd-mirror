@@ -837,7 +837,7 @@ static ed_list *selected_ed_list(off_t beg, off_t end, ed_list *current_state)
 }
 
 
-static void fixup_edlist_endmark(ed_list *new_state, ed_list *current_state, int len)
+static void fixup_edlist_endmark(ed_list *new_state)
 {
   int k;
   if (FRAGMENT_SOUND(new_state, (new_state->size - 1)) != EDIT_LIST_END_MARK)
@@ -963,7 +963,7 @@ static ed_list *insert_samples_1 (off_t samp, off_t num, ed_list *current_state,
   ripple_selection(new_state, samp, num);
   reflect_sample_change_in_axis(cp);
   check_for_first_edit(cp);
-  fixup_edlist_endmark(new_state, current_state, len);
+  fixup_edlist_endmark(new_state);
   return(new_state);
 }
 
@@ -1226,7 +1226,7 @@ static ed_list *change_samples_1(off_t beg, off_t num, ed_list *current_state, c
   new_state->size = len + len_fixup; /* don't propagate useless trailing blocks */
   ripple_marks(cp, 0, 0);
   check_for_first_edit(cp);
-  fixup_edlist_endmark(new_state, current_state, len);
+  fixup_edlist_endmark(new_state);
   return(new_state);
 }    
 

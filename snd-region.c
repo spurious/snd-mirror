@@ -706,7 +706,7 @@ static int paste_region_1(int n, chan_info *cp, int add, off_t beg, const char *
 
 void paste_region(int n, chan_info *cp, const char *origin) {paste_region_1(n, cp, FALSE, cp->cursor, origin);}
 void add_region(int n, chan_info *cp, const char *origin) {paste_region_1(n, cp, TRUE, cp->cursor, origin);}
-static int mix_region(int n, chan_info *cp, int beg) {return(paste_region_1(n, cp, TRUE, beg, S_mix_region));}
+static int mix_region(int n, chan_info *cp, off_t beg) {return(paste_region_1(n, cp, TRUE, beg, S_mix_region));}
 
 int define_region(sync_info *si, off_t *ends)
 {

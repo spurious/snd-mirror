@@ -7112,36 +7112,24 @@ void *form_to_ptree_1f2b_without_env(XEN code)
 Float evaluate_ptree_1f2f(void *upt, Float arg)
 {
   ptree *pt = (ptree *)upt;
-  if (pt)
-    {
-      pt->dbls[pt->args[0]] = arg;
-      eval_ptree(pt);
-      return(pt->dbls[pt->result->addr]);
-    }
-  return(0.0);
+  pt->dbls[pt->args[0]] = arg;
+  eval_ptree(pt);
+  return(pt->dbls[pt->result->addr]);
 }
 
 Float evaluate_ptree_0f2f(void *upt)
 {
   ptree *pt = (ptree *)upt;
-  if (pt)
-    {
-      eval_ptree(pt);
-      return(pt->dbls[pt->result->addr]);
-    }
-  return(0.0);
+  eval_ptree(pt);
+  return(pt->dbls[pt->result->addr]);
 }
 
 int evaluate_ptree_1f2b(void *upt, Float arg)
 {
   ptree *pt = (ptree *)upt;
-  if (pt)
-    {
-      pt->dbls[pt->args[0]] = arg;
-      eval_ptree(pt);
-      return(pt->ints[pt->result->addr]);
-    }
-  return(0);
+  pt->dbls[pt->args[0]] = arg;
+  eval_ptree(pt);
+  return(pt->ints[pt->result->addr]);
 }
 
 /* ---------------- internal testing stuff ---------------- */

@@ -1569,14 +1569,14 @@ static void make_mark_graph(chan_info *cp, snd_info *sp, off_t initial_sample, o
 	  env_info *ep;
 	  ep = cp->amp_envs[cp->edit_ctr];
 	  step = samples_per_pixel / (Float)(ep->samps_per_bin);
-	  xf = (Float)(ap->losamp) / (Float)(ep->samps_per_bin);
+	  xf = (double)(ap->losamp) / (double)(ep->samps_per_bin);
 	  j = 0;
 	  x = ap->x0;
 	  xi = grf_x(x, ap);
 	  i = ap->losamp;
 	  ii = ap->losamp;
 	  xk = i;
-	  xki = (Float)(ap->losamp);
+	  xki = (double)(ap->losamp);
 	  while (i <= ap->hisamp)
 	    {
 	      k = (int)xf;

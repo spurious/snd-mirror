@@ -31,14 +31,14 @@
 ;;; TODO: test of off_t mark search
 ;;; TODO: GL tests, gtk (xg) tests
 ;;; TODO: load-font current-font send-netscape apply-ladspa set-enved-selected-env
-;;; TODO: mix panel env editor (apply button)
-;;; TODO: loop-samples of large section, scale-to with chn but 0..dur, [before-]transform-hook? output-name-hook [requires New dialog]?
+;;; TODO: mix panel env editor (apply button (|XmMessageBoxGetChild mix_panel |XmDIALOG_CANCEL_BUTTON)
+;;; TODO: [before-]transform-hook? output-name-hook [requires New dialog]?
 ;;; TODO: make-graph[-data?] of 1 samp, 
 ;;; TODO: lisp-graph-hook with forward proc, linear src moving backwards
 ;;; TODO: srate control change while using semitones
 ;;; TODO: control-panel apply to channel [apply button with ctrl and no active selection]
 ;;; TODO: raw|new data dialog help, delete enved env? ...
-;;; TODO: click fir in enved, activate order text
+;;; TODO: activate order text
 
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs) (ice-9 syncase))
@@ -2515,6 +2515,15 @@
 	      (let ((val (forward-sample)))
 		(IF (not (= (cursor ind) (* 44100 50000))) (snd-display ";up bigger cursor: ~A" (cursor ind)))
 		(IF (not (= val (* 44100 50000))) (snd-display ";up rtn bigger cursor: ~A" (cursor ind))))
+	      (let ((m1 (add-mark (* 44123 51234) ind)))
+		(IF (not (= (mark-sample m1) (* 44123 51234))) (snd-display ";bigger mark at: ~A" (mark-sample m1)))
+		(let ((mid (find-mark (* 44123 51234))))
+		  (IF (or (not (number? mid)) (not (= mid m1))) (snd-display ";bigger mark seach: ~A ~A" mid m1))))
+	      (let ((mx (mix-sound "oboe.snd" (* 44123 61234))))
+		(let ((mxd (find-mix (* 44123 61234))))
+		  (IF (or (not (number? mxd)) (not (= mxd mx))) (snd-display ";bigger find-mix ~A ~A" mxd mx))))
+	      (set! (cursor ind) (* 44123 51234))
+	      (IF (not (= (cursor ind) (* 44123 51234))) (snd-display ";bigger cursor 123: ~A" (cursor ind)))
 	      (close-sound ind))
 	    ))
       ))))
@@ -3993,6 +4002,12 @@
 	      (IF (fneq (maxamp) (* 2 max1)) 
 		  (snd-display ";loop-samples test-a2 max: ~A ~A" max1 (maxamp)))
 	      (loop-samples (make-sample-reader 0 ind4 0) (get-flange) (frames) "flange" (make-flange 2.0 5.0 0.001))
+	      (close-sound ind4)
+	      (set! ind4 (open-sound "storm.snd"))
+	      (set! max1 (maxamp))
+	      (loop-samples (make-sample-reader 0 ind4 0) (get-test-a2) (frames ind4) "a2")
+	      (IF (fneq (maxamp) (* 2 max1)) 
+		  (snd-display ";loop-samples test-a2 max storm: ~A ~A" max1 (maxamp)))
 	      (close-sound ind4)))
 
 	(delete-samples 0 10000 ind1 0)
@@ -8031,7 +8046,7 @@
 		 (reader-string (format #f "~A" mr)))
 	      (IF (not (string=? (substring reader-string 0 24) "#<track-sample-reader 0x"))
 		  (snd-display ";track sample reader actually got: [~S]" (substring reader-string 0 24)))
-	      (IF (not (string=? (substring reader-string 31) (string-append ": " home-dir "/bil/cl/oboe.snd chan 0 via mixes '(11 13 15)>")))
+	      (IF (not (string=? (substring reader-string 31) (string-append ": " home-dir "/bil/cl/oboe.snd chan 0 via mixes '(12 14 16)>")))
 		  (snd-display ";track sample reader actually got: [~S]" (substring reader-string 31)))
 	      (free-track-sample-reader mr))
 	  (let ((curend (track-end (track 1))))
@@ -12050,6 +12065,16 @@
 	  (snd-display ";concatenate-envelopes: ~A" (concatenate-envelopes '(0 0 1 1) '(0 1 1 0))))
       (IF (not (feql (concatenate-envelopes '(0 0 1 1.5) '(0 1 1 0)) '(0.0 0 1.0 1.5 1.01 1 2.01 0)))
 	  (snd-display ";concatenate-envelopes: ~A" (concatenate-envelopes '(0 0 1 1.5) '(0 1 1 0))))
+      (IF (not (feql (repeat-envelope '(0 0 1 100) 2) '(0 0 1 100 1.01 0 2.01 100)))
+	  (snd-display ";repeat-envelope 0: ~A" (repeat-envelope '(0 0 1 100) 2)))
+      (IF (not (feql (repeat-envelope '(0 0 1.5 1 2 0) 2) '(0 0 1.5 1 2.0 0 3.5 1 4.0 0)))
+	  (snd-display ";repeat-envelope 1: ~A" (repeat-envelope '(0 0 1.5 1 2 0) 2)))
+      (IF (not (feql (repeat-envelope '(0 0 1.5 1 2 0) 2 #f #t) '(0.0 0 0.75 1 1.0 0 1.75 1 2.0 0)))
+	  (snd-display ";repeat-envelope 2: ~A" (repeat-envelope '(0 0 1.5 1 2 0) 2 #f #t)))
+      (IF (not (feql (repeat-envelope '(0 0 1.5 1 2 0) 2 #t) '(0 0 1.5 1 2.0 0 2.5 1 4.0 0)))
+	  (snd-display ";repeat-envelope 3: ~A" (repeat-envelope '(0 0 1.5 1 2 0) 2 #t)))
+      (IF (not (feql (repeat-envelope '(0 0 1.5 1 2 0) 3) '(0 0 1.5 1 2.0 0 3.5 1 4.0 0 5.5 1 6.0 0)))
+	  (snd-display ";repeat-envelope 4: ~A" (repeat-envelope '(0 0 1.5 1 2 0) 3)))
 
       (let ((ind (new-sound "fmv.snd"))
 	    (v (make-vct 20)))
@@ -18640,6 +18665,7 @@ EDITS: 5
 			 (exp-button (list-ref enved-widgets 20))
 			 (lin-button (list-ref enved-widgets 21))
 			 (env-list (list-ref enved-widgets 25))
+			 (fir-button (list-ref enved-widgets 26))
 			 (ewid drawer))
 		    
 		    (click-button reset-button) (force-event)
@@ -18798,7 +18824,9 @@ EDITS: 5
 					    cb))
 			(click-button show-button) (force-event)
 			(close-sound ind))
-		      
+		      (let ((firB (enved-filter)))
+			(click-button fir-button) (force-event)
+			(if (eq? (enved-filter) firB) (snd-display "fir button had no effect?")))
 		      (click-button dismiss-button) (force-event)
 		      ))
 		  ))
@@ -23992,7 +24020,7 @@ EDITS: 5
 	(check-error-tag 'no-such-widget (lambda () (set! (widget-size (list 'Widget 0)) (list 10 10))))
 	(check-error-tag 'no-such-menu (lambda () (main-menu -1)))
 	(check-error-tag 'no-such-menu (lambda () (main-menu 111)))
-	;(check-error-tag 'mus-error (vct-map (lambda () 1.0)))
+	(check-error-tag 'mus-error (lambda () (vct-map (lambda () 1.0))))
 	(let ((ind (open-sound "oboe.snd"))) 
 	  (select-all)
 	  (check-error-tag 'no-such-channel (lambda () (mix-selection 0 ind 123)))

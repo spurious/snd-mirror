@@ -26,7 +26,8 @@ static int snd_checked_write(int fd, unsigned char *buf, int bytes, char *filena
 {
   /* io.c checked_write assumes its file descriptors are around */
   /* can't call mus_error here because we need to clean up first in case of error */
-  int bytes_written, kfree;
+  int bytes_written;
+  off_t kfree;
   kfree = disk_kspace(filename);
   if (kfree < 0) 
     {
@@ -38,7 +39,7 @@ static int snd_checked_write(int fd, unsigned char *buf, int bytes, char *filena
   if (kfree < (bytes >> 10))
     { 
       mus_snprintf(write_error_buffer, PRINT_BUFFER_SIZE,
-		   "only %d bytes left on device (we need %d bytes)",
+		   "only " OFF_TD " bytes left on device (we need %d bytes)",
 		   kfree << 10, bytes);
       return(MUS_ERROR);
     }

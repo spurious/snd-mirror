@@ -918,7 +918,7 @@ static Widget listener_pane = NULL;
 
 void listener_append_and_prompt(snd_state *ss, char *msg)
 {
-  int cmd_eot;
+  XmTextPosition cmd_eot;
   if (listener_text)
     {
       if (listener_print_p(msg))
