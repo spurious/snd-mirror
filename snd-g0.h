@@ -76,7 +76,6 @@ typedef struct {
   GdkGC *gc;
   GdkDrawable *wn;
   SG_FONT *current_font;
-  void *ss;
 } axis_context;
 
 typedef struct {

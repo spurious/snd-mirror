@@ -128,7 +128,6 @@ typedef struct {
   GC gc;
   Display *dp;
   Drawable wn;
-  void *ss;
   Font current_font;
 } axis_context;
 

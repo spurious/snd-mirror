@@ -130,13 +130,12 @@ typedef struct {
   void *x_ticks, *y_ticks;              /* actual type is tick_descriptor local to snd-axis.c */
   axis_context *ax;
   Latus width, height;
-  struct snd__state *ss;               /* back pointers for debugging and whatnot */
   struct chan__info *cp;
   Float sy, zy;                         /* as set by user, 0.0 - 1.0 */
   double sx, zx;
   Locus y_offset;
   Latus window_width;
-  int no_data, changed;
+  int no_data, changed, use_gl;
 } axis_info;
 
 typedef struct {
@@ -888,7 +887,7 @@ void handle_filter_release(snd_info *sp);
 void report_filter_edit(snd_info *sp);
 chan_info *new_env_axis(snd_state *ss);
 void init_env_axes(chan_info *acp, char *name, int x_offset, int ey0, int width, int height, Float xmin, Float xmax, Float ymin, Float ymax);
-axis_info *new_wave_axis(snd_state *ss);
+axis_info *new_wave_axis(void);
 void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_cp, char *name, int x0, int y0, int width, int height, int dots, Float base);
 void view_envs(snd_state *ss, int env_window_width, int env_window_height);
 int hit_env(int xe, int ye, int env_window_width, int env_window_height);

@@ -152,8 +152,10 @@ int set_axis_numbers_font(snd_state *ss, char *font)
 
 void activate_numbers_font(axis_context *ax)
 {
-  ax->current_font = ((XFontStruct *)(AXIS_NUMBERS_FONT(ax->ss)))->fid;
-  XSetFont(ax->dp, ax->gc, ((XFontStruct *)(AXIS_NUMBERS_FONT(ax->ss)))->fid);
+  snd_state *ss;
+  ss = get_global_state();
+  ax->current_font = ((XFontStruct *)(AXIS_NUMBERS_FONT(ss)))->fid;
+  XSetFont(ax->dp, ax->gc, ((XFontStruct *)(AXIS_NUMBERS_FONT(ss)))->fid);
 }
    
 void activate_button_font(axis_context *ax, snd_state *ss)
@@ -166,14 +168,16 @@ void activate_button_font(axis_context *ax, snd_state *ss)
 
 void activate_label_font(axis_context *ax)
 {
-  ax->current_font = ((XFontStruct *)(AXIS_LABEL_FONT(ax->ss)))->fid;
-  XSetFont(ax->dp, ax->gc, ((XFontStruct *)(AXIS_LABEL_FONT(ax->ss)))->fid);
+  snd_state *ss;
+  ss = get_global_state();
+  ax->current_font = ((XFontStruct *)(AXIS_LABEL_FONT(ss)))->fid;
+  XSetFont(ax->dp, ax->gc, ((XFontStruct *)(AXIS_LABEL_FONT(ss)))->fid);
 }
 
-int label_width(axis_context *ax, char *txt)
+int label_width(snd_state *ss, char *txt)
 {
   if (txt)
-    return(XTextWidth(AXIS_LABEL_FONT(ax->ss), txt, strlen(txt)));
+    return(XTextWidth(AXIS_LABEL_FONT(ss), txt, strlen(txt)));
   else return(0);
 }
 
@@ -188,24 +192,24 @@ int mark_name_width(snd_state *ss, char *txt)
   return(0);
 }
 
-int number_width(axis_context *ax, char *num)
+int number_width(snd_state *ss, char *num)
 {
   if (num)
-    return(XTextWidth(AXIS_NUMBERS_FONT(ax->ss), num, strlen(num)));
+    return(XTextWidth(AXIS_NUMBERS_FONT(ss), num, strlen(num)));
   return(0);
 }
 
-int number_height(axis_context *ax)
+int number_height(snd_state *ss)
 {
   XFontStruct *numbers_font;
-  numbers_font = AXIS_NUMBERS_FONT(ax->ss);
+  numbers_font = AXIS_NUMBERS_FONT(ss);
   return(numbers_font->ascent + numbers_font->descent);
 }
 
-int label_height(axis_context *ax)
+int label_height(snd_state *ss)
 {
   XFontStruct *label_font;
-  label_font = AXIS_LABEL_FONT(ax->ss);
+  label_font = AXIS_LABEL_FONT(ss);
   return(label_font->ascent + label_font->descent);
 }
 

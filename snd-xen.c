@@ -1307,7 +1307,9 @@ static XEN g_set_with_gl(XEN val)
 {
   #define H_with_gl "(" S_with_gl ") -> #t if Snd should use GL graphics"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, "set-" S_with_gl, "a boolean");
+#if HAVE_GL
   set_with_gl(state, XEN_TO_C_BOOLEAN_OR_TRUE(val));
+#endif
   return(C_TO_XEN_BOOLEAN(with_gl(state)));
 }
 

@@ -395,6 +395,8 @@ AC_FUNC_VPRINTF
 
 
 # -------- OpenGL --------
+#
+# TODO: this should be dependent on Motif (i.e. GtkGLArea widget appears to be dead and/or inaccessible -- goddamn Gnome!)
 GL_LIBS=""
 GL_FILES=""
 if test "$with_gl" = yes ; then

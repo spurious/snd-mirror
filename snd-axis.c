@@ -187,6 +187,7 @@ static Locus tick_grf_x(double val, axis_info *ap, int style, int srate)
 
 void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, int show_x_axis)
 {
+  snd_state *ss;
   Latus width, height;
   double x_range, y_range, tens;
   Latus axis_thickness, left_border_width, bottom_border_width, top_border_width, right_border_width;
@@ -199,6 +200,7 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
   tick_descriptor *tdx = NULL, *tdy = NULL;
   Locus curx, cury, curdy;
   axis_context *ax;
+  ss = get_global_state();
   ax = ap->ax;
   width = ap->width;
   height = ap->height;
@@ -253,6 +255,7 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
   major_tick_length = 9;
   minor_tick_length = 5;
   axis_thickness = 2;
+
   if (show_x_axis)
     {
       include_x_label = ((ap->xlabel) && ((height > 100) && (width > 100)));
@@ -279,24 +282,24 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
   curx = left_border_width;
   cury = height - bottom_border_width;
   
-  x_number_height = number_height(ax);
+  x_number_height = number_height(ss);
   x_label_height = 0;
   x_label_width = 0;
 
   if (include_x_label)
     {
-      x_label_width = label_width(ax, ap->xlabel);
+      x_label_width = label_width(ss, ap->xlabel);
       if ((x_label_width + curx + right_border_width) > width)
 	{
 	  include_x_label = 0;
 	  x_label_width = 0;
 	  x_label_height = 0;
 	}
-      else x_label_height = label_height(ax);
+      else x_label_height = label_height(ss);
     }
   else
     if (include_x_ticks) 
-      x_label_height = label_height(ax);
+      x_label_height = label_height(ss);
 
   curdy = cury;
   if (include_y_ticks)
@@ -332,14 +335,14 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
 	      tdy->min_label = NULL;
 	    }
 	  tdy->min_label = prettyf(tdy->mlo, tdy->tens);
-	  tdy->min_label_width = number_width(ax, tdy->min_label);
+	  tdy->min_label_width = number_width(ss, tdy->min_label);
 	  if (tdy->max_label) 
 	    {
 	      FREE(tdy->max_label); 
 	      tdy->max_label = NULL;
 	    }
 	  tdy->max_label = prettyf(tdy->mhi, tdy->tens);
-	  tdy->max_label_width = number_width(ax, tdy->max_label);
+	  tdy->max_label_width = number_width(ss, tdy->max_label);
 	  tick_label_width = tdy->min_label_width;
 	  if (tick_label_width < tdy->max_label_width) 
 	    tick_label_width = tdy->max_label_width;
@@ -404,14 +407,14 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
 	      tdx->min_label = NULL;
 	    }
 	  tdx->min_label = prettyf(tdx->mlo, tdx->tens);
-	  tdx->min_label_width = number_width(ax, tdx->min_label);
+	  tdx->min_label_width = number_width(ss, tdx->min_label);
 	  if (tdx->max_label) 
 	    {
 	      FREE(tdx->max_label); 
 	      tdx->max_label = NULL;
 	    }
 	  tdx->max_label = prettyf(tdx->mhi, tdx->tens);
-	  tdx->max_label_width = number_width(ax, tdx->max_label);
+	  tdx->max_label_width = number_width(ss, tdx->max_label);
 	  tick_label_width = tdx->min_label_width;
 	  if (tick_label_width < tdx->max_label_width) 
 	    tick_label_width = tdx->max_label_width;
@@ -647,7 +650,6 @@ axis_info *make_axis_info (chan_info *cp, double xmin, double xmax, Float ymin, 
   else
     {
       ap = (axis_info *)CALLOC(1, sizeof(axis_info));
-      ap->ss = cp->state;
       ap->cp = cp;
     }
   ap->xmin = xmin;
@@ -770,8 +772,6 @@ x0 0.0, x1 1.0, y0 -1.0, y1 1.0, style x-axis-in-seconds, axes #t."
   ap = (axis_info *)CALLOC(1, sizeof(axis_info));
   ax = (axis_context *)CALLOC(1, sizeof(axis_context));
   ap->ax = ax;
-  ap->ss = get_global_state();
-  ax->ss = ap->ss;
   ax->dp = XtDisplay(w);
   ax->wn = XtWindow(w);
   ap->xmin = x0;

@@ -72,8 +72,6 @@ static void graph_redisplay(snd_state *ss)
       axis_ap = (axis_info *)CALLOC(1, sizeof(axis_info));
       ax = (axis_context *)CALLOC(1, sizeof(axis_context));
       axis_ap->ax = ax;
-      axis_ap->ss = ss;
-      ax->ss = ss;
     }
   else
     {
@@ -340,7 +338,12 @@ static void peaks_callback(GtkWidget *w, gpointer context)
   map_over_chans(ss, calculate_fft, NULL);
 }
 
-static int map_chans_fft_log_magnitude(chan_info *cp, void *ptr) {cp->fft_log_magnitude = (*((int *)ptr)); return(0);}
+static int map_chans_fft_log_magnitude(chan_info *cp, void *ptr) 
+{
+  cp->fft_log_magnitude = (*((int *)ptr)); 
+  cp->fft_changed = FFT_CHANGE_LOCKED;
+  return(0);
+}
 
 static void db_callback(GtkWidget *w, gpointer context)
 {
@@ -351,7 +354,12 @@ static void db_callback(GtkWidget *w, gpointer context)
   map_over_chans(ss, calculate_fft, NULL);
 }
 
-static int map_chans_fft_log_frequency(chan_info *cp, void *ptr) {cp->fft_log_frequency = (*((int *)ptr)); return(0);}
+static int map_chans_fft_log_frequency(chan_info *cp, void *ptr) 
+{
+  cp->fft_log_frequency = (*((int *)ptr)); 
+  cp->fft_changed = FFT_CHANGE_LOCKED;
+  return(0);
+}
 
 static void logfreq_callback(GtkWidget *w, gpointer context)
 {
@@ -362,7 +370,12 @@ static void logfreq_callback(GtkWidget *w, gpointer context)
   map_over_chans(ss, calculate_fft, NULL);
 }
 
-static int map_chans_transform_normalization(chan_info *cp, void *ptr) {cp->transform_normalization = (*((int *)ptr)); return(0);}
+static int map_chans_transform_normalization(chan_info *cp, void *ptr) 
+{
+  cp->transform_normalization = (*((int *)ptr)); 
+  cp->fft_changed = FFT_CHANGE_LOCKED;
+  return(0);
+}
 
 static void normalize_callback(GtkWidget *w, gpointer context)
 {

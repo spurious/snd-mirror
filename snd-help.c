@@ -100,9 +100,9 @@ static char *glx_version(void)
   if ((ss->sgx) && (ss->sgx->cx))
     {
       glXMakeCurrent(MAIN_DISPLAY(ss), XtWindow(ss->sgx->mainshell), ss->sgx->cx);
-      snprintf(version, 128, " %s", glGetString(GL_VERSION));
+      mus_snprintf(version, 128, " %s", glGetString(GL_VERSION));
     }
-  else snprintf(version, 128, " %d.%d", major, minor);
+  else mus_snprintf(version, 128, " %d.%d", major, minor);
   return(version);
 }
 #endif

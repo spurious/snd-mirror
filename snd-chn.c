@@ -1953,25 +1953,28 @@ void reset_spectro(snd_state *state)
 }
 
 #if HAVE_GL
-static void make_normal(Float x0, Float y0, Float z0, Float x1, Float y1, Float z1, Float x2, Float y2, Float z2)
+#if 0
+static void unproject(int x, int y)
 {
-  /* for lighting, 1 normal per polygon (not ideal, but this is an experiment...) */
-  Float xx0, xx1, yy0, yy1, zz0, zz1, nx, ny, nz, len;
-  xx0 = x0 - x1;
-  xx1 = x1 - x2;
-  yy0 = y0 - y1;
-  yy1 = y1 - y2;
-  zz0 = z0 - z1;
-  zz1 = z1 - z2;
-  nx = zz0 * yy1 - yy0 * zz1;
-  ny = xx0 * zz1 - zz0 * xx1;
-  nz = yy0 * xx1 - xx0 * yy1;
-  len = sqrt((nx * nx) + (ny * ny) + (nz * nz));
-  glNormal3f(nx / len, ny / len, nz / len);
+  /* taken from GL doc p152 */
+  GLint viewport[4];
+  GLdouble mv[16], proj[16];
+  GLint realy;
+  GLdouble wx, wy, wz;
+  glGetIntegerv(GL_VIEWPORT, viewport);
+  glGetDoublev(GL_MODELVIEW_MATRIX, mv);
+  glGetDoublev(GL_PROJECTION_MATRIX, proj);
+  realy = viewport[3] - (GLint)y - 1;
+  gluUnProject((GLdouble)x, (GLdouble)realy, 0.0, mv, proj, viewport, &wx, &wy, &wz);
+  fprintf(stderr,"z0: %f %f %f\n", wx, wy, wz);
+  gluUnProject((GLdouble)x, (GLdouble)realy, 1.0, mv, proj, viewport, &wx, &wy, &wz);
+  fprintf(stderr,"z1: %f %f %f\n", wx, wy, wz);
 }
+#endif
 #endif
 
 static void display_channel_time_data(chan_info *cp, snd_info *sp, snd_state *ss);
+static void make_axes(chan_info *cp, axis_info *ap, int x_style, int erase_first);
 static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 {
   sono_info *si;
@@ -1989,36 +1992,34 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
   if ((si) && (si->scale > 0.0))
     {
 #if HAVE_GL
+      /* experiments with lighting were a bust -- does not improve things (ditto fog) */
       /* TODO: draggable y axis (within_graph below depends on x_axis_x0 et al set in make_axes_1 in snd-axis.c)
 	 TODO: axis ticks and labels
 	 TODO: multi-channel (combined) gl spectros (interaction with lisp graphs?)
-	 TODO: gl sonogram
 	 TODO: wavogram display list? [time-changed flag]
 	 TODO: gl xrec labels
-	 TODO: lighting?, texture?
 	 SOMEDAY: editable spectrogram (select, apply any selection-proc)
 	 TODO: fix the regraph problem (glClear of partial window?)
 	 TODO: printing support (doesn't GL->ps already exist?)
-	 TODO: semi-transparent coloring for spectrogram
-	 TODO: configure --with-just-gl on SGI
-	 SOMEDAY: gl in gtk [GtkGLArea widget, http://www.student.oulu.fi/~jlof/gtkglarea/index.html]
-	 TODO: two[four-wavo too] sets of spectro-defaults (currently toggling with-gl = silly output)
-	 TODO: special log axis cases:
-	      binval = fdata[i] / scl;
-	      if (cp->fft_log_magnitude) binval = 1.0 - (cp_dB(cp, binval)) / cp->min_dB;
-	 TODO: glLightfv needed in gl.c
+	 TODO: BUTTON or SCALE: semi-transparent coloring for spectrogram -- make this an option
+	 TODO: BUTTON to toggle with-gl
+	 TODO: BUTTONS: two[four-wavo too] sets of spectro-defaults (currently toggling with-gl = silly output)
+	 TODO: glLightfv needed in gl.c (and others -- is there a max size?)
+	 TODO: y axis is clipped in front
+	 TODO: with-gl in configure only if have-motif
+	 TODO: texture as topographic grid?
       */
       if (((sp->nchans == 1) || (sp->channel_style == CHANNELS_SEPARATE)) &&
 	  (color_map(ss) != BLACK_AND_WHITE) &&
 	  (with_gl(ss)))
 	{
-	  int with_light = 0;
 	  float x1, y1, inv_scl;
 	  unsigned short br = 65535, bg = 65535, bb = 65535;
 	  int **js = NULL;
 	  inv_scl = 1.0 / si->scale; /* unnormalized fft doesn't make much sense here (just washes out the graph) */
 	  fp = cp->fft;
 	  fap = fp->axis;
+
 	  if (cp->gl_fft_list == NO_LIST) 
 	    cp->gl_fft_list = (int)glGenLists(1);
 	  /* 0 is possible list id! In Mesa these are simply keys into a hash table --
@@ -2040,8 +2041,16 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	      for (i = 0; i < si->active_slices; i++)
 		{
 		  js[i] = (int *)CALLOC(bins, sizeof(int));
-		  for (j = 0; j < bins; j++)
-		    js[i][j] = skew_color(ss, si->data[i][j] * inv_scl); /* can be NO_COLOR (-1) */
+		  if (cp->fft_log_magnitude) 
+		    {
+		      for (j = 0; j < bins; j++)
+			js[i][j] = skew_color(ss, 1.0 - (cp_dB(cp, si->data[i][j] * inv_scl)) / cp->min_dB);
+		    }
+		  else
+		    {
+		      for (j = 0; j < bins; j++)
+			js[i][j] = skew_color(ss, si->data[i][j] * inv_scl); /* can be NO_COLOR (-1) */
+		    }
 		}
 	    }
 	  glXMakeCurrent(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)), ss->sgx->cx);
@@ -2049,7 +2058,11 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	  /* glDepthFunc(GL_LEQUAL); */
 	  glShadeModel(GL_SMOOTH);
 	  glClearDepth(1.0);
-#if HAVE_MOTIF
+#if 0
+	  glEnable(GL_BLEND);
+	  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+#endif
+
 	  {
 	    /* a kludge for the background color */
 	    Colormap cmap;
@@ -2070,47 +2083,12 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 			 (float)tmp_color.blue / 65535.0,
 			 0.0);
 	  }
-#else
-	  glClearColor(1.0, 1.0, 1.0, 0.0);
-#endif
-	  if (with_light)
-	    {
-	      GLfloat amb[] = {0.1, 0.1, 0.1, 1.0};
-	      GLfloat dif[] = {1.0, 1.0, 1.0, 1.0};
-	      GLfloat lpos[] = {1.0, 1.0, 1.0, 0.0};
-	      glLightModelfv(GL_LIGHT_MODEL_AMBIENT, amb);
-	      glLightfv(GL_LIGHT0, GL_AMBIENT, amb);
-	      glLightfv(GL_LIGHT0, GL_DIFFUSE, dif);
-	      glLightfv(GL_LIGHT0, GL_SPECULAR, dif);
-	      glLightfv(GL_LIGHT0, GL_POSITION, lpos);
-	      glMaterialfv(GL_FRONT, GL_AMBIENT, dif);
-	      glMaterialfv(GL_FRONT, GL_DIFFUSE, dif);
-	      glMaterialfv(GL_FRONT, GL_SPECULAR, dif);
-	      glMaterialf(GL_FRONT, GL_SHININESS, 50.0);
-	      glEnable(GL_LIGHTING);
-	      glEnable(GL_LIGHT0);
-	      /* glEnable(GL_NORMALIZE); */ /* or GL_RESCALE_NORMAL */
-	    }
+
 	  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	  if (cp->fft_changed == FFT_CHANGED)
 	    {
 	      glNewList((GLuint)(cp->gl_fft_list), GL_COMPILE);
-	      /* a kludge for some axes */
-	      glBegin(GL_POLYGON);
-	      glColor3f(0.0, 0.0, 0.0);
-	      glVertex3f(-0.51, 0.0, -0.51);
-	      glVertex3f(0.51, 0.0, -0.51);
-	      glVertex3f(0.51, 0.0, -0.52);
-	      glVertex3f(-0.51, 0.0, -0.52);
-	      glEnd();
-	      glBegin(GL_POLYGON);
-	      glColor3f(0.0, 0.0, 0.0);
-	      glVertex3f(-0.51, 0.0, -0.51);
-	      glVertex3f(-0.51, 0.0, 0.51);
-	      glVertex3f(-0.52, 0.0, 0.51);
-	      glVertex3f(-0.52, 0.0, -0.51);
-	      glEnd();
-	      
+
 	      xincr = 1.0 / (float)(si->active_slices);
 	      yincr = 1.0 / (float)bins;
 	      for (x0 = -0.5, slice = 0; slice < si->active_slices - 1; slice++, x0 += xincr)
@@ -2118,22 +2096,31 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 		  for (i = 0, y0 = -0.5; i < bins - 1; i++, y0 += yincr)
 		    {
 		      unsigned short r, g, b;
+		      Float val00, val01, val11, val10;
 		      glBegin(GL_POLYGON);
 		      x1 = x0 + xincr;
 		      y1 = y0 + yincr;
-		  
-		      if (with_light)
-			make_normal(x0, y0, si->data[slice][i],
-				    x1, y0, si->data[slice + 1][i],
-				    x1, y1, si->data[slice + 1][i + 1]);
 		      
+		      val00 = si->data[slice][i] * inv_scl;
+		      val01 = si->data[slice][i + 1] * inv_scl;
+		      val10 = si->data[slice + 1][i] * inv_scl;
+		      val11 = si->data[slice + 1][i + 1] * inv_scl;
+
+		      if (cp->fft_log_magnitude) 
+			{
+			  val00 = 1.0 - (cp_dB(cp, val00)) / cp->min_dB;
+			  val01 = 1.0 - (cp_dB(cp, val01)) / cp->min_dB;
+			  val10 = 1.0 - (cp_dB(cp, val10)) / cp->min_dB;
+			  val11 = 1.0 - (cp_dB(cp, val11)) / cp->min_dB;
+			}
+#if 1
 		      if (js[slice][i] != NO_COLOR)
 			{
 			  get_current_color(color_map(ss), js[slice][i], &r, &g, &b);
 			  glColor3us(r, g, b);
 			}
 		      else glColor3us(br, bg, bb);
-		      glVertex3f(x0, (si->data[slice][i] * inv_scl), y0);
+		      glVertex3f(x0, val00, y0);
 		      
 		      if (js[slice + 1][i] != NO_COLOR)
 			{
@@ -2141,7 +2128,7 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 			  glColor3us(r, g, b);
 			}
 		      else glColor3us(br, bg, bb);
-		      glVertex3f(x1, (si->data[slice + 1][i] * inv_scl), y0);
+		      glVertex3f(x1, val10, y0);
 		  
 		      if (js[slice + 1][i + 1] != NO_COLOR)
 			{
@@ -2149,7 +2136,7 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 			  glColor3us(r, g, b);
 			}
 		      else glColor3us(br, bg, bb);
-		      glVertex3f(x1, (si->data[slice + 1][i + 1] * inv_scl), y1);
+		      glVertex3f(x1, val11, y1);
 		  
 		      if (js[slice][i + 1] != NO_COLOR)
 			{
@@ -2157,8 +2144,40 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 			  glColor3us(r, g, b);
 			}
 		      else glColor3us(br, bg, bb);
-		      glVertex3f(x0, (si->data[slice][i + 1] * inv_scl), y1);
+		      glVertex3f(x0, val01, y1);
+#else
+		      if (js[slice][i] != NO_COLOR)
+			{
+			  get_current_color(color_map(ss), js[slice][i], &r, &g, &b);
+			  glColor4us(r, g, b, 32000);
+			}
+		      else glColor3us(br, bg, bb);
+		      glVertex3f(x0, val00, y0);
 		      
+		      if (js[slice + 1][i] != NO_COLOR)
+			{
+			  get_current_color(color_map(ss), js[slice + 1][i], &r, &g, &b);
+			  glColor4us(r, g, b, 32000);
+			}
+		      else glColor3us(br, bg, bb);
+		      glVertex3f(x1, val10, y0);
+		  
+		      if (js[slice + 1][i + 1] != NO_COLOR)
+			{
+			  get_current_color(color_map(ss), js[slice + 1][i + 1], &r, &g, &b);
+			  glColor4us(r, g, b, 32000);
+			}
+		      else glColor3us(br, bg, bb);
+		      glVertex3f(x1, val11, y1);
+		  
+		      if (js[slice][i + 1] != NO_COLOR)
+			{
+			  get_current_color(color_map(ss), js[slice][i + 1], &r, &g, &b);
+			  glColor4us(r, g, b, 32000);
+			}
+		      else glColor3us(br, bg, bb);
+		      glVertex3f(x0, val01, y1);
+#endif		      
 		      glEnd();
 		    }
 		}
@@ -2173,6 +2192,26 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	  glRotatef(cp->spectro_z_angle, 0.0, 0.0, 1.0);
 	  glScalef(cp->spectro_x_scale, cp->spectro_y_scale, cp->spectro_z_scale);
 	  glCallList((GLuint)(cp->gl_fft_list));
+
+	      /* a kludge for some axes */
+	      glBegin(GL_POLYGON);
+	      glColor3f(0.0, 0.0, 0.0);
+	      glVertex3f(-0.52, 0.0, -0.51);
+	      glVertex3f(0.51, 0.0, -0.51);
+	      glVertex3f(0.51, 0.0, -0.52);
+	      glVertex3f(-0.52, 0.0, -0.52);
+	      glEnd();
+	      glBegin(GL_POLYGON);
+	      glColor3f(0.0, 0.0, 0.0);
+	      glVertex3f(-0.51, 0.0, -0.51);
+	      glVertex3f(-0.51, 0.0, 0.51);
+	      glVertex3f(-0.52, 0.0, 0.51);
+	      glVertex3f(-0.52, 0.0, -0.51);
+	      glEnd();
+	      /* fap->use_gl = TRUE; */
+	      /* make_axes(cp, fap, X_AXIS_IN_SECONDS, FALSE); */
+	      /* fap->use_gl = FALSE; */
+
 	  if (ss->gl_has_double_buffer)
 	    glXSwapBuffers(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)));
 	  else glFlush();
@@ -2187,11 +2226,7 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	      for (i = 0; i < si->active_slices; i++) FREE(js[i]);
 	      FREE(js);
 	    }
-#if HAVE_MOTIF
 	  return(XtAppPending(MAIN_APP(ss)) == 0); /* return true if there are no pending events to force current buffer to be displayed */
-#else
-	  return(TRUE);
-#endif
 	}
 #endif
       if (cp->printing) ps_allocate_grf_points();
@@ -2668,7 +2703,6 @@ static void make_axes(chan_info *cp, axis_info *ap, int x_style, int erase_first
     {
       ax = (axis_context *)CALLOC(1, sizeof(axis_context));
       ap->ax = ax;
-      ax->ss = ss;
     }
   else ax = ap->ax;
   sp = cp->sound;

@@ -1178,6 +1178,7 @@ void fht(int powerOfFour, Float *array)
 	      a1 = (int) (k * n_over_d3) % n;
 	      a2 = (a1 + a1) % n;
 	      a3 = (a1 + a2) % n;
+	      /* TODO: get rid of this silly table! */
 	      t5 = array[L2] * fht_cosines[a1] + array[L6] * fht_sines[a1];
 	      t6 = array[L3] * fht_cosines[a2] + array[L7] * fht_sines[a2];
 	      t7 = array[L4] * fht_cosines[a3] + array[L8] * fht_sines[a3];
@@ -1232,7 +1233,7 @@ void fht(int powerOfFour, Float *array)
  *
  * Bill says:
  *   this is slightly (15-20%) faster than the fht above for small ffts (smaller than 16384 samples)
- *   it slows down radically (factor of 2) on big arrays, and returns bogus results
+ *   it slows down radically (factor of 2) on big arrays, and returns bogus results -- perhaps real sin/cos would fix it
  *   it is not restricted to powers of 4 (hence its use in snd-fft.c)
  */
 

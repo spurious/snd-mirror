@@ -1900,7 +1900,7 @@ changed back to waveshaping in this version.
 The basic idea is that each of the three vocal formants is created by two
 sets of waveshapers, one centered on the even multiple of the base frequency closest to the desired formant frequency,
 and the other on the nearest odd multiple.  As the base frequency moves (vibrato, glissando),
-these center frequencies are recalculated (one each sample), and the respective amplitudes
+these center frequencies are recalculated (on each sample), and the respective amplitudes
 set from the distance to the desired frequency.  If a center frequency moves (for example,
 the base frequency moves down far enough that the previous upper member of the pair has
 to become the lower member), the upper waveshaper (which has ramped to zero amplitude), jumps

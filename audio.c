@@ -1502,7 +1502,20 @@ int mus_audio_oss_buffer_size(void)
 {
   if (fragments_locked)
     return(FRAGMENTS * (1 << FRAGMENT_SIZE));
-  else return(16 * 4096); /* TODO: need to readback the default setting, not assume it (and are these bytes?) */
+  else return(16 * 4096); 
+#if 0
+/* TODO: need to readback the default setting, not assume it (preferably without screwing up ongoing playback) */
+#ifdef SNDCTL_DSP_GETOSPACE
+  /* 2048 * 64 -- these are bytes */
+  audio_buf_info abi;
+  fd = linux_audio_open(dsp_name, O_RDWR, 0, 0);
+  if (fd == -1) fd = linux_audio_open(DAC_NAME, O_WRONLY, 0, 0);
+  if (fd == -1) return(16 * 4096);
+  ioctl(fd, SNDCTL_DSP_GETOSPACE, &abi);
+  linux_audio_close(fd);
+  return(abi.fragments * abi.fragsize / 2); /* 2=assumed datum size */
+#endif
+#endif
 }
 /* SOMEDAY: these should be set per-card, not globally */
 

@@ -112,8 +112,10 @@ int set_axis_numbers_font(snd_state *ss, char *font)
 
 void activate_numbers_font(axis_context *ax)
 {
-  SG_SET_FONT(ax->gc, AXIS_NUMBERS_FONT(ax->ss));
-  ax->current_font = AXIS_NUMBERS_FONT(ax->ss);
+  snd_state *ss;
+  ss = get_global_state();
+  SG_SET_FONT(ax->gc, AXIS_NUMBERS_FONT(ss));
+  ax->current_font = AXIS_NUMBERS_FONT(ss);
 }
    
 void activate_button_font(axis_context *ax, snd_state *ss)
@@ -124,14 +126,16 @@ void activate_button_font(axis_context *ax, snd_state *ss)
 
 void activate_label_font(axis_context *ax)
 {
-  SG_SET_FONT(ax->gc, AXIS_LABEL_FONT(ax->ss));
-  ax->current_font = AXIS_LABEL_FONT(ax->ss);
+  snd_state *ss;
+  ss = get_global_state();
+  SG_SET_FONT(ax->gc, AXIS_LABEL_FONT(ss));
+  ax->current_font = AXIS_LABEL_FONT(ss);
 }
 
-int label_width(axis_context *ax, char *txt)
+int label_width(snd_state *ss, char *txt)
 {
   if (txt)
-    return(SG_TEXT_WIDTH(txt, AXIS_LABEL_FONT(ax->ss)));
+    return(SG_TEXT_WIDTH(txt, AXIS_LABEL_FONT(ss)));
   else return(0);
 }
 
@@ -143,31 +147,31 @@ int mark_name_width(snd_state *ss, char *txt)
 }
 
 
-int number_width(axis_context *ax, char *num)
+int number_width(snd_state *ss, char *num)
 {
   if (num)
-    return(SG_TEXT_WIDTH(num, AXIS_NUMBERS_FONT(ax->ss)));
+    return(SG_TEXT_WIDTH(num, AXIS_NUMBERS_FONT(ss)));
   return(0);
 }
 
-int number_height(axis_context *ax)
+int number_height(snd_state *ss)
 {
   gint lb, rb, asc, des, wid;
 #if HAVE_GTK2
-  gdk_text_extents(gdk_font_from_description(AXIS_NUMBERS_FONT(ax->ss)), "1", 1, &lb, &rb, &wid, &asc, &des);
+  gdk_text_extents(gdk_font_from_description(AXIS_NUMBERS_FONT(ss)), "1", 1, &lb, &rb, &wid, &asc, &des);
 #else
-  gdk_text_extents(AXIS_NUMBERS_FONT(ax->ss), "1", 1, &lb, &rb, &wid, &asc, &des);
+  gdk_text_extents(AXIS_NUMBERS_FONT(ss), "1", 1, &lb, &rb, &wid, &asc, &des);
 #endif
   return(asc + des);
 }
 
-int label_height(axis_context *ax)
+int label_height(snd_state *ss)
 {
   gint lb, rb, asc, des, wid;
 #if HAVE_GTK2
-  gdk_text_extents(gdk_font_from_description(AXIS_LABEL_FONT(ax->ss)), "1", 1, &lb, &rb, &wid, &asc, &des);
+  gdk_text_extents(gdk_font_from_description(AXIS_LABEL_FONT(ss)), "1", 1, &lb, &rb, &wid, &asc, &des);
 #else
-  gdk_text_extents(AXIS_LABEL_FONT(ax->ss), "1", 1, &lb, &rb, &wid, &asc, &des);
+  gdk_text_extents(AXIS_LABEL_FONT(ss), "1", 1, &lb, &rb, &wid, &asc, &des);
 #endif
   return(asc + des);
 }
@@ -532,9 +536,11 @@ void set_widget_position(GtkWidget *w, gint16 x, gint16 y)
 
 void fixup_axis_context(axis_context *ax, GtkWidget *w, GdkGC *gc)
 {
+  snd_state *ss;
+  ss = get_global_state();
   ax->wn = w->window;
   if (gc) ax->gc = gc;
-  ax->current_font = AXIS_NUMBERS_FONT(ax->ss);
+  ax->current_font = AXIS_NUMBERS_FONT(ss);
 }
 
 static GtkObject **our_objects;

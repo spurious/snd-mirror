@@ -3031,7 +3031,7 @@ void progress_report(snd_info *sp, const char *funcname, int curchan, int chans,
   else snd_file_glasses_icon(sp, TRUE, which);
   if (chans > 1) 
     {
-      snprintf(glass_num, 8, "[%d]", curchan);
+      mus_snprintf(glass_num, 8, "[%d]", curchan);
       make_minibuffer_label(sp, glass_num);
     }
 #else

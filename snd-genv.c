@@ -44,7 +44,7 @@ chan_info *enved_make_axis_cp(snd_state *ss, char *name, axis_context *ax,
     }
   if (!gray_ap) 
     {
-      gray_ap = new_wave_axis(ss);
+      gray_ap = new_wave_axis();
       fixup_axis_context(gray_ap->ax, drawer, ggc);
     }
   init_env_axes(axis_cp, name, ex0, ey0, width, height, xmin, xmax, ymin, ymax);

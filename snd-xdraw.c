@@ -1,8 +1,5 @@
 #include "snd.h"
 
-/* SOMEDAY: bottom-lit spectrogram 
- */
-
 void draw_line (axis_context *ax, int x0, int y0, int x1, int y1) 
 {
   XDrawLine(ax->dp, ax->wn, ax->gc, x0, y0, x1, y1);

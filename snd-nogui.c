@@ -147,10 +147,10 @@ int set_axis_numbers_font(snd_state *ss, char *font) {ss->Axis_Numbers_Font = fo
 void activate_numbers_font(axis_context *ax) {}
 void activate_label_font(axis_context *ax) {}
 void activate_button_font(axis_context *ax, snd_state *ss) {}
-int label_width(axis_context *ax, char *txt) {return(0);}
-int number_width(axis_context *ax, char *num) {return(0);}
-int number_height(axis_context *ax) {return(0);}
-int label_height(axis_context *ax) {return(0);}
+int label_width(snd_state *ss, char *txt) {return(0);}
+int number_width(snd_state *ss, char *num) {return(0);}
+int number_height(snd_state *ss) {return(0);}
+int label_height(snd_state *ss) {return(0);}
 int mark_name_width(snd_state *ss, char *txt) {return(0);}
 void clear_window(axis_context *ax) {}
 void highlight_color(snd_state *ss, int w) {}

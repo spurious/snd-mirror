@@ -251,7 +251,7 @@ static void sp_make_axis_cp(snd_info *sp, char *name, int ex0, int ey0, int widt
     }
   if (!(spf->gray_ap)) 
     {
-      spf->gray_ap = new_wave_axis(ss);
+      spf->gray_ap = new_wave_axis();
       fixup_axis_context(spf->gray_ap->ax, 
 			 filter_graph(sp), 
 			 (ss->sgx)->fltenv_data_gc);
@@ -527,22 +527,18 @@ chan_info *new_env_axis(snd_state *ss)
   acp->axis = ap;
   ax = (axis_context *)CALLOC(1, sizeof(axis_context));
   ap->ax = ax;
-  ap->ss = ss;
   ap->cp = acp;
-  ax->ss = ss;
   return(acp);
 }
 
-axis_info *new_wave_axis(snd_state *ss)
+axis_info *new_wave_axis(void)
 {
   axis_info *gap;
   axis_context *gray_ax;
   gap = (axis_info *)CALLOC(1, sizeof(axis_info));
   gray_ax = (axis_context *)CALLOC(1, sizeof(axis_context));
   gap->ax = gray_ax;
-  gap->ss = ss;
   gap->graph_active = 1;
-  gray_ax->ss = ss;
   return(gap);
 }
 
