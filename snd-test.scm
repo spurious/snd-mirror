@@ -10821,6 +10821,11 @@ EDITS: 5
 	    (if (or (fneq (vct-ref v2 3) 2.0) (fneq (vct-ref v2 2) 1.0))
 		(snd-display ";vct-move! back: ~A?" v2)))
 	  
+	  (if (not (vequal (vct 4 3 2 1) (vct-reverse! (vct 1 2 3 4)))) (snd-display ";vct-reverse: ~A" (vct-reverse! (vct 1 2 3 4))))
+	  (if (not (vequal (vct 3 2 1) (vct-reverse! (vct 1 2 3)))) (snd-display ";vct-reverse: ~A" (vct-reverse! (vct 1 2 3))))
+	  (if (not (vequal (vct 2 1) (vct-reverse! (vct 1 2)))) (snd-display ";vct-reverse: ~A" (vct-reverse! (vct 1 2))))
+	  (if (not (vequal (vct 1) (vct-reverse! (vct 1)))) (snd-display ";vct-reverse: ~A" (vct-reverse! (vct 1))))
+
 	  (let ((v0 (make-vct 3)))
 	    (let ((var (catch #t (lambda () (vct-ref v0 10)) (lambda args args))))
 	      (if (not (eq? (car var) 'out-of-range))
@@ -16528,6 +16533,33 @@ EDITS: 5
 						    0)))))
 	    (if (or (< (/ (maxamp) mx) 3.0) (> (/ mx (maxamp)) 6.0))
 		(snd-display ";gran edit 4* (2): ~A ~A" mx (maxamp)))))
+	(close-sound ind))
+
+      (let ((ind (open-sound "oboe.snd")))
+	(let ((grn (make-granulate :expansion 2.0 :length .01 :hop .05))
+	      (rd (make-sample-reader 0)))
+	  (map-channel (lambda (y) (granulate grn (lambda (dir) (rd)))))
+	  (let ((mx (maxamp)))
+	    (if (> mx .2) (snd-display ";trouble in granulate len .01 hop .05: ~A" mx))
+	    (undo)))
+	(let ((grn (make-granulate :expansion 2.0 :length .04 :hop .05))
+	      (rd (make-sample-reader 0)))
+	  (map-channel (lambda (y) (granulate grn (lambda (dir) (rd)))))
+	  (let ((mx (maxamp)))
+	    (if (> mx .2) (snd-display ";trouble in granulate len .04 hop .05: ~A" mx))
+	    (undo)))
+	(let ((grn (make-granulate :expansion 2.0 :length .01 :hop .25))
+	      (rd (make-sample-reader 0)))
+	  (map-channel (lambda (y) (granulate grn (lambda (dir) (rd)))))
+	  (let ((mx (maxamp)))
+	    (if (> mx .2) (snd-display ";trouble in granulate len .01 hop .25: ~A" mx))
+	    (undo)))
+	(let ((grn (make-granulate :expansion 2.0 :length .4 :hop .5))
+	      (rd (make-sample-reader 0)))
+	  (map-channel (lambda (y) (granulate grn (lambda (dir) (rd)))))
+	  (let ((mx (maxamp)))
+	    (if (> mx .2) (snd-display ";trouble in granulate len .4 hop .5: ~A" mx))
+	    (undo)))
 	(close-sound ind))
 
       (let* ((v0 (make-vct 32))
@@ -49425,7 +49457,7 @@ EDITS: 2
 		     sum-of-cosines? sum-of-sines? ssb-am? table-lookup table-lookup? tap triangle-wave triangle-wave? two-pole two-pole? two-zero
 		     two-zero? wave-train wave-train?  waveshape waveshape?  make-vct vct-add! vct-subtract!  vct-copy
 		     vct-length vct-multiply! vct-offset! vct-ref vct-scale! vct-fill! vct-set! mus-audio-describe vct-peak
-		     vct? list->vct vct->list vector->vct vct->vector vct-move!  vct-subseq vct little-endian?
+		     vct? list->vct vct->list vector->vct vct->vector vct-move! vct-reverse! vct-subseq vct little-endian?
 		     clm-channel env-channel map-channel scan-channel play-channel reverse-channel seconds->samples samples->seconds
 		     smooth-channel vct->channel channel->vct src-channel scale-channel ramp-channel pad-channel
 		     cursor-position clear-listener mus-sound-prune mus-sound-forget xramp-channel ptree-channel

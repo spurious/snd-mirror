@@ -842,15 +842,11 @@ load <i>len</i> samples of <i>filename</i> into <i>vct</i> starting at frame <i>
 <tr><td><a href="clm.html#file-&gt;sample">file-&gt;sample</a></td><td>(gen loc <i>(chan 0)</i>)</td><td>return sample from file at loc</td></tr>
 <tr><td><a href="clm.html#file-&gt;sample?">file-&gt;sample?</a></td><td>(gen)</td><td>#t if gen is file-&gt;sample generator</td></tr>
 <tr><td><a href="clm.html#filter">filter</a></td><td>(gen input)</td><td>filter</td></tr>
-
 <tr><td></td><td colspan=2><br>
-<small>
-In Guile an unrelated function named <b>filter</b> is defined in and exported from oop/goops/util.scm.
-No attempt is made to protect it.
-</small>
+Some versions of Guile define an unrelated function named <b>filter</b>.
+It is renamed <b>%filter</b>, if it is noticed in time.
 </td></tr>
 <tr><td colspan=3><br></td></tr>
-
 <tr><td><a href="clm.html#filter?">filter?</a></td><td>(gen)</td><td>#t if gen is filter</td></tr>
 <tr><td><a href="clm.html#fir-filter">fir-filter</a></td><td>(gen input)</td><td>FIR filter</td></tr>
 <tr><td><a href="clm.html#fir-filter?">fir-filter?</a></td><td>(gen)</td><td>#t if gen is fir filter</td></tr>

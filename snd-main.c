@@ -1078,6 +1078,9 @@ void g_init_main(void)
 {
   XEN_DEFINE_PROCEDURE(S_save_options, g_save_options_w, 1, 0, 0, H_save_options);
   XEN_DEFINE_PROCEDURE(S_save_state,   g_save_state_w,   1, 0, 0, H_save_state);
+#if HAVE_GUILE
+  XEN_EVAL_C_STRING("(define %exit exit)");
+#endif
   XEN_DEFINE_PROCEDURE(S_exit,         g_exit_w,         0, 1, 0, H_exit);
 
   #define H_start_hook S_start_hook " (filename): called upon start-up. If it returns #t, snd exits immediately."

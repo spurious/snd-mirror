@@ -2164,6 +2164,10 @@ is the same as <code>(<a class=quiet href="#vctfill">vct-fill!</a> v 3.0)</code>
 <tr><td colspan=2><code><a class=def name="vctref">vct-ref</a> (v pos)</code></td></tr>
 <tr><td></td><td>element <i>pos</i> in <i>v</i>: <code>v[pos]</code>.</td></tr>
 
+<!-- vct-reverse! -->
+<tr><td colspan=2><code><a class=def name="vctreverse">vct-reverse!</a> (v)</code></td></tr>
+<tr><td></td><td>reverse contents of v (in-place), return v</td></tr>
+
 <!-- vct-scale! -->
 <tr><td colspan=2><code><a class=def name="vctscale">vct-scale!</a> (v scl)</code></td></tr>
 <tr><td></td><td>multiply each element of <i>v</i> by <i>scl</i>: <code>v[i] *= scl</code>, returns v.</td></tr>
@@ -2731,22 +2735,26 @@ and <i>read-track-sample</i>.
 <td>return a copy of <i>obj</i> (any kind of sample-reader).
 <br>
 <br>
+<!-- INDEX copying:Copying -->
+<A NAME="copying"></a>
 <TABLE border=3 bordercolor="tan" hspace=40><tr><td>
 <blockquote><small>
 <br>
 copy file: in Guile: copy-file, in Ruby: File.copy or File.syscopy<br>
-copy string: in Guile: string-copy.<br>
-copy list: in Guile: list-copy.<br>
-copy vct: <a href="#vctcopy">vct-copy</a><br>
-copy mix: <a href="#copymix">copy-mix</a><br>
-copy track: <a href="#copytrack">copy-track</a><br>
+copy string: in Guile: string-copy<br>
+copy list: in Guile: list-copy or copy-tree<br>
+copy vct: <a href="#vctcopy">vct-copy</a>, <a href="#vct_to_vector">vct-&gt;vector</a><br>
+copy mix: <a href="#copymix">copy-mix</a>, <a href="sndscm.html#mix2vct">mix-&gt;vct</a><br>
+copy track: <a href="#copytrack">copy-track</a>, <a href="sndscm.html#track2vct">track-&gt;vct</a><br>
 copy sample reader: <a href="#copysamplereader">copy-sample-reader</a><br>
 copy (clone) current sound edit state: <a href="#clonesoundas">clone-sound-as</a><br>
-copy channel data: <a href="#channel_to_vct">channel-&gt;vct</a> or <a href="#savesoundas">save-sound-as</a><br>
+copy channel data: <a href="#channel_to_vct">channel-&gt;vct</a>,  <a href="#samples_to_vct">samples-&gt;vct</a>, or <a href="#savesoundas">save-sound-as</a><br>
 copy selection data: <a href="#selection2vct">selection-&gt;vct</a> or <a href="#saveselection">save-selection</a><br>
 copy region data: <a href="#region2vct">region-&gt;vct</a>, <a href="#regionsamples_to_vct">region-samples-&gt;vct</a>, or <a href="#saveregion">save-region</a><br>
 copy transform data: <a href="#transformsamples_to_vct">transform-samples-&gt;vct</a><br>
 copy sound-data: <a href="#sounddata2vct">sound-data-&gt;vct</a><br>
+copy vector: <a href="#vector_to_vct">vector-&gt;vct</a><br>
+copy random state: Guile: copy-random-state, or use <a href="clm.html#mus-set-rand-seed">mus-rand-seed</a><br>
 <br>
 </small></blockquote>
 </td></tr></TABLE>
@@ -3358,7 +3366,7 @@ mix so that it can be easily moved around.
 <TABLE border=3 bordercolor="tan" hspace=40><tr><td>
 <blockquote><small>
 <br>
-mix sound file: <a href="#mix">mix</a> or drag-and-drop it where you want it mixed.<br>
+mix sound file: <a href="#mix">mix</a> or drag-and-drop it where you want it mixed<br>
 mix channel: see <a href="sndscm.html#mixchannel">mix-channel</a> in extensions.scm<br>
 mix region: <a href="#mixregion">mix-region</a><br>
 mix selection: <a href="#mixselection">mix-selection</a><br>
@@ -3728,7 +3736,6 @@ args (that is, they are normal keyword arguments, but the keywords are optional)
 <!-- INDEX regionstuff:Regions -->
 <TABLE border=3 bordercolor="tan" hspace=40><tr><td>
 <small><blockquote>
-See also:<br>
 Max length of region list: <a href="#maxregions">max-regions</a><br>
 Whether selection creates a region: <a href="#selectioncreatesregion">selection-creates-region</a><br>
 To play region repeatedly: <a href="sndscm.html#explayregionforever">play-region-forever</a><br>
@@ -3936,7 +3943,6 @@ this is the same as <i>src-sound</i> but applied to selection.
 <!-- INDEX selectionstuff:Selections -->
 <TABLE border=3 bordercolor="tan" hspace=40><tr><td>
 <small><blockquote>
-See also:<br>
 color of selected portion: <a href="#selectioncolor">selection-color</a><br>
 set whether creating a selection creates a region: <a href="#selectioncreatesregion">selection-creates-region</a><br>
 fft graph refers to the selection: <a href="#lshowselectiontransform">show-selection-transform</a><br>
@@ -4449,12 +4455,12 @@ try <code>(set! (cursor-location-offset) (* 4 (expt 2 11)))</code>.
 <TABLE border=3 bordercolor="tan" hspace=40><tr><td>
 <blockquote><small>
 <br>
-play from the current cursor position with a tracking cursor:  <a href="#pfc">pfc</a>.<br>
-display tracking cursor as a full height vertical line: <a href="#cursorstyle">cursor-style</a>.<br>
-track play once: control-click 'play'. (You can add a mark at the current tracking cursor location during the play with C-m).<br>
-leave the cursor at the final position after tracking play: if-cursor-follows-play-it-stays-where-play-stopped in examp.scm.<br>
-tracking cursor accuracy: <a href="#cursorlocationoffset">cursor-location-offset</a>.<br>
-tracking cursor updating: <a href="#cursorupdateinterval">cursor-update-interval</a>.<br>
+play from the current cursor position with a tracking cursor:  <a href="#pfc">pfc</a><br>
+display tracking cursor as a full height vertical line: <a href="#cursorstyle">cursor-style</a><br>
+track play once: control-click 'play'. (You can add a mark at the current tracking cursor location during the play with C-m)<br>
+leave the cursor at the final position after tracking play: if-cursor-follows-play-it-stays-where-play-stopped in examp.scm<br>
+tracking cursor accuracy: <a href="#cursorlocationoffset">cursor-location-offset</a><br>
+tracking cursor updating: <a href="#cursorupdateinterval">cursor-update-interval</a><br>
 <br>
 </small></blockquote>
 </td></tr></TABLE>
@@ -4641,16 +4647,18 @@ delete sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
 <br><br>
 <TABLE border=3 bordercolor="tan" hspace=40><tr><td>
 <small><blockquote>
-delete a file: use the Guile function delete-file or Ruby's File.delete.<br>
+delete a file: use the Guile function delete-file or Ruby's File.delete<br>
 delete a region: <a href="#forgetregion">forget-region</a><br>
 delete the currently selected samples: <a href="#deleteselection">delete-selection</a><br>
 delete the selection and smooth the splice: <a href="sndscm.html#exdeleteselectionandsmooth">delete-selection-and-smooth</a><br>
 delete a mix or all mixes: <a href="#deletemix">delete-mix</a><br>
 delete a track or all tracks: <a href="#deletetrack">delete-track</a><br>
 delete a mark or all marks: <a href="#deletemark">delete-mark</a><br>
+delete a colormap: <a href="#deletecolormap">delete-colormap</a><br>
 remove a file from the sound cache: <a href="#soundforget">mus-sound-forget</a><br>
-remove a menu item: <a href="#removefrommenu">remove-from-menu</a><br>
+remove a menu item: <a href="#removefrommenu">remove-from-menu</a> or remove-main-menu in snd-motif.scm<br>
 add a 'delete' option to the file selection dialog: <a href="sndscm.html#adddeleteoption">add-delete-option</a><br>
+Scheme delete funcs: remove-if assoc-remove! hash-remove! delete-if! delete! string-delete<br>
 <br>
 </blockquote></small>
 </td></tr></TABLE>
@@ -4899,7 +4907,7 @@ Butterworth filters: make-butter-high-pass, make-butter-low etc in dsp.scm, used
 IIR filters of various orders/kinds: dsp.scm<br>
 Hilbert transform: make-hilbert-transform in dsp.scm<br>
 differentiator: make-differentiator in dsp.scm<br>
-block DC: see example above, dc-block in prc95.scm, or stereo-flute in clm-ins.scm.<br>
+block DC: see example above, dc-block in prc95.scm, or stereo-flute in clm-ins.scm<br>
 hum elimination: see eliminate-hum and notch-channel in dsp.scm<br>
 hiss elimination: <a href="sndscm.html#notchoutrumbleandhiss">notch-out-rumble-and-hiss</a><br>
 notch-filters: <a href="sndscm.html#notchchannel">notch-channel</a> and <a href="sndscm.html#notchselection">notch-selection</a><br>
@@ -4915,6 +4923,7 @@ Max Mathews resonator: <a href="sndscm.html#maxfdoc">maxf.scm, maxf.rb</a><br>
 Spectral edit dialog: <a href="snd.html#editenvelope">Envelope Editor</a><br>
 graphical equalizer filter bank: <a href="sndscm.html#clminsdoc">graphEq</a><br>
 see also convolution, physical modeling, reverb, and <a href="sndscm.html#ssffts">fft-based filtering</a><br>
+Guile built-in filter function: %filter.<br>
 <br>
 </small></blockquote>
 </td></tr></TABLE>
@@ -4944,11 +4953,14 @@ find a sound: <a href="#findsound">find-sound</a><br>
 Example find procedures: <a href="sndscm.html#exsearchforclick">search-for-click, zero+, next-peak, find-pitch</a><br>
 Search via continuation: <a href="#scanagain">scan-again</a><br>
 Explicit access to search procedures: <a href="#searchprocedure">search-procedure</a><br>
-The Find dialog: <a href="snd.html#editoperations">Find</a><br>
+The Find dialog: <a href="snd.html#editoperations">Find</a> or <a href="#finddialog">find-dialog</a><br>
 find silence: <a href="#mapsilence">map-silence</a>, scramble-channel in examp.scm<br>
 find zero crossing: <a href="#newcp">find-zero</a><br>
 find any difference between two chans: <a href="sndscm.html#channelsequal">channels-equal</a><br>
-see also <a href="#lcountmatches">count-matches</a> and <a href="#scanchannel">scan-channel</a>.<br>
+see also <a href="#lcountmatches">count-matches</a> and <a href="#scanchannel">scan-channel</a><br>
+find a widget: find-child in snd-motif.scm<br>
+add C-s and C-r to the listener key bindings: add-find-to-listener in snd-motif.scm<br>
+Guile find: find-if<br>
 <br>
 </small></blockquote>
 </td></tr></TABLE>
@@ -5705,6 +5717,7 @@ send arbitrary data to the DAC: <a href="#musaudiowrite">mus-audio-write</a>, <a
 play after sending the data through some function: <a href="sndscm.html#explaysound">play-sound</a><br>
 play with applied amplitude envelope: <a href="sndscm.html#explaywithenvs">play-with-envs</a>, <a href="sndscm.html#explaypanned">play-panned</a><br>
 play an external file: (play "file")<br>
+<br>
 </blockquote></small>
 </td></tr></TABLE>
 
@@ -6300,14 +6313,17 @@ temporary messages.  C-g clears it.  See also <a href="#promptinminibuffer">prom
 <blockquote><small>
 <br>
 reverse selected portion: <a href="#reverseselection">reverse-selection</a><br>
-read samples in reverse: use <a href="#makesamplereader">make-sample-reader</a> with direction -1.<br>
-reverse at new sampling rate: use <a href="#srcchannel">src-channel</a> with a negative ratio.<br>
-Reverse in control panel: <a href="snd.html#speed">control panel</a> and <a href="#speedcontrol">speed-control</a> variable.<br>
+read samples in reverse: use <a href="#makesamplereader">make-sample-reader</a> with direction -1<br>
+reverse at new sampling rate: use <a href="#srcchannel">src-channel</a> with a negative ratio<br>
+Reverse in control panel: <a href="snd.html#speed">control panel</a> and <a href="#speedcontrol">speed-control</a> variable<br>
 reverse a track: <a href="sndscm.html#reversetrack">reverse-track</a><br>
 reverse an envelope: <a href="sndscm.html#reverseenvelope">reverse-envelope</a><br>
 Virtual reverse-channel: <a href="#virtualreverse">xen-channel</a><br>
 reverse via FFT: <a href="#sillyreverse">silly-reverse</a><br>
 reverse order of channels: <a href="#reversechannels">reverse-channels</a><br>
+reverse a list: reverse and reverse!<br>
+reverse a string: in Guile: string-reverse, in Ruby: reverse<br>
+reverse vct: <a href="#vctreverse">vct-reverse!</a><br>
 <br>
 </small></blockquote>
 </td></tr></TABLE>
@@ -6473,7 +6489,7 @@ save <i>snd</i>, writing the current state of the sound to its underlying sound 
 <A NAME="saveexamples"></a>
 <TABLE border=3 bordercolor="tan" hspace=40><tr><td>
 <small><blockquote>
-save all sounds: <code>(for-each save-sound (sounds))</code>.<br>
+save all sounds: <code>(for-each save-sound (sounds))</code><br>
 save a sound under a different name: <a href="#savesoundas">save-sound-as</a><br>
 extract one channel from a sound: <a href="#extractchannel">extract-channel</a><br>
 extract a set of channels from a sound: <a href="#extractchannels">extract-channels</a><br>
@@ -8660,7 +8676,7 @@ polynomial approach to spectral multiplies (convolution): <a href="sndscm.html#s
 Superimpose ffts: <a href="sndscm.html#exsuperimposeffts">superimpose-ffts</a><br>
 Waterfall real-time spectrograph: <a href="sndscm.html#startwaterfall">start-waterfall</a><br>
 Simple rt spectrum: <a href="sndscm.html#exshowinputfft">show-input-fft</a>, <a href="sndscm.html#exshowdraggableinputfft">show-draggable-input-fft</a><br>
-More transforms: <a href="sndscm.html#fractionalfouriertransform">fractional-fourier-transform</a>, <a href="sndscm.html#ztransform">z-transform</a> in dsp.scm.<br>
+More transforms: <a href="sndscm.html#fractionalfouriertransform">fractional-fourier-transform</a>, <a href="sndscm.html#ztransform">z-transform</a> in dsp.scm<br>
 3D (single) fft display: <a href="sndscm.html#complexify">complexify</a><br>
 </blockquote></small>
 </td></tr></TABLE>
@@ -9699,7 +9715,7 @@ This function is specific to the Motif version of Snd.
 <tr><td colspan=2>
 <code><a class=def name="exit">exit</a> (<i>exit-value</i>)</code></td></tr>
 <tr><td></td><td>
-exit Snd.  Guile has a function named exit that is shadowed by Snd's version.
+exit Snd.  Guile's exit function is renamed %exit.
 </td></tr>
 
 <!-- goto-listener-end -->

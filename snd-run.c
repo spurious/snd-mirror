@@ -7463,6 +7463,34 @@ VCT_OP_2(add!, add, +=)
 VCT_OP_2(multiply!, multiply, *=)
 VCT_OP_2(subtract!, subtract, -=)
 
+static void vct_reverse_0(int *args, ptree *pt) 
+{
+  int i, j, len;
+  Float temp;
+  vct *v;
+  v = VCT_ARG_1;
+  len = v->length;
+  if (len > 1)
+    {
+      for (i = 0, j = len - 1; i < j; i++, j--)
+	{
+	  temp = v->data[i];
+	  v->data[i] = v->data[j];
+	  v->data[j] = temp;
+	}
+    }
+  VCT_RESULT = v;
+}
+static char *descr_vct_reverse_0(int *args, ptree *pt) 
+{
+  return(mus_format( VCT_PT " = vct_reverse(" VCT_PT ")", args[0], DESC_VCT_RESULT, args[1], DESC_VCT_ARG_1));
+}
+static xen_value *vct_reverse_1(ptree *prog, xen_value **args, int num_args)
+{
+  return(package(prog, R_VCT, vct_reverse_0, descr_vct_reverse_0, args, 1));
+}
+
+
 
 /* ---------------- sound-data ---------------- */
 
@@ -11556,6 +11584,7 @@ static void init_walkers(void)
   INIT_WALKER(S_make_vct, make_walker(make_vct_1, NULL, NULL, 1, 2, R_VCT, false, 2, R_INT, R_FLOAT));
   INIT_WALKER(S_vct, make_walker(vct_1, NULL, NULL, 1, UNLIMITED_ARGS, R_VCT, false, 1, -R_FLOAT));
   INIT_WALKER(S_vct_p, make_walker(vct_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
+  INIT_WALKER(S_vct_reverse, make_walker(vct_reverse_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_VCT));
 
   INIT_WALKER(S_sound_data_length, make_walker(sound_data_length_1, NULL, NULL, 1, 1, R_INT, false, 1, R_SOUND_DATA));
   INIT_WALKER(S_sound_data_chans, make_walker(sound_data_chans_1, NULL, NULL, 1, 1, R_INT, false, 1, R_SOUND_DATA));

@@ -2083,22 +2083,16 @@ In the following code, we use the edit function to reverse every other grain:
 (let ((forward #t))
   (let ((grn (<em class=red>make-granulate</em> :expansion 2.0
 			     :edit (lambda (g)
-				     (let ((grain (mus-data g))  ; current grain
-					   (len (mus-length g))) ; current grain length
+				     (let ((grain (<a class=quiet href="#mus-data">mus-data</a> g))  ; current grain
+					   (len (<a class=quiet href="#mus-length">mus-length</a> g))) ; current grain length
 				       (if forward ; no change to data
+				           (set! forward #f)
 					   (begin
-					     (set! forward #f)
-					     len)
-					   (let ((mid (inexact-&gt;exact (floor (/ len 2)))))
 					     (set! forward #t)
-					     (do ((i 0 (1+ i))
-						  (j (1- len) (1- j)))
-						 ((= i mid) len)
-					       (let ((temp (vct-ref grain j)))
-						 (vct-set! grain j (vct-ref grain i))
-						 (vct-set! grain i temp)))))))))
-	(rd (make-sample-reader 0)))
-    (map-channel (lambda (y) (<em class=red>granulate</em> grn (lambda (dir) (rd)))))))
+					     (<a class=quiet href="extsnd.html#vctreverse">vct-reverse!</a> grain)))
+				       len))))
+	(rd (<a class=quiet href="extsnd.html#makesamplereader">make-sample-reader</a> 0)))
+    (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (lambda (y) (<em class=red>granulate</em> grn (lambda (dir) (rd)))))))
 </pre>
 </td></tr></table>
 

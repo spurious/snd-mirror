@@ -578,6 +578,24 @@ static XEN vct_to_vector(XEN vobj)
   return(xen_return_first(new_vect, vobj));
 }
 
+static XEN vct_reverse(XEN vobj)
+{
+  #define H_vct_reverse "(" S_vct_reverse " vct): in-place reversal of vct contents"
+  vct *v;
+  int i, j, len;
+  Float temp;
+  XEN_ASSERT_TYPE(VCT_P(vobj), vobj, XEN_ONLY_ARG, S_vct_to_vector, "a vct");
+  v = TO_VCT(vobj);
+  len = v->length;
+  if (len == 1) return(vobj);
+  for (i = 0, j = len - 1; i < j; i++, j--)
+    {
+      temp = v->data[i];
+      v->data[i] = v->data[j];
+      v->data[j] = temp;
+    }
+  return(vobj);
+}
 
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_2(g_make_vct_w, g_make_vct)
@@ -601,6 +619,7 @@ XEN_NARGIFY_1(vct_peak_w, vct_peak)
 XEN_ARGIFY_4(vct_move_w, vct_move)
 XEN_ARGIFY_4(vct_subseq_w, vct_subseq)
 XEN_VARGIFY(g_vct_w, g_vct)
+XEN_NARGIFY_1(vct_reverse_w, vct_reverse)
 #else
 #define g_make_vct_w g_make_vct
 #define copy_vct_w copy_vct
@@ -624,6 +643,7 @@ XEN_VARGIFY(g_vct_w, g_vct)
 #define vct_subseq_w vct_subseq
 #define g_vct_w g_vct
 #define vct_ref_w vct_ref
+#define vct_reverse_w vct_reverse
 #endif
 
 #if HAVE_RUBY
@@ -708,6 +728,7 @@ void vct_init(void)
   XEN_DEFINE_PROCEDURE(S_vct_moveB,     vct_move_w,     3, 1, 0, H_vct_moveB);
   XEN_DEFINE_PROCEDURE(S_vct_subseq,    vct_subseq_w,   2, 2, 0, H_vct_subseq);
   XEN_DEFINE_PROCEDURE(S_vct,           g_vct_w,        0, 0, 1, H_vct);
+  XEN_DEFINE_PROCEDURE(S_vct_reverse,   vct_reverse_w,  1, 0, 0, H_vct_reverse);
 #if WITH_RUN && USE_SND
   XEN_DEFINE_PROCEDURE("vct-map-1",     vct_mapB_w,     2, 0, 0, H_vct_mapB);
   XEN_EVAL_C_STRING("(defmacro vct-map! (v form) `(vct-map-1 ,v (list ',form ,form)))");
@@ -745,6 +766,7 @@ void vct_init(void)
 	       S_vct_mapB,
 	       S_vct_ref,
 	       S_vct_setB,
+	       S_vct_reverse,
 #if WITH_RUN && USE_SND
 	       "vct-map-1",
 #endif

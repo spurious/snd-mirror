@@ -368,6 +368,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+9-Sep:   vct-reverse!\n\
 8-Sep:   create-ssb-dialog in snd-motif.scm.\n\
 6-Sep:   removed vct-convolve! (see snd7.scm).\n\
          removed float vector as possible arg to formant-bank (use vct) (see snd7.scm).\n\
@@ -1538,7 +1539,7 @@ static char **xref_tables[NUM_XREFS] = {
   Deletions_xrefs, Envelopes_xrefs, Filters_xrefs, Searching_xrefs, Insertions_xrefs, Maxamps_xrefs,
   Playing_xrefs, Reversing_xrefs, Saving_xrefs, Smoothing_xrefs, Resampling_xrefs, FFTs_xrefs, Reverb_xrefs,
   Resampling_xrefs, Searching_xrefs, Undo_and_Redo_xrefs, Undo_and_Redo_xrefs, 
-  sync_xrefs, control_xrefs, record_xrefs, header_and_data_xrefs, key_xrefs, Tracks_xrefs, Vcts_xrefs,
+  sync_xrefs, control_xrefs, record_xrefs, header_and_data_xrefs, key_xrefs, Tracks_xrefs, Copying_xrefs,
   Noise_Reduction_xrefs, Window_size_and_position_xrefs, Colors_xrefs, control_xrefs, Random_Numbers_xrefs
 };
 
@@ -1547,7 +1548,7 @@ static char **xref_url_tables[NUM_XREFS] = {
   Deletions_urls, Envelopes_urls, Filters_urls, Searching_urls, Insertions_urls, Maxamps_urls,
   Playing_urls, Reversing_urls, Saving_urls, Smoothing_urls, Resampling_urls, FFTs_urls, Reverb_urls,
   Resampling_urls, Searching_urls, Undo_and_Redo_urls, Undo_and_Redo_urls, 
-  NULL, NULL, NULL, NULL, Tracks_urls, Vcts_urls, 
+  NULL, NULL, NULL, NULL, Tracks_urls, Copying_urls, 
   Noise_Reduction_urls, Window_size_and_position_urls, Colors_urls, NULL, Random_Numbers_urls,
 };
 

@@ -6426,8 +6426,16 @@ mus_any *mus_make_granulate(Float (*input)(void *arg, int direction),
   spd->amp = scaler;
   spd->output_hop = (int)(hop * sampling_rate);
   spd->input_hop = (int)((Float)(spd->output_hop) / expansion);
-  spd->s20 = (int)(jitter * sampling_rate / 20);
-  spd->s50 = (int)(jitter * sampling_rate / 50);
+  if (hop >= .05)
+    {
+      spd->s20 = (int)(jitter * sampling_rate / 20);
+      spd->s50 = (int)(jitter * sampling_rate / 50);
+    }
+  else 
+    {
+      spd->s20 = (int)(jitter * hop);
+      spd->s50 = (int)(jitter * hop * .4);
+    }
   spd->ctr = 0;
   spd->block_len = outlen;
   spd->data = (Float *)clm_calloc(outlen, sizeof(Float), "granulate out data");
@@ -6455,9 +6463,10 @@ Float mus_granulate_with_editor(mus_any *ptr, Float (*input)(void *arg, int dire
 { 
   grn_info *spd = (grn_info *)ptr;
   int start, end, len, extra, i, j, k, steady_end, curstart;
-  Float amp, incr, result;
+  Float amp, incr, result = 0.0;
   Float *out_data;
-  result = spd->data[spd->ctr];
+  if (spd->ctr < spd->block_len)
+    result = spd->data[spd->ctr];
   spd->ctr++;
   if (spd->ctr >= spd->cur_out)
     {
@@ -6471,14 +6480,13 @@ Float mus_granulate_with_editor(mus_any *ptr, Float (*input)(void *arg, int dire
       if (end < 0) end = 0;
       if (end > 0) 
 	for (i = 0, j = start; i < end; i++, j++) 
-	  spd->data[i] = spd->data[j];
-#if 0
-      for (i = end; i < spd->block_len; i++) 
-	spd->data[i] = 0.0;
-#else
-      memset((void *)(spd->data + end), 0, (spd->block_len - end) * sizeof(Float));
-#endif
-
+	  {
+	    if (j < spd->block_len)
+	      spd->data[i] = spd->data[j];
+	    else spd->data[i] = 0.0;
+	  }
+      if (end < spd->block_len)
+	memset((void *)(spd->data + end), 0, (spd->block_len - end) * sizeof(Float));
       start = spd->in_data_start;
       len = spd->in_data_len;
       if (start > len)
@@ -6493,7 +6501,6 @@ Float mus_granulate_with_editor(mus_any *ptr, Float (*input)(void *arg, int dire
       for (i = (len - start); i < len; i++) 
 	spd->in_data[i] = (*spd_input)(spd->closure, 1);
       spd->in_data_start = spd->input_hop;
-
       amp = 0.0;
       incr = (Float)(spd->amp) / (Float)(spd->rmp);
       steady_end = (spd->len - spd->rmp);
@@ -6508,7 +6515,9 @@ Float mus_granulate_with_editor(mus_any *ptr, Float (*input)(void *arg, int dire
       else out_data = spd->data;
       for (i = 0, j = curstart; i < spd->len; i++, j++)
 	{
-	  out_data[i] += (amp * spd->in_data[j]);
+	  if (j < spd->in_data_len)
+	    out_data[i] += (amp * spd->in_data[j]);
+	  else out_data[i] = 0.0;
 	  if (i < spd->rmp) 
 	    amp += incr; 
 	  else 
@@ -6529,7 +6538,6 @@ Float mus_granulate_with_editor(mus_any *ptr, Float (*input)(void *arg, int dire
 	  for (i = 0; i < new_len; i++)
 	    spd->data[i] += out_data[i];
 	}
-      
       spd->ctr -= spd->cur_out;
       /* spd->cur_out = spd->output_hop + irandom(spd->s50); */             /* this was the original form */
       spd->cur_out = spd->output_hop + irandom(spd->s50) - (spd->s50 >> 1); /* this form suggested by Marc Lehmann */

@@ -22,6 +22,7 @@
 #define S_vct_moveB      "vct-move!"
 #define S_vct_subseq     "vct-subseq"
 #define S_vct            "vct"
+#define S_vct_reverse    "vct-reverse!"
 
 #ifndef Float
   #define Float float
