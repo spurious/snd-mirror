@@ -2102,10 +2102,10 @@ static SCM sp_fwrite(SCM snd_n, SCM val, int fld, char *caller)
       fval = gh_scm2double(val);
       switch (fld)
 	{
-	case SP_AMP:           if (fval >= 0.0) set_snd_amp(sp,fval); break;
-	case SP_CONTRAST:      set_snd_contrast(sp,fval); break;
+	case SP_AMP:           if (fval >= 0.0) set_snd_amp(sp,fval); RTNFLT(sp->amp); break;
+	case SP_CONTRAST:      set_snd_contrast(sp,fval); RTNFLT(sp->contrast); break;
 	case SP_CONTRAST_AMP:  sp->contrast_amp = fval; if (sp->playing) dac_set_contrast_amp(sp,fval); break;
-	case SP_EXPAND:        if (fval > 0.0) set_snd_expand(sp,fval); break;
+	case SP_EXPAND:        if (fval > 0.0) set_snd_expand(sp,fval); RTNFLT(sp->expand); break;
 	case SP_EXPAND_LENGTH: if (fval > 0.0) sp->expand_length = fval; if (sp->playing) dac_set_expand_length(sp,fval); break;
 	case SP_EXPAND_RAMP:   if ((fval >= 0.0) && (fval < 0.5)) sp->expand_ramp = fval; if (sp->playing) dac_set_expand_ramp(sp,fval); break;
 	case SP_EXPAND_HOP:    if (fval > 0.0) sp->expand_hop = fval; if (sp->playing) dac_set_expand_hop(sp,fval); break;
@@ -2115,11 +2115,12 @@ static SCM sp_fwrite(SCM snd_n, SCM val, int fld, char *caller)
 	      if (fval > 0.0) direction=1; else direction=-1;
 	      set_snd_srate(sp,direction*fval); 
 	      toggle_direction_arrow(sp,(direction == -1));
+	      if (sp->play_direction == -1) RTNFLT((-(sp->srate))); else RTNFLT(sp->srate);
 	    }
 	  break;
-	case SP_REVERB_LENGTH:    if (fval >= 0.0) set_snd_revlen(sp,fval); break;
+	case SP_REVERB_LENGTH:    if (fval >= 0.0) set_snd_revlen(sp,fval); RTNFLT(sp->revlen); break;
 	case SP_REVERB_FEEDBACK:  sp->revfb = fval; if (sp->playing) dac_set_reverb_feedback(sp,fval); break;
-	case SP_REVERB_SCALE:     set_snd_revscl(sp,fval); break;
+	case SP_REVERB_SCALE:     set_snd_revscl(sp,fval); RTNFLT(sp->revscl); break;
 	case SP_REVERB_LOW_PASS:  sp->revlp = fval; if (sp->playing) dac_set_reverb_lowpass(sp,fval); break;
 	case SP_REVERB_DECAY:     sp->reverb_decay = fval; break;
 	}

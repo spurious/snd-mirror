@@ -2,6 +2,7 @@
 
 /* TODO:   add minihistory support in listener
  * TODO    bubble args help if tab at end of name? (or click name?)
+ * TODO    when dialog pops up showing completion choices, make them mouse sensitive (i.e. complete from choice if any)
  */
 
 
@@ -52,7 +53,7 @@ static void Activate_channel (Widget w, XEvent *ev, char **str, Cardinal *num)
   snd_state *ss;
   ss = get_global_state();
   clear_listener();
-  if (ss->checking_explicitly) ss->stopped_explicitly = 1; 
+  if ((ss->checking_explicitly) || (play_in_progress())) ss->stopped_explicitly = 1; 
   cp = current_channel(ss);
   if (cp) goto_graph(cp);
 }

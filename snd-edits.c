@@ -2571,16 +2571,16 @@ void redo_edit_with_sync(chan_info *cp, int count)
 
 static SCM g_display_edits(SCM snd, SCM chn)
 {
-  #define H_display_edits " prints current edit tree state"
+  #define H_display_edits "(" S_display_edits ") prints current edit tree state"
   FILE *tmp;
   char *buf,*name;
   int len,fd;
   snd_state *ss;
   ss = get_global_state();
   name = snd_tempnam(ss);
-  display_edits(get_cp(snd,chn,"display-edits"),stderr);
+  display_edits(get_cp(snd,chn,S_display_edits),stderr);
   tmp = fopen(name,"w");
-  display_edits(get_cp(snd,chn,"display-edits"),tmp);
+  display_edits(get_cp(snd,chn,S_display_edits),tmp);
   fclose(tmp);
   fd = mus_file_open_read(name);
   len = lseek(fd,0L,SEEK_END);
@@ -2620,12 +2620,13 @@ static SCM g_edit_fragment(SCM uctr, SCM snd, SCM chn)
 
 static SCM g_edit_tree(SCM snd, SCM chn, SCM upos)
 {
+  #define H_edit_tree "(" S_edit_tree " snd chn pos) returns the edit lists '((global-pos data-num local-pos local-end scaler)...)"
   /* internal debugging (auto-test) aid -- return complete ed list at pos */
   int i,len,pos;
   chan_info *cp;
   ed_list *ed;
   SCM res;
-  cp = get_cp(snd,chn,"edit-tree");
+  cp = get_cp(snd,chn,S_edit_tree);
   if (cp)
     {
       pos = g_scm2intdef(upos,cp->edit_ctr);
@@ -3148,8 +3149,8 @@ void g_init_edits(SCM local_doc)
   DEFINE_PROC(gh_new_procedure(S_undo,SCM_FNC g_undo,0,3,0),H_undo);
   DEFINE_PROC(gh_new_procedure(S_redo,SCM_FNC g_redo,0,3,0),H_redo);
   DEFINE_PROC(gh_new_procedure(S_as_one_edit,SCM_FNC g_as_one_edit,1,1,0),H_as_one_edit);
-  DEFINE_PROC(gh_new_procedure("display-edits",SCM_FNC g_display_edits,0,2,0),H_display_edits);
-  DEFINE_PROC(gh_new_procedure("edit-tree",SCM_FNC g_edit_tree,0,3,0),"returns current edit tree");
+  DEFINE_PROC(gh_new_procedure(S_display_edits,SCM_FNC g_display_edits,0,2,0),H_display_edits);
+  DEFINE_PROC(gh_new_procedure(S_edit_tree,SCM_FNC g_edit_tree,0,3,0),H_edit_tree);
 
   DEFINE_PROC(gh_new_procedure("section-scale-by",SCM_FNC g_section_scale_by,5,0,0),"internal scaling function");
 

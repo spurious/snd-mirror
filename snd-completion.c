@@ -18,10 +18,10 @@
   #endif
 #endif
       
-#define NUM_COMMANDS 555
+#define NUM_COMMANDS 557
 
 static char *snd_commands[NUM_COMMANDS]={
-  S_abort,S_abortQ,S_activate_listener,S_add_mark,S_add_player,S_add_sound_file_extension,S_add_to_main_menu,S_add_to_menu,S_add_transform,
+  S_abort,S_activate_listener,S_add_mark,S_add_player,S_add_sound_file_extension,S_add_to_main_menu,S_add_to_menu,S_add_transform,
   S_after_graph_hook,S_after_open_hook,
   S_amp,S_amplitude_env,S_append_to_minibuffer,S_as_one_edit,S_ask_before_overwrite,
   S_audio_input_device,S_audio_output_device,S_audio_state_file,
@@ -31,7 +31,7 @@ static char *snd_commands[NUM_COMMANDS]={
   S_backward_graph,S_backward_mark,S_backward_mix,S_backward_sample,S_basic_color,S_bind_key,
   S_bold_button_font,S_bomb,S_button_font,
 
-  S_call_apply,S_cepstrum,S_change_menu_label,S_channel_style,S_channel_sync,S_channels,S_channels_combined,S_channels_separate,
+  S_c_g,S_call_apply,S_cepstrum,S_change_menu_label,S_channel_style,S_channel_sync,S_channels,S_channels_combined,S_channels_separate,
   S_channels_superimposed,S_chans,S_chebyshev_transform,S_clear_audio_inputs,
   S_close_hook,S_close_sound,S_close_sound_file,S_color2list,S_color_cutoff,S_color_dialog,S_color_inverted,S_color_scale,S_colorQ,S_colormap,
   S_comment,S_contrast,S_contrast_amp,S_contrast_func,S_contrasting,
@@ -44,9 +44,9 @@ static char *snd_commands[NUM_COMMANDS]={
   S_default_output_chans,S_default_output_format,S_default_output_srate,S_default_output_type,
   S_define_envelope,
   S_delete_mark,S_delete_marks,S_delete_region,S_delete_sample,S_delete_samples,S_delete_selection,S_describe_audio,
-  S_dismiss_all_dialogs,S_dont_normalize,S_dot_size,S_during_open_hook,
+  S_dismiss_all_dialogs,S_display_edits,S_dont_normalize,S_dot_size,S_during_open_hook,
 
-  S_edit_fragment,S_edit_header_dialog,S_edit_hook,S_edit_position,S_edits,
+  S_edit_fragment,S_edit_header_dialog,S_edit_hook,S_edit_position,S_edit_tree,S_edits,
   S_env_selection,S_env_sound,S_enved_active_env,S_enved_base,S_enved_clipping,S_enved_dBing,
   S_enved_dialog,S_enved_exping,S_enved_power,S_enved_selected_env,S_enved_target,
   S_enved_waveform_color,S_enved_waving,S_eps_bottom_margin,S_eps_file,S_eps_left_margin,S_exit,S_exit_hook,S_expand,S_expand_funcs,S_expand_hop,

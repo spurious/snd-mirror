@@ -1158,7 +1158,7 @@ field; '(0 0 1 1) followed by return fires up a ramp as a new envelope.
 In the overall view of envelopes, click an envelope, or click its name in
 the scrolled list on the left to select it; click the selected envelope to
 load it into the editor portion, clearing out whatever was previously there.
-To load an exisiting envelope into the editor, you can also type its name in
+To load an existing envelope into the editor, you can also type its name in
 the text field; to give a name to the envelope as it is currently defined in
 the graph viewer, type its name in this field, then either push return or
 the 'save' button.
@@ -1463,7 +1463,7 @@ Index
                                            Index
 
         Action           Menu       Keyboard          Lisp                  Other
- abort command                    Cg          abort?               mouse click
+ abort command                    Cg          c-g?                 mouse click
 
  amp env             Edit: Edit   Cx Ca, Cx a env-sound            scale-to, scale-by
                      Env

@@ -260,7 +260,6 @@
 
 
 #define S_abort                         "abort"
-#define S_abortQ                        "abort?"
 #define S_activate_listener             "activate-listener"
 #define S_add_mark                      "add-mark"
 #define S_add_player                    "add-player"
@@ -293,6 +292,7 @@
 #define S_bold_button_font              "bold-button-font"
 #define S_bomb                          "bomb"
 #define S_button_font                   "button-font"
+#define S_c_g                           "c-g?"
 #define S_call_apply                    "call-apply"
 #define S_cepstrum                      "cepstrum"
 #define S_change_menu_label             "change-menu-label"
@@ -360,6 +360,7 @@
 #define S_delete_selection              "delete-selection"
 #define S_describe_audio                "describe-audio"
 #define S_dismiss_all_dialogs           "dismiss-all-dialogs"
+#define S_display_edits                 "display-edits"
 #define S_dont_normalize                "dont-normalize"
 #define S_dot_size                      "dot-size"
 #define S_during_open_hook              "during-open-hook"
@@ -367,6 +368,7 @@
 #define S_edit_fragment                 "edit-fragment"
 #define S_edit_hook                     "edit-hook"
 #define S_edit_position                 "edit-position"
+#define S_edit_tree                     "edit-tree"
 #define S_edits                         "edits"
 #define S_env_base                      "env-base"
 #define S_env_selection                 "env-selection"

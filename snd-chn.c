@@ -4735,7 +4735,12 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
   si = sc->si;
   sfs = sc->sfs;
   if (regexpr) dur = sc->dur;
-  if (dur == 0) {free_sync_state(sc); return;}
+  if (dur == 0) 
+    {
+      for (i=0;i<si->chans;i++) if (sfs[i]) free_snd_fd(sfs[i]);
+      free_sync_state(sc); 
+      return;
+    }
   if (dur > MAX_BUFFER_SIZE) /* if smaller than this, we don't gain anything by using a temp file (its buffers are this large) */
     {
       temp_file = 1; 
@@ -6073,7 +6078,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      dot_seen = 0; 
 	      deactivate_selection();
 	      defining_macro = 0;
-	      if (ss->checking_explicitly) ss->stopped_explicitly = 1; 
+	      if ((ss->checking_explicitly) || (play_in_progress())) ss->stopped_explicitly = 1; 
 	      /* this tries to break out of long filter/src computations (and perhaps others) */
 	      if (sp->playing) stop_playing_all_sounds();
 	      if (sp->applying) stop_applying(sp);
@@ -6309,7 +6314,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      counting = 0; 
 	      dot_seen = 0; 
 	      defining_macro = 0;
-	      if (ss->checking_explicitly) ss->stopped_explicitly = 1; 
+	      if ((ss->checking_explicitly) || (play_in_progress())) ss->stopped_explicitly = 1; 
 	      clear_listener();
 	      break;
 	    case snd_K_H: case snd_K_h: break;

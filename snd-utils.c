@@ -375,6 +375,7 @@ char *kmg (int num)
 #if 0
 /* from glibc/debug/backtrace-tst.c -- doesn't decode local (Snd) function names) */
 /*    we need some way to search the symbol table given an address (gdb symtab.c?) */
+/*    see ltrace code! */
 #include <execinfo.h>
 #include <inttypes.h>
 void show_stack(void);

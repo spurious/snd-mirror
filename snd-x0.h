@@ -36,6 +36,12 @@
   #define MANAGE_DIALOG 0
 #endif
 
+#if __GNUC__
+#ifdef LESSTIF_VERSION
+  #warning You appear to be using Lesstif: this is not recommended!  Expect bugs...
+#endif
+#endif
+
 #if defined(SUN) || (defined(LINUX) && (!(defined(LESSTIF_VERSION))))
   #define OVERRIDE_TOGGLE 1
   /* Metrolink Motif (Linux) defines control-button1 to be "take focus" -- this is not a good idea!! */

@@ -47,7 +47,7 @@
 		     (audio-fd (mus-audio-open-output mus-audio-default 22050 1 mus-lshort bytes)))
 		(if (not (= audio-fd -1))
 		    (do ()
-			((or (abort?) (>= beg len))
+			((or (c-g?) (>= beg len))
 			 (mus-audio-close audio-fd))
 		      (vct->sound-data (vct-scale! (samples->vct beg size) amplitude) data 0)
 		      (mus-audio-write audio-fd data size)
@@ -152,7 +152,7 @@
 			(set! running #t)
 			(if (not (= audio-fd -1))
 			    (do ()
-				((or (abort?) (not running))
+				((or (c-g?) (not running))
 				 (begin
 				   (set! running #f)
 				   (mus-audio-close audio-fd)))

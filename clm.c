@@ -5458,7 +5458,7 @@ void mus_fft (Float *rl, Float *im, int n, int is)
       ui = 0.0;
       for (i2=0;i2<ldm;i2++)
 	{
-#if HAVE_ISNAN 
+#if (HAVE_ISNAN) || (LINUX)
 	  if (isnan(ui)) ui=0.0;
 #endif
 	  i = i2;

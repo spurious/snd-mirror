@@ -4,6 +4,7 @@
  * TODO    colored marks etc (requires 2 pixels for selected/unselected graphs)?
  * TODO    colormaps applied to lisp or data graph?
  * TODO    option to set the background-colour in the fft/transform-window?
+ * TODO    user-callable channel graph drawing routines (coordinated with snd-gscm also)
  */
 
 #if HAVE_GUILE

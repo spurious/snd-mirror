@@ -1,10 +1,9 @@
 /* TODO  guile-gtk (hundreds of widgets, a dozen or so examples)
  * TODO  all sgx, popup, grec gmix
- * TODO  exs: red for changed portion in time domain, 
- * TODO    annotation boxes (see grfsnd)
- * TODO    popup info in file viewer
- * TODO    special lisp graph effects
- * TODO    own fft peaks info
+ * TODO  exs: annotation boxes (see grfsnd)
+ * TODO       popup info in file viewer
+ * TODO       special lisp graph effects
+ * TODO       own fft peaks info
  */
 
 #include "snd.h"

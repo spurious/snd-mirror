@@ -256,6 +256,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+21-Nov:  abort? -> C-g?.  edit-tree and display-edits documented.\n\
 17-Nov:  esd support thanks to Nick Bailey.\n\
 14-Nov:  un-normalized fft display bugfix.\n\
 13-Nov:  mark-drag-hook.\n\
@@ -275,16 +276,6 @@ void news_help(snd_state *ss)
 25-Oct:  emacs subjob 'read: unexpected \")\"' bugfix, I hope.\n\
 24-Oct:  eps-bottom-margin and eps-left-margin (for Print command).\n\
          menu-hook\n\
-23-Oct:  interface to mixes changed:\n\
-           mix consoles are now in a separate dialog, each mix displayed with a tag and its waveform.\n\
-           removed mix-console-state, mix-console-state-changed-hook, show-mix-consoles, mix-waveform-color.\n\
-           changed mix-console-y to mix-tag-y, Show Consoles menu item to Mix Panel.\n\
-           changed with-mix-consoles to with-mix-tags, mix-focus-color to selected-mix-color.\n\
-           show-mix-waveforms default now #t.\n\
-           removed snd-gtkfixed.*.\n\
-           added mix-tag-width and height, mix-panel.\n\
-         removed .sndrc and other related stuff.\n\
-         removed Show Marks menu item.\n\
 ",
 NULL);
   FREE(info);
@@ -1112,7 +1103,6 @@ it has only one channel, (" S_cursor ") (" S_cursor " 0), and (" S_cursor " 0 0)
 all refer to the same thing.\n\
 \n\
   " S_abort "             ()\n\
-  " S_abortQ "            ()\n\
   " S_activate_listener " ()\n\
   " S_add_mark "          (sample snd chn)\n\
   " S_add_player "        (player start end)\n\
@@ -1128,6 +1118,7 @@ all refer to the same thing.\n\
   " S_backward_mix "      (count)\n\
   " S_backward_sample "   (count)\n\
   " S_bind_key "          (key state code ignore-prefix)\n\
+  " S_c_g "               ()\n\
   " S_change_menu_label " (top-menu old-label new-label)\n\
   " S_channels "          (snd)\n\
   " S_chans "             (snd)\n\

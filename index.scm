@@ -3,7 +3,6 @@
 (define snd-names-and-urls
   (list
     (list "abort" "extsnd.html#abort")
-    (list "abort?" "extsnd.html#sndabort")
     (list "activate-listener" "extsnd.html#activatelistener")
     (list "add-clm-method" "clm.html#add-clm-method")
     (list "add-mark" "extsnd.html#sndaddmark")
@@ -50,6 +49,7 @@
     (list "buffer-full?" "clm.html#buffer-full?")
     (list "buffer?" "clm.html#buffer?")
     (list "button-font" "extsnd.html#buttonfont")
+    (list "c-g?" "extsnd.html#sndabort")
     (list "call-apply" "extsnd.html#callapply")
     (list "centered-random" "clm.html#centered-random")
     (list "change-menu-label" "extsnd.html#sndchangemenulabel")
@@ -150,6 +150,7 @@
     (list "delete-selection" "extsnd.html#snddeleteselection")
     (list "describe-instrument" "clm.html#describe-instrument")
     (list "dismiss-all-dialogs" "extsnd.html#dismissalldialogs")
+    (list "display-edits" "extsnd.html#snddisplayedits")
     (list "dlocsig" "clm.html#dlocsig")
     (list "dot-product" "clm.html#dot-product")
     (list "dot-size" "extsnd.html#dotsize")
@@ -158,6 +159,7 @@
     (list "edit-header-dialog" "extsnd.html#sndeditheaderdialog")
     (list "edit-hook" "extsnd.html#edithook")
     (list "edit-position" "extsnd.html#sndeditposition")
+    (list "edit-tree" "extsnd.html#sndedittree")
     (list "edits" "extsnd.html#sndedits")
     (list "env" "clm.html#env")
     (list "env-interp" "clm.html#env-interp")
@@ -290,6 +292,7 @@
     (list "insert-sample" "extsnd.html#sndinsertsample")
     (list "insert-samples" "extsnd.html#sndinsertsamples")
     (list "insert-selection" "extsnd.html#sndinsertselection")
+    (list "insert-silence" "extsnd.html#sndinsertsilence")
     (list "insert-sound" "extsnd.html#sndinsertfile")
     (list "instrument-let" "clm.html#instrument-let")
     (list "just-sounds" "extsnd.html#justsounds")
@@ -380,6 +383,7 @@
     (list "mark->sound" "extsnd.html#mark2sound")
     (list "mark-click-hook" "extsnd.html#markclickhook")
     (list "mark-color" "extsnd.html#markcolor")
+    (list "mark-drag-hook" "extsnd.html#markdraghook")
     (list "mark-name" "extsnd.html#sndmarkname")
     (list "mark-sync" "extsnd.html#sndmarksync")
     (list "mark-sync-max" "extsnd.html#sndmarksyncmax")
@@ -394,6 +398,7 @@
     (list "menu-hook" "extsnd.html#mennuhook")
     (list "menu-sensitive" "extsnd.html#menusensitive")
     (list "min-dB" "extsnd.html#mindb")
+    (list "minibuffer-history-length" "extsnd.html#minibufferhistorylength")
     (list "mix" "extsnd.html#sndmix")
     (list "mix" "clm.html#mix")
     (list "mix-amp" "extsnd.html#sndmixamp")
@@ -723,6 +728,7 @@
     (list "snd-warning" "extsnd.html#sndwarning")
     (list "snd-warning-hook" "extsnd.html#sndwarninghook")
     (list "sound-chans" "clm.html#sound-chans")
+    (list "sound-data and Sndlib" "extsnd.html#sndsounddata")
     (list "sound-data-format" "clm.html#sound-data-format")
     (list "sound-data-location" "clm.html#sound-data-location")
     (list "sound-datum-size" "clm.html#sound-datum-size")
@@ -881,7 +887,6 @@
     (list "zoom-color" "extsnd.html#zoomcolor")
     (list "zoom-focus-style" "extsnd.html#zoomfocusstyle")
   ))
-
 
 
 (define *html-reader* "netscape")

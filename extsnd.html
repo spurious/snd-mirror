@@ -2225,6 +2225,8 @@ one, and are exposed in many functions described above as the <i>pos</i> argumen
 <small>
                                      (<em class=red>as-one-edit</em> (lambda () (set! (sample 100) .1) (set! (sample 200) .2)))
 </small>
+  <b><a name="snddisplayedits">display-edits</a></b> ()           print out the current edit list contents.
+
   <b><a name="sndeditfragment">edit-fragment</a></b> (<i>num</i> <em class=targ>snd chn</em>) return a list similar to that displayed in the edit history window giving 
                               the origin of the specified edit, its type (delete, insert, etc), its 
                               begin sample (given the current edit tree), and the number of samples 
@@ -2235,7 +2237,39 @@ one, and are exposed in many functions described above as the <i>pos</i> argumen
 
   <b><a name="sndedits">edits</a></b>         (<em class=targ>snd chn</em>)     return a list with number of undo-able edits and redo-able edits.
 
-  <b>revert-sound</b>  (<i>snd</i>)         revert <i>snd</i> to saved state (undo all edits).
+  <b><a name="sndedittree">edit-tree</a></b>     (<i>snd chn pos</i>) return list of lists completely describing current edit list.
+                              Each inner list has the form 
+                                   '(global-position data-number local-position local-end scaler).
+                              If <i>data-number</i> is -2, it marks the end of the list.  The following function uses
+                              this information to highlight the changed portions of a given sound. (This example is 
+                              specific to Gtk+ and Guile-gtk):
+<small>
+                                   (use-modules (gtk gtk) (gtk gdk))
+                                   (define (show-original snd chn)
+                                     (define (check-fragment tree ls rs)
+                                       (let* ((fragment (car tree))       ; current edit list fragment
+                                              (pos (car fragment))        ; its position in sound
+                                              (dat (cadr fragment))
+                                              (scl (list-ref fragment 4)))
+                                         (if (and (= dat 0)               ; original sound
+                                                  (= scl 1.0))            ; unscaled
+                                           (let ((nxtpos (car (cadr tree))))
+                                             (if (and (<= pos rs)
+                                                      (>= nxtpos ls))     ; fragment is at least partially visible
+                                               (let* ((win (gtk-widget-window (sg-channel-graph-widget snd chn)))
+                                                      (gc (gdk-gc-new win))
+                                                      (x0pos (sg-sample->x (max ls pos)))
+                                                      (x1pos (sg-sample->x (min rs nxtpos))))
+                                                 (gdk-draw-rectangle win gc #t x0pos 2 (- x1pos x0pos) 5)))))
+                                         (if (and (cdr tree)              ; go to next fragment
+                                                  (not (= (cadr (car tree)) -2)))
+                                           (check-fragment (cdr tree) ls rs))))
+                                     (check-fragment (edit-tree snd chn)
+                                                     (left-sample snd chn)
+                                                     (right-sample snd chn)))
+                                   (add-hook! after-graph-hook show-original)
+</small>
+  <b>revert-sound</b>  (<i>snd</i>)        revert <i>snd</i> to saved state (undo all edits).
 
   <b><a name="sndsaveedithistory">save-edit-history</a></b> (filename <i>snd chn</i>)
                               save current edit list(s) in <i>filename</i>.
@@ -2858,9 +2892,6 @@ Axis choice:
 
   <b><a name="abort">abort</a></b>             ()            drop into gdb
 
-  <b><a name="sndabort">abort?</a></b>            ()            check for C-g to interrupt on-going computation (and let other UI 
-                                  events through).
-
   <b><a name="addsoundfileextension">add-sound-file-extension</a></b> (ext)  add <i>ext</i> to the list of sound file extensions.
                                   The initial list is ("snd" "aiff" "aif" "wav" "au" "aifc" "voc" "wve")
 
@@ -2888,6 +2919,9 @@ Axis choice:
                                   (bind-key (char->integer #\p) 0 (lambda () (play "pistol.snd")))
 </small>
                                   Now each time we hit "o", "oboe.snd" plays,  etc.
+
+  <b><a name="sndabort">c-g?</a></b>              ()            check for C-g to interrupt on-going computation (and let other UI 
+                                  events through).
 
   <b><a name="sndconvolve">convolve-arrays</a></b>   (rl1 rl2)     convolve vectors <i>rl1</i> with <i>rl2</i>.  Result returned in rl1.
                                   rl1 should be large enough to hold the full convolution result.
@@ -3230,7 +3264,7 @@ found (this code obviously has to be in the init file):</p>
 	<!-- I(zoom window):L(x-bounds)(sndxbounds) -->
 	<!-- I(save options):L(save-options)(sndsaveoptions) -->
 	<!-- I(describe audio):A(describeaudiostate) --><!-- I(describe audio):L(mus-audio-describe)(describeaudiostate) -->
-	<!-- I(abort command):L(abort?)(sndabort) -->
+	<!-- I(abort command):L(c-g?)(sndabort) -->
 	<!-- I(count matches):L(count-matches)(lcountmatches) --><!-- I(count matches):A(lcountmatches) -->
 	<!-- I(convolution):L(convolve)(sndconvolve) --><!-- I(convolution):A(sndconvolve) --><!-- I(convolution):O(convolve-with)(sndconvolvewith) -->
 	<!-- I(auto-save):O(examp.scm) -->

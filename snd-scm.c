@@ -5,7 +5,6 @@
  *         but would be much faster if we can wait until the amp-env is computed
  * TODO  sample-color?
  * TODO  should snd-out soft-port (examp.scm) be built-in?
- * TODO  find a better name for abort? -- C-g? ? 
  */
 
 #if HAVE_GUILE
@@ -1506,7 +1505,7 @@ static SCM g_dismiss_all_dialogs(void)
 
 static SCM g_abortq(void)
 {
-  #define H_abortQ "(" S_abortQ ") allows pending user interface events to occur, returning #t if C-g was typed"
+  #define H_abortQ "(" S_c_g ") allows pending user interface events to occur, returning #t if C-g was typed"
   check_for_event(state);
   if (state->stopped_explicitly)
     {
@@ -3558,7 +3557,7 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure(S_exit,SCM_FNC g_exit,0,0,0),H_exit);
   DEFINE_PROC(gh_new_procedure(S_abort,SCM_FNC g_abort,0,0,0),H_abort);
   DEFINE_PROC(gh_new_procedure(S_dismiss_all_dialogs,SCM_FNC g_dismiss_all_dialogs,0,0,0),H_dismiss_all_dialogs);
-  DEFINE_PROC(gh_new_procedure(S_abortQ,SCM_FNC g_abortq,0,0,0),H_abortQ);
+  DEFINE_PROC(gh_new_procedure(S_c_g,SCM_FNC g_abortq,0,0,0),H_abortQ);
   DEFINE_PROC(gh_new_procedure(S_snd_version,SCM_FNC g_snd_version,0,0,0),H_snd_version);
   DEFINE_PROC(gh_new_procedure(S_show_listener,SCM_FNC g_show_listener,0,0,0),H_show_listener);
   DEFINE_PROC(gh_new_procedure(S_hide_listener,SCM_FNC g_hide_listener,0,0,0),H_hide_listener);
@@ -3692,6 +3691,7 @@ the functions html and ? can be used in place of help to go to the HTML descript
   /* These will probably be built-in:
    * gh_eval_str("(define fit-data fit-data-on-open)");
    */
+  gh_eval_str("(define abort? c-g?)"); /* backwards compatibility */
 
 #if USE_MOTIF
   scm_add_feature("snd-motif");

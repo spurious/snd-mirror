@@ -1,5 +1,6 @@
 snd change log
 
+  21-Nov:    abort? -> C-g?.  edit-tree and display-edits documented.
   17-Nov:    esd support thanks to Nick Bailey.
   14-Nov:    un-normalized fft display bugfix.
   13-Nov:    mark-drag-hook.

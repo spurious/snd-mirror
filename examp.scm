@@ -10,7 +10,7 @@
 ;;; XEmacs-like "Buffers" menu
 ;;; set fft-size based on current time domain window size
 ;;; superimpose spectra of sycn'd sounds
-;;; example of abort?
+;;; example of c-g?
 ;;; play sound n times
 ;;; play region over and over until C-g typed
 ;;; play samples created on-the-fly
@@ -410,7 +410,7 @@
 ;(add-hook! graph-hook superimpose-ffts)
 
 
-;;; -------- abort? example (Anders Vinjar)
+;;; -------- c-g? example (Anders Vinjar)
 
 (define (locate-zero limit)
   (let* ((start (cursor))
@@ -419,7 +419,7 @@
 	 (val0 (abs (next-sample sf)) val1)
 	 (val1 (abs (next-sample sf)) (abs (next-sample sf))))
 	((or (sample-reader-at-end? sf)
-	     (abort?)
+	     (c-g?)
 	     (< (+ val0 val1) limit))
 	 (begin
 	   (free-sample-reader sf)
@@ -452,7 +452,7 @@
 
 (define play-region-again
   (lambda (reg)
-    (if (abort?)
+    (if (c-g?)
 	(remove-hook! stop-playing-region-hook play-region-again)
 	(play-region reg))))
 
@@ -501,7 +501,7 @@
 	(vct->sound-data (vct-scale! (samples->vct beg size) (amp)) data 0)
 	(mus-audio-write fd data size)
 	(set! beg (+ beg size))
-	(or (abort?) (>= beg len))))))
+	(or (c-g?) (>= beg len))))))
 
 ;(play-fun (amprt (frames)) 256)
 
@@ -521,7 +521,7 @@
 	   (audio-fd (mus-audio-open-output mus-audio-default 22050 1 mus-lshort bytes)))
       (if (not (= audio-fd -1))
 	  (do ()
-	      ((abort?) 
+	      ((c-g?) 
 	       (mus-audio-close audio-fd))
 	    (do ((i 0 (1+ i)))
 		((= i bufsize) 
@@ -1560,7 +1560,7 @@
 	   (let ((outval 0.0))
 	     (if (= ctr freq-inc)
 		 (begin
-		  (if (abort?)               ; let interface run
+		  (if (c-g?)               ; let interface run
 		      (break "interrupted")) ;   if C-g exit the loop returning the string "interrupted"
 		  (samples->vct inctr fftsize 0 0 fdr)
 		  (let ((pk (vct-peak fdr)))
@@ -2028,7 +2028,7 @@
 	       (let ((buffix (modulo filptr N)))
 					; buffix is the index into the input buffer
 					; it wraps around circularly as time increases in the input
-		 (if (abort?) (break "interrupted"))
+		 (if (c-g?) (break "interrupted"))
 		 (set! output 0)       ; reset the output sample counter
 		 ;; save the old amplitudes and frequencies
 		 (vct-fill! lastamp 0.0)
@@ -2441,7 +2441,7 @@
 	(let ((val (sin (/ (* 2 pi i) 12.0))))
 	  (vct-set! x1 (+ i (- (/ size 4) 6)) val)))
       (do ((i 0 (1+ i)))
-	  ((or (abort?) (= i 1024)))
+	  ((or (c-g?) (= i 1024)))
 	(compute-uniform-circular-string size x0 x1 x2 mass xspring damp)
 	(graph x0 "string" 0 1.0 -10.0 10.0)))))
 
@@ -2463,7 +2463,7 @@
 	(do ((i 0 (1+ i))
 	     (k 0.0)
 	     (kincr (/ 1.0 recompute-samps)))
-	    ((or (abort?) (= i dur)))
+	    ((or (c-g?) (= i dur)))
 	  (if (>= k 1.0)
 	      (begin
 		(set! k 0.0)

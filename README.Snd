@@ -32,6 +32,8 @@ The configure program has several Snd-related arguments:
    --with-gsl            use gsl for ffts and whatnot
    --with-ladspa         include LADSPA plugin support (Linux)
    --with-sample-width=N use N bits of samples (default = 24)
+                         N=32 or so is not recommended because it does not leave
+                         you any "head room" during mixes.
    --with-sndlib         use libsndlib.so if possible
    --with-esd            use the enlightened sound daemon, if possible
 

@@ -573,7 +573,7 @@ ww_info *make_title_row(snd_state *ss, GtkWidget *formw, char *first_str, char *
   gtk_box_pack_start(GTK_BOX(wwi->tophbox),wwi->svw,FALSE,FALSE,(pad == PAD_TITLE_ON_LEFT) ? 5 : 2);
   gtk_widget_show(wwi->svw);
 
-  wwi->plw = gtk_label_new(second_str); /* TODO: button (small) font here */
+  wwi->plw = gtk_label_new(second_str);
   gtk_box_pack_start(GTK_BOX(wwi->tophbox),wwi->plw,FALSE,FALSE,2);
   gtk_widget_show(wwi->plw);
 

@@ -1168,7 +1168,6 @@ static void remix_file(mix_info *md, char *origin)
 {
   int beg,end,i,j,ofd = 0,size,num,no_space,use_temp_file;
   Float val,maxy,miny;
-  Float fmax,fmin;
   snd_info *cursp;
   mix_fd *add,*sub;
   snd_fd *cur,*sfb,*afb;
@@ -1240,8 +1239,9 @@ static void remix_file(mix_info *md, char *origin)
   new_beg -= beg;
   new_end -= beg;
 
-  maxy = 0.99999; /* TODO: use current y-bounds here? */
-  miny = 1.0;
+  /* these max/min values are only used to reset y-axis limits if overflow occurred */
+  maxy = ap->ymax;
+  miny = ap->ymin;
 
   /* split out special simple cases */
   if ((add->calc == C_ZERO) && (sub->calc == C_ZERO))
@@ -1330,15 +1330,13 @@ static void remix_file(mix_info *md, char *origin)
   make_current_console(md);
 
   /* fix up graph if we overflowed during mix */
-  fmax = maxy;
-  fmin = miny;
-  if ((fmax > ap->ymax) || (fmin < ap->ymin)) 
+  if ((maxy > ap->ymax) || (miny < ap->ymin)) 
     {
-      if (fmax < -fmin) fmax = -fmin; 
-      ap->y0 = -fmax;
-      ap->y1 = fmax;
-      ap->ymin = -fmax;
-      ap->ymax = fmax;
+      if (maxy < -miny) maxy = -miny; 
+      ap->y0 = -maxy;
+      ap->y1 = maxy;
+      ap->ymin = -maxy;
+      ap->ymax = maxy;
     }
   update_graph(cp,NULL);
 }

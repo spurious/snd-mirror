@@ -32,7 +32,7 @@
 
 (if (file-exists? "sndlib.gdbm") (delete-file "sndlib.gdbm"))
 
-(define tests 50)
+(define tests 100)
 (define snd-test -1)
 (define full-test #t)
 
@@ -3328,7 +3328,7 @@
   (lambda (fil)
     (let ((val (peek-char fil)))
       (or (and val (read-char fil))
-          (abort?)
+          (c-g?)
           (read-or-run fil)))))
 
 (define execute-and-wait
