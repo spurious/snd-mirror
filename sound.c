@@ -216,14 +216,14 @@ static time_t local_file_write_date(const char *filename)
 static int local_file_write_date(const char *filename) {return(1);}
 #endif
 
-static int sndlib_initialized = 0;
+static int sndlib_initialized = FALSE;
 
 int mus_sound_initialize(void)
 {
   int err = MUS_NO_ERROR;
   if (!sndlib_initialized)
     {
-      sndlib_initialized = 1;
+      sndlib_initialized = TRUE;
       mus_error_handler = default_mus_error;
       err = mus_header_initialize();
       if (err == MUS_NO_ERROR) 
@@ -348,7 +348,7 @@ int mus_sound_prune(void)
 
 int mus_sound_forget(const char *name)
 {
-  int i, len, free_name = 0;
+  int i, len, free_name = FALSE;
   char *short_name = NULL;
   if (name == NULL) return(MUS_ERROR);
   if (name[0] == '/')
@@ -361,7 +361,7 @@ int mus_sound_forget(const char *name)
   else
     {
       short_name = mus_expand_filename((char *)name);
-      free_name = 1;
+      free_name = TRUE;
     }
   previous_sf = NULL;
   if (name)

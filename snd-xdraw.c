@@ -502,7 +502,7 @@ void allocate_sono_rects(int size)
 
 void allocate_color_map(snd_state *ss, int colormap)
 {
-  static int warned_color = 0;
+  static int warned_color = FALSE;
   int i;
   Colormap cmap;
   XColor tmp_color;
@@ -526,9 +526,9 @@ void allocate_color_map(snd_state *ss, int colormap)
 	      tmp_color.blue = 0;
 	      if ((XAllocColor(dpy, cmap, &tmp_color)) == 0)
 		{
-		  if (warned_color == 0)
+		  if (!warned_color)
 		    snd_error("can't even allocate black?!?");
-		  warned_color = 1;
+		  warned_color = TRUE;
 		}
 	    }
 	  grays[i] = tmp_color.pixel;
@@ -540,6 +540,12 @@ void allocate_color_map(snd_state *ss, int colormap)
 
 
 /* -------- color browser -------- */
+
+static XEN color_hook;
+static void check_color_hook(void)
+{
+  run_hook(color_hook, XEN_EMPTY_LIST, S_color_hook);
+}
 
 typedef struct {
   Widget dialog;
@@ -566,6 +572,7 @@ static void invert_color_callback(Widget w, XtPointer context, XtPointer info)
   ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   ss = cd->state;
   in_set_color_inverted(ss, cb->set);
+  check_color_hook();
   for_each_chan(ss, update_graph_setting_fft_changed);
 }
 
@@ -574,6 +581,7 @@ void set_color_inverted(snd_state *ss, int val)
   in_set_color_inverted(ss, val);
   if (ccd) 
     XmToggleButtonSetState(ccd->invert, (Boolean)val, FALSE);
+  check_color_hook();
   if (!(ss->graph_hook_active)) 
     for_each_chan(ss, update_graph_setting_fft_changed);
 }
@@ -592,6 +600,7 @@ static void scale_color_callback(Widget w, XtPointer context, XtPointer info)
     val = (Float)(scale_val + 1) / 51.0;
   else val = 1.0 + (Float)((scale_val - 50) * (scale_val - 50)) / 12.5;
   in_set_color_scale(ss, val);
+  check_color_hook();
   for_each_chan(ss, update_graph_setting_fft_changed);
 }
 
@@ -624,6 +633,7 @@ static void list_color_callback(Widget w, XtPointer context, XtPointer info)
   ASSERT_WIDGET_TYPE(XmIsList(w), w);
   ss = cd->state;
   in_set_color_map(ss, (cbs->item_position - 1));
+  check_color_hook();
   for_each_chan(ss, update_graph_setting_fft_changed);
 }
 
@@ -632,6 +642,7 @@ void set_color_map(snd_state *ss, int val)
   in_set_color_map(ss, val);
   if ((ccd) && (val >= 0))
     XmListSelectPos(ccd->list, val + 1, FALSE);
+  check_color_hook();
   if (!(ss->graph_hook_active)) 
     for_each_chan(ss, update_graph_setting_fft_changed);
 }
@@ -645,6 +656,7 @@ static void cutoff_color_callback(Widget w, XtPointer context, XtPointer info) /
   ASSERT_WIDGET_TYPE(XmIsScale(w), w);
   ss = cd->state;
   in_set_color_cutoff(ss, (Float)(cbs->value) / 1000.0);
+  check_color_hook();
   for_each_chan(ss, update_graph_setting_fft_changed);
 }
 
@@ -880,6 +892,12 @@ Widget start_color_dialog(snd_state *ss, int width, int height)
 
 /* -------- orientation browser -------- */
 
+static XEN orientation_hook;
+static void check_orientation_hook(void)
+{
+  run_hook(orientation_hook, XEN_EMPTY_LIST, S_orientation_hook);
+}
+
 typedef struct {
   Widget dialog;
   Widget ax, ay, az, sx, sy, sz, hop, cut, glbutton; 
@@ -899,6 +917,7 @@ static void ax_orientation_callback(Widget w, XtPointer context, XtPointer info)
   ss = od->state;
   in_set_spectro_x_angle(ss, (Float)(cbs->value));
   chans_field(ss, FCP_X_ANGLE, (Float)(cbs->value));
+  check_orientation_hook();
   for_each_chan(ss, update_graph);
 }
 
@@ -908,6 +927,7 @@ void set_spectro_x_angle(snd_state *ss, Float val)
   in_set_spectro_x_angle(ss, val);
   if (oid) XmScaleSetValue(oid->ax, (int)val);
   chans_field(ss, FCP_X_ANGLE, val);
+  check_orientation_hook();
   if (!(ss->graph_hook_active)) 
     for_each_chan(ss, update_graph);
 }
@@ -928,6 +948,7 @@ static void ay_orientation_callback(Widget w, XtPointer context, XtPointer info)
   ss = od->state;
   in_set_spectro_y_angle(ss, (Float)(cbs->value));
   chans_field(ss, FCP_Y_ANGLE, (Float)(cbs->value));
+  check_orientation_hook();
   for_each_chan(ss, update_graph);
 }
 
@@ -937,6 +958,7 @@ void set_spectro_y_angle(snd_state *ss, Float val)
   in_set_spectro_y_angle(ss, val);
   if (oid) XmScaleSetValue(oid->ay, (int)val);
   chans_field(ss, FCP_Y_ANGLE, val);
+  check_orientation_hook();
   if (!(ss->graph_hook_active)) 
     for_each_chan(ss, update_graph);
 }
@@ -957,6 +979,7 @@ static void az_orientation_callback(Widget w, XtPointer context, XtPointer info)
   ss = od->state;
   in_set_spectro_z_angle(ss, (Float)(cbs->value));
   chans_field(ss, FCP_Z_ANGLE, (Float)(cbs->value));
+  check_orientation_hook();
   for_each_chan(ss, update_graph);
 }
 
@@ -966,6 +989,7 @@ void set_spectro_z_angle(snd_state *ss, Float val)
   in_set_spectro_z_angle(ss, val);
   if (oid) XmScaleSetValue(oid->az, (int)val);
   chans_field(ss, FCP_Z_ANGLE, val);
+  check_orientation_hook();
   if (!(ss->graph_hook_active)) 
     for_each_chan(ss, update_graph);
 }
@@ -986,6 +1010,7 @@ static void sx_orientation_callback(Widget w, XtPointer context, XtPointer info)
   ss = od->state;
   in_set_spectro_x_scale(ss, (Float)(cbs->value) * 0.01);
   chans_field(ss, FCP_X_SCALE, (Float)(cbs->value) * 0.01);
+  check_orientation_hook();
   for_each_chan(ss, update_graph);
 }
 
@@ -994,6 +1019,7 @@ void set_spectro_x_scale(snd_state *ss, Float val)
   in_set_spectro_x_scale(ss, val);
   if (oid) XmScaleSetValue(oid->sx, mus_iclamp(0, (int)(val * 100), 100));
   chans_field(ss, FCP_X_SCALE, val);
+  check_orientation_hook();
   if (!(ss->graph_hook_active)) 
     for_each_chan(ss, update_graph);
 }
@@ -1014,6 +1040,7 @@ static void sy_orientation_callback(Widget w, XtPointer context, XtPointer info)
   ss = od->state;
   in_set_spectro_y_scale(ss, (Float)(cbs->value) * 0.01);
   chans_field(ss, FCP_Y_SCALE, (Float)(cbs->value) * 0.01);
+  check_orientation_hook();
   for_each_chan(ss, update_graph);
 }
 
@@ -1022,6 +1049,7 @@ void set_spectro_y_scale(snd_state *ss, Float val)
   in_set_spectro_y_scale(ss, val);
   if (oid) XmScaleSetValue(oid->sy, mus_iclamp(0, (int)(val * 100), 100));
   chans_field(ss, FCP_Y_SCALE, val);
+  check_orientation_hook();
   if (!(ss->graph_hook_active)) 
     for_each_chan(ss, update_graph);
 }
@@ -1042,6 +1070,7 @@ static void sz_orientation_callback(Widget w, XtPointer context, XtPointer info)
   ss = od->state;
   in_set_spectro_z_scale(ss, (Float)(cbs->value) * 0.01);
   chans_field(ss, FCP_Z_SCALE, (Float)(cbs->value) * 0.01);
+  check_orientation_hook();
   for_each_chan(ss, update_graph);
 }
 
@@ -1050,6 +1079,7 @@ void set_spectro_z_scale(snd_state *ss, Float val)
   in_set_spectro_z_scale(ss, val);
   if (oid) XmScaleSetValue(oid->sz, mus_iclamp(0, (int)(val * 100), 100));
   chans_field(ss, FCP_Z_SCALE, val);
+  check_orientation_hook();
   if (!(ss->graph_hook_active)) 
     for_each_chan(ss, update_graph);
 }
@@ -1074,6 +1104,7 @@ static void hop_orientation_callback(Widget w, XtPointer context, XtPointer info
   val = mus_iclamp(1, cbs->value, HOP_MAX);
   in_set_spectro_hop(ss, val);
   for_each_chan_1(ss, chans_spectro_hop, (void *)(&val));
+  check_orientation_hook();
   for_each_chan(ss, update_graph);
 }
 
@@ -1084,6 +1115,7 @@ void set_spectro_hop(snd_state *ss, int val)
       in_set_spectro_hop(ss, val);
       if (oid) XmScaleSetValue(oid->hop, mus_iclamp(1, val, HOP_MAX));
       for_each_chan_1(ss, chans_spectro_hop, (void *)(&val));
+      check_orientation_hook();
       if (!(ss->graph_hook_active)) 
 	for_each_chan(ss, update_graph);
     }
@@ -1108,6 +1140,7 @@ static void cut_orientation_callback(Widget w, XtPointer context, XtPointer info
   ss = od->state;
   chans_field(ss, FCP_CUTOFF, (Float)(cbs->value) * 0.01);
   for_each_chan(ss, chans_spectro_cut);
+  check_orientation_hook();
   set_spectro_cutoff_and_redisplay(ss, (Float)(cbs->value) * 0.01); /* calls in_set... */
 } 
 
@@ -1116,6 +1149,7 @@ void set_spectro_cutoff(snd_state *ss, Float val)
   in_set_spectro_cutoff(ss, val);
   if (oid) XmScaleSetValue(oid->cut, (int)(val * 100));
   chans_field(ss, FCP_CUTOFF, val);
+  check_orientation_hook();
   if (!(ss->graph_hook_active)) 
     for_each_chan(ss, update_graph_setting_fft_changed);
 }
@@ -1155,6 +1189,7 @@ void reflect_spectro(snd_state *ss)
       XtVaSetValues(oid->sz, XmNvalue, mus_iclamp(0, (int)(spectro_z_scale(ss) * 100), 100), NULL);
       XtVaSetValues(oid->hop, XmNvalue, mus_iclamp(1, spectro_hop(ss), HOP_MAX), NULL);
       XtVaSetValues(oid->cut, XmNvalue, mus_iclamp(0, (int)(spectro_cutoff(ss) * 100), 100), NULL);
+      check_orientation_hook();
     }
 }
 
@@ -1441,4 +1476,15 @@ Widget start_orientation_dialog(snd_state *ss, int width, int height)
 		  XmNheight, (Dimension)height, 
 		  NULL);
   return(oid->dialog);
+}
+
+void g_init_gxdraw(void)
+{
+  #define H_orientation_hook S_orientation_hook " () called whenever one of the variables associated with the \
+orientation dialog changes"
+  #define H_color_hook S_color_hook " () called whenever one of the variables associated with the \
+color dialog changes"
+
+  XEN_DEFINE_HOOK(orientation_hook, S_orientation_hook, 0, H_orientation_hook);
+  XEN_DEFINE_HOOK(color_hook, S_color_hook, 0, H_color_hook);
 }

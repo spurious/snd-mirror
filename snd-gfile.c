@@ -218,7 +218,7 @@ static void play_selected_callback(GtkWidget *w, gpointer data)
 	stop_playing_sound(fd->file_play_sp);
       filename = (char *)gtk_file_selection_get_filename(GTK_FILE_SELECTION(fd->dialog));
       fd->file_play_sp = make_sound_readable(get_global_state(), filename, FALSE);
-      fd->file_play_sp->delete_me = 1;
+      fd->file_play_sp->delete_me = TRUE;
       if (fd->file_play_sp)
 	play_sound(fd->file_play_sp, 0, 
 		   NO_END_SPECIFIED, IN_BACKGROUND, 
@@ -1266,16 +1266,16 @@ int file_dialog_is_active(void)
 static GtkWidget *raw_data_dialog = NULL;
 static GtkWidget *raw_srate_text, *raw_chans_text, *raw_location_text, *raw_data_label;
 static off_t raw_data_location = 0;
-static int raw_cancelled = 0, raw_done = 0;
+static int raw_cancelled = FALSE, raw_done = FALSE;
 
-static void raw_data_ok_callback(GtkWidget *w, gpointer context) {raw_cancelled = 0; raw_done = 1;}
-static void raw_data_cancel_callback(GtkWidget *w, gpointer context) {raw_cancelled = 1; raw_done = 1;}
-static void raw_data_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context) {raw_cancelled = 1; raw_done = 1;}
+static void raw_data_ok_callback(GtkWidget *w, gpointer context) {raw_cancelled = FALSE; raw_done = TRUE;}
+static void raw_data_cancel_callback(GtkWidget *w, gpointer context) {raw_cancelled = TRUE; raw_done = TRUE;}
+static void raw_data_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context) {raw_cancelled = TRUE; raw_done = TRUE;}
 
 static void raw_data_default_callback(GtkWidget *w, gpointer context) 
 {
-  raw_cancelled = 0; 
-  raw_done = 1;
+  raw_cancelled = FALSE; 
+  raw_done = TRUE;
 }
 
 static char **data_formats = NULL;
@@ -1423,7 +1423,7 @@ file_info *raw_data_dialog_to_file_info(char *filename, snd_state *ss, const cha
   if (!raw_data_dialog) make_raw_data_dialog(ss);
   gtk_label_set_text(GTK_LABEL(raw_data_label), title);
   reflect_raw_pending_in_menu();
-  raw_done = 0;
+  raw_done = FALSE;
   gtk_widget_show(raw_data_dialog);
   while (!raw_done) gtk_main_iteration();
   gtk_widget_hide(raw_data_dialog);
@@ -1469,13 +1469,13 @@ file_info *raw_data_dialog_to_file_info(char *filename, snd_state *ss, const cha
 
 /* no longer shares with raw data -- 11-Nov-99 */
 
-static int new_file_cancelled = 0, new_file_done = 0;
+static int new_file_cancelled = FALSE, new_file_done = FALSE;
 static GtkWidget *new_dialog = NULL, *new_file_name;
 static file_data *new_dialog_data = NULL;
 
-static void new_file_ok_callback(GtkWidget *w, gpointer context) {new_file_cancelled = 0; new_file_done = 1;}
-static void new_file_cancel_callback(GtkWidget *w, gpointer context) {new_file_cancelled = 1; new_file_done = 1;}
-static void new_file_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context) {new_file_cancelled = 1; new_file_done = 1;}
+static void new_file_ok_callback(GtkWidget *w, gpointer context) {new_file_cancelled = FALSE; new_file_done = TRUE;}
+static void new_file_cancel_callback(GtkWidget *w, gpointer context) {new_file_cancelled = TRUE; new_file_done = TRUE;}
+static void new_file_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context) {new_file_cancelled = TRUE; new_file_done = TRUE;}
 
 static void new_file_help_callback(GtkWidget *w, gpointer context) 
 {
@@ -1489,7 +1489,7 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
   snd_info *sp = NULL;
   GtkWidget *name_label, *hform;
   GtkWidget *help_button, *cancel_button, *ok_button;
-  new_file_cancelled = 0;
+  new_file_cancelled = FALSE;
   title = (char *)CALLOC(snd_strlen(newname) + 32, sizeof(char));
   sprintf(title, "create new sound: %s", newname);
   if (!new_dialog)
@@ -1553,7 +1553,7 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
       gtk_entry_set_text(GTK_ENTRY(new_file_name), newname);
     }
   load_header_and_data_lists(new_dialog_data, header_type, data_format, srate, chans, -1, comment);
-  new_file_done = 0;
+  new_file_done = FALSE;
   gtk_widget_show(new_dialog);
   while (!new_file_done) gtk_main_iteration();
   gtk_widget_hide(new_dialog);
@@ -1693,7 +1693,7 @@ XEN_ARGIFY_1(g_set_just_sounds_w, g_set_just_sounds)
 #define g_set_just_sounds_w g_set_just_sounds
 #endif
 
-void g_initialize_gxfile(void)
+void g_init_gxfile(void)
 {
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_just_sounds, g_just_sounds_w, H_just_sounds, "set-" S_just_sounds, g_set_just_sounds_w,  0, 0, 0, 1);
 

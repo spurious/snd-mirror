@@ -480,7 +480,7 @@ static void make_region_dialog(snd_state *ss)
   else add_channel_window(rsp, 0, ss, 0, 0, region_grf, WITH_ARROWS);
   cp = rsp->chans[0];
 
-  cp->hookable = 0;
+  cp->hookable = FALSE;
   if (!(ss->using_schemes)) 
     {
       XtVaSetValues(region_rows[0]->nm, XmNbackground, (ss->sgx)->white, XmNforeground, (ss->sgx)->black, NULL);

@@ -920,7 +920,7 @@ static void filter_drawer_button_motion(Widget w, XtPointer context, XEvent *eve
 		   sp->filter_control_in_dB,
 		   sp->filter_control_env_xmax);
   display_filter_env(sp);
-  sp->filter_control_changed = 1;
+  sp->filter_control_changed = TRUE;
 }
 
 static void filter_drawer_button_press(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
@@ -948,7 +948,7 @@ static void filter_drawer_button_release(Widget w, XtPointer context, XEvent *ev
   display_filter_env(sp);
   set_filter_text(sp, tmpstr = env_to_string(sp->filter_control_env));
   if (tmpstr) FREE(tmpstr);
-  sp->filter_control_changed = 1;
+  sp->filter_control_changed = TRUE;
 }
 
 static void filter_drawer_resize(Widget w, XtPointer context, XtPointer info) 
@@ -990,7 +990,7 @@ void set_snd_filter_order(snd_info *sp, int order)
       FREE(fltorder);
       display_filter_env(sp);
     }
-  sp->filter_control_changed = 1;
+  sp->filter_control_changed = TRUE;
 }
 
 static void filter_order_up_callback(Widget w, XtPointer context, XtPointer info)
@@ -1063,7 +1063,7 @@ static void filter_activate_callback(Widget w, XtPointer context, XtPointer info
   edp_edited(sp->sgx->flt);
   display_filter_env(sp);
   filter_textfield_deactivate(sp);
-  sp->filter_control_changed = 1;
+  sp->filter_control_changed = TRUE;
 }
 
 static void filter_order_activate_callback(Widget w, XtPointer context, XtPointer info)
@@ -1078,7 +1078,7 @@ static void filter_order_activate_callback(Widget w, XtPointer context, XtPointe
       if (order & 1) order++;
       if (order <= 0) order = 2;
       sp->filter_control_order = order;
-      sp->filter_control_changed = 1;
+      sp->filter_control_changed = TRUE;
       display_filter_env(sp);
       XtFree(str);
     }
@@ -1096,7 +1096,7 @@ void filter_env_changed(snd_info *sp, env *e)
       edp_edited(sp->sgx->flt);
       display_filter_env(sp);
     }
-  sp->filter_control_changed = 1;
+  sp->filter_control_changed = TRUE;
 }
 
 void set_play_button(snd_info *sp, int val)
@@ -1232,7 +1232,7 @@ static void sync_button_callback(Widget w, XtPointer context, XtPointer info)
       cp = sp->lacp;
       if (cp == NULL) cp = any_selected_channel(sp);
       goto_graph(cp);
-      if (cp->cursor_on) cursor_moveto(cp, cp->cursor);
+      if (cp->cursor_on) cursor_moveto(cp, CURSOR(cp));
       apply_x_axis_change(cp->axis, cp, sp);
     }
 }
@@ -1305,7 +1305,7 @@ static void apply_callback(Widget w, XtPointer context, XtPointer info)
       sp->applying = TRUE;
       if (!(ss->using_schemes)) 
 	XmChangeColor(APPLY_BUTTON(sp), (Pixel)((ss->sgx)->pushed_button_color));
-      sgx->apply_in_progress = BACKGROUND_ADD(ss, apply_controls, (GUI_POINTER)(make_apply_state_with_implied_beg_and_dur(sp)));
+      sgx->apply_in_progress = BACKGROUND_ADD(ss, apply_controls, (Indicium)(make_apply_state_with_implied_beg_and_dur(sp)));
     }
 }
 
@@ -1541,7 +1541,7 @@ static unsigned char speed_l_bits1[] = {
 
 static Pixmap mini_lock = 0;
 static Pixmap blank_pixmap = 0;
-static int mini_lock_allocated = 0;
+static int mini_lock_allocated = FALSE;
 static Pixmap mini_bombs[NUM_BOMBS];
 static Pixmap mini_glasses[NUM_GLASSES];
 
@@ -1601,7 +1601,7 @@ static void inc_bomb(snd_info *sp, void *ptr)
     }
 }
 
-static int bomb_in_progress = 0;
+static int bomb_in_progress = FALSE;
 
 static void bomb_check(XtPointer context, XtIntervalId *id)
 {
@@ -1616,16 +1616,16 @@ static void bomb_check(XtPointer context, XtIntervalId *id)
 		    (unsigned long)BOMB_TIME,
 		    (XtTimerCallbackProc)bomb_check,
 		    context);
-  else bomb_in_progress = 0;
+  else bomb_in_progress = FALSE;
 }
 
 void snd_file_bomb_icon(snd_info *sp, int on)
 {
   snd_state *ss;
-  if ((on) && (bomb_in_progress == 0))
+  if ((on) && (!bomb_in_progress))
     {
       ss = sp->state;
-      bomb_in_progress = 1;
+      bomb_in_progress = TRUE;
       XtAppAddTimeOut(MAIN_APP(ss),
 		      (unsigned long)BOMB_TIME,
 		      (XtTimerCallbackProc)bomb_check,
@@ -1672,7 +1672,7 @@ static void close_sound_dialog(Widget w, XtPointer context, XtPointer info)
 }
 
 static Pixmap spd_r, spd_l;
-static int spd_ok = 0;
+static int spd_ok = FALSE;
 
 static snd_info *add_sound_window_with_parent (Widget parent, char *filename, snd_state *ss, int read_only)
 {  
@@ -1691,7 +1691,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
   XtCallbackList n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12;
   snd_context *sx;
   Atom sound_delete;
-  static int first_window = 1;
+  static int first_window = TRUE;
   errno = 0;
   hdr = make_file_info(filename, ss);
   if (!hdr) return(NULL);
@@ -1892,7 +1892,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
 		    }
 		}
 	    }
-	  mini_lock_allocated = 1;
+	  mini_lock_allocated = TRUE;
       }
 #endif
       n = 0;      
@@ -2148,7 +2148,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNtopOffset, 0); n++;
       sw[W_srate_arrow] = make_togglebutton_widget("dir", sw[W_amp_form], args, n);
       form = sw[W_srate_arrow];
-      if (spd_ok == 0)
+      if (!spd_ok)
 	{
 	  rb = XCreateBitmapFromData(XtDisplay(form), RootWindowOfScreen(XtScreen(form)), (const char *)speed_r_bits1, 16, 12);
 	  lb = XCreateBitmapFromData(XtDisplay(form), RootWindowOfScreen(XtScreen(form)), (const char *)speed_l_bits1, 16, 12);
@@ -2159,7 +2159,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
 	  XCopyPlane(XtDisplay(form), lb, spd_l, (ss->sgx)->fltenv_basic_gc, 0, 0, 16, 12, 0, 0, 1);
 	  XFreePixmap(XtDisplay(form), rb);
 	  XFreePixmap(XtDisplay(form), lb);
-	  spd_ok = 1;
+	  spd_ok = TRUE;
 	}
       XtVaSetValues(form, XmNselectPixmap, spd_l, XmNlabelPixmap, spd_r, NULL);
       XtAddCallback(sw[W_srate_arrow], XmNhelpCallback, srate_arrow_help_callback, ss);
@@ -2819,7 +2819,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtVaGetValues(sw[W_apply], XmNy, &rsy, NULL);
       /* end if control-panel */
       ss->open_ctrls_height = fey + ((rsy < 0) ? (-rsy) : rsy) + cy - 1;
-      first_window = 0;
+      first_window = FALSE;
     } 
   if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
     {
@@ -3274,26 +3274,6 @@ void start_progress_report(snd_info *sp, int from_enved)
 #endif
 }
 
-static XEN g_add_sound_window (XEN parent, XEN filename, XEN read_only)
-{
-  /* an experiment via snd-motif.scm / xm.c */
-  snd_info *sp;
-  snd_state *ss;
-  ss = get_global_state();
-  sp = add_sound_window_with_parent((Widget)XEN_UNWRAP_WIDGET(parent), 
-				    XEN_TO_C_STRING(filename), 
-				    ss,
-				    XEN_TO_C_BOOLEAN_OR_TRUE(read_only));
-  if (sp)
-    {
-      sp->write_date = file_write_date(sp->filename);
-      sp->need_update = 0;
-      ss->active_sounds++; /* ?? */
-      return(C_TO_XEN_INT(sp->index));
-    }
-  else return(XEN_FALSE);
-}
-
 static XEN g_sound_widgets(XEN snd)
 {
   #define H_sound_widgets "(" S_sound_widgets " snd) -> list of \
@@ -3318,16 +3298,13 @@ widgets: (0)pane (1)name (2)control-panel (3)minibuffer (4)play-button (5)filter
 
 #ifdef XEN_ARGIFY_1
   XEN_ARGIFY_1(g_sound_widgets_w, g_sound_widgets)
-  XEN_ARGIFY_3(g_add_sound_window_w, g_add_sound_window)
 #else
   #define g_sound_widgets_w g_sound_widgets
-  #define g_add_sound_window_w g_add_sound_window
 #endif
 
 void g_init_gxsnd(void)
 {
   XEN_DEFINE_PROCEDURE(S_sound_widgets, g_sound_widgets_w, 0, 1, 0, H_sound_widgets);
-  XEN_DEFINE_PROCEDURE("create-sound-window", g_add_sound_window_w, 2, 1, 0, "add a sound window to a widget");
 }
 
 

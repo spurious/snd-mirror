@@ -6,11 +6,6 @@ Float un_dB(snd_state *ss, Float py)
   return((py <= ss->min_dB) ? 0.0 : pow(10.0, py * .05));
 }
 
-static Float dB(snd_state *ss, Float py)
-{
-  return((py <= ss->lin_dB) ? ss->min_dB : (20.0 * (log10(py))));
-}
-
 /* mus_free(e) */
 env *free_env(env *e)
 {
@@ -200,7 +195,7 @@ typedef struct {
   int *current_ys;
   int current_size;
   axis_info *axis;
-  TIME_TYPE down_time;
+  Tempus down_time;
   int env_dragged;
   int env_pos;
   int click_to_delete;
@@ -215,10 +210,10 @@ void *new_env_editor(void)
   edp->current_ys = (int *)CALLOC(8, sizeof(int));
   edp->axis = (axis_info *)CALLOC(1, sizeof(axis_info));
   edp->current_size = 8;
-  edp->env_dragged = 0;
+  edp->env_dragged = FALSE;
   edp->env_pos = 0;
-  edp->click_to_delete = 0;
-  edp->edited = 0;
+  edp->click_to_delete = FALSE;
+  edp->edited = FALSE;
   return((void *)edp);
 }
 
@@ -227,10 +222,10 @@ void edp_reset(void *spf)
   env_ed *edp = (env_ed *)spf;
   if (edp)
     {
-      edp->edited = 0;
-      edp->env_dragged = 0;
+      edp->edited = FALSE;
+      edp->env_dragged = FALSE;
       edp->env_pos = 0;
-      edp->click_to_delete = 0;
+      edp->click_to_delete = FALSE;
     }
 }
 
@@ -246,16 +241,16 @@ static void edp_set_current_point(env_ed *edp, int pos, int x, int y)
   edp->current_ys[pos] = y;
 }
 
-static short edp_grf_y_dB(snd_state *ss, Float val, axis_info *ap, int in_dB)
+static short edp_grf_y_dB(snd_state *ss, Float val, axis_info *ap, int use_dB)
 {
-  if (in_dB)
-    return(grf_y(dB(ss, val), ap));
+  if (use_dB)
+    return(grf_y(in_dB(ss->min_dB, ss->lin_dB, val), ap));
   else return(grf_y(val, ap));
 }
 
-static double edp_ungrf_y_dB(snd_state *ss, axis_info *ap, int y, int in_dB)
+static double edp_ungrf_y_dB(snd_state *ss, axis_info *ap, int y, int use_dB)
 {
-  if (in_dB)
+  if (use_dB)
     return(un_dB(ss, ungrf_y(ap, y)));
   else return(ungrf_y(ap, y));
 }
@@ -269,7 +264,7 @@ axis_info *edp_ap(void *spf)
 #define MIN_FILTER_GRAPH_HEIGHT 20
 
 int edp_display_graph(snd_state *ss, void *spf, const char *name, axis_context *ax, 
-		      int x, int y, int width, int height, env *e, int in_dB, int with_dots)
+		      int x, int y, int width, int height, env *e, int use_dB, int with_dots)
 {
   axis_info *ap;
   env_ed *edp = (env_ed *)spf;
@@ -292,7 +287,7 @@ int edp_display_graph(snd_state *ss, void *spf, const char *name, axis_context *
   if (ey0 > 0.0) ey0 = 0.0;
   if ((ey0 == ey1) && (ey1 == 0.0)) ey1 = 1.0; /* fixup degenerate case */
   if (ey1 < 1.0) ey1 = 1.0;
-  if (in_dB) 
+  if (use_dB) 
     {
       ey0 = ss->min_dB; 
       ey1 = 0.0;
@@ -302,7 +297,7 @@ int edp_display_graph(snd_state *ss, void *spf, const char *name, axis_context *
   if (with_dots)
     init_env_axes(ap, name, x, y, width, height, ex0, ex1, ey0, ey1, FALSE);
   ix1 = grf_x(e->data[0], ap);
-  iy1 = edp_grf_y_dB(ss, e->data[1], ap, in_dB);
+  iy1 = edp_grf_y_dB(ss, e->data[1], ap, use_dB);
   if (with_dots)
     {
       if (e->pts < 100)
@@ -311,14 +306,14 @@ int edp_display_graph(snd_state *ss, void *spf, const char *name, axis_context *
       edp_set_current_point(edp, 0, ix1, iy1);
       draw_arc(ax, ix1, iy1, size);
     }
-  if (in_dB)
+  if (use_dB)
     {
       for (j = 1, i = 2; i < e->pts * 2; i += 2, j++)
 	{
 	  ix0 = ix1;
 	  iy0 = iy1;
 	  ix1 = grf_x(e->data[i], ap);
-	  iy1 = edp_grf_y_dB(ss, e->data[i + 1], ap, in_dB);
+	  iy1 = edp_grf_y_dB(ss, e->data[i + 1], ap, use_dB);
 	  if (with_dots)
 	    {
 	      edp_set_current_point(edp, j, ix1, iy1);
@@ -347,7 +342,7 @@ int edp_display_graph(snd_state *ss, void *spf, const char *name, axis_context *
 		  lx0 = lx1;
 		  ly0 = ly1;
 		  lx1 = grf_x(curx, ap);
-		  ly1 = grf_y(dB(ss, yval), ap);
+		  ly1 = grf_y(in_dB(ss->min_dB, ss->lin_dB, yval), ap);
 		  draw_line(ax, lx0, ly0, lx1, ly1);
 		}
 	      draw_line(ax, lx1, ly1, ix1, iy1);
@@ -373,15 +368,15 @@ int edp_display_graph(snd_state *ss, void *spf, const char *name, axis_context *
   return(edp->edited);
 }
 
-void edp_handle_point(snd_state *ss, void *spf, int evx, int evy, TIME_TYPE motion_time, env *e, int in_dB, Float xmax)
+void edp_handle_point(snd_state *ss, void *spf, int evx, int evy, Tempus motion_time, env *e, int use_dB, Float xmax)
 {
   env_ed *edp = (env_ed *)spf;
   axis_info *ap;
   Float x0, x1, x, y;
   if ((e == NULL) || (edp == NULL)) return;
   if ((motion_time - edp->down_time) < 100) return;
-  edp->env_dragged = 1;
-  edp->click_to_delete = 0;
+  edp->env_dragged = TRUE;
+  edp->click_to_delete = FALSE;
   ap = edp->axis;
   x = ungrf_x(ap, evx);
   if (edp->env_pos > 0) 
@@ -398,12 +393,12 @@ void edp_handle_point(snd_state *ss, void *spf, int evx, int evy, TIME_TYPE moti
   if (y < 0.0) y = 0.0;
   if (y < ap->y0) y = ap->y0;
   if (y > ap->y1) y = ap->y1;
-  if (in_dB) y = un_dB(ss, y);
+  if (use_dB) y = un_dB(ss, y);
   move_point(e, edp->env_pos, x, y);
-  edp->edited = 1;
+  edp->edited = TRUE;
 }
 
-int edp_handle_press(snd_state *ss, void *spf, int evx, int evy, TIME_TYPE time, env *e, int in_dB, Float xmax)
+int edp_handle_press(snd_state *ss, void *spf, int evx, int evy, Tempus time, env *e, int use_dB, Float xmax)
 {
   int pos;
   Float x, y;
@@ -411,10 +406,10 @@ int edp_handle_press(snd_state *ss, void *spf, int evx, int evy, TIME_TYPE time,
   axis_info *ap;
   ap = edp->axis;
   edp->down_time = time;
-  edp->env_dragged = 0;
+  edp->env_dragged = FALSE;
   pos = hit_point(ss, edp->current_xs, edp->current_ys, e->pts, evx, evy);
   x = ungrf_x(ap, evx);
-  y = edp_ungrf_y_dB(ss, ap, evy, in_dB);
+  y = edp_ungrf_y_dB(ss, ap, evy, use_dB);
   if (y < 0.0) y = 0.0;
   if (pos == -1)
     {
@@ -437,10 +432,10 @@ int edp_handle_press(snd_state *ss, void *spf, int evx, int evy, TIME_TYPE time,
       pos = place_point(edp->current_xs, e->pts, evx);
       add_point(e, pos + 1, x, y);
       edp->env_pos = pos + 1;
-      edp->click_to_delete = 0;
+      edp->click_to_delete = FALSE;
     }
-  else edp->click_to_delete = 1;
-  edp->edited = 1;
+  else edp->click_to_delete = TRUE;
+  edp->edited = TRUE;
   return(pos == -1);
 }
 
@@ -453,14 +448,14 @@ void edp_handle_release(void *spf, env *e)
        (edp->env_pos < (e->pts - 1))))
     delete_point(e, edp->env_pos);
   edp->env_pos = 0;
-  edp->env_dragged = 0;
-  edp->click_to_delete = 0;
+  edp->env_dragged = FALSE;
+  edp->click_to_delete = FALSE;
 }
 
 void edp_edited(void *spf)
 {
   env_ed *edp = (env_ed *)spf;
-  edp->edited = 1;
+  edp->edited = TRUE;
 }
 
 
@@ -528,7 +523,7 @@ void init_env_axes(axis_info *ap, const char *name, int x_offset, int ey0, int w
 static short grf_y_dB(snd_state *ss, Float val, axis_info *ap)
 {
   if (enved_in_dB(ss))
-    return(grf_y(dB(ss, val), ap));
+    return(grf_y(in_dB(ss->min_dB, ss->lin_dB, val), ap));
   else return(grf_y(val, ap));
 }
 
@@ -631,7 +626,7 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax,
 			  lx0 = lx1;
 			  ly0 = ly1;
 			  lx1 = grf_x(curx, ap);
-			  ly1 = grf_y(dB(ss, yval), ap);
+			  ly1 = grf_y(in_dB(ss->min_dB, ss->lin_dB, yval), ap);
 			  draw_line(ax, lx0, ly0, lx1, ly1);
 			}
 		      draw_line(ax, lx1, ly1, ix1, iy1);
@@ -686,17 +681,17 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax,
 		for (j = 1, i = 2; i < e->pts * 2; i += 2, j++)
 		  set_current_point(j, grf_x(e->data[i], ap), grf_y(e->data[i + 1], ap));
 
-	      ce = mus_make_env(e->data, e->pts, 1.0, 0.0, base, 0.0, 0, width / EXP_SEGLEN - 1, NULL);
-	      if (ce == NULL) return;
 	      /* exponential case */
 	      dur = width / EXP_SEGLEN;
+	      ce = mus_make_env(e->data, e->pts, 1.0, 0.0, base, 0.0, 0, dur - 1, NULL);
+	      if (ce == NULL) return;
 	      if (dur < e->pts) dur = e->pts;
 	      env_val = mus_env(ce);
 	      ix1 = grf_x(0.0, ap);
 	      iy1 = grf_y_dB(ss, env_val, ap);
 	      xincr = (ex1 - ex0) / (Float)dur;
 	      j = 1;
-	      for (i = 1, curx = ex0; i < dur; i++, curx += xincr)
+	      for (i = 1, curx = ex0 + xincr; i < dur; i++, curx += xincr)
 		{
 		  iy0 = iy1;
 		  ix0 = ix1;
@@ -707,8 +702,9 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax,
 		  if (printing) ps_draw_line(ap, ix0, iy0, ix1, iy1);
 		  if ((dots) && (index != mus_position(ce)))
 		    {
-		      draw_arc(ax, ix1, iy1, size);
 		      index = mus_position(ce);
+		      if (index < (e->pts - 1))
+			draw_arc(ax, ix1, iy1, size);
 		    }
 		}
 	      if (curx < ex1)
@@ -1065,10 +1061,10 @@ int enved_button_press_display(snd_state *ss, axis_info *ap, env *active_env, in
       if (check_enved_hook(active_env, pos, x, y, ENVED_ADD_POINT) == 0)
 	add_point(active_env, pos + 1, x, y);
       env_pos = pos + 1;
-      set_enved_click_to_delete(0);
+      set_enved_click_to_delete(FALSE);
       env_redisplay(ss);
     }
-  else set_enved_click_to_delete(1);
+  else set_enved_click_to_delete(TRUE);
   enved_display_point_label(ss, x, y);
   return(env_pos);
 }
@@ -1332,7 +1328,7 @@ int check_enved_hook(env *e, int pos, Float x, Float y, int reason)
 {
   XEN result = XEN_FALSE;
   XEN procs; XEN env_list;
-  int env_changed = 0, len = 0;
+  int env_changed = FALSE, len = 0;
   if (XEN_HOOKED(enved_hook))
     {
       /* if hook procedure returns a list, that is the new contents of the
@@ -1380,7 +1376,7 @@ int check_enved_hook(env *e, int pos, Float x, Float y, int reason)
 		e->data[i] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
 	      if (XEN_NOT_NULL_P(procs))
 		env_list = env_to_xen(e);
-	      env_changed = 1;
+	      env_changed = TRUE;
 	    }
 #if HAVE_GUILE
 	}

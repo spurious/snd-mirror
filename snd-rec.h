@@ -118,7 +118,7 @@ typedef struct {
   int digital_in_button;
   int microphone_button;
   int line_in_button;
-  BACKGROUND_FUNCTION_TYPE recorder_reader;
+  Cessator recorder_reader;
 } recorder_info;
 
 recorder_info *get_recorder_info(void);

@@ -96,7 +96,7 @@ static int device_buttons_size = 0;
 #endif
 static int mixer_gains_posted[MAX_SOUNDCARDS];
 static int tone_controls_posted[MAX_SOUNDCARDS];
-static XM_FONT_TYPE small_fontlist;
+static xm_font_t small_fontlist;
 
 static vu_label **vu_labels = NULL;
 static int vu_labels_size = 0;
@@ -430,7 +430,7 @@ static int allocate_meter_2(Widget w, vu_label *vu)
 
 static Pixel yellows[VU_COLORS];
 static Pixel reds[VU_COLORS];
-static int vu_colors_allocated = 0;
+static int vu_colors_allocated = FALSE;
 static int yellow_vals[] = {0, 16, 32, 64, 96, 128, 160, 175, 185, 200, 210, 220, 230, 240};
 
 static void allocate_meter_1(snd_state *ss, vu_label *vu)
@@ -469,7 +469,7 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
   XtVaGetValues(recorder, XmNdepth, &depth, NULL);
   if (!vu_colors_allocated)
     {
-      vu_colors_allocated = 1;
+      vu_colors_allocated = TRUE;
       tmp_color.flags = DoRed | DoGreen | DoBlue;
       tmp_color.red = (unsigned short)65535;
       for (i = 0; i < VU_COLORS; i++)
@@ -1194,7 +1194,7 @@ static void device_button_callback(Widget w, XtPointer context, XtPointer info)
 	    {
 	      p = all_panes[active_device_button];
 	      for (i = p->in_chan_loc, j = 0; j < p->in_chans; j++, i++) 
-		rp->input_channel_active[i] = 0;
+		rp->input_channel_active[i] = FALSE;
 	      if (active_device_button != button)
 		{
 		  /* XtVaGetValues(p->pane, XmNheight, &(p->pane_size), NULL); */
@@ -1207,7 +1207,7 @@ static void device_button_callback(Widget w, XtPointer context, XtPointer info)
 	  active_device_button = button;
 	  p = all_panes[button];
 	  for (i = p->in_chan_loc, j = 0; j < p->in_chans; j++, i++) 
-	    rp->input_channel_active[i] = 1;
+	    rp->input_channel_active[i] = TRUE;
 	  rp->input_channels[0] = p->in_chans;
 
 	  /* if digital in, get its srate (and reflect in srate text) */
@@ -1223,7 +1223,7 @@ static void device_button_callback(Widget w, XtPointer context, XtPointer info)
 	    record_report(messages, recorder_device_name(p->device), NULL);
 	  else
 	    {
-	      rp->taking_input = 1;
+	      rp->taking_input = TRUE;
 	      set_read_in_progress(ss);
 	    }
 	}
@@ -1239,15 +1239,15 @@ static void device_button_callback(Widget w, XtPointer context, XtPointer info)
 		  if (rp->monitor_port == -1)
 		    {
 		      record_report(messages, "open output", NULL);
-		      rp->monitoring = 0;
+		      rp->monitoring = FALSE;
 		    }
-		  else rp->monitoring = 1;
+		  else rp->monitoring = TRUE;
 		}
 	    }
 	  else 
 	    {
 	      mus_audio_close(rp->monitor_port);
-	      rp->monitoring = 0;
+	      rp->monitoring = FALSE;
 	      rp->monitor_port = -1;
 	    }
 	}
@@ -1269,7 +1269,7 @@ static void save_audio_settings_callback(Widget w, XtPointer context, XtPointer 
   recorder_info *rp;
   rp = get_recorder_info();
   XmToggleButtonSetState(w, FALSE, FALSE);
-  rp->mixer_settings_saved = 1;
+  rp->mixer_settings_saved = TRUE;
   mus_audio_mixer_save(DEFAULT_AUDIO_STATE_FILE);
 }
 
@@ -2414,7 +2414,7 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
 #if NEW_SGI_AL
   if (p->device == MUS_AUDIO_MICROPHONE)
     for (i = p->in_chan_loc, k = 0; k < p->in_chans; i++, k++) 
-      rp->input_channel_active[i] = 1;
+      rp->input_channel_active[i] = TRUE;
 #endif
 
   if (input) overall_input_ctr += p->in_chans;
@@ -3497,7 +3497,7 @@ static void initialize_recorder(recorder_info *rp)
   /* in this case, digital in blocks out the others */
   long sb[2];
   int err;
-  int in_digital = 0;
+  int in_digital = FALSE;
 #endif
   for (i = 0; i < MAX_SOUNDCARDS; i++)
     {
@@ -3510,7 +3510,7 @@ static void initialize_recorder(recorder_info *rp)
 #if OLD_SGI_AL
   sb[0] = AL_INPUT_SOURCE;
   err = ALgetparams(AL_DEFAULT_DEVICE, sb, 2);
-  if ((!err) && (sb[1] == AL_INPUT_DIGITAL)) in_digital = 1;
+  if ((!err) && (sb[1] == AL_INPUT_DIGITAL)) in_digital = TRUE;
   XmToggleButtonSetState(device_buttons[rp->digital_in_button], in_digital, FALSE);
   device_button_callback(device_buttons[rp->digital_in_button], (XtPointer)all_panes[rp->digital_in_button], NULL);
 #endif

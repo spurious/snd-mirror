@@ -56,6 +56,7 @@
 
 (define (tree-for-each func tree)
   "(tree-for-each func tree) applies func to every leaf of 'tree'"
+  ;; was named tree-apply in snd-4
   (cond ((null? tree) '())
 	((not (pair? tree)) (func tree))
 	(else (tree-for-each func (car tree))

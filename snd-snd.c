@@ -96,7 +96,7 @@ void free_env_state(chan_info *cp)
 
 static env_state *make_env_state(chan_info *cp, off_t samples)
 {
-  int val, pos, i, j, start_bin, end_bin, old_end_bin, happy = 0;
+  int val, pos, i, j, start_bin, end_bin, old_end_bin, happy = FALSE;
   off_t start, end, old_samples;
   env_info *ep, *old_ep = NULL;
   env_state *es;
@@ -169,12 +169,12 @@ static env_state *make_env_state(chan_info *cp, off_t samples)
 			  ep->top_bin = end_bin;
 			}
 		      else ep->top_bin = 0;
-		      happy = 1;
+		      happy = TRUE;
 		    }
 		}
 	    }
 	}
-      if (happy == 0)
+      if (!happy)
 	{
 	  /* we want samps_per_bin to be useful over a wide range of file sizes */
 	  /* 160e6 = about a hour at 44KHz */
@@ -276,7 +276,7 @@ static int tick_amp_env(chan_info *cp, env_state *es)
     }
 }
 
-BACKGROUND_TYPE get_amp_env(GUI_POINTER ptr)
+Cessate get_amp_env(Indicium ptr)
 {
   /* calculate the amp env of channel */
   chan_info *cp = (chan_info *)ptr;
@@ -300,7 +300,7 @@ BACKGROUND_TYPE get_amp_env(GUI_POINTER ptr)
       reflect_amp_env_completion(cp->sound);
       if (cp->waiting_to_make_graph) 
 	{
-	  cp->waiting_to_make_graph = 0;
+	  cp->waiting_to_make_graph = FALSE;
 	  update_graph(cp);
 	}
       return(BACKGROUND_QUIT);
@@ -616,7 +616,7 @@ env_info *amp_env_copy(chan_info *cp, int reversed, int edpos)
   return(new_ep);
 }
 
-void amp_env_env(chan_info *cp, Float *brkpts, int npts, int pos, Float base)
+void amp_env_env(chan_info *cp, Float *brkpts, int npts, int pos, Float base, Float scaler, Float offset)
 {
   env_info *old_ep, *new_ep;
   int i;
@@ -638,7 +638,9 @@ void amp_env_env(chan_info *cp, Float *brkpts, int npts, int pos, Float base)
 	}
       new_ep->amp_env_size = old_ep->amp_env_size;
       new_ep->samps_per_bin = old_ep->samps_per_bin;
-      e = mus_make_env(brkpts, npts, 1.0, 0.0, base, 0.0, 0, new_ep->amp_env_size - 1, brkpts);
+      if (base == 1.0)
+	e = mus_make_env(brkpts, npts, scaler, offset, base, 0.0, 0, new_ep->amp_env_size - 1, brkpts);
+      else e = mus_make_env(brkpts, npts, 1.0, 0.0, base, 0.0, 0, new_ep->amp_env_size - 1, brkpts);
       fmin = MUS_SAMPLE_MAX;
       fmax = MUS_SAMPLE_MIN;
       for (i = 0; i < new_ep->amp_env_size; i++) 
@@ -733,11 +735,12 @@ void amp_env_env_selection_by(chan_info *cp, mus_any *e, off_t beg, off_t num, i
     }
 }
 
-void amp_env_ptree(chan_info *cp, void *pt, int pos, XEN init_func)
+void amp_env_ptree(chan_info *cp, void *pt, int pos, XEN init_func, int is_xen)
 {
   env_info *old_ep, *new_ep;
-  int i;
+  int i, need_unprotect = FALSE;
   vct *vlo = NULL, *vhi = NULL;
+  XEN init_lo = XEN_UNDEFINED, init_hi = XEN_UNDEFINED;
   mus_sample_t fmin, fmax, dmin, dmax;
   old_ep = cp->amp_envs[pos];
   if ((old_ep) && (old_ep->completed))
@@ -758,30 +761,52 @@ void amp_env_ptree(chan_info *cp, void *pt, int pos, XEN init_func)
       fmax = MUS_SAMPLE_MIN;
       if (XEN_PROCEDURE_P(init_func))
 	{
-	  /* probably faster to copy locally than protect from GC */
-	  vlo = c_vct_copy((vct *)(XEN_OBJECT_REF(XEN_CALL_2(init_func,
-							     C_TO_XEN_OFF_T(0),
-							     C_TO_XEN_OFF_T(new_ep->amp_env_size),
-							     "ptree-channel fallback init func"))));
-	  vhi = c_vct_copy(vlo);
-	}
-      for (i = 0; i < new_ep->amp_env_size; i++) 
-	{
-	  if (vlo)
+	  if (is_xen)
 	    {
-	      dmin = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f1v1b2f(pt, 
-								 MUS_SAMPLE_TO_FLOAT(old_ep->data_min[i]),
-								 vlo,
-								 TRUE));
-	      dmax = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f1v1b2f(pt, 
-								 MUS_SAMPLE_TO_FLOAT(old_ep->data_max[i]),
-								 vhi,
-								 TRUE));
+	      init_lo = XEN_CALL_2(init_func,
+				   C_TO_XEN_OFF_T(0),
+				   C_TO_XEN_OFF_T(new_ep->amp_env_size),
+				   "xen-channel init func");
+	      snd_protect(init_lo);
+	      init_hi = XEN_CALL_2(init_func,
+				   C_TO_XEN_OFF_T(0),
+				   C_TO_XEN_OFF_T(new_ep->amp_env_size),
+				   "xen-channel init func");
+	      snd_protect(init_hi);
+	      need_unprotect = TRUE;
 	    }
 	  else
 	    {
-	      dmin = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(pt, MUS_SAMPLE_TO_FLOAT(old_ep->data_min[i])));
-	      dmax = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(pt, MUS_SAMPLE_TO_FLOAT(old_ep->data_max[i])));
+	      /* probably faster to copy locally than protect from GC */
+	      vlo = c_vct_copy((vct *)(XEN_OBJECT_REF(XEN_CALL_2(init_func,
+								 C_TO_XEN_OFF_T(0),
+								 C_TO_XEN_OFF_T(new_ep->amp_env_size),
+								 "ptree-channel init func"))));
+	      vhi = c_vct_copy(vlo);
+	    }
+	}
+      for (i = 0; i < new_ep->amp_env_size; i++) 
+	{
+	  if (is_xen)
+	    {
+	      XEN val;
+	      val = XEN_CALL_3((XEN)pt, C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_FLOAT(old_ep->data_min[i])), init_lo, XEN_TRUE, "xen-channel");
+	      dmin = MUS_FLOAT_TO_SAMPLE(XEN_TO_C_DOUBLE_OR_ELSE(val, 0.0));
+	      val = XEN_CALL_3((XEN)pt, C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_FLOAT(old_ep->data_max[i])), init_hi, XEN_TRUE, "xen-channel");
+	      dmax = MUS_FLOAT_TO_SAMPLE(XEN_TO_C_DOUBLE_OR_ELSE(val, 0.0));
+	    }
+	  else
+	    {
+	      if (vlo)
+		{
+		  dmin = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f1v1b2f(pt, MUS_SAMPLE_TO_FLOAT(old_ep->data_min[i]), vlo, TRUE));
+		  dmax = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f1v1b2f(pt, MUS_SAMPLE_TO_FLOAT(old_ep->data_max[i]), vhi, TRUE));
+		}
+	      else
+		{
+		  dmin = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(pt, MUS_SAMPLE_TO_FLOAT(old_ep->data_min[i])));
+		  dmax = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(pt, MUS_SAMPLE_TO_FLOAT(old_ep->data_max[i])));
+		}
 	    }
 	  if (dmin <= dmax)
 	    {
@@ -796,8 +821,19 @@ void amp_env_ptree(chan_info *cp, void *pt, int pos, XEN init_func)
 	  if (new_ep->data_min[i] < fmin) fmin = new_ep->data_min[i];
 	  if (new_ep->data_max[i] > fmax) fmax = new_ep->data_max[i];
 	}
-      if (vlo) FREE(vlo);
-      if (vhi) FREE(vhi);
+      if (is_xen)
+	{
+	  if (need_unprotect)
+	    {
+	      snd_unprotect(init_lo);
+	      snd_unprotect(init_hi);
+	    }
+	}
+      else
+	{
+	  if (vlo) FREE(vlo);
+	  if (vhi) FREE(vhi);
+	}
       new_ep->fmin = fmin;
       new_ep->fmax = fmax;
       new_ep->completed = TRUE;
@@ -807,13 +843,14 @@ void amp_env_ptree(chan_info *cp, void *pt, int pos, XEN init_func)
     }
 }
 
-void amp_env_ptree_selection(chan_info *cp, void *pt, off_t beg, off_t num, int pos, XEN init_func)
+void amp_env_ptree_selection(chan_info *cp, void *pt, off_t beg, off_t num, int pos, XEN init_func, int is_xen)
 {
   env_info *old_ep, *new_ep = NULL;
   mus_sample_t fmax = MUS_SAMPLE_0, fmin = MUS_SAMPLE_0, dmin, dmax;
-  int i, closure = FALSE;
+  int i, closure = FALSE, inited = FALSE, need_unprotect = FALSE;
   vct *vlo = NULL, *vhi = NULL;
   off_t cursamp, start, end;
+  XEN init_lo = XEN_FALSE, init_hi = XEN_FALSE;
   old_ep = cp->amp_envs[pos];
   if ((old_ep) && (old_ep->completed))
     {
@@ -843,29 +880,50 @@ void amp_env_ptree_selection(chan_info *cp, void *pt, off_t beg, off_t num, int 
 	    {
 	      if ((cursamp >= beg) && ((cursamp + new_ep->samps_per_bin) <= end))
 		{
-		  if (closure)
+		  if (is_xen)
 		    {
-		      if (vlo == NULL)
+		      XEN val;
+		      if ((!inited) && (closure))
 			{
-			  vlo = c_vct_copy((vct *)(XEN_OBJECT_REF(XEN_CALL_2(init_func,
-									     C_TO_XEN_OFF_T((off_t)((Float)(cursamp - beg) / (Float)(num))),
-									     C_TO_XEN_OFF_T((off_t)(num / new_ep->samps_per_bin)),
-									     "ptree-channel fallback init func"))));
-			  vhi = c_vct_copy(vlo);
+			  init_lo = XEN_CALL_2(init_func,
+					       C_TO_XEN_OFF_T((off_t)((Float)(cursamp - beg) / (Float)(num))),
+					       C_TO_XEN_OFF_T((off_t)(num / new_ep->samps_per_bin)),
+					       "xen-channel init-func");
+			  snd_protect(init_lo);
+			  init_hi = XEN_CALL_2(init_func,
+					       C_TO_XEN_OFF_T((off_t)((Float)(cursamp - beg) / (Float)(num))),
+					       C_TO_XEN_OFF_T((off_t)(num / new_ep->samps_per_bin)),
+					       "xen-channel init-func");
+			  snd_protect(init_hi);
+			  need_unprotect = TRUE;
+			  inited = TRUE;
 			}
-		      dmin = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f1v1b2f(pt, 
-									 MUS_SAMPLE_TO_FLOAT(old_ep->data_min[i]),
-									 vlo,
-									 TRUE));
-		      dmax = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f1v1b2f(pt, 
-									 MUS_SAMPLE_TO_FLOAT(old_ep->data_max[i]),
-									 vhi,
-									 TRUE));
+		      val = XEN_CALL_3((XEN)pt, C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_FLOAT(old_ep->data_min[i])), init_lo, XEN_TRUE, "xen-channel");
+		      dmin = MUS_FLOAT_TO_SAMPLE(XEN_TO_C_DOUBLE_OR_ELSE(val, 0.0));
+		      val = XEN_CALL_3((XEN)pt, C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_FLOAT(old_ep->data_max[i])), init_hi, XEN_TRUE, "xen-channel");
+		      dmax = MUS_FLOAT_TO_SAMPLE(XEN_TO_C_DOUBLE_OR_ELSE(val, 0.0));
 		    }
 		  else
 		    {
-		      dmin = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(pt, MUS_SAMPLE_TO_FLOAT(old_ep->data_min[i])));
-		      dmax = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(pt, MUS_SAMPLE_TO_FLOAT(old_ep->data_max[i])));
+		      if (closure)
+			{
+			  if (!inited)
+			    {
+			      vlo = c_vct_copy((vct *)(XEN_OBJECT_REF(XEN_CALL_2(init_func,
+										 C_TO_XEN_OFF_T((off_t)((Float)(cursamp - beg) / (Float)(num))),
+										 C_TO_XEN_OFF_T((off_t)(num / new_ep->samps_per_bin)),
+										 "ptree-channel init func"))));
+			      vhi = c_vct_copy(vlo);
+			      inited = TRUE;
+			    }
+			  dmin = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f1v1b2f(pt, MUS_SAMPLE_TO_FLOAT(old_ep->data_min[i]), vlo, TRUE));
+			  dmax = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f1v1b2f(pt, MUS_SAMPLE_TO_FLOAT(old_ep->data_max[i]), vhi, TRUE));
+			}
+		      else
+			{
+			  dmin = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(pt, MUS_SAMPLE_TO_FLOAT(old_ep->data_min[i])));
+			  dmax = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(pt, MUS_SAMPLE_TO_FLOAT(old_ep->data_max[i])));
+			}
 		    }
 		  if (dmin <= dmax)
 		    {
@@ -883,8 +941,19 @@ void amp_env_ptree_selection(chan_info *cp, void *pt, off_t beg, off_t num, int 
 	  if (fmin > new_ep->data_min[i]) fmin = new_ep->data_min[i];
 	  if (fmax < new_ep->data_max[i]) fmax = new_ep->data_max[i];
 	}
-      if (vlo) FREE(vlo);
-      if (vhi) FREE(vhi);
+      if (is_xen)
+	{
+	  if (need_unprotect)
+	    {
+	      snd_unprotect(init_lo);
+	      snd_unprotect(init_hi);
+	    }
+	}
+      else
+	{
+	  if (vlo) FREE(vlo);
+	  if (vhi) FREE(vhi);
+	}
       new_ep->fmin = fmin;
       new_ep->fmax = fmax;
       new_ep->completed = TRUE;
@@ -1251,7 +1320,7 @@ static void remember_string(snd_info *sp, char *str, int which)
   for (i = top; i > 0; i--) mh->strings[i] = mh->strings[i - 1];
   mh->strings[0] = copy_string(str);
   mh->strings_pos = 0;
-  mh->first_time = 1;
+  mh->first_time = TRUE;
 }
 
 void remember_mini_string(snd_info *sp, char *str) {remember_string(sp, str, MINIBUFFER);}
@@ -1271,13 +1340,13 @@ static void restore_string(snd_info *sp, int back, int which)
     }
   if (mh)
     {
-      if (mh->first_time == 0)
+      if (mh->first_time == FALSE)
 	{
 	  if (back)
 	    mh->strings_pos++;
 	  else mh->strings_pos--;
 	}
-      mh->first_time = 0;
+      mh->first_time = FALSE;
       if (mh->strings_pos < 0) mh->strings_pos = 0;
       if (mh->strings_pos > (mh->strings_size - 1)) mh->strings_pos = mh->strings_size - 1;
       str = mh->strings[mh->strings_pos];
@@ -1334,7 +1403,7 @@ void clear_filter_strings(snd_info *sp) {clear_strings(sp, FILTER_TEXT);}
 void stop_applying(snd_info *sp)
 {
   /* called if user unset the apply button during the apply process */
-  sp->apply_ok = 0;
+  sp->apply_ok = FALSE;
 }
 
 typedef struct {
@@ -1387,7 +1456,7 @@ void *make_apply_state_with_implied_beg_and_dur(void *xp)
   return(make_apply_state(xp));
 }
 
-BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
+Cessate apply_controls(Indicium ptr)
 {
   apply_state *ap = (apply_state *)ptr;
   snd_state *ss;
@@ -1476,12 +1545,12 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 	  if (ap->ofd == -1)
 	    {
 	      snd_error("can't open apply temp file %s: %s\n", ap->ofile, strerror(errno));
-	      sp->applying = 0;
+	      sp->applying = FALSE;
 	      FREE(ap);
 	      return(BACKGROUND_QUIT);
 	    }
 	  lock_apply(ss, sp);
-	  sp->apply_ok = 1;
+	  sp->apply_ok = TRUE;
 	  initialize_apply(sp, ap->hdr->chans, apply_beg, apply_dur); /* snd-dac.c, called only here */
 	  apply_reporting = (apply_dur > (MAX_BUFFER_SIZE * 4));
 	  if (apply_reporting) 
@@ -1604,7 +1673,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 		}
 	      clear_minibuffer(sp);
 	      set_apply_button(sp, FALSE);
-	      sp->apply_ok = 0;
+	      sp->apply_ok = FALSE;
 	      
 	      if ((sp->expand_control_p) || 
 		  (sp->speed_control_direction != 1) || (sp->speed_control != 1.0))
@@ -1642,7 +1711,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
     }
   unlock_apply(ss, sp);
   reset_controls(sp); /* i.e. clear it */
-  sp->applying = 0;
+  sp->applying = FALSE;
   sgx = sp->sgx;
   if (sgx->apply_in_progress) sgx->apply_in_progress = 0;
   if (XEN_HOOKED(after_apply_hook))
@@ -3087,10 +3156,10 @@ The 'choices' are 0 (apply to sound), 1 (apply to channel), and 2 (apply to sele
       if (XEN_OFF_T_P(beg)) apply_beg = XEN_TO_C_OFF_T(beg); else apply_beg = 0;
       if (XEN_OFF_T_P(dur)) apply_dur = XEN_TO_C_OFF_T(dur); else apply_dur = 0;
       ss->apply_choice = mus_iclamp(0, XEN_TO_C_INT_OR_ELSE(choice, 0), 2);
-      sp->applying = 1;
+      sp->applying = TRUE;
       ap = (apply_state *)make_apply_state((void *)sp);
       if (ap)
-	while (apply_controls((GUI_POINTER)ap) == BACKGROUND_CONTINUE);
+	while (apply_controls((Indicium)ap) == BACKGROUND_CONTINUE);
       return(snd);
     }
   return(snd_no_such_sound_error(S_apply_controls, snd));
@@ -3323,7 +3392,7 @@ typedef struct {
   XEN func;
 } env_tick;
 
-static BACKGROUND_TYPE tick_it(GUI_POINTER pet)
+static Cessate tick_it(Indicium pet)
 {
   int val;
   env_state *es;
@@ -3470,7 +3539,7 @@ If 'filename' is a sound index (an integer), 'size' is an edit-position, and the
 	      et->len = len;
 	      et->filename = filename;
 	      snd_protect(done_func);
-	      id = (int)BACKGROUND_ADD(ss, tick_it, (GUI_POINTER)et);
+	      id = (int)BACKGROUND_ADD(ss, tick_it, (Indicium)et);
 	      if (fullname) FREE(fullname);
 	      return(C_TO_XEN_INT(id));
 	    }

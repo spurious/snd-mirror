@@ -152,7 +152,7 @@ static void chans_transform_size(chan_info *cp, void *ptr)
   if (cp->fft) 
     {
       fp = cp->fft;
-      if (fp->size < size) fp->ok = 0; /* "dirty" flag for fft data array = needs REALLOCation */
+      if (fp->size < size) fp->ok = FALSE; /* "dirty" flag for fft data array = needs REALLOCation */
       fp->size = size;
     }
 }
@@ -414,7 +414,7 @@ static void help_transform_callback(GtkWidget *w, gpointer context)
 GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
 {
   GtkWidget *outer_table, *buttons;
-  int i, need_callback = 0;
+  int i, need_callback = FALSE;
   GtkWidget *display_frame, *help_button, *dismiss_button;
   GtkWidget *window_box, *orient_button, *color_button;
 
@@ -673,7 +673,7 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
       sg_list_moveto(window_list, fft_window(ss));
       sg_list_select(wavelet_list, wavelet_type(ss));
       sg_list_moveto(wavelet_list, wavelet_type(ss));
-      need_callback = 1;
+      need_callback = TRUE;
       gtk_widget_show(outer_table);
       set_dialog_widget(ss, TRANSFORM_DIALOG, transform_dialog);
     }
@@ -693,7 +693,7 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(graph_configure_callback), (gpointer)ss, 0),
 				     0);
-      need_callback = 0;
+      need_callback = FALSE;
     }
   return(transform_dialog);
 }

@@ -571,7 +571,7 @@ static gboolean graph_button_press(GtkWidget *w, GdkEventButton *ev, gpointer da
       ss = cp->state;
       (ss->sgx)->graph_is_active = TRUE;
       gtk_widget_grab_focus(w);
-      ((cp->sound)->sgx)->mini_active = 0;
+      ((cp->sound)->sgx)->mini_active = FALSE;
       graph_button_press_callback(cp, (int)(ev->x), (int)(ev->y), ev->state, ev->button, ev->time);
     }
   return(FALSE);
@@ -907,14 +907,14 @@ void set_tiny_numbers_font(chan_info *cp) {set_graph_font(cp, (cp->state->sgx)->
 void set_peak_numbers_font(chan_info *cp) {set_graph_font(cp, (cp->state->sgx)->peaks_fnt);}
 void set_bold_peak_numbers_font(chan_info *cp) {set_graph_font(cp, (cp->state->sgx)->bold_peaks_fnt);}
 
-COLOR_TYPE get_foreground_color(chan_info *cp, axis_context *ax)
+color_t get_foreground_color(chan_info *cp, axis_context *ax)
 {
   GdkGCValues gv;
   gdk_gc_get_values(ax->gc, &gv);
   return(gdk_color_copy(&(gv.foreground)));
 }
 
-COLOR_TYPE get_background_color(chan_info *cp, axis_context *ax)
+color_t get_background_color(chan_info *cp, axis_context *ax)
 {
   GdkGCValues gv;
   gdk_gc_get_values(ax->gc, &gv);
@@ -955,7 +955,7 @@ void cleanup_cw(chan_info *cp)
   if ((cp) && (cp->cgx))
     {
       cx = cp->cgx;
-      cx->selected = 0;
+      cx->selected = FALSE;
       cw = cx->chan_widgets;
       if (cw)
 	{

@@ -414,7 +414,7 @@ static dac_info *make_dac_info(chan_info *cp, snd_info *sp, snd_fd *fd)
 	}
       if (dp->filtering)
 	{
-	  sp->filter_control_changed = 0;
+	  sp->filter_control_changed = FALSE;
 	  if (!(sp->filter_control_env)) 
 	    dp->filtering = 0;
 	  else
@@ -538,7 +538,7 @@ void dac_set_reverb_lowpass(snd_info *sp, Float newval) {dac_set_field(sp, newva
 
 /* -------------------------------- stop playing (remove from play-list) -------------------------------- */
 
-static int dac_running = 0;
+static int dac_running = FALSE;
 static XEN play_hook;
 static XEN start_playing_hook;
 static XEN stop_playing_hook;
@@ -562,7 +562,7 @@ void cleanup_dac(void)
 	}
   for (i = 0; i < MAX_DEVICES; i++) dev_fd[i] = -1;
   cleanup_dac_hook();
-  dac_running = 0;
+  dac_running = FALSE;
 }
 
 static void reflect_play_stop (snd_info *sp) 
@@ -580,7 +580,7 @@ static void free_player(snd_info *sp);
 static void stop_playing_with_toggle(dac_info *dp, int toggle)
 {
   snd_info *sp = NULL;
-  int sp_stopping = 0;
+  int sp_stopping = FALSE;
   chan_info *cp;
   if ((dp == NULL) || (play_list == NULL)) return;
   sp = dp->sp;
@@ -589,7 +589,7 @@ static void stop_playing_with_toggle(dac_info *dp, int toggle)
     {
       sp->playing_mark = NULL;
       if (sp->playing > 0) sp->playing--;
-      if (sp->playing == 0) sp_stopping = 1;
+      if (sp->playing == 0) sp_stopping = TRUE;
       if ((sp->inuse) && (sp->cursor_follows_play != DONT_FOLLOW))
 	cursor_moveto_without_verbosity(cp, cp->original_cursor);
       if ((sp_stopping) && (sp->cursor_follows_play == FOLLOW_ONCE)) 
@@ -759,12 +759,12 @@ static void free_dac_state(void)
     }
 }
 
-static BACKGROUND_TYPE dac_in_background(GUI_POINTER ptr);
+static Cessate dac_in_background(Indicium ptr);
 
 #if DEBUGGING
-static int disable_play = 0;
-static XEN g_disable_play(void) {disable_play = 1; return(XEN_FALSE);}
-static XEN g_enable_play(void) {disable_play = 0; return(XEN_TRUE);}
+static int disable_play = FALSE;
+static XEN g_disable_play(void) {disable_play = TRUE; return(XEN_FALSE);}
+static XEN g_enable_play(void) {disable_play = FALSE; return(XEN_TRUE);}
 #endif
 
 static void start_dac(snd_state *ss, int srate, int channels, int background)
@@ -872,8 +872,8 @@ static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, off_t sta
 	  sp->playing++;
 	  if (sp->cursor_follows_play != DONT_FOLLOW)
 	    {
-	      cp->original_cursor = cp->cursor;
-	      cp->cursor_on = 1;
+	      cp->original_cursor = CURSOR(cp);
+	      cp->cursor_on = TRUE;
 	      cursor_moveto_without_verbosity(cp, start);
 	    }
 	}
@@ -971,7 +971,7 @@ void play_channels(chan_info **cps, int chans, off_t *starts, off_t *ur_ends, in
 				  sp = (cps[i]->sound), 
 				  starts[i], ends[i],
 				  edpos, caller, arg_pos);
-  if ((dp) && (selection)) dp->selection = 1;
+  if ((dp) && (selection)) dp->selection = TRUE;
   if (ur_ends == NULL) FREE(ends);
   if ((sp) && (dp)) start_dac(sp->state, SND_SRATE(sp), chans, background);
 }
@@ -1206,7 +1206,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		      data = sample_linear_env(sp->filter_control_env, sp->filter_control_order);
 		      mus_make_fir_coeffs(sp->filter_control_order, data, dp->a); /* since dp->a is used directly, this might work */
 		      FREE(data);
-		      sp->filter_control_changed = 0;
+		      sp->filter_control_changed = FALSE;
 		    }
 		  if (dp->expanding)
 		    {
@@ -1520,7 +1520,7 @@ static int alsa_min_chans[ALSA_MAX_DEVICES];
 
 static int alsa_max_chans_value = 0;
 static int alsa_max_chans_dev = 0;
-static int audio_devices_scanned = 0;
+static int audio_devices_scanned = FALSE;
 static int alsa_devices_available = 0;
 
 static void scan_audio_devices(void)
@@ -1531,7 +1531,7 @@ static void scan_audio_devices(void)
   float val[ALSA_MAX_DEVICES];
   if (!audio_devices_scanned)
     {
-      audio_devices_scanned = 1;
+      audio_devices_scanned = TRUE;
        /* At this time
        * we always select the widest device if the requested channels fit into it. 
        * Otherwise we try to combine devices, if all fails we modify snd settings
@@ -1735,7 +1735,7 @@ static int start_audio_output_1 (dac_state *dacp)
 		  mus_audio_close(alsa_devices[out_dev[i]]);
 		}
 	      dac_error(__FILE__, __LINE__, __FUNCTION__);
-	      dac_running = 0;
+	      dac_running = FALSE;
 	      cleanup_dac_hook();
 	      unlock_recording_audio();
 	      if (global_rev) free_reverb();
@@ -1915,7 +1915,7 @@ static int start_audio_output(dac_state *dacp)
 		}
 	    }
 	}
-      dac_running = 1;
+      dac_running = TRUE;
       fill_dac_buffers(dacp, WRITE_TO_DAC);
       lock_apply(dacp->ss, NULL);
       return(TRUE);
@@ -1932,7 +1932,7 @@ static void stop_audio_output(dac_state *dacp)
 	 mus_audio_close(dev_fd[i]);
 	 dev_fd[i] = -1;
        }
-   dac_running = 0;
+   dac_running = FALSE;
    cleanup_dac_hook();
    unlock_recording_audio();
    dac_pausing = 0;
@@ -1941,7 +1941,7 @@ static void stop_audio_output(dac_state *dacp)
    unlock_apply(dacp->ss, NULL);
 }
 
-static BACKGROUND_TYPE dac_in_background(GUI_POINTER ptr)
+static Cessate dac_in_background(Indicium ptr)
 {
   /* slice 0: try to open audio output devices and get ready to send samples
    *       1: loop sending data until the play_list is empty or some error (C-g) happens
@@ -1989,7 +1989,7 @@ void initialize_apply(snd_info *sp, int chans, off_t beg, off_t dur)
   max_active_slot = -1;
   play_list_members = 0;
 
-  dac_running = 1; /* this keeps start_dac from actually starting the dac */
+  dac_running = TRUE; /* this keeps start_dac from actually starting the dac */
   if (snd_dacp) free_dac_state();
   snd_dacp = (dac_state *)CALLOC(1, sizeof(dac_state));
   snd_dacp->slice = 0;
@@ -2027,7 +2027,7 @@ void finalize_apply(snd_info *sp)
   max_active_slot = -1;
   play_list_members = 0;
   sp->playing = 0;
-  dac_running = 0;
+  dac_running = FALSE;
   cleanup_dac_hook();
   if (snd_dacp) free_dac_state();
   if (global_rev) free_reverb();
@@ -2087,7 +2087,7 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, int background, int syncd,
       sp = make_sound_readable(get_global_state(), name, FALSE);
       sp->short_filename = filename_without_home_directory(name);
       sp->filename = NULL;
-      sp->delete_me = 1;
+      sp->delete_me = TRUE;
       if (XEN_OFF_T_P(chn_n)) end = XEN_TO_C_OFF_T(chn_n);
       play_sound(sp, samp, end, background, C_TO_SMALL_XEN_INT(0), caller, arg_pos);
       if (name) FREE(name);
@@ -2504,7 +2504,7 @@ If it returns #t, the sound is not played."
   XEN_DEFINE_HOOK(stop_playing_selection_hook, S_stop_playing_selection_hook, 0, H_stop_playing_selection_hook); /* no args */
 
 #if DEBUGGING
-  XEN_DEFINE_PROCEDURE("disable-play", g_disable_play_w, 0, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE("enable-play", g_enable_play_w, 0, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE("disable-play", g_disable_play_w, 0, 0, 0, "internal testing function");
+  XEN_DEFINE_PROCEDURE("enable-play", g_enable_play_w, 0, 0, 0, "internal testing function");
 #endif
 }

@@ -1110,7 +1110,7 @@ formants: (map-chan (osc-formants .99 '(400 800 1200) '(400 800 1200) '(4 2 3)))
     (vct->samples 0 len out-data)))
 	    
 
-;;; -------- compand
+;;; -------- compand, compand-channel
 
 (define (compand)
   "(compand) returns a compander: (map-chan (compand))"
@@ -1124,18 +1124,16 @@ formants: (map-chan (osc-formants .99 '(400 800 1200) '(400 800 1200) '(4 2 3)))
 ;;; since there's no state in this function, it can be used without change
 ;;; in any of the mapping functions (unlike echo, for example)
 
-;;; it is easy to test functions like this in the listener:
-;;;
-;;;    >((compand) 0.0)
-;;;    0.0
-;;;    >((compand) 1.0)
-;;;    1.0
-;;;    >((compand) .1)
-;;;    0.200000047683716
-;;;    >((compand) .99)
-;;;    0.996800001335146
-;;;    >((compand) .95)
-;;;    0.984000006675728
+(define compand-table (vct -1.000 -0.960 -0.900 -0.820 -0.720 -0.600 -0.450 -0.250 
+			   0.000 0.250 0.450 0.600 0.720 0.820 0.900 0.960 1.000))
+
+(define* (compand-channel #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
+  ;; this is the "regularized version of the compander using ptree-channel
+  (ptree-channel (lambda (inval)
+		   (let ((index (+ 8.0 (* 8.0 inval))))
+		     (array-interp compand-table index 17)))
+		 beg dur snd chn edpos #t))
+
 
 
 ;;; -------- shift pitch keeping duration constant

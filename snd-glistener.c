@@ -158,7 +158,7 @@ static void listener_completion(snd_state *ss)
 {
   int beg, end, matches = 0;
   char *old_text, *new_text = NULL, *file_text = NULL;
-  int try_completion = 1;
+  int try_completion = TRUE;
   beg = printout_end + 1;
   end = gtk_text_buffer_get_char_count(LISTENER_BUFFER);
   if (end <= beg) return;
@@ -167,7 +167,7 @@ static void listener_completion(snd_state *ss)
   if (old_text)
     {
       new_text = complete_listener_text(old_text, end, &try_completion, &file_text);
-      if (try_completion == 0)
+      if (!try_completion)
 	{
 	  g_free(old_text);
 	  return;
@@ -412,10 +412,10 @@ static gint flash_unbalanced_paren(gpointer data)
   return(0);
 }
 
-void highlight_unbalanced_paren(void)
+int highlight_unbalanced_paren(void)
 {
   /* if cursor is positioned at close paren, try to find reason for unbalanced expr and highlight it */
-  int pos;
+  int pos, success = TRUE;
   char *str = NULL;
   snd_state *ss;
   ss = get_global_state();
@@ -434,9 +434,11 @@ void highlight_unbalanced_paren(void)
 	      flashes = 4;
 	      gtk_timeout_add((guint32)FLASH_TIME, flash_unbalanced_paren, NULL);
 	    }
+	  else success = FALSE;
 	}
       if (str) g_free(str);
     }
+  return(success);
 }
 
 

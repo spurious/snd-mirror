@@ -384,7 +384,7 @@ void check_for_event(snd_state *ss)
   XtInputMask msk = 0;
   XtAppContext app;
   if (ss->checking_explicitly) return;
-  ss->checking_explicitly = 1;
+  ss->checking_explicitly = TRUE;
   app = MAIN_APP(ss);
   while (1)
     {
@@ -396,7 +396,7 @@ void check_for_event(snd_state *ss)
 	}
       else break;
     }
-  ss->checking_explicitly = 0;
+  ss->checking_explicitly = FALSE;
 }
 
 int event_pending(snd_state *ss)
@@ -609,7 +609,7 @@ Pixmap make_pixmap(snd_state *ss, unsigned char *bits, int width, int height, in
   return(nr);
 }
 
-BACKGROUND_FUNCTION_TYPE add_work_proc(snd_state *ss, XtWorkProc func, XtPointer data)
+Cessator add_work_proc(snd_state *ss, XtWorkProc func, XtPointer data)
 {
   /* during auto-testing I need to force the background procs to run to completion */
   if (with_background_processes(ss))

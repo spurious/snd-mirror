@@ -54,6 +54,8 @@ static Window find_window(Display *display,
 
 static XEN send_netscape(XEN cmd)
 {
+  #define H_send_netscape "(send-netscape cmd) finds netscape (or starts it if necessary), and sends it the \
+string 'cmd', assumed to be a URL.  This is used by index.scm."
   Window window;
   snd_state *ss;
   Display *dpy;
@@ -137,7 +139,7 @@ XEN_NARGIFY_3(g_change_property_w, g_change_property)
 
 void g_init_gxutils(void)
 {
-  XEN_DEFINE_PROCEDURE("send-netscape", send_netscape_w, 1, 0, 0, "");
+  XEN_DEFINE_PROCEDURE("send-netscape", send_netscape_w, 1, 0, 0, H_send_netscape);
   XEN_DEFINE_PROCEDURE(S_change_property, g_change_property_w, 3, 0, 0, H_change_property);
 }
 

@@ -379,7 +379,7 @@ static void get_stdin_string (XtPointer context, int *fd, XtInputId *id)
 
 static int tm_slice = 0;
 
-static BACKGROUND_TYPE startup_funcs(XtPointer context)
+static Cessate startup_funcs(XtPointer context)
 {
   Atom wm_delete_window;
   snd_state *ss;

@@ -375,7 +375,7 @@ void init_recorder(void)
 {
   int i;
   rp = (recorder_info *)CALLOC(1, sizeof(recorder_info));
-  rp->recording = 0;
+  rp->recording = FALSE;
   rp->autoload = DEFAULT_RECORDER_AUTOLOAD;
   rp->buffer_size = DEFAULT_RECORDER_BUFFER_SIZE;
   rp->out_chans = DEFAULT_RECORDER_OUT_CHANS;
@@ -386,14 +386,14 @@ void init_recorder(void)
   rp->max_duration = DEFAULT_RECORDER_MAX_DURATION;
   if (DEFAULT_RECORDER_FILE != (char *)NULL) rp->output_file = copy_string(DEFAULT_RECORDER_FILE); else rp->output_file = NULL;
   rp->in_device = MUS_AUDIO_DEFAULT;
-  rp->triggering = 0;
-  rp->triggered = 1;
+  rp->triggering = FALSE;
+  rp->triggered = TRUE;
   rp->monitor_chans = 2;
   rp->monitor_port = -1;
-  rp->monitoring = 0;
-  rp->taking_input = 0;
+  rp->monitoring = FALSE;
+  rp->taking_input = FALSE;
   rp->systems = 1;
-  rp->mixer_settings_saved = 0;
+  rp->mixer_settings_saved = FALSE;
 #if LINUX || __bsdi__
   rp->output_header_type = MUS_RIFF;
 #else
@@ -679,7 +679,7 @@ void fire_up_recorder(snd_state *ss)
     rp->srate = DEFAULT_RECORDER_SRATE;
   rp->monitor_chans = 2;
   for (i = 0; i < rp->possible_input_chans; i++) 
-    rp->input_channel_active[i] = 1; 
+    rp->input_channel_active[i] = TRUE; 
 
   if (mus_audio_api() == ALSA_API) 
     {
@@ -771,7 +771,7 @@ void fire_up_recorder(snd_state *ss)
 		}
 	    }
 	}
-      rp->taking_input = 1;
+      rp->taking_input = TRUE;
 
       /* search for output devices for rp->monitoring, first one wins */
 
@@ -813,12 +813,12 @@ void fire_up_recorder(snd_state *ss)
 			}
 		      if (!(rp->monitor_buf))
 			rp->monitor_buf = (char *)CALLOC(rp->buffer_size * rp->monitor_chans * size, 1);
-		      rp->monitoring = 1;
+		      rp->monitoring = TRUE;
 		    }
 		  else
 		    {
 		      recorder_error("open output: ");
-		      rp->monitoring = 0;
+		      rp->monitoring = FALSE;
 		    }
 		  break;
 		}
@@ -856,7 +856,7 @@ void fire_up_recorder(snd_state *ss)
 	  recorder_error("open device: ");
 	  return;
 	}
-      rp->taking_input = 1;
+      rp->taking_input = TRUE;
       /* rp->monitor_port = 0; */
 
       /*
@@ -867,9 +867,9 @@ void fire_up_recorder(snd_state *ss)
       if (rp->monitor_port == -1)
 	{
 	  recorder_error("open output: ");
-	  rp->monitoring = 0;
+	  rp->monitoring = FALSE;
 	}
-      else rp->monitoring = 1;
+      else rp->monitoring = TRUE;
     }
   set_read_in_progress(ss);
 }
@@ -958,11 +958,11 @@ void fire_up_recorder(snd_state *ss)
     /* turn on "monitor" */
     val[0] = 1.0;
     mus_audio_mixer_write(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_MICROPHONE, MUS_AUDIO_IGAIN, 0, val);
-    rp->input_channel_active[0] = 1;
+    rp->input_channel_active[0] = TRUE;
 #if HAVE_SYS_MIXER_H
-    rp->input_channel_active[1] = 1;
+    rp->input_channel_active[1] = TRUE;
 #else
-    rp->input_channel_active[1] = 0;
+    rp->input_channel_active[1] = FALSE;
 #endif
   #else
     err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | rp->in_device, MUS_AUDIO_SRATE, 0, val);
@@ -975,7 +975,7 @@ void fire_up_recorder(snd_state *ss)
     rp->monitor_chans = 2;
     for (i = 0; i < rp->possible_input_chans; i++) 
       {
-	rp->input_channel_active[i] = 1; 
+	rp->input_channel_active[i] = TRUE; 
       }
   #endif
 #endif
@@ -1037,7 +1037,7 @@ void fire_up_recorder(snd_state *ss)
       recorder_error("open device: ");
       return;
     }
-  rp->taking_input = 1;
+  rp->taking_input = TRUE;
 #if HAVE_OSS || SUN
   /* rp->monitor_port = 0; */
 
@@ -1056,9 +1056,9 @@ void fire_up_recorder(snd_state *ss)
   if (rp->monitor_port == -1)
     {
       recorder_error("open output: ");
-      rp->monitoring = 0;
+      rp->monitoring = FALSE;
     }
-  else rp->monitoring = 1;
+  else rp->monitoring = TRUE;
   set_read_in_progress(ss);
 }
 #endif
@@ -1074,7 +1074,7 @@ void close_recorder_audio(void)
 	    mus_audio_close(rp->input_ports[i]);
 	    rp->input_ports[i] = -1;
 	  }
-      rp->taking_input = 0;
+      rp->taking_input = FALSE;
     }
   if (rp->recorder_reader) 
     {
@@ -1084,7 +1084,7 @@ void close_recorder_audio(void)
   if (rp->monitoring)
     {
       mus_audio_close(rp->monitor_port);
-      rp->monitoring = 0;
+      rp->monitoring = FALSE;
     }
 }
 
@@ -1168,7 +1168,7 @@ void recorder_characterize_devices(int devs, int output_devices)
 
 #if (HAVE_ALSA || HAVE_OSS)
 
-static BACKGROUND_TYPE read_adc(snd_state *ss) 
+static Cessate read_adc(snd_state *ss) 
 {
   int in_chan, out_chan, i, k, m, n, out_frame, inchn, offset, active_in_chans, ochns, sr, buffer_size, in_datum_size;
   mus_sample_t val;
@@ -1275,7 +1275,7 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
       recorder_set_vu_out_val(out_chan, rp->output_vu_maxes[out_chan]);
       if ((!rp->triggered) && 
 	  (MUS_SAMPLE_TO_FLOAT(rp->output_vu_maxes[out_chan]) > rp->trigger)) 
-	rp->triggered = 1;
+	rp->triggered = TRUE;
     }
   if ((rp->monitoring) && (rp->output_bufs) && (ochns <= rp->monitor_chans))
     {
@@ -1300,7 +1300,7 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
 
 #else
 
-static BACKGROUND_TYPE read_adc(snd_state *ss)
+static Cessate read_adc(snd_state *ss)
 {
   int in_chan, out_chan, i, k, m, n, out_frame, inchn, offset, active_in_chans, cur_size, ochns, sr, sz, ifmt, in_datum_size;
   mus_sample_t val;
@@ -1395,7 +1395,7 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
       recorder_set_vu_out_val(out_chan, rp->output_vu_maxes[out_chan]);
       if ((!rp->triggered) && 
 	  (MUS_SAMPLE_TO_FLOAT(rp->output_vu_maxes[out_chan]) > rp->trigger)) 
-	rp->triggered = 1;
+	rp->triggered = TRUE;
     }
 
   if ((rp->monitoring) && 
@@ -1436,7 +1436,7 @@ int recorder_start_output_file(snd_state *ss, char *comment)
       mus_snprintf(msg, PRINT_BUFFER_SIZE, "%s:\n %s", rp->output_file, strerror(errno));
       recorder_error(msg);
       FREE(msg);
-      rp->recording = 0;
+      rp->recording = FALSE;
       rp->triggered = (!rp->triggering);
       return(TRUE);
     }
@@ -1518,16 +1518,16 @@ void cleanup_recording (void)
   if (rp->taking_input) close_recorder_audio();
   if ((record_in_progress()) && (rp->output_file_descriptor > 0))
     {
-      rp->recording = 0;
+      rp->recording = FALSE;
       rp->triggered = (!rp->triggering);
       sensitize_control_buttons();
       mus_file_close(rp->output_file_descriptor);
     }
 }
 
-static BACKGROUND_TYPE run_adc(GUI_POINTER uss)
+static Cessate run_adc(Indicium uss)
 {
-  BACKGROUND_TYPE val;
+  Cessate val;
   snd_state *ss = (snd_state *)uss;
   val = read_adc(ss);
 #if DEBUGGING
@@ -1535,7 +1535,7 @@ static BACKGROUND_TYPE run_adc(GUI_POINTER uss)
 #endif
   if (val == BACKGROUND_QUIT)
     {
-      rp->recording = 0;
+      rp->recording = FALSE;
       finish_recording(ss, rp);
     }
   return(val);

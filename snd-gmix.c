@@ -1,7 +1,7 @@
 #include "snd.h"
 
 static GtkWidget *mix_panel = NULL;
-static int dragging = 0;
+static int dragging = FALSE;
 static void update_mix_panel(int mix_id);
 
 /* ---------------- SPEED ---------------- */
@@ -47,8 +47,8 @@ static void speed_changed_callback(GtkAdjustment *adj, gpointer data)
 		      speed_number_buffer,
 		      sp->speed_control_style,
 		      sp->speed_control_tones);
-  if (dragging == 0) start_mix_drag(mix_id);
-  dragging = 1;
+  if (!dragging) start_mix_drag(mix_id);
+  dragging = TRUE;
   change_mix_speed(mix_id, val);
   gtk_label_set_text(GTK_LABEL(w_speed_number), speed_number_buffer);
 }
@@ -67,7 +67,7 @@ static gboolean speed_release_callback(GtkWidget *w, GdkEventButton *ev, gpointe
 		      speed_number_buffer,
 		      sp->speed_control_style,
 		      sp->speed_control_tones);
-  dragging = 0;
+  dragging = FALSE;
   change_mix_speed(mix_id, val);
   return(FALSE);
 }
@@ -186,8 +186,8 @@ static void amp_changed_callback(GtkAdjustment *adj, gpointer data)
   snd_state *ss = (snd_state *)data;
   chan = get_user_int_data(G_OBJECT(adj));
   scrollval = GTK_ADJUSTMENT(w_amp_adjs[chan])->value;
-  if (dragging == 0) start_mix_drag(current_mix_id(ss));
-  dragging = 1;
+  if (!dragging) start_mix_drag(current_mix_id(ss));
+  dragging = TRUE;
   change_mix_amp(current_mix_id(ss), chan, scroll_to_amp(scrollval));
 }
 
@@ -198,7 +198,7 @@ static gboolean amp_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer 
   snd_state *ss = (snd_state *)data;
   chan = get_user_int_data(G_OBJECT(w));
   scrollval = GTK_ADJUSTMENT(w_amp_adjs[chan])->value;
-  dragging = 0;
+  dragging = FALSE;
   change_mix_amp(current_mix_id(ss), chan, scroll_to_amp(scrollval));
   return(FALSE);
 }
@@ -394,7 +394,7 @@ static void track_activated(GtkWidget *w, gpointer context)
     set_mix_track_from_id(current_mix_id(ss), string2int(val));
 }
 
-static int mix_playing = 0;
+static int mix_playing = FALSE;
 int mix_play_stopped(void) {return(!mix_playing);}
 
 void reflect_mix_play_stop(void)
@@ -405,7 +405,7 @@ void reflect_mix_play_stop(void)
       ss = get_global_state();
       set_backgrounds(w_play, (ss->sgx)->basic_color);
     }
-  mix_playing = 0;
+  mix_playing = FALSE;
 }
 
 static void play_callback(GtkWidget *w, gpointer context) 
@@ -417,7 +417,7 @@ static void play_callback(GtkWidget *w, gpointer context)
     }
   else
     {
-      mix_playing = 1;
+      mix_playing = TRUE;
       if (w_play) set_backgrounds(w_play, (ss->sgx)->pushed_button_color);
       mix_play_from_id(current_mix_id(ss));
     }

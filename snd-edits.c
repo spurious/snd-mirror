@@ -1,14 +1,5 @@
 #include "snd.h"
 
-/* TODO: ramp on ptree?
- * TODO: ED_XEN (xen as ptree) for experimenting
- *         still need init-func to return closure here since many copies can run in parallel
- * TODO: ramp2 ramp3 ptree2 ptree3 perhaps
- * TODO: preliminary tests for xen-channel
- * TODO: fill-out xramp-channel tests, peak-amp-env cases, tie into apply_env, test
- */
-
-
 static int dont_edit(chan_info *cp) 
 {
   XEN res = XEN_FALSE;
@@ -76,11 +67,7 @@ static void release_pending_sounds(chan_info *cp, int edit_ctr)
     }
 }
 
-#ifdef DEBUGGING_REALLOC
-  #define EDIT_ALLOC_SIZE 2
-#else
-  #define EDIT_ALLOC_SIZE 32
-#endif
+#define EDIT_ALLOC_SIZE 32
 /* EDIT_ALLOC_SIZE is the allocation amount (pointers) each time cp->sounds is (re)allocated */
 
 static void prepare_sound_list (chan_info *cp)
@@ -127,9 +114,13 @@ void free_ptree_list(chan_info *cp)
 	    cp->ptrees[i] = free_ptree(cp->ptrees[i]);
 	  if (XEN_PROCEDURE_P(cp->ptree_inits[i]))
 	    snd_unprotect(cp->ptree_inits[i]);
+	  if (XEN_PROCEDURE_P(cp->xens[i]))
+	    snd_unprotect(cp->xens[i]);
 	}
       FREE(cp->ptrees);
       cp->ptrees = NULL;
+      FREE(cp->xens);
+      cp->xens = NULL;
       FREE(cp->ptree_inits);
       cp->ptree_inits = NULL;
     }
@@ -150,19 +141,23 @@ static int add_ptree(chan_info *cp)
 	  for (i = cp->ptree_ctr; i < cp->ptree_size; i++) cp->ptrees[i] = NULL;
  	  cp->ptree_inits = (XEN *)REALLOC(cp->ptree_inits, cp->ptree_size * sizeof(XEN));
  	  for (i = cp->ptree_ctr; i < cp->ptree_size; i++) cp->ptree_inits[i] = XEN_FALSE;
+ 	  cp->xens = (XEN *)REALLOC(cp->xens, cp->ptree_size * sizeof(XEN));
+ 	  for (i = cp->ptree_ctr; i < cp->ptree_size; i++) cp->xens[i] = XEN_FALSE;
  	}
        else 
  	{
  	  cp->ptrees = (void **)CALLOC(cp->ptree_size, sizeof(void *));
  	  cp->ptree_inits = (XEN *)CALLOC(cp->ptree_size, sizeof(XEN));
  	  for (i = 0; i < cp->ptree_size; i++) cp->ptree_inits[i] = XEN_FALSE;
+ 	  cp->xens = (XEN *)CALLOC(cp->ptree_size, sizeof(XEN));
+ 	  for (i = 0; i < cp->ptree_size; i++) cp->xens[i] = XEN_FALSE;
 	}
     }
   return(cp->ptree_ctr);
 }
 
 
-static ed_list *free_ed_list(ed_list *ed);
+static ed_list *free_ed_list(ed_list *ed, chan_info *cp);
 static void prune_edits(chan_info *cp, int edpt)
 {
   int i;
@@ -172,7 +167,7 @@ static void prune_edits(chan_info *cp, int edpt)
 	sequester_deferred_regions(cp, edpt - 1);
       for (i = edpt; i < cp->edit_size; i++) 
 	{
-	  cp->edits[i] = free_ed_list(cp->edits[i]);
+	  cp->edits[i] = free_ed_list(cp->edits[i], cp);
 	  cp->amp_envs[i] = free_amp_env(cp, i);
 	}
       release_pending_marks(cp, edpt);
@@ -205,6 +200,8 @@ static void prepare_edit_list(chan_info *cp, off_t len, int pos, const char *cal
       else cp->edits = (ed_list **)REALLOC(cp->edits, cp->edit_size * sizeof(ed_list *));
       if (!cp->samples) cp->samples = (off_t *)CALLOC(cp->edit_size, sizeof(off_t));
       else cp->samples = (off_t *)REALLOC(cp->samples, cp->edit_size * sizeof(off_t));
+      if (!cp->cursors) cp->cursors = (off_t *)CALLOC(cp->edit_size, sizeof(off_t));
+      else cp->cursors = (off_t *)REALLOC(cp->cursors, cp->edit_size * sizeof(off_t));
       if (!(cp->amp_envs)) cp->amp_envs = (env_info **)CALLOC(cp->edit_size, sizeof(env_info *));
       else cp->amp_envs = (env_info **)REALLOC(cp->amp_envs, cp->edit_size * sizeof(env_info *));
       for (i = cp->edit_ctr; i < cp->edit_size; i++) 
@@ -216,7 +213,9 @@ static void prepare_edit_list(chan_info *cp, off_t len, int pos, const char *cal
     }
   prune_edits(cp, cp->edit_ctr);
   reflect_undo_ok_in_menu();
-  cp->samples[cp->edit_ctr] = len;
+  CURRENT_SAMPLES(cp) = len;
+  if (cp->edit_ctr > 0)
+    CURSOR(cp) = cp->cursors[cp->edit_ctr - 1];
 }
 
 static void reflect_sample_change_in_axis(chan_info *cp)
@@ -315,7 +314,7 @@ char *run_save_state_hook(char *filename)
  * redo: push position foward
  * No actual changes are flushed out to the file system until the file is saved.
  *
- * the editing possibilities are insert, change, delete, scaling, zero, ramp, ptree.  All input goes through these lists.
+ * the editing possibilities are insert, change, delete, scaling, zero, [x]ramp[2,3], ptree(xen).  All input goes through these lists.
  */
 
 typedef struct {
@@ -325,6 +324,8 @@ typedef struct {
   Float scl,       /* segment scaler */
         rmp0,      /* first val of ramp */
         rmp1,      /* end val of ramp */
+        rmp3, rmp4,  /* ramp2 vals */
+        rmp5, rmp6,  /* ramp3 vals */
         pscl,      /* scales the arg to the ptree */
         scaler,    /* exp-env segment scaler */
         offset;    /* exp-env segment offset */
@@ -334,11 +335,17 @@ typedef struct {
   off_t ptree_pos, /* segment position within original at time of ptree edit */
         ptree_dur; /* original (unfragmented) segment length */
 } ed_fragment;
-/* current size: 76 bytes (off_t: 5, Float/int: 9) */
 
+enum {ED_SIMPLE, ED_ZERO, 
+      ED_RAMP, ED_RAMP2, ED_RAMP3, ED_XRAMP, 
+      ED_PTREE, ED_PTREE_RAMP, ED_PTREE_XRAMP, ED_PTREE_ZERO, ED_PTREE_RAMP2, 
+      ED_PTREE_CLOSURE, ED_PTREE_RAMP_CLOSURE, ED_PTREE_XRAMP_CLOSURE, ED_PTREE_ZERO_CLOSURE, ED_PTREE_RAMP2_CLOSURE,
+      ED_XEN, ED_XEN_RAMP, ED_XEN_XRAMP, ED_XEN_ZERO, ED_XEN_RAMP2
+};
 
-/* ed_list fields accessed only in this file */
-enum {ED_SIMPLE, ED_RAMP, ED_PTREE}; /* typ field choices */
+#define PTREE_OP(Typ) ((Typ) >= ED_PTREE)
+#define PTREE_CLOSURE_OP(Typ) ((Typ) >= ED_PTREE_CLOSURE)
+#define XEN_OP(Typ) ((Typ) >= ED_XEN)
 
 /* try to make this code easier to read... */
 #define FRAGMENTS(Ed)                       (ed_fragment **)((Ed)->fragments)
@@ -351,6 +358,10 @@ enum {ED_SIMPLE, ED_RAMP, ED_PTREE}; /* typ field choices */
 #define FRAGMENT_SOUND(Ed, Pos)            ((ed_fragment **)((Ed)->fragments))[Pos]->snd
 #define FRAGMENT_RAMP_BEG(Ed, Pos)         ((ed_fragment **)((Ed)->fragments))[Pos]->rmp0
 #define FRAGMENT_RAMP_END(Ed, Pos)         ((ed_fragment **)((Ed)->fragments))[Pos]->rmp1
+#define FRAGMENT_RAMP2_BEG(Ed, Pos)        ((ed_fragment **)((Ed)->fragments))[Pos]->rmp3
+#define FRAGMENT_RAMP2_END(Ed, Pos)        ((ed_fragment **)((Ed)->fragments))[Pos]->rmp4
+#define FRAGMENT_RAMP3_BEG(Ed, Pos)        ((ed_fragment **)((Ed)->fragments))[Pos]->rmp5
+#define FRAGMENT_RAMP3_END(Ed, Pos)        ((ed_fragment **)((Ed)->fragments))[Pos]->rmp6
 #define FRAGMENT_XRAMP_SCALER(Ed, Pos)     ((ed_fragment **)((Ed)->fragments))[Pos]->scaler
 #define FRAGMENT_XRAMP_OFFSET(Ed, Pos)     ((ed_fragment **)((Ed)->fragments))[Pos]->offset
 #define FRAGMENT_PTREE_SCALER(Ed, Pos)     ((ed_fragment **)((Ed)->fragments))[Pos]->pscl
@@ -367,6 +378,10 @@ enum {ED_SIMPLE, ED_RAMP, ED_PTREE}; /* typ field choices */
 #define READER_SOUND(Sf)            ((ed_fragment *)((Sf)->cb))->snd
 #define READER_RAMP_BEG(Sf)         ((ed_fragment *)((Sf)->cb))->rmp0
 #define READER_RAMP_END(Sf)         ((ed_fragment *)((Sf)->cb))->rmp1
+#define READER_RAMP2_BEG(Sf)        ((ed_fragment *)((Sf)->cb))->rmp3
+#define READER_RAMP2_END(Sf)        ((ed_fragment *)((Sf)->cb))->rmp4
+#define READER_RAMP3_BEG(Sf)        ((ed_fragment *)((Sf)->cb))->rmp5
+#define READER_RAMP3_END(Sf)        ((ed_fragment *)((Sf)->cb))->rmp6
 #define READER_XRAMP_SCALER(Sf)     ((ed_fragment *)((Sf)->cb))->scaler
 #define READER_XRAMP_OFFSET(Sf)     ((ed_fragment *)((Sf)->cb))->offset
 #define READER_PTREE_SCALER(Sf)     ((ed_fragment *)((Sf)->cb))->pscl
@@ -383,6 +398,10 @@ enum {ED_SIMPLE, ED_RAMP, ED_PTREE}; /* typ field choices */
 #define ED_SOUND(Ed)            (Ed)->snd
 #define ED_RAMP_BEG(Ed)         (Ed)->rmp0
 #define ED_RAMP_END(Ed)         (Ed)->rmp1
+#define ED_RAMP2_BEG(Ed)        (Ed)->rmp3
+#define ED_RAMP2_END(Ed)        (Ed)->rmp4
+#define ED_RAMP3_BEG(Ed)        (Ed)->rmp5
+#define ED_RAMP3_END(Ed)        (Ed)->rmp6
 #define ED_XRAMP_SCALER(Ed)     (Ed)->scaler
 #define ED_XRAMP_OFFSET(Ed)     (Ed)->offset
 #define ED_PTREE_SCALER(Ed)     (Ed)->pscl
@@ -394,13 +413,23 @@ enum {ED_SIMPLE, ED_RAMP, ED_PTREE}; /* typ field choices */
 #define EDIT_LIST_END_MARK -2
 #define EDIT_LIST_ZERO_MARK -1
 
-enum {INSERTION_EDIT, DELETION_EDIT, CHANGE_EDIT, INITIALIZE_EDIT, SCALED_EDIT, ZERO_EDIT, RAMP_EDIT, PTREE_EDIT};
-static char *edit_names[9] = {"insert", "delete", "set", "init", "scale", "zero", "env", "ptree", ""};
+enum {INSERTION_EDIT, DELETION_EDIT, CHANGE_EDIT, INITIALIZE_EDIT, SCALED_EDIT, ZERO_EDIT, RAMP_EDIT, PTREE_EDIT, XEN_EDIT};
+static char *edit_names[10] = {"insert", "delete", "set", "init", "scale", "zero", "env", "ptree", "xen", ""};
 
-static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed)
+static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, int with_source)
 {
   int len, j, type, index;
   snd_data *sd;
+  if (ed == NULL)
+    {
+      fprintf(outp, "\n (NULL FRAGMENT at %d)", i);
+      return;
+    }
+  if (i >= cp->edit_size)
+    {
+      fprintf(outp, "\n (BOGUS FRAGMENT at %d of %d)", i, cp->edit_size);
+      return;
+    }
   len = ed->size; /* number of fragments in this list */
   type = ed->edit_type;
   switch (type)
@@ -411,6 +440,7 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed)
     case SCALED_EDIT:     fprintf(outp, "\n (scale " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);                         break;
     case ZERO_EDIT:       fprintf(outp, "\n (silence " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);                       break;
     case RAMP_EDIT:       fprintf(outp, "\n (ramp " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);                          break;
+    case XEN_EDIT:        fprintf(outp, "\n (xen[%d] " OFF_TD " " OFF_TD ") ", ed->ptree_location, ed->beg, ed->len);   break; 
     case PTREE_EDIT:      fprintf(outp, "\n (ptree[%d] " OFF_TD " " OFF_TD ") ", ed->ptree_location, ed->beg, ed->len); break; 
     case INITIALIZE_EDIT: fprintf(outp, "\n (begin) ");                                                                 break;
     }
@@ -430,32 +460,71 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed)
 		  FRAGMENT_LOCAL_END(ed, j),
 		  FRAGMENT_SCALER(ed, j));
 	  if ((FRAGMENT_TYPE(ed, j) == ED_RAMP) || 
-	      ((FRAGMENT_TYPE(ed, j) == ED_PTREE) &&
-	       ((FRAGMENT_RAMP_BEG(ed, j) != 0.0) || (FRAGMENT_RAMP_END(ed, j) != 0.0))))
+	      (FRAGMENT_TYPE(ed, j) == ED_XRAMP) || 
+	      (FRAGMENT_TYPE(ed, j) == ED_RAMP2) || 
+	      (FRAGMENT_TYPE(ed, j) == ED_RAMP3) || 
+	      (FRAGMENT_TYPE(ed, j) == ED_PTREE_RAMP) || 
+	      (FRAGMENT_TYPE(ed, j) == ED_PTREE_XRAMP) ||
+	      (FRAGMENT_TYPE(ed, j) == ED_PTREE_RAMP2) ||
+	      (FRAGMENT_TYPE(ed, j) == ED_XEN_RAMP) || 
+	      (FRAGMENT_TYPE(ed, j) == ED_XEN_XRAMP) ||
+	      (FRAGMENT_TYPE(ed, j) == ED_XEN_RAMP2) ||
+	      (FRAGMENT_TYPE(ed, j) == ED_PTREE_RAMP_CLOSURE) || 
+	      (FRAGMENT_TYPE(ed, j) == ED_PTREE_XRAMP_CLOSURE) ||
+	      (FRAGMENT_TYPE(ed, j) == ED_PTREE_RAMP2_CLOSURE))
 	    {
 	      fprintf(outp, ", %f -> %f", 
 		      FRAGMENT_RAMP_BEG(ed, j),
 		      FRAGMENT_RAMP_END(ed, j));
-	      if (FRAGMENT_XRAMP_SCALER(ed, j) != 0.0)
+	      if ((FRAGMENT_TYPE(ed, j) == ED_RAMP2) || 
+		  (FRAGMENT_TYPE(ed, j) == ED_RAMP3) || 
+		  (FRAGMENT_TYPE(ed, j) == ED_PTREE_RAMP2) ||
+		  (FRAGMENT_TYPE(ed, j) == ED_XEN_RAMP2) ||
+		  (FRAGMENT_TYPE(ed, j) == ED_PTREE_RAMP2_CLOSURE))
+		fprintf(outp, ", %f -> %f", 
+			FRAGMENT_RAMP2_BEG(ed, j),
+			FRAGMENT_RAMP2_END(ed, j));
+	      if (FRAGMENT_TYPE(ed, j) == ED_RAMP3)
+		fprintf(outp, ", %f -> %f", 
+			FRAGMENT_RAMP3_BEG(ed, j),
+			FRAGMENT_RAMP3_END(ed, j));
+	      if (FRAGMENT_XRAMP_SCALER(ed, j) != 0.0) /* ptree or xramp cases */
 		fprintf(outp, ", off: %f, scl: %f", 
 			FRAGMENT_XRAMP_OFFSET(ed, j),
 			FRAGMENT_XRAMP_SCALER(ed, j));
 	    }
-	  if (FRAGMENT_TYPE(ed, j) == ED_PTREE)
+	  if (PTREE_OP(FRAGMENT_TYPE(ed, j)))
 	    {
 	      XEN code;
 	      fprintf(outp, ", loc: %d, pos: " OFF_TD ", arg: %f",
 		      FRAGMENT_PTREE_INDEX(ed, j),
 		      FRAGMENT_PTREE_POSITION(ed, j),
 		      (float)(MUS_FLOAT_TO_FIX * FRAGMENT_PTREE_SCALER(ed, j)));
-	      code = ptree_code(cp->ptrees[FRAGMENT_PTREE_INDEX(ed, j)]);
-	      if (XEN_LIST_P(code))
-		fprintf(outp, ", code: %s", XEN_AS_STRING(code));
+	      if (with_source)
+		{
+		  if (XEN_OP(FRAGMENT_TYPE(ed, j)))
+		    {
+		      code = cp->xens[FRAGMENT_PTREE_INDEX(ed, j)];
 #if HAVE_GUILE
-	      code = cp->ptree_inits[FRAGMENT_PTREE_INDEX(ed, j)];
-	      if ((code) && (XEN_PROCEDURE_P(code)))
-		fprintf(outp, ", init: %s", XEN_AS_STRING(scm_procedure_source(code)));
+		      if ((code) && (XEN_PROCEDURE_P(code)))
+			fprintf(outp, ", code: %s", XEN_AS_STRING(scm_procedure_source(code)));
 #endif
+		    }
+		  else 
+		    {
+		      code = ptree_code(cp->ptrees[FRAGMENT_PTREE_INDEX(ed, j)]);
+		      if (XEN_LIST_P(code))
+			fprintf(outp, ", code: %s", XEN_AS_STRING(code));
+		    }
+#if HAVE_GUILE
+		  if (PTREE_CLOSURE_OP(FRAGMENT_TYPE(ed, j)))
+		    {
+		      code = cp->ptree_inits[FRAGMENT_PTREE_INDEX(ed, j)];
+		      if ((code) && (XEN_PROCEDURE_P(code)))
+			fprintf(outp, ", init: %s", XEN_AS_STRING(scm_procedure_source(code)));
+		    }
+#endif
+		}
 	    }
 	  fprintf(outp, "])");
 	  if (index != EDIT_LIST_ZERO_MARK)
@@ -533,12 +602,12 @@ char *edit_to_string(chan_info *cp, int edit)
   return(edbuf);
 }
 
-static void display_edits(chan_info *cp, FILE *outp)
+static void display_edits(chan_info *cp, FILE *outp, int with_source)
 {
   int i;
   fprintf(outp, "\nEDITS: %d\n", cp->edit_ctr);
   for (i = 0; i <= cp->edit_ctr; i++)
-    display_ed_list(cp, outp, i, cp->edits[i]);
+    display_ed_list(cp, outp, i, cp->edits[i], with_source);
 }
 
 static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
@@ -703,6 +772,13 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 		      ed->origin,
 		      cp->chan);
 	      break;
+	    case XEN_EDIT:
+	      fprintf(fd, "      (xen-channel %s " OFF_TD " " OFF_TD " sfile %d",
+		      XEN_AS_STRING(cp->xens[ed->ptree_location]),
+		      ed->beg,
+		      ed->len,
+		      cp->chan);
+	      break;
 	    case PTREE_EDIT:
 	      fprintf(fd, "      (ptree-channel %s " OFF_TD " " OFF_TD " sfile %d",
 		      XEN_AS_STRING(ptree_code(cp->ptrees[ed->ptree_location])),
@@ -722,7 +798,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 	    fprintf(fd, " %d", ed->edpos);
 	  else fprintf(fd, " #f");
 #if HAVE_GUILE
-	  if (ed->edit_type == PTREE_EDIT)
+	  if ((ed->edit_type == PTREE_EDIT) || (ed->edit_type == XEN_EDIT))
 	      {
 		XEN code;
 		fprintf(fd, " %s", (ed->ptree_env_too) ? "#t" : "#f");
@@ -741,25 +817,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
   save_mark_list(fd, cp);
 }
 
-static void ripple_out(ed_fragment **list, int beg, off_t num, int len)
-{
-  int i;
-  for (i = beg; i < len; i++) ED_GLOBAL_POSITION(list[i]) += num;
-}
-
 #define copy_ed_fragment(New_Ed, Old_Ed) memcpy((void *)(New_Ed), (void *)(Old_Ed), sizeof(ed_fragment))
-
-static void copy_ed_blocks(ed_fragment **new_list, ed_fragment **old_list, int new_beg, int old_beg, int num_lists)
-{
-  /* beg and num_lists here are in terms of blocks, not ints */
-  int i, end, k;
-  if (num_lists > 0)
-    {
-      end = old_beg + num_lists;
-      for (k = new_beg, i = old_beg; i < end; i++, k++) 
-	copy_ed_fragment(new_list[k], old_list[i]);
-    }
-}
 
 static ed_list *make_ed_list(int size)
 {
@@ -805,33 +863,36 @@ Float ed_selection_maxamp(chan_info *cp)
   return(ed->selection_maxamp);
 }
 
-static ed_list *append_ed_list(chan_info *cp, int size)
+static ed_list *free_ed_list(ed_list *ed, chan_info *cp)
 {
-  /* edit_ctr is already incremented */
-  ed_list *new_ed, *old_ed;
-  new_ed = make_ed_list(size);
-  if ((cp->edits) && (cp->edit_ctr > 0))
-    {
-      old_ed = cp->edits[cp->edit_ctr - 1];
-      new_ed->selection_beg = old_ed->selection_beg;
-      new_ed->selection_end = old_ed->selection_end;
-    }
-  return(new_ed);
-}
-
-static ed_list *free_ed_list(ed_list *ed)
-{
-  int i;
   if (ed)
     {
       if (FRAGMENTS(ed)) 
 	{
+	  int i;
 	  for (i = 0; i < ed->allocated_size; i++)
 	    if (FRAGMENT(ed, i))
 	      FREE(FRAGMENT(ed, i));
 	  FREE(FRAGMENTS(ed));
 	}
       if (ed->origin) FREE(ed->origin);
+      if ((ed->edit_type == PTREE_EDIT) || (ed->edit_type == XEN_EDIT))
+	{
+	  int loc;
+	  loc = ed->ptree_location;
+	  if (cp->ptrees[loc]) 
+	    cp->ptrees[loc] = free_ptree(cp->ptrees[loc]);
+	  if (XEN_PROCEDURE_P(cp->ptree_inits[loc]))
+	    {
+	      snd_unprotect(cp->ptree_inits[loc]);
+	      cp->ptree_inits[loc] = XEN_FALSE;
+	    }
+	  if (XEN_PROCEDURE_P(cp->xens[loc]))
+	    {
+	      snd_unprotect(cp->xens[loc]);
+	      cp->xens[loc] = XEN_FALSE;
+	    }
+	}
       FREE(ed);
     }
   return(NULL);
@@ -844,7 +905,7 @@ void backup_edit_list(chan_info *cp)
   cur = cp->edit_ctr;
   if (cur <= 0) return;
   cp->edits[cur]->edpos = cp->edits[cur - 1]->edpos;
-  free_ed_list(cp->edits[cur - 1]);
+  free_ed_list(cp->edits[cur - 1], cp);
   free_amp_env(cp, cur - 1);
   cp->edits[cur - 1] = cp->edits[cur];
   cp->amp_envs[cur - 1] = cp->amp_envs[cur];
@@ -872,7 +933,7 @@ void free_edit_list(chan_info *cp)
 	  for (i = 0; i < cp->edit_size; i++)
 	    {
 	      /* cp->edit_ctr follows current edit state (redo/undo) */
-	      if (cp->edits[i]) free_ed_list(cp->edits[i]);
+	      if (cp->edits[i]) free_ed_list(cp->edits[i], cp);
 	      if (cp->amp_envs[i]) free_amp_env(cp, i);
 	    }
 	  FREE(cp->edits);
@@ -905,12 +966,22 @@ ed_list *initial_ed_list(off_t beg, off_t end)
   FRAGMENT_PTREE_SCALER(ed, 0) = 0.0;
   FRAGMENT_RAMP_END(ed, 0) = 0.0;
   FRAGMENT_TYPE(ed, 0) = ED_SIMPLE;
-  /* second block is our end-of-tree marker */
-  FRAGMENT_LOCAL_POSITION(ed, 1) = 0;
-  FRAGMENT_LOCAL_END(ed, 1) = 0;
-  FRAGMENT_SOUND(ed, 1) = EDIT_LIST_END_MARK;
-  FRAGMENT_GLOBAL_POSITION(ed, 1) = end + 1;
-  FRAGMENT_PTREE_POSITION(ed, 1) = 0;
+  if (ed->len > 0)
+    {
+      /* second block is our end-of-tree marker */
+      FRAGMENT_LOCAL_POSITION(ed, 1) = 0;
+      FRAGMENT_LOCAL_END(ed, 1) = 0;
+      FRAGMENT_SOUND(ed, 1) = EDIT_LIST_END_MARK;
+      FRAGMENT_GLOBAL_POSITION(ed, 1) = end + 1;
+      FRAGMENT_PTREE_POSITION(ed, 1) = 0;
+    }
+  else
+    {
+      FRAGMENT_LOCAL_POSITION(ed, 0) = 0;
+      FRAGMENT_LOCAL_END(ed, 0) = 0;
+      FRAGMENT_SOUND(ed, 0) = EDIT_LIST_END_MARK;
+      ed->size = 1;
+    }
   return(ed);
 }
 
@@ -919,158 +990,108 @@ void allocate_ed_list(chan_info *cp)
   cp->edits = (ed_list **)CALLOC(cp->edit_size, sizeof(ed_list *));
 }
 
-static int find_split_loc(off_t samp, ed_list *current_state)
-{
-  int i;
-  for (i = 0; i < current_state->size; i++)
-    if (FRAGMENT_GLOBAL_POSITION(current_state, i) >= samp) 
-      return(i);
-  return(0);
-}
-
-static ed_list *selected_ed_list(off_t beg, off_t end, ed_list *current_state)
-{
-  int bk, ek, new_size, k, oldk;
-  off_t len, diff;
-  ed_list *new_ed;
-  /* this refers to selected data, so beg and end must be within the current data bounds! */
-  if (beg < 0) beg = 0;
-  if (end < 0) end = 0;
-  len = FRAGMENT_GLOBAL_POSITION(current_state, current_state->size - 1);
-  if (beg >= len) beg = len - 1;
-  if (end >= len) end = len - 1;
-  bk = find_split_loc(beg, current_state);
-  if (FRAGMENT_GLOBAL_POSITION(current_state, bk) > beg) bk--;
-  ek = find_split_loc(end + 1, current_state) - 1; /* was end 11-Nov-00 */
-  new_size = current_state->size;
-  /* if (ek < 0) ek = new_size - 1; */
-  if (ek < 0) ek = 0;
-  if (FRAGMENT_GLOBAL_POSITION(current_state, bk) != beg) new_size++;
-  if (FRAGMENT_GLOBAL_POSITION(current_state, (ek + 1)) != end + 1) new_size++;
-  new_ed = make_ed_list(new_size);
-  new_ed->size = new_size;
-  for (k = 0; k <= bk; k++)
-    copy_ed_fragment(FRAGMENT(new_ed, k), FRAGMENT(current_state, k));
-  k = bk + 1;
-  diff = beg - FRAGMENT_GLOBAL_POSITION(current_state, bk);
-  if (diff != 0)
-    {
-      copy_ed_fragment(FRAGMENT(new_ed, k), FRAGMENT(current_state, bk));
-      FRAGMENT_LOCAL_END(new_ed, bk) = FRAGMENT_LOCAL_POSITION(new_ed, bk) + diff - 1;
-      FRAGMENT_GLOBAL_POSITION(new_ed, k) = beg;
-      FRAGMENT_LOCAL_POSITION(new_ed, k) = FRAGMENT_LOCAL_END(new_ed, bk) + 1;
-      k++;
-    }
-  for (oldk = bk + 1; oldk <= ek; oldk++, k++)
-      copy_ed_fragment(FRAGMENT(new_ed, k), FRAGMENT(current_state, oldk));
-  diff = FRAGMENT_GLOBAL_POSITION(current_state, (ek + 1)) - end - 1;
-  if (diff != 0)
-    {
-      copy_ed_fragment(FRAGMENT(new_ed, k), FRAGMENT(current_state, ek));
-      FRAGMENT_LOCAL_END(new_ed, (k - 1)) -= diff;
-      FRAGMENT_LOCAL_POSITION(new_ed, k) = FRAGMENT_LOCAL_END(new_ed, (k - 1)) + 1;
-      FRAGMENT_GLOBAL_POSITION(new_ed, k) = end + 1; /* 1? */
-      k++;
-    }
-  for (oldk = ek + 1; (oldk <= current_state->size) && (k < new_size); oldk++, k++)
-    copy_ed_fragment(FRAGMENT(new_ed, k), FRAGMENT(current_state, oldk));
-  return(new_ed);
-}
-
-
-static void fixup_edlist_endmark(ed_list *new_state)
-{
-  int k;
-  if (FRAGMENT_SOUND(new_state, (new_state->size - 1)) != EDIT_LIST_END_MARK)
-    {
-      for (k = new_state->size - 1; k > 0; k--)
-	if (FRAGMENT_SOUND(new_state, k) == EDIT_LIST_END_MARK) break;
-      if (k > 0) 
-	new_state->size = k + 1;
-    }
-}
-
 static void new_leading_ramp(ed_fragment *new_start, ed_fragment *old_start, off_t samp)
 {
   Float rmp1, rmp0;
   Float val;
+  double xpos = 0.0;
   rmp0 = ED_RAMP_BEG(old_start);
   rmp1 = ED_RAMP_END(old_start);
-  if (ED_LOCAL_END(old_start) == ED_LOCAL_POSITION(old_start))
-    val = rmp0;
-  else val = rmp0 + (rmp1 - rmp0) * (double)(samp - 1 - ED_GLOBAL_POSITION(old_start)) / (double)(ED_LOCAL_END(old_start) - ED_LOCAL_POSITION(old_start));
-  ED_TYPE(new_start) = ED_RAMP;
-  ED_RAMP_BEG(new_start) = ED_RAMP_BEG(old_start);
-  ED_XRAMP_OFFSET(new_start) = ED_XRAMP_OFFSET(old_start);
-  ED_XRAMP_SCALER(new_start) = ED_XRAMP_SCALER(old_start);
-  ED_RAMP_END(new_start) = val;
+  if ((rmp0 != 0.0) || (rmp1 != 0.0))
+    {
+      if (ED_LOCAL_END(old_start) == ED_LOCAL_POSITION(old_start))
+	val = rmp0;
+      else 
+	{
+	  xpos = (double)(samp - 1 - ED_GLOBAL_POSITION(old_start)) / (double)(ED_LOCAL_END(old_start) - ED_LOCAL_POSITION(old_start));
+	  val = rmp0 + (rmp1 - rmp0) * xpos;
+	}
+      ED_RAMP_BEG(new_start) = rmp0;
+      ED_RAMP_END(new_start) = val;
+      ED_XRAMP_OFFSET(new_start) = ED_XRAMP_OFFSET(old_start);
+      ED_XRAMP_SCALER(new_start) = ED_XRAMP_SCALER(old_start);
+      if ((val == 0.0) && (rmp0 == 0.0))
+	{
+	  ED_SCALER(new_start) = 0.0; /* not redundant because reader chooser thinks rmps=0 means no env */
+	  ED_TYPE(new_start) = ED_ZERO;
+	}
+      if ((ED_TYPE(old_start) == ED_RAMP2) || 
+	  (ED_TYPE(old_start) == ED_RAMP3) || 
+	  (ED_TYPE(old_start) == ED_PTREE_RAMP2) || 
+	  (ED_TYPE(old_start) == ED_XEN_RAMP2) || 
+	  (ED_TYPE(old_start) == ED_PTREE_RAMP2_CLOSURE))
+	{
+	  rmp0 = ED_RAMP2_BEG(old_start);
+	  rmp1 = ED_RAMP2_END(old_start);
+	  ED_RAMP2_BEG(new_start) = rmp0;
+	  if (ED_LOCAL_END(old_start) == ED_LOCAL_POSITION(old_start))
+	    ED_RAMP2_END(new_start) = rmp0;
+	  else ED_RAMP2_END(new_start) = rmp0 + (rmp1 - rmp0) * xpos;
+	  if (ED_TYPE(old_start) == ED_RAMP3)
+	    {
+	      rmp0 = ED_RAMP3_BEG(old_start);
+	      rmp1 = ED_RAMP3_END(old_start);
+	      ED_RAMP3_BEG(new_start) = rmp0;
+	      if (ED_LOCAL_END(old_start) == ED_LOCAL_POSITION(old_start))
+		ED_RAMP3_END(new_start) = rmp0;
+	      else ED_RAMP3_END(new_start) = rmp0 + (rmp1 - rmp0) * xpos;
+	    }
+	}
+    }
 }
 
 static void new_trailing_ramp(ed_fragment *new_back, ed_fragment *old_back, off_t samp)
 {
   Float rmp1, rmp0;
   Float val;
+  double xpos = 0.0;
   rmp0 = ED_RAMP_BEG(old_back);
   rmp1 = ED_RAMP_END(old_back);
-  if (ED_LOCAL_END(old_back) == ED_LOCAL_POSITION(old_back))
-    val = rmp0;
-  else val = rmp0 + (rmp1 - rmp0) * (double)(samp - ED_GLOBAL_POSITION(old_back)) / (double)(ED_LOCAL_END(old_back) - ED_LOCAL_POSITION(old_back));
-  ED_TYPE(new_back) = ED_RAMP;
-  ED_RAMP_BEG(new_back) = val;
-  ED_RAMP_END(new_back) = ED_RAMP_END(old_back);
-  ED_XRAMP_OFFSET(new_back) = ED_XRAMP_OFFSET(old_back);
-  ED_XRAMP_SCALER(new_back) = ED_XRAMP_SCALER(old_back);
-}
-
-static void copy_ptree_fields(ed_fragment *newf, ed_fragment *oldf, off_t pos)
-{
-  ED_PTREE_SCALER(newf) = ED_PTREE_SCALER(oldf);
-  ED_PTREE_INDEX(newf) = ED_PTREE_INDEX(oldf);
-  ED_PTREE_DUR(newf) = ED_PTREE_DUR(oldf);
-  ED_PTREE_POSITION(newf) = pos;
-}
-
-static void copy_base_fields(ed_fragment *newf, ed_fragment *oldf)
-{
-  ED_SOUND(newf) = ED_SOUND(oldf);
-  ED_SCALER(newf) = ED_SCALER(oldf);
-  ED_TYPE(newf) = ED_TYPE(oldf);
-}
-
-static void set_position_fields(ed_fragment *newf, off_t out, off_t beg, off_t end)
-{
-  ED_GLOBAL_POSITION(newf) = out;
-  ED_LOCAL_POSITION(newf) = beg;
-  ED_LOCAL_END(newf) = end;
-}
-
-static void new_trailing_fragment(ed_fragment *new_back, ed_fragment *old_back, off_t new_loc, off_t new_beg, off_t new_pos)
-{
-  copy_base_fields(new_back, old_back);
-  set_position_fields(new_back, new_loc, new_beg, ED_LOCAL_END(old_back));
-  if (ED_TYPE(old_back) == ED_PTREE)
-    copy_ptree_fields(new_back, old_back, ED_PTREE_POSITION(old_back) + new_pos);
-  else
+  if ((rmp0 != 0.0) || (rmp1 != 0.0))
     {
-      if (ED_TYPE(old_back) == ED_RAMP)
-	new_trailing_ramp(new_back, old_back, new_beg);
+      if (ED_LOCAL_END(old_back) == ED_LOCAL_POSITION(old_back))
+	val = rmp0;
+      else 
+	{
+	  xpos = (double)(samp - ED_GLOBAL_POSITION(old_back)) / (double)(ED_LOCAL_END(old_back) - ED_LOCAL_POSITION(old_back));
+	  val = rmp0 + (rmp1 - rmp0) * xpos;
+	}
+      ED_RAMP_BEG(new_back) = val;
+      ED_RAMP_END(new_back) = rmp1;
+      ED_XRAMP_OFFSET(new_back) = ED_XRAMP_OFFSET(old_back);
+      ED_XRAMP_SCALER(new_back) = ED_XRAMP_SCALER(old_back);
+      if ((val == 0.0) && (rmp1 == 0.0))
+	{
+	  ED_SCALER(new_back) = 0.0;
+	  ED_TYPE(new_back) = ED_ZERO;
+	}
+      if ((ED_TYPE(old_back) == ED_RAMP2) ||
+	  (ED_TYPE(old_back) == ED_RAMP3) ||
+	  (ED_TYPE(old_back) == ED_PTREE_RAMP2) ||
+	  (ED_TYPE(old_back) == ED_XEN_RAMP2) ||
+	  (ED_TYPE(old_back) == ED_PTREE_RAMP2_CLOSURE))
+	{
+	  rmp0 = ED_RAMP2_BEG(old_back);
+	  rmp1 = ED_RAMP2_END(old_back);
+	  if (ED_LOCAL_END(old_back) == ED_LOCAL_POSITION(old_back))
+	    val = rmp0;
+	  else val = rmp0 + (rmp1 - rmp0) * xpos;
+	  ED_RAMP2_BEG(new_back) = val;
+	  ED_RAMP2_END(new_back) = rmp1;
+	  if (ED_TYPE(old_back) == ED_RAMP3)
+	    {
+	      rmp0 = ED_RAMP3_BEG(old_back);
+	      rmp1 = ED_RAMP3_END(old_back);
+	      if (ED_LOCAL_END(old_back) == ED_LOCAL_POSITION(old_back))
+		val = rmp0;
+	      else val = rmp0 + (rmp1 - rmp0) * xpos;
+	      ED_RAMP3_BEG(new_back) = val;
+	      ED_RAMP3_END(new_back) = rmp1;
+	    }
+	}
     }
-}
-
-static void new_leading_fragment(ed_fragment *new_front, ed_fragment *old_front, off_t beg)
-{
-  copy_base_fields(new_front, old_front);
-  set_position_fields(new_front, 
-		      ED_GLOBAL_POSITION(old_front), 
-		      ED_LOCAL_POSITION(old_front), 
-		      ED_LOCAL_POSITION(old_front) + beg - ED_GLOBAL_POSITION(old_front) - 1);
-  if (ED_TYPE(old_front) == ED_PTREE)
-    copy_ptree_fields(new_front, old_front, ED_PTREE_POSITION(old_front));
-  else
-    {
-      if (ED_TYPE(old_front) == ED_RAMP)
-	new_leading_ramp(new_front, old_front, beg);
-    }
+  if (PTREE_OP(ED_TYPE(new_back)))
+    ED_PTREE_POSITION(new_back) = ED_PTREE_POSITION(old_back) + samp - ED_GLOBAL_POSITION(old_back);
 }
 
 static void ripple_all(chan_info *cp, off_t beg, off_t samps)
@@ -1080,78 +1101,101 @@ static void ripple_all(chan_info *cp, off_t beg, off_t samps)
   check_for_first_edit(cp);
 }
 
-static ed_list *insert_samples_1(off_t samp, off_t num, ed_list *current_state, chan_info *cp, ed_fragment **cb_rtn, const char *origin, Float scaler)
+
+/* -------------------------------- insert samples -------------------------------- */
+static ed_list *insert_section_into_list(off_t samp, off_t num, ed_list *current_state, ed_fragment **rtn, const char *origin, Float scaler)
 {
-  int len, k;
+  int cur_len, cur_i, new_i;
+  ed_fragment *cur_f, *new_f, *inserted_f = NULL;
   ed_list *new_state;
-  ed_fragment *cb_new, *cb_old, *cb_old_0, *cb_new_1, *cb_new_0;
-  ed_fragment **ed;
   if (num <= 0) return(NULL);
-  len = current_state->size;
-  ed = FRAGMENTS(current_state);
-  k = find_split_loc(samp, current_state);
-  cb_old = ed[k];
-  if ((k == 0) && (ED_LOCAL_END(cb_old) == -1))
+  cur_len = current_state->size;
+  new_state = make_ed_list(cur_len + 2); /* leave room for possible split */
+  for (cur_i = 0, new_i = 0; cur_i < cur_len; cur_i++, new_i++)
     {
-      /* no data: just set insertion */
-      new_state = append_ed_list(cp, len);
-      copy_ed_blocks(FRAGMENTS(new_state), ed, 0, 0, len);
-      cb_new = FRAGMENT(new_state, 0);
-      ED_LOCAL_END(cb_new) = num - 1;
-    }
-  else
-    {
-      if ((samp == ED_GLOBAL_POSITION(cb_old)) || 
-	  (samp == (ED_GLOBAL_POSITION(cb_old) - 1)))
+      cur_f = FRAGMENT(current_state, cur_i);
+      new_f = FRAGMENT(new_state, new_i);
+      if (ED_GLOBAL_POSITION(cur_f) > samp)
 	{
-	  new_state = append_ed_list(cp, len + 1);
-	  copy_ed_blocks(FRAGMENTS(new_state), ed, 0, 0, k);
-	  copy_ed_blocks(FRAGMENTS(new_state), ed, k + 1, k, len - k);
-	  len++;
+	  /* copy this fragment and ripple */
+	  copy_ed_fragment(new_f, cur_f);
+	  ED_GLOBAL_POSITION(new_f) += num;
 	}
       else
 	{
-	  off_t new_beg_1;
-	  cb_old_0 = ed[k - 1];
-	  new_beg_1 = ED_LOCAL_POSITION(cb_old_0) + samp - ED_GLOBAL_POSITION(cb_old_0);
-	  new_state = append_ed_list(cp, len + 2);
-	  copy_ed_blocks(FRAGMENTS(new_state), ed, 0, 0, k);
-	  copy_ed_blocks(FRAGMENTS(new_state), ed, k + 2, k, len - k);
-	  cb_new_0 = FRAGMENT(new_state, (k - 1));
-	  ED_LOCAL_END(cb_new_0) = new_beg_1 - 1;
-	  cb_new_1 = FRAGMENT(new_state, (k + 1));
-	  set_position_fields(cb_new_1, samp, new_beg_1, ED_LOCAL_END(cb_old_0));
-	  copy_base_fields(cb_new_1, cb_old_0);
-	  if (ED_TYPE(cb_old_0) == ED_PTREE)
-	    copy_ptree_fields(cb_new_1, 
-			      cb_old_0, 
-			      ED_PTREE_POSITION(cb_old_0) + samp - ED_GLOBAL_POSITION(cb_old_0));
+	  if (ED_GLOBAL_POSITION(cur_f) == samp)
+	    {
+	      /* insert new fragment, copy to end */
+	      inserted_f = new_f;
+	      
+	      /* make newf and increment */
+	      new_i++;
+	      new_f = FRAGMENT(new_state, new_i);
+	      copy_ed_fragment(new_f, cur_f);
+	      ED_GLOBAL_POSITION(new_f) += num;
+	    }
 	  else
 	    {
-	      if (ED_TYPE(cb_old_0) == ED_RAMP)
+	      copy_ed_fragment(new_f, cur_f);
+	      /* look for splits */
+	      if (FRAGMENT_GLOBAL_POSITION(current_state, (cur_i + 1)) > samp)
 		{
-		  new_leading_ramp(cb_new_0, cb_old_0, samp);
-		  new_trailing_ramp(cb_new_1, cb_old_0, samp);
+		  ed_fragment *split_front_f, *split_back_f;
+		  /* split current at samp */
+		  split_front_f = new_f;
+		  copy_ed_fragment(split_front_f, cur_f);
+		  ED_LOCAL_END(split_front_f) = ED_LOCAL_POSITION(split_front_f) + samp - ED_GLOBAL_POSITION(split_front_f) - 1;
+		  /* samp - global position = where in current fragment, offset that by its local offset, turn into end sample */
+		  
+		  new_i++;
+		  inserted_f = FRAGMENT(new_state, new_i);
+		  /* deal with that later */
+		  
+		  new_i++;
+		  split_back_f = FRAGMENT(new_state, new_i);
+		  copy_ed_fragment(split_back_f, cur_f);
+		  ED_LOCAL_POSITION(split_back_f) = ED_LOCAL_END(split_front_f) + 1;
+		  ED_GLOBAL_POSITION(split_back_f) = samp + num; /* rippled */
+		  
+		  /* now fixup ramps/ptrees affected by the split */
+		  if ((ED_TYPE(cur_f) != ED_SIMPLE) && (ED_TYPE(cur_f) != ED_ZERO))
+		    {
+		      new_leading_ramp(split_front_f, cur_f, samp);
+		      new_trailing_ramp(split_back_f, cur_f, samp);
+		    }
 		}
 	    }
-
-	  len += 2;
 	}
-      cb_new = FRAGMENT(new_state, k);
-      set_position_fields(cb_new, samp, 0, num - 1);
-      ED_TYPE(cb_new) = ED_SIMPLE;
     }
-  ED_SCALER(cb_new) = scaler;
-  (*cb_rtn) = cb_new;
+  ED_GLOBAL_POSITION(inserted_f) = samp;
+  ED_LOCAL_POSITION(inserted_f) = 0;
+  ED_LOCAL_END(inserted_f) = num - 1;
+  ED_TYPE(inserted_f) = ED_SIMPLE;
+  ED_SCALER(inserted_f) = scaler;
+  if (scaler == 0.0) ED_TYPE(inserted_f) = ED_ZERO;
+  (*rtn) = inserted_f;
+  new_state->size = new_i;
   new_state->beg = samp;
   new_state->len = num;
   if (origin) new_state->origin = copy_string(origin);
-  ripple_out(FRAGMENTS(new_state), k + 1, num, len);
+  return(new_state);
+}
+
+static ed_list *insert_samples_into_list(off_t samp, off_t num, int pos, chan_info *cp, ed_fragment **rtn, const char *origin, Float scaler)
+{
+  ed_list *new_state, *old_state;
+  new_state = insert_section_into_list(samp, num, cp->edits[pos], rtn, origin, scaler);
+  new_state->edpos = pos;
+  if ((cp->edits) && (cp->edit_ctr > 0))
+    {
+      old_state = cp->edits[cp->edit_ctr - 1];
+      new_state->selection_beg = old_state->selection_beg;
+      new_state->selection_end = old_state->selection_end;
+    }
   ripple_all(cp, samp, num);
   ripple_selection(new_state, samp, num);
-  if (cp->cursor > samp) cp->cursor += num;
+  if (CURSOR(cp) > samp) CURSOR(cp) += num;
   reflect_sample_change_in_axis(cp);
-  fixup_edlist_endmark(new_state);
   return(new_state);
 }
 
@@ -1170,12 +1214,13 @@ void extend_with_zeros(chan_info *cp, off_t beg, off_t num, const char *origin, 
     }
   else new_len = len + num;
   prepare_edit_list(cp, new_len, edpos, origin);
-  ed = insert_samples_1(beg, num, cp->edits[edpos], cp, &cb, origin, 0.0);
+  ed = insert_samples_into_list(beg, num, edpos, cp, &cb, origin, 0.0);
   cp->edits[cp->edit_ctr] = ed;
   ED_SOUND(cb) = EDIT_LIST_ZERO_MARK;
+  ED_SCALER(cb) = 0.0;
+  ED_TYPE(cb) = ED_ZERO;
   ed->edit_type = ZERO_EDIT;
   ed->sound_location = 0;
-  ed->edpos = edpos;
   reflect_edit_history_change(cp);
   check_for_first_edit(cp); /* needed to activate revert menu option */
 }
@@ -1197,13 +1242,13 @@ void file_insert_samples(off_t beg, off_t num, char *inserted_file, chan_info *c
   len = cp->samples[edpos];
   if (beg >= len)
     {
-      extend_with_zeros(cp, len, beg - len + 1, "(insert-extend)", edpos);
+      extend_with_zeros(cp, len, beg - len, "(insert-extend)", edpos);
       edpos = cp->edit_ctr;
       len = CURRENT_SAMPLES(cp);
     }
   ss = cp->state;
   prepare_edit_list(cp, len + num, edpos, origin);
-  cp->edits[cp->edit_ctr] = insert_samples_1(beg, num, cp->edits[edpos], cp, &cb, origin, 1.0);
+  cp->edits[cp->edit_ctr] = insert_samples_into_list(beg, num, edpos, cp, &cb, origin, 1.0);
   reflect_edit_history_change(cp);
   ss->catch_message = NULL;
   hdr = make_file_info(inserted_file, ss);
@@ -1226,7 +1271,6 @@ void file_insert_samples(off_t beg, off_t num, char *inserted_file, chan_info *c
 	ed = cp->edits[cp->edit_ctr];
 	ed->edit_type = INSERTION_EDIT;
 	ed->sound_location = ED_SOUND(cb);
-	ed->edpos = edpos;
       }
       lock_affected_mixes(cp, beg, beg + num);
       if (cp->mix_md) reflect_mix_edit(cp, origin);
@@ -1249,19 +1293,18 @@ static void insert_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *
   len = cp->samples[edpos];
   if (beg >= len)
     {
-      extend_with_zeros(cp, len, beg - len + 1, "(insert-extend)", edpos);
+      extend_with_zeros(cp, len, beg - len, "(insert-extend)", edpos);
       edpos = cp->edit_ctr;
       len = CURRENT_SAMPLES(cp);
     }
   prepare_edit_list(cp, len + num, edpos, origin);
-  cp->edits[cp->edit_ctr] = insert_samples_1(beg, num, cp->edits[edpos], cp, &cb, origin, 1.0);
+  cp->edits[cp->edit_ctr] = insert_samples_into_list(beg, num, edpos, cp, &cb, origin, 1.0);
   ED_SOUND(cb) = add_sound_buffer_to_edit_list(cp, vals, (int)num); 
   {
     ed_list *ed;
     ed = cp->edits[cp->edit_ctr];
     ed->edit_type = INSERTION_EDIT;
     ed->sound_location = ED_SOUND(cb);
-    ed->edpos = edpos;
   }
   reflect_edit_history_change(cp);
   lock_affected_mixes(cp, beg, beg + num);
@@ -1269,81 +1312,99 @@ static void insert_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *
   after_edit(cp);
 }
 
-static ed_list *delete_samples_1(off_t beg, off_t num, int pos, chan_info *cp, const char *origin)
+/* -------------------------------- delete samples -------------------------------- */
+
+static ed_list *delete_section_from_list(off_t beg, off_t num, ed_list *current_state, const char *origin)
 {
-  ed_list *current_state;
-  int len, k, cbi, start_del, len_fixup;
-  ed_fragment *cb_old_0, *cb_old_1;
-  off_t curbeg, need_to_delete;
+  int cur_len, cur_i, new_i;
+  ed_fragment *cur_f, *new_f;
+  off_t end, next_pos;
   ed_list *new_state;
   if (num <= 0) return(NULL);
-  current_state = cp->edits[pos];
-  len = current_state->size;
-  len_fixup = -1;
-  k = find_split_loc(beg, current_state);
-  need_to_delete = num;
-  start_del = k;
-  curbeg = beg;
-  cb_old_0 = FRAGMENT(current_state, k);
-  if (ED_GLOBAL_POSITION(cb_old_0) > beg) start_del--;
-  new_state = append_ed_list(cp, len + 1);
-  copy_ed_blocks(FRAGMENTS(new_state), FRAGMENTS(current_state), 0, 0, start_del);
-  cbi = start_del;
-  cb_old_0 = FRAGMENT(current_state, start_del);
-  if (beg > ED_GLOBAL_POSITION(cb_old_0))
+  cur_len = current_state->size;
+  end = beg + num;
+  new_state = make_ed_list(cur_len + 2); /* leave room for possible splits */
+  for (cur_i = 0, new_i = 0; cur_i < cur_len; cur_i++)
     {
-      new_leading_fragment(FRAGMENT(new_state, start_del), cb_old_0, beg);
-      start_del++;
-      len_fixup++;
-    }
-  while (need_to_delete > 0)
-    {
-      off_t old_out;
-      old_out = FRAGMENT_GLOBAL_POSITION(current_state, (cbi + 1));
-      need_to_delete -= (old_out - curbeg);
-      if (need_to_delete > 0)
+      cur_f = FRAGMENT(current_state, cur_i);
+      new_f = FRAGMENT(new_state, new_i);
+      if (ED_GLOBAL_POSITION(cur_f) >= end)
 	{
-	  cbi++;
-	  curbeg = old_out;
+	  /* copy this fragment (we're past the deletion) */
+	  copy_ed_fragment(new_f, cur_f);
+	  ED_GLOBAL_POSITION(new_f) -= num;
+	  new_i++;
+	}
+      else
+	{
+	  next_pos = FRAGMENT_GLOBAL_POSITION(current_state, (cur_i + 1));
+	  if (next_pos <= beg)
+	    {
+	      /* we're before deletion without any split, just copy */
+	      copy_ed_fragment(new_f, cur_f);
+	      new_i++;
+	    }
+	  else
+	    {
+	      /* split off begin (if any), delete until num used up, split off end (if any) */
+	      /* if global_pos > beg and global_pos next <= end, just drop it, else split */
+	      if (ED_GLOBAL_POSITION(cur_f) < beg)
+		{
+		  ed_fragment *split_front_f;
+		  /* split front */
+		  split_front_f = new_f;
+		  copy_ed_fragment(split_front_f, cur_f);
+		  new_i++;
+		  ED_LOCAL_END(split_front_f) = ED_LOCAL_POSITION(split_front_f) + beg - ED_GLOBAL_POSITION(split_front_f) - 1;
+		  /* samp - global position = where in current fragment, offset that by its local offset, turn into end sample */
+		  if ((ED_TYPE(cur_f) != ED_SIMPLE) && (ED_TYPE(cur_f) != ED_ZERO))
+		    new_leading_ramp(split_front_f, cur_f, beg);
+		}
+	      next_pos = FRAGMENT_GLOBAL_POSITION(current_state, (cur_i + 1));
+	      if (next_pos > end)
+		{
+		  ed_fragment *split_back_f;
+		  new_f = FRAGMENT(new_state, new_i);
+		  split_back_f = new_f;
+		  copy_ed_fragment(split_back_f, cur_f);
+		  new_i++;
+		  ED_GLOBAL_POSITION(split_back_f) = beg;
+		  ED_LOCAL_POSITION(split_back_f) += end - ED_GLOBAL_POSITION(cur_f);
+		  if ((ED_TYPE(cur_f) != ED_SIMPLE) && (ED_TYPE(cur_f) != ED_ZERO))
+		    new_trailing_ramp(split_back_f, cur_f, end);
+		}
+	    }
 	}
     }
-  if (need_to_delete < 0)
-    {
-      cb_old_1 = FRAGMENT(current_state, cbi);
-      new_trailing_fragment(FRAGMENT(new_state, start_del),
-			    cb_old_1, 
-			    beg, 
-			    ED_LOCAL_END(cb_old_1) + 1 + need_to_delete,
-			    ED_LENGTH(cb_old_1) + need_to_delete);
-      start_del++;
-      len_fixup++;
-    }
-  cbi++;
-  copy_ed_blocks(FRAGMENTS(new_state), FRAGMENTS(current_state), start_del, cbi, len - cbi); /* ??? */
+  new_state->size = new_i;
   new_state->beg = beg;
   new_state->len = num;
-  new_state->edpos = pos;
   if (origin) new_state->origin = copy_string(origin);
   new_state->edit_type = DELETION_EDIT;
   new_state->sound_location = 0;
-  ripple_out(FRAGMENTS(new_state), start_del, -num, len + len_fixup);
+  return(new_state);
+}
+
+static ed_list *delete_samples_from_list(off_t beg, off_t num, int pos, chan_info *cp, const char *origin)
+{
+  ed_list *new_state, *old_state;
+  new_state = delete_section_from_list(beg, num, cp->edits[pos], origin);
+  if ((cp->edits) && (cp->edit_ctr > 0))
+    {
+      old_state = cp->edits[cp->edit_ctr - 1];
+      new_state->selection_beg = old_state->selection_beg;
+      new_state->selection_end = old_state->selection_end;
+    }
+  new_state->edpos = pos;
   ripple_all(cp, beg, -num);
   ripple_selection(new_state, beg, -num);
-  if (cp->cursor > beg)
+  if (CURSOR(cp) > beg)
     {
       /* this added 6-Dec-02 */
-      cp->cursor -= num;
-      if (cp->cursor < beg) cp->cursor = beg;
+      CURSOR(cp) -= num;
+      if (CURSOR(cp) < beg) CURSOR(cp) = beg;
     }
   reflect_sample_change_in_axis(cp);
-  new_state->size = len + len_fixup; /* don't propagate useless trailing blocks */
-  if (FRAGMENT_SOUND(new_state, (new_state->size - 1)) != EDIT_LIST_END_MARK)
-    {
-      for (k = new_state->size - 1; k > 0; k--)
-	if (FRAGMENT_SOUND(new_state, k) == EDIT_LIST_END_MARK) break;
-      if (k > 0) 
-	new_state->size = k + 1; 
-    }
   return(new_state);
 }    
 
@@ -1357,8 +1418,7 @@ void delete_samples(off_t beg, off_t num, chan_info *cp, const char *origin, int
     {
       if ((beg + num) > len) num = len - beg;
       prepare_edit_list(cp, len - num, edpos, origin);
-      cp->edits[cp->edit_ctr] = delete_samples_1(beg, num, edpos, cp, origin);
-      cp->edits[cp->edit_ctr]->edpos = edpos;
+      cp->edits[cp->edit_ctr] = delete_samples_from_list(beg, num, edpos, cp, origin);
       reflect_edit_history_change(cp);
       lock_affected_mixes(cp, beg, beg + num);
       if (cp->mix_md) reflect_mix_edit(cp, origin);
@@ -1376,82 +1436,42 @@ void delete_samples(off_t beg, off_t num, chan_info *cp, const char *origin, int
     }
 }
 
-static ed_list *change_samples_1(off_t beg, off_t num, int pos, chan_info *cp, ed_fragment **cb_rtn, off_t lengthen, const char *origin)
+
+
+/* -------------------------------- change samples -------------------------------- */
+
+static ed_list *change_samples_in_list(off_t beg, off_t num, int pos, chan_info *cp, ed_fragment **rtn, const char *origin)
 {
-  ed_list *current_state;
-  int len, k, start_del, cbi, len_fixup;
-  off_t curbeg, need_to_delete;
-  ed_list *new_state;
-  ed_fragment *cb_old_0, *cb_new, *cb_old_1;
+  /* delete + insert */
+  ed_list *new_state, *old_state;
+  off_t del_num, cur_end;
+  ed_fragment *changed_f;
   if (num <= 0) return(NULL);
-  current_state = cp->edits[pos];
-  len = current_state->size;
-  len_fixup = -1;
-  k = find_split_loc(beg, current_state);
-  need_to_delete = num - lengthen;
-  start_del = k;
-  curbeg = beg;
-  cbi = 0;
-  cb_old_0 = FRAGMENT(current_state, k);
-  if (ED_GLOBAL_POSITION(cb_old_0) > beg) start_del--;
-  new_state = append_ed_list(cp, len + 2);
-  copy_ed_blocks(FRAGMENTS(new_state), FRAGMENTS(current_state), 0, 0, start_del);
-  cbi = start_del;
-  cb_old_0 = FRAGMENT(current_state, start_del);
-  if (beg > ED_GLOBAL_POSITION(cb_old_0))
+  cur_end = cp->samples[pos];
+  if (beg < cur_end)
     {
-      new_leading_fragment(FRAGMENT(new_state, start_del), cb_old_0, beg);
-      start_del++;
-      len_fixup++;
+      ed_list *del_state;
+      del_num = cur_end - beg;
+      if (num < del_num) del_num = num;
+      del_state = delete_section_from_list(beg, del_num, cp->edits[pos], NULL);
+      new_state = insert_section_into_list(beg, num, del_state, &changed_f, origin, 1.0);
+      del_state = free_ed_list(del_state, cp);
     }
-  while (need_to_delete > 0)
+  else 
     {
-      off_t old_out;
-      old_out = FRAGMENT_GLOBAL_POSITION(current_state, (cbi + 1));
-      need_to_delete -= (old_out - curbeg);
-      if (need_to_delete > 0)
-	{
-	  cbi++;
-	  curbeg = old_out;
-	}
+      new_state = insert_section_into_list(beg, num, cp->edits[pos], &changed_f, origin, 1.0);
     }
-  cb_new = FRAGMENT(new_state, start_del);
-  (*cb_rtn) = cb_new;
-  set_position_fields(cb_new, beg, 0, num - 1);
-  ED_SCALER(cb_new) = 1.0;
-  ED_RAMP_BEG(cb_new) = 0.0;
-  ED_RAMP_END(cb_new) = 0.0;
-  ED_PTREE_SCALER(cb_new) = 0.0;
-  ED_TYPE(cb_new) = ED_SIMPLE;
-  start_del++;
-  len_fixup++;
-  if (need_to_delete < 0)
+  (*rtn) = changed_f;
+  if ((cp->edits) && (cp->edit_ctr > 0))
     {
-      cb_old_1 = FRAGMENT(current_state, cbi);
-      new_trailing_fragment(FRAGMENT(new_state, start_del),
-			    cb_old_1, 
-			    beg + num, 
-			    ED_LOCAL_END(cb_old_1) + 1 + need_to_delete,
-			    ED_LENGTH(cb_old_1) + need_to_delete);
-      start_del++;
-      len_fixup++;
+      old_state = cp->edits[cp->edit_ctr - 1];
+      new_state->selection_beg = old_state->selection_beg;
+      new_state->selection_end = old_state->selection_end;
     }
-  cbi++;
-  copy_ed_blocks(FRAGMENTS(new_state), FRAGMENTS(current_state), start_del, cbi, len - cbi);
-  new_state->beg = beg;
-  new_state->len = num;
   new_state->edpos = pos;
-  if (origin) new_state->origin = copy_string(origin);
-  if (lengthen)
-    {
-      ripple_out(FRAGMENTS(new_state), k + 1, lengthen, len + len_fixup);
-      reflect_sample_change_in_axis(cp);
-    }
-  new_state->size = len + len_fixup; /* don't propagate useless trailing blocks */
   ripple_all(cp, 0, 0);
-  fixup_edlist_endmark(new_state);
   return(new_state);
-}    
+}
 
 void file_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, int chan, int auto_delete, int lock, const char *origin, int edpos)
 {
@@ -1482,7 +1502,8 @@ void file_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, in
       new_len = beg + num;
       if (new_len < prev_len) new_len = prev_len;
       prepare_edit_list(cp, new_len, edpos, origin);
-      cp->edits[cp->edit_ctr] = change_samples_1(beg, num, edpos, cp, &cb, new_len - prev_len, origin);
+      cp->edits[cp->edit_ctr] = change_samples_in_list(beg, num, edpos, cp, &cb, origin);
+      if (new_len > prev_len) reflect_sample_change_in_axis(cp);
       reflect_edit_history_change(cp);
       if (lock == LOCK_MIXES) lock_affected_mixes(cp, beg, beg + num);
       fd = snd_open_read(ss, tempfile);
@@ -1502,7 +1523,6 @@ void file_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, in
 	ed = cp->edits[cp->edit_ctr];
 	ed->edit_type = CHANGE_EDIT;
 	ed->sound_location = ED_SOUND(cb);
-	ed->edpos = edpos;
       }
       if (cp->mix_md) reflect_mix_edit(cp, origin);
       after_edit(cp);
@@ -1586,7 +1606,8 @@ void change_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, int
   new_len = beg + num;
   if (new_len < prev_len) new_len = prev_len;
   prepare_edit_list(cp, new_len, edpos, origin);
-  ed = change_samples_1(beg, num, edpos, cp, &cb, new_len - prev_len, origin);
+  ed = change_samples_in_list(beg, num, edpos, cp, &cb, origin);
+  if (new_len > prev_len) reflect_sample_change_in_axis(cp);
   cp->edits[cp->edit_ctr] = ed;
   ED_SOUND(cb) = add_sound_buffer_to_edit_list(cp, vals, (int)num); 
   ed->edit_type = CHANGE_EDIT;
@@ -1597,8 +1618,12 @@ void change_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, int
   after_edit(cp);
 }
 
-int ramp_or_ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos)
+
+
+/* -------------------------------- ramp/scale/ptree -------------------------------- */
+int ramp_or_ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos, Float base)
 {
+  /* from enveloper (snd-sig.c) */
   ed_list *ed;
   int i, typ;
   off_t end, loc, next_loc;
@@ -1612,13 +1637,21 @@ int ramp_or_ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos)
       typ = FRAGMENT_TYPE(ed, i);
       next_loc = FRAGMENT_GLOBAL_POSITION(ed, i + 1);         /* i.e. next loc = current fragment end point */
       /* fragment starts at loc, ends just before next_loc, is of type typ */
-      if ((typ != ED_SIMPLE) && (next_loc > beg)) return(TRUE);
+      if (((PTREE_OP(typ)) ||
+	   (typ == ED_RAMP3) || 
+	   (typ == ED_XRAMP)) && 
+	  (next_loc > beg)) return(TRUE);
+      if (((typ == ED_RAMP) || (typ == ED_RAMP2)) &&
+	  (base != 1.0) && 
+	  (next_loc > beg))
+	return(TRUE);
     }
   return(FALSE);
 }
 
 int ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos)
 {
+  /* from ptree-channel (snd-sig.c) check for pre-existing ptree-channel */
   ed_list *ed;
   int i, typ;
   off_t end, loc, next_loc;
@@ -1632,34 +1665,14 @@ int ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos)
       typ = FRAGMENT_TYPE(ed, i);
       next_loc = FRAGMENT_GLOBAL_POSITION(ed, i + 1);         /* i.e. next loc = current fragment end point */
       /* fragment starts at loc, ends just before next_loc, is of type typ */
-      if ((typ == ED_PTREE) && (next_loc > beg)) return(TRUE);
-    }
-  return(FALSE);
-}
-
-static int ramp_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos)
-{
-  ed_list *ed;
-  int i, typ;
-  off_t end, loc, next_loc;
-  ed = cp->edits[pos];
-  end = beg + dur - 1;
-  for (i = 0; i < ed->size - 1; i++) 
-    {
-      if (FRAGMENT_SOUND(ed, i) == EDIT_LIST_END_MARK) return(FALSE);
-      loc = FRAGMENT_GLOBAL_POSITION(ed, i);
-      if (loc > end) return(FALSE);
-      typ = FRAGMENT_TYPE(ed, i);
-      next_loc = FRAGMENT_GLOBAL_POSITION(ed, i + 1);         /* i.e. next loc = current fragment end point */
-      /* fragment starts at loc, ends just before next_loc, is of type typ */
-      if ((typ == ED_RAMP) && (next_loc > beg)) return(TRUE);
+      if (((PTREE_OP(typ)) || (FRAGMENT_TYPE(ed, i) == ED_RAMP3)) && (next_loc > beg)) return(TRUE);
     }
   return(FALSE);
 }
 
 int ptree_or_sound_fragments_in_use(chan_info *cp, int pos)
 {
-  /* are there any non-simple edits? */
+  /* (swap-channels): are there any non-simple edits? */
   int i, index;
   ed_list *ed;
   ed = cp->edits[pos];
@@ -1670,60 +1683,109 @@ int ptree_or_sound_fragments_in_use(chan_info *cp, int pos)
       if ((index != 0) &&
 	  (index != EDIT_LIST_ZERO_MARK))
 	return(TRUE);
-      if (FRAGMENT_TYPE(ed, i) == ED_PTREE) return(TRUE);
+      if (PTREE_OP(FRAGMENT_TYPE(ed, i)))
+	return(TRUE);
     }
   return(FALSE);
 }
 
-static void fix_possible_split_ramp(off_t beg, off_t num, ed_list *new_ed, ed_list *old_ed)
+static ed_list *copy_and_split_list(off_t beg, off_t num, ed_list *current_state, const char *origin)
 {
-  /* tricky code... */
-  int previous, current;
-  ed_fragment *old_back, *new_back, *old_end, *new_end;
-  Float rmp0, rmp1, val;
-  double incr;
-  off_t next_beg;
-  previous = find_split_loc(beg, old_ed);
-  if (FRAGMENT_GLOBAL_POSITION(old_ed, previous) > beg) previous--;
-  old_back = FRAGMENT(old_ed, previous);
-  current = find_split_loc(beg, new_ed);
-  new_back = FRAGMENT(new_ed, current);
-  rmp0 = ED_RAMP_BEG(old_back);
-  rmp1 = ED_RAMP_END(old_back);
-  if ((rmp0 != 0.0) || (rmp1 != 0.0))
+  off_t end, next_pos;
+  int cur_len, cur_i, new_i;
+  ed_list *new_state;
+  ed_fragment *new_f, *cur_f, *mid_f = NULL;
+  if (num <= 0) return(NULL);
+  cur_len = current_state->size;
+  new_state = make_ed_list(cur_len + 2); /* leave room for possible split */
+  end = beg + num;
+  for (cur_i = 0, new_i = 0; cur_i < cur_len; cur_i++, new_i++)
     {
-      if (ED_LOCAL_END(old_back) == ED_LOCAL_POSITION(old_back))
-	incr = 0.0;
-      else incr = (rmp1 - rmp0) / (double)(ED_LOCAL_END(old_back) - ED_LOCAL_POSITION(old_back));
-      val = rmp0 + incr * (double)(beg - ED_GLOBAL_POSITION(old_back));
-      ED_RAMP_BEG(new_back) = val;
-      ED_RAMP_END(new_back) = ED_RAMP_END(old_back);
-      /*
-	ED_XRAMP_SCALER(new_back) = ED_XRAMP_SCALER(old_back);
-	ED_XRAMP_OFFSET(new_back) = ED_XRAMP_OFFSET(old_back);
-      */
-      if (current > previous)
-	FRAGMENT_RAMP_END(new_ed, (current - 1)) = val - incr;
+      cur_f = FRAGMENT(current_state, cur_i);
+      new_f = FRAGMENT(new_state, new_i);
+      if (ED_GLOBAL_POSITION(cur_f) >= end)
+	{
+	  /* after any split, copy this fragment */
+	  copy_ed_fragment(new_f, cur_f);
+	}
+      else
+	{
+	  next_pos = FRAGMENT_GLOBAL_POSITION(current_state, (cur_i + 1));
+	  if (next_pos <= beg)
+	    {
+	      /* we're before any split, just copy */
+	      copy_ed_fragment(new_f, cur_f);
+	    }
+	  else
+	    {
+	      if ((ED_GLOBAL_POSITION(cur_f) >= beg) && (next_pos < end))
+		{
+		  /* entire segment is included */
+		  copy_ed_fragment(new_f, cur_f);
+		}
+	      else
+		{
+		  /* check for front and back splits, copy cur */
+		  copy_ed_fragment(new_f, cur_f);
+		  if (ED_GLOBAL_POSITION(cur_f) < beg)
+		    {
+		      ed_fragment *split_front_f, *split_back_f;
+		      /* split current at samp */
+		      split_front_f = new_f;
+		      new_i++;
+		      split_back_f = FRAGMENT(new_state, new_i);
+		      copy_ed_fragment(split_back_f, cur_f);
+		      new_f = split_back_f;
+		      ED_LOCAL_END(split_front_f) = ED_LOCAL_POSITION(split_front_f) + beg - ED_GLOBAL_POSITION(split_front_f) - 1;
+		      /* beg - global position = where in current fragment, offset that by its local offset, turn into end sample */
+		      ED_LOCAL_POSITION(split_back_f) = ED_LOCAL_END(split_front_f) + 1;
+		      ED_GLOBAL_POSITION(split_back_f) = beg;
+		      /* now fixup ramps/ptrees affected by the split */
+		      if ((ED_TYPE(cur_f) != ED_SIMPLE) && (ED_TYPE(cur_f) != ED_ZERO))
+			{
+			  new_leading_ramp(split_front_f, cur_f, beg);
+			  new_trailing_ramp(split_back_f, cur_f, beg);
+			  mid_f = split_back_f;
+			}
+		    }
+		  
+		  if (next_pos > end)
+		    {
+		      ed_fragment *split_front_f, *split_back_f;
+		      /* split current at samp */
+		      split_front_f = new_f;
+		      new_i++;
+		      split_back_f = FRAGMENT(new_state, new_i);
+		      copy_ed_fragment(split_back_f, cur_f);
+		      ED_LOCAL_END(split_front_f) = ED_LOCAL_POSITION(split_front_f) + end - ED_GLOBAL_POSITION(split_front_f) - 1;
+		      ED_LOCAL_POSITION(split_back_f) = ED_LOCAL_END(split_front_f) + 1;
+		      ED_GLOBAL_POSITION(split_back_f) = end;
+		      /* now fixup ramps/ptrees affected by the split */
+		      if ((ED_TYPE(cur_f) != ED_SIMPLE) && (ED_TYPE(cur_f) != ED_ZERO))
+			{
+			  Float old_beg, old_beg2, old_beg3;
+			  old_beg = ED_RAMP_BEG(split_front_f);
+			  old_beg2 = ED_RAMP2_BEG(split_front_f);
+			  old_beg3 = ED_RAMP3_BEG(split_front_f);
+			  new_leading_ramp(split_front_f, cur_f, end);
+			  if (mid_f == split_front_f)
+			    {
+			      ED_RAMP_BEG(split_front_f) = old_beg;
+			      ED_RAMP2_BEG(split_front_f) = old_beg2;
+			      ED_RAMP3_BEG(split_front_f) = old_beg3;
+			    }
+			  new_trailing_ramp(split_back_f, cur_f, end);
+			}
+		    }
+		}
+	    }
+	}
     }
-  next_beg = beg + num;
-  previous = find_split_loc(next_beg, old_ed);
-  if (FRAGMENT_GLOBAL_POSITION(old_ed, previous) >= next_beg) previous--;
-  old_end = FRAGMENT(old_ed, previous);
-  current = find_split_loc(next_beg, new_ed);
-  if (FRAGMENT_GLOBAL_POSITION(new_ed, current) >= next_beg) current--;
-  new_end = FRAGMENT(new_ed, current);
-  rmp0 = ED_RAMP_BEG(old_end);
-  rmp1 = ED_RAMP_END(old_end);
-  if ((rmp0 != 0.0) || (rmp1 != 0.0))
-    {
-      if (ED_LOCAL_END(old_end) == ED_LOCAL_POSITION(old_end))
-	incr = 0.0;
-      else incr = (rmp1 - rmp0) / (double)(ED_LOCAL_END(old_end) - ED_LOCAL_POSITION(old_end));
-      val = rmp0 + incr * (double)(beg + num - 1 - ED_GLOBAL_POSITION(old_end));
-      ED_RAMP_END(new_end) = val;
-      if (FRAGMENT_GLOBAL_POSITION(old_ed, previous + 1) != FRAGMENT_GLOBAL_POSITION(new_ed, current + 1))
-	FRAGMENT_RAMP_BEG(new_ed, (current + 1)) = val + incr;
-    }
+  new_state->size = new_i;
+  new_state->beg = beg;
+  new_state->len = num;
+  if (origin) new_state->origin = copy_string(origin);
+  return(new_state);
 }
 
 void scale_channel(chan_info *cp, Float scl, off_t beg, off_t num, int pos, int in_as_one_edit)
@@ -1734,7 +1796,7 @@ void scale_channel(chan_info *cp, Float scl, off_t beg, off_t num, int pos, int 
   ed_list *new_ed, *old_ed;
   if ((beg < 0) || 
       (num <= 0) ||
-      (beg > cp->samples[pos]) ||
+      (beg >= cp->samples[pos]) ||
       (scl == 1.0))
     return; 
   len = cp->samples[pos];
@@ -1745,34 +1807,37 @@ void scale_channel(chan_info *cp, Float scl, off_t beg, off_t num, int pos, int 
     {
       num = len;
       new_ed = make_ed_list(cp->edits[pos]->size);
+      new_ed->beg = beg;
+      new_ed->len = num;
       cp->edits[cp->edit_ctr] = new_ed;
       for (i = 0; i < new_ed->size; i++) 
 	{
 	  copy_ed_fragment(FRAGMENT(new_ed, i), FRAGMENT(old_ed, i));
 	  FRAGMENT_SCALER(new_ed, i) *= scl;
+	  if (scl == 0.0) FRAGMENT_TYPE(new_ed, i) = ED_ZERO;
 	}
       amp_env_scale_by(cp, scl, pos); 
     }
   else 
     {
-      new_ed = selected_ed_list(beg, beg + num - 1, old_ed);
+      if (beg + num > len) num = len - beg;
+      new_ed = copy_and_split_list(beg, num, old_ed, NULL);
+
       cp->edits[cp->edit_ctr] = new_ed;
       for (i = 0; i < new_ed->size; i++) 
 	{
 	  if (FRAGMENT_GLOBAL_POSITION(new_ed, i) > (beg + num - 1)) break; /* not >= (1 sample selections) */
-	  if (FRAGMENT_GLOBAL_POSITION(new_ed, i) >= beg) FRAGMENT_SCALER(new_ed, i) *= scl;
+	  if (FRAGMENT_GLOBAL_POSITION(new_ed, i) >= beg) 
+	    {
+	      FRAGMENT_SCALER(new_ed, i) *= scl;
+	      if (scl == 0.0) FRAGMENT_TYPE(new_ed, i) = ED_ZERO;
+	    }
 	}
-      /* now we have to find underlying ramps and fix up all the end points */
-      if ((!in_as_one_edit) &&
-	  (ramp_fragments_in_use(cp, beg, num, cp->edit_ctr)))
-	fix_possible_split_ramp(beg, num, new_ed, old_ed);
       amp_env_scale_selection_by(cp, scl, beg, num, pos);
     }
   new_ed->edit_type = SCALED_EDIT;
   new_ed->sound_location = 0;
   new_ed->origin = mus_format("%s %.4f " OFF_TD " " OFF_TD, S_scale_channel, scl, beg, num);
-  new_ed->beg = beg;
-  new_ed->len = num;
   new_ed->edpos = pos;
   new_ed->selection_beg = old_ed->selection_beg;
   new_ed->selection_end = old_ed->selection_end;
@@ -1791,12 +1856,11 @@ static void all_ramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler
   ed_list *new_ed, *old_ed;
   Float seg0, seg1;
   double incr;
-
   if ((beg < 0) || 
       (num <= 0) ||
       (beg >= cp->samples[pos]))
     return; 
-  if (rmp0 == rmp1)
+  if ((rmp0 == rmp1) || (num == 1))
     {
       scale_channel(cp, rmp0, beg, num, pos, in_as_one_edit);
       return;
@@ -1804,13 +1868,15 @@ static void all_ramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler
   len = cp->samples[pos];
   prepare_edit_list(cp, len, pos, origin);
   old_ed = cp->edits[pos];
-  incr = (double)(rmp1 - rmp0) / (double)num;
+  incr = (double)(rmp1 - rmp0) / (double)(num - 1);
   if ((beg == 0) && 
       (num >= cp->samples[pos]))
     {
       /* one ramp over entire fragment list -- no splits will occur here */
       num = len;
       new_ed = make_ed_list(cp->edits[pos]->size);
+      new_ed->beg = beg;
+      new_ed->len = num;
       cp->edits[cp->edit_ctr] = new_ed;
       for (i = 0; i < new_ed->size; i++)
 	copy_ed_fragment(FRAGMENT(new_ed, i), FRAGMENT(old_ed, i));
@@ -1818,17 +1884,49 @@ static void all_ramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler
       for (i = 0; i < new_ed->size - 1; i++) /* -1 here to leave end mark alone */
 	{
 	  seg0 = seg1 + incr;
-	  seg1 = seg0 + (incr * FRAGMENT_LENGTH(new_ed, i));
-	  FRAGMENT_RAMP_BEG(new_ed, i) = seg0;
-	  FRAGMENT_RAMP_END(new_ed, i) = seg1;
-	  FRAGMENT_XRAMP_SCALER(new_ed, i) = scaler;
-	  FRAGMENT_XRAMP_OFFSET(new_ed, i) = offset;
-	  FRAGMENT_TYPE(new_ed, i) = ED_RAMP;
+	  seg1 = seg0 + (incr * (FRAGMENT_LENGTH(new_ed, i) - 1));
+	  if (FRAGMENT_TYPE(new_ed, i) != ED_ZERO)
+	    {
+	      if (FRAGMENT_TYPE(new_ed, i) == ED_RAMP2)
+		{
+		  FRAGMENT_RAMP3_BEG(new_ed, i) = seg0;
+		  FRAGMENT_RAMP3_END(new_ed, i) = seg1;
+		  FRAGMENT_TYPE(new_ed, i) = ED_RAMP3;
+		}
+	      else
+		{
+		  if (FRAGMENT_TYPE(new_ed, i) == ED_RAMP)
+		    {
+		      FRAGMENT_RAMP2_BEG(new_ed, i) = seg0;
+		      FRAGMENT_RAMP2_END(new_ed, i) = seg1;
+		      FRAGMENT_TYPE(new_ed, i) = ED_RAMP2;
+		    }
+		  else
+		    {
+		      FRAGMENT_RAMP_BEG(new_ed, i) = seg0;
+		      FRAGMENT_RAMP_END(new_ed, i) = seg1;
+		      if (scaler != 0.0)
+			FRAGMENT_TYPE(new_ed, i) = ED_XRAMP;
+		      else FRAGMENT_TYPE(new_ed, i) = ED_RAMP;
+		    }
+		}
+#if DEBUGGING
+	      if ((seg0 == 0.0) && (seg1 == 0.0)) 
+		{
+		  fprintf(stderr, "unexpected zero");
+		  abort();
+		}
+#endif
+	      FRAGMENT_XRAMP_SCALER(new_ed, i) = scaler;
+	      FRAGMENT_XRAMP_OFFSET(new_ed, i) = offset;
+	    }
 	}
     }
   else 
     {
-      new_ed = selected_ed_list(beg, beg + num - 1, old_ed);
+      if (beg + num > len) num = len - beg;
+      new_ed = copy_and_split_list(beg, num, old_ed, NULL);
+      
       cp->edits[cp->edit_ctr] = new_ed;
       seg1 = rmp0 - incr;
       for (i = 0; i < new_ed->size - 1; i++) 
@@ -1837,20 +1935,49 @@ static void all_ramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler
 	  if (FRAGMENT_GLOBAL_POSITION(new_ed, i) >= beg)
 	    {
 	      seg0 = seg1 + incr;
-	      seg1 = seg0 + (incr * FRAGMENT_LENGTH(new_ed, i));
-	      FRAGMENT_RAMP_BEG(new_ed, i) = seg0;
-	      FRAGMENT_RAMP_END(new_ed, i) = seg1;
-	      FRAGMENT_XRAMP_SCALER(new_ed, i) = scaler;
-	      FRAGMENT_XRAMP_OFFSET(new_ed, i) = offset;
-	      FRAGMENT_TYPE(new_ed, i) = ED_RAMP;
+	      seg1 = seg0 + (incr * (FRAGMENT_LENGTH(new_ed, i) - 1));
+	      
+	      if (FRAGMENT_TYPE(new_ed, i) != ED_ZERO)
+		{
+		  if (FRAGMENT_TYPE(new_ed, i) == ED_RAMP2)
+		    {
+		      FRAGMENT_RAMP3_BEG(new_ed, i) = seg0;
+		      FRAGMENT_RAMP3_END(new_ed, i) = seg1;
+		      FRAGMENT_TYPE(new_ed, i) = ED_RAMP3;
+		    }
+		  else
+		    {
+		      if (FRAGMENT_TYPE(new_ed, i) == ED_RAMP)
+			{
+			  FRAGMENT_RAMP2_BEG(new_ed, i) = seg0;
+			  FRAGMENT_RAMP2_END(new_ed, i) = seg1;
+			  FRAGMENT_TYPE(new_ed, i) = ED_RAMP2;
+			}
+		      else
+			{
+			  FRAGMENT_RAMP_BEG(new_ed, i) = seg0;
+			  FRAGMENT_RAMP_END(new_ed, i) = seg1;
+			  if (scaler != 0.0)
+			    FRAGMENT_TYPE(new_ed, i) = ED_XRAMP;
+			  else FRAGMENT_TYPE(new_ed, i) = ED_RAMP;
+			}
+		    }
+#if DEBUGGING
+		  if ((seg0 == 0.0) && (seg1 == 0.0)) 
+		    {
+		      fprintf(stderr, "unexpected zero");
+		      abort();
+		    }
+#endif
+		  FRAGMENT_XRAMP_SCALER(new_ed, i) = scaler;
+		  FRAGMENT_XRAMP_OFFSET(new_ed, i) = offset;
+		}
 	    }
 	}
     }
   new_ed->edit_type = RAMP_EDIT;
   new_ed->sound_location = 0;
   new_ed->origin = mus_format("%s %.4f %.4f %.4f %.4f " OFF_TD " " OFF_TD, origin, rmp0, rmp1, scaler, offset, beg, num);
-  new_ed->beg = beg;
-  new_ed->len = num;
   new_ed->edpos = pos;
   new_ed->selection_beg = old_ed->selection_beg;
   new_ed->selection_end = old_ed->selection_end;
@@ -1858,7 +1985,6 @@ static void all_ramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler
   lock_affected_mixes(cp, beg, beg + num);
   if (cp->mix_md) reflect_mix_edit(cp, "ramp");
   reflect_edit_history_change(cp);
-  if (!in_as_one_edit) update_graph(cp);
 }
 
 void ramp_channel(chan_info *cp, Float rmp0, Float rmp1, off_t beg, off_t num, int pos, int in_as_one_edit)
@@ -1866,32 +1992,66 @@ void ramp_channel(chan_info *cp, Float rmp0, Float rmp1, off_t beg, off_t num, i
   all_ramp_channel(cp, rmp0, rmp1, 0.0, 0.0, beg, num, pos, in_as_one_edit, S_ramp_channel);
 }
 
-void xramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler, Float offset, off_t beg, off_t num, int pos, int in_as_one_edit)
+void xramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler, Float offset, 
+		   off_t beg, off_t num, int pos, int in_as_one_edit)
 {
   all_ramp_channel(cp, rmp0, rmp1, scaler, offset, beg, num, pos, in_as_one_edit, S_xramp_channel);
 }
 
-void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, void *env_pt, XEN init_func)
+
+static void make_ptree_fragment(ed_list *new_ed, int i, int ptree_loc, int with_closure, off_t beg, off_t num, int is_xen)
 {
-  /* env_pt is usually either NULL (env_too: #f) or the same ptree as ptree */
+  FRAGMENT_PTREE_INDEX(new_ed, i) = ptree_loc;
+  switch (FRAGMENT_TYPE(new_ed, i))
+    {
+    case ED_ZERO: 
+      FRAGMENT_TYPE(new_ed, i) = ((is_xen) ? ED_XEN_ZERO : ((with_closure) ? ED_PTREE_ZERO_CLOSURE : ED_PTREE_ZERO));
+      break;
+    case ED_RAMP:
+      FRAGMENT_TYPE(new_ed, i) = ((is_xen) ? ED_XEN_RAMP : ((with_closure) ? ED_PTREE_RAMP_CLOSURE : ED_PTREE_RAMP));
+      break;
+    case ED_XRAMP:
+      FRAGMENT_TYPE(new_ed, i) = ((is_xen) ? ED_XEN_XRAMP : ((with_closure) ? ED_PTREE_XRAMP_CLOSURE : ED_PTREE_XRAMP));
+      break;
+    case ED_RAMP2:
+      FRAGMENT_TYPE(new_ed, i) = ((is_xen) ? ED_XEN_RAMP2 : ((with_closure) ? ED_PTREE_RAMP2_CLOSURE : ED_PTREE_RAMP2));
+      break;
+    default:
+      FRAGMENT_TYPE(new_ed, i) = ((is_xen) ? ED_XEN : ((with_closure) ? ED_PTREE_CLOSURE : ED_PTREE));
+      break;
+    }
+  FRAGMENT_PTREE_DUR(new_ed, i) = num;
+  FRAGMENT_PTREE_SCALER(new_ed, i) = MUS_SAMPLE_TO_FLOAT(FRAGMENT_SCALER(new_ed, i));
+  FRAGMENT_SCALER(new_ed, i) = 1.0;
+  FRAGMENT_PTREE_POSITION(new_ed, i) = FRAGMENT_GLOBAL_POSITION(new_ed, i) - beg;
+}
+
+void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, int env_it, XEN init_func, int is_xen)
+{
   off_t len;
-  int i, ptree_loc = 0;
+  int i, ptree_loc = 0, with_closure = FALSE;
   ed_list *new_ed, *old_ed;
   if ((beg < 0) || 
       (num <= 0) ||
-      (beg > cp->samples[pos]) ||
+      (beg >= cp->samples[pos]) ||
       (ptree == NULL))
     return; 
   len = cp->samples[pos];
   prepare_edit_list(cp, len, pos, S_ptree_channel);
   old_ed = cp->edits[pos];
   ptree_loc = add_ptree(cp);
-  cp->ptrees[ptree_loc] = ptree;
+  if (is_xen)
+    {
+      snd_protect((XEN)ptree);
+      cp->xens[ptree_loc] = (XEN)ptree;
+    }
+  else cp->ptrees[ptree_loc] = ptree;
 
   if (XEN_PROCEDURE_P(init_func))
     {
       cp->ptree_inits[ptree_loc] = init_func;
       snd_protect(init_func);
+      with_closure = TRUE;
     }
   else cp->ptree_inits[ptree_loc] = XEN_FALSE;
 
@@ -1900,48 +2060,39 @@ void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, vo
     {
       num = len;
       new_ed = make_ed_list(cp->edits[pos]->size);
+      new_ed->beg = beg;
+      new_ed->len = num;
       cp->edits[cp->edit_ctr] = new_ed;
       for (i = 0; i < new_ed->size; i++) 
 	{
 	  copy_ed_fragment(FRAGMENT(new_ed, i), FRAGMENT(old_ed, i));
-	  FRAGMENT_PTREE_INDEX(new_ed, i) = ptree_loc;
-	  FRAGMENT_TYPE(new_ed, i) = ED_PTREE;
-	  FRAGMENT_PTREE_DUR(new_ed, i) = num;
-	  FRAGMENT_PTREE_SCALER(new_ed, i) = MUS_SAMPLE_TO_FLOAT(FRAGMENT_SCALER(new_ed, i));
-	  FRAGMENT_SCALER(new_ed, i) = 1.0;
+	  make_ptree_fragment(new_ed, i, ptree_loc, with_closure, beg, num, is_xen);
 	}
-      if (env_pt)
-	amp_env_ptree(cp, env_pt, pos, init_func);
+      if (env_it)
+	amp_env_ptree(cp, ptree, pos, init_func, is_xen);
     }
   else 
     {
-      new_ed = selected_ed_list(beg, beg + num - 1, old_ed);
+      if (beg + num > len) num = len - beg;
+      new_ed = copy_and_split_list(beg, num, old_ed, NULL);
+
       cp->edits[cp->edit_ctr] = new_ed;
-      if (ramp_fragments_in_use(cp, beg, num, cp->edit_ctr))
-	fix_possible_split_ramp(beg, num, new_ed, old_ed);
       for (i = 0; i < new_ed->size; i++) 
 	{
-	  if (FRAGMENT_GLOBAL_POSITION(new_ed, i) > (beg + num - 1)) break; /* not >= (1 sample selections) */
+	  if (FRAGMENT_GLOBAL_POSITION(new_ed, i) > (beg + num - 1)) 
+	    break;                                                    /* not >= (1 sample selections) */
 	  if (FRAGMENT_GLOBAL_POSITION(new_ed, i) >= beg)
-	    {
-	      FRAGMENT_PTREE_INDEX(new_ed, i) = ptree_loc;
-	      FRAGMENT_TYPE(new_ed, i) = ED_PTREE;
-	      FRAGMENT_PTREE_DUR(new_ed, i) = num;
-	      FRAGMENT_PTREE_SCALER(new_ed, i) = MUS_SAMPLE_TO_FLOAT(FRAGMENT_SCALER(new_ed, i));
-	      FRAGMENT_SCALER(new_ed, i) = 1.0;
-	    }
+	    make_ptree_fragment(new_ed, i, ptree_loc, with_closure, beg, num, is_xen);
 	}
-      if (env_pt)
-	amp_env_ptree_selection(cp, env_pt, beg, num, pos, init_func);
+      if (env_it)
+	amp_env_ptree_selection(cp, ptree, beg, num, pos, init_func, is_xen);
     }
-  new_ed->edit_type = PTREE_EDIT;
+  new_ed->edit_type = (is_xen) ? XEN_EDIT : PTREE_EDIT;
   new_ed->sound_location = 0;
   new_ed->ptree_location = ptree_loc;
-  new_ed->origin = mus_format("ptree %d " OFF_TD " " OFF_TD, ptree_loc, beg, num);
-  new_ed->beg = beg;
-  new_ed->len = num;
+  new_ed->origin = mus_format("%s %d " OFF_TD " " OFF_TD, (is_xen) ? "xen" : "ptree", ptree_loc, beg, num);
   new_ed->edpos = pos;
-  new_ed->ptree_env_too = (env_pt != NULL);
+  new_ed->ptree_env_too = env_it;
   new_ed->selection_beg = old_ed->selection_beg;
   new_ed->selection_end = old_ed->selection_end;
   ripple_all(cp, 0, 0); /* 0,0 -> copy marks */
@@ -1951,6 +2102,8 @@ void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, vo
   update_graph(cp);
 }
 
+
+/* -------------------------------- sample readers -------------------------------- */
 static mus_sample_t reader_out_of_data(snd_fd *sf);
 snd_fd *free_snd_fd_almost(snd_fd *sf)
 {
@@ -1968,7 +2121,7 @@ snd_fd *free_snd_fd_almost(snd_fd *sf)
 	  ((sd->type == SND_DATA_BUFFER) || (sd->type == SND_DATA_FILE)))
 	{
 	  sd->inuse = FALSE;
-	  if ((sd->copy == 1) || (sd->free_me == 1))
+	  if ((sd->copy) || (sd->free_me))
 	    sd = free_snd_data(sd); 
 	}
       sf->current_state = NULL;
@@ -1994,8 +2147,8 @@ off_t current_location(snd_fd *sf)
 }
 
 
-/* -------------------------------------------------------------------------------- */
-/* fragment handlers
+
+/* -------------------------------- fragment handlers --------------------------------
  *
  * each fragment has two associated read funcs: run and runf
  *   run -> mus_sample_t
@@ -2188,8 +2341,129 @@ static Float previous_sample_to_float_with_ramp(snd_fd *sf)
 }
 
 
+/* ---------------- ramp2 ---------------- */
+static mus_sample_t next_sample_with_ramp2(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+    return(next_sound(sf));
+  else
+    {
+      mus_sample_t val;
+      val = (mus_sample_t)(sf->data[sf->loc++] * sf->curval * sf->curval2);
+      sf->curval += sf->incr;
+      sf->curval2 += sf->incr2;
+      return(val);
+    }
+}
 
-/* ---------------- exp env ---------------- */
+static mus_sample_t previous_sample_with_ramp2(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound(sf));
+  else 
+    {
+      mus_sample_t val;
+      val = (mus_sample_t)(sf->data[sf->loc--] * sf->curval * sf->curval2);
+      sf->curval -= sf->incr;
+      sf->curval2 -= sf->incr2;
+      return(val);
+    }
+}
+
+static Float next_sample_to_float_with_ramp2(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(MUS_SAMPLE_TO_FLOAT(next_sound(sf)));
+  else 
+    {
+      Float val;
+      val = sf->data[sf->loc++] * sf->curval * MUS_FIX_TO_FLOAT * sf->curval2;
+      sf->curval += sf->incr;
+      sf->curval2 += sf->incr2;
+      return(val);
+    }
+}
+
+static Float previous_sample_to_float_with_ramp2(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(MUS_SAMPLE_TO_FLOAT(previous_sound(sf)));
+  else
+    {
+      Float val;
+      val = sf->data[sf->loc--] * sf->curval * MUS_FIX_TO_FLOAT * sf->curval2;
+      sf->curval -= sf->incr;
+      sf->curval2 -= sf->incr2;
+      return(val);
+    }
+}
+
+
+
+/* ---------------- ramp3 ---------------- */
+static mus_sample_t next_sample_with_ramp3(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+    return(next_sound(sf));
+  else
+    {
+      mus_sample_t val;
+      val = (mus_sample_t)(sf->data[sf->loc++] * sf->curval * sf->curval2 * sf->curval3);
+      sf->curval += sf->incr;
+      sf->curval2 += sf->incr2;
+      sf->curval3 += sf->incr3;
+      return(val);
+    }
+}
+
+static mus_sample_t previous_sample_with_ramp3(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound(sf));
+  else 
+    {
+      mus_sample_t val;
+      val = (mus_sample_t)(sf->data[sf->loc--] * sf->curval * sf->curval2 * sf->curval3);
+      sf->curval -= sf->incr;
+      sf->curval2 -= sf->incr2;
+      sf->curval3 -= sf->incr3;
+      return(val);
+    }
+}
+
+static Float next_sample_to_float_with_ramp3(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(MUS_SAMPLE_TO_FLOAT(next_sound(sf)));
+  else 
+    {
+      Float val;
+      val = sf->data[sf->loc++] * sf->curval * MUS_FIX_TO_FLOAT * sf->curval2 * sf->curval3;
+      sf->curval += sf->incr;
+      sf->curval2 += sf->incr2;
+      sf->curval3 += sf->incr3;
+      return(val);
+    }
+}
+
+static Float previous_sample_to_float_with_ramp3(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(MUS_SAMPLE_TO_FLOAT(previous_sound(sf)));
+  else
+    {
+      Float val;
+      val = sf->data[sf->loc--] * sf->curval * MUS_FIX_TO_FLOAT * sf->curval2 * sf->curval3;
+      sf->curval -= sf->incr;
+      sf->curval2 -= sf->incr2;
+      sf->curval3 -= sf->incr3;
+      return(val);
+    }
+}
+
+
+
+/* ---------------- xramp ---------------- */
 static mus_sample_t next_sample_with_xramp(snd_fd *sf)
 {
   if (sf->loc > sf->last)
@@ -2213,7 +2487,7 @@ static mus_sample_t previous_sample_with_xramp(snd_fd *sf)
   else 
     {
       mus_sample_t val;
-      val = (mus_sample_t)(sf->data[sf->loc++] * 
+      val = (mus_sample_t)(sf->data[sf->loc--] * 
 			   READER_SCALER(sf) *
 			   (READER_XRAMP_OFFSET(sf) + 
 			    (READER_XRAMP_SCALER(sf) * exp(sf->curval))));
@@ -2255,15 +2529,12 @@ static Float previous_sample_to_float_with_xramp(snd_fd *sf)
 }
 
 
-
 /* ---------------- ptree ---------------- */
 static mus_sample_t next_sample_with_ptree(snd_fd *sf)
 {
   if (sf->loc > sf->last)
      return(next_sound(sf));
-  else return((mus_sample_t)(sf->rscaler * 
-			     evaluate_ptree_1f2f(sf->ptree, 
-						 READER_PTREE_SCALER(sf) * sf->data[sf->loc++])));
+  else return((mus_sample_t)(sf->rscaler * evaluate_ptree_1f2f(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc++])));
   /* fscaler after ptree so that subsequent scaling of ptree-fragment actually scales it */
 }
 
@@ -2271,27 +2542,21 @@ static mus_sample_t previous_sample_with_ptree(snd_fd *sf)
 {
   if (sf->loc < sf->first)
     return(previous_sound(sf));
-  else return((mus_sample_t)(sf->rscaler * 
-			     evaluate_ptree_1f2f(sf->ptree, 
-						 READER_PTREE_SCALER(sf) * sf->data[sf->loc--])));
+  else return((mus_sample_t)(sf->rscaler * evaluate_ptree_1f2f(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc--])));
 }
 
 static Float next_sample_to_float_with_ptree(snd_fd *sf)
 {
   if (sf->loc > sf->last)
      return(MUS_SAMPLE_TO_FLOAT(next_sound(sf)));
-  else return(READER_SCALER(sf) * 
-	      evaluate_ptree_1f2f(sf->ptree, 
-				  READER_PTREE_SCALER(sf) * sf->data[sf->loc++]));
+  else return(READER_SCALER(sf) * evaluate_ptree_1f2f(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc++]));
 }
 
 static Float previous_sample_to_float_with_ptree(snd_fd *sf)
 {
   if (sf->loc < sf->first)
     return(MUS_SAMPLE_TO_FLOAT(previous_sound(sf)));
-  else return(READER_SCALER(sf) * 
-	      evaluate_ptree_1f2f(sf->ptree, 
-				  READER_PTREE_SCALER(sf) * sf->data[sf->loc--]));
+  else return(READER_SCALER(sf) * evaluate_ptree_1f2f(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc--]));
 }
 
 static mus_sample_t next_sample_with_ptree_on_air(snd_fd *sf)
@@ -2338,10 +2603,9 @@ static Float previous_sample_to_float_with_ptree_on_air(snd_fd *sf)
     }
 }
 
-/* TODO: ptree(and closure) on xramp */
-
 
 /* -------- ptree(no closure) on ramp -------- */
+
 static mus_sample_t next_sample_with_ptree_on_ramp(snd_fd *sf)
 {
   if (sf->loc > sf->last)
@@ -2352,9 +2616,7 @@ static mus_sample_t next_sample_with_ptree_on_ramp(snd_fd *sf)
       val = sf->data[sf->loc++] * sf->curval;
       /* curval and incr have possible post-ramp but pre-ptree scaling embedded (choose_accessor) */
       sf->curval += sf->incr;
-      return((mus_sample_t)(sf->rscaler *                /* post-ptree scaling */
-			    evaluate_ptree_1f2f(sf->ptree, 
-						val)));
+      return((mus_sample_t)(sf->rscaler * evaluate_ptree_1f2f(sf->ptree, val)));
     }
 }
 
@@ -2367,9 +2629,7 @@ static mus_sample_t previous_sample_with_ptree_on_ramp(snd_fd *sf)
       Float val;
       val = sf->data[sf->loc--] * sf->curval;
       sf->curval -= sf->incr;
-      return((mus_sample_t)(sf->rscaler *                /* post-ptree scaling */
-			    evaluate_ptree_1f2f(sf->ptree, 
-						val)));
+      return((mus_sample_t)(sf->rscaler * evaluate_ptree_1f2f(sf->ptree, val)));
     }
 }
 
@@ -2382,9 +2642,7 @@ static Float next_sample_to_float_with_ptree_on_ramp(snd_fd *sf)
       Float val;
       val = sf->data[sf->loc++] * sf->curval;
       sf->curval += sf->incr;
-      return(READER_SCALER(sf) *
-	     evaluate_ptree_1f2f(sf->ptree, 
-				 val));
+      return(READER_SCALER(sf) * evaluate_ptree_1f2f(sf->ptree, val));
     }
 }
 
@@ -2397,11 +2655,134 @@ static Float previous_sample_to_float_with_ptree_on_ramp(snd_fd *sf)
       Float val;
       val = sf->data[sf->loc--] * sf->curval;
       sf->curval -= sf->incr;
-      return(READER_SCALER(sf) *
-	     evaluate_ptree_1f2f(sf->ptree, 
-				 val));
+      return(READER_SCALER(sf) * evaluate_ptree_1f2f(sf->ptree, val));
     }
 }
+
+
+/* -------- ptree(no closure) on xramp -------- */
+
+#define NEXT_PTREE_XRAMP(Sf) \
+  (sf->data[sf->loc++] * READER_PTREE_SCALER(Sf) * (READER_XRAMP_OFFSET(Sf) + (READER_XRAMP_SCALER(Sf) * exp(Sf->curval))))
+
+#define PREVIOUS_PTREE_XRAMP(Sf) \
+  (sf->data[sf->loc--] * READER_PTREE_SCALER(sf) * (READER_XRAMP_OFFSET(sf) + (READER_XRAMP_SCALER(sf) * exp(sf->curval))))
+
+/* to optimize out scaling multiply READER_PTREE_SCALER above) in xramps, we need
+ *   to localize XRAMP_OFFSET/SCALER in snd_fd (these fields are not writable in ed_fragment)
+ */
+
+static mus_sample_t next_sample_with_ptree_on_xramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound(sf));
+  else 
+    {
+      Float val;
+      val = NEXT_PTREE_XRAMP(sf);
+      sf->curval += sf->incr;
+      return((mus_sample_t)(sf->rscaler * evaluate_ptree_1f2f(sf->ptree, val)));
+    }
+}
+
+static mus_sample_t previous_sample_with_ptree_on_xramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound(sf));
+  else 
+    {
+      Float val;
+      val = PREVIOUS_PTREE_XRAMP(sf);
+      sf->curval -= sf->incr;
+      return((mus_sample_t)(sf->rscaler * evaluate_ptree_1f2f(sf->ptree, val)));
+    }
+}
+
+static Float next_sample_to_float_with_ptree_on_xramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(MUS_SAMPLE_TO_FLOAT(next_sound(sf)));
+  else 
+    {
+      Float val;
+      val = NEXT_PTREE_XRAMP(sf);
+      sf->curval += sf->incr;
+      return(READER_SCALER(sf) * evaluate_ptree_1f2f(sf->ptree, val));
+    }
+}
+
+static Float previous_sample_to_float_with_ptree_on_xramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(MUS_SAMPLE_TO_FLOAT(previous_sound(sf)));
+  else 
+    {
+      Float val;
+      val = PREVIOUS_PTREE_XRAMP(sf);
+      sf->curval -= sf->incr;
+      return(READER_SCALER(sf) * evaluate_ptree_1f2f(sf->ptree, val));
+    }
+}
+
+/* -------- ptree(no closure) on ramp2 -------- */
+
+static mus_sample_t next_sample_with_ptree_on_ramp2(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound(sf));
+  else 
+    {
+      Float val;
+      val = sf->data[sf->loc++] * sf->curval * sf->curval2;
+      /* curval and incr have possible post-ramp but pre-ptree scaling embedded (choose_accessor) */
+      sf->curval += sf->incr;
+      sf->curval2 += sf->incr2;
+      return((mus_sample_t)(sf->rscaler * evaluate_ptree_1f2f(sf->ptree, val)));
+    }
+}
+
+static mus_sample_t previous_sample_with_ptree_on_ramp2(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound(sf));
+  else 
+    {
+      Float val;
+      val = sf->data[sf->loc--] * sf->curval * sf->curval2;
+      sf->curval -= sf->incr;
+      sf->curval2 -= sf->incr2;
+      return((mus_sample_t)(sf->rscaler * evaluate_ptree_1f2f(sf->ptree, val)));
+    }
+}
+
+static Float next_sample_to_float_with_ptree_on_ramp2(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(MUS_SAMPLE_TO_FLOAT(next_sound(sf)));
+  else 
+    {
+      Float val;
+      val = sf->data[sf->loc++] * sf->curval * sf->curval2;
+      sf->curval += sf->incr;
+      sf->curval2 += sf->incr2;
+      return(READER_SCALER(sf) * evaluate_ptree_1f2f(sf->ptree, val));
+    }
+}
+
+static Float previous_sample_to_float_with_ptree_on_ramp2(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(MUS_SAMPLE_TO_FLOAT(previous_sound(sf)));
+  else 
+    {
+      Float val;
+      val = sf->data[sf->loc--] * sf->curval * sf->curval2;
+      sf->curval -= sf->incr;
+      sf->curval2 -= sf->incr2;
+      return(READER_SCALER(sf) * evaluate_ptree_1f2f(sf->ptree, val));
+    }
+}
+
 
 
 
@@ -2457,11 +2838,7 @@ static mus_sample_t next_sample_with_ptree_and_closure_on_air(snd_fd *sf)
   else 
     {
       sf->loc++;
-      return((mus_sample_t)(sf->rscaler *
-			    evaluate_ptree_1f1v1b2f(sf->ptree, 
-						    0.0,
-						    (vct *)XEN_OBJECT_REF(sf->closure),
-						    TRUE)));
+      return((mus_sample_t)(sf->rscaler * evaluate_ptree_1f1v1b2f(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), TRUE)));
     }
 }
 
@@ -2472,11 +2849,7 @@ static mus_sample_t previous_sample_with_ptree_and_closure_on_air(snd_fd *sf)
   else 
     {
       sf->loc--;
-      return((mus_sample_t)(sf->rscaler * 
-			    evaluate_ptree_1f1v1b2f(sf->ptree, 
-						    0.0,
-						    (vct *)XEN_OBJECT_REF(sf->closure),
-						    FALSE)));
+      return((mus_sample_t)(sf->rscaler * evaluate_ptree_1f1v1b2f(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), FALSE)));
     }
 }
 
@@ -2487,11 +2860,7 @@ static Float next_sample_to_float_with_ptree_and_closure_on_air(snd_fd *sf)
   else 
     {
       sf->loc++;
-      return(READER_SCALER(sf) * 
-	     evaluate_ptree_1f1v1b2f(sf->ptree, 
-				     0.0,
-				     (vct *)XEN_OBJECT_REF(sf->closure),
-				     TRUE));
+      return(READER_SCALER(sf) * evaluate_ptree_1f1v1b2f(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), TRUE));
     }
 }
 
@@ -2502,11 +2871,7 @@ static Float previous_sample_to_float_with_ptree_and_closure_on_air(snd_fd *sf)
   else 
     {
       sf->loc--;
-      return(READER_SCALER(sf) * 
-	     evaluate_ptree_1f1v1b2f(sf->ptree, 
-				     0.0,
-				     (vct *)XEN_OBJECT_REF(sf->closure),
-				     FALSE));
+      return(READER_SCALER(sf) * evaluate_ptree_1f1v1b2f(sf->ptree, 0.0, (vct *)XEN_OBJECT_REF(sf->closure), FALSE));
     }
 }
 
@@ -2521,11 +2886,7 @@ static mus_sample_t next_sample_with_ptree_with_closure_on_ramp(snd_fd *sf)
       Float val;
       val = sf->data[sf->loc++] * sf->curval;
       sf->curval += sf->incr;
-      return((mus_sample_t)(sf->rscaler * 
-			    evaluate_ptree_1f1v1b2f(sf->ptree, 
-						    val,
-						    (vct *)XEN_OBJECT_REF(sf->closure),
-						    TRUE)));
+      return((mus_sample_t)(sf->rscaler * evaluate_ptree_1f1v1b2f(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), TRUE)));
     }
 }
 
@@ -2538,11 +2899,7 @@ static mus_sample_t previous_sample_with_ptree_with_closure_on_ramp(snd_fd *sf)
       Float val;
       val = sf->data[sf->loc--] * sf->curval;
       sf->curval -= sf->incr;
-      return((mus_sample_t)(sf->rscaler * 
-			    evaluate_ptree_1f1v1b2f(sf->ptree, 
-						    val,
-						    (vct *)XEN_OBJECT_REF(sf->closure),
-						    TRUE)));
+      return((mus_sample_t)(sf->rscaler * evaluate_ptree_1f1v1b2f(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), TRUE)));
     }
 }
 
@@ -2555,11 +2912,7 @@ static Float next_sample_to_float_with_ptree_with_closure_on_ramp(snd_fd *sf)
       Float val;
       val = sf->data[sf->loc++] * sf->curval;
       sf->curval += sf->incr;
-      return(READER_SCALER(sf) *
-	     evaluate_ptree_1f1v1b2f(sf->ptree, 
-				     val,
-				     (vct *)XEN_OBJECT_REF(sf->closure),
-				     TRUE));
+      return(READER_SCALER(sf) * evaluate_ptree_1f1v1b2f(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), TRUE));
     }
 }
 
@@ -2572,33 +2925,316 @@ static Float previous_sample_to_float_with_ptree_with_closure_on_ramp(snd_fd *sf
       Float val;
       val = sf->data[sf->loc--] * sf->curval;
       sf->curval -= sf->incr;
-      return(READER_SCALER(sf) *
-	     evaluate_ptree_1f1v1b2f(sf->ptree, 
-				     val,
-				     (vct *)XEN_OBJECT_REF(sf->closure),
-				     TRUE));
+      return(READER_SCALER(sf) * evaluate_ptree_1f1v1b2f(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), TRUE));
     }
 }
+
+/* -------- ptree with closure on ramp2 -------- */
+static mus_sample_t next_sample_with_ptree_with_closure_on_ramp2(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound(sf));
+  else 
+    {
+      Float val;
+      val = sf->data[sf->loc++] * sf->curval * sf->curval2;
+      sf->curval += sf->incr;
+      sf->curval2 += sf->incr2;
+      return((mus_sample_t)(sf->rscaler * evaluate_ptree_1f1v1b2f(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), TRUE)));
+    }
+}
+
+static mus_sample_t previous_sample_with_ptree_with_closure_on_ramp2(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound(sf));
+  else 
+    {
+      Float val;
+      val = sf->data[sf->loc--] * sf->curval * sf->curval2;
+      sf->curval -= sf->incr;
+      sf->curval2 -= sf->incr2;
+      return((mus_sample_t)(sf->rscaler * evaluate_ptree_1f1v1b2f(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), TRUE)));
+    }
+}
+
+static Float next_sample_to_float_with_ptree_with_closure_on_ramp2(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(MUS_SAMPLE_TO_FLOAT(next_sound(sf)));
+  else 
+    {
+      Float val;
+      val = sf->data[sf->loc++] * sf->curval * sf->curval2;
+      sf->curval += sf->incr;
+      sf->curval2 += sf->incr2;
+      return(READER_SCALER(sf) * evaluate_ptree_1f1v1b2f(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), TRUE));
+    }
+}
+
+static Float previous_sample_to_float_with_ptree_with_closure_on_ramp2(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(MUS_SAMPLE_TO_FLOAT(previous_sound(sf)));
+  else 
+    {
+      Float val;
+      val = sf->data[sf->loc--] * sf->curval * sf->curval2;
+      sf->curval -= sf->incr;
+      sf->curval2 -= sf->incr2;
+      return(READER_SCALER(sf) * evaluate_ptree_1f1v1b2f(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), TRUE));
+    }
+}
+
+/* -------- ptree with closure on xramp -------- */
+static mus_sample_t next_sample_with_ptree_with_closure_on_xramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(next_sound(sf));
+  else 
+    {
+      Float val;
+      val = NEXT_PTREE_XRAMP(sf);
+      sf->curval += sf->incr;
+      return((mus_sample_t)(sf->rscaler * evaluate_ptree_1f1v1b2f(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), TRUE)));
+    }
+}
+
+static mus_sample_t previous_sample_with_ptree_with_closure_on_xramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound(sf));
+  else 
+    {
+      Float val;
+      val = PREVIOUS_PTREE_XRAMP(sf);
+      sf->curval -= sf->incr;
+      return((mus_sample_t)(sf->rscaler * evaluate_ptree_1f1v1b2f(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), TRUE)));
+    }
+}
+
+static Float next_sample_to_float_with_ptree_with_closure_on_xramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(MUS_SAMPLE_TO_FLOAT(next_sound(sf)));
+  else 
+    {
+      Float val;
+      val = NEXT_PTREE_XRAMP(sf);
+      sf->curval += sf->incr;
+      return(READER_SCALER(sf) * evaluate_ptree_1f1v1b2f(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), TRUE));
+    }
+}
+
+static Float previous_sample_to_float_with_ptree_with_closure_on_xramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(MUS_SAMPLE_TO_FLOAT(previous_sound(sf)));
+  else 
+    {
+      Float val;
+      val = PREVIOUS_PTREE_XRAMP(sf);
+      sf->curval -= sf->incr;
+      return(READER_SCALER(sf) * evaluate_ptree_1f1v1b2f(sf->ptree, val, (vct *)XEN_OBJECT_REF(sf->closure), TRUE));
+    }
+}
+
+
+/* ---------------- xen ---------------- */
+
+static Float xen_next_sample(snd_fd *sf, Float scaler, Float flter)
+{
+  if (sf->loc > sf->last)
+     return(flter * next_sound(sf));
+  else 
+    {
+      XEN val;
+      val = XEN_CALL_3((XEN)(sf->ptree),
+		       C_TO_XEN_DOUBLE(READER_PTREE_SCALER(sf) * sf->data[sf->loc++]), 
+		       sf->closure, 
+		       XEN_TRUE, 
+		       "xen-channel");
+      return(scaler * XEN_TO_C_DOUBLE_OR_ELSE(val, 0.0));
+    }
+}
+
+static Float xen_previous_sample(snd_fd *sf, Float scaler, Float flter)
+{
+  if (sf->loc < sf->first)
+    return(flter * previous_sound(sf));
+  else 
+    {
+      XEN val;
+      val = XEN_CALL_3((XEN)(sf->ptree),
+		       C_TO_XEN_DOUBLE(READER_PTREE_SCALER(sf) * sf->data[sf->loc--]),
+		       sf->closure,
+		       XEN_FALSE,
+		       "xen-channel");
+      return(scaler * XEN_TO_C_DOUBLE_OR_ELSE(val, 0.0));
+    }
+}
+
+static mus_sample_t next_sample_with_xen(snd_fd *sf) {return((mus_sample_t)xen_next_sample(sf, sf->rscaler, 1.0));}
+static mus_sample_t previous_sample_with_xen(snd_fd *sf) {return((mus_sample_t)xen_previous_sample(sf, sf->rscaler, 1.0));}
+static Float next_sample_to_float_with_xen(snd_fd *sf) {return(xen_next_sample(sf, READER_SCALER(sf), MUS_FIX_TO_FLOAT));}
+static Float previous_sample_to_float_with_xen(snd_fd *sf) {return(xen_previous_sample(sf, READER_SCALER(sf), MUS_FIX_TO_FLOAT));}
+
+
+/* ---------------- xen on air ---------------- */
+
+static Float xen_next_sample_on_air(snd_fd *sf, Float scaler, Float flter)
+{
+  if (sf->loc > sf->last)
+     return(flter * next_sound(sf));
+  else 
+    {
+      XEN val;
+      sf->loc++;
+      val = XEN_CALL_3((XEN)(sf->ptree), C_TO_XEN_DOUBLE(0.0), sf->closure, XEN_TRUE, "xen-channel");
+      return(scaler * XEN_TO_C_DOUBLE_OR_ELSE(val, 0.0));
+    }
+}
+
+static Float xen_previous_sample_on_air(snd_fd *sf, Float scaler, Float flter)
+{
+  if (sf->loc < sf->first)
+    return(flter * previous_sound(sf));
+  else 
+    {
+      XEN val;
+      sf->loc--;
+      val = XEN_CALL_3((XEN)(sf->ptree), C_TO_XEN_DOUBLE(0.0), sf->closure, XEN_FALSE, "xen-channel");
+      return(scaler * XEN_TO_C_DOUBLE_OR_ELSE(val, 0.0));
+    }
+}
+
+static mus_sample_t next_sample_with_xen_on_air(snd_fd *sf) {return((mus_sample_t)xen_next_sample_on_air(sf, sf->rscaler, 1.0));}
+static mus_sample_t previous_sample_with_xen_on_air(snd_fd *sf) {return((mus_sample_t)xen_previous_sample_on_air(sf, sf->rscaler, 1.0));}
+static Float next_sample_to_float_with_xen_on_air(snd_fd *sf) {return(xen_next_sample_on_air(sf, READER_SCALER(sf), MUS_FIX_TO_FLOAT));}
+static Float previous_sample_to_float_with_xen_on_air(snd_fd *sf) {return(xen_previous_sample_on_air(sf, READER_SCALER(sf), MUS_FIX_TO_FLOAT));}
+
+
+/* ---------------- xen on ramp ---------------- */
+
+static Float xen_next_sample_on_ramp(snd_fd *sf, Float scaler, Float flter)
+{
+  if (sf->loc > sf->last)
+     return(flter * next_sound(sf));
+  else 
+    {
+      XEN xval;
+      Float val;
+      val = sf->data[sf->loc++] * sf->curval;
+      sf->curval += sf->incr;
+      xval = XEN_CALL_3((XEN)(sf->ptree), C_TO_XEN_DOUBLE(val), sf->closure, XEN_TRUE, "xen-channel");
+      return(scaler * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
+    }
+}
+
+static Float xen_previous_sample_on_ramp(snd_fd *sf, Float scaler, Float flter)
+{
+  if (sf->loc < sf->first)
+    return(flter * previous_sound(sf));
+  else 
+    {
+      XEN xval;
+      Float val;
+      val = sf->data[sf->loc--] * sf->curval;
+      sf->curval -= sf->incr;
+      xval = XEN_CALL_3((XEN)(sf->ptree), C_TO_XEN_DOUBLE(val), sf->closure, XEN_FALSE, "xen-channel");
+      return(scaler * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
+    }
+}
+
+static mus_sample_t next_sample_with_xen_on_ramp(snd_fd *sf) {return((mus_sample_t)xen_next_sample_on_ramp(sf, sf->rscaler, 1.0));}
+static mus_sample_t previous_sample_with_xen_on_ramp(snd_fd *sf) {return((mus_sample_t)xen_previous_sample_on_ramp(sf, sf->rscaler, 1.0));}
+static Float next_sample_to_float_with_xen_on_ramp(snd_fd *sf) {return(xen_next_sample_on_ramp(sf, READER_SCALER(sf), MUS_FIX_TO_FLOAT));}
+static Float previous_sample_to_float_with_xen_on_ramp(snd_fd *sf) {return(xen_previous_sample_on_ramp(sf, READER_SCALER(sf), MUS_FIX_TO_FLOAT));}
+
+
+/* -------- xen on xramp -------- */
+
+static Float xen_next_sample_on_xramp(snd_fd *sf, Float scaler, Float flter)
+{
+  if (sf->loc > sf->last)
+     return(flter * next_sound(sf));
+  else 
+    {
+      XEN xval;
+      Float val;
+      val = NEXT_PTREE_XRAMP(sf);
+      sf->curval += sf->incr;
+      xval = XEN_CALL_3((XEN)(sf->ptree), C_TO_XEN_DOUBLE(val), sf->closure, XEN_TRUE, "xen-channel");
+      return(scaler * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
+    }
+}
+
+static Float xen_previous_sample_on_xramp(snd_fd *sf, Float scaler, Float flter)
+{
+  if (sf->loc < sf->first)
+    return(flter * previous_sound(sf));
+  else 
+    {
+      XEN xval;
+      Float val;
+      val = PREVIOUS_PTREE_XRAMP(sf);
+      sf->curval -= sf->incr;
+      xval = XEN_CALL_3((XEN)(sf->ptree), C_TO_XEN_DOUBLE(val), sf->closure, XEN_FALSE, "xen-channel");
+      return(scaler * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
+    }
+}
+
+static mus_sample_t next_sample_with_xen_on_xramp(snd_fd *sf) {return((mus_sample_t)xen_next_sample_on_xramp(sf, sf->rscaler, 1.0));}
+static mus_sample_t previous_sample_with_xen_on_xramp(snd_fd *sf) {return((mus_sample_t)xen_previous_sample_on_xramp(sf, sf->rscaler, 1.0));}
+static Float next_sample_to_float_with_xen_on_xramp(snd_fd *sf) {return(xen_next_sample_on_xramp(sf, READER_SCALER(sf), MUS_FIX_TO_FLOAT));}
+static Float previous_sample_to_float_with_xen_on_xramp(snd_fd *sf) {return(xen_previous_sample_on_xramp(sf, READER_SCALER(sf), MUS_FIX_TO_FLOAT));}
+
+
+/* -------- xen on ramp2 -------- */
+
+static Float xen_next_sample_on_ramp2(snd_fd *sf, Float scaler, Float flter)
+{
+  if (sf->loc > sf->last)
+     return(flter * next_sound(sf));
+  else 
+    {
+      XEN xval;
+      Float val;
+      val = sf->data[sf->loc++] * sf->curval * sf->curval2;
+      sf->curval += sf->incr;
+      sf->curval2 += sf->incr2;
+      xval = XEN_CALL_3((XEN)(sf->ptree), C_TO_XEN_DOUBLE(val), sf->closure, XEN_TRUE, "xen-channel");
+      return(scaler * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
+    }
+}
+
+static Float xen_previous_sample_on_ramp2(snd_fd *sf, Float scaler, Float flter)
+{
+  if (sf->loc < sf->first)
+    return(flter * previous_sound(sf));
+  else 
+    {
+      XEN xval;
+      Float val;
+      val = sf->data[sf->loc--] * sf->curval * sf->curval2;
+      sf->curval -= sf->incr;
+      sf->curval2 -= sf->incr2;
+      xval = XEN_CALL_3((XEN)(sf->ptree), C_TO_XEN_DOUBLE(val), sf->closure, XEN_FALSE, "xen-channel");
+      return(scaler * XEN_TO_C_DOUBLE_OR_ELSE(xval, 0.0));
+    }
+}
+
+static mus_sample_t next_sample_with_xen_on_ramp2(snd_fd *sf) {return((mus_sample_t)xen_next_sample_on_ramp2(sf, sf->rscaler, 1.0));}
+static mus_sample_t previous_sample_with_xen_on_ramp2(snd_fd *sf) {return((mus_sample_t)xen_previous_sample_on_ramp2(sf, sf->rscaler, 1.0));}
+static Float next_sample_to_float_with_xen_on_ramp2(snd_fd *sf) {return(xen_next_sample_on_ramp2(sf, READER_SCALER(sf), MUS_FIX_TO_FLOAT));}
+static Float previous_sample_to_float_with_xen_on_ramp2(snd_fd *sf) {return(xen_previous_sample_on_ramp2(sf, READER_SCALER(sf), MUS_FIX_TO_FLOAT));}
+
+
 /* -------------------------------------------------------------------------------- */
 
 
-void move_to_next_sample(snd_fd *sf)
+static void swap_readers(snd_fd *sf)
 {
-  if (sf->loc > sf->last)
-    next_sound(sf);
-  else sf->loc++;
-}
-
-static void move_to_previous_sample(snd_fd *sf)
-{
-  if (sf->loc < sf->first)
-    previous_sound(sf);
-  else sf->loc--;
-}
-
-void read_sample_change_direction(snd_fd *sf, int dir)
-{
-  /* direction reversal can happen in dac(speed arrow), src gen, or user can call next/previous independent of initial dir */
   mus_sample_t (*rrun)(struct snd__fd *sf);
   Float (*rrunf)(struct snd__fd *sf);
   rrun = sf->run;
@@ -2607,10 +3243,15 @@ void read_sample_change_direction(snd_fd *sf, int dir)
   sf->runf = sf->rev_runf;
   sf->rev_run = rrun;
   sf->rev_runf = rrunf;
+}
+
+void read_sample_change_direction(snd_fd *sf, int dir)
+{
+  /* direction reversal can happen in dac(speed arrow), src gen, or user can call next/previous independent of initial dir */
+  swap_readers(sf);
   sf->direction = dir;
-  if (dir == READ_FORWARD)
-    move_to_next_sample(sf);
-  else move_to_previous_sample(sf);
+  /* can't optimize anything here -- some accessors have state */
+  read_sample(sf);
 }
 
 Float protected_next_sample_to_float(snd_fd *sf)
@@ -2650,359 +3291,336 @@ static void get_sf_closure(snd_fd *sf)
   XEN proc;
   proc = sf->cp->ptree_inits[READER_PTREE_INDEX(sf)];
   if ((sf->closure) && (XEN_BOUND_P(sf->closure)))
-    {
-      snd_unprotect(sf->closure);
-      sf->closure = XEN_UNDEFINED;
-    }
+    snd_unprotect(sf->closure);
+  sf->closure = XEN_UNDEFINED;
   if ((proc) && (XEN_PROCEDURE_P(proc)))
     {
       sf->closure = XEN_CALL_2(proc,
 			       C_TO_XEN_OFF_T(sf->frag_pos + READER_PTREE_POSITION(sf)),
 			       C_TO_XEN_OFF_T(READER_PTREE_DUR(sf)),
 			       "ptree-channel init func");
+      if ((sf->closure) && (XEN_BOUND_P(sf->closure)))
+	snd_protect(sf->closure);
     }
 }
 
 static void choose_accessor(snd_fd *sf)
 {
-  Float rmp0, rmp1, scl;
+  double rmp0 = 0.0, rmp1 = 0.0;
   /* fragment-specific reader choice */
-  if (sf->direction == READ_FORWARD)
+  switch (READER_TYPE(sf))
     {
-      if (READER_SCALER(sf) == 0.0)
+    case ED_ZERO:
+      sf->run = next_zero_sample;
+      sf->runf = next_zero_sample_to_float;
+      sf->rev_run = previous_zero_sample;
+      sf->rev_runf = previous_zero_sample_to_float;
+      break;
+    case ED_RAMP:
+      rmp0 = READER_SCALER(sf) * READER_RAMP_BEG(sf);
+      rmp1 = READER_SCALER(sf) * READER_RAMP_END(sf);
+      if (READER_LOCAL_END(sf) == READER_LOCAL_POSITION(sf))
+	sf->incr = 0.0;
+      else sf->incr = (double)(rmp1 - rmp0) / (double)(READER_LOCAL_END(sf) - READER_LOCAL_POSITION(sf));
+      sf->curval = rmp0 + sf->incr * sf->frag_pos;
+      sf->run = next_sample_with_ramp;
+      sf->runf = next_sample_to_float_with_ramp;
+      sf->rev_run = previous_sample_with_ramp;
+      sf->rev_runf = previous_sample_to_float_with_ramp;
+      break;
+    case ED_XRAMP:
+      rmp0 = READER_RAMP_BEG(sf);
+      rmp1 = READER_RAMP_END(sf);
+      if (READER_LOCAL_END(sf) == READER_LOCAL_POSITION(sf))
+	sf->incr = 0.0;
+      else sf->incr = (double)(rmp1 - rmp0) / (double)(READER_LOCAL_END(sf) - READER_LOCAL_POSITION(sf));
+      sf->curval = rmp0 + sf->incr * sf->frag_pos;
+      sf->run = next_sample_with_xramp;
+      sf->runf = next_sample_to_float_with_xramp;
+      sf->rev_run = previous_sample_with_xramp;
+      sf->rev_runf = previous_sample_to_float_with_xramp;
+      break;
+    case ED_RAMP2:
+      rmp0 = READER_SCALER(sf) * READER_RAMP_BEG(sf);
+      rmp1 = READER_SCALER(sf) * READER_RAMP_END(sf);
+      if (READER_LOCAL_END(sf) == READER_LOCAL_POSITION(sf))
+	sf->incr = 0.0;
+      else sf->incr = (double)(rmp1 - rmp0) / (double)(READER_LOCAL_END(sf) - READER_LOCAL_POSITION(sf));
+      sf->curval = rmp0 + sf->incr * sf->frag_pos;
+      rmp0 = READER_RAMP2_BEG(sf);
+      rmp1 = READER_RAMP2_END(sf);
+      if (READER_LOCAL_END(sf) == READER_LOCAL_POSITION(sf))
+	sf->incr2 = 0.0;
+      else sf->incr2 = (double)(rmp1 - rmp0) / (double)(READER_LOCAL_END(sf) - READER_LOCAL_POSITION(sf));
+      sf->curval2 = rmp0 + sf->incr2 * sf->frag_pos;
+      sf->run = next_sample_with_ramp2;
+      sf->runf = next_sample_to_float_with_ramp2;
+      sf->rev_run = previous_sample_with_ramp2;
+      sf->rev_runf = previous_sample_to_float_with_ramp2;
+      break;
+    case ED_RAMP3:
+      rmp0 = READER_SCALER(sf) * READER_RAMP_BEG(sf);
+      rmp1 = READER_SCALER(sf) * READER_RAMP_END(sf);
+      if (READER_LOCAL_END(sf) == READER_LOCAL_POSITION(sf))
+	sf->incr = 0.0;
+      else sf->incr = (double)(rmp1 - rmp0) / (double)(READER_LOCAL_END(sf) - READER_LOCAL_POSITION(sf));
+      sf->curval = rmp0 + sf->incr * sf->frag_pos;
+      rmp0 = READER_RAMP2_BEG(sf);
+      rmp1 = READER_RAMP2_END(sf);
+      if (READER_LOCAL_END(sf) == READER_LOCAL_POSITION(sf))
+	sf->incr2 = 0.0;
+      else sf->incr2 = (double)(rmp1 - rmp0) / (double)(READER_LOCAL_END(sf) - READER_LOCAL_POSITION(sf));
+      sf->curval2 = rmp0 + sf->incr2 * sf->frag_pos;
+      rmp0 = READER_RAMP3_BEG(sf);
+      rmp1 = READER_RAMP3_END(sf);
+      if (READER_LOCAL_END(sf) == READER_LOCAL_POSITION(sf))
+	sf->incr3 = 0.0;
+      else sf->incr3 = (double)(rmp1 - rmp0) / (double)(READER_LOCAL_END(sf) - READER_LOCAL_POSITION(sf));
+      sf->curval3 = rmp0 + sf->incr3 * sf->frag_pos;
+      sf->run = next_sample_with_ramp3;
+      sf->runf = next_sample_to_float_with_ramp3;
+      sf->rev_run = previous_sample_with_ramp3;
+      sf->rev_runf = previous_sample_to_float_with_ramp3;
+      break;
+    case ED_PTREE:
+      sf->ptree = sf->cp->ptrees[READER_PTREE_INDEX(sf)];
+      sf->closure = XEN_UNDEFINED;
+      sf->run = next_sample_with_ptree;
+      sf->runf = next_sample_to_float_with_ptree;
+      sf->rev_run = previous_sample_with_ptree;
+      sf->rev_runf = previous_sample_to_float_with_ptree;
+      break;
+    case ED_PTREE_CLOSURE:
+      sf->ptree = sf->cp->ptrees[READER_PTREE_INDEX(sf)];
+      get_sf_closure(sf);
+      sf->run = next_sample_with_ptree_and_closure;
+      sf->runf = next_sample_to_float_with_ptree_and_closure;
+      sf->rev_run = previous_sample_with_ptree_and_closure;
+      sf->rev_runf = previous_sample_to_float_with_ptree_and_closure;
+      break;
+    case ED_PTREE_ZERO:
+      sf->ptree = sf->cp->ptrees[READER_PTREE_INDEX(sf)];
+      sf->closure = XEN_UNDEFINED;
+      sf->run = next_sample_with_ptree_on_air;
+      sf->runf = next_sample_to_float_with_ptree_on_air;
+      sf->rev_run = previous_sample_with_ptree_on_air;
+      sf->rev_runf = previous_sample_to_float_with_ptree_on_air;
+      break;
+    case ED_PTREE_ZERO_CLOSURE:
+      sf->ptree = sf->cp->ptrees[READER_PTREE_INDEX(sf)];
+      get_sf_closure(sf);
+      sf->run = next_sample_with_ptree_and_closure_on_air;
+      sf->runf = next_sample_to_float_with_ptree_and_closure_on_air;
+      sf->rev_run = previous_sample_with_ptree_and_closure_on_air;
+      sf->rev_runf = previous_sample_to_float_with_ptree_and_closure_on_air;
+      break;
+    case ED_PTREE_RAMP:
+      rmp0 = READER_RAMP_BEG(sf) * READER_PTREE_SCALER(sf);
+      rmp1 = READER_RAMP_END(sf) * READER_PTREE_SCALER(sf);
+      if (READER_LOCAL_END(sf) == READER_LOCAL_POSITION(sf))
+	sf->incr = 0.0;
+      else sf->incr = (double)(rmp1 - rmp0) / (double)(READER_LOCAL_END(sf) - READER_LOCAL_POSITION(sf));
+      sf->curval = rmp0 + sf->incr * sf->frag_pos;
+      sf->ptree = sf->cp->ptrees[READER_PTREE_INDEX(sf)];
+      sf->closure = XEN_UNDEFINED;
+      sf->run = next_sample_with_ptree_on_ramp;
+      sf->runf = next_sample_to_float_with_ptree_on_ramp;
+      sf->rev_run = previous_sample_with_ptree_on_ramp;
+      sf->rev_runf = previous_sample_to_float_with_ptree_on_ramp;
+      break;
+    case ED_PTREE_RAMP_CLOSURE:
+      rmp0 = READER_RAMP_BEG(sf) * READER_PTREE_SCALER(sf);
+      rmp1 = READER_RAMP_END(sf) * READER_PTREE_SCALER(sf);
+      if (READER_LOCAL_END(sf) == READER_LOCAL_POSITION(sf))
+	sf->incr = 0.0;
+      else sf->incr = (double)(rmp1 - rmp0) / (double)(READER_LOCAL_END(sf) - READER_LOCAL_POSITION(sf));
+      sf->curval = rmp0 + sf->incr * sf->frag_pos;
+      sf->ptree = sf->cp->ptrees[READER_PTREE_INDEX(sf)];
+      get_sf_closure(sf);
+      sf->run = next_sample_with_ptree_with_closure_on_ramp;
+      sf->runf = next_sample_to_float_with_ptree_with_closure_on_ramp;
+      sf->rev_run = previous_sample_with_ptree_with_closure_on_ramp;
+      sf->rev_runf = previous_sample_to_float_with_ptree_with_closure_on_ramp;
+      break;
+    case ED_PTREE_RAMP2:
+      rmp0 = READER_RAMP_BEG(sf) * READER_PTREE_SCALER(sf);
+      rmp1 = READER_RAMP_END(sf) * READER_PTREE_SCALER(sf);
+      if (READER_LOCAL_END(sf) == READER_LOCAL_POSITION(sf))
+	sf->incr = 0.0;
+      else sf->incr = (double)(rmp1 - rmp0) / (double)(READER_LOCAL_END(sf) - READER_LOCAL_POSITION(sf));
+      sf->curval = rmp0 + sf->incr * sf->frag_pos;
+      rmp0 = READER_RAMP2_BEG(sf);
+      rmp1 = READER_RAMP2_END(sf);
+      if (READER_LOCAL_END(sf) == READER_LOCAL_POSITION(sf))
+	sf->incr2 = 0.0;
+      else sf->incr2 = (double)(rmp1 - rmp0) / (double)(READER_LOCAL_END(sf) - READER_LOCAL_POSITION(sf));
+      sf->curval2 = rmp0 + sf->incr2 * sf->frag_pos;
+      sf->ptree = sf->cp->ptrees[READER_PTREE_INDEX(sf)];
+      sf->closure = XEN_UNDEFINED;
+      sf->run = next_sample_with_ptree_on_ramp2;
+      sf->runf = next_sample_to_float_with_ptree_on_ramp2;
+      sf->rev_run = previous_sample_with_ptree_on_ramp2;
+      sf->rev_runf = previous_sample_to_float_with_ptree_on_ramp2;
+      break;
+    case ED_PTREE_RAMP2_CLOSURE:
+      rmp0 = READER_RAMP_BEG(sf) * READER_PTREE_SCALER(sf);
+      rmp1 = READER_RAMP_END(sf) * READER_PTREE_SCALER(sf);
+      if (READER_LOCAL_END(sf) == READER_LOCAL_POSITION(sf))
+	sf->incr = 0.0;
+      else sf->incr = (double)(rmp1 - rmp0) / (double)(READER_LOCAL_END(sf) - READER_LOCAL_POSITION(sf));
+      sf->curval = rmp0 + sf->incr * sf->frag_pos;
+      rmp0 = READER_RAMP2_BEG(sf);
+      rmp1 = READER_RAMP2_END(sf);
+      if (READER_LOCAL_END(sf) == READER_LOCAL_POSITION(sf))
+	sf->incr2 = 0.0;
+      else sf->incr2 = (double)(rmp1 - rmp0) / (double)(READER_LOCAL_END(sf) - READER_LOCAL_POSITION(sf));
+      sf->curval2 = rmp0 + sf->incr2 * sf->frag_pos;
+      sf->ptree = sf->cp->ptrees[READER_PTREE_INDEX(sf)];
+      get_sf_closure(sf);
+      sf->run = next_sample_with_ptree_with_closure_on_ramp2;
+      sf->runf = next_sample_to_float_with_ptree_with_closure_on_ramp2;
+      sf->rev_run = previous_sample_with_ptree_with_closure_on_ramp2;
+      sf->rev_runf = previous_sample_to_float_with_ptree_with_closure_on_ramp2;
+      break;
+    case ED_PTREE_XRAMP:
+      rmp0 = READER_RAMP_BEG(sf);
+      rmp1 = READER_RAMP_END(sf);
+      if (READER_LOCAL_END(sf) == READER_LOCAL_POSITION(sf))
+	sf->incr = 0.0;
+      else sf->incr = (double)(rmp1 - rmp0) / (double)(READER_LOCAL_END(sf) - READER_LOCAL_POSITION(sf));
+      sf->curval = rmp0 + sf->incr * sf->frag_pos;
+      sf->ptree = sf->cp->ptrees[READER_PTREE_INDEX(sf)];
+      sf->closure = XEN_UNDEFINED;
+      sf->run = next_sample_with_ptree_on_xramp;
+      sf->runf = next_sample_to_float_with_ptree_on_xramp;
+      sf->rev_run = previous_sample_with_ptree_on_xramp;
+      sf->rev_runf = previous_sample_to_float_with_ptree_on_xramp;
+      break;
+    case ED_PTREE_XRAMP_CLOSURE:
+      rmp0 = READER_RAMP_BEG(sf);
+      rmp1 = READER_RAMP_END(sf);
+      if (READER_LOCAL_END(sf) == READER_LOCAL_POSITION(sf))
+	sf->incr = 0.0;
+      else sf->incr = (double)(rmp1 - rmp0) / (double)(READER_LOCAL_END(sf) - READER_LOCAL_POSITION(sf));
+      sf->curval = rmp0 + sf->incr * sf->frag_pos;
+      sf->ptree = sf->cp->ptrees[READER_PTREE_INDEX(sf)];
+      get_sf_closure(sf);
+      sf->run = next_sample_with_ptree_with_closure_on_xramp;
+      sf->runf = next_sample_to_float_with_ptree_with_closure_on_xramp;
+      sf->rev_run = previous_sample_with_ptree_with_closure_on_xramp;
+      sf->rev_runf = previous_sample_to_float_with_ptree_with_closure_on_xramp;
+      break;
+    case ED_XEN:
+      sf->ptree = (void *)(sf->cp->xens[READER_PTREE_INDEX(sf)]);
+      get_sf_closure(sf);
+      sf->run = next_sample_with_xen;
+      sf->runf = next_sample_to_float_with_xen;
+      sf->rev_run = previous_sample_with_xen;
+      sf->rev_runf = previous_sample_to_float_with_xen;
+      break;
+    case ED_XEN_ZERO:
+      sf->ptree = (void *)(sf->cp->xens[READER_PTREE_INDEX(sf)]);
+      get_sf_closure(sf);
+      sf->run = next_sample_with_xen_on_air;
+      sf->runf = next_sample_to_float_with_xen_on_air;
+      sf->rev_run = previous_sample_with_xen_on_air;
+      sf->rev_runf = previous_sample_to_float_with_xen_on_air;
+      break;
+    case ED_XEN_RAMP:
+      rmp0 = READER_RAMP_BEG(sf) * READER_PTREE_SCALER(sf);
+      rmp1 = READER_RAMP_END(sf) * READER_PTREE_SCALER(sf);
+      if (READER_LOCAL_END(sf) == READER_LOCAL_POSITION(sf))
+	sf->incr = 0.0;
+      else sf->incr = (double)(rmp1 - rmp0) / (double)(READER_LOCAL_END(sf) - READER_LOCAL_POSITION(sf));
+      sf->curval = rmp0 + sf->incr * sf->frag_pos;
+      sf->ptree = (void *)(sf->cp->xens[READER_PTREE_INDEX(sf)]);
+      get_sf_closure(sf);
+      sf->run = next_sample_with_xen_on_ramp;
+      sf->runf = next_sample_to_float_with_xen_on_ramp;
+      sf->rev_run = previous_sample_with_xen_on_ramp;
+      sf->rev_runf = previous_sample_to_float_with_xen_on_ramp;
+      break;
+    case ED_XEN_RAMP2:
+      rmp0 = READER_RAMP_BEG(sf) * READER_PTREE_SCALER(sf);
+      rmp1 = READER_RAMP_END(sf) * READER_PTREE_SCALER(sf);
+      if (READER_LOCAL_END(sf) == READER_LOCAL_POSITION(sf))
+	sf->incr = 0.0;
+      else sf->incr = (double)(rmp1 - rmp0) / (double)(READER_LOCAL_END(sf) - READER_LOCAL_POSITION(sf));
+      sf->curval = rmp0 + sf->incr * sf->frag_pos;
+      rmp0 = READER_RAMP2_BEG(sf);
+      rmp1 = READER_RAMP2_END(sf);
+      if (READER_LOCAL_END(sf) == READER_LOCAL_POSITION(sf))
+	sf->incr2 = 0.0;
+      else sf->incr2 = (double)(rmp1 - rmp0) / (double)(READER_LOCAL_END(sf) - READER_LOCAL_POSITION(sf));
+      sf->curval2 = rmp0 + sf->incr2 * sf->frag_pos;
+      sf->ptree = (void *)(sf->cp->xens[READER_PTREE_INDEX(sf)]);
+      get_sf_closure(sf);
+      sf->run = next_sample_with_xen_on_ramp2;
+      sf->runf = next_sample_to_float_with_xen_on_ramp2;
+      sf->rev_run = previous_sample_with_xen_on_ramp2;
+      sf->rev_runf = previous_sample_to_float_with_xen_on_ramp2;
+      break;
+    case ED_XEN_XRAMP:
+      rmp0 = READER_RAMP_BEG(sf);
+      rmp1 = READER_RAMP_END(sf);
+      if (READER_LOCAL_END(sf) == READER_LOCAL_POSITION(sf))
+	sf->incr = 0.0;
+      else sf->incr = (double)(rmp1 - rmp0) / (double)(READER_LOCAL_END(sf) - READER_LOCAL_POSITION(sf));
+      sf->curval = rmp0 + sf->incr * sf->frag_pos;
+      sf->ptree = (void *)(sf->cp->xens[READER_PTREE_INDEX(sf)]);
+      get_sf_closure(sf);
+      sf->run = next_sample_with_xen_on_xramp;
+      sf->runf = next_sample_to_float_with_xen_on_xramp;
+      sf->rev_run = previous_sample_with_xen_on_xramp;
+      sf->rev_runf = previous_sample_to_float_with_xen_on_xramp;
+      break;
+    default:
+      if (READER_SCALER(sf) == 1.0)
 	{
-	  sf->run = next_zero_sample;
-	  sf->runf = next_zero_sample_to_float;
-	  sf->rev_run = previous_zero_sample;
-	  sf->rev_runf = previous_zero_sample_to_float;
+	  sf->run = next_sample_unscaled;
+	  sf->rev_run = previous_sample_unscaled;
+	  if (sf->fscaler == 1.0) 
+	    {
+	      sf->runf = next_sample_to_float_unscaled;
+	      sf->rev_runf = previous_sample_to_float_unscaled;
+	    }
+	  else 
+	    {
+	      sf->runf = next_sample_to_float;
+	      sf->rev_runf = previous_sample_to_float;
+	    }
 	}
       else
 	{
-	  switch (READER_TYPE(sf))
-	    {
-	    case ED_RAMP:
-	      if (READER_XRAMP_SCALER(sf) == 0.0)
-		{
-		  scl = READER_SCALER(sf);
-		  rmp0 = scl * READER_RAMP_BEG(sf);
-		  rmp1 = scl * READER_RAMP_END(sf);
-		}
-	      else
-		{
-		  rmp0 = READER_RAMP_BEG(sf);
-		  rmp1 = READER_RAMP_END(sf);
-		}
-	      if (READER_LOCAL_END(sf) == READER_LOCAL_POSITION(sf))
-		sf->incr = 0.0;
-	      else sf->incr = (double)(rmp1 - rmp0) / (double)(READER_LOCAL_END(sf) - READER_LOCAL_POSITION(sf));
-	      sf->curval = rmp0 + sf->incr * sf->frag_pos;
-	      if (READER_XRAMP_SCALER(sf) == 0.0)
-		{
-		  sf->run = next_sample_with_ramp;
-		  sf->runf = next_sample_to_float_with_ramp;
-		  sf->rev_run = previous_sample_with_ramp;
-		  sf->rev_runf = previous_sample_to_float_with_ramp;
-		}
-	      else
-		{
-		  sf->run = next_sample_with_xramp;
-		  sf->runf = next_sample_to_float_with_xramp;
-		  sf->rev_run = previous_sample_with_xramp;
-		  sf->rev_runf = previous_sample_to_float_with_xramp;
-		}
-	      break;
-	    case ED_PTREE:
-	      /* one special case here -- since zero blocks have scl=0.0 and snd=-1,
-	       *   the transfer of the scaler to the ptree's pscl means that when
-	       *   the underlying block is actually a phantom zero block, pscl=0.0 and snd=-1.
-	       */
-	      if ((READER_PTREE_SCALER(sf) == 0.0) || (READER_SOUND(sf) == EDIT_LIST_ZERO_MARK))
-		{
-		  sf->run = next_sample_with_ptree_on_air;
-		  sf->runf = next_sample_to_float_with_ptree_on_air;
-		  sf->rev_run = previous_sample_with_ptree_on_air;
-		  sf->rev_runf = previous_sample_to_float_with_ptree_on_air;
-		}
-	      else
-		{
-		  rmp0 = READER_RAMP_BEG(sf);
-		  rmp1 = READER_RAMP_END(sf);
-		  if ((rmp0 != 0.0) || (rmp1 != 0.0))
-		    {
-		      scl = READER_PTREE_SCALER(sf);
-		      rmp0 *= scl;
-		      rmp1 *= scl;
-		      if (READER_LOCAL_END(sf) == READER_LOCAL_POSITION(sf))
-			sf->incr = 0.0;
-		      else sf->incr = (double)(rmp1 - rmp0) / (double)(READER_LOCAL_END(sf) - READER_LOCAL_POSITION(sf));
-		      sf->curval = rmp0 + sf->incr * sf->frag_pos;
-		      sf->run = next_sample_with_ptree_on_ramp;
-		      sf->runf = next_sample_to_float_with_ptree_on_ramp;
-		      sf->rev_run = previous_sample_with_ptree_on_ramp;
-		      sf->rev_runf = previous_sample_to_float_with_ptree_on_ramp;
-		    }
-		  else
-		    {
-		      sf->run = next_sample_with_ptree;
-		      sf->runf = next_sample_to_float_with_ptree;
-		      sf->rev_run = previous_sample_with_ptree;
-		      sf->rev_runf = previous_sample_to_float_with_ptree;
-		    }
-		}
-	      sf->ptree = sf->cp->ptrees[READER_PTREE_INDEX(sf)];
-
-	      get_sf_closure(sf);
-	      if ((sf->closure) && (XEN_BOUND_P(sf->closure)))
-		{
-		  snd_protect(sf->closure);
-		  if ((READER_PTREE_SCALER(sf) == 0.0) || (READER_SOUND(sf) == EDIT_LIST_ZERO_MARK))
-		    {
-		      sf->run = next_sample_with_ptree_and_closure_on_air;
-		      sf->runf = next_sample_to_float_with_ptree_and_closure_on_air;
-		      sf->rev_run = previous_sample_with_ptree_and_closure_on_air;
-		      sf->rev_runf = previous_sample_to_float_with_ptree_and_closure_on_air;
-		    }
-		  else
-		    {
-		      rmp0 = READER_RAMP_BEG(sf);
-		      rmp1 = READER_RAMP_END(sf);
-		      if ((rmp0 != 0.0) || (rmp1 != 0.0))
-			{
-			  scl = READER_PTREE_SCALER(sf);
-			  rmp0 *= scl;
-			  rmp1 *= scl;
-			  if (READER_LOCAL_END(sf) == READER_LOCAL_POSITION(sf))
-			    sf->incr = 0.0;
-			  else sf->incr = (double)(rmp1 - rmp0) / (double)(READER_LOCAL_END(sf) - READER_LOCAL_POSITION(sf));
-			  sf->curval = rmp0 + sf->incr * sf->frag_pos;
-			  sf->run = next_sample_with_ptree_with_closure_on_ramp;
-			  sf->runf = next_sample_to_float_with_ptree_with_closure_on_ramp;
-			  sf->rev_run = previous_sample_with_ptree_with_closure_on_ramp;
-			  sf->rev_runf = previous_sample_to_float_with_ptree_with_closure_on_ramp;
-			}
-		      else
-			{
-			  sf->run = next_sample_with_ptree_and_closure;
-			  sf->runf = next_sample_to_float_with_ptree_and_closure;
-			  sf->rev_run = previous_sample_with_ptree_and_closure;
-			  sf->rev_runf = previous_sample_to_float_with_ptree_and_closure;
-			}
-		    }
-		}
-	      else sf->closure = XEN_UNDEFINED;
-
-	      break;
-	    default:
-	      if (READER_SCALER(sf) == 1.0)
-		{
-		  sf->run = next_sample_unscaled;
-		  sf->rev_run = previous_sample_unscaled;
-		  if (sf->fscaler == 1.0) 
-		    {
-		      sf->runf = next_sample_to_float_unscaled;
-		      sf->rev_runf = previous_sample_to_float_unscaled;
-		    }
-		  else 
-		    {
-		      sf->runf = next_sample_to_float;
-		      sf->rev_runf = previous_sample_to_float;
-		    }
-		}
-	      else
-		{
 #if (!SNDLIB_USE_FLOATS)
-		  /* more concerned here with the int->float->int conversions than the multiply */
-		  scl = READER_SCALER(sf);
-		  if (scl == floor(scl))
-		    {
-		      sf->iscaler = (int)floor(scl);
-		      sf->run = next_sample_by_int;
-		      sf->rev_run = previous_sample_by_int;
-		    }
-		  else
-		    {
-		      sf->run = next_sample;
-		      sf->rev_run = previous_sample;
-		    }
-		  sf->runf = next_sample_to_float;
-		  sf->rev_runf = previous_sample_to_float;
-#else
-		  sf->run = next_sample;
-		  sf->runf = next_sample_to_float;
-		  sf->rev_run = previous_sample;
-		  sf->rev_runf = previous_sample_to_float;
-#endif
-		}
-	      break;
-	    }
-	}
-    }
-  else
-    {
-      if (READER_SCALER(sf) == 0.0)
-	{
-	  sf->run = previous_zero_sample;
-	  sf->runf = previous_zero_sample_to_float;
-	  sf->rev_run = next_zero_sample;
-	  sf->rev_runf = next_zero_sample_to_float;
-	}
-      else
-	{
-	  switch (READER_TYPE(sf))
+	  Float scl;
+	  /* more concerned here with the int->float->int conversions than the multiply */
+	  scl = READER_SCALER(sf);
+	  if (scl == floor(scl))
 	    {
-	    case ED_RAMP:
-	      if (READER_XRAMP_SCALER(sf) == 0.0)
-		{
-		  scl = READER_SCALER(sf);
-		  rmp0 = scl * READER_RAMP_BEG(sf);
-		  rmp1 = scl * READER_RAMP_END(sf);
-		}
-	      else
-		{
-		  rmp0 = READER_RAMP_BEG(sf);
-		  rmp1 = READER_RAMP_END(sf);
-		}
-	      if (READER_LOCAL_END(sf) == READER_LOCAL_POSITION(sf))
-		sf->incr = 0.0;
-	      else sf->incr = (double)(rmp1 - rmp0) / (double)(READER_LOCAL_END(sf) - READER_LOCAL_POSITION(sf));
-	      sf->curval = rmp0 + sf->incr * sf->frag_pos;
-	      if (READER_XRAMP_SCALER(sf) == 0.0)
-		{
-		  sf->run = previous_sample_with_ramp;
-		  sf->runf = previous_sample_to_float_with_ramp;
-		  sf->rev_run = next_sample_with_ramp;
-		  sf->rev_runf = next_sample_to_float_with_ramp;
-		}
-	      else
-		{
-		  sf->run = previous_sample_with_xramp;
-		  sf->runf = previous_sample_to_float_with_xramp;
-		  sf->rev_run = next_sample_with_xramp;
-		  sf->rev_runf = next_sample_to_float_with_xramp;
-		}
-	      break;
-	    case ED_PTREE:
-	      if ((READER_PTREE_SCALER(sf) == 0.0) || (READER_SOUND(sf) == EDIT_LIST_ZERO_MARK))
-		{
-		  sf->run = previous_sample_with_ptree_on_air;
-		  sf->runf = previous_sample_to_float_with_ptree_on_air;
-		  sf->rev_run = next_sample_with_ptree_on_air;
-		  sf->rev_runf = next_sample_to_float_with_ptree_on_air;
-		}
-	      else
-		{
-		  rmp0 = READER_RAMP_BEG(sf);
-		  rmp1 = READER_RAMP_END(sf);
-		  if ((rmp0 != 0.0) || (rmp1 != 0.0))
-		    {
-		      scl = READER_PTREE_SCALER(sf);
-		      rmp0 *= scl;
-		      rmp1 *= scl;
-		      if (READER_LOCAL_END(sf) == READER_LOCAL_POSITION(sf))
-			sf->incr = 0.0;
-		      else sf->incr = (double)(rmp1 - rmp0) / (double)(READER_LOCAL_END(sf) - READER_LOCAL_POSITION(sf));
-		      sf->curval = rmp0 + sf->incr * sf->frag_pos;
-		      sf->run = previous_sample_with_ptree_on_ramp;
-		      sf->runf = previous_sample_to_float_with_ptree_on_ramp;
-		      sf->rev_run = next_sample_with_ptree_on_ramp;
-		      sf->rev_runf = next_sample_to_float_with_ptree_on_ramp;
-		    }
-		  else
-		    {
-		      sf->run = previous_sample_with_ptree;
-		      sf->runf = previous_sample_to_float_with_ptree;
-		      sf->rev_run = next_sample_with_ptree;
-		      sf->rev_runf = next_sample_to_float_with_ptree;
-		    }
-		}
-	      sf->ptree = sf->cp->ptrees[READER_PTREE_INDEX(sf)];
-
-	      get_sf_closure(sf);
-	      if ((sf->closure) && (XEN_BOUND_P(sf->closure)))
-		{
-		  snd_protect(sf->closure);
-		  if ((READER_PTREE_SCALER(sf) == 0.0) || (READER_SOUND(sf) == EDIT_LIST_ZERO_MARK))
-		    {
-		      sf->run = previous_sample_with_ptree_and_closure_on_air;
-		      sf->runf = previous_sample_to_float_with_ptree_and_closure_on_air;
-		      sf->rev_run = next_sample_with_ptree_and_closure_on_air;
-		      sf->rev_runf = next_sample_to_float_with_ptree_and_closure_on_air;
-		    }
-		  else
-		    {
-		      rmp0 = READER_RAMP_BEG(sf);
-		      rmp1 = READER_RAMP_END(sf);
-		      if ((rmp0 != 0.0) || (rmp1 != 0.0))
-			{
-			  scl = READER_PTREE_SCALER(sf);
-			  rmp0 *= scl;
-			  rmp1 *= scl;
-			  if (READER_LOCAL_END(sf) == READER_LOCAL_POSITION(sf))
-			    sf->incr = 0.0;
-			  else sf->incr = (double)(rmp1 - rmp0) / (double)(READER_LOCAL_END(sf) - READER_LOCAL_POSITION(sf));
-			  sf->curval = rmp0 + sf->incr * sf->frag_pos;
-			  sf->run = previous_sample_with_ptree_with_closure_on_ramp;
-			  sf->runf = previous_sample_to_float_with_ptree_with_closure_on_ramp;
-			  sf->rev_run = next_sample_with_ptree_with_closure_on_ramp;
-			  sf->rev_runf = next_sample_to_float_with_ptree_with_closure_on_ramp;
-			}
-		      else
-			{
-			  sf->run = previous_sample_with_ptree_and_closure;
-			  sf->runf = previous_sample_to_float_with_ptree_and_closure;
-			  sf->rev_run = next_sample_with_ptree_and_closure;
-			  sf->rev_runf = next_sample_to_float_with_ptree_and_closure;
-			}
-		    }
-		}
-	      else sf->closure = XEN_UNDEFINED;
-
-	      break;
-	    default:
-	      if (READER_SCALER(sf) == 1.0)
-		{
-		  sf->run = previous_sample_unscaled;
-		  sf->rev_run = next_sample_unscaled;
-		  if (sf->fscaler == 1.0)
-		    {
-		      sf->runf = previous_sample_to_float_unscaled;
-		      sf->rev_runf = next_sample_to_float_unscaled;
-		    }
-		  else 
-		    {
-		      sf->runf = previous_sample_to_float;
-		      sf->rev_runf = next_sample_to_float;
-		    }
-		}
-	      else
-		{
-#if (!SNDLIB_USE_FLOATS)
-		  scl = READER_SCALER(sf);
-		  if (scl == floor(scl))
-		    {
-		      sf->iscaler = (int)floor(scl);
-		      sf->run = previous_sample_by_int;
-		      sf->rev_run = next_sample_by_int;
-		    }
-		  else
-		    {
-		      sf->run = previous_sample;
-		      sf->rev_run = next_sample;
-		    }
-		  sf->runf = previous_sample_to_float;
-		  sf->rev_runf = next_sample_to_float;
-#else
-		  sf->run = previous_sample;
-		  sf->runf = previous_sample_to_float;
-		  sf->rev_run = next_sample;
-		  sf->rev_runf = next_sample_to_float;
-#endif
-		}
-	      break;
+	      sf->iscaler = (int)floor(scl);
+	      sf->run = next_sample_by_int;
+	      sf->rev_run = previous_sample_by_int;
 	    }
+	  else
+	    {
+	      sf->run = next_sample;
+	      sf->rev_run = previous_sample;
+	    }
+	  sf->runf = next_sample_to_float;
+	  sf->rev_runf = previous_sample_to_float;
+#else
+	  sf->run = next_sample;
+	  sf->runf = next_sample_to_float;
+	  sf->rev_run = previous_sample;
+	  sf->rev_runf = previous_sample_to_float;
+#endif
 	}
+      break;
     }
+  if (sf->direction == READ_BACKWARD) swap_readers(sf);
 }
+
 
 static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, int direction, int edit_position, int bufsize)
 {
@@ -3015,11 +3633,6 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, int 
   snd_data *first_snd = NULL;
   if (!(cp->active)) return(NULL);
   if ((edit_position < 0) || (edit_position > cp->edit_size)) return(NULL);
-  if ((samp == 0) && (direction == READ_BACKWARD))
-    {
-      snd_warning("reading backward from sample 0?");
-      direction = READ_FORWARD;
-    }
   ed = (ed_list *)(cp->edits[edit_position]);
   if (!ed) return(NULL);
   sp = cp->sound;
@@ -3058,7 +3671,7 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, int 
 	  ind1 = READER_LOCAL_END(sf);
 	  sf->fscaler = MUS_FIX_TO_FLOAT * READER_SCALER(sf);
 	  sf->rscaler = MUS_FLOAT_TO_FIX * READER_SCALER(sf);
-	  if ((READER_SCALER(sf) == 0.0) || (READER_SOUND(sf) == EDIT_LIST_ZERO_MARK))
+	  if (READER_TYPE(sf) == ED_ZERO)
 	    {
 	      sf->current_sound = NULL;
 	      sf->loc = indx;
@@ -3165,7 +3778,7 @@ mus_sample_t previous_sound (snd_fd *sf)
       ind1 = READER_LOCAL_END(sf);
       sf->fscaler = MUS_FIX_TO_FLOAT * READER_SCALER(sf);
       sf->rscaler = MUS_FLOAT_TO_FIX * READER_SCALER(sf);
-      if ((READER_SCALER(sf) == 0.0) || (READER_SOUND(sf) == EDIT_LIST_ZERO_MARK))
+      if (READER_TYPE(sf) == ED_ZERO)
 	{
 	  sf->current_sound = NULL;
 	  sf->loc = ind1;
@@ -3235,7 +3848,7 @@ mus_sample_t next_sound (snd_fd *sf)
       ind1 = READER_LOCAL_END(sf);
       sf->fscaler = MUS_FIX_TO_FLOAT * READER_SCALER(sf);
       sf->rscaler = MUS_FLOAT_TO_FIX * READER_SCALER(sf);
-      if ((READER_SCALER(sf) == 0.0) || (READER_SOUND(sf) == EDIT_LIST_ZERO_MARK))
+      if (READER_TYPE(sf) == ED_ZERO)
 	{
 	  sf->current_sound = NULL;
 	  sf->loc = ind0;
@@ -3480,6 +4093,7 @@ static int save_edits_and_update_display(snd_info *sp)
   snd_state *ss;
   int i;
   off_t samples = 0;
+  off_t *old_cursors = NULL;
   chan_info *cp;
   snd_fd **sf;
   axes_data *sa;
@@ -3513,6 +4127,7 @@ static int save_edits_and_update_display(snd_info *sp)
     }
   sphdr->samples = samples * sp->nchans;
   collapse_marks(sp);
+  old_cursors = (off_t *)CALLOC(sp->nchans, sizeof(off_t));
   for (i = 0; i < sp->nchans; i++)
     {
       cp = sp->chans[i];
@@ -3526,6 +4141,12 @@ static int save_edits_and_update_display(snd_info *sp)
 	{
 	  FREE(cp->samples); 
 	  cp->samples = NULL;
+	}
+      old_cursors[i] = CURSOR(cp);
+      if (cp->cursors) 
+	{
+	  FREE(cp->cursors); 
+	  cp->cursors = NULL;
 	}
       cp->axis = free_axis_info(cp->axis);
     }
@@ -3548,6 +4169,9 @@ static int save_edits_and_update_display(snd_info *sp)
   add_sound_data(sp->filename, sp, ss, WITHOUT_INITIAL_GRAPH_HOOK);
   restore_axes_data(sp, sa, mus_sound_duration(sp->filename), TRUE);
   sa = free_axes_data(sa);
+  for (i = 0; i < sp->nchans; i++)
+    CURSOR(sp->chans[i]) = old_cursors[i];
+  FREE(old_cursors);
   reflect_file_revert_in_label(sp);
   reflect_file_save_in_menu(ss);
   if (err)
@@ -3695,13 +4319,13 @@ void save_edits(snd_info *sp, void *ptr)
   if (sp == NULL) return;
   if (!sp->read_only)
     {
-      need_save = 0;
+      need_save = FALSE;
       for (i = 0; i < sp->nchans; i++)
 	{
 	  cp = sp->chans[i];
 	  if (cp->edit_ctr > 0) 
 	    {
-	      need_save = 1;
+	      need_save = TRUE;
 	      break;
 	    }
 	}
@@ -3858,22 +4482,33 @@ void redo_edit_with_sync(chan_info *cp, int count)
 }
 
 
-static XEN g_display_edits(XEN snd, XEN chn)
+static XEN g_display_edits(XEN snd, XEN chn, XEN edpos, XEN with_source)
 {
-  #define H_display_edits "(" S_display_edits " &optional snd chn) returns the current edit tree state"
+  #define H_display_edits "(" S_display_edits " &optional snd chn edpos) returns the current edit tree state"
   FILE *tmp = NULL;
   char *buf, *name;
   chan_info *cp;
-  int fd;
+  int fd, include_source = TRUE;
   off_t len;
   snd_state *ss;
   XEN res;
   ASSERT_CHANNEL(S_display_edits, snd, chn, 1);
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(with_source), with_source, XEN_ARG_4, S_display_edits, "boolean");
   cp = get_cp(snd, chn, S_display_edits);
+  if (XEN_BOOLEAN_P(with_source)) include_source = XEN_TO_C_BOOLEAN(with_source);
   ss = get_global_state();
   name = snd_tempnam(ss);
   tmp = FOPEN(name, "w");
-  if (tmp) display_edits(cp, tmp);
+  if (tmp) 
+    {
+      if (XEN_INTEGER_P(edpos))
+	{
+	  int pos;
+	  pos = XEN_TO_C_INT(edpos);
+	  display_ed_list(cp, tmp, pos, cp->edits[pos], include_source);
+	}
+      else display_edits(cp, tmp, include_source);
+    }
   if ((!tmp) || (FCLOSE(tmp) != 0))
     {
       XEN_ERROR(CANNOT_SAVE,
@@ -4023,6 +4658,28 @@ static XEN g_sample_reader_at_end(XEN obj)
   return(C_TO_XEN_BOOLEAN(sf->at_eof));
 }
 
+static XEN g_inspect_sample_reader(XEN obj) 
+{
+  snd_fd *sf = NULL;
+  char *buf;
+  XEN res;
+  XEN_ASSERT_TYPE(SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, "inspect-sample-reader", "a sample-reader");
+  sf = TO_SAMPLE_READER(obj);
+  buf = (char *)malloc(4096);
+  snprintf(buf, 4096, "snd_fd: %f, %s[%d](%s%s) beg: " OFF_TD ", at " OFF_TD " [frag_pos: " OFF_TD ", first: " OFF_TD ", last: " OFF_TD "], fragment %d",
+	   sf->curval,
+	   sf->cp->sound->filename,
+	   sf->cp->chan,
+	   (sf->direction == 1) ? "forward" : "backward",
+	   (sf->at_eof) ? ", at eof" : "",
+	   sf->initial_samp,
+	   sf->loc, sf->frag_pos, sf->first, sf->last,
+	   sf->cbi);
+  res = C_TO_XEN_STRING(buf);
+  free(buf);
+  return(res);
+}
+
 static XEN g_sample_reader_position(XEN obj) 
 {
   #define H_sample_reader_position "(" S_sample_reader_position " obj) -> current (sample-wise) location of sample-reader"
@@ -4170,10 +4827,10 @@ static XEN g_free_sample_reader(XEN obj)
 typedef float (*g_plug)(float val);
 typedef float (*g_plug_env)(float val, void *envp);
 
-static XEN g_loop_samples(XEN reader, XEN proc, XEN calls, XEN origin, XEN environ)
+static XEN g_loop_samples(XEN reader, XEN proc, XEN s_beg, XEN s_dur, XEN origin, XEN environ)
 {
-  #define H_loop_samples "(" S_loop_samples " reader func calls origin environ) calls (func (reader)) 'calls' times, \
-replacing current data with the function results; origin is the edit-history name for this operation"
+  #define H_loop_samples "(" S_loop_samples " reader func beg dur origin environ) calls (func (reader)) 'dur' times, \
+replacing current data starting at 'beg' with the function results; origin is the edit-history name for this operation"
 
   /* proc here is a pointer to a float procedure that takes a float arg */
   g_plug func = NULL;
@@ -4183,7 +4840,7 @@ replacing current data with the function results; origin is the edit-history nam
   char *ofile;
   snd_state *ss;
   int j = 0, ofd, datumb, err = 0;
-  off_t i, num;
+  off_t i, num = 0, beg = 0;
   snd_fd *sf;
   void *envp = NULL;
   file_info *hdr;
@@ -4191,10 +4848,12 @@ replacing current data with the function results; origin is the edit-history nam
   mus_sample_t *idata;
   XEN_ASSERT_TYPE(SAMPLE_READER_P(reader), reader, XEN_ARG_1, S_loop_samples, "a sample-reader");
   XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(proc), proc, XEN_ARG_2, S_loop_samples, "a wrapped object");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(calls), calls, XEN_ARG_3, S_loop_samples, "an integer");
-  XEN_ASSERT_TYPE(XEN_STRING_P(origin), origin, XEN_ARG_4, S_loop_samples, "a string");
-  num = XEN_TO_C_OFF_T(calls);
+  ASSERT_SAMPLE_TYPE(S_loop_samples, s_beg, XEN_ARG_3);
+  ASSERT_SAMPLE_TYPE(S_loop_samples, s_dur, XEN_ARG_4);
+  XEN_ASSERT_TYPE(XEN_STRING_P(origin), origin, XEN_ARG_5, S_loop_samples, "a string");
+  num = XEN_TO_C_OFF_T(s_dur);
   if (num <= 0) return(XEN_FALSE);
+  beg = XEN_TO_C_OFF_T(s_beg);
   sf = TO_SAMPLE_READER(reader);
   cp = sf->cp;
   ss = cp->state;
@@ -4257,7 +4916,7 @@ replacing current data with the function results; origin is the edit-history nam
   hdr = free_file_info(hdr);
   if (!(ss->stopped_explicitly))
     {
-      file_change_samples(sf->initial_samp, num, ofile, cp, 0, DELETE_ME, LOCK_MIXES, XEN_TO_C_STRING(origin), cp->edit_ctr);
+      file_change_samples(beg, num, ofile, cp, 0, DELETE_ME, LOCK_MIXES, XEN_TO_C_STRING(origin), cp->edit_ctr);
       update_graph(cp);
     }
   else 
@@ -4336,7 +4995,7 @@ static XEN g_undo(XEN ed_n, XEN snd_n, XEN chn_n) /* opt ed_n */
     undo_edit_with_sync(cp, 
 			XEN_TO_C_INT(ed_n));
   else undo_edit_with_sync(cp, 1);
-  return(XEN_TRUE);
+  return(ed_n);
 }
 
 static XEN g_redo(XEN ed_n, XEN snd_n, XEN chn_n) /* opt ed_n */
@@ -4355,7 +5014,7 @@ static XEN g_redo(XEN ed_n, XEN snd_n, XEN chn_n) /* opt ed_n */
     redo_edit_with_sync(cp, 
 			XEN_TO_C_INT(ed_n));
   else redo_edit_with_sync(cp, 1);
-  return(XEN_TRUE);
+  return(ed_n);
 }
 
 void as_one_edit(chan_info *cp, int one_edit, char *one_edit_origin) /* origin copied here */
@@ -4651,7 +5310,7 @@ static XEN g_sample(XEN samp_n, XEN snd_n, XEN chn_n, XEN pos_n)
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(pos_n), pos_n, XEN_ARG_4, S_sample, "a number");
   ASSERT_CHANNEL(S_sample, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_sample);
-  return(C_TO_XEN_DOUBLE(chn_sample(XEN_TO_C_OFF_T_OR_ELSE(samp_n, cp->cursor), 
+  return(C_TO_XEN_DOUBLE(chn_sample(XEN_TO_C_OFF_T_OR_ELSE(samp_n, CURSOR(cp)), 
 				    cp, 
 				    to_c_edit_position(cp, pos_n, S_sample, 4))));
 
@@ -4669,7 +5328,7 @@ static XEN g_set_sample(XEN samp_n, XEN val, XEN snd_n, XEN chn_n, XEN edpos)
   cp = get_cp(snd_n, chn_n, "set! " S_sample);
   pos = to_c_edit_position(cp, edpos, "set! " S_sample, 5);
   ival[0] = MUS_FLOAT_TO_SAMPLE(XEN_TO_C_DOUBLE(val));
-  change_samples(XEN_TO_C_OFF_T_OR_ELSE(samp_n, cp->cursor), 
+  change_samples(XEN_TO_C_OFF_T_OR_ELSE(samp_n, CURSOR(cp)), 
 		 1, ival, cp, LOCK_MIXES, "set! " S_sample, pos);
   update_graph(cp);
   return(val);
@@ -4986,7 +5645,7 @@ inserts channel 'file-chan' of 'file' (or all chans if file-chan not given) into
     }
   if (XEN_NUMBER_P(ubeg))
     beg = XEN_TO_C_OFF_T_OR_ELSE(ubeg, 0);
-  else beg = cp->cursor;
+  else beg = CURSOR(cp);
   if (XEN_INTEGER_P(file_chn))
     {
       fchn = XEN_TO_C_INT(file_chn);
@@ -5034,16 +5693,13 @@ static XEN g_delete_sample(XEN samp_n, XEN snd_n, XEN chn_n, XEN edpos)
   cp = get_cp(snd_n, chn_n, S_delete_sample);
   samp = XEN_TO_C_OFF_T_OR_ELSE(samp_n, 0);
   pos = to_c_edit_position(cp, edpos, S_delete_sample, 4);
-  if ((samp >= 0) && (samp <= CURRENT_SAMPLES(cp)))
-    {
-      delete_samples(samp, 1, cp, S_delete_sample, pos);
-      update_graph(cp);
-      return(XEN_TRUE);
-    }
-  XEN_ERROR(NO_SUCH_SAMPLE,
-	    XEN_LIST_4(C_TO_XEN_STRING(S_delete_sample),
-		       samp_n,
-		       snd_n, chn_n));
+  if ((samp < 0) || (samp > CURRENT_SAMPLES(cp)))
+    XEN_ERROR(NO_SUCH_SAMPLE,
+	      XEN_LIST_4(C_TO_XEN_STRING(S_delete_sample),
+			 samp_n,
+			 snd_n, chn_n));
+  delete_samples(samp, 1, cp, S_delete_sample, pos);
+  update_graph(cp);
   return(samp_n);
 }
 
@@ -5060,7 +5716,7 @@ static XEN g_delete_samples_1(XEN samp_n, XEN samps, XEN snd_n, XEN chn_n, const
 		 XEN_TO_C_OFF_T_OR_ELSE(samps, 0),
 		 cp, origin, pos);
   update_graph(cp);
-  return(XEN_TRUE);
+  return(samp_n);
 }
 
 static XEN g_delete_samples(XEN samp_n, XEN samps, XEN snd_n, XEN chn_n, XEN edpos)
@@ -5193,15 +5849,16 @@ XEN_NARGIFY_1(g_previous_sample_w, g_previous_sample)
 XEN_NARGIFY_1(g_free_sample_reader_w, g_free_sample_reader)
 XEN_NARGIFY_1(g_sample_reader_home_w, g_sample_reader_home)
 XEN_NARGIFY_1(g_sample_reader_position_w, g_sample_reader_position)
+XEN_NARGIFY_1(g_inspect_sample_reader_w, g_inspect_sample_reader)
 XEN_NARGIFY_1(g_sf_p_w, g_sf_p)
 XEN_NARGIFY_1(g_sample_reader_at_end_w, g_sample_reader_at_end)
-XEN_ARGIFY_5(g_loop_samples_w, g_loop_samples)
+XEN_ARGIFY_6(g_loop_samples_w, g_loop_samples)
 XEN_ARGIFY_3(g_save_edit_history_w, g_save_edit_history)
 XEN_ARGIFY_3(g_edit_fragment_w, g_edit_fragment)
 XEN_ARGIFY_3(g_undo_w, g_undo)
 XEN_ARGIFY_3(g_redo_w, g_redo)
 XEN_ARGIFY_2(g_as_one_edit_w, g_as_one_edit)
-XEN_ARGIFY_2(g_display_edits_w, g_display_edits)
+XEN_ARGIFY_4(g_display_edits_w, g_display_edits)
 XEN_ARGIFY_3(g_edit_tree_w, g_edit_tree)
 XEN_ARGIFY_4(g_delete_sample_w, g_delete_sample)
 XEN_ARGIFY_5(g_delete_samples_w, g_delete_samples)
@@ -5231,6 +5888,7 @@ XEN_ARGIFY_9(g_set_samples_w, g_set_samples)
 #define g_free_sample_reader_w g_free_sample_reader
 #define g_sample_reader_home_w g_sample_reader_home
 #define g_sample_reader_position_w g_sample_reader_position
+#define g_inspect_sample_reader_w g_inspect_sample_reader
 #define g_sf_p_w g_sf_p
 #define g_sample_reader_at_end_w g_sample_reader_at_end
 #define g_loop_samples_w g_loop_samples
@@ -5493,14 +6151,15 @@ void g_init_edits(void)
   XEN_DEFINE_PROCEDURE(S_sample_reader_p,           g_sf_p_w, 1, 0, 0,                      H_sf_p);
   XEN_DEFINE_PROCEDURE(S_sample_reader_at_end_p,    g_sample_reader_at_end_w, 1, 0, 0,      H_sample_reader_at_end);
   XEN_DEFINE_PROCEDURE(S_sample_reader_position,    g_sample_reader_position_w, 1, 0, 0,    H_sample_reader_position);
-  XEN_DEFINE_PROCEDURE(S_loop_samples,              g_loop_samples_w, 4, 1, 0,              H_loop_samples);
+  XEN_DEFINE_PROCEDURE("inspect-sample-reader",     g_inspect_sample_reader_w, 1, 0, 0,     "internal debugging function");
+  XEN_DEFINE_PROCEDURE(S_loop_samples,              g_loop_samples_w, 5, 1, 0,              H_loop_samples);
 
   XEN_DEFINE_PROCEDURE(S_save_edit_history,         g_save_edit_history_w, 1, 2, 0,         H_save_edit_history);
   XEN_DEFINE_PROCEDURE(S_edit_fragment,             g_edit_fragment_w, 0, 3, 0,             H_edit_fragment);
   XEN_DEFINE_PROCEDURE(S_undo,                      g_undo_w, 0, 3, 0,                      H_undo);
   XEN_DEFINE_PROCEDURE(S_redo,                      g_redo_w, 0, 3, 0,                      H_redo);
   XEN_DEFINE_PROCEDURE(S_as_one_edit,               g_as_one_edit_w, 1, 1, 0,               H_as_one_edit);
-  XEN_DEFINE_PROCEDURE(S_display_edits,             g_display_edits_w, 0, 2, 0,             H_display_edits);
+  XEN_DEFINE_PROCEDURE(S_display_edits,             g_display_edits_w, 0, 4, 0,             H_display_edits);
   XEN_DEFINE_PROCEDURE(S_edit_tree,                 g_edit_tree_w, 0, 3, 0,                 H_edit_tree);
 
   XEN_DEFINE_PROCEDURE(S_delete_sample,             g_delete_sample_w, 1, 3, 0,             H_delete_sample);
@@ -5517,10 +6176,10 @@ void g_init_edits(void)
   XEN_DEFINE_PROCEDURE(S_scale_sound_to,            g_scale_sound_to_w, 1, 4, 0,            H_scale_sound_to);
 
   /* semi-internal functions (restore-state) */
-  XEN_DEFINE_PROCEDURE("section-scale-by",           g_scale_sound_by_w, 1, 5, 0,           "internal scaling function");
-  XEN_DEFINE_PROCEDURE(S_change_samples_with_origin, g_change_samples_with_origin_w, 4, 3, 0, "");
-  XEN_DEFINE_PROCEDURE(S_delete_samples_with_origin, g_delete_samples_with_origin_w, 3, 3, 0, "");
-  XEN_DEFINE_PROCEDURE(S_insert_samples_with_origin, g_insert_samples_with_origin_w, 4, 3, 0, "");
+  XEN_DEFINE_PROCEDURE("section-scale-by",           g_scale_sound_by_w, 1, 5, 0,           "internal scaling function used in save-state");
+  XEN_DEFINE_PROCEDURE(S_change_samples_with_origin, g_change_samples_with_origin_w, 4, 3, 0, "internal function used in save-state");
+  XEN_DEFINE_PROCEDURE(S_delete_samples_with_origin, g_delete_samples_with_origin_w, 3, 3, 0, "internal function used in save-state");
+  XEN_DEFINE_PROCEDURE(S_insert_samples_with_origin, g_insert_samples_with_origin_w, 4, 3, 0, "internal function used in save-state");
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_sample, g_sample_w, H_sample,
 					    "set-" S_sample, g_set_sample_w, g_set_sample_reversed, 0, 4, 0, 5);
@@ -5567,3 +6226,18 @@ into some arbitrary place in the tree again?  Would pasting it in
 be analogous to take a certain stage of the edit-history and
 append the rest?
 */
+
+/* 
+ * Another possibility: mix as virtual op, ED_MIX would have two readers etc.
+ *  this could be done perhaps with ptree-channel: channel-amp-envs for mixed data peaks,
+ *    init pos: set up reader for mixed data (or peak-envs)
+ *    need mix-amp etc (mix-speed is problematic)
+ *    release of mix sample-reader needs to know when closure is unprotected (snd-unprotect-hook? a guardian? snd-protect|unprotect?)
+ *    if the last, how to know when to unprotect -- need to know that a given edit list (ptree loc?) is being flushed.
+ *    for "small-enough" mixes, the data could be stored in the vct along with a current-loc ptr
+ *    how to tie into existing mix-tag support?
+ */
+
+/* and ED_REVERSE -- split using pos, no higher cases, peak-env needs check of trailing junk at end
+ *  this is implemented via xen-channel in extsnd.html (does that code work for sections?)
+ */

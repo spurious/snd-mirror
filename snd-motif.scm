@@ -2387,4 +2387,3 @@ Reverb-feedback sets the scaler on the feedback.\n\
 ;;; SOMEDAY: radar scope style region cue list
 ;;; SOMEDAY: spatial envelope dialog
 ;;; SOMEDAY: spectral edit dialog
-

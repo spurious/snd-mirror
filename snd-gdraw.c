@@ -502,6 +502,12 @@ void allocate_color_map(snd_state *ss, int colormap)
 
 /* -------- color browser -------- */
 
+static XEN color_hook;
+static void check_color_hook(void)
+{
+  run_hook(color_hook, XEN_EMPTY_LIST, S_color_hook);
+}
+
 typedef struct {
   GtkWidget *dialog;
   GtkWidget *list; 
@@ -525,6 +531,7 @@ static void invert_color_callback(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
   in_set_color_inverted(ss, GTK_TOGGLE_BUTTON(w)->active);
+  check_color_hook();
   for_each_chan(ss, update_graph_setting_fft_changed);
 }
 
@@ -532,6 +539,7 @@ void set_color_inverted(snd_state *ss, int val)
 {
   in_set_color_inverted(ss, val);
   if (ccd) set_toggle_button(ccd->invert, FALSE, FALSE, (gpointer)ss);
+  check_color_hook();
   if (!(ss->graph_hook_active)) for_each_chan(ss, update_graph_setting_fft_changed);
 }
 
@@ -544,6 +552,7 @@ static void scale_color_callback(GtkAdjustment *adj, gpointer context)
     val = (Float)(scale_val + 1) / 51.0;
   else val = 1.0 + (Float)(scale_val - 50) * 20.0;
   in_set_color_scale(ss, val);
+  check_color_hook();
   for_each_chan(ss, update_graph_setting_fft_changed);
 }
 
@@ -565,6 +574,7 @@ void set_color_scale(snd_state *ss, Float val)
 {
   in_set_color_scale(ss, val);
   if (ccd) reflect_color_scale(color_scale(ss));
+  check_color_hook();
   if (!(ss->graph_hook_active)) for_each_chan(ss, update_graph_setting_fft_changed);
 }
 
@@ -586,12 +596,14 @@ static void list_color_callback(GtkTreeSelection *selection, gpointer *gp)
 	for_each_chan(ss, update_graph_setting_fft_changed);
 	return;
       }
+  check_color_hook();
 }
 
 void set_color_map(snd_state *ss, int val)
 {
   in_set_color_map(ss, val);
   if ((ccd) && (val >= 0)) sg_list_select(ccd->list, val);
+  check_color_hook();
   if (!(ss->graph_hook_active)) for_each_chan(ss, update_graph_setting_fft_changed);
 }
 
@@ -599,6 +611,7 @@ static void cutoff_color_callback(GtkAdjustment *adj, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
   in_set_color_cutoff(ss, adj->value);
+  check_color_hook();
   for_each_chan(ss, update_graph_setting_fft_changed);
 }
 
@@ -606,6 +619,7 @@ void set_color_cutoff(snd_state *ss, Float val)
 {
   in_set_color_cutoff(ss, val);
   if (ccd) gtk_adjustment_set_value(GTK_ADJUSTMENT(ccd->cutoff_adj), val);
+  check_color_hook();
   if (!(ss->graph_hook_active)) for_each_chan(ss, update_graph_setting_fft_changed);
 }
 
@@ -768,6 +782,12 @@ GtkWidget *start_color_dialog(snd_state *ss, int width, int height)
 
 /* -------- orientation browser -------- */
 
+static XEN orientation_hook;
+static void check_orientation_hook(void)
+{
+  run_hook(orientation_hook, XEN_EMPTY_LIST, S_orientation_hook);
+}
+
 typedef struct {
   GtkWidget *dialog;
   GtkWidget *ax, *ay, *az, *sx, *sy, *sz, *hop, *cut; 
@@ -787,6 +807,7 @@ static void ax_orientation_callback(GtkAdjustment *adj, gpointer context)
   ss = od->state;
   in_set_spectro_x_angle(ss, (Float)(adj->value));
   chans_field(ss, FCP_X_ANGLE, (Float)(adj->value));
+  check_orientation_hook();
   for_each_chan(ss, update_graph);
 }
 
@@ -795,6 +816,7 @@ void set_spectro_x_angle(snd_state *ss, Float val)
   in_set_spectro_x_angle(ss, val);
   if (oid) gtk_adjustment_set_value(GTK_ADJUSTMENT(oid->ax_adj), val);
   chans_field(ss, FCP_X_ANGLE, val);
+  check_orientation_hook();
   if (!(ss->graph_hook_active)) for_each_chan(ss, update_graph);
 }
 
@@ -805,6 +827,7 @@ static void ay_orientation_callback(GtkAdjustment *adj, gpointer context)
   ss = od->state;
   in_set_spectro_y_angle(ss, (Float)(adj->value));
   chans_field(ss, FCP_Y_ANGLE, (Float)(adj->value));
+  check_orientation_hook();
   for_each_chan(ss, update_graph);
 }
 
@@ -813,6 +836,7 @@ void set_spectro_y_angle(snd_state *ss, Float val)
   in_set_spectro_y_angle(ss, val);
   if (oid) gtk_adjustment_set_value(GTK_ADJUSTMENT(oid->ay_adj), val);
   chans_field(ss, FCP_Y_ANGLE, val);
+  check_orientation_hook();
   if (!(ss->graph_hook_active)) for_each_chan(ss, update_graph);
 }
 
@@ -823,6 +847,7 @@ static void az_orientation_callback(GtkAdjustment *adj, gpointer context)
   ss = od->state;
   in_set_spectro_z_angle(ss, (Float)(adj->value));
   chans_field(ss, FCP_Z_ANGLE, (Float)(adj->value));
+  check_orientation_hook();
   for_each_chan(ss, update_graph);
 }
 
@@ -831,6 +856,7 @@ void set_spectro_z_angle(snd_state *ss, Float val)
   in_set_spectro_z_angle(ss, val);
   if (oid) gtk_adjustment_set_value(GTK_ADJUSTMENT(oid->az_adj), val);
   chans_field(ss, FCP_Z_ANGLE, val);
+  check_orientation_hook();
   if (!(ss->graph_hook_active)) for_each_chan(ss, update_graph);
 }
 
@@ -841,6 +867,7 @@ static void sx_orientation_callback(GtkAdjustment *adj, gpointer context)
   ss = od->state;
   in_set_spectro_x_scale(ss, (Float)(adj->value));
   chans_field(ss, FCP_X_SCALE, (Float)(adj->value));
+  check_orientation_hook();
   for_each_chan(ss, update_graph);
 }
 
@@ -849,6 +876,7 @@ void set_spectro_x_scale(snd_state *ss, Float val)
   in_set_spectro_x_scale(ss, val);
   if (oid) gtk_adjustment_set_value(GTK_ADJUSTMENT(oid->sx_adj), val);
   chans_field(ss, FCP_X_SCALE, val);
+  check_orientation_hook();
   if (!(ss->graph_hook_active)) for_each_chan(ss, update_graph);
 }
 
@@ -859,6 +887,7 @@ static void sy_orientation_callback(GtkAdjustment *adj, gpointer context)
   ss = od->state;
   in_set_spectro_y_scale(ss, (Float)(adj->value));
   chans_field(ss, FCP_Y_SCALE, (Float)(adj->value));
+  check_orientation_hook();
   for_each_chan(ss, update_graph);
 }
 
@@ -867,6 +896,7 @@ void set_spectro_y_scale(snd_state *ss, Float val)
   in_set_spectro_y_scale(ss, val);
   if (oid) gtk_adjustment_set_value(GTK_ADJUSTMENT(oid->sy_adj), val);
   chans_field(ss, FCP_Y_SCALE, val);
+  check_orientation_hook();
   if (!(ss->graph_hook_active)) for_each_chan(ss, update_graph);
 }
 
@@ -877,6 +907,7 @@ static void sz_orientation_callback(GtkAdjustment *adj, gpointer context)
   ss = od->state;
   in_set_spectro_z_scale(ss, (Float)(adj->value));
   chans_field(ss, FCP_Z_SCALE, (Float)(adj->value));
+  check_orientation_hook();
   for_each_chan(ss, update_graph);
 }
 
@@ -885,6 +916,7 @@ void set_spectro_z_scale(snd_state *ss, Float val)
   in_set_spectro_z_scale(ss, val);
   if (oid) gtk_adjustment_set_value(GTK_ADJUSTMENT(oid->sz_adj), val);
   chans_field(ss, FCP_Z_SCALE, val);
+  check_orientation_hook();
   if (!(ss->graph_hook_active)) for_each_chan(ss, update_graph);
 }
 
@@ -899,6 +931,7 @@ static void hop_orientation_callback(GtkAdjustment *adj, gpointer context)
   val = mus_iclamp(1, (int)(adj->value), 20);
   in_set_spectro_hop(ss, val);
   for_each_chan_1(ss, chans_spectro_hop, (void *)(&val));
+  check_orientation_hook();
   for_each_chan(ss, update_graph);
 }
 
@@ -909,6 +942,7 @@ void set_spectro_hop(snd_state *ss, int val)
       in_set_spectro_hop(ss, val);
       if (oid) gtk_adjustment_set_value(GTK_ADJUSTMENT(oid->hop_adj), val);
       for_each_chan_1(ss, chans_spectro_hop, (void *)(&val));
+      check_orientation_hook();
       if (!(ss->graph_hook_active)) for_each_chan(ss, update_graph);
     }
 }
@@ -920,6 +954,7 @@ static void cut_orientation_callback(GtkAdjustment *adj, gpointer context)
   orientation_info *od = (orientation_info *)context;
   ss = od->state;
   chans_field(ss, FCP_CUTOFF, (Float)(adj->value));
+  check_orientation_hook();
   set_spectro_cutoff_and_redisplay(ss, (Float)(adj->value)); /* calls in_set... */
 } 
 
@@ -928,6 +963,7 @@ void set_spectro_cutoff(snd_state *ss, Float val)
   in_set_spectro_cutoff(ss, val);
   if (oid) gtk_adjustment_set_value(GTK_ADJUSTMENT(oid->cut_adj), val);
   chans_field(ss, FCP_CUTOFF, val);
+  check_orientation_hook();
   if (!(ss->graph_hook_active)) for_each_chan(ss, update_graph_setting_fft_changed);
 }
 
@@ -975,6 +1011,7 @@ void reflect_spectro(snd_state *ss)
       gtk_adjustment_set_value(GTK_ADJUSTMENT(oid->sz_adj), spectro_z_scale(ss));
       gtk_adjustment_set_value(GTK_ADJUSTMENT(oid->hop_adj), (spectro_hop(ss) > 100) ? 100 : (spectro_hop(ss)));
       gtk_adjustment_set_value(GTK_ADJUSTMENT(oid->cut_adj), (spectro_cutoff(ss)));
+      check_orientation_hook();
     }
 }
 
@@ -1343,4 +1380,15 @@ int set_with_gl(snd_state *ss, int val)
   for_each_chan(ss, update_graph);
 #endif
   return(with_gl(ss));
+}
+
+void g_init_gxdraw(void)
+{
+  #define H_orientation_hook S_orientation_hook " () called whenever one of the variables associated with the \
+orientation dialog changes"
+  #define H_color_hook S_color_hook " () called whenever one of the variables associated with the \
+color dialog changes"
+
+  XEN_DEFINE_HOOK(orientation_hook, S_orientation_hook, 0, H_orientation_hook);
+  XEN_DEFINE_HOOK(color_hook, S_color_hook, 0, H_color_hook);
 }

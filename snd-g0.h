@@ -28,15 +28,12 @@
 
 #define NUM_COLORMAPS 16
 
-#define BACKGROUND_TYPE gint
 #define BACKGROUND_QUIT FALSE
 #define BACKGROUND_CONTINUE TRUE
-#define BACKGROUND_FUNCTION_TYPE gint
 #define BACKGROUND_REMOVE(func) gtk_idle_remove(func)
 #define BACKGROUND_ADD(ss, func, data) gtk_idle_add(func, (gpointer)data)
 
-#define GUI_POINTER gpointer
-#define GUI_WIDGET GtkWidget*
+#define widget_t GtkWidget*
 #define XEN_WRAP_WIDGET(Value)   ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkWidget_"), C_TO_XEN_ULONG((unsigned long)Value)) : XEN_FALSE)
 #define XEN_WRAP_WINDOW(Value)   ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkWindow_"), C_TO_XEN_ULONG((unsigned long)Value)) : XEN_FALSE)
 #define XEN_WRAP_GC(Value)       XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkGC_"), C_TO_XEN_ULONG((unsigned long)Value))
@@ -50,8 +47,12 @@
                                   (strcmp("GdkColor_", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
 #define XEN_WRAP_EVENT(Value)    ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkEvent_"), C_TO_XEN_ULONG((unsigned long)Value)) : XEN_FALSE)
 
+#define Cessator gint
+#define Cessate gint
+#define Indicium gpointer
 #define Locus gint16
 #define Latus guint16
+#define Tempus guint32
 
 typedef struct {
   GdkGC *gc;
@@ -64,8 +65,8 @@ typedef struct {
   /* we need two versions of each GC because the selected channel's colors can be different from the unselected channels' */
   GtkWidget **chan_widgets;
   GtkObject **chan_adjs;
-  BACKGROUND_FUNCTION_TYPE fft_in_progress;
-  BACKGROUND_FUNCTION_TYPE amp_env_in_progress;
+  Cessator fft_in_progress;
+  Cessator amp_env_in_progress;
   void *amp_env_state;
   axis_context *ax;
   int selected;
@@ -74,7 +75,7 @@ typedef struct {
 typedef struct {
   GdkPixmap *file_pix;
   GdkBitmap *file_mask;
-  BACKGROUND_FUNCTION_TYPE apply_in_progress;
+  Cessator apply_in_progress;
   GtkWidget **snd_widgets;
   GtkObject **snd_adjs;
   GtkWidget *tab;
@@ -162,8 +163,6 @@ typedef struct {
   #define snd_MetaMask (GDK_MOD1_MASK | GDK_MOD4_MASK)
 #endif
 
-#define TIME_TYPE guint32
-
 #define MAIN_SHELL(a) (a->sgx)->mainshell
 #define MAIN_WINDOW(a) (a->sgx)->mainwindow
 #define MAIN_PANE(a) (a->sgx)->mainpane
@@ -171,7 +170,7 @@ typedef struct {
 #define SOUND_PANE_BOX(a) (a->sgx)->soundpanebox
 #define AXIS_NUMBERS_FONT(a) ((state_context *)((snd_state *)a)->sgx)->axis_numbers_fnt
 #define AXIS_LABEL_FONT(a) ((state_context *)((snd_state *)a)->sgx)->axis_label_fnt
-#define COLOR_TYPE GdkColor *
+#define color_t GdkColor *
 #define KEY_TO_NAME(key) gdk_keyval_name(key)
 
 /* #define GUI_CURRENT_TIME(ss) GDK_CURRENT_TIME */

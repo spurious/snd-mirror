@@ -231,7 +231,7 @@ void reactivate_selection(chan_info *cp, off_t beg, off_t end)
   if (beg > end) end = beg;
   ed->selection_beg = beg;
   ed->selection_end = end;
-  cp->selection_visible = 0;
+  cp->selection_visible = FALSE;
   ed->selection_maxamp = -1.0;
   reflect_edit_with_selection_in_menu();
 }
@@ -332,7 +332,7 @@ void add_selection_or_region(snd_state *ss, int reg, chan_info *cp, const char *
   if (cp) 
     {
       if ((reg == 0) && (selection_is_active()))
-	mix_selection(ss, cp, cp->cursor, origin);
+	mix_selection(ss, cp, CURSOR(cp), origin);
       else add_region(reg, cp, origin);
     }
 }
@@ -375,7 +375,7 @@ void insert_selection_or_region(snd_state *ss, int reg, chan_info *cp, const cha
   if (cp) 
     {
       if ((reg == 0) && (selection_is_active()))
-	insert_selection(ss, cp, cp->cursor, origin);
+	insert_selection(ss, cp, CURSOR(cp), origin);
       else paste_region(reg, cp, origin);
     }
 }
@@ -460,7 +460,7 @@ static void cp_redraw_selection(chan_info *cp, void *with_fft)
 		     (int)(ap->y_axis_y0 - ap->y_axis_y1));
       cp->old_x0 = x0;
       cp->old_x1 = x1;
-      cp->selection_visible = 1;
+      cp->selection_visible = TRUE;
     }
   if ((with_fft) && (cp->graph_transform_p) && (cp_has_selection(cp, NULL)) && (!(chan_fft_in_progress(cp))))
     {
@@ -484,7 +484,7 @@ void display_selection(chan_info *cp)
 int make_region_from_selection(void)
 {
   off_t *ends = NULL;
-  int i, happy = 0, id = -1;
+  int i, happy = FALSE, id = -1;
   sync_info *si;
   if (!(selection_is_active())) return(-1);
   si = selection_sync();
@@ -492,7 +492,7 @@ int make_region_from_selection(void)
   for (i = 0; i < si->chans; i++) 
     {
       ends[i] = selection_end(si->cps[i]);
-      if (ends[i] > si->begs[i]) happy = 1;
+      if (ends[i] > si->begs[i]) happy = TRUE;
       /* C-space followed by mouse click causes a bogus selection-creation event */
     }
   if (happy) id = define_region(si, ends);
@@ -525,7 +525,7 @@ int select_all(chan_info *cp)
 /* ---------------- selection mouse motion ---------------- */
 
 static int last_selection_x = 0;
-static BACKGROUND_FUNCTION_TYPE watch_selection_button = 0;
+static Cessator watch_selection_button = 0;
 
 void cancel_selection_watch(void)
 {
@@ -554,7 +554,7 @@ static void move_selection_1(chan_info *cp, int x)
   redraw_selection();
 }
 
-static BACKGROUND_TYPE WatchSelection(GUI_POINTER cp)
+static Cessate WatchSelection(Indicium cp)
 {
   if (watch_selection_button)
     {

@@ -50,14 +50,14 @@ chan_info *mix_channel_from_id(int mix_id)
 }
 
 
-static void color_one_mix_from_id(int mix_id, COLOR_TYPE color)
+static void color_one_mix_from_id(int mix_id, color_t color)
 {
   mix_info *md;
   md = md_from_id(mix_id);
   if (md) md->wg->color = color;
 }
 
-static COLOR_TYPE mix_to_color_from_id(int mix_id)
+static color_t mix_to_color_from_id(int mix_id)
 {
   mix_info *md;
   snd_state *ss;
@@ -129,7 +129,7 @@ static console_state *make_console_state(int chans, int edit_ctr, off_t beg, off
   cs->beg = beg;
   cs->end = end;
   cs->len = end - beg + 1;
-  cs->locked = 0;
+  cs->locked = FALSE;
   cs->mix_edit_ctr = (int *)CALLOC(chans, sizeof(int));
   cs->scalers = (Float *)CALLOC(chans, sizeof(Float));
   cs->amp_envs = NULL; 
@@ -230,12 +230,7 @@ static void release_pending_consoles(mix_info *md)
 
 /* -------- mix_info (state of mix) -------- */
 
-#ifdef DEBUGGING_REALLOC
-  #define MIX_INFO_INCREMENT 2
-#else
-  #define MIX_INFO_INCREMENT 16
-#endif
-
+#define MIX_INFO_INCREMENT 16
 static mix_info **mix_infos = NULL;
 static int mix_infos_size = 0;
 static int mix_infos_ctr = 0;
@@ -442,7 +437,7 @@ snd_info *make_mix_readable_from_id(int id) {return(make_mix_readable(md_from_id
 static int mix_input_amp_env_usable(mix_info *md, Float samples_per_pixel) 
 {
   env_info *ep = NULL;
-  int i, happy = 1;
+  int i, happy = TRUE;
   chan_info *cp;
   snd_info *sp;
   int samps_per_bin = 0;
@@ -1107,18 +1102,14 @@ void mix_complete_file_at_cursor(snd_info *sp, char *str, const char *origin, in
       fullname = mus_expand_filename(str);
       clear_minibuffer(sp);
       cp = any_selected_channel(sp);
-      err = mix_complete_file(sp, cp->cursor, fullname, origin, with_tag);
+      err = mix_complete_file(sp, CURSOR(cp), fullname, origin, with_tag);
       if (err == -2) 
 	report_in_minibuffer_and_save(sp, "can't mix file: %s, %s ", str, strerror(errno));
       if (fullname) FREE(fullname);
     }
 }
 
-#ifdef DEBUGGING_REALLOC
-  #define CONSOLE_INCREMENT 2
-#else
-  #define CONSOLE_INCREMENT 8
-#endif
+#define CONSOLE_INCREMENT 8
 
 static void extend_console_list(mix_info *md)
 {
@@ -1352,7 +1343,6 @@ static void remix_file(mix_info *md, const char *origin)
   cs->orig = new_beg + beg;
   cs->beg = cs->orig;
   cs->end = cs->beg + cs->len - 1;
-
   md->states[md->curcons] = cs;
   make_current_console(md);
 
@@ -1692,13 +1682,13 @@ static void make_temporary_graph(chan_info *cp, mix_info *md, console_state *cs)
 	{
 	  incr = 1.0 / samples_per_pixel;
 	  initial_x = x_start;
-	  widely_spaced = 1;
+	  widely_spaced = TRUE;
 	}
       else
 	{
 	  incr = (double)1.0 / cur_srate;
 	  initial_x = start_time;
-	  widely_spaced = 0;
+	  widely_spaced = FALSE;
 	}
       for (j = 0, i = lo, x = initial_x; i <= hi; i++, j++, x += incr)
 	{
@@ -1923,7 +1913,7 @@ static void draw_mix_tag(mix_info *md)
   md->tagy = md->y;
 }
 
-static BACKGROUND_FUNCTION_TYPE watch_mix_proc = 0;    /* work proc if mouse outside graph causing axes to move */
+static Cessator watch_mix_proc = 0;    /* work proc if mouse outside graph causing axes to move */
 
 static int display_mix_waveform(chan_info *cp, mix_info *md, console_state *cs, int draw)
 {
@@ -1994,13 +1984,13 @@ static int display_mix_waveform(chan_info *cp, mix_info *md, console_state *cs, 
 	{
 	  incr = 1.0 / samples_per_pixel;
 	  initial_x = x_start;
-	  widely_spaced = 1;
+	  widely_spaced = TRUE;
 	}
       else
 	{
 	  incr = (double)1.0 /cur_srate;
 	  initial_x = start_time;
-	  widely_spaced = 0;
+	  widely_spaced = FALSE;
 	}
       x = initial_x + (incr * (newbeg - lo));
       for (j = 0, i = newbeg; i <= newend; i++, j++, x += incr)
@@ -2096,7 +2086,7 @@ static int display_mix_waveform(chan_info *cp, mix_info *md, console_state *cs, 
 
 /* -------------------------------- moving mix tags -------------------------------- */
 
-static int mix_dragged = 0;
+static int mix_dragged = FALSE;
 
 static int clear_mix_tags_1(mix_info *md, void *ignore)
 {
@@ -2115,7 +2105,7 @@ static void move_mix(mix_info *md);
 void move_mix_tag(int mix_tag, int x)
 {
   mix_info *md;
-  mix_dragged = 1;
+  mix_dragged = TRUE;
   md = md_from_id(mix_tag);
   md->x = x;
   move_mix(md);
@@ -2135,7 +2125,7 @@ void finish_moving_mix_tag(int mix_tag, int x)
       BACKGROUND_REMOVE(watch_mix_proc);
       watch_mix_proc = 0;
     }
-  mix_dragged = 0;
+  mix_dragged = FALSE;
   ms = md->wg;
   ms->lastpj = 0;
   if (cs->beg == cs->orig) return;
@@ -2186,7 +2176,7 @@ void start_mix_drag(int mix_id)
 
 /* for axis movement (as in mark drag off screen) */
 
-static BACKGROUND_TYPE watch_mix(GUI_POINTER m)
+static Cessate watch_mix(Indicium m)
 {
   if (watch_mix_proc)
     {
@@ -2202,7 +2192,7 @@ static void move_mix(mix_info *md)
   axis_info *ap;
   chan_info *cp;
   console_state *cs;
-  int nx, x, updated = 0;
+  int nx, x, updated = FALSE;
   off_t samps, samp;
   cp = md->cp;
   if (!cp) return;
@@ -2218,7 +2208,7 @@ static void move_mix(mix_info *md)
 	  if ((x > ap->x_axis_x1) && (ap->x1 == ap->xmax)) return;
 	}
       nx = move_axis(cp, ap, x); /* calls update_graph eventually (in snd-chn.c reset_x_display) */
-      updated = 1;
+      updated = TRUE;
       if ((mix_dragged) && (!watch_mix_proc))
 	watch_mix_proc = BACKGROUND_ADD(ss, watch_mix, md);
     }
@@ -2449,13 +2439,13 @@ static int lock_mixes(mix_info *md, void *ptr)
 	  if (md->states[md->curcons]) free_console_state(md->states[md->curcons]);
 	  md->states[md->curcons] = (console_state *)CALLOC(1, sizeof(console_state));
 	  cs = md->states[md->curcons];
-	  cs->locked = 1;
+	  cs->locked = TRUE;
 	  ss = get_global_state();
 	  if (ss->selected_mix == md->id) ss->selected_mix = INVALID_MIX_ID;
 	  cp = md->cp;
 	  cs->edit_ctr = cp->edit_ctr;
 	  cs = md->current_cs;
-	  cs->locked = 1;
+	  cs->locked = TRUE;
 	}
     }
   return(0);
@@ -2564,6 +2554,7 @@ static int ripple_mixes_1(mix_info *md, void *ptr)
       ncs->end = ncs->beg + cs->len - 1;
       if (cp->show_mix_waveforms) erase_mix_waveform(md);
       extend_console_list(md);
+      if (md->states[md->curcons]) free_console_state(md->states[md->curcons]);
       md->states[md->curcons] = ncs;
       make_current_console(md);
       if (cp->show_mix_waveforms) draw_mix_waveform(md);
@@ -2637,11 +2628,11 @@ void goto_mix(chan_info *cp, int count)
 	    }
 	}
       qsort((void *)css, j, sizeof(off_t), compare_consoles);
-      /* now find where we are via cp->cursor and go forward or back as per count */
+      /* now find where we are via CURSOR(cp) and go forward or back as per count */
       if (count > 0)
 	{
 	  for (i = 0; i < j; i++)
-	    if (css[i] > cp->cursor)
+	    if (css[i] > CURSOR(cp))
 	      {
 		count--;
 		if (count == 0)
@@ -2650,13 +2641,13 @@ void goto_mix(chan_info *cp, int count)
 		    break;
 		  }
 	      }
-	  if ((count > 0) && (cp->cursor < css[j - 1]))
+	  if ((count > 0) && (CURSOR(cp) < css[j - 1]))
 	    cursor_moveto(cp, css[j - 1]);
 	}
       else
 	{
 	  for (i = j - 1; i >= 0; i--)
-	    if (css[i] < cp->cursor)
+	    if (css[i] < CURSOR(cp))
 	      {
 		count++;
 		if (count == 0)
@@ -2665,7 +2656,7 @@ void goto_mix(chan_info *cp, int count)
 		    break;
 		  }
 	      }
-	  if ((count < 0) && (cp->cursor > css[0]))
+	  if ((count < 0) && (CURSOR(cp) > css[0]))
 	    cursor_moveto(cp, css[0]);
 	}
       FREE(css);
@@ -2690,7 +2681,7 @@ int mix_ok_and_unlocked(int n)
   md = md_from_id(n); 
   return((md) && 
 	 (md->current_cs) &&
-	 (md->current_cs->locked == 0) &&
+	 (md->current_cs->locked == FALSE) &&
 	 (md->states) && 
 	 (md->states[0]) && 
 	 (md->cp) &&
@@ -2837,7 +2828,7 @@ static void play_track(snd_state *ss, chan_info **ucps, int chans, int track_num
   track_fd **fds;
   chan_info **cps;
   chan_info *locp;
-  int playfd, i, j, k, n, samps, chan = 0, happy = 0, need_free = 0, format, datum_bytes, outchans, frames;
+  int playfd, i, j, k, n, samps, chan = 0, happy = FALSE, need_free = FALSE, format, datum_bytes, outchans, frames;
 #if MAC_OSX
   /* TODO: fix OSX play-track/mix to handle mono/22050 correctly */
   float *buf;
@@ -2855,18 +2846,18 @@ static void play_track(snd_state *ss, chan_info **ucps, int chans, int track_num
       chans = active_channels(ss, WITH_VIRTUAL_CHANNELS);
       if (chans == 0) return;
       cps = (chan_info **)CALLOC(chans, sizeof(chan_info *));
-      need_free = 1;
+      need_free = TRUE;
       chan = 0;
       for (i = 0; i < mix_infos_ctr; i++) 
 	if ((mix_ok(i)) && 
 	    (mix_infos[i]->track == track_num))
 	  {
 	    locp = mix_infos[i]->cp;
-	    happy = 0;
+	    happy = FALSE;
 	    for (j = 0; j < chan; j++) 
 	      if (cps[j] == locp) 
 		{
-		  happy = 1; 
+		  happy = TRUE; 
 		  break;
 		}
 	    if (!happy)
@@ -3917,7 +3908,7 @@ static XEN g_forward_mix(XEN count, XEN snd, XEN chn)
   cp = get_cp(snd, chn, S_forward_mix);
   val = XEN_TO_C_INT_OR_ELSE(count, 1); 
   goto_mix(cp, val);
-  return(C_TO_XEN_INT(mix_id_from_channel_position(cp, cp->cursor)));
+  return(C_TO_XEN_INT(mix_id_from_channel_position(cp, CURSOR(cp))));
 }
 
 static XEN g_backward_mix(XEN count, XEN snd, XEN chn) 
@@ -3930,7 +3921,7 @@ static XEN g_backward_mix(XEN count, XEN snd, XEN chn)
   cp = get_cp(snd, chn, S_backward_mix);
   val = -(XEN_TO_C_INT_OR_ELSE(count, 1)); 
   goto_mix(cp, val);
-  return(C_TO_XEN_INT(mix_id_from_channel_position(cp, cp->cursor)));
+  return(C_TO_XEN_INT(mix_id_from_channel_position(cp, CURSOR(cp))));
 }
 
 
@@ -3944,7 +3935,7 @@ If file_chn is omitted, file's channels are mixed until snd runs out of channels
   chan_info *cp = NULL;
   char *name = NULL;
   int chans, id = -1, file_channel;
-  int with_mixer = 1;
+  int with_mixer = TRUE;
   snd_state *ss;
   mix_info *md;
   off_t beg;
@@ -3965,7 +3956,7 @@ If file_chn is omitted, file's channels are mixed until snd runs out of channels
     with_mixer = with_mix_tags(ss);
   else with_mixer = XEN_TO_C_BOOLEAN_OR_TRUE(tag);
   cp = get_cp(snd_n, chn_n, S_mix);
-  beg = XEN_TO_C_OFF_T_OR_ELSE(chn_samp_n, cp->cursor);
+  beg = XEN_TO_C_OFF_T_OR_ELSE(chn_samp_n, CURSOR(cp));
   if (XEN_NOT_BOUND_P(file_chn))
     {
       id = mix_complete_file(any_selected_sound(ss), beg, name, S_mix, with_mixer);
@@ -4310,7 +4301,7 @@ mixes data (a vct object) into snd's channel chn starting at beg; returns the ne
   char *edname = NULL, *newname = NULL;
   snd_fd *sf;
   mus_sample_t *data;
-  int i, len, mix_id = -1, with_mixer = 1;
+  int i, len, mix_id = -1, with_mixer = TRUE;
   XEN_ASSERT_TYPE(VCT_P(obj), obj, XEN_ARG_1, S_mix_vct, "a vct");
   ASSERT_CHANNEL(S_mix_vct, snd, chn, 3);
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg), beg, XEN_ARG_2, S_mix_vct, "an integer");
@@ -4660,24 +4651,3 @@ The hook function argument 'id' is the newly selected mix's id."
   XEN_EVAL_C_STRING("(define mix-sync mix-track)");
 #endif
 }
-
-
-
-/*
-  TODO: fix these bugs:
-    After defining some mix files as members of a Track, I use the
-Reverse Track (from the Mix/Tracks menu) and the main waveform display
-disappears. Delete Track does the same. Also, the mix file graphics
-(with the handles) occasionally disappear during Mix/Track operations.
-Has the relevant code changed recently ?
-
-    If I use the OpenGL Transform display and have the wqveform display
-open at the same time, the Mix/Track functions are affected. For
-instance, Delete All Tracks & Mixes will remove what's in the main
-display but leave the mix files displayed.
-
-  Btw, the OpenGL display is really neat. Is there any way to have it
-respond to realtime input, i.e., create a dynamic waterfall spectral
-display ?
-
-*/

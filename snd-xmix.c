@@ -5,7 +5,7 @@
  */
 
 static Widget mix_panel = NULL;
-static int dragging = 0;
+static int dragging = FALSE;
 static void update_mix_panel(int mix_id);
 
 
@@ -63,8 +63,8 @@ static void speed_drag_callback(Widget w, XtPointer context, XtPointer info)
   snd_state *ss = (snd_state *)context;
   ival = ((XmScrollBarCallbackStruct *)info)->value;
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
-  if (dragging == 0) start_mix_drag(current_mix_id(ss));
-  dragging = 1;
+  if (!dragging) start_mix_drag(current_mix_id(ss));
+  dragging = TRUE;
   change_mix_speed(current_mix_id(ss), exp((Float)(ival - SPEED_SCROLLBAR_MID) / SPEED_SCROLLBAR_BREAK));
 }
 
@@ -73,7 +73,7 @@ static void speed_valuechanged_callback(Widget w, XtPointer context, XtPointer i
   XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)info;
   snd_state *ss = (snd_state *)context;
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
-  dragging = 0;
+  dragging = FALSE;
   change_mix_speed(current_mix_id(ss), exp((Float)(cb->value - SPEED_SCROLLBAR_MID) / SPEED_SCROLLBAR_BREAK));
 }
 
@@ -157,8 +157,8 @@ static void amp_drag_callback(Widget w, XtPointer context, XtPointer info)
   XtVaGetValues(w, XmNuserData, &chan, NULL);
   ival = ((XmScrollBarCallbackStruct *)info)->value;
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
-  if (dragging == 0) start_mix_drag(current_mix_id(ss));
-  dragging = 1;
+  if (!dragging) start_mix_drag(current_mix_id(ss));
+  dragging = TRUE;
   change_mix_amp(current_mix_id(ss), chan, int_amp_to_Float(ival));
 }
 
@@ -169,7 +169,7 @@ static void amp_valuechanged_callback(Widget w, XtPointer context, XtPointer inf
   ival = ((XmScrollBarCallbackStruct *)info)->value;
   XtVaGetValues(w, XmNuserData, &chan, NULL);
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
-  dragging = 0;
+  dragging = FALSE;
   change_mix_amp(current_mix_id(ss), chan, int_amp_to_Float(ival));
 }
 
@@ -435,7 +435,7 @@ mix amp env (if any) is drawn in blue.");
 }
 
 
-static int mix_playing = 0;
+static int mix_playing = FALSE;
 int mix_play_stopped(void) {return(!mix_playing);}
 
 void reflect_mix_play_stop(void)
@@ -446,7 +446,7 @@ void reflect_mix_play_stop(void)
       ss = get_global_state();
       XmChangeColor(w_play, (ss->sgx)->basic_color);
     }
-  mix_playing = 0;
+  mix_playing = FALSE;
 }
 
 static void mix_panel_play_callback(Widget w, XtPointer context, XtPointer info) 
@@ -459,7 +459,7 @@ static void mix_panel_play_callback(Widget w, XtPointer context, XtPointer info)
   else
     {
       ss = get_global_state();
-      mix_playing = 1;
+      mix_playing = TRUE;
       if (w_play) XmChangeColor(w_play, (ss->sgx)->pushed_button_color);
       mix_play_from_id(current_mix_id(ss));
     }

@@ -1025,7 +1025,7 @@ static Float set_delay_fb(void *ptr, Float val) {((dly *)ptr)->yscl = val; retur
 static Float *delay_set_data(void *ptr, Float *val) 
 {
   dly *gen = (dly *)ptr;
-  if (gen->line_allocated) {FREE(gen->line); gen->line_allocated = 0;}
+  if (gen->line_allocated) {FREE(gen->line); gen->line_allocated = FALSE;}
   gen->line = val; 
   return(val);
 }
@@ -1061,12 +1061,12 @@ mus_any *mus_make_delay(int size, Float *preloaded_line, int line_size)
   if (preloaded_line)
     {
       gen->line = preloaded_line;
-      gen->line_allocated = 0;
+      gen->line_allocated = FALSE;
     }
   else 
     {
       gen->line = (Float *)clm_calloc(line_size, sizeof(Float), "delay line");
-      gen->line_allocated = 1;
+      gen->line_allocated = TRUE;
     }
   gen->zloc = line_size - size;
   return((mus_any *)gen);
@@ -1361,7 +1361,7 @@ static int free_table_lookup(void *ptr)
 static Float *table_set_data(void *ptr, Float *val) 
 {
   tbl *gen = (tbl *)ptr;
-  if (gen->table_allocated) {FREE(gen->table); gen->table_allocated = 0;}
+  if (gen->table_allocated) {FREE(gen->table); gen->table_allocated = FALSE;}
   gen->table = val; 
   return(val);
 }
@@ -1399,12 +1399,12 @@ mus_any *mus_make_table_lookup (Float freq, Float phase, Float *table, int table
   if (table)
     {
       gen->table = table;
-      gen->table_allocated = 0;
+      gen->table_allocated = FALSE;
     }
   else
     {
       gen->table = (Float *)clm_calloc(table_size, sizeof(Float), "table lookup table");
-      gen->table_allocated = 1;
+      gen->table_allocated = TRUE;
     }
   return((mus_any *)gen);
 }
@@ -2784,7 +2784,7 @@ static mus_any *make_filter(mus_any_class *cls, const char *name, int order, Flo
       else 
 	{
 	  gen->state = (Float *)clm_calloc(order, sizeof(Float), "filter coeff space");
-	  gen->state_allocated = 1;
+	  gen->state_allocated = TRUE;
 	}
       gen->core = cls;
       gen->order = order;
@@ -2959,7 +2959,7 @@ static int ws_equalp(void *p1, void *p2)
 static Float *set_ws_data(void *ptr, Float *val) 
 {
   ws *gen = (ws *)ptr;
-  if (gen->table_allocated) {FREE(gen->table); gen->table_allocated = 0;}
+  if (gen->table_allocated) {FREE(gen->table); gen->table_allocated = FALSE;}
   gen->table = val; 
   return(val);
 }
@@ -3009,12 +3009,12 @@ mus_any *mus_make_waveshape(Float frequency, Float phase, Float *table, int size
   if (table)
     {
       gen->table = table;
-      gen->table_allocated = 0;
+      gen->table_allocated = FALSE;
     }
   else
     {
       gen->table = (Float *)clm_calloc(size, sizeof(Float), "waveshape table");
-      gen->table_allocated = 1;
+      gen->table_allocated = TRUE;
     }
   gen->table_size = size;
   gen->offset = (Float)size / 2.0;
@@ -3407,7 +3407,7 @@ mus_any *mus_make_env(Float *brkpts, int npts, Float scaler, Float offset, Float
   else
     {
       e->original_data = (Float *)clm_calloc(npts * 2, sizeof(Float), "env original data");
-      e->data_allocated = 1;
+      e->data_allocated = TRUE;
     }
   for (i = 0; i < npts * 2; i++) e->original_data[i] = brkpts[i];
   if (base == 0.0)
@@ -3978,7 +3978,7 @@ static int rblk_equalp(void *p1, void *p2)
 static Float *rblk_set_data(void *ptr, Float *new_data) 
 {
   rblk *rb = (rblk *)ptr;
-  if (rb->buf_allocated) {FREE(rb->buf); rb->buf_allocated = 0;}
+  if (rb->buf_allocated) {FREE(rb->buf); rb->buf_allocated = FALSE;}
   rb->buf = new_data; 
   return(new_data);
 }
@@ -4035,7 +4035,7 @@ Float mus_sample2buffer(mus_any *ptr, Float val)
 	  for (i = 0; i < old_size; i++) tmp[i] = gen->buf[i];
 	  if (gen->buf_allocated) FREE(gen->buf);
 	  gen->buf = tmp;
-	  gen->buf_allocated = 1;
+	  gen->buf_allocated = TRUE;
 	}
       else
 	{
@@ -4087,12 +4087,12 @@ mus_any *mus_make_buffer(Float *preloaded_buffer, int size, Float current_fill_t
   if (preloaded_buffer)
     {
       gen->buf = preloaded_buffer;
-      gen->buf_allocated = 0;
+      gen->buf_allocated = FALSE;
     }
   else
     {
       gen->buf = (Float *)clm_calloc(size, sizeof(Float), "buffer data");
-      gen->buf_allocated = 1;
+      gen->buf_allocated = TRUE;
     }
   if (current_fill_time == 0) 
     gen->empty = TRUE; 
@@ -4190,7 +4190,7 @@ static int wt_equalp(void *p1, void *p2)
 static Float *wt_set_data(void *ptr, Float *data) 
 {
   wt *gen = (wt *)ptr;
-  if (gen->wave_allocated) {FREE(gen->wave); gen->wave_allocated = 0;}
+  if (gen->wave_allocated) {FREE(gen->wave); gen->wave_allocated = FALSE;}
   gen->wave = data; 
   return(data);
 }
@@ -5090,10 +5090,15 @@ mus_frame *mus_frame2file(mus_any *ptr, off_t samp, mus_frame *data)
 {
   rdout *gen = (rdout *)ptr;
   int i, chans;
-  chans = data->chans;
-  if (gen->chans < chans) chans = gen->chans;
-  for (i = 0; i < chans; i++) 
-    mus_sample2file(ptr, samp, i, data->vals[i]);
+  if (data->chans == 1)
+    mus_sample2file(ptr, samp, 0, data->vals[0]);
+  else
+    {
+      chans = data->chans;
+      if (gen->chans < chans) chans = gen->chans;
+      for (i = 0; i < chans; i++) 
+	mus_sample2file(ptr, samp, i, data->vals[i]);
+    }
   return(data);
 }
 
@@ -5707,6 +5712,84 @@ Float mus_src(mus_any *srptr, Float sr_change, Float (*input)(void *arg, int dir
     }
   srp->x += srx;
   return(sum * factor);
+}
+
+
+/* it was a cold, rainy day... */
+Float mus_src_20(mus_any *srptr, Float (*input)(void *arg, int direction));
+Float mus_src_20(mus_any *srptr, Float (*input)(void *arg, int direction))
+{
+  sr *srp = (sr *)srptr;
+  Float sum;
+  int lim, i, loc;
+  int xi, xs;
+  lim = srp->lim;
+  if (srp->x > 0.0)
+    {
+      /* realign data, reset srp->x */
+#if (!HAVE_MEMMOVE)
+      for (i = 2, loc = 0; i < lim; i++, loc++) 
+	srp->data[loc] = srp->data[i];
+#else
+      loc = lim - 2;
+      memmove((void *)(srp->data), (void *)(srp->data + 2), sizeof(Float) * loc);
+#endif
+      for (i = loc; i < lim; i++) 
+	{
+	  if (input)
+	    srp->data[i] = (*input)(srp->environ, 1);
+	  else srp->data[i] = (*(srp->feeder))(srp->environ, 1);
+	}
+    }
+  else srp->x = 2.0;
+  xi = (int)(SRC_SINC_DENSITY / 2);
+  xs = xi * (1 - srp->width);
+  xi *= 2;
+  sum = srp->data[srp->width - 1];
+  for (i = 0; (i < lim) && (xs < 0); i += 2, xs += xi)
+    sum += (srp->data[i] * srp->sinc_table[-xs]);
+  for (; i < lim; i += 2, xs += xi)
+    sum += (srp->data[i] * srp->sinc_table[xs]);
+  return(sum * 0.5);
+}
+
+Float mus_src_05(mus_any *srptr, Float (*input)(void *arg, int direction));
+Float mus_src_05(mus_any *srptr, Float (*input)(void *arg, int direction))
+{
+  sr *srp = (sr *)srptr;
+  Float sum;
+  int lim, i, loc;
+  int xs;
+  lim = srp->lim;
+  if (srp->x >= 1.0)
+    {
+#if (!HAVE_MEMMOVE)
+      for (i = 1, loc = 0; i < lim; i++, loc++) 
+	srp->data[loc] = srp->data[i];
+#else
+      loc = lim - 1;
+      memmove((void *)(srp->data), (void *)(srp->data + 1), sizeof(Float) * loc);
+#endif
+      for (i = loc; i < lim; i++) 
+	{
+	  if (input)
+	    srp->data[i] = (*input)(srp->environ, 1);
+	  else srp->data[i] = (*(srp->feeder))(srp->environ, 1);
+	}
+      srp->x = 0.0;
+    }
+  if (srp->x == 0.0)
+    {
+      srp->x = 0.5;
+      return(srp->data[srp->width - 1]);
+    }
+  xs = (int)(SRC_SINC_DENSITY * (srp->width_1 - 0.5));
+  for (i = 0, sum = 0.0; (i < lim) && (xs < 0); i++, xs += SRC_SINC_DENSITY)
+    sum += (srp->data[i] * srp->sinc_table[-xs]);
+  for (; i < lim; i++, xs += SRC_SINC_DENSITY)
+    sum += (srp->data[i] * srp->sinc_table[xs]);
+  srp->x += 0.5;
+  return(sum);
 }
 
 

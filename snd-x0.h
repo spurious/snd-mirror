@@ -16,11 +16,11 @@
 
 #if (USE_RENDITIONS)
   /* SOMEDAY: get renditions working */
-  #define XM_FONT_TYPE XmRenderTable
+  #define xm_font_t XmRenderTable
   #define XM_FONT_RESOURCE XmNrenderTable
   #define XM_FONT_FREE XmRenderTableFree
 #else
-  #define XM_FONT_TYPE XmFontList
+  #define xm_font_t XmFontList
   #define XM_FONT_RESOURCE XmNfontList
   #define XM_FONT_FREE XmFontListFree
 #endif
@@ -74,17 +74,11 @@
 #define SCROLLBAR_LINEAR_MAX 150
 #define SCROLLBAR_LINEAR_MULT 0.0011584929
 
-#define BACKGROUND_TYPE Boolean
 #define BACKGROUND_QUIT TRUE
 #define BACKGROUND_CONTINUE FALSE
-#define BACKGROUND_FUNCTION_TYPE XtWorkProcId
 #define BACKGROUND_REMOVE(func) XtRemoveWorkProc(func)
 /* #define BACKGROUND_ADD(ss, func, data) XtAppAddWorkProc(MAIN_APP(ss), func, (XtPointer)data) */
 #define BACKGROUND_ADD(ss, func, data) add_work_proc(ss, func, (XtPointer)data)
-
-#define GUI_POINTER XtPointer
-#define GUI_WIDGET Widget
-#define TIME_TYPE Time
 #define NUM_COLORMAPS 16
 
 #if DEBUGGING
@@ -93,6 +87,12 @@
   #define ASSERT_WIDGET_TYPE(Cond, Wid)
 #endif
 
+#define widget_t Widget
+
+#define Cessator XtWorkProcId
+#define Cessate Boolean
+#define Indicium XtPointer
+#define Tempus Time
 #define Locus short
 #define Latus unsigned short
 /* Position/Dimension in X terms */
@@ -107,8 +107,8 @@ typedef struct {
 typedef struct {
   /* we need two versions of each GC because the selected channel's colors can be different from the unselected channels' */
   Widget *chan_widgets;
-  BACKGROUND_FUNCTION_TYPE fft_in_progress;
-  BACKGROUND_FUNCTION_TYPE amp_env_in_progress;
+  Cessator fft_in_progress;
+  Cessator amp_env_in_progress;
   void *amp_env_state;
   axis_context *ax;
   int selected;
@@ -116,7 +116,7 @@ typedef struct {
 
 typedef struct {
   Pixmap file_pix;
-  BACKGROUND_FUNCTION_TYPE apply_in_progress;
+  Cessator apply_in_progress;
   Widget *snd_widgets;
   Widget tab;
   void *flt;
@@ -135,21 +135,21 @@ typedef struct {
   Widget soundpane;
   Widget soundpanebox;
   Display *mdpy;
-  XM_FONT_TYPE button_fontlist;
+  xm_font_t button_fontlist;
   XFontStruct *button_fontstruct;
-  XM_FONT_TYPE bold_button_fontlist;
+  xm_font_t bold_button_fontlist;
   XFontStruct *bold_button_fontstruct; 
-  XM_FONT_TYPE peaks_fontlist;
+  xm_font_t peaks_fontlist;
   XFontStruct *peaks_fontstruct;
-  XM_FONT_TYPE bold_peaks_fontlist;
+  xm_font_t bold_peaks_fontlist;
   XFontStruct *bold_peaks_fontstruct; 
-  XM_FONT_TYPE listener_fontlist;
+  xm_font_t listener_fontlist;
   XFontStruct *listener_fontstruct;
   XFontStruct *axis_label_fontstruct;
   XFontStruct *axis_numbers_fontstruct;
-  XM_FONT_TYPE help_text_fontlist;
+  xm_font_t help_text_fontlist;
   XFontStruct *help_text_fontstruct;
-  XM_FONT_TYPE tiny_fontlist;
+  xm_font_t tiny_fontlist;
   XFontStruct *tiny_fontstruct;
 
   Pixel white, black, red, yellow, green, light_blue, lighter_blue;
@@ -227,7 +227,7 @@ typedef struct {
 #define AXIS_LABEL_FONT(a) ((state_context *)((snd_state *)a)->sgx)->axis_label_fontstruct
 #define TINY_NUMBERS_FONT(a) (a->sgx)->tiny_fontstruct
 #define HELP_TEXT_FONT(a) (a->sgx)->help_text_fontlist
-#define COLOR_TYPE Pixel
+#define color_t Pixel
 /* this was unsigned long = Pixel (/usr/X11R6/include/X11/Intrinsic.h) */
 
 #define KEY_TO_NAME(key) XKeysymToString(key)

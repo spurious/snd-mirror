@@ -165,7 +165,7 @@ static void chans_transform_size(chan_info *cp, void *ptr)
   if (cp->fft) 
     {
       fp = cp->fft;
-      if (fp->size < size) fp->ok = 0; /* "dirty" flag for fft data array = needs reallocation */
+      if (fp->size < size) fp->ok = FALSE; /* "dirty" flag for fft data array = needs reallocation */
       fp->size = size;
     }
 }
@@ -449,7 +449,7 @@ static void help_transform_callback(Widget w, XtPointer context, XtPointer info)
   transform_dialog_help((snd_state *)context);
 }
 
-static int need_callback = 1;
+static int need_callback = TRUE;
 Widget fire_up_transform_dialog(snd_state *ss, int managed)
 {
   XmString xhelp, xdismiss, xtitle, bstr, xorient, xcolor;
@@ -1035,7 +1035,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       get_fft_window_data(ss);
       XtAddCallback(graph_drawer, XmNresizeCallback, graph_resize_callback, ss);
       XtAddCallback(graph_drawer, XmNexposeCallback, graph_resize_callback, ss);
-      need_callback = 0;
+      need_callback = FALSE;
     }
   return(transform_dialog);
 }

@@ -26,7 +26,7 @@ static int lpr (char *name)
   return(system(print_string));
 }
 
-static int printing = 0;
+static int printing = FALSE;
 
 static void file_print_ok_callback(Widget w, XtPointer context, XtPointer info)
 {
@@ -52,7 +52,7 @@ static void file_print_ok_callback(Widget w, XtPointer context, XtPointer info)
 	  XmStringFree(plab);
 	  XmStringFree(slab);
 	}
-      printing = 1;
+      printing = TRUE;
       print_it = XmToggleButtonGetState(file_print_eps_or_lpr);
       quit = (ss->print_choice == PRINT_ENV);
       if (print_it)
@@ -79,7 +79,7 @@ static void file_print_ok_callback(Widget w, XtPointer context, XtPointer info)
 	  if (str) XtFree(str);
 	}
     }
-  printing = 0;
+  printing = FALSE;
   if (ss->print_choice == PRINT_SND)
     {
       plab = XmStringCreate("Print", XmFONTLIST_DEFAULT_TAG);

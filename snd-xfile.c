@@ -220,7 +220,7 @@ static void play_selected_callback(Widget w, XtPointer context, XtPointer info)
       if (filename)
 	{
 	  fd->file_play_sp = make_sound_readable(ss, filename, FALSE);
-	  fd->file_play_sp->delete_me = 1;
+	  fd->file_play_sp->delete_me = TRUE;
 	  if (fd->file_play_sp)
 	    play_sound(fd->file_play_sp, 0, 
 		       NO_END_SPECIFIED, IN_BACKGROUND, 
@@ -307,7 +307,7 @@ static void sound_file_search(Widget FSB_w, XmFileSelectionBoxCallbackStruct *in
 	  fd->save_dir = (char *)(fd->fullpathname + snd_strlen(our_dir));
 	  if (fd->sound_files) free_dir(fd->sound_files);
 	  fd->sound_files = find_sound_files_in_dir(our_dir);
-	  fd->need_update = 1;
+	  fd->need_update = TRUE;
 	}
       if (fd->last_pattern)
 	{
@@ -333,11 +333,11 @@ static void sound_file_search(Widget FSB_w, XmFileSelectionBoxCallbackStruct *in
 	    if ((fd->sound_files) && 
 		(fd->sound_files->len > 0)) 
 	      fd->current_files = filter_sound_files(fd->sound_files, pattern);
-	    fd->need_update = 1;
+	    fd->need_update = TRUE;
 	  }
       cdp = fd->current_files;
     }  
-  fd->new_file_written = 0;
+  fd->new_file_written = FALSE;
   if (fd->need_update)
     {
       if ((cdp) && (cdp->len > 0))
@@ -378,7 +378,7 @@ static void sound_file_search(Widget FSB_w, XmFileSelectionBoxCallbackStruct *in
 	  FREE(names);
 	}
     }
-  fd->need_update = 0;
+  fd->need_update = FALSE;
 }
 
 static void force_directory_reread(Widget dialog)
@@ -400,7 +400,7 @@ static void just_sounds_callback(Widget w, XtPointer context, XtPointer info)
       XtVaSetValues(fd->dialog, XmNfileSearchProc, sound_file_search, NULL);
     }
   else XtVaSetValues(fd->dialog, XmNfileSearchProc, fd->default_search_proc, NULL);
-  fd->need_update = 1;
+  fd->need_update = TRUE;
   force_directory_reread(fd->dialog);
 }
 
@@ -582,7 +582,7 @@ void make_open_file_dialog(snd_state *ss, int read_only, int managed)
   if (open_dialog->new_file_written) 
     {
       force_directory_reread(open_dialog->dialog);
-      open_dialog->new_file_written = 0;
+      open_dialog->new_file_written = FALSE;
     }
   if ((managed) && (!(XtIsManaged(open_dialog->dialog))))
     XtManageChild(open_dialog->dialog);
@@ -635,9 +635,9 @@ void set_open_file_play_button(int val)
 void alert_new_file(void) 
 {
   if (open_dialog)
-    open_dialog->new_file_written = 1;
+    open_dialog->new_file_written = TRUE;
   if (mix_dialog)
-    mix_dialog->new_file_written = 1;
+    mix_dialog->new_file_written = TRUE;
 }
 
 
@@ -1919,10 +1919,10 @@ int file_dialog_is_active(void)
 static Widget raw_data_dialog = NULL;
 static Widget raw_srate_text, raw_chans_text, raw_location_text;
 static off_t raw_data_location = 0;
-static int raw_cancelled = 0;
+static int raw_cancelled = FALSE;
 
-static void raw_data_ok_callback(Widget w, XtPointer context, XtPointer info) {raw_cancelled = 0;}
-static void raw_data_cancel_callback(Widget w, XtPointer context, XtPointer info) {raw_cancelled = 1;}
+static void raw_data_ok_callback(Widget w, XtPointer context, XtPointer info) {raw_cancelled = FALSE;}
+static void raw_data_cancel_callback(Widget w, XtPointer context, XtPointer info) {raw_cancelled = TRUE;}
 
 static void raw_data_default_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -2168,13 +2168,13 @@ file_info *raw_data_dialog_to_file_info(char *filename, snd_state *ss, const cha
 
 /* -------------------------------- New File -------------------------------- */
 
-static int new_file_cancelled = 0;
+static int new_file_cancelled = FALSE;
 static Widget new_dialog = NULL;
 static file_data *new_dialog_data = NULL;
 static Widget new_file_name = NULL;
 
-static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info) {new_file_cancelled = 0;}
-static void new_file_cancel_callback(Widget w, XtPointer context, XtPointer info) {new_file_cancelled = 1;}
+static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info) {new_file_cancelled = FALSE;}
+static void new_file_cancel_callback(Widget w, XtPointer context, XtPointer info) {new_file_cancelled = TRUE;}
 
 static void new_file_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -2190,7 +2190,7 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
   char *tmpstr, *title, *newer_name = NULL;
   snd_info *sp = NULL;
   Widget name_label, form;
-  new_file_cancelled = 0;
+  new_file_cancelled = FALSE;
   title = (char *)CALLOC(snd_strlen(newname) + 32, sizeof(char));
   sprintf(title, "create new sound: %s", newname);
   titlestr = XmStringCreate(title, XmFONTLIST_DEFAULT_TAG);
@@ -2440,7 +2440,7 @@ static XEN g_new_file_dialog(void)
 }
 #endif
 
-void g_initialize_gxfile(void)
+void g_init_gxfile(void)
 {
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_just_sounds, g_just_sounds_w, H_just_sounds,
 				   "set-" S_just_sounds, g_set_just_sounds_w,  0, 0, 0, 1);

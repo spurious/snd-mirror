@@ -297,7 +297,7 @@ static xen_value *make_xen_value(int typ, int address, int constant)
   v->type = typ;
   v->addr = address;
   v->constant = constant;
-  v->gc = 0;
+  v->gc = FALSE;
   return(v);
 }
 
@@ -314,7 +314,7 @@ static xen_value *make_xen_value_1(int typ, int address, int constant, const cha
   v->type = typ;
   v->addr = address;
   v->constant = constant;
-  v->gc = 0;
+  v->gc = FALSE;
   set_encloser(NULL);
   return(v);
 }
@@ -540,7 +540,7 @@ static char *add_comments(ptree *pt, char *str)
   int addr, i, j, len;
   char *new_buf;
   char name[64];
-  int name_pending = 0;
+  int name_pending = FALSE;
   /* look for i%n(...) or d%n(...), if found, look for addr in pt tables, if found add name to buf */
   len = snd_strlen(str);
   new_buf = (char *)CALLOC(len + 256, sizeof(char));
@@ -558,7 +558,7 @@ static char *add_comments(ptree *pt, char *str)
 	      for (k = 0; k < name_len; k++)
 		new_buf[j++] = name[k];
 	      new_buf[j++] = ']';
-	      name_pending = 0;
+	      name_pending = FALSE;
 	      name[0] = '\0';
 	    }
 	}
@@ -578,7 +578,7 @@ static char *add_comments(ptree *pt, char *str)
 	      if (var)
 		{
 		  strcpy(name, var->name);
-		  name_pending = 1;
+		  name_pending = TRUE;
 		}
 #if DEBUGGING
 	      else
@@ -588,7 +588,7 @@ static char *add_comments(ptree *pt, char *str)
 		  if (local_name)
 		    {
 		      strcpy(name, local_name);
-		      name_pending = 1;
+		      name_pending = TRUE;
 		    }
 		}
 #endif
@@ -735,13 +735,13 @@ static char *describe_xen_value(xen_value *v, int *ints, Float *dbls)
   return(buf);
 }
 
-static int got_lambda = 0; /* a temporary kludge?? */
+static int got_lambda = FALSE; /* a temporary kludge?? */
 
 static ptree *make_ptree(int initial_data_size)
 {
   ptree *pt;
 
-  got_lambda = 0;
+  got_lambda = FALSE;
 
   pt = (ptree *)CALLOC(1, sizeof(ptree));
   if (initial_data_size > 0)
@@ -1035,7 +1035,7 @@ void *free_ptree(void *upt)
 			}
 		      pt->ints[v->addr] = 0;
 		    }
-		  v->gc = 0;
+		  v->gc = FALSE;
 		  FREE(v);
 		  pt->gcs[i] = NULL;
 		}
@@ -1236,7 +1236,7 @@ static void add_obj_to_gcs(ptree *pt, int type, int addr)
   xen_value *v;
   int old_size, i;
   v = make_xen_value(type, addr, R_VARIABLE);
-  v->gc = 1;
+  v->gc = TRUE;
   if (pt->gc_ctr >= pt->gcs_size)
     {
       old_size = pt->gcs_size;
@@ -1646,10 +1646,10 @@ static char *descr_store_f_i(int *args, int *ints, Float *dbls) {return(mus_form
 static void store_i_f(int *args, int *ints, Float *dbls) {FLOAT_RESULT = (Float)INT_ARG_1;}
 static char *descr_store_i_f(int *args, int *ints, Float *dbls) {return(mus_format( FLT_PT " = " INT_PT , args[0], FLOAT_RESULT, args[1], INT_ARG_1));}
 
-static void store_false(int *args, int *ints, Float *dbls) {BOOL_RESULT = 0;}
+static void store_false(int *args, int *ints, Float *dbls) {BOOL_RESULT = FALSE;}
 static char *descr_store_false(int *args, int *ints, Float *dbls) {return(mus_format( INT_PT " = 0", args[0], BOOL_RESULT));}
 
-static void store_true(int *args, int *ints, Float *dbls) {BOOL_RESULT = 1;}
+static void store_true(int *args, int *ints, Float *dbls) {BOOL_RESULT = TRUE;}
 static char *descr_store_true(int *args, int *ints, Float *dbls) {return(mus_format( INT_PT " = 1", args[0], BOOL_RESULT));}
 
 static void store_s(int *args, int *ints, Float *dbls) 
@@ -1966,7 +1966,7 @@ static xen_value *lambda_form(ptree *prog, XEN form, int separate)
       free_embedded_ptree(new_tree);
       return(run_warn("can't handle this embedded lambda: %s", XEN_AS_STRING(form)));
     }
-  got_lambda = 1;
+  got_lambda = TRUE;
   locals_loc = prog->var_ctr;
   err = declare_args(prog, form, R_FLOAT, separate);
   if (err) return(run_warn(err));
@@ -5184,7 +5184,7 @@ static void cursor_i(int *args, int *ints, Float *dbls)
 {
   chan_info *cp; 
   cp = run_get_cp(1, args, ints);
-  if (cp) INT_RESULT = cp->cursor;
+  if (cp) INT_RESULT = CURSOR(cp);
 }
 
 static char *descr_cursor_i(int *args, int *ints, Float *dbls) 

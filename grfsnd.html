@@ -584,7 +584,7 @@ void init_gsl_j0(void)
 <p>To acess and edit sound data from such a module, use the
 Snd functions make-sample-reader and loop-samples.  loop-samples
 takes a sample reader, a pointer to a (C) float function that takes
-one float argument (the current sample), the number of times
+one float argument (the current sample), a begin time, the number of times
 to call that function, and a name for the editing operation for
 the edit history list.  For example, the following module
 defines a function that scales the data by 2:</p>
@@ -600,7 +600,7 @@ void init_hiho() {scm_c_define_gsubr("get-a2", 0, 0, 0, get_a2);}
 <p>The "a2" function will be called from Snd as follows; first make
 the shared object module and load it as above, then</p>
 <pre>
-(loop-samples (make-sample-reader 0) (get-a2) 50828 "a2")
+(loop-samples (make-sample-reader 0) (get-a2) 0 50828 "a2")
 </pre>
 <p>There's a way to make a module like this loadable via the
 (use-modules ...) syntax in Guile, but I haven't delved into
@@ -737,7 +737,7 @@ included explicitly:
 Once the dynamic linker is happy, the flanger can be 
 invoked:</p>
 <pre>
-(loop-samples (make-sample-reader 0) (get-flange) (frames) "flange" (make-flange 2.0 5.0 0.001))
+(loop-samples (make-sample-reader 0) (get-flange) 0 (frames) "flange" (make-flange 2.0 5.0 0.001))
 </pre>
 <p>There is (yet another)
 gotcha in this business: if Snd is built in the normal way incorporating the sndlib code directly,

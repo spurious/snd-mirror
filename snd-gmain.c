@@ -272,7 +272,7 @@ static gboolean io_invoke(GIOChannel *source, GIOCondition condition, gpointer d
 
 static int tm_slice = 0;
 
-static BACKGROUND_TYPE startup_funcs(gpointer context)
+static Cessate startup_funcs(gpointer context)
 {
   snd_state *ss;
   snd_info *sp;

@@ -1,7 +1,7 @@
 #include "snd.h"
 
 void check_menu_labels(int key, int state, int extended) {}
-void add_channel_window(snd_info *sound, int channel, snd_state *ss, int chan_y, int insertion, GUI_WIDGET main, int arrows) {}
+void add_channel_window(snd_info *sound, int channel, snd_state *ss, int chan_y, int insertion, widget_t main, int arrows) {}
 int snd_help(snd_state *ss, char *subject, char *help) {fprintf(stdout, help); return(0);}
 int snd_help_with_wrap(snd_state *ss, char *subject, char *help) {fprintf(stdout, help); return(0);}
 void add_to_error_history(snd_state *ss, char *msg, int popup) {}
@@ -54,7 +54,7 @@ void listener_append(char *msg) {fprintf(stderr, "%s", msg);}
 void handle_listener(snd_state *ss, int new_state) {}
 int listener_height(void) {return(0);}
 int listener_width(void) {return(0);}
-void highlight_unbalanced_paren(void) {}
+int highlight_unbalanced_paren(void) {return(TRUE);}
 int file_open_menu(void) {return(0);}
 int file_close_menu(void) {return(0);}
 int file_save_menu(void) {return(0);}
@@ -188,8 +188,8 @@ void reflect_save_as_in_edit_history(chan_info *cp, char *filename) {}
 void set_peak_numbers_font(chan_info *cp) {}
 void set_bold_peak_numbers_font(chan_info *cp) {}
 void set_tiny_numbers_font(chan_info *cp) {}
-COLOR_TYPE get_foreground_color(chan_info *cp, axis_context *ax) {return(0);}
-COLOR_TYPE get_background_color(chan_info *cp, axis_context *ax) {return(0);}
+color_t get_foreground_color(chan_info *cp, axis_context *ax) {return(0);}
+color_t get_background_color(chan_info *cp, axis_context *ax) {return(0);}
 void set_foreground_color(chan_info *cp, axis_context *ax, int color) {}
 void change_channel_style(snd_info *sp, int new_style) {}
 void reflect_amp_env_in_progress(snd_info *sp) {}

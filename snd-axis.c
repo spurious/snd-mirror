@@ -1,8 +1,5 @@
 #include "snd.h"
 
-/* changed to use doubles here 14-Nov-00: very small windows appear to get arithmetic problems otherwise */
-/* removed y-label support 18-Dec-00 */
-
 axis_context *free_axis_context(axis_context *ax)
 {
   if (ax) FREE(ax);
@@ -565,14 +562,6 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
 #if HAVE_GL
   if (ap->use_gl) activate_gl_fonts(ss);
   ap->used_gl = ap->use_gl;
-#if DEBUGGING
-  {
-    GLenum errcode;
-    errcode = glGetError();
-    if (errcode != GL_NO_ERROR)
-      fprintf(stderr, "GL fonts: %s\n", gluErrorString(errcode));
-  }
-#endif
 #endif
   if (include_x_label)
     {

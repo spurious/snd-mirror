@@ -274,7 +274,7 @@ static XEN g_set_foreground_color_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg
 
 static XEN g_load_font(XEN font)
 {
-  #define H_load_font "(" S_load_font " <name>) -> font-id"
+  #define H_load_font "(" S_load_font " name) -> load font 'name' and return font-id"
   XFontStruct *fs = NULL;
   snd_state *ss;
   XEN_ASSERT_TYPE(XEN_STRING_P(font), font, XEN_ONLY_ARG, S_load_font, "a string");
@@ -324,7 +324,7 @@ static XEN g_current_font(XEN snd, XEN chn, XEN ax_id)
 
 static XEN g_load_font(XEN font)
 {
-  #define H_load_font "(" S_load_font " <name>) -> font-id"
+  #define H_load_font "(" S_load_font " name) -> load font 'name' and return font-id"
   PangoFontDescription *fs = NULL;
   XEN_ASSERT_TYPE(XEN_STRING_P(font), font, XEN_ONLY_ARG, S_load_font, "a string");
   fs = pango_font_description_from_string(XEN_TO_C_STRING(font));
@@ -452,7 +452,7 @@ widgets (list (0)main-app (1)main-shell (2)main-pane (3)sound-pane (4)listener-p
 static XEN dialog_widgets;
 static XEN new_widget_hook;
 
-void run_new_widget_hook(GUI_WIDGET w)
+void run_new_widget_hook(widget_t w)
 {
   if (XEN_HOOKED(new_widget_hook))
     run_hook(new_widget_hook, XEN_LIST_1(XEN_WRAP_WIDGET(w)), S_new_widget_hook);
@@ -479,12 +479,12 @@ static XEN g_dialog_widgets(void)
   return(XEN_VECTOR_TO_LIST(dialog_widgets));
 }
 
-void set_dialog_widget(snd_state *ss, int which, GUI_WIDGET wid)
+void set_dialog_widget(snd_state *ss, int which, widget_t wid)
 {
   state_context *sx;
   sx = ss->sgx;
   if (sx->dialogs == NULL)
-    sx->dialogs = (GUI_WIDGET *)CALLOC(NUM_DIALOGS, sizeof(GUI_WIDGET));
+    sx->dialogs = (widget_t *)CALLOC(NUM_DIALOGS, sizeof(widget_t));
   sx->dialogs[which] = wid;
   check_dialog_widget_table();
   XEN_VECTOR_SET(dialog_widgets, 
@@ -495,10 +495,10 @@ void set_dialog_widget(snd_state *ss, int which, GUI_WIDGET wid)
 
 static XEN g_widget_position(XEN wid)
 {
-  #define H_widget_position "(" S_widget_position " wid) -> '(x y)"
-  GUI_WIDGET w;
+  #define H_widget_position "(" S_widget_position " wid) -> '(x y) in pixels"
+  widget_t w;
   XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ONLY_ARG, S_widget_position, "a Widget");  
-  w = (GUI_WIDGET)(XEN_UNWRAP_WIDGET(wid));
+  w = (widget_t)(XEN_UNWRAP_WIDGET(wid));
   if (!w)
     XEN_ERROR(NO_SUCH_WIDGET,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_widget_position),
@@ -509,10 +509,10 @@ static XEN g_widget_position(XEN wid)
 
 static XEN g_set_widget_position(XEN wid, XEN xy)
 {
-  GUI_WIDGET w;
+  widget_t w;
   XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ONLY_ARG, "set! " S_widget_position, "a Widget");  
   XEN_ASSERT_TYPE(XEN_LIST_P(xy) && (XEN_LIST_LENGTH(xy) == 2), xy, XEN_ARG_2, "set! " S_widget_position, "a list: (x y)");  
-  w = (GUI_WIDGET)(XEN_UNWRAP_WIDGET(wid));
+  w = (widget_t)(XEN_UNWRAP_WIDGET(wid));
   if (w)
     set_widget_position(w,
 			XEN_TO_C_INT(XEN_CAR(xy)),
@@ -526,10 +526,10 @@ static XEN g_set_widget_position(XEN wid, XEN xy)
 
 static XEN g_widget_size(XEN wid)
 {
-  #define H_widget_size "(" S_widget_size " wid) -> '(width height)"
-  GUI_WIDGET w;
+  #define H_widget_size "(" S_widget_size " wid) -> '(width height) in pixels"
+  widget_t w;
   XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ONLY_ARG, S_widget_size, "a Widget"); 
-  w = (GUI_WIDGET)(XEN_UNWRAP_WIDGET(wid));
+  w = (widget_t)(XEN_UNWRAP_WIDGET(wid));
   if (!w)
     XEN_ERROR(NO_SUCH_WIDGET,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_widget_size),
@@ -540,10 +540,10 @@ static XEN g_widget_size(XEN wid)
 
 static XEN g_set_widget_size(XEN wid, XEN wh)
 {
-  GUI_WIDGET w;
+  widget_t w;
   XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ARG_1, "set! " S_widget_size, "a Widget");  
   XEN_ASSERT_TYPE(XEN_LIST_P(wh) && (XEN_LIST_LENGTH(wh) == 2), wh, XEN_ARG_2, "set! " S_widget_size, "a list: (width height)");  
-  w = (GUI_WIDGET)(XEN_UNWRAP_WIDGET(wid));
+  w = (widget_t)(XEN_UNWRAP_WIDGET(wid));
   if (w)
     set_widget_size(w,
 		    XEN_TO_C_INT(XEN_CAR(wh)),
@@ -558,10 +558,10 @@ static XEN g_set_widget_size(XEN wid, XEN wh)
 static XEN g_widget_text(XEN wid)
 {
   #define H_widget_text "(" S_widget_text " wid) -> text)"
-  GUI_WIDGET w;
+  widget_t w;
   XEN res = XEN_FALSE;
   XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ARG_1, S_widget_text, "a Widget");
-  w = (GUI_WIDGET)(XEN_UNWRAP_WIDGET(wid));
+  w = (widget_t)(XEN_UNWRAP_WIDGET(wid));
   if (w)
     {
 #if USE_MOTIF
@@ -610,10 +610,10 @@ static XEN g_widget_text(XEN wid)
 
 static XEN g_set_widget_text(XEN wid, XEN text)
 {
-  GUI_WIDGET w;
+  widget_t w;
   XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ARG_1, "set! " S_widget_text, "a Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(text), text, XEN_ARG_2, "set! " S_widget_text, "a string");
-  w = (GUI_WIDGET)(XEN_UNWRAP_WIDGET(wid));
+  w = (widget_t)(XEN_UNWRAP_WIDGET(wid));
   if (w)
     {
 #if USE_MOTIF
@@ -636,10 +636,10 @@ static XEN g_set_widget_text(XEN wid, XEN text)
 static XEN g_recolor_widget(XEN wid, XEN color)
 {
   #define H_recolor_widget "(" S_recolor_widget " wid color) resets widget color"
-  GUI_WIDGET w;
+  widget_t w;
   XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ARG_1, S_recolor_widget, "a Widget");  
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ARG_2, S_recolor_widget, "a color"); 
-  w = (GUI_WIDGET)(XEN_UNWRAP_WIDGET(wid));
+  w = (widget_t)(XEN_UNWRAP_WIDGET(wid));
   if (w)
     {
 #if USE_MOTIF
@@ -659,9 +659,9 @@ static XEN g_recolor_widget(XEN wid, XEN color)
 static XEN g_hide_widget(XEN wid)
 {
   #define H_hide_widget "(" S_hide_widget " widget) undisplays widget"
-  GUI_WIDGET w;
+  widget_t w;
   XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ONLY_ARG, S_hide_widget, "a Widget");  
-  w = (GUI_WIDGET)(XEN_UNWRAP_WIDGET(wid));
+  w = (widget_t)(XEN_UNWRAP_WIDGET(wid));
   if (w)
     {
 #if USE_MOTIF
@@ -679,9 +679,9 @@ static XEN g_hide_widget(XEN wid)
 static XEN g_show_widget(XEN wid)
 {
   #define H_show_widget "(" S_show_widget " widget) displays widget"
-  GUI_WIDGET w;
+  widget_t w;
   XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ONLY_ARG, S_show_widget, "a Widget");  
-  w = (GUI_WIDGET)(XEN_UNWRAP_WIDGET(wid));
+  w = (widget_t)(XEN_UNWRAP_WIDGET(wid));
   if (w)
     {
 #if USE_MOTIF
@@ -699,9 +699,9 @@ static XEN g_show_widget(XEN wid)
 static XEN g_focus_widget(XEN wid)
 {
   #define H_focus_widget "(" S_focus_widget " widget) causes widget to receive input ('focus')"
-  GUI_WIDGET w;
+  widget_t w;
   XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ONLY_ARG, S_focus_widget, "a Widget");
-  w = (GUI_WIDGET)(XEN_UNWRAP_WIDGET(wid));
+  w = (widget_t)(XEN_UNWRAP_WIDGET(wid));
   if (w)
     goto_window(w);
   else XEN_ERROR(NO_SUCH_WIDGET,

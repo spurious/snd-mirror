@@ -81,11 +81,11 @@ static int start_ps_graph(char *output, char *title)
 
 static void ps_graph(chan_info *cp, int x0, int y0)
 {
-  cp->printing = 1;
+  cp->printing = TRUE;
   bx0 = x0;
   by0 = y0;
   display_channel_data(cp, cp->sound, cp->state);
-  cp->printing = 0;
+  cp->printing = FALSE;
 }
 
 static void end_ps_graph(void)
@@ -324,7 +324,7 @@ void ps_reset_color(void)
   last_color = -1;
 }
 
-static void ps_set_color(COLOR_TYPE color)
+static void ps_set_color(color_t color)
 {
 #if USE_MOTIF
   Colormap cmap;

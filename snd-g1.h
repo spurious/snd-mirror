@@ -74,6 +74,7 @@ void draw_spectro_line(axis_context *ax, int color, int x0, int y0, int x1, int 
 void allocate_color_map(snd_state *ss, int colormap);
 void initialize_colormap(snd_state *ss);
 int set_with_gl(snd_state *ss, int val);
+void g_init_gxdraw(void);
 
 
 
@@ -93,7 +94,7 @@ void listener_append_and_prompt(char *msg);
 void clear_listener(void);
 void g_init_gxlistener(void);
 GtkWidget *snd_entry_new(snd_state *ss, GtkWidget *container, int with_white_background);
-void highlight_unbalanced_paren(void);
+int highlight_unbalanced_paren(void);
 
 
 
@@ -289,8 +290,8 @@ void add_channel_window(snd_info *sound, int channel, snd_state *ss, int chan_y,
 void set_peak_numbers_font(chan_info *cp);
 void set_bold_peak_numbers_font(chan_info *cp);
 void set_tiny_numbers_font(chan_info *cp);
-COLOR_TYPE get_foreground_color(chan_info *cp, axis_context *ax);
-COLOR_TYPE get_background_color(chan_info *cp, axis_context *ax);
+color_t get_foreground_color(chan_info *cp, axis_context *ax);
+color_t get_background_color(chan_info *cp, axis_context *ax);
 void set_foreground_color(chan_info *cp, axis_context *ax, GdkColor *color);
 GdkGC *copy_GC(chan_info *cp);
 GdkGC *erase_GC(chan_info *cp);
@@ -495,10 +496,10 @@ void g_init_gxenv(void);
 
 /* -------- snd-gxen.c -------- */
 
-void color_chan_components(COLOR_TYPE color, int which_component);
-void color_unselected_graphs(COLOR_TYPE color);
-void recolor_everything(GUI_WIDGET w, void *ptr);
-void g_initialize_gxen(void);
+void color_chan_components(color_t color, int which_component);
+void color_unselected_graphs(color_t color);
+void recolor_everything(widget_t w, void *ptr);
+void g_init_gxen(void);
 
 
 
@@ -541,7 +542,7 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
 void make_mix_file_dialog(snd_state *ss, int managed);
 GtkWidget *edit_header(snd_info *sp);
 void set_open_file_play_button(int val);
-void g_initialize_gxfile(void);
+void g_init_gxfile(void);
 
 
 

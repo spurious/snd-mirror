@@ -1,6 +1,6 @@
 #include "snd.h"
 
-static int search_in_progress = 0;
+static int search_in_progress = FALSE;
 typedef struct {int n; int direction; int chans; off_t inc; chan_info **cps; snd_fd **fds;} gfd;
 
 static void prepare_global_search (chan_info *cp, void *g0)
@@ -9,7 +9,7 @@ static void prepare_global_search (chan_info *cp, void *g0)
   int direction;
   direction = g->direction;
   g->cps[g->n] = cp;
-  g->fds[g->n] = init_sample_read((direction == READ_FORWARD) ? (cp->cursor + 1) : (cp->cursor - 1), cp, direction);
+  g->fds[g->n] = init_sample_read((direction == READ_FORWARD) ? (CURSOR(cp) + 1) : (CURSOR(cp) - 1), cp, direction);
   if (g->fds[g->n] != NULL) g->n++;
 }
 
@@ -132,7 +132,7 @@ char *global_search(snd_state *ss, int direction)
 	  snd_protect(ss->search_proc);
 	}
     }
-  search_in_progress = 1;
+  search_in_progress = TRUE;
   chans = active_channels(ss, WITH_VIRTUAL_CHANNELS);
   search_message[0] = '\0';
   if (chans > 0)
@@ -169,7 +169,7 @@ char *global_search(snd_state *ss, int direction)
 	{
 	  /* fd->n is winner, fd->inc is how far forward we searched from current cursor loc */
 	  cp = fd->cps[fd->n];
-          cp->cursor_on = 1;
+          cp->cursor_on = TRUE;
 	  if (direction == READ_FORWARD)
 	    cursor_move(cp, fd->inc);
 	  else cursor_move(cp, -fd->inc);
@@ -184,7 +184,7 @@ char *global_search(snd_state *ss, int direction)
       FREE(fd->cps);
       FREE(fd);
     }
-  search_in_progress = 0;
+  search_in_progress = FALSE;
   return(search_message);
 }
 
@@ -201,14 +201,14 @@ static off_t cursor_find_forward(snd_info *sp, chan_info *cp, int count)
       report_in_minibuffer(sp, "search in progress");
       return(-1);
     }
-  search_in_progress = 1;
+  search_in_progress = TRUE;
   if (cp->last_search_result == SEARCH_OK)
-    start = cp->cursor + 1;
+    start = CURSOR(cp) + 1;
   else start = 0;
   sf = init_sample_read(start, cp, READ_FORWARD);
   if (!sf)
     {
-      search_in_progress = 0;
+      search_in_progress = FALSE;
       return(-1);
     }
   end = CURRENT_SAMPLES(cp);
@@ -246,7 +246,7 @@ static off_t cursor_find_forward(snd_info *sp, chan_info *cp, int count)
     }
   ss->stopped_explicitly = FALSE;
   free_snd_fd(sf);
-  search_in_progress = 0;
+  search_in_progress = FALSE;
   if (count != 0) return(-1); /* impossible sample number, so => failure */
   if (XEN_INTEGER_P(res))
     return(i + XEN_TO_C_INT(res));
@@ -266,14 +266,14 @@ static off_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
       report_in_minibuffer(sp, "search in progress");
       return(-1);
     }
-  search_in_progress = 1;
+  search_in_progress = TRUE;
   if (cp->last_search_result == SEARCH_OK)
-    start = cp->cursor - 1;
+    start = CURSOR(cp) - 1;
   else start = CURRENT_SAMPLES(cp) - 1;
   sf = init_sample_read(start, cp, READ_BACKWARD);
   if (!sf)
     {
-      search_in_progress = 0;
+      search_in_progress = FALSE;
       return(-1);
     }
   if (sp->search_tree)
@@ -311,7 +311,7 @@ static off_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
     }
   ss->stopped_explicitly = FALSE;
   free_snd_fd(sf);
-  search_in_progress = 0;
+  search_in_progress = FALSE;
   if (count != 0) return(-1); /* impossible sample number, so => failure */
   if (XEN_INTEGER_P(res))
     return(i - XEN_TO_C_INT(res));

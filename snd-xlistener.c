@@ -158,7 +158,7 @@ void textfield_unfocus_callback(Widget w, XtPointer context, XtPointer info)
 
 /* -------- specialized action procs -------- */
 
-static int actions_loaded = 0;
+static int actions_loaded = FALSE;
 #define CONTROL_KEY 4
 
 static void No_op (Widget w, XEvent *ev, char **str, Cardinal *num) 
@@ -485,7 +485,7 @@ void append_listener_text(int end, char *msg)
     }
 }
 
-static int dont_check_motion = 0;
+static int dont_check_motion = FALSE;
 
 static void clear_back_to_prompt(Widget w)
 {
@@ -493,10 +493,10 @@ static void clear_back_to_prompt(Widget w)
   beg = printout_end + 1;
   end = XmTextGetLastPosition(w);
   if (end <= beg) return;
-  dont_check_motion = 1;
+  dont_check_motion = TRUE;
   XmTextSetSelection(listener_text, beg, end, CurrentTime);
   XmTextRemove(listener_text);
-  dont_check_motion = 0;
+  dont_check_motion = FALSE;
 }
 
 static void Listener_Meta_P(Widget w, XEvent *event, char **str, Cardinal *num) 
@@ -548,7 +548,7 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
    */
   int beg, end, len, matches = 0, need_position;
   char *old_text, *new_text = NULL, *file_text = NULL;
-  int try_completion = 1;
+  int try_completion = TRUE;
   Position wx, wy;
   int xoff, yoff; 
   Window wn;
@@ -568,7 +568,7 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
     {
       new_text = complete_listener_text(old_text, end, &try_completion, &file_text);
       /* fprintf(stderr,"  --> %s\n", new_text); */
-      if (try_completion == 0)
+      if (!try_completion)
 	{
 	  FREE(old_text);
 	  return;
@@ -850,7 +850,7 @@ Widget make_textfield_widget(snd_state *ss, char *name, Widget parent, Arg *args
   if (!actions_loaded) 
     {
       XtAppAddActions(MAIN_APP(ss), acts, NUM_ACTS); 
-      actions_loaded = 1;
+      actions_loaded = TRUE;
     }
   if (n1) {FREE(n1); n1 = NULL;}
   XtSetArg(args[n], XmNactivateCallback, n1 = make_callback_list(remember_event, (XtPointer)ss)); n++;
@@ -884,7 +884,7 @@ void add_completer_to_textfield(snd_state *ss, Widget w, int completer)
   if (!actions_loaded) 
     {
       XtAppAddActions(MAIN_APP(ss), acts, NUM_ACTS); 
-      actions_loaded = 1;
+      actions_loaded = TRUE;
     }
   if (!transTable2) 
     transTable2 = XtParseTranslationTable(TextTrans2);
@@ -899,7 +899,7 @@ Widget make_text_widget(snd_state *ss, char *name, Widget parent, Arg *args, int
   if (!actions_loaded) 
     {
       XtAppAddActions(MAIN_APP(ss), acts, NUM_ACTS); 
-      actions_loaded = 1;
+      actions_loaded = TRUE;
     }
   if (n1) {FREE(n1); n1 = NULL;}
   XtSetArg(args[n], XmNactivateCallback, n1 = make_callback_list(remember_event, (XtPointer)ss)); n++;
@@ -980,10 +980,10 @@ static void flash_unbalanced_paren(XtPointer context, XtIntervalId *id)
     }
 }
 
-void highlight_unbalanced_paren(void)
+int highlight_unbalanced_paren(void)
 {
   /* if cursor is positioned at close paren, try to find reason for unbalanced expr and highlight it */
-  int pos;
+  int pos, success = TRUE;
   char *str = NULL;
   snd_state *ss;
   ss = get_global_state();
@@ -1005,9 +1005,11 @@ void highlight_unbalanced_paren(void)
 			      (XtTimerCallbackProc)flash_unbalanced_paren,
 			      NULL);
 	    }
+	  else success = FALSE;
 	}
       if (str) XtFree(str);
     }
+  return(success);
 }
 
 static int last_highlight_position = -1;
@@ -1103,7 +1105,7 @@ static void make_command_widget(snd_state *ss, int height)
   int n;
   if (!listener_text)
     {
-      if (!actions_loaded) {XtAppAddActions(MAIN_APP(ss), acts, NUM_ACTS); actions_loaded = 1;}
+      if (!actions_loaded) {XtAppAddActions(MAIN_APP(ss), acts, NUM_ACTS); actions_loaded = TRUE;}
 
       n = attach_all_sides(args, 0);
       XtSetArg(args[n], XmNheight, height); n++;
@@ -1283,10 +1285,10 @@ static XEN g_reset_listener_cursor(void)
 
 void clear_listener(void)
 {
-  dont_check_motion = 1;
+  dont_check_motion = TRUE;
   XmTextSetSelection(listener_text, 1, XmTextGetCursorPosition(listener_text), CurrentTime);
   XmTextRemove(listener_text);
-  dont_check_motion = 0;
+  dont_check_motion = FALSE;
 }
 
 void lock_listener_pane(void)

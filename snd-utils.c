@@ -36,6 +36,11 @@ int snd_2pow2(int n)
   return(0);
 }
 
+Float in_dB(Float min_dB, Float lin_dB, Float py)
+{
+  return((py <= lin_dB) ? min_dB : (20.0 * (log10(py))));
+}
+
 
 char *copy_string(const char *str)
 {
@@ -622,7 +627,7 @@ int file_belongs_to_region(const char *file);
 
 void mem_report(void)
 {
-  int loc, i, j, sum, ptr = 0, have_stacks = 0;
+  int loc, i, j, sum, ptr = 0, have_stacks = FALSE;
   int *sums, *ptrs;
   FILE *Fp;
   time_t ts;
@@ -634,7 +639,7 @@ void mem_report(void)
   for (i = 0; i < mem_size; i++)
     if (stacks[i])
       {
-	have_stacks = 1;
+	have_stacks = TRUE;
 	break;
       }
 

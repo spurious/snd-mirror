@@ -56,7 +56,7 @@ void set_snd_error_display (void (*func)(const char *))
 }
 #endif
 
-static int direct_snd_error_call = 0;
+static int direct_snd_error_call = FALSE;
 
 void snd_error(char *format, ...)
 {
@@ -120,9 +120,9 @@ static XEN g_snd_error(XEN msg)
 {
   #define H_snd_error "(" S_snd_error " str) reports error message str"
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ONLY_ARG, S_snd_error, "a string");
-  direct_snd_error_call = 1;
+  direct_snd_error_call = TRUE;
   snd_error(XEN_TO_C_STRING(msg));
-  direct_snd_error_call = 0;
+  direct_snd_error_call = FALSE;
   return(msg);
 }
   

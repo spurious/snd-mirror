@@ -87,7 +87,7 @@ typedef struct snd__fd {
   int cbi, direction, at_eof;
   mus_sample_t *data;
   snd_data *current_sound;
-  off_t initial_samp;
+  off_t initial_samp; /* only real use (outside descriptions) is in apply-ladspa (sigh...) */
   struct chan__info *cp;
   struct snd__info *local_sp;
   Float fscaler, rscaler;
@@ -96,6 +96,7 @@ typedef struct snd__fd {
   double incr, curval;
   void *ptree;
   XEN closure;
+  double incr2, curval2, incr3, curval3;
   mus_sample_t (*rev_run)(struct snd__fd *sf);
   Float (*rev_runf)(struct snd__fd *sf);
 } snd_fd;
@@ -197,7 +198,7 @@ typedef struct chan__info {
   lisp_grf *lisp_info;
   int cursor_on;           /* channel's cursor */
   int cursor_visible;      /* for XOR decisions */
-  off_t cursor;            /* sample */
+  off_t *cursors;          /* sample number (follows edit history) */
   int cursor_style, cursor_size;
   int cx, cy;               /* graph-relative cursor loc (for XOR) */
   int edit_ctr;            /* channel's edit history */
@@ -209,7 +210,7 @@ typedef struct chan__info {
   int ptree_size;          /* ditto for ptrees */
   int ptree_ctr;
   void **ptrees;
-  XEN *ptree_inits;
+  XEN *ptree_inits, *xens;
   fft_info *fft;           /* possibly null fft data */
   struct snd__info *sound; /* containing sound */
   struct snd__state *state;
@@ -256,6 +257,7 @@ typedef struct chan__info {
 } chan_info;
 
 #define CURRENT_SAMPLES(Cp) (Cp)->samples[(Cp)->edit_ctr]
+#define CURSOR(Cp) (Cp)->cursors[(Cp)->edit_ctr]
 
 typedef struct snd__info {
   int inuse;
@@ -297,7 +299,7 @@ typedef struct snd__info {
   struct snd__state *state;
   snd_context *sgx;
   file_info *hdr;             /* header of file that would be affected if we were to save current edits */
-  int env_anew, bomb_ctr;
+  int bomb_ctr;
   time_t write_date;          /* check for change behind back while editing */
   int need_update;            /* current in-core data does not match actual file (someone wrote it behind our back) */
   int channel_style;          /* 0:separate panes per chan, 1:all chans in one pane */
@@ -705,12 +707,11 @@ mus_sample_t next_sound (snd_fd *sf);
 void scale_channel(chan_info *cp, Float scaler, off_t beg, off_t num, int pos, int in_as_one_edit);
 void ramp_channel(chan_info *cp, Float rmp0, Float rmp1, off_t beg, off_t num, int pos, int in_as_one_edit);
 void xramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler, Float offset, off_t beg, off_t num, int pos, int in_as_one_edit);
-void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, void *env_pt, XEN init_func);
-void move_to_next_sample(snd_fd *sf);
+void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, int env_it, XEN init_func, int is_xen);
 snd_fd *init_sample_read(off_t samp, chan_info *cp, int direction);
 snd_fd *init_sample_read_any(off_t samp, chan_info *cp, int direction, int edit_position);
 void read_sample_change_direction(snd_fd *sf, int dir);
-int ramp_or_ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos);
+int ramp_or_ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos, Float base);
 int ptree_or_sound_fragments_in_use(chan_info *cp, int pos);
 int ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos);
 #define read_sample(Sf) (*Sf->run)(Sf)
@@ -749,7 +750,7 @@ void c_convolve(char *fname, Float amp, int filec, off_t filehdr, int filterc, o
 		 int fftsize, int filter_chans, int filter_chan, int data_size, snd_info *gsp, int from_enved, int ip, int total_chans);
 void *make_sonogram_state(chan_info *cp);
 void single_fft(chan_info *cp, int dpy);
-BACKGROUND_TYPE sonogram_in_slices(void *sono);
+Cessate sonogram_in_slices(void *sono);
 char *added_transform_name(int type);
 void clear_transform_edit_ctrs(chan_info *cp);
 void make_fft_graph(chan_info *cp, snd_info *sp, axis_info *fap, axis_context *ax, int with_hooks);
@@ -865,7 +866,7 @@ void paste_region(int n, chan_info *cp, const char *origin);
 void add_region(int n, chan_info *cp, const char *origin);
 int define_region(sync_info *si, off_t *ends);
 snd_fd *init_region_read (off_t beg, int n, int chan, int direction);
-snd_info *make_initial_region_sp(snd_state *ss, GUI_WIDGET region_grf);
+snd_info *make_initial_region_sp(snd_state *ss, widget_t region_grf);
 void cleanup_region_temp_files(void);
 int snd_regions(void);
 void save_regions(snd_state *ss, FILE *fd);
@@ -893,8 +894,8 @@ void edp_reset(void *spf);
 axis_info *edp_ap(void *spf);
 int edp_display_graph(snd_state *ss, void *spf, const char *name, axis_context *ax, 
 		      int x, int y, int width, int height, env *e, int in_dB, int with_dots);
-void edp_handle_point(snd_state *ss, void *spf, int evx, int evy, TIME_TYPE motion_time, env *e, int in_dB, Float xmax);
-int edp_handle_press(snd_state *ss, void *spf, int evx, int evy, TIME_TYPE time, env *e, int in_dB, Float xmax);
+void edp_handle_point(snd_state *ss, void *spf, int evx, int evy, Tempus motion_time, env *e, int in_dB, Float xmax);
+int edp_handle_press(snd_state *ss, void *spf, int evx, int evy, Tempus time, env *e, int in_dB, Float xmax);
 void edp_handle_release(void *spf, env *e);
 void edp_edited(void *spf);
 void init_env_axes(axis_info *ap, const char *name, int x_offset, int ey0, int width, int height, 
@@ -984,7 +985,7 @@ void combine_sound(snd_info *sp);
 void separate_sound(snd_info *sp);
 void superimpose_sound(snd_info *sp);
 void set_sound_channel_style(snd_info *sp, int val);
-void set_chan_fft_in_progress(chan_info *cp, BACKGROUND_FUNCTION_TYPE fp);
+void set_chan_fft_in_progress(chan_info *cp, Cessator fp);
 void goto_graph(chan_info *cp);
 void start_amp_env(chan_info *cp);
 void stop_amp_env(chan_info *cp);
@@ -1005,9 +1006,9 @@ int move_axis(chan_info *cp, axis_info *ap, int x);
 void set_axes(chan_info *cp, double x0, double x1, Float y0, Float y1);
 void focus_x_axis_change(axis_info *ap, chan_info *cp, snd_info *sp, int focus_style);
 int key_press_callback(chan_info *ur_cp, int x, int y, int key_state, int keysym);
-void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int button, TIME_TYPE time);
+void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int button, Tempus time);
 void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, int button);
-void graph_button_motion_callback(chan_info *cp, int x, int y, TIME_TYPE time, TIME_TYPE click_time);
+void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time, Tempus click_time);
 int make_graph(chan_info *cp, snd_info *sp, snd_state *ss);
 void reset_spectro(snd_state *state);
 void cursor_moveto (chan_info *cp, off_t samp);
@@ -1061,7 +1062,7 @@ void free_env_state(chan_info *cp);
 env_info *free_env_info(env_info *ep);
 void start_env_state(chan_info *cp);
 env_info *make_mix_input_amp_env(chan_info *cp);
-BACKGROUND_TYPE get_amp_env(GUI_POINTER ptr);
+Cessate get_amp_env(Indicium ptr);
 int amp_env_maxamp_ok(chan_info *cp, int edpos);
 Float amp_env_maxamp(chan_info *cp, int edpos);
 int amp_env_usable(chan_info *cp, Float samples_per_pixel, off_t hisamp, int start_new, int edit_pos);
@@ -1077,12 +1078,12 @@ void restore_controls(snd_info *sp);
 void reset_controls(snd_info *sp);
 void stop_applying(snd_info *sp);
 void remove_apply(snd_info *sp);
-BACKGROUND_TYPE apply_controls(GUI_POINTER xp);
+Cessate apply_controls(Indicium xp);
 void *make_apply_state_with_implied_beg_and_dur(void *xp);
-void amp_env_env(chan_info *cp, Float *brkpts, int npts, int pos, Float base);
+void amp_env_env(chan_info *cp, Float *brkpts, int npts, int pos, Float base, Float scaler, Float offset);
 void amp_env_env_selection_by(chan_info *cp, mus_any *e, off_t beg, off_t num, int pos);
-void amp_env_ptree(chan_info *cp, void *pt, int pos, XEN init_func);
-void amp_env_ptree_selection(chan_info *cp, void *pt, off_t beg, off_t num, int pos, XEN init_func);
+void amp_env_ptree(chan_info *cp, void *pt, int pos, XEN init_func, int is_xen);
+void amp_env_ptree_selection(chan_info *cp, void *pt, off_t beg, off_t num, int pos, XEN init_func, int is_xen);
 
 void g_init_snd(void);
 XEN snd_no_such_sound_error(const char *caller, XEN n);
@@ -1177,6 +1178,7 @@ int snd_round(double x);
 off_t snd_round_off_t(double x);
 int snd_ipow2(int n);
 int snd_2pow2(int n);
+Float in_dB(Float min_dB, Float lin_dB, Float py);
 char *copy_string(const char *str);
 int snd_strlen(char *str);
 char *filename_without_home_directory(char *name);
@@ -1200,7 +1202,7 @@ XEN show_stack(void);
 
 /* -------- snd-listener -------- */
 
-void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt);
+void command_return(widget_t w, snd_state *ss, int last_prompt);
 char *listener_prompt_with_cr(snd_state *ss);
 int check_balance(char *expr, int start, int end, int in_listener);
 int find_matching_paren(char *str, int parens, int pos, char *prompt, int *highlight_pos);
@@ -1332,7 +1334,7 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
 		    int from_enved, const char *origin, int over_selection, mus_any *gen, XEN edpos, int arg_pos, Float e_base);
 void apply_filter(chan_info *ncp, int order, env *e, int from_enved, const char *origin, 
 		  int over_selection, Float *ur_a, mus_any *gen, XEN edpos, int arg_pos);
-void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int regexpr, 
+void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, int regexpr, 
 	       int from_enved, const char *origin, mus_any *gen, XEN edpos, int arg_pos, Float e_base);
 void cos_smooth(chan_info *cp, off_t beg, off_t num, int regexpr, const char *origin);
 void display_frequency_response(snd_state *ss, env *e, axis_info *ap, axis_context *gax, int order, int dBing);
@@ -1369,8 +1371,8 @@ void *form_to_ptree_3_f(XEN code);
 #if (!USE_NO_GUI)
   axis_info *get_ap(chan_info *cp, int ap_id, const char *caller);
   void g_init_draw(void);
-  void set_dialog_widget(snd_state *ss, int which, GUI_WIDGET wid);
-  void run_new_widget_hook(GUI_WIDGET w);
+  void set_dialog_widget(snd_state *ss, int which, widget_t wid);
+  void run_new_widget_hook(widget_t w);
 #endif
 #if HAVE_GL
   void sgl_save_currents(snd_state *ss);

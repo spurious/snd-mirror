@@ -153,7 +153,7 @@ static int read_midi_sample_dump(char *oldname, char *newname, char *hdr)
       CLEANUP();
       RETURN_MUS_WRITE_ERROR(oldname, newname);
     }
-  happy = 1;
+  happy = TRUE;
   inp = 21;
   block_count = 120;
   state = 2;
@@ -178,7 +178,7 @@ static int read_midi_sample_dump(char *oldname, char *newname, char *hdr)
       if (inp >= totalin)
 	{
 	  if (totalin < TRANS_BUF_SIZE) 
-	    happy = 0;
+	    happy = FALSE;
 	  else 
 	    {
 	      totalin = read(fd, buf, TRANS_BUF_SIZE); 
@@ -264,7 +264,7 @@ static int read_ieee_text(char *oldname, char *newname, char *hdr)
   int osp;
   STARTUP(oldname, newname, TRANS_BUF_SIZE, char);
   totalin = read(fd, buf, TRANS_BUF_SIZE);      
-  commenting = 1;
+  commenting = TRUE;
   inp = 0;
   outp = 24;
   srate = 0;
@@ -298,7 +298,7 @@ static int read_ieee_text(char *oldname, char *newname, char *hdr)
 		    }
 		}
 	      inp++;
-	      if (buf[inp] != '%') commenting = 0;
+	      if (buf[inp] != '%') commenting = FALSE;
 	      else
 		{
 		  hdr[outp] = '\n';
@@ -322,7 +322,7 @@ static int read_ieee_text(char *oldname, char *newname, char *hdr)
       CLEANUP();
       RETURN_MUS_WRITE_ERROR(oldname, newname);
     }
-  happy = 1;
+  happy = TRUE;
   s0 = 0;
   outp = 0;
   osp = 0;
@@ -331,7 +331,7 @@ static int read_ieee_text(char *oldname, char *newname, char *hdr)
       if (inp >= totalin)
 	{
 	  if (totalin < TRANS_BUF_SIZE) 
-	    happy = 0;
+	    happy = FALSE;
 	  else 
 	    {
 	      totalin = read(fd, buf, TRANS_BUF_SIZE); 
@@ -427,7 +427,7 @@ static int read_mus10(char *oldname, char *newname, char *hdr)
       CLEANUP();
       RETURN_MUS_WRITE_ERROR(oldname, newname);
     }
-  happy = 1;
+  happy = TRUE;
   outp = 0;
   osp = 0;
   while (happy)
@@ -435,7 +435,7 @@ static int read_mus10(char *oldname, char *newname, char *hdr)
       if (inp >= totalin)
 	{
 	  if (totalin < PDP_BUF_SIZE) 
-	    happy = 0;
+	    happy = FALSE;
 	  else 
 	    {
 	      totalin = read(fd, buf, PDP_BUF_SIZE); 
@@ -519,7 +519,7 @@ static int read_ibm_cvsd(char *oldname, char *newname, char *hdr)
     }
   lseek(fd, loc, SEEK_SET);
   totalin = read(fd, buf, TRANS_BUF_SIZE);
-  happy = 1;
+  happy = TRUE;
   inp = 0;
   outp = 0;
   osp = 0;
@@ -528,7 +528,7 @@ static int read_ibm_cvsd(char *oldname, char *newname, char *hdr)
       if (inp >= totalin)
 	{
 	  if (totalin < TRANS_BUF_SIZE) 
-	    happy = 0;
+	    happy = FALSE;
 	  else 
 	    {
 	      totalin = read(fd, buf, TRANS_BUF_SIZE); 
@@ -604,7 +604,7 @@ static int read_hcom(char *oldname, char *newname, char *hdr)
   totalin = read(fd, buf, TRANS_BUF_SIZE);
   osp = 0;
   isp = 0;
-  happy = 1;
+  happy = TRUE;
   outp = 2;
   mus_bshort_to_char((unsigned char *)(hdr + osp), (sample - 128) * 0x100); osp += 2;
   bits = 0;
@@ -613,7 +613,7 @@ static int read_hcom(char *oldname, char *newname, char *hdr)
       if (isp >= totalin)
 	{
 	  if (totalin < TRANS_BUF_SIZE) 
-	    happy = 0;
+	    happy = FALSE;
 	  else 
 	    {
 	      totalin = read(fd, buf, TRANS_BUF_SIZE); 
@@ -691,7 +691,7 @@ static int read_nist_shortpack(char *oldname, char *newname, char *hdr)
     }
   lseek(fd, 1024, SEEK_SET);                       /* NIST header always 1024 bytes */
   totalin = read(fd, buf, TRANS_BUF_SIZE);
-  happy = 1;
+  happy = TRUE;
   outp = 0;
   num = 0;
   osp = 0; /* hdr */
@@ -780,7 +780,7 @@ static int read_nist_shortpack(char *oldname, char *newname, char *hdr)
       if (isp >= totalin)
 	{
 	  if (totalin < TRANS_BUF_SIZE) 
-	    happy = 0;
+	    happy = FALSE;
 	  else 
 	    {
 	      totalin = read(fd, buf, TRANS_BUF_SIZE); 
@@ -888,7 +888,7 @@ static int adpcm_decoder(unsigned char *indata, short *outdata, int totalbytes, 
   unsigned int delta, inputbuffer = 0;
   int step, valpred, vpdiff, index, bufferstep, i, j, happy;
   bufferstep = 0;
-  happy = 1;
+  happy = TRUE;
   if (type == 0)
     {
       j = 4;
@@ -908,7 +908,7 @@ static int adpcm_decoder(unsigned char *indata, short *outdata, int totalbytes, 
       if (bufferstep) 
 	{
 	  delta = inputbuffer & 0xf;
-	  if (j == totalbytes) happy = 0;
+	  if (j == totalbytes) happy = FALSE;
 	} 
       else 
 	{
@@ -1197,7 +1197,7 @@ static int read_avi(char *oldname, char *newname, char *hdr)
     }
   hdrbuf = (unsigned char *)CALLOC(8, sizeof(unsigned char));
   lseek(fd, mus_sound_data_location(oldname), SEEK_SET);
-  happy = 1;
+  happy = TRUE;
   while (happy)
     {
       totalin = read(fd, hdrbuf, 8);
@@ -1213,7 +1213,7 @@ static int read_avi(char *oldname, char *newname, char *hdr)
 	      totalin = read(fd, (unsigned char *)buf, num);
 	      if (totalin < 0) 
 		{
-		  happy = 0; 
+		  happy = FALSE; 
 		  break;
 		}
 	      else 

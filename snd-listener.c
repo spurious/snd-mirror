@@ -50,12 +50,15 @@ int find_matching_paren(char *str, int parens, int pos, char *prompt, int *highl
 			  else quote_comment = j;
 			}
 		    }
-		  if (up_comment > 0)
-		    i = up_comment;
-		  else
+		  if (up_comment < i)
 		    {
-		      if ((up_quoting) && (quote_comment > 0))
-			i = quote_comment;
+		      if (up_comment > 0)
+			i = up_comment;
+		      else
+			{
+			  if ((up_quoting) && (quote_comment > 0))
+			    i = quote_comment;
+			}
 		    }
 		}
 	    }
@@ -73,10 +76,10 @@ int find_matching_paren(char *str, int parens, int pos, char *prompt, int *highl
 int check_balance(char *expr, int start, int end, int in_listener) 
 {
   int i;
-  int non_whitespace_p = 0;
+  int non_whitespace_p = FALSE;
   int paren_count = 0;
-  int prev_separator = 1;
-  int quote_wait = 0;
+  int prev_separator = TRUE;
+  int quote_wait = FALSE;
   i = start;
   while (i < end) 
     {
@@ -96,7 +99,7 @@ int check_balance(char *expr, int start, int end, int in_listener)
 	    return(i);
 	  else 
 	    {
-	      prev_separator = 1;
+	      prev_separator = TRUE;
 	      i++;
 	    }
 	  break;
@@ -120,9 +123,9 @@ int check_balance(char *expr, int start, int end, int in_listener)
 		} 
 	      else 
 		{
-		  prev_separator = 1;
-		  non_whitespace_p = 1;
-		  quote_wait = 0;
+		  prev_separator = TRUE;
+		  non_whitespace_p = TRUE;
+		  quote_wait = FALSE;
 		}
 	    }
 	  break;
@@ -140,9 +143,9 @@ int check_balance(char *expr, int start, int end, int in_listener)
 		    i += 3;
 		  else
 		    {
-		      prev_separator = 0;
-		      quote_wait = 0;
-		      non_whitespace_p = 1;
+		      prev_separator = FALSE;
+		      quote_wait = FALSE;
+		      non_whitespace_p = TRUE;
 		      i++;
 		    }
 		}
@@ -155,9 +158,9 @@ int check_balance(char *expr, int start, int end, int in_listener)
 	    {
 	      i++;
 	      paren_count++;
-	      non_whitespace_p = 1;
-	      prev_separator = 1;
-	      quote_wait = 0;
+	      non_whitespace_p = TRUE;
+	      prev_separator = TRUE;
+	      quote_wait = FALSE;
 	    }
 	  break;
 	case ')' :
@@ -167,27 +170,26 @@ int check_balance(char *expr, int start, int end, int in_listener)
 	  else 
 	    {
 	      i++;
-	      non_whitespace_p = 1;
-	      prev_separator = 1;
-	      quote_wait = 0;
+	      non_whitespace_p = TRUE;
+	      prev_separator = TRUE;
+	      quote_wait = FALSE;
 	    }
 	  break;
 	case '\'' :
 	  if (prev_separator) 
-	    quote_wait = 1;
-	  non_whitespace_p = 1;
+	    quote_wait = TRUE;
+	  non_whitespace_p = TRUE;
 	  i++;
 	  break;
 	default:
-	  prev_separator = 0;
-	  quote_wait = 0;
-	  non_whitespace_p = 1;
+	  prev_separator = FALSE;
+	  quote_wait = FALSE;
+	  non_whitespace_p = TRUE;
 	  i++;
 	  break;
 	}
     }
-  if (in_listener)
-    highlight_unbalanced_paren();
+  if ((in_listener) && (!(highlight_unbalanced_paren()))) return(-1);
   return(0);
 }
 
@@ -275,7 +277,7 @@ XEN provide_listener_help(char *source)
 
 static XEN read_hook;
 
-void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
+void command_return(widget_t w, snd_state *ss, int last_prompt)
 {
 #if (!USE_NO_GUI)
   /* try to find complete form either enclosing current cursor, or just before it */
@@ -283,7 +285,7 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
   char *str = NULL, *full_str = NULL, *prompt;
   int i, j, slen;
   XEN form = XEN_UNDEFINED;
-  GUI_TEXT_POSITION_TYPE end_of_text, start_of_text, last_position, current_position;
+  GUI_TEXT_POSITION_TYPE end_of_text = 0, start_of_text = 0, last_position = 0, current_position = 0;
   int parens;
   full_str = GUI_TEXT(w);
   current_position = GUI_TEXT_INSERTION_POSITION(w);
@@ -403,11 +405,9 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
 	    }
 	  str[end_of_text - start_of_text + 1] = 0;
 	  end_of_text = snd_strlen(str);
-	  /* fprintf(stderr, "got: %s %d parens ", str, parens); */
 	  if (parens)
 	    {
-	      end_of_text = check_balance(str, 0, end_of_text, TRUE); /* last-arg->we are in the listener */
-	      /* fprintf(stderr, "now eot: %d (%d) ", end_of_text, slen); */
+	      end_of_text = check_balance(str, 0, (int)end_of_text, TRUE); /* last-arg->we are in the listener */
 	      if ((end_of_text > 0) && 
 		  (end_of_text < slen))
 		{
@@ -422,7 +422,9 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
 		  FREE(str);
 		  str = NULL;
 		  new_eot = GUI_TEXT_END(w);
-		  GUI_LISTENER_TEXT_INSERT(w, new_eot, "\n");
+		  if (end_of_text < 0)
+		    GUI_LISTENER_TEXT_INSERT(w, new_eot, listener_prompt_with_cr(ss));
+		  else GUI_LISTENER_TEXT_INSERT(w, new_eot, "\n");
 		  return;
 		}
 	    }

@@ -74,7 +74,7 @@ static GtkWidget *w_snd_name_pix(snd_info *sp) {if ((sp) && (sp->sgx)) return((s
 #define NUM_BOMBS 15
 
 static GdkPixmap *mini_lock, *speed_r, *speed_l, *blank;
-static int mini_lock_allocated = 0;
+static int mini_lock_allocated = FALSE;
 static GdkPixmap *mini_bombs[NUM_BOMBS];
 static GdkPixmap *mini_glasses[NUM_GLASSES];
 
@@ -130,7 +130,7 @@ static void inc_bomb(snd_info *sp, void *ptr)
     }
 }
 
-static int bomb_in_progress = 0;
+static int bomb_in_progress = FALSE;
 
 static gint bomb_check(gpointer data)
 {
@@ -142,17 +142,17 @@ static gint bomb_check(gpointer data)
   for_each_sound(ss, inc_bomb, (void *)incs);
   if (incs[0] > 0)
     gtk_timeout_add((guint32)BOMB_TIME, bomb_check, data);
-  else bomb_in_progress = 0;
+  else bomb_in_progress = FALSE;
   return(0);
 }
 
 void snd_file_bomb_icon(snd_info *sp, int on)
 {
   snd_state *ss;
-  if ((on) && (bomb_in_progress == 0))
+  if ((on) && (!bomb_in_progress))
     {
       ss = sp->state;
-      bomb_in_progress = 1;
+      bomb_in_progress = TRUE;
       gtk_timeout_add((guint32)BOMB_TIME, bomb_check, (gpointer)sp);
     }
 }
@@ -184,7 +184,7 @@ static void make_pixmaps(snd_state *ss)
 	mini_bombs[k] = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, mini_bomb_bits(k));
       for (k = 0; k < NUM_GLASSES; k++) 
 	mini_glasses[k] = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, mini_glass_bits(k));
-      mini_lock_allocated = 1;
+      mini_lock_allocated = TRUE;
     }
 }
 
@@ -206,7 +206,7 @@ void goto_minibuffer(snd_info *sp)
   if (sp) 
     {
       ss = sp->state;
-      (sp->sgx)->mini_active = 1;
+      (sp->sgx)->mini_active = TRUE;
       set_text_background(MINIBUFFER_TEXT(sp), (ss->sgx)->white);
       goto_window(MINIBUFFER_TEXT(sp));
     }
@@ -242,7 +242,7 @@ static void minibuffer_activate_callback(GtkWidget *w, gpointer data)
   ss = sp->state;
   ss->mx_sp = sp; 
   snd_minibuffer_activate(sp, 0, 0);
-  (sp->sgx)->mini_active = 1;
+  (sp->sgx)->mini_active = TRUE;
 }
 
 static gboolean minibuffer_key_callback(GtkWidget *w, GdkEventKey *event, gpointer data)
@@ -252,7 +252,7 @@ static gboolean minibuffer_key_callback(GtkWidget *w, GdkEventKey *event, gpoint
   chan_info *cp;
   snd_state *ss;
   ss = sp->state;
-  if (((sp->sgx)->mini_active == 0) || 
+  if (((sp->sgx)->mini_active == FALSE) || 
       (((event->keyval == snd_K_s) || 
 	(event->keyval == snd_K_r)) && 
        (event->state & snd_ControlMask)))
@@ -281,7 +281,7 @@ static gboolean minibuffer_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpoin
       if (ss)
 	{
 	  set_text_background(w, (ss->sgx)->white);
-	  (sp->sgx)->mini_active = 1;
+	  (sp->sgx)->mini_active = TRUE;
 	}
     }
   return(FALSE);
@@ -298,7 +298,7 @@ static gboolean minibuffer_mouse_leave(GtkWidget *w, GdkEventCrossing *ev, gpoin
 	{
 	  /* weird -- I'm getting this event sent to an inactive sound?? */
 	  set_text_background(w, (ss->sgx)->basic_color);
-	  (sp->sgx)->mini_active = 0;
+	  (sp->sgx)->mini_active = FALSE;
 	}
     }
   return(FALSE);
@@ -445,7 +445,7 @@ static void sync_button_click(GtkWidget *w, gpointer data)
       cp = sp->lacp;
       if (cp == NULL) cp = any_selected_channel(sp);
       goto_graph(cp);
-      if (cp->cursor_on) cursor_moveto(cp, cp->cursor);
+      if (cp->cursor_on) cursor_moveto(cp, CURSOR(cp));
       apply_x_axis_change(cp->axis, cp, sp);
     }
 }
@@ -1010,7 +1010,7 @@ static gboolean filter_drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gp
 		       sp->filter_control_in_dB,
 		       sp->filter_control_env_xmax);
       display_filter_env(sp);
-      sp->filter_control_changed = 1;
+      sp->filter_control_changed = TRUE;
     }
   return(FALSE);
 }
@@ -1036,7 +1036,7 @@ static gboolean filter_drawer_button_release(GtkWidget *w, GdkEventButton *ev, g
   display_filter_env(sp);
   set_filter_text(sp, tmpstr = env_to_string(sp->filter_control_env));
   if (tmpstr) FREE(tmpstr);
-  sp->filter_control_changed = 1;
+  sp->filter_control_changed = TRUE;
   return(FALSE);
 }
 
@@ -1100,7 +1100,7 @@ static void set_snd_filter_order_1(snd_info *sp, int order, int setadj)
   if (setadj)
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(FILTER_ORDER_TEXT(sp)), (gfloat)order);
   display_filter_env(sp);
-  sp->filter_control_changed = 1;
+  sp->filter_control_changed = TRUE;
 }  
 
 void set_snd_filter_order(snd_info *sp, int order) 
@@ -1133,7 +1133,7 @@ static void filter_activate_callback(GtkWidget *w, gpointer context)
     sp->filter_control_env = default_env(sp->filter_control_env_xmax, 1.0);
   edp_edited(sp->sgx->flt);
   display_filter_env(sp);
-  sp->filter_control_changed = 1;
+  sp->filter_control_changed = TRUE;
 }
 
 void filter_env_changed(snd_info *sp, env *e)
@@ -1153,7 +1153,7 @@ void filter_env_changed(snd_info *sp, env *e)
       display_filter_env(sp);
       /* this is called also from snd-scm.c */
     }
-  sp->filter_control_changed = 1;
+  sp->filter_control_changed = TRUE;
 }
 
 void color_filter_waveform(snd_state *ss, GdkColor *color)
@@ -1207,7 +1207,7 @@ static void apply_button_callback(GtkWidget *w, gpointer context)
 	}
       sp->applying = TRUE;
       set_background(APPLY_BUTTON(sp), (ss->sgx)->pushed_button_color);
-      sgx->apply_in_progress = BACKGROUND_ADD(ss, apply_controls, (GUI_POINTER)(make_apply_state_with_implied_beg_and_dur(sp)));
+      sgx->apply_in_progress = BACKGROUND_ADD(ss, apply_controls, (Indicium)(make_apply_state_with_implied_beg_and_dur(sp)));
     }
 }
 
@@ -1342,7 +1342,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
   sp = ss->sounds[snd_slot];
   sp->inuse = TRUE;
   sx = sp->sgx;
-  sx->controls_fixed = 0;
+  sx->controls_fixed = FALSE;
   sx->file_pix = blank;
   sp->bomb_ctr = 0;
   make_pixmaps(ss);
@@ -2093,10 +2093,10 @@ int control_panel_height(snd_info *sp)
 
 void sound_check_control_panel(snd_info *sp, int height)
 {
-  if (((sp->sgx)->controls_fixed == 0) && 
+  if (((sp->sgx)->controls_fixed == FALSE) && 
       (height > 50))
     {
-      (sp->sgx)->controls_fixed = 1;
+      (sp->sgx)->controls_fixed = TRUE;
       sound_hide_ctrls(sp);
     }
 }

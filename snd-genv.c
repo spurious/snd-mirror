@@ -48,7 +48,7 @@ axis_info *enved_make_axis(char *name, axis_context *ax,
     {
       gray_ap = (axis_info *)CALLOC(1, sizeof(axis_info));
       gray_ap->ax = (axis_context *)CALLOC(1, sizeof(axis_context));
-      gray_ap->graph_active = 1;
+      gray_ap->graph_active = TRUE;
       fixup_axis_context(gray_ap->ax, drawer, ggc);
     }
   init_env_axes(axis, name, ex0, ey0, width, height, xmin, xmax, ymin, ymax, printing);
@@ -140,7 +140,7 @@ static void help_enved_callback(GtkWidget *w, gpointer context)
   envelope_editor_dialog_help((snd_state *)context);
 }
 
-static int within_selection_src = 0;
+static int within_selection_src = FALSE;
 
 static void apply_enved(snd_state *ss)
 {
@@ -175,10 +175,10 @@ static void apply_enved(snd_state *ss)
 		  active_channel = current_channel(ss);
 		}
 	      else apply_env(active_channel, active_env, 0, 
-			     CURRENT_SAMPLES(active_channel), 1.0, 
+			     CURRENT_SAMPLES(active_channel),
 			     apply_to_selection, FROM_ENVED, 
 			     "Enved: amp", NULL,
-			     C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, active_env_base); 
+			     C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, (enved_exp_p(ss)) ? active_env_base : 1.0);
 	      /* calls update_graph, I think, but in short files that doesn't update the amp-env */
 	      if (enved_wave_p(ss)) env_redisplay(ss);
 	      break;
@@ -194,11 +194,11 @@ static void apply_enved(snd_state *ss)
 	      max_env = copy_env(active_env);
 	      for (i = 0, j = 1; i < max_env->pts; i++, j += 2)
 		if (max_env->data[j] < .01) max_env->data[j] = .01;
-	      within_selection_src = 1;
+	      within_selection_src = TRUE;
 	      src_env_or_num(ss, active_channel, max_env, 0.0, 
 			     FALSE, FROM_ENVED, "Enved: src", apply_to_selection, NULL,
-			     C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, active_env_base);
-	      within_selection_src = 0;
+			     C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, (enved_exp_p(ss)) ? active_env_base : 1.0);
+	      within_selection_src = FALSE;
 	      max_env = free_env(max_env);
 	      if (enved_wave_p(ss)) env_redisplay(ss);
 	      break;
@@ -222,7 +222,10 @@ static void env_redisplay_1(snd_state *ss, int printing)
 	{
 	  name = (char *)gtk_entry_get_text(GTK_ENTRY(textL));
 	  if (!name) name = "noname";
-	  display_env(ss, active_env, name, gc, 0, 0, env_window_width, env_window_height, 1, active_env_base, printing);
+	  display_env(ss, active_env, name, gc, 0, 0, 
+		      env_window_width, env_window_height, 1, 
+		      (enved_exp_p(ss)) ? active_env_base : 1.0,
+		      printing);
 	  name = NULL;
 	  if ((enved_wave_p(ss)) && (!apply_to_mix))
 	    {
@@ -317,9 +320,9 @@ static void undo_and_apply_enved_callback(GtkWidget *w, gpointer context)
   snd_state *ss = (snd_state *)context;
   if ((active_channel) && (active_channel == last_active_channel))
     {
-      active_channel->squelch_update = 1;
+      active_channel->squelch_update = TRUE;
       undo_edit_with_sync(active_channel, 1);
-      active_channel->squelch_update = 0;
+      active_channel->squelch_update = FALSE;
     }
   apply_enved(ss);
   last_active_channel = active_channel;
@@ -393,17 +396,17 @@ static gboolean brkpixL_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 }
 
 
-static TIME_TYPE down_time;
-static int env_dragged = 0;
+static Tempus down_time;
+static int env_dragged = FALSE;
 static int env_pos = 0;
-static int click_to_delete = 0;
+static int click_to_delete = FALSE;
 
 static gboolean drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data)
 {
   snd_state *ss = (snd_state *)data;
   int evx, evy;
   GdkModifierType state;
-  TIME_TYPE motion_time;
+  Tempus motion_time;
   axis_info *ap;
   Float x0, x1, x, y;
   if (ev->state & GDK_BUTTON1_MASK)
@@ -423,8 +426,8 @@ static gboolean drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer 
   else return(FALSE);
   if (!showing_all_envs)
     {
-      env_dragged = 1;
-      click_to_delete = 0;
+      env_dragged = TRUE;
+      click_to_delete = FALSE;
       ap = axis;
       x = ungrf_x(ap, evx);
       if (env_pos > 0) 
@@ -457,7 +460,7 @@ static gboolean drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpointer d
   snd_state *ss = (snd_state *)data;
   int pos;
   down_time = ev->time;
-  env_dragged = 0;
+  env_dragged = FALSE;
   if (showing_all_envs)
     {
       pos = hit_env((int)(ev->x), (int)(ev->y), env_window_width, env_window_height);
@@ -485,17 +488,15 @@ static gboolean drawer_button_release(GtkWidget *w, GdkEventButton *ev, gpointer
 {
   if (!showing_all_envs)
     {
-      if ((click_to_delete) && 
-	  (!env_dragged) && 
-	  (env_pos != 0)) /* might want to protect last point also */
+      if ((click_to_delete) && (!env_dragged) && (env_pos != 0) && (env_pos != active_env->pts - 1))
 	{
 	  if (check_enved_hook(active_env, env_pos, 0, 0, ENVED_DELETE_POINT) == 0)
 	    delete_point(active_env, env_pos);
 	}
       do_env_edit(active_env, FALSE);
       env_pos = 0;
-      env_dragged = 0;
-      click_to_delete = 0;
+      env_dragged = FALSE;
+      click_to_delete = FALSE;
       env_redisplay((snd_state *)data);
       clear_point_label();
     }
@@ -1343,7 +1344,7 @@ void set_enved_filter_order(snd_state *ss, int order)
 void enved_reflect_selection(int on)
 {
   snd_state *ss;
-  if ((enved_dialog) && (within_selection_src == 0))
+  if ((enved_dialog) && (!within_selection_src))
     {
       ss = get_global_state();
       set_sensitive(selectionB, on);

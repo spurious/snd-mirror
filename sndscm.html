@@ -281,10 +281,13 @@ include:
   <em class=def>DotEmacs</em>               Emacs init file (Fernando Lopez-Lezcano)
   <em class=def>edit123.scm</em>            Handy editing sequences (Tom Roth)
   <em class=def>examp.rb</em>               Ruby version of examp.scm (Michael Scholz)
+  <em class=def>inf-snd.el</em>             Ruby/Guile Emacs connection (Michael Scholz)
   <em class=def>rmsgain.scm</em>            amplitude via rms (Fabio Furlanete)
   <em class=def>tutorial/</em>              Snd tutorial (Dave Phillips)
+  <em class=def>v.rb</em>                   Ruby version of v.scm (and more) (Michael Scholz)
 </pre>
-<p>See the individual files and the tutorial for more details.</p>
+<p>See the individual files and the tutorial for more details.
+</p>
 
 
 <A NAME="drawdoc"></a><span class=box><h2>draw.scm</h2></span>
@@ -460,7 +463,7 @@ probably has:
   invert
   chordalize (chordalize-amount, chordalize-base)
   flange (increase speed and amount to get phasing, flange-speed, flange-amount, flange-time)
-  compand
+  compand, compand-channel
   reverberate (reverb-amount)
   intensify (contrast-amount)
   echo (echo-length, echo-amount)
@@ -773,7 +776,7 @@ I'm slowly dividing out related groups of procedures to separate files.
     <li>echo (delays)
     <li>ring-modulation, am
     <li>src-related sound effects (src, rand-interp, etc)
-    <li>compand (array-interp)
+    <li>compand, compand-channel (array-interp)
     <li>shift pitch keeping duration constant (src+granulate)
     <li>tempo change via envelope (granulate)
     <li>cross-synthesis (using a formant bank)
@@ -1119,6 +1122,7 @@ the split depends on the panning envelope (0 = all in chan 0, etc).
   <em class=def><A NAME="exhellodentist">hello-dentist</a></em> frq amp          ; randomized sampling rate changes
   <em class=def><A NAME="exfp">fp</a></em> sr osamp osfrq              ; osc-driven src ("Forbidden Planet")
   <em class=def><a name="excompand">compand</a></em>
+  <em class=def><a name="excompandchannel">compand-channel</a></em> beg dur snd chn edpos
   <em class=def><A NAME="exexpsrc">expsrc</a></em> rate snd chn
   <em class=def><A NAME="exexpsnd">expsnd</a></em> rate-envelope
   <em class=def><a name="excrosssynthesis">cross-synthesis</a></em> cross-snd amp fftsize radius
@@ -1560,7 +1564,7 @@ built by index.cl, then accessed through the <i>html</i> and <i>?</i> functions.
 in the various Snd documents, 
 and if one is found, calls *html-reader* with it.
 <code>(? obj)</code> prints out any help it can find for obj, and tries to find obj in the documentation.
-The function that actually passes the url to the reader is send-netscape defined in snd-gxutils.c.
+The function that actually passes the url to the reader is <a href="extsnd.html#sendnetscape">send-netscape</a>.
 Since it uses X window properties specific to netscape, it's not obvious how any other HTML
 reader can work.  All the following forms are acceptable:
 </p>
@@ -2213,8 +2217,11 @@ and some slightly inconsistent old function names.
 </p>
 <pre>
   <em class=def><A NAME="glinfo">gl-info</a></em>
+  <em class=def><a name="startwaterfall">start-waterfall</a></em> &amp;optional (scl 1.0) (pc-spectrum 0.2) (fft-size 512)
+  <em class=def><A NAME="stopwaterfall">stop-waterfall</a></em>
 </pre>
-<p><b>gl-info</b> prints out information about the current GL setup.
+<p><b>gl-info</b> prints out information about the current GL setup.  <b>start-waterfall</b> starts a
+waterfall spectrum display of the incoming audio data.  <b>stop-waterfall</b> turns it off.
 </p>
 
 <A NAME="sndmotifdoc"></a><span class=box><h2>snd-motif.scm</h2></span>

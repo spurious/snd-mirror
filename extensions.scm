@@ -594,7 +594,7 @@ If 'check' is #f, the hooks are removed."
 	(start (or beg 0)))
     (if (< start 0) (throw 'no-such-sample (list "c-channel" beg)))
     (if (> len 0)
-	(loop-samples (make-sample-reader start snd chn 1 edpos) func len "c-channel" call-data))))
+	(loop-samples (make-sample-reader start snd chn 1 edpos) func start len "c-channel" call-data))))
 
 
 ;;; -------- redo-channel, undo-channel

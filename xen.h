@@ -134,6 +134,7 @@
 #define XEN_ARG_6    SCM_ARG6
 #define XEN_ARG_7    SCM_ARG7
 #define XEN_ARG_8    8
+#define XEN_ARG_9    9
 
 #define XEN_TO_C_DOUBLE(a)            scm_num2dbl(a,  __FUNCTION__)
 #define XEN_TO_C_DOUBLE_OR_ELSE(a, b) ((XEN_NUMBER_P(a)) ? (scm_num2dbl(a,  __FUNCTION__)) : (b))
@@ -232,7 +233,7 @@
   #define XEN_NEW_PROCEDURE(Name, Func, Req, Opt, Rst) gh_new_procedure(Name, XEN_PROCEDURE_CAST Func, Req, Opt, Rst)
 #endif
 
-/* if ((DEBUGGING) && (XEN_TRUE_P(scm_definedp(C_STRING_TO_XEN_SYMBOL(Name), XEN_UNDEFINED)))) fprintf(stderr, "%s is defined\n", Name); */
+/*  if ((DEBUGGING) && (XEN_TRUE_P(scm_definedp(C_STRING_TO_XEN_SYMBOL(Name), XEN_UNDEFINED)))) fprintf(stderr, "%s is defined\n", Name); */
 #define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
   if (Doc != (char *)NULL) \
     scm_set_procedure_property_x(XEN_NEW_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(Doc)); \
@@ -481,6 +482,7 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #define XEN_ARG_6 6
 #define XEN_ARG_7 7
 #define XEN_ARG_8 8
+#define XEN_ARG_9 9
 
 #ifdef __cplusplus
   #ifdef ANYARGS
@@ -1192,6 +1194,7 @@ XEN xen_rb_copy_list(XEN val); /* Ruby arrays (lists) are passed by reference */
 #define XEN_ARG_6    0
 #define XEN_ARG_7    0
 #define XEN_ARG_8    0
+#define XEN_ARG_9    0
 
 #endif
 /* end NO EXTENSION LANGUAGE */

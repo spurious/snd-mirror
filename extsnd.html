@@ -773,6 +773,15 @@ the hook.
 <!-- --></pre></td></tr></table></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
+<!-- color-hook -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="colorhook">color-hook</a></em> () </code></span><td align=right><b>progn</b></td>
+<!-- --></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td colspan=2>
+<!-- -->called whenever one of the variables associated with the color dialog changes.
+<!-- --></td></tr><tr><td colspan=3></td></tr>
+<!-- -->
 <!-- dac-hook -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="dachook">dac-hook</a></em> (data) </code></span><td align=right><b>progn</b></td>
@@ -1473,6 +1482,15 @@ the hook.
 <!-- -->called each time the optimizer hits something it can't handle; <i>message</i> tries to give some information about the situation.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
+<!-- -->
+<!-- orientation-hook -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="orientationhook">orientation-hook</a></em> () </code></span><td align=right><b>progn</b></td>
+<!-- --></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td colspan=2>
+<!-- -->called whenever one of the variables associated with the orientation dialog changes.
+<!-- --></td></tr><tr><td colspan=3></td></tr>
 <!-- -->
 <!-- output-comment-hook -->
 <!-- --><tr><td colspan=2>
@@ -2228,31 +2246,31 @@ an oscil or a sawtooth-wave:
 <!-- -->
 <!-- --><table border=0 cellspacing=5>
 <!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def>make-sound-data</em> (chans frames)</code></span></td>
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="makesounddata">make-sound-data</a></em> (chans frames)</code></span></td>
 <!-- --><td>return a sound-data object with <i>chans</i> arrays, each of length <i>frames</i></td></tr>
 <!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def>sound-data-ref</em> (obj chan frame)</code></span></td>
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="sounddataref">sound-data-ref</a></em> (obj chan frame)</code></span></td>
 <!-- --><td>return (as a float) the sample in channel <i>chan</i> at location <i>frame</i></td></tr>
 <!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def>sound-data-set!</em> (obj chan frame val)</code></span></td>
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="sounddataset">sound-data-set!</a></em> (obj chan frame val)</code></span></td>
 <!-- --><td>set <i>obj</i>'s sample at <i>frame</i> in <i>chan</i> to (the float) <i>val</i></td></tr>
 <!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def>sound-data?</em> (obj)</code></span></td>
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="sounddata?">sound-data?</a></em> (obj)</code></span></td>
 <!-- --><td>#t if <i>obj</i> is of type sound-data</td></tr>
 <!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def>sound-data-length</em> (obj)</code></span></td>
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="sounddatalength">sound-data-length</a></em> (obj)</code></span></td>
 <!-- --><td>length of each channel of data in <i>obj</i></td></tr>
 <!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def>sound-data-maxamp</em> (obj)</code></span></td>
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="sounddatamaxamp">sound-data-maxamp</a></em> (obj)</code></span></td>
 <!-- --><td>list of maxamps of data in <i>obj</i></td></tr>
 <!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def>sound-data-chans</em> (obj)</code></span></td>
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="sounddatachans">sound-data-chans</a></em> (obj)</code></span></td>
 <!-- --><td>number of channels of data in <i>obj</i></td></tr>
 <!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def>sound-data-&gt;vct</em> (sdobj chan vobj)</code></span></td>
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="sounddata2vct">sound-data-&gt;vct</a></em> (sdobj chan vobj)</code></span></td>
 <!-- --><td>place sound-data channel data in vct </td></tr>
 <!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def>vct-&gt;sound-data</em> (vobj sdobj chan)</code></span></td>
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="vct2sounddata">vct-&gt;sound-data</a></em> (vobj sdobj chan)</code></span></td>
 <!-- --><td>place vct data in sound-data</td></tr>
 <!-- --></table>
 
@@ -2347,6 +2365,14 @@ See play.scm and rtio.scm for example code. The most important Sndlib functions 
 <!-- --><td>read <i>frames</i> of data into sound-data object <i>sdata</i> from port <i>line</i>.  The in-coming data format
 <!-- -->is set by the corresponding mus-audio-open-input call and is translated to the sound-data format (internally known as
 <!-- -->mus_sample_t) by mus-audio-read.</td></tr>
+<!-- -->
+<!-- mus-audio-restore -->
+<!-- --><tr><td valign=top><span class=defbox><code><em class=def><a name="musaudiorestore">mus-audio-restore</a></em> ()</code></span></td>
+<!-- --><td>tries to restore a previously saved audio hardware state</td></tr>
+<!-- -->
+<!-- mus-audio-save -->
+<!-- --><tr><td valign=top><span class=defbox><code><em class=def><a name="musaudiosave">mus-audio-save</a></em> ()</code></span></td>
+<!-- --><td>tries to save the current audio hardware state</td></tr>
 <!-- -->
 <!-- mus-audio-write -->
 <!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="musaudiowrite">mus-audio-write</a></em> (line sdata frames)</code></span></td>
@@ -3587,9 +3613,12 @@ sets its value to val.
 
 <p>Many of the procedures also have an <i>edpos</i> argument (standing for "edit position").
 It always defaults to the current edit history position.  If specified, it can be either an edit history position (to which
-the operation is applied), the constant current-edit-position (the default), or a function
+the operation is applied), the constant <a name="currenteditposition">current-edit-position</a> (the default), or a function
 of two arguments, the sound index and the channel number.  The function should return the
-desired edit history position. 
+desired edit history position. In most cases, you should only refer to edits in the past
+(that is, <i>edpos</i> should be less than or equal to the current edit-position); in a few
+situations, you can make use of data in the "redo" section of the edit-history list, but
+nothing is guaranteed.  
 </p>
 
 <blockquote>
@@ -3609,7 +3638,7 @@ The following substitutions can be made:
 </p>
 <small>
 <pre>
-<a href="#sndenv">env-sound</a> env beg dur s c e                     <a href="#envchannel">env-channel</a> clm-env-gen beg dur s c e
+<a href="#sndenv">env-sound</a> env beg dur base s c e                <a href="#envchannel">env-channel</a> clm-env-gen beg dur s c e
 <a href="#sndfilter">filter-sound</a> env order s c e                    <a href="#clmchannel">clm-channel</a> clm-filter-gen beg dur s c e overlap
 <a href="#mapchan">map-chan</a> func beg end origin s c e              <a href="#mapchannel">map-channel</a> func beg dur s c e origin (or <a href="#ptreechannel">ptree-channel</a>)
 <a href="#scanchan">scan-chan</a> func beg end s c e                    <a href="#scanchannel">scan-channel</a> func beg dur s c e
@@ -3623,7 +3652,7 @@ The following substitutions can be made:
 <a href="#sndinsertsilence">insert-silence</a> beg dur s c                      <a href="#padchannel">pad-channel</a> beg dur s c e
 <a href="#sndsrc">src-sound</a> num base s c e                        <a href="#srcchannel">src-channel</a> ratio-or-env-gen beg dur s c e
 <a href="#sndconvolvewith">convolve-with</a> file amp s c e                    <a href="#clmchannel">clm-channel</a> convolve-gen beg dur s c e
-<a href="#loopsamples">loop-samples</a> reader c-func dur origin ptr       <a href="sndscm.html#cchannel">c-channel</a> c-func beg dur s c e ptr
+<a href="#loopsamples">loop-samples</a> reader c-func beg dur origin ptr   <a href="sndscm.html#cchannel">c-channel</a> c-func beg dur s c e ptr
 <a href="grfsnd.html#applyladspa">apply-ladspa</a> reader dat dur origin              <a href="grfsnd.html#ladspachannel">ladspa-channel</a> dat beg dur s c e
 <a href="#sndmix">mix</a> file beg filechn s c with-tags              <a href="sndscm.html#mixchannel">mix-channel</a> filedat beg dur s c e
 <a href="#sndmixsound">mix-sound</a> file beg                              <a href="sndscm.html#mixchannel">mix-channel</a> filedat beg dur s c e
@@ -3640,9 +3669,9 @@ The following substitutions can be made:
      (map-chan func beg end edname snd chn edpos)))
 </small>
 </pre>
-<p>Another case that might deserve "regularization" is make-sample-reader which confusingly interpolates
+<p><small>Another case that might deserve "regularization" is make-sample-reader which confusingly interpolates
 the direction argument between the channel and edit-position:
-</p>
+</small></p>
 <pre>
 <small>
  (define* (read-channel #:optional (beg 0) snd chn edpos (direction 1))
@@ -3926,11 +3955,12 @@ the direction argument between the channel and edit-position:
 <!-- -->
 <!-- cursor -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndcursor">cursor</a></em> (<em class=targ>snd chn</em>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="sndcursor">cursor</a></em> (<em class=targ>snd chn edpos</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->cursor location (as a sample number, first sample is numbered 0) in channel <i>chn</i> of <i>snd</i>.
-<!-- --><code>(set! (cursor) 100)</code> moves the cursor to sample 100.
+<!-- --><code>(set! (cursor) 100)</code> moves the cursor to sample 100.  The cursor is somewhat similar to a
+<!-- -->mark in that it moves if you delete or insert samples in front of it.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4512,7 +4542,7 @@ the direction argument between the channel and edit-position:
 <!-- -->
 <!-- loop-samples -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="loopsamples">loop-samples</a></em> (reader function calls origin <i>environ</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="loopsamples">loop-samples</a></em> (reader function beg dur origin <i>environ</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->This calls external C functions while moving through the data accessed
@@ -4528,7 +4558,7 @@ the direction argument between the channel and edit-position:
 (define* (<A NAME="excchannel">c-channel</A> func #:optional (beg 0) dur snd chn edpos call-data)
   (let ((reader (make-sample-reader beg snd chn 1 edpos))
         (samps (or dur (frames snd chn edpos))))
-    (<em class=red>loop-samples</em> reader func samps "c-channel" call-data)))
+    (<em class=red>loop-samples</em> reader func beg samps "c-channel" call-data)))
 <!-- --></pre></td></tr></table>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5063,10 +5093,10 @@ the direction argument between the channel and edit-position:
 <!-- -->
 <!-- ptree-channel -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="ptreechannel">ptree-channel</a></em> (proc <i>beg dur snd chn edpos env-too init-func</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="ptreechannel">ptree-channel</a></em> (proc <i>beg dur snd chn edpos env-too init-func (map-fallback #t)</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- --><b>ptree-channel</b> (only in Guile currently)
+<!-- --><b>ptree-channel</b> (only in Guile currently, unless <i>map-fallback</i> is #f)
 <!-- -->applies 'proc' as a 'virtual edit'; that is, the effect of 'proc' (a function of one argument, the
 <!-- -->current sample), comes about as an implicit change in the way the data is read. 
 <!-- --><br><br>
@@ -5121,8 +5151,8 @@ the direction argument between the channel and edit-position:
 <!-- -->of view or redisplay.  But if the details of the noise don't
 <!-- -->matter, this change is also ok -- you're editing a sort
 <!-- -->of mobile in sound (analogous to mobile sculpture).
-<!-- -->I intend to expand this capability soon to include any
-<!-- -->function at all...
+<!-- -->I may expand this capability to include any
+<!-- -->function at all.
 <!-- --><br><br>
 <!-- -->However, not everyone wants his samples floating around randomly beneath his gaze.
 <!-- -->'init-func' provides a way to include state with the 'proc', as in
@@ -5152,7 +5182,7 @@ the direction argument between the channel and edit-position:
 <!-- --></pre></td></tr></table></td></tr>
 <!-- -->
 <!-- --><tr><td></td><td>
-<!-- -->Several things to note:  since the ptree-channel function (the first one, 'proc') is optimized
+<!-- -->Since the ptree-channel function (the first argument, 'proc') is optimized
 <!-- -->via the run macro, all normal closure references are packaged up into the parse tree and never
 <!-- -->seen again (in this context anyway), so we need a way to pass in the initial value of 'angle'
 <!-- -->each time ptree-channel is run over the segment that owns this operation.  So, the 'init-func'
@@ -5166,13 +5196,16 @@ the direction argument between the channel and edit-position:
 <!-- -->to refer to, then each time a sample is needed from the current sample
 <!-- -->reader, 'proc' is called passing it the current underlying sample, the vct of 'init-func',
 <!-- -->and the read direction.
+<!-- --><br><br>The second argument to the init-func only comes into play when 'env-too' is #t.
+<!-- -->In this case, 'proc' is being evaluated over the peak env data, rather than the
+<!-- -->original data, so the duration is the envelope size.
 <!-- --><br><br>
 <!-- -->One major limitation of ptree-channel with an 'init-func' is that <a href="#sndsavestate">save-state</a>
 <!-- -->currently doesn't know how to save the enclosing environment along with the init-func. So,
 <!-- -->for example,
 <!-- --><br><br><pre>
   (let ((outer 0.5))
-    (ptree-channel (lambda (y data forward)
+    (<em class=red>ptree-channel</em> (lambda (y data forward)
 		     (declare (y real) (data vct) (forward boolean))
 		     (* y (vct-ref data 0)))
 		   0 #f ind 0 #f #f
@@ -5184,11 +5217,55 @@ the direction argument between the channel and edit-position:
 <!-- -->save the current closure as text.
 <!-- -->You can fix the saved state file by hand (it is just Scheme code, of course),
 <!-- -->but that's not a very elegant solution.
-<!-- -->The second argument to the init-func only comes into play when 'env-too' is #t.
-<!-- -->In this case, 'proc' is being evaluated over the peak env data, rather than the
-<!-- -->original data, so the duration is the envelope size, in this case.
+<!-- -->
+<!-- --><br><br>Another limitation is that Guile may garbage collect the enclosing environment.
+<!-- -->Only the vct returned by 'init-func' and 'init-func' itself are protected from the GC (this may change -- it seems
+<!-- -->counterintuitive and unnecessary). 
+<!-- -->In compand-channel (examp.scm), the table of companding data is declared globally
+<!-- -->to protect against this.  We could also, in this case, place the companding table in the vct.
 <!-- --><br><br>
-<!-- -->Here are a couple more examples:
+<!-- -->The real limitation in using ptree-channel, however, is that the read direction
+<!-- -->can not only be backwards, but it can also change at any time.  This makes it
+<!-- -->hard to use CLM generators, or anything that depends on previous samples.
+<!-- -->Since the run macro (on which ptree-channel depends) is currently limited in
+<!-- -->the kinds of vector or list elements it can decipher, you're pretty tightly
+<!-- -->constricted in this context.
+<!-- -->The read direction argument can be ignored if you know you're not going to read backwards.
+<!-- -->The only "hidden" reverse read is in the src generator where a negative increment can be
+<!-- -->generated in a variety of ways (for example, src driven by oscil).  A one-zero filter
+<!-- -->could in this case be:
+<!-- --><br><br><pre>
+  (<em class=red>ptree-channel</em> (lambda (y data forward)
+		   (declare (y real) (data vct) (forward boolean))
+		   (let ((val (* 0.5 (+ y (vct-ref data 0)))))
+		     (vct-set! data 0 y)
+		     val))
+		 0 (frames) ind 0 #f #f
+		 (let ((edpos (edit-position ind 0)))
+		   (lambda (pos dur)
+		     (vct (if (= pos 0) 0.0
+			      (sample (1- pos) ind 0 edpos))))))
+<!-- --></pre>
+<!-- -->The last (highly experimental) argument to ptree-channel, 'map-fallback', can be set
+<!-- -->to #f if you want to try out a more general virtual operator: 'proc' and 'init-func' can
+<!-- -->be anything legal in Snd, and the actual forms will be evaluated as virtual ops
+<!-- -->at run-time. This should also work in Ruby, whereas the optimized cases (those that
+<!-- -->depend on the run macro) will work only in Guile.  We could define xen-channel:
+<!-- --><br><br><pre>
+  (define* (<a name="xenchannel">xen-channel</a> proc #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f) (env-too #f) (init-func #f))
+    (<em class=red>ptree-channel</em> proc beg dur snd chn edpos env-too init-func #f))
+<!-- --></pre>Then reverse-channel as a virtual op could be:
+<!-- --><br><br><pre>
+(xen-channel (lambda (y data forward)
+	       (if forward
+		   (previous-sample data)
+		   (next-sample data)))
+	     0 (frames) ind 0 #f #f
+	     (let ((edpos (edit-position ind 0))
+		   (orig-last (1- (frames))))
+	       (lambda (pos dur)
+		 (make-sample-reader (- orig-last pos) ind 0 -1 edpos))))
+<!-- --></pre><br><br>Here are a couple more examples:
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
@@ -5203,7 +5280,7 @@ the direction argument between the channel and edit-position:
 (define* (ptree-xramp r0 r1 ubase #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
   "exponential version of ramp-channel"
   ;; this is essentially what CLM's exponential envelope generator is doing
-  ;;   to accomodate C, it actually uses (exp (* power (log base))) precomputing (log base)
+  ;;   to accomodate C, it actually uses (exp (* power (log base))) prescaling power by (log base)
   (let* ((base (if (&gt; r0 r1) (/ 1.0 ubase) ubase)))
     (<em class=red>ptree-channel</em>
      (lambda (y data forward)
@@ -5467,6 +5544,9 @@ the direction argument between the channel and edit-position:
 (begin (select-all) (scale-selection-by 2.0))
 (begin (save-sound-as "temp.snd") (mix "temp.snd" 0) (delete-file "temp.snd"))
 
+(ptree-channel (lambda (y data forward) (data y)) 0 (frames) 0 0 #f #t
+	       (lambda (pos dur) (lambda (y) (* 2.0 y))) #f)
+
 (let ((sd (samples-&gt;sound-data)))
   (do ((i 0 (1+ i))) 
       ((= i (frames)))
@@ -5479,8 +5559,8 @@ the direction argument between the channel and edit-position:
 	(sf (make-sample-reader 0)))
     (map-channel
      (lambda (val)
-       (convolve cnv (lambda (dir) (read-sample sf)))))
-    (free-sample-reader sf)))
+       (convolve cnv (lambda (dir) 
+                       (read-sample sf)))))))
 
 (do ((i 0 (1+ i)))
     ((= i (frames)))
@@ -5496,7 +5576,8 @@ the direction argument between the channel and edit-position:
 			(if (&lt;= ctr end)
 			    (them us)))))
 	   us))))
-  ((make-scaler 0 (frames)) (make-scaler 1 (frames))))
+  ((make-scaler 0 (frames)) 
+     (make-scaler 1 (frames))))
 <!-- --></pre></td></tr></table>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
@@ -6921,10 +7002,11 @@ The edit list functions are:</p>
 <!-- display-edits -->
 <!-- -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="snddisplayedits">display-edits</a></em> (<i>snd chn</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="snddisplayedits">display-edits</a></em> (<i>snd chn edpos with-source</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->returns the current edit list contents (as a string).
+<!-- -->returns the current edit list contents (as a string).  If <i>edpos</i> is specified, only that position is described.
+<!-- --><i>with-source</i> (default #t) determines whether ptree source code is included in the output.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td></td></tr>
 <!-- -->
@@ -7813,7 +7895,7 @@ Once in the debugger, you'll get a prompt:
 of debugger commands, and so on.
 Here's a real-life example, edited for brevity.  I hit a numerical
 overflow error (actually divide by zero...) in snd-test.scm, a huge
-(29000 line) pile of tests, got a slightly truncated backtrace from
+(32000 line) pile of tests, got a slightly truncated backtrace from
 Snd's default backtrace displayer (not sure why it was truncated, but first things first), so
 </p>
 <pre>
@@ -8577,12 +8659,13 @@ and returns the new file's index"</em>
 <!-- -->
 <!-- snd-spectrum -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndspectrum">snd-spectrum</a></em> (data window length <i>linear beta</i>)</code></span></td></tr>
+<!-- --><span class=defbox><code><em class=def><a name="sndspectrum">snd-spectrum</a></em> (data window length <i>linear beta in-place normalized</i>)</code></span></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->return spectrum (vct) of <i>data</i> (also a vct) using fft-window <i>win</i>.
 <!-- -->length of data (and fft) is <i>length</i>. <code>(let ((spectr (snd-spectrum data rectangular-window (transform-size)))) ...)</code>
 <!-- -->If <i>linear</i> is #f (default is #t), the spectrum is returned as dB values.
 <!-- --><i>beta</i> is the fft data window "family" parameter; it is scaled internally so here it should be between 0.0 and 1.0.
+<!-- -->If <i>in-place</i> is #t, the spectrum is returned in <i>data</i>, otherwise a newly created vct is returned.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -8738,7 +8821,7 @@ are:</p>
 <tr><td><code><em class=def><a name="pushedbuttoncolor">pushed-button-color</a></em></code></td>
     <td><code>lightsteelblue1</code></td>
     <td>color of pushed button.</td></tr>
-<tr><td><code><em class=def>sash-color</em></code></td>
+<tr><td><code><em class=def><a name="sashcolor">sash-color</a></em></code></td>
     <td><code>lightgreen</code></td>
     <td>color of paned window sashes.</td></tr>
 <tr><td><code><em class=def><a name="selecteddatacolor">selected-data-color</a></em></code></td>
@@ -8863,6 +8946,7 @@ If the requested font can't be loaded, the set! statement will return the old (u
 <tr><td><code><em class=def><a name="recolorwidget">recolor-widget</a></em> (widget color)</code></td></tr>
 <tr><td><code><em class=def><a name="showwidget">show-widget</a></em> (widget)</code></td></tr>
 <tr><td><code><em class=def><a name="hidewidget">hide-widget</a></em> (widget)</code></td></tr>
+<tr><td><code><em class=def><a name="focuswidget">focus-widget</a></em> (widget)</code></td></tr>
 <tr><td colspan=2><br></td></tr>
 <tr><td><code><em class=def><a name="mainmenu">main-menu</a></em> (menu)</code></td><td></td></tr>
 <tr><td><code><em class=def><a name="mainwidgets">main-widgets</a></em> ()</code></td><td></td></tr>
@@ -9134,7 +9218,14 @@ The lowest level procedures are:
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
-
+<!-- -->glSpectrogram -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="glspectrogram">glSpectrogram</a></em> (data gl-list cutoff use-dB min-dB scale br bg bb)</code></span></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- --><i>glSpectrogram</i> takes spectrogram data and passes it to openGL.  See snd-gl.scm for an example.</td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
 <!-- graph-data -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="graphdata">graph-data</a></em> (data snd chn context low high graphics-style)</code></span></td></tr>
@@ -9277,6 +9368,14 @@ The lowest level procedures are:
 <!-- -->
 <!-- --><tr><td></td><td>
 <!-- -->the graphics context for XOR drawing in the selection color.</td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- send-netscape -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sendnetscape">send-netscape</a></em>(url)</code></span></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- -->send netscape (starting it, if necessary), the location 'url'.
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- snd-gcs -->

@@ -232,7 +232,7 @@ static void edit_redo_callback(Widget w, XtPointer cD, XtPointer mD)
   IF_MENU_HOOK("Edit", "Redo") redo_edit_with_sync(current_channel((snd_state *)cD), 1);
 }
 
-static int selection_play_stop = 0;
+static int selection_play_stop = FALSE;
 
 static void edit_play_callback(Widget w, XtPointer cD, XtPointer mD) 
 {
@@ -245,7 +245,7 @@ static void edit_play_callback(Widget w, XtPointer cD, XtPointer mD)
       IF_MENU_HOOK("Edit", "Play Selection") 
 	{
 	  set_menu_label(edit_play_menu(), "Stop");
-	  selection_play_stop = 1;
+	  selection_play_stop = TRUE;
 	  play_selection(IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "play selection", 0);
 	}
     }
@@ -254,7 +254,7 @@ static void edit_play_callback(Widget w, XtPointer cD, XtPointer mD)
 void reflect_play_selection_stop(void)
 {
   set_menu_label(edit_play_menu(), "Play Selection");
-  selection_play_stop = 0;
+  selection_play_stop = FALSE;
 }
 
 static void edit_header_callback_1(Widget w, XtPointer cD, XtPointer mD)
@@ -1190,7 +1190,7 @@ int g_add_to_menu(snd_state *ss, int which_menu, char *label, int callb, int pos
 
 /* -------------------------------- POPUP MENU -------------------------------- */
 
-static int stopping = 0;
+static int stopping = FALSE;
 
 static void popup_play_callback(Widget w, XtPointer cD, XtPointer mD) 
 {
@@ -1202,7 +1202,7 @@ static void popup_play_callback(Widget w, XtPointer cD, XtPointer mD)
       if (stopping)
 	{
 	  stop_playing_all_sounds();
-	  stopping = 0;
+	  stopping = FALSE;
 	  set_button_label(w, "Play");
 	  if (sp) set_play_button(sp, 0);
 	}
@@ -1212,7 +1212,7 @@ static void popup_play_callback(Widget w, XtPointer cD, XtPointer mD)
 	    {
 	      play_sound(sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "popup play", 0);
 	      set_play_button(sp, 1);
-	      stopping = 1;
+	      stopping = TRUE;
 	      set_button_label(w, "Stop playing");
 	    }
 	}
@@ -1221,7 +1221,7 @@ static void popup_play_callback(Widget w, XtPointer cD, XtPointer mD)
 
 void reflect_play_stop_in_popup_menu(void)
 {
-  stopping = 0;
+  stopping = FALSE;
   if (popup_menu)
     set_button_label(popup_children[W_pop_play], "Play");
 }

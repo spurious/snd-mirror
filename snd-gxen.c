@@ -55,13 +55,13 @@ static XEN g_make_snd_color(XEN r, XEN g, XEN b)
   return(XEN_WRAP_PIXEL(ccolor));
 }
 
-void recolor_everything(GUI_WIDGET w, void *ptr)
+void recolor_everything(widget_t w, void *ptr)
 {
   if (GTK_IS_WIDGET(w)) 
     set_background_and_redraw(w, (GdkColor *)ptr);
 }
 
-void color_unselected_graphs(COLOR_TYPE color)
+void color_unselected_graphs(color_t color)
 {
   int i, j;
   chan_info *cp;
@@ -81,7 +81,7 @@ void color_unselected_graphs(COLOR_TYPE color)
     }
 }
 
-void color_chan_components(COLOR_TYPE color, int which_component)
+void color_chan_components(color_t color, int which_component)
 {
   int i, j;
   chan_info *cp;
@@ -148,7 +148,7 @@ XEN_NARGIFY_1(g_set_graph_cursor_w, g_set_graph_cursor)
 #define g_set_graph_cursor_w g_set_graph_cursor
 #endif
 
-void g_initialize_gxen(void)
+void g_init_gxen(void)
 {
   XEN_DEFINE_PROCEDURE(S_in,            g_in_w, 2, 0, 0,             H_in);
   XEN_DEFINE_PROCEDURE(S_make_color,    g_make_snd_color_w, 3, 0, 0, H_make_color);

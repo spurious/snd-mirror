@@ -319,13 +319,13 @@ mark *hit_triangle(chan_info *cp, int x, int y)
 }
 
 
-static int watching_mouse = 0; /* this is tracking axis moves */
+static int watching_mouse = FALSE; /* this is tracking axis moves */
 static int last_mouse_x = 0;
 static mark *moving_mark = NULL; /* used only while "off-screen" during axis moves */
 
 static void move_axis_to_track_mark(chan_info *cp);
-static BACKGROUND_FUNCTION_TYPE watch_mouse_button = 0;
-static BACKGROUND_TYPE WatchMouse(GUI_POINTER cp)
+static Cessator watch_mouse_button = 0;
+static Cessate WatchMouse(Indicium cp)
 {
   if (watch_mouse_button)
     {
@@ -341,14 +341,14 @@ static void start_mark_watching(chan_info *cp, mark *mp)
   moving_mark = mp;
   ss = cp->state;
   watch_mouse_button = BACKGROUND_ADD(ss, WatchMouse, cp);
-  watching_mouse = 1;
+  watching_mouse = TRUE;
 }
 
 static void cancel_mark_watch(chan_info *cp)
 {
   if (watch_mouse_button) BACKGROUND_REMOVE(watch_mouse_button);
   watch_mouse_button = 0;
-  watching_mouse = 0;
+  watching_mouse = FALSE;
   moving_mark = NULL;
 }
 
@@ -460,11 +460,7 @@ static void allocate_marks(chan_info *cp, int edit_ctr)
   for (i = 0; i < cp->marks_size; i++) cp->mark_ctr[i] = -1;
 }
 
-#ifdef DEBUGGING_REALLOC
-  #define MARKS_ALLOC_SIZE 2
-#else
-  #define MARKS_ALLOC_SIZE 16
-#endif
+#define MARKS_ALLOC_SIZE 16
 
 mark *add_mark(off_t samp, char *name, chan_info *cp)
 {
@@ -749,7 +745,7 @@ static mark *find_nth_mark(chan_info *cp, int count)
   mark *mp = NULL;
   if ((!cp) || (!cp->marks)) return(NULL);
   if (count > 0) c = count; else c = -count;
-  samp = cp->cursor;
+  samp = CURSOR(cp);
   for (i = 0; i < c; i++)
     {
       if (count > 0) mp = find_next_mark(samp, cp);
@@ -947,7 +943,7 @@ void mark_define_region(chan_info *cp, int count)
     {
       if (cp->marks)
 	{
-	  beg = cp->cursor;
+	  beg = CURSOR(cp);
 	  mp = find_nth_mark(cp, count);
 	  if (mp)
 	    {
@@ -1543,7 +1539,7 @@ static void make_mark_graph(chan_info *cp, snd_info *sp, off_t initial_sample, o
 	    {
 	      if (i == current_sample) 
 		for (k = current_sample; k < initial_sample; k++) 
-		  move_to_next_sample(sf);
+		  read_sample(sf);
 	      set_grf_point(grf_x(x, ap), j, grf_y(read_sample_to_float(sf), ap));
 	    }
 	}
@@ -1647,7 +1643,7 @@ static void make_mark_graph(chan_info *cp, snd_info *sp, off_t initial_sample, o
 		{
 		  if (i == current_sample) 
 		    for (k = current_sample; k < initial_sample; k++) 
-		      move_to_next_sample(sf);
+		      read_sample(sf);
 		  msamp = read_sample(sf);
 		  if (msamp > ymax) ymax = msamp;
 		  if (msamp < ymin) ymin = msamp;
@@ -2266,7 +2262,7 @@ void g_init_marks(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mark_name, g_mark_name_w, H_mark_name,
 				   "set-" S_mark_name, g_set_mark_name_w, 0, 1, 1, 1);
 
-  XEN_DEFINE_PROCEDURE(S_restore_marks, g_restore_marks_w, 4, 0, 0, "internal func");
+  XEN_DEFINE_PROCEDURE(S_restore_marks, g_restore_marks_w, 4, 0, 0, "internal func used in save-state, restores marks");
   XEN_DEFINE_PROCEDURE(S_mark_sync_max, g_mark_sync_max_w, 0, 0, 0, H_mark_sync_max);
   XEN_DEFINE_PROCEDURE(S_mark_home,     g_mark_home_w, 0, 1, 0,     H_mark_home);
   XEN_DEFINE_PROCEDURE(S_marks,         g_marks_w, 0, 3, 0,         H_marks);

@@ -524,22 +524,23 @@ static void w_toggle_callback(Widget w, XtPointer context, XtPointer info)
   w_button_callback((chan_info *)context, cb->set, (ev->state & snd_ControlMask));
 }
 
-#define GUI_CURRENT_TIME(ss) XtLastTimestampProcessed(MAIN_DISPLAY(ss))
-
 static void channel_expose_callback(Widget w, XtPointer context, XtPointer info)
 {
-  static TIME_TYPE last_expose_event_time = 0;
+  static Tempus last_expose_event_time = 0;
   static chan_info *last_cp = NULL;
   snd_info *sp;
   chan_info *cp = (chan_info *)context;
   XmDrawingAreaCallbackStruct *cb = (XmDrawingAreaCallbackStruct *)info;
   XExposeEvent *ev;
-  TIME_TYPE curtime;
+  Tempus curtime;
   ASSERT_WIDGET_TYPE(XmIsDrawingArea(w), w);
   if ((cp == NULL) || (!(cp->active)) || (cp->sound == NULL)) return;
   ev = (XExposeEvent *)(cb->event);
+  /*
+  fprintf(stderr,"expose %d %d %d\n", ev->count, ev->width, ev->height);
+  */
   if (ev->count > 0) return;
-  curtime = GUI_CURRENT_TIME(cp->state);
+  curtime = XtLastTimestampProcessed(MAIN_DISPLAY(cp->state));
   if ((ev->width < 15) && (last_expose_event_time == curtime) && (cp == last_cp)) return;
   last_cp = cp;
   last_expose_event_time = curtime;
@@ -1144,7 +1145,7 @@ void set_peak_numbers_font(chan_info *cp) {set_graph_font(cp, PEAK_NUMBERS_FONT(
 void set_tiny_numbers_font(chan_info *cp) {set_graph_font(cp, TINY_NUMBERS_FONT(cp->state));}
 void set_bold_peak_numbers_font(chan_info *cp) {set_graph_font(cp, BOLD_PEAK_NUMBERS_FONT(cp->state));}
 
-COLOR_TYPE get_foreground_color(chan_info *cp, axis_context *ax)
+color_t get_foreground_color(chan_info *cp, axis_context *ax)
 {
   XGCValues gv;
   snd_state *ss;
@@ -1153,7 +1154,7 @@ COLOR_TYPE get_foreground_color(chan_info *cp, axis_context *ax)
   return(gv.foreground);
 }
 
-COLOR_TYPE get_background_color(chan_info *cp, axis_context *ax)
+color_t get_background_color(chan_info *cp, axis_context *ax)
 {
   XGCValues gv;
   snd_state *ss;
@@ -1234,7 +1235,7 @@ void cleanup_cw(chan_info *cp)
   if ((cp) && (cp->cgx))
     {
       cx = cp->cgx;
-      cx->selected = 0;
+      cx->selected = FALSE;
       cw = cx->chan_widgets;
       if (cw)
 	{

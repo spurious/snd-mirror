@@ -136,12 +136,10 @@ void recorder_error(char *msg)
 /* -------------------------------- ICONS -------------------------------- */
 
 static GdkPixmap *speaker_pix, *line_in_pix, *mic_pix, *aes_pix, *adat_pix, *digital_in_pix, *cd_pix;
-static int icons_created = 0;
 
 static void make_record_icons(GtkWidget *w, snd_state *ss)
 {
   GdkWindow *wn;
-  icons_created = 1;
   wn = MAIN_WINDOW(ss);
   speaker_pix = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, speaker_bits());
   mic_pix = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, mic_bits());
@@ -217,7 +215,7 @@ static void allocate_meter_2(GtkWidget *w, vu_label *vu)
 
 static GdkColor *yellows[VU_COLORS];
 static GdkColor *reds[VU_COLORS];
-static int vu_colors_allocated = 0;
+static int vu_colors_allocated = FALSE;
 static int yellow_vals[] = {0, 16, 32, 64, 96, 128, 160, 175, 185, 200, 210, 220, 230, 240};
 
 static void allocate_meter_1(snd_state *ss, vu_label *vu)
@@ -249,7 +247,7 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
 
   if (!vu_colors_allocated)
     {
-      vu_colors_allocated = 1;
+      vu_colors_allocated = TRUE;
       tmp_color.red = (unsigned short)65535;
       for (i = 0; i < VU_COLORS; i++)
 	{
@@ -746,7 +744,7 @@ static void device_button_callback(GtkWidget *w, gpointer context)
   	  if (active_device_button != -1)
 	    {
 	      p = all_panes[active_device_button];
-	      for (i = p->in_chan_loc, j = 0; j < p->in_chans; j++, i++) rp->input_channel_active[i] = 0;
+	      for (i = p->in_chan_loc, j = 0; j < p->in_chans; j++, i++) rp->input_channel_active[i] = FALSE;
 	      if (active_device_button != button)
 		{
 		  set_toggle_button(device_buttons[active_device_button], FALSE, FALSE, (void *)(all_panes[active_device_button])); 
@@ -755,7 +753,7 @@ static void device_button_callback(GtkWidget *w, gpointer context)
 	    }
 	  active_device_button = button;
 	  p = all_panes[button];
-	  for (i = p->in_chan_loc, j = 0; j < p->in_chans; j++, i++) rp->input_channel_active[i] = 1;
+	  for (i = p->in_chan_loc, j = 0; j < p->in_chans; j++, i++) rp->input_channel_active[i] = TRUE;
 	  rp->input_channels[0] = p->in_chans;
 
 	  /* if digital in, get its srate (and reflect in srate text) */
@@ -770,7 +768,7 @@ static void device_button_callback(GtkWidget *w, gpointer context)
 	    record_report(messages, recorder_device_name(p->device), NULL);
 	  else
 	    {
-	      rp->taking_input = 1;
+	      rp->taking_input = TRUE;
 	      set_read_in_progress(ss);
 	    }
 	}
@@ -786,15 +784,15 @@ static void device_button_callback(GtkWidget *w, gpointer context)
 		  if (rp->monitor_port == -1)
 		    {
 		      record_report(messages, "open output", NULL);
-		      rp->monitoring = 0;
+		      rp->monitoring = FALSE;
 		    }
-		  else rp->monitoring = 1;
+		  else rp->monitoring = TRUE;
 		}
 	    }
 	  else 
 	    {
 	      mus_audio_close(rp->monitor_port);
-	      rp->monitoring = 0;
+	      rp->monitoring = FALSE;
 	      rp->monitor_port = -1;
 	    }
 	}
@@ -817,7 +815,7 @@ static void save_audio_settings_callback(GtkWidget *w, gpointer context)
   recorder_info *rp;
   rp = get_recorder_info();
   set_toggle_button(w, FALSE, FALSE, (void *)ss);
-  rp->mixer_settings_saved = 1;
+  rp->mixer_settings_saved = TRUE;
   mus_audio_mixer_save(DEFAULT_AUDIO_STATE_FILE);
 }
 #endif
@@ -2197,13 +2195,13 @@ static void initialize_recorder(recorder_info *rp)
   /* in this case, digital in blocks out the others */
   long sb[2];
   int err;
-  int in_digital = 0;
+  int in_digital = FALSE;
 #endif
   for (i = 0; i < MAX_SOUNDCARDS; i++) rp->raw_input_bufs[i] = NULL;
 #if OLD_SGI_AL
   sb[0] = AL_INPUT_SOURCE;
   err = ALgetparams(AL_DEFAULT_DEVICE, sb, 2);
-  if ((!err) && (sb[1] == AL_INPUT_DIGITAL)) in_digital = 1;
+  if ((!err) && (sb[1] == AL_INPUT_DIGITAL)) in_digital = TRUE;
   set_toggle_button(device_buttons[rp->digital_in_button], 
 		    in_digital, FALSE, 
 		    (void *)(all_panes[rp->digital_in_button]));

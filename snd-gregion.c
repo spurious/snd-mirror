@@ -455,7 +455,7 @@ static void make_region_dialog(snd_state *ss)
 
   gtk_paned_set_position(GTK_PANED(region_grf), 150);
 
-  cp->hookable = 0;
+  cp->hookable = FALSE;
   g_signal_connect_closure_by_id(GTK_OBJECT(channel_graph(cp)),
 				 g_signal_lookup("expose_event", G_OBJECT_TYPE(GTK_OBJECT(channel_graph(cp)))),
 				 0,

@@ -96,7 +96,7 @@
 
 #include "sndlib.h"
 
-static int hdrbuf_is_inited = 0;
+static int hdrbuf_is_inited = FALSE;
 
 #define HDRBUFSIZ 256
 #ifndef MACOS
@@ -119,16 +119,16 @@ static int *marker_ids = NULL, *marker_positions = NULL;
 #ifdef CLM
 void reset_headers_c(void) 
 {
-  hdrbuf_is_inited = 0; 
+  hdrbuf_is_inited = FALSE; 
   markers = 0;
 }
 #endif
 
 int mus_header_initialize (void)
 {
-  if (hdrbuf_is_inited == 0)
+  if (!hdrbuf_is_inited)
     {
-      hdrbuf_is_inited = 1;
+      hdrbuf_is_inited = TRUE;
 #ifndef MACOS
       hdrbuf = (unsigned char *)CALLOC(HDRBUFSIZ, sizeof(unsigned char));
 #else
@@ -858,7 +858,7 @@ static int read_aiff_header (int chan, int overall_offset)
   data_format = MUS_BSHORT;
   srate = 0;
   chans = 0;
-  happy = 1;
+  happy = TRUE;
   data_size = 0;
   true_file_length = SEEK_FILE_LENGTH(chan);
   update_form_size = mus_char_to_bint((unsigned char *)(hdrbuf + 4 + overall_offset)); /* should be file-size-8 unless there are multiple forms */
@@ -1057,7 +1057,7 @@ static int read_aiff_header (int chan, int overall_offset)
 	}
       chunkloc = (8 + chunksize);
       if (chunksize & 1) chunkloc++; /* extra null appended to odd-length chunks */
-      if ((offset + chunkloc) >= update_form_size) happy = 0;
+      if ((offset + chunkloc) >= update_form_size) happy = FALSE;
     }
   if (true_file_length < data_size) 
     data_size = true_file_length - data_location;
@@ -1797,7 +1797,7 @@ static int read_avi_header (int chan)
   data_format = MUS_UNSUPPORTED;
   srate = 0;
   chans = 1;
-  happy = 1;
+  happy = TRUE;
   data_size = 0;
   data_location = 0;
   true_file_length = SEEK_FILE_LENGTH(chan);
@@ -1821,7 +1821,7 @@ static int read_avi_header (int chan)
 		  if ((hdrbuf[2] == 'w') && (hdrbuf[3] == 'b'))
 		    {
 		      data_location = ckoff;
-		      if (srate != 0) happy = 0;
+		      if (srate != 0) happy = FALSE;
 		      break;
 		    }
 		  ckoff += (8 + cksize);
@@ -1862,7 +1862,7 @@ static int read_avi_header (int chan)
 			      /* only 16 bit linear little endian for now */
 			      if ((bits == 16) && (original_data_format == 1))
 				original_data_format = MUS_LSHORT;
-			      if (data_location != 0) happy = 0;
+			      if (data_location != 0) happy = FALSE;
 			      break;
 			    }
 			}
@@ -1956,7 +1956,7 @@ static int read_soundfont_header (int chan)
   data_format = MUS_LSHORT;
   srate = 0;
   chans = 1; 
-  happy = 1;
+  happy = TRUE;
   data_size = 0;
   data_location = 0;
   last_end = 0;
@@ -2111,7 +2111,7 @@ static int decode_nist_value (char *str, int base, int end)
 static int read_nist_header (int chan)
 {
   char str[MAX_FIELD_LENGTH], name[MAX_FIELD_LENGTH];
-  int happy = 1;
+  int happy = TRUE;
   int k, hend, curbase, j, n, nm, samples, bytes, read_bytes, byte_format, idata_location;
   type_specifier = mus_char_to_uninterpreted_int((unsigned char *)hdrbuf); /* the actual id is "NIST_1A" */
   for (k = 8; k < 16; k++) 
@@ -2157,14 +2157,14 @@ static int read_nist_header (int chan)
 	  name[nm] = 0;
 	  if (strcmp(name, "sample_rate") == 0) srate = decode_nist_value(str, nm, k); else
 	    if (strcmp(name, "channel_count") == 0) chans = decode_nist_value(str, nm, k); else
-	      if (strcmp(name, "end_head") == 0) {happy = 0; comment_end = curbase + n - 9;} else
+	      if (strcmp(name, "end_head") == 0) {happy = FALSE; comment_end = curbase + n - 9;} else
 		if (strcmp(name, "sample_count") == 0) samples = decode_nist_value(str, nm, k); else
 		  if ((bytes == 0) && (strcmp(name, "sample_n_bytes") == 0)) bytes = decode_nist_value(str, nm, k); else
 		    if ((bytes == 0) && (strcmp(name, "sample_sig_bits") == 0)) {bytes = decode_nist_value(str, nm, k); bytes = (bytes >> 3);} else
 		      if (strcmp(name, "sample_byte_format") == 0) byte_format = decode_nist_value(str, nm, k);
 	  for (j = 0; j <= k; j++) str[j] =' ';
 	  k = 0;
-	  if ((curbase + n + 1) > 1024) happy = 0;
+	  if ((curbase + n + 1) > 1024) happy = FALSE;
 	}
       else
 	k++;
@@ -2283,12 +2283,12 @@ static int read_bicsf_header (int chan)
   /* now check for a COMM chunk, setting the comment pointers */
   chunkloc = 4; /* next header + magic number, srate, chans, packing, then chunks, I think */
   offset = 40;
-  happy = 1;
+  happy = TRUE;
   while (happy)
     {
       if (((offset + chunkloc) >= data_location) ||
 	  ((offset + chunkloc) < 40))
-	happy = 0;
+	happy = FALSE;
       else
 	{
 	  offset += chunkloc;
@@ -2300,12 +2300,12 @@ static int read_bicsf_header (int chan)
 	    {
 	      comment_start = 8 + offset;
 	      comment_end = comment_start + chunksize -1;
-	      happy = 0;
+	      happy = FALSE;
 	    }
 	  else
 	    {
 	      if ((chunkname == 0) || (chunksize <= 0)) 
-		happy = 0;
+		happy = FALSE;
 	    }
 	  chunkloc = (8 + chunksize);
 	}
@@ -2389,7 +2389,7 @@ static int read_ircam_header (int chan)
   srate = (int)big_or_little_endian_float((unsigned char *)(hdrbuf + 4), little);
   chans = big_or_little_endian_int((unsigned char *)(hdrbuf + 8), little);
   bloc = 16;
-  happy = 1;
+  happy = TRUE;
   offset = 0;
   while (happy)
     {
@@ -2400,12 +2400,12 @@ static int read_ircam_header (int chan)
       bsize = big_or_little_endian_short((unsigned char *)(hdrbuf + 2), little);
       if (bcode == 2)
 	{
-	  happy = 0;
+	  happy = FALSE;
 	  comment_start = 4 + offset;
 	  comment_end = comment_start + bsize - 1; /* was -5? */
 	}
       bloc = bsize;
-      if ((bsize <= 0) || (bcode <= 0) || ((offset + bloc) > 1023)) happy = 0;
+      if ((bsize <= 0) || (bcode <= 0) || ((offset + bloc) > 1023)) happy = FALSE;
     }
   data_size = mus_bytes_to_samples(data_format, data_size);
   return(MUS_NO_ERROR);
@@ -2491,7 +2491,7 @@ static int read_8svx_header (int chan)
   data_format = MUS_BYTE;
   srate = 0;
   chans = 1;
-  happy = 1;
+  happy = TRUE;
   true_file_length = SEEK_FILE_LENGTH(chan);
   update_form_size = mus_char_to_bint((unsigned char *)(hdrbuf + 4));
   while (happy)
@@ -2533,7 +2533,7 @@ static int read_8svx_header (int chan)
 		    {
 		      data_size = chunksize;
 		      data_location = offset + 12;
-		      happy = 0;
+		      happy = FALSE;
 		    }
 		}
 	    }
@@ -2567,7 +2567,7 @@ static int read_voc_header(int chan)
   int type, happy, len, curbase, voc_extended, bits, code;
   data_format = MUS_UBYTE;
   chans = 1;
-  happy = 1;
+  happy = TRUE;
   voc_extended = 0;
   true_file_length = SEEK_FILE_LENGTH(chan);
   curbase = mus_char_to_lshort((unsigned char *)(hdrbuf + 20));
@@ -2589,7 +2589,7 @@ static int read_voc_header(int chan)
 		data_format = MUS_UBYTE; 
 	      else data_format = MUS_UNSUPPORTED;
 	    }
-	  happy = 0;
+	  happy = FALSE;
 	}
       else
 	{
@@ -2638,7 +2638,7 @@ static int read_voc_header(int chan)
 		else data_format = MUS_UNSUPPORTED;
 	      chans = (int)hdrbuf[9];
 	      if (chans == 0) chans = 1;
-	      happy = 0;
+	      happy = FALSE;
 	    }
 	  else
 	    {
@@ -2663,7 +2663,7 @@ static int read_voc_header(int chan)
 		    return(mus_error(MUS_HEADER_READ_FAILED, "read_voc_header: ran off end of file"));
 		  curbase += len;
 		}
-	      else happy = 0;
+	      else happy = FALSE;
 	    }
 	}
     }
@@ -2999,7 +2999,7 @@ static int read_sppack_header(int chan)
 static int read_esps_header (int chan)
 {
   char str[80];
-  int happy = 1;
+  int happy = TRUE;
   int k, hend, curbase, j, n, chars, floats, shorts, doubles, little, bytes;
   little = (hdrbuf[18] == 0);
   if (little)
@@ -3076,9 +3076,9 @@ static int read_esps_header (int chan)
 	      if (little)
 		srate = (int)mus_char_to_ldouble((unsigned char *)(hdrbuf + 8));
 	      else srate = (int)mus_char_to_bdouble((unsigned char *)(hdrbuf + 8));
-	      happy = 0;
+	      happy = FALSE;
 	    }
-	  if ((curbase + n + 1) >= data_location) happy = 0;
+	  if ((curbase + n + 1) >= data_location) happy = FALSE;
 	  k = 0;
 	}
       else
@@ -3157,7 +3157,7 @@ static int read_maud_header (int chan)
   data_format = MUS_BYTE;
   srate = 0;
   chans = 1;
-  happy = 1;
+  happy = TRUE;
   update_form_size = mus_char_to_bint((unsigned char *)(hdrbuf + 4));
   while (happy)
     {
@@ -3199,7 +3199,7 @@ static int read_maud_header (int chan)
 	      if (match_four_chars((unsigned char *)hdrbuf, I_MDAT))
 		{
 		  data_location = offset + 12;
-		  happy = 0;
+		  happy = FALSE;
 		}
 	    }
 	}
@@ -3238,7 +3238,7 @@ static int read_csl_header (int chan)
   data_format = MUS_LSHORT;
   srate = 0;
   chans = 1;
-  happy = 1;
+  happy = TRUE;
   
   update_form_size = mus_char_to_lint((unsigned char *)(hdrbuf + 8));
   while (happy)
@@ -3272,7 +3272,7 @@ static int read_csl_header (int chan)
 		{
 		  data_location = offset + 8;
 		  data_size = mus_char_to_lint((unsigned char *)(hdrbuf + 4));
-		  happy = 0;
+		  happy = FALSE;
 		}
 	    }
 	}
@@ -3569,7 +3569,7 @@ static int read_sbstudio_header(int chan)
   data_format = MUS_LSHORT; /* might change later */
   true_file_length = SEEK_FILE_LENGTH(chan);
   data_size = true_file_length - 56; /* first guess */
-  happy = 1;
+  happy = TRUE;
   i = 8;
   bp = (unsigned char *)(hdrbuf + 8);
   while (happy)
@@ -3578,7 +3578,7 @@ static int read_sbstudio_header(int chan)
 	{
 	  data_size = mus_char_to_lint((unsigned char *)(bp + 4));
 	  data_location = i + 8;
-	  happy = 0;
+	  happy = FALSE;
 	}
       else
 	{
@@ -3603,7 +3603,7 @@ static int read_sbstudio_header(int chan)
       if (i >= HDRBUFSIZ)
 	{
 	  data_format = MUS_UNSUPPORTED;
-	  happy = 0;
+	  happy = FALSE;
 	}
     }
   data_size = mus_bytes_to_samples(data_format, data_size);
@@ -4087,7 +4087,7 @@ static int read_comdisco_header (int chan)
   char portion[32];
   char value[32];
   int i, j, k, m, n, curend, commenting, offset, len, little, type, d_size = 0;
-  int happy = 1;
+  int happy = TRUE;
   k = 15;
   line = (char *)CALLOC(256, sizeof(char));
   little = 0;
@@ -4117,7 +4117,7 @@ static int read_comdisco_header (int chan)
       if ((strcmp(line, "$DATA BINARY") == 0) || 
 	  (strcmp(line, "$DATA ASCII") == 0)) 
 	{
-	  happy = 0; 
+	  happy = FALSE; 
 	  data_location = offset + k;
 	}
       if (strcmp(line, "$USER_COMMENT") == 0)
@@ -4547,12 +4547,12 @@ static int mus_header_read_with_fd_and_name(int chan, const char *filename)
       header_type = MUS_HCOM;
       return(MUS_NO_ERROR);
     }
-  happy = 0;
+  happy = FALSE;
   for (i = 0; i < NINRS; i++) 
     {
       if (equal_big_or_little_endian((unsigned char *)hdrbuf, I_INRS[i]))
 	{
-	  happy = 1;
+	  happy = TRUE;
 	  loc = inrs_srates[i];
 	}
     }

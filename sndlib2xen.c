@@ -103,25 +103,25 @@ static XEN glmus_sound_set(const char *caller, int (*func)(const char *file, off
 
 static XEN g_sound_samples(XEN filename) 
 {
-  #define H_mus_sound_samples "(" S_mus_sound_samples " filename) -> samples (frames*channels) in sound"
+  #define H_mus_sound_samples "(" S_mus_sound_samples " filename) -> samples (frames * channels) in sound file"
   return(glmus_sound(S_mus_sound_samples, mus_sound_samples, filename));
 }
 
 static XEN g_sound_set_samples(XEN filename, XEN val) 
 {
-  #define H_mus_sound_set_samples "(set! (" S_mus_sound_samples " filename) val) -> sets samples (frames*channels) in sound"
+  #define H_mus_sound_set_samples "(set! (" S_mus_sound_samples " filename) val) -> sets sample number (frames * channels) in sound file."
   return(glmus_sound_set("set! " S_mus_sound_samples, mus_sound_set_samples, filename, val));
 }
 
 static XEN g_sound_frames(XEN filename) 
 {
-  #define H_mus_sound_frames "(" S_mus_sound_frames " filename) -> frames (samples/channel) in sound"
+  #define H_mus_sound_frames "(" S_mus_sound_frames " filename) -> frames (samples / channel) in sound file"
   return(glmus_sound(S_mus_sound_frames, mus_sound_frames, filename));
 }
 
 static XEN g_sound_datum_size(XEN filename) 
 {
-  #define H_mus_sound_datum_size "(" S_mus_sound_datum_size " filename) -> bytes per sample of data in sound"
+  #define H_mus_sound_datum_size "(" S_mus_sound_datum_size " filename) -> bytes per sample used by the data in sound file (data format dependent)"
   return(gmus_sound(S_mus_sound_datum_size, mus_sound_datum_size, filename));
 }
 
@@ -133,85 +133,86 @@ static XEN g_sound_data_location(XEN filename)
 
 static XEN g_sound_set_data_location(XEN filename, XEN val) 
 {
-  #define H_mus_sound_set_data_location "(set! (" S_mus_sound_data_location " filename) val) -> sets data_location in sound"
+  #define H_mus_sound_set_data_location "(set! (" S_mus_sound_data_location " filename) val) -> sets data location (in bytes) in sound file"
   return(glmus_sound_set("set! " S_mus_sound_data_location, mus_sound_set_data_location, filename, val));
 }
 
 static XEN g_sound_chans(XEN filename) 
 {
-  #define H_mus_sound_chans "(" S_mus_sound_chans " filename) -> channels of sound"
+  #define H_mus_sound_chans "(" S_mus_sound_chans " filename) -> channels of data in sound file"
   return(gmus_sound(S_mus_sound_chans, mus_sound_chans, filename));
 }
 
 static XEN g_sound_set_chans(XEN filename, XEN val) 
 {
-  #define H_mus_sound_set_chans "(set! (" S_mus_sound_chans " filename) val) -> sets channels in sound"
+  #define H_mus_sound_set_chans "(set! (" S_mus_sound_chans " filename) val) -> sets channels of data in sound file"
   return(gmus_sound_set("set! " S_mus_sound_chans, mus_sound_set_chans, filename, val));
 }
 
 static XEN g_sound_srate(XEN filename) 
 {
-  #define H_mus_sound_srate "(" S_mus_sound_srate " filename) -> sampling rate of sound"
+  #define H_mus_sound_srate "(" S_mus_sound_srate " filename) -> sampling rate of sound file"
   return(gmus_sound(S_mus_sound_srate, mus_sound_srate, filename));
 }
 
 static XEN g_sound_set_srate(XEN filename, XEN val) 
 {
-  #define H_mus_sound_set_srate "(set! (" S_mus_sound_srate " filename) val) -> sets srate of sound"
+  #define H_mus_sound_set_srate "(set! (" S_mus_sound_srate " filename) val) -> sets sampling rate of sound file"
   return(gmus_sound_set("set! " S_mus_sound_srate, mus_sound_set_srate, filename, val));
 }
 
 static XEN g_sound_header_type(XEN filename) 
 {
-  #define H_mus_sound_header_type "(" S_mus_sound_header_type " filename) -> header type (e.g. AIFF) of sound"
+  #define H_mus_sound_header_type "(" S_mus_sound_header_type " filename) -> header type (e.g. mus-aifc) of sound file"
   return(gmus_sound(S_mus_sound_header_type, mus_sound_header_type, filename));
 }
 
 static XEN g_sound_set_header_type(XEN filename, XEN val) 
 {
-  #define H_mus_sound_set_header_type "(set! (" S_mus_sound_header_type " filename) val) -> sets header_type of sound"
+  #define H_mus_sound_set_header_type "(set! (" S_mus_sound_header_type " filename) val) -> sets header type (e.g. mus-aifc) of sound file"
   return(gmus_sound_set("set! " S_mus_sound_header_type, mus_sound_set_header_type, filename, val));
 }
 
 static XEN g_sound_data_format(XEN filename) 
 {
-  #define H_mus_sound_data_format "(" S_mus_sound_data_format " filename) -> data format (e.g. big endian short) of sound"
+  #define H_mus_sound_data_format "(" S_mus_sound_data_format " filename) -> data format (e.g. mus-bshort) of data in sound file"
   return(gmus_sound(S_mus_sound_data_format, mus_sound_data_format, filename));
 }
 
 static XEN g_sound_set_data_format(XEN filename, XEN val) 
 {
-  #define H_mus_sound_set_data_format "(set! (" S_mus_sound_data_format " filename) val) -> sets data_format of sound"
+  #define H_mus_sound_set_data_format "(set! (" S_mus_sound_data_format " filename) val) -> sets data format (e.g. mus-bshort) of data in sound file"
   return(gmus_sound_set("set! " S_mus_sound_data_format, mus_sound_set_data_format, filename, val));
 }
 
 static XEN g_sound_length(XEN filename) 
 {
-  #define H_mus_sound_length "(" S_mus_sound_length " filename) -> file length in bytes"
+  #define H_mus_sound_length "(" S_mus_sound_length " filename) -> sound file length in bytes"
   return(glmus_sound(S_mus_sound_length, mus_sound_length, filename));
 }
 
 static XEN g_sound_type_specifier(XEN filename) 
 {
-  #define H_mus_sound_type_specifier "(" S_mus_sound_type_specifier " filename) -> original file type identifier (e.g. 0x2e736e64)"
+  #define H_mus_sound_type_specifier "(" S_mus_sound_type_specifier " filename) -> original sound file header type identifier (e.g. 0x2e736e64)"
   return(gmus_sound(S_mus_sound_type_specifier, mus_sound_type_specifier, filename));
 }
 
 static XEN g_sound_forget(XEN filename) 
 {
-  #define H_mus_sound_forget "(" S_mus_sound_forget " filename) removes 'filename' from sound cache"
+  #define H_mus_sound_forget "(" S_mus_sound_forget " filename) removes 'filename' from sound cache.  If you create, then later \
+delete a sound file, " S_mus_sound_forget " can be used to clear it from sndlib's cache of sound files"
   return(gmus_sound(S_mus_sound_forget, mus_sound_forget, filename));
 }
 
 static XEN g_sound_prune(void) 
 {
-  #define H_mus_sound_prune "(" S_mus_sound_prune ") removes all defunct entries from sound cache"
+  #define H_mus_sound_prune "(" S_mus_sound_prune ") removes all defunct entries from sndlib's sound file cache."
   return(C_TO_XEN_INT(mus_sound_prune()));
 }
 
 static XEN g_sound_comment(XEN filename) 
 {
-  #define H_mus_sound_comment "(" S_mus_sound_comment " filename) -> comment (string) found in sound's header"
+  #define H_mus_sound_comment "(" S_mus_sound_comment " filename) -> comment (string) found in sound file's header"
   char *tmpstr = NULL, *res = NULL; 
   XEN newstr;
   XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ONLY_ARG, S_mus_sound_comment, "a string"); 
@@ -224,7 +225,7 @@ static XEN g_sound_comment(XEN filename)
 
 static XEN g_sound_write_date(XEN filename) 
 {
-  #define H_mus_sound_write_date "(" S_mus_sound_write_date " filename) -> write_date of sound"
+  #define H_mus_sound_write_date "(" S_mus_sound_write_date " filename) -> write date of sound file"
   return(gmus_sound(S_mus_sound_write_date, mus_sound_write_date, filename));
 }
 
@@ -257,7 +258,7 @@ static XEN g_report_audio_state(void)
 
 static XEN g_sound_duration(XEN filename) 
 {
-  #define H_mus_sound_duration "(" S_mus_sound_duration " filename) -> duration (seconds) of sound"
+  #define H_mus_sound_duration "(" S_mus_sound_duration " filename) -> duration (seconds) of sound file"
   char *tmpstr = NULL;
   float res;
   XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ONLY_ARG, S_mus_sound_duration, "a string"); 
@@ -399,7 +400,7 @@ static void sound_data_free(sound_data *v)
   int i;
   if (v)
     {
-      if ((v->data) && (v->wrapped == 0))
+      if ((v->data) && (v->wrapped == FALSE))
 	{
 	  for (i = 0; i < v->chans; i++) if (v->data[i]) FREE(v->data[i]);
 	  FREE(v->data);
@@ -472,7 +473,7 @@ XEN make_sound_data(int chans, int frames)
   new_sound_data = (sound_data *)MALLOC(sizeof(sound_data));
   new_sound_data->length = frames;
   new_sound_data->chans = chans;
-  new_sound_data->wrapped = 0;
+  new_sound_data->wrapped = FALSE;
   new_sound_data->data = (mus_sample_t **)CALLOC(chans, sizeof(mus_sample_t *));
   for (i = 0; i < chans; i++)
     new_sound_data->data[i] = (mus_sample_t *)CALLOC(frames, sizeof(mus_sample_t));
@@ -485,7 +486,7 @@ XEN wrap_sound_data(int chans, int frames, mus_sample_t **data)
   new_sound_data = (sound_data *)MALLOC(sizeof(sound_data));
   new_sound_data->length = frames;
   new_sound_data->chans = chans;
-  new_sound_data->wrapped = 1;
+  new_sound_data->wrapped = TRUE;
   new_sound_data->data = data;
   XEN_MAKE_AND_RETURN_OBJECT(sound_data_tag, new_sound_data, 0, free_sound_data);
 }
@@ -963,7 +964,7 @@ static XEN g_audio_systems (void)
 
 static XEN g_write_audio(XEN line, XEN sdata, XEN frames)
 {
-  #define H_mus_audio_write "(" S_mus_audio_write " line sdata frames) writes frames of data (channels*frames = samples) \
+  #define H_mus_audio_write "(" S_mus_audio_write " line sdata frames) writes frames of data (channels * frames = samples) \
 to the audio line from the sound-data object sdata."
 
   char *obuf;
@@ -991,7 +992,7 @@ to the audio line from the sound-data object sdata."
 
 static XEN g_read_audio(XEN line, XEN sdata, XEN frames)
 {
-  #define H_mus_audio_read "(" S_mus_audio_read " line sdata frames) reads frames of data (channels*frames = samples) \
+  #define H_mus_audio_read "(" S_mus_audio_read " line sdata frames) reads frames of data (channels * frames = samples) \
 from the audio line into the sound-data object sdata."
 
   char *inbuf;
@@ -1100,7 +1101,8 @@ static XEN g_mus_set_prescaler(XEN fd, XEN val)
 
 static XEN g_mus_expand_filename(XEN file)
 {
-  #define H_mus_expand_filename "(" S_mus_expand_filename " name) returns a 'canonical' or 'absolute' filename"
+  #define H_mus_expand_filename "(" S_mus_expand_filename " name) returns a 'canonical' or 'absolute' filename, that is, \
+one in which all directories in the path are explicit."
   XEN result;
   char *tmpstr;
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ONLY_ARG, S_mus_expand_filename, "a string");
@@ -1133,7 +1135,7 @@ header data table to the file given or stdout if none"
 
 static XEN g_mus_error_to_string(XEN err)
 {
-  #define H_mus_error_to_string "(" S_mus_error_to_string " err) -> string description of err"
+  #define H_mus_error_to_string "(" S_mus_error_to_string " err) -> string description of err (a sndlib error type)"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(err), err, XEN_ONLY_ARG, S_mus_error_to_string, "an integer");
   return(C_TO_XEN_STRING((char *)mus_error_to_string(XEN_TO_C_INT(err))));
 }

@@ -74,6 +74,7 @@ int color_dialog_is_active(void);
 int orientation_dialog_is_active(void);
 void reflect_spectro(snd_state *ss);
 int set_with_gl(snd_state *ss, int val);
+void g_init_gxdraw(void);
 
 
 
@@ -101,7 +102,7 @@ void clear_listener(void);
 void lock_listener_pane(void);
 void unlock_listener_pane(void);
 void g_init_gxlistener(void);
-void highlight_unbalanced_paren(void);
+int highlight_unbalanced_paren(void);
 
 
 /* -------- snd-xmenu.c -------- */
@@ -329,7 +330,7 @@ void set_widget_size(Widget w, Dimension width, Dimension height);
 void set_widget_position(Widget w, Position x, Position y);
 void fixup_axis_context(axis_context *ax, Widget w, GC gc);
 Pixmap make_pixmap(snd_state *ss, unsigned char *bits, int width, int height, int depth, GC gc);
-BACKGROUND_FUNCTION_TYPE add_work_proc(snd_state *ss, XtWorkProc func, XtPointer data);
+Cessator add_work_proc(snd_state *ss, XtWorkProc func, XtPointer data);
 int attach_all_sides(Arg *args, int n);
 
 
@@ -362,8 +363,8 @@ void add_channel_window(snd_info *sound, int channel, snd_state *ss, int chan_y,
 void set_peak_numbers_font(chan_info *cp);
 void set_bold_peak_numbers_font(chan_info *cp);
 void set_tiny_numbers_font(chan_info *cp);
-COLOR_TYPE get_foreground_color(chan_info *cp, axis_context *ax);
-COLOR_TYPE get_background_color(chan_info *cp, axis_context *ax);
+color_t get_foreground_color(chan_info *cp, axis_context *ax);
+color_t get_background_color(chan_info *cp, axis_context *ax);
 void set_foreground_color(chan_info *cp, axis_context *ax, Pixel color);
 GC copy_GC(chan_info *cp);
 GC erase_GC(chan_info *cp);
@@ -465,8 +466,7 @@ file_info *raw_data_dialog_to_file_info(char *filename, snd_state *ss, const cha
 Widget edit_header(snd_info *sp);
 void set_open_file_play_button(int val);
 void make_mix_file_dialog(snd_state *ss, int managed);
-
-void g_initialize_gxfile(void);
+void g_init_gxfile(void);
 
 
 
@@ -533,11 +533,11 @@ void file_print_callback(Widget w, XtPointer context, XtPointer info);
 /* -------- snd-xxen.c -------- */
 
 
-void recolor_button(GUI_WIDGET w, void *ptr);
-void color_chan_components(COLOR_TYPE color, int which_component);
-void color_unselected_graphs(COLOR_TYPE color);
-void recolor_everything(GUI_WIDGET w, void *ptr);
-void g_initialize_gxen(void);
+void recolor_button(widget_t w, void *ptr);
+void color_chan_components(color_t color, int which_component);
+void color_unselected_graphs(color_t color);
+void recolor_everything(widget_t w, void *ptr);
+void g_init_gxen(void);
 
 #endif
 

@@ -268,17 +268,14 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
-18-Dec:  xramp-channel for virtual exp envs.\n\
+8-Jan:   xramp-channel for virtual exp envs.\n\
          edpos args for swap-channels.\n\
+         map-channel arg for ptree-channel for generalized virtual ops.\n\
+         added orientation-hook and color-hook.\n\
+         waterfall spectrum in snd-gl.scm.\n\
 16-Dec:  snd 6.4\n\
 11-Dec:  --with-shared-sndlib configure switch.\n\
 10-Dec:  contrib/inf-snd.el from Michael Scholz.\n\
-9-Dec:   init-func arg to ptree-channel.\n\
-1-Dec:   removed Chebyshev and Hankel transforms.\n\
-         def-clm-struct support in run completed.\n\
-         new-sound-hook, sound-let (ws.scm).\n\
-         -nostdin switch for CLM/Snd communication.\n\
-22-Nov:  contrib/v.rb thanks to Michael Scholz.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

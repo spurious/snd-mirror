@@ -469,7 +469,7 @@ char *complete_listener_text(char *old_text, int end, int *try_completion, char 
 	      FREE(file_text);
 	      file_text = NULL;
 	    }
-	  (*try_completion) = 0;
+	  (*try_completion) = FALSE;
 	  return(NULL);
 	}
       if (old_text[i] == ';')
@@ -499,7 +499,7 @@ char *complete_listener_text(char *old_text, int end, int *try_completion, char 
 	      append_listener_text(end - 1, file_text);
 	      FREE(file_text);
 	    }
-	  (*try_completion) = 0;
+	  (*try_completion) = FALSE;
 	  return(NULL);
 	}
       if (old_text[i] == '\"')
@@ -520,7 +520,7 @@ char *complete_listener_text(char *old_text, int end, int *try_completion, char 
       if (isspace((int)(old_text[i]))) break;
     }
   if (new_text == NULL) new_text = command_completer(old_text);
-  (*try_completion) = 1;
+  (*try_completion) = TRUE;
   (*to_file_text) = file_text;
   return(new_text);
 }

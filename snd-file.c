@@ -649,7 +649,7 @@ static snd_info *snd_open_file_1 (char *filename, snd_state *ss, int select, int
     {
       XEN_VARIABLE_SET(memo_sound, C_TO_SMALL_XEN_INT(sp->index));
       sp->write_date = file_write_date(sp->filename);
-      sp->need_update = 0;
+      sp->need_update = FALSE;
       ss->active_sounds++;
       files = ss->active_sounds;
       if (files == 1) reflect_file_open_in_menu();
@@ -892,7 +892,7 @@ axes_data *make_axes_data(snd_info *sp)
 
 int restore_axes_data(snd_info *sp, axes_data *sa, Float new_duration, int need_edit_history_update)
 {
-  int i, j, loc, need_update = 0;
+  int i, j, loc, need_update = FALSE;
   Float old_duration;
   chan_info *cp;
   axis_info *ap;
@@ -924,12 +924,12 @@ int restore_axes_data(snd_info *sp, axes_data *sa, Float new_duration, int need_
       if (sa->fftp[j]) 
 	{
 	  fftb(cp, TRUE); 
-	  need_update = 1;
+	  need_update = TRUE;
 	}
       if (!(sa->wavep[j])) 
 	{
 	  waveb(cp, FALSE); 
-	  need_update = 1;
+	  need_update = TRUE;
 	}
       if (need_edit_history_update) 
 	reflect_edit_history_change(cp);
@@ -941,7 +941,6 @@ int restore_axes_data(snd_info *sp, axes_data *sa, Float new_duration, int need_
 static void copy_chan_info(chan_info *ncp, chan_info *ocp)
 {
   ncp->cursor_on = ocp->cursor_on;
-  ncp->cursor = ocp->cursor;
   ncp->cursor_style = ocp->cursor_style;
   ncp->cursor_size = ocp->cursor_size;
   ncp->spectro_x_scale = ocp->spectro_x_scale;
@@ -1100,6 +1099,7 @@ static snd_info *snd_update_1(snd_state *ss, snd_info *sp, char *ur_filename)
   mark_info **ms;
   snd_info *saved_sp;
   void *saved_controls;
+  off_t *old_cursors;
   XEN update_hook_result = XEN_FALSE;
 
   if (XEN_HOOKED(update_hook))
@@ -1135,6 +1135,8 @@ static snd_info *snd_update_1(snd_state *ss, snd_info *sp, char *ur_filename)
   saved_controls = sp->saved_controls;
   sp->saved_controls = NULL;
   saved_sp = sound_store_chan_info(sp);
+  old_cursors = (off_t *)CALLOC(sp_chans, sizeof(off_t));
+  for (i = 0; i < sp_chans; i++) old_cursors[i] = CURSOR(sp->chans[i]);
   snd_close_file(sp, ss);
   /* this normalizes the fft/lisp/wave state so we need to reset it after reopen */
   alert_new_file();
@@ -1152,7 +1154,9 @@ static snd_info *snd_update_1(snd_state *ss, snd_info *sp, char *ur_filename)
       if (nsp->nchans == sp_chans) sound_restore_marks(nsp, ms);
       for (i = 0; i < nsp->nchans; i++) 
 	update_graph(nsp->chans[i]);
+      for (i = 0; (i < nsp->nchans) && (i < sp_chans); i++) CURSOR(nsp->chans[i]) = old_cursors[i];
     }
+  FREE(old_cursors);
 
   if (XEN_PROCEDURE_P(update_hook_result))
     {

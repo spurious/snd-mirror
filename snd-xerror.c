@@ -109,10 +109,10 @@ void show_snd_errors(snd_state *ss)
   else post_error_dialog(ss, "no errors yet");
 }
 
-static int yes_or_no = 0;
+static int yes_or_no = FALSE;
 
-static void yes_callback(Widget w, XtPointer context, XtPointer info) {yes_or_no = 1;}
-static void no_callback(Widget w, XtPointer context, XtPointer info) {yes_or_no = 0;}
+static void yes_callback(Widget w, XtPointer context, XtPointer info) {yes_or_no = TRUE;}
+static void no_callback(Widget w, XtPointer context, XtPointer info) {yes_or_no = FALSE;}
 
 #define YES_OR_NO_BUFFER_SIZE 1024
 
@@ -142,7 +142,7 @@ int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
   sprintf(yes_buf, "%s...[you need vprintf]", format);
 #endif
 #endif
-  yes_or_no = 0;
+  yes_or_no = FALSE;
   if (!yes_or_no_dialog)
     {
       titlestr = XmStringCreate("Yow!", XmFONTLIST_DEFAULT_TAG);
@@ -182,10 +182,10 @@ int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
   XtVaSetValues(yes_or_no_dialog, XmNmessageString, error_msg, NULL);
   if (with_background_processes(ss) != DISABLE_BACKGROUND_PROCESSES)
     {
-      ss->error_lock = 1;
-      while ((XtIsManaged(yes_or_no_dialog)) && (ss->error_lock == 1))
+      ss->error_lock = TRUE;
+      while ((XtIsManaged(yes_or_no_dialog)) && (ss->error_lock))
 	check_for_event(ss);
-      ss->error_lock = 0;
+      ss->error_lock = FALSE;
     }
   if (XtIsManaged(yes_or_no_dialog))
     XtUnmanageChild(yes_or_no_dialog);

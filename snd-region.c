@@ -312,7 +312,7 @@ static int check_regions(void)
   return(act);
 }
 
-snd_info *make_initial_region_sp(snd_state *ss, GUI_WIDGET region_grf)
+snd_info *make_initial_region_sp(snd_state *ss, widget_t region_grf)
 {
   int id;
   snd_info *reg_sp;
@@ -338,6 +338,7 @@ snd_info *make_initial_region_sp(snd_state *ss, GUI_WIDGET region_grf)
   cp->edit_ctr = 0;
   allocate_ed_list(cp);
   cp->samples = (off_t *)CALLOC(cp->edit_size, sizeof(off_t));
+  cp->cursors = (off_t *)CALLOC(cp->edit_size, sizeof(off_t));
   cp->sound_size = 1;
   cp->sound_ctr = 0;
   cp->sounds = (snd_data **)CALLOC(cp->sound_size, sizeof(snd_data *));
@@ -380,7 +381,7 @@ static void make_region_readable(region *r)
       cp->edits[0] = initial_ed_list(0, r->frames - 1);
       cp->edit_size = 1;
       cp->sound_size = 1;
-      cp->hookable = 0;
+      cp->hookable = FALSE;
 
       ss->catch_message = NULL;
       hdr = make_file_info(r->filename, ss);
@@ -711,8 +712,8 @@ static int paste_region_1(int n, chan_info *cp, int add, off_t beg, const char *
   return(id);
 }
 
-void paste_region(int n, chan_info *cp, const char *origin) {paste_region_1(n, cp, FALSE, cp->cursor, origin);}
-void add_region(int n, chan_info *cp, const char *origin) {paste_region_1(n, cp, TRUE, cp->cursor, origin);}
+void paste_region(int n, chan_info *cp, const char *origin) {paste_region_1(n, cp, FALSE, CURSOR(cp), origin);}
+void add_region(int n, chan_info *cp, const char *origin) {paste_region_1(n, cp, TRUE, CURSOR(cp), origin);}
 
 int define_region(sync_info *si, off_t *ends)
 {
@@ -1162,7 +1163,7 @@ static XEN g_restore_region(XEN pos, XEN chans, XEN len, XEN srate, XEN maxamp, 
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_6, S_restore_region, "a string");
   XEN_ASSERT_TYPE(XEN_STRING_P(start), start, XEN_ARG_7, S_restore_region, "a string");
   XEN_ASSERT_TYPE(XEN_STRING_P(end), end, XEN_ARG_8, S_restore_region, "a string");
-  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, 9, S_restore_region, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ARG_9, S_restore_region, "a string");
   r = (region *)CALLOC(1, sizeof(region));
   regn = XEN_TO_SMALL_C_INT(pos);
   if (regions[regn]) free_region(regions[regn], COMPLETE_DELETION);
@@ -1292,10 +1293,10 @@ static XEN g_forget_region (XEN n)
 static XEN g_play_region (XEN n, XEN wait) 
 {
   #define H_play_region "(" S_play_region " &optional (n 0) (wait #f)) play region n, if wait is #t, play to end before returning"
-  int rg, wt = 0;
+  int rg, wt = FALSE;
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ARG_1, S_play_region, "a region id");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(wait), wait, XEN_ARG_2, S_play_region, "a boolean");
-  if (XEN_TRUE_P(wait)) wt = 1;
+  if (XEN_TRUE_P(wait)) wt = TRUE;
   rg = XEN_REGION_TO_C_INT(n);
   if (!(region_ok(rg)))
     return(snd_no_such_region_error(S_play_region, n));
@@ -1373,8 +1374,10 @@ If 'chn' is #t, all chans are included, taking the 'snd' sync field into account
       else
 	{
 	  cp = get_cp(snd_n, chn_n, S_make_region);
-	  si = make_simple_sync(cp, ibeg);
+	  if (cp) si = make_simple_sync(cp, ibeg);
 	}
+      if (si == NULL)
+	return(C_TO_XEN_INT(INVALID_REGION));
       ends = (off_t *)CALLOC(si->chans, sizeof(off_t));
       for (i = 0; i < si->chans; i++)
 	{
@@ -1462,7 +1465,7 @@ mixes region into snd's channel chn starting at chn-samp; returns new mix id."
   cp = get_cp(snd_n, chn_n, S_mix_region);
   cp->state->catch_message = NULL;
   id = paste_region_1(rg, cp, TRUE,
-		      XEN_TO_C_OFF_T_OR_ELSE(chn_samp_n, cp->cursor),
+		      XEN_TO_C_OFF_T_OR_ELSE(chn_samp_n, CURSOR(cp)),
 		      S_mix_region);
   if (id == INVALID_MIX_ID)
     XEN_ERROR(MUS_MISC_ERROR,
@@ -1581,7 +1584,7 @@ XEN_NARGIFY_1(g_set_max_regions_w, g_set_max_regions)
 
 void g_init_regions(void)
 {
-  XEN_DEFINE_PROCEDURE(S_restore_region,     g_restore_region_w, 9, 0, 0,     "restores a region");
+  XEN_DEFINE_PROCEDURE(S_restore_region,     g_restore_region_w, 9, 0, 0,     "internal func used in save-state, restores a region");
   XEN_DEFINE_PROCEDURE(S_insert_region,      g_insert_region_w, 0, 4, 0,      H_insert_region);
   XEN_DEFINE_PROCEDURE(S_regions,            g_regions_w, 0, 0, 0,            H_regions);
   XEN_DEFINE_PROCEDURE(S_region_frames,      g_region_frames_w, 0, 1, 0,      H_region_frames);

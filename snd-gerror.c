@@ -90,14 +90,14 @@ void show_snd_errors(snd_state *ss)
   else post_error_dialog(ss, "no errors yet");
 }
 
-static int yes_or_no = 0;
+static int yes_or_no = FALSE;
 static GtkWidget *yes_or_no_dialog = NULL;
 static GtkWidget *yn_label;
 static GtkWidget *yes_button, *no_button;
 
-static void yes_callback(GtkWidget *w, gpointer context) {gtk_widget_hide(yes_or_no_dialog); yes_or_no = 1;}
-static void no_callback(GtkWidget *w, gpointer context) {gtk_widget_hide(yes_or_no_dialog); yes_or_no = 0;}
-static void delete_yes_or_no_dialog(GtkWidget *w, GdkEvent *event, gpointer context) {gtk_widget_hide(yes_or_no_dialog); yes_or_no = 1;}
+static void yes_callback(GtkWidget *w, gpointer context) {gtk_widget_hide(yes_or_no_dialog); yes_or_no = TRUE;}
+static void no_callback(GtkWidget *w, gpointer context) {gtk_widget_hide(yes_or_no_dialog); yes_or_no = FALSE;}
+static void delete_yes_or_no_dialog(GtkWidget *w, GdkEvent *event, gpointer context) {gtk_widget_hide(yes_or_no_dialog); yes_or_no = TRUE;}
 
 #define YES_OR_NO_BUFFER_SIZE 1024
 
@@ -123,7 +123,7 @@ int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
 #endif
 #endif
 
-  yes_or_no = 0;
+  yes_or_no = FALSE;
   if (!yes_or_no_dialog)
     {
       yes_or_no_dialog = gtk_dialog_new();
@@ -164,10 +164,10 @@ int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
     }
   else gtk_label_set_text(GTK_LABEL(yn_label), yes_buf);
   gtk_widget_show(yes_or_no_dialog);
-  ss->error_lock = 1;
-  while ((GTK_WIDGET_VISIBLE(yes_or_no_dialog))  && (ss->error_lock == 1))
+  ss->error_lock = TRUE;
+  while ((GTK_WIDGET_VISIBLE(yes_or_no_dialog))  && (ss->error_lock))
     check_for_event(ss);
-  ss->error_lock = 0;
+  ss->error_lock = FALSE;
   if (GTK_WIDGET_VISIBLE(yes_or_no_dialog))
     gtk_widget_hide(yes_or_no_dialog);
   FREE(yes_buf);

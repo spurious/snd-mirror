@@ -43,7 +43,7 @@ static void reposition_file_buffers_1(off_t loc, snd_io *io)
 static void reposition_file_buffers(snd_data *sd, off_t index)
 {
   int fd = 0;
-  int reclose = 0;
+  int reclose = FALSE;
   file_info *hdr;
   if (index < 0) index = 0; /* if reading in reverse, don't fall off the start of the buffer */
   if (sd->open == FD_CLOSED)
@@ -69,7 +69,7 @@ static void reposition_file_buffers(snd_data *sd, off_t index)
       /* fix up io->fd and whatever else is clobbered by mus_file_close */
       sd->io->fd = fd;
       sd->open = FD_OPEN;
-      reclose = 1;
+      reclose = TRUE;
     }
   reposition_file_buffers_1(index, sd->io);
   if (reclose)
@@ -330,7 +330,7 @@ void remember_temp(char *filename, int chans)
 
 void forget_temp(char *filename, int chan)
 {
-  int i, j, happy = 0;
+  int i, j, happy = FALSE;
   tempfile_ctr *tmp;
   for (i = 0; i < tempfiles_size; i++)
     {
@@ -341,10 +341,10 @@ void forget_temp(char *filename, int chan)
 	  for (j = 0; j < tmp->chans; j++)
 	    if (tmp->ticks[j] > 0) 
 	      {
-		happy = 1;
+		happy = TRUE;
 		return;
 	      }
-	  if (happy == 0)
+	  if (!happy)
 	    {
 	      snd_remove(tmp->name, TRUE);
 	      FREE(tmp->name);
@@ -437,7 +437,7 @@ snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize)
   sf->edit_ctr = sd->edit_ctr;
   sf->open = FD_OPEN;
   sf->inuse = FALSE;
-  sf->copy = 1;
+  sf->copy = TRUE;
   return(sf);
 }
 
@@ -476,12 +476,6 @@ snd_data *free_snd_data(snd_data *sd)
 	    return(NULL);
 	  if (sd->temporary == MULTICHANNEL_DELETION)
 	    forget_temp(sd->filename, sd->chan);
-#if DEBUGGING
-	  if ((sd->type == SND_DATA_BUFFER) && 
-	      (sd->buffered_data) &&
-	      (sd->copy))
-	    fprintf(stderr,"free %p\n", sd->buffered_data);
-#endif
 	  if ((sd->type == SND_DATA_BUFFER) && 
 	      (sd->buffered_data)) 
 	    FREE(sd->buffered_data);
@@ -512,12 +506,12 @@ snd_data *free_snd_data(snd_data *sd)
 	  sd->filename = NULL;
 	  sd->temporary = ALREADY_DELETED;
 	  sd->copy = FALSE;
-  sd->type = 0;
+	  sd->type = 0;
 	  FREE(sd);
 	}
       else 
 	{
-	  sd->free_me = 1;
+	  sd->free_me = TRUE;
 	}
     }
   return(NULL);

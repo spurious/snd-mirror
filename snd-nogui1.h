@@ -79,7 +79,7 @@ void handle_listener(snd_state *ss, int new_state);
 int listener_height(void);
 int listener_width(void);
 void clear_listener(void);
-void highlight_unbalanced_paren(void);
+int highlight_unbalanced_paren(void);
 
 
 /* -------- snd-xmenu.c -------- */
@@ -253,8 +253,8 @@ void reflect_save_as_in_edit_history(chan_info *cp, char *filename);
 void set_peak_numbers_font(chan_info *cp);
 void set_bold_peak_numbers_font(chan_info *cp);
 void set_tiny_numbers_font(chan_info *cp);
-COLOR_TYPE get_foreground_color(chan_info *cp, axis_context *ax);
-COLOR_TYPE get_background_color(chan_info *cp, axis_context *ax);
+color_t get_foreground_color(chan_info *cp, axis_context *ax);
+color_t get_background_color(chan_info *cp, axis_context *ax);
 void set_foreground_color(chan_info *cp, axis_context *ax, int color);
 void cleanup_cw(chan_info *cp);
 void combine_sound(snd_info *sp);
@@ -263,7 +263,7 @@ void superimpose_sound(snd_info *sp);
 int fixup_cp_cgx_ax_wn(chan_info *cp);
 void get_current_color(int colormap, int j, unsigned short *r, unsigned short *g, unsigned short *b);
 void change_channel_style(snd_info *sp, int new_style);
-void add_channel_window(snd_info *sound, int channel, snd_state *ss, int chan_y, int insertion, GUI_WIDGET main, int arrows);
+void add_channel_window(snd_info *sound, int channel, snd_state *ss, int chan_y, int insertion, widget_t main, int arrows);
 
 
 /* -------- snd-xsnd.c -------- */

@@ -11,9 +11,9 @@ static GC gc, rgc, ggc;
 
 static char *env_names[3] = {"amp env:", "flt env:", "src env:"};
 
-static int showing_all_envs = 0; /* edit one env (0), or view all currently defined envs (1) */
-static int apply_to_selection = 0;
-static int apply_to_mix = 0;
+static int showing_all_envs = FALSE; /* edit one env (0), or view all currently defined envs (1) */
+static int apply_to_selection = FALSE;
+static int apply_to_mix = FALSE;
 
 static int env_window_width = 0;
 static int env_window_height = 0;
@@ -26,8 +26,8 @@ static Float active_env_base = 1.0;
 
 static axis_info *axis = NULL;
 static axis_info *gray_ap = NULL;
-static int FIR_p = 1;
-static int old_clip_p = 0;
+static int FIR_p = TRUE;
+static int old_clip_p = FALSE;
 
 axis_info *enved_make_axis(char *name, axis_context *ax, 
 			   int ex0, int ey0, int width, int height, 
@@ -45,7 +45,7 @@ axis_info *enved_make_axis(char *name, axis_context *ax,
     {
       gray_ap = (axis_info *)CALLOC(1, sizeof(axis_info));
       gray_ap->ax = (axis_context *)CALLOC(1, sizeof(axis_context));
-      gray_ap->graph_active = 1;
+      gray_ap->graph_active = TRUE;
       fixup_axis_context(gray_ap->ax, drawer, ggc);
     }
   init_env_axes(axis, name, ex0, ey0, width, height, xmin, xmax, ymin, ymax, printing);
@@ -138,7 +138,7 @@ static void help_enved_callback(Widget w, XtPointer context, XtPointer info)
   envelope_editor_dialog_help((snd_state *)context);
 }
 
-static int within_selection_src = 0;
+static int within_selection_src = FALSE;
 
 static void apply_enved(snd_state *ss)
 {
@@ -174,9 +174,9 @@ static void apply_enved(snd_state *ss)
 		}
 	      else apply_env(active_channel, active_env, 0,
 			     CURRENT_SAMPLES(active_channel), 
-			     1.0, apply_to_selection, FROM_ENVED, 
+			     apply_to_selection, FROM_ENVED, 
 			     "Enved: amp", NULL,
-			     C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, active_env_base); 
+			     C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, (enved_exp_p(ss)) ? active_env_base : 1.0);
 	      /* calls update_graph, I think, but in short files that doesn't update the amp-env */
 	      break;
 	    case ENVED_SPECTRUM: 
@@ -193,12 +193,12 @@ static void apply_enved(snd_state *ss)
 	      for (i = 0, j = 1; i < max_env->pts; i++, j += 2)
 		if (max_env->data[j] < .01) 
 		  max_env->data[j] = .01;
-	      within_selection_src = 1;
+	      within_selection_src = TRUE;
 	      src_env_or_num(ss, active_channel, max_env, 0.0, 
 			     FALSE, FROM_ENVED, "Enved: src", 
 			     apply_to_selection, NULL,
-			     C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, active_env_base);
-	      within_selection_src = 0;
+			     C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, (enved_exp_p(ss)) ? active_env_base : 1.0);
+	      within_selection_src = FALSE;
 	      max_env = free_env(max_env);
 	      break;
 	    }
@@ -222,7 +222,10 @@ static void env_redisplay_1(snd_state *ss, int printing)
 	{
 	  name = XmTextGetString(textL);
 	  if (!name) name = copy_string("noname");
-	  display_env(ss, active_env, name, gc, 0, 0, env_window_width, env_window_height, 1, active_env_base, printing);
+	  display_env(ss, active_env, name, gc, 0, 0, 
+		      env_window_width, env_window_height, 1, 
+		      (enved_exp_p(ss)) ? active_env_base : 1.0,
+		      printing);
 	  if (name) XtFree(name);
 	  if ((enved_wave_p(ss)) && (!apply_to_mix))
 	    {
@@ -379,9 +382,9 @@ static void undo_and_apply_enved_callback(Widget w, XtPointer context, XtPointer
   snd_state *ss = (snd_state *)context;
   if ((active_channel) && (active_channel == last_active_channel))
     {
-      active_channel->squelch_update = 1;
+      active_channel->squelch_update = TRUE;
       undo_edit_with_sync(active_channel, 1);
-      active_channel->squelch_update = 0;
+      active_channel->squelch_update = FALSE;
     }
   apply_enved(ss);
   last_active_channel = active_channel;
@@ -418,7 +421,7 @@ static void select_or_edit_env(snd_state *ss, int pos)
 {
   if (showing_all_envs)
     {
-      showing_all_envs = 0;
+      showing_all_envs = FALSE;
       set_button_label_normal(showB, "view envs");
     }
   if (active_env) active_env = free_env(active_env);
@@ -460,10 +463,10 @@ void display_enved_progress(char *str, Pixmap pix)
 		     NULL);
 }
 
-static TIME_TYPE down_time;
-static int env_dragged = 0;
+static Tempus down_time;
+static int env_dragged = FALSE;
 static int env_pos = 0;
-static int click_to_delete = 0;
+static int click_to_delete = FALSE;
 
 #ifdef MAC_OSX
 static int press_x, press_y;
@@ -473,7 +476,7 @@ static void drawer_button_motion(Widget w, XtPointer context, XEvent *event, Boo
 {
   snd_state *ss = (snd_state *)context;
   XMotionEvent *ev = (XMotionEvent *)event;
-  TIME_TYPE motion_time;
+  Tempus motion_time;
   axis_info *ap;
   Float x0, x1, x, y;
   if (!showing_all_envs)
@@ -485,8 +488,8 @@ static void drawer_button_motion(Widget w, XtPointer context, XEvent *event, Boo
 #else
       if ((motion_time - down_time) < (0.5 * XtGetMultiClickTime(XtDisplay(w)))) return;
 #endif
-      env_dragged = 1;
-      click_to_delete = 0;
+      env_dragged = TRUE;
+      click_to_delete = FALSE;
       ap = axis;
       x = ungrf_x(ap, ev->x);
       if (env_pos > 0) 
@@ -525,7 +528,7 @@ static void drawer_button_press(Widget w, XtPointer context, XEvent *event, Bool
   press_y = ev->y;
 #endif
   down_time = ev->time;
-  env_dragged = 0;
+  env_dragged = FALSE;
   if (showing_all_envs)
     {
       pos = hit_env(ev->x, ev->y, env_window_width, env_window_height);
@@ -552,15 +555,15 @@ static void drawer_button_release(Widget w, XtPointer context, XEvent *event, Bo
 {
   if (!showing_all_envs)
     {
-      if ((click_to_delete) && (!env_dragged) && (env_pos != 0)) /* might want to protect last point also */
+      if ((click_to_delete) && (!env_dragged) && (env_pos != 0) && (env_pos != active_env->pts - 1))
 	{
 	  if (check_enved_hook(active_env, env_pos, 0, 0, ENVED_DELETE_POINT) == 0)
 	    delete_point(active_env, env_pos);
 	}
       do_env_edit(active_env, FALSE);
       env_pos = 0;
-      env_dragged = 0;
-      click_to_delete = 0;
+      env_dragged = FALSE;
+      click_to_delete = FALSE;
       env_redisplay((snd_state *)context);
       clear_point_label();
     }
@@ -641,7 +644,7 @@ static void selection_button_pressed(Widget s, XtPointer context, XtPointer info
     {
       if (apply_to_mix) 
 	XmChangeColor(mixB, ((Pixel)(ss->sgx)->highlight_color));
-      apply_to_mix = 0;
+      apply_to_mix = FALSE;
     }
   XmChangeColor(selectionB, 
 		(apply_to_selection) ? ((Pixel)(ss->sgx)->yellow) : 
@@ -663,7 +666,7 @@ static void mix_button_pressed(Widget w, XtPointer context, XtPointer info)
     {
       if (apply_to_selection) 
 	XmChangeColor(selectionB, ((Pixel)(ss->sgx)->highlight_color));
-      apply_to_selection = 0;
+      apply_to_selection = FALSE;
       if (ss->selected_mix != INVALID_MIX_ID) 
 	mix_id = ss->selected_mix; 
       else
@@ -1781,13 +1784,13 @@ void set_enved_filter_order(snd_state *ss, int order)
 void enved_reflect_selection(int on)
 {
   snd_state *ss;
-  if ((enved_dialog) && (within_selection_src == 0))
+  if ((enved_dialog) && (!within_selection_src))
     {
       ss = get_global_state();
       set_sensitive(selectionB, on);
       if ((apply_to_selection) && (!on))
 	{
-	  apply_to_selection = 0;
+	  apply_to_selection = FALSE;
 	  XmChangeColor(selectionB, (Pixel)(ss->sgx)->highlight_color);
 	}
       if ((enved_target(ss) != ENVED_SPECTRUM) && 
@@ -1972,7 +1975,7 @@ void g_init_gxenv(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_selected_env, g_enved_selected_env_w, H_enved_selected_env,
 				   "set-" S_enved_selected_env, g_set_enved_selected_env_w,  0, 0, 1, 0);
 #if DEBUGGING
-  XEN_DEFINE_PROCEDURE("enved-dialog-widgets", g_enved_dialog_widgets_w, 0, 0, 0, "");
-  XEN_DEFINE_PROCEDURE("enved-axis-info",  g_enved_axis_info_w, 0, 0, 0, "");
+  XEN_DEFINE_PROCEDURE("enved-dialog-widgets", g_enved_dialog_widgets_w, 0, 0, 0, "internal testing function");
+  XEN_DEFINE_PROCEDURE("enved-axis-info",  g_enved_axis_info_w, 0, 0, 0, "internal testing function");
 #endif
 }

@@ -70,14 +70,13 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
   cp->ptree_size = 0;
   cp->ptree_ctr = -1;
   cp->edit_size = 0;
-  cp->cursor_on = 0;
-  cp->cursor_visible = 0;
-  cp->selection_visible = 0;
-  cp->cursor = 0;
+  cp->cursor_on = FALSE;
+  cp->cursor_visible = FALSE;
+  cp->selection_visible = FALSE;
   cp->cursor_style = CURSOR_CROSS;
   cp->cursor_size = DEFAULT_CURSOR_SIZE;
   cp->cursor_proc = XEN_UNDEFINED;
-  cp->squelch_update = 0;
+  cp->squelch_update = FALSE;
   cp->show_y_zero = show_y_zero(ss);
   cp->show_marks = show_marks(ss);
   cp->time_graph_type = time_graph_type(ss);
@@ -116,17 +115,17 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
   cp->x_axis_style = x_axis_style(ss);
   cp->beats_per_minute = beats_per_minute(ss);
   cp->show_axes = show_axes(ss);
-  cp->graph_time_p = 1; /* the default state (button is set when we start) */
+  cp->graph_time_p = TRUE; /* the default state (button is set when we start) */
   cp->graph_transform_p = 0;
-  cp->printing = 0;
-  cp->waiting_to_make_graph = 0;
+  cp->printing = FALSE;
+  cp->waiting_to_make_graph = FALSE;
   cp->state = ss;
   cp->amp_envs = NULL;
   cp->sonogram_data = NULL;
   cp->lisp_info = NULL;
   cp->mix_md = NULL;
   cp->amp_control = NULL;
-  cp->hookable = 1;
+  cp->hookable = TRUE;
   cp->gzy = 1.0;
   cp->gsy = 1.0;
   cp->cx = 0;
@@ -156,15 +155,16 @@ static chan_info *free_chan_info(chan_info *cp)
    */
   chan_info_cleanup(cp);
   ss = cp->state;
-  cp->squelch_update = 1;
+  cp->squelch_update = TRUE;
   cp->tcgx = NULL;
   cp->axis = free_axis_info(cp->axis);
   if (cp->fft) cp->fft = free_fft_info(cp->fft);
   cp_free_fft_state(cp);
   cp->graph_transform_p = 0;
-  cp->printing = 0;
-  cp->graph_time_p = 1;
+  cp->printing = FALSE;
+  cp->graph_time_p = TRUE;
   if (cp->samples) {FREE(cp->samples); cp->samples = NULL;}
+  if (cp->cursors) {FREE(cp->cursors); cp->cursors = NULL;}
   if (cp->edits) free_edit_list(cp);
   if (cp->sounds) free_sound_list(cp);
   if (cp->ptrees) free_ptree_list(cp);
@@ -173,10 +173,9 @@ static chan_info *free_chan_info(chan_info *cp)
   cp->sound = NULL;  /* a backpointer */
   cp->state = NULL;
   cp->mix_md = NULL;
-  cp->cursor_on = 0;
-  cp->cursor_visible = 0;
-  cp->selection_visible = 0;
-  cp->cursor = 0;
+  cp->cursor_on = FALSE;
+  cp->cursor_visible = FALSE;
+  cp->selection_visible = FALSE;
   cp->cursor_style = CURSOR_CROSS;
   cp->cursor_size = DEFAULT_CURSOR_SIZE;
   if (cp->amp_control)
@@ -192,7 +191,7 @@ static chan_info *free_chan_info(chan_info *cp)
     }
   if (XEN_VECTOR_P(cp->properties)) /* using vector as node for GC */
     XEN_VECTOR_SET(cp->properties, 0, XEN_EMPTY_LIST);
-  cp->waiting_to_make_graph = 0;
+  cp->waiting_to_make_graph = FALSE;
   if (cp->sonogram_data) free_sono_info(cp);
   if (cp->temp_sonogram) 
     {
@@ -209,7 +208,7 @@ static chan_info *free_chan_info(chan_info *cp)
       cp->last_sonogram = NULL;
     }
   if (cp->lisp_info) cp->lisp_info = free_lisp_info(cp);
-  cp->graph_lisp_p = 0;
+  cp->graph_lisp_p = FALSE;
   cp->selection_transform_size = 0;
   XEN_CLEAR_HOOK(cp->edit_hook);
   XEN_CLEAR_HOOK(cp->after_edit_hook);
@@ -317,14 +316,13 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
   sp->filter_control_env = default_env(sp->filter_control_env_xmax, 1.0);
   sp->selected_channel = NO_SELECTION;
   sp->playing = 0;
-  sp->applying = 0;
-  sp->env_anew = 0;
+  sp->applying = FALSE;
   sp->search_expr = NULL;
   sp->lacp = NULL;
   sp->search_tree = NULL;
   sp->search_proc = XEN_UNDEFINED;
   sp->prompt_callback = XEN_UNDEFINED;
-  sp->delete_me = 0;
+  sp->delete_me = FALSE;
   sp->active = TRUE;
   return(sp);
 }
@@ -365,12 +363,12 @@ void free_snd_info(snd_info *sp)
   sp->playing_mark = NULL;
   sp->playing = 0;
   sp->searching = 0;
-  sp->loading = 0;
+  sp->loading = FALSE;
   sp->marking = 0;
   sp->filing = 0;
-  sp->applying = 0;
+  sp->applying = FALSE;
   sp->channel_style = CHANNELS_SEPARATE;
-  sp->read_only = 0;
+  sp->read_only = FALSE;
   sp->minibuffer_on = MINI_OFF;                     /* if it's on, should we clear it first ?? */
   if (sp->search_expr) 
     {
@@ -394,8 +392,7 @@ void free_snd_info(snd_info *sp)
   sp->filename = NULL;
   if (sp->filter_control_env) sp->filter_control_env = free_env(sp->filter_control_env);
   if (sp->saved_controls) free_controls(sp);
-  sp->env_anew = 0;
-  sp->delete_me = 0;
+  sp->delete_me = FALSE;
   sp->lacp = NULL;
   if (sp->hdr) sp->hdr = free_file_info(sp->hdr);
   if (sp->edited_region) clear_region_backpointer(sp);
@@ -702,7 +699,7 @@ void select_channel(snd_info *sp, int chan)
       if (cp) 
 	{
 	  recolor_graph(cp, FALSE);
-	  (cp->cgx)->selected = 0;
+	  (cp->cgx)->selected = FALSE;
 	  if (sp != cp->sound) (cp->sound)->selected_channel = NO_SELECTION;
 	  update_graph(cp);
 	}
@@ -714,7 +711,7 @@ void select_channel(snd_info *sp, int chan)
       ncp = sp->chans[chan];
       reflect_undo_or_redo_in_menu(ncp);
       recolor_graph(ncp, TRUE);
-      (ncp->cgx)->selected = 1;
+      (ncp->cgx)->selected = TRUE;
       if ((ss->sgx)->data_color != (ss->sgx)->selected_data_color) 
 	update_graph(ncp);
       goto_graph(ncp);

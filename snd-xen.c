@@ -91,7 +91,7 @@ void snd_unprotect(XEN obj)
   #include <libguile/fluids.h>
 #endif
 
-static int send_error_output_to_stdout = 0;
+static int send_error_output_to_stdout = FALSE;
 static char *last_file_loaded = NULL;
 
 static void string_to_stdout(snd_state *ss, char *msg)
@@ -111,7 +111,6 @@ static void string_to_stdout(snd_state *ss, char *msg)
 static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error handler */
 {
 #if HAVE_GUILE
-  /* this is actually catching any throw not caught elsewhere, I think */
   snd_info *sp;
   char *possible_code;
   XEN port; XEN stmp;
@@ -231,13 +230,29 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
       XEN_PUTS("\n; ", port);
       XEN_PUTS(possible_code, port);
     }
-  if (last_file_loaded)
+#if HAVE_SCM_PORT_P
+  if ((XEN_TRUE_P(scm_port_p(scm_current_load_port()))) &&
+      (XEN_INTEGER_P(scm_port_line(scm_current_load_port()))))
     {
-      /* sigh -- scm_current_load_port is #f so can't use scm_port_filename etc */
-      XEN_PUTS("\n(while loading \"", port);
-      XEN_PUTS(last_file_loaded, port);
-      XEN_PUTS("\")", port);
-      last_file_loaded = NULL;
+      /* this actually isn't very useful since it points to the end of the enclosing form */
+      char *info;
+      info = (char *)CALLOC(1024, sizeof(char));
+      sprintf(info, " (%s: line %d)", 
+	      filename_without_home_directory(XEN_TO_C_STRING(scm_port_filename(scm_current_load_port()))),
+	      XEN_TO_C_INT(scm_port_line(scm_current_load_port())));
+      XEN_PUTS(info, port);
+      FREE(info);
+    }
+  else
+#endif
+    {
+      if (last_file_loaded)
+	{
+	  XEN_PUTS("\n(while loading \"", port);
+	  XEN_PUTS(last_file_loaded, port);
+	  XEN_PUTS("\")", port);
+	  last_file_loaded = NULL;
+	}
     }
   XEN_FLUSH_PORT(port); /* needed to get rid of trailing garbage chars?? -- might be pointless now */
   name_buf = XEN_TO_C_STRING(XEN_PORT_TO_STRING(port));
@@ -751,9 +766,9 @@ void snd_eval_stdin_str(snd_state *ss, char *buf)
   str = stdin_check_for_full_expression(buf);
   if (str)
     {
-      send_error_output_to_stdout = 1;
+      send_error_output_to_stdout = TRUE;
       result = snd_catch_any(eval_str_wrapper, (void *)str, str);
-      send_error_output_to_stdout = 0;
+      send_error_output_to_stdout = FALSE;
       if (stdin_str) FREE(stdin_str);
       /* same as str here; if c-g! evaluated from stdin, clear_listener is called which frees/nullifies stdin_str */
       stdin_str = NULL;
@@ -2425,7 +2440,7 @@ static XEN g_basic_color(void)
 
 static XEN g_set_basic_color(XEN color) 
 {
-  COLOR_TYPE old_color;
+  color_t old_color;
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, "set! " S_basic_color, "a color"); 
@@ -2994,8 +3009,8 @@ void g_initialize_gh(void)
 #if DEBUGGING
   XEN_DEFINE_PROCEDURE("snd-sound-pointer", g_snd_sound_pointer_w, 1, 0, 0, "internal testing function");
 #if HAVE_GUILE
-  XEN_DEFINE_PROCEDURE("gc-off", g_gc_off, 0, 0, 0, "turn off GC");
-  XEN_DEFINE_PROCEDURE("gc-on", g_gc_on, 0, 0, 0, "turn on GC");
+  XEN_DEFINE_PROCEDURE("gc-off", g_gc_off, 0, 0, 0, "turns off the garbage collector");
+  XEN_DEFINE_PROCEDURE("gc-on", g_gc_on, 0, 0, 0, "turns on the garbage collector");
 #endif
 #endif
 
@@ -3320,8 +3335,9 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   g_init_run();
 #if (!USE_NO_GUI)
   g_init_gxutils();
-  g_initialize_gxen();
-  g_initialize_gxfile();
+  g_init_gxen();
+  g_init_gxfile();
+  g_init_gxdraw();
   g_init_gxenv();
   g_init_gxmenu();
   g_init_axis();
