@@ -718,6 +718,13 @@ else
       	AC_SUBST(GTK_CFLAGS)
       	AC_DEFINE(USE_GTK)
 
+	GTK_LD_LIBS="$GTK_LIBS"
+	AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
+	if test x$PKG_CONFIG != xno ; then
+          GTK_LD_LIBS="`$PKG_CONFIG gtk+-2.0 --libs-only-L` `$PKG_CONFIG gtk+-2.0 --libs-only-l`"
+        fi
+      	AC_SUBST(GTK_LD_LIBS)
+
 	AC_CHECK_LIB(m, gdk_draw_pixbuf, [AC_DEFINE(HAVE_GDK_DRAW_PIXBUF)], ,$GTK_LIBS)
 	# gtk 2.1
 	AC_CHECK_LIB(m, gtk_file_chooser_dialog_new, [AC_DEFINE(HAVE_GTK_FILE_CHOOSER_DIALOG_NEW)], ,$GTK_LIBS)
@@ -830,8 +837,8 @@ if test "$with_gl" = yes || test "$with_just_gl" = yes ; then
       if test "$with_gtk" = yes ; then
 	AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
 	if test x$PKG_CONFIG != xno && $PKG_CONFIG gtkglext-1.0 --exists ; then
-          GL_LIBS=$GL_LIBS" "`$PKG_CONFIG gtkglext-1.0 --libs`
-          GL_FLAGS=$GL_FLAGS" "`$PKG_CONFIG gtkglext-1.0 --cflags`
+          GL_LIBS="$GL_LIBS `$PKG_CONFIG gtkglext-1.0 --libs`"
+          GL_FLAGS="$GL_FLAGS `$PKG_CONFIG gtkglext-1.0 --cflags`"
         else
           OLD_CFLAGS="$CFLAGS"
 	  OLD_CPPFLAGS="$CPPFLAGS"

@@ -62,9 +62,10 @@
 
 
 
-;; This should take care of the functions we need.
 (if (not (provided? 'snd-gui.scm))
     (load-from-path "gui.scm"))
+
+
 
 
 
@@ -83,8 +84,6 @@
 	(insert-ladspa-help (cddddr alist)))))
 
 (insert-ladspa-help ladspa-help-texts)
-
-
 
 
 
@@ -217,7 +216,7 @@
   
   (define (minimum-num-handles sndchannels pluginchannels)
     (+ (if (> (modulo sndchannels pluginchannels) 0) 1 0)
-       (inexact->exact (floor (/ sndchannels pluginchannels)))))
+       (c-integer (/ sndchannels pluginchannels))))
 
 
 
@@ -416,6 +415,29 @@
     (vct-ref (ports num) 0))
 
 
+  (define-method (get-hint portnum)
+    (car (list-ref (.PortRangeHints this->descriptor) portnum)))
+
+  (define (ishint portnum dashint)
+    (not (= (logand (this->get-hint portnum) dashint) 0)))
+
+  (define-method (get-lo portnum)
+    (* (if (ishint portnum LADSPA_HINT_SAMPLE_RATE)
+	   (srate)
+	   1)
+       (if (not (ishint portnum LADSPA_HINT_BOUNDED_BELOW))
+	   0                                   ;The value Ardour use.
+	   (cadr (list-ref (.PortRangeHints this->descriptor) portnum)))))
+
+  (define-method (get-hi portnum)
+    (* (if (ishint portnum LADSPA_HINT_SAMPLE_RATE)
+	   (srate)
+	   1)
+       (if (not (ishint portnum LADSPA_HINT_BOUNDED_ABOVE))
+	   4                                   ;The value Ardour use.
+	   (caddr (list-ref (.PortRangeHints this->descriptor) portnum)))))
+
+
   ;; Constructor:
   (if (not this->descriptor)
       (set! this #f)
@@ -444,270 +466,377 @@
 
 (define (install-ladspa-menues)  
 
-  (let* ((ladspa-effects-menu (add-to-main-menu "Ladspa" (lambda x #f)))
-	 (num-effects-per-submenu 12)
-	 (ladspa-effect-num num-effects-per-submenu)
-	 (curr-submenu #f))
+  (define das-ladspa-list #f)
+
+  (define (get-ladspa-list)
+    (if (not das-ladspa-list)
+	(set! das-ladspa-list (sort (map (lambda (listpart) (list (ladspa-descriptor (car listpart) (cadr listpart))
+								  (car listpart)
+								  (cadr listpart)))
+					 (list-ladspa))
+				    (lambda (x y)
+				      (string-ci<? (.Name (car x))
+						   (.Name (car y)))))))
+    das-ladspa-list)
+  
+  (define (get-ladspa-with-id id)
+    (if (null? (get-ladspa-list))
+	#f
+	(if (= (.UniqueID (caar das-ladspa-list)) id)
+	    (let ((ret (car das-ladspa-list)))
+	      (set! das-ladspa-list (cdr das-ladspa-list))
+	      ret)
+	    (let loop ((part das-ladspa-list))
+	      (if (or (null? part)
+		      (null? (cdr part)))
+		  #f
+		  (if (= (.UniqueID (caadr part)) id)
+		      (let ((ret (cadr part)))
+			(set-cdr! part (cddr part))
+			ret)
+		      (loop (cdr part))))))))
+
+
+  (define ladspa-effects-menu (add-to-main-menu "Ladspa" (lambda x #f)))
+
+  (define ladspa-add-effect-menuitem
+    (let* ((num-effects-per-submenu 12)
+	   (ladspa-effect-num num-effects-per-submenu)
+	   (uncat-submenu #f)
+	   (curr-submenu #f))
+      (lambda* (name proc #:optional menu)
+	       (if menu
+		   (menu-add menu name proc)
+		   (begin
+		     (if (not uncat-submenu)
+			 (set! uncat-submenu 
+			       (if (provided? 'snd-lrdf)
+				   (menu-sub-add ladspa-effects-menu "Uncategorised")
+				   ladspa-effects-menu)))
+		     (if (= num-effects-per-submenu ladspa-effect-num)
+			 (begin
+			   (set! curr-submenu (menu-sub-add uncat-submenu (string-append (substring name 0 (min (string-length name) 20)) " ... ")))
+			   (set! ladspa-effect-num -1)))
+		     (menu-add curr-submenu name proc)
+		     (set! ladspa-effect-num (+ 1 ladspa-effect-num)))))))
+  
     
-    (define (ladspa-add-effect-menuitem name proc)
-      (if (= num-effects-per-submenu ladspa-effect-num)
-	  (begin
-	    (set! curr-submenu (menu-sub-add ladspa-effects-menu (string-append (substring name 0 (min (string-length name) 20)) " ... ")))
-	    (set! ladspa-effect-num -1)))
-      (menu-add curr-submenu name proc)
-      (set! ladspa-effect-num (+ 1 ladspa-effect-num)))
+  (define* (make-ladspadialog descriptor libraryname effectname #:optional menu)
+    (define ladspa #f)
+    (define dialog #f)
     
-    
-    (define (make-ladspadialog ladspa-analysed libraryname effectname)
-      (define ladspa #f)
-      (define dialog #f)
-
-      (let ((name (car ladspa-analysed))
-	    (author (cadr ladspa-analysed))
-	    (lisense (caddr ladspa-analysed))
-	    (isplaying #f)
-	    (onoffbutton #f)
-	    (islooping #f)
-	    (isplayingselection #f)
-	    (nodelines (make-hash-table 4))
-	    (play-hooks (make-hash-table 4))
-	    (node-graphs (make-hash-table 4))
-	    (open-portnums '()))
-	
-	(define (ShowDialog)
-	  (MakeDialogIfNotMade)
-	  (-> dialog show)
-	  (-> onoffbutton set #t)
-	  (enableplugin)
-	  (for-each (lambda (portnum)
-		      (automation-onoff #t portnum
-					(cadr (list-ref (.PortRangeHints (-> ladspa descriptor)) portnum))
-					(caddr (list-ref (.PortRangeHints (-> ladspa descriptor)) portnum))
-					(list-ref (.PortNames (-> ladspa descriptor)) portnum)))
-		    open-portnums)
-	  )
-
-	(define (Help)
-	  (let ((dashelp (assoc (string-append libraryname effectname) ladspa-help-assoclist)))
-	    (help-dialog author
-			 (string-append (if dashelp
-					    (caddr dashelp)
-					    lisense)
-					(string #\newline #\newline)
-					"Processing can be stopped by pressing C-g"))))
-	  
-	(define (OK)
-	  (MyStop)
-	  (disableplugin)
-	  (-> onoffbutton set #f)
-	  (-> ladspa apply!
-	      (lambda (snd pos)
-		(hash-fold (lambda (portnum nodeline s)
-			     (let ((lo (cadr (list-ref (.PortRangeHints (-> ladspa descriptor)) portnum)))
-				   (hi (caddr (list-ref (.PortRangeHints (-> ladspa descriptor)) portnum))))
-			       (-> ladspa input-control-set!
-				   portnum
-				   (c-scale (-> nodeline get-val (c-scale pos 0 (frames snd 0) 0 1))
-					    0 1
-					    hi lo))))
-			   '() nodelines))))
-
-	(define (Cancel)
-	  (set! open-portnums (hash-fold (lambda (portnum nodeline s) (nodeline-off portnum) (cons portnum s))
-					 '() nodelines))
-	  (-> onoffbutton set #f)
-	  (-> dialog hide)
-	  (disableplugin)
-	  (if (string=? "vst" libraryname)
-	      (-> ladspa close)))
-
-	(define (MyPlay)
-	  (if (not (selection-member? (selected-sound)))
-	      (select-all (selected-sound)))
-	  (letrec ((das-play (lambda ()
-			       (play-selection #f #f
-					       (lambda (x)
-						 (if (= x 0)
-						     (das-play)))))))
-	    (das-play)))
-
-	(define (MyStop)
-	  ;;(remove-hook! stop-playing-selection-hook play-selection)
-	  (stop-playing))
-
-	(define (enableplugin)
-	  (if (not (-> ladspa add-dac-hook!))
-	      (begin
-		(display "Unable to use ladspa plugin.")
-		(newline))))
-
-	(define (disableplugin)
-	  (-> ladspa remove-dac-hook!))
-
-	(define (onoff onoroff)
-	  (if onoroff
-	      (enableplugin)
-	      (disableplugin)))
-
-	(define (nodeline-off portnum)
-	  (remove-hook! play-hook (hash-ref play-hooks portnum))
-	  (hash-set! node-graphs portnum (-> (hash-ref nodelines portnum) get-graph))
-	  (hash-remove! play-hooks portnum)
-	  (-> (hash-ref nodelines portnum) paint)
-	  (-> (hash-ref nodelines portnum) delete!)
-	  (hash-remove! nodelines portnum))
-	
-	(define (automation-onoff onoroff portnum lo hi name)
-	  (if onoroff
-	      (let* ((nodeline (<editor-nodeline> (selected-sound) 0
-						  (c-scale (-> ladspa get-input-control portnum) hi lo 0 1)
-						  (lambda (val)
-						    (format #f "~1,3f(~A)" (c-scale val 0 1 hi lo) name))
-						  #f
-						  (list-ref (list cursor-context selection-context) (random 2))))
-		     (das-play-hook (let ((lastcursor (- (dac-size))))
-				      (lambda (samples)
-					(let* ((snd (selected-sound))
-					       (ch 0)
-					       (newcursor (cursor snd ch)))
-					  (if (or (= newcursor (- lastcursor (dac-size)) )
-						  (= newcursor lastcursor))
-					      (set! newcursor (min (frames snd ch) (+ (dac-size) lastcursor))))
-					  (set! lastcursor newcursor)
-					  (-> ladspa input-control-set!
-					      portnum
-					      (c-scale (-> nodeline get-val (c-scale newcursor 0 (frames snd ch) 0 1))
-						       0 1
-						       hi lo)))))))
-		(if (hash-ref node-graphs portnum)
-		    (-> nodeline set-graph!
+    (let ((name (.Name descriptor))
+	  (author (.Maker descriptor))
+	  (lisense (.Copyright descriptor))
+	  (isplaying #f)
+	  (onoffbutton #f)
+	  (islooping #f)
+	  (isplayingselection #f)
+	  (nodelines (make-hash-table 4))
+	  (play-hooks (make-hash-table 4))
+	  (node-graphs (make-hash-table 4))
+	  (open-portnums '()))
+      
+      (define (ShowDialog)
+	(MakeDialogIfNotMade)
+	(-> dialog show)
+	(-> onoffbutton set #t)
+	(enableplugin)
+	(for-each (lambda (portnum)
+		    (automation-onoff #t portnum
+				      (-> ladspa get-lo portnum)
+				      (-> ladspa get-hi portnum)
+				      (list-ref (.PortNames descriptor) portnum)))
+		  open-portnums)
+	)
+      
+      (define (Help)
+	(let ((dashelp (assoc (string-append libraryname effectname) ladspa-help-assoclist)))
+	  (help-dialog author
+		       (string-append (if dashelp
+					  (caddr dashelp)
+					  lisense)
+				      (string #\newline #\newline)
+				      "Processing can be stopped by pressing C-g"))))
+      
+      (define (OK)
+	(MyStop)
+	(disableplugin)
+	(-> onoffbutton set #f)
+	(-> ladspa apply!
+	    (lambda (snd pos)
+	      (hash-fold (lambda (portnum nodeline s)
+			   (let ((-> ladspa get-lo portnum)
+				 (-> ladspa get-hi portnum))
+			     (-> ladspa input-control-set!
+				 portnum
+				 (c-scale (-> nodeline get-val (c-scale pos 0 (frames snd 0) 0 1))
+					  0 1
+					  hi lo))))
+			 '() nodelines))))
+      
+      (define (Cancel)
+	(set! open-portnums (hash-fold (lambda (portnum nodeline s) (nodeline-off portnum) (cons portnum s))
+				       '() nodelines))
+	(-> onoffbutton set #f)
+	(-> dialog hide)
+	(disableplugin)
+	(if (string=? "vst" libraryname)
+	    (-> ladspa close)))
+      
+      (define (MyPlay)
+	(if (not (selection-member? (selected-sound)))
+	    (select-all (selected-sound)))
+	(letrec ((das-play (lambda ()
+			     (play-selection #f #f
+					     (lambda (x)
+					       (if (= x 0)
+						   (das-play)))))))
+	  (das-play)))
+      
+      (define (MyStop)
+	;;(remove-hook! stop-playing-selection-hook play-selection)
+	(stop-playing))
+      
+      (define (enableplugin)
+	(if (not (-> ladspa add-dac-hook!))
+	    (begin
+	      (display "Unable to use ladspa plugin.")
+	      (newline))))
+      
+      (define (disableplugin)
+	(-> ladspa remove-dac-hook!))
+      
+      (define (onoff onoroff)
+	(if onoroff
+	    (enableplugin)
+	    (disableplugin)))
+      
+      (define (nodeline-off portnum)
+	(remove-hook! play-hook (hash-ref play-hooks portnum))
+	(hash-set! node-graphs portnum (-> (hash-ref nodelines portnum) get-graph))
+	(hash-remove! play-hooks portnum)
+	(-> (hash-ref nodelines portnum) paint)
+	(-> (hash-ref nodelines portnum) delete!)
+	(hash-remove! nodelines portnum))
+      
+      (define (automation-onoff onoroff portnum lo hi name)
+	(if onoroff
+	    (let* ((nodeline (<editor-nodeline> (selected-sound) 0
+						(c-scale (-> ladspa get-input-control portnum) hi lo 0 1)
+						(lambda (val)
+						  (format #f "~1,3f(~A)" (c-scale val 0 1 hi lo) name))
+						#f
+						(list-ref (list cursor-context selection-context) (random 2))))
+		   (das-play-hook (let ((lastcursor (- (dac-size))))
+				    (lambda (samples)
+				      (let* ((snd (selected-sound))
+					     (ch 0)
+					     (newcursor (cursor snd ch)))
+					(if (or (= newcursor (- lastcursor (dac-size)) )
+						(= newcursor lastcursor))
+					    (set! newcursor (min (frames snd ch) (+ (dac-size) lastcursor))))
+					(set! lastcursor newcursor)
+					(-> ladspa input-control-set!
+					    portnum
+					    (c-scale (-> nodeline get-val (c-scale newcursor 0 (frames snd ch) 0 1))
+						     0 1
+						     hi lo)))))))
+	      (if (hash-ref node-graphs portnum)
+		  (-> nodeline set-graph!
 			(hash-ref node-graphs portnum)))
-		(hash-set! nodelines portnum nodeline)
-		(add-hook! play-hook das-play-hook)
-		(hash-set! play-hooks portnum das-play-hook))
-	      (nodeline-off portnum)))
-
-	(define (slider-moved val portnum lo hi name)
-	  (if (not (hash-ref nodelines portnum))
+	      (hash-set! nodelines portnum nodeline)
+	      (add-hook! play-hook das-play-hook)
+	      (hash-set! play-hooks portnum das-play-hook))
+	    (nodeline-off portnum)))
+      
+      (define (slider-moved val portnum lo hi name)
+	(if (not (hash-ref nodelines portnum))
 	      (-> ladspa input-control-set! portnum val)))
-	
-	(define (ishint dashint dashint2)
-	  (not (= (logand dashint dashint2 ) 0)))
+      
+      (define (ishint dashint dashint2)
+	(not (= (logand dashint dashint2 ) 0)))
 
-	(define (MakeDialogIfNotMade)
-	  (if (not dialog)
-	      (let ((descriptor (-> ladspa descriptor)))
+      (define (MakeDialogIfNotMade)
+	(if (not dialog)
+	    (begin
+	      ;; Make sure the plugin is disabled before quitting.
+	      (add-hook! exit-hook (lambda args
+				     (disableplugin)
+				     (if (string=? "vst" libraryname)
+					 (-> ladspa close))
+				     #f))
+	      
+	      
+	      ;; Make dialog
+	      (set! dialog 
+		    (<dialog> name Cancel
+			      "Close" Cancel
+			      "Apply" OK
+			      "Play" MyPlay
+			      "Stop" MyStop
+			      (if (assoc (string-append libraryname effectname) ladspa-help-assoclist)
+				  "Help"
+				  "Not much help")
+			      Help))
+	      
+	      ;; Add sliders.
+	      (if (not (null? (-> ladspa input-controls)))
+		  (dialog 'add-sliders
+			  (map (lambda (portnum)
+				 (let* ((lo (-> ladspa get-lo portnum))
+					(init (-> ladspa get-input-control portnum))
+					(hi (-> ladspa get-hi portnum))
+					(hint (-> ladspa get-hint portnum))
+					(scale (if (ishint hint LADSPA_HINT_INTEGER)
+						   1
+						   (if use-gtk 1000.0 100.0)))
+					(name (list-ref (.PortNames descriptor) portnum)))
+				   (list name
+					 lo
+					 init
+					 hi
+					 (lambda (val) (slider-moved val portnum lo hi name))
+					 scale
+					 (lambda (onoff) (automation-onoff onoff portnum lo hi name)))))
+			       (remove (lambda (portnum) (ishint (car (list-ref (.PortRangeHints descriptor) portnum))  LADSPA_HINT_TOGGLED))
+				       (-> ladspa input-controls)))
+			  ))
+	      
+	      
+	      ;; Add toggle buttons.
+	      (for-each (lambda (portnum)
+			  (let* ((hint (-> ladspa get-hint portnum))
+				 (hi (-> ladspa get-hi portnum))
+				 (lo (-> ladspa get-lo portnum))
+				 (portname (list-ref (.PortNames descriptor) portnum))
+				 (ison (> (-> ladspa get-input-control portnum) 0)))
+			    (<checkbutton> dialog
+					   portname
+					   (lambda (on)
+					     (-> ladspa input-control-set! portnum (if on hi lo)))
+					   ison)))
+			(filter-org (lambda (portnum) (ishint (car (list-ref (.PortRangeHints descriptor) portnum))  LADSPA_HINT_TOGGLED))
+				    (-> ladspa input-controls)))
+	      
+	      
+	      ;; Add on/off button.
+	      (set! onoffbutton (<checkbutton> dialog
+					       "On/off"
+					       onoff
+					       #t)))))
+      
+      
+      (set! ladspa (<ladspa> libraryname effectname))
+      
+      (if ladspa
+	  (ladspa-add-effect-menuitem name ShowDialog menu)
+	  #t)))
 
-	    
-		;; Make sure the plugin is disabled before quitting.
-		(add-hook! exit-hook (lambda args
-				       (disableplugin)
-				       (if (string=? "vst" libraryname)
-					   (-> ladspa close))
-				       #f))
-		
-	    
-		;; Make dialog
-		(set! dialog 
-		      (<dialog> name Cancel
-				"Close" Cancel
-				"Apply" OK
-				"Play" MyPlay
-				"Stop" MyStop
-				(if (assoc (string-append libraryname effectname) ladspa-help-assoclist)
-				    "Help"
-				    "Not much help")
-				Help))
-		
-		;; Add sliders.
-		(if (not (null? (-> ladspa input-controls)))
-		    (dialog 'add-sliders
-			    (map (lambda (portnum)
-				   (let* ((lo (cadr (list-ref (.PortRangeHints descriptor) portnum)))
-					  (init (-> ladspa get-input-control portnum))
-					  (hi (caddr (list-ref (.PortRangeHints descriptor) portnum)))
-					  (hint (car (list-ref (.PortRangeHints descriptor) portnum)))
-					  (scale (if (ishint hint LADSPA_HINT_INTEGER)
-						     1
-						     (if use-gtk 1000.0 100.0)))
-					  (name (list-ref (.PortNames descriptor) portnum))
-					  (islog (ishint hint LADSPA_HINT_LOGARITHMIC)))
-				     
-				     (if #f
-					 (begin
-					   (if (ishint hint LADSPA_HINT_SAMPLE_RATE)
-					       (display "HINT_SAMPLE_RATE "))
-					   (if (ishint hint LADSPA_HINT_BOUNDED_ABOVE)
-					       (display "HINT_BOUNDED_ABOVE "))
-					   (if (ishint hint LADSPA_HINT_BOUNDED_BELOW)
-					       (display "HINT_BOUNDED_BELOW "))
-					   (display (list-ref (.PortNames descriptor) portnum))(display " ")(display hint)(display " ")
-					   (display lo)(display " ")(display init)(display " ")(display hi)(newline)))
-				     
-				     (if (not (ishint hint LADSPA_HINT_BOUNDED_BELOW))
-					 (set! lo 0))                                   ;The value Ardour use.
-				     (if (not (ishint hint LADSPA_HINT_BOUNDED_ABOVE))
-					 (set! hi 4))                                   ;The value Ardour use.
-				     (if (ishint hint LADSPA_HINT_SAMPLE_RATE)
-					 (begin
-					   (set! lo (* lo (srate)))
-					   (set! hi (* hi (srate)))))
-				     
-				     (list name
-					   lo
-					   init
-					   hi
-					   (lambda (val) (slider-moved val portnum lo hi name))
-					   scale
-					   (lambda (onoff) (automation-onoff onoff portnum lo hi name)))))
-				 (remove (lambda (portnum) (ishint (car (list-ref (.PortRangeHints descriptor) portnum))  LADSPA_HINT_TOGGLED))
-					 (-> ladspa input-controls)))
-			    ))
-		
-		
-		;; Add toggle buttons.
-		(for-each (lambda (portnum)
-			    (let* ((hint (car (list-ref (.PortRangeHints descriptor) portnum)))
-				   (hi (caddr (list-ref (.PortRangeHints descriptor) portnum)))
-				   (lo (cadr (list-ref (.PortRangeHints descriptor) portnum)))
-				   (portname (list-ref (.PortNames descriptor) portnum))
-				   (ison (> (-> ladspa get-input-control portnum) 0)))
-			      (<checkbutton> dialog
-					     portname
-					     (lambda (on)
-					       (-> ladspa input-control-set! portnum (if on hi lo)))
-					     ison)))
-			  (filter-org (lambda (portnum) (ishint (car (list-ref (.PortRangeHints descriptor) portnum))  LADSPA_HINT_TOGGLED))
-				      (-> ladspa input-controls)))
-		
-	    
-		;; Add on/off button.
-		(set! onoffbutton (<checkbutton> dialog
-						 "On/off"
-						 onoff
-						 #t)))))
-	
-	  
-	(set! ladspa (<ladspa> libraryname effectname))
-
-	(if ladspa
-	    (ladspa-add-effect-menuitem name ShowDialog)
-	    #t)))
-
-    (for-each (lambda (x)
-		(make-ladspadialog (x 2) (x 0) (x 1)))
-	      (sort (map (lambda (listpart) (<array> (car listpart)
-						     (cadr listpart)
-						     (analyse-ladspa (car listpart) (cadr listpart))))
-			 (list-ladspa))
-		    (lambda (x y)
-		      (string-ci<? (car (x 2))
-				   (car (y 2))))))))
+  ;; Following function made while looking at the source for jack-rack written by Bob Ham.
+  (define (menu-descend menu uri base)
+    (let ((uris (lrdf-get-subclasses uri)))
+      (if uris
+	  (let ((n 0))
+	    (while (< n (lrdf-uris-count uris))
+		   (let* ((item (lrdf-uris-get-item uris n))
+			  (label (lrdf-get-label item))
+			  (newmenu (menu-sub-add menu label)))
+		     (menu-descend newmenu item (string-append base "/" label))
+		     (set! n (1+ n))))
+	    (lrdf-free-uris uris))))
+    (let ((uris (lrdf-get-instances uri)))
+      (if uris
+	  (let ((n 0))
+	    (while (< n (lrdf-uris-count uris))
+		   (let* ((item (lrdf-uris-get-item uris n))
+			  (das-ladspa (get-ladspa-with-id (lrdf-get-uid item))))
+		     (if das-ladspa
+			 (apply make-ladspadialog (append das-ladspa (list menu))))
+		     (set! n (1+ n))))
+	    (lrdf-free-uris uris)))))
+  
+  (if (provided? 'snd-lrdf)
+      (menu-descend ladspa-effects-menu (string-append (LADSPA-BASE) "Plugin") ""))
+  
+  (for-each (lambda (x)
+	      (apply make-ladspadialog x))
+	    (get-ladspa-list)))
 
 
-;;(c-display 1)
+
+
+;; Remove the following line to take away lrdf support.
+(provide 'snd-lrdf)
+
+
+(define lrdf-is-inited #f)
+
+(if (and (provided? 'snd-lrdf)
+	 (not lrdf-is-inited))
+    (begin
+      (c-eval-c2 "-llrdf"
+		 "#include <lrdf.h>"
+
+		 '((lrdf-get-subclasses (uri))
+		   "  lrdf_uris *ret=lrdf_get_subclasses(GET_STRING(uri));"
+		   "  if(ret)"
+		   "    return MAKE_POINTER(ret);"
+		   "  else"
+		   "    return SCM_BOOL_F;")
+
+		 '((lrdf-get-label (uri))
+		   "  return MAKE_STRING(lrdf_get_label(GET_STRING(uri)));")
+		 
+		 '((lrdf-uris-count (uris))
+		   "  return MAKE_INTEGER(((lrdf_uris*)GET_POINTER(uris))->count);")
+		 
+		 '((lrdf-free-uris (uris))
+		   "  lrdf_free_uris((lrdf_uris*)GET_POINTER(uris));return SCM_UNSPECIFIED;")
+
+		 '((lrdf-get-instances (uri))
+		   "  lrdf_uris *ret=lrdf_get_instances(GET_STRING(uri));"
+		   "  if(ret)"
+		   "    return MAKE_POINTER(ret);"
+		   "  else"
+		   "    return SCM_BOOL_F;")
+
+		 '((lrdf-get-uid (item))
+		   "  return MAKE_INTEGER(lrdf_get_uid(GET_STRING(item)));")
+
+		 '((lrdf-uris-get-item (uri n))
+		   "  return MAKE_STRING((((lrdf_uris*)GET_POINTER(uri))->items[GET_INTEGER(n)]));")
+
+		 '((lrdf-init ())
+		   "  lrdf_init();return SCM_UNSPECIFIED;")
+
+		 '((lrdf-read-file (uri))
+		   "  return MAKE_INTEGER(lrdf_read_file(GET_STRING(uri)));")
+
+		 '((LADSPA-BASE () )
+		   "  return MAKE_STRING(LADSPA_BASE);"))
+
+      (lrdf-init)
+      (for-each (lambda (path)
+		  (catch #t
+			 (lambda ()
+			   (let* ((dir (opendir path))
+				  (entry (readdir dir)))
+			     (while (not (eof-object? entry))
+				    (lrdf-read-file (string-append "file://" path "/" entry))
+				    (set! entry (readdir dir)))
+			     (closedir dir)))
+			 (lambda (key . args)
+			   #f)))
+		(string-split	(if (getenv "LADSPA_RDF_PATH")
+				    (getenv "LADSPA_RDF_PATH")
+				    "/usr/local/share/ladspa/rdf:/usr/share/ladspa/rdf")
+				#\:))
+
+      (set! lrdf-is-inited #t)))
+
+
+
 (install-ladspa-menues)
-;;(c-display 2)
-
 
 

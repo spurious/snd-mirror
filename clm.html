@@ -87,7 +87,7 @@ ccrma-ftp.stanford.edu; the Snd editor is <a href="ftp://ccrma-ftp.stanford.edu/
 <ul>
 <li><small><a href="#with-sound">With-sound</a></small>
 <li><small><a href="#mix-and-with-mix">With-mix</a></small>
-<li><small><a href="#instrument-let">Instrument-let and Sound-let</a></small>
+<li><small><a href="#sound-let">Sound-let</a></small>
 </ul>
 <li><a href="#debugging-aids">Debugging</a>
 <ul>
@@ -334,8 +334,9 @@ this regard).
 <p><small>
 <i>Declare</i> can be used to set the safety and debugging options, as
 well as set variable types (this can result in tighter code in many cases).
-In Common Lisp, the recognized types are integer and float;
-in the resultant C code these become integers and doubles respectively.
+In Common Lisp, the recognized types are :integer, :float, :string,
+:double*, :int*, :mus-any, and :mus-any-array (the keyword package
+is used to avoid endless CL package name troubles).
 In Scheme (in the Snd run macro), the declarable types are:
 int, float, boolean, char, string, vct, reader, clm, number, vector, integer, real, string, bignum (sample number), mus-any (i.e. a generator),
 and any def-clm-struct name.
@@ -1549,8 +1550,8 @@ effect in new-effects.scm (Snd).
 <table border cellpadding=4>
 <tr><td colspan=2><center>src methods</center></td></tr>
 <tr><td><em class=gen>mus-increment</em></td><td>srate arg to make-src</td></tr>
-<tr><td><em class=gen>mus-location</em></td><td>if file input, current location in file</td></tr>
-<tr><td><em class=gen>mus-channel</em></td><td>if file input, channel of file (no setf)</td></tr>
+<tr><td><em class=gen>mus-location</em></td><td>if file input, current location in file (CL clm only)</td></tr>
+<tr><td><em class=gen>mus-channel</em></td><td>if file input, channel of file (no setf) (CL clm only)</td></tr>
 </table>
 
 <p><b>src</b> performs sampling rate conversion
@@ -1957,22 +1958,24 @@ sets osc1's current frequency to (<a class=quiet href="#hz-&gt;radians">hz-&gt;r
 
 </p>
 <pre><small>
-(<a class=quiet href="#definstrument">definstrument</a> backandforth (onset duration file src-ratio)
+(definstrument backandforth (onset duration file src-ratio)
   ;; read file forwards and backwards until dur is used up
   ;; a slightly improved version is 'scratch' in ug1.ins
-  (let* ((f (<a class=quiet href="#open-input">open-input</a> file))
-         (last-sample (<a class=quiet href="#sound-frames">sound-frames</a> file))
+  (let* ((last-sample (<a class=quiet href="#sound-frames">sound-frames</a> file))
          (beg (floor (* *srate* onset)))
          (end (+ beg (floor (* *srate* duration))))
-         (s (<a class=quiet href="#make-src">make-src</a> :file f :start 0 :srate src-ratio))
+         (s (<a class=quiet href="#make-src">make-src</a> :input file :srate src-ratio))
          (cs 0))
     (run
      (loop for i from beg below end do
-       (setf cs (mus-location s))
-       (if (&gt;= cs last-sample) (setf (<em class=red>mus-increment</em> s) (- src-ratio)))
-       (if (&lt;= cs 0) (setf (<em class=red>mus-increment</em> s) src-ratio)
-       (<a class=quiet href="#outa">outa</a> i (<a class=quiet href="#src">src</a> s)))))
-    (<a class=quiet href="#close-input">close-input</a> f)))
+       (declare (type :integer cs last-sample)
+		(type :float src-ratio))
+       (setf cs (<a class=quiet href="#mus-location">mus-location</a> s))
+       (if (>= cs last-sample) (setf (<a class=quiet href="#mus-increment">mus-increment</a> s) (- src-ratio)))
+       (if (<= cs 0) (setf (<a class=quiet href="#mus-increment">mus-increment</a> s) src-ratio))
+       (<a class=quiet href="#outa">outa</a> i (<a class=quiet href="#src">src</a> s))))))
+
+;;; (with-sound () (backandforth 0 10 "pistol.snd" .5))
 </small></pre>
 <p>mus-location is useful in cases where you're doing some complicated
 processing on a file, and want to use envelopes, but for whatever reason can't
@@ -3241,37 +3244,6 @@ messages).</p>
 
 <br>
 
-<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><a Name="instrument-let">Instrument-let</a></h3></td></tr></table>
-
-<p><b>instrument-let</b> is like Lisp's <i>flet</i> -- it can be used to
-define local instruments:</p>
-<pre><small>
-(defun ins ()
-  (<em class=red>instrument-let</em> ((simp (beg dur freq)
-                     (let* ((start (floor (* beg *srate*)))
-                            (end (+ start (floor (* dur *srate*))))
-                            (osc (<a class=quiet href="#make-oscil">make-oscil</a> :frequency freq)))
-                       (run
-                         (loop for i from start below end do
-                           (<a class=quiet href="#outa">outa</a> i (* .25 (<a class=quiet href="#oscil">oscil</a> osc)))))))
-                   (toot (beg dur) 
-                     (let* ((start (floor (* beg *srate*)))
-                            (end (+ start (floor (* dur *srate*))))
-                            (osc (<a class=quiet href="#make-oscil">make-oscil</a> :frequency 220)))
-                       (run
-                         (loop for i from start below end do
-                           (<a class=quiet href="#outa">outa</a> i (* .25 (<a class=quiet href="#oscil">oscil</a> osc))))))))
-    (simp 0 1 660)
-    (toot 3 1)))
-</small></pre>
-<p>Now, when the function Ins is called within <a href="#with-sound">with-sound</a> or
-<a href="#clm-load">clm-load</a>, it will add a note from Simp and Toot.  For a more useful
-example, see <a href="expsrc.ins">expsrc.ins</a>. 
-Don't use instrument-let within
-<a href="#definstrument">definstrument</a>.</p>
-<br>
-
-
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><a name="sound-let">Sound-let</a></h3></td></tr></table>
 
 <p><b>sound-let</b> is a form of <i>let*</i> that creates temporary sound streams
@@ -4050,7 +4022,7 @@ its note list.</p>
   <tr><td><em class=tab><a href="clm.html#clm-random">clm-random</a></em></td><td><em class=tab><a href="clm.html#in-any">in-any</a></em></td><td><em class=tab><a href="clm.html#mus-channels">mus-channels</a></em></td><td><em class=tab><a href="clm.html#radians-&gt;hz">radians-&gt;hz</a></em></td><td><em class=tab><a href="clm.html#stretch-envelope">stretch-envelope</a></em></td></tr>
   <tr><td><em class=tab><a href="clm.html#*clm-safety*">*clm-safety*</a></em></td><td><em class=tab><a href="clm.html#ina-outa"><b>Input and output</b></a></em></td><td><em class=tab><a href="clm.html#mus-close">mus-close</a></em></td><td><em class=tab><a href="clm.html#rand">rand</a></em></td><td><em class=tab><a href="clm.html#sum-of-cosines">sum-of-cosines</a></em></td></tr>
   <tr><td><em class=tab><a href="clm.html#*clm-search-list*">*clm-search-list*</a></em></td><td><em class=tab><a href="clm.html#ins-var">ins-var</a></em></td><td><em class=tab><a href="clm.html#mus-cosines">mus-cosines</a></em></td><td><em class=tab><a href="clm.html#rand-interp">rand-interp</a></em></td><td><em class=tab><a href="clm.html#sum-of-cosines?">sum-of-cosines?</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#*clm-srate*">*clm-srate*</a></em></td><td><em class=tab><a href="clm.html#instrument-let">instrument-let</a></em></td><td><em class=tab><a href="clm.html#mus-create">mus-create</a></em></td><td><em class=tab><a href="clm.html#rand-interp?">rand-interp?</a></em></td><td><em class=tab><a href="clm.html#sum-of-sines">sum-of-sines</a></em></td></tr>
+  <tr><td><em class=tab><a href="clm.html#*clm-srate*">*clm-srate*</a></em></td><td></td><td><em class=tab><a href="clm.html#mus-create">mus-create</a></em></td><td><em class=tab><a href="clm.html#rand-interp?">rand-interp?</a></em></td><td><em class=tab><a href="clm.html#sum-of-sines">sum-of-sines</a></em></td></tr>
   <tr><td><em class=tab><a href="clm.html#*clm-table-size*">*clm-table-size*</a></em></td><td><em class=tab><a href="clm.html#ins-files"><b>Instruments</b></a></em></td><td><em class=tab><a href="clm.html#mus-data">mus-data</a></em></td><td><em class=tab><a href="clm.html#rand?">rand?</a></em></td><td><em class=tab><a href="clm.html#sum-of-sines?">sum-of-sines?</a></em></td></tr>
   <tr><td><em class=tab><a href="clm.html#*clm-version*">*clm-version*</a></em></td><td><em class=tab><a href="clm.html#linear-&gt;db">linear-&gt;db</a></em></td><td><em class=tab><a href="clm.html#mus-describe">mus-describe</a></em></td><td><em class=tab><a href="clm.html#randomnumbers"><b>Random Numbers</b></a></em></td><td><em class=tab><a href="clm.html#table-lookup">table-lookup</a></em></td></tr>
   <tr><td><em class=tab><a href="clm.html#close-input">close-input</a></em></td><td><em class=tab><a href="clm.html#locsig">locsig</a></em></td><td><em class=tab><a href="clm.html#mus-feedback">mus-feedback</a></em></td><td><em class=tab><a href="clm.html#raw-data"><b>raw data </b></a></em></td><td><em class=tab><a href="clm.html#table-lookup?">table-lookup?</a></em></td></tr>

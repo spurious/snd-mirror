@@ -34,8 +34,9 @@
 
 
 (if (not use-gtk)
-    (c-display "Warning, gui.scm might not work very well with Motif anymore."
-	       "You should compile up Snd with the --use-gtk configure option."))
+    (begin
+      (display "Warning, gui.scm might not work very well with Motif anymore.")(newline)
+      (display "You should compile up Snd with the --use-gtk configure option.")(newline)))
 
 
 (if use-gtk
@@ -58,6 +59,13 @@
        (load-from-path (symbol->string (symbol-append ',filename '.scm)))))
 
 
+(define (c-atleast1.7?)
+  (or (>= (string->number (major-version)) 2)
+      (and (string=? "1" (major-version))
+	   (>= (string->number (minor-version)) 7))))
+
+(define (c-integer somekindofnumberorsomething)
+  (inexact->exact (floor somekindofnumberorsomething)))
 
 (define (c-editor-widget snd)
   (list-ref (channel-widgets snd 0) 0))
@@ -246,22 +254,77 @@
   (newline))
 
 
-
 ;; Eval c-code on the fly. Code must have a void()-function called "das_init".
 (define* (c-eval-c #:key (compile-options "") . codestrings)
   (let* ((evalstring "")
 	(sourcefile (string-append (tmpnam) ".c"))
 	(libfile (string-append sourcefile ".so"))
-	(fd (open-file sourcefile "w")))
+	(fd (open-file sourcefile "w"))
+	(guile-config (string-append (cdr (assoc 'bindir %guile-build-info)) "/guile-config")))
+    (if (not (access? guile-config X_OK))
+	(begin
+	  (c-display "Error. " guile-config " not found, or is not an executable.")
+	  (c-display "        Perhaps you need the guile-devel pacage?")
+	  (newline)
+	  (exit)))
     (for-each (lambda (s)
 		(write-line s fd))
 	      (if (eq? (car codestrings) '#:compile-options)
 		  (cddr codestrings)
 		  codestrings))
     (close fd)
-    (system (string-append "gcc -Wall -O2 -shared -o " libfile " " sourcefile " " compile-options))
+    ;;(c-display sourcefile)
+    (system (string-append "gcc -Wall -O2 -shared -o " libfile " " sourcefile " "
+			   (if (getenv "CFLAGS") (getenv "CFLAGS") "") " " (if (getenv "LDFLAGS") (getenv "LDFLAGS") "") " "
+			   (string #\`) guile-config " compile" (string #\`) " "
+			   compile-options))
     (dynamic-call "das_init" (dynamic-link libfile))
-    (system (string-append "rm " libfile " " sourcefile))))
+    ;;(system (string-append "rm " libfile " " sourcefile))
+    ))
+
+
+(define (c-eval-c2 compile-options top . codestrings)
+  (c-eval-c #:compile-options compile-options
+	    (let ((n 0)
+		  (funcs '())
+		  (<-> string-append))
+	      (apply <-> (map (lambda (x) (<-> x (string #\newline)))
+			      (append (list "#include <stdio.h>"
+					    "#include <libguile.h>"
+					    "#define MAKE_STRING(a) scm_mem2string(a,strlen(a))"
+					    "#define GET_STRING(a) ((char*)SCM_STRING_CHARS(a))"
+					    "#define GET_POINTER(a) (void *)scm_num2ulong(a,0,\"GET_POINTER()\")"
+					    "#define GET_POINTER2(a) (void *)scm_num2ulong(SCM_CAR(SCM_CDR(a)),0,\"GET_POINTER2()\")"
+					    "#define MAKE_POINTER(a) scm_ulong2num((unsigned long)a)"
+					    "#define GET_INTEGER SCM_INUM"
+					    "#define MAKE_INTEGER SCM_MAKINUM"
+					    top)
+				      (map (lambda (x)
+					     (let ((name (caar x))
+						   (args (cadar x))
+						   (code (cdr x))
+						   (funcname (format #f "func~A" n)))
+					       (set! n (1+ n))
+					       (set! funcs (cons (list name (length args) funcname) funcs))
+					       (<-> "static SCM " funcname "("
+						    (apply <-> (map (lambda (arg)
+								      (<-> "SCM " (symbol->string arg)
+									   (if (not (eq? arg (car (reverse args))))
+									       ","
+									       "")))
+								    args))
+						    "){" (apply <-> (map (lambda (x) (<-> x " ")) code)) "}")))
+					   codestrings)
+				      (cons "void das_init(){"
+					    (map (lambda (x)
+						   (let ((name (car x))
+							 (numargs (cadr x))
+							 (funcname (caddr x)))
+						     (<-> "scm_c_define_gsubr(\"" (symbol->string name) "\"," (format #f "~A" numargs) ",0,0," funcname ");")))
+						 funcs))
+				      (list "}")))))))
+
+
 
 
 ;; define-toplevel is like define, but at the toplevel.
@@ -272,6 +335,45 @@ void das_init(){
   scm_c_define_gsubr(\"define-toplevel\",2,0,0,scm_define);
 }
 ")
+
+
+
+
+;; A desperate way to minimize consing. (Guile is definitely not a realtime friendly language...)
+
+(c-for 0 < 50 1
+       (lambda (n)
+	 (define-toplevel (string->symbol (format #f "c-arg~A" n)) 0)))
+
+
+(define-macro (lambda-non-cons args . body)
+  (let ((lets '())
+	(sets '()))
+    (c-for-each (lambda (n val)
+		  (set! lets (cons (list  val #f) lets))
+		  (set! sets (cons (list 'set!
+					 val
+					 (string->symbol (format #f "c-arg~A" n)))
+				   sets)))
+		args)
+    `(let (,@lets)
+       (lambda ()
+	 ,@sets
+	 ,@body))))
+
+
+(define-macro (call-non-cons func . args)
+  (let ((sets '()))
+    (c-for-each (lambda (n val)
+		  (set! sets (cons (list 'set!
+					 (string->symbol (format #f "c-arg~A" n))
+					 val)
+				   sets)))
+		args)
+    `(begin
+       ,@(reverse sets)
+       (,func))))
+
 
 
 (define-macro (add-call-hook! funcname func)
@@ -706,72 +808,49 @@ void das_init(){
 
 
 (define mouse-button-press-hook (<hook>))
-(define mouse-button-rightpress-hook (<hook>))
 (define mouse-move-hook (<hook>))
 (define mouse-drag2-hook (<hook>))
 (define mouse-button-release-hook (<hook>))
 (define mouse-scroll-hook (<hook>))
 (define selection-changed2-hook (<hook>))
 
-;; A function to remove all the gtk mousehandlers in snd for a widget.
+
 (if (not use-gtk)
     (c-display "c-remove-motionhandler not implemented for motif")
-    (c-eval-c #:compile-options "\`pkg-config --cflags gtk+-2.0\` `pkg-config --cflags glib-2.0\`"
-	      "
-#include <stdio.h>
-#include <libguile.h>
-#include <gtk/gtk.h>
-#include <glib.h>
-#include <glib-object.h>
-SCM das_func(SCM w){
-  gpointer g=(gpointer)scm_num2ulong(SCM_CAR(SCM_CDR(w)),0,\"remove-motionhanders\");
-  g_signal_handler_disconnect(g,g_signal_handler_find(g,
-						      G_SIGNAL_MATCH_ID,
-						      g_signal_lookup(\"motion_notify_event\",G_OBJECT_TYPE(g)),
-						      0,0,0,0));
-  g_signal_handler_disconnect(g,g_signal_handler_find(g,
-						      G_SIGNAL_MATCH_ID,
-						      g_signal_lookup(\"button_press_event\",G_OBJECT_TYPE(g)),
-						      0,0,0,0));
-  g_signal_handler_disconnect(g,g_signal_handler_find(g,
-						      G_SIGNAL_MATCH_ID,
-						      g_signal_lookup(\"button_release_event\",G_OBJECT_TYPE(g)),
-						      0,0,0,0));
-  g_signal_handler_disconnect(g,g_signal_handler_find(g,
-						      G_SIGNAL_MATCH_ID,
-						      g_signal_lookup(\"scroll_event\",G_OBJECT_TYPE(g)),
-						      0,0,0,0));
-  return SCM_UNSPECIFIED;
-}
-SCM das_func2(SCM s_widget,SCM s_gc,SCM s_x,SCM s_y,SCM s_text){
-    GtkWidget *widget=(GtkWidget*)scm_num2ulong(SCM_CAR(SCM_CDR(s_widget)),0,\"c-draw-string\");
-    GdkGC *gc=(GdkGC*)scm_num2ulong(SCM_CAR(SCM_CDR(s_gc)),0,\"c-draw-string2\");
-    GdkFont *font=gtk_style_get_font(widget->style);
-    gdk_draw_string(widget->window,font,gc,SCM_INUM(scm_inexact_to_exact(s_x)),SCM_INUM(scm_inexact_to_exact(s_y)),(char*)SCM_STRING_CHARS(s_text));
-    return SCM_UNSPECIFIED;
-}
-void das_init(){
-  scm_c_define_gsubr(\"c-remove-mousehandlers\",1,0,0,das_func);
-  scm_c_define_gsubr(\"c-draw-string\",5,0,0,das_func2);
-}
-"))
+    (c-eval-c2 (string-append (string #\`) "pkg-config --cflags gtk+-2.0" (string #\`))
+	       "#include <gtk/gtk.h>"
+	    
+	       ;; A function to remove all the gtk mousehandlers in snd for a widget.
+	       '((c-remove-mousehandlers (w))
+		 "  gpointer g=(gpointer)GET_POINTER2(w);"
+		 "  g_signal_handler_disconnect(g,g_signal_handler_find(g,"
+		 "						      G_SIGNAL_MATCH_ID,"
+		 " 						      g_signal_lookup(\"motion_notify_event\",G_OBJECT_TYPE(g)),"
+		 "						      0,0,0,0));"
+		 "  g_signal_handler_disconnect(g,g_signal_handler_find(g,"
+		 "						      G_SIGNAL_MATCH_ID,"
+		 "						      g_signal_lookup(\"button_press_event\",G_OBJECT_TYPE(g)),"
+		 "						      0,0,0,0));"
+		 "  g_signal_handler_disconnect(g,g_signal_handler_find(g,"
+		 "						      G_SIGNAL_MATCH_ID,"
+		 "						      g_signal_lookup(\"button_release_event\",G_OBJECT_TYPE(g)),"
+		 "						      0,0,0,0));"
+		 "  g_signal_handler_disconnect(g,g_signal_handler_find(g,"
+		 "						      G_SIGNAL_MATCH_ID,"
+		 "						      g_signal_lookup(\"scroll_event\",G_OBJECT_TYPE(g)),"
+		 "						      0,0,0,0));"
+		 "  return SCM_UNSPECIFIED;")
 
+	       ;; Wrapper for gdk_draw_string
+	       `((c-draw-string (s_widget s_gc s_x s_y s_text))
+		 "  GtkWidget *widget=(GtkWidget*)GET_POINTER2(s_widget);"
+		 "  GdkGC *gc=(GdkGC*)GET_POINTER2(s_gc);"
+		 "  GdkFont *font=gtk_style_get_font(widget->style);"
+		 "  gdk_draw_string(widget->window,font,gc,GET_INTEGER(scm_inexact_to_exact("
+		 ,(if (c-atleast1.7?) "scm_floor(s_x)" "s_x")  ")),GET_INTEGER(scm_inexact_to_exact(" ,(if (c-atleast1.7?) "scm_floor(s_y)" "s_y") ")),GET_STRING(s_text));"
+		 "  return SCM_UNSPECIFIED;")
+	       ))
 
-
-#!
-(define ddd #t)
-(define (newthread)
-  ;;(c-display "yes")
-  (if ddd
-      (begin
-	(setpriority PRIO_PROCESS 0 20)
-	(set! ddd #f)))
-  (gc)
-  (sleep 1)
-  (newthread))
-
-(call-with-new-thread newthread (lambda x x))
-!#
 
 
 
@@ -799,75 +878,88 @@ void das_init(){
 
 		     (c-g_signal_connect w "button_press_event"
 					 (lambda (w e i)
-					   (if (= (.button (GDK_EVENT_BUTTON e)) 3)
-					       (if (not (eq? 'stop!
-							     (-> mouse-button-rightpress-hook run
-								 snd (.x (GDK_EVENT_BUTTON e)) (.y (GDK_EVENT_BUTTON e)) (.state (GDK_EVENT_BUTTON e)))))
-						   (run-hook gtk-popup-hook w e i snd 0))
-					       (begin
-						 (set! ispressed #t)
-						 (set! ismoved #f)
-						 (-> mouse-button-press-hook run
-						     snd (.x (GDK_EVENT_BUTTON e)) (.y (GDK_EVENT_BUTTON e)) (.state (GDK_EVENT_BUTTON e)))))))
+					   (set! ispressed #t)
+					   (set! ismoved #f)
+					   (if (and (not (eq? 'stop!
+							      (-> mouse-button-press-hook run
+								  snd (.x (GDK_EVENT_BUTTON e)) (.y (GDK_EVENT_BUTTON e))
+								  (.button (GDK_EVENT_BUTTON e)) (.state (GDK_EVENT_BUTTON e)))))
+						    (= (.button (GDK_EVENT_BUTTON e)) 3))
+					       (run-hook gtk-popup-hook w e i snd 0))))
 		     (c-g_signal_connect w "motion_notify_event"
 				       (lambda (w e i)
-					 (if (not (= (.button (GDK_EVENT_BUTTON e)) 3))
-					     (begin
-					       (set! ismoved #t)
-					       (let ((args (if (.is_hint (GDK_EVENT_MOTION e))
-							       (cons snd (cdr (gdk_window_get_pointer (.window e))))
-							       (list snd (.x (GDK_EVENT_BUTTON e)) (.y (GDK_EVENT_BUTTON e)) (.state (GDK_EVENT_BUTTON e))))))
-						 (if (and (not (eq? 'stop! (apply (<- mouse-move-hook run) args)))
-							  ispressed)
-						     (apply (<- mouse-drag2-hook run) args)))))))
+					 (set! ismoved #t)
+					 (let ((args (if (.is_hint (GDK_EVENT_MOTION e))
+							 (let ((s (cdr (gdk_window_get_pointer (.window e)))))
+							   (list snd (car s) (cadr s) (.button (GDK_EVENT_BUTTON e)) (caddr s)))
+							 (list snd (.x (GDK_EVENT_BUTTON e)) (.y (GDK_EVENT_BUTTON e))
+							       (.button (GDK_EVENT_BUTTON e)) (.state (GDK_EVENT_BUTTON e))))))
+					   (if (and (not (eq? 'stop! (apply (<- mouse-move-hook run) args)))
+						    ispressed)
+					       (apply (<- mouse-drag2-hook run) args)))))
 		     (c-g_signal_connect w "button_release_event"
 					 (lambda (w e i)
-					   (if (not (= (.button (GDK_EVENT_BUTTON e)) 3))
-					       (begin
-						 (set! ispressed #f)
-						 (-> mouse-button-release-hook run
-						     snd (.x (GDK_EVENT_BUTTON e)) (.y (GDK_EVENT_BUTTON e)) (.state (GDK_EVENT_BUTTON e)))))))
+					   (set! ispressed #f)
+					   (-> mouse-button-release-hook run
+					       snd (.x (GDK_EVENT_BUTTON e)) (.y (GDK_EVENT_BUTTON e)) (.button (GDK_EVENT_BUTTON e)) (.state (GDK_EVENT_BUTTON e)))))
 		     (c-g_signal_connect w "scroll_event"
 					 (lambda (w e i)
 					   (set! ispressed #f)
 					   (-> mouse-scroll-hook run
-					       snd (.x (GDK_EVENT_BUTTON e)) (.y (GDK_EVENT_BUTTON e)) (.state (GDK_EVENT_BUTTON e)))))
+					       snd (.x (GDK_EVENT_BUTTON e)) (.y (GDK_EVENT_BUTTON e)) (.state (GDK_EVENT_BUTTON e)))
+					   ))
 		     )))))
 
 
+(define (c-rightbutton? button)
+  (= 3 button))
+
+(define (c-leftbutton? button)
+  (= 1 button))
+
+(define (c-ctrl? stat)
+  (= (logand stat 4) 4))
+
+(define (c-shift? stat)
+  (= (logand stat 1) 1))
+
+(define (c-altGr? stat)
+  (= (logand stat 8192) 8192))
 
 ;; Common way to treat mouse
 (define-class (<mouse-cycle> clickfunc movefunc releasefunc #:key (scaled #f) (add-type 'add!))
 
-  (define (press-hook snd pix-x pix-y stat)
+  (define (press-hook snd pix-x pix-y button stat)
     (let ((isdragged #f)
 	  (mousefunc (if scaled c-get-mouse-info2 c-get-mouse-info)))
       (mousefunc snd pix-x pix-y #t
 		 (lambda (ch x y)
-		   (let ((res (clickfunc snd ch x y stat)))
+		   (let ((res (clickfunc snd ch x y button stat)))
 		     (if (or (eq? 'stop! res)
 			     (eq? 'allways-stop! res))
 			 (begin
 			   (-> mouse-move-hook only!
-			       (lambda (snd pix-x pix-y stat)
+			       (lambda (snd pix-x pix-y button stat)
 				 (set! isdragged #t)
 				 (mousefunc snd pix-x pix-y ch
 					    (lambda (dasch x y)
-					      (movefunc snd ch x y stat)))))
+					      (movefunc snd ch x y button stat)))))
 			   (-> mouse-button-release-hook only!
-			       (lambda (snd pix-x pix-y stat)
+			       (lambda (snd pix-x pix-y button stat)
 				 (-> mouse-move-hook not-only!)
 				 (-> mouse-button-release-hook not-only!)
 				 (mousefunc snd pix-x pix-y ch
 					    (lambda (dasch x y)
-					      (if (and (eq? 'allways-stop!) (not isdragged))
+					      (if (and (eq? 'allways-stop! res) (not isdragged))
 						  (begin
 						    ;; Small hack needed to get the mouse-click-hook to run.
 						    (focus-widget (c-editor-widget snd))
 						    (select-channel ch)
 						    (run-hook mouse-click-hook
-							      snd ch 1 stat pix-x pix-y time-graph))
-						  (releasefunc snd ch x y stat))))))
+							      snd ch button stat pix-x pix-y time-graph))
+						  (if (= 7 (car (procedure-property releasefunc 'arity)))
+						      (releasefunc snd ch x y button stat isdragged)
+						      (releasefunc snd ch x y button stat)))))))
 			   'stop!)))))))
 
   (define-method (delete!)
@@ -881,7 +973,7 @@ void das_init(){
 
 ;; Allways select current channel
 (-> mouse-button-press-hook add-system!
-    (lambda (snd x y stat)
+    (lambda (snd x y button stat)
       (let ((ch (c-get-channel snd y)))
 	(if ch 
 	    (select-channel ch)))))
@@ -890,10 +982,10 @@ void das_init(){
 ;; Run the mouse-click-hook
 (let ((isdragged #f))
   (-> mouse-button-press-hook add!
-      (lambda (snd x y stat)
+      (lambda (snd x y button stat)
 	(set! isdragged #f)))
   (-> mouse-drag2-hook add!
-      (lambda (snd x y stat)
+      (lambda (snd x y button stat)
 	(set! isdragged #t)))
   (-> mouse-scroll-hook add!
       (lambda (snd orgx y stat)
@@ -915,8 +1007,8 @@ void das_init(){
 
 ;;  Moving marks with the mouse
 (let ((currmark #f))
-  (<mouse-cycle> (lambda (snd ch x y stat)
-		 (let ((pointpos (max 0 (inexact->exact (* (srate snd) (position->x x snd ch)))))
+  (<mouse-cycle> (lambda (snd ch x y button stat)
+		 (let ((pointpos (max 0 (c-integer (* (srate snd) (position->x x snd ch)))))
 		       (pointrange (- (* (srate snd) (position->x 15 snd ch))
 				      (* (srate snd) (position->x 0 snd ch)))))
 		   (if (and (> y 7)
@@ -931,15 +1023,15 @@ void das_init(){
 				   (return 'stop!))))
 			   (list-ref (list-ref (marks) snd) ch)))))))
 
-	       (lambda (snd ch x y stat)
-		 (let ((pointpos (max 0 (inexact->exact (* (srate snd) (position->x x snd ch))))))
+	       (lambda (snd ch x y button stat)
+		 (let ((pointpos (max 0 (c-integer (* (srate snd) (position->x x snd ch))))))
 		   (if (> (mark-sync currmark) 0)
 		       (move-syncd-marks (mark-sync currmark)
 					 (- pointpos (mark-sample currmark)))
 		       (set! (mark-sample currmark) pointpos))))
 
-	       (lambda (snd ch x y stat)
-		 (let ((pointpos (max 0 (inexact->exact (* (srate snd) (position->x x snd ch))))))
+	       (lambda (snd ch x y button stat)
+		 (let ((pointpos (max 0 (c-integer (* (srate snd) (position->x x snd ch))))))
 		   (if (> (mark-sync currmark) 0)
 		       (move-syncd-marks (mark-sync currmark)
 					 (- pointpos (mark-sample currmark)))
@@ -954,8 +1046,8 @@ void das_init(){
 (let ((currmixes #f)
       (offset 0))
 
-  (<mouse-cycle> (lambda (snd ch x y stat)
-		 (let ((pointpos (max 0 (inexact->exact (* (srate snd) (position->x x snd ch)))))
+  (<mouse-cycle> (lambda (snd ch x y button stat)
+		 (let ((pointpos (max 0 (c-integer (* (srate snd) (position->x x snd ch)))))
 		       (pointrange (- (* (srate snd) (position->x (mix-tag-width) snd ch))
 				      (* (srate snd) (position->x 0 snd ch)))))
 		   (call-with-current-continuation
@@ -980,13 +1072,13 @@ void das_init(){
 				     (return 'stop!))))))
 		       (mixes snd ch))))))
 
-	       (lambda (snd ch x y stat)
-		 (let ((pointpos (max 0 (inexact->exact (* (srate snd) (position->x x snd ch))))))
+	       (lambda (snd ch x y button stat)
+		 (let ((pointpos (max 0 (c-integer (* (srate snd) (position->x x snd ch))))))
 		   ;;(set! (mix-position currmix) (+ offset pointpos))
 		   (draw-line x 0 x (list-ref (axis-info snd ch) 11))))
 
-	       (lambda (snd ch x y stat)
-		 (let ((pointpos (max 0 (inexact->exact (* (srate snd) (position->x x snd ch))))))
+	       (lambda (snd ch x y button stat)
+		 (let ((pointpos (max 0 (c-integer (* (srate snd) (position->x x snd ch))))))
 		   (for-each (lambda (mix)
 			       (set! (mix-position mix) (+ offset pointpos)))
 			     currmixes)
@@ -998,10 +1090,11 @@ void das_init(){
 
 
 
-;; To avoid irritating non-smoothness, we turn off the garbage collector for 2 seconds.
-(-> mouse-button-press-hook add-system!
-    (lambda (snd orgx orgy stat)
-      (c-gc-off)))
+;; To avoid irritating non-smoothness, we turn off the garbage collector for 2 seconds. (Does not seem to be necessary for guile 1.7 and newer)
+(if (not (c-atleast1.7?))
+    (-> mouse-button-press-hook add-system!
+	(lambda (snd orgx orgy button stat)
+	  (c-gc-off))))
 
 
 
@@ -1342,8 +1435,8 @@ void das_init(){
 				   (F2 (/ (- (* 4 a2 b2)
 					     (square (- (+ a2 b2) c2)))
 					  16))
-				   (hc (* 2 (sqrt (/ F2 c2)))))
-			      (return (if (< hc this->boxsize)
+				   (hc2 (* 4 (/ F2 c2))))
+			      (return (if (< hc2 (square this->boxsize))
 					  (let ((node (list x y)))
 					    (changefunc this)
 					    (set! nodes (insert! nodes i node))
@@ -1424,65 +1517,92 @@ void das_init(){
   (define prevnode #f)
   (define nextnode #f)
   (define pressednodenum 0)
+  (define x_press 0)
+  (define y_press 0)
+  (define x_press_offset 0)
+  (define y_press_offset 0)
   (define (maixy x)
     (max 0 (min 1 x)))
-
-  (define-method (mouse-remove x y)
-    (let ((nodenum (get-node (maixy x) (maixy y))))
-      (if (and nodenum
-	       (> nodenum 0)
-	       (< nodenum (1- (length nodes))))
-	  (begin
-	    (changefunc this)
-	    (set! nodes (delete! (list-ref nodes nodenum) nodes eq?))
-	    (make-lines-and-boxes)
-	    (this->paint)
-	    'stop!))))
+  (define direction #f)
 
 
-  (define-method (mouse-press x y)
-    (let ((func (lambda ()
-		  (let ((nodenum (get-node (maixy x) (maixy y))))
-		    (if nodenum
-			(begin
-			  (set! pressednodenum nodenum)
-			  (if (> nodenum 0)
-			      (set! prevnode (list-ref nodes (1- nodenum))))
-			  (set! pressednode (list-ref nodes nodenum))
-			  (if (< nodenum (1- (length nodes)))
-			      (set! nextnode (list-ref nodes (1+ nodenum))))
-			  'stop!)
-			#f)))))
-      ;; Varrious bugs can make mouse-press loop forever, so therefore its not recursive, which would have looked nicer.
-      (if (not (func))
-	  (if (perhaps-make-node (c-scale x 0 1 minx maxx) y)
-	      (func))
-	  'stop!)))
+  (define (delete-node nodenum)
+    (changefunc this)
+    (set! nodes (delete! (list-ref nodes nodenum) nodes eq?))
+    (make-lines-and-boxes)
+    (this->paint)
+    'stop!)
+  
+  (define-method (mouse-clicked x y button stat)
+    (if (and pressednode
+	     (c-rightbutton? button)
+	     (> pressednodenum 0)
+	     (< pressednodenum (1- (length nodes))))
+	(delete-node pressednodenum)))
 
-  (define-method (mouse-move x y)
+  (define-method (mouse-press x y button stat)
+    (if (and (c-shift? stat)
+	     (c-rightbutton? button))
+	(let ((nodenum (get-node (maixy x) (maixy y))))
+	  (if (and nodenum
+		   (> nodenum 0)
+		   (< nodenum (1- (length nodes))))
+	      (delete-node nodenum)))
+	(let ((func (lambda ()
+		      (let ((nodenum (get-node (maixy x) (maixy y))))
+			(if nodenum
+			    (begin
+			      (set! pressednodenum nodenum)
+			      (if (> nodenum 0)
+				  (set! prevnode (list-ref nodes (1- nodenum))))
+			      (set! pressednode (list-ref nodes nodenum))
+			      (if (< nodenum (1- (length nodes)))
+				  (set! nextnode (list-ref nodes (1+ nodenum))))
+			      (set! x_press x)
+			      (set! y_press y)
+			      (set! x_press_offset (- (car pressednode) x))
+			      (set! y_press_offset (- (cadr pressednode) y))
+			      (set! direction (if (c-rightbutton? button) 'not-set #f))
+			      'stop!)
+			    #f)))))
+	  (if (not (func))
+	      (if (perhaps-make-node (c-scale x 0 1 minx maxx) y)
+		  (func))
+	      'stop!))))
+
+  (define-method (mouse-move x_org y_org button stat)
     (if pressednode
-	(let ((minx2 (if prevnode (if nextnode (car prevnode) 1) 0))
+	(let ((y (+ y_press_offset (if (c-ctrl? stat) (+ y_press (/ (- y_org y_press) 12)) y_org)))
+	      (x (+ x_press_offset (if (c-ctrl? stat) (+ x_press (/ (- x_org x_press) 12)) x_org)))
+	      (minx2 (if prevnode (if nextnode (car prevnode) 1) 0))
 	      (maxx2 (if nextnode (if prevnode (car nextnode) 0) 1)))
-	  ;;(changefunc this)
+	  (if direction
+	      (begin
+		(if (eq? direction 'not-set)
+		    (set! direction (if (> (abs (- x_org x_press)) (abs (- y_org y_press)))
+					'x
+					'y)))
+		(if (eq? direction 'y)
+		    (set! x (+ x_press_offset x_press))
+		    (set! y (+ y_press_offset y_press)))))
 	  (paint-some  pressednodenum (1+ pressednodenum))
 	  (set-car! pressednode (max minx2 (min maxx2 (c-scale x 0 1 minx maxx))))
-	  (set-car! (cdr pressednode) (maixy y))
+	  (set-car! (cdr pressednode) (if (c-shift? stat) 0.5 (maixy y)))
 	  (make-lines-and-boxes)
-	  ;;(this->paint)
 	  (paint-some pressednodenum (1+ pressednodenum))
 	  (c-gc-on) ;; To avoid crashing the machine, actually.
 	  'stop!)))
 
-  (define-method (mouse-release x y)
+  (define-method (mouse-release x y button stat)
     (if pressednode
 	(begin
-	  (this->mouse-move x y)
+	  (this->mouse-move x y button stat)
 	  (set! prevnode #f)
 	  (set! pressednode #f)
 	  (set! nextnode #f)
 	  'stop!)))
 
-  
+
   )
 		     
 		  
@@ -1543,28 +1663,19 @@ void das_init(){
     #f)
 
 
-  (define (rightpress-hook dassnd x y stat)
-    (if (and active (= snd dassnd))
-	(c-get-mouse-info2 snd x y #t
-			   (lambda (dasch x y)
-			     (if (= ch dasch)
-				 (if (eq? 'stop! (-> this mouse-remove x y))
-				     (begin
-				       (if moused-func (moused-func this))
-				       'stop!)))))))
-
-
-  (define mouse-cycle (<mouse-cycle> (lambda (dassnd dasch x y stat)
+  (define mouse-cycle (<mouse-cycle> (lambda (dassnd dasch x y button stat)
 				       (if (and active (= snd dassnd) (= ch dasch))
-					   (if (eq? 'stop! (-> this mouse-press x y))
+					   (if (eq? 'stop! (-> this mouse-press x y button stat))
 					       (begin
 						 (if moused-func (moused-func this))
 						 'stop!))))
-				     (lambda (snd ch x y stat)
-				       (-> this mouse-move x y)
+				     (lambda (snd ch x y button stat)
+				       (-> this mouse-move x y button stat)
 				       (if moused-func (moused-func this)))
-				     (lambda (snd ch x y stat)
-				       (-> this mouse-release x y)
+				     (lambda (snd ch x y button stat isdragged)
+				       (if isdragged
+					   (-> this mouse-release x y button stat)
+					   (-> this mouse-clicked x y button stat))
 				       (if moused-func (moused-func this)))
 				     
 				     #:scaled #t))
@@ -1576,13 +1687,11 @@ void das_init(){
 
   (define-method (delete!)
     (remove-hook! after-graph-hook das-after-graph-hook)
-    (-> mouse-button-rightpress-hook remove! rightpress-hook)
     (-> mouse-cycle delete!)
     (remove-hook! close-hook das-close-hook))
 
 
   (add-hook! after-graph-hook das-after-graph-hook)
-  (-> mouse-button-rightpress-hook add! rightpress-hook)
   (add-hook! close-hook das-close-hook)
 
   (das-after-graph-hook snd ch)
@@ -1840,9 +1949,9 @@ void das_init(){
 	     (new-slider (XtCreateManagedWidget title xmScaleWidgetClass mainform
 						(list XmNorientation   XmHORIZONTAL
 						      XmNshowValue     #t
-						      XmNminimum       (inexact->exact (floor (* low scaler)))
-						      XmNmaximum       (inexact->exact (floor (* high scaler)))
-						      XmNvalue         (inexact->exact (floor (* initial scaler)))
+						      XmNminimum       (c-integer (* low scaler))
+						      XmNmaximum       (c-integer (* high scaler))
+						      XmNvalue         (c-integer (* initial scaler))
 						      XmNdecimalPoints (if (= scaler 1000) 3 (if (= scaler 100) 2 (if (= scaler 10) 1 0)))
 						      XmNtitleString   dastitle
 						      XmNleftAttachment XmATTACH_FORM

@@ -69,6 +69,10 @@
 (c-load-from-path rgb)
 
 
+(define-macro (c-show-times time force)
+  `(call-non-cons c-show-times-das ,time ,force))
+
+
 
 
 ;;(load-from-path "bird.scm")
@@ -128,10 +132,10 @@
 
 (c-define c-zoomfactor 1.2)
 
-;; Time forward/backward to move the cursor using which keys, in seconds.
+;; Percent of the window to move the cursor forward/backward using which keys.
 (c-define c-cursormovetime-rightleft 2)
 (c-define c-cursormovetime-updown 10)
-(c-define c-cursormovetime-pageupdown 30)
+(c-define c-cursormovetime-pageupdown 50)
 
 ;; Hopefully this will change.
 (define c-setting-cursor-color-cause-redraw #t)
@@ -199,22 +203,22 @@
 							 "Make mark"
 							 "      m"
 							 ""
-							 "Move cursor 2 seconds forward"
+							 "Move cursor 2 percent forward"
 							 "      <Arrow right>"
 							 ""
-							 "Move cursor 2 seconds backward"
+							 "Move cursor 2 percent backward"
 							 "      <Arrow left>"
 							 ""
-							 "Move cursor 10 seconds forward"
+							 "Move cursor 10 percent forward"
 							 "      <Arrow up>"
 							 ""
-							 "Move cursor 10 seconds backward"
+							 "Move cursor 10 percent backward"
 							 "      <Arrow down>"
 							 ""
-							 "Move cursor 30 seconds forward"
+							 "Move cursor 50 percent forward"
 							 "      <Page Up>"
 							 ""
-							 "Move cursor 30 seconds backward"
+							 "Move cursor 50 percent backward"
 							 "      <Page Down>"
 							 ""
 							 "Set cursor at beginning:"
@@ -228,6 +232,18 @@
 							 ""
 							 "Move selected area:"
 							 "      <Shift> + <Mouse>"
+							 ""
+							 "Remove Node"
+							 "      <Right Mouse click>  OR  <Shift> + <Right Mouse>"
+							 ""
+							 "Set Node at Middle position:"
+							 "      <Shift> + <Mouse>"
+							 ""
+							 "Finetune Node position:"
+							 "      <Ctrl> + <Mouse>"
+							 ""
+							 "Move node only in x or y directioy"
+							 "      <Right Mouse button>"
 							 ""
 							 "Apply Envelope:"
 							 "      v"
@@ -272,25 +288,25 @@
 (define (c-selection-frames)
   (selection-frames (selected-sound)))
 
-(define (c-set-selection-position! snd ch val)
-  (if (c-sync? snd)
+(define* (c-set-selection-position! snd ch val #:optional (dassync (c-sync? snd)))
+  (if dassync
       (let ((chans (chans snd)))
 	(do ((chan 0 (1+ chan)))
 	    ((= chan chans))
 	  (set! (selection-position snd chan) val)))
       (set! (selection-position snd ch) val)))
 
-(define (c-set-selection-frames! snd ch val)
-  (if (c-sync? snd)
+(define* (c-set-selection-frames! snd ch val #:optional (dassync (c-sync? snd)))
+  (if dassync
       (let ((chans (chans snd)))
 	(do ((chan 0 (1+ chan)))
 	    ((= chan chans))
 	  (set! (selection-frames snd chan) val)))
       (set! (selection-frames snd ch) val)))
 
-(define (c-set-selection! snd ch start end)
-  (c-set-selection-position! snd ch start)
-  (c-set-selection-frames! snd ch (- end start -1)))
+(define* (c-set-selection! snd ch start end #:optional (dassync (c-sync? snd)))
+  (c-set-selection-position! snd ch start dassync)
+  (c-set-selection-frames! snd ch (- end start -1) dassync))
 
 ;; Like (selection?) but only for the selected sound.
 (define (c-selection?)
@@ -307,7 +323,7 @@
 (define (c-set-cursor-pos pos)
   (c-for-each-channel2 (selected-sound)
 		       (lambda (ch)
-			 (set! (cursor (selected-sound) ch) pos))))
+			 (set! (cursor (selected-sound) ch) (c-integer pos)))))
 
 
 ;; Like (set-cursor-pos pos), but legalize pos and
@@ -320,7 +336,7 @@
 	  (c-stop-playing legalpos)
 	  (c-play legalpos))
 	(begin
-	  (c-show-times legalpos)
+	  (c-show-times legalpos #f)
 	  (c-set-cursor-pos legalpos)))))
 
 
@@ -476,7 +492,7 @@
 	   (lambda (snd chn button state x y axis)
 	     (if (and (not (= state 260))
 		      (= axis time-graph))
-		 (let ((samp (max 0 (inexact->exact (* (srate snd) (position->x x snd chn)))))
+		 (let ((samp (max 0 (c-integer (* (srate snd) (position->x x snd chn)))))
 		       (dasspeed (speed-control)))
 		   (c-stop-playing samp)
 		   (cond ((= button 4)
@@ -529,10 +545,9 @@
 (define (c-stop-playing cursorpos)
   (set! (cursor-follows-play) #f)
   (stop-playing)
+  (c-set-cursor-pos (if cursorpos cursorpos (cursor)))
   (if cursorpos
-      (begin
-	(c-set-cursor-pos cursorpos)
-	(c-show-times cursorpos #t)))
+      (c-show-times cursorpos #t))
   (set! (cursor-follows-play) #t))
 
 (define (c-play-selection2)
@@ -663,43 +678,35 @@
 ;; Cursor position
 ;;##############################################################
 
+(let ((m (lambda (func percent)
+	   (lambda ()
+	     (c-set-cursor-pos2 (func (cursor) (* (srate) 
+						  (- (cadr (x-bounds)) (car (x-bounds)))
+						  0.01
+						  percent)))))))
+  (bind-key #xFF56 0
+	    (m - c-cursormovetime-pageupdown))
+  
+  (bind-key #xFF55 0
+	    (m + c-cursormovetime-pageupdown))
+ 
+  (bind-key #xFF52 0
+	    (m + c-cursormovetime-updown))
 
-;; Page Up/Down: +/- 30 seconds
-;; Up/down:      +/- 10 seconds
-;; Right/left:   +/-  2 seconds
+  (bind-key #xFF54 0
+	    (m - c-cursormovetime-updown))
 
+  (bind-key #xFF51 0
+	    (m - c-cursormovetime-rightleft))
 
-(bind-key #xFF56 0
-	  (lambda ()
-	    (c-set-cursor-pos2 (- (cursor) (* (srate) c-cursormovetime-pageupdown)))))
+  (bind-key #xFF53 0
+	    (m + c-cursormovetime-rightleft))
 
-(bind-key #xFF55 0
-	  (lambda ()
-	    (c-set-cursor-pos2 (+ (cursor) (* (srate) c-cursormovetime-pageupdown)))))
+  (bind-key #xFF57 0
+	    (lambda () (c-set-cursor-pos2 0)))
 
-(bind-key #xFF52 0
-	  (lambda ()
-	    (c-set-cursor-pos2 (+ (cursor) (* (srate) c-cursormovetime-updown)))))
-
-(bind-key #xFF54 0
-	  (lambda ()
-	    (c-set-cursor-pos2 (- (cursor) (* (srate) c-cursormovetime-updown)))))
-
-(bind-key #xFF51 0
-	  (lambda ()
-	    (c-set-cursor-pos2 (- (cursor) (* (srate) c-cursormovetime-rightleft)))))
-
-(bind-key #xFF53 0
-	  (lambda ()
-	    (c-set-cursor-pos2 (+ (cursor) (* (srate) c-cursormovetime-rightleft)))))
-
-(bind-key #xFF57 0
-	  (lambda ()
-	    (c-set-cursor-pos2 0)))
-
-(bind-key (char->integer #\<) 0
-	  (lambda ()
-	    (c-set-cursor-pos2 0)))
+  (bind-key (char->integer #\<) 0
+	    (lambda () (c-set-cursor-pos2 0))))
 
 #!
 Does not work.
@@ -873,36 +880,39 @@ Does not work.
 
 
 (let ((about-to-move #f)
-      (selection-starting-point #f))
+      (selection-starting-point #f)
+      (dassync #f))
 
-  (define (mouse-press-callback snd ch x y state)
-    (let ((samp (inexact->exact (* (srate snd) (position->x x snd ch))))
-	  (selmember (selection-member? snd ch)))
-      (if (< samp 0) (set! samp 0))
-      (if (and (= state 4) selmember)
-	  (let ((selpos (selection-position snd ch))
-		(selframes (selection-frames snd ch)))
-	    (if (< samp (+ (/ selframes 2) selpos))
-		(set! selection-starting-point (+ selpos selframes))
-		(set! selection-starting-point selpos))
-	    (mouse-motion-callback snd ch x y state))
-	  (if (and (= state 1) selmember)
+  (define (mouse-press-callback snd ch x y button state)
+    (if (c-leftbutton? button)
+	(let ((samp (c-integer (* (srate snd) (position->x x snd ch))))
+	      (selmember (selection-member? snd ch)))
+	  (set! dassync (> (position->y y snd 0) 0))
+	  (if (< samp 0) (set! samp 0))
+	  (if (and (c-ctrl? state) selmember)
 	      (let ((selpos (selection-position snd ch))
 		    (selframes (selection-frames snd ch)))
-		(color-samples-allchans (channels) green selpos selframes)
-		(set! about-to-move (<array> selpos selframes)))
-	      (set! selection-starting-point samp))))
-    'allways-stop!)
+		(if (< samp (+ (/ selframes 2) selpos))
+		    (set! selection-starting-point (+ selpos selframes))
+		    (set! selection-starting-point selpos))
+		(mouse-motion-callback snd ch x y button state))
+	      (if (and (c-shift? state) selmember)
+		  (let ((selpos (selection-position snd ch))
+			(selframes (selection-frames snd ch)))
+		    (color-samples-allchans (channels) green selpos selframes)
+		    (set! about-to-move (<array> selpos selframes)))
+		  (set! selection-starting-point samp)))
+	  'allways-stop!)))
 
-  (define (mouse-motion-callback snd ch x y state)
-    (let ((samp (max 0 (inexact->exact (* (srate snd) (position->x x snd ch))))))
+  (define (mouse-motion-callback snd ch x y button state)
+    (let ((samp (max 0 (c-integer (* (srate snd) (position->x x snd ch))))))
       (if about-to-move
-	  (c-set-selection! snd ch samp (+ samp (about-to-move 1)))
+	  (c-set-selection! snd ch samp (+ samp (about-to-move 1)) dassync)
 	  (begin
 	    (if (not (selection-member? snd ch))
 		(if (< x selection-starting-point)
-		    (c-set-selection! snd ch x selection-starting-point)
-		    (c-set-selection! snd ch selection-starting-point x))
+		    (c-set-selection! snd ch x selection-starting-point dassync)
+		    (c-set-selection! snd ch selection-starting-point x dassync))
 		(let* ((selstart (selection-position snd ch))
 		       (selframes (selection-frames snd ch))
 		       (newselstart (if (< samp selection-starting-point)
@@ -916,30 +926,30 @@ Does not work.
 			   (not (= samp selection-starting-point)))
 		      (begin
 			(c-put snd 'region-generation (1+ (c-get snd 'region-generation 0)))
-			(c-set-selection! snd ch newselstart (+ newselstart newselframes))))))
+			(c-set-selection! snd ch newselstart (+ newselstart newselframes) dassync)))))
 	    (c-show-times (cursor) #t)))))
     
-  (define (mouse-release-callback snd ch x y state)
+  (define (mouse-release-callback snd ch x y button state)
     (define (nofunc . x)
       #t)
-    (let ((samp (max 0 (inexact->exact (* (srate snd) (position->x x snd ch))))))
+    (let ((samp (max 0 (c-integer (* (srate snd) (position->x x snd ch))))))
       (if about-to-move
 	  (begin
 	    (add-hook! graph-hook nofunc)
-	    (c-set-selection! snd ch (about-to-move 0) (+ (about-to-move 0) (about-to-move 1)))
+	    (c-set-selection! snd ch (about-to-move 0) (+ (about-to-move 0) (about-to-move 1)) dassync)
 	    (c-cut)
 	    (c-set-cursor-pos samp)
 	    (remove-hook! graph-hook nofunc)
 	    (c-paste)
-	    (c-set-selection! snd ch samp (+ samp (about-to-move 1)))
+	    (c-set-selection! snd ch samp (+ samp (about-to-move 1)) dassync)
 	    (set! about-to-move #f))
 	  (begin
 	    (if selection-starting-point
 		(if (not (= samp selection-starting-point))
 		    (begin
 		      (if (< samp selection-starting-point)
-			  (c-set-selection! snd ch samp selection-starting-point)
-			  (c-set-selection! snd ch selection-starting-point samp))
+			  (c-set-selection! snd ch samp selection-starting-point dassync)
+			  (c-set-selection! snd ch selection-starting-point samp dassync))
 		      (c-gc-on)
 		      (gc))))
 	    (c-show-times (cursor) #t)
@@ -1096,8 +1106,6 @@ Does not work.
 
 
 
-
-
 ;;##############################################################
 ;; Show times
 ;;##############################################################
@@ -1105,14 +1113,16 @@ Does not work.
 ;; Show cursor and selection position in minutes, seconds and 1/10th seconds.
 ;; This function is often called when playing, so I have tried as much as possible to avoid triggering a garbage collection.
 ;; (without very much (if any) success by the way). Would be extremely nice if Guile could collect garbage in a seperate thread.
+;; No, the garbage collector can't just be turned off while playing. I have tried many times,
+;; but theres a huge chance everything goes bananas because of a swapping hell that is eventually
+;; going to happen. Its a scary amount of memory that is allocated by guile just doing small things.
 
-
-(define c-show-times
+(define c-show-times-das
 
   (let (
 	 
 	(c-dodasprint
-	 (let* ((lastpainted (<array/multidimensional> '(3 4)))
+	 (let* ((lastpainted (list-tabulate 3 (lambda (n) (list-tabulate 4 (lambda (n) #f)))))
 		(fontwidth 9)	
 		(fontheight 12)
 		(stringlen (* fontwidth 7))
@@ -1126,39 +1136,42 @@ Does not work.
 		(height #f)
 		(y #f))
 	   
-	   (lambda (string level color framepos . force)
+	   (lambda-non-cons (string level color framepos force)
 	     (set! sound-widget (c-editor-widget (selected-sound)))
 	     (set! width (- (car (widget-size sound-widget)) fontwidth))
 	     (set! x (min (- width stringlen) (x->position (/ framepos (srate)))))
-	     (set! dim (lastpainted level))
+	     (set! dim (list-ref lastpainted level))
 	     
-	     (if (or (not (null? force))
-		     (not (= x (dim 0))))
+	     (if (or force
+		     (not (= x (car dim))))
 		 (begin
 		   (set! old-color (foreground-color))
 		   (set! height (cadr (widget-size sound-widget)))
 		   (set! y (+ (- (* fontheight level) (* 1.5 fontheight))
 			      (- (/ (- height fontheight) 2) fontheight)))
 
-		   (if (dim 0)
+		   (if (car dim)
 		       (begin
 			 (set! (foreground-color) c-backgroundcolor)
 			 ;;(set! (foreground-color) green)
 			 (if #f
-			     (draw-string (dim 3) (dim 0) (dim 1))
-			     (fill-rectangle (dim 0) (dim 1) (dim 2) (1+ fontheight)))))
+			     (draw-string (cadddr dim) (car dim) (cadr dim))
+			     (fill-rectangle (car dim) (cadr dim) (caddr dim) (1+ fontheight)))))
 		   ;;(display string)(newline)
 		   (set! (foreground-color) color)
 		   (draw-string string x y)
 
-		   (-> dim set! x y stringlen string)
+		   (set-car! dim x)
+		   (set-car! (cdr dim) y)
+		   (set-car! (cddr dim) stringlen)
+		   (set-car! (cdddr dim) string)
 		   (set! (foreground-color) old-color))))))
 
 	(get-time-string
 	 (let* ((ret-string "        ")
-		(intdiv (lambda (a b)
-			  (inexact->exact (floor (/ a b)))))
-		(int->char (lambda (i)
+		(intdiv (lambda-non-cons (a b)
+			  (c-integer (/ a b))))
+		(int->char (lambda-non-cons (i)
 			     (integer->char (+ (char->integer #\0) i))))
 		
 		(time #f)
@@ -1171,37 +1184,37 @@ Does not work.
 		(seconds1 #f)
 		(seconds-1 #f)
 
-		(p (lambda (n)
+		(p (lambda-non-cons (n)
 		     (if (< minutes 10)
 			 (max 0 (- n 2))
 			 (if (< minutes 100)
 			     (max 0 (- n 1))
 			     n)))))
 	   
-	   (lambda (dastime)
+	   (lambda-non-cons (dastime)
 	     (set! time (/ (floor (* 10 (/ dastime (srate (selected-sound))))) 10))
-	     (set! minutes (intdiv time 60))
-	     (set! minutes100 (intdiv minutes 100))
-	     (set! minutes10 (intdiv (- minutes (* minutes100 100)) 10))
+	     (set! minutes (call-non-cons intdiv time 60))
+	     (set! minutes100 (call-non-cons intdiv minutes 100))
+	     (set! minutes10 (call-non-cons intdiv (- minutes (* minutes100 100)) 10))
 	     (set! minutes1 (- minutes (* minutes100 100) (* minutes10 10)))
 	     (set! seconds (/ (floor (* 10 (- time (* minutes 60)))) 10))
-	     (set! seconds10 (intdiv seconds 10))
-	     (set! seconds1 (inexact->exact (floor (- seconds (* seconds10 10)))))
-	     (set! seconds-1 (inexact->exact (floor (* 10 (- seconds (* 10 seconds10) seconds1)))))
+	     (set! seconds10 (call-non-cons intdiv seconds 10))
+	     (set! seconds1 (c-integer (floor (- seconds (* seconds10 10)))))
+	     (set! seconds-1 (c-integer (floor (* 10 (- seconds (* 10 seconds10) seconds1)))))
 
 	     (if (< minutes 100)
 		 (string-set! ret-string 7 #\ )
-		 (string-set! ret-string 0 (int->char minutes100)))
+		 (string-set! ret-string 0 (call-non-cons int->char minutes100)))
 	     (if (< minutes 10)
 		 (string-set! ret-string 6 #\ )
-		 (string-set! ret-string (p 1) (int->char minutes10)))
+		 (string-set! ret-string (call-non-cons p 1) (call-non-cons int->char minutes10)))
 	     
-	     (string-set! ret-string (p 2) (int->char minutes1))
-	     (string-set! ret-string (p 3) #\:)
-	     (string-set! ret-string (p 4) (int->char seconds10))
-	     (string-set! ret-string (p 5) (int->char seconds1))
-	     (string-set! ret-string (p 6) #\.)
-	     (string-set! ret-string (p 7) (int->char seconds-1))
+	     (string-set! ret-string (call-non-cons p 2) (call-non-cons int->char minutes1))
+	     (string-set! ret-string (call-non-cons p 3) #\:)
+	     (string-set! ret-string (call-non-cons p 4) (call-non-cons int->char seconds10))
+	     (string-set! ret-string (call-non-cons p 5) (call-non-cons int->char seconds1))
+	     (string-set! ret-string (call-non-cons p 6) #\.)
+	     (string-set! ret-string (call-non-cons p 7) (call-non-cons int->char seconds-1))
 	     
 	     ret-string)))
 	
@@ -1214,30 +1227,30 @@ Does not work.
 	(wanttoupdate #f))
     
 
-    (lambda (dastime . force)
+    (lambda-non-cons (dastime force)
       (set! largetimechange (>= (abs (- dastime last-time-showed))
 				(/ (srate (selected-sound)) 5)))
       (set! stereocombined (and (= (channels) 2) 
 				(= (channel-style (selected-sound)) channels-combined)))
-      (set! wanttoupdate (or (not (null? force)) largetimechange))
+      (set! wanttoupdate (or force largetimechange))
       (if wanttoupdate
 	  (set! last-time-showed dastime))
 
       (if stereocombined
 	  (begin
-	    (c-dodasprint (get-time-string dastime) 0 red dastime wanttoupdate)
-	    (if (and (not (null? force)) (c-selection?))
+	    (call-non-cons c-dodasprint (call-non-cons get-time-string dastime) 0 red dastime wanttoupdate)
+	    (if (and force (c-selection?))
 		(begin
-		  (c-dodasprint (get-time-string (c-selection-position)) 1 blue (c-selection-position) #t)
-		  (c-dodasprint (get-time-string (+ (c-selection-position) (c-selection-frames))) 2 blue (+ (c-selection-position) (c-selection-frames)) #t))))
+		  (call-non-cons c-dodasprint (call-non-cons get-time-string (c-selection-position)) 1 blue (c-selection-position) #t)
+		  (call-non-cons c-dodasprint (call-non-cons get-time-string (+ (c-selection-position) (c-selection-frames))) 2 blue (+ (c-selection-position) (c-selection-frames)) #t))))
 	  (if wanttoupdate
 	      (report-in-minibuffer (if (c-selection?)
 					(begin
-					  (substring-move! (get-time-string dastime) 0 7 largestring 0)
-					  (substring-move! (get-time-string (c-selection-position)) 0 7 largestring 9)
-					  (substring-move! (get-time-string (+ (c-selection-position) (c-selection-frames))) 0 7 largestring 18)
+					  (substring-move! (call-non-cons get-time-string dastime) 0 7 largestring 0)
+					  (substring-move! (call-non-cons get-time-string (c-selection-position)) 0 7 largestring 9)
+					  (substring-move! (call-non-cons get-time-string (+ (c-selection-position) (c-selection-frames))) 0 7 largestring 18)
 					  largestring)
-					(get-time-string dastime))))))))
+					(call-non-cons get-time-string dastime))))))))
 
 
 
@@ -1249,23 +1262,18 @@ Does not work.
   (add-hook! play-hook
 	     (lambda (samples)
 	       (set! samplecount (+ samplecount (* 40 samples)))
-	       (if (or #f (> samplecount (srate (selected-sound))))
+	       (if (> samplecount (srate (selected-sound)))
 		   (begin
 		     (set! samplecount 0)
-		     (c-show-times (cursor))))
+		     (c-show-times (cursor) #f)))
 	       #f)))
 
 
 ;; ..And when updating the graphics.
-;(define te 0)
-
-
 (add-hook! after-graph-hook
 	   (lambda (snd ch)
-	     ;(set! te (1+ te))
-	     ;(c-display "after-graph-hook " te)
 	     (if (= 0 ch)
-		 (c-show-times (cursor) #t))
+		 (c-show-times (cursor snd) #t))
 	     #f))
 
 
@@ -1364,65 +1372,54 @@ Does not work.
 ;; Gain node-line
 ;;##############################################################
 
-(let* ((for-all-channels
-	(lambda (snd ch func)
-	  (c-for-each-channel2 snd
-			       (lambda (newch)
-				 (if (not (= ch newch))
-				     (func ((c-get snd 'nodelines) newch)))))))
-       (do-mouse-op
-	(lambda (snd ch nodeline)
-	  (if (c-sync? snd)
-	      (for-all-channels snd ch
-				(lambda (newnodeline)
-				  (-> newnodeline set-graph!
-				      (-> nodeline get-graph)))))))
+(define c-apply-envelope
+  (let ((isenving #f))
+    (lambda* (snd #:optional (upperval 2) (lowerval 0))
+	     (if (not isenving)
+		 (let* ((snd (selected-sound))
+			(nodelines (c-get snd 'nodelines))
+			(doit (lambda (ch)
+				(let* ((nodeline (nodelines ch))
+				       (sel (selection-member? snd ch))
+				       (start (if sel (selection-position snd ch) 0))
+				       (start2 (c-scale start 0 (frames snd ch) 0 1))
+				       (length (if sel (selection-frames snd ch) (frames snd ch))))
+				  (env-channel (apply append (map (lambda (xy) (list (- (car xy) start2) (c-scale (cadr xy) 0 1 upperval lowerval)))
+								  (-> nodeline get-graph
+								      start2
+								      (c-scale (+ start length) 0 (frames snd ch) 0 1))))
+					       start length snd ch)))))
+		   (set! isenving #t)
+		   (c-for-each-channel snd doit)
+		   (set! isenving #f))))))
 
-       (isenving #f)
-
-       (envfunc 
-	(lambda (snd)
-	  (if (not isenving)
-	      (let* ((snd (selected-sound))
-		     (nodelines (c-get snd 'nodelines))
-		     (doit (lambda (ch)
-			     (let* ((nodeline (nodelines ch))
-				    (sel (selection-member? snd ch))
-				    (start (if sel (selection-position snd ch) 0))
-				    (start2 (c-scale start 0 (frames snd ch) 0 1))
-				    (length (if sel (selection-frames snd ch) (frames snd ch))))
-			       (env-channel (apply append (map (lambda (xy) (list (- (car xy) start2) (c-scale (cadr xy) 0 1 2 0)))
-							       (-> nodeline get-graph
-								   start2
-								   (c-scale (+ start length) 0 (frames snd ch) 0 1))))
-					    start length snd ch)))))
-		(set! isenving #t)
-		(c-for-each-channel snd doit)
-		(set! isenving #f))))))
+(bind-key (char->integer #\v) 0
+	  (lambda ()
+	    (c-apply-envelope (selected-sound))))
 
 
-  (add-hook! after-open-hook
-	     (lambda (snd)
-	       (let ((button (<button> (c-get-nameform snd)
-				       "Env"
-				       (lambda ()
-					 (envfunc snd)))))
-		 (gtk_widget_set_name (-> button button) "doit_button"))
-	       (c-put snd 'nodelines (<array/map> (channels snd)
-						  (lambda (ch)
-						    (<editor-nodeline> snd ch 0.5
-								       (lambda (val)
-									 (format #f "~1,3f" (c-scale val 0 1 2 0)))
-								       (lambda (this)
-									 (do-mouse-op snd ch this))))))
-	       #f)) 
+(add-hook! after-open-hook
+	   (lambda (snd)
+	     (let ((button (<button> (c-get-nameform snd)
+				     "Env"
+				     (lambda ()
+				       (c-apply-envelope snd)))))
+	       (gtk_widget_set_name (-> button button) "doit_button"))
+	     (c-put snd 'nodelines
+		    (<array/map> (channels snd)
+				 (lambda (ch)
+				   (<editor-nodeline> snd ch 0.5
+						      (lambda (val)
+							(format #f "~1,3f" (c-scale val 0 1 2 0)))
+						      (lambda (this)
+							(if (c-sync? snd)
+							    (c-for-each-channel2 snd
+										 (lambda (newch)
+										   (if (not (= ch newch))
+										       (-> ((c-get snd 'nodelines) newch) set-graph!
+											   (-> this get-graph)))))))))))
+	     #f))
 
-
-  (bind-key (char->integer #\v) 0
-	    (lambda ()
-	      (envfunc (selected-sound))))
-
-  )
 
 
 

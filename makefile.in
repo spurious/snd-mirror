@@ -8,6 +8,7 @@ XM_LIBS = @XM_LIBS@
 GUILE_CFLAGS = @GUILE_CFLAGS@
 GTK_CFLAGS = @GTK_CFLAGS@
 GTK_LIBS = @GTK_LIBS@
+GTK_LD_LIBS = @GTK_LD_LIBS@
 MOTIF_LIBS = @XLIBS@
 MOTIF_FLAGS = @XFLAGS@
 AUDIO_LIB = @AUDIO_LIB@
@@ -65,7 +66,7 @@ xm: 	xen.h xen.o
 
 xg: 	xen.h xen.o
 	$(CC) -c xg.c -DUNDEF_USE_SND $(DEFS) $(GTK_CFLAGS) $(CFLAGS) $(GUILE_CFLAGS) $(MOTIF_FLAGS) $(GSL_FLAGS) $(GL_FLAGS)
-	$(SO_LD) xen.o $(GG_FILES) -o $(GG_SO_FILE) $(LDSO_FLAGS) $(GTK_LIBS) $(LIBS)
+	$(SO_LD) xen.o $(GG_FILES) -o $(GG_SO_FILE) $(LDSO_FLAGS) $(GTK_LD_LIBS) $(LIBS)
 
 widget: snd_widget.o
 
