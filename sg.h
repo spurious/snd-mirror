@@ -148,12 +148,11 @@ static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
 
 #ifndef SCM_BOOLP
   #define SCM_BOOLP(Arg) gh_boolean_p(Arg)
-#endif
-#ifndef SCM_STRINGP
+  /* the next two exist in 1.3.4 but are not usable in this context */
+  #undef SCM_STRINGP
+  #undef SCM_VECTORP
   #define SCM_STRINGP(Arg) gh_string_p(Arg)
-#endif
-#ifndef SCM_VECTORP
-  #define SCM_VECTOR_P(Arg) gh_vector_p(Arg)
+  #define SCM_VECTORP(Arg) gh_vector_p(Arg)
 #endif
 
 #define BOOLEAN_IF_BOUND_P(Arg) ((SCM_BOOLP(Arg)) || (SCM_UNBNDP(Arg)))

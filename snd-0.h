@@ -73,7 +73,6 @@
   #endif
   #if (!HAVE_GUILE_1_3)
     #define HAVE_SCM_MAKE_REAL 1
-    #define HAVE_SCM_OUT_OF_RANGE_POS 1
   #endif
 #endif
 

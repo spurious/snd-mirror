@@ -3811,6 +3811,7 @@ If chn is omitted, file's channels are mixed until snd runs out of channels"
 static SND_TAG_TYPE mf_tag = 0;
 static SCM mark_mf(SCM obj) {SND_SETGCMARK(obj); return(SCM_BOOL_F);}
 static int mf_p(SCM obj) {return((SCM_NIMP(obj)) && (SND_SMOB_TYPE(mf_tag, obj)));}
+#define TO_MIX_SAMPLE_READER(obj) ((mix_fd *)SND_VALUE_OF(obj))
 
 static SCM g_mf_p(SCM obj) 
 {
@@ -3880,7 +3881,7 @@ static SCM g_next_mix_sample(SCM obj)
 {
   #define H_next_mix_sample "(" S_next_mix_sample " reader) -> next sample from mix reader"
   SCM_ASSERT(mf_p(obj), obj, SCM_ARG1, S_next_mix_sample);
-  return(TO_SCM_DOUBLE(next_mix_sample(get_mf(obj))));
+  return(TO_SCM_DOUBLE(next_mix_sample(TO_MIX_SAMPLE_READER(obj))));
 }
 
 static SCM g_free_mix_sample_reader(SCM obj)
@@ -3888,7 +3889,7 @@ static SCM g_free_mix_sample_reader(SCM obj)
   #define H_free_mix_sample_reader "(" S_free_mix_sample_reader " reader) frees mix sample reader 'reader'"
   mix_fd *mf;
   SCM_ASSERT(mf_p(obj), obj, SCM_ARG1, S_free_mix_sample_reader);
-  mf = get_mf(obj);
+  mf = TO_MIX_SAMPLE_READER(obj);
   SND_SET_VALUE_OF(obj, (SCM)NULL);
   free_mix_fd(mf);
   return(scm_return_first(SCM_BOOL_F, obj));
@@ -3901,6 +3902,7 @@ static SCM g_free_mix_sample_reader(SCM obj)
 static SND_TAG_TYPE tf_tag = 0;
 static SCM mark_tf(SCM obj) {SND_SETGCMARK(obj); return(SCM_BOOL_F);}
 static int tf_p(SCM obj) {return((SCM_NIMP(obj)) && (SND_SMOB_TYPE(tf_tag, obj)));}
+#define TO_TRACK_SAMPLE_READER(obj) ((track_fd *)SND_VALUE_OF(obj))
 
 static SCM g_tf_p(SCM obj) 
 {
@@ -3984,7 +3986,7 @@ static SCM g_next_track_sample(SCM obj)
 {
   #define H_next_track_sample "(" S_next_track_sample " reader) -> next sample from track reader"
   SCM_ASSERT(tf_p(obj), obj, SCM_ARG1, S_next_track_sample);
-  return(TO_SCM_DOUBLE(MUS_SAMPLE_TO_FLOAT(next_track_sample(get_tf(obj)))));
+  return(TO_SCM_DOUBLE(MUS_SAMPLE_TO_FLOAT(next_track_sample(TO_TRACK_SAMPLE_READER(obj)))));
 }
 
 static SCM g_free_track_sample_reader(SCM obj)
@@ -3992,7 +3994,7 @@ static SCM g_free_track_sample_reader(SCM obj)
   #define H_free_track_sample_reader "(" S_free_track_sample_reader " reader) frees the track sample reader 'reader'"
   track_fd *tf = NULL;
   SCM_ASSERT(tf_p(obj), obj, SCM_ARG1, S_free_track_sample_reader);
-  tf = get_tf(obj);
+  tf = TO_TRACK_SAMPLE_READER(obj);
   SND_SET_VALUE_OF(obj, (SCM)NULL);
   free_track_fd(tf);
   return(scm_return_first(SCM_BOOL_F, obj));
@@ -4089,18 +4091,18 @@ mixes data (a vct object) into snd's channel chn starting at beg; returns the ne
   char *edname = NULL;
   MUS_SAMPLE_TYPE **data;
   int i, len, mix_id = -1, with_mixers = 1;
-  SCM_ASSERT(vct_p(obj), obj, SCM_ARG1, S_mix_vct);
+  SCM_ASSERT(VCT_P(obj), obj, SCM_ARG1, S_mix_vct);
   SND_ASSERT_CHAN(S_mix_vct, snd, chn, 3);
   SCM_ASSERT(INTEGER_IF_BOUND_P(beg), beg, SCM_ARG2, S_mix_vct);
   SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(with_consoles), with_consoles, SCM_ARG5, S_mix_vct);
-  v = get_vct(obj);
+  v = TO_VCT(obj);
   if (v)
     {
       len = v->length;
       cp[0] = get_cp(snd, chn, S_mix_vct);
       bg = TO_C_INT_OR_ELSE(beg, 0);
       if (bg < 0)
-	scm_misc_error(S_mix_vct, "beg = ~S?", beg);
+	mus_misc_error(S_mix_vct, "beg < 0?", beg);
       else
 	{
 	  if (SCM_UNBNDP(with_consoles))

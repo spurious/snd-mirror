@@ -1390,9 +1390,9 @@ static int apply_fft_window(fft_state *fs)
 		      sfd,
 		      "added transform func");
 	snd_protect(res);
-	if (vct_p(res))
+	if (VCT_P(res))
 	  {
-	    v = get_vct(res);
+	    v = TO_VCT(res);
 	    len = v->length;
 	    for (i = 0; i < len; i++) fft_data[i] = v->data[i];
 	  }
@@ -2171,8 +2171,8 @@ static SCM g_autocorrelate(SCM reals)
   int n, i;
   SCM *vdata;
   Float *rl;
-  SCM_ASSERT(((vct_p(reals)) || (VECTOR_P(reals))), reals, SCM_ARG1, S_autocorrelate);
-  if (vct_p(reals))
+  SCM_ASSERT(((VCT_P(reals)) || (VECTOR_P(reals))), reals, SCM_ARG1, S_autocorrelate);
+  if (VCT_P(reals))
     {
       v1 = (vct *)SND_VALUE_OF(reals);
       rl = v1->data;

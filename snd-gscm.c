@@ -199,7 +199,7 @@ static SCM g_load_colormap(SCM colors)
   #define H_load_colormap "(" S_load_colormap " col" STR_OR "s) uses the vector col" STR_OR "s to set the current col" STR_OR "map"
   int i, len;
   GdkColor **xcs;
-  snd_color *v;
+  snd_color *v = NULL;
   SCM *vdata;
   SCM_ASSERT(VECTOR_P(colors), colors, SCM_ARG1, S_load_colormap);
   len = gh_vector_length(colors);

@@ -391,16 +391,16 @@ void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form)
     if (gh_list_p(stats))
       {
 	if (gh_length(stats) > 7)
-	  gc_swept = scm_num2long_long(gh_cdr(gh_list_ref(stats,TO_SMALL_SCM_INT(9))), (char *)SCM_ARG1, __FUNCTION__);
-	gc_heap = scm_num2long_long(gh_cdr(gh_list_ref(stats,TO_SMALL_SCM_INT(2))), (char *)SCM_ARG1, __FUNCTION__);
-	gc_cells = scm_num2long_long(gh_cdr(gh_list_ref(stats,TO_SMALL_SCM_INT(1))), (char *)SCM_ARG1, __FUNCTION__);
-	gc_time = (float)TO_C_INT(gh_cdr(gh_list_ref(stats,TO_SMALL_SCM_INT(0)))) * (1000.0 / (float)CLOCKS_PER_SEC);
+	  gc_swept = scm_num2long_long(SCM_CDR(gh_list_ref(stats,TO_SMALL_SCM_INT(9))), (char *)SCM_ARG1, __FUNCTION__);
+	gc_heap = scm_num2long_long(SCM_CDR(gh_list_ref(stats,TO_SMALL_SCM_INT(2))), (char *)SCM_ARG1, __FUNCTION__);
+	gc_cells = scm_num2long_long(SCM_CDR(gh_list_ref(stats,TO_SMALL_SCM_INT(1))), (char *)SCM_ARG1, __FUNCTION__);
+	gc_time = (float)TO_C_INT(SCM_CDR(gh_list_ref(stats,TO_SMALL_SCM_INT(0)))) * (1000.0 / (float)CLOCKS_PER_SEC);
 	str = (char *)CALLOC(2048,sizeof(char));
 	if (gh_length(stats) > 7)
 	  mus_snprintf(str, 2048,
 		  "\nGuile:\n  gc time: %.2f secs (%d sweeps)\n  cells: %Ld (%Ld gc'd)\n  heap size: %Ld",
 		  gc_time,
-		  TO_C_INT(gh_cdr(gh_list_ref(stats,TO_SMALL_SCM_INT(5)))),     /* times */
+		  TO_C_INT(SCM_CDR(gh_list_ref(stats,TO_SMALL_SCM_INT(5)))),     /* times */
 		  gc_cells,
 		  gc_swept,
 		  gc_heap);

@@ -919,7 +919,7 @@ static axis_context *combined_context(chan_info *cp);
 int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 {
   /* axes are already set, determining the data we will show -- do we need explicit clipping ? */
-  int i, j = 0, samps, xi;
+  int i = 0, j = 0, samps, xi;
   axis_info *ap;
   Float samples_per_pixel, xf, pinc = 0.0;
   double x, incr;  
@@ -945,7 +945,7 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
    * on some extreme cases (hour-long 44KHz stereo), but there's always another special case...
    */
   Float samp, ymin, ymax;
-  int pixels;
+  int pixels, grfpts;
   snd_fd *sf = NULL;
   int x_start, x_end;
   double start_time = 0.0, cur_srate = 1.0;
@@ -989,35 +989,23 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	}
       else ax = copy_context(cp);
     }
-  if (samples_per_pixel < 1.0)
+  if ((samples_per_pixel < 1.0) ||
+      ((samples_per_pixel < 5.0) && (samps < POINT_BUFFER_SIZE)))
     {
       /* i.e. individual samples are widely spaced, so we have to be careful about placement
        *   mouse uses grf_x so in this case we have to also (to make the cursor hit the dots etc) 
        */
       sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
       incr = (double)1.0 / cur_srate;
-      for (j = 0, i = ap->losamp, x = ((double)(ap->losamp) / cur_srate); 
-	   i <= ap->hisamp; 
-	   i++, j++, x += incr)
+      grfpts = ap->hisamp - ap->losamp + 1;
+      for (j = 0, x = ((double)(ap->losamp) / cur_srate); j < grfpts; j++, x += incr)
 	{
 	  samp = next_sample_to_float(sf);
 	  set_grf_point(local_grf_x(x, ap), 
 			j, 
 			local_grf_y(samp, ap));
-
-	  /* for colored lines (mix as green for example), we'd check sf->cb[ED_COLOR],
-	   * if it has changed, send out the current points in the current color,
-	   * change to the new color.
-	   * mix groups by color could OR together base colors -- could be based
-	   * on current color map.
-	   * lisp edits could specifiy any color etc.
-	   * need map from cb[ED_COLOR] to Pixel (or could it be the index itself?)
-	   */
-
-	  /* to show fft extent, losamp to losamp+fft_size min hisamp in fft-color */
-
 	  if (cp->printing) 
-	    ps_set_grf_point((double)i / cur_srate, j, samp);
+	    ps_set_grf_point(x, j, samp);
 	}
       if (sp)
 	{
@@ -1028,86 +1016,61 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
     }
   else
     {
-      if ((samples_per_pixel < 5.0) && (samps < POINT_BUFFER_SIZE))
-	{
-	  sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
-	  incr = (double)1.0 / cur_srate;
-	  for (j = 0, i = ap->losamp, x = start_time; 
-	       i <= ap->hisamp; 
-	       i++, j++, x += incr)
-	    {
-	      samp = next_sample_to_float(sf);
-	      set_grf_point(local_grf_x(x, ap), 
-			    j, 
-			    local_grf_y(samp, ap));
-	      if (cp->printing) 
-		ps_set_grf_point(x, j, samp);
-	    }
-	  if (sp)
-	    {
-	      draw_grf_points(cp, ax, j, ap, 0.0, MAIN_GRAPH_STYLE(cp));
-	      if (cp->printing) 
-		ps_draw_grf_points(cp, ap, j, 0.0, MAIN_GRAPH_STYLE(cp));
-	    }
-	}
+      /* take min, max */
+      if (amp_env_usable(cp, samples_per_pixel, ap->hisamp,TRUE, cp->edit_ctr)) /* true = start new background amp env process if needed */
+	j = amp_env_graph(cp, ap, samples_per_pixel, (sp) ? ((int)SND_SRATE(sp)) : 1);
       else
 	{
-	  /* take min, max */
-	  if (amp_env_usable(cp, samples_per_pixel, ap->hisamp,TRUE, cp->edit_ctr)) /* true = start new background amp env process if needed */
-	    j = amp_env_graph(cp, ap, samples_per_pixel, (sp) ? ((int)SND_SRATE(sp)) : 1);
-	  else
-	    {
-	      if ((ap->hisamp - ap->losamp) > (current_ed_samples(cp)/4))
-		{                                /* we're trying to view a large portion of the (large) sound */
-		  cgx = cp->cgx;
-		  if (cgx->amp_env_in_progress)
-		    {                            /* but the amp-env background process is still working on it */
-		      ep = cp->amp_envs[cp->edit_ctr];
-		      if ((ep) && samples_per_pixel >= (Float)(ep->samps_per_bin))
-			{                        /* and it will be useful when it finishes */
-			  cp->waiting_to_make_graph = 1;
-			  return(0);             /* so don't run two enormous data readers in parallel */
-			}
+	  if ((ap->hisamp - ap->losamp) > (current_ed_samples(cp)/4))
+	    {                                /* we're trying to view a large portion of the (large) sound */
+	      cgx = cp->cgx;
+	      if (cgx->amp_env_in_progress)
+		{                            /* but the amp-env background process is still working on it */
+		  ep = cp->amp_envs[cp->edit_ctr];
+		  if ((ep) && samples_per_pixel >= (Float)(ep->samps_per_bin))
+		    {                        /* and it will be useful when it finishes */
+		      cp->waiting_to_make_graph = 1;
+		      return(0);             /* so don't run two enormous data readers in parallel */
 		    }
 		}
-	      sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
-	      j = 0;      /* graph point counter */
-	      x = ap->x0;
-	      xi = local_grf_x(x, ap);
-	      xf = 0.0;     /* samples per pixel counter */
-	      ymin = 100.0;
-	      ymax = -100.0;
-	      if (cp->printing) pinc = samples_per_pixel/cur_srate;
-	      for (i = ap->losamp, xf = 0.0; i <= ap->hisamp; i++)
+	    }
+	  sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
+	  j = 0;      /* graph point counter */
+	  x = ap->x0;
+	  xi = local_grf_x(x, ap);
+	  xf = 0.0;     /* samples per pixel counter */
+	  ymin = 100.0;
+	  ymax = -100.0;
+	  if (cp->printing) pinc = samples_per_pixel/cur_srate;
+	  for (i = ap->losamp, xf = 0.0; i <= ap->hisamp; i++)
+	    {
+	      samp = next_sample_to_float(sf);
+	      if (samp > ymax) ymax = samp;
+	      if (samp < ymin) ymin = samp;
+	      xf += 1.0;
+	      if (xf > samples_per_pixel)
 		{
-		  samp = next_sample_to_float(sf);
-		  if (samp > ymax) ymax = samp;
-		  if (samp < ymin) ymin = samp;
-		  xf += 1.0;
-		  if (xf > samples_per_pixel)
+		  set_grf_points(xi, j, 
+				 local_grf_y(ymin, ap), 
+				 local_grf_y(ymax, ap));
+		  if (cp->printing) 
 		    {
-		      set_grf_points(xi, j, 
-				     local_grf_y(ymin, ap), 
-				     local_grf_y(ymax, ap));
-		      if (cp->printing) 
-			{
-			  x += pinc; 
-			  ps_set_grf_points(x, j, ymin, ymax);
-			}
-		      xi++;
-		      j++;
-		      xf -= samples_per_pixel;
-		      ymin = 100.0;
-		      ymax = -100.0;
+		      x += pinc; 
+		      ps_set_grf_points(x, j, ymin, ymax);
 		    }
+		  xi++;
+		  j++;
+		  xf -= samples_per_pixel;
+		  ymin = 100.0;
+		  ymax = -100.0;
 		}
 	    }
-	  if (sp)
-	    {
-	      draw_both_grf_points(cp, ax, j, MAIN_GRAPH_STYLE(cp));
-	      if (cp->printing) 
-		ps_draw_both_grf_points(cp, ap, j, MAIN_GRAPH_STYLE(cp));
-	    }
+	}
+      if (sp)
+	{
+	  draw_both_grf_points(cp, ax, j, MAIN_GRAPH_STYLE(cp));
+	  if (cp->printing) 
+	    ps_draw_both_grf_points(cp, ap, j, MAIN_GRAPH_STYLE(cp));
 	}
     }
   if (sf) {free_snd_fd(sf); sf = NULL;}
@@ -1321,6 +1284,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
   int num_peaks, row, col, tens, i, with_amps, acol, acols;
   Float amp0, px;
   char *fstr;
+  axis_context *ax;
   fft_peak *peak_freqs = NULL;
   fft_peak *peak_amps = NULL;
   if (samps > (scaler * 10)) 
@@ -1362,6 +1326,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
 	  acols = 4;
 	}
     }
+  ax = copy_context(cp);
   if (num_peaks > 6)
     {
       for (i = 0; i < num_peaks; i++) peak_amps[i] = peak_freqs[i];
@@ -1376,7 +1341,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
 	    {
 	      px = peak_freqs[i].freq;
 	      fstr = prettyf(px * scaler, tens);
-	      draw_string(copy_context(cp), col, row, fstr, strlen(fstr));
+	      draw_string(ax, col, row, fstr, strlen(fstr));
 	      if (cp->printing) ps_draw_string(cp, col, row, fstr);
 	      FREE(fstr);
 	      fstr = NULL;
@@ -1385,7 +1350,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
 		  if ((fft_data) && (cp->fft_log_magnitude))
 		    mus_snprintf(ampstr, AMPSTR_SIZE, "%.1f", cp_dB(cp, peak_freqs[i].amp));
 		  else mus_snprintf(ampstr, AMPSTR_SIZE, "%.*f", acols, peak_freqs[i].amp);
-		  draw_string(copy_context(cp), acol, row, ampstr, strlen(ampstr));
+		  draw_string(ax, acol, row, ampstr, strlen(ampstr));
 		  if (cp->printing) 
 		    ps_draw_string(cp, acol, row, ampstr);
 		}
@@ -1404,7 +1369,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
 	{
 	  px = peak_freqs[i].freq;
 	  fstr = prettyf(px * scaler, tens);
-	  draw_string(copy_context(cp), col, row, fstr, strlen(fstr));
+	  draw_string(ax, col, row, fstr, strlen(fstr));
 	  if (cp->printing) ps_draw_string(cp, col, row, fstr);
 	  FREE(fstr);
 	  fstr = NULL;
@@ -1413,7 +1378,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
 	      if ((fft_data) && (cp->fft_log_magnitude))
 		mus_snprintf(ampstr, AMPSTR_SIZE, "%.1f", cp_dB(cp, peak_freqs[i].amp));
 	      else mus_snprintf(ampstr, AMPSTR_SIZE, "%.*f", acols, peak_freqs[i].amp);
-	      draw_string(copy_context(cp), acol, row, ampstr, strlen(ampstr));
+	      draw_string(ax, acol, row, ampstr, strlen(ampstr));
 	      if (cp->printing) 
 		ps_draw_string(cp, acol, row, ampstr);
 	    }
@@ -1763,6 +1728,7 @@ static void make_sonogram(chan_info *cp, snd_info *sp, snd_state *ss)
   Float binval, xf, xfincr, yf, yfincr, scaler = 0.0, frectw, frecth, xscl, scl = 1.0;
   Float *hfdata;
   int *hidata;
+  axis_context *ax;
   if (chan_fft_in_progress(cp)) return;
   si = (sono_info *)(cp->sonogram_data);
   if ((si) && (si->scale > 0.0))
@@ -1810,6 +1776,7 @@ static void make_sonogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	}
       xfincr = ((Float)fwidth / (Float)(si->target_slices));
       xf = 2 + fap->x_axis_x0;
+      ax = copy_context(cp);
       for (slice = 0; slice < si->active_slices; slice++, xf += xfincr)
 	{
 	  for (i = 0; i < GRAY_SCALES; i++) js[i] = 0;
@@ -1839,7 +1806,7 @@ static void make_sonogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	    }
 	  for (i = 0; i < GRAY_SCALES; i++)
 	    if (js[i] > 0) 
-	      draw_sono_rectangles(copy_context(cp), i, js[i]);
+	      draw_sono_rectangles(ax, i, js[i]);
 	  if (cp->printing)
 	    {
 	      check_for_event(ss);
@@ -1864,14 +1831,15 @@ static void rotate_matrix(Float xangle, Float yangle, Float zangle, Float xscl, 
 {
   /* return rotation matrix for rotation through angles xangle, yangle, then zangle with scaling by xscl, yscl, zscl */
   Float sinx, siny, sinz, cosx, cosy, cosz, deg;
+  Float x, y, z;
   deg = TWO_PI / 360.0;
   /* might be nice to use sincosf here, but it segfaults in GnuC */
-  sinx = sin(xangle * deg);
-  siny = sin(yangle * deg);
-  sinz = sin(zangle * deg);
-  cosx = cos(xangle * deg);
-  cosy = cos(yangle * deg);
-  cosz = cos(zangle * deg);
+  sinx = sin(x = (xangle * deg));
+  siny = sin(y = (yangle * deg));
+  sinz = sin(z = (zangle * deg));
+  cosx = cos(x);
+  cosy = cos(y);
+  cosz = cos(z);
   mat[0] = cosy * cosz * xscl;
   mat[1] = (sinx * siny * cosz - cosx * sinz) * yscl;
   mat[2] = (cosx * siny * cosz + sinx * sinz) * zscl;
@@ -1917,6 +1885,7 @@ static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
   sono_info *si;
   fft_info *fp;
   axis_info *fap;
+  axis_context *ax;
   Float *fdata;
   Float matrix[9];
   Float xyz[3];
@@ -1945,6 +1914,7 @@ static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
       rotate_matrix(cp->spectro_x_angle, cp->spectro_y_angle, cp->spectro_z_angle,
 		    cp->spectro_x_scale, cp->spectro_y_scale, zscl,
 		    matrix);
+      ax = copy_context(cp);
       if (color_map(ss) == -1)
 	{
 	  for (slice = 0, xoff = fap->x_axis_x0, yoff = fap->y_axis_y0; 
@@ -1974,7 +1944,7 @@ static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 		    ps_set_grf_point(ungrf_x(fap, (int)(xval + x0)), i, 
 				     ungrf_y(fap, (int)(yval + y0)));
 		}
-	      draw_grf_points(cp, copy_context(cp), bins, fap, 0.0, FFT_GRAPH_STYLE(cp));
+	      draw_grf_points(cp, ax, bins, fap, 0.0, FFT_GRAPH_STYLE(cp));
 	      if (cp->printing) 
 		{
 		  ps_draw_grf_points(cp, fap, bins, 0.0, FFT_GRAPH_STYLE(cp));
@@ -2027,7 +1997,7 @@ static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 		      else j = (int)(skew_color(binval, color_scale(ss)) * GRAY_SCALES);
 		      if (j > 0) j--;
 		      if (j >= GRAY_SCALES) j = GRAY_SCALES-1;
-		      draw_spectro_line(copy_context(cp), j, xx, yy, 
+		      draw_spectro_line(ax, j, xx, yy, 
 					(int)(xval + x0), 
 					(int)(yval + y0));
 		      if (cp->printing) 
@@ -2064,6 +2034,7 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
   Float xyz[3];
   snd_fd *sf;
   axis_info *ap;
+  axis_context *ax;
   ap = cp->axis;
   if (sp) ap->losamp = (int)(ap->x0 * SND_SRATE(sp));
   sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
@@ -2081,6 +2052,7 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
   rotate_matrix(cp->spectro_x_angle, cp->spectro_y_angle, cp->spectro_z_angle,
 		cp->spectro_x_scale, cp->spectro_y_scale, zscl,
 		matrix);
+  ax = copy_context(cp);
   if (color_map(ss) == -1)
     {
       for (xoff = ap->x_axis_x0, yoff = ap->y_axis_y0; 
@@ -2103,7 +2075,7 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
 		ps_set_grf_point(ungrf_x(ap, (int)(xval + x0)), i, 
 				 ungrf_y(ap, (int)(y0 + yval)));
 	    }
-	  draw_grf_points(cp, copy_context(cp), cp->wavo_trace, ap, 0.0, MAIN_GRAPH_STYLE(cp));
+	  draw_grf_points(cp, ax, cp->wavo_trace, ap, 0.0, MAIN_GRAPH_STYLE(cp));
 	  if (cp->printing) 
 	    ps_draw_grf_points(cp, ap, cp->wavo_trace, 0.0, MAIN_GRAPH_STYLE(cp));
 	}
@@ -2137,7 +2109,7 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
 		  else j = (int)(skew_color(binval, color_scale(ss)) * GRAY_SCALES);
 		  if (j > 0) j--;
 		  if (j >= GRAY_SCALES) j = GRAY_SCALES - 1;
-		  draw_spectro_line(copy_context(cp), j, xx, yy, 
+		  draw_spectro_line(ax, j, xx, yy, 
 				    (int)(xval + x0), 
 				    (int)(yval + y0));
 		  if (cp->printing) 
@@ -5240,8 +5212,8 @@ static SCM g_set_x_bounds(SCM bounds, SCM snd_n, SCM chn_n)
   SND_ASSERT_CHAN("set-" S_x_bounds, snd_n, chn_n, 2);
   SCM_ASSERT(gh_list_p(bounds), bounds, SCM_ARG1, "set-" S_x_bounds);
   cp = get_cp(snd_n, chn_n, "set-" S_x_bounds);
-  x0 = TO_C_DOUBLE(gh_car(bounds));
-  x1 = TO_C_DOUBLE(gh_cadr(bounds));
+  x0 = TO_C_DOUBLE(SCM_CAR(bounds));
+  x1 = TO_C_DOUBLE(SCM_CADR(bounds));
   if (x1 > x0)
     set_x_axis_x0x1(cp, x0, x1);
   else scm_throw(IMPOSSIBLE_BOUNDS,
@@ -5261,9 +5233,9 @@ static SCM g_set_y_bounds(SCM bounds, SCM snd_n, SCM chn_n)
   cp = get_cp(snd_n, chn_n, "set-" S_y_bounds);
   if (gh_length(bounds) > 0)
     {
-      y0 = gh_car(bounds);
+      y0 = SCM_CAR(bounds);
       if (gh_length(bounds) > 1)
-	y1 = gh_cadr(bounds);
+	y1 = SCM_CADR(bounds);
     }
   if (NUMBER_P(y0))
     {

@@ -522,6 +522,9 @@ typedef struct {
   MUS_SAMPLE_TYPE *buffer;
   MUS_SAMPLE_TYPE **mus_data;
   file_info *hdr, *sp_hdr;
+#if DEBUGGING
+  int backup;
+#endif
 } output_state;
 
 static output_state *start_output(int bufsize, file_info *default_hdr, int orig_size)
@@ -534,6 +537,9 @@ static output_state *start_output(int bufsize, file_info *default_hdr, int orig_
   os->sp_hdr = default_hdr;
   os->loc = 0;
   os->data_size = 0;
+#if DEBUGGING
+  os->backup = 0;
+#endif
   os->orig_size = orig_size;
   os->hdr = NULL;
   return(os);
@@ -543,9 +549,12 @@ static void output_sample(snd_state *ss, output_state *os, int srate, MUS_SAMPLE
 {
   os->buffer[os->loc] = sample;
   os->loc++;
-  os->data_size++;
+#if DEBUGGING
+  os->backup++;
+#endif
   if (os->loc == os->buffer_size)
     {
+      os->data_size += os->loc;
       if (os->filing == 0)
 	{
 	  os->filename = snd_tempnam(ss);
@@ -564,6 +573,11 @@ static void output_sample(snd_state *ss, output_state *os, int srate, MUS_SAMPLE
 static output_state *end_output(output_state *os, int beg, chan_info *cp, const char *origin)
 {
   int cured;
+  os->data_size += os->loc;
+#if DEBUGGING
+  if (os->data_size != os->backup)
+    fprintf(stderr,"data_size: %d, backup: %d?", os->data_size, os->backup);
+#endif
   if (os->data_size > 0)
     {
       if (os->filing)
@@ -3362,12 +3376,12 @@ static SCM g_fht(SCM data)
   #define H_fht "(fht vct-obj) returns the Hartley transform of the data in the vct object whose size must be a power of 4"
   vct *v;
   int pow4;
-  SCM_ASSERT(vct_p(data), data, SCM_ARG1, S_fht);
-  v = get_vct(data);
+  SCM_ASSERT(VCT_P(data), data, SCM_ARG1, S_fht);
+  v = TO_VCT(data);
   pow4 = (int)(round(log(v->length) / (log(4))));
   if (((int)(pow(4.0, pow4))) != v->length) 
-    scm_misc_error(S_fht,
-		   "fht data length must be a power of 4: ~S: ~S (~S)",
+    mus_misc_error(S_fht,
+		   "fht data length must be a power of 4",
 		   SCM_LIST3(TO_SCM_INT(v->length),
 			     TO_SCM_DOUBLE((log(v->length) / (log(4)))),
 			     TO_SCM_INT((int)(pow(4.0, pow4)))));
@@ -3564,9 +3578,9 @@ static SCM g_fft_1(SCM reals, SCM imag, SCM sign, int use_fft)
   int ipow, n, n2, i, isign = 1;
   Float *rl, *im;
   SCM *rvdata, *ivdata;
-  SCM_ASSERT(((vct_p(reals)) || (VECTOR_P(reals))), reals, SCM_ARG1, ((use_fft) ? S_fft : S_convolve_arrays));
-  SCM_ASSERT(((vct_p(imag)) || (VECTOR_P(imag))), imag, SCM_ARG2, ((use_fft) ? S_fft : S_convolve_arrays));
-  if ((vct_p(reals)) && (vct_p(imag)))
+  SCM_ASSERT(((VCT_P(reals)) || (VECTOR_P(reals))), reals, SCM_ARG1, ((use_fft) ? S_fft : S_convolve_arrays));
+  SCM_ASSERT(((VCT_P(imag)) || (VECTOR_P(imag))), imag, SCM_ARG2, ((use_fft) ? S_fft : S_convolve_arrays));
+  if ((VCT_P(reals)) && (VCT_P(imag)))
     {
       v1 = (vct *)SND_VALUE_OF(reals);
       v2 = (vct *)SND_VALUE_OF(imag);
@@ -3716,11 +3730,11 @@ return magnitude spectrum of data (vct) in data using fft-window win and fft len
   Float maxa, todb, lowest, val;
   Float *idat, *rdat, *window;
   vct *v;
-  SCM_ASSERT((vct_p(data)), data, SCM_ARG1, S_snd_spectrum);
+  SCM_ASSERT((VCT_P(data)), data, SCM_ARG1, S_snd_spectrum);
   SCM_ASSERT(INTEGER_P(win), win, SCM_ARG2, S_snd_spectrum);
   SCM_ASSERT(INTEGER_P(len), len, SCM_ARG3, S_snd_spectrum);
   SCM_ASSERT(BOOLEAN_IF_BOUND_P(linear_or_dB), linear_or_dB, SCM_ARG1, S_snd_spectrum);
-  v = get_vct(data);
+  v = TO_VCT(data);
   rdat = v->data;
   n = TO_C_INT(len);
   if (n <= 0)
@@ -3953,17 +3967,13 @@ applies FIR filter to snd's channel chn. 'filter' is either the frequency respon
   else
     {
       len = TO_C_INT_OR_ELSE(order, 0);
-#if HAVE_SCM_OUT_OF_RANGE_POS
       if (len <= 0) 
-	scm_out_of_range_pos(S_filter_sound, order, TO_SMALL_SCM_INT(2));
-#endif
-      if (vct_p(e)) /* the filter coefficients direct */
+	mus_misc_error(S_filter_sound, "order <= 0?", order);
+      if (VCT_P(e)) /* the filter coefficients direct */
 	{
-	  v = get_vct(e);
-#if HAVE_SCM_OUT_OF_RANGE_POS
+	  v = TO_VCT(e);
 	  if (len > v->length) 
-	    scm_out_of_range_pos(S_filter_sound, order, TO_SMALL_SCM_INT(2));
-#endif
+	    mus_misc_error(S_filter_sound, "order > length coeffs?", SCM_LIST2(order, e));
 	  apply_filter(cp, len, NULL, NOT_FROM_ENVED, S_filter_sound, FALSE, v->data, NULL);
 	}
       else 
@@ -4006,17 +4016,13 @@ static SCM g_filter_selection(SCM e, SCM order)
   else
     {
       len = TO_C_INT_OR_ELSE(order, 0);
-#if HAVE_SCM_OUT_OF_RANGE_POS
       if (len <= 0) 
-	scm_out_of_range_pos(S_filter_selection, order, TO_SMALL_SCM_INT(2));
-#endif
-      if (vct_p(e)) /* the filter coefficients direct */
+	mus_misc_error(S_filter_selection, "order <= 0?", order);
+      if (VCT_P(e)) /* the filter coefficients direct */
 	{
-	  v = get_vct(e);
-#if HAVE_SCM_OUT_OF_RANGE_POS
+	  v = TO_VCT(e);
 	  if (len > v->length) 
-	    scm_out_of_range_pos(S_filter_selection, order, TO_SMALL_SCM_INT(2));
-#endif
+	    mus_misc_error(S_filter_selection, "order > length coeffs?", SCM_LIST2(order, e));
 	  apply_filter(cp, len, NULL, NOT_FROM_ENVED, S_filter_selection, TRUE, v->data, NULL);
 	}
       else 

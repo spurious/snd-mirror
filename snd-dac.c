@@ -544,8 +544,8 @@ static void freeverb(void *ur, Float *rins, Float *routs, int chans)
 static SCM g_nrev(SCM ptr, SCM invals, SCM outvals)
 {
   vct *inp, *outp;
-  inp = get_vct(invals);
-  outp = get_vct(outvals);
+  inp = TO_VCT(invals);
+  outp = TO_VCT(outvals);
   nrev((void *)SND_UNWRAP(ptr), inp->data, outp->data, outp->length);
   return(outvals);
 }
@@ -554,8 +554,8 @@ static SCM g_freeverb(SCM ptr, SCM invals, SCM outvals)
 {
   /* actually just a place-holder */
   vct *inp, *outp;
-  inp = get_vct(invals);
-  outp = get_vct(outvals);
+  inp = TO_VCT(invals);
+  outp = TO_VCT(outvals);
   freeverb((void *)SND_UNWRAP(ptr), inp->data, outp->data, outp->length);
   return(outvals);
 }
@@ -590,7 +590,7 @@ static void reverb(void *ur, Float **rins, MUS_SAMPLE_TYPE **outs, int ind)
 	SCM res;
 	if (!ur) return;
 	res = g_call3(g_reverb, (SCM)ur, v_ins, v_outs, __FUNCTION__);
-	if (!(vct_p(res)))
+	if (!(VCT_P(res)))
 	  {
 	    stop_playing_all_sounds();
 	    free_reverb(global_rev);
@@ -1934,9 +1934,9 @@ static void make_dac_buffers(dac_state *dacp)
       else
 	{
 	  vct *v;
-	  v = get_vct(v_ins);
+	  v = TO_VCT(v_ins);
 	  v->data = r_ins;
-	  v = get_vct(v_outs);
+	  v = TO_VCT(v_outs);
 	  v->data = r_outs;
 	}
 #endif

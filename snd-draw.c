@@ -143,12 +143,7 @@ static POINT *TO_C_POINTS(SCM pts, const char *caller)
   SCM_ASSERT(VECTOR_P(pts), pts, SCM_ARG1, caller);
   len = gh_vector_length(pts) / 2;
   if (len <= 0) 
-    {
-      scm_misc_error(caller,
-		     "empty vector: ~A?",
-		     SCM_LIST1(pts));
-      return(NULL);
-    }
+    mus_misc_error(caller, "empty vector?", SCM_LIST1(pts));
   data = SCM_VELTS(pts);
   pack_pts = (POINT *)CALLOC(len, sizeof(POINT));
   for (i = 0, j = 0; i < len; i++, j += 2)
@@ -535,15 +530,15 @@ in the drawing mode 'graphic-style'."
   vct *v0, *v1 = NULL;
   SND_ASSERT_CHAN(S_graph_data, snd, chn, 2);
   cp = get_cp(snd, chn, S_graph_data);
-  SCM_ASSERT(gh_list_p(data) || vct_p(data), data, SCM_ARG1, S_graph_data);
+  SCM_ASSERT(gh_list_p(data) || VCT_P(data), data, SCM_ARG1, S_graph_data);
   SCM_ASSERT(INTEGER_IF_BOUND_P(ax), ax, SCM_ARG4, S_graph_data);
   SCM_ASSERT(NUMBER_IF_BOUND_P(lo), lo, SCM_ARG5, S_graph_data);
   SCM_ASSERT(NUMBER_IF_BOUND_P(hi), hi, SCM_ARG6, S_graph_data);
   SCM_ASSERT(INTEGER_IF_BOUND_P(style), style, SCM_ARG7, S_graph_data);
   if (gh_list_p(data))
     {
-      v0 = get_vct(gh_car(data));
-      v1 = get_vct(gh_cadr(data));
+      v0 = get_vct(SCM_CAR(data));
+      v1 = get_vct(SCM_CADR(data));
     }
   else v0 = get_vct(data);
 

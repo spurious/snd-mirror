@@ -72,7 +72,7 @@ static void define_procedure_with_setter(char *get_name, SCM (*get_func)(), char
 					 int get_req, int get_opt, int set_req, int set_opt)
 {
   scm_set_object_property_x(
-    gh_cdr(
+    SCM_CDR(
       gh_define(get_name,
 	scm_make_procedure_with_setter(gh_new_procedure("", SCM_FNC get_func, get_req, get_opt, 0),
 	  gh_new_procedure(set_name, SCM_FNC set_func, set_req, set_opt, 0)
@@ -440,10 +440,10 @@ static SCM g_dot_product(SCM val1, SCM val2)
 {
   #define H_dot_product "(" S_dot_product " v1 v2) -> sum of (vcts) v1[i]*v2[i]"
   vct *v1, *v2;
-  SCM_ASSERT(vct_p(val1), val1, SCM_ARG1, S_dot_product);
-  SCM_ASSERT(vct_p(val2), val2, SCM_ARG2, S_dot_product);
-  v1 = get_vct(val1);
-  v2 = get_vct(val2);
+  SCM_ASSERT(VCT_P(val1), val1, SCM_ARG1, S_dot_product);
+  SCM_ASSERT(VCT_P(val2), val2, SCM_ARG2, S_dot_product);
+  v1 = TO_VCT(val1);
+  v2 = TO_VCT(val2);
   return(scm_return_first(TO_SCM_DOUBLE(mus_dot_product(v1->data, v2->data, v1->length)), val1, val2));
 }
 
@@ -451,10 +451,10 @@ static SCM g_sum_of_sines(SCM amps, SCM phases)
 {
   #define H_sum_of_sines "(" S_sum_of_sines " amps phases) -> sum of amps[i] * sin(phases[i])"
   vct *v1, *v2;
-  SCM_ASSERT(vct_p(amps), amps, SCM_ARG1, S_sum_of_sines);
-  SCM_ASSERT(vct_p(phases), phases, SCM_ARG2, S_sum_of_sines);
-  v1 = get_vct(amps);
-  v2 = get_vct(phases);
+  SCM_ASSERT(VCT_P(amps), amps, SCM_ARG1, S_sum_of_sines);
+  SCM_ASSERT(VCT_P(phases), phases, SCM_ARG2, S_sum_of_sines);
+  v1 = TO_VCT(amps);
+  v2 = TO_VCT(phases);
   return(scm_return_first(TO_SCM_DOUBLE(mus_sum_of_sines(v1->data, v2->data, v1->length)), amps, phases));
 }
 
@@ -462,10 +462,10 @@ static SCM g_fft_window_1(char *caller, int choice, SCM val1, SCM val2, SCM ulen
 {
   vct *v1, *v2;
   int len;
-  SCM_ASSERT(vct_p(val1), val1, SCM_ARG1, caller);
-  SCM_ASSERT(vct_p(val2), val2, SCM_ARG2, caller);
-  v1 = get_vct(val1);
-  v2 = get_vct(val2);
+  SCM_ASSERT(VCT_P(val1), val1, SCM_ARG1, caller);
+  SCM_ASSERT(VCT_P(val2), val2, SCM_ARG2, caller);
+  v1 = TO_VCT(val1);
+  v2 = TO_VCT(val2);
   if (NUMBER_P(ulen)) 
     {
       len = TO_C_INT_OR_ELSE(ulen, 0); 
@@ -504,10 +504,10 @@ the real and imaginary parts of the data, len should be a power of 2, dir = 1 fo
   int sign, n, np;
   Float nf;
   vct *v1, *v2;
-  SCM_ASSERT((vct_p(url)), url, SCM_ARG1, S_mus_fft);
-  SCM_ASSERT((vct_p(uim)), uim, SCM_ARG2, S_mus_fft);
-  v1 = get_vct(url);
-  v2 = get_vct(uim);
+  SCM_ASSERT((VCT_P(url)), url, SCM_ARG1, S_mus_fft);
+  SCM_ASSERT((VCT_P(uim)), uim, SCM_ARG2, S_mus_fft);
+  v1 = TO_VCT(url);
+  v2 = TO_VCT(uim);
   if (INTEGER_P(usign)) sign = TO_C_INT(usign); else sign = 1;
   if (INTEGER_P(len)) 
     {
@@ -559,12 +559,12 @@ and type determines how the spectral data is scaled:\n\
   int n, type, np;
   Float nf;
   vct *v1, *v2, *v3 = NULL;
-  SCM_ASSERT((vct_p(url)), url, SCM_ARG1, S_spectrum);
-  SCM_ASSERT((vct_p(uim)), uim, SCM_ARG2, S_spectrum);
-  if (SCM_NFALSEP(uwin)) SCM_ASSERT((vct_p(uwin)), uwin, SCM_ARG3, S_spectrum);
-  v1 = get_vct(url);
-  v2 = get_vct(uim);
-  if (SCM_NFALSEP(uwin)) v3 = get_vct(uwin);
+  SCM_ASSERT((VCT_P(url)), url, SCM_ARG1, S_spectrum);
+  SCM_ASSERT((VCT_P(uim)), uim, SCM_ARG2, S_spectrum);
+  if (SCM_NFALSEP(uwin)) SCM_ASSERT((VCT_P(uwin)), uwin, SCM_ARG3, S_spectrum);
+  v1 = TO_VCT(url);
+  v2 = TO_VCT(uim);
+  if (SCM_NFALSEP(uwin)) v3 = TO_VCT(uwin);
   if (INTEGER_P(un)) 
     {
       n = TO_C_INT(un); 
@@ -590,10 +590,10 @@ of (vcts) v1 with v2, using fft of size len (a power of 2), result in v1"
   int n, np;
   Float nf;
   vct *v1, *v2;
-  SCM_ASSERT((vct_p(url1)), url1, SCM_ARG1, S_convolution);
-  SCM_ASSERT((vct_p(url2)), url2, SCM_ARG2, S_convolution);
-  v1 = get_vct(url1);
-  v2 = get_vct(url2);
+  SCM_ASSERT((VCT_P(url1)), url1, SCM_ARG1, S_convolution);
+  SCM_ASSERT((VCT_P(url2)), url2, SCM_ARG2, S_convolution);
+  v1 = TO_VCT(url1);
+  v2 = TO_VCT(url2);
   if (INTEGER_P(un)) 
     {
       n = TO_C_INT(un); 
@@ -616,8 +616,8 @@ static SCM g_clear_array(SCM arr)
 {
   #define H_clear_array "(" S_clear_array " v) clears vct v: v[i] = 0.0"
   vct *v;
-  SCM_ASSERT(vct_p(arr), arr, SCM_ARG1, S_clear_array);
-  v = get_vct(arr);
+  SCM_ASSERT(VCT_P(arr), arr, SCM_ARG1, S_clear_array);
+  v = TO_VCT(arr);
   mus_clear_array(v->data, v->length);
   return(scm_return_first(arr));
 }
@@ -626,9 +626,9 @@ static SCM g_polynomial(SCM arr, SCM x)
 {
   #define H_polynomial "(" S_polynomial " coeffs x) evaluates a polynomial at x"
   vct *v;
-  SCM_ASSERT(vct_p(arr), arr, SCM_ARG1, S_polynomial);
+  SCM_ASSERT(VCT_P(arr), arr, SCM_ARG1, S_polynomial);
   SCM_ASSERT(NUMBER_P(x), x, SCM_ARG2, S_polynomial);
-  v = get_vct(arr);
+  v = TO_VCT(arr);
   return(scm_return_first(TO_SCM_DOUBLE(mus_polynomial(v->data, TO_C_DOUBLE(x), v->length)), arr));
 }
 
@@ -639,12 +639,13 @@ taking into account wrap-around (size = size of data), with linear interpolation
 
   int len;
   vct *v;
-  SCM_ASSERT(vct_p(obj), obj, SCM_ARG1, S_array_interp);
+  SCM_ASSERT(VCT_P(obj), obj, SCM_ARG1, S_array_interp);
   SCM_ASSERT(NUMBER_P(phase), phase, SCM_ARG2, S_array_interp);
-  v = get_vct(obj);
-  if (NUMBER_P(size)) 
+  SCM_ASSERT(INTEGER_IF_BOUND_P(size), size, SCM_ARG3, S_array_interp);
+  v = TO_VCT(obj);
+  if (BOUND_P(size)) 
     {
-      len = TO_C_INT_OR_ELSE(size, 0); 
+      len = TO_C_INT(size); 
       if (len <= 0)
 	mus_misc_error(S_array_interp, "size <= 0?", size);
       if (len > v->length) len = v->length;
@@ -725,15 +726,18 @@ static void init_simple_stuff(void)
 
 static SND_TAG_TYPE mus_scm_tag = 0;
 
-int mus_scm_p(SCM obj) {return((SCM_NIMP(obj)) && (SND_SMOB_TYPE(mus_scm_tag, obj)));}
+#define MUS_SCM_P(obj) ((SCM_NIMP(obj)) && (SND_SMOB_TYPE(mus_scm_tag, obj)))
+#define TO_MUS_SCM(arg) ((mus_scm *)SND_VALUE_OF(arg))
+int mus_scm_p(SCM obj) {return(MUS_SCM_P(obj));}
 
-mus_any *mus_scm_to_clm(SCM obj) {return(((mus_any *)(((mus_scm *)(SND_VALUE_OF(obj)))->gen)));}
+#define TO_CLM(obj) ((mus_any *)((TO_MUS_SCM(obj))->gen))
+mus_any *mus_scm_to_clm(SCM obj) {return(TO_CLM(obj));}
 
 static SCM mark_mus_scm(SCM obj) 
 {
   int i;
   mus_scm *ms;
-  ms = mus_get_scm(obj);
+  ms = TO_MUS_SCM(obj);
   if (ms->vcts) 
     {
       for (i = 0; i < ms->nvcts; i++) 
@@ -747,8 +751,8 @@ static SCM mark_mus_scm(SCM obj)
 static scm_sizet free_mus_scm(SCM obj) 
 {
   mus_scm *ms;
-  ms = mus_get_scm(obj);
-  if (ms->nvcts != -1) mus_free(mus_get_any(obj));
+  ms = TO_MUS_SCM(obj);
+  if (ms->nvcts != -1) mus_free(TO_CLM(obj));
   if (ms->vcts) FREE(ms->vcts);  
   FREE(ms);
   return(0);
@@ -757,7 +761,7 @@ static scm_sizet free_mus_scm(SCM obj)
 static int print_mus_scm(SCM obj, SCM port, scm_print_state *pstate)
 {
   char *buf;
-  buf = mus_describe(mus_get_any(obj));
+  buf = mus_describe(TO_CLM(obj));
   if (buf)
     {
       scm_puts(buf, port);
@@ -768,13 +772,13 @@ static int print_mus_scm(SCM obj, SCM port, scm_print_state *pstate)
 
 static SCM equalp_mus_scm(SCM obj1, SCM obj2) 
 {
-  return((mus_equalp(mus_get_any(obj1), mus_get_any(obj2))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return((mus_equalp(TO_CLM(obj1), TO_CLM(obj2))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
 #if HAVE_APPLICABLE_SMOB
 static SCM mus_scm_apply(SCM gen, SCM arg1, SCM arg2)
 {
-  return(TO_SCM_DOUBLE(mus_run(mus_get_any(gen),
+  return(TO_SCM_DOUBLE(mus_run(TO_CLM(gen),
 			       (NUMBER_P(arg1)) ? TO_C_DOUBLE(arg1) : 0.0,
 			       (NUMBER_P(arg2)) ? TO_C_DOUBLE(arg2) : 0.0)));
 }
@@ -832,8 +836,8 @@ static SCM g_inspect(SCM gen)
   #define H_mus_inspect "(" S_mus_inspect " gen) -> the internal state of gen"
   char *buf;
   SCM result;
-  SCM_ASSERT((mus_scm_p(gen)), gen, SCM_ARG1, S_mus_inspect);
-  buf = mus_inspect(mus_get_any(gen));
+  SCM_ASSERT((MUS_SCM_P(gen)), gen, SCM_ARG1, S_mus_inspect);
+  buf = mus_inspect(TO_CLM(gen));
   result = TO_SCM_STRING(buf);
   FREE(buf);
   return(result);
@@ -844,8 +848,8 @@ static SCM g_describe(SCM gen)
   #define H_mus_describe "(" S_mus_describe " gen) -> the user's view of the state of gen"
   char *buf;
   SCM result;
-  SCM_ASSERT((mus_scm_p(gen)), gen, SCM_ARG1, S_mus_describe);
-  buf = mus_describe(mus_get_any(gen));
+  SCM_ASSERT((MUS_SCM_P(gen)), gen, SCM_ARG1, S_mus_describe);
+  buf = mus_describe(TO_CLM(gen));
   result = TO_SCM_STRING(buf);
   FREE(buf);
   return(result);
@@ -854,50 +858,50 @@ static SCM g_describe(SCM gen)
 static SCM g_phase(SCM gen) 
 {
   #define H_mus_phase "(" S_mus_phase " gen) -> gen's current phase (radians)"
-  SCM_ASSERT(mus_scm_p(gen), gen, SCM_ARG1, S_mus_phase);
-  return(TO_SCM_DOUBLE(mus_phase(mus_get_any(gen))));
+  SCM_ASSERT(MUS_SCM_P(gen), gen, SCM_ARG1, S_mus_phase);
+  return(TO_SCM_DOUBLE(mus_phase(TO_CLM(gen))));
 }
 
 static SCM g_set_phase(SCM gen, SCM val) 
 {
-  SCM_ASSERT(mus_scm_p(gen), gen, SCM_ARG1, S_mus_set_phase);
+  SCM_ASSERT(MUS_SCM_P(gen), gen, SCM_ARG1, S_mus_set_phase);
   SCM_ASSERT(NUMBER_P(val), val, SCM_ARG2, S_mus_set_phase);
-  return(TO_SCM_DOUBLE(mus_set_phase(mus_get_any(gen), TO_C_DOUBLE(val))));
+  return(TO_SCM_DOUBLE(mus_set_phase(TO_CLM(gen), TO_C_DOUBLE(val))));
 }
 
 static SCM g_scaler(SCM gen) 
 {
   #define H_mus_scaler "(" S_mus_scaler " gen) -> gen's scaler, if any"
-  SCM_ASSERT(mus_scm_p(gen), gen, SCM_ARG1, S_mus_scaler);
-  return(TO_SCM_DOUBLE(mus_scaler(mus_get_any(gen))));
+  SCM_ASSERT(MUS_SCM_P(gen), gen, SCM_ARG1, S_mus_scaler);
+  return(TO_SCM_DOUBLE(mus_scaler(TO_CLM(gen))));
 }
 
 static SCM g_set_scaler(SCM gen, SCM val) 
 {
-  SCM_ASSERT(mus_scm_p(gen), gen, SCM_ARG1, S_mus_set_scaler);
+  SCM_ASSERT(MUS_SCM_P(gen), gen, SCM_ARG1, S_mus_set_scaler);
   SCM_ASSERT(NUMBER_P(val), val, SCM_ARG2, S_mus_set_scaler);
-  return(TO_SCM_DOUBLE(mus_set_scaler(mus_get_any(gen), TO_C_DOUBLE(val))));
+  return(TO_SCM_DOUBLE(mus_set_scaler(TO_CLM(gen), TO_C_DOUBLE(val))));
 }
 
 static SCM g_frequency(SCM gen) 
 {
   #define H_mus_frequency "(" S_mus_frequency " gen) -> gen's frequency (Hz)"
-  SCM_ASSERT(mus_scm_p(gen), gen, SCM_ARG1, S_mus_frequency);
-  return(TO_SCM_DOUBLE(mus_frequency(mus_get_any(gen))));
+  SCM_ASSERT(MUS_SCM_P(gen), gen, SCM_ARG1, S_mus_frequency);
+  return(TO_SCM_DOUBLE(mus_frequency(TO_CLM(gen))));
 }
 
 static SCM g_set_frequency(SCM gen, SCM val) 
 {
-  SCM_ASSERT(mus_scm_p(gen), gen, SCM_ARG1, S_mus_frequency);
+  SCM_ASSERT(MUS_SCM_P(gen), gen, SCM_ARG1, S_mus_frequency);
   SCM_ASSERT(NUMBER_P(val), val, SCM_ARG2, S_mus_set_frequency);
-  return(TO_SCM_DOUBLE(mus_set_frequency(mus_get_any(gen), TO_C_DOUBLE(val))));
+  return(TO_SCM_DOUBLE(mus_set_frequency(TO_CLM(gen), TO_C_DOUBLE(val))));
 }
 
 static SCM g_run(SCM gen, SCM arg1, SCM arg2) 
 {
   #define H_mus_run "(" S_mus_run " gen &optional arg1 arg2) -> apply gen to arg1 and arg2"
-  SCM_ASSERT(mus_scm_p(gen), gen, SCM_ARG1, S_mus_run);
-  return(TO_SCM_DOUBLE(mus_run(mus_get_any(gen),
+  SCM_ASSERT(MUS_SCM_P(gen), gen, SCM_ARG1, S_mus_run);
+  return(TO_SCM_DOUBLE(mus_run(TO_CLM(gen),
 			       (NUMBER_P(arg1)) ? TO_C_DOUBLE(arg1) : 0.0,
 			       (NUMBER_P(arg2)) ? TO_C_DOUBLE(arg2) : 0.0)));
 }
@@ -905,30 +909,30 @@ static SCM g_run(SCM gen, SCM arg1, SCM arg2)
 static SCM g_length(SCM gen) 
 {
   #define H_mus_length "(" S_mus_length " gen) -> gen's length, if any"
-  SCM_ASSERT(mus_scm_p(gen), gen, SCM_ARG1, S_mus_length);
-  return(TO_SMALL_SCM_INT(mus_length(mus_get_any(gen))));
+  SCM_ASSERT(MUS_SCM_P(gen), gen, SCM_ARG1, S_mus_length);
+  return(TO_SMALL_SCM_INT(mus_length(TO_CLM(gen))));
 }
 
 static SCM g_set_length(SCM gen, SCM val) 
 {
-  SCM_ASSERT(mus_scm_p(gen), gen, SCM_ARG1, S_mus_length);
+  SCM_ASSERT(MUS_SCM_P(gen), gen, SCM_ARG1, S_mus_length);
   SCM_ASSERT(NUMBER_P(val), val, SCM_ARG2, S_mus_set_length);
-  return(TO_SMALL_SCM_INT(mus_set_length(mus_get_any(gen), TO_C_INT_OR_ELSE(val, 0))));
+  return(TO_SMALL_SCM_INT(mus_set_length(TO_CLM(gen), TO_C_INT_OR_ELSE(val, 0))));
 }
 
 static SCM g_name(SCM gen) 
 {
   #define H_mus_name "(" S_mus_name " gen) -> gen's name, if any"
-  SCM_ASSERT(mus_scm_p(gen), gen, SCM_ARG1, S_mus_name);
-  return(TO_SCM_STRING(mus_name(mus_get_any(gen))));
+  SCM_ASSERT(MUS_SCM_P(gen), gen, SCM_ARG1, S_mus_name);
+  return(TO_SCM_STRING(mus_name(TO_CLM(gen))));
 }
 
 static SCM g_data(SCM gen) 
 {
   #define H_mus_data "(" S_mus_data " gen) -> gen's internal data (vct), if any"
   mus_scm *ms;
-  SCM_ASSERT(mus_scm_p(gen), gen, SCM_ARG1, S_mus_data);
-  ms = mus_get_scm(gen);
+  SCM_ASSERT(MUS_SCM_P(gen), gen, SCM_ARG1, S_mus_data);
+  ms = TO_MUS_SCM(gen);
   if (ms->vcts)
     return(ms->vcts[MUS_DATA_POSITION]); 
   else return(SCM_BOOL_F);
@@ -939,9 +943,9 @@ static SCM g_set_data(SCM gen, SCM val)
   mus_scm *ms;
   mus_any *ma;
   vct *v;
-  SCM_ASSERT(mus_scm_p(gen), gen, SCM_ARG1, S_mus_set_data);
-  SCM_ASSERT((vct_p(val)), val, SCM_ARG2, S_mus_set_data);
-  ms = mus_get_scm(gen);
+  SCM_ASSERT(MUS_SCM_P(gen), gen, SCM_ARG1, S_mus_set_data);
+  SCM_ASSERT((VCT_P(val)), val, SCM_ARG2, S_mus_set_data);
+  ms = TO_MUS_SCM(gen);
   if (ms->vcts)
     {
       v = (vct *)SND_VALUE_OF(val);
@@ -979,8 +983,8 @@ static Float *whatever_to_floats(SCM inp, int size, const char *caller)
     }
   else
     {
-      if (vct_p(inp))
-	invals = copy_vct_data(get_vct(inp));
+      if (VCT_P(inp))
+	invals = copy_vct_data(TO_VCT(inp));
       else
 	{
 	  if (NUMBER_P(inp)) 
@@ -1026,8 +1030,8 @@ static SCM g_mus_bank(SCM gens, SCM amps, SCM inp, SCM inp2)
   gs = (mus_any **)CALLOC(size, sizeof(mus_any *));
   data = SCM_VELTS(gens);
   for (i = 0; i < size; i++) 
-    if (mus_scm_p(data[i]))
-      gs[i] = mus_get_any(data[i]);
+    if (MUS_SCM_P(data[i]))
+      gs[i] = TO_CLM(data[i]);
     else 
       {
 	if (scls) FREE(scls);
@@ -1105,10 +1109,10 @@ static SCM g_oscil(SCM os, SCM fm, SCM pm)
 {
   #define H_oscil "(" S_oscil " gen &optional fm pm) -> next sample from " S_oscil " gen: rtn = sin(phase+pm) phase+=(freq+fm)"
   Float fm1 = 0.0, pm1 = 0.0;
-  SCM_ASSERT((mus_scm_p(os)) && (mus_oscil_p(mus_get_any(os))), os, SCM_ARG1, S_oscil);
+  SCM_ASSERT((MUS_SCM_P(os)) && (mus_oscil_p(TO_CLM(os))), os, SCM_ARG1, S_oscil);
   if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else if (BOUND_P(fm)) scm_wrong_type_arg(S_oscil, 2, fm);
   if (NUMBER_P(pm)) pm1 = TO_C_DOUBLE(pm); else if (BOUND_P(pm)) scm_wrong_type_arg(S_oscil, 3, pm);
-  return(TO_SCM_DOUBLE(mus_oscil(mus_get_any(os), fm1, pm1)));
+  return(TO_SCM_DOUBLE(mus_oscil(TO_CLM(os), fm1, pm1)));
 }
 
 static SCM g_oscil_bank(SCM amps, SCM gens, SCM inp, SCM size)
@@ -1122,7 +1126,7 @@ static SCM g_oscil_bank(SCM amps, SCM gens, SCM inp, SCM size)
 static SCM g_oscil_p(SCM os) 
 {
   #define H_oscil_p "(" S_oscil_p " gen) -> #t if gen is an " S_oscil " generator, else #f"
-  return(((mus_scm_p(os)) && (mus_oscil_p(mus_get_any(os)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(((MUS_SCM_P(os)) && (mus_oscil_p(TO_CLM(os)))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
 static SCM g_mus_apply(SCM arglist)
@@ -1134,16 +1138,16 @@ static SCM g_mus_apply(SCM arglist)
   SCM arg2, arg3;
   arglist_len = gh_length(arglist);
   if ((arglist_len > 3) || (arglist_len == 0)) return(TO_SCM_DOUBLE(0.0));
-  gen = mus_get_any(gh_car(arglist));
+  gen = TO_CLM(SCM_CAR(arglist));
   if (arglist_len == 1) return(TO_SCM_DOUBLE(mus_apply(gen)));
-  arg2 = gh_cadr(arglist);
+  arg2 = SCM_CADR(arglist);
   if (arglist_len == 2)
     {
       if (SCM_INUMP(arg2))
 	return(TO_SCM_DOUBLE(mus_apply(gen, TO_C_INT(arg2))));
       else return(TO_SCM_DOUBLE(mus_apply(gen, TO_C_DOUBLE(arg2))));
     }
-  arg3 = gh_caddr(arglist);
+  arg3 = SCM_CADDR(arglist);
   if (SCM_INUMP(arg2))
     {
       if (SCM_INUMP(arg3))
@@ -1199,7 +1203,7 @@ static SCM g_make_delay_1(int choice, SCM arglist)
   SCM args[14], keys[7];
   int orig_arg[7] = {0, 0, 0, 0, 0, 0, 0};
   int vals, i, argn = 0, len, arglist_len, keyn, max_size = -1;
-  int size = 1, size_key;
+  int size = 1, size_key = 0;
   Float *line = NULL;
   Float scaler = 0.0, feedback = 0.0, feedforward = 0.0;
   SCM initial_contents = SCM_UNDEFINED, lst;
@@ -1244,8 +1248,8 @@ static SCM g_make_delay_1(int choice, SCM arglist)
       if (!(keyword_p(keys[keyn])))
 	{
 	  initial_contents = keys[keyn];
-	  if (vct_p(initial_contents))
-	    line = copy_vct_data(get_vct(initial_contents));
+	  if (VCT_P(initial_contents))
+	    line = copy_vct_data(TO_VCT(initial_contents));
 	  else
 	    {
 	      if (gh_list_p(initial_contents))
@@ -1356,101 +1360,101 @@ The Scheme built-in 'delay' function is named %delay. \
 If pm is greater than 0.0, the max-size argument used to create gen should have accommodated its maximum value."
 
   Float in1 = 0.0, pm1 = 0.0;
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_delay_p(mus_get_any(obj))), obj, SCM_ARG1, S_delay);
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_delay_p(TO_CLM(obj))), obj, SCM_ARG1, S_delay);
   if (NUMBER_P(input)) in1 = TO_C_DOUBLE(input); else if (BOUND_P(input)) scm_wrong_type_arg(S_delay, 2, input);
   if (NUMBER_P(pm)) pm1 = TO_C_DOUBLE(pm); else if (BOUND_P(pm)) scm_wrong_type_arg(S_delay, 3, pm);
-  return(TO_SCM_DOUBLE(mus_delay(mus_get_any(obj), in1, pm1)));
+  return(TO_SCM_DOUBLE(mus_delay(TO_CLM(obj), in1, pm1)));
 }
 
 static SCM g_notch(SCM obj, SCM input, SCM pm)
 {
   #define H_notch "(" S_notch " gen &optional (val 0.0) (pm 0.0)) notch filters val, pm changes the delay length."
   Float in1 = 0.0, pm1 = 0.0;
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_notch_p(mus_get_any(obj))), obj, SCM_ARG1, S_notch);
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_notch_p(TO_CLM(obj))), obj, SCM_ARG1, S_notch);
   if (NUMBER_P(input)) in1 = TO_C_DOUBLE(input); else if (BOUND_P(input)) scm_wrong_type_arg(S_notch, 2, input);
   if (NUMBER_P(pm)) pm1 = TO_C_DOUBLE(pm); else if (BOUND_P(pm)) scm_wrong_type_arg(S_notch, 3, pm);
-  return(TO_SCM_DOUBLE(mus_notch(mus_get_any(obj), in1, pm1)));
+  return(TO_SCM_DOUBLE(mus_notch(TO_CLM(obj), in1, pm1)));
 }
 
 static SCM g_comb(SCM obj, SCM input, SCM pm)
 {
   #define H_comb "(" S_comb " gen &optional (val 0.0) (pm 0.0)) comb filters val, pm changes the delay length."
   Float in1 = 0.0, pm1 = 0.0;
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_comb_p(mus_get_any(obj))), obj, SCM_ARG1, S_comb);
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_comb_p(TO_CLM(obj))), obj, SCM_ARG1, S_comb);
   if (NUMBER_P(input)) in1 = TO_C_DOUBLE(input); else if (BOUND_P(input)) scm_wrong_type_arg(S_comb, 2, input);
   if (NUMBER_P(pm)) pm1 = TO_C_DOUBLE(pm); else if (BOUND_P(pm)) scm_wrong_type_arg(S_comb, 3, pm);
-  return(TO_SCM_DOUBLE(mus_comb(mus_get_any(obj), in1, pm1)));
+  return(TO_SCM_DOUBLE(mus_comb(TO_CLM(obj), in1, pm1)));
 }
 
 static SCM g_all_pass(SCM obj, SCM input, SCM pm)
 {
   #define H_all_pass "(" S_all_pass " gen &optional (val 0.0) (pm 0.0)) all-pass filters val, pm changes the delay length."
   Float in1 = 0.0, pm1 = 0.0;
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_all_pass_p(mus_get_any(obj))), obj, SCM_ARG1, S_all_pass);
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_all_pass_p(TO_CLM(obj))), obj, SCM_ARG1, S_all_pass);
   if (NUMBER_P(input)) in1 = TO_C_DOUBLE(input); else if (BOUND_P(input)) scm_wrong_type_arg(S_all_pass, 2, input);
   if (NUMBER_P(pm)) pm1 = TO_C_DOUBLE(pm); else if (BOUND_P(pm)) scm_wrong_type_arg(S_all_pass, 3, pm);
-  return(TO_SCM_DOUBLE(mus_all_pass(mus_get_any(obj), in1, pm1)));
+  return(TO_SCM_DOUBLE(mus_all_pass(TO_CLM(obj), in1, pm1)));
 }
 
 static SCM g_tap(SCM obj, SCM loc)
 {
   #define H_tap "(" S_tap " gen &optional (pm 0.0)) taps the " S_delay " generator offset by pm"
   Float dloc = 0.0;
-  SCM_ASSERT((mus_scm_p(obj)), obj, SCM_ARG1, S_tap);
+  SCM_ASSERT((MUS_SCM_P(obj)), obj, SCM_ARG1, S_tap);
   if (NUMBER_P(loc)) dloc = TO_C_DOUBLE(loc); else if (BOUND_P(loc)) scm_wrong_type_arg(S_tap, 2, loc);
-  return(TO_SCM_DOUBLE(mus_tap(mus_get_any(obj), dloc)));
+  return(TO_SCM_DOUBLE(mus_tap(TO_CLM(obj), dloc)));
 }
 
 static SCM g_delay_p(SCM obj) 
 {
   #define H_delay_p "(" S_delay_p " gen) -> #t if gen is a delay line, else #f"
-  return(((mus_scm_p(obj)) && (mus_delay_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(((MUS_SCM_P(obj)) && (mus_delay_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
 static SCM g_comb_p(SCM obj)
 {
   #define H_comb_p "(" S_comb_p " gen) -> #t if gen is a comb filter, else #f"
-  return(((mus_scm_p(obj)) && (mus_comb_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(((MUS_SCM_P(obj)) && (mus_comb_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
 static SCM g_notch_p(SCM obj) 
 {
   #define H_notch_p "(" S_notch_p " gen) -> #t if gen is a notch filter, else #f"
-  return(((mus_scm_p(obj)) && (mus_notch_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(((MUS_SCM_P(obj)) && (mus_notch_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
 static SCM g_all_pass_p(SCM obj) 
 {
   #define H_all_pass_p "(" S_all_pass_p " gen) -> #t if gen is an all-pass filter, else #f"
-  return(((mus_scm_p(obj)) && (mus_all_pass_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(((MUS_SCM_P(obj)) && (mus_all_pass_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
 static SCM g_feedback(SCM obj)
 {
   #define H_mus_feedback "(" S_mus_feedback " gen) -> feedback value of gen"
-  SCM_ASSERT(mus_scm_p(obj), obj, SCM_ARG1, S_mus_feedback);
-  return(TO_SCM_DOUBLE(mus_feedback(mus_get_any(obj))));
+  SCM_ASSERT(MUS_SCM_P(obj), obj, SCM_ARG1, S_mus_feedback);
+  return(TO_SCM_DOUBLE(mus_feedback(TO_CLM(obj))));
 }
 
 static SCM g_set_feedback(SCM obj, SCM val)
 {
-  SCM_ASSERT(mus_scm_p(obj), obj, SCM_ARG1, S_mus_set_feedback);
+  SCM_ASSERT(MUS_SCM_P(obj), obj, SCM_ARG1, S_mus_set_feedback);
   SCM_ASSERT(NUMBER_P(val), val, SCM_ARG2, S_mus_set_feedback);
-  return(TO_SCM_DOUBLE(mus_set_feedback(mus_get_any(obj), TO_C_DOUBLE(val))));
+  return(TO_SCM_DOUBLE(mus_set_feedback(TO_CLM(obj), TO_C_DOUBLE(val))));
 }
 
 static SCM g_feedforward(SCM obj)
 {
   #define H_mus_feedforward "(" S_mus_feedforward " gen) -> feedforward term of gen"
-  SCM_ASSERT(mus_scm_p(obj), obj, SCM_ARG1, S_mus_feedforward);
-  return(TO_SCM_DOUBLE(mus_feedforward(mus_get_any(obj))));
+  SCM_ASSERT(MUS_SCM_P(obj), obj, SCM_ARG1, S_mus_feedforward);
+  return(TO_SCM_DOUBLE(mus_feedforward(TO_CLM(obj))));
 }
 
 static SCM g_set_feedforward(SCM obj, SCM val)
 {
-  SCM_ASSERT(mus_scm_p(obj), obj, SCM_ARG1, S_mus_set_feedforward);
+  SCM_ASSERT(MUS_SCM_P(obj), obj, SCM_ARG1, S_mus_set_feedforward);
   SCM_ASSERT(NUMBER_P(val), val, SCM_ARG2, S_mus_set_feedforward);
-  return(TO_SCM_DOUBLE(mus_set_feedforward(mus_get_any(obj), TO_C_DOUBLE(val))));
+  return(TO_SCM_DOUBLE(mus_set_feedforward(TO_CLM(obj), TO_C_DOUBLE(val))));
 }
 
 static void init_dly(void)
@@ -1488,7 +1492,7 @@ static void init_dly(void)
 static SCM g_sum_of_cosines_p(SCM obj) 
 {
   #define H_sum_of_cosines_p "(" S_sum_of_cosines_p " gen) -> #t if gen is a " S_sum_of_cosines " generator, else #f"
-  return(((mus_scm_p(obj)) && (mus_sum_of_cosines_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(((MUS_SCM_P(obj)) && (mus_sum_of_cosines_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
 static SCM g_make_sum_of_cosines(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6)
@@ -1528,16 +1532,16 @@ static SCM g_sum_of_cosines(SCM obj, SCM fm)
 gets the next sample of the band-limited pulse-train produced by gen"
 
   Float fm1 = 0.0;
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_sum_of_cosines_p(mus_get_any(obj))), obj, SCM_ARG1, S_sum_of_cosines);
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_sum_of_cosines_p(TO_CLM(obj))), obj, SCM_ARG1, S_sum_of_cosines);
   if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else if (BOUND_P(fm)) scm_wrong_type_arg(S_sum_of_cosines, 2, fm);
-  return(TO_SCM_DOUBLE(mus_sum_of_cosines(mus_get_any(obj), fm1)));
+  return(TO_SCM_DOUBLE(mus_sum_of_cosines(TO_CLM(obj), fm1)));
 }
 
 static SCM g_cosines(SCM obj)
 {
   #define H_mus_cosines "(" S_mus_cosines " gen) -> number of cosines produced by gen"
-  SCM_ASSERT(mus_scm_p(obj), obj, SCM_ARG1, S_mus_cosines);
-  return(TO_SCM_DOUBLE(mus_cosines(mus_get_any(obj))));
+  SCM_ASSERT(MUS_SCM_P(obj), obj, SCM_ARG1, S_mus_cosines);
+  return(TO_SCM_DOUBLE(mus_cosines(TO_CLM(obj))));
 }
 
 static void init_cosp(void)
@@ -1609,15 +1613,15 @@ static SCM g_rand(SCM obj, SCM fm)
 fm can modulate the rate at which the current number is changed."
 
   Float fm1 = 0.0;
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_rand_p(mus_get_any(obj))), obj, SCM_ARG1, S_rand);
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_rand_p(TO_CLM(obj))), obj, SCM_ARG1, S_rand);
   if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else if (BOUND_P(fm)) scm_wrong_type_arg(S_rand, 2, fm);
-  return(TO_SCM_DOUBLE(mus_rand(mus_get_any(obj), fm1)));
+  return(TO_SCM_DOUBLE(mus_rand(TO_CLM(obj), fm1)));
 }
 
 static SCM g_rand_p(SCM obj) 
 {
   #define H_rand_p "(" S_rand_p " gen) -> #t if gen is a " S_rand " generator, else #f"
-  return(((mus_scm_p(obj)) && (mus_rand_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(((MUS_SCM_P(obj)) && (mus_rand_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
 static SCM g_rand_interp(SCM obj, SCM fm)
@@ -1626,15 +1630,15 @@ static SCM g_rand_interp(SCM obj, SCM fm)
 fm can modulate the rate at which new segment end-points are chosen."
 
   Float fm1 = 0.0;
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_rand_interp_p(mus_get_any(obj))), obj, SCM_ARG1, S_rand_interp);
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_rand_interp_p(TO_CLM(obj))), obj, SCM_ARG1, S_rand_interp);
   if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else if (BOUND_P(fm)) scm_wrong_type_arg(S_rand_interp, 2, fm);
-  return(TO_SCM_DOUBLE(mus_rand_interp(mus_get_any(obj), fm1)));
+  return(TO_SCM_DOUBLE(mus_rand_interp(TO_CLM(obj), fm1)));
 }
 
 static SCM g_rand_interp_p(SCM obj) 
 {
   #define H_rand_interp_p "(" S_rand_interp_p " gen) -> #t if gen is a " S_rand_interp " generator, else #f"
-  return(((mus_scm_p(obj)) && (mus_rand_interp_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(((MUS_SCM_P(obj)) && (mus_rand_interp_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
 static SCM g_mus_random(SCM a) 
@@ -1683,7 +1687,7 @@ static int DEFAULT_TABLE_SIZE = 512;
 static SCM g_table_lookup_p(SCM obj) 
 {
   #define H_table_lookup_p "(" S_table_lookup_p " gen) -> #t if gen is a " S_table_lookup " generator, else #f"
-  return(((mus_scm_p(obj)) && (mus_table_lookup_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(((MUS_SCM_P(obj)) && (mus_table_lookup_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
 static SCM g_partials2wave(SCM partials, SCM utable, SCM normalize)
@@ -1699,18 +1703,18 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
   Float *partial_data, *wave;
   int len, i;
   SCM_ASSERT(gh_list_p(partials), partials, SCM_ARG1, S_partials2wave);
-  SCM_ASSERT(vct_p(utable) || SCM_FALSEP(utable) || (!(BOUND_P(utable))), utable, SCM_ARG2, S_partials2wave);
+  SCM_ASSERT(VCT_P(utable) || SCM_FALSEP(utable) || (!(BOUND_P(utable))), utable, SCM_ARG2, S_partials2wave);
   SCM_ASSERT(BOOLEAN_IF_BOUND_P(normalize), normalize, SCM_ARG3, S_partials2wave);
   len = gh_length(partials);
   if (len == 0)
     mus_misc_error(S_partials2wave, "partials list empty?", partials);
-  if ((SCM_UNBNDP(utable)) || (!(vct_p(utable))))
+  if ((SCM_UNBNDP(utable)) || (!(VCT_P(utable))))
     {
       wave = (Float *)CALLOC(DEFAULT_TABLE_SIZE, sizeof(Float));
       table = make_vct(DEFAULT_TABLE_SIZE, wave);
     }
   else table = utable;
-  f = get_vct(table);
+  f = TO_VCT(table);
   partial_data = (Float *)CALLOC(len, sizeof(Float));
   for (i = 0, lst = partials; i < len; i++, lst = SCM_CDR(lst)) 
     partial_data[i] = TO_C_DOUBLE(SCM_CAR(lst));
@@ -1733,18 +1737,18 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
   (set! gen (make-table-lookup 440.0 :wave (phase-partials->wave (list 1 .75 0.0 2 .25 (* pi .5)))))"
 
   SCM_ASSERT(gh_list_p(partials), partials, SCM_ARG1, S_phasepartials2wave);
-  SCM_ASSERT(vct_p(utable) || SCM_FALSEP(utable) || (!(BOUND_P(utable))), utable, SCM_ARG2, S_phasepartials2wave);
+  SCM_ASSERT(VCT_P(utable) || SCM_FALSEP(utable) || (!(BOUND_P(utable))), utable, SCM_ARG2, S_phasepartials2wave);
   SCM_ASSERT(BOOLEAN_IF_BOUND_P(normalize), normalize, SCM_ARG3, S_phasepartials2wave);
   len = gh_length(partials);
   if (len == 0)
     mus_misc_error(S_partials2wave, "partials list empty?", partials);
-  if ((SCM_UNBNDP(utable)) || (!(vct_p(utable))))
+  if ((SCM_UNBNDP(utable)) || (!(VCT_P(utable))))
     {
       wave = (Float *)CALLOC(DEFAULT_TABLE_SIZE, sizeof(Float));
       table = make_vct(DEFAULT_TABLE_SIZE, wave);
     }
   else table = utable;
-  f = get_vct(table);
+  f = TO_VCT(table);
   partial_data = (Float *)CALLOC(len, sizeof(Float));
   for (i = 0, lst = partials; i < len; i++, lst = SCM_CDR(lst)) 
     partial_data[i] = TO_C_DOUBLE(SCM_CAR(lst));
@@ -1779,9 +1783,9 @@ is the same in effect as " S_make_oscil "."
       phase = fkeyarg(keys[1], S_make_table_lookup, orig_arg[1] + 1, args[orig_arg[1]], phase);
       if (!(keyword_p(keys[2])))
 	{
-	  if (vct_p(keys[2]))
+	  if (VCT_P(keys[2]))
 	    {
-	      v = get_vct(keys[2]);
+	      v = TO_VCT(keys[2]);
 	      table = copy_vct_data(v);
 	      table_size = v->length;
 	    }
@@ -1803,9 +1807,9 @@ static SCM g_table_lookup (SCM obj, SCM fm)
 with 'wrap-around' when gen's phase marches off the end of its table."
 
   Float fm1 = 0.0;
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_table_lookup_p(mus_get_any(obj))), obj, SCM_ARG1, S_table_lookup);
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_table_lookup_p(TO_CLM(obj))), obj, SCM_ARG1, S_table_lookup);
   if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm);  else if (BOUND_P(fm)) scm_wrong_type_arg(S_table_lookup, 2, fm);
-  return(TO_SCM_DOUBLE(mus_table_lookup(mus_get_any(obj), fm1)));
+  return(TO_SCM_DOUBLE(mus_table_lookup(TO_CLM(obj), fm1)));
 }
 
 static void init_tbl(void)
@@ -1911,60 +1915,60 @@ static SCM g_sawtooth_wave(SCM obj, SCM fm)
 {
   #define H_sawtooth_wave "(" S_sawtooth_wave " gen &optional (fm 0.0)) -> next sawtooth sample from gen"
   Float fm1 = 0.0;
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_sawtooth_wave_p(mus_get_any(obj))), obj, SCM_ARG1, S_sawtooth_wave);
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_sawtooth_wave_p(TO_CLM(obj))), obj, SCM_ARG1, S_sawtooth_wave);
   if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else if (BOUND_P(fm)) scm_wrong_type_arg(S_sawtooth_wave, 2, fm);
-  return(TO_SCM_DOUBLE(mus_sawtooth_wave(mus_get_any(obj), fm1)));
+  return(TO_SCM_DOUBLE(mus_sawtooth_wave(TO_CLM(obj), fm1)));
 }
 
 static SCM g_square_wave(SCM obj, SCM fm) 
 {
   #define H_square_wave "(" S_square_wave " gen &optional (fm 0.0)) -> next square wave sample from gen"
   Float fm1 = 0.0;
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_square_wave_p(mus_get_any(obj))), obj, SCM_ARG1, S_square_wave);
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_square_wave_p(TO_CLM(obj))), obj, SCM_ARG1, S_square_wave);
   if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else if (BOUND_P(fm)) scm_wrong_type_arg(S_square_wave, 2, fm);
-  return(TO_SCM_DOUBLE(mus_square_wave(mus_get_any(obj), fm1)));
+  return(TO_SCM_DOUBLE(mus_square_wave(TO_CLM(obj), fm1)));
 }
 
 static SCM g_triangle_wave(SCM obj, SCM fm) 
 {
   #define H_triangle_wave "(" S_triangle_wave " gen &optional (fm 0.0)) -> next triangle wave sample from gen"
   Float fm1 = 0.0;
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_triangle_wave_p(mus_get_any(obj))), obj, SCM_ARG1, S_triangle_wave);
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_triangle_wave_p(TO_CLM(obj))), obj, SCM_ARG1, S_triangle_wave);
   if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else if (BOUND_P(fm)) scm_wrong_type_arg(S_triangle_wave, 2, fm);
-  return(TO_SCM_DOUBLE(mus_triangle_wave(mus_get_any(obj), fm1)));
+  return(TO_SCM_DOUBLE(mus_triangle_wave(TO_CLM(obj), fm1)));
 }
 
 static SCM g_pulse_train(SCM obj, SCM fm) 
 {
   #define H_pulse_train "(" S_pulse_train " gen &optional (fm 0.0)) -> next (im)pulse train sample from gen"
   Float fm1 = 0.0;
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_pulse_train_p(mus_get_any(obj))), obj, SCM_ARG1, S_pulse_train);
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_pulse_train_p(TO_CLM(obj))), obj, SCM_ARG1, S_pulse_train);
   if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else if (BOUND_P(fm)) scm_wrong_type_arg(S_pulse_train, 2, fm);
-  return(TO_SCM_DOUBLE(mus_pulse_train(mus_get_any(obj), fm1)));
+  return(TO_SCM_DOUBLE(mus_pulse_train(TO_CLM(obj), fm1)));
 }
 
 static SCM g_sawtooth_wave_p(SCM obj) 
 {
   #define H_sawtooth_wave_p "(" S_sawtooth_wave_p " gen) -> #t if gen is a " S_sawtooth_wave " generator, else #f"
-  return(((mus_scm_p(obj)) && (mus_sawtooth_wave_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(((MUS_SCM_P(obj)) && (mus_sawtooth_wave_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
 static SCM g_square_wave_p(SCM obj) 
 {
   #define H_square_wave_p "(" S_square_wave_p " gen) -> #t if gen is a " S_square_wave " generator, else #f"
-  return(((mus_scm_p(obj)) && (mus_square_wave_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(((MUS_SCM_P(obj)) && (mus_square_wave_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
 static SCM g_triangle_wave_p(SCM obj) 
 {
   #define H_triangle_wave_p "(" S_triangle_wave_p " gen) -> #t if gen is a " S_triangle_wave " generator, else #f"
-  return(((mus_scm_p(obj)) && (mus_triangle_wave_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(((MUS_SCM_P(obj)) && (mus_triangle_wave_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
 static SCM g_pulse_train_p(SCM obj) 
 {
   #define H_pulse_train_p "(" S_pulse_train_p " gen) -> #t if gen is a " S_pulse_train " generator, else #f"
-  return(((mus_scm_p(obj)) && (mus_pulse_train_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(((MUS_SCM_P(obj)) && (mus_pulse_train_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
 static void init_sw(void)
@@ -2025,16 +2029,16 @@ static SCM g_asymmetric_fm(SCM obj, SCM index, SCM fm)
 {
   #define H_asymmetric_fm "(" S_asymmetric_fm " gen &optional (index 0.0) (fm 0.0)) -> next sample from asymmetric fm gen"
   Float fm1 = 0.0, index1 = 0.0;
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_asymmetric_fm_p(mus_get_any(obj))), obj, SCM_ARG1, S_asymmetric_fm);
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_asymmetric_fm_p(TO_CLM(obj))), obj, SCM_ARG1, S_asymmetric_fm);
   if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else if (BOUND_P(fm)) scm_wrong_type_arg(S_asymmetric_fm, 3, fm);
   if (NUMBER_P(index)) index1 = TO_C_DOUBLE(index); else if (BOUND_P(index)) scm_wrong_type_arg(S_asymmetric_fm, 2, index);
-  return(TO_SCM_DOUBLE(mus_asymmetric_fm(mus_get_any(obj), index1, fm1)));
+  return(TO_SCM_DOUBLE(mus_asymmetric_fm(TO_CLM(obj), index1, fm1)));
 }
 
 static SCM g_asymmetric_fm_p(SCM obj) 
 {
   #define H_asymmetric_fm_p "(" S_asymmetric_fm_p " gen) -> #t if gen is a " S_asymmetric_fm " generator, else #f"
-  return(((mus_scm_p(obj)) && (mus_asymmetric_fm_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(((MUS_SCM_P(obj)) && (mus_asymmetric_fm_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
 static void init_asyfm(void)
@@ -2198,130 +2202,130 @@ static SCM g_one_zero(SCM obj, SCM fm)
 {
   #define H_one_zero "(" S_one_zero " gen &optional (input 0.0)) -> one zero filter of input"
   Float fm1 = 0.0;
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_one_zero_p(mus_get_any(obj))), obj, SCM_ARG1, S_one_zero);
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_one_zero_p(TO_CLM(obj))), obj, SCM_ARG1, S_one_zero);
   if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else if (BOUND_P(fm)) scm_wrong_type_arg(S_one_zero, 2, fm);
-  return(TO_SCM_DOUBLE(mus_one_zero(mus_get_any(obj), fm1)));
+  return(TO_SCM_DOUBLE(mus_one_zero(TO_CLM(obj), fm1)));
 }
 
 static SCM g_one_pole(SCM obj, SCM fm)
 {
   #define H_one_pole "(" S_one_pole " gen &optional (input 0.0)) -> one pole filter of input"
   Float fm1 = 0.0;
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_one_pole_p(mus_get_any(obj))), obj, SCM_ARG1, S_one_pole);
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_one_pole_p(TO_CLM(obj))), obj, SCM_ARG1, S_one_pole);
   if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else if (BOUND_P(fm)) scm_wrong_type_arg(S_one_pole, 2, fm);
-  return(TO_SCM_DOUBLE(mus_one_pole(mus_get_any(obj), fm1)));
+  return(TO_SCM_DOUBLE(mus_one_pole(TO_CLM(obj), fm1)));
 }
 
 static SCM g_two_zero(SCM obj, SCM fm)
 {
   #define H_two_zero "(" S_two_zero " gen &optional (input 0.0)) -> two zero filter of input"
   Float fm1 = 0.0;
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_two_zero_p(mus_get_any(obj))), obj, SCM_ARG1, S_two_zero);
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_two_zero_p(TO_CLM(obj))), obj, SCM_ARG1, S_two_zero);
   if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else if (BOUND_P(fm)) scm_wrong_type_arg(S_two_zero, 2, fm);
-  return(TO_SCM_DOUBLE(mus_two_zero(mus_get_any(obj), fm1)));
+  return(TO_SCM_DOUBLE(mus_two_zero(TO_CLM(obj), fm1)));
 }
 
 static SCM g_two_pole(SCM obj, SCM fm)
 {
   #define H_two_pole "(" S_two_pole " gen &optional (input 0.0)) -> two pole filter of input"
   Float fm1 = 0.0;
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_two_pole_p(mus_get_any(obj))), obj, SCM_ARG1, S_two_pole);
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_two_pole_p(TO_CLM(obj))), obj, SCM_ARG1, S_two_pole);
   if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else if (BOUND_P(fm)) scm_wrong_type_arg(S_two_pole, 2, fm);
-  return(TO_SCM_DOUBLE(mus_two_pole(mus_get_any(obj), fm1)));
+  return(TO_SCM_DOUBLE(mus_two_pole(TO_CLM(obj), fm1)));
 }
 
 static SCM g_one_zero_p(SCM obj) 
 {
   #define H_one_zero_p "(" S_one_zero_p " gen) -> #t if gen is a " S_one_zero " generator, else #f"
-  return(((mus_scm_p(obj)) && (mus_one_zero_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(((MUS_SCM_P(obj)) && (mus_one_zero_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
 static SCM g_one_pole_p(SCM obj) 
 {
   #define H_one_pole_p "(" S_one_pole_p " gen) -> #t if gen is a " S_one_pole " generator, else #f"
-  return(((mus_scm_p(obj)) && (mus_one_pole_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(((MUS_SCM_P(obj)) && (mus_one_pole_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
 static SCM g_two_zero_p(SCM obj) 
 {
   #define H_two_zero_p "(" S_two_zero_p " gen) -> #t if gen is a " S_two_zero " generator, else #f"
-  return(((mus_scm_p(obj)) && (mus_two_zero_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(((MUS_SCM_P(obj)) && (mus_two_zero_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
 static SCM g_two_pole_p(SCM obj) 
 {
   #define H_two_pole_p "(" S_two_pole_p " gen) -> #t if gen is a " S_two_pole " generator, else #f"
-  return(((mus_scm_p(obj)) && (mus_two_pole_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(((MUS_SCM_P(obj)) && (mus_two_pole_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
 static SCM g_a0(SCM obj) 
 {
   #define H_mus_a0 "(" S_mus_a0 " gen) -> gen's " S_mus_a0 " coefficient (scaler on x(n)), if any"
-  SCM_ASSERT(mus_scm_p(obj), obj, SCM_ARG1, S_mus_a0);
-  return(TO_SCM_DOUBLE(mus_a0(mus_get_any(obj))));
+  SCM_ASSERT(MUS_SCM_P(obj), obj, SCM_ARG1, S_mus_a0);
+  return(TO_SCM_DOUBLE(mus_a0(TO_CLM(obj))));
 }
 
 static SCM g_a1(SCM obj)
 {
   #define H_mus_a1 "(" S_mus_a1 " gen) -> gen's " S_mus_a1 " coefficient (scaler on x(n-1)), if any"
-  SCM_ASSERT(mus_scm_p(obj), obj, SCM_ARG1, S_mus_a1);
-  return(TO_SCM_DOUBLE(mus_a1(mus_get_any(obj))));
+  SCM_ASSERT(MUS_SCM_P(obj), obj, SCM_ARG1, S_mus_a1);
+  return(TO_SCM_DOUBLE(mus_a1(TO_CLM(obj))));
 }
 
 static SCM g_a2(SCM obj)
 {
   #define H_mus_a2 "(" S_mus_a2 " gen) -> gen's " S_mus_a2 " coefficient (scaler on x(n-2)), if any"
-  SCM_ASSERT(mus_scm_p(obj), obj, SCM_ARG1, S_mus_a2);
-  return(TO_SCM_DOUBLE(mus_a2(mus_get_any(obj))));
+  SCM_ASSERT(MUS_SCM_P(obj), obj, SCM_ARG1, S_mus_a2);
+  return(TO_SCM_DOUBLE(mus_a2(TO_CLM(obj))));
 }
 
 static SCM g_b1(SCM obj)
 {
   #define H_mus_b1 "(" S_mus_b1 " gen) -> gen's " S_mus_b1 " coefficient (scaler on y(n-1)), if any"
-  SCM_ASSERT(mus_scm_p(obj), obj, SCM_ARG1, S_mus_b1);
-  return(TO_SCM_DOUBLE(mus_b1(mus_get_any(obj))));
+  SCM_ASSERT(MUS_SCM_P(obj), obj, SCM_ARG1, S_mus_b1);
+  return(TO_SCM_DOUBLE(mus_b1(TO_CLM(obj))));
 }
 
 static SCM g_b2(SCM obj)
 {
   #define H_mus_b2 "(" S_mus_b2 " gen) -> gen's " S_mus_b2 " coefficient (scaler on y(n-2)), if any"
-  SCM_ASSERT(mus_scm_p(obj), obj, SCM_ARG1, S_mus_b2);
-  return(TO_SCM_DOUBLE(mus_b2(mus_get_any(obj))));
+  SCM_ASSERT(MUS_SCM_P(obj), obj, SCM_ARG1, S_mus_b2);
+  return(TO_SCM_DOUBLE(mus_b2(TO_CLM(obj))));
 }
 
 static SCM g_set_a0(SCM obj, SCM val)
 {
-  SCM_ASSERT(mus_scm_p(obj), obj, SCM_ARG1, S_mus_a0);
+  SCM_ASSERT(MUS_SCM_P(obj), obj, SCM_ARG1, S_mus_a0);
   SCM_ASSERT(NUMBER_P(val), val, SCM_ARG2, S_mus_a0);
-  return(TO_SCM_DOUBLE(mus_set_a0(mus_get_any(obj), TO_C_DOUBLE(val))));
+  return(TO_SCM_DOUBLE(mus_set_a0(TO_CLM(obj), TO_C_DOUBLE(val))));
 }
 
 static SCM g_set_a1(SCM obj, SCM val)
 {
-  SCM_ASSERT(mus_scm_p(obj), obj, SCM_ARG1, S_mus_a1);
+  SCM_ASSERT(MUS_SCM_P(obj), obj, SCM_ARG1, S_mus_a1);
   SCM_ASSERT(NUMBER_P(val), val, SCM_ARG2, S_mus_a1);
-  return(TO_SCM_DOUBLE(mus_set_a1(mus_get_any(obj), TO_C_DOUBLE(val))));
+  return(TO_SCM_DOUBLE(mus_set_a1(TO_CLM(obj), TO_C_DOUBLE(val))));
 }
 
 static SCM g_set_a2(SCM obj, SCM val)
 {
-  SCM_ASSERT(mus_scm_p(obj), obj, SCM_ARG1, S_mus_a2);
+  SCM_ASSERT(MUS_SCM_P(obj), obj, SCM_ARG1, S_mus_a2);
   SCM_ASSERT(NUMBER_P(val), val, SCM_ARG2, S_mus_a2);
-  return(TO_SCM_DOUBLE(mus_set_a2(mus_get_any(obj), TO_C_DOUBLE(val))));
+  return(TO_SCM_DOUBLE(mus_set_a2(TO_CLM(obj), TO_C_DOUBLE(val))));
 }
 
 static SCM g_set_b1(SCM obj, SCM val)
 {
-  SCM_ASSERT(mus_scm_p(obj), obj, SCM_ARG1, S_mus_b1);
+  SCM_ASSERT(MUS_SCM_P(obj), obj, SCM_ARG1, S_mus_b1);
   SCM_ASSERT(NUMBER_P(val), val, SCM_ARG2, S_mus_b1);
-  return(TO_SCM_DOUBLE(mus_set_b1(mus_get_any(obj), TO_C_DOUBLE(val))));
+  return(TO_SCM_DOUBLE(mus_set_b1(TO_CLM(obj), TO_C_DOUBLE(val))));
 }
 
 static SCM g_set_b2(SCM obj, SCM val)
 {
-  SCM_ASSERT(mus_scm_p(obj), obj, SCM_ARG1, S_mus_b2);
+  SCM_ASSERT(MUS_SCM_P(obj), obj, SCM_ARG1, S_mus_b2);
   SCM_ASSERT(NUMBER_P(val), val, SCM_ARG2, S_mus_b2);
-  return(TO_SCM_DOUBLE(mus_set_b2(mus_get_any(obj), TO_C_DOUBLE(val))));
+  return(TO_SCM_DOUBLE(mus_set_b2(TO_CLM(obj), TO_C_DOUBLE(val))));
 }
 
 static void init_smpflt(void)
@@ -2402,9 +2406,9 @@ static SCM g_formant(SCM gen, SCM input)
 {
   #define H_formant "(" S_formant " gen &optional (input 0.0)) -> next sample from resonator gen"
   Float in1 = 0.0;
-  SCM_ASSERT((mus_scm_p(gen) && (mus_formant_p(mus_get_any(gen)))), gen, SCM_ARG1, S_formant);
+  SCM_ASSERT((MUS_SCM_P(gen) && (mus_formant_p(TO_CLM(gen)))), gen, SCM_ARG1, S_formant);
   if (NUMBER_P(input)) in1 = TO_C_DOUBLE(input); else if (BOUND_P(input)) scm_wrong_type_arg(S_formant, 2, input);
-  return(TO_SCM_DOUBLE(mus_formant(mus_get_any(gen), in1)));
+  return(TO_SCM_DOUBLE(mus_formant(TO_CLM(gen), in1)));
 }
 
 static SCM g_formant_bank(SCM amps, SCM gens, SCM inp)
@@ -2417,7 +2421,7 @@ static SCM g_formant_bank(SCM amps, SCM gens, SCM inp)
 static SCM g_formant_p(SCM os) 
 {
   #define H_formant_p "(" S_formant_p " gen) -> #t if gen is a " S_formant " generator, else #f"
-  return(((mus_scm_p(os)) && (mus_formant_p(mus_get_any(os)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(((MUS_SCM_P(os)) && (mus_formant_p(TO_CLM(os)))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
 static SCM g_formant_radius (SCM gen)
@@ -2425,16 +2429,16 @@ static SCM g_formant_radius (SCM gen)
   #define H_mus_formant_radius  "(" S_mus_formant_radius  " gen) -> (" S_formant " generator) gen's pole radius \
 (the closer the radius is to 1.0, the narrower the resonance)."
 
-  SCM_ASSERT((mus_scm_p(gen) && (mus_formant_p(mus_get_any(gen)))), gen, SCM_ARG1, S_mus_formant_radius);
-  return(TO_SCM_DOUBLE(mus_formant_radius(mus_get_any(gen))));
+  SCM_ASSERT((MUS_SCM_P(gen) && (mus_formant_p(TO_CLM(gen)))), gen, SCM_ARG1, S_mus_formant_radius);
+  return(TO_SCM_DOUBLE(mus_formant_radius(TO_CLM(gen))));
 }
 
 static SCM g_set_formant_radius (SCM gen, SCM val)
 {
   #define H_mus_set_formant_radius  "(" S_mus_set_formant_radius  " gen val) sets (" S_formant " generator) gen's " S_mus_formant_radius " to val"
-  SCM_ASSERT((mus_scm_p(gen) && (mus_formant_p(mus_get_any(gen)))), gen, SCM_ARG1, S_mus_set_formant_radius);
+  SCM_ASSERT((MUS_SCM_P(gen) && (mus_formant_p(TO_CLM(gen)))), gen, SCM_ARG1, S_mus_set_formant_radius);
   SCM_ASSERT(NUMBER_P(val), val, SCM_ARG2, S_mus_set_formant_radius);
-  return(TO_SCM_DOUBLE(mus_set_formant_radius(mus_get_any(gen), TO_C_DOUBLE(val))));
+  return(TO_SCM_DOUBLE(mus_set_formant_radius(TO_CLM(gen), TO_C_DOUBLE(val))));
 }
 
 static SCM g_set_formant_radius_and_frequency (SCM gen, SCM rad, SCM frq)
@@ -2442,10 +2446,10 @@ static SCM g_set_formant_radius_and_frequency (SCM gen, SCM rad, SCM frq)
   #define H_mus_set_formant_radius_and_frequency  "(" S_mus_set_formant_radius_and_frequency  " gen radius frequency) sets (" S_formant " \
 generator) gen's radius and frequency"
 
-  SCM_ASSERT((mus_scm_p(gen) && (mus_formant_p(mus_get_any(gen)))), gen, SCM_ARG1, S_mus_set_formant_radius_and_frequency);
+  SCM_ASSERT((MUS_SCM_P(gen) && (mus_formant_p(TO_CLM(gen)))), gen, SCM_ARG1, S_mus_set_formant_radius_and_frequency);
   SCM_ASSERT(NUMBER_P(rad), rad, SCM_ARG2, S_mus_set_formant_radius_and_frequency);
   SCM_ASSERT(NUMBER_P(frq), frq, SCM_ARG3, S_mus_set_formant_radius_and_frequency);
-  mus_set_formant_radius_and_frequency(mus_get_any(gen), TO_C_DOUBLE(rad), TO_C_DOUBLE(frq));
+  mus_set_formant_radius_and_frequency(TO_CLM(gen), TO_C_DOUBLE(rad), TO_C_DOUBLE(frq));
   return(rad);
 }
 
@@ -2515,7 +2519,7 @@ with chans samples, each sample set from the trailing arguments (defaulting to 0
 static SCM g_frame_p(SCM obj) 
 {
   #define H_frame_p "(" S_frame_p " gen) -> #t if gen is a " S_frame " object, else #f"
-  return(((mus_scm_p(obj)) && (mus_frame_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(((MUS_SCM_P(obj)) && (mus_frame_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
 #define DONT_FREE_FRAME -1
@@ -2536,13 +2540,13 @@ static SCM g_frame_add(SCM uf1, SCM uf2, SCM ures) /* optional res */
 if outf is not given, a new frame is created. outf[i] = f1[i] + f2[i]"
 
   mus_frame *res = NULL;
-  SCM_ASSERT((mus_scm_p(uf1)) && (mus_frame_p(mus_get_any(uf1))), uf1, SCM_ARG1, S_frame_add);
-  SCM_ASSERT((mus_scm_p(uf2)) && (mus_frame_p(mus_get_any(uf2))), uf2, SCM_ARG2, S_frame_add);
-  if ((mus_scm_p(ures)) && 
-      (mus_frame_p(mus_get_any(ures)))) 
-    res = (mus_frame *)mus_get_any(ures);
-  return(g_wrap_frame(mus_frame_add((mus_frame *)mus_get_any(uf1),
-				    (mus_frame *)mus_get_any(uf2),
+  SCM_ASSERT((MUS_SCM_P(uf1)) && (mus_frame_p(TO_CLM(uf1))), uf1, SCM_ARG1, S_frame_add);
+  SCM_ASSERT((MUS_SCM_P(uf2)) && (mus_frame_p(TO_CLM(uf2))), uf2, SCM_ARG2, S_frame_add);
+  if ((MUS_SCM_P(ures)) && 
+      (mus_frame_p(TO_CLM(ures)))) 
+    res = (mus_frame *)TO_CLM(ures);
+  return(g_wrap_frame(mus_frame_add((mus_frame *)TO_CLM(uf1),
+				    (mus_frame *)TO_CLM(uf2),
 				    res),
 		      (res) ? DONT_FREE_FRAME : FREE_FRAME));
 }
@@ -2553,13 +2557,13 @@ static SCM g_frame_multiply(SCM uf1, SCM uf2, SCM ures) /* optional res */
 if outf is not given, a new frame is created. outf[i] = f1[i] * f2[i]."
 
   mus_frame *res = NULL;
-  SCM_ASSERT((mus_scm_p(uf1)) && (mus_frame_p(mus_get_any(uf1))), uf1, SCM_ARG1, S_frame_multiply);
-  SCM_ASSERT((mus_scm_p(uf2)) && (mus_frame_p(mus_get_any(uf2))), uf2, SCM_ARG2, S_frame_multiply);
-  if ((mus_scm_p(ures)) && 
-      (mus_frame_p(mus_get_any(ures)))) 
-    res = (mus_frame *)mus_get_any(ures);
-  return(g_wrap_frame(mus_frame_multiply((mus_frame *)mus_get_any(uf1),
-					 (mus_frame *)mus_get_any(uf2),
+  SCM_ASSERT((MUS_SCM_P(uf1)) && (mus_frame_p(TO_CLM(uf1))), uf1, SCM_ARG1, S_frame_multiply);
+  SCM_ASSERT((MUS_SCM_P(uf2)) && (mus_frame_p(TO_CLM(uf2))), uf2, SCM_ARG2, S_frame_multiply);
+  if ((MUS_SCM_P(ures)) && 
+      (mus_frame_p(TO_CLM(ures)))) 
+    res = (mus_frame *)TO_CLM(ures);
+  return(g_wrap_frame(mus_frame_multiply((mus_frame *)TO_CLM(uf1),
+					 (mus_frame *)TO_CLM(uf2),
 					 res),
 		      (res) ? DONT_FREE_FRAME : FREE_FRAME));
 }
@@ -2567,18 +2571,18 @@ if outf is not given, a new frame is created. outf[i] = f1[i] * f2[i]."
 static SCM g_frame_ref(SCM uf1, SCM uchan)
 {
   #define H_frame_ref "(" S_frame_ref " f chan) -> f[chan] (the chan-th sample in frame f"
-  SCM_ASSERT((mus_scm_p(uf1)) && (mus_frame_p(mus_get_any(uf1))), uf1, SCM_ARG1, S_frame_ref);
+  SCM_ASSERT((MUS_SCM_P(uf1)) && (mus_frame_p(TO_CLM(uf1))), uf1, SCM_ARG1, S_frame_ref);
   SCM_ASSERT(INTEGER_P(uchan), uchan, SCM_ARG2, S_frame_ref);
-  return(TO_SCM_DOUBLE(mus_frame_ref((mus_frame *)mus_get_any(uf1), TO_C_INT(uchan))));
+  return(TO_SCM_DOUBLE(mus_frame_ref((mus_frame *)TO_CLM(uf1), TO_C_INT(uchan))));
 }
 
 static SCM g_set_frame_ref(SCM uf1, SCM uchan, SCM val)
 {
   #define H_frame_set "(" S_frame_set " f chan val) sets frame f's chan-th sample to val: f[chan] = val"
-  SCM_ASSERT((mus_scm_p(uf1)) && (mus_frame_p(mus_get_any(uf1))), uf1, SCM_ARG1, S_frame_set);
+  SCM_ASSERT((MUS_SCM_P(uf1)) && (mus_frame_p(TO_CLM(uf1))), uf1, SCM_ARG1, S_frame_set);
   SCM_ASSERT(INTEGER_P(uchan), uchan, SCM_ARG2, S_frame_set);
   SCM_ASSERT(NUMBER_P(val), val, SCM_ARG3, S_frame_set);
-  return(TO_SCM_DOUBLE(mus_frame_set((mus_frame *)mus_get_any(uf1), TO_C_INT(uchan), TO_C_DOUBLE(val))));
+  return(TO_SCM_DOUBLE(mus_frame_set((mus_frame *)TO_CLM(uf1), TO_C_INT(uchan), TO_C_DOUBLE(val))));
 }
 
 static void init_frame(void)
@@ -2610,16 +2614,16 @@ static void init_frame(void)
 static SCM g_mixer_p(SCM obj) 
 {
   #define H_mixer_p "(" S_mixer_p " gen) -> #t if gen is a " S_mixer " object, else #f"
-  return(((mus_scm_p(obj)) && (mus_mixer_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(((MUS_SCM_P(obj)) && (mus_mixer_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
 static SCM g_mixer_ref(SCM uf1, SCM in, SCM out)
 {
   #define H_mixer_ref "(" S_mixer_ref " m in out) -> m[in, out], the mixer coefficient at location (in, out)"
-  SCM_ASSERT((mus_scm_p(uf1)) && (mus_mixer_p(mus_get_any(uf1))), uf1, SCM_ARG1, S_mixer_ref);
+  SCM_ASSERT((MUS_SCM_P(uf1)) && (mus_mixer_p(TO_CLM(uf1))), uf1, SCM_ARG1, S_mixer_ref);
   SCM_ASSERT(INTEGER_P(in), in, SCM_ARG2, S_mixer_ref);
   SCM_ASSERT(INTEGER_P(out), out, SCM_ARG3, S_mixer_ref);
-  return(TO_SCM_DOUBLE(mus_mixer_ref((mus_mixer *)mus_get_any(uf1),
+  return(TO_SCM_DOUBLE(mus_mixer_ref((mus_mixer *)TO_CLM(uf1),
 				     TO_C_INT(in),
 				     TO_C_INT(out))));
 }
@@ -2627,11 +2631,11 @@ static SCM g_mixer_ref(SCM uf1, SCM in, SCM out)
 static SCM g_set_mixer_ref(SCM uf1, SCM in, SCM out, SCM val)
 {
   #define H_mixer_set "(" S_mixer_set " m in out val) sets m[in, out] = val"
-  SCM_ASSERT((mus_scm_p(uf1)) && (mus_mixer_p(mus_get_any(uf1))), uf1, SCM_ARG1, S_mixer_set);
+  SCM_ASSERT((MUS_SCM_P(uf1)) && (mus_mixer_p(TO_CLM(uf1))), uf1, SCM_ARG1, S_mixer_set);
   SCM_ASSERT(INTEGER_P(in), in, SCM_ARG2, S_mixer_set);
   SCM_ASSERT(INTEGER_P(out), out, SCM_ARG2, S_mixer_set);
   SCM_ASSERT(NUMBER_P(val), val, SCM_ARG4, S_mixer_set);
-  return(TO_SCM_DOUBLE(mus_mixer_set((mus_mixer *)mus_get_any(uf1),
+  return(TO_SCM_DOUBLE(mus_mixer_set((mus_mixer *)TO_CLM(uf1),
 				     TO_C_INT(in),
 				     TO_C_INT(out),
 				     TO_C_DOUBLE(val))));
@@ -2655,13 +2659,13 @@ static SCM g_mixer_multiply(SCM uf1, SCM uf2, SCM ures) /* optional res */
 (a matrix multiply), returning the mixer outm, or creating a new mixer if outm is not given."
 
   mus_mixer *res = NULL;
-  SCM_ASSERT((mus_scm_p(uf1)) && (mus_mixer_p(mus_get_any(uf1))), uf1, SCM_ARG1, S_mixer_multiply);
-  SCM_ASSERT((mus_scm_p(uf2)) && (mus_mixer_p(mus_get_any(uf2))), uf2, SCM_ARG2, S_mixer_multiply);
-  if ((mus_scm_p(ures)) && 
-      (mus_mixer_p(mus_get_any(ures))))
-    res = (mus_mixer *)mus_get_any(ures);
-  return(g_wrap_mixer(mus_mixer_multiply((mus_mixer *)mus_get_any(uf1),
-					 (mus_mixer *)mus_get_any(uf2),
+  SCM_ASSERT((MUS_SCM_P(uf1)) && (mus_mixer_p(TO_CLM(uf1))), uf1, SCM_ARG1, S_mixer_multiply);
+  SCM_ASSERT((MUS_SCM_P(uf2)) && (mus_mixer_p(TO_CLM(uf2))), uf2, SCM_ARG2, S_mixer_multiply);
+  if ((MUS_SCM_P(ures)) && 
+      (mus_mixer_p(TO_CLM(ures))))
+    res = (mus_mixer *)TO_CLM(ures);
+  return(g_wrap_mixer(mus_mixer_multiply((mus_mixer *)TO_CLM(uf1),
+					 (mus_mixer *)TO_CLM(uf2),
 					 res),
 		      (res) ? DONT_FREE_MIXER : FREE_MIXER));
 }
@@ -2672,13 +2676,13 @@ static SCM g_frame2frame(SCM mx, SCM infr, SCM outfr) /* optional outfr */
 returning frame outf (or creating a new frame if necessary); this is a matrix multiply of m and f"
 
   mus_frame *res = NULL;
-  SCM_ASSERT((mus_scm_p(mx)) && (mus_mixer_p(mus_get_any(mx))), mx, SCM_ARG1, S_frame2frame);
-  SCM_ASSERT((mus_scm_p(infr)) && (mus_frame_p(mus_get_any(infr))), infr, SCM_ARG2, S_frame2frame);
-  if ((mus_scm_p(outfr)) && 
-      (mus_frame_p(mus_get_any(outfr)))) 
-    res = (mus_frame *)mus_get_any(outfr);
-  return(g_wrap_frame(mus_frame2frame((mus_mixer *)mus_get_any(mx),
-				      (mus_frame *)mus_get_any(infr),
+  SCM_ASSERT((MUS_SCM_P(mx)) && (mus_mixer_p(TO_CLM(mx))), mx, SCM_ARG1, S_frame2frame);
+  SCM_ASSERT((MUS_SCM_P(infr)) && (mus_frame_p(TO_CLM(infr))), infr, SCM_ARG2, S_frame2frame);
+  if ((MUS_SCM_P(outfr)) && 
+      (mus_frame_p(TO_CLM(outfr)))) 
+    res = (mus_frame *)TO_CLM(outfr);
+  return(g_wrap_frame(mus_frame2frame((mus_mixer *)TO_CLM(mx),
+				      (mus_frame *)TO_CLM(infr),
 				      res),
 		      (res) ? DONT_FREE_FRAME : FREE_FRAME));
 }
@@ -2689,8 +2693,8 @@ static SCM g_frame2list(SCM fr)
   mus_frame *val;
   int i;
   SCM res = SCM_EOL;
-  SCM_ASSERT((mus_scm_p(fr)) && (mus_frame_p(mus_get_any(fr))), fr, SCM_ARG1, S_frame2list);
-  val = (mus_frame *)mus_get_any(fr);
+  SCM_ASSERT((MUS_SCM_P(fr)) && (mus_frame_p(TO_CLM(fr))), fr, SCM_ARG1, S_frame2list);
+  val = (mus_frame *)TO_CLM(fr);
   for (i = (val->chans) - 1; i >= 0; i--) 
     res = scm_cons(TO_SCM_DOUBLE(val->vals[i]), res);
   return(scm_return_first(res, fr));
@@ -2699,10 +2703,10 @@ static SCM g_frame2list(SCM fr)
 static SCM g_frame2sample(SCM mx, SCM fr)
 {
   #define H_frame2sample "(" S_frame2sample " m f) -> pass frame f through mixer (or frame) m to produce a sample"
-  SCM_ASSERT((mus_scm_p(mx)), mx, SCM_ARG1, S_frame2sample);
-  SCM_ASSERT((mus_scm_p(fr)) && (mus_frame_p(mus_get_any(fr))), fr, SCM_ARG2, S_frame2sample);
-  return(TO_SCM_DOUBLE(mus_frame2sample(mus_get_any(mx),
-					(mus_frame *)mus_get_any(fr))));
+  SCM_ASSERT((MUS_SCM_P(mx)), mx, SCM_ARG1, S_frame2sample);
+  SCM_ASSERT((MUS_SCM_P(fr)) && (mus_frame_p(TO_CLM(fr))), fr, SCM_ARG2, S_frame2sample);
+  return(TO_SCM_DOUBLE(mus_frame2sample(TO_CLM(mx),
+					(mus_frame *)TO_CLM(fr))));
 }
 
 static SCM g_sample2frame(SCM mx, SCM insp, SCM outfr) /* optional outfr */
@@ -2711,12 +2715,12 @@ static SCM g_sample2frame(SCM mx, SCM insp, SCM outfr) /* optional outfr */
 returning frame outf (creating it if necessary)"
 
   mus_frame *res = NULL;
-  SCM_ASSERT((mus_scm_p(mx)), mx, SCM_ARG1, S_sample2frame);
+  SCM_ASSERT((MUS_SCM_P(mx)), mx, SCM_ARG1, S_sample2frame);
   SCM_ASSERT(NUMBER_P(insp), insp, SCM_ARG2, S_sample2frame);
-  if ((mus_scm_p(outfr)) && 
-      (mus_frame_p(mus_get_any(outfr)))) 
-    res = (mus_frame *)mus_get_any(outfr);
-  return(g_wrap_frame(mus_sample2frame(mus_get_any(mx),
+  if ((MUS_SCM_P(outfr)) && 
+      (mus_frame_p(TO_CLM(outfr)))) 
+    res = (mus_frame *)TO_CLM(outfr);
+  return(g_wrap_frame(mus_sample2frame(TO_CLM(mx),
 				       TO_C_DOUBLE(insp),
 				       res),
 		      (res) ? DONT_FREE_FRAME : FREE_FRAME));
@@ -2799,7 +2803,7 @@ static void init_mixer(void)
 static SCM g_buffer_p(SCM obj) 
 {
   #define H_buffer_p "(" S_buffer_p " gen) -> #t if gen is a " S_buffer " object, else #f"
-  return(((mus_scm_p(obj)) && (mus_buffer_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(((MUS_SCM_P(obj)) && (mus_buffer_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
 static SCM g_make_buffer(SCM arg1, SCM arg2, SCM arg3, SCM arg4)
@@ -2838,50 +2842,50 @@ processing normally involving overlap-adds."
 static SCM g_buffer2sample(SCM obj)
 {
   #define H_buffer2sample "(" S_buffer2sample " gen) -> next sample in buffer, removing it"
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_buffer_p(mus_get_any(obj))), obj, SCM_ARG1, S_buffer2sample);
-  return(TO_SCM_DOUBLE(mus_buffer2sample(mus_get_any(obj))));
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_buffer_p(TO_CLM(obj))), obj, SCM_ARG1, S_buffer2sample);
+  return(TO_SCM_DOUBLE(mus_buffer2sample(TO_CLM(obj))));
 }
 
 static SCM g_buffer2frame(SCM obj, SCM fr)
 {
   #define H_buffer2frame "(" S_buffer2frame " gen) -> next frame of samples in buffer, removing them"
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_buffer_p(mus_get_any(obj))), obj, SCM_ARG1, S_buffer2frame);
-  SCM_ASSERT((mus_scm_p(fr)) && (mus_frame_p(mus_get_any(fr))), fr, SCM_ARG2, S_buffer2frame);
-  return(g_wrap_frame((mus_frame *)mus_buffer2frame(mus_get_any(obj),
-						    mus_get_any(fr)),
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_buffer_p(TO_CLM(obj))), obj, SCM_ARG1, S_buffer2frame);
+  SCM_ASSERT((MUS_SCM_P(fr)) && (mus_frame_p(TO_CLM(fr))), fr, SCM_ARG2, S_buffer2frame);
+  return(g_wrap_frame((mus_frame *)mus_buffer2frame(TO_CLM(obj),
+						    TO_CLM(fr)),
 		      DONT_FREE_FRAME));
 }
 
 static SCM g_buffer_empty_p(SCM obj)
 {
   #define H_buffer_empty_p "(" S_buffer_empty_p " gen) -> #t if buffer is in need of more samples"
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_buffer_p(mus_get_any(obj))), obj, SCM_ARG1, S_buffer_empty_p);
-  return(TO_SMALL_SCM_INT(mus_buffer_empty_p(mus_get_any(obj))));
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_buffer_p(TO_CLM(obj))), obj, SCM_ARG1, S_buffer_empty_p);
+  return(TO_SMALL_SCM_INT(mus_buffer_empty_p(TO_CLM(obj))));
 }
 
 static SCM g_buffer_full_p(SCM obj)
 {
   #define H_buffer_full_p "(" S_buffer_full_p " gen) -> #t if buffer has no room for any more samples"
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_buffer_p(mus_get_any(obj))), obj, SCM_ARG1, S_buffer_full_p);
-  return(TO_SMALL_SCM_INT(mus_buffer_full_p(mus_get_any(obj))));
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_buffer_p(TO_CLM(obj))), obj, SCM_ARG1, S_buffer_full_p);
+  return(TO_SMALL_SCM_INT(mus_buffer_full_p(TO_CLM(obj))));
 }
 
 static SCM g_sample2buffer(SCM obj, SCM val)
 {
   #define H_sample2buffer "(" S_sample2buffer " gen val) append val to current end of data in buffer"
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_buffer_p(mus_get_any(obj))), obj, SCM_ARG1, S_sample2buffer);
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_buffer_p(TO_CLM(obj))), obj, SCM_ARG1, S_sample2buffer);
   SCM_ASSERT(NUMBER_P(val), val, SCM_ARG1, S_sample2buffer);
-  return(TO_SCM_DOUBLE(mus_sample2buffer(mus_get_any(obj),
+  return(TO_SCM_DOUBLE(mus_sample2buffer(TO_CLM(obj),
 					 TO_C_DOUBLE(val))));
 }
 
 static SCM g_frame2buffer(SCM obj, SCM val)
 {
   #define H_frame2buffer "(" S_frame2buffer " gen f) appends sample in frame f to end of data in buffer"
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_buffer_p(mus_get_any(obj))), obj, SCM_ARG1, S_frame2buffer);
-  SCM_ASSERT((mus_scm_p(val)) && (mus_frame_p(mus_get_any(val))), val, SCM_ARG2, S_frame2buffer);
-  return(g_wrap_frame((mus_frame *)mus_frame2buffer(mus_get_any(obj),
-						    mus_get_any(val)),
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_buffer_p(TO_CLM(obj))), obj, SCM_ARG1, S_frame2buffer);
+  SCM_ASSERT((MUS_SCM_P(val)) && (mus_frame_p(TO_CLM(val))), val, SCM_ARG2, S_frame2buffer);
+  return(g_wrap_frame((mus_frame *)mus_frame2buffer(TO_CLM(obj),
+						    TO_CLM(val)),
 		      DONT_FREE_FRAME));
 }
 
@@ -2930,9 +2934,9 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
       phase = fkeyarg(keys[1], S_make_wave_train, orig_arg[1] + 1, args[orig_arg[1]], phase);
       if (!(keyword_p(keys[2])))
         {
-	  if (vct_p(keys[2]))
+	  if (VCT_P(keys[2]))
 	    {
-	      v = get_vct(keys[2]);
+	      v = TO_VCT(keys[2]);
 	      wave = copy_vct_data(v);
 	      wsize = v->length;
 	    }
@@ -2952,15 +2956,15 @@ static SCM g_wave_train(SCM obj, SCM fm)
 {
   #define H_wave_train "(" S_wave_train " gen &optional (fm 0.0)) -> next sample of wave-train"
   Float fm1 = 0.0;
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_wave_train_p(mus_get_any(obj))), obj, SCM_ARG1, S_wave_train);
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_wave_train_p(TO_CLM(obj))), obj, SCM_ARG1, S_wave_train);
   if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else if (BOUND_P(fm)) scm_wrong_type_arg(S_wave_train, 2, fm);
-  return(TO_SCM_DOUBLE(mus_wave_train(mus_get_any(obj), fm1)));
+  return(TO_SCM_DOUBLE(mus_wave_train(TO_CLM(obj), fm1)));
 }
 
 static SCM g_wave_train_p(SCM obj) 
 {
   #define H_wave_train_p "(" S_wave_train_p " gen) -> #t if gen is a " S_wave_train " generator, else #f"
-  return(((mus_scm_p(obj)) && (mus_wave_train_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(((MUS_SCM_P(obj)) && (mus_wave_train_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
 static void init_wt(void)
@@ -3047,9 +3051,9 @@ is basically the same as make-oscil"
 	}
       if (!(keyword_p(keys[3])))
         {
-	  if (vct_p(keys[3]))
+	  if (VCT_P(keys[3]))
 	    {
-	      v = get_vct(keys[3]);
+	      v = TO_VCT(keys[3]);
 	      wave = copy_vct_data(v);
 	      wsize = v->length;
 	    }
@@ -3080,16 +3084,16 @@ static SCM g_waveshape(SCM obj, SCM index, SCM fm)
 {
   #define H_waveshape "(" S_waveshape " gen &optional (index 1.0) (fm 0.0)) -> next sample of waveshaper"
   Float fm1 = 0.0, index1 = 1.0;
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_waveshape_p(mus_get_any(obj))), obj, SCM_ARG1, S_waveshape);
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_waveshape_p(TO_CLM(obj))), obj, SCM_ARG1, S_waveshape);
   if (NUMBER_P(index)) index1 = TO_C_DOUBLE(index); else if (BOUND_P(index)) scm_wrong_type_arg(S_waveshape, 2, index);
   if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else if (BOUND_P(fm)) scm_wrong_type_arg(S_waveshape, 3, fm);
-  return(TO_SCM_DOUBLE(mus_waveshape(mus_get_any(obj), index1, fm1)));
+  return(TO_SCM_DOUBLE(mus_waveshape(TO_CLM(obj), index1, fm1)));
 }
 
 static SCM g_waveshape_p(SCM obj) 
 {
   #define H_waveshape_p "(" S_waveshape_p " gen) -> #t if gen is a " S_waveshape " generator, else #f"
-  return(((mus_scm_p(obj)) && (mus_waveshape_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(((MUS_SCM_P(obj)) && (mus_waveshape_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
 static SCM g_partials2waveshape(SCM amps, SCM s_size)
@@ -3159,16 +3163,16 @@ static void init_ws(void)
 static SCM g_sine_summation_p(SCM obj) 
 {
   #define H_sine_summation_p "(" S_sine_summation_p " gen) -> #t if gen is a " S_sine_summation " generator, else #f"
-  return(((mus_scm_p(obj)) && (mus_sine_summation_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(((MUS_SCM_P(obj)) && (mus_sine_summation_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
 static SCM g_sine_summation(SCM obj, SCM fm)
 {
   #define H_sine_summation "(" S_sine_summation " gen &optional (fm 0.0)) -> next sample of sine summation generator"
   Float fm1 = 0.0;
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_sine_summation_p(mus_get_any(obj))), obj, SCM_ARG1, S_sine_summation);
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_sine_summation_p(TO_CLM(obj))), obj, SCM_ARG1, S_sine_summation);
   if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else if (BOUND_P(fm)) scm_wrong_type_arg(S_sine_summation, 2, fm);
-  return(TO_SCM_DOUBLE(mus_sine_summation(mus_get_any(obj), fm1)));
+  return(TO_SCM_DOUBLE(mus_sine_summation(TO_CLM(obj), fm1)));
 }
 
 static SCM g_make_sine_summation(SCM arglist)
@@ -3231,43 +3235,43 @@ static void init_sss(void)
 static SCM g_filter_p(SCM obj) 
 {
   #define H_filter_p "(" S_filter_p " gen) -> #t if gen is a " S_filter " generator, else #f"
-  return(((mus_scm_p(obj)) && (mus_filter_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(((MUS_SCM_P(obj)) && (mus_filter_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
 static SCM g_fir_filter_p(SCM obj) 
 {
   #define H_fir_filter_p "(" S_fir_filter_p " gen) -> #t if gen is a " S_fir_filter " generator, else #f"
-  return(((mus_scm_p(obj)) && (mus_fir_filter_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(((MUS_SCM_P(obj)) && (mus_fir_filter_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
 static SCM g_iir_filter_p(SCM obj) 
 {
   #define H_iir_filter_p "(" S_iir_filter_p " gen) -> #t if gen is a " S_iir_filter " generator, else #f"
-  return(((mus_scm_p(obj)) && (mus_iir_filter_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(((MUS_SCM_P(obj)) && (mus_iir_filter_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
 static SCM g_filter(SCM obj, SCM input)
 {
   #define H_filter "(" S_filter " gen &optional (input 0.0)) -> next sample from FIR/IIR filter"
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_filter_p(mus_get_any(obj))), obj, SCM_ARG1, S_filter);
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_filter_p(TO_CLM(obj))), obj, SCM_ARG1, S_filter);
   SCM_ASSERT(NUMBER_P(input), input, SCM_ARG2, S_filter);
-  return(TO_SCM_DOUBLE(mus_filter(mus_get_any(obj), TO_C_DOUBLE(input))));
+  return(TO_SCM_DOUBLE(mus_filter(TO_CLM(obj), TO_C_DOUBLE(input))));
 }
 
 static SCM g_fir_filter(SCM obj, SCM input)
 {
   #define H_fir_filter "(" S_fir_filter " gen &optional (input 0.0)) -> next sample from FIR filter"
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_fir_filter_p(mus_get_any(obj))), obj, SCM_ARG1, S_fir_filter);
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_fir_filter_p(TO_CLM(obj))), obj, SCM_ARG1, S_fir_filter);
   SCM_ASSERT(NUMBER_P(input), input, SCM_ARG2, S_fir_filter);
-  return(TO_SCM_DOUBLE(mus_fir_filter(mus_get_any(obj), TO_C_DOUBLE(input))));
+  return(TO_SCM_DOUBLE(mus_fir_filter(TO_CLM(obj), TO_C_DOUBLE(input))));
 }
 
 static SCM g_iir_filter(SCM obj, SCM input)
 {
   #define H_iir_filter "(" S_iir_filter " gen &optional (input 0.0)) -> next sample from IIR filter"
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_iir_filter_p(mus_get_any(obj))), obj, SCM_ARG1, S_iir_filter);
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_iir_filter_p(TO_CLM(obj))), obj, SCM_ARG1, S_iir_filter);
   SCM_ASSERT(NUMBER_P(input), input, SCM_ARG2, S_iir_filter);
-  return(TO_SCM_DOUBLE(mus_iir_filter(mus_get_any(obj), TO_C_DOUBLE(input))));
+  return(TO_SCM_DOUBLE(mus_iir_filter(TO_CLM(obj), TO_C_DOUBLE(input))));
 }
 
 enum {G_FILTER, G_FIR_FILTER, G_IIR_FILTER};
@@ -3299,20 +3303,20 @@ static SCM g_make_filter_1(int choice, SCM arg1, SCM arg2, SCM arg3, SCM arg4, S
       order = ikeyarg(keys[0], caller, orig_arg[0] + 1, args[orig_arg[0]], 0);
       if (!(keyword_p(keys[1])))
         {
-	  if (vct_p(keys[1]))
+	  if (VCT_P(keys[1]))
 	    {
 	      xwave = keys[1];
-	      x = get_vct(xwave);
+	      x = TO_VCT(xwave);
 	    }
           else scm_wrong_type_arg(caller, orig_arg[1] + 1, args[orig_arg[1]]);
         }
       if (nkeys > 2)
 	if (!(keyword_p(keys[2])))
 	  {
-	    if (vct_p(keys[2]))
+	    if (VCT_P(keys[2]))
 	      {
 		ywave = keys[2];
-		y = get_vct(ywave);
+		y = TO_VCT(ywave);
 	      }
 	    else scm_wrong_type_arg(caller, orig_arg[2] + 1, args[orig_arg[2]]);
 	  }
@@ -3361,16 +3365,16 @@ static SCM g_make_iir_filter(SCM arg1, SCM arg2, SCM arg3, SCM arg4)
 static SCM g_mus_order(SCM obj)
 {
   #define H_mus_order "(" S_mus_order " gen) -> gen's filter order"
-  SCM_ASSERT(mus_scm_p(obj), obj, SCM_ARG1, S_mus_order);
-  return(TO_SMALL_SCM_INT(mus_order(mus_get_any(obj))));
+  SCM_ASSERT(MUS_SCM_P(obj), obj, SCM_ARG1, S_mus_order);
+  return(TO_SMALL_SCM_INT(mus_order(TO_CLM(obj))));
 }
 
 static SCM g_mus_xcoeffs(SCM gen) 
 {
   #define H_mus_xcoeffs "(" S_mus_xcoeffs " gen) -> gen's filter xcoeffs (vct of coefficients on inputs)"
   mus_scm *ms;
-  SCM_ASSERT(mus_scm_p(gen), gen, SCM_ARG1, S_mus_data);
-  ms = mus_get_scm(gen);
+  SCM_ASSERT(MUS_SCM_P(gen), gen, SCM_ARG1, S_mus_data);
+  ms = TO_MUS_SCM(gen);
   if (ms->vcts)
     return(ms->vcts[0]); 
   return(SCM_BOOL_F);
@@ -3380,15 +3384,15 @@ static SCM g_mus_ycoeffs(SCM gen)
 {
   #define H_mus_ycoeffs "(" S_mus_ycoeffs " gen) -> gen's filter ycoeffs (vct of coefficients on outputs)"
   mus_scm *ms;
-  SCM_ASSERT(mus_scm_p(gen), gen, SCM_ARG1, S_mus_data);
-  ms = mus_get_scm(gen);
+  SCM_ASSERT(MUS_SCM_P(gen), gen, SCM_ARG1, S_mus_data);
+  ms = TO_MUS_SCM(gen);
   if (ms->vcts)
     {
-      if (mus_iir_filter_p(mus_get_any(gen)))  
+      if (mus_iir_filter_p(TO_CLM(gen)))  
 	return(ms->vcts[0]);
       else
 	{
-	  if (mus_filter_p(mus_get_any(gen)))
+	  if (mus_filter_p(TO_CLM(gen)))
 	    return(ms->vcts[1]); 
 	}
     }
@@ -3424,21 +3428,21 @@ static void init_flt(void)
 static SCM g_env_p(SCM obj) 
 {
   #define H_env_p "(" S_env_p " gen) -> #t if gen is a " S_env " generator, else #f"
-  return(((mus_scm_p(obj)) && (mus_env_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(((MUS_SCM_P(obj)) && (mus_env_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
 static SCM g_env(SCM obj) 
 {
   #define H_env "(" S_env " gen) -> next sample from envelope generator"
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_env_p(mus_get_any(obj))), obj, SCM_ARG1, S_env);
-  return(TO_SCM_DOUBLE(mus_env(mus_get_any(obj))));
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_env_p(TO_CLM(obj))), obj, SCM_ARG1, S_env);
+  return(TO_SCM_DOUBLE(mus_env(TO_CLM(obj))));
 }
 
 static SCM g_restart_env(SCM obj) 
 {
   #define H_restart_env "(" S_restart_env " gen) restarts (sets to sample 0) envelope generator gen"
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_env_p(mus_get_any(obj))), obj, SCM_ARG1, S_restart_env);
-  mus_restart_env(mus_get_any(obj));
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_env_p(TO_CLM(obj))), obj, SCM_ARG1, S_restart_env);
+  mus_restart_env(TO_CLM(obj));
   return(SCM_BOOL_F);
 }
 
@@ -3498,7 +3502,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
         }
     }
   if (brkpts == NULL) 
-    scm_misc_error(S_make_env, "no envelope?", SCM_EOL);
+    mus_misc_error(S_make_env, "no envelope?", SCM_EOL);
   if ((end < 0) || (base < 0.0) || (duration < 0.0) || (start < 0))
     {
       if (brkpts) FREE(brkpts);
@@ -3529,8 +3533,8 @@ static SCM g_env_interp(SCM x, SCM env1) /* "env" causes trouble in Objective-C!
 {
   #define H_env_interp "(" S_env_interp " gen x) -> value of envelope at x"
   SCM_ASSERT(NUMBER_P(x), x, SCM_ARG1, S_env_interp);
-  SCM_ASSERT((mus_scm_p(env1)) && (mus_env_p(mus_get_any(env1))), env1, SCM_ARG2, S_env_interp);
-  return(TO_SCM_DOUBLE(mus_env_interp(TO_C_DOUBLE(x), mus_get_any(env1))));
+  SCM_ASSERT((MUS_SCM_P(env1)) && (mus_env_p(TO_CLM(env1))), env1, SCM_ARG2, S_env_interp);
+  return(TO_SCM_DOUBLE(mus_env_interp(TO_C_DOUBLE(x), TO_CLM(env1))));
 }
 
 static void init_env(void)
@@ -3575,45 +3579,45 @@ static void init_env(void)
 static SCM g_input_p(SCM obj) 
 {
   #define H_mus_input_p "(" S_mus_input_p " gen) -> #t if gen is an input generator, else #f"
-  return(((mus_scm_p(obj)) && (mus_input_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(((MUS_SCM_P(obj)) && (mus_input_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
 static SCM g_output_p(SCM obj) 
 {
   #define H_mus_output_p "(" S_mus_output_p " gen) -> #t if gen is an output generator, else #f"
-  return(((mus_scm_p(obj)) && (mus_output_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(((MUS_SCM_P(obj)) && (mus_output_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
 static SCM g_file2sample_p(SCM obj) 
 {
   #define H_file2sample_p "(" S_file2sample_p " gen) -> #t if gen is a " S_file2sample " generator, else #f"
-  return(((mus_scm_p(obj)) && (mus_file2sample_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(((MUS_SCM_P(obj)) && (mus_file2sample_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
 static SCM g_file2frame_p(SCM obj) 
 {
   #define H_file2frame_p "(" S_file2frame_p " gen) -> #t if gen is a " S_file2frame " generator, else #f"
-  return(((mus_scm_p(obj)) && (mus_file2frame_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(((MUS_SCM_P(obj)) && (mus_file2frame_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
 static SCM g_sample2file_p(SCM obj) 
 {
   #define H_sample2file_p "(" S_sample2file_p " gen) -> #t if gen is a " S_sample2file " generator, else #f"
-  return(((mus_scm_p(obj)) && (mus_sample2file_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(((MUS_SCM_P(obj)) && (mus_sample2file_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
 static SCM g_frame2file_p(SCM obj) 
 {
   #define H_frame2file_p "(" S_frame2file_p " gen) -> #t if gen is a " S_frame2file " generator, else #f"
-  return(((mus_scm_p(obj)) && (mus_frame2file_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(((MUS_SCM_P(obj)) && (mus_frame2file_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
 static SCM g_in_any_1(char *caller, SCM frame, SCM chan, SCM inp)
 {
   SCM_ASSERT(NUMBER_P(frame), frame, SCM_ARG1, caller);
   SCM_ASSERT(INTEGER_P(chan), chan, SCM_ARG2, caller);
-  SCM_ASSERT((mus_scm_p(inp)) && (mus_input_p(mus_get_any(inp))), inp, SCM_ARG3, caller);
-  return(TO_SCM_DOUBLE(mus_in_any(TO_C_INT_OR_ELSE(frame, 0), TO_C_INT(chan), (mus_input *)mus_get_any(inp))));
+  SCM_ASSERT((MUS_SCM_P(inp)) && (mus_input_p(TO_CLM(inp))), inp, SCM_ARG3, caller);
+  return(TO_SCM_DOUBLE(mus_in_any(TO_C_INT_OR_ELSE(frame, 0), TO_C_INT(chan), (mus_input *)TO_CLM(inp))));
 }
 
 static SCM g_in_any(SCM frame, SCM chan, SCM inp) 
@@ -3639,11 +3643,11 @@ static SCM g_out_any_1(char *caller, SCM frame, SCM chan, SCM val, SCM outp)
   SCM_ASSERT(NUMBER_P(frame), frame, SCM_ARG1, caller);
   SCM_ASSERT(INTEGER_P(chan), chan, SCM_ARG2, caller);
   SCM_ASSERT(NUMBER_P(val), val, SCM_ARG3, caller);
-  SCM_ASSERT((mus_scm_p(outp)) && (mus_output_p(mus_get_any(outp))), outp, SCM_ARG4, caller);
+  SCM_ASSERT((MUS_SCM_P(outp)) && (mus_output_p(TO_CLM(outp))), outp, SCM_ARG4, caller);
   return(TO_SCM_DOUBLE(mus_out_any(TO_C_INT_OR_ELSE(frame, 0),
 				   TO_C_DOUBLE(val),
 				   TO_C_INT(chan),
-				   (mus_output *)mus_get_any(outp))));
+				   (mus_output *)TO_CLM(outp))));
 }
 
 static SCM g_out_any(SCM frame, SCM val, SCM chan, SCM outp)
@@ -3679,8 +3683,8 @@ static SCM g_outd(SCM frame, SCM val, SCM outp)
 static SCM g_mus_close(SCM ptr)
 {
   #define H_mus_close "(" S_mus_close " fd) closes the stream (fd) opened by mus-open-read or write"
-  SCM_ASSERT(mus_scm_p(ptr), ptr, SCM_ARG1, S_mus_close);
-  return(TO_SCM_INT(mus_close_file((mus_any *)mus_get_any(ptr))));
+  SCM_ASSERT(MUS_SCM_P(ptr), ptr, SCM_ARG1, S_mus_close);
+  return(TO_SCM_INT(mus_close_file((mus_any *)TO_CLM(ptr))));
 }
 
 static SCM g_make_file2sample(SCM name)
@@ -3703,14 +3707,14 @@ static SCM g_file2sample(SCM obj, SCM samp, SCM chan)
 {
   #define H_file2sample "(" S_file2sample " obj frame chan) -> sample value in sound file read by 'obj' in channel chan at frame"
   int channel = 0;
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_input_p(mus_get_any(obj))), obj, SCM_ARG1, S_file2sample);
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_input_p(TO_CLM(obj))), obj, SCM_ARG1, S_file2sample);
   SCM_ASSERT(NUMBER_P(samp), samp, SCM_ARG2, S_file2sample);
   if (BOUND_P(chan))
     {
       SCM_ASSERT(INTEGER_P(chan), chan, SCM_ARG3, S_file2sample);
       channel = TO_C_INT(chan);
     }
-  return(TO_SCM_DOUBLE(mus_file2sample(mus_get_any(obj),
+  return(TO_SCM_DOUBLE(mus_file2sample(TO_CLM(obj),
 				       TO_C_INT_OR_ELSE(samp, 0),
 				       channel)));
 }
@@ -3760,11 +3764,11 @@ static SCM g_sample2file(SCM obj, SCM samp, SCM chan, SCM val)
   #define H_sample2file "(" S_sample2file " obj samp chan val) adds val to the output stream \
 handled by the output generator 'obj', in channel 'chan' at frame 'samp'"
 
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_output_p(mus_get_any(obj))), obj, SCM_ARG1, S_sample2file);
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_output_p(TO_CLM(obj))), obj, SCM_ARG1, S_sample2file);
   SCM_ASSERT(NUMBER_P(samp), samp, SCM_ARG2, S_sample2file);
   SCM_ASSERT(INTEGER_P(chan), chan, SCM_ARG3, S_sample2file);
   SCM_ASSERT(NUMBER_P(val), val, SCM_ARG4, S_sample2file);
-  return(TO_SCM_DOUBLE(mus_sample2file(mus_get_any(obj),
+  return(TO_SCM_DOUBLE(mus_sample2file(TO_CLM(obj),
 				       TO_C_INT_OR_ELSE(samp, 0),
 				       TO_C_INT(chan),
 				       TO_C_DOUBLE(val))));
@@ -3790,12 +3794,12 @@ static SCM g_file2frame(SCM obj, SCM samp, SCM outfr)
 {
   #define H_file2frame "(" S_file2frame " obj samp outf) -> frame of samples at frame 'samp' in sound file read by 'obj'"
   mus_frame *res = NULL;
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_input_p(mus_get_any(obj))), obj, SCM_ARG1, S_file2frame);
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_input_p(TO_CLM(obj))), obj, SCM_ARG1, S_file2frame);
   SCM_ASSERT(NUMBER_P(samp), samp, SCM_ARG2, S_file2frame);
-  if ((mus_scm_p(outfr)) && 
-      (mus_frame_p(mus_get_any(outfr)))) 
-    res = (mus_frame *)mus_get_any(outfr);
-  return(g_wrap_frame(mus_file2frame(mus_get_any(obj),
+  if ((MUS_SCM_P(outfr)) && 
+      (mus_frame_p(TO_CLM(outfr)))) 
+    res = (mus_frame *)TO_CLM(outfr);
+  return(g_wrap_frame(mus_file2frame(TO_CLM(obj),
 				     TO_C_INT_OR_ELSE(samp, 0),
 				     res),
 		      (res) ? DONT_FREE_FRAME : FREE_FRAME));
@@ -3828,12 +3832,12 @@ static SCM g_frame2file(SCM obj, SCM samp, SCM val)
   #define H_frame2file "(" S_frame2file " obj samp val) adds frame 'val' to the output stream \
 handled by the output generator 'obj' at frame 'samp'"
 
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_output_p(mus_get_any(obj))), obj, SCM_ARG1, S_frame2file);
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_output_p(TO_CLM(obj))), obj, SCM_ARG1, S_frame2file);
   SCM_ASSERT(NUMBER_P(samp), samp, SCM_ARG2, S_frame2file);
-  SCM_ASSERT((mus_scm_p(val)) && (mus_frame_p(mus_get_any(val))), val, SCM_ARG3, S_frame2file);
-  return(g_wrap_frame(mus_frame2file(mus_get_any(obj),
+  SCM_ASSERT((MUS_SCM_P(val)) && (mus_frame_p(TO_CLM(val))), val, SCM_ARG3, S_frame2file);
+  return(g_wrap_frame(mus_frame2file(TO_CLM(obj),
 				     TO_C_INT_OR_ELSE(samp, 0),
-				     (mus_frame *)mus_get_any(val)),
+				     (mus_frame *)TO_CLM(val)),
 		      DONT_FREE_FRAME));
 }
 
@@ -3846,11 +3850,11 @@ srate and channels.  'len' samples are written."
   int olen, samps;
   vct *v;
   SCM_ASSERT(STRING_P(filename), filename, SCM_ARG1, S_array2file);
-  SCM_ASSERT(vct_p(data), data, SCM_ARG2, S_array2file);
+  SCM_ASSERT(VCT_P(data), data, SCM_ARG2, S_array2file);
   SCM_ASSERT(NUMBER_P(len), len, SCM_ARG3, S_array2file);
   SCM_ASSERT(NUMBER_P(srate), srate, SCM_ARG4, S_array2file);
   SCM_ASSERT(INTEGER_P(channels), channels, SCM_ARG5, S_array2file);
-  v = get_vct(data);
+  v = TO_VCT(data);
   samps = TO_C_INT_OR_ELSE(len, 1);
   if (samps <= 0)
     mus_misc_error(S_array2file, "samples <= 0?", len);
@@ -3883,8 +3887,8 @@ at frame 'start' and reading 'samples' samples altogether."
   SCM_ASSERT(INTEGER_P(chan), chan, SCM_ARG2, S_file2array);
   SCM_ASSERT(NUMBER_P(start), start, SCM_ARG3, S_file2array);
   SCM_ASSERT(NUMBER_P(samples), samples, SCM_ARG4, S_file2array);
-  SCM_ASSERT((vct_p(data)), data, SCM_ARG5, S_file2array);
-  v = get_vct(data);
+  SCM_ASSERT((VCT_P(data)), data, SCM_ARG5, S_file2array);
+  v = TO_VCT(data);
   samps = TO_C_INT_OR_ELSE(samples, 1);
   if (samps <= 0) 
     mus_misc_error(S_file2array, "samples <= 0?", samples);
@@ -3964,14 +3968,14 @@ static void init_io(void)
 static SCM g_readin_p(SCM obj) 
 {
   #define H_readin_p "(" S_readin_p " gen) -> #t if gen is a " S_readin " generator, else #f"
-  return(((mus_scm_p(obj)) && (mus_readin_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(((MUS_SCM_P(obj)) && (mus_readin_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
 static SCM g_readin(SCM obj)
 {
   #define H_readin "(" S_readin " gen) -> next sample from readin generator (a sound file reader)"
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_readin_p(mus_get_any(obj))), obj, SCM_ARG1, S_readin);
-  return(TO_SCM_DOUBLE(mus_readin(mus_get_any(obj))));
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_readin_p(TO_CLM(obj))), obj, SCM_ARG1, S_readin);
+  return(TO_SCM_DOUBLE(mus_readin(TO_CLM(obj))));
 }
 
 static SCM g_make_readin(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6, SCM arg7, SCM arg8)
@@ -4027,36 +4031,36 @@ returns a new readin (file input) generator reading the sound file 'file' starti
 static SCM g_increment(SCM obj)
 {
   #define H_mus_increment "(" S_mus_increment " gen) -> gen's " S_mus_increment " field, if any"
-  SCM_ASSERT(mus_scm_p(obj), obj, SCM_ARG1, S_mus_increment);
-  return(TO_SCM_DOUBLE(mus_increment(mus_get_any(obj))));
+  SCM_ASSERT(MUS_SCM_P(obj), obj, SCM_ARG1, S_mus_increment);
+  return(TO_SCM_DOUBLE(mus_increment(TO_CLM(obj))));
 }
 
 static SCM g_set_increment(SCM obj, SCM val)
 {
-  SCM_ASSERT(mus_scm_p(obj), obj, SCM_ARG1, S_mus_set_increment);
+  SCM_ASSERT(MUS_SCM_P(obj), obj, SCM_ARG1, S_mus_set_increment);
   SCM_ASSERT(NUMBER_P(val), val, SCM_ARG2, S_mus_set_increment);
-  return(TO_SCM_DOUBLE(mus_set_increment(mus_get_any(obj), TO_C_DOUBLE(val))));
+  return(TO_SCM_DOUBLE(mus_set_increment(TO_CLM(obj), TO_C_DOUBLE(val))));
 }
 
 static SCM g_location(SCM obj)
 {
   #define H_mus_location "(" S_mus_location " gen) -> gen's " S_mus_location " field, if any"
-  SCM_ASSERT(mus_scm_p(obj), obj, SCM_ARG1, S_mus_location);
-  return(TO_SCM_INT(mus_location(mus_get_any(obj))));
+  SCM_ASSERT(MUS_SCM_P(obj), obj, SCM_ARG1, S_mus_location);
+  return(TO_SCM_INT(mus_location(TO_CLM(obj))));
 }
 
 static SCM g_set_location(SCM obj, SCM val)
 {
-  SCM_ASSERT(mus_scm_p(obj), obj, SCM_ARG1, S_mus_set_location);
+  SCM_ASSERT(MUS_SCM_P(obj), obj, SCM_ARG1, S_mus_set_location);
   SCM_ASSERT(NUMBER_P(val), val, SCM_ARG2, S_mus_set_location);
-  return(TO_SCM_INT(mus_set_location(mus_get_any(obj), TO_C_INT_OR_ELSE(val, 0))));
+  return(TO_SCM_INT(mus_set_location(TO_CLM(obj), TO_C_INT_OR_ELSE(val, 0))));
 }
 
 static SCM g_channel(SCM obj)
 {
   #define H_mus_channel "(" S_mus_channel " gen) -> gen's " S_mus_channel " field, if any"
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_input_p(mus_get_any(obj))), obj, SCM_ARG1, S_mus_channel);
-  return(TO_SMALL_SCM_INT(mus_channel((mus_input *)mus_get_any(obj))));
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_input_p(TO_CLM(obj))), obj, SCM_ARG1, S_mus_channel);
+  return(TO_SMALL_SCM_INT(mus_channel((mus_input *)TO_CLM(obj))));
 }
 
 static void init_rdin(void)
@@ -4088,18 +4092,18 @@ static void init_rdin(void)
 static SCM g_locsig_ref(SCM obj, SCM chan)
 {
   #define H_locsig_ref "(" S_locsig_ref " gen chan) -> locsig 'gen' channel 'chan' scaler"
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_locsig_p(mus_get_any(obj))), obj, SCM_ARG1, S_locsig_ref);
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_locsig_p(TO_CLM(obj))), obj, SCM_ARG1, S_locsig_ref);
   SCM_ASSERT(INTEGER_P(chan), chan, SCM_ARG2, S_locsig_ref);
-  return(TO_SCM_DOUBLE(mus_locsig_ref(mus_get_any(obj), TO_C_INT(chan))));
+  return(TO_SCM_DOUBLE(mus_locsig_ref(TO_CLM(obj), TO_C_INT(chan))));
 }
 
 static SCM g_locsig_set(SCM obj, SCM chan, SCM val)
 {
   #define H_locsig_set "(" S_locsig_set " gen chan val) sets the locsig generator's channel 'chan' scaler to 'val'"
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_locsig_p(mus_get_any(obj))), obj, SCM_ARG1, S_locsig_set);
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_locsig_p(TO_CLM(obj))), obj, SCM_ARG1, S_locsig_set);
   SCM_ASSERT(INTEGER_P(chan), chan, SCM_ARG2, S_locsig_set);
   SCM_ASSERT(NUMBER_P(val), val, SCM_ARG3, S_locsig_set);
-  return(TO_SCM_DOUBLE(mus_locsig_set(mus_get_any(obj),
+  return(TO_SCM_DOUBLE(mus_locsig_set(TO_CLM(obj),
 				      TO_C_INT(chan),
 				      TO_C_DOUBLE(val))));
 }
@@ -4107,18 +4111,18 @@ static SCM g_locsig_set(SCM obj, SCM chan, SCM val)
 static SCM g_locsig_reverb_ref(SCM obj, SCM chan)
 {
   #define H_locsig_reverb_ref "(" S_locsig_reverb_ref " gen chan) -> locsig reverb channel 'chan' scaler"
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_locsig_p(mus_get_any(obj))), obj, SCM_ARG1, S_locsig_reverb_ref);
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_locsig_p(TO_CLM(obj))), obj, SCM_ARG1, S_locsig_reverb_ref);
   SCM_ASSERT(INTEGER_P(chan), chan, SCM_ARG2, S_locsig_reverb_ref);
-  return(TO_SCM_DOUBLE(mus_locsig_reverb_ref(mus_get_any(obj), TO_C_INT(chan))));
+  return(TO_SCM_DOUBLE(mus_locsig_reverb_ref(TO_CLM(obj), TO_C_INT(chan))));
 }
 
 static SCM g_locsig_reverb_set(SCM obj, SCM chan, SCM val)
 {
   #define H_locsig_reverb_set "(" S_locsig_reverb_set " gen chan val) sets the locsig reverb channel 'chan' scaler to 'val'"
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_locsig_p(mus_get_any(obj))), obj, SCM_ARG1, S_locsig_reverb_set);
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_locsig_p(TO_CLM(obj))), obj, SCM_ARG1, S_locsig_reverb_set);
   SCM_ASSERT(INTEGER_P(chan), chan, SCM_ARG2, S_locsig_reverb_set);
   SCM_ASSERT(NUMBER_P(val), val, SCM_ARG3, S_locsig_reverb_set);
-  return(TO_SCM_DOUBLE(mus_locsig_reverb_set(mus_get_any(obj),
+  return(TO_SCM_DOUBLE(mus_locsig_reverb_set(TO_CLM(obj),
 					     TO_C_INT(chan),
 					     TO_C_DOUBLE(val))));
 }
@@ -4126,16 +4130,16 @@ static SCM g_locsig_reverb_set(SCM obj, SCM chan, SCM val)
 static SCM g_locsig_p(SCM obj)
 {
   #define H_locsig_p "(" S_locsig_p " gen) -> #t if gen is a " S_locsig " generator, else #f"
-  return(((mus_scm_p(obj)) && (mus_locsig_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(((MUS_SCM_P(obj)) && (mus_locsig_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
 static SCM g_locsig(SCM obj, SCM loc, SCM val)
 {
   #define H_locsig "(" S_locsig " gen loc val) adds 'val' to the output of locsig at frame 'loc'"
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_locsig_p(mus_get_any(obj))), obj, SCM_ARG1, S_locsig);
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_locsig_p(TO_CLM(obj))), obj, SCM_ARG1, S_locsig);
   SCM_ASSERT(NUMBER_P(loc), loc, SCM_ARG2, S_locsig);
   SCM_ASSERT(NUMBER_P(val), val, SCM_ARG3, S_locsig);
-  return(g_wrap_frame(mus_locsig(mus_get_any(obj),
+  return(g_wrap_frame(mus_locsig(TO_CLM(obj),
 				 TO_C_INT_OR_ELSE(loc, 0),
 				 TO_C_DOUBLE(val)),
 		      DONT_FREE_FRAME));
@@ -4170,11 +4174,11 @@ returns a new generator for signal placement in up to 4 channels.  Channel 0 cor
       reverb = fkeyarg(keys[2], S_make_locsig, orig_arg[2] + 1, args[orig_arg[2]], reverb);
       if (!(keyword_p(keys[3]))) 
 	{
-	  if ((mus_scm_p(keys[3])) && (mus_output_p(mus_get_any(keys[3]))))
+	  if ((MUS_SCM_P(keys[3])) && (mus_output_p(TO_CLM(keys[3]))))
 	    {
 	      out_obj = keys[3];
 	      vlen++;
-	      outp = (mus_output *)mus_get_any(keys[3]);
+	      outp = (mus_output *)TO_CLM(keys[3]);
 	      out_chans = mus_channels((mus_any *)outp);
 	    }
 	  else 
@@ -4186,11 +4190,11 @@ returns a new generator for signal placement in up to 4 channels.  Channel 0 cor
 	}
       if (!(keyword_p(keys[4]))) 
 	{
-	  if ((mus_scm_p(keys[4])) && (mus_output_p(mus_get_any(keys[4]))))
+	  if ((MUS_SCM_P(keys[4])) && (mus_output_p(TO_CLM(keys[4]))))
 	    {
 	      rev_obj = keys[4];
 	      vlen++;
-	      revp = (mus_output *)mus_get_any(keys[4]);
+	      revp = (mus_output *)TO_CLM(keys[4]);
 	    }
 	  else 
 	    {
@@ -4217,8 +4221,8 @@ returns a new generator for signal placement in up to 4 channels.  Channel 0 cor
 static SCM g_channels(SCM obj)
 {
   #define H_mus_channels "(" S_mus_channels " gen) -> gen's " S_mus_channels " field, if any"
-  SCM_ASSERT(mus_scm_p(obj), obj, SCM_ARG1, S_mus_channels);
-  return(TO_SMALL_SCM_INT(mus_channels(mus_get_any(obj))));
+  SCM_ASSERT(MUS_SCM_P(obj), obj, SCM_ARG1, S_mus_channels);
+  return(TO_SMALL_SCM_INT(mus_channels(TO_CLM(obj))));
 }
 
 static void init_locs(void)
@@ -4278,7 +4282,7 @@ static SCM g_clear_sincs(void)
 static SCM g_src_p(SCM obj) 
 {
   #define H_src_p "(" S_src_p " gen) -> #t if gen is an " S_src " generator, else #f"
-  return(((mus_scm_p(obj)) && (mus_src_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(((MUS_SCM_P(obj)) && (mus_src_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
 static SCM g_src(SCM obj, SCM pm, SCM func) 
@@ -4291,11 +4295,11 @@ included an 'input' argument, input-function is ignored."
 
   Float pm1 = 0.0;
   mus_scm *gn;
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_src_p(mus_get_any(obj))), obj, SCM_ARG1, S_src);
-  gn = mus_get_scm(obj);
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_src_p(TO_CLM(obj))), obj, SCM_ARG1, S_src);
+  gn = TO_MUS_SCM(obj);
   if (NUMBER_P(pm)) pm1 = TO_C_DOUBLE(pm); else if (BOUND_P(pm)) scm_wrong_type_arg(S_src, 2, pm);
   if (procedure_fits(func, 1)) gn->vcts[INPUT_FUNCTION] = func;
-  return(TO_SCM_DOUBLE(mus_src(mus_get_any(obj), pm1, 0)));
+  return(TO_SCM_DOUBLE(mus_src(TO_CLM(obj), pm1, 0)));
 }
 
 static SCM g_make_src(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6)
@@ -4360,31 +4364,31 @@ static void init_sr(void)
 static SCM g_granulate_p(SCM obj) 
 {
   #define H_granulate_p "(" S_granulate_p " gen) -> #t if gen is a " S_granulate " generator, else #f"
-  return(((mus_scm_p(obj)) && (mus_granulate_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(((MUS_SCM_P(obj)) && (mus_granulate_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
 static SCM g_granulate(SCM obj, SCM func) 
 {
   #define H_granulate "(" S_granulate " gen) -> next sample from granular synthesis generator"
   mus_scm *gn;
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_granulate_p(mus_get_any(obj))), obj, SCM_ARG1, S_granulate);
-  gn = mus_get_scm(obj);
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_granulate_p(TO_CLM(obj))), obj, SCM_ARG1, S_granulate);
+  gn = TO_MUS_SCM(obj);
   if (procedure_fits(func, 1)) gn->vcts[INPUT_FUNCTION] = func;
-  return(TO_SCM_DOUBLE(mus_granulate(mus_get_any(obj), 0)));
+  return(TO_SCM_DOUBLE(mus_granulate(TO_CLM(obj), 0)));
 }
 
 static SCM g_ramp(SCM obj)
 {
   #define H_mus_ramp "(" S_mus_ramp " gen) -> (granulate generator) gen's " S_mus_ramp " field"
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_granulate_p(mus_get_any(obj))), obj, SCM_ARG1, S_mus_ramp);
-  return(TO_SCM_INT(mus_ramp(mus_get_any(obj))));
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_granulate_p(TO_CLM(obj))), obj, SCM_ARG1, S_mus_ramp);
+  return(TO_SCM_INT(mus_ramp(TO_CLM(obj))));
 }
 
 static SCM g_set_ramp(SCM obj, SCM val)
 {
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_granulate_p(mus_get_any(obj))), obj, SCM_ARG1, S_mus_set_ramp);
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_granulate_p(TO_CLM(obj))), obj, SCM_ARG1, S_mus_set_ramp);
   SCM_ASSERT(NUMBER_P(val), val, SCM_ARG2, S_mus_set_ramp);
-  return(TO_SCM_INT(mus_set_ramp(mus_get_any(obj), TO_C_INT_OR_ELSE(val, 0))));
+  return(TO_SCM_INT(mus_set_ramp(TO_CLM(obj), TO_C_INT_OR_ELSE(val, 0))));
 }
 
 static SCM g_make_granulate(SCM arglist)
@@ -4467,17 +4471,17 @@ static void init_spd(void)
 static SCM g_convolve_p(SCM obj) 
 {
   #define H_convolve_p "(" S_convolve_p " gen) -> #t if gen is a " S_convolve " generator, else #f"
-  return(((mus_scm_p(obj)) && (mus_convolve_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(((MUS_SCM_P(obj)) && (mus_convolve_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
 static SCM g_convolve(SCM obj, SCM func) 
 {
   #define H_convolve_gen "(" S_convolve " gen &optional input-func) -> next sample from convolution generator"
   mus_scm *gn;
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_convolve_p(mus_get_any(obj))), obj, SCM_ARG1, S_convolve);
-  gn = mus_get_scm(obj);
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_convolve_p(TO_CLM(obj))), obj, SCM_ARG1, S_convolve);
+  gn = TO_MUS_SCM(obj);
   if (procedure_fits(func, 1)) gn->vcts[INPUT_FUNCTION] = func;
-  return(TO_SCM_DOUBLE(mus_convolve(mus_get_any(obj), 0)));
+  return(TO_SCM_DOUBLE(mus_convolve(TO_CLM(obj), 0)));
 }
 
 /* filter-size? */
@@ -4511,10 +4515,10 @@ returns a new convolution generator which convolves its input with the impulse r
 	}
       if (!(keyword_p(keys[1]))) 
 	{
-	  if (vct_p(keys[1]))
+	  if (VCT_P(keys[1]))
 	    {
 	      filt = keys[1];
-	      filter = get_vct(filt);
+	      filter = TO_VCT(filt);
 	    }
           else scm_wrong_type_arg(S_make_convolve, orig_arg[1] + 1, args[orig_arg[1]]);
 	}
@@ -4630,17 +4634,17 @@ static int pvanalyze (void *ptr, Float (*input)(void *arg1, int direction))
 static SCM g_phase_vocoder_p(SCM obj) 
 {
   #define H_phase_vocoder_p "(" S_phase_vocoder_p " gen) -> #t if gen is an " S_phase_vocoder " generator, else #f"
-  return(((mus_scm_p(obj)) && (mus_phase_vocoder_p(mus_get_any(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
+  return(((MUS_SCM_P(obj)) && (mus_phase_vocoder_p(TO_CLM(obj)))) ? SCM_BOOL_T : SCM_BOOL_F);
 }
 
 static SCM g_phase_vocoder(SCM obj, SCM func) 
 {
   #define H_phase_vocoder "(" S_phase_vocoder " gen &optional input-function) -> phase vocoder"
   mus_scm *gn;
-  SCM_ASSERT((mus_scm_p(obj)) && (mus_phase_vocoder_p(mus_get_any(obj))), obj, SCM_ARG1, S_phase_vocoder);
-  gn = mus_get_scm(obj);
+  SCM_ASSERT((MUS_SCM_P(obj)) && (mus_phase_vocoder_p(TO_CLM(obj))), obj, SCM_ARG1, S_phase_vocoder);
+  gn = TO_MUS_SCM(obj);
   if (procedure_fits(func, 1)) gn->vcts[INPUT_FUNCTION] = func;
-  return(TO_SCM_DOUBLE(mus_phase_vocoder(mus_get_any(obj), 0)));
+  return(TO_SCM_DOUBLE(mus_phase_vocoder(TO_CLM(obj), 0)));
 }
 
 static SCM g_make_phase_vocoder(SCM arglist)
@@ -4705,9 +4709,9 @@ static SCM g_pv_amps(SCM pv, SCM ind)
 {
   Float *amps; 
   mus_scm *gn;
-  SCM_ASSERT((mus_scm_p(pv)) && (mus_phase_vocoder_p(mus_get_any(pv))), pv, SCM_ARG1, __FUNCTION__);
+  SCM_ASSERT((MUS_SCM_P(pv)) && (mus_phase_vocoder_p(TO_CLM(pv))), pv, SCM_ARG1, __FUNCTION__);
   SCM_ASSERT(INTEGER_P(ind), ind, SCM_ARG2, __FUNCTION__);
-  gn = mus_get_scm(pv);
+  gn = TO_MUS_SCM(pv);
   amps = mus_phase_vocoder_amps((void *)(gn->gen)); 
   return(TO_SCM_DOUBLE(amps[TO_SMALL_C_INT(ind)]));
 }
@@ -4716,10 +4720,10 @@ static SCM g_set_pv_amps(SCM pv, SCM ind, SCM val)
 {
   Float *amps; 
   mus_scm *gn;
-  SCM_ASSERT((mus_scm_p(pv)) && (mus_phase_vocoder_p(mus_get_any(pv))), pv, SCM_ARG1, __FUNCTION__);
+  SCM_ASSERT((MUS_SCM_P(pv)) && (mus_phase_vocoder_p(TO_CLM(pv))), pv, SCM_ARG1, __FUNCTION__);
   SCM_ASSERT(INTEGER_P(ind), ind, SCM_ARG2, __FUNCTION__);
   SCM_ASSERT(NUMBER_P(val), val, SCM_ARG3, __FUNCTION__);
-  gn = mus_get_scm(pv);
+  gn = TO_MUS_SCM(pv);
   amps = mus_phase_vocoder_amps((void *)(gn->gen)); 
   amps[TO_SMALL_C_INT(ind)] = TO_C_DOUBLE(val); 
   return(val);
@@ -4730,8 +4734,8 @@ static SCM g_pv_amps_1(SCM pv)
   Float *amps; 
   int len;
   mus_scm *gn;
-  SCM_ASSERT((mus_scm_p(pv)) && (mus_phase_vocoder_p(mus_get_any(pv))), pv, SCM_ARG1, __FUNCTION__);
-  gn = mus_get_scm(pv);
+  SCM_ASSERT((MUS_SCM_P(pv)) && (mus_phase_vocoder_p(TO_CLM(pv))), pv, SCM_ARG1, __FUNCTION__);
+  gn = TO_MUS_SCM(pv);
   amps = mus_phase_vocoder_amps((void *)(gn->gen)); 
   len = mus_length((mus_any *)(gn->gen));
   return(make_vct_wrapper(len / 2, amps));
@@ -4741,9 +4745,9 @@ static SCM g_pv_freqs(SCM pv, SCM ind)
 {
   Float *freqs; 
   mus_scm *gn;
-  SCM_ASSERT((mus_scm_p(pv)) && (mus_phase_vocoder_p(mus_get_any(pv))), pv, SCM_ARG1, __FUNCTION__);
+  SCM_ASSERT((MUS_SCM_P(pv)) && (mus_phase_vocoder_p(TO_CLM(pv))), pv, SCM_ARG1, __FUNCTION__);
   SCM_ASSERT(INTEGER_P(ind), ind, SCM_ARG2, __FUNCTION__);
-  gn = mus_get_scm(pv);
+  gn = TO_MUS_SCM(pv);
   freqs = mus_phase_vocoder_freqs((void *)(gn->gen));
   return(TO_SCM_DOUBLE(freqs[TO_SMALL_C_INT(ind)]));
 }
@@ -4752,10 +4756,10 @@ static SCM g_set_pv_freqs(SCM pv, SCM ind, SCM val)
 {
   Float *freqs; 
   mus_scm *gn;
-  SCM_ASSERT((mus_scm_p(pv)) && (mus_phase_vocoder_p(mus_get_any(pv))), pv, SCM_ARG1, __FUNCTION__);
+  SCM_ASSERT((MUS_SCM_P(pv)) && (mus_phase_vocoder_p(TO_CLM(pv))), pv, SCM_ARG1, __FUNCTION__);
   SCM_ASSERT(INTEGER_P(ind), ind, SCM_ARG2, __FUNCTION__);
   SCM_ASSERT(NUMBER_P(val), val, SCM_ARG3, __FUNCTION__);
-  gn = mus_get_scm(pv);
+  gn = TO_MUS_SCM(pv);
   freqs = mus_phase_vocoder_freqs((void *)(gn->gen)); 
   freqs[TO_SMALL_C_INT(ind)] = TO_C_DOUBLE(val);
   return(val);
@@ -4766,8 +4770,8 @@ static SCM g_pv_freqs_1(SCM pv)
   Float *amps; 
   int len;
   mus_scm *gn;
-  SCM_ASSERT((mus_scm_p(pv)) && (mus_phase_vocoder_p(mus_get_any(pv))), pv, SCM_ARG1, __FUNCTION__);
-  gn = mus_get_scm(pv);
+  SCM_ASSERT((MUS_SCM_P(pv)) && (mus_phase_vocoder_p(TO_CLM(pv))), pv, SCM_ARG1, __FUNCTION__);
+  gn = TO_MUS_SCM(pv);
   amps = mus_phase_vocoder_freqs((void *)(gn->gen)); 
   len = mus_length((mus_any *)(gn->gen));
   return(make_vct_wrapper(len, amps));
@@ -4777,9 +4781,9 @@ static SCM g_pv_phases(SCM pv, SCM ind)
 {
   Float *phases; 
   mus_scm *gn;
-  SCM_ASSERT((mus_scm_p(pv)) && (mus_phase_vocoder_p(mus_get_any(pv))), pv, SCM_ARG1, __FUNCTION__);
+  SCM_ASSERT((MUS_SCM_P(pv)) && (mus_phase_vocoder_p(TO_CLM(pv))), pv, SCM_ARG1, __FUNCTION__);
   SCM_ASSERT(INTEGER_P(ind), ind, SCM_ARG2, __FUNCTION__);
-  gn = mus_get_scm(pv);
+  gn = TO_MUS_SCM(pv);
   phases = mus_phase_vocoder_phases((void *)(gn->gen)); 
   return(TO_SCM_DOUBLE(phases[TO_SMALL_C_INT(ind)]));
 }
@@ -4788,10 +4792,10 @@ static SCM g_set_pv_phases(SCM pv, SCM ind, SCM val)
 {
   Float *phases; 
   mus_scm *gn;
-  SCM_ASSERT((mus_scm_p(pv)) && (mus_phase_vocoder_p(mus_get_any(pv))), pv, SCM_ARG1, __FUNCTION__);
+  SCM_ASSERT((MUS_SCM_P(pv)) && (mus_phase_vocoder_p(TO_CLM(pv))), pv, SCM_ARG1, __FUNCTION__);
   SCM_ASSERT(INTEGER_P(ind), ind, SCM_ARG2, __FUNCTION__);
   SCM_ASSERT(NUMBER_P(val), val, SCM_ARG3, __FUNCTION__);
-  gn = mus_get_scm(pv);
+  gn = TO_MUS_SCM(pv);
   phases = mus_phase_vocoder_phases((void *)(gn->gen)); 
   phases[TO_SMALL_C_INT(ind)] = TO_C_DOUBLE(val); 
   return(val);
@@ -4802,8 +4806,8 @@ static SCM g_pv_phases_1(SCM pv)
   Float *amps; 
   int len;
   mus_scm *gn;
-  SCM_ASSERT((mus_scm_p(pv)) && (mus_phase_vocoder_p(mus_get_any(pv))), pv, SCM_ARG1, __FUNCTION__);
-  gn = mus_get_scm(pv);
+  SCM_ASSERT((MUS_SCM_P(pv)) && (mus_phase_vocoder_p(TO_CLM(pv))), pv, SCM_ARG1, __FUNCTION__);
+  gn = TO_MUS_SCM(pv);
   amps = mus_phase_vocoder_phases((void *)(gn->gen)); 
   len = mus_length((mus_any *)(gn->gen));
   return(make_vct_wrapper(len / 2, amps));
@@ -4814,9 +4818,9 @@ static SCM g_pv_ampinc(SCM pv, SCM ind)
 {
   Float *ampinc; 
   mus_scm *gn;
-  SCM_ASSERT((mus_scm_p(pv)) && (mus_phase_vocoder_p(mus_get_any(pv))), pv, SCM_ARG1, __FUNCTION__);
+  SCM_ASSERT((MUS_SCM_P(pv)) && (mus_phase_vocoder_p(TO_CLM(pv))), pv, SCM_ARG1, __FUNCTION__);
   SCM_ASSERT(INTEGER_P(ind), ind, SCM_ARG2, __FUNCTION__);
-  gn = mus_get_scm(pv);
+  gn = TO_MUS_SCM(pv);
   ampinc = mus_phase_vocoder_ampinc((void *)(gn->gen)); 
   return(TO_SCM_DOUBLE(ampinc[TO_SMALL_C_INT(ind)]));
 }
@@ -4825,10 +4829,10 @@ static SCM g_set_pv_ampinc(SCM pv, SCM ind, SCM val)
 {
   Float *ampinc; 
   mus_scm *gn;
-  SCM_ASSERT((mus_scm_p(pv)) && (mus_phase_vocoder_p(mus_get_any(pv))), pv, SCM_ARG1, __FUNCTION__);
+  SCM_ASSERT((MUS_SCM_P(pv)) && (mus_phase_vocoder_p(TO_CLM(pv))), pv, SCM_ARG1, __FUNCTION__);
   SCM_ASSERT(INTEGER_P(ind), ind, SCM_ARG2, __FUNCTION__);
   SCM_ASSERT(NUMBER_P(val), val, SCM_ARG3, __FUNCTION__);
-  gn = mus_get_scm(pv);
+  gn = TO_MUS_SCM(pv);
   ampinc = mus_phase_vocoder_ampinc((void *)(gn->gen)); 
   ampinc[TO_SMALL_C_INT(ind)] = TO_C_DOUBLE(val); 
   return(val);
@@ -4839,8 +4843,8 @@ static SCM g_pv_ampinc_1(SCM pv)
   Float *amps; 
   int len;
   mus_scm *gn;
-  SCM_ASSERT((mus_scm_p(pv)) && (mus_phase_vocoder_p(mus_get_any(pv))), pv, SCM_ARG1, __FUNCTION__);
-  gn = mus_get_scm(pv);
+  SCM_ASSERT((MUS_SCM_P(pv)) && (mus_phase_vocoder_p(TO_CLM(pv))), pv, SCM_ARG1, __FUNCTION__);
+  gn = TO_MUS_SCM(pv);
   amps = mus_phase_vocoder_ampinc((void *)(gn->gen)); 
   len = mus_length((mus_any *)(gn->gen));
   return(make_vct_wrapper(len, amps));
@@ -4850,9 +4854,9 @@ static SCM g_pv_phaseinc(SCM pv, SCM ind)
 {
   Float *phaseinc; 
   mus_scm *gn;
-  SCM_ASSERT((mus_scm_p(pv)) && (mus_phase_vocoder_p(mus_get_any(pv))), pv, SCM_ARG1, __FUNCTION__);
+  SCM_ASSERT((MUS_SCM_P(pv)) && (mus_phase_vocoder_p(TO_CLM(pv))), pv, SCM_ARG1, __FUNCTION__);
   SCM_ASSERT(INTEGER_P(ind), ind, SCM_ARG2, __FUNCTION__);
-  gn = mus_get_scm(pv);
+  gn = TO_MUS_SCM(pv);
   phaseinc = mus_phase_vocoder_phaseinc((void *)(gn->gen)); 
   return(TO_SCM_DOUBLE(phaseinc[TO_SMALL_C_INT(ind)]));
 }
@@ -4861,10 +4865,10 @@ static SCM g_set_pv_phaseinc(SCM pv, SCM ind, SCM val)
 {
   Float *phaseinc; 
   mus_scm *gn;
-  SCM_ASSERT((mus_scm_p(pv)) && (mus_phase_vocoder_p(mus_get_any(pv))), pv, SCM_ARG1, __FUNCTION__);
+  SCM_ASSERT((MUS_SCM_P(pv)) && (mus_phase_vocoder_p(TO_CLM(pv))), pv, SCM_ARG1, __FUNCTION__);
   SCM_ASSERT(INTEGER_P(ind), ind, SCM_ARG2, __FUNCTION__);
   SCM_ASSERT(NUMBER_P(val), val, SCM_ARG3, __FUNCTION__);
-  gn = mus_get_scm(pv);
+  gn = TO_MUS_SCM(pv);
   phaseinc = mus_phase_vocoder_phaseinc((void *)(gn->gen)); 
   phaseinc[TO_SMALL_C_INT(ind)] = TO_C_DOUBLE(val); 
   return(val);
@@ -4875,8 +4879,8 @@ static SCM g_pv_phaseinc_1(SCM pv)
   Float *amps; 
   int len;
   mus_scm *gn;
-  SCM_ASSERT((mus_scm_p(pv)) && (mus_phase_vocoder_p(mus_get_any(pv))), pv, SCM_ARG1, __FUNCTION__);
-  gn = mus_get_scm(pv);
+  SCM_ASSERT((MUS_SCM_P(pv)) && (mus_phase_vocoder_p(TO_CLM(pv))), pv, SCM_ARG1, __FUNCTION__);
+  gn = TO_MUS_SCM(pv);
   amps = mus_phase_vocoder_phaseinc((void *)(gn->gen)); 
   len = mus_length((mus_any *)(gn->gen));
   return(make_vct_wrapper(len / 2, amps));
@@ -4886,9 +4890,9 @@ static SCM g_pv_lastphase(SCM pv, SCM ind)
 {
   Float *lastphase; 
   mus_scm *gn;
-  SCM_ASSERT((mus_scm_p(pv)) && (mus_phase_vocoder_p(mus_get_any(pv))), pv, SCM_ARG1, __FUNCTION__);
+  SCM_ASSERT((MUS_SCM_P(pv)) && (mus_phase_vocoder_p(TO_CLM(pv))), pv, SCM_ARG1, __FUNCTION__);
   SCM_ASSERT(INTEGER_P(ind), ind, SCM_ARG2, __FUNCTION__);
-  gn = mus_get_scm(pv);
+  gn = TO_MUS_SCM(pv);
   lastphase = mus_phase_vocoder_lastphase((void *)(gn->gen)); 
   return(TO_SCM_DOUBLE(lastphase[TO_SMALL_C_INT(ind)]));
 }
@@ -4897,10 +4901,10 @@ static SCM g_set_pv_lastphase(SCM pv, SCM ind, SCM val)
 {
   Float *lastphase; 
   mus_scm *gn;
-  SCM_ASSERT((mus_scm_p(pv)) && (mus_phase_vocoder_p(mus_get_any(pv))), pv, SCM_ARG1, __FUNCTION__);
+  SCM_ASSERT((MUS_SCM_P(pv)) && (mus_phase_vocoder_p(TO_CLM(pv))), pv, SCM_ARG1, __FUNCTION__);
   SCM_ASSERT(INTEGER_P(ind), ind, SCM_ARG2, __FUNCTION__);
   SCM_ASSERT(NUMBER_P(val), val, SCM_ARG3, __FUNCTION__);
-  gn = mus_get_scm(pv);
+  gn = TO_MUS_SCM(pv);
   lastphase = mus_phase_vocoder_lastphase((void *)(gn->gen));
   lastphase[TO_SMALL_C_INT(ind)] = TO_C_DOUBLE(val); 
   return(val);
@@ -4911,8 +4915,8 @@ static SCM g_pv_lastphase_1(SCM pv)
   Float *amps; 
   int len;
   mus_scm *gn;
-  SCM_ASSERT((mus_scm_p(pv)) && (mus_phase_vocoder_p(mus_get_any(pv))), pv, SCM_ARG1, __FUNCTION__);
-  gn = mus_get_scm(pv);
+  SCM_ASSERT((MUS_SCM_P(pv)) && (mus_phase_vocoder_p(TO_CLM(pv))), pv, SCM_ARG1, __FUNCTION__);
+  gn = TO_MUS_SCM(pv);
   amps = mus_phase_vocoder_lastphase((void *)(gn->gen)); 
   len = mus_length((mus_any *)(gn->gen));
   return(make_vct_wrapper(len / 2, amps));
@@ -4921,15 +4925,15 @@ static SCM g_pv_lastphase_1(SCM pv)
 static SCM g_hop(SCM obj)
 {
   #define H_mus_hop "(" S_mus_hop " gen) -> gen's " S_mus_hop " field"
-  SCM_ASSERT(mus_scm_p(obj), obj, SCM_ARG1, S_mus_hop);
-  return(TO_SMALL_SCM_INT(mus_hop(mus_get_any(obj))));
+  SCM_ASSERT(MUS_SCM_P(obj), obj, SCM_ARG1, S_mus_hop);
+  return(TO_SMALL_SCM_INT(mus_hop(TO_CLM(obj))));
 }
 
 static SCM g_set_hop(SCM obj, SCM val)
 {
-  SCM_ASSERT(mus_scm_p(obj), obj, SCM_ARG1, S_mus_set_hop);
+  SCM_ASSERT(MUS_SCM_P(obj), obj, SCM_ARG1, S_mus_set_hop);
   SCM_ASSERT(NUMBER_P(val), val, SCM_ARG2, S_mus_set_hop);
-  return(TO_SMALL_SCM_INT(mus_set_hop(mus_get_any(obj), TO_C_INT_OR_ELSE(val, 0))));
+  return(TO_SMALL_SCM_INT(mus_set_hop(TO_CLM(obj), TO_C_INT_OR_ELSE(val, 0))));
 }
 
 
@@ -4980,27 +4984,30 @@ it in conjunction with mixer to scale/envelope all the various ins and outs."
   mus_any ***envs1 = NULL;
   char *outfile = NULL, *infile = NULL;
   int in_len = 0, out_len, i, j, ostart = 0, istart = 0, osamps = 0;
+  SCM *vdata0, *vdata1;
   SCM_ASSERT(STRING_P(out), out, SCM_ARG1, S_mus_mix);
   SCM_ASSERT(STRING_P(in), in, SCM_ARG2, S_mus_mix);
   SCM_ASSERT(NUMBER_IF_BOUND_P(ost), ost, SCM_ARG3, S_mus_mix);
   SCM_ASSERT(NUMBER_IF_BOUND_P(olen), olen, SCM_ARG4, S_mus_mix);
   SCM_ASSERT(NUMBER_IF_BOUND_P(ist), ist, SCM_ARG5, S_mus_mix);
-  SCM_ASSERT((SCM_UNBNDP(mx)) || ((mus_scm_p(mx)) && (mus_mixer_p(mus_get_any(mx)))), mx, SCM_ARG6, S_mus_mix);
+  SCM_ASSERT((SCM_UNBNDP(mx)) || ((MUS_SCM_P(mx)) && (mus_mixer_p(TO_CLM(mx)))), mx, SCM_ARG6, S_mus_mix);
   SCM_ASSERT((SCM_UNBNDP(envs)) || (VECTOR_P(envs)), envs, SCM_ARG7, S_mus_mix);
   if (BOUND_P(ost)) ostart = TO_C_INT_OR_ELSE(ost, 0);
   if (BOUND_P(ist)) istart = TO_C_INT_OR_ELSE(ist, 0);
-  if (BOUND_P(mx)) mx1 = (mus_mixer *)mus_get_any(mx);
+  if (BOUND_P(mx)) mx1 = (mus_mixer *)TO_CLM(mx);
   if (BOUND_P(envs))
     {
       /* pack into a C-style array of arrays of env pointers */
       in_len = gh_vector_length(envs);
-      out_len = gh_vector_length(gh_vector_ref(envs, TO_SMALL_SCM_INT(0)));
+      vdata0 = SCM_VELTS(envs);
+      out_len = gh_vector_length(vdata0[0]);
       envs1 = (mus_any ***)CALLOC(in_len, sizeof(mus_any **));
       for (i = 0; i < in_len; i++)
 	{
+	  vdata1 = SCM_VELTS(vdata0[i]);
 	  envs1[i] = (mus_any **)CALLOC(out_len, sizeof(mus_any *));
 	  for (j = 0; j < out_len; j++) 
-	    envs1[i][j] = mus_get_any(gh_vector_ref(gh_vector_ref(envs, TO_SCM_INT(i)), TO_SCM_INT(j)));
+	    envs1[i][j] = TO_CLM(vdata1[j]);
 	}
     }
   outfile = TO_NEW_C_STRING(out);

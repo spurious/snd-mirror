@@ -33,6 +33,7 @@ void snd_protect(SCM obj)
 {
   int i, old_size;
   SCM tmp, num;
+  SCM *gcdata;
   if (gc_protection_size == 0)
     {
       gc_protection_size = 128;
@@ -43,9 +44,9 @@ void snd_protect(SCM obj)
     }
   else
     {
+      gcdata = SCM_VELTS(gc_protection);
       for (i = 0; i < gc_protection_size; i++)
-	if (SCM_EQ_P(scm_vector_ref(gc_protection, TO_SCM_INT(i)), 
-		     DEFAULT_GC_VALUE))
+	if (SCM_EQ_P(gcdata[i], DEFAULT_GC_VALUE))
 	  {
 	    scm_vector_set_x(gc_protection, TO_SCM_INT(i), obj);
 	    return;
@@ -68,8 +69,10 @@ void snd_protect(SCM obj)
 void snd_unprotect(SCM obj)
 {
   int i;
+  SCM *gcdata;
+  gcdata = SCM_VELTS(gc_protection);
   for (i = 0; i < gc_protection_size; i++)
-    if (SCM_EQ_P(scm_vector_ref(gc_protection, TO_SCM_INT(i)), obj))
+    if (SCM_EQ_P(gcdata[i], obj))
       {
 	scm_vector_set_x(gc_protection, TO_SCM_INT(i), DEFAULT_GC_VALUE);
 	return;
@@ -155,7 +158,7 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
   if ((gh_list_p(throw_args)) && 
       (gh_length(throw_args) > 0))
     {
-      scm_display(gh_car(throw_args), port);
+      scm_display(SCM_CAR(throw_args), port);
       scm_puts(": ", port);
       if (gh_length(throw_args) > 1)
 	{
@@ -163,10 +166,10 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
 	    {
 	      scm_display(tag, port);
 	      scm_puts(" \"", port);
-	      scm_display(gh_cadr(throw_args), port);
+	      scm_display(SCM_CADR(throw_args), port);
 	      scm_puts("\" ", port);
 	      if (gh_length(throw_args) > 2)
-		scm_display(gh_cddr(throw_args), port);
+		scm_display(SCM_CDDR(throw_args), port);
 	    }
 	  else
 	    {
@@ -179,13 +182,13 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
 		{
 		  scm_display(tag, port);
 		  scm_puts(" ", port);
-		  scm_display(gh_cdr(throw_args), port);
+		  scm_display(SCM_CDR(throw_args), port);
 		}
 	      else
 		{
-		  stmp = gh_cadr(throw_args);
+		  stmp = SCM_CADR(throw_args);
 		  if ((STRING_P(stmp)) && (gh_length(throw_args) > 2))
-		    scm_display_error_message(stmp, gh_caddr(throw_args), port);
+		    scm_display_error_message(stmp, SCM_CADDR(throw_args), port);
 		  else scm_display(tag, port);
 		  if (show_backtrace(state))
 		    {
@@ -296,7 +299,7 @@ char *procedure_ok(SCM proc, int req_args, int opt_args, const char *caller, con
     {
       arity_list = scm_i_procedure_arity(proc);
       snd_protect(arity_list);
-      args = TO_SMALL_C_INT(gh_car(arity_list));
+      args = TO_SMALL_C_INT(SCM_CAR(arity_list));
       if (args != req_args)
 	return(mus_format("%s, arg %d to %s, should take %d required argument%s, but instead takes %d",
 			  arg_name, argn, caller,
@@ -305,7 +308,7 @@ char *procedure_ok(SCM proc, int req_args, int opt_args, const char *caller, con
 			  args));
       else
 	{
-	  args = TO_SMALL_C_INT(gh_cadr(arity_list));
+	  args = TO_SMALL_C_INT(SCM_CADR(arity_list));
 	  if (args != opt_args)
 	    return(mus_format("%s, arg %d to %s, should take %d optional argument%s, but instead takes %d",
 			      arg_name, argn, caller,
@@ -381,7 +384,16 @@ static SCM eval_file_wrapper(void *data)
 
 static SCM g_call0_1(void *arg)
 {
-  return(scm_apply((SCM)arg, SCM_EOL, SCM_EOL));
+  SCM code = (SCM)arg;
+  switch (SCM_TYP7(code))
+    {
+    case scm_tc7_subr_0:
+      return(SCM_SUBRF(code)());
+    case scm_tcs_closures:
+      return scm_eval_body(SCM_CDR(SCM_CODE(code)), SCM_ENV(code)); /* not sure about env here */
+    default:
+      return(scm_apply(code, SCM_EOL, SCM_EOL));
+    }
 }
 
 SCM g_call0(SCM proc, const char *caller) /* replacement for gh_call0 -- protect ourselves from premature exit(!$#%@$) */
@@ -391,9 +403,21 @@ SCM g_call0(SCM proc, const char *caller) /* replacement for gh_call0 -- protect
 
 static SCM g_call1_1(void *arg)
 {
-  return(scm_apply(((SCM *)arg)[0], 
-		   ((SCM *)arg)[1], 
-		   scm_listofnull));
+  SCM env, code, obj;
+  code = ((SCM *)arg)[0]; 
+  obj = ((SCM *)arg)[1]; 
+  switch (SCM_TYP7(code))
+    {
+    case scm_tc7_subr_1:
+      return SCM_SUBRF(code)(obj);
+    case scm_tcs_closures:
+      env = SCM_EXTEND_ENV(SCM_CAR(SCM_CODE(code)),
+			   SCM_LIST1(obj),
+			   SCM_ENV(code));
+      return scm_eval_body(SCM_CDR (SCM_CODE(code)), env);
+    default:
+      return(scm_apply(code, obj, scm_listofnull));
+    }
 }
 
 SCM g_call1(SCM proc, SCM arg, const char *caller)
@@ -421,10 +445,22 @@ SCM g_call_any(SCM proc, SCM arglist, const char *caller)
 
 static SCM g_call2_1(void *arg)
 {
-  return(scm_apply(((SCM *)arg)[0], 
-		   ((SCM *)arg)[1], 
-		   scm_cons(((SCM *)arg)[2], 
-			    scm_listofnull)));
+  SCM env, code, arg1, arg2;
+  code = ((SCM *)arg)[0]; 
+  arg1 = ((SCM *)arg)[1]; 
+  arg2 = ((SCM *)arg)[2]; 
+  switch (SCM_TYP7(code))
+    {
+    case scm_tc7_subr_2:
+      return SCM_SUBRF(code)(arg1, arg2);
+    case scm_tcs_closures:
+      env = SCM_EXTEND_ENV(SCM_CAR(SCM_CODE(code)),
+			   SCM_LIST2(arg1, arg2),
+			   SCM_ENV(code));
+      return scm_eval_body(SCM_CDR (SCM_CODE(code)), env);
+    default:
+      return(scm_apply(code, arg1, scm_cons(arg2, scm_listofnull)));
+    }
 }
 
 SCM g_call2(SCM proc, SCM arg1, SCM arg2, const char *caller)
@@ -1349,8 +1385,8 @@ static SCM g_sounds(void)
     {
       sp = ((snd_info *)(ss->sounds[i]));
       if ((sp) && (sp->inuse))
-	result = gh_cons(TO_SMALL_SCM_INT(i),
-			 result);
+	result = scm_cons(TO_SMALL_SCM_INT(i),
+			  result);
     }
   return(result);
 }
@@ -1835,11 +1871,11 @@ static SCM vct2soundfile(SCM g_fd, SCM obj, SCM g_nums)
   float *vals;
   vct *v;
   SCM_ASSERT(INTEGER_P(g_fd), g_fd, SCM_ARG1, S_vct_sound_file);
-  SCM_ASSERT((vct_p(obj)), obj, SCM_ARG2, S_vct_sound_file);
+  SCM_ASSERT((VCT_P(obj)), obj, SCM_ARG2, S_vct_sound_file);
   SCM_ASSERT(NUMBER_P(g_nums), g_nums, SCM_ARG3, S_vct_sound_file);
   fd = TO_C_INT(g_fd);
   nums = TO_C_INT_OR_ELSE(g_nums, 0);
-  v = get_vct(obj);
+  v = TO_VCT(obj);
   lseek(fd, 0L, SEEK_END);
   if (sizeof(Float) == 4) /* Float can be either float or double */
     nums = write(fd, (char *)(v->data), nums * 4);
@@ -2005,7 +2041,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
   int h = 0, w = 0, o = 0, gx0 = 0, ww = 0;
   axis_info *uap = NULL;
   /* ldata can be a vct object, a vector, or a list of either */
-  SCM_ASSERT(((vct_p(ldata)) || (VECTOR_P(ldata)) || (gh_list_p(ldata))), ldata, SCM_ARG1, S_graph);
+  SCM_ASSERT(((VCT_P(ldata)) || (VECTOR_P(ldata)) || (gh_list_p(ldata))), ldata, SCM_ARG1, S_graph);
   SND_ASSERT_CHAN(S_graph, snd_n, chn_n, 7);
   cp = get_cp(snd_n, chn_n, S_graph);
   ymin = 32768.0;
@@ -2082,7 +2118,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
 	  if (gh_list_p(ldata))
 	    data = gh_list_ref(ldata, TO_SMALL_SCM_INT(graph));
 	  else data = ldata;
-	  if (vct_p(data))
+	  if (VCT_P(data))
 	    {
 	      v = (vct *)SND_VALUE_OF(data);
 	      len = v->length;
@@ -2729,7 +2765,7 @@ void define_procedure_with_setter(char *get_name, SCM (*get_func)(), char *get_h
 				  int get_req, int get_opt, int set_req, int set_opt)
 {
   scm_set_object_property_x(
-    gh_cdr(
+    SCM_CDR(
       gh_define(get_name,
 	scm_make_procedure_with_setter(
           gh_new_procedure("", SCM_FNC get_func, get_req, get_opt, 0),
@@ -2746,7 +2782,7 @@ void define_procedure_with_reversed_setter(char *get_name, SCM (*get_func)(), ch
 					   int get_req, int get_opt, int set_req, int set_opt)
 {
   scm_set_object_property_x(
-    gh_cdr(
+    SCM_CDR(
       gh_define(get_name,
 	scm_make_procedure_with_setter(
           gh_new_procedure("", SCM_FNC get_func, get_req, get_opt, 0),

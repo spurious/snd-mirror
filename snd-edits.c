@@ -2685,6 +2685,7 @@ static SCM g_sf_p(SCM obj)
 
 snd_fd *get_sf(SCM obj); /* currently for snd-ladspa.c */
 snd_fd *get_sf(SCM obj) {if (sf_p(obj)) return((snd_fd *)SND_VALUE_OF(obj)); else return(NULL);}
+#define TO_SAMPLE_READER(obj) ((snd_fd *)SND_VALUE_OF(obj))
 
 static int print_sf(SCM obj, SCM port, scm_print_state *pstate) 
 {
@@ -2743,7 +2744,7 @@ static SCM g_sample_reader_at_end(SCM obj)
 {
   #define H_sample_reader_at_end "(" S_sample_reader_at_endQ " obj) -> #t if sample-reader has reached the end of its data"
   SCM_ASSERT(sf_p(obj), obj, SCM_ARG1, S_sample_reader_at_endQ);
-  return(TO_SCM_BOOLEAN(read_sample_eof(get_sf(obj))));
+  return(TO_SCM_BOOLEAN(read_sample_eof(TO_SAMPLE_READER(obj))));
 }
 
 SCM g_c_make_sample_reader(snd_fd *fd)
@@ -2837,14 +2838,14 @@ static SCM g_next_sample(SCM obj)
 {
   #define H_next_sample "(" S_next_sample " reader) -> next sample from reader"
   SCM_ASSERT(sf_p(obj), obj, SCM_ARG1, S_next_sample);
-  return(TO_SCM_DOUBLE(next_sample_to_float(get_sf(obj))));
+  return(TO_SCM_DOUBLE(next_sample_to_float(TO_SAMPLE_READER(obj))));
 }
 
 static SCM g_previous_sample(SCM obj)
 {
   #define H_previous_sample "(" S_previous_sample " reader) -> previous sample from reader"
   SCM_ASSERT(sf_p(obj), obj, SCM_ARG1, S_previous_sample);
-  return(TO_SCM_DOUBLE(previous_sample_to_float(get_sf(obj))));
+  return(TO_SCM_DOUBLE(previous_sample_to_float(TO_SAMPLE_READER(obj))));
 }
 
 static SCM g_free_sample_reader(SCM obj)
@@ -2853,7 +2854,7 @@ static SCM g_free_sample_reader(SCM obj)
   snd_fd *fd;
   snd_info *sp = NULL;
   SCM_ASSERT(sf_p(obj), obj, SCM_ARG1, S_free_sample_reader);
-  fd = get_sf(obj);
+  fd = TO_SAMPLE_READER(obj);
   sp = fd->local_sp; 
   fd->local_sp = NULL;
   SND_SET_VALUE_OF(obj, (SCM)NULL);
@@ -2892,7 +2893,7 @@ replacing current data with the function results; origin is the edit-history nam
   SCM_ASSERT(INTEGER_P(calls), calls, SCM_ARG3, S_loop_samples);
   SCM_ASSERT(STRING_P(origin), origin, SCM_ARG4, S_loop_samples);
   num = TO_C_INT(calls);
-  sf = get_sf(reader);
+  sf = TO_SAMPLE_READER(reader);
   cp = sf->cp;
   ss = cp->state;
   if (!(SCM_UNBNDP(environ))) 
@@ -3133,9 +3134,9 @@ MUS_SAMPLE_TYPE *g_floats_to_samples(SCM obj, int *size, const char *caller, int
 	}
       else
 	{
-	  if (vct_p(obj))
+	  if (VCT_P(obj))
 	    {
-	      v = get_vct(obj);
+	      v = TO_VCT(obj);
 	      if ((*size) == 0) 
 		num = v->length; 
 	      else num = (*size);

@@ -94,12 +94,12 @@ int vct_p(SCM obj)
 static SCM g_vct_p(SCM obj) 
 {
   #define H_vct_p "(" S_vct_p " obj) -> #t if obj is a vct object, else #f"
-  return(TO_SCM_BOOLEAN(vct_p(obj)));
+  return(TO_SCM_BOOLEAN(VCT_P(obj)));
 }
 
 vct *get_vct(SCM arg)
 {
-  if (vct_p(arg))
+  if (VCT_P(arg))
     return((vct *)SND_VALUE_OF(arg));
   return(NULL);
 }
@@ -201,8 +201,8 @@ static SCM copy_vct(SCM obj)
   vct *v;
   Float *copied_data;
   int len, i;
-  SCM_ASSERT(vct_p(obj), obj, SCM_ARG1, S_vct_copy);
-  v = get_vct(obj);
+  SCM_ASSERT(VCT_P(obj), obj, SCM_ARG1, S_vct_copy);
+  v = TO_VCT(obj);
   if (v)
     {
       len = v->length;
@@ -219,24 +219,24 @@ static SCM vct_move(SCM obj, SCM newi, SCM oldi, SCM backwards)
   #define H_vct_moveB "(" S_vct_moveB " obj new old backwards) moves obj data from old to new"
   vct *v;
   int i, j, ni, nj;
-  SCM_ASSERT(vct_p(obj), obj, SCM_ARG1, S_vct_moveB);
+  SCM_ASSERT(VCT_P(obj), obj, SCM_ARG1, S_vct_moveB);
   SCM_ASSERT(INTEGER_P(newi), newi, SCM_ARG2, S_vct_moveB);
   SCM_ASSERT(INTEGER_P(oldi), oldi, SCM_ARG3, S_vct_moveB);
   SCM_ASSERT(BOOLEAN_IF_BOUND_P(backwards), backwards, SCM_ARG4, S_vct_moveB);
-  v = get_vct(obj);
+  v = TO_VCT(obj);
   ni = SCM_INUM(newi);
   nj = SCM_INUM(oldi);
   if ((BOOLEAN_P(backwards)) && 
       (SCM_NFALSEP(backwards)))
     {
       if (ni >= v->length) 
-	scm_misc_error(S_vct_moveB,
-		       "new-index: ~A (len: ~A)?",
+	mus_misc_error(S_vct_moveB,
+		       "new-index too high?",
 		       SCM_LIST2(newi,
 				 TO_SCM_INT(v->length)));
       if (nj >= v->length)
-	scm_misc_error(S_vct_moveB,
-		       "old-index: ~A (len: ~A)?",
+	mus_misc_error(S_vct_moveB,
+		       "old-index too high?",
 		       SCM_LIST2(oldi,
 				 TO_SCM_INT(v->length)));
       if (v) for (i = ni, j = nj; (j >= 0) && (i >= 0); i--, j--) 
@@ -245,13 +245,13 @@ static SCM vct_move(SCM obj, SCM newi, SCM oldi, SCM backwards)
   else
     {
       if (ni < 0)
-	scm_misc_error(S_vct_moveB,
-		       "new-index: ~A?",
-		       SCM_LIST1(newi));
+	mus_misc_error(S_vct_moveB,
+		       "new-index < 0?",
+		       newi);
       if (nj < 0)
-	scm_misc_error(S_vct_moveB,
-		       "old-index: ~A?",
-		       SCM_LIST1(oldi));
+	mus_misc_error(S_vct_moveB,
+		       "old-index < 0?",
+		       oldi);
       if (v) for (i = ni, j = nj; (j < v->length) && (i < v->length); i++, j++) 
 	v->data[i] = v->data[j];
     }
@@ -261,8 +261,9 @@ static SCM vct_move(SCM obj, SCM newi, SCM oldi, SCM backwards)
 static SCM vct_length(SCM obj)
 {
   #define H_vct_length     "(" S_vct_length " v) -> length of vct v"
-  vct *v = get_vct(obj);
-  SCM_ASSERT(vct_p(obj), obj, SCM_ARG1, S_vct_length);
+  vct *v;
+  SCM_ASSERT(VCT_P(obj), obj, SCM_ARG1, S_vct_length);
+  v = TO_VCT(obj);
   if (v)
     return(TO_SCM_INT(v->length));
   return(TO_SMALL_SCM_INT(0));
@@ -274,53 +275,55 @@ static SCM vct_length(SCM obj)
 static SCM vct_ref(SCM obj, SCM pos)
 {
   #define H_vct_ref "(" S_vct_ref " v n) -> element n of vct v, v[n]"
-  vct *v = get_vct(obj);
+  vct *v;
   int loc;
-  SCM_ASSERT(vct_p(obj), obj, SCM_ARG1, S_vct_ref);
+  SCM_ASSERT(VCT_P(obj), obj, SCM_ARG1, S_vct_ref);
   SCM_ASSERT(INTEGER_P(pos), pos, SCM_ARG2, S_vct_ref);
+  v = TO_VCT(obj);
   if (v)
     {
       loc = TO_C_INT(pos);
       if (loc < 0)
-	scm_misc_error(S_vct_ref, "index: ~A?", SCM_LIST1(pos));
+	mus_misc_error(S_vct_ref, "index < 0?", pos);
       else
 	{
 	  if (loc >= v->length)
-	    scm_misc_error(S_vct_ref,
-			   "index: ~A but vct length: ~A?",
+	    mus_misc_error(S_vct_ref,
+			   "index too high?",
 			   SCM_LIST2(pos,
 				     TO_SCM_INT(v->length)));
 	  else return(TO_SCM_DOUBLE(v->data[loc]));
 	}
     }
-  else scm_misc_error(S_vct_ref, "~A is null?", SCM_LIST1(obj));
+  else mus_misc_error(S_vct_ref, "vct obj is null?", obj);
   return(TO_SCM_DOUBLE(0.0));
 }
 
 static SCM vct_set(SCM obj, SCM pos, SCM val)
 {
   #define H_vct_setB "(" S_vct_setB " v n val) sets element n of vct v to val, v[n] = val"
-  vct *v = get_vct(obj);
+  vct *v;
   int loc;
-  SCM_ASSERT(vct_p(obj), obj, SCM_ARG1, S_vct_setB);
+  SCM_ASSERT(VCT_P(obj), obj, SCM_ARG1, S_vct_setB);
   SCM_ASSERT(INTEGER_P(pos), pos, SCM_ARG2, S_vct_setB);
   SCM_ASSERT(NUMBER_P(val), val, SCM_ARG3, S_vct_setB);
+  v = TO_VCT(obj);
   if (v)
     {
       loc = TO_C_INT(pos);
       if (loc < 0)
-	scm_misc_error(S_vct_setB, "index: ~A?", SCM_LIST1(pos));
+	mus_misc_error(S_vct_setB, "index < 0?", pos);
       else
 	{
 	  if (loc >= v->length)
-	    scm_misc_error(S_vct_setB,
-			   "index: ~A but vct length: ~A?",
+	    mus_misc_error(S_vct_setB,
+			   "index too high?",
 			   SCM_LIST2(pos,
 				     TO_SCM_INT(v->length)));
 	  else v->data[loc] = TO_C_DOUBLE(val);
 	}
     }
-  else scm_misc_error(S_vct_ref, "~A is null?", SCM_LIST1(obj));
+  else mus_misc_error(S_vct_ref, "vct obj is null?", obj);
   return(scm_return_first(val, obj, pos));
 }
 
@@ -329,10 +332,10 @@ static SCM vct_multiply(SCM obj1, SCM obj2)
   #define H_vct_multiplyB "(" S_vct_multiplyB " v1 v2) -> v1 with element-wise multiply of vcts v1 and v2: v1[i] *= v2[i]"
   int i, lim;
   vct *v1, *v2;
-  SCM_ASSERT(vct_p(obj1), obj1, SCM_ARG1, S_vct_multiplyB);
-  SCM_ASSERT(vct_p(obj2), obj2, SCM_ARG2, S_vct_multiplyB);
-  v1 = get_vct(obj1);
-  v2 = get_vct(obj2);
+  SCM_ASSERT(VCT_P(obj1), obj1, SCM_ARG1, S_vct_multiplyB);
+  SCM_ASSERT(VCT_P(obj2), obj2, SCM_ARG2, S_vct_multiplyB);
+  v1 = TO_VCT(obj1);
+  v2 = TO_VCT(obj2);
   if ((v1) && (v2))
     {
       lim = MIN(v1->length, v2->length);
@@ -346,10 +349,10 @@ static SCM vct_add(SCM obj1, SCM obj2, SCM offs)
   #define H_vct_addB "(" S_vct_addB " v1 v2 &optional (offset 0)) -> v1 with element-wise add of vcts v1 and v2: v1[i+offset] += v2[i]"
   int i, lim, j;
   vct *v1, *v2;
-  SCM_ASSERT(vct_p(obj1), obj1, SCM_ARG1, S_vct_addB);
-  SCM_ASSERT(vct_p(obj2), obj2, SCM_ARG2, S_vct_addB);
-  v1 = get_vct(obj1);
-  v2 = get_vct(obj2);
+  SCM_ASSERT(VCT_P(obj1), obj1, SCM_ARG1, S_vct_addB);
+  SCM_ASSERT(VCT_P(obj2), obj2, SCM_ARG2, S_vct_addB);
+  v1 = TO_VCT(obj1);
+  v2 = TO_VCT(obj2);
   if ((v1) && (v2))
     {
       lim = MIN(v1->length, v2->length);
@@ -368,10 +371,10 @@ static SCM vct_subtract(SCM obj1, SCM obj2)
   #define H_vct_subtractB "(" S_vct_subtractB " v1 v2) -> v1 with element-wise subtract of vcts v1 and v2: v1[i] -= v2[i]"
   int i, lim;
   vct *v1, *v2;
-  SCM_ASSERT(vct_p(obj1), obj1, SCM_ARG1, S_vct_subtractB);
-  SCM_ASSERT(vct_p(obj2), obj2, SCM_ARG2, S_vct_subtractB);
-  v1 = get_vct(obj1);
-  v2 = get_vct(obj2);
+  SCM_ASSERT(VCT_P(obj1), obj1, SCM_ARG1, S_vct_subtractB);
+  SCM_ASSERT(VCT_P(obj2), obj2, SCM_ARG2, S_vct_subtractB);
+  v1 = TO_VCT(obj1);
+  v2 = TO_VCT(obj2);
   if ((v1) && (v2))
     {
       lim = MIN(v1->length, v2->length);
@@ -386,9 +389,9 @@ static SCM vct_scale(SCM obj1, SCM obj2)
   int i;
   vct *v1;
   Float scl;
-  SCM_ASSERT(vct_p(obj1), obj1, SCM_ARG1, S_vct_scaleB);
+  SCM_ASSERT(VCT_P(obj1), obj1, SCM_ARG1, S_vct_scaleB);
   SCM_ASSERT(NUMBER_P(obj2), obj2, SCM_ARG2, S_vct_scaleB);
-  v1 = get_vct(obj1);
+  v1 = TO_VCT(obj1);
   scl = TO_C_DOUBLE(obj2);
   if (v1)
     for (i = 0; i < v1->length; i++) v1->data[i] *= scl;
@@ -401,9 +404,9 @@ static SCM vct_offset(SCM obj1, SCM obj2)
   int i;
   vct *v1;
   Float scl;
-  SCM_ASSERT(vct_p(obj1), obj1, SCM_ARG1, S_vct_offsetB);
+  SCM_ASSERT(VCT_P(obj1), obj1, SCM_ARG1, S_vct_offsetB);
   SCM_ASSERT(NUMBER_P(obj2), obj2, SCM_ARG2, S_vct_offsetB);
-  v1 = get_vct(obj1);
+  v1 = TO_VCT(obj1);
   scl = TO_C_DOUBLE(obj2);
   if (v1)
     for (i = 0; i < v1->length; i++) v1->data[i] += scl;
@@ -416,9 +419,9 @@ static SCM vct_fill(SCM obj1, SCM obj2)
   int i;
   vct *v1;
   Float scl;
-  SCM_ASSERT(vct_p(obj1), obj1, SCM_ARG1, S_vct_fillB);
+  SCM_ASSERT(VCT_P(obj1), obj1, SCM_ARG1, S_vct_fillB);
   SCM_ASSERT(NUMBER_P(obj2), obj2, SCM_ARG2, S_vct_fillB);
-  v1 = get_vct(obj1);
+  v1 = TO_VCT(obj1);
   scl = TO_C_DOUBLE(obj2);
   if (v1)
     for (i = 0; i < v1->length; i++) v1->data[i] = scl;
@@ -441,11 +444,11 @@ static SCM vct_map(SCM obj, SCM proc)
   #define H_vct_mapB "(" S_vct_mapB " v proc) -> v with each element set to value of proc: v[i] = (proc)"
   int i;
   vct *v;
-  SCM_ASSERT(vct_p(obj), obj, SCM_ARG1, S_vct_mapB);
+  SCM_ASSERT(VCT_P(obj), obj, SCM_ARG1, S_vct_mapB);
   SCM_ASSERT((gh_procedure_p(proc)), proc, SCM_ARG2, S_vct_mapB);
   if (!(procedure_fits(proc, 0)))
     scm_wrong_type_arg(S_vct_mapB, 2, proc);
-  v = get_vct(obj);
+  v = TO_VCT(obj);
 #if USE_SND
   if (v) 
     for (i = 0; i < v->length; i++) 
@@ -463,11 +466,11 @@ static SCM vct_do(SCM obj, SCM proc)
   #define H_vct_doB "(" S_vct_doB " v proc) -> v with each element set to value of proc: v[i] = (proc i)"
   int i;
   vct *v;
-  SCM_ASSERT(vct_p(obj), obj, SCM_ARG1, S_vct_doB);
+  SCM_ASSERT(VCT_P(obj), obj, SCM_ARG1, S_vct_doB);
   SCM_ASSERT((gh_procedure_p(proc)), proc, SCM_ARG2, S_vct_doB);
   if (!(procedure_fits(proc, 1)))
     scm_wrong_type_arg(S_vct_doB, 2, proc);
-  v = get_vct(obj);
+  v = TO_VCT(obj);
 #if USE_SND
   if (v) 
     for (i = 0; i < v->length; i++) 
@@ -498,21 +501,21 @@ static SCM vcts_map(SCM args)
   for (i = 0; i < vnum; i++)
     {
       arg = gh_list_ref(args, TO_SMALL_SCM_INT(i));
-      if (!(vct_p(arg))) 
+      if (!(VCT_P(arg))) 
 	{
 	  FREE(v);
 	  scm_wrong_type_arg(S_vcts_mapB, i, arg);
 	  return(TO_SMALL_SCM_INT(0));
 	}
-      v[i] = get_vct(arg);
+      v[i] = TO_VCT(arg);
     }
   proc = gh_list_ref(args, TO_SMALL_SCM_INT(vnum));
   if (!(procedure_fits(proc, 1)))
     {
       FREE(v);
-      scm_misc_error(S_vcts_mapB,
-		     "in ~S, last argument must be a function of 1 arg",
-		     SCM_LIST1(args));
+      mus_misc_error(S_vcts_mapB,
+		     "last argument must be a function of 1 arg",
+		     args);
       return(TO_SMALL_SCM_INT(0));
     }
   svi = TO_SMALL_SCM_INT(vnum);
@@ -539,7 +542,7 @@ static SCM vcts_map(SCM args)
 
 static SCM vcts_do(SCM args)
 {
-  #define H_vcts_doB "(" S_vcts_doB " v1 v2 ... proc) sets each element of the vct objects from the list of values returned by (proc i)"
+  #define H_vcts_doB "(" S_vcts_doB " v1 v2 ... proc) sets each element of the vct objects from the list of values returned by (proc vnum i)"
   /* n vcts followed by proc, proc returns n values (list) on each call */
   int i, vi, vnum, vsize, argnum;
   vct **v;
@@ -555,21 +558,21 @@ static SCM vcts_do(SCM args)
   for (i = 0; i < vnum; i++)
     {
       arg = gh_list_ref(args, TO_SMALL_SCM_INT(i));
-      if (!(vct_p(arg))) 
+      if (!(VCT_P(arg))) 
 	{
 	  FREE(v);
 	  scm_wrong_type_arg(S_vcts_doB, i, arg);
 	  return(TO_SMALL_SCM_INT(0));
 	}
-      v[i] = get_vct(arg);
+      v[i] = TO_VCT(arg);
     }
   proc = gh_list_ref(args, TO_SMALL_SCM_INT(vnum));
   if (!(procedure_fits(proc, 2)))
     {
       FREE(v);
-      scm_misc_error(S_vcts_doB,
-		     "in ~S, last argument must be a function of 2 args",
-		     SCM_LIST1(args));
+      mus_misc_error(S_vcts_doB,
+		     "last argument must be a function of 2 args",
+		     args);
       return(TO_SMALL_SCM_INT(0));
     }
   vsize = v[0]->length;
@@ -600,8 +603,8 @@ static SCM vct_peak(SCM obj)
   int i;
   Float val = 0.0, absv;
   vct *v;
-  SCM_ASSERT(vct_p(obj), obj, SCM_ARG1, S_vct_peak);
-  v = get_vct(obj);
+  SCM_ASSERT(VCT_P(obj), obj, SCM_ARG1, S_vct_peak);
+  v = TO_VCT(obj);
   if (v) 
     {
       val = fabs(v->data[0]); 
@@ -625,7 +628,7 @@ static SCM list2vct(SCM lst)
   if (len == 0)
     return(SCM_BOOL_F);
   scv = make_vct(len, (Float *)CALLOC(len, sizeof(Float)));
-  v = get_vct(scv);
+  v = TO_VCT(scv);
   for (i = 0, lst1 = lst; i < len; i++, lst1 = SCM_CDR(lst1)) 
     v->data[i] = (Float)TO_C_DOUBLE(SCM_CAR(lst1));
   return(scm_return_first(scv, lst));
@@ -640,9 +643,9 @@ static SCM g_vct(SCM args)
 static SCM array_to_list(Float *arr, int i, int len)
 {
   if (i < (len - 1))
-    return(gh_cons(TO_SCM_DOUBLE(arr[i]), 
+    return(scm_cons(TO_SCM_DOUBLE(arr[i]), 
 		   array_to_list(arr, i + 1, len)));
-  else return(gh_cons(TO_SCM_DOUBLE(arr[i]), 
+  else return(scm_cons(TO_SCM_DOUBLE(arr[i]), 
 		      SCM_EOL));
 }
 
@@ -650,8 +653,8 @@ static SCM vct2list(SCM vobj)
 {
   #define H_vct2list "(" S_vct2list " v) -> a new list with elements of vct v"
   vct *v;
-  SCM_ASSERT(vct_p(vobj), vobj, SCM_ARG1, S_vct2list);
-  v = get_vct(vobj);
+  SCM_ASSERT(VCT_P(vobj), vobj, SCM_ARG1, S_vct2list);
+  v = TO_VCT(vobj);
   return(scm_return_first(array_to_list(v->data, 0, v->length), vobj));
 }
 
@@ -665,7 +668,7 @@ static SCM vector2vct(SCM vect)
   SCM_ASSERT(gh_vector_p(vect), vect, SCM_ARG1, S_vector2vct);
   len = gh_vector_length(vect);
   scv = make_vct(len, (Float *)CALLOC(len, sizeof(Float)));
-  v = get_vct(scv);
+  v = TO_VCT(scv);
   vdata = SCM_VELTS(vect);
   for (i = 0; i < len; i++) 
     v->data[i] = (Float)TO_C_DOUBLE(vdata[i]);
@@ -678,20 +681,20 @@ static SCM vct_subseq(SCM vobj, SCM start, SCM end, SCM newv)
   vct *vold, *vnew;
   SCM res;
   int i, old_len, new_len, j;
-  SCM_ASSERT(vct_p(vobj), vobj, SCM_ARG1, S_vct_subseq);
+  SCM_ASSERT(VCT_P(vobj), vobj, SCM_ARG1, S_vct_subseq);
   SCM_ASSERT(INTEGER_P(start), start, SCM_ARG2, S_vct_subseq);
   SCM_ASSERT(INTEGER_IF_BOUND_P(end), end, SCM_ARG3, S_vct_subseq);
-  vold = get_vct(vobj);
+  vold = TO_VCT(vobj);
   old_len = vold->length;
   if (SCM_INUMP(end))
     new_len = SCM_INUM(end) - SCM_INUM(start) + 1;
   else new_len = old_len - SCM_INUM(start);
   if (new_len <= 0) 
     return(SCM_BOOL_F);
-  if (vct_p(newv))
+  if (VCT_P(newv))
     res = newv;
   else res = make_vct(new_len, (Float *)CALLOC(new_len, sizeof(Float)));
-  vnew = get_vct(res);
+  vnew = TO_VCT(res);
   if (new_len > vnew->length) 
     new_len = vnew->length;
   for (i = SCM_INUM(start), j = 0; (j < new_len) && (i < old_len); i++, j++)

@@ -26,7 +26,7 @@
 (use-modules (ice-9 format) (ice-9 debug))
 
 (define tests 1)
-(define snd-test -2)
+(define snd-test -1)
 (define full-test (< snd-test 0))
 
 (if (and (not (file-exists? "4.aiff"))
@@ -6414,7 +6414,7 @@
 			(lambda ()
 			  (vct-ref v 12))
 			(lambda args (car args)))))
-	    (if (not (eq? tag 'misc-error))
+	    (if (not (eq? tag 'mus-error))
 		     (snd-display (format #f ";vct[12]: ~A" tag)))))
 
 	(for-each (lambda (arg)
