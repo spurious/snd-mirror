@@ -18,7 +18,7 @@
   #endif
 #endif
       
-#define NUM_COMMANDS 549
+#define NUM_COMMANDS 552
 
 static char *snd_commands[NUM_COMMANDS]={
   S_abort,S_abortQ,S_activate_listener,S_add_mark,S_add_player,S_add_sound_file_extension,S_add_to_main_menu,S_add_to_menu,S_add_transform,
@@ -43,7 +43,7 @@ static char *snd_commands[NUM_COMMANDS]={
   S_dac_folding,S_dac_size,S_data_clipped,S_data_color,S_data_format,S_data_location,
   S_default_output_chans,S_default_output_format,S_default_output_srate,S_default_output_type,
   S_define_envelope,
-  S_delete_mark,S_delete_marks,S_delete_region,S_delete_sample,S_delete_samples,S_describe_audio,
+  S_delete_mark,S_delete_marks,S_delete_region,S_delete_sample,S_delete_samples,S_delete_selection,S_describe_audio,
   S_dismiss_all_dialogs,S_dont_normalize,S_dot_size,S_during_open_hook,
 
   S_edit_fragment,S_edit_header_dialog,S_edit_hook,S_edit_position,S_edits,
@@ -69,7 +69,7 @@ static char *snd_commands[NUM_COMMANDS]={
   S_hide_listener,S_highlight_color,S_html_dir,
 
   S_id_region,S_in,S_initial_x0,S_initial_x1,S_initial_y0,S_initial_y1,S_insert_region,S_insert_sample,
-  S_insert_samples,S_insert_sound,
+  S_insert_samples,S_insert_selection,S_insert_sound,
 
   S_just_sounds_hook,
 
@@ -84,7 +84,7 @@ static char *snd_commands[NUM_COMMANDS]={
   S_max_fft_peaks,S_max_regions,S_max_sounds,S_maxamp,S_memo_sound,S_menu_hook,S_min_dB,S_mix,
   S_mix_amp,S_mix_amp_changed_hook,S_mix_amp_env,S_mix_anchor,S_mix_chans,S_mix_color,
   S_mix_length,S_mix_locked,S_mix_name,S_mix_panel,S_mix_position,S_mix_position_changed_hook,
-  S_mix_region,S_mix_sample_readerQ,S_mix_sound,S_mix_sound_channel,S_mix_sound_index,S_mix_speed,S_mix_speed_changed_hook,
+  S_mix_region,S_mix_sample_readerQ,S_mix_selection,S_mix_sound,S_mix_sound_channel,S_mix_sound_index,S_mix_speed,S_mix_speed_changed_hook,
   S_mix_tag_height,S_mix_tag_width,S_mix_tag_y,S_mix_track,
   S_mix_vct,S_mix_waveform_height,S_mixQ,S_mixes,
   S_mouse_drag_hook,S_mouse_press_hook,S_mouse_release_hook,S_movies,S_multichannel_mix_hook,S_mus_error_hook,

@@ -3507,7 +3507,7 @@ void convolve_with(char *filename, Float amp, chan_info *cp)
 
 /* amplitude scaling */
 
-void scale_by(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int len, int selection)
+void scale_by(chan_info *cp, Float *ur_scalers, int len, int selection)
 {
   /* if selection, sync to current selection, else sync to current sound */
   /* 3-Oct-00: the scale factors are now embedded in the edit fragments,
@@ -3517,11 +3517,10 @@ void scale_by(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int
    */
   sync_info *si;
   chan_info *ncp;
-  int i,j,beg,frames,chans;
+  int i,j,beg,frames;
   if (selection)
     si = selection_sync();
   else si = sync_to_chan(cp);
-  if (si->chans < len) chans = len; else chans = si->chans;
   for (i=0,j=0;i<si->chans;i++)
     {
       ncp = si->cps[i];
@@ -4646,7 +4645,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
   if (scalable)
     {
       val[0] *= scaler;
-      scale_by(cp->state,cp->sound,cp,val,1,regexpr);
+      scale_by(cp,val,1,regexpr);
       return;
     }
 
@@ -5047,7 +5046,7 @@ static int cursor_zeros(chan_info *cp, int count, int regexpr)
 	  old_sync = nsp->syncing;
 	  nsp->syncing = 0;
 	  scaler[0] = 0.0;
-	  scale_by(nsp->state,nsp,ncp,scaler,1,FALSE);
+	  scale_by(ncp,scaler,1,FALSE);
 	  nsp->syncing = old_sync;
 	}
       else

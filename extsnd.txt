@@ -1213,12 +1213,18 @@ These are specific to the current selection (these can return the error
 
   cut               ()            cut the current selection (a no-op if no active selection)
 
+  delete-selection  ()            same as cut (deletes currently selected portions).
+
   env-selection     (envelope env-base snd chn)
                                   apply envelope to the currently selected portion of snd's channel chn
 
   filter-selection  (env order)   apply an FIR filter of order order and frequency response env
                                   to the current selection.  env can also be the filter coefficients
                                   themselves, in a vct object with at least order elements
+
+  insert-selection  (beg snd chn) insert (paste) selection starting at beg in snd's channel chn.
+
+  mix-selection     (beg snd chn) mix (add) selection starting at beg in snd's channel chn.  Returns new mix id.
 
   play-selection    (wait)        play the currently selected data
 

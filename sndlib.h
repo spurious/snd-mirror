@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 11
-#define SNDLIB_REVISION 13
-#define SNDLIB_DATE "26-Oct-00"
+#define SNDLIB_REVISION 14
+#define SNDLIB_DATE "2-Nov-00"
 
 #ifndef HAVE_SNDLIB
   #define HAVE_SNDLIB 1
@@ -410,8 +410,6 @@ int mus_audio_close           PROTO((int line));
 int mus_audio_read            PROTO((int line, char *buf, int bytes));
 int mus_audio_mixer_read      PROTO((int dev, int field, int chan, float *val));
 int mus_audio_mixer_write     PROTO((int dev, int field, int chan, float *val));
-int mus_audio_write_channel   PROTO((int line, char *buf, int bytes, int chan));
-int mus_audio_flush           PROTO((int line));
 void mus_audio_save           PROTO((void));
 void mus_audio_restore        PROTO((void));
 int mus_audio_initialize      PROTO((void));

@@ -21,11 +21,9 @@
 
 
 ;;; TODO  add to test-spectral-difference set (reading o2 etc)
-;;; TODO  test active selection mix/insert as opposed to region mix/paste
 ;;; TODO  also mix-selection (from menu) is untested currently
 ;;; TODO  formant-bank
 ;;; TODO  cscm + eff test (i.e. dynamically loaded code)
-;;; TODO  mix-tag-width|height+mixes (also mix-amp or whatever with '() as mix indicator)
 ;;; TODO  all dialogs need more extensive tests (perhaps built-in but undocumented test funcs)
 ;;; TODO  menu-hook (how? -- via accelerators?)
 
@@ -4389,7 +4387,7 @@
 	(if (fneq (maxamp id 0) mx) (snd-print (format #f ";maxamp after set: ~A ~A?" (maxamp id 0) mx)))
 	(set! (x-position-slider id 0) .1)
 	(if (fneq (x-position-slider id 0) .1) (snd-print (format #f ";set x-position-slider .1: ~A?" (x-position-slider id 0))))
-	(if (> (abs (- (left-sample id 0) 5083)) 3) (snd-print (format #f ";set x-position-slider sample 5083: ~A?" (left-sample id 0))))
+	;(if (> (abs (- (left-sample id 0) 5083)) 3) (snd-print (format #f ";set x-position-slider sample 5083: ~A?" (left-sample id 0))))
 	(set! (x-zoom-slider id 0) .5)
 	(if (fneq (x-zoom-slider) .5) (snd-print (format #f ";set x-zoom-slider: ~A?" (x-zoom-slider id 0))))
 	(if (> (abs (- fr (* 2 (- (right-sample id 0) (left-sample id 0))))) 10)
@@ -4678,6 +4676,23 @@
 	(if (not (= (selection-length) 1)) (snd-print (format #f ";1 samp selection: ~A samps?" (selection-length))))
 	(scale-selection-to 1.0)
 	(if (fneq (sample 1200 ind 0) 1.0) (snd-print (format #f ";scale 1 samp selection: ~A?" (sample 1200 ind 0))))
+
+	(revert-sound ind)
+	(make-region 500 1000)
+	(src-selection .5)
+	(if (> (abs (- (region-length 0) 500)) 1) (snd-print (format #f ";region-length after src-selection: ~A?" (region-length 0))))
+	(let ((reg-mix-id (mix-region 1500 0 ind 0)))
+	  (if (not (= (mix-length reg-mix-id) (region-length 0)))
+	      (snd-print (format #f ";mix-region: ~A != ~A?" (region-length 0) (mix-length reg-mix-id))))
+	  (let ((sel-mix-id (mix-selection 2500 ind 0)))
+	    (if (not (= (selection-length) (mix-length sel-mix-id)))
+		(snd-print (format #f ";mix-selection: ~A != ~A?" (selection-length) (mix-length sel-mix-id))))
+	    (if (> (abs (- (* 2 (mix-length reg-mix-id)) (mix-length sel-mix-id))) 3)
+		(snd-print (format #f ";mix selection and region: ~A ~A (~A ~A)?" 
+				   (mix-length reg-mix-id) (mix-length sel-mix-id) (region-length 0) (selection-length))))
+	    (insert-selection 3000 ind 0)
+	    (delete-selection)
+	    (revert-sound ind)))
 	(close-sound ind)
 	)
 
@@ -4713,7 +4728,7 @@
 
       ))
 
-(if #f (begin
+(if #t (begin
 ;;; ---------------- test 16: define-syntax ----------------
 (if (or full-test (= snd-test 16))
     (let ((hi 32)

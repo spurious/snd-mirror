@@ -256,6 +256,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+2-Nov:   added insert-selection, mix-selection, delete-selection.\n\
 1-Nov:   added filter-env-in-hz switch.\n\
 31-Oct:  syncing -> sync. Set! extended to frames, maxamp, x|y-zoom|position-slider.\n\
 30-Oct:  added examp.scm soft-port example of redirecting display to Snd's listener.\n\
@@ -1148,6 +1149,7 @@ all refer to the same thing.\n\
   " S_delete_region "     (reg)\n\
   " S_delete_sample "     (samp snd chn)\n\
   " S_delete_samples "    (samp samps snd chn)\n\
+  " S_delete_selection "  ()\n\
   " S_describe_audio "    ()\n\
   " S_dismiss_all_dialogs "()\n\
   " S_edit_fragment "     (num snd chn)\n\
@@ -1191,6 +1193,7 @@ all refer to the same thing.\n\
   " S_insert_region "     (beg reg snd chn)\n\
   " S_insert_sample "     (samp value snd chn)\n\
   " S_insert_samples "    (samp data snd chn)\n\
+  " S_insert_selection "  (beg snd chn)\n\
   " S_key "               (key state)\n\
   " S_left_sample "       (snd chn)\n\
   " S_list2vct "         (lst)\n\
@@ -1223,7 +1226,8 @@ all refer to the same thing.\n\
   " S_mix_locked "        (mix)\n\
   " S_mix_name "          (mix)\n\
   " S_mix_position "      (mix)\n\
-  " S_mix_region "        (samp scaler reg snd chn)\n\
+  " S_mix_region "        (samp reg snd chn)\n\
+  " S_mix_selection "     (samp snd chn)\n\
   " S_mix_sound_channel " (mix)\n\
   " S_mix_sound_index "   (mix)\n\
   " S_mix_speed "         (mix)\n\

@@ -903,7 +903,7 @@ static mix_info *add_mix(chan_info *cp, int chan, int beg, int num,
   return(md);
 }
 
-static mix_info *file_mix_samples(int beg, int num, char *tempfile, chan_info *cp, int chan, int temp, int out_chans, char *origin, int with_console)
+static mix_info *file_mix_samples(int beg, int num, char *tempfile, chan_info *cp, int chan, int temp, char *origin, int with_console)
 {
   /* open tempfile, current data, write to new temp file mixed, close others, open and use new as change case */
   /* used for clip-region temp file incoming and C-q in snd-chn.c (i.e. mix in file) so sync not relevant */
@@ -1031,7 +1031,7 @@ static int mix(int beg, int num, int chans, chan_info **cps, char *mixinfile, in
     {
       ids[i]=-1;
       sp = cps[i]->sound;
-      md = file_mix_samples(beg,num,mixinfile,cps[i],i,temp,chans,origin,with_console); /* explode in this file, or mix in snd-clm.c */
+      md = file_mix_samples(beg,num,mixinfile,cps[i],i,temp,origin,with_console); /* explode in this file, or mix in snd-clm.c */
       if (md) 
 	{
 	  if (id == -1) id = md->id;
@@ -3562,7 +3562,7 @@ static SCM g_mix(SCM file, SCM chn_samp_n, SCM file_chn, SCM snd_n, SCM chn_n, S
 	  md = file_mix_samples(g_scm2intdef(chn_samp_n,0),
 				mus_sound_samples(name)/chans,name,
 				cp,g_scm2intdef(file_chn,0),
-				DONT_DELETE_ME,1,S_mix,
+				DONT_DELETE_ME,S_mix,
 				with_mixer);
 	  if (md) id = md->id;
 	}

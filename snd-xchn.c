@@ -566,6 +566,7 @@ void reflect_edit_history_change(chan_info *cp)
   snd_info *sp;
   int i,eds;
   XmString *edits;
+  XmString edit;
 #if (XmVERSION == 1)
   if (0)
 #endif
@@ -577,20 +578,28 @@ void reflect_edit_history_change(chan_info *cp)
 	  if (lst)
 	    {
 	      eds = cp->edit_ctr;
-	      while ((eds<(cp->edit_size-1)) && (cp->edits[eds+1])) eds++;
-	      if (eds>=0)
+	      while ((eds < (cp->edit_size - 1)) && (cp->edits[eds+1])) eds++;
+	      if (eds >= 0)
 		{
-		  /* TODO: optimize this somehow -- it's slowing down power-key edits
-		   *       perhaps if key held through C-d or C-o etc, we coalesce edits?
-		   */
-		  sp = cp->sound;
-		  edits = (XmString *)CALLOC(eds+1,sizeof(XmString));
-		  edits[0] = XmStringCreate(sp->fullname,XmFONTLIST_DEFAULT_TAG);
-		  for (i=1;i<=eds;i++) edits[i] = XmStringCreate(edit_to_string(cp,i),XmFONTLIST_DEFAULT_TAG);
-		  XtVaSetValues(lst,XmNitems,edits,XmNitemCount,eds+1,NULL);
+		  if ((eds == cp->edit_ctr) && (eds > 1)) /* need to force 0 (1) case to start list with sound file name */
+		    {
+		      /* special common case -- we're appending a new edit description */
+		      XmListDeleteItemsPos(lst,cp->edit_size,eds+1);
+		      edit = XmStringCreate(edit_to_string(cp,eds),XmFONTLIST_DEFAULT_TAG);
+		      XmListAddItemUnselected(lst,edit,eds+1);
+		      XmStringFree(edit);
+		    }
+		  else
+		    {
+		      sp = cp->sound;
+		      edits = (XmString *)CALLOC(eds+1,sizeof(XmString));
+		      edits[0] = XmStringCreate(sp->fullname,XmFONTLIST_DEFAULT_TAG);
+		      for (i=1;i<=eds;i++) edits[i] = XmStringCreate(edit_to_string(cp,i),XmFONTLIST_DEFAULT_TAG);
+		      XtVaSetValues(lst,XmNitems,edits,XmNitemCount,eds+1,NULL);
+		      for (i=0;i<=eds;i++) XmStringFree(edits[i]);
+		      FREE(edits);
+		    }
 		  XmListSelectPos(lst,cp->edit_ctr+1,FALSE);
-		  for (i=0;i<=eds;i++) XmStringFree(edits[i]);
-		  FREE(edits);
 		  XtVaGetValues(lst,XmNvisibleItemCount,&i,NULL);
 		  if (i <= eds) XtVaSetValues(lst,XmNtopItemPosition,eds-i+2,NULL);
 		  goto_graph(cp);

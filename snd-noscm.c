@@ -1000,7 +1000,7 @@ static int symit(snd_state *ss,char **str)
 	  if (selection_is_active())
 	    {
 	      scls[0] = fstr(str[1]);
-	      scale_by(ss,NULL,NULL,scls,1,TRUE);
+	      scale_by(NULL,scls,1,TRUE);
 	      fsym(ss,scls[0]);
 	    }
 	  else 
@@ -1027,7 +1027,7 @@ static int symit(snd_state *ss,char **str)
 	  if (cp)
 	    {
 	      scls[0] = fstr(str[1]);
-	      scale_by(ss,cp->sound,cp,scls,1,FALSE); 
+	      scale_by(cp,scls,1,FALSE); 
 	    }
 	  fsym(ss,scls[0]);
 	  return(0);

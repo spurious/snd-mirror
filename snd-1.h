@@ -974,7 +974,7 @@ int keyboard_command (chan_info *cp, int keysym, int state);
   void g_init_chn(SCM local_doc);
 #endif
 void convolve_with(char *filename, Float amp, chan_info *cp);
-void scale_by(snd_state *ss, snd_info *sp, chan_info *cp, Float *scalers, int len, int selection);
+void scale_by(chan_info *cp, Float *scalers, int len, int selection);
 void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *scalers, int len, int selection);
 Float get_maxamp(snd_info *sp, chan_info *cp);
 src_state *make_src(snd_state *ss, Float srate, snd_fd *sf);

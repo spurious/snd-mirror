@@ -45,7 +45,7 @@
     <ul>
     <li><a href="#Vcts">Vcts</a>
     <li><a href="#samplereaders">Sample-readers</a>
-    <li><a href="#sndsndlib">Sound-data and Sndlib</a>
+    <li><a href="#sndsounddata">Sound-data and Sndlib</a>
     <li><a href="#sndmarks">Marks</a>
     <li><a href="#sndmixes">Mixes</a>
     <li><a href="#sndregions">Regions</a>
@@ -848,7 +848,7 @@ call (set! (samples...) data) with the new sound file's name; otherwise call ins
 </p>
 
 <br>
-<span class=cbox><h3><a name="sndsndlib">Sound-data and Sndlib</a></h3></span>
+<span class=cbox><h3><a name="sndsounddata">Sound-data and Sndlib</a></h3></span>
 
 <p>Another sound data object is the sound-data array used in Sndlib.</p>
 <pre>
@@ -1331,12 +1331,18 @@ these are indicated as <em class=targ>reg</em> below.
 
   <b><a name="sndcut">cut</a></b>               ()            cut the current selection (a no-op if no active selection) 
 
+  <b><a name="snddeleteselection">delete-selection</a></b>  ()            same as cut (deletes currently selected portions).
+
   <b><a name="sndenvselection">env-selection</a></b>     (envelope <i>env-base snd chn</i>)
                                   apply <i>envelope</i> to the currently selected portion of <i>snd</i>'s channel <i>chn</i> 
 
   <b><a name="sndfilterselection">filter-selection</a></b>  (env order)   apply an FIR filter of order <i>order</i> and frequency response <i>env</i>
                                   to the current selection.  <i>env</i> can also be the filter coefficients
                                   themselves, in a vct object with at least order elements 
+
+  <b><a name="sndinsertselection">insert-selection</a></b>  (<i>beg snd chn</i>) insert (paste) selection starting at beg in snd's channel chn.
+
+  <b><a name="sndmixselection">mix-selection</a></b>     (<i>beg snd chn</i>) mix (add) selection starting at beg in snd's channel chn.  Returns new mix id.
 
   <b><a name="sndplayselection">play-selection</a></b>    (<i>wait</i>)        play the currently selected data 
 
@@ -3105,7 +3111,7 @@ found (this code obviously has to be in the init file):</p>
         <!-- I(cut selection):L(cut)(sndcut) -->
 	<!-- I(insert selection):L(insert-region)(sndinsertregion) -->
 	<!-- I(play file):L(play, stop)(sndplay) -->
-        <!-- I(show marks):L(show-marks)(showmarks) -->
+        <!-- I(show marks):L(show-marks)(showmarks) --><!-- I(show marks):A(showmarks) -->
 	<!-- I(y=0 line):L(show-y-zero)(showyzero) -->
 	<!-- I(dots or lines):L(graph-style)(graphstyle) -->
         <!-- I(combine channels):L(channel-style)(channelstyle) -->

@@ -719,6 +719,9 @@ the current sounds (without affecting whatever was saved in region 0).
   scale-selection-to args
   src-selection num-or-env
   filter-selection coeffs order
+  delete-selection
+  insert-selection beg snd ch
+  mix-selection beg snd chn
   reverse-selection
   env-selection env
   save-selection name type format srate comment
@@ -1412,15 +1415,16 @@ on only if the contrast button is set.
 
 The filter is an arbitrary (even) order FIR filter specified by giving the
 frequency response envelope (the envelope is assumed to go from 0 to half
-the sampling rate) and filter order in the text windows provided. If you
-raise the control pane from its default height, a graph is revealed beneath
-the filter text field; this is an envelope editor like the envelope editor
-dialog but specialized for filtering. The actual frequency response is
-displayed in blue. As with all the user interface text entry widgets,
-anything you type in the filter envelope text field is evaluated as a scheme
-expression, returning a list of breakpoints; you can, for example, define a
-function that returns the list you want, then call that function in the text
-field. The filter is on only if the filter button is set.
+the sampling rate -- see filter-env-in-hz) and filter order in the text
+windows provided. If you raise the control pane from its default height, a
+graph is revealed beneath the filter text field; this is an envelope editor
+like the envelope editor dialog but specialized for filtering. The actual
+frequency response is displayed in blue. As with all the user interface text
+entry widgets, anything you type in the filter envelope text field is
+evaluated as a scheme expression, returning a list of breakpoints; you can,
+for example, define a function that returns the list you want, then call
+that function in the text field. The filter is on only if the filter button
+is set.
 
 There are many variables that reflect or control the panel's various
 sliders; each also has a default or initial value. The reverb and expand
@@ -1450,6 +1454,8 @@ Customization and Extension
 See extsnd.html.
 
 Index
+
+                                           Index
 
         Action           Menu       Keyboard          Lisp                  Other
  abort command                    Cg          abort?               mouse click
@@ -1568,7 +1574,7 @@ Index
  mix selection       Edit: Mix    Cx q        mix-region
  move cursor ahead                Cf, Cn, Ce  forward-sample       also >
  move cursor back                 Cb, Cp, Ca  backward-sample      also <
- move mixed file                              mix-position         see mix doc
+ move mixed file                              mix-position         drag mix tag
  move to mark                     Cj, Cx j    forward-mark         Cx j -> named mark
  move to mix                      Cx Cj       forward-mix
 
@@ -1577,7 +1583,7 @@ Index
 
  move window back                 [Right], Cx left-sample          scroll bars
                                   b
- multichannel ops                             syncing              sync button
+ multichannel ops                             sync                 sync button
 
  normalize display   View:                    normalize-view       Popup: Normalize
                      Normalize
@@ -1620,8 +1626,9 @@ Index
 
  save state          Options:                 save-state           save-state-on-exit
                      Save State
- select sound                     Cx o        select-sound         File dialog: click file
+ select sound                     Cx o        selected-sound       File dialog: click file
  show freq domain                             ffting               'f' button
+ show marks                                   show-marks
  show time domain                             waving               'w' button
  smooth samples                   Cx Cz       smooth
  smooth selection                 Cx z        smooth-selection

@@ -885,7 +885,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 	}
       else sp->syncing = 0;
       scaler[0] = sp->amp;
-      scale_by(ss,sp,(sp->selected_channel == NO_SELECTION) ? sp->chans[0] : sp->chans[sp->selected_channel],scaler,1,FALSE);
+      scale_by((sp->selected_channel == NO_SELECTION) ? sp->chans[0] : sp->chans[sp->selected_channel],scaler,1,FALSE);
       sp->syncing = old_sync;
     }
   else

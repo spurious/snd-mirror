@@ -256,24 +256,28 @@ sync_info *selection_sync(void)
   return(si);
 }
 
-void add_selection_or_region(snd_state *ss, int reg, chan_info *cp, char *origin)
+static int mix_selection(snd_state *ss, chan_info *cp, int beg, char *origin)
 {
   char *tempfile = NULL;
   sync_info *si_out;
-  int err;
+  int err,id = INVALID_MIX_ID;
+  tempfile = snd_tempnam(ss);
+  err = save_selection(ss,tempfile,MUS_NEXT,MUS_OUT_FORMAT,SND_SRATE(cp->sound),NULL);
+  if (err == MUS_NO_ERROR)
+    {
+      si_out = sync_to_chan(cp);
+      id = mix_file_and_delete(beg,selection_len(),tempfile,si_out->cps,si_out->chans,origin,with_mix_tags(ss));
+      free_sync_info(si_out);	      
+    }
+  return(id);
+}
+
+void add_selection_or_region(snd_state *ss, int reg, chan_info *cp, char *origin)
+{
   if (cp) 
     {
       if ((reg == 0) && (selection_is_active()))
-	{
-	  tempfile = snd_tempnam(ss);
-	  err = save_selection(ss,tempfile,MUS_NEXT,MUS_OUT_FORMAT,SND_SRATE(cp->sound),NULL);
-	  if (err == MUS_NO_ERROR)
-	    {
-	      si_out = sync_to_chan(cp);
-	      mix_file_and_delete(cp->cursor,selection_len(),tempfile,si_out->cps,si_out->chans,origin,with_mix_tags(ss));
-	      free_sync_info(si_out);	      
-	    }
-	}
+	mix_selection(ss,cp,cp->cursor,origin);
       else add_region(reg,cp,origin);
     }
 }
@@ -283,40 +287,43 @@ void mix_selection_from_menu(snd_state *ss)
   add_selection_or_region(ss,0,selected_channel(ss),"Edit: mix");
 }
 
-void paste_selection_or_region(snd_state *ss, int reg, chan_info *cp, char *origin)
+static int insert_selection(snd_state *ss, chan_info *cp, int beg, char *origin)
 {
   char *tempfile = NULL;
   sync_info *si_out,*si_in;
   chan_info *cp_in,*cp_out;
-  int i,err;
+  int i,err=MUS_NO_ERROR;
+  tempfile = snd_tempnam(ss);
+  err = save_selection(ss,tempfile,MUS_NEXT,MUS_OUT_FORMAT,SND_SRATE(cp->sound),NULL);
+  if (err == MUS_NO_ERROR)
+    {
+      si_out = sync_to_chan(cp);
+      si_in = selection_sync();
+      if (si_in->chans > 1) 
+	remember_temp(tempfile,si_in->chans);
+      for (i=0;((i<si_in->chans) && (i<si_out->chans));i++)
+	{
+	  cp_out = si_out->cps[i]; /* currently syncd chan that we might paste to */
+	  cp_in = si_in->cps[i];   /* selection chan to paste in (no wrap-around here) */
+	  file_insert_samples(beg,
+			      cp_selection_len(cp_in,NULL),
+			      tempfile,cp_out,i,
+			      (si_in->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
+			      origin);
+	  update_graph(cp_out,NULL);
+	}
+      free_sync_info(si_in);
+      free_sync_info(si_out);
+    }
+  return(err);
+}
+
+void paste_selection_or_region(snd_state *ss, int reg, chan_info *cp, char *origin)
+{
   if (cp) 
     {
       if ((reg == 0) && (selection_is_active()))
-	{
-	  tempfile = snd_tempnam(ss);
-	  err = save_selection(ss,tempfile,MUS_NEXT,MUS_OUT_FORMAT,SND_SRATE(cp->sound),NULL);
-	  if (err == MUS_NO_ERROR)
-	    {
-	      si_out = sync_to_chan(cp);
-	      si_in = selection_sync();
-	      if (si_in->chans > 1) 
-		remember_temp(tempfile,si_in->chans);
-	      for (i=0;((i<si_in->chans) && (i<si_out->chans));i++)
-		{
-		  cp_out = si_out->cps[i]; /* currently syncd chan that we might paste to */
-		  cp_in = si_in->cps[i];   /* selection chan to paste in (no wrap-around here) */
-		  file_insert_samples(cp_out->cursor,
-				      cp_selection_len(cp_in,NULL),
-				      tempfile,cp_out,i,
-				      (si_in->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
-				      origin);
-		  update_graph(cp_out,NULL);
-		}
-	      free_sync_info(si_in);
-	      free_sync_info(si_out);
-	    }
-	  /* else assume save_selection already posted an error message */
-	}
+	insert_selection(ss,cp,cp->cursor,origin);
       else paste_region(reg,cp,origin);
     }
 }
@@ -601,13 +608,48 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
 
 static SCM g_cut(void)
 {
-  #define H_cut "(" S_cut ") cuts (deletes) the currently selected portion"
+  #define H_cut "(" S_cut ") cuts (deletes) the currently selected portion (same as 'delete-selection')"
+  #define H_delete_selection "(" S_delete_selection ") deletes the currently selected portion (same as 'cut')"
   if (selection_is_active())
     {
       delete_selection(S_cut,UPDATE_DISPLAY);
       return(SCM_BOOL_T);
     }
   return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_cut))));
+}
+
+static SCM g_insert_selection(SCM beg, SCM snd, SCM chn)
+{
+  #define H_insert_selection "(" S_insert_selection ") inserts the currently selected portion start at beg"
+  chan_info *cp;
+  snd_state *ss;
+  int err = MUS_NO_ERROR;
+  if (selection_is_active())
+    {
+      ss = get_global_state();
+      cp = get_cp(snd,chn,S_insert_selection);
+      if (cp == NULL) cp = selected_channel(ss);
+      if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST3(gh_str02scm(S_insert_selection),snd,chn)));
+      err = insert_selection(ss,cp,g_scm2intdef(beg,0),S_insert_selection);
+      RTNBOOL((err == MUS_NO_ERROR));
+    }
+  return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_insert_selection))));
+}
+
+static SCM g_mix_selection(SCM beg, SCM snd, SCM chn)
+{
+  #define H_mix_selection "(" S_mix_selection ") mixes the currently selected portion start at beg"
+  chan_info *cp;
+  snd_state *ss;
+  if (selection_is_active())
+    {
+      ss = get_global_state();
+      cp = get_cp(snd,chn,S_mix_selection);
+      if (cp == NULL) cp = selected_channel(ss);
+      if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST3(gh_str02scm(S_mix_selection),snd,chn)));
+      return(gh_int2scm(mix_selection(ss,cp,g_scm2intdef(beg,0),S_mix_selection)));
+    }
+  return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_mix_selection))));
 }
 
 static SCM g_selectionQ(void)
@@ -795,6 +837,9 @@ void g_init_selection(SCM local_doc)
 
   DEFINE_PROC(gh_new_procedure(S_selectionQ,SCM_FNC g_selectionQ,0,0,0),H_selectionQ);
   DEFINE_PROC(gh_new_procedure(S_cut,SCM_FNC g_cut,0,0,0),H_cut);
+  DEFINE_PROC(gh_new_procedure(S_delete_selection,SCM_FNC g_cut,0,0,0),H_delete_selection);
+  DEFINE_PROC(gh_new_procedure(S_insert_selection,SCM_FNC g_insert_selection,0,3,0),H_insert_selection);
+  DEFINE_PROC(gh_new_procedure(S_mix_selection,SCM_FNC g_mix_selection,0,3,0),H_mix_selection);
   DEFINE_PROC(gh_new_procedure(S_select_all,SCM_FNC g_select_all,0,2,0),H_select_all);
   DEFINE_PROC(gh_new_procedure(S_save_selection,SCM_FNC g_save_selection,1,4,0),H_save_selection);
 }

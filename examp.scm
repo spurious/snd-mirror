@@ -62,7 +62,8 @@
 ;;; with-sound for Snd
 ;;; how to get 'display' to write to Snd's listener
 ;;; hold DAC open and play sounds via keyboard
-
+;;; "frequency division"
+;;; "adaptive saturation"
 
 ;;; TODO: pitch tracker
 ;;;       adaptive notch filter
@@ -2654,3 +2655,52 @@
 
 ;;; in this particular case, there's no need to hold the DAC open
 ;;;   but maybe this will come in handy someday
+
+
+;;; -------- "frequency division" -- an effect from sed_sed@my-dejanews.cmo
+;;;
+;;; (freqdiv n) repeats each nth sample n times (clobbering the intermediate samples)
+
+(define freqdiv
+  (lambda (n)
+    (let ((div 0)
+	  (curval 0.0))
+      (map-chan (lambda (val)
+		  (if (= div 0)
+		      (set! curval val))
+		  (set! div (1+ div))
+		  (if (= div n) (set! div 0))
+		  curval)))))
+
+;(freqdiv 8)
+
+
+;;; -------- "adaptive saturation" -- an effect from sed_sed@my-dejanews.com
+;;;
+;;; a more extreme effect is "saturation":
+;;;   (map-chan (lambda (val) (if (< (abs val) .1) val (if (>= val 0.0) 0.25 -0.25))))
+
+(define adsat
+  (lambda (size)
+    (let ((mn 0.0)
+	  (mx 0.0)
+	  (n 0)
+	  (vals (make-vct size)))
+      (map-chan (lambda (val)
+		  (if (= n size)
+		      (begin
+			(do ((i 0 (1+ i)))
+			    ((= i size))
+			  (if (>= (vct-ref vals i) 0.0)
+			      (vct-set! vals i mx)
+			      (vct-set! vals i mn)))
+			(set! n 0)
+			(set! mx 0.0)
+			(set! mn 0.0)
+			vals)
+		      (begin
+			(vct-set! vals n val)
+			(if (> val mx) (set! mx val))
+			(if (< val mn) (set! mn val))
+			(set! n (1+ n))
+			#f)))))))

@@ -2469,7 +2469,7 @@ static SCM g_scale_by(SCM scalers, SCM snd_n, SCM chn_n)
   ERRCP(S_scale_by,snd_n,chn_n,2);
   cp = get_cp(snd_n,chn_n,S_scale_by);
   scls = load_Floats(scalers,len);
-  scale_by(state,cp->sound,cp,scls,len[0],FALSE);
+  scale_by(cp,scls,len[0],FALSE);
   FREE(scls);
   return(scalers);
 }
@@ -2497,7 +2497,7 @@ static SCM g_scale_selection_by(SCM scalers)
   if (selection_is_active())
     {
       scls = load_Floats(scalers,len);
-      scale_by(state,NULL,NULL,scls,len[0],TRUE);
+      scale_by(NULL,scls,len[0],TRUE);
       FREE(scls);
       return(scalers);
     }
