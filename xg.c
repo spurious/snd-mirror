@@ -34,7 +34,6 @@
  * TODO: check out the g_signal handlers
  * TODO: GdkEvent casts
  * TODO: struct print, more struct instance creators(?)
- * TODO: tie into Snd (snd-motif translation)
  * TODO: unprotect *_remove, unprotect old upon reset callback
  * TODO: test suite (snd-test 24)
  *
@@ -30513,7 +30512,7 @@ static int xg_already_inited = 0;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"05-Nov-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"08-Nov-02\")");
 #endif
       xg_already_inited = 1;
     }

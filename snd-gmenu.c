@@ -1654,7 +1654,7 @@ int g_add_to_menu(snd_state *ss, int which_menu, char *label, int callb, int pos
    gtk_widget_show(m);
    if (label)
      {
-       set_user_data(G_OBJECT(m), (gpointer)callb);
+       set_user_int_data(G_OBJECT(m), callb);
        g_signal_connect_closure_by_id(GTK_OBJECT(m),
 				      g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(m))),
 				      0,
