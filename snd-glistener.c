@@ -66,11 +66,7 @@ static void start_completion_dialog(int num_items, char **items)
   if (!completion_dialog)
     {
       completion_dialog = snd_gtk_dialog_new();
-      g_signal_connect_closure_by_id(GTK_OBJECT(completion_dialog),
-				     g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(completion_dialog))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(delete_completion_dialog), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(completion_dialog, "delete_event", delete_completion_dialog, NULL);
       gtk_window_set_title(GTK_WINDOW(completion_dialog), _("Completions"));
       sg_make_resizable(completion_dialog);
       gtk_container_set_border_width (GTK_CONTAINER(completion_dialog), 4);
@@ -83,16 +79,8 @@ static void start_completion_dialog(int num_items, char **items)
       gtk_widget_set_name(dismiss_button, "quit_button");
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(completion_dialog)->action_area), dismiss_button, false, true, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(completion_dialog)->action_area), help_button, false, true, 10);
-      g_signal_connect_closure_by_id(GTK_OBJECT(dismiss_button),
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(dismiss_button))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(dismiss_completion_callback), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(help_button),
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(help_button))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(help_completion_callback), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(dismiss_button, "clicked", dismiss_completion_callback, NULL);
+      SG_SIGNAL_CONNECT(help_button, "clicked", help_completion_callback, NULL);
       gtk_widget_show(dismiss_button);
       gtk_widget_show(help_button);
   
@@ -693,16 +681,8 @@ static gboolean mouse_leave_text_callback(GtkWidget *w, GdkEventCrossing *ev, gp
 
 void connect_mouse_to_text(GtkWidget *text)
 {
-  g_signal_connect_closure_by_id(GTK_OBJECT(text),
-				 g_signal_lookup("enter_notify_event", G_OBJECT_TYPE(GTK_OBJECT(text))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(mouse_enter_text_callback), NULL, 0),
-				 0);
-  g_signal_connect_closure_by_id(GTK_OBJECT(text),
-				 g_signal_lookup("leave_notify_event", G_OBJECT_TYPE(GTK_OBJECT(text))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(mouse_leave_text_callback), NULL, 0),
-				 0);
+  SG_SIGNAL_CONNECT(text, "enter_notify_event", mouse_enter_text_callback, NULL);
+  SG_SIGNAL_CONNECT(text, "leave_notify_event", mouse_leave_text_callback, NULL);
 }
 
 GtkWidget *snd_entry_new(GtkWidget *container, bool with_white_background)
@@ -848,31 +828,11 @@ static void make_command_widget(int height)
 				     "paste_clipboard", 0);
       }
 
-      g_signal_connect_closure_by_id(GTK_OBJECT(listener_text),
-				     g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(listener_text))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(listener_key_press), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(listener_text),
-				     g_signal_lookup("key_release_event", G_OBJECT_TYPE(GTK_OBJECT(listener_text))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(listener_key_release), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(listener_text),
-				     g_signal_lookup("button_press_event", G_OBJECT_TYPE(GTK_OBJECT(listener_text))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(listener_button_press), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(listener_text),
-				     g_signal_lookup("enter_notify_event", G_OBJECT_TYPE(GTK_OBJECT(listener_text))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(listener_focus_callback), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(listener_text),
-				     g_signal_lookup("leave_notify_event", G_OBJECT_TYPE(GTK_OBJECT(listener_text))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(listener_unfocus_callback), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(listener_text, "key_press_event", listener_key_press, NULL);
+      SG_SIGNAL_CONNECT(listener_text, "key_release_event", listener_key_release, NULL);
+      SG_SIGNAL_CONNECT(listener_text, "button_press_event", listener_button_press, NULL);
+      SG_SIGNAL_CONNECT(listener_text, "enter_notify_event", listener_focus_callback, NULL);
+      SG_SIGNAL_CONNECT(listener_text, "leave_notify_event", listener_unfocus_callback, NULL);
       ss->sgx->listener_pane = listener_text;
       sg_text_insert(listener_text, listener_prompt(ss));
     }

@@ -20,11 +20,7 @@ static void create_snd_error_dialog(bool popup)
 {
   GtkWidget *ok_button;
   snd_error_dialog = snd_gtk_dialog_new();
-  g_signal_connect_closure_by_id(GTK_OBJECT(snd_error_dialog),
-				 g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(snd_error_dialog))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(delete_snd_error), NULL, 0),
-				 0);
+  SG_SIGNAL_CONNECT(snd_error_dialog, "delete_event", delete_snd_error, NULL);
   gtk_window_set_title(GTK_WINDOW(snd_error_dialog), _("Error"));
   sg_make_resizable(snd_error_dialog);
   gtk_container_set_border_width (GTK_CONTAINER(snd_error_dialog), 10);
@@ -34,11 +30,7 @@ static void create_snd_error_dialog(bool popup)
   ok_button = gtk_button_new_with_label(_("Ok"));
   gtk_widget_set_name(ok_button, "quit_button");
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(snd_error_dialog)->action_area), ok_button, false, true, 20);
-  g_signal_connect_closure_by_id(GTK_OBJECT(ok_button),
-				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(ok_button))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(dismiss_snd_error), NULL, 0),
-				 0);
+  SG_SIGNAL_CONNECT(ok_button, "clicked", dismiss_snd_error, NULL);
   gtk_widget_show(ok_button);
   snd_error_history = make_scrolled_text(GTK_DIALOG(snd_error_dialog)->vbox, false, NULL, NULL);
   if (popup) gtk_widget_show(snd_error_dialog);
@@ -132,11 +124,7 @@ bool snd_yes_or_no_p(const char *format, ...)
   if (!yes_or_no_dialog)
     {
       yes_or_no_dialog = snd_gtk_dialog_new();
-      g_signal_connect_closure_by_id(GTK_OBJECT(yes_or_no_dialog),
-				     g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(yes_or_no_dialog))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(delete_yes_or_no_dialog), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(yes_or_no_dialog, "delete_event", delete_yes_or_no_dialog, NULL);
       gtk_window_set_title(GTK_WINDOW(yes_or_no_dialog), _("Yow!"));
       sg_make_resizable(yes_or_no_dialog);
       gtk_container_set_border_width (GTK_CONTAINER(yes_or_no_dialog), 4);
@@ -149,16 +137,8 @@ bool snd_yes_or_no_p(const char *format, ...)
       gtk_widget_set_name(no_button, "quit_button");
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(yes_or_no_dialog)->action_area), yes_button, false, true, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(yes_or_no_dialog)->action_area), no_button, false, true, 10);
-      g_signal_connect_closure_by_id(GTK_OBJECT(yes_button),
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(yes_button))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(yes_callback), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(no_button),
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(no_button))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(no_callback), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(yes_button, "clicked", yes_callback, NULL);
+      SG_SIGNAL_CONNECT(no_button, "clicked", no_callback, NULL);
       gtk_widget_show(yes_button);
       gtk_widget_show(no_button);
   

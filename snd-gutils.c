@@ -598,7 +598,7 @@ GtkWidget *sg_make_list(const char *title, GtkWidget *parent, widget_add_t paned
   gtk_container_add(GTK_CONTAINER(scrolled_win), list);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_win), GTK_POLICY_AUTOMATIC, GTK_POLICY_ALWAYS);
   gtk_container_set_border_width(GTK_CONTAINER(scrolled_win), 0);
-  g_signal_connect(gtk_tree_view_get_selection(GTK_TREE_VIEW(list)), "changed", G_CALLBACK(callback), gp);
+  SG_SIGNAL_CONNECT(gtk_tree_view_get_selection(GTK_TREE_VIEW(list)), "changed", callback, gp);
 
   switch (paned)
     {

@@ -102,11 +102,7 @@ static void start_file_print_dialog(void)
   if (!file_print_dialog)
     {
       file_print_dialog = snd_gtk_dialog_new();
-      g_signal_connect_closure_by_id(GTK_OBJECT(file_print_dialog),
-				     g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(file_print_dialog))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(file_print_delete_callback), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(file_print_dialog, "delete_event", file_print_delete_callback, NULL);
       gtk_window_set_title(GTK_WINDOW(file_print_dialog), _("Print"));
       sg_make_resizable(file_print_dialog);
       gtk_container_set_border_width (GTK_CONTAINER(file_print_dialog), 10);
@@ -122,21 +118,9 @@ static void start_file_print_dialog(void)
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(file_print_dialog)->action_area), print_button, true, true, 4);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(file_print_dialog)->action_area), dismiss_button, true, true, 4);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(file_print_dialog)->action_area), help_button, true, true, 4);
-      g_signal_connect_closure_by_id(GTK_OBJECT(dismiss_button),
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(dismiss_button))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(file_print_cancel_callback), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(help_button),
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(help_button))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(file_print_help_callback), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(print_button),
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(print_button))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(file_print_ok_callback), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(dismiss_button, "clicked", file_print_cancel_callback, NULL);
+      SG_SIGNAL_CONNECT(help_button, "clicked", file_print_help_callback, NULL);
+      SG_SIGNAL_CONNECT(print_button, "clicked", file_print_ok_callback, NULL);
       gtk_widget_show(dismiss_button);
       gtk_widget_show(print_button);
       gtk_widget_show(help_button);

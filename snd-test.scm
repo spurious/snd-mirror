@@ -38305,6 +38305,11 @@ EDITS: 2
       ))
 (set! (optimization) old-opt-23)
 
+(gc)
+(if (defined? 'mem-report) (mem-report))
+(if (file-exists? "memlog")
+    (system "mv memlog memlog.23")) ; save pre-error version
+
 
 ;;; ---------------- test 24: user-interface ----------------
 

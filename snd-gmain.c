@@ -77,7 +77,7 @@ static GdkAtom snd_v, snd_c;
 #if HAVE_EXTENSION_LANGUAGE
 static XEN window_property_changed_hook;
 
-static void who_called(GtkWidget *w, GdkEvent *event, gpointer context) 
+static gboolean who_called(GtkWidget *w, GdkEvent *event, gpointer context) 
 {
   /* watch for communication from some other program via the SND_COMMAND property */
   GdkEventProperty *ev = (GdkEventProperty *)event;
@@ -101,6 +101,7 @@ static void who_called(GtkWidget *w, GdkEvent *event, gpointer context)
 	    }
 	}
     }
+  return(false);
 }
 #endif
 
@@ -267,18 +268,10 @@ static Cessate startup_funcs(gpointer context)
 			  strlen(SND_DATE) + 1);
 #if HAVE_EXTENSION_LANGUAGE
       gtk_widget_add_events(MAIN_SHELL(ss), GDK_PROPERTY_CHANGE_MASK);
-      g_signal_connect_closure_by_id(GTK_OBJECT(MAIN_SHELL(ss)),
-				     g_signal_lookup("property_notify_event", G_OBJECT_TYPE(GTK_OBJECT(MAIN_SHELL(ss)))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(who_called), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(MAIN_SHELL(ss), "property_notify_event", who_called, NULL);
 #endif
       /* trap outer-level Close for cleanup check */
-      g_signal_connect_closure_by_id(GTK_OBJECT(MAIN_SHELL(ss)),
-				     g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(MAIN_SHELL(ss)))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(window_close), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(MAIN_SHELL(ss), "delete_event", window_close, NULL);
 #endif
       (ss->sgx)->graph_cursor = gdk_cursor_new((GdkCursorType)in_graph_cursor(ss));
       (ss->sgx)->wait_cursor = gdk_cursor_new(GDK_WATCH);
@@ -736,11 +729,7 @@ widget \"*.reset_button\" style \"reset\"\n\
 	{
 	  SOUND_PANE_BOX(ss) = gtk_notebook_new();
 	  gtk_notebook_set_tab_pos(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)), GTK_POS_TOP);
-          g_signal_connect_closure_by_id(GTK_OBJECT(SOUND_PANE_BOX(ss)),
-				         g_signal_lookup("switch_page", G_OBJECT_TYPE(GTK_OBJECT(SOUND_PANE_BOX(ss)))),
-				         0,
-				         g_cclosure_new(GTK_SIGNAL_FUNC(notebook_switch_page), NULL, 0),
-				         0);
+          SG_SIGNAL_CONNECT(SOUND_PANE_BOX(ss), "switch_page", notebook_switch_page, NULL);
 	}
       else 
 	{

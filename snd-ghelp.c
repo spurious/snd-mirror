@@ -218,11 +218,7 @@ static void create_help_monolog(void)
   /* create scrollable but not editable text window */
   GtkWidget *ok_button, *search, *frame, *label, *hbox;
   help_dialog = snd_gtk_dialog_new();
-  g_signal_connect_closure_by_id(GTK_OBJECT(help_dialog),
-				 g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(help_dialog))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(delete_help_dialog), NULL, 0),
-				 0);
+  SG_SIGNAL_CONNECT(help_dialog, "delete_event", delete_help_dialog, NULL);
 
   gtk_window_set_title(GTK_WINDOW(help_dialog), _("Help"));
   sg_make_resizable(help_dialog);
@@ -233,11 +229,7 @@ static void create_help_monolog(void)
   ok_button = gtk_button_new_with_label(_("Ok"));
   gtk_widget_set_name(ok_button, "quit_button");
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(help_dialog)->action_area), ok_button, false, true, 20);
-  g_signal_connect_closure_by_id(GTK_OBJECT(ok_button),
-				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(ok_button))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(dismiss_help_dialog), NULL, 0),
-				 0);
+  SG_SIGNAL_CONNECT(ok_button, "clicked", dismiss_help_dialog, NULL);
   gtk_widget_show(ok_button);
 
   frame = gtk_frame_new(NULL);
@@ -247,18 +239,14 @@ static void create_help_monolog(void)
   help_text = make_scrolled_text(frame, false, NULL, NULL);
   gtk_widget_add_events(help_text, GDK_BUTTON_RELEASE);
   gtk_text_view_set_left_margin(GTK_TEXT_VIEW(help_text), 10);
-  g_signal_connect_closure_by_id(GTK_OBJECT(help_text),
-				 g_signal_lookup("button_release_event", G_OBJECT_TYPE(GTK_OBJECT(help_text))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(text_release_callback), NULL, 0),
-				 0);
+  SG_SIGNAL_CONNECT(help_text, "button_release_event", text_release_callback, NULL);
 
   related_items = sg_make_list(_("related topics"), 
 			       GTK_DIALOG(help_dialog)->vbox, 
 			       BOX_PACK, NULL, 0, NULL,
 			       GTK_SIGNAL_FUNC(help_browse_callback), 0, 0, 0, 0);
   gtk_widget_add_events(related_items, GDK_ALL_EVENTS_MASK);
-  g_signal_connect(GTK_OBJECT(related_items), "row_activated", G_CALLBACK(double_callback), NULL);
+  SG_SIGNAL_CONNECT(related_items, "row_activated", double_callback, NULL);
 
 
   hbox = gtk_hbox_new(false, 0);
@@ -270,19 +258,9 @@ static void create_help_monolog(void)
   gtk_widget_show(label);
 
   search = snd_entry_new(hbox, true);
-  g_signal_connect_closure_by_id(GTK_OBJECT(search),
-				 g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(search))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(search_activated), NULL, 0),
-				 0);
+  SG_SIGNAL_CONNECT(search, "activate", search_activated, NULL);
   gtk_widget_show(help_dialog);
-
-  g_signal_connect_closure_by_id(GTK_OBJECT(GTK_OBJECT(help_dialog)),
-				 g_signal_lookup("expose_event", G_OBJECT_TYPE(GTK_OBJECT(help_dialog))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(help_expose_callback), NULL, 0),
-				 0);
-
+  SG_SIGNAL_CONNECT(GTK_OBJECT(help_dialog), "expose_event", help_expose_callback, NULL);
   set_dialog_widget(HELP_DIALOG, help_dialog);
 }
 

@@ -166,11 +166,6 @@ static gboolean recorder_noop_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gp
   g_signal_stop_emission(GTK_OBJECT(w), g_signal_lookup("enter_notify_event", G_OBJECT_TYPE(GTK_OBJECT(w))), 0);
   return(false);
 }
-/* g_signal_connect_closure_by_id(GTK_OBJECT(w),
-   g_signal_lookup("enter_notify_event", G_OBJECT_TYPE(GTK_OBJECT(w))),
-   0,
-   g_cclosure_new(GTK_SIGNAL_FUNC(recorder_noop_mouse_enter), NULL, 0),
-0);*/
 
 
 /* -------------------------------- VU METER -------------------------------- */
@@ -848,11 +843,7 @@ static void make_file_info_pane(recorder_info *rp, GtkWidget *file_pane, int nde
   gtk_widget_show(ff_sep3);
 
   recdat = make_file_data_panel(left_form, "data-form", true, rp->output_header_type, rp->output_data_format, false, true, false);
-  g_signal_connect_closure_by_id(GTK_OBJECT(recdat->srate_text), 
-				 g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(recdat->srate_text))),
-				 0,
-				 g_cclosure_new_swap(GTK_SIGNAL_FUNC(srate_changed_callback), NULL, 0),
-				 0);
+  SG_SIGNAL_CONNECT(recdat->srate_text, "activate", srate_changed_callback, NULL);
 
 #if SGI
   err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_MICROPHONE, MUS_AUDIO_SRATE, 0, val);
@@ -880,11 +871,7 @@ static void make_file_info_pane(recorder_info *rp, GtkWidget *file_pane, int nde
   gtk_widget_show(rec_size_label);
 
   rec_size_text = snd_entry_new(durbox, true);
-  g_signal_connect_closure_by_id(GTK_OBJECT(rec_size_text), 
-				 g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(rec_size_text))),
-				 0,
-				 g_cclosure_new_swap(GTK_SIGNAL_FUNC(rec_size_changed_callback), NULL, 0),
-				 0);
+  SG_SIGNAL_CONNECT(rec_size_text,  "activate", rec_size_changed_callback, NULL);
   mus_snprintf(timbuf, TIME_STR_SIZE, "%d", rp->buffer_size);
   gtk_entry_set_text(GTK_ENTRY(rec_size_text), timbuf);
 
@@ -907,11 +894,7 @@ static void make_file_info_pane(recorder_info *rp, GtkWidget *file_pane, int nde
   gtk_scale_set_draw_value(GTK_SCALE(trigger_scale), true);
   gtk_scale_set_value_pos(GTK_SCALE(trigger_scale), GTK_POS_LEFT);
   gtk_box_pack_start(GTK_BOX(triggerbox), trigger_scale, true, true, 0);
-  g_signal_connect_closure_by_id(GTK_OBJECT(trigger_adj),
-				 g_signal_lookup("value_changed", G_OBJECT_TYPE(GTK_OBJECT(trigger_adj))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(change_trigger_callback), NULL, 0),
-				 0);
+  SG_SIGNAL_CONNECT(trigger_adj, "value_changed", change_trigger_callback, NULL);
   gtk_widget_show(trigger_scale);
 
   /* buttons */
@@ -933,11 +916,7 @@ static void make_file_info_pane(recorder_info *rp, GtkWidget *file_pane, int nde
       gtk_box_pack_start(GTK_BOX(button_holder), device_buttons[i], true, true, 0);
       gtk_widget_show(device_buttons[i]);
       set_user_int_data(G_OBJECT(device_buttons[i]), i);
-      g_signal_connect_closure_by_id(GTK_OBJECT(device_buttons[i]),
-				     g_signal_lookup("toggled", G_OBJECT_TYPE(GTK_OBJECT(device_buttons[i]))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(device_button_callback), (gpointer)all_panes[i], 0),
-				     0);
+      SG_SIGNAL_CONNECT(device_buttons[i], "toggled", device_button_callback, all_panes[i]);
       set_toggle_button(device_buttons[i], true, false, (void *)(all_panes[i]));
     }
 
@@ -947,11 +926,7 @@ static void make_file_info_pane(recorder_info *rp, GtkWidget *file_pane, int nde
   device_buttons[ndevs] = autoload_file;
   /* we assume this is last in the device_buttons list in sensitize_control_buttons */
   rp->autoload_button = ndevs;
-  g_signal_connect_closure_by_id(GTK_OBJECT(autoload_file),
-				 g_signal_lookup("toggled", G_OBJECT_TYPE(GTK_OBJECT(autoload_file))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(autoload_file_callback), NULL, 0),
-				 0);
+  SG_SIGNAL_CONNECT(autoload_file, "toggled", autoload_file_callback, NULL);
   set_toggle_button(autoload_file, rp->autoload, false, NULL); 
 }
 
@@ -1073,41 +1048,21 @@ static void make_recorder_slider(PANE *p, AMP *a, bool input)
   gtk_button_set_relief(GTK_BUTTON(a->label), GTK_RELIEF_NONE);
   gtk_box_pack_start(GTK_BOX(hb), a->label, false, false, 0);
   gtk_widget_show(a->label);
-  g_signal_connect_closure_by_id(GTK_OBJECT(a->label),
-				 g_signal_lookup("button_press_event", G_OBJECT_TYPE(GTK_OBJECT(a->label))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(record_amp_click_callback), (gpointer)a, 0),
-				 0);
-  g_signal_connect_closure_by_id(GTK_OBJECT(a->label),
-				 g_signal_lookup("enter_notify_event", G_OBJECT_TYPE(GTK_OBJECT(a->label))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(recorder_noop_mouse_enter), NULL, 0),
-				 0);
+  SG_SIGNAL_CONNECT(a->label, "button_press_event", record_amp_click_callback, a);
+  SG_SIGNAL_CONNECT(a->label, "enter_notify_event", recorder_noop_mouse_enter, NULL);
 
   mus_snprintf(numbuf, 6, "%.2f", global_amp(a));
   a->number = gtk_button_new_with_label(numbuf);
   gtk_button_set_relief(GTK_BUTTON(a->number), GTK_RELIEF_NONE);
   gtk_box_pack_start(GTK_BOX(hb), a->number, false, false, 0);
   gtk_widget_show(a->number);
-  g_signal_connect_closure_by_id(GTK_OBJECT(a->number),
-				 g_signal_lookup("button_press_event", G_OBJECT_TYPE(GTK_OBJECT(a->number))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(record_amp_click_callback), (gpointer)a, 0),
-				 0);
-  g_signal_connect_closure_by_id(GTK_OBJECT(a->number),
-				 g_signal_lookup("enter_notify_event", G_OBJECT_TYPE(GTK_OBJECT(a->number))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(recorder_noop_mouse_enter), NULL, 0),
-				 0);
+  SG_SIGNAL_CONNECT(a->number, "button_press_event", record_amp_click_callback, a);
+  SG_SIGNAL_CONNECT(a->number, "enter_notify_event", recorder_noop_mouse_enter, NULL);
 
   a->adj = gtk_adjustment_new(amp_to_slider(global_amp(a)), 0.0, 1.00, 0.001, 0.01, .1);
   a->slider = gtk_hscrollbar_new(GTK_ADJUSTMENT(a->adj));
   gtk_box_pack_start(GTK_BOX(hb), a->slider, true, true, 6);
-  g_signal_connect_closure_by_id(GTK_OBJECT(a->adj),
-				 g_signal_lookup("value_changed", G_OBJECT_TYPE(GTK_OBJECT(a->adj))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(record_amp_drag_callback), (gpointer)a, 0),
-				 0);
+  SG_SIGNAL_CONNECT(a->adj, "value_changed", record_amp_drag_callback, a);
   gtk_widget_show(a->slider);
 
 }
@@ -1233,11 +1188,7 @@ static GtkWidget *make_button_matrix(PANE *p, char *name, GtkWidget *parent, Flo
 	else gtk_widget_modify_bg(mb, GTK_STATE_NORMAL, (ss->sgx)->basic_color);
 	gtk_table_attach_defaults(GTK_TABLE(buttons), mb, col, col + 1, row, row + 1);
 	gtk_widget_show(mb);
-	g_signal_connect_closure_by_id(GTK_OBJECT(mb),
-				       g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(mb))),
-				       0,
-				       g_cclosure_new(GTK_SIGNAL_FUNC(matrix_button_callback), (gpointer)si, 0),
-				       0);
+	SG_SIGNAL_CONNECT(mb, "clicked", matrix_button_callback, si);
 	p->matrix_buttons[row][col] = mb;
       }
   return(outer_frame);
@@ -1418,16 +1369,8 @@ static void make_vu_meters(PANE *p, int vu_meters,
 	rec_in_VU[overall_input_ctr + i] = vu;
       else rec_out_VU[i] = vu;
 
-      g_signal_connect_closure_by_id(GTK_OBJECT(meter),
-				     g_signal_lookup("expose_event", G_OBJECT_TYPE(GTK_OBJECT(meter))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(meter_expose_callback), (gpointer)vu, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(meter),
-				     g_signal_lookup("configure_event", G_OBJECT_TYPE(GTK_OBJECT(meter))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(meter_resize_callback), (gpointer)vu, 0),
-				     0);
+      SG_SIGNAL_CONNECT(meter, "expose_event", meter_expose_callback, vu);
+      SG_SIGNAL_CONNECT(meter, "configure_event", meter_resize_callback, vu);
 
       if ((i == (columns * (row + 1) - 1)) && 
 	  (vu_meters > (i + 1))) 
@@ -1481,11 +1424,7 @@ static void make_vertical_gain_sliders(recorder_info *rp, PANE *p,
 	  gtk_widget_set_size_request(spix, 16, 16);
 	  gtk_box_pack_start(GTK_BOX(sbox), spix, false, false, 0);
 	  gtk_widget_show(spix);
-	  g_signal_connect_closure_by_id(GTK_OBJECT(spix),
-					 g_signal_lookup("expose_event", G_OBJECT_TYPE(GTK_OBJECT(spix))),
-					 0,
-					 g_cclosure_new(GTK_SIGNAL_FUNC(spix_expose), (gpointer)wd, 0),
-					 0);
+	  SG_SIGNAL_CONNECT(spix, "expose_event", spix_expose, wd);
 	}
       else
 	{
@@ -1511,11 +1450,7 @@ static void make_vertical_gain_sliders(recorder_info *rp, PANE *p,
       gtk_scale_set_draw_value(GTK_SCALE(wd->wg), false);
       gtk_box_pack_start(GTK_BOX(sbox), wd->wg, true, true, 0);
       gtk_widget_show(wd->wg);
-      g_signal_connect_closure_by_id(GTK_OBJECT(wd->adj),
-				     g_signal_lookup("value_changed", G_OBJECT_TYPE(GTK_OBJECT(wd->adj))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(volume_callback), (gpointer)wd, 0),
-				     0);
+      SG_SIGNAL_CONNECT(wd->adj, "value_changed", volume_callback, wd);
 #if (HAVE_OSS || HAVE_ALSA)
       last_device = this_device;
 #endif
@@ -1594,11 +1529,7 @@ static GtkWidget *make_button_box(recorder_info *rp, PANE *p, Float meter_size,
       vu = p->meters[i];
       vu->max_button = max_label;
       vu->max_val = 0.0;
-      g_signal_connect_closure_by_id(GTK_OBJECT(p->on_buttons[i]),
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(p->on_buttons[i]))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(meter_button_callback), (gpointer)wd, 0),
-				     0);
+      SG_SIGNAL_CONNECT(p->on_buttons[i], "clicked", meter_button_callback, wd);
 
       if ((i == (columns*(row + 1) - 1)) && (vu_meters > (i + 1))) 
 	row++;
@@ -1611,11 +1542,7 @@ static void make_reset_button(PANE *p, GtkWidget *btab)
   p->reset_button = gtk_button_new_with_label(_("Reset"));
   gtk_box_pack_start(GTK_BOX(btab), p->reset_button, true, true, 0);
   gtk_widget_show(p->reset_button);
-  g_signal_connect_closure_by_id(GTK_OBJECT(p->reset_button),
-				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(p->reset_button))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(vu_reset_callback), (gpointer)p, 0),
-				 0);
+  SG_SIGNAL_CONNECT(p->reset_button, "clicked", vu_reset_callback, p);
 }
 
 static int make_amp_sliders(recorder_info *rp, PANE *p, bool input, int overall_input_ctr)
@@ -1973,11 +1900,7 @@ widget_t snd_record_file(void)
       small_font = pango_font_description_from_string((vu_size(ss) < SMALLER_FONT_CUTOFF) ? SMALLER_FONT : SMALL_FONT);
 
       recorder = snd_gtk_dialog_new();
-      g_signal_connect_closure_by_id(GTK_OBJECT(recorder),
-				     g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(recorder))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(recorder_delete), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(recorder, "delete_event", recorder_delete, NULL);
       gtk_window_set_title(GTK_WINDOW(recorder), _("Record"));
       sg_make_resizable(recorder);
       gtk_container_set_border_width (GTK_CONTAINER(recorder), 10);
@@ -1997,26 +1920,10 @@ widget_t snd_record_file(void)
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(recorder)->action_area), record_button, true, true, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(recorder)->action_area), help_button, true, true, 10);
 
-      g_signal_connect_closure_by_id(GTK_OBJECT(dismiss_button),
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(dismiss_button))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(dismiss_record_callback), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(help_button),
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(help_button))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(help_record_callback), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(reset_button),
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(reset_button))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(reset_record_callback), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(record_button),
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(record_button))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(record_button_callback), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(dismiss_button, "clicked", dismiss_record_callback, NULL);
+      SG_SIGNAL_CONNECT(help_button, "clicked", help_record_callback, NULL);
+      SG_SIGNAL_CONNECT(reset_button, "clicked", reset_record_callback, NULL);
+      SG_SIGNAL_CONNECT(record_button, "clicked", record_button_callback, NULL);
       gtk_widget_show(dismiss_button);
       gtk_widget_show(reset_button);
       gtk_widget_show(record_button);

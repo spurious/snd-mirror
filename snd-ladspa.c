@@ -387,11 +387,7 @@ it can be useful when the plugins on the system have changed."
     m = gtk_menu_item_new_with_label(_("Plugins"));
     gtk_menu_shell_append(GTK_MENU_SHELL(help_menu), m);
     gtk_widget_show(m);
-    g_signal_connect_closure_by_id(GTK_OBJECT(m),
-				   g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(m))),
-				   0,
-				   g_cclosure_new(GTK_SIGNAL_FUNC(ladspa_help_callback), NULL, 0),
-				   0);
+    SG_SIGNAL_CONNECT(m, "activate", ladspa_help_callback, NULL);
   }
 #endif
   return(XEN_FALSE);

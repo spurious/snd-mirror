@@ -108,13 +108,9 @@ void add_drop(GtkWidget *w)
 {
   gtk_drag_dest_set(w, GTK_DEST_DEFAULT_ALL, target_table, 5, (GdkDragAction)(GDK_ACTION_COPY | GDK_ACTION_MOVE));
   /* this (the cast to GdkDragAction) is actually a bug in gtk -- they are OR'ing these together so the correct type is some flavor of int */
-  g_signal_connect_closure_by_id(GTK_OBJECT(w),
-				 g_signal_lookup("drag_data_received", G_OBJECT_TYPE(GTK_OBJECT(w))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(drag_data_received), NULL, 0),
-				 0);
-  g_signal_connect(G_OBJECT(w), "drag_motion", G_CALLBACK(drag_motion), NULL);
-  g_signal_connect(G_OBJECT(w), "drag_leave", G_CALLBACK(drag_leave), NULL);
+  SG_SIGNAL_CONNECT(w, "drag_data_received", drag_data_received, NULL);
+  SG_SIGNAL_CONNECT(w, "drag_motion", drag_motion, NULL);
+  SG_SIGNAL_CONNECT(w, "drag_leave", drag_leave, NULL);
 }
 
 

@@ -298,11 +298,7 @@ static void make_region_dialog(void)
   ww_info *wwl;
   GtkWidget *infobox, *labels, *labbox;
   region_dialog = snd_gtk_dialog_new();
-  g_signal_connect_closure_by_id(GTK_OBJECT(region_dialog),
-				 g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(region_dialog))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(region_browser_delete_callback), NULL, 0),
-				 0);
+  SG_SIGNAL_CONNECT(region_dialog, "delete_event", region_browser_delete_callback, NULL);
   gtk_window_set_title(GTK_WINDOW(region_dialog), _("Regions"));
   sg_make_resizable(region_dialog);
   gtk_container_set_border_width(GTK_CONTAINER(region_dialog), 10);
@@ -320,21 +316,9 @@ static void make_region_dialog(void)
   gtk_box_pack_end(GTK_BOX(GTK_DIALOG(region_dialog)->action_area), help_button, true, true, 4);
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(region_dialog)->action_area), delete_button, true, true, 4);
 
-  g_signal_connect_closure_by_id(GTK_OBJECT(delete_button),
-				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(delete_button))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(region_delete_callback), NULL, 0),
-				 0);
-  g_signal_connect_closure_by_id(GTK_OBJECT(help_button),
-				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(help_button))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(region_help_callback), NULL, 0),
-				 0);
-  g_signal_connect_closure_by_id(GTK_OBJECT(dismiss_button),
-				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(dismiss_button))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(region_ok_callback), NULL, 0),
-				 0);
+  SG_SIGNAL_CONNECT(delete_button, "clicked", region_delete_callback, NULL);
+  SG_SIGNAL_CONNECT(help_button, "clicked", region_help_callback, NULL);
+  SG_SIGNAL_CONNECT(dismiss_button, "clicked", region_ok_callback, NULL);
 
   gtk_widget_show(delete_button);
   gtk_widget_show(help_button);
@@ -369,11 +353,7 @@ static void make_region_dialog(void)
   gtk_box_pack_start(GTK_BOX(infobox), labels, true, true, 2);
   gtk_widget_show(labels);
   gtk_widget_modify_bg(labels, GTK_STATE_NORMAL, ss->sgx->highlight_color);
-  g_signal_connect_closure_by_id(GTK_OBJECT(labels),
-				 g_signal_lookup("enter_notify_event", G_OBJECT_TYPE(GTK_OBJECT(labels))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(region_labels_mouse_enter), NULL, 0),
-				 0);
+  SG_SIGNAL_CONNECT(labels, "enter_notify_event", region_labels_mouse_enter, NULL);
 
   labbox = gtk_vbox_new(true, 0);
   gtk_container_add(GTK_CONTAINER(labels), labbox);
@@ -401,22 +381,14 @@ static void make_region_dialog(void)
   gtk_widget_show(maxamp_text);
 
   edit_button = gtk_button_new_with_label(_("edit"));
-  g_signal_connect_closure_by_id(GTK_OBJECT(edit_button),
-				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(edit_button))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(region_edit_callback), NULL, 0),
-				 0);
+  SG_SIGNAL_CONNECT(edit_button, "clicked", region_edit_callback, NULL);
   gtk_box_pack_start(GTK_BOX(infobox), edit_button, true, true, 2);
   gtk_widget_show(edit_button);
   gtk_widget_modify_bg(edit_button, GTK_STATE_NORMAL, ss->sgx->lighter_blue);
   gtk_widget_modify_bg(edit_button, GTK_STATE_ACTIVE, ss->sgx->red);
 
   print_button = gtk_button_new_with_label(_("print"));
-  g_signal_connect_closure_by_id(GTK_OBJECT(print_button),
-				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(print_button))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(region_print_callback), NULL, 0),
-				 0);
+  SG_SIGNAL_CONNECT(print_button, "clicked", region_print_callback, NULL);
   gtk_box_pack_start(GTK_BOX(infobox), print_button, true, true, 2);
   gtk_widget_show(print_button);
   gtk_widget_modify_bg(print_button, GTK_STATE_NORMAL, ss->sgx->lighter_blue);
@@ -432,27 +404,11 @@ static void make_region_dialog(void)
   cp = rsp->chans[0];
 
   gtk_paned_set_position(GTK_PANED(region_grf), 150);
-  g_signal_connect_closure_by_id(GTK_OBJECT(channel_graph(cp)),
-				 g_signal_lookup("expose_event", G_OBJECT_TYPE(GTK_OBJECT(channel_graph(cp)))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(region_resize_callback), (gpointer)cp, 0),
-				 0);
-  g_signal_connect_closure_by_id(GTK_OBJECT(channel_graph(cp)),
-				 g_signal_lookup("configure_event", G_OBJECT_TYPE(GTK_OBJECT(channel_graph(cp)))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(region_expose_callback), (gpointer)cp, 0),
-				 0);
+  SG_SIGNAL_CONNECT(channel_graph(cp), "expose_event", region_resize_callback, cp);
+  SG_SIGNAL_CONNECT(channel_graph(cp), "configure_event", region_expose_callback, cp);
 
-  g_signal_connect_closure_by_id(GTK_OBJECT(channel_up_arrow(cp)),
-				 g_signal_lookup("button_press_event", G_OBJECT_TYPE(GTK_OBJECT(channel_up_arrow(cp)))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(region_up_arrow_callback), NULL, 0),
-				 0);
-  g_signal_connect_closure_by_id(GTK_OBJECT(channel_down_arrow(cp)),
-				 g_signal_lookup("button_press_event", G_OBJECT_TYPE(GTK_OBJECT(channel_down_arrow(cp)))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(region_down_arrow_callback), NULL, 0),
-				 0);
+  SG_SIGNAL_CONNECT(channel_up_arrow(cp), "button_press_event", region_up_arrow_callback, NULL);
+  SG_SIGNAL_CONNECT(channel_down_arrow(cp), "button_press_event", region_down_arrow_callback, NULL);
 
   set_sensitive(channel_f(cp), false);
   if (region_chans(region_list_position_to_id(0)) > 1) set_sensitive(channel_w(cp), true);

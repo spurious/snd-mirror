@@ -80,11 +80,7 @@ static void make_edit_find_dialog(bool managed)
   if (!edit_find_dialog)
     {
       edit_find_dialog = snd_gtk_dialog_new();
-      g_signal_connect_closure_by_id(GTK_OBJECT(edit_find_dialog),
-				     g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(edit_find_dialog))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(edit_find_delete), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(edit_find_dialog, "delete_event", edit_find_delete, NULL);
       gtk_window_set_title(GTK_WINDOW(edit_find_dialog), _("Find"));
       sg_make_resizable(edit_find_dialog);
       gtk_container_set_border_width (GTK_CONTAINER(edit_find_dialog), 10);
@@ -103,26 +99,10 @@ static void make_edit_find_dialog(bool managed)
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(edit_find_dialog)->action_area), next_button, true, true, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(edit_find_dialog)->action_area), previous_button, true, true, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(edit_find_dialog)->action_area), help_button, true, true, 10);
-      g_signal_connect_closure_by_id(GTK_OBJECT(cancelB),
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(cancelB))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(edit_find_dismiss), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(help_button),
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(help_button))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(edit_find_help), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(next_button),
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(next_button))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(edit_find_next), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(previous_button),
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(previous_button))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(edit_find_previous), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(cancelB, "clicked", edit_find_dismiss, NULL);
+      SG_SIGNAL_CONNECT(help_button, "clicked", edit_find_help, NULL);
+      SG_SIGNAL_CONNECT(next_button, "clicked", edit_find_next, NULL);
+      SG_SIGNAL_CONNECT(previous_button, "clicked", edit_find_previous, NULL);
       gtk_widget_show(cancelB);
       gtk_widget_show(next_button);
       gtk_widget_show(previous_button);
@@ -137,11 +117,7 @@ static void make_edit_find_dialog(bool managed)
       gtk_widget_show(dl);
 
       edit_find_text = snd_entry_new(rc, true);
-      g_signal_connect_closure_by_id(GTK_OBJECT(edit_find_text),
-				     g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(edit_find_text))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(edit_find_next), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(edit_find_text, "activate", edit_find_next, NULL);
       
       edit_find_label = gtk_label_new(_("global search"));
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(edit_find_dialog)->vbox), edit_find_label, false, false, 4);

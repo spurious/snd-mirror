@@ -2002,6 +2002,7 @@ static void add_loc_to_protected_list(ptree *pt, int loc)
 	}
     }
   pt->gc_protected[pt->gc_protected_ctr++] = loc;
+  /* TODO: I think run make-* results are not always unprotected -- need some way to trace them */
 }
 
 static vect *read_int_vector(XEN vectr)

@@ -198,15 +198,10 @@ static GtkWidget *snd_filer_new(char *title, bool saving, GtkSignalFunc gdelete,
   gtk_window_set_default_size(GTK_WINDOW(new_dialog), 600, 400);
 
   set_user_data(G_OBJECT(new_dialog), (gpointer)wrap_filer_callbacks(ok, cancel, help));
-  g_signal_connect(GTK_OBJECT(new_dialog), "response", G_CALLBACK(chooser_response_callback), NULL);
+  SG_SIGNAL_CONNECT(new_dialog, "response", chooser_response_callback, NULL);
 
   /* this has to be separate (not handled as a "response" because the latter deletes the goddamn widget!! */
-  g_signal_connect_closure_by_id(GTK_OBJECT(new_dialog),
-				 g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(new_dialog))),
-				 0,
-				 g_cclosure_new(gdelete, NULL, 0),
-				 0);
-
+  SG_SIGNAL_CONNECT(new_dialog, "delete_event", gdelete, NULL);
   return(new_dialog);
 }
 
@@ -251,21 +246,9 @@ static GtkWidget *snd_filer_new(char *title, bool saving, GtkSignalFunc gdelete,
   gtk_widget_modify_bg(entry, GTK_STATE_NORMAL, ss->sgx->white);
   connect_mouse_to_text(entry);
 
-  g_signal_connect_closure_by_id(GTK_OBJECT(new_dialog),
-				 g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(new_dialog))),
-				 0,
-				 g_cclosure_new(gdelete, NULL, 0),
-				 0);
-  g_signal_connect_closure_by_id(GTK_OBJECT(filer->ok_button),
-				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(filer->ok_button))),
-				 0,
-				 g_cclosure_new(ok, NULL, 0),
-				 0);
-  g_signal_connect_closure_by_id(GTK_OBJECT(filer->cancel_button), 
-				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(filer->cancel_button))),
-				 0,
-				 g_cclosure_new_swap(cancel, NULL, 0),
-				 0);
+  SG_SIGNAL_CONNECT(new_dialog, "delete_event", gdelete, NULL);
+  SG_SIGNAL_CONNECT(filer->ok_button, "clicked", ok, NULL);
+  SG_SIGNAL_CONNECT(filer->cancel_button, "clicked", cancel, NULL);
 
   gtk_widget_set_name(filer->ok_button, "doit_button");
   gtk_widget_set_name(filer->cancel_button, "quit_button");
@@ -452,13 +435,8 @@ static file_dialog_info *make_file_dialog(int read_only, char *title, snd_dialog
   gtk_box_pack_start(GTK_BOX(fd->dialog_vbox), fd->dialog_info2, false, true, 2);
   fd->playb = gtk_check_button_new_with_label(_("play selected sound"));
   gtk_box_pack_start(GTK_BOX(fd->dialog_vbox), fd->playb, false, true, 2);
-  g_signal_connect_closure_by_id(GTK_OBJECT(fd->playb),
-				 g_signal_lookup("toggled", G_OBJECT_TYPE(GTK_OBJECT(fd->playb))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(play_selected_callback), (gpointer)fd, 0),
-				 0);
-
-  g_signal_connect(fd->dialog, "update-preview", G_CALLBACK(update_preview_callback), NULL);
+  SG_SIGNAL_CONNECT(fd->playb, "toggled", play_selected_callback, fd);
+  SG_SIGNAL_CONNECT(fd->dialog, "update-preview", update_preview_callback, NULL);
 
   all_files_filter = gtk_file_filter_new();
   gtk_file_filter_set_name(all_files_filter, "All Files");
@@ -502,16 +480,11 @@ static file_dialog_info *make_file_dialog(int read_only, char *title, snd_dialog
 	
   fd->dialog_info2 = gtk_label_new(NULL);
   gtk_box_pack_start(GTK_BOX(fd->dialog_vbox), fd->dialog_info2, true, true, 2);
-  g_signal_connect(gtk_tree_view_get_selection(GTK_TREE_VIEW(SND_FILER(fd->dialog)->file_list)), "changed",
-		   G_CALLBACK (dialog_select_callback), fd);
+  SG_SIGNAL_CONNECT(gtk_tree_view_get_selection(GTK_TREE_VIEW(SND_FILER(fd->dialog)->file_list)), "changed", dialog_select_callback, fd);
 
   fd->playb = gtk_check_button_new_with_label(_("play selected sound"));
   gtk_box_pack_start(GTK_BOX(fd->dialog_vbox), fd->playb, true, true, 2);
-  g_signal_connect_closure_by_id(GTK_OBJECT(fd->playb),
-				 g_signal_lookup("toggled", G_OBJECT_TYPE(GTK_OBJECT(fd->playb))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(play_selected_callback), (gpointer)fd, 0),
-				 0);
+  SG_SIGNAL_CONNECT(fd->playb, "toggled", play_selected_callback, fd);
   set_dialog_widget(which_dialog, fd->dialog);
   return(fd);
 }
@@ -1046,7 +1019,7 @@ ww_info *make_title_row(GtkWidget *formw, char *top_str, char *main_str, dialog_
 static XEN mouse_enter_label_hook;
 static XEN mouse_leave_label_hook;
 
-static gint mouse_name(XEN hook, GtkWidget *w, const char *caller)
+static gboolean mouse_name(XEN hook, GtkWidget *w, const char *caller)
 {
   char *label = NULL;
   regrow *r;
@@ -1072,15 +1045,15 @@ static gint mouse_name(XEN hook, GtkWidget *w, const char *caller)
 		     caller);
 	}
     }
-  return(0);
+  return(false);
 }
 
-static gint label_enter_callback(GtkWidget *w, GdkEventCrossing *ev)
+static gboolean label_enter_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer *gp)
 {
   return(mouse_name(mouse_enter_label_hook, w, S_mouse_enter_label_hook));
 }
 
-static gint label_leave_callback(GtkWidget *w, GdkEventCrossing *ev)
+static gboolean label_leave_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer *gp)
 {
   return(mouse_name(mouse_leave_label_hook, w, S_mouse_leave_label_hook));
 }
@@ -1098,31 +1071,15 @@ regrow *make_regrow(GtkWidget *ww, GtkSignalFunc play_callback, GtkSignalFunc na
 
   r->pl = gtk_check_button_new();
   gtk_box_pack_start(GTK_BOX(r->rw), r->pl, false, false, 2);
-  g_signal_connect_closure_by_id(GTK_OBJECT(r->pl),
-				 g_signal_lookup("toggled", G_OBJECT_TYPE(GTK_OBJECT(r->pl))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(play_callback), (gpointer)r, 0),
-				 0);
+  SG_SIGNAL_CONNECT(r->pl, "toggled", play_callback, r);
   gtk_widget_show(r->pl);
 
   r->nm = gtk_button_new_with_label("");
   sg_left_justify_button(r->nm);
   gtk_box_pack_start(GTK_BOX(r->rw), r->nm, true, true, 2);
-  g_signal_connect_closure_by_id(GTK_OBJECT(r->nm),
-				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(r->nm))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(name_callback), (gpointer)r, 0),
-				 0);
-  g_signal_connect_closure_by_id(GTK_OBJECT(r->nm),
-				 g_signal_lookup("enter_notify_event", G_OBJECT_TYPE(GTK_OBJECT(r->nm))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(label_enter_callback), (gpointer)r, 0),
-				 0);
-  g_signal_connect_closure_by_id(GTK_OBJECT(r->nm),
-				 g_signal_lookup("leave_notify_event", G_OBJECT_TYPE(GTK_OBJECT(r->nm))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(label_leave_callback), (gpointer)r, 0),
-				 0);
+  SG_SIGNAL_CONNECT(r->nm, "clicked", name_callback, r);
+  SG_SIGNAL_CONNECT(r->nm, "enter_notify_event", label_enter_callback, r);
+  SG_SIGNAL_CONNECT(r->nm, "leave_notify_event", label_leave_callback, r);
   set_user_data(G_OBJECT(r->nm), (gpointer)r);
   gtk_widget_show(r->nm);
 
@@ -1399,11 +1356,7 @@ static void start_view_files_dialog(bool managed)
     {
       vf_selected_file = -1;
       view_files_dialog = snd_gtk_dialog_new();
-      g_signal_connect_closure_by_id(GTK_OBJECT(view_files_dialog),
-				     g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(view_files_dialog))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(view_files_delete_callback), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(view_files_dialog, "delete_event", view_files_delete_callback, NULL);
       gtk_window_set_title(GTK_WINDOW(view_files_dialog), _("Files"));
       sg_make_resizable(view_files_dialog);
       gtk_container_set_border_width (GTK_CONTAINER(view_files_dialog), 10);
@@ -1422,26 +1375,10 @@ static void start_view_files_dialog(bool managed)
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(view_files_dialog)->action_area), updateB, true, true, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(view_files_dialog)->action_area), clearB, true, true, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(view_files_dialog)->action_area), helpB, true, true, 10);
-      g_signal_connect_closure_by_id(GTK_OBJECT(dismissB),
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(dismissB))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(view_files_dismiss_callback), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(helpB),
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(helpB))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(view_files_help_callback), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(updateB),
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(updateB))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(view_files_update_callback), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(clearB),
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(clearB))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(view_files_clear_callback), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(dismissB, "clicked", view_files_dismiss_callback, NULL);
+      SG_SIGNAL_CONNECT(helpB, "clicked", view_files_help_callback, NULL);
+      SG_SIGNAL_CONNECT(updateB, "clicked", view_files_update_callback, NULL);
+      SG_SIGNAL_CONNECT(clearB, "clicked", view_files_clear_callback, NULL);
       gtk_widget_show(dismissB);
       gtk_widget_show(updateB);
       gtk_widget_show(helpB);
@@ -1476,31 +1413,11 @@ static void start_view_files_dialog(bool managed)
       wwl = make_title_row(prevform, _("play"), _("previous files"), PAD_TITLE_ON_LEFT, WITH_SORT_BUTTON, WITHOUT_PANED_WINDOW);
       fs3 = wwl->tophbox;
 
-      g_signal_connect_closure_by_id(GTK_OBJECT(wwl->byname), 
-				     g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(wwl->byname))), 
-				     0,
-				     g_cclosure_new_swap(GTK_SIGNAL_FUNC(sort_prevfiles_by_name), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(wwl->bydate), 
-				     g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(wwl->bydate))), 
-				     0,
-				     g_cclosure_new_swap(GTK_SIGNAL_FUNC(sort_prevfiles_by_date), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(wwl->bysize), 
-				     g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(wwl->bysize))),
-				     0,
-				     g_cclosure_new_swap(GTK_SIGNAL_FUNC(sort_prevfiles_by_size), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(wwl->byentry), 
-				     g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(wwl->byentry))), 
-				     0,
-				     g_cclosure_new_swap(GTK_SIGNAL_FUNC(sort_prevfiles_by_entry), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(wwl->byproc), 
-				     g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(wwl->byproc))), 
-				     0,
-				     g_cclosure_new_swap(GTK_SIGNAL_FUNC(sort_prevfiles_by_user_procedure), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(wwl->byname,  "activate", sort_prevfiles_by_name, NULL);
+      SG_SIGNAL_CONNECT(wwl->bydate,  "activate", sort_prevfiles_by_date, NULL);
+      SG_SIGNAL_CONNECT(wwl->bysize,  "activate", sort_prevfiles_by_size, NULL);
+      SG_SIGNAL_CONNECT(wwl->byentry,  "activate", sort_prevfiles_by_entry, NULL);
+      SG_SIGNAL_CONNECT(wwl->byproc,  "activate", sort_prevfiles_by_user_procedure, NULL);
       vf_prevww = wwl->list;
       vf_prevlst = wwl->list;
       FREE(wwl); 
@@ -1602,11 +1519,7 @@ static void make_raw_data_dialog(void)
   GtkWidget *defaultB, *helpB, *cancelB, *okB, *sratehbox, *lochbox;
   mus_header_raw_defaults(&sr, &oc, &fr);
   raw_data_dialog = snd_gtk_dialog_new();
-  g_signal_connect_closure_by_id(GTK_OBJECT(raw_data_dialog),
-				 g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(raw_data_dialog))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(raw_data_delete_callback), NULL, 0),
-				 0);
+  SG_SIGNAL_CONNECT(raw_data_dialog, "delete_event", raw_data_delete_callback, NULL);
   gtk_window_set_title(GTK_WINDOW(raw_data_dialog), _("No Header on File"));
   sg_make_resizable(raw_data_dialog);
   gtk_container_set_border_width(GTK_CONTAINER(raw_data_dialog), 10);
@@ -1625,26 +1538,10 @@ static void make_raw_data_dialog(void)
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(raw_data_dialog)->action_area), defaultB, true, true, 10);
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(raw_data_dialog)->action_area), cancelB, true, true, 10);
   gtk_box_pack_end(GTK_BOX(GTK_DIALOG(raw_data_dialog)->action_area), helpB, true, true, 10);
-  g_signal_connect_closure_by_id(GTK_OBJECT(okB),
-				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(okB))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(raw_data_ok_callback), NULL, 0),
-				 0);
-  g_signal_connect_closure_by_id(GTK_OBJECT(helpB),
-				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(helpB))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(raw_data_help_callback), NULL, 0),
-				 0);
-  g_signal_connect_closure_by_id(GTK_OBJECT(defaultB),
-				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(defaultB))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(raw_data_default_callback), NULL, 0),
-				 0);
-  g_signal_connect_closure_by_id(GTK_OBJECT(cancelB),
-				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(cancelB))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(raw_data_cancel_callback), NULL, 0),
-				 0);
+  SG_SIGNAL_CONNECT(okB, "clicked", raw_data_ok_callback, NULL);
+  SG_SIGNAL_CONNECT(helpB, "clicked", raw_data_help_callback, NULL);
+  SG_SIGNAL_CONNECT(defaultB, "clicked", raw_data_default_callback, NULL);
+  SG_SIGNAL_CONNECT(cancelB, "clicked", raw_data_cancel_callback, NULL);
   gtk_widget_show(okB);
   gtk_widget_show(cancelB);
   gtk_widget_show(helpB);
@@ -1776,11 +1673,7 @@ snd_info *make_new_file_dialog(char *newname, int header_type, int data_format, 
   if (!new_dialog)
     {
       new_dialog = snd_gtk_dialog_new();
-      g_signal_connect_closure_by_id(GTK_OBJECT(new_dialog),
-				     g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(new_dialog))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(new_file_delete_callback), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(new_dialog, "delete_event", new_file_delete_callback, NULL);
       gtk_window_set_title(GTK_WINDOW(new_dialog), title);
       sg_make_resizable(new_dialog);
       gtk_container_set_border_width (GTK_CONTAINER(new_dialog), 10);
@@ -1796,21 +1689,9 @@ snd_info *make_new_file_dialog(char *newname, int header_type, int data_format, 
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(new_dialog)->action_area), ok_button, true, true, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(new_dialog)->action_area), cancel_button, true, true, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(new_dialog)->action_area), help_button, true, true, 10);
-      g_signal_connect_closure_by_id(GTK_OBJECT(cancel_button),
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(cancel_button))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(new_file_cancel_callback), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(help_button),
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(help_button))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(new_file_help_callback), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(ok_button),
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(ok_button))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(new_file_ok_callback), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(cancel_button, "clicked", new_file_cancel_callback, NULL);
+      SG_SIGNAL_CONNECT(help_button, "clicked", new_file_help_callback, NULL);
+      SG_SIGNAL_CONNECT(ok_button, "clicked", new_file_ok_callback, NULL);
       gtk_widget_show(cancel_button);
       gtk_widget_show(ok_button);
       gtk_widget_show(help_button);
@@ -1901,11 +1782,7 @@ GtkWidget *edit_header(snd_info *sp)
   if (!edit_header_dialog)
     {
       edit_header_dialog = snd_gtk_dialog_new();
-      g_signal_connect_closure_by_id(GTK_OBJECT(edit_header_dialog),
-				     g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(edit_header_dialog))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(edit_header_delete_callback), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(edit_header_dialog, "delete_event", edit_header_delete_callback, NULL);
       /* gtk_window_set_title(GTK_WINDOW(edit_header_dialog), _("Edit Header")); */
       sg_make_resizable(edit_header_dialog);
       gtk_container_set_border_width (GTK_CONTAINER(edit_header_dialog), 10);
@@ -1921,21 +1798,9 @@ GtkWidget *edit_header(snd_info *sp)
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(edit_header_dialog)->action_area), cancel_button, true, true, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(edit_header_dialog)->action_area), save_button, true, true, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(edit_header_dialog)->action_area), help_button, true, true, 10);
-      g_signal_connect_closure_by_id(GTK_OBJECT(cancel_button),
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(cancel_button))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(edit_header_cancel_callback), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(help_button),
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(help_button))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(edit_header_help_callback), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(save_button),
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(save_button))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(edit_header_ok_callback), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(cancel_button, "clicked", edit_header_cancel_callback, NULL);
+      SG_SIGNAL_CONNECT(help_button, "clicked", edit_header_help_callback, NULL);
+      SG_SIGNAL_CONNECT(save_button, "clicked", edit_header_ok_callback, NULL);
       gtk_widget_show(cancel_button);
       gtk_widget_show(save_button);
       gtk_widget_show(help_button);
@@ -1976,11 +1841,7 @@ static void create_post_it_monolog(void)
   /* create scrollable but not editable text window */
   GtkWidget *ok_button;
   post_it_dialog = gtk_dialog_new();
-  g_signal_connect_closure_by_id(GTK_OBJECT(post_it_dialog),
-				 g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(post_it_dialog))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(delete_post_it), NULL, 0),
-				 0);
+  SG_SIGNAL_CONNECT(post_it_dialog, "delete_event", delete_post_it, NULL);
 
   gtk_window_set_title(GTK_WINDOW(post_it_dialog), _("Info"));
   sg_make_resizable(post_it_dialog);
@@ -1991,11 +1852,7 @@ static void create_post_it_monolog(void)
   ok_button = gtk_button_new_with_label(_("Ok"));
   gtk_widget_set_name(ok_button, "quit_button");
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(post_it_dialog)->action_area), ok_button, false, true, 20);
-  g_signal_connect_closure_by_id(GTK_OBJECT(ok_button),
-				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(ok_button))),
-				 0,
-				 g_cclosure_new(GTK_SIGNAL_FUNC(dismiss_post_it), NULL, 0),
-				 0);
+  SG_SIGNAL_CONNECT(ok_button, "clicked", dismiss_post_it, NULL);
   gtk_widget_show(ok_button);
 
   post_it_text = make_scrolled_text(GTK_DIALOG(post_it_dialog)->vbox, false, NULL, NULL);

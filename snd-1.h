@@ -870,7 +870,12 @@ XEN g_call_any(XEN proc, XEN arglist, const char *caller);
 char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name, int argn);
 bool procedure_ok_with_error(XEN proc, int req_args, const char *caller, const char *arg_name, int argn);
 bool procedure_arity_ok(XEN proc, int args);
-int snd_protect(XEN obj);
+#if DEBUGGING
+  int snd_protect_1(XEN obj, const char *caller);
+  #define snd_protect(Obj) snd_protect_1(Obj, c__FUNCTION__)
+#else
+  int snd_protect(XEN obj);
+#endif
 void snd_unprotect(XEN obj);
 void snd_unprotect_at(int loc);
 XEN run_or_hook (XEN hook, XEN args, const char *caller);

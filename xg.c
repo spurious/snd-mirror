@@ -954,7 +954,7 @@ XM_TYPE_PTR_1(GtkAboutDialog_, GtkAboutDialog*)
 #define XEN_PangoEllipsizeMode_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_1(PangoAttrFilterFunc, PangoAttrFilterFunc)
 XM_TYPE_PTR_1(PangoFontFamily_, PangoFontFamily*)
-XM_TYPE(PangoScript, PangoScript)
+XM_TYPE_NO_P(PangoScript, PangoScript)
 XM_TYPE_PTR(PangoScriptIter_, PangoScriptIter*)
 #endif
 
@@ -30984,10 +30984,10 @@ static bool xg_already_inited = false;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"11-Aug-04\")");
+      XEN_EVAL_C_STRING("(define xm-version \"12-Aug-04\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("11-Aug-04"));
+      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("12-Aug-04"));
 #endif
       xg_already_inited = true;
 #if WITH_GTK_AND_X11

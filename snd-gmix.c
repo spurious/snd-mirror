@@ -565,11 +565,7 @@ GtkWidget *make_mix_dialog(void)
     {
       mix_dialog_id = any_mix_id();
       mix_dialog = snd_gtk_dialog_new();
-      g_signal_connect_closure_by_id(GTK_OBJECT(mix_dialog),
-				     g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(mix_dialog))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(delete_mix_dialog), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(mix_dialog, "delete_event", delete_mix_dialog, NULL);
       gtk_window_set_title(GTK_WINDOW(mix_dialog), _("Mixes"));
       sg_make_resizable(mix_dialog);
       gtk_container_set_border_width (GTK_CONTAINER(mix_dialog), 6);
@@ -578,51 +574,31 @@ GtkWidget *make_mix_dialog(void)
       dismiss_button = gtk_button_new_with_label(_("Dismiss"));
       gtk_widget_set_name(dismiss_button, "quit_button");
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(mix_dialog)->action_area), dismiss_button, false, true, 10);
-      g_signal_connect_closure_by_id(GTK_OBJECT(dismiss_button),
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(dismiss_button))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(dismiss_mix_dialog), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(dismiss_button, "clicked", dismiss_mix_dialog, NULL);
       gtk_widget_show(dismiss_button);
 
       previousb = gtk_button_new_with_label(_("Previous"));
       gtk_widget_set_name(previousb, "reset_button");
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(mix_dialog)->action_area), previousb, false, true, 10);
-      g_signal_connect_closure_by_id(GTK_OBJECT(previousb),
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(previousb))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_previous_callback), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(previousb, "clicked", mix_previous_callback, NULL);
       gtk_widget_show(previousb);
 
       nextb = gtk_button_new_with_label(_("Next"));
       gtk_widget_set_name(nextb, "doit_button");
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(mix_dialog)->action_area), nextb, false, true, 10);
-      g_signal_connect_closure_by_id(GTK_OBJECT(nextb),
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(nextb))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_next_callback), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(nextb, "clicked", mix_next_callback, NULL);
       gtk_widget_show(nextb);
 
       apply_button = gtk_button_new_with_label(_("Apply Env"));
       gtk_widget_set_name(apply_button, "doit_again_button");
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(mix_dialog)->action_area), apply_button, false, true, 10);
-      g_signal_connect_closure_by_id(GTK_OBJECT(apply_button),
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(apply_button))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(apply_mix_dialog), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(apply_button, "clicked", apply_mix_dialog, NULL);
       gtk_widget_show(apply_button);
 
       help_button = gtk_button_new_with_label(_("Help"));
       gtk_widget_set_name(help_button, "help_button");
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(mix_dialog)->action_area), help_button, true, true, 10);
-      g_signal_connect_closure_by_id(GTK_OBJECT(help_button),
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(help_button))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_dialog_help_callback), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(help_button, "clicked", mix_dialog_help_callback, NULL);
       gtk_widget_show(help_button);
 
 
@@ -653,36 +629,16 @@ GtkWidget *make_mix_dialog(void)
       gtk_widget_show(w_id_label);
 
       w_id = snd_entry_new(rc, false);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_id),
-				     g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(w_id))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(id_activated), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_id),
-				     g_signal_lookup("leave_notify_event", G_OBJECT_TYPE(GTK_OBJECT(w_id))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(id_check_callback), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_id),
-				     g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(w_id))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(id_modify_callback), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(w_id, "activate", id_activated, NULL);
+      SG_SIGNAL_CONNECT(w_id, "leave_notify_event", id_check_callback, NULL);
+      SG_SIGNAL_CONNECT(w_id, "key_press_event", id_modify_callback, NULL);
 
       w_beg = snd_entry_new(rc, false);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_beg),
-				     g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(w_beg))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(beg_activated), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(w_beg, "activate", beg_activated, NULL);
 
       mix_play = gtk_button_new();
       gtk_box_pack_start(GTK_BOX(rc), mix_play, false, false, 2);
-      g_signal_connect_closure_by_id(GTK_OBJECT(mix_play),
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(mix_play))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_play_callback), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(mix_play, "clicked", mix_play_callback, NULL);
       gtk_widget_show(mix_play);
       gtk_widget_modify_bg(mix_play, GTK_STATE_ACTIVE, ss->sgx->basic_color);
       gtk_widget_modify_bg(mix_play, GTK_STATE_SELECTED, ss->sgx->basic_color);
@@ -700,11 +656,7 @@ GtkWidget *make_mix_dialog(void)
       gtk_widget_set_size_request(mix_play_pix, 16, 16);
       gtk_container_add(GTK_CONTAINER(mix_play), mix_play_pix);
       gtk_widget_show(mix_play_pix);
-      g_signal_connect_closure_by_id(GTK_OBJECT(mix_play_pix),
-				     g_signal_lookup("expose_event", G_OBJECT_TYPE(GTK_OBJECT(mix_play_pix))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_play_pix_expose), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(mix_play_pix, "expose_event", mix_play_pix_expose, NULL);
 
 
       w_track_label = gtk_label_new(_("track:"));
@@ -712,29 +664,13 @@ GtkWidget *make_mix_dialog(void)
       gtk_widget_show(w_track_label);
 
       w_track = snd_entry_new(rc1, false);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_track),
-				     g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(w_track))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_track_activated), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_track),
-				     g_signal_lookup("leave_notify_event", G_OBJECT_TYPE(GTK_OBJECT(w_track))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(track_check_callback), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_track),
-				     g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(w_track))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(track_modify_callback), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(w_track, "activate", mix_track_activated, NULL);
+      SG_SIGNAL_CONNECT(w_track, "leave_notify_event", track_check_callback, NULL);
+      SG_SIGNAL_CONNECT(w_track, "key_press_event", track_modify_callback, NULL);
 
       mix_track_play = gtk_button_new();
       gtk_box_pack_start(GTK_BOX(rc1), mix_track_play, false, false, 2);
-      g_signal_connect_closure_by_id(GTK_OBJECT(mix_track_play),
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(mix_track_play))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_track_play_callback), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(mix_track_play, "clicked", mix_track_play_callback, NULL);
       gtk_widget_show(mix_track_play);
       gtk_widget_modify_bg(mix_track_play, GTK_STATE_ACTIVE, ss->sgx->basic_color);
       gtk_widget_modify_bg(mix_track_play, GTK_STATE_SELECTED, ss->sgx->basic_color);
@@ -744,22 +680,14 @@ GtkWidget *make_mix_dialog(void)
       gtk_widget_set_size_request(mix_track_play_pix, 16, 16);
       gtk_container_add(GTK_CONTAINER(mix_track_play), mix_track_play_pix);
       gtk_widget_show(mix_track_play_pix);
-      g_signal_connect_closure_by_id(GTK_OBJECT(mix_track_play_pix),
-				     g_signal_lookup("expose_event", G_OBJECT_TYPE(GTK_OBJECT(mix_track_play_pix))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_track_play_pix_expose), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(mix_track_play_pix, "expose_event", mix_track_play_pix_expose, NULL);
 
       mix_basic_pan_pix = gdk_pixmap_create_from_xpm_d(MAIN_WINDOW(ss), NULL, NULL, pan_bits());
       mix_yellow_pan_pix = gdk_pixmap_create_from_xpm_d(MAIN_WINDOW(ss), NULL, NULL, yellow_pan_bits());
       mix_pan_pix = mix_basic_pan_pix;
       w_mix_pan = gtk_button_new();
       gtk_box_pack_end(GTK_BOX(rc1), w_mix_pan, false, false, 2);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_mix_pan),
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(w_mix_pan))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_pan_callback), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(w_mix_pan, "clicked", mix_pan_callback, NULL);
       gtk_widget_show(w_mix_pan);
 
       w_mix_pan1 = gtk_drawing_area_new();
@@ -767,11 +695,7 @@ GtkWidget *make_mix_dialog(void)
       gtk_widget_set_size_request(w_mix_pan1, 16, 16);
       gtk_container_add(GTK_CONTAINER(w_mix_pan), w_mix_pan1);
       gtk_widget_show(w_mix_pan1);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_mix_pan1),
-				     g_signal_lookup("expose_event", G_OBJECT_TYPE(GTK_OBJECT(w_mix_pan1))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(w_mix_pan_pix_expose), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(w_mix_pan1, "expose_event", w_mix_pan_pix_expose, NULL);
 
       /* SPEED */
       w_speed_form = gtk_hbox_new(false, 2);
@@ -780,11 +704,7 @@ GtkWidget *make_mix_dialog(void)
       w_speed_event = gtk_event_box_new();
       gtk_box_pack_start(GTK_BOX(w_speed_form), w_speed_event, false, false, 4);
       gtk_widget_show(w_speed_event);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_speed_event),
-				     g_signal_lookup("button_press_event", G_OBJECT_TYPE(GTK_OBJECT(w_speed_event))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(speed_click_callback), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(w_speed_event, "button_press_event", speed_click_callback, NULL);
       
       w_speed_label = gtk_label_new(_("speed:"));
       gtk_container_add(GTK_CONTAINER(w_speed_event), w_speed_label);
@@ -802,21 +722,9 @@ GtkWidget *make_mix_dialog(void)
       w_speed_adj = gtk_adjustment_new(0.45, 0.0, 1.0, 0.001, 0.01, .1);
       w_speed = gtk_hscrollbar_new(GTK_ADJUSTMENT(w_speed_adj));
       gtk_box_pack_start(GTK_BOX(w_speed_form), w_speed, true, true, 4);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_speed),
-				     g_signal_lookup("button_release_event", G_OBJECT_TYPE(GTK_OBJECT(w_speed))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(speed_release_callback), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_speed),
-				     g_signal_lookup("motion_notify_event", G_OBJECT_TYPE(GTK_OBJECT(w_speed))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(speed_motion_callback), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_speed),
-				     g_signal_lookup("button_press_event", G_OBJECT_TYPE(GTK_OBJECT(w_speed))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(speed_press_callback), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(w_speed, "button_release_event", speed_release_callback, NULL);
+      SG_SIGNAL_CONNECT(w_speed, "motion_notify_event", speed_motion_callback, NULL);
+      SG_SIGNAL_CONNECT(w_speed, "button_press_event", speed_press_callback, NULL);
       gtk_widget_show(w_speed);
       gtk_widget_show(w_speed_form);
 
@@ -839,11 +747,7 @@ GtkWidget *make_mix_dialog(void)
 	  w_amp_events[i] = gtk_event_box_new();
 	  gtk_box_pack_start(GTK_BOX(w_amp_forms[i]), w_amp_events[i], false, false, 4);
 	  gtk_widget_show(w_amp_events[i]);
-	  g_signal_connect_closure_by_id(GTK_OBJECT(w_amp_events[i]),
-					 g_signal_lookup("button_press_event", G_OBJECT_TYPE(GTK_OBJECT(w_amp_events[i]))),
-					 0,
-					 g_cclosure_new(GTK_SIGNAL_FUNC(amp_click_callback), NULL, 0),
-					 0);
+	  SG_SIGNAL_CONNECT(w_amp_events[i], "button_press_event", amp_click_callback, NULL);
       
 	  mus_snprintf(amplab, LABEL_BUFFER_SIZE, _("amp %d:"), i);
 	  w_amp_labels[i] = gtk_label_new(amplab);
@@ -859,21 +763,9 @@ GtkWidget *make_mix_dialog(void)
 	  w_amps[i] = gtk_hscrollbar_new(GTK_ADJUSTMENT(w_amp_adjs[i]));
 	  gtk_box_pack_start(GTK_BOX(w_amp_forms[i]), w_amps[i], true, true, 4);
 
-	  g_signal_connect_closure_by_id(GTK_OBJECT(w_amps[i]),
-					 g_signal_lookup("motion_notify_event", G_OBJECT_TYPE(GTK_OBJECT(w_amps[i]))),
-					 0,
-					 g_cclosure_new(GTK_SIGNAL_FUNC(amp_motion_callback), NULL, 0),
-					 0);
-	  g_signal_connect_closure_by_id(GTK_OBJECT(w_amps[i]),
-					 g_signal_lookup("button_release_event", G_OBJECT_TYPE(GTK_OBJECT(w_amps[i]))),
-					 0,
-					 g_cclosure_new(GTK_SIGNAL_FUNC(amp_release_callback), NULL, 0),
-					 0);
-	  g_signal_connect_closure_by_id(GTK_OBJECT(w_amps[i]),
-					 g_signal_lookup("button_press_event", G_OBJECT_TYPE(GTK_OBJECT(w_amps[i]))),
-					 0,
-					 g_cclosure_new(GTK_SIGNAL_FUNC(amp_press_callback), NULL, 0),
-					 0);
+	  SG_SIGNAL_CONNECT(w_amps[i], "motion_notify_event", amp_motion_callback, NULL);
+	  SG_SIGNAL_CONNECT(w_amps[i], "button_release_event", amp_release_callback, NULL);
+	  SG_SIGNAL_CONNECT(w_amps[i], "button_press_event", amp_press_callback, NULL);
 	  set_user_int_data(G_OBJECT(w_amps[i]), i);	  
 	  set_user_int_data(G_OBJECT(w_amp_adjs[i]), i);
 	  gtk_widget_show(w_amps[i]);
@@ -899,29 +791,17 @@ GtkWidget *make_mix_dialog(void)
       gtk_widget_show(w_dB_row);	
 
       w_clip = gtk_check_button_new_with_label(_("clip"));
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_clip),
-				     g_signal_lookup("toggled", G_OBJECT_TYPE(GTK_OBJECT(w_clip))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_clip_callback), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(w_clip, "toggled", mix_clip_callback, NULL);
       gtk_box_pack_start(GTK_BOX(w_dB_row), w_clip, false, false, 0);
       gtk_widget_show(w_clip);
 
       w_wave = gtk_check_button_new_with_label(_("wave"));
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_wave),
-				     g_signal_lookup("toggled", G_OBJECT_TYPE(GTK_OBJECT(w_wave))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_wave_callback), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(w_wave, "toggled", mix_wave_callback, NULL);
       gtk_box_pack_start(GTK_BOX(w_dB_row), w_wave, false, false, 0);
       gtk_widget_show(w_wave);
 
       w_dB = gtk_check_button_new_with_label(_("dB"));
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_dB),
-				     g_signal_lookup("toggled", G_OBJECT_TYPE(GTK_OBJECT(w_dB))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_dB_callback), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(w_dB, "toggled", mix_dB_callback, NULL);
       gtk_box_pack_start(GTK_BOX(w_dB_row), w_dB, false, false, 0);
       gtk_widget_show(w_dB);
 
@@ -931,31 +811,11 @@ GtkWidget *make_mix_dialog(void)
       gtk_container_add(GTK_CONTAINER(w_env_frame), w_env);
       gtk_widget_modify_bg(w_env, GTK_STATE_NORMAL, ss->sgx->highlight_color);
       gtk_widget_show(w_env);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_env),
-				     g_signal_lookup("expose_event", G_OBJECT_TYPE(GTK_OBJECT(w_env))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_amp_env_expose_callback), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_env),
-				     g_signal_lookup("configure_event", G_OBJECT_TYPE(GTK_OBJECT(w_env))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_amp_env_resize_callback), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_env),
-				     g_signal_lookup("button_press_event", G_OBJECT_TYPE(GTK_OBJECT(w_env))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_drawer_button_press), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_env),
-				     g_signal_lookup("button_release_event", G_OBJECT_TYPE(GTK_OBJECT(w_env))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_drawer_button_release), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_env),
-				     g_signal_lookup("motion_notify_event", G_OBJECT_TYPE(GTK_OBJECT(w_env))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_drawer_button_motion), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(w_env, "expose_event", mix_amp_env_expose_callback, NULL);
+      SG_SIGNAL_CONNECT(w_env, "configure_event", mix_amp_env_resize_callback, NULL);
+      SG_SIGNAL_CONNECT(w_env, "button_press_event", mix_drawer_button_press, NULL);
+      SG_SIGNAL_CONNECT(w_env, "button_release_event", mix_drawer_button_release, NULL);
+      SG_SIGNAL_CONNECT(w_env, "motion_notify_event", mix_drawer_button_motion, NULL);
       gtk_widget_show(w_env_frame);
 
       gtk_widget_show(mix_dialog);
@@ -1622,11 +1482,7 @@ GtkWidget *make_track_dialog(void)
       track_spf = new_env_editor();
       track_dialog_id = any_track_id();
       track_dialog = snd_gtk_dialog_new();
-      g_signal_connect_closure_by_id(GTK_OBJECT(track_dialog),
-				     g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(track_dialog))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(delete_track_dialog), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(track_dialog, "delete_event", delete_track_dialog, NULL);
       gtk_window_set_title(GTK_WINDOW(track_dialog), _("Tracks"));
       sg_make_resizable(track_dialog);
       gtk_container_set_border_width (GTK_CONTAINER(track_dialog), 6);
@@ -1635,51 +1491,31 @@ GtkWidget *make_track_dialog(void)
       dismiss_button = gtk_button_new_with_label(_("Dismiss"));
       gtk_widget_set_name(dismiss_button, "quit_button");
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(track_dialog)->action_area), dismiss_button, false, true, 10);
-      g_signal_connect_closure_by_id(GTK_OBJECT(dismiss_button),
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(dismiss_button))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(dismiss_track_dialog), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(dismiss_button, "clicked", dismiss_track_dialog, NULL);
       gtk_widget_show(dismiss_button);
 
       track_previousb = gtk_button_new_with_label(_("Previous"));
       gtk_widget_set_name(track_previousb, "reset_button");
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(track_dialog)->action_area), track_previousb, false, true, 10);
-      g_signal_connect_closure_by_id(GTK_OBJECT(track_previousb),
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(track_previousb))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(track_previous_callback), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(track_previousb, "clicked", track_previous_callback, NULL);
       gtk_widget_show(track_previousb);
 
       track_nextb = gtk_button_new_with_label(_("Next"));
       gtk_widget_set_name(track_nextb, "doit_button");
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(track_dialog)->action_area), track_nextb, false, true, 10);
-      g_signal_connect_closure_by_id(GTK_OBJECT(track_nextb),
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(track_nextb))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(track_next_callback), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(track_nextb, "clicked", track_next_callback, NULL);
       gtk_widget_show(track_nextb);
 
       apply_button = gtk_button_new_with_label(_("Apply Env"));
       gtk_widget_set_name(apply_button, "doit_again_button");
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(track_dialog)->action_area), apply_button, false, true, 10);
-      g_signal_connect_closure_by_id(GTK_OBJECT(apply_button),
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(apply_button))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(apply_track_dialog), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(apply_button, "clicked", apply_track_dialog, NULL);
       gtk_widget_show(apply_button);
 
       help_button = gtk_button_new_with_label(_("Help"));
       gtk_widget_set_name(help_button, "help_button");
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(track_dialog)->action_area), help_button, true, true, 10);
-      g_signal_connect_closure_by_id(GTK_OBJECT(help_button),
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(help_button))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(track_dialog_help_callback), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(help_button, "clicked", track_dialog_help_callback, NULL);
       gtk_widget_show(help_button);
 
       rc_top = gtk_hbox_new(false, 0);
@@ -1707,36 +1543,16 @@ GtkWidget *make_track_dialog(void)
       gtk_widget_show(w_track_id_label);
 
       w_track_id = snd_entry_new(rc, false);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_track_id),
-				     g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(w_track_id))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(track_id_activated), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_track_id),
-				     g_signal_lookup("leave_notify_event", G_OBJECT_TYPE(GTK_OBJECT(w_track_id))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(track_id_check_callback), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_track_id),
-				     g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(w_track_id))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(track_id_modify_callback), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(w_track_id, "activate", track_id_activated, NULL);
+      SG_SIGNAL_CONNECT(w_track_id, "leave_notify_event", track_id_check_callback, NULL);
+      SG_SIGNAL_CONNECT(w_track_id, "key_press_event", track_id_modify_callback, NULL);
 
       w_track_beg = snd_entry_new(rc, false);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_track_beg),
-				     g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(w_track_beg))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(track_beg_activated), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(w_track_beg, "activate", track_beg_activated, NULL);
 
       w_track_play = gtk_button_new();
       gtk_box_pack_start(GTK_BOX(rc), w_track_play, false, false, 2);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_track_play),
-				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(w_track_play))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(track_dialog_play_callback), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(w_track_play, "clicked", track_dialog_play_callback, NULL);
       gtk_widget_show(w_track_play);
       gtk_widget_modify_bg(w_track_play, GTK_STATE_ACTIVE, ss->sgx->basic_color);
       gtk_widget_modify_bg(w_track_play, GTK_STATE_SELECTED, ss->sgx->basic_color);
@@ -1753,11 +1569,7 @@ GtkWidget *make_track_dialog(void)
       gtk_widget_set_size_request(w_track_play_pix, 16, 16);
       gtk_container_add(GTK_CONTAINER(w_track_play), w_track_play_pix);
       gtk_widget_show(w_track_play_pix);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_track_play_pix),
-				     g_signal_lookup("expose_event", G_OBJECT_TYPE(GTK_OBJECT(w_track_play_pix))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(w_track_play_pix_expose), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(w_track_play_pix, "expose_event", w_track_play_pix_expose, NULL);
 
 
       w_track_track_label = gtk_label_new(_("track:"));
@@ -1765,21 +1577,9 @@ GtkWidget *make_track_dialog(void)
       gtk_widget_show(w_track_track_label);
 
       w_track_track = snd_entry_new(rc1, false);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_track_track),
-				     g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(w_track_track))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(track_track_activated), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_track_track),
-				     g_signal_lookup("leave_notify_event", G_OBJECT_TYPE(GTK_OBJECT(w_track_track))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(track_track_check_callback), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_track_track),
-				     g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(w_track_track))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(track_track_modify_callback), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(w_track_track, "activate", track_track_activated, NULL);
+      SG_SIGNAL_CONNECT(w_track_track, "leave_notify_event", track_track_check_callback, NULL);
+      SG_SIGNAL_CONNECT(w_track_track, "key_press_event", track_track_modify_callback, NULL);
       
       w_track_text = gtk_label_new("");
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(track_dialog)->vbox), w_track_text, false, false, 4); 
@@ -1793,11 +1593,7 @@ GtkWidget *make_track_dialog(void)
       w_track_speed_event = gtk_event_box_new();
       gtk_box_pack_start(GTK_BOX(w_track_speed_form), w_track_speed_event, false, false, 4);
       gtk_widget_show(w_track_speed_event);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_track_speed_event),
-				     g_signal_lookup("button_press_event", G_OBJECT_TYPE(GTK_OBJECT(w_track_speed_event))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(track_speed_click_callback), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(w_track_speed_event, "button_press_event", track_speed_click_callback, NULL);
       
       w_track_speed_label = gtk_label_new(_("speed:"));
       gtk_container_add(GTK_CONTAINER(w_track_speed_event), w_track_speed_label);
@@ -1815,21 +1611,9 @@ GtkWidget *make_track_dialog(void)
       w_track_speed_adj = gtk_adjustment_new(0.45, 0.0, 1.0, 0.001, 0.01, .1);
       w_track_speed = gtk_hscrollbar_new(GTK_ADJUSTMENT(w_track_speed_adj));
       gtk_box_pack_start(GTK_BOX(w_track_speed_form), w_track_speed, true, true, 4);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_track_speed),
-				     g_signal_lookup("button_release_event", G_OBJECT_TYPE(GTK_OBJECT(w_track_speed))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(track_speed_release_callback), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_track_speed),
-				     g_signal_lookup("motion_notify_event", G_OBJECT_TYPE(GTK_OBJECT(w_track_speed))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(track_speed_motion_callback), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_track_speed),
-				     g_signal_lookup("button_press_event", G_OBJECT_TYPE(GTK_OBJECT(w_track_speed))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(track_speed_press_callback), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(w_track_speed, "button_release_event", track_speed_release_callback, NULL);
+      SG_SIGNAL_CONNECT(w_track_speed, "motion_notify_event", track_speed_motion_callback, NULL);
+      SG_SIGNAL_CONNECT(w_track_speed, "button_press_event", track_speed_press_callback, NULL);
       gtk_widget_show(w_track_speed);
       gtk_widget_show(w_track_speed_form);
 
@@ -1840,11 +1624,7 @@ GtkWidget *make_track_dialog(void)
       w_track_tempo_event = gtk_event_box_new();
       gtk_box_pack_start(GTK_BOX(w_track_tempo_form), w_track_tempo_event, false, false, 4);
       gtk_widget_show(w_track_tempo_event);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_track_tempo_event),
-				     g_signal_lookup("button_press_event", G_OBJECT_TYPE(GTK_OBJECT(w_track_tempo_event))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(track_tempo_click_callback), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(w_track_tempo_event, "button_press_event", track_tempo_click_callback, NULL);
       
       w_track_tempo_label = gtk_label_new(_("tempo:"));
       gtk_container_add(GTK_CONTAINER(w_track_tempo_event), w_track_tempo_label);
@@ -1857,21 +1637,9 @@ GtkWidget *make_track_dialog(void)
       w_track_tempo_adj = gtk_adjustment_new(0.0, 0.0, 1.0, 0.001, 0.01, .1);
       w_track_tempo = gtk_hscrollbar_new(GTK_ADJUSTMENT(w_track_tempo_adj));
       gtk_box_pack_start(GTK_BOX(w_track_tempo_form), w_track_tempo, true, true, 4);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_track_tempo),
-				     g_signal_lookup("button_release_event", G_OBJECT_TYPE(GTK_OBJECT(w_track_tempo))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(track_tempo_release_callback), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_track_tempo),
-				     g_signal_lookup("motion_notify_event", G_OBJECT_TYPE(GTK_OBJECT(w_track_tempo))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(track_tempo_motion_callback), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_track_tempo),
-				     g_signal_lookup("button_press_event", G_OBJECT_TYPE(GTK_OBJECT(w_track_tempo))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(track_tempo_press_callback), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(w_track_tempo, "button_release_event", track_tempo_release_callback, NULL);
+      SG_SIGNAL_CONNECT(w_track_tempo, "motion_notify_event", track_tempo_motion_callback, NULL);
+      SG_SIGNAL_CONNECT(w_track_tempo, "button_press_event", track_tempo_press_callback, NULL);
       gtk_widget_show(w_track_tempo);
       gtk_widget_show(w_track_tempo_form);
 
@@ -1883,11 +1651,7 @@ GtkWidget *make_track_dialog(void)
       w_track_amp_event = gtk_event_box_new();
       gtk_box_pack_start(GTK_BOX(w_track_amp_form), w_track_amp_event, false, false, 4);
       gtk_widget_show(w_track_amp_event);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_track_amp_event),
-				     g_signal_lookup("button_press_event", G_OBJECT_TYPE(GTK_OBJECT(w_track_amp_event))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(track_amp_click_callback), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(w_track_amp_event, "button_press_event", track_amp_click_callback, NULL);
       
       w_track_amp_label = gtk_label_new(_("amp:"));
       gtk_container_add(GTK_CONTAINER(w_track_amp_event), w_track_amp_label);
@@ -1900,21 +1664,9 @@ GtkWidget *make_track_dialog(void)
       w_track_amp_adj = gtk_adjustment_new(0.0, 0.0, 1.0, 0.001, 0.01, .1);
       w_track_amp = gtk_hscrollbar_new(GTK_ADJUSTMENT(w_track_amp_adj));
       gtk_box_pack_start(GTK_BOX(w_track_amp_form), w_track_amp, true, true, 4);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_track_amp),
-				     g_signal_lookup("button_release_event", G_OBJECT_TYPE(GTK_OBJECT(w_track_amp))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(track_amp_release_callback), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_track_amp),
-				     g_signal_lookup("motion_notify_event", G_OBJECT_TYPE(GTK_OBJECT(w_track_amp))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(track_amp_motion_callback), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_track_amp),
-				     g_signal_lookup("button_press_event", G_OBJECT_TYPE(GTK_OBJECT(w_track_amp))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(track_amp_press_callback), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(w_track_amp, "button_release_event", track_amp_release_callback, NULL);
+      SG_SIGNAL_CONNECT(w_track_amp, "motion_notify_event", track_amp_motion_callback, NULL);
+      SG_SIGNAL_CONNECT(w_track_amp, "button_press_event", track_amp_press_callback, NULL);
       gtk_widget_show(w_track_amp);
       gtk_widget_show(w_track_amp_form);
 
@@ -1937,29 +1689,17 @@ GtkWidget *make_track_dialog(void)
       gtk_widget_show(w_dB_row);	
 
       w_clip = gtk_check_button_new_with_label(_("clip"));
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_clip),
-				     g_signal_lookup("toggled", G_OBJECT_TYPE(GTK_OBJECT(w_clip))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(track_clip_callback), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(w_clip, "toggled", track_clip_callback, NULL);
       gtk_box_pack_start(GTK_BOX(w_dB_row), w_clip, false, false, 0);
       gtk_widget_show(w_clip);
 
       w_wave = gtk_check_button_new_with_label(_("wave"));
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_wave),
-				     g_signal_lookup("toggled", G_OBJECT_TYPE(GTK_OBJECT(w_wave))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(track_wave_callback), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(w_wave, "toggled", track_wave_callback, NULL);
       gtk_box_pack_start(GTK_BOX(w_dB_row), w_wave, false, false, 0);
       gtk_widget_show(w_wave);
 
       w_dB = gtk_check_button_new_with_label(_("dB"));
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_dB),
-				     g_signal_lookup("toggled", G_OBJECT_TYPE(GTK_OBJECT(w_dB))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(track_dB_callback), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(w_dB, "toggled", track_dB_callback, NULL);
       gtk_box_pack_start(GTK_BOX(w_dB_row), w_dB, false, false, 0);
       gtk_widget_show(w_dB);
 
@@ -1968,31 +1708,11 @@ GtkWidget *make_track_dialog(void)
       gtk_container_add(GTK_CONTAINER(w_track_env_frame), w_track_env);
       gtk_widget_modify_bg(w_track_env, GTK_STATE_NORMAL, ss->sgx->highlight_color);
       gtk_widget_show(w_track_env);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_track_env),
-				     g_signal_lookup("expose_event", G_OBJECT_TYPE(GTK_OBJECT(w_track_env))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(track_amp_env_expose_callback), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_track_env),
-				     g_signal_lookup("configure_event", G_OBJECT_TYPE(GTK_OBJECT(w_track_env))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(track_amp_env_resize_callback), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_track_env),
-				     g_signal_lookup("button_press_event", G_OBJECT_TYPE(GTK_OBJECT(w_track_env))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(track_drawer_button_press), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_track_env),
-				     g_signal_lookup("button_release_event", G_OBJECT_TYPE(GTK_OBJECT(w_track_env))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(track_drawer_button_release), NULL, 0),
-				     0);
-      g_signal_connect_closure_by_id(GTK_OBJECT(w_track_env),
-				     g_signal_lookup("motion_notify_event", G_OBJECT_TYPE(GTK_OBJECT(w_track_env))),
-				     0,
-				     g_cclosure_new(GTK_SIGNAL_FUNC(track_drawer_button_motion), NULL, 0),
-				     0);
+      SG_SIGNAL_CONNECT(w_track_env, "expose_event", track_amp_env_expose_callback, NULL);
+      SG_SIGNAL_CONNECT(w_track_env, "configure_event", track_amp_env_resize_callback, NULL);
+      SG_SIGNAL_CONNECT(w_track_env, "button_press_event", track_drawer_button_press, NULL);
+      SG_SIGNAL_CONNECT(w_track_env, "button_release_event", track_drawer_button_release, NULL);
+      SG_SIGNAL_CONNECT(w_track_env, "motion_notify_event", track_drawer_button_motion, NULL);
       gtk_widget_show(w_track_env_frame);
 
       gtk_widget_show(track_dialog);

@@ -1554,7 +1554,9 @@
 	 (pi 3.141592653589793)
 	 (two-pi (* 2 pi))
 	 (filptr 0)
+	 (window (make-fft-window hamming-window size 0.0))
 	 (D (inexact->exact (/ size 4)))) ; overlap = 4
+    (vct-scale! window (/ 2.0 (* 0.54 size)))
     (run
      (lambda ()
        (declare (n2 integer) (D integer))
@@ -1567,9 +1569,7 @@
 		(lambda (closure input)
 		  (declare (closure clm))
 		  (let ((N size)
-			(buf (modulo filptr size))
-			(window (make-fft-window hamming-window size 0.0)))
-		    (vct-scale! window (/ 2.0 (* 0.54 size)))
+			(buf (modulo filptr size)))
 		    (clear-array (phase-vocoder-freqs sr))
 		    (if (= filptr 0)
 			(do ((k 0 (1+ k)))

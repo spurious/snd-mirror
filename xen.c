@@ -276,7 +276,16 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str)
       if (xen_temp_strings[xen_temp_strings_ctr]) FREE(xen_temp_strings[xen_temp_strings_ctr]);
     }
   result = XEN_TO_C_STRING(str);
+#if (DEBUGGING && USE_SND)
+  {
+    char *temp;
+    temp = copy_string(result);
+    free(result);
+    xen_temp_strings[xen_temp_strings_ctr] = temp;
+  }
+#else
   xen_temp_strings[xen_temp_strings_ctr] = result;
+#endif
   xen_temp_strings_ctr++;
   if (xen_temp_strings_ctr >= XEN_TEMP_STRINGS_SIZE) xen_temp_strings_ctr = 0;
   return(result);
