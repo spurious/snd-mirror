@@ -268,6 +268,8 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+7-June:  added Reset button to envelope editor (to return to initial state).\n\
+         yes-or-no-p -> yes-or-no?\n\
 5-June:  replaced wavo by time-graph-type, graph-time-one, graph-time-as-wavogram (analogous to transform-graph-type).\n\
 4-June:  configure.ac for autoconf 2.50.\n\
          prepended \"zoom-\" to the zoom-focus-style choices (e.g. zoom-focus-left)\n\

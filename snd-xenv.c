@@ -2,9 +2,13 @@
 
 /* envelope editor and viewer */
 
+/* TODO: (set! (enved-selected-env) "empty-env") appears to do nothing
+ *       and it should take a symbol as well as a string
+ */
+
 static Widget enved_dialog = NULL;
 static Widget mainform, applyB, apply2B, cancelB, drawer, colB, colF, showB, saveB, revertB, undoB, redoB, printB, brkptL, graphB, fltB, ampB, srcB, rbrow, clipB;
-static Widget nameL, textL, screnvlst, screnvname, dBB, orderL, revrow, deleteB;
+static Widget nameL, textL, screnvlst, screnvname, dBB, orderL, revrow, deleteB, resetB;
 static Widget expB, linB, lerow, baseScale, baseLabel, baseValue, baseSep, selectionB, mixB, selrow, unrow, saverow;
 static GC gc, rgc, ggc;
 
@@ -225,6 +229,26 @@ void env_redisplay(snd_state *ss)
 	    }
 	}
     }
+}
+
+static void enved_reset(void)
+{
+  snd_state *ss;
+  ss = get_global_state();
+  set_enved_clip_p(ss, DEFAULT_ENVED_CLIP_P);
+  set_enved_exp_p(ss, DEFAULT_ENVED_EXP_P);
+  set_enved_power(ss, DEFAULT_ENVED_POWER);
+  set_enved_base(ss, DEFAULT_ENVED_BASE);
+  set_enved_target(ss, DEFAULT_ENVED_TARGET);
+  set_enved_wave_p(ss, DEFAULT_ENVED_WAVE_P);
+  set_enved_in_dB(ss, DEFAULT_ENVED_IN_DB);
+  set_enved_filter_order(ss, DEFAULT_ENVED_FILTER_ORDER);
+  if (active_env) active_env = free_env(active_env);
+  active_env = string2env("'(0 0 1 0)");
+  set_enved_env_list_top(0);
+  do_env_edit(active_env, TRUE);
+  set_sensitive(saveB, TRUE);
+  env_redisplay(ss);
 }
 
 static void order_field_activated(snd_state *ss)
@@ -860,6 +884,11 @@ static void Src_Button_Callback(Widget w, XtPointer context, XtPointer info)
   reflect_apply_state(ss);
 }
 
+static void Reset_Button_Callback(Widget w, XtPointer context, XtPointer info) 
+{
+  enved_reset();
+}
+
 static void Src_Button_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help((snd_state *)context,
@@ -1143,7 +1172,7 @@ Widget create_envelope_editor (snd_state *ss)
   int n;
   Arg args[32];
   Widget spacer, spacer1, aform;
-  XmString xhelp, xdismiss, xapply, titlestr, s1;
+  XmString xhelp, xdismiss, xapply, titlestr, s1, xreset;
   XGCValues gv;
   XtCallbackList n1, n2;
   char str[LABEL_BUFFER_SIZE];
@@ -1156,6 +1185,7 @@ Widget create_envelope_editor (snd_state *ss)
       xhelp = XmStringCreate(STR_Help, XmFONTLIST_DEFAULT_TAG);
       titlestr = XmStringCreate(STR_Edit_Envelope, XmFONTLIST_DEFAULT_TAG);
       xapply = XmStringCreate(STR_Apply, XmFONTLIST_DEFAULT_TAG);
+      xreset = XmStringCreate(STR_Reset, XmFONTLIST_DEFAULT_TAG);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -1199,6 +1229,10 @@ Widget create_envelope_editor (snd_state *ss)
       apply2B = XtCreateManagedWidget(STR_Undo_and_Apply, xmPushButtonWidgetClass, enved_dialog, args, n);
       XtAddCallback(apply2B, XmNactivateCallback, Undo_and_Apply_Enved_Callback, ss);
       XtAddCallback(apply2B, XmNhelpCallback, Undo_and_Apply_Help_Callback, ss);
+
+      resetB = XtCreateManagedWidget(STR_Reset, xmPushButtonWidgetClass, enved_dialog, args, n);
+      XtAddCallback(resetB, XmNactivateCallback, Reset_Button_Callback, ss);
+
 
       /* -------- MAIN WIDGET -------- */
       n = 0;
@@ -1869,10 +1903,62 @@ static SCM g_set_enved_selected_env(SCM name)
   return(name);
 }
 
+#if DEBUGGING
+static SCM g_enved_dialog_widgets(void)
+{
+  if (enved_dialog)
+    return(CONS(SND_WRAP(enved_dialog),
+	     CONS(SND_WRAP(drawer),
+	       CONS(SND_WRAP(orderL),
+		 CONS(SND_WRAP(textL),
+		   CONS(SND_WRAP(applyB),
+		     CONS(SND_WRAP(apply2B),
+		       CONS(SND_WRAP(cancelB),
+			 CONS(SND_WRAP(showB),
+			   CONS(SND_WRAP(saveB),
+			     CONS(SND_WRAP(revertB),
+			       CONS(SND_WRAP(undoB),
+				 CONS(SND_WRAP(redoB),
+			           CONS(SND_WRAP(printB),
+				     CONS(SND_WRAP(graphB),
+				       CONS(SND_WRAP(fltB),
+				         CONS(SND_WRAP(ampB),
+					   CONS(SND_WRAP(srcB),
+					     CONS(SND_WRAP(clipB),
+					       CONS(SND_WRAP(dBB),
+						 CONS(SND_WRAP(deleteB),
+					           CONS(SND_WRAP(expB),
+						     CONS(SND_WRAP(linB),
+						       CONS(SND_WRAP(selectionB),
+						         CONS(SND_WRAP(mixB),
+							   CONS(SND_WRAP(resetB),
+							     SCM_EOL))))))))))))))))))))))))));
+  return(SCM_EOL);
+}
+static SCM g_enved_axis_info(void)
+{
+  axis_info *ap;
+  if (enved_dialog)
+    {
+      ap = axis_cp->axis;
+      return(CONS(TO_SCM_INT(ap->x_axis_x0),
+               CONS(TO_SCM_INT(ap->y_axis_y0),
+                 CONS(TO_SCM_INT(ap->x_axis_x1),
+		   CONS(TO_SCM_INT(ap->y_axis_y1),
+		     SCM_EOL)))));
+    }
+  return(SCM_EOL);
+}
+#endif
+
 void g_init_gxenv(SCM local_doc)
 {
   define_procedure_with_setter(S_enved_active_env, SCM_FNC g_enved_active_env, H_enved_active_env,
 			       "set-" S_enved_active_env, SCM_FNC g_set_enved_active_env, local_doc, 0, 0, 1, 0);
   define_procedure_with_setter(S_enved_selected_env, SCM_FNC g_enved_selected_env, H_enved_selected_env,
 			       "set-" S_enved_selected_env, SCM_FNC g_set_enved_selected_env, local_doc, 0, 0, 1, 0);
+#if DEBUGGING
+  DEFINE_PROC("enved-dialog-widgets", g_enved_dialog_widgets, 0, 0, 0, "");
+  DEFINE_PROC("enved-axis-info",  g_enved_axis_info, 0, 0, 0, "");
+#endif
 }

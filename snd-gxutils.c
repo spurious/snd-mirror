@@ -356,6 +356,45 @@ static SCM g_x_synchronize(SCM on)
   return(on);
 }
 
+static SCM g_click_button(SCM button)
+{
+#if USE_MOTIF
+  Widget w;
+  w = (Widget)(SND_UNWRAP(button));
+  if ((XmIsPushButton(w)) || (XmIsPushButtonGadget(w)))
+    { 
+      if (XtIsSensitive(w))
+	XtCallCallbacks(w, XmNactivateCallback, (void *)get_global_state());
+    }
+  else
+    {
+      if ((XmIsToggleButton(w)) || (XmIsToggleButtonGadget(w)))
+	{
+	  if (XtIsSensitive(w))
+	    XtCallCallbacks(w, XmNvalueChangedCallback, (void *)get_global_state());
+	}
+      else fprintf(stderr,"bad type");
+    }
+#endif
+  return(button);
+}
+
+static SCM g_resize_pane(SCM wid, SCM height)
+{
+#if USE_MOTIF
+  Widget w;
+  int hgt;
+  w = (Widget)(SND_UNWRAP(wid));
+  hgt = TO_C_INT(height);
+  XtUnmanageChild(w);
+  XtVaSetValues(w,
+		XmNpaneMinimum, (hgt >= 5) ? (hgt - 5) : 0,
+		XmNpaneMaximum, hgt + 5,
+		NULL);
+  XtManageChild(w);
+#endif
+  return(height);
+}
 #endif
 
 void g_init_gxutils(SCM local_doc)
@@ -371,6 +410,8 @@ void g_init_gxutils(SCM local_doc)
   DEFINE_PROC("widget-window", g_widget_window, 1, 0, 0, "");
   DEFINE_PROC("force-event", g_force_event, 0, 0, 0, "");
   DEFINE_PROC("x-synchronize", g_x_synchronize, 1, 0, 0, "");
+  DEFINE_PROC("click-button", g_click_button, 1, 0, 0, "");
+  DEFINE_PROC("resize-pane", g_resize_pane, 2, 0, 0, "");
   YES_WE_HAVE("snd-events");
 #endif
 }

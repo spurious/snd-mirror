@@ -227,7 +227,7 @@
 		    #f
 		    (let ((eds (edits ind chan)))
 		      (if (> (car eds) 0)
-			  (not (yes-or-no-p ;that is, "yes" => exit
+			  (not (yes-or-no? ;that is, "yes" => exit
 				(format #f "~A has ~D unsaved edit~P in channel ~D, exit anyway? " 
 					(short-file-name ind) 
 					(vector-ref eds 0)
@@ -3293,6 +3293,7 @@ read, even if not playing.  'files' is a list of files to be played."
       (define update-graph      update-time-graph)
       (define fft-size          transform-size)
       (define wavo              time-graph-type) ;not quite right since wavo used booleans
+      (define yes-or-no-p       yes-or-no?)
 
       (define uniting 
 	(make-procedure-with-setter 

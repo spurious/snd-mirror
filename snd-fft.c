@@ -2555,6 +2555,16 @@ of a moving mark:\n\
   DEFINE_VAR(S_graph_transform_as_sonogram,    GRAPH_TRANSFORM_AS_SONOGRAM,    H_graph_transform_as_sonogram);
   DEFINE_VAR(S_graph_transform_as_spectrogram, GRAPH_TRANSFORM_AS_SPECTROGRAM, H_graph_transform_as_spectrogram);
 
+  #define H_dont_normalize_transform "The value for " S_transform_normalization " that causes the transform to display raw data"
+  #define H_normalize_transform_by_channel "The value for " S_transform_normalization " that causes the transform to be normalized in each channel independently"
+  #define H_normalize_transform_by_sound "The value for " S_transform_normalization " that causes the transform to be normalized across a sound's channels"
+  #define H_normalize_transform_globally "The value for " S_transform_normalization " that causes the transform to be normalized across all sounds"
+
+  DEFINE_VAR(S_dont_normalize_transform,        DONT_NORMALIZE_TRANSFORM,       H_dont_normalize_transform);
+  DEFINE_VAR(S_normalize_transform_by_channel,  NORMALIZE_TRANSFORM_BY_CHANNEL, H_normalize_transform_by_channel);
+  DEFINE_VAR(S_normalize_transform_by_sound,    NORMALIZE_TRANSFORM_BY_SOUND,   H_normalize_transform_by_sound);
+  DEFINE_VAR(S_normalize_transform_globally,    NORMALIZE_TRANSFORM_GLOBALLY,   H_normalize_transform_globally);
+
   DEFINE_PROC(S_transform_samples_size,  g_transform_samples_size, 0, 2, 0,H_transform_samples_size);
   DEFINE_PROC(S_transform_samples,     g_transform_samples, 0, 2, 0,   H_transform_samples);
   DEFINE_PROC(S_transform_sample,      g_transform_sample, 0, 4, 0,    H_transform_sample);

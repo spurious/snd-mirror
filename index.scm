@@ -1031,7 +1031,7 @@
     (list "y-bounds" "extsnd.html#sndybounds")
     (list "y-position-slider" "extsnd.html#ypositionslider")
     (list "y-zoom-slider" "extsnd.html#yzoomslider")
-    (list "yes-or-no-p" "extsnd.html#sndyesornop")
+    (list "yes-or-no?" "extsnd.html#sndyesornop")
     (list "zero-pad" "extsnd.html#zeropad")
     (list "zipper" "sndscm.html#zipper")
     (list "zoom-color" "extsnd.html#zoomcolor")

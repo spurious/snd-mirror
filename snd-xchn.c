@@ -36,8 +36,8 @@ static Widget channel_gzy(chan_info *cp) {if ((cp) && (cp->cgx)) return((cp->cgx
 Widget channel_w(chan_info *cp)          {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_w]);     else return(NULL);}
 Widget channel_f(chan_info *cp)          {if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_f]);     else return(NULL);}
 
-static Float sqr(Float a) {return(a*a);}
-static Float cube (Float a) {return(a*a*a);}
+static Float sqr(Float a) {return(a * a);}
+static Float cube (Float a) {return(a * a * a);}
 
 static Float get_scrollbar(Widget w, int val, int scrollbar_max)
 {

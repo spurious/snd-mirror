@@ -3,7 +3,7 @@
 /* envelope editor and viewer */
 
 static GtkWidget *enved_dialog = NULL;
-static GtkWidget *applyB, *apply2B, *cancelB, *drawer, *showB, *saveB;
+static GtkWidget *applyB, *apply2B, *cancelB, *drawer, *showB, *saveB, *resetB;
 static GtkWidget *revertB, *undoB, *redoB, *printB, *brktxtL, *brkpixL, *graphB, *fltB, *ampB, *srcB, *rbrow, *clipB, *deleteB;
 static GtkWidget *nameL, *textL, *env_list, *env_list_frame, *env_list_scroller, *dBB, *orderL;
 static GtkWidget *expB, *linB, *lerow, *baseScale, *baseLabel, *baseValue, *selectionB, *mixB, *selrow, *revrow, *unrow, *saverow;
@@ -605,6 +605,31 @@ static void src_button_pressed(GtkWidget *w, gpointer context)
   reflect_apply_state(ss);
 }
 
+static void enved_reset(void)
+{
+  snd_state *ss;
+  ss = get_global_state();
+  set_enved_clip_p(ss, DEFAULT_ENVED_CLIP_P);
+  set_enved_exp_p(ss, DEFAULT_ENVED_EXP_P);
+  set_enved_power(ss, DEFAULT_ENVED_POWER);
+  set_enved_base(ss, DEFAULT_ENVED_BASE);
+  set_enved_target(ss, DEFAULT_ENVED_TARGET);
+  set_enved_wave_p(ss, DEFAULT_ENVED_WAVE_P);
+  set_enved_in_dB(ss, DEFAULT_ENVED_IN_DB);
+  set_enved_filter_order(ss, DEFAULT_ENVED_FILTER_ORDER);
+  if (active_env) active_env = free_env(active_env);
+  active_env = string2env("'(0 0 1 0)");
+  set_enved_env_list_top(0);
+  do_env_edit(active_env, TRUE);
+  set_sensitive(saveB, TRUE);
+  env_redisplay(ss);
+}
+
+static void reset_button_pressed(GtkWidget *w, gpointer context)
+{
+  enved_reset();
+}
+
 void enved_print(char *name)
 {
   print_enved(name, axis_cp, env_window_height);
@@ -778,21 +803,26 @@ GtkWidget *create_envelope_editor (snd_state *ss)
       cancelB = gtk_button_new_with_label(STR_Dismiss);
       applyB = gtk_button_new_with_label(STR_Apply);
       apply2B = gtk_button_new_with_label(STR_Undo_and_Apply);
+      resetB = gtk_button_new_with_label(STR_Reset);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(enved_dialog)->action_area), cancelB, FALSE, TRUE, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(enved_dialog)->action_area), applyB, FALSE, TRUE, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(enved_dialog)->action_area), apply2B, FALSE, TRUE, 10);
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(enved_dialog)->action_area), resetB, FALSE, TRUE, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(enved_dialog)->action_area), helpB, FALSE, TRUE, 10);
       gtk_signal_connect(GTK_OBJECT(cancelB), "clicked", GTK_SIGNAL_FUNC(Dismiss_Enved_Callback), (gpointer)ss);
       gtk_signal_connect(GTK_OBJECT(applyB), "clicked", GTK_SIGNAL_FUNC(Apply_Enved_Callback), (gpointer)ss);
       gtk_signal_connect(GTK_OBJECT(apply2B), "clicked", GTK_SIGNAL_FUNC(Undo_and_Apply_Enved_Callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(resetB), "clicked", GTK_SIGNAL_FUNC(reset_button_pressed), (gpointer)ss);
       gtk_signal_connect(GTK_OBJECT(helpB), "clicked", GTK_SIGNAL_FUNC(Help_Enved_Callback), (gpointer)ss);
       set_pushed_button_colors(helpB, ss);
       set_pushed_button_colors(cancelB, ss);
       set_pushed_button_colors(applyB, ss);
       set_pushed_button_colors(apply2B, ss);
+      set_pushed_button_colors(resetB, ss);
       gtk_widget_show(cancelB);
       gtk_widget_show(applyB);
       gtk_widget_show(apply2B);
+      gtk_widget_show(resetB);
       gtk_widget_show(helpB);
 
       mainform = gtk_hbox_new(FALSE, 0); /* buttons + graph */

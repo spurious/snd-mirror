@@ -844,7 +844,7 @@
 #define S_y_bounds                      "y-bounds"
 #define S_y_position_slider             "y-position-slider"
 #define S_y_zoom_slider                 "y-zoom-slider"
-#define S_yes_or_no_p                   "yes-or-no-p"
+#define S_yes_or_no_p                   "yes-or-no?"
 #define S_zero_pad                      "zero-pad"
 #define S_zoom_color                    "zoom-col" STR_OR
 #define S_zoom_focus_active             "zoom-focus-active"

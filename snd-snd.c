@@ -2669,14 +2669,18 @@ static int dont_babble_info(snd_info *sp)
 #if (!USE_NO_GUI)
 static SCM g_sound_widgets(SCM snd)
 {
+  /* perhaps this belongs in snd-xsnd where we can grab every widget */
   snd_info *sp;
   SND_ASSERT_SND("sound_widgets", snd, 1);
   sp = get_sp(snd);
   return(CONS(SND_WRAP(w_snd_pane(sp)),
 	  CONS(SND_WRAP(w_snd_name(sp)),
            CONS(SND_WRAP(w_snd_ctrls(sp)),
-	     CONS(SND_WRAP(w_snd_minibuffer(sp)),
-	       SCM_EOL)))));
+	    CONS(SND_WRAP(w_snd_minibuffer(sp)),
+	     CONS(SND_WRAP(w_snd_play(sp)),
+	      CONS(SND_WRAP(w_snd_filter_env(sp)), /* this is the drawingarea widget */
+	       CONS(SND_WRAP(w_snd_combine(sp)),
+	        SCM_EOL))))))));
 }
 #endif
 

@@ -1,5 +1,7 @@
 snd change log
 
+  7-June:    added Reset button to envelope editor (to return to initial state).
+	     yes-or-no-p -> yes-or-no?
   5-June:    replaced wavo by time-graph-type, graph-time-once, graph-time-as-wavogram (analogous to transform-graph-type).
   4-June:    configure.ac for autoconf 2.50.
              prepended "zoom-" to the zoom-focus-style choices (e.g. zoom-focus-left).

@@ -932,79 +932,6 @@ are available, but not all are compatible with all header types"
   return(TO_SCM_INT(default_output_format(state)));
 }
 
-static SCM g_enved_base(void) {return(TO_SCM_DOUBLE(enved_base(state)));}
-static SCM g_set_enved_base(SCM val) 
-{
-  #define H_enved_base "(" S_enved_base ") -> envelope editor exponential base value (1.0)"
-  ASSERT_TYPE(NUMBER_P(val), val, SCM_ARGn, "set-" S_enved_base, "a number"); 
-  set_enved_base(state, mus_fclamp(0.0, TO_C_DOUBLE(val), 300000.0));
-  return(TO_SCM_DOUBLE(enved_base(state)));
-}
-
-static SCM g_enved_power(void) {return(TO_SCM_DOUBLE(enved_power(state)));}
-static SCM g_set_enved_power(SCM val) 
-{
-  #define H_enved_power "(" S_enved_power ") -> envelope editor base scale range (9.0^power)"
-  ASSERT_TYPE(NUMBER_P(val), val, SCM_ARGn, "set-" S_enved_power, "a number"); 
-  set_enved_power(state, mus_fclamp(0.0, TO_C_DOUBLE(val), 10.0));
-  return(TO_SCM_DOUBLE(enved_power(state)));
-}
-
-static SCM g_enved_clip_p(void) {return(TO_SCM_BOOLEAN(enved_clip_p(state)));}
-static SCM g_set_enved_clip_p(SCM on)
-{
-  #define H_enved_clip_p "(" S_enved_clip_p ") -> envelope editor 'clip' button setting; \
-if clipping, the motion of the mouse is restricted to the current graph bounds."
-
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARGn, "set-" S_enved_clip_p, "a boolean");
-  set_enved_clip_p(state, TO_C_BOOLEAN_OR_T(on)); 
-  return(TO_SCM_BOOLEAN(enved_clip_p(state)));
-}
-
-static SCM g_enved_exp_p(void) {return(TO_SCM_BOOLEAN(enved_exp_p(state)));}
-static SCM g_set_enved_exp_p(SCM val) 
-{
-  #define H_enved_exp_p "(" S_enved_exp_p ") -> envelope editor 'exp' and 'lin' buttons; \
-if enved-exping, the connecting segments use exponential curves rather than straight lines."
-
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARGn, "set-" S_enved_exp_p, "a boolean");
-  set_enved_exp_p(state, TO_C_BOOLEAN_OR_T(val)); 
-  return(TO_SCM_BOOLEAN(enved_clip_p(state)));
-}
-
-static SCM g_enved_target(void) {return(TO_SCM_INT(enved_target(state)));}
-static SCM g_set_enved_target(SCM val) 
-{
-  int n; 
-  #define H_enved_target "(" S_enved_target ") determines how the envelope is applied to data in the envelope editor; \
-choices are " S_enved_amplitude ", " S_enved_srate ", and " S_enved_spectrum
-
-  ASSERT_TYPE(INTEGER_P(val), val, SCM_ARGn, "set-" S_enved_target, "an integer"); 
-  n = mus_iclamp(ENVED_AMPLITUDE,
-	     TO_C_INT(val),
-	     ENVED_SRATE); 
-  set_enved_target(state, n); 
-  return(TO_SCM_INT(enved_target(state)));
-}
-
-static SCM g_enved_wave_p(void) {return(TO_SCM_BOOLEAN(enved_wave_p(state)));}
-static SCM g_set_enved_wave_p(SCM val) 
-{
-  #define H_enved_wave_p "(" S_enved_wave_p ") -> #t if the envelope editor is displaying the waveform to be edited"
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARGn, "set-" S_enved_wave_p, "a boolean");
-  set_enved_wave_p(state, TO_C_BOOLEAN_OR_T(val));
-  return(TO_SCM_BOOLEAN(enved_wave_p(state)));
-}
-
-static SCM g_enved_in_dB(void) {return(TO_SCM_BOOLEAN(enved_in_dB(state)));}
-static SCM g_set_enved_in_dB(SCM val) 
-{
-  #define H_enved_in_dB "(" S_enved_in_dB ") -> #t if the envelope editor is using dB"
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARGn, "set-" S_enved_in_dB, "a boolean");
-  set_enved_in_dB(state, TO_C_BOOLEAN_OR_T(val)); 
-  return(TO_SCM_BOOLEAN(enved_in_dB(state)));
-}
-
 static SCM g_eps_file(void) {return(TO_SCM_STRING(eps_file(state)));}
 static SCM g_set_eps_file(SCM val) 
 {
@@ -1062,15 +989,6 @@ static SCM g_set_audio_state_file(SCM val)
   if (audio_state_file(state)) free(audio_state_file(state));
   set_audio_state_file(state, TO_NEW_C_STRING(val));
   return(TO_SCM_STRING(audio_state_file(state)));
-}
-
-static SCM g_enved_filter_order(void) {return(TO_SCM_INT(enved_filter_order(state)));}
-static SCM g_set_enved_filter_order(SCM val) 
-{
-  #define H_enved_filter_order "(" S_enved_filter_order ") -> envelope editor's FIR filter order (40)"
-  ASSERT_TYPE(INTEGER_P(val), val, SCM_ARGn, "set-" S_enved_filter_order, "an integer"); 
-  set_enved_filter_order(state, TO_C_INT(val));
-  return(TO_SCM_INT(enved_filter_order(state)));
 }
 
 static SCM g_movies(void) {return(TO_SCM_BOOLEAN(movies(state)));}
@@ -1948,12 +1866,6 @@ static SCM g_mix_panel(void)
 {
   #define H_mix_panel "(" S_mix_panel ") starts (and returns) the mix panel"
   return(SND_WRAP(make_mix_panel(get_global_state())));
-}
-
-static SCM g_enved_dialog(void) 
-{
-  #define H_enved_dialog "(" S_enved_dialog ") fires up the Envelope Editor"
-  return(SND_WRAP(create_envelope_editor(state))); 
 }
 
 static SCM g_color_dialog(void) 
@@ -2927,14 +2839,6 @@ void g_initialize_gh(snd_state *ss)
 
   /* ---------------- CONSTANTS ---------------- */
 
-  #define H_enved_amplitude "The value for " S_enved_target " that sets the envelope editor 'amp' button."
-  #define H_enved_spectrum "The value for " S_enved_target " that sets the envelope editor 'flt' button."
-  #define H_enved_srate "The value for " S_enved_target " that sets the envelope editor 'src' button."
-
-  DEFINE_VAR(S_enved_amplitude,       ENVED_AMPLITUDE, H_enved_amplitude);
-  DEFINE_VAR(S_enved_spectrum,        ENVED_SPECTRUM,  H_enved_spectrum);
-  DEFINE_VAR(S_enved_srate,           ENVED_SRATE,     H_enved_srate);
-
   /* should these be named "graph-with-lines" etc? */
   #define H_graph_lines "The value for " S_graph_style " that causes graphs to use line-segments"
   #define H_graph_dots "The value for " S_graph_style " that causes graphs to use dots"
@@ -3004,16 +2908,6 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_VAR(S_show_no_axes,          SHOW_NO_AXES,  H_show_no_axes);
   DEFINE_VAR(S_show_x_axis,           SHOW_X_AXIS,   H_show_x_axis);
 
-  #define H_dont_normalize_transform "The value for " S_transform_normalization " that causes the transform to display raw data"
-  #define H_normalize_transform_by_channel "The value for " S_transform_normalization " that causes the transform to be normalized in each channel independently"
-  #define H_normalize_transform_by_sound "The value for " S_transform_normalization " that causes the transform to be normalized across a sound's channels"
-  #define H_normalize_transform_globally "The value for " S_transform_normalization " that causes the transform to be normalized across all sounds"
-
-  DEFINE_VAR(S_dont_normalize_transform,        DONT_NORMALIZE_TRANSFORM,       H_dont_normalize_transform);
-  DEFINE_VAR(S_normalize_transform_by_channel,  NORMALIZE_TRANSFORM_BY_CHANNEL, H_normalize_transform_by_channel);
-  DEFINE_VAR(S_normalize_transform_by_sound,    NORMALIZE_TRANSFORM_BY_SOUND,   H_normalize_transform_by_sound);
-  DEFINE_VAR(S_normalize_transform_globally,    NORMALIZE_TRANSFORM_GLOBALLY,   H_normalize_transform_globally);
-
   #define H_graph_time_once "The value for " S_time_graph_type " to display the standard time domain waveform"
   #define H_graph_time_as_wavogram "The value for " S_time_graph_type " to make a spectrogram-like form of the time-domain data"
 
@@ -3073,27 +2967,6 @@ void g_initialize_gh(snd_state *ss)
   define_procedure_with_setter(S_default_output_format, SCM_FNC g_default_output_format, H_default_output_format,
 			       "set-" S_default_output_format, SCM_FNC g_set_default_output_format, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_enved_base, SCM_FNC g_enved_base, H_enved_base,
-			       "set-" S_enved_base, SCM_FNC g_set_enved_base, local_doc, 0, 0, 0, 1);
-
-  define_procedure_with_setter(S_enved_power, SCM_FNC g_enved_power, H_enved_power,
-			       "set-" S_enved_power, SCM_FNC g_set_enved_power, local_doc, 0, 0, 0, 1);
-
-  define_procedure_with_setter(S_enved_clip_p, SCM_FNC g_enved_clip_p, H_enved_clip_p,
-			       "set-" S_enved_clip_p, SCM_FNC g_set_enved_clip_p, local_doc, 0, 0, 0, 1);
-
-  define_procedure_with_setter(S_enved_exp_p, SCM_FNC g_enved_exp_p, H_enved_exp_p,
-			       "set-" S_enved_exp_p, SCM_FNC g_set_enved_exp_p, local_doc, 0, 0, 0, 1);
-
-  define_procedure_with_setter(S_enved_target, SCM_FNC g_enved_target, H_enved_target,
-			       "set-" S_enved_target, SCM_FNC g_set_enved_target, local_doc, 0, 0, 0, 1);
-
-  define_procedure_with_setter(S_enved_wave_p, SCM_FNC g_enved_wave_p, H_enved_wave_p,
-			       "set-" S_enved_wave_p, SCM_FNC g_set_enved_wave_p, local_doc, 0, 0, 0, 1);
-
-  define_procedure_with_setter(S_enved_in_dB, SCM_FNC g_enved_in_dB, H_enved_in_dB,
-			       "set-" S_enved_in_dB, SCM_FNC g_set_enved_in_dB, local_doc, 0, 0, 0, 1);
-
   define_procedure_with_setter(S_eps_file, SCM_FNC g_eps_file, H_eps_file,
 			       "set-" S_eps_file, SCM_FNC g_set_eps_file, local_doc, 0, 0, 0, 1);
 
@@ -3108,9 +2981,6 @@ void g_initialize_gh(snd_state *ss)
 
   define_procedure_with_setter(S_audio_state_file, SCM_FNC g_audio_state_file, H_audio_state_file,
 			       "set-" S_audio_state_file, SCM_FNC g_set_audio_state_file, local_doc, 0, 0, 0, 1);
-
-  define_procedure_with_setter(S_enved_filter_order, SCM_FNC g_enved_filter_order, H_enved_filter_order,
-			       "set-" S_enved_filter_order, SCM_FNC g_set_enved_filter_order, local_doc, 0, 0, 0, 1);
 
   define_procedure_with_setter(S_movies, SCM_FNC g_movies, H_movies,
 			       "set-" S_movies, SCM_FNC g_set_movies, local_doc, 0, 0, 0, 1);
@@ -3290,7 +3160,6 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC("set-" S_oss_buffers,  g_set_oss_buffers, 2, 0, 0,     H_set_oss_buffers);
   DEFINE_PROC(S_update_usage_stats,  g_update_usage_stats, 0, 0, 0,  H_update_usage_stats);
   DEFINE_PROC(S_clear_audio_inputs,  g_clear_audio_inputs, 0, 0, 0,  H_clear_audio_inputs);
-  DEFINE_PROC(S_enved_dialog,        g_enved_dialog, 0, 0, 0,        H_enved_dialog);
   DEFINE_PROC(S_color_dialog,        g_color_dialog, 0, 0, 0,        H_color_dialog);
   DEFINE_PROC(S_orientation_dialog,  g_orientation_dialog, 0, 0, 0,  H_orientation_dialog);
   DEFINE_PROC(S_transform_dialog,    g_transform_dialog, 0, 0, 0,    H_transform_dialog);
@@ -3492,6 +3361,7 @@ If more than one hook function, results are concatenated. If none, the current c
                (define update-fft        update-transform)\
                (define update-graph      update-time-graph)\
                (define wavo              time-graph-type)\
+               (define yes-or-no-p       yes-or-no?)\
                (define uniting \
                  (make-procedure-with-setter \
                    (lambda arg \

@@ -1393,8 +1393,130 @@ int check_enved_hook(env *e, int pos, Float x, Float y, int reason)
   return(env_changed); /* 0 = default action */
 }
 
+static SCM g_enved_base(void) {return(TO_SCM_DOUBLE(enved_base(get_global_state())));}
+static SCM g_set_enved_base(SCM val) 
+{
+  #define H_enved_base "(" S_enved_base ") -> envelope editor exponential base value (1.0)"
+  ASSERT_TYPE(NUMBER_P(val), val, SCM_ARGn, "set-" S_enved_base, "a number"); 
+  set_enved_base(get_global_state(), mus_fclamp(0.0, TO_C_DOUBLE(val), 300000.0));
+  return(TO_SCM_DOUBLE(enved_base(get_global_state())));
+}
+
+static SCM g_enved_power(void) {return(TO_SCM_DOUBLE(enved_power(get_global_state())));}
+static SCM g_set_enved_power(SCM val) 
+{
+  #define H_enved_power "(" S_enved_power ") -> envelope editor base scale range (9.0^power)"
+  ASSERT_TYPE(NUMBER_P(val), val, SCM_ARGn, "set-" S_enved_power, "a number"); 
+  set_enved_power(get_global_state(), mus_fclamp(0.0, TO_C_DOUBLE(val), 10.0));
+  return(TO_SCM_DOUBLE(enved_power(get_global_state())));
+}
+
+static SCM g_enved_clip_p(void) {return(TO_SCM_BOOLEAN(enved_clip_p(get_global_state())));}
+static SCM g_set_enved_clip_p(SCM on)
+{
+  #define H_enved_clip_p "(" S_enved_clip_p ") -> envelope editor 'clip' button setting; \
+if clipping, the motion of the mouse is restricted to the current graph bounds."
+
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARGn, "set-" S_enved_clip_p, "a boolean");
+  set_enved_clip_p(get_global_state(), TO_C_BOOLEAN_OR_T(on)); 
+  return(TO_SCM_BOOLEAN(enved_clip_p(get_global_state())));
+}
+
+static SCM g_enved_exp_p(void) {return(TO_SCM_BOOLEAN(enved_exp_p(get_global_state())));}
+static SCM g_set_enved_exp_p(SCM val) 
+{
+  #define H_enved_exp_p "(" S_enved_exp_p ") -> envelope editor 'exp' and 'lin' buttons; \
+if enved-exping, the connecting segments use exponential curves rather than straight lines."
+
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARGn, "set-" S_enved_exp_p, "a boolean");
+  set_enved_exp_p(get_global_state(), TO_C_BOOLEAN_OR_T(val)); 
+  return(TO_SCM_BOOLEAN(enved_clip_p(get_global_state())));
+}
+
+static SCM g_enved_target(void) {return(TO_SCM_INT(enved_target(get_global_state())));}
+static SCM g_set_enved_target(SCM val) 
+{
+  int n; 
+  #define H_enved_target "(" S_enved_target ") determines how the envelope is applied to data in the envelope editor; \
+choices are " S_enved_amplitude ", " S_enved_srate ", and " S_enved_spectrum
+
+  ASSERT_TYPE(INTEGER_P(val), val, SCM_ARGn, "set-" S_enved_target, "an integer"); 
+  n = mus_iclamp(ENVED_AMPLITUDE,
+	     TO_C_INT(val),
+	     ENVED_SRATE); 
+  set_enved_target(get_global_state(), n); 
+  return(TO_SCM_INT(enved_target(get_global_state())));
+}
+
+static SCM g_enved_wave_p(void) {return(TO_SCM_BOOLEAN(enved_wave_p(get_global_state())));}
+static SCM g_set_enved_wave_p(SCM val) 
+{
+  #define H_enved_wave_p "(" S_enved_wave_p ") -> #t if the envelope editor is displaying the waveform to be edited"
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARGn, "set-" S_enved_wave_p, "a boolean");
+  set_enved_wave_p(get_global_state(), TO_C_BOOLEAN_OR_T(val));
+  return(TO_SCM_BOOLEAN(enved_wave_p(get_global_state())));
+}
+
+static SCM g_enved_in_dB(void) {return(TO_SCM_BOOLEAN(enved_in_dB(get_global_state())));}
+static SCM g_set_enved_in_dB(SCM val) 
+{
+  #define H_enved_in_dB "(" S_enved_in_dB ") -> #t if the envelope editor is using dB"
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARGn, "set-" S_enved_in_dB, "a boolean");
+  set_enved_in_dB(get_global_state(), TO_C_BOOLEAN_OR_T(val)); 
+  return(TO_SCM_BOOLEAN(enved_in_dB(get_global_state())));
+}
+
+static SCM g_enved_filter_order(void) {return(TO_SCM_INT(enved_filter_order(get_global_state())));}
+static SCM g_set_enved_filter_order(SCM val) 
+{
+  #define H_enved_filter_order "(" S_enved_filter_order ") -> envelope editor's FIR filter order (40)"
+  ASSERT_TYPE(INTEGER_P(val), val, SCM_ARGn, "set-" S_enved_filter_order, "an integer"); 
+  set_enved_filter_order(get_global_state(), TO_C_INT(val));
+  return(TO_SCM_INT(enved_filter_order(get_global_state())));
+}
+
+static SCM g_enved_dialog(void) 
+{
+  #define H_enved_dialog "(" S_enved_dialog ") fires up the Envelope Editor"
+  return(SND_WRAP(create_envelope_editor(get_global_state()))); 
+}
+
+
 void g_init_env(SCM local_doc)
 {
+  #define H_enved_amplitude "The value for " S_enved_target " that sets the envelope editor 'amp' button."
+  #define H_enved_spectrum "The value for " S_enved_target " that sets the envelope editor 'flt' button."
+  #define H_enved_srate "The value for " S_enved_target " that sets the envelope editor 'src' button."
+
+  DEFINE_VAR(S_enved_amplitude,       ENVED_AMPLITUDE, H_enved_amplitude);
+  DEFINE_VAR(S_enved_spectrum,        ENVED_SPECTRUM,  H_enved_spectrum);
+  DEFINE_VAR(S_enved_srate,           ENVED_SRATE,     H_enved_srate);
+
+  define_procedure_with_setter(S_enved_base, SCM_FNC g_enved_base, H_enved_base,
+			       "set-" S_enved_base, SCM_FNC g_set_enved_base, local_doc, 0, 0, 0, 1);
+
+  define_procedure_with_setter(S_enved_power, SCM_FNC g_enved_power, H_enved_power,
+			       "set-" S_enved_power, SCM_FNC g_set_enved_power, local_doc, 0, 0, 0, 1);
+
+  define_procedure_with_setter(S_enved_clip_p, SCM_FNC g_enved_clip_p, H_enved_clip_p,
+			       "set-" S_enved_clip_p, SCM_FNC g_set_enved_clip_p, local_doc, 0, 0, 0, 1);
+
+  define_procedure_with_setter(S_enved_exp_p, SCM_FNC g_enved_exp_p, H_enved_exp_p,
+			       "set-" S_enved_exp_p, SCM_FNC g_set_enved_exp_p, local_doc, 0, 0, 0, 1);
+
+  define_procedure_with_setter(S_enved_target, SCM_FNC g_enved_target, H_enved_target,
+			       "set-" S_enved_target, SCM_FNC g_set_enved_target, local_doc, 0, 0, 0, 1);
+
+  define_procedure_with_setter(S_enved_wave_p, SCM_FNC g_enved_wave_p, H_enved_wave_p,
+			       "set-" S_enved_wave_p, SCM_FNC g_set_enved_wave_p, local_doc, 0, 0, 0, 1);
+
+  define_procedure_with_setter(S_enved_in_dB, SCM_FNC g_enved_in_dB, H_enved_in_dB,
+			       "set-" S_enved_in_dB, SCM_FNC g_set_enved_in_dB, local_doc, 0, 0, 0, 1);
+
+  define_procedure_with_setter(S_enved_filter_order, SCM_FNC g_enved_filter_order, H_enved_filter_order,
+			       "set-" S_enved_filter_order, SCM_FNC g_set_enved_filter_order, local_doc, 0, 0, 0, 1);
+
+  DEFINE_PROC(S_enved_dialog,    g_enved_dialog, 0, 0, 0,     H_enved_dialog);
   DEFINE_PROC(S_save_envelopes,  g_save_envelopes, 0, 1, 0,   H_save_envelopes);
   DEFINE_PROC(S_define_envelope, g_define_envelope, 2, 0, 0,  H_define_envelope);
 

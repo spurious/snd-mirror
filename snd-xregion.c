@@ -297,11 +297,13 @@ static void region_edit_Callback(Widget w, XtPointer context, XtPointer info)
     region_edit((snd_state *)context, current_region);
 }
 
+static Widget prtb, editb;
+
 static void make_region_dialog(snd_state *ss)
 {
   int n, i, id;
   Arg args[32];
-  Widget formw, last_row, ww, infosep, prtb, editb;
+  Widget formw, last_row, ww, infosep;
   XmString xok, xdelete, xhelp, titlestr;
   regrow *r;
   chan_info *cp;
@@ -614,7 +616,12 @@ static SCM g_region_dialog_widgets(void)
 	         CONS(SND_WRAP(reg_lentxt),
 	           CONS(SND_WRAP(reg_chntxt),
 	             CONS(SND_WRAP(reg_maxtxt),
-		       (reg_sp) ? g_channel_widgets_1(reg_sp->chans[0]) : SCM_EOL)))))));
+		       CONS(SND_WRAP(prtb),
+			 CONS(SND_WRAP(editb),
+			   CONS(SND_WRAP(XmMessageBoxGetChild(region_dialog, XmDIALOG_OK_BUTTON)),
+			     CONS(SND_WRAP(XmMessageBoxGetChild(region_dialog, XmDIALOG_CANCEL_BUTTON)),
+			       CONS(SND_WRAP(XmMessageBoxGetChild(region_dialog, XmDIALOG_HELP_BUTTON)),
+				 (reg_sp) ? g_channel_widgets_1(reg_sp->chans[0]) : SCM_EOL))))))))))));
   return(SCM_EOL);
 }
 #endif
