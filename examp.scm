@@ -2377,8 +2377,6 @@
       (if (> retitle-time 0)
 	  (in retitle-time title-with-date)))))
 
-;;; TODO: document change-property
-
 ;(title-with-date)
 ;  -- this line starts the new window title handler which runs until Snd is exited or retitle-time is set to 0
 

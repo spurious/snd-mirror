@@ -26,7 +26,7 @@
 (use-modules (ice-9 format) (ice-9 debug))
 
 (define tests 1)
-(define snd-test 20)
+(define snd-test -1)
 (define full-test (< snd-test 0))
 
 (if (and (not (file-exists? "4.aiff"))
@@ -6977,7 +6977,6 @@
 	;; now try everything! (all we care about here is that Snd keeps running)
 	
 	;; ---------------- 0 Args
-	(display ";; ---------------- 0 Args")
 	(for-each 
 	 (lambda (n)
 	   (catch #t
@@ -6988,7 +6987,6 @@
 	(gc)
 
 	;; ---------------- 1 Arg
-	(display ";; ---------------- 1 Arg")
 	(for-each 
 	 (lambda (arg)
 	   (for-each 
@@ -7003,12 +7001,11 @@
 	(gc)
 
 	;; ---------------- 2 Args
-	(display ";; ---------------- 2 Args")
 	(for-each 
 	 (lambda (arg1)
+	   ;(display (format #f "1: ~A" arg1))
 	   (for-each 
 	    (lambda (arg2)
-	      ;(display (format #f "(~A ~A)~%" arg1 arg2))
 	      (for-each 
 	       (lambda (n)
 		 ;(display (format #f "(~A ~A ~A)~%" n arg1 arg2))
@@ -7025,7 +7022,6 @@
 	(gc)
 
 	;; ---------------- set! no Args
-	(display ";; ---------------- set! no Args")
 	(for-each 
 	 (lambda (arg)
 	   (for-each 
@@ -7040,12 +7036,10 @@
 	(gc)
 
 	;; ---------------- set! 1 Arg
-	(display ";; ---------------- set! 1 Arg")
 	(for-each 
 	 (lambda (arg1)
 	   (for-each 
 	    (lambda (arg2)
-	      ;(display (format #f "(4 ~A ~A)~%" arg1 arg2))
 	      (for-each 
 	       (lambda (n)
 		 ;(display (format #f "(~A ~A ~A)~%" n arg1 arg2))
@@ -7060,13 +7054,10 @@
 	(gc)
 
 	;; ---------------- set! 2 Args
-	(display ";; ---------------- set! 2 Args")
 	(for-each 
 	 (lambda (arg1)
-	   (display (format #f "2: ~A " arg1))
 	   (for-each 
 	    (lambda (arg2)
-	      ;(display (format #f "(~A ~A ~)~%" arg1 arg2 arg3))
 	      (for-each 
 	       (lambda (arg3)
 		 ;(display (format #f "(~A ~A ~A )~%" arg1 arg2 arg3))
@@ -7084,19 +7075,18 @@
 	       (sqrt -1.0) (make-delay 32) :frequency -1 0 #f #t '() 12345678901234567890))
 	(gc)
 
-	(if (or #t (> tests 1))
+	(if (> tests 1)
 	    ;; these can take awhile...
 	    (begin
 	      ;; ---------------- 3 Args
 	      (for-each 
 	       (lambda (arg1)
 		 (begin
-		   (display (format #f "3: ~A " arg1))
+		   ;(display (format #f "3: ~A " arg1))
 		   (for-each
 		    (lambda (arg2)
 		      (for-each 
 		       (lambda (arg3)
-			 ;(display (format #f "(~A ~A ~A)~%" arg1 arg2 arg3))
 			 (for-each
 			  (lambda (n)
 			    ;(display (format #f "(~A ~A ~A ~A)~%" n arg1 arg2 arg3))
@@ -7113,14 +7103,13 @@
 	      (for-each 
 	       (lambda (arg1)
 		 (begin
-		   (display (format #f "4: ~A " arg1))
+		   ;(display (format #f "4: ~A " arg1))
 		   (for-each 
 		    (lambda (arg2)
 		      (for-each 
 		       (lambda (arg3)
 			 (for-each 
 			  (lambda (arg4)
-			    ;(display (format #f "(~A ~A ~A ~A)~%" arg1 arg2 arg3 arg4))
 			    (for-each
 			     (lambda (n)
 			       ;(display (format #f "(~A ~A ~A ~A ~A)~%" n arg1 arg2 arg3 arg4))
@@ -7137,7 +7126,7 @@
 	      ;; ---------------- 5 Args
 	      (for-each 
 	       (lambda (arg1)
-		 (display (format #f "5: ~A " arg1))
+		 ;(display (format #f "5: ~A " arg1))
 		 (for-each 
 		  (lambda (arg2)
 		    (for-each 

@@ -381,7 +381,7 @@ Next add Guile wrappers to your C code:</p>
 
   int hiho (int a) 
   { /* this is the function we want to call from Snd */
-    return(1+a);
+    return(1 + a);
   }
 
   SCM hiho_wrapper(SCM a) 
@@ -391,7 +391,7 @@ Next add Guile wrappers to your C code:</p>
 
   void init_hiho() 
   { /* this declares hiho within Guile calling the wrapper which calls the C function hiho */
-    gh_new_procedure1_0("hiho",hiho_wrapper);
+    gh_new_procedure1_0("hiho", hiho_wrapper);
   }
 </pre>
 <p>
@@ -432,13 +432,13 @@ Then make a file (say "gsl-ex.c"):</p>
 static SCM scm_j0(SCM x)
 { /* calls GSL function gsl_sf_bessel_J0_e */
   gsl_sf_result res;
-  gsl_sf_bessel_J0_e(gh_scm2double(x),&amp;res);
+  gsl_sf_bessel_J0_e(gh_scm2double(x), &amp;res);
   return(gh_double2scm(res.val));
 }
 
 void init_gsl_j0(void)
 { /* links scm_j0 into Snd under the name j0 */
-  gh_new_procedure("j0",scm_j0,1,0,0);
+  gh_new_procedure("j0", scm_j0, 1, 0, 0);
 }
 </pre>
 <p>Now the usual compile, load, link into Snd sequence:</p>
@@ -506,11 +506,11 @@ defines a function that scales the data by 2:</p>
 <pre>
 #include &lt;guile/gh.h&gt;
 
-static float a2(float b) {return(b*2.0);}
+static float a2(float b) {return(b * 2.0);}
 
 static SCM get_a2(void) {return(gh_ulong2scm((unsigned long)a2));}
 
-void init_hiho() {gh_new_procedure0_0("get-a2",get_a2);}
+void init_hiho() {gh_new_procedure0_0("get-a2", get_a2);}
 </pre>
 <p>The "a2" function will be called from Snd as follows; first make
 the shared object module and load it as above, then</p>
@@ -530,10 +530,10 @@ is a sketch using the Snd internal "srate" function:</p>
 <pre>
   #include &lt;guile/gh.h&gt;
   static SCM g_srate;
-  static SCM srate_wrapper(SCM a) {return(gh_call1(g_srate,a));}
+  static SCM srate_wrapper(SCM a) {return(gh_call1(g_srate, a));}
   void init_srate(void) 
   { 
-    gh_new_procedure1_0("my-srate",srate_wrapper);
+    gh_new_procedure1_0("my-srate", srate_wrapper);
     g_srate = scm_symbol_value0("srate");
   }
 </pre>
@@ -582,16 +582,16 @@ static flg *make_flange(float flg_speed, float flg_amount, float flg_time)
   flg *gens;
   int len;
   len = (int)(flg_time * 22050) + 1;
-  gens = (flg *)calloc(1,sizeof(flg));
-  gens-&gt;del = mus_make_delay(len,NULL,(int)(len+1+flg_amount));
-  gens-&gt;ri = mus_make_rand_interp(flg_speed,flg_amount);
+  gens = (flg *)calloc(1, sizeof(flg));
+  gens-&gt;del = mus_make_delay(len, NULL, (int)(len + 1 + flg_amount));
+  gens-&gt;ri = mus_make_rand_interp(flg_speed, flg_amount);
   return(gens);
 }
 
 static float run_flange(float inval, void *ugens)
 {
   flg *gens = (flg *)ugens;
-  return(0.75 * (inval + mus_delay(gens-&gt;del,inval,mus_rand_interp(gens-&gt;ri,0.0))));
+  return(0.75 * (inval + mus_delay(gens-&gt;del, inval, mus_rand_interp(gens-&gt;ri, 0.0))));
 }
 
 static void free_flange(flg *gens)
@@ -605,7 +605,7 @@ static SCM g_make_flange(SCM speed, SCM amount, SCM time)
 {
   SCM result;
   flg *gens;
-  gens = make_flange(gh_scm2double(speed),gh_scm2double(amount),gh_scm2double(time));
+  gens = make_flange(gh_scm2double(speed), gh_scm2double(amount), gh_scm2double(time));
   return(gh_ulong2scm((unsigned long)(gens)));
 }
 
@@ -621,9 +621,9 @@ static SCM g_free_flange(SCM g_gens)
 
 void init_eff(void)
 {
-  gh_new_procedure("free-flange",g_free_flange,1,0,0);
-  gh_new_procedure("get-flange",g_get_flange,0,0,0);
-  gh_new_procedure("make-flange",g_make_flange,3,0,0);
+  gh_new_procedure("free-flange", g_free_flange, 1, 0, 0);
+  gh_new_procedure("get-flange", g_get_flange, 0, 0, 0);
+  gh_new_procedure("make-flange", g_make_flange, 3, 0, 0);
 }
 </pre>
 <p>Now compile eff.c and turn it into eff.so, then</p>
@@ -1080,232 +1080,245 @@ The CLM (common lisp) version might be something like:</p>
 <span class=cbox><h4><A NAME="clmfuncs">CLM functions</a></h4></span>
 
 <p>See <a href="clm.html">clm.html</a> for full details. Optional args are in italics.</p>
+<br>
 
-<pre>
-  <a href="clm.html#all-pass">all-pass</a>            (gen input <i>pm</i>)               all-pass filter
-  <a href="clm.html#all-pass?">all-pass?</a>           (gen)                        #t if gen is all-pass filter
-  <a href="clm.html#amplitude-modulate">amplitude-modulate</a>  (carrier in1 in2)            amplitude modulation
-  <a href="clm.html#array-interp">array-interp</a>        (arr x)                      interpolated array lookup
-  <a href="clm.html#array-&gt;file">array-&gt;file</a>         (filename vct len srate channels)
-                            write the contents of <i>vct</i> to the newly created sound file <i>filename</i>, giving 
-                            the new file <i>channels</i> channels (data assumed to be interleaved in <i>vct</i>),
-                            sampling rate <i>srate</i>, and <i>len</i> samples (not frames).
-  <a href="clm.html#asymmetric-fm">asymmetric-fm</a>       (gen index <i>fm</i>)               asymmetric-fm generator
-  <a href="clm.html#asymmetric-fm?">asymmetric-fm?</a>      (gen)                        #t if gen is asymmetric-fm generator
-  <a href="clm.html#buffer-&gt;frame">buffer-&gt;frame</a>       (gen frame)                  buffer generator returning frame
-  <a href="clm.html#buffer-&gt;sample">buffer-&gt;sample</a>      (gen)                        buffer generator returning sample
-  <a href="clm.html#buffer-empty?">buffer-empty?</a>       (gen)                        #t if buffer has no data
-  <a href="clm.html#buffer-full?">buffer-full?</a>        (gen)                        #t if buffer has no room for more data
-  <a href="clm.html#buffer?">buffer?</a>             (gen)                        #t if gen is buffer generator
-  <a href="clm.html#clear-array">clear-array</a>         (arr)                        set all elements of arr to 0.0
-  <a href="clm.html#comb">comb</a>                (gen input <i>pm</i>)               comb filter
-  <a href="clm.html#comb?">comb?</a>               (gen)                        #t if gen is comb filter
-  <a href="clm.html#contrast-enhancement">contrast-enhancement</a>(input (<i>index</i> 1.0))          a kind of phase modulation or companding
-  <a href="clm.html#convolution">convolution</a>         (sig1 sig2 n)                convolve sig1 with sig2 (size n), returning new sig1
-  <a href="clm.html#convolve">convolve</a>            (gen <i>input-function</i>)          convolve generator
-  <a href="clm.html#convolve?">convolve?</a>           (gen)                        #t if gen is convolve generator
-  <a href="clm.html#convolvefiles">convolve-files</a>      (f1 f2 maxamp outf)          convolve f1 with f2, normalize to maxamp, write outf
-  <a href="clm.html#db-&gt;linear">db-&gt;linear</a>          (db)                         translate dB value to linear
-  <a href="clm.html#degrees-&gt;radians">degrees-&gt;radians</a>    (deg)                        translate degrees to radians
-  <a href="clm.html#delay">delay</a>               (gen input <i>pm</i>)               delay line
-                            <b>delay</b> is a built-in syntactic form (or whatever they call it) in Scheme,
-                            but I don't think this is a case where I care!  The name <b>%delay</b> is bound
-                            to the original meaning of <b>delay</b> in case you need to use it.
-  <a href="clm.html#delay?">delay?</a>              (gen)                        #t if gen is delay line
-  <a href="clm.html#dot-product">dot-product</a>         (sig1 sig2)                  return dot-product of sig1 with sig2
-  <a href="clm.html#env">env</a>                 (gen)                        envelope generator
-  <a href="clm.html#env-interp">env-interp</a>          (x env (<i>base</i> 1.0))           return value of env at x
-  <a href="clm.html#env?">env?</a>                (gen)                        #t if gen is env (from make-env)
-  <a href="clm.html#fft">mus-fft</a>             (rl im n sign)               fft of rl and im (sign = -1 for ifft), result in rl
-  <a href="clm.html#file-&gt;array">file-&gt;array</a>         (filename chan start len vct)
-                            load <i>len</i> samples of <i>filename</i> into <i>vct</i> starting at frame <i>start</i> in channel <i>chan</i>.
-  <a href="clm.html#file-&gt;frame">file-&gt;frame</a>         (gen loc <i>frame</i>)              return frame from file at loc
-  <a href="clm.html#file-&gt;frame?">file-&gt;frame?</a>        (gen)                        #t if gen is file-&gt;frame generator
-  <a href="clm.html#file-&gt;sample">file-&gt;sample</a>        (gen loc <i>(chan 0)</i>)            return sample from file at loc
-  <a href="clm.html#file-&gt;sample?">file-&gt;sample?</a>       (gen)                        #t if gen is file-&gt;sample generator
-  <a href="clm.html#filter">filter</a>              (gen input)                  filter
-  <a href="clm.html#filter?">filter?</a>             (gen)                        #t if gen is filter
-  <a href="clm.html#fir-filter">fir-filter</a>          (gen input)                  FIR filter
-  <a href="clm.html#fir-filter?">fir-filter?</a>         (gen)                        #t if gen is fir filter
-  <a href="clm.html#formant">formant</a>             (gen input)                  formant generator
-  formant-bank        (scls gens inval)
-  <a href="clm.html#formant?">formant?</a>            (gen)                        #t if gen is formant generator
-  <a href="clm.html#frame*">frame*</a>              (fr1 fr2 <i>outfr</i>)              element-wise multiply
-  <a href="clm.html#frame+">frame+</a>              (fr1 fr2 <i>outfr</i>)              element-wise add
-  <a href="clm.html#frame-&gt;buffer">frame-&gt;buffer</a>       (buf frame)                  add frame to buffer
-  <a href="clm.html#frame-&gt;file">frame-&gt;file</a>         (gen loc frame)              write (add) frame to file at loc
-  <a href="clm.html#frame-&gt;file?">frame-&gt;file?</a>        (gen)                        #t if gen is frame-&gt;file generator
-  <a href="clm.html#frame-&gt;frame">frame-&gt;frame</a>        (mixer frame <i>outfr</i>)          pass frame through mixer
-  <a href="clm.html#frame-&gt;list">frame-&gt;list</a>         (frame)                      return list of frame contents
-  <a href="clm.html#frame-ref">frame-ref</a>           (frame chan)                 return frame[chan]
-  <a href="clm.html#frame-&gt;sample">frame-&gt;sample</a>       (frmix frame)                pass frame through frame or mixer to produce sample
-  <a href="clm.html#frame-set!">frame-set!</a>          (frame chan val)             frame[chan]=val
-  <a href="clm.html#frame?">frame?</a>              (gen)                        #t if gen is frame object
-  <a href="clm.html#granulate">granulate</a>           (gen <i>input-function</i>)           granular synthesis generator
-  <a href="clm.html#granulate?">granulate?</a>          (gen)                        #t if gen is granulate generator
-  <a href="clm.html#hz-&gt;radians">hz-&gt;radians</a>         (freq)                       translate freq to radians/sample
-  <a href="clm.html#iir-filter">iir-filter</a>          (gen input)                  IIR filter
-  <a href="clm.html#iir-filter?">iir-filter?</a>         (gen)                        #t if gen is iir-filter
-  <a href="clm.html#in-any">in-any</a>              (loc <i>chan</i> <i>stream</i>)            return sample in stream at loc and chan
-  in-hz               (freq)                       translate freq to radians/sample
-  <a href="clm.html#ina">ina</a>                 (loc <i>stream</i>)                 return sample in stream at loc, chan 0
-  <a href="clm.html#inb">inb</a>                 (loc <i>stream</i>)                 return sample in stream at loc, chan 1
-  <a href="clm.html#linear-&gt;db">linear-&gt;db</a>          (val)                        translate linear val to dB
-  <a href="clm.html#locsig">locsig</a>              (gen loc input)              place input in output channels at loc
-  <a href="clm.html#locsig-ref">locsig-ref</a>          (gen chan)                   locsig-scaler[chan]
-  <a href="clm.html#locsig-reverb-ref">locsig-reverb-ref</a>   (gen chan)                   locsig-reverb-scaler[chan]
-  <a href="clm.html#locsig-set!">locsig-set!</a>         (gen chan val)               locsig-scaler[chan] = val
-  <a href="clm.html#locsig-reverb-set!">locsig-reverb-set!</a>  (gen chan val)               locsig-reverb-scaler[chan] = val
-  <a href="clm.html#locsig?">locsig?</a>             (gen)                        #t if gen is locsig generator
-  ;; all the make function arguments are <a href="clm.html#optional-key">optional-key</a> args	
-  <a href="clm.html#make-all-pass">make-all-pass</a>       (feedback feedforward size initial-contents initial-element max-size)
-  <a href="clm.html#make-asymmetric-fm">make-asymmetric-fm</a>  (frequency initial-phase r ratio)
-  <a href="clm.html#make-buffer">make-buffer</a>         (size fill-time)
-  <a href="clm.html#make-comb">make-comb</a>           (scaler size initial-contents initial-element max-size)
-  <a href="clm.html#make-convolve">make-convolve</a>       (input filter fft-size filter-size)
-  <a href="clm.html#make-delay">make-delay</a>          (size initial-contents initial-element max-size)
-  <a href="clm.html#make-env">make-env</a>            (envelope scaler duration offset base end start)
-  <a href="clm.html#make-fft-window">make-fft-window</a>     (type size beta)
-  <a href="clm.html#make-file-&gt;frame">make-file-&gt;frame</a>    (name)
-  <a href="clm.html#make-file-&gt;sample">make-file-&gt;sample</a>   (name)
-  <a href="clm.html#make-filter">make-filter</a>         (order xcoeffs ycoeffs)
-  <a href="clm.html#make-fir-filter">make-fir-filter</a>     (order xcoeffs)
-  <a href="clm.html#make-formant">make-formant</a>        (radius frequency gain)
-  <a href="clm.html#make-frame">make-frame</a>          (chans &amp;rest vals)
-  <a href="clm.html#make-frame-&gt;file">make-frame-&gt;file</a>    (name chans format type)
-  <a href="clm.html#make-granulate">make-granulate</a>      (input expansion length scaler hop ramp jitter max-size)
-  <a href="clm.html#make-iir-filter">make-iir-filter</a>     (order ycoeffs)
-  <a href="clm.html#make-locsig">make-locsig</a>         (degree distance reverb output revout channels)
-  <a href="clm.html#make-mixer">make-mixer</a>          (chans &amp;rest vals)
-  <a href="clm.html#make-notch">make-notch</a>          (scaler size initial-contents initial-element max-size)
-  <a href="clm.html#make-one-pole">make-one-pole</a>       (a0 b1)
-  <a href="clm.html#make-one-zero">make-one-zero</a>       (a0 a1)
-  <a href="clm.html#make-oscil">make-oscil</a>          (frequency initial-phase)
-  <a href="clm.html#make-phase-vocoder">make-phase-vocoder</a>  (fftsize overlap interp pitch analyze edit synthesize)
-  <a href="clm.html#make-ppolar">make-ppolar</a>         (radius frequency)
-  <a href="clm.html#make-pulse-train">make-pulse-train</a>    (frequency amplitude initial-phase)
-  <a href="clm.html#make-rand">make-rand</a>           (frequency amplitude)
-  <a href="clm.html#make-rand-interp">make-rand-interp</a>    (frequency amplitude)
-  <a href="clm.html#make-readin">make-readin</a>         (file channel start)
-  <a href="clm.html#make-sample-&gt;file">make-sample-&gt;file</a>   (name chans format type)
-  <a href="clm.html#make-sawtooth-wave">make-sawtooth-wave</a>  (frequency amplitude initial-phase)
-  <a href="clm.html#make-sine-summation">make-sine-summation</a> (frequency initial-phase n a ratio)
-  <a href="clm.html#make-square-wave">make-square-wave</a>    (frequency amplitude initial-phase)
-  <a href="clm.html#make-src">make-src</a>            (input srate width)
-  <a href="clm.html#make-sum-of-cosines">make-sum-of-cosines</a> (frequency initial-phase cosines)
-  <a href="clm.html#make-table-lookup">make-table-lookup</a>   (frequency initial-phase wave)
-  <a href="clm.html#make-triangle-wave">make-triangle-wave</a>  (frequency amplitude initial-phase)
-  <a href="clm.html#make-two-pole">make-two-pole</a>       (a0 b1 b2)
-  <a href="clm.html#make-two-zero">make-two-zero</a>       (a0 a1 a2)
-  <a href="clm.html#make-wave-train">make-wave-train</a>     (frequency initial-phase wave)
-  <a href="clm.html#make-waveshape">make-waveshape</a>      (frequency partials)
-  <a href="clm.html#make-zpolar">make-zpolar</a>         (radius frequency)
-  <a href="clm.html#mixer*">mixer*</a>              (mix1 mix2 <i>outmx</i>)            matrix multiply of mix1 and mix2
-  <a href="clm.html#mixer-ref">mixer-ref</a>           (mix in out)                 mix-scaler[in,out]
-  <a href="clm.html#mixer-set!">mixer-set!</a>          (mix in out val)             mix-scaler[in,out] = val
-  <a href="clm.html#mixer?">mixer?</a>              (gen)                        #t if gen is mixer object
-  <a href="clm.html#multiply-arrays">multiply-arrays</a>     (arr1 arr2)                  arr1[i] *= arr2[i]
-  <a href="clm.html#mus-a0">mus-a0</a>              (gen)                        a0 field (simple filters)
-  <a href="clm.html#mus-a1">mus-a1</a>              (gen)                        a1 field (simple filters)
-  <a href="clm.html#mus-a2">mus-a2</a>              (gen)                        a2 field (simple filters)
-  mus-array-print-length ()                        how many array elements to print in mus_describe
-  <a href="clm.html#mus-b1">mus-b1</a>              (gen)                        b1 field (simple filters)
-  <a href="clm.html#mus-b2">mus-b2</a>              (gen)                        b2 field (simple filters)
-  <a href="clm.html#musbank">mus-bank</a>            (gens amps <i>args1 args2</i>)
-  <a href="clm.html#mus-channel">mus-channel</a>         (gen)                        channel of gen
-  <a href="clm.html#mus-channels">mus-channels</a>        (gen)                        channels of gen
-  <a href="clm.html#mus-cosines">mus-cosines</a>         (gen)                        cosines of sum-of-cosines gen
-  <a href="clm.html#mus-data">mus-data</a>            (gen)                        data array of gen
-  <a href="clm.html#mus-feedback">mus-feedback</a>        (gen)                        feedback term of gen (simple filters)
-  <a href="clm.html#mus-feedforward">mus-feedforward</a>     (gen)                        feedforward term of gen (all-pass)
-  <a href="clm.html#mus-formant-radius">mus-formant-radius</a>  (gen)                        formant radius
-  <a href="clm.html#mus-frequency">mus-frequency</a>       (gen)                        frequency of gen (Hz)
-  <a href="clm.html#mus-hop">mus-hop</a>             (gen)                        hop amount of gen (granulate)
-  <a href="clm.html#mus-increment">mus-increment</a>       (gen)                        increment of gen (src, readin, granulate)
-  <a href="clm.html#mus-input?">mus-input?</a>          (gen)                        #t if gen is input source
-  <a href="clm.html#mus-length">mus-length</a>          (gen)                        length of gen
-  <a href="clm.html#mus-location">mus-location</a>        (gen)                        location (read point) of gen
-  mus-mix             (outfile infile <i>(outloc 0) frames (inloc 0) mixer envs</i>)
-                            mix <i>infile</i> into <i>outfile</i> starting at <i>outloc</i> in <i>outfile</i> and <i>inloc</i> in <i>infile</i>
-                            mixing <i>frames</i> frames of <i>infile</i>.  <i>frames</i> defaults to the length of <i>infile</i>. If <i>mixer</i>,
-                            use it to scale the various channels; if <i>envs</i> (an array of envelope generators), use
-                            it in conjunction with <i>mixer</i> to scale/envelope all the various ins and outs.
-  <a href="clm.html#mus-order">mus-order</a>           (gen)                        order of gen (filters)
-  <a href="clm.html#mus-output?">mus-output?</a>         (gen)                        #t if gen is output generator
-  <a href="clm.html#mus-phase">mus-phase</a>           (gen)                        phase of gen (radians)
-  <a href="clm.html#mus-ramp">mus-ramp</a>            (gen)                        ramp time of gen (granulate)
-  <a href="clm.html#mus-random">mus-random</a>          (val)                        random numbers bewteen -val and val
-  <a href="clm.html#mus-run">mus-run</a>             (gen <i>arg1 arg2</i>)               apply gen to args
-  <a href="clm.html#mus-scaler">mus-scaler</a>          (gen)                        scaler of gen
-  <a href="clm.html#mus-set-rand-seed">mus-set-rand-seed</a>   (val)                        set random number generator seed to val
-  mus-set-srate       (val)                        set sampling rate to val -- (set! (mus-srate) val) is the same.
-  mus-srate           ()                           current sampling rate
-  <a href="clm.html#mus-xcoeffs">mus-xcoeffs</a>         (gen)                        feedforward (FIR) coeffs of filter
-  <a href="clm.html#mus-ycoeffs">mus-ycoeffs</a>         (gen)                        feedback (IIR) coeefs of filter
-  <a href="clm.html#notch">notch</a>               (gen input <i>pm</i>)               notch filter
-  <a href="clm.html#notch?">notch?</a>              (gen)                        #t if gen is notch filter
-  <a href="clm.html#one-pole">one-pole</a>            (gen input)                  one-pole filter
-  <a href="clm.html#one-pole?">one-pole?</a>           (gen)                        #t if gen is one-pole filter
-  <a href="clm.html#one-zero">one-zero</a>            (gen input)                  one-zero filter
-  <a href="clm.html#one-zero?">one-zero?</a>           (gen)                        #t if gen is one-zero filter
-  <a href="clm.html#oscil">oscil</a>               (gen <i>fm pm</i>)                  sine wave generator
-  <a href="clm.html#oscilbank">oscil-bank</a>          (scls gens invals)           bank of oscils
-  <a href="clm.html#oscil?">oscil?</a>              (gen)                        #t if gen is oscil generator
-  <a href="clm.html#out-any">out-any</a>             (loc samp chan <i>stream</i>)       write (add) samp to stream at loc in channel chan
-  <a href="clm.html#outa">outa</a>                (loc samp <i>stream</i>)            write (add) samp to stream at loc in chan 0
-  <a href="clm.html#outb">outb</a>                (loc samp <i>stream</i>)            write (add) samp to stream at loc in chan 1
-  <a href="clm.html#outc">outc</a>                (loc samp <i>stream</i>)            write (add) samp to stream at loc in chan 2
-  <a href="clm.html#outd">outd</a>                (loc samp <i>stream</i>)            write (add) samp to stream at loc in chan 3
-  <a href="clm.html#partials-&gt;polynomial">partials-&gt;polynomial</a>(partials <i>kind</i>)              create waveshaping polynomial from partials
-  <a href="clm.html#partials-&gt;wave">partials-&gt;wave</a>      (synth-data table <i>norm</i>)      load table from synth-data
-  <a href="clm.html#partials-&gt;waveshape">partials-&gt;waveshape</a> (partials <i>norm size</i>)         create waveshaping table from partials
-  <a href="clm.html#phase-partials-&gt;wave">phase-partials-&gt;wave</a>(synth-data table <i>norm</i>)      load table from synth-data
-  <a href="clm.html#phase-vocoder">phase-vocoder</a>       (pv input)                   phase vocoder generator
-  <a href="clm.html#phase-vocoder?">phase-vocoder?</a>      (pv)                         #t if pv is phase vocoder generator
-  <a href="clm.html#polynomial">polynomial</a>          (coeffs x)                   evaluate polynomial at x
-  <a href="clm.html#pulse-train">pulse-train</a>         (gen <i>fm</i>)                     pulse-train generator
-  <a href="clm.html#pulse-train?">pulse-train?</a>        (gen)                        #t if gen is pulse-train generator
-  <a href="clm.html#radians-&gt;degrees">radians-&gt;degrees</a>    (rads)                       convert radians to degrees
-  <a href="clm.html#radians-&gt;hz">radians-&gt;hz</a>         (rads)                       convert radians/sample to Hz
-  <a href="clm.html#rand">rand</a>                (gen <i>fm</i>)                     random number generator
-  <a href="clm.html#rand-interp">rand-interp</a>         (gen <i>fm</i>)                     interpolating random number generator
-  <a href="clm.html#rand-interp?">rand-interp?</a>        (gen)                        #t if gen is interpolating random number generator
-  <a href="clm.html#rand?">rand?</a>               (gen)                        #t if gen is random number generator
-  <a href="clm.html#readin">readin</a>              (gen)                        read one value from associated input stream
-  <a href="clm.html#readin?">readin?</a>             (gen)                        #t if gen is readin generator
-  <a href="clm.html#rectangular-&gt;polar">rectangular-&gt;polar</a>  (rl im)                      translate from rectangular to polar coordinates
-  <a href="clm.html#restart-env">restart-env</a>         (env)                        return to start of env
-  <a href="clm.html#ring-modulate">ring-modulate</a>       (sig1 sig2)                  sig1 * sig2 (element-wise)
-  <a href="clm.html#sample-&gt;buffer">sample-&gt;buffer</a>      (buf samp)                   store samp in buffer
-  <a href="clm.html#sample-&gt;file">sample-&gt;file</a>        (gen loc chan val)           store val in file at loc in channel chan
-  <a href="clm.html#sample-&gt;file?">sample-&gt;file?</a>       (gen)                        #t if gen is sample-&gt;file generator
-  <a href="clm.html#sample-&gt;frame">sample-&gt;frame</a>       (frmix samp <i>outfr</i>)           convert samp to frame
-  <a href="clm.html#sawtooth-wave">sawtooth-wave</a>       (gen <i>fm</i>)                     sawtooth-wave generator
-  <a href="clm.html#sawtooth-wave?">sawtooth-wave?</a>      (gen)                        #t if gen is sawtooth-wave generator
-  <a href="clm.html#sine-summation">sine-summation</a>      (gen <i>fm</i>)                     sine-summation generator
-  <a href="clm.html#sine-summation?">sine-summation?</a>     (gen)                        #t if gen is sine-summation generator
-  <a href="clm.html#spectrum">spectrum</a>            (rl im win type)             produce spectrum of data in rl (return rl)
-  <a href="clm.html#square-wave">square-wave</a>         (gen <i>fm</i>)                     square-wave generator
-  <a href="clm.html#square-wave?">square-wave?</a>        (gen)                        #t if gen is square-wave generator
-  <a href="clm.html#src">src</a>                 (gen <i>fm input-function</i>)      sample rate converter
-  <a href="clm.html#src?">src?</a>                (gen)                        #t if gen is sample-rate converter
-  <a href="clm.html#sum-of-cosines">sum-of-cosines</a>      (gen <i>fm</i>)                     sum-of-cosines (pulse-train) generator
-  <a href="clm.html#sum-of-cosines?">sum-of-cosines?</a>     (gen)                        #t if gen is sum-of-cosines generator
-  <a href="clm.html#sum-of-sines">sum-of-sines</a>        (amps phases)                additive synthesis
-  <a href="clm.html#table-lookup">table-lookup</a>        (gen <i>fm</i>)                     table-lookup generator
-  <a href="clm.html#table-lookup?">table-lookup?</a>       (gen)                        #t if gen is table-lookup generator
-  <a href="clm.html#tap">tap</a>                 (gen <i>pm</i>)                     delay line tap
-  <a href="clm.html#triangle-wave">triangle-wave</a>       (gen <i>fm</i>)                     triangle-wave generator
-  <a href="clm.html#triangle-wave?">triangle-wave?</a>      (gen)                        #t if gen is triangle-wave generator
-  <a href="clm.html#two-pole">two-pole</a>            (gen input)                  two-pole filter
-  <a href="clm.html#two-pole?">two-pole?</a>           (gen)                        #t if gen is two-pole filter
-  <a href="clm.html#two-zero">two-zero</a>            (gen input)                  two-zero filter
-  <a href="clm.html#two-zero?">two-zero?</a>           (gen)                        #t if gen is two-zero filter
-  <a href="clm.html#wave-train">wave-train</a>          (gen <i>fm</i>)                     wave-train generator
-  <a href="clm.html#wave-train?">wave-train?</a>         (gen)                        #t if gen is wave-train generator
-  <a href="clm.html#waveshape">waveshape</a>           (gen <i>index fm</i>)               waveshaping generator
-  <a href="clm.html#waveshape?">waveshape?</a>          (gen)                        #t if gen is waveshape generator
-</pre>
+<table border=0 cellpadding=0 cellspacing=0>
+<tr><td><a href="clm.html#all-pass">all-pass</a></td><td>(gen input <i>pm</i>)</td><td>all-pass filter</td></tr>
+<tr><td><a href="clm.html#all-pass?">all-pass?</a></td><td>(gen)</td><td>#t if gen is all-pass filter</td></tr>
+<tr><td><a href="clm.html#amplitude-modulate">amplitude-modulate</a></td><td>(carrier in1 in2)</td><td>amplitude modulation</td></tr>
+<tr><td><a href="clm.html#array-interp">array-interp</a></td><td>(arr x)</td><td>interpolated array lookup</td></tr>
+<tr><td><a href="clm.html#array-&gt;file">array-&gt;file</a></td><td colspan=2>(filename vct len srate channels)</td></tr>
+<tr><td></td><td colspan=2>
+write the contents of <i>vct</i> to the newly created sound file <i>filename</i>, giving 
+the new file <i>channels</i> channels (data assumed to be interleaved in <i>vct</i>),
+sampling rate <i>srate</i>, and <i>len</i> samples (not frames).
+</td></tr>
+<tr><td><a href="clm.html#asymmetric-fm">asymmetric-fm</a></td><td>(gen index <i>fm</i>)</td><td>asymmetric-fm generator</td></tr>
+<tr><td><a href="clm.html#asymmetric-fm?">asymmetric-fm?</a></td><td>(gen)</td><td>#t if gen is asymmetric-fm generator</td></tr>
+<tr><td><a href="clm.html#buffer-&gt;frame">buffer-&gt;frame</a></td><td>(gen frame)</td><td>buffer generator returning frame</td></tr>
+<tr><td><a href="clm.html#buffer-&gt;sample">buffer-&gt;sample</a></td><td>(gen)</td><td>buffer generator returning sample</td></tr>
+<tr><td><a href="clm.html#buffer-empty?">buffer-empty?</a></td><td>(gen)</td><td>#t if buffer has no data</td></tr>
+<tr><td><a href="clm.html#buffer-full?">buffer-full?</a></td><td>(gen)</td><td>#t if buffer has no room for more data</td></tr>
+<tr><td><a href="clm.html#buffer?">buffer?</a></td><td>(gen)</td><td>#t if gen is buffer generator</td></tr>
+<tr><td><a href="clm.html#clear-array">clear-array</a></td><td>(arr)</td><td>set all elements of arr to 0.0</td></tr>
+<tr><td><a href="clm.html#comb">comb</a></td><td>(gen input <i>pm</i>)</td><td>comb filter</td></tr>
+<tr><td><a href="clm.html#comb?">comb?</a></td><td>(gen)</td><td>#t if gen is comb filter</td></tr>
+<tr><td><a href="clm.html#contrast-enhancement">contrast-enhancement</a></td><td>(input (<i>index</i> 1.0))</td><td>a kind of phase modulation or companding</td></tr>
+<tr><td><a href="clm.html#convolution">convolution</a></td><td>(sig1 sig2 n)</td><td>convolve sig1 with sig2 (size n), returning new sig1</td></tr>
+<tr><td><a href="clm.html#convolve">convolve</a></td><td>(gen <i>input-function</i>)</td><td>convolve generator</td></tr>
+<tr><td><a href="clm.html#convolve?">convolve?</a></td><td>(gen)</td><td>#t if gen is convolve generator</td></tr>
+<tr><td><a href="clm.html#convolvefiles">convolve-files</a></td><td>(f1 f2 maxamp outf)</td><td>convolve f1 with f2, normalize to maxamp, write outf</td></tr>
+<tr><td><a href="clm.html#db-&gt;linear">db-&gt;linear</a></td><td>(db)</td><td>translate dB value to linear</td></tr>
+<tr><td><a href="clm.html#degrees-&gt;radians">degrees-&gt;radians</a></td><td>(deg)</td><td>translate degrees to radians</td></tr>
+<tr><td><a href="clm.html#delay">delay</a></td><td>(gen input <i>pm</i>)</td><td>delay line</td></tr>
+<tr><td></td><td colspan=2><br>
+<b>delay</b> is a built-in syntactic form. The name <b>%delay</b> is bound
+to the original meaning of <b>delay</b> in case you need to use it.
+</td></tr>
+<tr><td colspan=3><br></td></tr>
+<tr><td><a href="clm.html#delay?">delay?</a></td><td>(gen)</td><td>#t if gen is delay line</td></tr>
+<tr><td><a href="clm.html#dot-product">dot-product</a></td><td>(sig1 sig2)</td><td>return dot-product of sig1 with sig2</td></tr>
+<tr><td><a href="clm.html#env">env</a></td><td>(gen)</td><td>envelope generator</td></tr>
+<tr><td><a href="clm.html#env-interp">env-interp</a></td><td>(x env (<i>base</i> 1.0))</td><td>return value of env at x</td></tr>
+<tr><td><a href="clm.html#env?">env?</a></td><td>(gen)</td><td>#t if gen is env (from make-env)</td></tr>
+<tr><td><a href="clm.html#fft">mus-fft</a></td><td>(rl im n sign)</td><td>fft of rl and im (sign = -1 for ifft), result in rl</td></tr>
+<tr><td valign=top><a href="clm.html#file-&gt;array">file-&gt;array</a></td><td valign=top>(filename chan start len vct)</td><td>
+load <i>len</i> samples of <i>filename</i> into <i>vct</i> starting at frame <i>start</i> in channel <i>chan</i>.
+</td></tr>
+<tr><td><a href="clm.html#file-&gt;frame">file-&gt;frame</a></td><td>(gen loc <i>frame</i>)</td><td>return frame from file at loc</td></tr>
+<tr><td><a href="clm.html#file-&gt;frame?">file-&gt;frame?</a></td><td>(gen)</td><td>#t if gen is file-&gt;frame generator</td></tr>
+<tr><td><a href="clm.html#file-&gt;sample">file-&gt;sample</a></td><td>(gen loc <i>(chan 0)</i>)</td><td>return sample from file at loc</td></tr>
+<tr><td><a href="clm.html#file-&gt;sample?">file-&gt;sample?</a></td><td>(gen)</td><td>#t if gen is file-&gt;sample generator</td></tr>
+<tr><td><a href="clm.html#filter">filter</a></td><td>(gen input)</td><td>filter</td></tr>
+<tr><td><a href="clm.html#filter?">filter?</a></td><td>(gen)</td><td>#t if gen is filter</td></tr>
+<tr><td><a href="clm.html#fir-filter">fir-filter</a></td><td>(gen input)</td><td>FIR filter</td></tr>
+<tr><td><a href="clm.html#fir-filter?">fir-filter?</a></td><td>(gen)</td><td>#t if gen is fir filter</td></tr>
+<tr><td><a href="clm.html#formant">formant</a></td><td>(gen input)</td><td>formant generator</td></tr>
+<tr><td>formant-bank</td><td>(scls gens inval)</td><td></td></tr>
+<tr><td><a href="clm.html#formant?">formant?</a></td><td>(gen)</td><td>#t if gen is formant generator</td></tr>
+<tr><td><a href="clm.html#frame*">frame*</a></td><td>(fr1 fr2 <i>outfr</i>)</td><td>element-wise multiply</td></tr>
+<tr><td><a href="clm.html#frame+">frame+</a></td><td>(fr1 fr2 <i>outfr</i>)</td><td>element-wise add</td></tr>
+<tr><td><a href="clm.html#frame-&gt;buffer">frame-&gt;buffer</a></td><td>(buf frame)</td><td>add frame to buffer</td></tr>
+<tr><td><a href="clm.html#frame-&gt;file">frame-&gt;file</a></td><td>(gen loc frame)</td><td>write (add) frame to file at loc</td></tr>
+<tr><td><a href="clm.html#frame-&gt;file?">frame-&gt;file?</a></td><td>(gen)</td><td>#t if gen is frame-&gt;file generator</td></tr>
+<tr><td><a href="clm.html#frame-&gt;frame">frame-&gt;frame</a></td><td>(mixer frame <i>outfr</i>)</td><td>pass frame through mixer</td></tr>
+<tr><td><a href="clm.html#frame-&gt;list">frame-&gt;list</a></td><td>(frame)</td><td>return list of frame contents</td></tr>
+<tr><td><a href="clm.html#frame-ref">frame-ref</a></td><td>(frame chan)</td><td>return frame[chan]</td></tr>
+<tr><td><a href="clm.html#frame-&gt;sample">frame-&gt;sample</a></td><td>(frmix frame)</td><td>pass frame through frame or mixer to produce sample</td></tr>
+<tr><td><a href="clm.html#frame-set!">frame-set!</a></td><td>(frame chan val)</td><td>frame[chan]=val</td></tr>
+<tr><td><a href="clm.html#frame?">frame?</a></td><td>(gen)</td><td>#t if gen is frame object</td></tr>
+<tr><td><a href="clm.html#granulate">granulate</a></td><td>(gen <i>input-function</i>)</td><td>granular synthesis generator</td></tr>
+<tr><td><a href="clm.html#granulate?">granulate?</a></td><td>(gen)</td><td>#t if gen is granulate generator</td></tr>
+<tr><td><a href="clm.html#hz-&gt;radians">hz-&gt;radians</a></td><td>(freq)</td><td>translate freq to radians/sample</td></tr>
+<tr><td><a href="clm.html#iir-filter">iir-filter</a></td><td>(gen input)</td><td>IIR filter</td></tr>
+<tr><td><a href="clm.html#iir-filter?">iir-filter?</a></td><td>(gen)</td><td>#t if gen is iir-filter</td></tr>
+<tr><td><a href="clm.html#in-any">in-any</a></td><td>(loc <i>chan stream</i>)</td><td>return sample in stream at loc and chan</td></tr>
+<tr><td>in-hz</td><td>(freq)</td><td>translate freq to radians/sample</td></tr>
+<tr><td><a href="clm.html#ina">ina</a></td><td>(loc <i>stream</i>)</td><td>return sample in stream at loc, chan 0</td></tr>
+<tr><td><a href="clm.html#inb">inb</a></td><td>(loc <i>stream</i>)</td><td>return sample in stream at loc, chan 1</td></tr>
+<tr><td><a href="clm.html#linear-&gt;db">linear-&gt;db</a></td><td>(val)</td><td>translate linear val to dB</td></tr>
+<tr><td><a href="clm.html#locsig">locsig</a></td><td>(gen loc input)</td><td>place input in output channels at loc</td></tr>
+<tr><td><a href="clm.html#locsig-ref">locsig-ref</a></td><td>(gen chan)</td><td>locsig-scaler[chan]</td></tr>
+<tr><td><a href="clm.html#locsig-reverb-ref">locsig-reverb-ref</a></td><td>(gen chan)</td><td>locsig-reverb-scaler[chan]</td></tr>
+<tr><td><a href="clm.html#locsig-set!">locsig-set!</a></td><td>(gen chan val)</td><td>locsig-scaler[chan] = val</td></tr>
+<tr><td><a href="clm.html#locsig-reverb-set!">locsig-reverb-set!</a></td><td>(gen chan val)</td><td>locsig-reverb-scaler[chan] = val</td></tr>
+<tr><td><a href="clm.html#locsig?">locsig?</a></td><td>(gen)</td><td>#t if gen is locsig generator</td></tr>
+<tr><td colspan=3><br>
+;; all the make function arguments are <a href="clm.html#optional-key">optional-key</a> args
+</td></tr>
+<tr><td><a href="clm.html#make-all-pass">make-all-pass</a></td><td colspan=2>(feedback feedforward size initial-contents initial-element max-size)</td></tr>
+<tr><td><a href="clm.html#make-asymmetric-fm">make-asymmetric-fm</a></td><td colspan=2>(frequency initial-phase r ratio)</td></tr>
+<tr><td><a href="clm.html#make-buffer">make-buffer</a></td><td colspan=2>(size fill-time)</td></tr>
+<tr><td><a href="clm.html#make-comb">make-comb</a></td><td colspan=2>(scaler size initial-contents initial-element max-size)</td></tr>
+<tr><td><a href="clm.html#make-convolve">make-convolve</a></td><td colspan=2>(input filter fft-size filter-size)</td></tr>
+<tr><td><a href="clm.html#make-delay">make-delay</a></td><td colspan=2>(size initial-contents initial-element max-size)</td></tr>
+<tr><td><a href="clm.html#make-env">make-env</a></td><td colspan=2>(envelope scaler duration offset base end start)</td></tr>
+<tr><td><a href="clm.html#make-fft-window">make-fft-window</a></td colspan=2><td>(type size beta)</td></tr>
+<tr><td><a href="clm.html#make-file-&gt;frame">make-file-&gt;frame</a></td><td colspan=2>(name)</td></tr>
+<tr><td><a href="clm.html#make-file-&gt;sample">make-file-&gt;sample</a></td><td colspan=2>(name)</td></tr>
+<tr><td><a href="clm.html#make-filter">make-filter</a></td><td colspan=2>(order xcoeffs ycoeffs)</td></tr>
+<tr><td><a href="clm.html#make-fir-filter">make-fir-filter</a></td><td colspan=2>(order xcoeffs)</td></tr>
+<tr><td><a href="clm.html#make-formant">make-formant</a></td><td colspan=2>(radius frequency gain)</td></tr>
+<tr><td><a href="clm.html#make-frame">make-frame</a></td><td colspan=2>(chans &amp;rest vals)</td></tr>
+<tr><td><a href="clm.html#make-frame-&gt;file">make-frame-&gt;file</a></td><td colspan=2>(name chans format type)</td></tr>
+<tr><td><a href="clm.html#make-granulate">make-granulate</a></td><td colspan=2>(input expansion length scaler hop ramp jitter max-size)</td></tr>
+<tr><td><a href="clm.html#make-iir-filter">make-iir-filter</a></td><td colspan=2>(order ycoeffs)</td></tr>
+<tr><td><a href="clm.html#make-locsig">make-locsig</a></td><td colspan=2>(degree distance reverb output revout channels)</td></tr>
+<tr><td><a href="clm.html#make-mixer">make-mixer</a></td><td colspan=2>(chans &amp;rest vals)</td></tr>
+<tr><td><a href="clm.html#make-notch">make-notch</a></td><td colspan=2>(scaler size initial-contents initial-element max-size)</td></tr>
+<tr><td><a href="clm.html#make-one-pole">make-one-pole</a></td><td colspan=2>(a0 b1)</td></tr>
+<tr><td><a href="clm.html#make-one-zero">make-one-zero</a></td><td colspan=2>(a0 a1)</td></tr>
+<tr><td><a href="clm.html#make-oscil">make-oscil</a></td><td colspan=2>(frequency initial-phase)</td></tr>
+<tr><td><a href="clm.html#make-phase-vocoder">make-phase-vocoder</a></td><td colspan=2>(fftsize overlap interp pitch analyze edit synthesize)</td></tr>
+<tr><td><a href="clm.html#make-ppolar">make-ppolar</a></td><td colspan=2>(radius frequency)</td></tr>
+<tr><td><a href="clm.html#make-pulse-train">make-pulse-train</a></td><td colspan=2>(frequency amplitude initial-phase)</td></tr>
+<tr><td><a href="clm.html#make-rand">make-rand</a></td><td colspan=2>(frequency amplitude)</td></tr>
+<tr><td><a href="clm.html#make-rand-interp">make-rand-interp</a></td><td colspan=2>(frequency amplitude)</td></tr>
+<tr><td><a href="clm.html#make-readin">make-readin</a></td><td colspan=2>(file channel start)</td></tr>
+<tr><td><a href="clm.html#make-sample-&gt;file">make-sample-&gt;file</a></td><td colspan=2>(name chans format type)</td></tr>
+<tr><td><a href="clm.html#make-sawtooth-wave">make-sawtooth-wave</a></td><td colspan=2>(frequency amplitude initial-phase)</td></tr>
+<tr><td><a href="clm.html#make-sine-summation">make-sine-summation</a></td><td colspan=2>(frequency initial-phase n a ratio)</td></tr>
+<tr><td><a href="clm.html#make-square-wave">make-square-wave</a></td><td colspan=2>(frequency amplitude initial-phase)</td></tr>
+<tr><td><a href="clm.html#make-src">make-src</a></td><td colspan=2>(input srate width)</td></tr>
+<tr><td><a href="clm.html#make-sum-of-cosines">make-sum-of-cosines</a></td><td colspan=2>(frequency initial-phase cosines)</td></tr>
+<tr><td><a href="clm.html#make-table-lookup">make-table-lookup</a></td><td colspan=2>(frequency initial-phase wave)</td></tr>
+<tr><td><a href="clm.html#make-triangle-wave">make-triangle-wave</a></td><td colspan=2>(frequency amplitude initial-phase)</td></tr>
+<tr><td><a href="clm.html#make-two-pole">make-two-pole</a></td><td colspan=2>(a0 b1 b2)</td></tr>
+<tr><td><a href="clm.html#make-two-zero">make-two-zero</a></td><td colspan=2>(a0 a1 a2)</td></tr>
+<tr><td><a href="clm.html#make-wave-train">make-wave-train</a></td><td colspan=2>(frequency initial-phase wave)</td></tr>
+<tr><td><a href="clm.html#make-waveshape">make-waveshape</a></td><td colspan=2>(frequency partials)</td></tr>
+<tr><td><a href="clm.html#make-zpolar">make-zpolar</a></td><td colspan=2>(radius frequency)</td></tr>
+<tr><td><a href="clm.html#mixer*">mixer*</a></td><td>(mix1 mix2 <i>outmx</i>)</td><td>matrix multiply of mix1 and mix2</td></tr>
+<tr><td><a href="clm.html#mixer-ref">mixer-ref</a></td><td>(mix in out)</td><td>mix-scaler[in,out]</td></tr>
+<tr><td><a href="clm.html#mixer-set!">mixer-set!</a></td><td>(mix in out val)</td><td>mix-scaler[in,out] = val</td></tr>
+<tr><td><a href="clm.html#mixer?">mixer?</a></td><td>(gen)</td><td>#t if gen is mixer object</td></tr>
+<tr><td><a href="clm.html#multiply-arrays">multiply-arrays</a></td><td>(arr1 arr2)</td><td>arr1[i] *= arr2[i]</td></tr>
+<tr><td><a href="clm.html#mus-a0">mus-a0</a></td><td>(gen)</td><td>a0 field (simple filters)</td></tr>
+<tr><td><a href="clm.html#mus-a1">mus-a1</a></td><td>(gen)</td><td>a1 field (simple filters)</td></tr>
+<tr><td><a href="clm.html#mus-a2">mus-a2</a></td><td>(gen)</td><td>a2 field (simple filters)</td></tr>
+<tr><td>mus-array-print-length</td><td>()</td><td>how many array elements to print in mus_describe</td></tr>
+<tr><td><a href="clm.html#mus-b1">mus-b1</a></td><td>(gen)</td><td>b1 field (simple filters)</td></tr>
+<tr><td><a href="clm.html#mus-b2">mus-b2</a></td><td>(gen)</td><td>b2 field (simple filters)</td></tr>
+<tr><td><a href="clm.html#musbank">mus-bank</a></td><td>(gens amps <i>args1 args2</i>)</td><td></td></tr>
+<tr><td><a href="clm.html#mus-channel">mus-channel</a></td><td>(gen)</td><td>channel of gen</td></tr>
+<tr><td><a href="clm.html#mus-channels">mus-channels</a></td><td>(gen)</td><td>channels of gen</td></tr>
+<tr><td><a href="clm.html#mus-cosines">mus-cosines</a></td><td>(gen)</td><td>cosines of sum-of-cosines gen</td></tr>
+<tr><td><a href="clm.html#mus-data">mus-data</a></td><td>(gen)</td><td>data array of gen</td></tr>
+<tr><td><a href="clm.html#mus-feedback">mus-feedback</a></td><td>(gen)</td><td>feedback term of gen (simple filters)</td></tr>
+<tr><td><a href="clm.html#mus-feedforward">mus-feedforward</a></td><td>(gen)</td><td>feedforward term of gen (all-pass)</td></tr>
+<tr><td><a href="clm.html#mus-formant-radius">mus-formant-radius</a></td><td>(gen)</td><td>formant radius</td></tr>
+<tr><td><a href="clm.html#mus-frequency">mus-frequency</a></td><td>(gen)</td><td>frequency of gen (Hz)</td></tr>
+<tr><td><a href="clm.html#mus-hop">mus-hop</a></td><td>(gen)</td><td>hop amount of gen (granulate)</td></tr>
+<tr><td><a href="clm.html#mus-increment">mus-increment</a></td><td>(gen)</td><td>increment of gen (src, readin, granulate)</td></tr>
+<tr><td><a href="clm.html#mus-input?">mus-input?</a></td><td>(gen)</td><td>#t if gen is input source</td></tr>
+<tr><td><a href="clm.html#mus-length">mus-length</a></td><td>(gen)</td><td>length of gen</td></tr>
+<tr><td><a href="clm.html#mus-location">mus-location</a></td><td>(gen)</td><td>location (read point) of gen</td></tr>
+<tr><td>mus-mix</td><td colspan=2>(outfile infile <i>(outloc 0) frames (inloc 0) mixer envs</i>)</td></tr>
+<tr><td></td><td colspan=2><br>
+mix <i>infile</i> into <i>outfile</i> starting at <i>outloc</i> in <i>outfile</i> and <i>inloc</i> in <i>infile</i>
+mixing <i>frames</i> frames of <i>infile</i>.  <i>frames</i> defaults to the length of <i>infile</i>. If <i>mixer</i>,
+use it to scale the various channels; if <i>envs</i> (an array of envelope generators), use
+it in conjunction with <i>mixer</i>to scale/envelope all the various ins and outs.
+</td></tr>
+<tr><td colspan=3><br></td></tr>
+<tr><td><a href="clm.html#mus-order">mus-order</a></td><td>(gen)</td><td>order of gen (filters)</td></tr>
+<tr><td><a href="clm.html#mus-output?">mus-output?</a></td><td>(gen)</td><td>#t if gen is output generator</td></tr>
+<tr><td><a href="clm.html#mus-phase">mus-phase</a></td><td>(gen)</td><td>phase of gen (radians)</td></tr>
+<tr><td><a href="clm.html#mus-ramp">mus-ramp</a></td><td>(gen)</td><td>ramp time of gen (granulate)</td></tr>
+<tr><td><a href="clm.html#mus-random">mus-random</a></td><td>(val)</td><td>random numbers bewteen -val and val</td></tr>
+<tr><td><a href="clm.html#mus-run">mus-run</a></td><td>(gen <i>arg1 arg2</i>)</td><td>apply gen to args</td></tr>
+<tr><td><a href="clm.html#mus-scaler">mus-scaler</a></td><td>(gen)</td><td>scaler of gen</td></tr>
+<tr><td><a href="clm.html#mus-set-rand-seed">mus-set-rand-seed</a></td><td>(val)</td><td>set random number generator seed to val</td></tr>
+<tr><td>mus-set-srate</td><td>(val)</td><td>set sampling rate to val -- (set! (mus-srate) val) is the same.</td></tr>
+<tr><td>mus-srate</td><td>()</td><td>current sampling rate</td></tr>
+<tr><td><a href="clm.html#mus-xcoeffs">mus-xcoeffs</a></td><td>(gen)</td><td>feedforward (FIR) coeffs of filter</td></tr>
+<tr><td><a href="clm.html#mus-ycoeffs">mus-ycoeffs</a></td><td>(gen)</td><td>feedback (IIR) coeefs of filter</td></tr>
+<tr><td><a href="clm.html#notch">notch</a></td><td>(gen input <i>pm</i>)</td><td>notch filter</td></tr>
+<tr><td><a href="clm.html#notch?">notch?</a></td><td>(gen)</td><td>#t if gen is notch filter</td></tr>
+<tr><td><a href="clm.html#one-pole">one-pole</a></td><td>(gen input)</td><td>one-pole filter</td></tr>
+<tr><td><a href="clm.html#one-pole?">one-pole?</a></td><td>(gen)</td><td>#t if gen is one-pole filter</td></tr>
+<tr><td><a href="clm.html#one-zero">one-zero</a></td><td>(gen input)</td><td>one-zero filter</td></tr>
+<tr><td><a href="clm.html#one-zero?">one-zero?</a></td><td>(gen)</td><td>#t if gen is one-zero filter</td></tr>
+<tr><td><a href="clm.html#oscil">oscil</a></td><td>(gen <i>fm pm</i>)</td><td>sine wave generator</td></tr>
+<tr><td><a href="clm.html#oscilbank">oscil-bank</a></td><td>(scls gens invals)</td><td>bank of oscils</td></tr>
+<tr><td><a href="clm.html#oscil?">oscil?</a></td><td>(gen)</td><td>#t if gen is oscil generator</td></tr>
+<tr><td><a href="clm.html#out-any">out-any</a></td><td>(loc samp chan <i>stream</i>)</td><td>write (add) samp to stream at loc in channel chan</td></tr>
+<tr><td><a href="clm.html#outa">outa</a></td><td>(loc samp <i>stream</i>)</td><td>write (add) samp to stream at loc in chan 0</td></tr>
+<tr><td><a href="clm.html#outb">outb</a></td><td>(loc samp <i>stream</i>)</td><td>write (add) samp to stream at loc in chan 1</td></tr>
+<tr><td><a href="clm.html#outc">outc</a></td><td>(loc samp <i>stream</i>)</td><td>write (add) samp to stream at loc in chan 2</td></tr>
+<tr><td><a href="clm.html#outd">outd</a></td><td>(loc samp <i>stream</i>)</td><td>write (add) samp to stream at loc in chan 3</td></tr>
+<tr><td><a href="clm.html#partials-&gt;polynomial">partials-&gt;polynomial</a></td><td>(partials <i>kind</i>)</td><td>create waveshaping polynomial from partials</td></tr>
+<tr><td><a href="clm.html#partials-&gt;wave">partials-&gt;wave</a></td><td>(synth-data table <i>norm</i>)</td><td>load table from synth-data</td></tr>
+<tr><td><a href="clm.html#partials-&gt;waveshape">partials-&gt;waveshape</a></td><td>(partials <i>norm size</i>)</td><td>create waveshaping table from partials</td></tr>
+<tr><td><a href="clm.html#phase-partials-&gt;wave">phase-partials-&gt;wave</a></td><td>(synth-data table <i>norm</i>)</td><td>load table from synth-data</td></tr>
+<tr><td><a href="clm.html#phase-vocoder">phase-vocoder</a></td><td>(pv input)</td><td>phase vocoder generator</td></tr>
+<tr><td><a href="clm.html#phase-vocoder?">phase-vocoder?</a></td><td>(pv)</td><td>#t if pv is phase vocoder generator</td></tr>
+<tr><td><a href="clm.html#polynomial">polynomial</a></td><td>(coeffs x)</td><td>evaluate polynomial at x</td></tr>
+<tr><td><a href="clm.html#pulse-train">pulse-train</a></td><td>(gen <i>fm</i>)</td><td>pulse-train generator</td></tr>
+<tr><td><a href="clm.html#pulse-train?">pulse-train?</a></td><td>(gen)</td><td>#t if gen is pulse-train generator</td></tr>
+<tr><td><a href="clm.html#radians-&gt;degrees">radians-&gt;degrees</a></td><td>(rads)</td><td>convert radians to degrees</td></tr>
+<tr><td><a href="clm.html#radians-&gt;hz">radians-&gt;hz</a></td><td>(rads)</td><td>convert radians/sample to Hz</td></tr>
+<tr><td><a href="clm.html#rand">rand</a></td><td>(gen <i>fm</i>)</td><td>random number generator</td></tr>
+<tr><td><a href="clm.html#rand-interp">rand-interp</a></td><td>(gen <i>fm</i>)</td><td>interpolating random number generator</td></tr>
+<tr><td><a href="clm.html#rand-interp?">rand-interp?</a></td><td>(gen)</td><td>#t if gen is interpolating random number generator</td></tr>
+<tr><td><a href="clm.html#rand?">rand?</a></td><td>(gen)</td><td>#t if gen is random number generator</td></tr>
+<tr><td><a href="clm.html#readin">readin</a></td><td>(gen)</td><td>read one value from associated input stream</td></tr>
+<tr><td><a href="clm.html#readin?">readin?</a></td><td>(gen)</td><td>#t if gen is readin generator</td></tr>
+<tr><td><a href="clm.html#rectangular-&gt;polar">rectangular-&gt;polar</a></td><td>(rl im)</td><td>translate from rectangular to polar coordinates</td></tr>
+<tr><td><a href="clm.html#restart-env">restart-env</a></td><td>(env)</td><td>return to start of env</td></tr>
+<tr><td><a href="clm.html#ring-modulate">ring-modulate</a></td><td>(sig1 sig2)</td><td>sig1 * sig2 (element-wise)</td></tr>
+<tr><td><a href="clm.html#sample-&gt;buffer">sample-&gt;buffer</a></td><td>(buf samp)</td><td>store samp in buffer</td></tr>
+<tr><td><a href="clm.html#sample-&gt;file">sample-&gt;file</a></td><td>(gen loc chan val)</td><td>store val in file at loc in channel chan</td></tr>
+<tr><td><a href="clm.html#sample-&gt;file?">sample-&gt;file?</a></td><td>(gen)</td><td>#t if gen is sample-&gt;file generator</td></tr>
+<tr><td><a href="clm.html#sample-&gt;frame">sample-&gt;frame</a></td><td>(frmix samp <i>outfr</i>)</td><td>convert samp to frame</td></tr>
+<tr><td><a href="clm.html#sawtooth-wave">sawtooth-wave</a></td><td>(gen <i>fm</i>)</td><td>sawtooth-wave generator</td></tr>
+<tr><td><a href="clm.html#sawtooth-wave?">sawtooth-wave?</a></td><td>(gen)</td><td>#t if gen is sawtooth-wave generator</td></tr>
+<tr><td><a href="clm.html#sine-summation">sine-summation</a></td><td>(gen <i>fm</i>)</td><td>sine-summation generator</td></tr>
+<tr><td><a href="clm.html#sine-summation?">sine-summation?</a></td><td>(gen)</td><td>#t if gen is sine-summation generator</td></tr>
+<tr><td><a href="clm.html#spectrum">spectrum</a></td><td>(rl im win type)</td><td>produce spectrum of data in rl (return rl)</td></tr>
+<tr><td><a href="clm.html#square-wave">square-wave</a></td><td>(gen <i>fm</i>)</td><td>square-wave generator</td></tr>
+<tr><td><a href="clm.html#square-wave?">square-wave?</a></td><td>(gen)</td><td>#t if gen is square-wave generator</td></tr>
+<tr><td><a href="clm.html#src">src</a></td><td>(gen <i>fm input-function</i>)</td><td>sample rate converter</td></tr>
+<tr><td><a href="clm.html#src?">src?</a></td><td>(gen)</td><td>#t if gen is sample-rate converter</td></tr>
+<tr><td><a href="clm.html#sum-of-cosines">sum-of-cosines</a></td><td>(gen <i>fm</i>)</td><td>sum-of-cosines (pulse-train) generator</td></tr>
+<tr><td><a href="clm.html#sum-of-cosines?">sum-of-cosines?</a></td><td>(gen)</td><td>#t if gen is sum-of-cosines generator</td></tr>
+<tr><td><a href="clm.html#sum-of-sines">sum-of-sines</a></td><td>(amps phases)</td><td>additive synthesis</td></tr>
+<tr><td><a href="clm.html#table-lookup">table-lookup</a></td><td>(gen <i>fm</i>)</td><td>table-lookup generator</td></tr>
+<tr><td><a href="clm.html#table-lookup?">table-lookup?</a></td><td>(gen)</td><td>#t if gen is table-lookup generator</td></tr>
+<tr><td><a href="clm.html#tap">tap</a></td><td>(gen <i>pm</i>)</td><td>delay line tap</td></tr>
+<tr><td><a href="clm.html#triangle-wave">triangle-wave</a></td><td>(gen <i>fm</i>)</td><td>triangle-wave generator</td></tr>
+<tr><td><a href="clm.html#triangle-wave?">triangle-wave?</a></td><td>(gen)</td><td>#t if gen is triangle-wave generator</td></tr>
+<tr><td><a href="clm.html#two-pole">two-pole</a></td><td>(gen input)</td><td>two-pole filter</td></tr>
+<tr><td><a href="clm.html#two-pole?">two-pole?</a></td><td>(gen)</td><td>#t if gen is two-pole filter</td></tr>
+<tr><td><a href="clm.html#two-zero">two-zero</a></td><td>(gen input)</td><td>two-zero filter</td></tr>
+<tr><td><a href="clm.html#two-zero?">two-zero?</a></td><td>(gen)</td><td>#t if gen is two-zero filter</td></tr>
+<tr><td><a href="clm.html#wave-train">wave-train</a></td><td>(gen <i>fm</i>)</td><td>wave-train generator</td></tr>
+<tr><td><a href="clm.html#wave-train?">wave-train?</a></td><td>(gen)</td><td>#t if gen is wave-train generator</td></tr>
+<tr><td><a href="clm.html#waveshape">waveshape</a></td><td>(gen <i>index fm</i>)</td><td>waveshaping generator</td></tr>
+<tr><td><a href="clm.html#waveshape?">waveshape?</a></td><td>(gen)</td><td>#t if gen is waveshape generator</td></tr>
+</table>
+<br>
+
 <p><b>formant-bank</b> and <b>oscil-bank</b> are optimizations for situations like the phase
 vocoder or cross synthesis (see <a href="sndscm.html#exampdoc">examp.scm</a>).  It is assumed that you have a vector of generators,
 all summing their outputs into a single float.  The amplitude scalers (the first argument to

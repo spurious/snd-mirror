@@ -7468,7 +7468,8 @@ variable %load-verbosely to #t.
 <!-- -->
 <!-- --></table>
 
-<br>
+
+<hr>
 <pre>
 <!-- add-input -->
 <!-- remove-input -->
@@ -7477,6 +7478,8 @@ variable %load-verbosely to #t.
 
   <b><a name="addidler">add-idler</a></b> (code)
   <b><a name="removeidler">remove-idler</a></b> (id)
+
+  <b><a name="changeproperty">change-property</a></b> (known-atom property value)
 </pre>
 <p>These are still experimental; <i>add-input</i> causes <i>callback</i> (a function of one argument, the file number)
 to be called whenever input is available on <i>file</i> (a file number, as returned by open). <i>remove-input</i>
@@ -7485,6 +7488,8 @@ removes the callback.  Eventually I hope to add MIDI controls to Snd, using thes
 As long as the function returns #t, the process keeps calling it; <i>remove-idler</i> takes as its
 argument the thing returned by <i>add-idler</i> (the identifier of that process), and kills the
 associated background process.
+</p>
+<p><i>change-property</i> changes an X-window's property; there's an example in examp.scm.
 </p>
 
 <br>

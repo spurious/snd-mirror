@@ -2,7 +2,6 @@
 
 /* TODO:   add minihistory support in listener
  * TODO    bubble args help if tab at end of name? (or click name?)
- * TODO:   opening the listener should not cause Snd to change or at least reduce its size
  */
 
 static Widget listener_text = NULL;
@@ -951,6 +950,8 @@ static void sndCreateCommandWidget(snd_state *ss, int height)
       set_dialog_widget(LISTENER_PANE, listener_text);
 #endif
 
+      XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, FALSE, NULL);
+
       XtManageChild(listener_text);
       XmTextSetCursorPosition(listener_text, 1);
       if (!transTable4) 
@@ -976,7 +977,12 @@ static void sndCreateCommandWidget(snd_state *ss, int height)
 	  XmChangeColor(wh, (ss->sgx)->basic_color);
 	  map_over_children(SOUND_PANE(ss), color_sashes, (void *)ss);
 	}
-      XtVaSetValues(lisp_window, XmNpaneMinimum, 1, NULL);
+      XtVaSetValues(listener_pane, XmNpaneMinimum, 60, NULL);
+      XtManageChild(listener_pane);
+      XtVaSetValues(listener_pane, XmNpaneMinimum, 1, NULL);
+
+      if (auto_resize(ss))
+	XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, TRUE, NULL);
     }
 }
 

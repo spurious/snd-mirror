@@ -111,14 +111,14 @@ static SCM g_change_property(SCM winat, SCM name, SCM command)
 {
   char *c;
   /* winat arg needed as well as command arg because we need an atom that is guaranteed to have a value */
-  SCM_ASSERT(gh_string_p(winat), name, SCM_ARG1, "change-property");
-  SCM_ASSERT(gh_string_p(name), name, SCM_ARG2, "change-property");
+  SCM_ASSERT(gh_string_p(winat), name, SCM_ARG1, S_change_property);
+  SCM_ASSERT(gh_string_p(name), name, SCM_ARG2, S_change_property);
   if (gh_string_p(command))
     c = TO_NEW_C_STRING(command);
   else
     {
       /* turn it into a string before passing it to change_property */
-      c = gh_print_1(command, __FUNCTION__);
+      c = gh_print_1(command, S_change_property);
     }
   change_property(get_global_state(), 
 		  TO_C_STRING(winat), 
@@ -130,7 +130,7 @@ static SCM g_change_property(SCM winat, SCM name, SCM command)
 void g_init_gxutils(void)
 {
   gh_new_procedure1_0("send-netscape", send_netscape);
-  gh_new_procedure3_0("change-property", g_change_property);
+  gh_new_procedure3_0(S_change_property, g_change_property);
 }
 
 #endif

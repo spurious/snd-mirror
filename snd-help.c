@@ -305,7 +305,6 @@ void news_help(snd_state *ss)
                main-widgets, menu-widgets, sound-widgets, channel-widgets, dialog-widgets.\n\
                lisp-graph-hook, recolor-widget, show-backtrace.\n\
                make-graph-data, graph-data, property-changed-hook.\n\
-28-Feb:  added enved-hook with enved-add-point, enved-delete-point, and enved-move-point.\n\
 ",
 NULL);
   FREE(info);

@@ -299,6 +299,7 @@
 #define S_call_apply                    "call-apply"
 #define S_cepstrum                      "cepstrum"
 #define S_change_menu_label             "change-menu-label"
+#define S_change_property               "change-property"
 #define S_change_samples_with_origin    "change-samples-with-origin"
 #define S_channel_style                 "channel-style"
 #define S_channel_sync                  "channel-sync"
