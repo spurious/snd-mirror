@@ -786,7 +786,7 @@ geometric explanation.</p>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
 <tr><td><em class=gen>mus-scaler</em></td><td>(/ 1.0 (+ 1 (* 2 cosines)))</td></tr>
-<tr><td><em class=gen>mus-cosines</em></td><td>cosines arg  used in make-&lt;gen&gt; (no setf)</td></tr>
+<tr><td><em class=gen>mus-cosines</em></td><td>cosines arg  used in make-&lt;gen&gt;</td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>same as mus-cosines</td></tr>
 </table>
 <pre><small>
@@ -799,6 +799,10 @@ based on:
   also cosine-summation in dsp.scm for an extension
   a similar sum involves cos for sin above, AAR 5.6.2
 </small></pre><br clear=left>
+<br>
+<p>The mus-cosines setf method does not try to fix up the scaler.  If you change the number
+of cosines on the fly, you'll probably want to set the scaler to (/ 1.0 (+ 1 (* 2 cosines))).
+</p>
 <br>
 
 <!-- TOPIC wave-train -->

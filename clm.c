@@ -1,6 +1,6 @@
 /* CLM (music V) implementation as a C module */
 /*
- *   the leftovers now are: xcoeffs, ycoeffs
+ *   the leftovers now are: xcoeffs, ycoeffs, x1,x2,y1,y2
  *   to make global (gen-relative) method change, need way to set gen's class fields
  *   to make gen-local method change, need to copy class, reassign core, set desired field
  *   or add-to-existing would need access to current
@@ -42,6 +42,17 @@
 #if HAVE_FFTW
 #include <rfftw.h>
 #endif
+
+enum {MUS_OSCIL, MUS_SUM_OF_COSINES, MUS_DELAY, MUS_COMB, MUS_NOTCH, MUS_ALL_PASS,
+      MUS_TABLE_LOOKUP, MUS_SQUARE_WAVE, MUS_SAWTOOTH_WAVE, MUS_TRIANGLE_WAVE, MUS_PULSE_TRAIN,
+      MUS_RAND, MUS_RAND_INTERP, MUS_ASYMMETRIC_FM, MUS_ONE_ZERO, MUS_ONE_POLE, MUS_TWO_ZERO, MUS_TWO_POLE, MUS_FORMANT,
+      MUS_WAVESHAPE, MUS_SRC, MUS_GRANULATE, MUS_SINE_SUMMATION, MUS_WAVE_TRAIN, MUS_BUFFER,
+      MUS_FILTER, MUS_FIR_FILTER, MUS_IIR_FILTER, MUS_CONVOLVE, MUS_ENV, MUS_LOCSIG,
+      MUS_FRAME, MUS_READIN, MUS_FILE2SAMPLE, MUS_FILE2FRAME,
+      MUS_SAMPLE2FILE, MUS_FRAME2FILE, MUS_MIXER, MUS_PHASE_VOCODER,
+      MUS_INITIAL_GEN_TAG};
+
+enum {MUS_NOT_SPECIAL, MUS_SIMPLE_FILTER, MUS_FULL_FILTER, MUS_OUTPUT, MUS_INPUT};
 
 static int mus_class_tag = MUS_INITIAL_GEN_TAG;
 int mus_make_class_tag(void) {return(mus_class_tag++);}
@@ -826,9 +837,10 @@ static mus_any_class OSCIL_CLASS = {
   &set_oscil_phase,
   0, 0, 0, 0,
   &mus_oscil,
-  0, NULL,
-  &oscil_cosines,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  MUS_NOT_SPECIAL, 
+  NULL,
+  0, 
+  0, 0, 0, 0, 0, 0, &oscil_cosines, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0
 };
 
@@ -879,6 +891,7 @@ static Float set_sum_of_cosines_phase(mus_any *ptr, Float val) {((cosp *)ptr)->p
 static Float sum_of_cosines_scaler(mus_any *ptr) {return(((cosp *)ptr)->scaler);}
 static Float set_sum_of_cosines_scaler(mus_any *ptr, Float val) {((cosp *)ptr)->scaler = val; return(val);}
 static int sum_of_cosines_cosines(mus_any *ptr) {return(((cosp *)ptr)->cosines);}
+static int set_sum_of_cosines_cosines(mus_any *ptr, int val) {((cosp *)ptr)->cosines = val; return(val);}
 static Float run_sum_of_cosines(mus_any *ptr, Float fm, Float unused) {return(mus_sum_of_cosines(ptr, fm));}
 
 static int sum_of_cosines_equalp(mus_any *p1, mus_any *p2)
@@ -930,9 +943,11 @@ static mus_any_class SUM_OF_COSINES_CLASS = {
   &set_sum_of_cosines_scaler,
   0, 0,
   &run_sum_of_cosines,
-  0, NULL,
-  &sum_of_cosines_cosines,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  MUS_NOT_SPECIAL, 
+  NULL,
+  0,
+  0, 0, 0, 0, 0, 0, 
+  &sum_of_cosines_cosines, &set_sum_of_cosines_cosines, 0, 0,
   0, 0, 0, 0, 0, 0, 0
 };
 
@@ -1185,7 +1200,8 @@ static mus_any_class DELAY_CLASS = {
   0, 0, 0, 0, 0, 0, /* freq phase scaler */
   0, 0,
   &mus_delay,
-  0, NULL, 0,
+  MUS_FULL_FILTER, 
+  NULL, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0
 };
@@ -1248,7 +1264,8 @@ static mus_any_class COMB_CLASS = {
   &delay_fb,
   &set_delay_fb,
   &mus_comb,
-  0, NULL, 0,
+  MUS_FULL_FILTER, 
+  NULL, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0
 };
@@ -1284,7 +1301,8 @@ static mus_any_class NOTCH_CLASS = {
   &set_delay_scaler,
   0, 0,
   &mus_notch,
-  0, NULL, 0,
+  MUS_FULL_FILTER, 
+  NULL, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0
 };
@@ -1352,7 +1370,8 @@ static mus_any_class ALL_PASS_CLASS = {
   &delay_fb,
   &set_delay_fb,
   &mus_all_pass,
-  0, NULL, 0,
+  MUS_FULL_FILTER, 
+  NULL, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0
 };
@@ -1533,7 +1552,8 @@ static mus_any_class TABLE_LOOKUP_CLASS = {
   0, 0,
   0, 0,
   &run_table_lookup,
-  0, NULL, 0,
+  MUS_NOT_SPECIAL, 
+  NULL, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0
 };
@@ -1655,7 +1675,8 @@ static mus_any_class SAWTOOTH_WAVE_CLASS = {
   &set_sawtooth_scaler,
   0, 0,
   &run_sawtooth_wave,
-  0, NULL, 0,
+  MUS_NOT_SPECIAL, 
+  NULL, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0
 };
@@ -1718,7 +1739,8 @@ static mus_any_class SQUARE_WAVE_CLASS = {
   &set_square_wave_scaler,
   0, 0,
   &run_square_wave,
-  0, NULL, 0,
+  MUS_NOT_SPECIAL, 
+  NULL, 0,
   0, 0, 
   &sw_width, &sw_set_width, 
   0, 0, 
@@ -1792,7 +1814,8 @@ static mus_any_class TRIANGLE_WAVE_CLASS = {
   &set_triangle_wave_scaler,
   0, 0,
   &run_triangle_wave,
-  0, NULL, 0,
+  MUS_NOT_SPECIAL, 
+  NULL, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0
 };
@@ -1862,7 +1885,8 @@ static mus_any_class PULSE_TRAIN_CLASS = {
   &set_pulse_train_scaler,
   0, 0,
   &run_pulse_train,
-  0, NULL, 0,
+  MUS_NOT_SPECIAL, 
+  NULL, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0
 };
@@ -2028,7 +2052,8 @@ static mus_any_class RAND_INTERP_CLASS = {
   &set_noi_scaler,
   0, 0,
   &run_rand_interp,
-  0, NULL, 0,
+  MUS_NOT_SPECIAL, 
+  NULL, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0
 };
@@ -2061,7 +2086,8 @@ static mus_any_class RAND_CLASS = {
   &set_noi_scaler,
   0, 0,
   &run_rand,
-  0, NULL, 0,
+  MUS_NOT_SPECIAL, 
+  NULL, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0
 };
@@ -2183,7 +2209,8 @@ static mus_any_class ASYMMETRIC_FM_CLASS = {
   &set_asyfm_r,
   0, 0,
   &mus_asymmetric_fm,
-  0, NULL, 0,
+  MUS_NOT_SPECIAL, 
+  NULL, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0
 };
@@ -2315,7 +2342,8 @@ static mus_any_class ONE_ZERO_CLASS = {
   &smp_set_a0,
   0, 0,
   &run_one_zero,
-  0, NULL, 0,
+  MUS_SIMPLE_FILTER, 
+  NULL, 0,
   &smp_a1, &smp_set_a1, 
   0, 0,
   0, 0,
@@ -2359,7 +2387,8 @@ static mus_any_class ONE_POLE_CLASS = {
   &smp_b1,
   &smp_set_b1,
   &run_one_pole,
-  0, NULL, 0,
+  MUS_SIMPLE_FILTER, 
+  NULL, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0
 };
@@ -2402,7 +2431,8 @@ static mus_any_class TWO_ZERO_CLASS = {
   &smp_set_a0,
   0, 0,
   &run_two_zero,
-  0, NULL, 0,
+  MUS_SIMPLE_FILTER, 
+  NULL, 0,
   &smp_a1, &smp_set_a1, 
   &smp_a2, &smp_set_a2, 
   0, 0,
@@ -2455,7 +2485,8 @@ static mus_any_class TWO_POLE_CLASS = {
   &smp_b1,
   &smp_set_b1,
   &run_two_pole,
-  0, NULL, 0,
+  MUS_SIMPLE_FILTER, 
+  NULL, 0,
   0, 0, 0, 0,
   &smp_b2, &smp_set_b2, 
   0, 0, 0, 0,
@@ -2587,7 +2618,8 @@ static mus_any_class FORMANT_CLASS = {
   &smp_b1,
   &smp_set_b1,
   &run_formant,
-  0, NULL, 0,
+  MUS_SIMPLE_FILTER, 
+  NULL, 0,
   &smp_a1, &smp_set_a1, 
   &smp_a2, &smp_set_a2, 
   &smp_b2, &smp_set_b2, 
@@ -2711,7 +2743,8 @@ static mus_any_class SINE_SUMMATION_CLASS = {
   &set_sss_a,
   0, 0,
   &run_sine_summation,
-  0, NULL, 0,
+  MUS_NOT_SPECIAL, 
+  NULL, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0
 };
@@ -2867,7 +2900,8 @@ static mus_any_class FILTER_CLASS = {
   0, 0,
   0, 0,
   &run_filter,
-  0, NULL, 0,
+  MUS_FULL_FILTER, 
+  NULL, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0
 };
@@ -2886,7 +2920,8 @@ static mus_any_class FIR_FILTER_CLASS = {
   0, 0,
   0, 0,
   &run_fir_filter,
-  0, NULL, 0,
+  MUS_FULL_FILTER, 
+  NULL, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0
 };
@@ -2905,7 +2940,8 @@ static mus_any_class IIR_FILTER_CLASS = {
   0, 0,
   0, 0,
   &run_iir_filter,
-  0, NULL, 0,
+  MUS_FULL_FILTER, 
+  NULL, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0
 };
@@ -2999,35 +3035,116 @@ Float *mus_make_fir_coeffs(int order, Float *envl, Float *aa)
 
 void mus_clear_filter_state(mus_any *gen)
 {
-  int len;
-  Float *state;
-  smpflt *ptr;
-  switch (mus_type(gen))
+  if ((gen->core)->extended_type == MUS_FULL_FILTER)
     {
-    case MUS_FIR_FILTER:
-    case MUS_FILTER:
-    case MUS_IIR_FILTER:
-    case MUS_DELAY:
-    case MUS_COMB:
-    case MUS_NOTCH:
-    case MUS_ALL_PASS:
+      int len;
+      Float *state;
       state = mus_data(gen);
       len = mus_length(gen);
       memset((void *)state, 0, len * sizeof(Float));
-      break;
-    case MUS_ONE_ZERO:
-    case MUS_ONE_POLE:
-    case MUS_TWO_ZERO:
-    case MUS_TWO_POLE:
-    case MUS_FORMANT:
-      ptr = (smpflt *)gen;
-      ptr->x1 = 0.0;
-      ptr->x2 = 0.0;
-      ptr->y1 = 0.0;
-      ptr->y2 = 0.0;
-      break;
+    }
+  else
+    {
+      if ((gen->core)->extended_type == MUS_SIMPLE_FILTER)
+	{
+	  smpflt *ptr;
+	  ptr = (smpflt *)gen;
+	  ptr->x1 = 0.0;
+	  ptr->x2 = 0.0;
+	  ptr->y1 = 0.0;
+	  ptr->y2 = 0.0;
+	}
     }
 }
+
+Float mus_x1(mus_any *gen)
+{
+  if (gen)
+    {
+      if ((gen->core)->extended_type == MUS_SIMPLE_FILTER)
+	return(((smpflt *)gen)->x1);
+      else mus_error(MUS_NO_X1, "can't get %s's x1", mus_name(gen));
+    }
+  return(0.0);
+}
+
+Float mus_set_x1(mus_any *gen, Float val)
+{
+  if (gen)
+    {
+      if ((gen->core)->extended_type == MUS_SIMPLE_FILTER)
+	((smpflt *)gen)->x1 = val;
+      else mus_error(MUS_NO_X1, "can't set %s's x1", mus_name(gen));
+    }
+  return(val);
+}
+
+Float mus_x2(mus_any *gen)
+{
+  if (gen)
+    {
+      if ((gen->core)->extended_type == MUS_SIMPLE_FILTER)
+	return(((smpflt *)gen)->x2);
+      else mus_error(MUS_NO_X2, "can't get %s's x2", mus_name(gen));
+    }
+  return(0.0);
+}
+
+Float mus_set_x2(mus_any *gen, Float val)
+{
+  if (gen)
+    {
+      if ((gen->core)->extended_type == MUS_SIMPLE_FILTER)
+	((smpflt *)gen)->x2 = val;
+      else mus_error(MUS_NO_X2, "can't set %s's x2", mus_name(gen));
+    }
+  return(val);
+}
+
+Float mus_y1(mus_any *gen)
+{
+  if (gen)
+    {
+      if ((gen->core)->extended_type == MUS_SIMPLE_FILTER)
+	return(((smpflt *)gen)->y1);
+      else mus_error(MUS_NO_Y1, "can't get %s's y1", mus_name(gen));
+    }
+  return(0.0);
+}
+
+Float mus_set_y1(mus_any *gen, Float val)
+{
+  if (gen)
+    {
+      if ((gen->core)->extended_type == MUS_SIMPLE_FILTER)
+	((smpflt *)gen)->y1 = val;
+      else mus_error(MUS_NO_Y1, "can't set %s's y1", mus_name(gen));
+    }
+  return(val);
+}
+
+Float mus_y2(mus_any *gen)
+{
+  if (gen)
+    {
+      if ((gen->core)->extended_type == MUS_SIMPLE_FILTER)
+	return(((smpflt *)gen)->y2);
+      else mus_error(MUS_NO_Y2, "can't get %s's y2", mus_name(gen));
+    }
+  return(0.0);
+}
+
+Float mus_set_y2(mus_any *gen, Float val)
+{
+  if (gen)
+    {
+      if ((gen->core)->extended_type == MUS_SIMPLE_FILTER)
+	((smpflt *)gen)->y2 = val;
+      else mus_error(MUS_NO_Y2, "can't set %s's y2", mus_name(gen));
+    }
+  return(val);
+}
+
 
 
 /* ---------------- waveshape ---------------- */
@@ -3133,7 +3250,8 @@ static mus_any_class WAVESHAPE_CLASS = {
   0, 0,
   0, 0,
   &mus_waveshape,
-  0, NULL, 0,
+  MUS_NOT_SPECIAL, 
+  NULL, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0
 };
@@ -3521,7 +3639,8 @@ static mus_any_class ENV_CLASS = {
   &env_increment,
   0,
   &run_env,
-  0, NULL,
+  MUS_NOT_SPECIAL, 
+  NULL,
   &env_position,
   &env_offset, &set_env_offset, 
   0, 0, 0, 0, 0, 0, 0, 0,
@@ -3766,7 +3885,8 @@ static mus_any_class FRAME_CLASS = {
   0, 0,
   0, 0,
   0,
-  0, NULL,
+  MUS_NOT_SPECIAL, 
+  NULL,
   &frame_length,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0
@@ -3934,7 +4054,8 @@ static mus_any_class MIXER_CLASS = {
   0, 0,
   0, 0,
   0,
-  0, NULL,
+  MUS_NOT_SPECIAL, 
+  NULL,
   &mixer_length,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0
@@ -4259,7 +4380,8 @@ static mus_any_class BUFFER_CLASS = {
   &buffer_increment,
   &buffer_set_increment,
   &run_buffer,
-  0, NULL, 0,
+  MUS_NOT_SPECIAL, 
+  NULL, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0
 };
@@ -4458,7 +4580,8 @@ static mus_any_class WAVE_TRAIN_CLASS = {
   0, 0,
   0, 0,
   &run_wave_train,
-  0, NULL, 0,
+  MUS_NOT_SPECIAL, 
+  NULL, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0
 };
@@ -5754,7 +5877,7 @@ static mus_any_class SRC_CLASS = {
   &src_increment,
   &src_set_increment,
   &run_src_gen,
-  0,
+  MUS_NOT_SPECIAL,
   &src_environ,
   0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -6080,7 +6203,7 @@ static mus_any_class GRANULATE_CLASS = {
   &grn_increment,
   &grn_set_increment,
   &run_granulate,
-  0,
+  MUS_NOT_SPECIAL,
   &grn_environ,
   0,
   0, 0, 0, 0, 0, 0, 
@@ -6646,7 +6769,7 @@ static mus_any_class CONVOLVE_CLASS = {
   0, 0,
   0, 0,
   &run_convolve,
-  0,
+  MUS_NOT_SPECIAL,
   &conv_environ,
   0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -7212,7 +7335,7 @@ static mus_any_class PHASE_VOCODER_CLASS = {
   &pv_increment,
   &pv_set_increment,
   &run_phase_vocoder,
-  0,
+  MUS_NOT_SPECIAL,
   &pv_environ,
   0,
   0, 0, 0, 0, 0, 0, 

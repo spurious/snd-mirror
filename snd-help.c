@@ -387,8 +387,8 @@ static char edit_menu_help_string[] =
   Delete selection: delete selected portion.\n\
   Insert selection: insert the selection at the cursor.\n\
   Mix selection: add the selection at the cursor.\n\
-  Play selection: play the current selection.\n\
-  Save selection: save the current selection in a file.\n\
+  Play selection: play the selection.\n\
+  Save selection: save the selection in a file.\n\
   Select all: select entire sound.\n\
   Edit Envelope: start the envelope editor dialog.\n\
   Edit Header: view or edit file's header.\n\
@@ -455,7 +455,7 @@ open a sound file.  To hear the sound, click\n\
 the 'play' button. To see an fft, click the\n\
 'f' button on the left.  The left mouse button\n\
 is used for most pointing operations; the\n\
-middle button pastes in the current selection; \n\
+middle button pastes in the selection; \n\
 the right button brings up the Snd popup menu.\n\
 \n\
 ";
@@ -527,7 +527,7 @@ The extended commands (preceded by c-x) are:\n\
   q: mix in region\n\
   r: redo last undone edit\n\
   u: undo last edit\n\
-  v: position window over current selection\n\
+  v: position window over selection\n\
   w: save selection as file\n\
   z: smooth selection\n\
   /: place named mark\n\
@@ -1517,7 +1517,7 @@ Once you have an envelope in the editor, it can be applied to the currently acti
 'Apply' or 'Undo&Apply' buttons; the latter first tries to undo the previous edit, then applies the \
 envelope. The envelope can be applied to the amplitude, the spectrum, or the sampling rate. The \
 choice is made via the three buttons marked 'amp', 'flt', and 'src'. The filter order is the variable \
-" S_enved_filter_order " which defaults to 40. To apply the changes to the current selection, \
+" S_enved_filter_order " which defaults to 40. To apply the changes to the selection, \
 rather than the current sound, set the 'selection' button.  To apply it to the currently selected mix, \
 set the 'mix' button. \
 \n\n\
@@ -1538,7 +1538,7 @@ help_menu_help_string,
 "\n",
 "The main menu items are:\n\
   File: operations on files.\n\
-  Edit: operations on the current selection.\n\
+  Edit: operations on the selection.\n\
   View: change Snd display choices.\n\
   Options: change Snd analysis choices.\n\
   Help: this menu.\n\
@@ -1705,7 +1705,7 @@ desired member of that family of windows. \
 \n\n\
 If the 'selection' button is not set, the FFT is taken from the start (the left edge) of the \
 current window and is updated as the window bounds change; otherwise the FFT is taken over the extent \
-of the current selection, if any is active in the current channel.  The fft data is scaled to fit \
+of the selection, if any is active in the current channel.  The fft data is scaled to fit \
 between 0.0 and 1.0 unless the fft normalization is off. The full frequency axis is normally \
 displayed, but the axis is 'dragable' -- put the mouse on the axis and drag it either way to change \
 the range (this is equivalent to changing the variable " S_spectro_cutoff "). You can also click on \

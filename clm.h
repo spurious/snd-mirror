@@ -2,10 +2,12 @@
 #define MUS_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 23
-#define MUS_DATE "10-Feb-03"
+#define MUS_REVISION 24
+#define MUS_DATE "21-Feb-03"
 
 /* 
+ * 21-Feb:     mus_set_cosines added, mus_cosines moved to hop slot.
+ *             mus_[set_]x1/x2/y1/y2.
  * 10-Feb:     mus_file_name moved into the mus_input|output structs.
  *             folded mus_input|output into mus_any.
  *             moved mus_frame|mixer declarations into clm.c.
@@ -141,7 +143,6 @@
 #endif
 
 #include "sndlib.h"
-enum {MUS_LINEAR, MUS_SINUSOIDAL};
 
 #if (!defined(M_PI))
   #define M_PI 3.14159265358979323846264338327
@@ -181,6 +182,7 @@ typedef struct mus__any_class {
   Float (*set_width)(mus_any *ptr, Float val);
   Float (*b2)(mus_any *ptr);
   Float (*set_b2)(mus_any *ptr, Float val);
+  /* TODO: mus-y1 mus-y2 mus-x1 mus-x2 ? */
   int   (*hop)(mus_any *ptr);
   int   (*set_hop)(mus_any *ptr, int new_length);
   int   (*ramp)(mus_any *ptr);
@@ -194,14 +196,7 @@ typedef struct mus__any_class {
   int   (*channel)(mus_any *ptr);
 } mus_any_class;
 
-enum {MUS_OSCIL, MUS_SUM_OF_COSINES, MUS_DELAY, MUS_COMB, MUS_NOTCH, MUS_ALL_PASS,
-      MUS_TABLE_LOOKUP, MUS_SQUARE_WAVE, MUS_SAWTOOTH_WAVE, MUS_TRIANGLE_WAVE, MUS_PULSE_TRAIN,
-      MUS_RAND, MUS_RAND_INTERP, MUS_ASYMMETRIC_FM, MUS_ONE_ZERO, MUS_ONE_POLE, MUS_TWO_ZERO, MUS_TWO_POLE, MUS_FORMANT,
-      MUS_WAVESHAPE, MUS_SRC, MUS_GRANULATE, MUS_SINE_SUMMATION, MUS_WAVE_TRAIN, MUS_BUFFER,
-      MUS_FILTER, MUS_FIR_FILTER, MUS_IIR_FILTER, MUS_CONVOLVE, MUS_ENV, MUS_LOCSIG,
-      MUS_FRAME, MUS_READIN, MUS_INPUT, MUS_OUTPUT, MUS_FILE2SAMPLE, MUS_FILE2FRAME,
-      MUS_SAMPLE2FILE, MUS_FRAME2FILE, MUS_MIXER, MUS_PHASE_VOCODER,
-      MUS_INITIAL_GEN_TAG};
+enum {MUS_LINEAR, MUS_SINUSOIDAL};
 
 enum {MUS_RECTANGULAR_WINDOW, MUS_HANN_WINDOW, MUS_WELCH_WINDOW, MUS_PARZEN_WINDOW, MUS_BARTLETT_WINDOW,
       MUS_HAMMING_WINDOW, MUS_BLACKMAN2_WINDOW, MUS_BLACKMAN3_WINDOW, MUS_BLACKMAN4_WINDOW,
@@ -277,7 +272,8 @@ mus_any *mus_make_oscil         PROTO((Float freq, Float phase));
 Float mus_sum_of_cosines        PROTO((mus_any *gen, Float fm));
 int mus_sum_of_cosines_p        PROTO((mus_any *ptr));
 mus_any *mus_make_sum_of_cosines PROTO((int cosines, Float freq, Float phase));
-#define mus_cosines(Gen) mus_channels(Gen)
+#define mus_cosines(Gen) mus_hop(Gen)
+#define mus_set_cosines(Gen, Val) mus_set_hop(Gen, Val)
 
 Float mus_delay                 PROTO((mus_any *gen, Float input, Float pm));
 Float mus_delay_1               PROTO((mus_any *ptr, Float input));
@@ -384,6 +380,15 @@ int mus_formant_p               PROTO((mus_any *ptr));
 #define mus_formant_radius(Gen) mus_phase(Gen)
 #define mus_set_formant_radius(Gen, Val) mus_set_phase(Gen, Val)
 void mus_set_formant_radius_and_frequency PROTO((mus_any *ptr, Float radius, Float frequency));
+
+Float mus_x1                    PROTO((mus_any *gen));
+Float mus_set_x1                PROTO((mus_any *gen, Float val));
+Float mus_x2                    PROTO((mus_any *gen));
+Float mus_set_x2                PROTO((mus_any *gen, Float val));
+Float mus_y1                    PROTO((mus_any *gen));
+Float mus_set_y1                PROTO((mus_any *gen, Float val));
+Float mus_y2                    PROTO((mus_any *gen));
+Float mus_set_y2                PROTO((mus_any *gen, Float val));
 
 Float mus_sine_summation        PROTO((mus_any *ptr, Float fm));
 mus_any *mus_make_sine_summation PROTO((Float frequency, Float phase, int n, Float a, Float b_ratio));

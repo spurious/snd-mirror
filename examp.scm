@@ -1564,7 +1564,7 @@ synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
     (vector-set! es 5 (make-env '(0 .4 1 1) :duration 1.0))
     (lambda (x)
       (let ((val (fir-filter flt x))
-	    (xcof (mus-data flt)))
+	    (xcof (mus-xcoeffs flt)))
 	(do ((i 0 (1+ i)))
 	    ((= i 8))
 	  (vct-set! xcof i (env (vector-ref es i))))

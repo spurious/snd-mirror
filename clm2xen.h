@@ -8,8 +8,10 @@ typedef struct {
   void *input_ptree; /* added 24-Apr-02 for snd-run.c optimizer */
 } mus_xen;
 
-#define CLM_TO_MUS_XEN(arg) ((mus_xen *)XEN_OBJECT_REF(arg))
-#define MUS_XEN_TO_CLM(obj) ((mus_any *)((CLM_TO_MUS_XEN(obj))->gen))
+#define XEN_TO_MUS_XEN(arg) ((mus_xen *)XEN_OBJECT_REF(arg))
+#define XEN_TO_MUS_ANY(obj) ((mus_any *)((XEN_TO_MUS_XEN(obj))->gen))
+#define MUS_XEN_TO_MUS_ANY(obj) ((mus_any *)(((mus_xen *)(obj))->gen))
+#define MUS_DATA_POSITION 0
 
 int mus_xen_p(XEN obj);
 void mus_xen_init(void);

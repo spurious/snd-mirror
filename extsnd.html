@@ -1838,7 +1838,7 @@ called when a region finishes playing.  See play.scm.
 <span class=defbox><code><em class=def><a name="stopplayingselectionhook">stop-playing-selection-hook</a></em> ()</code></span><td align=right><b>progn</b></td>
 </td></tr>
 <tr><td></td><td colspan=2>
-called when the current selection finishes playing.  See popup.scm.
+called when the selection finishes playing.  See popup.scm.
 </td></tr>
 
 <!-- transform-hook -->
@@ -2770,35 +2770,36 @@ for an overview and key bindings associated with marks.
 
 <!-- -------------------------------- MARKS TABLE -------------------------------- -->
 
-<table border=0 cellspacing=8>
+<table border=0 cellspacing=10>
 
 <!-- add-mark -->
-<tr><td><span class=defbox><code><em class=def><a name="sndaddmark">add-mark</a></em> (sample <i>snd chn</i>)</code></span></td>
-<td>add mark at <i>sample</i>, returning mark id.  If <i>sample</i> is out-of-range, <i>add-mark</i> throws 'no-such-sample.
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndaddmark">add-mark</a></em> (sample <i>snd chn</i>)</code></span></td></tr>
+<tr><td><spacer type=horizontal size=40><br></td><td>
+add mark at <i>sample</i>, returning mark id.  If <i>sample</i> is out-of-range, <i>add-mark</i> throws 'no-such-sample.
 </td></tr>
 
 <!-- backward-mark -->
-<tr><td><span class=defbox><code><em class=def><a name="sndbackwardmark">backward-mark</a></em> (<i>count snd chn</i>)</code></span></td>
-<td>move the cursor back <i>count</i> marks (C-j), returning mark id, or #f if none.
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndbackwardmark">backward-mark</a></em> (<i>count snd chn</i>)</code></span></td></tr>
+<tr><td></td><td>move the cursor back <i>count</i> marks (C-j), returning mark id, or #f if none.
 </td></tr>
 
 <!-- delete-mark -->
-<tr><td><span class=defbox><code><em class=def><a name="snddeletemark">delete-mark</a></em> (<i>id</i>)</code></span></td>
-<td>delete mark <i>id</i> (- C-m).
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="snddeletemark">delete-mark</a></em> (<i>id</i>)</code></span></td></tr>
+<tr><td></td><td>delete mark <i>id</i> (- C-m).
 </td></tr>
 
 <!-- delete-marks -->
-<tr><td><span class=defbox><code><em class=def><a name="snddeletemarks">delete-marks</a></em> (<i>snd chn</i>)</code></span></td>
-<td>delete all marks in <i>snd</i>'s channel <i>chn</i>.
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="snddeletemarks">delete-marks</a></em> (<i>snd chn</i>)</code></span></td></tr>
+<tr><td></td><td>delete all marks in <i>snd</i>'s channel <i>chn</i>.
 </td></tr>
 
-<tr><td><span class=defbox><code><em class=def><a href="#drawmarkhook">draw-mark-hook</a></em> (id)</code></span></td>
-<td>called before a mark is drawn.
+<tr><td colspan=2><span class=defbox><code><em class=def><a href="#drawmarkhook">draw-mark-hook</a></em> (id)</code></span></td></tr>
+<tr><td></td><td>called before a mark is drawn (discussed in the Hooks section).
 </td></tr>
 
 <!-- find-mark -->
-<tr><td valign=top><span class=defbox><code><em class=def><a name="sndfindmark">find-mark</a></em> (samp <i>snd chn edpos</i>)</code></span></td>
-<td>return identifier of mark at sample <i>samp</i> or #f if none found.
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndfindmark">find-mark</a></em> (samp <i>snd chn edpos</i>)</code></span></td></tr>
+<tr><td></td><td>return identifier of the mark at sample <i>samp</i> or #f if none.
 This identifier is used in calls such as <a href="#sndmarksample">mark-sample</a>.  Since marks
 can move around during editing, a unique 'tag' is needed to refer to a 
 particular mark. <i>samp</i> can also be a string; in this case <i>find-mark</i> 
@@ -2806,69 +2807,97 @@ looks for a mark of that name.  <i>mark-name-&gt;id</i> in marks.scm finds a nam
 </td></tr>
 
 <!-- forward-mark -->
-<tr><td><span class=defbox><code><em class=def><a name="sndforwardmark">forward-mark</a></em> (<i>count snd chn</i>)</code></span></td>
-<td>move the cursor forward <i>count</i> marks (C-j), returning mark id, or #f if none.
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndforwardmark">forward-mark</a></em> (<i>count snd chn</i>)</code></span></td></tr>
+<tr><td></td><td>move the cursor forward <i>count</i> marks (C-j), returning mark id, or #f if none.
 </td></tr>
 
-<tr><td><span class=defbox><code><em class=def><a href="#markclickhook">mark-click-hook</a></em> (id)</code></span></td>
-<td>called when a mark is clicked.
+<tr><td colspan=2><span class=defbox><code><em class=def><a href="#markclickhook">mark-click-hook</a></em> (id)</code></span></td></tr>
+<tr><td></td><td>called when a mark is clicked (discussed in the Hooks section).
 </td></tr>
 
-<tr><td><span class=defbox><code><em class=def><a href="#markcolor">mark-color</a></em></code></span></td>
-<td>color of mark indicator.
+<tr><td colspan=2><span class=defbox><code><em class=def><a href="#markcolor">mark-color</a></em></code></span></td></tr>
+<tr><td></td><td>color of mark indicator (default: red).
 </td></tr>
 
-<tr><td><span class=defbox><code><em class=def><a href="#markcontext">mark-context</a></em></code></span></td>
-<td>graphics context to use to draw a mark (XOR mode).
+<tr><td colspan=2><span class=defbox><code><em class=def><a href="#markcontext">mark-context</a></em></code></span></td></tr>
+<tr><td></td><td>graphics context to use to draw a mark (XOR mode).
 </td></tr>
 
 <!-- mark-home -->
-<tr><td><span class=defbox><code><em class=def><a name="markhome">mark-home</a></em> (<i>id</i>)</code></span></td>
-<td>a list with the sound index and channel that hold mark <i>id</i>.
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="markhome">mark-home</a></em> (<i>id</i>)</code></span></td></tr>
+<tr><td></td><td>a list with the sound index and channel that hold mark <i>id</i>.
+mark-home provides a way to go from a mark to its sound and
+channel; the inverse function is <b>marks</b>.  
 </td></tr>
 
-<tr><td><span class=defbox><code><em class=def><a href="#markhook">mark-hook</a></em> (id snd chn reason)</code></span></td>
-<td>called when a mark is added, deleted, moved.
+<tr><td colspan=2><span class=defbox><code><em class=def><a href="#markhook">mark-hook</a></em> (id snd chn reason)</code></span></td></tr>
+<tr><td></td><td>called when a mark is added, deleted, moved (discussed in the Hooks section).
 </td></tr>
 
 <!-- mark-name -->
-<tr><td><span class=defbox><code><em class=def><a name="sndmarkname">mark-name</a></em> (<i>id</i>)</code></span></td>
-<td>name of mark <i>id</i>.
-<tr><td colspan=2>
-<center><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmarkname">mark-name</a></em> (<i>id</i>)</code></span></td></tr>
+<tr><td></td><td>name of mark <i>id</i>.
+</tr>
+<tr><td></td><td>
+<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define* (add-named-mark samp name #:optional snd chn)
   (let ((m (add-mark samp snd chn)))
     (set! (<em class=red>mark-name</em> m) name)
     m))
-</pre></td></tr></table></center>
+</pre></td></tr></table>
 </td></tr>
 
 <!-- mark-sample -->
-<tr><td valign=top><span class=defbox><code><em class=def><a name="sndmarksample">mark-sample</a></em> (<i>id pos</i>)</code></span></td>
-<td>sample (number) marked by mark <i>id</i> at edit history position <i>pos</i>; also <code>(set! (mark-sample id) samp)</code>.
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmarksample">mark-sample</a></em> (<i>id pos</i>)</code></span></td></tr>
+<tr><td></td><td>sample (number) marked by mark <i>id</i> at edit history position <i>pos</i>; also <code>(set! (mark-sample id) samp)</code>.
 It might be more consistent with other Snd names to call this mark-position, but I wanted to emphasize
 that a mark follows its sample around as a sound is edited; that is, it marks a sample, not a position in the sound.
 </td></tr>
 
 <!-- mark-sync -->
-<tr><td><span class=defbox><code><em class=def><a name="sndmarksync">mark-sync</a></em> (<i>id</i>)</code></span></td>
-<td>mark <i>id</i>'s sync value; can be set.
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmarksync">mark-sync</a></em> (<i>id</i>)</code></span></td></tr>
+<tr><td></td><td>mark <i>id</i>'s sync value.
+The sync value is very similar to
+the mix track number or the sound sync field; it provides a way to group marks for simultaneous
+changes.  Marks that share the same sync value (if not 0), move together when any one of them is
+dragged, play together if clicked, etc.  To find which marks share a given
+sync value, use <b>syncd-marks</b>; to find an unused sync value use <b>mark-sync-max</b>.
+<br><br>
+Marks that are syncd together can be used for insertions, and deletions, and can
+set arbitrary groups of play points.  But it's a bit tedious to type (set! (mark-sync ...)...)
+for each of the marks you want in the group.  The following uses the mark-clicked-hook
+instead; you type (start-sync), then click the set of marks to sync, then (stop-sync).
+</tr>
+<tr><td></td><td>
+<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+(define mark-sync-number 0)
+(define (start-sync) (set! mark-sync-number (+ (mark-sync-max) 1)))
+(define (stop-sync) (set! mark-sync-number 0))
+(define (click-to-sync id) (set! (mark-sync id) mark-sync-number) #f)
+(add-hook! mark-click-hook click-to-sync)
+</pre></td></tr></table>
+</td></tr>
+<tr><td></td><td>
+Now control-click and drag one of them, and all move together deleting data, or
+inserting zeros; or click the "play" triangle, and all play together starting from
+the respective marks (which need not be in separate channels). 
 </td></tr>
 
 <!-- mark-sync-max -->
-<tr><td><span class=defbox><code><em class=def><a name="sndmarksyncmax">mark-sync-max</a></em> ()</code></span></td>
-<td>max mark sync value seen so far (intended as a way to get a unique sync value).
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmarksyncmax">mark-sync-max</a></em> ()</code></span></td></tr>
+<tr><td></td><td>max mark sync value seen so far (intended as a way to get a unique sync value).
 </td></tr>
 
 <!-- marks -->
-<tr><td valign=top><span class=defbox><code><em class=def><a name="emarks">marks</a></em> (<i>snd chn pos</i>)</code></span></td>
-<td>list of mark ids in <i>snd</i>'s channel <i>chn</i> at edit history position <i>pos</i>.
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="emarks">marks</a></em> (<i>snd chn pos</i>)</code></span></td></tr>
+<tr><td></td><td>list of mark ids in <i>snd</i>'s channel <i>chn</i> at edit history position <i>pos</i>.
 If <i>chn</i> and <i>pos</i> are omitted, a list of lists is returned, 
 each inner list representing a channel of <i>snd</i>.  If <i>snd</i> is 
 also omitted, a list of lists of lists is returned, representing
 each sound and its channels.
-<tr><td colspan=2>
-<center><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+</tr>
+<tr><td></td><td>
+<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define (how-many-marks-in-channel snd chn)
   (length (<em class=red>marks</em> snd chn)))
 
@@ -2877,58 +2906,24 @@ each sound and its channels.
 
 (define (how-many-marks)
   (apply + (map how-many-marks-in-sound (sounds))))
-</pre></td></tr></table></center>
-</td></tr>
-
-<!-- mark? -->
-<tr><td><span class=defbox><code><em class=def><a name="sndmarkok">mark?</a></em> (<i>id</i>)</code></span></td>
-<td>#t if mark <i>id</i> is active.
-</td></tr>
-
-<!-- save-marks -->
-<tr><td><span class=defbox><code><em class=def><a name="sndsavemarks">save-marks</a></em> (<i>snd</i>)</code></span></td>
-<td>save <i>snd</i>'s marks, writing a file &lt;name&gt;.marks (returns file name or #f if no marks).
-</td></tr>
-
-<tr><td><span class=defbox><code><em class=def><a href="#showmarks">show-marks</a></em></code></span></td>
-<td>#t if marks are being displayed.
-</td></tr>
-
-<!-- syncd-marks -->
-<tr><td><span class=defbox><code><em class=def><a name="syncdmarks">syncd-marks</a></em> (sync)</code></span></td>
-<td>list of marks (ids) that share sync.
-</td></tr>
-
-</table>
-
-<p>The sync value is very similar to
-the mix track number or the sound sync field; it provides a way to group marks for simultaneous
-changes.  Marks that share the same sync value (if not 0), move together when any one of them is
-dragged, play together, etc.  <b>mark-home</b> provides a way to go from a mark id to the sound and
-channel that hold that mark; the inverse function is <b>marks</b>.  To find which marks share a given
-sync value, use <b>syncd-marks</b>; to find an unused sync value use <b>mark-sync-max</b>. </p>
-
-<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(define (move-syncd-marks sync diff)
-  (map (lambda (m) 
-         (set! (mark-sample m) (+ (mark-sample m) diff))) 
-       (<em class=red>syncd-marks</em> sync)))
 </pre></td></tr></table>
-
-<p><b>marks</b>
+</td></tr>
+<tr><td></td><td>
+<b>marks</b>
 without any argument, or with just a sound index returns a list of lists; each inner list is the list
 of current marks (ids) active in that channel, ordered by sample number.  If the channel argument is
 specified, <b>marks</b> returns just the list of mark ids.  If the edit history position is given,
 the list of ids reflects the mark list at that time in the edit history.  So, for example, the
 following procedure returns a list describing the history of a mark over the course of
 editing a channel, each list entry being the mark sample at that time or #f if the mark was not active:
-</p>
-
+</tr>
+<tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define (describe-mark id)
   "(describe-mark id) returns a description of the movements of mark id over the channel's edit history"
   (let ((mark-setting (catch 'no-such-mark 
-                        (lambda () (mark-home id)) ;mark might be deleted in current edit, but active earlier
+                        (lambda () (mark-home id)) 
+                          ;;mark might be deleted in current edit, but active earlier
                         (lambda args #f))))
     (if (not mark-setting)
         ;; not an active mark, so go scrounging for it
@@ -2960,23 +2955,40 @@ editing a channel, each list entry being the mark sample at that time or #f if t
           (cons header descr))
         (throw 'no-such-mark (list "describe-mark" id)))))
 </pre></td></tr></table>
+</td></tr>
 
-<p>Marks that are syncd together can be used for insertions, and deletions, and can
-set arbitrary groups of play points.  But it's a bit tedious to type (set! (mark-sync ...)...)
-for each of the marks you want in the group.  The following uses the mark-clicked-hook
-instead; you type (start-sync), then click the set of marks to sync, then (stop-sync).</p>
+<!-- mark? -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmarkok">mark?</a></em> (<i>id</i>)</code></span></td></tr>
+<tr><td></td><td>#t if mark <i>id</i> is active (that is, present in an active channel).
+</td></tr>
 
+<!-- save-marks -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndsavemarks">save-marks</a></em> (<i>snd</i>)</code></span></td></tr>
+<tr><td></td><td>save <i>snd</i>'s marks, writing a file &lt;name&gt;.marks (returns file name or #f if no marks).
+</td></tr>
+
+<tr><td colspan=2><span class=defbox><code><em class=def><a href="#showmarks">show-marks</a></em></code></span></td></tr>
+<tr><td></td><td>#t if marks are being (or to be) displayed.
+</td></tr>
+
+<!-- syncd-marks -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="syncdmarks">syncd-marks</a></em> (sync)</code></span></td></tr>
+<tr><td></td><td>a list of marks (the mark id's) that share the mark-sync value <i>sync</i>.
+</tr>
+<tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(define mark-sync-number 0)
-(define (start-sync) (set! mark-sync-number (+ (mark-sync-max) 1)))
-(define (stop-sync) (set! mark-sync-number 0))
-(define (click-to-sync id) (set! (mark-sync id) mark-sync-number) #f)
-(add-hook! mark-click-hook click-to-sync)
+(define (move-syncd-marks sync diff)
+  (map (lambda (m) 
+         (set! (mark-sample m) (+ (mark-sample m) diff))) 
+       (<em class=red>syncd-marks</em> sync)))
 </pre></td></tr></table>
+</td></tr>
 
-<p>Now control-click and drag one of them, and all move together deleting data, or
-inserting zeros; or click the "play" triangle, and all play together starting from
-the respective marks (which need not be in separate channels). See <a href="sndscm.html#marksdoc">marks.scm</a> for
+</table>
+
+<br>
+<p>
+See <a href="sndscm.html#marksdoc">marks.scm</a> for
 more examples including:
 </p>
 <table border=0>
@@ -3001,197 +3013,9 @@ edit-menu.scm (trim from mark, etc), examp.scm (move window to correspond to mar
 <br>
 <span class=cbox><h3><A NAME="sndmixes">Mixes</a></h3></span>
 
-<p>A mix is an object that controls one channel of a sound mix.
-All of the signal-processing functions can be applied to the mix data.
-These variables affect all mixes:</p>
-
-<table border=0 cellspacing=8>
-<!-- mix-color -->
-
-<tr><td valign=top><code><em class=def><a name="mixcolor">mix-color</a></em> dark gray</code></td>
-<td>color of mix waveforms.<br>
-The set form <code>(set! (mix-color) ...)</code> has an optional second argument; if you
-want to set just a particular mix's color, give the id of the mix
-here. That is, <code>(set! (mix-color) red)</code> sets all unselected mixes to
-red; but <code>(set! (mix-color 3) red)</code> sets only mix #3 to be red. Similarly,
-mix-color has an optional argument that can specify which mix's color
-we want.</td></tr>
-<!-- selected-mix-color -->
-
-<tr><td><code><em class=def><a name="selectedmixcolor">selected-mix-color</a></em> light green</code></td><td>color of selected mix waveform.</td></tr>
-<!-- mix-waveform-height -->
-
-<tr><td><code><em class=def><a name="mixwaveformheight">mix-waveform-height</a></em> 20</code></td><td>Max height (pixels) of mix waveforms (see <a href="#showmixwaveforms">show-mix-waveforms</a>).</td></tr>
-<!-- with-mix-tags -->
-
-<tr><td><code><em class=def><a name="withmixtags">with-mix-tags</a></em> #t</code></td><td>If #f, don't make mixes editable.</td></tr>
-
-<tr><td><code><a href="#showmixwaveforms">show-mix-waveforms</a></code></td><td></td></tr>
-</table>
-
-<p>Each mix object has a unique identifier used in the next set of functions to access
-a particular mix object:</p>
-
-<!-- -------------------------------- MIX FUNCTION TABLE -------------------------------- -->
-
-<table border=0 cellspacing=8>
-
-<!-- backward-mix -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndbackwardmix">backward-mix</a></em> (<i>count snd chn</i>)</code></span></td>
-<td>move the cursor back <i>count</i> mix tags (C-x C-j), returning the mix id.
-</td></tr>
-
-<!-- find-mix -->
-
-<tr><td valign=top><span class=defbox><code><em class=def><a name="sndfindmix">find-mix</a></em> (<i>samp snd chn</i>)</code></span></td>
-<td>return identifier of mix at sample <i>samp</i> (or anywhere in the given channel if <i>samp</i> is not specified) or #f if no mix is found.
-</td></tr>
-
-<!-- forward-mix -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndforwardmix">forward-mix</a></em> (<i>count snd chn</i>)</code></span></td>
-<td> move the cursor forward <i>count</i> mix tags (C-x C-j), returning the mix id.
-</td></tr>
-
-<!-- mixes -->
-
-<tr><td><span class=defbox><code><em class=def><a name="mixes">mixes</a></em> (<i>snd chn pos</i>)</code></span></td>
-<td>list of currently active mixes in <i>snd</i>'s channel <i>chn</i> at history <i>pos</i>.
-</td></tr>
-
-<!-- mix-amp -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndmixamp">mix-amp</a></em> (<i>mix chan</i>)</code></span></td>
-<td>amplitude of <i>mix</i>'s channel <i>chan</i>.
-</td></tr>
-
-<!-- mix-amp-env -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndmixampenv">mix-amp-env</a></em> (<i>mix chan</i>)</code></span></td>
-<td>amplitude envelope of <i>mix</i>'s channel <i>chan</i>.
-</td></tr>
-
-<!-- mix-anchor -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndmixanchor">mix-anchor</a></em> (<i>mix</i>)</code></span></td>
-<td>anchor (tag) position (within the mix) of <i>mix</i>.
-</td></tr>
-
-<!-- mix-chans -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndmixchans">mix-chans</a></em> (<i>mix</i>)</code></span></td>
-<td>chans in <i>mix</i>.
-</td></tr>
-
-<!-- mix-frames -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndmixframes">mix-frames</a></em> (<i>mix</i>)</code></span></td>
-<td>mix's length in samples.
-</td></tr>
-
-<!-- mix-home-->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndmixhome">mix-home</a></em> (<i>mix</i>)</code></span></td>
-<td>returns a list of the sound index and channel number affected by <i>mix</i>.
-</td></tr>
-
-<!-- mix-locked -->
-
-<tr><td valign=top><span class=defbox><code><em class=def><a name="sndmixlocked">mix-locked</a></em> (<i>mix</i>)</code></span></td>
-<td>#t if <i>mix</i> is locked.  A mix is automatically locked (i.e. made immovable) if an edit operation
-affects some portion of the data that the mix also affects.  For example, if you delete a portion of a sound
-that has actively mixed data, the associated mix tag goes away until you undo that deletion.  This can
-be used deliberately to remove a mix:
-</td></tr>
-<tr><td colspan=2>
-<center><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(define (delete-mix id)
-  (if (mix? id)
-      (as-one-edit
-       (lambda ()
-	 (do ((i 0 (1+ i)))
-	     ((= i (mix-chans id)))
-	   (set! (mix-amp id i) 0.0))
-	 (set! (<em class=red>mix-locked</em> id) #t)))))
-</pre></td></tr></table></center>
-</td></tr>
-
-<!-- mix-name -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndmixname">mix-name</a></em> (<i>mix</i>)</code></span></td>
-<td><i>mix</i>'s name.
-</td></tr>
-
-<!-- mix-position -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndmixposition">mix-position</a></em> (<i>mix</i>)</code></span></td>
-<td>position (sample number) of <i>mix</i>.
-</td></tr>
-
-<!-- mix-speed -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndmixspeed">mix-speed</a></em> (<i>mix</i>)</code></span></td>
-<td>speed of <i>mix</i>.
-</td></tr>
-
-<!-- mix-tag-width -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndmixtagwidth">mix-tag-width</a></em> (<i>mix</i>)</code></span></td>
-<td>tag width in graph of <i>mix</i> (default 6)
-</td></tr>
-
-<!-- mix-tag-height -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndmixtagheighth">mix-tag-height</a></em> (<i>mix</i>)</code></span></td>
-<td>tag height in graph of <i>mix</i> (default 14)
-</td></tr>
-
-<!-- mix-tag-y -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndmixtagy">mix-tag-y</a></em> (<i>mix</i>)</code></span></td>
-<td>tag y offset in graph of <i>mix</i> (default 0)
-</td></tr>
-
-<!-- mix-track -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndmixtrack">mix-track</a></em> (<i>mix</i>)</code></span></td>
-<td>mix track (0 = none).  (mix-sync is a synonym for this).
-</td></tr>
-
-<!-- mix? -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndmixok">mix?</a></em> (<i>mix</i>)</code></span></td>
-<td>#t if <i>mix</i> is active.
-</td></tr>
-
-<!-- play-mix -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndplaymix">play-mix</a></em> (<i>mix</i>)</code></span></td>
-<td>play mix <i>mix</i>.
-</td></tr>
-
-<!-- play-track -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndplaytrack">play-track</a></em> (<i>track snd chn</i>)</code></span></td>
-<td>play track <i>track</i>. If snd is #t, play all associated chans.
-</td></tr>
-
-<!-- selected-mix -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndselectedmix">selected-mix</a></em> ()</code></span></td>
-<td>selected mix (#f if none) -- set to select mix.
-</td></tr>
-
-<!-- select-mix -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndselectmix">select-mix</a></em> (mix)</code></span></td>
-<td>set selected mix (#f = none).
-</td></tr>
-
-</table>
-
-<p>As an example, say we have a mix active whose "id" is 123.</p>
+<p>A mix is an object that represents a channel of a sound mix.
+Each mix object has a unique identifier called its id that identifies it in the following functions.
+Say we have a mix whose id is 123:</p>
 <pre>
 &gt;<em class=typing>(mix-chans 123)</em>
 <em class=listener>1</em>
@@ -3200,9 +3024,34 @@ be used deliberately to remove a mix:
 </pre>
 <p>This 
 sets mix 123's channel 0 amplitude scaler to .5.
-To mix data in such a way as to create an associated mix object:</p>
+</p>
+<p>
+All of the signal-processing functions can be applied to its data.
+In the functions that refer to a given sound, the form <code>(list mix-id)</code> refers to the
+underlying mix's sound.  So, for example, <code>(src-sound 2.0 1.0 (list 0) 0)</code> performs
+sampling-rate conversion on mix 0's sound's channel 0; <code>(display-edits (list 0) 0)</code>
+shows the edit list of that sound.  To undo or redo an edit that actually applied to the underlying
+mix sound, call undo or redo on the outer (resultant, mixed-into) sound.
+</p>
 
-<table border=0 cellspacing=8>
+<!-- -------------------------------- MIX FUNCTION TABLE -------------------------------- -->
+
+<table border=0 cellspacing=10>
+
+<!-- backward-mix -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndbackwardmix">backward-mix</a></em> (<i>count snd chn</i>)</code></span></td></tr>
+<tr><td><spacer type=horizontal size=40><br></td><td>move the cursor back <i>count</i> mix tags (C-x C-j), returning the mix id.
+</td></tr>
+
+<!-- find-mix -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndfindmix">find-mix</a></em> (<i>samp snd chn</i>)</code></span></td></tr>
+<tr><td></td><td>return identifier of mix at sample <i>samp</i> (or anywhere in the given channel if <i>samp</i> is not specified) or #f if no mix is found.
+</td></tr>
+
+<!-- forward-mix -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndforwardmix">forward-mix</a></em> (<i>count snd chn</i>)</code></span></td></tr>
+<tr><td></td><td>move the cursor forward <i>count</i> mix tags (C-x C-j), returning the mix id.
+</td></tr>
 
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmix">mix</a></em> (file <i>samp in_chan snd chn with-mix-tags</i>)</code></span></td></tr>
 <tr><td></td><td>
@@ -3215,16 +3064,121 @@ If <i>with-mix-tags</i> is #f (default is #t), the data is simply
 mixed without creating any mix tags.
 </td></tr>
 
+<!-- mixes -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="mixes">mixes</a></em> (<i>snd chn pos</i>)</code></span></td></tr>
+<tr><td></td><td>a list of currently active mixes in <i>snd</i>'s channel <i>chn</i> at history <i>pos</i>.
+</td></tr>
+
+<!-- mix-amp -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixamp">mix-amp</a></em> (<i>mix chan</i>)</code></span></td></tr>
+<tr><td></td><td>amplitude of <i>mix</i>'s channel <i>chan</i>.
+</td></tr>
+
+<!-- mix-amp-env -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixampenv">mix-amp-env</a></em> (<i>mix chan</i>)</code></span></td></tr>
+<tr><td></td><td>amplitude envelope of <i>mix</i>'s channel <i>chan</i>.
+</td></tr>
+
+<!-- mix-anchor -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixanchor">mix-anchor</a></em> (<i>mix</i>)</code></span></td></tr>
+<tr><td></td><td>anchor (tag) position (within the mix) of <i>mix</i>.
+</td></tr>
+
+<!-- mix-chans -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixchans">mix-chans</a></em> (<i>mix</i>)</code></span></td></tr>
+<tr><td></td><td>chans in <i>mix</i>.
+</td></tr>
+
+<!-- mix-color -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="mixcolor">mix-color</a></em>()</code></span></td></tr>
+<tr><td></td><td>color of mix waveforms (defaults to dark-gray).
+The set form, <code>(set! (mix-color) ...)</code>, has an optional second argument; if you
+want to set just a particular mix's color, give the id of the mix
+as that argument: <code>(set! (mix-color) red)</code> sets all unselected mixes to
+red; but <code>(set! (mix-color 3) red)</code> sets only mix #3 to be red.
+</td></tr>
+
+<!-- mix-frames -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixframes">mix-frames</a></em> (<i>mix</i>)</code></span></td></tr>
+<tr><td></td><td>mix's length in samples.
+</td></tr>
+
+<!-- mix-home-->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixhome">mix-home</a></em> (<i>mix</i>)</code></span></td></tr>
+<tr><td></td><td>a list of the sound index and channel number affected by <i>mix</i>.
+</td></tr>
+
+<!-- mix-locked -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixlocked">mix-locked</a></em> (<i>mix</i>)</code></span></td></tr>
+<tr><td></td><td>#t if <i>mix</i> is locked.  A mix is automatically locked (i.e. made immovable) if an edit operation
+affects some portion of the data that the mix also affects.  For example, if you delete a portion of a sound
+that has actively mixed data, the associated mix tag goes away until you undo that deletion.  This can
+be used deliberately to remove a mix:
+</td></tr>
+<tr><td></td><td>
+<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+(define (delete-mix id)
+  (if (mix? id)
+      (as-one-edit
+       (lambda ()
+	 (do ((i 0 (1+ i)))
+	     ((= i (mix-chans id)))
+	   (set! (mix-amp id i) 0.0))
+	 (set! (<em class=red>mix-locked</em> id) #t)))))
+</pre></td></tr></table>
+</td></tr>
+
+<!-- mix-name -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixname">mix-name</a></em> (<i>mix</i>)</code></span></td></tr>
+<tr><td></td><td><i>mix</i>'s name.
+</td></tr>
+
+<!-- mix-position -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixposition">mix-position</a></em> (<i>mix</i>)</code></span></td></tr>
+<tr><td></td><td>position (sample number) of <i>mix</i>.
+</td></tr>
+
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixregion">mix-region</a></em> (<i>samp reg snd chn</i>)</code></span></td></tr>
-<tr><td width=150></td><td>
+<tr><td></td><td>
 Mix in region <i>reg</i> at sample <i>samp</i> (defaulting to the cursor sample), 
 in <i>snd</i>'s channel <i>chn</i>.  mix-region returns the id of the first channel's 
 mix (subsequent channels simply increment this number).
 </td></tr>
 
+<!-- mix-selection -->
+<tr><td colspan=2><span class=defbox><code><em class=def>mix-selection</em> (<i>beg snd chn</i>)</code></span></td></tr>
+<tr><td></td><td>
+mix (add) selection starting at beg in snd's channel chn.  Return new mix id.
+</td></tr>
+
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixsound">mix-sound</a></em> (file start)</code></span></td>
 <tr><td></td><td>
 mix <i>file</i> (all chans) into selected sound at <i>start</i>.
+</td></tr>
+
+<!-- mix-speed -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixspeed">mix-speed</a></em> (<i>mix</i>)</code></span></td></tr>
+<tr><td></td><td>speed of <i>mix</i>.
+</td></tr>
+
+<!-- mix-tag-height -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixtagheighth">mix-tag-height</a></em> (<i>mix</i>)</code></span></td></tr>
+<tr><td></td><td>tag height in graph of <i>mix</i> (default 14)
+</td></tr>
+
+<!-- mix-tag-width -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixtagwidth">mix-tag-width</a></em> (<i>mix</i>)</code></span></td></tr>
+<tr><td></td><td>tag width in graph of <i>mix</i> (default 6)
+</td></tr>
+
+<!-- mix-tag-y -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixtagy">mix-tag-y</a></em> (<i>mix</i>)</code></span></td></tr>
+<tr><td></td><td>tag y offset in graph of <i>mix</i> (default 0)
+</td></tr>
+
+<!-- mix-track -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixtrack">mix-track</a></em> (<i>mix</i>)</code></span></td></tr>
+<tr><td></td><td>mix track (0 = none).  (mix-sync is a synonym for this).
 </td></tr>
 
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixvct">mix-vct</a></em> (vct <i>beg snd chn with-mix-tags</i> origin)</code></span></td></tr>
@@ -3234,13 +3188,51 @@ Returns the id of the new mix, or -1 if some error occurred.
 If <i>with-mix-tags</i> is #f (default is #t), the data is simply
 mixed without creating any mix tags, and without returning a mix id.
 </td></tr>
-</table>
 
-<p>In the functions that refer to a given sound, the form <code>(list mix-id)</code> refers to the
-underlying mix's sound.  So, for example, <code>(src-sound 2.0 1.0 (list 0) 0)</code> performs
-sampling-rate conversion on mix 0's sound's channel 0; <code>(display-edits (list 0) 0)</code>
-shows the edit list of that sound.  To undo or redo an edit that actually applied to the underlying
-mix sound, call undo or redo on the outer (resultant, mixed-into) sound.
+<!-- mix-waveform-height -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="mixwaveformheight">mix-waveform-height</a></em>()</code></span></td></tr>
+<tr><td></td><td>Max height (pixels) of mix waveforms; default is 20 (see <a href="#showmixwaveforms">show-mix-waveforms</a>).
+</td></tr>
+
+<!-- mix? -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixok">mix?</a></em> (<i>mix</i>)</code></span></td></tr>
+<tr><td></td><td>#t if <i>mix</i> is active.
+</td></tr>
+
+<!-- play-mix -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndplaymix">play-mix</a></em> (<i>mix</i>)</code></span></td></tr>
+<tr><td></td><td>play mix <i>mix</i>.
+</td></tr>
+
+<!-- play-track -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndplaytrack">play-track</a></em> (<i>track snd chn</i>)</code></span></td></tr>
+<tr><td></td><td>play track <i>track</i>. If snd is #t, play all associated chans.
+</td></tr>
+
+<!-- select-mix -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndselectmix">select-mix</a></em> (mix)</code></span></td></tr>
+<tr><td></td><td>set selected mix (#f = none).
+</td></tr>
+
+<!-- selected-mix -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndselectedmix">selected-mix</a></em> ()</code></span></td></tr>
+<tr><td></td><td>selected mix (#f if none) -- set to select mix.
+</td></tr>
+
+<!-- selected-mix-color -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="selectedmixcolor">selected-mix-color</a></em>()</code></span></td></tr>
+<tr><td></td><td>color of selected mix waveform (default is light green).
+</td></tr>
+
+<!-- with-mix-tags -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="withmixtags">with-mix-tags</a></em>()</code></span></td></tr>
+<tr><td></td><td>If #f (default #t), automatically lock each new mix; the default is to place a tag above each
+mix so that it can be easily moved around.
+</td></tr>
+
+</table>
+<br>
+<p>
 See mix.scm for more mix-related (and track-related) functions including:
 </p>
 <table border=0>
@@ -3269,104 +3261,99 @@ read pre-mix samples: <a href="#makemixsamplereader">make-mix-sample-reader</a>
 <br>
 <span class=cbox><h3><A NAME="sndregions">Regions and Selections</a></h3></span>
 
-<p>A region is a saved portion of sound data.  There is a dialog to browse regions, and
-a notion of a stack of regions.  As regions are added, old ones get pushed off the
-stack and deleted.  The current selection is usually based on region 0,
-although in fact there's no necessary connection between them.
+<p>A region is a saved portion of sound data.  There is a dialog, the View:Region browser, to inspect regions.
+As regions are defined, the new ones are pushed on a stack, and if enough regions already
+exist, old ones are pushed off (and deleted) to make room.
 Each region has a unique id returned by make-region and shown beside the region name in the Region Browser.
-Most of the region number arguments default to the current region (the first in the regions list).
+Most of the region arguments default to the current region (the top of the regions stack).
+The selection is usually based on region 0,
+although in fact there's no necessary connection between them.
 </p>
 
 <!-- -------------------------------- REGION TABLE -------------------------------- -->
 
-<table border=0 cellspacing=8>
+<table border=0 cellspacing=10>
 
 <!-- forget-region -->
-
-<tr><td valign=top><span class=defbox><code><em class=def><a name="snddeleteregion">forget-region</a></em> (<i>reg</i>)</code></span></td>
-<td>
-"forget" region <i>reg</i>, removing it 
-from the region stack.  Once forgotten, the region's data no longer exists (as a separate entity accessible via region-samples-&gt;vct and so on).
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="snddeleteregion">forget-region</a></em> (<i>reg</i>)</code></span></td></tr>
+<td><spacer type=horizontal size=40><br></td><td>
+"forget" (delete) region <i>reg</i>, removing it from the region stack.
 </td></tr>
 
 <!-- insert-region -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndinsertregion">insert-region</a></em> (<i>beg reg snd chn</i>)</code></span></td>
-<td>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndinsertregion">insert-region</a></em> (<i>beg reg snd chn</i>)</code></span></td></tr>
+<tr><td></td><td>
 insert region <i>reg</i> at sample <i>beg</i> in <i>snd</i>'s channel <i>chn</i>.
 </td></tr>
 
 <!-- make-region -->
-
-<tr><td valign=top><span class=defbox><code><em class=def><a name="sndmakeregion">make-region</a></em> (<i>beg end snd chn</i>)</code></span></td>
-<td>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmakeregion">make-region</a></em> (<i>beg end snd chn</i>)</code></span></td></tr>
+<tr><td></td><td>
 create a new region spanning samples <i>beg</i> to <i>end</i> in <i>snd</i>'s channel <i>chn</i>.
 returns region's id.  If no arguments are given, the 
-current selection is used. If <i>chn</i> is #t, all chans are included, taking the <i>snd</i> sync field into account if it's not 0.
+selection is used. If <i>chn</i> is #t, all chans are included, taking the <i>snd</i> sync field into account if it's not 0.
 </td></tr>
 
-<tr><td colspan=2><span class=defbox><code><a href="#makeregionsamplereader">make-region-sample-reader</a> (<i>start reg chn dir</i>)</code></span></td>
-</tr><tr><td></td><td>
-create a <a href="#samplereaders">sample-reader</a> object reading region <i>reg</i>'s channel <i>chn</i>
+<!-- make-region-sample-reader -->
+<tr><td colspan=2><span class=defbox><code><a href="#makeregionsamplereader">make-region-sample-reader</a> (<i>start reg chn dir</i>)</code></span></td></tr>
+<tr><td></td><td>
+create a <a href="#samplereaders">sample-reader</a> object reading region <i>reg</i>'s channel <i>chn</i>.
 </td></tr>
 
-<!-- mix-region --><td ><span class=defbox><code><em class=def>mix-region</em> (<i>samp reg snd chn</i>)</code></span></td>
-<td>see <a href="#sndmixregion">above</a>.
+<!-- mix-region -->
+<tr><td colspan=2><span class=defbox><code><em class=def>mix-region</em> (<i>samp reg snd chn</i>)</code></span></td></tr>
+<tr><td></td><td>
+Mix in region <i>reg</i> at sample <i>samp</i> (defaulting to the cursor sample), 
+in <i>snd</i>'s channel <i>chn</i>.  mix-region returns the id of the first channel's 
+mix (subsequent channels simply increment this number).
 </td></tr>
 
 <!-- play-region -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndplayregion">play-region</a></em> (<i>reg wait</i>)</code></span></td>
-<td>
-play region <i>reg</i>, if wait is #t, play to end before returning. (See play.scm).
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndplayregion">play-region</a></em> (<i>reg wait</i>)</code></span></td></tr>
+<tr><td></td><td>
+play region <i>reg</i>; if wait is #t, play to the end before returning. (See play.scm).
 </td></tr>
 
 <!-- protect-region -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndprotectregion">protect-region</a></em> (reg protect)</code></span></td>
-<td>protect/unprotect region <i>reg</i> from deletion (removal from the region stack).
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndprotectregion">protect-region</a></em> (reg protect)</code></span></td></tr>
+<tr><td></td><td>protect or unprotect region <i>reg</i> from deletion (removal from the region stack).  A protected region won't be pushed
+off the region stack.
 </td></tr>
 
 <!-- region-chans -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndregionchans">region-chans</a></em> (<i>reg</i>)</code></span></td>
-<td>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndregionchans">region-chans</a></em> (<i>reg</i>)</code></span></td></tr>
+<tr><td></td><td>
 number of channels in region <i>reg</i>.
 </td></tr>
 
 <!-- region-frames -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndregionframes">region-frames</a></em> (<i>reg</i>)</code></span></td>
-<td>
-number of samples (per channel) in region <i>reg</i>. (This used to be region-length).
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndregionframes">region-frames</a></em> (<i>reg</i>)</code></span></td></tr>
+<tr><td></td><td>
+number of samples (per channel) in region <i>reg</i>.
 </td></tr>
 
 <!-- region-graph-style -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndregiongraphstyle">region-graph-style</a></em> (style)</code></span></td>
-<td>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndregiongraphstyle">region-graph-style</a></em> (style)</code></span></td></tr>
+<tr><td></td><td>
 graph drawing choice for the region dialog's graph.
 </td></tr>
 
 <!-- region-maxamp -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndregionmaxamp">region-maxamp</a></em> (<i>reg</i>)</code></span></td>
-<td>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndregionmaxamp">region-maxamp</a></em> (<i>reg</i>)</code></span></td></tr>
+<tr><td></td><td>
 maximum amplitude of region <i>reg</i>.
 </td></tr>
 
 <!-- region-sample -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndregionsample">region-sample</a></em> (<i>samp reg chn</i>)</code></span></td>
-<td>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndregionsample">region-sample</a></em> (<i>samp reg chn</i>)</code></span></td></tr>
+<tr><td></td><td>
 value of sample <i>samp</i> in region <i>reg</i> in channel <i>chn</i>.
 </td></tr>
 
 <!-- region-samples->vct -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndregionsamples2vct">region-samples-&gt;vct</a></em> (<i>samp samps reg chn v</i>)</code></span></td></tr>
-<tr><td></td>
-<td>
-return vct struct of <i>samps</i> samples starting at <i>samp</i> in region <i>reg</i>'s 
+<tr><td></td><td>
+return a vct containing <i>samps</i> samples starting at <i>samp</i> in region <i>reg</i>'s 
 channel <i>chn</i>. If v (a vct object) is provided, it is filled, 
 rather than creating a new vct object.
 </td></tr>
@@ -3379,118 +3366,104 @@ rather than creating a new vct object.
 </pre></td></tr></table></center>
 </td></tr>
 
-
 <!-- region-srate -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndregionsrate">region-srate</a></em> (<i>reg</i>)</code></span></td>
-<td>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndregionsrate">region-srate</a></em> (<i>reg</i>)</code></span></td></tr>
+<tr><td></td><td>
 original (nominal) sampling rate of region <i>reg</i>.
 </td></tr>
 
 <!-- regions -->
-
-<tr><td valign=top><span class=defbox><code><em class=def><a name="eregions">regions</a></em> ()</code></span></td>
-<td>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="eregions">regions</a></em> ()</code></span></td></tr>
+<tr><td></td><td>
 list of ids of regions currently active.  The most recently created region is <code>(car (regions))</code>.
 <code>(map region-frames (regions))</code> returns a list of region lengths.
 </td></tr>
 
 <!-- region? -->
-
-<tr><td valign=top><span class=defbox><code><em class=def><a name="regionok">region?</a></em> (<i>reg</i>)</code></span></td>
-<td>
-#t if region <i>reg</i> exists (has not yet been forgotten).  There is a limit to how many regions Snd tries to
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="regionok">region?</a></em> (<i>reg</i>)</code></span></td></tr>
+<tr><td></td><td>
+#t if region <i>reg</i> exists.  There is a limit to how many regions Snd tries to
 keep track of (<a href="#maxregions">max-regions</a>); when necessary, the least-recently created region is
 deleted.
 </td></tr>
 
 <!-- save-region -->
-
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndsaveregion">save-region</a></em> (reg filename <i>type format comment</i>) </code></span></td></tr>
 <tr><td></td><td>
-save region <i>reg</i> in <i>filename</i> in data format <i>format</i> (default mus-bshort), header type <i>type</i> (defaults
-to mus-next), and <i>comment</i>.
+save region <i>reg</i> in <i>filename</i> in data format <i>format</i> (default is mus-bshort), header type <i>type</i> (default
+is mus-next), with header comment <i>comment</i>.
 </td></tr>
 
 </table>
-
+<br>
 <hr>
-<p>These are specific to the current selection (they can return the error 'no-active-selection):</p>
+
 
 <!-- -------------------------------- SELECTION TABLE -------------------------------- -->
 
-<table border=0 cellspacing=8>
+<table border=0 cellspacing=10>
 
 <!-- convolve-selection-with -->
-
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndconvolveselectionwith">convolve-selection-with</a></em> (file <i>amp</i>)     </code></span></td>
-</tr><tr><td></td><td>
-convolve the current selection with <i>file</i>.
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndconvolveselectionwith">convolve-selection-with</a></em> (file <i>amp</i>)</code></span></td></tr>
+<tr><td><spacer type=horizontal size=40><br></td><td>
+convolve the selection with <i>file</i>.
 </td></tr>
 
 <!-- delete-selection -->
-
-<tr><td><span class=defbox><code><em class=def><a name="snddeleteselection">delete-selection</a></em> ()</code></span></td>
-<td>
-deletes currently selected portion, if any.
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="snddeleteselection">delete-selection</a></em> ()</code></span></td></tr>
+<tr><td></td><td>
+delete the selection.
 </td></tr>
 
 <!-- env-selection -->
-
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndenvselection">env-selection</a></em> (envelope <i>env-base</i>)</code></span></td>
-</tr><tr><td></td><td>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndenvselection">env-selection</a></em> (envelope <i>env-base</i>)</code></span></td></tr>
+<tr><td></td><td>
 apply <i>envelope</i> to the selection.
 <i>envelope</i> can also be a CLM env generator (in this case, <i>env-base</i> 
 is ignored).
 </td></tr>
 
 <!-- filter-selection -->
-
-<tr><td valign=top><span class=defbox><code><em class=def><a name="sndfilterselection">filter-selection</a></em> (env <i>order</i>)</code></span></td>
-<td>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndfilterselection">filter-selection</a></em> (env <i>order</i>)</code></span></td></tr>
+<tr><td></td><td>
 apply an FIR filter of order <i>order</i> and frequency response <i>env</i>
-to the current selection.  <i>env</i> can be the filter coefficients
+to the selection.  <i>env</i> can be the filter coefficients
 themselves in a vct object with at least order elements, or 
 a CLM filtering generator (see <a href="filtersound">filter-sound</a>).
 </td></tr>
 
 <!-- insert-selection -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndinsertselection">insert-selection</a></em> (<i>beg snd chn</i>)</code></span></td>
-<td>
-insert (paste) selection starting at beg in snd's channel chn.
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndinsertselection">insert-selection</a></em> (<i>beg snd chn</i>)</code></span></td></tr>
+<tr><td></td><td>
+insert selection starting at beg in snd's channel chn.
 </td></tr>
 
 <!-- mix-selection -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndmixselection">mix-selection</a></em> (<i>beg snd chn</i>)</code></span></td>
-<td>
-mix (add) selection starting at beg in snd's channel chn.  Returns new mix id.
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixselection">mix-selection</a></em> (<i>beg snd chn</i>)</code></span></td></tr>
+<tr><td></td><td>
+mix (add) selection starting at beg in snd's channel chn.  Return new mix id.
 </td></tr>
 
 <!-- play-selection -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndplayselection">play-selection</a></em> (<i>wait pos</i>)</code></span></td>
-<td>
-play the currently selected data.  If <i>pos</i> is given, it sets the edit position to be played.
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndplayselection">play-selection</a></em> (<i>wait pos</i>)</code></span></td></tr>
+<tr><td></td><td>
+play the selection.  <i>pos</i> sets the edit position.  If <i>wait</i> is #t, the function does not return until the play has completed.
 </td></tr>
 
 <!-- reverse-selection -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndreverseselection">reverse-selection</a></em> ()</code></span></td>
-<td>
-reverse data delineated by current selection.
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndreverseselection">reverse-selection</a></em> ()</code></span></td></tr>
+<tr><td></td><td>
+reverse the selection.
 </td></tr>
 
 <!-- save-selection -->
-
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndsaveselection">save-selection</a></em> (file <i>header-type data-format srate comment chan</i>)</code></span></td>
-</tr><tr><td></td><td>
-save the currently selected data in <i>file</i>.  If <i>chan</i> is given, save only that channel.
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndsaveselection">save-selection</a></em> (file <i>header-type data-format srate comment chan</i>)</code></span></td></tr>
+<tr><td></td><td>
+save the selection in <i>file</i>.  If <i>chan</i> is given, save only that channel.
 See popup.scm for an example.
 </td></tr>
-<tr><td colspan=2>
-<center><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+<tr><td></td><td>
+<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define (brksnd dur base)
   "(brksnd dur base) divides the current sound into dur-sized pieces, saving them as base.n"
   (let ((hop (inexact-&gt;exact (* (srate) dur)))
@@ -3503,107 +3476,95 @@ See popup.scm for an example.
       (make-selection i (+ i hop)) ; in extensions.scm
       (<em class=red>save-selection</em> (string-append base "." (number-&gt;string j))))
     (set! (sync) old-sync)))
-</pre></td></tr></table></center>
+</pre></td></tr></table>
 </td></tr>
 
 <!-- scale-selection-by -->
-
-<tr><td valign=top><span class=defbox><code><em class=def><a name="sndscaleselectionby">scale-selection-by</a></em> (scalers)</code></span></td>
-<td>
-<a href="snd.html#scaling">scale</a> the current selection by <i>scalers</i> which can be either a float, 
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndscaleselectionby">scale-selection-by</a></em> (scalers)</code></span></td></tr>
+<tr><td></td><td>
+<a href="snd.html#scaling">scale</a> the selection by <i>scalers</i> which can be either a float, 
 a list of floats, or a vector of floats.  In a multi-channel selection, each member of the vector or list
 is applied to the next channel in the selection.  <code>(scale-selection-by '(0.0 2.0))</code> scales
 the first channel by 0.0, the second (if any) by 2.0.  <code>(scale-selection-by 2.0)</code> scales
-all channels by 2.0.  Normally the order of channels follows the order of the enclosing sound indices.
+all channels by 2.0.  Normally the order of channels follows the order of the sound indices.
 </td></tr>
 
 <!-- scale-selection-to -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndscaleselectionto">scale-selection-to</a></em> (<i>norms</i>)</code></span></td>
-<td>
-<a href="snd.html#scaling">normalize</a> the current selection to <i>norms</i> which can be either a float, 
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndscaleselectionto">scale-selection-to</a></em> (<i>norms</i>)</code></span></td></tr>
+<tr><td></td><td>
+<a href="snd.html#scaling">normalize</a> the selection to <i>norms</i> which can be either a float, 
 a list of floats, or a vector of floats.
 </td></tr>
 
 <!-- select-all -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndselectall">select-all</a></em> (<i>snd chn</i>)</code></span></td>
-<td>
-selects all samples in <i>snd</i>'s channel <i>chn</i>.
-If a region is created, it returns the region's id.
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndselectall">select-all</a></em> (<i>snd chn</i>)</code></span></td></tr>
+<tr><td></td><td>
+select all samples in <i>snd</i>'s channel <i>chn</i>.
+If a region is created, return the region's id.
 </td></tr>
 
 <!-- selection-chans -->
-
-<tr><td><span class=defbox><code><em class=def><a name="selectionchans">selection-chans</a></em> ()</code></span></td>
-<td>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="selectionchans">selection-chans</a></em> ()</code></span></td></tr>
+<tr><td></td><td>
 selection channels.
 </td></tr>
 
 <!-- selection-frames -->
-
-<tr><td><span class=defbox><code><em class=def><a name="selectionframes">selection-frames</a></em> (<i>snd chn</i>)</code></span></td>
-<td>
-length in samples of selection.  You can set this to move the selection end point. 
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="selectionframes">selection-frames</a></em> (<i>snd chn</i>)</code></span></td></tr>
+<tr><td></td><td>
+selection length in samples.  You can set this to move the selection end point. 
 </td></tr>
 
 <!-- selection-maxamp -->
-
-<tr><td><span class=defbox><code><em class=def><a name="sndselectionmaxamp">selection-maxamp</a></em> (<i>snd chn</i>)</code></span></td>
-<td>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndselectionmaxamp">selection-maxamp</a></em> (<i>snd chn</i>)</code></span></td></tr>
+<tr><td></td><td>
 maximum amplitude of selection in the given channel.
 </td></tr>
 
 <!-- selection-member? -->
-
-<tr><td><span class=defbox><code><em class=def><a name="selectionmember">selection-member?</a></em> (<i>snd chn</i>)</code></span></td>
-<td>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="selectionmember">selection-member?</a></em> (<i>snd chn</i>)</code></span></td></tr>
+<tr><td></td><td>
 #t if snd's chn is member of active selection. (This is settable).  See make-selection in extensions.scm.
-If <i>snd</i> is #t and the new value is #f, the entire current selection is deactivated.
+If <i>snd</i> is #t and the new value is #f, the entire selection is deactivated.
 </td></tr>
 
 <!-- selection-position -->
-
-<tr><td valign=top><span class=defbox><code><em class=def><a name="selectionposition">selection-position</a></em> (<i>snd chn</i>)</code></span></td>
-<td>
-selection begin sample number. You can set this to move the selection's starting point to some arbitrary sample.
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="selectionposition">selection-position</a></em> (<i>snd chn</i>)</code></span></td></tr>
+<tr><td></td><td>
+sample where selection begins. You can set this to move the selection's starting point to some arbitrary sample.
 If changed, the selection end point stays the same, while the length (selection-frames) changes to reflect the
 moved origin. 
 See make-selection in extensions.scm.
 </td></tr>
 
 <!-- selection-srate -->
-
-<tr><td><span class=defbox><code><em class=def><a name="selectionsrate">selection-srate</a></em> ()</code></span></td>
-<td>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="selectionsrate">selection-srate</a></em> ()</code></span></td></tr>
+<tr><td></td><td>
 selection srate.  There's some arbitrariness in this if the sounds that make up the selection have different sampling rates.
 </td></tr>
 
 <!-- selection? -->
-
-<tr><td><span class=defbox><code><em class=def><a name="selectionok">selection?</a></em> ()</code></span></td>
-<td>
-#t if selection is active.
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="selectionok">selection?</a></em> ()</code></span></td></tr>
+<tr><td></td><td>
+#t if there is a selection.
 </td></tr>
 
 <!-- smooth-selection -->
-
-<tr><td valign=top><span class=defbox><code><em class=def><a name="sndsmoothselection">smooth-selection</a></em> ()</code></span></td>
-<td>
-apply a smoothing function to the current selection.  This produces a sinusoid between
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndsmoothselection">smooth-selection</a></em> ()</code></span></td></tr>
+<tr><td></td><td>
+apply a smoothing function to the selection.  This produces a sinusoid between
 the end points.</td></tr>
 
 <!-- src-selection -->
-
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndsrcselection">src-selection</a></em> (num-or-env <i>base</i>) </code></span></td>
-</tr><tr><td></td><td>
-same as <i>src-sound</i> but applied to current selection.
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndsrcselection">src-selection</a></em> (num-or-env <i>base</i>) </code></span></td></tr>
+<tr><td></td><td>
+apply sampling rate conversion to the selection;
+this is the same as <i>src-sound</i> but applied to selection.
 </td></tr>
 
 </table>
 
-<p>The selected portion can be set, independent of any region, by setting selection-position and selection-frames.
-See make-selection in extensions.scm.
+<p>The selected portion can be chosen, independent of any region, by setting selection-position and selection-frames.
 It's easy to extend the notion of a selection to an arbitrary list of sound portions:
 </p>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
@@ -3879,7 +3840,7 @@ The following code sets the 'unite' button if the current sound has more than 4 
       (if (selection?)
           (throw 'no-such-channel 
                  (list "selection-&gt;vct"
-     	               (format #f "snd ~D channel ~D is not a member of the current selection" snd chn)))
+     	               (format #f "snd ~D channel ~D is not a member of the selection" snd chn)))
 	  (throw 'no-active-selection (list "selection-&gt;vct")))))
 </pre></td></tr></table>
 <br>
@@ -4595,7 +4556,7 @@ insert sample <i>value</i> at sample <i>samp</i> in <i>snd</i>'s channel <i>chn<
 To insert some portion of a channel: <a href="sndscm.html#insertchannel">insert-channel</a>
 To insert a silence: <a href="#padchannel">pad-channel</a>, <a href="#sndinsertsilence">insert-silence</a>
 To insert a region: <a href="#sndinsertregion">insert-region</a>
-To insert the current selection: <a href="#sndinsertselection">insert-selection</a>
+To insert the selection: <a href="#sndinsertselection">insert-selection</a>
 To insert a vct of samples: <a href="#sndinsertsamples">insert-samples</a>
 To insert a sound: <a href="#sndinsertfile">insert-sound</a>
 </blockquote></small></pre>
@@ -5132,7 +5093,7 @@ If <i>pos</i> is given, play at that edit position.
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="playerhome">player-home</a></em> (player)</code></span>
 </td></tr>
-<tr><td width=150></td><td>
+<tr><td></td><td>
 return a list of the sound index and channel number associated with <a href="#makeplayer">player</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -5311,8 +5272,6 @@ This gives a slightly different take on the sound on each change
 of view or redisplay.  But if the details of the noise don't
 matter, this change is also ok -- you're editing a sort
 of mobile in sound (analogous to mobile sculpture).
-I may expand this capability to include any
-function at all.
 <br><br>
 However, not everyone wants his samples floating around randomly beneath his gaze.
 'init-func' provides a way to include state with the 'proc', as in
@@ -5680,7 +5639,7 @@ To backup edits automatically: <a href="sndscm.html#exautosave">autosave</a>
 To check first for unsaved edits: <a href="sndscm.html#exunsavededits">check-for-unsaved-edits</a>
 To save Snd's complete state (unsaved edits and all): <a href="#sndsavestate">save-state</a>, <a href="#savedir">save-dir</a>, <a href="#savestatehook">save-state-hook</a>, <a href="#lsavestatefile">save-state-file</a>
 To save just the current options: <a href="#sndsaveoptions">save-options</a>
-To save the current selection: <a href="#sndsaveselection">save-selection</a>
+To save the selection: <a href="#sndsaveselection">save-selection</a>
 To save a region: <a href="#sndsaveregion">save-region</a>
 To save a track: <a href="sndscm.html#savetrack">save-track</a>
 To save the control panel state: <a href="#sndcontrolsave">save-controls</a>
@@ -7588,7 +7547,7 @@ should return that list, sorted as it pleases.  For example, the following sorts
 <!-- edit-save-as-dialog -->
 
 <tr><td><span class=defbox><code><em class=def><a name="sndeditsaveasdialog">edit-save-as-dialog</a></em> () </code></span></td>
-<td>fire up Edit Save-as dialog (to save the current selection).</td></tr>
+<td>fire up Edit Save-as dialog (to save the selection).</td></tr>
 
 <!-- enved-active-env -->
 
@@ -8288,8 +8247,8 @@ run
 <br>
 <p><b>Transform type</b> (<a href="#ltransformtype">transform-type</a>):</p>
 <pre>
-  <a name="fouriertransform">fourier-transform</a>  wavelet-transform
-  autocorrelation    walsh-transform     hadamard-transform  cepstrum   haar-transform
+  <a name="fouriertransform">fourier-transform</a>  wavelet-transform   cepstrum   haar-transform
+  autocorrelation    walsh-transform     hadamard-transform  
 </pre><br>
 
 <p><b>Transform normalization</b> (<a href="#normalizefft">transform-normalization</a>):</p>
@@ -8663,7 +8622,7 @@ exit Snd.
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="sndgraph2ps">graph-&gt;ps</a></em> (<i>file</i>)</code></span></td></tr>
 <tr><td></td><td>
-create Postscript description of current display 
+create Postscript description of current display.
 <i>file</i> defaults to <a href="#epsfile">eps-file</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -9776,7 +9735,7 @@ If #t and GL is loaded, use GL where possible (default is #t if HAVE_GL).</td></
 	<!-- I(describe audio):A(describeaudiostate) --><!-- I(describe audio):L(mus-audio-describe)(describeaudiostate) -->
 	<!-- I(abort command):L(c-g?)(sndabort) -->
 	<!-- I(count matches):L(count-matches)(lcountmatches) --><!-- I(count matches):A(lcountmatches) -->
-	<!-- I(convolution):L(convolve)(sndconvolve) --><!-- I(convolution):A(sndconvolve) --><!-- I(convolution):O(convolve-with)(sndconvolvewith) -->
+	<!-- I(convolution):L(vct-convolve!)(vctconvolve) --><!-- I(convolution):A(vctconvolve) --><!-- I(convolution):O(convolve-with)(sndconvolvewith) -->
 	<!-- I(auto save):O(autosave.scm) -->
         <!-- I(reverberate file):L(convolve-with)(sndconvolvewith) -->
         <!-- I(record sound):L(recorder-dialog)(sndrecorderdialog) -->

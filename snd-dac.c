@@ -2168,7 +2168,7 @@ static XEN g_play_channel(XEN beg, XEN dur, XEN snd_n, XEN chn_n, XEN edpos)
 
 static XEN g_play_selection(XEN wait, XEN edpos) 
 {
-  #define H_play_selection "(" S_play_selection " &optional (wait #f) pos) plays the current selection"
+  #define H_play_selection "(" S_play_selection " &optional (wait #f) pos) plays the selection"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(wait), wait, XEN_ARG_1, S_play_selection, "a boolean");
   if (selection_is_active())
     {

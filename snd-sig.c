@@ -150,7 +150,7 @@ static sync_state *get_sync_state_1(snd_state *ss, snd_info *sp, chan_info *cp, 
 	    }
 	  else 
 	    {
-	      snd_warning(_("no current selection"));
+	      snd_warning(_("no selection"));
 	      return(NULL);
 	    }
 	}
@@ -200,7 +200,7 @@ static sync_state *get_sync_state_without_snd_fds(snd_state *ss, snd_info *sp, c
 	    }
 	  else
 	    {
-	      snd_warning(_("no current selection"));
+	      snd_warning(_("no selection"));
 	      return(NULL);
 	    }
 	}
@@ -3406,7 +3406,7 @@ scales snd by scalers (following sync) scalers can be a float or a vector of flo
 
 static XEN g_scale_selection_to(XEN scalers)
 {
-  #define H_scale_selection_to "(" S_scale_selection_to " norms) normalizes current selected portion to norms"
+  #define H_scale_selection_to "(" S_scale_selection_to " norms) normalizes selected portion to norms"
   int len[1];
   Float *scls;
   if (selection_is_active())
@@ -3421,7 +3421,7 @@ static XEN g_scale_selection_to(XEN scalers)
 
 static XEN g_scale_selection_by(XEN scalers)
 {
-  #define H_scale_selection_by "(" S_scale_selection_by " scalers) scales current selected portion by scalers"
+  #define H_scale_selection_by "(" S_scale_selection_by " scalers) scales selected portion by scalers"
   int len[1];
   Float *scls;
   if (selection_is_active())
@@ -3455,7 +3455,7 @@ applies gen to snd's channel chn starting at beg for dur samples. overlap is the
   dur = dur_to_samples(samps, beg, cp, pos, XEN_ARG_3, S_clm_channel);
   if (dur == 0) return(XEN_FALSE);
   XEN_ASSERT_TYPE(mus_xen_p(gen), gen, XEN_ARG_1, S_clm_channel, "a clm generator");
-  egen = MUS_XEN_TO_CLM(gen);
+  egen = XEN_TO_MUS_ANY(gen);
   errmsg = clm_channel(cp, egen, beg, dur, pos, S_clm_channel, XEN_TO_C_OFF_T_OR_ELSE(overlap, 0));
   if (errmsg)
     {
@@ -3482,7 +3482,7 @@ static XEN g_env_1(XEN edata, off_t beg, off_t dur, XEN base, chan_info *cp, XEN
     }
   else
     {
-      XEN_ASSERT_TYPE((mus_xen_p(edata)) && (mus_env_p(egen = MUS_XEN_TO_CLM(edata))), edata, XEN_ARG_1, caller, "an env generator or a list");
+      XEN_ASSERT_TYPE((mus_xen_p(edata)) && (mus_env_p(egen = XEN_TO_MUS_ANY(edata))), edata, XEN_ARG_1, caller, "an env generator or a list");
       apply_env(cp, NULL, beg, dur, selection, NOT_FROM_ENVED, caller, egen, edpos, 7, 1.0);
       return(edata);
     }
@@ -3966,7 +3966,7 @@ convolves file with snd's channel chn (or the currently sync'd channels), amp is
 static XEN g_convolve_selection_with(XEN file, XEN new_amp)
 {
   #define H_convolve_selection_with "(" S_convolve_selection_with " file &optional (amp 1.0))\n\
-convolves the current selection with file; amp is the resultant peak amp"
+convolves the selection with file; amp is the resultant peak amp"
 
   if (selection_is_active() == 0) 
     return(snd_no_active_selection_error(S_convolve_selection_with));
@@ -4021,7 +4021,7 @@ sampling-rate converts snd's channel chn by ratio, or following an envelope gene
   XEN err;
   XEN_ASSERT_TYPE((XEN_NUMBER_P(ratio_or_env_gen)) || 
 		  ((mus_xen_p(ratio_or_env_gen)) && 
-		   (mus_env_p(egen = MUS_XEN_TO_CLM(ratio_or_env_gen)))),
+		   (mus_env_p(egen = XEN_TO_MUS_ANY(ratio_or_env_gen)))),
 		  ratio_or_env_gen, XEN_ARG_1, S_src_channel, "a number or a CLM env generator");
   ASSERT_SAMPLE_TYPE(S_src_channel, beg_n, XEN_ARG_2);
   ASSERT_SAMPLE_TYPE(S_src_channel, dur_n, XEN_ARG_3);
@@ -4081,7 +4081,7 @@ static XEN g_src_1(XEN ratio_or_env, XEN base, XEN snd_n, XEN chn_n, XEN edpos, 
 	}
       else
 	{
-	  XEN_ASSERT_TYPE((mus_xen_p(ratio_or_env)) && (mus_env_p(egen = MUS_XEN_TO_CLM(ratio_or_env))), 
+	  XEN_ASSERT_TYPE((mus_xen_p(ratio_or_env)) && (mus_env_p(egen = XEN_TO_MUS_ANY(ratio_or_env))), 
 			  ratio_or_env, XEN_ARG_1, caller, "a number, list, or env generator");
 	  check_src_envelope(mus_length(egen), mus_data(egen), caller);
 	  src_env_or_num(ss, cp, NULL, 
@@ -4124,7 +4124,7 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos, const c
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(order), order, XEN_ARG_2, caller, "an integer");
   if (mus_xen_p(e))
     {
-      error = apply_filter_or_error(cp, 0, NULL, NOT_FROM_ENVED, caller, selection, NULL, MUS_XEN_TO_CLM(e), edpos, 5);
+      error = apply_filter_or_error(cp, 0, NULL, NOT_FROM_ENVED, caller, selection, NULL, XEN_TO_MUS_ANY(e), edpos, 5);
       if (error)
 	{
 	  errstr = C_TO_XEN_STRING(error);
@@ -4166,7 +4166,7 @@ applies FIR filter to snd's channel chn. 'filter' is either the frequency respon
 
 static XEN g_filter_selection(XEN e, XEN order)
 {
-  #define H_filter_selection "(" S_filter_selection " filter order) applies filter to current selection"
+  #define H_filter_selection "(" S_filter_selection " filter order) applies filter to selection"
 
   if (selection_is_active() == 0) 
     return(snd_no_active_selection_error(S_filter_selection));

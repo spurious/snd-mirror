@@ -642,7 +642,7 @@ static XEN g_open_sound_output(XEN file, XEN srate, XEN chans, XEN data_format, 
 
   #define H_mus_sound_open_output "(" S_mus_sound_open_output " filename srate chans data-format header-type &optional comment)\n\
 opens filename for sound output with the given srate and so on, returns the file number (int). \
-the file size is normally set later via mus-sound-close-output. srate is an integer, comment is a string, \
+The file size is normally set later via mus-sound-close-output. srate is an integer, comment is a string, \
 data-format is a sndlib format indicator such as mus-bshort, if #f if defaults to a format compatible with sndlib, \
 header-type is a sndlib type indicator such as mus-aiff, sndlib currently only writes 5 or so header types."
 
@@ -688,7 +688,7 @@ static XEN g_reopen_sound_output(XEN file, XEN chans, XEN data_format, XEN heade
 
   #define H_mus_sound_reopen_output "(" S_mus_sound_reopen_output " filename chans data-format header-type data-location)\n\
 reopen (without alteration) filename for output \
-data-format and header-type are sndlib indicators such as mus-bshort or mus-aiff \
+data-format and header-type are sndlib indicators such as mus-bshort or mus-aiff. \
 data-location should be retrieved from a previous call to mus-sound-data-location"
 
   int fd = -1, df, ht, chns;
@@ -1110,7 +1110,7 @@ one in which all directories in the path are explicit."
 static XEN g_mus_sound_report_cache(XEN file)
 {
   #define H_mus_sound_report_cache "(" S_mus_sound_report_cache " name) prints the current sound \
-header data table to the file given or stdout if none"
+header data table to the file given or stdout"
 
   XEN res = XEN_FALSE;
   if (XEN_NOT_BOUND_P(file))
