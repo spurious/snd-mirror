@@ -77,22 +77,45 @@ static XEN gmus_sound_set(const char *caller, int (*func)(const char *file, int 
   return(C_TO_XEN_INT(res));
 }
 
+static XEN glmus_sound(const char *caller, off_t (*func)(const char *file), XEN filename)
+{
+  char *tmpstr = NULL;
+  int res;
+  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ONLY_ARG, caller, "a string"); 
+  tmpstr = mus_expand_filename(XEN_TO_C_STRING(filename));
+  res = (*func)(tmpstr);
+  if (tmpstr) FREE(tmpstr);
+  return(C_TO_XEN_ULONG(res));
+}
+
+static XEN glmus_sound_set(const char *caller, off_t (*func)(const char *file, off_t newval), XEN filename, XEN val)
+{
+  char *tmpstr = NULL;
+  off_t res;
+  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ARG_1, caller, "a string"); 
+  XEN_ASSERT_TYPE(XEN_ULONG_P(val), val, XEN_ARG_2, caller, "a long");
+  tmpstr = mus_expand_filename(XEN_TO_C_STRING(filename));
+  res = (*func)(tmpstr, XEN_TO_C_ULONG(val));
+  if (tmpstr) FREE(tmpstr);
+  return(C_TO_XEN_ULONG(res));
+}
+
 static XEN g_sound_samples(XEN filename) 
 {
   #define H_mus_sound_samples "(" S_mus_sound_samples " filename) -> samples (frames*channels) in sound"
-  return(gmus_sound(S_mus_sound_samples, mus_sound_samples, filename));
+  return(glmus_sound(S_mus_sound_samples, mus_sound_samples, filename));
 }
 
 static XEN g_sound_set_samples(XEN filename, XEN val) 
 {
   #define H_mus_sound_set_samples "(set! (" S_mus_sound_samples " filename) val) -> sets samples (frames*channels) in sound"
-  return(gmus_sound_set("set-" S_mus_sound_samples, mus_sound_set_samples, filename, val));
+  return(glmus_sound_set("set-" S_mus_sound_samples, mus_sound_set_samples, filename, val));
 }
 
 static XEN g_sound_frames(XEN filename) 
 {
   #define H_mus_sound_frames "(" S_mus_sound_frames " filename) -> frames (samples/channel) in sound"
-  return(gmus_sound(S_mus_sound_frames, mus_sound_frames, filename));
+  return(glmus_sound(S_mus_sound_frames, mus_sound_frames, filename));
 }
 
 static XEN g_sound_datum_size(XEN filename) 
@@ -104,13 +127,13 @@ static XEN g_sound_datum_size(XEN filename)
 static XEN g_sound_data_location(XEN filename) 
 {
   #define H_mus_sound_data_location "(" S_mus_sound_data_location " filename) -> location (bytes) of first sample of sound data"
-  return(gmus_sound(S_mus_sound_data_location, mus_sound_data_location, filename));
+  return(glmus_sound(S_mus_sound_data_location, mus_sound_data_location, filename));
 }
 
 static XEN g_sound_set_data_location(XEN filename, XEN val) 
 {
   #define H_mus_sound_set_data_location "(set! (" S_mus_sound_data_location " filename) val) -> sets data_location in sound"
-  return(gmus_sound_set("set-" S_mus_sound_data_location, mus_sound_set_data_location, filename, val));
+  return(glmus_sound_set("set-" S_mus_sound_data_location, mus_sound_set_data_location, filename, val));
 }
 
 static XEN g_sound_chans(XEN filename) 
@@ -164,7 +187,7 @@ static XEN g_sound_set_data_format(XEN filename, XEN val)
 static XEN g_sound_length(XEN filename) 
 {
   #define H_mus_sound_length "(" S_mus_sound_length " filename) -> file length in bytes"
-  return(gmus_sound(S_mus_sound_length, mus_sound_length, filename));
+  return(glmus_sound(S_mus_sound_length, mus_sound_length, filename));
 }
 
 static XEN g_sound_type_specifier(XEN filename) 

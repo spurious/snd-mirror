@@ -93,6 +93,10 @@
 #include "vct.h"
 #include "clm2xen.h"
 
+#ifdef __USE_LARGEFILE64
+  #warn got 64
+#endif
+
 #define XEN_SYMBOL_TO_VALUE(a) XEN_VARIABLE_REF(scm_sym2var(a, scm_current_module_lookup_closure(), XEN_TRUE))
 #define XEN_SYMBOL_NAME_SET_VALUE(a, b) XEN_VARIABLE_SET(scm_sym2var(scm_str2symbol(a), scm_current_module_lookup_closure(), XEN_TRUE), b)
 #define XEN_AS_STRING(form) XEN_TO_C_STRING(XEN_TO_STRING(form))
@@ -266,6 +270,8 @@ static char* type_name(int id) {if ((id >= R_INT) && (id <= R_CLM_VECTOR)) retur
 #define VECTOR_P(Type) ((Type) > R_CLM)
 
 enum {R_VARIABLE, R_CONSTANT};
+#define NEED_ANY_RESULT 1
+#define NEED_INT_RESULT 2
 
 /* local variables (let vars) global to the closure we are passed are sometimes unbound at read-time,
  *   so we can't get their type from their current value.  It's possible to make plausible
@@ -344,8 +350,8 @@ static xen_value *run_warn(char *format, ...)
   run_warned = TRUE;
 #if HAVE_VPRINTF
   va_start(ap, format);
-#if HAVE_VSNPRINTF
-  vsnprintf(optimizer_warning_buffer, OPTIMIZER_WARNING_BUFFER_SIZE, format, ap);
+#if HAVE_VMUS_SNPRINTF
+  vmus_snprintf(optimizer_warning_buffer, OPTIMIZER_WARNING_BUFFER_SIZE, format, ap);
 #else
   vsprintf(optimizer_warning_buffer, format, ap);
 #endif
@@ -482,6 +488,69 @@ static xen_var *find_pending_var_in_ptree_via_xen_value(ptree *pt, xen_value *v)
   return(NULL);
 }
 
+#if DEBUGGING
+static char **saved_names = NULL;
+static int *saved_int_addrs = NULL;
+static int *saved_dbl_addrs = NULL;
+static int saved_vars = 0, saved_var_ctr = 0;
+static void save_local_var_info(xen_var *var)
+{
+  int i, loc = -1;
+  if (saved_vars == 0)
+    {
+      loc = 0;
+      saved_vars = 8;
+      saved_dbl_addrs = (int *)CALLOC(saved_vars, sizeof(int));
+      saved_int_addrs = (int *)CALLOC(saved_vars, sizeof(int));
+      saved_names = (char **)CALLOC(saved_vars, sizeof(char *));
+    }
+  else
+    {
+      if (saved_var_ctr == saved_vars)
+	{
+	  loc = saved_vars;
+	  saved_vars += 8;
+	  saved_dbl_addrs = (int *)REALLOC(saved_dbl_addrs, saved_vars * sizeof(int));
+	  saved_int_addrs = (int *)REALLOC(saved_int_addrs, saved_vars * sizeof(int));
+	  saved_names = (char **)REALLOC(saved_names, saved_vars * sizeof(char *));
+	  for (i = loc; i < saved_vars; i++) saved_names[i] = NULL;
+	}
+      else
+	loc = saved_var_ctr++;
+    }
+  if (var->v->type == R_FLOAT)
+    saved_dbl_addrs[loc] = var->v->addr;
+  else saved_int_addrs[loc] = var->v->addr;
+  saved_names[loc] = copy_string(var->name);
+}
+static char *find_local_var_via_addr(int is_float, int addr)
+{
+  int i;
+  for (i = 0; i < saved_var_ctr; i++)
+    {
+      if ((is_float) && (saved_dbl_addrs[i] == addr))
+	return(saved_names[i]);
+      if ((!is_float) && (saved_int_addrs[i] == addr))
+	return(saved_names[i]);
+    }
+  return(NULL);
+}
+static void free_saved_locals(void)
+{
+  int i;
+  for (i = 0; i < saved_var_ctr; i++)
+    if (saved_names[i]) FREE(saved_names[i]);
+  if (saved_names) FREE(saved_names);
+  if (saved_int_addrs) FREE(saved_int_addrs);
+  if (saved_dbl_addrs) FREE(saved_dbl_addrs);
+  saved_var_ctr = 0;
+  saved_vars = 0;
+  saved_names = NULL;
+  saved_int_addrs = NULL;
+  saved_dbl_addrs = NULL;
+}
+#endif
+
 static char *add_comments(ptree *pt, char *str)
 {
   xen_var *var;
@@ -528,6 +597,18 @@ static char *add_comments(ptree *pt, char *str)
 		  strcpy(name, var->name);
 		  name_pending = 1;
 		}
+#if DEBUGGING
+	      else
+		{
+		  char *local_name;
+		  local_name = find_local_var_via_addr(str[i] == 'd', addr);
+		  if (local_name)
+		    {
+		      strcpy(name, local_name);
+		      name_pending = 1;
+		    }
+		}
+#endif
 	    }
 	  new_buf[j++] = str[i];
 	}
@@ -542,7 +623,7 @@ static char *str_append(char *oldstr, int *oldsize, char *newstr)
   size = strlen(oldstr) + strlen(newstr);
   if (size >= (*oldsize))
     {
-      oldstr = REALLOC(oldstr, size * 2 * sizeof(char));
+      oldstr = (char *)REALLOC(oldstr, size * 2 * sizeof(char));
       (*oldsize) = size * 2;
     }
   strcat(oldstr, newstr);
@@ -576,20 +657,20 @@ static char *describe_ptree(ptree *p)
   for (i = 0; i < p->int_ctr - 1; i++)
     {
       temp = (char *)CALLOC(16, sizeof(char));
-      snprintf(temp, 16, "%d, ", ints[i]);
+      mus_snprintf(temp, 16, "%d, ", ints[i]);
       buf = str_append(buf, &size, temp);
     }
   temp = (char *)CALLOC(16, sizeof(char));
-  snprintf(temp, 16, "%d], [", ints[p->int_ctr - 1]);
+  mus_snprintf(temp, 16, "%d], [", ints[p->int_ctr - 1]);
   buf = str_append(buf, &size, temp);
   for (i = 0; i < p->dbl_ctr - 1; i++)
     {
       temp = (char *)CALLOC(16, sizeof(char));
-      snprintf(temp, 16, "%.4f, ", dbls[i]);
+      mus_snprintf(temp, 16, "%.4f, ", dbls[i]);
       buf = str_append(buf, &size, temp);
     }
   temp = (char *)CALLOC(16, sizeof(char));
-  snprintf(temp, 16, "%.4f]\n", dbls[p->dbl_ctr - 1]);
+  mus_snprintf(temp, 16, "%.4f]\n", dbls[p->dbl_ctr - 1]);
   buf = str_append(buf, &size, temp);
   for (i = 0; i < p->triple_ctr; i++)
     {
@@ -644,11 +725,11 @@ static char *describe_xen_value(xen_value *v, int *ints, Float *dbls)
   if (v == NULL) return(copy_string("null xen_value"));
   switch (v->type)
     {
-    case R_BOOL:    buf = (char *)CALLOC(32, sizeof(char)); snprintf(buf, 32, "i%d(%s)", v->addr, (ints[v->addr] == 0) ? "#f" : "#t"); break;
-    case R_INT:     buf = (char *)CALLOC(32, sizeof(char)); snprintf(buf, 32, "i%d(%d)", v->addr, ints[v->addr]);                      break;
-    case R_CHAR:    buf = (char *)CALLOC(32, sizeof(char)); snprintf(buf, 32, "i%d(#\\%c)", v->addr, (char)(ints[v->addr]));           break;
-    case R_STRING:  buf = (char *)CALLOC(256, sizeof(char)); snprintf(buf, 256, "i%d(\"%s\")", v->addr, (char *)(ints[v->addr]));      break;
-    case R_FLOAT:   buf = (char *)CALLOC(32, sizeof(char)); snprintf(buf, 32, "d%d(%.4f)", v->addr, dbls[v->addr]);                    break;
+    case R_BOOL:    buf = (char *)CALLOC(32, sizeof(char)); mus_snprintf(buf, 32, "i%d(%s)", v->addr, (ints[v->addr] == 0) ? "#f" : "#t"); break;
+    case R_INT:     buf = (char *)CALLOC(32, sizeof(char)); mus_snprintf(buf, 32, "i%d(%d)", v->addr, ints[v->addr]);                      break;
+    case R_CHAR:    buf = (char *)CALLOC(32, sizeof(char)); mus_snprintf(buf, 32, "i%d(#\\%c)", v->addr, (char)(ints[v->addr]));           break;
+    case R_STRING:  buf = (char *)CALLOC(256, sizeof(char)); mus_snprintf(buf, 256, "i%d(\"%s\")", v->addr, (char *)(ints[v->addr]));      break;
+    case R_FLOAT:   buf = (char *)CALLOC(32, sizeof(char)); mus_snprintf(buf, 32, "d%d(%.4f)", v->addr, dbls[v->addr]);                    break;
     case R_FLOAT_VECTOR:
     case R_VCT:     buf = vct_to_string((vct *)(ints[v->addr]));                                                                       break;
     case R_READER:  if (ints[v->addr]) buf = sf_to_string((snd_fd *)(ints[v->addr])); else buf = copy_string("null");                  break;
@@ -659,7 +740,7 @@ static char *describe_xen_value(xen_value *v, int *ints, Float *dbls)
     case R_INT_VECTOR: return(mus_format("int vector i%d(%p)", v->addr, (int_vct *)(ints[v->addr])));                                  break;
     case R_VCT_VECTOR: return(mus_format("vct vector i%d(%p)", v->addr, (vct_vct *)(ints[v->addr])));                                  break;
     case R_CLM_VECTOR: return(mus_format("clm vector i%d(%p)", v->addr, (clm_vct *)(ints[v->addr])));                                  break;
-    default:        buf = (char *)CALLOC(32, sizeof(char)); snprintf(buf, 32, "unknown type: %d", v->type);                            break;
+    default:        buf = (char *)CALLOC(32, sizeof(char)); mus_snprintf(buf, 32, "unknown type: %d", v->type);                            break;
     }
   return(buf);
 }
@@ -838,6 +919,9 @@ static xen_var *free_xen_var(ptree *prog, xen_var *var)
   int local_var;
   if (var)
     {
+#if DEBUGGING
+      save_local_var_info(var);
+#endif
       /* fprintf(stderr, "free var %s %s (global: %d, unclean: %d)\n", var->name, type_name(var->v->type), var->global, var->unclean); */
       /* if var->global, reflect new value into outer level version of the variable upon quit */
       if ((var->global) &&
@@ -913,6 +997,9 @@ void *free_ptree(void *upt)
 {
   int i;
   ptree *pt = (ptree *)upt;
+#if DEBUGGING
+  free_saved_locals();
+#endif
   if (pt)
     {
       /* free_xen_var depends (in vector case) on finding current (unfreed) data */
@@ -1037,7 +1124,6 @@ static int add_dbl_to_ptree(ptree *pt, Float value)
       pt->dbls_size += 8;
       pt->dbls = (Float *)REALLOC(pt->dbls, pt->dbls_size * sizeof(Float));
     }
-  /* fprintf(stderr,"put %f at %d ",value, pt->dbl_ctr); */
   pt->dbls[pt->dbl_ctr++] = value;
   return(cur);
 }
@@ -1248,7 +1334,7 @@ static xen_value *add_global_var_to_ptree(ptree *prog, XEN form)
   int var_loc = 0, local_var = FALSE;
   xen_value *v = NULL;
   char varname[256];
-  snprintf(varname, 256, "%s", XEN_SYMBOL_TO_C_STRING(form));
+  mus_snprintf(varname, 256, "%s", XEN_SYMBOL_TO_C_STRING(form));
   var = find_var_in_ptree(prog, varname);
   if (var) return(copy_xen_value(var->v));
   val = symbol_to_value(prog->code, form, &local_var);
@@ -1353,7 +1439,7 @@ static continuation *add_goto_to_ptree(ptree *pt, char *name)
   int old_size, i;
   c = (continuation *)CALLOC(1, sizeof(continuation));
   c->name = (char *)CALLOC(256, sizeof(char));                      /* c->name is used within the call/cc to identify the continuation */
-  snprintf(c->name, 256, "%s", name);
+  mus_snprintf(c->name, 256, "%s", name);
   c->jump = make_xen_value(R_GOTO, add_int_to_ptree(pt, 0), R_VARIABLE); /* c->jump->addr will be the continuation PC */
   c->result = NULL;                                                 /* c->result is the returned value address */
   if (pt->gotos_size <= pt->goto_ctr)
@@ -1653,7 +1739,6 @@ static char *descr_store_true(int *args, int *ints, Float *dbls) {return(mus_for
 
 static void store_s(int *args, int *ints, Float *dbls) 
 {
-  /* fprintf(stderr,"set %s (%d) to %s (%d)\n", STRING_RESULT, args[0], STRING_ARG_1, args[1]); */
   if (STRING_RESULT) FREE(STRING_RESULT);
   STRING_RESULT = copy_string(STRING_ARG_1);
 }
@@ -1896,7 +1981,6 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, int separ
 	      declarations = XEN_CDR(declarations);
 	      if (XEN_EQ_P(XEN_CAR(declaration), arg))
 		{
-		  /* fprintf(stderr,"found %s\n",XEN_AS_STRING(declaration)); */
 		  type = XEN_AS_STRING(XEN_CADR(declaration));
 		  if (strcmp(type, "integer") == 0) arg_type = R_INT; else
 		  if (strcmp(type, "string") == 0) arg_type = R_STRING; else
@@ -2539,7 +2623,7 @@ static xen_value *generalized_set_form(ptree *prog, XEN form, int need_result)
       xen_value *in_v, *v;
       char accessor[256];
       in_settee = XEN_CAR(settee);
-      snprintf(accessor, 256, "%s", XEN_SYMBOL_TO_C_STRING(in_settee));
+      mus_snprintf(accessor, 256, "%s", XEN_SYMBOL_TO_C_STRING(in_settee));
       v = walk(prog, setval, TRUE);
       if (v == NULL) 
 	return(run_warn("set!: can't handle: %s", XEN_AS_STRING(setval)));
@@ -2564,7 +2648,7 @@ static xen_value *set_form(ptree *prog, XEN form, int need_result)
   setval = XEN_CADDR(form);
   if (!(XEN_SYMBOL_P(settee)))
     return(generalized_set_form(prog, form, need_result));
-  snprintf(varname, 256, "%s", XEN_SYMBOL_TO_C_STRING(settee));
+  mus_snprintf(varname, 256, "%s", XEN_SYMBOL_TO_C_STRING(settee));
   var = find_var_in_ptree(prog, varname);
   if (var == NULL)
     {
@@ -2667,10 +2751,10 @@ static char *describe_dbl_args(char *func, int num_args, int *args, Float *dbls,
   sprintf(buf,"d%d(%.4f) =", args[0], dbls[args[0]]);
   for (i = start; i < num_args; i++)
     {
-      snprintf(str, 32, " d%d(%.4f) %s", args[i], dbls[args[i]], func);
+      mus_snprintf(str, 32, " d%d(%.4f) %s", args[i], dbls[args[i]], func);
       strcat(buf, str);
     }
-  snprintf(str, 32, " d%d(%.4f))", args[num_args], dbls[args[num_args]]);
+  mus_snprintf(str, 32, " d%d(%.4f))", args[num_args], dbls[args[num_args]]);
   strcat(buf, str);
   FREE(str);
   return(buf);
@@ -2685,10 +2769,10 @@ static char *describe_int_args(char *func, int num_args, int *args, int *ints, i
   sprintf(buf,"i%d(%d) =", args[0], ints[args[0]]);
   for (i = start; i < num_args; i++)
     {
-      snprintf(str, 32, " i%d(%d) %s", args[i], ints[args[i]], func);
+      mus_snprintf(str, 32, " i%d(%d) %s", args[i], ints[args[i]], func);
       strcat(buf, str);
     }
-  snprintf(str, 32, " i%d(%d))", args[num_args], ints[args[num_args]]);
+  mus_snprintf(str, 32, " i%d(%d))", args[num_args], ints[args[num_args]]);
   strcat(buf, str);
   FREE(str);
   return(buf);
@@ -2700,7 +2784,6 @@ static xen_value *fixup_if_pending(ptree *pt, xen_value *sf, int new_type)
   xen_value *newv;
   if (sf->type == R_PENDING)
     {
-      /* fprintf(stderr,"fixup at %d (%p)...", sf->addr, (sf->addr > 0) ? (snd_fd *)(pt->ints[sf->addr]) : NULL); */
       var = find_pending_var_in_ptree_via_xen_value(pt, sf);
       /* sf->addr is a negative number as part of the pending_tag system */
       if (var == NULL) return(NULL);
@@ -2713,7 +2796,6 @@ static xen_value *fixup_if_pending(ptree *pt, xen_value *sf, int new_type)
       FREE(sf);
       var->v->type = new_type;
       var->v->addr = newv->addr;
-      /* fprintf(stderr,"found %s, %p (%d, %s %s)\n",var->name, var, var->v->addr, type_name(var->v->type), describe_xen_var(var, pt->ints, pt->dbls)); */
       return(newv);
     }
   return(sf);
@@ -2763,6 +2845,9 @@ static char *descr_multiply_f2(int *args, int *ints, Float *dbls) {return(descri
 static void multiply_f3(int *args, int *ints, Float *dbls) {FLOAT_RESULT = (FLOAT_ARG_1 * FLOAT_ARG_2 * FLOAT_ARG_3);}
 static char *descr_multiply_f3(int *args, int *ints, Float *dbls) {return(describe_dbl_args("*", 3, args, dbls, 1));}
 
+static void multiply_f4(int *args, int *ints, Float *dbls) {FLOAT_RESULT = (FLOAT_ARG_1 * FLOAT_ARG_2 * FLOAT_ARG_3 * FLOAT_ARG_4);}
+static char *descr_multiply_f4(int *args, int *ints, Float *dbls) {return(describe_dbl_args("*", 4, args, dbls, 1));}
+
 static void multiply_fn(int *args, int *ints, Float *dbls) 
 {
   int i, n;
@@ -2777,6 +2862,9 @@ static char *descr_multiply_i2(int *args, int *ints, Float *dbls) {return(descri
 
 static void multiply_i3(int *args, int *ints, Float *dbls) {INT_RESULT = (INT_ARG_1 * INT_ARG_2 * INT_ARG_3);}
 static char *descr_multiply_i3(int *args, int *ints, Float *dbls) {return(describe_int_args("*", 3, args, ints, 1));}
+
+static void multiply_i4(int *args, int *ints, Float *dbls) {INT_RESULT = (INT_ARG_1 * INT_ARG_2 * INT_ARG_3 * INT_ARG_4);}
+static char *descr_multiply_i4(int *args, int *ints, Float *dbls) {return(describe_int_args("*", 4, args, ints, 1));}
 
 static void multiply_in(int *args, int *ints, Float *dbls)
 {
@@ -2827,12 +2915,14 @@ static xen_value *multiply(ptree *prog, int float_result, xen_value **args, int 
     {
       if (num_args == 2) return(package(prog, R_FLOAT, multiply_f2, descr_multiply_f2, args, num_args));
       if (num_args == 3) return(package(prog, R_FLOAT, multiply_f3, descr_multiply_f3, args, num_args));
+      if (num_args == 4) return(package(prog, R_FLOAT, multiply_f4, descr_multiply_f4, args, num_args));
       return(package_n(prog, R_FLOAT, multiply_fn, descr_multiply_fn, args, num_args));
     }
   else
     {
       if (num_args == 2) return(package(prog, R_INT, multiply_i2, descr_multiply_i2, args, num_args)); 
       if (num_args == 3) return(package(prog, R_INT, multiply_i3, descr_multiply_i3, args, num_args));
+      if (num_args == 4) return(package(prog, R_INT, multiply_i4, descr_multiply_i4, args, num_args));
       return(package_n(prog, R_INT, multiply_in, descr_multiply_in, args, num_args));
     }
   return(run_warn("* trouble"));
@@ -2846,6 +2936,9 @@ static char *descr_add_f2(int *args, int *ints, Float *dbls) {return(describe_db
 
 static void add_f3(int *args, int *ints, Float *dbls) {FLOAT_RESULT = (FLOAT_ARG_1 + FLOAT_ARG_2 + FLOAT_ARG_3);}
 static char *descr_add_f3(int *args, int *ints, Float *dbls) {return(describe_dbl_args("+", 3, args, dbls, 1));}
+
+static void add_f4(int *args, int *ints, Float *dbls) {FLOAT_RESULT = (FLOAT_ARG_1 + FLOAT_ARG_2 + FLOAT_ARG_3 + FLOAT_ARG_4);}
+static char *descr_add_f4(int *args, int *ints, Float *dbls) {return(describe_dbl_args("+", 4, args, dbls, 1));}
 
 static void add_fn(int *args, int *ints, Float *dbls) 
 {
@@ -2861,6 +2954,9 @@ static char *descr_add_i2(int *args, int *ints, Float *dbls) {return(describe_in
 
 static void add_i3(int *args, int *ints, Float *dbls) {INT_RESULT = (INT_ARG_1 + INT_ARG_2 + INT_ARG_3);}
 static char *descr_add_i3(int *args, int *ints, Float *dbls) {return(describe_int_args("+", 3, args, ints, 1));}
+
+static void add_i4(int *args, int *ints, Float *dbls) {INT_RESULT = (INT_ARG_1 + INT_ARG_2 + INT_ARG_3 + INT_ARG_4);}
+static char *descr_add_i4(int *args, int *ints, Float *dbls) {return(describe_int_args("+", 4, args, ints, 1));}
 
 static void add_in(int *args, int *ints, Float *dbls)
 {
@@ -2909,12 +3005,14 @@ static xen_value *add(ptree *prog, int float_result, xen_value **args, int num_a
     {
       if (num_args == 2) return(package(prog, R_FLOAT, add_f2, descr_add_f2, args, num_args));
       if (num_args == 3) return(package(prog, R_FLOAT, add_f3, descr_add_f3, args, num_args));
+      if (num_args == 4) return(package(prog, R_FLOAT, add_f4, descr_add_f4, args, num_args));
       return(package_n(prog, R_FLOAT, add_fn, descr_add_fn, args, num_args));
     }
   else
     {
       if (num_args == 2) return(package(prog, R_INT, add_i2, descr_add_i2, args, num_args));
       if (num_args == 3) return(package(prog, R_INT, add_i3, descr_add_i3, args, num_args));
+      if (num_args == 4) return(package(prog, R_INT, add_i4, descr_add_i4, args, num_args));
       return(package_n(prog, R_INT, add_in, descr_add_in, args, num_args));
     }
   return(run_warn("+ trouble"));
@@ -3093,10 +3191,10 @@ static char *descr_divide_fn(int *args, int *ints, Float *dbls)
   sprintf(buf,"d%d(%.4f) = d%d(%.4f) / (", args[0], dbls[args[0]], args[2], dbls[args[2]]);
   for (i = 3; i < num_args; i++)
     {
-      snprintf(str, 32, " d%d(%.4f) *", args[i], dbls[args[i]]);
+      mus_snprintf(str, 32, " d%d(%.4f) *", args[i], dbls[args[i]]);
       strcat(buf, str);
     }
-  snprintf(str, 32, " d%d(%.4f))", args[num_args], dbls[args[num_args]]);
+  mus_snprintf(str, 32, " d%d(%.4f))", args[num_args], dbls[args[num_args]]);
   strcat(buf, str);
   FREE(str);
   return(buf);
@@ -3152,10 +3250,10 @@ static char *describe_rel_f_args(char *func, int num_args, int *args, int *ints,
   sprintf(buf,"i%d(%d) =", args[0], ints[args[0]]);
   for (i = start; i < num_args; i++)
     {
-      snprintf(str, 32, " d%d(%.4f) %s", args[i], dbls[args[i]], func);
+      mus_snprintf(str, 32, " d%d(%.4f) %s", args[i], dbls[args[i]], func);
       strcat(buf, str);
     }
-  snprintf(str, 32, " d%d(%.4f))", args[num_args], dbls[args[num_args]]);
+  mus_snprintf(str, 32, " d%d(%.4f))", args[num_args], dbls[args[num_args]]);
   strcat(buf, str);
   FREE(str);
   return(buf);
@@ -3308,10 +3406,10 @@ static char *descr_max_min_fn(int *args, int *ints, Float *dbls, char *which)
   sprintf(buf,"i%d(%d) = %s(", args[0], ints[args[0]], which);
   for (i = 2; i <= n; i++)
     {
-      snprintf(str, 32, "d%d(%.4f) ", args[i], dbls[args[i]]);
+      mus_snprintf(str, 32, "d%d(%.4f) ", args[i], dbls[args[i]]);
       strcat(buf, str);
     }
-  snprintf(str, 32, "d%d(%.4f))", args[n + 1], dbls[args[n + 1]]);
+  mus_snprintf(str, 32, "d%d(%.4f))", args[n + 1], dbls[args[n + 1]]);
   strcat(buf, str);
   FREE(str);
   return(buf);
@@ -3342,10 +3440,10 @@ static char *descr_max_min_in(int *args, int *ints, Float *dbls, char *which)
   sprintf(buf,"i%d(%d) = %s(", args[0], ints[args[0]], which);
   for (i = 2; i <= n; i++)
     {
-      snprintf(str, 32, "i%d(%d) ", args[i], ints[args[i]]);
+      mus_snprintf(str, 32, "i%d(%d) ", args[i], ints[args[i]]);
       strcat(buf, str);
     }
-  snprintf(str, 32, "i%d(%d))", args[n + 1], ints[args[n + 1]]);
+  mus_snprintf(str, 32, "i%d(%d))", args[n + 1], ints[args[n + 1]]);
   strcat(buf, str);
   FREE(str);
   return(buf);
@@ -3695,14 +3793,27 @@ static Float f_round(Float x)
 
 static void round_f(int *args, int *ints, Float *dbls) {FLOAT_RESULT = f_round(FLOAT_ARG_1);}
 static char *descr_round_f(int *args, int *ints, Float *dbls) {return(mus_format("d%d(%.4f) = round(d%d(%.4f))", args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1));}
-static xen_value *round_1(ptree *prog, xen_value **args, int constants)
+static void round_i(int *args, int *ints, Float *dbls) {INT_RESULT = (int)f_round(FLOAT_ARG_1);}
+static char *descr_round_i(int *args, int *ints, Float *dbls) {return(mus_format("i%d(%d) = (int)round(d%d(%.4f))", args[0], INT_RESULT, args[1], FLOAT_ARG_1));}
+static xen_value *round_1(ptree *prog, xen_value **args, int constants, int arg_result)
 {
   /* (round 1) -> 1.0! */
   if (constants == 1)
     {
       if (args[1]->type == R_INT) 
 	return(make_xen_value(R_INT, add_int_to_ptree(prog, prog->ints[args[1]->addr]), R_CONSTANT)); /* r5rs spec says return int here */
-      else return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, f_round(prog->dbls[args[1]->addr])), R_CONSTANT));
+      else 
+	{
+	  if (arg_result == NEED_INT_RESULT)
+	    return(make_xen_value(R_INT, add_int_to_ptree(prog, (int)f_round(prog->dbls[args[1]->addr])), R_CONSTANT));
+	  return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, f_round(prog->dbls[args[1]->addr])), R_CONSTANT));
+	}
+    }
+  if (arg_result == NEED_INT_RESULT)
+    {
+      if (args[1]->type == R_INT)
+	return(copy_xen_value(args[1]));
+      return(package(prog, R_INT, round_i, descr_round_i, args, 1));
     }
   if (args[1]->type == R_INT)
     return(package(prog, R_FLOAT, store_i_f, descr_store_i_f, args,1));
@@ -3720,14 +3831,33 @@ static Float f_truncate(Float x)
 }
 
 static void truncate_f(int *args, int *ints, Float *dbls) {FLOAT_RESULT = f_truncate(FLOAT_ARG_1);}
-static char *descr_truncate_f(int *args, int *ints, Float *dbls) {return(mus_format("d%d(%.4f) = truncate(d%d(%.4f))", args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1));}
-static xen_value *truncate_1(ptree *prog, xen_value **args, int constants)
+static char *descr_truncate_f(int *args, int *ints, Float *dbls) 
+{
+  return(mus_format("d%d(%.4f) = truncate(d%d(%.4f))", args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1));
+}
+static void truncate_i(int *args, int *ints, Float *dbls) {INT_RESULT = (int)f_truncate(FLOAT_ARG_1);}
+static char *descr_truncate_i(int *args, int *ints, Float *dbls) 
+{
+  return(mus_format("i%d(%d) = truncate(d%d(%.4f))", args[0], INT_RESULT, args[1], FLOAT_ARG_1));
+}
+static xen_value *truncate_1(ptree *prog, xen_value **args, int constants, int arg_result)
 {
   if (constants == 1)
     {
       if (args[1]->type == R_INT) 
 	return(make_xen_value(R_INT, add_int_to_ptree(prog, prog->ints[args[1]->addr]), R_CONSTANT));
-      else return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, f_truncate(prog->dbls[args[1]->addr])), R_CONSTANT));
+      else 
+	{
+	  if (arg_result == NEED_INT_RESULT)
+	    return(make_xen_value(R_INT, add_int_to_ptree(prog, (int)f_truncate(prog->dbls[args[1]->addr])), R_CONSTANT));
+	  return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, f_truncate(prog->dbls[args[1]->addr])), R_CONSTANT));
+	}
+    }
+  if (arg_result == NEED_INT_RESULT)
+    {
+      if (args[1]->type == R_INT)
+	return(copy_xen_value(args[1]));
+      return(package(prog, R_INT, truncate_i, descr_truncate_i, args, 1));
     }
   if (args[1]->type == R_INT)
     return(package(prog, R_FLOAT, store_i_f, descr_store_i_f, args,1));
@@ -3738,13 +3868,26 @@ static xen_value *truncate_1(ptree *prog, xen_value **args, int constants)
 
 static void floor_f(int *args, int *ints, Float *dbls) {FLOAT_RESULT = floor(FLOAT_ARG_1);}
 static char *descr_floor_f(int *args, int *ints, Float *dbls) {return(mus_format("d%d(%.4f) = floor(d%d(%.4f))", args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1));}
-static xen_value *floor_1(ptree *prog, xen_value **args, int constants)
+static void floor_i(int *args, int *ints, Float *dbls) {INT_RESULT = (int)floor(FLOAT_ARG_1);}
+static char *descr_floor_i(int *args, int *ints, Float *dbls) {return(mus_format("i%d(%d) = (int)floor(d%d(%.4f))", args[0], INT_RESULT, args[1], FLOAT_ARG_1));}
+static xen_value *floor_1(ptree *prog, xen_value **args, int constants, int arg_result)
 {
   if (constants == 1)
     {
       if (args[1]->type == R_INT) 
 	return(make_xen_value(R_INT, add_int_to_ptree(prog, prog->ints[args[1]->addr]), R_CONSTANT));
-      else return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, floor(prog->dbls[args[1]->addr])), R_CONSTANT));
+      else 
+	{
+	  if (arg_result == NEED_INT_RESULT)
+	    return(make_xen_value(R_INT, add_int_to_ptree(prog, (int)floor(prog->dbls[args[1]->addr])), R_CONSTANT));
+	  return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, floor(prog->dbls[args[1]->addr])), R_CONSTANT));
+	}
+    }
+  if (arg_result == NEED_INT_RESULT)
+    {
+      if (args[1]->type == R_INT)
+	return(copy_xen_value(args[1]));
+      return(package(prog, R_INT, floor_i, descr_floor_i, args, 1));
     }
   if (args[1]->type == R_INT)
     return(package(prog, R_FLOAT, store_i_f, descr_store_i_f, args,1));
@@ -3755,13 +3898,26 @@ static xen_value *floor_1(ptree *prog, xen_value **args, int constants)
 
 static void ceiling_f(int *args, int *ints, Float *dbls) {FLOAT_RESULT = ceil(FLOAT_ARG_1);}
 static char *descr_ceiling_f(int *args, int *ints, Float *dbls) {return(mus_format("d%d(%.4f) = ceil(d%d(%.4f))", args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1));}
-static xen_value *ceiling_1(ptree *prog, xen_value **args, int constants)
+static void ceiling_i(int *args, int *ints, Float *dbls) {INT_RESULT = (int)ceil(FLOAT_ARG_1);}
+static char *descr_ceiling_i(int *args, int *ints, Float *dbls) {return(mus_format("i%d(%d) = (int)ceil(d%d(%.4f))", args[0], INT_RESULT, args[1], FLOAT_ARG_1));}
+static xen_value *ceiling_1(ptree *prog, xen_value **args, int constants, int arg_result)
 {
   if (constants == 1)
     {
       if (args[1]->type == R_INT) 
 	return(make_xen_value(R_INT, add_int_to_ptree(prog, prog->ints[args[1]->addr]), R_CONSTANT));
-      else return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, ceil(prog->dbls[args[1]->addr])), R_CONSTANT));
+      else 
+	{
+	  if (arg_result == NEED_INT_RESULT)
+	    return(make_xen_value(R_INT, add_int_to_ptree(prog, (int)ceil(prog->dbls[args[1]->addr])), R_CONSTANT));
+	  return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, ceil(prog->dbls[args[1]->addr])), R_CONSTANT));
+	}
+    }
+  if (arg_result == NEED_INT_RESULT)
+    {
+      if (args[1]->type == R_INT)
+	return(copy_xen_value(args[1]));
+      return(package(prog, R_INT, ceiling_i, descr_ceiling_i, args, 1));
     }
   if (args[1]->type == R_INT)
     return(package(prog, R_FLOAT, store_i_f, descr_store_i_f, args,1));
@@ -4224,7 +4380,7 @@ static void string_n(int *args, int *ints, Float *dbls)
   int i, n;
   n = ints[args[1]];
   if (STRING_RESULT) FREE(STRING_RESULT);
-  STRING_RESULT = (char *)CALLOC(n + 1, sizeof(char));
+  INT_RESULT = (int)CALLOC(n + 1, sizeof(char));
   for (i = 1; i <= n; i++) STRING_RESULT[i - 1] = (char)(ints[args[i + 1]]);
 }
 static char *descr_string_n(int *args, int *ints, Float *dbls)
@@ -4290,10 +4446,8 @@ static void strfill_1(int *args, int *ints, Float *dbls)
 {
   int len;
   len = snd_strlen(STRING_RESULT);
-  /* fprintf(stderr,"%s (%d at %d) filled with %c -> ", STRING_RESULT, len, args[0], (char)(CHAR_ARG_1)); */
   if (len > 0)
     memset((void *)(STRING_RESULT), (char)(CHAR_ARG_1), len);
-  /* fprintf(stderr,"%s (%d)\n", STRING_RESULT, snd_strlen(STRING_RESULT)); */
 }
 static char *descr_strfill_1(int *args, int *ints, Float *dbls) 
 {
@@ -4497,11 +4651,11 @@ static char *descr_strn(int *args, int *ints, Float *dbls, char *which, int bool
   buf = (char *)CALLOC(1024, sizeof(char));
   temp = (char *)CALLOC(1024, sizeof(char));
   if (bool_result)
-    snprintf(buf, 1024, "i%d(%d) = %s(i%d(\"%s\")", args[0], BOOL_RESULT, which, args[2], (char *)(ints[args[2]]));
-  else snprintf(buf, 1024, "i%d(\"%s\") = %s(i%d(\"%s\")", args[0], STRING_RESULT, which, args[2], (char *)(ints[args[2]]));
+    mus_snprintf(buf, 1024, "i%d(%d) = %s(i%d(\"%s\")", args[0], BOOL_RESULT, which, args[2], (char *)(ints[args[2]]));
+  else mus_snprintf(buf, 1024, "i%d(\"%s\") = %s(i%d(\"%s\")", args[0], STRING_RESULT, which, args[2], (char *)(ints[args[2]]));
   for (i = 2; i <= n; i++)
     {
-      snprintf(temp, 1024, ", i%d(\"%s\")", args[i + 1], (char *)(ints[args[i + 1]]));
+      mus_snprintf(temp, 1024, ", i%d(\"%s\")", args[i + 1], (char *)(ints[args[i + 1]]));
       if ((snd_strlen(buf) + snd_strlen(temp) < 1023))
 	strcat(buf, temp);
     }
@@ -4803,7 +4957,6 @@ static void next_reader_f(int *args, int *ints, Float *dbls) {FLOAT_RESULT = pro
 static xen_value *next_sample_1(ptree *prog, xen_value **args) 
 {
   if ((args[1] = fixup_if_pending(prog, args[1], R_READER)) == NULL) return(run_warn("next-sample bad arg"));
-  /* fprintf(stderr,"next sample %p at %d\n", (snd_fd *)(prog->ints[args[1]->addr]), args[1]->addr); */
   return(package(prog, R_FLOAT, next_reader_f, descr_next_reader_f, args, 1));
 }
 
@@ -5254,7 +5407,7 @@ static char *descr_gen(int *args, int *ints, Float *dbls, char *which, int num_a
   sprintf(buf,"d%d(%.4f) = %s(i%d(%p)", args[0], FLOAT_RESULT, which, args[1], (mus_any *)(INT_ARG_1));
   for (i = 1; i <= num_args; i++)
     {
-      snprintf(str, 32, ", d%d(%.4f)", args[i + 1], dbls[args[i + 1]]);
+      mus_snprintf(str, 32, ", d%d(%.4f)", args[i + 1], dbls[args[i + 1]]);
       strcat(buf, str);
     }
   strcat(buf, ")");
@@ -5465,7 +5618,7 @@ static char *descr_ref_gen0(int *args, int *ints, Float *dbls, char *which)
   static xen_value * Name ## _0(ptree *prog, xen_value **args, int num_args) \
   { \
     if (num_args != 2) return(run_warn(#Name ": wrong number of args")); \
-    if (args[2]->type != R_INT) return(run_warn(#Name ":bad arg 2")); \
+    if (args[2]->type != R_INT) return(run_warn(#Name ": bad arg 2")); \
     if ((args[1] = fixup_if_pending(prog, args[1], R_CLM)) == NULL) return(run_warn("mus-" #Name ": bad gen")); \
     return(package(prog, R_FLOAT, Name ## _0r, descr_ ## Name ## _0r, args, 2)); \
   }
@@ -5473,6 +5626,66 @@ static char *descr_ref_gen0(int *args, int *ints, Float *dbls, char *which)
 REF_GEN0(frame_ref, mus_frame)
 REF_GEN0(locsig_ref, mus_any)
 REF_GEN0(locsig_reverb_ref, mus_any)
+
+
+static char *descr_set_gen0(int *args, int *ints, Float *dbls, char *which)
+{
+  return(mus_format("%s(i%d(%p), i%d(%d), d%d(%.4f))", which, args[1], (mus_any *)(INT_ARG_1), args[2], INT_ARG_2, args[3], FLOAT_ARG_3));
+}
+#define SET_GEN0(Name, Type) \
+  static char *descr_ ## Name ## _0r(int *args, int *ints, Float *dbls) {return(descr_set_gen0(args, ints, dbls, #Name));} \
+  static void Name ## _0r(int *args, int *ints, Float *dbls) \
+    { \
+      FLOAT_RESULT = FLOAT_ARG_3; \
+      mus_ ## Name ((Type *)(INT_ARG_1), INT_ARG_2, FLOAT_ARG_3); \
+    } \
+  static xen_value * Name ## _0(ptree *prog, xen_value **args, int num_args) \
+  { \
+    if (num_args != 3) return(run_warn(#Name ": wrong number of args")); \
+    if (args[2]->type != R_INT) return(run_warn(#Name ": bad arg 2")); \
+    if (args[3]->type != R_FLOAT) return(run_warn(#Name ": bad arg 3")); \
+    if ((args[1] = fixup_if_pending(prog, args[1], R_CLM)) == NULL) return(run_warn("mus-" #Name ": bad gen")); \
+    return(package(prog, R_FLOAT, Name ## _0r, descr_ ## Name ## _0r, args, 3)); \
+  }
+
+SET_GEN0(frame_set, mus_frame)
+SET_GEN0(locsig_set, mus_any)
+SET_GEN0(locsig_reverb_set, mus_any)
+
+
+static char *descr_mixer_ref_0(int *args, int *ints, Float *dbls)
+{
+  return(mus_format("d%d(%.4f) = mixer-ref(i%d(%p), i%d(%d), i%d(%d))", 
+		    args[0], FLOAT_RESULT, args[1], (mus_any *)(INT_ARG_1), args[2], INT_ARG_2, args[3], INT_ARG_3));
+}
+static void mixer_ref_0(int *args, int *ints, Float *dbls) {FLOAT_RESULT = mus_mixer_ref((mus_mixer *)(INT_ARG_1), INT_ARG_2, INT_ARG_3);}
+static xen_value *mixer_ref_1(ptree *prog, xen_value **args, int num_args)
+{
+  if (num_args != 3) return(run_warn("mixer-ref: wrong number of args"));
+  if ((args[2]->type != R_INT) || (args[3]->type != R_INT)) return(run_warn("mixer-ref: bad arg index"));
+  if ((args[1] = fixup_if_pending(prog, args[1], R_CLM)) == NULL) return(run_warn("mixer-ref: bad gen"));
+  return(package(prog, R_FLOAT, mixer_ref_0, descr_mixer_ref_0, args, 3));
+}
+
+static char *descr_mixer_set_0(int *args, int *ints, Float *dbls)
+{
+  return(mus_format("mixer-set!(i%d(%p), i%d(%d), i%d(%d), d%d(%.4f))", 
+		    args[1], (mus_any *)(INT_ARG_1), args[2], INT_ARG_2, args[3], INT_ARG_3, args[4], FLOAT_ARG_4));
+}
+static void mixer_set_0(int *args, int *ints, Float *dbls) 
+{
+  FLOAT_RESULT = FLOAT_ARG_4;
+  mus_mixer_set((mus_mixer *)(INT_ARG_1), INT_ARG_2, INT_ARG_3, FLOAT_ARG_4);
+}
+static xen_value *mixer_set_1(ptree *prog, xen_value **args, int num_args)
+{
+  if (num_args != 4) return(run_warn("mixer-set!: wrong number of args"));
+  if ((args[2]->type != R_INT) || (args[3]->type != R_INT)) return(run_warn("mixer-set!: bad arg index"));
+  if (args[4]->type != R_FLOAT) return(run_warn("mixer-set!: bad arg 4"));
+  if ((args[1] = fixup_if_pending(prog, args[1], R_CLM)) == NULL) return(run_warn("mixer-set!: bad gen"));
+  return(package(prog, R_FLOAT, mixer_set_0, descr_mixer_set_0, args, 4));
+}
+
 
 
 static char *descr_vct_gen0(int *args, int *ints, Float *dbls, char *which)
@@ -5824,7 +6037,7 @@ static void CName ## _2(int *args, int *ints, Float *dbls) {FLOAT_RESULT = mus_ 
 static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) \
 { \
   if (num_args != 2) return(run_warn( #SName ": wrong number of args")); \
-  if (args[1]->type != R_INT) return(run_warn( #SName ":bad arg type")); \
+  if (args[1]->type != R_INT) return(run_warn( #SName ": bad arg type")); \
   if ((args[2] = fixup_if_pending(prog, args[2], R_CLM)) == NULL) return(run_warn( #SName ": bad reader")); \
   return(package(prog, R_FLOAT, CName ## _2, descr_ ## CName ## _2, args, 2)); \
 }
@@ -6024,7 +6237,6 @@ static Float src_input(void *arg, int direction)
   outer = pt->outer_tree;
   outer->ints[pt->args[0]] = direction;
   eval_embedded_ptree(pt, outer->ints, outer->dbls);
-  /* fprintf(stderr,"src called with %d -> %f\n", direction, pt->dbls[pt->result->addr]); */
   return(outer->dbls[pt->result->addr]);
 }
 static char *descr_src_2f(int *args, int *ints, Float *dbls) 
@@ -6302,11 +6514,11 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
       char funcname[32];
       xen_value **args = NULL;
       int i, num_args, float_result = FALSE, constants = 0, booleans = 0, vcts = 0;
-      int readers = 0, pendings = 0, clms = 0, chars = 0, strings = 0;
+      int readers = 0, pendings = 0, clms = 0, chars = 0, strings = 0, arg_result = NEED_ANY_RESULT;
       xen_var *var;
       xen_value *v = NULL;
       function = XEN_CAR(form);
-      snprintf(funcname, 32, "%s", XEN_AS_STRING(function)); /* protect from gc... */
+      mus_snprintf(funcname, 32, "%s", XEN_AS_STRING(function)); /* protect from gc... */
 
       if (strcmp(funcname, "lambda") == 0) return(lambda_form(prog, form, TRUE));
       if (strcmp(funcname, "declare") == 0) return(make_xen_value(R_BOOL, -1, TRUE));
@@ -6346,9 +6558,10 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
       args = (xen_value **)CALLOC(num_args + 1, sizeof(xen_value *));
       if (num_args > 0)
 	{
+	  if (strcmp(funcname, "inexact->exact") == 0) arg_result = NEED_INT_RESULT;
 	  for (i = 0; i < num_args; i++, all_args = XEN_CDR(all_args))
 	    {
-	      args[i + 1] = walk(prog, XEN_CAR(all_args), TRUE);
+	      args[i + 1] = walk(prog, XEN_CAR(all_args), arg_result);
 	      if (args[i + 1] == NULL) return(clean_up(NULL, args, num_args));
 	      if (args[i + 1]->constant == R_CONSTANT) constants++;
 	      switch (args[i + 1]->type)
@@ -6723,6 +6936,11 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	  if (strcmp(funcname, "locsig-ref") == 0) return(clean_up(locsig_ref_0(prog, args, num_args), args, num_args));
 	  if (strcmp(funcname, "frame-ref") == 0) return(clean_up(frame_ref_0(prog, args, num_args), args, num_args));
 	  if (strcmp(funcname, "locsig-reverb-ref") == 0) return(clean_up(locsig_reverb_ref_0(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "locsig-set!") == 0) return(clean_up(locsig_set_0(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "frame-set!") == 0) return(clean_up(frame_set_0(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "locsig-reverb-set!") == 0) return(clean_up(locsig_reverb_set_0(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "mixer-set!") == 0) return(clean_up(mixer_set_1(prog, args, num_args), args, num_args));
+	  if (strcmp(funcname, "mixer-ref") == 0) return(clean_up(mixer_ref_1(prog, args, num_args), args, num_args));
 	}
       if (num_args == 3)
 	{
@@ -6838,10 +7056,10 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 		    }
 		  if (strcmp(funcname, "inexact->exact") == 0) return(clean_up(inexact2exact_1(prog, args, constants), args, num_args));
 		  if (strcmp(funcname, "exact->inexact") == 0) return(clean_up(exact2inexact_1(prog, args, constants), args, num_args));
-		  if (strcmp(funcname, "round") == 0) return(clean_up(round_1(prog, args, constants), args, num_args));
-		  if (strcmp(funcname, "truncate") == 0) return(clean_up(truncate_1(prog, args, constants), args, num_args));
-		  if (strcmp(funcname, "floor") == 0) return(clean_up(floor_1(prog, args, constants), args, num_args));
-		  if (strcmp(funcname, "ceiling") == 0) return(clean_up(ceiling_1(prog, args, constants), args, num_args));
+		  if (strcmp(funcname, "round") == 0) return(clean_up(round_1(prog, args, constants, need_result), args, num_args));
+		  if (strcmp(funcname, "truncate") == 0) return(clean_up(truncate_1(prog, args, constants, need_result), args, num_args));
+		  if (strcmp(funcname, "floor") == 0) return(clean_up(floor_1(prog, args, constants, need_result), args, num_args));
+		  if (strcmp(funcname, "ceiling") == 0) return(clean_up(ceiling_1(prog, args, constants, need_result), args, num_args));
 		  if (strcmp(funcname, "odd?") == 0) return(clean_up(odd_p(prog, args, constants), args, num_args));
 		  if (strcmp(funcname, "even?") == 0) return(clean_up(even_p(prog, args, constants), args, num_args));
 		  if (strcmp(funcname, "zero?") == 0) return(clean_up(zero_p(prog, args, constants), args, num_args));
@@ -6984,6 +7202,14 @@ void *form_to_ptree_1f2f(XEN code)
   pt = form_to_ptree(code);
   if (pt)
     {
+#if 0
+      {
+	char *msg;
+	msg = describe_ptree(pt);
+	fprintf(stderr, msg);
+	FREE(msg);
+      }
+#endif
       if ((pt->result->type == R_FLOAT) && (pt->arity == 1))
 	return(pt);
       free_ptree(pt);
@@ -6997,6 +7223,14 @@ void *form_to_ptree_0f2f(XEN code)
   pt = form_to_ptree(code);
   if (pt)
     {
+#if 0
+      {
+	char *msg;
+	msg = describe_ptree(pt);
+	fprintf(stderr, msg);
+	FREE(msg);
+      }
+#endif
       if ((pt->result->type == R_FLOAT) && (pt->arity == 0))
 	return(pt);
       free_ptree(pt);
@@ -7176,10 +7410,11 @@ static XEN g_vct_map(XEN arglist)
   #define H_vct_map "(" S_vct_map " thunk v ...) calls 'thunk' which should return a frame; the frame result \
 is then parcelled out to the vcts passed as the trailing arguments.  This is intended for use with locsig \
 in multi-channel situations where you want the optimization that vct-map! provides."
-  int i, len, min_len = 0;
+  int i, j, len, min_len = 0;
   vct **vs;
   XEN proc, obj;
   ptree *pt = NULL;
+  Float *vals;
   proc = XEN_CAR(arglist);
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc) && (XEN_REQUIRED_ARGS(proc) == 0), proc, XEN_ARG_1, S_vct_map, "a thunk");
   len = XEN_LIST_LENGTH(arglist) - 1;
@@ -7205,8 +7440,6 @@ in multi-channel situations where you want the optimization that vct-map! provid
       if ((pt) && (pt->arity == 0) && (pt->result->type == R_CLM))
 	{
 	  char *err;
-	  int j;
-	  Float *vals;
 	  err = initialize_ptree(pt);
 	  if (err == NULL)
 	    {
@@ -7218,8 +7451,17 @@ in multi-channel situations where you want the optimization that vct-map! provid
 		    vs[j]->data[i] = vals[j];
 		}
 	    }
+	  if (pt) free_ptree(pt);
+	  return(proc);
 	}
+      /* else fall through to guile */
       if (pt) free_ptree(pt);
+    }
+  for (i = 0; i < min_len; i++) 
+    {
+      vals = mus_data(MUS_XEN_TO_CLM(XEN_CALL_0_NO_CATCH(proc, S_vct_map)));
+      for (j = 0; j < len; j++)
+	vs[j]->data[i] = vals[j];
     }
   return(proc);
 }
@@ -7252,33 +7494,18 @@ void g_init_run(void)
 
 #if 0
 /* not done yet for CLM:
-  int mus_close_file              PROTO((mus_any *ptr));
   Float mus_srate                 PROTO((void));
   Float mus_set_srate             PROTO((Float val));
-
 void mus_spectrum               PROTO((Float *rdat, Float *idat, Float *window, int n, int type));
-Float *mus_make_fft_window      PROTO((int type, int size, Float beta));
-
  [with size arg] Float mus_array_interp          PROTO((Float *wave, Float phase, int size)); 
-
 mus_any *mus_buffer2frame       PROTO((mus_any *rb, mus_any *fr));
-
-Float mus_frame_set             PROTO((mus_frame *f, int chan, Float val));
-Float mus_locsig_set            PROTO((mus_any *ptr, int chan, Float val));
-Float mus_locsig_reverb_set     PROTO((mus_any *ptr, int chan, Float val));
-
-Float mus_mixer_ref             PROTO((mus_mixer *f, int in, int out));
-Float mus_mixer_set             PROTO((mus_mixer *f, int in, int out, Float val));
-
 mus_frame *mus_sample2frame     PROTO((mus_any *f, Float in, mus_frame *out));
-
 Float *mus_set_data             PROTO((mus_any *gen, Float *data));
 Float mus_set_formant_radius    PROTO((mus_any *ptr, Float val));
 void mus_set_formant_radius_and_frequency PROTO((mus_any *ptr, Float radius, Float frequency));
 void mus_mix                    PROTO((const char *outfile, const char *infile, int out_start, int out_samps, int in_start, mus_mixer *mx, mus_any ***envs));
 int mus_file2fltarray           PROTO((const char *filename, int chan, int start, int samples, Float *array));
 int mus_fltarray2file           PROTO((const char *filename, Float *ddata, int len, int srate, int channels));
-
   void mus_convolve_files         PROTO((const char *file1, const char *file2, Float maxamp, const char *output_file));
 */
 #endif

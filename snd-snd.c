@@ -2,7 +2,8 @@
 
 snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *new_comment)
 {
-  int chan, size, err;
+  int chan, err;
+  off_t size;
   unsigned char* buf;
   if (snd_overwrite_ok(ss, newname))
     {
@@ -2570,7 +2571,8 @@ creates a new sound file with the indicated attributes; if any are omitted, the 
   snd_info *sp = NULL; 
   int ht, df, sr, ch, err;
   snd_state *ss;
-  int chan, size;
+  int chan;
+  off_t size;
   unsigned char* buf;
   char *str = NULL, *com = NULL;
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(name), name, XEN_ARG_1, S_new_sound, "a string");

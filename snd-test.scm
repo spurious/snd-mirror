@@ -2376,6 +2376,9 @@
 	(set! (mus-sound-data-location "oboe.snd") cur-loc)
 	(set! (mus-sound-header-type "oboe.snd") cur-type)
 	(set! (mus-sound-data-format "oboe.snd") cur-format))
+      (IF (not (= (mus-sound-samples "/zap/sounds/bigger.snd") 794020506)) (snd-display ";bigger samples: ~A" (mus-sound-samples "/zap/sounds/bigger.snd")))
+      (IF (not (= (mus-sound-frames "/zap/sounds/bigger.snd") 794020506)) (snd-display ";bigger frames: ~A" (mus-sound-frames "/zap/sounds/bigger.snd")))
+      (IF (not (= (mus-sound-length "/zap/sounds/bigger.snd") 3176082512)) (snd-display ";bigger bytes: ~A" (mus-sound-length "/zap/sounds/bigger.snd")))
       ))))
 
 (define a-ctr 0)

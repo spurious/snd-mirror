@@ -71,6 +71,8 @@
 
 #if defined(HAVE_CONFIG_H)
   #include <config.h>
+#else
+  #define _FILE_OFFSET_BITS 64
 #endif
 
 #include <ctype.h>
@@ -147,7 +149,7 @@
 
 #include "snd-strings.h"
 
-#define SND_VERSION "1-May-02"
+#define SND_VERSION "2-May-02"
 #define SND_RPM_VERSION "5.10"
 #define SND_MAJOR_VERSION 5
 #define SND_MINOR_VERSION 10

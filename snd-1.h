@@ -39,8 +39,8 @@ typedef struct {
 
 typedef struct {
   char *name;             /* full name */
-  int samples;            /* total samples = chans * samples/chan */
-  int data_location;      /* bytes */
+  off_t samples;          /* total samples = chans * samples/chan */
+  off_t data_location;    /* bytes */
   int srate;
   int chans;
   int format;             /* data format (snd_16_linear etc) */

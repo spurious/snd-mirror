@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 15
-#define SNDLIB_REVISION 4
-#define SNDLIB_DATE "29-Apr-02"
+#define SNDLIB_REVISION 5
+#define SNDLIB_DATE "2-May-02"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 
@@ -375,10 +375,10 @@ const char *mus_error_to_string     PROTO((int err));
 typedef void mus_print_handler_t(char *msg);
 mus_print_handler_t *mus_print_set_handler PROTO((mus_print_handler_t *new_print_handler));
 
-int mus_sound_samples         PROTO((const char *arg));
-int mus_sound_frames          PROTO((const char *arg));
+off_t mus_sound_samples       PROTO((const char *arg));
+off_t mus_sound_frames        PROTO((const char *arg));
 int mus_sound_datum_size      PROTO((const char *arg));
-int mus_sound_data_location   PROTO((const char *arg));
+off_t mus_sound_data_location PROTO((const char *arg));
 int mus_sound_chans           PROTO((const char *arg));
 int mus_sound_srate           PROTO((const char *arg));
 int mus_sound_header_type     PROTO((const char *arg));
@@ -386,7 +386,7 @@ int mus_sound_data_format     PROTO((const char *arg));
 int mus_sound_original_format PROTO((const char *arg));
 int mus_sound_comment_start   PROTO((const char *arg));
 int mus_sound_comment_end     PROTO((const char *arg));
-int mus_sound_length          PROTO((const char *arg));
+off_t mus_sound_length        PROTO((const char *arg));
 int mus_sound_fact_samples    PROTO((const char *arg));
 int mus_sound_distributed     PROTO((const char *arg));
 int mus_sound_write_date      PROTO((const char *arg));
@@ -398,8 +398,8 @@ int mus_sound_set_chans       PROTO((const char *arg, int val));
 int mus_sound_set_srate       PROTO((const char *arg, int val));
 int mus_sound_set_header_type PROTO((const char *arg, int val));
 int mus_sound_set_data_format PROTO((const char *arg, int val));
-int mus_sound_set_data_location PROTO((const char *arg, int val));
-int mus_sound_set_samples     PROTO((const char *arg, int val));
+off_t mus_sound_set_data_location PROTO((const char *arg, off_t val));
+off_t mus_sound_set_samples   PROTO((const char *arg, off_t val));
 
 const char *mus_header_type_name PROTO((int type));
 const char *mus_data_format_name PROTO((int format));
@@ -410,7 +410,7 @@ float mus_sound_duration      PROTO((const char *arg));
 int mus_sound_initialize      PROTO((void));
 void mus_sound_finalize       PROTO((void));
 int mus_sample_bits           PROTO((void));
-int mus_sound_override_header PROTO((const char *arg, int srate, int chans, int format, int type, int location, int size));
+int mus_sound_override_header PROTO((const char *arg, int srate, int chans, int format, int type, off_t location, off_t size));
 int mus_sound_forget          PROTO((const char *name));
 int mus_sound_prune           PROTO((void));
 void mus_sound_print_cache    PROTO((void));
@@ -571,7 +571,7 @@ Float mus_fclamp                    PROTO((Float lo, Float val, Float hi));
 /* -------- headers.c -------- */
 
 off_t mus_header_samples            PROTO((void));
-int mus_header_data_location        PROTO((void));
+off_t mus_header_data_location      PROTO((void));
 int mus_header_chans                PROTO((void));
 int mus_header_srate                PROTO((void));
 int mus_header_type                 PROTO((void));
@@ -594,8 +594,8 @@ void mus_header_raw_defaults        PROTO((int *sr, int *chn, int *frm));
 off_t mus_header_true_length        PROTO((void));
 int mus_header_original_format      PROTO((void));
 int mus_header_data_format_to_bytes_per_sample PROTO((void));
-unsigned int mus_samples_to_bytes   PROTO((int format, unsigned int size));
-unsigned int mus_bytes_to_samples   PROTO((int format, unsigned int size));
+off_t mus_samples_to_bytes          PROTO((int format, off_t size));
+off_t mus_bytes_to_samples          PROTO((int format, off_t size));
 int mus_header_write_next_header    PROTO((int chan, int srate, int chans, int loc, int siz, int format, const char *comment, int len));
 int mus_header_read_with_fd         PROTO((int chan));
 int mus_header_read                 PROTO((const char *name));

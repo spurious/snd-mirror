@@ -573,7 +573,8 @@ void move_selection(chan_info *cp, int x)
 
 int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, char *comment, int chan)
 {
-  int ofd, oloc, comlen, err = MUS_NO_ERROR, reporting = 0, no_space, num, bps;
+  int ofd, comlen, err = MUS_NO_ERROR, reporting = 0, no_space, num, bps;
+  off_t oloc;
   sync_info *si;
   int *ends;
   int i, dur, j, k, chans;

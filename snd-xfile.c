@@ -1916,7 +1916,7 @@ int file_dialog_is_active(void)
 
 static Widget raw_data_dialog = NULL;
 static Widget raw_srate_text, raw_chans_text, raw_location_text;
-static int raw_data_location = 0;
+static off_t raw_data_location = 0;
 static int raw_cancelled = 0;
 
 static void raw_data_ok_callback(Widget w, XtPointer context, XtPointer info) {raw_cancelled = 0;}

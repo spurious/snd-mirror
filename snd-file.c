@@ -243,7 +243,8 @@ file_info *make_file_info(char *fullname, snd_state *ss)
 	{
 	  XEN res = XEN_FALSE;
 	  XEN procs; XEN arg1;
-	  int len, srate, chans, data_format, data_location, bytes;
+	  int len, srate, chans, data_format;
+	  off_t data_location, bytes;
 
 	  if (ss->reloading_updated_file)
 	    {
@@ -279,7 +280,7 @@ file_info *make_file_info(char *fullname, snd_state *ss)
 	      if (len > 1) srate = XEN_TO_C_INT(XEN_CADR(res));
 	      if (len > 2) data_format = XEN_TO_C_INT(XEN_LIST_REF(res, 2)); 
 	      if (len > 3) data_location = XEN_TO_C_INT(XEN_LIST_REF(res, 3)); else data_location = 0;
-	      if (len > 4) bytes = XEN_TO_C_INT(XEN_LIST_REF(res, 4)); else bytes = mus_sound_length(fullname) - data_location;
+	      if (len > 4) bytes = XEN_TO_C_ULONG(XEN_LIST_REF(res, 4)); else bytes = mus_sound_length(fullname) - data_location;
 	      mus_header_set_raw_defaults(srate, chans, data_format);
 	      mus_sound_override_header(fullname, srate, chans, data_format, 
 					MUS_RAW, data_location,
@@ -2069,10 +2070,10 @@ static char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr)
       mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, " (swapped: %d)", ns);
       strcat(reason_str, tmp_str);
     }
-  mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nlength: %.3f (%d samples, %d bytes total)",
+  mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nlength: %.3f (%ld samples, %ld bytes total)",
 	       (float)(hdr->samples) / (float)(hdr->chans * hdr->srate),
-	       hdr->samples,
-	       mus_sound_length(filename));
+	       (long)(hdr->samples),
+	       (long)mus_sound_length(filename));
   strcat(reason_str, tmp_str);
   ns = swap_int(hdr->samples);
   if (ns < mus_sound_length(filename))
@@ -2088,7 +2089,7 @@ static char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr)
 	}
       else strcat(reason_str, ")");
     }
-  mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\ndata location: %d", hdr->data_location);
+  mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\ndata location: %ld", (long)(hdr->data_location));
   strcat(reason_str, tmp_str);
   ns = swap_int(hdr->data_location);
   if ((ns > 0) && (ns <= 1024)) 

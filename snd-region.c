@@ -550,7 +550,8 @@ static void stack_region(snd_state *ss, region *r)
 
 static int save_region_1(snd_state *ss, char *ofile, int type, int format, int srate, int reg, char *comment)
 {
-  int ofd, oloc, ifd, chans, i, frames, cursamples, iloc, comlen, err = 0;
+  int ofd, ifd, chans, i, frames, cursamples, comlen, err = 0;
+  off_t oloc, iloc;
   MUS_SAMPLE_TYPE **bufs;
   region *r;
   comlen = snd_strlen(comment);

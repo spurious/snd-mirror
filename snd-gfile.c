@@ -1324,7 +1324,7 @@ int file_dialog_is_active(void)
 
 static GtkWidget *raw_data_dialog = NULL;
 static GtkWidget *raw_srate_text, *raw_chans_text, *raw_location_text, *raw_data_label;
-static int raw_data_location = 0;
+static off_t raw_data_location = 0;
 static int raw_cancelled = 0, raw_done = 0;
 
 static void raw_data_ok_callback(GtkWidget *w, gpointer context) {raw_cancelled = 0; raw_done = 1;}
