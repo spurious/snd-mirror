@@ -403,4 +403,23 @@
 				   #f)
 		     0 32 #f |XA_STRING)
 -> (0 (Atom 31) 8 10 0 "16-Aug-01")
+
+(define (add-main-pane name type args)
+  (|XtCreateManagedWidget name type (|Widget (list-ref (main-widgets) 3)) args))
+
+(|XtAppAddActions app (list (list "try1" (lambda (w e strs)
+					   (snd-print (format #f "try1: ~A~%" strs))))
+			    (list "try2" (lambda (w e strs)
+					   (snd-print (format #f "try2: ~A~%" strs))))))
+
+(define tab (|XtParseTranslationTable 
+	      (format #f "Ctrl <Key>osfLeft:  try1()~%Ctrl <Key>osfRight: try2()~%Ctrl <Key>osfUp:  try1(hiho)~%Ctrl <Key>osfDown: try2(down, up)~%")))
+
+
+(define pane (add-main-pane "hiho" |xmTextWidgetClass 
+	       '()))
+
+(|XtOverrideTranslations pane tab)
+
+
 !#

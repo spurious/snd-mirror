@@ -11,8 +11,10 @@
  *       xm-test.scm regression tests
  *       XEvent fields should be settable
  *       check for memory leaks etc
- *       struct tie-ins for Ruby
  *       struct accessors for XIconSize (see min_height)?
+ *       XtTypedArg and XtVaNestedList
+ *       XmVaCreateSimple* (need special arglist handlers)
+ *       XtAppAddActions currently only handles 8 actions (globally)
  */
 
 /* HISTORY: 
@@ -759,10 +761,13 @@ static XEN C_TO_XEN_Widgets(Widget *array, int len)
 {
   XEN lst = XEN_EMPTY_LIST;
   int i, loc;
-  loc = xm_protect(lst);
-  for (i = len - 1; i >= 0; i--)
-    lst = XEN_CONS(C_TO_XEN_Widget(array[i]), lst);
-  xm_unprotect_at(loc);
+  if (array)
+    {
+      loc = xm_protect(lst);
+      for (i = len - 1; i >= 0; i--)
+	lst = XEN_CONS(C_TO_XEN_Widget(array[i]), lst);
+      xm_unprotect_at(loc);
+    }
   return(lst);
 }
 
@@ -770,10 +775,13 @@ static XEN C_TO_XEN_Ints(int *array, int len)
 {
   XEN lst = XEN_EMPTY_LIST;
   int i, loc;
-  loc = xm_protect(lst);
-  for (i = len - 1; i >= 0; i--)
-    lst = XEN_CONS(C_TO_XEN_INT(array[i]), lst);
-  xm_unprotect_at(loc);
+  if (array)
+    {
+      loc = xm_protect(lst);
+      for (i = len - 1; i >= 0; i--)
+	lst = XEN_CONS(C_TO_XEN_INT(array[i]), lst);
+      xm_unprotect_at(loc);
+    }
   return(lst);
 }
 
@@ -781,10 +789,13 @@ static XEN C_TO_XEN_Atoms(Atom *array, int len)
 {
   XEN lst = XEN_EMPTY_LIST;
   int i, loc;
-  loc = xm_protect(lst);
-  for (i = len - 1; i >= 0; i--)
-    lst = XEN_CONS(C_TO_XEN_Atom(array[i]), lst);
-  xm_unprotect_at(loc);
+  if (array)
+    {
+      loc = xm_protect(lst);
+      for (i = len - 1; i >= 0; i--)
+	lst = XEN_CONS(C_TO_XEN_Atom(array[i]), lst);
+      xm_unprotect_at(loc);
+    }
   return(lst);
 }
 
@@ -792,21 +803,27 @@ static XEN C_TO_XEN_Strings(char **array, int len)
 {
   XEN lst = XEN_EMPTY_LIST;
   int i, loc;
-  loc = xm_protect(lst);
-  for (i = len - 1; i >= 0; i--)
-    lst = XEN_CONS(C_TO_XEN_STRING(array[i]), lst);
-  xm_unprotect_at(loc);
+  if (array)
+    {
+      loc = xm_protect(lst);
+      for (i = len - 1; i >= 0; i--)
+	lst = XEN_CONS(C_TO_XEN_STRING(array[i]), lst);
+      xm_unprotect_at(loc);
+    }
   return(lst);
 }
 
-static XEN C_TO_XEN_XmStringTable(XmStringTable str, int len)
+static XEN C_TO_XEN_XmStringTable(XmStringTable array, int len)
 {
   XEN lst = XEN_EMPTY_LIST;
   int i, loc;
-  loc = xm_protect(lst);
-  for (i = len - 1; i >= 0; i--)
-    lst = XEN_CONS(C_TO_XEN_XmString(str[i]), lst);
-  xm_unprotect_at(loc);
+  if (array)
+    {
+      loc = xm_protect(lst);
+      for (i = len - 1; i >= 0; i--)
+	lst = XEN_CONS(C_TO_XEN_XmString(array[i]), lst);
+      xm_unprotect_at(loc);
+    }
   return(lst);
 }
 
@@ -814,10 +831,13 @@ static XEN C_TO_XEN_XRectangles(XRectangle *array, int len)
 {
   XEN lst = XEN_EMPTY_LIST;
   int i, loc;
-  loc = xm_protect(lst);
-  for (i = len - 1; i >= 0; i--)
-    lst = XEN_CONS(C_TO_XEN_XRectangle(&(array[i])), lst);
-  xm_unprotect_at(loc);
+  if (array)
+    {
+      loc = xm_protect(lst);
+      for (i = len - 1; i >= 0; i--)
+	lst = XEN_CONS(C_TO_XEN_XRectangle(&(array[i])), lst);
+      xm_unprotect_at(loc);
+    }
   return(lst);
 }
 
@@ -825,10 +845,13 @@ static XEN C_TO_XEN_KeySyms(KeySym *array, int len)
 {
   XEN lst = XEN_EMPTY_LIST;
   int i, loc;
-  loc = xm_protect(lst);
-  for (i = len - 1; i >= 0; i--)
-    lst = XEN_CONS(C_TO_XEN_KeySym(array[i]), lst);
-  xm_unprotect_at(loc);
+  if (array)
+    {
+      loc = xm_protect(lst);
+      for (i = len - 1; i >= 0; i--)
+	lst = XEN_CONS(C_TO_XEN_KeySym(array[i]), lst);
+      xm_unprotect_at(loc);
+    }
   return(lst);
 }
 
@@ -1314,7 +1337,7 @@ static void gxm_XtSelectionCallbackProc(Widget w, XtPointer x, Atom* a1, Atom* a
 		       XEN_CADR(xm_XtSelectionCallback_Descr),
 		       C_TO_XEN_Atom(*a1),
 		       C_TO_XEN_Atom(*a2),
-		       C_TO_XEN_STRING_WITH_TERMINATION((char *)x1, *l), /* TODO: should we handle Atom -> Lisp type conversions? */
+		       C_TO_XEN_STRING_WITH_TERMINATION((char *)x1, *l), /* should we handle Atom -> Lisp type conversions? */
 		       C_TO_XEN_ULONG(*l),
 		       C_TO_XEN_INT(*i)),
 	    __FUNCTION__);
@@ -2856,7 +2879,7 @@ returns the type, length, and value of the next component in the compound string
   int val;
   char *ptr;
   XEN_ASSERT_TYPE(XEN_XmStringContext_P(arg1), arg1, 1, "XmStringGetNextTriple", "XmStringContext");
-  val = XmStringGetNextTriple(XEN_TO_C_XmStringContext(arg1), &len, (XtPointer)(&ptr));
+  val = XmStringGetNextTriple(XEN_TO_C_XmStringContext(arg1), &len, (XtPointer *)(&ptr));
   return(XEN_LIST_3(C_TO_XEN_INT(val),
 		    C_TO_XEN_INT((int)len),
 		    (val == XmSTRING_COMPONENT_TEXT) ? C_TO_XEN_STRING(ptr) : C_TO_XEN_ULONG((unsigned long)ptr)));
@@ -3625,6 +3648,15 @@ static XEN gxm_XmTrackingEvent(XEN arg1, XEN arg2, XEN arg3)
   w = XmTrackingEvent(XEN_TO_C_Widget(arg1), XEN_TO_C_ULONG(arg2), XEN_TO_C_BOOLEAN(arg3), e);
   return(XEN_LIST_2(C_TO_XEN_Widget(w), C_TO_XEN_XEvent_OBJ(e)));
 }
+
+
+/* The various XmVaCreateSimple{object} require special arg handling --
+     these are not "normal" resource lists, but can also contain special indicators
+     -- not immediately clear how to handle these things!
+     Apparently we need to run through the args, split out the special args,
+     collect arglists, add to arglist buttons, buttonCount etc, then call the
+     underlying simple creator. (see lesstif lib/Xm/VaSimple.c)
+*/
 
 static XEN gxm_XmVaCreateSimpleCheckBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
@@ -4870,7 +4902,7 @@ static XEN gxm_XmToggleButtonSetValue(XEN arg1, XEN arg2, XEN arg3)
   #define H_XmToggleButtonSetValue "void XmToggleButtonSetValue(Widget widget, XmToggleButtonState state, Boolean notify) \
 sets or changes the current state"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmToggleButtonSetValue", "Widget");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmToggleButtonSetValue", "int");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmToggleButtonSetValue", "int (actually XmToggleButtonState)");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg3), arg3, 3, "XmToggleButtonSetValue", "boolean");
   return(C_TO_XEN_BOOLEAN(XmToggleButtonSetValue(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2), XEN_TO_C_BOOLEAN(arg3))));
 }
@@ -4881,9 +4913,9 @@ static XEN gxm_XmToggleButtonSetState(XEN arg1, XEN arg2, XEN arg3)
   #define H_XmToggleButtonSetState "void XmToggleButtonSetState(Widget widget, Boolean state, Boolean notify) \
 sets or changes the current state"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmToggleButtonSetState", "Widget");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmToggleButtonSetState", "int");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg2), arg2, 2, "XmToggleButtonSetState", "boolean");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg3), arg3, 3, "XmToggleButtonSetState", "boolean");
-  XmToggleButtonSetState(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2), XEN_TO_C_BOOLEAN(arg3));
+  XmToggleButtonSetState(XEN_TO_C_Widget(arg1), XEN_TO_C_BOOLEAN(arg2), XEN_TO_C_BOOLEAN(arg3));
   return(XEN_FALSE);
 }
 
@@ -7640,16 +7672,17 @@ static XEN gxm_XmPrintPopupPDM(XEN arg1, XEN arg2)
 }
 
 /* called locally but not in place, so we need to protect, call, then unprotect before return */
-static void gxm_XPFinishProc(Display *dpy, XPContext con, XPGetDocStatus status, XPointer data)
+/* this needs to be in sync with call by Xp proc below */
+
+static void gxm_XPFinishProc(Display *display, XPContext context, XPGetDocStatus status, XPointer client_data)
 {
-  XEN descr = (XEN)data;
-  XEN_CALL_4(XEN_CAR(descr),
-	     C_TO_XEN_Display(dpy),
-	     C_TO_XEN_ULONG(con), /* who knows?? -- can't find a definition */
+  XEN data = (XEN)client_data;
+  XEN_CALL_4(XEN_CADR(data),
+	     C_TO_XEN_Display(display),
+	     C_TO_XEN_XPContext(context),
 	     C_TO_XEN_INT(status),
-	     XEN_CADR(descr),
+	     XEN_CADDR(data),
 	     __FUNCTION__);
-  xm_unprotect(descr);
 }
 
 static XEN gxm_XmPrintToFile(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
@@ -7660,12 +7693,12 @@ retrieves and saves data that would normally be printed by the X Print Server"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XmPrintToFile", "Display*");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmPrintToFile", "char*");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg3), arg3, 3, "XmPrintToFile", "XPFinishProc");
-  descr = XEN_LIST_2(arg3, arg4);
+  descr = XEN_LIST_3(XEN_FALSE, arg3, arg4);
   xm_protect(descr);
   return(C_TO_XEN_INT(XmPrintToFile(XEN_TO_C_Display(arg1), 
 				    XEN_TO_C_STRING(arg2), 
 				    (XPFinishProc)gxm_XPFinishProc,
-				    (char *)descr))); /* C++ insists this is a char *! */
+				    (char *)descr)));
 }
 
 static XEN gxm_XmPrintSetup(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
@@ -16419,15 +16452,49 @@ a list maintained in the application context."
 }
 
 
-/* (72) this is part of an actionrec, probably just protect and save all */
-/*   but there's no way to tell which user function to call */
-/* perhaps we could install an action-hook that sets a global saying which action is upcoming on which widget. */
-/* then we have a list of (action widget func) where we match the 1st 2 and call the 3rd (geez...) */
+/* (72) this is part of an actionrec */
+/* we actually need an array of XtActionProcs here -- this code is a horrible kludge */
+
+static XEN xtactionprocs[8];
+static void gxm_XtActionProc0(Widget w, XEvent *e, char **args, Cardinal *argn) 
+{
+  XEN_CALL_3(xtactionprocs[0], C_TO_XEN_Widget(w), C_TO_XEN_XEvent(e), C_TO_XEN_Strings(args, *argn), __FUNCTION__);
+}
+static void gxm_XtActionProc1(Widget w, XEvent *e, char **args, Cardinal *argn) 
+{
+  XEN_CALL_3(xtactionprocs[1], C_TO_XEN_Widget(w), C_TO_XEN_XEvent(e), C_TO_XEN_Strings(args, *argn), __FUNCTION__);
+}
+static void gxm_XtActionProc2(Widget w, XEvent *e, char **args, Cardinal *argn) 
+{
+  XEN_CALL_3(xtactionprocs[2], C_TO_XEN_Widget(w), C_TO_XEN_XEvent(e), C_TO_XEN_Strings(args, *argn), __FUNCTION__);
+}
+static void gxm_XtActionProc3(Widget w, XEvent *e, char **args, Cardinal *argn) 
+{
+  XEN_CALL_3(xtactionprocs[3], C_TO_XEN_Widget(w), C_TO_XEN_XEvent(e), C_TO_XEN_Strings(args, *argn), __FUNCTION__);
+}
+static void gxm_XtActionProc4(Widget w, XEvent *e, char **args, Cardinal *argn) 
+{
+  XEN_CALL_3(xtactionprocs[4], C_TO_XEN_Widget(w), C_TO_XEN_XEvent(e), C_TO_XEN_Strings(args, *argn), __FUNCTION__);
+}
+static void gxm_XtActionProc5(Widget w, XEvent *e, char **args, Cardinal *argn) 
+{
+  XEN_CALL_3(xtactionprocs[5], C_TO_XEN_Widget(w), C_TO_XEN_XEvent(e), C_TO_XEN_Strings(args, *argn), __FUNCTION__);
+}
+static void gxm_XtActionProc6(Widget w, XEvent *e, char **args, Cardinal *argn) 
+{
+  XEN_CALL_3(xtactionprocs[6], C_TO_XEN_Widget(w), C_TO_XEN_XEvent(e), C_TO_XEN_Strings(args, *argn), __FUNCTION__);
+}
+static void gxm_XtActionProc7(Widget w, XEvent *e, char **args, Cardinal *argn) 
+{
+  XEN_CALL_3(xtactionprocs[7], C_TO_XEN_Widget(w), C_TO_XEN_XEvent(e), C_TO_XEN_Strings(args, *argn), __FUNCTION__);
+}
+static int xm_action_ctr = 0;
 
 static XEN gxm_XtAddActions(XEN arg1)
 {
   #define H_XtAddActions "void XtAddActions(actions, num_actions) has been replaced by XtAppAddActions."
   /* DIFF: XtAddActions takes list of lists for arg1 (name proc) pairs, not XtActionList, omits arg2 (pointless)
+   *        and action proc itself takes 3 args (no need for trailing count)
    */
   XtActionsRec *act;
   XEN pair;
@@ -16439,7 +16506,24 @@ static XEN gxm_XtAddActions(XEN arg1)
     {
       pair = XEN_CAR(arg1);
       act[i].string = (String)XEN_TO_C_STRING(XEN_CAR(pair));
-      act[i].proc = (XtActionProc)XEN_TO_C_ULONG(XEN_CADR(pair));  /* this is useless but what can we do? */
+      if (xm_action_ctr >= 8)
+	fprintf(stderr,"too many actions...");
+      else
+	{
+	  switch (xm_action_ctr)
+	    {
+	    case 0: act[i].proc = (XtActionProc)gxm_XtActionProc0; break;
+	    case 1: act[i].proc = (XtActionProc)gxm_XtActionProc1; break;
+	    case 2: act[i].proc = (XtActionProc)gxm_XtActionProc2; break;
+	    case 3: act[i].proc = (XtActionProc)gxm_XtActionProc3; break;
+	    case 4: act[i].proc = (XtActionProc)gxm_XtActionProc4; break;
+	    case 5: act[i].proc = (XtActionProc)gxm_XtActionProc5; break;
+	    case 6: act[i].proc = (XtActionProc)gxm_XtActionProc6; break;
+	    case 7: act[i].proc = (XtActionProc)gxm_XtActionProc7; break;
+	    }
+	  xm_protect(XEN_CADR(pair));
+	  xtactionprocs[xm_action_ctr++] = XEN_CADR(pair);
+	}
     }
   XtAddActions(act, len);
   free(act);
@@ -16451,19 +16535,37 @@ static XEN gxm_XtAppAddActions(XEN arg1, XEN arg2)
   #define H_XtAppAddActions "void XtAppAddActions(app_context, actions, num_actions) adds the specified action table and registers it \
 with the translation manager."
   /* DIFF: XtAddAppActions takes list of lists for arg2 (name proc) pairs, not XtActionList, omits arg3 (pointless)
+   *        and action proc itself takes 3 args (no need for trailing count)
    */
   XtActionsRec *act;
   XEN pair;
   int i, len;
   XEN_ASSERT_TYPE(XEN_XtAppContext_P(arg1), arg1, 1, "XtAppAddActions", "XtAppContext");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XtAppAddActions", "list of XtActions");
-  len = XEN_LIST_LENGTH(arg1);
+  len = XEN_LIST_LENGTH(arg2);
   act = (XtActionsRec *)calloc(len, sizeof(XtActionsRec));
-  for (i = 0; i < len; i++, arg1 = XEN_CDR(arg1))
+  for (i = 0; i < len; i++, arg2 = XEN_CDR(arg2))
     {
-      pair = XEN_CAR(arg1);
+      pair = XEN_CAR(arg2);
       act[i].string = (String)XEN_TO_C_STRING(XEN_CAR(pair));
-      act[i].proc = (XtActionProc)XEN_TO_C_ULONG(XEN_CADR(pair));
+      if (xm_action_ctr >= 8)
+	fprintf(stderr,"too many actions...");
+      else
+	{
+	  switch (xm_action_ctr)
+	    {
+	    case 0: act[i].proc = (XtActionProc)gxm_XtActionProc0; break;
+	    case 1: act[i].proc = (XtActionProc)gxm_XtActionProc1; break;
+	    case 2: act[i].proc = (XtActionProc)gxm_XtActionProc2; break;
+	    case 3: act[i].proc = (XtActionProc)gxm_XtActionProc3; break;
+	    case 4: act[i].proc = (XtActionProc)gxm_XtActionProc4; break;
+	    case 5: act[i].proc = (XtActionProc)gxm_XtActionProc5; break;
+	    case 6: act[i].proc = (XtActionProc)gxm_XtActionProc6; break;
+	    case 7: act[i].proc = (XtActionProc)gxm_XtActionProc7; break;
+	    }
+	  xm_protect(XEN_CADR(pair));
+	  xtactionprocs[xm_action_ctr++] = XEN_CADR(pair);
+	}
     }
   XtAppAddActions(XEN_TO_C_XtAppContext(arg1), act, len);
   free(act);
@@ -17293,19 +17395,42 @@ static XEN gxm_XpInputSelected(XEN arg1, XEN arg2, XEN arg3)
 		    C_TO_XEN_ULONG(i1)));
 }
 
+static void gxm_XPSaveProc(Display *display, XPContext context, unsigned char *sdata, unsigned int data_len, XPointer client_data)
+{
+  XEN data = (XEN)client_data;
+  XEN_CALL_5(XEN_CAR(data),
+	     C_TO_XEN_Display(display),
+	     C_TO_XEN_XPContext(context),
+	     C_TO_XEN_STRING(sdata),
+	     C_TO_XEN_INT(data_len),
+	     XEN_CADDR(data),
+	     __FUNCTION__);
+}
+
+#if (!HAVE_MOTIF)
+static void gxm_XPFinishProc(Display *display, XPContext context, XPGetDocStatus status, XPointer client_data)
+{
+  XEN data = (XEN)client_data;
+  XEN_CALL_4(XEN_CADR(data),
+	     C_TO_XEN_Display(display),
+	     C_TO_XEN_XPContext(context),
+	     C_TO_XEN_INT(status),
+	     XEN_CADDR(data),
+	     __FUNCTION__);
+}
+#endif
+
 static XEN gxm_XpGetDocumentData(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
   #define H_XpGetDocumentData "Status XpGetDocumentData(Display *display,XPContext context,XPSaveProc save_proc,XPFinishProc finish_proc,XPointer client_data)"
-  /* TODO: pass the Xp callback procs
-   */
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpGetDocumentData", "Display*");
   XEN_ASSERT_TYPE(XEN_XPContext_P(arg2), arg2, 2, "XpGetDocumentData", "XPContext");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg3), arg3, 3, "XpGetDocumentData", "XPSaveProc");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4), arg4, 4, "XpGetDocumentData", "XPFinishProc");
   return(C_TO_XEN_INT(XpGetDocumentData(XEN_TO_C_Display(arg1), XEN_TO_C_XPContext(arg2), 
-					(XPSaveProc)XEN_TO_C_ULONG(arg3), 
-					(XPFinishProc)XEN_TO_C_ULONG(arg4), 
-					(XtPointer)XEN_TO_C_ULONG(arg5))));
+					(XPSaveProc)gxm_XPSaveProc,
+					(XPFinishProc)gxm_XPFinishProc,
+					(char *)XEN_LIST_3(arg3, arg4, arg5))));
 }
 
 static XEN gxm_XpPutDocumentData(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
@@ -18994,8 +19119,6 @@ static void define_procedures(void)
 
   XEN_DEFINE_PROCEDURE("xm-gc-elements", xm_gc_elements, 0, 0, 0, NULL);
 }
-#else
-  #include "xm-ruby.c"
 #endif
 
 
@@ -21994,6 +22117,7 @@ static XEN gxm_page_number(XEN ptr)
 #endif
 /* HAVE_MOTIF */
 
+#if HAVE_GUILE
 static void define_structs(void)
 {
   XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "pixel" XM_POSTFIX, gxm_pixel, "", XM_PREFIX "set-pixel" XM_POSTFIX, gxm_set_pixel,  1, 0, 2, 0);
@@ -22010,8 +22134,6 @@ static void define_structs(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "angle1" XM_POSTFIX, gxm_angle1, "", XM_PREFIX "set-angle1" XM_POSTFIX, gxm_set_angle1,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "angle2" XM_POSTFIX, gxm_angle2, "", XM_PREFIX "set-angle2" XM_POSTFIX, gxm_set_angle2,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XArc" XM_POSTFIX, gxm_XArc, 6, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "x" XM_POSTFIX, gxm_x, "", XM_PREFIX "set-x" XM_POSTFIX, gxm_set_x,  1, 0, 2, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "y" XM_POSTFIX, gxm_y, "", XM_PREFIX "set-y" XM_POSTFIX, gxm_set_y,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XPoint" XM_POSTFIX, gxm_XPoint, 2, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "x1" XM_POSTFIX, gxm_x1, "", XM_PREFIX "set-x1" XM_POSTFIX, gxm_set_x1,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "y1" XM_POSTFIX, gxm_y1, "", XM_PREFIX "set-y1" XM_POSTFIX, gxm_set_y1,  1, 0, 2, 0);
@@ -22291,6 +22413,9 @@ static void define_structs(void)
 #endif
 
 }
+#else
+  #include "xm-ruby.c"
+#endif
 
 
 #if HAVE_MOTIF
@@ -22361,6 +22486,21 @@ static void define_strings(void)
   DEFINE_STRING(XM_PREFIX "XmSTRING_ISO8859_1" XM_POSTFIX, XmSTRING_ISO8859_1);
   DEFINE_STRING(XM_PREFIX "XmFONTLIST_DEFAULT_TAG" XM_POSTFIX, XmFONTLIST_DEFAULT_TAG);
   DEFINE_STRING(XM_PREFIX "XmFONTLIST_DEFAULT_TAG_STRING" XM_POSTFIX, XmFONTLIST_DEFAULT_TAG_STRING);
+
+
+  /* these define special XmVaCreateSimple... arg possibilities */
+  DEFINE_STRING(XM_PREFIX "XmVaCASCADEBUTTON" XM_POSTFIX, XmVaCASCADEBUTTON);
+  DEFINE_STRING(XM_PREFIX "XmVaCHECKBUTTON" XM_POSTFIX, XmVaCHECKBUTTON);
+  DEFINE_STRING(XM_PREFIX "XmVaDOUBLE_SEPARATOR" XM_POSTFIX, XmVaDOUBLE_SEPARATOR);
+  DEFINE_STRING(XM_PREFIX "XmVaPUSHBUTTON" XM_POSTFIX, XmVaPUSHBUTTON);
+  DEFINE_STRING(XM_PREFIX "XmVaRADIOBUTTON" XM_POSTFIX, XmVaRADIOBUTTON);
+  DEFINE_STRING(XM_PREFIX "XmVaSEPARATOR" XM_POSTFIX, XmVaSEPARATOR);
+  DEFINE_STRING(XM_PREFIX "XmVaSINGLE_SEPARATOR" XM_POSTFIX, XmVaSINGLE_SEPARATOR);
+  DEFINE_STRING(XM_PREFIX "XmVaTOGGLEBUTTON" XM_POSTFIX, XmVaTOGGLEBUTTON);
+  DEFINE_STRING(XM_PREFIX "XmVaTITLE" XM_POSTFIX, XmVaTITLE);
+  DEFINE_STRING(XM_PREFIX "XtVaNestedList" XM_POSTFIX, XtVaNestedList);
+  DEFINE_STRING(XM_PREFIX "XtVaTypedArg" XM_POSTFIX, XtVaTypedArg);
+
 
   /* XM_CALLBACK is used where the resource type is XtCallbackList */
 

@@ -1400,6 +1400,72 @@
 ;;; the more successive samples we include in the product, the more we
 ;;;   limit the output to pulses placed at (just after) wave peaks
 
+#!
+(define find-plausible-marks
+  (lambda args
+    (let* ((snd (selected-sound))
+	   (chn (selected-channel))
+	   (m1 (if (> (length args) 0)
+		   (car args)
+		   (let find-mark ((ms (marks snd chn)))
+		     (if (null? ms)
+			 (begin
+			   (snd-print ";no marks in current window?")
+			   #f)
+			 (if (>= (mark-sample (car ms)) (left-sample snd chn))
+			     (car ms)
+			     (find-mark (cdr ms)))))))
+	   (m2 (and (mark? m1)
+		    (if (> (length args) 1)
+			(cadr args)
+			(let find-another-mark ((ms (marks snd chn)))
+			  (if (null? ms)
+			      (begin
+				(snd-print ";no second mark?")
+				#f)
+			      (if (> (mark-sample (car ms)) (mark-sample m1))
+				  (car ms)
+				  (find-another-mark (cdr ms)))))))))
+      (if (and (mark? m1)
+	       (mark? m2))
+	  (list (mark-sample m1) 
+		(car (mark-home m1)) 
+		(cadr (mark-home m1)) 
+		#f 
+		(mark-sample m2))
+	  #f))))
+
+(add-to-menu effects-menu 
+	     "Mark play"
+	     (let ((old-cfp #f)
+		   (old-cursor #f)
+		   (stopping #f))
+	       (lambda () 
+		 (if stopping
+		     (let ((snd (selected-sound)))
+		       (set! (cursor-follows-play snd) old-cfp)
+		       (set! (cursor snd (selected-channel snd)) old-cursor)
+		       (set! stopping #f)
+		       (change-menu-label effects-menu "Stop" "Mark Play")
+		       (reset-hook! stop-playing-channel-hook)
+		       (stop-playing (selected-sound)))
+		   (let ((snd (selected-sound)))
+		     (set! old-cfp (cursor-follows-play snd))
+		     (set! old-cursor (cursor snd (selected-channel snd)))
+		     (set! stopping #t)
+		     (change-menu-label effects-menu "Mark play" "Stop")
+		     (let ((args (find-plausible-marks)))
+		       (if args
+			   (begin
+			     (set! (cursor-follows-play snd) #t)
+			     (set! (cursor snd (selected-channel snd)) (car args))
+			     (apply play args)
+			     (add-hook! stop-playing-channel-hook 
+					(lambda (snd chn)
+					  (apply play args)))))))))))
+				  
+!#
+
 (add-to-menu effects-menu #f #f)
 (add-to-menu effects-menu "Octave-down" down-oct)
 (add-to-menu effects-menu "Remove clicks" remove-clicks)

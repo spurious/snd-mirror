@@ -252,10 +252,12 @@ void news_help(snd_state *ss)
   info = version_info();
   ssnd_help(ss, STR_News,
 	    info,
-	    "\n    *features*: \n'",
 #if HAVE_GUILE
+	    "\n    *features*: \n'",
 	    word_wrap(XEN_TO_C_STRING(XEN_TO_STRING(XEN_EVAL_C_STRING("*features*"))), 600),
 	    "\n\n",
+#else
+	    "\n",
 #endif
 	    "Recent changes include:\n\
 \n\
