@@ -420,11 +420,11 @@ functions that generators respond to: mus_free, for example, frees a
 generator, and mus_frequency returns its current frequency, if relevant.
 All generators are pointers to mus_any structs.  Finally, CLM has two
 special data types: frame and mixer.  A frame is an array that represents
-a multi-channel sample (that is, in a stereo file, at time 0.0, there
+a multichannel sample (that is, in a stereo file, at time 0.0, there
 are two samples, one for each channel).  A mixer is a array of arrays
 that represents a set of input and output scalers, as if it were the
-current state of a mixing console's volume controls.  A frame (a multi-channel
-input) can be mixed into a new frame (a multi-channel output) by passing
+current state of a mixing console's volume controls.  A frame (a multichannel
+input) can be mixed into a new frame (a multichannel output) by passing
 it through a mixer (a matrix, the operation being a matrix multiply).
 </p>
 

@@ -2392,9 +2392,7 @@ static Widget make_vertical_gain_sliders(recorder_info *rp, pane_t *p, int num_g
 	  XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
 	  XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
 	  XtSetArg(args[n], XmNrightWidget, icon_label); n++;
-#if USE_RENDITIONS
 	  XtSetArg(args[n], XmNfontList, NULL); n++;
-#endif
 	  XtSetArg(args[n], XM_FONT_RESOURCE, small_fontlist); n++;
 	  XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;
 	  XtSetArg(args[n], XmNwidth, 30); n++;
@@ -2493,9 +2491,7 @@ static Widget make_button_box(recorder_info *rp, pane_t *p, Float meter_size,
   XtSetArg(args[n], XmNrightWidget, p->button_vertical_sep); n++;
   if (meter_size < SMALL_FONT_CUTOFF) 
     {
-#if USE_RENDITIONS
       XtSetArg(args[n], XmNfontList, NULL); n++;
-#endif
       XtSetArg(args[n], XM_FONT_RESOURCE, small_fontlist); n++;
     }
   if ((rp->systems == 1) || (!input))
@@ -2515,9 +2511,7 @@ static Widget make_button_box(recorder_info *rp, pane_t *p, Float meter_size,
       XtSetArg(args[n], XmNrightWidget, p->button_vertical_sep); n++;
       if (meter_size < SMALL_FONT_CUTOFF) 
 	{
-#if USE_RENDITIONS
 	  XtSetArg(args[n], XmNfontList, NULL); n++;
-#endif
 	  XtSetArg(args[n], XM_FONT_RESOURCE, small_fontlist); n++;
 	}
       button_label = XtCreateManagedWidget(recorder_device_name(p->device), xmLabelWidgetClass, p->pane, args, n);
@@ -2571,9 +2565,7 @@ static Widget make_button_box(recorder_info *rp, pane_t *p, Float meter_size,
 	}
       if (meter_size < SMALL_FONT_CUTOFF) 
 	{
-#if USE_RENDITIONS
 	  XtSetArg(args[n], XmNfontList, NULL); n++;
-#endif
 	  XtSetArg(args[n], XM_FONT_RESOURCE, small_fontlist); n++;
 	}
       if (((i + 1) % columns) != 0)
@@ -2632,9 +2624,7 @@ static Widget make_button_box(recorder_info *rp, pane_t *p, Float meter_size,
       XtSetArg(args[n], XmNrecomputeSize, false); n++;
       if (meter_size < SMALL_FONT_CUTOFF) 
 	{
-#if USE_RENDITIONS
 	  XtSetArg(args[n], XmNfontList, NULL); n++;
-#endif
 	  XtSetArg(args[n], XM_FONT_RESOURCE, small_fontlist); n++;
 	}
       max_label = XtCreateManagedWidget("0.000", xmLabelWidgetClass, last_max, args, n);
@@ -2686,9 +2676,7 @@ static void make_reset_button(pane_t *p, Float meter_size, Widget button_box, Wi
   XtSetArg(args[n], XmNrightWidget, p->button_vertical_sep); n++;
   if (meter_size < SMALL_FONT_CUTOFF) 
     {
-#if USE_RENDITIONS
       XtSetArg(args[n], XmNfontList, NULL); n++;
-#endif
       XtSetArg(args[n], XM_FONT_RESOURCE, small_fontlist); n++;
     }
   XtSetArg(args[n], XmNlabelString, labelstr); n++;
@@ -3105,7 +3093,6 @@ widget_t snd_record_file(void)
       /* now create recording dialog using the info gathered above */
       small_fontstruct = XLoadQueryFont(MAIN_DISPLAY(ss), 
 					(vu_size(ss) < SMALLER_FONT_CUTOFF) ? SMALLER_FONT : SMALL_FONT);
-#if (USE_RENDITIONS)
       {
 	XmRendition rend;
 	n = 0;
@@ -3118,20 +3105,6 @@ widget_t snd_record_file(void)
 	rend = XmRenditionCreate(MAIN_SHELL(ss), "small_font", args, n);
 	small_fontlist = XmRenderTableAddRenditions(NULL, &rend, 1, XmMERGE_NEW);
       }
-#else
-      if (small_fontstruct)
-	{
-	  XmFontListEntry e1;
-	  e1 = XmFontListEntryCreate("small_font", XmFONT_IS_FONT, (XtPointer)small_fontstruct);
-	  small_fontlist = XmFontListAppendEntry(NULL, e1);
-	  XmFontListEntryFree(&e1);
-	}
-      else
-	{
-	  small_fontlist = ss->sgx->peaks_fontlist;
-	  XmFontListEntryCreate("small_font", XmFONT_IS_FONT, (XtPointer)PEAK_NUMBERS_FONT(ss));
-	}
-#endif
       xdismiss = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG);
       xhelp = XmStringCreate(_("Help"), XmFONTLIST_DEFAULT_TAG);
       xreset = XmStringCreate(_("Reset"), XmFONTLIST_DEFAULT_TAG);

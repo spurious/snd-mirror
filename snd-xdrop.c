@@ -33,7 +33,6 @@ static char *atom_to_filename(Atom type, XtPointer value, unsigned long length)
 	}
       str[length] = '\0';
     }
-#if (XmVERSION > 1)
   else
     {
       if ((type == COMPOUND_TEXT) || (type == _MOTIF_COMPOUND_STRING))
@@ -49,7 +48,6 @@ static char *atom_to_filename(Atom type, XtPointer value, unsigned long length)
 	  XtFree(temp);
 	}
     }
-#endif
   return(str);
 }
 

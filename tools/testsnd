@@ -224,34 +224,6 @@ echo ' '
 ./snd --version
 ./snd -l snd-test 10
 
-echo ' -------------------------------- configure with lesstif -------------------------------- '
-make allclean
-echo ' CFLAGS=-I/home/bil/test/lesstif/Motif-1.2 --with-static-xm '
-./configure --quiet CFLAGS=-I/home/bil/test/lesstif/Motif-1.2 --with-static-xm
-make
-./snd --version
-echo ' '
-echo ' '
-make allclean
-echo ' CFLAGS=-I/home/bil/test/lesstif/Motif-1.2 --with-static-xm --with-ruby '
-./configure --quiet CFLAGS=-I/home/bil/test/lesstif/Motif-1.2 --with-static-xm --with-ruby
-make
-./snd --version
-make allclean
-echo ' CFLAGS=-I/home/bil/test/lesstif/Motif-2.0 --with-static-xm '
-./configure --quiet CFLAGS=-I/home/bil/test/lesstif/Motif-1.2 --with-static-xm
-make
-./snd --version
-echo ' '
-echo ' '
-make allclean
-echo ' CFLAGS=-I/home/bil/test/lesstif/Motif-2.0 --with-static-xm --with-ruby '
-./configure --quiet CFLAGS=-I/home/bil/test/lesstif/Motif-1.2 --with-static-xm --with-ruby
-make
-./snd --version
-echo ' '
-echo ' '
-date
 echo ' -------------------------------- configure --with-gtk test -------------------------------- '
 make allclean
 rm -f snd

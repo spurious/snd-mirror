@@ -72,9 +72,7 @@
   XEN_NARGIFY_1(gxm_XtDispatchEvent_w, gxm_XtDispatchEvent)
   XEN_NARGIFY_2(gxm_XtCallAcceptFocus_w, gxm_XtCallAcceptFocus)
   XEN_NARGIFY_1(gxm_XtAppPeekEvent_w, gxm_XtAppPeekEvent)
-#if MOTIF_2
   XEN_NARGIFY_2(gxm_XtIsSubclass_w, gxm_XtIsSubclass)
-#endif
   XEN_NARGIFY_2(gxm_XtAppSetFallbackResources_w, gxm_XtAppSetFallbackResources)
   XEN_NARGIFY_1(gxm_XtIsObject_w, gxm_XtIsObject)
   XEN_NARGIFY_1(gxm_XtIsManaged_w, gxm_XtIsManaged)
@@ -714,7 +712,6 @@
   XEN_NARGIFY_2(gxm_XmMessageBoxGetChild_w, gxm_XmMessageBoxGetChild)
   XEN_ARGIFY_4(gxm_XmCreateArrowButtonGadget_w, gxm_XmCreateArrowButtonGadget)
   XEN_ARGIFY_4(gxm_XmCreateArrowButton_w, gxm_XmCreateArrowButton)
-#if MOTIF_2
   XEN_ARGIFY_4(gxm_XmCreateNotebook_w, gxm_XmCreateNotebook)
   XEN_NARGIFY_2(gxm_XmNotebookGetPageInfo_w, gxm_XmNotebookGetPageInfo)
 #if HAVE_XM_XP
@@ -765,7 +762,6 @@
   XEN_NARGIFY_1(gxm_XmTextPasteLink_w, gxm_XmTextPasteLink)
   XEN_NARGIFY_2(gxm_XmTextCopyLink_w, gxm_XmTextCopyLink)
   XEN_NARGIFY_7(gxm_XmScaleSetTicks_w, gxm_XmScaleSetTicks)
-#endif
   XEN_NARGIFY_3(gxm_XmInternAtom_w, gxm_XmInternAtom)
   XEN_NARGIFY_2(gxm_XmGetAtomName_w, gxm_XmGetAtomName)
   XEN_ARGIFY_4(gxm_XmCreatePanedWindow_w, gxm_XmCreatePanedWindow)
@@ -809,9 +805,7 @@
   XEN_NARGIFY_2(gxm_XmScaleSetValue_w, gxm_XmScaleSetValue)
   XEN_NARGIFY_1(gxm_XmScaleGetValue_w, gxm_XmScaleGetValue)
   XEN_ARGIFY_4(gxm_XmCreateScale_w, gxm_XmCreateScale)
-#ifndef LESSTIF_VERSION
   XEN_NARGIFY_5(gxm_XmClipboardBeginCopy_w, gxm_XmClipboardBeginCopy)
-#endif
   XEN_NARGIFY_6(gxm_XmClipboardStartCopy_w, gxm_XmClipboardStartCopy)
   XEN_NARGIFY_7(gxm_XmClipboardCopy_w, gxm_XmClipboardCopy)
   XEN_NARGIFY_3(gxm_XmClipboardEndCopy_w, gxm_XmClipboardEndCopy)
@@ -829,14 +823,10 @@
   XEN_NARGIFY_3(gxm_XmClipboardInquireLength_w, gxm_XmClipboardInquireLength)
   XEN_NARGIFY_3(gxm_XmClipboardInquirePendingItems_w, gxm_XmClipboardInquirePendingItems)
   XEN_NARGIFY_3(gxm_XmClipboardRegisterFormat_w, gxm_XmClipboardRegisterFormat)
-#if MOTIF_2
 #if HAVE_XmToolTipGetLabel
   XEN_NARGIFY_1(gxm_XmToolTipGetLabel_w, gxm_XmToolTipGetLabel)
 #endif
-#ifndef LESSTIF_VERSION
   XEN_NARGIFY_1(gxm_XmGetXmScreen_w, gxm_XmGetXmScreen)
-#endif
-#endif
 #if HAVE_XmCreateFontSelector
     XEN_ARGIFY_4(gxm_XmCreateFontSelector_w, gxm_XmCreateFontSelector)
 #endif
@@ -879,10 +869,8 @@
   XEN_NARGIFY_2(gxm_XmTextFieldSetString_w, gxm_XmTextFieldSetString)
   XEN_NARGIFY_4(gxm_XmTextFieldReplace_w, gxm_XmTextFieldReplace)
   XEN_NARGIFY_3(gxm_XmTextFieldInsert_w, gxm_XmTextFieldInsert)
-#if MOTIF_2
   XEN_NARGIFY_2(gxm_XmTextFieldSetAddMode_w, gxm_XmTextFieldSetAddMode)
   XEN_NARGIFY_1(gxm_XmTextFieldGetAddMode_w, gxm_XmTextFieldGetAddMode)
-#endif
   XEN_NARGIFY_1(gxm_XmTextFieldGetEditable_w, gxm_XmTextFieldGetEditable)
   XEN_NARGIFY_2(gxm_XmTextFieldSetEditable_w, gxm_XmTextFieldSetEditable)
   XEN_NARGIFY_1(gxm_XmTextFieldGetMaxLength_w, gxm_XmTextFieldGetMaxLength)
@@ -918,10 +906,8 @@
   XEN_NARGIFY_2(gxm_XmTextSetString_w, gxm_XmTextSetString)
   XEN_NARGIFY_4(gxm_XmTextReplace_w, gxm_XmTextReplace)
   XEN_NARGIFY_3(gxm_XmTextInsert_w, gxm_XmTextInsert)
-#if MOTIF_2
   XEN_NARGIFY_2(gxm_XmTextSetAddMode_w, gxm_XmTextSetAddMode)
   XEN_NARGIFY_1(gxm_XmTextGetAddMode_w, gxm_XmTextGetAddMode)
-#endif
   XEN_NARGIFY_1(gxm_XmTextGetEditable_w, gxm_XmTextGetEditable)
   XEN_NARGIFY_2(gxm_XmTextSetEditable_w, gxm_XmTextSetEditable)
   XEN_NARGIFY_1(gxm_XmTextGetMaxLength_w, gxm_XmTextGetMaxLength)
@@ -1036,7 +1022,6 @@
   XEN_NARGIFY_0(gxm_XmStringSeparatorCreate_w, gxm_XmStringSeparatorCreate)
   XEN_NARGIFY_1(gxm_XmStringInitContext_w, gxm_XmStringInitContext)
   XEN_NARGIFY_1(gxm_XmStringFreeContext_w, gxm_XmStringFreeContext)
-#if MOTIF_2
   XEN_NARGIFY_2(gxm_XmStringConcatAndFree_w, gxm_XmStringConcatAndFree)
   XEN_NARGIFY_1(gxm_XmStringIsVoid_w, gxm_XmStringIsVoid)
   XEN_NARGIFY_1(gxm_XmStringPeekNextTriple_w, gxm_XmStringPeekNextTriple)
@@ -1082,7 +1067,6 @@
   XEN_ARGIFY_3(gxm_XmRenderTableCopy_w, gxm_XmRenderTableCopy)
   XEN_ARGIFY_3(gxm_XmRenderTableRemoveRenditions_w, gxm_XmRenderTableRemoveRenditions)
   XEN_NARGIFY_4(gxm_XmRenderTableAddRenditions_w, gxm_XmRenderTableAddRenditions)
-#endif
   XEN_NARGIFY_2(gxm_XmStringConcat_w, gxm_XmStringConcat)
   XEN_NARGIFY_1(gxm_XmStringCopy_w, gxm_XmStringCopy)
   XEN_NARGIFY_2(gxm_XmStringCompare_w, gxm_XmStringCompare)
@@ -1109,12 +1093,9 @@
   XEN_NARGIFY_1(gxm_XmIsMessageBox_w, gxm_XmIsMessageBox)
   XEN_NARGIFY_1(gxm_XmIsArrowButtonGadget_w, gxm_XmIsArrowButtonGadget)
   XEN_NARGIFY_1(gxm_XmIsArrowButton_w, gxm_XmIsArrowButton)
-#if MOTIF_2
-
   XEN_NARGIFY_1(gxm_XmCvtXmStringToByteStream_w, gxm_XmCvtXmStringToByteStream)
   XEN_NARGIFY_1(gxm_XmCvtByteStreamToXmString_w, gxm_XmCvtByteStreamToXmString)
   XEN_NARGIFY_1(gxm_XmStringByteStreamLength_w, gxm_XmStringByteStreamLength)
-
   XEN_NARGIFY_1(gxm_XmIsNotebook_w, gxm_XmIsNotebook)
 #if HAVE_XM_XP
   XEN_NARGIFY_1(gxm_XmIsPrintShell_w, gxm_XmIsPrintShell)
@@ -1124,7 +1105,6 @@
   XEN_NARGIFY_1(gxm_XmIsGrabShell_w, gxm_XmIsGrabShell)
   XEN_NARGIFY_1(gxm_XmIsIconGadget_w, gxm_XmIsIconGadget)
   XEN_NARGIFY_1(gxm_XmIsIconHeader_w, gxm_XmIsIconHeader)
-#endif
   XEN_NARGIFY_1(gxm_XmIsPanedWindow_w, gxm_XmIsPanedWindow)
   XEN_NARGIFY_1(gxm_XmIsBulletinBoard_w, gxm_XmIsBulletinBoard)
   XEN_NARGIFY_1(gxm_XmIsPrimitive_w, gxm_XmIsPrimitive)
@@ -1135,9 +1115,7 @@
   XEN_NARGIFY_1(gxm_XmIsCommand_w, gxm_XmIsCommand)
   XEN_NARGIFY_1(gxm_XmIsRowColumn_w, gxm_XmIsRowColumn)
   XEN_NARGIFY_1(gxm_XmIsScale_w, gxm_XmIsScale)
-#if MOTIF_2
   XEN_NARGIFY_1(gxm_XmIsScreen_w, gxm_XmIsScreen)
-#endif
   XEN_NARGIFY_1(gxm_XmIsScrollBar_w, gxm_XmIsScrollBar)
   XEN_NARGIFY_1(gxm_XmIsDialogShell_w, gxm_XmIsDialogShell)
   XEN_NARGIFY_1(gxm_XmIsScrolledWindow_w, gxm_XmIsScrolledWindow)
@@ -1145,9 +1123,7 @@
   XEN_NARGIFY_1(gxm_XmIsSelectionBox_w, gxm_XmIsSelectionBox)
   XEN_NARGIFY_1(gxm_XmIsDragContext_w, gxm_XmIsDragContext)
   XEN_NARGIFY_1(gxm_XmIsSeparatorGadget_w, gxm_XmIsSeparatorGadget)
-#if MOTIF_2
   XEN_NARGIFY_1(gxm_XmIsDragIconObjectClass_w, gxm_XmIsDragIconObjectClass)
-#endif
   XEN_NARGIFY_1(gxm_XmIsSeparator_w, gxm_XmIsSeparator)
   XEN_NARGIFY_1(gxm_XmIsDrawingArea_w, gxm_XmIsDrawingArea)
   XEN_NARGIFY_1(gxm_XmIsDrawnButton_w, gxm_XmIsDrawnButton)
@@ -1352,13 +1328,11 @@
 #if HAVE_MOTIF
   XEN_NARGIFY_1(XEN_WidgetClass_p_w, XEN_WidgetClass_p)
   XEN_NARGIFY_1(XEN_XmString_p_w, XEN_XmString_p)
-#if MOTIF_2
   XEN_NARGIFY_1(XEN_XmTab_p_w, XEN_XmTab_p)
   XEN_NARGIFY_1(XEN_XmRendition_p_w, XEN_XmRendition_p)
   XEN_NARGIFY_1(XEN_XmRenderTable_p_w, XEN_XmRenderTable_p)
   XEN_NARGIFY_1(XEN_XmTabList_p_w, XEN_XmTabList_p)
   XEN_NARGIFY_1(XEN_XmParseMapping_p_w, XEN_XmParseMapping_p)
-#endif
   XEN_NARGIFY_1(XEN_XmTextSource_p_w, XEN_XmTextSource_p)
 #endif
 #if HAVE_XPM
@@ -1439,9 +1413,7 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XtDispatchEvent, gxm_XtDispatchEvent_w, 1, 0, 0, H_XtDispatchEvent);
   XM_DEFINE_PROCEDURE(XtCallAcceptFocus, gxm_XtCallAcceptFocus_w, 2, 0, 0, H_XtCallAcceptFocus);
   XM_DEFINE_PROCEDURE(XtAppPeekEvent, gxm_XtAppPeekEvent_w, 1, 0, 0, H_XtAppPeekEvent);
-#if MOTIF_2
   XM_DEFINE_PROCEDURE(XtIsSubclass, gxm_XtIsSubclass_w, 2, 0, 0, H_XtIsSubclass);
-#endif
   XM_DEFINE_PROCEDURE(XtIsObject, gxm_XtIsObject_w, 1, 0, 0, H_XtIsObject);
   XM_DEFINE_PROCEDURE(XtIsManaged, gxm_XtIsManaged_w, 1, 0, 0, H_XtIsManaged);
   XM_DEFINE_PROCEDURE(XtIsRealized, gxm_XtIsRealized_w, 1, 0, 0, H_XtIsRealized);
@@ -2087,7 +2059,6 @@ static void define_procedures(void)
 #if HAVE_XmCreateColorSelector
   XM_DEFINE_PROCEDURE(XmCreateColorSelector, gxm_XmCreateColorSelector_w, 3, 1, 0, H_XmCreateColorSelector);
 #endif
-#if MOTIF_2
 #if HAVE_XmToolTipGetLabel
   XM_DEFINE_PROCEDURE(XmToolTipGetLabel, gxm_XmToolTipGetLabel_w, 1, 0, 0, H_XmToolTipGetLabel);
 #endif
@@ -2141,7 +2112,6 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmTextPasteLink, gxm_XmTextPasteLink_w, 1, 0, 0, H_XmTextPasteLink);
   XM_DEFINE_PROCEDURE(XmTextCopyLink, gxm_XmTextCopyLink_w, 2, 0, 0, H_XmTextCopyLink);
   XM_DEFINE_PROCEDURE(XmScaleSetTicks, gxm_XmScaleSetTicks_w, 7, 0, 0, H_XmScaleSetTicks);
-#endif
   XM_DEFINE_PROCEDURE(XmInternAtom, gxm_XmInternAtom_w, 3, 0, 0, H_XmInternAtom);
   XM_DEFINE_PROCEDURE(XmGetAtomName, gxm_XmGetAtomName_w, 2, 0, 0, H_XmGetAtomName);
   XM_DEFINE_PROCEDURE(XmCreatePanedWindow, gxm_XmCreatePanedWindow_w, 3, 1, 0, H_XmCreatePanedWindow);
@@ -2185,9 +2155,7 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmScaleSetValue, gxm_XmScaleSetValue_w, 2, 0, 0, H_XmScaleSetValue);
   XM_DEFINE_PROCEDURE(XmScaleGetValue, gxm_XmScaleGetValue_w, 1, 0, 0, H_XmScaleGetValue);
   XM_DEFINE_PROCEDURE(XmCreateScale, gxm_XmCreateScale_w, 3, 1, 0, H_XmCreateScale);
-#ifndef LESSTIF_VERSION
   XM_DEFINE_PROCEDURE(XmClipboardBeginCopy, gxm_XmClipboardBeginCopy_w, 5, 0, 0, H_XmClipboardBeginCopy);
-#endif
   XM_DEFINE_PROCEDURE(XmWidgetGetDisplayRect, gxm_XmWidgetGetDisplayRect_w, 1, 0, 0, H_XmWidgetGetDisplayRect);
   XM_DEFINE_PROCEDURE(XmClipboardStartCopy, gxm_XmClipboardStartCopy_w, 6, 0, 0, H_XmClipboardStartCopy);
   XM_DEFINE_PROCEDURE(XmClipboardCopy, gxm_XmClipboardCopy_w, 7, 0, 0, H_XmClipboardCopy);
@@ -2206,11 +2174,7 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmClipboardInquireLength, gxm_XmClipboardInquireLength_w, 3, 0, 0, H_XmClipboardInquireLength);
   XM_DEFINE_PROCEDURE(XmClipboardInquirePendingItems, gxm_XmClipboardInquirePendingItems_w, 3, 0, 0, H_XmClipboardInquirePendingItems);
   XM_DEFINE_PROCEDURE(XmClipboardRegisterFormat, gxm_XmClipboardRegisterFormat_w, 3, 0, 0, H_XmClipboardRegisterFormat);
-#if MOTIF_2
-#ifndef LESSTIF_VERSION
   XM_DEFINE_PROCEDURE(XmGetXmScreen, gxm_XmGetXmScreen_w, 1, 0, 0, H_XmGetXmScreen);
-#endif
-#endif
   XM_DEFINE_PROCEDURE(XmCreateScrollBar, gxm_XmCreateScrollBar_w, 3, 1, 0, H_XmCreateScrollBar);
   XM_DEFINE_PROCEDURE(XmScrollBarGetValues, gxm_XmScrollBarGetValues_w, 1, 0, 0, H_XmScrollBarGetValues);
   XM_DEFINE_PROCEDURE(XmScrollBarSetValues, gxm_XmScrollBarSetValues_w, 6, 0, 0, H_XmScrollBarSetValues);
@@ -2247,10 +2211,8 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmTextFieldSetString, gxm_XmTextFieldSetString_w, 2, 0, 0, H_XmTextFieldSetString);
   XM_DEFINE_PROCEDURE(XmTextFieldReplace, gxm_XmTextFieldReplace_w, 4, 0, 0, H_XmTextFieldReplace);
   XM_DEFINE_PROCEDURE(XmTextFieldInsert, gxm_XmTextFieldInsert_w, 3, 0, 0, H_XmTextFieldInsert);
-#if MOTIF_2
   XM_DEFINE_PROCEDURE(XmTextFieldSetAddMode, gxm_XmTextFieldSetAddMode_w, 2, 0, 0, H_XmTextFieldSetAddMode);
   XM_DEFINE_PROCEDURE(XmTextFieldGetAddMode, gxm_XmTextFieldGetAddMode_w, 1, 0, 0, NULL);
-#endif
   XM_DEFINE_PROCEDURE(XmTextFieldGetEditable, gxm_XmTextFieldGetEditable_w, 1, 0, 0, H_XmTextFieldGetEditable);
   XM_DEFINE_PROCEDURE(XmTextFieldSetEditable, gxm_XmTextFieldSetEditable_w, 2, 0, 0, H_XmTextFieldSetEditable);
   XM_DEFINE_PROCEDURE(XmTextFieldGetMaxLength, gxm_XmTextFieldGetMaxLength_w, 1, 0, 0, H_XmTextFieldGetMaxLength);
@@ -2286,10 +2248,8 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmTextSetString, gxm_XmTextSetString_w, 2, 0, 0, H_XmTextSetString);
   XM_DEFINE_PROCEDURE(XmTextReplace, gxm_XmTextReplace_w, 4, 0, 0, H_XmTextReplace);
   XM_DEFINE_PROCEDURE(XmTextInsert, gxm_XmTextInsert_w, 3, 0, 0, H_XmTextInsert);
-#if MOTIF_2
   XM_DEFINE_PROCEDURE(XmTextSetAddMode, gxm_XmTextSetAddMode_w, 2, 0, 0, H_XmTextSetAddMode);
   XM_DEFINE_PROCEDURE(XmTextGetAddMode, gxm_XmTextGetAddMode_w, 1, 0, 0, NULL);
-#endif
   XM_DEFINE_PROCEDURE(XmTextGetEditable, gxm_XmTextGetEditable_w, 1, 0, 0, H_XmTextGetEditable);
   XM_DEFINE_PROCEDURE(XmTextSetEditable, gxm_XmTextSetEditable_w, 2, 0, 0, H_XmTextSetEditable);
   XM_DEFINE_PROCEDURE(XmTextGetMaxLength, gxm_XmTextGetMaxLength_w, 1, 0, 0, H_XmTextGetMaxLength);
@@ -2404,13 +2364,9 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmStringSeparatorCreate, gxm_XmStringSeparatorCreate_w, 0, 0, 0, H_XmStringSeparatorCreate);
   XM_DEFINE_PROCEDURE(XmStringInitContext, gxm_XmStringInitContext_w, 1, 0, 0, H_XmStringInitContext);
   XM_DEFINE_PROCEDURE(XmStringFreeContext, gxm_XmStringFreeContext_w, 1, 0, 0, H_XmStringFreeContext);
-
-#if MOTIF_2
-
   XM_DEFINE_PROCEDURE(XmCvtXmStringToByteStream, gxm_XmCvtXmStringToByteStream_w, 1, 0, 0, H_XmCvtXmStringToByteStream);
   XM_DEFINE_PROCEDURE(XmCvtByteStreamToXmString, gxm_XmCvtByteStreamToXmString_w, 1, 0, 0, H_XmCvtByteStreamToXmString);
   XM_DEFINE_PROCEDURE(XmStringByteStreamLength, gxm_XmStringByteStreamLength_w, 1, 0, 0, H_XmStringByteStreamLength);
-
   XM_DEFINE_PROCEDURE(XmStringConcatAndFree, gxm_XmStringConcatAndFree_w, 2, 0, 0, H_XmStringConcatAndFree);
   XM_DEFINE_PROCEDURE(XmStringIsVoid, gxm_XmStringIsVoid_w, 1, 0, 0, H_XmStringIsVoid);
   XM_DEFINE_PROCEDURE(XmStringPeekNextTriple, gxm_XmStringPeekNextTriple_w, 1, 0, 0, H_XmStringPeekNextTriple);
@@ -2456,7 +2412,6 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmRenderTableCopy, gxm_XmRenderTableCopy_w, 0, 3, 0, H_XmRenderTableCopy);
   XM_DEFINE_PROCEDURE(XmRenderTableRemoveRenditions, gxm_XmRenderTableRemoveRenditions_w, 0, 3, 0, H_XmRenderTableRemoveRenditions);
   XM_DEFINE_PROCEDURE(XmRenderTableAddRenditions, gxm_XmRenderTableAddRenditions_w, 4, 0, 0, H_XmRenderTableAddRenditions);
-#endif
   XM_DEFINE_PROCEDURE(XmStringConcat, gxm_XmStringConcat_w, 2, 0, 0, H_XmStringConcat);
   XM_DEFINE_PROCEDURE(XmStringCopy, gxm_XmStringCopy_w, 1, 0, 0, H_XmStringCopy);
   XM_DEFINE_PROCEDURE(XmStringCompare, gxm_XmStringCompare_w, 2, 0, 0, H_XmStringCompare);
@@ -2482,7 +2437,6 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmIsMessageBox, gxm_XmIsMessageBox_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmIsArrowButtonGadget, gxm_XmIsArrowButtonGadget_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmIsArrowButton, gxm_XmIsArrowButton_w, 1, 0, 0, NULL);
-#if MOTIF_2
   XM_DEFINE_PROCEDURE(XmIsNotebook, gxm_XmIsNotebook_w, 1, 0, 0, NULL);
 #if HAVE_XM_XP
   XM_DEFINE_PROCEDURE(XmIsPrintShell, gxm_XmIsPrintShell_w, 1, 0, 0, NULL);
@@ -2492,7 +2446,6 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmIsGrabShell, gxm_XmIsGrabShell_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmIsIconGadget, gxm_XmIsIconGadget_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmIsIconHeader, gxm_XmIsIconHeader_w, 1, 0, 0, NULL);
-#endif
   XM_DEFINE_PROCEDURE(XmIsPanedWindow, gxm_XmIsPanedWindow_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmIsBulletinBoard, gxm_XmIsBulletinBoard_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmIsPrimitive, gxm_XmIsPrimitive_w, 1, 0, 0, NULL);
@@ -2503,9 +2456,7 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmIsCommand, gxm_XmIsCommand_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmIsRowColumn, gxm_XmIsRowColumn_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmIsScale, gxm_XmIsScale_w, 1, 0, 0, NULL);
-#if MOTIF_2
   XM_DEFINE_PROCEDURE(XmIsScreen, gxm_XmIsScreen_w, 1, 0, 0, NULL);
-#endif
   XM_DEFINE_PROCEDURE(XmIsScrollBar, gxm_XmIsScrollBar_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmIsDialogShell, gxm_XmIsDialogShell_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmIsScrolledWindow, gxm_XmIsScrolledWindow_w, 1, 0, 0, NULL);
@@ -2513,9 +2464,7 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmIsSelectionBox, gxm_XmIsSelectionBox_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmIsDragContext, gxm_XmIsDragContext_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmIsSeparatorGadget, gxm_XmIsSeparatorGadget_w, 1, 0, 0, NULL);
-#if MOTIF_2
   XM_DEFINE_PROCEDURE(XmIsDragIconObjectClass, gxm_XmIsDragIconObjectClass_w, 1, 0, 0, NULL);
-#endif
   XM_DEFINE_PROCEDURE(XmIsSeparator, gxm_XmIsSeparator_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmIsDrawingArea, gxm_XmIsDrawingArea_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmIsDrawnButton, gxm_XmIsDrawnButton_w, 1, 0, 0, NULL);
@@ -2759,7 +2708,6 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmCommand?, gxm_XmIsCommand_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmScale?, gxm_XmIsScale_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmRowColumn?, gxm_XmIsRowColumn_w, 1, 0, 0, NULL);
-#if MOTIF_2
   XM_DEFINE_PROCEDURE(XmTab?, XEN_XmTab_p_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmNotebook?, gxm_XmIsNotebook_w, 1, 0, 0, NULL);
 #if HAVE_XM_XP
@@ -2774,22 +2722,17 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmIconGadget?, gxm_XmIsIconGadget_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmTabList?, XEN_XmTabList_p_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmParseMapping?, XEN_XmParseMapping_p_w, 1, 0, 0, NULL);
-#endif
   XM_DEFINE_PROCEDURE(XmPanedWindow?, gxm_XmIsPanedWindow_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmScrolledWindow?, gxm_XmIsScrolledWindow_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmCascadeButton?, gxm_XmIsCascadeButton_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmForm?, gxm_XmIsForm_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmBulletinBoard?, gxm_XmIsBulletinBoard_w, 1, 0, 0, NULL);
-#if MOTIF_2
   XM_DEFINE_PROCEDURE(XmScreen?, gxm_XmIsScreen_w, 1, 0, 0, NULL);
-#endif
   XM_DEFINE_PROCEDURE(XmDialogShell?, gxm_XmIsDialogShell_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmDisplay?, gxm_XmIsDisplay_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmSelectionBox?, gxm_XmIsSelectionBox_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmDragContext?, gxm_XmIsDragContext_w, 1, 0, 0, NULL);
-#if MOTIF_2
   XM_DEFINE_PROCEDURE(XmDragIconObjectClass?, gxm_XmIsDragIconObjectClass_w, 1, 0, 0, NULL);
-#endif
   XM_DEFINE_PROCEDURE(XmSeparator?, gxm_XmIsSeparator_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmDropSiteManager?, gxm_XmIsDropSiteManager_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmDropTransfer?, gxm_XmIsDropTransfer_w, 1, 0, 0, NULL);
@@ -3134,7 +3077,6 @@ static void define_procedures(void)
   XEN_NARGIFY_1(gxm_ptr_w, gxm_ptr)
   XEN_NARGIFY_2(gxm_set_ptr_w, gxm_set_ptr)
   XEN_NARGIFY_2(gxm_set_reason_w, gxm_set_reason)
-#if MOTIF_2
   XEN_NARGIFY_1(gxm_page_number_w, gxm_page_number)
   XEN_NARGIFY_1(gxm_page_widget_w, gxm_page_widget)
   XEN_NARGIFY_1(gxm_status_area_widget_w, gxm_status_area_widget)
@@ -3167,7 +3109,6 @@ static void define_procedures(void)
   XEN_NARGIFY_1(gxm_traversal_destination_w, gxm_traversal_destination)
   XEN_NARGIFY_1(gxm_dragProtocolStyle_w, gxm_dragProtocolStyle)
   XEN_NARGIFY_1(gxm_direction_w, gxm_direction)
-#endif
   XEN_NARGIFY_1(gxm_reason_w, gxm_reason)
   XEN_NARGIFY_1(gxm_timeStamp_w, gxm_timeStamp)
   XEN_NARGIFY_1(gxm_operation_w, gxm_operation )
@@ -3198,9 +3139,7 @@ static void define_procedures(void)
   XEN_NARGIFY_1(gxm_dir_length_w, gxm_dir_length)
   XEN_NARGIFY_1(gxm_pattern_w, gxm_pattern)
   XEN_NARGIFY_1(gxm_pattern_length_w, gxm_pattern_length)
-#if MOTIF_2
   XEN_NARGIFY_1(gxm_position_w, gxm_position)
-#endif
   XEN_NARGIFY_1(gxm_currInsert_w, gxm_currInsert)
   XEN_NARGIFY_1(gxm_newInsert_w, gxm_newInsert)
   XEN_NARGIFY_1(gxm_startPos_w, gxm_startPos)
@@ -3210,12 +3149,10 @@ static void define_procedures(void)
   XEN_NARGIFY_2(gxm_set_value_w, gxm_set_value)
   XEN_NARGIFY_1(gxm_doit_w, gxm_doit)
   XEN_NARGIFY_2(gxm_set_doit_w, gxm_set_doit)
-#if MOTIF_2
   XEN_NARGIFY_1(gxm_menuToPost_w, gxm_menuToPost)
   XEN_NARGIFY_2(gxm_set_menuToPost_w, gxm_set_menuToPost)
   XEN_NARGIFY_1(gxm_postIt_w, gxm_postIt)
   XEN_NARGIFY_2(gxm_set_postIt_w, gxm_set_postIt)
-#endif
 #if HAVE_XmCreateDataField
   XEN_NARGIFY_1(gxm_w_w, gxm_w)
   XEN_NARGIFY_1(gxm_accept_w, gxm_accept)
@@ -3409,7 +3346,6 @@ static void define_structs(void)
   XM_DEFINE_READER(width_inc, gxm_width_inc_w, 1, 0, 0);
 
 #if HAVE_MOTIF
-#if MOTIF_2
   XM_DEFINE_READER(page_number, gxm_page_number_w, 1, 0, 0);
   XM_DEFINE_READER(page_widget, gxm_page_widget_w, 1, 0, 0);
   XM_DEFINE_READER(status_area_widget, gxm_status_area_widget_w, 1, 0, 0);
@@ -3445,7 +3381,6 @@ static void define_structs(void)
   XM_DEFINE_READER(position, gxm_position_w, 1, 0, 0);
   XM_DEFINE_ACCESSOR(menuToPost, gxm_menuToPost_w, set_menuToPost, gxm_set_menuToPost_w, 1, 0, 2, 0);
   XM_DEFINE_ACCESSOR(postIt, gxm_postIt_w, set_postIt, gxm_set_postIt_w, 1, 0, 2, 0);
-#endif
   XM_DEFINE_READER(timeStamp, gxm_timeStamp_w, 1, 0, 0);
   XM_DEFINE_ACCESSOR(operation, gxm_operation_w, set_operation, gxm_set_operation_w, 1, 0, 2, 0);
   XM_DEFINE_ACCESSOR(reason, gxm_reason_w, set_reason, gxm_set_reason_w, 1, 0, 2, 0);

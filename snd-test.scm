@@ -1315,6 +1315,8 @@
 	    (list "oboe.smp" 1 22050 2.305125 "snack SMP" "little endian short (16 bits)")
 	    (list "oboe.nsp" 1 22050 2.305125 "CSL" "little endian short (16 bits)")
 	    (list "oboe.nvf" 1 8000 6.353500 "Creative NVF" "unknown")
+	    (list "oboe-ulaw.voc" 1 22050 2.305669 "VOC" "mulaw (8 bits)")
+	    (list "oboe-lf32.voc" 1 22050 2.305669 "IRCAM" "little endian float (32 bits)")
 	    (list "oboe.wfp" 1 22050 2.305125 "Turtle Beach" "little endian short (16 bits)")
 	    (list "oki.snd" 2 44100 0.0041950112208724 "raw (no header)" "big endian short (16 bits)")
 	    (list "oki.wav" 1 44100 0.016780 "RIFF" "unknown")

@@ -10,11 +10,7 @@ enum {W_top, W_form, W_main_window, W_edhist, W_wf_buttons, W_f, W_w, W_left_scr
 
 Widget channel_main_pane(chan_info *cp)
 {
-#if (XmVERSION > 1)
   if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_form]);
-#else
-  if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_main_window]);
-#endif
   return(NULL);
 }
 
@@ -556,7 +552,6 @@ static void show_gz_scrollbars(snd_info *sp)
 
 /* edit history support */
 
-#if (XmVERSION > 1)
 static void history_select_callback(Widget w, XtPointer context, XtPointer info) 
 {
   /* undo/redo to reach selected position */
@@ -659,18 +654,16 @@ static void watch_edit_history_sash(Widget w, XtPointer closure, XtPointer info)
     }
 }
 #endif
-#endif
 
 void reflect_edit_history_change(chan_info *cp)
 {
   /* new edit so it is added, and any trailing lines removed */
-#if (XmVERSION > 1)
   snd_info *sp;
   Widget lst;
   if ((cp->in_as_one_edit) || (cp->cgx == NULL)) return;
   sp = cp->sound;
   lst = EDIT_HISTORY_LIST(cp);
-#if WITH_RELATIVE_PANES && (XmVERSION > 1)
+#if WITH_RELATIVE_PANES
   if ((lst) && (widget_width(lst) > 1))
     remake_edit_history(lst, cp, true);
   else
@@ -726,13 +719,11 @@ void reflect_edit_history_change(chan_info *cp)
 	}
     }
 #endif
-#endif
 }
 
 void reflect_edit_counter_change(chan_info *cp)
 {
   /* undo/redo/revert -- change which line is highlighted */
-#if (XmVERSION > 1)
   Widget lst;
   if (cp->cgx == NULL) return;
   lst = EDIT_HISTORY_LIST(cp);
@@ -763,7 +754,6 @@ void reflect_edit_counter_change(chan_info *cp)
 	    XmListSelectPos(lst, cp->edit_ctr + 1 + cp->edhist_base, false);
 	}
     }
-#endif
 #endif
 }
 
@@ -838,7 +828,6 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
 	  if (insertion) {XtSetArg(args[n], XmNpositionIndex, (short)channel); n++;}
 	  XtSetArg(args[n], XmNpaneMinimum, chan_y); n++;
 
-#if (XmVERSION > 1)
 	  cw[W_form] = XtCreateManagedWidget("chn-form", xmFormWidgetClass, w_snd_pane(sp), args, n);
 	  if ((sp->channel_style == CHANNELS_COMBINED) && (channel > 0)) XtUnmanageChild(cw[W_form]);
 
@@ -884,12 +873,6 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
 		}
 	    }
 	}
-#endif
-
-#else
-	/* Motif 1 */
-	  cw[W_main_window] = XtCreateManagedWidget("chn-main-window", xmFormWidgetClass, w_snd_pane(sp), args, n);
-	  XtAddEventHandler(cw[W_main_window], KeyPressMask, false, graph_key_press, (XtPointer)sp);
 #endif
 	}
       else cw[W_main_window] = main;
@@ -1133,9 +1116,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
   else
     { /* re-manage currently inactive chan */
       XtVaSetValues(cw[W_main_window], XmNpaneMinimum, chan_y, NULL);
-#if (XmVERSION > 1)
       if (cw[W_edhist]) XtVaSetValues(XtParent(cw[W_edhist]), XmNpaneMaximum, 1, NULL);
-#endif
       if ((sp->channel_style != CHANNELS_COMBINED) || (channel == 0))
 	for (i = 0; i < NUM_CHAN_WIDGETS; i++)
 	  if (cw[i])
@@ -1143,10 +1124,8 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
 	      XtManageChild(cw[i]);
       recolor_graph(cp, false); /* in case selection color left over from previous use */
     }
-#if (XmVERSION > 1)
   if (cw[W_edhist]) 
     XtVaSetValues(XtParent(cw[W_edhist]), XmNpaneMaximum, LOTSA_PIXELS, NULL);
-#endif
   if ((need_extra_scrollbars) && (sp->channel_style != CHANNELS_COMBINED)) 
     hide_gz_scrollbars(sp); /* default is on in this case */  
   cax = cx->ax;
@@ -1247,7 +1226,7 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 	{
 	  int height[1];
 	  sp->channel_style = new_style;
-#if WITH_RELATIVE_PANES && (XmVERSION > 1)
+#if WITH_RELATIVE_PANES
 	  if ((new_style == CHANNELS_SEPARATE) || (old_style == CHANNELS_SEPARATE))
 	    {
 	      Widget lst;

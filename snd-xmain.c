@@ -522,7 +522,6 @@ static void muffle_warning(char *name, char *type, char *klass, char *defaultp, 
 }
 #endif
 
-#if (XmVERSION > 1)
 static void notebook_page_changed_callback(Widget w, XtPointer context, XtPointer info)
 {
   /* if page chosen via major tab click, select that sound */
@@ -547,7 +546,6 @@ static void notebook_page_changed_callback(Widget w, XtPointer context, XtPointe
 	}
     }
 }
-#endif
 
 color_t get_in_between_color(color_t fg, color_t bg)
 {
@@ -881,7 +879,6 @@ void snd_doit(int argc, char **argv)
       XtSetArg(args[n], XmNsashIndent, ss->sash_indent); n++;
       sx->soundpane = XtCreateManagedWidget("soundpane", xmPanedWindowWidgetClass, sx->mainpane, args, n);
       break;
-#if (XmVERSION > 1)
     case SOUNDS_IN_NOTEBOOK:
       XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
       sx->soundpanebox = XtCreateManagedWidget("soundpane", xmPanedWindowWidgetClass, sx->mainpane, args, n);
@@ -905,7 +902,6 @@ void snd_doit(int argc, char **argv)
       XtAddCallback(sx->soundpane, XmNpageChangedCallback, notebook_page_changed_callback, NULL);
       map_over_children(sx->soundpane, set_main_color_of_widget, NULL); /* appears to be a no-op */
       break;
-#endif
     }
 
 #ifndef SND_AS_WIDGET

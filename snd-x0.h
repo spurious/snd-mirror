@@ -11,19 +11,9 @@
 #include <GL/glx.h>
 #endif
 
-#if (XmVERSION >= 2)
-  #define USE_RENDITIONS 1
-#endif
-
-#if (USE_RENDITIONS)
-  #define xm_font_t XmRenderTable
-  #define XM_FONT_RESOURCE XmNrenderTable
-  #define XM_FONT_FREE XmRenderTableFree
-#else
-  #define xm_font_t XmFontList
-  #define XM_FONT_RESOURCE XmNfontList
-  #define XM_FONT_FREE XmFontListFree
-#endif
+#define xm_font_t XmRenderTable
+#define XM_FONT_RESOURCE XmNrenderTable
+#define XM_FONT_FREE XmRenderTableFree
 
 #ifdef SGI
   #define CLOSED_CTRLS_HEIGHT 22

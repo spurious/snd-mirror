@@ -2414,7 +2414,6 @@ snd_info *add_sound_window(char *filename, bool read_only)
       FREE(n1); FREE(n2); FREE(n3); FREE(n4); FREE(n5); FREE(n6);
       FREE(n7); FREE(n8); FREE(n9); FREE(n10); FREE(n11); FREE(n12);
       /* end if control-panel */
-#if (XmVERSION > 1)
       if (sound_style(ss) == SOUNDS_IN_NOTEBOOK)
 	{
 	  char* name;
@@ -2427,7 +2426,6 @@ snd_info *add_sound_window(char *filename, bool read_only)
 	  sx->tab = XtCreateManagedWidget(name, xmPushButtonWidgetClass, SOUND_PANE(ss), args, n);
 	  FREE(name);
 	}
-#endif
       if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
 	run_new_widget_hook(sw[W_pane]);
       else run_new_widget_hook(sx->dialog);
@@ -2465,7 +2463,6 @@ snd_info *add_sound_window(char *filename, bool read_only)
 		      XmNpaneMinimum, 1,
 		      XmNpaneMaximum, LOTSA_PIXELS,
 		      NULL);
-#if (XmVERSION > 1)
       if (sound_style(ss) == SOUNDS_IN_NOTEBOOK)
 	{
 	  char *name;
@@ -2473,7 +2470,6 @@ snd_info *add_sound_window(char *filename, bool read_only)
 	  set_label(sx->tab, name);
 	  FREE(name);
 	}
-#endif
     }
   if (sp->nchans == 1) 
     {
@@ -2545,13 +2541,11 @@ void snd_info_cleanup(snd_info *sp)
 	  XtVaSetValues(REVERB_BUTTON(sp), XmNset, false, NULL);
 	  XmToggleButtonSetState(unite_button(sp), false, false);
 	  sp->channel_style = CHANNELS_SEPARATE;
-#if (XmVERSION > 1)
 	  if (sound_style(ss) == SOUNDS_IN_NOTEBOOK)
 	    {
 	      set_label((sp->sgx)->tab, _("none"));
 	      XmChangeColor((sp->sgx)->tab, (ss->sgx)->graph_color);
 	    }
-#endif
 	  XtUnmanageChild(w_snd_pane(sp));
 	}
       if ((sx->dialog) && 
@@ -2974,15 +2968,12 @@ void reflect_sound_selection(snd_info *sp)
       if ((osp) && (sp != osp) && (osp->inuse == SOUND_NORMAL)) 
 	{
 	  XmChangeColor(w_snd_name(osp), (ss->sgx)->highlight_color);
-#if (XmVERSION > 1)
 	  if (sound_style(ss) == SOUNDS_IN_NOTEBOOK) 
 	    XmChangeColor((osp->sgx)->tab, (ss->sgx)->graph_color);
-#endif
 	}
       if (sp->selected_channel != NO_SELECTION) 
 	{
 	  XmChangeColor(w_snd_name(sp), (ss->sgx)->white);
-#if (XmVERSION > 1)
 	  if (sound_style(ss) == SOUNDS_IN_NOTEBOOK) 
 	    {
 	      int page, current_page;
@@ -3002,7 +2993,6 @@ void reflect_sound_selection(snd_info *sp)
 		    }
 		}
 	    }
-#endif
 	}
     }
 }

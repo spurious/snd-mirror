@@ -431,7 +431,7 @@ else
    		         TEST_PRE_LIBS="$TEST_PRE_LIBS -lXmu"
 			])
     else
-# need to check for -lXmu required by (buggy) libXm.a (openmotif 2.2.2)
+        # need to check for -lXmu required by (buggy) libXm.a (openmotif 2.2.2)
 	AC_MSG_CHECKING([whether libXm requires libXmu])
 	AC_TRY_LINK_FUNC(XmCreateForm,
 		AC_MSG_RESULT(no),
@@ -628,7 +628,8 @@ else
 	     AC_MSG_RESULT(yes)
 	    ],
 	    [AC_MSG_RESULT(no)
-# perhaps the user hasn't installed the Motif headers? 
+
+            # perhaps the user hasn't installed the Motif headers? 
              AC_MSG_CHECKING([for Motif headers])
 	     AC_COMPILE_IFELSE(
                [AC_LANG_PROGRAM([#include <Xm/XmAll.h>],

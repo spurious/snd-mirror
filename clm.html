@@ -2420,11 +2420,11 @@ the envelope to apply over the entire input file:</p>
 
 <p>There are two special data types in CLM: frames and mixers.
 A frame is an array that represents
-a multi-channel sample (that is, in a stereo file, at time 0.0, there
+a multichannel sample (that is, in a stereo file, at time 0.0, there
 are two samples, one for each channel, and the frame that represents it has 2 samples).  A mixer is a array of arrays
 that represents a set of input to output scalers, as if it were the
-current state of a mixing console's volume controls.  A frame (a multi-channel
-input) can be mixed into a new frame (a multi-channel output) by passing
+current state of a mixing console's volume controls.  A frame (a multichannel
+input) can be mixed into a new frame (a multichannel output) by passing
 it through a mixer (a matrix, the operation being a (left) matrix multiply).
 These are combined with the notion of a sample (one datum of sampled music), and
 input/output ports (files, audio ports, etc) to handle all the underlying
@@ -3344,12 +3344,24 @@ do this is with with-sound or clm-load.
 <p><b>with-sound</b> is a macro that performs all the various services needed to
 produce and play a sound file; it also wraps an unwind-protect around its body to
 make sure that everything is cleaned up properly if you happen to interrupt
-computation; at the end it returns the output file name.</p>
+computation; at the end it returns the output file name.  with-sound opens an
+output sound file, evaluates its body (normally a bunch of instrument calls),
+applies reverb, if any, as a second pass, and plays the sound, if desired.
+The sound file's name defaults to "test.snd" or something similar; use the
+<b>output</b> argument to write some other file: 
+</p>
+<pre>
+  (with-sound (:<em class=red>output</em> "new.wave") (fm-violin 0 1 440 .1))
+</pre>
+<p>
+The <b>channels</b>, <b>srate</b>, <b>data-format</b>, and <b>header-type</b> arguments
+set the sound characteristics.  (The default values for these are set in defaults.lisp).
+Reverberation is handled as a second pass through a reverb instrument (nrev.ins for
+example).  The <b>reverb</b> argument sets the choice of reverberator.
+</p>
 <pre>
   (<a class=quiet href="#with-sound">with-sound</a> (:output "new.snd") (simp 0 1 440 .1))
   (<a class=quiet href="#with-sound">with-sound</a> (:srate 44100 :channels 2) ...)
-  (<a class=quiet href="#with-sound">with-sound</a> (:comment (format nil 
-     "This version is louder: ~A" (make-header))))
   (<a class=quiet href="#with-sound">with-sound</a> (:reverb jc-reverb) ...)
   (<a class=quiet href="#with-sound">with-sound</a> (:reverb nrev :reverb-data (:reverb-factor 1.2 :lp-coeff .95))...)
 </pre>
@@ -3419,7 +3431,7 @@ for each section of a piece as well as the whole thing, all in one run.  Since i
 </td></tr></table>
 
 <p>
-Besides the obvious options like :reverb and :srate, the most useful ones are :scaled-to and
+Besides :channels, :reverb, and :srate, the most useful options are :scaled-to and
 :statistics.
 <i>statistics</i>, if t, causes clm
 to keep track of a variety of interesting things and print them out at the end

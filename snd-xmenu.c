@@ -914,14 +914,6 @@ void post_popup(XButtonPressedEvent *event)
   XtManageChild(popup_menu);
 }
 
-#if (XmVERSION == 1)
-static void post_popup_menu(Widget w, XtPointer info, XEvent *event, Boolean *flag)
-{
-  if (event->xbutton.button == Button3)
-    post_popup((XButtonPressedEvent *)event);
-}
-#endif
-
 void create_popup_menu(void)
 {
   /* make it a child of the main window */
@@ -934,14 +926,9 @@ void create_popup_menu(void)
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
       mainp = MAIN_PANE(ss);
-#if (XmVERSION >= 2)
       XtSetArg(args[n], XmNpopupEnabled, XmPOPUP_AUTOMATIC_RECURSIVE); n++;
-#endif
       XtSetArg(args[n], XmNuserData, 5);
       popup_menu = XmCreatePopupMenu(mainp, "popup-menu", args, n + 1);
-#if (XmVERSION == 1)
-      XtAddEventHandler(mainp, ButtonPressMask, false, post_popup_menu, popup_menu);
-#endif
 
       popup_children[W_pop_menu] = XtCreateManagedWidget("snd", xmLabelWidgetClass, popup_menu, args, n);
       popup_children[W_pop_sep] = XtCreateManagedWidget("sep", xmSeparatorWidgetClass, popup_menu, args, n);

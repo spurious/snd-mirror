@@ -1900,7 +1900,7 @@ static XEN g_set_vu_font(XEN val)
   XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, XEN_ONLY_ARG, S_setB S_vu_font, "a string"); 
   if (vu_font(ss)) FREE(vu_font(ss));
   if (XEN_FALSE_P(val))
-    set_vu_font((DEFAULT_VU_FONT) ? copy_string(DEFAULT_VU_FONT) : NULL);
+    set_vu_font(copy_string(DEFAULT_VU_FONT));
   else set_vu_font(copy_string(XEN_TO_C_STRING(val)));
   return(C_TO_XEN_STRING(vu_font(ss)));
 }

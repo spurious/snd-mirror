@@ -369,6 +369,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+31-Jan:  removed support for Motif 1.\n\
 26-Jan:  removed useless edpos arg to controls->channel.\n\
 20-Jan:  translation of CLM scentroid (B Battey) in dsp.scm.\n\
 19-Jan:  changed send-netscape to send-mozilla.\n\
@@ -376,10 +377,6 @@ void about_snd_help(void)
 18-Jan:  changed transform-hook to after-transform-hook.\n\
          variable-graph?, free-player.\n\
 17-Jan:  gfm improvements (see gfm/README) thanks to Mike Scholz.\n\
-14-Jan:  moved makesnd.* into makefile.in.\n\
-10-Jan:  colormap?\n\
-         moved sndsine.c to documentation\n\
-5-Jan:   snd 7.9.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",
@@ -453,7 +450,7 @@ void sync_help(void)
 {
   snd_help_with_xrefs("Sync", 
 "The sync button causes certain operations to apply to all channels or multiple sounds simultaneously. \
-For example, to get a multi-channel selection, set the sync button, then define the selection (by dragging \
+For example, to get a multichannel selection, set the sync button, then define the selection (by dragging \
 the mouse) in one channel, and the parallel portions of the other channels will also be selected. \
 Marks and mixes can also be sync'd together.",
 		      WITH_WORD_WRAP,
@@ -914,7 +911,7 @@ The Edit menu 'Play' option plays the current selection, if any.  The Popup menu
 currently selected sound.  And the region and file browsers provide play buttons for each of the listed regions or files.  If you \
 hold down the control key when you click 'play', the cursor follows along as the sound is played.   \
 \n\n\
-In a multi-channel file, C-q plays all channels from the current channel's \
+In a multichannel file, C-q plays all channels from the current channel's \
 cursor if the sync button is on, and otherwise plays only the current channel. \
 Except in the browsers, what is actually played depends on the control panel.",
 		      WITH_WORD_WRAP,
@@ -941,8 +938,8 @@ command is C-x C-s (save).  Other related keyboard commands are C-x w (save sele
 C-x C-w (extract and save the current channel as a file). Normally, if the new file already exists, and it is \
 not currently being edited in Snd, it is silently overwritten.  If you try to overwrite a file, and \
 that file has active edits in a different Snd window, you'll be asked for confirmation. \
-If you want Snd to ask before overwriting a file in any case, set the resource overwriteCheck to 1, \
-or include the expression (set! (ask-before-overwrite) #t) in your Snd initialization file.",
+If you want Snd to ask before overwriting a file in any case, set the variable " S_ask_before_overwrite " to \
+#t) in your Snd initialization file.",
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Save"),
 		      snd_xref_urls("Save"));
@@ -1162,7 +1159,7 @@ As option.  The output header type, data format,  and sampling rate can also be 
 are little-endian where relevant except for 'aifc' output.  If a file by the chosen name already exists \
 it is silently overwritten, unless that file is already open in Snd and has edits.  In that case,  \
 you'll be asked what to do.  If you want to be warned whenever a file is about to be overwritten by this \
-option, set the resource overwriteCheck to 1 (or the " S_ask_before_overwrite " variable to #t). \
+option, set the the variable " S_ask_before_overwrite " to #t. \
 If you give the current file name to Save As,  \
 any current edits will be saved and the current version in Snd will be updated (that is, in this \
 case, the edit tree is not preserved).",
@@ -1279,7 +1276,7 @@ void print_dialog_help(void)
   snd_help_with_xrefs("File Print",
 "Print causes the currently active display to be either printed (via the lpr command) or saved as \
 an eps file.  In the latter case, the file name is set either by the dialog, or taken from the \
-resource epsFile (normally snd.eps).  Currently the openGL graphics can't be printed by Snd, \
+variable " S_eps_file " (normally snd.eps).  Currently the openGL graphics can't be printed by Snd, \
 but you can use Gimp or some such program to get a screenshot, and print that.",
 		      WITH_WORD_WRAP,
 		      print_xrefs,

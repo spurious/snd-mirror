@@ -1,6 +1,6 @@
 # Snd valgrind suppressions file
 # valgrind --error-limit=no -v --gen-suppressions=yes --suppressions=/home/bil/cl/snd.supp snd
-# valgrind --error-limit=no -v --freelist-vol=100000000 --gen-suppressions=no --suppressions=/home/bil/cl/snd.supp --leak-check=yes --leak-resolution=high --show-reachable=no --num-callers=12 snd
+# valgrind --error-limit=no -v --gen-suppressions=no --suppressions=/home/bil/cl/snd.supp --leak-check=yes --leak-resolution=high --show-reachable=no --num-callers=12 snd
 #
 # first section copied (unnecessarily) from default: /usr/local/lib/valgrind/default.supp
 
@@ -1479,6 +1479,23 @@
    fun:rb_gc_mark
    fun:*
 }
+
+{
+   ruby-6
+   Memcheck:Cond
+   fun:rb_gc_mark_children
+   fun:mark_locations_array
+   fun:*
+}
+
+{
+   ruby-7
+   Memcheck:Value4
+   fun:rb_gc_mark_children
+   fun:mark_locations_array
+   fun:*
+}
+
 
 
 # addcheck

@@ -7,11 +7,11 @@
   /* moved the warning here so it only is displayed once */
   #warning You appear to be using Lesstif: this is not recommended!  Expect bugs...
 #endif
+#if (XmVERSION == 1)
+  #warning Motif 1 is no longer supported -- this has little chance of working...
+#endif
 #endif
 
-#define FREE_FONTS 1
-
-#if (USE_RENDITIONS)
 static XmRenderTable get_xm_font(XFontStruct *ignore, char *font, char *tag)
 {
   XmRendition tmp;
@@ -27,17 +27,6 @@ static XmRenderTable get_xm_font(XFontStruct *ignore, char *font, char *tag)
   /* XmRenditionFree(tmp); */ /* valgrind thinks this is a bad idea */
   return(tabl);
 }
-#else
-static XmFontList get_xm_font(XFontStruct *fs, char *font, char *tag)
-{
-  XmFontList fl = NULL;
-  XmFontListEntry e1;
-  e1 = XmFontListEntryCreate(tag, XmFONT_IS_FONT, (XtPointer)fs);
-  fl = XmFontListAppendEntry(NULL, e1);
-  XmFontListEntryFree(&e1);
-  return(fl);
-}
-#endif
 
 bool set_tiny_font(char *font)
 {
@@ -47,10 +36,8 @@ bool set_tiny_font(char *font)
   fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
   if (fs)
     {
-#if FREE_FONTS
       /* it's not clear to me whether this is safe -- what if two fontstructs are pointing to the same font? */
       if (sgx->tiny_fontstruct) XFreeFont(MAIN_DISPLAY(ss), sgx->tiny_fontstruct);
-#endif
       if (tiny_font(ss)) FREE(tiny_font(ss));
       in_set_tiny_font(copy_string(font));
       sgx->tiny_fontstruct = fs;
@@ -67,9 +54,7 @@ bool set_listener_font(char *font)
   fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
   if (fs)
     {
-#if FREE_FONTS
       if (ss->sgx->listener_fontstruct) XFreeFont(MAIN_DISPLAY(ss), ss->sgx->listener_fontstruct);
-#endif
       if (listener_font(ss)) FREE(listener_font(ss));
       in_set_listener_font(copy_string(font));
       (ss->sgx)->listener_fontstruct = fs;
@@ -87,9 +72,7 @@ bool set_peaks_font(char *font)
   fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
   if (fs)
     {
-#if FREE_FONTS
       if (ss->sgx->peaks_fontstruct) XFreeFont(MAIN_DISPLAY(ss), ss->sgx->peaks_fontstruct);
-#endif
       if (peaks_font(ss)) FREE(peaks_font(ss));
       in_set_peaks_font(copy_string(font));
       (ss->sgx)->peaks_fontstruct = fs;
@@ -106,9 +89,7 @@ bool set_bold_peaks_font(char *font)
   fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
   if (fs)
     {
-#if FREE_FONTS
       if (ss->sgx->bold_peaks_fontstruct) XFreeFont(MAIN_DISPLAY(ss), ss->sgx->bold_peaks_fontstruct);
-#endif
       if (bold_peaks_font(ss)) FREE(bold_peaks_font(ss));
       in_set_bold_peaks_font(copy_string(font));
       (ss->sgx)->bold_peaks_fontstruct = fs;
@@ -125,9 +106,7 @@ bool set_axis_label_font(char *font)
   fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
   if (fs)
     {
-#if FREE_FONTS
       if (ss->sgx->axis_label_fontstruct) XFreeFont(MAIN_DISPLAY(ss), ss->sgx->axis_label_fontstruct);
-#endif
       if (axis_label_font(ss)) FREE(axis_label_font(ss));
       in_set_axis_label_font(copy_string(font));
       (ss->sgx)->axis_label_fontstruct = fs;
@@ -145,9 +124,7 @@ bool set_axis_numbers_font(char *font)
   fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
   if (fs)
     {
-#if FREE_FONTS
       if (ss->sgx->axis_numbers_fontstruct) XFreeFont(MAIN_DISPLAY(ss), ss->sgx->axis_numbers_fontstruct);
-#endif
       if (axis_numbers_font(ss)) FREE(axis_numbers_font(ss));
       in_set_axis_numbers_font(copy_string(font));
       (ss->sgx)->axis_numbers_fontstruct = fs;
@@ -277,32 +254,10 @@ void set_title(const char *title)
   XtVaSetValues(MAIN_SHELL(ss), XmNtitle, (char*)title, NULL);
 }
 
-static bool complain_about_focus_policy = true;
-
 void goto_window(Widget text)
 {
-  if ((XmIsTraversable(text)) && (1))
-    /*
-      there's a major memory leak here
-      (XmGetVisibility(text) != XmVISIBILITY_FULLY_OBSCURED))
-    */
-    {
-      if (!(XmProcessTraversal(text, XmTRAVERSE_CURRENT)))
-	{
-	  if (complain_about_focus_policy)
-	    {
-	      int err;
-	      XtVaGetValues(text, XmNkeyboardFocusPolicy, &err, NULL);
-	      if (err == XmEXPLICIT)
-		snd_error("goto_window: traverse to %s failed!", XtName(text));
-	      else 
-		{
-		  snd_error("goto_window: keyboard focus policy is not explicit!");
-		  complain_about_focus_policy = false;
-		}
-	    }
-	}
-    }
+  if (XmIsTraversable(text))
+    XmProcessTraversal(text, XmTRAVERSE_CURRENT);
 }
 
 XtCallbackList make_callback_list(XtCallbackProc callback, XtPointer closure)

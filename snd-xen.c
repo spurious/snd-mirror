@@ -1452,7 +1452,7 @@ static XEN g_set_ladspa_dir(XEN val)
   XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, XEN_ONLY_ARG, S_setB S_ladspa_dir, "a string or #f=default (null)"); 
   if (ladspa_dir(ss)) FREE(ladspa_dir(ss));
   if (XEN_FALSE_P(val))
-    set_ladspa_dir((DEFAULT_LADSPA_DIR) ? copy_string(DEFAULT_LADSPA_DIR) : NULL);
+    set_ladspa_dir(copy_string(DEFAULT_LADSPA_DIR));
   else set_ladspa_dir(copy_string(XEN_TO_C_STRING(val)));
   return(C_TO_XEN_STRING(ladspa_dir(ss)));
 }

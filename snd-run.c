@@ -3570,7 +3570,7 @@ static xen_value *and_form(ptree *prog, XEN form, walk_result_t ignored)
 
 static xen_value *lookup_generalized_set(ptree *prog, XEN accessor, xen_value *arg0, xen_value *arg1, xen_value *arg2, xen_value *new_value);
 
-static xen_value *generalized_set_form(ptree *prog, XEN form, walk_result_t need_result)
+static xen_value *generalized_set_form(ptree *prog, XEN form)
 {
   /* (set! (mus-phase gen) 0.0) */
   XEN settee, setval;
@@ -3619,7 +3619,7 @@ static xen_value *generalized_set_form(ptree *prog, XEN form, walk_result_t need
   return(run_warn("generalized set! for %s not implemented yet", XEN_AS_STRING(settee)));
 }
 
-static xen_value *set_form(ptree *prog, XEN form, walk_result_t need_result)
+static xen_value *set_form(ptree *prog, XEN form, walk_result_t ignore)
 {
   char *varname = NULL;
   xen_var *var;
@@ -3628,7 +3628,7 @@ static xen_value *set_form(ptree *prog, XEN form, walk_result_t need_result)
   settee = XEN_CADR(form);
   setval = XEN_CADDR(form);
   if (!(XEN_SYMBOL_P(settee)))
-    return(generalized_set_form(prog, form, need_result));
+    return(generalized_set_form(prog, form));
   varname = XEN_SYMBOL_TO_C_STRING(settee);
   var = find_var_in_ptree(prog, varname);
   if (var == NULL)
@@ -9401,9 +9401,9 @@ static xen_value *integer_to_char_1(ptree *prog, xen_value **args, int num_args)
   return(newv);
 }
 
-static xen_value *declare_1(ptree *prog, XEN form, walk_result_t need_result) {return(make_xen_value(R_UNSPECIFIED, -1, R_VARIABLE));}
-static xen_value *lambda_preform(ptree *prog, XEN form, walk_result_t need_result) {return(lambda_form(prog, form, true, NULL, 0, XEN_FALSE));}
-static xen_value *quote_form(ptree *prog, XEN form, walk_result_t need_result) 
+static xen_value *declare_1(ptree *prog, XEN form, walk_result_t ignore) {return(make_xen_value(R_UNSPECIFIED, -1, R_VARIABLE));}
+static xen_value *lambda_preform(ptree *prog, XEN form, walk_result_t ignore) {return(lambda_form(prog, form, true, NULL, 0, XEN_FALSE));}
+static xen_value *quote_form(ptree *prog, XEN form, walk_result_t ignore) 
 {
   return(unwrap_constant_xen_object(prog, XEN_CADR(form), "quote"));
 }

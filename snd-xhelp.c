@@ -1,40 +1,5 @@
 #include "snd.h"
 
-
-/* ---------------- MOTIF 1 ---------------- */
-
-#if (XmVERSION == 1)
-
-Widget snd_help(const char *subject, const char *helpstr, with_word_wrap_t with_wrap)
-{
-  post_it(subject, helpstr);
-  return(NULL);
-}
-
-Widget snd_help_with_xrefs(const char *subject, const char *helpstr, with_word_wrap_t with_wrap, char **xrefs, char **urls)
-{
-  post_it(subject, helpstr);
-  return(NULL);
-}
-
-int help_text_width(const char *txt, int start, int end)
-{
-  return((end - start) * 8);
-}
-
-void snd_help_append(char *text)
-{
-  post_it_append(text);
-}
-
-void snd_help_back_to_top(void)
-{
-}
-
-#else
-
-/* ---------------- MOTIF 2 ---------------- */
-
 #define HELP_ROWS 10
 #define HELP_XREFS 8
 #define HELP_COLUMNS 56
@@ -492,9 +457,7 @@ static void create_help_monolog(void)
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-#if USE_RENDITIONS
   XtSetArg(args[n], XmNfontList, NULL); n++; /* needed or new rendertable doesn't take effect! */
-#endif
   XtSetArg(args[n], XmNrenderTable, rs); n++;
   XtSetArg(args[n], XmNvisibleItemCount, HELP_XREFS); n++;
   XtSetArg(args[n], XmNscrollBarDisplayPolicy, XmAS_NEEDED); n++;
@@ -646,4 +609,3 @@ void snd_help_back_to_top(void)
   if (help_text) XmTextShowPosition(help_text, 0);
 }
 
-#endif

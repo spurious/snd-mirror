@@ -1367,9 +1367,7 @@ Widget create_envelope_editor(void)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       if ((ss->sgx)->listener_fontlist) 
 	{
-#if USE_RENDITIONS
 	  XtSetArg(args[n], XmNfontList, NULL); n++;
-#endif
 	  XtSetArg(args[n], XM_FONT_RESOURCE, (ss->sgx)->listener_fontlist); n++;
 	  use_listener_font = true;
 	}

@@ -89,7 +89,7 @@ and a CVS <a href="http://snd.sourceforge.net">repository</a>.
     <small><ul>
     <li><a href="#saveopen">Save, open, close, print</a>
     <li><a href="#deleteinsert">Delete, insert, mix</a>
-    <li><a href="#multichannel">Multi-channel operations</a>
+    <li><a href="#multichannel">Multichannel operations</a>
     <li><a href="#ampenvs">Amplitude envelopes and scaling</a>
     <li><a href="#find">Find</a>
     <li><a href="#changesamples">Change samples</a>
@@ -367,7 +367,7 @@ to the start of the window; C-j jumps forward to the
 next mark.  Click and drag the upper horizontal
 mark portion to move the mark; click the triangular
 lower portion to play from the mark.  If you are
-editing a multi-channel file, control-click the
+editing a multichannel file, control-click the
 triangle to play all channels together from the mark.
 Drag the triangular
 portion to play the data following the mouse.
@@ -870,7 +870,7 @@ window size:</p>
 The fft data is scaled to fit between 0.0 and 1.0 unless
 transform normalization is off. 
 The full frequency axis is normally displayed, but the
-axis is dragable -- put the mouse on the axis and
+axis is draggable -- put the mouse on the axis and
 drag it either way to change the range (this is equivalent
 to changing the variable <a href="extsnd.html#spectrocutoff">spectro-cutoff</a>).  You can also click
 on any point in the fft to get the associated fft value at that point
@@ -1058,7 +1058,7 @@ the cursor forward 2.1 seconds in the data.</p>
 <p>The simplest way to move the window (the portion of the data in the current graph) is to drag the
 scrollbars with the mouse.  The darker scrollbars zoom in and
 out; the lighter bars move the window along the x or y axis.
-To move by a single windowful, click the
+To move by a single window, click the
 arrows on the scrollbar.  To move by smaller amounts,
 use the left and right arrow keys (or zoom with the up and
 down arrow keys);  the control, shift, and meta keys
@@ -1204,7 +1204,7 @@ rendition of the current graph contents, using the default
 eps output name. 'play' plays the region.  The graphical
 display 
 shows the waveform with arrows to move around in the
-channels of multi-channel regions.  The 'edit' button
+channels of multichannel regions.  The 'edit' button
 loads the region into the main editor as a temporary
 file.  It can be edited or renamed, etc.  If you save
 the file, the region is updated to reflect any edits
@@ -1263,7 +1263,7 @@ See <a href="extsnd.html#editlists">Edit Lists</a> for more details.
 <ul>
 <li><a href="#saveopen">Save, open, close, print</a>
 <li><a href="#deleteinsert">Delete, insert, mix</a>
-<li><a href="#multichannel">Multi-channel operations</a>
+<li><a href="#multichannel">Multichannel operations</a>
 <li><a href="#ampenvs">Amplitude envelopes and scaling</a>
 <li><a href="#find">Find</a>
 <li><a href="#changesamples">Change samples</a>
@@ -1338,7 +1338,7 @@ cursor, define a command something like:</p>
   (<a class=quiet href="extsnd.html#bindkey">bind-key</a> (char-&gt;integer #\i) 0 (lambda () "insert region after cursor" (<a class=quiet href="extsnd.html#insertregion">insert-region</a> (1+ (<a class=quiet href="extsnd.html#cursor">cursor</a>)))))
 </pre>
 
-<h4><A NAME="multichannel">Multi-channel operations</a></h4>
+<h4><A NAME="multichannel">Multichannel operations</a></h4>
 
 <A NAME="syncbutton"></a><p>Normally each operation applies only to the currently
 active channel.  If, however, the sound's 'sync' button is set,
@@ -1381,7 +1381,7 @@ edit the sound; it's aimed more at FFT comparisons and so on.
 </p>
         <!-- I(multichannel ops):A(multichannel) --><!-- I(multichannel ops):O(sync button)(syncbutton) -->
 
-<p>To get multi-channel selections, set the sync
+<p>To get multichannel selections, set the sync
 button, then define the selection (by dragging
 the mouse) in one channel, and the parallel
 portions of the other channels will also be
@@ -1570,7 +1570,7 @@ My initialization file uses <code>(mus-audio-set-oss-buffers 2 12)</code>.
   <A NAME="cxp"></a>C-x p  play region (numeric arg selects region)
 </pre>
         <!-- I(play channel):K(C-q, C-t)(cq) --><!-- I(play channel):A(cq) -->
-<p>In a multi-channel file, C-q plays all channels from the current channel's
+<p>In a multichannel file, C-q plays all channels from the current channel's
 cursor if the sync button is on, and otherwise plays only the current channel.
 Except in the browsers, what is actually
 played depends on the <a href="#controls">control panel</a>.

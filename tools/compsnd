@@ -2,6 +2,7 @@
 
 fgrep decrip *.html
 fgrep accomoda *.html
+fgrep pysical *.html
 fgrep -e " #(" *.scm
 
 echo ' -------------------------------- basic configure test -------------------------------- '
@@ -204,37 +205,6 @@ echo ' '
 echo ' '
 ./snd --version
 
-echo ' -------------------------------- configure with lesstif -------------------------------- '
-make allclean
-echo ' CFLAGS=-I/home/bil/test/lesstif/Motif-1.2 --with-static-xm '
-./configure --quiet CFLAGS=-I/home/bil/test/lesstif/Motif-1.2 --with-static-xm
-make
-snd --version
-
-echo ' '
-echo ' '
-make allclean
-echo ' CFLAGS=-I/home/bil/test/lesstif/Motif-1.2 --with-static-xm --with-ruby '
-./configure --quiet CFLAGS=-I/home/bil/test/lesstif/Motif-1.2 --with-static-xm --with-ruby
-make
-snd --version
-
-make allclean
-echo ' CFLAGS=-I/home/bil/test/lesstif/Motif-2.0 --with-static-xm '
-./configure --quiet CFLAGS=-I/home/bil/test/lesstif/Motif-1.2 --with-static-xm
-make
-snd --version
-
-echo ' '
-echo ' '
-make allclean
-echo ' CFLAGS=-I/home/bil/test/lesstif/Motif-2.0 --with-static-xm --with-ruby '
-./configure --quiet CFLAGS=-I/home/bil/test/lesstif/Motif-1.2 --with-static-xm --with-ruby
-make
-snd --version
-
-echo ' '
-echo ' '
 echo ' -------------------------------- configure --with-gtk test -------------------------------- '
 make allclean
 rm -f snd

@@ -431,7 +431,6 @@ static void just_sounds_callback(Widget w, XtPointer context, XtPointer info)
   force_directory_reread(fd->dialog);
 }
 
-#if (XmVERSION > 1)
 static void file_dialog_select_callback(Widget w, XtPointer context, XtPointer info)
 {
   file_dialog_info *fd = (file_dialog_info *)context;
@@ -486,7 +485,6 @@ static void file_dialog_select_callback(Widget w, XtPointer context, XtPointer i
 	XtUnmanageChild(fd->dialog_frame);
     }
 }
-#endif
 
 static file_dialog_info *make_file_dialog(bool read_only, char *title, char *select_title, snd_dialog_t which_dialog, 
 					  XtCallbackProc file_ok_proc, XtCallbackProc file_help_proc)
@@ -527,7 +525,6 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
   fd->play_selected_button = XtVaCreateWidget(_("play selected sound"), xmToggleButtonWidgetClass, rc,
 					      XmNalignment, XmALIGNMENT_END,
 					      NULL);
-#if (XmVERSION > 1)
   fd->dialog_frame = XtVaCreateWidget("", xmFrameWidgetClass, rc1, NULL);
   rc2 = XtVaCreateManagedWidget("info-rc2", 
 				xmRowColumnWidgetClass, fd->dialog_frame,
@@ -536,7 +533,6 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
 				NULL);
   fd->dialog_info1 = XtVaCreateManagedWidget("", xmLabelWidgetClass, rc2, XmNbackground, ss->sgx->highlight_color, NULL);
   fd->dialog_info2 = XtVaCreateManagedWidget("", xmLabelWidgetClass, rc2, XmNbackground, ss->sgx->highlight_color, NULL);
-#endif
   color_file_selection_box(fd->dialog);
 
   wtmp = XtNameToWidget(fd->dialog, "Text");
@@ -561,10 +557,8 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
   XtAddCallback(fd->dialog, XmNhelpCallback, file_help_proc, NULL);
   XtAddCallback(fd->just_sounds_button, XmNvalueChangedCallback, just_sounds_callback, (XtPointer)fd);
   XtAddCallback(fd->play_selected_button, XmNvalueChangedCallback, play_selected_callback, (XtPointer)fd);
-#if (XmVERSION > 1)
   XtAddCallback(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_LIST),
 		XmNbrowseSelectionCallback, file_dialog_select_callback, (XtPointer)fd);
-#endif
   set_dialog_widget(which_dialog, fd->dialog);
   return(fd);
 }
