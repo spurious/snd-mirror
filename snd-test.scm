@@ -28,7 +28,7 @@
 ;;; test 25: errors
 
 ;;; TODO: gtk tests
-;;; TODO: Xt selection tests? rest of Motif tests?
+;;; TODO: Xt selection tests?
 ;;; TODO: rest of Snd callbacks triggered
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs) (ice-9 syncase))
@@ -11275,8 +11275,8 @@
 	       (wids4 (channel-widgets ind1 1)))
 	  (IF (or (not (list? wids))
 		  (not (list? wids3))
-		  (not (= (length wids1) 10))
-		  (not (= (length wids2) 10)))
+		  (not (= (length wids1) 11))
+		  (not (= (length wids2) 11)))
 	      (snd-display ";channel-widgets confused: ~A ~A ~A ~A ~A" wids wids1 wids2 wids3 wids4))
 	  (hide-widget (car (channel-widgets)))
 	  (show-widget (car (channel-widgets)))
@@ -14825,6 +14825,18 @@ EDITS: 4
 		  (IF (not (equal? (|stipple val) (list 'Pixmap 0)))
 		      (snd-display ";stipple: ~A" (|stipple val)))
 
+		  (let* ((dpy (|XtDisplay (cadr (main-widgets))))
+			 (win (|XtWindow (cadr (main-widgets))))
+			 (newwin (|XCreateWindow dpy win 10 10 100 100 3 
+						 |CopyFromParent |InputOutput (list 'Visual |CopyFromParent)
+						 (logior |CWBackPixel |CWBorderPixel)
+						 (|XSetWindowAttributes #f (snd-pixel (basic-color)) #f (snd-pixel (highlight-color))))))
+		    (IF (not (|Window? newwin)) (snd-display ";XCreateWindow: ~A" newwin))
+		    (|XChangeWindowAttributes dpy newwin (logior |CWBackPixel) (|XSetWindowAttributes #f (snd-pixel (basic-color))))
+		    (|XDestroyWindow dpy newwin)
+		    (set! newwin (|XCreateSimpleWindow dpy win 10 10 100 100 3 (snd-pixel (basic-color)) (snd-pixel (highlight-color))))
+		    (|XDestroyWindow dpy newwin))
+
 		  (|XSetRegion dpy gc (|XPolygonRegion (list (|XPoint 0 0) (|XPoint 10 0) (|XPoint 10 10) (|XPoint 0 10)) 4 |WindingRule))
 		  (let ((pix (make-pixmap (cadr (main-widgets)) arrow-strs)))
 		    (IF (not (|Pixmap? pix)) 
@@ -15234,7 +15246,14 @@ EDITS: 4
 		  ;; this (replacepositions) is very prone to segfaults -- *very* poorly implemented! 
 		  (|XmTabSetValue atab 6.0)
 		  (|XmTabFree atab)
-		  (|XmTabListFree another)))
+		  (|XmTabListFree another))
+		(let ((tabl (|XmStringTableProposeTablist
+			      (list (|XmStringCreateLocalized "a-string") (|XmStringCreateLocalized "another")) 2
+			      (cadr (main-widgets))
+			      1.0
+			      |XmABSOLUTE)))
+		  (IF (not (|XmTabList? tabl)) (snd-display ";XmStringTableProposeTabList: ~A" tabl))
+		  (|XmTabListFree tabl)))
 
 	      (let* ((tmp (|XmStringCreateLocalized "h"))
 		     (pm (|XmParseMappingCreate (list |XmNincludeStatus |XmINSERT
@@ -15313,6 +15332,48 @@ EDITS: 4
 			(IF (not (|XmRenderTable? another)) (snd-display ";XmRenderTableCvtFromProp: ~A" another))
 			(|XmRenderTableFree another))
 		      )))
+
+		(let ((tabl (|XmStringTableParseStringArray (list "hi" "ho") 2 "hiho" |XmCHARSET_TEXT #f 0 #f)))
+		  (IF (not (|XmString? (car tabl))) (snd-display ";XmStringTableParseStringArray: ~A" tabl))
+		  (let ((strs (|XmStringTableUnparse tabl 2 "hiho" |XmCHARSET_TEXT |XmCHARSET_TEXT #f 0 |XmOUTPUT_ALL)))
+		    (IF (not (equal? strs (list "hi" "ho"))) (snd-display ";XmStringTableUnparse: ~A" strs)))
+		  (let ((str (|XmStringTableToXmString tabl 2 #f)))
+		    (IF (not (|XmString? str)) (snd-display ";XmStringTableToXmString: ~A" str))
+		    (|XmStringToXmStringTable str #f)
+		    (let ((val (|XmStringUnparse str "hiho" |XmCHARSET_TEXT |XmCHARSET_TEXT #f 0 |XmOUTPUT_ALL)))
+		      (IF (not (string=? val "hiho")) (snd-display ";XmStringUnparse: ~A" val)))
+		    (let* ((ind (open-sound "oboe.snd"))
+			   (grf (car (channel-widgets)))
+			   (dpy (|XtDisplay grf))
+			   (win (|XtWindow grf))
+			   (scr (|DefaultScreenOfDisplay dpy))
+			   (scrn (|XScreenNumberOfScreen scr))
+			   (gv (|XGCValues)))
+		      (set! (|foreground gv) (snd-pixel (data-color)))
+		      (set! (|background gv) (snd-pixel (basic-color)))
+		      (set! (|function gv) |GXcopy)
+		      (let* ((gc (|XtAllocateGC grf 
+						(|XDefaultDepth dpy scrn) 
+						(logior |GCForeground |GCBackground |GCFunction)
+						gv
+						(logior |GCFont |GCDashList)
+						0))
+			     (str2 (|XmStringCreateLocalized "hiho")))
+			(|XmStringDraw dpy win rendertable str2 gc 10 10 100 
+				       |XmALIGNMENT_END |XmSTRING_DIRECTION_L_TO_R (|XRectangle 0 0 100 100))
+			(|XmStringDrawImage dpy win rendertable str2 gc 10 10 100 
+					    |XmALIGNMENT_END |XmSTRING_DIRECTION_L_TO_R (|XRectangle 0 0 100 100))
+			(|XmStringDrawUnderline dpy win rendertable str2 gc 10 10 100 
+						|XmALIGNMENT_END |XmSTRING_DIRECTION_L_TO_R (|XRectangle 0 0 100 100) str2)
+			(|XtReleaseGC grf gc))
+		      (close-sound ind))
+		    (let ((lc (|XmStringLineCount (|XmStringCreateLocalized "hiho"))))
+		      (IF (not (= lc 1)) (snd-display ";XmStringLineCount: ~A" lc)))
+		    (IF (not (|XmStringHasSubstring str (|XmStringCreateLocalized "hi"))) (snd-display ";XmStringHasSubstring?"))
+		    (|XmStringNCopy str 2)
+		    (|XmStringNConcat str (|XmStringCreateLocalized "hiho") 2)
+		    (IF (not (|XmStringByteCompare (|XmStringCreateLocalized "hiho") (|XmStringCreateLocalized "hiho")))
+			(snd-display ";XmStringByteCompare?"))))
 
 		(IF (not (equal? (|XmRenderTableGetTags rendertable) (list "one" "two" "three" "four")))
 		    (snd-display ";tags: ~A~%" (|XmRenderTableGetTags rendertable)))
@@ -16037,8 +16098,12 @@ EDITS: 4
 											  #f
 											  (|XtLastTimestampProcessed dpy))))
 								    #f)))))
-		(|XmTextFieldPaste txtf1))
-
+		(focus-widget txtf1)
+		(|XmTextFieldPaste txtf1)
+		(IF (not (|Widget? (|XmGetTabGroup txtf1))) (snd-display ";XmGetTabGroup: ~A " (|XmGetTabGroup txtf1)))
+		(let ((fw (|XmGetFocusWidget (cadr (main-widgets)))))
+		  (IF (not (equal? fw txtf1))
+		      (snd-display ";XmGetFocusWidget: ~A" fw))))
 
 	      (|XtAppAddActions (car (main-widgets)) (list (list "hiho" (lambda args (snd-print "hiho")))))
 	      (|XtAugmentTranslations txt (|XtParseTranslationTable "Ctrl <Key>i: hiho()\n"))
@@ -16374,7 +16439,7 @@ EDITS: 4
 			            |XmCreatePanedWindow |XmCreateNotebook |XmCreateArrowButton |XmCreateArrowButtonGadget
 			            |XmCreateTemplateDialog |XmCreateWorkingDialog |XmCreateWarningDialog
 			            |XmCreateQuestionDialog |XmCreateInformationDialog |XmCreateErrorDialog
-			            |XmCreateMessageDialog |XmCreateMessageBox))
+			            |XmCreateMessageDialog |XmCreateMessageBox |XmCreateIconGadget))
 		   (parent (list-ref (main-widgets) 3))
 		   (str (|XmStringCreateLocalized "yow"))
 		   (args (list |XmNheight 100 |XmNwidth 100 |XmNlabelString str))
@@ -16391,7 +16456,7 @@ EDITS: 4
 			         |XmCommand? #f #f |XmComboBox? |XmPushButton?
 			         |XmPushButtonGadget? |XmCascadeButton? |XmCascadeButtonGadget? #f
 			         |XmBulletinBoard? |XmPanedWindow? |XmNotebook? |XmArrowButton? |XmArrowButtonGadget?
-			         #f #f #f #f #f #f #f #f))
+			         #f #f #f #f #f #f #f #f |XmIconGadget?))
 		   (is (list   |XmIsMenuShell #f #f #f #f
 		               #f #f |XmIsMainWindow #f |XmIsList
 		               |XmIsLabel |XmIsLabelGadget |XmIsToggleButton
@@ -16405,7 +16470,7 @@ EDITS: 4
 		               |XmIsCommand #f #f |XmIsComboBox |XmIsPushButton
 		               |XmIsPushButtonGadget |XmIsCascadeButton |XmIsCascadeButtonGadget #f
 		               |XmIsBulletinBoard |XmIsPanedWindow |XmIsNotebook |XmIsArrowButton |XmIsArrowButtonGadget
-		               #f #f #f #f #f #f #f #f)))
+		               #f #f #f #f #f #f #f #f |XmIsIconGadget)))
 	      (for-each 
 	       (lambda (n q qq)
 		 (let ((wid (n parent "hiho" args)))
@@ -16626,8 +16691,7 @@ EDITS: 4
 		         |XmStringSegmentCreate |XmStringCreateLtoR |XmStringInitContext
 		         |XmStringFreeContext |XmStringGetNextComponent |XmStringPeekNextComponent |XmStringGetNextSegment
 		         |XmStringGetLtoR |XmFontListEntryCreate |XmFontListEntryCreate_r |XmFontListCreate_r
-		         |XmStringConcatAndFree |XmStringIsVoid |XmCvtXmStringToByteStream
-		         |XmCvtByteStreamToXmString |XmStringByteStreamLength |XmStringPeekNextTriple |XmStringGetNextTriple
+		         |XmStringConcatAndFree |XmStringIsVoid |XmStringPeekNextTriple |XmStringGetNextTriple
 		         |XmStringComponentCreate |XmStringUnparse |XmStringParseText |XmStringToXmStringTable
 		         |XmStringTableToXmString |XmStringTableUnparse |XmStringTableParseStringArray
 		         |XmDirectionToStringDirection |XmStringDirectionToDirection |XmStringGenerate |XmStringPutRendition

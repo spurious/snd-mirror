@@ -984,9 +984,6 @@
 #if MOTIF_2
   XEN_NARGIFY_2(gxm_XmStringConcatAndFree_w, gxm_XmStringConcatAndFree)
   XEN_NARGIFY_1(gxm_XmStringIsVoid_w, gxm_XmStringIsVoid)
-  XEN_NARGIFY_1(gxm_XmCvtXmStringToByteStream_w, gxm_XmCvtXmStringToByteStream)
-  XEN_NARGIFY_1(gxm_XmCvtByteStreamToXmString_w, gxm_XmCvtByteStreamToXmString)
-  XEN_NARGIFY_1(gxm_XmStringByteStreamLength_w, gxm_XmStringByteStreamLength)
   XEN_NARGIFY_1(gxm_XmStringPeekNextTriple_w, gxm_XmStringPeekNextTriple)
   XEN_NARGIFY_1(gxm_XmStringGetNextTriple_w, gxm_XmStringGetNextTriple)
   XEN_NARGIFY_3(gxm_XmStringComponentCreate_w, gxm_XmStringComponentCreate)
@@ -1228,7 +1225,6 @@
   XEN_NARGIFY_1(XEN_WidgetClass_p_w, XEN_WidgetClass_p)
   XEN_NARGIFY_1(XEN_XmString_p_w, XEN_XmString_p)
 #if MOTIF_2
-  XEN_NARGIFY_1(XEN_XmParseTable_p_w, XEN_XmParseTable_p)
   XEN_NARGIFY_1(XEN_XmTab_p_w, XEN_XmTab_p)
   XEN_NARGIFY_1(XEN_XmRendition_p_w, XEN_XmRendition_p)
   XEN_NARGIFY_1(XEN_XmRenderTable_p_w, XEN_XmRenderTable_p)
@@ -2210,9 +2206,6 @@ static void define_procedures(void)
 #if MOTIF_2
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringConcatAndFree" XM_POSTFIX, gxm_XmStringConcatAndFree_w, 2, 0, 0, H_XmStringConcatAndFree);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringIsVoid" XM_POSTFIX, gxm_XmStringIsVoid_w, 1, 0, 0, H_XmStringIsVoid);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCvtXmStringToByteStream" XM_POSTFIX, gxm_XmCvtXmStringToByteStream_w, 1, 0, 0, H_XmCvtXmStringToByteStream);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCvtByteStreamToXmString" XM_POSTFIX, gxm_XmCvtByteStreamToXmString_w, 1, 0, 0, H_XmCvtByteStreamToXmString);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringByteStreamLength" XM_POSTFIX, gxm_XmStringByteStreamLength_w, 1, 0, 0, H_XmStringByteStreamLength);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringPeekNextTriple" XM_POSTFIX, gxm_XmStringPeekNextTriple_w, 1, 0, 0, H_XmStringPeekNextTriple);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringGetNextTriple" XM_POSTFIX, gxm_XmStringGetNextTriple_w, 1, 0, 0, H_XmStringGetNextTriple);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringComponentCreate" XM_POSTFIX, gxm_XmStringComponentCreate_w, 3, 0, 0, H_XmStringComponentCreate);
@@ -2422,20 +2415,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSubImage" XM_POSTFIX, gxm_XSubImage_w, 5, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XAddPixel" XM_POSTFIX, gxm_XAddPixel_w, 2, 0, 0, NULL);
 
-
-  /*  ADD: XtAppContext? XtRequestId? XtWorkProcId? XtInputId? XtIntervalId? Screen? XEvent? XRectangle? XArc?
-      ADD: XPoint? XSegment? XColor? XmTab? Atom? Colormap? Depth? Display? Drawable? Font? GC? KeySym? Pixel? Pixmap? Region?
-      ADD: Time? Visual? Window? XFontProp? XFontStruct? XGCValues? XImage? XVisualInfo? XWMHints? XWindowAttributes? XWindowChanges?
-      ADD: KeyCode? XContext? Substitution? XmString? XmToggleButton? XmDrawingArea?
-      ADD: XmPushButton? XmTextField? XmFileSelectionBox? XmText? XmFrame? XmLabel? XmList? XmArrowButton? XmScrollBar? XmCommand?
-      ADD: XmScale? XmRowColumn? XmNotebook? XmPrintShell? XmComboBox? XmContainer? XmIconHeader? XmGrabShell? XmPanedWindow? XmScrolledWindow?
-      ADD: XmCascadeButton? XmForm? XmBulletinBoard? XmScreen? XmDialogShell? XmDisplay? XmSelectionBox? XmDragContext? XmDragIconObjectClass?
-      ADD: XmSeparator? XmDropSiteManager? XmDropTransfer? XmVendorShell? XmMainWindow? XmMessageBox? XmManager? XmMenuShell? XmIconGadget?
-      ADD: XmLabelGadget? XmPushButtonGadget? XmSeparatorGadget? XmArrowButtonGadget? XmCascadeButtonGadget? XmToggleButtonGadget? XmDrawnButton?
-      ADD: XmPrimitive? XmTabList? XmParseMapping? XmFontList? XmFontListEntry? XmTextSource? XmStringContext?
-      ADD: XStandardColormap? WidgetClass? Widget? XTextItem? XCharStruct? XmParseTable? XmFontContext? XFontSet?
-      ADD: XpmAttributes? XpmImage? XmRendition? XmRenderTable? XModifierKeymap? XPContext?
-  */
 #if HAVE_MOTIF
   XEN_DEFINE_PROCEDURE(XM_PREFIX "Pixel" XM_POSTFIX, gxm_Pixel_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "GC" XM_POSTFIX, gxm_GC_w, 1, 0, 0, NULL);
@@ -2507,7 +2486,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmScale?" XM_POSTFIX, gxm_XmIsScale_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRowColumn?" XM_POSTFIX, gxm_XmIsRowColumn_w, 1, 0, 0, NULL);
 #if MOTIF_2
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmParseTable?" XM_POSTFIX, XEN_XmParseTable_p_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmTab?" XM_POSTFIX, XEN_XmTab_p_w, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmNotebook?" XM_POSTFIX, gxm_XmIsNotebook_w, 1, 0, 0, NULL);
 #if HAVE_XP
@@ -2564,7 +2542,9 @@ static void define_procedures(void)
   XEN_NARGIFY_4(gxm_XRectangle_w, gxm_XRectangle)
   XEN_NARGIFY_1(gxm_to_s_w, gxm_to_s)
   XEN_ARGIFY_6(gxm_XColor_w, gxm_XColor)
-  XEN_NARGIFY_6(gxm_XArc_w, gxm_XArc)
+  XEN_ARGIFY_6(gxm_XArc_w, gxm_XArc)
+  XEN_ARGIFY_7(gxm_XWindowChanges_w, gxm_XWindowChanges)
+  XEN_VARGIFY(gxm_XSetWindowAttributes_w, gxm_XSetWindowAttributes)
   XEN_NARGIFY_2(gxm_XPoint_w, gxm_XPoint)
   XEN_NARGIFY_4(gxm_XTextItem_w, gxm_XTextItem)
   XEN_NARGIFY_1(gxm_pixel_w, gxm_pixel)
@@ -2978,6 +2958,8 @@ static void define_structs(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "angle2" XM_POSTFIX, gxm_angle2_w, "", 
 				   XM_PREFIX "set_angle2" XM_POSTFIX, gxm_set_angle2_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XArc" XM_POSTFIX, gxm_XArc_w, 6, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XWindowChanges" XM_POSTFIX, gxm_XWindowChanges_w, 7, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetWindowAttributes" XM_POSTFIX, gxm_XSetWindowAttributes_w, 0, 0, 1, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XPoint" XM_POSTFIX, gxm_XPoint_w, 2, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "x1" XM_POSTFIX, gxm_x1_w, "", 
 				   XM_PREFIX "set_x1" XM_POSTFIX, gxm_set_x1_w,  1, 0, 2, 0);

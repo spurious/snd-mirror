@@ -736,35 +736,35 @@
 	(set! dbls (cons name dbls))
 	(set! names (cons (cons name 'dbl) names)))))
 
-(define (CLNG name)
+(define* (CLNG name #:optional type)
   (if (assoc name names)
       (no-way "~A CLNG~%" name)
       (begin
 	(set! ulongs (cons name ulongs))
 	(set! names (cons (cons name 'ulong) names)))))
 
-(define (CINT name)
+(define* (CINT name #:optional type)
   (if (assoc name names)
       (no-way "~A CINT~%" name)
       (begin
 	(set! ints (cons name ints))
 	(set! names (cons (cons name 'int) names)))))
 
-(define (CINT-extra name)
+(define* (CINT-extra name #:optional type)
   (if (assoc name names)
       (no-way "~A CINT-extra~%" name)
       (begin
 	(set! extra-ints (cons name extra-ints))
 	(set! names (cons (cons name 'int) names)))))
 
-(define (CINT-broken name)
+(define* (CINT-broken name #:optional type)
   (if (assoc name names)
       (no-way "~A CINT-broken~%" name)
       (begin
 	(set! broken-ints (cons name broken-ints))
 	(set! names (cons (cons name 'int) names)))))
 
-(define (CINT-dep name)
+(define* (CINT-dep name #:optional type)
   (if (assoc name names)
       (no-way "~A CINT-deprecated~%" name)
       (begin
@@ -979,15 +979,13 @@
 (hey " *     deprecated struct field accessors, Pango struct field accessors~%")
 (hey " *     win32-specific functions~%")
 (hey " *~%")
-(hey " * TODO:~%")
-(hey " *     check out the g_signal handlers (gtk_signal_* is ok)~%")
-(hey " *     GdkEvent casts~%")
-(hey " *     struct print, more struct instance creators(?)~%")
-(hey " *     tie into libxm (configure.ac etc), Snd (snd-motif translation)~%")
-(hey " *     add unicode handlers from glib -- anything else?~%")
-(hey " *     unprotect *_remove, unprotect old upon reset callback~%")
-(hey " *     test -- snd-test.scm~%")
-(hey " *     auto-generated test suite?~%")
+(hey " * TODO: check out the g_signal handlers (gtk_signal_* is ok)~%")
+(hey " * TODO: GdkEvent casts~%")
+(hey " * TODO: struct print, more struct instance creators(?)~%")
+(hey " * TODO: tie into libxm (configure.ac etc), Snd (snd-motif translation)~%")
+(hey " * TODO: add unicode handlers from glib -- anything else?~%")
+(hey " * TODO: unprotect *_remove, unprotect old upon reset callback~%")
+(hey " * TODO: test suite (snd-test 24)~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
 (hey " *     27-Feb:    remove gtk_tree_view_column_cell_render, gtk_tree_view_column_cell_focus, ~%")

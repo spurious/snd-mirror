@@ -1023,9 +1023,8 @@ static gboolean filter_drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gp
 	  evx = (int)(ev->x);
 	  evy = (int)(ev->y);
 	}
+      handle_filter_point(sp->state, sp, evx, evy, ev->time);
     }
-  else return;
-  handle_filter_point(sp->state, sp, evx, evy, ev->time);
   return(FALSE);
 }
 

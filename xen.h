@@ -360,6 +360,7 @@
 #define XEN_HOOKED(a)                 (XEN_NOT_NULL_P(SCM_HOOK_PROCEDURES(a)))
 #define XEN_HOOK_PROCEDURES(a)        SCM_HOOK_PROCEDURES(a)
 
+/* disabling type checks saves almost no space (200k out of 12M) and no time (5% or so) */
 #ifdef SCM_ASSERT_TYPE
   #define XEN_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) \
     SCM_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type)

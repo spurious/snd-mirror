@@ -7,19 +7,19 @@
  * TODO: XmVaCreateSimple* (need special arglist handlers)
  * TODO: Motif 2.2 has a bunch of widgets that seem to be partly ICS-specific? (Xi... rather than Xm...)
  * TODO: callback struct print (and tie makers into Ruby)
- * TODO: XWindowChanges and XSetWindowAttributes accessible
  * TODO: finish the -> converters
  * TODO: XmParseProc callback (p860)
+ * TODO: add_resource
  */
 
 /* HISTORY: 
+ *   4-Mar:     XWindowChanges and XSetWindowAttributes struct creators.
  *   1-Mar:     XmTabListFree, various ->* conversions.
  *   25-Feb:    XmTextBlock fields
  *   22-Feb:    #f = NULL and vice-versa throughout
  *   21-Feb:    added various callback struct makers, changed XtCallCallbacks to be compatible with them.
  *   18-Feb:    removed undocumented functions: XmCvtFromHorizontalPixels, XmCvtFromVerticalPixels, XmCvtToHorizontalPixels, XInitImage
  *                XmCvtToVerticalPixels, XmGetIconFileName, XmStringCreateFontList, XmStringCreateFontList_r, XmStringLtoRCreate
- *              commented out undocumented resources (see HAVE_UNDOCUMENTED_RESOURCES)
  *              added XM_DISABLE_DEPRECATED which affects:
  *                XtError, XtSetErrorHandler, XtSetWarningHandler, XtSetErrorMsgHandler, XtSetWarningMsgHandler, XtWarningMsg, XtAppWarning, XtErrorMsg
  *                XtSetSelectionTimeout, XtInitialize , XtAddActions, XtAddInput, XtAddTimeout, XtAddWorkProc, XtCreateApplicationShell
@@ -190,7 +190,7 @@
  *    XtAppContext app -> bare XtAppContext (pointer) wrapped for xm 
  *    XGCValues -> a blank XGCValues struct (for XCreateGC etc)
  *    XColor &optional pixel red green blue flags pad
- *    XArc XRectangle XPoint XSegment XEvent Pixel GC
+ *    XArc XRectangle XPoint XSegment XEvent Pixel GC XWindowChanges XSetWindowAttributes
  *    XTextItem XpmImage XpmColorSymbol
  *    XDrawLinesDirect same as XDrawLines but takes (opaque) ptr to XPoint array
  *    vector->XPoints vect packages point data in vector as (opaque) array of XPoints 
@@ -350,11 +350,11 @@ XM_TYPE_PTR(XSelectionEvent, XSelectionEvent *)
 XM_TYPE_PTR(XSelectionRequestEvent, XSelectionRequestEvent *)
 XM_TYPE_PTR(XUnmapEvent, XUnmapEvent *)
 XM_TYPE_PTR(XVisibilityEvent, XVisibilityEvent *)
-XM_TYPE_PTR(XSetWindowAttributes, XSetWindowAttributes *)
+XM_TYPE_PTR_OBJ(XSetWindowAttributes, XSetWindowAttributes *)
 XM_TYPE_PTR(XVisualInfo, XVisualInfo *)
 XM_TYPE_PTR(XWMHints, XWMHints *)
 XM_TYPE_PTR(XWindowAttributes, XWindowAttributes *)
-XM_TYPE_PTR(XWindowChanges, XWindowChanges *)
+XM_TYPE_PTR_OBJ(XWindowChanges, XWindowChanges *)
 XM_TYPE_PTR(XStandardColormap, XStandardColormap *)
 XM_TYPE(KeyCode, KeyCode)
 XM_TYPE(XContext, XContext)
@@ -1510,12 +1510,6 @@ static Arg *XEN_TO_C_Args(XEN inargl)
 	  XEN_ASSERT_TYPE(XEN_INTEGER_P(value), value, XEN_ONLY_ARG, name, "an integer");
 	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_INT(value)));
 	  break;
-#if HAVE_UNDOCUMENTED_RESOURCES
-	case XM_FLOAT:	
-	  XEN_ASSERT_TYPE(XEN_NUMBER_P(value), value, XEN_ONLY_ARG, name, "a number");      
-	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_DOUBLE(value)));
-	  break;
-#endif
 	case XM_STRING:	      
 	  XEN_ASSERT_TYPE(XEN_STRING_P(value), value, XEN_ONLY_ARG, name, "a string");      
 	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_STRING(value)));
@@ -1812,6 +1806,7 @@ static XEN C_TO_XEN_ANY(Widget w, char *name, unsigned long *v)
     case XM_UCHAR:	      return(C_TO_XEN_char(value));
     case XM_FLOAT:	      return(C_TO_XEN_DOUBLE(value));
     case XM_STRING:	      return(C_TO_XEN_STRING((char *)value));
+    case XM_STRING_OR_XMSTRING: /* fileselectionbox here , not parsemapping */
     case XM_XMSTRING:	      return(C_TO_XEN_XmString((XmString)value));
     case XM_STRING_TABLE:     return(C_TO_XEN_XmStringTable((XmStringTable)value, xmstringtable_length(w, name)));
 #if MOTIF_2
@@ -2961,11 +2956,11 @@ converts a compound string table to a single compound string"
   XmString val;
   XEN_ASSERT_TYPE(XEN_LIST_P(arg1), arg1, 1, "XmStringTableToXmString", "XmStringTable");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmStringTableToXmString", "int");
-  XEN_ASSERT_TYPE(XEN_XmString_P(arg3), arg3, 3, "XmStringTableToXmString", "XmString");
+  XEN_ASSERT_TYPE(XEN_XmString_P(arg3) || XEN_FALSE_P(arg3), arg3, 3, "XmStringTableToXmString", "XmString");
   tab = XEN_TO_C_XmStringTable(arg1, XEN_TO_C_INT(arg2));
   val = XmStringTableToXmString(tab,
 				XEN_TO_C_INT(arg2), 
-				XEN_TO_C_XmString(arg3));
+				(XEN_XmString_P(arg3)) ? XEN_TO_C_XmString(arg3) : NULL);
   FREE(tab);
   return(C_TO_XEN_XmString(val));
 }
@@ -2979,8 +2974,10 @@ converts a single compound string to a table of compound strings"
   XmStringTable tab;
   Cardinal val;
   XEN_ASSERT_TYPE(XEN_XmString_P(arg1), arg1, 1, "XmStringToXmStringTable", "XmString");
-  XEN_ASSERT_TYPE(XEN_XmString_P(arg2), arg2, 2, "XmStringToXmStringTable", "XmString");
-  val = XmStringToXmStringTable(XEN_TO_C_XmString(arg1), XEN_TO_C_XmString(arg2), &tab);
+  XEN_ASSERT_TYPE(XEN_XmString_P(arg2) || XEN_FALSE_P(arg2), arg2, 2, "XmStringToXmStringTable", "XmString");
+  val = XmStringToXmStringTable(XEN_TO_C_XmString(arg1), 
+				(XEN_XmString_P(arg2)) ? XEN_TO_C_XmString(arg2) : NULL,
+				&tab);
   return(XEN_LIST_2(C_TO_XEN_INT(val), C_TO_XEN_XmStringTable(tab, val)));
 }
 
@@ -3030,7 +3027,7 @@ XmParseTable parse_table, Cardinal parse_count, XmParseModel parse_model) unpars
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmStringUnparse", "XmStringTag");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmStringUnparse", "XmTextType");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XmStringUnparse", "XmTextType");
-  XEN_ASSERT_TYPE(XEN_XmParseTable_P(arg5), arg5, 5, "XmStringUnparse", "XmParseTable");
+  XEN_ASSERT_TYPE(XEN_XmParseTable_P(arg5) || XEN_FALSE_P(arg5), arg5, 5, "XmStringUnparse", "XmParseTable");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg6), arg6, 6, "XmStringUnparse", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg7), arg7, 7, "XmStringUnparse", "XmParseModel");
   type1 = (XmTextType)XEN_TO_C_INT(arg3);
@@ -3038,7 +3035,7 @@ XmParseTable parse_table, Cardinal parse_count, XmParseModel parse_model) unpars
   type2 = (XmTextType)XEN_TO_C_INT(arg4);
   if ((type2 < 0) || (type2 > 1)) XEN_ASSERT_TYPE(0, arg4, 4, "XmStringUnparse", "XmTextType");
   len = XEN_TO_C_INT(arg6);
-  pt = XEN_TO_C_XmParseTable(arg5, len);
+  if (XEN_XmParseTable_P(arg5)) pt = XEN_TO_C_XmParseTable(arg5, len);
   rtn = C_TO_XEN_STRING((const char *)XmStringUnparse(XEN_TO_C_XmString(arg1), 
 						      XEN_TO_C_STRING(arg2), 
 						      type1, type2, pt, len,
@@ -3081,34 +3078,6 @@ static XEN gxm_XmStringPeekNextTriple(XEN arg1)
 component type of the next component"
   XEN_ASSERT_TYPE(XEN_XmStringContext_P(arg1), arg1, 1, "XmStringPeekNextTriple", "XmStringContext");
   return(C_TO_XEN_INT(XmStringPeekNextTriple(XEN_TO_C_XmStringContext(arg1))));
-}
-
-static XEN gxm_XmStringByteStreamLength(XEN arg1)
-{
-  #define H_XmStringByteStreamLength "unsigned int XmStringByteStreamLength (string) returns the size of a string"
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XmStringByteStreamLength", "unsigned char*");
-  return(C_TO_XEN_ULONG(XmStringByteStreamLength((unsigned char *)XEN_TO_C_STRING(arg1))));
-}
-
-static XEN gxm_XmCvtByteStreamToXmString(XEN arg1)
-{
-  #define H_XmCvtByteStreamToXmString "XmString XmCvtByteStreamToXmString(unsigned char *property)  \
-converts from a compound string in Byte Stream format to a compound string"
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XmCvtByteStreamToXmString", "unsigned char*");
-  return(C_TO_XEN_XmString(XmCvtByteStreamToXmString((unsigned char *)XEN_TO_C_STRING(arg1))));
-}
-
-static XEN gxm_XmCvtXmStringToByteStream(XEN arg1)
-{
-  #define H_XmCvtXmStringToByteStream "unsigned int XmCvtXmStringToByteStream(XmString string) \
-converts a compound string to a Byte Stream format -> prop"
-  /* DIFF: XmCvtXmStringToByteStream omit arg2 and rtns string
-   */
-  int len;
-  unsigned char *str;
-  XEN_ASSERT_TYPE(XEN_XmString_P(arg1), arg1, 1, "XmCvtXmStringToByteStream", "XmString");
-  len = XmCvtXmStringToByteStream(XEN_TO_C_XmString(arg1), &str);
-  return(C_TO_XEN_STRING((const char *)str));
 }
 #endif
 /* MOTIF_2 */
@@ -12040,14 +12009,14 @@ server to generate a CreateNotify event."
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg5), arg5, 5, "XCreateSimpleWindow", "unsigned int");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg6), arg6, 6, "XCreateSimpleWindow", "unsigned int");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg7), arg7, 7, "XCreateSimpleWindow", "unsigned int");
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg8), arg8, 8, "XCreateSimpleWindow", "ulong");
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg9), arg9, 9, "XCreateSimpleWindow", "ulong");
+  XEN_ASSERT_TYPE(XEN_Pixel_P(arg8), arg8, 8, "XCreateSimpleWindow", "Pixel");
+  XEN_ASSERT_TYPE(XEN_Pixel_P(arg9), arg9, 9, "XCreateSimpleWindow", "Pixel");
   return(C_TO_XEN_Window(XCreateSimpleWindow(XEN_TO_C_Display(arg1), 
 					     XEN_TO_C_Window(arg2), 
 					     XEN_TO_C_INT(arg3), XEN_TO_C_INT(arg4), 
 					     XEN_TO_C_ULONG(arg5), XEN_TO_C_ULONG(arg6), 
-					     XEN_TO_C_ULONG(arg7), XEN_TO_C_ULONG(arg8), 
-					     XEN_TO_C_ULONG(arg9))));
+					     XEN_TO_C_ULONG(arg7), XEN_TO_C_Pixel(arg8), 
+					     XEN_TO_C_Pixel(arg9))));
 }
 
 static XEN gxm_XCreatePixmapFromBitmapData(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
@@ -17967,9 +17936,6 @@ static void define_procedures(void)
 #if MOTIF_2
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringConcatAndFree" XM_POSTFIX, gxm_XmStringConcatAndFree, 2, 0, 0, H_XmStringConcatAndFree);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringIsVoid" XM_POSTFIX, gxm_XmStringIsVoid, 1, 0, 0, H_XmStringIsVoid);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCvtXmStringToByteStream" XM_POSTFIX, gxm_XmCvtXmStringToByteStream, 1, 0, 0, H_XmCvtXmStringToByteStream);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCvtByteStreamToXmString" XM_POSTFIX, gxm_XmCvtByteStreamToXmString, 1, 0, 0, H_XmCvtByteStreamToXmString);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringByteStreamLength" XM_POSTFIX, gxm_XmStringByteStreamLength, 1, 0, 0, H_XmStringByteStreamLength);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringPeekNextTriple" XM_POSTFIX, gxm_XmStringPeekNextTriple, 1, 0, 0, H_XmStringPeekNextTriple);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringGetNextTriple" XM_POSTFIX, gxm_XmStringGetNextTriple, 1, 0, 0, H_XmStringGetNextTriple);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringComponentCreate" XM_POSTFIX, gxm_XmStringComponentCreate, 3, 0, 0, H_XmStringComponentCreate);
@@ -18566,9 +18532,9 @@ static XEN gxm_XColor(XEN pixel, XEN red, XEN green, XEN blue, XEN flags, XEN pa
 {
   XColor *r;
   XEN_ASSERT_TYPE(XEN_ULONG_IF_BOUND_P(pixel), pixel, 1, "XColor", "ulong");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(red), red, 2, "XColor", "INT");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(green), green, 3, "XColor", "INT");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(blue), blue, 4, "XColor", "INT");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(red), red, 2, "XColor", "int");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(green), green, 3, "XColor", "int");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(blue), blue, 4, "XColor", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(flags), flags, 5, "XColor", "char");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(pad), pad, 6, "XColor", "char");
   r = (XColor *)CALLOC(1, sizeof(XColor));
@@ -18659,6 +18625,51 @@ static XEN gxm_set_red(XEN ptr, XEN val)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_2, "set_red", "an integer");
   (XEN_TO_C_XColor(ptr))->red = XEN_TO_C_INT(val);
   return(val);
+}
+
+static XEN gxm_XWindowChanges(XEN x, XEN y, XEN width, XEN height, XEN border_width, XEN sibling, XEN stack_mode)
+{
+  XWindowChanges *r;
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(x), x, 1, "XWindowChanges", "int");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(y), y, 2, "XWindowChanges", "int");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(width), width, 3, "XWindowChanges", "int");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(height), height, 4, "XWindowChanges", "int");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(border_width), border_width, 5, "XWindowChanges", "int");
+  XEN_ASSERT_TYPE(XEN_Window_P(sibling) || XEN_NOT_BOUND_P(sibling), sibling, 6, "XWindowChanges", "Window");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(stack_mode), stack_mode, 7, "XWindowChanges", "int");
+  r = (XWindowChanges *)CALLOC(1, sizeof(XWindowChanges));
+  if (XEN_BOUND_P(x)) r->x = XEN_TO_C_INT(x);
+  if (XEN_BOUND_P(y)) r->y = XEN_TO_C_INT(y);
+  if (XEN_BOUND_P(width)) r->width = XEN_TO_C_INT(width);
+  if (XEN_BOUND_P(height)) r->height = XEN_TO_C_INT(height);
+  if (XEN_BOUND_P(border_width)) r->border_width = XEN_TO_C_INT(border_width);
+  if (XEN_BOUND_P(sibling)) r->sibling = XEN_TO_C_Window(sibling);
+  if (XEN_BOUND_P(stack_mode)) r->stack_mode = XEN_TO_C_INT(stack_mode);
+  return(C_TO_XEN_XWindowChanges(r));
+}
+
+static XEN gxm_XSetWindowAttributes(XEN arglist)
+{
+  int len;
+  XSetWindowAttributes *r;
+  r = (XSetWindowAttributes *)CALLOC(1, sizeof(XSetWindowAttributes));
+  len = XEN_LIST_LENGTH(arglist);
+  if ((len > 0) && (XEN_Pixmap_P(XEN_LIST_REF(arglist, 0)))) r->background_pixmap = XEN_TO_C_Pixmap(XEN_LIST_REF(arglist, 0));
+  if ((len > 1) && (XEN_ULONG_P(XEN_LIST_REF(arglist, 1)))) r->background_pixel = XEN_TO_C_ULONG(XEN_LIST_REF(arglist, 1));
+  if ((len > 2) && (XEN_Pixmap_P(XEN_LIST_REF(arglist, 2)))) r->border_pixmap = XEN_TO_C_Pixmap(XEN_LIST_REF(arglist, 2));
+  if ((len > 3) && (XEN_ULONG_P(XEN_LIST_REF(arglist, 3)))) r->border_pixel = XEN_TO_C_ULONG(XEN_LIST_REF(arglist, 3));
+  if ((len > 4) && (XEN_INTEGER_P(XEN_LIST_REF(arglist, 4)))) r->bit_gravity = XEN_TO_C_INT(XEN_LIST_REF(arglist, 4));
+  if ((len > 5) && (XEN_INTEGER_P(XEN_LIST_REF(arglist, 5)))) r->win_gravity = XEN_TO_C_INT(XEN_LIST_REF(arglist, 5));
+  if ((len > 6) && (XEN_INTEGER_P(XEN_LIST_REF(arglist, 6)))) r->backing_store = XEN_TO_C_INT(XEN_LIST_REF(arglist, 6));
+  if ((len > 7) && (XEN_ULONG_P(XEN_LIST_REF(arglist, 7)))) r->backing_planes = XEN_TO_C_ULONG(XEN_LIST_REF(arglist, 7));
+  if ((len > 8) && (XEN_ULONG_P(XEN_LIST_REF(arglist, 8)))) r->backing_pixel = XEN_TO_C_ULONG(XEN_LIST_REF(arglist, 8));
+  if ((len > 9) && (XEN_BOOLEAN_P(XEN_LIST_REF(arglist, 9)))) r->save_under = XEN_TO_C_BOOLEAN(XEN_LIST_REF(arglist, 9));
+  if ((len > 10) && (XEN_INTEGER_P(XEN_LIST_REF(arglist, 10)))) r->event_mask = XEN_TO_C_INT(XEN_LIST_REF(arglist, 10));
+  if ((len > 11) && (XEN_INTEGER_P(XEN_LIST_REF(arglist, 11)))) r->do_not_propagate_mask = XEN_TO_C_INT(XEN_LIST_REF(arglist, 11));
+  if ((len > 12) && (XEN_BOOLEAN_P(XEN_LIST_REF(arglist, 12)))) r->override_redirect = XEN_TO_C_BOOLEAN(XEN_LIST_REF(arglist, 12));
+  if ((len > 13) && (XEN_Colormap_P(XEN_LIST_REF(arglist, 13)))) r->colormap = XEN_TO_C_Colormap(XEN_LIST_REF(arglist, 13));
+  if ((len > 14) && (XEN_Cursor_P(XEN_LIST_REF(arglist, 14)))) r->cursor = XEN_TO_C_Cursor(XEN_LIST_REF(arglist, 14));
+  return(C_TO_XEN_XSetWindowAttributes(r));
 }
 
 static XEN gxm_stack_mode(XEN ptr)
@@ -21497,6 +21508,8 @@ static void define_structs(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "angle2" XM_POSTFIX, gxm_angle2, "", 
 				   XM_PREFIX "set_angle2" XM_POSTFIX, gxm_set_angle2,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XArc" XM_POSTFIX, gxm_XArc, 6, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XWindowChanges" XM_POSTFIX, gxm_XWindowChanges, 7, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XSetWindowAttributes" XM_POSTFIX, gxm_XSetWindowAttributes, 0, 0, 1, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XPoint" XM_POSTFIX, gxm_XPoint, 2, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "x1" XM_POSTFIX, gxm_x1, "", 
 				   XM_PREFIX "set_x1" XM_POSTFIX, gxm_set_x1,  1, 0, 2, 0);
@@ -22582,93 +22595,6 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNdefaultFontList" XM_POSTFIX, XmNdefaultFontList,                  XM_FONTLIST);
   DEFINE_RESOURCE(XM_PREFIX "XmNshellUnitType" XM_POSTFIX, XmNshellUnitType,		          XM_UCHAR);
 #endif
-#if HAVE_UNDOCUMENTED_RESOURCES
-  DEFINE_RESOURCE(XM_PREFIX "XmNavailability" XM_POSTFIX, XmNavailability,                        XM_ULONG);
-  DEFINE_RESOURCE(XM_PREFIX "XmNcallback" XM_POSTFIX, XmNcallback,                                XM_CALLBACK);
-  DEFINE_RESOURCE(XM_PREFIX "XmNchildPosition" XM_POSTFIX, XmNchildPosition,                      XM_INT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNdefaultGlyphPixmap" XM_POSTFIX, XmNdefaultGlyphPixmap,	          XM_PIXMAP);
-  DEFINE_RESOURCE(XM_PREFIX "XmNdesktopParent" XM_POSTFIX, XmNdesktopParent,		          XM_WIDGET);
-  DEFINE_RESOURCE(XM_PREFIX "XmNdragOverMode" XM_POSTFIX, XmNdragOverMode,		          XM_ULONG);
-  DEFINE_RESOURCE(XM_PREFIX "XmNeditType" XM_POSTFIX, XmNeditType,			          XM_UCHAR);
-  DEFINE_RESOURCE(XM_PREFIX "XmNextensionType" XM_POSTFIX, XmNextensionType,                      XM_UCHAR);
-  DEFINE_RESOURCE(XM_PREFIX "XmNfocusMovedCallback" XM_POSTFIX, XmNfocusMovedCallback,	          XM_CALLBACK);
-  DEFINE_RESOURCE(XM_PREFIX "XmNfocusPolicyChanged" XM_POSTFIX, XmNfocusPolicyChanged,	          XM_BOOLEAN);
-  DEFINE_RESOURCE(XM_PREFIX "XmNfontSet" XM_POSTFIX, XmNfontSet,			          XM_ULONG);
-  DEFINE_RESOURCE(XM_PREFIX "XmNforceBars" XM_POSTFIX, XmNforceBars,			          XM_BOOLEAN);
-  DEFINE_RESOURCE(XM_PREFIX "XmNfunction" XM_POSTFIX, XmNfunction,			          XM_CALLBACK);
-  DEFINE_RESOURCE(XM_PREFIX "XmNindex" XM_POSTFIX, XmNindex,				          XM_INT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNinnerHeight" XM_POSTFIX, XmNinnerHeight,		          XM_INT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNinnerWidth" XM_POSTFIX, XmNinnerWidth,			          XM_INT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNinnerWindow" XM_POSTFIX, XmNinnerWindow,		          XM_WIDGET);
-  DEFINE_RESOURCE(XM_PREFIX "XmNinputCreate" XM_POSTFIX, XmNinputCreate,		          XM_ULONG);
-  DEFINE_RESOURCE(XM_PREFIX "XmNinstallColormap" XM_POSTFIX, XmNinstallColormap,	          XM_BOOLEAN);
-  DEFINE_RESOURCE(XM_PREFIX "XmNinternalHeight" XM_POSTFIX, XmNinternalHeight,		          XM_INT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNinternalWidth" XM_POSTFIX, XmNinternalWidth,		          XM_INT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNjumpProc" XM_POSTFIX, XmNjumpProc,			          XM_CALLBACK);
-  DEFINE_RESOURCE(XM_PREFIX "XmNjustify" XM_POSTFIX, XmNjustify,			          XM_BOOLEAN);
-  DEFINE_RESOURCE(XM_PREFIX "XmNlargeIconX" XM_POSTFIX, XmNlargeIconX,			          XM_FLOAT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNlargeIconY" XM_POSTFIX, XmNlargeIconY,			          XM_FLOAT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNlength" XM_POSTFIX, XmNlength,				          XM_INT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNlogicalParent" XM_POSTFIX, XmNlogicalParent,		          XM_WIDGET);
-  DEFINE_RESOURCE(XM_PREFIX "XmNlowerRight" XM_POSTFIX, XmNlowerRight,			          XM_INT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNmenuEntry" XM_POSTFIX, XmNmenuEntry,			          XM_ULONG);
-  DEFINE_RESOURCE(XM_PREFIX "XmNmessageProc" XM_POSTFIX, XmNmessageProc,		          XM_CALLBACK);
-  DEFINE_RESOURCE(XM_PREFIX "XmNmwmMessages" XM_POSTFIX, XmNmwmMessages,		          XM_ULONG);
-  DEFINE_RESOURCE(XM_PREFIX "XmNname" XM_POSTFIX, XmNname,				          XM_ULONG);
-  DEFINE_RESOURCE(XM_PREFIX "XmNneedsMotion" XM_POSTFIX, XmNneedsMotion,		          XM_BOOLEAN);
-  DEFINE_RESOURCE(XM_PREFIX "XmNnotify" XM_POSTFIX, XmNnotify,				          XM_ULONG);
-  DEFINE_RESOURCE(XM_PREFIX "XmNnotifyProc" XM_POSTFIX, XmNnotifyProc,			          XM_CALLBACK);
-  DEFINE_RESOURCE(XM_PREFIX "XmNnumRectangles" XM_POSTFIX, XmNnumRectangles,		          XM_INT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNoffsetModel" XM_POSTFIX, XmNoffsetModel,		          XM_ULONG);
-  DEFINE_RESOURCE(XM_PREFIX "XmNoutputCreate" XM_POSTFIX, XmNoutputCreate,		          XM_ULONG);
-  DEFINE_RESOURCE(XM_PREFIX "XmNparameter" XM_POSTFIX, XmNparameter,			          XM_ULONG);
-  DEFINE_RESOURCE(XM_PREFIX "XmNpostFromCount" XM_POSTFIX, XmNpostFromCount,		          XM_INT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNpostFromList" XM_POSTFIX, XmNpostFromList,		          XM_ULONG);
-  DEFINE_RESOURCE(XM_PREFIX "XmNprintOrientation" XM_POSTFIX, XmNprintOrientation,	          XM_UCHAR);
-  DEFINE_RESOURCE(XM_PREFIX "XmNprintOrientations" XM_POSTFIX, XmNprintOrientations,	          XM_INT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNprintResolution" XM_POSTFIX, XmNprintResolution,	          XM_UCHAR);
-  DEFINE_RESOURCE(XM_PREFIX "XmNprintResolutions" XM_POSTFIX, XmNprintResolutions,	          XM_INT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNprotocolCallback" XM_POSTFIX, XmNprotocolCallback,	          XM_CALLBACK);
-  DEFINE_RESOURCE(XM_PREFIX "XmNrealizeCallback" XM_POSTFIX, XmNrealizeCallback,	          XM_CALLBACK);
-  DEFINE_RESOURCE(XM_PREFIX "XmNrectangles" XM_POSTFIX, XmNrectangles,			          XM_RECTANGLE_LIST);
-  DEFINE_RESOURCE(XM_PREFIX "XmNreverseVideo" XM_POSTFIX, XmNreverseVideo,		          XM_BOOLEAN);
-  DEFINE_RESOURCE(XM_PREFIX "XmNscrollDCursor" XM_POSTFIX, XmNscrollDCursor,		          XM_ULONG);
-  DEFINE_RESOURCE(XM_PREFIX "XmNscrollHCursor" XM_POSTFIX, XmNscrollHCursor,		          XM_ULONG);
-  DEFINE_RESOURCE(XM_PREFIX "XmNscrollLCursor" XM_POSTFIX, XmNscrollLCursor,		          XM_ULONG);
-  DEFINE_RESOURCE(XM_PREFIX "XmNscrollProc" XM_POSTFIX, XmNscrollProc,			          XM_CALLBACK);
-  DEFINE_RESOURCE(XM_PREFIX "XmNscrollRCursor" XM_POSTFIX, XmNscrollRCursor,		          XM_ULONG);
-  DEFINE_RESOURCE(XM_PREFIX "XmNscrollUCursor" XM_POSTFIX, XmNscrollUCursor,		          XM_ULONG);
-  DEFINE_RESOURCE(XM_PREFIX "XmNscrollVCursor" XM_POSTFIX, XmNscrollVCursor,		          XM_ULONG);
-  DEFINE_RESOURCE(XM_PREFIX "XmNshown" XM_POSTFIX, XmNshown,				          XM_BOOLEAN);
-  DEFINE_RESOURCE(XM_PREFIX "XmNsizePolicy" XM_POSTFIX, XmNsizePolicy,			          XM_UCHAR);
-  DEFINE_RESOURCE(XM_PREFIX "XmNsmallIconX" XM_POSTFIX, XmNsmallIconX,			          XM_FLOAT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNsmallIconY" XM_POSTFIX, XmNsmallIconY,			          XM_FLOAT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNsourceIsExternal" XM_POSTFIX, XmNsourceIsExternal,	          XM_BOOLEAN);
-  DEFINE_RESOURCE(XM_PREFIX "XmNsourceWidget" XM_POSTFIX, XmNsourceWidget,		          XM_WIDGET);
-  DEFINE_RESOURCE(XM_PREFIX "XmNsourceWindow" XM_POSTFIX, XmNsourceWindow,		          XM_WIDGET);
-  DEFINE_RESOURCE(XM_PREFIX "XmNspace" XM_POSTFIX, XmNspace,				          XM_INT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNstartTime" XM_POSTFIX, XmNstartTime,			          XM_ULONG);
-  DEFINE_RESOURCE(XM_PREFIX "XmNtabValue" XM_POSTFIX, XmNtabValue,			          XM_FLOAT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNtextOptions" XM_POSTFIX, XmNtextOptions,		          XM_ULONG);
-  DEFINE_RESOURCE(XM_PREFIX "XmNtextSink" XM_POSTFIX, XmNtextSink,			          XM_ULONG);
-  DEFINE_RESOURCE(XM_PREFIX "XmNtextSource" XM_POSTFIX, XmNtextSource,			          XM_TEXT_SOURCE);
-  DEFINE_RESOURCE(XM_PREFIX "XmNtextValue" XM_POSTFIX, XmNtextValue,			          XM_ULONG);
-  DEFINE_RESOURCE(XM_PREFIX "XmNthickness" XM_POSTFIX, XmNthickness,			          XM_INT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNthumb" XM_POSTFIX, XmNthumb,				          XM_ULONG);
-  DEFINE_RESOURCE(XM_PREFIX "XmNthumbProc" XM_POSTFIX, XmNthumbProc,			          XM_CALLBACK);
-  DEFINE_RESOURCE(XM_PREFIX "XmNtoPositionCallback" XM_POSTFIX, XmNtoPositionCallback,	          XM_CALLBACK);
-  DEFINE_RESOURCE(XM_PREFIX "XmNtraversalCallback" XM_POSTFIX, XmNtraversalCallback,	          XM_CALLBACK);
-  DEFINE_RESOURCE(XM_PREFIX "XmNtraversalType" XM_POSTFIX, XmNtraversalType,		          XM_UCHAR);
-  DEFINE_RESOURCE(XM_PREFIX "XmNtreeUpdateProc" XM_POSTFIX, XmNtreeUpdateProc,		          XM_CALLBACK);
-  DEFINE_RESOURCE(XM_PREFIX "XmNunselectPixmap" XM_POSTFIX, XmNunselectPixmap,		          XM_PIXMAP);
-  DEFINE_RESOURCE(XM_PREFIX "XmNupdate" XM_POSTFIX, XmNupdate,				          XM_ULONG);
-  DEFINE_RESOURCE(XM_PREFIX "XmNupdateSliderSize" XM_POSTFIX, XmNupdateSliderSize,	          XM_INT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNuseBottom" XM_POSTFIX, XmNuseBottom,			          XM_BOOLEAN);
-  DEFINE_RESOURCE(XM_PREFIX "XmNuseRight" XM_POSTFIX, XmNuseRight,			          XM_BOOLEAN);
-  DEFINE_RESOURCE(XM_PREFIX "XmNuseMask" XM_POSTFIX, XmNuseMask,			          XM_PIXMAP);
-  DEFINE_RESOURCE(XM_PREFIX "XmNuseTextColor" XM_POSTFIX, XmNuseTextColor,		          XM_PIXEL);
-  DEFINE_STRING(XM_PREFIX "XmSTRING_ISO8859_1" XM_POSTFIX,       XmSTRING_ISO8859_1);
-#endif
 
   qsort((void *)xm_hash, hd_ctr, sizeof(hdata *), alphabet_compare);
   {
@@ -22956,6 +22882,46 @@ static void define_integers(void)
   DEFINE_INTEGER(XM_PREFIX "DestroyAll" XM_POSTFIX,		      DestroyAll);
   DEFINE_INTEGER(XM_PREFIX "RetainPermanent" XM_POSTFIX,	      RetainPermanent);
   DEFINE_INTEGER(XM_PREFIX "RetainTemporary" XM_POSTFIX,	      RetainTemporary);
+  DEFINE_INTEGER(XM_PREFIX "CWBackPixmap" XM_POSTFIX,                 CWBackPixmap);
+  DEFINE_INTEGER(XM_PREFIX "CWBackPixel" XM_POSTFIX,                  CWBackPixel);
+  DEFINE_INTEGER(XM_PREFIX "CWBorderPixmap" XM_POSTFIX,               CWBorderPixmap);
+  DEFINE_INTEGER(XM_PREFIX "CWBorderPixel" XM_POSTFIX,                CWBorderPixel);
+  DEFINE_INTEGER(XM_PREFIX "CWBitGravity" XM_POSTFIX,                 CWBitGravity);
+  DEFINE_INTEGER(XM_PREFIX "CWWinGravity" XM_POSTFIX,                 CWWinGravity);
+  DEFINE_INTEGER(XM_PREFIX "CWBackingStore" XM_POSTFIX,               CWBackingStore);
+  DEFINE_INTEGER(XM_PREFIX "CWBackingPlanes" XM_POSTFIX,              CWBackingPlanes);
+  DEFINE_INTEGER(XM_PREFIX "CWBackingPixel" XM_POSTFIX,               CWBackingPixel);
+  DEFINE_INTEGER(XM_PREFIX "CWOverrideRedirect" XM_POSTFIX,           CWOverrideRedirect);
+  DEFINE_INTEGER(XM_PREFIX "CWSaveUnder" XM_POSTFIX,                  CWSaveUnder);
+  DEFINE_INTEGER(XM_PREFIX "CWEventMask" XM_POSTFIX,                  CWEventMask);
+  DEFINE_INTEGER(XM_PREFIX "CWDontPropagate" XM_POSTFIX,              CWDontPropagate);
+  DEFINE_INTEGER(XM_PREFIX "CWColormap" XM_POSTFIX,                   CWColormap);
+  DEFINE_INTEGER(XM_PREFIX "CWCursor" XM_POSTFIX,                     CWCursor);
+  DEFINE_INTEGER(XM_PREFIX "CWX" XM_POSTFIX,                          CWX);
+  DEFINE_INTEGER(XM_PREFIX "CWY" XM_POSTFIX,                          CWY);
+  DEFINE_INTEGER(XM_PREFIX "CWWidth" XM_POSTFIX,                      CWWidth);
+  DEFINE_INTEGER(XM_PREFIX "CWHeight" XM_POSTFIX,                     CWHeight);
+  DEFINE_INTEGER(XM_PREFIX "CWBorderWidth" XM_POSTFIX,                CWBorderWidth);
+  DEFINE_INTEGER(XM_PREFIX "CWSibling" XM_POSTFIX,                    CWSibling);
+  DEFINE_INTEGER(XM_PREFIX "CWStackMode" XM_POSTFIX,                  CWStackMode);
+  DEFINE_INTEGER(XM_PREFIX "ForgetGravity" XM_POSTFIX,                ForgetGravity);
+  DEFINE_INTEGER(XM_PREFIX "NorthWestGravity" XM_POSTFIX,             NorthWestGravity);
+  DEFINE_INTEGER(XM_PREFIX "NorthGravity" XM_POSTFIX,                 NorthGravity);
+  DEFINE_INTEGER(XM_PREFIX "NorthEastGravity" XM_POSTFIX,             NorthEastGravity);
+  DEFINE_INTEGER(XM_PREFIX "WestGravity" XM_POSTFIX,                  WestGravity);
+  DEFINE_INTEGER(XM_PREFIX "CenterGravity" XM_POSTFIX,                CenterGravity);
+  DEFINE_INTEGER(XM_PREFIX "EastGravity" XM_POSTFIX,                  EastGravity);
+  DEFINE_INTEGER(XM_PREFIX "SouthWestGravity" XM_POSTFIX,             SouthWestGravity);
+  DEFINE_INTEGER(XM_PREFIX "SouthGravity" XM_POSTFIX,                 SouthGravity);
+  DEFINE_INTEGER(XM_PREFIX "SouthEastGravity" XM_POSTFIX,             SouthEastGravity);
+  DEFINE_INTEGER(XM_PREFIX "StaticGravity" XM_POSTFIX,                StaticGravity);
+  DEFINE_INTEGER(XM_PREFIX "Above" XM_POSTFIX,                        Above);
+  DEFINE_INTEGER(XM_PREFIX "Below" XM_POSTFIX,                        Below);
+  DEFINE_INTEGER(XM_PREFIX "TopIf" XM_POSTFIX,                        TopIf);
+  DEFINE_INTEGER(XM_PREFIX "BottomIf" XM_POSTFIX,                     BottomIf);
+  DEFINE_INTEGER(XM_PREFIX "Opposite" XM_POSTFIX,                     Opposite);
+  DEFINE_INTEGER(XM_PREFIX "RaiseLowest" XM_POSTFIX,                  RaiseLowest);
+  DEFINE_INTEGER(XM_PREFIX "LowerHighest" XM_POSTFIX,                 LowerHighest);
   DEFINE_INTEGER(XM_PREFIX "PropModeReplace" XM_POSTFIX,	      PropModeReplace);
   DEFINE_INTEGER(XM_PREFIX "PropModePrepend" XM_POSTFIX,	      PropModePrepend);
   DEFINE_INTEGER(XM_PREFIX "PropModeAppend" XM_POSTFIX,		      PropModeAppend);
@@ -24482,7 +24448,7 @@ static int xm_already_inited = 0;
       define_structs();
       XEN_YES_WE_HAVE("xm");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"1-Mar-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"4-Mar-02\")");
 #endif
       xm_already_inited = 1;
     }

@@ -4230,6 +4230,11 @@ the direction argument between the channel and edit-position.
 				       (next-sample reader)))))
     (<em class=red>clm-channel</em> cgen beg dur snd chn edpos)
     (free-sample-reader reader)))
+
+(define (difference) (<em class=red>clm-channel</em> (make-two-zero 1 -1)))
+(define (wobble) (<em class=red>clm-channel</em> (make-sum-of-cosines 3 50))
+(define (hold-nose) (<em class=red>clm-channel</em> (make-sum-of-cosines 3 1)))
+(define (bad-reception) (<em class=red>clm-channel</em> (make-sum-of-cosines 5 10)))
 <!-- --></pre></td></tr></table>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
@@ -4457,7 +4462,9 @@ the direction argument between the channel and edit-position.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- --><b>env-channel</b> is the <a href="#regularizedargs">regularized</a> version of <a href="#sndenv">env-sound</a>.  <i>clm-env-gen</i>
-<!-- -->must be a CLM envelope generator.
+<!-- -->must be a CLM envelope generator.<br><code>(env-channel (make-env '(0 0 1 1 2 0) :end (1- (frames))))</code></br>
+<!-- -->You can speed up simple envelopes by splitting out the "steady state" (the portion that
+<!-- -->doesn't change), handling it as with scale-by (or nothing if the value is 1.0), then the rest as ramps.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5157,8 +5164,7 @@ the direction argument between the channel and edit-position.
 <!-- -->[<em class=error>no-such-file, no-such-sound</em>]
 <!-- --><br><br>
 <!-- -->The <i>pos</i> argument makes it easier to try "A:B" comparisons.
-<!-- --><code>(play 0 #f #f #f #f (1- (edit-position)))</code> plays version before the latest edit.
-<!-- --><code>(define (play-then-and-now) (play-and-wait 0 #f #f #f #f (1- (edit-position))) (play))</code>.
+<!-- --><br><code>(play 0 #f #f #f #f (1- (edit-position)))</code></br> plays the version before the latest edit.
 <!-- -->The following code plays from the cursor with a moving ("tracking") cursor:
 <!-- --><br><br>
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
@@ -8183,8 +8189,22 @@ run
 <!-- --><span class=defbox><code><em class=def><a name="sndabort">c-g?</a></em> ()</code></span></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->check for C-g to interrupt on-going computation (and let other UI 
-<!-- -->events through).
+<!-- -->events through).  <i>c-g?</i> is especially useful in loops; we could define our own safe while loop as follows
+<!-- -->(this is a slight revision of Guile's while macro from ice-9/boot-9.scm):
 <!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(defmacro safe-while (cond . body)
+  `(letrec ((break (lambda val (apply throw 'break val)))
+	    (continue (lambda () (if (<em class=red>c-g?</em>) 
+				     (break 'interrupted)
+				     (or (not ,cond) 
+					 (begin (begin ,@ body) 
+						(continue)))))))
+     (catch 'break
+	    (lambda () (continue))
+	    (lambda v (cadr v)))))
+<!-- --></pre></td></tr></table></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- c-g! -->

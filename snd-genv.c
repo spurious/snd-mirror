@@ -404,10 +404,10 @@ static gboolean drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer 
 	  evx = (int)(ev->x);
 	  evy = (int)(ev->y);
 	  motion_time = ev->time;
-	  if ((motion_time - down_time) < 100) return;
+	  if ((motion_time - down_time) < 100) return(FALSE);
 	}
     }
-  else return;
+  else return(FALSE);
   if (!showing_all_envs)
     {
       env_dragged = 1;
