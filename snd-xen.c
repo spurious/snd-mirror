@@ -753,7 +753,7 @@ void snd_load_init_file(snd_state *ss, int nog, int noi)
   #define SND_CONF "/etc/snd.conf"
   if (nog == 0)
     {
-      fd = open(SND_CONF, O_RDONLY, 0);
+      fd = OPEN(SND_CONF, O_RDONLY, 0);
       if (fd != -1)
 	{
 	  snd_close(fd, SND_CONF);
@@ -763,7 +763,7 @@ void snd_load_init_file(snd_state *ss, int nog, int noi)
   if ((ss->init_file) && (noi == 0))
     {
       str = mus_expand_filename(ss->init_file);
-      fd = open(str, O_RDONLY, 0);
+      fd = OPEN(str, O_RDONLY, 0);
       if (fd != -1) 
 	{
 	  snd_close(fd, str);
@@ -1911,7 +1911,6 @@ subsequent " S_close_sound_file ". data can be written with " S_vct2sound_file
   ss = get_global_state();
   ss->catch_message = NULL;
   result = open_temp_file(name, chans, hdr, ss);
-  mus_file_set_data_clipped(result, data_clipped(ss));
   if (result == -1) 
     {
       free_file_info(hdr);
@@ -1924,6 +1923,7 @@ subsequent " S_close_sound_file ". data can be written with " S_vct2sound_file
       else
 	return(snd_no_such_file_error(S_open_sound_file, g_name));
     }
+  mus_file_set_data_clipped(result, data_clipped(ss));
   set_temp_fd(result, hdr);
   return(C_TO_XEN_INT(result));
 }

@@ -281,7 +281,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->deferred_regions = 0;
 
 #if HAVE_LLONGS
-  md = fopen("/proc/meminfo", "r");
+  md = FOPEN("/proc/meminfo", "r");
   if (md)
     {
       long long mem;
@@ -323,7 +323,17 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   #endif
 #endif
 
-snd_state *get_global_state(void) {return(ss);} /* sigh */
+snd_state *get_global_state(void) 
+{
+#if DEBUGGING
+  if (ss == NULL) 
+    {
+      fprintf(stderr,"global state stepped on?"); 
+      abort();
+    }
+#endif
+  return(ss);
+}
 
 
 void g_init_base(void)

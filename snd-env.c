@@ -1295,10 +1295,10 @@ static XEN g_save_envelopes(XEN filename)
   if (XEN_STRING_P(filename)) 
     name = mus_expand_filename(XEN_TO_C_STRING(filename));
   else name = copy_string("envs.save");
-  fd = fopen(name, "w");
+  fd = FOPEN(name, "w");
   if (fd) save_envelope_editor_state(fd);
   if (name) FREE(name);
-  if ((!fd) || (fclose(fd) != 0))
+  if ((!fd) || (FCLOSE(fd) != 0))
     XEN_ERROR(CANNOT_SAVE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_save_envelopes),
 			 filename,

@@ -2521,9 +2521,17 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 				  for (i = 0; i < len; i++, res = XEN_CDR(res)) 
 				    mus_outa(j++, XEN_TO_C_DOUBLE(XEN_CAR(res)), (mus_output *)outgen);
 				}
-			      else XEN_ERROR(BAD_TYPE,
-					     XEN_LIST_2(C_TO_XEN_STRING(caller),
-							res));
+			      else 
+				{
+				  if (outgen) mus_free(outgen);
+				  if (sf) sf = free_snd_fd(sf);
+				  if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
+				  snd_remove(filename, TRUE);
+				  FREE(filename);
+				  XEN_ERROR(BAD_TYPE,
+					    XEN_LIST_2(C_TO_XEN_STRING(caller),
+						       res));
+				}
 			    }
 			}
 		    }
@@ -2623,6 +2631,7 @@ about where it is in the sound."
 }
 
 
+static snd_fd *stop_leak = NULL;
 static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn, 
 		     const char *caller, int counting, XEN edpos, int arg_pos, XEN s_dur)
 {
@@ -2638,6 +2647,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
   char *errmsg;
   XEN proc = XEN_FALSE;
   void *pt = NULL;
+  if (stop_leak) stop_leak = free_snd_fd(stop_leak);
   if (XEN_LIST_P(proc_and_list))
     proc = XEN_CADR(proc_and_list);
   else proc = proc_and_list;
@@ -2668,6 +2678,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
   sp = cp->sound;
   sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
   if (sf == NULL) return(XEN_TRUE);
+  stop_leak = sf;
   rpt4 = MAX_BUFFER_SIZE / 4;
   if (end == 0) 
     {
@@ -2693,6 +2704,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 		  else
 		    {
 		      sf = free_snd_fd(sf);
+		      stop_leak = NULL;
 		      free_ptree(pt);
 		      if (reporting) 
 			finish_progress_report(sp, NOT_FROM_ENVED);
@@ -2706,6 +2718,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 	      res = XEN_CALL_1_NO_CATCH(proc,
 					C_TO_XEN_DOUBLE((double)read_sample_to_float(sf)),
 					caller);
+	      /* leak here -- if reader active and error occurs, we jump out without cleanup -- hence "stop_leak" above */
 	      if (XEN_NOT_FALSE_P(res))
 		{
 		  if ((counting) &&
@@ -2714,6 +2727,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 		  else
 		    {
 		      sf = free_snd_fd(sf);
+		      stop_leak = NULL;
 		      if (reporting) 
 			finish_progress_report(sp, NOT_FROM_ENVED);
 		      return(XEN_LIST_2(res,
@@ -2737,6 +2751,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 	      report_in_minibuffer(sp, "C-G stopped %s at sample " OFF_TD, 
 				   caller, kp + beg);
 	      sf = free_snd_fd(sf);
+	      stop_leak = NULL;
 	      if (counting)
 		return(C_TO_XEN_INT(counts));
 	      return(XEN_FALSE);
@@ -2745,6 +2760,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
       if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
     }
   if (sf) sf = free_snd_fd(sf);
+  stop_leak = NULL;
   if (pt) free_ptree(pt);
   if (counting)
     return(C_TO_XEN_INT(counts));

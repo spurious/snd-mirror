@@ -21,7 +21,7 @@ static char *file_to_string(char *filename)
   FILE *file;
   int size;
   char *content;
-  if ((file = fopen(filename, "r")) == NULL)
+  if ((file = FOPEN(filename, "r")) == NULL)
     {
       snd_error("can't open %s: %s", filename, strerror(errno));
       return(NULL);

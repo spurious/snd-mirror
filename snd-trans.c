@@ -102,17 +102,17 @@ static int be_snd_checked_write(int fd, unsigned char *buf, int bytes, char *fil
 /* I'm using the same variable names in most cases below, so these two macros save lots of repetition */
 #define CLEANUP() \
   do { \
-      if (fs != -1) close(fs); \
-      if (fd != -1) close(fd); \
+      if (fs != -1) CLOSE(fs); \
+      if (fd != -1) CLOSE(fd); \
       if (buf) FREE(buf); \
      } \
   while (0)
 
 #define STARTUP(OldName, NewName, BufSize, BufType) \
   do { \
-    fs = creat(NewName, 0666); \
+    fs = CREAT(NewName, 0666); \
     if (fs == -1) RETURN_MUS_IO_ERROR("create", NewName); \
-    fd = open(OldName, O_RDONLY, 0); \
+    fd = OPEN(OldName, O_RDONLY, 0); \
     if (fd == -1) \
       { \
         CLEANUP(); \
@@ -994,7 +994,6 @@ static int read_oki_adpcm(char *oldname, char *newname, char *hdr)
   srate = mus_sound_srate(oldname);
   mus_bint_to_char((unsigned char *)(hdr + 16), srate);
   mus_bint_to_char((unsigned char *)(hdr + 20), chans);
-  fd = open(oldname, O_RDONLY, 0);
   if (snd_checked_write(fs, (unsigned char *)hdr, 28, newname) == MUS_ERROR) 
     {
       FREE(buf1);
@@ -1494,13 +1493,13 @@ static int read_g72x_adpcm(char *oldname, char *newname, char *hdr, int which_g)
 		__LINE__, __FUNCTION__);
       return(MUS_ERROR);
     }
-  fs = creat(newname, 0666);
+  fs = CREAT(newname, 0666);
   if (fs == -1) RETURN_MUS_IO_ERROR("create", newname);
   loc = mus_sound_data_location(oldname);
   srate = mus_sound_srate(oldname);
   mus_bint_to_char((unsigned char *)(hdr + 16), srate);
   mus_bint_to_char((unsigned char *)(hdr + 20), chans);
-  fd = fopen(oldname, "rb");
+  fd = FOPEN(oldname, "rb");
   if (fd == NULL) 
     {
       snd_close(fs, newname); 

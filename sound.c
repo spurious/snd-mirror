@@ -391,7 +391,7 @@ static sound_file *check_write_date(const char *name, sound_file *sf)
 	      data_size = lseek(chan, 0L, SEEK_END);
 	      sf->true_file_length = data_size;
 	      sf->samples = mus_bytes_to_samples(sf->data_format, data_size);
-	      close(chan);  
+	      CLOSE(chan);  
 	      return(sf);
 	    }
 	  /* otherwise our data base is out-of-date, so clear it out */
@@ -735,7 +735,7 @@ char *mus_sound_comment(const char *name)
       lseek(fd, start, SEEK_SET);
       sc = (char *)CALLOC(len + 1, sizeof(char)); /* len + 1 calloc'd => we'll always have a trailing null */
       read(fd, sc, len);
-      close(fd);
+      CLOSE(fd);
 #ifndef MACOS
       if ((mus_sound_header_type(name) == MUS_AIFF) || 
 	  (mus_sound_header_type(name) == MUS_AIFC)) 
@@ -762,10 +762,15 @@ int mus_sound_open_input (const char *arg)
   sound_file *sf = NULL;
   mus_sound_initialize();
   fd = mus_file_open_read(arg);
-  if (fd != MUS_ERROR)
+  if (fd != -1)
     {
       if ((sf = find_sound_file(arg)) == NULL)
 	sf = read_sound_file_header_with_fd(fd, arg);
+      if (sf == NULL)
+	{
+	  CLOSE(fd);
+	  fd = -1;
+	}
     }
   if (sf) 
     {

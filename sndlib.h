@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 16
-#define SNDLIB_REVISION 6
-#define SNDLIB_DATE "27-June-02"
+#define SNDLIB_REVISION 7
+#define SNDLIB_DATE "1-July-02"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 
@@ -321,19 +321,45 @@ enum {MUS_NO_ERROR, MUS_NO_FREQUENCY, MUS_NO_PHASE, MUS_NO_GEN, MUS_NO_LENGTH,
   /* realloc is enough of a mess that I'll handle each case individually */
   /*   FREE is used only when we call either CALLOC or MALLOC ourselves -- other cases use free, g_free, XtFree, etc */
   #define CALLOC(a, b)  NewPtrClear((a) * (b))
-  #define MALLOC(a)    NewPtr((a))
-  #define FREE(a)      DisposePtr((Ptr)(a))
+  #define MALLOC(a)     NewPtr((a))
+  #define FREE(a)       DisposePtr((Ptr)(a))
+
+  #define OPEN(File, Flags, Mode) open((File), (Flags))
+  #define FOPEN(File, Flags) fopen((File), (Flags))
+  #define CLOSE(Fd) close(Fd)
+  #define FCLOSE(Fd) fclose(Fd)
+  #ifdef MPW_C
+    #define CREAT(File, Flags) creat((File))
+  #else
+    #define CREAT(File, Flags) creat((File), 0)
+  #endif
 #else
   #ifdef DEBUG_MEMORY
     #define CALLOC(a, b)  mem_calloc((size_t)(a), (size_t)(b), __FUNCTION__, __FILE__, __LINE__)
     #define MALLOC(a)     mem_malloc((size_t)(a), __FUNCTION__, __FILE__, __LINE__)
     #define FREE(a)       mem_free(a, __FUNCTION__, __FILE__, __LINE__)
     #define REALLOC(a, b) mem_realloc(a, (size_t)(b), __FUNCTION__, __FILE__, __LINE__)
+
+    #define OPEN(File, Flags, Mode) io_open((File), (Flags), (Mode), __FUNCTION__, __FILE__, __LINE__)
+    #define FOPEN(File, Flags) io_fopen((File), (Flags), __FUNCTION__, __FILE__, __LINE__)
+    #define CLOSE(Fd) io_close((Fd), __FUNCTION__, __FILE__, __LINE__)
+    #define FCLOSE(Fd) io_fclose((Fd), __FUNCTION__, __FILE__, __LINE__)
+    #define CREAT(File, Flags) io_creat((File), (Flags), __FUNCTION__, __FILE__, __LINE__)
   #else
     #define CALLOC(a, b)  calloc((size_t)(a), (size_t)(b))
     #define MALLOC(a)     malloc((size_t)(a))
     #define FREE(a)       free(a)
     #define REALLOC(a, b) realloc(a, (size_t)(b))
+
+    #ifdef WINDOZE
+      #define OPEN(File, Flags, Mode) open((File), (Flags))
+    #else
+      #define OPEN(File, Flags, Mode) open((File), (Flags), (Mode))
+    #endif
+    #define FOPEN(File, Flags) fopen((File), (Flags))
+    #define CLOSE(Fd) close(Fd)
+    #define FCLOSE(Fd) fclose(Fd)
+    #define CREAT(File, Flags) creat((File), (Flags))
   #endif
 #endif 
 
@@ -627,10 +653,15 @@ char *mus_midi_describe             PROTO((void));
 
 #ifdef DEBUG_MEMORY
   /* snd-utils.c (only used in conjunction with Snd's memory tracking functions) */
-  void *mem_calloc                  PROTO((size_t len, size_t size, const char *func, const char *file, int line));
-  void *mem_malloc                  PROTO((size_t len, const char *func, const char *file, int line));
-  void mem_free                     PROTO((void *ptr, const char *func, const char *file, int line));
-  void *mem_realloc                 PROTO((void *ptr, size_t size, const char *func, const char *file, int line));
+  void *mem_calloc  PROTO((size_t len, size_t size, const char *func, const char *file, int line));
+  void *mem_malloc  PROTO((size_t len, const char *func, const char *file, int line));
+  void mem_free     PROTO((void *ptr, const char *func, const char *file, int line));
+  void *mem_realloc PROTO((void *ptr, size_t size, const char *func, const char *file, int line));
+  int io_open       PROTO((const char *pathname, int flags, mode_t mode, const char *func, const char *file, int line));
+  int io_creat      PROTO((const char *pathname, mode_t mode, const char *func, const char *file, int line));
+  int io_close      PROTO((int fd, const char *func, const char *file, int line));
+  FILE *io_fopen    PROTO((const char *path, const char *mode, const char *func, const char *file, int line));
+  int io_fclose     PROTO((FILE *stream, const char *func, const char *file, int line));
 #endif
 
 #ifdef MPW_C

@@ -263,7 +263,7 @@ static void mix_drawer_button_motion(Widget w, XtPointer context, XEvent *event,
 		   e,
 		   FALSE,
 		   1.0);
-  mix_amp_env_resize(w, ss, NULL);
+  mix_amp_env_resize(w, (XtPointer)ss, NULL);
 }
 
 static void mix_drawer_button_press(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
@@ -284,7 +284,7 @@ static void mix_drawer_button_press(Widget w, XtPointer context, XEvent *event, 
 		       e,
 		       FALSE,
 		       1.0))
-    mix_amp_env_resize(w, ss, NULL);
+    mix_amp_env_resize(w, (XtPointer)ss, NULL);
 }
 
 static void mix_drawer_button_release(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
@@ -300,7 +300,7 @@ static void mix_drawer_button_release(Widget w, XtPointer context, XEvent *event
   chan = (int)(pos * chans);
   e = mix_panel_env(mix_id, chan);
   edp_handle_release(spfs[chan], e);
-  mix_amp_env_resize(w, ss, NULL);
+  mix_amp_env_resize(w, (XtPointer)ss, NULL);
 }
 
 

@@ -46,7 +46,7 @@ static int start_ps_graph(char *output, char *title)
 { 
   time_t ts;
   snd_state *ss;
-  ps_fd = creat(output, 0666);
+  ps_fd = CREAT(output, 0666);
   if (ps_fd == -1) return(-1);
   if (!pbuf) pbuf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   bbx = 0;

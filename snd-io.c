@@ -213,12 +213,12 @@ static int too_many_files_cleanup(snd_state *ss)
 int snd_open_read(snd_state *ss, const char *arg) 
 {
   int fd;
-  fd = open(arg, O_RDONLY, 0);
+  fd = OPEN(arg, O_RDONLY, 0);
   if ((fd == -1) && (errno == EMFILE))
     {
       fd = too_many_files_cleanup(ss);
       if (fd != -1) 
-	fd = open(arg, O_RDONLY, 0);
+	fd = OPEN(arg, O_RDONLY, 0);
       if (fd == -1) 
 	snd_error("%s: %s", arg, strerror(errno));
     }
@@ -231,13 +231,13 @@ int snd_overwrite_ok(snd_state *ss, const char *ofile)
   if (ask_before_overwrite(ss))
     {
 #ifndef _MSC_VER
-      fil = open(ofile, O_RDONLY, O_NONBLOCK);
+      fil = OPEN(ofile, O_RDONLY, O_NONBLOCK);
 #else
-      fil = open(ofile, O_RDONLY);
+      fil = OPEN(ofile, O_RDONLY);
 #endif
       if (fil != -1) 
 	{
-	  close(fil);
+	  CLOSE(fil);
 	  rtn = snd_yes_or_no_p(ss, "%s exists. Overwrite?", ofile);
 	}
     }
@@ -247,13 +247,13 @@ int snd_overwrite_ok(snd_state *ss, const char *ofile)
 int snd_reopen_write(snd_state *ss, const char *arg)
 {
   int fd;
-  fd = open(arg, O_RDWR, 0);
+  fd = OPEN(arg, O_RDWR, 0);
   if ((fd == -1) && 
       (errno == EMFILE))
     {
       fd = too_many_files_cleanup(ss);
       if (fd != -1) 
-	fd = open(arg, O_RDWR, 0);
+	fd = OPEN(arg, O_RDWR, 0);
       if (fd == -1) 
 	snd_error("%s: %s", arg, strerror(errno));
     }
@@ -295,7 +295,7 @@ int snd_remove(const char *name, int forget)
 int snd_close(int fd, const char *name)
 {
   int val;
-  val = close(fd);
+  val = CLOSE(fd);
   if (val != 0)
     snd_warning("can't close %d (%s): %s", fd, name, strerror(errno));
   return(val);
@@ -304,7 +304,7 @@ int snd_close(int fd, const char *name)
 int snd_fclose(FILE *fd, const char *name)
 {
   int val;
-  val = fclose(fd);
+  val = FCLOSE(fd);
   if (val != 0)
     snd_warning("can't close %s: %s", name, strerror(errno));
   return(val);

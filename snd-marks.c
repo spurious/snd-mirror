@@ -2159,7 +2159,7 @@ static char *save_marks(snd_info *sp)
   if ((sp) && (map_over_sound_chans(sp, find_any_marks, NULL)))
     {
       newname = mark_file_name(sp);
-      fd = fopen(newname, "w");
+      fd = FOPEN(newname, "w");
       if (fd)
 	{
 	  fprintf(fd, "(let ((sfile (find-sound \"%s\")))\n", sp->short_filename);

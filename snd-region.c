@@ -132,6 +132,20 @@ void allocate_regions(snd_state *ss, int numreg)
   regions_size = numreg;
 }
 
+#if DEBUGGING
+int file_belongs_to_region(const char *file);
+int file_belongs_to_region(const char *file)
+{
+  int i;
+  for (i = 0; i < regions_size; i++)
+    if ((regions[i]) &&
+	(regions[i]->filename) &&
+	(strcmp(file, regions[i]->filename) == 0))
+      return(regions[i]->id);
+  return(INVALID_REGION);
+}
+#endif
+
 static void set_max_regions(snd_state *ss, int n)
 {
   if (n >= 0)
@@ -836,7 +850,7 @@ static void deferred_region_to_temp_file(region *r)
 	snd_error("can't write region temp file %s: %s", r->filename, strerror(errno));
       else
 	{
-	  mus_header_write_next_header(fdo, r->srate, r->chans, 28, data_size, sp0->hdr->format, NULL, 0);
+	  mus_header_write_next_header(fdo, r->srate, r->chans, 28, data_size, sp0->hdr->format, "region deferred temp", 20);
 	  fdi = mus_file_open_read(sp0->filename);
 	  if (fdi == -1)
 	    snd_error("can't read region's original sound? %s: %s", sp0->filename, strerror(errno));

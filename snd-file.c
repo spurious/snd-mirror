@@ -161,11 +161,11 @@ static file_info *translate_file(char *filename, snd_state *ss, int type)
    *
    * loop info across translation: 4-Dec-01
    */
-  fd = creat(newname, 0666);
+  fd = CREAT(newname, 0666);
   if (fd == -1)
     {
       tempname = snd_tempnam(ss);
-      fd = creat(tempname, 0666);
+      fd = CREAT(tempname, 0666);
       if (fd == -1)
 	{
 	  snd_error("can't write translator temp file: %s or %s!",
@@ -759,9 +759,9 @@ int copy_file(char *oldname, char *newname)
   off_t bytes, wb, total;
   char *buf = NULL;
   total = 0;
-  ifd = open(oldname, O_RDONLY, 0);
+  ifd = OPEN(oldname, O_RDONLY, 0);
   if (ifd == -1) return(MUS_CANT_OPEN_FILE);
-  ofd = creat(newname, 0666);
+  ofd = CREAT(newname, 0666);
   if (ofd == -1) 
     {
       snd_close(ifd, oldname);
@@ -781,16 +781,16 @@ int copy_file(char *oldname, char *newname)
 	}
     }
   snd_close(ifd, oldname);
-  total = total >> 10;
   wb = disk_kspace(newname);
+  snd_close(ofd, newname);
+  FREE(buf);
+  total = total >> 10;
   if (wb < 0) 
-    snd_error("%s: %s\n", newname, strerror(errno));
+    snd_warning("%s: %s\n", newname, strerror(errno));
   else
     if (total > wb) 
-      snd_error("disk nearly full: used " OFF_TD " Kbytes leaving " OFF_TD,
-		total, wb);
-  FREE(buf);
-  snd_close(ofd, newname);
+      snd_warning("disk nearly full: used " OFF_TD " Kbytes leaving " OFF_TD,
+		  total, wb);
   return(MUS_NO_ERROR);
 }
 
@@ -1644,7 +1644,7 @@ void update_prevlist(void)
       for (i = 0; i <= prevfile_end; i++)
 	if (prevnames[i]) 
 	  {
-	    fd = open(prevfullnames[i], O_RDONLY, 0);
+	    fd = OPEN(prevfullnames[i], O_RDONLY, 0);
 	    if (fd == -1) 
 	      {
 		FREE(prevnames[i]); 

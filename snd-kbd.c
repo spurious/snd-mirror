@@ -1777,7 +1777,7 @@ static XEN g_save_macros(void)
   ss = get_global_state();
   fd = open_snd_init_file(ss);
   if (fd) save_macro_state(fd);
-  if ((!fd) || (fclose(fd) != 0))
+  if ((!fd) || (FCLOSE(fd) != 0))
     XEN_ERROR(CANNOT_SAVE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_save_macros),
 			 C_TO_XEN_STRING(ss->init_file),

@@ -69,7 +69,7 @@ static XEN g_make_snd_color(XEN r, XEN g, XEN b)
   return(XEN_WRAP_PIXEL(tmp_color.pixel));
 }
 
-void recolor_everything(GUI_WIDGET w, GUI_POINTER ptr)
+void recolor_everything(GUI_WIDGET w, void *ptr)
 {
   Pixel curcol;
   snd_state *ss;
@@ -135,7 +135,7 @@ void color_chan_components(COLOR_TYPE color, int which_component)
     }
 }
 
-void recolor_button(GUI_WIDGET w, GUI_POINTER ptr)
+void recolor_button(GUI_WIDGET w, void *ptr)
 {
   snd_state *ss;
   ss = get_global_state();

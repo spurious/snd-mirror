@@ -556,6 +556,126 @@ static char *mem_stats(snd_state *ss, int ub)
   return(result);
 }
 
+
+/* file bookkeepping */
+static char **open_files = NULL, **file_funcs = NULL, **file_files = NULL;
+static int *file_lines = NULL, *file_fds = NULL;
+static FILE **file_fls = NULL;
+static int file_size = 0;
+
+static void io_add(const char *pathname, const char *func, const char *file, int line, int fd, FILE *fl)
+{
+  int i, loc = -1;
+  if (file_size == 0)
+    {
+      file_size = 128;
+      open_files = (char **)calloc(file_size, sizeof(char *));
+      file_funcs = (char **)calloc(file_size, sizeof(char *));
+      file_files = (char **)calloc(file_size, sizeof(char *));
+      file_lines = (int *)calloc(file_size, sizeof(int));
+      file_fds = (int *)calloc(file_size, sizeof(int));
+      for (i = 0; i < file_size; i++) file_fds[i] = -1;
+      file_fls = (FILE **)calloc(file_size, sizeof(FILE *));
+      open_files[0] = copy_string(pathname);
+      file_funcs[0] = copy_string(func);
+      file_files[0] = copy_string(file);
+      file_lines[0] = line;
+      file_fds[0] = fd;
+      file_fls[0] = fl;
+    }
+  else
+    {
+      for (i = 0; i < file_size; i++)
+	if (open_files[i] == NULL)
+	  {
+	    loc = i;
+	    break;
+	  }
+      if (loc == -1)
+	{
+	  loc = file_size;
+	  file_size += 128;
+	  open_files = (char **)realloc(open_files, file_size * sizeof(char *));
+	  file_funcs = (char **)realloc(file_funcs, file_size * sizeof(char *));
+	  file_files = (char **)realloc(file_files, file_size * sizeof(char *));
+	  file_lines = (int *)realloc(file_lines, file_size * sizeof(int));
+	  file_fds = (int *)realloc(file_fds, file_size * sizeof(int));
+	  for (i = loc; i < file_size; i++) 
+	    {
+	      file_fds[i] = -1;
+	      open_files[i] = NULL;
+	      file_files[i] = NULL;
+	      file_funcs[i] = NULL;
+	    }
+	  file_fls = (FILE **)realloc(file_fls, file_size * sizeof(FILE *));
+	}
+      open_files[loc] = copy_string(pathname);
+      file_funcs[loc] = copy_string(func);
+      file_files[loc] = copy_string(file);
+      file_lines[loc] = line;
+      file_fds[loc] = fd;
+      file_fls[loc] = fl;
+    }
+}
+
+static void io_subtract(int fd, FILE *fl, const char *func, const char *file, int line)
+{
+  int i;
+  for (i = 0; i < file_size; i++)
+    if (((fd >= 0) && (file_fds[i] == fd)) ||
+	((fl) && (file_fls[i] == fl)))
+      {
+	if (((file_fls[i]) && (fd >= 0)) ||
+	    ((fl) && (file_fds[i] >= 0)))
+	  fprintf(stderr,"%s: %s[%d] (%s) %d %p?\n", file_files[i], file_funcs[i], file_lines[i], open_files[i], file_fds[i], file_fls[i]);
+	FREE(file_files[i]); file_files[i] = NULL;
+	FREE(file_funcs[i]); file_funcs[i] = NULL;
+	FREE(open_files[i]); open_files[i] = NULL;
+	file_fds[i] = -1;
+	file_fls[i] = NULL;
+	return;
+      }
+  fprintf(stderr, "%s: %s[%d] can't find %d %p?\n", file, func, line, fd, fl);
+}
+
+int io_open(const char *pathname, int flags, mode_t mode, const char *func, const char *file, int line)
+{
+  int fd;
+  fd = open(pathname, flags, mode);
+  if (fd != -1) io_add(pathname, func, file, line, fd, NULL);
+  return(fd);
+}
+
+int io_creat(const char *pathname, mode_t mode, const char *func, const char *file, int line)
+{
+  int fd;
+  fd = creat(pathname, mode);
+  if (fd != -1) io_add(pathname, func, file, line, fd, NULL);
+  return(fd);
+}
+
+int io_close(int fd, const char *func, const char *file, int line)
+{
+  io_subtract(fd, NULL, func, file, line);
+  return(close(fd));
+}
+
+FILE *io_fopen(const char *path, const char *mode, const char *func, const char *file, int line)
+{
+  FILE *fp;
+  fp = fopen(path, mode);
+  if (fp) io_add(path, func, file, line, -1, fp);
+  return(fp);
+}
+
+int io_fclose(FILE *stream, const char *func, const char *file, int line)
+{
+  io_subtract(-1, stream, func, file, line);
+  return(fclose(stream));
+}
+
+int file_belongs_to_region(const char *file);
+
 void mem_report(void)
 {
   int loc, i, j, sum, ptr = 0, have_stacks = 0;
@@ -621,6 +741,16 @@ void mem_report(void)
   fprintf(Fp, "\n\n");
   save_listener_text(Fp);
   /* mus_sound_report_cache(Fp); */
+
+  for (i = 0; i < file_size; i++)
+    if (open_files[i])
+      {
+	int reg;
+	reg = file_belongs_to_region(open_files[i]);
+	if (reg != INVALID_REGION)
+	  fprintf(Fp, "region %d: %s: %s[%d] (%s) %d %p?\n", reg, file_files[i], file_funcs[i], file_lines[i], open_files[i], file_fds[i], file_fls[i]);
+	else fprintf(Fp, "%s: %s[%d] (%s) %d %p?\n", file_files[i], file_funcs[i], file_lines[i], open_files[i], file_fds[i], file_fls[i]);
+      }
   fclose(Fp);
 }
 
@@ -637,4 +767,3 @@ void start_timing(void) {start = clock();}
 void stop_timing(void) {fprintf(stderr, "time: %d ",(int)((clock() - start) * 1000.0 / CLOCKS_PER_SEC));}
 
 #endif
-

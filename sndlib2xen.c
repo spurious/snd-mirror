@@ -1105,9 +1105,9 @@ header data table to the file given or stdout if none"
     {
       FILE *fd;
       char *name = NULL;
-      fd = fopen(name = mus_expand_filename(XEN_TO_C_STRING(file)), "w");
+      fd = FOPEN(name = mus_expand_filename(XEN_TO_C_STRING(file)), "w");
       mus_sound_report_cache(fd);
-      fclose(fd);
+      FCLOSE(fd);
       if (name) FREE(name);
       return(file);
     }
@@ -1321,6 +1321,7 @@ static XEN sound_data_dup(XEN obj)
 #endif
 
 #if HAVE_OSS
+#define S_mus_audio_reinitialize "mus-audio-reinitialize"
 static XEN g_mus_audio_reinitialize(void)
 {
   #define H_mus_audio_reinitialize "(" S_mus_audio_reinitialize ") force audio device re-initialization"

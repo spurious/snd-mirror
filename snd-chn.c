@@ -1720,7 +1720,7 @@ static int display_transform_peaks(chan_info *ucp, char *filename)
   si = sync_to_chan(ucp);
   if ((filename) && (snd_strlen(filename) > 0))
     {
-      fd = fopen(mcf = mus_expand_filename(filename), "w");
+      fd = FOPEN(mcf = mus_expand_filename(filename), "w");
       if (mcf) FREE(mcf);
       if (fd == NULL) 
 	{
@@ -1732,7 +1732,7 @@ static int display_transform_peaks(chan_info *ucp, char *filename)
   if (tmp_file == 1)
     {
       filename = snd_tempnam(ss);
-      fd = fopen(filename, "w");
+      fd = FOPEN(filename, "w");
     }
   if (fd) 
     {
@@ -1794,11 +1794,11 @@ static int display_transform_peaks(chan_info *ucp, char *filename)
 		}
 	    }
 	}
-      if (fclose(fd) != 0)
+      if (FCLOSE(fd) != 0)
 	report_in_minibuffer_and_save(sp, "can't close %s: %s", filename, strerror(errno));
       if (tmp_file)
 	{
-	  fd = fopen(filename, "r");
+	  fd = FOPEN(filename, "r");
 	  fseek(fd, 0, SEEK_END);
 	  chars = ftell(fd);
 	  rewind(fd);

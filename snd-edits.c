@@ -2879,9 +2879,9 @@ static XEN g_display_edits(XEN snd, XEN chn)
   cp = get_cp(snd, chn, S_display_edits);
   ss = get_global_state();
   name = snd_tempnam(ss);
-  tmp = fopen(name, "w");
+  tmp = FOPEN(name, "w");
   if (tmp) display_edits(cp, tmp);
-  if ((!tmp) || (fclose(tmp) != 0))
+  if ((!tmp) || (FCLOSE(tmp) != 0))
     {
       XEN_ERROR(CANNOT_SAVE,
 		XEN_LIST_3(C_TO_XEN_STRING(S_display_edits),
@@ -3279,7 +3279,7 @@ static XEN g_save_edit_history(XEN filename, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ARG_1, S_save_edit_history, "a string");
   ASSERT_CHANNEL(S_save_edit_history, snd, chn, 2);
   mcf = mus_expand_filename(XEN_TO_C_STRING(filename));
-  fd = fopen(mcf, "w");
+  fd = FOPEN(mcf, "w");
   if (mcf) FREE(mcf);
   if (fd)
     {
@@ -3307,7 +3307,7 @@ static XEN g_save_edit_history(XEN filename, XEN snd, XEN chn)
 	    }
 	}
     }
-  if ((!fd) || (fclose(fd) != 0))
+  if ((!fd) || (FCLOSE(fd) != 0))
     XEN_ERROR(CANNOT_SAVE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_save_edit_history),
 			 filename,

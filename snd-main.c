@@ -377,8 +377,8 @@ static FILE *open_restart_file(char *name, int append)
       str = buf;
     }
   if (append)
-    fd = fopen(str, "a");
-  else fd = fopen(str, "w");
+    fd = FOPEN(str, "a");
+  else fd = FOPEN(str, "w");
   FREE(buf);
   return(fd);
 }
@@ -393,7 +393,7 @@ static char *save_options_or_error(snd_state *ss)
   FILE *fd;
   fd = open_snd_init_file(ss);
   if (fd) save_snd_state_options(ss, fd);
-  if ((!fd) || (fclose(fd) != 0))
+  if ((!fd) || (FCLOSE(fd) != 0))
     return(mus_format("save-options in %s: %s",
 		      ss->init_file,
 		      strerror(errno)));
@@ -757,12 +757,12 @@ static XEN g_save_options(XEN filename)
   FILE *fd;
   XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ONLY_ARG, S_save_options, "a string");
   name = mus_expand_filename(XEN_TO_C_STRING(filename));
-  fd = fopen(name, "w");
+  fd = FOPEN(name, "w");
   if (name) FREE(name);
   if (fd) 
     save_snd_state_options(get_global_state(), fd);
   if ((!fd) || 
-      (fclose(fd) != 0))
+      (FCLOSE(fd) != 0))
     XEN_ERROR(CANNOT_SAVE, 
 	      XEN_LIST_3(C_TO_XEN_STRING(S_save_options),
 			 filename,

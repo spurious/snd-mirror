@@ -406,9 +406,9 @@ static XEN g_save_listener(XEN filename)
   #define H_save_listener "(" S_save_listener " filename) saves the current listener text in filename"
   FILE *fp = NULL;
   XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ONLY_ARG, S_save_listener, "a string");
-  fp = fopen(XEN_TO_C_STRING(filename), "w");
+  fp = FOPEN(XEN_TO_C_STRING(filename), "w");
   if (fp) save_listener_text(fp);
-  if ((!fp) || (fclose(fp) != 0))
+  if ((!fp) || (FCLOSE(fp) != 0))
     XEN_ERROR(CANNOT_SAVE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_save_listener),
 			 filename,

@@ -56,7 +56,7 @@ static XEN g_make_snd_color(XEN r, XEN g, XEN b)
   return(XEN_WRAP_PIXEL(ccolor));
 }
 
-void recolor_everything(GUI_WIDGET w, GUI_POINTER ptr)
+void recolor_everything(GUI_WIDGET w, void *ptr)
 {
   if (GTK_IS_WIDGET(w)) 
     set_background_and_redraw(w, (GdkColor *)ptr);
@@ -113,7 +113,7 @@ void color_chan_components(COLOR_TYPE color, int which_component)
     }
 }
 
-void recolor_button(GUI_WIDGET w, GUI_POINTER ptr)
+void recolor_button(GUI_WIDGET w, void *ptr)
 {
   if ((GTK_IS_WIDGET(w)) && (GTK_IS_BUTTON(w)))
     set_pushed_button_colors(w, get_global_state());

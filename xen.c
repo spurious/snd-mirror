@@ -12,6 +12,11 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#if MACOS
+  #define off_t long
+#else
+  #include <sys/types.h>
+#endif
 #include "xen.h"
 
 

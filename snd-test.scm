@@ -58,7 +58,7 @@
     ((IF <form1> <form2> <form3>) (if <form1> <form2> <form3>))))
 
 (system "cp /home/bil/.snd /home/bil/dot-snd")
-(define tests 1)
+(define tests 20)
 (define snd-test -1)
 (if (provided? 'snd-debug) (disable-play))
 (define keep-going #f)
@@ -1589,7 +1589,8 @@
 (if (or full-test (= snd-test 4) (and keep-going (<= snd-test 4)))
     (begin
       (if (procedure? test-hook) (test-hook 4))
-      (do ((clmtest 0 (1+ clmtest))) ((= clmtest tests)) (if (> tests 1) (snd-display ";test ~D " clmtest))
+      (do ((clmtest 0 (1+ clmtest))) ((= clmtest tests)) 
+	(if (> tests 1) (begin (snd-display ";test ~D " clmtest) (mus-sound-prune)))
     (let ((chns (mus-sound-chans "oboe.snd"))
 	  (dl (mus-sound-data-location "oboe.snd"))
 	  (fr (mus-sound-frames "oboe.snd"))
@@ -1858,6 +1859,7 @@
 	      (snd-display ";saved-as int -> ~A?" (mus-data-format-name (mus-sound-data-format "test.snd"))))
 	  (IF (fneq (sample 1000 ab) samp) (snd-display ";nist[1000] = ~A?" (sample 1000 ab)))
 	  (close-sound ab))
+	(reset-hook! output-comment-hook)
 	(add-hook! output-comment-hook
 		   (lambda (str) 
 		     " [written by me]"))
@@ -3487,6 +3489,8 @@
 	(IF (ffneq (amp-control ind 1) .5) (snd-display ";amp-control 1 after local set (.5): ~A?" (amp-control ind 1)))
 	(let ((before-ran #f)
 	      (after-ran #f))
+	  (reset-hook! after-apply-hook)
+	  (reset-hook! before-apply-hook)
 	  (add-hook! after-apply-hook (lambda (snd) (set! after-ran snd)))
 	  (add-hook! before-apply-hook (lambda (snd) (set! before-ran snd)))
 	  (apply-controls ind)
@@ -4684,7 +4688,8 @@
 (if (or full-test (= snd-test 6) (and keep-going (<= snd-test 6)))
     (begin 
       (if (procedure? test-hook) (test-hook 6))
-    (do ((clmtest 0 (1+ clmtest))) ((= clmtest tests)) (IF (> tests 1) (snd-display ";test ~D " clmtest))
+    (do ((clmtest 0 (1+ clmtest))) ((= clmtest tests)) 
+      (if (> tests 1) (snd-display ";test ~D " clmtest))
     (let ((v0 (make-vct 10))
 	  (v1 (make-vct 10))
 	  (vlst (make-vct 3)))
@@ -10475,7 +10480,7 @@
 
 	  (let ((choose-fd (lambda () (list-ref open-files (my-random open-ctr)))))
 
-	    (if (> tests 1) (snd-display ";main test ~D " test-ctr))
+	    (if (> tests 1) (begin (snd-display ";main test ~D " test-ctr) (mus-sound-prune)))
 
 	    (let* ((frame-list (map frames open-files))
 		   (curloc (min 1200 (1- (list-ref frame-list 0))))
@@ -12741,6 +12746,7 @@
 					       (if (> (length args) 2)
 						   (caddr args)
 						   (selected-sound)))))
+
 	  (funcs-equal? "src-sound"
 			(lambda args (apply src-sound (list 2.0 1.0 (if (> (length args) 2) (caddr args) #f))))
 			(lambda args (apply src-channel (cons 2.0 args))))
@@ -13300,7 +13306,9 @@
 		       (if (not (vequal vals (vct 0 .25 .5 .75 1.0 .8 .6 1 1 1)))
 			   (snd-display "; 5 vals: ~A" vals))))
 		   (undo 2)))
-	     (close-sound i1)
+	     (let ((file (file-name i1)))
+	       (close-sound i1)
+	       (if (file-exists? file) (delete-file file)))
 	     ))
 	 (list 10 10000))
 	
@@ -13549,7 +13557,9 @@
 		 (set! vals (channel->vct 0 10 i2 1))
 		 (if (not (vequal vals (vct 0.0 (/ 1.111 dur) (/ 2.222 dur) 1 1 1 (/ 6.66  dur) (/ 7.77  dur) (/ 8.88  dur) (/ 10.0 dur))))
 		     (snd-display "; 2 1 vals: ~A" vals))))
-	     (close-sound i1)
+	     (let ((file (file-name i1)))
+	       (close-sound i1)
+	       (if (file-exists? file) (delete-file file)))
 	     (close-sound i2)
 	     ))
 	 (list 10 10000))
@@ -23747,7 +23757,7 @@ EDITS: 5
 	       mix-anchor mix-chans mix-color mix-track mix-length mix-locked mix-name mix? mix-panel mix-position
 	       mix-region mix-sample-reader?  mix-selection mix-sound mix-home mix-speed mix-tag-height mix-tag-width
 	       mix-tag-y mix-vct mix-waveform-height new-sound next-mix-sample read-mix-sample read-track-sample next-sample next-track-sample
-	       transform-normalization equalize-panes open-raw-sound open-sound open-sound-file orientation-dialog
+	       transform-normalization equalize-panes open-raw-sound open-sound orientation-dialog
 	       peak-env-info peaks play play-and-wait play-mix play-region play-selection play-track player?
 	       position-color position->x position->y preload-directory preload-file previous-files-sort previous-sample
 	       print-length progress-report prompt-in-minibuffer protect-region pushed-button-color read-only
@@ -25052,15 +25062,16 @@ EDITS: 5
     (begin
       (snd-display (format #f "ls ~A/snd_* | wc~%" original-temp-dir))
       (system (format #f "ls ~A/snd_* | wc" original-temp-dir))
+      (system (format #f "sndinfo ~A/snd_*" original-temp-dir))
       (system (format #f "rm ~A/snd_*" original-temp-dir))))
 
 (if (file-exists? "/tmp")
     (begin ; -noinit possibly
       (snd-display (format #f "ls /tmp/snd_* | wc~%"))
       (system "ls /tmp/snd_* | wc")
+      (system "sndinfo /tmp/snd_*")
       (system "rm /tmp/snd_*")
-      (snd-display (format #f "ls /tmp/file*.snd | wc~%"))
-      (system "ls /tmp/file*.snd | wc")
+      (system "ls /tmp/file*.snd | wc") ; these are externally created (snd-tempnam in sndxtest etc) 
       (system "rm /tmp/file*.snd")))
 
 (close-output-port optimizer-log)

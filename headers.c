@@ -1337,6 +1337,7 @@ char *mus_header_aiff_aux_comment(const char *name, int *starts, int *ends)
 		}
 	    }
 	}
+      CLOSE(fd);
     }
   return(sc);
 }
@@ -1696,7 +1697,7 @@ char *mus_header_riff_aux_comment(const char *name, int *starts, int *ends)
       lseek(fd, i, SEEK_SET);
       auxcom = (char *)CALLOC(end - i + 2, sizeof(char));
       read(fd, auxcom, end - i + 1);
-      close(fd);
+      CLOSE(fd);
       i += 4;
       while (i < end)
 	{
@@ -4894,7 +4895,7 @@ int mus_header_read(const char *name)
       return(MUS_ERROR);
     }
   err = mus_header_read_with_fd_and_name(chan, name);
-  if (close(chan) != 0)
+  if (CLOSE(chan) != 0)
     {
       mus_error(MUS_CANT_CLOSE_FILE, "mus_header_read: can't close %s: %s", name, strerror(errno));
       return(MUS_ERROR);
@@ -4957,7 +4958,7 @@ int mus_header_write(const char *name, int type, int in_srate, int in_chans, off
       return(MUS_ERROR);
     }
   err = mus_header_write_with_fd_and_name(chan, type, in_srate, in_chans, loc, size_in_samples, format, comment, len, name);
-  if (close(chan) != 0)
+  if (CLOSE(chan) != 0)
     {
       mus_error(MUS_CANT_CLOSE_FILE, "mus_header_write: can't close %s: %s", name, strerror(errno));
       return(MUS_ERROR);
@@ -5020,7 +5021,7 @@ int mus_header_update(const char *name, int type, off_t size, int wsrate, int fo
 	  write(chan, hdrbuf, 4);
 	}
     }
-  if (close(chan) != 0)
+  if (CLOSE(chan) != 0)
     {
       mus_error(MUS_CANT_CLOSE_FILE, "mus_header_update can't close %s: %s", name, strerror(errno));
       return(MUS_ERROR);
@@ -5089,7 +5090,7 @@ int mus_header_change_chans(const char *filename, int new_chans)
 	      write(fd, hdrbuf, 2);
 	      break;
 	    }
-	  close(fd);
+	  CLOSE(fd);
 	}
     }
   return(err);
@@ -5140,7 +5141,7 @@ int mus_header_change_srate(const char *filename, int new_srate)
 	      write(fd, hdrbuf, 4);
 	      break;
 	    }
-	  close(fd);
+	  CLOSE(fd);
 	}
     }
   return(err);
@@ -5171,7 +5172,7 @@ int mus_header_change_type(const char *filename, int new_type, int new_format)
 		  ifd = mus_file_open_read(filename);
 		  lseek(ifd, comment_start, SEEK_SET);
 		  read(ifd, (unsigned char *)comment, len);
-		  close(ifd);
+		  CLOSE(ifd);
 		}
 	      data_size = data_size * mus_data_format_to_bytes_per_sample(data_format) / mus_data_format_to_bytes_per_sample(new_format);
 	      mus_header_write(new_file, new_type, srate, chans, loc, data_size, new_format, comment, len);
@@ -5183,8 +5184,8 @@ int mus_header_change_type(const char *filename, int new_type, int new_format)
 	  lseek(ofd, 0L, SEEK_END);
 	  buf = (char *)CALLOC(8192, sizeof(char));
 	  while ((nbytes = read(ifd, buf, 8192))) write(ofd, buf, nbytes);
-	  close(ifd);
-	  close(ofd);
+	  CLOSE(ifd);
+	  CLOSE(ofd);
 	  FREE(buf);
 	  if (comment) FREE(comment);
 	  rename(new_file, filename);
@@ -5274,7 +5275,7 @@ int mus_header_change_format(const char *filename, int new_format)
 	      write(fd, hdrbuf, 2);
 	      break;
 	    }
-	  close(fd);
+	  CLOSE(fd);
 	}
     }
   return(err);
@@ -5303,7 +5304,7 @@ int mus_header_change_location(const char *filename, off_t new_location)
 	      write(fd, hdrbuf, 4);
 	      break;
 	    }
-	  close(fd);
+	  CLOSE(fd);
 	}
     }
   return(err);
@@ -5322,7 +5323,7 @@ int mus_header_change_comment(const char *filename, char *new_comment)
 	  lseek(fd, 16L, SEEK_SET);
 	  if (new_comment) len = strlen(new_comment);
 	  write_ircam_comment(fd, new_comment, len);
-	  close(fd);
+	  CLOSE(fd);
 	  break;
 	case MUS_NEXT:
 	  fd = mus_file_reopen_write(filename);
@@ -5335,7 +5336,7 @@ int mus_header_change_comment(const char *filename, char *new_comment)
 		write_next_comment(fd, new_comment, strlen(new_comment), data_location); /* there's room to overwrite old comment */
 	      else need_ripple = 1;
 	    }
-	  close(fd);
+	  CLOSE(fd);
 	  break;
 	default:
 	  need_ripple = 1;
@@ -5359,8 +5360,8 @@ int mus_header_change_comment(const char *filename, char *new_comment)
 	  lseek(ofd, 0L, SEEK_END);
 	  buf = (char *)CALLOC(8192, sizeof(char));
 	  while ((nbytes = read(ifd, buf, 8192))) write(ofd, buf, nbytes);
-	  close(ifd);
-	  close(ofd);
+	  CLOSE(ifd);
+	  CLOSE(ofd);
 	  FREE(buf);
 	  rename(new_file, filename);
 	  FREE(new_file);
@@ -5879,6 +5880,7 @@ int mus_header_no_header(const char *filename)
       return(MUS_ERROR);
     }
   bytes = read(chan, hdrbuf, INITIAL_READ_SIZE);
+  CLOSE(chan);
   if (bytes > 4) 
     ok = ((match_four_chars((unsigned char *)hdrbuf, I_DSND)) || 
 	  (match_four_chars((unsigned char *)hdrbuf, I_DECN)) ||

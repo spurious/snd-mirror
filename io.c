@@ -556,101 +556,61 @@ int mus_file_set_chans (int tfd, int chans)
 
 int mus_file_open_read(const char *arg) 
 {
-#ifdef MACOS
-  return(open (arg, O_RDONLY));
-#else
   int fd;
-  #ifdef WINDOZE
-    fd = open (arg, O_RDONLY | O_BINARY);
-  #else
-    fd = open (arg, O_RDONLY, 0);
-  #endif
-  return(fd);
+#ifdef WINDOZE
+  fd = OPEN(arg, O_RDONLY | O_BINARY, 0);
+#else
+  fd = OPEN(arg, O_RDONLY, 0);
 #endif
+  return(fd);
 }
 
 int mus_file_probe(const char *arg) 
 {
   int fd;
-#ifdef MACOS
-  fd = (open (arg, O_RDONLY));
+#ifdef O_NONBLOCK
+  fd = OPEN(arg, O_RDONLY, O_NONBLOCK);
 #else
-  #ifdef WINDOZE
-    fd = open (arg, O_RDONLY | O_BINARY);
-  #else
-    #ifdef O_NONBLOCK
-      fd = open(arg, O_RDONLY, O_NONBLOCK);
-    #else
-      fd = open(arg, O_RDONLY, 0);
-    #endif
-  #endif
+  fd = OPEN(arg, O_RDONLY, 0);
 #endif
   if (fd == -1) return(0);
-  if (close(fd) != 0) return(0);
+  if (CLOSE(fd) != 0) return(0);
   return(1);
 }
 
 int mus_file_open_write(const char *arg)
 {
   int fd;
-#ifdef MACOS
-  if ((fd = open(arg, O_RDWR)) == -1)
-  #ifdef MPW_C
-    fd = creat(arg);
-  #else
-    fd = creat(arg, 0);
-  #endif
-  else
-    lseek(fd, 0L, SEEK_END);
+#ifdef WINDOZE
+  if ((fd = OPEN(arg, O_RDWR | O_BINARY, 0)) == -1)
 #else
-  #ifdef WINDOZE
-    if ((fd = open(arg, O_RDWR | O_BINARY)) == -1)
-  #else
-    if ((fd = open(arg, O_RDWR, 0)) == -1)
-  #endif
-      {
-        fd = creat(arg, 0666);  /* equivalent to the new open(arg, O_RDWR | O_CREAT | O_TRUNC, 0666) */
-      }
-    else
-      lseek(fd, 0L, SEEK_END);
+  if ((fd = OPEN(arg, O_RDWR, 0)) == -1)
 #endif
+    fd = CREAT(arg, 0666);  /* equivalent to the new open(arg, O_RDWR | O_CREAT | O_TRUNC, 0666) */
+  else lseek(fd, 0L, SEEK_END);
   return(fd);
 }
 
 int mus_file_create(const char *arg)
 {
-#ifdef MACOS
-  #ifdef MPW_C
-    return(creat(arg));
-  #else
-    return(creat(arg, 0));
-  #endif
-#else
-  int fd;
-  fd = creat(arg, 0666);
-  return(fd);
-#endif
+  return(CREAT(arg, 0666));
 }
 
 int mus_file_reopen_write(const char *arg)
 {
-#ifdef MACOS
-  return(open(arg, O_RDWR));
-#else
   int fd;
-  #ifdef WINDOZE
-    fd = open(arg, O_RDWR | O_BINARY);
-  #else
-    fd = open(arg, O_RDWR, 0);
-  #endif
-  return(fd);
+#ifdef WINDOZE
+  fd = OPEN(arg, O_RDWR | O_BINARY, 0);
+#else
+  fd = OPEN(arg, O_RDWR, 0);
 #endif
+  return(fd);
 }
 
 int mus_file_close(int fd)
 {
   if (mus_file_close_descriptors(fd) == MUS_NO_ERROR)
-    return(close(fd));
+    return(CLOSE(fd));
   return(MUS_ERROR);
 }
 
@@ -1520,9 +1480,9 @@ char *mus_expand_filename(char *utok)
   else strcpy(file_name_buf, tok);
 #endif
 #if DEBUG_MEMORY
- return(copy_string(file_name_buf));
+  return(copy_string(file_name_buf));
 #else
- return(strdup(file_name_buf));
+  return(strdup(file_name_buf));
 #endif
 }
 

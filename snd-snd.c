@@ -3146,7 +3146,11 @@ static env_info *get_peak_env_info(char *fullname, int *error)
 	    }
 	}
     }
-  if ((*error) != PEAK_ENV_NO_ERROR) return(NULL);
+  if ((*error) != PEAK_ENV_NO_ERROR) 
+    {
+      snd_close(fd, fullname);
+      return(NULL);
+    }
   ep = (env_info *)CALLOC(1, sizeof(env_info));
   ep->completed = hdr & 0xff;
   ep->amp_env_size = ibuf[1];

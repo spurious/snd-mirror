@@ -4526,7 +4526,7 @@ static int alsa_audio_open(int ur_dev, int srate, int chans, int format, int siz
 	handles[alsa_stream] = NULL;
 	alsa_dump_configuration(alsa_name, hw_params, sw_params);
 	mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, 
-		  "%s: %s: cannot set buffer size to %d periods of %d frames;
+		  "%s: %s: cannot set buffer size to %d periods of %d frames; \
 total requested buffer size is %d frames, minimum allowed is %d, maximum is %d", 
 		  __FUNCTION__, alsa_name, periods, frames, periods*frames, min, max);
 	return(MUS_ERROR);
