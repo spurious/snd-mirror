@@ -404,17 +404,10 @@ char *edit_to_string(chan_info *cp, int edit)
 
 static void display_edits(chan_info *cp, FILE *outp)
 {
-  int eds, i;
-  ed_list *ed;
-  eds = cp->edit_ctr;
-  fprintf(outp, "\nEDITS: %d\n", eds);
-  for (i = 0; i <= eds; i++)
-    {
-      ed = cp->edits[i];
-      if (!ed) 
-	fprintf(outp, "\nedit_ctr is %d, but [%d] is nil!", eds, i);
-      else display_ed_list(cp, outp, i, ed);
-    }
+  int i;
+  fprintf(outp, "\nEDITS: %d\n", cp->edit_ctr);
+  for (i = 0; i <= cp->edit_ctr; i++)
+    display_ed_list(cp, outp, i, cp->edits[i]);
 }
 
 static XEN save_state_hook = XEN_FALSE;
@@ -984,14 +977,6 @@ static ed_list *insert_samples_1 (off_t samp, off_t num, ed_list *current_state,
       else
 	{
 	  off_t new_beg_1;
-#if DEBUGGING
-	  if (k == 0) 
-	    {
-	      fprintf(stderr,"bad insert %p:\n",current_state);
-	      display_ed_list(cp, stderr, cp->edit_ctr-1, current_state);
-	      abort();
-	    }
-#endif
 	  cb_old_0 = ed[k - 1];
 	  new_beg_1 = cb_old_0->beg + samp - cb_old_0->out;
 	  new_state = append_ed_list(cp, len + 2);

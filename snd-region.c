@@ -1106,37 +1106,31 @@ void save_region_backpointer(snd_info *sp)
   int i, err;
   Float val;
   snd_state *ss;
-  if (sp->edited_region)
+  r = (region *)(sp->edited_region);
+  ss = sp->state;
+  /* update r's data in file, deleting old, redisplay if browser active etc */
+  if (r == regions[0]) deactivate_selection();
+  free_region(r, CLEAR_REGION_DATA);
+  r->use_temp_file = REGION_FILE;
+  r->maxamp = 0.0;
+  r->frames = CURRENT_SAMPLES(sp->chans[0]);
+  for (i = 0; i < sp->nchans; i++)
     {
-      r = (region *)(sp->edited_region);
-      ss = sp->state;
-      if (r)
-	{
-	  /* update r's data in file, deleting old, redisplay if browser active etc */
-	  if (r == regions[0]) deactivate_selection();
-	  free_region(r, CLEAR_REGION_DATA);
-	  r->use_temp_file = REGION_FILE;
-	  r->maxamp = 0.0;
-	  r->frames = CURRENT_SAMPLES(sp->chans[0]);
-	  for (i = 0; i < sp->nchans; i++)
-	    {
-	      val = get_maxamp(sp, sp->chans[i], AT_CURRENT_EDIT_POSITION);
-	      if (val > r->maxamp) r->maxamp = val;
-	    }
-	  /* make new region temp file */
-	  r->filename = snd_tempnam(ss);
-	  err = copy_file(r->editor_name, r->filename);
-	  if (err != MUS_NO_ERROR)
-	    snd_error("can't make region temp file (%s: %s)", 
-		      r->filename, 
-		      strerror(errno));
-	  else
-	    {
-	      make_region_readable(r);
-	      if (region_browser_is_active()) 
-		update_region_browser(ss, 1);
-	    }
-	}
+      val = get_maxamp(sp, sp->chans[i], AT_CURRENT_EDIT_POSITION);
+      if (val > r->maxamp) r->maxamp = val;
+    }
+  /* make new region temp file */
+  r->filename = snd_tempnam(ss);
+  err = copy_file(r->editor_name, r->filename);
+  if (err != MUS_NO_ERROR)
+    snd_error("can't make region temp file (%s: %s)", 
+	      r->filename, 
+	      strerror(errno));
+  else
+    {
+      make_region_readable(r);
+      if (region_browser_is_active()) 
+	update_region_browser(ss, 1);
     }
 }
 

@@ -2725,6 +2725,8 @@
 	(play-and-wait 12345 index)
 	(set! (speed-control-style) speed-control-as-semitone)
 	(set! (speed-control index) 0.5)
+	(set! (speed-control-style) speed-control-as-ratio)
+	(set! (speed-control index) 0.25)
 	(set! (use-sinc-interp) old-sinc)
 	(set! (speed-control index) old-speed)
 	(set! (speed-control-style) old-style)
@@ -8887,6 +8889,9 @@
 
 (load "marks.scm")
 
+(if (and (provided? 'snd-motif)
+	 (provided? 'xm))
+    (load "event.scm"))
 
 ;;; ---------------- test 10: marks ----------------
 (if (or full-test (= snd-test 10) (and keep-going (<= snd-test 10)))
@@ -9021,8 +9026,29 @@
 		(snd-display ";transform-samples-size of sonogram: ~A" size)))
 	  (graph->ps "aaa.eps")
 	  (let ((ax (axis-info ind1 0 transform-graph)))
-	    (if (not ax) (snd-display ";axis-info transform-graph?")))
-
+	    (if (not ax) (snd-display ";axis-info transform-graph?"))
+	    (if (and (provided? 'xm) (provided? 'snd-debug))
+		(let ((cwid (car (channel-widgets ind1 0))))
+		  (focus-widget cwid)
+		  (click-event cwid 0 0 
+			       (inexact->exact (* .5 (+ (list-ref ax 10) (list-ref ax 12))))
+			       (inexact->exact (* .5 (+ (list-ref ax 11) (list-ref ax 13)))))
+		  (force-event))))
+	  (let ((old-colormap (colormap)))
+	    (set! (colormap) -1) ; black-and-white
+	    (update-transform-graph)
+	    (set! (transform-graph-type ind1 0) graph-as-spectrogram)
+	    (update-transform-graph)
+	    (let ((ax (axis-info ind1 0 transform-graph)))
+	      (if (not ax) (snd-display ";axis-info transform-graph?"))
+	      (if (and (provided? 'xm) (provided? 'snd-debug))
+		  (let ((cwid (car (channel-widgets ind1 0))))
+		    (focus-widget cwid)
+		    (click-event cwid 0 0 
+				 (inexact->exact (* .5 (+ (list-ref ax 10) (list-ref ax 12))))
+				 (inexact->exact (* .5 (+ (list-ref ax 11) (list-ref ax 13)))))
+		    (force-event))))
+	    (set! (colormap) old-colormap))
 	  (revert-sound ind0)
 	  (revert-sound ind1)
 	  (insert-samples 0 10 v0 ind0 0)
@@ -12553,6 +12579,9 @@
 	    (time (env-sound '(0 0 1 1 2 0)))
 	    (time (filter-sound '(0 1 .2 0 .5 1 1 0) 20))      ; FIR direct form
 	    (time (filter-sound '(0 0 .1 0 .11 1 .12 0 1 0) 2048)) ; convolution
+	    (revert-sound ind)
+	    (let ((reg (make-region 0 123000 ind 0))) ; force copy branch to execute
+	      (region-samples->vct 0 10 reg 0 (make-vct 10)))
 	    (close-sound ind)))
       (if (file-exists? "1a.snd")
 	  (let ((ind1 (open-sound "1a.snd")))
@@ -14484,6 +14513,9 @@ EDITS: 6
 	  (ptree-channel (lambda (y) y) #f #f ind 0 0 #t)
 	  (amp-envs-equal? ind 0 (edit-position) (- (edit-position) 1) .001)
 	  (close-sound ind))
+	(let ((ind (open-sound "storm.snd")))
+	  (ptree-channel (lambda (y) (* y .5)) 1000 123000 ind 0 0 #t) ; get the amp-env code too
+	  (close-sound ind))
 
 	;; recursion tests
         (let ((old-opt (optimization))
@@ -14715,6 +14747,12 @@ EDITS: 6
       (delete-sample 12)
       (set! (x-bounds) (list .2 .4))
       (let ((old-bounds (x-bounds)))
+	(set! (show-axes) show-all-axes)
+	(set! (transform-graph-type) graph-as-sonogram)
+	;(set! (time-graph-type) graph-as-wavogram)
+	(set! (speed-control-style) speed-control-as-ratio)
+	(set! (channel-style) channels-superimposed)
+	(set! (enved-target) enved-srate)
 	(save-state (save-state-file))
 	(save-options "test.temp")
 	(close-sound nind)
@@ -18846,8 +18884,8 @@ EDITS: 5
 	 (provided? 'xm))
     (begin
       (load "popup.scm")
-      (load "snd-motif.scm")
-      (load "event.scm")))
+      (load "snd-motif.scm")))
+
 (load "peak-env.scm")
 (if (hook-empty? initial-graph-hook) (snd-display "restore peaks failed?"))
 
@@ -22619,9 +22657,14 @@ EDITS: 5
 	      (IF (not (XtIsWidget wid)) (snd-display ";XtIsWidget"))
 	      (XtRealizeWidget wid)
 	      (IF (not (XtIsRealized wid)) (snd-display ";XtRealizeWidget?"))
+	      (XtAddGrab shell #f #f)
+	      (XtRemoveGrab shell)
+	      (XtMakeResizeRequest wid 200 200)
+	      (XtMapWidget wid)
+	      (XtUnmapWidget wid)
 	      (XtUnrealizeWidget wid)
 	      (XtDestroyWidget wid1))
-	    (XtAppWarningMsg (car (main-widgets)) "conversionError" "string" "hi" "oops" '() 0)
+	    (XtAppWarningMsg (car (main-widgets)) "conversionError" "string" "hi" "oops" '("hi") 1)
 	    (XtWarningMsg "conversionError" "string" "hi" "oops: %s" (list "hi") 1)
 	    (XtFree 0) (XtCalloc 0 0) (XtMalloc 0) (XtRealloc 0 0)
 	    (XtSetLanguageProc 
@@ -23167,6 +23210,8 @@ EDITS: 5
 		(XPutImage dpy (list 'Window (cadr rotpix)) gc before 0 0 0 0 10 10)
 		(XAddPixel before 1)
 		(IF (> (.bits_per_pixel before) 123) (snd-display ";bits_per_pixel: ~A" (.bits_per_pixel before)))
+		(XmInstallImage before "before_image")
+		(XmUninstallImage before)
 		(let ((i1 (XGetImage dpy (list 'Window (cadr pix)) 0 0 10 10 AllPlanes XYPixmap))
 		      (attr (XpmAttributes))
 		      (vals (XtGetValues (cadr (main-widgets)) (list XmNcolormap 0 XmNdepth 0)))
@@ -23842,7 +23887,10 @@ EDITS: 5
 			      (let ((data (XmClipboardInquireFormat dpy win 1 10)))
 				(let ((clip (XmClipboardRetrieve dpy win "SND_DATA" 10)))
 				  (IF (not (string=? (cadr clip) "copy this")) (snd-display ";XmClipboardRetrieve: ~A" clip))
-				  (XmClipboardWithdrawFormat dpy win item-id))))))))))
+				  (XmClipboardWithdrawFormat dpy win item-id)))))))))
+	      (let ((selbox (XmCreateSelectionBox shell "selbox" '() 0)))
+		(XmSelectionBoxGetChild selbox XmDIALOG_APPLY_BUTTON)))
+
 
 	    (let* ((frm (add-main-pane "hi" xmFormWidgetClass (list XmNpaneMinimum 120)))
 		   (current-time (list 'Time CurrentTime))
@@ -24088,6 +24136,12 @@ EDITS: 5
 				    XmNselectedObjects 0 XmNconvertCallback 0 XmNdestinationCallback 0 XmNselectionCallback 0))))
 		  (IF (not (= (list-ref vals 1) 0)) (snd-display ";XmNlargeCellHeight: ~A" (list-ref vals 1)))
 		  (IF (not (Pixmap? (list-ref vals 3))) (snd-display ";XmNcollapsedStatePixmap: ~A" (list-ref vals 3)))
+		  (let ((children '()))
+		    (for-each-child container
+				    (lambda (w)
+				      (if (XmIsIconGadget w)
+					  (set! children (cons w children)))))
+		    (XmContainerReorder container children (length children)))
 		  (let ((func (lambda (w) 0)))
 		    (XtSetValues container (list XmNinsertPosition func))
 		    (let ((func1 (cadr (XtGetValues container (list XmNinsertPosition 0)))))
@@ -24309,6 +24363,9 @@ EDITS: 5
 		(snd-display ";xevent type trouble! ~A -> ~A" (XEvent) (XEvent? (XEvent))))
 	    (IF (not (XGCValues? (XGCValues)))
 		(snd-display ";xgcvalues type trouble! ~A -> ~A" (XGCValues) (XGCValues? (XGCValues))))
+
+	    (let ((val (XpQueryExtension (XtDisplay (cadr (main-widgets))))))
+	      (if (car val) (snd-display ";got Xp?? ~A" val)))
 
 	    (let* ((xm-procs 
 		    ;; these can't be called in this context:
@@ -24652,7 +24709,7 @@ EDITS: 5
 			   :channels -1 0 #f #t '() (make-vector 0) 12345678901234567890))
 		    ))
 
-	      (let ((struct-accessors (list  .pixel .red .green .blue .flags .pad .x .y .width .height .angle1 .angle2
+	      (let ((struct-accessors (list  .pixel .red .green .blue .flags .pad .x .y .width .height .angle1 .angle2 .ptr
 				.x1 .y1 .x2 .y2 .dashes .dash_offset .clip_mask .clip_y_origin .clip_x_origin .graphics_exposures
 				.subwindow_mode .font .ts_y_origin .ts_x_origin .stipple .tile .arc_mode .fill_rule .fill_style
 				.join_style .cap_style .line_style .line_width .background .foreground .plane_mask .function .delta
@@ -24681,7 +24738,7 @@ EDITS: 5
 				.send_event .serial .type .value .doit .colormap .menuToPost .postIt .valuemask .ncolors .cpp
 				.numsymbols .colorsymbols .npixels .y_hotspot .x_hotspot))
 
-		    (struct-accessor-names (list  '.pixel '.red '.green '.blue '.flags '.pad '.x '.y '.width '.height '.angle1 '.angle2
+		    (struct-accessor-names (list  '.pixel '.red '.green '.blue '.flags '.pad '.x '.y '.width '.height '.angle1 '.angle2 '.ptr
 				'.x1 '.y1 '.x2 '.y2 '.dashes '.dash_offset '.clip_mask '.clip_y_origin '.clip_x_origin '.graphics_exposures
 				'.subwindow_mode '.font '.ts_y_origin '.ts_x_origin '.stipple '.tile '.arc_mode '.fill_rule '.fill_style
 				'.join_style '.cap_style '.line_style '.line_width '.background '.foreground '.plane_mask '.function '.delta
@@ -25896,6 +25953,8 @@ EDITS: 5
 	  (check-error-tag 'no-such-sample (lambda () (set! (selection-position ind 0) -999)))
 	  (check-error-tag 'wrong-type-arg (lambda () (set! (selection-frames ind 0) -999)))
 	  (check-error-tag 'wrong-type-arg (lambda () (set! (selection-frames ind 0) 0)))
+	  (check-error-tag 'no-such-edit (lambda () (edit-fragment -1)))
+	  (check-error-tag 'no-such-edit (lambda () (edit-fragment 101 ind 0)))
 	  (close-sound ind))
 	(check-error-tag 'bad-arity (lambda () (add-transform "hiho" "time" 0 1 (lambda () 1.0))))
 	(check-error-tag 'cannot-save (lambda () (save-options "/bad/baddy")))

@@ -92,12 +92,8 @@ static void chans_max_transform_peaks(chan_info *cp, void *ptr)
   cp->max_transform_peaks = (*((int *)ptr)); 
 }
 
-static void set_max_transform_peaks(snd_state *ss, int uval) 
+static void set_max_transform_peaks(snd_state *ss, int val) 
 {
-  int val; 
-  if (uval < 0) 
-    val = 0; 
-  else val = uval; 
   in_set_max_transform_peaks(ss, val); 
   for_each_chan_1(ss, chans_max_transform_peaks, (void *)(&val));
 }
@@ -108,12 +104,8 @@ static void chans_zero_pad(chan_info *cp, void *ptr)
   calculate_fft(cp);
 }
 
-static void set_zero_pad(snd_state *ss, int uval) 
+static void set_zero_pad(snd_state *ss, int val) 
 {
-  int val; 
-  if (uval < 0) 
-    val = 0; 
-  else val = uval; 
   in_set_zero_pad(ss, val); 
   for_each_chan_1(ss, chans_zero_pad, (void *)(&val));
 }

@@ -183,12 +183,9 @@ static file_info *translate_file(char *filename, snd_state *ss, int type)
       if (err == MUS_NO_ERROR)
 	{
 	  hdr = make_file_info_1(newname);
-	  if (hdr) 
-	    {
-	      if (hdr->loops == NULL) hdr->loops = loops;
-	      loops = NULL;
-	      ss->pending_change = copy_string(newname);
-	    }
+	  if (hdr->loops == NULL) hdr->loops = loops;
+	  loops = NULL;
+	  ss->pending_change = copy_string(newname);
 	}
     }
   else snd_remove(newname, TRUE);
@@ -787,13 +784,6 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
   off_t len;
   /* we've already checked that filename exists */
   hdr = make_file_info_1(filename);
-  if (hdr == NULL)
-    {
-      XEN_ERROR(NO_SUCH_FILE,
-		XEN_LIST_2(C_TO_XEN_STRING(filename),
-			   C_TO_XEN_STRING(ss->catch_message)));
-      return(NULL);
-    }
   chans = mus_sound_chans(filename);
   if (chans == 0)
     {

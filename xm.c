@@ -10352,6 +10352,7 @@ static XEN gxm_XDrawText(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN a
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XDrawText", "int");
   XEN_ASSERT_TYPE(XEN_XTextItem_P(arg6), arg6, 6, "XDrawText", "XTextItem*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg7), arg7, 7, "XDrawText", "int");
+  /* TODO: XDrawText arg6 is an array of XTextItems */
   return(C_TO_XEN_INT(XDrawText(XEN_TO_C_Display(arg1), 
 				XEN_TO_C_Window(arg2), 
 				XEN_TO_C_GC(arg3), 
@@ -13849,7 +13850,7 @@ static XEN gxm_XtAppWarningMsg(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5,
 {
   #define H_XtAppWarningMsg "void XtAppWarningMsg(app_context, name, type, class, default, params, num_params) calls the high-level error \
 handler and passes the specified information."
-  /* DIFF: XtAppWarningMsg takes final int not int*, arg5 is list of strings
+  /* DIFF: XtAppWarningMsg takes final int not int*, arg6 is list of strings
    */
   int size;
   Cardinal csize;
@@ -13863,7 +13864,7 @@ handler and passes the specified information."
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg7), arg7, 7, "XtAppWarningMsg", "int");
   size = XEN_TO_C_INT(arg7);
   if (size <= 0) return(XEN_FALSE);
-  pars = XEN_TO_C_Strings(arg5, size);
+  pars = XEN_TO_C_Strings(arg6, size);
   csize = (Cardinal)size;
   XtAppWarningMsg(XEN_TO_C_XtAppContext(arg1), XEN_TO_C_STRING(arg2), 
 		  XEN_TO_C_STRING(arg3), XEN_TO_C_STRING(arg4), XEN_TO_C_STRING(arg5), 
@@ -13901,7 +13902,7 @@ static XEN gxm_XtAppErrorMsg(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, X
 {
   #define H_XtAppErrorMsg "void XtAppErrorMsg(app_context, name, type, class, default, params, num_params) calls the high-level error \
 handler and passes the specified information."
-  /* DIFF: XtAppErrorMsg takes final int not int*, arg5 is list of strings
+  /* DIFF: XtAppErrorMsg takes final int not int*, arg6 is list of strings
    */
   int size;
   Cardinal csize;
@@ -15419,9 +15420,9 @@ static XEN gxm_XtAddGrab(XEN arg1, XEN arg2, XEN arg3)
   #define H_XtAddGrab "void XtAddGrab(w, exclusive, spring_loaded) appends the widget (and associated parameters) to the modal cascade and \
 checks that exclusive is #t if spring_loaded is #t."
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtAddGrab", "Widget");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XtAddGrab", "int");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XtAddGrab", "int");
-  XtAddGrab(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2), XEN_TO_C_INT(arg3));
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg2), arg2, 2, "XtAddGrab", "boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg3), arg3, 3, "XtAddGrab", "boolean");
+  XtAddGrab(XEN_TO_C_Widget(arg1), XEN_TO_C_BOOLEAN(arg2), XEN_TO_C_BOOLEAN(arg3));
   return(XEN_FALSE);
 }
 
@@ -15757,6 +15758,7 @@ when multiple events are interpreted as a repeated event."
   return(XEN_FALSE);
 }
 
+/* SOMEDAY: XtActionProc */
 static void gxm_XtActionProc(Widget w, XEvent* e, String* s, Cardinal* c) {}
 
 static XEN gxm_XtRegisterGrabAction(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
@@ -24661,7 +24663,7 @@ static int xm_already_inited = 0;
       XEN_DEFINE_PROCEDURE(S_add_resource, g_add_resource_w, 2, 0, 0, H_add_resource);
       XEN_YES_WE_HAVE("xm");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"18-Sep-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"23-Sep-02\")");
 #endif
       xm_already_inited = 1;
     }
