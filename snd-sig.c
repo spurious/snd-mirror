@@ -38,8 +38,7 @@ int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos
 	{
 	  errstr = C_TO_XEN_STRING(errmsg);
 	  FREE(errmsg);
-	  snd_bad_arity_error(caller, errstr, edpos);
-	  return(0); /* never called, presumably */
+	  return(snd_bad_arity_error(caller, errstr, edpos));
 	}
       pos = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(XEN_CALL_2(edpos, 
 							C_TO_SMALL_XEN_INT(cp->sound->index), 
@@ -1804,7 +1803,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
       /* both beg and dur are meaningless here -- use selection bounds (per chan) */
       if (selection_is_active())
 	dur = selection_len();
-      else snd_no_active_selection_error(S_env_selection);
+      else return(snd_no_active_selection_error(S_env_selection));
     }
   if (dur == 0) return;
   if (e)

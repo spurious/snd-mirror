@@ -707,8 +707,7 @@ static XEN g_delete_selection(void)
       delete_selection(S_delete_selection, UPDATE_DISPLAY);
       return(XEN_TRUE);
     }
-  snd_no_active_selection_error(S_delete_selection);
-  return(XEN_FALSE);
+  return(snd_no_active_selection_error(S_delete_selection));
 }
 
 static XEN g_insert_selection(XEN beg, XEN snd, XEN chn)
@@ -728,8 +727,7 @@ static XEN g_insert_selection(XEN beg, XEN snd, XEN chn)
 			     S_insert_selection);
       return(C_TO_XEN_BOOLEAN((err == MUS_NO_ERROR)));
     }
-  snd_no_active_selection_error(S_insert_selection);
-  return(beg);
+  return(snd_no_active_selection_error(S_insert_selection));
 }
 
 static XEN g_mix_selection(XEN beg, XEN snd, XEN chn)
@@ -747,8 +745,7 @@ static XEN g_mix_selection(XEN beg, XEN snd, XEN chn)
 					XEN_TO_C_OFF_T_OR_ELSE(beg, 0), 
 					S_mix_selection)));
     }
-  snd_no_active_selection_error(S_mix_selection);
-  return(beg);
+  return(snd_no_active_selection_error(S_mix_selection));
 }
 
 static XEN g_selection_p(void)
@@ -772,8 +769,7 @@ static XEN g_selection_position(XEN snd, XEN chn)
 	  return(C_TO_XEN_OFF_T(selection_beg(cp)));
 	}
     }
-  snd_no_active_selection_error(S_selection_position);
-  return(snd);
+  return(snd_no_active_selection_error(S_selection_position));
 }
 
 static XEN g_set_selection_position(XEN pos, XEN snd, XEN chn)
@@ -827,8 +823,7 @@ static XEN g_selection_frames(XEN snd, XEN chn)
 	  return(C_TO_XEN_OFF_T(cp_selection_len(cp, NULL)));
 	}
     }
-  snd_no_active_selection_error(S_selection_frames);
-  return(snd);
+  return(snd_no_active_selection_error(S_selection_frames));
 }
 
 static XEN g_set_selection_frames(XEN samps, XEN snd, XEN chn)

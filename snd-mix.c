@@ -3588,7 +3588,7 @@ static XEN g_set_mix_position(XEN n, XEN uval)
   if (set_mix_position(XEN_TO_C_INT_OR_ELSE(n, 0), 
 		       XEN_TO_C_OFF_T_OR_ELSE(uval, 0),
 		       FALSE) == INVALID_MIX_ID)
-    snd_no_such_mix_error("set! " S_mix_position, n);
+    return(snd_no_such_mix_error("set! " S_mix_position, n));
   return(uval);
 }
 
@@ -3710,7 +3710,7 @@ static XEN g_set_mix_speed(XEN n, XEN uval)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, "set! " S_mix_speed, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(uval), uval, XEN_ARG_2, "set! " S_mix_speed, "a number");
   if (set_mix_speed(XEN_TO_C_INT(n), XEN_TO_C_DOUBLE(uval), FALSE, TRUE) == INVALID_MIX_ID)
-    snd_no_such_mix_error("set! " S_mix_speed, n);
+    return(snd_no_such_mix_error("set! " S_mix_speed, n));
   return(uval);
 }
 
@@ -3733,10 +3733,10 @@ static XEN g_set_mix_amp(XEN n, XEN uchan_1, XEN uval_1)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(uval), uval, XEN_ARG_3, "set! " S_mix_amp, "a number");
   res = set_mix_amp(XEN_TO_C_INT(n), (XEN_BOUND_P(uchan)) ? XEN_TO_C_INT(uchan) : 0, XEN_TO_C_DOUBLE(uval), FALSE, TRUE);
   if (res == INVALID_MIX_ID)
-    snd_no_such_mix_error("set! " S_mix_amp, n);
+    return(snd_no_such_mix_error("set! " S_mix_amp, n));
   else 
     if (res == INVALID_MIX_CHANNEL)
-      snd_no_such_channel_error("set! " S_mix_amp, n, uchan);  
+      return(snd_no_such_channel_error("set! " S_mix_amp, n, uchan));  
   return(uval);
 }
 
@@ -3763,10 +3763,10 @@ static XEN g_set_mix_amp_env(XEN n, XEN chan_1, XEN val_1)
 			e = get_env(val, "set! " S_mix_amp_env));
   if (e) free_env(e);
   if (res == INVALID_MIX_ID)
-    snd_no_such_mix_error("set! " S_mix_amp_env, n);
+    return(snd_no_such_mix_error("set! " S_mix_amp_env, n));
   else 
     if (res == INVALID_MIX_CHANNEL)
-      snd_no_such_channel_error("set! " S_mix_amp_env, n, chan); 
+      return(snd_no_such_channel_error("set! " S_mix_amp_env, n, chan)); 
   return(val);
 }
 
@@ -3803,7 +3803,7 @@ static XEN g_mix_sound(XEN file, XEN start_samp)
 	XEN_ERROR(MUS_MISC_ERROR,
 		  XEN_LIST_2(C_TO_XEN_STRING(S_mix),
 			     C_TO_XEN_STRING(ss->catch_message)));
-      snd_no_such_file_error(S_mix_sound, file);
+      return(snd_no_such_file_error(S_mix_sound, file));
     }
   return(C_TO_XEN_INT(err));
 }

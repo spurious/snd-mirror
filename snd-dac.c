@@ -2124,7 +2124,7 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, int background, int syncd,
 	      cp = get_cp(snd_n, chn_n, caller);
 	      if (cp) 
 		play_channel(cp, samp, end, background, edpos, caller, arg_pos);
-	      else snd_no_such_channel_error(caller, snd_n, chn_n);
+	      else return(snd_no_such_channel_error(caller, snd_n, chn_n));
 	    }
 	}
     }
@@ -2166,8 +2166,7 @@ static XEN g_play_selection(XEN wait, XEN edpos)
       play_selection(!(TO_C_BOOLEAN_OR_F(wait)), edpos, S_play_selection, 2);
       return(XEN_TRUE);
     }
-  snd_no_active_selection_error(S_play_selection);
-  return(wait);
+  return(snd_no_active_selection_error(S_play_selection));
 }
 
 static XEN g_play_and_wait(XEN samp_n, XEN snd_n, XEN chn_n, XEN syncd, XEN end_n, XEN edpos) 
@@ -2345,7 +2344,7 @@ static XEN g_add_player(XEN snd_chn, XEN start, XEN end, XEN edpos)
 				    4);
       if (dp == NULL) return(XEN_FALSE);
     }
-  else snd_no_such_player_error(S_add_player, snd_chn);
+  else return(snd_no_such_player_error(S_add_player, snd_chn));
   return(snd_chn);
 }
 
@@ -2379,7 +2378,7 @@ static XEN g_stop_player(XEN snd_chn)
   if ((index > 0) && (index < players_size)) sp = players[index];
   if (sp) 
     stop_playing_sound(sp);
-  else snd_no_such_player_error(S_stop_player, snd_chn);
+  else return(snd_no_such_player_error(S_stop_player, snd_chn));
   return(snd_chn);
 }
 

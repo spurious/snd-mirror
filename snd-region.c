@@ -1,8 +1,5 @@
 #include "snd.h" 
 
-/* changed 29-May-01 to use the region id, not its stack position throughout */
-/* changed 16-Sep-01 to use deferred file handlers */
-
 #define REGION_FILE 1
 #define REGION_DEFERRED 0
 /* region data can be stored either in a temp file that is deleted when the region is deleted (hence must be copied upon insert or mix)
@@ -1488,8 +1485,7 @@ static XEN g_region_sample(XEN samp_n, XEN reg_n, XEN chn_n)
     return(snd_no_such_region_error(S_region_sample, reg_n));
   if (chan < region_chans(rg))
     return(C_TO_XEN_DOUBLE(region_sample(rg, chan, XEN_TO_C_OFF_T_OR_ELSE(samp_n, 0))));
-  else snd_no_such_channel_error(S_region_sample, XEN_LIST_1(reg_n), chn_n);
-  return(samp_n);
+  else return(snd_no_such_channel_error(S_region_sample, XEN_LIST_1(reg_n), chn_n));
 }
 
 #include "vct.h"

@@ -49,10 +49,70 @@
 (define ladspa-delay-cascade (XtCreateManagedWidget "Delay Effects" xmCascadeButtonWidgetClass plug-menu
                                             (list XmNsubMenuId ladspa-delay-menu
                                                   XmNbackground (basic-color))))
+(define ladspa-delay-menu-list '()) ; just for testing
+;(define delay-menu (main-menu (add-to-main-menu "Delay Testing" (lambda () #f)))) ; just to test this
+
+;; this definition only needs to occur once in the entire file
+(define (change-label widget new-label)
+  (let ((str (XmStringCreateLocalized new-label)))
+    (XtSetValues widget (list XmNlabelString str))
+    (XmStringFree str)))
 
 
-;;; Canyon delay
+
+(define (apply-ladspa-over-target-with-sync ladspa-description target origin decay)
+  ;;
+  ;; ladspa-description is a list of ladspa data passed as the 2nd arg to apply-ladspa
+  ;;   for example: (list "delay" "delay_5s" delay5s-time delay5s-balance)
+  ;;
+  ;; target: 'marks -> beg=closest marked sample, dur=samples to next mark
+  ;;         'sound -> beg=0, dur=all samples in sound
+  ;;         'selection -> beg=selection-position, dur=selection-frames
+  ;;         'cursor -> beg=cursor, dur=samples to end of sound
+  ;;
+  ;; origin is a string naming the edit for use in the edit history list
+  ;;
+  ;; decay is how long to run the effect past the end of the sound
+  ;; first portion borrowed from map-chan-over-target-with-sync with added 'cursor target
+  (let* ((snc (sync))
+         (ms (and (eq? target 'marks)
+                  (plausible-mark-samples)))
+         (beg (if (eq? target 'sound)
+                  0
+                  (if (eq? target 'selection)
+                      (selection-position)
+                      (if (eq? target 'cursor)
+                          (cursor (selected-sound) (selected-channel))
+                          (car ms)))))
+         (overlap (if decay
+                      (inexact->exact (* (srate) decay))
+                      0)))
+    (apply for-each
+           (lambda (snd chn)
+             (let ((dur (if (eq? target 'sound)
+                            (1- (frames snd chn))
+                            (if (eq? target 'selection)
+                                (+ (selection-position) (selection-frames))
+                                (if (eq? target 'cursor)
+                                    (- (frames snd chn) beg)
+                                    (cadr ms))))))
+               (if (= (sync snd) snc)
+                   ;; replace map-chan with apply-ladspa
+                   (apply-ladspa
+                    (make-sample-reader beg snd chn)
+                    ladspa-description
+                    dur
+                    origin))))
+           (if (> snc 0)
+               (all-chans)
+               (list (list (selected-sound))
+                     (list (selected-channel)))))))
+
+
+
+;;; LADSPA Canyon delay
 ;;;
+
 
 (define canyon-delay-left-to-right-time .10)
 (define canyon-delay-left-to-right-feedback 0)
@@ -60,137 +120,159 @@
 (define canyon-delay-right-to-left-feedback 0)
 (define canyon-delay-filter-cutoff 1000)
 (define canyon-delay-dialog #f)
-(define canyon-delay-label "Canyon delay (stereo)")
-
-(define (cp-canyon-delay)
-  (let* ((snd (selected-sound)) 
-         (chns (channels snd))
-         (readers (if (= chns 1)
-         (make-sample-reader 0 snd 0)
-         ;; assume stereo -- this could collect an arbitrary list
-         (list (make-sample-reader 0 snd 0)
-               (make-sample-reader 0 snd 1)))))
-         (apply-ladspa readers
-           (list "cmt" "canyon_delay" canyon-delay-left-to-right-time canyon-delay-left-to-right-feedback canyon-delay-right-to-left-time canyon-delay-right-to-left-feedback canyon-delay-filter-cutoff)
-             (- (frames) (cursor))
-             "canyon delay")))
+(define canyon-delay-label "Canyon-delay (stereo)")
+(define canyon-delay-target 'sound)
+(define canyon-delay-truncate #t)
+(define canyon-delay-menu-widget #f)
 
 
-(if (and (provided? 'snd-ladspa)
-         (provided? 'xm))
-  (begin
+(define (post-canyon-delay-dialog)
+  (if (not canyon-delay-dialog)
+      ;; if canyon-delay-dialog doesn't exist, create it
+      (let ((initial-canyon-delay-left-to-right-time .10)
+            (initial-canyon-delay-left-to-right-feedback 0)
+            (initial-canyon-delay-right-to-left-time .10)
+            (initial-canyon-delay-right-to-left-feedback 0)
+            (initial-canyon-delay-filter-cutoff 1000)
+            (sliders '()))
+        (set! canyon-delay-dialog
+              (make-effect-dialog
+               canyon-delay-label
+               (lambda (w context info)
+                 (apply-ladspa-over-target-with-sync
+                  (list "cmt" "canyon_delay" canyon-delay-left-to-right-time canyon-delay-left-to-right-feedback canyon-delay-right-to-left-time canyon-delay-right-to-left-feedback canyon-delay-filter-cutoff)
+                  canyon-delay-target
+                  "canyon delay"
+                  (and canyon-delay-truncate
+                       (* 4 canyon-delay-left-to-right-time))))
+               (lambda (w context info) (XtUnmanageChild canyon-delay-dialog)) ; not needed in new-effects.scm version
 
-     (define (post-canyon-delay-dialog)
-       (if (not (Widget? canyon-delay-dialog))
-           (let ((sliders '()))
-             (set! canyon-delay-dialog
-                   (make-effect-dialog "canyon stereo delay ladspa plugin"
-                                       (lambda (w context info) (cp-canyon-delay))
-                                       (lambda (w context info) (XtUnmanageChild canyon-delay-dialog))
+               (lambda (w context info)
+                 (help-dialog "Canyon delay"
+ "A deep stereo cross-delay with built-in low pass filters. Note: This effect works only with stereo soundfiles !"))
+
+               (lambda (w c i)
+                 (set! canyon-delay-left-to-right-time initial-canyon-delay-left-to-right-time)
+                 (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* canyon-delay-left-to-right-time 100))))
+                 (set! canyon-delay-left-to-right-feedback initial-canyon-delay-left-to-right-feedback)
+                 (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (* canyon-delay-left-to-right-feedback 100))))
+                 (set! canyon-delay-right-to-left-time initial-canyon-delay-right-to-left-time)
+                 (XtSetValues (list-ref sliders 2) (list XmNvalue (inexact->exact (* canyon-delay-right-to-left-time 100))))
+                 (set! canyon-delay-right-to-left-feedback initial-canyon-delay-right-to-left-feedback)
+                 (XtSetValues (list-ref sliders 3) (list XmNvalue (inexact->exact (* canyon-delay-right-to-left-feedback 100))))
+                 (set! canyon-delay-filter-cutoff initial-canyon-delay-filter-cutoff)
+                 (XtSetValues (list-ref sliders 4) (list XmNvalue (inexact->exact (* canyon-delay-filter-cutoff 1)))))))
+        (set! sliders
+              (add-sliders canyon-delay-dialog
+                           (list (list "left to right time (s)" 0.01 initial-canyon-delay-left-to-right-time .99
                                        (lambda (w context info)
-                                         (help-dialog "Canyon delay"
-                                                      "A deep stereo cross-delay with built-in low pass filters. Note: This effect works only with stereo soundfiles !"))
-                                       (lambda (w c i)
-                                         (set! canyon-delay-left-to-right-time .10)
-                                         (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* canyon-delay-left-to-right-time 100))))
-                                         (set! canyon-delay-left-to-right-feedback 0)
-                                         (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (* canyon-delay-left-to-right-feedback 100))))
-                                         (set! canyon-delay-right-to-left-time .10)
-                                         (XtSetValues (list-ref sliders 2) (list XmNvalue (inexact->exact (* canyon-delay-right-to-left-time 100))))
-                                         (set! canyon-delay-right-to-left-feedback 0)
-                                         (XtSetValues (list-ref sliders 3) (list XmNvalue (inexact->exact (* canyon-delay-right-to-left-feedback 100))))
-                                         (set! canyon-delay-filter-cutoff 1000)
-                                         (XtSetValues (list-ref sliders 4) (list XmNvalue (inexact->exact (* canyon-delay-filter-cutoff 1)))))))
-             (set! sliders
-                   (add-sliders canyon-delay-dialog
-                                (list (list "left to right time (s)" 0.01 .10 .99
-                                            (lambda (w context info)
-                                              (set! canyon-delay-left-to-right-time (/ (.value info) 100)))
-                                            100)
-                                      (list "left to right feedback (%)" -1 0 1
-                                            (lambda (w context info)
-                                              (set! canyon-delay-left-to-right-feedback (/ (.value info) 100)))
-                                            100)
- 				      (list "right to left time (s)" 0.01 .10 .99
-                                            (lambda (w context info)
-                                              (set! canyon-delay-right-to-left-time (/ (.value info) 100)))
-                                            100)
-                                      (list "right to left feedback (%)" -1 0 1
-                                            (lambda (w context info)
-                                              (set! canyon-delay-right-to-left-feedback (/ (.value info) 100)))
-                                            100)
-                                      (list "low-pass filter cutoff (Hz)" 1 1000 44100
-                                            (lambda (w context info)
-                                              (set! canyon-delay-filter-cutoff (/ (.value info) 1)))
-                                            1))))))
-       (activate-dialog canyon-delay-dialog))))
+                                         (set! canyon-delay-left-to-right-time (/ (.value info) 100)))
+                                       100)
+                                 (list "left to right feedback (%)" -1 initial-canyon-delay-left-to-right-feedback 1
+                                       (lambda (w context info)
+                                         (set! canyon-delay-left-to-right-feedback (/ (.value info) 100)))
+                                       100)
+                                 (list "right to left time (s)" 0.01 initial-canyon-delay-right-to-left-time .99
+                                       (lambda (w context info)
+                                         (set! canyon-delay-right-to-left-time (/ (.value info) 100)))
+                                       100)
+                                 (list "right to left feedback (%)" -1 initial-canyon-delay-right-to-left-feedback 1
+                                       (lambda (w context info)
+                                         (set! canyon-delay-right-to-left-feedback (/ (.value info) 100)))
+                                       100)
+                                 (list "low-pass filter cutoff (Hz)" 1 initial-canyon-delay-filter-cutoff 44100 
+                                       (lambda (w context info)
+                                         (set! canyon-delay-filter-cutoff (/ (.value info) 1)))
+                                       1))))
+        (add-target (XtParent (car sliders))
+                    (lambda (target) (set! canyon-delay-target target))
+                    (lambda (truncate) (set! canyon-delay-truncate truncate)))))
 
-      (let ((child (XtCreateManagedWidget "Canyon delay (stereo)" xmPushButtonWidgetClass ladspa-delay-menu
-                                           (list XmNbackground (basic-color)))))
-        (XtAddCallback child XmNactivateCallback
-                        (lambda (w c i)
-                          (post-canyon-delay-dialog))))
+  (activate-dialog canyon-delay-dialog))
+
+(let ((child (XtCreateManagedWidget "Canyon delay" xmPushButtonWidgetClass ladspa-delay-menu
+                                    (list XmNbackground (basic-color)))))
+  (XtAddCallback child XmNactivateCallback
+                 (lambda (w c i)
+                   (post-canyon-delay-dialog)))
+  (set! ladspa-delay-menu-list
+        (cons (lambda ()
+                (let ((new-label (format #f "Canyon delay (~1,2F ~1,2D ~1,2F ~1,2D ~1,2D)" canyon-delay-left-to-right-time canyon-delay-left-to-right-feedback canyon-delay-right-to-left-time canyon-delay-right-to-left-feedback canyon-delay-filter-cutoff)))
+                  (change-label child new-label)))
+              ladspa-delay-menu-list)))
 
 
-;;; Delay (5 sec)
+
+
+
+
+;;; LADSPA Delay (5 sec)
 ;;;
 
 (define delay5s-time .3)
 (define delay5s-balance .5)
 (define delay5s-dialog #f)
 (define delay5s-label "Delay (5 sec)")
-
-(define (cp-delay5s)
-  (apply-ladspa (make-sample-reader (cursor))
-      (list "delay" "delay_5s" delay5s-time delay5s-balance)
-      (- (frames) (cursor))
-      "delay5s"))
-
-(if (and (provided? 'snd-ladspa)
-         (provided? 'xm))
-  (begin
-
-    (define (post-delay5s-dialog)
-       (if (not (Widget? delay5s-dialog))
-           ;; if delay5s-dialog doesn't exist, create it
-           (let ((sliders '()))
-             (set! delay5s-dialog
-                   (make-effect-dialog "delay_5s ladspa plugin"
-                                       (lambda (w context info)
-                                         (apply-ladspa (make-sample-reader (cursor))
-                                                       (list "delay" "delay_5s" delay5s-time delay5s-balance)
-                                                       (- (frames) (cursor))
-                                                       "delay5s"))
-                                       (lambda (w context info) (XtUnmanageChild delay5s-dialog))
-                                       (lambda (w context info)
-                                         (help-dialog "Delay (5 sec)"
-                                                      "Move the slider to set delay parameters."))
-                                       (lambda (w c i)
-                                         (set! delay5s-time .3)
-                                         (XtSetValues (list-ref sliders 0)
-                                            (list XmNvalue (inexact->exact (* delay5s-time 100))))
-				         (set! delay5s-balance .5)
-				         (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (* delay5s-balance 100)))))))
-             (set! sliders
-                   (add-sliders delay5s-dialog
-                                (list (list "delay time" 0.0 0.3 5.0
-                                            (lambda (w context info)
-                                              (set! delay5s-time (/ (.value info) 100.0)))
-                                            100)
-                                      (list "balance" 0.0 0.5 1.0
-                                            (lambda (w context info)
-                                              (set! delay5s-balance (/ (.value info) 100.0)))
-                                            100))))))
-       (activate-dialog delay5s-dialog))))
-
-      (let ((child (XtCreateManagedWidget "Delay (5 sec)" xmPushButtonWidgetClass ladspa-delay-menu
-                                           (list XmNbackground (basic-color)))))
-        (XtAddCallback child XmNactivateCallback
-                        (lambda (w c i)
-                          (post-delay5s-dialog))))
+(define delay5s-target 'sound)
+(define delay5s-truncate #t)
+(define delay5s-menu-widget #f)
 
 
-;;; Delayorama
+(define (post-delay5s-dialog)
+  (if (not delay5s-dialog)
+      ;; if delay5s-dialog doesn't exist, create it
+      (let ((initial-delay5s-time 0.3)
+	    (initial-delay5s-balance 0.5)
+	    (sliders '()))
+	(set! delay5s-dialog
+	      (make-effect-dialog
+	       delay5s-label
+	       (lambda (w context info)
+		 (apply-ladspa-over-target-with-sync
+		  (list "delay" "delay_5s" delay5s-time delay5s-balance)
+		  delay5s-target
+		  "delay5s"
+		  (and delay5s-truncate
+		       (* 4 delay5s-time))))
+	       (lambda (w context info) (XtUnmanageChild delay5s-dialog)) ; not needed in new-effects.scm version
+	
+	       (lambda (w context info)
+		 (help-dialog "Delay 5s" "The delay time unit is in seconds. The balance slider controls the strength of the delays."))
+	
+	       (lambda (w c i)
+		 (set! delay5s-time initial-delay5s-time)
+		 (XtSetValues (car sliders) (list XmNvalue (inexact->exact (* delay5s-time 100))))
+		 (set! delay5s-balance initial-delay5s-balance)
+		 (XtSetValues (cadr sliders) (list XmNvalue (inexact->exact (* delay5s-balance 100)))))))
+	(set! sliders
+	      (add-sliders delay5s-dialog
+			   (list (list "delay time" 0.0 initial-delay5s-time 5.0
+				       (lambda (w context info)
+					 (set! delay5s-time (/ (.value info) 100.0)))
+				       100)
+				 (list "balance" 0.0 initial-delay5s-balance 1.0
+				       (lambda (w context info)
+					 (set! delay5s-balance (/ (.value info) 100.0)))
+				       100))))
+	(add-target (XtParent (car sliders))
+		    (lambda (target) (set! delay5s-target target))
+		    (lambda (truncate) (set! delay5s-truncate truncate)))))
+
+  (activate-dialog delay5s-dialog))
+
+(let ((child (XtCreateManagedWidget "Delay 5s" xmPushButtonWidgetClass ladspa-delay-menu
+				    (list XmNbackground (basic-color)))))
+  (XtAddCallback child XmNactivateCallback
+		 (lambda (w c i)
+		   (post-delay5s-dialog)))
+  (set! ladspa-delay-menu-list
+	(cons (lambda ()
+		(let ((new-label (format #f "Delay 5s (~1,2F ~1,2F)" delay5s-time delay5s-balance)))
+		  (change-label child new-label)))
+	      ladspa-delay-menu-list)))
+
+
+;;; LADSPA Delayorama
 ;;;
 
 (define delayorama-random-seed 100)
@@ -206,27 +288,27 @@
 (define delayorama-mix 0.5)
 (define delayorama-dialog #f)
 (define delayorama-label "Delayorama")
+(define delayorama-target 'sound)
+(define delayorama-truncate #t)
+(define delayorama-menu-widget #f)
 
-(define (cp-delayorama)
-   (apply-ladspa (make-sample-reader (cursor))
-      (list "delayorama_1402" "delayorama" delayorama-random-seed delayorama-input-gain delayorama-feedback delayorama-taps delayorama-first-delay delayorama-delay-range delayorama-delay-change delayorama-delay-random delayorama-amp-change delayorama-amp-random delayorama-mix)
-         (- (frames) (cursor))
-         "delayorama"))
 
-(if (and (provided? 'snd-ladspa)
-         (provided? 'xm))
-  (begin
-
-    (define (post-delayorama-dialog)
-       (if (not (Widget? delayorama-dialog))
-           (let ((sliders '()))
-             (set! delayorama-dialog
-                   (make-effect-dialog "delayorama ladspa plugin"
-                                       (lambda (w context info) (cp-delayorama))
-                                       (lambda (w context info) (XtUnmanageChild delayorama-dialog))
-                                       (lambda (w context info)
-                                         (help-dialog "Delayorama"
-                                                      "Random seed: Controls the random numbers that will be used to stagger the delays and amplitudes if random is turned up on them. Changing this forces the random values to be recalulated.\n\ Input gain (dB): Controls the gain of the input signal in decibels.\n\ Feedback (%): Controls the amount of output signal fed back into the input.\n\ Number of taps: Controls the number of taps in the delay.\n\ First delay (s): The time (in seconds) of the first delay.\n\ Delay range (s): The time difference (in seconds) between the first and last delay.\n\ Delay change: The scaling factor between one delay and the next.\n\ Delay random (%): The random factor applied to the delay.\n\ Amplitude change: The scaling factor between one amplitude and the next.\n\ Amplitude random (%): The random factor applied to the amplitude.\n\ Dry/wet mix: The level of delayed sound mixed into the output."))
+(define (post-delayorama-dialog)
+   (if (not delayorama-dialog)
+       (let ((sliders '()))
+         (set! delayorama-dialog
+               (make-effect-dialog 
+               delayorama-label
+               (lambda (w context info)
+                 (apply-ladspa-over-target-with-sync
+                  (list "delayorama_1402" "delayorama" delayorama-random-seed delayorama-input-gain delayorama-feedback delayorama-taps delayorama-first-delay delayorama-delay-range delayorama-delay-change delayorama-delay-random delayorama-amp-change delayorama-amp-random delayorama-mix)
+                  delayorama-target
+                  "delayorama"
+                  (and delayorama-truncate
+                       (* 4 delayorama-first-delay))))
+               (lambda (w context info) (XtUnmanageChild delayorama-dialog))
+               (lambda (w context info)
+                       (help-dialog "Delayorama" "Random seed: Controls the random numbers that will be used to stagger the delays and amplitudes if random is turned up on them. Changing this forces the random values to be recalulated.\n\ Input gain (dB): Controls the gain of the input signal in decibels.\n\ Feedback (%): Controls the amount of output signal fed back into the input.\n\ Number of taps: Controls the number of taps in the delay.\n\ First delay (s): The time (in seconds) of the first delay.\n\ Delay range (s): The time difference (in seconds) between the first and last delay.\n\ Delay change: The scaling factor between one delay and the next.\n\ Delay random (%): The random factor applied to the delay.\n\ Amplitude change: The scaling factor between one amplitude and the next.\n\ Amplitude random (%): The random factor applied to the amplitude.\n\ Dry/wet mix: The level of delayed sound mixed into the output."))
                                        (lambda (w c i)
                                          (set! delayorama-random-seed 100)
                                          (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* delayorama-random-seed 1))))
@@ -295,196 +377,261 @@
                                      (list "dry/wet mix" 0.0 0.5 1.0
                                             (lambda (w context info)
                                               (set! delayorama-amp-random (/ (.value info) 100)))
-                                            100))))))
-       (activate-dialog delayorama-dialog))))
+                                            100))))
 
-      (let ((child (XtCreateManagedWidget "Delayorama" xmPushButtonWidgetClass ladspa-delay-menu
-                                           (list XmNbackground (basic-color)))))
-        (XtAddCallback child XmNactivateCallback
-                        (lambda (w c i)
-                          (post-delayorama-dialog))))
+        (add-target (XtParent (car sliders))
+                    (lambda (target) (set! delayorama-target target))
+                    (lambda (truncate) (set! delayorama-truncate truncate)))))
+
+  (activate-dialog delayorama-dialog))
+
+(let ((child (XtCreateManagedWidget "Delayorama" xmPushButtonWidgetClass ladspa-delay-menu
+                                    (list XmNbackground (basic-color)))))
+  (XtAddCallback child XmNactivateCallback
+                 (lambda (w c i)
+                   (post-delayorama-dialog)))
+  (set! ladspa-delay-menu-list
+        (cons (lambda ()
+                (let ((new-label (format #f "Delayorama (~1,2D ~1,2D ~1,2D ~1,2D ~1,2F ~1,2F ~1,2F ~1,2D ~1,2F ~1,2D ~1,2F)" delayorama-random-seed delayorama-input-gain delayorama-feedback delayorama-taps delayorama-first-delay delayorama-delay-range delayorama-delay-change delayorama-delay-random delayorama-amp-change delayorama-amp-random delayorama-mix)))
+                  (change-label child new-label)))
+              ladspa-delay-menu-list)))
 
 
 
-;;; Feedback delay
+
+
+
+;;; LADSPA Feedback Delay (5s)
 ;;;
 
-(define fbdelay5s-time 1.0)
+
+
+(define fbdelay5s-time .3)
 (define fbdelay5s-balance .5)
 (define fbdelay5s-feedback 0)
 (define fbdelay5s-dialog #f)
 (define fbdelay5s-label "Feedback delay (5 sec)")
+(define fbdelay5s-target 'sound)
+(define fbdelay5s-truncate #t)
+(define fbdelay5s-menu-widget #f)
 
-(define (cp-fbdelay5s)
-   (apply-ladspa (make-sample-reader (cursor))
-      (list "cmt" "fbdelay_5s" fbdelay5s-time fbdelay5s-balance fbdelay5s-feedback)
-            (- (frames) (cursor))
-            "fbdelay5s"))
 
-(if (and (provided? 'snd-ladspa)
-         (provided? 'xm))
-  (begin
+(define (post-fbdelay5s-dialog)
+  (if (not fbdelay5s-dialog)
+      ;; if fbdelay5s-dialog doesn't exist, create it
+      (let ((initial-fbdelay5s-time 0.3)
+            (initial-fbdelay5s-balance 0.5)
+            (initial-fbdelay5s-feedback 0)
+            (sliders '()))
+        (set! fbdelay5s-dialog
+              (make-effect-dialog
+               fbdelay5s-label
+               (lambda (w context info)
+                 (apply-ladspa-over-target-with-sync
+                  (list "cmt" "fbdelay_5s" fbdelay5s-time fbdelay5s-balance fbdelay5s-feedback)
+                  fbdelay5s-target
+                  "fbdelay5s"
+                  (and fbdelay5s-truncate
+                       (* 4 fbdelay5s-time))))
+               (lambda (w context info) (XtUnmanageChild fbdelay5s-dialog)) ; not needed in new-effects.scm version
 
-    (define (post-fbdelay5s-dialog)
-       (if (not (Widget? fbdelay5s-dialog))
-           ;; if fbdelay5s-dialog doesn't exist, create it
-           (let ((sliders '()))
-             (set! fbdelay5s-dialog
-                   (make-effect-dialog "feedback delay ladspa plugin"
-                                       (lambda (w context info) (cp-fbdelay5s))
-                                       (lambda (w context info) (XtUnmanageChild fbdelay5s-dialog))
+               (lambda (w context info)
+                 (help-dialog "Feedback delay (5 sec)" "Feedback delay with maximum delay time of 5 seconds."))
+
+               (lambda (w c i)
+                 (set! fbdelay5s-time initial-fbdelay5s-time)
+                 (XtSetValues (car sliders) (list XmNvalue (inexact->exact (* fbdelay5s-time 100))))
+                 (set! fbdelay5s-balance initial-fbdelay5s-balance)
+                 (XtSetValues (cadr sliders) (list XmNvalue (inexact->exact (* fbdelay5s-balance 100))))
+                 (set! fbdelay5s-feedback initial-fbdelay5s-feedback)
+                 (XtSetValues (caddr sliders) (list XmNvalue (inexact->exact (* fbdelay5s-feedback 100)))))))
+        (set! sliders
+              (add-sliders fbdelay5s-dialog
+                           (list (list "fbdelay time" 0.0 initial-fbdelay5s-time 5.0
                                        (lambda (w context info)
-                                         (help-dialog "Feedback delay (5 sec)"
-                                                      "Feedback delay with maximum delay time of 5 seconds."))
-                                       (lambda (w c i)
-                                         (set! fbdelay5s-time 1.0)
-                                         (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* fbdelay5s-time 100))))
-				         (set! fbdelay5s-balance .5)
-				         (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (* fbdelay5s-balance 100))))
-                                         (set! fbdelay5s-feedback 0)
-                                         (XtSetValues (list-ref sliders 2) (list XmNvalue (inexact->exact (* fbdelay5s-feedback 100)))))))
-             (set! sliders
-                   (add-sliders fbdelay5s-dialog
-                                (list (list "delay time (s)" 0.0 1.0 5.0
-                                            (lambda (w context info)
-                                              (set! fbdelay5s-time (/ (.value info) 100)))
-                                            100)
-                                      (list "balance" 0.0 0.5 1.0
-                                            (lambda (w context info)
-                                              (set! fbdelay5s-balance (/ (.value info) 100)))
-                                            100)
-                                      (list "feedback" -1 0 1
-                                            (lambda (w context info)
-                                              (set! fbdelay5s-feedback (/ (.value info) 100)))
-                                            100))))))
-       (activate-dialog fbdelay5s-dialog))))
+                                         (set! fbdelay5s-time (/ (.value info) 100.0)))
+                                       100)
+                                 (list "balance" 0.0 initial-fbdelay5s-balance 1.0
+                                       (lambda (w context info)
+                                         (set! fbdelay5s-balance (/ (.value info) 100.0)))
+                                       100)
+                                 (list "feedback" -1 initial-fbdelay5s-feedback 1.0
+                                       (lambda (w context info)
+                                         (set! fbdelay5s-feedback (/ (.value info) 100.0)))
+                                       100))))
+        (add-target (XtParent (car sliders))
+                    (lambda (target) (set! fbdelay5s-target target))
+                    (lambda (truncate) (set! fbdelay5s-truncate truncate)))))
 
-      (let ((child (XtCreateManagedWidget "Feedback delay (5 sec)" xmPushButtonWidgetClass ladspa-delay-menu
-                                           (list XmNbackground (basic-color)))))
-        (XtAddCallback child XmNactivateCallback
-                        (lambda (w c i)
-                          (post-fbdelay5s-dialog))))
+  (activate-dialog fbdelay5s-dialog))
 
-;;; Fractionally addressed delay line
+(let ((child (XtCreateManagedWidget "Feedback delay 5s" xmPushButtonWidgetClass ladspa-delay-menu
+                                    (list XmNbackground (basic-color)))))
+  (XtAddCallback child XmNactivateCallback
+                 (lambda (w c i)
+                   (post-fbdelay5s-dialog)))
+  (set! ladspa-delay-menu-list
+        (cons (lambda ()
+                (let ((new-label (format #f "Feedback delay 5s (~1,2F ~1,2F ~1,2D)" fbdelay5s-time fbdelay5s-balance fbdelay5s-feedback)))
+                  (change-label child new-label)))
+              ladspa-delay-menu-list)))
+
+
+;;; LADSPA Fractional Delay Line
 ;;;
+
 
 (define fractional-delay-time 1.0)
 (define fractional-delay-feedback 0)
 (define fractional-delay-dialog #f)
 (define fractional-delay-label "Fractionally addressed delay")
+(define fractional-delay-target 'sound)
+(define fractional-delay-truncate #t)
+(define fractional-delay-menu-widget #f)
 
-(define (cp-fractional-delay)
-   (apply-ladspa (make-sample-reader (cursor))
-      (list "fad_delay_1192" "fadDelay" fractional-delay-time fractional-delay-feedback)
-         (- (frames) (cursor))
-         "fad delay"))
 
-(if (and (provided? 'snd-ladspa)
-         (provided? 'xm))
-  (begin
+(define (post-fractional-delay-dialog)
+  (if (not fractional-delay-dialog)
+      ;; if fractional-delay-dialog doesn't exist, create it
+      (let ((initial-fractional-delay-time 1.0)
+            (initial-fractional-delay-feedback 0)
+            (sliders '()))
+        (set! fractional-delay-dialog
+              (make-effect-dialog
+               fractional-delay-label
+               (lambda (w context info)
+                 (apply-ladspa-over-target-with-sync
+                  (list "fad_delay_1192" "fadDelay" fractional-delay-time fractional-delay-feedback)
+                  fractional-delay-target
+                  "fad delay"
+                  (and fractional-delay-truncate
+                       (* 4 fractional-delay-time))))
+               (lambda (w context info) (XtUnmanageChild fractional-delay-dialog)) ; not needed in new-effects.scm version
 
-    (define (post-fractional-delay-dialog)
-       (if (not (Widget? fractional-delay-dialog))
-           (let ((sliders '()))
-             (set! fractional-delay-dialog
-                   (make-effect-dialog "fractionally addressed delay line ladspa plugin"
-                                       (lambda (w context info) (cp-fractional-delay))
-                                       (lambda (w context info) (XtUnmanageChild fractional-delay-dialog))
+               (lambda (w context info)
+                 (help-dialog "Fractionally addressed delay line"
+ "A fixed ring buffer delay implementation. Has different dynamics than a normal delay, more suitable for certain things.\n\ Changes in delay length are generally more pleasing, but delays >2s long have reduced sound quality."))
+
+               (lambda (w c i)
+                 (set! fractional-delay-time initial-fractional-delay-time)
+                 (XtSetValues (car sliders) (list XmNvalue (inexact->exact (* fractional-delay-time 100))))
+                 (set! fractional-delay-feedback initial-fractional-delay-feedback)
+                 (XtSetValues (cadr sliders) (list XmNvalue (inexact->exact (* fractional-delay-feedback 1)))))))
+        (set! sliders
+              (add-sliders fractional-delay-dialog
+                           (list (list "delay time (s)" 0.0 initial-fractional-delay-time 10.0
                                        (lambda (w context info)
-                                         (help-dialog "Fractionally addressed delay line"
-                                                      "A fixed ring buffer delay implementation. Has different dynamics than a normal delay, more suitable for certain things.\n\ Changes in delay length are generally more pleasing, but delays >2s long have reduced sound quality."))
-                                       (lambda (w c i)
-                                         (set! fractional-delay-time 1.0)
-                                         (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* fractional-delay-time 100))))
-                                         (set! fractional-delay-feedback 0)
-                                         (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (* fractional-delay-feedback 1)))))))
-             (set! sliders
-                   (add-sliders fractional-delay-dialog
-                                (list (list "delay time (s)" 0.1 1.0 10.0
-                                            (lambda (w context info)
-                                              (set! fractional-delay-time (/ (.value info) 100)))
-                                            100)
-                                      (list "feedback (dB)" -70 0 0
-                                            (lambda (w context info)
-                                              (set! fractional-delay-feedback (/ (.value info) 1)))
-                                            1))))))
-       (activate-dialog fractional-delay-dialog))))
+                                         (set! fractional-delay-time (/ (.value info) 100.0)))
+                                       100)
+                                 (list "feedback (dB)" -70 initial-fractional-delay-feedback 0
+                                       (lambda (w context info)
+                                         (set! fractional-delay-feedback (/ (.value info) 1)))
+                                       1))))
+        (add-target (XtParent (car sliders))
+                    (lambda (target) (set! fractional-delay-target target))
+                    (lambda (truncate) (set! fractional-delay-truncate truncate)))))
 
-      (let ((child (XtCreateManagedWidget "Fractionally addressed delay" xmPushButtonWidgetClass ladspa-delay-menu
-                                           (list XmNbackground (basic-color)))))
-        (XtAddCallback child XmNactivateCallback
-                        (lambda (w c i)
-                          (post-fractional-delay-dialog))))
+  (activate-dialog fractional-delay-dialog))
+
+(let ((child (XtCreateManagedWidget "Fractional Delay" xmPushButtonWidgetClass delay-menu
+                                    (list XmNbackground (basic-color)))))
+  (XtAddCallback child XmNactivateCallback
+                 (lambda (w c i)
+                   (post-fractional-delay-dialog)))
+  (set! ladspa-delay-menu-list
+        (cons (lambda ()
+                (let ((new-label (format #f "Fractional Delay (~1,2F ~1,2D)" fractional-delay-time fractional-delay-feedback)))
+                  (change-label child new-label)))
+              ladspa-delay-menu-list)))
 
 
 
-;;; Granular scatter processor
+;;; LADSPA Granular scatter processor
 ;;;
+
 
 (define gs-density 5)
 (define gs-scatter 1)
 (define gs-grain-length 1)
-(define gs-grain-attack 1)
+(define gs-grain-attack 0)
 (define gs-dialog #f)
 (define gs-label "Granular scatter processor")
+(define gs-target 'sound)
+(define gs-truncate #t)
+(define gs-menu-widget #f)
 
-(define (cp-gs)
-  (apply-ladspa (make-sample-reader (cursor))
-    (list "cmt" "grain_scatter" gs-density gs-scatter gs-grain-length gs-grain-attack)
-          (- (frames) (cursor))
-          "grain_scatter"))
 
-(if (and (provided? 'snd-ladspa)
-         (provided? 'xm))
-  (begin
+(define (post-gs-dialog)
+  (if (not gs-dialog)
+      ;; if gs-dialog doesn't exist, create it
+      (let ((initial-gs-density 5)
+            (initial-gs-scatter 1)
+            (initial-gs-grain-length 1)
+            (initial-gs-grain-attack 1)
+            (sliders '()))
+        (set! gs-dialog
+              (make-effect-dialog
+               gs-label
+               (lambda (w context info)
+                 (apply-ladspa-over-target-with-sync
+                  (list "cmt" "grain_scatter" gs-density gs-scatter gs-grain-length gs-grain-attack)
+                  gs-target
+                  "granular scatter"
+                  (and gs-truncate
+                       (* 4 gs-grain-length))))
+               (lambda (w context info) (XtUnmanageChild gs-dialog)) ; not needed in new-effects.scm version
 
-    (define (post-gs-dialog)
-       (if (not (Widget? gs-dialog))
-           (let ((sliders '()))
-             (set! gs-dialog
-                   (make-effect-dialog "granular scatter processor ladspa plugin"
-                                       (lambda (w context info) (cp-gs))
-                                       (lambda (w context info) (XtUnmanageChild gs-dialog))
+               (lambda (w context info)
+                 (help-dialog "Granular scatter processor"
+ "This plugin generates an output audio stream by scattering short `grains' of sound from an input stream. It is possible to control the length and envelope of these grains, how far away from their source time grains may be scattered and the density (grains/sec) of the texture produced."))
+
+               (lambda (w c i)
+                 (set! gs-density initial-gs-density)
+                 (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* gs-density 1))))
+                 (set! gs-scatter initial-gs-scatter)
+                 (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (* gs-scatter 100))))
+                 (set! gs-grain-length initial-gs-grain-length)
+                 (XtSetValues (list-ref sliders 2) (list XmNvalue (inexact->exact (* gs-grain-length 100))))
+                 (set! gs-grain-attack initial-gs-grain-attack)
+                 (XtSetValues (list-ref sliders 3) (list XmNvalue (inexact->exact (* gs-grain-attack 100)))))))
+        (set! sliders
+              (add-sliders gs-dialog
+                           (list (list "density (grains/s)" 0 initial-gs-density 100
                                        (lambda (w context info)
-                                         (help-dialog "Granular scatter processor"
-                                                      "This plugin generates an output audio stream by scattering short `grains' of sound from an input stream. It is possible to control the length and envelope of these grains, how far away from their source time grains may be scattered and the density (grains/sec) of the texture produced."))
-                                       (lambda (w c i)
-                                         (set! gs-density 5)
-                                         (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* gs-density 1))))
-                                         (set! gs-scatter 1)
-                                         (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (* gs-scatter 100))))
-                                         (set! gs-grain-length 1)
-                                         (XtSetValues (list-ref sliders 2) (list XmNvalue (inexact->exact (* gs-grain-length 100))))
-                                         (set! gs-grain-attack 1)
-                                         (XtSetValues (list-ref sliders 3) (list XmNvalue (inexact->exact (* gs-grain-attack 100)))))))
-             (set! sliders
-                   (add-sliders gs-dialog
-                                (list (list "density (grains/s)" 0 5 100
-                                            (lambda (w context info)
-                                              (set! gs-density (/ (.value info) 1)))
-                                            1)
-                                      (list "scatter" 0 1 5
-                                            (lambda (w context info)
-                                              (set! gs-scatter (/ (.value info) 100)))
-                                            100)
- 				      (list "grain length (s)" 0 1 5
-                                            (lambda (w context info)
-                                              (set! gs-grain-length (/ (.value info) 100)))
-                                            100)
-                                      (list "grain attack (s)" 0 1 5
-                                            (lambda (w context info)
-                                              (set! gs-grain-attack (/ (.value info) 100)))
-                                            100))))))
-       (activate-dialog gs-dialog))))
+                                         (set! gs-density (/ (.value info) 1)))
+                                       1)
+                                 (list "scatter" 0 initial-gs-scatter 5
+                                       (lambda (w context info)
+                                         (set! gs-scatter (/ (.value info) 100)))
+                                       100)
+                                 (list "grain length (s)" 0 initial-gs-grain-length 5
+                                       (lambda (w context info)
+                                         (set! gs-grain-length (/ (.value info) 100)))
+                                       100)
+                                 (list "grain attack (s)" 0 initial-gs-grain-attack 5
+                                       (lambda (w context info)
+                                         (set! gs-grain-attack (/ (.value info) 100)))
+                                       100))))
+        (add-target (XtParent (car sliders))
+                    (lambda (target) (set! gs-target target))
+                    (lambda (truncate) (set! gs-truncate truncate)))))
 
-      (let ((child (XtCreateManagedWidget "Granular scatter processor" xmPushButtonWidgetClass ladspa-delay-menu
-                                           (list XmNbackground (basic-color)))))
-        (XtAddCallback child XmNactivateCallback
-                        (lambda (w c i)
-                          (post-gs-dialog))))
+  (activate-dialog gs-dialog))
+
+(let ((child (XtCreateManagedWidget "Granular scatter processor" xmPushButtonWidgetClass ladspa-delay-menu
+                                    (list XmNbackground (basic-color)))))
+  (XtAddCallback child XmNactivateCallback
+                 (lambda (w c i)
+                   (post-gs-dialog)))
+  (set! ladspa-delay-menu-list
+        (cons (lambda ()
+                (let ((new-label (format #f "Granular scatter processor (~1,2D ~1,2D ~1,2D ~1,2D)" gs-density gs-scatter gs-grain-length gs-grain-attack)))
+                  (change-label child new-label)))
+              ladspa-delay-menu-list)))
 
 
-;;; Tape delay
+
+;;; LADSPA Tape delay
 ;;;
 
 (define tape-delay-tape-speed 1)
@@ -499,27 +646,31 @@
 (define tape-delay-tap-4-level 0)
 (define tape-delay-dialog #f)
 (define tape-delay-label "Tape delay")
+(define tape-delay-target 'sound)
+(define tape-delay-truncate #t)
+(define tape-delay-menu-widget #f)
 
-(define (cp-tape-delay)
-   (apply-ladspa (make-sample-reader (cursor))
-      (list "tape_delay_1211" "tapeDelay" tape-delay-tape-speed tape-delay-dry-level tape-delay-tap-1-distance tape-delay-tap-1-level tape-delay-tap-2-distance tape-delay-tap-2-level tape-delay-tap-3-distance tape-delay-tap-3-level tape-delay-tap-4-distance tape-delay-tap-4-level)
-         (- (frames) (cursor))
-         "tape delay"))
 
-(if (and (provided? 'snd-ladspa)
-         (provided? 'xm))
-  (begin
+(define (post-tape-delay-dialog)
+  (if (not tape-delay-dialog)
+      ;; if tape-delay-dialog doesn't exist, create it
+      (let ((sliders '()))
 
-    (define (post-tape-delay-dialog)
-       (if (not (Widget? tape-delay-dialog))
-           (let ((sliders '()))
-             (set! tape-delay-dialog
-                   (make-effect-dialog "tape delay ladspa plugin"
-                                       (lambda (w context info) (cp-tape-delay))
-                                       (lambda (w context info) (XtUnmanageChild tape-delay-dialog))
-                                       (lambda (w context info)
-                                         (help-dialog "Tape delay"
-                                                      "Correctly models the tape motion and some of the smear effect, but there is no simulation for the head saturation yet. The way the tape accelerates and decelerates gives a nicer delay effect for many purposes."))
+        (set! tape-delay-dialog
+              (make-effect-dialog
+               tape-delay-label
+               (lambda (w context info)
+                 (apply-ladspa-over-target-with-sync
+                  (list "tape_delay_1211" "tapeDelay" tape-delay-tape-speed tape-delay-dry-level tape-delay-tap-1-distance tape-delay-tap-1-level tape-delay-tap-2-distance tape-delay-tap-2-level tape-delay-tap-3-distance tape-delay-tap-3-level tape-delay-tap-4-distance tape-delay-tap-4-level)
+                  tape-delay-target
+                  "tape delay"
+                  (and tape-delay-truncate
+                       (* 4 tape-delay-tap-1-distance))))
+               (lambda (w context info) (XtUnmanageChild tape-delay-dialog)) ; not needed in new-effects.scm version
+
+               (lambda (w context info)
+                 (help-dialog "Tape delay" "Correctly models the tape motion and some of the smear effect, but there is no simulation for the head saturation yet. The way the tape accelerates and decelerates gives a nicer delay effect for many purposes."))
+
                                        (lambda (w c i)
                                          (set! tape-delay-tape-speed 1)
                                          (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* tape-delay-tape-speed 100))))
@@ -551,7 +702,7 @@
                                             (lambda (w context info)
                                               (set! tape-delay-dry-level (/ (.value info) 1)))
                                             1)
- 				      (list "tap 1 distance (inches)" 0 0 4
+                                      (list "tap 1 distance (inches)" 0 0 4
                                             (lambda (w context info)
                                               (set! tape-delay-tap-1-distance (/ (.value info) 100)))
                                             100)
@@ -582,14 +733,25 @@
                                       (list "tap 4 level (dB)" -70 0 0
                                             (lambda (w context info)
                                               (set! tape-delay-tap-4-level (/ (.value info) 1)))
-                                            1))))))
-       (activate-dialog tape-delay-dialog))))
+                                            1))))
+        (add-target (XtParent (car sliders))
+                    (lambda (target) (set! tape-delay-target target))
+                    (lambda (truncate) (set! tape-delay-truncate truncate)))))
 
-      (let ((child (XtCreateManagedWidget "Tape delay" xmPushButtonWidgetClass ladspa-delay-menu
-                                           (list XmNbackground (basic-color)))))
-        (XtAddCallback child XmNactivateCallback
-                        (lambda (w c i)
-                          (post-tape-delay-dialog))))
+ (activate-dialog tape-delay-dialog))
+
+(let ((child (XtCreateManagedWidget "Tape delay" xmPushButtonWidgetClass ladspa-delay-menu
+                                    (list XmNbackground (basic-color)))))
+  (XtAddCallback child XmNactivateCallback
+                 (lambda (w c i)
+                   (post-tape-delay-dialog)))
+  (set! ladspa-delay-menu-list
+        (cons (lambda ()
+                (let ((new-label (format #f "Tape delay (~1,2D ~1,2D ~1,2D ~1,2D ~1,2D ~1,2D ~1,2D ~1,2D ~1,2D ~1,2D)" tape-delay-tape-speed tape-delay-dry-level tape-delay-tap-1-distance tape-delay-tap-1-level tape-delay-tap-2-distance tape-delay-tap-2-level tape-delay-tap-3-distance tape-delay-tap-3-level tape-delay-tap-4-distance tape-delay-tap-4-level)))
+                  (change-label child new-label)))
+              ladspa-delay-menu-list)))
+
+
 
 ;;; DISTORTION EFFECTS
 ;;;
