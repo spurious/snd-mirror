@@ -4383,6 +4383,12 @@ Float mus_frame_set(mus_any *uf, int chan, Float val)
 
 /* ---------------- mixer ---------------- */
 
+/* other possibilities: 
+ *    mixer_scale ["scalar product"] (or a generic mus_scale? -- frame, et al?)
+ *    mixer_transpose, mixer_invert?, mixer_determinant?? mixer_rotate?
+ *    lie_product??, jordan_product??
+ */
+
 typedef struct {
   mus_any_class *core;
   int chans;

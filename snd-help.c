@@ -390,10 +390,6 @@ void about_snd_help(void)
 4-Jun:   added add-colormap, delete-colormap, colormap-size, colormap-name, changed colormap-ref\n\
          removed 2 previously built-in colormaps, added rainbow colormap, default colormap is 0\n\
 1-Jun:   read-ascii in examp.scm.\n\
-27-May:  cursor-update-interval.\n\
-25-May:  removed stop-playing-region-hook, stop-playing-channel-hook, before-apply-hook\n\
-         added stop-function arg to play, play-and-wait, play-selection, play-region, add-player\n\
-21-May:  --with-doc-dir configuration switch.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

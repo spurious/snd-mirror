@@ -5,15 +5,15 @@
 ;; The hobbit-compile macro also works around some bugs in hobbit.
 ;; 
 ;; The compiled code may infact run a lot slower compaired to when being interpreted. (but usually not)
-;; For simple mathematical computations, code seems to run between 1.5 and 300 times faster than when being interpreted.
-;; The simplest kind of fibonacci function runs between 250-300 times faster when compiled:
+;; For simple mathematical computations, code seems to run between 1.5 and 80 times faster than when being interpreted.
+;; The simplest kind of fibonacci function runs up to 80 times faster when compiled:
 ;;(define (fib n)
 ;;  (cond ((%= n 0) 0)
 ;;	  ((%= n 1) 1)
 ;;	  (else (%+ (fib (%- n 1))
 ;;		    (fib (%- n 2))))))
 ;;
-;; The produced code might also run faster if the variable "hobbit-add-numargs-property" is set to #f.
+;; Some code also runs a lot faster if the variable "hobbit-add-numargs-property" is set to #f.
 ;; However, "hobbit-add-numargs-property" must be set to #t for Snd to know the number of arguments
 ;; a function inside a compiled closure takes. This is necesarry when making callbacks to any of the built-
 ;; in functions in Snd.
@@ -119,7 +119,8 @@
 ;;  #t)
 
 (define (hobbit-fix-vars term varlist)
-
+  (define newlambda (cons 'hf_newlambda__ #t))
+  
   (define get-varname car)
   (define get-newname cadr)
   (define get-numaccess caddr)
@@ -132,15 +133,11 @@
     (list name (gensym (string-append "hf_" (symbol->string name) "_")) 0))
 
   (define (add-varlist! nameelement)
-    (set! varlist (cons (if (symbol? nameelement)
-			    (cons nameelement #t)
-			    nameelement)
-			varlist)))
-
+    (set! varlist (cons nameelement varlist)))
 
 
   (if (not varlist)
-      (set! varlist (list (cons 'newlambda #t))))
+      (set! varlist (list newlambda)))
 
 
 
@@ -157,15 +154,18 @@
    ;; A variable
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ((symbol? term)
-    (if (symbol? term)
-	(let* ((m (member (cons 'newlambda #t) varlist))
-	       (a (if m (assq term m) #f)))
+    (call-with-values (lambda () (break (lambda (a) (eq? a newlambda))
+					varlist))
+      (lambda (local nonlocal)
+	(let ((a (assq term local)))
 	  (if a
-	      (set-numaccess! a 1+))
-	  (let ((a (assq term varlist)))
-	    (if a
-		(get-newname a)
-		term)))))
+	      (get-newname a)
+	      (let ((a (assq term nonlocal)))
+		(if a
+		    (begin
+		      (set-numaccess! a 1+)
+		      (get-newname a))
+		    term)))))))
 
 
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -184,7 +184,7 @@
    ;; (lambda ...)
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ((eq? 'lambda (car term))
-    (add-varlist! 'newlambda)
+    (add-varlist! newlambda)
     (letrec ((namelist '())
 	     (varlistadd (lambda (r)
 			   (cond ((pair? r)
@@ -241,25 +241,29 @@
 	(append (list type)
 		(list newvardecls)
 		(hobbit-fix-vars body varlist)))))
-   
+
 
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;; (set! ...)
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ((eq? 'set! (car term))
-    (let* ((myvarlist (take varlist (list-index (lambda (t) (equal? t (cons 'newlambda #t))) varlist)))
-	   (a (assq (cadr term) myvarlist)))
-      (if (and a
-	       (> (get-numaccess a) 0))
-	  (begin
-	    (set-numaccess! a 0)
-	    (list 'apply (list 'lambda '() 
-			       (list 'set! (get-newname a)
-				     (hobbit-fix-vars (caddr term) varlist)))
-		  '()))
-	  (map-in-order (lambda (t) (hobbit-fix-vars t varlist))
-			term))))
-   
+    (call-with-values (lambda () (break (lambda (a) (eq? a newlambda))
+					varlist))
+      (lambda (local nonlocal)
+	(let ((a (assq (cadr term) local)))
+	  (if (and a
+		   (> (get-numaccess a) 0))
+	      (begin
+		(set-numaccess! a 0)
+		(list 'apply
+		      (list 'lambda '() 
+			    (list 'set!
+				  (get-newname a)
+				  (hobbit-fix-vars (caddr term) varlist)))
+		      '()))
+	      (map-in-order (lambda (t) (hobbit-fix-vars t varlist))
+			    term))))))
+
 
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;; (...)
@@ -321,7 +325,7 @@
    ((eq? 'quote (car term)) term)
    ((eq? 'lambda (car term))
     (append (list 'lambda (cadr term))
-	    (car (hobbit-fix-replace-define-with-letrec (list (cddr term))))))
+	    (map hobbit-fix-replace-define-with-letrec (cddr term))))
    (else
     (map hobbit-fix-replace-define-with-letrec
 	 (call-with-values (lambda () (break (lambda (t) (and (pair? t)

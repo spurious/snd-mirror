@@ -23,6 +23,7 @@
 
 
 
+
 ;;##############################################################
 ;; Various functions
 ;;##############################################################
@@ -43,6 +44,7 @@
 	      (snd-error (format #f "gui.scm needs the xm module: ~A" hxm))
 	      (dlinit hxm "init_xm")))))
     
+
 
 
 (define-macro (c-load-from-path filename)
@@ -384,7 +386,7 @@ void das_init(){
 (define-macro (-> object method . args)
   (if (number? object)
       `(list-set! ,method ,object ,(car args))
-      (let ((funcname (symbol-append '-> method (gensym))))
+      (let ((funcname (gensym (string-append "->___" (symbol->string method)))))
 	(define-toplevel funcname
 	  (let ((func #f)
 		(lastobj #f))
@@ -568,16 +570,25 @@ void das_init(){
 
 
 
-
 ;;##############################################################
 ;; Mouse-hooks for the channel widgets.
 ;;##############################################################
 
+(define c-ismoved #f)
 
 (define mouse-button-press-hook (make-hook 4))
 (define mouse-move-hook (make-hook 4))
 (define mouse-drag2-hook (make-hook 4))
 (define mouse-button-release-hook (make-hook 4))
+
+;;(define mouse-click-hook-old mouse-click-hook)
+;;(define mouse-click-hook (make-hook 7))
+;;
+;;(add-hook! mouse-click-hook-old
+;;	   (lambda args
+;;	     (c-display args)
+;;	     (if (and #f (not c-ismoved))
+;;		 (apply run-hook (cons mouse-click-hook args)))))
 
 
 (add-hook! after-open-hook
@@ -598,9 +609,11 @@ void das_init(){
 		     (g_signal_connect w "button_press_event"
 				       (lambda (w e i)
 					 (set! ispressed #t)
+					 (set! c-ismoved #f)
 					 (run-hook mouse-button-press-hook snd (.x (GDK_EVENT_BUTTON e)) (.y (GDK_EVENT_BUTTON e)) (.state (GDK_EVENT_BUTTON e)))))
 		     (g_signal_connect w "motion_notify_event"
 				       (lambda (w e i)
+					 (set! c-ismoved #t)
 					 (let ((args (if (.is_hint (GDK_EVENT_MOTION e))
 							 (cons snd (cdr (gdk_window_get_pointer (.window e))))
 							 (list snd (.x (GDK_EVENT_BUTTON e)) (.y (GDK_EVENT_BUTTON e)) (.state (GDK_EVENT_BUTTON e))))))
@@ -616,6 +629,8 @@ void das_init(){
 
 
 (define mouse-click2-hook (make-hook 4))
+
+;)
 
 
 ;;##############################################################
@@ -808,11 +823,11 @@ void das_init(){
       (for-each-node (lambda (i x1 y1 x2 y2)
 		       (if (and (not foundit) (>= x x1) (<= x x2))
 			   (begin
-			     (set! newnodes (cons (list x1 x2) (list x y) newnodes))
+			     (set! newnodes (cons (list x1 x2) newnodes))
 			     (set! foundit #t))
 			   (set! newnodes (cons (list x1 x2) newnodes)))
-		       (if (= i (- (length nodes 1)))
-			   (set! newnodes (cons (list y1 y2))))))
+		       (if (= i (- (length nodes) 1))
+			   (set! newnodes (cons (list y1 y2) newnodes)))))
       (set! nodes (reverse newnodes))))
 
   (define ispressed #f)
@@ -868,7 +883,11 @@ void das_init(){
 	  submenu))))
 
 
-(define* (menu-add top-menu menu-label callback #:optional position)
+
+ (define (blabb w d)
+   (c-display w))
+
+ (define* (menu-add top-menu menu-label callback #:optional position)
   (if (integer? top-menu)
       (if position
 	  (add-to-menu top-menu menu-label callback position)
@@ -877,13 +896,17 @@ void das_init(){
 	  (let ((child (gtk_menu_item_new_with_label menu-label)))
 	    (gtk_menu_shell_append (GTK_MENU_SHELL top-menu) child)
 	    (gtk_widget_show child)
+	    ;(set-procedure-property! das 'arity '(2 0 #f))
+	    ;;(set-procedure-properties! das '((arity 2 0 #f)))
+	    ;;(c-display "prop: " (procedure-properties das))
 	    (g_signal_connect_closure_by_id 
 	     (GPOINTER child)
 	     (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
-	     (g_cclosure_new 
-	      (lambda (w d)
-		(callback))
-	      #f #f)
+	     (g_cclosure_new (lambda (w d)
+			       (callback))
+					;das
+					; (callback))
+			     #f #f)
 	     #f)
 	    child)
 	  (let ((child (XtCreateManagedWidget menu-label xmPushButtonWidgetClass top-menu
@@ -1213,7 +1236,7 @@ void das_init(){
 	  (g_signal_connect_closure_by_id (GPOINTER new-dialog)
 					  (g_signal_lookup "delete_event" (G_OBJECT_TYPE (GTK_OBJECT new-dialog)))
 					  0 (g_cclosure_new (lambda (w ev data)
-							      (if deletefunc (deletefunc new-dialog))
+							      (if deletefunc (deletefunc))
 							      (gtk_widget_hide new-dialog)
 							      (focus-widget (list-ref (channel-widgets (selected-sound) 0) 0)))
 							    #f #f) #f))
@@ -1227,7 +1250,7 @@ void das_init(){
 					      XmNbackground          (basic-color)
 					      XmNtransient           #f)))
 	  (XtAddCallback new-dialog XmNcancelCallback (lambda (w c i)
-							(if deletefunc (deletefunc new-dialog))
+							(if deletefunc (deletefunc))
 							(XtUnmanageChild new-dialog)
 							(focus-widget (list-ref (channel-widgets (selected-sound) 0) 0))))
 	  (XmStringFree titlestr)))
@@ -1266,6 +1289,7 @@ void das_init(){
 
 
 
+
 ;;##############################################################
 ;; GUI test
 ;;##############################################################
@@ -1291,4 +1315,9 @@ void das_init(){
 
 
 
+
+
     
+
+
+
