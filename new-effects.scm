@@ -15,6 +15,12 @@
 (if (not (defined? 'rotate-phase))
     (load-from-path "dsp.scm"))
 
+
+(define (current-screen)
+  "(current-screen) returns the current X screen number of the current display"
+  (DefaultScreenOfDisplay 
+    (XtDisplay (cadr (main-widgets)))))
+
 (define use-combo-box-for-fft-size #f) ; cross-synthesis fft size: radio-buttons or combo-box choice
 
 (define effects-list '()) ; menu labels are updated to show current settings
