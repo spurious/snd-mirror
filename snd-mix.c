@@ -2931,10 +2931,11 @@ static Float next_track_sample(track_fd *fd)
   #define MUS_CONVERT(samp) MUS_SAMPLE_TO_SHORT(MUS_FLOAT_TO_SAMPLE(samp))
 #endif
 
-static int play_track(snd_state *ss, chan_info **ucps, int chans, int track_num)
+static int play_track(snd_state *ss, chan_info **ucps, int chans, int track_num, off_t beg, int from_gui)
 {
   track_fd **fds;
   chan_info **cps;
+  snd_info *sp;
   chan_info *locp;
   int playfd, i, j, k, n, samps, chan = 0, happy = FALSE, need_free = FALSE, format, datum_bytes, outchans, frames;
 #if HAVE_ALSA
@@ -2995,7 +2996,7 @@ static int play_track(snd_state *ss, chan_info **ucps, int chans, int track_num)
 #endif
   for (i = 0; i < chans; i++)
     {
-      fds[i] = init_track_reader(cps[i], track_num, need_free, 0);
+      fds[i] = init_track_reader(cps[i], track_num, need_free, beg);
       if (fds[i]) /* perhaps bad track number? */
 	for (n = 0; n < fds[i]->mixes; n++)
 	  {
@@ -3005,8 +3006,10 @@ static int play_track(snd_state *ss, chan_info **ucps, int chans, int track_num)
     }
   if (samps > 0)
     {
+      sp = cps[0]->sound;
+      clear_minibuffer(sp);
       playfd = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss), 
-				     SND_SRATE(cps[0]->sound), 
+				     SND_SRATE(sp), 
 				     outchans, 
 				     format, 
 				     dac_size(ss));
@@ -3030,10 +3033,10 @@ static int play_track(snd_state *ss, chan_info **ucps, int chans, int track_num)
 	      mus_audio_write(playfd, (char *)buf, frames * datum_bytes * chans);
 #endif
 	      check_for_event(ss);
-	      if ((ss->stopped_explicitly) || (mix_play_stopped()))
+	      if ((ss->stopped_explicitly) || ((from_gui) && (mix_play_stopped())))
 		{
 		  ss->stopped_explicitly = FALSE;
-		  report_in_minibuffer(cps[0]->sound, _("stopped"));
+		  report_in_minibuffer(sp, _("stopped"));
 		  break;
 		}
 	    }
@@ -3064,9 +3067,10 @@ void reflect_mix_edit(chan_info *input_cp, const char *origin)
   remix_file(md, origin);
 }
 
-static void play_mix(snd_state *ss, mix_info *md)
+static void play_mix(snd_state *ss, mix_info *md, off_t beg, int from_gui)
 {
   chan_info *cp;
+  snd_info *sp;
   mix_fd *mf;
   console_state *cs;
 #if HAVE_ALSA
@@ -3080,6 +3084,7 @@ static void play_mix(snd_state *ss, mix_info *md)
   off_t i, samps;
   if (md == NULL) return;
   cp = md->cp;
+  sp = cp->sound;
   cs = md->current_cs;
   samps = cs->len;
   format = mus_audio_compatible_format(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss));
@@ -3101,16 +3106,18 @@ static void play_mix(snd_state *ss, mix_info *md)
 #endif
 
   play_fd = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss),
-				  SND_SRATE(cp->sound),
+				  SND_SRATE(sp),
 				  outchans, 
 				  format, 
 				  dac_size(ss));
   if (play_fd != -1)
     {
-      mf = init_mix_read(md, CURRENT_MIX, 0);
+      clear_minibuffer(sp);
+      mf = init_mix_read(md, CURRENT_MIX, beg);
       if (mf)
 	{
 	  ss->stopped_explicitly = FALSE;
+	  samps -= beg;
 	  for (i = 0; i < samps; i += frames)
 	    {
 #if HAVE_ALSA
@@ -3124,10 +3131,10 @@ static void play_mix(snd_state *ss, mix_info *md)
 	      mus_audio_write(play_fd, (char *)buf, frames * datum_bytes);
 #endif
 	      check_for_event(ss);
-	      if ((ss->stopped_explicitly) || (mix_play_stopped()))
+	      if ((ss->stopped_explicitly) || ((from_gui) && (mix_play_stopped())))
 		{
 		  ss->stopped_explicitly = FALSE;
-		  report_in_minibuffer(cp->sound, _("stopped"));
+		  report_in_minibuffer(sp, _("stopped"));
 		  break;
 		}
 	    }
@@ -3146,7 +3153,7 @@ static void play_mix(snd_state *ss, mix_info *md)
 
 void mix_play_from_id(int mix_id)
 {
-  play_mix(get_global_state(), md_from_id(mix_id));
+  play_mix(get_global_state(), md_from_id(mix_id), 0, TRUE);
 }
 
 void track_play_from_id(int mix_id)
@@ -3156,8 +3163,8 @@ void track_play_from_id(int mix_id)
   md = md_from_id(mix_id);
   ss = get_global_state();
   if (md->track != 0)
-    play_track(ss, NULL, 0, md->track);
-  else play_mix(ss, md);
+    play_track(ss, NULL, 0, md->track, 0, TRUE);
+  else play_mix(ss, md, 0, TRUE);
 }
 
 static console_state *cs_from_id(int n)
@@ -4449,19 +4456,23 @@ static XEN g_free_track_sample_reader(XEN obj)
   return(xen_return_first(XEN_FALSE, obj));
 }
 
-static XEN g_play_track(XEN num, XEN snd, XEN chn)
+static XEN g_play_track(XEN num, XEN snd, XEN chn, XEN beg)
 {
-  #define H_play_track "(" S_play_track " track (snd #f) (chn #f)): play track"
+  #define H_play_track "(" S_play_track " track (snd #f) (chn #f) (beg 0)): play track. If 'snd' is #t, \
+play all the mixes in the track, even if in different sounds.  'beg' is where to start playing within the track."
   chan_info *cp = NULL;
   int err;
+  off_t samp;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(num), num, XEN_ARG_1, S_play_track, "an integer");
   /* in this case if snd=#t, play all associated mixes in all chans */
+  ASSERT_SAMPLE_TYPE(S_play_track, beg, XEN_ARG_4);
+  samp = beg_to_sample(beg, S_play_track);
   if (XEN_TRUE_P(snd))
-    err = play_track(get_global_state(), NULL, 0, XEN_TO_C_INT_OR_ELSE(num, 0));
+    err = play_track(get_global_state(), NULL, 0, XEN_TO_C_INT_OR_ELSE(num, 0), samp, FALSE);
   else 
     {
       cp = get_cp(snd, chn, S_play_track);
-      err = play_track(cp->state, &cp, 1, XEN_TO_C_INT_OR_ELSE(num, 0));
+      err = play_track(cp->state, &cp, 1, XEN_TO_C_INT_OR_ELSE(num, 0), samp, FALSE);
     }
   if (err == -1)
     XEN_ERROR(NO_SUCH_TRACK,
@@ -4470,15 +4481,18 @@ static XEN g_play_track(XEN num, XEN snd, XEN chn)
   return(num);
 }
 
-static XEN g_play_mix(XEN num)
+static XEN g_play_mix(XEN num, XEN beg)
 {
-  #define H_play_mix "(" S_play_mix " id): play mix"
+  #define H_play_mix "(" S_play_mix " id (beg 0)): play mix.  'beg' is where to start playing."
   mix_info *md;
+  off_t samp;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(num), num, XEN_ONLY_ARG, S_play_mix, "an integer");
   md = md_from_id(XEN_TO_C_INT(num));
   if (md == NULL)
     return(snd_no_such_mix_error(S_play_mix, num));
-  play_mix(md->ss, md); 
+  ASSERT_SAMPLE_TYPE(S_play_track, beg, XEN_ARG_4);
+  samp = beg_to_sample(beg, S_play_track);
+  play_mix(md->ss, md, samp, FALSE); 
   return(num);
 }
 
@@ -4619,8 +4633,8 @@ XEN_NARGIFY_1(g_next_track_sample_w, g_next_track_sample)
 XEN_NARGIFY_1(g_read_track_sample_w, g_read_track_sample)
 XEN_NARGIFY_1(g_free_track_sample_reader_w, g_free_track_sample_reader)
 XEN_NARGIFY_1(g_tf_p_w, g_tf_p)
-XEN_ARGIFY_1(g_play_mix_w, g_play_mix)
-XEN_ARGIFY_3(g_play_track_w, g_play_track)
+XEN_ARGIFY_2(g_play_mix_w, g_play_mix)
+XEN_ARGIFY_4(g_play_track_w, g_play_track)
 XEN_ARGIFY_1(g_mix_position_w, g_mix_position)
 XEN_NARGIFY_2(g_set_mix_position_w, g_set_mix_position)
 XEN_ARGIFY_1(g_mix_frames_w, g_mix_frames)
@@ -4756,8 +4770,8 @@ void g_init_mix(void)
   XEN_DEFINE_PROCEDURE(S_read_track_sample,        g_read_track_sample_w, 1, 0, 0,        H_read_track_sample);
   XEN_DEFINE_PROCEDURE(S_free_track_sample_reader, g_free_track_sample_reader_w, 1, 0, 0, H_free_track_sample_reader);
   XEN_DEFINE_PROCEDURE(S_track_sample_reader_p,    g_tf_p_w, 1, 0, 0,                     H_tf_p);
-  XEN_DEFINE_PROCEDURE(S_play_mix,                 g_play_mix_w, 0, 1, 0,                 H_play_mix);
-  XEN_DEFINE_PROCEDURE(S_play_track,               g_play_track_w, 1, 2, 0,               H_play_track);
+  XEN_DEFINE_PROCEDURE(S_play_mix,                 g_play_mix_w, 0, 2, 0,                 H_play_mix);
+  XEN_DEFINE_PROCEDURE(S_play_track,               g_play_track_w, 1, 3, 0,               H_play_track);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_position, g_mix_position_w, H_mix_position, S_setB S_mix_position, g_set_mix_position_w, 0, 1, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_frames, g_mix_frames_w, H_mix_frames, S_setB S_mix_frames, g_set_mix_frames_w, 0, 1, 2, 0);

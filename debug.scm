@@ -1,9 +1,5 @@
 (use-modules (ice-9 debug) (ice-9 optargs) (ice-9 format))
 
-;;; TODO: help dialog for stack/local environment
-;;;       similarly stack with click to show locals + args?
-;;;       or multi-level display stack|vars|local|expanded
-
 ;;; -------- backtrace --------
 
 (define *snd-port* (make-soft-port

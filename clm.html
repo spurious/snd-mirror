@@ -3559,7 +3559,7 @@ the same arguments -- it is smarter about which browser is used.
   <a name="ins-var"><em class=def>ins-var</em></a> (var &amp;optional ins-name)  return value of var in instrument ins-name
 </pre>
 
-<p>Except when running in just-lisp mode, each instrument has a variety of properties
+<p>Each instrument has a variety of properties
 the may occasionally be useful.</p>
 <pre>
   :c-version-number     lisp/C version to check for libclm conflicts
@@ -3568,7 +3568,7 @@ the may occasionally be useful.</p>
   :run-vars             run* variables
   :ins-args             complete arglist of the instrument (including initial values)
   :c-proc               name of c function called from lisp
-  :language             :c (or :lisp if just-lisp)
+  :language             :c (or :lisp)
   :c-file-name          file containing C source code for instrument
   :print-function       function used by describe-instrument
 </pre>

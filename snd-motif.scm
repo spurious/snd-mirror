@@ -2600,9 +2600,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		     (loc (cursor snd 0)))
 		(sound-data-set! data 0 loc var)
 		(if (time-graph? snd) (update-time-graph snd))
-		;; TODO: vardpy fft should probably not be updated(recalculated?) on every sample
 		;; TODO: also the spectrum x sliders are confusing -- should show entire window
-		;; TODO: some nice way to reset cursor to 0 upon new note
 		(if (transform-graph? snd) (update-transform-graph snd))
 		(if (= (+ loc 1) frames)
 		    (set! (cursor snd 0) 0)
@@ -2614,6 +2612,20 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		    (display-level widget)
 		    (XmUpdateDisplay (car widget)))))))
   var)
+
+(define (variable-display-reset widget)
+  ;; restart graphs -- this is intended for the start (or perhaps end) of a note
+  (if (list? widget)
+      (if (number? (car widget))
+	  ;; graph/spectrum
+	  (let* ((snd (car widget))
+		 (data (cadr widget))
+		 (frames (sound-data-length data)))
+	    (set! (cursor snd 0) 0)
+	    (do ((i 0 (1+ i)))
+		((= i frames))
+	      (sound-data-set! data 0 i 0.0))))))
+
 
 #!
 (define wid (make-variable-display "do-loop" "i*2" 'text))

@@ -296,7 +296,7 @@ void news_help(snd_state *ss)
 	    "\nRecent changes include:\n\
 \n\
 1-July:  added optional 'nth' arg to find-sound.\n\
-         added optional begin time to make-track-sample-reader.\n\
+         added optional begin time to make-track-sample-reader, play-track, and play-mix.\n\
 30-Jun:  snd 6.10.\n\
 24-Jun:  moved mix-name and mix-name->id to snd6.scm.\n\
 23-Jun:  mix-amp-env-changed-hook.\n\
@@ -792,7 +792,6 @@ automatically translated to Sun 16-bit, then read/write:\n\
      NIST shortpack, HCOM, Intel, IBM, and Oki (Dialogic) ADPCM, \n\
      G721, G723_24, G723_40, MIDI sample dump\n\
 \n\
-'Linear' here means 2's complement integer.\n\
 The files can have any number of channels.\n\
 Data can be either big or little endian.\n\
 For MPEG and OGG translation, see the code in examp.scm.\n\

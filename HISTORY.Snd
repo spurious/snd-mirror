@@ -1,7 +1,7 @@
 Snd change log
 
   1-July:    added optional 'nth' arg to find-sound.
-             added optional begin time to make-track-sample-reader.
+             added optional begin time to make-track-sample-reader, play-track, and play-mix.
   30-Jun:    snd 6.10.
   24-Jun:    moved mix-name and mix-name->id to snd6.scm.
   23-Jun:    mix-amp-env-changed-hook.

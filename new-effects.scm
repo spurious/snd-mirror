@@ -889,8 +889,6 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
   
   (XtAddCallback filter-cascade XmNcascadingCallback (lambda (w c i) (update-label filter-menu-list)))
   
-;;; TODO: these filters don't notice the 'marks target yet
-  
 ;;; -------- Butterworth band-pass filter
   
   (let ((band-pass-freq 1000)
@@ -909,11 +907,13 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 		  (make-effect-dialog 
 		   band-pass-label
 		   (lambda (w context info)
-		     (if (eq? band-pass-target 'sound)
-			 (filter-sound (make-butter-band-pass band-pass-freq band-pass-bw))
-			 (if (eq? band-pass-target 'selection)
-			     (filter-selection (make-butter-band-pass band-pass-freq band-pass-bw)))))
-		   
+		     (let ((flt (make-butter-band-pass band-pass-freq band-pass-bw)))
+		       (if (eq? band-pass-target 'sound)
+			   (filter-sound flt)
+			   (if (eq? band-pass-target 'selection)
+			       (filter-selection flt)
+			       (let ((ms (plausible-mark-samples)))
+				 (clm-channel flt (car ms) (1+ (- (cadr ms) (car ms)))))))))
 		   (lambda (w context info)
 		     (help-dialog "Band-pass filter"
 				  "Butterworth band-pass filter.\n\ Move the sliders to change the center frequency and bandwidth."))
@@ -965,10 +965,13 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 		  (make-effect-dialog 
 		   notch-label
 		   (lambda (w context info) 
-		     (if (eq? notch-target 'sound)
-			 (filter-sound (make-butter-band-reject notch-freq notch-bw))
-			 (if (eq? notch-target 'selection)
-			     (filter-selection (make-butter-band-reject notch-freq notch-bw)))))
+		     (let ((flt (make-butter-band-reject notch-freq notch-bw)))
+		       (if (eq? notch-target 'sound)
+			   (filter-sound flt)
+			   (if (eq? notch-target 'selection)
+			       (filter-selection flt)
+			       (let ((ms (plausible-mark-samples)))
+				 (clm-channel flt (car ms) (1+ (- (cadr ms) (car ms)))))))))
 		   (lambda (w context info)
 		     (help-dialog "Band-reject filter"
 				  "Butterworth band-reject filter.\n\ Move the sliders to change the center frequency and bandwidth."))
@@ -1018,10 +1021,13 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 		  (make-effect-dialog 
 		   high-pass-label
 		   (lambda (w context info)
-		     (if (eq? high-pass-target 'sound)
-			 (filter-sound (make-butter-high-pass high-pass-freq))
-			 (if (eq? high-pass-target 'selection)
-			     (filter-selection (make-butter-high-pass high-pass-freq)))))
+		     (let ((flt (make-butter-high-pass high-pass-freq)))
+		       (if (eq? high-pass-target 'sound)
+			   (filter-sound flt)
+			   (if (eq? high-pass-target 'selection)
+			       (filter-selection flt)
+			       (let ((ms (plausible-mark-samples)))
+				 (clm-channel flt (car ms) (1+ (- (cadr ms) (car ms)))))))))
 		   (lambda (w context info)
 		     (help-dialog "High-pass filter"
 				  "Butterworth high-pass filter.\n\ Move the slider to change the high-pass cutoff frequency."))
@@ -1066,10 +1072,13 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 		  (make-effect-dialog 
 		   low-pass-label
 		   (lambda (w context info)
-		     (if (eq? low-pass-target 'sound)
-			 (filter-sound (make-butter-low-pass low-pass-freq))
-			 (if (eq? low-pass-target 'selection)
-			     (filter-selection (make-butter-low-pass low-pass-freq)))))
+		     (let ((flt (make-butter-low-pass low-pass-freq)))
+		       (if (eq? low-pass-target 'sound)
+			   (filter-sound flt)
+			   (if (eq? low-pass-target 'selection)
+			       (filter-selection flt)
+			       (let ((ms (plausible-mark-samples)))
+				 (clm-channel flt (car ms) (1+ (- (cadr ms) (car ms)))))))))
 		   (lambda (w context info)
 		     (help-dialog "Low-pass filter"
 				  "Butterworth low-pass filter.\n\ Move the slider to change the low-pass cutoff frequency."))
