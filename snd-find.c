@@ -63,8 +63,7 @@ static int run_global_search (snd_state *ss, gfd *g)
   return(0);
 }
 
-#define SEARCH_NO_LUCK_SIZE 128
-static char search_no_luck[SEARCH_NO_LUCK_SIZE];
+static char search_no_luck[PRINT_BUFFER_SIZE];
 
 char *global_search(snd_state *ss, int direction)
 {
@@ -78,7 +77,7 @@ char *global_search(snd_state *ss, int direction)
   chan_info *cp;
   if (ss->search_in_progress) 
     {
-      mus_snprintf(search_no_luck, SEARCH_NO_LUCK_SIZE, "search in progress");
+      mus_snprintf(search_no_luck, PRINT_BUFFER_SIZE, "search in progress");
       return(search_no_luck);
     }
   ss->search_in_progress = 1;
@@ -108,8 +107,8 @@ char *global_search(snd_state *ss, int direction)
       if (fd->n == -1)
 	{
 	  if (ss->stopped_explicitly)
-	    mus_snprintf(search_no_luck, SEARCH_NO_LUCK_SIZE, "search stopped");
-	  else mus_snprintf(search_no_luck, SEARCH_NO_LUCK_SIZE, "%s: not found", ss->search_expr);
+	    mus_snprintf(search_no_luck, PRINT_BUFFER_SIZE, "search stopped");
+	  else mus_snprintf(search_no_luck, PRINT_BUFFER_SIZE, "%s: not found", ss->search_expr);
 	  /* printed by find_ok_callback in snd-xmenu.c */
 	}
       else
@@ -350,8 +349,7 @@ static SCM g_set_search_procedure(SCM snd, SCM proc)
       sp = get_sp(snd);
       if (sp)
 	{
-	  if ((sp->search_proc) && 
-	      (PROCEDURE_P(sp->search_proc))) 
+	  if (PROCEDURE_P(sp->search_proc))
 	    snd_unprotect(sp->search_proc);
 	  sp->search_proc = SCM_UNDEFINED;
 	  error = procedure_ok(proc, 1, 0, "find", "find procedure", 1);
@@ -376,8 +374,7 @@ static SCM g_set_search_procedure(SCM snd, SCM proc)
   else 
     {
       ss = get_global_state();
-      if ((ss->search_proc) && 
-	  (PROCEDURE_P(ss->search_proc))) 
+      if (PROCEDURE_P(ss->search_proc))
 	snd_unprotect(ss->search_proc);
       ss->search_proc = SCM_UNDEFINED;
       error = procedure_ok(snd, 1, 0, "find", "find procedure", 1);

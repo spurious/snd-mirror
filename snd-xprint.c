@@ -5,8 +5,7 @@
 static Widget file_print_dialog = NULL;
 static Widget file_print_name = NULL;
 static Widget file_print_eps_or_lpr = NULL;
-#define PRINT_STRING_SIZE 256
-static char print_string[PRINT_STRING_SIZE];
+static char print_string[PRINT_BUFFER_SIZE];
 
 static void file_print_help_callback(Widget w, XtPointer context, XtPointer info)
 {
@@ -23,7 +22,7 @@ static void file_print_cancel_callback(Widget w, XtPointer context, XtPointer in
 static int lpr (char *name)
 {
   /* make some desultory effort to print the file */
-  mus_snprintf(print_string, PRINT_STRING_SIZE, "lpr %s", name);
+  mus_snprintf(print_string, PRINT_BUFFER_SIZE, "lpr %s", name);
   return(system(print_string));
 }
 
@@ -44,7 +43,7 @@ static void file_print_ok_callback(Widget w, XtPointer context, XtPointer info)
 	{
 	  plab = XmStringCreate(STR_Stop, XmFONTLIST_DEFAULT_TAG);
 	  nsp = any_selected_sound(ss);
-	  mus_snprintf(print_string, PRINT_STRING_SIZE, "printing %s", nsp->shortname);
+	  mus_snprintf(print_string, PRINT_BUFFER_SIZE, "printing %s", nsp->shortname);
 	  slab = XmStringCreate(print_string, XmFONTLIST_DEFAULT_TAG);
 	  XtVaSetValues(file_print_dialog, 
 			XmNokLabelString, plab, 
@@ -85,7 +84,7 @@ static void file_print_ok_callback(Widget w, XtPointer context, XtPointer info)
   if (ss->print_choice == PRINT_SND)
     {
       plab = XmStringCreate(STR_Print, XmFONTLIST_DEFAULT_TAG);
-      mus_snprintf(print_string, PRINT_STRING_SIZE, "print %s", nsp->shortname);
+      mus_snprintf(print_string, PRINT_BUFFER_SIZE, "print %s", nsp->shortname);
       slab = XmStringCreate(print_string, XmFONTLIST_DEFAULT_TAG);
       XtVaSetValues(file_print_dialog, 
 		    XmNokLabelString, plab, 
@@ -111,7 +110,7 @@ void File_Print_Callback(Widget w, XtPointer context, XtPointer info)
     {
       nsp = any_selected_sound(ss);
       if (!nsp) return;
-      mus_snprintf(print_string, PRINT_STRING_SIZE, "print %s", nsp->shortname);
+      mus_snprintf(print_string, PRINT_BUFFER_SIZE, "print %s", nsp->shortname);
       xmstr4 = XmStringCreate(print_string, XmFONTLIST_DEFAULT_TAG);
     }
   else xmstr4 = XmStringCreate(STR_print_env, XmFONTLIST_DEFAULT_TAG);
@@ -219,8 +218,8 @@ char *ps_rgb(snd_state *ss, int pchan)
   tmp_color.flags = DoRed | DoGreen | DoBlue;
   tmp_color.pixel = color;
   XQueryColor(dpy, cmap, &tmp_color);
-  buf = (char *)CALLOC(128, sizeof(char));
-  mus_snprintf(buf, 128, " %.2f %.2f %.2f RG\n",
+  buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+  mus_snprintf(buf, PRINT_BUFFER_SIZE, " %.2f %.2f %.2f RG\n",
 	  (float)tmp_color.red / 65535.0,
 	  (float)tmp_color.green / 65535.0,
 	  (float)tmp_color.blue / 65535.0);

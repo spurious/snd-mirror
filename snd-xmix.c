@@ -370,8 +370,7 @@ Widget make_mix_panel(snd_state *ss)
   GC gc;
   int depth;
   XGCValues v;
-  #define AMPLAB_SIZE 16
-  char amplab[AMPLAB_SIZE];
+  char amplab[LABEL_BUFFER_SIZE];
   if (mix_panel == NULL)
     {
       xdismiss = XmStringCreate(STR_Dismiss, XmFONTLIST_DEFAULT_TAG);
@@ -533,7 +532,7 @@ Widget make_mix_panel(snd_state *ss)
       for (i = 0; i < chans; i++)
 	{
 	  n = 0;
-	  mus_snprintf(amplab, AMPLAB_SIZE, "amp %d:", i);
+	  mus_snprintf(amplab, LABEL_BUFFER_SIZE, "amp %d:", i);
 	  s1 = XmStringCreate(amplab, XmFONTLIST_DEFAULT_TAG);
 	  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
 	  XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
@@ -632,8 +631,7 @@ static void update_mix_panel(int mix_id)
   chan_info *cp;
   int i, chans, beg, len;
   Float val;
-  #define LAB_SIZE 32
-  char lab[LAB_SIZE];
+  char lab[LABEL_BUFFER_SIZE];
   ss = get_global_state();
   if (mix_id == INVALID_MIX_ID) return;
   if (mix_id == current_mix_id(ss))
@@ -651,17 +649,17 @@ static void update_mix_panel(int mix_id)
 	  current_speed = val;
 	}
 
-      mus_snprintf(lab, LAB_SIZE, "%d", mix_track_from_id(mix_id));
+      mus_snprintf(lab, LABEL_BUFFER_SIZE, "%d", mix_track_from_id(mix_id));
       XmTextSetString(w_track, lab);
 
-      mus_snprintf(lab, LAB_SIZE, "%d", mix_id);
+      mus_snprintf(lab, LABEL_BUFFER_SIZE, "%d", mix_id);
       XmTextSetString(w_id, lab);
 
       XmTextSetString(w_name, mix_name_from_id(mix_id));
 
       beg = mix_position_from_id(mix_id);
       len = mix_length(mix_id);
-      mus_snprintf(lab, LAB_SIZE, "%.3f : %.3f",
+      mus_snprintf(lab, LABEL_BUFFER_SIZE, "%.3f : %.3f",
 	      (float)beg / (float)SND_SRATE(cp->sound),
 	      (float)(beg + len) / (float)SND_SRATE(cp->sound));
       XmTextSetString(w_beg, lab);

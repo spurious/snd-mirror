@@ -47,11 +47,17 @@
 
 #if USE_SND
   #include "snd.h"
+#else
+  #define PRINT_BUFFER_SIZE 512
+  #define LABEL_BUFFER_SIZE 64
 #endif
 
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
+#if (!defined(HAVE_CONFIG_H)) || (defined(HAVE_STRING_H))
+  #include <string.h>
+#endif
 
 #if (!USE_SND)
 #if HAVE_GUILE
@@ -74,11 +80,6 @@
 #include "sndlib.h"
 #include "vct.h"
 #include "sndlib2scm.h"
-
-#ifdef DEBUG_MEMORY
-  #include <stdlib.h>
-  #include "sndlib.h"
-#endif
 
 #ifndef CALLOC
   #define CALLOC(a, b)  calloc(a, b)

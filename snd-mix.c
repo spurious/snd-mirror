@@ -876,8 +876,8 @@ static mix_info *add_mix(chan_info *cp, int chan, int beg, int num,
   md->in_chans = input_chans;
   md->orig_beg = beg;
   md->in_samps = num;
-  namebuf = (char *)CALLOC(12, sizeof(char));
-  mus_snprintf(namebuf, 12, "mix%d", md->id);
+  namebuf = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
+  mus_snprintf(namebuf, LABEL_BUFFER_SIZE, "mix%d", md->id);
   md->name = namebuf;
   md->temporary = temp;
   md->console_state_size = 1;
@@ -3816,13 +3816,6 @@ static mix_fd *get_mf(SCM obj)
   else return(NULL);
 }
 
-/*
-static SCM equalp_mf(SCM obj1, SCM obj2) 
-{
-  return(TO_SCM_BOOLEAN(get_mf(obj1) == get_mf(obj2)));
-}
-*/
-
 static int print_mf(SCM obj, SCM port, scm_print_state *pstate) 
 {
   mix_fd *fd;
@@ -3836,8 +3829,8 @@ static int print_mf(SCM obj, SCM port, scm_print_state *pstate)
       md = fd->md;
       if ((md) && (MIX_TYPE_OK(fd->type)))
 	{
-	  desc = (char *)CALLOC(128, sizeof(char));
-	  mus_snprintf(desc, 128, "#<mix-sample-reader %p: %s via mix %d>",
+	  desc = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+	  mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<mix-sample-reader %p: %s via mix %d>",
 		       fd,
 		       md->in_filename,
 		       md->id);
@@ -3931,15 +3924,15 @@ static int print_tf(SCM obj, SCM port, scm_print_state *pstate)
     WRITE_STRING("#<track-sample-reader: null>", port);
   else
     {
-      desc = (char *)CALLOC(128, sizeof(char));
+      desc = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
       if ((fd->fds) && (fd->mixes > 0))
 	mf = fd->fds[0];
       if (mf == NULL)
-	mus_snprintf(desc, 128, "#<track-sample-reader %p: inactive>", fd);
+	mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<track-sample-reader %p: inactive>", fd);
       else
 	{
 	  md = mf->md;
-	  mus_snprintf(desc, 128, "#<track-sample-reader %p: %s chan %d via mixes '(",
+	  mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<track-sample-reader %p: %s chan %d via mixes '(",
 		       fd,
 		       md->in_filename,
 		       (md->cp)->chan);
@@ -3950,11 +3943,11 @@ static int print_tf(SCM obj, SCM port, scm_print_state *pstate)
 	      for (i = 0; i < len - 1; i++)
 		{
 		  mf = fd->fds[i];
-		  mus_snprintf(desc, 128, "%d ", (mf->md)->id);
+		  mus_snprintf(desc, PRINT_BUFFER_SIZE, "%d ", (mf->md)->id);
 		  WRITE_STRING(desc, port); 
 		}
 	      mf = fd->fds[len - 1];
-	      mus_snprintf(desc, 128, "%d)>",(mf->md)->id);
+	      mus_snprintf(desc, PRINT_BUFFER_SIZE, "%d)>",(mf->md)->id);
 	    }
 	  else sprintf(desc, ")>");
 	}

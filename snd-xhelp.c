@@ -12,7 +12,7 @@
 
 static Widget help_dialog = NULL;
 static Widget help_text = NULL;
-static char help_window_label[64];
+static char help_window_label[LABEL_BUFFER_SIZE];
 
 #if HAVE_HTML
 
@@ -88,8 +88,8 @@ static void load_html(snd_state *ss, int which_html, char *anchor, int added)
     {
       if (html_dir(ss) && (*(html_dir(ss))))
 	{
-	  buf = (char *)CALLOC(256, sizeof(char));
-	  mus_snprintf(buf, 256, "%s/%s", html_dir(ss), htmls[which_html]);
+	  buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+	  mus_snprintf(buf, PRINT_BUFFER_SIZE, "%s/%s", html_dir(ss), htmls[which_html]);
 	  html_text = file_to_string(buf);
 	  FREE(buf);
 	}
@@ -177,8 +177,8 @@ static XmImageInfo* loadImage(Widget w, String url, Dimension width, Dimension h
   ss = get_global_state();
   if (html_dir(ss) && (*(html_dir(ss))))
     {
-      buf = (char *)CALLOC(256, sizeof(char));
-      mus_snprintf(buf, 256, "%s/%s", html_dir(ss), url);
+      buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+      mus_snprintf(buf, PRINT_BUFFER_SIZE, "%s/%s", html_dir(ss), url);
       result = XmHTMLImageDefaultProc(w, buf, NULL, 0);
       FREE(buf);
     }
@@ -335,7 +335,7 @@ Widget snd_help(snd_state *ss, char *subject, char *helpstr)
       raise_dialog(help_dialog);
     }
 
-  mus_snprintf(help_window_label, 64, "%s help", subject);
+  mus_snprintf(help_window_label, LABEL_BUFFER_SIZE, "%s help", subject);
   xstr1 = XmStringCreate(help_window_label, XmFONTLIST_DEFAULT_TAG);
   XtVaSetValues(help_dialog, XmNmessageString, xstr1, NULL);
 #if HAVE_HTML

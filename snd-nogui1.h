@@ -159,7 +159,7 @@ void set_fft_size(snd_state *ss, int val);
 void set_fft_window(snd_state *ss, int val);
 void set_transform_type(snd_state *ss, int val);
 void set_wavelet_type(snd_state *ss, int val);
-GtkWidget *fire_up_transform_dialog(snd_state *ss);
+int fire_up_transform_dialog(snd_state *ss);
 int transform_dialog_is_active(void);
 
 char *transform_type_name(int choice);

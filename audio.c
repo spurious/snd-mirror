@@ -52,6 +52,9 @@
 
 #if USE_SND
   #include "snd.h"
+#else
+  #define PRINT_BUFFER_SIZE 512
+  #define LABEL_BUFFER_SIZE 64
 #endif
 
 #include <math.h>
@@ -68,20 +71,18 @@
     #include <unistd.h>
   #endif
 #endif
-
-#define STRBUF_SIZE 1024
-/* was 4096 which seems excessive */
+#if (!defined(HAVE_CONFIG_H)) || (defined(HAVE_STRING_H))
+  #include <string.h>
+#endif
 
 #if (defined(HAVE_CONFIG_H)) && (!defined(HAVE_STRERROR))
 char *strerror(int errnum)
 {
   char *strerrbuf;
-  strerrbuf = (char *)CALLOC(16, sizeof(char));
-  mus_snprintf(strerrbuf, 16, "io err %d", errnum);
+  strerrbuf = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
+  mus_snprintf(strerrbuf, LABEL_BUFFER_SIZE, "io err %d", errnum);
   return(strerrbuf);
 }
-#else
-  #include <string.h>
 #endif
 
 #if HAVE_SAM_9407
@@ -98,10 +99,8 @@ char *strerror(int errnum)
   mus_print("%s %s: %s\n  [%s[%d] %s]", IO_Func, IO_Name, strerror(errno), __FILE__, __LINE__, __FUNCTION__)
 
 
-
 static char *version_name = NULL;
 static int audio_initialized = 0;
-
 
 static const char *mus_audio_device_names[] = {
   "mus_audio_default", "mus_audio_duplex_default", "mus_audio_adat_in", "mus_audio_aes_in", "mus_audio_line_out",
@@ -233,8 +232,8 @@ static void sgi_mus_print(char *msg)
   int oserr = oserror();
   if (oserr)
     {
-      if (sgi_err_buf == NULL) sgi_err_buf = (char *)CALLOC(512, sizeof(char));
-      mus_snprintf(sgi_err_buf, 512, "%s [%s]", msg, alGetErrorString(oserr));
+      if (sgi_err_buf == NULL) sgi_err_buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+      mus_snprintf(sgi_err_buf, PRINT_BUFFER_SIZE, "%s [%s]", msg, alGetErrorString(oserr));
       (*old_handler)(sgi_err_buf);
     }
   else (*old_handler)(msg);
@@ -960,7 +959,7 @@ static void dump_resources(ALvalue *x, int rv)
       if (alIsSubtype(AL_DEVICE_TYPE, x[i].i)) 
         {
           alGetParamInfo(x[i].i, AL_GAIN, &pinf);
-          mus_snprintf(strbuf, STRBUF_SIZE, "\nDevice: %s (%s), srate: %d, chans: %d",
+          mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "\nDevice: %s (%s), srate: %d, chans: %d",
                   dn, dl,
                   y[3].value.i, 
 		  y[2].value.i); 
@@ -974,7 +973,7 @@ static void dump_resources(ALvalue *x, int rv)
               pprint(" amps:[");
               for (k = 0; k < yy.sizeOut; k++)
                 {
-                  mus_snprintf(strbuf, STRBUF_SIZE, "%.2f",
+                  mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "%.2f",
 			  dB_to_normalized(alFixedToDouble(g[k]),
 					   alFixedToDouble(pinf.min.ll),
 					   alFixedToDouble(pinf.max.ll)));
@@ -986,12 +985,12 @@ static void dump_resources(ALvalue *x, int rv)
           pprint("\n");
           if ((nres= alQueryValues(x[i].i, AL_INTERFACE, z, 16, 0, 0)) >= 0) 
             dump_resources(z, nres);
-          else mus_snprintf(strbuf, STRBUF_SIZE, "query failed: %s\n", alGetErrorString(oserror())); 
+          else mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "query failed: %s\n", alGetErrorString(oserror())); 
           pprint(strbuf);
         }
       else 
         {
-          mus_snprintf(strbuf, STRBUF_SIZE, "      %s (%s), chans: %d\n", dn, dl, y[2].value.i); 
+          mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "      %s (%s), chans: %d\n", dn, dl, y[2].value.i); 
           pprint(strbuf);
         }
     }
@@ -1001,7 +1000,7 @@ static void describe_audio_state_1(void)
 {
   int rv;
   ALvalue x[16];
-  if (!strbuf) strbuf = (char *)CALLOC(STRBUF_SIZE, sizeof(char));
+  if (!strbuf) strbuf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   pprint("Devices and Interfaces on this system:\n"); 
   rv= alQueryValues(AL_SYSTEM, AL_DEVICES, x, 16, 0, 0);
   if (rv > 0) 
@@ -1332,31 +1331,31 @@ static void describe_audio_state_1(void)
 {
   float amps[1];
   int err;
-  if (!strbuf) strbuf = (char *)CALLOC(STRBUF_SIZE, sizeof(char));
+  if (!strbuf) strbuf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   err = mus_audio_mixer_read(MUS_AUDIO_SPEAKERS, MUS_AUDIO_SRATE, 0, amps);
   if (err == MUS_NO_ERROR) 
-    {mus_snprintf(strbuf, STRBUF_SIZE, "srate: %.2f\n", amps[0]); pprint(strbuf);} 
+    {mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "srate: %.2f\n", amps[0]); pprint(strbuf);} 
   else {fprintf(stdout, "err: %d!\n", err); fflush(stdout);}
   err = mus_audio_mixer_read(MUS_AUDIO_SPEAKERS, MUS_AUDIO_AMP, 0, amps);
-  if (err == MUS_NO_ERROR) {mus_snprintf(strbuf, STRBUF_SIZE, "speakers: %.2f", amps[0]); pprint(strbuf);}
+  if (err == MUS_NO_ERROR) {mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "speakers: %.2f", amps[0]); pprint(strbuf);}
   err = mus_audio_mixer_read(MUS_AUDIO_SPEAKERS, MUS_AUDIO_AMP, 1, amps);
-  if (err == MUS_NO_ERROR) {mus_snprintf(strbuf, STRBUF_SIZE, " %.2f\n", amps[0]); pprint(strbuf);}
+  if (err == MUS_NO_ERROR) {mus_snprintf(strbuf, PRINT_BUFFER_SIZE, " %.2f\n", amps[0]); pprint(strbuf);}
   err = mus_audio_mixer_read(MUS_AUDIO_LINE_IN, MUS_AUDIO_AMP, 0, amps);
-  if (err == MUS_NO_ERROR) {mus_snprintf(strbuf, STRBUF_SIZE, "line in: %.2f", amps[0]); pprint(strbuf);}
+  if (err == MUS_NO_ERROR) {mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "line in: %.2f", amps[0]); pprint(strbuf);}
   err = mus_audio_mixer_read(MUS_AUDIO_LINE_IN, MUS_AUDIO_AMP, 1, amps);
-  if (err == MUS_NO_ERROR) {mus_snprintf(strbuf, STRBUF_SIZE, " %.2f\n", amps[0]); pprint(strbuf);}
+  if (err == MUS_NO_ERROR) {mus_snprintf(strbuf, PRINT_BUFFER_SIZE, " %.2f\n", amps[0]); pprint(strbuf);}
   err = mus_audio_mixer_read(MUS_AUDIO_MICROPHONE, MUS_AUDIO_AMP, 0, amps);
-  if (err == MUS_NO_ERROR) {mus_snprintf(strbuf, STRBUF_SIZE, "microphone: %.2f", amps[0]); pprint(strbuf);}
+  if (err == MUS_NO_ERROR) {mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "microphone: %.2f", amps[0]); pprint(strbuf);}
   err = mus_audio_mixer_read(MUS_AUDIO_MICROPHONE, MUS_AUDIO_AMP, 1, amps);
-  if (err == MUS_NO_ERROR) {mus_snprintf(strbuf, STRBUF_SIZE, " %.2f\n", amps[0]); pprint(strbuf);}
+  if (err == MUS_NO_ERROR) {mus_snprintf(strbuf, PRINT_BUFFER_SIZE, " %.2f\n", amps[0]); pprint(strbuf);}
   err = mus_audio_mixer_read(MUS_AUDIO_LINE_OUT, MUS_AUDIO_AMP, 0, amps);
-  if (err == MUS_NO_ERROR) {mus_snprintf(strbuf, STRBUF_SIZE, "line out: %.2f", amps[0]); pprint(strbuf);}
+  if (err == MUS_NO_ERROR) {mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "line out: %.2f", amps[0]); pprint(strbuf);}
   err = mus_audio_mixer_read(MUS_AUDIO_LINE_OUT, MUS_AUDIO_AMP, 1, amps);
-  if (err == MUS_NO_ERROR) {mus_snprintf(strbuf, STRBUF_SIZE, " %.2f\n", amps[0]); pprint(strbuf);}
+  if (err == MUS_NO_ERROR) {mus_snprintf(strbuf, PRINT_BUFFER_SIZE, " %.2f\n", amps[0]); pprint(strbuf);}
   err = mus_audio_mixer_read(MUS_AUDIO_DIGITAL_OUT, MUS_AUDIO_AMP, 0, amps);
-  if (err == MUS_NO_ERROR) {mus_snprintf(strbuf, STRBUF_SIZE, "digital out: %.2f", amps[0]); pprint(strbuf);}
+  if (err == MUS_NO_ERROR) {mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "digital out: %.2f", amps[0]); pprint(strbuf);}
   err = mus_audio_mixer_read(MUS_AUDIO_DIGITAL_OUT, MUS_AUDIO_AMP, 1, amps);
-  if (err == MUS_NO_ERROR) {mus_snprintf(strbuf, STRBUF_SIZE, " %.2f\n", amps[0]); pprint(strbuf);}
+  if (err == MUS_NO_ERROR) {mus_snprintf(strbuf, PRINT_BUFFER_SIZE, " %.2f\n", amps[0]); pprint(strbuf);}
 }
 
 static long *init_state = NULL;
@@ -1503,7 +1502,6 @@ enum {NORMAL_CARD, SONORUS_STUDIO, RME_HAMMERFALL, SAM9407_DSP, DELTA_66};
 static int sound_cards = 0;
 static int new_oss_running = 0;
 static char *dev_name = NULL;
-#define DEV_NAME_SIZE 64
 
 static int oss_mus_audio_systems(void) 
 {
@@ -1515,7 +1513,7 @@ static char *mixer_name(int sys)
 #if HAVE_SAM_9407
   if(sys < sound_cards && audio_type[sys] == SAM9407_DSP)
     {
-      mus_snprintf(dev_name, DEV_NAME_SIZE, "/dev/sam%d_mixer", audio_mixer[sys]);
+      mus_snprintf(dev_name, LABEL_BUFFER_SIZE, "/dev/sam%d_mixer", audio_mixer[sys]);
       return(dev_name);
     }
 #endif 
@@ -1531,7 +1529,7 @@ static char *mixer_name(int sys)
 	    return(DAC_NAME); 
 	  else 
 	    {
-	      mus_snprintf(dev_name, DEV_NAME_SIZE, "%s%d", MIXER_NAME, audio_mixer[sys]);
+	      mus_snprintf(dev_name, LABEL_BUFFER_SIZE, "%s%d", MIXER_NAME, audio_mixer[sys]);
 	      return(dev_name);
 	    }
 	}
@@ -1586,15 +1584,15 @@ static char *oss_mus_audio_moniker(void) {return("Sam 9407");}
 #else
 static char *oss_mus_audio_moniker(void)
 {
-  char version[8];
-  if (version_name == NULL) version_name = (char *)CALLOC(64, sizeof(char));
+  char version[LABEL_BUFFER_SIZE];
+  if (version_name == NULL) version_name = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
   if (SOUND_VERSION < 361)
     {
-      mus_snprintf(version, 8, "%d", SOUND_VERSION);
-      mus_snprintf(version_name, 64, "OSS %c.%c.%c", version[0], version[1], version[2]);
+      mus_snprintf(version, LABEL_BUFFER_SIZE, "%d", SOUND_VERSION);
+      mus_snprintf(version_name, LABEL_BUFFER_SIZE, "OSS %c.%c.%c", version[0], version[1], version[2]);
     }
   else
-    mus_snprintf(version_name, 64, "OSS %x.%x.%x", 
+    mus_snprintf(version_name, LABEL_BUFFER_SIZE, "OSS %x.%x.%x", 
 		 (SOUND_VERSION >> 16) & 0xff, 
 		 (SOUND_VERSION >> 8) & 0xff, 
 		 SOUND_VERSION & 0xff);
@@ -1607,13 +1605,13 @@ static char *dac_name(int sys, int offset)
 #if HAVE_SAM_9407
   if (sys < sound_cards && audio_type[sys] == SAM9407_DSP) 
     {
-      mus_snprintf(dev_name, DEV_NAME_SIZE, "/dev/sam%d_dsp", audio_dsp[sys]);
+      mus_snprintf(dev_name, LABEL_BUFFER_SIZE, "/dev/sam%d_dsp", audio_dsp[sys]);
       return(dev_name);
     }
 #endif
   if ((sys < sound_cards) && (audio_mixer[sys] >= -1))
     {
-      mus_snprintf(dev_name, DEV_NAME_SIZE, "%s%d", DAC_NAME, audio_dsp[sys] + offset);
+      mus_snprintf(dev_name, LABEL_BUFFER_SIZE, "%s%d", DAC_NAME, audio_dsp[sys] + offset);
       return(dev_name);
     }
   return(DAC_NAME);
@@ -1652,8 +1650,7 @@ static int oss_mus_audio_initialize(void)
   /* since this info is not passed to us by OSS, we have to work at it... */
   /* for the time being, I'll ignore auxiliary dsp and mixer ports (each is a special case) */
   int i, fd = -1, md, err = 0;
-  #define DNAME_SIZE 32
-  char dname[DNAME_SIZE];
+  char dname[LABEL_BUFFER_SIZE];
   int amp, old_mixer_amp, old_dsp_amp, new_mixer_amp, responsive_field;
   int devmask;
 #ifdef NEW_OSS
@@ -1672,7 +1669,7 @@ static int oss_mus_audio_initialize(void)
       audio_mixer = (int *)CALLOC(MAX_SOUNDCARDS, sizeof(int));
       audio_type = (int *)CALLOC(MAX_SOUNDCARDS, sizeof(int));
       audio_mode = (int *)CALLOC(MAX_SOUNDCARDS, sizeof(int));
-      dev_name = (char *)CALLOC(DEV_NAME_SIZE, sizeof(char));
+      dev_name = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
       init_srate = (int *)CALLOC(MAX_SOUNDCARDS, sizeof(int));
       init_chans = (int *)CALLOC(MAX_SOUNDCARDS, sizeof(int));
       init_format = (int *)CALLOC(MAX_SOUNDCARDS, sizeof(int));
@@ -1692,7 +1689,7 @@ static int oss_mus_audio_initialize(void)
 	SamDriverInfo driverInfo;
 	for (i = 0; i < MAX_SOUNDCARDS; i++) 
 	  {
-	    mus_snprintf(dname, DNAME_SIZE, "/dev/sam%d_mixer", i);
+	    mus_snprintf(dname, LABEL_BUFFER_SIZE, "/dev/sam%d_mixer", i);
 	    fd = open(dname, O_WRONLY);
 	    if (fd < 0)
 	      break;
@@ -1767,7 +1764,7 @@ static int oss_mus_audio_initialize(void)
 	   *   open next unchecked dsp, try to set volume, read current, if different we found a match -- set and go on.
 	   *     if no change, move to next dsp and try again, if no more dsps, quit (checking for null case as before)
 	   */
-	  mus_snprintf(dname, DNAME_SIZE, "%s%d", MIXER_NAME, nmix);
+	  mus_snprintf(dname, LABEL_BUFFER_SIZE, "%s%d", MIXER_NAME, nmix);
 	  md = open(dname, O_RDWR, 0);
 	  if (md == -1)
 	    {
@@ -1781,7 +1778,7 @@ static int oss_mus_audio_initialize(void)
 		}
 	      else break;
 	    }
-	  mus_snprintf(dname, DNAME_SIZE, "%s%d", DAC_NAME, ndsp);
+	  mus_snprintf(dname, LABEL_BUFFER_SIZE, "%s%d", DAC_NAME, ndsp);
 	  fd = open(dname, O_RDWR, 0);
 	  if (fd == -1) fd = open(dname, O_RDONLY, 0);
 	  if (fd == -1) fd = open(dname, O_WRONLY, 0); /* some output devices need this */
@@ -2014,10 +2011,10 @@ static int to_oss_format(int snd_format)
   return(MUS_ERROR);
 }
 
-static char sonorus_buf[16];
+static char sonorus_buf[LABEL_BUFFER_SIZE];
 static char *sonorus_name(int sys, int offset)
 {
-  mus_snprintf(sonorus_buf, 16, "/dev/dsp%d", offset + audio_dsp[sys]);
+  mus_snprintf(sonorus_buf, LABEL_BUFFER_SIZE, "/dev/dsp%d", offset + audio_dsp[sys]);
   return(sonorus_buf);
 }
 
@@ -2085,8 +2082,8 @@ static int oss_mus_audio_open_output(int ur_dev, int srate, int chans, int forma
 #if HAVE_SAM_9407
   if (audio_type[sys] == SAM9407_DSP)
     {
-      char dname[DNAME_SIZE];
-      mus_snprintf(dname, DNAME_SIZE, "/dev/sam%d_dsp", audio_dsp[sys]);
+      char dname[LABEL_BUFFER_SIZE];
+      mus_snprintf(dname, LABEL_BUFFER_SIZE, "/dev/sam%d_dsp", audio_dsp[sys]);
       audio_out = open(dname, O_WRONLY);
       if(audio_out == -1)
 	RETURN_ERROR_EXIT(MUS_AUDIO_CANT_OPEN, audio_out,
@@ -2258,8 +2255,8 @@ static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int format
 #if HAVE_SAM_9407
   if (audio_type[sys] == SAM9407_DSP)
     {
-      char dname[DNAME_SIZE];
-      mus_snprintf(dname, DNAME_SIZE, "/dev/sam%d_dsp", audio_dsp[sys]);
+      char dname[LABEL_BUFFER_SIZE];
+      mus_snprintf(dname, LABEL_BUFFER_SIZE, "/dev/sam%d_dsp", audio_dsp[sys]);
       audio_fd = open(dname, O_RDONLY);
       if(audio_fd == -1)
 	RETURN_ERROR_EXIT(MUS_AUDIO_CANT_OPEN, audio_fd,
@@ -2979,10 +2976,8 @@ static void oss_describe_audio_state_1(void)
   struct synth_info sinfo;
   struct midi_info minfo;
   const char *sound_device_names[] = SOUND_DEVICE_LABELS;
-  #define DSP_NAME_SIZE 32
-  char dsp_name[DSP_NAME_SIZE];
-  #define VERSION_SIZE 8
-  char version[VERSION_SIZE];
+  char dsp_name[LABEL_BUFFER_SIZE];
+  char version[LABEL_BUFFER_SIZE];
   int dsp_num = 0;
 #ifdef NEW_OSS
   mixer_info mixinfo;
@@ -3004,41 +2999,41 @@ static void oss_describe_audio_state_1(void)
     }
 #endif
 
-  if (!strbuf) strbuf = (char *)CALLOC(STRBUF_SIZE, sizeof(char));
+  if (!strbuf) strbuf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   
   if (new_oss_running)
     {
 #ifdef NEW_OSS
       if (status == 0)
 	{
-	  mus_snprintf(strbuf, STRBUF_SIZE, "OSS version: %s\n", sysinfo.version);
+	  mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "OSS version: %s\n", sysinfo.version);
 	  pprint(strbuf);
 	}
       else
 	{
-	  mus_snprintf(strbuf, STRBUF_SIZE, "OSS version: %x.%x.%x\n", (level >> 16) & 0xff, (level >> 8) & 0xff, level & 0xff);
+	  mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "OSS version: %x.%x.%x\n", (level >> 16) & 0xff, (level >> 8) & 0xff, level & 0xff);
 	  pprint(strbuf);
 	}
 #else
-      mus_snprintf(strbuf, STRBUF_SIZE, "OSS version: %x.%x.%x\n", (level >> 16) & 0xff, (level >> 8) & 0xff, level & 0xff);
+      mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "OSS version: %x.%x.%x\n", (level >> 16) & 0xff, (level >> 8) & 0xff, level & 0xff);
       pprint(strbuf);
 #endif
     }
   else 
     {
       /* refers to the version upon compilation */
-      mus_snprintf(version, VERSION_SIZE, "%d", SOUND_VERSION);
-      mus_snprintf(strbuf, STRBUF_SIZE, "OSS version: %c.%c.%c\n", version[0], version[1], version[2]);
+      mus_snprintf(version, LABEL_BUFFER_SIZE, "%d", SOUND_VERSION);
+      mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "OSS version: %c.%c.%c\n", version[0], version[1], version[2]);
       pprint(strbuf);
     }
   
-  mus_snprintf(strbuf, STRBUF_SIZE, "%d card%s found", sound_cards, (sound_cards != 1) ? "s" : ""); pprint(strbuf);
+  mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "%d card%s found", sound_cards, (sound_cards != 1) ? "s" : ""); pprint(strbuf);
   if (sound_cards > 1)
     {
       pprint(": ");
       for (i = 0; i < sound_cards; i++)
 	{
-	  mus_snprintf(strbuf, STRBUF_SIZE, "/dev/dsp%d with /dev/mixer%d%s", audio_dsp[i], audio_mixer[i], (i<(sound_cards-1)) ? ", " : "");
+	  mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "/dev/dsp%d with /dev/mixer%d%s", audio_dsp[i], audio_mixer[i], (i<(sound_cards-1)) ? ", " : "");
 	  pprint(strbuf);
 	}
     }
@@ -3048,7 +3043,7 @@ static void oss_describe_audio_state_1(void)
   if (fd == -1) fd = open(SYNTH_NAME, O_RDONLY, 0);
   if (fd == -1) 
     {
-      mus_snprintf(strbuf, STRBUF_SIZE, "%s: %s\n", SYNTH_NAME, strerror(errno)); pprint(strbuf); 
+      mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "%s: %s\n", SYNTH_NAME, strerror(errno)); pprint(strbuf); 
       pprint("no synth found\n"); 
     }
   else
@@ -3061,7 +3056,7 @@ static void oss_describe_audio_state_1(void)
 	}
       else
 	{
-	  mus_snprintf(strbuf, STRBUF_SIZE, "/dev/sequencer: %d device%s installed\n", numdevs, (numdevs == 1) ? "" : "s"); 
+	  mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "/dev/sequencer: %d device%s installed\n", numdevs, (numdevs == 1) ? "" : "s"); 
 	  pprint(strbuf);
 	  for (i = 0; i < numdevs; i++)
 	    {
@@ -3069,7 +3064,7 @@ static void oss_describe_audio_state_1(void)
 	      status = ioctl(fd, SNDCTL_SYNTH_INFO, &sinfo);
 	      if (status != -1)
 		{
-		  mus_snprintf(strbuf, STRBUF_SIZE, "  device: %d: %s, %s, %d voices\n", i, sinfo.name, device_type(sinfo.synth_type), sinfo.nr_voices); 
+		  mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "  device: %d: %s, %s, %d voices\n", i, sinfo.name, device_type(sinfo.synth_type), sinfo.nr_voices); 
 		  pprint(strbuf);
 		}
 	    }
@@ -3081,7 +3076,7 @@ static void oss_describe_audio_state_1(void)
 	    }
 	  else
 	    {
-	      mus_snprintf(strbuf, STRBUF_SIZE, "  %d midi device%s installed\n", numdevs, (numdevs == 1) ? "" : "s"); 
+	      mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "  %d midi device%s installed\n", numdevs, (numdevs == 1) ? "" : "s"); 
 	      pprint(strbuf);
 	      for (i = 0; i < numdevs; i++)
 		{
@@ -3089,7 +3084,7 @@ static void oss_describe_audio_state_1(void)
 		  status = ioctl(fd, SNDCTL_MIDI_INFO, &minfo);
 		  if (status != -1)
 		    {
-		      mus_snprintf(strbuf, STRBUF_SIZE, "  device %d: %s, %s\n", i, minfo.name, synth_name(minfo.dev_type)); 
+		      mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "  device %d: %s, %s\n", i, minfo.name, synth_name(minfo.dev_type)); 
 		      pprint(strbuf);
 		    }
 		}
@@ -3100,7 +3095,7 @@ static void oss_describe_audio_state_1(void)
   pprint("--------------------------------\n");
 
 MIXER_INFO:
-  mus_snprintf(dsp_name, DSP_NAME_SIZE, "%s%d", MIXER_NAME, dsp_num);
+  mus_snprintf(dsp_name, LABEL_BUFFER_SIZE, "%s%d", MIXER_NAME, dsp_num);
   fd = linux_audio_open(dsp_name, O_RDWR, 0, 0);
   if (fd == -1) 
     {
@@ -3110,7 +3105,7 @@ MIXER_INFO:
         {
           if (dsp_num == 0) 
 	    {
-	      mus_snprintf(dsp_name, DSP_NAME_SIZE, "%s", DAC_NAME);
+	      mus_snprintf(dsp_name, LABEL_BUFFER_SIZE, "%s", DAC_NAME);
 	      fd = linux_audio_open(DAC_NAME, O_RDWR, 0, 0);
 	      if (fd == -1) 
 		{
@@ -3132,18 +3127,18 @@ MIXER_INFO:
 #ifdef NEW_OSS
   if (new_oss_running) status = ioctl(fd, SOUND_MIXER_INFO, &mixinfo);
 #endif
-  mus_snprintf(strbuf, STRBUF_SIZE, "%s", dsp_name);
+  mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "%s", dsp_name);
   pprint(strbuf);
 #ifdef NEW_OSS
   if ((new_oss_running) && (status == 0)) 
     {
-      mus_snprintf(strbuf, STRBUF_SIZE, " (%s", mixinfo.name);
+      mus_snprintf(strbuf, PRINT_BUFFER_SIZE, " (%s", mixinfo.name);
       pprint(strbuf);
       for (i = 0; i < sound_cards; i++)
 	{
 	  if ((audio_mixer[i] == dsp_num) && (audio_type[i] == SONORUS_STUDIO))
 	    {
-	      mus_snprintf(strbuf, STRBUF_SIZE, " in mode %d", audio_mode[i]);
+	      mus_snprintf(strbuf, PRINT_BUFFER_SIZE, " in mode %d", audio_mode[i]);
 	      pprint(strbuf);
 	      break;
 	    }
@@ -3195,7 +3190,7 @@ MIXER_INFO:
 	    {
 	      if ((1<<i) & devmask)
 		{
-		  mus_snprintf(strbuf, STRBUF_SIZE, "  %-10s", sound_device_names[i]); 
+		  mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "  %-10s", sound_device_names[i]); 
 		  pprint(strbuf);
 		  yes_no((1 << i) & recmask);
 		  yes_no((1 << i) & recsrc);
@@ -3204,8 +3199,8 @@ MIXER_INFO:
 		  if (status != -1)
 		    {
 		      if ((1<<i) & stereodevs)
-			mus_snprintf(strbuf, STRBUF_SIZE, "  %.2f %.2f", (float)(level & 0xff) * 0.01, (float)((level & 0xff00) >> 8) * 0.01);
-		      else mus_snprintf(strbuf, STRBUF_SIZE, "  %.2f", (float)(level & 0xff) * 0.01);
+			mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "  %.2f %.2f", (float)(level & 0xff) * 0.01, (float)((level & 0xff00) >> 8) * 0.01);
+		      else mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "  %.2f", (float)(level & 0xff) * 0.01);
 		      /* can't use %% here because subsequent fprintf in pprint evaluates the %! #$@$! */
 		      pprint(strbuf);
 		    }
@@ -3218,17 +3213,17 @@ MIXER_INFO:
 
 AUDIO_INFO:
   if (fd != -1) {linux_audio_close(fd); fd=-1;}
-  mus_snprintf(dsp_name, DSP_NAME_SIZE, "%s%d", DAC_NAME, dsp_num);
+  mus_snprintf(dsp_name, LABEL_BUFFER_SIZE, "%s%d", DAC_NAME, dsp_num);
   fd = linux_audio_open(dsp_name, O_RDWR, 0, 0);
   if ((fd == -1) && (dsp_num == 0)) fd = linux_audio_open(DAC_NAME, O_WRONLY, 0, 0);
   if (fd == -1) return;
-  mus_snprintf(strbuf, STRBUF_SIZE, "%s:\n\n", dsp_name); pprint(strbuf);
+  mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "%s:\n\n", dsp_name); pprint(strbuf);
   if ((ioctl(fd, SOUND_PCM_READ_RATE, &rate) != -1) &&
       (ioctl(fd, SOUND_PCM_READ_CHANNELS, &channels) != -1) &&
       (ioctl(fd, SOUND_PCM_READ_BITS, &bits) != -1) &&
       (ioctl(fd, SNDCTL_DSP_GETBLKSIZE, &blocksize) != -1))
     {
-      mus_snprintf(strbuf, STRBUF_SIZE, 
+      mus_snprintf(strbuf, PRINT_BUFFER_SIZE, 
 		   "  defaults:\n    sampling rate: %d, chans: %d, sample size: %d bits, block size: %d bytes", 
 		   rate, channels, bits, blocksize); 
       pprint(strbuf);
@@ -3237,7 +3232,7 @@ AUDIO_INFO:
       {
 	audio_buf_info abi;
 	ioctl(fd, SNDCTL_DSP_GETOSPACE, &abi);
-	mus_snprintf(strbuf, STRBUF_SIZE, " (%d fragments)\n", abi.fragments);
+	mus_snprintf(strbuf, PRINT_BUFFER_SIZE, " (%d fragments)\n", abi.fragments);
 	pprint(strbuf);
       }
 #else
@@ -3276,7 +3271,7 @@ AUDIO_INFO:
 		      if (set_dsp(fd, channels, bits, &min_rate) == -1) continue;
 		      max_rate = 100000;
 		      if (set_dsp(fd, channels, bits, &max_rate) == -1) continue;
-		      mus_snprintf(strbuf, STRBUF_SIZE, "  %4d  %8d  %8d  %8d\n", channels, bits, min_rate, max_rate); 
+		      mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "  %4d  %8d  %8d  %8d\n", channels, bits, min_rate, max_rate); 
 		      pprint(strbuf);
 		    }
 		}
@@ -3289,7 +3284,7 @@ AUDIO_INFO:
   dsp_num++; 
   if (dsp_num < 16)
     {
-      mus_snprintf(dsp_name, DSP_NAME_SIZE, "%s%d", MIXER_NAME, dsp_num);
+      mus_snprintf(dsp_name, LABEL_BUFFER_SIZE, "%s%d", MIXER_NAME, dsp_num);
       goto MIXER_INFO;
     }
 }
@@ -3465,7 +3460,7 @@ char* mus_audio_moniker(void)
 {
 #if (HAVE_OSS && HAVE_ALSA)
   char *both_names;
-  both_names = (char *)CALLOC(128, sizeof(char));
+  both_names = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   /* need to be careful here since these use the same constant buffer */
   strcpy(both_names, oss_mus_audio_moniker());
   strcat(both_names, ", ");
@@ -3968,7 +3963,7 @@ static int alsa_mus_audio_initialize(void)
     /* initialize function pointers for normal or plugin calls */
     alsa_initialize_functions();
     /* allocate various things */
-    dev_name = (char *)CALLOC(64, sizeof(char));
+    dev_name = (char *)CALLOC(LABLE_BUFFER_SIZE, sizeof(char));
     /* scan for soundcards */
     mask = snd_cards_mask();
     if (!mask) {
@@ -4068,7 +4063,7 @@ static int alsa_mus_audio_initialize(void)
     /* initialize function pointers for normal or plugin calls */
     alsa_initialize_functions();
     /* allocate various things */
-    dev_name = (char *)CALLOC(64, sizeof(char));
+    dev_name = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
     /* scan for soundcards */
     mask = snd_cards_mask();
     if (!mask) {
@@ -4179,8 +4174,8 @@ static char *alsa_mus_audio_system_name(int system)
 
 static char *alsa_mus_audio_moniker(void)
 {
-  if (version_name == NULL) version_name = (char *)CALLOC(64, sizeof(char));
-  mus_snprintf(version_name, 64, "ALSA %s", SND_LIB_VERSION_STR);
+  if (version_name == NULL) version_name = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
+  mus_snprintf(version_name, LABEL_BUFFER_SIZE, "ALSA %s", SND_LIB_VERSION_STR);
   return(version_name);
 }
 
@@ -5346,10 +5341,10 @@ static void alsa_describe_audio_state_1(void)
     snd_pcm_info_t pcminfo;
     snd_pcm_channel_info_t strinfo;
 
-    if (!strbuf) strbuf=(char *)CALLOC(STRBUF_SIZE, sizeof(char));
+    if (!strbuf) strbuf=(char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
     mask = snd_cards_mask();
     if (!mask) {
-	mus_snprintf(strbuf, STRBUF_SIZE, "no soundcards found...\n");
+	mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "no soundcards found...\n");
 	pprint(strbuf);
 	return;
     }
@@ -5373,15 +5368,15 @@ static void alsa_describe_audio_state_1(void)
 			  __FUNCTION__, card, dev, snd_strerror(err));
 		continue;
 	    }
-	    mus_snprintf(strbuf, STRBUF_SIZE, "Device %s: %i [%s] / #%i: %s\n",
+	    mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "Device %s: %i [%s] / #%i: %s\n",
 		    info.name, card+1, info.id, dev, pcminfo.name);
 	    pprint(strbuf);
-	    mus_snprintf(strbuf, STRBUF_SIZE, "  Directions: %s%s%s\n",
+	    mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "  Directions: %s%s%s\n",
 		    pcminfo.flags & SND_PCM_INFO_PLAYBACK ? "playback " : "",
 		    pcminfo.flags & SND_PCM_INFO_CAPTURE ? "capture " : "",
 		    pcminfo.flags & SND_PCM_INFO_DUPLEX ? "duplex " : "");
 	    pprint(strbuf);
-	    mus_snprintf(strbuf, STRBUF_SIZE, "  Playback subdevices: %i\n", pcminfo.playback + 1);
+	    mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "  Playback subdevices: %i\n", pcminfo.playback + 1);
 	    pprint(strbuf);
 	    if (pcminfo.flags & SND_PCM_INFO_PLAYBACK) {
 		/* get hardware information for playback device */
@@ -5398,17 +5393,17 @@ static void alsa_describe_audio_state_1(void)
 			mus_print( "%s: snd_pcm_plugin_info: %s", 
 				  __FUNCTION__, snd_strerror(err));
 		    } else {
-			mus_snprintf(strbuf, STRBUF_SIZE, "  Playback: formats=%d rates=%d frag-size=%d-%d\n", 
+			mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "  Playback: formats=%d rates=%d frag-size=%d-%d\n", 
 				dev_info.formats, dev_info.rates, 
 				dev_info.min_fragment_size, dev_info.max_fragment_size);
 			pprint(strbuf);
-			mus_snprintf(strbuf, STRBUF_SIZE, "            rate=%d-%d channels=%d-%d\n", 
+			mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "            rate=%d-%d channels=%d-%d\n", 
 				dev_info.min_rate, dev_info.max_rate, 
 				dev_info.min_voices, dev_info.max_voices);
 			pprint(strbuf);
 			for (i = 0; i < 32; i++) {
 			    if (dev_info.formats & (1<<i)) {
-				mus_snprintf(strbuf, STRBUF_SIZE, "              format %s -> %s\n",
+				mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "              format %s -> %s\n",
 					decode_alsa_format(1<<i),
 					mus_audio_format_name(to_mus_format(1<<i)));
 				pprint(strbuf);
@@ -5416,10 +5411,10 @@ static void alsa_describe_audio_state_1(void)
 			}
 			/* list associated mixer element - hum, not very useful info */
 			if (snd_mixer_element_has_info(&(dev_info.mixer_eid))) {
-			    mus_snprintf(strbuf, STRBUF_SIZE, "  Associated mixer element #%i: %i\n", 
+			    mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "  Associated mixer element #%i: %i\n", 
 				    dev_info.mixer_eid, dev_info.mixer_device);
 			    pprint(strbuf);
-			    mus_snprintf(strbuf, STRBUF_SIZE, "    name=%s index=%i type=%i\n", 
+			    mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "    name=%s index=%i type=%i\n", 
 				    dev_info.mixer_eid.name, dev_info.mixer_eid.index,  dev_info.mixer_eid.type);
 			    pprint(strbuf);
 			}		    
@@ -5436,13 +5431,13 @@ static void alsa_describe_audio_state_1(void)
 			mus_print( "%s: snd_ctl_pcm_channel_info[%i]: %s", 
 				  __FUNCTION__, card, snd_strerror(err));
 		    } else {
-			mus_snprintf(strbuf, STRBUF_SIZE, "  Playback subdevice #%i: %s\n", idx, strinfo.subname);
+			mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "  Playback subdevice #%i: %s\n", idx, strinfo.subname);
 			pprint(strbuf);
 		    }
 		}
 	    }
 
-	    mus_snprintf(strbuf, STRBUF_SIZE, "  Capture subdevices: %i\n", pcminfo.capture + 1);
+	    mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "  Capture subdevices: %i\n", pcminfo.capture + 1);
 	    pprint(strbuf);
 	    if (pcminfo.flags & SND_PCM_INFO_CAPTURE) {
 		/* get hardware information for capture device */
@@ -5457,17 +5452,17 @@ static void alsa_describe_audio_state_1(void)
 		    if ((err = alsa_info(dhandle, &dev_info))!=0) {
 			mus_error(MUS_AUDIO_CANT_OPEN, "%s: snd_pcm_plugin_info: %s", __FUNCTION__, snd_strerror(err));
 		    } else {
-			mus_snprintf(strbuf, STRBUF_SIZE, "  Capture: formats=%d rates=%d frag-size=%d-%d\n", 
+			mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "  Capture: formats=%d rates=%d frag-size=%d-%d\n", 
 				dev_info.formats, dev_info.rates, 
 				dev_info.min_fragment_size, dev_info.max_fragment_size);
 			pprint(strbuf);
-			mus_snprintf(strbuf, STRBUF_SIZE, "           rate=%d-%d channels=%d-%d\n", 
+			mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "           rate=%d-%d channels=%d-%d\n", 
 				dev_info.min_rate, dev_info.max_rate, 
 				dev_info.min_voices, dev_info.max_voices);
 			pprint(strbuf);
 			for (i = 0; i < 32; i++) {
 			    if (dev_info.formats & (1<<i)) {
-				mus_snprintf(strbuf, STRBUF_SIZE, "             format %s -> %s\n",
+				mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "             format %s -> %s\n",
 					decode_alsa_format(1<<i),
 					mus_audio_format_name(to_mus_format(1<<i)));
 				pprint(strbuf);
@@ -5486,7 +5481,7 @@ static void alsa_describe_audio_state_1(void)
 			mus_print( "%s: snd_ctl_pcm_channel_info[%i]: %s", 
 				  __FUNCTION__, card, snd_strerror(err));
 		    } else {
-			mus_snprintf(strbuf, STRBUF_SIZE, "  Capture subdevice #%i: %s\n", idx, strinfo.subname);
+			mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "  Capture subdevice #%i: %s\n", idx, strinfo.subname);
 			pprint(strbuf);
 		    }
 		}
@@ -5554,8 +5549,8 @@ static void next_mus_print(char *msg)
 {
   if (nxt_err)
     {
-      if (next_err_buf == NULL) next_err_buf = (char *)CALLOC(512, sizeof(char));
-      mus_snprintf(next_err_buf, 512, "%s [%s]", msg, SNDSoundError(nxt_err));
+      if (next_err_buf == NULL) next_err_buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+      mus_snprintf(next_err_buf, PRINT_BUFFER_SIZE, "%s [%s]", msg, SNDSoundError(nxt_err));
       nxt_err = 0;
       (*old_handler)(next_err_buf);
     }
@@ -6000,11 +5995,11 @@ static void describe_audio_state_1(void)
   /* get volume -- not much else we can do here */
   float amps[1];
   float val;
-  if (!strbuf) strbuf = (char *)CALLOC(1024, sizeof(char));
+  if (!strbuf) strbuf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   mus_audio_mixer_read(MUS_AUDIO_DEFAULT, MUS_AUDIO_AMP, 0, amps);
   val = amps[0];
   mus_audio_mixer_read(MUS_AUDIO_DEFAULT, MUS_AUDIO_AMP, 1, amps);
-  mus_snprintf(strbuf, STRBUF_SIZE, "speaker vols: %.2f %.2f\n", val, amps[0]);
+  mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "speaker vols: %.2f %.2f\n", val, amps[0]);
   pprint(strbuf);
   mus_audio_mixer_read(MUS_AUDIO_DAC_FILTER, MUS_AUDIO_TREBLE, 0, amps);
   pprint("dac lowpass: ");
@@ -6115,19 +6110,19 @@ char *mus_audio_moniker(void)
       return("sun?");
     }
   mus_audio_close(audio_fd);
-  if (version_name == NULL) version_name = (char *)CALLOC(32, sizeof(char));
+  if (version_name == NULL) version_name = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
 #ifndef AUDIO_DEV_AMD
-  mus_snprintf(version_name, 32, "audio: %s (%s)", ad.name, ad.version);
+  mus_snprintf(version_name, LABEL_BUFFER_SIZE, "audio: %s (%s)", ad.name, ad.version);
 #else
   switch (ad)
     {
-    case AUDIO_DEV_AMD:        mus_snprintf(version_name, 32, "audio: amd");        break;
+    case AUDIO_DEV_AMD:        mus_snprintf(version_name, LABEL_BUFFER_SIZE, "audio: amd");        break;
   #ifdef AUDIO_DEV_CS4231
-    case AUDIO_DEV_CS4231:     mus_snprintf(version_name, 32, "audio: cs4231");     break;
+    case AUDIO_DEV_CS4231:     mus_snprintf(version_name, LABEL_BUFFER_SIZE, "audio: cs4231");     break;
   #endif
-    case AUDIO_DEV_SPEAKERBOX: mus_snprintf(version_name, 32, "audio: speakerbox"); break;
-    case AUDIO_DEV_CODEC:      mus_snprintf(version_name, 32, "audio: codec");      break;
-    default:                   mus_snprintf(version_name, 32, "audio: unknown");    break;
+    case AUDIO_DEV_SPEAKERBOX: mus_snprintf(version_name, LABEL_BUFFER_SIZE, "audio: speakerbox"); break;
+    case AUDIO_DEV_CODEC:      mus_snprintf(version_name, LABEL_BUFFER_SIZE, "audio: codec");      break;
+    default:                   mus_snprintf(version_name, LABEL_BUFFER_SIZE, "audio: unknown");    break;
     }
 #endif
   return(version_name);
@@ -6817,12 +6812,12 @@ static char *sun_out_device_name(int dev)
 static char *sun_vol_name = NULL;
 static char *sun_volume_name(float vol, int balance, int chans)
 {
-  if (sun_vol_name == NULL) sun_vol_name = (char *)CALLOC(64, sizeof(char));
+  if (sun_vol_name == NULL) sun_vol_name = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
   if (chans != 2)
-    mus_snprintf(sun_vol_name, 64, "%.3f", vol);
+    mus_snprintf(sun_vol_name, LABEL_BUFFER_SIZE, "%.3f", vol);
   else 
     {
-      mus_snprintf(sun_vol_name, 64, "%.3f %.3f",
+      mus_snprintf(sun_vol_name, LABEL_BUFFER_SIZE, "%.3f %.3f",
 		   vol * (float)(AUDIO_RIGHT_BALANCE - balance) / (float)AUDIO_RIGHT_BALANCE,
 		   vol * (float)balance / (float)AUDIO_RIGHT_BALANCE);
     }
@@ -6840,7 +6835,7 @@ static void describe_audio_state_1(void)
   int audio_fd, err;
   char *dev_name;
   AUDIO_INITINFO(&info);
-  if (!strbuf) strbuf = (char *)CALLOC(STRBUF_SIZE, sizeof(char));
+  if (!strbuf) strbuf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   if (getenv(AUDIODEV_ENV) != NULL) 
     dev_name = getenv(AUDIODEV_ENV); 
   else dev_name = DAC_NAME;
@@ -6854,12 +6849,12 @@ static void describe_audio_state_1(void)
   if (err == -1) return;
   mus_audio_close(audio_fd);
 #ifndef AUDIO_DEV_AMD
-  mus_snprintf(strbuf, STRBUF_SIZE, "%s (version %s, configuration: %s)\n", ad.name, ad.version, ad.config);
+  mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "%s (version %s, configuration: %s)\n", ad.name, ad.version, ad.config);
 #else
-  mus_snprintf(strbuf, STRBUF_SIZE, "type: %d\n", ad);
+  mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "type: %d\n", ad);
 #endif
   pprint(strbuf);
-  mus_snprintf(strbuf, STRBUF_SIZE, "output: %s\n    srate: %d, vol: %s, chans: %d, format %d-bit %s\n",
+  mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "output: %s\n    srate: %d, vol: %s, chans: %d, format %d-bit %s\n",
 	  sun_out_device_name(info.play.port),
 	  info.play.sample_rate,
 	  sun_volume_name((float)info.play.gain / (float)AUDIO_MAX_GAIN, info.play.balance, 2),
@@ -6867,7 +6862,7 @@ static void describe_audio_state_1(void)
 	  info.play.precision,
 	  sun_format_name(info.play.encoding));
   pprint(strbuf);
-  mus_snprintf(strbuf, STRBUF_SIZE, "input: %s\n    srate: %d, vol: %s, chans: %d, format %d-bit %s\n",
+  mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "input: %s\n    srate: %d, vol: %s, chans: %d, format %d-bit %s\n",
 	  sun_in_device_name(info.record.port),
 	  info.record.sample_rate,
 	  sun_volume_name((float)info.record.gain / (float)AUDIO_MAX_GAIN, info.record.balance, 2),
@@ -6875,11 +6870,11 @@ static void describe_audio_state_1(void)
 	  info.record.precision,
 	  sun_format_name(info.record.encoding));
   pprint(strbuf);
-  mus_snprintf(strbuf, STRBUF_SIZE, "input->output vol: %.3f\n", (float)info.monitor_gain / (float)AUDIO_MAX_GAIN);
+  mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "input->output vol: %.3f\n", (float)info.monitor_gain / (float)AUDIO_MAX_GAIN);
   pprint(strbuf);
-  if (info.play.pause) {mus_snprintf(strbuf, STRBUF_SIZE, "Playback is paused\n"); pprint(strbuf);}
-  if (info.record.pause) {mus_snprintf(strbuf, STRBUF_SIZE, "Recording is paused\n"); pprint(strbuf);}
-  if (info.output_muted) {mus_snprintf(strbuf, STRBUF_SIZE, "Output is muted\n"); pprint(strbuf);}
+  if (info.play.pause) {mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "Playback is paused\n"); pprint(strbuf);}
+  if (info.record.pause) {mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "Recording is paused\n"); pprint(strbuf);}
+  if (info.output_muted) {mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "Output is muted\n"); pprint(strbuf);}
 }
 
 static struct audio_info saved_info;
@@ -6930,7 +6925,7 @@ static int available_input_devices(void)
   OSErr err;
   int i;
   Handle h;
-  devname = (unsigned char *)CALLOC(256, sizeof(char));
+  devname = (unsigned char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   for (i = 1; i < 16; i++)
     {
       err = SPBGetIndexedDevice(i, devname, &h);
@@ -6998,7 +6993,7 @@ static char *input_device_name(long refnum)
 {
   char *name;
   OSErr err;  
-  name = (char *)CALLOC(256, sizeof(char));
+  name = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   err = SPBGetDeviceInfo(refnum, siDeviceName, name);
   if (err == noErr) return(name);
   FREE(name);
@@ -7183,9 +7178,9 @@ static int input_device_set_gains(long refnum, float *gains)
 char *mus_audio_moniker(void)
 {
   NumVersion nv;
-  if (version_name == NULL) version_name = (char *)CALLOC(32, sizeof(char));
+  if (version_name == NULL) version_name = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
   nv = SndSoundManagerVersion();
-  mus_snprintf(version_name, 32, "Mac audio: %d.%d.%d.%d\n", nv.majorRev, nv.minorAndBugRev, nv.stage, nv.nonRelRev);
+  mus_snprintf(version_name, LABEL_BUFFER_SIZE, "Mac audio: %d.%d.%d.%d\n", nv.majorRev, nv.minorAndBugRev, nv.stage, nv.nonRelRev);
   return(version_name);
 }
 
@@ -7203,9 +7198,9 @@ static void describe_audio_state_1(void)
   int i, j, devs, rates, range, sizes, connected;
   long refnum;
   Handle h;
-  if (!strbuf) strbuf = (char *)CALLOC(STRBUF_SIZE, sizeof(char));
+  if (!strbuf) strbuf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   nv = SndSoundManagerVersion();
-  mus_snprintf(strbuf, STRBUF_SIZE, "Sound Manager: %d.%d.%d.%d\n", 
+  mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "Sound Manager: %d.%d.%d.%d\n", 
 	  nv.majorRev, nv.minorAndBugRev, nv.stage, nv.nonRelRev);
   pprint(strbuf);
   err = Gestalt(gestaltSoundAttr, &response);
@@ -7214,7 +7209,7 @@ static void describe_audio_state_1(void)
   if (have_IO_mgr)
     {
       nv = SPBVersion();
-      mus_snprintf(strbuf, STRBUF_SIZE, "Sound Input Manager: %d.%d.%d.%d\n", 
+      mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "Sound Input Manager: %d.%d.%d.%d\n", 
 	      nv.majorRev, nv.minorAndBugRev, nv.stage, nv.nonRelRev); 
       pprint(strbuf);
      }
@@ -7228,12 +7223,12 @@ static void describe_audio_state_1(void)
   if (response & gestaltPlayAndRecord) pprint("can play and record simultaneously\n");
   if (response & gestaltMultiChannels) pprint("has multichannel support\n");
   GetSysBeepVolume(&response);
-  mus_snprintf(strbuf, STRBUF_SIZE, "beep vol: %.3f %.3f\n", 
+  mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "beep vol: %.3f %.3f\n", 
 	  ((float)(response >> 16)) / 255.0, 
 	  ((float)(response & 0xffff)) / 255.0); 
   pprint(strbuf);
   GetDefaultOutputVolume(&response);
-  mus_snprintf(strbuf, STRBUF_SIZE, "output vol: %.3f %.3f\n", 
+  mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "output vol: %.3f %.3f\n", 
 	  ((float)(response >> 16)) / 255.0, 
 	  ((float)(response & 0xffff)) / 255.0); 
   pprint(strbuf);
@@ -7243,8 +7238,8 @@ static void describe_audio_state_1(void)
       devs = available_input_devices();
       if (devs > 0)
         {
-          devname = (unsigned char *)CALLOC(256, sizeof(char));
-          mus_snprintf(strbuf, STRBUF_SIZE, "input device%s:\n", (devs > 1) ? "s" : ""); 
+          devname = (unsigned char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+          mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "input device%s:\n", (devs > 1) ? "s" : ""); 
 	  pprint(strbuf);
           for (i = 1; i <= devs; i++)
             {
@@ -7258,7 +7253,7 @@ static void describe_audio_state_1(void)
                         {
                           range = input_device_get_source(refnum);
                           connected = input_device_is_connected(refnum);
-                          mus_snprintf(strbuf, STRBUF_SIZE, "  %s: %s%s",
+                          mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "  %s: %s%s",
                                   (*devname) ? devname : (unsigned char *)"un-named",
                                   ((input_device_get_async(refnum) == 1) ? "(async) " : ""),
                                   ((connected == siDeviceIsConnected) ? "" : 
@@ -7268,10 +7263,10 @@ static void describe_audio_state_1(void)
                         if (range == 0) pprint("\n");
                         else
                                 {
-                                mus_snprintf(strbuf, STRBUF_SIZE, " (source: %d)\n", range);
+                                mus_snprintf(strbuf, PRINT_BUFFER_SIZE, " (source: %d)\n", range);
                                 pprint(strbuf);
                                 }
-                                mus_snprintf(strbuf, STRBUF_SIZE, "    %d chans available, %d active\n",
+                                mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "    %d chans available, %d active\n",
                                   input_device_channels(refnum),
                                   input_device_get_channels(refnum));
                           pprint(strbuf);
@@ -7282,37 +7277,37 @@ static void describe_audio_state_1(void)
                           rates = input_device_sample_rates(refnum, &range, vals);
                           if (rates > 1)
                             {
-                              mus_snprintf(strbuf, STRBUF_SIZE, "    srates available:"); 
+                              mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "    srates available:"); 
                               pprint(strbuf);
                               if (range)
                                 {
-				  mus_snprintf(strbuf, STRBUF_SIZE, "%d to %d", vals[0], vals[1]); 
+				  mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "%d to %d", vals[0], vals[1]); 
 				  pprint(strbuf);
 				}
                               else
                                 for (j = 0; j < rates; j++) 
 				  {
-				    mus_snprintf(strbuf, STRBUF_SIZE, " %d", vals[j]); 
+				    mus_snprintf(strbuf, PRINT_BUFFER_SIZE, " %d", vals[j]); 
 				    pprint(strbuf);
 				  }
-                              mus_snprintf(strbuf, STRBUF_SIZE, ", current srate: %d\n",
+                              mus_snprintf(strbuf, PRINT_BUFFER_SIZE, ", current srate: %d\n",
                                       input_device_get_srate(refnum));
                               pprint(strbuf);
                             }
                           else 
                             {
-                              mus_snprintf(strbuf, STRBUF_SIZE, "    srate: %d\n", input_device_get_srate(refnum)); 
+                              mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "    srate: %d\n", input_device_get_srate(refnum)); 
                               pprint(strbuf);
                             }
                           err = input_device_get_quality(refnum);
                           if (err != -1) 
                             {
-                              mus_snprintf(strbuf, STRBUF_SIZE, "    quality: %s\n",
+                              mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "    quality: %s\n",
 				      quality_names[1 + input_device_get_quality(refnum)]);
                               pprint(strbuf);
                             }
                           input_device_get_gains(refnum, gains);
-                          mus_snprintf(strbuf, STRBUF_SIZE, "    gain: %.3f (%.3f %.3f)\n    sample: %s %d bits",
+                          mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "    gain: %.3f (%.3f %.3f)\n    sample: %s %d bits",
                                   input_device_get_gain(refnum), 
 				  gains[0], gains[1],
                                   ((input_device_get_signed(refnum)) ? "signed" : "unsigned"),
@@ -7321,11 +7316,11 @@ static void describe_audio_state_1(void)
                           sizes = input_device_sample_sizes(refnum, vals);
                           if (sizes > 0)
                             {
-                              mus_snprintf(strbuf, STRBUF_SIZE, " (%d", vals[0]); 
+                              mus_snprintf(strbuf, PRINT_BUFFER_SIZE, " (%d", vals[0]); 
 			      pprint(strbuf);
                               for (j = 1; j < sizes; j++) 
                                 {
-				  mus_snprintf(strbuf, STRBUF_SIZE, ", %d", vals[j]); 
+				  mus_snprintf(strbuf, PRINT_BUFFER_SIZE, ", %d", vals[j]); 
 				  pprint(strbuf);
 				}
                               pprint(" bit samples available)");
@@ -7948,12 +7943,12 @@ static void describe_audio_state_1(void)
   gain.channel_mask = (AUDIO_CHANNEL_LEFT | AUDIO_CHANNEL_RIGHT);
   ioctl(fd, AUDIO_GET_GAINS, &gain);
   close(fd);
-  if (!strbuf) strbuf = (char *)CALLOC(STRBUF_SIZE, sizeof(char));
+  if (!strbuf) strbuf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   g[0] = gain.cgain[0].transmit_gain; 
   g[1] = gain.cgain[1].transmit_gain;
   mina = desc.min_transmit_gain;  
   maxa = desc.max_transmit_gain;
-  mus_snprintf(strbuf, STRBUF_SIZE, "out vols: %.3f %.3f\n",
+  mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "out vols: %.3f %.3f\n",
 	  (float)(g[0] - mina) / (float)(maxa - mina),
 	  (float)(g[1] - mina) / (float)(maxa - mina)); 
   pprint(strbuf);
@@ -7961,7 +7956,7 @@ static void describe_audio_state_1(void)
   g[1] = gain.cgain[1].receive_gain;
   mina = desc.min_receive_gain;  
   maxa = desc.max_receive_gain;
-  mus_snprintf(strbuf, STRBUF_SIZE, "in vols: %.3f %.3f\n",
+  mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "in vols: %.3f %.3f\n",
 	  (float)(g[0] - mina) / (float)(maxa - mina),
 	  (float)(g[1] - mina) / (float)(maxa - mina)); 
   pprint(strbuf);
@@ -7969,7 +7964,7 @@ static void describe_audio_state_1(void)
   g[1] = gain.cgain[1].monitor_gain;
   mina = desc.min_monitor_gain;  
   maxa = desc.max_monitor_gain;
-  mus_snprintf(strbuf, STRBUF_SIZE, "monitor vols: %.3f %.3f\n",
+  mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "monitor vols: %.3f %.3f\n",
 	  (float)(g[0] - mina) / (float)(maxa - mina),
 	  (float)(g[1] - mina) / (float)(maxa - mina)); 
   pprint(strbuf);
@@ -8286,9 +8281,9 @@ static void win_mus_print(char *msg)
   else
     {
       if (win_in_err) 
-	waveInGetErrorText(win_in_err, getstr, 128);
-      else waveOutGetErrorText(win_out_err, getstr, 128);
-      mus_snprintf(errstr, 128, "%s [%s]", msg, getstr);
+	waveInGetErrorText(win_in_err, getstr, PRINT_BUFFER_SIZE);
+      else waveOutGetErrorText(win_out_err, getstr, PRINT_BUFFER_SIZE);
+      mus_snprintf(errstr, PRINT_BUFFER_SIZE, "%s [%s]", msg, getstr);
       (*old_handler)(errstr);
     }
 }
@@ -8711,7 +8706,7 @@ static void describe_audio_state_1(void)
 #endif
   need_comma = 1;
   chans = 1;
-  if (!strbuf) strbuf = (char *)CALLOC(STRBUF_SIZE, sizeof(char));
+  if (!strbuf) strbuf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   devs = waveOutGetNumDevs();
   if (devs > 0)
     {
@@ -8723,7 +8718,7 @@ static void describe_audio_state_1(void)
             {
               version = wocaps.vDriverVersion;
               maker = wocaps.wMid;
-              mus_snprintf(strbuf, STRBUF_SIZE, "  %s %s: version %d.%d\n",
+              mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "  %s %s: version %d.%d\n",
                       mfg(maker), wocaps.szPname,
                       version>>8, version&0xff);
               pprint(strbuf);
@@ -8750,11 +8745,11 @@ static void describe_audio_state_1(void)
                   if (!err)
                     {
                       if (wocaps.dwSupport & WAVECAPS_LRVOLUME)
-                        mus_snprintf(strbuf, STRBUF_SIZE, 
+                        mus_snprintf(strbuf, PRINT_BUFFER_SIZE, 
 				     "  vol: %.3f %.3f", 
 				     unlog((unsigned short)(val >> 16)), 
 				     unlog((unsigned short)(val & 0xffff)));
-                      else mus_snprintf(strbuf, STRBUF_SIZE, 
+                      else mus_snprintf(strbuf, PRINT_BUFFER_SIZE, 
 					"  vol: %.3f", 
 					unlog((unsigned short)(val & 0xffff)));
                       pprint(strbuf);
@@ -8769,7 +8764,7 @@ static void describe_audio_state_1(void)
                       err = waveOutGetPlaybackRate(hd, &rate);
                       if (!err)
                         {
-                          mus_snprintf(strbuf, STRBUF_SIZE, 
+                          mus_snprintf(strbuf, PRINT_BUFFER_SIZE, 
 				       "%s playback rate: %.3f", 
 				       (need_comma ? ", " : ""), 
 				       (float)rate / 65536.0);
@@ -8782,7 +8777,7 @@ static void describe_audio_state_1(void)
                       err = waveOutGetPitch(hd, &pitch);
                       if (!err)
                         {
-                          mus_snprintf(strbuf, STRBUF_SIZE, 
+                          mus_snprintf(strbuf, PRINT_BUFFER_SIZE, 
 				       "%s pitch: %.3f", 
 				       (need_comma ? ", " : ""), 
 				       (float)pitch / 65536.0);
@@ -8805,11 +8800,11 @@ static void describe_audio_state_1(void)
           err = waveInGetDevCaps(dev, &wicaps, sizeof(wicaps));
           if (!err)
             {
-              mus_snprintf(strbuf, STRBUF_SIZE, "  %s%s", (wicaps.wMid != maker) ? mfg(wicaps.wMid) : "", wicaps.szPname);
+              mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "  %s%s", (wicaps.wMid != maker) ? mfg(wicaps.wMid) : "", wicaps.szPname);
               pprint(strbuf);
               if ((wicaps.wMid != maker) || (version != wicaps.vDriverVersion))
                 {
-                  mus_snprintf(strbuf, STRBUF_SIZE, ": version %d.%d\n", 
+                  mus_snprintf(strbuf, PRINT_BUFFER_SIZE, ": version %d.%d\n", 
 			       (wicaps.vDriverVersion >> 8), 
 			       wicaps.vDriverVersion & 0xff);
                   pprint(strbuf);
@@ -8834,13 +8829,13 @@ static void describe_audio_state_1(void)
           err = auxGetDevCaps(dev, &wacaps, sizeof(wacaps));
           if (!err)
             {
-              mus_snprintf(strbuf, STRBUF_SIZE, "  %s%s", (wacaps.wMid != maker) ? mfg(wacaps.wMid) : "", wacaps.szPname);
+              mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "  %s%s", (wacaps.wMid != maker) ? mfg(wacaps.wMid) : "", wacaps.szPname);
               pprint(strbuf);
               if ((wacaps.wMid != maker) || (version != wacaps.vDriverVersion))
-                mus_snprintf(strbuf, STRBUF_SIZE, ": version %d.%d%s",
+                mus_snprintf(strbuf, PRINT_BUFFER_SIZE, ": version %d.%d%s",
                         (wacaps.vDriverVersion>>8), wacaps.vDriverVersion&0xff,
                         (wacaps.wTechnology & AUXCAPS_CDAUDIO) ? " (CD)" : "");
-              else mus_snprintf(strbuf, STRBUF_SIZE, "%s\n", (wacaps.wTechnology & AUXCAPS_CDAUDIO) ? " (CD)" : "");
+              else mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "%s\n", (wacaps.wTechnology & AUXCAPS_CDAUDIO) ? " (CD)" : "");
               pprint(strbuf);
               if (wacaps.dwSupport & AUXCAPS_VOLUME)
                 {
@@ -8848,11 +8843,11 @@ static void describe_audio_state_1(void)
                   if (!err)
                     {
                       if (wacaps.dwSupport & AUXCAPS_LRVOLUME)
-                        mus_snprintf(strbuf, STRBUF_SIZE, 
+                        mus_snprintf(strbuf, PRINT_BUFFER_SIZE, 
 				     "  vol: %.3f %.3f\n", 
 				     unlog((unsigned short)(val >> 16)), 
 				     unlog((unsigned short)(val & 0xffff)));
-                      else mus_snprintf(strbuf, STRBUF_SIZE, 
+                      else mus_snprintf(strbuf, PRINT_BUFFER_SIZE, 
 					"  vol: %.3f\n", 
 					unlog((unsigned short)(val & 0xffff)));
                       pprint(strbuf);
@@ -8871,11 +8866,11 @@ static void describe_audio_state_1(void)
           err = mixerGetDevCaps(dev, &wmcaps, sizeof(wmcaps));
           if (!err)
             {
-              mus_snprintf(strbuf, STRBUF_SIZE, "  %s%s", (wmcaps.wMid != maker) ? mfg(wmcaps.wMid) : "", wmcaps.szPname);
+              mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "  %s%s", (wmcaps.wMid != maker) ? mfg(wmcaps.wMid) : "", wmcaps.szPname);
               pprint(strbuf);
               if ((wmcaps.wMid != maker) || (version != wmcaps.vDriverVersion))
                 {
-                  mus_snprintf(strbuf, STRBUF_SIZE,
+                  mus_snprintf(strbuf, PRINT_BUFFER_SIZE,
 			       ": version %d.%d\n", 
 			       (wmcaps.vDriverVersion >> 8), 
 			       wmcaps.vDriverVersion & 0xff);
@@ -8909,7 +8904,7 @@ static void describe_audio_state_1(void)
                         {
                           if ((source == 0) && (!dest_time)) pprint("  Sources:\n");
                           if ((dest == 0) && (dest_time)) pprint("  Destinations:\n");
-                          mus_snprintf(strbuf, STRBUF_SIZE, "    %s: %s (%s), %d chan%s",
+                          mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "    %s: %s (%s), %d chan%s",
                                   mixline.szName,
                                   mixer_component_name(mixline.dwComponentType),
                                   mixer_target_name(mixline.Target.dwType),
@@ -8918,13 +8913,13 @@ static void describe_audio_state_1(void)
                           pprint(strbuf);
                           if (mixline.cConnections > 0)
                                 {
-                                    mus_snprintf(strbuf, STRBUF_SIZE, ", %d connection%s",
+                                    mus_snprintf(strbuf, PRINT_BUFFER_SIZE, ", %d connection%s",
                                     mixline.cConnections, ((mixline.cConnections != 1) ? "s" : ""));
                                     pprint(strbuf);
                                 }
                           if (dest_time) 
                             {
-                              mus_snprintf(strbuf, STRBUF_SIZE, "%s\n", mixer_status_name(mixline.fdwLine));
+                              mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "%s\n", mixer_status_name(mixline.fdwLine));
                               pprint(strbuf);
                             }
                           else pprint("\n");
@@ -8941,7 +8936,7 @@ static void describe_audio_state_1(void)
                               err = mixerGetLineControls(mfd, &linecontrols, MIXER_GETLINECONTROLSF_ALL);
                               if (!err)
                                 {
-                                  mus_snprintf(strbuf, STRBUF_SIZE, 
+                                  mus_snprintf(strbuf, PRINT_BUFFER_SIZE, 
 					       "      %d control%s:\n", 
 					       linecontrols.cControls, 
 					       (linecontrols.cControls != 1) ? "s" : "");
@@ -8951,7 +8946,7 @@ static void describe_audio_state_1(void)
                                   for (control = 0; control < controls; control++)
                                     {
 
-                                       mus_snprintf(strbuf, STRBUF_SIZE, "        %s", mc[control].szName);
+                                       mus_snprintf(strbuf, PRINT_BUFFER_SIZE, "        %s", mc[control].szName);
                                        pprint(strbuf);
                                        controldetails.cbStruct = sizeof(MIXERCONTROLDETAILS);
                                        controldetails.dwControlID = mc[control].dwControlID;
@@ -8972,7 +8967,7 @@ static void describe_audio_state_1(void)
 					     {
 					       for (chan = 0; chan < mixline.cChannels; chan++) 
 						 {
-						   mus_snprintf(strbuf, STRBUF_SIZE, " [%s]", clist[chan].szName);
+						   mus_snprintf(strbuf, PRINT_BUFFER_SIZE, " [%s]", clist[chan].szName);
 						   pprint(strbuf);
 						 }
 					     }
@@ -9012,7 +9007,7 @@ static void describe_audio_state_1(void)
                                                  case MIXERCONTROL_CT_UNITS_BOOLEAN:
                                                    for (chan = 0; chan < chans; chan++)
                                                      {
-                                                       mus_snprintf(strbuf, STRBUF_SIZE, " %s", (cbool[chan].fValue) ? " on" : " off");
+                                                       mus_snprintf(strbuf, PRINT_BUFFER_SIZE, " %s", (cbool[chan].fValue) ? " on" : " off");
                                                        pprint(strbuf);
                                                      }
                                                    break;
@@ -9023,7 +9018,7 @@ static void describe_audio_state_1(void)
                                                      {
                                                        for (chan = 0; chan < chans; chan++)
                                                          {
-                                                           mus_snprintf(strbuf, STRBUF_SIZE, " %.3f", 
+                                                           mus_snprintf(strbuf, PRINT_BUFFER_SIZE, " %.3f", 
 									(float)(csign[chan].lValue - mina) / (float)(maxa - mina));
                                                            pprint(strbuf);
                                                          }
@@ -9036,7 +9031,7 @@ static void describe_audio_state_1(void)
                                                      {
                                                        for (chan = 0; chan < chans; chan++)
                                                          {
-                                                           mus_snprintf(strbuf, STRBUF_SIZE, " %.3f", 
+                                                           mus_snprintf(strbuf, PRINT_BUFFER_SIZE, " %.3f", 
 									(float)(cline[chan].dwValue - mina) / (float)(maxa - mina));
                                                            pprint(strbuf);
                                                          }
@@ -9933,14 +9928,14 @@ static int swap_end, resign; /* How to handle samples on write */
 int mus_audio_initialize(void) {return(MUS_NO_ERROR);}
 int mus_audio_systems(void) {return(1);}
 char *mus_audio_system_name(int system) {return esd_name;}
-static char our_name[128];
+static char our_name[LABEL_BUFFER_SIZE];
 char *mus_audio_moniker(void) 
 {
 #ifdef ESD_VERSION
   #ifdef AUDIOFILE_VERSION
-    mus_snprintf(our_name, 128, "%s: %s (Audiofile %s)", esd_name, ESD_VERSION, AUDIOFILE_VERSION);
+    mus_snprintf(our_name, LABEL_BUFFER_SIZE, "%s: %s (Audiofile %s)", esd_name, ESD_VERSION, AUDIOFILE_VERSION);
   #else
-    mus_snprintf(our_name, 128, "%s: %s", esd_name, ESD_VERSION);
+    mus_snprintf(our_name, LABEL_BUFFER_SIZE, "%s: %s", esd_name, ESD_VERSION);
   #endif
   return(our_name);
 #else

@@ -614,7 +614,7 @@ static SCM g_main_widgets(void)
 }
 
 #define NUM_DIALOGS 22
-static SCM dialog_widgets = SCM_UNDEFINED;
+static SCM dialog_widgets;
 
 static SCM g_dialog_widgets(void)
 {
@@ -732,6 +732,8 @@ static SCM g_main_shell(void)
 
 void g_init_draw(SCM local_doc)
 {
+  dialog_widgets = SCM_UNDEFINED;
+
   /* ---------------- stable? ---------------- */
 
   DEFINE_VAR(S_time_graph,           WAVE_AXIS_INFO, "time domain graph");

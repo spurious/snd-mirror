@@ -52,10 +52,10 @@ char *env_to_string(env *e)
       news[0] = '\'';
       news[1] = '(';
       news[2] = '\0';
-      expr_buf = (char *)CALLOC(128, sizeof(char));
+      expr_buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
       for (i = 0, j = 0; i < e->pts; i++, j += 2)
 	{
-	  mus_snprintf(expr_buf, 128, "%.3f %.3f ", e->data[j], e->data[j + 1]);
+	  mus_snprintf(expr_buf, PRINT_BUFFER_SIZE, "%.3f %.3f ", e->data[j], e->data[j + 1]);
 	  strcat(news, expr_buf);
 	}
       FREE(expr_buf);
@@ -1309,13 +1309,13 @@ void add_or_edit_symbol(char *name, env *val)
   /* called from envelope editor -- pass new definition into scheme */
   SCM e;
   char *buf, *tmpstr = NULL;
-  buf = (char *)CALLOC(256, sizeof(char));
+  buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   e = SND_LOOKUP(name);
-  if ((e) && (LIST_P(e)))
-    mus_snprintf(buf, 256, "(set! %s %s)", 
+  if ((BOUND_P(e)) && (LIST_P(e)))
+    mus_snprintf(buf, PRINT_BUFFER_SIZE, "(set! %s %s)", 
 	    name, 
 	    tmpstr = env_to_string(val));
-  else mus_snprintf(buf, 256, "(define %s %s)", 
+  else mus_snprintf(buf, PRINT_BUFFER_SIZE, "(define %s %s)", 
 	       name, 
 	       tmpstr = env_to_string(val));
   snd_catch_any(eval_str_wrapper, buf, buf);

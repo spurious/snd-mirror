@@ -26,7 +26,9 @@
 #include <stdio.h>
 #include <errno.h>
 #include <stdlib.h>
-#include <string.h>
+#if (!defined(HAVE_CONFIG_H)) || (defined(HAVE_STRING_H))
+  #include <string.h>
+#endif
 #include <stdarg.h>
 
 #if (defined(NEXT) || (defined(HAVE_LIBC_H) && (!defined(HAVE_UNISTD_H))))
@@ -39,6 +41,9 @@
 
 #if USE_SND
   #include "snd.h"
+#else
+  #define PRINT_BUFFER_SIZE 512
+  #define LABEL_BUFFER_SIZE 64
 #endif
 
 #include "sndlib.h"
@@ -734,6 +739,16 @@ static SND_TAG_TYPE mus_scm_tag = 0;
 int mus_scm_p(SCM obj) {return(MUS_SCM_P(obj));}
 mus_any *mus_scm_to_clm(SCM obj) {return(TO_CLM(obj));}
 
+static SCM *make_vcts(int size)
+{
+  int i;
+  SCM *vcts;
+  vcts = (SCM *)MALLOC(size * sizeof(SCM));
+  for (i = 0; i < size; i++)
+    vcts[i] = SCM_UNDEFINED;
+  return(vcts);
+}
+
 static SCM mark_mus_scm(SCM obj) 
 {
   int i;
@@ -743,18 +758,21 @@ static SCM mark_mus_scm(SCM obj)
   if (ms->vcts) 
     {
       for (i = 0; i < ms->nvcts; i++) 
-	if (ms->vcts[i]) 
+	if (BOUND_P(ms->vcts[i]))
 	  scm_gc_mark(ms->vcts[i]);
     }
 #endif
   return(SCM_BOOL_F);
 }
 
+#define DONT_FREE_FRAME -1
+#define FREE_FRAME 1
+
 static scm_sizet free_mus_scm(SCM obj) 
 {
   mus_scm *ms;
   ms = TO_MUS_SCM(obj);
-  if (ms->nvcts != -1) mus_free(TO_CLM(obj));
+  if (ms->nvcts != DONT_FREE_FRAME) mus_free(TO_CLM(obj));
   if (ms->vcts) FREE(ms->vcts);  
   FREE(ms);
   return(sizeof(mus_scm));
@@ -1297,8 +1315,7 @@ static SCM g_make_delay_1(int choice, SCM arglist)
 	  line[i] = initial_element;
     }
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
-  gn->vcts = (SCM *)CALLOC(1, sizeof(SCM));
-  gn->vcts[0] = SCM_EOL;
+  gn->vcts = make_vcts(1);
   gn->nvcts = 1;
   switch (choice)
     {
@@ -1794,9 +1811,8 @@ is the same in effect as " S_make_oscil "."
     }
   if (table == NULL) table = (Float *)CALLOC(table_size, sizeof(Float));
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
-  gn->vcts = (SCM *)CALLOC(1, sizeof(SCM));
+  gn->vcts = make_vcts(1);
   gn->nvcts = 1;
-  gn->vcts[0] = SCM_EOL;
   gn->gen = mus_make_table_lookup(freq, phase, table, table_size);
   return(mus_scm_to_smob_with_vct(gn, make_vct(table_size, table)));
 }
@@ -2520,15 +2536,12 @@ static SCM g_frame_p(SCM obj)
   return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_frame_p(TO_CLM(obj)))));
 }
 
-#define DONT_FREE_FRAME -1
-#define FREE_FRAME 1
-
 static SCM g_wrap_frame(mus_frame *val, int dealloc)
 {
   mus_scm *gn;
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
   gn->gen = (mus_any *)val;
-  gn->nvcts = dealloc;
+  gn->nvcts = dealloc;           /* free_mus_scm checks this before deallocating */
   return(mus_scm_to_smob(gn));
 }
 
@@ -2829,8 +2842,7 @@ processing normally involving overlap-adds."
   if (siz <= 0) return(SCM_BOOL_F);
   buf = (Float *)CALLOC(siz, sizeof(Float));
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
-  gn->vcts = (SCM *)CALLOC(1, sizeof(SCM));
-  gn->vcts[0] = SCM_EOL;
+  gn->vcts = make_vcts(1);
   gn->nvcts = 1;
   gn->gen = mus_make_buffer(buf, siz, filltime);
   return(mus_scm_to_smob_with_vct(gn, make_vct(siz, buf)));
@@ -2942,8 +2954,7 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
     }
   if (wave == NULL) wave = (Float *)CALLOC(wsize, sizeof(Float));
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
-  gn->vcts = (SCM *)CALLOC(1, sizeof(SCM));
-  gn->vcts[0] = SCM_EOL;
+  gn->vcts = make_vcts(1);
   gn->nvcts = 1;
   gn->gen = mus_make_wave_train(freq, phase, wave, wsize);
   return(mus_scm_to_smob_with_vct(gn, make_vct(wsize, wave)));
@@ -3077,8 +3088,7 @@ is basically the same as make-oscil"
     }
   if (partials_allocated) {FREE(partials); partials = NULL;}
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
-  gn->vcts = (SCM *)CALLOC(1, sizeof(SCM));
-  gn->vcts[0] = SCM_EOL;
+  gn->vcts = make_vcts(1);
   gn->nvcts = 1;
   gn->gen = mus_make_waveshape(freq, 0.0, wave, wsize);
   return(mus_scm_to_smob_with_vct(gn, make_vct(wsize, wave)));
@@ -3341,9 +3351,7 @@ static SCM g_make_filter_1(int choice, SCM arg1, SCM arg2, SCM arg3, SCM arg4, S
     }
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
   gn->gen = fgen;                                    /* delay gn allocation since make_filter can throw an error */
-  gn->vcts = (SCM *)CALLOC(nkeys - 1, sizeof(SCM));
-  gn->vcts[0] = SCM_EOL;
-  if (nkeys > 2) gn->vcts[1] = SCM_EOL;
+  gn->vcts = make_vcts(nkeys - 1);
   gn->nvcts = nkeys - 1;
   gn->vcts[0] = xwave;
   if (nkeys > 2) gn->vcts[1] = ywave;
@@ -3519,8 +3527,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
     }
   /* odata = vct->data in this context [vcts[0]] */
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
-  gn->vcts = (SCM *)CALLOC(1, sizeof(SCM));
-  gn->vcts[0] = SCM_EOL;
+  gn->vcts = make_vcts(1);
   gn->nvcts = 1;
   gn->gen = mus_make_env(brkpts, npts, scaler, offset, base, duration, start, end, odata);
   FREE(brkpts);
@@ -3906,7 +3913,7 @@ at frame 'start' and reading 'samples' samples altogether."
     ERROR(NO_SUCH_CHANNEL,
 	  SCM_LIST3(TO_SCM_STRING(S_file2array),
 		    TO_SCM_STRING("invalid chan"),
-		    chn));
+		    chan));
   if (samps > v->length)
     samps = v->length;
   err = mus_file2fltarray(name,
@@ -4210,7 +4217,7 @@ returns a new generator for signal placement in up to 4 channels.  Channel 0 cor
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
   if (vlen > 0)
     {
-      gn->vcts = (SCM *)CALLOC(vlen, sizeof(SCM));
+      gn->vcts = make_vcts(vlen);
       i = 0;
       if (BOUND_P(out_obj)) gn->vcts[i++] = out_obj;
       if (BOUND_P(rev_obj)) gn->vcts[i] = rev_obj;
@@ -4260,7 +4267,7 @@ static Float funcall1 (void *ptr, int direction) /* intended for "as-needed" inp
    *   it returns a float which we then return to C
    */
   mus_scm *gn = (mus_scm *)ptr;
-  if ((gn) && (gn->vcts) && (gn->vcts[INPUT_FUNCTION]) && (PROCEDURE_P(gn->vcts[INPUT_FUNCTION])))
+  if ((gn) && (gn->vcts) && (BOUND_P(gn->vcts[INPUT_FUNCTION])) && (PROCEDURE_P(gn->vcts[INPUT_FUNCTION])))
     /* the gh_procedure_p call can be confused by 0 -> segfault! */
     return(TO_C_DOUBLE(CALL1(gn->vcts[INPUT_FUNCTION], TO_SMALL_SCM_INT(direction), "as-needed-input")));
   else return(0.0);
@@ -4333,8 +4340,8 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
   if (srate <= 0) mus_misc_error(S_make_src, "srate <= 0.0?", keys[1]);
   if (wid < 0) mus_misc_error(S_make_src, "width < 0?", keys[2]);
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
-  gn->vcts = (SCM *)CALLOC(1, sizeof(SCM));
-  if (BOUND_P(in_obj)) gn->vcts[INPUT_FUNCTION] = in_obj; else gn->vcts[INPUT_FUNCTION] = SCM_EOL;
+  gn->vcts = make_vcts(1);
+  gn->vcts[INPUT_FUNCTION] = in_obj;
   gn->nvcts = 1;
   gn->gen = mus_make_src(funcall1, srate, wid, gn);
   return(mus_scm_to_smob(gn));
@@ -4441,8 +4448,8 @@ jitter controls the randomness in that spacing, input can be a file pointer."
   if ((segment_length + output_hop) > 60.0) /* multiplied by srate in mus_make_granulate in array allocation */
     mus_misc_error(S_make_granulate, "segment_length + output_hop too large!", SCM_LIST2(keys[2], keys[4]));
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
-  gn->vcts = (SCM *)CALLOC(1, sizeof(SCM));
-  if (BOUND_P(in_obj)) gn->vcts[INPUT_FUNCTION] = in_obj; else gn->vcts[INPUT_FUNCTION] = SCM_EOL;
+  gn->vcts = make_vcts(1);
+  gn->vcts[INPUT_FUNCTION] = in_obj;
   gn->nvcts = 1;
   gn->gen = mus_make_granulate(funcall1, expansion, segment_length, segment_scaler, output_hop, ramp_time, jitter, maxsize, gn);
   return(mus_scm_to_smob(gn));
@@ -4529,8 +4536,8 @@ returns a new convolution generator which convolves its input with the impulse r
   if (fft_size < fftlen) fft_size = fftlen;
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
   gn->nvcts = 2;
-  gn->vcts = (SCM *)CALLOC(2, sizeof(SCM));
-  if (BOUND_P(in_obj)) gn->vcts[INPUT_FUNCTION] = in_obj; else gn->vcts[INPUT_FUNCTION] = SCM_EOL;
+  gn->vcts = make_vcts(2);
+  gn->vcts[INPUT_FUNCTION] = in_obj;
   gn->vcts[1] = filt;
   gn->gen = mus_make_convolve(funcall1, filter->data, fft_size, filter->length, gn);
   return(mus_scm_to_smob(gn));
@@ -4589,7 +4596,7 @@ static void init_conv(void)
 static int pvedit (void *ptr)
 {
   mus_scm *gn = (mus_scm *)ptr;
-  if ((gn) && (gn->vcts) && (gn->vcts[EDIT_FUNCTION]) && (PROCEDURE_P(gn->vcts[EDIT_FUNCTION])))
+  if ((gn) && (gn->vcts) && (BOUND_P(gn->vcts[EDIT_FUNCTION])) && (PROCEDURE_P(gn->vcts[EDIT_FUNCTION])))
     return(TO_C_BOOLEAN(CALL1(gn->vcts[EDIT_FUNCTION], gn->vcts[SELF_WRAPPER], __FUNCTION__)));
   return(0);
 }
@@ -4597,7 +4604,7 @@ static int pvedit (void *ptr)
 static Float pvsynthesize (void *ptr)
 {
   mus_scm *gn = (mus_scm *)ptr;
-  if ((gn) && (gn->vcts) && (gn->vcts[SYNTHESIZE_FUNCTION]) && (PROCEDURE_P(gn->vcts[SYNTHESIZE_FUNCTION])))
+  if ((gn) && (gn->vcts) && (BOUND_P(gn->vcts[SYNTHESIZE_FUNCTION])) && (PROCEDURE_P(gn->vcts[SYNTHESIZE_FUNCTION])))
     return(TO_C_DOUBLE(CALL1(gn->vcts[SYNTHESIZE_FUNCTION], gn->vcts[SELF_WRAPPER], __FUNCTION__)));
   return(0.0);
 }
@@ -4605,7 +4612,7 @@ static Float pvsynthesize (void *ptr)
 static int pvanalyze (void *ptr, Float (*input)(void *arg1, int direction))
 {
   mus_scm *gn = (mus_scm *)ptr;
-  if ((gn) && (gn->vcts) && (gn->vcts[SYNTHESIZE_FUNCTION]) && (PROCEDURE_P(gn->vcts[SYNTHESIZE_FUNCTION])))
+  if ((gn) && (gn->vcts) && (BOUND_P(gn->vcts[SYNTHESIZE_FUNCTION])) && (PROCEDURE_P(gn->vcts[SYNTHESIZE_FUNCTION])))
     /* we can only get input func if it's already set up by the outer gen call, so (?) we can use that function here */
     return(TO_C_BOOLEAN(CALL2(gn->vcts[SYNTHESIZE_FUNCTION], gn->vcts[SELF_WRAPPER], gn->vcts[INPUT_FUNCTION], __FUNCTION__)));
   return(0);
@@ -4671,11 +4678,11 @@ and interp set the fftsize, the amount of overlap between ffts, and the time bet
     }
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
   gn->nvcts = 5;
-  gn->vcts = (SCM *)CALLOC(gn->nvcts, sizeof(SCM));
-  if (BOUND_P(in_obj)) gn->vcts[INPUT_FUNCTION] = in_obj; else gn->vcts[INPUT_FUNCTION] = SCM_EOL;
-  if (BOUND_P(edit_obj)) gn->vcts[EDIT_FUNCTION] = edit_obj; else gn->vcts[EDIT_FUNCTION] = SCM_EOL;
-  if (BOUND_P(analyze_obj)) gn->vcts[ANALYZE_FUNCTION] = analyze_obj; else gn->vcts[ANALYZE_FUNCTION] = SCM_EOL;
-  if (BOUND_P(synthesize_obj)) gn->vcts[SYNTHESIZE_FUNCTION] = synthesize_obj; else gn->vcts[SYNTHESIZE_FUNCTION] = SCM_EOL;
+  gn->vcts = make_vcts(gn->nvcts);
+  gn->vcts[INPUT_FUNCTION] = in_obj;
+  gn->vcts[EDIT_FUNCTION] = edit_obj;
+  gn->vcts[ANALYZE_FUNCTION] = analyze_obj;
+  gn->vcts[SYNTHESIZE_FUNCTION] = synthesize_obj;
   gn->gen = mus_make_phase_vocoder(funcall1,
 				   fft_size, overlap, interp, pitch,
 				   (NOT_BOUND_P(analyze_obj) ? NULL : pvanalyze),

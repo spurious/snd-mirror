@@ -80,13 +80,13 @@ static int print_snd_color(SCM obj, SCM port, scm_print_state *pstate)
   Colormap cmap;
   XColor tmp_color;
   Display *dpy;
-  buf = (char *)CALLOC(128, sizeof(char));
+  buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   dpy = XtDisplay(MAIN_SHELL(state));
   cmap = DefaultColormap(dpy, DefaultScreen(dpy));
   tmp_color.flags = DoRed | DoGreen | DoBlue;
   tmp_color.pixel = v->color;
   XQueryColor(dpy, cmap, &tmp_color);
-  mus_snprintf(buf, 128, "#<col" STR_OR ": (%.2f %.2f %.2f)>",
+  mus_snprintf(buf, PRINT_BUFFER_SIZE, "#<col" STR_OR ": (%.2f %.2f %.2f)>",
 	  (float)tmp_color.red / 65535.0,
 	  (float)tmp_color.green / 65535.0,
 	  (float)tmp_color.blue / 65535.0);

@@ -409,10 +409,10 @@ static void clear_point_label(void)
 
 void enved_display_point_label(snd_state *ss, Float x, Float y)
 {
-  char brkpt_buf[32];
+  char brkpt_buf[LABEL_BUFFER_SIZE];
   if ((enved_dBing(ss)) && (ss->min_dB < -60))
-    mus_snprintf(brkpt_buf, 32, "%.3f : %.5f", x, y);
-  else mus_snprintf(brkpt_buf, 32, "%.3f : %.3f", x, y);
+    mus_snprintf(brkpt_buf, LABEL_BUFFER_SIZE, "%.3f : %.5f", x, y);
+  else mus_snprintf(brkpt_buf, LABEL_BUFFER_SIZE, "%.3f : %.3f", x, y);
   set_button_label_normal(brkptL, brkpt_buf);
 }
 
@@ -1136,7 +1136,7 @@ Widget create_envelope_editor (snd_state *ss)
   XmString xhelp, xdismiss, xapply, titlestr, s1;
   XGCValues gv;
   XtCallbackList n1, n2;
-  char str[8];
+  char str[LABEL_BUFFER_SIZE];
 
   if (!enved_dialog)
     {
@@ -1252,7 +1252,7 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNmarginHeight, 0); n++;
       XtSetArg(args[n], XmNmarginBottom, 0); n++;
-      mus_snprintf(str, 8, "%d", filter_env_order(ss));
+      mus_snprintf(str, LABEL_BUFFER_SIZE, "%d", filter_env_order(ss));
       XtSetArg(args[n], XmNvalue, str); n++;
       orderL = sndCreateTextFieldWidget(ss, "orderL", mainform, args, n, ACTIVATABLE, NO_COMPLETER);
       XtAddCallback(orderL, XmNhelpCallback, Order_Help_Callback, ss);
@@ -1755,7 +1755,7 @@ int enved_dialog_is_active(void)
 
 void set_filter_env_order(snd_state *ss, int order)
 {
-  char str[8];
+  char str[LABEL_BUFFER_SIZE];
   if ((order > 0) && (order < 2000))
     {
       if (order & 1) 
@@ -1763,7 +1763,7 @@ void set_filter_env_order(snd_state *ss, int order)
       else in_set_filter_env_order(ss, order);
       if (enved_dialog)
 	{
-	  mus_snprintf(str, 8, "%d", filter_env_order(ss));
+	  mus_snprintf(str, LABEL_BUFFER_SIZE, "%d", filter_env_order(ss));
 	  XmTextFieldSetString(orderL, str);
 	  if ((enved_dialog) && 
 	      (enved_target(ss) == SPECTRUM_ENV) && 

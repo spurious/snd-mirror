@@ -1010,8 +1010,8 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp)  /
   si = sc->si;
   sfs = sc->sfs;
 
-  origin = (char *)CALLOC(128, sizeof(char));
-  mus_snprintf(origin, 128,
+  origin = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+  mus_snprintf(origin, PRINT_BUFFER_SIZE,
 	  "%s \"%s\" %.3f", 
 	  (cp == NULL) ? S_convolve_selection_with : S_convolve_with, 
 	  filename, amp);
@@ -1485,8 +1485,9 @@ static snd_exf *snd_to_temp(chan_info *cp, int selection, int one_file, int head
 	len = sc->dur; 
       else len = current_ed_samples(cp);
       nhdr = copy_header(data->old_filenames[0], sp->hdr);
-      if (header_type != MUS_UNSUPPORTED) nhdr->type = header_type;
-      if (data_format != MUS_UNSUPPORTED) nhdr->format = data_format;
+      /* we have to set universally recognizable defaults here (make_snd_file will use MUS_OUT_FORMAT/MUS_NEXT which can be trouble) */
+      if (header_type != MUS_UNSUPPORTED) nhdr->type = header_type; else nhdr->type = MUS_NEXT;
+      if (data_format != MUS_UNSUPPORTED) nhdr->format = data_format; else nhdr->format = MUS_BSHORT;
       snd_make_file(data->old_filenames[0], chans, nhdr, sc->sfs, len, ss);
       free_file_info(nhdr);
     }
@@ -1499,8 +1500,8 @@ static snd_exf *snd_to_temp(chan_info *cp, int selection, int one_file, int head
 	    len = sc->dur; 
 	  else len = current_ed_samples(si->cps[i]);
 	  nhdr = copy_header(data->old_filenames[i], sp->hdr);
-	  if (header_type != MUS_UNSUPPORTED) nhdr->type = header_type;
-	  if (data_format != MUS_UNSUPPORTED) nhdr->format = data_format;
+	  if (header_type != MUS_UNSUPPORTED) nhdr->type = header_type; else nhdr->type = MUS_NEXT;
+	  if (data_format != MUS_UNSUPPORTED) nhdr->format = data_format; else nhdr->format = MUS_BSHORT;
 	  temp_sfs[0] = sc->sfs[i];
 	  snd_make_file(data->old_filenames[i], 1, nhdr, temp_sfs, len, ss);
 	  nhdr = free_file_info(nhdr);
@@ -1529,49 +1530,47 @@ static int temp_to_snd(snd_exf *data, const char *origin)
 	if ((data->new_filenames[i] == NULL) || 
 	    (strcmp(data->new_filenames[i], data->old_filenames[i]) != 0))
 	  err = snd_remove(data->old_filenames[i]);
+	/* TODO: if in scm (how else can we be here??), throw this error rather than using snd_warning (snd-io.c) */
 	FREE(data->old_filenames[i]);
       }
   if (data->selection)
     {
       /* should this balk if there's no active selection? */
       old_len = selection_len();
-      if (data->files == 1)
+      if ((data->files == 1) && (snd_strlen(data->new_filenames[0]) > 0))
 	{
-	  if (snd_strlen(data->new_filenames[0]) > 0)
+	  new_len = mus_sound_samples(data->new_filenames[0]) / chans;
+	  if (new_len != -1)
 	    {
-	      new_len = mus_sound_samples(data->new_filenames[0])/chans;
-	      if (new_len != -1)
+	      new_chans = mus_sound_chans(data->new_filenames[0]);
+	      if (chans != new_chans)
 		{
-		  new_chans = mus_sound_chans(data->new_filenames[0]);
-		  if (chans != new_chans)
+		  snd_warning("temp-to-selection: original chans: %d, new chans: %d", chans, new_chans);
+		  if (chans > new_chans) 
+		    chans = new_chans;
+		}
+	      if (old_len == new_len)
+		{
+		  for (k = 0; k < chans; k++)
+		    file_change_samples(si->begs[k], old_len, data->new_filenames[0], si->cps[k], k, DELETE_ME, LOCK_MIXES, origin);
+		}
+	      else
+		{
+		  ok = delete_selection(origin, DONT_UPDATE_DISPLAY);
+		  if (!ok) 
+		    snd_warning("temp-to-selection: no active selection? (inserting at sample %d...)", si->begs[0]);
+		  for (k = 0; k < chans; k++)
 		    {
-		      snd_warning("temp-to-selection: original chans: %d, new chans: %d", chans, new_chans);
-		      if (chans > new_chans) 
-			chans = new_chans;
-		    }
-		  if (old_len == new_len)
-		    {
-		      for (k = 0; k < chans; k++)
-			file_change_samples(si->begs[k], old_len, data->new_filenames[0], si->cps[k], k, DELETE_ME, LOCK_MIXES, origin);
-		    }
-		  else
-		    {
-		      ok = delete_selection(origin, DONT_UPDATE_DISPLAY);
-		      if (!ok) 
-			snd_warning("temp-to-selection: no active selection? (inserting at sample %d...)", si->begs[0]);
-		      for (k = 0; k < chans; k++)
-			{
-			  file_insert_samples(si->begs[k], new_len, data->new_filenames[0], si->cps[k], k, DELETE_ME, origin);
-			  reactivate_selection(si->cps[k], si->begs[k], si->begs[k] + new_len);
-			  if (ok) 
-			    backup_edit_list(si->cps[k]);
-			  if ((si->cps[k])->marks) 
-			    ripple_trailing_marks(si->cps[k], si->begs[k], old_len, new_len);
-			}
+		      file_insert_samples(si->begs[k], new_len, data->new_filenames[0], si->cps[k], k, DELETE_ME, origin);
+		      reactivate_selection(si->cps[k], si->begs[k], si->begs[k] + new_len);
+		      if (ok) 
+			backup_edit_list(si->cps[k]);
+		      if ((si->cps[k])->marks) 
+			ripple_trailing_marks(si->cps[k], si->begs[k], old_len, new_len);
 		    }
 		}
-	      else snd_warning("temp-to-selection: %s not readable?", data->new_filenames[0]);
 	    }
+	  else snd_warning("temp-to-selection: %s not readable?", data->new_filenames[0]);
 	}
       else
 	{
@@ -1597,25 +1596,22 @@ static int temp_to_snd(snd_exf *data, const char *origin)
     }
   else
     {
-      if (data->files == 1)
+      if ((data->files == 1) && (snd_strlen(data->new_filenames[0]) > 0))
 	{
-	  if (snd_strlen(data->new_filenames[0]) > 0)
+	  new_len = mus_sound_samples(data->new_filenames[0]) / chans;
+	  if (new_len != -1)
 	    {
-	      new_len = mus_sound_samples(data->new_filenames[0]) / chans;
-	      if (new_len != -1)
+	      new_chans = mus_sound_chans(data->new_filenames[0]);
+	      if (chans != new_chans)
 		{
-		  new_chans = mus_sound_chans(data->new_filenames[0]);
-		  if (chans != new_chans)
-		    {
-		      snd_warning("temp-to-sound: original chans: %d, new chans: %d", chans, new_chans);
-		      if (chans > new_chans) 
-			chans = new_chans;
-		    }
-		  for (k = 0; k < chans; k++)
-		    file_override_samples(new_len, data->new_filenames[0], si->cps[k], k, DELETE_ME, LOCK_MIXES, origin);
+		  snd_warning("temp-to-sound: original chans: %d, new chans: %d", chans, new_chans);
+		  if (chans > new_chans) 
+		    chans = new_chans;
 		}
-	      else snd_warning("temp-to-sound: %s not readable?", data->new_filenames[0]);
+	      for (k = 0; k < chans; k++)
+		file_override_samples(new_len, data->new_filenames[0], si->cps[k], k, DELETE_ME, LOCK_MIXES, origin);
 	    }
+	  else snd_warning("temp-to-sound: %s not readable?", data->new_filenames[0]);
 	}
       else
 	{
@@ -3003,13 +2999,14 @@ static SCM g_sound_to_temp_1(SCM ht, SCM df, int selection, int one_file, const 
   ASSERT_TYPE(INTEGER_IF_BOUND_P(ht), ht, SCM_ARG1, caller, "an integer (a header type id)");
   ASSERT_TYPE(INTEGER_IF_BOUND_P(df), df, SCM_ARG2, caller, "an integer (a data format id)");
   if ((selection) && (selection_is_active() == 0)) 
-    snd_no_active_selection_error((one_file) ? S_selection_to_temp : S_selection_to_temps);
+    snd_no_active_selection_error(caller);
   ss = get_global_state();
   cp = current_channel(ss);
   if (cp)
     {
-      type = TO_C_INT_OR_ELSE(ht, MUS_UNSUPPORTED);  /* mus-next? */
-      format = TO_C_INT_OR_ELSE(df, MUS_UNSUPPORTED);  /* mus-out-format? */
+      type = TO_C_INT_OR_ELSE_WITH_ORIGIN(ht, MUS_UNSUPPORTED, caller);  
+      /* mus-next? hmmm --this needs to be readable by external programs that don't know about our secret next-header formats */
+      format = TO_C_INT_OR_ELSE_WITH_ORIGIN(df, MUS_UNSUPPORTED, caller); 
       program_data = snd_to_temp(cp, selection, one_file, type, format);
       if (program_data)
 	return(SND_WRAP(program_data));
@@ -3061,6 +3058,7 @@ using data returned by the latter and origin as the edit history entry for the e
   program_data = (snd_exf *)(SND_UNWRAP(data));
   program_data->new_filenames[0] = TO_NEW_C_STRING(new_name);
   temp_to_snd(program_data, TO_C_STRING(origin));
+  /* TODO if ^ returned -1, something went awry (?) */
   return(new_name);
 }
 

@@ -27,6 +27,9 @@
 
 #if USE_SND
   #include "snd.h"
+#else
+  #define PRINT_BUFFER_SIZE 512
+  #define LABEL_BUFFER_SIZE 64
 #endif
 
 #include <math.h>
@@ -1019,7 +1022,6 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, MUS_SAMPLE_TYP
 	}
       format = fd->data_format;
       siz = fd->bytes_per_sample;
-
       if ((format == MUS_OUT_FORMAT) && (chans == 1) && (beg == 0)
 #if SNDLIB_USE_FLOATS 
 	  && (fd->prescaler == 1.0)

@@ -60,11 +60,11 @@ static SCM send_netscape(SCM cmd)
   ASSERT_TYPE(STRING_P(cmd), cmd, SCM_ARGn, "send-netscape", "a string");
   ss = get_global_state();
   dpy = MAIN_DISPLAY(ss);
-  command = (char *)CALLOC(256, sizeof(char));
+  command = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   tmp = TO_C_STRING(cmd);
   if ((window = find_window(dpy, DefaultRootWindow(dpy), NS_VERSION, compare_window)))
     {
-      mus_snprintf(command, 256, "openURL(file:%s)", tmp);
+      mus_snprintf(command, PRINT_BUFFER_SIZE, "openURL(file:%s)", tmp);
       XChangeProperty(dpy, 
 		      window, 
 		      XInternAtom(dpy, NS_COMMAND, False), 
@@ -78,7 +78,7 @@ static SCM send_netscape(SCM cmd)
     {
       if (!(fork()))
         {
-	  mus_snprintf(command, 256, "netscape file:%s", tmp);
+	  mus_snprintf(command, PRINT_BUFFER_SIZE, "netscape file:%s", tmp);
 	  if (execl("/bin/sh", "/bin/sh", "-c", command, NULL) == -1)
 	    return(SCM_BOOL_F);
 	}

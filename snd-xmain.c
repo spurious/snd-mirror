@@ -652,14 +652,14 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   if ((html_dir(ss)) && (strcmp(html_dir(ss), HTML_DIR) == 0))
     {
       /* default wasn't changed by user -- check to see if default should have been /usr/doc/snd-n instead */
-      tmpstr = (char *)CALLOC(256, sizeof(char));
-      mus_snprintf(tmpstr, 256, "%s/snd.html", html_dir(ss));
+      tmpstr = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+      mus_snprintf(tmpstr, PRINT_BUFFER_SIZE, "%s/snd.html", html_dir(ss));
       if (!(mus_file_probe(tmpstr)))
 	{
-	  mus_snprintf(tmpstr, 256, "/usr/doc/snd-%d/snd.html", SND_MAJOR_VERSION);
+	  mus_snprintf(tmpstr, PRINT_BUFFER_SIZE, "/usr/doc/snd-%d/snd.html", SND_MAJOR_VERSION);
 	  if (mus_file_probe(tmpstr))
 	    {
-	      mus_snprintf(tmpstr, 256, "/usr/doc/snd-%d", SND_MAJOR_VERSION);
+	      mus_snprintf(tmpstr, PRINT_BUFFER_SIZE, "/usr/doc/snd-%d", SND_MAJOR_VERSION);
 	      set_html_dir(ss, copy_string(tmpstr));
 	    }
 	}

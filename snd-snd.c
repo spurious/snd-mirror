@@ -674,12 +674,12 @@ Float srate_changed(Float val, char *srcbuf, int style, int tones)
 
 /* -------- name click etc */
 
-static char sname[256];
+static char sname[PRINT_BUFFER_SIZE];
 char *shortname(snd_info *sp)
 {
   if (is_link(sp->fullname))
     {
-      mus_snprintf(sname, 256, "(%s)", sp->shortname);
+      mus_snprintf(sname, PRINT_BUFFER_SIZE, "(%s)", sp->shortname);
       return(sname);
     }
   else return(sp->shortname);
@@ -689,7 +689,7 @@ char *shortname_indexed(snd_info *sp)
 {
   if (show_indices(sp->state))
     {
-      mus_snprintf(sname, 256, "%d: %s", sp->index, shortname(sp));
+      mus_snprintf(sname, PRINT_BUFFER_SIZE, "%d: %s", sp->index, shortname(sp));
       return(sname);
     }
   else return(shortname(sp));

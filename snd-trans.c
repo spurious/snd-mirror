@@ -20,7 +20,7 @@
 
 #define TRANS_BUF_SIZE 8192
 
-static char write_error_buffer[256];
+static char write_error_buffer[PRINT_BUFFER_SIZE];
 
 static int snd_checked_write(int fd, unsigned char *buf, int bytes)
 {
@@ -30,14 +30,14 @@ static int snd_checked_write(int fd, unsigned char *buf, int bytes)
   kfree = disk_kspace(fd);
   if (kfree < 0) 
     {
-      mus_snprintf(write_error_buffer, 256,
+      mus_snprintf(write_error_buffer, PRINT_BUFFER_SIZE,
 	      "no space left on device: %s",
 	      strerror(errno)); 
       return(MUS_ERROR);
     }
   if (kfree < (bytes>>10))
     { 
-      mus_snprintf(write_error_buffer, 256,
+      mus_snprintf(write_error_buffer, PRINT_BUFFER_SIZE,
 	      "only %d bytes left on device (we need %d bytes)",
 	      kfree<<10, bytes);
       return(MUS_ERROR);
@@ -45,7 +45,7 @@ static int snd_checked_write(int fd, unsigned char *buf, int bytes)
   bytes_written = write(fd, buf, bytes);
   if (bytes_written != bytes)
     {
-      mus_snprintf(write_error_buffer, 256,
+      mus_snprintf(write_error_buffer, PRINT_BUFFER_SIZE,
 	      "write error (wrote %d of requested %d bytes): %s",
 	      bytes_written, bytes, strerror(errno));
       return(MUS_ERROR);

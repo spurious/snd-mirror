@@ -28,7 +28,7 @@ static void edit_find_ok_callback(int direction, Widget w, XtPointer context, Xt
     { 
       if (ss->search_expr) XtFree(ss->search_expr);
       ss->search_expr = str;
-      if ((ss->search_proc) && (PROCEDURE_P(ss->search_proc))) snd_unprotect(ss->search_proc);
+      if (PROCEDURE_P(ss->search_proc)) snd_unprotect(ss->search_proc);
       ss->search_proc = SCM_UNDEFINED;
       proc = snd_catch_any(eval_str_wrapper, str, str);
       if (procedure_ok_with_error(proc, 1, 0, "find", "find procedure", 1))
@@ -36,8 +36,8 @@ static void edit_find_ok_callback(int direction, Widget w, XtPointer context, Xt
 	  ss->search_proc = proc;
 	  snd_protect(proc);
 	}
-      buf = (char *)CALLOC(256, sizeof(char));
-      mus_snprintf(buf, 256, "find: %s", str);
+      buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+      mus_snprintf(buf, PRINT_BUFFER_SIZE, "find: %s", str);
       set_label(edit_find_label, buf);
       XmTextSetString(edit_find_text, NULL);
       FREE(buf);

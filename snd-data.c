@@ -39,7 +39,7 @@ lisp_grf *free_lisp_info(chan_info *cp)
 
 chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *ss)
 {
-  chan_info *cp; /* may be re-use */
+  chan_info *cp; /* may be re-used */
   if (!cip)
     {
       cp = (chan_info *)CALLOC(1, sizeof(chan_info)); 
@@ -166,8 +166,7 @@ static chan_info *free_chan_info(chan_info *cp)
   cp->cursor = 0;
   cp->cursor_style = CURSOR_CROSS;
   cp->cursor_size = DEFAULT_CURSOR_SIZE;
-  if ((cp->cursor_proc) && 
-      (PROCEDURE_P(cp->cursor_proc)))
+  if (PROCEDURE_P(cp->cursor_proc))
     {
       snd_unprotect(cp->cursor_proc);
       cp->cursor_proc = SCM_UNDEFINED;
@@ -371,16 +370,13 @@ void free_snd_info(snd_info *sp)
       free(sp->eval_expr); 
       sp->eval_expr = NULL;
     }
-  if ((sp->search_proc) && 
-      (PROCEDURE_P(sp->search_proc))) 
+  if (PROCEDURE_P(sp->search_proc))
     snd_unprotect(sp->search_proc);
   sp->search_proc = SCM_UNDEFINED;
-  if ((sp->eval_proc) && 
-      (PROCEDURE_P(sp->eval_proc))) 
+  if (PROCEDURE_P(sp->eval_proc))
     snd_unprotect(sp->eval_proc);
   sp->eval_proc = SCM_UNDEFINED;
-  if ((sp->prompt_callback) && 
-      (PROCEDURE_P(sp->prompt_callback))) 
+  if (PROCEDURE_P(sp->prompt_callback))
     snd_unprotect(sp->prompt_callback);
   sp->prompt_callback = SCM_UNDEFINED;
   sp->selected_channel = NO_SELECTION;

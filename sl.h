@@ -21,6 +21,7 @@
 #define scm_apply(a, b, c) rep_apply(a, b)
 SCM scm_return_first(SCM a, ...);
 #define scm_must_malloc(size, str) malloc(size)
+#define scm_done_malloc(size) 
 
 #define SCM_EQ_P(a, b)  ((a) == (b))
 #define SCM_LIST0       Qnil

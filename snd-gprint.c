@@ -6,8 +6,7 @@ static GtkWidget *file_print_dialog = NULL;
 static GtkWidget *file_print_name = NULL;
 static GtkWidget *file_print_eps_or_lpr = NULL;
 static GtkWidget *file_print_ok_button, *file_print_message;
-#define PRINT_STRING_SIZE 256
-static char print_string[PRINT_STRING_SIZE];
+static char print_string[PRINT_BUFFER_SIZE];
 
 static void file_print_help_callback(GtkWidget *w, gpointer context)
 {
@@ -29,7 +28,7 @@ static void file_print_delete_callback(GtkWidget *w, GdkEvent *event, gpointer c
 static int lpr (char *name)
 {
   /* make some desultory effort to print the file */
-  mus_snprintf(print_string, PRINT_STRING_SIZE, "lpr %s", name);
+  mus_snprintf(print_string, PRINT_BUFFER_SIZE, "lpr %s", name);
   return(system(print_string));
 }
 
@@ -49,7 +48,7 @@ static void file_print_ok_callback(GtkWidget *w, gpointer context)
 	{
 	  set_button_label(file_print_ok_button, STR_Stop);
 	  nsp = any_selected_sound(ss);
-	  mus_snprintf(print_string, PRINT_STRING_SIZE, "printing %s", nsp->shortname);
+	  mus_snprintf(print_string, PRINT_BUFFER_SIZE, "printing %s", nsp->shortname);
 	  set_label(file_print_message, print_string);
 	}
       printing = 1;
@@ -91,7 +90,7 @@ static void file_print_ok_callback(GtkWidget *w, gpointer context)
   if (ss->print_choice == PRINT_SND)
     {
       set_button_label(file_print_ok_button, STR_Print);
-      mus_snprintf(print_string, PRINT_STRING_SIZE, "print %s", nsp->shortname);
+      mus_snprintf(print_string, PRINT_BUFFER_SIZE, "print %s", nsp->shortname);
       set_label(file_print_message, print_string);
     }
   ss->print_choice = PRINT_SND;
@@ -160,9 +159,9 @@ void File_Print_Callback(GtkWidget *w, gpointer context)
   if (ss->print_choice == PRINT_SND)
     {
       nsp = any_selected_sound(ss);
-      mus_snprintf(print_string, PRINT_STRING_SIZE, "print %s", nsp->shortname);
+      mus_snprintf(print_string, PRINT_BUFFER_SIZE, "print %s", nsp->shortname);
     }
-  else mus_snprintf(print_string, PRINT_STRING_SIZE, "%s", STR_print_env);
+  else mus_snprintf(print_string, PRINT_BUFFER_SIZE, "%s", STR_print_env);
   gtk_label_set_text(GTK_LABEL(file_print_message), print_string);
   gtk_widget_show(file_print_dialog);
 }
@@ -181,8 +180,8 @@ char *ps_rgb(snd_state *ss, int pchan)
     case 3: color = sx->light_blue; break;
     default: color = sx->black;     break;
     }
-  buf = (char *)CALLOC(128, sizeof(char));
-  mus_snprintf(buf, 128, " %.2f %.2f %.2f RG\n", 
+  buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+  mus_snprintf(buf, PRINT_BUFFER_SIZE, " %.2f %.2f %.2f RG\n", 
 	  (float)color->red / 65535.0, 
 	  (float)color->green / 65535.0, 
 	  (float)color->blue / 65535.0);

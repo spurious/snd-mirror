@@ -769,8 +769,8 @@ void snd_load_file(char *filename)
 {
   char *str = NULL, *str1 = NULL, *str2 = NULL;
   str = mus_expand_filename(filename);
-  str2 = (char *)CALLOC(256, sizeof(char));
-  mus_snprintf(str2, 256, "(load \"%s\")", filename);
+  str2 = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+  mus_snprintf(str2, PRINT_BUFFER_SIZE, "(load \"%s\")", filename);
   if (!mus_file_probe(str))
     {
       /* try tacking on .scm */
@@ -1121,8 +1121,8 @@ static SCM g_set_listener_prompt(SCM val)
   {
 #if HAVE_GUILE
     char *str;
-    str = (char *)CALLOC(128, sizeof(char));
-    mus_snprintf(str, 128, "(set! scm-repl-prompt \"%s\")", listener_prompt(state));
+    str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+    mus_snprintf(str, PRINT_BUFFER_SIZE, "(set! scm-repl-prompt \"%s\")", listener_prompt(state));
     EVAL_STRING(str);
     FREE(str);
 #endif
@@ -2787,7 +2787,7 @@ SCM g_c_run_progn_hook (SCM hook, SCM args, const char *caller)
   SCM procs = SCM_HOOK_PROCEDURES (hook);
   while (NOT_NULL_P (procs))
     {
-      if (args != SCM_LIST0)
+      if (!(SCM_EQ_P(args, SCM_LIST0)))
 	result = APPLY(SCM_CAR(procs), args, caller);
       else result = CALL0(SCM_CAR(procs), caller);
       procs = SCM_CDR (procs);
@@ -2802,7 +2802,7 @@ SCM g_c_run_or_hook (SCM hook, SCM args, const char *caller)
   SCM procs = SCM_HOOK_PROCEDURES (hook);
   while (NOT_NULL_P (procs))
     {
-      if (args != SCM_LIST0)
+      if (!(SCM_EQ_P(args, SCM_LIST0)))
 	result = APPLY(SCM_CAR(procs), args, caller);
       else result = CALL0(SCM_CAR(procs), caller);
       if (NOT_FALSE_P(result)) return(result);
@@ -2817,7 +2817,7 @@ SCM g_c_run_and_hook (SCM hook, SCM args, const char *caller)
   SCM procs = SCM_HOOK_PROCEDURES (hook);
   while (NOT_NULL_P (procs))
     {
-      if (args != SCM_LIST0)
+      if (!(SCM_EQ_P(args, SCM_LIST0)))
 	result = APPLY(SCM_CAR(procs), args, caller);
       else result = CALL0(SCM_CAR(procs), caller);
       if (FALSE_P(result)) return(result);
@@ -2997,23 +2997,21 @@ static SCM g_gc_on(void) {--scm_block_gc; return(TO_SCM_INT(scm_block_gc));}
 
 #if GCING
 /* need someplace findable in gdb (without knowing much about Guile) to get the last call+args upon segfault */
-static int last_mallocated = 0;
 static SCM g_gc_hook(void)
 {
-  /*
-  if (scm_mallocated < last_mallocated)
-    fprintf(stderr,"[%d] ", last_mallocated - scm_mallocated);
-  last_mallocated = scm_mallocated;
-  */
   return(SCM_BOOL_F);
 }
 static char *this_proc = NULL, *these_args = NULL;
 static SCM g_set_last_proc(SCM proc, SCM args)
 {
+#if HAVE_SCM_OBJECT_TO_STRING
+  /*
   if (this_proc) free(this_proc);
   this_proc = TO_NEW_C_STRING(scm_object_to_string(proc, SCM_UNDEFINED));
   if (these_args) free(these_args);
   these_args = TO_NEW_C_STRING(scm_object_to_string(args, SCM_UNDEFINED));
+  */
+#endif
   return(scm_return_first(SCM_BOOL_F, proc, args));
 }
 #endif
@@ -3022,6 +3020,7 @@ void g_initialize_gh(snd_state *ss)
 {
   SCM local_doc;
   state = ss;
+  local_doc = MAKE_PERMANENT(DOCUMENTATION);
 
 #if GCING
   gh_new_procedure("set-last-proc", SCM_FNC g_set_last_proc, 2, 0, 0);
@@ -3032,7 +3031,6 @@ void g_initialize_gh(snd_state *ss)
   YES_WE_HAVE("gcing");
 #endif
 
-  local_doc = MAKE_PERMANENT(DOCUMENTATION);
 #if TIMING
   g_init_timing(local_doc);
 #endif

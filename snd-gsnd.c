@@ -1828,8 +1828,8 @@ snd_info *add_sound_window(char *filename, snd_state *ss)
 
   if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)
     {
-      title = (char *)CALLOC(128, sizeof(char));
-      mus_snprintf(title, 128, "%d: %s", snd_slot, sp->shortname);
+      title = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+      mus_snprintf(title, PRINT_BUFFER_SIZE, "%d: %s", snd_slot, sp->shortname);
       gtk_window_set_title(GTK_WINDOW(sx->dialog), title);
       FREE(title);
     }

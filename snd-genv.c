@@ -333,13 +333,13 @@ static void clear_point_label(void)
   gtk_label_set_text(GTK_LABEL(brktxtL), "");
 }
 
-static char brkpt_buf[32];
+static char brkpt_buf[LABEL_BUFFER_SIZE];
 
 void enved_display_point_label(snd_state *ss, Float x, Float y)
 {
   if ((enved_dBing(ss)) && (ss->min_dB < -60))
-    mus_snprintf(brkpt_buf, 32, "%.3f : %.5f", x, y);
-  else mus_snprintf(brkpt_buf, 32, "%.3f : %.3f", x, y);
+    mus_snprintf(brkpt_buf, LABEL_BUFFER_SIZE, "%.3f : %.5f", x, y);
+  else mus_snprintf(brkpt_buf, LABEL_BUFFER_SIZE, "%.3f : %.3f", x, y);
   gtk_label_set_text(GTK_LABEL(brktxtL), brkpt_buf);
 }
 
@@ -740,7 +740,7 @@ static void base_changed_callback(GtkAdjustment *adj, gpointer context)
   base_changed(ss, adj->value);
 }
 
-GthWidget *create_envelope_editor (snd_state *ss)
+GtkWidget *create_envelope_editor (snd_state *ss)
 {
   GtkWidget *mainform, *helpB, *leftbox, *bottombox, *leftframe, *toprow, *bottomrow, *brkbox;
   if (!enved_dialog)
@@ -1100,7 +1100,7 @@ int enved_dialog_is_active(void)
 
 void set_filter_env_order(snd_state *ss, int order)
 {
-  char str[8];
+  char str[LABEL_BUFFER_SIZE];
   if ((order > 0) && (order < 2000))
     {
       if (order & 1) 
@@ -1108,7 +1108,7 @@ void set_filter_env_order(snd_state *ss, int order)
       else in_set_filter_env_order(ss, order);
       if (enved_dialog)
 	{
-	  mus_snprintf(str, 8, "%d", filter_env_order(ss));
+	  mus_snprintf(str, LABEL_BUFFER_SIZE, "%d", filter_env_order(ss));
 	  gtk_entry_set_text(GTK_ENTRY(orderL), str);
 	  if ((enved_target(ss) == SPECTRUM_ENV) && 
 	      (enved_waving(ss)) && 

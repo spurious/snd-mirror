@@ -89,15 +89,15 @@ static void load_header_and_data_lists(file_data *fdat, int type, int format, in
   gtk_signal_handler_unblock_by_data(GTK_OBJECT(fdat->format_list), (gpointer)ss);
   if ((srate > 0) && (fdat->srate_text))
     {
-      str = (char *)CALLOC(32, sizeof(char));
-      mus_snprintf(str, 32, "%d", srate);
+      str = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
+      mus_snprintf(str, LABEL_BUFFER_SIZE, "%d", srate);
       gtk_entry_set_text(GTK_ENTRY(fdat->srate_text), str);
       FREE(str);
     }
   if ((chans > 0) && (fdat->chans_text))
     {
-      str = (char *)CALLOC(8, sizeof(char));
-      mus_snprintf(str, 8, "%d", chans);
+      str = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
+      mus_snprintf(str, LABEL_BUFFER_SIZE, "%d", chans);
       gtk_entry_set_text(GTK_ENTRY(fdat->chans_text), str);
       FREE(str);
     }
@@ -112,8 +112,8 @@ static void load_header_and_data_lists(file_data *fdat, int type, int format, in
     }
   if ((location >= 0) && (fdat->location_text))
     {
-      str = (char *)CALLOC(32, sizeof(char));
-      mus_snprintf(str, 32, "%d", location);
+      str = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
+      mus_snprintf(str, LABEL_BUFFER_SIZE, "%d", location);
       gtk_entry_set_text(GTK_ENTRY(fdat->location_text), str);
       FREE(str);
     }
@@ -131,8 +131,8 @@ static char *snd_gtk_get_filename(GtkWidget *dialog)
   gchar *file;
   path = gtk_file_list_get_path(GTK_FILE_LIST(GTK_ICON_FILESEL(dialog)->file_list));
   file = gtk_file_list_get_filename(GTK_FILE_LIST(GTK_ICON_FILESEL(dialog)->file_list));
-  if (last_filename == NULL) last_filename = (char *)CALLOC(256, sizeof(char));
-  mus_snprintf(last_filename, 256, "%s%s", path, file);
+  if (last_filename == NULL) last_filename = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+  mus_snprintf(last_filename, PRINT_BUFFER_SIZE, "%s%s", path, file);
 #else
   last_filename = gtk_file_selection_get_filename(GTK_FILE_SELECTION(dialog));
 #endif
@@ -1125,8 +1125,7 @@ static void raw_data_help_Callback(GtkWidget *w, gpointer context)
 
 static void make_raw_data_dialog(snd_state *ss)
 {
-  #define DFS_STR_SIZE 16
-  char dfs_str[DFS_STR_SIZE];
+  char dfs_str[LABEL_BUFFER_SIZE];
   int i;
   char *str;
   GtkWidget *lst, *dls, *dlab, *dloclab, *chnlab;
@@ -1180,7 +1179,7 @@ static void make_raw_data_dialog(snd_state *ss)
   gtk_entry_set_editable(GTK_ENTRY(raw_srate_text), TRUE);
   gtk_box_pack_start(GTK_BOX(sratehbox), raw_srate_text, TRUE, TRUE, 2);
   set_background(raw_srate_text, (ss->sgx)->white);
-  mus_snprintf(dfs_str, DFS_STR_SIZE, "%d", raw_srate(ss));
+  mus_snprintf(dfs_str, LABEL_BUFFER_SIZE, "%d", raw_srate(ss));
   gtk_entry_set_text(GTK_ENTRY(raw_srate_text), dfs_str);
   gtk_widget_show(raw_srate_text);
 
@@ -1192,7 +1191,7 @@ static void make_raw_data_dialog(snd_state *ss)
   gtk_entry_set_editable(GTK_ENTRY(raw_chans_text), TRUE);
   gtk_box_pack_start(GTK_BOX(sratehbox), raw_chans_text, TRUE, TRUE, 2);
   set_background(raw_chans_text, (ss->sgx)->white);
-  mus_snprintf(dfs_str, DFS_STR_SIZE, "%d", raw_chans(ss));
+  mus_snprintf(dfs_str, LABEL_BUFFER_SIZE, "%d", raw_chans(ss));
   gtk_entry_set_text(GTK_ENTRY(raw_chans_text), dfs_str);
   gtk_widget_show(raw_chans_text);
 
@@ -1495,8 +1494,8 @@ GtkWidget *edit_header(snd_info *sp)
       load_header_and_data_lists(edit_header_data, hdr->type, hdr->format, hdr->srate, hdr->chans, hdr->data_location, hdr->comment);
     }
 
-  str = (char *)CALLOC(128, sizeof(char));
-  mus_snprintf(str, 128, STR_Edit_header_of, sp->shortname);
+  str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+  mus_snprintf(str, PRINT_BUFFER_SIZE, STR_Edit_header_of, sp->shortname);
   gtk_window_set_title(GTK_WINDOW(edit_header_dialog), str);
   FREE(str);
   gtk_widget_show(edit_header_dialog);

@@ -8,6 +8,9 @@
 
 #if USE_SND
   #include "snd.h"
+#else
+  #define PRINT_BUFFER_SIZE 512
+  #define LABEL_BUFFER_SIZE 64
 #endif
 
 #include <math.h>

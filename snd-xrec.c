@@ -112,11 +112,11 @@ static void record_report(Widget text, ...)
   va_list ap;
   char *nextstr;
   int textpos = 0;
-  if (msgbuf == NULL) msgbuf = (char *)CALLOC(512, sizeof(char));
+  if (msgbuf == NULL) msgbuf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
 #if HAVE_STRFTIME
   time(&ts);
   strftime(timbuf, TIME_STR_SIZE, "%H:%M:%S", localtime(&ts));
-  mus_snprintf(msgbuf, 512, "\n[%s] ", timbuf);
+  mus_snprintf(msgbuf, PRINT_BUFFER_SIZE, "\n[%s] ", timbuf);
 #endif
   pos = XmTextGetLastPosition(text);
   if (pos == 0) 
@@ -375,8 +375,7 @@ static Pixmap device_icon(int device)
 
 static XFontStruct *get_vu_font(snd_state *ss, Float size)
 {
-  #define FONT_NAME_SIZE 64
-  char font_name[FONT_NAME_SIZE];
+  char font_name[LABEL_BUFFER_SIZE];
   int font_size;
   char *vu_font_name;
   XFontStruct *label_font;
@@ -398,7 +397,7 @@ static XFontStruct *get_vu_font(snd_state *ss, Float size)
 	  else vu_font_name = "times";
 	}
     }
-  mus_snprintf(font_name, FONT_NAME_SIZE, "-*-%s-%s-r-*-*-%d-*-*-*-*-*-*",
+  mus_snprintf(font_name, LABEL_BUFFER_SIZE, "-*-%s-%s-r-*-*-%d-*-*-*-*-*-*",
 	  vu_font_name,
 	  (font_size > 10) ? "bold" : "*",
 	  font_size);
@@ -406,15 +405,15 @@ static XFontStruct *get_vu_font(snd_state *ss, Float size)
   label_font = XLoadQueryFont(MAIN_DISPLAY(ss), font_name);
   if (!(label_font))
     {
-      mus_snprintf(font_name, FONT_NAME_SIZE, "-*-%s-*-*-*-*-%d-*-*-*-*-*-*", vu_font_name, font_size);
+      mus_snprintf(font_name, LABEL_BUFFER_SIZE, "-*-%s-*-*-*-*-%d-*-*-*-*-*-*", vu_font_name, font_size);
       label_font = XLoadQueryFont(MAIN_DISPLAY(ss), font_name);
       if (!(label_font))
 	{
-	  mus_snprintf(font_name, FONT_NAME_SIZE, "-*-courier-*-*-*-*-%d-*-*-*-*-*-*", font_size);
+	  mus_snprintf(font_name, LABEL_BUFFER_SIZE, "-*-courier-*-*-*-*-%d-*-*-*-*-*-*", font_size);
 	  label_font = XLoadQueryFont(MAIN_DISPLAY(ss), font_name);
 	  while (!(label_font))
 	    {
-	      mus_snprintf(font_name, FONT_NAME_SIZE, "-*-*-*-*-*-*-%d-*-*-*-*-*-*", font_size);
+	      mus_snprintf(font_name, LABEL_BUFFER_SIZE, "-*-*-*-*-*-*-%d-*-*-*-*-*-*", font_size);
 	      label_font = XLoadQueryFont(MAIN_DISPLAY(ss), font_name);
 	      font_size++;
 	      if (font_size > 60) 
@@ -441,8 +440,8 @@ static int allocate_meter_2(Widget w, vu_label *vu)
   off_err = XpmCreatePixmapFromData(dp, wn, offlabel_bits(), &(vu->off_label), &shape, NULL);   
   if (off_err != XpmSuccess) 
     {
-      buf = (char *)CALLOC(128, sizeof(char));
-      mus_snprintf(buf, 128, "can't create VU meter's label: %s\n", XpmGetErrorString(off_err));
+      buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+      mus_snprintf(buf, PRINT_BUFFER_SIZE, "can't create VU meter's label: %s\n", XpmGetErrorString(off_err));
       attach_error(buf);
       FREE(buf);
       return(off_err);
@@ -450,8 +449,8 @@ static int allocate_meter_2(Widget w, vu_label *vu)
   err = XpmCreatePixmapFromData(dp, wn, onlabel_bits(), &(vu->on_label), &shape, NULL);     
   if (err != XpmSuccess) 
     {
-      buf = (char *)CALLOC(128, sizeof(char));
-      mus_snprintf(buf, 128, "trouble with VU meter's 'on label' (%s)\nwill use the colorless 'off label'\n", XpmGetErrorString(err));
+      buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+      mus_snprintf(buf, PRINT_BUFFER_SIZE, "trouble with VU meter's 'on label' (%s)\nwill use the colorless 'off label'\n", XpmGetErrorString(err));
       attach_error(buf);
       FREE(buf);
       vu->on_label = vu->off_label;
@@ -459,8 +458,8 @@ static int allocate_meter_2(Widget w, vu_label *vu)
   err = XpmCreatePixmapFromData(dp, wn, cliplabel_bits(), &(vu->clip_label), &shape, NULL); 
   if (err != XpmSuccess) 
     {
-      buf = (char *)CALLOC(128, sizeof(char));
-      mus_snprintf(buf, 128, "trouble with VU meter's 'clip label' (%s)\nwill use the colorless 'off label'\n", XpmGetErrorString(err));
+      buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+      mus_snprintf(buf, PRINT_BUFFER_SIZE, "trouble with VU meter's 'clip label' (%s)\nwill use the colorless 'off label'\n", XpmGetErrorString(err));
       attach_error(buf);
       FREE(buf);
       vu->clip_label = vu->off_label;
@@ -1152,8 +1151,8 @@ static void make_trigger_label(Float val)
   char *buf;
   if (trigger_label)
     {
-      buf = (char *)CALLOC(32, sizeof(char));
-      mus_snprintf(buf, 32, "trigger: %.3f", val);
+      buf = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
+      mus_snprintf(buf, LABEL_BUFFER_SIZE, "trigger: %.3f", val);
       s1 = XmStringCreate(buf, XmFONTLIST_DEFAULT_TAG);
       FREE(buf);
       XtVaSetValues(trigger_label, XmNlabelString, s1, NULL);
@@ -3239,8 +3238,8 @@ void finish_recording(snd_state *ss, recorder_info *rp)
   duration = (Float)rp->total_output_frames / (Float)(rp->srate);
   /* 25-Jun-00: this used to divide by chans, but rp->total_output_frames is in terms of frames (it was named total_out_samps) */
   reflect_recorder_duration(duration);
-  str = (char *)CALLOC(256, sizeof(char));
-  mus_snprintf(str, 256, "recorded %s:\n  duration: %.2f\n  srate: %d, chans: %d\n  type: %s, format: %s",
+  str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+  mus_snprintf(str, PRINT_BUFFER_SIZE, "recorded %s:\n  duration: %.2f\n  srate: %d, chans: %d\n  type: %s, format: %s",
 	  rp->output_file, duration, rp->srate, rp->out_chans,
 	  mus_header_type_name(rp->output_header_type), 
 	  mus_data_format_name(rp->out_format));
@@ -3299,8 +3298,8 @@ static void Record_Button_Callback(Widget w, XtPointer context, XtPointer info)
 	  
 	  if (out_chans_active() != rp->out_chans)
 	    {
-	      if (msgbuf == NULL) msgbuf = (char *)CALLOC(512, sizeof(char));
-	      mus_snprintf(msgbuf, 512,
+	      if (msgbuf == NULL) msgbuf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+	      mus_snprintf(msgbuf, PRINT_BUFFER_SIZE,
 		      "chans field (%d) doesn't match file out panel (%d channels active)",
 		      rp->out_chans, out_chans_active());
 	      record_report(messages, msgbuf, NULL);
@@ -3667,7 +3666,7 @@ void set_recorder_trigger(recorder_info *rp, Float val)
 
 void set_recorder_srate(recorder_info *rp, int val)
 {
-  char sbuf[8];
+  char sbuf[LABEL_BUFFER_SIZE];
   /* this just reflects the setting in the text field -- it doesn't actually set anything in the audio system */
   if (val > 0)
     {
@@ -3675,7 +3674,7 @@ void set_recorder_srate(recorder_info *rp, int val)
       rp->srate = val;
       if (recorder) 
 	{
-	  mus_snprintf(sbuf, 8, "%d", rp->srate);
+	  mus_snprintf(sbuf, LABEL_BUFFER_SIZE, "%d", rp->srate);
 	  XmTextSetString(recdat->srate_text, sbuf);
 	}
     }

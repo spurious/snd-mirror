@@ -210,14 +210,13 @@ int edit_changes_end_at(chan_info *cp)
   return(0);
 }
 
-#define EDBUF_SIZE 128
-static char edbuf[EDBUF_SIZE];
+static char edbuf[PRINT_BUFFER_SIZE];
 char *edit_to_string(chan_info *cp, int edit)
 {
   ed_list *ed;
   ed = cp->edits[edit];
   /* only for edit list in snd-xchn.c */
-  mus_snprintf(edbuf, EDBUF_SIZE, "%s : (%s %d %d)", 
+  mus_snprintf(edbuf, PRINT_BUFFER_SIZE, "%s : (%s %d %d)", 
 	       ed->origin, edit_names[EDIT_TYPE(ed->sfnum)], ed->beg, ed->len);
   return(edbuf);
 }
@@ -1639,12 +1638,12 @@ void file_override_samples(int num, char *tempfile,
       prepare_edit_list(cp, num);
       fd = snd_open_read(ss, tempfile);
       mus_file_open_descriptors(fd,
-			       tempfile,
-			       hdr->format,
-			       mus_data_format_to_bytes_per_sample(hdr->format),
-			       hdr->data_location,
-			       hdr->chans,
-			       hdr->type);
+				tempfile,
+				hdr->format,
+				mus_data_format_to_bytes_per_sample(hdr->format),
+				hdr->data_location,
+				hdr->chans,
+				hdr->type);
       during_open(fd, tempfile, SND_OVERRIDE_FILE);
       datai = make_file_state(fd, hdr, chan, FILE_BUFFER_SIZE);
       e = initial_ed_list(0, num - 1);
@@ -2721,11 +2720,11 @@ static int print_sf(SCM obj, SCM port, scm_print_state *pstate)
 	    name = (cp->sound)->shortname;
 	  else name = "unknown source";
 	}
-      desc = (char *)CALLOC(128, sizeof(char));
+      desc = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
       if (fd->eof)
-	mus_snprintf(desc, 128, "#<sample-reader %p: %s from %d, at eof>",
+	mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<sample-reader %p: %s from %d, at eof>",
 		     fd, name, fd->initial_samp);
-      else mus_snprintf(desc, 128, "#<sample-reader %p: %s from %d, at %d>",
+      else mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<sample-reader %p: %s from %d, at %d>",
 			fd, name, fd->initial_samp, current_location(fd));
       WRITE_STRING(desc, port); 
       FREE(desc);
@@ -3053,13 +3052,14 @@ static int init_as_one_edit(chan_info *cp, void *ptr)
 
 static int finish_as_one_edit(chan_info *cp, void *ptr) 
 {
-  int one_edit;
+  int one_edit, need_backup = 0;
   ed_list *ed;
   one_edit = (((int *)ptr)[chan_ctr] + 1);
+  need_backup = (cp->edit_ctr > one_edit);      /* cp->edit_ctr will be changing, so save this */
   if (cp->edit_ctr >= one_edit)                 /* ">=" here because the origin needs to be set even if there were no extra edits */
     {
       while (cp->edit_ctr > one_edit) backup_edit_list(cp);
-      if ((cp->edit_ctr > one_edit) && (cp->mixes)) backup_mix_list(cp, one_edit);
+      if ((need_backup) && (cp->mixes)) backup_mix_list(cp, one_edit);
       if (as_one_edit_origin)
 	{
 	  ed = cp->edits[cp->edit_ctr];
@@ -3070,7 +3070,7 @@ static int finish_as_one_edit(chan_info *cp, void *ptr)
 	      reflect_edit_history_change(cp);
 	    }
 	}
-      if (cp->edit_ctr > one_edit) prune_edits(cp, cp->edit_ctr + 1);
+      if (need_backup) prune_edits(cp, cp->edit_ctr + 1);
       update_graph(cp, NULL); 
     }
   chan_ctr++; 

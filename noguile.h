@@ -39,6 +39,7 @@
 #define scm_apply(a, b, c) 0
 SCM scm_return_first(SCM a, ...);
 #define scm_must_malloc(size, str) malloc(size)
+#define scm_done_malloc(size) 
 
 #define SCM_EQ_P(a, b) 0
 #define SCM_LIST0 0

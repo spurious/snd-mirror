@@ -61,14 +61,14 @@ static void make_region_labels(file_info *hdr)
 {
   char *str;
   if (hdr == NULL) return;
-  str = (char *)CALLOC(256, sizeof(char));
-  mus_snprintf(str, 256, STR_srate, hdr->srate);
+  str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+  mus_snprintf(str, PRINT_BUFFER_SIZE, STR_srate, hdr->srate);
   set_label(srate_text, str);
-  mus_snprintf(str, 256, STR_chans, hdr->chans);
+  mus_snprintf(str, PRINT_BUFFER_SIZE, STR_chans, hdr->chans);
   set_label(chans_text, str);
-  mus_snprintf(str, 256, STR_length, (float)(hdr->samples) / (float)(hdr->chans * hdr->srate));
+  mus_snprintf(str, PRINT_BUFFER_SIZE, STR_length, (float)(hdr->samples) / (float)(hdr->chans * hdr->srate));
   set_label(length_text, str);
-  mus_snprintf(str, 256, STR_maxamp, region_maxamp(current_region));
+  mus_snprintf(str, PRINT_BUFFER_SIZE, STR_maxamp, region_maxamp(current_region));
   set_label(maxamp_text, str);
   FREE(str);
 }
@@ -422,6 +422,9 @@ static void make_region_dialog(snd_state *ss)
       reg_sp->chans = (chan_info **)CALLOC(1, sizeof(chan_info *));
       reg_sp->sx_scroll_max = 100;
       reg_sp->hdr = (file_info *)CALLOC(1, sizeof(file_info));
+      reg_sp->search_proc = SCM_UNDEFINED;
+      reg_sp->eval_proc = SCM_UNDEFINED;
+      reg_sp->prompt_callback = SCM_UNDEFINED;
       hdr = reg_sp->hdr;
       hdr->samples = region_len(0);
       hdr->srate = region_srate(0);

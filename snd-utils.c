@@ -220,9 +220,9 @@ char *shorter_tempnam(char *udir, char *prefix)
 {
   /* tempnam turns out names that are inconveniently long (in this case the filename is user-visible) */
   char *str;
-  str = (char *)CALLOC(512, sizeof(char));
+  str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   if ((udir == NULL) || (snd_strlen(udir) == 0)) udir = get_tmpdir(); /* incoming dir could be "" */
-  mus_snprintf(str, 512, "%s/%s%d_%d.snd", udir, (prefix) ? prefix : "snd_", getpid(), sect_ctr++);
+  mus_snprintf(str, PRINT_BUFFER_SIZE, "%s/%s%d_%d.snd", udir, (prefix) ? prefix : "snd_", getpid(), sect_ctr++);
   return(str);
 }
 
@@ -247,18 +247,18 @@ char *kmg (int num)
 {
   /* return number 0..1024, then in terms of K, M, G */
   char *str;
-  str = (char *)calloc(32, sizeof(char));
+  str = (char *)calloc(LABEL_BUFFER_SIZE, sizeof(char));
   if (num > 1024)
     {
       if (num > (1024 * 1024))
 	{
 	  if (num > (1024 * 1024 * 1024))
-	    mus_snprintf(str, 32, "%.5fG", (float)num / (float)(1024 * 1024 * 1024));
-	  else mus_snprintf(str, 32, "%.4fM", (float)num / (float)(1024 * 1024));
+	    mus_snprintf(str, LABEL_BUFFER_SIZE, "%.5fG", (float)num / (float)(1024 * 1024 * 1024));
+	  else mus_snprintf(str, LABEL_BUFFER_SIZE, "%.4fM", (float)num / (float)(1024 * 1024));
 	}
-      else mus_snprintf(str, 32, "%.3fK", (float)num / 1024.0);
+      else mus_snprintf(str, LABEL_BUFFER_SIZE, "%.3fK", (float)num / 1024.0);
     }
-  else mus_snprintf(str, 32, "%d", num);
+  else mus_snprintf(str, LABEL_BUFFER_SIZE, "%d", num);
   return(str);
 }
 
@@ -309,6 +309,7 @@ static char **functions = NULL, **files = NULL;
 static int *lines = NULL;
 static int mem_location = -1;
 static int mem_locations = 0;
+static int last_mem_location = -1;
 
 static int find_mem_location(const char *ur_func, const char *file, int line)
 {
@@ -320,6 +321,11 @@ static int find_mem_location(const char *ur_func, const char *file, int line)
       sprintf(func, "%s->%s", encloser, ur_func);
     }
   else func = (char *)ur_func;
+  if ((last_mem_location >= 0) &&
+      (line == lines[last_mem_location]) &&
+      (strcmp(func, functions[last_mem_location]) == 0) &&
+      (strcmp(file, files[last_mem_location]) == 0))
+    return(last_mem_location);
   for (i = 0; i <= mem_location; i++)
     if ((line == lines[i]) &&
 	(strcmp(func, functions[i]) == 0) &&
@@ -350,6 +356,7 @@ static int find_mem_location(const char *ur_func, const char *file, int line)
 	}
     }
   /* NOT copy_string HERE!! */
+  last_mem_location = mem_location;
   functions[mem_location] = (char *)calloc(strlen(func) + 1, sizeof(char));
   strcpy(functions[mem_location], func);
   files[mem_location] = (char *)calloc(strlen(file) + 1, sizeof(char));
@@ -384,53 +391,53 @@ static void forget_pointer(void *ptr, const char *func, const char *file, int li
 
 static void remember_pointer(void *ptr, size_t len, const char *func, const char *file, int line)
 {
-  int i, least = 10000, least_loc = -1;
+  int i, loc = 0;
   if (last_forgotten == -1)
     {
       if (mem_size == 0)
 	{
-	  mem_size = 4096;
+	  mem_size = 8192;
 	  pointers = (int *)calloc(mem_size, sizeof(int));
 	  sizes = (int *)calloc(mem_size, sizeof(int));
 	  locations = (int *)calloc(mem_size, sizeof(int));
+	  loc = 0;
+	  goto GOT_ONE;
 	}
-      for (i = 0; i < mem_size; i++)
-	{
+      if (last_remembered != -1)
+	for (i = last_remembered + 1; i < mem_size; i++)
 	  if (pointers[i] == 0) 
 	    {
-	      least_loc = i;
-	      break;
+	      loc = i;
+	      goto GOT_ONE;
 	    }
-	  if (sizes[i] < least)
-	    {
-	      least = sizes[i];
-	      least_loc = i;
-	    }
-	}
-      if (pointers[least_loc] != 0)
+      for (i = 0; i < mem_size; i++)
+	if (pointers[i] == 0) 
+	  {
+	    loc = i;
+	    goto GOT_ONE;
+	  }
+      loc = mem_size;
+      mem_size += 4096;
+      pointers = (int *)realloc(pointers, mem_size * sizeof(int));
+      sizes = (int *)realloc(sizes, mem_size * sizeof(int));
+      locations = (int *)realloc(locations, mem_size * sizeof(int));
+      for (i = loc; i < mem_size; i++)
 	{
-	  least_loc = mem_size;
-	  mem_size += 4096;
-	  pointers = (int *)realloc(pointers, mem_size * sizeof(int));
-	  sizes = (int *)realloc(sizes, mem_size * sizeof(int));
-	  locations = (int *)realloc(locations, mem_size * sizeof(int));
-	  for (i = least_loc; i < mem_size; i++)
-	    {
-	      pointers[i] = 0;
-	      sizes[i] = 0;
-	      locations[i] = 0;
-	    }
+	  pointers[i] = 0;
+	  sizes[i] = 0;
+	  locations[i] = 0;
 	}
     }
   else
     {
-      least_loc = last_forgotten;
+      loc = last_forgotten;
       last_forgotten = -1;
     }
-  pointers[least_loc] = (int)ptr;
-  sizes[least_loc] = (int)len;
-  locations[least_loc] = find_mem_location(func, file, line);
-  last_remembered = least_loc;
+ GOT_ONE:
+  pointers[loc] = (int)ptr;
+  sizes[loc] = (int)len;
+  locations[loc] = find_mem_location(func, file, line);
+  last_remembered = loc;
   last_remembered_ptr = (int)ptr;
 }
 
@@ -500,14 +507,14 @@ char *mem_stats(snd_state *ss, int ub)
 	ptrs++;
 	sum += sizes[i];
       }
-  result = (char *)calloc(128, sizeof(char));
+  result = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
   for (i = 0; i < ss->max_sounds; i++)
     if ((sp=((snd_info *)(ss->sounds[i]))))
       {
 	snds++;
 	chns += sp->allocated_chans;
       }
-  mus_snprintf(result, 128, "snd mem: %s (%s ptrs), %d sounds, %d chans (%s)\n",
+  mus_snprintf(result, PRINT_BUFFER_SIZE, "snd mem: %s (%s ptrs), %d sounds, %d chans (%s)\n",
 	  ksum = kmg(sum),
 	  kptrs = kmg(ptrs),
 	  snds, chns,

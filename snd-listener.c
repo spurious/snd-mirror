@@ -143,10 +143,10 @@ int check_balance(char *expr, int start, int end)
   return 0;
 }
 
-static char listener_prompt_buffer[64];
+static char listener_prompt_buffer[LABEL_BUFFER_SIZE];
 char *listener_prompt_with_cr(snd_state *ss)
 {
-  mus_snprintf(listener_prompt_buffer, 64, "\n%s", listener_prompt(ss));
+  mus_snprintf(listener_prompt_buffer, LABEL_BUFFER_SIZE, "\n%s", listener_prompt(ss));
   return(listener_prompt_buffer);
 }
  
@@ -322,6 +322,8 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
   void report_gc_stats(int *vals);
 #endif
 
+#define STATS_BUFFER_SIZE 2048
+
 void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form)
 {
 #if (!USE_NO_GUI)
@@ -348,8 +350,8 @@ void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form)
   if (regs > 0)
     {
       region_stats(vals);
-      str = (char *)CALLOC(256, sizeof(char));
-      mus_snprintf(str, 256, "\nregions (%d): array: %s + file: %s\n",
+      str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+      mus_snprintf(str, PRINT_BUFFER_SIZE, "\nregions (%d): array: %s + file: %s\n",
 	      regs,
 	      r0 = kmg(vals[0]),
 	      r1 = kmg(vals[1]));
@@ -364,8 +366,8 @@ void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form)
     struct mallinfo mall;
     char *m0 = NULL, *m1 = NULL, *m2 = NULL, *m3 = NULL;
     mall = mallinfo();
-    str = (char *)CALLOC(256, sizeof(char));
-    mus_snprintf(str, 256, "\nmalloc: %s + %s (in use: %s, freed: %s)\n",
+    str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+    mus_snprintf(str, PRINT_BUFFER_SIZE, "\nmalloc: %s + %s (in use: %s, freed: %s)\n",
 	    m0 = kmg(mall.arena),
 	    m1 = kmg(mall.hblkhd),
 	    m2 = kmg(used_bytes = mall.uordblks),
@@ -408,9 +410,9 @@ void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form)
 	gc_cells = scm_num2long_long(SCM_CDR(LIST_REF(stats, 1)), (char *)SCM_ARG1, __FUNCTION__);
 #endif
 	gc_time = (float)TO_C_INT(SCM_CDR(LIST_REF(stats, 0))) * (1000.0 / (float)CLOCKS_PER_SEC);
-	str = (char *)CALLOC(2048,sizeof(char));
+	str = (char *)CALLOC(STATS_BUFFER_SIZE,sizeof(char));
 	if (len > 7)
-	  mus_snprintf(str, 2048,
+	  mus_snprintf(str, STATS_BUFFER_SIZE,
 		  "\nGuile:\n  gc time: %.2f secs (%d sweeps)\n  cells: %Ld (%Ld gc'd)\n  heap size: %Ld",
 		  gc_time,
 		  TO_C_INT(SCM_CDR(LIST_REF(stats, 5))),     /* times */
@@ -418,7 +420,7 @@ void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form)
 		  gc_swept,
 		  gc_heap);
 	else
-	  mus_snprintf(str, 2048,
+	  mus_snprintf(str, STATS_BUFFER_SIZE,
 		  "\nGuile:\n  gc time: %.2f secs\n  cells: %Ld\n  heap size: %Ld",
 		  gc_time,
 		  gc_cells,
@@ -436,12 +438,12 @@ void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form)
     int sfs[3];
     int ios[16];
     int gcs[4];
-    str = (char *)CALLOC(2048,sizeof(char));
+    str = (char *)CALLOC(STATS_BUFFER_SIZE,sizeof(char));
     report_header_stats(vals);
     report_sound_stats(sfs);
     report_io_stats(ios);
     report_gc_stats(gcs);
-    mus_snprintf(str, 2048,
+    mus_snprintf(str, STATS_BUFFER_SIZE,
 		 "\n\nHeader:\n  reads: %d, writes: %d, updates: %d\n  seeks: %d, size-seeks: %d, empty chunks: %d\n  sf-seeks: %d, table-seeks: %d\n  direct reads: %d of %d, direct writes: %d of %d (%d zero) [%d %d %d %d %d]\n\nSnd gc: set: %d, clear: %d, hit: %d, max: %d\n",
 		 vals[1], vals[0], vals[2],
 		 vals[3], vals[4], vals[5],

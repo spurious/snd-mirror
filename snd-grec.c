@@ -120,11 +120,11 @@ static void record_report(GtkWidget *text, ...)
   char *nextstr;
   snd_state *ss;
   ss = get_global_state();
-  if (msgbuf == NULL) msgbuf = (char *)CALLOC(512, sizeof(char));
+  if (msgbuf == NULL) msgbuf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
 #if HAVE_STRFTIME
   time(&ts);
   strftime(timbuf, TIME_STR_SIZE, "%H:%M:%S", localtime(&ts));
-  mus_snprintf(msgbuf, 512, "\n[%s] ", timbuf);
+  mus_snprintf(msgbuf, PRINT_BUFFER_SIZE, "\n[%s] ", timbuf);
 #endif
   gtk_text_insert(GTK_TEXT(text), (ss->sgx)->help_text_fnt, (ss->sgx)->black, (ss->sgx)->light_blue, msgbuf, -1);
   va_start(ap, text);
@@ -221,8 +221,7 @@ static void recorder_noop_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpoint
 
 static GdkFont *get_vu_font(snd_state *ss, Float size)
 {
-  #define FONT_NAME_SIZE 64
-  char font_name[FONT_NAME_SIZE];
+  char font_name[LABEL_BUFFER_SIZE];
   int font_size;
   char *vu_font_name;
   GdkFont *label_font;
@@ -244,7 +243,7 @@ static GdkFont *get_vu_font(snd_state *ss, Float size)
 	  else vu_font_name = "times";
 	}
     }
-  mus_snprintf(font_name, FONT_NAME_SIZE, "-*-%s-%s-r-*-*-%d-*-*-*-*-*-*",
+  mus_snprintf(font_name, LABEL_BUFFER_SIZE, "-*-%s-%s-r-*-*-%d-*-*-*-*-*-*",
 	  vu_font_name,
 	  (font_size > 10) ? "bold" : "*",
 	  font_size);
@@ -252,15 +251,15 @@ static GdkFont *get_vu_font(snd_state *ss, Float size)
   label_font = gdk_font_load(font_name);
   if (!(label_font))
     {
-      mus_snprintf(font_name, FONT_NAME_SIZE, "-*-%s-*-*-*-*-%d-*-*-*-*-*-*", vu_font_name, font_size);
+      mus_snprintf(font_name, LABEL_BUFFER_SIZE, "-*-%s-*-*-*-*-%d-*-*-*-*-*-*", vu_font_name, font_size);
       label_font = gdk_font_load(font_name);
       if (!(label_font))
 	{
-	  mus_snprintf(font_name, FONT_NAME_SIZE, "-*-courier-*-*-*-*-%d-*-*-*-*-*-*", font_size);
+	  mus_snprintf(font_name, LABEL_BUFFER_SIZE, "-*-courier-*-*-*-*-%d-*-*-*-*-*-*", font_size);
 	  label_font = gdk_font_load(font_name);
 	  while (!(label_font))
 	    {
-	      mus_snprintf(font_name, FONT_NAME_SIZE, "-*-*-*-*-*-*-%d-*-*-*-*-*-*", font_size);
+	      mus_snprintf(font_name, LABEL_BUFFER_SIZE, "-*-*-*-*-*-*-%d-*-*-*-*-*-*", font_size);
 	      label_font = gdk_font_load(font_name);
 	      font_size++;
 	      if (font_size > 60) 
@@ -1949,8 +1948,8 @@ void finish_recording(snd_state *ss, recorder_info *rp)
   rp->output_file_descriptor = -1;
   duration = (Float)rp->total_output_frames / (Float)(rp->srate);
   reflect_recorder_duration(duration);
-  str = (char *)CALLOC(256, sizeof(char));
-  mus_snprintf(str, 256, "recorded %s:\n  duration: %.2f\n  srate: %d, chans: %d\n  type: %s, format: %s",
+  str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+  mus_snprintf(str, PRINT_BUFFER_SIZE, "recorded %s:\n  duration: %.2f\n  srate: %d, chans: %d\n  type: %s, format: %s",
 	  rp->output_file, duration, rp->srate, rp->out_chans,
 	  mus_header_type_name(rp->output_header_type), 
 	  mus_data_format_name(rp->out_format));
@@ -2009,8 +2008,8 @@ static void Record_Button_Callback(GtkWidget *w, gpointer context)
 	  
 	  if (out_chans_active() != rp->out_chans)
 	    {
-	      if (msgbuf == NULL) msgbuf = (char *)CALLOC(512, sizeof(char));
-	      mus_snprintf(msgbuf, 512,
+	      if (msgbuf == NULL) msgbuf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+	      mus_snprintf(msgbuf, PRINT_BUFFER_SIZE,
 		      "chans field (%d) doesn't match file out panel (%d channels active)", 
 		      rp->out_chans, out_chans_active());
 	      record_report(messages, msgbuf, NULL);
@@ -2310,7 +2309,7 @@ void set_recorder_trigger(recorder_info *rp, Float val)
 
 void set_recorder_srate(recorder_info *rp, int val)
 {
-  char sbuf[8];
+  char sbuf[LABEL_BUFFER_SIZE];
   if (val < 1000) return;
   /* this just reflects the setting in the text field -- it doesn't actually set anything in the audio system */
   if (val > 0)
@@ -2319,7 +2318,7 @@ void set_recorder_srate(recorder_info *rp, int val)
       rp->srate = val;
       if (recorder) 
 	{
-	  mus_snprintf(sbuf, 8, "%d", rp->srate);
+	  mus_snprintf(sbuf, LABEL_BUFFER_SIZE, "%d", rp->srate);
 	  gtk_entry_set_text(GTK_ENTRY(recdat->srate_text), sbuf);
 	}
     }

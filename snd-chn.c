@@ -849,8 +849,7 @@ static void display_zero (chan_info *cp)
     }
 }
 
-#define CHN_ID_STR_SIZE 32
-static char chn_id_str[CHN_ID_STR_SIZE];
+static char chn_id_str[LABEL_BUFFER_SIZE];
 
 static void display_channel_id (chan_info *cp, int height, int chans)
 {
@@ -866,24 +865,24 @@ static void display_channel_id (chan_info *cp, int height, int chans)
 	  if (chans > 1)
 	    {
 	      if (cp->edit_ctr == 0)
-		mus_snprintf(chn_id_str, CHN_ID_STR_SIZE, "[%s%d]", 
+		mus_snprintf(chn_id_str, LABEL_BUFFER_SIZE, "[%s%d]", 
 			STR_channel_id, (cp->chan + 1));                    /* cp chan numbers are 0 based to index sp->chans array */
-	      else mus_snprintf(chn_id_str, CHN_ID_STR_SIZE, "[%s%d: (%d)]", 
+	      else mus_snprintf(chn_id_str, LABEL_BUFFER_SIZE, "[%s%d: (%d)]", 
 			   STR_channel_id, (cp->chan + 1), cp->edit_ctr);
 	    }
-	  else mus_snprintf(chn_id_str, CHN_ID_STR_SIZE, "[%d]", cp->edit_ctr);
+	  else mus_snprintf(chn_id_str, LABEL_BUFFER_SIZE, "[%d]", cp->edit_ctr);
 	}
       else
 	{
 	  if (chans > 1)
 	    {
 	      if (cp->edit_ctr == 0)
-		mus_snprintf(chn_id_str, CHN_ID_STR_SIZE, "%s%d", 
+		mus_snprintf(chn_id_str, LABEL_BUFFER_SIZE, "%s%d", 
 			STR_channel_id, (cp->chan + 1));
-	      else mus_snprintf(chn_id_str, CHN_ID_STR_SIZE, "%s%d:(%d)", 
+	      else mus_snprintf(chn_id_str, LABEL_BUFFER_SIZE, "%s%d:(%d)", 
 			   STR_channel_id, (cp->chan + 1), cp->edit_ctr);
 	    }
-	  else mus_snprintf(chn_id_str, CHN_ID_STR_SIZE, "(%d)", cp->edit_ctr);
+	  else mus_snprintf(chn_id_str, LABEL_BUFFER_SIZE, "(%d)", cp->edit_ctr);
 	}
       draw_string(copy_context(cp), x0, y0, chn_id_str, strlen(chn_id_str));
       if (cp->printing) 
@@ -899,7 +898,7 @@ static void display_selection_fft_size (chan_info *cp, axis_info *fap)
   if (cp->printing) ps_set_tiny_numbers_font(cp);
   y0 = fap->height + fap->y_offset - 3;
   x0 = fap->x_axis_x0 + 10;
-  mus_snprintf(chn_id_str, CHN_ID_STR_SIZE, "(len: %d/%d)", selection_len(), cp->selection_transform_size);
+  mus_snprintf(chn_id_str, LABEL_BUFFER_SIZE, "(len: %d/%d)", selection_len(), cp->selection_transform_size);
   draw_string(copy_context(cp), x0, y0, chn_id_str, strlen(chn_id_str));
   if (cp->printing) ps_draw_string(cp, x0, y0, chn_id_str);
 }
@@ -1262,8 +1261,7 @@ static int compare_peak_amps(const void *pk1, const void *pk2)
   return(1);
 }
 
-#define AMPSTR_SIZE 8
-static char ampstr[AMPSTR_SIZE];
+static char ampstr[LABEL_BUFFER_SIZE];
 #define AMP_ROOM 35
 #define AMP_ROOM_CUTOFF 3.0
 
@@ -1344,8 +1342,8 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
 	      if (with_amps)
 		{
 		  if ((fft_data) && (cp->fft_log_magnitude))
-		    mus_snprintf(ampstr, AMPSTR_SIZE, "%.1f", cp_dB(cp, peak_freqs[i].amp));
-		  else mus_snprintf(ampstr, AMPSTR_SIZE, "%.*f", acols, peak_freqs[i].amp);
+		    mus_snprintf(ampstr, LABEL_BUFFER_SIZE, "%.1f", cp_dB(cp, peak_freqs[i].amp));
+		  else mus_snprintf(ampstr, LABEL_BUFFER_SIZE, "%.*f", acols, peak_freqs[i].amp);
 		  draw_string(ax, acol, row, ampstr, strlen(ampstr));
 		  if (cp->printing) 
 		    ps_draw_string(cp, acol, row, ampstr);
@@ -1372,8 +1370,8 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
 	  if (with_amps)
 	    {
 	      if ((fft_data) && (cp->fft_log_magnitude))
-		mus_snprintf(ampstr, AMPSTR_SIZE, "%.1f", cp_dB(cp, peak_freqs[i].amp));
-	      else mus_snprintf(ampstr, AMPSTR_SIZE, "%.*f", acols, peak_freqs[i].amp);
+		mus_snprintf(ampstr, LABEL_BUFFER_SIZE, "%.1f", cp_dB(cp, peak_freqs[i].amp));
+	      else mus_snprintf(ampstr, LABEL_BUFFER_SIZE, "%.*f", acols, peak_freqs[i].amp);
 	      draw_string(ax, acol, row, ampstr, strlen(ampstr));
 	      if (cp->printing) 
 		ps_draw_string(cp, acol, row, ampstr);
@@ -2688,7 +2686,6 @@ int cursor_move (chan_info *cp, int samps)
 
 void show_cursor_info(chan_info *cp)
 {
-  #define EXPR_SIZE 256
   char *expr_str;
   snd_info *sp;
   chan_info *ncp;
@@ -2703,16 +2700,16 @@ void show_cursor_info(chan_info *cp)
   if (absy < .0001) digits = 4;
   else if (absy<.001) digits = 3;
   else digits = 2;
-  expr_str = (char *)CALLOC(EXPR_SIZE,sizeof(char));
+  expr_str = (char *)CALLOC(PRINT_BUFFER_SIZE,sizeof(char));
   if (sp->nchans == 1)
-    mus_snprintf(expr_str, EXPR_SIZE, "cursor at %s (sample %d) = %s",
+    mus_snprintf(expr_str, PRINT_BUFFER_SIZE, "cursor at %s (sample %d) = %s",
 	    s1 = prettyf((double)samp/(double)SND_SRATE(sp), 2),
 	    samp,
 	    s2 = prettyf(y, digits));
   else
     {
       if (sp->sync == 0)
-	mus_snprintf(expr_str, EXPR_SIZE, "chan %d, cursor at %s (sample %d) = %s",
+	mus_snprintf(expr_str, PRINT_BUFFER_SIZE, "chan %d, cursor at %s (sample %d) = %s",
 		cp->chan + 1,
 		s1 = prettyf((double)samp/(double)SND_SRATE(sp), 2),
 		samp,
@@ -2721,7 +2718,7 @@ void show_cursor_info(chan_info *cp)
 	{
 	  /* in this case, assume we show all on chan 0 and ignore the call otherwise (see above) */
 	  /* "cursor at..." then list of values */
-	  mus_snprintf(expr_str, EXPR_SIZE, "cursor at %s (sample %d): %s",
+	  mus_snprintf(expr_str, PRINT_BUFFER_SIZE, "cursor at %s (sample %d): %s",
 		  s1 = prettyf((double)samp/(double)SND_SRATE(sp), 2),
 		  samp,
 		  s2 = prettyf(y, digits));
@@ -3514,7 +3511,7 @@ enum {CP_FFTING, CP_WAVING, CP_FRAMES, CP_CURSOR, CP_LISP_GRAPHING, CP_AP_LOSAMP
       CP_EDPOS_FRAMES
 };
 
-static SCM cp_edpos = SCM_UNDEFINED;
+static SCM cp_edpos;
 
 static SCM cp_iread(SCM snd_n, SCM chn_n, int fld, char *caller)
 {
@@ -3689,7 +3686,6 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
 	  if (error == NULL)
 	    {
 	      if ((cp->cursor_style == CURSOR_PROC) &&
-		  (cp->cursor_proc) &&
 		  (PROCEDURE_P(cp->cursor_proc)))
 		snd_unprotect(cp->cursor_proc);
 	      snd_protect(on);
@@ -3706,7 +3702,6 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
       else
 	{
 	  if ((cp->cursor_style == CURSOR_PROC) &&
-	      (cp->cursor_proc) &&
 	      (PROCEDURE_P(cp->cursor_proc)))
 	    {
 	      snd_unprotect(cp->cursor_proc);
@@ -5339,6 +5334,8 @@ static SCM g_channel_widgets(SCM snd, SCM chn)
 
 void g_init_chn(SCM local_doc)
 {
+  cp_edpos = SCM_UNDEFINED;
+
 #if (!USE_NO_GUI)
   DEFINE_PROC(S_channel_widgets,         g_channel_widgets, 0, 2, 0,         "returns channel widgets");
 #endif

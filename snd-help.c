@@ -69,8 +69,8 @@ static void ssnd_help_with_url(snd_state *ss, char *subject, char *url, ...)
 static char *snd_itoa(int n)
 {
   char *str;
-  str = (char *)CALLOC(8, sizeof(char));
-  mus_snprintf(str, 8, "%d", n);
+  str = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
+  mus_snprintf(str, LABEL_BUFFER_SIZE, "%d", n);
   return(str);
 }
 
@@ -96,8 +96,8 @@ static char *sndlib_consistency_check(void)
   else
     if (mus_sample_bits() != MUS_SAMPLE_BITS)
       {
-	buf = (char *)CALLOC(64, sizeof(char)); /* memory leak here is the least of our worries... */
-	mus_snprintf(buf, 64, " Snd expects %d bit int samples, but sndlib uses %d bits!",
+	buf = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char)); /* memory leak here is the least of our worries... */
+	mus_snprintf(buf, LABEL_BUFFER_SIZE, " Snd expects %d bit int samples, but sndlib uses %d bits!",
 		     MUS_SAMPLE_BITS,
 		     mus_sample_bits());
 	return(buf);
@@ -264,6 +264,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+11-May:  selection-to-temp was writing files that Sox et al can't read (thanks to Matti Koskinen).\n\
 9-May:   support for GSL 0.7+\n\
 7-May:   added edit-position arg to various play functions, save-sound-as,\n\
            scan/map/find funcs, frames and maxamps.\n\

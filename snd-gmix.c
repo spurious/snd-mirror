@@ -354,8 +354,7 @@ GtkWidget *make_mix_panel(snd_state *ss)
 {
   GtkWidget *dismiss_button, *help_button, *rc;
   GdkWindow *wn;
-  #define AMPLAB_SIZE 16
-  char amplab[AMPLAB_SIZE];
+  char amplab[LABEL_BUFFER_SIZE];
   int mix_id, i, chans;
   mix_id = current_mix_id(ss);
 
@@ -484,7 +483,7 @@ GtkWidget *make_mix_panel(snd_state *ss)
 	  gtk_signal_connect(GTK_OBJECT(w_amp_events[i]), "button_press_event", GTK_SIGNAL_FUNC(amp_click_callback), (gpointer)ss);
 	  set_background(w_amp_events[i], (ss->sgx)->basic_color);
       
-	  mus_snprintf(amplab, AMPLAB_SIZE, "amp %d:", i);
+	  mus_snprintf(amplab, LABEL_BUFFER_SIZE, "amp %d:", i);
 	  w_amp_labels[i] = gtk_label_new(amplab);
 	  gtk_container_add(GTK_CONTAINER(w_amp_events[i]), w_amp_labels[i]);
 	  gtk_object_set_user_data(GTK_OBJECT(w_amp_events[i]), (gpointer)i);
@@ -533,8 +532,7 @@ static void update_mix_panel(int mix_id)
   chan_info *cp;
   int i, chans, beg, len;
   Float val;
-  #define LAB_SIZE 32
-  char lab[LAB_SIZE];
+  char lab[LABEL_BUFFER_SIZE];
   ss = get_global_state();
   if (mix_id == INVALID_MIX_ID) return;
   if (mix_id == current_mix_id(ss))
@@ -552,17 +550,17 @@ static void update_mix_panel(int mix_id)
 	  current_speed = val;
 	}
 
-      mus_snprintf(lab, LAB_SIZE, "%d", mix_track_from_id(mix_id));
+      mus_snprintf(lab, LABEL_BUFFER_SIZE, "%d", mix_track_from_id(mix_id));
       gtk_entry_set_text(GTK_ENTRY(w_track), lab);
 
-      mus_snprintf(lab, LAB_SIZE, "%d", mix_id);
+      mus_snprintf(lab, LABEL_BUFFER_SIZE, "%d", mix_id);
       gtk_entry_set_text(GTK_ENTRY(w_id), lab);
 
       gtk_entry_set_text(GTK_ENTRY(w_name), mix_name_from_id(mix_id));
 
       beg = mix_position_from_id(mix_id);
       len = mix_length(mix_id);
-      mus_snprintf(lab, LAB_SIZE, "%.3f : %.3f",
+      mus_snprintf(lab, LABEL_BUFFER_SIZE, "%.3f : %.3f",
 	      (float)beg / (float)SND_SRATE(cp->sound),
 	      (float)(beg + len) / (float)SND_SRATE(cp->sound));
       gtk_entry_set_text(GTK_ENTRY(w_beg), lab);

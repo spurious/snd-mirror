@@ -210,9 +210,7 @@ char *reverb_name(void)
 }
 
 /* user hooks into reverb */
-static SCM g_make_reverb = SCM_UNDEFINED,
-           g_reverb = SCM_UNDEFINED, 
-           g_free_reverb = SCM_UNDEFINED;
+static SCM g_make_reverb, g_reverb, g_free_reverb;
 
 static SCM g_reverb_funcs(void) 
 {
@@ -254,11 +252,11 @@ static SCM g_set_reverb_funcs(SCM rev, SCM make_rev, SCM free_rev)
       g_reverb = rev;
       g_make_reverb = make_rev;
       g_free_reverb = free_rev;
-      if (g_reverb == SND_LOOKUP("snd-nrev")) 
+      if (SCM_EQ_P(g_reverb, SND_LOOKUP("snd-nrev")))
 	which_reverb = NREVERB;
       else
 	{
-	  if (g_reverb == SND_LOOKUP("snd-freeverb"))
+	  if (SCM_EQ_P(g_reverb, SND_LOOKUP("snd-freeverb")))
 	    which_reverb = FREEVERB;
 	  else which_reverb = USERVERB;
 	}
@@ -278,7 +276,7 @@ static SCM g_set_reverb_funcs(SCM rev, SCM make_rev, SCM free_rev)
 }
 
 /* user hook into contrast */
-static SCM g_contrast = SCM_UNDEFINED;
+static SCM g_contrast;
 static int use_g_contrast = 0;
 
 static SCM g_contrast_func(void) 
@@ -338,9 +336,9 @@ static char *inspect_fcomb(void *ptr)
 {
   fcomb *gen = (fcomb *)ptr;
   char *desc = NULL;
-  desc = (char *)CALLOC(1024, sizeof(char));
+  desc = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   if (desc) 
-    mus_snprintf(desc, 1024, "fcomb line[%d at %d], xscl: %f, a0: %f, a1: %f, x1: %f",
+    mus_snprintf(desc, PRINT_BUFFER_SIZE, "fcomb line[%d at %d], xscl: %f, a0: %f, a1: %f, x1: %f",
 	    gen->size, gen->loc, gen->xscl, gen->a0, gen->a1, gen->x1);
   return(desc);
 }
@@ -349,13 +347,13 @@ static char *describe_fcomb(void *ptr)
 {
   char *desc = NULL;
   fcomb *gen = (fcomb *)ptr;
-  desc = (char *)CALLOC(1024, sizeof(char));
+  desc = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   if (desc)
     {
       if (mus_fcomb_p((mus_any *)ptr))
-	mus_snprintf(desc, 1024, "fcomb: scaler: %.3f, a0: %.3f, a1: %.3f, line[%d]",
+	mus_snprintf(desc, PRINT_BUFFER_SIZE, "fcomb: scaler: %.3f, a0: %.3f, a1: %.3f, line[%d]",
 		gen->xscl, gen->a0, gen->a1, gen->size);
-      else mus_snprintf(desc, 1024, "not an fcomb gen");
+      else mus_snprintf(desc, PRINT_BUFFER_SIZE, "not an fcomb gen");
     }
   return(desc);
 }
@@ -560,7 +558,7 @@ static SCM g_freeverb(SCM ptr, SCM invals, SCM outvals)
   return(outvals);
 }
 
-static SCM v_ins = SCM_UNDEFINED, v_outs = SCM_UNDEFINED;
+static SCM v_ins, v_outs;
 
 static Float *r_ins, *r_outs;
 static void free_reverb(void *ur);
@@ -826,6 +824,12 @@ static SCM g_mus_contrast(SCM inval, SCM index)
 
 static void init_rev_funcs(SCM local_doc)
 {
+  g_make_reverb = SCM_UNDEFINED;
+  g_reverb = SCM_UNDEFINED;
+  g_free_reverb = SCM_UNDEFINED;
+  g_contrast = SCM_UNDEFINED;
+  v_ins = SCM_UNDEFINED;
+  v_outs = SCM_UNDEFINED;
   DEFINE_PROC("make-snd-nrev",     g_make_nrev, 2, 0, 0,     "make-snd-nrev is the default reverb make function");
   DEFINE_PROC("snd-nrev",          g_nrev, 3, 0, 0,          "snd-nrev is the default reverb");
   DEFINE_PROC("free-snd-nrev",     g_free_rev, 1, 0, 0,      "free-snd-nrev is the default reverb free function");

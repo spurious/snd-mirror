@@ -11,6 +11,9 @@
 
 #if USE_SND
   #include "snd.h"
+#else
+  #define PRINT_BUFFER_SIZE 512
+  #define LABEL_BUFFER_SIZE 64
 #endif
 
 #include "sndlib.h"
@@ -390,8 +393,8 @@ static int print_sound_data(SCM obj, SCM port, scm_print_state *pstate)
     {
       if ((v->data) && (v->chans > 0))
 	{
-	  buf = (char *)CALLOC(64, sizeof(char));
-	  mus_snprintf(buf, 64, "#<sound-data: %d chan%s, %d frame%s>",
+	  buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+	  mus_snprintf(buf, PRINT_BUFFER_SIZE, "#<sound-data: %d chan%s, %d frame%s>",
 		       v->chans, (v->chans == 1) ? "" : "s",
 		       v->length, (v->length == 1) ? "" : "s");
 	  WRITE_STRING(buf, port);
@@ -431,7 +434,7 @@ static SCM sound_data_length(SCM obj)
   sound_data *v;
   ASSERT_TYPE(SOUND_DATA_P(obj), obj, SCM_ARGn, S_sound_data_length, "a sound-data object");
   v = (sound_data *)SND_VALUE_OF(obj);
-  if (v == NULL) return(0);
+  if (v == NULL) return(SCM_BOOL_F);
   return(TO_SCM_INT(v->length));
 }
 
@@ -441,7 +444,7 @@ static SCM sound_data_chans(SCM obj)
   sound_data *v;
   ASSERT_TYPE(SOUND_DATA_P(obj), obj, SCM_ARGn, S_sound_data_chans, "a sound-data object");
   v = (sound_data *)SND_VALUE_OF(obj);
-  if (v == NULL) return(0);
+  if (v == NULL) return(SCM_BOOL_F);
   return(TO_SMALL_SCM_INT(v->chans));
 }
 

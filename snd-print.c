@@ -2,7 +2,6 @@
 
 /* create Postscript version of graph */
 
-#define PRINT_BUFFER_SIZE 256
 static char *pbuf = NULL;
 static int bbx, bby, bx0, by0;
 static int ps_fd;

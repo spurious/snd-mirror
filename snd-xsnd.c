@@ -847,8 +847,8 @@ void set_snd_filter_order(snd_info *sp, int order)
   sp->filter_order = order;
   if (!(IS_PLAYER(sp)))
     {
-      fltorder = (char *)CALLOC(8, sizeof(char));
-      mus_snprintf(fltorder, 8, "%d", order);
+      fltorder = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
+      mus_snprintf(fltorder, LABEL_BUFFER_SIZE, "%d", order);
       XmTextSetString(w_snd_filter_order(sp), fltorder);
       FREE(fltorder);
       sp_display_env(sp);
@@ -1442,8 +1442,8 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
 
       if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)
 	{
-	  title = (char *)CALLOC(128, sizeof(char));
-	  mus_snprintf(title, 128, "%d: %s", snd_slot, sp->shortname);
+	  title = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+	  mus_snprintf(title, PRINT_BUFFER_SIZE, "%d: %s", snd_slot, sp->shortname);
 	  if (sx->dialog == NULL)
 	    {
 	      n = 0;
@@ -2466,8 +2466,8 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
 		      NULL);
       else 
 	{
-	  title = (char *)CALLOC(128, sizeof(char));
-	  mus_snprintf(title, 128, "%d: %s", snd_slot, sp->shortname);
+	  title = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+	  mus_snprintf(title, PRINT_BUFFER_SIZE, "%d: %s", snd_slot, sp->shortname);
 	  XtVaSetValues(sx->dialog, XmNtitle, title, NULL);
 	  FREE(title);
 	  if (!XtIsManaged(sx->dialog)) XtManageChild(sx->dialog);
@@ -2878,11 +2878,11 @@ void progress_report(snd_info *sp, const char *funcname, int curchan, int chans,
   else snd_file_glasses_icon(sp, TRUE, which);
 #else
   char *expr_str;
-  expr_str = (char *)CALLOC(128, sizeof(char));
+  expr_str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   which = (int)(100.0 * pct);
   if (chans > 1)
-    mus_snprintf(expr_str, 128, "%s: (%d of %d) %d%%", funcname, curchan, chans, which);
-  else mus_snprintf(expr_str, 128, "%s: %d%%", funcname, which);
+    mus_snprintf(expr_str, PRINT_BUFFER_SIZE, "%s: (%d of %d) %d%%", funcname, curchan, chans, which);
+  else mus_snprintf(expr_str, PRINT_BUFFER_SIZE, "%s: %d%%", funcname, which);
   if (from_enved)
     display_enved_progress(expr_str, 0);
   else report_in_minibuffer(sp, expr_str);

@@ -267,8 +267,8 @@ file_info *make_file_info(char *fullname, snd_state *ss)
 	  else 
 	    {
 	      char *str;
-	      str = (char *)CALLOC(256, sizeof(char));
-	      mus_snprintf(str, 256, "No header found for %s", filename_without_home_directory(fullname));
+	      str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+	      mus_snprintf(str, PRINT_BUFFER_SIZE, "No header found for %s", filename_without_home_directory(fullname));
 	      hdr = raw_data_dialog_to_file_info(fullname, ss, str);
 	      FREE(str);
 	      return(hdr);
@@ -768,6 +768,9 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
   sp->reverbing = 0;
   sp->revscl = 0.0;
   sp->filtering = 0;
+  sp->search_proc = SCM_UNDEFINED;
+  sp->eval_proc = SCM_UNDEFINED;
+  sp->prompt_callback = SCM_UNDEFINED;
   sp->index = TEMP_SOUND_INDEX;
   sp->sgx = NULL;
   len = (hdr->samples) / (hdr->chans);
@@ -918,7 +921,7 @@ char *update_chan_stats(chan_info *cp)
   char *desc;
   char *vals[8];
   int i;
-  desc = (char *)CALLOC(256, sizeof(char));
+  desc = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   vals[0] = kmg(cp->stats[ARRAY_USAGE]);
   vals[1] = kmg(cp->stats[ARRAYS_ACTIVE]);
   vals[2] = kmg(cp->stats[FILE_USAGE]);
@@ -928,12 +931,12 @@ char *update_chan_stats(chan_info *cp)
   vals[6] = kmg(cp->stats[AMP_ENVS_ACTIVE]);
   vals[7] = kmg(cp->stats[AMP_ENV_USAGE]);
   if (cp->stats[TEMPS_ACTIVE] != cp->stats[TEMPS_OPEN])
-    mus_snprintf(desc, 256, "%s %d: %s (%s), %s, %s (%s, %s), %s %s\n",
+    mus_snprintf(desc, PRINT_BUFFER_SIZE, "%s %d: %s (%s), %s, %s (%s, %s), %s %s\n",
 	    (cp->sound)->shortname,
 	    cp->chan + 1,
 	    vals[0], vals[1], vals[2], vals[3], vals[4], vals[5], vals[6], vals[7]);
   else
-    mus_snprintf(desc, 256, "%s %d: %s (%s), %s, %s (%s), %s %s\n",
+    mus_snprintf(desc, PRINT_BUFFER_SIZE, "%s %d: %s (%s), %s, %s (%s), %s %s\n",
 	    (cp->sound)->shortname,
 	    cp->chan + 1,
 	    vals[0], vals[1], vals[2], vals[3], vals[4], vals[6], vals[7]);
@@ -980,8 +983,8 @@ char *get_curfullname(int pos)
 char *view_curfiles_name(int pos)
 {
   char *str;
-  str = (char *)CALLOC(128, sizeof(char));
-  mus_snprintf(str, 128, "%s%s", curnames[pos], (a_big_star[pos]) ? "*" : "");
+  str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+  mus_snprintf(str, PRINT_BUFFER_SIZE, "%s%s", curnames[pos], (a_big_star[pos]) ? "*" : "");
   return(str);
 }
 
@@ -1937,23 +1940,22 @@ static short swap_short (short n)
 
 char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr)
 {
-  #define TMPSTR_SIZE 64
   char *reason_str, *tmp_str, *file_string;
   int ns, better_srate = 0, better_chans = 0;
-  reason_str = (char *)CALLOC(1024, sizeof(char));
-  tmp_str = (char *)CALLOC(TMPSTR_SIZE, sizeof(char));
+  reason_str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+  tmp_str = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
   /* try to provide some notion of what might be the intended header (currently limited to byte-order mistakes) */
-  mus_snprintf(reason_str, 1024, "srate: %d", hdr->srate);
+  mus_snprintf(reason_str, PRINT_BUFFER_SIZE, "srate: %d", hdr->srate);
   ns = (int)swap_int(hdr->srate);
   if ((ns < 4000) || (ns > 100000)) 
     ns = (int)swap_short((short)(hdr->srate));
   if ((ns > 4000) && (ns < 100000))
     {
       better_srate = ns;
-      mus_snprintf(tmp_str, TMPSTR_SIZE, " (swapped: %d)", ns);
+      mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, " (swapped: %d)", ns);
       strcat(reason_str, tmp_str);
     }
-  mus_snprintf(tmp_str, TMPSTR_SIZE, "\nchans: %d", hdr->chans);
+  mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nchans: %d", hdr->chans);
   strcat(reason_str, tmp_str);
   ns = swap_int(hdr->chans);
   if ((ns < 0) || (ns > 8)) 
@@ -1961,10 +1963,10 @@ char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr)
   if ((ns > 0) && (ns <= 8))
     {
       better_chans = ns;
-      mus_snprintf(tmp_str, TMPSTR_SIZE, " (swapped: %d)", ns);
+      mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, " (swapped: %d)", ns);
       strcat(reason_str, tmp_str);
     }
-  mus_snprintf(tmp_str, TMPSTR_SIZE, "\nlength: %.3f (%d samples, %d bytes total)",
+  mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nlength: %.3f (%d samples, %d bytes total)",
 	  (float)(hdr->samples) / (float)(hdr->chans * hdr->srate),
 	  hdr->samples,
 	  mus_sound_length(filename));
@@ -1972,33 +1974,33 @@ char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr)
   ns = swap_int(hdr->samples);
   if (ns < mus_sound_length(filename))
     {
-      mus_snprintf(tmp_str, TMPSTR_SIZE, "\n  (swapped: %d", ns);
+      mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\n  (swapped: %d", ns);
       strcat(reason_str, tmp_str);
       if ((better_chans) && (better_srate))
 	{
-	  mus_snprintf(tmp_str, TMPSTR_SIZE,
+	  mus_snprintf(tmp_str, LABEL_BUFFER_SIZE,
 		  ", swapped length: %.3f / sample-size-in-bytes)",
 		  (float)ns / (float)(better_chans * better_srate));
 	  strcat(reason_str, tmp_str);
 	}
       else strcat(reason_str, ")");
     }
-  mus_snprintf(tmp_str, TMPSTR_SIZE, "\ndata location: %d", hdr->data_location);
+  mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\ndata location: %d", hdr->data_location);
   strcat(reason_str, tmp_str);
   ns = swap_int(hdr->data_location);
   if ((ns > 0) && (ns <= 1024)) 
     {
-      mus_snprintf(tmp_str, TMPSTR_SIZE, " (swapped: %d)", ns);
+      mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, " (swapped: %d)", ns);
       strcat(reason_str, tmp_str);
     }
-  mus_snprintf(tmp_str, TMPSTR_SIZE, "\ntype: %s", mus_header_type_name(hdr->type));
+  mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\ntype: %s", mus_header_type_name(hdr->type));
   strcat(reason_str, tmp_str);
-  mus_snprintf(tmp_str, TMPSTR_SIZE, "\nformat: %s\n", mus_data_format_name(hdr->format));
+  mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nformat: %s\n", mus_data_format_name(hdr->format));
   strcat(reason_str, tmp_str);
   hdr->type = MUS_RAW;
   snd_help(ss, "Current header values", reason_str);
-  file_string = (char *)CALLOC(256, sizeof(char));
-  mus_snprintf(file_string, 256,
+  file_string = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+  mus_snprintf(file_string, PRINT_BUFFER_SIZE,
 	  "Bogus header found for %s", 
 	  filename_without_home_directory(filename));
   FREE(tmp_str);

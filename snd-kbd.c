@@ -176,7 +176,7 @@ static int in_user_keymap(int key, int state)
   for (i = 0; i < keymap_top; i++)
     if ((user_keymap[i].key == key) && 
 	(user_keymap[i].state == state) && 
-	(user_keymap[i].func != SCM_UNDEFINED))
+	(BOUND_P(user_keymap[i].func)))
       return(i);
   return(-1);
 }
@@ -187,7 +187,7 @@ void save_user_key_bindings(FILE *fd)
   char binder[64];
   SCM con;
   for (i = 0; i < keymap_top; i++)
-    if (user_keymap[i].func != SCM_UNDEFINED)
+    if (BOUND_P(user_keymap[i].func))
       {
 	sprintf(binder,
 		"(bind-key (char->integer #\\%c) %d ",
@@ -245,8 +245,7 @@ static void set_keymap_entry(int key, int state, int ignore, SCM func)
     }
   else
     {
-      if ((user_keymap[i].func) && 
-	  (PROCEDURE_P(user_keymap[i].func))) 
+      if (PROCEDURE_P(user_keymap[i].func))
 	snd_unprotect(user_keymap[i].func);
     }
   /* already checked arity etc */
@@ -261,7 +260,7 @@ static int call_user_keymap(int hashedsym, int count)
   SCM funcres;
   /* if guile call the associated scheme code, else see if basic string parser can handle it */
   if (user_keymap[hashedsym].ignore_prefix) count = 1;
-  if (user_keymap[hashedsym].func != SCM_UNDEFINED)
+  if (BOUND_P(user_keymap[hashedsym].func))
     for (i = 0; i < count; i++) 
       {
 	funcres = CALL0(user_keymap[hashedsym].func, "user key func");
@@ -287,7 +286,7 @@ void report_in_minibuffer(snd_info *sp, char *format, ...)
 #if HAVE_VPRINTF
   va_list ap;
   if (sp->active == 0) return;
-  len = snd_strlen(format) + 256;
+  len = snd_strlen(format) + PRINT_BUFFER_SIZE;
   buf = (char *)CALLOC(len, sizeof(char));
   va_start(ap, format);
 #if HAVE_VSNPRINTF
@@ -297,7 +296,7 @@ void report_in_minibuffer(snd_info *sp, char *format, ...)
 #endif
   va_end(ap);
 #else
-  len = snd_strlen(format) + 256;
+  len = snd_strlen(format) + PRINT_BUFFER_SIZE;
   buf = (char *)CALLOC(len, sizeof(char));
 #if HAVE_SNPRINTF
   snprintf(buf, len, "%s...[you need vprintf]", format);
@@ -624,8 +623,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	       */
 	      if (sp->search_expr) free(sp->search_expr);
 	      sp->search_expr = str;
-	      if ((sp->search_proc) && 
-		  (PROCEDURE_P(sp->search_proc))) 
+	      if (PROCEDURE_P(sp->search_proc))
 		snd_unprotect(sp->search_proc);
 	      sp->search_proc = SCM_UNDEFINED;
 	      proc = snd_catch_any(eval_str_wrapper, str, str);
@@ -805,8 +803,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	{
 	  proc = snd_catch_any(eval_str_wrapper, str, str);
 	  snd_protect(proc);
-	  if ((sp->prompt_callback) && 
-	      (PROCEDURE_P(sp->prompt_callback)))
+	  if (PROCEDURE_P(sp->prompt_callback))
 	    CALL2(sp->prompt_callback, proc, TO_SMALL_SCM_INT(sp->index), "prompt callback func");
 	  snd_unprotect(proc);
 	  if (str) free(str);
@@ -824,8 +821,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	  sp->eval_expr = str;
 	  if (sp->evaling)
 	    {
-	      if ((sp->eval_proc) && 
-		  (PROCEDURE_P(sp->eval_proc))) 
+	      if (PROCEDURE_P(sp->eval_proc))
 		snd_unprotect(sp->eval_proc);
 	      sp->eval_proc = SCM_UNDEFINED;
 	      proc = snd_catch_any(eval_str_wrapper, str, str);
@@ -1950,8 +1946,7 @@ then when the user eventually responds, invokes the function callback with the r
   sp = get_sp(snd_n);
   if (sp == NULL) 
     snd_no_such_sound_error(S_prompt_in_minibuffer, snd_n);
-  if ((sp->prompt_callback) && 
-      (PROCEDURE_P(sp->prompt_callback))) 
+  if (PROCEDURE_P(sp->prompt_callback))
     snd_unprotect(sp->prompt_callback);
   if (PROCEDURE_P(callback)) 
     {
@@ -1990,8 +1985,8 @@ static SCM g_append_to_minibuffer(SCM msg, SCM snd_n)
   sp = get_sp(snd_n);
   if (sp == NULL) 
     snd_no_such_sound_error(S_append_to_minibuffer, snd_n);
-  expr_str = (char *)CALLOC(512, sizeof(char));
-  mus_snprintf(expr_str, 512, "%s%s", str1 = get_minibuffer_string(sp), TO_C_STRING(msg));
+  expr_str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+  mus_snprintf(expr_str, PRINT_BUFFER_SIZE, "%s%s", str1 = get_minibuffer_string(sp), TO_C_STRING(msg));
   set_minibuffer_string(sp, expr_str);
   FREE(expr_str);
   sp->minibuffer_temp = 1;

@@ -210,6 +210,9 @@ static void make_region_readable(region *r, snd_state *ss)
   regsp->allocated_chans = r->chans; /* needed for complete GC */
   regsp->chans = (chan_info **)CALLOC(r->chans, sizeof(chan_info *));
   regsp->hdr = (file_info *)CALLOC(1, sizeof(file_info));
+  regsp->search_proc = SCM_UNDEFINED;
+  regsp->eval_proc = SCM_UNDEFINED;
+  regsp->prompt_callback = SCM_UNDEFINED;
   hdr = regsp->hdr;
   hdr->samples = r->frames * r->chans;
   hdr->srate = r->srate;
@@ -298,8 +301,8 @@ region_state *region_report(void)
     {
       r = regions[i];
       rs->save[i] = r->save;
-      reg_buf = (char *)CALLOC(64, sizeof(char));
-      mus_snprintf(reg_buf, 64, "%d: %s (%s:%s)", i, r->name, r->start, r->end);
+      reg_buf = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
+      mus_snprintf(reg_buf, LABEL_BUFFER_SIZE, "%d: %s (%s:%s)", i, r->name, r->start, r->end);
       rs->name[i] = reg_buf;
     }
   return(rs);

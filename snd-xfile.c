@@ -801,8 +801,8 @@ static void make_save_as_dialog(snd_state *ss, char *sound_name, int header_type
       XtSetArg(args[n], XmNselectionLabelString, s1); n++;
       xmstr1 = XmStringCreate(STR_Save, XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n], XmNokLabelString, xmstr1); n++;
-      file_string = (char *)CALLOC(256, sizeof(char));
-      mus_snprintf(file_string, 256, "saving %s", sound_name);
+      file_string = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+      mus_snprintf(file_string, PRINT_BUFFER_SIZE, "saving %s", sound_name);
       xmstr2 = XmStringCreate(file_string, XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n], XmNdialogTitle, xmstr2); n++;
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
@@ -846,8 +846,8 @@ static void make_save_as_dialog(snd_state *ss, char *sound_name, int header_type
     }
   else
     {
-      file_string = (char *)CALLOC(256, sizeof(char));
-      mus_snprintf(file_string, 256, "saving %s", sound_name);
+      file_string = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+      mus_snprintf(file_string, PRINT_BUFFER_SIZE, "saving %s", sound_name);
       xmstr2 = XmStringCreate(file_string, XmFONTLIST_DEFAULT_TAG);
       XtVaSetValues(save_as_dialog, XmNdialogTitle, xmstr2, NULL);
       XmStringFree(xmstr2);
@@ -1705,9 +1705,8 @@ static void raw_data_help_Callback(Widget w, XtPointer context, XtPointer info)
   raw_data_dialog_help((snd_state *)context);
 }
 
-#define DFS_STR_SIZE 16
-static char dfs_str[DFS_STR_SIZE];
-static char dfc_str[DFS_STR_SIZE];
+static char dfs_str[LABEL_BUFFER_SIZE];
+static char dfc_str[LABEL_BUFFER_SIZE];
 
 static void make_raw_data_dialog(char *filename, snd_state *ss)
 {
@@ -1722,8 +1721,8 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
   xstr2 = XmStringCreate(STR_Help, XmFONTLIST_DEFAULT_TAG);
   xstr3 = XmStringCreate(STR_Ok, XmFONTLIST_DEFAULT_TAG);
   titlestr = XmStringCreate(STR_No_Header_on_File, XmFONTLIST_DEFAULT_TAG);
-  str = (char *)CALLOC(256, sizeof(char));
-  mus_snprintf(str, 256, "No header found for %s",
+  str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+  mus_snprintf(str, PRINT_BUFFER_SIZE, "No header found for %s",
 	  filename_without_home_directory(filename));
   xstr4 = XmStringCreate(str, XmFONTLIST_DEFAULT_TAG);
   FREE(str);
@@ -1776,8 +1775,8 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
   XtSetArg(args[n], XmNresizeWidth, FALSE); n++;
   raw_srate_text = sndCreateTextFieldWidget(ss, "text", rform, args, n, NOT_ACTIVATABLE, add_completer_func(srate_completer));
   if (raw_srate(ss) < 100000) 
-    mus_snprintf(dfs_str, DFS_STR_SIZE, " %d", raw_srate(ss)); 
-  else mus_snprintf(dfs_str, DFS_STR_SIZE, "%d", raw_srate(ss));
+    mus_snprintf(dfs_str, LABEL_BUFFER_SIZE, " %d", raw_srate(ss)); 
+  else mus_snprintf(dfs_str, LABEL_BUFFER_SIZE, "%d", raw_srate(ss));
   XmTextSetString(raw_srate_text, dfs_str);
 
   n = 0;
@@ -1800,8 +1799,8 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
   XtSetArg(args[n], XmNresizeWidth, FALSE); n++;
   raw_chans_text = sndCreateTextFieldWidget(ss, "text", rform, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
   if (raw_chans(ss) < 10) 
-    mus_snprintf(dfc_str, DFS_STR_SIZE, "  %d", raw_chans(ss)); 
-  else mus_snprintf(dfc_str, DFS_STR_SIZE, " %d", raw_chans(ss));
+    mus_snprintf(dfc_str, LABEL_BUFFER_SIZE, "  %d", raw_chans(ss)); 
+  else mus_snprintf(dfc_str, LABEL_BUFFER_SIZE, " %d", raw_chans(ss));
   XmTextSetString(raw_chans_text, dfc_str);
   
   n = 0;
@@ -2172,8 +2171,8 @@ Widget edit_header(snd_info *sp)
       xstr2 = XmStringCreate(STR_Help, XmFONTLIST_DEFAULT_TAG);
       xstr3 = XmStringCreate(STR_Save, XmFONTLIST_DEFAULT_TAG);
       titlestr = XmStringCreate(STR_Edit_Header, XmFONTLIST_DEFAULT_TAG);
-      str = (char *)CALLOC(128, sizeof(char));
-      mus_snprintf(str, 128, STR_Edit_header_of, sp->shortname);
+      str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+      mus_snprintf(str, PRINT_BUFFER_SIZE, STR_Edit_header_of, sp->shortname);
       xstr4 = XmStringCreate(str, XmFONTLIST_DEFAULT_TAG);
       FREE(str);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}

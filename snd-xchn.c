@@ -683,8 +683,8 @@ void reflect_save_as_in_edit_history(chan_info *cp, char *filename)
       lst = cx->chan_widgets[W_edhist];
       if (lst)
 	{
-	  new_line = (char *)CALLOC(256, sizeof(char));
-	  mus_snprintf(new_line, 256,
+	  new_line = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+	  mus_snprintf(new_line, PRINT_BUFFER_SIZE,
 		  "%s: (save-sound-as \"%s\")", 
 		  edit_to_string(cp, cp->edit_ctr), 
 		  filename);

@@ -33,8 +33,7 @@ void           gtk_html_load_from_string  (GtkHTML             *html,
 
 static GtkWidget *help_dialog = NULL;
 static GtkWidget *help_text = NULL;
-#define HELP_WINDOW_LABEL_SIZE 64
-static char help_window_label[HELP_WINDOW_LABEL_SIZE];
+static char help_window_label[LABEL_BUFFER_SIZE];
 
 static void help_help_callback(GtkWidget *w, gpointer context) 
 {
@@ -129,7 +128,7 @@ GtkWidget *snd_help(snd_state *ss, char *subject, char *helpstr)
   /* if window is already active, add this help at the top and reposition */
   guint chars;
   if (!(help_dialog)) create_help_monolog(ss); else raise_dialog(help_dialog);
-  mus_snprintf(help_window_label, HELP_WINDOW_LABEL_SIZE, "%s help", subject);
+  mus_snprintf(help_window_label, LABEL_BUFFER_SIZE, "%s help", subject);
   gtk_window_set_title(GTK_WINDOW(help_dialog), help_window_label);
   chars = gtk_text_get_length(GTK_TEXT(help_text));
   if (chars > 0) gtk_editable_delete_text(GTK_EDITABLE(help_text), 0, -1);
