@@ -1808,15 +1808,15 @@ Does not work.
         (insert-sound filename))
       "Insert file" "." "*" "File will be inserted at cursor location.")))
 
-(define (append-sound name)
+(define (append-sound filename)
   ;; appends sound file
-  (insert-sound name (frames)))
+  (insert-sound filename (frames)))
 
 (add-to-menu edit-menu "Append file"
   (lambda ()
     (select-file
      (lambda (filename)
-       (append-sound name)))))
+       (append-sound filename)))))
 
 (add-to-menu edit-menu #f #f)
 

@@ -1710,7 +1710,12 @@ void das_init(){
 
 (define-class (<editor-nodeline> snd ch orgval #:optional string-func moused-func (context mark-context))
   
-  (Super (<nodeline> (list (list 0 orgval) (list 1 orgval))
+  (Super (<nodeline> (begin
+		       (if (or (< orgval 0) (> orgval 1))
+			   (begin
+			     (c-display "Warning! gui.scm/<editor-nodeline>: orgval=" orgval)
+			     (set! orgval (max 0 (min orgval 1)))))
+		       (list (list 0 orgval) (list 1 orgval)))
 		     (lambda (x1 y1 x2 y2)
 		       (c-get-bounds snd ch
 				     (lambda (minx miny maxx maxy)
