@@ -182,7 +182,7 @@ static XEN g_fill_polygon(XEN pts, XEN snd, XEN chn, XEN ax_id)
   return(pts);
 }
 
-static XEN g_make_bezier(XEN args)
+static XEN g_make_bezier(XEN args1)
 {
   #define S_make_bezier "make-bezier"
   #define H_make_bezier "(" S_make_bezier " x0 y0 x1 y1 x2 y2 x3 y3 n) -> vector of points"
@@ -192,8 +192,9 @@ static XEN g_make_bezier(XEN args)
   int x[4];
   int y[4];
   int n = 50;
-  XEN pts;
+  XEN pts, args;
   XEN *data;
+  args = XEN_COPY_ARG(args1);
   for (i = 0; i < 4; i++)
     {
       x[i] = XEN_TO_C_INT(XEN_CAR(args));

@@ -425,6 +425,7 @@ typedef struct {
 
 static int io_fd_size = 0;
 static io_fd **io_fds = NULL;
+#define IO_FD_ALLOC_SIZE 8
 
 int mus_file_set_descriptors (int tfd, const char *name, int format, int size /* datum size */, off_t location, int chans, int type)
 {
@@ -435,7 +436,7 @@ int mus_file_set_descriptors (int tfd, const char *name, int format, int size /*
 #ifdef MACOS
       io_fd_size = 64;
 #else
-      io_fd_size = tfd + 8;
+      io_fd_size = tfd + IO_FD_ALLOC_SIZE;
 #endif
       io_fds = (io_fd **)CALLOC(io_fd_size, sizeof(io_fd *));
     }
@@ -443,7 +444,7 @@ int mus_file_set_descriptors (int tfd, const char *name, int format, int size /*
   if (io_fd_size <= tfd)
     {
       lim = io_fd_size;
-      io_fd_size = tfd + 8;
+      io_fd_size = tfd + IO_FD_ALLOC_SIZE;
       io_fds = (io_fd **)REALLOC(io_fds, io_fd_size * sizeof(io_fd *));
       for (i = lim; i < io_fd_size; i++) io_fds[i] = NULL;
     }

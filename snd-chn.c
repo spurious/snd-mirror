@@ -998,7 +998,6 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
   double cur_srate = 1.0;
   axis_context *ax = NULL;
   chan_context *cgx;
-  env_info *ep;
   ap = cp->axis;
   /* check for no graph */
   if ((!ap) || (!(ap->graph_active)) || (ap->x0 == ap->x1)) return(0);
@@ -1097,6 +1096,7 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	      cgx = cp->cgx;
 	      if (cgx->amp_env_in_progress)
 		{                            /* but the amp-env background process is still working on it */
+		  env_info *ep;
 		  ep = cp->amp_envs[cp->edit_ctr];
 		  if ((ep) && samples_per_pixel >= (Float)(ep->samps_per_bin))
 		    {                        /* and it will be useful when it finishes */

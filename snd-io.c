@@ -476,6 +476,12 @@ snd_data *free_snd_data(snd_data *sd)
 	    return(NULL);
 	  if (sd->temporary == MULTICHANNEL_DELETION)
 	    forget_temp(sd->filename, sd->chan);
+#if DEBUGGING
+	  if ((sd->type == SND_DATA_BUFFER) && 
+	      (sd->buffered_data) &&
+	      (sd->copy))
+	    fprintf(stderr,"free %p\n", sd->buffered_data);
+#endif
 	  if ((sd->type == SND_DATA_BUFFER) && 
 	      (sd->buffered_data)) 
 	    FREE(sd->buffered_data);

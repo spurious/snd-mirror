@@ -2443,6 +2443,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
       else end = cp->samples[pos] - 1;
     }
   num = end - beg + 1;
+  /* TODO: map-chan: use local array if num small */
   if (num > 0)
     {
       errmsg = procedure_ok(proc, 1, caller, "", 1);
@@ -2578,62 +2579,96 @@ static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, off
   snd_state *ss;
   snd_info *sp;
   snd_fd *sf = NULL;
-  off_t kp, j = 0;
-  int cured;
+  off_t kp;
+  int temp_file;
   XEN res = XEN_FALSE;
-  char *filename;
+  char *filename = NULL;
   mus_any *outgen = NULL;
   XEN v;
+  mus_sample_t *data = NULL;
   ss = cp->state;
   sp = cp->sound;
   sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
   if (sf == NULL) return(XEN_TRUE);
-  filename = snd_tempnam(ss);
-  outgen = mus_make_sample2file(filename, 1, MUS_OUT_FORMAT, MUS_NEXT);
-  j = 0;
-  ss->stopped_explicitly = FALSE;
-  v = XEN_CALL_2(init_func,
-		 C_TO_XEN_OFF_T(0),
-		 C_TO_XEN_OFF_T(num),
-		 "ptree-channel fallback init func");
-  snd_protect(v);
-  for (kp = 0; kp < num; kp++)
+  temp_file = (num > MAX_BUFFER_SIZE);
+  if (temp_file)
     {
-      res = XEN_CALL_3(proc, 
-		       C_TO_XEN_DOUBLE((double)read_sample_to_float(sf)),
-		       v,
-		       XEN_TRUE,
-		       "ptree-channel fallback proc");
-      MUS_OUTA_1(j++, XEN_TO_C_DOUBLE(res), (mus_output *)outgen);
-      if (ss->stopped_explicitly) 
-	break;
-    }
-  snd_unprotect(v);
-  if (outgen) mus_free(outgen);
-  if (sf) sf = free_snd_fd(sf);
-  if (ss->stopped_explicitly) 
-    ss->stopped_explicitly = FALSE;
-  else
-    {
-      if (j == num)
-	file_change_samples(beg, j, filename, cp, 0, DELETE_ME, LOCK_MIXES, "ptree-channel fallback", cp->edit_ctr);
+      filename = snd_tempnam(ss);
+      outgen = mus_make_sample2file(filename, 1, MUS_OUT_FORMAT, MUS_NEXT);
+      if (XEN_PROCEDURE_P(init_func))
+	{
+	  v = XEN_CALL_2(init_func,
+		     C_TO_XEN_OFF_T(0),
+		     C_TO_XEN_OFF_T(num),
+		     "ptree-channel fallback init func");
+	  snd_protect(v);
+	  for (kp = 0; kp < num; kp++)
+	    {
+	      res = XEN_CALL_3(proc, 
+			       C_TO_XEN_DOUBLE((double)read_sample_to_float(sf)),
+			       v,
+			       XEN_TRUE,
+			       "ptree-channel fallback proc");
+	      MUS_OUTA_1(kp, XEN_TO_C_DOUBLE(res), (mus_output *)outgen);
+	    }
+	  snd_unprotect(v);
+	}
       else
 	{
-	  cured = cp->edit_ctr;
-	  delete_samples(beg, num, cp, "ptree-channel fallback", cp->edit_ctr);
-	  if (j > 0)
+	  for (kp = 0; kp < num; kp++)
 	    {
-	      file_insert_samples(beg, j, filename, cp, 0, DELETE_ME, "ptree-channel fallback", cp->edit_ctr);
-	      backup_edit_list(cp);
-	      if (cp->edit_ctr > cured)
-		backup_edit_list(cp);
-	      ripple_trailing_marks(cp, beg, num, j);
+	      res = XEN_CALL_1(proc, 
+			       C_TO_XEN_DOUBLE((double)read_sample_to_float(sf)),
+			       "ptree-channel fallback proc");
+	      MUS_OUTA_1(kp, XEN_TO_C_DOUBLE(res), (mus_output *)outgen);
 	    }
-	  else snd_remove(filename, TRUE);
 	}
-      update_graph(cp);
+      if (outgen) mus_free(outgen);
     }
-  FREE(filename);
+  else
+    {
+      data = (mus_sample_t *)CALLOC(num, sizeof(mus_sample_t)); 
+      if (XEN_PROCEDURE_P(init_func))
+	{
+	  v = XEN_CALL_2(init_func,
+		     C_TO_XEN_OFF_T(0),
+		     C_TO_XEN_OFF_T(num),
+		     "ptree-channel fallback init func");
+	  snd_protect(v);
+	  for (kp = 0; kp < num; kp++)
+	    {
+	      res = XEN_CALL_3(proc, 
+			       C_TO_XEN_DOUBLE((double)read_sample_to_float(sf)),
+			       v,
+			       XEN_TRUE,
+			       "ptree-channel fallback proc");
+	      data[kp] = MUS_DOUBLE_TO_SAMPLE(XEN_TO_C_DOUBLE(res));
+	    }
+	  snd_unprotect(v);
+	}
+      else
+	{
+	  for (kp = 0; kp < num; kp++)
+	    {
+	      res = XEN_CALL_1(proc, 
+			       C_TO_XEN_DOUBLE((double)read_sample_to_float(sf)),
+			       "ptree-channel fallback proc");
+	      data[kp] = MUS_DOUBLE_TO_SAMPLE(XEN_TO_C_DOUBLE(res));
+	    }
+	}
+    }
+  free_snd_fd(sf);
+  if (temp_file)
+    {
+      file_change_samples(beg, num, filename, cp, 0, DELETE_ME, LOCK_MIXES, "ptree-channel fallback", cp->edit_ctr);
+      FREE(filename);
+    }
+  else 
+    {
+      change_samples(beg, num, data, cp, LOCK_MIXES, "ptree-channel fallback", cp->edit_ctr);
+      FREE(data);
+    }
+  update_graph(cp); 
   return(res);
 }
 
@@ -2680,7 +2715,7 @@ for the gory details."
 		  XEN_LIST_2(C_TO_XEN_STRING(S_ptree_channel),
 			     C_TO_XEN_STRING("init-func must take 2 args")));
       pt = form_to_ptree_3_f(proc_and_list);
-      if ((pt != NULL) && (!(ramp_or_ptree_fragments_in_use(cp, beg, dur, pos))))
+      if ((pt != NULL) && (!(ptree_fragments_in_use(cp, beg, dur, pos))))
 	ptree_channel(cp, pt, beg, dur, pos, (XEN_TRUE_P(env_too)) ? pt : NULL, init_func);
       else g_map_chan_ptree_fallback(proc, init_func, cp, beg, dur, pos);
       return(proc_and_list);
@@ -2689,7 +2724,7 @@ for the gory details."
   pt = form_to_ptree_1_f(proc_and_list);
   if (pt)
     {
-      if (ramp_or_ptree_fragments_in_use(cp, beg, dur, pos))
+      if (ptree_fragments_in_use(cp, beg, dur, pos))
 	{
 	  snd_warning("ptree not virtual in this case");
 	  run_channel(cp, pt, beg, dur, pos);
@@ -2700,7 +2735,8 @@ for the gory details."
   else
     {
       snd_warning("can't optimize ptree; calling map-channel");
-      g_map_chan_1(proc_and_list, s_beg, XEN_FALSE, C_TO_XEN_STRING(S_ptree_channel), snd, chn, edpos, s_dur, S_map_chan);
+      g_map_chan_ptree_fallback(proc, init_func, cp, beg, dur, pos);
+      /* g_map_chan_1(proc_and_list, s_beg, XEN_FALSE, C_TO_XEN_STRING(S_ptree_channel), snd, chn, edpos, s_dur, S_map_chan); */
     }
   return(proc_and_list);
 }
@@ -3187,6 +3223,7 @@ static XEN g_swap_channels(XEN snd0, XEN chn0, XEN snd1, XEN chn1, XEN beg, XEN 
 	    num = dur0; 
 	  else num = dur1; /* was min here 13-Dec-02 */
 	}
+      /* TODO: edpos for swap-channels? */
       if ((beg0 != 0) ||
 	  ((num != dur0) && (num != dur1))) /* if just a section being swapped, use readers */
 	swap_channels(cp0, cp1, beg0, num);
@@ -3220,12 +3257,7 @@ static XEN g_swap_channels(XEN snd0, XEN chn0, XEN snd1, XEN chn1, XEN beg, XEN 
 	      /* look for simple cases where copying the current edit tree entry is not too hard */
 	      if ((ptree_or_sound_fragments_in_use(cp0, cp0->edit_ctr)) ||
 		  (ptree_or_sound_fragments_in_use(cp1, cp1->edit_ctr)) ||
-#if DEBUGGING
-		  (num < 0)
-#else
-		  (num < FILE_BUFFER_SIZE)
-#endif
-		  )
+		  (num < FILE_BUFFER_SIZE))
 		swap_channels(cp0, cp1, beg0, num);
 	      else copy_then_swap_channels(cp0, cp1, beg0, num); /* snd-edits.c */
 	    }

@@ -1299,7 +1299,7 @@ void lock_listener_pane(void)
 
 void unlock_listener_pane(void)
 {
-  if (XtIsManaged(listener_pane))
+  if ((listener_pane) && (XtIsManaged(listener_pane)))
     XtVaSetValues(listener_pane, XmNpaneMinimum, 1, XmNpaneMaximum, LOTSA_PIXELS, NULL);
 }
 

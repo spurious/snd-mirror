@@ -230,7 +230,12 @@ static void release_pending_consoles(mix_info *md)
 
 /* -------- mix_info (state of mix) -------- */
 
-#define MIX_INFO_INCREMENT 16
+#ifdef DEBUGGING_REALLOC
+  #define MIX_INFO_INCREMENT 2
+#else
+  #define MIX_INFO_INCREMENT 16
+#endif
+
 static mix_info **mix_infos = NULL;
 static int mix_infos_size = 0;
 static int mix_infos_ctr = 0;
@@ -1109,7 +1114,11 @@ void mix_complete_file_at_cursor(snd_info *sp, char *str, const char *origin, in
     }
 }
 
-#define CONSOLE_INCREMENT 8
+#ifdef DEBUGGING_REALLOC
+  #define CONSOLE_INCREMENT 2
+#else
+  #define CONSOLE_INCREMENT 8
+#endif
 
 static void extend_console_list(mix_info *md)
 {

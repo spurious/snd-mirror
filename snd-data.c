@@ -286,7 +286,7 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
       sp = sip;
       if (sp->allocated_chans < chans) 
 	{
-	  sp->chans = (chan_info **)REALLOC(sp->chans, chans*sizeof(chan_info *));
+	  sp->chans = (chan_info **)REALLOC(sp->chans, chans * sizeof(chan_info *));
 	  for (i = sp->allocated_chans; i < chans; i++) sp->chans[i] = NULL;
 	  sp->allocated_chans = chans;
 	}
@@ -567,6 +567,8 @@ int active_channels (snd_state *ss, int count_virtual_channels)
   return(chans);
 }
 
+#define SOUNDS_ALLOC_SIZE 4
+
 int find_free_sound_slot (snd_state *ss, int desired_chans)
 {
   int i, j;
@@ -597,7 +599,7 @@ int find_free_sound_slot (snd_state *ss, int desired_chans)
       if (sp->inuse == 0) return(i);
     }
   j = ss->max_sounds;
-  ss->max_sounds += 4;
+  ss->max_sounds += SOUNDS_ALLOC_SIZE;
   ss->sounds = (snd_info **)REALLOC(ss->sounds, ss->max_sounds * sizeof(snd_info *));
   for (i = j; i < ss->max_sounds; i++) ss->sounds[i] = NULL;
   return(j);

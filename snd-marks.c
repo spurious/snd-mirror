@@ -460,6 +460,12 @@ static void allocate_marks(chan_info *cp, int edit_ctr)
   for (i = 0; i < cp->marks_size; i++) cp->mark_ctr[i] = -1;
 }
 
+#ifdef DEBUGGING_REALLOC
+  #define MARKS_ALLOC_SIZE 2
+#else
+  #define MARKS_ALLOC_SIZE 16
+#endif
+
 mark *add_mark(off_t samp, char *name, chan_info *cp)
 {
   int i, j, ed, med;
@@ -471,13 +477,13 @@ mark *add_mark(off_t samp, char *name, chan_info *cp)
   cp->mark_ctr[ed]++;
   if (cp->mark_ctr[ed] >= cp->mark_size[ed])
     {
-      cp->mark_size[ed] += 16;
+      cp->mark_size[ed] += MARKS_ALLOC_SIZE;
       if (!cp->marks[ed]) 
 	cp->marks[ed] = (mark **)CALLOC(cp->mark_size[ed], sizeof(mark *));
       else 
 	{
 	  cp->marks[ed] = (mark **)REALLOC(cp->marks[ed], cp->mark_size[ed] * sizeof(mark *));
-	  for (i = cp->mark_size[ed] - 16; i < cp->mark_size[ed]; i++) cp->marks[ed][i] = NULL;
+	  for (i = cp->mark_size[ed] - MARKS_ALLOC_SIZE; i < cp->mark_size[ed]; i++) cp->marks[ed][i] = NULL;
 	}
     }
   mps = cp->marks[ed];
@@ -864,7 +870,7 @@ void ripple_marks(chan_info *cp, off_t beg, off_t change)
       if (new_m >= cp->marks_size) /* groan -- we have to realloc the base array of array of pointers! */
 	{
 	  old_size = cp->marks_size;
-	  cp->marks_size += 16;
+	  cp->marks_size += MARKS_ALLOC_SIZE;
 	  cp->marks = (mark ***)REALLOC(cp->marks, cp->marks_size * sizeof(mark **));
 	  cp->mark_size = (int *)REALLOC(cp->mark_size, cp->marks_size * sizeof(int));
 	  cp->mark_ctr = (int *)REALLOC(cp->mark_ctr, cp->marks_size * sizeof(int));
@@ -1709,56 +1715,54 @@ static XEN g_restore_marks(XEN size, XEN snd, XEN chn, XEN marklist)
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_restore_marks, snd));
   cp = get_cp(snd, chn, S_restore_marks);
-  if ((cp) && (!(cp->marks)))
+  if (cp->marks)
     {
-      cp->marks_size = XEN_TO_C_INT(size);
-      cp->marks = (mark ***)CALLOC(cp->marks_size, sizeof(mark **));
-      cp->mark_size = (int *)CALLOC(cp->marks_size, sizeof(int));
-      cp->mark_ctr = (int *)CALLOC(cp->marks_size, sizeof(int));
-      for (i = 0; i < cp->marks_size; i++) cp->mark_ctr[i] = -1;
-      list_size = XEN_LIST_LENGTH(marklist);
-      for (i = 0, olst = marklist; i < list_size; i++, olst = XEN_CDR(olst))
+      snd_error("restore-marks: there are marks here already!");
+      free_mark_list(cp, 0);
+    }
+  cp->marks_size = XEN_TO_C_INT(size);
+  cp->marks = (mark ***)CALLOC(cp->marks_size, sizeof(mark **));
+  cp->mark_size = (int *)CALLOC(cp->marks_size, sizeof(int));
+  cp->mark_ctr = (int *)CALLOC(cp->marks_size, sizeof(int));
+  for (i = 0; i < cp->marks_size; i++) cp->mark_ctr[i] = -1;
+  list_size = XEN_LIST_LENGTH(marklist);
+  for (i = 0, olst = XEN_COPY_ARG(marklist); i < list_size; i++, olst = XEN_CDR(olst))
+    {
+      lst = XEN_CAR(olst);
+      cp->mark_size[i] = XEN_TO_C_INT(XEN_CAR(lst));
+      cp->mark_ctr[i] = XEN_TO_C_INT(XEN_CADR(lst));
+      if (cp->mark_size[i] > 0)
 	{
-	  lst = XEN_CAR(olst);
-	  cp->mark_size[i] = XEN_TO_C_INT(XEN_CAR(lst));
-	  cp->mark_ctr[i] = XEN_TO_C_INT(XEN_CADR(lst));
-          if (cp->mark_size[i] > 0)
+	  mlst = XEN_CADDR(lst);
+	  cp->marks[i] = (mark **)CALLOC(cp->mark_size[i], sizeof(mark *));
+	  in_size = XEN_LIST_LENGTH(mlst);
+	  for (j = 0, molst = XEN_COPY_ARG(mlst); j < in_size; j++, molst = XEN_CDR(molst))
 	    {
-	      mlst = XEN_CADDR(lst);
-	      cp->marks[i] = (mark **)CALLOC(cp->mark_size[i], sizeof(mark *));
-	      in_size = XEN_LIST_LENGTH(mlst);
-	      for (j = 0, molst = mlst; j < in_size; j++, molst = XEN_CDR(molst))
+	      el = XEN_CAR(molst);
+	      if (!(XEN_LIST_P(el))) 
+		snd_error("restore-marks: saved mark data is not a list?? ");
+	      else
 		{
-		  el = XEN_CAR(molst);
-		  if (!(XEN_LIST_P(el))) 
-		    snd_error("restore-marks: saved mark data is not a list?? ");
-		  else
+		  sm = XEN_CADR(el);
+		  if (XEN_NOT_FALSE_P(sm))
 		    {
-		      sm = XEN_CADR(el);
-		      if (XEN_NOT_FALSE_P(sm))
-			{
-			  unsigned int sync;
-			  nm = XEN_CAR(el);
-			  if (XEN_NOT_FALSE_P(nm))
-			    str = XEN_TO_C_STRING(nm);
-			  else str = NULL;
-			  id = XEN_TO_C_INT(XEN_CADDR(el));
-			  if (XEN_LIST_LENGTH(el) > 3)
-			    sync = XEN_TO_C_INT(XEN_CADDDR(el));
-			  else sync = 0;
-			  cp->marks[i][j] = make_mark_1(XEN_TO_C_OFF_T(sm), str, id, sync);
-			  if (id > mark_id_counter) mark_id_counter = id;
-			}
+		      unsigned int sync;
+		      nm = XEN_CAR(el);
+		      if (XEN_NOT_FALSE_P(nm))
+			str = XEN_TO_C_STRING(nm);
+		      else str = NULL;
+		      id = XEN_TO_C_INT(XEN_CADDR(el));
+		      if (XEN_LIST_LENGTH(el) > 3)
+			sync = XEN_TO_C_INT(XEN_CADDDR(el));
+		      else sync = 0;
+		      cp->marks[i][j] = make_mark_1(XEN_TO_C_OFF_T(sm), str, id, sync);
+		      if (id > mark_id_counter) mark_id_counter = id;
 		    }
 		}
 	    }
 	}
-      return(XEN_TRUE);
     }
-  else 
-    if (cp->marks) 
-      snd_error("restore-marks: there are marks here already!");
-  return(XEN_FALSE);
+  return(marklist);
 }
 
 enum {MARK_SAMPLE, MARK_NAME, MARK_SYNC, MARK_HOME};

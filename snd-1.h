@@ -86,7 +86,6 @@ typedef struct snd__fd {
   off_t loc, first, last;
   int cbi, direction, at_eof;
   mus_sample_t *data;
-  snd_data **sounds;
   snd_data *current_sound;
   off_t initial_samp;
   struct chan__info *cp;
@@ -712,6 +711,7 @@ snd_fd *init_sample_read_any(off_t samp, chan_info *cp, int direction, int edit_
 void read_sample_change_direction(snd_fd *sf, int dir);
 int ramp_or_ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos);
 int ptree_or_sound_fragments_in_use(chan_info *cp, int pos);
+int ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos);
 #define read_sample(Sf) (*Sf->run)(Sf)
 #define read_sample_to_float(Sf) (*Sf->runf)(Sf)
 Float protected_next_sample_to_float(snd_fd *sf);
