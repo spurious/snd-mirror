@@ -8,6 +8,12 @@
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
 
+#if HAVE_GL
+#include <gtk/gtkgl.h>
+#include <GL/gl.h>
+#include <GL/glu.h>
+#endif
+
 #ifndef HAVE_GTK2
   #if (GTK_MAJOR_VERSION != 1) || (GTK_MINOR_VERSION > 2)
     #define HAVE_GTK2 1

@@ -763,7 +763,8 @@
        (lambda (func name)
 	 (let ((val (func)))
 	   (set! (func) "8x123")
-	   (IF (not (string=? val (func)))
+	   (IF (or (not (string? (func)))
+		   (not (string=? val (func))))
 	       (snd-display ";set ~A to bogus value: ~A ~A" name val (func)))))
        (list axis-label-font axis-numbers-font listener-font help-text-font tiny-font button-font bold-button-font)
        (list 'axis-label-font 'axis-numbers-font 'listener-font 'help-text-font 'tiny-font button-font 'bold-button-font))
@@ -24197,7 +24198,10 @@ EDITS: 5
     (begin ; -noinit possibly
       (snd-display (format #f "ls /tmp/snd_* | wc~%"))
       (system "ls /tmp/snd_* | wc")
-      (system "rm /tmp/snd_*")))
+      (system "rm /tmp/snd_*")
+      (snd-display (format #f "ls /tmp/file*.snd | wc~%"))
+      (system "ls /tmp/file*.snd | wc")
+      (system "rm /tmp/file*.snd")))
 
 (close-output-port optimizer-log)
 (mem-report)

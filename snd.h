@@ -21,6 +21,7 @@
  *                 This part of Snd is brand-new and has many bugs/omissions/etc.
  *
  *   HAVE_GL       include support for OpenGL.  include JUST_GL to omit gl.o (the GL/Guile bindings)
+ *                 In Motif, this uses the built-in glX support; in Gtk it needs libgtkglext.
  *
  *   HAVE_LADSPA   include support for LADSPA.
  *
@@ -28,15 +29,12 @@
  *                 These determine the internal representation of sample values. The default
  *                 is 0 for SNDLIB_USE_FLOATS (so 32-bit ints are used), and 24 for
  *                 MUS_SAMPLE_BITS (this sets the size of the "fraction").  Floats are
- *                 slightly faster on the Pentium.
+ *                 slightly faster on the Pentium.  Someday I may have Snd maintain the
+ *                 external data type as long as possible (i.e. have three possible
+ *                 internal representations).
  *
- *   USR_LIB_OSS, USR_LOCAL_LIB_OSS, OPT_OSS, VAR_LIB_OSS
- *                 define if OSS library/header files are in the indicated directory.
- *                 These are sometimes needed to find the correct version of soundcard.h
  *   HAVE_ALSA     In Linux, OSS is the default audio system; HAVE_ALSA overrides this.
- *   HAVE_SAM_9407 Currently, this driver is only supported as a special case under OSS.
- *                 If the OSS code doesn't work as is, try adding -DHAVE_SAM_9407.
- *       there are many other similar audio choices (SGI, ESD, etc)
+ *                 There are many other similar audio choices (SGI, ESD, etc)
  *
  *   HAVE_CONFIG_H define if you're trying to build Snd via autoconf config files
  *                 (automatic if you use ./configure followed by make)
@@ -61,6 +59,7 @@
  *
  *   HAVE_GTKEXTRA If USE_GTK is set, and you want the Gtk+extra version of the file
  *                 selection widget, set this flag (it requires libgtkextra).
+ *                 I don't think gtkextra works with gtk2 yet.
  *
  *  Many others are set by configure -- see config.h.in.
  */
@@ -147,7 +146,7 @@
 
 #include "snd-strings.h"
 
-#define SND_VERSION "3-Jun-02"
+#define SND_VERSION "4-Jun-02"
 #define SND_RPM_VERSION "5.11"
 #define SND_MAJOR_VERSION 5
 #define SND_MINOR_VERSION 11

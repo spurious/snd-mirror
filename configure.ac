@@ -397,26 +397,28 @@ AC_FUNC_VPRINTF
 # -------- OpenGL --------
 GL_LIBS=""
 GL_FILES=""
+have_gl=no
 if test "$with_gl" = yes ; then
-  if test "$with_gtk" = yes ; then
-    AC_MSG_WARN([GL support not available in Gtk yet])
-  fi
   AC_CHECK_HEADER(GL/gl.h,
 	[AC_DEFINE(HAVE_GL)
+	 have_gl=yes
 	 GL_FILES="gl.o"
 	 GL_LIBS="-lGLU -lGL"],
 	[AC_MSG_WARN(can't find GL headers)])
 fi
 if test "$with_just_gl" = yes ; then
-  if test "$with_gtk" = yes ; then
-    AC_MSG_WARN([GL support not available in Gtk yet])
-  fi
   AC_CHECK_HEADER(GL/gl.h,
 	[AC_DEFINE(HAVE_GL)
 	 AC_DEFINE(JUST_GL)
+	 have_gl=yes
 	 GL_FILES=""
 	 GL_LIBS="-lGLU -lGL"],
 	[AC_MSG_WARN(can't find GL headers)])
+fi
+# if with_gl and with_gtk look got gtkglext
+# TODO: find the current version of libgtkglext somehow
+if test "$have_gl" = yes && test "$with_gtk" = yes; then
+  GL_LIBS="$GL_LIBS -lgdkglext-x11-0.x -lgtkglext-x11-0.x"
 fi
 AC_SUBST(GL_LIBS)
 AC_SUBST(GL_FILES)

@@ -1258,7 +1258,7 @@ void post_popup(XButtonPressedEvent *event)
 }
 
 #if (XmVERSION == 1)
-static void Post_Popup_Menu(Widget w, XtPointer cD, XEvent *event, Boolean *flag)
+static void post_popup_menu(Widget w, XtPointer cD, XEvent *event, Boolean *flag)
 {
   if (event->xbutton.button == BUTTON_3)
     post_popup((XButtonPressedEvent *)event);
@@ -1281,7 +1281,7 @@ void create_popup_menu(snd_state *ss)
 #endif
       popup_menu = XmCreatePopupMenu(mainp, "popup-menu", args, n);
 #if (XmVERSION == 1)
-      XtAddEventHandler(mainp, ButtonPressMask, FALSE, Post_Popup_Menu, popup_menu);
+      XtAddEventHandler(mainp, ButtonPressMask, FALSE, post_popup_menu, popup_menu);
 #endif
 
       popup_children[W_pop_menu] = XtCreateManagedWidget("snd", xmLabelWidgetClass, popup_menu, args, n);

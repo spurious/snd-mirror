@@ -91,18 +91,30 @@ static char *xm_version(void)
 static char *glx_version(void)
 {
   snd_state *ss;
-  int major, minor, err;
+  int major = 0, minor = 0;
   char *version;
   ss = get_global_state();
   if (ss == NULL) return(""); /* snd --help for example */
-  err = glXQueryVersion(MAIN_DISPLAY(ss), &major, &minor);
   version = (char *)CALLOC(128, sizeof(char));
+#if USE_MOTIF
   if ((ss->sgx) && (ss->sgx->cx))
     {
       glXMakeCurrent(MAIN_DISPLAY(ss), XtWindow(ss->sgx->mainshell), ss->sgx->cx);
       mus_snprintf(version, 128, " %s", glGetString(GL_VERSION));
     }
-  else mus_snprintf(version, 128, " %d.%d", major, minor);
+  else 
+    {
+      glXQueryVersion(MAIN_DISPLAY(ss), &major, &minor);
+      mus_snprintf(version, 128, " %d.%d", major, minor);
+    }
+#else
+  if (gdk_gl_query_extension() != 0)
+    {
+      gdk_gl_query_version (&major, &minor);
+      mus_snprintf(version, 128, " %d.%d", major, minor);
+    }
+  else mus_snprintf(version, 128, "gtkGL not supported?");
+#endif
   return(version);
 }
 #endif
@@ -227,6 +239,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+4-Jun:   Gtk OpenGL support via the gtkglext library.\n\
 3-Jun:   removed \"colour\" spelling option (snd5.scm has backwards compatible definitions).\n\
 28-May:  Dave Phillips' Snd tutorial added in contrib/tutorial.\n\
 24-May:  with-gl to choose between GL/X graphics, snd-gl.scm.\n\

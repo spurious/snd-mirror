@@ -9,6 +9,7 @@
  * TODO: glGet* returning more than one value
  *
  * HISTORY:
+ *     4-June:    GtkGLext support.
  *     20-May-02: initial version.
  */
 
@@ -16,9 +17,14 @@
   #include <config.h>
 #endif
 
+#if USE_GTK
+  #include <gtk/gtkgl.h>
+#endif
 #include <GL/gl.h>
 #include <GL/glu.h>
-#include <GL/glx.h>
+#if USE_MOTIF
+  #include <GL/glx.h>
+#endif
 #include <string.h>
 
 #if USE_SND
@@ -67,6 +73,7 @@
 
 /* ---------------------------------------- types ---------------------------------------- */
 
+#if USE_MOTIF
 XL_TYPE(XVisualInfo, XVisualInfo*)
 XL_TYPE_1(Display, Display*)
 #define C_TO_XEN_int(Arg) C_TO_XEN_INT(Arg)
@@ -87,6 +94,7 @@ XL_TYPE_1(Font, Font)
 #define C_TO_XEN_char_(Arg) C_TO_XEN_STRING(Arg)
 #define XEN_TO_C_char_(Arg) (char_)(XEN_TO_C_STRING(Arg))
 #define XEN_char__P(Arg) XEN_STRING_P(Arg)
+#endif
 #define C_TO_XEN_GLfloat(Arg) C_TO_XEN_DOUBLE(Arg)
 #define XEN_TO_C_GLfloat(Arg) (GLfloat)(XEN_TO_C_DOUBLE(Arg))
 #define XEN_GLfloat_P(Arg) XEN_NUMBER_P(Arg)
@@ -148,6 +156,7 @@ XL_TYPE_PTR_1(GLshort_, GLshort*)
 
 /* ---------------------------------------- functions ---------------------------------------- */
 
+#if USE_MOTIF
 static XEN gxg_glXChooseVisual(XEN dpy, XEN screen, XEN attribList)
 {
   #define H_glXChooseVisual "XVisualInfo* glXChooseVisual(Display* dpy, int screen, int* attribList)"
@@ -335,6 +344,7 @@ static XEN gxg_glXQueryExtensionsString(XEN dpy, XEN screen)
   return(C_TO_XEN_char_(glXQueryExtensionsString(XEN_TO_C_Display(dpy), XEN_TO_C_int(screen))));
 }
 
+#endif
 static XEN gxg_glClearIndex(XEN c)
 {
   #define H_glClearIndex "void glClearIndex(GLfloat c)"
@@ -4075,6 +4085,7 @@ GLint* [params])"
 #if HAVE_GUILE
 static void define_functions(void)
 {
+#if USE_MOTIF
   XEN_DEFINE_PROCEDURE(XL_PRE "glXChooseVisual" XL_POST, gxg_glXChooseVisual, 3, 0, 0, H_glXChooseVisual);
   XEN_DEFINE_PROCEDURE(XL_PRE "glXCopyContext" XL_POST, gxg_glXCopyContext, 4, 0, 0, H_glXCopyContext);
   XEN_DEFINE_PROCEDURE(XL_PRE "glXCreateContext" XL_POST, gxg_glXCreateContext, 4, 0, 0, H_glXCreateContext);
@@ -4095,6 +4106,7 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XL_PRE "glXGetClientString" XL_POST, gxg_glXGetClientString, 2, 0, 0, H_glXGetClientString);
   XEN_DEFINE_PROCEDURE(XL_PRE "glXQueryServerString" XL_POST, gxg_glXQueryServerString, 3, 0, 0, H_glXQueryServerString);
   XEN_DEFINE_PROCEDURE(XL_PRE "glXQueryExtensionsString" XL_POST, gxg_glXQueryExtensionsString, 2, 0, 0, H_glXQueryExtensionsString);
+#endif
   XEN_DEFINE_PROCEDURE(XL_PRE "glClearIndex" XL_POST, gxg_glClearIndex, 1, 0, 0, H_glClearIndex);
   XEN_DEFINE_PROCEDURE(XL_PRE "glClearColor" XL_POST, gxg_glClearColor, 4, 0, 0, H_glClearColor);
   XEN_DEFINE_PROCEDURE(XL_PRE "glClear" XL_POST, gxg_glClear, 1, 0, 0, H_glClear);
@@ -4490,16 +4502,14 @@ static void define_integers(void)
 #if HAVE_GUILE
 #if HAVE_SCM_C_DEFINE
   #define DEFINE_INTEGER(Name, Value) scm_c_define(Name, C_TO_XEN_INT(Value))
-  #define DEFINE_ULONG(Name, Value) scm_c_define(Name, C_TO_XEN_ULONG(Value))
 #else
   #define DEFINE_INTEGER(Name, Value) gh_define(Name, C_TO_XEN_INT(Value))
-  #define DEFINE_ULONG(Name, Value) gh_define(Name, C_TO_XEN_ULONG(Value))
 #endif
 #else
   #define DEFINE_INTEGER(Name, Value) rb_define_global_const(Name, C_TO_XEN_INT(Value))
-  #define DEFINE_ULONG(Name, Value) rb_define_global_const(Name, C_TO_XEN_ULONG(Value))
 #endif
 
+#if USE_MOTIF
   DEFINE_INTEGER(XL_PRE "GLX_USE_GL" XL_POST,                                   GLX_USE_GL);
   DEFINE_INTEGER(XL_PRE "GLX_BUFFER_SIZE" XL_POST,                              GLX_BUFFER_SIZE);
   DEFINE_INTEGER(XL_PRE "GLX_LEVEL" XL_POST,                                    GLX_LEVEL);
@@ -4543,6 +4553,7 @@ static void define_integers(void)
   DEFINE_INTEGER(XL_PRE "GLX_VENDOR" XL_POST,                                   GLX_VENDOR);
   DEFINE_INTEGER(XL_PRE "GLX_VERSION" XL_POST,                                  GLX_VERSION);
   DEFINE_INTEGER(XL_PRE "GLX_EXTENSIONS" XL_POST,                               GLX_EXTENSIONS);
+#endif
   DEFINE_INTEGER(XL_PRE "GL_FALSE" XL_POST,                                     GL_FALSE);
   DEFINE_INTEGER(XL_PRE "GL_TRUE" XL_POST,                                      GL_TRUE);
   DEFINE_INTEGER(XL_PRE "GL_BYTE" XL_POST,                                      GL_BYTE);
@@ -5384,7 +5395,7 @@ static int gl_already_inited = 0;
       define_functions();
       XEN_YES_WE_HAVE("gl");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define gl-version \"25-May-02\")");
+      XEN_EVAL_C_STRING("(define gl-version \"03-Jun-02\")");
 #endif
       gl_already_inited = 1;
     }

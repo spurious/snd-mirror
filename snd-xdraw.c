@@ -1160,6 +1160,7 @@ void reflect_spectro(snd_state *ss)
 }
 
 #if HAVE_GL
+/* TODO: resets for gtk GL */
 static Float gl_currents[6] = {DEFAULT_SPECTRO_X_ANGLE, DEFAULT_SPECTRO_Y_ANGLE, DEFAULT_SPECTRO_Z_ANGLE, 
 			       DEFAULT_SPECTRO_X_SCALE, DEFAULT_SPECTRO_Y_SCALE, DEFAULT_SPECTRO_Z_SCALE};
 static Float x_currents[6] = {90.0, 0.0, 358.0, 1.0, 1.0, 0.1};

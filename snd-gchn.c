@@ -603,6 +603,18 @@ static gboolean graph_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer d
   return(FALSE);
 }
 
+#if HAVE_GL
+static const gint config_attributes[] = {
+  GDK_GL_DOUBLEBUFFER,
+  GDK_GL_RGBA,
+  GDK_GL_RED_SIZE,        1,
+  GDK_GL_GREEN_SIZE,      1,
+  GDK_GL_BLUE_SIZE,       1,
+  GDK_GL_DEPTH_SIZE,      12,
+  GDK_GL_ATTRIB_LIST_NONE
+};
+#endif
+
 void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, int insertion, GtkWidget *main, int button_style)
 {
   GtkWidget **cw;
@@ -659,6 +671,9 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       gtk_paned_add2(GTK_PANED(cw[W_main_window]), cw[W_graph_window]);
 
       cw[W_graph] = gtk_drawing_area_new();
+#if HAVE_GL
+      gtk_widget_set_gl_capability(GTK_WIDGET(cw[W_graph]), config_attributes, GDK_GL_RGBA_TYPE, NULL, TRUE);
+#endif
       set_user_data(GTK_OBJECT(cw[W_graph]), (gpointer)(PACK_SOUND_AND_CHANNEL(sp->index, cp->chan)));
       gtk_widget_set_events(cw[W_graph], GDK_ALL_EVENTS_MASK);
       gtk_table_attach(GTK_TABLE(cw[W_graph_window]), cw[W_graph], 2, 3, 0, 2, 

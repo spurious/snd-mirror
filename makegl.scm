@@ -3,6 +3,8 @@
 
 ;;; makegl.scm creates the GL/GLU bindings using gldata.scm, writes gl.c and gl-ruby.c
 
+;;; TODO: gtk-gl-specific bindings
+
 (use-modules (ice-9 debug))
 (use-modules (ice-9 format))
 (use-modules (ice-9 optargs))
@@ -31,8 +33,11 @@
 (define names '())
 (define types '())
 (define ints '())
-(define ulongs '())
 (define funcs '())
+
+(define x-types '())
+(define x-funcs '())
+(define x-ints '())
 
 (define (cadr-str data)
   (let ((sp1 -1)
@@ -168,7 +173,7 @@
 		 (char=? (string-ref name i) #\*))
 	     (return (substring name 0 i))))))))
 
-(define (parse-args args)
+(define* (parse-args args #:optional x)
   (let ((data '())
 	(sp -1)
 	(type #f)
@@ -203,8 +208,11 @@
 						       data)))
 				    (set! data (cons (list type given-name) data)))))
 			(if reftype (set! type reftype))
-			(if (not (member type types))
-			    (set! types (cons type types)))
+			(if x
+			    (if (not (member type x-types))
+				(set! x-types (cons type x-types)))
+			    (if (not (member type types))
+				(set! types (cons type types))))
 			(set! type #f))
 		      (if (> i (1+ sp))
 			  (set! type (substring args (1+ sp) i))))
@@ -337,6 +345,27 @@
 	(set! ints (cons name ints))
 	(set! names (cons (cons name 'int) names)))))
 
+(define* (CFNC-X data #:optional spec spec-name)
+  (let ((name (cadr-str data))
+	(args (caddr-str data)))
+    (if (assoc name names)
+	(display (format #f "~A CFNC-X~%" name))
+	(let ((type (car-str data)))
+	  (if (not (member type x-types))
+	      (set! x-types (cons type x-types)))
+	  (let ((strs (parse-args args #t)))
+	    (if spec
+		(set! x-funcs (cons (list name type strs args spec spec-name) x-funcs))
+		(set! x-funcs (cons (list name type strs args) x-funcs)))
+	    (set! names (cons (cons name 'fnc) names)))))))
+
+(define* (CINT-X name #:optional type)
+  (if (assoc name names)
+      (display (format #f "~A CINT-X~%" name))
+      (begin
+	(set! x-ints (cons name x-ints))
+	(set! names (cons (cons name 'int) names)))))
+
 (define (no-arg name)
   (let ((len (string-length name)))
     (call-with-current-continuation
@@ -347,6 +376,7 @@
 	     (return (substring name 0 i))))))))
 
 ;;; ---------------------------------------- read data ---------------------------------------- 
+
 (load "gldata.scm")
 
 ;;; ---------------------------------------- write output files ----------------------------------------
@@ -361,14 +391,20 @@
 (hey " * ~A: glGet* returning more than one value~%" (string-append "T" "ODO"))
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     4-June:    GtkGLext support.~%")
 (hey " *     20-May-02: initial version.~%")
 (hey " */~%~%")
 
 (hey "#if defined(HAVE_CONFIG_H)~%  #include <config.h>~%#endif~%~%")
 
+(hey "#if USE_GTK~%")
+(hey "  #include <gtk/gtkgl.h>~%")
+(hey "#endif~%")
 (hey "#include <GL/gl.h>~%")
 (hey "#include <GL/glu.h>~%")
-(hey "#include <GL/glx.h>~%")
+(hey "#if USE_MOTIF~%")
+(hey "  #include <GL/glx.h>~%")
+(hey "#endif~%")
 (hey "#include <string.h>~%~%")
 
 (hey "#if USE_SND~%")
@@ -416,6 +452,10 @@
 (hey "  static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));} /* if NULL ok, should be explicit */~%")
 
 (hey "~%~%/* ---------------------------------------- types ---------------------------------------- */~%~%")
+
+(hey "#if USE_MOTIF~%")
+(for-each type-it (reverse x-types))
+(hey "#endif~%")
 
 (for-each type-it (reverse types))
 
@@ -592,6 +632,10 @@
      (hey "~%")
      )))
 
+(hey "#if USE_MOTIF~%")
+(for-each handle-func (reverse x-funcs))
+(hey "#endif~%")
+
 (for-each handle-func (reverse funcs))
 
 
@@ -616,6 +660,10 @@
 	(say "#endif~%"))
     (if (member (car func) glu-1-2) (say "#endif~%"))))
 	 
+(say "#if USE_MOTIF~%")
+(for-each argify-func (reverse x-funcs))
+(say "#endif~%")
+
 (for-each argify-func (reverse funcs))
 
 
@@ -645,6 +693,10 @@
     (if (member (car func) glu-1-2) (say "#endif~%"))
     ))
 
+(say-hey "#if USE_MOTIF~%")
+(for-each defun (reverse x-funcs))
+(say-hey "#endif~%")
+
 (for-each defun (reverse funcs))
 
 (say-hey "}~%~%")
@@ -659,31 +711,25 @@
 (hey "#if HAVE_GUILE~%")
 (hey "#if HAVE_SCM_C_DEFINE~%")
 (hey "  #define DEFINE_INTEGER(Name, Value) scm_c_define(Name, C_TO_XEN_INT(Value))~%")
-(hey "  #define DEFINE_ULONG(Name, Value) scm_c_define(Name, C_TO_XEN_ULONG(Value))~%")
 (hey "#else~%")
 (hey "  #define DEFINE_INTEGER(Name, Value) gh_define(Name, C_TO_XEN_INT(Value))~%")
-(hey "  #define DEFINE_ULONG(Name, Value) gh_define(Name, C_TO_XEN_ULONG(Value))~%")
 (hey "#endif~%")
 (hey "#else~%")
 (hey "  #define DEFINE_INTEGER(Name, Value) rb_define_global_const(Name, C_TO_XEN_INT(Value))~%")
-(hey "  #define DEFINE_ULONG(Name, Value) rb_define_global_const(Name, C_TO_XEN_ULONG(Value))~%")
 (hey "#endif~%")
 (hey "~%")
+
+(hey "#if USE_MOTIF~%")
+(for-each 
+ (lambda (val) 
+   (hey "  DEFINE_INTEGER(XL_PRE ~S XL_POST,~80,1T~A);~%" val val)) 
+ (reverse x-ints))
+(hey "#endif~%")
 
 (for-each 
  (lambda (val) 
    (hey "  DEFINE_INTEGER(XL_PRE ~S XL_POST,~80,1T~A);~%" val val)) 
  (reverse ints))
-
-(for-each 
- (lambda (vals)
-   (let ((val (car vals)))
-     (if (eq? (cadr vals) 'if)
-	 (hey "#if HAVE_~A~%" (string-upcase (symbol->string (caddr vals)))))
-     (hey "  DEFINE_ULONG(XL_PRE ~S XL_POST,~80,1T~A);~%" val val)
-     (if (eq? (cadr vals) 'if)
-	 (hey "#endif~%"))))
- (reverse ulongs))
 
 (hey "}~%~%")
 

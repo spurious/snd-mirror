@@ -190,6 +190,7 @@ static int gl_fonts_activated = FALSE;
 static int label_base, number_base;
 static void activate_gl_fonts(snd_state *ss)
 {
+#if USE_MOTIF
   XFontStruct *label, *number;
   if (!gl_fonts_activated)
     {
@@ -201,10 +202,21 @@ static void activate_gl_fonts(snd_state *ss)
       glXUseXFont(number->fid, 32, 96, number_base + 32);
       gl_fonts_activated = TRUE;
     }
+#else
+  if (!gl_fonts_activated)
+    {
+      label_base = glGenLists(128);
+      number_base = glGenLists(128);
+      gdk_gl_font_use_gdk_font(gdk_font_from_description(AXIS_LABEL_FONT(ss)), 32, 96, label_base + 32);
+      gdk_gl_font_use_gdk_font(gdk_font_from_description(AXIS_NUMBERS_FONT(ss)), 32, 96, number_base + 32);
+      gl_fonts_activated = TRUE;
+    }
+#endif
 }
 
 void reload_label_font(snd_state *ss)
 {
+#if USE_MOTIF
   XFontStruct *label;
   if (gl_fonts_activated)
     {
@@ -213,10 +225,19 @@ void reload_label_font(snd_state *ss)
       label = (XFontStruct *)(AXIS_LABEL_FONT(ss));
       glXUseXFont(label->fid, 32, 96, label_base + 32);
     }
+#else
+  if (gl_fonts_activated)
+    {
+      glDeleteLists(label_base, 128);
+      label_base = glGenLists(128);
+      gdk_gl_font_use_gdk_font(gdk_font_from_description(AXIS_LABEL_FONT(ss)), 32, 96, label_base + 32);
+    }
+#endif
 }
 
 void reload_number_font(snd_state *ss)
 {
+#if USE_MOTIF
   XFontStruct *number;
   if (gl_fonts_activated)
     {
@@ -225,6 +246,14 @@ void reload_number_font(snd_state *ss)
       number = (XFontStruct *)(AXIS_NUMBERS_FONT(ss));
       glXUseXFont(number->fid, 32, 96, number_base + 32);
     }
+#else
+  if (gl_fonts_activated)
+    {
+      glDeleteLists(number_base, 128);
+      number_base = glGenLists(128);
+      gdk_gl_font_use_gdk_font(gdk_font_from_description(AXIS_NUMBERS_FONT(ss)), 32, 96, number_base + 32);
+    }
+#endif
 }
 #endif
 

@@ -2518,7 +2518,7 @@ static XEN g_set_pushed_button_color (XEN color)
   if (v) 
     {
       (state->sgx)->pushed_button_color = v->color;
-#if HAVE_MOTIF
+#if USE_MOTIF
       map_over_children(MAIN_SHELL(state), recolor_button, NULL);
 #endif
     }
@@ -2547,7 +2547,7 @@ static XEN g_set_basic_color(XEN color)
     {
       old_color = (state->sgx)->basic_color;
       (state->sgx)->basic_color = v->color; 
-#if HAVE_MOTIF
+#if USE_MOTIF
       map_over_children(MAIN_SHELL(state), recolor_everything, (void *)old_color);
 #endif
     }

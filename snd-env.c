@@ -337,19 +337,21 @@ void display_filter_graph(snd_state *ss, snd_info *sp, axis_context *ax, int wid
 	  else
 	    {
 	      /* interpolate so the display looks closer to dB (we should use the env base...) */
+	      Float yval, yincr;
 	      dur = (ix1 - ix0) / EXP_SEGLEN;
 	      xincr = (e->data[i] - e->data[i - 2]) / (Float)dur;
 	      curx = e->data[i - 2] + xincr;
 	      lx1 = ix0;
 	      ly1 = iy0;
-	      for (k = 1; k < dur; k++, curx += xincr)
+	      yval = e->data[i - 1];
+	      yincr = (e->data[i + 1] - yval) / (Float)dur;
+	      yval += yincr;
+	      for (k = 1; k < dur; k++, curx += xincr, yval += yincr)
 		{
 		  lx0 = lx1;
 		  ly0 = ly1;
 		  lx1 = grf_x(curx, ap);
-		  /* TODO: this is silly -- do the env interp direct! */
-		  val = list_interp(curx, e->data, e->pts);
-		  ly1 = grf_y(dB(ss, val), ap);
+		  ly1 = grf_y(dB(ss, yval), ap);
 		  draw_line(ax, lx0, ly0, lx1, ly1);
 		}
 	      draw_line(ax, lx1, ly1, ix1, iy1);
@@ -661,18 +663,21 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_
 		  else
 		    {
 		      /* interpolate so the display looks closer to dB (we should use the env base...) */
+		      Float yval, yincr;
 		      dur = (ix1 - ix0) / EXP_SEGLEN;
 		      xincr = (e->data[i] - e->data[i - 2]) / (Float)dur;
 		      curx = e->data[i - 2] + xincr;
 		      lx1 = ix0;
 		      ly1 = iy0;
-		      for (k = 1; k < dur; k++, curx += xincr)
+		      yval = e->data[i - 1];
+		      yincr = (e->data[i + 1] - yval) / (Float)dur;
+		      yval += yincr;
+		      for (k = 1; k < dur; k++, curx += xincr, yval += yincr)
 			{
 			  lx0 = lx1;
 			  ly0 = ly1;
 			  lx1 = grf_x(curx, axis_cp->axis);
-			  val = list_interp(curx, e->data, e->pts);
-			  ly1 = grf_y(dB(ss, val), axis_cp->axis);
+			  ly1 = grf_y(dB(ss, yval), axis_cp->axis);
 			  draw_line(ax, lx0, ly0, lx1, ly1);
 			}
 		      draw_line(ax, lx1, ly1, ix1, iy1);

@@ -89,6 +89,9 @@ int set_axis_label_font(snd_state *ss, char *font)
       if (axis_label_font(ss)) FREE(axis_label_font(ss));
       in_set_axis_label_font(ss, copy_string(font));
       (ss->sgx)->axis_label_fnt = fs;
+#if HAVE_GL
+      reload_label_font(ss);
+#endif
       return(TRUE);
     }
   return(FALSE);
@@ -104,6 +107,9 @@ int set_axis_numbers_font(snd_state *ss, char *font)
       if (axis_numbers_font(ss)) FREE(axis_numbers_font(ss));
       in_set_axis_numbers_font(ss, copy_string(font));
       (ss->sgx)->axis_numbers_fnt = fs;
+#if HAVE_GL
+      reload_number_font(ss);
+#endif
       return(TRUE);
     }
   return(FALSE);

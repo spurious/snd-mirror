@@ -964,7 +964,7 @@ static Float *env2array(int order, env *e)
   /* get the frequency envelope and design the FIR filter */
   fdata = (Float *)CALLOC(order, sizeof(Float));
   last_x = e->data[(e->pts - 1) * 2];
-  step = 2 * last_x / ((Float)order - 1);
+  step = 2.0 * last_x / (Float)(order - 1);
   lim = order / 2;
   for (i = 0, x = 0.0; i < lim; i++, x += step) 
     fdata[i] = list_interp(x, e->data, e->pts); /* not mus_env here since it's likely the points fall between the order-related samples */
@@ -1178,7 +1178,7 @@ void fht(int powerOfFour, Float *array)
 	      a1 = (int) (k * n_over_d3) % n;
 	      a2 = (a1 + a1) % n;
 	      a3 = (a1 + a2) % n;
-	      /* TODO: get rid of this silly table! */
+	      /* use of table-lookup here speeds up the overall function by a factor of about 8! */
 	      t5 = array[L2] * fht_cosines[a1] + array[L6] * fht_sines[a1];
 	      t6 = array[L3] * fht_cosines[a2] + array[L7] * fht_sines[a2];
 	      t7 = array[L4] * fht_cosines[a3] + array[L8] * fht_sines[a3];
@@ -1235,6 +1235,10 @@ void fht(int powerOfFour, Float *array)
  *   this is slightly (15-20%) faster than the fht above for small ffts (smaller than 16384 samples)
  *   it slows down radically (factor of 2) on big arrays, and returns bogus results -- perhaps real sin/cos would fix it
  *   it is not restricted to powers of 4 (hence its use in snd-fft.c), but len must be > 4
+ *
+ * as a kind of goofy experiment, I unrolled all the loops of a 256 point fft,
+ *   creating a single-level 2200 line fft with no address calcs, and it ran
+ *   twice as fast as fht.
  */
 
 static Float halsec[20]=

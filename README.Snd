@@ -294,8 +294,7 @@ panes. 2) Gtk+ colors are a bottomless pit; colors may or may not work
 right.  3) Gtk+ file selection dialog's filter is restricted to a simple
 string using "*" -- the just-sounds button of Motif, and the associated
 sound file extension list are omitted.  4) Emacs bindings are only partially
-competed in the listener, and help/completion is broken. 5) No OpenGL
-support -- there is apparently a GtkGLArea widget somewhere.
+competed in the listener, and help/completion is broken.
 
 (I've tried snd+gtk in Linux, Sun, and SGI).
 
@@ -465,6 +464,20 @@ than adequate -- I use Mesa on Linux where X drawing commands can be mixed
 with OpenGL.  On the SGI, the former are all messed up colorwise.
 
 
+---- Gtk/OpenGL ----
+
+I'm currently depending on the user to do something reasonable in regard
+to placement of the GtkGLext headers and libraries.  If they aren't in
+automatically searched directories, you'll have to fix up the makefile
+by hand.  For example, I built GtkGLext --prefix=/home/bil/test, so
+I added the two /home/bil/test directories to the makefile:
+
+  GTKEXTRA_FLAGS = -I/home/bil/test/include/gtkglext-0.x
+  GL_LIBS = -lGLU -lGL -L/home/bil/test/lib -lgdkglext-x11-0.x -lgtkglext-x11-0.x
+
+Don't run the Motif/GL and the Gtk/GL versions of Snd at the same time.
+This can kill the X server!
+
 
 ---- Mac OS-X: ---- 
 
@@ -590,6 +603,7 @@ Motif:
 Gtk+:
   http://www.gtk.org
   ftp://ftp.gtk.org/pub/gtk/
+  http://gtkglext.sourceforge.net/
 
 gmeteor:
   http://gmeteor.sourceforge.net

@@ -2069,25 +2069,29 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	        glReadPixels(fap->graph_x0, 0, fap->width, fap->height, GL_RGB, GL_UNSIGNED_SHORT, array_for_pixels)
 		then PS colorimage op [see gtkplotps.c, ps doc p 225]
 	 TODO: glLightfv needed in gl.c (and others -- is there a max size?)
-	 SOMEDAY: should there be an error return 'gl-error? is this (or wavogram) called from Scheme?
       */
       if (((sp->nchans == 1) || (sp->channel_style == CHANNELS_SEPARATE)) &&
 	  (color_map(ss) != BLACK_AND_WHITE) &&
 	  (with_gl(ss)))
 	{
-	  float x1, y1, inv_scl;
 	  unsigned short br = 65535, bg = 65535, bb = 65535;
+	  float x1, y1, inv_scl;
 	  int **js = NULL;
+#if USE_MOTIF
 	  Colormap cmap;
 	  XColor tmp_color;
 	  Display *dpy;
+#endif
 	  inv_scl = 1.0 / si->scale;
 	  fp = cp->fft;
 	  fap = fp->axis;
 	  if (cp->printing) snd_warning("can't print openGL graphics yet");
-
+#if USE_MOTIF
 	  glXMakeCurrent(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)), ss->sgx->cx);
-
+#else
+	  gtk_widget_gl_make_current(channel_graph(cp));
+	  gdk_gl_drawable_wait_gdk(gtk_widget_get_gl_drawable(channel_graph(cp)));
+#endif
 	  if (cp->gl_fft_list == NO_LIST) 
 	    cp->gl_fft_list = (int)glGenLists(1);
 	  else
@@ -2122,7 +2126,7 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	  glEnable(GL_DEPTH_TEST);
 	  glShadeModel(GL_SMOOTH);
 	  glClearDepth(1.0);
-
+#if USE_MOTIF
 	  /* get the background color */
 	  dpy = XtDisplay(MAIN_SHELL(ss));
 	  cmap = DefaultColormap(dpy, DefaultScreen(dpy));
@@ -2138,6 +2142,10 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 		       (float)tmp_color.green / 65535.0,
 		       (float)tmp_color.blue / 65535.0,
 		       0.0);
+#else
+	  /* TODO: bg color for gtk gl */
+	  glClearColor(1.0, 1.0, 1.0, 0.0);
+#endif
 	  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	  if (cp->fft_changed == FFT_CHANGED)
 	    {
@@ -2227,10 +2235,16 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 			 fap);
 	  make_axes(cp, fap, X_AXIS_IN_SECONDS, FALSE);
 	  fap->use_gl = FALSE;
-
+#if USE_MOTIF
 	  if (ss->gl_has_double_buffer)
 	    glXSwapBuffers(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)));
 	  else glFlush();
+#else
+	  if (gtk_widget_gl_is_double_buffer(channel_graph(cp)))
+	    gtk_widget_gl_swap_buffers(channel_graph(cp));
+	  else glFlush();
+	  gdk_gl_drawable_wait_gl(gtk_widget_get_gl_drawable(channel_graph(cp)));
+#endif
 #if DEBUGGING
 	  {
 	    GLenum errcode;
@@ -2246,7 +2260,11 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	    display_channel_time_data(cp, cp->sound, cp->state); 
 	  if (cp->graph_lisp_p)
 	    display_channel_lisp_data(cp, cp->sound, cp->state); 
+#if USE_MOTIF
 	  return(XtAppPending(MAIN_APP(ss)) == 0); /* return true if there are no pending events to force current buffer to be displayed */
+#else
+	  return(TRUE);
+#endif
 	}
 #endif
       if (cp->printing) ps_allocate_grf_points();
@@ -2412,7 +2430,12 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	      if (js[i][j] < 0) js[i][j] = 0;
 	    }
 	}
+#if USE_MOTIF
       glXMakeCurrent(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)), ss->sgx->cx);
+#else
+      gtk_widget_gl_make_current(channel_graph(cp));
+      gdk_gl_drawable_wait_gdk(gtk_widget_get_gl_drawable(channel_graph(cp)));
+#endif
       glEnable(GL_DEPTH_TEST);
       glDepthFunc(GL_LEQUAL); 
       glClearDepth(1.0);
@@ -2453,9 +2476,16 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
 		      
 	    glEnd();
 	  }
+#if USE_MOTIF
       if (ss->gl_has_double_buffer)
 	glXSwapBuffers(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)));
       else glFlush();
+#else
+      if (gtk_widget_gl_is_double_buffer(channel_graph(cp)))
+	gtk_widget_gl_swap_buffers(channel_graph(cp));
+      else glFlush();
+      gdk_gl_drawable_wait_gl(gtk_widget_get_gl_drawable(channel_graph(cp)));
+#endif
 #if DEBUGGING
       {
 	GLenum errcode;

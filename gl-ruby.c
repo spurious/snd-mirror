@@ -1,5 +1,6 @@
 /* Ruby connection for gl.c */
 
+#if USE_MOTIF
 XEN_NARGIFY_3(gxg_glXChooseVisual_w, gxg_glXChooseVisual)
 XEN_NARGIFY_4(gxg_glXCopyContext_w, gxg_glXCopyContext)
 XEN_NARGIFY_4(gxg_glXCreateContext_w, gxg_glXCreateContext)
@@ -20,6 +21,7 @@ XEN_NARGIFY_0(gxg_glXWaitX_w, gxg_glXWaitX)
 XEN_NARGIFY_2(gxg_glXGetClientString_w, gxg_glXGetClientString)
 XEN_NARGIFY_3(gxg_glXQueryServerString_w, gxg_glXQueryServerString)
 XEN_NARGIFY_2(gxg_glXQueryExtensionsString_w, gxg_glXQueryExtensionsString)
+#endif
 XEN_NARGIFY_1(gxg_glClearIndex_w, gxg_glClearIndex)
 XEN_NARGIFY_4(gxg_glClearColor_w, gxg_glClearColor)
 XEN_NARGIFY_1(gxg_glClear_w, gxg_glClear)
@@ -404,6 +406,7 @@ XEN_ARGIFY_3(gxg_glGetColorTableParameterfvEXT_w, gxg_glGetColorTableParameterfv
 XEN_ARGIFY_3(gxg_glGetColorTableParameterivEXT_w, gxg_glGetColorTableParameterivEXT)
 static void define_functions(void)
 {
+#if USE_MOTIF
   XEN_DEFINE_PROCEDURE(XL_PRE "glXChooseVisual" XL_POST, gxg_glXChooseVisual_w, 3, 0, 0, H_glXChooseVisual);
   XEN_DEFINE_PROCEDURE(XL_PRE "glXCopyContext" XL_POST, gxg_glXCopyContext_w, 4, 0, 0, H_glXCopyContext);
   XEN_DEFINE_PROCEDURE(XL_PRE "glXCreateContext" XL_POST, gxg_glXCreateContext_w, 4, 0, 0, H_glXCreateContext);
@@ -424,6 +427,7 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XL_PRE "glXGetClientString" XL_POST, gxg_glXGetClientString_w, 2, 0, 0, H_glXGetClientString);
   XEN_DEFINE_PROCEDURE(XL_PRE "glXQueryServerString" XL_POST, gxg_glXQueryServerString_w, 3, 0, 0, H_glXQueryServerString);
   XEN_DEFINE_PROCEDURE(XL_PRE "glXQueryExtensionsString" XL_POST, gxg_glXQueryExtensionsString_w, 2, 0, 0, H_glXQueryExtensionsString);
+#endif
   XEN_DEFINE_PROCEDURE(XL_PRE "glClearIndex" XL_POST, gxg_glClearIndex_w, 1, 0, 0, H_glClearIndex);
   XEN_DEFINE_PROCEDURE(XL_PRE "glClearColor" XL_POST, gxg_glClearColor_w, 4, 0, 0, H_glClearColor);
   XEN_DEFINE_PROCEDURE(XL_PRE "glClear" XL_POST, gxg_glClear_w, 1, 0, 0, H_glClear);
