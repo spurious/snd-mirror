@@ -726,6 +726,10 @@ typedef enum {PLAY_COMPLETE, PLAY_CLOSE, PLAY_BUTTON_UNSET, PLAY_STOP_CALLED, PL
 #define in_set_show_grid(a) ss->Show_Grid = a
 #define DEFAULT_SHOW_GRID NO_GRID
 
+#define show_sonogram_cursor(ss) ss->Show_Sonogram_Cursor
+#define in_set_show_sonogram_cursor(a) ss->Show_Sonogram_Cursor = a
+#define DEFAULT_SHOW_SONOGRAM_CURSOR FALSE
+
 #define show_axes(ss) ss->Show_Axes
 #define in_set_show_axes(a) ss->Show_Axes = a
 #define DEFAULT_SHOW_AXES SHOW_ALL_AXES

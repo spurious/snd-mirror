@@ -609,6 +609,8 @@ them); if you're not using regions anyway, this switch can turn them off.
 <tr><td colspan=2><code><a class=def name="showselectiontransform">show-selection-transform</a></code></td>
 <td><code>#f</code></td></tr>
 <tr><td></td><td colspan=2>If #t, display the transform of the current active selection, if any.
+(Thie sonogram and spectrogram displays ignore this flag because they assume their time axis
+matches that of the time domain graph).
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -1888,7 +1890,7 @@ called just after an FFT (or spectrum) is calculated.
            (= (<a class=quiet href="#transformgraphtype">transform-graph-type</a>) <a class=quiet href="#transformgraphtype">graph-once</a>))
       (<a class=quiet href="#reportinminibuffer">report-in-minibuffer</a> 
         (number-&gt;string (/ (* 2 (<a class=quiet href="#vctpeak">vct-peak</a> (<a class=quiet href="#transformsamples_to_vct">transform-samples-&gt;vct</a> snd chn))) 
-                           (<a class=quiet href="#lfftsize">transform-size</a> snd chn))))))
+                           (<a class=quiet href="#transformsize">transform-size</a> snd chn))))))
 (add-hook! <em class=red>transform-hook</em> fft-peak)
 </pre></td></tr></table>
 </td></tr><tr><td colspan=3></td></tr>
@@ -6928,6 +6930,16 @@ at the start of the waveform can be dragged to move the mix, or clicked to selec
 <tr><td colspan=2></td></tr>
 
 
+<!-- show-sonogram-cursor -->
+<tr><td colspan=2>
+<code><a class=def name="showsonogramcursor">show-sonogram-cursor</a> (<em class=narg>snd chn</em>)</code>
+</td></tr>
+<tr><td></td><td>
+If #t (default is #f) the cursor is also displayed in the sonogram.
+</td></tr>
+<tr><td colspan=2></td></tr>
+
+
 <!-- show-transform-peaks -->
 <tr><td colspan=2>
 <code><a class=def name="showfftpeaks">show-transform-peaks</a> (<em class=narg>snd chn</em>)</code>
@@ -7531,7 +7543,7 @@ or (list full-size bins slices) if sonogram or spectrogram.
 
 <!-- transform-size -->
 <tr><td colspan=2>
-<code><a class=def name="lfftsize">transform-size</a> (<em class=narg>snd chn</em>)</code>
+<code><a class=def name="transformsize">transform-size</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
 FFT size (the default size is 512).  Should be a power of 2.  Any size is ok, if you have sufficient
@@ -8657,7 +8669,7 @@ the size of the vcts passed to it, whereas CLM's takes the size as an argument.
 <tr><td><a href="#ffthook"><small>transform-hook</small></a></td><td><a href="#spectrocutoff"><small>spectro-cutoff</small></a></td><td><a href="#transformgraphsize"><small>transform-samples-size</small></a></td></tr>
 <tr><td><a href="#fftlogfrequency"><small>fft-log-frequency</small></a></td><td><a href="#spectrohop"><small>spectro-hop</small></a></td><td><a href="#transformtype"><small>transform-type</small></a></td></tr>
 <tr><td><a href="#fftlogmagnitude"><small>fft-log-magnitude</small></a></td><td><a href="#spectrostart"><small>spectro-start</small></a></td><td><a href="#updatetransformgraph"><small>update-transform-graph</small></a></td></tr>
-<tr><td><a href="#lfftsize"><small>transform-size</small></a></td><td><a href="#spectroxangle"><small>spectro-x-angle</small></a></td><td><a href="#normalizefft"><small>transform-normalization</small></a></td></tr>
+<tr><td><a href="#transformsize"><small>transform-size</small></a></td><td><a href="#spectroxangle"><small>spectro-x-angle</small></a></td><td><a href="#normalizefft"><small>transform-normalization</small></a></td></tr>
 <tr><td><a href="#transformgraphtype"><small>transform-graph-type</small></a></td><td><a href="#spectroxscale"><small>spectro-x-scale</small></a></td><td><a href="#zeropad"><small>zero-pad</small></a></td></tr>
 <tr><td><a href="#fftwindow"><small>fft-window</small></a></td><td><a href="#spectroyangle"><small>spectro-y-angle</small></a></td><td><a href="#wavelettype"><small>wavelet-type</small></a></td></tr>
 <tr><td><a href="#maxfftpeaks"><small>max-transform-peaks</small></a></td><td><a href="#spectroyscale"><small>spectro-y-scale</small></a></td><td><a href="#spectrozscale"><small>spectro-z-scale</small></a></td></tr>
@@ -8766,7 +8778,7 @@ as the default:
   (set! (<a class=quiet href="#envedwaving">enved-wave?</a>) #t)
   (set! (<a class=quiet href="#envedtarget">enved-target</a>) <a class=quiet href="#envedtarget">enved-spectrum</a>)
   (add-hook! <a class=quiet href="#afteropenhook">after-open-hook</a> (lambda (snd)
-			       (set! (<a class=quiet href="#lfftsize">transform-size</a> snd) 
+			       (set! (<a class=quiet href="#transformsize">transform-size</a> snd) 
 				     (expt 2 (ceiling (/ (log (max 1 (<a class=quiet href="#frames">frames</a> snd)))
 							 (log 2.0))))))))
 </pre></td></tr></table></td></tr>
@@ -9254,7 +9266,7 @@ Here is a partial list of the dialogs scattered around Snd.
 <tr><td></td><td colspan=2>Errors</td><td>View:<a href="snd.html#errorhistory">Error history</a></td>
     <td></td><td></td></tr>
 <tr><td></td><td colspan=2>FFT choices</td><td>Options:<a href="snd.html#viewfft">Transforms</a></td>
-    <td><a href="#transformdialog">transform-dialog</a>, <a href="#lfftsize">transform-size</a> and its friends</td><td></td></tr>
+    <td><a href="#transformdialog">transform-dialog</a>, <a href="#transformsize">transform-size</a> and its friends</td><td></td></tr>
 <tr><td></td><td colspan=2>Help choices</td><td>Help:*</td>
     <td><a href="#helpdialog">help-dialog</a>, <a href="#sndhelp">snd-help</a>, <a href="#helphook">help-hook</a></td><td></td></tr>
 
@@ -10010,7 +10022,7 @@ use load-from-path inside a Scheme file when you don't know in advance where tha
 <tr><td></td><td>
 return the spectrum (as a vct) of <i>data</i> (also a vct) using fft-window <i>win</i>.
 <i>length</i> is the number of samples 
-of data. <code>(let ((spectr (snd-spectrum data rectangular-window (<a class=quiet href="#lfftsize">transform-size</a>)))) ...)</code>
+of data. <code>(let ((spectr (snd-spectrum data rectangular-window (<a class=quiet href="#transformsize">transform-size</a>)))) ...)</code>
 If <i>linear</i> is #f (its default is #t), the spectrum is in dB.
 <i>beta</i> is the fft data window family parameter; it is scaled internally so here it should be between 0.0 and 1.0.
 If <i>in-place</i> is #t, the spectrum is in <i>data</i>, otherwise snd-spectrum returns a new vct.
@@ -11158,7 +11170,7 @@ If #t and GL is loaded, use GL where possible (default is #t if HAVE_GL).</td></
         <!-- I(temp directory):L(temp-dir)(tempdir) -->
         <!-- I(continue session):L(load) -->
         <!-- I(fft window):L(fft-window)(fftwindow) -->
-	<!-- I(fft size):L(transform-size)(lfftsize) -->
+	<!-- I(fft size):L(transform-size)(transformsize) -->
         <!-- I(fft window parameter):L(fft-window-beta)(fftbeta) -->
 	<!-- I(move cursor ahead):L(set cursor)(cursor) -->
         <!-- I(move cursor back):L(set cursor)(cursor) -->

@@ -575,9 +575,9 @@ static XEN xen_rb_rescue(XEN val)
 
 void xen_repl(int argc, char **argv)
 {
-  int status = 0;
   while (true)
     {
+      int status = 0;
       rb_protect(XEN_VALUE_ARG_PROCEDURE_CAST xen_rb_rescue,
 		 XEN_FALSE,
 		 &status);
@@ -808,7 +808,6 @@ VALUE xen_rb_hook_reset_hook(VALUE hook)
 static VALUE xen_rb_hook_names(VALUE hook)
 {
   VALUE ary = rb_obj_dup(rb_iv_get(hook, "@procs"));
-  
   if (RARRAY(ary)->len) {
     VALUE ret = rb_ary_new();
     while (RARRAY(ary)->len)

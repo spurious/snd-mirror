@@ -42,12 +42,11 @@ bool selection_is_visible_in_channel (chan_info *cp)
 static off_t off_t_map_over_chans(off_t (*func)(chan_info *, off_t *), off_t *userptr)
 {
   int i, j;
-  off_t val;
-  snd_info *sp;
-  chan_info *cp;
-  val = 0;
+  off_t val = 0;
   for (i = 0; i < ss->max_sounds; i++)
     {
+      snd_info *sp;
+      chan_info *cp;
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse == SOUND_NORMAL))
 	for (j = 0; j < sp->nchans; j++)
@@ -234,7 +233,6 @@ void reactivate_selection(chan_info *cp, off_t beg, off_t end)
 static void update_selection(chan_info *cp, off_t newend)
 {
   ed_list *ed;
-  off_t samps;
   ed = cp->edits[cp->edit_ctr];
   ed->selection_maxamp = -1.0;
   if ((newend != ed->selection_beg) && (newend != ed->selection_end)) /* redundant call from somewhere */
@@ -247,6 +245,7 @@ static void update_selection(chan_info *cp, off_t newend)
 	}
       else 
 	{
+	  off_t samps;
 	  samps = CURRENT_SAMPLES(cp);
 	  if (newend < samps)
 	    ed->selection_end = newend;
@@ -281,10 +280,10 @@ void ripple_selection(ed_list *ed, off_t beg, off_t num)
 
 static void next_selection_chan(chan_info *cp, void *sidata)
 {
-  sync_info *si = (sync_info *)sidata;
-  int chan;
   if (cp_has_selection(cp, NULL))
     {
+      sync_info *si = (sync_info *)sidata;
+      int chan;
       chan = si->chans;
       si->chans++;
       si->begs[chan] = selection_beg(cp);
@@ -308,13 +307,13 @@ sync_info *selection_sync(void)
 static int mix_selection(chan_info *cp, off_t beg, const char *origin, int trk)
 {
   char *tempfile = NULL;
-  sync_info *si_out;
   int err, id = INVALID_MIX_ID;
   if (!(editable_p(cp))) return(id);
   tempfile = snd_tempnam();
   err = save_selection(tempfile, MUS_NEXT, MUS_OUT_FORMAT, SND_SRATE(cp->sound), NULL, SAVE_ALL_CHANS);
   if (err == MUS_NO_ERROR)
     {
+      sync_info *si_out;
       si_out = sync_to_chan(cp);
       id = mix_file(beg, selection_len(), si_out->chans, si_out->cps, tempfile, 
 		    (si_out->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME, 
@@ -339,10 +338,7 @@ void add_selection_or_region(int reg, chan_info *cp, const char *origin)
 static int insert_selection(chan_info *cp, off_t beg, const char *origin)
 {
   char *tempfile = NULL;
-  sync_info *si_out, *si_in;
-  chan_info *cp_in, *cp_out;
   int i, err = MUS_NO_ERROR, out_format = MUS_OUT_FORMAT;
-  off_t len;
   if (!(editable_p(cp))) return(MUS_NO_ERROR);
   if (mus_header_writable(MUS_NEXT, cp->sound->hdr->format))
     out_format = cp->sound->hdr->format;
@@ -350,18 +346,19 @@ static int insert_selection(chan_info *cp, off_t beg, const char *origin)
   err = save_selection(tempfile, MUS_NEXT, out_format, SND_SRATE(cp->sound), NULL, SAVE_ALL_CHANS);
   if (err == MUS_NO_ERROR)
     {
+      sync_info *si_out, *si_in;
       si_out = sync_to_chan(cp);
       si_in = selection_sync();
       if (si_in == NULL) /* C-g just after save? */
-	{
-	  free_sync_info(si_out);
-	}
+	free_sync_info(si_out);
       else
 	{
 	  if (si_in->chans > 1) 
 	    remember_temp(tempfile, si_in->chans);
 	  for (i = 0; ((i < si_in->chans) && (i < si_out->chans)); i++)
 	    {
+	      chan_info *cp_in, *cp_out;
+	      off_t len;
 	      cp_out = si_out->cps[i]; /* currently syncd chan that we might paste to */
 	      cp_in = si_in->cps[i];   /* selection chan to paste in (no wrap-around here) */
 	      len = cp_selection_len(cp_in, NULL);
@@ -439,12 +436,12 @@ void finish_selection_creation(void)
 
 static void cp_redraw_selection(chan_info *cp, void *with_fft)
 {
-  Locus x0, x1;
-  off_t beg, end;
-  axis_info *ap;
-  double sp_srate;
   if (selection_is_visible(cp))
     {
+      Locus x0, x1;
+      off_t beg, end;
+      axis_info *ap;
+      double sp_srate;
       ap = cp->axis;
       beg = selection_beg(cp);
       end = selection_end(cp);
@@ -511,10 +508,10 @@ int make_region_from_selection(void)
 
 int select_all(chan_info *cp)
 {
-  sync_info *si;
-  int i;
   if (cp) 
     {
+      sync_info *si;
+      int i;
       deactivate_selection();
       si = sync_to_chan(cp);
       for (i = 0; i < si->chans; i++)
@@ -760,11 +757,11 @@ static XEN g_delete_selection(void)
 static XEN g_insert_selection(XEN beg, XEN snd, XEN chn)
 {
   #define H_insert_selection "(" S_insert_selection " (beg 0) (snd #f) (chn #f)): insert the currently selected portion starting at beg"
-  chan_info *cp;
-  off_t samp;
-  int err = MUS_NO_ERROR;
   if (selection_is_active())
     {
+      chan_info *cp;
+      off_t samp;
+      int err = MUS_NO_ERROR;
       char *buf;
       ASSERT_CHANNEL(S_insert_selection, snd, chn, 2);
       XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg), beg, XEN_ARG_1, S_insert_selection, "a number");
@@ -781,11 +778,11 @@ static XEN g_insert_selection(XEN beg, XEN snd, XEN chn)
 static XEN g_mix_selection(XEN beg, XEN snd, XEN chn, XEN id)
 {
   #define H_mix_selection "(" S_mix_selection " (beg 0) (snd #f) (chn #f) (track 0)): mix the currently selected portion starting at beg"
-  chan_info *cp;
-  off_t obeg;
-  int track_id = 0;
   if (selection_is_active())
     {
+      chan_info *cp;
+      off_t obeg;
+      int track_id = 0;
       XEN res;
       char *buf;
       ASSERT_CHANNEL(S_mix_selection, snd, chn, 2);
@@ -817,13 +814,13 @@ static XEN g_selection_p(void)
 static XEN g_selection_position(XEN snd, XEN chn)
 {
   #define H_selection_position "(" S_selection_position " (snd #f) (chn #f)): selection start samp"
-  chan_info *cp;
   if (selection_is_active())
     {
       if (XEN_NOT_BOUND_P(snd))
 	return(C_TO_XEN_OFF_T(selection_beg(NULL)));
       else
 	{
+	  chan_info *cp;
 	  ASSERT_CHANNEL(S_selection_position, snd, chn, 1);
 	  cp = get_cp(snd, chn, S_selection_position);
 	  return(C_TO_XEN_OFF_T(selection_beg(cp)));
@@ -835,14 +832,13 @@ static XEN g_selection_position(XEN snd, XEN chn)
 static XEN g_set_selection_position(XEN pos, XEN snd, XEN chn)
 {
   chan_info *cp;
-  sync_info *si = NULL;
-  int i;
   off_t beg;
   ASSERT_CHANNEL(S_setB S_selection_position, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_NUMBER_P(pos), pos, XEN_ARG_1, S_selection_position, "a number");
   beg = beg_to_sample(pos, S_setB S_selection_position);
   if (XEN_NOT_BOUND_P(snd))
     {
+      sync_info *si = NULL;
       if (selection_is_active())
 	si = selection_sync();
       else 
@@ -852,6 +848,7 @@ static XEN g_set_selection_position(XEN pos, XEN snd, XEN chn)
 	}
       if (si)
 	{
+	  int i;
 	  for (i = 0; i < si->chans; i++) 
 	    cp_set_selection_beg(si->cps[i], beg);
 	  si = free_sync_info(si);
@@ -871,13 +868,13 @@ WITH_REVERSED_CHANNEL_ARGS(g_set_selection_position_reversed, g_set_selection_po
 static XEN g_selection_frames(XEN snd, XEN chn)
 {
   #define H_selection_frames "(" S_selection_frames " (snd #f) (chn #f)): selection length"
-  chan_info *cp;
   if (selection_is_active())
     {
       if (XEN_NOT_BOUND_P(snd))
 	return(C_TO_XEN_OFF_T(selection_len()));
       else
 	{
+	  chan_info *cp;
 	  ASSERT_CHANNEL(S_selection_frames, snd, chn, 1);
 	  cp = get_cp(snd, chn, S_selection_frames);
 	  return(C_TO_XEN_OFF_T(cp_selection_len(cp, NULL)));
@@ -889,8 +886,6 @@ static XEN g_selection_frames(XEN snd, XEN chn)
 static XEN g_set_selection_frames(XEN samps, XEN snd, XEN chn)
 {
   chan_info *cp;
-  sync_info *si = NULL;
-  int i;
   off_t len;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(samps), samps, XEN_ARG_1, S_setB S_selection_frames, "a number");
   len = XEN_TO_C_OFF_T_OR_ELSE(samps, 0);
@@ -898,6 +893,7 @@ static XEN g_set_selection_frames(XEN samps, XEN snd, XEN chn)
     XEN_WRONG_TYPE_ARG_ERROR(S_setB S_selection_frames, XEN_ARG_1, samps, "a positive integer");
   if (XEN_NOT_BOUND_P(snd))
     {
+      sync_info *si = NULL;
       if (selection_is_active())
 	si = selection_sync();
       else 
@@ -907,6 +903,7 @@ static XEN g_set_selection_frames(XEN samps, XEN snd, XEN chn)
 	}
       if (si)
 	{
+	  int i;
 	  for (i = 0; i < si->chans; i++)
 	    cp_set_selection_len(si->cps[i], len);
 	  si = free_sync_info(si);
@@ -935,12 +932,12 @@ static XEN g_selection_member(XEN snd, XEN chn)
 
 static XEN g_set_selection_member(XEN on, XEN snd, XEN chn)
 {
-  chan_info *cp;
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_selection_member, "a boolean");
   if ((XEN_TRUE_P(snd)) && (XEN_FALSE_P(on)))
     deactivate_selection();
   else
     {
+      chan_info *cp;
       ASSERT_CHANNEL(S_setB S_selection_member, snd, chn, 2);
       cp = get_cp(snd, chn, S_setB S_selection_member);
       if (XEN_TRUE_P(on))

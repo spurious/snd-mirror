@@ -166,8 +166,7 @@ static void help_previous_callback(GtkWidget *w, gpointer context)
 
 static char *find_highlighted_text(const char *value)
 {
-  char *topic = NULL;
-  int i, k, len, start = -1, end;
+  int i, len, start = -1;
   len = snd_strlen(value);
   for (i = 0; i < len; i++)
     if (value[i] == '{')
@@ -176,9 +175,12 @@ static char *find_highlighted_text(const char *value)
       {
 	if (value[i] == '}')
 	  {
+	    int end;
 	    end = i;
 	    if ((start > 0) && ((end - start) > 0))
 	      {
+		int k;
+		char *topic;
 		topic = (char *)CALLOC(end - start + 1, sizeof(char));
 		for (i = start, k = 0; i < end; i++, k++)
 		  topic[k] = value[i];
@@ -218,11 +220,12 @@ static void double_callback(GtkTreeView *tree_view, GtkTreePath *path, GtkTreeVi
 {
   GtkTreeModel *model = gtk_tree_view_get_model(tree_view);
   GtkTreeIter iter;
-  gchar *topic, *value;
+  gchar *value;
   gtk_tree_model_get_iter(model, &iter, path);
   gtk_tree_model_get(model, &iter, 0, &value, -1);
   if (value)
     {
+      gchar *topic;
       topic = find_highlighted_text(value);
       if (topic)
 	{

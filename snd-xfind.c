@@ -80,13 +80,13 @@ static void edit_find_cancel_callback(Widget w, XtPointer context, XtPointer inf
 
 static void make_edit_find_dialog(bool managed)
 {
-  Widget dl, rc;
-  Arg args[20];
-  int n;
-  XmString xmstr1, xmstr3, titlestr;
-
   if (!edit_find_dialog)
     {
+      Widget dl, rc;
+      Arg args[20];
+      int n;
+      XmString xmstr1, xmstr3, titlestr;
+
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       xmstr1 = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG);

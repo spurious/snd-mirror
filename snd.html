@@ -800,7 +800,7 @@ posted during the current run of Snd.  If some error gets erased too quickly fro
 <tr><td><a href="#savedstate">Save state</a></td><td>save current state</td></tr>
 </table>
 </center>
-        <!-- I(fft size):M(Options: Transform)(fftsize) --><!-- I(fft size):O(transform-size: numberpad: '*', '/')(lfftsize) -->
+        <!-- I(fft size):M(Options: Transform)(fftsize) --><!-- I(fft size):O(transform-size: numberpad: '*', '/')(transformsize) -->
         <!-- I(fft size):A(fftsize) --><!-- I(fft peaks):M(Options: Transform)(showpeaks) -->
 	<!-- I(fft normalization):M(Options: Transform)(normalizefft) -->
         <!-- I(fft peaks):A(showpeaks) --><!-- I(fft log freq):M(Options: Transform)(logfreq) -->
@@ -838,7 +838,7 @@ to choose the desired member of that family of windows.
   <area shape=rect coords="0,0,500,20" href="extsnd.html#sndtransforms" alt="transforms">
   <area shape=rect coords="0,20,170,200" href="extsnd.html#transformtype" alt="transform types">
   <area shape=rect coords="0,200,170,380" href="extsnd.html#wavelettype" alt="wavelet types">
-  <area shape=rect coords="170,20,320,200" href="extsnd.html#lfftsize" alt="transform sizes">
+  <area shape=rect coords="170,20,320,200" href="extsnd.html#transformsize" alt="transform sizes">
   <area shape=rect coords="170,200,320,330" href="extsnd.html#fftwindow" alt="transform windows">
   <area shape=rect coords="170,320,320,380" href="extsnd.html#fftbeta" alt="transform window family">  
   <area shape=rect coords="320,60,420,86" href="extsnd.html#transformgraphtype" alt="normal transform graphing choice">
@@ -860,7 +860,7 @@ window size:</p>
   (lambda (snd chn y0 y1)
     (if (and (<a href="extsnd.html#transformgraphp">transform-graph?</a>) 
              (= (<a href="extsnd.html#transformgraphtype">transform-graph-type</a>) <a class=quiet href="extsnd.html#transformgraphtype">graph-once</a>))
-      (set! (<a href="extsnd.html#lfftsize">transform-size)</a>
+      (set! (<a href="extsnd.html#transformsize">transform-size)</a>
         (expt 2 (ceiling (/ (log (- (<a class=quiet href="extsnd.html#rightsample">right-sample</a>) 
                                     (<a class=quiet href="extsnd.html#leftsample">left-sample</a>))) 
                             (log 2.0))))))))
@@ -907,7 +907,7 @@ The keypad keys are mapped to various variables as follows:</p>
 <tr><td><a href="extsnd.html#spectroxangle">spectro-x-angle</a></td><td>Ctrl-UpArrow</td><td>Ctrl-DownArrow</td></tr>
 <tr><td><a href="extsnd.html#spectroyangle">spectro-y-angle</a></td><td>Ctrl-RightArrow</td><td>Ctrl-LeftArrow</td></tr>
 <tr><td><a href="extsnd.html#spectrozscale">spectro-z-scale</a></td><td>UpArrow</td><td>DownArrow</td></tr>
-<tr><td><a href="extsnd.html#lfftsize">transform-size</a></td><td>Multiply (*)</td><td>Divide (/)</td></tr>
+<tr><td><a href="extsnd.html#transformsize">transform-size</a></td><td>Multiply (*)</td><td>Divide (/)</td></tr>
 <tr><td><a href="extsnd.html#dotsize">dot-size</a></td><td>Delete</td><td>Insert</td></tr>
 </table>
 <p>You can rotate the spectrogram around the various axes
@@ -2359,7 +2359,7 @@ panel are:</p>
   <tr><td><a href="#logfreq">fft log freq</a></td><td><small>Options: <a href="#logfreq">Transform</a></small></td><td><br></td><td><a href="extsnd.html#fftlogfrequency"><small>fft-log-frequency</small></a></td><td><br></td></tr>
   <tr><td><a href="extsnd.html#normalizefft">fft normalization</a></td><td><small>Options: <a href="extsnd.html#normalizefft">Transform</a></small></td><td><br></td><td><a href="extsnd.html#normalizefft"><small>transform-normalization</small></a></td><td><br></td></tr>
   <tr><td><a href="#showpeaks">fft peaks</a></td><td><small>Options: <a href="#showpeaks">Transform</a></small></td><td><br></td><td><a href="extsnd.html#showfftpeaks"><small>show-transform-peaks</small></a></td><td><a href="extsnd.html#peaks"><small>peaks</small></a></td></tr>
-  <tr><td><a href="#fftsize">fft size</a></td><td><small>Options: <a href="#fftsize">Transform</a></small></td><td><br></td><td><a href="extsnd.html#lfftsize"><small>transform-size</small></a></td><td><a href="extsnd.html#lfftsize"><small>transform-size: numberpad: '*', '/'</small></a></td></tr>
+  <tr><td><a href="#fftsize">fft size</a></td><td><small>Options: <a href="#fftsize">Transform</a></small></td><td><br></td><td><a href="extsnd.html#transformsize"><small>transform-size</small></a></td><td><a href="extsnd.html#transformsize"><small>transform-size: numberpad: '*', '/'</small></a></td></tr>
   <tr><td><a href="#fftwindow">fft window</a></td><td><small>Options: <a href="#fftwindow">Transform</a></small></td><td><br></td><td><a href="extsnd.html#fftwindow"><small>fft-window</small></a></td><td><br></td></tr>
   <tr><td><a href="#Xfftbeta">fft window parameter</a></td><td><small>Options: <a href="#Xfftbeta">Transform</a></small></td><td><br></td><td><a href="extsnd.html#fftbeta"><small>fft-window-beta</small></a></td><td><br></td></tr>
   <tr><td><a href="#fftstyle">fft/sono/spectrogram</a></td><td><small>Options: <a href="extsnd.html#transformgraphtype">Transform</a></small></td><td><br></td><td><a href="extsnd.html#transformgraphtype"><small>transform-graph-type</small></a></td><td><br></td></tr>

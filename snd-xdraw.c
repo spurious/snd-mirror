@@ -75,13 +75,13 @@ void draw_lines (axis_context *ax, XPoint *points, int num)
 
 void draw_points (axis_context *ax, XPoint *points, int num, int size)
 {
-  XArc *rs;
-  int i, size2;
   if (num == 0) return;
   if (size == 1)
     XDrawPoints(ax->dp, ax->wn, ax->gc, points, num, CoordModeOrigin);
   else
     {
+      int i, size2;
+      XArc *rs;
       /* create squares or whatever centered on each point */
       size2 = size / 2;
       rs = (XArc *)CALLOC(num, sizeof(XArc));
@@ -175,7 +175,7 @@ void set_grf_point(Locus xi, int j, Locus yi)
 
 void draw_both_grf_points(int dot_size, axis_context *ax, int j, graph_style_t graph_style)
 {
-  int i, size8, size4;
+  int i;
   switch (graph_style)
     {
     case GRAPH_LINES:
@@ -206,6 +206,7 @@ void draw_both_grf_points(int dot_size, axis_context *ax, int j, graph_style_t g
 	}
       else
 	{
+	  int size8, size4;
 	  size8 = dot_size / 8;
 	  size4 = dot_size / 4;
 	  if (size4 < 1) size4 = 1;
@@ -224,7 +225,7 @@ void draw_both_grf_points(int dot_size, axis_context *ax, int j, graph_style_t g
 
 void draw_grf_points(int dot_size, axis_context *ax, int j, axis_info *ap, Float y0, graph_style_t graph_style)
 {
-  int i, gy0, size8, size4;
+  int i, gy0;
   switch (graph_style)
     {
     case GRAPH_LINES: 
@@ -249,6 +250,7 @@ void draw_grf_points(int dot_size, axis_context *ax, int j, axis_info *ap, Float
 	}
       else
 	{
+	  int size8, size4;
 	  size8 = dot_size / 8;
 	  size4 = dot_size / 4;
 	  if (size4 < 1) size4 = 1;
@@ -544,9 +546,9 @@ void set_sono_rectangle(int j, int color, Locus x, Locus y, Latus width, Latus h
 
 void allocate_sono_rects(int bins)
 {
-  int i;
   if (bins != sono_bins)
     {
+      int i;
       for (i = 0; i < sono_colors; i++)
 	{
 	  if ((sono_bins > 0) && (sono_data[i]))
@@ -560,13 +562,13 @@ void allocate_sono_rects(int bins)
 void allocate_color_map(int colormap)
 {
   static bool warned_color = false;
-  int i;
-  Colormap cmap;
-  XColor tmp_color;
-  Display *dpy;
-  int scr;
   if (grays_allocated != colormap)
     {
+      int i;
+      Colormap cmap;
+      XColor tmp_color;
+      Display *dpy;
+      int scr;
       tmp_color.flags = DoRed | DoGreen | DoBlue;
       dpy = XtDisplay(MAIN_SHELL(ss));
       scr = DefaultScreen(dpy);
@@ -731,10 +733,10 @@ static void help_color_callback(Widget w, XtPointer context, XtPointer info)
 
 void reflect_color_list(bool setup_time)
 {
-  int i, size;
-  XmString *cmaps;
   if ((ccd) && (ccd->list))
     {
+      int i, size;
+      XmString *cmaps;
       size = num_colormaps();
       cmaps = (XmString *)CALLOC(size, sizeof(XmString));
       for (i = 0; i < size; i++)
@@ -756,12 +758,13 @@ void reflect_color_list(bool setup_time)
 
 static void start_view_color_dialog(bool managed)
 {
-  Arg args[32];
-  int n;
-  XmString xhelp, xdismiss, xcutoff, xinvert, titlestr;
-  Widget mainform, list_label, light_label, sep, sep1;
   if (!ccd)
     {
+      Arg args[32];
+      int n;
+      XmString xhelp, xdismiss, xcutoff, xinvert, titlestr;
+      Widget mainform, list_label, light_label, sep, sep1;
+
       /* create color chooser dialog window */
       ccd = (color_chooser_info *)CALLOC(1, sizeof(color_chooser_info));
 
@@ -1230,15 +1233,16 @@ static void reset_orientation_callback(Widget w, XtPointer context, XtPointer in
 
 static void start_view_orientation_dialog(bool managed)
 {
-  Widget mainform, rightbox, leftbox;
-  XmString xdismiss, xhelp, xstr, xreset, titlestr;
-#if HAVE_GL
-  XmString glstr;
-#endif
-  int n;
-  Arg args[20];
   if (!oid)
     {
+      Widget mainform, rightbox, leftbox;
+      XmString xdismiss, xhelp, xstr, xreset, titlestr;
+#if HAVE_GL
+      XmString glstr;
+#endif
+      int n;
+      Arg args[20];
+
       /* create orientation window */
       oid = (orientation_info *)CALLOC(1, sizeof(orientation_info));
 

@@ -532,6 +532,7 @@
 #define S_show_mix_waveforms            "show-mix-waveforms"
 #define S_show_no_axes                  "show-no-axes"
 #define S_show_selection_transform      "show-selection-transform"
+#define S_show_sonogram_cursor          "show-sonogram-cursor"
 #define S_show_transform_peaks          "show-transform-peaks"
 #define S_show_widget                   "show-widget"
 #define S_show_x_axis                   "show-x-axis"

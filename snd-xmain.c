@@ -293,12 +293,12 @@ static void who_called(Widget w, XtPointer context, XEvent *event, Boolean *cont
 {
   /* watch for communication from some other program via the SND_COMMAND property */
   XPropertyEvent *ev = (XPropertyEvent *)event;
-  Atom type;
-  int format;
-  unsigned long nitems, bytesafter;
-  unsigned char *version[1];
   if (ev->atom == snd_c)
     {
+      Atom type;
+      int format;
+      unsigned long nitems, bytesafter;
+      unsigned char *version[1];
       if (((XGetWindowProperty(XtDisplay(w), XtWindow(w), snd_c, 0L, (long)BUFSIZ, False,
 			       XA_STRING, &type, &format, &nitems, &bytesafter, 
 			       (unsigned char **)version)) == Success) && 

@@ -9,11 +9,11 @@ static void timed_eval(XtPointer in_code, XtIntervalId *id)
 static XEN g_in(XEN ms, XEN code)
 {
   #define H_in "(" S_in " msecs thunk): invoke thunk in msecs milliseconds (named call_in in Ruby)"
-  int secs;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(ms), ms, XEN_ARG_1, S_in, "a number");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code), code, XEN_ARG_2, S_in, "a procedure");
   if (XEN_REQUIRED_ARGS_OK(code, 0))
     {
+      int secs;
       secs = XEN_TO_C_INT(ms);
       if (secs < 0) 
 	XEN_OUT_OF_RANGE_ERROR(S_in, XEN_ARG_1, ms, "a positive integer");
@@ -80,10 +80,10 @@ static XEN g_make_snd_color(XEN r, XEN g, XEN b)
 void color_unselected_graphs(color_t color)
 {
   int i, j;
-  chan_info *cp;
-  snd_info *sp;
   for (i = 0; i < ss->max_sounds; i++)
     {
+      chan_info *cp;
+      snd_info *sp;
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse != SOUND_WRAPPER))
 	for (j = 0; j < sp->allocated_chans; j++)
@@ -98,10 +98,10 @@ void color_unselected_graphs(color_t color)
 void color_chan_components(color_t color, slider_choice_t which_component)
 {
   int i, j;
-  chan_info *cp;
-  snd_info *sp;
   for (i = 0; i < ss->max_sounds; i++)
     {
+      chan_info *cp;
+      snd_info *sp;
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse != SOUND_WRAPPER))
 	for (j = 0; j < sp->allocated_chans; j++)

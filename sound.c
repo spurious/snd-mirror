@@ -375,11 +375,9 @@ int mus_sound_forget(const char *name)
 
 static sound_file *check_write_date(const char *name, sound_file *sf)
 {
-  int chan;
-  off_t data_size;
-  time_t date;
   if (sf)
     {
+      time_t date;
       date = local_file_write_date(name);
       if (date == sf->write_date)
 	return(sf);
@@ -387,6 +385,8 @@ static sound_file *check_write_date(const char *name, sound_file *sf)
 	{
 	  if ((sf->header_type == MUS_RAW) && (mus_header_no_header(name)))
 	    {
+	      int chan;
+	      off_t data_size;
 	      /* sound has changed since we last read it, but it has no header, so
 	       * the only sensible thing to check is the new length (i.e. caller
 	       * has set other fields by hand)
@@ -752,11 +752,11 @@ char *mus_sound_comment(const char *name)
 int mus_sound_open_input (const char *arg) 
 {
   int fd = -1;
-  sound_file *sf = NULL;
   if (!(mus_file_probe(arg)))
     mus_error(MUS_CANT_OPEN_FILE, S_mus_sound_open_input " can't open %s: %s", arg, strerror(errno));
   else
     {
+      sound_file *sf = NULL;
       mus_sound_initialize();
       sf = find_sound_file(arg);
       if (!sf)
@@ -811,10 +811,10 @@ int mus_sound_close_input(int fd)
 int mus_sound_close_output(int fd, off_t bytes_of_data) 
 {
   char *name;
-  int err = MUS_ERROR, old_type;
   name = mus_file_fd_name(fd);
   if (name)
     {
+      int err = MUS_ERROR, old_type;
       char *fname;
       fname = strdup(name); /* strdup defined, if necessary, in io.c */
       old_type = mus_file_header_type(fd);
@@ -995,11 +995,11 @@ off_t mus_sound_maxamps(const char *ifile, int chans, mus_sample_t *vals, off_t 
 
 int mus_sound_set_maxamps(const char *ifile, int chans, mus_sample_t *vals, off_t *times)
 {
-  int i, ichans = 0;
   sound_file *sf; 
   sf = getsf(ifile); 
   if (sf)
     {
+      int i, ichans = 0;
       if (sf->maxamps)
 	{
 	  if (chans > sf->chans) ichans = sf->chans; else ichans = chans;

@@ -369,6 +369,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+20-Sep:  show-sonogram-cursor\n\
 13-Sep:  removed buffer generator.\n\
          log-freq-start.\n\
 9-Sep:   vct-reverse!\n\

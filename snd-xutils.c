@@ -204,9 +204,9 @@ void map_over_children (Widget w, void (*func)(Widget, void *), void *userptr)
   /* apply func to each child in entire tree beneath top widget */
   /* taken from Douglas Young, "Motif Debugging and Performance Tuning" Prentice-Hall 1995 */
   /* used mostly to get colors right in non-SGI environments with "convenience" widgets */
-  unsigned int i;
   if (w)
     {
+      unsigned int i;
       (*func)(w, userptr);
       if (XtIsComposite(w))
 	{
@@ -230,9 +230,9 @@ void raise_dialog(Widget w)
   /* since we're using non-transient message dialogs, the dialog window can become completely
    * hidden behind other windows, with no easy way to raise it back to the top, so...
    */
-  Widget parent;
   if ((w) && (XtIsManaged(w)))
     {
+      Widget parent;
       parent = XtParent(w);
       if ((parent) && 
 	  (XtIsSubclass(parent, xmDialogShellWidgetClass)))
@@ -281,7 +281,6 @@ static bool complain_about_focus_policy = true;
 
 void goto_window(Widget text)
 {
-  int err;
   if ((XmIsTraversable(text)) && (1))
     /*
       there's a major memory leak here
@@ -292,6 +291,7 @@ void goto_window(Widget text)
 	{
 	  if (complain_about_focus_policy)
 	    {
+	      int err;
 	      XtVaGetValues(text, XmNkeyboardFocusPolicy, &err, NULL);
 	      if (err == XmEXPLICIT)
 		snd_error("goto_window: traverse to %s failed!", XtName(text));

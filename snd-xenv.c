@@ -153,10 +153,10 @@ static bool within_selection_src = false;
 
 static void apply_enved(void)
 {
-  int i, j;
-  env *max_env = NULL;
   if (active_env)
     {
+      int i, j;
+      env *max_env = NULL;
       active_channel = current_channel();
       if (active_channel)
 	{
@@ -207,7 +207,6 @@ static void apply_enved(void)
 
 static void env_redisplay_1(printing_t printing)
 {
-  char *name = NULL;
   if (enved_dialog_is_active())
     {
       XClearWindow(XtDisplay(drawer), XtWindow(drawer));
@@ -215,6 +214,7 @@ static void env_redisplay_1(printing_t printing)
 	view_envs(env_window_width, env_window_height, printing);
       else 
 	{
+	  char *name = NULL;
 	  name = XmTextGetString(textL);
 	  if (!name) name = copy_string(_("noname"));
 	  /* active_env can be null here if just showing axes (empty initial graph) */
@@ -261,10 +261,10 @@ static void order_field_activated(void)
 {
   /* return in order text field */
   char *str = NULL;
-  int order;
   str = XmTextGetString(orderL);
   if ((str) && (*str))
     {
+      int order;
       order = string_to_int(str);
       if (order & 1) order++;
       if ((order > 0) && 
@@ -277,10 +277,10 @@ static void order_field_activated(void)
 static void text_field_activated(void)
 { /* might be breakpoints to load or an envelope name (<cr> in enved text field) */
   char *name = NULL, *str;
-  env *e = NULL;
   name = XmTextGetString(textL);
   if ((name) && (*name))
     {
+      env *e = NULL;
       str = name;
       while (isspace((int)(*str))) str++;
       e = name_to_env(str);
@@ -513,9 +513,9 @@ static void selection_button_pressed(Widget s, XtPointer context, XtPointer info
 
 static void delete_button_pressed(Widget w, XtPointer context, XtPointer info) 
 {
-  int i, len;
   if (selected_env)
     {
+      int i, len;
       len = enved_all_envs_top();
       for (i = 0; i < len; i++)
 	if (selected_env == enved_all_envs(i))
@@ -779,17 +779,16 @@ static void FIR_click_callback(Widget w, XtPointer context, XtPointer info)
 
 Widget create_envelope_editor(void)
 {
-  int n;
-  Arg args[32];
-  Widget colE, colD, colB, colF;
-  Widget spacer, spacer1, aform, mainform, screnvname, baseSep, baseLabel;
-  XmString xhelp, xdismiss, xapply, titlestr, s1;
-  XGCValues gv;
-  XtCallbackList n1, n2;
-  char str[LABEL_BUFFER_SIZE];
-
   if (!enved_dialog)
     {
+      int n;
+      Arg args[32];
+      Widget colE, colD, colB, colF;
+      Widget spacer, spacer1, aform, mainform, screnvname, baseSep, baseLabel;
+      XmString xhelp, xdismiss, xapply, titlestr, s1;
+      XGCValues gv;
+      XtCallbackList n1, n2;
+      char str[LABEL_BUFFER_SIZE];
 
       /* -------- DIALOG -------- */
       xdismiss = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG);

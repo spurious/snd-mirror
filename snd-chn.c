@@ -5,10 +5,6 @@
 /* TODO: show sonogram in wave window so marks/selections etc can be used to edit that data */
 /* SOMEDAY: if superimposed and 2chn cursor set, 1chan is xor'd, subsequent click sets both (and chan1 cursor takes precedence?) */
 /*    cursor redraw can check for this, but it gloms up code */
-/* TODO: tracking cursor in sonogram (or spectrogram -- would need projected xor'd line) */
-/*    and what about the xor effect over unknown bg colors? -- perhaps white here? */
-/*    for sonogram, can use local_grf_x[y not needed?] here, just as in time case, I think */
-
 
 typedef enum {CLICK_NOGRAPH, CLICK_WAVE, CLICK_FFT_AXIS, CLICK_LISP, CLICK_FFT_MAIN} click_loc_t;    /* for marks, regions, mouse click detection */
 
@@ -131,6 +127,18 @@ static void set_show_grid(with_grid_t val)
 {
   in_set_show_grid(val);
   for_each_chan_1(chans_show_grid, (void *)(&val));
+}
+
+static void chans_show_sonogram_cursor(chan_info *cp, void *ptr)
+{
+  cp->show_sonogram_cursor = (*((bool *)ptr));
+  update_graph(cp);
+}
+
+static void set_show_sonogram_cursor(bool val)
+{
+  in_set_show_sonogram_cursor(val);
+  for_each_chan_1(chans_show_sonogram_cursor, (void *)(&val));
 }
 
 static void chans_transform_graph_type(chan_info *cp, void *ptr) 
@@ -2450,7 +2458,7 @@ static bool make_spectrogram(chan_info *cp)
 	      for (i = 0; i < bins; i++, x += xincr)
 		{
 		  xyz[0] = x - x0; 
-		  xyz[1] = y - y0; 
+		  xyz[1] = y - y0;  /* add log freq here I assume [2034 sono] */
 		  if (!(cp->fft_log_magnitude))
 		    xyz[2] = fdata[i];
 		  else 
@@ -2932,6 +2940,7 @@ static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool
 }
 
 static void draw_graph_cursor(chan_info *cp);
+static void draw_sonogram_cursor(chan_info *cp);
 
 static void display_channel_data_with_size (chan_info *cp, 
 					    int width, int height, int offset, 
@@ -3157,6 +3166,11 @@ static void display_channel_data_with_size (chan_info *cp,
 #endif
 	  break;
 	}
+      if (cp->cursor_on) 
+	{
+	  cp->fft_cursor_visible = false; 
+	  draw_sonogram_cursor(cp);
+	}
     }
 
   if ((with_lisp) && 
@@ -3337,17 +3351,6 @@ static void draw_cursor(chan_info *cp)
 		 "cursor-style procedure");
       break;
     }
-#if 0
-	      if ((cp->graph_transform_p) &&
-		  (cp->transform_graph_type == GRAPH_AS_SONOGRAM))
-		{
-		  double x0;
-		  axis_info *fap;
-		  fap = cp->fft->axis;
-		  x0 = local_grf_x((double)(CURSOR(cp)) / (double)SND_SRATE(cp->sound), fap);
-		  draw_line(copy_context(cp), x0, fap->y_axis_y0, x0, fap->y_axis_y1);
-		}
-#endif
 }
 
 static void draw_graph_cursor(chan_info *cp)
@@ -3362,6 +3365,30 @@ static void draw_graph_cursor(chan_info *cp)
   else cp->cy = local_grf_y(chn_sample(CURSOR(cp), cp, cp->edit_ctr), ap);
   draw_cursor(cp);
   cp->cursor_visible = true;
+}
+
+static void draw_sonogram_cursor_1(chan_info *cp)
+{
+  axis_info *fap;
+  axis_context *fax;
+  fap = cp->fft->axis;
+  fax = cursor_context(cp);
+  /* fprintf(stderr,"draw (%d) at %d\n", cp->fft_cursor_visible, cp->fft_cx); */
+  draw_line(fax, cp->fft_cx, fap->y_axis_y0, cp->fft_cx, fap->y_axis_y1);
+}
+
+static void draw_sonogram_cursor(chan_info *cp)
+{
+  if ((cp->graph_transform_p) &&
+      (cp->show_sonogram_cursor) &&
+      (cp->fft) &&
+      (cp->transform_graph_type == GRAPH_AS_SONOGRAM))
+    {
+      if (cp->fft_cursor_visible) draw_sonogram_cursor_1(cp);
+      cp->fft_cx = local_grf_x((double)(CURSOR(cp)) / (double)SND_SRATE(cp->sound), cp->fft->axis);
+      draw_sonogram_cursor_1(cp);
+      cp->fft_cursor_visible = true;
+    }
 }
 
 kbd_cursor_t cursor_decision(chan_info *cp)
@@ -3429,7 +3456,14 @@ void handle_cursor(chan_info *cp, kbd_cursor_t redisplay)
 	  if (ap->x_ambit != 0.0)
 	    reset_x_display(cp, (gx - ap->xmin) / ap->x_ambit, ap->zx);
 	}
-      else {if (cp->cursor_on) draw_graph_cursor(cp);}
+      else 
+	{
+	  if (cp->cursor_on) 
+	    {
+	      draw_graph_cursor(cp);
+	      draw_sonogram_cursor(cp);
+	    }
+	}
     }
   {
     /* not sure about this */
@@ -3505,15 +3539,17 @@ void cursor_moveto_with_window(chan_info *cp, off_t samp, off_t left_samp, off_t
   snd_info *sp;
   off_t current_window_size;
   axis_info *ap;
-  axis_context *ax;
   sp = cp->sound;
   ap = cp->axis;
   if (cp->cursor_visible)
     {
-      ax = cursor_context(cp);
-      draw_line(ax, cp->cx, cp->cy - cp->cursor_size, cp->cx, cp->cy + cp->cursor_size);
-      draw_line(ax, cp->cx - cp->cursor_size, cp->cy, cp->cx + cp->cursor_size, cp->cy);
+      draw_cursor(cp);
       cp->cursor_visible = false; /* don't redraw at old location */
+    }
+  if (cp->fft_cursor_visible)
+    {
+      draw_sonogram_cursor_1(cp);
+      cp->fft_cursor_visible = false; /* don't redraw at old location */
     }
   CURSOR(cp) = samp;
   current_window_size = ap->hisamp - ap->losamp;
@@ -4421,7 +4457,7 @@ typedef enum {CP_GRAPH_TRANSFORM_P, CP_GRAPH_TIME_P, CP_FRAMES, CP_CURSOR, CP_GR
 	      CP_EDPOS_FRAMES, CP_X_AXIS_STYLE, CP_UPDATE_TIME, CP_UPDATE_TRANSFORM_GRAPH, CP_UPDATE_LISP, CP_PROPERTIES,
 	      CP_MIN_DB, CP_SPECTRO_X_ANGLE, CP_SPECTRO_Y_ANGLE, CP_SPECTRO_Z_ANGLE, CP_SPECTRO_X_SCALE, CP_SPECTRO_Y_SCALE, CP_SPECTRO_Z_SCALE,
 	      CP_SPECTRO_CUTOFF, CP_SPECTRO_START, CP_FFT_WINDOW_BETA, CP_AP_SX, CP_AP_SY, CP_AP_ZX, CP_AP_ZY, CP_MAXAMP, CP_EDPOS_MAXAMP,
-	      CP_BEATS_PER_MINUTE, CP_EDPOS_CURSOR, CP_SHOW_GRID
+	      CP_BEATS_PER_MINUTE, CP_EDPOS_CURSOR, CP_SHOW_GRID, CP_SHOW_SONOGRAM_CURSOR
 } cp_field_t;
 
 #define EDPOS_NOT_PROTECTED -1
@@ -4505,6 +4541,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, char *caller)
 	      break;
 	    case CP_SHOW_Y_ZERO:             return(C_TO_XEN_BOOLEAN(cp->show_y_zero));                        break;
 	    case CP_SHOW_GRID:               return(C_TO_XEN_BOOLEAN((bool)(cp->show_grid)));                  break;
+	    case CP_SHOW_SONOGRAM_CURSOR:    return(C_TO_XEN_BOOLEAN((bool)(cp->show_sonogram_cursor)));       break;
 	    case CP_SHOW_MARKS:              return(C_TO_XEN_BOOLEAN(cp->show_marks));                         break;
 	    case CP_TIME_GRAPH_TYPE:         return(C_TO_XEN_INT((int)(cp->time_graph_type)));                 break;
 	    case CP_WAVO_HOP:                return(C_TO_XEN_INT(cp->wavo_hop));                               break;
@@ -4757,6 +4794,11 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, char *calle
       cp->show_grid = (with_grid_t)(XEN_TO_C_BOOLEAN(on)); 
       update_graph(cp); 
       return(C_TO_XEN_BOOLEAN((bool)(cp->show_grid)));
+      break;
+    case CP_SHOW_SONOGRAM_CURSOR:
+      cp->show_sonogram_cursor = XEN_TO_C_BOOLEAN(on); 
+      update_graph(cp); 
+      return(C_TO_XEN_BOOLEAN(cp->show_sonogram_cursor));
       break;
     case CP_SHOW_MARKS:
       cp->show_marks = XEN_TO_C_BOOLEAN(on); 
@@ -5402,6 +5444,28 @@ static XEN g_set_show_grid(XEN on, XEN snd, XEN chn)
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_show_grid_reversed, g_set_show_grid)
+
+static XEN g_show_sonogram_cursor(XEN snd, XEN chn)
+{
+  #define H_show_sonogram_cursor "(" S_show_sonogram_cursor " (snd #f) (chn #f)): #t if Snd should display a cursor in the sonogram"
+  if (XEN_BOUND_P(snd))
+    return(channel_get(snd, chn, CP_SHOW_SONOGRAM_CURSOR, S_show_sonogram_cursor));
+  return(C_TO_XEN_BOOLEAN((bool)show_sonogram_cursor(ss)));
+}
+
+static XEN g_set_show_sonogram_cursor(XEN on, XEN snd, XEN chn) 
+{
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_show_sonogram_cursor, "a boolean");
+  if (XEN_BOUND_P(snd))
+    return(channel_set(snd, chn, on, CP_SHOW_SONOGRAM_CURSOR, S_setB S_show_sonogram_cursor));
+  else
+    {
+      set_show_sonogram_cursor(XEN_TO_C_BOOLEAN(on));
+      return(C_TO_XEN_BOOLEAN(show_sonogram_cursor(ss)));
+    }
+}
+
+WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_show_sonogram_cursor_reversed, g_set_show_sonogram_cursor)
 
 static XEN g_min_dB(XEN snd, XEN chn) 
 {
@@ -6852,6 +6916,8 @@ XEN_ARGIFY_2(g_show_y_zero_w, g_show_y_zero)
 XEN_ARGIFY_3(g_set_show_y_zero_w, g_set_show_y_zero)
 XEN_ARGIFY_2(g_show_grid_w, g_show_grid)
 XEN_ARGIFY_3(g_set_show_grid_w, g_set_show_grid)
+XEN_ARGIFY_2(g_show_sonogram_cursor_w, g_show_sonogram_cursor)
+XEN_ARGIFY_3(g_set_show_sonogram_cursor_w, g_set_show_sonogram_cursor)
 XEN_ARGIFY_2(g_show_marks_w, g_show_marks)
 XEN_ARGIFY_3(g_set_show_marks_w, g_set_show_marks)
 XEN_ARGIFY_2(g_time_graph_type_w, g_time_graph_type)
@@ -6985,6 +7051,8 @@ XEN_ARGIFY_2(g_update_transform_graph_w, g_update_transform_graph)
 #define g_set_show_y_zero_w g_set_show_y_zero
 #define g_show_grid_w g_show_grid
 #define g_set_show_grid_w g_set_show_grid
+#define g_show_sonogram_cursor_w g_show_sonogram_cursor
+#define g_set_show_sonogram_cursor_w g_set_show_sonogram_cursor
 #define g_show_marks_w g_show_marks
 #define g_set_show_marks_w g_set_show_marks
 #define g_time_graph_type_w g_time_graph_type
@@ -7165,6 +7233,9 @@ void g_init_chn(void)
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_show_grid, g_show_grid_w, H_show_grid,
 					    S_setB S_show_grid, g_set_show_grid_w, g_set_show_grid_reversed, 0, 2, 1, 2);
+  
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_show_sonogram_cursor, g_show_sonogram_cursor_w, H_show_sonogram_cursor,
+					    S_setB S_show_sonogram_cursor, g_set_show_sonogram_cursor_w, g_set_show_sonogram_cursor_reversed, 0, 2, 1, 2);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_show_marks, g_show_marks_w, H_show_marks,
 					    S_setB S_show_marks, g_set_show_marks_w, g_set_show_marks_reversed, 0, 2, 1, 2);

@@ -203,7 +203,6 @@ static void ps_fill_polygons(axis_info *ap, int j, Float *xpts, Float *ypts, Flo
 
 void ps_draw_grf_points(axis_info *ap, int j, Float y0, graph_style_t graph_style, int dot_size) 
 {
-  int i, gy0, size8, size4;
   switch (graph_style)
     {
     case GRAPH_LINES:
@@ -220,20 +219,23 @@ void ps_draw_grf_points(axis_info *ap, int j, Float y0, graph_style_t graph_styl
       if (dot_size > 1) ps_draw_dots(ap, j, xpts, ypts, dot_size);
       break;
     case GRAPH_LOLLIPOPS:
-      if (dot_size > 1) ps_draw_dots(ap, j, xpts, ypts, dot_size);
-      gy0 = (int)ps_grf_y(ap, y0);
-      size8 = dot_size / 8;
-      size4 = dot_size / 4;
-      if (size4 < 1) size4 = 1;
-      for (i = 0; i < j; i++)
-	{
-	  mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " %.2f %.2f %.2f %.2f RF\n",
-		       ps_grf_x(ap, xpts[i]) - size8,
-		       (float)gy0,
-		       (float)size4,
-		       ps_grf_y(ap, ypts[i]) - gy0);
-	  ps_write(pbuf);
-	}
+      {
+	int i, gy0, size8, size4;
+	if (dot_size > 1) ps_draw_dots(ap, j, xpts, ypts, dot_size);
+	gy0 = (int)ps_grf_y(ap, y0);
+	size8 = dot_size / 8;
+	size4 = dot_size / 4;
+	if (size4 < 1) size4 = 1;
+	for (i = 0; i < j; i++)
+	  {
+	    mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " %.2f %.2f %.2f %.2f RF\n",
+			 ps_grf_x(ap, xpts[i]) - size8,
+			 (float)gy0,
+			 (float)size4,
+			 ps_grf_y(ap, ypts[i]) - gy0);
+	    ps_write(pbuf);
+	  }
+      }
       break;
     }
 }
@@ -456,14 +458,14 @@ void ps_set_tiny_numbers_font(void)
 
 static char *snd_print_or_error(char *output)
 {
-  int j, i, err;
-  int *offsets = NULL;
-  snd_info *sp;
-  sync_info *si;
-  chan_info *ccp;
-  char *errstr = NULL;
   if ((output) && (*output))
     {
+      int j, i, err;
+      int *offsets = NULL;
+      snd_info *sp;
+      sync_info *si;
+      chan_info *ccp;
+      char *errstr = NULL;
       ccp = current_channel();
       if (ccp == NULL) 
 	return(copy_string(_("nothing to print?")));
@@ -516,9 +518,9 @@ void snd_print(char *output)
 
 void region_print(char *output, char* title, chan_info *cp)
 {
-  int err;
   if ((output) && (*output))
     {
+      int err;
       err = start_ps_graph(output, title);
       if (err == 0)
 	{
@@ -532,9 +534,9 @@ void region_print(char *output, char* title, chan_info *cp)
 
 void print_enved(char *output, int y0)
 {
-  int err;
   if ((output) && (*output))
     {
+      int err;
       err = start_ps_graph(output, "Envelope Editor");
       if (err == 0)
 	{
@@ -553,13 +555,13 @@ static XEN g_graph_to_ps(XEN filename)
   #define H_graph_to_ps "(" S_graph_to_ps " (filename eps-file)): write the current Snd displays to an EPS file"
 
   char *error,*file;
-  XEN result;
   if (XEN_STRING_P(filename))
     file = XEN_TO_C_STRING(filename);
   else file = eps_file(ss);
   error = snd_print_or_error(file);
   if (error)
     {
+      XEN result;
       result = C_TO_XEN_STRING(error);
       FREE(error);
       XEN_ERROR(CANNOT_PRINT,

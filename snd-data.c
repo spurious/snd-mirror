@@ -43,6 +43,8 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
   cp->tracks = NULL;
   cp->cursor_on = false;
   cp->cursor_visible = false;
+  cp->fft_cursor_visible = false;
+  cp->show_sonogram_cursor = show_sonogram_cursor(ss);
   cp->selection_visible = false;
   cp->cursor_style = cursor_style(ss);
   cp->cursor_size = cursor_size(ss);
@@ -103,6 +105,7 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
   cp->gsy = 1.0;
   cp->cx = 0;
   cp->cy = 0;
+  cp->fft_cx = 0;
   cp->selection_transform_size = 0;
   cp->last_search_result = SEARCH_OK;
   if (cp->last_sonogram) 
@@ -147,6 +150,8 @@ static chan_info *free_chan_info(chan_info *cp)
   cp->sound = NULL;  /* a backpointer */
   cp->cursor_on = false;
   cp->cursor_visible = false;
+  cp->fft_cursor_visible = false;
+  cp->show_sonogram_cursor = false;
   cp->selection_visible = false;
   if (cp->amp_control)
     {
@@ -441,12 +446,11 @@ bool map_over_chans(bool (*func)(chan_info *, void *), void *userptr)
 {
   /* argument to func is chan_info pointer+void pointer of user spec, return non-zero = abort map, skips inactive sounds */
   int i, j;
-  bool val;
-  snd_info *sp;
-  chan_info *cp;
-  val = false;
+  bool val = false;
   for (i = 0; i < ss->max_sounds; i++)
     {
+      snd_info *sp;
+      chan_info *cp;
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse == SOUND_NORMAL))
 	for (j = 0; j < sp->nchans; j++)
@@ -462,10 +466,10 @@ bool map_over_chans(bool (*func)(chan_info *, void *), void *userptr)
 void for_each_chan_1(void (*func)(chan_info *, void *), void *userptr)
 {
   int i, j;
-  snd_info *sp;
-  chan_info *cp;
   for (i = 0; i < ss->max_sounds; i++)
     {
+      snd_info *sp;
+      chan_info *cp;
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse == SOUND_NORMAL))
 	for (j = 0; j < sp->nchans; j++)
@@ -477,10 +481,10 @@ void for_each_chan_1(void (*func)(chan_info *, void *), void *userptr)
 void for_each_chan(void (*func)(chan_info *))
 {
   int i, j;
-  snd_info *sp;
-  chan_info *cp;
   for (i = 0; i < ss->max_sounds; i++)
     {
+      snd_info *sp;
+      chan_info *cp;
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse == SOUND_NORMAL))
 	for (j = 0; j < sp->nchans; j++)
@@ -493,9 +497,8 @@ bool map_over_sound_chans(snd_info *sp, bool (*func)(chan_info *, void *), void 
 {
   /* argument to func is chan_info pointer+void pointer of user spec, return non-zero = abort map, skips inactive sounds */
   int j;
-  bool val;
+  bool val = false;
   chan_info *cp;
-  val = false;
   for (j = 0; j < sp->nchans; j++)
     if ((cp = sp->chans[j]))
       {
@@ -518,11 +521,10 @@ bool map_over_sounds(bool (*func)(snd_info *, void *), void *userptr)
 {
   /* argument to func is snd_info pointer, return true = abort map, skips inactive sounds */
   int i;
-  bool val;
-  snd_info *sp;
-  val = false;
+  bool val = false;
   for (i = 0; i < ss->max_sounds; i++)
     {
+      snd_info *sp;
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse == SOUND_NORMAL))
 	{
@@ -536,9 +538,9 @@ bool map_over_sounds(bool (*func)(snd_info *, void *), void *userptr)
 void for_each_sound(void (*func)(snd_info *, void *), void *userptr)
 {
   int i;
-  snd_info *sp;
   for (i = 0; i < ss->max_sounds; i++)
     {
+      snd_info *sp;
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse == SOUND_NORMAL))
 	(*func)(sp, userptr);
@@ -548,11 +550,10 @@ void for_each_sound(void (*func)(snd_info *, void *), void *userptr)
 bool map_over_separate_chans(bool (*func)(chan_info *, void *), void *userptr)
 {
   int i;
-  bool val;
-  snd_info *sp;
-  val = false;
+  bool val =false;
   for (i = 0; i < ss->max_sounds; i++)
     {
+      snd_info *sp;
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse == SOUND_NORMAL))
 	{
@@ -574,11 +575,10 @@ bool snd_ok(snd_info *sp)
 
 int active_channels(virtual_channels_t count_virtual_channels)
 {
-  int chans, i;
-  snd_info *sp;
-  chans = 0;
+  int chans = 0, i;
   for (i = 0; i < ss->max_sounds; i++)
     {
+      snd_info *sp;
       sp = ss->sounds[i];
       if (snd_ok(sp) && 
 	  (sp->inuse != SOUND_WRAPPER))
@@ -644,10 +644,10 @@ int find_free_sound_slot_for_channel_display(void)
 
 static snd_info *any_active_sound(void)
 {
-  snd_info *sp;
   int i;
   for (i = 0; i < ss->max_sounds; i++)
     {
+      snd_info *sp;
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse == SOUND_NORMAL))
 	return(sp);
@@ -679,9 +679,9 @@ chan_info *any_selected_channel(snd_info *sp)
 
 chan_info *selected_channel(void)
 {
-  snd_info *sp;
   if (ss->selected_sound != NO_SELECTION)
     {
+      snd_info *sp;
       sp = ss->sounds[ss->selected_sound];
       if ((sp->inuse == SOUND_NORMAL) && (sp->selected_channel != NO_SELECTION))
 	return(sp->chans[sp->selected_channel]);
@@ -834,7 +834,6 @@ sync_info *snd_sync(int sync)
 {
   int i, j, k, chans = 0;
   snd_info *sp;
-  sync_info *si;
   for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
@@ -843,6 +842,7 @@ sync_info *snd_sync(int sync)
     }
   if (chans > 0)
     {
+      sync_info *si;
       si = (sync_info *)CALLOC(1, sizeof(sync_info));
       si->begs = (off_t *)CALLOC(chans, sizeof(off_t));
       si->cps = (chan_info **)CALLOC(chans, sizeof(chan_info *));
@@ -883,13 +883,13 @@ sync_info *sync_to_chan(chan_info *cp)
 
 snd_info *find_sound(const char *name, int nth)
 {
-  snd_info *sp;
   char *sname;
   int i, which = 0;
   if (name == NULL) return(NULL);
   sname = filename_without_home_directory(name);
   for (i = 0; i < ss->max_sounds; i++)
     {
+      snd_info *sp;
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse == SOUND_NORMAL))
 	if ((strcmp(name, sp->short_filename) == 0) || 
@@ -930,14 +930,14 @@ static char timestr[TIME_STR_SIZE];
 
 void display_info(snd_info *sp)
 {
-  char *buffer = NULL;
-  file_info *hdr;
-  char *comment = NULL, *ampstr = NULL;
   if (sp)
     {
+      file_info *hdr;
       hdr = sp->hdr;
       if (hdr)
 	{
+	  char *comment = NULL, *ampstr = NULL;
+	  char *buffer = NULL;
 	  comment = hdr->comment;
 	  while ((comment) && (*comment) && 
 		 (((*comment) == '\n') || 

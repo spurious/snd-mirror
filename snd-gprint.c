@@ -36,14 +36,13 @@ static printing_t printing = NOT_PRINTING;
 
 static void file_print_ok_callback(GtkWidget *w, gpointer context)
 {
-  bool print_it, quit = false;
-  int err = 0;
-  char *name;
+  bool quit = false;
   snd_info *nsp = NULL;
   if (printing) 
     ss->stopped_explicitly = true;
   else
     {
+      bool print_it;
       if (ss->print_choice == PRINT_SND)
 	{
 	  set_button_label(file_print_ok_button, _("Stop"));
@@ -56,6 +55,8 @@ static void file_print_ok_callback(GtkWidget *w, gpointer context)
       quit = (ss->print_choice == PRINT_ENV);
       if (print_it)
 	{
+	  char *name;
+	  int err = 0;
 	  name = snd_tempnam();
 	  switch (ss->print_choice)
 	    {
@@ -98,9 +99,10 @@ static void file_print_ok_callback(GtkWidget *w, gpointer context)
 
 static void start_file_print_dialog(void)
 {
-  GtkWidget *print_button, *help_button, *dismiss_button, *epsbox, *epslabel;
   if (!file_print_dialog)
     {
+      GtkWidget *print_button, *help_button, *dismiss_button, *epsbox, *epslabel;
+
       file_print_dialog = snd_gtk_dialog_new();
       SG_SIGNAL_CONNECT(file_print_dialog, "delete_event", file_print_delete_callback, NULL);
       gtk_window_set_title(GTK_WINDOW(file_print_dialog), _("Print"));
@@ -150,10 +152,10 @@ static void start_file_print_dialog(void)
 
 void file_print_callback(GtkWidget *w, gpointer context)
 {
-  snd_info *nsp;
   start_file_print_dialog();
   if (ss->print_choice == PRINT_SND)
     {
+      snd_info *nsp;
       nsp = any_selected_sound();
       mus_snprintf(print_string, PRINT_BUFFER_SIZE, _("print %s"), nsp->short_filename);
     }

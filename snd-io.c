@@ -5,10 +5,10 @@
 static void c_io_bufclr (snd_io *io, int beg)
 {
   int k, end;
-  mus_sample_t *j;
   end = io->bufsize;
   for (k = 0; k < io->chans; k++)
     {
+      mus_sample_t *j;
       j = io->arrays[k];
       if (j)
 	memset((void *)(j + beg), 0, (end - beg) * sizeof(mus_sample_t));
@@ -44,10 +44,10 @@ static void reposition_file_buffers(snd_data *sd, off_t index)
 {
   int fd = 0;
   bool reclose = false;
-  file_info *hdr;
   if (index < 0) index = 0; /* if reading in reverse, don't fall off the start of the buffer */
   if (sd->open == FD_CLOSED)
     {
+      file_info *hdr;
       /* try to open it with sndlib descriptors */
       fd = mus_file_open_read(sd->filename); 
       if (fd == -1) 
@@ -149,29 +149,26 @@ void file_buffers_back(off_t ind0, off_t ind1, off_t indx, snd_fd *sf, snd_data 
 
 static void close_temp_files(chan_info *cp, void *closed)
 {
-  int i, rtn;
-  snd_data *sd;
-  if (cp)
+  if ((cp) && (cp->sounds))
     {
-      if (cp->sounds)
+      int i, rtn;
+      rtn = (*((int *)closed));
+      for (i = 0; i < cp->sound_size; i++)
 	{
-	  rtn = (*((int *)closed));
-	  for (i = 0; i < cp->sound_size; i++)
+	  snd_data *sd;
+	  sd = cp->sounds[i];
+	  if ((sd) && 
+	      (sd->type == SND_DATA_FILE) && 
+	      (sd->io) && 
+	      (sd->open == FD_OPEN))
 	    {
-	      sd = cp->sounds[i];
-	      if ((sd) && 
-		  (sd->type == SND_DATA_FILE) && 
-		  (sd->io) && 
-		  (sd->open == FD_OPEN))
-		{
-		  mus_file_close(sd->io->fd);
-		  sd->open = FD_CLOSED;
-		  sd->io->fd = -1;
-		  rtn++;
-		}
+	      mus_file_close(sd->io->fd);
+	      sd->open = FD_CLOSED;
+	      sd->io->fd = -1;
+	      rtn++;
 	    }
-	  (*((int *)closed)) = rtn;
 	}
+      (*((int *)closed)) = rtn;
     }
 }
 
@@ -209,10 +206,10 @@ int snd_open_read(const char *arg)
 
 bool snd_overwrite_ok(const char *ofile)
 {
-  int fil;
   bool rtn = true;
   if (ask_before_overwrite(ss))
     {
+      int fil;
       fil = OPEN(ofile, O_RDONLY, O_NONBLOCK);
       if (fil != -1) 
 	{
@@ -347,10 +344,10 @@ void remember_temp(const char *filename, int chans)
 static void forget_temp(const char *filename, int chan)
 {
   int i, j;
-  bool happy = false;
-  tempfile_ctr *tmp;
   for (i = 0; i < tempfiles_size; i++)
     {
+      bool happy = false;
+      tempfile_ctr *tmp;
       tmp = tempfiles[i];
       if ((tmp) && (strcmp(filename, tmp->name) == 0))
 	{
@@ -377,9 +374,9 @@ static void forget_temp(const char *filename, int chan)
 static void tick_temp(const char *filename, int chan)
 {
   int i;
-  tempfile_ctr *tmp;
   for (i = 0; i < tempfiles_size; i++)
     {
+      tempfile_ctr *tmp;
       tmp = tempfiles[i];
       if ((tmp) && (strcmp(filename, tmp->name) == 0))
 	{

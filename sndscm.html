@@ -1254,7 +1254,7 @@ size.  The simpler one is:
 	     (if (and (<a class=quiet href="extsnd.html#transformgraphp">transform-graph?</a> snd chn) 
                       (= (<a class=quiet href="extsnd.html#transformgraphtype">transform-graph-type</a> snd chn) <a class=quiet href="extsnd.html#transformgraphtype">graph-once</a>))
 		 (begin
-		   (set! (<a class=quiet href="extsnd.html#lfftsize">transform-size</a> snd chn)
+		   (set! (<a class=quiet href="extsnd.html#transformsize">transform-size</a> snd chn)
 			 (expt 2 (ceiling 
 				  (/ (log (- (<a class=quiet href="extsnd.html#rightsample">right-sample</a> snd chn) (<a class=quiet href="extsnd.html#leftsample">left-sample</a> snd chn))) 
 				     (log 2.0)))))
@@ -4665,7 +4665,7 @@ end points.  (This is also "just-good-enough" software).
 This produced 418 edits, with a maxamp of 2.26.  So scale it back down:
 <code>(<a class=quiet href="extsnd.html#scaleto">scale-to</a> .9)</code>.
 Next I ran some large ffts to see what sort of overall spectrum I had:
-<code>(set! (<a class=quiet href="extsnd.html#lfftsize">transform-size</a>) (expt 2 23))</code>.
+<code>(set! (<a class=quiet href="extsnd.html#transformsize">transform-size</a>) (expt 2 23))</code>.
 This showed a massive DC component, and numerous harmonics of 60 Hz.
 I decided to get rid of the portions that were clearly noise.  Since I was dealing with
 telephone recordings, I assumed anything under 40 Hz or above

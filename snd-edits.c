@@ -22,11 +22,11 @@ static void after_edit(chan_info *cp)
 
 void free_sound_list(chan_info *cp)
 {
-  int i;
   if (cp)
     {
       if (cp->sounds)
 	{
+	  int i;
 	  if ((cp->sound) && (cp->sound->playing)) stop_playing_sound_without_hook(cp->sound, PLAY_CLOSE);
 	  for (i = 0; i < cp->sound_size; i++)
 	    if (cp->sounds[i]) 
@@ -42,14 +42,14 @@ void free_sound_list(chan_info *cp)
 static void release_pending_sounds(chan_info *cp, int edit_ctr)
 {
   /* look for buffers or temp files that are no longer reachable after pruning the edit tree */
-  int i;
-  snd_data *sf;
   if ((cp) && (cp->sounds))
     {
+      int i;
       if ((cp->sound) && (cp->sound->playing)) 
 	stop_playing_sound_without_hook(cp->sound, PLAY_CLOSE);
       for (i = 0; i < cp->sound_size; i++)
 	{
+	  snd_data *sf;
 	  sf = cp->sounds[i];
 	  if (sf)
 	    {
@@ -66,11 +66,11 @@ static void release_pending_sounds(chan_info *cp, int edit_ctr)
 
 static void prepare_sound_list (chan_info *cp)
 {
-  int i;
   cp->sound_ctr++;
   /* this is the only place the sound set is incremented */
   if (cp->sound_ctr >= cp->sound_size)
     {
+      int i;
       cp->sound_size += EDIT_ALLOC_SIZE;
       cp->sounds = (snd_data **)REALLOC(cp->sounds, cp->sound_size * sizeof(snd_data *));
       for (i = cp->sound_ctr; i < cp->sound_size; i++) cp->sounds[i] = NULL;
@@ -98,9 +98,9 @@ static int add_sound_file_to_edit_list(chan_info *cp, const char *name, snd_io *
 
 void free_ptree_list(chan_info *cp)
 {
-  int i;
   if (cp->ptrees)
     {
+      int i;
       for (i = 0; i < cp->ptree_size; i++)
  	{
 	  if (cp->ptrees[i]) 
@@ -170,9 +170,9 @@ static ed_list *free_ed_list(ed_list *ed, chan_info *cp);
 
 static void prune_edits(chan_info *cp, int edpt)
 {
-  int i;
   if (cp->edits[edpt]) 
     {
+      int i;
       if (ss->deferred_regions > 0)
 	sequester_deferred_regions(cp, edpt - 1);
       for (i = edpt; i < cp->edit_size; i++) 
@@ -211,7 +211,6 @@ static bool prepare_edit_list(chan_info *cp, off_t len, int pos, const char *cal
    *   we normally can't set up an edit list entry that refers to a situation
    *   that will be clobbered by prune_edits below
    */
-  int i;
   snd_info *sp;
   if (pos > cp->edit_ctr)
     {
@@ -238,6 +237,7 @@ static bool prepare_edit_list(chan_info *cp, off_t len, int pos, const char *cal
   cp->edit_ctr++;
   if (cp->edit_ctr >= cp->edit_size)
     {
+      int i;
       cp->edit_size += EDIT_ALLOC_SIZE;
       if (!cp->edits) cp->edits = (ed_list **)CALLOC(cp->edit_size, sizeof(ed_list *));
       else cp->edits = (ed_list **)REALLOC(cp->edits, cp->edit_size * sizeof(ed_list *));
@@ -270,10 +270,10 @@ static bool prepare_edit_list(chan_info *cp, off_t len, int pos, const char *cal
 static void reflect_sample_change_in_axis(chan_info *cp)
 {
   axis_info *ap;
-  off_t samps;
   ap = cp->axis;
   if (ap)
     {
+      off_t samps;
       samps = CURRENT_SAMPLES(cp);
       ap->xmax = (double)samps / (double)SND_SRATE(cp->sound);
       ap->x_ambit = ap->xmax - ap->xmin;
@@ -293,13 +293,13 @@ static void reflect_sample_change_in_axis(chan_info *cp)
 void reflect_file_change_in_label(chan_info *cp)
 {
   snd_info *sp;
-  char *starred_name;
-  int len;
   if (cp->edit_ctr == 0) return;
   sp = cp->sound;
   if (sp->sgx == NULL) return;
   if (!(cp->squelch_update))
     {
+      char *starred_name;
+      int len;
       len = strlen(shortname(sp)) + 16;
       starred_name = (char *)CALLOC(len, sizeof(char));
       strcpy(starred_name, shortname_indexed(sp));
@@ -324,11 +324,11 @@ static XEN save_state_hook;
 
 char *run_save_state_hook(char *file)
 {
-  XEN result = XEN_FALSE;
   char *filename;
   filename = copy_string(file);
   if (XEN_HOOKED(save_state_hook))
     {
+      XEN result = XEN_FALSE;
       XEN procs = XEN_HOOK_PROCEDURES(save_state_hook);
       while (XEN_NOT_NULL_P(procs))
 	{
@@ -365,12 +365,13 @@ char *run_save_state_hook(char *file)
 
 static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 {
-  snd_data *sd;
-  char *newname;
-  int i, snd;
+  int snd;
   snd = ed->sound_location; /* sound_location read only here (modulo error reporting) */
   if (snd < cp->sound_size)
     {
+      snd_data *sd;
+      char *newname;
+      int i;
       sd = cp->sounds[snd];
       if (sd->type == SND_DATA_BUFFER)
 	{
@@ -4797,7 +4798,6 @@ static ed_list *free_ed_list(ed_list *ed, chan_info *cp)
 void backup_edit_list(chan_info *cp)
 {
   int cur, i;
-  snd_data *sd;
   ed_list *old_ed, *new_ed;
   cur = cp->edit_ctr;
   if (cur <= 0) return;
@@ -4829,6 +4829,7 @@ void backup_edit_list(chan_info *cp)
   if (cp->sounds) /* protect from release_pending_sounds upon edit after undo after as-one-edit or whatever */
     for (i = 0; i < cp->sound_size; i++)
       {
+	snd_data *sd;
 	sd = cp->sounds[i];
 	if ((sd) && (sd->edit_ctr == cur)) sd->edit_ctr--;
       }
@@ -4839,9 +4840,9 @@ void backup_edit_list(chan_info *cp)
 
 void free_edit_list(chan_info *cp)
 {
-  int i;
   if (cp)
     {
+      int i;
       if (cp->edits)
 	{
 	  for (i = 0; i < cp->edit_size; i++)
@@ -4894,10 +4895,10 @@ ed_list *initial_ed_list(off_t beg, off_t end)
 snd_info *sound_is_silence(snd_info *sp)
 {
   int i;
-  chan_info *cp;
-  ed_list *ed;
   for (i = 0; i < sp->nchans; i++)
     {
+      chan_info *cp;
+      ed_list *ed;
       cp = sp->chans[i];
       ed = cp->edits[0];
       FRAGMENT_SCALER(ed, 0) = 0.0;
@@ -4914,11 +4915,11 @@ void allocate_ed_list(chan_info *cp)
 
 static void new_leading_ramp(ed_fragment *new_start, ed_fragment *old_start, off_t samp)
 {
-  Float rmp1, rmp0;
-  Float val;
-  double xpos = 0.0;
   if (RAMP_OP(ED_TYPE(old_start)))
     {
+      Float rmp1, rmp0;
+      Float val;
+      double xpos = 0.0;
       rmp0 = ED_RAMP_BEG(old_start);
       rmp1 = ED_RAMP_END(old_start);
       if (ED_LOCAL_END(old_start) == ED_LOCAL_POSITION(old_start))
@@ -4955,11 +4956,11 @@ static void new_leading_ramp(ed_fragment *new_start, ed_fragment *old_start, off
 
 static void new_trailing_ramp(ed_fragment *new_back, ed_fragment *old_back, off_t samp)
 {
-  Float rmp1, rmp0;
-  Float val;
-  double xpos = 0.0;
   if (RAMP_OP(ED_TYPE(old_back)))
     {
+      Float rmp1, rmp0;
+      Float val;
+      double xpos = 0.0;
       rmp0 = ED_RAMP_BEG(old_back);
       rmp1 = ED_RAMP_END(old_back);
       if (ED_LOCAL_END(old_back) == ED_LOCAL_POSITION(old_back))
@@ -5091,11 +5092,12 @@ static ed_list *insert_section_into_list(off_t samp, off_t num, ed_list *current
 
 static ed_list *insert_samples_into_list(off_t samp, off_t num, int pos, chan_info *cp, ed_fragment **rtn, const char *origin, Float scaler)
 {
-  ed_list *new_state, *old_state;
+  ed_list *new_state;
   new_state = insert_section_into_list(samp, num, cp->edits[pos], rtn, origin, scaler);
   new_state->edpos = pos;
   if ((cp->edits) && (cp->edit_ctr > 0))
     {
+      ed_list *old_state;
       old_state = cp->edits[cp->edit_ctr - 1];
       new_state->selection_beg = old_state->selection_beg;
       new_state->selection_end = old_state->selection_end;
@@ -5166,7 +5168,6 @@ bool file_insert_samples(off_t beg, off_t num, char *inserted_file, chan_info *c
 {
   off_t len;
   ed_fragment *cb;
-  int fd;
   file_info *hdr;
   len = cp->samples[edpos];
   if (beg >= len)
@@ -5181,6 +5182,7 @@ bool file_insert_samples(off_t beg, off_t num, char *inserted_file, chan_info *c
   hdr = make_file_info(inserted_file);
   if (hdr)
     {
+      int fd;
       fd = snd_open_read(inserted_file);
       mus_file_open_descriptors(fd,
 				inserted_file,
@@ -5314,10 +5316,11 @@ static ed_list *delete_section_from_list(off_t beg, off_t num, ed_list *current_
 
 static ed_list *delete_samples_from_list(off_t beg, off_t num, int pos, chan_info *cp, const char *origin)
 {
-  ed_list *new_state, *old_state;
+  ed_list *new_state;
   new_state = delete_section_from_list(beg, num, cp->edits[pos], origin);
   if ((cp->edits) && (cp->edit_ctr > 0))
     {
+      ed_list *old_state;
       old_state = cp->edits[cp->edit_ctr - 1];
       new_state->selection_beg = old_state->selection_beg;
       new_state->selection_end = old_state->selection_end;
@@ -5369,7 +5372,7 @@ bool delete_samples(off_t beg, off_t num, chan_info *cp, const char *origin, int
 static ed_list *change_samples_in_list(off_t beg, off_t num, int pos, chan_info *cp, ed_fragment **rtn, const char *origin)
 {
   /* delete + insert -- already checked that beg < cur end */
-  ed_list *new_state, *old_state;
+  ed_list *new_state;
   ed_list *del_state;
   off_t del_num, cur_end;
   ed_fragment *changed_f;
@@ -5383,6 +5386,7 @@ static ed_list *change_samples_in_list(off_t beg, off_t num, int pos, chan_info 
   (*rtn) = changed_f;
   if ((cp->edits) && (cp->edit_ctr > 0))
     {
+      ed_list *old_state;
       old_state = cp->edits[cp->edit_ctr - 1];
       new_state->selection_beg = old_state->selection_beg;
       new_state->selection_end = old_state->selection_end;
@@ -5395,14 +5399,14 @@ static ed_list *change_samples_in_list(off_t beg, off_t num, int pos, chan_info 
 bool file_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, int chan, 
 			 file_delete_t auto_delete, lock_mix_t lock, const char *origin, int edpos)
 {
-  off_t prev_len, new_len;
-  ed_fragment *cb;
-  int fd;
   file_info *hdr;
   ss->catch_message = NULL;
   hdr = make_file_info(tempfile);
   if (hdr)
     {
+      off_t prev_len, new_len;
+      ed_fragment *cb;
+      int fd;
       prev_len = cp->samples[edpos];
       if (beg >= prev_len)
 	{
@@ -5456,13 +5460,13 @@ bool file_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, in
 
 bool file_override_samples(off_t num, char *tempfile, chan_info *cp, int chan, file_delete_t auto_delete, lock_mix_t lock, const char *origin)
 {
-  int fd;
-  ed_list *e;
   file_info *hdr;
   ss->catch_message = NULL;
   hdr = make_file_info(tempfile);
   if (hdr) 
     {
+      int fd;
+      ed_list *e;
       if (num == -1) num = (hdr->samples / hdr->chans);
       if (!(prepare_edit_list(cp, num, AT_CURRENT_EDIT_POSITION, origin)))
 	{
@@ -5537,12 +5541,14 @@ bool ramp_or_ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos
 {
   /* from enveloper (snd-sig.c) */
   ed_list *ed;
-  int i, typ;
-  off_t end, loc, next_loc;
+  int i;
+  off_t end;
   ed = cp->edits[pos];
   end = beg + dur - 1;
   for (i = 0; i < ed->size - 1; i++) 
     {
+      off_t loc, next_loc;
+      int typ;
       if (FRAGMENT_SOUND(ed, i) == EDIT_LIST_END_MARK) return(false);
       loc = FRAGMENT_GLOBAL_POSITION(ed, i);
       if (loc > end) return(false);
@@ -5561,12 +5567,14 @@ bool ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos, bool i
 {
   /* from ptree-channel (snd-sig.c) check for pre-existing ptree-channel */
   ed_list *ed;
-  int i, typ;
-  off_t end, loc, next_loc;
+  int i;
+  off_t end;
   ed = cp->edits[pos];
   end = beg + dur - 1;
   for (i = 0; i < ed->size - 1; i++) 
     {
+      off_t loc, next_loc;
+      int typ;
       if (FRAGMENT_SOUND(ed, i) == EDIT_LIST_END_MARK) return(false);
       loc = FRAGMENT_GLOBAL_POSITION(ed, i);
       if (loc > end) return(false);
@@ -5587,11 +5595,12 @@ bool ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos, bool i
 bool ptree_or_sound_fragments_in_use(chan_info *cp, int pos)
 {
   /* (swap-channels): are there any non-simple/non-ramp edits? */
-  int i, index;
+  int i;
   ed_list *ed;
   ed = cp->edits[pos];
   for (i = 0; i < ed->size - 1; i++) 
     {
+      int index;
       index = FRAGMENT_SOUND(ed, i);
       if (index == EDIT_LIST_END_MARK) return(false);
       if ((index != 0) &&
@@ -6075,9 +6084,9 @@ bool ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, bo
 
 snd_fd *free_snd_fd_almost(snd_fd *sf)
 {
-  snd_data *sd;
   if (sf) 
     {
+      snd_data *sd;
       if ((XEN_BOUND_P(sf->closure)) && (!(XEN_EQ_P(sf->closure, empty_closure))))
  	{
  	  snd_unprotect_at(sf->protect);
@@ -6132,8 +6141,7 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
   snd_info *sp;
   ed_list *ed;
   int len, i;
-  off_t ind0, ind1, indx, curlen;
-  ed_fragment *cb;
+  off_t curlen;
   snd_data *first_snd = NULL;
   if (!(cp->active)) return(NULL);
   if ((edit_position < 0) || (edit_position > cp->edit_size)) return(NULL);
@@ -6172,10 +6180,12 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
   len = ed->size;
   for (i = 0; i < len; i++)
     {
+      ed_fragment *cb;
       cb = FRAGMENT(ed, i);
       if ((ED_GLOBAL_POSITION(cb) > samp) || 
 	  (ED_SOUND(cb) == EDIT_LIST_END_MARK))             /* i.e. we went one too far */
 	{
+	  off_t ind0, ind1, indx;
 	  sf->cb = FRAGMENT(ed, i - 1);  /* so back up one */
 	  sf->cbi = i - 1;
 	  sf->frag_pos = samp - READER_GLOBAL_POSITION(sf);
@@ -6249,13 +6259,13 @@ snd_fd *init_sample_read(off_t samp, chan_info *cp, read_direction_t direction)
 
 Float chn_sample(off_t samp, chan_info *cp, int pos)
 { 
-  snd_data *sd;
   snd_fd *sf;
   Float val = 0.0;
   if ((!(cp->active)) || (samp < 0) || (pos < 0) || (pos > cp->edit_size) || (samp >= cp->samples[pos])) return(0.0);
   /* try the quick case */
   if (pos == 0)
     {
+      snd_data *sd;
       sd = cp->sounds[0];
       if ((sd) && (sd->io) && (sd->io->beg <= samp) && (sd->io->end >= samp))
 	return(MUS_SAMPLE_TO_FLOAT(sd->buffered_data[samp - sd->io->beg]));
@@ -6273,11 +6283,11 @@ Float chn_sample(off_t samp, chan_info *cp, int pos)
 static void previous_sound_1 (snd_fd *sf) 
 {
   off_t ind0, ind1, indx;
-  snd_data *prev_snd;
   bool at_start;
   at_start = ((sf->cb == NULL) || (sf->current_sound == NULL) || (READER_LOCAL_POSITION(sf) >= sf->current_sound->io->beg));
   if (at_start)
     {
+      snd_data *prev_snd;
       if (sf->current_sound) 
 	{
 	  prev_snd = sf->current_sound; 
@@ -6364,13 +6374,13 @@ static Float previous_sound_as_float(snd_fd *sf)
 static void next_sound_1(snd_fd *sf)
 {
   off_t ind0, ind1, indx;
-  snd_data *nxt_snd;
   bool at_end = false;
   at_end = ((sf->cb == NULL) || 
 	    (sf->current_sound == NULL) || 
 	    (READER_LOCAL_END(sf) <= sf->current_sound->io->end));
   if (at_end)
     {
+      snd_data *nxt_snd;
       if (sf->current_sound) 
 	{
 	  nxt_snd = sf->current_sound; 
@@ -6658,11 +6668,7 @@ static bool save_edits_and_update_display(snd_info *sp)
 int save_edits_without_display(snd_info *sp, char *new_name, int type, int format, int srate, char *comment, XEN edpos, const char *caller, int arg_pos)
 { 
   /* file save as menu option -- changed 19-June-97 to retain current state after writing */
-  file_info *hdr, *ohdr;
-  int i, err = MUS_NO_ERROR, pos;
-  off_t frames = 0;
-  snd_fd **sf;
-  chan_info *cp;
+  file_info *hdr;
   if ((sp->read_only) && (strcmp(new_name, sp->filename) == 0))
     {
       if (strcmp(caller, "file save as") == 0)
@@ -6675,6 +6681,10 @@ int save_edits_without_display(snd_info *sp, char *new_name, int type, int forma
     {
       if (MUS_HEADER_TYPE_OK(type))
 	{
+	  snd_fd **sf;
+	  off_t frames = 0;
+	  int i, err = MUS_NO_ERROR;
+	  file_info *ohdr;
 	  ohdr = sp->hdr;
 	  hdr = copy_header(new_name, ohdr);
 	  hdr->format = format;
@@ -6687,6 +6697,8 @@ int save_edits_without_display(snd_info *sp, char *new_name, int type, int forma
 	  sf = (snd_fd **)MALLOC(sp->nchans * sizeof(snd_fd *));
 	  for (i = 0; i < sp->nchans; i++) 
 	    {
+	      int pos;
+	      chan_info *cp;
 	      cp = sp->chans[i];
 	      pos = to_c_edit_position(cp, edpos, caller, arg_pos);
 	      sf[i] = init_sample_read_any(0, cp, READ_FORWARD, pos);
@@ -6720,13 +6732,13 @@ int save_channel_edits(chan_info *cp, char *ofile, XEN edpos, const char *caller
   /* channel extraction -- does not (normally) cause reversion of edits, or change of in-window file, etc */
   snd_info *sp;
   int err, pos;
-  char *nfile;
   sp = cp->sound;
   err = MUS_NO_ERROR;
   if (!(snd_overwrite_ok(ofile))) return(MUS_NO_ERROR); /* no error because decision was explicit */
   pos = to_c_edit_position(cp, edpos, caller, arg_pos);
   if (strcmp(ofile, sp->filename) == 0)
     {
+      char *nfile;
       if (sp->read_only)
 	{
 	  report_in_minibuffer_and_save(sp, _("can't save (extract) channel as %s (%s is write-protected)"), ofile, sp->short_filename);
@@ -6750,16 +6762,15 @@ int save_channel_edits(chan_info *cp, char *ofile, XEN edpos, const char *caller
 
 void save_edits(snd_info *sp, void *ptr)
 {
-  int i;
-  bool err, need_save;
-  time_t current_write_date;
-  chan_info *cp;
   if (sp == NULL) return;
   if (!sp->read_only)
     {
+      int i;
+      bool err, need_save;
       need_save = false;
       for (i = 0; i < sp->nchans; i++)
 	{
+	  chan_info *cp;
 	  cp = sp->chans[i];
 	  if (cp->edit_ctr > 0) 
 	    {
@@ -6769,6 +6780,7 @@ void save_edits(snd_info *sp, void *ptr)
 	}
       if (need_save)
 	{
+	  time_t current_write_date;
 	  errno = 0;
 	  /* check for change to file while we were editing it */
 	  current_write_date = file_write_date(sp->filename);
@@ -6823,9 +6835,9 @@ void revert_edits(chan_info *cp, void *ptr)
 
 void undo_edit(chan_info *cp, int count)
 {
-  snd_info *sp;
   if ((cp) && (cp->edit_ctr > 0) && (count != 0))
     {
+      snd_info *sp;
       sp = cp->sound;
       cp->edit_ctr -= count; 
       if (cp->edit_ctr < 0) cp->edit_ctr = 0;
@@ -6856,21 +6868,20 @@ void undo_edit_with_sync(chan_info *cp, int count)
    *   was a no-op (scale by 1.0 etc), but not another, a subsequent undo with
    *   sync can end up in a state different from where it started.
    */
-  snd_info *sp;
-  int i;
-  sync_info *si;
   if (count == 0) return;
   if (count < 0)
     redo_edit_with_sync(cp, -count);
   else
     {
-      si = NULL;
       if (cp)
 	{
+	  snd_info *sp;
+	  sync_info *si = NULL;
 	  sp = cp->sound;
 	  if (sp->sync != 0) si = snd_sync(sp->sync);
 	  if (si)
 	    {
+	      int i;
 	      for (i = 0; i < si->chans; i++) undo_edit(si->cps[i], count);
 	      si = free_sync_info(si);
 	    }
@@ -6912,21 +6923,20 @@ void redo_edit(chan_info *cp, int count)
 
 void redo_edit_with_sync(chan_info *cp, int count)
 {
-  snd_info *sp;
-  int i;
-  sync_info *si;
   if (count == 0) return;
   if (count < 0)
     undo_edit_with_sync(cp, -count);
   else
     {
-      si = NULL;
       if (cp)
 	{
+	  snd_info *sp;
+	  sync_info *si = NULL;
 	  sp = cp->sound;
 	  if (sp->sync != 0) si = snd_sync(sp->sync);
 	  if (si)
 	    {
+	      int i;
 	      for (i = 0; i < si->chans; i++) redo_edit(si->cps[i], count);
 	      si = free_sync_info(si);
 	    }
@@ -6999,7 +7009,6 @@ static XEN g_edit_fragment(XEN uctr, XEN snd, XEN chn)
 associated with snd's channel chn; the returned value is a list (origin type start-sample samps)"
 
   chan_info *cp;
-  ed_list *ed;
   int ctr;
   ASSERT_CHANNEL(S_edit_fragment, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(uctr), uctr, XEN_ARG_1, S_edit_fragment, "an integer");
@@ -7008,6 +7017,7 @@ associated with snd's channel chn; the returned value is a list (origin type sta
   if ((ctr < cp->edit_size) && 
       (ctr >= 0))
     {
+      ed_list *ed;
       ed = cp->edits[ctr];
       if (ed) 
 	return(XEN_LIST_4(C_TO_XEN_STRING(ed->origin),
@@ -7131,7 +7141,7 @@ static int dangling_reader_size = 0;
 
 static void list_reader(snd_fd *fd)
 {
-  int i, loc = -1;
+  int loc = -1;
   if (dangling_reader_size == 0)
     {
       dangling_reader_size = DANGLING_READER_INCREMENT;
@@ -7140,6 +7150,7 @@ static void list_reader(snd_fd *fd)
     }
   else
     {
+      int i;
       for (i = 0; i < dangling_reader_size; i++)
 	if (dangling_readers[i] == NULL)
 	  {
@@ -7169,9 +7180,9 @@ static void unlist_reader(snd_fd *fd)
 
 static void sf_free(snd_fd *fd)
 {
-  snd_info *sp = NULL;
   if (fd) 
     {
+      snd_info *sp = NULL;
       /* changed to reflect g_free_sample_reader 29-Oct-00 */
       unlist_reader(fd);
       sp = fd->local_sp; 
@@ -7184,9 +7195,9 @@ static void sf_free(snd_fd *fd)
 void release_dangling_readers(chan_info *cp, int edit_ctr)
 {
   int i;
-  snd_fd *fd;
   for (i = 0; i < dangling_reader_size; i++)
     {
+      snd_fd *fd;
       fd = dangling_readers[i];
       if ((fd) && 
 	  (fd->cp == cp) && 
@@ -7421,9 +7432,9 @@ return a reader ready to access region's channel chn data starting at start-samp
 static XEN g_sample_reader_p(XEN obj)
 {
   #define H_sample_reader_p "(" S_sample_reader_p " obj) -> #t if obj is a sound sample-reader."
-  snd_fd *fd;
   if (sf_p(obj))
     {
+      snd_fd *fd;
       fd = TO_SAMPLE_READER(obj);
       return(C_TO_XEN_BOOLEAN(fd->region == INVALID_REGION));
     }
@@ -7433,9 +7444,9 @@ static XEN g_sample_reader_p(XEN obj)
 static XEN g_region_sample_reader_p(XEN obj)
 {
   #define H_region_sample_reader_p "(" S_region_sample_reader_p " obj) -> #t if obj is a region sample-reader."
-  snd_fd *fd;
   if (sf_p(obj))
     {
+      snd_fd *fd;
       fd = TO_SAMPLE_READER(obj);
       return(C_TO_XEN_BOOLEAN(fd->region != INVALID_REGION));
     }
@@ -7475,10 +7486,10 @@ static XEN g_copy_sample_reader(XEN obj)
 void release_region_readers(int reg)
 {
   int i, regval;
-  snd_fd *fd;
   regval = -2 - reg;
   for (i = 0; i < dangling_reader_size; i++)
     {
+      snd_fd *fd;
       fd = dangling_readers[i];
       if ((fd) && 
 	  (fd->edit_ctr == regval))
@@ -7513,11 +7524,11 @@ static XEN g_previous_sample(XEN obj)
 static XEN g_free_sample_reader(XEN obj)
 {
   #define H_free_sample_reader "(" S_free_sample_reader " reader): free a sample reader (of any kind)"
-  snd_fd *fd;
-  snd_info *sp = NULL;
   XEN_ASSERT_TYPE(ANY_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_free_sample_reader, "a sample-reader");
   if (sf_p(obj))
     {
+      snd_info *sp = NULL;
+      snd_fd *fd;
       fd = TO_SAMPLE_READER(obj);
       sp = fd->local_sp; 
       fd->local_sp = NULL;
@@ -7535,9 +7546,6 @@ static XEN g_save_edit_history(XEN filename, XEN snd, XEN chn)
 {
   #define H_save_edit_history "(" S_save_edit_history " filename (snd #f) (chn #f)): save snd channel's chn edit history in filename"
   FILE *fd;
-  int i, j;
-  snd_info *sp;
-  chan_info *cp;
   char *mcf = NULL;
   XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ARG_1, S_save_edit_history, "a string");
   ASSERT_CHANNEL(S_save_edit_history, snd, chn, 2);
@@ -7546,6 +7554,7 @@ static XEN g_save_edit_history(XEN filename, XEN snd, XEN chn)
   if (mcf) FREE(mcf);
   if (fd)
     {
+      chan_info *cp;
       if ((XEN_INTEGER_P(chn)) && (XEN_INTEGER_P(snd)))
 	{
 	  cp = get_cp(snd, chn, S_save_edit_history);
@@ -7553,6 +7562,8 @@ static XEN g_save_edit_history(XEN filename, XEN snd, XEN chn)
 	}
       else
 	{
+	  int i, j;
+	  snd_info *sp;
 	  if (XEN_INTEGER_P(snd))
 	    {
 	      sp = get_sp(snd, NO_PLAYERS);
@@ -7618,7 +7629,6 @@ static XEN g_redo(XEN ed_n, XEN snd_n, XEN chn_n) /* opt ed_n */
 void as_one_edit(chan_info *cp, int one_edit, const char *one_edit_origin) /* origin copied here */
 {
   bool need_backup = false;
-  ed_list *ed;
   need_backup = (cp->edit_ctr > one_edit);      /* cp->edit_ctr will be changing, so save this */
   if (cp->edit_ctr >= one_edit)                 /* ">=" here because the origin needs to be set even if there were no extra edits */
     {
@@ -7628,6 +7638,7 @@ void as_one_edit(chan_info *cp, int one_edit, const char *one_edit_origin) /* or
       if ((need_backup) && (cp->mixes)) backup_mix_list(cp, one_edit);
       if (one_edit_origin)
 	{
+	  ed_list *ed;
 	  ed = cp->edits[cp->edit_ctr];
 	  if (ed)
 	    {
@@ -7699,9 +7710,6 @@ static XEN g_as_one_edit(XEN proc, XEN origin)
 {
   #define H_as_one_edit "(" S_as_one_edit " thunk (origin #f)): evaluate thunk, collecting all edits into one from the edit historys' point of view"
   int chans;
-#if (!HAVE_GUILE_DYNAMIC_WIND)
-  int *cur_edits;
-#endif
   XEN result = XEN_FALSE;
   char *errmsg;
   XEN errstr;
@@ -7717,6 +7725,9 @@ static XEN g_as_one_edit(XEN proc, XEN origin)
   chans = active_channels(WITH_VIRTUAL_CHANNELS);
   if (chans > 0)
     {
+#if (!HAVE_GUILE_DYNAMIC_WIND)
+      int *cur_edits;
+#endif
       if (XEN_STRING_P(origin))
 	as_one_edit_origin = XEN_TO_C_STRING(origin);
       else as_one_edit_origin = NULL;
@@ -7753,9 +7764,9 @@ static XEN g_scale_sound_by(XEN scl, XEN beg, XEN num, XEN snd, XEN chn, XEN edp
 scale samples in the given sound/channel \
 between beg and beg + num by scaler.  If channel is omitted, the scaling applies to the entire sound (and edpos is ignored)."
 
+  int pos;
   snd_info *sp;
   chan_info *cp;
-  int i, pos;
   off_t samp;
   Float scaler;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(scl), scl, XEN_ARG_1, S_scale_sound_by, "a number");
@@ -7772,6 +7783,7 @@ between beg and beg + num by scaler.  If channel is omitted, the scaling applies
     }
   else
     {
+      int i;
       sp = get_sp(snd, NO_PLAYERS);
       if (sp == NULL)
 	return(snd_no_such_sound_error(S_scale_sound_by, snd));
@@ -7909,12 +7921,10 @@ between beg and beg + num to peak value norm.  If channel is omitted, the scalin
 static mus_sample_t *g_floats_to_samples(XEN obj, int *size, const char *caller, int position)
 {
   mus_sample_t *vals = NULL;
-  XEN *vdata;
-  vct *v;
   int i, num = 0;
-  XEN lst;
   if (XEN_LIST_P_WITH_LENGTH(obj, num))
     {
+      XEN lst;
       if (num == 0) return(NULL);
       if (((*size) > 0) && (num > (*size))) 
 	num = (*size);
@@ -7926,6 +7936,7 @@ static mus_sample_t *g_floats_to_samples(XEN obj, int *size, const char *caller,
     {
       if (XEN_VECTOR_P(obj))
 	{
+	  XEN *vdata;
 	  num = XEN_VECTOR_LENGTH(obj); 
 	  if (num == 0) return(NULL);
 	  if (((*size) > 0) && (num > (*size)))
@@ -7939,6 +7950,7 @@ static mus_sample_t *g_floats_to_samples(XEN obj, int *size, const char *caller,
 	{
 	  if (VCT_P(obj))
 	    {
+	      vct *v;
 	      v = TO_VCT(obj);
 	      num = v->length; 
 	      if (((*size) > 0) && (num > (*size)))
@@ -8025,12 +8037,10 @@ start-samp can be beyond current data end; if truncate is #t and start-samp is 0
 the new data's end."
 
   chan_info *cp;
-  mus_sample_t *ivals;
-  off_t len = 0, beg, curlen;
+  off_t len = 0, beg;
   bool override = false;
-  int inchan = 0, pos;
-  bool delete_file = false;
-  char *fname, *caller;
+  int pos;
+  char *caller;
   if (XEN_STRING_P(edname))
     caller = XEN_TO_C_STRING(edname);
   else caller = "set-samples";
@@ -8049,6 +8059,10 @@ the new data's end."
   override = XEN_TRUE_P(truncate);
   if (XEN_STRING_P(vect))
     {
+      int inchan = 0;
+      bool delete_file = false;
+      off_t curlen;
+      char *fname;
       curlen = CURRENT_SAMPLES(cp);
       fname = XEN_TO_C_STRING(vect);
       inchan = XEN_TO_C_INT_OR_ELSE(infile_chan, 0);
@@ -8060,6 +8074,7 @@ the new data's end."
     }
   else
     {
+      mus_sample_t *ivals;
       int ilen;
       ilen = (int)len;
       ivals = g_floats_to_samples(vect, &ilen, caller, 3);
@@ -8112,11 +8127,11 @@ static XEN g_vct_to_channel(XEN v, XEN beg, XEN dur, XEN snd_n, XEN chn_n, XEN e
 {
   #define H_vct_to_channel "(" S_vct_to_channel " vct (beg 0) (dur len) (snd #f) (chn #f) (edpos #f)): \
 set snd's channel chn's samples starting at beg for dur samps from vct data"
-  vct *v1;
   XEN_ASSERT_TYPE(VCT_P(v), v, XEN_ARG_1, S_vct_to_channel, "a vct");
   if (XEN_NOT_BOUND_P(beg)) beg = XEN_ZERO;
   if (XEN_NOT_BOUND_P(dur)) 
     {
+      vct *v1;
       v1 = TO_VCT(v);
       dur = C_TO_XEN_INT(v1->length);
     }
@@ -8234,10 +8249,8 @@ static XEN g_set_samples_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN ar
 static XEN g_change_samples_with_origin(XEN samp_0, XEN samps, XEN origin, XEN vect, XEN snd_n, XEN chn_n, XEN edpos)
 {
   chan_info *cp;
-  mus_sample_t *ivals;
   int pos;
   off_t beg, i, len;
-  XEN *vdata;
   XEN_ASSERT_TYPE(XEN_OFF_T_P(samp_0), samp_0, XEN_ARG_1, S_change_samples_with_origin, "an integer");
   XEN_ASSERT_TYPE(XEN_OFF_T_P(samps), samps, XEN_ARG_2, S_change_samples_with_origin, "an integer");
   XEN_ASSERT_TYPE(XEN_STRING_P(origin), origin, XEN_ARG_3, S_change_samples_with_origin, "a string");
@@ -8250,6 +8263,8 @@ static XEN g_change_samples_with_origin(XEN samp_0, XEN samps, XEN origin, XEN v
   pos = to_c_edit_position(cp, edpos, S_change_samples_with_origin, 7);
   if (XEN_VECTOR_P(vect))
     {
+      XEN *vdata;
+      mus_sample_t *ivals;
       ivals = (mus_sample_t *)MALLOC(len * sizeof(mus_sample_t));
       vdata = XEN_VECTOR_ELEMENTS(vect);
       if (len > XEN_VECTOR_LENGTH(vect)) len = XEN_VECTOR_LENGTH(vect);
@@ -8283,9 +8298,8 @@ insert channel file-chan of file (or all chans if file-chan is not given) into s
 inserts all of oboe.snd starting at sample 1000."
 
   chan_info *cp;
-  snd_info *sp;
   char *filename = NULL;
-  int nc, fchn, i;
+  int nc, i;
   bool delete_file = false;
   off_t beg = 0, len;
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, S_insert_sound, "a string");
@@ -8317,6 +8331,7 @@ inserts all of oboe.snd starting at sample 1000."
   else beg = CURSOR(cp);
   if (XEN_INTEGER_P(file_chn))
     {
+      int fchn;
       fchn = XEN_TO_C_INT(file_chn);
       if (fchn < mus_sound_chans(filename))
 	{
@@ -8334,6 +8349,7 @@ inserts all of oboe.snd starting at sample 1000."
     }
   else
     {
+      snd_info *sp;
       sp = cp->sound;
       if (sp->nchans < nc) nc = sp->nchans;
       for (i = 0; i < nc; i++)
@@ -8431,7 +8447,6 @@ static XEN g_insert_samples(XEN samp, XEN samps, XEN vect, XEN snd_n, XEN chn_n,
 insert data (either a vector, vct, or list of samples, or a filename) into snd's channel chn starting at 'start-samp' for 'samps' samples"
 
   chan_info *cp;
-  mus_sample_t *ivals;
   int pos;
   bool delete_file = false;
   off_t beg, len = 0;
@@ -8450,6 +8465,7 @@ insert data (either a vector, vct, or list of samples, or a filename) into snd's
   else
     {
       int ilen;
+      mus_sample_t *ivals;
       ilen = (int)len;
       ivals = g_floats_to_samples(vect, &ilen, S_insert_samples, 3);
       if (ivals)
@@ -8465,10 +8481,8 @@ insert data (either a vector, vct, or list of samples, or a filename) into snd's
 static XEN g_insert_samples_with_origin(XEN samp, XEN samps, XEN origin, XEN vect, XEN snd_n, XEN chn_n, XEN edpos)
 {
   chan_info *cp;
-  mus_sample_t *ivals;
   int pos;
-  off_t i, beg, len;
-  XEN *vdata;
+  off_t beg, len;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(samp), samp, XEN_ARG_1, S_insert_samples_with_origin, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(samps), samps, XEN_ARG_2, S_insert_samples_with_origin, "an integer");
   XEN_ASSERT_TYPE(XEN_STRING_P(origin), origin, XEN_ARG_3, S_insert_samples_with_origin, "a string");
@@ -8481,6 +8495,9 @@ static XEN g_insert_samples_with_origin(XEN samp, XEN samps, XEN origin, XEN vec
   pos = to_c_edit_position(cp, edpos, S_insert_samples_with_origin, 7);
   if (XEN_VECTOR_P(vect))
     {
+      XEN *vdata;
+      mus_sample_t *ivals;
+      int i;
       ivals = (mus_sample_t *)MALLOC(len * sizeof(mus_sample_t));
       vdata = XEN_VECTOR_ELEMENTS(vect);
       if (len > XEN_VECTOR_LENGTH(vect)) len = XEN_VECTOR_LENGTH(vect);
@@ -8533,11 +8550,11 @@ static off_t snd_to_sample_length(mus_any *ptr) {return(CURRENT_SAMPLES(((snd_to
 static int snd_to_sample_free(mus_any *ptr)
 {
   snd_to_sample *spl = (snd_to_sample *)ptr;
-  int i;
   if (spl)
     {
       if (spl->sfs)
 	{
+	  int i;
 	  for (i = 0; i < spl->chans; i++)
 	    if (spl->sfs[i])
 	      spl->sfs[i] = free_snd_fd(spl->sfs[i]);
@@ -8820,10 +8837,10 @@ static XEN g_make_xen_to_sample(XEN reader)
 be a function of 2 args: the sample to read (a long int), and the channel."
   mus_any *ge;
   char *errmsg;
-  XEN errstr;
   errmsg = procedure_ok(reader, 2, S_make_xen_to_sample, "reader", 1);
   if (errmsg)
     {
+      XEN errstr;
       errstr = C_TO_XEN_STRING(errmsg);
       FREE(errmsg);
       return(snd_bad_arity_error(S_make_xen_to_sample, errstr, reader));

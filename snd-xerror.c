@@ -121,9 +121,7 @@ static void no_callback(Widget w, XtPointer context, XtPointer info) {yes_or_no 
 bool snd_yes_or_no_p(const char *format, ...)
 {
   static Widget yes_or_no_dialog = NULL;
-  Arg args[20];
-  int n;
-  XmString titlestr, error_msg, xmstr1, xmstr2;
+  XmString error_msg;
   char *yes_buf;
 #if HAVE_VPRINTF
   va_list ap;
@@ -146,6 +144,10 @@ bool snd_yes_or_no_p(const char *format, ...)
   yes_or_no = false;
   if (!yes_or_no_dialog)
     {
+      Arg args[20];
+      int n;
+      XmString titlestr, xmstr1, xmstr2;
+
       titlestr = XmStringCreate(_("Yow!"), XmFONTLIST_DEFAULT_TAG);
       xmstr1 = XmStringCreate(_("Yes"), XmFONTLIST_DEFAULT_TAG);
       xmstr2 = XmStringCreate(_("No"), XmFONTLIST_DEFAULT_TAG);

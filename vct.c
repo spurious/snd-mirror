@@ -116,7 +116,7 @@ XEN_MAKE_OBJECT_FREE_PROCEDURE(vct, free_vct, vct_free)
 
 char *vct_to_string(vct *v)
 {
-  int len, i;
+  int len;
   char *buf;
   char flt[16];
   if (v == NULL) return(NULL); /* not copy_string! -- it's not a sndlib function */
@@ -126,6 +126,7 @@ char *vct_to_string(vct *v)
   sprintf(buf, "#<vct[len=%d]:", v->length);
   if (len > 0)
     {
+      int i;
       for (i = 0; i < len; i++)
 	{
 	  mus_snprintf(flt, 16, " %.3f", v->data[i]);
@@ -584,7 +585,6 @@ static XEN vct_reverse(XEN vobj, XEN size)
   #define H_vct_reverse "(" S_vct_reverse " vct len): in-place reversal of vct contents"
   vct *v;
   int i, j, len = -1;
-  Float temp;
   XEN_ASSERT_TYPE(VCT_P(vobj), vobj, XEN_ARG_1, S_vct_to_vector, "a vct");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(size), size, XEN_ARG_2, S_vct_to_vector, "an integer");
   v = TO_VCT(vobj);
@@ -595,6 +595,7 @@ static XEN vct_reverse(XEN vobj, XEN size)
   if (len == 1) return(vobj);
   for (i = 0, j = len - 1; i < j; i++, j--)
     {
+      Float temp;
       temp = v->data[i];
       v->data[i] = v->data[j];
       v->data[j] = temp;

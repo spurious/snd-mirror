@@ -149,12 +149,12 @@ static void get_fft_window_data(void)
 
 static void chans_transform_size(chan_info *cp, void *ptr) 
 {
-  fft_info *fp;
   int size;
   size = (*((int *)ptr));
   cp->transform_size = size;
   if (cp->fft) 
     {
+      fft_info *fp;
       fp = cp->fft;
       if (fp->size < size) fp->ok = false; /* "dirty" flag for fft data array = needs reallocation */
       fp->size = size;
@@ -410,10 +410,10 @@ void reflect_peaks_in_transform_dialog(void)
 static void peaks_activate_callback(Widget w, XtPointer context, XtPointer info)
 {
   char *str;
-  int new_peaks;
   str = XmTextFieldGetString(w);
   if ((str) && (*str))
     {
+      int new_peaks;
       new_peaks = string_to_int(str);
       if (new_peaks >= 1)
 	{
@@ -433,10 +433,10 @@ void reflect_log_freq_start_in_transform_dialog(void)
 static void log_freq_start_activate_callback(Widget w, XtPointer context, XtPointer info)
 {
   char *str;
-  Float new_lfb;
   str = XmTextFieldGetString(w);
   if ((str) && (*str))
     {
+      Float new_lfb;
       new_lfb = string_to_Float(str);
       if (new_lfb > 0.0)
 	set_log_freq_start(new_lfb);
@@ -453,10 +453,10 @@ void reflect_min_db_in_transform_dialog(void)
 static void min_db_activate_callback(Widget w, XtPointer context, XtPointer info)
 {
   char *str;
-  Float new_db;
   str = XmTextFieldGetString(w);
   if ((str) && (*str))
     {
+      Float new_db;
       new_db = string_to_Float(str);
       if (new_db < 0.0)
 	set_min_db(new_db);
@@ -467,21 +467,22 @@ static void min_db_activate_callback(Widget w, XtPointer context, XtPointer info
 static bool need_callback = true;
 Widget fire_up_transform_dialog(bool managed)
 {
-  XmString xhelp, xdismiss, xtitle, bstr, xorient;
-  Arg args[32];
-  XmString sizes[NUM_TRANSFORM_SIZES];
-  XmString *types;
-  XmString wavelets[NUM_WAVELETS];
-  XmString windows[GUI_NUM_FFT_WINDOWS];
-  XGCValues gv;
-  XtCallbackList n1, n2;
-  int size_pos = 1;
-  int n, i;
   Widget mainform, type_frame, type_form, type_label, size_frame, size_form, size_label, display_frame, display_form, display_label;
   Widget window_frame, window_form, window_label, wavelet_frame, wavelet_form, wavelet_label, graph_frame, graph_form, color_button;
     
   if (!transform_dialog)
     {
+      XmString xhelp, xdismiss, xtitle, bstr, xorient;
+      Arg args[32];
+      XmString sizes[NUM_TRANSFORM_SIZES];
+      XmString *types;
+      XmString wavelets[NUM_WAVELETS];
+      XmString windows[GUI_NUM_FFT_WINDOWS];
+      XGCValues gv;
+      XtCallbackList n1, n2;
+      int size_pos = 1;
+      int n, i;
+
       types = (XmString *)CALLOC(num_transform_types, sizeof(XmString));
       for (i = 0; i < NUM_TRANSFORM_SIZES; i++)
 	if (transform_sizes[i] == transform_size(ss))
@@ -1158,12 +1159,12 @@ void set_transform_graph_type(graph_type_t val)
 
 void set_transform_size(int val)
 {
-  int i;
   for_each_chan(force_fft_clear);
   in_set_transform_size(val);
   for_each_chan_1(chans_transform_size, (void *)(&val));
   if (transform_dialog)
     {
+      int i;
       for (i = 0; i < NUM_TRANSFORM_SIZES; i++)
 	if (transform_sizes[i] == val)
 	  {
@@ -1263,9 +1264,9 @@ void set_show_selection_transform(bool show)
 int add_transform_to_list(char *name)
 {
   /* put at end of list and return associated browse callback row */
-  XmString str;
   if (transform_dialog)
     {
+      XmString str;
       str = XmStringCreate(name, XmFONTLIST_DEFAULT_TAG);
       XmListAddItem(type_list, str, 0);
       XmStringFree(str);

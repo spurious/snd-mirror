@@ -29,15 +29,15 @@ static printing_t printing = NOT_PRINTING;
 
 static void file_print_ok_callback(Widget w, XtPointer context, XtPointer info)
 {
-  bool print_it, quit = false;
-  int err = 0;
-  char *name, *str = NULL;
+  bool quit = false;
   XmString plab, slab;
   snd_info *nsp = NULL;
   if (printing) 
     ss->stopped_explicitly = true;
   else
     {
+      bool print_it;
+      char *str = NULL;
       if (ss->print_choice == PRINT_SND)
 	{
 	  plab = XmStringCreate(_("Stop"), XmFONTLIST_DEFAULT_TAG);
@@ -56,6 +56,8 @@ static void file_print_ok_callback(Widget w, XtPointer context, XtPointer info)
       quit = (ss->print_choice == PRINT_ENV);
       if (print_it)
 	{
+	  int err = 0;
+	  char *name;
 	  name = snd_tempnam();
 	  switch (ss->print_choice)
 	    {
@@ -98,12 +100,13 @@ static void file_print_ok_callback(Widget w, XtPointer context, XtPointer info)
 
 static void start_file_print_dialog(XmString xmstr4, bool managed)
 {
-  Arg args[20];
-  int n;
-  Widget dl, rc;
-  XmString xmstr1, xmstr2, xmstr3, titlestr;
   if (!file_print_dialog)
     {
+      Widget dl, rc;
+      XmString xmstr1, xmstr2, xmstr3, titlestr;
+      Arg args[20];
+      int n;
+
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       xmstr1 = XmStringCreate(_("Print"), XmFONTLIST_DEFAULT_TAG);  /* "ok" here is confusing -- might mean, ok I'm done */
@@ -195,9 +198,9 @@ widget_t make_file_print_dialog(bool managed)
 void file_print_callback(Widget w, XtPointer context, XtPointer info)
 {
   XmString xmstr4;
-  snd_info *nsp;
   if (ss->print_choice == PRINT_SND)
     {
+      snd_info *nsp;
       nsp = any_selected_sound();
       if (!nsp) return;
       mus_snprintf(print_string, PRINT_BUFFER_SIZE, _("print %s"), nsp->short_filename);

@@ -135,10 +135,10 @@ static Float expand(dac_info *dp, Float sr, Float ex)
 
 static int prime (int num)
 {
-  int lim, i;
   if (num == 2) return(1);
   if ((num % 2) == 1)
     {
+      int lim, i;
       lim = (int)(sqrt(num));
       for (i = 3; i < lim; i += 2)
 	if ((num % i) == 0) 
@@ -207,11 +207,11 @@ static void reverb(rev_info *r, Float **rins, mus_sample_t **outs, int ind)
 
 static void free_reverb(void) 
 {
-  int i;
   rev_info *r;
   r = global_rev;
   if (r)
     {
+      int i;
       if (r->combs)
 	{
 	  for (i = 0; i < r->num_combs; i++) 
@@ -320,7 +320,6 @@ Float *sample_linear_env(env *e, int order)
   int ordp;
   Float *data = NULL;
   Float last_x, step, x;
-  int i, j;
   last_x = e->data[(e->pts - 1) * 2];
   step = 2 * last_x / ((Float)order - 1);
   ordp = e->pts; 
@@ -331,6 +330,7 @@ Float *sample_linear_env(env *e, int order)
   mus_error_set_handler(old_error_handler);
   if (!got_local_error)
     {
+      int i, j;
       data = (Float *)CALLOC(order, sizeof(Float));
       for (i = 0, x = 0.0; i < order / 2; i++, x += step) 
 	data[i] = mus_env_interp(x, ge);
@@ -344,7 +344,6 @@ Float *sample_linear_env(env *e, int order)
 static dac_info *make_dac_info(chan_info *cp, snd_info *sp, snd_fd *fd, int out_chan)
 {
   dac_info *dp;
-  Float *data = NULL;
   dp = (dac_info *)CALLOC(1, sizeof(dac_info)); /* only place dac_info is created */
   dp->stop_procedure = XEN_FALSE;
   dp->region = -1;
@@ -372,6 +371,7 @@ static dac_info *make_dac_info(chan_info *cp, snd_info *sp, snd_fd *fd, int out_
 	    dp->filtering = false;
 	  else
 	    {
+	      Float *data = NULL;
 	      data = sample_linear_env(sp->filter_control_envelope, sp->filter_control_order);
 	      if (data)
 		{
@@ -423,8 +423,6 @@ typedef enum {DAC_EXPAND, DAC_EXPAND_RAMP, DAC_EXPAND_LENGTH, DAC_EXPAND_HOP, DA
 static void dac_set_field(snd_info *sp, Float newval, dac_field_t field)
 {
   /* if sp == NULL, sets globally */
-  int i, val;
-  dac_info *dp;
   if (play_list)
     {
       if (field == DAC_REVERB_LOWPASS)
@@ -441,11 +439,14 @@ static void dac_set_field(snd_info *sp, Float newval, dac_field_t field)
 	    }
 	  else
 	    {
+	      int i;
 	      for (i = 0; i <= max_active_slot; i++)
 		{
+		  dac_info *dp;
 		  dp = play_list[i];
 		  if ((dp) && ((sp == NULL) || (sp == dp->sp)))
 		    {
+		      int val;
 		      switch (field)
 			{
 			case DAC_EXPAND: 
@@ -562,8 +563,15 @@ static void stop_playing_with_toggle(dac_info *dp, dac_toggle_t toggle, with_hoo
       if (sp->playing == 0) sp_stopping = true;
       if (sp_stopping)
 	{
-	  if ((sp->inuse == SOUND_NORMAL) && (sp->cursor_follows_play != DONT_FOLLOW))
-	    cursor_moveto_with_window(cp, cp->original_cursor, cp->original_left_sample, cp->original_window_size);
+	  if ((sp->inuse == SOUND_NORMAL) && (sp->cursor_follows_play != DONT_FOLLOW) && (sp->index >= 0))
+	    {
+	      int i;
+	      for (i = 0; i < sp->nchans; i++)
+		cursor_moveto_with_window(sp->chans[i], 
+					  sp->chans[i]->original_cursor, 
+					  sp->chans[i]->original_left_sample, 
+					  sp->chans[i]->original_window_size);
+	    }
 	  /* this is needed to get the original window/cursor location displayed after playing */
 	  if (sp->cursor_follows_play == FOLLOW_ONCE)
 	    sp->cursor_follows_play = DONT_FOLLOW;
@@ -622,10 +630,10 @@ static void stop_playing_sound_with_toggle(snd_info *sp, dac_toggle_t toggle, wi
   /* this needs to scan all current play_list members and remove any that are referring
    * to sp, even indirectly (as through the current selection)
    */
-  int i;
-  dac_info *dp;
   if ((sp) && (play_list))
     {
+      int i;
+      dac_info *dp;
       for (i = 0; i < dac_max_sounds; i++)
 	if ((play_list[i]) && 
 	    (sp == (play_list[i]->sp)))
@@ -655,10 +663,10 @@ void stop_playing_sound_no_toggle(snd_info *sp, play_stop_t reason) {stop_playin
 
 static void stop_playing_all_sounds_1(with_hook_t with_hook, play_stop_t reason)
 {
-  int i;
-  dac_info *dp;
   if (play_list)
     {
+      int i;
+      dac_info *dp;
       for (i = 0; i < dac_max_sounds; i++)
 	{
 	  dp = play_list[i];
@@ -687,10 +695,10 @@ void stop_playing_all_sounds_without_hook(play_stop_t reason) {stop_playing_all_
 
 void stop_playing_region(int n, play_stop_t reason)
 {
-  int i;
-  dac_info *dp;
   if (play_list)
     {
+      int i;
+      dac_info *dp;
       for (i = 0; i < dac_max_sounds; i++)
 	if ((play_list[i]) &&
 	    (play_list[i]->region == n))
@@ -781,12 +789,12 @@ static Cessate dac_in_background(Indicium ptr);
 
 static void start_dac(int srate, int channels, play_process_t background, Float decay)
 {
-  dac_info *dp;
   int i;
   /* look for channel folding cases etc */
   /* channels = how many output audio chans we have; dac_combines_channels sets whether to wrap or muffle chans outside this limit */
   for (i = 0; i <= max_active_slot; i++)
     {
+      dac_info *dp;
       dp = play_list[i];
       if ((dp) && (dac_running))                          /* dac_running also if apply */
 	{
@@ -1071,19 +1079,19 @@ void play_channels(chan_info **cps, int chans, off_t *starts, off_t *ur_ends, pl
 static dac_info *play_selection_1(play_process_t background, XEN edpos, const char *caller, int arg_pos, XEN stop_proc)
 {
   /* just plays the current selection */
-  int i;
-  off_t *ends;
   dac_info *dp = NULL;
-  snd_info *sp;
-  sync_info *si = NULL;
   if (selection_is_active())
     {
+      sync_info *si = NULL;
       si = selection_sync();
       if (si)
 	{
+	  int i;
+	  off_t *ends;
 	  ends = (off_t *)CALLOC(si->chans, sizeof(off_t));
 	  for (i = 0; i < si->chans; i++) 
 	    {
+	      snd_info *sp;
 	      sp = si->cps[i]->sound;
 	      if ((sp) && 
 		  (sp->speed_control != 1.0) && 
@@ -1239,6 +1247,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		  dp->cp->just_zero = true;
 		  loc = current_location(dp->chn_fd);
 		  loc -= (int)(cursor_location_offset(ss) * dp->cur_srate); /* should work in either direction */
+		  /* TODO: tracking cursor is broken in gtk */
 		  cursor_moveto_without_verbosity(dp->cp, loc);
 		  dp->cp->just_zero = old_just_zero;
 		}
@@ -1375,10 +1384,6 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		}
 	      if (dp->end != NO_END_SPECIFIED)
 		{
-
-		  /* TODO: tracking cursor is all messed up in gtk! */
-		  /* TODO: $#%@&! paned window for control panel leaks into listener in gtk */
-
 		  if (dp->end <= current_location(dp->chn_fd))
 		    dp->end = 0;
 		}
@@ -2243,9 +2248,9 @@ static XEN g_play_channel(XEN beg, XEN dur, XEN snd_n, XEN chn_n, XEN edpos, XEN
   #define H_play_channel "(" S_play_channel " (beg 0) (dur len) (snd #f) (chn #f) (pos -1) stop-proc out-chan): \
 play snd or snd's channel chn starting at beg for dur samps."
   XEN end = XEN_FALSE;
-  off_t len;
   if (XEN_INTEGER_P(dur))
     {
+      off_t len;
       len = XEN_TO_C_OFF_T(dur);
       if (len <= 0) return(XEN_FALSE);
       end = C_TO_XEN_OFF_T(beg_to_sample(beg, S_play_channel) + len);
@@ -2358,11 +2363,11 @@ static void free_player(snd_info *sp)
 
 void clear_players(void)
 {
-  int i, j, k;
-  snd_info *sp;
-  dac_info *dp;
+  int i;
   for (i = 0; i < players_size; i++)
     {
+      int j;
+      snd_info *sp;
       sp = players[i];
       if (sp)
 	for (j = 0; j < sp->nchans; j++)
@@ -2370,8 +2375,10 @@ void clear_players(void)
 	      (!(sp->chans[j]->active)) ||
 	      (sp->chans[j]->sound == NULL))
 	    {
+	      int k;
 	      for (k = 0; k <= max_active_slot; k++)
 		{
+		  dac_info *dp;
 		  dp = play_list[k];
 		  if ((dp) && (sp == dp->sp))
 		    {
@@ -2425,7 +2432,6 @@ static XEN g_player_home(XEN snd_chn)
 {
   #define H_player_home "(" S_player_home " player): a list of the sound index and channel number associated with player"
   int index;
-  chan_info *cp;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(snd_chn), snd_chn, XEN_ONLY_ARG, S_player_home, "an integer");
   index = -XEN_TO_C_INT(snd_chn);
   if ((index > 0) && 
@@ -2434,6 +2440,7 @@ static XEN g_player_home(XEN snd_chn)
       (players[index]->chans) &&
       (player_chans[index] < players[index]->nchans))
     {
+      chan_info *cp;
       cp = players[index]->chans[player_chans[index]]; /* trying to get back to the original sound index (not the player index) */
       if ((cp->sound) && (cp->sound->active))
 	return(XEN_LIST_2(C_TO_XEN_INT(cp->sound->index),
@@ -2452,9 +2459,7 @@ the audio hardware output channel to use to play this channel.  It defaults to t
 channel number in the sound that contains the channel being played."
 
   snd_info *sp = NULL;
-  chan_info *cp;
-  dac_info *dp = NULL;
-  int index, i, ochan = -1;
+  int index;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(snd_chn), snd_chn, XEN_ARG_1, S_add_player, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(start), start, XEN_ARG_2, S_add_player, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(end), end, XEN_ARG_3, S_add_player, "a number");
@@ -2467,6 +2472,9 @@ channel number in the sound that contains the channel being played."
   if ((index > 0) && (index < players_size)) sp = players[index];
   if (sp)
     {
+      chan_info *cp;
+      dac_info *dp = NULL;
+      int i, ochan = -1;
       if (play_list)
 	for (i = 0; i < dac_max_sounds; i++)
 	  if ((play_list[i]) && 

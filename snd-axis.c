@@ -323,9 +323,9 @@ static void draw_log_tick_label(char *label, int logx, int x_label_width, int ri
   lx0 = ap->x_label_x;
   lx1 = lx0 + x_label_width;
   label_width = number_width(label);
-  tx0 = logx - .45 * label_width;
+  tx0 = (int)(logx - .45 * label_width);
   if ((tx0 + label_width) > ap->x_axis_x1)
-    tx0 = logx - label_width + .75 * right_border_width;
+    tx0 = (int)(logx - label_width + .75 * right_border_width);
   tx1 = tx0 + label_width;
   if ((lx0 > tx1) || (lx1 < tx0))
     draw_label(label, tx0, ap->x_label_y + X_NUMBERS_OFFSET, ap, ax, printing);

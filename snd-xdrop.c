@@ -58,8 +58,6 @@ static Position mx, my;
 static void massage_selection(Widget w, XtPointer context, Atom *selection, Atom *type, XtPointer value, unsigned long *length, int *format)
 {
   char *str = NULL;
-  snd_info *sp = NULL;
-  Widget caller;
   str = atom_to_filename(*type, value, *length);
   if (str)
     {
@@ -68,6 +66,8 @@ static void massage_selection(Widget w, XtPointer context, Atom *selection, Atom
 				    XEN_LIST_1(C_TO_XEN_STRING(str)),
 				    "drop")))))
 	{
+	  snd_info *sp = NULL;
+	  Widget caller;
 	  caller = (Widget)((XmDropTransferEntry)context)->client_data;
 	  if (XmIsRowColumn(caller)) /* top menuBar widget or top level menu */
 	    {

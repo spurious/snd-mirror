@@ -39,16 +39,16 @@ static void prepare_global_search (chan_info *cp, void *g0)
 
 static bool run_global_search (gfd *g)
 {
-  int i, j, k;
-  Float samp;
-  XEN res;
-  snd_fd *sf;
   if ((XEN_PROCEDURE_P(ss->search_proc)) || (ss->search_tree))
     {
+      int i, j, k;
       for (i = 0; i < g->chans; i++)
 	{
 	  if (g->cps[i])
 	    {
+	      Float samp;
+	      XEN res;
+	      snd_fd *sf;
 	      if (!((g->cps[i])->sound)) return(STOP_SEARCHING);
 	      sf = g->fds[i]; 
 	      samp = read_sample_to_float(sf);
@@ -400,9 +400,7 @@ static void get_find_expression(snd_info *sp, int count)
 
 void cursor_search(chan_info *cp, int count)
 {
-  off_t samp;
   snd_info *sp;
-  char *s1, *s2;
   sp = cp->sound;
   if (search_in_progress) 
     report_in_minibuffer(sp, _("search in progress"));
@@ -410,6 +408,7 @@ void cursor_search(chan_info *cp, int count)
     {
       if (sp->searching)
 	{
+	  off_t samp;
 	  if ((!(XEN_PROCEDURE_P(sp->search_proc))) && (sp->search_tree == NULL)) return; /* no search expr */
 	  if (sp->search_expr)
 	    {
@@ -442,6 +441,7 @@ void cursor_search(chan_info *cp, int count)
 	    }
 	  else
 	    {
+	      char *s1, *s2;
 	      report_in_minibuffer(sp, _("%s%sy = %s at %s (" PRId64 ")"),
 				   (sp->search_expr) ? sp->search_expr : "",
 				   (sp->search_expr) ? ": " : "",
@@ -461,9 +461,9 @@ void cursor_search(chan_info *cp, int count)
 static XEN g_search_procedure(XEN snd)
 {
   #define H_search_procedure "(" S_search_procedure " (snd #f)): global (if no 'snd' specified) or sound-local search function"
-  snd_info *sp;
   if (XEN_BOUND_P(snd))
     {
+      snd_info *sp;
       ASSERT_SOUND(S_search_procedure, snd, 1);
       sp = get_sp(snd, NO_PLAYERS);
       if (sp)

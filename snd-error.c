@@ -17,7 +17,6 @@ static XEN snd_warning_hook;
 void snd_warning(char *format, ...)
 {
   va_list ap;
-  snd_info *sp;
   if (snd_error_buffer == NULL) 
     snd_error_buffer = (char *)CALLOC(SND_ERROR_BUFFER_SIZE, sizeof(char));
 #if HAVE_VPRINTF
@@ -35,6 +34,7 @@ void snd_warning(char *format, ...)
     return;
   if ((ss) && (!(ss->batch_mode)) && (ss->max_sounds > 0))
     {
+      snd_info *sp;
       sp = any_selected_sound();
       if ((sp) && (sp->active))
 	report_in_minibuffer(sp, snd_error_buffer);

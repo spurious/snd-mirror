@@ -6,13 +6,11 @@
 
 snd_info *snd_new_file(char *newname, int header_type, int data_format, int srate, int chans, char *new_comment, off_t samples)
 {
-  int chan, err;
-  off_t size;
-  unsigned char* buf;
   if (snd_overwrite_ok(newname))
     {
       if (mus_header_writable(header_type, data_format))
 	{
+	  int err;
 	  err = snd_write_header(newname, header_type, srate, chans, 0, /* 0 is loc? */
 				 samples * chans, /* total samples apparently */
 				 data_format, new_comment, 
@@ -21,6 +19,9 @@ snd_info *snd_new_file(char *newname, int header_type, int data_format, int srat
 	    snd_error(_("can't write %s"),newname);
 	  else
 	    {
+	      int chan;
+	      off_t size;
+	      unsigned char* buf;
 	      /* send out the initial samples */
 	      chan = snd_reopen_write(newname);
 	      lseek(chan, mus_header_data_location(), SEEK_SET);
@@ -83,13 +84,13 @@ void free_env_state(chan_info *cp)
 {
   /* env info is tied into cp->amp_envs immediately upon env start, released via normal cp cleanups */
   /* this function just cleans up the current work proc stuff (amp_env in this case can be incomplete) */
-  env_state *es;
-  chan_context *cgx;
   if (cp)
     {
+      chan_context *cgx;
       cgx = cp->cgx;
       if (cgx)
 	{
+	  env_state *es;
 	  es = (env_state *)(cgx->amp_env_state);
 	  if (es)
 	    {

@@ -204,11 +204,11 @@ typedef struct chan_info {
   bool graph_lisp_p;       /* is lisp graph active */
   void *lisp_info;
   bool cursor_on;          /* channel's cursor */
-  bool cursor_visible;     /* for XOR decisions */
+  bool cursor_visible, fft_cursor_visible;     /* for XOR decisions */
   off_t *cursors;          /* sample number (follows edit history) */
   int cursor_size;
   cursor_style_t cursor_style;
-  int cx, cy;               /* graph-relative cursor loc (for XOR) */
+  int cx, cy, fft_cx;      /* graph-relative cursor loc (for XOR) */
   int edit_ctr;            /* channel's edit history */
   int edit_size;           /* current edit list size */
   ed_list **edits;         /* the edit list */
@@ -222,7 +222,7 @@ typedef struct chan_info {
   int *init_locs, *xen_locs;
   void *enved_spectra;
   fft_info *fft;           /* possibly null fft data */
-  struct snd_info *sound; /* containing sound */
+  struct snd_info *sound;  /* containing sound */
   axis_info *axis;         /* time domain axis */
   mark ***marks;           /* current marks, indexed by edit_ctr, then mark_number, then the mark pointer */
   int marks_size;
@@ -233,6 +233,7 @@ typedef struct chan_info {
   env_info **amp_envs;
   void *sonogram_data;
   void *last_sonogram, *temp_sonogram;
+  bool show_sonogram_cursor;
   void *fft_data;          /* parallels sonogram -- try to avoid repeating large ffts needlessly */
   printing_t printing;
   fft_change_t fft_changed;
@@ -420,7 +421,7 @@ typedef struct snd_state {
   bool Data_Clipped, Show_Indices;
   int Cursor_Size;
   cursor_style_t Cursor_Style;
-  bool Filter_Control_In_Db, Filter_Control_In_Hz;
+  bool Filter_Control_In_Db, Filter_Control_In_Hz, Show_Sonogram_Cursor;
   int Speed_Control_Tones;
   speed_style_t Speed_Control_Style;
   Float Expand_Control_Length, Expand_Control_Ramp, Expand_Control_Hop, Expand_Control_Jitter;
