@@ -409,8 +409,10 @@ void reflect_mix_play_stop(void)
   mix_playing = false;
   mix_speaker_pix = speaker_off_pix;
   mix_track_speaker_pix = speaker_off_pix;
-  gdk_draw_drawable(GDK_DRAWABLE(mix_play_pix->window), ss->sgx->basic_gc, mix_speaker_pix, 0, 0, 2, 4, 12, 12);
-  gdk_draw_drawable(GDK_DRAWABLE(mix_track_play_pix->window), ss->sgx->basic_gc, mix_track_speaker_pix, 0, 0, 2, 4, 12, 12);
+  if (mix_play_pix)
+    gdk_draw_drawable(GDK_DRAWABLE(mix_play_pix->window), ss->sgx->basic_gc, mix_speaker_pix, 0, 0, 2, 4, 12, 12);
+  if (mix_track_play_pix)
+    gdk_draw_drawable(GDK_DRAWABLE(mix_track_play_pix->window), ss->sgx->basic_gc, mix_track_speaker_pix, 0, 0, 2, 4, 12, 12);
 }
 
 static void mix_play_callback(GtkWidget *w, gpointer context) 

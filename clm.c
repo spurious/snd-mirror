@@ -1850,6 +1850,8 @@ Float *mus_partials_to_polynomial(int npartials, Float *partials, mus_chebyshev_
   return(partials);
 }
 
+/* ---------------- polyshape ---------------- */
+
 /* PERHAPS: make-ssb-polyshape partials, ssb-polyshape gen driver fm
 
 	 (sin-coeffs (partials->polynomial normalized-partials mus-chebyshev-second-kind))

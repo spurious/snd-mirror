@@ -5,6 +5,30 @@
 
 (provide 'snd-dsp.scm)
 
+;;; src-duration (see src-channel in extsnd.html)
+
+(define (src-duration e)
+  (let* ((len (length e))
+	 (ex0 (car e))
+	 (ex1 (list-ref e (- len 2)))
+	 (all-x (- ex1 ex0))
+	 (dur 0.0))
+    (do ((i 0 (+ i 2)))
+	((>= i (- len 2)) dur)
+      (let* ((x0 (list-ref e i))
+	     (x1 (list-ref e (+ i 2)))
+	     (xy0 (list-ref e (+ i 1))) ; 1/x x points
+	     (y0 (/ 1.0 xy0))           ; related y value
+	     (xy1 (list-ref e (+ i 3)))
+	     (y1 (/ 1.0 xy1))
+	     (area (if (< (abs (- xy0 xy1)) .0001)
+		       (* y0 (/ (- x1 x0) all-x))
+		       (* (/ (- (log y1) (log y0)) 
+			     (- xy0 xy1)) 
+			  (/ (- x1 x0) all-x)))))
+	(set! dur (+ dur (abs area)))))))
+
+
 ;;; -------- Dolph-Chebyshev window
 ;;; 
 ;;; formula taken from Richard Lyons, "Understanding DSP"

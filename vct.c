@@ -737,6 +737,30 @@ static XEN g_rb_make_vct(int argc, XEN *argv, XEN self)
   }
   return(make_vct(size, (Float *)CALLOC(size, sizeof(Float))));
 }
+
+static XEN g_vct_map(XEN obj)
+{
+  if (rb_block_given_p()) {
+    long i;
+    vct *v = TO_VCT(obj);
+    Float *buffer = (Float *)CALLOC(v->length, sizeof(Float));
+    for(i = 0; i < v->length; i++)
+      buffer[i] = XEN_TO_C_DOUBLE(rb_yield(C_TO_XEN_DOUBLE(v->data[i])));
+    return make_vct(v->length, buffer);
+  }
+  return obj;
+}
+
+static XEN g_vct_map_store(XEN obj)
+{
+  if (rb_block_given_p()) {
+    long i;
+    vct *v = TO_VCT(obj);
+    for(i = 0; i < v->length; i++)
+      v->data[i] = XEN_TO_C_DOUBLE(rb_yield(C_TO_XEN_DOUBLE(v->data[i])));
+  }
+  return obj;
+}
 #endif
 
 #if WITH_MODULES
@@ -757,14 +781,18 @@ void vct_init(void)
 #if HAVE_RUBY
   rb_include_module(vct_tag, rb_mComparable);
   rb_include_module(vct_tag, rb_mEnumerable);
-  rb_define_method(vct_tag, "to_s", XEN_PROCEDURE_CAST print_vct, 0);
-  rb_define_method(vct_tag, "eql?", XEN_PROCEDURE_CAST equalp_vct, 1);
-  rb_define_method(vct_tag, "[]", XEN_PROCEDURE_CAST vct_ref, 1);
-  rb_define_method(vct_tag, "[]=", XEN_PROCEDURE_CAST vct_set, 2);
-  rb_define_method(vct_tag, "length", XEN_PROCEDURE_CAST vct_length, 0);
-  rb_define_method(vct_tag, "each", XEN_PROCEDURE_CAST vct_each, 0);
-  rb_define_method(vct_tag, "<=>", XEN_PROCEDURE_CAST vct_compare, 1);
+  rb_define_method(vct_tag, "to_s",     XEN_PROCEDURE_CAST print_vct, 0);
+  rb_define_method(vct_tag, "eql?",     XEN_PROCEDURE_CAST equalp_vct, 1);
+  rb_define_method(vct_tag, "[]",       XEN_PROCEDURE_CAST vct_ref, 1);
+  rb_define_method(vct_tag, "[]=",      XEN_PROCEDURE_CAST vct_set, 2);
+  rb_define_method(vct_tag, "length",   XEN_PROCEDURE_CAST vct_length, 0);
+  rb_define_method(vct_tag, "each",     XEN_PROCEDURE_CAST vct_each, 0);
+  rb_define_method(vct_tag, "<=>",      XEN_PROCEDURE_CAST vct_compare, 1);
   rb_define_singleton_method(vct_tag, "new", XEN_PROCEDURE_CAST g_rb_make_vct, -1);
+  rb_define_method(vct_tag, "map",      XEN_PROCEDURE_CAST g_vct_map, 0);
+  rb_define_method(vct_tag, "map!",     XEN_PROCEDURE_CAST g_vct_map_store, 0);
+  rb_define_method(vct_tag, "to_a",     XEN_PROCEDURE_CAST vct_to_vector, 0);
+  rb_define_method(rb_cArray, "to_vct", XEN_PROCEDURE_CAST vector_to_vct, 0);
 
   /* many more could be added */
 #endif
