@@ -5598,29 +5598,50 @@ void mus_xen_init(void)
   rb_define_method(mus_xen_tag, "to_s", XEN_PROCEDURE_CAST mus_xen_to_s, 0);
   rb_define_method(mus_xen_tag, "eql?", XEN_PROCEDURE_CAST equalp_mus_xen, 1);
   rb_define_method(mus_xen_tag, "frequency", XEN_PROCEDURE_CAST g_mus_frequency, 0);
+  rb_define_method(mus_xen_tag, "frequency=", XEN_PROCEDURE_CAST g_mus_set_frequency, 1);
   rb_define_method(mus_xen_tag, "phase", XEN_PROCEDURE_CAST g_mus_phase, 0);
+  rb_define_method(mus_xen_tag, "phase=", XEN_PROCEDURE_CAST g_mus_set_phase, 1);
   rb_define_method(mus_xen_tag, "scaler", XEN_PROCEDURE_CAST g_mus_scaler, 0);
+  rb_define_method(mus_xen_tag, "scaler=", XEN_PROCEDURE_CAST g_mus_set_scaler, 1);
   rb_define_method(mus_xen_tag, "width", XEN_PROCEDURE_CAST g_mus_width, 0);
+  rb_define_method(mus_xen_tag, "width=", XEN_PROCEDURE_CAST g_mus_set_width, 1);
   rb_define_method(mus_xen_tag, "offset", XEN_PROCEDURE_CAST g_mus_offset, 0);
+  rb_define_method(mus_xen_tag, "offset=", XEN_PROCEDURE_CAST g_mus_set_offset, 1);
   rb_define_method(mus_xen_tag, "reset", XEN_PROCEDURE_CAST g_mus_reset, 0);
   rb_define_method(mus_xen_tag, "length", XEN_PROCEDURE_CAST g_mus_length, 0);
+  rb_define_method(mus_xen_tag, "length=", XEN_PROCEDURE_CAST g_mus_set_length, 1);
   rb_define_method(mus_xen_tag, "data", XEN_PROCEDURE_CAST g_mus_data, 0);
+  rb_define_method(mus_xen_tag, "data=", XEN_PROCEDURE_CAST g_mus_set_data, 1);
   rb_define_method(mus_xen_tag, "feedforward", XEN_PROCEDURE_CAST g_mus_scaler, 0);
+  rb_define_method(mus_xen_tag, "feedforward=", XEN_PROCEDURE_CAST g_mus_set_scaler, 1);
   rb_define_method(mus_xen_tag, "feedback", XEN_PROCEDURE_CAST g_mus_increment, 0);
-  rb_define_method(mus_xen_tag, "cosines", XEN_PROCEDURE_CAST g_mus_channels, 0);
+  rb_define_method(mus_xen_tag, "feedback=", XEN_PROCEDURE_CAST g_mus_set_increment, 1);
+  rb_define_method(mus_xen_tag, "cosines", XEN_PROCEDURE_CAST g_mus_hop, 0);
+  rb_define_method(mus_xen_tag, "cosines=", XEN_PROCEDURE_CAST g_mus_set_hop, 1);
   rb_define_method(mus_xen_tag, "order", XEN_PROCEDURE_CAST g_mus_length, 0);
+  rb_define_method(mus_xen_tag, "order=", XEN_PROCEDURE_CAST g_mus_set_length, 1);
   rb_define_method(mus_xen_tag, "call", XEN_PROCEDURE_CAST mus_xen_apply, 2);
   rb_define_method(mus_xen_tag, "location", XEN_PROCEDURE_CAST g_mus_location, 0);
+  rb_define_method(mus_xen_tag, "location=", XEN_PROCEDURE_CAST g_mus_set_location, 1);
   rb_define_method(mus_xen_tag, "increment", XEN_PROCEDURE_CAST g_mus_increment, 0);
+  rb_define_method(mus_xen_tag, "increment=", XEN_PROCEDURE_CAST g_mus_set_increment, 1);
   rb_define_method(mus_xen_tag, "channels", XEN_PROCEDURE_CAST g_mus_channels, 0);
   rb_define_method(mus_xen_tag, "channel", XEN_PROCEDURE_CAST g_mus_channel, 0);
   rb_define_method(mus_xen_tag, "interp_type", XEN_PROCEDURE_CAST g_mus_interp_type, 0);
   rb_define_method(mus_xen_tag, "xcoeffs", XEN_PROCEDURE_CAST g_mus_xcoeffs, 0);
   rb_define_method(mus_xen_tag, "ycoeffs", XEN_PROCEDURE_CAST g_mus_ycoeffs, 0);
-  rb_define_method(mus_xen_tag, "xcoeff", XEN_PROCEDURE_CAST g_mus_xcoeff, 0);
-  rb_define_method(mus_xen_tag, "ycoeff", XEN_PROCEDURE_CAST g_mus_ycoeff, 0);
+  rb_define_method(mus_xen_tag, "xcoeff", XEN_PROCEDURE_CAST g_mus_xcoeff, 1);
+  rb_define_method(mus_xen_tag, "ycoeff", XEN_PROCEDURE_CAST g_mus_ycoeff, 1);
+  /*
+  rb_define_method(mus_xen_tag, "xcoeff=", XEN_PROCEDURE_CAST g_mus_set_xcoeff, 1);
+  rb_define_method(mus_xen_tag, "ycoeff=", XEN_PROCEDURE_CAST g_mus_set_ycoeff, 1);
+  */
   rb_define_method(mus_xen_tag, "ramp", XEN_PROCEDURE_CAST g_mus_ramp, 0);
+  rb_define_method(mus_xen_tag, "ramp=", XEN_PROCEDURE_CAST g_mus_set_ramp, 1);
   rb_define_method(mus_xen_tag, "hop", XEN_PROCEDURE_CAST g_mus_hop, 0);
+  rb_define_method(mus_xen_tag, "hop=", XEN_PROCEDURE_CAST g_mus_set_hop, 1);
+  rb_define_method(mus_xen_tag, "name", XEN_PROCEDURE_CAST g_mus_name, 0);
+  rb_define_method(mus_xen_tag, "file_name", XEN_PROCEDURE_CAST g_mus_file_name, 0);
 #endif  
 
   init_keywords();

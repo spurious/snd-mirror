@@ -339,7 +339,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->just_sounds_state = false;
   ss->deferred_regions = 0;
 
-#if USE_NO_GUI
+#if USE_NO_GUI || HAVE_RUBY
   ss->catch_exists = 1; /* scm_shell */
 #else
   ss->catch_exists = 0;

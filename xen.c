@@ -361,6 +361,42 @@ char *xen_help(char *name)
   return(NULL);
 }
 
+#define S_get_help "get_help"
+
+static XEN g_get_help(XEN name)
+{
+#define H_get_help S_get_help"(name = :"S_get_help") -- returns help strings of String or Symbol NAME (or of itself) if help is available."
+    char *subject = NULL;
+
+    XEN_ASSERT_TYPE((XEN_STRING_P(name) || XEN_SYMBOL_P(name)), name, XEN_ONLY_ARG, S_get_help, "char* or symbol");
+    if (XEN_NOT_BOUND_P(name))
+	return C_TO_XEN_STRING(H_get_help);
+    else {
+	if (XEN_STRING_P(name))
+	    subject = XEN_TO_C_STRING(name);
+	else if (XEN_SYMBOL_P(name))
+	    subject = XEN_SYMBOL_TO_C_STRING(name);
+	return C_TO_XEN_STRING(xen_help(subject));
+    }
+}
+
+#define S_add_help "add_help"
+
+static XEN g_add_help(XEN name, XEN help)
+{
+#define H_add_help S_add_help"(name, help) -- adds HELP strings to topic or function NAME (String or Symbol)."
+    char *subject = NULL;
+
+    XEN_ASSERT_TYPE((XEN_STRING_P(name) || XEN_SYMBOL_P(name)), name, XEN_ARG_1, S_add_help, "char * or symbol");
+    XEN_ASSERT_TYPE(XEN_STRING_P(help), help, XEN_ARG_2, S_add_help, "char *");
+    if (XEN_STRING_P(name))
+	subject = XEN_TO_C_STRING(name);
+    else if (XEN_SYMBOL_P(name))
+	subject = XEN_SYMBOL_TO_C_STRING(name);
+    xen_add_help(subject, XEN_TO_C_STRING(help));
+    return name;
+}
+
 void xen_initialize(void)
 {
   ruby_init();
@@ -926,16 +962,22 @@ static VALUE xen_rb_hook_inspect(VALUE hook)
 static VALUE xen_rb_make_hook(int argc, VALUE *argv, VALUE klass)
 {
   VALUE hook, name;
-  if (argc <= 3) {
+  if (argc <= 4) {
     hook = xen_rb_hook_initialize(argc, argv, hook_alloc(xen_rb_cHook));
   }
-  else {
+  else if (argc == 4 && rb_block_given_p()) {
     hook = xen_rb_hook_initialize(3, argv, hook_alloc(xen_rb_cHook));
     argv[0] = argv[3];
-    hook = xen_rb_hook_add_hook(1, argv, hook);
+    argv[1] = argv[4];
+    xen_rb_hook_add_hook(1, argv, hook);
+  }
+  else {
+      XEN_ERROR(XEN_ERROR_TYPE("wrong-number-of-args"),
+		XEN_LIST_1(C_TO_XEN_STRING("make_hook(name, arity = 0, help = \"\", hook_name = nil, &func)")));
   }
   /* set global ruby variable "#{@name} = #{hook}" */
   name = xen_rb_hook_name(hook);
+
   if (RSTRING(name)->ptr[0] != '$')
     name = C_TO_XEN_STRING(xen_scheme_global_variable_to_ruby(RSTRING(name)->ptr));
   XEN_ASSERT_TYPE(RSTRING(name)->len >= 2, name, XEN_ARG_1, c__FUNCTION__, "a char*, len >= 2");
@@ -977,6 +1019,9 @@ static VALUE xen_rb_new(int argc, VALUE *argv, VALUE klass)
 }
 #endif
 
+XEN_ARGIFY_1(g_get_help_w, g_get_help);
+XEN_NARGIFY_2(g_add_help_w, g_add_help);
+
 static bool hook_inited = false;
 
 void Init_Hook(void)
@@ -1013,6 +1058,9 @@ void Init_Hook(void)
   
   rb_define_global_function("make_hook", XEN_PROCEDURE_CAST xen_rb_make_hook, -1);
   rb_define_global_function("hook?", XEN_PROCEDURE_CAST xen_rb_hook_p, 1);
+
+  XEN_DEFINE_PROCEDURE(S_get_help,             g_get_help_w,             0, 1, 0, H_get_help);
+  XEN_DEFINE_PROCEDURE(S_add_help,             g_add_help_w,             2, 0, 0, H_add_help);
 }
 
 /* end of class Hook */

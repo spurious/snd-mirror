@@ -20,11 +20,12 @@
  */
 
 #define XEN_MAJOR_VERSION 1
-#define XEN_MINOR_VERSION 28
-#define XEN_VERSION "1.28"
+#define XEN_MINOR_VERSION 29
+#define XEN_VERSION "1.29"
 
 /* HISTORY:
  *
+ *  8-Mar-05:  Ruby improvements in keywords and hooks (Mike Scholz).
  *  7-Mar-05:  C99 complex number changes (creal, _Complex_I) (Steve Bankowitz).
  *  2-Mar-05:  Ruby support for off_t (Mike Scholz).
  *  4-Jan-05:  more guile changes, deprecated XEN_VECTOR_ELEMENTS.
@@ -994,7 +995,7 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
 #define XEN_REQUIRED_ARGS(Func)         xen_rb_required_args(XEN_ARITY(Func))
 #define XEN_REQUIRED_ARGS_OK(Func, Args) (xen_rb_required_args(XEN_ARITY(Func)) == Args)
 #define XEN_KEYWORD_EQ_P(k1, k2)        ((k1) == (k2))
-#define XEN_MAKE_KEYWORD(Arg)           C_STRING_TO_XEN_SYMBOL(Arg)
+#define XEN_MAKE_KEYWORD(Arg)           C_STRING_TO_XEN_SYMBOL(xen_scheme_procedure_to_ruby(Arg))
 #define XEN_YES_WE_HAVE(a)              rb_provide(a)
 #define XEN_DOCUMENTATION_SYMBOL        rb_intern("documentation")
 #define XEN_PROTECT_FROM_GC(Var)        rb_gc_register_address(&(Var))

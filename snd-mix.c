@@ -4831,6 +4831,7 @@ void g_init_mix(void)
 #endif
 #if HAVE_RUBY
   rb_define_method(mf_tag, "to_s", XEN_PROCEDURE_CAST print_mf, 0);
+  rb_define_method(mf_tag, "call", XEN_PROCEDURE_CAST g_read_mix_sample, 0);
 #endif
 
   XEN_DEFINE_PROCEDURE(S_make_mix_sample_reader, g_make_mix_sample_reader_w, 1, 1, 0, H_make_mix_sample_reader);
@@ -8075,6 +8076,7 @@ void g_init_track(void)
   tf_tag = XEN_MAKE_OBJECT_TYPE("TrackSampleReader", sizeof(track_fd));
 #if HAVE_RUBY
   rb_define_method(tf_tag, "to_s", XEN_PROCEDURE_CAST print_tf, 0);
+  rb_define_method(mf_tag, "call", XEN_PROCEDURE_CAST g_read_track_sample, 0);
 #endif
 #if HAVE_GUILE
   scm_set_smob_print(tf_tag, print_tf);
