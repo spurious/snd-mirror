@@ -471,7 +471,6 @@ static void fill_sf_record(const char *name, sound_file *sf)
   int i;
   sf->data_location = mus_header_data_location();
   sf->samples = mus_header_samples();
-  if (sf->samples < 0) sf->samples = 0;
   sf->data_format = mus_header_format();
   sf->srate = mus_header_srate();
   if (sf->srate < 0) sf->srate = 0;

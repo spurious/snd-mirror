@@ -613,7 +613,7 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int reque
   long sr[2];
   int resind;
 #endif
-  int i, line, size, sgi_format;
+  int i, line, sgi_format;
   start_sgi_print();
   dev = MUS_AUDIO_DEVICE(ur_dev);
   line = -1;
@@ -629,11 +629,6 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int reque
   channels[line] = chans;
   line_out[line] = 0;
   datum_size[line] = mus_data_format_to_bytes_per_sample(format);
-  if (requested_size == 0) 
-    size = 1024 * chans;
-  else size = check_queue_size(requested_size, chans);
-                /* there are lots of ways this may be called in terms of the desired "device" */
-                /* in CLM, the caller specifies which device, in Snd we try to open everything available */
 #ifdef AL_RESOURCE
   if (dev == MUS_AUDIO_DEFAULT)
     device[line] = AL_DEFAULT_INPUT;

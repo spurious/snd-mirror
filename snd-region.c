@@ -761,7 +761,6 @@ static void deferred_region_to_temp_file(region *r)
   datumb = mus_data_format_to_bytes_per_sample(hdr->format);
 
   /* if edit_ctr == 0, can't we just copy the relevant portion via block-reads/writes? */
-  /* amp_env_section(drp->cps[i], drp->begs[i], drp->lens[i], drp->edpos[i]) */
 
   for (i = 0; i < r->chans; i++)
     {

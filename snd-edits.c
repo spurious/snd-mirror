@@ -337,6 +337,8 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 				      strerror(errno),
 				      __FILE__, __LINE__, __FUNCTION__);
 			  fprintf(fd, ")");
+			  FREE(ibufs[0]);
+			  FREE(ibufs);
 			  return;
 			}
 		    }

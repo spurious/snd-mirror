@@ -1181,6 +1181,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
       scale_by(cp, scalers, si->chans, FALSE);
       sp->sync = old_sync;
       FREE(scalers);
+      si = free_sync_info(si);
     }
   else
     {

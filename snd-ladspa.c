@@ -100,7 +100,7 @@ char * packLADSPAFilename(const char * pcFilename) {
     if (strcmp(".so", pcEnd - 3) == 0)
       pcEnd -= 3;
 
-  pcPackedFilename = MALLOC(pcEnd - pcStart + 1);
+  pcPackedFilename = (char *)MALLOC(pcEnd - pcStart + 1);
   memcpy(pcPackedFilename, pcStart, pcEnd - pcStart);
   pcPackedFilename[pcEnd - pcStart] = '\0';
 
@@ -112,19 +112,32 @@ char * packLADSPAFilename(const char * pcFilename) {
 static void unloadLADSPA() {
 
   long lIndex;
+#ifndef __cplusplus
   void * pvPluginHandle;
   LADSPAPluginInfo * psInfo;
-
   if (g_lLADSPARepositoryCount > 0)
     pvPluginHandle = g_psLADSPARepository[0]->m_pvPluginHandle + 1;
-
+#else
+  LADSPAPluginInfo *pvPluginHandle;
+  LADSPAPluginInfo * psInfo;
+  if (g_lLADSPARepositoryCount > 0)
+    {
+      pvPluginHandle = (LADSPAPluginInfo *)(g_psLADSPARepository[0]->m_pvPluginHandle);
+      pvPluginHandle++;
+    }
+#endif
   for (lIndex = 0; lIndex < g_lLADSPARepositoryCount; lIndex++) {
     psInfo = g_psLADSPARepository[lIndex];
     free(psInfo->m_pcPackedFilename);
     /* Don't free Label or Descriptor - this memory is owned by the
        relevant plugin library. */
+#ifndef __cplusplus
     if (pvPluginHandle != psInfo->m_pvPluginHandle) {
       pvPluginHandle = psInfo->m_pvPluginHandle;
+#else
+    if (pvPluginHandle != psInfo->m_pvPluginHandle) {
+      pvPluginHandle = (LADSPAPluginInfo *)(psInfo->m_pvPluginHandle);
+#endif
       dlclose(pvPluginHandle);
     }
     free(psInfo);
@@ -153,7 +166,7 @@ static void loadLADSPALibrary(void * pvPluginHandle,
 	psOldRepository = g_psLADSPARepository;
 	lNewCapacity = (g_lLADSPARepositoryCapacity
 			+ LADSPA_REPOSITORY_CAPACITY_STEP);
-	g_psLADSPARepository = MALLOC(sizeof(LADSPAPluginInfo *) * lNewCapacity);
+	g_psLADSPARepository = (LADSPAPluginInfo **)MALLOC(sizeof(LADSPAPluginInfo *) * lNewCapacity);
 	memcpy(g_psLADSPARepository,
 	       psOldRepository,
 	       sizeof(LADSPAPluginInfo *) * g_lLADSPARepositoryCount);
@@ -162,7 +175,7 @@ static void loadLADSPALibrary(void * pvPluginHandle,
       }
       psInfo
 	= g_psLADSPARepository[g_lLADSPARepositoryCount++]
-	= MALLOC(sizeof(LADSPAPluginInfo));
+	= (LADSPAPluginInfo *)MALLOC(sizeof(LADSPAPluginInfo));
       psInfo->m_pcPackedFilename = packLADSPAFilename(pcFilename);
       psInfo->m_pcLabel = psDescriptor->Label;
       psInfo->m_psDescriptor = psDescriptor;
@@ -204,7 +217,7 @@ static void loadLADSPADirectory(const char * pcDirectory) {
       return;
     }
 
-    pcFilename = MALLOC(lDirLength
+    pcFilename = (char *)MALLOC(lDirLength
 			+ strlen(psDirectoryEntry->d_name)
 			+ 1 + iNeedSlash);
     strcpy(pcFilename, pcDirectory);
@@ -241,7 +254,7 @@ static void loadLADSPA() {
   const char * pcStart;
 
   g_bLADSPAInitialised = 1;
-  g_psLADSPARepository = MALLOC(sizeof(LADSPAPluginInfo *)
+  g_psLADSPARepository = (LADSPAPluginInfo **)MALLOC(sizeof(LADSPAPluginInfo *)
 				* LADSPA_REPOSITORY_CAPACITY_STEP);
   g_lLADSPARepositoryCapacity = LADSPA_REPOSITORY_CAPACITY_STEP;
   g_lLADSPARepositoryCount = 0;
@@ -260,7 +273,7 @@ static void loadLADSPA() {
     while (*pcEnd != ':' && *pcEnd != '\0')
       pcEnd++;
 
-    pcBuffer = MALLOC(1 + pcEnd - pcStart);
+    pcBuffer = (char *)MALLOC(1 + pcEnd - pcStart);
     if (pcEnd > pcStart)
       strncpy(pcBuffer, pcStart, pcEnd - pcStart);
     pcBuffer[pcEnd - pcStart] = '\0';
@@ -414,6 +427,7 @@ LADSPA plugins are supported by Snd at this time."
 /*****************************************************************************/
 
 snd_fd *get_sf(XEN obj);
+int sf_p(XEN obj);
 
 //FIXME: We could improve this function to receive a list of plugin
 //configurations for chain processing. Also, is multiple channel
@@ -538,7 +552,7 @@ by any arguments. (Information about about parameters can be acquired using anal
 	     ladspa_plugin_configuration,
 	     XEN_ARG_2,
 	     S_apply_ladspa, "a list");
-  pfControls = MALLOC(psDescriptor->PortCount * sizeof(LADSPA_Data));
+  pfControls = (LADSPA_Data *)MALLOC(psDescriptor->PortCount * sizeof(LADSPA_Data));
 
   /* Get parameters. */
   xenParameters = XEN_CDR(XEN_CDR(ladspa_plugin_configuration));
@@ -559,7 +573,7 @@ by any arguments. (Information about about parameters can be acquired using anal
   }
 
   lSampleRate = (unsigned long)(sp->hdr->srate);
-  psHandle = psDescriptor->instantiate(psDescriptor, lSampleRate);
+  psHandle = (void **)psDescriptor->instantiate(psDescriptor, lSampleRate);
   if (!psHandle) {
     snd_error("Plugin did not instantiate.\n");
     //FIXME: How to report?

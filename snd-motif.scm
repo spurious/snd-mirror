@@ -1081,12 +1081,13 @@ Reverb-feedback sets the scaler on the feedback.\n\
   (define (open-remarks snd)
     (do ((i 0 (1+ i)))
 	((= i (chans snd)))
-      (add-hook! (edit-hook snd i) (lambda () make-mark-list snd i))
-      (add-hook! (undo-hook snd i) (lambda () make-mark-list snd i))))
+      (add-hook! (edit-hook snd i) (lambda () (make-mark-list snd i)))
+      (add-hook! (undo-hook snd i) (lambda () (make-mark-list snd i)))))
 
   (add-hook! mark-hook remark)
   (add-hook! close-hook unremark)
-  (add-hook! after-open-hook open-remarks))
+  (add-hook! after-open-hook open-remarks)
+  )
 
 
 ;;; -------- select-file --------
