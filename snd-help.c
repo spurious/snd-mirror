@@ -556,13 +556,15 @@ variable " S_transform_normalization " to " S_dont_normalize ".",
 		      snd_xref_urls("FFT"));
 }
 
-static char *control_xrefs[8] = {
+static char *control_xrefs[10] = {
   "various control panel variables: {Control panel}",
   "amplitude: {scale-by}",
   "speed or srate: {src-sound}",
   "expand: {granulate}",
   "contrast: {contrast-enhancement}",
   "filter: {filter-sound}",
+  "{apply-controls}",
+  "(controls->channel}",
   NULL};
 
 void controls_help(void) 

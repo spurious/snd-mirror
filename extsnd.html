@@ -7911,6 +7911,25 @@ For many examples see new-effects.scm.
 <tr><td colspan=2></td></tr>
 
 
+<!-- controls->channel -->
+<tr><td colspan=2>
+<code><a class=def name="controlstochannel">controls-&gt;channel</a> (<i>settings beg dur snd chn edpos origin</i>)</code>
+</td></tr>
+<tr><td></td><td>
+sets up snd's controls to reflect 'settings' (unspecified settings are not changed), then applies the controls as
+an edit of channel 'chn'. The 'settings' argument is a list:
+<pre>
+(list amp speed
+  (list contrast contrast_amp)
+  (list expand expand_length expand_ramp expand_hop expand_jitter)
+  (list reverb_scale reverb_length reverb_feedback reverb_low_pass reverb_decay)
+  (list filter_order filter_env))
+</pre>
+where each entry can also be #f or an empty list.
+</td></tr>
+<tr><td colspan=2></td></tr>
+
+
 <!-- contrast-control -->
 <tr><td colspan=2>
 <code><a class=def name="contrastcontrol">contrast-control</a> (<em class=narg>snd</em>)</code>

@@ -1250,9 +1250,8 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		  cursor_moveto_without_verbosity(dp->cp, loc);
 		  dp->cp->just_zero = old_just_zero;
 		}
-	      /*
-	      fprintf(stderr,"fill %s[%d]: " OFF_TD "\n", sp->filename, dp->cp->chan, current_location(dp->chn_fd));
-	      */
+	      /* fprintf(stderr,"fill %s[%d]: " OFF_TD " (%d)\n", sp->filename, dp->cp->chan, current_location(dp->chn_fd), choose_dac_op(dp, sp)); */
+
 	      /* add a buffer's worth from the current source into dp->audio_chan */
 	      buf = dac_buffers[dp->audio_chan];
 #if DEBUGGING

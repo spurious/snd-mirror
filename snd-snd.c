@@ -1311,38 +1311,37 @@ void sp_name_click(snd_info *sp)
 
 /* ---------------- save and restore control panel buttons ----------------*/
 
-/* TODO: what about: contrast_amp, expand_length|ramp|hop|jitter, reverb_feedback|low_pass|decay
- * TODO: what about remembering the remembered controls state in save-state?
- */
-
 typedef struct {
   Float amp, speed, contrast, expand, revscl, revlen;
   env *filter_env;
   bool expand_on, contrast_on, reverb_on, filter_on, reversed;
   int filter_order;
+  Float contrast_amp, expand_ramp, expand_length, expand_hop, expand_jitter, reverb_feedback, reverb_decay, reverb_lowpass;
+#if HAVE_GUILE_DYNAMIC_WIND
+  snd_info *sp;
+  int old_selected_channel;
+  void *ap;
+#endif
 } ctrl_state;
 
-void free_controls(snd_info *sp)
+static ctrl_state *free_control_settings(ctrl_state *cs)
 {
-  ctrl_state *cs;
-  cs = (ctrl_state *)(sp->saved_controls);
   if (cs)
     {
       if (cs->filter_env) free_env(cs->filter_env);
       FREE(cs);
-      sp->saved_controls = NULL;
     }
+  return(NULL);
 }
 
-void save_controls(snd_info *sp) 
+void free_controls(snd_info *sp)
 {
-  ctrl_state *cs;
-  cs = (ctrl_state *)(sp->saved_controls);
-  if (!cs)
-    {
-      sp->saved_controls = (ctrl_state *)CALLOC(1, sizeof(ctrl_state));
-      cs = (ctrl_state *)(sp->saved_controls);
-    }
+  sp->saved_controls = free_control_settings((ctrl_state *)(sp->saved_controls));
+}
+
+static ctrl_state *current_control_settings(snd_info *sp, ctrl_state *cs)
+{
+  if (!cs) cs = (ctrl_state *)CALLOC(1, sizeof(ctrl_state));
   cs->amp = sp->amp_control;
   cs->speed = sp->speed_control;
   cs->expand = sp->expand_control;
@@ -1362,10 +1361,62 @@ void save_controls(snd_info *sp)
   if (sp->speed_control_direction == 1) 
     cs->reversed = false; 
   else cs->reversed = true;
+  /* "hidden" vars */
+  cs->contrast_amp = sp->contrast_control_amp;
+  cs->expand_ramp = sp->expand_control_ramp;
+  cs->expand_hop = sp->expand_control_hop;
+  cs->expand_jitter = sp->expand_control_jitter;
+  cs->expand_length = sp->expand_control_length;
+  cs->reverb_feedback = sp->reverb_control_feedback;
+  cs->reverb_decay = sp->reverb_control_decay;
+  cs->reverb_lowpass = sp->reverb_control_lowpass;
+  return(cs);
+}
+
+void save_controls(snd_info *sp) 
+{
+  sp->saved_controls = current_control_settings(sp, (ctrl_state *)(sp->saved_controls));
+}
+
+static ctrl_state *restore_control_settings(snd_info *sp, ctrl_state *cs)
+{
+  /* for use in controls->channel when the actual control panel is not in use */
+  if (cs)
+    {
+      sp->amp_control = cs->amp;
+      sp->speed_control = cs->speed;
+      sp->expand_control = cs->expand;
+      sp->reverb_control_scale = cs->revscl;
+      sp->reverb_control_length = cs->revlen;
+      sp->contrast_control = cs->contrast;
+      sp->expand_control_p = cs->expand_on;
+      sp->reverb_control_p = cs->reverb_on;
+      sp->contrast_control_p = cs->contrast_on;
+      sp->filter_control_p = cs->filter_on;
+      sp->filter_control_order = cs->filter_order;
+      if (cs->filter_env)
+	{
+	  sp->filter_control_envelope = free_env(sp->filter_control_envelope);
+	  sp->filter_control_envelope = copy_env(cs->filter_env);
+	}
+      if (cs->reversed)
+	sp->speed_control_direction = -1;
+      else sp->speed_control_direction = 1;
+      sp->contrast_control_amp = cs->contrast_amp;
+      sp->expand_control_ramp = cs->expand_ramp;
+      sp->expand_control_hop = cs->expand_hop;
+      sp->expand_control_jitter = cs->expand_jitter;
+      sp->expand_control_length = cs->expand_length;
+      sp->reverb_control_feedback = cs->reverb_feedback;
+      sp->reverb_control_decay = cs->reverb_decay;
+      sp->reverb_control_lowpass = cs->reverb_lowpass;
+    }
+  return(cs);
 }
 
 void restore_controls(snd_info *sp) 
 {
+  /* for use upon 'Apply' button click and in apply_controls when the actual control panel is in use */
   ctrl_state *cs;
   char *tmpstr;
   cs = (ctrl_state *)(sp->saved_controls);
@@ -1429,6 +1480,7 @@ void reset_controls(snd_info *sp)
   set_filter_text(sp, tmpstr);
   display_filter_env(sp);
   if (tmpstr) FREE(tmpstr);
+
 }
 
 static void apply_unset_controls(snd_info *sp) 
@@ -1578,6 +1630,7 @@ typedef struct {
   char *ofile;
   ctrl_state *cs;
   file_info *hdr;
+  char *origin;
 } apply_state;
 
 static XEN after_apply_hook;
@@ -1592,6 +1645,18 @@ static void *make_apply_state(void *xp)
   ap->hdr = NULL;
   ap->sp = sp;
   return((void *)ap);
+}
+
+static apply_state *free_apply_state(apply_state *ap)
+{
+  if (ap)
+    {
+      if (ap->ofile) {FREE(ap->ofile); ap->ofile = NULL;}
+      if (ap->origin) {FREE(ap->origin); ap->origin = NULL;}
+      if (ap->hdr) ap->hdr = free_file_info(ap->hdr);
+      FREE(ap);
+    }
+  return(NULL);
 }
 
 #define APPLY_TICKS 4
@@ -1698,6 +1763,12 @@ Cessate apply_controls(Indicium ptr)
 		apply_dur = selection_len(); 
 	      break;
 	    }
+	  if (ap->origin == NULL)
+	    {
+	      /* from apply-controls or the 'Apply' button */
+	      ap->origin = copy_string("YOW");
+	      /* TODO: conjure up apply call */
+	    }
 	  orig_dur = apply_dur;
 	  apply_dur = (off_t)(mult_dur * (apply_dur + added_dur));
 	  ap->ofd = open_temp_file(ap->ofile, ap->hdr->chans, ap->hdr);
@@ -1705,12 +1776,12 @@ Cessate apply_controls(Indicium ptr)
 	    {
 	      snd_error(_("can't open apply temp file %s: %s\n"), ap->ofile, strerror(errno));
 	      sp->applying = false;
-	      FREE(ap);
+	      ap = free_apply_state(ap);
 	      return(BACKGROUND_QUIT);
 	    }
 	  lock_apply(sp);
 	  sp->apply_ok = true;
-	  initialize_apply(sp, ap->hdr->chans, apply_beg, apply_dur); /* snd-dac.c, called only here */
+	  initialize_apply(sp, ap->hdr->chans, apply_beg, orig_dur + added_dur); /* dur here is input dur */
 	  apply_reporting = (apply_dur > REPORTING_SIZE);
 	  if (apply_reporting) 
 	    start_progress_report(sp, NOT_FROM_ENVED);
@@ -1773,7 +1844,7 @@ Cessate apply_controls(Indicium ptr)
 			{
 			  if (file_change_samples(apply_beg, apply_dur, ap->ofile, sp->chans[i], i,
 						  (sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
-						  LOCK_MIXES, "Apply to sound", sp->chans[i]->edit_ctr))
+						  LOCK_MIXES, ap->origin, sp->chans[i]->edit_ctr))
 			    update_graph(sp->chans[i]);
 			}
 		    }
@@ -1783,7 +1854,7 @@ Cessate apply_controls(Indicium ptr)
 			{
 			  if (file_override_samples(apply_dur, ap->ofile, sp->chans[i], i,
 						    (sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
-						    LOCK_MIXES, "Apply to sound"))
+						    LOCK_MIXES, ap->origin))
 			    update_graph(sp->chans[i]);
 			}
 		    }
@@ -1793,9 +1864,9 @@ Cessate apply_controls(Indicium ptr)
 		    curchan = sp->selected_channel;
 		  if (apply_beg > 0)
 		    file_change_samples(apply_beg, apply_dur, ap->ofile, sp->chans[curchan], 0, 
-					DELETE_ME, LOCK_MIXES, "Apply to channel", sp->chans[curchan]->edit_ctr);
+					DELETE_ME, LOCK_MIXES, ap->origin, sp->chans[curchan]->edit_ctr);
 		  else file_override_samples(apply_dur, ap->ofile, sp->chans[curchan], 0, 
-					     DELETE_ME, LOCK_MIXES, "Apply to channel");
+					     DELETE_ME, LOCK_MIXES, ap->origin);
 		  update_graph(sp->chans[curchan]);
 		  break;
 		case APPLY_TO_SELECTION:
@@ -1808,7 +1879,7 @@ Cessate apply_controls(Indicium ptr)
 			{
 			  if (file_change_samples(si->begs[i], apply_dur, ap->ofile, si->cps[i], i,
 						  (si->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
-						  LOCK_MIXES, "Apply to selection", si->cps[i]->edit_ctr))
+						  LOCK_MIXES, ap->origin, si->cps[i]->edit_ctr))
 			    update_graph(si->cps[i]);
 			}
 		    }
@@ -1822,7 +1893,7 @@ Cessate apply_controls(Indicium ptr)
 			    {
 			      file_insert_samples(si->begs[i], apply_dur, ap->ofile, si->cps[i], 0, 
 						  (si->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
-						  "Apply to selection", si->cps[i]->edit_ctr);
+						  ap->origin, si->cps[i]->edit_ctr);
 			      reactivate_selection(si->cps[i], si->begs[i], si->begs[i] + apply_dur);
 			      if (ok) backup_edit_list(si->cps[i]);
 			    }
@@ -1863,9 +1934,6 @@ Cessate apply_controls(Indicium ptr)
 	    {
 	      snd_remove(ap->ofile, REMOVE_FROM_CACHE);
 	    }
-	  FREE(ap->ofile);
-	  ap->ofile = NULL;
-	  if (ap->hdr) ap->hdr = free_file_info(ap->hdr);
 	  break;
 	}
     }
@@ -1878,7 +1946,7 @@ Cessate apply_controls(Indicium ptr)
     run_hook(after_apply_hook, 
 	     XEN_LIST_1(C_TO_XEN_INT(sp->index)),
 	     S_after_apply_hook);
-  FREE(ap);
+  ap = free_apply_state(ap);
   ss->stopped_explicitly = false;
   return(BACKGROUND_QUIT);
 }
@@ -3771,49 +3839,158 @@ static XEN g_set_filter_control_envelope(XEN val, XEN snd)
 
 WITH_REVERSED_ARGS(g_set_filter_control_envelope_reversed, g_set_filter_control_envelope)
 
-/* TODO: g_controls_to_channel doc test handle settings etc
+/* TODO: g_controls_to_channel test settings etc
    TODO: similarly ladspa->channel
 */
+
+#if HAVE_GUILE_DYNAMIC_WIND
+static void before_controls_to_channel(void *ignore) {}
+static void after_controls_to_channel(void *context) 
+{
+  ctrl_state *cs = (ctrl_state *)context;
+  snd_info *sp;
+  sp = cs->sp;
+  sp->selected_channel = cs->old_selected_channel;
+  restore_control_settings(sp, cs);
+  free_control_settings(cs);
+}
+static XEN controls_to_channel_body(void *context)
+{
+  ctrl_state *cs = (ctrl_state *)context;
+  apply_state *ap;
+  ap = (apply_state *)(cs->ap);
+  if (ap)
+    while (apply_controls((Indicium)ap) == BACKGROUND_CONTINUE);
+  return(XEN_FALSE);
+}
+#endif
 
 static XEN g_controls_to_channel(XEN settings, XEN beg, XEN dur, XEN snd, XEN chn, XEN edpos, XEN origin)
 {
   #define H_controls_to_channel "(" S_controls_to_channel " settings beg dur snd chn edpos origin) sets up \
-snd's controls to reflect 'settings' (unspecified settings are not changed), the applies the controls as \
+snd's controls to reflect 'settings' (unspecified settings are not changed), then applies the controls as \
 an edit of channel 'chn'. The 'settings' argument is a list:\n\
 \n\
-(list amp speed\n\
-  (list contrast_on contrast contrast_amp)\n\
-  (list expand_on expand expand_length expand_ramp expand_hop expand_jitter)\n\
-  (list reverb_on reverb_scale reverb_length reverb_feedback reverb_low_pass reverb_decay)\n\
-  (list filter_on filter_order filter_env))\n\
+  (list amp speed\n\
+    (list contrast contrast_amp)\n\
+    (list expand expand_length expand_ramp expand_hop expand_jitter)\n\
+    (list reverb_scale reverb_length reverb_feedback reverb_low_pass reverb_decay)\n\
+    (list filter_order filter_env))\n\
 \n\
-where #f or an empty list leaves the associated settings unchanged.  So, to mimic \
-clicking the 'Apply' button, (" S_controls_to_channel ")."
+where each inner list entry can also be #f."
 
   snd_info *sp;
   chan_info *cp;
   int pos;
   ASSERT_CHANNEL(S_controls_to_channel, snd, chn, 4);
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(beg), beg, XEN_ARG_2, S_controls_to_channel, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(dur), dur, XEN_ARG_3, S_controls_to_channel, "an integer");
+  XEN_ASSERT_TYPE(XEN_OFF_T_P(beg) || XEN_BOOLEAN_P(beg) || XEN_NOT_BOUND_P(beg), beg, XEN_ARG_2, S_controls_to_channel, "an integer");
+  XEN_ASSERT_TYPE(XEN_OFF_T_P(dur) || XEN_BOOLEAN_P(dur) || XEN_NOT_BOUND_P(dur), dur, XEN_ARG_3, S_controls_to_channel, "an integer");
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, XEN_ARG_7, S_controls_to_channel, "a string");
   sp = get_sp(snd, NO_PLAYERS); /* control changes make sense, but not 'apply' -- expecting just 'play' if a player */
   if (sp)
     {
+      XEN lst;
       apply_state *ap;
       int old_selected_channel;
+      ctrl_state *saved_settings;
       if (XEN_OFF_T_P(beg)) apply_beg = XEN_TO_C_OFF_T(beg); else apply_beg = 0;
       if (XEN_OFF_T_P(dur)) apply_dur = XEN_TO_C_OFF_T(dur); else apply_dur = 0;
       cp = get_cp(snd, chn, S_controls_to_channel);
       old_selected_channel = sp->selected_channel;
       sp->selected_channel = cp->chan;
       pos = to_c_edit_position(cp, edpos, S_controls_to_channel, XEN_ARG_6);
+      saved_settings = current_control_settings(sp, NULL);
+      /* now read the 'settings' list for any new settings */
+      if ((XEN_LIST_P(settings)) && (XEN_NOT_NULL_P(settings)))
+	{
+	  int i, len, elen;
+	  /* settings: 
+	     (list amp speed
+	       (list contrast contrast_amp)
+	       (list expand expand_length expand_ramp expand_hop expand_jitter)
+	       (list reverb_scale reverb_length reverb_feedback reverb_low_pass reverb_decay)
+	       (list filter_order filter_env))
+	     where any (outer) items can be #f
+	  */
+	  len = XEN_LIST_LENGTH(settings);
+	  for (i = 0, lst = XEN_COPY_ARG(settings); i < len; i++, lst = XEN_CDR(lst))
+	    {
+	      XEN element;
+	      element = XEN_CAR(lst);
+	      switch (i)
+		{
+		case 0: 
+		  if (XEN_NUMBER_P(element)) sp->amp_control = XEN_TO_C_DOUBLE(element);
+		  break;
+		case 1:
+		  if (XEN_NUMBER_P(element)) sp->speed_control = XEN_TO_C_DOUBLE(element);
+		  break;
+		case 2:
+		  if (XEN_LIST_P(element))
+		    {
+		      elen = XEN_LIST_LENGTH(element);
+		      if (elen > 0) sp->contrast_control_p = true;
+		      if (elen > 0) sp->contrast_control = XEN_TO_C_DOUBLE(XEN_CAR(element));
+		      if (elen > 1) sp->contrast_control_amp = XEN_TO_C_DOUBLE(XEN_CADR(element));
+		    }
+		  break;
+		case 3:
+		  if (XEN_LIST_P(element))
+		    {
+		      elen = XEN_LIST_LENGTH(element);
+		      if (elen > 0) sp->expand_control_p = true;
+		      if (elen > 0) sp->expand_control = XEN_TO_C_DOUBLE(XEN_CAR(element));
+		      if (elen > 1) sp->expand_control_length = XEN_TO_C_DOUBLE(XEN_CADR(element));
+		      if (elen > 2) sp->expand_control_ramp = XEN_TO_C_DOUBLE(XEN_CADDR(element));
+		      if (elen > 3) sp->expand_control_hop = XEN_TO_C_DOUBLE(XEN_LIST_REF(element, 3));
+		      if (elen > 4) sp->expand_control_jitter = XEN_TO_C_DOUBLE(XEN_LIST_REF(element, 4));
+		    }
+		  break;
+		case 4:
+		  if (XEN_LIST_P(element))
+		    {
+		      elen = XEN_LIST_LENGTH(element);
+		      if (elen > 0) sp->reverb_control_p = true;
+		      if (elen > 0) sp->reverb_control_scale = XEN_TO_C_DOUBLE(XEN_CAR(element));
+		      if (elen > 1) sp->reverb_control_length = XEN_TO_C_DOUBLE(XEN_CADR(element));
+		      if (elen > 2) sp->reverb_control_feedback = XEN_TO_C_DOUBLE(XEN_CADDR(element));
+		      if (elen > 3) sp->reverb_control_lowpass = XEN_TO_C_DOUBLE(XEN_LIST_REF(element, 3));
+		      if (elen > 4) sp->reverb_control_decay = XEN_TO_C_DOUBLE(XEN_LIST_REF(element, 4));
+		    }
+		  break;
+		case 5:
+		  if (XEN_LIST_P(element))
+		    {
+		      elen = XEN_LIST_LENGTH(element);
+		      if (elen > 0) sp->filter_control_p = true;
+		      if (elen > 0) sp->filter_control_order = XEN_TO_C_INT(XEN_CAR(element));
+		      if (elen > 1) sp->filter_control_envelope = get_env(XEN_CADR(element), S_controls_to_channel);
+		    }
+		}
+	    }
+	}
       ss->apply_choice = APPLY_TO_CHANNEL;
       sp->applying = true;
       ap = (apply_state *)make_apply_state((void *)sp);
+      if (!(XEN_NUMBER_P(dur)))
+	ap->origin = mus_format("%s '%s " OFF_TD " #f", S_controls_to_channel, XEN_AS_STRING(settings), apply_beg);
+      else ap->origin = mus_format("%s '%s " OFF_TD " " OFF_TD, S_controls_to_channel, XEN_AS_STRING(settings), apply_beg, apply_dur);
+#if HAVE_GUILE_DYNAMIC_WIND
+      saved_settings->sp = sp;
+      saved_settings->old_selected_channel = old_selected_channel;
+      saved_settings->ap = (void *)ap;
+      scm_internal_dynamic_wind((scm_t_guard)before_controls_to_channel, 
+				(scm_t_inner)controls_to_channel_body,  /* restore settings if error during apply_controls */
+				(scm_t_guard)after_controls_to_channel, 
+				(void *)saved_settings,
+				(void *)saved_settings);
+#else
       if (ap)
 	while (apply_controls((Indicium)ap) == BACKGROUND_CONTINUE);
       sp->selected_channel = old_selected_channel;
+      restore_control_settings(sp, saved_settings);
+      free_control_settings(saved_settings);
+#endif
     }
   return(settings);
 }
