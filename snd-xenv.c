@@ -180,7 +180,7 @@ static void apply_enved(void)
 			   active_env, FROM_ENVED, 
 			   "Enved: flt", apply_to_selection, 
 			   NULL, NULL,
-			   C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0);
+			   C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, false);
 	      break;
 	    case ENVED_SRATE:
 	      /* mus_src no longer protects against 0 srate */

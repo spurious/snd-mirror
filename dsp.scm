@@ -163,7 +163,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 (define (fltit-1 order spectr)
   "(fltit-1 order spectrum) creates an FIR filter from spectrum and order and returns a closure that calls it: 
-(map-chan (fltit-1 10 (list->vct '(0 1.0 0 0 0 0 0 0 1.0 0))))"
+(map-chan (fltit-1 10 (vct 0 1.0 0 0 0 0 0 0 1.0 0)))"
   (let* ((flt (make-fir-filter order (spectrum->coeffs order spectr))))
     (lambda (x)
       (fir-filter flt x))))

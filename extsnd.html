@@ -789,7 +789,20 @@ If it returns #t, the apply is aborted.
 
 <tr><td></td><td colspan=2>
 called just before an FFT (or spectrum) is calculated.  If it returns 
-an integer, it is used as the starting point of the fft.  The following 
+an integer, that value is used as the starting point of the fft.  Normally,
+the fft starts from the left window edge.  To have it start at mid-window:
+</td></tr>
+
+<tr><td></td><td colspan=2>
+<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+(add-hook! before-transform-hook 
+  (lambda (s c) 
+    (inexact-&gt;exact 
+      (* .5 (+ (right-sample s c) (left-sample s c))))))
+</pre></td></tr></table></td></tr>
+
+<tr><td></td><td colspan=2>
+The following 
 somewhat brute-force code shows a way to have the fft reflect the position 
 of a moving mark:
 </td></tr>
@@ -820,8 +833,10 @@ If it returns #t, the file is not closed.
   (lambda (snd) 
     (system \"sndplay wood16.wav\")
     #f))
-</pre></td></tr></table>
-<br><i>close-hook</i> is used in autosave.scm, examp.scm, extensions.scm, and peak-env.scm; see, for example,
+</pre></td></tr></table></td></tr>
+
+<tr><td></td><td colspan=2>
+<i>close-hook</i> is used in autosave.scm, examp.scm, extensions.scm, and peak-env.scm; see, for example,
 <i>check-for-unsaved-edits</i> or <i>remember-sound-state</i> in extensions.scm.
 </td></tr>
 <tr><td colspan=3></td></tr>
@@ -959,7 +974,7 @@ See examp.scm for many examples.
 (add-hook! <em class=red>graph-hook</em>
   (lambda (snd chn y0 y1)
     "set the dot size depending on the number of samples being displayed"
-    (let ((dots (- (<a class=quiet href="#sndrightsample">right-sample</a> snd chn) (<a class=quiet href="#sndleftsample">left-sample</a> snd chn))))
+    (let ((dots (- (<a class=quiet href="#rightsample">right-sample</a> snd chn) (<a class=quiet href="#leftsample">left-sample</a> snd chn))))
       (if (&gt; dots 100) 
 	  (set! (<a class=quiet href="#dotsize">dot-size</a> snd chn) 1)
 	(if (&gt; dots 50)
@@ -1265,8 +1280,8 @@ See the <i>current-window-location</i> procedures in draw.scm.  Here's a simpler
   (if (= axis <a class=quiet href="#y2position">time-graph</a>)
       (let ((samp (inexact-&gt;exact (* (<a class=quiet href="#sndsrate">srate</a> snd) (<a class=quiet href="#position2x">position-&gt;x</a> x snd chn)))))
 	(set! (<a class=quiet href="#sndcursor">cursor</a> snd chn) samp)
-	(set! (<a class=quiet href="#sndrightsample">right-sample</a> snd chn) 
-          (- samp (inexact-&gt;exact (* .5 (- (<a class=quiet href="#sndleftsample">left-sample</a> snd chn) (<a class=quiet href="#sndrightsample">right-sample</a> snd chn))))))
+	(set! (<a class=quiet href="#rightsample">right-sample</a> snd chn) 
+          (- samp (inexact-&gt;exact (* .5 (- (<a class=quiet href="#leftsample">left-sample</a> snd chn) (<a class=quiet href="#rightsample">right-sample</a> snd chn))))))
 	(<a class=quiet href="#sndupdategraph">update-time-graph</a>)
 	#t)
       #f))
@@ -1962,12 +1977,12 @@ up protected portions of the edit history:
 (define protect
   "(protect #:optional snd chn) disallows any edits before the current one"
   (lambda args
-    (let* ((edit-pos (apply edit-position args))
+    (let* ((edit-pos (apply <a class=quiet href="#sndeditposition">edit-position</a> args))
            (hook (apply <em class=red>edit-hook</em> args)))
       (reset-hook! hook)
       (add-hook! hook 
         (lambda ()
-          (let ((val (&lt; (apply edit-position args) edit-pos)))
+          (let ((val (&lt; (apply <a class=quiet href="#sndeditposition">edit-position</a> args) edit-pos)))
             (if val (<a class=quiet href="#sndreportinminibuffer">report-in-minibuffer</a> "protected"))
             val))))))
 
@@ -2056,7 +2071,7 @@ selected sound.  Similarly, <i>chn</i> is the channel number, starting from 0, a
 to the currently selected channel.  So if there's only one sound active (say it's index is 0), and it has only
 one channel, (cursor) (cursor 0), and (cursor 0 0) all refer to the same
 thing.  If you want to refer to the currently selected sound, either use #f
-as the sound index or <a href="#sndselectedsound">selected-sound</a>.
+as the sound index or <a href="#selectedsound">selected-sound</a>.
 </p>
 
 <p>In many cases, the <i>snd</i>, <i>chn</i>, and <i>reg</i> arguments
@@ -2743,7 +2758,7 @@ between two edits:
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define snd-diff
   (lambda () ;assume mono, get diff between current state and previous
-    (let* ((index (<a class=quiet href="#sndselectedsound">selected-sound</a>))
+    (let* ((index (<a class=quiet href="#selectedsound">selected-sound</a>))
            (edit-pos (<a class=quiet href="#sndeditposition">edit-position</a> index))
            (previous-edit (<em class=red>make-sample-reader</em> 0 0 index 1 (1- edit-pos))))
       (lambda (x)
@@ -3711,12 +3726,14 @@ is ignored).
 </td></tr>
 
 <!-- filter-selection -->
-<tr><td colspan=2><code><a class=def name="sndfilterselection">filter-selection</a> (env <i>order</i>)</code></td></tr>
+<tr><td colspan=2><code><a class=def name="sndfilterselection">filter-selection</a> (env <i>order truncate</i>)</code></td></tr>
 <tr><td></td><td>
 apply an FIR filter of order <i>order</i> and frequency response <i>env</i>
 to the selection.  <i>env</i> can be the filter coefficients
 themselves in a vct with at least order elements, or 
 a CLM filtering generator (see <a href="filtersound">filter-sound</a>).
+If <i>truncate</i> is #t (its default), the filter output is truncated at the selection
+end.  If #f, the extra output (order samples) is mixed into the stuff following the selection.
 </td></tr>
 
 <!-- insert-selection -->
@@ -3756,7 +3773,7 @@ See popup.scm for an example.
   "(brksnd dur base) divides the current sound into dur-sized pieces, \
 saving them in files named 'base'.n: (brksnd 1.0 \"sec\")"
   (let ((hop (inexact-&gt;exact (* (<a class=quiet href="#sndsrate">srate</a>) dur)))
-	(len (<a class=quiet href="#sndframes">frames</a>))
+	(len (<a class=quiet href="#frames">frames</a>))
         (old-sync (<a class=quiet href="#sndsyncing">sync</a>)))
     (set! (<a class=quiet href="#sndsyncing">sync</a>) 1) ; save all chans
     (do ((i 0 (+ i hop))
@@ -3991,7 +4008,7 @@ The following substitutions can be made:
 <pre>
 <small>
  (define* (map-channel func #:optional (beg 0) dur snd chn edpos (edname "map-channel"))
-   (let* ((end (if dur (+ beg dur) (1- (<a class=quiet href="#sndframes">frames</a> snd chn edpos)))))
+   (let* ((end (if dur (+ beg dur) (1- (<a class=quiet href="#frames">frames</a> snd chn edpos)))))
      (<a class=quiet href="#mapchan">map-chan</a> func beg end edname snd chn edpos)))
 </small>
 </pre>
@@ -4197,9 +4214,9 @@ This is used by some of the <a class=quiet href="#regularizedargs">regularized</
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define* (convolve-channel kernel #:optional nbeg ndur nsnd nchn nedpos)
   (let* ((beg (or nbeg 0)) 
-	 (snd (or nsnd (<a class=quiet href="#sndselectedsound">selected-sound</a>) (car (<a class=quiet href="#sounds">sounds</a>))))
-	 (chn (or nchn (<a class=quiet href="#sndselectedchannel">selected-channel</a>)))
-	 (dur (or ndur (- (<a class=quiet href="#sndframes">frames</a> snd chn) beg)))
+	 (snd (or nsnd (<a class=quiet href="#selectedsound">selected-sound</a>) (car (<a class=quiet href="#sounds">sounds</a>))))
+	 (chn (or nchn (<a class=quiet href="#selectedchannel">selected-channel</a>)))
+	 (dur (or ndur (- (<a class=quiet href="#frames">frames</a> snd chn) beg)))
 	 (edpos (or nedpos current-edit-position))
 	 (reader (<a class=quiet href="#makesamplereader">make-sample-reader</a> beg snd chn 1 edpos))
 	 (cgen (<a class=quiet href="clm.html#make-convolve">make-convolve</a> :filter kernel 
@@ -4866,7 +4883,7 @@ move the selected channel forward (down or right) <i>count</i> graphs (C-x C-o),
 
 <!-- frames -->
 <tr><td colspan=2>
-<code><a class=def name="sndframes">frames</a> (<em class=targ>snd chn</em> <i>edpos</i>)</code>
+<code><a class=def name="frames">frames</a> (<em class=targ>snd chn</em> <i>edpos</i>)</code>
 </td></tr>
 <tr><td></td><td>
 <i>chn</i>'s current length in samples.  Used with set!, this either truncates 
@@ -4900,8 +4917,8 @@ the lisp-graph-hook, where the redisplay is automatic.
   ;; y-zoom-slider controls the graph amp
   (lambda (snd chn)
     "display time domain data as energy"
-    (let* ((ls (<a class=quiet href="#sndleftsample">left-sample</a>))
-           (rs (<a class=quiet href="#sndrightsample">right-sample</a>))
+    (let* ((ls (<a class=quiet href="#leftsample">left-sample</a>))
+           (rs (<a class=quiet href="#rightsample">right-sample</a>))
 	   (datal (<a class=quiet href="#makegraphdata">make-graph-data</a> snd chn))
 	   (data (if (<a class=quiet href="#vctp">vct?</a> datal) datal (cadr datal)))
            (len (<a class=quiet href="#vctlength">vct-length</a> data))
@@ -5035,8 +5052,8 @@ beg defaults to the cursor position; if <i>in-chan</i> is not given, all
 channels are inserted. To append a sound to another, padding at the end with some silence:
 <pre>
 (define* (<a name="appendsound">append-sound</a> file #:optional (silence 1.0))
-  (<em class=red>insert-sound</em> file (<a class=quiet href="#sndframes">frames</a>))
-  (<em class=red>insert-silence</em> (<a class=quiet href="#sndframes">frames</a>) (inexact-&gt;exact (round (* (<a class=quiet href="#sndsrate">srate</a>) silence)))))
+  (<em class=red>insert-sound</em> file (<a class=quiet href="#frames">frames</a>))
+  (<em class=red>insert-silence</em> (<a class=quiet href="#frames">frames</a>) (inexact-&gt;exact (round (* (<a class=quiet href="#sndsrate">srate</a>) silence)))))
 </pre>
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -5044,7 +5061,7 @@ channels are inserted. To append a sound to another, padding at the end with som
 
 <!-- left-sample -->
 <tr><td colspan=2>
-<code><a class=def name="sndleftsample">left-sample</a> (<em class=targ>snd chn</em>)</code>
+<code><a class=def name="leftsample">left-sample</a> (<em class=targ>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
 return the position in samples of the left edge of the time domain
@@ -5055,9 +5072,30 @@ To get the data currently displayed in the time domain window:
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define (<a class=quiet href="sndscm.html#exwindowsamples">window-samples</a>)
   (let ((wl (<em class=red>left-sample</em>))
-	(wr (<a href="#sndrightsample">right-sample</a>)))
+	(wr (<a href="#rightsample">right-sample</a>)))
    (<a href="#sndsamples">samples</a> wl (+ 1 (- wr wl)))))
-</pre></td></tr></table>
+</pre></td></tr></table></td></tr>
+
+<tr><td></td><td>
+See also <a href="#moveonepixel">move-one-pixel</a>.
+
+<!-- INDEX movingwindows:Window size and position -->
+<A NAME="movingwindows"></a>
+<br><br>
+<TABLE border=3 bordercolor="tan" hspace=40><tr><td>
+<blockquote><small>
+<br>
+Built-in keyboard commands: <a href="snd.html#movewindow">Moving the Window</a><br>
+Specialized keyboard commands: <a href="#sndbindkey">bind-key</a><br>
+Window size: <a href="#xzoomslider">x-zoom-slider</a>, <a href="#zoomonepixel">zoom-one-pixel</a>, <br>
+Window position: <a href="#xpositionslider">x-position-slider</a>, <a href="#moveonepixel">move-one-pixel</a><br>
+Window left edge: <a href="#leftsample">left-sample</a><br>
+Window right edge: <a href="#rightsample">right-sample</a><br>
+Axis description: <a href="#axisinfo">axis-info</a><br>
+<br>
+</small></blockquote>
+</td></tr></TABLE>
+
 </td></tr><tr><td colspan=2></td></tr>
 
 
@@ -5185,7 +5223,7 @@ something:<br><br>
 	  (buffer (make-vector 128 0.0))
 	  (position 0)
 	  (current-sample 0)
-	  (chan-samples (<a class=quiet href="#sndframes">frames</a>)))
+	  (chan-samples (<a class=quiet href="#frames">frames</a>)))
       (lambda (y)
         (let ((old-y (vector-ref buffer position)))
 	  (set! sum-of-squares (- (+ sum-of-squares (* y y)) (* old-y old-y)))
@@ -5293,7 +5331,7 @@ the preceding edit in the list will be the <code>(set! (<a class=quiet href="#sn
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define* (<A NAME="cosinechannel">cosine-channel</a> #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
   (<em class=red>map-channel</em>
-   (let* ((samps (or dur (<a class=quiet href="#sndframes">frames</a> snd chn)))
+   (let* ((samps (or dur (<a class=quiet href="#frames">frames</a> snd chn)))
 	  (incr (/ pi samps))
 	  (angle (* -0.5 pi)))
      (lambda (y)
@@ -5506,12 +5544,14 @@ If <i>pos</i> is given, play at that edit position.
 The <i>pos</i> argument makes it easier to try "A:B" comparisons.<br>
 <br><code>(play 0 #f #f #f #f (1- (<a class=quiet href="#sndeditposition">edit-position</a>)))</code><br><br> plays the version before the latest edit.
 <br><br>
-This code binds the "p" key to play all channels of the current sound from the cursor:<br><br>
+This code binds the "p" key to play all channels of the current sound from the cursor, and
+the "P" key to play the previous version of the current sound:<br><br>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(<a class=quiet href="#sndbindkey">bind-key</a> (char-&gt;integer #\p) 0 
-  (lambda () 
-    (<em class=red>play</em> (<a class=quiet href="#sndcursor">cursor</a>))
-    <a class=quiet href="#sndbindkey">keyboard-no-action</a>))
+(define (play-from-cursor current)
+  (<em class=red>play</em> (<a class=quiet href="#sndcursor">cursor</a>) #f #f #f #f (if current #f (1- (<a class=quiet href="#sndeditposition">edit-position</a>)))))
+
+(<a class=quiet href="#sndbindkey">bind-key</a> (char-&gt;integer #\p) 0 (lambda () (play-from-cursor #t) keyboard-no-action))
+(<a class=quiet href="#sndbindkey">bind-key</a> (char-&gt;integer #\P) 1 (lambda () (play-from-cursor #f) keyboard-no-action))
 </pre></td></tr></table><br>
 The following code plays from the cursor with a moving ("tracking") cursor:<br><br>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
@@ -5897,7 +5937,7 @@ could in this case be:
 		   (let ((val (* 0.5 (+ y (<a class=quiet href="#vctref">vct-ref</a> data 0)))))
 		     (<a class=quiet href="#vctset">vct-set!</a> data 0 y)
 		     val))
-		 0 (<a class=quiet href="#sndframes">frames</a>) ind 0 #f #f ; "ind" is the sound index 
+		 0 (<a class=quiet href="#frames">frames</a>) ind 0 #f #f ; "ind" is the sound index 
 		 (let ((edpos (<a class=quiet href="#sndeditposition">edit-position</a> ind 0)))
 		   (lambda (pos dur)
 		     (<a class=quiet href="#sndvct">vct</a> (if (= pos 0) 0.0
@@ -5917,9 +5957,9 @@ depend on the run macro) will work only in Guile.  We could define xen-channel:
 	       (if forward
 		   (<a class=quiet href="#previoussample">previous-sample</a> data)
 		   (<a class=quiet href="#nextsample">next-sample</a> data)))
-	     0 (<a class=quiet href="#sndframes">frames</a>) ind 0 #f #f
+	     0 (<a class=quiet href="#frames">frames</a>) ind 0 #f #f
 	     (let ((edpos (<a class=quiet href="#sndeditposition">edit-position</a> ind 0))
-		   (orig-last (1- (<a class=quiet href="#sndframes">frames</a>))))
+		   (orig-last (1- (<a class=quiet href="#frames">frames</a>))))
 	       (lambda (pos dur)
 		 (<a class=quiet href="#makesamplereader">make-sample-reader</a> (- orig-last pos) ind 0 -1 edpos))))
 </pre>
@@ -5979,7 +6019,7 @@ result appear to be one operation in the edit history list.
 <A NAME="powenvchannel"></a>(define* (powenv-channel envelope #:optional (beg 0) dur snd chn edpos)
   ;; envelope with a separate base for each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))
   (let* ((curbeg beg)
-	 (fulldur (or dur (<a class=quiet href="#sndframes">frames</a> snd chn edpos)))
+	 (fulldur (or dur (<a class=quiet href="#frames">frames</a> snd chn edpos)))
 	 (len (length envelope))
 	 (x1 (car envelope))
 	 (xrange (- (list-ref envelope (- len 3)) x1))
@@ -6144,10 +6184,11 @@ revert <i>snd</i> to saved state (<a class=quiet href="#sndundo">undo</a> all ed
 
 <!-- right-sample -->
 <tr><td colspan=2>
-<code><a class=def name="sndrightsample">right-sample</a> (<em class=targ>snd chn</em>)</code>
+<code><a class=def name="rightsample">right-sample</a> (<em class=targ>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-position (in samples) of right edge of time domain waveform.  See <a href="sndleftsample">left-sample</a> and many examples in examp.scm.
+position (in samples) of right edge of time domain waveform.  See <a href="leftsample">left-sample</a>, many examples in examp.scm,
+and <a href="#moveonepixel">move-one-pixel</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -6339,21 +6380,21 @@ There are approximately a bazillion ways to scale samples in Snd; here's a potpo
 (<a class=quiet href="#mapchan">map-chan</a> (lambda (val) (* val 2.0)))
 (set! (<a class=quiet href="#sndmaxamp">maxamp</a>) (* 2 (<a class=quiet href="#sndmaxamp">maxamp</a>)))
 (<a class=quiet href="#sndenv">env-sound</a> '(0 2 1 2))
-(<a class=quiet href="#envchannel">env-channel</a> (<a class=quiet href="clm.html#make-env">make-env</a> '(0 1 1 1) :scaler 2.0) :end (1- (<a class=quiet href="#sndframes">frames</a>)))
+(<a class=quiet href="#envchannel">env-channel</a> (<a class=quiet href="clm.html#make-env">make-env</a> '(0 1 1 1) :scaler 2.0) :end (1- (<a class=quiet href="#frames">frames</a>)))
 (<a class=quiet href="#clmchannel">clm-channel</a> (<a class=quiet href="clm.html#make-one-zero">make-one-zero</a> :a0 2.0 :a1 0.0))
-(<a class=quiet href="#vct2samples">vct-&gt;samples</a> 0 (<a class=quiet href="#sndframes">frames</a>) (<a class=quiet href="#vctscale">vct-scale!</a> (<a class=quiet href="#samples2vct">samples-&gt;vct</a>) 2.0))
+(<a class=quiet href="#vct2samples">vct-&gt;samples</a> 0 (<a class=quiet href="#frames">frames</a>) (<a class=quiet href="#vctscale">vct-scale!</a> (<a class=quiet href="#samples2vct">samples-&gt;vct</a>) 2.0))
 (begin (<a class=quiet href="#sndselectall">select-all</a>) (<a class=quiet href="#sndmixselection">mix-selection</a> 0))
 (begin (<a class=quiet href="#sndselectall">select-all</a>) (<a class=quiet href="#sndscaleselectionby">scale-selection-by</a> 2.0))
 (begin (<a class=quiet href="#sndsaveas">save-sound-as</a> "temp.snd") (<a class=quiet href="#sndmix">mix</a> "temp.snd" 0) (delete-file "temp.snd"))
 
-(<a class=quiet href="#ptreechannel">ptree-channel</a> (lambda (y data forward) (data y)) 0 (<a class=quiet href="#sndframes">frames</a>) 0 0 #f #t
+(<a class=quiet href="#ptreechannel">ptree-channel</a> (lambda (y data forward) (data y)) 0 (<a class=quiet href="#frames">frames</a>) 0 0 #f #t
 	       (lambda (pos dur) (lambda (y) (* 2.0 y))) #f)
 
 (let ((sd (<a class=quiet href="#samples2sounddata">samples-&gt;sound-data</a>)))
   (do ((i 0 (1+ i))) 
-      ((= i (<a class=quiet href="#sndframes">frames</a>)))
+      ((= i (<a class=quiet href="#frames">frames</a>)))
     (<a class=quiet href="#sounddataset">sound-data-set!</a> sd 0 i (* 2.0 (<a class=quiet href="#sounddataref">sound-data-ref</a> sd 0 i))))
-  (set! (<a class=quiet href="#sndsamples">samples</a> 0 (<a class=quiet href="#sndframes">frames</a>)) (<a class=quiet href="#sounddata2vct">sound-data-&gt;vct</a> sd)))
+  (set! (<a class=quiet href="#sndsamples">samples</a> 0 (<a class=quiet href="#frames">frames</a>)) (<a class=quiet href="#sounddata2vct">sound-data-&gt;vct</a> sd)))
 
 (let ((flt (<a class=quiet href="#makevct">make-vct</a> 8)))
   (<a class=quiet href="#vctset">vct-set!</a> flt 0 2.0)
@@ -6365,7 +6406,7 @@ There are approximately a bazillion ways to scale samples in Snd; here's a potpo
                        (<a class=quiet href="#readsample">read-sample</a> sf)))))))
 
 (do ((i 0 (1+ i)))
-    ((= i (<a class=quiet href="#sndframes">frames</a>)))
+    ((= i (<a class=quiet href="#frames">frames</a>)))
   ;; don't actually do this! -- it involves a separate edit on each sample
   (set! (<a class=quiet href="#sndsample">sample</a> i) (* 2 (<a class=quiet href="#sndsample">sample</a> i))))
 
@@ -6378,8 +6419,8 @@ There are approximately a bazillion ways to scale samples in Snd; here's a potpo
 			(if (&lt;= ctr end)
 			    (them us)))))
 	   us))))
-  ((make-scaler 0 (<a class=quiet href="#sndframes">frames</a>)) 
-     (make-scaler 1 (<a class=quiet href="#sndframes">frames</a>))))
+  ((make-scaler 0 (<a class=quiet href="#frames">frames</a>)) 
+     (make-scaler 1 (<a class=quiet href="#frames">frames</a>))))
 </pre></td></tr></table>
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -6457,9 +6498,9 @@ In this case, we found such a sample at position 4423.<br>
   (let* ((func (car args))
 	 (len (length args))
 	 (start (if (&gt; len 1) (cadr args) 0))
-	 (snd (if (&gt; len 3) (cadddr args) (or (<a class=quiet href="#sndselectedsound">selected-sound</a>) (car sounds))))
-	 (chn (if (&gt; len 4) (caddddr args) (<a class=quiet href="#sndselectedchannel">selected-channel</a> snd)))
-	 (end (if (&gt; len 2) (caddr args) (<a class=quiet href="#sndframes">frames</a> snd chn)))
+	 (snd (if (&gt; len 3) (cadddr args) (or (<a class=quiet href="#selectedsound">selected-sound</a>) (car sounds))))
+	 (chn (if (&gt; len 4) (caddddr args) (<a class=quiet href="#selectedchannel">selected-channel</a> snd)))
+	 (end (if (&gt; len 2) (caddr args) (<a class=quiet href="#frames">frames</a> snd chn)))
 	 (reader (<a class=quiet href="#makesamplereader">make-sample-reader</a> start snd chn))
 	 (result #f))
     (do ((i start (1+ i)))
@@ -6540,7 +6581,7 @@ the current global or sound-local (if <i>snd</i> is specified) search procedure.
 
 <!-- selected-channel -->
 <tr><td colspan=2>
-<code><a class=def name="sndselectedchannel">selected-channel</a> (<i>snd</i>)</code>
+<code><a class=def name="selectedchannel">selected-channel</a> (<i>snd</i>)</code>
 </td></tr>
 <tr><td></td><td>
 selected channel in <i>snd</i> (set it to select a channel).  Return #f is no channel is selected in snd. 
@@ -6550,7 +6591,7 @@ selected channel in <i>snd</i> (set it to select a channel).  Return #f is no ch
 
 <!-- selected-sound -->
 <tr><td colspan=2>
-<code><a class=def name="sndselectedsound">selected-sound</a> ()</code>
+<code><a class=def name="selectedsound">selected-sound</a> ()</code>
 </td></tr>
 <tr><td></td><td>
 selected sound (index) (set it to select a sound). Return #f is there is no selected sound. 
@@ -6563,7 +6604,7 @@ selected sound (index) (set it to select a sound). Return #f is there is no sele
 <code><a class=def name="sndselectchannel">select-channel</a> (<i>chn</i>)</code>
 </td></tr>
 <tr><td></td><td>
-select channel <i>chn</i>. This is the same as <code>(set! (<a class=quiet href="#sndselectedchannel">selected-channel</a>) chn)</code>. 
+select channel <i>chn</i>. This is the same as <code>(set! (<a class=quiet href="#selectedchannel">selected-channel</a>) chn)</code>. 
 See also <a href="#selectchannelhook">select-channel-hook</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -6574,7 +6615,7 @@ See also <a href="#selectchannelhook">select-channel-hook</a>.
 <code><a class=def name="sndselectsound">select-sound</a> (<i>snd</i>)</code>
 </td></tr>
 <tr><td></td><td>
-select sound <i>snd</i> (an index). This is the same as <code>(set! (<a class=quiet href="#sndselectedsound">selected-sound</a>) snd)</code>.
+select sound <i>snd</i> (an index). This is the same as <code>(set! (<a class=quiet href="#selectedsound">selected-sound</a>) snd)</code>.
 See also <a href="#selectsoundhook">select-sound-hook</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -6686,7 +6727,7 @@ delete the selection and smooth the splice: <a href="sndscm.html#exdeleteselecti
 smoothing as virtual op: smooth-channel-via-ptree in examp.scm<br>
 smoothing via fft: <a href="sndscm.html#exfftsmoother">fft-smoother</a><br>
 smooth via low-pass <a href="#filtersinsnd">filter</a><br>
-smooth over click: Remove-click in examp.scm<br>
+smooth over click: <a href="sndscm.html#exremoveclick">remove-click</a> in examp.scm<br>
 </blockquote></small>
 </td></tr></TABLE>
 </td></tr>
@@ -7018,11 +7059,11 @@ how long the resultant note will be given an src envelope:
 ;;; (src-duration '(0 .5 .5 3 .6 1 .7 .1 .8 1.5 1 1)) -&gt; 1.02474349685432
 
 ;;; here we're using this in the Snd listener:
-<em class=listener>&gt;</em><em class=typing>(<a class=quiet href="#sndframes">frames</a>)</em>
+<em class=listener>&gt;</em><em class=typing>(<a class=quiet href="#frames">frames</a>)</em>
 <em class=listener>220501</em>
 <em class=listener>&gt;</em><em class=typing>(<a class=quiet href="#sndsrc">src-sound</a> '(0 1 1 2))</em> ; should be about .693 * 220500 frames 
 <em class=listener>(0 1 1 2)</em>
-<em class=listener>&gt;</em><em class=typing>(<a class=quiet href="#sndframes">frames</a>)</em>
+<em class=listener>&gt;</em><em class=typing>(<a class=quiet href="#frames">frames</a>)</em>
 <em class=listener>152842</em>
 <em class=listener>&gt;</em><em class=typing>(/ 152842.0 220501)</em>
 <em class=listener>0.693157854159392</em><em class=typing></em>       ; tada!
@@ -7408,7 +7449,7 @@ This is the View menu 'X-axis units' option.
 </td></tr>
 <tr><td></td><td>
 return (list x0 x1) -- current x axis time domain bounds in seconds.
-<code>(set! (x-bounds) (list 0.0 (/ (<a class=quiet href="#sndframes">frames</a>) (<a class=quiet href="#sndsrate">srate</a>))))</code> shows the full sound.
+<code>(set! (x-bounds) (list 0.0 (/ (<a class=quiet href="#frames">frames</a>) (<a class=quiet href="#sndsrate">srate</a>))))</code> shows the full sound.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7438,7 +7479,7 @@ value of x axis position slider.  See <i>zoom-fft</i> in examp.scm.
 <code><a class=def name="xzoomslider">x-zoom-slider</a> (<em class=targ>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
-value of x axis zoom slider.
+value of x axis zoom slider.  See <a href="#zoomonepixel">zoom-one-pixel</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -8071,8 +8112,8 @@ this information to highlight the changed portions of a given sound.
                (not (= (cadr (car tree)) -2)))
           (check-fragment (cdr tree) ls rs))))
    (check-fragment (<em class=red>edit-tree</em> snd chn)
-                   (<a class=quiet href="#sndleftsample">left-sample</a> snd chn)
-                   (<a class=quiet href="#sndrightsample">right-sample</a> snd chn)))
+                   (<a class=quiet href="#leftsample">left-sample</a> snd chn)
+                   (<a class=quiet href="#rightsample">right-sample</a> snd chn)))
 (add-hook! after-graph-hook show-original)
 </pre></td></tr></table></td></tr>
 <tr><td></td><td></td></tr>
@@ -8102,7 +8143,7 @@ edit sequences can be compared.
 (define* (<a name="clonesoundas">clone-sound-as</a> new-name #:optional snd)
   (let* ((tmpf (<a class=quiet href="#sndtempnam">snd-tempnam</a>))
 	 (scm (string-append (substring tmpf 0 (- (string-length tmpf) 3)) "scm"))
-	 (oldsnd (or snd (<a class=quiet href="#sndselectedsound">selected-sound</a>))))
+	 (oldsnd (or snd (<a class=quiet href="#selectedsound">selected-sound</a>))))
     (if (not (string? (<a class=quiet href="#savedir">save-dir</a>))) (set! (<a class=quiet href="#savedir">save-dir</a>) "/tmp"))
     (<em class=red>save-edit-history</em> scm oldsnd)
     (copy-file (<a class=quiet href="#sndfilename">file-name</a> oldsnd) new-name)
@@ -8409,7 +8450,7 @@ as the default:
   (set! (<a class=quiet href="#envedtarget">enved-target</a>) <a class=quiet href="#envedtarget">enved-spectrum</a>)
   (add-hook! after-open-hook (lambda (snd)
 			       (set! (<a class=quiet href="#lfftsize">transform-size</a> snd) 
-				     (expt 2 (ceiling (/ (log (max 1 (<a class=quiet href="#sndframes">frames</a> snd)))
+				     (expt 2 (ceiling (/ (log (max 1 (<a class=quiet href="#frames">frames</a> snd)))
 							 (log 2.0))))))))
 </pre></td></tr></table></td></tr>
 
@@ -8784,7 +8825,7 @@ As a slightly more elaborate example, the following adds a Delete option to the 
 (<em class=red>add-to-menu</em> 0 "Delete" ; add Delete option to File menu
 	     (lambda ()
 	       ;; close current sound and delete it (after requesting confirmation)
-	       (if (<a class=quiet href="#sndselectedsound">selected-sound</a>)
+	       (if (<a class=quiet href="#selectedsound">selected-sound</a>)
 		   (let ((filename (<a class=quiet href="#sndfilename">file-name</a>)))
 		     (<a class=quiet href="#sndclose">close-sound</a>)
 		     (if (<a class=quiet href="#sndyesornop">yes-or-no?</a> (format #f "delete ~S?" filename))
@@ -8870,8 +8911,8 @@ If <i>origin</i> is included, it is the name reported if an error occurs.  The u
 (<em class=red>bind-key</em> (char-&gt;integer #\v) 4
 	  (lambda ()
             "C-v redefined to behave as in Emacs (move ahead window)"
-	    (if (&lt; (<a class=quiet href="#sndrightsample">right-sample</a>) (<a class=quiet href="#sndframes">frames</a>))
-		(set! (<a class=quiet href="#sndleftsample">left-sample</a>) (<a class=quiet href="#sndrightsample">right-sample</a>)))
+	    (if (&lt; (<a class=quiet href="#rightsample">right-sample</a>) (<a class=quiet href="#frames">frames</a>))
+		(set! (<a class=quiet href="#leftsample">left-sample</a>) (<a class=quiet href="#rightsample">right-sample</a>)))
 	    <a class=quiet href="#sndbindkey">keyboard-no-action</a>))
 </pre></td></tr></table></td></tr>
 <tr><td></td><td>
@@ -8925,7 +8966,7 @@ forward two samples in the graph each time we type "l":
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (<em class=red>bind-key</em> (char-&gt;integer #\l) 0 
   (lambda () 
-    (set! (<a class=quiet href="#sndleftsample">left-sample</a> 0 0) (+ 2 (<a class=quiet href="#sndleftsample">left-sample</a> 0 0))) 
+    (set! (<a class=quiet href="#leftsample">left-sample</a> 0 0) (+ 2 (<a class=quiet href="#leftsample">left-sample</a> 0 0))) 
     <a class=quiet href="#sndbindkey">keyboard-no-action</a>))
 </pre></td></tr></table></td></tr>
 
@@ -8943,15 +8984,51 @@ Or, more useful perhaps, have C-c set the cursor at a particular sample:
 
 <tr><td></td><td>
 The key codes can usually be found in the X header file X11R6/include/X11/keysymdef.h
-The "Page Up" key is given as 0xFF55, which in Scheme would be #xff55 (65365).
+The End key if #xff57, so we could bind it to cause the full sound to be displayed:
 <pre>
-  (<a class=quiet href="#sndbindkey">bind-key</a> #xff55 0 (lambda () (<a class=quiet href="#sndprint">snd-print</a> "Page up") <a class=quiet href="#sndbindkey">keyboard-no-action</a>))
+  (<em class=red>bind-key</em> #xff57 0 (lambda () (set! (<a class=quiet href="#sndxbounds">x-bounds</a>) (list 0.0 (/ (<a class=quiet href="#frames">frames</a>) (<a class=quiet href="#sndsrate">srate</a>))))))
 </pre>
-Similarly, the End key if #xFF57, so we could bind it to cause the full sound to be displayed:
-<pre>
-  (<a class=quiet href="#sndbindkey">bind-key</a> #xFF57 0 (lambda () (set! (<a class=quiet href="#sndxbounds">x-bounds</a>) (list 0.0 (/ (<a class=quiet href="#sndframes">frames</a>) (<a class=quiet href="#sndsrate">srate</a>))))))
-</pre>
+A similar set rebinds the arrow keys to give much more precise window position and size control:
 </td></tr>
+<tr><td></td><td>
+<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+(define (<a NAME="moveonepixel">move-one-pixel</a> s c right)
+  (let* ((ax (<a class=quiet href="#axisinfo">axis-info</a> s c time-graph))
+	 (lo (list-ref ax 0))
+	 (hi (list-ref ax 1))
+	 (lo-pix (list-ref ax 10))
+	 (hi-pix (list-ref ax 12))
+	 (samps-per-pixel (max 1 (inexact-&gt;exact (/ (- hi lo) (- hi-pix lo-pix))))))
+    (if right
+	(set! (<a class=quiet href="#rightsample">right-sample</a> s c) (min (+ hi samps-per-pixel) (<a class=quiet href="#frames">frames</a> s c)))
+	(set! (<a class=quiet href="#leftsample">left-sample</a>) (max 0 (- lo samps-per-pixel))))
+    keyboard-no-action))
+
+(<em class=red>bind-key</em> #xff51 0 (lambda () (move-one-pixel (<a class=quiet href="#selectedsound">selected-sound</a>) (<a class=quiet href="#selectedchannel">selected-channel</a>) #f))) ;left
+(<em class=red>bind-key</em> #xff53 0 (lambda () (move-one-pixel (<a class=quiet href="#selectedsound">selected-sound</a>) (<a class=quiet href="#selectedchannel">selected-channel</a>) #t))) ;right
+
+
+(define (<a NAME="zoomonepixel">zoom-one-pixel</a> s c in)
+  (let* ((ax (<a class=quiet href="#axisinfo">axis-info</a> s c time-graph))
+	 (lo (list-ref ax 0))
+	 (hi (list-ref ax 1))
+	 (lo-pix (list-ref ax 10))
+	 (hi-pix (list-ref ax 12))
+	 (samps-per-pixel (max 1 (inexact-&gt;exact (/ (- hi lo) (- hi-pix lo-pix)))))
+	 (len (<a class=quiet href="#frames">frames</a> s c)))
+    (if in
+	(if (&gt; (- hi-pix lo-pix) samps-per-pixel)
+	    (begin
+	      (set! (<a class=quiet href="#leftsample">left-sample</a>) (+ lo samps-per-pixel))
+	      (set! (<a class=quiet href="#xzoomslider">x-zoom-slider</a>) (exact-&gt;inexact (/ (max samps-per-pixel (- hi lo (* 2 samps-per-pixel))) len)))))
+	(begin
+	  (set! (<a class=quiet href="#leftsample">left-sample</a>) (max 0 (- lo samps-per-pixel)))
+	  (set! (<a class=quiet href="#xzoomslider">x-zoom-slider</a>) (exact-&gt;inexact (/ (min len (+ (- hi lo) (* 2 samps-per-pixel))) len)))))
+    keyboard-no-action))
+
+(<em class=red>bind-key</em> #xff52 0 (lambda () (zoom-one-pixel (<a class=quiet href="#selectedsound">selected-sound</a>) (<a class=quiet href="#selectedchannel">selected-channel</a>) #f))) ;up
+(<em class=red>bind-key</em> #xff54 0 (lambda () (zoom-one-pixel (<a class=quiet href="#selectedsound">selected-sound</a>) (<a class=quiet href="#selectedchannel">selected-channel</a>) #t))) ;down
+</pre></td></tr></table></td></tr>
 
 <tr><td></td><td>
 The emacs-style line-oriented commands C-p, C-n, and C-k aren't very useful in Snd,
@@ -9949,7 +10026,7 @@ The lowest level procedures are:
 <code><a class=def name="axisinfo">axis-info</a> (snd chn <i>grf</i>)</code></td></tr>
 <tr><td width=50><br></td><td>
 return a list describing the specified axis:
-<code>'(<a class=quiet href="#sndleftsample">left-sample</a> right-sample x0 y0 x1 y1 x-min y-min x-max y-max 
+<code>'(<a class=quiet href="#leftsample">left-sample</a> right-sample x0 y0 x1 y1 x-min y-min x-max y-max 
 x0-position y0-position x1-position y1-position y-offset xlabel)</code>.  This might be
 useful if you're drawing arbitrary figures in a graph.  <i>grf</i> defaults to
 time-graph; the other choices are transform-graph and lisp-graph.  The procedure <a href="#x2position">x-&gt;position</a>
@@ -10073,8 +10150,8 @@ currently in the time-domain graph:
 <tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define* (<a name="addcomment">add-comment</a> sample comment #:optional snd1 chn1)
-  (let* ((snd (or snd1 (<a class=quiet href="#sndselectedsound">selected-sound</a>)))
-	 (chn (or chn1 (<a class=quiet href="#sndselectedchannel">selected-channel</a>)))
+  (let* ((snd (or snd1 (<a class=quiet href="#selectedsound">selected-sound</a>)))
+	 (chn (or chn1 (<a class=quiet href="#selectedchannel">selected-channel</a>)))
 	 (old-comments (or (<a class=quiet href="sndscm.html#exchannelproperty">channel-property</a> 'comments snd chn) '())))
     (set! (<a class=quiet href="sndscm.html#exchannelproperty">channel-property</a> 'comments snd chn)
 	  (cons (list sample comment)
@@ -10087,8 +10164,8 @@ currently in the time-domain graph:
        (let* ((samp (car comment))
 	      (text (cadr comment))
 	      (text-width (* 6 (string-length text)))
-	      (ls (<a class=quiet href="#sndleftsample">left-sample</a> snd chn))
-	      (rs (<a class=quiet href="#sndrightsample">right-sample</a> snd chn)))
+	      (ls (<a class=quiet href="#leftsample">left-sample</a> snd chn))
+	      (rs (<a class=quiet href="#rightsample">right-sample</a> snd chn)))
 	 (if (and (&lt; ls samp)
 		  (&gt; rs samp))
 	     (let ((xpos (<a class=quiet href="#x2position">x-&gt;position</a> (/ samp (<a class=quiet href="#sndsrate">srate</a>))))
@@ -10162,8 +10239,8 @@ We can goof around with colors and fonts:
 (define show-hiho
   ;; show a red "hiho" in the helvetica bold font on a gray background
   (lambda (snd chn)
-    (let ((ls (<a class=quiet href="#sndleftsample">left-sample</a> snd chn))
-          (rs (<a class=quiet href="#sndrightsample">right-sample</a> snd chn)))
+    (let ((ls (<a class=quiet href="#leftsample">left-sample</a> snd chn))
+          (rs (<a class=quiet href="#rightsample">right-sample</a> snd chn)))
       (if (and (&lt; ls 1000)
                (&gt; rs 1000))
 	  (let ((pos (<a class=quiet href="#x2position">x-&gt;position</a> (/ 1000.0 (<a class=quiet href="#sndsrate">srate</a>))))
@@ -10202,8 +10279,8 @@ sound over another at an arbitrary point, and so on (see draw.scm):
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define (<A NAME="displaysampsinred">display-samps-in-red</A> snd chn)
   "display samples 1000 to 2000 in red whenever they're in the current view"
-  (let ((left (<a class=quiet href="#sndleftsample">left-sample</a> snd chn))
-	(right (<a class=quiet href="#sndrightsample">right-sample</a> snd chn))
+  (let ((left (<a class=quiet href="#leftsample">left-sample</a> snd chn))
+	(right (<a class=quiet href="#rightsample">right-sample</a> snd chn))
 	(old-color (<a class=quiet href="#foregroundcolor">foreground-color</a> snd chn))
 	(red (<a class=quiet href="#makecolor">make-color</a> 1 0 0)))
     (if (and (&lt; left 2000)
@@ -10290,7 +10367,7 @@ The result can be used in the lisp graph:
       (<a class=quiet href="#vctmap">vct-map!</a> data (lambda ()
 		       (+ 60.0 (dB (abs (<a class=quiet href="#vctref">vct-ref</a> data i))))))
       (<a class=quiet href="#sndgraph">graph</a> data "dB" 
-	     (/ (<a class=quiet href="#sndleftsample">left-sample</a> snd chn) sr) (/ (<a class=quiet href="#sndrightsample">right-sample</a> snd chn) sr)  
+	     (/ (<a class=quiet href="#leftsample">left-sample</a> snd chn) sr) (/ (<a class=quiet href="#rightsample">right-sample</a> snd chn) sr)  
 	     0.0 60.0
 	     snd chn))))
 
@@ -10388,7 +10465,7 @@ return the current x axis label (also settable).
         <!-- I(zoom focus):L(zoom-focus-style)(zoomfocusstyle) -->
 	<!-- I(fft in dB):L(fft-log-magnitude)(fftlogmagnitude) -->
 	<!-- I(fft log freq):L(fft-log-frequency)(fftlogfrequency) -->
-	<!-- I(select sound):L(selected-sound)(sndselectedsound) -->
+	<!-- I(select sound):L(selected-sound)(selectedsound) -->
 	<!-- I(multichannel ops):L(sync)(sndsyncing) -->
         <!-- I(save control panel):L(save-controls)(sndcontrolsave) -->
 	<!-- I(amp env):L(env-sound)(sndenv) -->
@@ -10451,8 +10528,8 @@ return the current x axis label (also settable).
 	<!-- I(mix selection):L(mix-selection)(sndmixselection) -->
 	<!-- I(interrupt Snd):L(stop-playing)(sndstop) -->
 	<!-- I(interrupt Snd):O(c-g!)(sndoops) -->
-	<!-- I(move window back):L(left-sample)(sndleftsample) -->
-	<!-- I(move window ahead):L(right-sample)(sndrightsample) -->
+	<!-- I(move window back):L(left-sample)(leftsample) -->
+	<!-- I(move window ahead):L(right-sample)(rightsample) -->
 	<!-- I(change tempo):L(expand)(sndexpand) -->
 	<!-- I(wavelets):L(wavelet-type)(wavelettype) -->
 	<!-- I(save macros):L(save-macros)(sndsavemacros) -->

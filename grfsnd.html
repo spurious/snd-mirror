@@ -775,6 +775,7 @@ In Guile <b>frame?</b> is part of the debugger; it is renamed <b>%frame?</b> her
 <tr><td><a href="clm.html#make-file-&gt;frame">make-file-&gt;frame</a></td><td colspan=2>(name)</td></tr>
 <tr><td><a href="clm.html#make-file-&gt;sample">make-file-&gt;sample</a></td><td colspan=2>(name)</td></tr>
 <tr><td><a href="clm.html#make-filter">make-filter</a></td><td colspan=2>(order xcoeffs ycoeffs)</td></tr>
+<tr><td><a class=def name="makefircoeffs">make-fir-coeffs</a></td><td colspan=2>(order spectr)</td></tr>
 <tr><td><a href="clm.html#make-fir-filter">make-fir-filter</a></td><td colspan=2>(order xcoeffs)</td></tr>
 <tr><td><a href="clm.html#make-formant">make-formant</a></td><td colspan=2>(radius frequency gain)</td></tr>
 <tr><td><a href="clm.html#make-frame">make-frame</a></td><td colspan=2>(chans &amp;rest vals)</td></tr>
@@ -988,7 +989,7 @@ Here are a few more examples, taken from <a href="sndscm.html#exampdoc">examp.sc
 (define zcomb
   (lambda (scaler size pm)
     (let ((cmb (<a class=quiet href="clm.html#make-comb">make-comb</a> scaler size :max-size (+ size 1 (<a class=quiet href="sndscm.html#maxenvelope">max-envelope</a> pm 0))))
-	  (penv (<a class=quiet href="clm.html#make-env">make-env</a> :envelope pm :end (<a class=quiet href="extsnd.html#sndframes">frames</a>))))
+	  (penv (<a class=quiet href="clm.html#make-env">make-env</a> :envelope pm :end (<a class=quiet href="extsnd.html#frames">frames</a>))))
       (lambda (x) (<a class=quiet href="clm.html#comb">comb</a> cmb x (env penv))))))
 
 ; (<a class=quiet href="extsnd.html#mapchan">map-chan</a> (zcomb .8 32 '(0 0 1 10)))
@@ -1012,7 +1013,7 @@ Here are a few more examples, taken from <a href="sndscm.html#exampdoc">examp.sc
 (define moving-formant
   (lambda (radius move)
     (let ((frm (<a class=quiet href="clm.html#make-formant">make-formant</a> radius (cadr move)))
-	  (menv (<a class=quiet href="clm.html#make-env">make-env</a> :envelope move :end (<a class=quiet href="extsnd.html#sndframes">frames</a>))))
+	  (menv (<a class=quiet href="clm.html#make-env">make-env</a> :envelope move :end (<a class=quiet href="extsnd.html#frames">frames</a>))))
       (lambda (x)
         (let ((val (<a class=quiet href="clm.html#formant">formant</a> frm x)))
 	  (set! (<a class=quiet href="clm.html#mus-frequency">mus-frequency</a> frm) (env menv))
@@ -1026,7 +1027,7 @@ Here are a few more examples, taken from <a href="sndscm.html#exampdoc">examp.sc
   (lambda (sr osamp osfrq)
     (let* ((os (<a class=quiet href="clm.html#make-oscil">make-oscil</a> osfrq))
 	   (sr (<a class=quiet href="clm.html#make-src">make-src</a> :srate sr))
-	   (len (<a class=quiet href="extsnd.html#sndframes">frames</a>))
+	   (len (<a class=quiet href="extsnd.html#frames">frames</a>))
 	   (sf (<a class=quiet href="extsnd.html#makesamplereader">make-sample-reader</a>))
 	   (out-data (<a class=quiet href="extsnd.html#makevct">make-vct</a> len)))
       (<a class=quiet href="extsnd.html#vctmap">vct-map!</a> out-data
@@ -1425,7 +1426,7 @@ like:
 <em class=listener>snd&gt;</em><em class=typing> (load "v.scm")</em>
 <em class=listener>snd&gt;</em><em class=typing> (fm-violin 0 1 440 .1)</em>
 <em class=listener>-1</em>
-<em class=listener>snd&gt;</em><em class=typing> (<a class=quiet href="extsnd.html#sndframes">frames</a> 0)</em>
+<em class=listener>snd&gt;</em><em class=typing> (<a class=quiet href="extsnd.html#frames">frames</a> 0)</em>
 <em class=listener>22050</em>
 <em class=listener>snd&gt;</em><em class=typing> (<a class=quiet href="extsnd.html#sndplay">play</a>)</em>
 <em class=listener>#t</em>
@@ -1547,7 +1548,7 @@ than 40 seconds in duration, and truncates them to 40 seconds:
     (let* ((name (list-ref (<a class=quiet href="extsnd.html#sndscriptargs">script-args</a>) arg)))
       (if (&gt; (<a class=quiet href="extsnd.html#soundduration">mus-sound-duration</a> name) 40.0)
 	  (let* ((ind (<a class=quiet href="extsnd.html#sndopen">open-sound</a> name)))
-	    (set! (<a class=quiet href="extsnd.html#sndframes">frames</a> ind) (* 40 (<a class=quiet href="extsnd.html#sndsrate">srate</a> ind)))
+	    (set! (<a class=quiet href="extsnd.html#frames">frames</a> ind) (* 40 (<a class=quiet href="extsnd.html#sndsrate">srate</a> ind)))
 	    (<a class=quiet href="extsnd.html#sndsave">save-sound</a> ind)
 	    (<a class=quiet href="extsnd.html#sndclose">close-sound</a> ind))))))
 (<a class=quiet href="extsnd.html#sndexit">exit</a>)
@@ -1819,9 +1820,9 @@ than one input is required, the first argument to apply-ladspa should be a list 
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define* (ladspa-channel ladspa-data #:optional nbeg ndur nsnd nchn nedpos)
   (let* ((beg (or nbeg 0)) 
-	 (snd (or nsnd (<a class=quiet href="extsnd.html#sndselectedsound">selected-sound</a>) (car (<a class=quiet href="extsnd.html#sounds">sounds</a>))))
-	 (chn (or nchn (<a class=quiet href="extsnd.html#sndselectedchannel">selected-channel</a>)))
-	 (dur (or ndur (- (<a class=quiet href="extsnd.html#sndframes">frames</a> snd chn) beg)))
+	 (snd (or nsnd (<a class=quiet href="extsnd.html#selectedsound">selected-sound</a>) (car (<a class=quiet href="extsnd.html#sounds">sounds</a>))))
+	 (chn (or nchn (<a class=quiet href="extsnd.html#selectedchannel">selected-channel</a>)))
+	 (dur (or ndur (- (<a class=quiet href="extsnd.html#frames">frames</a> snd chn) beg)))
 	 (edpos (or nedpos current-edit-position))
 	 (reader (<a class=quiet href="extsnd.html#makesamplereader">make-sample-reader</a> beg snd chn 1 edpos)))
     (<em class=red>apply-ladspa</em> reader ladspa-data dur "apply-ladspa")
@@ -1903,7 +1904,7 @@ data directly to the DAC:
 	 (block-size 256)
 	 (in-block (<a class=quiet href="extsnd.html#makevct">make-vct</a> block-size))
 	 (out-block (<a class=quiet href="extsnd.html#makevct">make-vct</a> block-size))
-	 (len (<a class=quiet href="extsnd.html#sndframes">frames</a>))
+	 (len (<a class=quiet href="extsnd.html#frames">frames</a>))
 	 (data (<a class=quiet href="extsnd.html#makesounddata">make-sound-data</a> 1 block-size))
 	 (audio-port (<a class=quiet href="extsnd.html#musaudioopenoutput">mus-audio-open-output</a> mus-audio-default (<a class=quiet href="extsnd.html#sndsrate">srate</a>) 1 mus-lshort (* block-size 2))))
   (dynamic-wind

@@ -135,7 +135,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 
 
 (define* (window-samples #:optional snd chn)
-  "(window-samples #:optional snd chn) -> sample in snd channel chn in current graph window"
+  "(window-samples #:optional snd chn) -> samples in snd channel chn in current graph window"
   (let ((wl (left-sample snd chn))
 	(wr (right-sample snd chn)))
     (samples wl (+ 1 (- wr wl)) snd chn)))

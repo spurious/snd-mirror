@@ -2928,6 +2928,7 @@ _ACEOF
 #   SNDLIB_CONFIG_path    where to look for sndlib-config
 #
 # SOMEDAY: --with-static-libraries --with-static-guile
+# TODO: pass static decisions up to snd-help
 
 
 #--------------------------------------------------------------------------------
@@ -3113,13 +3114,6 @@ _ACEOF
 
 fi;
 
-if test "$with_motif" = yes ; then
-  cat >>confdefs.h <<\_ACEOF
-#define USE_MOTIF 1
-_ACEOF
-
-fi
-
 
 # Check whether --with-motif-prefix or --without-motif-prefix was given.
 if test "${with_motif_prefix+set}" = set; then
@@ -3130,10 +3124,6 @@ else
 fi;
 
 if test "$with_static_motif" = yes ; then
-  cat >>confdefs.h <<\_ACEOF
-#define USE_MOTIF 1
-_ACEOF
-
   with_motif=yes
 fi
 
@@ -12855,79 +12845,7 @@ _ACEOF
   XFLAGS="$X_CFLAGS"
   X_POST_LIBS="-lX11 $X_EXTRA_LIBS"
 
-  if test "$with_static_motif" = yes ; then
-    if test x$motif_prefix != x ; then
-    as_ac_File=`echo "ac_cv_file_$motif_prefix/lib/libXm.a" | $as_tr_sh`
-echo "$as_me:$LINENO: checking for $motif_prefix/lib/libXm.a" >&5
-echo $ECHO_N "checking for $motif_prefix/lib/libXm.a... $ECHO_C" >&6
-if eval "test \"\${$as_ac_File+set}\" = set"; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  test "$cross_compiling" = yes &&
-  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
-echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
-   { (exit 1); exit 1; }; }
-if test -r "$motif_prefix/lib/libXm.a"; then
-  eval "$as_ac_File=yes"
-else
-  eval "$as_ac_File=no"
-fi
-fi
-echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_File'}'`" >&5
-echo "${ECHO_T}`eval echo '${'$as_ac_File'}'`" >&6
-if test `eval echo '${'$as_ac_File'}'` = yes; then
-
-      X_PRE_LIBS="$motif_prefix/lib/libXm.a $X_LIBS $X_PRE_LIBS -lXt"
-
-else
-
-      { echo "$as_me:$LINENO: WARNING: can't find $motif_prefix/lib/libXm.a!" >&5
-echo "$as_me: WARNING: can't find $motif_prefix/lib/libXm.a!" >&2;}
-      X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt"
-
-fi
-
-    else
-    as_ac_File=`echo "ac_cv_file_$x_libraries/libXm.a" | $as_tr_sh`
-echo "$as_me:$LINENO: checking for $x_libraries/libXm.a" >&5
-echo $ECHO_N "checking for $x_libraries/libXm.a... $ECHO_C" >&6
-if eval "test \"\${$as_ac_File+set}\" = set"; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  test "$cross_compiling" = yes &&
-  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
-echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
-   { (exit 1); exit 1; }; }
-if test -r "$x_libraries/libXm.a"; then
-  eval "$as_ac_File=yes"
-else
-  eval "$as_ac_File=no"
-fi
-fi
-echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_File'}'`" >&5
-echo "${ECHO_T}`eval echo '${'$as_ac_File'}'`" >&6
-if test `eval echo '${'$as_ac_File'}'` = yes; then
-
-      X_PRE_LIBS="$x_libraries/libXm.a $X_LIBS $X_PRE_LIBS -lXt"
-
-else
-
-      { echo "$as_me:$LINENO: WARNING: can't find $x_libraries/libXm.a!" >&5
-echo "$as_me: WARNING: can't find $x_libraries/libXm.a!" >&2;}
-      X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt"
-
-fi
-
-    fi
-  else
-    if test x$motif_prefix != x ; then
-      X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -L$motif_prefix/lib -lXm -lXt"
-      XFLAGS="$XFLAGS -I$motif_prefix/include"
-    else
-      X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt"
-    fi
-  fi
-
+# this needs to precede the Xm check
   TEST_PRE_LIBS="$X_LIBS $X_PRE_LIBS"
   TEST_POST_LIBS="$X_POST_LIBS"
   TEST_LIBS="$TEST_PRE_LIBS $TEST_POST_LIBS"
@@ -13008,6 +12926,83 @@ _ACEOF
 
 fi
 
+
+  if test "$with_static_motif" = yes ; then
+    if test x$motif_prefix != x ; then
+    as_ac_File=`echo "ac_cv_file_$motif_prefix/lib/libXm.a" | $as_tr_sh`
+echo "$as_me:$LINENO: checking for $motif_prefix/lib/libXm.a" >&5
+echo $ECHO_N "checking for $motif_prefix/lib/libXm.a... $ECHO_C" >&6
+if eval "test \"\${$as_ac_File+set}\" = set"; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  test "$cross_compiling" = yes &&
+  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "$motif_prefix/lib/libXm.a"; then
+  eval "$as_ac_File=yes"
+else
+  eval "$as_ac_File=no"
+fi
+fi
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_File'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_File'}'`" >&6
+if test `eval echo '${'$as_ac_File'}'` = yes; then
+
+      X_PRE_LIBS="$motif_prefix/lib/libXm.a $X_LIBS $X_PRE_LIBS -lXt"
+
+else
+
+      { echo "$as_me:$LINENO: WARNING: can't find $motif_prefix/lib/libXm.a!" >&5
+echo "$as_me: WARNING: can't find $motif_prefix/lib/libXm.a!" >&2;}
+      X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt"
+
+fi
+
+    else
+    as_ac_File=`echo "ac_cv_file_$x_libraries/libXm.a" | $as_tr_sh`
+echo "$as_me:$LINENO: checking for $x_libraries/libXm.a" >&5
+echo $ECHO_N "checking for $x_libraries/libXm.a... $ECHO_C" >&6
+if eval "test \"\${$as_ac_File+set}\" = set"; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  test "$cross_compiling" = yes &&
+  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "$x_libraries/libXm.a"; then
+  eval "$as_ac_File=yes"
+else
+  eval "$as_ac_File=no"
+fi
+fi
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_File'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_File'}'`" >&6
+if test `eval echo '${'$as_ac_File'}'` = yes; then
+
+      X_PRE_LIBS="$x_libraries/libXm.a $X_LIBS $X_PRE_LIBS -lXt"
+
+else
+
+      { echo "$as_me:$LINENO: WARNING: can't find $x_libraries/libXm.a!" >&5
+echo "$as_me: WARNING: can't find $x_libraries/libXm.a!" >&2;}
+      X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt"
+
+fi
+
+    fi
+  else
+    if test x$motif_prefix != x ; then
+      X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -L$motif_prefix/lib -lXm -lXt"
+      XFLAGS="$XFLAGS -I$motif_prefix/include"
+    else
+      X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt"
+    fi
+  fi
+
+  TEST_PRE_LIBS="$X_LIBS $X_PRE_LIBS"
+  TEST_POST_LIBS="$X_POST_LIBS"
+  TEST_LIBS="$TEST_PRE_LIBS $TEST_POST_LIBS"
 
   GX_FILES="X_O_FILES"
   GX_HEADERS="SND_X_HEADERS"

@@ -111,15 +111,10 @@ AC_ARG_WITH(sample-width,
         LOCAL_SNDLIB_BITS=$with_sample_width
 	)
 
-if test "$with_motif" = yes ; then
-  AC_DEFINE(USE_MOTIF)
-fi
-
 AC_ARG_WITH(motif-prefix,[  --with-motif-prefix=PFX where Motif is installed],
             motif_prefix="$withval", motif_prefix="")
 
 if test "$with_static_motif" = yes ; then
-  AC_DEFINE(USE_MOTIF)
   with_motif=yes
 fi
 
@@ -371,6 +366,19 @@ else
   XFLAGS="$X_CFLAGS"
   X_POST_LIBS="-lX11 $X_EXTRA_LIBS"
 
+# this needs to precede the Xm check
+  TEST_PRE_LIBS="$X_LIBS $X_PRE_LIBS"
+  TEST_POST_LIBS="$X_POST_LIBS"
+  TEST_LIBS="$TEST_PRE_LIBS $TEST_POST_LIBS"
+
+  AC_CHECK_LIB(Xext, XShapeQueryExtension, 
+    [
+     X_POST_LIBS="$X_POST_LIBS -lXext"
+     TEST_POST_LIBS="$TEST_POST_LIBS -lXext"
+     TEST_LIBS="$TEST_PRE_LIBS $TEST_POST_LIBS"
+     AC_DEFINE(HAVE_XSHAPEQUERYEXTENSION)
+    ], , $TEST_LIBS)
+
   if test "$with_static_motif" = yes ; then
     if test x$motif_prefix != x ; then
     AC_CHECK_FILE($motif_prefix/lib/libXm.a,[
@@ -401,14 +409,6 @@ else
   TEST_PRE_LIBS="$X_LIBS $X_PRE_LIBS"
   TEST_POST_LIBS="$X_POST_LIBS"
   TEST_LIBS="$TEST_PRE_LIBS $TEST_POST_LIBS"
-
-  AC_CHECK_LIB(Xext, XShapeQueryExtension, 
-    [
-     X_POST_LIBS="$X_POST_LIBS -lXext"
-     TEST_POST_LIBS="$TEST_POST_LIBS -lXext"
-     TEST_LIBS="$TEST_PRE_LIBS $TEST_POST_LIBS"
-     AC_DEFINE(HAVE_XSHAPEQUERYEXTENSION)
-    ], , $TEST_LIBS)
 
   GX_FILES="X_O_FILES"
   GX_HEADERS="SND_X_HEADERS"

@@ -378,7 +378,8 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
-9-Feb:   channels-equal in extensions.scm\n\
+11-Feb:  added optional truncate arg to file-selection\n\
+9-Feb:   channels-equal? and channels=? in extensions.scm\n\
          play-sine, play-sines, open-play-oputput in play.scm.\n\
          notch-channel and notch-selection in dsp.scm\n\
 6-Feb:   expand-control-jitter.\n\
@@ -1403,16 +1404,36 @@ static void reverse_help(void)
 		      snd_xref_urls("Reverse"));
 }
 
+static void noise_reduction_help(void)
+{
+  snd_help_with_xrefs("Noise Reduction",
+		      "",
+		      true,
+		      snd_xrefs("Noise Reduction"),
+		      snd_xref_urls("Noise Reduction"));
+}
+
+static void window_size_help(void)
+{
+  snd_help_with_xrefs("Window Size",
+		      "",
+		      true,
+		      snd_xrefs("Window Size"),
+		      snd_xref_urls("Window Size"));
+}
+
+
 
 #include "snd-xref.c"
 
-#define NUM_TOPICS 32
+#define NUM_TOPICS 34
 static char *topic_names[NUM_TOPICS] = {
   "Hook", "Vct", "Sample reader", "Mark", "Mix", "Region", "Edit list", "Transform", "Error",
   "Color", "Font", "Graphic", "Widget", "Emacs",
   "CLM", "Instrument", "CM", "CMN", "Libxm", "Sndlib", 
   "Motif", "Gtk", "Script", "Ruby", "LADSPA", "OpenGL", "Gdb", "Control panel",
-  "X resources", "Invocation flags", "Initialization file", "Customization"
+  "X resources", "Invocation flags", "Initialization file", "Customization",
+  "Noise Reduction", "Window Size"
 };
 
 static char *topic_urls[NUM_TOPICS] = {
@@ -1424,7 +1445,8 @@ static char *topic_urls[NUM_TOPICS] = {
   "libxm.html#xm", "sndlib.html#introduction", "grfsnd.html#sndwithmotif", 
   "grfsnd.html#sndwithgtk", "grfsnd.html#sndwithnogui", "grfsnd.html#sndandruby", "grfsnd.html#sndandladspa", 
   "grfsnd.html#sndandgl", "grfsnd.html#sndandgdb", "extsnd.html#customcontrols",
-  "grfsnd.html#sndresources", "grfsnd.html#sndswitches", "grfsnd.html#sndinitfile", "extsnd.html#extsndcontents"
+  "grfsnd.html#sndresources", "grfsnd.html#sndswitches", "grfsnd.html#sndinitfile", "extsnd.html#extsndcontents",
+  "extsnd.html#noisystory", "extsnd.html#movingwindows"
 };
 
 #if HAVE_STRCASECMP
@@ -1453,25 +1475,30 @@ static char *topic_url(const char *topic)
   return(NULL);
 }
 
-#define NUM_XREFS 30
+#define NUM_XREFS 32
 static char *xrefs[NUM_XREFS] = {
   "Mark", "Mix", "Region", "Selection", "Cursor", "Tracking cursor", "Delete", "Envelope", "Filter",
   "Search", "Insert", "Maxamp", "Play", "Reverse", "Save", "Smooth", "Resample", "FFT", "Reverb",
-  "Src", "Find", "Undo", "Redo", "Sync", "Control panel", "Record", "Header", "Key", "Track", "Copy"};
+  "Src", "Find", "Undo", "Redo", "Sync", "Control panel", "Record", "Header", "Key", "Track", "Copy",
+  "Noise Reduction", "Window Size"
+};
 
 static char **xref_tables[NUM_XREFS] = {
   Marking_xrefs, Mixing_xrefs, Regions_xrefs, Selections_xrefs, Cursors_xrefs, Tracking_cursors_xrefs,
   Deletions_xrefs, Envelopes_xrefs, Filters_xrefs, Searching_xrefs, Insertions_xrefs, Maxamps_xrefs,
   Playing_xrefs, Reversing_xrefs, Saving_xrefs, Smoothing_xrefs, Resampling_xrefs, FFTs_xrefs, Reverb_xrefs,
   Resampling_xrefs, Searching_xrefs, Undo_and_Redo_xrefs, Undo_and_Redo_xrefs, 
-  sync_xrefs, control_xrefs, record_xrefs, header_and_data_xrefs, key_xrefs, Tracks_xrefs, Vcts_xrefs};
+  sync_xrefs, control_xrefs, record_xrefs, header_and_data_xrefs, key_xrefs, Tracks_xrefs, Vcts_xrefs,
+  Noise_Reduction_xrefs, Window_size_and_position_xrefs
+};
 
 static char **xref_url_tables[NUM_XREFS] = {
   Marking_urls, Mixing_urls, Regions_urls, Selections_urls, Cursors_urls, Tracking_cursors_urls,
   Deletions_urls, Envelopes_urls, Filters_urls, Searching_urls, Insertions_urls, Maxamps_urls,
   Playing_urls, Reversing_urls, Saving_urls, Smoothing_urls, Resampling_urls, FFTs_urls, Reverb_urls,
   Resampling_urls, Searching_urls, Undo_and_Redo_urls, Undo_and_Redo_urls, 
-  NULL, NULL, NULL, NULL, Tracks_urls, Vcts_urls};
+  NULL, NULL, NULL, NULL, Tracks_urls, Vcts_urls, Noise_Reduction_urls, Window_size_and_position_urls
+};
 
 typedef void (*help_func)(void);
 /* if an entry is null here, the main help window will display "(no help found)" */
@@ -1480,7 +1507,9 @@ static help_func help_funcs[NUM_XREFS] = {
   &delete_help, &env_help, &filter_help, &find_help, &insert_help, &maxamp_help,
   &play_help, &reverse_help, &save_help, &smooth_help, &resample_help, &fft_help, &reverb_help,
   &resample_help, &find_help, &undo_help, &undo_help,
-  &sync_help, &controls_help, recording_help, &sound_files_help, &key_binding_help, &track_help, &copy_help};
+  &sync_help, &controls_help, recording_help, &sound_files_help, &key_binding_help, &track_help, &copy_help,
+  &noise_reduction_help, &window_size_help
+};
 
 static char **snd_xrefs(const char *topic)
 {

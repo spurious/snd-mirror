@@ -2966,6 +2966,25 @@ return a new sine summation synthesis generator."
 
 /* ----------------  filter ---------------- */
 
+static XEN g_make_fir_coeffs(XEN order, XEN envl)
+{
+  #define H_make_fir_coeffs "(" S_make_fir_coeffs " order v) turns spectral envelope in vct v into coeffs for FIR filter"
+  int size;
+  Float *a;
+  vct *v;
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(order), order, XEN_ARG_1, S_make_fir_coeffs, "int");
+  XEN_ASSERT_TYPE(VCT_P(envl), envl, XEN_ARG_2, S_make_fir_coeffs, "a vct");
+  v = TO_VCT(envl);
+  size = XEN_TO_C_INT(order);
+  if (size != v->length)
+    XEN_ERROR(MUS_MISC_ERROR,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_make_fir_coeffs), 
+			 C_TO_XEN_STRING("order (~A) != vct length (~A)"),
+			 XEN_LIST_2(order, envl)));
+  a = mus_make_fir_coeffs(XEN_TO_C_INT(order), v->data, NULL);
+  return(xen_return_first(make_vct(v->length, a), envl));
+}
+
 static XEN g_filter_p(XEN obj) 
 {
   #define H_filter_p "(" S_filter_p " gen): #t if gen is a " S_filter
@@ -4868,6 +4887,7 @@ XEN_ARGIFY_6(g_make_filter_w, g_make_filter)
 XEN_NARGIFY_2(g_filter_w, g_filter)
 XEN_NARGIFY_1(g_filter_p_w, g_filter_p)
 XEN_ARGIFY_4(g_make_fir_filter_w, g_make_fir_filter)
+XEN_NARGIFY_2(g_make_fir_coeffs_w, g_make_fir_coeffs)
 XEN_NARGIFY_2(g_fir_filter_w, g_fir_filter)
 XEN_NARGIFY_1(g_fir_filter_p_w, g_fir_filter_p)
 XEN_ARGIFY_4(g_make_iir_filter_w, g_make_iir_filter)
@@ -5119,6 +5139,7 @@ XEN_ARGIFY_7(g_mus_mix_w, g_mus_mix)
 #define g_filter_w g_filter
 #define g_filter_p_w g_filter_p
 #define g_make_fir_filter_w g_make_fir_filter
+#define g_make_fir_coeffs_w g_make_fir_coeffs
 #define g_fir_filter_w g_fir_filter
 #define g_fir_filter_p_w g_fir_filter_p
 #define g_make_iir_filter_w g_make_iir_filter
@@ -5518,6 +5539,7 @@ the closer the radius is to 1.0, the narrower the resonance."
   XEN_DEFINE_PROCEDURE(S_make_filter,     g_make_filter_w,     0, 6, 0, H_make_filter);
   XEN_DEFINE_PROCEDURE(S_filter,          g_filter_w,          2, 0, 0, H_filter);
   XEN_DEFINE_PROCEDURE(S_filter_p,        g_filter_p_w,        1, 0, 0, H_filter_p);
+  XEN_DEFINE_PROCEDURE(S_make_fir_coeffs, g_make_fir_coeffs_w, 2, 0, 0, H_make_fir_coeffs);
   XEN_DEFINE_PROCEDURE(S_make_fir_filter, g_make_fir_filter_w, 0, 4, 0, H_make_fir_filter);
   XEN_DEFINE_PROCEDURE(S_fir_filter,      g_fir_filter_w,      2, 0, 0, H_fir_filter);
   XEN_DEFINE_PROCEDURE(S_fir_filter_p,    g_fir_filter_p_w,    1, 0, 0, H_fir_filter_p);

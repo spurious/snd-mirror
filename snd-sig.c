@@ -1202,10 +1202,10 @@ static Float convolve_next_sample(void *ptr, int dir)
 }
 
 /* TODO: perhaps save filter coeffs and re-use? */
-/* TODO: filter-selection hits samples after end of selection */
 
 static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_progress_t from_enved, 
-				   const char *origin, bool over_selection, Float *ur_a, mus_any *gen, XEN edpos, int arg_pos)
+				   const char *origin, bool over_selection, Float *ur_a, 
+				   mus_any *gen, XEN edpos, int arg_pos, bool truncate)
 {
   /* if string returned, needs to be freed */
   /* interpret e as frequency response and apply as filter to all sync'd chans */
@@ -1300,6 +1300,9 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
 	      if (!(POWER_OF_2_P(order)))
 		order = snd_2pow2(order);
 	      fsize = 2 * order; /* need room for convolution */
+	      
+	      /* TODO: it would be better to use sample_linear_env + fft_filter rather than convolve gen */
+
 	      fltdat = get_filter_coeffs(order, e);
 	      gen = mus_make_convolve(NULL, fltdat, fsize, order, (void *)sf);
 	      j = 0;
@@ -1385,7 +1388,6 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
       /* for each decide whether a file or internal array is needed, scale, update edit tree */
       data = (mus_sample_t **)MALLOC(sizeof(mus_sample_t *));
       data[0] = (mus_sample_t *)CALLOC(MAX_BUFFER_SIZE, sizeof(mus_sample_t)); 
-      
       if (!(ss->stopped_explicitly))
 	{
 	  for (i = 0; i < si->chans; i++)
@@ -1403,7 +1405,8 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
 		  continue;
 		}
 	      if (!(editable_p(cp))) continue;
-	      dur += order;
+	      if ((!over_selection) || (!truncate))
+		dur += order;
 	      /* if over-selection this causes it to clobber samples beyond the selection end -- maybe mix? */
 	      reporting = ((sp) && (dur > REPORTING_SIZE));
 	      if (reporting) start_progress_report(sp, from_enved);
@@ -1441,6 +1444,8 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
 		    }
 		}
 	      j = 0;
+	      if ((over_selection) && (!truncate))
+		dur -= order;
 	      for (offk = 0; offk < dur; offk++)
 		{
 		  if (gen)
@@ -1469,6 +1474,37 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
 			  if (ss->stopped_explicitly) break;
 			}
 		    }
+		}
+	      if ((over_selection) && (!truncate))
+		{
+		  snd_fd *sfold;
+		  sfold = init_sample_read_any(si->begs[i] + dur - order, cp, READ_FORWARD, sf->edit_ctr);
+		  for (offk = 0; offk < order; offk++)
+		    {
+		      if (gen)
+			x = MUS_RUN(gen, read_sample_to_float(sf), 0.0);
+		      else
+			{
+			  x = 0.0; 
+			  d[0] = read_sample_to_float(sf);
+			  for (m = order - 1; m > 0; m--) 
+			    {
+			      x += d[m] * a[m]; 
+			      d[m] = d[m - 1];
+			    } 
+			  x += d[0] * a[0]; 
+			}
+		      idata[j] = MUS_FLOAT_TO_SAMPLE(x + read_sample_to_float(sfold));
+		      j++;
+		      if ((temp_file) && (j == MAX_BUFFER_SIZE))
+			{
+			  err = mus_file_write(ofd, 0, j - 1, 1, data);
+			  j = 0;
+			  if (err == -1) break;
+			}
+		    }
+		  dur += order;
+		  free_snd_fd(sfold);
 		}
 	      if (reporting) finish_progress_report(sp, from_enved);
 	      if (temp_file)
@@ -1512,10 +1548,11 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
 }
 
 void apply_filter(chan_info *ncp, int order, env *e, enved_progress_t from_enved, 
-		  const char *origin, bool over_selection, Float *ur_a, mus_any *gen, XEN edpos, int arg_pos)
+		  const char *origin, bool over_selection, Float *ur_a, mus_any *gen, 
+		  XEN edpos, int arg_pos, bool truncate)
 {
   char *error;
-  error = apply_filter_or_error(ncp, order, e, from_enved, origin, over_selection, ur_a, gen, edpos, arg_pos);
+  error = apply_filter_or_error(ncp, order, e, from_enved, origin, over_selection, ur_a, gen, edpos, arg_pos, truncate);
   if (error)
     {
       snd_error(error);
@@ -4092,7 +4129,7 @@ sampling-rate convert the currently selected data by ratio (which can be an enve
   return(g_src_1(ratio_or_env, base, XEN_FALSE, XEN_FALSE, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), S_src_selection, true));
 }
 
-static XEN g_filter_1(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos, const char *caller, bool selection)
+static XEN g_filter_1(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos, const char *caller, bool selection, bool truncate)
 {
   chan_info *cp;
   vct *v;
@@ -4105,7 +4142,7 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos, const c
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(order), order, XEN_ARG_2, caller, "an integer");
   if (mus_xen_p(e))
     {
-      error = apply_filter_or_error(cp, 0, NULL, NOT_FROM_ENVED, caller, selection, NULL, XEN_TO_MUS_ANY(e), edpos, 5);
+      error = apply_filter_or_error(cp, 0, NULL, NOT_FROM_ENVED, caller, selection, NULL, XEN_TO_MUS_ANY(e), edpos, 5, truncate);
       if (error)
 	{
 	  errstr = C_TO_XEN_STRING(error);
@@ -4123,14 +4160,14 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos, const c
 	  v = TO_VCT(e);
 	  if (len > v->length) 
 	    XEN_OUT_OF_RANGE_ERROR(caller, 2, order, "order ~A > length coeffs?");
-	  apply_filter(cp, len, NULL, NOT_FROM_ENVED, caller, selection, v->data, NULL, edpos, 5);
+	  apply_filter(cp, len, NULL, NOT_FROM_ENVED, caller, selection, v->data, NULL, edpos, 5, truncate);
 	}
       else 
 	{
 	  XEN_ASSERT_TYPE((XEN_VECTOR_P(e) || (XEN_LIST_P(e))), e, XEN_ARG_1, caller, "a list, vector, vct, or env generator");
 	  apply_filter(cp, len,
 		       ne = get_env(e, caller),
-		       NOT_FROM_ENVED, caller, selection, NULL, NULL, edpos, 5);
+		       NOT_FROM_ENVED, caller, selection, NULL, NULL, edpos, 5, truncate);
 	  if (ne) free_env(ne); 
 	}
     }
@@ -4142,16 +4179,21 @@ static XEN g_filter_sound(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos)
   #define H_filter_sound "(" S_filter_sound " filter order (snd #f) (chn #f) (edpos #f)): \
 applies FIR filter to snd's channel chn. 'filter' is either the frequency response envelope, a CLM filter, or a vct with the actual coefficients"
 
-  return(g_filter_1(e, order, snd_n, chn_n, edpos, S_filter_sound, false));
+  return(g_filter_1(e, order, snd_n, chn_n, edpos, S_filter_sound, false, false));
 }
 
-static XEN g_filter_selection(XEN e, XEN order)
+static XEN g_filter_selection(XEN e, XEN order, XEN truncate)
 {
-  #define H_filter_selection "(" S_filter_selection " filter order): apply filter to selection"
+  #define H_filter_selection "(" S_filter_selection " filter order (truncate #t)): apply filter to selection. If truncate, \
+cut off filter output at end of selection, else mix"
 
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(truncate), truncate, XEN_ARG_3, S_filter_selection, "boolean");
   if (!(selection_is_active())) 
     return(snd_no_active_selection_error(S_filter_selection));
-  return(g_filter_1(e, order, XEN_FALSE, XEN_FALSE, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), S_filter_selection, true));
+  return(g_filter_1(e, order, XEN_FALSE, XEN_FALSE, 
+		    C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 
+		    S_filter_selection, true, 
+		    XEN_TO_C_BOOLEAN_OR_TRUE(truncate)));
 }
 
 static XEN g_sinc_width(void) {return(C_TO_XEN_INT(sinc_width(ss)));}
@@ -4205,7 +4247,7 @@ XEN_ARGIFY_2(g_src_selection_w, g_src_selection)
 XEN_ARGIFY_6(g_src_channel_w, g_src_channel)
 XEN_ARGIFY_5(g_pad_channel_w, g_pad_channel)
 XEN_ARGIFY_5(g_filter_sound_w, g_filter_sound)
-XEN_ARGIFY_2(g_filter_selection_w, g_filter_selection)
+XEN_ARGIFY_3(g_filter_selection_w, g_filter_selection)
 XEN_ARGIFY_7(g_clm_channel_w, g_clm_channel)
 XEN_NARGIFY_0(g_sinc_width_w, g_sinc_width)
 XEN_NARGIFY_1(g_set_sinc_width_w, g_set_sinc_width)
@@ -4308,7 +4350,7 @@ void g_init_sig(void)
   XEN_DEFINE_PROCEDURE(S_src_sound,               g_src_sound_w,               1, 4, 0, H_src_sound);
   XEN_DEFINE_PROCEDURE(S_src_selection,           g_src_selection_w,           1, 1, 0, H_src_selection);
   XEN_DEFINE_PROCEDURE(S_filter_sound,            g_filter_sound_w,            1, 4, 0, H_filter_sound);
-  XEN_DEFINE_PROCEDURE(S_filter_selection,        g_filter_selection_w,        1, 1, 0, H_filter_selection);
+  XEN_DEFINE_PROCEDURE(S_filter_selection,        g_filter_selection_w,        1, 2, 0, H_filter_selection);
 
   XEN_DEFINE_PROCEDURE(S_reverse_channel,         g_reverse_channel_w,         0, 5, 0, H_reverse_channel);
   XEN_DEFINE_PROCEDURE(S_clm_channel,             g_clm_channel_w,             1, 6, 0, H_clm_channel);

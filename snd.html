@@ -852,8 +852,8 @@ window size:</p>
     (if (and (<a href="extsnd.html#sndffting">transform-graph?</a>) 
              (= (<a href="extsnd.html#lfftstyle">transform-graph-type</a>) <a class=quiet href="extsnd.html#lfftstyle">graph-once</a>))
       (set! (<a href="extsnd.html#lfftsize">transform-size)</a>
-        (expt 2 (ceiling (/ (log (- (<a class=quiet href="extsnd.html#sndrightsample">right-sample</a>) 
-                                    (<a class=quiet href="extsnd.html#sndleftsample">left-sample</a>))) 
+        (expt 2 (ceiling (/ (log (- (<a class=quiet href="extsnd.html#rightsample">right-sample</a>) 
+                                    (<a class=quiet href="extsnd.html#leftsample">left-sample</a>))) 
                             (log 2.0))))))))
 </pre>
 <br>
@@ -1081,7 +1081,11 @@ much more precise control of the window bounds and placement:</p>
 <p>As in most other cases, the sample numbers (or sizes) can be floats;
 if the argument is not an integer, it is multiplied by the sampling
 rate before being applied to the command.  So, C-u .1 C-x C-p makes
-the window display .1 seconds of data.</p>
+the window display .1 seconds of data.
+If you'd like far more precise window moving and zooming control,
+see <a href="extsnd.html#moveonepixel">move-one-pixel</a> and
+<a href="extsnd.html#zoomonepixel">zoom-one-pixel</a>.
+</p>
         <!-- I(zoom window):O(control keys intensify)(movingwindow) -->
         <!-- I(zoom window):A(movingwindow) --><!-- I(move window back):A(movingwindow) -->
         <!-- I(move window ahead):A(movingwindow) --><!-- I(move window back):O(scroll bars) -->
@@ -2015,21 +2019,21 @@ all the samples between the cursor and the next mark.</p>
 <tr><td valign=top>[Left]</td><td valign=top>move window left</td>
 <td><code><small><pre>
 (lambda () 
-  (set! (<a class=quiet href="extsnd.html#sndleftsample">left-sample</a>) 
-    (max 0 (- (* 1.5 (<a class=quiet href="extsnd.html#sndleftsample">left-sample</a>)) (* 0.5 (<a class=quiet href="extsnd.html#sndrightsample">right-sample</a>))))))
+  (set! (<a class=quiet href="extsnd.html#leftsample">left-sample</a>) 
+    (max 0 (- (* 1.5 (<a class=quiet href="extsnd.html#leftsample">left-sample</a>)) (* 0.5 (<a class=quiet href="extsnd.html#rightsample">right-sample</a>))))))
 </pre></small></code></td></tr>
-<tr><td>[Right]</td><td>move window right</td><td><code><small>(lambda () (set! (<a class=quiet href="extsnd.html#sndleftsample">left-sample</a>) (* 0.5 (+ (<a class=quiet href="extsnd.html#sndleftsample">left-sample</a>) (<a class=quiet href="extsnd.html#sndrightsample">right-sample</a>)))))</small></code></td></tr>
+<tr><td>[Right]</td><td>move window right</td><td><code><small>(lambda () (set! (<a class=quiet href="extsnd.html#leftsample">left-sample</a>) (* 0.5 (+ (<a class=quiet href="extsnd.html#leftsample">left-sample</a>) (<a class=quiet href="extsnd.html#rightsample">right-sample</a>)))))</small></code></td></tr>
 <tr><td>[Home]</td><td>update current file from disk</td><td><code><small>update-sound</small></code></td></tr>
 <tr><td>[Space]</td><td colspan=2>cancel selection; if playing, pause or continue playback</td></tr>
 <tr><td>&lt;</td><td>move cursor to sample 0</td><td><code><small>(lambda () (set! (<a class=quiet href="extsnd.html#sndcursor">cursor</a>) 0))</small></code></td></tr>
-<tr><td>&gt;</td><td>move cursor to last sample</td><td><code><small>(lambda () (set! (<a class=quiet href="extsnd.html#sndcursor">cursor</a>) (1- (<a class=quiet href="extsnd.html#sndframes">frames</a>))))</small></code></td></tr>
+<tr><td>&gt;</td><td>move cursor to last sample</td><td><code><small>(lambda () (set! (<a class=quiet href="extsnd.html#sndcursor">cursor</a>) (1- (<a class=quiet href="extsnd.html#frames">frames</a>))))</small></code></td></tr>
 <tr><td>C-&lt;</td><td>move cursor to sample 0</td><td><code><small>(lambda () (set! (<a class=quiet href="extsnd.html#sndcursor">cursor</a>) 0))</small></code></td></tr>
-<tr><td>C-&gt;</td><td>move cursor to last sample</td><td><code><small>(lambda () (set! (<a class=quiet href="extsnd.html#sndcursor">cursor</a>) (1- (<a class=quiet href="extsnd.html#sndframes">frames</a>))))</small></code></td></tr>
-<tr><td>C-a</td><td>move cursor to window start</td><td><code><small>(lambda () (set! (<a class=quiet href="extsnd.html#sndcursor">cursor</a>) (<a class=quiet href="extsnd.html#sndleftsample">left-sample</a>)))</small></code></td></tr>
+<tr><td>C-&gt;</td><td>move cursor to last sample</td><td><code><small>(lambda () (set! (<a class=quiet href="extsnd.html#sndcursor">cursor</a>) (1- (<a class=quiet href="extsnd.html#frames">frames</a>))))</small></code></td></tr>
+<tr><td>C-a</td><td>move cursor to window start</td><td><code><small>(lambda () (set! (<a class=quiet href="extsnd.html#sndcursor">cursor</a>) (<a class=quiet href="extsnd.html#leftsample">left-sample</a>)))</small></code></td></tr>
 <tr><td>C-b</td><td>move cursor back one sample</td><td><code><small>(lambda (arg) (set! (<a class=quiet href="extsnd.html#sndcursor">cursor</a>) (max 0 (- (<a class=quiet href="extsnd.html#sndcursor">cursor</a>) arg))))</small></code></td></tr>
 <tr><td>C-d</td><td>delete sample at cursor</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#snddeletesamples">delete-samples</a> (<a class=quiet href="extsnd.html#sndcursor">cursor</a>) arg))</small></code></td></tr>
-<tr><td>C-e</td><td>move cursor to window end</td><td><code><small>(lambda () (set! (<a class=quiet href="extsnd.html#sndcursor">cursor</a>) (<a class=quiet href="extsnd.html#sndrightsample">right-sample</a>)))</small></code></td></tr>
-<tr><td>C-f</td><td>move cursor ahead one sample</td><td><code><small>(lambda (arg) (set! (<a class=quiet href="extsnd.html#sndcursor">cursor</a>) (min (1- (<a class=quiet href="extsnd.html#sndframes">frames</a>)) (+ (<a class=quiet href="extsnd.html#sndcursor">cursor</a>) arg))))</small></code></td></tr>
+<tr><td>C-e</td><td>move cursor to window end</td><td><code><small>(lambda () (set! (<a class=quiet href="extsnd.html#sndcursor">cursor</a>) (<a class=quiet href="extsnd.html#rightsample">right-sample</a>)))</small></code></td></tr>
+<tr><td>C-f</td><td>move cursor ahead one sample</td><td><code><small>(lambda (arg) (set! (<a class=quiet href="extsnd.html#sndcursor">cursor</a>) (min (1- (<a class=quiet href="extsnd.html#frames">frames</a>)) (+ (<a class=quiet href="extsnd.html#sndcursor">cursor</a>) arg))))</small></code></td></tr>
 <tr><td>C-g</td><td>abort current command</td><td><code><small>c-g!</small></code></td></tr>
 <tr><td>C-h</td><td>delete previous sample</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#snddeletesamples">delete-samples</a> (- (<a class=quiet href="extsnd.html#sndcursor">cursor</a>) arg) arg))</small></code></td></tr>
 <tr><td>C-i</td><td>display cursor info</td><td><code><small>(lambda () (<a class=quiet href="extsnd.html#sndreportinminibuffer">report-in-minibuffer</a> (format #f "cursor at ~A" (<a class=quiet href="extsnd.html#sndsample">sample</a> (<a class=quiet href="extsnd.html#sndcursor">cursor</a>)))))</small></code></td></tr>
@@ -2042,12 +2046,12 @@ all the samples between the cursor and the next mark.</p>
 <tr><td>C-o</td><td>insert one zero sample at cursor</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#sndinsertsamples">insert-samples</a> (<a class=quiet href="extsnd.html#sndcursor">cursor</a>) arg (<a class=quiet href="extsnd.html#makevct">make-vct</a> arg))) ;see <a href="extsnd.html#newcp">go-to-zero</a></small></code></td></tr>
 <tr><td>C-p</td><td>move cursor back one 'line'</td><td><code><small>(lambda (arg) (set! (<a class=quiet href="extsnd.html#sndcursor">cursor</a>) (- (<a class=quiet href="extsnd.html#sndcursor">cursor</a>) (* 128 arg))))</small></code></td></tr>
 <tr><td>M-p</td><td colspan=2>move back one form in history</td></tr>
-<tr><td>C-q</td><td>play current channel(s) starting at cursor</td><td><code><small>(lambda () (<a class=quiet href="extsnd.html#sndplay">play</a> (<a class=quiet href="extsnd.html#sndcursor">cursor</a>) (<a class=quiet href="extsnd.html#sndselectedsound">selected-sound</a>) (<a class=quiet href="extsnd.html#sndselectedchannel">selected-channel</a>)))</small></code></td></tr>
+<tr><td>C-q</td><td>play current channel(s) starting at cursor</td><td><code><small>(lambda () (<a class=quiet href="extsnd.html#sndplay">play</a> (<a class=quiet href="extsnd.html#sndcursor">cursor</a>) (<a class=quiet href="extsnd.html#selectedsound">selected-sound</a>) (<a class=quiet href="extsnd.html#selectedchannel">selected-channel</a>)))</small></code></td></tr>
 <tr><td>C-r</td><td>search backwards</td><td></td></tr>
 <tr><td>C-s</td><td>search forwards</td><td><code><small>(lambda () (prompt "find:" find))</small></code></td></tr>
 <tr><td>C-t</td><td>stop playing</td><td><code><small>stop-playing</small></code></td></tr>
 <tr><td>C-u</td><td>start numerical argument</td><td></td></tr>
-<tr><td>C-v</td><td>move cursor to mid-window</td><td><code><small>(lambda () (set! (<a class=quiet href="extsnd.html#sndcursor">cursor</a>) (* 0.5 (+ (<a class=quiet href="extsnd.html#sndleftsample">left-sample</a>) (<a class=quiet href="extsnd.html#sndrightsample">right-sample</a>)))))</small></code></td></tr>
+<tr><td>C-v</td><td>move cursor to mid-window</td><td><code><small>(lambda () (set! (<a class=quiet href="extsnd.html#sndcursor">cursor</a>) (* 0.5 (+ (<a class=quiet href="extsnd.html#leftsample">left-sample</a>) (<a class=quiet href="extsnd.html#rightsample">right-sample</a>)))))</small></code></td></tr>
 <tr><td>C-w</td><td>delete current selection</td><td><code><small>delete-selection</small></code></td></tr>
 <tr><td>C-x</td><td>start extended command</td><td></td></tr>
 <tr><td>C-y</td><td>paste in selection</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#sndinsertselection">insert-selection</a> (<a class=quiet href="extsnd.html#sndcursor">cursor</a>)))</small></code></td></tr>
@@ -2108,7 +2112,7 @@ all the samples between the cursor and the next mark.</p>
         <!-- I(smooth selection):L(smooth-selection)(sndsmoothselection) -->
 
 <tr><td>C-x C-a</td><td>apply amplitude envelope</td><td><code><small>(lambda () (prompt "amp env:" env-sound))</small></code></td></tr>
-<tr><td>C-x C-b</td><td>set left sample (via C-u arg)</td><td><code><small>(lambda (arg) (set! (<a class=quiet href="extsnd.html#sndleftsample">left-sample</a>) arg))</small></code></td></tr>
+<tr><td>C-x C-b</td><td>set left sample (via C-u arg)</td><td><code><small>(lambda (arg) (set! (<a class=quiet href="extsnd.html#leftsample">left-sample</a>) arg))</small></code></td></tr>
 <tr><td>C-x C-c</td><td>hide ("close") controls</td><td><code><small>(lambda () (set! (<a class=quiet href="extsnd.html#sndshowcontrols">show-controls</a>) #f))</small></code></td></tr>
 <tr><td>C-x C-d</td><td>print</td><td><code><small>(lambda () (prompt "eps file:" graph-&gt;ps))</small></code></td></tr>
 <tr><td>C-x C-f</td><td>open file</td><td><code><small>(lambda () (prompt "file:" open-sound))</small></code></td></tr>
@@ -2136,7 +2140,7 @@ all the samples between the cursor and the next mark.</p>
 <tr><td valign=top>C-x C-v</td><td valign=top>set displayed duration as portion of total</td>
 <td><code><small><pre>
 (lambda (arg)
-  (let* ((range (/ (* (<a class=quiet href="extsnd.html#sndframes">frames</a>) arg) (<a class=quiet href="extsnd.html#sndsrate">srate</a>)))
+  (let* ((range (/ (* (<a class=quiet href="extsnd.html#frames">frames</a>) arg) (<a class=quiet href="extsnd.html#sndsrate">srate</a>)))
 	 (minx (max 0.0 (* 0.5 (- (apply + (<a class=quiet href="extsnd.html#sndxbounds">x-bounds</a>)) range)))))
     (set! (<a class=quiet href="extsnd.html#sndxbounds">x-bounds</a>) (list minx (+ minx range)))))
 </pre></small></code></td></tr>
@@ -2144,7 +2148,7 @@ all the samples between the cursor and the next mark.</p>
 <td><code><small><pre>
 (lambda (arg) (prompt "file:"
                 (lambda (val)
-                  (<a class=quiet href="extsnd.html#sndsave">save-sound</a> val (<a class=quiet href="extsnd.html#sndselectedsound">selected-sound</a>) (<a class=quiet href="extsnd.html#sndselectedchannel">selected-channel</a>)))))
+                  (<a class=quiet href="extsnd.html#sndsave">save-sound</a> val (<a class=quiet href="extsnd.html#selectedsound">selected-sound</a>) (<a class=quiet href="extsnd.html#selectedchannel">selected-channel</a>)))))
 </pre></small></code></td></tr>
 <tr><td>C-x C-z</td><td>smooth using cosine</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#sndsmooth">smooth-sound</a> (<a class=quiet href="extsnd.html#sndcursor">cursor</a>) arg))</small></code></td></tr>
 </table>
@@ -2372,8 +2376,8 @@ panel are:</p>
   <tr><td><a href="#mixingfiles">move mixed file</a></td><td><br></td><td><br></td><td><a href="extsnd.html#sndmixposition"><small>mix-position</small></a></td><td><a href="#mixingfiles"><small>drag mix tag</small></a></td></tr>
   <tr><td><a href="#cj">move to mark</a></td><td><br></td><td><a href="#cj"><small>Cj, Cx j</small></a></td><td><a href="extsnd.html#sndforwardmark"><small>forward-mark</small></a></td><td><a href="#cxj"><small>Cx j -&gt; named mark</small></a></td></tr>
   <tr><td><a href="#gotomix">move to mix</a></td><td><br></td><td><a href="#cxcj"><small>Cx Cj</small></a></td><td><a href="extsnd.html#sndforwardmix"><small>forward-mix</small></a></td><td><br></td></tr>
-  <tr><td><a href="#movingwindow">move window ahead</a></td><td><br></td><td><a href="#cxf"><small>[Left], Cx f</small></a></td><td><a href="extsnd.html#sndrightsample"><small>right-sample</small></a></td><td><small>scroll bars</small></td></tr>
-  <tr><td><a href="#movingwindow">move window back</a></td><td><br></td><td><a href="#movewindow"><small>[Right], Cx b</small></a></td><td><a href="extsnd.html#sndleftsample"><small>left-sample</small></a></td><td><small>scroll bars</small></td></tr>
+  <tr><td><a href="#movingwindow">move window ahead</a></td><td><br></td><td><a href="#cxf"><small>[Left], Cx f</small></a></td><td><a href="extsnd.html#rightsample"><small>right-sample</small></a></td><td><small>scroll bars</small></td></tr>
+  <tr><td><a href="#movingwindow">move window back</a></td><td><br></td><td><a href="#movewindow"><small>[Right], Cx b</small></a></td><td><a href="extsnd.html#leftsample"><small>left-sample</small></a></td><td><small>scroll bars</small></td></tr>
   <tr><td><a href="#multichannel">multichannel ops</a></td><td><br></td><td><br></td><td><a href="extsnd.html#sndsyncing"><small>sync</small></a></td><td><a href="#syncbutton"><small>sync button</small></a></td></tr>
   <tr><td><a href="#equalizepanes">normalize display</a></td><td><small>View: <a href="#equalizepanes">Equalize Panes</a></small></td><td><br></td><td><a href="extsnd.html#sndequalizepanes"><small>equalize-panes</small></a></td><td><small>Popup: Equalize Panes</small></td></tr>
   <tr><td><a href="sndscm.html#effectsdoc">normalize sound</a></td><td><small>Effects: <a href="sndscm.html#effectsdoc">Normalize</a></small></td><td><br></td><td><a href="extsnd.html#sndscaleto"><small>scale-to</small></a></td><td><br></td></tr>
@@ -2403,7 +2407,7 @@ panel are:</p>
   <tr><td><a href="#saveoptions">save options</a></td><td><small>Options: <a href="#saveoptions">Save options</a></small></td><td><br></td><td><a href="extsnd.html#sndsaveoptions"><small>save-options</small></a></td><td><br></td></tr>
   <tr><td><a href="#cxw">save selection</a></td><td><small>Edit: <a href="#cxw">Save selection</a></small></td><td><a href="#cxw"><small>Cx w</small></a></td><td><a href="extsnd.html#sndsaveregion"><small>save-region</small></a></td><td><a href="extsnd.html#sndsaveselection"><small>save-selection</small></a></td></tr>
   <tr><td><a href="#savedstate">save state</a></td><td><small>Options: <a href="#savedstate">Save State</a></small></td><td><br></td><td><a href="extsnd.html#sndsavestate"><small>save-state</small></a></td><td><br></td></tr>
-  <tr><td><a href="#prevfiles">select sound</a></td><td><br></td><td><a href="#cxo"><small>Cx o</small></a></td><td><a href="extsnd.html#sndselectedsound"><small>selected-sound</small></a></td><td><small>File dialog: click file</small></td></tr>
+  <tr><td><a href="#prevfiles">select sound</a></td><td><br></td><td><a href="#cxo"><small>Cx o</small></a></td><td><a href="extsnd.html#selectedsound"><small>selected-sound</small></a></td><td><small>File dialog: click file</small></td></tr>
   <tr><td><a href="#fw">show freq domain</a></td><td><br></td><td><br></td><td><a href="extsnd.html#sndffting"><small>transform-graph?</small></a></td><td><a href="#fw"><small>'f' button</small></a></td></tr>
   <tr><td><a href="extsnd.html#showmarks">show marks</a></td><td><br></td><td><br></td><td><a href="extsnd.html#showmarks"><small>show-marks</small></a></td><td><br></td></tr>
   <tr><td><a href="#fw">show time domain</a></td><td><br></td><td><br></td><td><a href="extsnd.html#timegraphp"><small>time-graph?</small></a></td><td><a href="#fw"><small>'w' button</small></a></td></tr>

@@ -1195,7 +1195,7 @@ constants and functions described above into Scheme.
   (lambda (file)
     (let* ((sound-fd (<a class=quiet href="extsnd.html#mussoundopeninput">mus-sound-open-input</a> file))
 	   (<a class=quiet href="extsnd.html#chans">chans</a> (<a class=quiet href="extsnd.html#soundchans">mus-sound-chans</a> file))
-	   (<a class=quiet href="extsnd.html#sndframes">frames</a> (<a class=quiet href="extsnd.html#soundframes">mus-sound-frames</a> file))
+	   (<a class=quiet href="extsnd.html#frames">frames</a> (<a class=quiet href="extsnd.html#soundframes">mus-sound-frames</a> file))
 	   (bufsize 256)
 	   (data (<a class=quiet href="extsnd.html#makesounddata">make-sound-data</a> chans bufsize))
 	   (bytes (* bufsize chans 2)))

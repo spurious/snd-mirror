@@ -99,6 +99,7 @@
 #define S_make_file2frame            "make-file->frame"
 #define S_make_file2sample           "make-file->sample"
 #define S_make_filter                "make-filter"
+#define S_make_fir_coeffs            "make-fir-coeffs"
 #define S_make_fir_filter            "make-fir-filter"
 #define S_make_formant               "make-formant"
 #define S_make_frame                 "make-frame"

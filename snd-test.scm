@@ -21,7 +21,7 @@
 ;;; test 18: enved
 ;;; test 19: save and restore
 ;;; test 20: transforms
-;;; test 21: unused
+;;; test 21: new stuff
 ;;; test 22: run
 ;;; test 23: with-sound
 ;;; test 24: Snd user-interface
@@ -33,6 +33,7 @@
 ;;; TODO: recorder-file-hook
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; TODO: replace all the (buggy) keystroke junk with snd-simulate-keystroke 
+;;; TODO: filter-selection truncate arg (and filter-* in general), make-fir-coeffs [should=spectrum->coeffs in dsp.scm]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen) (ice-9 session))
 
@@ -112,7 +113,7 @@
 	     (display (format #f "copying ~A~%" file))
 	     (copy-file (string-append home-dir "/cl/" file) (string-append (getcwd) "/" file)))))
      (list "4.aiff" "2.snd" "obtest.snd" "oboe.snd" "pistol.snd" "1a.snd" "now.snd" "fyow.snd"
-	   "storm.snd" "z.snd" "1.snd" "cardinal.snd" "now.snd.scm" "2a.snd")))
+	   "storm.snd" "z.snd" "1.snd" "cardinal.snd" "now.snd.scm" "2a.snd" "4a.snd")))
 
 (define times '())
 (defmacro time (a) 
@@ -28550,6 +28551,29 @@ EDITS: 2
 (if (or full-test (= snd-test 21) (and keep-going (<= snd-test 21)))
     (begin
       (run-hook before-test-hook 21)
+
+      (let ((ind1 (open-sound "oboe.snd")))
+	(save-sound-as "test.snd" ind1)
+	(let ((ind2 (open-sound "test.snd")))
+	  (if (not (channels-equal? ind1 0 ind2 0))
+	      (snd-display ";channels-equal? of copy"))
+	  (if (not (channels=? ind1 0 ind2 0))
+	      (snd-display ";channels=? of copy"))
+	  (pad-channel (frames ind2 0) 100)
+	  (if (channels-equal? ind1 0 ind2 0)
+	      (snd-display ";channels-equal? of pad"))
+	  (if (not (channels=? ind1 0 ind2 0))
+	      (snd-display ";channels=? of pad"))
+	  (set! (sample 50900 ind2 0) .1)
+	  (if (channels-equal? ind1 0 ind2 0)
+	      (snd-display ";channels-equal? of pad+set"))
+	  (if (channels=? ind1 0 ind2 0)
+	      (snd-display ";channels=? of pad+set 0 err"))
+	  (if (not (channels=? ind1 0 ind2 0 .2))
+	      (snd-display ";channels=? of pad+set .2 err"))
+	  (close-sound ind1)
+	  (close-sound ind2)))
+
       (run-hook after-test-hook 21)
       ))
 
@@ -33364,7 +33388,7 @@ EDITS: 2
 	(with-sound (:reverb jc-reverb) (fm-violin 0 .1 440 .1) (with-mix () "with-mix" 0 (fm-violin 0 .1 550 .3)))
 	(check-with-mix 6 .1 1.1 .398 "()" "((fm-violin 0 0.1 550 0.3))" old-date #f))
       
-      (with-sound (:srate 44100) (fm-violin 0 2 60 0.5 :periodic-vibrato-amplitude 0.0 :random-vibrato-amplitude 0.0))
+      (with-sound (:srate 44100 :play #f) (fm-violin 0 2 60 0.5 :periodic-vibrato-amplitude 0.0 :random-vibrato-amplitude 0.0))
       (let ((ind (find-sound "test.snd")))
 	(let ((mx (maxamp)))
 	  (notch-channel (let ((freqs '())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)))
@@ -33372,13 +33396,13 @@ EDITS: 2
 		  (ffneq (maxamp) .06))
 	      (snd-display ";notch 60 Hz: ~A to ~A" mx (maxamp)))
 	  (undo)
-	  (notch-channel (let ((freqs '())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)) 1024 ind 0 10)
+	  (notch-channel (let ((freqs '())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)) #f ind 0 10)
 	  (if (ffneq (maxamp) .009)
 	      (snd-display ";notch 60 hz 2: ~A" (maxamp)))
 	  (undo)
 	  (select-all)
-	  (notch-selection (let ((freqs '())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)) 1024)
-	  (if (ffneq (maxamp) .009)
+	  (notch-selection (let ((freqs '())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)) #f)
+	  (if (ffneq (maxamp) .04)
 	      (snd-display ";notch-selection 60 hz 2: ~A" (maxamp)))
 
 	  (play-sound
@@ -33388,6 +33412,14 @@ EDITS: 2
 		   ((= i len))
 		 (sound-data-set! data 0 i (* 2.0 (sound-data-ref data 0 i)))))))
 	  (close-sound ind)))
+      (with-sound (:srate 44100 :play #f) (fm-violin 0 60 60 0.5 :periodic-vibrato-amplitude 0.0 :random-vibrato-amplitude 0.0))
+      (let ((ind (find-sound "test.snd")))
+	(let ((mx (maxamp)))
+	  (notch-channel (let ((freqs '())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)) #f ind 0 10)
+	  (if (ffneq (maxamp) .04)
+	      (snd-display ";notch 60 hz 2 60: ~A" (maxamp))))
+	(close-sound ind))
+
       (play-sine 440 .1)
       (play-sines '((425 .05) (450 .01) (470 .01) (546 .02) (667 .01) (789 .034) (910 .032)))
 

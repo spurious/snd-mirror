@@ -732,27 +732,36 @@ If 'check' is #f, the hooks are removed."
 !#
 
 ;;; -------- channels-equal
-;;;
-;;; TODO: doc test channels-equal, ignore padding at end?
 
-(define (channels-equal snd1 chn1 snd2 chn2 allowable-difference)
-  ;; #t if the two channels are identical
+(define* (channels=? snd1 chn1 snd2 chn2 #:optional (allowable-difference 0.0))
+  "(channels=? s1 c1 s2 c2 (diff 0.0)) -> #t if the two channels are the same (within diff) modulo trailing 0's"
   (if (and (= snd1 snd2)
 	   (= chn1 chn2))
       #t
-      (let ((len1 (frames snd1 chn1))
-	    (len2 (frames snd2 chn2)))
-	(if (not (= len1 len2))
+      (let ((mx1 (maxamp snd1 chn1))
+	    (mx2 (maxamp snd1 chn1)))
+	(if (> (abs (- mx1 mx2)) allowable-difference)
 	    #f
-	    (let ((mx1 (maxamp snd1 chn1))
-		  (mx2 (maxamp snd1 chn1)))
-	      (if (> (abs (- mx1 mx2)) allowable-difference)
-		  #f
-		  (let ((read1 (make-sample-reader 0 snd1 chn1)))
-		    (not (scan-channel (lambda (y)
-					 (let ((val (read-sample read1)))
-					   (> (abs (- val y)) allowable-difference)))
-				       0 len2 snd2 chn2)))))))))
+	    (let* ((len1 (frames snd1 chn1))
+		   (len2 (frames snd2 chn2))
+		   (first-longer (>= len1 len2))
+		   (len (if first-longer len1 len2))
+		   (s1 (if first-longer snd1 snd2))
+		   (s2 (if first-longer snd2 snd1))
+		   (c1 (if first-longer chn1 chn2))
+		   (c2 (if first-longer chn2 chn1))
+		   (read2 (make-sample-reader 0 s2 c2))
+		   (diff allowable-difference))
+	      (not (scan-channel (lambda (y)
+				   (let ((val (read-sample read2)))
+				     (> (abs (- val y)) diff)))
+				 0 len s1 c1)))))))
 
+(define* (channels-equal? snd1 chn1 snd2 chn2 #:optional (allowable-difference 0.0))
+  "(channels-equal? s1 c1 s2 c2 (diff 0.0)) -> #t if the two channels are the same (within diff)"
+  (let ((len1 (frames snd1 chn1))
+	(len2 (frames snd2 chn2)))
+    (if (not (= len1 len2))
+	#f
+	(channels=? snd1 chn1 snd2 chn2 allowable-difference))))
 
-;;; TODO: channels-difference (rtn loc vals) or max-difference (rtn loc val), channels= (trailing 0 ignored)
